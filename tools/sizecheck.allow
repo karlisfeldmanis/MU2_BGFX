@@ -36,10 +36,10 @@ src/sim/items.cpp 1103
 src/sim/items.h 1377
 src/sim/quests.cpp 1787
 src/sim/realm.cpp 1639
-src/sim/realm.h 2404
+src/sim/realm.h 2401
 src/sim/realm_fight.cpp 2120
 src/sim/realm_items.cpp 2439
-src/sim/realm_move.cpp 993
+src/sim/realm_move.cpp 763
 src/sim/realm_raid.cpp 1412
 src/sim/realm_skills.cpp 1021
 src/sim/skills.cpp 1161

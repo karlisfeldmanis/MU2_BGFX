@@ -341,7 +341,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
         square_.phase = SquarePhase::Waiting;
         square_.startsAt = int64_t(kSquareWait) * kSquareTicksPerSecond;
     }
-    run_ = CastleRun{};
+    run_ = CastleInstance{};
     if (event() == EventKind::Castle) {
         run_.phase = CastlePhase::Waiting;
         run_.startsAt = int64_t(kCastleWait) * kCastleTicksPerSecond;
@@ -505,7 +505,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
             if (fixed(one)) one.facing = one.aim = -3.14159265359f / 2.0f;
             one.health = 0;
             const int32_t number = tables_->kinds[size_t(one.kind)].number;
-            // The statue and the Spirit Sorcerers are called up by the run (Realm::castleTick):
+            // The statue and the Spirit Sorcerers are called up by the run (CastleInstance::tick):
             // the sorcerers as the bridge lands, the statue when they are dead.
             one.risesAt = castleStatue(number) || castleSorcerer(number)
                               ? std::numeric_limits<int64_t>::max()
@@ -1079,7 +1079,7 @@ void Realm::step() {
     applyCommands();
     // The trades' upkeep: an ask out of time, a trade walked away from or shut by a death.
     dealTick();
-    castleTick();
+    run_.tick(*this);
     square_.tick(*this);
     invasionTick();
     raidTick();

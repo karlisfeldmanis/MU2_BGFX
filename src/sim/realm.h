@@ -46,6 +46,7 @@
 #include "sim/event.h"
 #include "sim/square.h"
 #include "sim/square_instance.h"
+#include "sim/castle_instance.h"
 #include "sim/invasion.h"
 #include "sim/raid.h"
 
@@ -2202,14 +2203,10 @@ private:
     const Satchel& kitOf(const Body& one) const;
     // The Town Portal's warp, shared with Icarus's sending home (realm_items.cpp).
     void warpHome(Body& hero);
-    CastleRun run_;  // see castleRun()
+    CastleInstance run_;  // see castleRun(); its run is sim/castle_instance.{h,cpp}
     SquareInstance square_;  // see squareRun(); its run is sim/square_instance.{h,cpp}
     friend struct SquareInstance;
-    // The win's pay (CastleRun::paid*), into the bag, once.
-    void payCastle();
-    // The run's clock, once a tick (Realm::step), and a kill counted against its quotas.
-    void castleTick();
-    void castleKill(const Body& dead);
+    friend struct CastleInstance;
     // Blood Castle's Statue of Saint: never wakes, walks, turns or is pushed (WebZen
     // gObjMonster.cpp:1524-1529, ObjAttack.cpp:2713-2719; MuMain NotRotateOnMagicHit).
     bool fixed(const Body& body) const;

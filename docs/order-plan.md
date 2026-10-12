@@ -976,6 +976,29 @@ every slice must leave them no longer. The slices, each with sim_test identical:
   (uninitialised padding in the pods it writes whole), so a snapshot cannot be compared across
   runs, only within one (as sim_test's does). Not this slice's to fix.
 
+### Slice I3: Blood Castle's run as `CastleInstance`, as done
+
+- **`sim/castle_instance.{h,cpp}`:** `struct CastleInstance : CastleRun` holds the run and its
+  code -- `set` (which castle: castle 1's garrison dressed as its own, one of three statues),
+  `freeRun`, `tick` (the hand-ins and claims, the clock, the bridge and its sorcerers, the rest
+  and the way out), `pay`, `kill` (the quotas, the statue's weapon) and `dropBridge` -- lifted out
+  of realm_move.cpp verbatim but for how they reach the realm, as I2's. No data of its own, so the
+  snapshot writes the same bytes; static_asserts hold it. Realm's setCastle, freeCastle and
+  dropCastleBridge stay public as one-line delegates (the client and the bots call them); the
+  step calls `run_.tick(*this)` where it called castleTick and the kill hook `run_.kill`.
+  realm_move.cpp is 763 lines (from 993) and realm.h 2401; their ratchets say so.
+- **Left in the Realm for now:** the Messenger's door and the cloak, the Archangel's page
+  (staffSlot, angelState, handInStaff, claimCastle), the queries, the raise-time hold of the waves
+  and the grid's own copy (`own_`), and `fixed`. They read the run through `run_`; I4 decides
+  whether they move with the per-player fields.
+- **Proved:** sim_test's 17,471 lines identical to HEAD's (7441 checks, 0 failed; the castle's
+  grid, run and pay tests among them); server_test 27 of 27; a scratch program stepping a
+  three-player Blood Castle 3 -- the statue drawn by `set`, the wait, the fight, the bridge
+  forced and falling, the grid opening, the end and the way out -- with the run's fields, the dice,
+  every body (its kind too) and the realm's own grid hashed at 39 points, HEAD's and I3's the same
+  (HEAD's own twice too); live on port 44521, three netbots and a client, every link "none
+  disagreed", 0 errors.
+
 ## 9c. Sprint F, the plan: the Cooker
 
 The user, 2026-10-12: "we want to build world, monster, item cooker like actual app where we

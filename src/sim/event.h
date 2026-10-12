@@ -87,7 +87,7 @@ enum class CastlePhase : uint8_t { None, Waiting, Running, Ended, Won };
 constexpr int64_t kCastleTicksPerSecond = 20;  // the realm's tick, MU2's Realm.Hz
 constexpr int kCastleKillsEach = 40;
 // As many of the castle's eight as the quota asks rise as the bridge falls (SetBossMonster), and
-// a dead one rises again as the garrison does until the quota is met (Realm::kill, castleKill).
+// a dead one rises again as the garrison does until the quota is met (Realm::kill, the run's kill).
 constexpr int kCastleSorcerersEach = 2;
 constexpr int kCastleMostSorcerers = 10;
 // How long the drawbridge takes to come down: 1.18 s, landing on eDownGate's thud (game/world/
@@ -101,7 +101,7 @@ constexpr int32_t kCastleStatue = 132;   // the Statue of Saint, raised by the r
 // Each castle's six breeds, in castle 1's order -- Chief Skeleton Warrior, Archer, Dark Skull
 // Soldier, Giant Ogre, Red Skeleton Knight, Magic Skeleton (the Spirit Sorcerer) -- on the same
 // nests (MonsterSetBase.txt, maps 11-16; MuMain _enum.h MONSTER_*_1.._6). A castle 2-6 run
-// raises castle 1's nests and swaps each body for its castle's own (Realm::setCastle).
+// raises castle 1's nests and swaps each body for its castle's own (CastleInstance::set).
 constexpr int32_t kCastleBreeds[6][6] = {
     {84, 85, 86, 87, 88, 89},     {90, 91, 92, 93, 94, 95},     {96, 97, 98, 99, 111, 112},
     {113, 114, 115, 116, 117, 118}, {119, 120, 121, 122, 123, 124}, {125, 126, 127, 128, 129, 130},
@@ -135,7 +135,7 @@ struct CastleRun {
     int sorcerersWanted = kCastleSorcerersEach;
     bool statueBroken = false;  // by him: the statue's bonus
     // Quota 1 met: the tick the drawbridge starts down, or -1; and whether it is down, its gap
-    // walkable (Realm::castleTick, kCastleBridgeTicks after).
+    // walkable (CastleInstance::tick, kCastleBridgeTicks after).
     int64_t bridgeAt = -1;
     bool bridgeDown = false;
     // The run over, won or out of time: the tick he is sent back to Devias (kCastleRest after),

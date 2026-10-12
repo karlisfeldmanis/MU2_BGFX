@@ -1827,7 +1827,7 @@ void Realm::kill(Body& dead, Body& killer) {
     dead.risesAt = tick_ + int64_t(dropRateOf(kind.number).regen + 1) * 20;
     // Blood Castle's statue is the run's, raised once by it and never again; its Spirit Sorcerers
     // rise again as the garrison does while the run is on and quota 2 is not met
-    // (CastleRun::sorcerersWanted); castleKill lays the dead down for good as the quota fills.
+    // (CastleRun::sorcerersWanted); the run's kill lays the dead down for good as the quota fills.
     if (event() == EventKind::Castle &&
         (castleStatue(kind.number) ||
          (castleSorcerer(kind.number) &&
@@ -1959,7 +1959,7 @@ void Realm::kill(Body& dead, Body& killer) {
         // party member in view, as the quests' counts are. Counted per member, three partied
         // knights met castle 1's quota of 120 in 40 kills, and the statue laid three weapons.
         square_.kill(*this, dead, killer.player ? killer : owner != nullptr ? *owner : hero);
-        if (dead.kind >= 0 && size_t(dead.kind) < tables_->kinds.size()) castleKill(dead);
+        if (dead.kind >= 0 && size_t(dead.kind) < tables_->kinds.size()) run_.kill(*this, dead);
         // And for each of his party in view who still wants that breed (the user, 2026-10-09:
         // "everyone nearby"); countKill skips a step already done. His who did the most damage,
         // as the drop is, when a player's blow or her summon's took it.
