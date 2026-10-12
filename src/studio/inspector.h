@@ -30,6 +30,8 @@ public:
     // `plus` is what the bench shows now; the return is the plus asked for, or -1.
     int draw(Cooker& cooker, const std::string& target, int plus, float x, float y, float w,
              float h);
+    // Opens the Light tab on the next draw, for a scripted run (MU_STUDIO_DO's `tab light`).
+    void showLight() { showLight_ = true; }
 
 private:
     // One value or block of `doc`, at `path` (a JSON array's text, built as it descends).
@@ -43,6 +45,7 @@ private:
     std::unordered_map<std::string, double> numbers_;    // a field being typed in, by path
     std::unordered_map<std::string, std::string> words_;
     bool notes_ = false;
+    bool showLight_ = false;
     std::string said_;
     bool saidOk_ = true;
 };

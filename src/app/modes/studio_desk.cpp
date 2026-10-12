@@ -182,6 +182,7 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
         core::logf("studio: frame %d does '%s' (MU_STUDIO_DO)", at, what.c_str());
         if (what == "swap" && swap_ == Swap::Idle) startSwap(bench, bench.browseName(bench.browseIndex()));
         if (what.rfind("plus ", 0) == 0) plusAsked_ = std::atoi(what.c_str() + 5);
+        if (what == "tab light") panels_.showLight();
         if (what.rfind("scene ", 0) == 0) {
             sceneAsked_ = what.substr(6);
             for (size_t i = 0; i < shelf_.scenes.size(); ++i) {

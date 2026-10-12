@@ -74,7 +74,9 @@ int Inspector::draw(Cooker& cooker, const std::string& target, int plus, float x
             tab(cooker, recipe_, target, false);
             ImGui::EndTabItem();
         }
-        if (ImGui::BeginTabItem("Light")) {
+        const ImGuiTabItemFlags lightFlags = showLight_ ? ImGuiTabItemFlags_SetSelected : 0;
+        showLight_ = false;
+        if (ImGui::BeginTabItem("Light", nullptr, lightFlags)) {
             ImGui::PushTextWrapPos(0.0f);
             ImGui::TextColored(kDim, "the game's own sheet: a change here is the light everywhere");
             ImGui::PopTextWrapPos();

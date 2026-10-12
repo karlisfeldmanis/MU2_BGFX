@@ -43,6 +43,7 @@ class Panels {
 public:
     // `width` and `height` are the window's, in framebuffer pixels; `now` wall seconds.
     Asked draw(const Shelf& shelf, Cooker& cooker, float width, float height, double now);
+    void showLight() { inspector_.showLight(); }
 
 private:
     void browser(const Shelf& shelf, Asked& asked, float x, float y, float w, float h);

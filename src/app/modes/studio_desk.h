@@ -17,7 +17,7 @@
 // The card's Read again runs the same swap with no job, for a cook run by hand.
 //
 // MU_STUDIO_DO="<frame>:<what>;..." does what the card would on those frames, for a shot run
-// with nobody at the mouse: `swap` (Read again), `scene <Stage|Home|world>` and `plus <N>` -- until F7's
+// with nobody at the mouse: `swap` (Read again), `scene <Stage|Home|world>`, `plus <N>` and `tab light` -- until F7's
 // control socket drives the studio (docs/order-plan.md §9c). "40:scene Home;200:swap".
 #pragma once
 
