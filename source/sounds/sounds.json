@@ -2622,16 +2622,21 @@
     },
     "hellmaine_attack": {
       "files": [
-        "hm_bloodywind.wav",
-        "hm_firelay.wav"
+        "hm_bloodywind.wav"
       ],
-      "from": "MU by action, once at its start: ATTACK1 (its wind) SOUND_AIDA_HELL_ATTACK3, w34/hm_bloodywind.wav; ATTACK2 (its fire lay) SOUND_AIDA_HELL_ATTACK2, hm_firelay.wav (GMAida.cpp:1030-1042; MapManager.cpp:362-363). Ours picks either for any blow. Its plain ATTACK3, hm_attack1.wav (:1044-1049), is not played: our breed swings Attack 1 and 2."
+      "from": "SOUND_AIDA_HELL_ATTACK3 (w34/hm_bloodywind.wav) once at the start of ATTACK1, its wind (GMAida.cpp:1030-1035; MapManager.cpp:363). Its plain ATTACK3, hm_attack1.wav (:1044-1049), is not played: our breed swings Attack 1 and 2."
     },
     "hellmaine_die": {
       "files": [
         "hm_death.wav"
       ],
       "from": "SOUND_AIDA_HELL_DIE on MONSTER01_DIE, once (GMAida.cpp:1051-1056); w34/hm_death.wav (MapManager.cpp:364)."
+    },
+    "hellmaine_attack2": {
+      "files": [
+        "hm_firelay.wav"
+      ],
+      "from": "SOUND_AIDA_HELL_ATTACK2 (w34/hm_firelay.wav) once at the start of ATTACK2, its fire lay (GMAida.cpp:1037-1042; MapManager.cpp:362). A breed`s <name>_attack2, when it has one, is its Attack 2`s cry (Play, cryAttack2)."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

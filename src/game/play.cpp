@@ -1432,7 +1432,9 @@ void Play::update(double seconds) {
                         // or what is in the character's hands. MU2's Crowd.Swinging.
                         int cry = body == nullptr ? -1
                                   : body->player  ? swingSound(*body)
-                                                  : swinger->cryAttack;
+                                  : swinger->cryAttack2 >= 0 && swinger->figure.clip() == swinger->attackClip2
+                                      ? swinger->cryAttack2
+                                      : swinger->cryAttack;
                         // A player archer's string is heard at its release, not as the draw
                         // starts: the noise is the string going (Play::nocking_, MU2's
                         // Crowd.Shot). MU plays it on the first key.

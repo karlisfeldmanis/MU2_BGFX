@@ -49,6 +49,7 @@
 #include "content/showing.h"
 #include "content/texture.h"
 #include "gfx/effects.h"
+#include "gfx/renderer.h"
 
 namespace mu::game {
 
@@ -68,6 +69,9 @@ public:
                float yaw, const float* target, float fade, float seconds);
     void update(float seconds);
     void gather(gfx::Effects& effects) const;
+    // Each fire lay's red on the ground, a line light down its length: MU's AddTerrainLight
+    // (0.2, 0, 0) over 2 tiles under each of its twenty flames, 50 units apart, summed.
+    uint32_t lights(gfx::PointLight* out, uint32_t max) const;
     // A stone a storm kicks up, for Play's meteor to throw. False when none are left.
     bool takeStone(float out[3]);
 

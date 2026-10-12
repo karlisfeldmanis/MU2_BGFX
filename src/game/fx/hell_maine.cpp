@@ -32,6 +32,8 @@ constexpr float kStormDiscHalf = 1.0f, kStormDisc = 0.3f;
 constexpr float kLaserLife = 20.0f, kLaserGap = 50.0f * kUnit;
 constexpr int kLaserFlames = 20;
 constexpr float kLaserDecal = 0.2f;
+// Twenty (0.2, 0, 0) lights 0.5 m apart over 2 m each: about four reach any point of the line.
+constexpr float kLaserGlow = 0.8f, kLaserGlowReach = 2.0f;
 constexpr size_t kMostMotes = 1200, kMostStorms = 8, kMostLasers = 8, kMostStones = 96;
 
 }  // namespace
@@ -170,13 +172,38 @@ void HellMaine::watch(uint32_t id, const Figure& figure, int attack, float key, 
             for (int i = 0; i < 3; ++i) laser.at[i] = hands[1][i];
             laser.way[0] = way[0];
             laser.way[1] = way[1];
+            // From its hand along its facing, as MU's: aimed from the hand at its target it went
+            // backwards, the hand of a 1.8 Hell Maine reaching past the knight at its feet.
             laser.floor = feet[1];
             laser.light = fade;
             lasers_.push_back(laser);
             core::logf("hell maine: Attack 2's fire lay from %.1f, %.1f toward %.2f, %.2f (%s)", hands[1][0], hands[1][2],
-                       way[0], way[1], target ? "its target" : "its facing");
+                       laser.way[0], laser.way[1], target ? "its target" : "its facing");
         }
     }
+}
+
+uint32_t HellMaine::lights(gfx::PointLight* out, uint32_t max) const {
+    uint32_t count = 0;
+    for (const Laser& one : lasers_) {
+        if (count >= max) break;
+        const float lit = one.light * std::clamp((kLaserLife - one.age) / kLaserFade, 0.0f, 1.0f);
+        const float reach = kLaserGap * float(kLaserFlames - 1);
+        gfx::PointLight& light = out[count++];
+        light = gfx::PointLight{};
+        light.line = true;
+        light.position[0] = one.at[0];
+        light.position[1] = one.floor;
+        light.position[2] = one.at[2];
+        light.to[0] = one.at[0] + one.way[0] * reach;
+        light.to[1] = one.floor;
+        light.to[2] = one.at[2] + one.way[1] * reach;
+        light.reach = kLaserGlowReach;
+        light.height = 1.0f;
+        light.colour[0] = kLaserGlow * lit;
+        light.colour[1] = light.colour[2] = 0.0f;
+    }
+    return count;
 }
 
 bool HellMaine::takeStone(float out[3]) {
@@ -340,13 +367,14 @@ void HellMaine::gather(gfx::Effects& effects) const {
         const float light = one.light * kLaserLight * std::clamp(left / kLaserFade, 0.0f, 1.0f);
         const float white[3] = {light, light, light};
         const float red[3] = {kLaserDecal * light, 0.0f, 0.0f};
-        for (int k = 1; k <= kLaserFlames; ++k) {
+        // The first at its hand, as MU's j = 0 (ZzzEffect.cpp:8973-8996).
+        for (int k = 0; k < kLaserFlames; ++k) {
             const float at[3] = {one.at[0] + one.way[0] * kLaserGap * float(k), one.at[1],
                                  one.at[2] + one.way[1] * kLaserGap * float(k)};
             // Angle[2] - 0.1 a flame, in degrees.
             sprite(flame_, at, 0.5f * kSixtyFour * 3.0f * kLaserSize, white,
                    -(one.age * 2.0f + float(k) * 0.1f) * 0.0174533f, gfx::Blend::Additive);
-            if (k % kDecalEvery == 0) {
+            if (k % kDecalEvery == kDecalEvery - 1) {
                 const float ground[3] = {at[0], one.floor, at[2]};
                 decal(smoke_, ground, kLaserDecalHalf, red, float(k) * 0.3f);
             }

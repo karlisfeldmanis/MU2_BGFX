@@ -555,9 +555,9 @@ void Play::openSound(const std::string& assetDir, bool muted) {
         }
         Drawn& one = drawn_[i];
         const int before = one.cryAttack;
-        one.cryAttack = sound_.load(named + "_attack", true, true);
-        one.cryDie = sound_.load(named + "_die", true, true);
-        one.cryMove = sound_.load(named + "_move", true, true);
+        const auto cry = [&](const char* what) { return sound_.load(named + what, true, true); };
+        one.cryAttack = cry("_attack"), one.cryAttack2 = cry("_attack2");  // Hell Maine's wind, fire lay
+        one.cryDie = cry("_die"), one.cryMove = cry("_move");
         if (before < 0 && one.cryAttack >= 0) ++breeds;
     }
     core::logf("sound: cries for %d monster bodies", breeds);

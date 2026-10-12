@@ -1083,7 +1083,7 @@ private:
         // A monster's own sound events, as Sound handles, found once at openSound: its breed's
         // `_attack`, `_die` and `_move` by MU2's naming (the label lowered, no spaces). -1 for
         // the character and for a breed with nothing cooked, which is silence.
-        int cryAttack = -1, cryDie = -1, cryMove = -1;
+        int cryAttack = -1, cryAttack2 = -1, cryDie = -1, cryMove = -1;  // cryAttack2: Attack 2's own
         // MONSTER01_SHOCK (slot 5): on the meteor's quake, silently, and on one landed blow in
         // two, crying its attack pair -- MU has no shock sound of its own: a model's
         // `Sounds[]` are idle/move, the attack pair and the death, and the cooked `_shock`

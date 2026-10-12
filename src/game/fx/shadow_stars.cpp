@@ -344,9 +344,11 @@ uint32_t ShadowStars::lights(gfx::PointLight* out, uint32_t max, const float nea
     for (const Glow& one : glows_) order.push_back(&one);
     std::sort(order.begin(), order.end(),
               [&](const Glow* a, const Glow* b) { return distance(*a) < distance(*b); });
-    uint32_t count = 0;
+    // Hell Maine's fire lays first: a few, and each a line the length of the beam.
+    uint32_t count = hellMaine_.lights(out, max);
+    const uint32_t end = std::min(max, count + most);
     for (const Glow* one : order) {
-        if (count >= most) break;
+        if (count >= end) break;
         gfx::PointLight& light = out[count++];
         for (int i = 0; i < 3; ++i) light.position[i] = one->position[i];
         light.reach = one->reach;
