@@ -311,10 +311,11 @@ def plan_thing(thing, threads):
                           after=jobs(os.path.join(COOKED, "wardrobe", "jobs.txt"), 60)))
         steps += tables(threads)
     elif thing.kind == "monster":
-        # Its show (aura, eye trails, stars, claws...) is in cooked/figures/shows.json, which
-        # plan_realm's `shows` step cooks: a show edit is nothing on screen without it. The
-        # realm's own tables (rules) are compiled C++ and wait for `mu make realm` and a build.
-        steps += [s for s in plan_realm() if s.name == "shows"]
+        # Its rules (src/sim/breeds_table.inc, out of every recipe's `rules`) and its show
+        # (cooked/figures/shows.json: aura, eye trails, stars, claws...) are plan_realm's two
+        # steps: either edit is nothing in a fight without them. The rules are compiled, so
+        # the game is built after them (build_game) -- the arena window then fights by them.
+        steps += plan_realm()
         steps += tables(threads)
         steps.append(Step(f"figure {thing.name}",
                           COOK + ["--world", thing.world, "--only", "figures", "--monsters", thing.name] + t,
@@ -323,6 +324,7 @@ def plan_thing(thing, threads):
                                     [glb, os.path.join(ASSETS, "index.json")], "the figures table"),
                           "cooked", lock="figures",
                           after=jobs(os.path.join(COOKED, "figures", "jobs.txt"), 60)))
+        steps.append(build_game(threads))
     else:
         steps.append(Step(f"cook_one {thing.name}",
                           ["python3", os.path.join(TOOLS, "cook_one.py"), thing.name, "--no-shots",
@@ -484,6 +486,31 @@ def plan_sounds(threads):
              lambda c: ((bool(c & {"index", "assets"}) or newest_in(sounds, ".wav") > mtime(mus),
                          "a sound is newer than showing.mus, or the index moved")), "cooked", lock="showing"),
     ]
+
+
+BUILD = os.path.join(ROOT, "build")
+GAME = os.path.join(BUILD, "mu2")
+
+
+def build_game(threads):
+    """mu2 and mu2_server built again after the realm's tables changed: the rules are C++.
+
+    Never netbot: rebuilding it under a running bot kills the bot. Under the `build` lock, so
+    two mu jobs never build at once; a session building by hand does not take it, and a build
+    racing another session's header edit mixes layouts (the shared-build trap: delete every
+    mu*.dir object and build again).
+    """
+    tables_inc = [os.path.join(ROOT, "src", "sim", n)
+                  for n in ("gates_table.inc", "maps_table.inc", "breeds_table.inc")]
+
+    def test(changed):
+        if "realm" in changed:
+            return True, "the realm's tables were written"
+        if newest(tables_inc) > mtime(GAME):
+            return True, "a realm table is newer than build/mu2"
+        return False, "build/mu2 is newer than the realm's tables"
+    return Step("compile the game", ["cmake", "--build", BUILD, "--target", "mu2", "mu2_server",
+                                   "-j", str(threads)], test, "binary", lock="build")
 
 
 def plan_tables(threads):
