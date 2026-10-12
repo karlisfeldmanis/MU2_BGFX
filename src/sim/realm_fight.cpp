@@ -150,7 +150,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // kResistanceCutMost (sim::Affix, ours -- WebZen's fire turns nothing aside). No draw.
     // The Golden Dragon's: through his Dragonfire too, which the blow then deepens (sim/raid.h);
     // its bite is no fire, its Flame of Evil is.
-    const bool dragonFire = invaderSlot_ >= 0 && &attacker == &bodies_[size_t(invaderSlot_)] &&
+    const bool dragonFire = invasion_.slot >= 0 && &attacker == &bodies_[size_t(invasion_.slot)] &&
                             fireBlow(attacker, flame) && (target.player || target.raider >= 0);
     if (dragonFire) {
         force *= dragonfireTaken(target);
@@ -1846,11 +1846,11 @@ void Realm::kill(Body& dead, Body& killer) {
     }
     // The Golden Invasion's dragon is not respawned (OpenMU creates invasion monsters directly
     // and never stands them up again), and its death ends the invasion.
-    if (invaderSlot_ >= 0 && &dead == &bodies_[size_t(invaderSlot_)]) {
+    if (invasion_.slot >= 0 && &dead == &bodies_[size_t(invasion_.slot)]) {
         dead.risesAt = std::numeric_limits<int64_t>::max();
         // The raid's dragon leaves its hoard first, while the raid still stands.
         dragonHoard(dead);
-        endInvasion();
+        invasion_.end(*this);
     }
     // Every monster the killer is still holding as a quarry forgets it, or a chase carries on
     // toward a corpse.

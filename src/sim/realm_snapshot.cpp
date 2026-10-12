@@ -135,10 +135,10 @@ void Realm::serialize(Archive& a) {
         a.pod(*dice);
     }
     a.vec(traps_);
-    a.pod(invaderSlot_);
-    a.pod(invasion_);
-    a.pod(invasionOwed_);
-    a.pod(invasionNow_);
+    a.pod(invasion_.slot);
+    a.pod(static_cast<InvasionRun&>(invasion_));
+    a.pod(invasion_.owed);
+    a.pod(invasion_.landNow);
     // The raid's own (the Golden Dragon), all but its party, which a snapshot does not carry.
     a.pod(raid_);
     a.pod(raidPlayers_);

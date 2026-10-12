@@ -476,7 +476,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     }
     // And the Golden Invasion's dragon, down until one lands (realm_invasion.cpp), after the
     // summon so no id before it moves.
-    raiseInvader();
+    invasion_.raise(*this);
     // And the raid's minions and party, after it, so no id before them moves (realm_raid.cpp).
     raiseRaid();
 
@@ -1081,7 +1081,7 @@ void Realm::step() {
     dealTick();
     run_.tick(*this);
     square_.tick(*this);
-    invasionTick();
+    invasion_.tick(*this);
     raidTick();
 
     // The order is fixed and is written down because it is the behaviour: each player walks and

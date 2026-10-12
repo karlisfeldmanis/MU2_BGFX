@@ -121,11 +121,11 @@ void Realm::raiseRaid() {
     // to check on dragon he also will see same experience as in raid"): its stages, its storm of
     // rocks, its Inferno, its swarm and its boxes, with or without a party. setRaid only names
     // the players it is tough for and brings the party; without it, its health is laid as it
-    // comes, for the players on the map then (Realm::invasionTick).
-    if (invaderSlot_ < 0) return;
+    // comes, for the players on the map then (InvasionInstance::tick).
+    if (invasion_.slot < 0) return;
     {
         // Its health and its blow as the raid's (sim/raid.h), laid on before it ever rises.
-        Body& dragon = bodies_[size_t(invaderSlot_)];
+        Body& dragon = bodies_[size_t(invasion_.slot)];
         dragon.maxHealth = raidHealth(raid_.players);
         dragon.stats.minimumDamage = int(float(dragon.stats.minimumDamage) * kRaidBlowScale);
         dragon.stats.maximumDamage = int(float(dragon.stats.maximumDamage) * kRaidBlowScale);
@@ -269,7 +269,7 @@ void Realm::minionSpoils(const Body& dead) {
     }
     const Body& hero = mine();
     // The rune's rarity by the dragon's level, not the little one's fifteen (a Common there).
-    const int level = invaderSlot_ >= 0 ? bodies_[size_t(invaderSlot_)].level : dead.level;
+    const int level = invasion_.slot >= 0 ? bodies_[size_t(invasion_.slot)].level : dead.level;
     const auto pick = [&](auto&& admits) -> int32_t {
         int count = 0;
         for (const content::ItemRow& row : tables_->items) count += admits(row) ? 1 : 0;
@@ -391,8 +391,8 @@ int Realm::partyIndex(const Body& one) const {
 }
 
 void Realm::raidSkipTo(RaidStage stage) {
-    if (invaderSlot_ < 0) return;
-    Body& dragon = bodies_[size_t(invaderSlot_)];
+    if (invasion_.slot < 0) return;
+    Body& dragon = bodies_[size_t(invasion_.slot)];
     if (!dragon.alive()) return;
     const int percent = stage == RaidStage::Flight      ? kFlightAt
                         : stage == RaidStage::Enraged   ? kEnragedAt
@@ -404,8 +404,8 @@ void Realm::raidSkipTo(RaidStage stage) {
 // ---- the dragon's clock -----------------------------------------------------------------------
 
 void Realm::raidTick() {
-    if (invaderSlot_ < 0) return;
-    Body& dragon = bodies_[size_t(invaderSlot_)];
+    if (invasion_.slot < 0) return;
+    Body& dragon = bodies_[size_t(invasion_.slot)];
     if (raid_.stage == RaidStage::None) {
         if (!dragon.alive() || invasion_.phase != InvasionPhase::Standing) return;
         raid_.landedAt = tick_;
@@ -442,7 +442,7 @@ void Realm::raidTick() {
             raid_.stage = RaidStage::None;
             raid_.aloft = false;
             for (Hazard& one : hazards_) one = Hazard{};
-            endInvasion();
+            invasion_.end(*this);
         }
         return;
     }
@@ -543,8 +543,8 @@ Hazard* Realm::layHazard(const Hazard& one) {
         at = one;
         at.serial = raid_.serial;
         // A pool is not told: it is the fire the meteor left, seen as it lands.
-        if (one.kind != HazardKind::Pool && invaderSlot_ >= 0) {
-            say(What::Raid, bodies_[size_t(invaderSlot_)], int32_t(RaidEvent::Tell),
+        if (one.kind != HazardKind::Pool && invasion_.slot >= 0) {
+            say(What::Raid, bodies_[size_t(invasion_.slot)], int32_t(RaidEvent::Tell),
                 int32_t(one.kind), int32_t(one.landsAt - tick_));
             happenings_.back().x = one.x;
             happenings_.back().y = one.y;
@@ -1013,8 +1013,8 @@ void Realm::bossThink(Body& dragon) {
 }
 
 void Realm::raidAfter() {
-    if (raid_.stage == RaidStage::None || invaderSlot_ < 0) return;
-    const Body& dragon = bodies_[size_t(invaderSlot_)];
+    if (raid_.stage == RaidStage::None || invasion_.slot < 0) return;
+    const Body& dragon = bodies_[size_t(invasion_.slot)];
     // 0.5^(1/140), the float nearest it: a literal, so no machine's powf decides it. A change to
     // kThreatHalf needs this again (python: struct float of 0.5 ** (1 / ticks)).
     static_assert(kThreatHalf == 140, "keep is 0.5^(1/140)");
@@ -1185,7 +1185,7 @@ void Realm::raid(Body& one, int index) {
             return;
         }
         // Back from town at the hero's run (sim::kRunFactor), walking within the fight.
-        const Body* landed = invaderSlot_ >= 0 ? &bodies_[size_t(invaderSlot_)] : nullptr;
+        const Body* landed = invasion_.slot >= 0 ? &bodies_[size_t(invasion_.slot)] : nullptr;
         const bool far = landed != nullptr && !within(one, *landed, 12.0f);
         one.speed = (far ? kRunFactor : 1.0f) / float(kHeroMoveTicks);
         advance(one);
@@ -1211,8 +1211,8 @@ void Realm::raid(Body& one, int index) {
     if (dodge(one, index)) return;
     if (tick_ < one.castUntil || tick_ < one.swingsAt) return;
 
-    Body* dragon = invaderSlot_ >= 0 && bodies_[size_t(invaderSlot_)].alive()
-                       ? &bodies_[size_t(invaderSlot_)]
+    Body* dragon = invasion_.slot >= 0 && bodies_[size_t(invasion_.slot)].alive()
+                       ? &bodies_[size_t(invasion_.slot)]
                        : nullptr;
     // Its own guard first: Defense on a knight with a shield, Soul Barrier on a wizard.
     const auto cast = [&](const SkillRow& row, Body& at) {

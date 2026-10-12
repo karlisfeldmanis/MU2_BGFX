@@ -1020,6 +1020,27 @@ every slice must leave them no longer. The slices, each with sim_test identical:
   the server, netbot and bot built; live on port 44521 at protocol 26, three netbots and a client,
   every link "none disagreed", 0 errors.
 
+### Slice J1: the Golden Invasion as `InvasionInstance`, as done
+
+- **`sim/invasion_instance.{h,cpp}`** (realm_invasion.cpp renamed): `struct InvasionInstance :
+  InvasionRun` (sim/invasion.h, what Realm::Invading was) adds the dragon's `slot` in the bodies
+  and the begin owed (`owed`, `landNow`), and holds `raise`, `rain`, `invade`, `tick` and `end`,
+  moved verbatim but for how they reach the realm (`realm.` here: the code has locals named `r`).
+  Realm keeps invasionRain and invade as delegates; the step, the kill hook and the raid call the
+  instance; the raid reads `invasion_.slot`/`phase` as it read the old members. The snapshot
+  writes the same four pieces in the same order, so its shape and the protocol stay (11, 26).
+  realm.h is 2373 lines.
+- **A trap caught on the way:** `rain`'s parameter `raining` has the run's field's name; stripping
+  `invasion_.` made `began = raining && !raining`, and sim_test's invasion test failed nine checks
+  until the field was `this->raining`. A moved function's parameters and locals must be checked
+  against the instance's fields (I2's and I3's had no such clash; their replays proved it).
+- **Proved:** sim_test identical to HEAD's (17,471 lines, 7441 checks, 0 failed; the invasion and
+  raid tests among them); server_test 27 of 27; a replay forcing a Lorencia invasion with three
+  players fighting the dragon -- the rain, the landing, the stand, the end -- with the invasion's
+  state, the dice and every body hashed at 31 points, HEAD's and J1's the same (HEAD's own twice);
+  live on port 44521, three netbots and a client, every link "none disagreed", 0 errors.
+- **The raid (J2, J3)** is not started: the user, 2026-10-12, 'Invasion only'.
+
 ## 9c. Sprint F, the plan: the Cooker
 
 The user, 2026-10-12: "we want to build world, monster, item cooker like actual app where we

@@ -80,4 +80,13 @@ enum class InvasionPhase : uint8_t {
     Standing,  // it has landed, and stands until killed or its thirty minutes are up
 };
 
+// The invasion's run (Realm::invasion_, sim/invasion_instance.h): written whole into a snapshot.
+struct InvasionRun {
+    InvasionPhase phase = InvasionPhase::Quiet;
+    int64_t landsAt = 0;
+    int64_t endsAt = 0;
+    bool raining = false;  // the weather the game last said, to see a spell begin
+    bool struck = false;   // a player has taken its health since it landed
+};
+
 }  // namespace mu::sim

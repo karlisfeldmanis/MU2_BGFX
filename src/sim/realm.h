@@ -47,6 +47,7 @@
 #include "sim/square.h"
 #include "sim/square_instance.h"
 #include "sim/castle_instance.h"
+#include "sim/invasion_instance.h"
 #include "sim/invasion.h"
 #include "sim/raid.h"
 
@@ -1285,7 +1286,7 @@ public:
     }
     // The dragon's body, or null on a map with no invasion.
     const Body* invader() const {
-        return invaderSlot_ >= 0 ? &bodies_[size_t(invaderSlot_)] : nullptr;
+        return invasion_.slot >= 0 ? &bodies_[size_t(invasion_.slot)] : nullptr;
     }
     // ---- the Golden Dragon's raid (sim/raid.h, realm_raid.cpp) ------------------------------
     // Set BEFORE raise or not at all: the raid itself (never set, the invasion is the plain
@@ -2086,24 +2087,11 @@ private:
     // Where a Meteorite's rocks fall (Realm::shower), so a wizard's showers move no other roll.
     Random showerDice_{0};
     std::vector<Trap> traps_;
-    // The Golden Invasion's dragon: one body, raised down at the end of `bodies_` on a map with
-    // an invasion, and risen where it lands (realm_invasion.cpp); -1 elsewhere.
-    int invaderSlot_ = -1;
-    struct Invading {
-        InvasionPhase phase = InvasionPhase::Quiet;
-        int64_t landsAt = 0;
-        int64_t endsAt = 0;
-        bool raining = false;  // the weather the game last said, to see a spell begin
-        bool struck = false;   // a player has taken its health since it landed
-    } invasion_;
-    bool invasionOwed_ = false;  // invade()'s, begun inside the next tick
-    bool invasionNow_ = false;   // invade(true)'s: landing on the tick after it begins
+    // The Golden Invasion: its run, the dragon's slot and the begin owed (sim/invasion_instance.h).
+    InvasionInstance invasion_;
+    friend struct InvasionInstance;
     // Where the dragon comes down, so a landing moves no other roll.
     Random invasionDice_{0};
-    void raiseInvader();
-    void invasionTick();
-    // Laid down for good: killed (Realm::kill) or its thirty minutes up.
-    void endInvasion();
     // ---- the Golden Dragon's raid (realm_raid.cpp) ---------------------------------------------
     struct RaidState {
         RaidStage stage = RaidStage::None;
@@ -2175,7 +2163,7 @@ private:
     void dragonfireMark(Body& one);
     bool inHazard(const Hazard& h, float x, float y) const;
     bool isBoss(const Body& one) const {
-        return invaderSlot_ >= 0 && &one == &bodies_[size_t(invaderSlot_)] &&
+        return invasion_.slot >= 0 && &one == &bodies_[size_t(invasion_.slot)] &&
                raid_.stage != RaidStage::None;
     }
     // A boss shrugs off what would hold or move it -- a freeze, a chill, a push, a pull -- and
@@ -2185,7 +2173,7 @@ private:
     // that means he cant get poison effect"): no spell's, rune's, plague's or ring's poison takes
     // on it, and it says Immune as it shrugs off a hold.
     bool venomProof(const Body& one) {
-        if (invaderSlot_ < 0 || &one != &bodies_[size_t(invaderSlot_)]) return false;
+        if (invasion_.slot < 0 || &one != &bodies_[size_t(invasion_.slot)]) return false;
         shrugs(one);
         return true;
     }
