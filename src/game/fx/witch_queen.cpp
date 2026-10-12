@@ -12,6 +12,10 @@ namespace {
 constexpr float kFrame = 0.04f;   // MU's reference frame
 constexpr float kUnit = 0.01f;    // a MU unit, in metres
 constexpr float kLightDim = 0.5f;  // ours: her lights and foot glow at half MU's
+// Ours: her five steady bone lights at 0.4 of MU's size, the 1.7 on zx02 over a metre across
+// (the user, 2026-10-12, of the Bloody Witch Queen's: 'that huge star/sparkle effect is not
+// great'). Her blows' flashes keep MU's.
+constexpr float kBoneLightSize = 0.4f;
 constexpr float kBoneScale[5] = {0.8f, 1.1f, 1.0f, 1.7f, 0.8f};
 constexpr const char* kBones[6] = {"Bip01 L Hand", "zx", "zx01", "zx02", "zx04", "Bip01"};
 constexpr float kFootGlow[3] = {0.7f, 0.5f, 0.7f};
@@ -277,7 +281,8 @@ void WitchQueen::gather(gfx::Effects& effects) const {
             continue;
         }
         const float colour[3] = {(one.roll + 0.5f) * dim, (one.roll - 0.05f) * dim, (one.roll + 0.5f) * dim};
-        sprite(impact_, one.at, 0.5f * kImpact * one.scale, 0.5f * kImpact * one.scale, colour, 0.0f);
+        const float half = 0.5f * kImpact * one.scale * kBoneLightSize;
+        sprite(impact_, one.at, half, half, colour, 0.0f);
     }
     for (const Mote& one : motes_) {
         const float light = one.light;
