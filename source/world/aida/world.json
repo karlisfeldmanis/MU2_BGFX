@@ -207,5 +207,29 @@
       },
       "note": "Aida's waterfall spray boxes (RenderAidaObjectVisual types 56-58, GMAida.cpp:166-183), drawn by game/world/waterfall_spray.h: 18 the falling drops of Object57, 19 the specks bursting off Object58, 20 the mist of Object59. None lights; each carries the box's Scale, which MU adds to every particle's (SPRAY_KINDS). and Object68's small fires on rocks and ruins (type 67, GMAida.cpp:239-242), game/world/small_fires.h, and Object71's skull ghosts (type 70, :243-252), game/world/skull_ghosts.h."
     }
-  }
+  },
+  "npcs": [
+    {
+      "npc": 253,
+      "name": "Potion Girl Amy",
+      "figure": "PotionGirlAmy",
+      "at": [
+        78,
+        13
+      ],
+      "look": 4,
+      "note": "Ours, not 2005's (Aida's town had no one): the user's pick, 2026-10-12, on OpenMU Season Six's first NPC tile, Osbourne's 78,13 facing south-east (VersionSeasonSix/Maps/Aida.cs:45)."
+    },
+    {
+      "npc": 240,
+      "name": "Baz The Vault Keeper",
+      "figure": "",
+      "at": [
+        86,
+        14
+      ],
+      "look": 2,
+      "note": "Ours, the user's pick, 2026-10-12, on OpenMU Season Six's second NPC tile, Jerridon's 86,14 facing south-west (Aida.cs:46), NoMove on every grid."
+    }
+  ]
 }

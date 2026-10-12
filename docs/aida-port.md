@@ -390,7 +390,8 @@ sheets. Ground luminance (sheet × light) is 29, against Noria's 49, Lorencia's 
   is `gates (119, 33, 82, 8, 87, 14, 1)`. WebZen sends death to Aida's town but the Town Portal to
   Noria's gate 27 (`protocol.cpp:17963-17968`). OM sends both to Aida.
 - **NPCs.** None in 2005. OM S6's Osbourne and Jerridon are Season 2's Jewel of Harmony NPCs, which
-  this game does not have.
+  this game does not have. Since 2026-10-12 (the user's pick) Potion Girl Amy stands on Osbourne's
+  tile (78,13, south-east) and Baz the Vault Keeper on Jerridon's (86,14, south-west): world.json `npcs`.
 - **The objects.** 3 752 placements of 74 kinds, none missing. 1 676 are rigged, 915 of them two
   shrub-card kinds. 183 flickering flower lights (155 green, 28 red). The serpent meshes scroll
   their scales. Glows come from `_R` sheet names (Treeange_R, waterfall_R, flowerlight_R/2_R,
@@ -467,7 +468,7 @@ sheets. Ground luminance (sheet × light) is 29, against Noria's 49, Lorencia's 
    *Recommended*: **MU's first**, then judge.
 8. **MU's dead extras.** *Recommended*: capped butterflies yes; no clouds, mist or skull ghost to
    start.
-9. **Town NPCs.** *Recommended*: **none**, since Noria is 82 steps away.
+9. **Town NPCs.** *Recommended*: **none**, since Noria is 82 steps away. The user picked Amy and Baz (2026-10-12).
 10. **Hell Maine's skills.** *Recommended*: one area blow from MU's MonsterSkill table (wind,
     firelay), with the other breeds' skills as visuals only.
 11. **Smaller calls.**
