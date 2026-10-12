@@ -45,6 +45,9 @@ bool StudioArena::open(Context& ctx, const std::string& breed, const std::string
     args_.play = true;
     if (!args_.levelAsked) args_.level = 80;
     if (!args_.weaponAsked) args_.weapon = "Sword01";
+    // Undying: the arena is for watching the breed, and a level-94 Witch Queen felled the knight
+    // in three blows and walked home while he stood up (2026-10-12).
+    args_.arenaUndying = true;
     args_.atSet = column >= 0;
     args_.atColumn = float(column), args_.atRow = float(row);
     // Not zero: no entrance, Escape left the studio's, and never a save (play_mode.cpp).
