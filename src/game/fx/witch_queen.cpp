@@ -15,7 +15,18 @@ constexpr float kLightDim = 0.5f;  // ours: her lights and foot glow at half MU'
 // Ours: her five steady bone lights at 0.4 of MU's size, the 1.7 on zx02 over a metre across
 // (the user, 2026-10-12, of the Bloody Witch Queen's: 'that huge star/sparkle effect is not
 // great'). Her blows' flashes keep MU's.
-constexpr float kBoneLightSize = 0.4f;
+constexpr float kBoneLightSize = 0.3f;
+// And smokier (the user, 2026-10-12: 'that start has to be more elegennt more smokey'): each
+// light a dimmer core, kBoneLightCore of its light, and off it a thin wisp of her Chrome03 smoke
+// every kWispEvery reference frames, rising and opening as it fades and turning slowly. Ours.
+constexpr float kBoneLightCore = 0.6f;
+constexpr float kWispEvery = 0.6f;
+constexpr float kWispScale = 0.18f;           // of the 64-texel sheet as it is born
+constexpr float kWispGrow = 0.012f;            // a reference frame, of the sheet
+constexpr float kWispRise = 1.8f * kUnit;     // a reference frame
+constexpr float kWispLife = 30.0f;            // reference frames
+constexpr float kWispTint[3] = {0.75f, 0.25f, 0.8f};
+constexpr float kWispLight = 0.32f;
 constexpr float kBoneScale[5] = {0.8f, 1.1f, 1.0f, 1.7f, 0.8f};
 constexpr const char* kBones[6] = {"Bip01 L Hand", "zx", "zx01", "zx02", "zx04", "Bip01"};
 constexpr float kFootGlow[3] = {0.7f, 0.5f, 0.7f};
@@ -97,6 +108,13 @@ void WitchQueen::mote(Mote::Kind kind, const float at[3], float scale, float fad
         one.life = 19.0f;
         break;
     case Mote::Kind::Shine: one.life = 7.0f; break;
+    case Mote::Kind::Wisp:
+        one.spin = unit() * 6.2831853f;
+        one.velocity[0] = (unit() * 2.0f - 1.0f) * 0.3f * kUnit;
+        one.velocity[1] = kWispRise * (0.7f + unit() * 0.6f);
+        one.velocity[2] = (unit() * 2.0f - 1.0f) * 0.3f * kUnit;
+        one.life = kWispLife;
+        break;
     case Mote::Kind::Blue:
         one.velocity[0] = (unit() * 4.0f - 2.0f) * kUnit;
         one.velocity[1] = (std::floor(unit() * 3.0f) + 1.0f) * kUnit;
@@ -149,6 +167,16 @@ void WitchQueen::watch(uint32_t id, const Figure& figure, int attack, float key,
     while (queen.owed >= 1.0f) {
         queen.owed -= 1.0f;
         queen.roll = std::floor(unit() * 30.0f) / 100.0f + 0.6f;
+        // A wisp off one of her five lights, drawn at random, every kWispEvery frames.
+        queen.wispOwed += 1.0f;
+        if (queen.wispOwed >= kWispEvery) {
+            queen.wispOwed -= kWispEvery;
+            const int k = int(unit() * 5.0f) % 5;
+            float at[3];
+            if (queen.bones[k] >= 0 && figure.pointOn(queen.bones[k], origin, at)) {
+                mote(Mote::Kind::Wisp, at, kWispScale * (0.7f + 0.3f * kBoneScale[k]), fade);
+            }
+        }
         if (attack == 0) continue;
         queen.frames += 1.0f;
         queen.odd = !queen.odd;
@@ -227,6 +255,10 @@ void WitchQueen::update(float seconds) {
             one.light *= std::pow(0.9f, frames);
             break;
         case Mote::Kind::Blue: one.scale -= 0.02f * frames; break;
+        case Mote::Kind::Wisp:
+            one.scale += kWispGrow * frames;
+            one.spin += 0.03f * frames;
+            break;
         }
     }
     motes_.erase(std::remove_if(motes_.begin(), motes_.end(),
@@ -280,7 +312,8 @@ void WitchQueen::gather(gfx::Effects& effects) const {
                    one.roll * 20.0f);
             continue;
         }
-        const float colour[3] = {(one.roll + 0.5f) * dim, (one.roll - 0.05f) * dim, (one.roll + 0.5f) * dim};
+        const float core = dim * kBoneLightCore;
+        const float colour[3] = {(one.roll + 0.5f) * core, (one.roll - 0.05f) * core, (one.roll + 0.5f) * core};
         const float half = 0.5f * kImpact * one.scale * kBoneLightSize;
         sprite(impact_, one.at, half, half, colour, 0.0f);
     }
@@ -299,6 +332,14 @@ void WitchQueen::gather(gfx::Effects& effects) const {
             for (int i = 0; i < 3; ++i) colour[i] = kShineTint[i] * light;
             sprite(shiny_, one.at, 0.5f * kShinyWide * one.scale, 0.5f * kShinyTall * one.scale, colour, one.spin);
             break;
+        case Mote::Kind::Wisp: {
+            // In, then out: a quick swell over its first fifth, then a long fade.
+            const float t = one.age / one.life;
+            const float swell = std::min(1.0f, t / 0.2f) * (1.0f - t);
+            for (int i = 0; i < 3; ++i) colour[i] = kWispTint[i] * kWispLight * swell * light;
+            sprite(smoke_, one.at, 0.5f * kSixtyFour * one.scale, 0.5f * kSixtyFour * one.scale, colour, one.spin);
+            break;
+        }
         case Mote::Kind::Blue:
             // MU overwrites its light every frame as LifeTime / 25 (:8333-8335): it fades out.
             for (int i = 0; i < 3; ++i) colour[i] = one.light * std::max(0.0f, one.life - one.age) / 25.0f;

@@ -87,7 +87,7 @@ private:
         float at[3] = {0, 0, 0};
         float velocity[3] = {0, 0, 0};
         float scale = 1.0f, spin = 0.0f, light = 1.0f, age = 0.0f, life = 1.0f;
-        enum class Kind : uint8_t { Smoke, Flash, Shine, Blue } kind = Kind::Smoke;
+        enum class Kind : uint8_t { Smoke, Flash, Shine, Blue, Wisp } kind = Kind::Smoke;
     };
     // A ring point: waiting its turn, then struck, its licks and scorch for the strike's life.
     struct Strike {
@@ -99,7 +99,7 @@ private:
     struct Queen {
         int bones[6] = {-1, -1, -1, -1, -1, -1};  // L Hand, zx, zx01, zx02, zx04, Bip01
         bool found = false, seen = false;
-        float owed = 0.0f, lastKey = 0.0f, frames = 0.0f, roll = 0.8f;
+        float owed = 0.0f, lastKey = 0.0f, frames = 0.0f, roll = 0.8f, wispOwed = 0.0f;
         int lastAttack = 0;
         bool ring = false;  // this Attack 2's ring is cast
         bool shone = false; // this Attack 1's shines are thrown (ours: once, kImpact below)
