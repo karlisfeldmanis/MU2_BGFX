@@ -340,6 +340,7 @@ const char* Hud::artOf(const Boon& one) {
     return one.pet >= 0          ? petArt(one.pet)
            : one.poison           ? "buff_poison"
            : one.dragonfire       ? "buff_dragonfire"
+           : one.bleed            ? "buff_bleed"
            : one.chill            ? "buff_ice"
            : one.ale              ? "buff_ale"
            : one.frenzy           ? "buff_frenzy"
@@ -664,18 +665,14 @@ std::string of(int now, int most) { return panel::grouped(now) + " / " + panel::
 
 }  // namespace
 
+bool debuffCard(const Hud::Boon& one, tip::Sheet& sheet);  // debuff_cards.cpp
+
 tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
     tip::Sheet sheet;
     sheet.wide = kCardWide;
-    const char* art = one.pet >= 0 ? petArt(one.pet)
-                      : one.poison ? "buff_poison"
-                      : one.dragonfire ? "buff_dragonfire"
-                      : one.chill  ? "buff_ice"
-                      : one.ale    ? "buff_ale"
-                      : one.frenzy ? "buff_frenzy"
-                      : one.potion == 0 ? "buff_healing"
-                      : one.potion == 1 ? "buff_mana"
-                                   : buffArt(one.skill);
+    // artOf's, but a skill with no art of its own shows none.
+    const char* art = one.skill != 0 && !one.debuff() && !one.ale && !one.frenzy &&
+                              one.pet < 0 && one.potion < 0 ? buffArt(one.skill) : artOf(one);
     if (art != nullptr) {
         const gfx::Art& icon = arts.get(art);
         if (icon.valid()) {
@@ -801,25 +798,7 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
         sheet.sections.push_back(what);
         return sheet;
     }
-    if (one.dragonfire) {
-        // The Golden Dragon's (sim/raid.h): each stack its fire bites deeper, and fire resistance
-        // takes the edge off both (the user, 2026-10-08: "players need some fire resistance items").
-        sheet.name = "Dragonfire";
-        sheet.nameTone = tip::Tone::Red;
-        sheet.base = "DEBUFF";
-        tip::Section what;
-        what.rows.push_back(said("Stacks",
-                                 std::to_string(one.stacks) + " of " +
-                                     std::to_string(sim::kDragonfireMost),
-                                 tip::Tone::Red));
-        what.rows.push_back(said("Fire damage taken", "+" + std::to_string(int(std::lround(
-                                     double(one.stacks) * sim::kDragonfireTaken * 100.0))) + "%",
-                                 tip::Tone::Red));
-        what.rows.push_back(prose("Every fire blow of the dragon's adds a stack. Fire resistance "
-                                  "lessens its fire and the stacks alike."));
-        sheet.sections.push_back(what);
-        return sheet;
-    }
+    if (debuffCard(one, sheet)) return sheet;   // Dragonfire and a bleed (debuff_cards.cpp)
     if (one.frenzy) {
         // The Dungeon's boots rune, ours and Diablo 3's shape: a stack a wound, each
         // sim::kFrenzyStackSpeed on the swing and the cast, four seconds from the last.
@@ -1267,11 +1246,11 @@ void Hud::rebuild() {
         // from the top and the debuffs' bar under the cell.
         controls::sweep(canvas_, box, 1.0f - left, gfx::rgba(0.0f, 0.0f, 0.0f, 0.58f));
         if (debuff) {
-            // Dragonfire's figure is its stacks, how deep it bites; any other debuff keeps its
+            // Dragonfire's figure is its stacks, how deep it bites (a bleed's too); any other debuff keeps its
             // big seconds (the user: "just use big number at center with some opacity
             // background for debuffs time"), now over the clock's own dark.
             char figure[16] = {};
-            if (one.dragonfire && one.stacks > 0) {
+            if ((one.dragonfire || one.bleed) && one.stacks > 0) {
                 std::snprintf(figure, sizeof figure, "%d", one.stacks);
             } else if (one.seconds >= 1.0f) {
                 const int whole = int(one.seconds + 0.5f);

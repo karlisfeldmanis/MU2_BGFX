@@ -181,4 +181,25 @@ void Realm::applyCommands() {
     carried_.clear();
 }
 
+// Out of realm.h, unchanged, to pay the size ratchet for the bleed (2026-10-12).
+Realm::Pouring Realm::pouring(bool mana) const {
+    Pouring out;
+    for (int i = 0; i < me().sipCount; ++i) {
+        const Sip& one = me().sips[i];
+        if (!one.drunk || one.mana != mana) continue;
+        out.left = std::max(out.left, one.due - tick_);
+        out.amount += one.amount;
+    }
+    return out;
+}
+
+// Out of realm.h, unchanged, to pay the size ratchet for the bleed (2026-10-12).
+void Realm::smite(uint32_t id) {
+    const Body* found = find(id);
+    if (found == nullptr || !found->monster() || !found->alive()) return;
+    Body& beast = *const_cast<Body*>(found);
+    beast.health = 0;
+    kill(beast, mine());
+}
+
 }  // namespace mu::sim

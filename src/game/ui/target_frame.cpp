@@ -75,6 +75,12 @@ int aurasOf(const sim::Realm& realm, const sim::Body& body, Hud::Boon* out) {
             one->stacks = body.dragonfire;
         }
     }
+    if (body.bleed > 0) {
+        if (Hud::Boon* one = add(body.bleedUntil, sim::kBleedTicks)) {
+            one->bleed = true;
+            one->stacks = body.bleed;
+        }
+    }
     if (Hud::Boon* one = add(body.chilledUntil, sim::kHeroChillTicks)) one->chill = true;
     if (body.boonSkill != 0) {
         const sim::SkillRow* row = sim::skillNumbered(body.boonSkill);

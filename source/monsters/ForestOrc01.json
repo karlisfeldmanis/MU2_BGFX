@@ -28,8 +28,8 @@
       "ice": 19,
       "poison": 19
     },
-    "note": "Resistance: OpenMU S6 Maps/Aida.cs:427-429 writes 19/255 to poison, ice and fire, read as WebZen's raw 19 the way Tarkan's are (realm_tuning.h); fire is not carried. Drops: no MoneyRate or MaxItemLevel for Aida exists anywhere on disk, so Tarkan's 30 and 3, as docs/aida-port.md's decision 11 says; RegTime 10, OpenMU's RespawnDelay (Aida.cs:415). Poisons: ours, not MU's (the user, 2026-10-12: 'could make poison damage i think'); no source gives an Aida breed a debuff (OpenMU no AttackSkill; WebZen's monster skill tables empty; MuMain none). The 0.75 poisoners' bite (kPoisoners).",
-    "poisons": true
+    "note": "Resistance: OpenMU S6 Maps/Aida.cs:427-429 writes 19/255 to poison, ice and fire, read as WebZen's raw 19 the way Tarkan's are (realm_tuning.h); fire is not carried. Drops: no MoneyRate or MaxItemLevel for Aida exists anywhere on disk, so Tarkan's 30 and 3, as docs/aida-port.md's decision 11 says; RegTime 10, OpenMU's RespawnDelay (Aida.cs:415). Bleeds: ours, in place of the poison it had (the user, 2026-10-12: 'lets make new effect for orcts. bleed'; Aida's two orcs, stacking and short): each blow that lands lays a stack, to five, five seconds from the last; realm_tuning.h kBleeders.",
+    "bleeds": true
   },
   "combat": {
     "level": 74,

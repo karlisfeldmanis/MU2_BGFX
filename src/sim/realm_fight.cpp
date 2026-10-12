@@ -262,6 +262,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     happenings_.back().bolt = bolt;
     happenings_.back().fireLay = fireLay;
     if (fireLay) layFire(attacker, target, blow.damage);   // realm_burn.cpp
+    if (target.player && bleeds(attacker)) cut(attacker, target, blow.damage);   // kBleeders
     // The element, after the blow and only on what it left standing: 0.75's order.
     if (row != nullptr && row->pushes && target.alive() && !target.player) push(target, attacker);
     // A beast that strikes with Lightning -- the Thunder Lich and the Devil, whose AttackSkill is
@@ -1765,6 +1766,9 @@ void Realm::kill(Body& dead, Body& killer) {
         dead.poisonUntil = 0;
         dead.poisonNext = 0;
         dead.poisonDamage = 0;
+        dead.bleed = 0;
+        dead.bleedUntil = 0;
+        dead.bleedNext = 0;
         dead.chilledUntil = 0;
         dead.frozenUntil = 0;
         dead.boonSkill = skill::kNone;

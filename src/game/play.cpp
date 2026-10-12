@@ -1227,10 +1227,11 @@ void Play::update(double seconds) {
                         cue.token = hero->swingToken;
                         showing_.schedule(cue);
                     }
-                } else if (happening.what == sim::What::Hit && happening.poisoned &&
-                           happening.whom == heroId) {
+                } else if (happening.what == sim::What::Hit &&
+                           (happening.poisoned || happening.bled) && happening.whom == heroId) {
                     // A poison's pulse on him: the green number now, and no swing -- the monster
-                    // that poisoned him may be across the field or dead.
+                    // that poisoned him may be across the field or dead. A bleed's the same, in
+                    // a blow's own colour on him (sim kBleeders).
                     Cue cue;
                     cue.attacker = happening.who;
                     cue.target = happening.whom;
@@ -1238,7 +1239,7 @@ void Play::update(double seconds) {
                     cue.taken = taken;
                     // And what his shield took of the pulse, which shows ABSORBED as a blow's does.
                     cue.absorbed = absorbed;
-                    cue.poison = true;
+                    cue.poison = happening.poisoned;
                     cue.thrown = true;
                     cue.fuse = 0.0f;
                     showing_.schedule(cue);

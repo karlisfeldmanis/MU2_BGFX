@@ -246,4 +246,16 @@ void Realm::healThreat(const Body& healer, const Body& healed, int32_t mended) {
     }
 }
 
+// Out of realm.h, unchanged, to pay the size ratchet for the bleed (2026-10-12).
+bool Realm::mayTake(const Lying& one) const {
+    // A bound thing (Held::bound) is its earner's, and nobody else's even once he has left.
+    if (one.what.bound) return one.owner == mine().id;
+    if (one.owner == 0 || one.owner == mine().id || playerOfId(one.owner) < 0) return true;
+    // Gone from the world, a player keeps his place in heroes_ (Realm::depart): his things
+    // are free as if he had never been, or the castle's weapon lay locked when its breaker left.
+    const Body* owner = find(one.owner);
+    if (owner == nullptr || owner->gone) return true;
+    return mine().party != 0 && owner->party == mine().party;
+}
+
 }  // namespace mu::sim

@@ -402,6 +402,7 @@ add_library(mu_game STATIC
   src/game/ui/sheet.cpp
   src/game/ui/cursor.cpp
   src/game/ui/hud.cpp
+  src/game/ui/debuff_cards.cpp
   src/game/ui/card.cpp
   src/game/ui/bag.cpp
   src/game/ui/shelf.cpp

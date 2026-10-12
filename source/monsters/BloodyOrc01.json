@@ -45,8 +45,8 @@
       "ice": 20,
       "poison": 20
     },
-    "note": "Resistance: OpenMU S6 Maps/Aida.cs:520-522 writes 20/255 to poison and ice and 150/255 to fire, read as WebZen's raw values the way the Forest Orc's are; fire is not carried. Drops: the Forest Orc's (Tarkan's 30 and 3, docs/aida-port.md decision 11); RegTime 8, OpenMU's RespawnDelay (Aida.cs:508). Poisons: as the Forest Orc it is drawn from (the user, 2026-10-12, for Aida's orcs).",
-    "poisons": true
+    "note": "Resistance: OpenMU S6 Maps/Aida.cs:520-522 writes 20/255 to poison and ice and 150/255 to fire, read as WebZen's raw values the way the Forest Orc's are; fire is not carried. Drops: the Forest Orc's (Tarkan's 30 and 3, docs/aida-port.md decision 11); RegTime 8, OpenMU's RespawnDelay (Aida.cs:508). Bleeds: ours, in place of the poison it had (the user, 2026-10-12: 'lets make new effect for orcts. bleed'; Aida's two orcs, stacking and short): each blow that lands lays a stack, to five, five seconds from the last; realm_tuning.h kBleeders.",
+    "bleeds": true
   },
   "show": {
     "note": "MODEL_BLOODY_ORC's blow is MODEL_FOREST_ORC's (GMAida.cpp:628-660 against :564-596): on Attack 1 and Attack 2, three CreateBlur type 3 in (0.5, 0.5, 0), 20 units along bones 35, 39, 43 to 60 along 37, 41, 45 -- the same three right-hand fingers on its 61-bone rig. So the Forest Orc's show.claws.",

@@ -32,6 +32,12 @@ constexpr float kThrowLift = 3.0f;       // rand() % 6 - 3
 constexpr float kDamping = 0.95f;        // per reference frame
 // Spark02.jpg is four pixels square. The splash is the sheet's own quadrant, 64 of 128.
 constexpr float kSplash = 50.0f;         // MU units across, at a man's size
+// A bleed's drip, ours: a third of a splash, born still and falling under a game's gravity,
+// stepping the sheet's four quadrants over its life so it thins as it drops.
+constexpr float kDripSplash = 16.0f;     // MU units across, at a man's size
+constexpr float kDripLife = 16.0f;       // reference frames, about two thirds of a second
+constexpr float kDripFall = 6.0f;        // metres a second a second
+constexpr float kDripDrift = 0.12f;      // metres a second aside, at most
 
 // --- the figure ---------------------------------------------------------------------------
 // Where it hangs, which is the one thing MU's own arrangement kept: a constant over the
@@ -232,6 +238,19 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float man,
     }
 }
 
+void Showing::drip(const float at[3], float floor, float scale) {
+    if (!bgfx::isValid(blood_) || particles_.size() >= particles_.capacity()) return;
+    Particle one;
+    for (int c = 0; c < 3; ++c) one.position[c] = at[c];
+    one.velocity[0] = (unit() * 2.0f - 1.0f) * kDripDrift;
+    one.velocity[1] = -0.2f;
+    one.velocity[2] = (unit() * 2.0f - 1.0f) * kDripDrift;
+    one.size = kDripSplash * scale / kPerMetre * 0.5f * (0.75f + unit() * 0.5f);
+    one.life = one.full = kDripLife;
+    one.floor = floor;
+    particles_.push_back(one);
+}
+
 void Showing::update(float seconds) {
     const float frames = seconds * kReference;
 
@@ -244,6 +263,17 @@ void Showing::update(float seconds) {
             continue;
         }
         for (int c = 0; c < 3; ++c) one.position[c] += one.velocity[c] * seconds;
+        if (one.full > 0.0f) {
+            // A drip falls, and is gone at the ground.
+            one.velocity[1] -= kDripFall * seconds;
+            if (one.position[1] <= one.floor) {
+                particles_[i] = particles_.back();
+                particles_.pop_back();
+                continue;
+            }
+            ++i;
+            continue;
+        }
         // 0.95 of itself every reference frame, which over twelve carries it under two metres.
         const float damp = std::pow(kDamping, frames);
         for (int c = 0; c < 3; ++c) one.velocity[c] *= damp;
@@ -275,7 +305,8 @@ void Showing::gather(gfx::Effects& effects) const {
             // one every three frames and the last is showing as the particle dies. The SHEET
             // does the fading -- its alpha peaks at 160 in the first quadrant and 58 in the
             // fourth -- so nothing here touches the colour.
-            int quadrant = int((kBloodLife - one.life) / kFramesHeld);
+            int quadrant = one.full > 0.0f ? int((one.full - one.life) / (one.full / 4.0f))
+                                           : int((kBloodLife - one.life) / kFramesHeld);
             quadrant = quadrant < 0 ? 0 : (quadrant > 3 ? 3 : quadrant);
             sprite.u0 = float(quadrant % 2) * 0.5f;
             sprite.v0 = float(quadrant / 2) * 0.5f;

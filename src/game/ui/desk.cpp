@@ -1475,6 +1475,15 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         boon.seconds = left * 0.05f;
         boon.share = left / float(sim::kDragonfireTicks);
     }
+    // And a bleeder's claws (sim kBleeders), its stacks in the middle as Dragonfire's.
+    if (hero.bleedUntil > realm.tick() && hero.bleed > 0 && standing < Hud::kBoons) {
+        Hud::Boon& boon = boons[standing++];
+        boon.bleed = true;
+        boon.stacks = hero.bleed;
+        const float left = float(hero.bleedUntil - realm.tick());
+        boon.seconds = left * 0.05f;
+        boon.share = left / float(sim::kBleedTicks);
+    }
     // And iced, the Ice Monster's slow: a debuff cell of its own, its seconds counting down.
     if (hero.chilledUntil > realm.tick() && standing < Hud::kBoons) {
         Hud::Boon& boon = boons[standing++];

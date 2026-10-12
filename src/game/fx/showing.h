@@ -133,6 +133,10 @@ public:
               bool onHero, bool told = true);
     // A word put up over `feet` with no blow under it: "Immune" over the raid's dragon.
     void word(Mark mark, const float feet[3]) { raise(mark, 0, feet, false); }
+    // **A bleed's drip** (sim kBleeders, ours): one drop of the blow's own blood born at `at`, a
+    // point on the bleeding body, falling to `floor` (the ground's height under it) and gone
+    // there. `scale` its size for the body's (its height over a man's).
+    void drip(const float at[3], float floor, float scale = 1.0f);
 
     // Ages everything alive, on the same scaled clock as the fuses.
     void update(float seconds);
@@ -212,6 +216,10 @@ private:
         // integer arithmetic, so four quadrants are stepped at one every three frames and the
         // last is showing as the particle dies.
         float life = 12.0f;
+        // A drip's (`drip`): its whole life, over which its quadrants step instead of MU's
+        // twelve frames, and the height it falls to. 0 for a blow's splash.
+        float full = 0.0f;
+        float floor = 0.0f;
     };
 
     bool open_ = false;

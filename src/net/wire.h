@@ -102,7 +102,9 @@ namespace mu::net {
 // 26: a Player's event fields as one EventSeat (snapshot shape 11; order-plan §9e, I4).
 // 27: a Broker row's last sale of the same thing (BrokerRow::lastSale), the Buy list's "vs last
 //     sale" (the market's redesign B, 2026-10-12).
-constexpr uint32_t kVersion = 27;
+// 28: a bleeder's claws (sim kBleeders): Body::bleed and its fellows, Happening::bled (snapshot
+//     shape 12), the Forest and Bloody Orcs' blow a stacking bleed in place of their poison.
+constexpr uint32_t kVersion = 28;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store

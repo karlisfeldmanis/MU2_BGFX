@@ -285,6 +285,8 @@ struct Happening {
     bool poisoned = false;
     // A `Hit` that is an Immolate burn's pulse: drawn in its ember with the word BURN.
     bool burned = false;
+    // A `Hit` that is a bleed's pulse (Realm::bleedPulse): no swing, the number and his drips.
+    bool bled = false;
     // A `Hit` a Rune of Creation's power dealt -- Stormcall's lightning, Meteor's rock, Frost
     // Arrow's second wound -- drawn in the rune's own colour (the user, 2026-10-01).
     bool rune = false;
@@ -616,6 +618,12 @@ struct Body {
     int64_t burnUntil = 0, burnNext = 0;
     int32_t burnDamage = 0;
     uint32_t burnBy = 0;
+    // Bleeding (a bleeder's claws on him, kBleeders): its stacks (to kBleedMost), until this
+    // tick, its next pulse, what each stack takes a pulse, and whose claws. 0 for never. Ours.
+    int32_t bleed = 0;
+    int64_t bleedUntil = 0, bleedNext = 0;
+    int32_t bleedDamage = 0;
+    uint32_t bleedBy = 0;
     int32_t blinkColumn = 0, blinkRow = 0;
     // Sitting, leaning or hanging, and off which perch (an index into Tables::perches, -1 for
     // none). The player's only; a monster never poses.
@@ -917,16 +925,7 @@ public:
         int64_t left = 0;
         int32_t amount = 0;
     };
-    Pouring pouring(bool mana) const {
-        Pouring out;
-        for (int i = 0; i < me().sipCount; ++i) {
-            const Sip& one = me().sips[i];
-            if (!one.drunk || one.mana != mana) continue;
-            out.left = std::max(out.left, one.due - tick_);
-            out.amount += one.amount;
-        }
-        return out;
-    }
+    Pouring pouring(bool mana) const;  // realm_commands.cpp
     // His auto-drink (sim::AutoDrink): set as asked, each held to 0..kAutoDrinkMost, and read.
     void setAutoDrink(int health, int mana);
     AutoDrink autoDrink() const { return me().autoDrink; }
@@ -1362,13 +1361,7 @@ public:
     int32_t castleWeaponItem() const;
     // A test's: the monster `id` felled by the hero's hand, through the kill every blow ends in
     // -- its quota, its drop, its rise -- without the walk and the swings (tests/sim_test.cpp).
-    void smite(uint32_t id) {
-        const Body* found = find(id);
-        if (found == nullptr || !found->monster() || !found->alive()) return;
-        Body& beast = *const_cast<Body*>(found);
-        beast.health = 0;
-        kill(beast, mine());
-    }
+    void smite(uint32_t id);  // realm_commands.cpp
     int64_t wallClock() const { return wall_; }
     // Whether his class may be paid this choice: the item's own class bits, as a purchase asks.
     bool questChoiceFits(int index, int choice) const;
@@ -1459,16 +1452,7 @@ public:
     // one whose owner has left, or his party's -- a drop from a party member's kill is the
     // party's (the user, 2026-10-10: 'if char is on party he can pick items from ground which
     // drops from party kills'). Ours, as the owner's minute is.
-    bool mayTake(const Lying& one) const {
-        // A bound thing (Held::bound) is its earner's, and nobody else's even once he has left.
-        if (one.what.bound) return one.owner == mine().id;
-        if (one.owner == 0 || one.owner == mine().id || playerOfId(one.owner) < 0) return true;
-        // Gone from the world, a player keeps his place in heroes_ (Realm::depart): his things
-        // are free as if he had never been, or the castle's weapon lay locked when its breaker left.
-        const Body* owner = find(one.owner);
-        if (owner == nullptr || owner->gone) return true;
-        return mine().party != 0 && owner->party == mine().party;
-    }
+    bool mayTake(const Lying& one) const;  // realm_party.cpp
     void step();
     // A tick of the player the queries answer for (lookAs) and nobody else: his commands and his
     // two halves, every monster, every other player and the world's own clocks held where they
@@ -1687,6 +1671,10 @@ private:
     void burnPulse(Body& beast), layFire(Body& by, Body& target, int damage);  // realm_burn.cpp
     // Whether this monster's blow poisons the hero (realm_tuning.h, kPoisoners).
     bool poisons(const Body& monster) const;
+    // Whether its blow cuts him (kBleeders), the cut a landed blow lays, and a bleed's pulse.
+    bool bleeds(const Body& monster) const;
+    void cut(Body& by, Body& target, int damage);
+    void bleedPulse(Body& one);
     // Whether a tile is within a guard post's clearing on the cleared map, where no nest puts a
     // monster down (raise, raiseBeast).
     bool nearPost(int column, int row) const;

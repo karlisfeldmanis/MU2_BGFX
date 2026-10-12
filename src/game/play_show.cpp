@@ -530,32 +530,7 @@ void Play::snort(float seconds) {
             }
         }
     }
-    // A poisoned body, a monster's or a character's (the user, 2026-10-12: 'update char poison
-    // effect same as monster with that subtle smoke'): green smoke off bones drawn at random.
-    for (Drawn& one : drawn_) {
-        const sim::Body* body = realm_.find(one.id);
-        const FigureBody* look = one.figure.body();
-        if (!body || !body->alive() || body->poisonUntil <= realm_.tick() ||
-            !one.visible || !one.placed || look == nullptr || look->boneCount() < 2) {
-            one.sickOwed = 0.0f;
-            continue;
-        }
-        if (one.burningDice == 0) one.burningDice = 0x9e3779b9u ^ (one.id * 2654435761u);
-        const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
-        const float origin[3] = {0.0f, 0.0f, 0.0f};
-        one.sickOwed += frames * kSickPuffs;
-        while (one.sickOwed >= 1.0f) {
-            one.sickOwed -= 1.0f;
-            one.burningDice ^= one.burningDice << 13;
-            one.burningDice ^= one.burningDice >> 17;
-            one.burningDice ^= one.burningDice << 5;
-            const int b = int(one.burningDice % uint32_t(bones.size()));
-            float at[3];
-            if (one.figure.pointOn(b, origin, at)) {
-                poison_.sicken(at, std::clamp(look->height * look->scale / 1.8f, 0.7f, 2.0f));
-            }
-        }
-    }
+    debuffShows(frames);   // poison's smoke and a bleed's drips (play_ribbons.cpp)
     for (Drawn& one : drawn_) {
         if (one.snortBone < 0 && one.eyeBones[0] < 0) continue;
         if (!one.visible || !one.placed) {

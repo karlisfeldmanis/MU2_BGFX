@@ -1139,7 +1139,7 @@ private:
         uint32_t burnFrame = 0;
         // An Immolate rune's burn on it (kEmberFlames): frames owed, and its draw of bones.
         float burningOwed = 0.0f;
-        float sickOwed = 0.0f;  // a poisoned body's smoke (kSickPuffs), frames owed
+        float sickOwed = 0.0f, bleedOwed = 0.0f;  // poison's smoke, a bleed's drips: owed
         uint32_t burningDice = 0;
         float snortOwed = 0.0f;
         // An Elite Yeti's breath: the same puff out of Box03, in every action, one in four
@@ -1335,7 +1335,7 @@ private:
         int tails = 0;
     };
     std::vector<StarRibbon> starRibbons_;
-    void ribbonStars(float seconds);  // their flight a frame (play_ribbons.cpp)
+    void ribbonStars(float seconds), debuffShows(float frames);  // play_ribbons.cpp
     uint32_t ribbonDice_ = 0x5EED51u;
     // A Balrog's meteor storm round where it stood: one more meteor every kBalrogStormEvery
     // while `left` lasts (seconds).

@@ -314,6 +314,18 @@ constexpr int32_t kBeastPushDelay = 12;
 constexpr int32_t kBoltPushDelay = 10;
 constexpr float kHeroPoisonShare = 0.03f;
 
+// ---- the monsters whose blow cuts --------------------------------------------------------------
+// Ours, in place of their poison: Aida's clawed orcs, the Forest Orc (307) and the Bloody Orc
+// (549) (the user, 2026-10-12: 'lets make new effect for orcts. bleed'; Aida's two, stacking and
+// short). Each blow that LANDS lays a stack, to kBleedMost, and sets the bleed kBleedTicks from
+// then; a pulse every kBleedEvery takes kBleedShare of the latest cut's blow for each stack,
+// through his shield as a poison's pulse, never the last point. Neither potion nor antidote
+// stops it. A Bloody Orc's ~690 blow at five stacks: ~170 a second for five seconds.
+constexpr int32_t kBleedMost = 5;
+constexpr int32_t kBleedTicks = 5 * 20;
+constexpr int32_t kBleedEvery = 20;
+constexpr float kBleedShare = 0.05f;
+
 // ---- the monsters whose blow ices -------------------------------------------------------------
 // Devias's Ice Monster (22), `AttackSkill = Ice` (Version075/Maps/Devias.cs:178). OpenMU's
 // Monster.AttackAsync hits with the plain blow and then, hit or miss, tries the skill's element on
