@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "cooker": {
+      "command": "python3",
+      "args": ["tools/mu/mcp_server.py"]
+    }
+  }
+}

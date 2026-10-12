@@ -14,6 +14,7 @@
 #include <sys/wait.h>
 
 #include "app/context.h"
+#include "core/json.h"
 #include "core/log.h"
 #include "game/bench.h"
 #include "game/figures.h"
@@ -84,6 +85,50 @@ std::string StudioDesk::targetOf(const game::ModelBench& bench) {
     if (world == std::string::npos || dot == std::string::npos || dot < meshes) return "";
     return path.substr(world + 1, meshes - world - 1) + "/" +
            path.substr(meshes + 8, dot - meshes - 8);
+}
+
+void StudioDesk::watchJournal(Context& ctx, double now) {
+    // An agent's edit, through `mu edit` or the Cooker's MCP (tools/mu/mcp_server.py), is a line
+    // in the journal like the studio's own: read the panels' sources again, so the user sees it
+    // as it is made (the user, 2026-10-12: "we see realtime how objects are made and improved").
+    if (now - journalLooked_ < 0.5) return;
+    journalLooked_ = now;
+    const std::string path = shelfRoot_ + "/workshop/.mu/journal.log";
+    std::error_code error;
+    const long long size = (long long)std::filesystem::file_size(path, error);
+    if (error) return;
+    if (journalSize_ < 0 || size < journalSize_) {
+        journalSize_ = size;   // the lines there before the studio opened are not news
+        return;
+    }
+    if (size == journalSize_) return;
+    FILE* file = std::fopen(path.c_str(), "rb");
+    if (!file) return;
+    std::fseek(file, long(journalSize_), SEEK_SET);
+    std::string fresh(size_t(size - journalSize_), '\0');
+    fresh.resize(std::fread(fresh.data(), 1, fresh.size(), file));
+    std::fclose(file);
+    journalSize_ = size;
+    bool theirs = false, world = false;
+    for (size_t at = 0; at < fresh.size();) {
+        size_t end = fresh.find('\n', at);
+        if (end == std::string::npos) end = fresh.size();
+        const core::Json line = core::parseJson(fresh.data() + at, end - at, "the journal");
+        at = end + 1;
+        if (line.isNull() || line["who"].stringOr("") == "studio") continue;
+        theirs = true;
+        const std::string file = line["file"].stringOr("");
+        world |= file.rfind("source/world/", 0) == 0;
+        core::logf("studio: %s changed %s %s; read again", line["who"].stringOr("?").c_str(), file.c_str(),
+                   line["path"].stringOr(line["op"].stringOr("").c_str()).c_str());
+    }
+    if (!theirs) return;
+    cooker_.forgetRecipe();
+    cooker_.forgetPlan();
+    if (world) {
+        place_.reread(ctx);
+        marks_.reread(ctx);
+    }
 }
 
 void StudioDesk::watchJobs(game::ModelBench& bench) {
@@ -246,12 +291,16 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
     shelf_.placing = placing_;
     shelf_.clip = bench.hasFigure() ? bench.clipLine() : std::string();
     shelf_.time = std::string(ctx.time.name()) + "    T changes the time of day";
+    shelf_.root = shelfRoot_;
+    shelf_.world = onStage ? std::string() : world;
+    shelf_.timeOfDay = ctx.time.which();
     shelf_.swapped = lastSwap_.empty() ? std::string() : lastSwap_ + "/compare.png";
     shelf_.plus = bench.plus();
     const game::FigureBody* body = bench.subjectBody();
     shelf_.monster = body && body->kind == game::BodyKind::Monster;
     shelf_.arena = arenaUp();
     watchJobs(bench);
+    watchJournal(ctx, std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count());
     for (const auto& [at, what] : script_) {
         if (at != frame_) continue;
         const std::string answer = act(ctx, bench, world, town, what);
@@ -277,6 +326,7 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
     }
     if (asked.reread) startSwap(bench, bench.browseName(bench.browseIndex()));
     if (asked.plus >= 0) plusAsked_ = asked.plus;
+    if (asked.time >= 0) ctx.time.set(asked.time);
     if (asked.place >= 0) {
         placing_ = asked.place == 1;
         if (!placing_) place_.drop();

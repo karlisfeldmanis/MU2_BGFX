@@ -469,6 +469,7 @@ add_library(mu_studio STATIC
   src/studio/cooker.cpp
   src/studio/panels.cpp
   src/studio/inspector.cpp
+  src/studio/light_panel.cpp
 )
 target_include_directories(mu_studio PRIVATE ${CMAKE_SOURCE_DIR}/extern/bgfx.cmake/bgfx/examples/common/imgui)
 target_link_libraries(mu_studio PUBLIC mu_imgui mu_gfx)
@@ -569,6 +570,7 @@ add_executable(cooker_test EXCLUDE_FROM_ALL
   src/studio/cooker.cpp
   src/studio/panels.cpp
   src/studio/inspector.cpp
+  src/studio/light_panel.cpp
 )
 target_link_libraries(cooker_test PRIVATE mu_imgui mu_core)
 target_compile_definitions(cooker_test PRIVATE MU2_ROOT_DIR="${CMAKE_SOURCE_DIR}")

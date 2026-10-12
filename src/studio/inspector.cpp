@@ -13,8 +13,6 @@ const ImVec4 kGreen(0.52f, 0.80f, 0.52f, 1.0f);
 const ImVec4 kRed(0.92f, 0.42f, 0.38f, 1.0f);
 const ImVec4 kDim(0.58f, 0.58f, 0.60f, 1.0f);
 
-constexpr const char* kLight = "sheets/lighting.json";
-
 // The prose beside a value, which the recipes carry at length: shown on asking.
 bool isNote(const std::string& key) {
     const size_t n = key.size();
@@ -51,8 +49,8 @@ std::string extend(const std::string& path, const std::string& step) {
 
 }  // namespace
 
-int Inspector::draw(Cooker& cooker, const std::string& target, int plus, float x, float y,
-                    float w, float h) {
+int Inspector::draw(Cooker& cooker, const std::string& target, int plus, float x, float y, float w,
+                    float h, const std::string& root, const std::string& world, int* time) {
     int asked = -1;
     ImGui::SetNextWindowPos(ImVec2(x, y));
     ImGui::SetNextWindowSize(ImVec2(w, h));
@@ -77,10 +75,8 @@ int Inspector::draw(Cooker& cooker, const std::string& target, int plus, float x
         const ImGuiTabItemFlags lightFlags = showLight_ ? ImGuiTabItemFlags_SetSelected : 0;
         showLight_ = false;
         if (ImGui::BeginTabItem("Light", nullptr, lightFlags)) {
-            ImGui::PushTextWrapPos(0.0f);
-            ImGui::TextColored(kDim, "the game's own sheet: a change here is the light everywhere");
-            ImGui::PopTextWrapPos();
-            tab(cooker, light_, kLight, true);
+            const int asked = light_.draw(cooker, root, world, *time);
+            if (asked >= 0) *time = asked;
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();

@@ -31,6 +31,9 @@ struct Shelf {
     bool placing = false; // the Place window has the inspector's spot
     std::vector<std::string> scenes;   // "Stage", "Home", then the cooked worlds
     int scene = 0;
+    std::string root;     // MU2_BGFX, for the Light tab's sheets
+    std::string world;    // the scene's world, its light the Light tab's; empty on the Stage
+    int timeOfDay = 0;    // 0 noon, 1 dusk, 2 night
 };
 
 struct Asked {
@@ -42,6 +45,7 @@ struct Asked {
     int plus = -1;           // show the items at +plus
     int arena = -1;          // 1 open the arena window, 0 close it
     int place = -1;          // 1 place objects, 0 stop
+    int time = -1;           // 0 noon, 1 dusk, 2 night: the Light tab's
 };
 
 class Panels {

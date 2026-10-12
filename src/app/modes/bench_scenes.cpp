@@ -14,6 +14,7 @@
 #include "game/shine.h"
 #include "game/figures.h"
 #include "game/pedestals.h"
+#include "game/world/maps.h"
 
 namespace mu::app {
 
@@ -31,6 +32,7 @@ void BenchMode::setScene(Context& ctx, const std::string& scene) {
         // sheets alone.
         ctx.renderer.setPointLights(nullptr, 0, 0.0f, 0.0f, 0.0f);
         ctx.renderer.setTransientLights(nullptr, 0);
+        ctx.time.setScene("");   // the base sheet alone, as the Stage always was
         onStage_ = true;
         core::logf("studio: on the Stage, %s kept behind it", sceneWorld_.c_str());
         return;
@@ -58,6 +60,10 @@ void BenchMode::setScene(Context& ctx, const std::string& scene) {
     } else if (leftStage && ctx.args.lampsOn) {
         world_.lamps().light(ctx.renderer);   // the lamps the Stage put out
     }
+
+    // The map's own light over the base, as play_mode.cpp lays it (dry: the studio has no
+    // weather). Before 2026-10-12 every world scene wore Lorencia's base sheet alone.
+    ctx.time.setScene(game::mapSheet(ctx.paths.sheets, world));
 
     const float m = world_.ground().metresPerTile();
     if (spawn) {

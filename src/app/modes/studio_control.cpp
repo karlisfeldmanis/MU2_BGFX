@@ -6,11 +6,12 @@
 //   swap                   Read again              arena        Simulate combat
 //   place | pick <model> | nudge <dx> <dz>          Place objects, as the window does
 //   add <model> | duplicate | delete                 ... and sprint G's: add at the view's middle
-//   mode objects|gates|townsfolk                     what Place places; duplicate and delete follow it
+//   mode objects|gates|townsfolk|ground              what Place places; duplicate and delete follow it
 //   mark <n> | budge <dc> <dr> | look <n>            a gate by number or townsperson by index; tiles
 //   way <world>                                      a gate there at the view's middle, with its pair
 //   brush <slot> base|overlay <alpha> <radius> | dab | undo   the ground: a stroke at the view's middle
 //   tab light              the inspector's Light   hide | show  the panels off and on
+//   time noon|dusk|night   the time of day the scene is lit at
 //   shot <abs.png>         this frame to a file    wait <N>     N frames before the next line
 //   status                 what is on the bench    quit         close the studio
 //
@@ -54,6 +55,13 @@ std::string StudioDesk::act(Context& ctx, game::ModelBench& bench, const std::st
     if (starts("plus")) {
         plusAsked_ = std::atoi(after("plus").c_str());
         return "ok +" + std::to_string(plusAsked_);
+    }
+    if (starts("time")) {
+        const std::string t = after("time");
+        const int which = t == "noon" ? 0 : t == "dusk" ? 1 : t == "night" ? 2 : -1;
+        if (which < 0) return "error time noon|dusk|night";
+        ctx.time.set(which);
+        return "ok " + t;
     }
     if (what == "tab light") {
         panels_.showLight();

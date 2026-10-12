@@ -1453,6 +1453,58 @@ the monsters tab's "Simulate combat" -- is the game's own arena in a window of i
   ground lorencia, stale: 18 of 19"; both undone, tiles.png as in git. cooker_test 27 and 38 live,
   layercheck green. Not cooked: that is a ground cook of Lorencia and every world's tables.
 
+### Slice H0: the Cooker as an MCP, and a map's light, as done
+
+The user, 2026-10-12: the Cooker "has to work similar like MCP, that it's opened and we see
+realtime how objects are made and improved and bug fixed"; "if we cook new monster on aida, we
+see it on aida map where it will be placed and character fighting monster"; the old workflow
+"asks for server and other stuff to open/close client all the time"; and the Cooker is "for
+adjusting lighting, tonemaps, shadow, sun, daylight for maps".
+
+- **tools/mu/mcp_server.py**: an MCP server, stdio JSON-RPC, no SDK. It is registered in
+  `.mcp.json` at the repo root and in MU2_BGFX. It acts only through what exists: the studio's
+  socket (what is shown), mu serve (cooks, whose bars the studio draws) and `./mu` (edits,
+  plans, checks, always the current code). The tools:
+  - `status`, `studio_open` (only when asked), `show`, `shot`, `do`;
+  - `plan`, `cook`, `jobs`;
+  - `recipe`, `edit`, `gate`, `light`;
+  - `journal`, `arena_log`, `check`.
+
+  `show kind=monster` opens the monster's world (its recipe's `world`, whose breeds the
+  Monsters tab lists), puts it on the bench by its label, takes it Home to its spawn and opens
+  the arena. `shot` returns the studio's picture at half size.
+- **The studio follows other hands' edits** (StudioDesk::watchJournal): twice a second, a
+  journal line not its own re-reads the inspector's recipe, the card's plan, and Place's and
+  the marks' sources, and logs who changed what.
+- **A world scene wears its map's light.** Before, every world scene in the studio wore the
+  base sheet alone. setScene now lays `sheets/worlds/<w>.json` over it, as play_mode.cpp does;
+  the Stage keeps the base.
+- **The Light tab** (studio/light_panel.{h,cpp}):
+  - the scene's light in its layers: this map, the base, dusk, night, this map in rain;
+  - its knobs in groups: sun, sky and daylight, shadows, tonemap, bloom and glow, the rest;
+  - Noon, Dusk and Night to see the time it is tuned at;
+  - a knob the layer inherits shows dimmed with **set here**, which writes it into the layer;
+  - every write is mu edit's, and the sheets are re-read when they change.
+
+  The word `time noon|dusk|night`; the MCP's `light` tool.
+- docs/cooker.md, the agent's guide, is now MCP-first. MU2_BGFX/CLAUDE.md points every agent
+  at it.
+- Proved:
+  - The protocol, scripted over stdio: tools/list, and each tool's answers and refusals.
+  - Against a self-quitting studio, MCP calls only:
+    - `show DeathTree01` stood the Death Tree at its Aida spawn with its stars, and the arena
+      logged "the hero hits Death Tree#2 for 8 -- 9920 left";
+    - an `edit` to its `rules.drops.regen` made the studio log "mu changed ...; read again",
+      and was put back;
+    - `light aida exposure` 1.44 -> 2.4 brightened the shot within the second, and was put
+      back;
+    - `time dusk` lit it at dusk.
+  - aida.json and DeathTree01.json are as in git. A shot run shows the Light tab's groups on
+    Aida at dusk. cooker_test 27 and 38 live; layercheck green.
+- Not yet: the arena is a window of its own, not inside the studio; an agent's `edit` of a
+  world's objects moves them on screen only after `placements` cooks (Place's words move them
+  at once).
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

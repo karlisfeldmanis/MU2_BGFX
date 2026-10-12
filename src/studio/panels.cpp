@@ -83,9 +83,11 @@ Asked Panels::draw(const Shelf& shelf, Cooker& cooker, float width, float height
     const float inspectorH = height - jobsH - 2.0f * pad - (cardBottom + pad);
     side_[0] = width - cardW - pad, side_[1] = cardBottom + pad, side_[2] = cardW, side_[3] = inspectorH;
     if (inspectorH > 6.0f * em && !shelf.placing) {
+        int time = shelf.timeOfDay;
         const int plus = inspector_.draw(cooker, shelf.target, shelf.plus, width - cardW - pad,
-                                         cardBottom + pad, cardW, inspectorH);
+                                         cardBottom + pad, cardW, inspectorH, shelf.root, shelf.world, &time);
         if (plus >= 0) asked.plus = plus;
+        if (time != shelf.timeOfDay) asked.time = time;
     }
     jobs(cooker, pad, height - jobsH - pad, width - 2.0f * pad, jobsH, now);
     return asked_;

@@ -76,6 +76,8 @@ public:
 
 private:
     void watchJobs(game::ModelBench& bench);
+    // Another hand's edits (an agent's mu edit, the Cooker's MCP): the panels read again.
+    void watchJournal(Context& ctx, double now);
     // One thing the card would do, by name: MU_STUDIO_DO's lines and the control socket's
     // (app/modes/studio_control.cpp). The answer is one line: "ok ..." or "error ...".
     std::string act(Context& ctx, game::ModelBench& bench, const std::string& world,
@@ -129,6 +131,8 @@ private:
     };
     std::vector<Client> clients_;
     bool quit_ = false;
+    long long journalSize_ = -1;   // how much of workshop/.mu/journal.log has been read
+    double journalLooked_ = 0.0;
     bool hidden_ = false;   // `hide`: the panels left undrawn, for a clean shot
 };
 

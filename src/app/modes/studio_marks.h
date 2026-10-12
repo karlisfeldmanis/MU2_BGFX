@@ -56,6 +56,10 @@ public:
     void panel(Context& ctx, game::World& world, studio::Cooker& cooker, const gfx::Camera& camera,
                float x, float y, float w, float h);
     void drop() { picked_ = -1; }
+    // The manifest read again: another hand edited it (StudioDesk::watchJournal).
+    void reread(Context& ctx) {
+        if (!file_.empty()) load(ctx);
+    }
 
     // For the control words: a gate by its number or a townsperson by their index, picked;
     // the picked moved by whole tiles and written; a townsperson's look set; duplicate, delete.

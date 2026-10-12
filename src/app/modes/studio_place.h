@@ -60,6 +60,12 @@ public:
     void panel(Context& ctx, game::World& world, studio::Cooker& cooker, const gfx::Camera& camera,
                float x, float y, float w, float h);
     void drop() { picked_ = -1; }
+    // The source read again: another hand edited it (StudioDesk::watchJournal).
+    void reread(Context& ctx) {
+        const std::string name = world_;
+        world_.clear();
+        world(ctx, name);
+    }
     // For a run with nobody at the mouse (MU_STUDIO_DO): the `model` nearest `near` picked, and
     // the picked one moved by (dx, dz) metres and written, as a drag would.
     bool pickModel(game::World& world, const std::string& model, const float near[3]);
