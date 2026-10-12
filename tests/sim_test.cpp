@@ -1918,9 +1918,9 @@ void testCastLock(const content::Tables& tables) {
         check(sim::skillIndexOf(sim::skill::kFlame) + 1 == sim::skillIndexOf(sim::skill::kEvilSpirit),
               "and its row is past the elf's, so no save's learned bit moves");
         const sim::SkillRow& spirit = *sim::skillNumbered(sim::skill::kEvilSpirit);
-        check(spirit.wizardry && spirit.primary() && spirit.damage == 45 && spirit.mana == 90 &&
+        check(spirit.wizardry && spirit.primary() && spirit.damage == 45 && spirit.mana == 60 &&
                   spirit.built && spirit.kin == sim::Kin::DarkWizard,
-              "Evil Spirit is a no-cooldown spell of forty-five damage and ninety mana");
+              "Evil Spirit is a no-cooldown spell of forty-five damage and sixty mana");
         check(sim::skillIndexOf(sim::skill::kEvilSpirit) + 1 ==
                   sim::skillIndexOf(sim::skill::kHellfire),
               "and its row is past Flame's");

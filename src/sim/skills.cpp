@@ -594,7 +594,10 @@ constexpr SkillRow kRows[kSkills] = {
     // **1.8 the band** (the user, 2026-10-05: "it has to be stronger that meteor"): at 0.75's
     // one a spirit struck ~180 on a 689-energy wizard to a Meteorite rock's ~240 (its 21 at 1.6);
     // at 1.8 a spirit is ~320. The shield's rune lets its spirits go at its own 1.0.
-    {.number = skill::kEvilSpirit, .name = "Evil Spirit", .mana = 90, .reach = 9.0f,
+    //
+    // **Sixty mana**, Twister's, not 0.75's ninety (the user, 2026-10-12: "reduce the mana cost
+    // for evil spirits for DW").
+    {.number = skill::kEvilSpirit, .name = "Evil Spirit", .mana = 60, .reach = 9.0f,
      .force = 1.8f, .spread = Spread::One,
      .tells = "Lets evil spirits loose around him, which strike most of the monsters within "
               "ten tiles.",
