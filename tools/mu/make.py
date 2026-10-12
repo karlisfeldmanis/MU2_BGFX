@@ -555,13 +555,31 @@ def NotFound_(message):
     return NotFound(message)
 
 
+def newest_under(folder):
+    """The newest file anywhere under `folder`, by date."""
+    return max((os.path.getmtime(os.path.join(at, f)) for at, _, files in os.walk(folder) for f in files),
+               default=0.0)
+
+
 def plan_sounds(threads):
     sounds = os.path.join(SOURCE, "sounds")
     mus = os.path.join(COOKED, "showing", "showing.mus")
+
+    # The effect sheets ride the same index (index.py's table of names, the PNGs under
+    # source/effects): a new sheet for a monster's show made nothing stale, and the game
+    # said `smoke NO` (2026-10-12, the Witch Queen's Chrome03 and fantaB).
+    def index_stale(changed):
+        at = mtime(os.path.join(WORKSHOP, "index.json"))
+        if newest_in(sounds, ".json") > at:
+            return True, "sounds.json is newer than the index"
+        if changed_at(os.path.join(PIPELINE, "index.py")) > at:
+            return True, "pipeline/index.py, its table of effect sheets, is newer than the index"
+        if newest_under(os.path.join(SOURCE, "effects")) > at:
+            return True, "an effect sheet under source/effects is newer than the index"
+        return False, "the index is newer than sounds.json and the effect sheets"
     return [
         Step("index", ["python3", os.path.join(PIPELINE, "index.py"), SOURCE, WORKSHOP],
-             lambda c: ((newest_in(sounds, ".json") > mtime(os.path.join(WORKSHOP, "index.json")),
-                         "sounds.json against the index")), "index"),
+             index_stale, "index"),
         Step("sync", ["python3", os.path.join(TOOLS, "sync.py"), "--src", WORKSHOP, "--dst", ASSETS,
                       "--world", "lorencia", "--only-world"], sync_test([]), "assets"),
         Step("showing", COOK + ["--only", "showing", "--threads", str(threads)],
