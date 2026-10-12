@@ -114,6 +114,7 @@ bool BenchMode::open(Context& ctx) {
                                          error)) {
                     game::lendShine(showing, ctx.paths.assets, ctx.textures, ctx.renderer);
                     game::WingLook::lendSparks(showing, ctx.paths.assets, ctx.textures);
+                    if (kind_ == Kind::Studio) standShow_.open(ctx.paths.assets, ctx.textures, showing);
                 }
             }
             // The refinement shine, on the subject's items: their rows out of the world's tables
@@ -295,6 +296,22 @@ void BenchMode::frame(Context& ctx, const Frame& at) {
             setShine_.wear(1, plus, feet, 0.0f, arms, lit, colour);
         }
         setShine_.update(float(at.deltaSeconds), world_.ground().metresPerTile());
+        // The subject's own show, as Play would draw it standing (game/stand_show.h).
+        if (standShow_.isOpen() && bench_.hasFigure()) {
+            if (bench_.figure().body() != shownBody_) {
+                shownBody_ = bench_.figure().body();
+                standShow_.fit(bench_.figure());
+            }
+            standShow_.update(desk_.holding() ? 0.0f : deltaSeconds, bench_.figure());
+            standShow_.gather(ctx.renderer.effects(), bench_.camera().position);
+            if (onStage_) {
+                // The Stage has no lamps: the show's own lights are its only point lights.
+                gfx::PointLight lights[gfx::Renderer::kMaxTransientLights];
+                const uint32_t count = standShow_.lights(lights, gfx::Renderer::kMaxTransientLights,
+                                                         bench_.camera().target);
+                ctx.renderer.setTransientLights(count ? lights : nullptr, count);
+            }
+        }
         setShine_.gather(ctx.renderer.effects(), world_.ground(), bench_.camera().position);
         ctx.renderer.draw(bench_.camera(), ctx.lighting, townDrawables_,
                           onStage_ ? nullptr : &world_.ground());
@@ -338,6 +355,7 @@ void BenchMode::report(Context& ctx) {
 void BenchMode::shutdown(Context& ctx) {
     desk_.shutdown();
     stage_.shutdown();
+    standShow_.shutdown();
     bench_.shutdown();
     setShine_.shutdown();
     ctx.renderer.closeStages();

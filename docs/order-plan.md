@@ -1311,6 +1311,26 @@ the monsters tab's "Simulate combat" -- is the game's own arena in a window of i
 - It is not headless: macOS has no window-less bgfx path here, so a picture still needs a
   window, the user's leave for a shot run as before ("never open the client").
 
+### A monster's show on the bench, as done (the standing half)
+
+- game/stand_show.{h,cpp}: a figure's show while it stands, fed for the one body on the bench
+  by the same effect classes Play uses (fx/shadow_stars, fx/eye_trails, fx/body_flames), from
+  the same recipe data and tuning, each line traced to Play::fit and play_show.cpp: the aura's
+  glow, the stars (Alquamos, Death Tree, Queen Rainer, Drakan) and their arcs, the Shadows' joint
+  stars, the embers (Death Gorgon, Death Knight, Great Drakan), Tarkan's eye trails, the Beam
+  Knight's hand flames and the Death Beam Knight's burning. On the Stage its lights are the
+  frame's transient lights (there are no lamps). Held still with the subject during a swap.
+- Play is untouched: the effect classes were already apart from it, so the bench needed a
+  driver and not a refactor, and the other session's play_show.cpp stays theirs. Until sprint H
+  makes the two one feed, a change to one of those Play lines is a change to make here too.
+- Not yet: the Zaikan's foot fires (Play's breath), the Hydra's heads, beams and claws -- each a
+  blow's or Play's own.
+- Proved by a mu do run: the Death Beam Knight burning, the Beam Knight's hand flames, the
+  Drakan's sparks, the Alquamos's starlight, the Death Knight's aura on the plinth and the Poison
+  Shadow's green rings and aura, each on the Stage; the log's `stand show:` line names what each
+  fitted (the Shadow 12 shade joints, the Poison Shadow its aura bone too). The plain Shadow's
+  stars are MU's minus-blended dark ones and barely read over a dark body on the grey plinth.
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

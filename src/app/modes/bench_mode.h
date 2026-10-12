@@ -23,6 +23,7 @@
 #include "app/modes/studio_desk.h"
 #include "game/bench.h"
 #include "game/fx/set_shine.h"
+#include "game/stand_show.h"
 #include "game/studio_stage.h"
 #include "game/world/world.h"
 
@@ -84,6 +85,10 @@ private:
     game::StudioStage stage_;
     bool onStage_ = false;
     bool quitEarly_ = false;   // the window closed under the studio's preloader
+    // A monster's show while it stands on the bench (game/stand_show.h): its aura, stars,
+    // trails and flames, which only Play drew before. Fitted again when the subject changes.
+    game::StandShow standShow_;
+    const game::FigureBody* shownBody_ = nullptr;
     std::string sceneWorld_;
     std::vector<content::ItemRow> plusRows_;   // studioPlus's rows, once read
 };
