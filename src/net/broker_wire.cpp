@@ -124,6 +124,7 @@ void putRow(Out& o, const BrokerRow& r) {
     o.str(r.seller);
     o.u8(r.flags);
     o.i32(r.count);
+    o.i64(r.lastSale);
     o.u8(uint8_t(std::min<size_t>(r.tiers.size(), 255)));
     for (size_t i = 0; i < r.tiers.size() && i < 255; ++i) {
         o.i64(r.tiers[i].price);
@@ -141,6 +142,7 @@ BrokerRow takeRow(In& in) {
     r.seller = in.str();
     r.flags = in.u8();
     r.count = in.i32();
+    r.lastSale = in.i64();
     r.tiers.resize(in.u8());
     for (BrokerRow::Tier& t : r.tiers) {
         t.price = in.i64();

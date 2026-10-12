@@ -116,6 +116,16 @@ net::BrokerRow rowFor(const sim::Listing& l, const std::string& viewer,
     if (seller != nullptr && seller->welcomed) row.flags |= net::BrokerRow::Online;
     if (seller != nullptr && seller->bot) row.flags |= net::BrokerRow::Bot | net::BrokerRow::Online;
     if (l.account == viewer) row.flags |= net::BrokerRow::Own;
+    // The newest sale of the same thing: a Kris +5 against a Kris +5 with what it carries, never
+    // against a plain one, so "vs last sale" compares like with like.
+    for (const sim::Sale& sale : g_book.salesOf(l.what.item)) {
+        const sim::Held& w = sale.what;
+        if (w.refinement == l.what.refinement && w.luck == l.what.luck && w.option == l.what.option &&
+            w.excellent == l.what.excellent && w.sockets == l.what.sockets) {
+            row.lastSale = sale.price;
+            break;
+        }
+    }
     return row;
 }
 
@@ -601,7 +611,6 @@ void brokerSample(int count) {
         const bool gear = sim::takesOptions(row);
         l.what.refinement = int16_t(gear ? (i * 7) % 10 : 0);
         l.what.luck = gear && i % 3 == 0;
-        l.what.skill = gear && row.skill != 0 && i % 2 == 0;
         l.what.option = int8_t(gear && i % 4 == 1 ? 1 + i % 3 : 0);
         l.what.durability = int16_t(std::max(1, sim::maximumDurability(row, l.what)));
         const int who = i % 7;

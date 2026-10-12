@@ -100,7 +100,9 @@ namespace mu::net {
 // 25: the Broker (docs/broker.md): a BrokerAsk up and a BrokerView down (net/broker_wire.h),
 //     Command::Kind::BrokerTake and its fellows, and a Player's Broker (snapshot shape 10).
 // 26: a Player's event fields as one EventSeat (snapshot shape 11; order-plan §9e, I4).
-constexpr uint32_t kVersion = 26;
+// 27: a Broker row's last sale of the same thing (BrokerRow::lastSale), the Buy list's "vs last
+//     sale" (the market's redesign B, 2026-10-12).
+constexpr uint32_t kVersion = 27;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store

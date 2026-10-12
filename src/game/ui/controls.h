@@ -75,8 +75,10 @@ void button(gfx::Canvas& canvas, const gfx::Box& box, const std::string& word, K
 
 // A tab over a page: its word on bare stone over a dark iron floor, the chosen one lit with a
 // red bar on the floor and a faint wash rising from it. Tabs laid edge to edge share the floor.
+// `floor` false leaves the floor to a rule already under them: the market's head (the user,
+// 2026-10-12: tabs integrated with the header's underline).
 void tab(gfx::Canvas& canvas, const gfx::Box& box, const std::string& word, bool chosen,
-         const State& state, float u);
+         const State& state, float u, bool floor = true);
 
 enum class Glyph : uint8_t { Close, Plus, Left, Right, CoinIn, CoinOut, Hammer, Hammers, Undo, Bottle };
 // A small square button (close, spend) or an icon square (the coins, the hammers). `red` is the

@@ -186,43 +186,60 @@ void Broker::gather(Play& play) {
 void Broker::layout(Play& play) {
     spots_.clear();
     const auto spot = [&](Box box, Hit hit, int index = 0) { spots_.push_back({box, hit, index}); };
-    spot({kWide - panel::kHeadInset - panel::kHeadButton, (panel::kHeadBand - panel::kHeadButton) * 0.5f,
-          panel::kHeadButton, panel::kHeadButton},
-         Hit::Close);
-    for (int t = 0; t < 3; ++t) spot({kPad + float(t) * 82.0f, kBarY, 78.0f, kBarH}, Hit::Tab, t);
-    if (!mine_.box.empty()) spot({kWide - kPad - 290.0f, kBarY + 2.0f, 116.0f, kBarH - 4.0f}, Hit::Collect, 1);
+    // The head: the tabs where the title was, the close button, the pill to what waits.
+    constexpr float kClose = kButtonH;
+    spot({kWide - 8.0f - kClose, (kHead - kClose) * 0.5f, kClose, kClose}, Hit::Close);
+    for (int t = 0; t < 3; ++t) spot({kPad + float(t) * 78.0f, kTabY, 78.0f, kTabH}, Hit::Tab, t);
+    if (!mine_.box.empty()) spot({kWide - 8.0f - kClose - 8.0f - 112.0f, (kHead - 16.0f) * 0.5f, 112.0f, 16.0f}, Hit::Collect, 1);
 
     if (tab_ == Tab::Buy) {
-        spot({kRail.x, kRail.y, kRail.w, 20.0f}, Hit::Search);
-        // All (-1), Watched (-2), then the kinds.
-        for (int k = -2; k < int(sim::BrokerKind::Count); ++k) {
-            const int at = k == -1 ? 0 : k == -2 ? 1 : k + 2;
-            spot({kRail.x, kRail.y + 34.0f + float(at) * 15.0f, kRail.w, 14.0f}, Hit::Kind, k);
+        // The filter bar: search, the category button, the chips (Watch removed, the user 2026-10-12).
+        float bx = kPad;
+        spot({bx, kBodyY, kSearchW, kBarH}, Hit::Search);
+        bx += kSearchW + kGap;
+        spot({bx, kBodyY, kCategoryW, kBarH}, Hit::Category);
+        bx += kCategoryW + 2.0f * kGap;
+        const float chip[3] = {66.0f, 52.0f, 52.0f};
+        for (int f = 0; f < 3; ++f) {
+            spot({bx, kBodyY, chip[f], kBarH}, Hit::Flag, f);
+            bx += chip[f] + kGap;
         }
-        for (int f = 0; f < 3; ++f) spot({kRail.x, kRail.y + 246.0f + float(f) * 15.0f, kRail.w, 14.0f}, Hit::Flag, f);
-        const bool filtered = query_.kind >= 0 || query_.watchedOnly || !query_.text.empty() || query_.usableBy >= 0 ||
+        const bool filtered = query_.kind >= 0 || !query_.text.empty() || query_.usableBy >= 0 ||
                               query_.excellentOnly || query_.sevenUp || !query_.sellerName.empty();
-        if (filtered) spot({kRail.x, kRail.y + 300.0f, kRail.w, 18.0f}, Hit::Clear);
-        // The heads: Item, Seller, Left, Price, sorted on.
-        const float hx[4] = {kList.x + 30.0f, kList.x + 186.0f, kList.x + 242.0f, kList.x + 268.0f};
-        const float hw[4] = {150.0f, 54.0f, 24.0f, 54.0f};
-        for (int h = 0; h < 4; ++h) spot({hx[h], kList.y, hw[h], 16.0f}, Hit::Head, h);
+        if (filtered) spot({bx, kBodyY, 40.0f, kBarH}, Hit::Clear);
+        // The heads: Item, Seller, Left, Each, sorted on.
+        const float hx[4] = {kList.x + kRowPad, kList.right() - kSellerFromRight, kList.right() - kLeftRight - 30.0f,
+                             kList.right() - kPriceRight - 52.0f};
+        const float hw[4] = {150.0f, 60.0f, 30.0f, 52.0f};
+        for (int h = 0; h < 4; ++h) spot({hx[h], kList.y, hw[h], kListHead}, Hit::Head, h);
         for (int r = 0; r < int(page_.rows.size()) && r < kRows; ++r) {
-            spot({kList.x, kList.y + 18.0f + float(r) * kRowH, kList.w, kRowH - 1.0f}, Hit::Row, r);
+            spot({kList.x, kList.y + kListHead + float(r) * kRowH, kList.w, kRowH - 1.0f}, Hit::Row, r);
         }
-        spot({kList.right() - 46.0f, kList.bottom() - 18.0f, 20.0f, 16.0f}, Hit::Prev);
-        spot({kList.right() - 22.0f, kList.bottom() - 18.0f, 20.0f, 16.0f}, Hit::Next);
+        spot({kList.right() - 2.0f * kButtonH - kGap, kFootButtonY, kButtonH, kButtonH}, Hit::Prev);
+        spot({kList.right() - kButtonH, kFootButtonY, kButtonH, kButtonH}, Hit::Next);
+        // The card's foot, from the bottom up: Buy, the total, then the seller or the quantity.
         if (const net::BrokerRow* row = chosenRow()) {
             const bool own = (row->flags & net::BrokerRow::Own) != 0;
-            spot({kCard.x + 58.0f, kCard.y + 40.0f, 64.0f, 15.0f}, Hit::Watch);
-            spot({kCard.x + 8.0f, kCard.y + 64.0f, 110.0f, 13.0f}, Hit::Seller);
-            if (!own) spot({kCard.right() - 58.0f, kCard.y + 62.0f, 50.0f, 16.0f}, Hit::Whisper);
+            const float in = 10.0f;
             if (row->flags & net::BrokerRow::Alike) {
-                spot({kCard.x + 8.0f, kCard.bottom() - 92.0f, 20.0f, 20.0f}, Hit::Qty, -1);
-                spot({kCard.x + 64.0f, kCard.bottom() - 92.0f, 20.0f, 20.0f}, Hit::Qty, 1);
-                spot({kCard.x + 90.0f, kCard.bottom() - 92.0f, kCard.w - 98.0f, 20.0f}, Hit::MostQty);
+                const float qy = kCard.bottom() - 76.0f;
+                spot({kCard.x + in, qy, kButtonH, kButtonH}, Hit::Qty, -1);
+                spot({kCard.x + in + kButtonH + 30.0f, qy, kButtonH, kButtonH}, Hit::Qty, 1);
+                const float mx = kCard.x + in + 2.0f * kButtonH + 30.0f + kGap;
+                spot({mx, qy, kCard.right() - in - mx, kButtonH}, Hit::MostQty);
+            } else {
+                spot({kCard.x + in, kCard.bottom() - 88.0f, 110.0f, 14.0f}, Hit::Seller);
+                if (!own) spot({kCard.right() - in - 56.0f, kCard.bottom() - 88.0f, 56.0f, kButtonH}, Hit::Whisper);
             }
-            if (!own) spot({kCard.x + 8.0f, kCard.bottom() - 32.0f, kCard.w - 16.0f, 24.0f}, Hit::Buy);
+            if (!own) spot({kCard.x + in, kCard.bottom() - in - kPrimaryH, kCard.w - 2.0f * in, kPrimaryH}, Hit::Buy);
+        }
+        // The open category list over the page, last so it takes the pointer from the rows under it:
+        // All (-1), then the kinds.
+        if (categories_) {
+            const float cx = kPad + kSearchW + 6.0f;
+            for (int kind = -1; kind < int(sim::BrokerKind::Count); ++kind) {
+                spot({cx + 2.0f, kBodyY + kBarH + 4.0f + float(kind + 1) * 16.0f, 146.0f, 15.0f}, Hit::Kind, kind);
+            }
         }
     } else if (tab_ == Tab::Sell) {
         spot({kThings.x, kThings.y, kThings.w * 0.5f, 20.0f}, Hit::Source, 0);
@@ -232,34 +249,30 @@ void Broker::layout(Play& play) {
             spot({kThings.x, kThings.y + 26.0f + float(i) * 22.0f, kThings.w, 21.0f}, Hit::Thing, first + i);
         }
         if (int(things_.size()) > kThingRows) {
-            spot({kThings.right() - 46.0f, kThings.bottom() - 18.0f, 20.0f, 16.0f}, Hit::ThingPrev);
-            spot({kThings.right() - 22.0f, kThings.bottom() - 18.0f, 20.0f, 16.0f}, Hit::ThingNext);
+            spot({kThings.right() - 2.0f * kButtonH - kGap, kFootButtonY, kButtonH, kButtonH}, Hit::ThingPrev);
+            spot({kThings.right() - kButtonH, kFootButtonY, kButtonH, kButtonH}, Hit::ThingNext);
         }
         if (sellSlot_ >= 0) {
-            spot({kPrice.x + 8.0f, kPrice.y + 20.0f, kPrice.w - 16.0f, 24.0f}, Hit::Price);
-            for (int q = 0; q < 3; ++q) {
-                const float w = (kPrice.w - 16.0f - 8.0f) / 3.0f;
-                spot({kPrice.x + 8.0f + float(q) * (w + 4.0f), kPrice.y + 50.0f, w, 18.0f}, Hit::Quick, q);
-            }
-            for (int h = 0; h < 3; ++h) {
-                const float w = (kPrice.w - 16.0f - 8.0f) / 3.0f;
-                spot({kPrice.x + 8.0f + float(h) * (w + 4.0f), kPrice.y + 112.0f, w, 20.0f}, Hit::Hours, h);
-            }
-            spot({kPrice.x + 8.0f, kPrice.bottom() - 32.0f, kPrice.w - 16.0f, 24.0f}, Hit::List);
+            // The price pane is not a well: its controls run its full width, on the 4-unit gaps.
+            const float w = (kPrice.w - 2.0f * kGap) / 3.0f;
+            spot({kPrice.x, kPrice.y + 20.0f, kPrice.w, kPrimaryH}, Hit::Price);
+            for (int q = 0; q < 3; ++q) spot({kPrice.x + float(q) * (w + kGap), kPrice.y + 50.0f, w, kButtonH}, Hit::Quick, q);
+            for (int h = 0; h < 3; ++h) spot({kPrice.x + float(h) * (w + kGap), kPrice.y + 112.0f, w, kButtonH}, Hit::Hours, h);
+            spot({kPrice.x, kPrice.bottom() - kPrimaryH, kPrice.w, kPrimaryH}, Hit::List);
         }
     } else {
-        if (!mine_.box.empty()) spot({kBox.x + 8.0f, kBox.y + 122.0f, kBox.w - 16.0f, 22.0f}, Hit::Collect);
+        if (!mine_.box.empty()) spot({kStrip.right() - 108.0f, kStrip.y + (kStrip.h - kPrimaryH) * 0.5f, 100.0f, kPrimaryH}, Hit::Collect);
         for (int r = 0; r < int(mine_.mine.size()) && r < kRows; ++r) {
-            const float y = kMine.y + 18.0f + float(r) * kRowH;
+            const float y = kMine.y + kListHead + float(r) * kMineRowH;
             // The listing's name, for its card on hover; clicks nothing.
-            spot({kMine.x, y, kMine.w - 250.0f, kRowH}, Hit::Listing, r);
+            spot({kMine.x, y, kMine.w - 110.0f, kMineRowH}, Hit::Listing, r);
             if (mine_.mine[size_t(r)].id == editing_) {
-                spot({kMine.right() - 186.0f, y + 3.0f, 80.0f, kRowH - 7.0f}, Hit::LowerField, r);
-                spot({kMine.right() - 102.0f, y + 3.0f, 46.0f, kRowH - 7.0f}, Hit::Save, r);
-                spot({kMine.right() - 52.0f, y + 3.0f, 46.0f, kRowH - 7.0f}, Hit::Back, r);
+                spot({kMine.right() - 190.0f, y + 2.0f, 86.0f, kButtonH}, Hit::LowerField, r);
+                spot({kMine.right() - 100.0f, y + 2.0f, 46.0f, kButtonH}, Hit::Save, r);
+                spot({kMine.right() - 50.0f, y + 2.0f, 46.0f, kButtonH}, Hit::Back, r);
             } else {
-                spot({kMine.right() - 102.0f, y + 3.0f, 46.0f, kRowH - 7.0f}, Hit::Lower, r);
-                spot({kMine.right() - 52.0f, y + 3.0f, 46.0f, kRowH - 7.0f}, Hit::Cancel, r);
+                spot({kMine.right() - 100.0f, y + 2.0f, 46.0f, kButtonH}, Hit::Lower, r);
+                spot({kMine.right() - 50.0f, y + 2.0f, 46.0f, kButtonH}, Hit::Cancel, r);
             }
         }
     }
@@ -274,6 +287,7 @@ void Broker::press(Play& play, const Spot& s) {
              : s.hit == Hit::LowerField ? Focus::Lower
                                         : Focus::None;
     if (s.hit != Hit::Buy) confirm_ = false;
+    if (s.hit != Hit::Category) categories_ = false;
     switch (s.hit) {
         case Hit::Close: play.closeBroker(); click(); break;
         case Hit::Tab:
@@ -283,9 +297,9 @@ void Broker::press(Play& play, const Spot& s) {
             if (tab_ == Tab::Buy) browseOwed_ = true;
             if (tab_ == Tab::Mine) ask(play, {.what = net::BrokerWhat::Look});
             break;
+        case Hit::Category: categories_ = !categories_; click(); break;
         case Hit::Kind:
-            query_.kind = std::max(-1, s.index);
-            query_.watchedOnly = s.index == -2;
+            query_.kind = s.index;
             query_.page = 0;
             browseOwed_ = true;
             click();
@@ -333,15 +347,6 @@ void Broker::press(Play& play, const Spot& s) {
                 browseOwed_ = true;
                 click();
             }
-            break;
-        case Hit::Watch:
-            // His watches are the server's, kept with the book: the answer is the page again.
-            if (const net::BrokerRow* row = chosenRow()) {
-                const bool alike = (row->flags & net::BrokerRow::Alike) != 0;
-                ask(play, {.what = net::BrokerWhat::Watch, .query = query_, .item = alike ? row->what.item : -1,
-                           .listing = alike ? 0u : row->id, .count = (row->flags & net::BrokerRow::Watched) ? 0 : 1});
-            }
-            click();
             break;
         case Hit::Whisper:
             if (const net::BrokerRow* row = chosenRow()) whisper_ = row->seller;
@@ -513,6 +518,7 @@ void Broker::update(float seconds, float width, float height, Play& play, const 
         play.ui(Play::Ui::Opened);
         tab_ = Tab::Buy;
         editing_ = 0;
+        categories_ = false;
         browseOwed_ = true;
         browseIn_ = 0.0f;
         ask(play, {.what = net::BrokerWhat::Look});
@@ -541,7 +547,7 @@ void Broker::update(float seconds, float width, float height, Play& play, const 
     }
     if (pointer.pressed) {
         pressed_ = hovered_;
-        if (hovered_ < 0) focus_ = Focus::None;
+        if (hovered_ < 0) focus_ = Focus::None, categories_ = false;
     }
     if (pointer.released) {
         if (pressed_ >= 0 && pressed_ == hovered_) press(play, spots_[size_t(pressed_)]);

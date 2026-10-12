@@ -50,6 +50,7 @@ struct BrokerRow {
     std::string seller;
     uint8_t flags = 0;
     int32_t count = 1;      // alike: how many are on sale
+    int64_t lastSale = 0;   // the newest sale of the same thing (item, plus, options), 0 for none
     struct Tier {
         int64_t price = 0;
         int32_t count = 0;

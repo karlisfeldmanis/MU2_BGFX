@@ -28,7 +28,6 @@ constexpr uint32_t kGold = gfx::rgba(0.851f, 0.706f, 0.373f);
 constexpr uint32_t kGoldWash = gfx::rgba(0.851f, 0.706f, 0.373f, 0.13f);
 constexpr uint32_t kGoldRim = gfx::rgba(0.851f, 0.706f, 0.373f, 0.55f);
 constexpr uint32_t kHover = gfx::rgba(1.0f, 0.94f, 0.82f, 0.04f);
-constexpr uint32_t kHair = gfx::rgba(0.0f, 0.0f, 0.0f, 0.55f);
 constexpr uint32_t kOnline = gfx::rgba(0.498f, 0.753f, 0.416f);
 constexpr uint32_t kOffline = gfx::rgba(0.29f, 0.27f, 0.235f);
 
@@ -60,35 +59,16 @@ uint32_t inkOf(const content::Tables& tables, const sim::Held& what) {
     return tip::colourOf(qualityOf(tables.items[size_t(what.item)], what));
 }
 
-// One line of what a thing carries, short: the row's sub line.
+// One line of what a thing carries, short, empty for a plain one. No "Skill": a weapon's skill
+// comes from orbs here, never from the weapon (the user, 2026-10-12).
 std::string traits(const sim::Held& what) {
     std::string out;
     const auto add = [&](const std::string& s) { out += (out.empty() ? "" : " · ") + s; };
-    if (what.skill) add("Skill");
     if (what.luck) add("Luck");
     if (what.option > 0) add("Option +" + std::to_string(what.option * 4));
     if (what.excellent != 0) add("Excellent");
     if (what.sockets > 0) add(std::to_string(what.sockets) + (what.sockets == 1 ? " socket" : " sockets"));
-    return out.empty() ? "Plain" : out;
-}
-
-// The watch star, MU has none: a pentagon and its five points, the canvas drawing convex shapes.
-void star(gfx::Canvas& canvas, float cx, float cy, float r, uint32_t ink) {
-    constexpr float kPi = 3.14159265f;
-    float core[10];
-    for (int i = 0; i < 5; ++i) {
-        const float a = -kPi * 0.5f + kPi * 0.2f + float(i) * kPi * 0.4f;
-        core[i * 2] = cx + std::cos(a) * r * 0.42f;
-        core[i * 2 + 1] = cy + std::sin(a) * r * 0.42f;
-    }
-    canvas.polygon(nullptr, core, nullptr, 5, ink);
-    for (int i = 0; i < 5; ++i) {
-        const float a = -kPi * 0.5f + float(i) * kPi * 0.4f;
-        const int left = (i + 4) % 5;
-        const float point[6] = {cx + std::cos(a) * r, cy + std::sin(a) * r, core[i * 2], core[i * 2 + 1],
-                                core[left * 2], core[left * 2 + 1]};
-        canvas.polygon(nullptr, point, nullptr, 3, ink);
-    }
+    return out;
 }
 
 const char* whyNot(sim::BrokerNo no) {
@@ -98,25 +78,6 @@ const char* whyNot(sim::BrokerNo no) {
         case sim::BrokerNo::Kind: return "Not sold here";
         case sim::BrokerNo::Worn: return "Repair it first";
         default: return "Not to be listed";
-    }
-}
-
-// A row of the item card as one line of the market's card: its words in its own ink.
-void sheetLines(const tip::Sheet& sheet, std::vector<std::pair<std::string, uint32_t>>* out) {
-    for (const tip::Section& section : sheet.sections) {
-        for (const tip::Row& row : section.rows) {
-            std::string text;
-            uint32_t ink = style::kBone;
-            if (!row.free.empty()) {
-                text = (row.keyword.empty() ? "" : row.keyword + " ") + row.free + (row.tail.empty() ? "" : " " + row.tail);
-                ink = tip::colourOf(row.freeTone);
-            } else {
-                text = row.label;
-                for (const tip::Value& v : row.values) text += (text.empty() ? "" : " ") + v.text;
-                if (!row.values.empty()) ink = tip::colourOf(row.values.front().tone);
-            }
-            if (!text.empty()) out->push_back({text, ink});
-        }
     }
 }
 
@@ -156,41 +117,189 @@ void Broker::rebuild(Play& play, Stage* stage) {
         canvas_.rect(P(b), kGoldWash);
         canvas_.outline(P(b), std::max(1.0f, u), kGoldRim);
     };
-    std::vector<Standing> standing;
-    const auto picture = [&](const Box& b, const sim::Held& what) {
-        controls::cell(canvas_, P(b), controls::Cell::Rest, u);
-        if (!what.empty()) standing.push_back({what.item, b.grown(-2.0f), what.refinement, false, what.excellent != 0});
+    // A line of type centred on its capitals in a band `tall` units high from `top`.
+    const auto mid = [&](float top, float tall, float size) {
+        return (controls::middle(y + top * k, tall * k, S(size)) - y) / k;
     };
+    // A rule one pixel thick across a run of the window.
+    const auto hair = [&](float ux, float uy, float wide, uint32_t ink) {
+        canvas_.rect({std::round(x + ux * k), std::round(y + uy * k), std::round(wide * k), std::max(1.0f, std::round(u))}, ink);
+    };
+    std::vector<Standing> standing;
+    // The thing, market-style (the user, 2026-10-12: "item card is to detailed, and we need that
+    // thumb is above item info and bigger", "i like styling but it has to be more on market
+    // style"): its picture large in a framed block on top, turning ("lets use rotating items in
+    // big thumbnail"), then its name and kind, then only what a buyer weighs, in the item card's
+    // own colours: the headline figure, what it carries, who wears it and an unmet need.
+    constexpr float kTurnSquare = 64.0f;
+    const gfx::Art turned = stage ? stage->picture() : gfx::Art{};
+    const auto thingCard = [&](const sim::Held& what, float ax, float ay, float aw, float pic, const std::string& kind,
+                               float stop) {
+        // One framed block: the picture on the left, its name and lines on the right (the user,
+        // 2026-10-12: "thumb has to be left side and info right side", then "better overall
+        // integration with thumb and info"). The picture stands on a dark floor that fades into
+        // the block's own ash at its foot and glows there faintly in the thing's own colour, the
+        // colour of its name beside it; a hairline parts the two; the words are centred on it.
+        const tip::Sheet sheet = describe(tables, what, realm.wearer(), realm.satchel());
+        const uint32_t ink = inkOf(tables, what);
+        const Box block{ax, ay, aw, pic + 8.0f};
+        canvas_.rect(P(block), style::kAsh2);
+        canvas_.outline(P(block), std::max(1.0f, u), style::kIronDk);
+        const Box well{ax + 4.0f, ay + 4.0f, pic, pic};
+        const uint32_t floor = style::kVoid;
+        const uint32_t glow = (ink & 0x00FFFFFFu) | (uint32_t(0.16f * 255.0f) << 24), none = ink & 0x00FFFFFFu;
+        canvas_.shade(P(well), floor, floor, style::kAsh1, style::kAsh1);
+        canvas_.shade(P({well.x, well.y + pic * 0.55f, pic, pic * 0.45f}), none, none, glow, glow);
+        canvas_.rect({std::round(x + (well.right() + 4.0f) * k), std::round(y + (ay + 10.0f) * k), std::max(1.0f, std::round(u)),
+                      std::round((pic - 12.0f) * k)},
+                     style::kIronDk);
+        standing.push_back({what.item, {0.0f, 0.0f, kTurnSquare, kTurnSquare}, what.refinement, true, what.excellent != 0});
+        if (turned.valid()) {
+            // A sixteenth of the square kept clear, and a one-cell jewel smaller than a sword.
+            const float side = (pic - 2.0f * std::round(pic * 0.06f)) * std::clamp(sheet.artScale, 0.62f, 1.0f);
+            canvas_.image(turned, P({well.midX() - side * 0.5f, well.midY() - side * 0.5f, side, side}));
+        }
+
+        // The words first, wrapped to the column, then set: centred on the picture when they are
+        // shorter than it, and on under the block at its full width when they are taller.
+        struct Said {
+            std::string left, value;
+            uint32_t leftInk = 0, valueInk = 0;
+        };
+        const float ix = well.right() + 12.0f, iw = block.right() - 8.0f - ix;
+        std::vector<Said> said;
+        const auto add = [&](const std::string& left, uint32_t leftInk, const std::string& value, uint32_t valueInk) {
+            if (!value.empty()) return said.push_back({left, value, leftInk, valueInk});
+            std::string row, word;
+            for (size_t i = 0; i <= left.size(); ++i) {
+                if (i < left.size() && left[i] != ' ') {
+                    word += left[i];
+                    continue;
+                }
+                const std::string tried = row.empty() ? word : row + " " + word;
+                if (!row.empty() && controls::labelWidth(S(kText), tried) / k > iw) said.push_back({row, "", leftInk, 0}), row = word;
+                else row = tried;
+                word.clear();
+            }
+            if (!row.empty()) said.push_back({row, "", leftInk, 0});
+        };
+        if (!sheet.hero.empty()) add(sheet.hero.word, style::kBone2, sheet.hero.value, tip::colourOf(sheet.hero.tone));
+        for (const tip::Section& section : sheet.sections) {
+            for (const tip::Row& r : section.rows) {
+                // The dual-wield rule is the game's, not the thing's: left to the bag's card.
+                if (r.keyword == "Dual Wield") continue;
+                if (!r.free.empty()) {
+                    add((r.keyword.empty() ? "" : r.keyword + " ") + r.free + (r.tail.empty() ? "" : " " + r.tail),
+                        tip::colourOf(r.freeTone), "", 0);
+                } else if (!r.values.empty()) {
+                    add(r.label, style::kBone2, r.values.front().text, tip::colourOf(r.values.front().tone));
+                }
+            }
+        }
+        // Who wears it, and only a need he does not meet.
+        for (size_t i = 0; i < sheet.who.size(); ++i) {
+            const tip::FootLine& w = sheet.who[i];
+            if (!w.text.empty() && (i == 0 || w.tone == tip::Tone::Red)) add(w.text, w.quiet ? style::kAshInk : tip::colourOf(w.tone), "", 0);
+        }
+        if (stop <= ay) said.clear();
+        constexpr float kStep = 13.0f, kHead = 30.0f;  // the name and its kind, then a gap
+        const std::string name = nameOf(tables, what);
+        const float nameSize = controls::labelWidth(S(16.0f), name) / k > iw ? 13.5f : 16.0f;
+        const int beside = std::min<int>(int(said.size()), int((pic - kHead - 4.0f) / kStep));
+        const float tall = kHead + float(beside) * kStep + (beside > 0 ? 4.0f : 0.0f);
+        const float top = ay + 4.0f + std::max(0.0f, (pic - tall) * 0.5f);
+        text(ix, top + 13.0f, nameSize, ink, name);
+        text(ix, top + 26.0f, kCaption, style::kAshInk, kind.empty() ? sheet.base : kind);
+        float ly = top + kHead + 12.0f;
+        for (int i = 0; i < int(said.size()); ++i) {
+            const bool under = i >= beside;
+            if (under && i == beside) ly = block.bottom() + 16.0f;
+            if (under && ly > stop) break;
+            const float lx = under ? ax : ix, rx = under ? block.right() : ix + iw;
+            text(lx, ly, kText, said[size_t(i)].leftInk, said[size_t(i)].left);
+            if (!said[size_t(i)].value.empty()) right(rx, ly, kText, said[size_t(i)].valueInk, said[size_t(i)].value);
+            ly += kStep;
+        }
+        return int(said.size()) > beside ? ly + 4.0f : block.bottom() + 16.0f;
+    };
+    // The online mark: a round dot, two units across, centred on (ux + 2, midU).
     const auto dot = [&](float ux, float midU, bool on) {
-        const float r = std::max(2.0f, 3.0f * u);
-        canvas_.rect({x + ux * k, y + midU * k - r, r * 2.0f, r * 2.0f}, on ? kOnline : kOffline);
+        constexpr float kPi = 3.14159265f;
+        float ring[24];
+        const float cx = x + (ux + 2.0f) * k, cy = y + midU * k, r = 2.0f * k;
+        for (int i = 0; i < 12; ++i) {
+            ring[i * 2] = cx + std::cos(float(i) * kPi / 6.0f) * r;
+            ring[i * 2 + 1] = cy + std::sin(float(i) * kPi / 6.0f) * r;
+        }
+        canvas_.polygon(nullptr, ring, nullptr, 12, on ? kOnline : kOffline);
+    };
+    // A choice, as the chips and the two-way switches are: ash and an iron edge at rest, gold
+    // when it is the one chosen. Actions are buttons (controls::button); choices are chips.
+    const auto chip = [&](const Box& b, const std::string& word, bool on, float lift) {
+        canvas_.rect(P(b), on ? kGoldWash : lift > 0.0f ? style::kAsh3 : style::kAsh2);
+        canvas_.outline(P(b), std::max(1.0f, u), on ? kGoldRim : style::kIronLo);
+        if (word.empty()) return;
+        const float w = controls::labelWidth(S(kText), word);
+        controls::label(canvas_, std::round(x + b.midX() * k - w * 0.5f), y + mid(b.y, b.h, kText) * k, S(kText),
+                        on ? kGold : style::kBone2, word);
+    };
+    const auto button = [&](Hit hit, int index, const std::string& word, controls::Kind kind, bool off = false) {
+        if (const Spot* s = spotOf(hit, index)) {
+            controls::State st = state(hit, index);
+            st.off = off;
+            controls::button(canvas_, P(s->box), word, kind, st, u, kind == controls::Kind::Primary ? 0.0f : S(12.5f));
+        }
+    };
+    const auto square = [&](Hit hit, controls::Glyph glyph) {
+        if (const Spot* s = spotOf(hit, 0)) controls::square(canvas_, P(s->box), glyph, state(hit, 0), u);
     };
 
-    // ---- the frame, the tabs, his Zen ----------------------------------------------------------
-    controls::frame(canvas_, P({0.0f, 0.0f, kWide, kTall}), u, "Market", nullptr, panel::kHeadBand * k);
-    if (const Spot* close = spotOf(Hit::Close, 0)) {
-        const Box socket = P(close->box);
-        const float side = std::round(std::min(style::kSmallSquare * u, socket.h));
-        controls::square(canvas_, {std::round(socket.right() - side), std::round(socket.midY() - side * 0.5f), side, side},
-                         controls::Glyph::Close, state(Hit::Close, 0), u);
-    }
+    // ---- the head, the tabs, the foot ---------------------------------------------------------
+    // No title (the user, 2026-10-12: "we dont need MARKET header it take to much space"): the
+    // tabs sit in the head band, the rule under them their floor.
+    const Box window{0.0f, 0.0f, kWide, kTall};
+    controls::frame(canvas_, P(window), u, "", nullptr, kHead * k);
+    square(Hit::Close, controls::Glyph::Close);
     const char* tabs[3] = {"Buy", "Sell", "My listings"};
     for (int t = 0; t < 3; ++t) {
-        if (const Spot* s = spotOf(Hit::Tab, t)) controls::tab(canvas_, P(s->box), tabs[t], int(tab_) == t, state(Hit::Tab, t), u);
+        if (const Spot* s = spotOf(Hit::Tab, t)) controls::tab(canvas_, P(s->box), tabs[t], int(tab_) == t, state(Hit::Tab, t), u, false);
     }
     if (const Spot* pill = spotOf(Hit::Collect, 1)) {
+        // What waits, as a gold pill with its dot: the Zen, or the one thing, or how many.
         int64_t zen = 0;
-        for (const net::BrokerParcel& p : mine_.box) zen += p.zen;
-        const std::string word = zen > 0 ? "Collect " + panel::commas(zen) : "Collect " + std::to_string(mine_.box.size());
-        controls::button(canvas_, P(pill->box), word, controls::Kind::Quiet, state(Hit::Collect, 1), u, S(12.0f));
+        const sim::Held* only = nullptr;
+        int things = 0;
+        for (const net::BrokerParcel& p : mine_.box) {
+            zen += p.zen;
+            if (!p.what.empty()) only = &p.what, ++things;
+        }
+        std::string word = zen > 0 ? "Collect " + panel::commas(zen) + " Zen"
+                           : things == 1 ? "Collect " + nameOf(tables, *only)
+                                         : "Collect " + std::to_string(things) + " things";
+        if (zen > 0 && things > 0) word += " +" + std::to_string(things);
+        const Box b = pill->box;
+        tip::panel(canvas_, P(b), b.h * k * 0.5f, state(Hit::Collect, 1).lift > 0.0f ? kGoldRim : kGoldWash, kGoldWash);
+        dot(b.x + 6.0f, b.midY(), true);
+        text(b.x + 14.0f, mid(b.y, b.h, kText), kText, kGold, word);
     }
-    right(kWide - kPad, 51.0f, 15.0f, kGold, panel::commas(realm.money()) + " Zen");
-    right(kWide - kPad, 60.0f, 10.5f, style::kAshInk, "+ " + panel::commas(realm.vault().zen()) + " in vault");
-    if (saidFor_ > 0.0f && !said_.empty()) {
-        text(kPad, kTall - 13.0f, 12.5f, saidBad_ ? style::kDanger : style::kLiveHi, said_);
-    } else if (waiting_ != 0) {
-        text(kPad, kTall - 13.0f, 12.5f, style::kAshInk, "The Broker is looking...");
+    // The foot, on the bag's foot rule: his Zen at the right, level with the bag's, and at the
+    // left the tab's own line or what the Broker just said.
+    controls::foot(canvas_, P(window), y + panel::kFootRule * k, u);
+    {
+        const float wide = right(kWide - kPad, kFootBaseline, 16.5f, kGold, panel::commas(realm.money()) + " Zen");
+        right(kWide - kPad - wide / k - 8.0f, kFootBaseline, kCaption, style::kAshInk,
+              "+ " + panel::commas(realm.vault().zen()) + " in vault");
     }
+    const auto foot = [&](const std::string& line) {
+        std::string said = line;
+        uint32_t ink = style::kAshInk;
+        if (saidFor_ > 0.0f && !said_.empty()) {
+            said = said_, ink = saidBad_ ? style::kDanger : style::kLiveHi;
+        } else if (waiting_ != 0) {
+            said = "The Broker is looking...";
+        }
+        text(kPad, kFootBaseline, 12.5f, ink, said);
+    };
 
     const bool caret = std::fmod(clock_, 1.0) < 0.5;
     const int64_t funds = realm.money() + realm.vault().zen();
@@ -201,153 +310,163 @@ void Broker::rebuild(Play& play, Stage* stage) {
             controls::field(canvas_, P(s->box), query_.text, "Search", focus_ == Focus::Search, false,
                             focus_ == Focus::Search && caret, false, u);
         }
-        controls::kicker(canvas_, x + (kRail.x + 4.0f) * k, y + 100.0f * k, "Category", u);
         int all = 0;
         const size_t kinds = size_t(sim::BrokerKind::Count);
         for (size_t i = 0; i < kinds && i < page_.kinds.size(); ++i) all += page_.kinds[i];
-        const int watched = page_.kinds.size() > kinds ? page_.kinds[kinds] : 0;
-        for (int kind = -2; kind < int(sim::BrokerKind::Count); ++kind) {
-            const Spot* s = spotOf(Hit::Kind, kind);
-            if (!s) continue;
-            const bool on = kind == -2 ? query_.watchedOnly : !query_.watchedOnly && query_.kind == kind;
-            if (on) canvas_.rect(P(s->box), kGoldWash);
-            else if (state(Hit::Kind, kind).lift > 0.0f) canvas_.rect(P(s->box), kHover);
-            const int count = kind == -1 ? all : kind == -2 ? watched
-                              : (size_t(kind) < page_.kinds.size() ? page_.kinds[size_t(kind)] : 0);
-            const uint32_t ink = on ? kGold : count > 0 ? style::kBone2 : style::kAshInk2;
-            text(s->box.x + 4.0f, s->box.y + 10.5f, 12.0f, ink, kind == -1 ? "All" : kind == -2 ? "Watched" : kKinds[kind]);
-            right(s->box.right() - 4.0f, s->box.y + 10.5f, 11.0f, on ? kGold : style::kAshInk, std::to_string(count));
+        const auto countOf = [&](int kind) {
+            return kind == -1 ? all : (size_t(kind) < page_.kinds.size() ? int(page_.kinds[size_t(kind)]) : 0);
+        };
+        // The category button: a chip with the chosen one, its count and a chevron down.
+        if (const Spot* s = spotOf(Hit::Category, 0)) {
+            const Box b = s->box;
+            const bool picked = query_.kind >= 0;
+            chip(b, "", picked, categories_ ? 1.0f : state(Hit::Category, 0).lift);
+            text(b.x + kRowPad, mid(b.y, b.h, kText), kText, picked ? kGold : style::kBoneHi,
+                 picked ? kKinds[query_.kind] : "All categories");
+            right(b.right() - 18.0f, mid(b.y, b.h, kCaption), kCaption, style::kAshInk, std::to_string(countOf(query_.kind)));
+            const float cx = x + (b.right() - 9.0f) * k, cy = y + b.midY() * k, r = 2.5f * k;
+            const float down[6] = {cx - r, cy - r * 0.45f, cx + r, cy - r * 0.45f, cx, cy + r * 0.6f};
+            canvas_.polygon(nullptr, down, nullptr, 3, style::kBone2);
         }
-        controls::kicker(canvas_, x + 16.0f * k, y + 310.0f * k, "Show only", u);
         const bool flags[3] = {query_.usableBy >= 0, query_.excellentOnly, query_.sevenUp};
         for (int f = 0; f < 3; ++f) {
-            const Spot* s = spotOf(Hit::Flag, f);
-            if (!s) continue;
-            const Box box{s->box.x + 4.0f, s->box.y + 3.0f, 8.0f, 8.0f};
-            canvas_.rect(P(box), flags[f] ? kGold : style::kVoid);
-            canvas_.outline(P(box), std::max(1.0f, u), flags[f] ? kGold : style::kIronLo);
-            text(s->box.x + 18.0f, s->box.y + 10.5f, 12.0f, flags[f] ? style::kBoneHi : style::kBone2, kFlags[f]);
+            if (const Spot* s = spotOf(Hit::Flag, f)) chip(s->box, kFlags[f], flags[f], state(Hit::Flag, f).lift);
         }
-        if (const Spot* s = spotOf(Hit::Clear, 0)) {
-            controls::button(canvas_, P(s->box), "Clear filters", controls::Kind::Quiet, state(Hit::Clear, 0), u, S(12.0f));
-        }
+        button(Hit::Clear, 0, "Clear", controls::Kind::Quiet);
 
-        // The list.
+        // The list: a head of captions on a dark rule, then rows centred on one line, every
+        // column ranged from the right so the heads and the figures share an edge.
         controls::well(canvas_, P(kList), u);
-        const char* heads[4] = {"Item", "Seller", "Left", "Price"};
+        const float sellerX = kList.right() - kSellerFromRight;
+        const char* heads[4] = {"Item", "Seller", "Left", "Each"};
         const sim::BrokerQuery::Sort sorts[4] = {sim::BrokerQuery::Sort::Name, sim::BrokerQuery::Sort::Seller,
                                                  sim::BrokerQuery::Sort::Left, sim::BrokerQuery::Sort::Price};
+        const float headBase = mid(kList.y, kListHead, kCaption);
         for (int h = 0; h < 4; ++h) {
             const Spot* s = spotOf(Hit::Head, h);
             if (!s) continue;
             const bool on = query_.sort == sorts[h];
             const std::string word = std::string(heads[h]) + (on ? (query_.descending ? " v" : " ^") : "");
-            if (h >= 2) right(s->box.right(), s->box.y + 11.5f, 11.0f, on ? kGold : style::kAshInk, word);
-            else text(s->box.x, s->box.y + 11.5f, 11.0f, on ? kGold : style::kAshInk, word);
+            const uint32_t ink = on ? kGold : state(Hit::Head, h).lift > 0.0f ? style::kBone2 : style::kAshInk;
+            if (h >= 2) right(s->box.right(), headBase, kCaption, ink, word);
+            else text(h == 1 ? sellerX + 8.0f : s->box.x, headBase, kCaption, ink, word);
         }
+        right(kList.right() - kVsRight, headBase, kCaption, style::kAshInk, "vs last sale");
+        hair(kList.x + 1.0f, kList.y + kListHead - 1.0f, kList.w - 2.0f, style::kIronDk);
         for (int r = 0; r < int(page_.rows.size()); ++r) {
             const Spot* s = spotOf(Hit::Row, r);
             if (!s) continue;
             const net::BrokerRow& row = page_.rows[size_t(r)];
-            const Box b = s->box;
-            canvas_.rect(P({b.x + 6.0f, b.bottom(), b.w - 12.0f, 0.6f}), kHair);
-            if (row.id == chosen_) chosenWash(b);
-            else if (state(Hit::Row, r).lift > 0.0f) canvas_.rect(P(b), kHover);
+            const Box b{s->box.x, s->box.y, s->box.w, kRowH};
+            if (row.id == chosen_) chosenWash({b.x + 1.0f, b.y, b.w - 2.0f, b.h - 1.0f});
+            else if (state(Hit::Row, r).lift > 0.0f) canvas_.rect(P({b.x + 1.0f, b.y, b.w - 2.0f, b.h - 1.0f}), kHover);
+            hair(b.x + 1.0f, b.bottom() - 1.0f, b.w - 2.0f, style::kAsh3);
             // Words only, no picture and no card on hover: the card beside shows the chosen one
-            // (the user, 2026-10-11).
+            // (the user, 2026-10-11). What it carries follows the name on the same line.
             const bool alike = (row.flags & net::BrokerRow::Alike) != 0;
-            const float named = text(b.x + 8.0f, b.y + 10.5f, 13.5f, inkOf(tables, row.what), nameOf(tables, row.what));
-            if (row.flags & net::BrokerRow::Watched) star(canvas_, x + (b.x + 14.0f) * k + named, y + (b.y + 6.5f) * k, 4.5f * u, kGold);
-            text(b.x + 8.0f, b.y + 20.5f, 11.0f, style::kAshInk,
-                 alike ? std::to_string(row.count) + " on sale" : traits(row.what));
+            const float nameBase = mid(b.y, kRowH, kName), textBase = mid(b.y, kRowH, kText);
+            const float named = text(b.x + kRowPad, nameBase, kName, inkOf(tables, row.what), nameOf(tables, row.what)) / k;
+            const std::string sub = alike ? std::to_string(row.count) + " on sale" : traits(row.what);
+            const float subX = b.x + kRowPad + named + 6.0f;
+            if (!sub.empty() && subX + controls::labelWidth(S(kCaption), sub) / k < sellerX - 6.0f) {
+                text(subX, nameBase, kCaption, alike ? style::kAshInk : tip::colourOf(tip::Tone::Blue), sub);
+            }
+            // The seller: the dot's place kept on every row, so every name starts on one edge.
             const bool own = (row.flags & net::BrokerRow::Own) != 0;
             if (!alike) {
-                dot(b.x + 186.0f, b.y + 12.0f, (row.flags & net::BrokerRow::Online) != 0);
-                text(b.x + 192.0f, b.y + 15.5f, 12.0f, own ? style::kAshInk : style::kBone2, own ? row.seller + " (you)" : row.seller);
-                right(b.x + 266.0f, b.y + 15.5f, 12.0f, row.secondsLeft < 7200 ? style::kDanger : style::kAshInk,
+                dot(sellerX, b.y + kRowH * 0.5f, (row.flags & net::BrokerRow::Online) != 0);
+                text(sellerX + 8.0f, textBase, kText, own ? style::kAshInk : style::kBone2, own ? row.seller + " (you)" : row.seller);
+                right(kList.right() - kLeftRight, textBase, kText, row.secondsLeft < 7200 ? style::kDanger : style::kAshInk,
                       hoursLeft(row.secondsLeft));
+            } else if (row.tiers.size() == 1) {
+                text(sellerX + 8.0f, textBase, kText, style::kBone2, row.tiers.front().seller);
             } else {
-                text(b.x + 192.0f, b.y + 15.5f, 12.0f, style::kAshInk, std::to_string(row.tiers.size()) + " sellers");
+                text(sellerX + 8.0f, textBase, kText, style::kAshInk, std::to_string(row.tiers.size()) + " sellers");
             }
-            right(b.right() - 6.0f, b.y + (alike ? 11.0f : 15.5f), 13.5f, kGold, panel::commas(row.price));
-            if (alike) right(b.right() - 6.0f, b.y + 21.0f, 10.0f, style::kAshInk, "each, cheapest");
+            right(kList.right() - kPriceRight, nameBase, kName, kGold, panel::commas(row.price));
+            // Against the newest sale of the same thing: green under it, quiet over it.
+            if (row.lastSale > 0) {
+                const int64_t pct = (row.price - row.lastSale) * 100 / row.lastSale;
+                const std::string word = pct == 0 ? "0%" : (pct < 0 ? "-" : "+") + std::to_string(std::llabs(pct)) + "%";
+                right(kList.right() - kVsRight, textBase, kText, pct < 0 ? style::kLive : style::kAshInk, word);
+            } else {
+                right(kList.right() - kVsRight, textBase, kText, style::kAshInk2, "new");
+            }
         }
         if (page_.rows.empty()) {
-            text(kList.x + 20.0f, kList.y + 60.0f, 13.0f, style::kAshInk,
-                 query_.watchedOnly ? "You watch nothing on sale. Choose one and press Watch."
-                 : query_.text.empty() && query_.kind < 0 ? "Nothing is on sale yet." : "Nothing on sale matches.");
+            text(kList.x + kRowPad, kList.y + kListHead + 24.0f, kText, style::kAshInk,
+                 query_.text.empty() && query_.kind < 0 ? "Nothing is on sale yet." : "Nothing on sale matches.");
         }
-        const int pages = std::max(1, int((page_.total + 11) / 12));
+        const int pages = std::max(1, int((page_.total + kRows - 1) / kRows));
         std::string count = std::to_string(page_.total) + (page_.total == 1 ? " listing" : " listings");
         if (!query_.sellerName.empty()) count += " sold by " + query_.sellerName;
-        text(kList.x + 8.0f, kList.bottom() - 6.0f, 11.0f, style::kAshInk, count);
-        right(kList.right() - 50.0f, kList.bottom() - 6.0f, 11.0f, style::kBone2,
-              std::to_string(page_.page + 1) + " / " + std::to_string(pages));
-        if (const Spot* s = spotOf(Hit::Prev, 0)) controls::square(canvas_, P(s->box), controls::Glyph::Left, state(Hit::Prev, 0), u);
-        if (const Spot* s = spotOf(Hit::Next, 0)) controls::square(canvas_, P(s->box), controls::Glyph::Right, state(Hit::Next, 0), u);
+        foot(count);
+        if (const Spot* s = spotOf(Hit::Prev, 0)) {
+            right(s->box.x - 8.0f, kFootBaseline, 12.5f, style::kBone2,
+                  "Page " + std::to_string(page_.page + 1) + " of " + std::to_string(pages));
+        }
+        square(Hit::Prev, controls::Glyph::Left);
+        square(Hit::Next, controls::Glyph::Right);
 
-        // The card.
+        // The card: the picture turning, the name; the thing's lines as label and value; at its
+        // foot, from the bottom up, Buy, the total, and the seller or the quantity.
         const Box card = kCard;
+        const float in = 10.0f;
         controls::well(canvas_, P(card), u);
         const net::BrokerRow* row = chosenRow();
         if (!row) {
-            text(card.x + 12.0f, card.y + 150.0f, 12.5f, style::kAshInk, "Choose a listing to see it in full.");
-            text(card.x + 12.0f, card.y + 164.0f, 12.5f, style::kAshInk, "Jewels fill from the cheapest first.");
+            text(card.x + in, card.y + 150.0f, kText, style::kAshInk, "Choose a listing to see it in full.");
+            text(card.x + in, card.y + 166.0f, kText, style::kAshInk, "Jewels fill from the cheapest first.");
         } else {
             const bool alike = (row->flags & net::BrokerRow::Alike) != 0;
             const bool own = (row->flags & net::BrokerRow::Own) != 0;
-            picture({card.x + 8.0f, card.y + 8.0f, 44.0f, 44.0f}, row->what);
-            text(card.x + 58.0f, card.y + 22.0f, 15.0f, inkOf(tables, row->what), nameOf(tables, row->what));
-            tip::Sheet sheet = describe(tables, row->what, realm.wearer(), realm.satchel());
-            text(card.x + 58.0f, card.y + 36.0f, 10.5f, style::kAshInk, sheet.base);
-            if (const Spot* s = spotOf(Hit::Watch, 0)) {
-                const bool on = (row->flags & net::BrokerRow::Watched) != 0;
-                const Box b = s->box;
-                canvas_.rect(P(b), on ? kGoldWash : state(Hit::Watch, 0).lift > 0.0f ? kHover : style::kVoid);
-                canvas_.outline(P(b), std::max(1.0f, u), on ? kGoldRim : style::kIronLo);
-                star(canvas_, x + (b.x + 9.0f) * k, y + b.midY() * k, 4.5f * u, on ? kGold : style::kAshInk);
-                text(b.x + 17.0f, b.y + 11.0f, 11.0f, on ? kGold : style::kBone2, on ? "Watching" : "Watch");
-            }
-            if (!alike) {
-                dot(card.x + 8.0f, card.y + 70.0f, (row->flags & net::BrokerRow::Online) != 0);
-                const float w = text(card.x + 15.0f, card.y + 74.0f, 12.0f, style::kAshInk, "Sold by ");
-                text(card.x + 15.0f + w / k, card.y + 74.0f, 12.0f, state(Hit::Seller, 0).lift > 0.0f ? style::kBoneHi : kGold,
-                     own ? row->seller + " (you)" : row->seller);
-                text(card.x + 8.0f, card.y + 88.0f, 11.0f, row->secondsLeft < 7200 ? style::kDanger : style::kAshInk,
-                     ((row->flags & net::BrokerRow::Online) != 0 ? "online · " : "offline · ") + hoursLeft(row->secondsLeft) + " left");
-                if (const Spot* s = spotOf(Hit::Whisper, 0)) {
-                    controls::button(canvas_, P(s->box), "Whisper", controls::Kind::Quiet, state(Hit::Whisper, 0), u, S(11.0f));
-                }
-            }
-            controls::rule(canvas_, x + (card.x + 8.0f) * k, y + (card.y + 96.0f) * k, (card.w - 16.0f) * k, u);
-            float ly = card.y + 110.0f;
+            float ly = thingCard(row->what, card.x + in, card.y + in, card.w - 2.0f * in, 76.0f,
+                                 alike ? std::to_string(row->count) + " on sale" : "", alike ? 0.0f : card.bottom() - 104.0f);
             if (alike) {
+                // The ladder as a table, cheapest first, the tiers this many takes lit in gold.
+                controls::kicker(canvas_, x + (card.x + in) * k, y + ly * k, "On sale, cheapest first", u);
+                ly += 14.0f;
+                text(card.x + in + 4.0f, ly, kCaption, style::kAshInk2, "Each");
+                text(card.x + in + 62.0f, ly, kCaption, style::kAshInk2, "Seller");
+                right(card.right() - in - 4.0f, ly, kCaption, style::kAshInk2, "Count");
+                ly += 4.0f;
                 int left = qty_;
                 for (const net::BrokerRow::Tier& t : row->tiers) {
-                    if (ly > card.bottom() - 110.0f) break;
+                    if (ly + 18.0f > card.bottom() - 84.0f) break;
                     const int take = std::min(left, t.count);
                     left -= take;
-                    const uint32_t ink = take > 0 ? style::kBoneHi : style::kAshInk;
-                    text(card.x + 8.0f, ly, 12.0f, ink, std::to_string(t.count) + " at");
-                    text(card.x + 40.0f, ly, 12.0f, ink, panel::commas(t.price));
-                    text(card.x + 98.0f, ly, 11.0f, style::kAshInk, t.seller);
-                    if (take > 0) right(card.right() - 8.0f, ly, 12.0f, kGold, "+" + std::to_string(take));
-                    ly += 14.0f;
+                    const Box tier{card.x + in, ly, card.w - 2.0f * in, 18.0f};
+                    if (take > 0) chosenWash(tier);
+                    const float base = mid(tier.y, tier.h, kText);
+                    text(tier.x + 4.0f, base, kText, take > 0 ? kGold : style::kBone2, panel::commas(t.price));
+                    text(tier.x + 62.0f, base, kText, take > 0 ? style::kBone : style::kAshInk, t.seller);
+                    right(tier.right() - 4.0f, base, kText, take > 0 ? style::kBoneHi : style::kAshInk,
+                          take > 0 && take < t.count ? std::to_string(take) + " of " + std::to_string(t.count)
+                                                     : std::to_string(t.count));
+                    ly += 20.0f;
+                }
+                if (row->lastSale > 0 && ly + 14.0f < card.bottom() - 84.0f) {
+                    text(card.x + in, ly + 12.0f, kCaption, style::kAshInk, "Last sold for " + panel::commas(row->lastSale) + " each.");
                 }
                 if (const Spot* s = spotOf(Hit::Qty, -1)) controls::square(canvas_, P(s->box), controls::Glyph::Left, state(Hit::Qty, -1), u);
+                if (const Spot* s = spotOf(Hit::Qty, -1)) {
+                    const float cx = s->box.right() + 15.0f;
+                    const std::string n = std::to_string(qty_);
+                    text(cx - controls::labelWidth(S(kName), n) / k * 0.5f, mid(s->box.y, s->box.h, kName), kName, style::kBoneHi, n);
+                }
                 if (const Spot* s = spotOf(Hit::Qty, 1)) controls::square(canvas_, P(s->box), controls::Glyph::Right, state(Hit::Qty, 1), u);
-                text(card.x + 36.0f, card.bottom() - 77.0f, 15.0f, style::kBoneHi, std::to_string(qty_));
-                if (const Spot* s = spotOf(Hit::MostQty, 0)) {
-                    controls::button(canvas_, P(s->box), "Most I can afford", controls::Kind::Quiet, state(Hit::MostQty, 0), u, S(11.0f));
-                }
+                button(Hit::MostQty, 0, "Most I can afford", controls::Kind::Secondary);
             } else {
-                std::vector<std::pair<std::string, uint32_t>> lines;
-                sheetLines(sheet, &lines);
-                for (const auto& [line, ink] : lines) {
-                    if (ly > card.bottom() - 96.0f) break;
-                    text(card.x + 8.0f, ly, 12.0f, ink, line);
-                    ly += 13.5f;
-                }
+                // The seller.
+                hair(card.x + in, card.bottom() - 96.0f, card.w - 2.0f * in, style::kIronDk);
+                const bool online = (row->flags & net::BrokerRow::Online) != 0;
+                dot(card.x + in, card.bottom() - 82.0f, online);
+                const float w = text(card.x + in + 8.0f, card.bottom() - 78.0f, kCaption, style::kAshInk, "Sold by ");
+                text(card.x + in + 8.0f + w / k, card.bottom() - 78.0f, kText,
+                     state(Hit::Seller, 0).lift > 0.0f ? style::kBoneHi : kGold, own ? row->seller + " (you)" : row->seller);
+                text(card.x + in + 8.0f, card.bottom() - 65.0f, kCaption, row->secondsLeft < 7200 ? style::kDanger : style::kAshInk,
+                     std::string(online ? "Online" : "Offline") + " · " + hoursLeft(row->secondsLeft) + " left");
+                button(Hit::Whisper, 0, "Whisper", controls::Kind::Secondary);
             }
             // What it will cost him, and where the thing goes.
             int64_t cost = row->price;
@@ -364,104 +483,117 @@ void Broker::rebuild(Play& play, Stage* stage) {
             // Into the vault, the bag if the vault is full (sim::Realm::brokerBuy).
             const bool vault = realm.vault().free(tables, shape.width, shape.height) >= 0;
             const bool fits = vault || realm.satchel().free(tables, shape.width, shape.height) >= 0;
-            text(card.x + 8.0f, card.bottom() - 50.0f, 11.0f, fits ? style::kLive : style::kDanger,
-                 vault ? "Goes straight to your vault" : fits ? "Vault full: it goes to your bag"
-                                                          : "Vault and bag full: it waits in Collect");
-            text(card.x + 8.0f, card.bottom() - 38.0f, 11.0f, style::kAshInk, alike ? "Total" : "Buyout");
-            right(card.right() - 8.0f, card.bottom() - 37.0f, 17.0f, kGold, panel::commas(cost));
-            if (const Spot* s = spotOf(Hit::Buy, 0)) {
-                controls::State st = state(Hit::Buy, 0);
-                st.off = waiting_ != 0 || cost > funds;
+            const std::string where = vault ? "goes to your vault" : fits ? "vault full: to your bag" : "waits in Collect";
+            text(card.x + in, card.bottom() - 42.0f, kCaption, fits ? style::kAshInk : style::kDanger,
+                 std::string(alike ? "Total" : "Buyout") + " · " + where);
+            right(card.right() - in, card.bottom() - 41.0f, 20.0f, kGold, panel::commas(cost));
+            if (spotOf(Hit::Buy, 0)) {
                 const std::string word = cost > funds ? "Not enough Zen" : confirm_ ? "Confirm " + panel::commas(cost) : "Buy";
-                controls::button(canvas_, P(s->box), word, controls::Kind::Primary, st, u);
+                button(Hit::Buy, 0, word, controls::Kind::Primary, waiting_ != 0 || cost > funds);
             } else if (own) {
-                text(card.x + 8.0f, card.bottom() - 14.0f, 12.0f, style::kAshInk, "Your own account's: not yours to buy.");
+                text(card.x + in, card.bottom() - 18.0f, kCaption, style::kAshInk, "Your own listing: not yours to buy.");
+            }
+        }
+
+        // The open category list, over the page under its button.
+        if (categories_) {
+            const Box sheet{kPad + kSearchW + kGap, kBodyY + kBarH + 2.0f, 150.0f, float(int(sim::BrokerKind::Count) + 1) * 16.0f + 4.0f};
+            canvas_.rect(P(sheet), style::kAsh1);
+            canvas_.outline(P(sheet), std::max(1.0f, u), style::kIron);
+            for (int kind = -1; kind < int(sim::BrokerKind::Count); ++kind) {
+                const Spot* s = spotOf(Hit::Kind, kind);
+                if (!s) continue;
+                const bool on = query_.kind == kind;
+                if (on) canvas_.rect(P(s->box), kGoldWash);
+                else if (state(Hit::Kind, kind).lift > 0.0f) canvas_.rect(P(s->box), kHover);
+                const int count = countOf(kind);
+                const uint32_t ink = on ? kGold : count > 0 ? style::kBone2 : style::kAshInk2;
+                const float base = mid(s->box.y, s->box.h, kText);
+                text(s->box.x + 6.0f, base, kText, ink, kind == -1 ? "All categories" : kKinds[kind]);
+                right(s->box.right() - 6.0f, base, kCaption, on ? kGold : style::kAshInk, std::to_string(count));
             }
         }
     }
 
     // ---- Sell ----------------------------------------------------------------------------------
     if (tab_ == Tab::Sell) {
-        if (const Spot* s = spotOf(Hit::Source, 0)) {
-            controls::toggle(canvas_, P({s->box.x, s->box.y, kThings.w, s->box.h}), "Bag", "Vault", fromVault_, u);
-        }
-        controls::well(canvas_, P({kThings.x, kThings.y + 24.0f, kThings.w, kThings.h - 24.0f}), u);
+        // Bag or vault, each with how many things it holds: a two-way choice, so two chips.
+        int inBag = 0, inVault = 0;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) inBag += realm.satchel()[slot].empty() ? 0 : 1;
+        for (int cell = 0; cell < sim::kVaultCells; ++cell) inVault += realm.vault()[cell].empty() ? 0 : 1;
+        if (const Spot* s = spotOf(Hit::Source, 0)) chip(s->box, "Bag · " + std::to_string(inBag), !fromVault_, state(Hit::Source, 0).lift);
+        if (const Spot* s = spotOf(Hit::Source, 1)) chip(s->box, "Vault · " + std::to_string(inVault), fromVault_, state(Hit::Source, 1).lift);
+        controls::well(canvas_, P({kThings.x, kThings.y + 26.0f, kThings.w, kThings.h - 26.0f}), u);
         for (const Spot& s : spots_) {
             if (s.hit != Hit::Thing) continue;
             const Thing& t = things_[size_t(s.index)];
             const bool ok = t.no == sim::BrokerNo::Yes;
-            if (t.slot == sellSlot_) chosenWash(s.box);
-            else if (ok && state(Hit::Thing, s.index).lift > 0.0f) canvas_.rect(P(s.box), kHover);
+            const Box b{s.box.x + 1.0f, s.box.y, s.box.w - 2.0f, s.box.h};
+            if (t.slot == sellSlot_) chosenWash(b);
+            else if (ok && state(Hit::Thing, s.index).lift > 0.0f) canvas_.rect(P(b), kHover);
+            hair(b.x, s.box.y + 21.0f, b.w, style::kAsh3);
             // No picture: the user wants the list words only, the picture large once a thing is chosen.
-            text(s.box.x + 8.0f, s.box.y + 9.5f, 12.0f, ok ? inkOf(tables, t.what) : style::kAshInk2, nameOf(tables, t.what));
-            text(s.box.x + 8.0f, s.box.y + 18.5f, 10.0f, ok ? style::kAshInk : style::kAshInk2, ok ? traits(t.what) : whyNot(t.no));
+            const float base = mid(s.box.y, 22.0f, kName);
+            text(s.box.x + kRowPad, base, kName, ok ? inkOf(tables, t.what) : style::kAshInk2, nameOf(tables, t.what));
+            const std::string sub = ok ? traits(t.what) : whyNot(t.no);
+            if (!sub.empty()) right(s.box.right() - kRowPad, base, kCaption, ok ? tip::colourOf(tip::Tone::Blue) : style::kAshInk, sub);
         }
         if (things_.empty()) {
-            text(kThings.x + 10.0f, kThings.y + 50.0f, 12.0f, style::kAshInk, fromVault_ ? "Your vault is empty." : "Your bag is empty.");
+            text(kThings.x + kRowPad, kThings.y + 50.0f, kText, style::kAshInk, fromVault_ ? "Your vault is empty." : "Your bag is empty.");
         }
-        if (const Spot* s = spotOf(Hit::ThingPrev, 0)) controls::square(canvas_, P(s->box), controls::Glyph::Left, state(Hit::ThingPrev, 0), u);
-        if (const Spot* s = spotOf(Hit::ThingNext, 0)) controls::square(canvas_, P(s->box), controls::Glyph::Right, state(Hit::ThingNext, 0), u);
+        square(Hit::ThingPrev, controls::Glyph::Left);
+        square(Hit::ThingNext, controls::Glyph::Right);
 
         const Box thing = kThing;
+        const float in = 10.0f;
+        controls::well(canvas_, P(thing), u);
         if (sellSlot_ < 0 || sellSeen_.empty()) {
-            text(thing.x + 20.0f, thing.y + 120.0f, 13.0f, style::kAshInk, "Choose a thing from your bag or vault,");
-            text(thing.x + 20.0f, thing.y + 135.0f, 13.0f, style::kAshInk, "or drag one here from your bag.");
+            text(thing.x + 20.0f, thing.y + 150.0f, kText, style::kAshInk, "Choose a thing from your bag or vault,");
+            text(thing.x + 20.0f, thing.y + 166.0f, kText, style::kAshInk, "or drag one here from your bag.");
         } else {
-            // The thing in full beside its picture, as the bag's card has it (the user, 2026-10-11:
-            // no card over the list, the whole of it here): its lines under the picture, the well
-            // as tall as they need, the market's cells and the last sales below.
-            const tip::Sheet sheet = describe(tables, sellSeen_, realm.wearer(), realm.satchel());
-            std::vector<std::pair<std::string, uint32_t>> lines;
-            sheetLines(sheet, &lines);
-            const int most = 11;  // under it the cells and two sales still fit the pane
-            const int shownLines = std::min<int>(int(lines.size()), most);
-            const float head = 96.0f + (shownLines > 0 ? float(shownLines) * 12.5f + 4.0f : 0.0f);
-            controls::well(canvas_, P({thing.x, thing.y, thing.w, head}), u);
-            picture({thing.x + 8.0f, thing.y + 8.0f, 80.0f, 80.0f}, sellSeen_);
-            text(thing.x + 96.0f, thing.y + 34.0f, 15.0f, inkOf(tables, sellSeen_), nameOf(tables, sellSeen_));
-            text(thing.x + 96.0f, thing.y + 50.0f, 10.5f, style::kAshInk, sheet.base);
-            text(thing.x + 96.0f, thing.y + 64.0f, 10.5f, style::kAshInk, fromVault_ ? "From your vault" : "From your bag");
-            for (int i = 0; i < shownLines; ++i) {
-                text(thing.x + 8.0f, thing.y + 106.0f + float(i) * 12.5f, 11.5f, lines[size_t(i)].second, lines[size_t(i)].first);
-            }
-            const float below = head - 96.0f;
+            // The thing in full beside its picture (the user, 2026-10-11): its lines, the market's
+            // three figures in one framed strip, and the last sales.
+            float ly = thingCard(sellSeen_, thing.x + in, thing.y + in, thing.w - 2.0f * in, 108.0f,
+                                 fromVault_ ? "From your vault" : "From your bag", thing.bottom() - 100.0f) + 2.0f;
             const bool quoted = quote_.item == sellSeen_.item;
             const int64_t typical = quoted && !quote_.sales.empty() ? quote_.sales.front().price : 0;
             const std::string cells[3][2] = {
                 {"Cheapest now", quoted && quote_.cheapest > 0 ? panel::commas(quote_.cheapest) : "None"},
                 {"Last sold for", typical > 0 ? panel::commas(typical) : "Never sold"},
                 {"On sale now", quoted ? std::to_string(quote_.onSale) : "..."}};
+            const Box facts{thing.x + in, ly, thing.w - 2.0f * in, 34.0f};
+            canvas_.outline(P(facts), std::max(1.0f, u), style::kIronDk);
             for (int c = 0; c < 3; ++c) {
-                const Box cell{thing.x + float(c) * (thing.w / 3.0f), thing.y + 104.0f + below, thing.w / 3.0f - 4.0f, 34.0f};
-                controls::well(canvas_, P(cell), u);
-                text(cell.x + 6.0f, cell.y + 12.0f, 10.5f, style::kAshInk, cells[c][0]);
-                text(cell.x + 6.0f, cell.y + 27.0f, 14.0f, style::kBoneHi, cells[c][1]);
+                const float cx = facts.x + float(c) * (facts.w / 3.0f);
+                if (c > 0) canvas_.rect({std::round(x + cx * k), y + facts.y * k, std::max(1.0f, std::round(u)), facts.h * k}, style::kIronDk);
+                text(cx + 7.0f, facts.y + 13.0f, kCaption, style::kAshInk, cells[c][0]);
+                text(cx + 7.0f, facts.y + 28.0f, kName, c == 0 && quoted && quote_.cheapest > 0 ? kGold : style::kBoneHi, cells[c][1]);
             }
-            controls::kicker(canvas_, x + (thing.x + 2.0f) * k, y + (thing.y + 156.0f + below) * k, "Last sales", u);
-            float ly = thing.y + 172.0f + below;
-            for (size_t i = 0; quoted && i < quote_.sales.size() && i < 8 && ly < thing.bottom() - 2.0f; ++i) {
+            ly = facts.bottom() + 18.0f;
+            controls::kicker(canvas_, x + (thing.x + in) * k, y + ly * k, "Last sales", u);
+            ly += 16.0f;
+            for (size_t i = 0; quoted && i < quote_.sales.size() && i < 8 && ly < thing.bottom() - 6.0f; ++i) {
                 const sim::Sale& sale = quote_.sales[i];
-                text(thing.x + 4.0f, ly, 12.0f, style::kBone2, ago(std::max<int64_t>(0, realm.wallClock() - sale.at)));
-                right(thing.right() - 4.0f, ly, 12.0f, style::kBoneHi, panel::commas(sale.price));
-                canvas_.rect(P({thing.x, ly + 4.0f, thing.w, 0.6f}), kHair);
+                text(thing.x + in, ly, kText, style::kBone2, ago(std::max<int64_t>(0, realm.wallClock() - sale.at)));
+                right(thing.right() - in, ly, kText, kGold, panel::commas(sale.price));
+                hair(thing.x + in, ly + 5.0f, thing.w - 2.0f * in, style::kAsh3);
                 ly += 17.0f;
             }
             if (quoted && quote_.sales.empty()) {
-                text(thing.x + 4.0f, ly, 12.0f, style::kAshInk, "Never sold here yet.");
+                text(thing.x + in, ly, kText, style::kAshInk, "None yet. The first sale sets the going price.");
             }
 
             // The price.
             const Box price = kPrice;
-            controls::kicker(canvas_, x + (price.x + 10.0f) * k, y + (price.y + 14.0f) * k, "Buyout price", u);
+            controls::kicker(canvas_, x + price.x * k, y + (price.y + 12.0f) * k, "Buyout price", u);
             if (const Spot* s = spotOf(Hit::Price, 0)) {
                 const std::string shown = priceText_.empty() ? "" : panel::commas(priceTyped());
                 controls::field(canvas_, P(s->box), shown, "0", focus_ == Focus::Price, false, focus_ == Focus::Price && caret, false, u);
             }
             const char* quick[3] = {"Cheapest", "Last sold", "5% under"};
             for (int q = 0; q < 3; ++q) {
-                if (const Spot* s = spotOf(Hit::Quick, q)) {
-                    controls::button(canvas_, P(s->box), quick[q], controls::Kind::Quiet, state(Hit::Quick, q), u, S(11.0f));
-                }
+                // Without a figure to go by, the button has nothing to set.
+                button(Hit::Quick, q, quick[q], controls::Kind::Secondary, q == 1 ? typical <= 0 : !(quoted && quote_.cheapest > 0));
             }
             const int64_t asked = priceTyped();
             const int64_t floor = std::max<int64_t>(1, sim::npcValue(tables, sellSeen_));
@@ -483,114 +615,129 @@ void Broker::rebuild(Play& play, Stage* stage) {
             } else {
                 guard = "Close to the market's price.";
             }
-            text(price.x + 10.0f, price.y + 84.0f, 11.0f, guardInk, guard);
-            controls::kicker(canvas_, x + (price.x + 10.0f) * k, y + (price.y + 104.0f) * k, "Listed for", u);
+            text(price.x, price.y + 84.0f, kCaption, guardInk, guard);
+            controls::kicker(canvas_, x + price.x * k, y + (price.y + 104.0f) * k, "Listed for", u);
             for (int h = 0; h < 3; ++h) {
                 if (const Spot* s = spotOf(Hit::Hours, h)) {
-                    controls::button(canvas_, P(s->box), std::to_string(sim::kBrokerHours[h]) + " hours",
-                                     h == hours_ ? controls::Kind::Secondary : controls::Kind::Quiet, state(Hit::Hours, h), u, S(11.5f));
-                    if (h == hours_) canvas_.rect(P({s->box.x + 4.0f, s->box.bottom() - 2.0f, s->box.w - 8.0f, 1.5f}), kGold);
+                    chip(s->box, std::to_string(sim::kBrokerHours[h]) + " hours", h == hours_, state(Hit::Hours, h).lift);
                 }
             }
-            text(price.x + 10.0f, price.bottom() - 82.0f, 11.0f, style::kAshInk, "Listing is free. You collect");
-            text(price.x + 10.0f, price.bottom() - 70.0f, 11.0f, style::kAshInk, "the whole price if it sells:");
-            right(price.right() - 10.0f, price.bottom() - 52.0f, 18.0f, kGold, panel::commas(std::max<int64_t>(0, asked)));
-            text(price.x + 10.0f, price.bottom() - 40.0f, 10.5f, style::kAshInk,
-                 std::to_string(mine_.accountCount) + " of 20 listings on your account");
-            if (const Spot* s = spotOf(Hit::List, 0)) {
-                controls::State st = state(Hit::List, 0);
-                st.off = waiting_ != 0 || asked < floor || asked > sim::kBrokerMostPrice || mine_.accountCount >= sim::kBrokerListings;
-                controls::button(canvas_, P(s->box), mine_.accountCount >= sim::kBrokerListings ? "Full" : "List",
-                                 controls::Kind::Primary, st, u);
-            }
+            // What listing it means, line by line over the button.
+            hair(price.x, price.bottom() - 78.0f, price.w, style::kIronDk);
+            text(price.x, price.bottom() - 64.0f, kText, style::kBone2, "You get when it sells");
+            right(price.right(), price.bottom() - 64.0f, kName, kGold, panel::commas(std::max<int64_t>(0, asked)));
+            text(price.x, price.bottom() - 50.0f, kText, style::kBone2, "To list it");
+            right(price.right(), price.bottom() - 50.0f, kText, style::kBoneHi, "Free");
+            text(price.x, price.bottom() - 36.0f, kText, style::kBone2, "Your listings");
+            right(price.right(), price.bottom() - 36.0f, kText, style::kBoneHi,
+                  std::to_string(std::min(mine_.accountCount + 1, sim::kBrokerListings)) + " of 20 after this");
+            const bool full = mine_.accountCount >= sim::kBrokerListings;
+            button(Hit::List, 0, full ? "Full" : "List", controls::Kind::Primary,
+                   waiting_ != 0 || asked < floor || asked > sim::kBrokerMostPrice || full);
         }
+        foot("Or drag a thing here from your bag.");
     }
 
     // ---- My listings ---------------------------------------------------------------------------
     if (tab_ == Tab::Mine) {
-        const Box box = kBox;
-        controls::well(canvas_, P({box.x, box.y, box.w, 150.0f}), u);
-        controls::kicker(canvas_, x + (box.x + 10.0f) * k, y + (box.y + 16.0f) * k, "Waiting to collect", u);
+        // What waits, as one strip across the top: its Zen, its things, Collect all.
+        const Box strip = kStrip;
         int64_t zen = 0;
-        for (const net::BrokerParcel& p : mine_.box) zen += p.zen;
-        text(box.x + 10.0f, box.y + 40.0f, 20.0f, kGold, panel::commas(zen) + " Zen");
-        text(box.x + 10.0f, box.y + 54.0f, 10.5f, style::kAshInk, "Kept 30 days, then gone.");
-        float ly = box.y + 72.0f;
-        int shown = 0;
+        std::vector<const net::BrokerParcel*> things;
         for (const net::BrokerParcel& p : mine_.box) {
-            if (p.what.empty()) continue;
-            if (shown == 3) {
-                text(box.x + 10.0f, ly, 11.0f, style::kAshInk, "and more");
-                break;
+            zen += p.zen;
+            if (!p.what.empty()) things.push_back(&p);
+        }
+        if (mine_.box.empty()) {
+            controls::well(canvas_, P(strip), u);
+            text(strip.x + 12.0f, mid(strip.y, strip.h, kText), kText, style::kAshInk,
+                 "Nothing waits for you. What sells, and what comes back, waits here 30 days.");
+        } else {
+            chosenWash(strip);
+            controls::kicker(canvas_, x + (strip.x + 10.0f) * k, y + (strip.y + 15.0f) * k, "Waiting to collect", u);
+            float wx = strip.x + 10.0f;
+            const float base = strip.y + 31.0f;
+            if (zen > 0) wx += text(wx, base, 17.0f, kGold, panel::commas(zen) + " Zen") / k + 8.0f;
+            if (!things.empty()) {
+                const net::BrokerParcel& p = *things.front();
+                const std::string what = things.size() == 1 ? nameOf(tables, p.what) : std::to_string(things.size()) + " things";
+                wx += text(wx, base, kName, things.size() == 1 ? inkOf(tables, p.what) : style::kBoneHi,
+                           (zen > 0 ? "and " : "") + what) / k + 8.0f;
+                if (things.size() == 1) {
+                    const char* why = p.why == uint8_t(sim::Parcel::Why::Cancelled) ? "Cancelled"
+                                      : p.why == uint8_t(sim::Parcel::Why::Bought) ? "Bought, bag full"
+                                                                                   : "Came back unsold";
+                    text(wx, base, kCaption, style::kAshInk, why);
+                }
             }
-            const char* why = p.why == uint8_t(sim::Parcel::Why::Cancelled) ? "Cancelled"
-                              : p.why == uint8_t(sim::Parcel::Why::Bought) ? "Bought, bag full"
-                                                                           : "Did not sell";
-            text(box.x + 10.0f, ly, 11.5f, inkOf(tables, p.what), nameOf(tables, p.what));
-            right(box.right() - 10.0f, ly, 10.0f, style::kAshInk,
-                  std::string(why) + " · " + std::to_string(std::max(1, p.secondsLeft / 86400)) + " d");
-            ly += 14.0f;
-            ++shown;
+            int days = 30;
+            for (const net::BrokerParcel& p : mine_.box) days = std::min(days, std::max(1, p.secondsLeft / 86400));
+            right(strip.right() - 118.0f, mid(strip.y, strip.h, kCaption), kCaption, style::kAshInk,
+                  "Kept 30 days. The oldest has " + std::to_string(days) + (days == 1 ? " day left." : " days left."));
+            button(Hit::Collect, 0, "Collect all", controls::Kind::Primary, waiting_ != 0);
         }
-        if (mine_.box.empty()) text(box.x + 10.0f, box.y + 80.0f, 12.0f, style::kAshInk, "Nothing waits for you.");
-        if (const Spot* s = spotOf(Hit::Collect, 0)) {
-            controls::State st = state(Hit::Collect, 0);
-            st.off = waiting_ != 0;
-            controls::button(canvas_, P(s->box), "Collect all", controls::Kind::Primary, st, u);
-        }
-        controls::kicker(canvas_, x + (box.x + 4.0f) * k, y + (box.y + 168.0f) * k, "Sold lately", u);
-        ly = box.y + 186.0f;
-        for (const sim::Sale& sale : mine_.soldLately) {
-            if (ly > box.bottom() - 4.0f) break;
-            text(box.x + 4.0f, ly, 12.0f, inkOf(tables, sale.what), nameOf(tables, sale.what));
-            right(box.right() - 4.0f, ly, 12.0f, kGold, "+" + panel::commas(sale.price));
-            text(box.x + 4.0f, ly + 11.0f, 10.0f, style::kAshInk, ago(std::max<int64_t>(0, realm.wallClock() - sale.at)));
-            ly += 26.0f;
-        }
-        if (mine_.soldLately.empty()) text(box.x + 4.0f, ly, 11.5f, style::kAshInk, "Nothing yet.");
 
+        // His listings.
         const Box list = kMine;
         controls::well(canvas_, P(list), u);
-        text(list.x + 8.0f, list.y + 11.5f, 11.0f, style::kAshInk, "On sale");
-        right(list.right() - 244.0f, list.y + 11.5f, 11.0f, style::kAshInk, "Left");
-        right(list.right() - 112.0f, list.y + 11.5f, 11.0f, style::kAshInk, "Price");
-        right(list.right() - 8.0f, list.y + 11.5f, 11.0f, style::kAshInk, std::to_string(mine_.accountCount) + " / 20");
-        for (int r = 0; r < int(mine_.mine.size()) && r < 12; ++r) {
+        const float leftAt = list.right() - 196.0f, priceAt = list.right() - 108.0f;
+        const float headBase = mid(list.y, kListHead, kCaption);
+        text(list.x + kRowPad, headBase, kCaption, style::kAshInk, "On sale");
+        right(leftAt, headBase, kCaption, style::kAshInk, "Left");
+        right(priceAt, headBase, kCaption, style::kAshInk, "Price");
+        right(list.right() - kRowPad, headBase, kCaption, style::kAshInk, std::to_string(mine_.accountCount) + " of 20 used");
+        hair(list.x + 1.0f, list.y + kListHead - 1.0f, list.w - 2.0f, style::kIronDk);
+        for (int r = 0; r < int(mine_.mine.size()) && r < kRows; ++r) {
             const net::BrokerRow& row = mine_.mine[size_t(r)];
-            const float ry = list.y + 18.0f + float(r) * 24.0f;
-            canvas_.rect(P({list.x + 6.0f, ry + 23.0f, list.w - 12.0f, 0.6f}), kHair);
+            const float ry = list.y + kListHead + float(r) * kMineRowH;
+            const float nameBase = mid(ry, kMineRowH, kName), textBase = mid(ry, kMineRowH, kText);
+            hair(list.x + 1.0f, ry + kMineRowH - 1.0f, list.w - 2.0f, style::kAsh3);
             // No picture: its card on hover instead (the user, 2026-10-11).
-            if (state(Hit::Listing, r).lift > 0.0f) canvas_.rect(P({list.x + 6.0f, ry, list.w - 256.0f, 23.0f}), kHover);
-            text(list.x + 8.0f, ry + 10.5f, 13.0f, inkOf(tables, row.what), nameOf(tables, row.what));
-            text(list.x + 8.0f, ry + 20.5f, 10.5f, style::kAshInk, traits(row.what));
-            right(list.right() - 244.0f, ry + 15.5f, 12.0f, row.secondsLeft < 7200 ? style::kDanger : style::kAshInk,
-                  hoursLeft(row.secondsLeft));
+            if (state(Hit::Listing, r).lift > 0.0f) canvas_.rect(P({list.x + 1.0f, ry, list.w - 110.0f, kMineRowH - 1.0f}), kHover);
+            const float named = text(list.x + kRowPad, nameBase, kName, inkOf(tables, row.what), nameOf(tables, row.what)) / k;
+            const std::string sub = traits(row.what);
+            if (!sub.empty() && list.x + kRowPad + named + 6.0f + controls::labelWidth(S(kCaption), sub) / k < leftAt - 30.0f) {
+                text(list.x + kRowPad + named + 6.0f, nameBase, kCaption, tip::colourOf(tip::Tone::Blue), sub);
+            }
+            right(leftAt, textBase, kText, row.secondsLeft < 7200 ? style::kDanger : style::kAshInk, hoursLeft(row.secondsLeft));
             if (row.id == editing_) {
                 if (const Spot* s = spotOf(Hit::LowerField, r)) {
                     controls::field(canvas_, P(s->box), lowerText_.empty() ? "" : panel::commas(std::stoll("0" + lowerText_)),
                                     "", focus_ == Focus::Lower, false, focus_ == Focus::Lower && caret, false, u);
                 }
-                if (const Spot* s = spotOf(Hit::Save, r)) controls::button(canvas_, P(s->box), "Save", controls::Kind::Primary, state(Hit::Save, r), u, S(11.5f));
-                if (const Spot* s = spotOf(Hit::Back, r)) controls::button(canvas_, P(s->box), "Back", controls::Kind::Quiet, state(Hit::Back, r), u, S(11.5f));
+                button(Hit::Save, r, "Save", controls::Kind::Secondary);
+                button(Hit::Back, r, "Back", controls::Kind::Quiet);
             } else {
-                right(list.right() - 112.0f, ry + 15.5f, 13.5f, kGold, panel::commas(row.price));
-                if (const Spot* s = spotOf(Hit::Lower, r)) controls::button(canvas_, P(s->box), "Lower", controls::Kind::Quiet, state(Hit::Lower, r), u, S(11.5f));
-                if (const Spot* s = spotOf(Hit::Cancel, r)) controls::button(canvas_, P(s->box), "Cancel", controls::Kind::Quiet, state(Hit::Cancel, r), u, S(11.5f));
+                right(priceAt, nameBase, kName, kGold, panel::commas(row.price));
+                button(Hit::Lower, r, "Lower", controls::Kind::Secondary);
+                button(Hit::Cancel, r, "Cancel", controls::Kind::Quiet);
             }
         }
         if (mine_.mine.empty()) {
-            text(list.x + 8.0f, list.y + 60.0f, 13.0f, style::kAshInk, "Nothing on sale. List something from the Sell tab.");
+            text(list.x + kRowPad, list.y + kListHead + 24.0f, kText, style::kAshInk, "Nothing on sale. List something from the Sell tab.");
         }
-        text(list.x + 8.0f, list.bottom() - 6.0f, 10.5f, style::kAshInk,
-             "A price may be lowered for nothing; to raise it, cancel and list it again.");
+
+        // What sold lately.
+        const Box sold = kSold;
+        controls::well(canvas_, P(sold), u);
+        controls::kicker(canvas_, x + (sold.x + 10.0f) * k, y + (sold.y + 16.0f) * k, "Sold lately", u);
+        float ly = sold.y + 34.0f;
+        for (const sim::Sale& sale : mine_.soldLately) {
+            if (ly > sold.bottom() - 14.0f) break;
+            text(sold.x + 10.0f, ly, kName, inkOf(tables, sale.what), nameOf(tables, sale.what));
+            right(sold.right() - 10.0f, ly, kName, kGold, "+" + panel::commas(sale.price));
+            text(sold.x + 10.0f, ly + 13.0f, kCaption, style::kAshInk, ago(std::max<int64_t>(0, realm.wallClock() - sale.at)));
+            hair(sold.x + 10.0f, ly + 19.0f, sold.w - 20.0f, style::kAsh3);
+            ly += 30.0f;
+        }
+        if (mine_.soldLately.empty()) text(sold.x + 10.0f, ly, kText, style::kAshInk, "Nothing yet.");
+        foot("Lowering a price is free. To raise it, cancel and list again.");
     }
 
-    // The item pictures, one pass over the window, as the vault's are.
-    if (stage) {
-        stage->stand(standing, kWide, kTall);
-        const gfx::Art art = stage->picture();
-        if (art.valid()) canvas_.image(art, P({0.0f, 0.0f, kWide, kTall}));
-    }
+    // The turning picture stood for next frame on a stage no bigger than itself (a stage the size
+    // of the window, redrawn every frame while the thing turns, halved the frame rate); the card
+    // above cut this frame's from the last.
+    if (stage) stage->stand(standing, kTurnSquare, kTurnSquare);
 
     // The item card over his own listing under the pointer, the bag's own card: My listings has
     // no card beside it, so this is where its details show (the user, 2026-10-11).

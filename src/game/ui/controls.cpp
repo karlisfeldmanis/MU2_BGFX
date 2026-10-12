@@ -755,11 +755,11 @@ void button(gfx::Canvas& canvas, const Box& box, const std::string& text, Kind k
 }
 
 void tab(gfx::Canvas& canvas, const Box& box, const std::string& text, bool chosen,
-          const State& state, float u) {
+          const State& state, float u, bool floor) {
     const Box b{std::round(box.x), std::round(box.y), std::round(box.w), std::round(box.h)};
     const float line = px(u), bar = std::round(2.0f * u);
     // The strip's floor: one dark iron line, which tabs side by side join into one.
-    canvas.rect({b.x, b.bottom() - line, b.w, line}, style::kIronLo);
+    if (floor) canvas.rect({b.x, b.bottom() - line, b.w, line}, style::kIronLo);
     const Tone quiet{0.561f, 0.522f, 0.459f, 1}, lit{0.953f, 0.910f, 0.831f, 1};
     Tone ink = quiet.mix(lit, chosen ? 1.0f : state.lift * 0.7f);
     if (chosen) {

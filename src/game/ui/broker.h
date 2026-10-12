@@ -1,7 +1,7 @@
 // The Broker's window (docs/broker.md): the market, Buy, Sell and My listings, three of the
 // panels' columns wide (618 x 429 units) at the vault's place, the bag in its own column beside
 // it. Designed on the canvas https://claude.ai/artifact/1f7nUNsQRELX6BMbnf84Bk and picked by the
-// user on 2026-10-11.
+// user on 2026-10-11; redrawn as the canvas's variant B on 2026-10-12 (game/ui/broker_layout.h).
 //
 // A mirror as every window is, of the server's book this time rather than the realm: it opens
 // while the realm says he is at a Broker (Realm::brokering), asks the server (Play::askBroker)
@@ -61,8 +61,8 @@ public:
     // which one of that kind. Drawn from the same list, so what is hit is what is drawn.
     enum class Hit : uint8_t {
         None, Close, Tab, Kind, Flag, Clear, Head, Row, Prev, Next, Search, Qty, MostQty, Buy,
-        Watch, Whisper, Seller, Source, Thing, ThingPrev, ThingNext, Price, Quick, Hours, List,
-        Collect, Lower, Cancel, LowerField, Save, Back, Listing,
+        Whisper, Seller, Source, Thing, ThingPrev, ThingNext, Price, Quick, Hours, List,
+        Collect, Lower, Cancel, LowerField, Save, Back, Listing, Category,
     };
     struct Spot {
         gfx::Box box;
@@ -104,6 +104,7 @@ private:
     float browseIn_ = 0.0f;  // a search typed waits this long before it is asked
 
     sim::BrokerQuery query_;
+    bool categories_ = false;  // the Category list open under its button
     net::BrokerView page_, mine_, quote_;
     uint32_t chosen_ = 0;  // the listing chosen on Buy
     int qty_ = 1;

@@ -277,12 +277,9 @@ void selfLines(const sim::SkillRow& row, const content::Tables* tables, const si
     }
 }
 
-uint32_t moneyColour(long long zen) {
-    if (zen >= 10000000) return gfx::rgba(0.0f, 0.0f, 1.0f);
-    if (zen >= 1000000) return gfx::rgba(0.0f, 150.0f / 255.0f, 1.0f);
-    if (zen >= 100000) return gfx::rgba(24.0f / 255.0f, 201.0f / 255.0f, 0.0f);
-    return gfx::rgba(150.0f / 255.0f, 220.0f / 255.0f, 1.0f);
-}
+// One gold for every sum, the market's: MU's tiers (pure blue from 10,000,000) read as a dark smudge
+// on the Sanctuary windows (the user, 2026-10-12: "fix blue color for zen in inventory").
+uint32_t moneyColour(long long) { return gfx::rgba(0.851f, 0.706f, 0.373f); }
 
 // A rune's rarity in WoW's colour for it (sim::Rarity): a legendary one orange, not the green
 // of every other legendary (the user, 2026-10-04: 'legendary runes has to use orange color').
