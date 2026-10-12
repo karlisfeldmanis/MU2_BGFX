@@ -247,6 +247,10 @@ def main() -> None:
 
     islands = merge(islands, destination)
 
+    if splice(destination, islands):
+        report(islands, destination)
+        return
+
     # Whatever else the file already said is kept. The island list is this step's to
     # rewrite; the sheet an item wears, and anything added beside it later, is not.
     document = {"item": item}
@@ -263,7 +267,35 @@ def main() -> None:
     # notes — the islands change by a triangle and the file reports thirty changed lines of
     # text nobody touched. The notes are meant to be read in the file.
     destination.write_text(json.dumps(document, indent=2, ensure_ascii=False) + "\n")
+    report(islands, destination)
 
+
+def splice(destination: Path, islands: list[dict]) -> bool:
+    """Writes the island list into its own span of the file's text, and nothing else.
+
+    A re-dump of the whole recipe put the islands last and every block after them up one:
+    a checklist or a rules block written after the islands (`mu research --write`, `mu edit
+    --insert`) jumped above them on each build, a diff in a recipe other sessions share.
+    `mu edit`'s parser finds the span, so the rest of the file stays byte for byte.
+    False when there is no file or no island list yet: the whole file is written then.
+    """
+    if not destination.exists():
+        return False
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools" / "mu"))
+    from edit import indent_of, parse      # noqa: E402  (mu's span parser; stdlib only)
+
+    text = destination.read_text()
+    node = parse(text).children.get("islands")
+    if node is None:
+        return False
+    outer = indent_of(text, node.start)
+    step = len(indent_of(text, node.children[0].start)) - len(outer) if node.children else 2
+    body = json.dumps(islands, indent=max(step, 1), ensure_ascii=False).replace("\n", "\n" + outer)
+    destination.write_text(text[:node.start] + body + text[node.end:])
+    return True
+
+
+def report(islands: list[dict], destination: Path) -> None:
     for island in islands:
         print(
             f"  {island['island']:2d}  {island['material']:<14} "
