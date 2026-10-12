@@ -1,6 +1,7 @@
 // Burning bodies: a monster an Immolate rune lit (Realm::ignite, realm_fight.cpp) and a character
 // a burner's fire lay lit (Hell Maine's, realm_tuning.h kBurners), each pulsing while it burns.
-// And a character a bleeder's claws cut (Aida's orcs, kBleeders), stacking.
+// And a character a bleeder's claws cut (Aida's orcs, kBleeders), stacking, and a monster a
+// bleed rune cut (Realm::rend).
 // Out of realm_fight.cpp, which is at its size.
 #include "sim/realm.h"
 
@@ -94,6 +95,22 @@ void Realm::cut(Body& by, Body& target, int damage) {
                target.id, target.bleed, target.bleedDamage);
 }
 
+// A bleed rune's roll off his swing that landed for `wound` (sim/items.h kGrazeBleed...): a
+// stack more on the monster, as a bleeder's claws lay one on him, each stack the tier's share
+// of this swing. Rolled first, so the dice do not hang on what it struck.
+void Realm::rend(Body& hero, Body& struck, const BleedRune& rune, int wound) {
+    if (!runeDice_.nextBool(rune.chance)) return;
+    if (!struck.alive() || !struck.monster() || wound <= 0) return;
+    const bool bleeding = struck.bleedUntil > tick_ && struck.bleed > 0;
+    struck.bleed = bleeding ? std::min(kBleedMost, struck.bleed + 1) : 1;
+    struck.bleedDamage = std::max(1, int(float(wound) * rune.share));
+    struck.bleedUntil = tick_ + kBleedTicks;
+    if (!bleeding) struck.bleedNext = tick_ + kBleedEvery;
+    struck.bleedBy = hero.id;
+    core::logf("rend: tick %lld, #%u cuts #%u, %d stack(s) of %d a pulse", (long long)tick_,
+               hero.id, struck.id, struck.bleed, struck.bleedDamage);
+}
+
 void Realm::bleedPulse(Body& one) {
     if (one.bleedUntil == 0 || tick_ < one.bleedNext) return;
     if (one.bleedNext > one.bleedUntil || !one.alive() || one.bleed <= 0) {
@@ -103,6 +120,22 @@ void Realm::bleedPulse(Body& one) {
     }
     one.bleedNext += kBleedEvery;
     Body* by = body(one.bleedBy);
+    // On a monster, a bleed rune's cut: the whole pulse, which may kill, his while he stands.
+    if (!one.player) {
+        if (by == nullptr || !by->alive()) {
+            one.bleed = 0;
+            one.bleedUntil = 0;
+            return;
+        }
+        const int bite = std::min(one.bleedDamage * one.bleed, one.health);
+        one.health -= bite;
+        noteHurt(one, *by, bite);
+        say(What::Hit, *by, bite, bite, one.health, one.id);
+        happenings_.back().thrown = true;
+        happenings_.back().bled = true;
+        if (one.health <= 0) kill(one, *by);
+        return;
+    }
     if (by == nullptr) by = &one;
     // As a poison's pulse: his shield first, never his last point.
     const int due = one.bleedDamage * one.bleed;

@@ -753,7 +753,12 @@ enum class Power : uint8_t {
     Wellspring = 67,
     GreaterWellspring = 68,
     // The twin-blade guard (sim::kTwinGuardDamage).
-    TwinGuard = 69
+    TwinGuard = 69,
+    // The bleed runes, four tiers (sim::bleedRuneOf).
+    Graze = 70,
+    Lacerate = 71,
+    Rend = 72,
+    Hemorrhage = 73
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -1145,6 +1150,25 @@ constexpr double kBurnRuneShare = 0.03;
 constexpr double kBurnRuneFloor = 0.15;
 constexpr int32_t kBurnRuneTicks = 80;
 constexpr int32_t kBurnRuneEvery = 20;
+// **The bleed runes** (the user, 2026-10-12: 'we now have bleed logic, lets make also rune for
+// DK,MG for weapons with several tires with bleed'): Graze Common, Lacerate Rare, Rend Epic and
+// Hemorrhage Legendary, the knight's and the Magic Gladiator's, a weapon's socket alone. A swing
+// that lands has the tier's chance to cut what it struck as Aida's orcs cut him (Realm::rend,
+// realm_burn.cpp): a stack more, to kBleedMost, the bleed kBleedTicks from then, and a pulse each
+// kBleedEvery of the tier's share of that swing for each stack (the latest cut's), which may kill.
+// Each one worn rolls, so two lay stacks faster. No element, so no rune raises it. Drawn with the
+// blood the hit throws: drips off its bones, the hit's spatter on each pulse, a light red tint.
+// invention, all of it.
+struct BleedRune {
+    double chance = 0.0;
+    float share = 0.0f;  // of the swing, each stack, each pulse
+};
+constexpr BleedRune kGrazeBleed{0.08, 0.04f};
+constexpr BleedRune kLacerateBleed{0.12, 0.06f};
+constexpr BleedRune kRendBleed{0.18, 0.09f};
+constexpr BleedRune kHemorrhageBleed{0.25, 0.12f};
+// The tier's, all zero for any other power.
+BleedRune bleedRuneOf(Power power);
 // **Spirit Plague** (the user, 2026-10-06: 'Evil Spirits has chance to poison monster and do
 // some percentage of monster hp'), Epic, every class's, in a weapon, a shield, a ring or the
 // pendant: each blow an Evil Spirit lands -- the wizard's spell's or an Evil Spirit rune's --

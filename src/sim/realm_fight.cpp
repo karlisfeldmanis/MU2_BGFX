@@ -597,6 +597,11 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         ignite(hero, struck, wound);
         return;
     }
+    // His bleed runes: a stack of bleeding on the monster he struck, at the tier's chance.
+    if (const BleedRune rune = bleedRuneOf(power.power); rune.chance > 0.0) {
+        rend(hero, struck, rune, wound);
+        return;
+    }
     // Only Stormcall and Meteor call anything down past here. Arcane Echo is a spell's power,
     // asked where he casts; left to fall through, a wizard's plain staff swing called a knight's
     // lightning.
@@ -2090,6 +2095,8 @@ void Realm::raiseBeast(Body& beast) {
     beast.chilledUntil = 0;
     beast.frozenUntil = 0;
     beast.poisonUntil = 0;
+    beast.bleed = 0;
+    beast.bleedUntil = 0;
     beast.walking = false;
     route(beast).clear();
     beast.onStep = 0;

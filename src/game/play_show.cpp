@@ -1954,6 +1954,9 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
                               (inRealm != nullptr && inRealm->poisonUntil > realm_.tick());
         // And a burning one an ember (kEmberTint), the Immolate rune's.
         const bool burning = inRealm != nullptr && inRealm->burnUntil > realm_.tick();
+        // And a monster a bleed rune cut a light red (kBleedTint).
+        const bool bleeding = inRealm != nullptr && !inRealm->player && inRealm->bleed > 0 &&
+                              inRealm->bleedUntil > realm_.tick();
         const size_t tintFrom = out.size();
         // And where the world asks, the painted light where it stands (Ground::figureLightAt):
         // Blood Castle, whose doubled exposure lifts a dark-painted floor and drew every figure
@@ -1980,13 +1983,14 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
                     for (int k = 0; k < 3; ++k) out[i].light[k] *= place[k];
                 }
             }
-            if (!soused && !iced && !poisoned && !burning && !one.murderer) return;
+            if (!soused && !iced && !poisoned && !burning && !bleeding && !one.murderer) return;
             // A debuff's light over a murderer's red: MU sets c->Light first and the debuff's
             // BodyLight after it.
             const float* by = poisoned && iced ? kPoisonIcedLight
                               : poisoned       ? (inRealm && inRealm->player ? kPoisonedCharLight : kPoisonedLight)
                               : iced           ? kIcedLight
                               : burning        ? kEmberTint
+                              : bleeding       ? kBleedTint
                               : soused         ? kSousedLight
                                                : kMurdererLight;
             for (size_t i = tintFrom; i < out.size(); ++i) {

@@ -60,6 +60,15 @@ bool debuffCard(const Hud::Boon& one, tip::Sheet& sheet) {
                                  std::to_string(one.stacks) + " of " +
                                      std::to_string(sim::kBleedMost),
                                  tip::Tone::Red));
+        // A monster a bleed rune cut (sim::BleedRune): what its stacks take, as a figure.
+        if (one.bite > 0) {
+            what.rows.push_back(said("Each second", std::to_string(one.bite) + " damage",
+                                     tip::Tone::Red));
+            what.rows.push_back(prose("Every cut that lands adds a stack and starts its "
+                                      "seconds again."));
+            sheet.sections.push_back(what);
+            return true;
+        }
         what.rows.push_back(said("Each second", std::to_string(int(std::lround(
                                      double(one.stacks) * sim::kBleedShare * 100.0))) +
                                      "% of the last cut",

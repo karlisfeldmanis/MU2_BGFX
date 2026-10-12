@@ -1675,6 +1675,8 @@ private:
     bool bleeds(const Body& monster) const;
     void cut(Body& by, Body& target, int damage);
     void bleedPulse(Body& one);
+    // A bleed rune's roll off his landed swing, and its stack on the monster (sim::BleedRune).
+    void rend(Body& hero, Body& struck, const BleedRune& rune, int wound);
     // Whether a tile is within a guard post's clearing on the cleared map, where no nest puts a
     // monster down (raise, raiseBeast).
     bool nearPost(int column, int row) const;

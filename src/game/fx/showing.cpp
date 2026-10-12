@@ -183,6 +183,7 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float man,
         if (cue.poison) return Mark::Poison;
         if (onHero) return Mark::Taken;
         if (cue.burn) return Mark::Burn;
+        if (cue.bleed) return Mark::Bleed;
         if (cue.reflected) return Mark::Reflected;
         // Her summon's, one colour whatever the roll: hers are told apart, its are its own.
         if (cue.summon) return Mark::Summon;

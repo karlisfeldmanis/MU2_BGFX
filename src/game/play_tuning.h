@@ -663,6 +663,9 @@ constexpr float kSickPuffs = 0.5f;
 // A bleeding body's drips (sim kBleeders, ours): this many a reference frame for each stack,
 // each a drop of the blow's own blood off a bone drawn at random, falling to the ground.
 constexpr float kBleedDrips = 0.15f;
+// And a monster a bleed rune cut (sim::BleedRune) lit a little red under its drips (the user,
+// 2026-10-12: 'combine some blood effect with minimal tint'); the hero's bleed keeps none. Ours.
+constexpr float kBleedTint[3] = {1.0f, 0.8f, 0.8f};
 // Tarkan's bosses' Flame of Evil (sim kBosses): the Zaikan's and the Death Beam Knight's
 // AT_SKILL_BOSS blow throws the ring of eighteen staffs at the attack's fourteenth frame
 // (fx/staff_ring.h), and the Death Beam Knight a MODEL_SKILL_BLAST within 400 units every frame

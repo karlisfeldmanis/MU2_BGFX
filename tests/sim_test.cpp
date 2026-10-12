@@ -9421,7 +9421,7 @@ void testGroupRunes(const content::Tables& tables) {
                     if (burst || spell) ++*answers;
                     ringing = ringing || spell;
                 }
-                if (h.what == sim::What::Hit && h.thrown && (h.rune || h.burned || ringing)) {
+                if (h.what == sim::What::Hit && h.thrown && (h.rune || h.burned || h.bled || ringing)) {
                     ++*blows;
                 }
             }
@@ -9469,6 +9469,24 @@ void testGroupRunes(const content::Tables& tables) {
         const double rate = double(pulses) / burnSwings;
         // Fewer than four a lit swing in Lorencia: most of what burns dies of the next swing.
         check(rate > 0.05 && rate < 0.65, "pulses follow about one landed swing in seven");
+    }
+    // The bleed runes (2026-10-12): four tiers, the knight's and the Gladiator's weapon alone;
+    // no cast, only bleed pulses on what he struck, more with each tier.
+    {
+        int grazes = 0;
+        for (const Power power : {Power::Graze, Power::Lacerate, Power::Rend, Power::Hemorrhage}) {
+            check(sets(power, sword, Kin::DarkKnight) && sets(power, sword, Kin::MagicGladiator) &&
+                      !sets(power, sword, Kin::DarkWizard) && !sets(power, sword, Kin::FairyElf),
+                  "a bleed rune goes in a knight's or a gladiator's sword alone");
+            int cutSwings = 0, cutCasts = 0, bleeds = 0;
+            hunt(power, &cutSwings, &cutCasts, &bleeds);
+            std::printf("  %s: %d landed swings, %d bleed pulses\n",
+                        sim::powerOf(uint8_t(power))->name, cutSwings, bleeds);
+            check(cutCasts == 0 && bleeds > 0, "a bleed rune bleeds with no spell");
+            // Most of what he cuts in Lorencia dies of the next swing, so only the ends compare.
+            if (power == Power::Graze) grazes = bleeds;
+            if (power == Power::Hemorrhage) check(bleeds > grazes, "Hemorrhage bleeds more than Graze");
+        }
     }
     // Scorch (2026-10-06), the wizard's: his Fire Ball lights the burn, his staff's swing never.
     {

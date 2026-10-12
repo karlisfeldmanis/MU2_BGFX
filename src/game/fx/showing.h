@@ -38,6 +38,7 @@ enum class Mark : uint8_t {
     Summon,    // her summon's blow, its own lilac, at a swing's size
     Burn,      // an Immolate or Scorch burn's pulse, orange, at a swing's size
     Immune,    // the word, over a boss that shrugged off a hold (sim::RaidEvent::Immune)
+    Bleed,     // a bleed rune's pulse on a monster, crimson, at a swing's size
 };
 
 // A blow that has landed on the tick and has not yet been shown.
@@ -79,6 +80,7 @@ struct Cue {
     bool arrow = false;
     bool poison = false;  // a poison's pulse (Happening::poisoned)
     bool burn = false;    // an Immolate burn's pulse (Happening::burned)
+    bool bleed = false;   // a bleed's pulse (Happening::bled)
     bool rune = false;    // a rune power's blow (Happening::rune)
     bool summon = false;  // her summon's blow on a monster (Play::land fills it)
     // Seconds left on the drawing's own clock. NOT the wall clock: MU2 found that at haste

@@ -1139,6 +1139,7 @@ void Realm::step() {
         }
         poisonPulse(beast);
         burnPulse(beast);
+        bleedPulse(beast);   // a bleed rune's cuts (Realm::rend)
         beamOn(beast);
         if (beast.alive() && beast.pushTicks > 0) {
             // Pushed: it slides and does nothing else until it lands on its tile.

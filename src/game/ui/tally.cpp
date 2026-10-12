@@ -205,6 +205,9 @@ const uint32_t kAbsorbedInk = byteColour(234, 160, 81);
 // tcolor for burning and poison damages'). Ours.
 const uint32_t kPoisonInk = byteColour(170, 255, 40);
 const uint32_t kBurnInk = byteColour(255, 150, 20);
+// A bleed rune's pulse (sim::BleedRune): a crimson, darker and bluer than a blow on him, so it
+// reads as blood and not as his own pain. Ours.
+const uint32_t kBleedInk = byteColour(230, 30, 64);
 // A rune power's blow, its own colour apart from the ramp (the user, 2026-10-01: "rune damage
 // has to be in different color"): an ice blue nothing else in the fight wears, and its critical
 // paler, as the ramp's gold is paler than its amber.
@@ -248,6 +251,7 @@ float sizeOf(Mark mark) {
         case Mark::Immune: return kMissSize;
         case Mark::Absorbed: return kAbsorbedSize;
         case Mark::Burn:
+        case Mark::Bleed:
         case Mark::Swing:
         case Mark::Poison:
         case Mark::Summon:
@@ -266,6 +270,7 @@ uint32_t inkOf(const Showing::Figure& figure) {
         case Mark::Absorbed: return kAbsorbedInk;
         case Mark::Poison: return kPoisonInk;
         case Mark::Burn: return kBurnInk;
+        case Mark::Bleed: return kBleedInk;
         case Mark::Rune: return kRuneInk;
         case Mark::RuneCritical: return kRuneCriticalInk;
         case Mark::Summon: return kSummonInk;

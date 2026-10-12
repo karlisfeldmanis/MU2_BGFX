@@ -617,11 +617,32 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::TwinGuard, "Twin Guard",
          "Two matched weapons: Defense works without a shield, +30% damage while it is up",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Legendary, false, true},
+        // The bleed runes' four tiers (sim::bleedRuneOf), the knight's and the Gladiator's.
+        {Power::Graze, "Graze", "8% on hit: the target bleeds 4% of the hit a second a stack, 5 s",
+         kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
+        {Power::Lacerate, "Lacerate",
+         "12% on hit: the target bleeds 6% of the hit a second a stack, 5 s",
+         kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Rare},
+        {Power::Rend, "Rend", "18% on hit: the target bleeds 9% of the hit a second a stack, 5 s",
+         kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
+        {Power::Hemorrhage, "Hemorrhage",
+         "25% on hit: the target bleeds 12% of the hit a second a stack, 5 s",
+         kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Legendary},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
     }
     return nullptr;
+}
+
+BleedRune bleedRuneOf(Power power) {
+    switch (power) {
+        case Power::Graze: return kGrazeBleed;
+        case Power::Lacerate: return kLacerateBleed;
+        case Power::Rend: return kRendBleed;
+        case Power::Hemorrhage: return kHemorrhageBleed;
+        default: return {};
+    }
 }
 
 double barrageShare(Power power) {

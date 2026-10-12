@@ -79,6 +79,7 @@ int aurasOf(const sim::Realm& realm, const sim::Body& body, Hud::Boon* out) {
         if (Hud::Boon* one = add(body.bleedUntil, sim::kBleedTicks)) {
             one->bleed = true;
             one->stacks = body.bleed;
+            if (!body.player) one->bite = body.bleedDamage * body.bleed;
         }
     }
     if (Hud::Boon* one = add(body.chilledUntil, sim::kHeroChillTicks)) one->chill = true;

@@ -149,6 +149,7 @@ public:
         // potion is active and doing its work').
         int potion = -1;
         int amount = 0;
+        int bite = 0;         // a monster's bleed: what its stacks take a pulse (target frame)
         int stacks = 0;       // and its stacks, 1 to sim::kFrenzyMostStacks (Dragonfire's too)
         // Or his pet in slot 8: 0 the Guardian Angel, 1 the Imp, -1 none. It has no clock; its
         // bar is its Life, `life` of `lifeMost`. Ours, as the strip is: MuMain shows a worn pet
