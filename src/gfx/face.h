@@ -85,6 +85,9 @@ public:
     float measure(float fontSize, const std::string& s) const;
 
 private:
+    bool bakeNew(const std::string& path, float pixels, int size, int padding, int oversample,
+                 int margin);
+    std::string key_;   // what the memo (face.cpp) knows this bake by; empty when not baked
     std::vector<FaceGlyph> glyphs_;
     std::vector<uint8_t> pixels_;
     int size_ = 0;

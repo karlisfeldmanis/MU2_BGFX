@@ -192,6 +192,8 @@ MU_STUDIO_DO="20:scene lorencia;100:place;110:pick Bonfire01;130:shot /abs/path/
 - `hide` and `show` take the panels off and put them back for a clean picture. Hidden panels
   also hide Place's overlays (the gate outlines, the townsfolk's marks, the ground's tint).
 - Every word's answer is in the log: `grep "MU_STUDIO_DO" run.log`.
+- A run with `MU_STUDIO_DO` leaves `studio.sock` alone: if the user does have a studio open,
+  the MCP and `mu do` still talk to theirs. (Before 2026-10-12 the last studio opened took it.)
 - Then Read the PNG and look at it. A visual change is not done until you have.
 
 **Drive a studio the user has open:** `./mu do "subject Monsters|Budge; scene Home; wait 30;

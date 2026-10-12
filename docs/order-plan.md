@@ -1548,6 +1548,16 @@ adjusting lighting, tonemaps, shadow, sun, daylight for maps".
   nothing: they read `number` where the view says `job`. Proved: cooker_test 28 and 39 live; a
   rehearsal through mu serve, its row "done 6 cores" and the header "6 of 10 cores" in a shot;
   t_status and t_jobs against the live serve.
+- A second fight without most of the load, the user's choice of "keep the fight's play layer
+  alive between fights". Measured first: of the arena's ~1.9 s the world was 0.17 s (its
+  textures already the studio's), and the windows' sixteen fonts, baked and blurred on the CPU
+  every time a Desk opens, were the biggest part; so borrowing the studio's World was not
+  worth its rewire. gfx::Face now keeps every bake and blur for the process (keyed by face,
+  size and blur), which a map change in the game gains too. Measured in one studio run: the
+  first fight 1.85 s, the second 0.83 s, no face baked again; the second fight drawn right.
+  On the way: a run scripted by MU_STUDIO_DO no longer takes studio.sock from the user's open
+  studio. And a stale tally.cpp.o (face.h's new member not seen) crashed the first try;
+  every mu*.dir object deleted and rebuilt.
 
 ## 10. Leave alone
 

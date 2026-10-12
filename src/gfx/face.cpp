@@ -5,6 +5,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <map>
+#include <mutex>
 
 #include "core/files.h"
 #include "core/log.h"
@@ -38,6 +41,30 @@ constexpr const char* kQuietFacePath = MU2_ROOT_DIR "/extern/Cinzel-Medium.ttf";
 // beside a packed glyph would bleed that glyph's edge into every panel.
 constexpr int kSolidRows = 12;
 
+// Every face baked (and blurred) once a process. The game's windows bake sixteen of them as
+// they open, about 0.6 s of stb packing and Gaussians on the CPU, and they open again for every
+// world: a map change, and the studio's arena each time a fight starts (the user, 2026-10-12:
+// "can't we do it all in cooker?"). A bake asked again is the first one's copy. The memo keeps
+// the coverage the owner drops once uploaded, about a megabyte a face, for the process's life.
+std::mutex gMemoLock;
+std::map<std::string, Face>& memo() {
+    static std::map<std::string, Face> faces;
+    return faces;
+}
+
+bool remembered(const std::string& key, Face* face) {
+    std::lock_guard<std::mutex> hold(gMemoLock);
+    auto found = memo().find(key);
+    if (found == memo().end()) return false;
+    *face = found->second;
+    return true;
+}
+
+void remember(const std::string& key, const Face& face) {
+    std::lock_guard<std::mutex> hold(gMemoLock);
+    memo()[key] = face;
+}
+
 }  // namespace
 
 const char* facePath() { return kFacePath; }
@@ -48,6 +75,17 @@ const char* quietFacePath() { return kQuietFacePath; }
 
 bool Face::bake(const std::string& path, float pixels, int size, int padding, int oversample,
                 int margin) {
+    char key[64];
+    std::snprintf(key, sizeof(key), "|%g|%d|%d|%d|%d", double(pixels), size, padding, oversample, margin);
+    if (remembered(path + key, this)) return true;
+    const bool baked = bakeNew(path, pixels, size, padding, oversample, margin);
+    key_ = baked ? path + key : std::string();
+    if (baked) remember(key_, *this);
+    return baked;
+}
+
+bool Face::bakeNew(const std::string& path, float pixels, int size, int padding, int oversample,
+                   int margin) {
     const std::vector<uint8_t> ttf = core::readFile(path);
     if (ttf.empty()) {
         core::logError("no face at %s. ./bootstrap.sh fetches it", path.c_str());
@@ -137,6 +175,10 @@ bool Face::bake(const std::string& path, float pixels, int size, int padding, in
 
 void Face::blur(float sigma) {
     if (pixels_.empty() || sigma <= 0.0f) return;
+    char suffix[32];
+    std::snprintf(suffix, sizeof(suffix), "|blur %g", double(sigma));
+    const std::string key = key_.empty() ? std::string() : key_ + suffix;
+    if (!key.empty() && remembered(key, this)) return;
     const float s = sigma * float(oversample_);
     const int radius = int(std::ceil(s * 3.0f));
     std::vector<float> kernel(size_t(radius) * 2 + 1);
@@ -171,6 +213,10 @@ void Face::blur(float sigma) {
         }
     }
     spreadTexels_ = radius;
+    if (!key.empty()) {
+        key_ = key;
+        remember(key_, *this);
+    }
 }
 
 float Face::measure(float fontSize, const std::string& s) const {

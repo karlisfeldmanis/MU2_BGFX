@@ -32,7 +32,10 @@ bool StudioDesk::open(Context& ctx) {
         return false;
     }
     shelfRoot_ = ctx.paths.root;
-    openControl(ctx);
+    // A run scripted by MU_STUDIO_DO drives itself and leaves the socket to the studio the user
+    // has open: the last one to listen takes it, and the user's MCP would be talking to a run
+    // that is about to quit.
+    if (!std::getenv("MU_STUDIO_DO")) openControl(ctx);
     // The scenes: the Stage, Home, and every world with a cooked town to stand in.
     shelf_.scenes = {"Stage", "Home"};
     std::error_code ignored;
