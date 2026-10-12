@@ -207,6 +207,29 @@ void live() {
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
     check(cooker.plan().error.find("no recipe") != std::string::npos, "live: an unknown name's plan says so");
+    // The inspector's two: a recipe read, a value set to itself (written nowhere, journalled
+    // nowhere), and a path that is not there refused.
+    cooker.askRecipe("Sword01");
+    for (int i = 0; i < 100 && !cooker.recipe().answered; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    const mu::studio::RecipeView recipe = cooker.recipe();
+    check(recipe.answered && recipe.files.size() == 1 &&
+              recipe.files[0].path == "source/items/weapons/Sword01.json" &&
+              recipe.files[0].doc["stats"]["minimum_damage"].numberOr(0) == 6.0,
+          "live: Sword01's recipe read");
+    check(recipe.materials.size() > 10, "live: the material library with it");
+    if (recipe.files.empty()) {
+        std::printf("live: no recipe came back: %s\n", recipe.error.c_str());
+        cooker.close();
+        return;
+    }
+    std::string answer;
+    check(cooker.edit(recipe.files[0].path, R"(["stats", "minimum_damage"])", "6", &answer),
+          "live: a value set to itself");
+    check(!cooker.edit(recipe.files[0].path, R"(["stats", "nope"])", "1", &answer) &&
+              answer.find("no stats.nope") != std::string::npos,
+          "live: a path that is not there refused");
     std::printf("live: job %d, %d bar moves seen\n", number, bars);
     cooker.close();
 }

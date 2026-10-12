@@ -16,6 +16,8 @@ JSON lines back:
     {"op": "watch", "job": 3, "since": 0}                   -> every event since, then live
     {"op": "cancel", "job": 3, "now": false}                -> after the step, or kill it now
     {"op": "plan", "target": ["Sword01"]}                   -> {"steps": [{name, needed, reason}]}
+    {"op": "recipe", "target": "Sword01"}                   -> {"files": [{file, doc}], "materials"}
+    {"op": "edit", "file": f, "path": [...], "value": v}    -> {"edit": the journal's line}
     {"op": "stop"}
 
 An event is {"seq", "at", "job", "kind", ...}. The kinds: queued, plan (the steps that will run,
@@ -32,6 +34,7 @@ import threading
 import time
 from collections import deque
 
+import edit
 import make
 import settings
 from things import WORKSHOP, NotFound
@@ -202,8 +205,14 @@ class Server:
                 if op == "watch":
                     self.watch(stream, ask.get("job"), ask.get("since", 0))
                     return
-                # A plan reads dates and asks git, so it is answered here, outside the lock.
-                reply = self.plan(ask) if op == "plan" else self.handle(op, ask)
+                # A plan reads dates and asks git, and an edit writes a file: answered here,
+                # outside the lock, so neither waits on the queue.
+                if op == "plan":
+                    reply = self.plan(ask)
+                elif op in ("recipe", "edit"):
+                    reply = self.write(op, ask)
+                else:
+                    reply = self.handle(op, ask)
                 stream.write(json.dumps(reply) + "\n")
                 stream.flush()
 
@@ -254,6 +263,17 @@ class Server:
                 changed.add(step.makes)
             out.append({"name": step.name, "needed": needed, "reason": reason})
         return {"steps": out}
+
+    def write(self, op, ask):
+        """The inspector's two (tools/mu/edit.py): a recipe read, and one value of it set."""
+        try:
+            if op == "recipe":
+                return edit.recipe(ask["target"])
+            return {"edit": edit.edit(ask["file"], ask["path"], ask["value"], ask.get("who", "studio"))}
+        except NotFound as refused:
+            return {"error": str(refused)}
+        except Exception as crash:
+            return {"error": f"{type(crash).__name__}: {crash}"}
 
     def find(self, number):
         return next((j for j in self.jobs if j.number == number), None)
@@ -314,11 +334,23 @@ def serve(say):
     worker = threading.Thread(target=server.work, daemon=True)
     worker.start()
     say(f"mu serve: listening on {SOCKET}; one job at a time, {settings.cores()[0]} cores each")
+    # Its own code, as it was when it started: a server that outlives an edit to make.py or
+    # edit.py answers with the old code, so it stops when idle and the studio starts a new one.
+    code = os.path.dirname(os.path.abspath(__file__))
+    stamp = lambda: max(os.path.getmtime(os.path.join(code, f)) for f in os.listdir(code) if f.endswith(".py"))
+    started = stamp()
     try:
         while not server.closing:
             try:
                 conn, _ = listener.accept()
             except socket.timeout:
+                with server.lock:
+                    idle = not server.queue and all(j.state != "running" for j in server.jobs)
+                if idle and stamp() > started:
+                    say("mu serve: tools/mu changed since it started; stopping so a new one runs it")
+                    with server.lock:
+                        server.closing = True
+                        server.lock.notify_all()
                 continue
             threading.Thread(target=server.answer, args=(conn,), daemon=True).start()
     except KeyboardInterrupt:

@@ -284,6 +284,8 @@ void BenchMode::frame(Context& ctx, const Frame& at) {
             desk_.panels(ctx, bench_, sceneWorld_);
             const std::string scene = desk_.takeScene();
             if (!scene.empty()) setScene(ctx, scene);
+            const int plus = desk_.takePlus();
+            if (plus >= 0) studioPlus(ctx, plus);
             if (!desk_.wantsPointer()) look(ctx);
             desk_.end();
         } else {

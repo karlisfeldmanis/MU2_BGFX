@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include "studio/inspector.h"
+
 namespace mu::studio {
 
 class Cooker;
@@ -23,6 +25,7 @@ struct Shelf {
     std::string clip;   // the clip line under a figure, empty for a mesh
     std::string time;   // the time of day, and the key that changes it
     std::string swapped;  // the last swap's before/after sheet, once one was taken
+    int plus = 0;         // the refinement the bench shows
     std::vector<std::string> scenes;   // "Stage", "Home", then the cooked worlds
     int scene = 0;
 };
@@ -33,6 +36,7 @@ struct Asked {
     bool openSheet = false;  // show the last swap's before/after
     bool reread = false;     // read the subject again from disk now, as after a cook
     int scene = -1;          // stand it in shelf.scenes[scene]
+    int plus = -1;           // show the items at +plus
 };
 
 class Panels {
@@ -42,10 +46,12 @@ public:
 
 private:
     void browser(const Shelf& shelf, Asked& asked, float x, float y, float w, float h);
-    void subject(const Shelf& shelf, Cooker& cooker, float x, float y, float w);
+    // Returns the card's bottom edge, where the inspector begins.
+    float subject(const Shelf& shelf, Cooker& cooker, float x, float y, float w);
     void jobs(Cooker& cooker, float x, float y, float w, float h, double now);
 
     char filter_[64] = {};
+    Inspector inspector_;
     Asked asked_;
     size_t finishedSeen_ = 0;
 };

@@ -139,6 +139,7 @@ public:
         return categories_[category_].entries[categories_[category_].at].body;
     }
     const Figures& figures() const { return figures_; }
+    int plus() const { return plus_; }
     bool browsing() const { return !categories_.empty(); }
     // "MONSTERS  17/105  Budge Dragon", for the log line once a second.
     std::string browseLine() const;

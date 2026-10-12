@@ -58,6 +58,9 @@ private:
     // "Home" (the subject's own place: a monster at its spawn, an armour set on the character
     // screen's middle pedestal, anything else at Lorencia's bonfire) or a world by name.
     void setScene(Context& ctx, const std::string& scene);
+    // Every item on the bench at +plus, as the game shines it (the inspector's refinement):
+    // the world's item rows and the showing's two shine sheets, read the first time.
+    void studioPlus(Context& ctx, int plus);
     // The world the studio stands in now, which the Stage keeps open and does not draw.
     std::string sceneWorld() const { return sceneWorld_; }
 
@@ -79,6 +82,7 @@ private:
     game::StudioStage stage_;
     bool onStage_ = false;
     std::string sceneWorld_;
+    std::vector<content::ItemRow> plusRows_;   // studioPlus's rows, once read
 };
 
 }  // namespace mu::app

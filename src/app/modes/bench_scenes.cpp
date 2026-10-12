@@ -8,7 +8,10 @@
 // bonfire, where the weapon sheets were approved.
 #include "app/modes/bench_mode.h"
 
+#include "content/showing.h"
+#include "content/tables.h"
 #include "core/log.h"
+#include "game/shine.h"
 #include "game/figures.h"
 #include "game/pedestals.h"
 
@@ -74,6 +77,24 @@ void BenchMode::setScene(Context& ctx, const std::string& scene) {
     }
     core::logf("studio: in %s at %.1f,%.1f m%s", world.c_str(), studioStand_[0], studioStand_[2],
                spawn ? ", where it spawns" : (pedestal ? ", on the middle pedestal" : ""));
+}
+
+void BenchMode::studioPlus(Context& ctx, int plus) {
+    if (plusRows_.empty() && plus > 0) {
+        // Lorencia's tables hold every item, as every world's do (a new item cooks them all).
+        content::Tables tables;
+        content::Showing showing;
+        std::string error;
+        if (!content::loadTables(ctx.paths.assets + "/cooked/lorencia/lorencia.mur", tables, error)) {
+            core::logError("studio: no item rows for the refinement: %s", error.c_str());
+            return;
+        }
+        plusRows_ = tables.items;
+        if (content::loadShowing(ctx.paths.assets + "/cooked/showing/showing.mus", showing, error)) {
+            game::lendShine(showing, ctx.paths.assets, ctx.textures, ctx.renderer);
+        }
+    }
+    bench_.setPlus(plus, plusRows_);
 }
 
 }  // namespace mu::app

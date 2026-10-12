@@ -1205,6 +1205,37 @@ same day, **a stage and the world**, a switch on the Subject card:
   a rebuild stalled 20 s inside Metal compiling a shader (the watchdog's hang report); the
   next did not -- a cold shader cache, not the studio.
 
+### Slice F4: the inspector, as done (items and the light)
+
+- An item's materials are baked by the Blender build (each island names a library material),
+  so "live" for an item cannot be the GPU's material: the inspector edits the recipe, writes
+  it at once, and the card's stale marker -- asked again after every edit -- says what the
+  edit costs: nothing, a cook, or a rebuild. Cook then runs it, and F3 swaps the result in.
+- **The Inspector window**, under the Subject card: a refinement slider (+0 to +11, the shine
+  as the game draws it; a view, not written), then two tabs. **Recipe**: the subject's file,
+  or each piece of an armour set, as a tree -- numbers, words and switches edited where they
+  stand, an island's `material` picked from the library, the prose (`*_note`, `*_from`,
+  `why*`) shown on asking, `item` and `mesh` read-only. **Light**: sheets/lighting.json the
+  same way, dragged, which the app reloads within 0.25 s; marked as the game's own sheet.
+  Nothing is written while a field is being typed in or dragged, only when it is let go.
+- **One writer**, tools/mu/edit.py: `mu recipe <name>`, `mu edit <name|file> <path> <value>`,
+  and mu serve's `recipe` and `edit` ops. Only a scalar already there is changed, and only its
+  own span of text: 39 recipes mix indents within one file, which a re-dump would reformat.
+  The span reader agrees with json.loads on all 1695 recipes and sheets; an edit is proved
+  before it is written (the new text parses and differs in that one value), refused with its
+  reason otherwise, and journalled in workshop/.mu/journal.log (when, who, file, path, old,
+  new) -- a value set to itself is neither written nor journalled.
+- mu serve stops itself, when idle, once tools/mu has changed since it started, and the
+  studio starts a new one when its server goes: a server outliving an edit answered with old
+  code (the first live run met one with no `recipe` op).
+- MU_STUDIO_DO takes `plus <N>`.
+- Proved: cooker_test 27 headless and 38 live (Sword01's recipe read with the library, a value
+  set to itself written nowhere, a missing path refused); edits on scratch copies of a weapon,
+  a mixed-indent monster and the lighting sheet each changed one line; a shot run of the
+  Legendary Sword at +11 with the inspector open.
+- Still to come in F4's line: the monster's show live (Figures::readShows has no reload hook
+  yet), stats and rules with the arena (F5), placement (F6).
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

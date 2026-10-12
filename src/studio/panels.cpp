@@ -78,7 +78,14 @@ Asked Panels::draw(const Shelf& shelf, Cooker& cooker, float width, float height
     const float leftW = std::max(17.0f * em, width * 0.18f);
     const float cardW = std::max(21.0f * em, width * 0.22f);
     browser(shelf, asked, pad, pad, leftW, height - jobsH - 3.0f * pad);
-    subject(shelf, cooker, width - cardW - pad, pad, cardW);
+    const float cardBottom = subject(shelf, cooker, width - cardW - pad, pad, cardW);
+    // The inspector under the card, down to the jobs.
+    const float inspectorH = height - jobsH - 2.0f * pad - (cardBottom + pad);
+    if (inspectorH > 6.0f * em) {
+        const int plus = inspector_.draw(cooker, shelf.target, shelf.plus, width - cardW - pad,
+                                         cardBottom + pad, cardW, inspectorH);
+        if (plus >= 0) asked.plus = plus;
+    }
     jobs(cooker, pad, height - jobsH - pad, width - 2.0f * pad, jobsH, now);
     return asked_;
 }
@@ -110,7 +117,7 @@ void Panels::browser(const Shelf& shelf, Asked& asked, float x, float y, float w
     ImGui::End();
 }
 
-void Panels::subject(const Shelf& shelf, Cooker& cooker, float x, float y, float w) {
+float Panels::subject(const Shelf& shelf, Cooker& cooker, float x, float y, float w) {
     ImGui::SetNextWindowPos(ImVec2(x, y));
     ImGui::SetNextWindowSize(ImVec2(w, 0.0f));
     ImGui::Begin("Subject", nullptr, kFixed | ImGuiWindowFlags_AlwaysAutoResize);
@@ -139,8 +146,9 @@ void Panels::subject(const Shelf& shelf, Cooker& cooker, float x, float y, float
     ImGui::PopTextWrapPos();
     if (shelf.target.empty()) {
         ImGui::TextColored(kDim, "no recipe to cook it from");
+        const float bottom = ImGui::GetWindowPos().y + ImGui::GetWindowSize().y;
         ImGui::End();
-        return;
+        return bottom;
     }
     ImGui::TextColored(kDim, "mu make %s", shelf.target.c_str());
 
@@ -168,7 +176,11 @@ void Panels::subject(const Shelf& shelf, Cooker& cooker, float x, float y, float
     } else {
         int count = 0;
         for (const PlanView::Step& s : plan.steps) count += s.needed ? 1 : 0;
-        ImGui::TextColored(kGold, "stale: %d of %zu steps would run", count, plan.steps.size());
+        // Folded, so the inspector below keeps its room; the count is the news.
+        ImGui::PushStyleColor(ImGuiCol_Text, kGold);
+        const bool open = ImGui::TreeNode("stale", "stale: %d of %zu steps would run", count, plan.steps.size());
+        ImGui::PopStyleColor();
+        if (open) {
         ImGui::PushTextWrapPos(0.0f);
         // Every world's tables for one reason are one line, not thirteen.
         int tables = 0;
@@ -190,6 +202,8 @@ void Panels::subject(const Shelf& shelf, Cooker& cooker, float x, float y, float
             ImGui::TextColored(kDim, "%s", tablesWhy.c_str());
         }
         ImGui::PopTextWrapPos();
+        ImGui::TreePop();
+        }
     }
     if (!shelf.swapped.empty()) {
         ImGui::TextColored(kGreen, "swapped in from disk");
@@ -205,7 +219,9 @@ void Panels::subject(const Shelf& shelf, Cooker& cooker, float x, float y, float
         cooker.make(shelf.target);
     }
     ImGui::EndDisabled();
+    const float bottom = ImGui::GetWindowPos().y + ImGui::GetWindowSize().y;
     ImGui::End();
+    return bottom;
 }
 
 void Panels::jobs(Cooker& cooker, float x, float y, float w, float h, double now) {

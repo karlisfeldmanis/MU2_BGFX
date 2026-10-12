@@ -14,13 +14,11 @@
 
 #include <memory>
 #include <mutex>
+
+#include "core/json.h"
 #include <string>
 #include <thread>
 #include <vector>
-
-namespace mu::core {
-class Json;
-}
 
 namespace mu::studio {
 
@@ -65,6 +63,21 @@ struct PlanView {
     bool stale() const;
 };
 
+// A recipe as the inspector edits it (tools/mu/edit.py's `recipe`): each of its files --
+// one for a weapon, the pieces for an armour set, the sheet itself for the light -- and the
+// material library an island may wear.
+struct RecipeView {
+    std::string target;
+    bool answered = false;
+    std::string error;
+    struct File {
+        std::string path;   // relative to MU2_BGFX
+        core::Json doc;
+    };
+    std::vector<File> files;
+    std::vector<std::string> materials;
+};
+
 class Cooker {
 public:
     ~Cooker();
@@ -93,6 +106,16 @@ public:
     // The next askPlan asks again, even for the same target: a job has finished since.
     void forgetPlan();
 
+    // The inspector's two. askRecipe reads on a thread, as askPlan does, and is asked again
+    // after forgetRecipe; edit sets one scalar and waits for the answer, which is quick: the
+    // file is written and the journal's line comes back, or the refusal with its reason.
+    // `path` and `value` are JSON: ["islands", 0, "material"] and "\"brass\"".
+    void askRecipe(const std::string& target);
+    RecipeView recipe() const;
+    void forgetRecipe();
+    bool edit(const std::string& file, const std::string& path, const std::string& value,
+              std::string* answer);
+
     const std::vector<JobView>& jobs() const { return jobs_; }
 
     // One event off the stream, or a job's view out of a `jobs` reply. Public for the test.
@@ -107,7 +130,8 @@ private:
     std::string root_, socket_;
     int stream_ = -1;
     std::string buffer_;
-    double nextTry_ = 0.0;
+    double nextTry_ = 0.0, nextStart_ = 0.0;
+    bool wasConnected_ = false;
     int serverPid_ = 0;
     std::vector<JobView> jobs_;
     std::string error_;
@@ -115,6 +139,8 @@ private:
     mutable std::mutex planLock_;
     PlanView plan_;
     std::unique_ptr<std::thread> planThread_;
+    RecipeView recipe_;
+    std::unique_ptr<std::thread> recipeThread_;
 };
 
 }  // namespace mu::studio

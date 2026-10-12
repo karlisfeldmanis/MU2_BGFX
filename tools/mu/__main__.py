@@ -15,6 +15,8 @@
     ./mu shot <world> <col,row> [--time T]   a muted shot at a tile, the save untouched
     ./mu compare <a.png> <b.png>             side by side, labelled, with how much moved
     ./mu cores [N]                           how many cores mu's tools may use, kept per machine
+    ./mu recipe <name>                       a recipe's file(s), parsed, and the material library
+    ./mu edit <name|file> <path> <value>     one value in place (islands.0.material brass), journalled
     ./mu serve                               the cook's job runner; `mu make` hands it its jobs
     ./mu jobs [--watch [N]] | cancel N [--now] what it is cooking, with bars and time left
 
@@ -59,6 +61,14 @@ def main():
                    help="for this run; `mu cores N` keeps one")
     m.add_argument("--here", action="store_true",
                    help="run in this process even when `mu serve` is running")
+
+    r = sub.add_parser("recipe", parents=[common])
+    r.add_argument("target")
+
+    e = sub.add_parser("edit", parents=[common])
+    e.add_argument("target", help="a recipe's name, or a file under source/ or sheets/")
+    e.add_argument("path", help="dotted, list indices as numbers: islands.0.material")
+    e.add_argument("value", help="JSON (7, 0.35, true, \"brass\") or a bare word for a string")
 
     v = sub.add_parser("serve", parents=[common])
     v.add_argument("--stop", action="store_true", help="stop a running one after its job")
@@ -140,6 +150,21 @@ def dispatch(args, say):
         ok, results = make.run(steps, args.plan, say, os.path.join(WORKSHOP, "logs", "mu"),
                                settings.environment(cores))
         return ok, {"plan": args.plan, "cores": cores, "steps": results}
+    if args.command == "recipe":
+        import edit
+        data = edit.recipe(args.target)
+        for one in data["files"]:
+            say(one["file"])
+        return True, data
+    if args.command == "edit":
+        import edit
+        try:
+            value = json.loads(args.value)
+        except ValueError:
+            value = args.value
+        line = edit.edit(args.target, args.path, value, who="mu")
+        say(f"{line['file']}: {line['path']} {json.dumps(line['old'])} -> {json.dumps(line['new'])}")
+        return True, line
     if args.command == "serve":
         if args.stop:
             if not serve.alive():

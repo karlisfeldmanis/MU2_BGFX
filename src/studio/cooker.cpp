@@ -115,6 +115,8 @@ void Cooker::open(const std::string& root) {
 void Cooker::close() {
     if (planThread_ && planThread_->joinable()) planThread_->join();
     planThread_.reset();
+    if (recipeThread_ && recipeThread_->joinable()) recipeThread_->join();
+    recipeThread_.reset();
     if (stream_ >= 0) ::close(stream_);
     stream_ = -1;
 }
@@ -181,7 +183,16 @@ void Cooker::poll() {
     if (stream_ < 0) {
         if (now < nextTry_) return;
         nextTry_ = now + 2.0;
-        if (!connect()) return;
+        if (!connect()) {
+            // A server that was here and went -- stopped for new code, or by hand -- is
+            // started again, no more often than every ten seconds.
+            if (wasConnected_ && serverPid_ == 0 && now > nextStart_) {
+                nextStart_ = now + 10.0;
+                startServer();
+            }
+            return;
+        }
+        wasConnected_ = true;
     }
     char chunk[8192];
     for (;;) {
@@ -284,6 +295,63 @@ void Cooker::askPlan(const std::string& target) {
         std::lock_guard<std::mutex> hold(planLock_);
         if (plan_.target == target) plan_ = std::move(answer);   // not one asked since
     });
+}
+
+void Cooker::askRecipe(const std::string& target) {
+    {
+        std::lock_guard<std::mutex> hold(planLock_);
+        if (recipe_.target == target) return;
+        recipe_ = RecipeView{};
+        recipe_.target = target;
+    }
+    if (recipeThread_ && recipeThread_->joinable()) recipeThread_->join();
+    recipeThread_ = std::make_unique<std::thread>([this, target] {
+        RecipeView answer;
+        answer.target = target;
+        std::string reply;
+        if (!request("{\"op\": \"recipe\", \"target\": " + quoted(target) + "}", &reply)) {
+            answer.error = "mu serve is not running";
+        } else {
+            const core::Json j = core::parseJson(reply.data(), reply.size(), "mu serve's recipe");
+            answer.error = j["error"].stringOr("");
+            for (const core::Json& f : j["files"].items) {
+                answer.files.push_back({f["file"].stringOr(""), f["doc"]});
+            }
+            for (const core::Json& m : j["materials"].items) answer.materials.push_back(m.stringOr(""));
+        }
+        answer.answered = true;
+        std::lock_guard<std::mutex> hold(planLock_);
+        if (recipe_.target == target) recipe_ = std::move(answer);
+    });
+}
+
+RecipeView Cooker::recipe() const {
+    std::lock_guard<std::mutex> hold(planLock_);
+    return recipe_;
+}
+
+void Cooker::forgetRecipe() {
+    std::lock_guard<std::mutex> hold(planLock_);
+    recipe_.target.clear();
+}
+
+bool Cooker::edit(const std::string& file, const std::string& path, const std::string& value,
+                  std::string* answer) {
+    std::string reply;
+    if (!request("{\"op\": \"edit\", \"file\": " + quoted(file) + ", \"path\": " + path +
+                     ", \"value\": " + value + ", \"who\": \"studio\"}",
+                 &reply)) {
+        *answer = error_;
+        return false;
+    }
+    const core::Json j = core::parseJson(reply.data(), reply.size(), "mu serve's edit");
+    if (!j["error"].isNull()) {
+        *answer = j["error"].stringOr("refused");
+        return false;
+    }
+    const core::Json& line = j["edit"];
+    *answer = line["path"].stringOr("") + " written to " + line["file"].stringOr("");
+    return true;
 }
 
 void Cooker::forgetPlan() {

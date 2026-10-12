@@ -175,11 +175,13 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
     shelf_.clip = bench.hasFigure() ? bench.clipLine() : std::string();
     shelf_.time = std::string(ctx.time.name()) + "    T changes the time of day";
     shelf_.swapped = lastSwap_.empty() ? std::string() : lastSwap_ + "/compare.png";
+    shelf_.plus = bench.plus();
     watchJobs(bench);
     for (const auto& [at, what] : script_) {
         if (at != frame_) continue;
         core::logf("studio: frame %d does '%s' (MU_STUDIO_DO)", at, what.c_str());
         if (what == "swap" && swap_ == Swap::Idle) startSwap(bench, bench.browseName(bench.browseIndex()));
+        if (what.rfind("plus ", 0) == 0) plusAsked_ = std::atoi(what.c_str() + 5);
         if (what.rfind("scene ", 0) == 0) {
             sceneAsked_ = what.substr(6);
             for (size_t i = 0; i < shelf_.scenes.size(); ++i) {
@@ -206,6 +208,7 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
         }
     }
     if (asked.reread) startSwap(bench, bench.browseName(bench.browseIndex()));
+    if (asked.plus >= 0) plusAsked_ = asked.plus;
     if (asked.scene >= 0 && asked.scene < int(shelf_.scenes.size())) {
         shelf_.scene = asked.scene;
         sceneAsked_ = shelf_.scenes[size_t(asked.scene)];
