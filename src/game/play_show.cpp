@@ -193,7 +193,7 @@ void Play::exhale(float seconds) {
         }
     }
 
-    // A Forest Orc's three claws on either swing (kForestOrcClaws), a ribbon each, keyed apart
+    // A Forest Orc's three claws on either swing (show.claws), a ribbon each, keyed apart
     // from the body's own as MU keys them by sub type.
     for (Drawn& one : drawn_) {
         if (one.clawBones.empty() || !one.visible || !one.placed || one.deadFor >= 0.0f) continue;
@@ -481,14 +481,15 @@ void Play::snort(float seconds) {
             for (int i = 0; i < 35 && posed; ++i) {
                 posed = one.figure.pointOn(one.burnBones[i], origin, points[i]);
             }
-            if (!posed) continue;
-            for (const BurnSegment& s : kBurnSegments) {
+            const FigureBody* burner = one.figure.body();
+            if (!posed || burner == nullptr) continue;
+            for (const FigureBody::BurnSegment& s : burner->burnSegments) {
                 bodyFlames_.segmentFlame(points[s.from], points[s.to], s.scale, kBurnLight);
             }
             if (one.burnFrame % 2 == 0) {
-                bodyFlames_.segmentFlame(points[kBurnBody[0]], points[kBurnBody[1]], 1.3f,
-                                         kBurnLight);
-                bodyFlames_.stillFlame(points[kBurnHead], 0.5f, kBurnLight);
+                bodyFlames_.segmentFlame(points[burner->burnBody[0]], points[burner->burnBody[1]],
+                                         1.3f, kBurnLight);
+                bodyFlames_.stillFlame(points[burner->burnHead], 0.5f, kBurnLight);
             }
         }
     }
@@ -629,7 +630,7 @@ void Play::shade(float seconds) {
             shadowStars_.roots().watch(one.id, one.figure.clip() == one.attackClip2, one.figure,
                                        one.yaw, fade, seconds);
         }
-        // A Queen Rainer's or a Drakan's crackle along its bones (kQueenArcs, kDrakanArcs): a
+        // A Queen Rainer's or a Drakan's crackle along its bones (show.arcs, show.arcs): a
         // fresh few each reference frame.
         if (!one.arcBones.empty() && one.deadFor < 0.0f) {
             const int pairs = int(one.arcBones.size() / 2);
@@ -726,14 +727,16 @@ void Play::shade(float seconds) {
             continue;
         }
         // A Hydra's: the Lizard King's red lightning, one broad bolt and three thin, from the
-        // mouth of the head it left (kHydraHeads) into the middle of the body struck, with
+        // mouth of the head it left (show.heads) into the middle of the body struck, with
         // Lightning's eThunder (the user, 2026-10-04: 'from heads we shoot red lightiing not
         // lasers?', 'we need to play lighting sound'); the Hydra's own voice stays MuMain's
         // ('use default hydra sounds from MuMain'). Ours, in place of MU's beams.
         if (devil->beams == Drawn::Beams::Horn) {
             const int head = devil->headBones[size_t(cast.head) % 4];
+            const FigureBody* hydra = devil->figure.body();
             float from[3];
-            if (head < 0 || !devil->figure.pointOnBind(head, kHydraHeads[size_t(cast.head) % 4].mouth, from)) {
+            if (head < 0 || hydra == nullptr || hydra->heads.size() < 4 ||
+                !devil->figure.pointOnBind(head, hydra->heads[size_t(cast.head) % 4].mouth, from)) {
                 continue;
             }
             if (!cast.heard) {

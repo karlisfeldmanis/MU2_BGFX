@@ -4006,6 +4006,47 @@
         1.0
       ],
       "note": "The Hydra's horn, where MU always hangs a lightning and a shiny sprite (ZzzCharacter.cpp:11216-11219): a pale blue."
+    },
+    "beam_material": {
+      "name": "glow_bbbb03",
+      "note": "play_tuning.h's comment by its tag (\"hydra\") says where MU draws it. Sprint E4c moved it here from kHydraBeamMaterial."
+    },
+    "heads": {
+      "note": "play_tuning.h's comment by its tag (\"hydra\") says where MU draws it. Sprint E4c moved it here from kHydraHeads.",
+      "rows": [
+        {
+          "bone": "Box49",
+          "mouth": [
+            1.603,
+            2.451,
+            1.392
+          ]
+        },
+        {
+          "bone": "Box29",
+          "mouth": [
+            0.926,
+            2.728,
+            1.368
+          ]
+        },
+        {
+          "bone": "Box37",
+          "mouth": [
+            -1.039,
+            2.362,
+            1.794
+          ]
+        },
+        {
+          "bone": "Box43",
+          "mouth": [
+            -1.75,
+            2.233,
+            1.392
+          ]
+        }
+      ]
     }
   }
 }

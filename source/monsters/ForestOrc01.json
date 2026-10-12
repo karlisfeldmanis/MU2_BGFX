@@ -1131,6 +1131,23 @@
     "tags": [
       "forest_orc"
     ],
-    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it."
+    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it.",
+    "claws": {
+      "note": "play_tuning.h's comment by its tag (\"forest_orc\") says where MU draws it. Sprint E4c moved it here from kForestOrcClaws.",
+      "pairs": [
+        [
+          "Bip01 R Finger0",
+          "Bip01 R Finger02"
+        ],
+        [
+          "Bip01 R Finger1",
+          "Bip01 R Finger12"
+        ],
+        [
+          "Bip01 R Finger2",
+          "Bip01 R Finger22"
+        ]
+      ]
+    }
   }
 }

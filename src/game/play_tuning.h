@@ -474,22 +474,13 @@ constexpr int32_t kHydraNumber = 49;
 // user, 2026-10-04: 'from heads we shoot red lightiing not lasers?'), and each beam is the
 // Lizard King's red lightning from a mouth instead -- the bone each beam rides in Monster38 and
 // the root of that beam in the model's bind space, metres, read off the mesh. Ours.
-struct HydraHead {
-    const char* bone;
-    float mouth[3];
-};
-inline constexpr HydraHead kHydraHeads[4] = {
-    {"Box49", {1.603f, 2.451f, 1.392f}},
-    {"Box29", {0.926f, 2.728f, 1.368f}},
-    {"Box37", {-1.039f, 2.362f, 1.794f}},
-    {"Box43", {-1.75f, 2.233f, 1.392f}},
-};
+// Its heads' bones and mouths are its recipe's show.heads (sprint E4c).
 // How long a head's bolt stands. Ours, the Lizard King's.
 constexpr float kHydraBoltSeconds = 0.45f;
 // Its BlendMesh 5, bbbb03: four red beams from its mouths, which MU lights only in an attack --
 // BlendMeshLight up 0.1 a frame in ATTACK1-2 and 0 in anything else (ZzzCharacter.cpp:
-// 5989-6001). Ours, never drawn: its heads throw red lightning instead (kHydraHeads).
-inline constexpr const char* kHydraBeamMaterial = "glow_bbbb03";
+// 5989-6001). Ours, never drawn: its heads throw red lightning instead (show.heads).
+// The material is its recipe's show.beam_material (sprint E4c).
 constexpr float kDevilBeamSeconds = 0.6f;
 // MU's four beams wander: each joint is laid at a fresh random angle every frame. Ours, the
 // second beam off each hand meets the target this far off its middle, rolled again each frame,
@@ -526,29 +517,19 @@ inline constexpr int kStarRibbons = 4;
 // (ZzzCharacter.cpp:8815-8818; Light is RenderCharacter's (1, 1, 1), :8498), drawn as an
 // Alquamos's starlight. MoveCharacterVisual's crackle (:5768-5817): every frame a
 // BITMAP_JOINT_THUNDER sub 7, 14 wide, in (0.5, 0.5, 1), along each of these bone pairs --
-// the legs, the spine, the arms -- by name in Monster52. Ours: kQueenArcsAFrame of them a
+// the legs, the spine, the arms -- by name in Monster52. Ours: show.arcs of them a
 // reference frame, picked at random, as ShadowStars::thunderBeam streaks at kQueenArcDim; all
 // fourteen each frame was a lit wire figure. Her blow's twenty BITMAP_BLIZZARD on the target at
 // CheckAttackTime(5) (:1681-1695), 4/25 s into it (ShadowStars::blizzard).
 // show tag "queen_rainer": QueenRainer01 (its recipe's show.tags).
-inline constexpr const char* kQueenLightBone = "Bip01 Head";
-inline constexpr const char* kQueenArcs[][2] = {
-    {"Bip01 Pelvis", "Bip01 L Thigh"},       {"Bip01 L Thigh", "Bip01 L Calf"},
-    {"Bip01 L Calf", "Bip01 L Foot"},        {"Bip01 Pelvis", "Bip01 R Thigh"},
-    {"Bip01 R Thigh", "Bip01 R Calf"},       {"Bip01 Pelvis", "Bip01 Spine1"},
-    {"Bip01 Spine1", "Bip01 R Clavicle"},    {"Bip01 R Clavicle", "Bip01 R UpperArm"},
-    {"Bip01 R UpperArm", "Bip01 R Forearm"}, {"Bip01 R Forearm", "Bip01 R Hand"},
-    {"Bip01 Spine1", "Bip01 L Clavicle"},    {"Bip01 L Clavicle", "Bip01 L UpperArm"},
-    {"Bip01 L UpperArm", "Bip01 L Forearm"}, {"Bip01 L Forearm", "Bip01 L Hand"}};
-inline constexpr int kQueenArcsAFrame = 4;
-constexpr float kQueenArcHalf = 0.07f;  // 14 units wide
+// Her head's light and her arcs are her recipe's show.bones.stars and show.arcs (sprint E4c).
 constexpr float kQueenArcColour[3] = {0.5f, 0.5f, 1.0f};
 constexpr float kQueenArcDim = 0.4f;
 constexpr float kBlizzardWait = 4.0f / 25.0f;
 // MONSTER_DRAKAN's (ZzzCharacter.cpp:8840-8865): BITMAP_LIGHT at 0.8 in (0.1, 0.1, 1) on bones
-// 13-26 and 52-58, Monster55's 21 stars bones, as starlights in kDrakanBlue; and a
+// 13-26 and 52-58, Monster55's 21 stars bones, as starlights in show.star_tint; and a
 // BITMAP_JOINT_THUNDER sub 7, 20 wide, from bone i - 1 to i for i of 14-16 and 23 each frame --
-// the kDrakanArcs, ours kDrakanArcsAFrame of them a reference frame. Its Attack 2 throws its
+// the show.arcs, ours show.arcs of them a reference frame. Its Attack 2 throws its
 // bolt at CheckAttackTime(13) from bone 11, its head (:2123-2138), drawn as a monster's Lightning
 // (Play::thunderCasts_, with MU's SOUND_METEORITE01, :1760-1771). Its Flame of
 // Evil (sim kBosses) shows nothing more than its blow: MU's boss show is the Gorgon's and the
@@ -565,22 +546,13 @@ constexpr float kBlizzardWait = 4.0f / 25.0f;
 // 20 units along each finger's first bone to 60 along its last: bones 35-37, 39-41 and 43-45. Laid
 // on fx/streak.h's ribbons, the spear's sheet, from the first key: MU's case has no wind-up guard.
 // show tag "forest_orc": ForestOrc01 (its recipe's show.tags).
-inline constexpr const char* kForestOrcClaws[][2] = {{"Bip01 R Finger0", "Bip01 R Finger02"},
-                                                     {"Bip01 R Finger1", "Bip01 R Finger12"},
-                                                     {"Bip01 R Finger2", "Bip01 R Finger22"}};
+// Its claws' bone pairs are its recipe's show.claws (sprint E4c).
 constexpr float kForestOrcClawFrom = 0.20f;  // metres along the first bone (MU's 20 units)
 constexpr float kForestOrcClawTo = 0.60f;    // and along the last (60)
 constexpr float kForestOrcClawLight[3] = {0.5f, 0.5f, 0.0f};
 // show tag "drakan": Drakan01 (its recipe's show.tags).
-inline constexpr const char* kDrakanStars[] = {
-    "stars04", "stars03", "stars02", "stars01", "stars00", "stars13", "stars05",
-    "stars10", "stars09", "stars12", "stars11", "stars08", "stars07", "stars06",
-    "stars14", "stars15", "stars16", "stars17", "stars18", "stars19", "stars20"};
-constexpr float kDrakanBlue[3] = {0.1f, 0.1f, 1.0f};
-inline constexpr const char* kDrakanArcs[][2] = {
-    {"stars04", "stars03"}, {"stars03", "stars02"}, {"stars02", "stars01"}, {"stars12", "stars11"}};
-inline constexpr int kDrakanArcsAFrame = 2;
-constexpr float kDrakanArcHalf = 0.10f;  // 20 units wide
+// Its stars, their blue and its arcs are its recipe's show.bones.stars, show.star_tint and
+// show.arcs (sprint E4c).
 constexpr int32_t kDrakanNumber = 73;
 // MONSTER_GREAT_DRAKAN, the Drakan's body in black and red: no stars and no arcs, but a
 // BITMAP_FIRE at Scale 0.3 on bone 18, stars13, each frame (ZzzCharacter.cpp:8867-8879) -- ours
@@ -672,24 +644,9 @@ constexpr float kHandFlameScale = 0.2f;
 // -1.3 terrain light is not carried either.
 // show tag "burning": DeathBeamKnight01 (its recipe's show.tags).
 // Its bones are its recipe's show.bones.burning (sprint E4b).
-struct BurnSegment {
-    int8_t from, to;
-    float scale;
-};
 // wingLeft and wingRight (their last four at 0.5), then arm_leg_Left and arm_leg_Right at 0.6.
-inline constexpr BurnSegment kBurnSegments[] = {
-    {0, 2, 1.0f},   {2, 3, 1.0f},   {2, 4, 1.0f},   {4, 5, 1.0f},   {5, 6, 1.0f},
-    {4, 7, 1.0f},   {7, 8, 1.0f},   {4, 9, 1.0f},   {9, 10, 1.0f},  {4, 11, 1.0f},
-    {11, 12, 1.0f}, {6, 5, 0.5f},   {8, 7, 0.5f},   {10, 9, 0.5f},  {12, 11, 0.5f},
-    {0, 13, 1.0f},  {13, 14, 1.0f}, {13, 15, 1.0f}, {15, 16, 1.0f}, {16, 17, 1.0f},
-    {15, 18, 1.0f}, {18, 19, 1.0f}, {15, 20, 1.0f}, {20, 21, 1.0f}, {15, 22, 1.0f},
-    {22, 23, 1.0f}, {17, 16, 0.5f}, {19, 18, 0.5f}, {21, 20, 0.5f}, {23, 22, 0.5f},
-    {29, 28, 0.6f}, {28, 27, 0.6f}, {34, 33, 0.6f}, {33, 30, 0.6f},
-    {26, 25, 0.6f}, {25, 24, 0.6f}, {32, 31, 0.6f}, {31, 30, 0.6f},
-};
-// And every other frame `body` {30, 0} at 1.3 and a subtype 3 at `head` 1 at 0.5.
-constexpr int kBurnBody[2] = {30, 0};
-constexpr int kBurnHead = 1;
+// And every other frame `body` at 1.3 and a subtype 3 at `head` at 0.5. The segments, body and
+// head are its recipe's show.burn (sprint E4c).
 // Ours: the burn at this share of MU's light. At MU's own, ~380 one-metre flames added over each
 // other under this renderer's bloom were one white blot that hid the knight (arena, 2026-10-06).
 constexpr float kBurnLight = 0.15f;

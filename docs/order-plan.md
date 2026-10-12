@@ -841,6 +841,28 @@ name (aura lights, eye trails, bone lists, the Hydra's heads, the arcs, the infe
 - **Left for E4c:** the Queen's and the Drakan's arc blocks (with the Drakan's stars and blue),
   kHydraHeads with their mouths, kForestOrcClaws' bone pairs and kBurnSegments.
 
+### Slice E4c: the structured shows, as done
+
+- **In five recipes' `show`:** the Queen's `bones.stars` (her head) and `arcs` {pairs, a_frame,
+  half}; the Drakan's `bones.stars` (21), `star_tint` (its blue) and `arcs`; the Hydra's `heads`
+  (four bones and mouths) and `beam_material`; the Forest Orc's `claws` ([first, last] pairs);
+  the Death Beam Knight's `burn` {segments, body, head}, indices into its `bones.burning`.
+  Their tunings -- colours, dims, the claws' lengths and light -- stay in play_tuning.h.
+- **Play::fit's Queen and Drakan branches became one block:** both now take their stars, tint
+  and arcs from their own recipes, the Queen's tint null as before. play_show.cpp reads the
+  burn and the Hydra's mouths off the body (`one.figure.body()`).
+- **The size ratchet, missed since E4a:** E4a, E4b and E4b's second part had each grown
+  `figures.cpp` past its recorded 1510 (to 1554), and the second part `play_open.cpp` past 1167
+  (to 1170); their checks' output was read only at its tail. The shows' reading and giving
+  moved out to `game/figure_shows.cpp` (`Figures::readShows`, `Figures::addShown`), so
+  figures.cpp is 1510 again, and the merged block brought play_open.cpp to 1163.
+- **Proved:** shows.json's new rows equal HEAD's tables for all five figures (14 and 4 arc
+  pairs, 21 stars, four heads, three claws, 38 segments) and none elsewhere, earlier fields
+  unchanged; the moved code is verbatim, the merged block gives the Queen and the Drakan what
+  their branches gave; sim_test identical to HEAD's (7441 checks, 0 failed), server_test 27 of
+  27; live in Atlans (the Hydra's), three netbots and a client, every link "none disagreed",
+  0 errors; sizecheck green for every file here.
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

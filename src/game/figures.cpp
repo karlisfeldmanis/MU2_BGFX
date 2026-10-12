@@ -1445,51 +1445,7 @@ void Figures::addMonster(const core::Json& entry) {
         made->walkSafeClip = made->walkClip;
         made->plantSpeedSafe = made->plantSpeed;
     }
-    readShows();
-    if (auto shown = shows_.find(made->name); shown != shows_.end()) {
-        const Show& show = shown->second;
-        made->tags = show.tags;
-        made->auraBone = show.auraBone;
-        for (int i = 0; i < 3; ++i) made->auraColour[i] = show.auraColour[i];
-        made->eyeTrail[0] = show.eyeTrail[0];
-        made->eyeTrail[1] = show.eyeTrail[1];
-        made->boneRoles = show.boneRoles;
-        for (int i = 0; i < 3; ++i) made->tint[i] = show.tint[i];
-        made->tinted = show.tinted;
-    }
-    bodies_[made->name] = std::move(made);
-}
-
-void Figures::readShows() {
-    if (showsRead_) return;
-    showsRead_ = true;
-    const std::string path = core::join(assetDir_, "cooked/figures/shows.json");
-    core::Json shows = core::parseJsonFile(path);
-    if (shows.isNull()) {
-        core::logf("no %s: every monster draws without its own shows. tools/cook.py --only shows",
-                   path.c_str());
-        return;
-    }
-    for (const auto& [name, row] : shows["shows"].members) {
-        Show& show = shows_[name];
-        for (const core::Json& tag : row["tags"].items) show.tags.push_back(tag.string);
-        show.auraBone = row["aura"]["bone"].stringOr("");
-        for (int i = 0; i < 3 && i < int(row["aura"]["colour"].items.size()); ++i) {
-            show.auraColour[i] = float(row["aura"]["colour"].items[size_t(i)].numberOr(0.0));
-        }
-        show.eyeTrail[0] = row["eye_trail"]["right"].stringOr("");
-        show.eyeTrail[1] = row["eye_trail"]["left"].stringOr("");
-        for (const auto& [role, names] : row["bones"].members) {
-            std::vector<std::string> list;
-            for (const core::Json& name : names.items) list.push_back(name.string);
-            show.boneRoles.emplace_back(role, std::move(list));
-        }
-        const core::Json& tint = row["star_tint"];
-        show.tinted = tint.items.size() == 3;
-        for (int i = 0; i < 3 && show.tinted; ++i) {
-            show.tint[i] = float(tint.items[size_t(i)].numberOr(0.0));
-        }
-    }
+    addShown(std::move(made));
 }
 
 bool Figures::borrow(const std::string& name) {

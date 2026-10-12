@@ -748,15 +748,15 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             if (look->has("hydra") && !look->parts.empty()) {
                 const auto& materials = look->parts.front()->materials();
                 for (size_t m = 0; m < materials.size(); ++m) {
-                    if (materials[m].name == kHydraBeamMaterial) one.beamMaterial = int(m);
+                    if (materials[m].name == look->beamMaterial) one.beamMaterial = int(m);
                 }
                 // MU's beams are never drawn: its heads throw red lightning instead.
                 one.figure.hideBodyMaterial(one.beamMaterial);
                 if (look->skeletonMesh) {
                     const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
-                    for (size_t h = 0; h < 4; ++h) {
+                    for (size_t h = 0; h < 4 && h < look->heads.size(); ++h) {
                         for (size_t b = 0; b < bones.size(); ++b) {
-                            if (bones[b].name == kHydraHeads[h].bone) one.headBones[h] = int(b);
+                            if (bones[b].name == look->heads[h].bone) one.headBones[h] = int(b);
                         }
                     }
                 }
@@ -793,7 +793,7 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             one.clawBones.clear();
             if (look->has("forest_orc") && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
-                for (const auto& claw : kForestOrcClaws) {
+                for (const auto& claw : look->claws) {
                     int ends[2] = {-1, -1};
                     for (int e = 0; e < 2; ++e)
                         for (size_t b = 0; b < bones.size(); ++b)
@@ -812,7 +812,7 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             }
             if ((one.blizzard || drakan) && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
-                const auto find = [&](const char* name) {
+                const auto find = [&](const std::string& name) {
                     for (size_t b = 0; b < bones.size(); ++b) {
                         if (bones[b].name == name) return int(b);
                     }
@@ -826,22 +826,15 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                         one.arcBones.push_back(b);
                     }
                 };
-                if (one.blizzard) {
-                    if (const int head = find(kQueenLightBone); head >= 0) {
-                        one.starBones.push_back(head);
-                    }
-                    arcs(kQueenArcs);
-                    one.arcsAFrame = kQueenArcsAFrame;
-                    one.arcHalf = kQueenArcHalf;
-                } else {
-                    for (const char* name : kDrakanStars) {
-                        if (const int star = find(name); star >= 0) one.starBones.push_back(star);
-                    }
-                    one.starTint = kDrakanBlue;
-                    arcs(kDrakanArcs);
-                    one.arcsAFrame = kDrakanArcsAFrame;
-                    one.arcHalf = kDrakanArcHalf;
+                // The Queen's and the Drakan's alike, each from its own recipe: its star bones,
+                // their colour (none for her, so the starlight's), and its arcs.
+                for (const std::string& name : look->bonesFor("stars")) {
+                    if (const int star = find(name); star >= 0) one.starBones.push_back(star);
                 }
+                one.starTint = look->starTint();
+                arcs(look->arcPairs);
+                one.arcsAFrame = look->arcsAFrame;
+                one.arcHalf = look->arcHalf;
             }
             one.auraBone = -1;
             if (!look->auraBone.empty() && look->skeletonMesh) {

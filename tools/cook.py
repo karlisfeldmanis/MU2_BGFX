@@ -3485,6 +3485,16 @@ def cook_shows(out_dir):
                 one["bones"] = {role: list(row["names"]) for role, row in show["bones"].items()}
             if "star_tint" in show:
                 one["star_tint"] = list(show["star_tint"]["colour"])
+            if "arcs" in show:
+                one["arcs"] = {k: show["arcs"][k] for k in ("pairs", "a_frame", "half")}
+            if "heads" in show:
+                one["heads"] = show["heads"]["rows"]
+            if "beam_material" in show:
+                one["beam_material"] = show["beam_material"]["name"]
+            if "claws" in show:
+                one["claws"] = show["claws"]["pairs"]
+            if "burn" in show:
+                one["burn"] = {k: show["burn"][k] for k in ("segments", "body", "head")}
             shows[doc["item"]] = one
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "shows.json")

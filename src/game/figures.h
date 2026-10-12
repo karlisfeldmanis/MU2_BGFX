@@ -12,6 +12,7 @@
 
 #include "core/json.h"
 #include <algorithm>
+#include <array>
 #include <condition_variable>
 #include <deque>
 #include <memory>
@@ -179,6 +180,27 @@ struct FigureBody {
     float tint[3] = {0.0f, 0.0f, 0.0f};
     bool tinted = false;
     const float* starTint() const { return tinted ? tint : nullptr; }
+    // The structured shows (sprint E4c): the Queen's and the Drakan's arcs, bone pairs with how
+    // many a reference frame and how wide; the Hydra's heads, each a bone and its mouth in bind
+    // space, and the material its beams were; the Forest Orc's claws, [first, last] bone pairs;
+    // the Death Beam Knight's burn, segments as indices into its show.bones.burning.
+    std::vector<std::array<std::string, 2>> arcPairs;
+    int arcsAFrame = 0;
+    float arcHalf = 0.0f;
+    struct Head {
+        std::string bone;
+        float mouth[3] = {0.0f, 0.0f, 0.0f};
+    };
+    std::vector<Head> heads;
+    std::string beamMaterial;
+    std::vector<std::array<std::string, 2>> claws;
+    struct BurnSegment {
+        int from = 0, to = 0;
+        float scale = 1.0f;
+    };
+    std::vector<BurnSegment> burnSegments;
+    int burnBody[2] = {0, 0};
+    int burnHead = 0;
     BodyKind kind = BodyKind::Character;
     std::vector<const content::Mesh*> parts;   // skinned, all against one skeleton
     // How each part's plus shows, beside `parts`; empty, or shorter, is +0. A body
@@ -462,6 +484,9 @@ private:
     void addMonster(const core::Json& entry);
     // Every figure's show tags, cooked/figures/shows.json, read the first time a monster is added.
     void readShows();
+    // A body made, given its recipe's show (tags, bones and the rest) and kept
+    // (game/figure_shows.cpp).
+    void addShown(std::unique_ptr<FigureBody> made);
     bool showsRead_ = false;
     struct Show {
         std::vector<std::string> tags;
@@ -471,6 +496,16 @@ private:
         std::vector<std::pair<std::string, std::vector<std::string>>> boneRoles;
         float tint[3] = {0.0f, 0.0f, 0.0f};
         bool tinted = false;
+        // E4c's structured shows, as FigureBody holds them.
+        std::vector<std::array<std::string, 2>> arcPairs;
+        int arcsAFrame = 0;
+        float arcHalf = 0.0f;
+        std::vector<FigureBody::Head> heads;
+        std::string beamMaterial;
+        std::vector<std::array<std::string, 2>> claws;
+        std::vector<FigureBody::BurnSegment> burnSegments;
+        int burnBody[2] = {0, 0};
+        int burnHead = 0;
     };
     std::unordered_map<std::string, Show> shows_;
     // Which clips a finished body stands and walks in: the stance's own row, or the idle

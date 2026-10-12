@@ -61,9 +61,9 @@ Traced from ebe25845 (Queen Rainer).
    - the recipe's `rules` (drops, resist, poisons, chill_odds, bolt, boss, split, bulk; since
      E1), then `./mu make realm`, which writes `sim/breeds_table.inc`;
    - the recipe's `show`: `tags` (E4a: what Play asks `has("tag")` for), `aura`,
-     `eye_trail`, `bones` {role: names} and `star_tint` (E4b), written by `./mu make realm`
-     into cooked/figures/shows.json;
-   - `game/play_tuning.h`: a show's tunings, and the arcs, claws and Hydra heads (until E4c);
+     `eye_trail`, `bones` {role: names}, `star_tint` (E4b), `arcs`, `heads`, `beam_material`,
+     `claws` and `burn` (E4c), written by `./mu make realm` into cooked/figures/shows.json;
+   - `game/play_tuning.h`: a show's tunings (colours, dims, lengths, cadences) alone;
    - `game/play.cpp`, `play.h`, `play_open.cpp` (sounds), `play_show.cpp` (its show);
    - a `game/fx/` pair for its own effect, plus `source/sounds/sounds.json` and
      `cook.py --only showing` (about 9 min).

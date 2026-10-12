@@ -7062,6 +7062,65 @@
     "tags": [
       "drakan"
     ],
-    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it."
+    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it.",
+    "arcs": {
+      "a_frame": 2,
+      "half": 0.1,
+      "note": "play_tuning.h's comment by its tag (\"drakan\") says where MU draws it. Sprint E4c moved it here from kDrakanArcs, kDrakanArcsAFrame and kDrakanArcHalf.",
+      "pairs": [
+        [
+          "stars04",
+          "stars03"
+        ],
+        [
+          "stars03",
+          "stars02"
+        ],
+        [
+          "stars02",
+          "stars01"
+        ],
+        [
+          "stars12",
+          "stars11"
+        ]
+      ]
+    },
+    "bones": {
+      "stars": {
+        "names": [
+          "stars04",
+          "stars03",
+          "stars02",
+          "stars01",
+          "stars00",
+          "stars13",
+          "stars05",
+          "stars10",
+          "stars09",
+          "stars12",
+          "stars11",
+          "stars08",
+          "stars07",
+          "stars06",
+          "stars14",
+          "stars15",
+          "stars16",
+          "stars17",
+          "stars18",
+          "stars19",
+          "stars20"
+        ],
+        "note": "play_tuning.h's comment by its tag (\"drakan\") says where MU draws it. Sprint E4c moved it here from kDrakanStars."
+      }
+    },
+    "star_tint": {
+      "colour": [
+        0.1,
+        0.1,
+        1.0
+      ],
+      "note": "play_tuning.h's comment by its tag (\"drakan\") says where MU draws it. Sprint E4c moved it here from kDrakanBlue."
+    }
   }
 }

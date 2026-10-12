@@ -1015,7 +1015,7 @@ private:
         // An Alquamos: its star bones (show.bones.stars) and whether its blow throws ribbons.
         std::vector<int> starBones;
         bool starRibbons = false;
-        // A Forest Orc's claws (kForestOrcClaws): first and last bone of each, flattened.
+        // A Forest Orc's claws (show.claws): first and last bone of each, flattened.
         std::vector<int> clawBones;
         // A Crust's glide (kGlideFigures): where it is drawn, eased toward where the realm has it
         // rather than walked there; -1 until first placed.
@@ -1024,7 +1024,7 @@ private:
         bool phoenix = false;
         bool shieldUp = false;
         float glideX = -1.0f, glideY = -1.0f;
-        // A Queen Rainer's crackle (kQueenArcs): bone pairs, flattened, and which are lit this
+        // A Queen Rainer's crackle (show.arcs): bone pairs, flattened, and which are lit this
         // reference frame, a bit each.
         std::vector<int> arcBones;
         uint32_t arcLit = 0;
@@ -1046,10 +1046,10 @@ private:
         // a hand wandering round it). The last two throw no embers. Or the Hydra (the "hydra" tag),
         // which throws none and wears MU's flare on its gem.
         enum class Beams : uint8_t { Laser, Blur, Thunder, Horn };
-        // The Hydra's BlendMesh, its four breath beams (kHydraBeamMaterial): never drawn, its
+        // The Hydra's BlendMesh, its four breath beams (show.beam_material): never drawn, its
         // heads' red lightning in their place; -1 on everything else.
         int beamMaterial = -1;
-        // Its four heads' bones (kHydraHeads), -1 when missing, and the head the next bolt
+        // Its four heads' bones (show.heads), -1 when missing, and the head the next bolt
         // leaves: one after another round the four.
         int headBones[4] = {-1, -1, -1, -1};
         int nextHead = 0;
@@ -1298,7 +1298,7 @@ private:
         float wait = 0.0f;
         // Seconds before it starts at all: a Lizard King's bolts wait for its swing (laserCasts_).
         float delay = 0.0f;
-        // Which of a Hydra's heads the bolt leaves (kHydraHeads), and whether its sound has gone.
+        // Which of a Hydra's heads the bolt leaves (show.heads), and whether its sound has gone.
         int head = 0;
         bool heard = false;
         // Whether its lightning has left its wisp of smoke on what it struck (ShadowStars::wisp).

@@ -320,6 +320,7 @@ add_library(mu_game STATIC
   src/game/world/ornaments.cpp
   src/game/world/shades.cpp
   src/game/figures.cpp
+  src/game/figure_shows.cpp
   src/game/crowd.cpp
   src/game/pets.cpp
   src/game/wings.cpp
