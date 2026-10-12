@@ -165,8 +165,8 @@ def t_show(a):
         words.append("arena")
     answers = studio(words)
     if a["kind"] == "monster" and a.get("fight", True):
-        answers.append("the arena opens in a window of its own: a character fights it in its world; "
-                       "arena_log reads how the fight goes")
+        answers.append("the fight is in the studio now: a level-80 knight against it at its spawn, the panels "
+                       "over it; arena_log reads how it goes, `do arena off` ends it")
     return "\n".join(answers)
 
 
@@ -347,7 +347,7 @@ TOOLS = [
     ("show", t_show,
      "Put a thing where the user sees it in the open studio: on the bench, in its own place (scene Home: a "
      "monster at its spawn in its world, an armour set on the character screen, the rest at Lorencia's bonfire), "
-     "and a monster fighting a character in the arena window. Do this first when you start on a thing, so the "
+     "and a monster fighting a character, inside the studio. Do this first when you start on a thing, so the "
      "user watches it change.",
      {"kind": {"type": "string", "enum": ["monster", "object", "weapon", "armour", "wings", "person"]},
       "name": {"type": "string", "description": "the recipe's name, as the studio's browser lists it"},
@@ -377,7 +377,9 @@ TOOLS = [
      {"name": {"type": "string"}}, ["name"]),
     ("edit", t_edit,
      "Change source/ in place, journalled, only the touched text: how=set (one value), insert (a value put in "
-     "at path: a list's index, or a new key), remove (path taken out). The studio's inspector shows it at once.",
+     "at path: a list's index, or a new key), remove (path taken out). The studio's inspector shows it at once, "
+     "and an edit of the scene world's objects (objects.N.at / angle.2 / scale, an insert or a remove) moves "
+     "them on screen as soon as it is written.",
      {"target": {"type": "string", "description": "a recipe's name or a file under source/ or sheets/"},
       "path": {"type": "string", "description": "dotted, list indices as numbers: islands.0.material"},
       "value": {"description": "JSON value (not for remove)"},

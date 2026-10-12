@@ -3,7 +3,7 @@
 //
 //   subject <tab>|<name>   open a tab of the browser and put a name of it on the bench
 //   scene <Stage|Home|w>   stand it there          plus <N>     the shine at +N
-//   swap                   Read again              arena        Simulate combat
+//   swap                   Read again              arena [off]  Simulate combat, in the studio
 //   place | pick <model> | nudge <dx> <dz>          Place objects, as the window does
 //   add <model> | duplicate | delete                 ... and sprint G's: add at the view's middle
 //   mode objects|gates|townsfolk|ground              what Place places; duplicate and delete follow it
@@ -66,6 +66,10 @@ std::string StudioDesk::act(Context& ctx, game::ModelBench& bench, const std::st
     if (what == "tab light") {
         panels_.showLight();
         return "ok the Light tab";
+    }
+    if (what == "arena off") {
+        closeArena();
+        return "ok the arena closes";
     }
     if (what == "arena") {
         if (!bench.subjectBody() || bench.subjectBody()->kind != game::BodyKind::Monster) {

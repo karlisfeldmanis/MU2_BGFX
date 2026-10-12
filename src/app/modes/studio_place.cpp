@@ -191,6 +191,99 @@ int StudioPlace::lineOf(game::World& world, size_t instance) const {
     return -1;
 }
 
+int StudioPlace::instanceOf(game::World& world, size_t line) const {
+    const core::Json& o = source_["objects"].at(line);
+    const std::string model = o["model"].stringOr("");
+    const double x = o["at"].at(0).numberOr(0.0) / perTile_, z = -o["at"].at(1).numberOr(0.0) / perTile_;
+    const content::CookedTown& town = world.town().cooked();
+    for (size_t i = 0; i < town.instances.size(); ++i) {
+        const content::TownInstance& one = town.instances[i];
+        if ((one.flags & 8) != 0 || town.models[one.model].name != model) continue;
+        if (std::fabs(x - one.position[0]) < 0.02 && std::fabs(z - one.position[2]) < 0.02) return int(i);
+    }
+    return -1;
+}
+
+bool StudioPlace::follow(game::World& world, const core::Json& line) {
+    if (line["file"].stringOr("") != file_ || !world.town().isOpen() || source_.isNull()) return false;
+    // "objects.12.at.0" into its steps.
+    std::vector<std::string> steps;
+    const std::string dotted = line["path"].stringOr("");
+    for (size_t at = 0; at <= dotted.size();) {
+        size_t end = dotted.find('.', at);
+        if (end == std::string::npos) end = dotted.size();
+        steps.push_back(dotted.substr(at, end - at));
+        at = end + 1;
+    }
+    core::Json* objects = member(source_, "objects");
+    if (!objects || steps.size() < 2 || steps[0] != "objects") return false;
+    const int n = std::atoi(steps[1].c_str());
+    const std::string op = line["op"].stringOr("set");
+    game::Town& town = world.town();
+    const content::Ground& ground = world.ground();
+    if (op == "remove" && steps.size() == 2 && n >= 0 && n < int(objects->items.size())) {
+        const int shown = instanceOf(world, size_t(n));
+        if (shown >= 0) town.setHidden(uint32_t(shown), true);
+        objects->items.erase(objects->items.begin() + n);
+        if (line_ == n) picked_ = line_ = -1;
+        else if (line_ > n) --line_;
+        return true;
+    }
+    if (op == "insert" && steps.size() == 2 && n >= 0 && n <= int(objects->items.size())) {
+        const core::Json& o = line["new"];
+        const std::string model = o["model"].stringOr("");
+        // A template of the model the source holds, for its flags, the cook's lift and light.
+        const content::CookedTown& cooked = town.cooked();
+        int found = -1, held = -1;
+        for (size_t i = 0; i < cooked.instances.size() && found < 0; ++i) {
+            if (cooked.models[cooked.instances[i].model].name != model) continue;
+            if ((held = lineOf(world, i)) >= 0) found = int(i);
+        }
+        objects->items.insert(objects->items.begin() + n, o);
+        if (line_ >= n) ++line_;
+        if (found < 0) return true;   // a model the town has not cooked: in the file, not shown
+        content::TownInstance one = cooked.instances[size_t(found)];
+        const core::Json& was = objects->items[size_t(held >= n ? held + 1 : held)];
+        const float lift = one.position[1] - float(was["at"].at(2).numberOr(0.0) / perTile_);
+        one.position[0] = float(o["at"].at(0).numberOr(0.0) / perTile_);
+        one.position[2] = float(-o["at"].at(1).numberOr(0.0) / perTile_);
+        one.position[1] = (one.flags & 1) ? ground.heightAt(one.position[0], one.position[2])
+                                          : float(o["at"].at(2).numberOr(0.0) / perTile_) + lift;
+        one.yaw = float(o["angle"].at(2).numberOr(0.0)) * kPi / 180.0f;
+        one.scale = float(o["scale"].numberOr(1.0));
+        one.flags = uint16_t(one.flags & ~8);
+        town.addInstance(one);
+        return true;
+    }
+    if (op != "set" || steps.size() < 3 || n < 0 || n >= int(objects->items.size())) return false;
+    const int shown = instanceOf(world, size_t(n));
+    core::Json& o = objects->items[size_t(n)];
+    const double value = line["new"].numberOr(0.0);
+    const std::string& field = steps[2];
+    const int k = steps.size() > 3 ? std::atoi(steps[3].c_str()) : -1;
+    core::Json* slot = field == "scale" ? member(o, "scale")
+                       : (field == "at" || field == "angle") && k >= 0 && member(o, field.c_str()) &&
+                               k < int(member(o, field.c_str())->items.size())
+                           ? &member(o, field.c_str())->items[size_t(k)]
+                           : nullptr;
+    if (!slot) return false;
+    const double old = slot->number;
+    slot->number = value;
+    if (shown < 0) return true;
+    content::TownInstance& one = town.instanceAt(size_t(shown));
+    float position[3] = {one.position[0], one.position[1], one.position[2]};
+    float yaw = one.yaw;
+    if (field == "at" && k == 0) position[0] = float(value / perTile_);
+    if (field == "at" && k == 1) position[2] = float(-value / perTile_);
+    if (field == "at" && k == 2 && (one.flags & 1) == 0) position[1] += float((value - old) / perTile_);
+    if ((one.flags & 1) != 0) position[1] = ground.heightAt(position[0], position[2]);
+    if (field == "angle" && k == 2) yaw = float(value) * kPi / 180.0f;
+    if (field == "scale") one.scale = float(value);
+    town.movePlacement(uint32_t(shown), yaw, position);
+    if (picked_ == shown) storedY_ = position[1];
+    return true;
+}
+
 bool StudioPlace::pointer(Context& ctx, game::World& world, const gfx::Camera& camera,
                           bool overPanels) {
     if (!world.town().isOpen() || source_.isNull()) return false;

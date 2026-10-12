@@ -489,6 +489,7 @@ add_executable(mu2
   src/app/modes/studio_place.cpp
   src/app/modes/studio_marks.cpp
   src/app/modes/studio_paint.cpp
+  src/app/modes/studio_arena.cpp
   src/app/modes/studio_control.cpp
 )
 target_include_directories(mu2 PRIVATE src extern ${CMAKE_BINARY_DIR}/generated)

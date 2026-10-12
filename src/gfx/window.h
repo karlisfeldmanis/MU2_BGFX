@@ -126,6 +126,11 @@ public:
 
     // Held, rather than the edge `clicked` reports: a drag is a thing that continues.
     bool held(int button) const { return held_[button & 1]; }
+    // This frame's buttons taken from whatever reads them after: the studio's panels have the
+    // pointer, and the game played under them (app/modes/studio_arena.h) must not walk to it.
+    void swallowPointer() {
+        for (int i = 0; i < 2; ++i) clicked_[i] = released_[i] = held_[i] = false;
+    }
     // How far the pointer moved since the last pump, in framebuffer pixels.
     void pointerDelta(float* x, float* y) const { *x = deltaX_; *y = deltaY_; }
     // The wheel since the last pump, in whatever units the OS reports. Positive is towards

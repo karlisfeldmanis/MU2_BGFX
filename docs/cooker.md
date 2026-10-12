@@ -6,7 +6,7 @@ the **cooker MCP server** (tools/mu/mcp_server.py, registered in `.mcp.json`). T
 every step on their screen as it happens:
 
 - the thing put where it lives: a monster at its spawn in its own world, fighting a character
-  in the arena window;
+  inside the studio;
 - the source edited, with the inspector showing the new value;
 - the cook's progress bars;
 - the new version swapped in when the cook finishes;
@@ -28,14 +28,16 @@ Start every piece of content work with:
 1. **`status`**: is the studio open, and what is on its bench? If no studio is open, ask the
    user to open it. Call `studio_open` only when they ask you to: a window takes their focus.
 2. **`show`** the thing you are working on: `show kind=monster name=DeathTree01`. That opens
-   Aida, puts the Death Tree on the bench at its spawn, and opens the arena, where a character
-   fights it. For an object, weapon, armour set, wings or a person, it shows the thing in its
+   Aida, puts the Death Tree on the bench at its spawn, and starts the arena there, inside the
+   studio: a level-80 knight with Kris fights it, the panels over the fight. `do "arena off"`
+   ends it. For an object, weapon, armour set, wings or a person, it shows the thing in its
    Home scene. From now on the user is watching it.
 3. **`shot`** to see what the user sees, before and after each change. Read the picture.
 4. Change the source with **`edit`** (`how` set, insert or remove), **`gate`**, **`light`**,
    or **`do`** with the studio's words (Place's `pick`, `nudge`, `add`, `duplicate`, `delete`,
-   `mode`, `mark`, `budge`, `look`, `way`, `brush`, `dab`, `undo`). Place's words move things on
-   screen at once.
+   `mode`, `mark`, `budge`, `look`, `way`, `brush`, `dab`, `undo`). Both move things on screen at
+   once: the studio follows a journalled edit of the scene world's objects (`objects.N.at`,
+   `angle.2`, `scale`, an insert or a remove) as soon as it is written.
 5. **`plan`**, then **`cook`** (only when you may, see "Cooking" below), then **`jobs`**
    with `wait`. The studio shows the bars, and when the cook is of what is on the bench, it
    swaps the new version in, and a monster's arena restarts on the new rules.
@@ -142,7 +144,8 @@ scale}`.
 - Delete: `--remove objects.N`. Every later index moves up one.
 - Then `./mu make placements <w>`.
 
-The game's x is `at[0] / 100` metres, and its z is `-at[1] / 100`. Objects the index adds
+The game's x is `at[0] / 100` metres, and its z is `-at[1] / 100`. In the open studio the
+object moves as soon as the edit is written, before the cook. Objects the index adds
 (assets/ holds more than source/) are not in the file and cannot be edited this way.
 
 **Move or add a townsperson.**
@@ -204,7 +207,7 @@ src/app/modes/studio_control.cpp.
 |---|---|
 | `subject <tab>\|<name>` | put a thing on the bench; tabs: World objects, Monsters, People, Armour sets, Weapons, Wings, Figure parts |
 | `scene Stage\|Home\|<world>` | the plain stage, the subject's own place, or a world |
-| `plus <N>`, `swap`, `arena` | the item's shine at +N, read the cooked subject again, a monster's fight window |
+| `plus <N>`, `swap`, `arena`, `arena off` | the item's shine at +N, read the cooked subject again, a monster's fight in the studio |
 | `place`, `mode objects\|gates\|townsfolk\|ground` | open Place, and what it edits |
 | `pick <model>`, `nudge <dx> <dz>`, `add <model>`, `duplicate`, `delete` | objects, at the view's middle (the subject's spot) |
 | `mark <n>`, `budge <dc> <dr>`, `look <n>`, `way <world>` | a gate by number or a townsperson by index; a new gate pair |

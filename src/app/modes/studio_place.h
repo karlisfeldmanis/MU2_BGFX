@@ -60,8 +60,14 @@ public:
     void panel(Context& ctx, game::World& world, studio::Cooker& cooker, const gfx::Camera& camera,
                float x, float y, float w, float h);
     void drop() { picked_ = -1; }
+    // Another hand's journalled edit of this world's objects (an agent's mu edit), made on
+    // screen as it is in the file: a set of objects.N.at.k, angle.2 or scale moves, turns or
+    // scales the instance; an insert of objects.N stands it (copied from one of its model); a
+    // remove hides it. False when the line is not one of those, for a reread instead.
+    bool follow(game::World& world, const core::Json& line);
     // The source read again: another hand edited it (StudioDesk::watchJournal).
     void reread(Context& ctx) {
+        if (world_.empty()) return;
         const std::string name = world_;
         world_.clear();
         world(ctx, name);
@@ -81,6 +87,8 @@ public:
 private:
     void match(game::World& world);
     int lineOf(game::World& world, size_t instance) const;
+    // The other way: the shown instance standing where source line `line` says, or -1.
+    int instanceOf(game::World& world, size_t line) const;
     void write(Context& ctx, game::World& world, studio::Cooker& cooker);
     // The source object `o` appended to the source's list, and the town instance `one` with it.
     bool append(game::World& world, studio::Cooker& cooker, const core::Json& o,

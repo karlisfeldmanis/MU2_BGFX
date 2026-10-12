@@ -67,6 +67,15 @@ public:
     // The refinement the inspector asked for this frame, once; -1 if none.
     int takePlus() { const int p = plusAsked_; plusAsked_ = -1; return p; }
     bool wantsPointer() const { return gui_.wantsPointer(); }
+    // What the desk asked of the arena since it was last taken: 1 open (`breed` in `world`),
+    // 2 close, 0 nothing; and BenchMode's word on whether it is up.
+    int takeArena(std::string* breed, std::string* world) {
+        const int ask = arenaAsk_;
+        arenaAsk_ = 0;
+        *breed = arenaBreed_, *world = arenaWorld_;
+        return ask;
+    }
+    void arenaIs(bool up) { arenaOn_ = up; }
     bool wantsKeys() const { return gui_.wantsKeys(); }
     void shutdown();
 
@@ -77,7 +86,7 @@ public:
 private:
     void watchJobs(game::ModelBench& bench);
     // Another hand's edits (an agent's mu edit, the Cooker's MCP): the panels read again.
-    void watchJournal(Context& ctx, double now);
+    void watchJournal(Context& ctx, game::World& town, double now);
     // One thing the card would do, by name: MU_STUDIO_DO's lines and the control socket's
     // (app/modes/studio_control.cpp). The answer is one line: "ok ..." or "error ...".
     std::string act(Context& ctx, game::ModelBench& bench, const std::string& world,
@@ -87,10 +96,11 @@ private:
     void serveControl(Context& ctx, game::ModelBench& bench, const std::string& world,
                       game::World& town);
     void closeControl();
-    // The arena window (F5): `mu2 --arena <breed> --world <world>`, a process of its own.
+    // The arena (F5, inside the studio since 2026-10-12: app/modes/studio_arena.h). The desk
+    // asks; BenchMode, which owns the frame, opens and closes it at the next frame's start.
     void openArena(const std::string& breed, const std::string& world);
     void closeArena();
-    bool arenaUp();
+    bool arenaUp() const { return arenaOn_; }
     void startSwap(game::ModelBench& bench, const std::string& name);
     void stepSwap(Context& ctx, game::ModelBench& bench, const std::string& world);
 
@@ -110,7 +120,8 @@ private:
     std::string shelfRoot_;   // MU2_BGFX: ./mu and shots/ are under it
     std::string lastSwap_;    // the last swap's folder, for the card
     int comparePid_ = 0;
-    int arenaPid_ = 0;
+    int arenaAsk_ = 0;   // 1 open, 2 close: for BenchMode to take
+    bool arenaOn_ = false;
     std::string arenaBreed_, arenaWorld_;
     int frame_ = 0;   // this desk's frames
     std::vector<std::pair<int, std::string>> script_;   // MU_STUDIO_DO

@@ -18,6 +18,7 @@
 #include "core/log.h"
 #include "game/bench.h"
 #include "game/figures.h"
+#include "game/world/world.h"
 #include "imgui.h"
 
 extern "C" char** environ;
@@ -87,7 +88,7 @@ std::string StudioDesk::targetOf(const game::ModelBench& bench) {
            path.substr(meshes + 8, dot - meshes - 8);
 }
 
-void StudioDesk::watchJournal(Context& ctx, double now) {
+void StudioDesk::watchJournal(Context& ctx, game::World& town, double now) {
     // An agent's edit, through `mu edit` or the Cooker's MCP (tools/mu/mcp_server.py), is a line
     // in the journal like the studio's own: read the panels' sources again, so the user sees it
     // as it is made (the user, 2026-10-12: "we see realtime how objects are made and improved").
@@ -109,7 +110,7 @@ void StudioDesk::watchJournal(Context& ctx, double now) {
     fresh.resize(std::fread(fresh.data(), 1, fresh.size(), file));
     std::fclose(file);
     journalSize_ = size;
-    bool theirs = false, world = false;
+    bool theirs = false, world = false, objects = false;
     for (size_t at = 0; at < fresh.size();) {
         size_t end = fresh.find('\n', at);
         if (end == std::string::npos) end = fresh.size();
@@ -118,7 +119,12 @@ void StudioDesk::watchJournal(Context& ctx, double now) {
         if (line.isNull() || line["who"].stringOr("") == "studio") continue;
         theirs = true;
         const std::string file = line["file"].stringOr("");
-        world |= file.rfind("source/world/", 0) == 0;
+        // A world's objects follow line by line, on screen at once; its other files are read again.
+        if (place_.follow(town, line)) {
+            objects = true;
+        } else {
+            world |= file.rfind("source/world/", 0) == 0;
+        }
         core::logf("studio: %s changed %s %s; read again", line["who"].stringOr("?").c_str(), file.c_str(),
                    line["path"].stringOr(line["op"].stringOr("").c_str()).c_str());
     }
@@ -126,7 +132,7 @@ void StudioDesk::watchJournal(Context& ctx, double now) {
     cooker_.forgetRecipe();
     cooker_.forgetPlan();
     if (world) {
-        place_.reread(ctx);
+        if (!objects) place_.reread(ctx);
         marks_.reread(ctx);
     }
 }
@@ -163,40 +169,12 @@ void StudioDesk::watchJobs(game::ModelBench& bench) {
     seenAll_ = true;
 }
 
-bool StudioDesk::arenaUp() {
-    if (arenaPid_ > 0 && ::waitpid(arenaPid_, nullptr, WNOHANG) == arenaPid_) {
-        core::logf("studio: the arena window was closed");
-        arenaPid_ = 0;
-    }
-    return arenaPid_ > 0;
-}
-
-void StudioDesk::closeArena() {
-    if (!arenaUp()) return;
-    ::kill(arenaPid_, SIGTERM);
-    ::waitpid(arenaPid_, nullptr, 0);
-    arenaPid_ = 0;
-}
+void StudioDesk::closeArena() { arenaAsk_ = 2; }
 
 void StudioDesk::openArena(const std::string& breed, const std::string& world) {
-    closeArena();
-    // The game binary itself, as the studio is: what is fought there is what players fight.
-    const std::string self = shelfRoot_ + "/build/mu2";
-    const std::string log = shelfRoot_ + "/workshop/logs/mu/arena.log";
-    char* argv[] = {const_cast<char*>(self.c_str()), const_cast<char*>("--arena"),
-                    const_cast<char*>(breed.c_str()), const_cast<char*>("--world"),
-                    const_cast<char*>(world.c_str()), const_cast<char*>("--log"),
-                    const_cast<char*>(log.c_str()), nullptr};
-    pid_t pid = 0;
-    if (posix_spawn(&pid, self.c_str(), nullptr, nullptr, argv, environ) != 0) {
-        core::logError("studio: the arena would not start");
-        return;
-    }
-    arenaPid_ = pid;
+    arenaAsk_ = 1;
     arenaBreed_ = breed;
     arenaWorld_ = world;
-    core::logf("studio: the arena for %s in %s (pid %d), its log in workshop/logs/mu/arena.log",
-               breed.c_str(), world.c_str(), pid);
 }
 
 void StudioDesk::startSwap(game::ModelBench& bench, const std::string& name) {
@@ -262,8 +240,10 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
     // Place: only over a town, and before the panels so a pick is this frame's.
     if (onStage) placing_ = false;
     tookPointer_ = false;
+    // The scene's source, read whether placing or not: an agent's edit of its objects is followed
+    // on screen as soon as it is journalled (watchJournal).
+    if (!onStage && town.town().isOpen()) place_.world(ctx, world);
     if (placing_) {
-        place_.world(ctx, world);
         marks_.world(ctx, world);
         marks_.kind(ctx, placeMode_ == 1 ? StudioMarks::Kind::Gates : StudioMarks::Kind::Townsfolk);
         paint_.world(ctx, world);
@@ -300,7 +280,7 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
     shelf_.monster = body && body->kind == game::BodyKind::Monster;
     shelf_.arena = arenaUp();
     watchJobs(bench);
-    watchJournal(ctx, std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count());
+    watchJournal(ctx, town, std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count());
     for (const auto& [at, what] : script_) {
         if (at != frame_) continue;
         const std::string answer = act(ctx, bench, world, town, what);
@@ -381,7 +361,7 @@ void StudioDesk::end() {
 
 void StudioDesk::shutdown() {
     closeControl();
-    closeArena();   // the arena is the studio's window; the cook (mu serve) is not
+    // The arena, being BenchMode's, is closed with it; the cook (mu serve) is not.
     cooker_.close();
     gui_.close();
 }

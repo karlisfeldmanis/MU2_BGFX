@@ -1,10 +1,13 @@
 #include "app/modes/bench_mode.h"
 
+#include <cmath>
+
 #include "app/preloader.h"
 #include "content/showing.h"
 #include "content/tables.h"
 #include "core/loading.h"
 #include "core/log.h"
+#include "game/world/maps.h"
 #include "game/shine.h"
 #include "game/wings.h"
 #include "game/ui/browser_list.h"
@@ -249,10 +252,53 @@ void BenchMode::look(Context& ctx) {
     bench_.zoom(ctx.window.scroll());
 }
 
+void BenchMode::leaveArena(Context& ctx) {
+    if (!arena_.up()) return;
+    arena_.close(ctx);
+    desk_.arenaIs(false);
+    // The bench's light and lamps back, which the arena's world had taken.
+    ctx.time.setScene(onStage_ ? std::string() : game::mapSheet(ctx.paths.sheets, sceneWorld_));
+    if (!onStage_ && world_.town().isOpen() && ctx.args.lampsOn) world_.lamps().light(ctx.renderer);
+}
+
+void BenchMode::steerArena(Context& ctx) {
+    // Taken at the frame's start, before the panels begin theirs: an arena opening runs the
+    // preloader, which draws frames of its own.
+    std::string breed, world;
+    const int ask = desk_.takeArena(&breed, &world);
+    if (ask != 0) leaveArena(ctx);
+    if (ask == 1) {
+        // On the monster's own spawn tile when the bench stands it there (scene Home), else the
+        // arena's own patch.
+        int column = -1, row = -1;
+        if (world == sceneWorld_ && !onStage_) {
+            const float m = world_.ground().metresPerTile();
+            column = int(std::floor(studioStand_[0] / m));
+            row = int(std::floor(-studioStand_[2] / m));
+        }
+        arena_.open(ctx, breed, world, column, row, ctx.paths.root + "/workshop/logs/mu/arena.log");
+    }
+    desk_.arenaIs(arena_.up());
+}
+
 void BenchMode::frame(Context& ctx, const Frame& at) {
     core::Args& args = ctx.args;
     const float deltaSeconds = float(at.deltaSeconds);
+    if (kind_ == Kind::Studio && desk_.isOpen()) steerArena(ctx);
     if (desk_.isOpen()) desk_.begin(ctx, deltaSeconds, at.elapsed);
+    if (arena_.up()) {
+        // The fight is the frame; the panels over it. A click on a panel is not a walk order.
+        if (desk_.wantsPointer()) ctx.window.swallowPointer();
+        arena_.frame(ctx, at);
+        desk_.panels(ctx, bench_, sceneWorld_, world_, arena_.camera(), true);
+        const std::string scene = desk_.takeScene();
+        if (!scene.empty()) {
+            leaveArena(ctx);   // another scene: the fight is left
+            setScene(ctx, scene);
+        }
+        desk_.end();
+        return;
+    }
     // A filter being typed into keeps the arrows and Tab: they are the box's then.
     if (!desk_.wantsKeys()) steer(ctx);
 
@@ -361,6 +407,7 @@ void BenchMode::report(Context& ctx) {
 void BenchMode::shutdown(Context& ctx) {
     desk_.shutdown();
     stage_.shutdown();
+    arena_.close(ctx);
     standShow_.shutdown();
     folk_.clear();
     bench_.shutdown();

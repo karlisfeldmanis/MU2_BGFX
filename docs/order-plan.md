@@ -1505,6 +1505,37 @@ adjusting lighting, tonemaps, shadow, sun, daylight for maps".
   world's objects moves them on screen only after `placements` cooks (Place's words move them
   at once).
 
+### Slice H1: the fight inside the studio, and an agent's object edits on screen, as done
+
+- **The arena is inside the studio** (app/modes/studio_arena.{h,cpp}). BenchMode hosts the
+  game's own PlayMode, raised as `--arena <breed> --world <w>` raises it: a level-80 knight
+  with Kris, the sim deciding each blow. While it is up the frame is the arena's, with the
+  panels drawn over it.
+  - It stands on the monster's spawn tile (`--at`) when the bench stands it Home, instead of
+    Play::Arena's Lorencia patch.
+  - It runs on arguments of its own, swapped into the context around each call, so the
+    studio's --frames, Escape and shots stay the studio's.
+  - It opens at a frame's start, because the preloader draws its own frames.
+  - Closing it re-lays the bench's map light and relights its lamps.
+  - A click on a panel is not a walk order: the new Window::swallowPointer.
+  - Its lines go to workshop/logs/mu/arena.log through core::logTap.
+  - The window process, posix_spawn and waitpid, is gone.
+  - The word `arena off` ends a fight, and a cook still restarts it.
+- **An agent's edit of a world's objects shows at once** (StudioPlace::follow, from
+  StudioDesk::watchJournal). A journalled set of `objects.N.at.k`, `angle.2` or `scale` moves,
+  turns or scales the instance; an insert stands the new object, copied from one of its model;
+  a remove hides it. Place now keeps the scene's source read whether placing or not.
+- Proved through the MCP against a self-quitting studio:
+  - `show DeathTree01` put the fight inside the studio at Aida 213,38: the knight's hits on
+    screen, the log's "the hero hits Death Tree#2 for 8 -- 9952 left", "Stop the arena" on
+    the card;
+  - `arena off` closed it, and no other process was left;
+  - Lorencia's Bonfire01 was edited 2 m east, a copy inserted and removed, and the fire moved
+    back, each seen in the next shot; lorencia.json's hash is as before.
+  - cooker_test 27 and 38 live; layercheck green.
+- The game's own HUD (orbs, belt, minimap) draws under the panels during a fight, as a player
+  sees it.
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

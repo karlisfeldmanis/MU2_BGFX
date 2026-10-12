@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "app/mode.h"
+#include "app/modes/studio_arena.h"
 #include "app/modes/studio_desk.h"
 #include "game/bench.h"
 #include "game/fx/set_shine.h"
@@ -40,7 +41,7 @@ public:
 
     bool open(Context& ctx) override;
     void frame(Context& ctx, const Frame& at) override;
-    const gfx::Camera& camera() const override { return bench_.camera(); }
+    const gfx::Camera& camera() const override { return arena_.up() ? arena_.camera() : bench_.camera(); }
     void report(Context& ctx) override;
     bool quitEarly() const override { return quitEarly_; }
     bool quitting() const override { return desk_.quitAsked(); }
@@ -92,6 +93,10 @@ private:
     const game::FigureBody* shownBody_ = nullptr;
     // The world's townsfolk standing where its manifest says (game/studio_folk.h, sprint G).
     game::StudioFolk folk_;
+    // A monster fought inside the studio (app/modes/studio_arena.h): while up, the frame is its.
+    StudioArena arena_;
+    void steerArena(Context& ctx);
+    void leaveArena(Context& ctx);
     std::string sceneWorld_;
     std::vector<content::ItemRow> plusRows_;   // studioPlus's rows, once read
 };
