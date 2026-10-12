@@ -41,6 +41,7 @@ public:
     const gfx::Camera& camera() const override { return bench_.camera(); }
     void report(Context& ctx) override;
     bool quitEarly() const override { return quitEarly_; }
+    bool quitting() const override { return desk_.quitAsked(); }
     void shutdown(Context& ctx) override;
 
 private:

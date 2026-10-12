@@ -16,6 +16,11 @@
 // in shots/studio/swaps/<name>_<when>/. Eight frames, and the new look is on the bench.
 // The card's Read again runs the same swap with no job, for a cook run by hand.
 //
+// **The control socket** (F7): workshop/.mu/studio.sock takes the same lines one at a time and
+// answers each -- `./mu do "subject Weapons|Kris; scene Home; wait 30; shot /abs/x.png"` -- so
+// an agent drives a studio the user opened, or one it opened for a shot run, and reads back
+// what it asked for.
+//
 // MU_STUDIO_DO="<frame>:<what>;..." does what the card would on those frames, for a shot run
 // with nobody at the mouse: `swap` (Read again), `scene <Stage|Home|world>`, `plus <N>`, `tab light` and `arena` -- until F7's
 // control socket drives the studio (docs/order-plan.md §9c). "40:scene Home;200:swap".
@@ -49,6 +54,8 @@ public:
                 game::World& town, const gfx::Camera& camera, bool onStage);
     // Whether Place had the pointer this frame (a pick or a walk), so the camera keeps still.
     bool tookPointer() const { return tookPointer_; }
+    // `quit` on the control socket: the studio closes as Escape would.
+    bool quitAsked() const { return quit_; }
     void end();
     // While a swap is shooting: the bench is to be updated at heldSeconds() with no delta.
     bool holding() const { return swap_ != Swap::Idle; }
@@ -67,6 +74,15 @@ public:
 
 private:
     void watchJobs(game::ModelBench& bench);
+    // One thing the card would do, by name: MU_STUDIO_DO's lines and the control socket's
+    // (app/modes/studio_control.cpp). The answer is one line: "ok ..." or "error ...".
+    std::string act(Context& ctx, game::ModelBench& bench, const std::string& world,
+                    game::World& town, const std::string& what);
+    // The control socket (F7): workshop/.mu/studio.sock, a line in and a line out.
+    void openControl(Context& ctx);
+    void serveControl(Context& ctx, game::ModelBench& bench, const std::string& world,
+                      game::World& town);
+    void closeControl();
     // The arena window (F5): `mu2 --arena <breed> --world <world>`, a process of its own.
     void openArena(const std::string& breed, const std::string& world);
     void closeArena();
@@ -98,6 +114,17 @@ private:
     int plusAsked_ = -1;
     StudioPlace place_;
     bool placing_ = false, tookPointer_ = false;
+    // The control socket's listener and its clients, each with the frame its next line waits for.
+    int listener_ = -1;
+    std::string controlPath_;
+    struct Client {
+        int fd = -1;
+        std::string in;
+        int waitUntil = 0;
+    };
+    std::vector<Client> clients_;
+    bool quit_ = false;
+    bool hidden_ = false;   // `hide`: the panels left undrawn, for a clean shot
 };
 
 }  // namespace mu::app

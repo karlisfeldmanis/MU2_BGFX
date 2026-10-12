@@ -1293,6 +1293,24 @@ the monsters tab's "Simulate combat" -- is the game's own arena in a window of i
 - Not yet: adding and deleting objects (an edit changes only a value that is there), gates and
   NPC spots, the ground (sprint G's rest).
 
+### Slice F7: the control socket, as done
+
+- An open studio listens on workshop/.mu/studio.sock: a line in, a line out ("ok ..." or
+  "error ..."). `./mu do "subject Monsters|Budge; scene Home; wait 30; hide; shot /abs/x.png;
+  show; status"` drives it -- a studio the user opened, or one the agent opened for a shot run.
+- One list of words, StudioDesk::act (app/modes/studio_control.cpp), serves the socket and
+  MU_STUDIO_DO alike: subject, scene, plus, swap, arena, place, pick, nudge, tab light, hide,
+  show, shot, status, quit; and on the socket `wait N`, which holds that client's next line N
+  frames (a scene lands next frame; a shot is written when its frame is). One line a frame a
+  client. `quit` closes the studio as Escape does (BenchMode::quitting). The last studio
+  opened owns the socket; closing removes it.
+- The studio retries a server it started every half second until it answers (was 2 s).
+- Proved: a studio opened in the background and driven by one `mu do`: status, the Budge Dragon
+  put on the bench, Home, a clean shot with the panels hidden, the panels back, status again, an
+  unknown word refused, and `quit` -- the process gone and the socket removed.
+- It is not headless: macOS has no window-less bgfx path here, so a picture still needs a
+  window, the user's leave for a shot run as before ("never open the client").
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

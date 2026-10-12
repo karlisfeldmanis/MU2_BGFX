@@ -17,6 +17,7 @@
     ./mu cores [N]                           how many cores mu's tools may use, kept per machine
     ./mu recipe <name>                       a recipe's file(s), parsed, and the material library
     ./mu edit <name|file> <path> <value>     one value in place (islands.0.material brass), journalled
+    ./mu do "<line>; <line>; ..."            drive an open studio: subject, scene, shot, wait, status...
     ./mu serve                               the cook's job runner; `mu make` hands it its jobs
     ./mu jobs [--watch [N]] | cancel N [--now] what it is cooking, with bars and time left
 
@@ -69,6 +70,9 @@ def main():
     e.add_argument("target", help="a recipe's name, or a file under source/ or sheets/")
     e.add_argument("path", help="dotted, list indices as numbers: islands.0.material")
     e.add_argument("value", help="JSON (7, 0.35, true, \"brass\") or a bare word for a string")
+
+    d = sub.add_parser("do", parents=[common])
+    d.add_argument("lines", help="the studio's words, ';' between them (app/modes/studio_control.cpp)")
 
     v = sub.add_parser("serve", parents=[common])
     v.add_argument("--stop", action="store_true", help="stop a running one after its job")
@@ -165,6 +169,8 @@ def dispatch(args, say):
         line = edit.edit(args.target, args.path, value, who="mu")
         say(f"{line['file']}: {line['path']} {json.dumps(line['old'])} -> {json.dumps(line['new'])}")
         return True, line
+    if args.command == "do":
+        return drive(args.lines, say)
     if args.command == "serve":
         if args.stop:
             if not serve.alive():
@@ -201,6 +207,30 @@ def dispatch(args, say):
     if args.command == "compare":
         return look.compare(args.a, args.b, args.out, say)
     raise NotFound(f"no command {args.command}")
+
+
+def drive(lines, say):
+    """`mu do`: each line to the studio's control socket, and its answer back, in order."""
+    import socket
+    path = os.path.join(WORKSHOP, ".mu", "studio.sock")
+    answers = []
+    try:
+        with socket.socket(socket.AF_UNIX) as conn:
+            conn.connect(path)
+            conn.settimeout(120)   # a scene that opens a world holds the studio's frame for seconds
+            stream = conn.makefile("rw")
+            for line in [one.strip() for one in lines.split(";") if one.strip()]:
+                stream.write(line + "\n")
+                stream.flush()
+                answer = stream.readline().strip()
+                answers.append({"line": line, "answer": answer})
+                say(f"{line} -> {answer}")
+                if not answer.startswith("ok"):
+                    return False, {"answers": answers}
+    except OSError as failed:
+        say(f"mu do: no studio is listening on {path} ({failed}); open one with build/mu2 --studio")
+        return False, {"error": str(failed), "answers": answers}
+    return True, {"answers": answers}
 
 
 if __name__ == "__main__":

@@ -182,7 +182,8 @@ void Cooker::poll() {
     const double now = wallSeconds();
     if (stream_ < 0) {
         if (now < nextTry_) return;
-        nextTry_ = now + 2.0;
+        // Every half second while a server this studio started is coming up, every two after.
+        nextTry_ = now + (serverPid_ > 0 && !wasConnected_ ? 0.5 : 2.0);
         if (!connect()) {
             // A server that was here and went -- stopped for new code, or by hand -- is
             // started again, no more often than every ten seconds.

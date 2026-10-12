@@ -29,6 +29,7 @@ bool StudioDesk::open(Context& ctx) {
         return false;
     }
     shelfRoot_ = ctx.paths.root;
+    openControl(ctx);
     // The scenes: the Stage, Home, and every world with a cooked town to stand in.
     shelf_.scenes = {"Stage", "Home"};
     std::error_code ignored;
@@ -240,32 +241,9 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
     for (const auto& [at, what] : script_) {
         if (at != frame_) continue;
         core::logf("studio: frame %d does '%s' (MU_STUDIO_DO)", at, what.c_str());
-        if (what == "swap" && swap_ == Swap::Idle) startSwap(bench, bench.browseName(bench.browseIndex()));
-        if (what.rfind("plus ", 0) == 0) plusAsked_ = std::atoi(what.c_str() + 5);
-        if (what == "tab light") panels_.showLight();
-        if (what == "arena" && bench.subjectBody()) openArena(bench.subjectBody()->name, world);
-        if (what == "place") placing_ = true;
-        if (what.rfind("pick ", 0) == 0) {
-            float near[3];
-            for (int a = 0; a < 3; ++a) near[a] = bench.camera().target[a];
-            place_.world(ctx, world);
-            const bool found = place_.pickModel(town, what.substr(5), near);
-            core::logf("studio: picked %s: instance %d, source line %d", what.substr(5).c_str(),
-                       found ? place_.picked() : -1, place_.line());
-        }
-        if (what.rfind("nudge ", 0) == 0) {
-            float dx = 0.0f, dz = 0.0f;
-            std::sscanf(what.c_str() + 6, "%f %f", &dx, &dz);
-            place_.nudge(ctx, town, cooker_, dx, dz);
-        }
-        if (what.rfind("scene ", 0) == 0) {
-            sceneAsked_ = what.substr(6);
-            for (size_t i = 0; i < shelf_.scenes.size(); ++i) {
-                if (shelf_.scenes[i] == sceneAsked_) shelf_.scene = int(i);
-            }
-            shelfCategory_ = -1;
-        }
+        act(ctx, bench, world, town, what);
     }
+    serveControl(ctx, bench, world, town);
     ++frame_;
     stepSwap(ctx, bench, world);
 
@@ -319,11 +297,13 @@ std::string StudioDesk::takeScene() {
 }
 
 void StudioDesk::end() {
-    // Built every frame, as ImGui wants, and left undrawn while a swap is being shot.
-    gui_.end(swap_ == Swap::Idle);
+    // Built every frame, as ImGui wants, and left undrawn while a swap is being shot or the
+    // control socket asked for the panels hidden.
+    gui_.end(swap_ == Swap::Idle && !hidden_);
 }
 
 void StudioDesk::shutdown() {
+    closeControl();
     closeArena();   // the arena is the studio's window; the cook (mu serve) is not
     cooker_.close();
     gui_.close();
