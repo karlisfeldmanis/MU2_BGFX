@@ -439,6 +439,15 @@
         ],
         "note": "MU's bones by name; play_tuning.h's comment by its tag (\"foot_fire\") says where MU reads them. Sprint E4b moved them here from kFootFireBones."
       }
+    },
+    "blow": {
+      "note": "Its Flame of Evil's show (Play::update's boss branch in play.cpp says what each draws; absent, the Balrog's ring of fire and its storm). Sprint E4d moved the choice here from its breed number.",
+      "show": "staff_ring"
+    },
+    "inferno": {
+      "bombs": true,
+      "mesh": false,
+      "note": "The Inferno its blow throws (fx/inferno.h; play_tuning.h's comment by attackTime): `bombs` CreateInferno, `mesh` MODEL_SKILL_INFERNO, `attack_frame` the CheckAttackTime it waits for (none: at once), `first` on Attack 1 alone. Sprint E4d moved it here from kInfernoBlows. Its row: Zaikan."
     }
   }
 }

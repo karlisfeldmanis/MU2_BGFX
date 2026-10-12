@@ -863,6 +863,44 @@ name (aura lights, eye trails, bone lists, the Hydra's heads, the arcs, the infe
   27; live in Atlans (the Hydra's), three netbots and a client, every link "none disagreed",
   0 errors; sizecheck green for every file here.
 
+### Slice E4d: the boss blows, as done
+
+- **`show.inferno` {bombs, mesh, attack_frame?, first?}** in eight recipes (the Tantallos, Zaikan,
+  Beam Knight, Death Beam Knight, both Crusts, both Drakans), kInfernoBlows' rows by breed
+  number with their comments. `attack_frame` is the CheckAttackTime kept as its number, so the
+  wait is `attackTime(n)` computed as before, not a float written down.
+- **`show.blow`** names a boss's Flame of Evil show: `gorgon_ring` (the Death Gorgon),
+  `staff_ring` (the Zaikan), `staff_ring_comets` (the Death Beam Knight), `phantom_spirits`,
+  `phoenix_spirits`, and `none` (the Hydra, the Tantallos, both Drakans); absent, the Balrog's
+  ring and storm (the Balrog, the Golden Dragon). The Phantom Knight's is its first `show`.
+- **play.cpp asks the swinger's figure**, not `tables_.kinds[...].number`: the inferno, the
+  dispatch, and the Dark Phoenix's bolt in fire (its `phoenix` tag). kHydraNumber,
+  kDrakanNumber, kGreatDrakanNumber, kPhantomKnightNumber and kDarkPhoenixNumber are gone.
+  Each breed number has one recipe and one figure, so the figure answers as the number did.
+- **Proved:** shows.json's inferno and blow rows equal HEAD's table and dispatch for all twelve
+  breeds and none elsewhere, earlier fields unchanged; sim_test identical to HEAD's (7441
+  checks, 0 failed), server_test 27 of 27; live in Tarkan (its Infernos and staff rings),
+  three netbots and a client, every link "none disagreed", 0 errors; sizecheck green.
+
+### Sprint E, as finished
+
+A breed is its recipe now. What the C++ held by breed number or figure name, and mu.db held in
+tables, is in `source/monsters/<Name>.json` (and the Yeti's in unbuilt.json, its nests in each
+world's nests.json):
+- `rules` (E1): drops, resistances, poison, chill, bolts, boss, split blow, bulk, generated
+  into `sim/breeds_table.inc`;
+- `combat` (E2): the stats; mu.db's monster tables are gone (E2a, E3), and the dead respawn
+  with them (E2b, the .mur at version 10);
+- nests (E3): `source/world/<w>/nests.json`;
+- `show` (E4): tags, aura, eye trails, bones, star tint, arcs, heads, beam material, claws
+  (the Aida session added from, to, light and until for the Death Rider), burn, inferno and
+  blow, cooked into `cooked/figures/shows.json`.
+
+`./mu make realm` writes both the sim's table and the client's shows. What stays code: each
+show's own drawing and its tunings (colours, dims, lengths, cadences) in play_tuning.h, the
+bosses' bespoke fights (raid, invasion), the events, quests' kill targets and the traps. A plain
+new breed is a recipe and its art; a new kind of show is a tag or a field and its drawing.
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

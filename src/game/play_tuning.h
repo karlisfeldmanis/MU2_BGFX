@@ -469,7 +469,6 @@ constexpr float kLizardShaftWander = 0.06f;
 // show tag "hydra": Hydra01 (its recipe's show.tags).
 // The Silver Valkyrie, whose bolts are Penetration's arrow (Play::volleyShot). Ours.
 // show tag "pierces": SilverValkyrie01 (its recipe's show.tags).
-constexpr int32_t kHydraNumber = 49;
 // Its four heads, whose beams strike (sim kSplitBlows): MU's BlendMesh 5 is never drawn (the
 // user, 2026-10-04: 'from heads we shoot red lightiing not lasers?'), and each beam is the
 // Lizard King's red lightning from a mouth instead -- the bone each beam rides in Monster38 and
@@ -551,18 +550,15 @@ constexpr float kBlizzardWait = 4.0f / 25.0f;
 // show tag "drakan": Drakan01 (its recipe's show.tags).
 // Its stars, their blue and its arcs are its recipe's show.bones.stars, show.star_tint and
 // show.arcs (sprint E4c).
-constexpr int32_t kDrakanNumber = 73;
 // MONSTER_GREAT_DRAKAN, the Drakan's body in black and red: no stars and no arcs, but a
 // BITMAP_FIRE at Scale 0.3 on bone 18, stars13, each frame (ZzzCharacter.cpp:8867-8879) -- ours
 // as the Death Knight's embers, one every kGreatDrakanEmberEvery reference frames.
 // show tag "great_drakan": GreatDrakan01 (its recipe's show.tags).
 // Its bones are its recipe's show.bones.ember (sprint E4b).
 constexpr float kGreatDrakanEmberEvery = 2.0f;
-constexpr int32_t kGreatDrakanNumber = 75;
 // MONSTER_PHANTOM_KNIGHT's boss blow: 36 BITMAP_JOINT_SPIRIT sub 1 at Scale 60 from a metre over
 // it at CheckAttackTime(14) (ZzzCharacter.cpp:1710-1732). Ours: one Evil Spirit release of eight
 // (fx/spirits), the wizard's own joints, at that time -- thirty-six filled the sky.
-constexpr int32_t kPhantomKnightNumber = 72;
 constexpr float kPhantomSpiritWait = 13.0f / 25.0f;  // (14 - 1) / 25 s
 // MONSTER_DARK_PHOENIX, the bird (Monster56) with its rider (Monster57) merged into one body
 // (pipeline/merge_rigs.py). Its plain blow's bolt at CheckAttackTime(14) from the bird's head
@@ -570,7 +566,6 @@ constexpr float kPhantomSpiritWait = 13.0f / 25.0f;  // (14 - 1) / 25 s
 // forty BITMAP_JOINT_SPIRIT at CheckAttackTime(2) and (6) (:1785-1800), ours one Evil Spirit
 // release at the first.
 // show tag "phoenix": DarkPhoenix01 (its recipe's show.tags).
-constexpr int32_t kDarkPhoenixNumber = 77;
 constexpr float kPhoenixBoltWait = 13.0f / 25.0f;    // (14 - 1) / 25 s
 // Its bolt's colour and the light where it bites: the bird's fire, orange-red (the user,
 // 2026-10-07: 'lihgting from phoenix still is blue not orangish/redish'). Ours.
@@ -686,24 +681,8 @@ constexpr float kSpreadDegrees = 20.0f;
 // (ZzzCharacter.cpp:4133-4138; w_CharacterInfo.h:247-250): (n - 1) / 25 s. 0 is
 // CheckAttackTime(1), at once; the Crusts' CheckAttackTime(5) (:1696-1708) is 4/25.
 constexpr float attackTime(int n) { return float(n - 1) / 25.0f; }
-// `first`: on Attack 1 alone, the Drakans' (`c->Object.CurrentAction == MONSTER01_ATTACK1`).
-struct InfernoBlow {
-    int32_t number;
-    bool bombs;
-    bool mesh;
-    float wait = 0.0f;
-    bool first = false;
-};
-inline constexpr InfernoBlow kInfernoBlows[] = {
-    {58, true, false},            // Tantallos
-    {59, true, false},            // Zaikan
-    {61, false, true},            // Beam Knight
-    {63, true, true},             // Death Beam Knight
-    {71, true, true, attackTime(5)},  // Mega Crust
-    {74, true, true, attackTime(5)},  // Alpha Crust
-    {73, true, true, attackTime(11), true},  // Drakan (ZzzCharacter.cpp:1734-1757)
-    {75, true, true, attackTime(11), true},  // Great Drakan, the same case
-};
+// Which breeds throw one, and how, are their recipes' show.inferno (sprint E4d): bombs,
+// mesh, the attack_frame it waits for, and `first`, on Attack 1 alone.
 
 // Charon's light, RenderCharacter's MODEL_NPC_DEVILSQUARE case (ZzzCharacter.cpp:11249-11268):
 // `Vector(3.5f, -12.f, 10.f, p)` on BoneTransform[20], two BITMAP_LIGHTNING+1 sprites at Scale

@@ -375,5 +375,11 @@
     "defense_rate": 270,
     "attack_skill": 50,
     "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. The respawn is rules.drops.regen."
+  },
+  "show": {
+    "blow": {
+      "note": "Its Flame of Evil's show (Play::update's boss branch in play.cpp says what each draws; absent, the Balrog's ring of fire and its storm). Sprint E4d moved the choice here from its breed number.",
+      "show": "phantom_spirits"
+    }
   }
 }

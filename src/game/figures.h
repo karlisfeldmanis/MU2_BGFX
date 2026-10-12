@@ -208,6 +208,17 @@ struct FigureBody {
     std::vector<BurnSegment> burnSegments;
     int burnBody[2] = {0, 0};
     int burnHead = 0;
+    // Its blow's Inferno (show.inferno, sprint E4d): whether it throws one, CreateInferno's bombs
+    // and MODEL_SKILL_INFERNO's mesh, the CheckAttackTime it waits for (0, at once), and whether
+    // on Attack 1 alone.
+    struct Inferno {
+        bool throws = false, bombs = false, mesh = false, first = false;
+        int frame = 0;
+    };
+    Inferno inferno;
+    // Its Flame of Evil's show (show.blow): "gorgon_ring", "staff_ring", "none"...; empty, the
+    // Balrog's.
+    std::string blow;
     BodyKind kind = BodyKind::Character;
     std::vector<const content::Mesh*> parts;   // skinned, all against one skeleton
     // How each part's plus shows, beside `parts`; empty, or shorter, is +0. A body
@@ -513,6 +524,8 @@ private:
         std::vector<FigureBody::BurnSegment> burnSegments;
         int burnBody[2] = {0, 0};
         int burnHead = 0;
+        FigureBody::Inferno inferno;
+        std::string blow;
     };
     std::unordered_map<std::string, Show> shows_;
     // Which clips a finished body stands and walks in: the stance's own row, or the idle

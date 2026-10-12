@@ -299,6 +299,10 @@
         0.08
       ],
       "note": "The Dark Phoenix's fire, ours (the user, 2026-10-07: 'use red tone lighting for phoenix')."
+    },
+    "blow": {
+      "note": "Its Flame of Evil's show (Play::update's boss branch in play.cpp says what each draws; absent, the Balrog's ring of fire and its storm). Sprint E4d moved the choice here from its breed number.",
+      "show": "phoenix_spirits"
     }
   }
 }

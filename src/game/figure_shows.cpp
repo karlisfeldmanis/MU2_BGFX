@@ -81,6 +81,13 @@ void Figures::readShows() {
             show.burnBody[i] = int(row["burn"]["body"].items[size_t(i)].numberOr(0.0));
         }
         show.burnHead = int(row["burn"]["head"].numberOr(0.0));
+        const core::Json& inferno = row["inferno"];
+        show.inferno.throws = !inferno.isNull();
+        show.inferno.bombs = inferno["bombs"].boolOr(false);
+        show.inferno.mesh = inferno["mesh"].boolOr(false);
+        show.inferno.first = inferno["first"].boolOr(false);
+        show.inferno.frame = int(inferno["attack_frame"].numberOr(0.0));
+        show.blow = row["blow"].stringOr("");
     }
 }
 
@@ -107,6 +114,8 @@ void Figures::addShown(std::unique_ptr<FigureBody> made) {
         body.burnBody[0] = show.burnBody[0];
         body.burnBody[1] = show.burnBody[1];
         body.burnHead = show.burnHead;
+        body.inferno = show.inferno;
+        body.blow = show.blow;
     }
     bodies_[body.name] = std::move(made);
 }

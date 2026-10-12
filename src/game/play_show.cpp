@@ -886,7 +886,7 @@ void Play::shade(float seconds) {
     staffsDue_.erase(std::remove_if(staffsDue_.begin(), staffsDue_.end(),
                                     [](const StaffDue& one) { return one.wait <= 0.0f; }),
                      staffsDue_.end());
-    // A Crust's Inferno, at its CheckAttackTime(5) (kInfernoBlows' wait).
+    // A Crust's Inferno, at its CheckAttackTime(5) (show.inferno' wait).
     for (InfernoDue& due : infernosDue_) {
         due.wait -= seconds;
         if (due.wait <= 0.0f) throwInferno(due.feet, due.yaw, due.bombs, due.mesh);

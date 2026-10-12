@@ -1687,10 +1687,8 @@ void Play::update(double seconds) {
                         // made lightning (Happening::bolt), whose push lands with it.
                         if (happening.bolt && happening.whom != 0) {
                             // The Dark Phoenix's at CheckAttackTime(14) (kPhoenixBoltWait).
-                            const bool phoenix =
-                                body && body->kind >= 0 &&
-                                size_t(body->kind) < tables_.kinds.size() &&
-                                tables_.kinds[size_t(body->kind)].number == kDarkPhoenixNumber;
+                            const FigureBody* bird = swinger->figure.body();
+                            const bool phoenix = body && bird && bird->has("phoenix");
                             // The Phoenix's in its own fire, as the Lizard King's (Play's
                             // laserCasts_): Lightning's blue light read wrong on a fire bird
                             // (the user, 2026-10-07: 'lihgting from phoenix still is blue').
@@ -1712,23 +1710,24 @@ void Play::update(double seconds) {
                             bolt.head = hydra->nextHead++ % 4;
                             laserCasts_.push_back(bolt);
                         }
-                        // Tarkan's Inferno on the attack's first key (kInfernoBlows): at once,
+                        // Tarkan's Inferno on the attack's first key (show.inferno): at once,
                         // the key a tenth of a second into the swing at these breeds' speeds;
                         // the Crusts' at CheckAttackTime(5), `wait` later (infernosDue_).
                         if (body && !body->player && body->kind >= 0 &&
                             size_t(body->kind) < tables_.kinds.size() && ground_ &&
                             swinger->placed) {
-                            const int32_t number = tables_.kinds[size_t(body->kind)].number;
-                            for (const InfernoBlow& blow : kInfernoBlows) {
-                                if (blow.number != number) continue;
-                                if (blow.first && swing != swinger->attackClip) continue;
+                            const FigureBody* thrower = swinger->figure.body();
+                            if (thrower && thrower->inferno.throws &&
+                                !(thrower->inferno.first && swing != swinger->attackClip)) {
+                                const FigureBody::Inferno& blow = thrower->inferno;
+                                const float wait = blow.frame > 0 ? attackTime(blow.frame) : 0.0f;
                                 const float feet[3] = {
                                     swinger->crown[0],
                                     ground_->heightAt(swinger->crown[0], swinger->crown[2]),
                                     swinger->crown[2]};
-                                if (blow.wait > 0.0f) {
+                                if (wait > 0.0f) {
                                     infernosDue_.push_back({{feet[0], feet[1], feet[2]},
-                                                            swinger->yaw, blow.wait,
+                                                            swinger->yaw, wait,
                                                             blow.bombs, blow.mesh});
                                 } else {
                                     throwInferno(feet, swinger->yaw, blow.bombs, blow.mesh);
@@ -1749,35 +1748,25 @@ void Play::update(double seconds) {
                         if (happening.boss && body && ground_ && body != realm_.invader()) {
                             const float tile = ground_->metresPerTile();
                             const float bx = (body->x + 0.5f) * tile, bz = -(body->y + 0.5f) * tile;
-                            const bool gorgon = body->kind >= 0 &&
-                                                size_t(body->kind) < tables_.kinds.size() &&
-                                                tables_.kinds[size_t(body->kind)].number == 35;
                             const float floor[3] = {bx, ground_->heightAt(bx, bz), bz};
                             // The Hydra's shows as its swing does: its head beams alone (the
                             // user, 2026-10-04: 'lets keep only lasers from head'). MU's ring of
                             // nine BITMAP_BOSS_LASER (ZzzCharacter.cpp:1915-1929) is left out.
-                            const bool hydra = body->kind >= 0 &&
-                                               size_t(body->kind) < tables_.kinds.size() &&
-                                               tables_.kinds[size_t(body->kind)].number == kHydraNumber;
-                            const int32_t bossNumber =
-                                body->kind >= 0 && size_t(body->kind) < tables_.kinds.size()
-                                    ? tables_.kinds[size_t(body->kind)].number
-                                    : -1;
-                            if (hydra) {
-                            } else if (bossNumber == kPhantomKnightNumber) {
+                            // Which show is its recipe's show.blow (sprint E4d): "none" for the
+                            // Hydra, the Tantallos and the Drakans; absent, the Balrog's.
+                            const FigureBody* boss = swinger->figure.body();
+                            const std::string blow = boss ? boss->blow : std::string();
+                            if (blow == "none") {
+                            } else if (blow == "phantom_spirits") {
                                 // The Phantom Knight: its spirits (kPhantomSpiritWait).
                                 spiritsDue_.push_back({happening.who, kPhantomSpiritWait});
-                            } else if (bossNumber == kDarkPhoenixNumber) {
+                            } else if (blow == "phoenix_spirits") {
                                 // The Dark Phoenix: its spirits (kPhoenixSpiritWait).
                                 spiritsDue_.push_back({happening.who, kPhoenixSpiritWait});
-                            } else if (bossNumber == 58 || bossNumber == kDrakanNumber ||
-                                       bossNumber == kGreatDrakanNumber) {
-                                // The Tantallos: its blow's Inferno and nothing more; the Drakan,
-                                // its blow alone (the "drakan" tag).
-                            } else if (bossNumber == 59 || bossNumber == 63) {
+                            } else if (blow == "staff_ring" || blow == "staff_ring_comets") {
                                 staffsDue_.push_back(
                                     {{floor[0], floor[1], floor[2]}, swinger->yaw, kStaffRingWait});
-                                if (bossNumber == 63) {
+                                if (blow == "staff_ring_comets") {
                                     MeteorStorm rain;
                                     rain.x = bx;
                                     rain.z = bz;
@@ -1786,7 +1775,7 @@ void Play::update(double seconds) {
                                     rain.who = happening.who;
                                     storms_.push_back(rain);
                                 }
-                            } else if (gorgon) {
+                            } else if (blow == "gorgon_ring") {
                                 for (int i = 0; i < 18; ++i) {
                                     const float turn = float(i) * 6.2831853f / 18.0f;
                                     shadowStars_.roll(floor, std::cos(turn), std::sin(turn));
@@ -3081,7 +3070,7 @@ void Play::flinch(Drawn& struck, bool isHero) {
     if (cry >= 0) emit(cry, struck.crown[0], struck.crown[2], struck.id);
 }
 
-// A blow's Inferno (kInfernoBlows), with the meteor's stones and, for bombs, a bomb's
+// A blow's Inferno (show.inferno), with the meteor's stones and, for bombs, a bomb's
 // SOUND_EXPLOTION01, the eight heard as one.
 void Play::throwInferno(const float feet[3], float yaw, bool bombs, bool mesh) {
     inferno_.cast(feet, yaw, [&](const float* at) {

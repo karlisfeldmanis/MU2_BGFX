@@ -57,24 +57,20 @@ Traced from ebe25845 (Queen Rainer).
    `tools/sync_one.py`.
 6. `tools/cook.py --world <w> --only tables` for **every world**.
 7. `tools/cook.py --world <w> --only figures --monsters <Name> --threads 4`.
-8. C++, 7 files:
-   - the recipe's `rules` (drops, resist, poisons, chill_odds, bolt, boss, split, bulk; since
-     E1), then `./mu make realm`, which writes `sim/breeds_table.inc`;
-   - the recipe's `show`: `tags` (E4a: what Play asks `has("tag")` for), `aura`,
-     `eye_trail`, `bones` {role: names}, `star_tint` (E4b), `arcs`, `heads`, `beam_material`,
-     `claws` and `burn` (E4c), written by `./mu make realm` into cooked/figures/shows.json;
-   - `game/play_tuning.h`: a show's tunings (colours, dims, lengths, cadences) alone;
-   - `game/play.cpp`, `play.h`, `play_open.cpp` (sounds), `play_show.cpp` (its show);
-   - a `game/fx/` pair for its own effect, plus `source/sounds/sounds.json` and
-     `cook.py --only showing` (about 9 min).
+8. The recipe's `rules` (drops, resist, poisons, chill_odds, bolt, boss, split, bulk; E1) and
+   `show` (tags, aura, eye_trail, bones, star_tint, arcs, heads, beam_material, claws, burn,
+   inferno, blow; E4), then `./mu make realm`, which writes `sim/breeds_table.inc` and
+   cooked/figures/shows.json. Code only for a new kind of show: its tag or field, its drawing in
+   `game/play_*.cpp` and its tunings in `game/play_tuning.h`, or a `game/fx/` pair, plus
+   `source/sounds/sounds.json` and `cook.py --only showing` (about 9 min).
 9. Show it in its world beside its spawn (memory: show new monsters in their world).
 
 **Since sprint B:** `./mu new monster <number> --db` does steps 1-4 but the materials and the
 hands, and `./mu make <Name>` steps 5-7.
 
-**Today:** 6 code files and 1 data store, the recipe and its world's `nests.json`
-(`realm_tuning.h` left the list in E1; `mu.db` holds no monster since E3). **Goes to:** `source/monsters/<breed>/` (sprint E) and
-the monster panel (I). Code only for a bespoke behaviour.
+**After sprint E:** a plain breed is no code at all -- its recipe, its world's `nests.json`
+and its art. A breed with a show of a new kind adds that show's code. **Goes to:** the monster
+panel (sprint F's Cooker, then I).
 
 ## A map
 

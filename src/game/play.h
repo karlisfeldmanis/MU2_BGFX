@@ -1640,7 +1640,7 @@ private:
         float wait = 0.0f;
     };
     std::vector<StaffDue> staffsDue_;
-    // A blow's Inferno thrown later in the blow (kInfernoBlows' `wait`): the Crusts'.
+    // A blow's Inferno thrown later in the blow (show.inferno' `wait`): the Crusts'.
     struct InfernoDue {
         float feet[3] = {};
         float yaw = 0.0f;

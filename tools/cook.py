@@ -3496,6 +3496,11 @@ def cook_shows(out_dir):
                                 if k in show["claws"]}
             if "burn" in show:
                 one["burn"] = {k: show["burn"][k] for k in ("segments", "body", "head")}
+            if "inferno" in show:
+                keys = ("bombs", "mesh", "attack_frame", "first")
+                one["inferno"] = {k: show["inferno"][k] for k in keys if k in show["inferno"]}
+            if "blow" in show:
+                one["blow"] = show["blow"]["show"]
             shows[doc["item"]] = one
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "shows.json")

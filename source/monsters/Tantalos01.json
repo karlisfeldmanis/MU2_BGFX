@@ -435,6 +435,15 @@
       "right": "eye02",
       "left": "eye1",
       "note": "Its MoveEye(o, b, Right, Left) bones, by name, from MoveCharacterVisual (ZzzCharacter.cpp:5836-5984); fx/eye_trails.h draws them. MU's bones 24, 25."
+    },
+    "blow": {
+      "note": "Its Flame of Evil's show (Play::update's boss branch in play.cpp says what each draws; absent, the Balrog's ring of fire and its storm). Sprint E4d moved the choice here from its breed number.",
+      "show": "none"
+    },
+    "inferno": {
+      "bombs": true,
+      "mesh": false,
+      "note": "The Inferno its blow throws (fx/inferno.h; play_tuning.h's comment by attackTime): `bombs` CreateInferno, `mesh` MODEL_SKILL_INFERNO, `attack_frame` the CheckAttackTime it waits for (none: at once), `first` on Attack 1 alone. Sprint E4d moved it here from kInfernoBlows. Its row: Tantallos."
     }
   }
 }
