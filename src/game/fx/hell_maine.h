@@ -33,7 +33,8 @@
 // they read as single balls (the user, 2026-10-12: 'fire does not looks okey'; at half size still 'bubbles'). The storm's smoke
 // every other frame. One laser a blow where MU lays one a frame for its two keys, its flames at
 // kLaserSize and kLaserLight, fading over their last five frames, a decal under every fourth at two
-// tiles. Both blows go at its target. Not carried: EarthQuake (the storm shakes MU's camera
+// tiles; and broken up (the user: 'i dont like this beam'): each flame its own size, spin and drift,
+// flickering, orange, fading to the far end, thrown out from the hand. Both blows go at its target. Not carried: EarthQuake (the storm shakes MU's camera
 // every frame it walks), the laser's terrain light, the 10 units off the right hand. MU's numbers
 // are per reference frame, 25 a second, in centimetres. Fed by Play::breedShows from its own
 // clip; nothing here reaches the sim (the realm's blow is a melee, docs/aida-port.md decision 10).
@@ -99,6 +100,7 @@ private:
         float at[3] = {0, 0, 0};
         float way[2] = {0, 1};
         float floor = 0.0f, age = 0.0f, light = 1.0f;
+        uint32_t seed = 1;  // each flame's own size, spin and drift
     };
     struct One {
         int bones[7] = {-1, -1, -1, -1, -1, -1, -1};  // eyes, arm, L Hand, R Hand

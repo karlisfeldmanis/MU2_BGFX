@@ -19,8 +19,16 @@ constexpr float kBoneScale[5] = {0.3f, 0.3f, 1.0f, 1.0f, 1.0f};
 constexpr float kLightDim = 0.5f;
 constexpr float kFireSize = 0.33f;   // a third: at a half its cores still read as bubbles
 constexpr float kFireLight = 0.4f;    // every frame as MU, at 0.4: one tongue, not single balls
+// The fire lay broken up (the user, 2026-10-12, of MU's even row of twenty white Fire02: 'i dont
+// like this beam', then 'Broken-up air beam'): each flame its own size, spin, turn and drift off
+// the line, flickering on its own, in an orange, fading toward the far end, thrown out from the
+// hand over its first frames.
 constexpr float kLaserLight = 0.5f;
-constexpr float kLaserSize = 0.5f;
+constexpr float kLaserSize = 0.35f;
+constexpr float kLaserTint[3] = {1.0f, 0.55f, 0.25f};
+constexpr float kLaserEnd = 0.25f;      // the far flame's light, of the first's
+constexpr float kLaserReachOut = 5.0f;  // flames a frame as it is thrown out
+constexpr float kLaserDrift = 0.15f;    // metres off the line, at most
 constexpr float kLaserFade = 5.0f;    // its last frames, faded
 constexpr int kDecalEvery = 4;        // a laser decal under every fourth flame
 constexpr float kLaserDecalHalf = 1.0f;
@@ -177,6 +185,7 @@ void HellMaine::watch(uint32_t id, const Figure& figure, int attack, float key, 
             // From its hand along its facing, as MU's: aimed from the hand at its target it went
             // backwards, the hand of a 1.8 Hell Maine reaching past the knight at its feet.
             laser.floor = feet[1];
+            laser.seed = uint32_t(unit() * 16777216.0f) | 1u;
             laser.light = fade;
             lasers_.push_back(laser);
             core::logf("hell maine: Attack 2's fire lay from %.1f, %.1f toward %.2f, %.2f (%s)", hands[1][0], hands[1][2],
@@ -370,15 +379,29 @@ void HellMaine::gather(gfx::Effects& effects) const {
     for (const Laser& one : lasers_) {
         const float left = kLaserLife - one.age;
         const float light = one.light * kLaserLight * std::clamp(left / kLaserFade, 0.0f, 1.0f);
-        const float white[3] = {light, light, light};
         const float red[3] = {kLaserDecal * light, 0.0f, 0.0f};
+        const int out = std::min(kLaserFlames, int(one.age * kLaserReachOut) + 1);
         // The first at its hand, as MU's j = 0 (ZzzEffect.cpp:8973-8996).
-        for (int k = 0; k < kLaserFlames; ++k) {
-            const float at[3] = {one.at[0] + one.way[0] * kLaserGap * float(k), one.at[1],
-                                 one.at[2] + one.way[1] * kLaserGap * float(k)};
-            // Angle[2] - 0.1 a flame, in degrees.
-            sprite(flame_, at, 0.5f * kSixtyFour * 3.0f * kLaserSize, white,
-                   -(one.age * 2.0f + float(k) * 0.1f) * 0.0174533f, gfx::Blend::Additive);
+        for (int k = 0; k < out; ++k) {
+            // This flame's own dice, the same every frame of its beam.
+            uint32_t dice = one.seed ^ (uint32_t(k) * 0x9e3779b9u);
+            const auto roll = [&dice] {
+                dice ^= dice << 13;
+                dice ^= dice >> 17;
+                dice ^= dice << 5;
+                return float(dice >> 8) / 16777216.0f;
+            };
+            const float size = 0.6f + 0.6f * roll(), turn = (roll() - 0.5f) * 8.0f, phase = roll() * 6.2831853f;
+            const float across = (roll() * 2.0f - 1.0f) * kLaserDrift, up = (roll() * 2.0f - 1.0f) * kLaserDrift;
+            const float along = kLaserGap * float(k);
+            const float at[3] = {one.at[0] + one.way[0] * along + one.way[1] * across, one.at[1] + up,
+                                 one.at[2] + one.way[1] * along - one.way[0] * across};
+            const float flicker = 0.7f + 0.3f * std::sin(one.age * 1.7f + phase);
+            const float end = 1.0f - (1.0f - kLaserEnd) * float(k) / float(kLaserFlames - 1);
+            const float lit = light * flicker * end;
+            const float colour[3] = {kLaserTint[0] * lit, kLaserTint[1] * lit, kLaserTint[2] * lit};
+            sprite(flame_, at, 0.5f * kSixtyFour * 3.0f * kLaserSize * size, colour, phase + one.age * turn * 0.1f,
+                   gfx::Blend::Additive);
             if (k % kDecalEvery == kDecalEvery - 1) {
                 const float ground[3] = {at[0], one.floor, at[2]};
                 decal(smoke_, ground, kLaserDecalHalf, red, float(k) * 0.3f);
