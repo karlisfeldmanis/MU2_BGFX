@@ -22,11 +22,14 @@ struct Shelf {
     std::string target;
     std::string clip;   // the clip line under a figure, empty for a mesh
     std::string time;   // the time of day, and the key that changes it
+    std::string swapped;  // the last swap's before/after sheet, once one was taken
 };
 
 struct Asked {
     int category = -1;  // open this tab
     int pick = -1;      // put this row of the open tab on the bench
+    bool openSheet = false;  // show the last swap's before/after
+    bool reread = false;     // read the subject again from disk now, as after a cook
 };
 
 class Panels {
@@ -40,6 +43,7 @@ private:
     void jobs(Cooker& cooker, float x, float y, float w, float h, double now);
 
     char filter_[64] = {};
+    Asked asked_;
     size_t finishedSeen_ = 0;
 };
 

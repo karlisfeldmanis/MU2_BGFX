@@ -287,6 +287,7 @@ target_compile_options(mu_client PRIVATE ${MU_WARNINGS})
 
 add_library(mu_game STATIC
   src/game/bench.cpp
+  src/game/bench_reload.cpp
   src/game/world/world.cpp
   src/game/world/maps.cpp
   src/game/world/world_show.cpp

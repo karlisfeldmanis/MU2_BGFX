@@ -153,9 +153,9 @@ void Gui::begin(const Window& window, float deltaSeconds) {
     ImGui::NewFrame();
 }
 
-void Gui::end() {
+void Gui::end(bool draw) {
     ImGui::Render();
-    render(ImGui::GetDrawData());
+    if (draw) render(ImGui::GetDrawData());
 }
 
 bool Gui::wantsPointer() const { return context_ && ImGui::GetIO().WantCaptureMouse; }

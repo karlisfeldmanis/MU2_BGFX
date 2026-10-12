@@ -69,7 +69,8 @@ float fraction(const JobView& job) {
 }  // namespace
 
 Asked Panels::draw(const Shelf& shelf, Cooker& cooker, float width, float height, double now) {
-    Asked asked;
+    asked_ = Asked{};
+    Asked& asked = asked_;
     // In ems, so the panels keep their shape on a Retina display, where the font is doubled.
     const float em = ImGui::GetFontSize();
     const float pad = 0.7f * em;
@@ -79,7 +80,7 @@ Asked Panels::draw(const Shelf& shelf, Cooker& cooker, float width, float height
     browser(shelf, asked, pad, pad, leftW, height - jobsH - 3.0f * pad);
     subject(shelf, cooker, width - cardW - pad, pad, cardW);
     jobs(cooker, pad, height - jobsH - pad, width - 2.0f * pad, jobsH, now);
-    return asked;
+    return asked_;
 }
 
 void Panels::browser(const Shelf& shelf, Asked& asked, float x, float y, float w, float h) {
@@ -177,6 +178,15 @@ void Panels::subject(const Shelf& shelf, Cooker& cooker, float x, float y, float
         }
         ImGui::PopTextWrapPos();
     }
+    if (!shelf.swapped.empty()) {
+        ImGui::TextColored(kGreen, "swapped in from disk");
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Before / after")) asked_.openSheet = true;
+        ImGui::SetItemTooltip("%s", shelf.swapped.c_str());
+    }
+    if (ImGui::SmallButton("Read again")) asked_.reread = true;
+    ImGui::SetItemTooltip("what is on disk now, swapped in with a before and after: for a cook "
+                          "run by hand or by another session");
     ImGui::BeginDisabled(!cooker.connected() || !plan.answered || !plan.error.empty());
     if (ImGui::Button(plan.answered && plan.error.empty() && !plan.stale() ? "Cook anyway" : "Cook")) {
         cooker.make(shelf.target);

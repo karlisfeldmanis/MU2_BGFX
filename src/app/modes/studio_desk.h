@@ -8,9 +8,20 @@
 //
 // Off under --no-list, as the overlay's list was, so tools/studio.py's sweeps (which pass it)
 // shoot the subject with nothing over it.
+//
+// **The swap** (F3): when a job that cooked the subject finishes, the subject is held still --
+// its clip from its first frame, the camera's turn stopped -- the panels are hidden, and a
+// shot is taken; the bench reads its tables and textures again (ModelBench::reopen), the
+// same pose is shot again, and `mu compare` lays the two side by side with how much moved,
+// in shots/studio/swaps/<name>_<when>/. Eight frames, and the new look is on the bench.
+// The card's Read again runs the same swap with no job, for a cook run by hand.
+//
+// MU_STUDIO_SWAP_AT=<frame> presses Read again on that frame, for a shot run with nobody at
+// the mouse -- until F7's control socket drives the studio (docs/order-plan.md §9c).
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "gfx/gui.h"
 #include "studio/cooker.h"
@@ -28,9 +39,13 @@ class StudioDesk {
 public:
     bool open(Context& ctx);
     bool isOpen() const { return gui_.isOpen(); }
-    void begin(Context& ctx, float deltaSeconds);
-    void panels(Context& ctx, game::ModelBench& bench);
+    void begin(Context& ctx, float deltaSeconds, double elapsed);
+    // `world` is the bench's, which a swap reopens the tables of.
+    void panels(Context& ctx, game::ModelBench& bench, const std::string& world);
     void end();
+    // While a swap is shooting: the bench is to be updated at heldSeconds() with no delta.
+    bool holding() const { return swap_ != Swap::Idle; }
+    double heldSeconds() const { return heldSeconds_; }
     bool wantsPointer() const { return gui_.wantsPointer(); }
     bool wantsKeys() const { return gui_.wantsKeys(); }
     void shutdown();
@@ -40,11 +55,27 @@ public:
     static std::string targetOf(const game::ModelBench& bench);
 
 private:
+    void watchJobs(game::ModelBench& bench);
+    void startSwap(game::ModelBench& bench, const std::string& name);
+    void stepSwap(Context& ctx, game::ModelBench& bench, const std::string& world);
+
     gfx::Gui gui_;
     studio::Cooker cooker_;
     studio::Panels panels_;
     studio::Shelf shelf_;
     int shelfCategory_ = -1;   // the tab shelf_.names was read for
+
+    enum class Swap { Idle, Before, After };
+    Swap swap_ = Swap::Idle;
+    int swapFrames_ = 0;
+    double elapsed_ = 0.0, heldSeconds_ = 0.0;
+    std::string swapDir_;
+    std::vector<int> seen_;    // finished jobs already answered, or there before the studio was
+    bool seenAll_ = false;
+    std::string shelfRoot_;   // MU2_BGFX: ./mu and shots/ are under it
+    std::string lastSwap_;    // the last swap's folder, for the card
+    int comparePid_ = 0;
+    int frame_ = 0, swapAt_ = -1;   // this desk's frames, and MU_STUDIO_SWAP_AT
 };
 
 }  // namespace mu::app

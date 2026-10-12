@@ -32,7 +32,8 @@ public:
     bool isOpen() const { return context_ != nullptr; }
 
     void begin(const Window& window, float deltaSeconds);
-    void end();
+    // `draw` false builds the frame, as ImGui must, and submits nothing: a shot without panels.
+    void end(bool draw = true);
 
     bool wantsPointer() const;
     bool wantsKeys() const;

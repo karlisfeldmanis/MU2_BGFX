@@ -111,6 +111,14 @@ public:
     int clipIndex() const;
     std::string clipName(size_t index) const;
     bool playClip(size_t index);
+    // **After a cook** (the studio's swap, docs/order-plan.md §9c F3; game/bench_reload.cpp):
+    // the figure tables and the wardrobe read again from disk, the textures under them that
+    // the cook rewrote forgotten first, the lists refilled, and the same tab, the same name
+    // and the same clip put back. False when the subject is no longer there.
+    bool reopen(const std::string& assetDir, const std::string& world,
+                content::Textures& textures);
+    // The running clip from its first frame, so two shots of one pose can be taken.
+    void replayClip();
     bool browsing() const { return !categories_.empty(); }
     // "MONSTERS  17/105  Budge Dragon", for the log line once a second.
     std::string browseLine() const;

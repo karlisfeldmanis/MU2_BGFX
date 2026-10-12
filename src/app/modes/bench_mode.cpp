@@ -229,7 +229,7 @@ void BenchMode::look(Context& ctx) {
 void BenchMode::frame(Context& ctx, const Frame& at) {
     core::Args& args = ctx.args;
     const float deltaSeconds = float(at.deltaSeconds);
-    if (desk_.isOpen()) desk_.begin(ctx, deltaSeconds);
+    if (desk_.isOpen()) desk_.begin(ctx, deltaSeconds, at.elapsed);
     // A filter being typed into keeps the arrows and Tab: they are the box's then.
     if (!desk_.wantsKeys()) steer(ctx);
 
@@ -243,7 +243,16 @@ void BenchMode::frame(Context& ctx, const Frame& at) {
             const int time = (block / args.turns) % 3;
             if (time != ctx.time.which()) ctx.time.set(time);
         }
-        bench_.update(at.elapsed, at.deltaSeconds, !args.still);
+        // With the panels open the camera turns only when dragged (the user, 2026-10-12: "dont
+        // rotate camera automatically, set it so you can control orbit yourself"); the
+        // turntable sheets, which run without them, still go round. Held still while the desk
+        // shoots a swap's before and after: one pose, one angle.
+        const bool spin = !args.still && !desk_.isOpen();
+        if (desk_.holding()) {
+            bench_.update(desk_.heldSeconds(), 0.0, spin);
+        } else {
+            bench_.update(at.elapsed, at.deltaSeconds, spin);
+        }
         if (args.lampsOn) {
             world_.lamps().update(deltaSeconds, world_.town(), ctx.renderer,
                                   bench_.camera().target);
@@ -264,7 +273,7 @@ void BenchMode::frame(Context& ctx, const Frame& at) {
         setShine_.gather(ctx.renderer.effects(), world_.ground(), bench_.camera().position);
         ctx.renderer.draw(bench_.camera(), ctx.lighting, townDrawables_, &world_.ground());
         if (desk_.isOpen()) {
-            desk_.panels(ctx, bench_);
+            desk_.panels(ctx, bench_, args.world.empty() ? std::string("lorencia") : args.world);
             if (!desk_.wantsPointer()) look(ctx);
             desk_.end();
         } else {

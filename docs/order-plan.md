@@ -1098,6 +1098,29 @@ recipe's fields, Cook and Revert. The jobs along the bottom: step bars, the log'
   with Kris on the bench, a rehearsal's bar moving, and the second, after the fixes, with the
   studio starting its own server and Sword01's 17 stale steps listed.
 
+### Slice F3: the swap, as done
+
+- When a job that cooked what stands on the bench finishes (the Cook button's name, or the
+  recipe's own from a `./mu make` by hand), the studio swaps it in: the subject held still --
+  its clip from its first frame with no crossfade, the camera stopped -- the panels hidden, a
+  shot; `ModelBench::reopen` (game/bench_reload.cpp, out of bench.cpp at its ratchet) reads
+  the figure tables and the wardrobe again, the textures the cook rewrote forgotten first
+  (`Textures::forgetChanged`, by each file's date at load), and puts back the same tab, name
+  and clip; the same pose is shot again, and `mu compare` lays the two out with how much moved
+  in `shots/studio/swaps/<name>_<when>/`. The card says it was swapped in and opens the sheet.
+- The card's **Read again** runs the same swap with no job, for a cook run by hand or by
+  another session. `MU_STUDIO_SWAP_AT=<frame>` presses it, for a shot run (args.cpp is at its
+  ratchet; F7's control socket replaces it).
+- **The camera turns only when dragged** while the panels are open (the user, 2026-10-12:
+  "dont rotate camera automatically, set it so you can control orbit yourself"). The
+  turntable sheets, which run under --no-list, still go round.
+- Proved: the reload takes 0.09 s for the wardrobe; a Read again of Kris with nothing changed
+  gives a before and after 0.28 of 255 apart and 0.0% moved (the first try was 10.88 and 29%:
+  the replayed clip's crossfade froze at the old pose under the hold, and the after shot was
+  taken on the frame the panels came back). Not yet proved on a real cook: every weapon's
+  recipe is newer than its build since 2026-10-07, so a Cook is a Blender build and every
+  world's tables, which waits for the user's word.
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

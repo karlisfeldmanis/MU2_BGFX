@@ -217,6 +217,7 @@ void Textures::shutdown() {
     }
     byPath_.clear();
     sizes_.clear();
+    stamps_.clear();
     for (bgfx::TextureHandle* h : {&white_, &flatNormal_, &black_, &neutralOrm_, &ormOne_}) {
         if (bgfx::isValid(*h)) bgfx::destroy(*h);
         *h = BGFX_INVALID_HANDLE;
@@ -404,7 +405,28 @@ bgfx::TextureHandle Textures::load(const std::string& path, TextureRole role) {
         byPath_[path] = BGFX_INVALID_HANDLE;
         return BGFX_INVALID_HANDLE;
     }
+    stamps_[path] = core::fileModified(path);
     return loadFromMemory(path, bytes.data(), uint32_t(bytes.size()), role);
+}
+
+size_t Textures::forgetChanged(const std::string& dir) {
+    size_t forgotten = 0;
+    for (auto it = byPath_.begin(); it != byPath_.end();) {
+        auto stamp = stamps_.find(it->first);
+        const bool under = it->first.compare(0, dir.size(), dir) == 0;
+        if (!under || stamp == stamps_.end() || core::fileModified(it->first) == stamp->second) {
+            ++it;
+            continue;
+        }
+        if (bgfx::isValid(it->second)) {
+            sizes_.erase(it->second.idx);
+            bgfx::destroy(it->second);
+        }
+        stamps_.erase(stamp);
+        it = byPath_.erase(it);
+        ++forgotten;
+    }
+    return forgotten;
 }
 
 

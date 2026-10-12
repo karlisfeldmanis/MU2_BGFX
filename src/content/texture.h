@@ -105,12 +105,19 @@ public:
 
     size_t count() const { return byPath_.size(); }
 
+    // After a cook (the studio's swap, game/bench_reload.cpp): every texture loaded from a
+    // file under `dir` that has been written since is destroyed and forgotten, so the next
+    // load reads it again. Only for a caller that rebuilds everything holding those handles
+    // at once -- a handle forgotten here and still held draws whatever takes its slot next.
+    size_t forgetChanged(const std::string& dir);
+
     uint64_t bytes() const { return bytes_; }
     uint64_t mipBytes() const { return mipBytes_; }
 
 private:
     std::unordered_map<std::string, bgfx::TextureHandle> byPath_;
     std::unordered_map<uint16_t, Info> sizes_;
+    std::unordered_map<std::string, int64_t> stamps_;  // path -> its file's date when loaded
     bgfx::TextureHandle white_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle flatNormal_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle black_ = BGFX_INVALID_HANDLE;
