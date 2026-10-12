@@ -23,22 +23,23 @@ constexpr float kFireLight = 0.4f;    // every frame as MU, at 0.4: one tongue, 
 // like this beam', then 'Broken-up air beam'): each flame its own size, spin, turn and drift off
 // the line, flickering on its own, in an orange, fading toward the far end, thrown out from the
 // hand over its first frames.
-constexpr float kLaserLight = 0.5f;
-constexpr float kLaserSize = 0.35f;
+// Then 'Too dotted': twice MU's flames at half its gap, the same 10 m, as one stream.
+constexpr float kLaserLight = 0.4f;
+constexpr float kLaserSize = 0.45f;
 constexpr float kLaserTint[3] = {1.0f, 0.55f, 0.25f};
 constexpr float kLaserEnd = 0.25f;      // the far flame's light, of the first's
-constexpr float kLaserReachOut = 5.0f;  // flames a frame as it is thrown out
-constexpr float kLaserDrift = 0.15f;    // metres off the line, at most
+constexpr float kLaserReachOut = 10.0f;  // flames a frame as it is thrown out
+constexpr float kLaserDrift = 0.1f;      // metres off the line, at most
 constexpr float kLaserFade = 5.0f;    // its last frames, faded
-constexpr int kDecalEvery = 4;        // a laser decal under every fourth flame
+constexpr int kDecalEvery = 8;        // a laser decal every 2 m
 constexpr float kLaserDecalHalf = 1.0f;
 // MU's.
 constexpr float kFireLife = 32.0f;
 constexpr float kStormLife = 60.0f, kStormStep = 12.0f * kUnit;
 constexpr float kStormLift = 15.0f * kUnit;
 constexpr float kStormDiscHalf = 1.0f, kStormDisc = 0.3f;
-constexpr float kLaserLife = 20.0f, kLaserGap = 50.0f * kUnit;
-constexpr int kLaserFlames = 20;
+constexpr float kLaserLife = 20.0f, kLaserGap = 25.0f * kUnit;  // MU's 50, ours halved
+constexpr int kLaserFlames = 40;                                 // MU's 20, ours doubled
 constexpr float kLaserDecal = 0.2f;
 // Twenty (0.2, 0, 0) lights 0.5 m apart over 2 m each: about four reach any point of the line.
 constexpr float kLaserGlow = 0.8f, kLaserGlowReach = 2.0f;
