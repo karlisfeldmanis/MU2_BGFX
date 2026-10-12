@@ -17,6 +17,7 @@
     ./mu compare <a.png> <b.png>             side by side, labelled, with how much moved
     ./mu cores [N]                           how many cores mu's tools may use, kept per machine
     ./mu recipe <name>                       a recipe's file(s), parsed, and the material library
+    ./mu research <Monster|number> [--write] everything MuMain does for it, a checklist in its recipe
     ./mu edit <name|file> <path> <value>     one value in place (islands.0.material brass), journalled
               ... --insert / --remove          a value put in at path, or taken out (no value)
     ./mu gate add <w> <to> <col> <row>       a way in here and its way out there (tools/mu/gates.py)
@@ -70,6 +71,10 @@ def main():
 
     r = sub.add_parser("recipe", parents=[common])
     r.add_argument("target")
+
+    q = sub.add_parser("research", parents=[common])
+    q.add_argument("target", help="a monster recipe's name, or a breed's number")
+    q.add_argument("--write", action="store_true", help="into the recipe as mu_checklist, journalled")
 
     e = sub.add_parser("edit", parents=[common])
     e.add_argument("target", help="a recipe's name, or a file under source/ or sheets/")
@@ -182,6 +187,9 @@ def dispatch(args, say):
         for one in data["files"]:
             say(one["file"])
         return True, data
+    if args.command == "research":
+        import research
+        return True, research.research(args.target, args.write, say)
     if args.command == "edit":
         import edit
         if args.remove:

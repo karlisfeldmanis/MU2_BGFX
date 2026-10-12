@@ -268,6 +268,15 @@ close without the hero dying in a second.
   at MU's 0.6 a second, over the lit ice at a steady 0.4: as a plain glow at 1 it blew out white at
   noon. MU's chrome pass over it is not drawn. Sounds as deathrider_*; MU loads dr_idle1.wav but
   the folder ships dr_idle01.wav, so ours plays that file.
+- **Blue Golem (305)**: BlueGolem01, MuMain's Golden Stone Golem model (MONSTER_MODEL 101,
+  Data/Monster/monster102.bmd) at 1.35; FMbody_R water, FMammor rock; 38 nests. The first breed
+  made with its MU checklist (`mu research`, the recipe's `mu_checklist`). The water (mesh 0)
+  slides on both axes at MU's 0.3 a second over the lit water at a steady 0.4 (glow.FMbody_R);
+  MU's chrome over it is not drawn. MU's blue ground light (0, 0, 0.7), radius 3, is a stand-in
+  aura on Bip01 Pelvis. Sounds as bluegolem_*. Left (the checklist's three to do): the cyan
+  waterFall2 drips off both hands and the head; Attack 1's smoke, shock wave and energy joint
+  from the target back to it; MU's play speeds, which a missing break in ZzzOpenData sets to the
+  Death Rider's (stand 0.15, walk 0.3, attack 0.23, die 0.15).
 - **The breeds' rules**: Tarkan's MoneyRate 30 and MaxItemLevel 3, RegTime 10, and OpenMU's x/255
   resistance read raw (Death Tree 18, Forest Orc 19, Death Rider 20, about 95% turned aside; Tarkan's are 8-13).
 

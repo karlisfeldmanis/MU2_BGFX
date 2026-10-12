@@ -468,6 +468,7 @@ add_library(mu_studio STATIC
   src/gfx/gui.cpp
   src/studio/cooker.cpp
   src/studio/panels.cpp
+  src/studio/checklist.cpp
   src/studio/inspector.cpp
   src/studio/light_panel.cpp
 )
@@ -570,6 +571,7 @@ add_executable(cooker_test EXCLUDE_FROM_ALL
   tests/cooker_test.cpp
   src/studio/cooker.cpp
   src/studio/panels.cpp
+  src/studio/checklist.cpp
   src/studio/inspector.cpp
   src/studio/light_panel.cpp
 )

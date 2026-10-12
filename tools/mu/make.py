@@ -561,7 +561,19 @@ def plan_realm():
     monsters = os.path.join(SOURCE, "monsters")
     manifests += [os.path.join(monsters, f) for f in sorted(os.listdir(monsters))
                   if f.endswith(".json") and not f.endswith(".rig.json")]
-    stale = newest([script] + [m for m in manifests if os.path.exists(m)]) > min(mtime(out) for out in outs)
+    # The script rewrites a table only when its text changes, so the game is not rebuilt for
+    # nothing; the tables' own dates then lag every recipe edit that left the rules alone (a
+    # note, a material, a checklist), and the realm read stale for ever. The stamp is when the
+    # realm last ran.
+    stamp = os.path.join(LOCKS, "realm.stamp")
+    ran = max(min(mtime(out) for out in outs), mtime(stamp))
+    stale = newest([script] + [m for m in manifests if os.path.exists(m)]) > ran
+
+    def stamped():
+        os.makedirs(LOCKS, exist_ok=True)
+        with open(stamp, "w") as handle:
+            handle.write(time.strftime("%Y-%m-%d %H:%M:%S\n"))
+        return None
     # And the client's half of a recipe: every monster's show tags, cooked/figures/shows.json
     # (sprint E4a), which game/figures.cpp reads.
     shows = os.path.join(ASSETS, "cooked", "figures", "shows.json")
@@ -570,7 +582,7 @@ def plan_realm():
     return [Step("realm", ["python3", script],
                  lambda c: (stale, "a manifest or the script is newer than the realm's tables" if stale
                             else "the realm's tables are newer than every manifest"),
-                 "realm"),
+                 "realm", after=stamped),
             Step("shows", ["python3", cook, "--only", "shows"],
                  lambda c: (shown, "a recipe or the cook is newer than shows.json" if shown
                             else "shows.json is newer than every recipe"),

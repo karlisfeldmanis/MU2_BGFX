@@ -2559,6 +2559,26 @@
         "death_die.wav"
       ],
       "from": "Sounds[4], 156 -- death_die.wav. ZzzOpenData.cpp:3704-3709."
+    },
+    "bluegolem_move": {
+      "files": [
+        "bg_idle1.wav",
+        "bg_idle2.wav"
+      ],
+      "from": "SOUND_AIDA_BLUEGOLEM_MOVE1 + rand() % 2, one frame in 15 while it walks or runs (GMAida.cpp:809-834); MapManager.cpp:339-340 loads w34/bg_idle1.wav and bg_idle2.wav."
+    },
+    "bluegolem_attack": {
+      "files": [
+        "bg_attack1.wav",
+        "bg_attack2.wav"
+      ],
+      "from": "SOUND_AIDA_BLUEGOLEM_ATTACK1 on ATTACK1 and ATTACK2 on ATTACK2, once a blow (GMAida.cpp:809-834); w34/bg_attack1-2.wav. Ours picks either for any blow."
+    },
+    "bluegolem_die": {
+      "files": [
+        "bg_death.wav"
+      ],
+      "from": "SOUND_AIDA_BLUEGOLEM_DIE on MONSTER01_DIE, once (GMAida.cpp:809-834); w34/bg_death.wav."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

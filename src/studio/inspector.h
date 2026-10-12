@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "core/json.h"
+#include "studio/checklist.h"
 #include "studio/cooker.h"
 #include "studio/light_panel.h"
 
@@ -46,6 +47,8 @@ private:
 
     RecipeView recipe_;
     LightPanel light_;
+    Checklist checklist_;   // a monster's mu_checklist, over the recipe's tree
+    std::string root_;
     std::unordered_map<std::string, double> numbers_;    // a field being typed in, by path
     std::unordered_map<std::string, std::string> words_;
     bool notes_ = false;

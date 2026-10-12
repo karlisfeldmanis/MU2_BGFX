@@ -262,6 +262,18 @@ def t_recipe(a):
     return json.dumps(data.get("data", data), indent=1)[:60000]
 
 
+def t_research(a):
+    """Everything MuMain does for a monster (tools/mu/research.py), as its recipe's checklist."""
+    args = ["research", str(a["name"])] + (["--write"] if a.get("write") else [])
+    done = subprocess.run([MU, *args], cwd=ROOT, capture_output=True, text=True, timeout=300)
+    if done.returncode:
+        raise Refused((done.stdout + done.stderr).strip()[-2000:])
+    return done.stdout.strip() + ("\n\nSet a block's state with edit: path mu_checklist.N.state, value "
+                                  "done or skip, and mu_checklist.N.note for how ours carries it or why not. "
+                                  "The studio's inspector shows the list with each block's code."
+                                  if a.get("write") else "")
+
+
 def t_edit(a):
     args = ["edit", a["target"], a["path"]]
     how = a.get("how", "set")
@@ -386,6 +398,13 @@ TOOLS = [
      {"job": {"type": "integer"}, "wait": {"type": "boolean"}, "seconds": {"type": "number"}}),
     ("recipe", t_recipe, "A recipe's file(s), parsed, and the material library.",
      {"name": {"type": "string"}}, ["name"]),
+    ("research", t_research,
+     "Everything MuMain does for a monster: each block of its source that names it (the body, its effects, "
+     "lights, chrome, sounds and their files, play speeds), where it is and what it calls, as a checklist. "
+     "Do this before cooking a new monster and before calling one done. name: the recipe (DeathRider01), or a "
+     "breed's number before its recipe exists. write=true keeps it in the recipe as mu_checklist (journalled; "
+     "states already set are kept), which the studio's inspector shows.",
+     {"name": {"type": "string"}, "write": {"type": "boolean"}}, ["name"]),
     ("edit", t_edit,
      "Change source/ in place, journalled, only the touched text: how=set (one value), insert (a value put in "
      "at path: a list's index, or a new key), remove (path taken out). The studio's inspector shows it at once, "

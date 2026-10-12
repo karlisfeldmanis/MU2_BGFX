@@ -53,9 +53,28 @@ Start every piece of content work with:
 | `do` | any of the studio's words, below |
 | `plan`, `cook`, `jobs` | what a make would run; queue it; watch or wait for it, and the cores it cooks on (`./mu cores`) |
 | `recipe`, `edit` | read a recipe; change source/ in place, journalled |
+| `research` | everything MuMain does for a monster, as a checklist in its recipe (below) |
 | `gate` | a gate added or removed with its pair |
 | `light` | a map's lighting: sun, sky, shadows, tonemap, bloom; dusk, night, rain layers |
 | `journal`, `arena_log`, `check` | the edits so far, the fight, the quick gates |
+
+### A new monster: its MU checklist
+
+A monster is not done until each thing MuMain does for it is carried or set aside: its body, its
+effects, lights, chrome, sounds and their files, its play speeds (the user, 2026-10-06 and
+2026-10-12). **`research`** finds every block of MuMain's source that names it (MONSTER_X, its
+MONSTER_MODEL_X, its MODEL_X, and the files its SOUND_s load) and lists them with where they are,
+the function, the actions they wait on and what they call. A case with no `break` is said, and
+another breed's body on a shared model is set aside.
+
+1. `research name=305` before the recipe exists: what you will have to carry.
+2. `./mu new monster 305 --world aida --db`, then `research name=BlueGolem01 write=true`: the
+   list goes into the recipe as `mu_checklist`, journalled. Run it again any time: a block's
+   state and note are kept.
+3. As each block is carried, `edit` `mu_checklist.N.state` to `done` (or `skip`) and
+   `mu_checklist.N.note` to how ours does it or why not.
+4. The studio's inspector draws the list at the top of the Recipe tab, coloured, the count in its
+   header, MuMain's own lines on hover; a click on a state turns it. The user sees what is left.
 
 ### A map's light
 
@@ -107,6 +126,7 @@ than the prose.
 | check the gates | `./mu check` (layers, sizes, WAL, index, sync, white meshes, tables) |
 | find what names a thing | `./mu where <name>` |
 | scaffold new content | `./mu new object <w>/<ObjectNN>`, `./mu new monster <n>`, `./mu new item "<name>"` |
+| what MuMain does for a monster | `./mu research <Monster|number> [--write]` |
 
 **Targets:**
 

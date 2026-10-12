@@ -52,6 +52,7 @@ std::string extend(const std::string& path, const std::string& step) {
 int Inspector::draw(Cooker& cooker, const std::string& target, int plus, float x, float y, float w,
                     float h, const std::string& root, const std::string& world, int* time) {
     int asked = -1;
+    root_ = root;
     ImGui::SetNextWindowPos(ImVec2(x, y));
     ImGui::SetNextWindowSize(ImVec2(w, h));
     ImGui::Begin("Inspector", nullptr,
@@ -119,7 +120,14 @@ void Inspector::tab(Cooker& cooker, RecipeView& view, const std::string& target,
                           ImGui::TreeNodeEx(file.path.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
         if (view.files.size() == 1) ImGui::TextColored(kDim, "%s", file.path.c_str());
         if (open) {
+            // A monster's MU checklist first, drawn as a list of its own (studio/checklist.h).
             for (auto& [key, value] : file.doc.members) {
+                if (!light && key == "mu_checklist" && value.type == core::Json::Type::Array) {
+                    checklist_.draw(cooker, file.path, value, root_, &said_, &saidOk_);
+                }
+            }
+            for (auto& [key, value] : file.doc.members) {
+                if (key == "mu_checklist") continue;
                 node(cooker, view, f, value, key, extend("[]", quote(key)), light);
             }
             if (view.files.size() > 1) ImGui::TreePop();

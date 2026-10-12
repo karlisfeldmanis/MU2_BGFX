@@ -1558,6 +1558,21 @@ adjusting lighting, tonemaps, shadow, sun, daylight for maps".
   On the way: a run scripted by MU_STUDIO_DO no longer takes studio.sock from the user's open
   studio. And a stale tally.cpp.o (face.h's new member not seen) crashed the first try;
   every mu*.dir object deleted and rebuilt.
+- MU's checklist, the user's pick of four features "very useful for cooking new monsters", made
+  with the Blue Golem (docs/aida-port.md). tools/mu/research.py (`mu research <Monster|number>
+  [--write]`, the MCP's `research`) finds every block of MuMain's source naming the monster
+  (MONSTER_X, its MONSTER_MODEL_X, its MODEL_X, and the files its SOUND_s load): a case to its
+  break (a missing one said), an if to its brace; where, the function, the actions, the calls.
+  --write keeps it in the recipe as `mu_checklist`, journalled, states and notes kept on a rerun;
+  another breed's body on a shared model and MU's name table are set aside. studio/checklist
+  draws it atop the inspector's Recipe tab, the count in its header, a click turns a state,
+  MuMain's lines on hover. On the way: the realm read stale for ever after a recipe edit that
+  left the rules alone (realm_tables.py writes only changed text), so every cook ran it and
+  rebuilt the game; make.py stamps the realm's run (workshop/.mu/realm.stamp). Proved: the Death
+  Rider's list (10 blocks; 7 done from this file's record) and the Blue Golem's (12; 7 done after
+  its cook) in the studio, a rerun keeping every state, the golem fighting at Aida 81,80 in the
+  user's studio, every step of its plan skipping after the stamp. cooker_test 28 and 39 live,
+  layercheck green, mu check green.
 
 ## 10. Leave alone
 
