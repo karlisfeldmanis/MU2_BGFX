@@ -358,9 +358,9 @@ constexpr SkillRow kRows[kSkills] = {
     // cost more mana"; fifty, then Inferno's two hundred, then "200 to much lets use 60, but
     // decreae multiuplier to 1.6"): the dearest of his throws, and lighter than the 2.3 it was
     // while one rock fell on each body -- a rain now catches a crowd for it.
-    // **Forty since 2026-10-12** (the user: "reduce mana req for meteor"): Lightning's price, the
-    // band kept at 1.6.
-    {skill::kMeteorite, "Meteorite", 40, 9.0f, 1.6f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+    // **Thirty since 2026-10-12** (the user: "reduce mana req for meteor", forty, then "reduce more"):
+    // what it cost before it showered, the band kept at 1.6.
+    {skill::kMeteorite, "Meteorite", 30, 9.0f, 1.6f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "With his arm raised to the sky he calls a shower of burning rocks down on the ground up "
      "to nine tiles off, falling at random within four tiles of it.",
      183, "meteorite", true, arms::kNone, 0, Kin::DarkWizard, true, 21, 0, 15.0f, false, 0, 0, 0,
