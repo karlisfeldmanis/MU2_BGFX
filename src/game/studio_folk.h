@@ -41,6 +41,7 @@ public:
 private:
     std::string world_;
     long long stamp_ = -1;    // the manifest's date when it was last read
+    uint32_t generation_ = 0; // the figures' generation the folk were stood in
     double lookedAt_ = -1.0;  // when the date was last looked at
     std::vector<Figure> folk_;
     std::vector<float> scratch_;

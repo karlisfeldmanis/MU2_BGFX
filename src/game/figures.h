@@ -442,6 +442,10 @@ public:
     int lastMissed() const { return lastMissed_; }
 
     bool isOpen() const { return !bodies_.empty(); }
+    // Goes up each time the bodies are built again (open, openWardrobe, the shutdown's clear),
+    // which frees the ones before: whoever keeps a FigureBody* stands its figures again on a
+    // change (game/studio_folk.cpp; the studio crashed when its browser refilled under them).
+    uint32_t generation() const { return generation_; }
     const FigureBody* body(const std::string& name) const;
     // Every body of one kind, sorted by the label a reader sees. The bodies themselves live
     // in a hash map, whose order is neither stable between runs nor anything a person could
@@ -551,6 +555,7 @@ private:
     std::unordered_map<std::string, std::unique_ptr<content::CookedClips>> heldClips_;
     std::unordered_map<std::string, ItemRow> items_;       // mesh name -> what it is
     std::unordered_map<std::string, std::unique_ptr<FigureBody>> bodies_;
+    uint32_t generation_ = 0;
     std::vector<FigurePlacement> placements_;
     std::vector<Breed> breeds_;
     double loadSeconds_ = 0.0;

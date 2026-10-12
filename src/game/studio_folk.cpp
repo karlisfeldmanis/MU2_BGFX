@@ -21,7 +21,13 @@ void StudioFolk::clear() {
 
 void StudioFolk::follow(const std::string& root, const std::string& world, const Figures& figures,
                         const content::Ground& ground, double seconds) {
-    if (world == world_ && seconds - lookedAt_ < 0.5) return;
+    // The figures built again (the browser refilled): the bodies the folk stand in are gone.
+    if (figures.generation() != generation_) {
+        generation_ = figures.generation();
+        folk_.clear();
+        stamp_ = -1;
+    }
+    if (world == world_ && stamp_ != -1 && seconds - lookedAt_ < 0.5) return;
     lookedAt_ = seconds;
     const std::string path = root + "/source/world/" + world + "/world.json";
     std::error_code error;

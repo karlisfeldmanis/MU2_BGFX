@@ -991,6 +991,7 @@ const char* wearerFor(const core::Json& classes) {
 }  // namespace
 
 bool Figures::openWardrobe(const std::string& assetDir, content::Textures& textures) {
+    ++generation_;
     const int64_t started = bx::getHPCounter();
     const std::string path = core::join(assetDir, "cooked/wardrobe/wardrobe.json");
     core::Json manifest = core::parseJsonFile(path);
@@ -1126,6 +1127,7 @@ bool Figures::openWardrobe(const std::string& assetDir, content::Textures& textu
 
 bool Figures::open(const std::string& assetDir, const std::string& world,
                    content::Textures& textures) {
+    ++generation_;
     const int64_t started = bx::getHPCounter();
     assetDir_ = assetDir;
     textures_ = &textures;
@@ -1349,6 +1351,7 @@ void Figures::shutdown() {
     meshIndex_.clear();
     libraries_.clear();
     bodies_.clear();
+    ++generation_;
     placements_.clear();
     breeds_.clear();
 }
