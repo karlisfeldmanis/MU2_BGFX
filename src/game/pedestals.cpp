@@ -239,6 +239,11 @@ void Pedestals::pick(int slot) {
     stand.greeting = stand.figure.length();
 }
 
+void Pedestals::middleTile(float* column, float* row) {
+    *column = kStands[kRosterSlots / 2][0];
+    *row = kStands[kRosterSlots / 2][1];
+}
+
 void Pedestals::middle(float out[3]) const {
     tileToWorld(*ground_, kStands[kRosterSlots / 2][0], kStands[kRosterSlots / 2][1], out);
 }

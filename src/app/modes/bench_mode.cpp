@@ -36,8 +36,7 @@ bool BenchMode::openStudioWorld(Context& ctx, const std::string& benchWorld) {
         }
     }
     if (best == 1e30f) {
-        core::logError("the studio found no Bonfire01 in %s; standing at the middle",
-                       benchWorld.c_str());
+        core::logf("studio: no Bonfire01 in %s; standing at the middle", benchWorld.c_str());
         studioFire_[0] = middle + 1.6f;
         studioFire_[2] = -middle - 1.6f;
     }
@@ -127,7 +126,11 @@ bool BenchMode::open(Context& ctx) {
         }
     }
     // The studio's panels, where the list would be; the bench goes on without them if they fail.
-    if (kind_ == Kind::Studio && args.list) desk_.open(ctx);
+    if (kind_ == Kind::Studio) sceneWorld_ = benchWorld;
+    // With the panels the studio opens on its Stage (the user's pick, 2026-10-12); the world
+    // stays open behind it for Home and the world list. Without them -- studio.py's sheets --
+    // it is the bonfire, as it was.
+    if (kind_ == Kind::Studio && args.list && desk_.open(ctx)) setScene(ctx, "Stage");
     // The stage's lamps, once, as a world's are: the renderer lays its light grid here.
     if (bench_.hasStage() && args.lampsOn) bench_.stageLamps().light(ctx.renderer);
 
@@ -253,14 +256,18 @@ void BenchMode::frame(Context& ctx, const Frame& at) {
         } else {
             bench_.update(at.elapsed, at.deltaSeconds, spin);
         }
-        if (args.lampsOn) {
+        if (args.lampsOn && !onStage_) {
             world_.lamps().update(deltaSeconds, world_.town(), ctx.renderer,
                                   bench_.camera().target);
             world_.lamps().gather(ctx.renderer.effects(), bench_.camera().target,
                                   daylightOf(ctx.lighting));
         }
         townDrawables_.clear();
-        if (world_.town().isOpen()) world_.town().gatherAll(townDrawables_);
+        if (onStage_) {
+            townDrawables_ = stage_.drawables();
+        } else if (world_.town().isOpen()) {
+            world_.town().gatherAll(townDrawables_);
+        }
         const std::vector<gfx::Drawable>& subject = bench_.gather(ctx.renderer);
         townDrawables_.insert(townDrawables_.end(), subject.begin(), subject.end());
         // After the gather, which posed it: the suit's set light, round where it stands.
@@ -271,9 +278,12 @@ void BenchMode::frame(Context& ctx, const Frame& at) {
         }
         setShine_.update(float(at.deltaSeconds), world_.ground().metresPerTile());
         setShine_.gather(ctx.renderer.effects(), world_.ground(), bench_.camera().position);
-        ctx.renderer.draw(bench_.camera(), ctx.lighting, townDrawables_, &world_.ground());
+        ctx.renderer.draw(bench_.camera(), ctx.lighting, townDrawables_,
+                          onStage_ ? nullptr : &world_.ground());
         if (desk_.isOpen()) {
-            desk_.panels(ctx, bench_, args.world.empty() ? std::string("lorencia") : args.world);
+            desk_.panels(ctx, bench_, sceneWorld_);
+            const std::string scene = desk_.takeScene();
+            if (!scene.empty()) setScene(ctx, scene);
             if (!desk_.wantsPointer()) look(ctx);
             desk_.end();
         } else {
@@ -307,6 +317,7 @@ void BenchMode::report(Context& ctx) {
 
 void BenchMode::shutdown(Context& ctx) {
     desk_.shutdown();
+    stage_.shutdown();
     bench_.shutdown();
     setShine_.shutdown();
     ctx.renderer.closeStages();

@@ -51,6 +51,9 @@ class Pedestals {
 public:
     // MU's world 74, the pipeline's `charscene`.
     static constexpr const char* kMap = "charscene";
+    // The middle pedestal's tile, column and row, for a caller with no roster to stand: the
+    // studio's Home for an armour set (app/modes/bench_scenes.cpp).
+    static void middleTile(float* column, float* row);
 
     bool open(Figures* figures, const content::Ground* ground, const content::Tables* tables,
               const std::string& assetDir, content::Textures& textures);

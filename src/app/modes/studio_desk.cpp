@@ -27,7 +27,27 @@ bool StudioDesk::open(Context& ctx) {
         return false;
     }
     shelfRoot_ = ctx.paths.root;
-    if (const char* at = std::getenv("MU_STUDIO_SWAP_AT")) swapAt_ = std::atoi(at);
+    // The scenes: the Stage, Home, and every world with a cooked town to stand in.
+    shelf_.scenes = {"Stage", "Home"};
+    std::error_code ignored;
+    std::vector<std::string> worlds;
+    for (const auto& entry : std::filesystem::directory_iterator(ctx.paths.assets + "/cooked", ignored)) {
+        const std::string name = entry.path().filename().string();
+        if (std::filesystem::exists(entry.path() / (name + ".mut"), ignored)) worlds.push_back(name);
+    }
+    std::sort(worlds.begin(), worlds.end());
+    shelf_.scenes.insert(shelf_.scenes.end(), worlds.begin(), worlds.end());
+    if (const char* script = std::getenv("MU_STUDIO_DO")) {
+        std::string all = script;
+        for (size_t start = 0; start < all.size();) {
+            size_t end = all.find(';', start);
+            if (end == std::string::npos) end = all.size();
+            const std::string one = all.substr(start, end - start);
+            const size_t colon = one.find(':');
+            if (colon != std::string::npos) script_.push_back({std::atoi(one.c_str()), one.substr(colon + 1)});
+            start = end + 1;
+        }
+    }
     cooker_.open(ctx.paths.root);
     cooker_.poll();
     // No server answering: start one. It outlives the studio, so the next studio finds it.
@@ -156,9 +176,19 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
     shelf_.time = std::string(ctx.time.name()) + "    T changes the time of day";
     shelf_.swapped = lastSwap_.empty() ? std::string() : lastSwap_ + "/compare.png";
     watchJobs(bench);
-    if (frame_++ == swapAt_ && swap_ == Swap::Idle) {
-        startSwap(bench, bench.browseName(bench.browseIndex()));
+    for (const auto& [at, what] : script_) {
+        if (at != frame_) continue;
+        core::logf("studio: frame %d does '%s' (MU_STUDIO_DO)", at, what.c_str());
+        if (what == "swap" && swap_ == Swap::Idle) startSwap(bench, bench.browseName(bench.browseIndex()));
+        if (what.rfind("scene ", 0) == 0) {
+            sceneAsked_ = what.substr(6);
+            for (size_t i = 0; i < shelf_.scenes.size(); ++i) {
+                if (shelf_.scenes[i] == sceneAsked_) shelf_.scene = int(i);
+            }
+            shelfCategory_ = -1;
+        }
     }
+    ++frame_;
     stepSwap(ctx, bench, world);
 
     const double now = std::chrono::duration<double>(
@@ -176,6 +206,11 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
         }
     }
     if (asked.reread) startSwap(bench, bench.browseName(bench.browseIndex()));
+    if (asked.scene >= 0 && asked.scene < int(shelf_.scenes.size())) {
+        shelf_.scene = asked.scene;
+        sceneAsked_ = shelf_.scenes[size_t(asked.scene)];
+        shelfCategory_ = -1;   // a world's lists differ
+    }
     if (asked.pick >= 0 || asked.category >= 0) lastSwap_.clear();   // another subject
     if (asked.category >= 0) {
         bench.setCategory(size_t(asked.category), ctx.textures);
@@ -185,6 +220,12 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
         bench.step(asked.pick - int(bench.browseIndex()), ctx.textures);
         core::logf("browser: %s", bench.browseLine().c_str());
     }
+}
+
+std::string StudioDesk::takeScene() {
+    std::string scene;
+    scene.swap(sceneAsked_);
+    return scene;
 }
 
 void StudioDesk::end() {

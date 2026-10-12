@@ -117,8 +117,28 @@ public:
     // and the same clip put back. False when the subject is no longer there.
     bool reopen(const std::string& assetDir, const std::string& world,
                 content::Textures& textures);
+    // What reopen and restand put back: the open tab, the name in it, and its clip.
+    struct Held {
+        std::string tab, name;
+        int clip = -1;
+    };
+    Held held() const;
+    bool putBack(const Held& held, content::Textures& textures);
+    // The studio's scenes (F3b): the subject moved to another spot, in this world or another --
+    // the tables of `world` read, the subject stood at `stand` with the bonfire at `fire`, and
+    // the same tab, name and clip put back. False when the subject is not in that world.
+    bool restand(const std::string& assetDir, const std::string& world, const float stand[3],
+                 const float fire[3], content::Textures& textures);
     // The running clip from its first frame, so two shots of one pose can be taken.
     void replayClip();
+    // What stands here, for the studio's Home: its kind, and the tables it came out of.
+    const FigureBody* subjectBody() const {
+        if (categories_.empty() || categories_[category_].at >= categories_[category_].entries.size()) {
+            return nullptr;
+        }
+        return categories_[category_].entries[categories_[category_].at].body;
+    }
+    const Figures& figures() const { return figures_; }
     bool browsing() const { return !categories_.empty(); }
     // "MONSTERS  17/105  Budge Dragon", for the log line once a second.
     std::string browseLine() const;

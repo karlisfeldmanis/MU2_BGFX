@@ -1,0 +1,79 @@
+// The studio's scenes: BenchMode::setScene (app/modes/bench_mode.h), out of bench_mode.cpp so
+// the scene rules sit in one place. docs/order-plan.md §9c, F3b.
+//
+// The user, 2026-10-12, picked "a stage and the world": the Stage to work on a thing, with
+// nothing moving round it, and the world to judge it where the game puts it. Home is that
+// world chosen for the subject: a monster where it spawns, an armour set where a character is
+// first seen (the character screen's middle pedestal), and anything else at Lorencia's
+// bonfire, where the weapon sheets were approved.
+#include "app/modes/bench_mode.h"
+
+#include "core/log.h"
+#include "game/figures.h"
+#include "game/pedestals.h"
+
+namespace mu::app {
+
+void BenchMode::setScene(Context& ctx, const std::string& scene) {
+    if (scene == "Stage") {
+        if (!stage_.isOpen() && !stage_.open(ctx.textures)) return;
+        stage_.place(studioStand_);
+        // The town's lamps and the fire's flicker go dark with it: the Stage is lit by the
+        // sheets alone.
+        ctx.renderer.setPointLights(nullptr, 0, 0.0f, 0.0f, 0.0f);
+        ctx.renderer.setTransientLights(nullptr, 0);
+        onStage_ = true;
+        core::logf("studio: on the Stage, %s kept behind it", sceneWorld_.c_str());
+        return;
+    }
+
+    std::string world = scene;
+    bool spawn = false, pedestal = false;
+    if (scene == "Home") {
+        const game::FigureBody* body = bench_.subjectBody();
+        spawn = body && body->kind == game::BodyKind::Monster;
+        pedestal = body && body->kind == game::BodyKind::Armour;
+        world = spawn ? sceneWorld_ : (pedestal ? game::Pedestals::kMap : "lorencia");
+    }
+    const bool leftStage = onStage_;
+    onStage_ = false;
+    if (world != sceneWorld_ || !world_.town().isOpen()) {
+        world_.shutdown();
+        if (!openStudioWorld(ctx, world)) {
+            core::logError("studio: %s did not open; back to the Stage", world.c_str());
+            sceneWorld_.clear();
+            setScene(ctx, "Stage");
+            return;
+        }
+        sceneWorld_ = world;
+    } else if (leftStage && ctx.args.lampsOn) {
+        world_.lamps().light(ctx.renderer);   // the lamps the Stage put out
+    }
+
+    const float m = world_.ground().metresPerTile();
+    if (spawn) {
+        // The middle of the breed's first spawn rectangle, in tiles: column is +x, row is -z.
+        const game::FigureBody* body = bench_.subjectBody();
+        for (const game::Breed& breed : bench_.figures().breeds()) {
+            if (breed.body != body || breed.rects.empty()) continue;
+            const game::Breed::Rect& r = breed.rects.front();
+            studioStand_[0] = 0.5f * float(r.x1 + r.x2) * m;
+            studioStand_[2] = -0.5f * float(r.y1 + r.y2) * m;
+            studioStand_[1] = world_.ground().heightAt(studioStand_[0], studioStand_[2]);
+            break;
+        }
+    } else if (pedestal) {
+        float column = 0.0f, row = 0.0f;
+        game::Pedestals::middleTile(&column, &row);
+        studioStand_[0] = column * m;
+        studioStand_[2] = -row * m;
+        studioStand_[1] = world_.ground().heightAt(studioStand_[0], studioStand_[2]);
+    }
+    if (!bench_.restand(ctx.paths.assets, world, studioStand_, studioFire_, ctx.textures)) {
+        core::logError("studio: the subject is not cooked into %s", world.c_str());
+    }
+    core::logf("studio: in %s at %.1f,%.1f m%s", world.c_str(), studioStand_[0], studioStand_[2],
+               spawn ? ", where it spawns" : (pedestal ? ", on the middle pedestal" : ""));
+}
+
+}  // namespace mu::app

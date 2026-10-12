@@ -120,6 +120,19 @@ void Panels::subject(const Shelf& shelf, Cooker& cooker, float x, float y, float
     ImGui::TextColored(kGold, "%s", name.c_str());
     ImGui::PushTextWrapPos(0.0f);
     ImGui::PushStyleColor(ImGuiCol_Text, kDim);
+    if (!shelf.scenes.empty()) {
+        ImGui::SetNextItemWidth(12.0f * ImGui::GetFontSize());
+        if (ImGui::BeginCombo("scene", shelf.scenes[size_t(shelf.scene)].c_str())) {
+            for (size_t i = 0; i < shelf.scenes.size(); ++i) {
+                if (ImGui::Selectable(shelf.scenes[i].c_str(), int(i) == shelf.scene)) asked_.scene = int(i);
+                if (i == 1) {
+                    ImGui::SetItemTooltip("its own place: a monster where it spawns, armour on the "
+                                          "character screen, anything else at Lorencia's bonfire");
+                }
+            }
+            ImGui::EndCombo();
+        }
+    }
     if (!shelf.clip.empty()) ImGui::TextUnformatted(shelf.clip.c_str());
     if (!shelf.time.empty()) ImGui::TextUnformatted(shelf.time.c_str());
     ImGui::PopStyleColor();

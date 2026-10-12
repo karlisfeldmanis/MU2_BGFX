@@ -327,6 +327,27 @@ def plan_thing(thing, threads):
     return steps
 
 
+def plan_set(suffix, threads, say):
+    """An armour set by the game's name for it, Set<suffix> (SetMale16, what the studio's
+    Armour sets tab has in hand): each of its pieces built, then the set cooked once --
+    cook_one takes a set by its suffix, and the wardrobe and the tables follow it once."""
+    from things import NotFound, find
+    pieces = []
+    for piece in ("Helm", "Armor", "Pant", "Glove", "Boot"):
+        try:
+            pieces.append(find(piece + suffix))
+        except NotFound:
+            continue
+    if not pieces:
+        raise NotFound(f"no piece of the set {suffix} under source/ (Helm{suffix}, Armor{suffix}, ...)")
+    say(f"set {suffix}: {', '.join(p.name for p in pieces)}")
+    steps = plan_thing(pieces[0], threads)
+    builds = head(pieces, threads)
+    # The pieces' builds in place of the first piece's alone; its cook steps after them.
+    first_cook = next(i for i, s in enumerate(steps) if not s.name.startswith(("build ", "checkpoint", "index", "sync")))
+    return builds + steps[first_cook:]
+
+
 def plan_world(world, threads):
     things = world_recipes(world)
     return head(things, threads) + world_cook(world, things, threads)
@@ -550,6 +571,8 @@ def plan(target, threads, say, folder=None, reimport=False):
         return plan_realm()
     if target == ["rehearsal"]:
         return plan_rehearsal()
+    if len(target) == 1 and target[0].startswith("Set") and target[0][3:4].isupper():
+        return plan_set(target[0][3:], threads, say)
     if len(target) == 1:
         thing = find(target[0])
         say(f"{thing.kind} {thing.build_name}, world {thing.world}: {thing.rel}")

@@ -23,6 +23,8 @@ struct Shelf {
     std::string clip;   // the clip line under a figure, empty for a mesh
     std::string time;   // the time of day, and the key that changes it
     std::string swapped;  // the last swap's before/after sheet, once one was taken
+    std::vector<std::string> scenes;   // "Stage", "Home", then the cooked worlds
+    int scene = 0;
 };
 
 struct Asked {
@@ -30,6 +32,7 @@ struct Asked {
     int pick = -1;      // put this row of the open tab on the bench
     bool openSheet = false;  // show the last swap's before/after
     bool reread = false;     // read the subject again from disk now, as after a cook
+    int scene = -1;          // stand it in shelf.scenes[scene]
 };
 
 class Panels {

@@ -23,6 +23,7 @@
 #include "app/modes/studio_desk.h"
 #include "game/bench.h"
 #include "game/fx/set_shine.h"
+#include "game/studio_stage.h"
 #include "game/world/world.h"
 
 namespace mu::app {
@@ -53,6 +54,12 @@ private:
     // The studio's stage: the map's own bonfire nearest the middle of the town, and the
     // subject stood 1.6 m to its -x and +z, which is the left of MU's picture.
     bool openStudioWorld(Context& ctx, const std::string& benchWorld);
+    // The studio's scenes (app/modes/bench_scenes.cpp, docs/order-plan.md §9c F3b): "Stage",
+    // "Home" (the subject's own place: a monster at its spawn, an armour set on the character
+    // screen's middle pedestal, anything else at Lorencia's bonfire) or a world by name.
+    void setScene(Context& ctx, const std::string& scene);
+    // The world the studio stands in now, which the Stage keeps open and does not draw.
+    std::string sceneWorld() const { return sceneWorld_; }
 
     game::ModelBench bench_;
     // The studio's scenery, and nothing else's. A plain bench never opens it, and
@@ -69,6 +76,9 @@ private:
     // The studio's panels (`mu2 --studio`, docs/order-plan.md §9c): in place of the overlay's
     // list, and closed under --no-list as it was.
     StudioDesk desk_;
+    game::StudioStage stage_;
+    bool onStage_ = false;
+    std::string sceneWorld_;
 };
 
 }  // namespace mu::app

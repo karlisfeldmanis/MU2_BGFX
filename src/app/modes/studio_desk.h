@@ -16,8 +16,9 @@
 // in shots/studio/swaps/<name>_<when>/. Eight frames, and the new look is on the bench.
 // The card's Read again runs the same swap with no job, for a cook run by hand.
 //
-// MU_STUDIO_SWAP_AT=<frame> presses Read again on that frame, for a shot run with nobody at
-// the mouse -- until F7's control socket drives the studio (docs/order-plan.md §9c).
+// MU_STUDIO_DO="<frame>:<what>;..." does what the card would on those frames, for a shot run
+// with nobody at the mouse: `swap` (Read again) and `scene <Stage|Home|world>` -- until F7's
+// control socket drives the studio (docs/order-plan.md §9c). "40:scene Home;200:swap".
 #pragma once
 
 #include <string>
@@ -46,6 +47,8 @@ public:
     // While a swap is shooting: the bench is to be updated at heldSeconds() with no delta.
     bool holding() const { return swap_ != Swap::Idle; }
     double heldSeconds() const { return heldSeconds_; }
+    // The scene the card asked for this frame ("Stage", "Home" or a world), once; empty if none.
+    std::string takeScene();
     bool wantsPointer() const { return gui_.wantsPointer(); }
     bool wantsKeys() const { return gui_.wantsKeys(); }
     void shutdown();
@@ -75,7 +78,9 @@ private:
     std::string shelfRoot_;   // MU2_BGFX: ./mu and shots/ are under it
     std::string lastSwap_;    // the last swap's folder, for the card
     int comparePid_ = 0;
-    int frame_ = 0, swapAt_ = -1;   // this desk's frames, and MU_STUDIO_SWAP_AT
+    int frame_ = 0;   // this desk's frames
+    std::vector<std::pair<int, std::string>> script_;   // MU_STUDIO_DO
+    std::string sceneAsked_;
 };
 
 }  // namespace mu::app

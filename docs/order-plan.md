@@ -1138,6 +1138,31 @@ same day, **a stage and the world**, a switch on the Subject card:
 - The stage is the default once it exists; the switch keeps the subject, its clip and the
   camera's orbit. The turntable sheets (studio.py) stay on Lorencia unless told otherwise.
 
+### Slice F3b: the scenes, as done
+
+- The Subject card's **scene** box: Stage, Home, and every world with a cooked town. The
+  studio opens on the Stage when its panels are up; under --no-list (studio.py's sheets) it is
+  the bonfire, as before.
+- **Stage** (game/studio_stage.{h,cpp}): a dark floor 60 m across (sRGB 52), a plinth 2.2 m
+  across (92), a grey ball (118, the 18% card, rough), a chrome ball (230, roughness 0.05,
+  metal), and a 1.8 m post, laid round the subject as the camera first sees it. Drawn in
+  place of the town, which stays open behind it; the lamps and the fire's flicker are put
+  out (`setPointLights(nullptr, 0)`, `setTransientLights(nullptr, 0)`) and lit again on the
+  way back. A swap there with nothing changed is 0.00 apart: nothing moves but the cook.
+- **Home** (app/modes/bench_scenes.cpp): a monster at the middle of its breed's first spawn
+  rectangle in the world it is cooked into (Budge Dragon at 203,-167 in Lorencia); an armour
+  set on the character screen's middle pedestal (`Pedestals::middleTile`, charscene); anything
+  else at Lorencia's bonfire. A world by name stands at its bonfire nearest the middle, or the
+  middle. `ModelBench::restand` moves the subject and keeps its tab, name and clip
+  (bench_reload.cpp's held/putBack, which reopen uses too).
+- `mu make Set<suffix>` (SetMale16, the Armour sets tab's name) builds each of the set's
+  pieces and cooks the set once.
+- MU_STUDIO_DO="<frame>:<what>;..." replaces MU_STUDIO_SWAP_AT: `swap` and `scene <name>`.
+- Proved by shot runs: Kris, Budge Dragon and Storm Crow each on the Stage and at Home; a
+  swap on the Stage 0.00 apart; the set's card listing its 20 stale steps. The first run after
+  a rebuild stalled 20 s inside Metal compiling a shader (the watchdog's hang report); the
+  next did not -- a cold shader cache, not the studio.
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:
