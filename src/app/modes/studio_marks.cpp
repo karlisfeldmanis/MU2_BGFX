@@ -34,8 +34,8 @@ int placeModeBar(float x, float y, float w, int mode) {
     ImGui::Begin("##place what", nullptr,
                  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
                      ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize);
-    const char* names[] = {"Objects", "Gates", "Townsfolk"};
-    for (int i = 0; i < 3; ++i) {
+    const char* names[] = {"Objects", "Gates", "Townsfolk", "Ground"};
+    for (int i = 0; i < 4; ++i) {
         if (i) ImGui::SameLine();
         if (ImGui::RadioButton(names[i], mode == i)) mode = i;
     }

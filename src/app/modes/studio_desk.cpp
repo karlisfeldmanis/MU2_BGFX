@@ -96,14 +96,18 @@ void StudioDesk::watchJobs(game::ModelBench& bench) {
         seen_.push_back(job.number);
         if (!seenAll_ || job.state != "done" || swap_ != Swap::Idle) continue;
         // The Cook button's name, or the recipe's own from a `./mu make` by hand.
+        // Or what Place's card names: the world's placements, its ground. Those were never the
+        // subject's, and a placements cook went unanswered until sprint G compared this too.
         const std::string here = targetOf(bench);
-        if (job.target != here && "Arm" + job.target != here) continue;
-        if (job.target.rfind("placements ", 0) == 0) {
-            // The world's placements cooked: read the world again, so the lamps and the fires
-            // stand where their objects now do.
+        const bool placed = placing_ && job.target == shelf_.target;
+        if (!placed && job.target != here && "Arm" + job.target != here) continue;
+        if (job.target.rfind("placements ", 0) == 0 || job.target.rfind("ground ", 0) == 0) {
+            // The world's placements or its land cooked: read the world again, so the lamps and
+            // the fires stand where their objects now do, and the land is the painted one.
             core::logf("studio: job %d cooked %s; reading the world again", job.number, job.target.c_str());
             sceneAsked_ = "reload";
             place_.drop();
+            if (job.target.rfind("ground ", 0) == 0) paint_.cooked();
             continue;
         }
         core::logf("studio: job %d cooked %s; swapping it in", job.number, job.target.c_str());
@@ -217,9 +221,11 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
         place_.world(ctx, world);
         marks_.world(ctx, world);
         marks_.kind(ctx, placeMode_ == 1 ? StudioMarks::Kind::Gates : StudioMarks::Kind::Townsfolk);
-        const bool idle = swap_ == Swap::Idle;
-        tookPointer_ = idle && (placeMode_ == 0 ? place_.pointer(ctx, town, camera, gui_.wantsPointer())
-                                                : marks_.pointer(ctx, town, camera, gui_.wantsPointer()));
+        paint_.world(ctx, world);
+        const bool idle = swap_ == Swap::Idle, over = gui_.wantsPointer();
+        tookPointer_ = idle && (placeMode_ == 0   ? place_.pointer(ctx, town, camera, over)
+                                : placeMode_ == 3 ? paint_.pointer(ctx, town, camera, over)
+                                                  : marks_.pointer(ctx, town, camera, over));
     }
     // The names are read once a tab, not once a frame: the world objects run to hundreds.
     if (int(bench.categoryIndex()) != shelfCategory_ || shelf_.categories.size() != bench.categoryCount()) {
@@ -233,7 +239,10 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
     }
     shelf_.category = shelfCategory_;
     shelf_.selected = int(bench.browseIndex());
-    shelf_.target = !placing_ ? targetOf(bench) : placeMode_ == 0 ? "placements " + world : marks_.target();
+    shelf_.target = !placing_          ? targetOf(bench)
+                    : placeMode_ == 0  ? "placements " + world
+                    : placeMode_ == 3  ? paint_.target()
+                                       : marks_.target();
     shelf_.placing = placing_;
     shelf_.clip = bench.hasFigure() ? bench.clipLine() : std::string();
     shelf_.time = std::string(ctx.time.name()) + "    T changes the time of day";
@@ -284,6 +293,8 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
         const float bar = ImGui::GetFrameHeightWithSpacing() + 2.0f * ImGui::GetStyle().WindowPadding.y + 4.0f;
         if (placeMode_ == 0) {
             place_.panel(ctx, town, cooker_, camera, side[0], side[1] + bar, side[2], side[3] - bar);
+        } else if (placeMode_ == 3) {
+            paint_.panel(ctx, town, cooker_, camera, side[0], side[1] + bar, side[2], side[3] - bar);
         } else {
             marks_.panel(ctx, town, cooker_, camera, side[0], side[1] + bar, side[2], side[3] - bar);
         }

@@ -36,7 +36,8 @@ namespace mu::app {
 
 struct Context;
 
-// The row over Place's window that says what is placed: 0 objects, 1 gates, 2 townsfolk.
+// The row over Place's window that says what is placed: 0 objects, 1 gates, 2 townsfolk, 3 the
+// ground (app/modes/studio_paint.h).
 int placeModeBar(float x, float y, float w, int mode);
 
 class StudioMarks {

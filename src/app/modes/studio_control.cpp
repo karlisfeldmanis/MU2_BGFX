@@ -9,6 +9,7 @@
 //   mode objects|gates|townsfolk                     what Place places; duplicate and delete follow it
 //   mark <n> | budge <dc> <dr> | look <n>            a gate by number or townsperson by index; tiles
 //   way <world>                                      a gate there at the view's middle, with its pair
+//   brush <slot> base|overlay <alpha> <radius> | dab | undo   the ground: a stroke at the view's middle
 //   tab light              the inspector's Light   hide | show  the panels off and on
 //   shot <abs.png>         this frame to a file    wait <N>     N frames before the next line
 //   status                 what is on the bench    quit         close the studio
@@ -86,13 +87,31 @@ std::string StudioDesk::act(Context& ctx, game::ModelBench& bench, const std::st
     }
     if (starts("mode")) {
         const std::string mode = after("mode");
-        const int asked = mode == "objects" ? 0 : mode == "gates" ? 1 : mode == "townsfolk" ? 2 : -1;
-        if (asked < 0) return "error mode objects|gates|townsfolk";
+        const int asked = mode == "objects" ? 0 : mode == "gates" ? 1 : mode == "townsfolk" ? 2 : mode == "ground" ? 3 : -1;
+        if (asked < 0) return "error mode objects|gates|townsfolk|ground";
         placing_ = true;
         placeMode_ = asked;
         place_.drop();
         marks_.drop();
         return "ok placing " + mode + " in " + world;
+    }
+    if (placeMode_ == 3 && (starts("brush") || what == "dab" || what == "undo")) {
+        paint_.world(ctx, world);
+        std::string answer;
+        if (starts("brush")) {
+            int slot = 0, alpha = 255, radius = 0;
+            char how[16] = "";
+            if (std::sscanf(after("brush").c_str(), "%d %15s %d %d", &slot, how, &alpha, &radius) != 4) {
+                return "error brush <slot> base|overlay <alpha> <radius>";
+            }
+            paint_.brush(slot, std::string(how) == "overlay", alpha, radius);
+            return "ok brush " + after("brush");
+        }
+        const float m = town.ground().metresPerTile();
+        const bool ok = what == "dab" ? paint_.stroke(cooker_, int(std::floor(bench.camera().target[0] / m)),
+                                                      int(std::floor(-bench.camera().target[2] / m)), &answer)
+                                      : paint_.undo(cooker_, &answer);
+        return (ok ? "ok " : "error ") + answer;
     }
     if (placeMode_ != 0 && (starts("mark") || starts("budge") || starts("look") || starts("way") ||
                             what == "duplicate" || what == "delete")) {

@@ -21,6 +21,7 @@
               ... --insert / --remove          a value put in at path, or taken out (no value)
     ./mu gate add <w> <to> <col> <row>       a way in here and its way out there (tools/mu/gates.py)
     ./mu gate remove <w> <number>            a gate and its pair
+    ./mu paint <w> <col> <row> <slot>        the ground's tiles.png (--overlay --alpha --radius, --undo)
     ./mu do "<line>; <line>; ..."            drive an open studio: subject, scene, shot, wait, status...
     ./mu serve                               the cook's job runner; `mu make` hands it its jobs
     ./mu jobs [--watch [N]] | cancel N [--now] what it is cooking, with bars and time left
@@ -83,6 +84,14 @@ def main():
     g.add_argument("action", choices=["add", "remove"])
     g.add_argument("world", help="the world the way in stands in (remove: the gate's world)")
     g.add_argument("rest", nargs="+", help="add: <to-world> <column> <row>; remove: <number>")
+
+    pa = sub.add_parser("paint", parents=[common])
+    pa.add_argument("world")
+    pa.add_argument("at", nargs="*", type=int, help="<column> <row> <slot>")
+    pa.add_argument("--overlay", action="store_true", help="paint the overlay slot over the base")
+    pa.add_argument("--alpha", type=int, default=255, help="with --overlay: how far over, 0..255")
+    pa.add_argument("--radius", type=int, default=0, help="a round brush, in tiles")
+    pa.add_argument("--undo", action="store_true", help="take back the world's last stroke")
 
     d = sub.add_parser("do", parents=[common])
     d.add_argument("lines", help="the studio's words, ';' between them (app/modes/studio_control.cpp)")
@@ -200,6 +209,17 @@ def dispatch(args, say):
             done = gates.remove(args.world, int(args.rest[0]), who="mu")
             say("removed " + ", ".join(done["removed"]))
         return True, done
+    if args.command == "paint":
+        import paint
+        if args.undo:
+            done = paint.undo(args.world, who="mu")
+        else:
+            if len(args.at) != 3:
+                raise NotFound("mu paint <world> <column> <row> <slot> [--overlay --alpha A --radius R]")
+            done = paint.brush(args.world, *args.at, overlay=args.overlay, alpha=args.alpha,
+                               radius=args.radius, who="mu")
+        say(f"{done['tiles']} tiles of {done['world']}'s ground {'taken back' if args.undo else 'painted'}")
+        return True, {"world": done["world"], "tiles": done["tiles"]}
     if args.command == "do":
         return drive(args.lines, say)
     if args.command == "serve":

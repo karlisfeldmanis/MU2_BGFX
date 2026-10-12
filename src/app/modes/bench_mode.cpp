@@ -240,7 +240,8 @@ void BenchMode::drawList(Context& ctx) {
 }
 
 void BenchMode::look(Context& ctx) {
-    if (ctx.window.held(0)) {
+    // The right drag turns it too: in Place's Ground the left one paints (app/modes/studio_paint.h).
+    if (ctx.window.held(0) || ctx.window.held(1)) {
         float dx = 0.0f, dy = 0.0f;
         ctx.window.pointerDelta(&dx, &dy);
         bench_.orbit(dx, dy);

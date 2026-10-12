@@ -394,6 +394,21 @@ bool Cooker::gate(const std::string& fields, std::string* answer, int* number) {
     return true;
 }
 
+bool Cooker::paint(const std::string& fields, std::string* answer) {
+    std::string reply;
+    if (!request("{\"op\": \"paint\", " + fields + ", \"who\": \"studio\"}", &reply)) {
+        *answer = error_;
+        return false;
+    }
+    const core::Json j = core::parseJson(reply.data(), reply.size(), "mu serve's paint");
+    if (!j["error"].isNull()) {
+        *answer = j["error"].stringOr("refused");
+        return false;
+    }
+    *answer = std::to_string(int(j["paint"].numberOr(0.0))) + " tiles written to tiles.png";
+    return true;
+}
+
 void Cooker::forgetPlan() {
     std::lock_guard<std::mutex> hold(planLock_);
     plan_.target.clear();

@@ -21,6 +21,7 @@ JSON lines back:
         "how": "insert" puts value in at path, "remove" takes path out (value unused)
     {"op": "gate", "how": "add", "world", "to", "column", "row"} -> {"gate": what was written}
     {"op": "gate", "how": "remove", "world", "number"}           (tools/mu/gates.py)
+    {"op": "paint", "world", "tiles": [[col, row, l1, l2, a]]}   -> {"paint": n}; "how": "undo"
     {"op": "stop"}
 
 An event is {"seq", "at", "job", "kind", ...}. The kinds: queued, plan (the steps that will run,
@@ -212,7 +213,7 @@ class Server:
                 # outside the lock, so neither waits on the queue.
                 if op == "plan":
                     reply = self.plan(ask)
-                elif op in ("recipe", "edit", "gate"):
+                elif op in ("recipe", "edit", "gate", "paint"):
                     reply = self.write(op, ask)
                 else:
                     reply = self.handle(op, ask)
@@ -273,6 +274,10 @@ class Server:
             if op == "recipe":
                 return edit.recipe(ask["target"])
             how, who = ask.get("how", "set"), ask.get("who", "studio")
+            if op == "paint":
+                import paint
+                done = paint.undo(ask["world"], who) if how == "undo" else paint.paint(ask["world"], ask["tiles"], who)
+                return {"paint": done["tiles"]}
             if op == "gate":
                 import gates
                 if how == "add":

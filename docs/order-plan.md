@@ -1426,6 +1426,33 @@ the monsters tab's "Simulate combat" -- is the game's own arena in a window of i
   --insert` from the journal: both manifests as in git. cooker_test 27 and 38 live, layercheck
   green. Nothing reaches the game before `mu make realm` and a rebuild.
 
+### Slice G5: the ground painted, as done
+
+- tools/mu/paint.py, `mu paint <w> <col> <row> <slot> [--overlay --alpha A --radius R]` and `mu
+  paint <w> --undo`, and mu serve's `paint` op: source/world/<w>/tiles.png (red the base slot,
+  green the overlay slot, blue its strength; slots are <w>.json's `tile_slots`) changed tile by
+  tile, a stroke one journal line with every tile's old and new values, so an undo is exact. A
+  slot the world has not is refused. PIL re-saves an untouched grid byte for byte (Lorencia,
+  Noria, Devias), so a stroke and its undo leave the file as it was.
+- Place's fourth mode, **Ground** (app/modes/studio_paint.{h,cpp}): a slot from the legend, Base
+  (the floor, its overlay cleared) or Overlay (at a strength), a round brush of 0-8 tiles; a left
+  drag on the land paints, written when let go; the tile under the pointer says what it is as
+  cooked; **Undo the last stroke**. The right drag now turns the camera in every mode.
+- It cannot look real before a cook: the land is a mesh cooked from the grid with the blend in
+  its vertex colours, so each painted tile is tinted in its slot's colour until `mu make ground
+  <w>` -- the card's target, heavy (tile sheets, ground, index, the world's textures and
+  placements, every world's tables) and the user's to press. When it finishes the world is read
+  again and the tint goes.
+- Found on the way, F6's: a finished placements cook never read the world again -- the studio
+  answered only jobs named for the bench's subject. It answers the card's own target now.
+- Words: `mode ground`, `brush <slot> base|overlay <alpha> <radius>`, `dab` (at the view's
+  middle), `undo`.
+- Proved: on a scratch copy, base and overlay strokes undone in turn, byte for byte, the third
+  undo and slot 40 refused. In the studio, water (slot 5) as the floor in a radius-2 round under
+  the bonfire's view and rock (7) over it at 160 in radius 1, tinted on the land, the card "mu make
+  ground lorencia, stale: 18 of 19"; both undone, tiles.png as in git. cooker_test 27 and 38 live,
+  layercheck green. Not cooked: that is a ground cook of Lorencia and every world's tables.
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

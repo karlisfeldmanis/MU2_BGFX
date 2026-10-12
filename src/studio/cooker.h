@@ -121,6 +121,9 @@ public:
     // "how": "add", "world", "to", "column", "row" or "how": "remove", "world", "number". The
     // answer says what was written; `number` is the new way in's, or 0.
     bool gate(const std::string& fields, std::string* answer, int* number = nullptr);
+    // The ground painted (tools/mu/paint.py): "world", "tiles": [[col, row, l1, l2, a]], or
+    // "how": "undo", "world". The answer says how many tiles changed.
+    bool paint(const std::string& fields, std::string* answer);
 
     const std::vector<JobView>& jobs() const { return jobs_; }
 
