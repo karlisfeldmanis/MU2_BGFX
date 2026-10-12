@@ -163,8 +163,9 @@ def index_test(things):
             nests = os.path.join(worlds, world, "nests.json")
             if os.path.exists(nests) and mtime(nests) > at:
                 return True, f"{world}'s nests.json is newer than the index"
+        # pipeline/index.py reads neither a recipe's show, its rules nor its checklist.
         for thing in things:
-            if newest([thing.recipe, thing.glb()]) > at:
+            if max(mtime(thing.recipe, BUILD_IGNORES), mtime(thing.glb())) > at:
                 return True, f"{thing.name} is newer than the index"
         return False, "the index is newer than every input"
     return test
