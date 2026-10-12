@@ -12,7 +12,7 @@ It listens on a Unix socket, workshop/.mu/serve.sock. A client sends one JSON li
 JSON lines back:
 
     {"op": "make", "target": ["Sword01"], "cores": null}   -> {"job": 3}
-    {"op": "jobs"}                                          -> {"jobs": [...]}
+    {"op": "jobs"}                                          -> {"jobs": [...], "cores": {count, from, machine}}
     {"op": "watch", "job": 3, "since": 0}                   -> every event since, then live
     {"op": "cancel", "job": 3, "now": false}                -> after the step, or kill it now
     {"op": "plan", "target": ["Sword01"]}                   -> {"steps": [{name, needed, reason}]}
@@ -25,7 +25,7 @@ JSON lines back:
     {"op": "stop"}
 
 An event is {"seq", "at", "job", "kind", ...}. The kinds: queued, plan (the steps that will run,
-with their estimates), step, progress {n, of, label}, line {text}, say {text}, skip, warning,
+with their estimates, and the cores of the machine's it cooks with), step, progress {n, of, label}, line {text}, say {text}, skip, warning,
 done (a step's), stopped, finished {ok, error?}. They are kept in workshop/.mu/events.jsonl
 too, so a studio opened later reads the last jobs back.
 """
@@ -80,12 +80,13 @@ class Job:
         self.error = None
         self.stop = Stop()
         self.plan_index = {}           # the plan's step index -> the index into steps
+        self.used = None               # the cores it cooks with, once it starts
 
     def view(self):
         return {"job": self.number, "target": " ".join(self.target), "state": self.state,
                 "steps": self.steps, "at": self.at, "progress": self.progress, "line": self.line,
                 "queued": self.queued, "started": self.started, "ended": self.ended,
-                "error": self.error, "eta": self.eta()}
+                "error": self.error, "eta": self.eta(), "cores": self.used}
 
     def eta(self):
         """Seconds left, from the timings of earlier runs; None when a step was never timed."""
@@ -160,6 +161,7 @@ class Server:
 
     def cook(self, job):
         cores, _ = settings.cores(job.cores)
+        job.used = cores
         say = lambda text: self.emit(job, "say", text=text)
         try:
             steps = make.plan(job.target, cores, say, job.folder, job.reimport)
@@ -175,7 +177,7 @@ class Server:
                     dry.append({"name": step.name, "index": index, "state": "waiting",
                                 "estimate": make.estimate(step.name, timings), "seconds": None})
             job.steps = dry
-            self.emit(job, "plan", steps=dry)
+            self.emit(job, "plan", steps=dry, cores=cores, machine=settings.machine())
             ok, results = make.run(steps, False, say, LOGS, settings.environment(cores),
                                    on=lambda kind, **f: self.emit(job, kind, **f), stop=job.stop)
             for result in results:
@@ -229,7 +231,10 @@ class Server:
                 self.queue.append(job)
                 self.lock.notify_all()
             elif op == "jobs":
-                return {"jobs": [j.view() for j in self.jobs[-50:]], "seq": self.seq}
+                # The cores a job is held to, the user: "show how many cores is used for cooking".
+                count, source = settings.cores()
+                return {"jobs": [j.view() for j in self.jobs[-50:]], "seq": self.seq,
+                        "cores": {"count": count, "from": source, "machine": settings.machine()}}
             elif op == "cancel":
                 job = self.find(ask.get("job"))
                 if job is None:

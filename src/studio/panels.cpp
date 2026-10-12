@@ -249,6 +249,15 @@ void Panels::jobs(Cooker& cooker, float x, float y, float w, float h, double now
     ImGui::Begin("Jobs", nullptr, kFixed);
     if (cooker.connected()) {
         ImGui::TextColored(kGreen, "mu serve");
+        // The cores a cook is held to, the user: "show how many cores is used for cooking".
+        const Cooker::Cores& cores = cooker.cores();
+        if (cores.count > 0) {
+            ImGui::SameLine();
+            ImGui::Text("%d of %d cores", cores.count, cores.machine);
+            ImGui::SetItemTooltip("each cook's steps run on %d cores (%s), under nice; "
+                                  "./mu cores N changes it for the next job",
+                                  cores.count, cores.from.c_str());
+        }
         ImGui::SameLine();
         ImGui::TextColored(kDim, "one job at a time; closing the studio leaves a cook running");
     } else {
@@ -290,6 +299,10 @@ void Panels::jobs(Cooker& cooker, float x, float y, float w, float h, double now
             const bool open = ImGui::TreeNodeEx(job.target.c_str(), ImGuiTreeNodeFlags_SpanAvailWidth);
             ImGui::SameLine();
             ImGui::TextColored(stateColour(job.state), "%s", job.state.c_str());
+            if (job.cores > 0) {
+                ImGui::SameLine();
+                ImGui::TextColored(kDim, "%d cores", job.cores);
+            }
             ImGui::TableNextColumn();
             if (job.state == "running" && job.at >= 0 && job.at < int(job.steps.size())) {
                 ImGui::Text("%d/%zu %s", job.at + 1, job.steps.size(),

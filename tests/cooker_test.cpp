@@ -46,7 +46,7 @@ void events() {
     check(cooker.jobs()[0].target == "Sword01", "the target is the make's words");
 
     // Plan step 1 (the checkpoint) does not run, so the bar's steps are plan 0, 2 and 3.
-    feed(cooker, R"({"seq":2,"at":101.0,"job":7,"kind":"plan","steps":[
+    feed(cooker, R"({"seq":2,"at":101.0,"job":7,"kind":"plan","cores":6,"machine":10,"steps":[
         {"name":"build Sword01","index":0,"state":"waiting","estimate":60.0,"seconds":null},
         {"name":"index","index":2,"state":"waiting","estimate":10.0,"seconds":null},
         {"name":"cook_one Sword01","index":3,"state":"waiting","estimate":30.0,"seconds":null}]})");
@@ -54,6 +54,8 @@ void events() {
     check(job.state == "running" && job.steps.size() == 3, "the plan is the job's bar");
     check(job.planIndex.size() == 4 && job.planIndex[2] == 1 && job.planIndex[1] == -1,
           "plan steps map onto the bar's");
+    check(job.cores == 6 && cooker.cores().count == 6 && cooker.cores().machine == 10,
+          "the plan says the cores the job cooks with");
     check(std::fabs(job.eta(101.0) - 100.0) < 1e-6, "before it starts, the estimates add up");
 
     feed(cooker, R"({"seq":3,"at":101.0,"job":7,"kind":"step","step":0,"name":"build Sword01"})");
@@ -84,10 +86,11 @@ void events() {
     const char* view = R"({"job":8,"target":"world lorencia","state":"running","at":1,
         "steps":[{"name":"textures lorencia","index":0,"state":"done","estimate":20,"seconds":21},
                  {"name":"meshes lorencia","index":1,"state":"running","estimate":8,"began":200}],
-        "progress":{"n":3,"of":6,"label":"compress"},"line":"","error":null,"started":179,"ended":null})";
+        "progress":{"n":3,"of":6,"label":"compress"},"line":"","error":null,"started":179,"ended":null,"cores":4})";
     cooker.load(parseJson(view, std::strlen(view), "a job view"));
     const JobView& later = cooker.jobs().back();
-    check(later.number == 8 && later.at == 1 && later.n == 3 && later.of == 6, "a view loaded mid-cook");
+    check(later.number == 8 && later.at == 1 && later.n == 3 && later.of == 6 && later.cores == 4,
+          "a view loaded mid-cook, with its cores");
     feed(cooker, R"({"seq":20,"at":205.0,"job":8,"kind":"done","step":1,"seconds":5.0,"code":0})");
     check(later.steps[1].state == "done", "its events go on from there");
 }

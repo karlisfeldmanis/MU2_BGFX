@@ -121,6 +121,14 @@ def mu(*args, data=False):
 
 # ----------------------------------------------------------------------------- the tools
 
+def _cores(answer):
+    """The cores a cook is held to (tools/mu/settings.py), from mu serve's jobs answer."""
+    c = answer.get("cores") or {}
+    if not c:
+        return "cores: mu serve did not say (an older one; restart it)"
+    return f"cores: a cook runs on {c['count']} of {c['machine']} ({c['from']}); `./mu cores N` changes it"
+
+
 def t_status(_):
     out = []
     if os.path.exists(STUDIO_SOCK) and _answers(STUDIO_SOCK):
@@ -128,9 +136,11 @@ def t_status(_):
     else:
         out.append("no studio open")
     if os.path.exists(SERVE_SOCK) and _answers(SERVE_SOCK):
-        jobs = serve({"op": "jobs"}).get("jobs", [])[-5:]
-        out += [f"job {j.get('number')} {' '.join(j.get('target', []) if isinstance(j.get('target'), list) else [str(j.get('target'))])}: "
-                f"{j.get('state')}" for j in jobs] or ["mu serve: no jobs"]
+        answer = serve({"op": "jobs"})
+        out.append(_cores(answer))
+        out += [f"job {j.get('job')} {j.get('target')}: {j.get('state')}"
+                + (f" on {j['cores']} cores" if j.get("cores") else "")
+                for j in answer.get("jobs", [])[-5:]] or ["mu serve: no jobs"]
     else:
         out.append("mu serve not running (cook starts it)")
     return "\n".join(out)
@@ -235,12 +245,13 @@ def t_cook(a):
 def t_jobs(a):
     deadline = time.time() + min(float(a.get("seconds", 300)), 900)
     while True:
-        jobs = serve({"op": "jobs"}).get("jobs", [])
+        answer = serve({"op": "jobs"})
+        jobs = answer.get("jobs", [])
         if a.get("job") is not None:
-            jobs = [j for j in jobs if j.get("number") == a["job"]]
+            jobs = [j for j in jobs if j.get("job") == a["job"]]
         busy = [j for j in jobs if j.get("state") in ("queued", "running")]
         if not a.get("wait") or not busy or time.time() > deadline:
-            return json.dumps(jobs[-8:], indent=1)
+            return _cores(answer) + "\n" + json.dumps(jobs[-8:], indent=1)
         time.sleep(2)
 
 

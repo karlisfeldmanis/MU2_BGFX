@@ -1540,6 +1540,14 @@ adjusting lighting, tonemaps, shadow, sun, daylight for maps".
   over the ring, the stage under it, no MU letter and no loading music. Proved by a shot run
   (MU2_SPIN_SHOT): the arena's 2.1 s load under the studio's spinner, then the Death Tree fought
   at Aida.
+- The cores a cook runs with, the user: "show how many cores is used for cooking". mu serve's
+  `jobs` answers the setting ({count, from, machine}, tools/mu/settings.py) and each job's own
+  (`cores` in its view and its plan event); the Jobs panel says "6 of 10 cores" by its header,
+  with where the number came from on hover, and each job's count by its state; the MCP's
+  `status` and `jobs` print it. On the way, `status` printed "job None" and `jobs job=N` found
+  nothing: they read `number` where the view says `job`. Proved: cooker_test 28 and 39 live; a
+  rehearsal through mu serve, its row "done 6 cores" and the header "6 of 10 cores" in a shot;
+  t_status and t_jobs against the live serve.
 
 ## 10. Leave alone
 

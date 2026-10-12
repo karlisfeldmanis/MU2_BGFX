@@ -41,6 +41,7 @@ struct JobView {
     std::string line;       // the step's latest word
     std::string error;
     double started = 0.0, ended = 0.0;
+    int cores = 0;          // the cores it cooks with, once it starts; 0 not yet known
     std::vector<int> planIndex;  // the plan's step number -> an index into steps, or -1
 
     // Seconds left, as the server reckons it: the estimates of the steps to come, and the
@@ -126,6 +127,14 @@ public:
     bool paint(const std::string& fields, std::string* answer);
 
     const std::vector<JobView>& jobs() const { return jobs_; }
+    // The cores a cook is held to (tools/mu/settings.py): the count, the machine's, and where
+    // the count came from ("60% of this machine's 10", MU_CORES, the settings file). As mu
+    // serve last said it: on connecting, and again as each job starts. Count 0 when unknown.
+    struct Cores {
+        int count = 0, machine = 0;
+        std::string from;
+    };
+    const Cores& cores() const { return cores_; }
 
     // One event off the stream, or a job's view out of a `jobs` reply. Public for the test.
     void take(const core::Json& event);
@@ -143,6 +152,7 @@ private:
     bool wasConnected_ = false;
     int serverPid_ = 0;
     std::vector<JobView> jobs_;
+    Cores cores_;
     std::string error_;
 
     mutable std::mutex planLock_;

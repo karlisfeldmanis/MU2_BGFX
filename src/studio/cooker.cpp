@@ -168,6 +168,10 @@ bool Cooker::connect() {
     const core::Json answer = core::parseJson(reply.data(), reply.size(), "mu serve's jobs");
     jobs_.clear();
     for (const core::Json& view : answer["jobs"].items) load(view);
+    const core::Json& cores = answer["cores"];
+    cores_.count = int(cores["count"].numberOr(0.0));
+    cores_.machine = int(cores["machine"].numberOr(0.0));
+    cores_.from = cores["from"].stringOr("");
     const long long since = (long long)answer["seq"].numberOr(0.0);
 
     stream_ = openSocket(socket_);
@@ -450,6 +454,7 @@ void Cooker::load(const core::Json& view) {
     j.error = view["error"].stringOr("");
     j.started = view["started"].numberOr(0.0);
     j.ended = view["ended"].numberOr(0.0);
+    j.cores = int(view["cores"].numberOr(0.0));
     jobs_.push_back(std::move(j));
 }
 
@@ -477,6 +482,9 @@ void Cooker::take(const core::Json& event) {
     if (kind == "plan") {
         j->state = "running";
         j->started = at;
+        j->cores = int(event["cores"].numberOr(0.0));
+        if (j->cores > 0) cores_.count = j->cores;
+        if (event["machine"].numberOr(0.0) > 0.0) cores_.machine = int(event["machine"].numberOr(0.0));
         j->steps.clear();
         j->planIndex.clear();
         for (const core::Json& s : event["steps"].items) {

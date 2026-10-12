@@ -51,7 +51,7 @@ Start every piece of content work with:
 | `show` | a thing in its place for the user to watch; a monster fighting |
 | `shot` | the studio as the user sees it, as a picture (`clean` hides the panels) |
 | `do` | any of the studio's words, below |
-| `plan`, `cook`, `jobs` | what a make would run; queue it; watch or wait for it |
+| `plan`, `cook`, `jobs` | what a make would run; queue it; watch or wait for it, and the cores it cooks on (`./mu cores`) |
 | `recipe`, `edit` | read a recipe; change source/ in place, journalled |
 | `gate` | a gate added or removed with its pair |
 | `light` | a map's lighting: sun, sky, shadows, tonemap, bloom; dusk, night, rain layers |
