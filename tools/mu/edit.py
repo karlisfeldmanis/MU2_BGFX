@@ -138,6 +138,9 @@ def parse(text):
 
 def walk(node, path):
     for step in path:
+        # A block keyed by numbers (actions.json's "101"): in a block a number is a key's word.
+        if isinstance(node.children, dict) and isinstance(step, int):
+            step = str(step)
         if isinstance(node.children, dict) and isinstance(step, str) and step in node.children:
             node = node.children[step]
         elif isinstance(node.children, list) and isinstance(step, int) and 0 <= step < len(node.children):
@@ -248,9 +251,10 @@ def proved(text, new_text, path, change):
     other difference: the proof before any write."""
     expect = json.loads(text)
     holder = expect
+    word = lambda h, step: str(step) if isinstance(h, dict) and isinstance(step, int) else step
     for step in path[:-1]:
-        holder = holder[step]
-    change(holder, path[-1])
+        holder = holder[word(holder, step)]
+    change(holder, word(holder, path[-1]))
     if json.loads(new_text) != expect:
         raise NotFound("the edit would change more than its one value; not written")
 
@@ -284,6 +288,8 @@ def insert(target, path, value, who="mu"):
         text = handle.read()
     parent = walk(parse(text), path[:-1])
     last, dotted = path[-1], ".".join(map(str, path))
+    if isinstance(parent.children, dict) and isinstance(last, int):
+        last = path[-1] = str(last)
     if isinstance(parent.children, list):
         if not isinstance(last, int) or not 0 <= last <= len(parent.children):
             raise NotFound(f"{dotted}: a list of {len(parent.children)} takes an index 0 to "

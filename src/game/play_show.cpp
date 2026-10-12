@@ -635,6 +635,16 @@ void Play::shade(float seconds) {
             shadowStars_.roots().watch(one.id, one.figure.clip() == one.attackClip2, one.figure,
                                        one.yaw, fade, seconds);
         }
+        // A Blue Golem's drips, and its first blow drawing a life back from what it hunts.
+        if (one.figure.body() && one.figure.body()->has("blue_golem")) {
+            const sim::Body* golem = realm_.find(one.id);
+            const Drawn* prey = golem ? drawnOf(golem->quarry ? golem->quarry : golem->blowTarget) : nullptr;
+            const FigureBody* aim = prey && prey->placed ? prey->figure.body() : nullptr;
+            const float feet[3] = {aim ? prey->crown[0] : 0.0f,
+                                   aim ? prey->crown[1] - aim->height * aim->scale : 0.0f, aim ? prey->crown[2] : 0.0f};
+            shadowStars_.golemWater().watch(one.id, one.figure, one.figure.clip() == one.attackClip,
+                                            keyOf(one.figure), aim ? feet : nullptr, fade, seconds);
+        }
         // A Queen Rainer's or a Drakan's crackle along its bones (show.arcs, show.arcs): a
         // fresh few each reference frame.
         if (!one.arcBones.empty() && one.deadFor < 0.0f) {

@@ -273,10 +273,14 @@ close without the hero dying in a second.
   made with its MU checklist (`mu research`, the recipe's `mu_checklist`). The water (mesh 0)
   slides on both axes at MU's 0.3 a second over the lit water at a steady 0.4 (glow.FMbody_R);
   MU's chrome over it is not drawn. MU's blue ground light (0, 0, 0.7), radius 3, is a stand-in
-  aura on Bip01 Pelvis. Sounds as bluegolem_*. Left (the checklist's three to do): the cyan
-  waterFall2 drips off both hands and the head; Attack 1's smoke, shock wave and energy joint
-  from the target back to it; MU's play speeds, which a missing break in ZzzOpenData sets to the
-  Death Rider's (stand 0.15, walk 0.3, attack 0.23, die 0.15).
+  aura on Bip01 Pelvis. Sounds as bluegolem_*. Its water (game/fx/golem_water.h, the
+  `blue_golem` tag, hosted by ShadowStars beside the Death Tree's roots): waterFall2 drips off
+  both hands and the head every frame; on Attack 1 smoke at the left hand from key 4, the shock
+  wave from 5 to 5.5, and from 6.9 the JointLaser01 drain from its prey back to it. MU's play
+  speeds, which a missing break in ZzzOpenData sets to the Death Rider's (stand 0.15, walk 0.3,
+  attack 0.23, die 0.15), are actions.json's action_overrides.101. Left: the ground light (the
+  checklist's one to do). The Death Rider (102) has the same speeds in MU and none here yet, and
+  the Death Tree its 0.2 death: each a cook of its own.
 - **The breeds' rules**: Tarkan's MoneyRate 30 and MaxItemLevel 3, RegTime 10, and OpenMU's x/255
   resistance read raw (Death Tree 18, Forest Orc 19, Death Rider 20, about 95% turned aside; Tarkan's are 8-13).
 

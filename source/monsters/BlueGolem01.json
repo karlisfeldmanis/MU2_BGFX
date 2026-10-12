@@ -88,8 +88,8 @@
         "CreateJointFpsChecked",
         "BITMAP_JOINT_ENERGY"
       ],
-      "state": "todo",
-      "note": "not yet: cyan waterFall2 drips off both hands and the head every frame; on Attack 1 smoke and a shock wave at the left hand, then an energy joint from the target back to it (a life drain)"
+      "state": "done",
+      "note": "fx/golem_water: waterFall2 drips off both hands and the head every frame; on Attack 1 smoke at the left hand from key 4, the shock wave from 5 to 5.5, and from 6.9 the JointLaser01 drain from its prey back to it, trailing smoke. Its ground lights and SOUND_GET_ENERGY are left out, as Charon's wisps leave them"
     },
     {
       "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:339",
@@ -182,8 +182,8 @@
         "MONSTER01_DIE"
       ],
       "calls": [],
-      "state": "todo",
-      "note": "the Golden Stone Golem's case falls into the Death Rider's: stand 0.15, walk 0.3, attack 0.23, die 0.15 (ZzzOpenData.cpp:2691-2700); ours plays the rig's own rates"
+      "state": "done",
+      "note": "source/monsters/actions.json action_overrides.101: stand 0.15, walk 0.3, attack 0.23, die 0.15, the Death Rider's case it falls into"
     },
     {
       "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2424",

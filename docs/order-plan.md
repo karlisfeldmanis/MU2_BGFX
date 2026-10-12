@@ -1573,6 +1573,14 @@ adjusting lighting, tonemaps, shadow, sun, daylight for maps".
   its cook) in the studio, a rerun keeping every state, the golem fighting at Aida 81,80 in the
   user's studio, every step of its plan skipping after the stamp. cooker_test 28 and 39 live,
   layercheck green, mu check green.
+- The Blue Golem finished but for its ground light: fx/golem_water (drips, Attack 1's smoke,
+  shock wave and drain), MU's play speeds in actions.json. Two cook fixes on the way: a monster
+  recipe with a checklist is dated by its content outside it (make.py's recipe_time and
+  workshop/.mu/recipe_times.json), so ticking an item no longer makes the monster, the realm,
+  every table and the figure stale; and `mu edit` reaches a block keyed by numbers
+  (actions.json's "101"). Proved: a scripted fight's shots showed the drips, the smoke, the shock
+  wave and the drain; the idle 1.60 s for 7 keys (0.15) where it was 0.96; on a scratch copy a
+  tick keeps the old date and a real edit takes a new one; both checklist monsters plan clean.
 
 ## 10. Leave alone
 

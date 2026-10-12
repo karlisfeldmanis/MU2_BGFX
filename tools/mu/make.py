@@ -21,6 +21,8 @@ sessions using mu never write one world's cook at once; a script run by hand doe
 """
 
 import fcntl
+import hashlib
+import json
 import os
 import re
 import sqlite3
@@ -38,9 +40,49 @@ DB = os.path.join(SOURCE, "mu.db")
 
 def mtime(path):
     try:
-        return os.path.getmtime(path)
+        when = os.path.getmtime(path)
     except (OSError, TypeError):
         return 0.0
+    if path.endswith(".json") and os.path.dirname(path) == os.path.join(SOURCE, "monsters"):
+        return recipe_time(path, when)
+    return when
+
+
+# A monster recipe's MU checklist (tools/mu/research.py) is a record kept beside the recipe, not
+# an input of any cook: ticking an item must not make the monster's build, the realm, every
+# world's tables and the figure stale. So such a recipe is dated by when the rest of it last
+# changed -- a digest of it without `mu_checklist`, and the time that digest was first seen,
+# kept in workshop/.mu/recipe_times.json.
+RECIPE_TIMES = os.path.join(WORKSHOP, ".mu", "recipe_times.json")
+
+
+def recipe_time(path, when):
+    try:
+        with open(path) as handle:
+            text = handle.read()
+        if '"mu_checklist"' not in text:
+            return when
+        doc = json.loads(text)
+    except (OSError, ValueError):
+        return when
+    doc.pop("mu_checklist", None)
+    digest = hashlib.sha1(json.dumps(doc, sort_keys=True).encode()).hexdigest()
+    try:
+        with open(RECIPE_TIMES) as handle:
+            times = json.load(handle)
+    except (OSError, ValueError):
+        times = {}
+    key = os.path.relpath(path, ROOT)
+    seen = times.get(key)
+    if seen and seen[0] == digest:
+        return min(when, seen[1])
+    times[key] = [digest, when]
+    os.makedirs(os.path.dirname(RECIPE_TIMES), exist_ok=True)
+    scratch = RECIPE_TIMES + f".{os.getpid()}"
+    with open(scratch, "w") as handle:
+        json.dump(times, handle, indent=1, sort_keys=True)
+    os.replace(scratch, RECIPE_TIMES)
+    return when
 
 
 def newest(paths):

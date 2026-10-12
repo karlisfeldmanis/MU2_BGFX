@@ -34,6 +34,7 @@
 
 #include "content/showing.h"
 #include "content/texture.h"
+#include "game/fx/golem_water.h"
 #include "game/fx/tree_roots.h"
 #include "gfx/effects.h"
 #include "gfx/renderer.h"
@@ -44,6 +45,7 @@ class ShadowStars {
 public:
     // A Death Tree's roots and smoke ride along: opened, aged and drawn with these.
     TreeRoots& roots() { return roots_; }
+    GolemWater& golemWater() { return golemWater_; }
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);
     void shutdown();
@@ -174,6 +176,7 @@ private:
     };
     std::vector<Starlight> starlights_;
     TreeRoots roots_;
+    GolemWater golemWater_;   // a Blue Golem's drips and drain (fx/golem_water.h)
     static constexpr int kRibbonTails = 15;
     struct Ribbon {
         float points[kRibbonTails][3];
