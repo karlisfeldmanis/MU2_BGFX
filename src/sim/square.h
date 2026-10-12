@@ -153,7 +153,7 @@ struct SquareRun {
     int64_t endsAt = 0;    // the tick the time is up
     int bossesKilled = 0;
     // The waves called up so far, a bit each (bit kSquareWaves the bosses): each once, as its
-    // minute comes (Realm::squareTick).
+    // minute comes (SquareInstance::tick).
     uint8_t called = 0;
     // The run over: the tick everyone is sent to Noria (kSquareRest after the end), or -1; and
     // `sentOut` once it has passed, for the mode to take him home (as CastleRun's).

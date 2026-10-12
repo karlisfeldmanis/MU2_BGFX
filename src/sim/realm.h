@@ -45,6 +45,7 @@
 #include "sim/config.h"
 #include "sim/event.h"
 #include "sim/square.h"
+#include "sim/square_instance.h"
 #include "sim/invasion.h"
 #include "sim/raid.h"
 
@@ -2202,16 +2203,8 @@ private:
     // The Town Portal's warp, shared with Icarus's sending home (realm_items.cpp).
     void warpHome(Body& hero);
     CastleRun run_;  // see castleRun()
-    SquareRun square_;  // see squareRun()
-    // Devil Square's clock, once a tick, and a kill scored to whoever's it is (realm_square.cpp).
-    void squareTick();
-    void squareKill(const Body& dead, const Body& scorer);
-    // Whether a monster's nest is in this run's square's arena (sim/square.h kSquareArena).
-    bool ownSquare(const Body& one) const;
-    // Every player's rank and row reckoned once, as the time is up; and one row paid, once.
-    void rankSquare();
-    void paySquare();
-    int squareRankOf(size_t at, int* of) const;
+    SquareInstance square_;  // see squareRun(); its run is sim/square_instance.{h,cpp}
+    friend struct SquareInstance;
     // The win's pay (CastleRun::paid*), into the bag, once.
     void payCastle();
     // The run's clock, once a tick (Realm::step), and a kill counted against its quotas.

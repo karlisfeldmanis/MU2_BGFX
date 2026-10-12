@@ -955,6 +955,27 @@ every slice must leave them no longer. The slices, each with sim_test identical:
   failed; its castle and square runs among them), server_test 27 of 27; live on port 44521,
   three netbots and a client, every link "none disagreed", 0 errors; sizecheck green here.
 
+### Slice I2: Devil Square's run as `SquareInstance`, as done
+
+- **`sim/square_instance.{h,cpp}`:** `struct SquareInstance : SquareRun` holds the run and the code
+  that drives it -- `tick` (the clock, the waves, the claims, the rest's end), `kill` (a kill's
+  points), `owns` (its arena), `rank`, `pay`, `rankOf` -- lifted out of realm_square.cpp verbatim
+  but for how they reach the realm (`r.` before its members, the run's fields bare). It adds no
+  data, so `Realm::square_` (now a SquareInstance) writes the same bytes into a snapshot;
+  static_asserts hold it there. Realm calls `square_.tick(*this)` where it called squareTick, and
+  `square_.kill` from the kill hook; `friend struct SquareInstance` replaces six private
+  declarations. Charon's door, the test commands and the drawing's queries stay the Realm's
+  (realm_square.cpp, 297 lines to 150). realm.h is 2404 lines and its ratchet says so.
+- **Proved:** sim_test's 17,471 lines identical to HEAD's (both built in worktrees, 7441 checks,
+  0 failed; the square's result test scores kills); server_test 27 of 27; a scratch program
+  stepping a three-player Devil Square from its wait through the fight, its waves, the end, the
+  ranks, the pay and the rest, the run's fields, the dice and every body hashed at 36 points:
+  HEAD's and I2's the same (HEAD's own, run twice, too); live on port 44521, three netbots and a
+  client, every link "none disagreed", 0 errors.
+- **Found on the way:** a realm's snapshot bytes differ from run to run at HEAD even at tick 0
+  (uninitialised padding in the pods it writes whole), so a snapshot cannot be compared across
+  runs, only within one (as sim_test's does). Not this slice's to fix.
+
 ## 9c. Sprint F, the plan: the Cooker
 
 The user, 2026-10-12: "we want to build world, monster, item cooker like actual app where we

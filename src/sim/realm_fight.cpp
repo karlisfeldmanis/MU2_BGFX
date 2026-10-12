@@ -1958,7 +1958,7 @@ void Realm::kill(Body& dead, Body& killer) {
         // Devil Square's points and Blood Castle's quotas, once, to whoever's kill it is: not per
         // party member in view, as the quests' counts are. Counted per member, three partied
         // knights met castle 1's quota of 120 in 40 kills, and the statue laid three weapons.
-        squareKill(dead, killer.player ? killer : owner != nullptr ? *owner : hero);
+        square_.kill(*this, dead, killer.player ? killer : owner != nullptr ? *owner : hero);
         if (dead.kind >= 0 && size_t(dead.kind) < tables_->kinds.size()) castleKill(dead);
         // And for each of his party in view who still wants that breed (the user, 2026-10-09:
         // "everyone nearby"); countKill skips a step already done. His who did the most damage,

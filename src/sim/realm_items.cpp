@@ -754,7 +754,7 @@ void Realm::warpHome(Body& hero) {
     // spawn gate (BaseMapInitializer.cs:91). He is not set down here; `c` says the map
     // change is owed, and it is the mode's, as a gate's is (Play::takeHome).
     // And Blood Castle's: a scroll read in a castle leaves it, for Devias; and Devil Square's,
-    // for Noria, whose run sends everyone home this way as it ends (Realm::squareTick).
+    // for Noria, whose run sends everyone home this way as it ends (SquareInstance::tick).
     const int32_t* box = tables_->safeGate;
     const bool home = !(box[2] > box[0] && box[3] > box[1]) || event() != EventKind::None;
     say(What::Warped, hero, landing.first, landing.second, home ? 1 : 0);

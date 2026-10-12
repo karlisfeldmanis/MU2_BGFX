@@ -332,7 +332,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     // (WebZen BloodCastle.cpp:1128-1171: the court's 60 s, the barrier lifted at :887-917).
     // Raised on Devil Square, the wait before the fight starts (sim/square.h), and his points
     // nought.
-    square_ = SquareRun{};
+    square_ = SquareInstance{};
     me().squarePoints = 0;
     me().squareRanked = 0;
     me().squareExperience = me().squareZen = 0;
@@ -1080,7 +1080,7 @@ void Realm::step() {
     // The trades' upkeep: an ask out of time, a trade walked away from or shut by a death.
     dealTick();
     castleTick();
-    squareTick();
+    square_.tick(*this);
     invasionTick();
     raidTick();
 
