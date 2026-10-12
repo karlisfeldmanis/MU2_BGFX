@@ -546,10 +546,8 @@ constexpr float kBlizzardWait = 4.0f / 25.0f;
 // 20 units along each finger's first bone to 60 along its last: bones 35-37, 39-41 and 43-45. Laid
 // on fx/streak.h's ribbons, the spear's sheet, from the first key: MU's case has no wind-up guard.
 // show tag "forest_orc": ForestOrc01 (its recipe's show.tags).
-// Its claws' bone pairs are its recipe's show.claws (sprint E4c).
-constexpr float kForestOrcClawFrom = 0.20f;  // metres along the first bone (MU's 20 units)
-constexpr float kForestOrcClawTo = 0.60f;    // and along the last (60)
-constexpr float kForestOrcClawLight[3] = {0.5f, 0.5f, 0.0f};
+// Its claws are its recipe's show.claws: the bone pairs (sprint E4c), and the reach, light and
+// last key (from, to, light, until), which the Death Rider's blades share.
 // show tag "drakan": Drakan01 (its recipe's show.tags).
 // Its stars, their blue and its arcs are its recipe's show.bones.stars, show.star_tint and
 // show.arcs (sprint E4c).

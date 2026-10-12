@@ -791,9 +791,10 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             one.blizzard = look->has("queen_rainer");
             const bool drakan = look->has("drakan");
             one.clawBones.clear();
-            if (look->has("forest_orc") && look->skeletonMesh) {
+            // Any breed whose recipe has show.claws: the Forest Orc's, the Death Rider's blades.
+            if (!look->claws.pairs.empty() && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
-                for (const auto& claw : look->claws) {
+                for (const auto& claw : look->claws.pairs) {
                     int ends[2] = {-1, -1};
                     for (int e = 0; e < 2; ++e)
                         for (size_t b = 0; b < bones.size(); ++b)

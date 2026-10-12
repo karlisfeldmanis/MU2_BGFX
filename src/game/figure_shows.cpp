@@ -63,7 +63,14 @@ void Figures::readShows() {
             show.heads.push_back(one);
         }
         show.beamMaterial = row["beam_material"].stringOr("");
-        show.claws = pairsOf(row["claws"]);
+        const core::Json& claws = row["claws"];
+        show.claws.pairs = pairsOf(claws["pairs"]);
+        show.claws.from = float(claws["from"].numberOr(0.0));
+        show.claws.to = float(claws["to"].numberOr(0.0));
+        for (int i = 0; i < 3 && i < int(claws["light"].items.size()); ++i) {
+            show.claws.light[i] = float(claws["light"].items[size_t(i)].numberOr(0.0));
+        }
+        show.claws.until = float(claws["until"].numberOr(-1.0));
         for (const core::Json& segment : row["burn"]["segments"].items) {
             if (segment.items.size() != 3) continue;
             show.burnSegments.push_back({int(segment.items[0].numberOr(0.0)),

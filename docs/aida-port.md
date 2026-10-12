@@ -258,8 +258,18 @@ close without the hero dying in a second.
   the streak's ribbons went from 8 to 16. Its w34 sounds as forestorc_move/_attack/_die. A trap:
   Monster104's obj carries 16 vertices no face uses, which Blender's import drops and the build
   refuses (rig 1444, mesh 1428); they came out of the obj and the rig's binding together.
-- **Both breeds' rules**: Tarkan's MoneyRate 30 and MaxItemLevel 3, RegTime 10, and OpenMU's x/255
-  resistance read raw (Death Tree 18, Forest Orc 19, about 95% turned aside; Tarkan's are 8-13).
+- **Death Rider (306)**: DeathRider01, branch bark, leaves foliage (cut out), forestgost and its
+  shoulders rock, prizm ice; 39 nests. Its two blades (MU's bones 18->20 and 25->26, here Bip02 L
+  UpperArm->L Hand and R Forearm->R Hand) lay white blur02 ribbons, 20 to 100 units, only up to key
+  5.06 of either swing: `show.claws` now carries from, to, light and until per breed, and the Forest
+  Orc's 0.2/0.6/(0.5, 0.5, 0) moved into its recipe with them; Play::fit resolves claws for any
+  recipe that has them (it had asked for the forest_orc tag). Its head's green light is the faint
+  aura on Bip02 Head at MU's (0, 0.25, 0), the sparks left out. Mesh 3's prizm slides on both axes
+  at MU's 0.6 a second, over the lit ice at a steady 0.4: as a plain glow at 1 it blew out white at
+  noon. MU's chrome pass over it is not drawn. Sounds as deathrider_*; MU loads dr_idle1.wav but
+  the folder ships dr_idle01.wav, so ours plays that file.
+- **The breeds' rules**: Tarkan's MoneyRate 30 and MaxItemLevel 3, RegTime 10, and OpenMU's x/255
+  resistance read raw (Death Tree 18, Forest Orc 19, Death Rider 20, about 95% turned aside; Tarkan's are 8-13).
 
 ## The one thing to know first
 

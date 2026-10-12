@@ -1133,7 +1133,10 @@
     ],
     "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it.",
     "claws": {
-      "note": "play_tuning.h's comment by its tag (\"forest_orc\") says where MU draws it. Sprint E4c moved it here from kForestOrcClaws.",
+      "note": "play_tuning.h's comment by its tag (\"forest_orc\") says where MU draws it. Sprint E4c moved it here from kForestOrcClaws; from, to and light from kForestOrcClawFrom/To/Light: MU's 20 and 60 units and its (0.5, 0.5, 0) (GMAida.cpp:568-584), and no until, as MU's case has no frame guard.",
+      "from": 0.2,
+      "to": 0.6,
+      "light": [0.5, 0.5, 0.0],
       "pairs": [
         [
           "Bip01 R Finger0",

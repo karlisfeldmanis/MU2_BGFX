@@ -894,6 +894,26 @@
       ],
       "from": "SOUND_AIDA_DEATHTREE_DIE on MONSTER01_DIE, once (GMAida.cpp:971-977); w34/dt_death.wav."
     },
+    "deathrider_move": {
+      "files": [
+        "dr_idle01.wav",
+        "dr_idle2.wav"
+      ],
+      "from": "SOUND_AIDA_DEATHRAIDER_MOVE1 + rand() % 2, one frame in 15 while it walks or runs (GMAida.cpp:883-887); MapManager.cpp:344-345 loads w34/dr_idle1.wav and dr_idle2.wav, but the folder ships dr_idle01.wav, so MU's first move sound never loads; ours plays the file that is there."
+    },
+    "deathrider_attack": {
+      "files": [
+        "dr_attack1.wav",
+        "dr_attack2.wav"
+      ],
+      "from": "SOUND_AIDA_DEATHRAIDER_ATTACK1 on ATTACK1 and ATTACK2 on ATTACK2, once a blow (GMAida.cpp:888-901); w34/dr_attack1-2.wav. Ours picks either for any blow."
+    },
+    "deathrider_die": {
+      "files": [
+        "dr_death.wav"
+      ],
+      "from": "SOUND_AIDA_DEATHRAIDER_DIE on MONSTER01_DIE, once (GMAida.cpp:902-908); w34/dr_death.wav."
+    },
     "forestorc_move": {
       "files": [
         "fo_idle1.wav",

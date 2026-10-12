@@ -182,7 +182,8 @@ struct FigureBody {
     const float* starTint() const { return tinted ? tint : nullptr; }
     // The structured shows (sprint E4c): the Queen's and the Drakan's arcs, bone pairs with how
     // many a reference frame and how wide; the Hydra's heads, each a bone and its mouth in bind
-    // space, and the material its beams were; the Forest Orc's claws, [first, last] bone pairs;
+    // space, and the material its beams were; the claws (the Forest Orc's, the Death Rider's
+    // blades), [first, last] bone pairs with the ribbon's reach and light and the key it stops at;
     // the Death Beam Knight's burn, segments as indices into its show.bones.burning.
     std::vector<std::array<std::string, 2>> arcPairs;
     int arcsAFrame = 0;
@@ -193,7 +194,13 @@ struct FigureBody {
     };
     std::vector<Head> heads;
     std::string beamMaterial;
-    std::vector<std::array<std::string, 2>> claws;
+    struct Claws {
+        std::vector<std::array<std::string, 2>> pairs;
+        float from = 0.0f, to = 0.0f;  // metres along the first bone and along the last
+        float light[3] = {0.0f, 0.0f, 0.0f};
+        float until = -1.0f;  // the last key of a swing that lays one; -1, the whole swing
+    };
+    Claws claws;
     struct BurnSegment {
         int from = 0, to = 0;
         float scale = 1.0f;
@@ -502,7 +509,7 @@ private:
         float arcHalf = 0.0f;
         std::vector<FigureBody::Head> heads;
         std::string beamMaterial;
-        std::vector<std::array<std::string, 2>> claws;
+        FigureBody::Claws claws;
         std::vector<FigureBody::BurnSegment> burnSegments;
         int burnBody[2] = {0, 0};
         int burnHead = 0;
