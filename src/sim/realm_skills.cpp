@@ -167,7 +167,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // (the user, 2026-10-04: 'allow to cast auras on BC waiting zone to prepare for fight') --
     // a boon, a mend or a might on himself, not a summon, and nothing aimed.
     if (tables_->grid.safe(hero.column(), hero.row()) &&
-        !(row.aura() && tables_->map == kBloodCastleMap)) {
+        !(row.aura() && event() == EventKind::Castle)) {
         return false;
     }
     // And a mount's skill only on the mount: off it -- on a safe tile, or the horn's life gone this

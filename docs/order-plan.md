@@ -926,6 +926,35 @@ show's own drawing and its tunings (colours, dims, lengths, cadences) in play_tu
 bosses' bespoke fights (raid, invasion), the events, quests' kill targets and the traps. A plain
 new breed is a recipe and its art; a new kind of show is a tag or a field and its drawing.
 
+## 9e. The Instance (structure-plan S1), the plan
+
+Surveyed 2026-10-12 at 5fdd1fda; the user picked it over the ornaments ('Instance first').
+Blood Castle's run is `realm_move.cpp`:630-993 and Devil Square's `realm_square.cpp`; their
+state is `Realm::run_` and `square_` (each a pod in the snapshot) and fourteen fields on
+`Player`; 19 sim sites asked `tables_->map == kBloodCastleMap/kDevilSquareMap`. realm.h,
+realm.cpp, realm_move, realm_fight, realm_items and realm_skills are each at their ratchet, so
+every slice must leave them no longer. The slices, each with sim_test identical:
+- **I1, one switch:** `Realm::event()` (`eventOf(map)`, sim/event.h) for the 19 checks.
+- **I2, Devil Square** becomes `SquareInstance` (its own files): its run, tick, kills, ranking and
+  pay; Realm keeps one-line delegates in the same step order; snapshot bytes identical.
+- **I3, Blood Castle** becomes `CastleInstance`: its run, grid copy (bridge and doors), tick,
+  kills, pay and the wave hold; ~360 lines out of realm_move.cpp.
+- **I4:** the per-player event fields out of `Player`, and the Realm holding its instance (the
+  snapshot's kShape 10 to 11; a rebuild of server and clients and a deploy).
+- **Later:** the Golden Dragon raid and the invasion, the same way.
+
+### Slice I1: one event switch, as done
+
+- **`EventKind eventOf(map)`** (sim/event.h: None, Castle, Square) and **`Realm::event()`**: the
+  19 sim checks of the map's number against kBloodCastleMap or kDevilSquareMap ask it instead
+  (realm.cpp 4, realm_fight 3, realm_move 4, realm_items 4 -- the portal's two folded into
+  `!= None` -- realm_skills 1, realm_square 1, and the three `tables_ == nullptr ||` guards it
+  covers). No state: it reads the tables' map, so nothing in a snapshot changed. realm.h keeps its
+  2411 lines (openSquareDoor's comment folded onto its line).
+- **Proved:** sim_test's 17,471 lines identical to HEAD's (both built in worktrees, 7441 checks, 0
+  failed; its castle and square runs among them), server_test 27 of 27; live on port 44521,
+  three netbots and a client, every link "none disagreed", 0 errors; sizecheck green here.
+
 ## 9c. Sprint F, the plan: the Cooker
 
 The user, 2026-10-12: "we want to build world, monster, item cooker like actual app where we

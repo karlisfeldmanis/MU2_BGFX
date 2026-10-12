@@ -201,7 +201,7 @@ void Realm::passSquare(int square) {
 }
 
 void Realm::setSquare(int square, int wait) {
-    if (tables_ == nullptr || tables_->map != kDevilSquareMap || square_.phase != SquarePhase::Waiting) return;
+    if (event() != EventKind::Square || square_.phase != SquarePhase::Waiting) return;
     square_.square = std::clamp(square, 1, kSquares);
     if (wait > 0) square_.startsAt = tick_ + int64_t(wait) * kSquareTicksPerSecond;
 }

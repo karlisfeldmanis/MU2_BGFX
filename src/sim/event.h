@@ -9,12 +9,21 @@
 
 #include "content/grid.h"
 #include "sim/config.h"
+#include "sim/square.h"
 
 namespace mu::sim {
 
 // MU's map number for castle 1 (WD_11BLOODCASTLE1). The realm keeps its own copy of this map's
 // grid, which the run changes as it goes.
 constexpr uint32_t kBloodCastleMap = 11;
+// Which event a map holds -- Blood Castle's (every castle runs on map 11) or Devil Square's
+// (sim/square.h) -- or none: the one place a map's number decides it (Realm::event).
+enum class EventKind : uint8_t { None, Castle, Square };
+constexpr EventKind eventOf(uint32_t map) {
+    return map == kBloodCastleMap   ? EventKind::Castle
+           : map == kDevilSquareMap ? EventKind::Square
+                                    : EventKind::None;
+}
 
 // **When it opens** is a setting, not a rule: RealmConfig::castle (sim/config.h), hourly from
 // hh:25 for five minutes unless a test asks otherwise.

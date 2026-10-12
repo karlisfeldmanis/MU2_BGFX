@@ -756,8 +756,7 @@ void Realm::warpHome(Body& hero) {
     // And Blood Castle's: a scroll read in a castle leaves it, for Devias; and Devil Square's,
     // for Noria, whose run sends everyone home this way as it ends (Realm::squareTick).
     const int32_t* box = tables_->safeGate;
-    const bool home = !(box[2] > box[0] && box[3] > box[1]) || tables_->map == kBloodCastleMap ||
-                      tables_->map == kDevilSquareMap;
+    const bool home = !(box[2] > box[0] && box[3] > box[1]) || event() != EventKind::None;
     say(What::Warped, hero, landing.first, landing.second, home ? 1 : 0);
 }
 
@@ -1207,7 +1206,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
     }
     // Devil Square's Eye, then its Key, anywhere but the square itself (sim/square.h), the same
     // way: their own rolls, their level by the monster's, none from a monster of 15 or under.
-    if (tables_->map != kDevilSquareMap && devilTicketLevel(level) > 0) {
+    if (event() != EventKind::Square && devilTicketLevel(level) > 0) {
         const bool eye = devilDice_.nextInt(0, 10000) < kDevilsEyeIn10000;
         const bool key = !eye && devilDice_.nextInt(0, 10000) < kDevilsKeyIn10000;
         if (eye || key) {
@@ -1245,7 +1244,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
     }
     // Loch's Feather in Tarkan, Icarus and Blood Castle 6, the same way (sim::kFeatherOdds).
     const bool featherHere = featherMap(tables_->map) ||
-                             (tables_->map == kBloodCastleMap && run_.castle == kFeatherCastle);
+                             (event() == EventKind::Castle && run_.castle == kFeatherCastle);
     if (level >= kFeatherFromLevel && featherHere &&
         featherDice_.nextInt(0, kFeatherOdds) == 0) {
         for (size_t i = 0; i < tables_->items.size(); ++i) {
@@ -1361,7 +1360,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
 
     // The second class's gear only where it falls (sim::kTarkanMap): rules.second_class, and BC 6.
     const bool secondGearHere = rulesOf(tables_->map).secondClass ||
-                                (tables_->map == kBloodCastleMap && run_.castle >= kCastles);
+                                (event() == EventKind::Castle && run_.castle >= kCastles);
     const auto reaches = [level, secondGearHere](const content::ItemRow& row) {
         return row.dropLevel <= level &&
                (row.maximumDropLevel == 0 || level <= row.maximumDropLevel) &&

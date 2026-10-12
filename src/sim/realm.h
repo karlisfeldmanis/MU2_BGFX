@@ -1156,8 +1156,8 @@ public:
     // Into square `square` with `wait` seconds to the fight (Charon's gate's last seconds), so
     // everyone who came through it starts together on the odd hour; 0 keeps kSquareWait.
     void setSquare(int square, int wait);
-    // --square-open's: Charon's gate open at any hour (a test).
-    void openSquareDoor() { squareOpen_ = true; }
+    void openSquareDoor() { squareOpen_ = true; }  // --square-open's: Charon's gate at any hour
+    EventKind event() const { return tables_ ? eventOf(tables_->map) : EventKind::None; }
     // Blood Castle's run, while he is in one (sim/event.h), and the whole seconds left of its
     // wait or of its time.
     const CastleRun& castleRun() const { return run_; }

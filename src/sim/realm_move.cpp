@@ -330,7 +330,7 @@ bool Realm::worth(const Body& beast, const Body& target, int range) const {
 
 void Realm::rouse(Body& beast) {
     const content::MonsterKind& kind = tables_->kinds[size_t(beast.kind)];
-    const float far = float(tables_->map == kBloodCastleMap
+    const float far = float(event() == EventKind::Castle
                                 ? std::max(kind.viewRange + kMargin, kWakeAtLeast)
                                 : kind.viewRange + kMargin);
     float nearest = 1e30f;
@@ -682,7 +682,7 @@ void Realm::passCastle(int castle) {
 }
 
 void Realm::setCastle(int castle) {
-    if (tables_ == nullptr || tables_->map != kBloodCastleMap) return;
+    if (event() != EventKind::Castle) return;
     castle = std::clamp(castle, 1, kCastles);
     run_.castle = castle;
     const auto kindNumbered = [&](int32_t number) {
@@ -738,7 +738,7 @@ bool Realm::fixed(const Body& body) const {
 }
 
 void Realm::freeCastle() {
-    if (tables_ == nullptr || tables_->map != kBloodCastleMap) return;
+    if (event() != EventKind::Castle) return;
     run_ = CastleRun{};
     for (const GridBox& box : {kCastleEntrance, kCastleBridge, kCastleDoor[0], kCastleDoor[1],
                                kCastleDoor[2]}) {
@@ -918,7 +918,7 @@ void Realm::castleKill(const Body& dead) {
 }
 
 void Realm::dropCastleBridge(int seconds) {
-    if (tables_ == nullptr || tables_->map != kBloodCastleMap) return;
+    if (event() != EventKind::Castle) return;
     if (run_.phase == CastlePhase::Waiting) run_.startsAt = tick_;
     run_.kills = std::max(run_.kills, run_.killsWanted);
     run_.bridgeAt = tick_ + int64_t(seconds) * kCastleTicksPerSecond;

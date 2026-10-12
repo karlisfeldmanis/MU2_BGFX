@@ -1828,7 +1828,7 @@ void Realm::kill(Body& dead, Body& killer) {
     // Blood Castle's statue is the run's, raised once by it and never again; its Spirit Sorcerers
     // rise again as the garrison does while the run is on and quota 2 is not met
     // (CastleRun::sorcerersWanted); castleKill lays the dead down for good as the quota fills.
-    if (tables_->map == kBloodCastleMap &&
+    if (event() == EventKind::Castle &&
         (castleStatue(kind.number) ||
          (castleSorcerer(kind.number) &&
           (run_.phase != CastlePhase::Running || run_.sorcerers >= run_.sorcerersWanted)))) {
@@ -1836,7 +1836,7 @@ void Realm::kill(Body& dead, Body& killer) {
     }
     // Devil Square's: a wave's monster rises again only while its wave lasts, and a boss never
     // (OpenMU's AutomaticDuringWave and OnceAtWaveStart, sim/square.h); out of the fight none.
-    if (tables_->map == kDevilSquareMap && square_.phase != SquarePhase::None) {
+    if (event() == EventKind::Square && square_.phase != SquarePhase::None) {
         const int wave = squareWaveOf(square_.square, kind.number);
         const int64_t start = square_.endsAt - int64_t(kSquarePlay) * kSquareTicksPerSecond;
         const bool rises = square_.phase == SquarePhase::Running && wave >= 1 && wave <= kSquareWaves &&
@@ -2062,7 +2062,7 @@ void Realm::reviveHero() {
     // And Blood Castle, whose dead are out of the run and back in Devias (the user's pick of
     // 2026-10-03, 'death sends you out to Devias'; docs/blood-castle-port.md 5).
     const int32_t* box = tables_->safeGate;
-    const bool home = !(box[2] > box[0] && box[3] > box[1]) || tables_->map == kBloodCastleMap;
+    const bool home = !(box[2] > box[0] && box[3] > box[1]) || event() == EventKind::Castle;
     say(What::Rose, hero, hero.level, hero.health, home ? 1 : 0);
 }
 

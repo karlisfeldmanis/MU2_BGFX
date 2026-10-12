@@ -282,7 +282,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     tables_ = tables;
     if (!tables_ || tables_->grid.empty()) return false;
     own_.reset();
-    if (tables_->map == kBloodCastleMap) {
+    if (event() == EventKind::Castle) {
         own_ = std::make_unique<content::Tables>(*tables_);
         tables_ = own_.get();
     }
@@ -337,12 +337,12 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     me().squareRanked = 0;
     me().squareExperience = me().squareZen = 0;
     me().squarePaid = me().squareClaimOwed = false;
-    if (tables_->map == kDevilSquareMap) {
+    if (event() == EventKind::Square) {
         square_.phase = SquarePhase::Waiting;
         square_.startsAt = int64_t(kSquareWait) * kSquareTicksPerSecond;
     }
     run_ = CastleRun{};
-    if (tables_->map == kBloodCastleMap) {
+    if (event() == EventKind::Castle) {
         run_.phase = CastlePhase::Waiting;
         run_.startsAt = int64_t(kCastleWait) * kCastleTicksPerSecond;
         changeGrid(kCastleEntrance.x1, kCastleEntrance.y1, kCastleEntrance.x2, kCastleEntrance.y2,
@@ -390,7 +390,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
         // Spirit Sorcerers. The Giant Ogre MonsterSetBase puts on the drawbridge's gap (14,70)
         // still stands nowhere.
         const auto castleShut = [&](int column, int row) {
-            if (tables_->map != kBloodCastleMap) return false;
+            if (event() != EventKind::Castle) return false;
             if ((tables_->grid.at(column, row) & (content::kNoGround | content::kCharacter)) != 0) {
                 return false;
             }
