@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "app/modes/play_mode.h"
+#include "app/preloader.h"
 #include "core/log.h"
 
 namespace mu::app {
@@ -50,6 +51,7 @@ bool StudioArena::open(Context& ctx, const std::string& breed, const std::string
     args_.frames = ctx.args.frames != 0 ? ctx.args.frames : 1;
     args_.entrance = false;
     play_ = std::make_unique<PlayMode>();
+    play_->loadLook(Preloader::studio());   // the tool's loading, not the game's ring and music
     bool ok;
     {
         Swap swap(ctx, args_);

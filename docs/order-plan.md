@@ -1536,6 +1536,10 @@ adjusting lighting, tonemaps, shadow, sun, daylight for maps".
 - The fight is watched, not played (PlayMode::watch, the raid's spectator desk): the bars, the
   names and the blows' figures stay, and the hero's orbs and belt no longer draw under the panels.
   The minimap and the event herald, readings too, still do.
+- The fight loads as the studio loads (PlayMode::loadLook, Preloader::studio()): "MU Studio"
+  over the ring, the stage under it, no MU letter and no loading music. Proved by a shot run
+  (MU2_SPIN_SHOT): the arena's 2.1 s load under the studio's spinner, then the Death Tree fought
+  at Aida.
 
 ## 10. Leave alone
 

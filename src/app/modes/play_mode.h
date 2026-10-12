@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "app/mode.h"
+#include "app/preloader.h"
 #include "game/fx/litter.h"
 #include "game/item_models.h"
 #include "game/save.h"
@@ -41,6 +42,9 @@ public:
     // of the hero's chrome (orbs, belt). The raid's spectator view; the studio's arena too
     // (app/modes/studio_arena.h), whose panels stand where the chrome would.
     void watch(bool on) { desk_.setWatching(on); }
+    // How the loading spinner dresses, before open(): the game's own unless told; the studio's
+    // arena asks for the studio's (Preloader::studio()), so a fight loads as the tool loads.
+    void loadLook(const PreloaderLook& look) { look_ = look; }
     // The world and its realm, for the performance sweep (app/sweep.h).
     game::World& world() { return world_; }
     void report(Context& ctx) override;
@@ -66,6 +70,7 @@ private:
     void travel(Context& ctx, const std::string& world, int column = -1, int row = -1,
                 float facing = 0.0f, bool unfaced = false);
     std::string travelTo_;
+    PreloaderLook look_;
     // Go Back! (app/context.h): the clock run down, the plate told, its click taken, and a world
     // come into by magic given its landing. Every frame, before the pointer.
     void goBack(Context& ctx, double seconds);

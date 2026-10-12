@@ -581,7 +581,7 @@ bool PlayMode::open(Context& ctx) {
         const bool done = world_.played().settle(seconds);
         if (done) sound.setVolume(float(args.volume) / 100.0f);
         return done;
-    });
+    }, look_);
 
     if (!up) {
         core::logError("the world did not open");
