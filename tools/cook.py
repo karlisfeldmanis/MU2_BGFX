@@ -2904,12 +2904,19 @@ def cook_missiles(out_dir, texcook, threads):
         vertex_count = 0
         low = [1e30] * 3
         high = [-1e30] * 3
+        drawn = 0
         for part in row["parts"]:
             group = part["group"]
             if group not in faces:
-                print(f"cook: {name} names a part `{group}` its mesh has no faces for",
-                      file=sys.stderr)
-                return 2
+                # A sheet the folder carries for the effect that draws it, not a mesh of this
+                # model: Death Stab's spear names NSkill's streaks and the Flare, which
+                # game/fx/deathstab.cpp reads from the folder, so they are parts to be copied
+                # into the build (index.py's `carried`). Left out of the .mum. This refused
+                # the whole cook from 2026-10-02: every showing cook failed after writing the
+                # sounds, and the .mum of each mesh sorted after Spear01 went uncooked.
+                print(f"cook: {name}'s part `{group}` has no faces: its sheet is carried, not drawn here")
+                continue
+            drawn += 1
             packed, count, part_indices, part_low, part_high = obj_part(
                 at, normals, uvs, faces[group], per_tile)
             first_index = len(indices) // 4
@@ -2936,7 +2943,7 @@ def cook_missiles(out_dir, texcook, threads):
             materials += struct.pack("<2f", 1.0, 0.0)
 
         header = struct.pack("<4sIIIII", b"MU2M", 3, vertex_count, len(indices) // 4,
-                             len(parts), len(row["parts"]))
+                             len(parts), drawn)
         header += struct.pack("<3f3f", *low, *high)
         body = bytes(vertices) + bytes(indices)
         for part in parts:
