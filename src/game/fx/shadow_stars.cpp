@@ -140,6 +140,7 @@ bool ShadowStars::open(const std::string& assetDir, content::Textures& textures,
     roots_.open(assetDir, textures, table);
     golemWater_.open(assetDir, textures, table);
     witchQueen_.open(assetDir, textures, table);
+    hellMaine_.open(assetDir, textures, table);
     aidaSparks_.open(assetDir, textures, table);
     stars_.reserve(kStars);
     embers_.reserve(kEmbers);
@@ -152,6 +153,7 @@ void ShadowStars::shutdown() {
     roots_.shutdown();
     golemWater_.shutdown();
     witchQueen_.shutdown();
+    hellMaine_.shutdown();
     aidaSparks_.shutdown();
     open_ = false;
 }
@@ -160,6 +162,7 @@ void ShadowStars::update(float seconds) {
     roots_.update(seconds);
     golemWater_.update(seconds);
     witchQueen_.update(seconds);
+    hellMaine_.update(seconds);
     aidaSparks_.update(seconds);
     stars_.clear();
     starlights_.clear();
@@ -386,6 +389,7 @@ void ShadowStars::gather(gfx::Effects& effects) const {
     roots_.gather(effects);
     golemWater_.gather(effects);
     witchQueen_.gather(effects);
+    hellMaine_.gather(effects);
     aidaSparks_.gather(effects);
     if (bgfx::isValid(light_)) {
         for (const Starlight& one : starlights_) {

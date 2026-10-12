@@ -83,6 +83,7 @@ constexpr Resistance kResistances[] = {
     {306, 20, 20},  // Death Rider
     {307, 19, 19},  // Forest Orc
     {308, 18, 18},  // Death Tree
+    {309, 50, 50},  // Hell Maine
 };
 
 constexpr DropRate kDropRates[] = {
@@ -150,6 +151,7 @@ constexpr DropRate kDropRates[] = {
     {306, 30, 3, 10},  // Death Rider
     {307, 30, 3, 10},  // Forest Orc
     {308, 30, 3, 10},  // Death Tree
+    {309, 30, 3, 150},  // Hell Maine
 };
 
 constexpr Bulk kBulks[] = {

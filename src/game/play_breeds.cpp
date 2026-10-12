@@ -1,6 +1,7 @@
 // The Aida breeds' own shows, fed each frame from Play::shade: a Blue Golem's water
 // (fx/golem_water.h), a Witch Queen's lights and strikes (fx/witch_queen.h), and the sparks off a
-// Death Rider's head and a Death Tree's horns (fx/aida_sparks.h), each by its recipe's show tag.
+// Death Rider's head and a Death Tree's horns (fx/aida_sparks.h), and Hell Maine's lights, storm and
+// fire lay (fx/hell_maine.h), each by its recipe's show tag.
 // Out of play_show.cpp, which is at its size.
 #include "game/play.h"
 
@@ -22,6 +23,16 @@ void Play::breedShows(Drawn& one, float fade, float seconds) {
     if (look->has("death_tree")) {
         for (const int bone : one.starBones)
             if (float horn[3]; one.figure.pointOn(bone, origin, horn)) shadowStars_.aidaSparks().horn(horn, fade, seconds);
+        return;
+    }
+    // Hell Maine's lights and hand fire, Attack 1's storm (its stones are the meteor's) and
+    // Attack 2's fire lay.
+    if (look->has("hell_maine")) {
+        const int attack = one.figure.clip() == one.attackClip ? 1 : one.figure.clip() == one.attackClip2 ? 2 : 0;
+        const float feet[3] = {one.crown[0], ground_ ? ground_->heightAt(one.crown[0], one.crown[2]) : 0.0f,
+                               one.crown[2]};
+        shadowStars_.hellMaine().watch(one.id, one.figure, attack, keyOf(one.figure), feet, one.yaw, fade, seconds);
+        for (float stone[3]; shadowStars_.hellMaine().takeStone(stone);) meteor_.stones(stone[0], stone[2], stone[1], 1);
         return;
     }
     if (!look->has("blue_golem") && !look->has("witch_queen")) return;

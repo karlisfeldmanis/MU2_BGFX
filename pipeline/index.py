@@ -628,6 +628,11 @@ EFFECTS = {
     # 64 squares on black, added.
     "chrome03": "effects/aida/chrome03.png",
     "true_blue": "effects/aida/fantab.png",
+    # Hell Maine's (game/fx/hell_maine.h): BITMAP_TRUE_FIRE, Effect/fantaF.OZJ (:5185), the flame
+    # off its hands; BITMAP_POUNDING_BALL, Effect/PoundingBall.OZJ, its storm's fiery cloud and
+    # the disc spinning under it. 64 squares on black, added.
+    "true_fire": "effects/aida/fantaf.png",
+    "pounding_ball": "effects/aida/poundingball.png",
     # Tarkan's sandstorm, BITMAP_CHROME + 2 and + 3 (MapManager.cpp:143-145): sand01 a soft grey
     # cloud and sand02 sparse white specks, both on black, which RenderOutSides lays over the
     # whole screen added (ZzzInterface.cpp:3677-3689; game/world/sand_haze.h).

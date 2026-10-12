@@ -2612,6 +2612,26 @@
         "eElec2.wav"
       ],
       "from": "SOUND_CHAOS_THUNDER01 + rand() % 2 beside wq_attack1 at the start of her Attack 2 (GMAida.cpp:737-743); eElec1.wav and eElec2.wav (MapManager.cpp:370-371, ZzzOpenData.cpp:4860). Ours: heard as her ring of strikes falls (fx/witch_queen.h)."
+    },
+    "hellmaine_move": {
+      "files": [
+        "hm_idle1.wav",
+        "hm_idle2.wav"
+      ],
+      "from": "SOUND_AIDA_HELL_MOVE1 + rand() % 2, one frame in 15 while it walks or runs (GMAida.cpp:1025-1028); MapManager.cpp:359-360 loads w34/hm_idle1.wav and hm_idle2.wav."
+    },
+    "hellmaine_attack": {
+      "files": [
+        "hm_bloodywind.wav",
+        "hm_firelay.wav"
+      ],
+      "from": "MU by action, once at its start: ATTACK1 (its wind) SOUND_AIDA_HELL_ATTACK3, w34/hm_bloodywind.wav; ATTACK2 (its fire lay) SOUND_AIDA_HELL_ATTACK2, hm_firelay.wav (GMAida.cpp:1030-1042; MapManager.cpp:362-363). Ours picks either for any blow. Its plain ATTACK3, hm_attack1.wav (:1044-1049), is not played: our breed swings Attack 1 and 2."
+    },
+    "hellmaine_die": {
+      "files": [
+        "hm_death.wav"
+      ],
+      "from": "SOUND_AIDA_HELL_DIE on MONSTER01_DIE, once (GMAida.cpp:1051-1056); w34/hm_death.wav (MapManager.cpp:364)."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."
