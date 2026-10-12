@@ -158,8 +158,8 @@
         "SOUND_AIDA_DEATHRAIDER_ATTACK2",
         "SOUND_AIDA_DEATHRAIDER_DIE"
       ],
-      "state": "todo",
-      "note": "the head's green light is show.aura on Bip02 Head at MU's (0, 0.25, 0); the BITMAP_SPARK particles are not carried yet"
+      "state": "done",
+      "note": "Its head: show.aura's faint green light on Bip02 Head, and fx/aida_sparks.h's Impack03 sprite at 3 in (0, 0.2-0.29, 0) and MU's Spark03 sub 7 drizzle (one a frame, 30 frames, falling 1.3, green rolled) there, where MU's 60 along the neck lands. Sounds as deathrider_*."
     },
     {
       "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:344",

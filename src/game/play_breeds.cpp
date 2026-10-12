@@ -1,6 +1,7 @@
 // The Aida breeds' own shows, fed each frame from Play::shade: a Blue Golem's water
-// (fx/golem_water.h) and a Witch Queen's lights and strikes (fx/witch_queen.h), each by its
-// recipe's show tag. Out of play_show.cpp, which is at its size.
+// (fx/golem_water.h), a Witch Queen's lights and strikes (fx/witch_queen.h), and the sparks off a
+// Death Rider's head and a Death Tree's horns (fx/aida_sparks.h), each by its recipe's show tag.
+// Out of play_show.cpp, which is at its size.
 #include "game/play.h"
 
 #include "game/play_tuning.h"
@@ -9,7 +10,21 @@ namespace mu::game {
 
 void Play::breedShows(Drawn& one, float fade, float seconds) {
     const FigureBody* look = one.figure.body();
-    if (!look || (!look->has("blue_golem") && !look->has("witch_queen"))) return;
+    if (!look) return;
+    const float origin[3] = {0.0f, 0.0f, 0.0f};
+    // A Death Rider's head, its aura bone; a Death Tree's six horns, its star bones.
+    if (look->has("death_rider")) {
+        float head[3];
+        if (one.auraBone >= 0 && one.figure.pointOn(one.auraBone, origin, head))
+            shadowStars_.aidaSparks().head(head, fade, seconds);
+        return;
+    }
+    if (look->has("death_tree")) {
+        for (const int bone : one.starBones)
+            if (float horn[3]; one.figure.pointOn(bone, origin, horn)) shadowStars_.aidaSparks().horn(horn, fade, seconds);
+        return;
+    }
+    if (!look->has("blue_golem") && !look->has("witch_queen")) return;
     // What it hunts: its quarry, or its blow's target; that one's feet, or null.
     const sim::Body* self = realm_.find(one.id);
     const Drawn* prey = self ? drawnOf(self->quarry ? self->quarry : self->blowTarget) : nullptr;

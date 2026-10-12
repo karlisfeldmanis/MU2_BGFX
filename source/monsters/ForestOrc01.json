@@ -1152,5 +1152,120 @@
         ]
       ]
     }
-  }
+  },
+  "mu_checklist": [
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:380",
+      "in": "M33Aida::CreateAidaMonster",
+      "kind": "body",
+      "lines": 9,
+      "actions": [],
+      "calls": [
+        "CreateCharacter"
+      ],
+      "state": "done",
+      "note": "the recipe's monster block (mu new monster)"
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:564",
+      "in": "M33Aida::MoveAidaBlurEffect",
+      "kind": "effect",
+      "lines": 36,
+      "actions": [
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2"
+      ],
+      "calls": [
+        "CreateBlur"
+      ],
+      "state": "done",
+      "note": "show.claws: its three right-hand claws (Bip01 R Finger0-02, 1-12, 2-22) each lay a blur02 ribbon in (0.5, 0.5, 0), 20 along the first bone to 60 along the last, on Attack 1 and 2."
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:916",
+      "in": "M33Aida::RenderAidaMonsterVisual",
+      "kind": "sound",
+      "lines": 33,
+      "actions": [
+        "MONSTER01_WALK",
+        "MONSTER01_RUN",
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2",
+        "MONSTER01_DIE",
+        "MONSTER01_STOP1",
+        "MONSTER01_STOP2"
+      ],
+      "calls": [
+        "PlayBuffer",
+        "SOUND_AIDA_FORESTORC_MOVE1",
+        "SOUND_AIDA_FORESTORC_ATTACK1",
+        "SOUND_AIDA_FORESTORC_ATTACK2",
+        "SOUND_AIDA_FORESTORC_DIE"
+      ],
+      "state": "done",
+      "note": "Its cries as forestorc_move/_attack/_die, played by the game's monster sounds (walk, blow, death)."
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:354",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_FORESTORC_MOVE1"
+      ],
+      "file": "Data/Sound/w34/fo_idle1.wav",
+      "state": "done",
+      "note": "forestorc_move: fo_idle1 and fo_idle2."
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:356",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_FORESTORC_ATTACK1"
+      ],
+      "file": "Data/Sound/w34/fo_attack1.wav",
+      "state": "done",
+      "note": "forestorc_attack: fo_attack1 and fo_attack2."
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:357",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_FORESTORC_ATTACK2"
+      ],
+      "file": "Data/Sound/w34/fo_attack2.wav",
+      "state": "done",
+      "note": "forestorc_attack: fo_attack1 and fo_attack2."
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:358",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_FORESTORC_DIE"
+      ],
+      "file": "Data/Sound/w34/fo_death.wav",
+      "state": "done",
+      "note": "forestorc_die: fo_death."
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2426",
+      "in": "GetMonsterModelName",
+      "kind": "other",
+      "lines": 1,
+      "actions": [],
+      "calls": [],
+      "state": "skip",
+      "note": "MU's name for the model, for its tools; nothing to carry"
+    }
+  ]
 }

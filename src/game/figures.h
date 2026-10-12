@@ -201,6 +201,8 @@ struct FigureBody {
         float from = 0.0f, to = 0.0f;  // metres along the first bone and along the last
         float light[3] = {0.0f, 0.0f, 0.0f};
         float until = -1.0f;  // the last key of a swing that lays one; -1, the whole swing
+        bool firstOnly = false;  // swing 1: on Attack 1 alone (the Death Tree's; its second is roots)
+        bool alongZ = false;     // axis "z": along the bones' z, as MU lays the Death Tree's
     };
     Claws claws;
     // show.lands: the key of its swing its blow lands on, the hit's number and sound with it;

@@ -3501,7 +3501,7 @@ def cook_shows(out_dir):
             if "beam_material" in show:
                 one["beam_material"] = show["beam_material"]["name"]
             if "claws" in show:
-                one["claws"] = {k: show["claws"][k] for k in ("pairs", "from", "to", "light", "until")
+                one["claws"] = {k: show["claws"][k] for k in ("pairs", "from", "to", "light", "until", "swing", "axis")
                                 if k in show["claws"]}
             if "burn" in show:
                 one["burn"] = {k: show["burn"][k] for k in ("segments", "body", "head")}

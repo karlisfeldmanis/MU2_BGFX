@@ -246,9 +246,11 @@ fix the if needed, check for special effects').** Each is `./mu new monster N --
 shot in `--arena <Figure> --arena-undying --level 80`, which is how a level-72 breed is seen up
 close without the hero dying in a second.
 - **Death Tree (308)**: DeathTree01, foliage + bark, 29 spawns. Its six horns (`e04 e1 e05 e02 e06
-  e03`) glow green as star bones (kDeathTreeHorns; MU's sparks left out); its Attack 2 throws
+  e03`) glow green as star bones (kDeathTreeHorns), each dropping MU's Spark03 sub 6 one frame in fifty
+  (fx/aida_sparks.h, since 2026-10-12, at a third of MU's size); its Attack 2 throws
   Object34's tree_eff roots at its feet, in its facing, and green smoke (fx/tree_roots.h, owned by
-  ShadowStars). Not done: the claw's blur on Attack 1 (light 0.3, bones 26-27). The smoke at MU's
+  ShadowStars). Its claw's blur on Attack 1 is show.claws with `swing` 1 and `axis` z (grey 0.3,
+  20 along Bip01 R Finger01 to 70 along R Finger0Nub; 2026-10-12). The smoke at MU's
   (0.5, 0.7, 0.5) barely shows at noon. A trap: a constexpr array in a header is one copy per
   file, so compare figures by name, not by tint pointer.
 - **Forest Orc (307)**: ForestOrc01, one sheet as skin for now (green hide, bronze-trimmed leather,
@@ -264,7 +266,9 @@ close without the hero dying in a second.
   5.06 of either swing: `show.claws` now carries from, to, light and until per breed, and the Forest
   Orc's 0.2/0.6/(0.5, 0.5, 0) moved into its recipe with them; Play::fit resolves claws for any
   recipe that has them (it had asked for the forest_orc tag). Its head's green light is the faint
-  aura on Bip02 Head at MU's (0, 0.25, 0), the sparks left out. Mesh 3's prizm slides on both axes
+  aura on Bip02 Head at MU's (0, 0.25, 0), and since 2026-10-12 MU's Impack03 at 3 there and its
+  Spark03 sub 7 drizzle, a mote a frame falling 1.3, at a third of MU's size (the user: 'green
+  bubles to large'; fx/aida_sparks.h). Mesh 3's prizm slides on both axes
   at MU's 0.6 a second, over the lit ice at a steady 0.4: as a plain glow at 1 it blew out white at
   noon. MU's chrome pass over it is not drawn. Sounds as deathrider_*; MU loads dr_idle1.wav but
   the folder ships dr_idle01.wav, so ours plays that file.

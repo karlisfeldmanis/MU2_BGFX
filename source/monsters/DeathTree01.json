@@ -76,6 +76,24 @@
         1.0
       ],
       "note": "The colour its star bones' lights are drawn in; play_tuning.h's comment by its tag (\"death_tree\") says why. Sprint E4b moved it here from kDeathTreeGreen."
+    },
+    "claws": {
+      "pairs": [
+        [
+          "Bip01 R Finger01",
+          "Bip01 R Finger0Nub"
+        ]
+      ],
+      "from": 0.2,
+      "to": 0.7,
+      "light": [
+        0.3,
+        0.3,
+        0.3
+      ],
+      "swing": 1,
+      "axis": "z",
+      "note": "MoveAidaBlurEffect`s MODEL_DEATH_TREE (GMAida.cpp:600-625): on Attack 1 alone, ten CreateBlur type 3 (BITMAP_BLUR2) a frame in (0.3, 0.3, 0.3), sub 24, from 20 units along bone 26 (Bip01 R Finger01) to 70 along bone 27 (R Finger0Nub), both on the bones` z: the claw of its first blow. Attack 2 is its roots (fx/tree_roots.h)."
     }
   },
   "islands": [
@@ -848,6 +866,152 @@
         0.372,
         0.069
       ]
+    }
+  ],
+  "mu_checklist": [
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:389",
+      "in": "M33Aida::CreateAidaMonster",
+      "kind": "body",
+      "lines": 17,
+      "actions": [],
+      "calls": [
+        "CreateCharacter",
+        "RegisterBone"
+      ],
+      "state": "done",
+      "note": "the recipe's monster block (mu new monster)"
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:1475",
+      "in": "M33Aida::AttackEffectAidaMonster",
+      "kind": "effect",
+      "lines": 11,
+      "actions": [
+        "MONSTER01_ATTACK2"
+      ],
+      "calls": [
+        "CreateEffect"
+      ],
+      "state": "done",
+      "note": "Attack 2's roots: fx/tree_roots.h throws Object34's tree_eff at its feet in its facing, with green smoke."
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:600",
+      "in": "M33Aida::MoveAidaBlurEffect",
+      "kind": "effect",
+      "lines": 28,
+      "actions": [
+        "MONSTER01_ATTACK1"
+      ],
+      "calls": [
+        "CreateBlur"
+      ],
+      "state": "done",
+      "note": "show.claws on Attack 1 alone (swing 1), along the bones' z (axis z): a grey 0.3 blur02 ribbon from 20 along Bip01 R Finger01 to 70 along R Finger0Nub."
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:949",
+      "in": "M33Aida::RenderAidaMonsterVisual",
+      "kind": "effect",
+      "lines": 53,
+      "actions": [
+        "MONSTER01_WALK",
+        "MONSTER01_RUN",
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2",
+        "MONSTER01_DIE",
+        "MONSTER01_STOP1",
+        "MONSTER01_STOP2"
+      ],
+      "calls": [
+        "PlayBuffer",
+        "SOUND_AIDA_DEATHTREE_MOVE1",
+        "SOUND_AIDA_DEATHTREE_ATTACK1",
+        "SOUND_AIDA_DEATHTREE_ATTACK2",
+        "SOUND_AIDA_DEATHTREE_DIE",
+        "CreateSprite",
+        "BITMAP_LIGHT",
+        "CreateParticleFpsChecked",
+        "BITMAP_SPARK",
+        "BITMAP_SMOKE"
+      ],
+      "state": "done",
+      "note": "Its six horns glow green as its star bones (show.bones.stars, star_tint), and fx/aida_sparks.h drops MU's Spark03 sub 6 off each one frame in fifty; sounds as deathtree_move/_attack/_die."
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:349",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_DEATHTREE_MOVE1"
+      ],
+      "file": "Data/Sound/w34/dt_idle1.wav",
+      "state": "done",
+      "note": "deathtree_move: dt_idle1 and dt_idle2."
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:351",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_DEATHTREE_ATTACK1"
+      ],
+      "file": "Data/Sound/w34/dt_attack1.wav",
+      "state": "done",
+      "note": "deathtree_attack: dt_attack1 and dt_attack2."
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:352",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_DEATHTREE_ATTACK2"
+      ],
+      "file": "Data/Sound/w34/dt_attack2.wav",
+      "state": "done",
+      "note": "deathtree_attack: dt_attack1 and dt_attack2."
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:353",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_DEATHTREE_DIE"
+      ],
+      "file": "Data/Sound/w34/dt_death.wav",
+      "state": "done",
+      "note": "deathtree_die: dt_death."
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2701",
+      "in": "OpenMonsterModel",
+      "kind": "animation",
+      "lines": 3,
+      "actions": [
+        "MONSTER01_DIE"
+      ],
+      "calls": [],
+      "state": "done",
+      "note": "source/monsters/actions.json action_overrides.104: death 0.2."
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2427",
+      "in": "GetMonsterModelName",
+      "kind": "other",
+      "lines": 1,
+      "actions": [],
+      "calls": [],
+      "state": "skip",
+      "note": "MU's name for the model, for its tools; nothing to carry"
     }
   ]
 }

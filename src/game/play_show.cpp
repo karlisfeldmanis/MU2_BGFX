@@ -195,7 +195,8 @@ void Play::exhale(float seconds) {
 
     // Claws on either swing (show.claws): a Forest Orc's three, a Death Rider's two blades, a
     // ribbon each, keyed apart from the body's own as MU keys them by sub type; the Rider's only
-    // up to its `until` key (MU's AnimationFrame <= 5.06).
+    // up to its `until` key (MU's AnimationFrame <= 5.06); the Death Tree's on its first alone,
+    // along its fingers' z.
     for (Drawn& one : drawn_) {
         if (one.clawBones.empty() || !one.visible || !one.placed || one.deadFor >= 0.0f) continue;
         const int clip = one.figure.clip();
@@ -204,8 +205,9 @@ void Play::exhale(float seconds) {
         if (look == nullptr) continue;
         const FigureBody::Claws& claws = look->claws;
         if (claws.until >= 0.0f && keyOf(one.figure) > claws.until) continue;
-        const float grip[3] = {claws.from, 0.0f, 0.0f};
-        const float tip[3] = {claws.to, 0.0f, 0.0f};
+        if (claws.firstOnly && clip != one.attackClip) continue;
+        const float grip[3] = {claws.alongZ ? 0.0f : claws.from, 0.0f, claws.alongZ ? claws.from : 0.0f};
+        const float tip[3] = {claws.alongZ ? 0.0f : claws.to, 0.0f, claws.alongZ ? claws.to : 0.0f};
         for (size_t c = 0; c + 1 < one.clawBones.size(); c += 2) {
             float from[3], to[3];
             if (!one.figure.pointOn(one.clawBones[c], grip, from)) continue;

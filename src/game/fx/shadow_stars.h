@@ -36,6 +36,7 @@
 #include "content/texture.h"
 #include "game/fx/golem_water.h"
 #include "game/fx/witch_queen.h"
+#include "game/fx/aida_sparks.h"
 #include "game/fx/tree_roots.h"
 #include "gfx/effects.h"
 #include "gfx/renderer.h"
@@ -48,6 +49,7 @@ public:
     TreeRoots& roots() { return roots_; }
     GolemWater& golemWater() { return golemWater_; }
     WitchQueen& witchQueen() { return witchQueen_; }
+    AidaSparks& aidaSparks() { return aidaSparks_; }
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);
     void shutdown();
@@ -182,6 +184,7 @@ private:
     TreeRoots roots_;
     GolemWater golemWater_;   // a Blue Golem's drips and drain (fx/golem_water.h)
     WitchQueen witchQueen_;   // a Witch Queen's lights and strikes (fx/witch_queen.h)
+    AidaSparks aidaSparks_;   // the Death Rider's and Death Tree's sparks (fx/aida_sparks.h)
     static constexpr int kRibbonTails = 15;
     struct Ribbon {
         float points[kRibbonTails][3];

@@ -368,6 +368,7 @@ add_library(mu_game STATIC
   src/game/fx/shadow_stars.cpp
   src/game/fx/golem_water.cpp
   src/game/fx/witch_queen.cpp
+  src/game/fx/aida_sparks.cpp
   src/game/fx/tree_roots.cpp
   src/game/fx/forge.cpp
   src/game/fx/meteor.cpp
