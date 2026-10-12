@@ -96,6 +96,7 @@ constexpr Resistance kResistances[] = {
     {309, 50, 50},  // Hell Maine
     {549, 20, 20},  // Bloody Orc
     {550, 20, 20},  // Bloody Death Rider
+    {552, 20, 20},  // Bloody Witch Queen
 };
 
 constexpr DropRate kDropRates[] = {
@@ -166,6 +167,7 @@ constexpr DropRate kDropRates[] = {
     {309, 30, 3, 150},  // Hell Maine
     {549, 30, 3, 8},  // Bloody Orc
     {550, 30, 3, 10},  // Bloody Death Rider
+    {552, 30, 3, 10},  // Bloody Witch Queen
 };
 
 constexpr Bulk kBulks[] = {

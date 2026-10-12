@@ -2677,6 +2677,26 @@
         "dr_death.wav"
       ],
       "from": "The Death Rider's death, which MONSTER_BLOODY_DEATH_RIDER shares; w34/dr_death.wav."
+    },
+    "bloodywitchqueen_move": {
+      "files": [
+        "wq_idle1.wav",
+        "wq_idle2.wav"
+      ],
+      "from": "MONSTER_BLOODY_WITCH_QUEEN shares the Witch Queen's sounds (GMAida.cpp:1255-1283); as witchqueen_move."
+    },
+    "bloodywitchqueen_attack": {
+      "files": [
+        "wq_attack1.wav",
+        "wq_attack2.wav"
+      ],
+      "from": "MONSTER_BLOODY_WITCH_QUEEN shares the Witch Queen's sounds (GMAida.cpp:1255-1283); as witchqueen_attack."
+    },
+    "bloodywitchqueen_die": {
+      "files": [
+        "wq_death.wav"
+      ],
+      "from": "MONSTER_BLOODY_WITCH_QUEEN shares the Witch Queen's sounds (GMAida.cpp:1255-1283); as witchqueen_die."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."
