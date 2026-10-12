@@ -1394,6 +1394,19 @@ the monsters tab's "Simulate combat" -- is the game's own arena in a window of i
 - Not yet: the ground (painting tiles.png); townsfolk have no figure in the studio's world, only
   their mark; adding or deleting a gate (with its pair).
 
+### Slice G3: the townsfolk stand in the studio's world, as done
+
+- game/studio_folk.{h,cpp}: in every world scene (not the Stage) each townsperson of the
+  manifest's `npcs` with a figure stands by Play's own lines (play_open.cpp): the tile's middle,
+  the look's yaw, the body's scale (Tersia 0.93), the idle `stand` picks, posed and drawn with
+  the town. From the manifest, not the cooked tables, so a figure follows Place at once; the
+  file's date is looked at twice a second, so a `mu edit` by hand moves them too. Unarmed, as in
+  town (the studio holds no safe-zone grid); a guard stands at its post; the three with no
+  figure are the town's placements, already drawn.
+- Proved: Lorencia, 13 stood; Wandering Merchant Harold by his cart, then budged three tiles
+  west and turned to look 6 -- the figure there and turned in the next shot -- and put back,
+  world.json's hash as before. cooker_test 27, layercheck green.
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

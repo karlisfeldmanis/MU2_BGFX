@@ -287,6 +287,11 @@ void BenchMode::frame(Context& ctx, const Frame& at) {
         } else if (world_.town().isOpen()) {
             world_.town().gatherAll(townDrawables_);
         }
+        if (!onStage_ && world_.town().isOpen()) {
+            folk_.follow(ctx.paths.root, sceneWorld_, bench_.figures(), world_.ground(), at.elapsed);
+            folk_.update(desk_.holding() ? 0.0f : deltaSeconds);
+            folk_.gather(ctx.renderer, townDrawables_);
+        }
         const std::vector<gfx::Drawable>& subject = bench_.gather(ctx.renderer);
         townDrawables_.insert(townDrawables_.end(), subject.begin(), subject.end());
         // After the gather, which posed it: the suit's set light, round where it stands.
@@ -356,6 +361,7 @@ void BenchMode::shutdown(Context& ctx) {
     desk_.shutdown();
     stage_.shutdown();
     standShow_.shutdown();
+    folk_.clear();
     bench_.shutdown();
     setShine_.shutdown();
     ctx.renderer.closeStages();

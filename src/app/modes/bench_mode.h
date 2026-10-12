@@ -24,6 +24,7 @@
 #include "game/bench.h"
 #include "game/fx/set_shine.h"
 #include "game/stand_show.h"
+#include "game/studio_folk.h"
 #include "game/studio_stage.h"
 #include "game/world/world.h"
 
@@ -89,6 +90,8 @@ private:
     // trails and flames, which only Play drew before. Fitted again when the subject changes.
     game::StandShow standShow_;
     const game::FigureBody* shownBody_ = nullptr;
+    // The world's townsfolk standing where its manifest says (game/studio_folk.h, sprint G).
+    game::StudioFolk folk_;
     std::string sceneWorld_;
     std::vector<content::ItemRow> plusRows_;   // studioPlus's rows, once read
 };

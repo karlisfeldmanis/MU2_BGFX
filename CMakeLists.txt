@@ -290,6 +290,7 @@ add_library(mu_game STATIC
   src/game/bench_reload.cpp
   src/game/studio_stage.cpp
   src/game/stand_show.cpp
+  src/game/studio_folk.cpp
   src/game/world/world.cpp
   src/game/world/maps.cpp
   src/game/world/world_show.cpp
