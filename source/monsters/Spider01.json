@@ -1,41 +1,132 @@
 {
   "item": "Spider01",
   "mu_name": "Spider",
-  "mu_name_from": "Monster/Monster10.bmd. The server sends monster type 3 and the client draws model index 9, and Monster{index + 1:D2} is the file — so the Spider is Monster10 and not Monster04. See MuMonsters.cs in LEGACY: types 0, 1 and 2 really are Monster01, Monster02 and Monster03, and the run ends at this exact entry.",
+  "mu_name_from": "OpenMU Version075 names number 3 'Spider' (openmu/src/Persistence/Initialization/Version075/Maps/Lorencia.cs:160); MuMain's MONSTER_SPIDER (MuMain/src/source/Engine/Object/ZzzCharacter.cpp:14055).",
   "world": "lorencia",
   "object_type": 3,
   "monster": {
     "model_index": 9,
     "scale": 0.4
   },
-  "why_this_one": "Lorencia's first kill, and the smallest thing in the game: 168 triangles, 27 bones, two sheets totalling six kilopixels. It is the monster to prove the path with because every part of it is small enough to check by eye — six legs of four joints each, seven actions, and no effects at all to hide a mistake behind.",
+  "monster_from": "MuMain/src/source/Engine/Object/ZzzCharacter.cpp:14055:\n\ncase MONSTER_SPIDER:\n        OpenMonsterModel(MONSTER_MODEL_SPIDER);\n        c = CreateCharacter(Key, MODEL_SPIDER, PositionX, PositionY);\n        wcscpy(c->ID, L\"거미\");\n        c->Object.Scale = 0.4f;\n        break;",
   "profile": "monster",
-  "rig_from": "Seven actions, not twelve. Monster10.bmd carries slots 0 to 6 — the two idles, the walk, two attacks, the shock and the death — and stops. The twelve-slot layout in Monsters.cs is the layout every monster is authored to, not a promise that every monster fills it: there is no appear, no run and no third attack on this animal. A viewer that offers all twelve and plays silence for five of them is a viewer that looks broken.",
   "sheets": {
-    "spider01": "spider01.png",
-    "spider02": "spider02.png"
+    "spider02": "spider02.png",
+    "spider01": "spider01.png"
   },
-  "sheet_from": "Out of Data/Monster, beside the model. find_source.py was run over the whole of LEGACY for both and there is exactly one version of each — no larger copy exists anywhere in the tree, so what MU shipped is what this gets. The 256x256 H_Spider01 and BossSpider01 files under Object70-73 share a word and are a different drawing: those are Kalima's scenery webs, not this animal's sheets.",
   "sheet_materials": {
-    "spider01": "chitin",
-    "spider02": "chitin"
+    "spider02": "chitin",
+    "spider01": "fur"
   },
-  "sheet_materials_from": "Both, and neither is the profile's skin default. A spider is a shell rather than flesh — the one part of a creature that is genuinely a little glossy — and chitin is the material that says so at roughness 0.62 against skin's 0.78. The legs are hairy and are still chitin: the bristles are painted into the alpha of the leg sheet as silhouette rather than laid out as their own island, so there is no geometry to give hair.json to.",
-  "cutout_from": "Deliberately not declared, and that is the whole of the finding. spider01 is the .OZT of the pair — the legs, 32x64 of banded hair with each limb cut out of it — so it plainly is a cut-out and the first version of this file said so. Saying so is what broke it.\n\n`cutout` does not mean 'this is alpha-tested'. It means 'derive the mask from brightness instead of from the alpha channel', and transfer_albedo says why: guard_hair.ozt, the Plate helm's plume, carries alpha too weak to threshold — 0.2% of it is solid — so the client decides that mesh is see-through in code and the asset has to key the mask off the dark background instead. The Spider is the opposite sheet. Its alpha is a proper hard mask — 59% fully solid, mean 192 of 255 — and its legs are painted dark bristles on a dark ground, so keying on brightness threw away everything but the bright orange banding and left six legs rendering as confetti scattered in a ring round the body.\n\nLeft off, the sheet's own alpha is used, and the export is still alpha-tested: mu2.sh sniffs every sheet for a real alpha channel and sets --cutout on its own. The flag is for sheets that need help, and this one does not.",
-  "islands_from": "Every one of the thirty-nine is chitin, and they arrived as skin because islands.py assigns the profile's default to anything new and the profile's default is skin. That is the trap Wizard01 records: sheet_materials names a material per sheet, an island is a piece of geometry, so the two are not the same list and the second one is what the bake actually reads. Left alone the whole animal would have baked at skin's roughness 0.78 with the chitin material never once consulted — which is not a crash, just a spider with the sheen of a forearm.\n\nAll thirty-nine because the Spider is all shell. The body and the legs are the same material and the split between them is a sheet boundary rather than a material one; there is no third thing on this animal the way a merchant has a face and a lantern.",
-  "monster_from": "The two facts that tie this built model to MU's own monster tables, and nothing more.\n\nmodel_index is the client's model number, which is not the server's type: the server sends type 3 and CreateMonster switches it to model 9. It is the key into assets/monsters/actions.json, so it decides the play speed of every clip in the .glb — the Spider's walk at 1.2 rather than the 0.34 default comes from that file being asked about model 9, not from a number written here. The walk speed was written here once and taken out again: a number that is already in a shared table and is copied beside it is a number that will disagree with it.\n\nscale 0.4 is the client's own, out of the CreateMonster switch, and it is not decoration. The .glb is 2.73 m across at MU's own size; at 0.4 the animal is a bit over a metre from leg tip to leg tip and ankle-high on a character, which is what a Spider is. Drawn at 1.0 it is waist-high and reads as a different monster entirely.",
+  "combat": {
+    "level": 2,
+    "health": 30,
+    "minimum_damage": 4,
+    "maximum_damage": 7,
+    "defense": 1,
+    "move_range": 2,
+    "attack_range": 1,
+    "view_range": 5,
+    "move_delay": 400,
+    "attack_delay": 1800,
+    "attack_rate": 8,
+    "defense_rate": 1,
+    "attack_skill": null,
+    "note": "OpenMU Version075 (openmu/src/Persistence/Initialization/Version075/Maps/Lorencia.cs:160)."
+  },
+  "why_this_one": "Lorencia's first kill and the smallest thing in the game: Monster10.bmd at 0.4, two sheets (32x64 legs, 64x64 body), seven actions, no effects in MU. Rebuilt from MU's data on 2026-10-12 to prove the Cooker's research, scaffold and checklist flow end to end.",
+  "mu_checklist": [
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzCharacter.cpp:14055",
+      "in": "CreateMonster",
+      "kind": "body",
+      "lines": 6,
+      "actions": [],
+      "calls": [
+        "CreateCharacter"
+      ],
+      "state": "done",
+      "note": "the recipe's monster block (mu new monster)"
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:3405",
+      "in": "OpenMonsterModel",
+      "kind": "sound",
+      "lines": 4,
+      "actions": [],
+      "calls": [
+        "SOUND_MONSTER_SPIDER1"
+      ],
+      "state": "done",
+      "note": "SOUND_MONSTER_SPIDER1 is every cry: sounds.json's spider_move/_attack/_die/_shock all play mspider1.wav."
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:3406",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_MONSTER_SPIDER1"
+      ],
+      "file": "Data/Sound/mSpider1.wav",
+      "state": "done",
+      "note": "Data/Sound/mSpider1.wav, carried as mspider1.wav (spider_*)."
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2619",
+      "in": "OpenMonsterModel",
+      "kind": "animation",
+      "lines": 4,
+      "actions": [
+        "MONSTER01_WALK"
+      ],
+      "calls": [],
+      "state": "done",
+      "note": "source/monsters/actions.json walk_overrides.9: the walk at 1.2."
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzCharacter.cpp:11806",
+      "in": "CreateCharacterPointer",
+      "kind": "other",
+      "lines": 3,
+      "actions": [],
+      "calls": [],
+      "state": "skip",
+      "note": "Not a missing break: MODEL_SPIDER shares its case labels with the Budge Dragon, Larva, Chain Scorpion, Goblin and Worm to set a 50x50x80 pick box (CreateCharacterPointer). Nothing in a recipe carries MU's pick box; set aside."
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2332",
+      "in": "GetMonsterModelName",
+      "kind": "other",
+      "lines": 1,
+      "actions": [],
+      "calls": [],
+      "state": "skip",
+      "note": "MU's name for the model, for its tools; nothing to carry"
+    }
+  ],
+  "cutout_from": "Not declared. spider01, the legs, is the .OZT of the pair with a hard alpha mask (59% fully solid); `cutout` would key the mask off brightness instead, and on dark bristles over a dark ground that left the legs as orange confetti (the rebuild of 2026-10-12 found `mu new` declaring it again). Left off, the sheet's own alpha is used and the export is still alpha-tested.",
   "maps": 1024,
-  "maps_from": "Overridden, and this is the one number in this file that is not MU's. settings.map_size would give 192: three times the widest sheet, which is the project's cap and is right for every asset built before this one. It is wrong here by a factor of six, and the reason is a property of creatures rather than of this spider.\n\nThe rule assumes the bake layout is MU's own — that the islands partition the sheet, so an atlas three times the sheet gives each island three times its art. This model's islands do not partition anything. All six legs are flat cards and every one of them samples the *whole* 32x64 hair sheet: thirty-three of the thirty-nine islands carry mu_uv [0.001, 0.001, 0.999, 0.999]. Unwrapped into a unique atlas that is thirty-nine copies of the sheet packed side by side, so a 192 square gave each leg about thirty pixels of a picture that holds ninety-six — the upscale ran, and then the bake threw five sixths of it away again. It rendered as a body with a ring of orange speckles round it.\n\n1024 is not inflation and it is worth showing the arithmetic, because a four-figure map on a 6-kilopixel sheet looks exactly like the thing the cap exists to forbid. Each leg card needs 96x192 to hold its sheet at the capped 3x, which is 18k texels, times thirty-three legs is 608k; the two body cards want 192x192 each, another 74k. That is 682k of content before packing, and the next size up that holds it is 1024. Every island still gets exactly 3x its own art and not a texel more.\n\nDeclared per asset rather than fixed in settings.py, deliberately. The general rule would be to size the atlas by what the islands actually need instead of by the widest sheet, and that is very likely right — but it would move the map size of all 138 objects already built, and a change with that blast radius wants its own pass and its own look at the results. See the note in map_size for the last time this was made cleverer and had to be put back.",
+  "maps_from": "Not MU's: 33 of the 39 islands are leg cards that each sample the whole 32x64 hair sheet, so the 192 the widest-sheet rule gives left each leg about 30 of its 96 pixels and rendered as speckles. 1024 holds every island at exactly 3x its own art (about 682k texels of content).",
   "material_overrides": {
     "chitin": {
       "roughness": 0.85
     }
   },
-  "material_overrides_from": "The user's, 2026-10-11: 'spiders boddy has glossy effect which does not make sense'. Chitin's 0.62 lit a white sheen across the back at noon; this spider is a small hairy animal and MU painted its shading in. 0.85 here only -- the other chitin monsters keep theirs.",
+  "material_overrides_from": "The user's, 2026-10-11: 'spiders boddy has glossy effect which does not make sense'. Chitin's 0.62 lit a white sheen across the back at noon; this spider is small and hairy and MU painted its shading in.",
+  "rules": {
+    "drops": {
+      "money_rate": 10,
+      "max_plus": 6,
+      "regen": 5
+    },
+    "note": "WebZen Monster.txt (GameServer 1.00.93, Lorencia, index 3): RegTime 5, MoneyRate 10, MaxItemLevel 6, ItemRate 120, every resistance 0."
+  },
   "islands": [
     {
       "island": 0,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1181.3,
       "along": [
@@ -57,7 +148,7 @@
     },
     {
       "island": 1,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1181.3,
       "along": [
@@ -79,7 +170,7 @@
     },
     {
       "island": 2,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1847.7,
       "along": [
@@ -101,7 +192,7 @@
     },
     {
       "island": 3,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1847.7,
       "along": [
@@ -123,7 +214,7 @@
     },
     {
       "island": 4,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 975.6,
       "along": [
@@ -145,7 +236,7 @@
     },
     {
       "island": 5,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 975.6,
       "along": [
@@ -167,7 +258,7 @@
     },
     {
       "island": 6,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1069.9,
       "along": [
@@ -189,7 +280,7 @@
     },
     {
       "island": 7,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1203.6,
       "along": [
@@ -211,7 +302,7 @@
     },
     {
       "island": 8,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1843.6,
       "along": [
@@ -233,7 +324,7 @@
     },
     {
       "island": 9,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1843.6,
       "along": [
@@ -255,7 +346,7 @@
     },
     {
       "island": 10,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 975.6,
       "along": [
@@ -277,7 +368,7 @@
     },
     {
       "island": 11,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 975.6,
       "along": [
@@ -299,7 +390,7 @@
     },
     {
       "island": 12,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1189.5,
       "along": [
@@ -321,7 +412,7 @@
     },
     {
       "island": 13,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1111.3,
       "along": [
@@ -343,7 +434,7 @@
     },
     {
       "island": 14,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1843.5,
       "along": [
@@ -365,7 +456,7 @@
     },
     {
       "island": 15,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1843.5,
       "along": [
@@ -387,7 +478,7 @@
     },
     {
       "island": 16,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 975.6,
       "along": [
@@ -409,7 +500,7 @@
     },
     {
       "island": 17,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 975.6,
       "along": [
@@ -431,7 +522,7 @@
     },
     {
       "island": 18,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1087.6,
       "along": [
@@ -453,7 +544,7 @@
     },
     {
       "island": 19,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1232.9,
       "along": [
@@ -475,7 +566,7 @@
     },
     {
       "island": 20,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1815.0,
       "along": [
@@ -497,7 +588,7 @@
     },
     {
       "island": 21,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1814.9,
       "along": [
@@ -519,7 +610,7 @@
     },
     {
       "island": 22,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 975.6,
       "along": [
@@ -541,7 +632,7 @@
     },
     {
       "island": 23,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 975.6,
       "along": [
@@ -563,7 +654,7 @@
     },
     {
       "island": 24,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1181.3,
       "along": [
@@ -585,7 +676,7 @@
     },
     {
       "island": 25,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1181.0,
       "along": [
@@ -607,7 +698,7 @@
     },
     {
       "island": 26,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1804.1,
       "along": [
@@ -629,7 +720,7 @@
     },
     {
       "island": 27,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1804.0,
       "along": [
@@ -651,7 +742,7 @@
     },
     {
       "island": 28,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 975.6,
       "along": [
@@ -673,7 +764,7 @@
     },
     {
       "island": 29,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 975.6,
       "along": [
@@ -695,7 +786,7 @@
     },
     {
       "island": 30,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1171.8,
       "along": [
@@ -717,7 +808,7 @@
     },
     {
       "island": 31,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1100.2,
       "along": [
@@ -739,7 +830,7 @@
     },
     {
       "island": 32,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1816.2,
       "along": [
@@ -761,7 +852,7 @@
     },
     {
       "island": 33,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 1816.1,
       "along": [
@@ -783,7 +874,7 @@
     },
     {
       "island": 34,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 975.6,
       "along": [
@@ -805,7 +896,7 @@
     },
     {
       "island": 35,
-      "material": "chitin",
+      "material": "fur",
       "triangles": 2,
       "area": 975.6,
       "along": [
@@ -891,28 +982,5 @@
         0.889
       ]
     }
-  ],
-  "rules": {
-    "drops": {
-      "money_rate": 10,
-      "max_plus": 6,
-      "regen": 5
-    }
-  },
-  "combat": {
-    "level": 2,
-    "health": 30,
-    "minimum_damage": 4,
-    "maximum_damage": 7,
-    "defense": 1,
-    "move_range": 2,
-    "attack_range": 1,
-    "view_range": 5,
-    "move_delay": 400,
-    "attack_delay": 1800,
-    "attack_rate": 8,
-    "defense_rate": 1,
-    "attack_skill": null,
-    "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. The respawn is rules.drops.regen."
-  }
+  ]
 }
