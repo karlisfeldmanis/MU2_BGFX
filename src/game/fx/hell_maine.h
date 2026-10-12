@@ -48,6 +48,7 @@
 
 #include "content/showing.h"
 #include "content/texture.h"
+#include "game/fx/quake.h"
 #include "gfx/effects.h"
 #include "gfx/renderer.h"
 
@@ -72,6 +73,11 @@ public:
     // Each fire lay's red on the ground, a line light down its length: MU's AddTerrainLight
     // (0.2, 0, 0) over 2 tiles under each of its twenty flames, 50 units apart, summed.
     uint32_t lights(gfx::PointLight* out, uint32_t max) const;
+    // MU's EarthQuake while a storm walks, (rand() % 8 - 4) * 0.1 degrees of pitch every frame
+    // (MoveHandlers.cpp:3458-3465), decayed by 0.2 a frame (MainScene.cpp:199); the meteor's
+    // rule for whose (fx/quake.h): the hero's own, or within 5 m of him. MU shakes for any.
+    float quakeDegrees() const { return quake_; }
+    QuakeFor quakeFor;
     // A stone a storm kicks up, for Play's meteor to throw. False when none are left.
     bool takeStone(float out[3]);
 
@@ -86,6 +92,7 @@ private:
         float at[3] = {0, 0, 0};
         float way[2] = {0, 1};
         float age = 0.0f, owed = 0.0f, light = 1.0f;
+        uint32_t owner = 0;
         bool odd = false;
     };
     struct Laser {
@@ -116,6 +123,7 @@ private:
     std::unordered_map<uint32_t, One> ones_;
     uint32_t seed_ = 0x51a7e3c9u;
     float clock_ = 0.0f;
+    float quake_ = 0.0f;
     bgfx::TextureHandle impact_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle fire_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle ball_ = BGFX_INVALID_HANDLE;

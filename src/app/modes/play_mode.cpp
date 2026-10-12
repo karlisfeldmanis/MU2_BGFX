@@ -1156,11 +1156,12 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // the quarter of a MU unit it says it is: four millimetres, on a camera six
     // metres out, which is nothing at all.
     {
-        // And Rageful Blow's crater, which shakes it the same way (fx/fury.h), and Hellfire's
-        // wall (fx/hellfire.h).
+        // And Rageful Blow's crater, which shakes it the same way (fx/fury.h), Hellfire's
+        // wall (fx/hellfire.h) and Hell Maine's storm (fx/hell_maine.h).
         const float pitch = world_.played().meteor().quakeDegrees() +
                             world_.played().fury().quakeDegrees() +
-                            world_.played().hellfire().quakeDegrees();
+                            world_.played().hellfire().quakeDegrees() +
+                            world_.played().shadowStars().hellMaine().quakeDegrees();
         if (pitch != 0.0f) {
             float ahead[3], right[3], up[3];
             for (int a = 0; a < 3; ++a) ahead[a] = eye.position[a] - eye.target[a];

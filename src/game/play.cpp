@@ -1966,7 +1966,7 @@ void Play::update(double seconds) {
             here.x = me->crown[0];
             here.z = me->crown[2];
         }
-        meteor_.quakeFor = fury_.quakeFor = hellfire_.quakeFor = here;
+        meteor_.quakeFor = fury_.quakeFor = hellfire_.quakeFor = shadowStars_.hellMaine().quakeFor = here;
     }
     meteor_.update(float(seconds), meteorImpacts_);
     // Cometfall's landings, each Ice's crystals and an impact as a rock's is: the

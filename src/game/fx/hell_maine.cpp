@@ -70,6 +70,7 @@ void HellMaine::shutdown() {
     lights_.clear();
     stones_.clear();
     ones_.clear();
+    quake_ = 0.0f;
     impact_ = fire_ = ball_ = smoke_ = flame_ = BGFX_INVALID_HANDLE;
 }
 
@@ -161,6 +162,7 @@ void HellMaine::watch(uint32_t id, const Figure& figure, int attack, float key, 
             storm.way[0] = way[0];
             storm.way[1] = way[1];
             storm.light = fade;
+            storm.owner = id;
             storms_.push_back(storm);
             core::logf("hell maine: Attack 1's storm at %.1f, %.1f toward %.2f, %.2f (%s, yaw %.2f)", feet[0], feet[2],
                        way[0], way[1], target ? "its target" : "its facing", yaw);
@@ -253,6 +255,8 @@ void HellMaine::update(float seconds) {
                                 [](const Mote& m) { return m.age >= m.life || m.scale <= 0.0f; }),
                  motes_.end());
 
+    quake_ *= std::pow(0.2f, frames);
+    if (std::fabs(quake_) < 0.001f) quake_ = 0.0f;
     for (Storm& one : storms_) {
         one.age += frames;
         one.at[0] += one.way[0] * kStormStep * frames;
@@ -260,6 +264,7 @@ void HellMaine::update(float seconds) {
         for (one.owed += frames; one.owed >= 1.0f; one.owed -= 1.0f) {
             one.odd = !one.odd;
             const float low[3] = {one.at[0], one.at[1] + kStormLift, one.at[2]};
+            if (quakeFor.shakes(one.owner, one.at[0], one.at[2])) quake_ = (std::floor(unit() * 8.0f) - 4.0f) * 0.1f;
             if (one.odd) {
                 mote(Mote::Kind::Ball, low, 2.3f, one.light);
                 mote(Mote::Kind::Dark, low, 2.3f, one.light);

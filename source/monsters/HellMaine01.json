@@ -80,8 +80,8 @@
         "CreateEffectFpsChecked",
         "BITMAP_BOSS_LASER"
       ],
-      "state": "todo",
-      "note": ""
+      "state": "done",
+      "note": "game/fx/hell_maine: Impack03 on Bone02, Bone03 (0.3) and zx04, zx03, zx08 (1) in its rolled red at half light; fantaF off both hands every frame, 5 on Attack 2, at a third of the size; the fire lay (BOSS_LASER sub 1) from its right hand at key 9, once a blow, with its red line light. Sounds below."
     },
     {
       "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:1486",
@@ -94,8 +94,8 @@
       "calls": [
         "CreateEffect"
       ],
-      "state": "todo",
-      "note": ""
+      "state": "done",
+      "note": "One MODEL_STORM sub 3 nine frames into Attack 1 (MU`s loop passes CheckAttackTime once), walking 12 a frame for 60 at its target: PoundingBall, a smoke taken out, a white puff, stones, a spun disc. Seen in the studio."
     },
     {
       "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:359",
@@ -107,8 +107,8 @@
         "SOUND_AIDA_HELL_MOVE1"
       ],
       "file": "Data/Sound/w34/hm_idle1.wav",
-      "state": "todo",
-      "note": ""
+      "state": "done",
+      "note": "hellmaine_move, hm_idle1/2 one frame in 15 while it walks."
     },
     {
       "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:361",
@@ -120,8 +120,8 @@
         "SOUND_AIDA_HELL_ATTACK1"
       ],
       "file": "Data/Sound/w34/hm_attack1.wav",
-      "state": "todo",
-      "note": ""
+      "state": "skip",
+      "note": "hm_attack1 is ATTACK3`s, the plain blow MU plays after a skill; our breed swings Attack 1 and 2 only."
     },
     {
       "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:362",
@@ -133,8 +133,8 @@
         "SOUND_AIDA_HELL_ATTACK2"
       ],
       "file": "Data/Sound/w34/hm_firelay.wav",
-      "state": "todo",
-      "note": ""
+      "state": "done",
+      "note": "hellmaine_attack2, on Attack 2 (cryAttack2)."
     },
     {
       "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:363",
@@ -146,8 +146,8 @@
         "SOUND_AIDA_HELL_ATTACK3"
       ],
       "file": "Data/Sound/w34/hm_bloodywind.wav",
-      "state": "todo",
-      "note": ""
+      "state": "done",
+      "note": "hellmaine_attack, on Attack 1."
     },
     {
       "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:364",
@@ -159,8 +159,8 @@
         "SOUND_AIDA_HELL_DIE"
       ],
       "file": "Data/Sound/w34/hm_death.wav",
-      "state": "todo",
-      "note": ""
+      "state": "done",
+      "note": "hellmaine_die."
     },
     {
       "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:1379",
@@ -177,8 +177,8 @@
         "RENDER_BRIGHT",
         "RENDER_CHROME"
       ],
-      "state": "todo",
-      "note": ""
+      "state": "done",
+      "note": "The armour`s unlit pass a steady glow of its sheet at 0.4 (glow); the red chrome over the armour (1, 0, 0) and wings (0.5, 0, 0) as two RENDER_CHROME passes (chrome). The wings` StreamMesh 1 changes nothing they draw."
     },
     {
       "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:503",
@@ -189,8 +189,8 @@
       "calls": [
         "AddTerrainLight"
       ],
-      "state": "todo",
-      "note": ""
+      "state": "done",
+      "note": "show.aura (1, 0, 0) over 3 tiles under Bip01."
     },
     {
       "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2704",
@@ -201,8 +201,8 @@
         "MONSTER01_WALK"
       ],
       "calls": [],
-      "state": "todo",
-      "note": ""
+      "state": "done",
+      "note": "walk_overrides 105: 0.15."
     },
     {
       "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2428",
@@ -221,8 +221,8 @@
       "lines": 4,
       "actions": [],
       "calls": [],
-      "state": "todo",
-      "note": ""
+      "state": "skip",
+      "note": "CheckMonsterSkill`s wind and fire lay (ATTACK1, ATTACK2) are visuals only on our melee blows (the user, 2026-10-12)."
     }
   ],
   "rules": {
@@ -745,5 +745,15 @@
         0.196
       ]
     }
-  ]
+  ],
+  "glow": {
+    "epiboss_armor": {
+      "over": true,
+      "pulse": [
+        0.4,
+        0.4
+      ]
+    }
+  },
+  "glow_from": "RenderAidaMonsterObjectMesh MODEL_HELL_MAINE (GMAida.cpp:1383-1388): with StreamMesh 0, mesh 0 (epiboss_armor) is drawn unlit at BodyLight (1, 1, 1), its texture at full (ZzzBMD.cpp:1343-1369, 1817-1819); the skin and wings are lit. Ours, as the Blue Golem`s water: the lit armour, and its own sheet added over it at a steady 0.4 (the user, 2026-10-12: yes, at 0.4)."
 }
