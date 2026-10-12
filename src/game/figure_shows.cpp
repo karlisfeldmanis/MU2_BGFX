@@ -71,6 +71,7 @@ void Figures::readShows() {
             show.claws.light[i] = float(claws["light"].items[size_t(i)].numberOr(0.0));
         }
         show.claws.until = float(claws["until"].numberOr(-1.0));
+        show.landsAt = float(row["lands"].numberOr(-1.0));
         for (const core::Json& segment : row["burn"]["segments"].items) {
             if (segment.items.size() != 3) continue;
             show.burnSegments.push_back({int(segment.items[0].numberOr(0.0)),
@@ -110,6 +111,7 @@ void Figures::addShown(std::unique_ptr<FigureBody> made) {
         body.heads = show.heads;
         body.beamMaterial = show.beamMaterial;
         body.claws = show.claws;
+        body.landsAt = show.landsAt;
         body.burnSegments = show.burnSegments;
         body.burnBody[0] = show.burnBody[0];
         body.burnBody[1] = show.burnBody[1];

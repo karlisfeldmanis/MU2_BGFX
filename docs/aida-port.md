@@ -278,7 +278,7 @@ close without the hero dying in a second.
   both hands and the head every frame; on Attack 1 smoke at the left hand from key 4, the shock
   wave from 5 to 5.5, and from 6.9 the JointLaser01 drain from its prey back to it. MU's play
   speeds, which a missing break in ZzzOpenData sets to the Death Rider's (stand 0.15, walk 0.3,
-  attack 0.23, die 0.15), are actions.json's action_overrides.101. Left: the ground light (the
+  attack 0.23, die 0.15), are actions.json's action_overrides.101. Its hit (number and sound) lands on key 5 of its 8, with the shock wave (`show.lands`, read by play_tuning.h's landingOf; every other breed keeps half the clip). Left: the ground light (the
   checklist's one to do). The Death Rider (102) has the same speeds in MU and none here yet, and
   the Death Tree its 0.2 death: each a cook of its own.
 - **The breeds' rules**: Tarkan's MoneyRate 30 and MaxItemLevel 3, RegTime 10, and OpenMU's x/255

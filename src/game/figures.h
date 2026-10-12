@@ -201,6 +201,9 @@ struct FigureBody {
         float until = -1.0f;  // the last key of a swing that lays one; -1, the whole swing
     };
     Claws claws;
+    // show.lands: the key of its swing its blow lands on, the hit's number and sound with it;
+    // -1 for the half of the clip every other breed's lands on (Showing::kLandingPoint).
+    float landsAt = -1.0f;
     struct BurnSegment {
         int from = 0, to = 0;
         float scale = 1.0f;
@@ -521,6 +524,7 @@ private:
         std::vector<FigureBody::Head> heads;
         std::string beamMaterial;
         FigureBody::Claws claws;
+        float landsAt = -1.0f;
         std::vector<FigureBody::BurnSegment> burnSegments;
         int burnBody[2] = {0, 0};
         int burnHead = 0;

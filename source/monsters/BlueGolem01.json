@@ -242,6 +242,10 @@
         0.7
       ],
       "note": "MoveAidaMonsterVisual MODEL_GOLDEN_STONE_GOLEM (GMAida.cpp:496-501): AddTerrainLight at its feet in (0, 0, 0.7), radius 3, every frame. Ours: an aura at the pelvis in MU blue, a stand-in for the ground light; there is no ground-light field for a monster yet."
+    },
+    "lands": {
+      "key": 5,
+      "note": "Ours: where its hit, the number and the sound, lands in the swing. MU throws its shock wave at the left hand from AnimationFrame 5 to 5.5 of its 8-key Attack 1 (GMAida.cpp:844-848), the fist meeting; half the clip, every other breed`s landing, is key 4, 0.17 s early at MU`s 0.23."
     }
   },
   "islands": [

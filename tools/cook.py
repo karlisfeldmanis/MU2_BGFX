@@ -3503,6 +3503,8 @@ def cook_shows(out_dir):
                                 if k in show["claws"]}
             if "burn" in show:
                 one["burn"] = {k: show["burn"][k] for k in ("segments", "body", "head")}
+            if "lands" in show:
+                one["lands"] = show["lands"]["key"]
             if "inferno" in show:
                 keys = ("bombs", "mesh", "attack_frame", "first")
                 one["inferno"] = {k: show["inferno"][k] for k in keys if k in show["inferno"]}

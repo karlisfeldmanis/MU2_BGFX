@@ -1556,7 +1556,7 @@ void Play::update(double seconds) {
                             cue.fuse = release + 0.6f;
                             cue.arrow = true;
                         } else {
-                            cue.fuse = swinger->swinging * Showing::kLandingPoint;
+                            cue.fuse = swinger->swinging * landingOf(swinger->figure, Showing::kLandingPoint);
                         }
                         // An Ice Monster (attackSkill == 7): its blow is a bite, and the Ice it
                         // casts with it lands fifteen reference frames on, hit or miss. A breed

@@ -767,6 +767,17 @@ inline float keyOf(const Figure& figure) {
     return figure.clock() / clip.duration * float(clip.frames - 1);
 }
 
+// How far into its swing a figure's blow lands, as a fraction of the clip: its recipe's
+// show.lands key over the clip's keys (keyOf's measure), or `otherwise` -- the half every breed
+// without one lands on. The Blue Golem's fist meets on key 5 of 8, where MU throws its shock wave.
+inline float landingOf(const Figure& figure, float otherwise) {
+    const FigureBody* body = figure.body();
+    if (!body || body->landsAt < 0.0f || !body->library || figure.clip() < 0) return otherwise;
+    const content::CookedClip& clip = body->library->clips.clips[size_t(figure.clip())];
+    if (clip.frames < 2) return otherwise;
+    return std::clamp(body->landsAt / float(clip.frames - 1), 0.0f, 1.0f);
+}
+
 // The MU action a figure is playing, or -1.
 inline int slotOf(const Figure& figure) {
     const FigureBody* body = figure.body();
