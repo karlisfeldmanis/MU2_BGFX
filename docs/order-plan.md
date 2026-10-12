@@ -1121,6 +1121,23 @@ recipe's fields, Cook and Revert. The jobs along the bottom: step bars, the log'
   recipe is newer than its build since 2026-10-07, so a Cook is a Blender build and every
   world's tables, which waits for the user's word.
 
+### Slice F3b, the plan: the studio's scenes
+
+The user, 2026-10-12: "what will be the best studio environment/scene for items, monsters,
+because now we have the Lorencia scene but maybe we need something different". Decided the
+same day, **a stage and the world**, a switch on the Subject card:
+
+- **Stage**, for working: a neutral look-dev plinth (a dark grey disc, a soft fog backdrop),
+  lit by the game's own sheets (noon, dusk and night on T, as now), a grey ball and a chrome
+  ball beside the subject for reference, and a 1.8 m figure for scale. No fire and no wind,
+  so a before and after shows only what the cook changed.
+- **In world**, for judging in context: items at Lorencia's bonfire (today's studio, the one
+  the weapon sheets were approved in), armour sets in the character screen (charscene),
+  monsters in their home world at their spawn ("show new monsters in their world"), or any
+  cooked world from a list.
+- The stage is the default once it exists; the switch keeps the subject, its clip and the
+  camera's orbit. The turntable sheets (studio.py) stay on Lorencia unless told otherwise.
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:
