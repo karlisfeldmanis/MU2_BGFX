@@ -38,7 +38,7 @@ enum class Mark : uint8_t {
     Summon,    // her summon's blow, its own lilac, at a swing's size
     Burn,      // an Immolate or Scorch burn's pulse, orange, at a swing's size
     Immune,    // the word, over a boss that shrugged off a hold (sim::RaidEvent::Immune)
-    Bleed,     // a bleed rune's pulse on a monster, crimson, at a swing's size
+    Bleed,     // a bleed rune's pulse on a monster, reddish orange, at a swing's size
 };
 
 // A blow that has landed on the tick and has not yet been shown.

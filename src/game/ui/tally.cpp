@@ -205,9 +205,9 @@ const uint32_t kAbsorbedInk = byteColour(234, 160, 81);
 // tcolor for burning and poison damages'). Ours.
 const uint32_t kPoisonInk = byteColour(170, 255, 40);
 const uint32_t kBurnInk = byteColour(255, 150, 20);
-// A bleed rune's pulse (sim::BleedRune): a crimson, darker and bluer than a blow on him, so it
-// reads as blood and not as his own pain. Ours.
-const uint32_t kBleedInk = byteColour(230, 30, 64);
+// A bleed rune's pulse (sim::BleedRune): a reddish orange (the user, 2026-10-12: 'use redish
+// orange for blood dmaage'), redder than a burn's and yellower than a blow on him. Ours.
+const uint32_t kBleedInk = byteColour(255, 96, 24);
 // A rune power's blow, its own colour apart from the ramp (the user, 2026-10-01: "rune damage
 // has to be in different color"): an ice blue nothing else in the fight wears, and its critical
 // paler, as the ramp's gold is paler than its amber.
