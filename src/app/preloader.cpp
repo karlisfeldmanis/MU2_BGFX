@@ -179,11 +179,14 @@ void Preloader::cue(const std::string& path) {
 }
 
 bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitEarly,
-                    bool keepAmbient, const std::function<bool(double seconds)>& settle) {
+                    bool keepAmbient, const std::function<bool(double seconds)>& settle,
+                    const Look& look) {
     std::atomic<int> loaded{0};  // 0 loading, 1 ready, -1 what was asked for did not open
     core::Loading::reset();
-    ambient().start(core::join(ctx.paths.assets, "music/loading.mp3"),
-                    ctx.args.mute ? 0.0f : float(ctx.args.volume) / 100.0f);
+    if (look.music) {
+        ambient().start(core::join(ctx.paths.assets, "music/loading.mp3"),
+                        ctx.args.mute ? 0.0f : float(ctx.args.volume) / 100.0f);
+    }
     std::thread loader([&]() { loaded.store(load() ? 1 : -1); });
 
     ctx.curtain.init(ctx.paths.shaders);
@@ -317,8 +320,25 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
             const uint32_t gold = (uint32_t(alpha * 0.8f * 255.0f) << 24) | 0x0061bdffu;
             ctx.curtain.text(cx - wide * 0.5f, cy - gfx::Overlay::lineHeight(small) * 0.5f,
                              small, gold, percent);
+            const uint32_t parchment = (uint32_t(alpha * 0.5f * 255.0f) << 24) | 0x00b8c8d4u;
+            if (look.title) {
+                // The tool's name over the ring, in the ring's gold.
+                const float big = 3.0f * unit;
+                const float titleWide = ctx.curtain.measure(big, look.title);
+                ctx.curtain.text(cx - titleWide * 0.5f,
+                                 cy - radius - 28.0f * unit - gfx::Overlay::lineHeight(big), big,
+                                 gold, look.title);
+            }
+            if (look.stages) {
+                // What the worker is on, under the ring: the land, the town, the wardrobe.
+                const std::string what = core::Loading::what();
+                const float stageScale = 1.65f * unit;
+                const float stageWide = ctx.curtain.measure(stageScale, what);
+                ctx.curtain.text(cx - stageWide * 0.5f, cy + radius + 28.0f * unit, stageScale,
+                                 parchment, what);
+            }
             // The letter: small, centred, in a faint parchment grey, laid up from the foot.
-            // Wrapped again only when the window's width changes.
+            // Wrapped again only when the window's width changes. Not the studio's.
             const float letterScale = 1.65f * unit;
             if (w != letterWidth) {
                 letterWidth = w;
@@ -326,9 +346,8 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
                                    std::min(float(w) - 64.0f * unit, 780.0f * unit), kLetter);
             }
             const float leading = gfx::Overlay::lineHeight(letterScale) * 1.55f;
-            const uint32_t parchment = (uint32_t(alpha * 0.5f * 255.0f) << 24) | 0x00b8c8d4u;
             float y = float(h) - 40.0f * unit - leading * float(letterLines.size());
-            for (const std::string& line : letterLines) {
+            for (const std::string& line : (look.stages ? std::vector<std::string>() : letterLines)) {
                 const float wide = ctx.curtain.measure(letterScale, line);
                 ctx.curtain.text(cx - wide * 0.5f, y, letterScale, parchment, line);
                 y += leading;
@@ -340,6 +359,14 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
                                                gfx::Overlay::lineHeight(versionScale),
                              versionScale, parchment, MU2_BUILD_VERSION);
             ctx.curtain.submit(gfx::ViewHud);
+        }
+        // MU_PRELOADER_SHOT=<file.png>: the spinner a second in, for looking at the loading
+        // screen itself, which --shot (the loop's frames) never sees.
+        static const char* shot = std::getenv("MU_PRELOADER_SHOT");
+        static bool shotTaken = false;
+        if (shot && !shotTaken && seconds >= 1.0 && alpha >= 1.0f) {
+            shotTaken = true;
+            bgfx::requestScreenShot(BGFX_INVALID_HANDLE, shot);
         }
         bgfx::frame();
     };

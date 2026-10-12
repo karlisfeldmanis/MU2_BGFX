@@ -1,7 +1,9 @@
 #include "app/modes/bench_mode.h"
 
+#include "app/preloader.h"
 #include "content/showing.h"
 #include "content/tables.h"
+#include "core/loading.h"
 #include "core/log.h"
 #include "game/shine.h"
 #include "game/wings.h"
@@ -71,60 +73,76 @@ bool BenchMode::open(Context& ctx) {
     if (browsing && !ctx.overlay.init(ctx.paths.shaders)) {
         core::logError("the viewer opened without its list; the names are in the log");
     }
-    if (kind_ == Kind::Studio && !openStudioWorld(ctx, benchWorld)) return false;
-    if (kind_ == Kind::Studio) setShine_.open(ctx.paths.assets, ctx.textures);
+    // The browser's load: for the studio, its world, the figure tables and the wardrobe -- four
+    // to ten seconds -- on the preloader's worker behind the game's own spinner (app/preloader.h
+    // says why the creations in it are legal); for the bare browser, here, as it always was.
+    auto load = [&]() -> bool {
+        // The spinner's stages: World::open names its own in the first half.
+        core::Loading::span(0.0f, 0.5f);
+        if (kind_ == Kind::Studio && !openStudioWorld(ctx, benchWorld)) return false;
+        core::Loading::span(0.0f, 1.0f);
+        core::Loading::stage("the figures and the wardrobe", 0.5f, 0.96f);
+        if (kind_ == Kind::Studio) setShine_.open(ctx.paths.assets, ctx.textures);
 
-    if (browsing) {
-        // The stage is the browser with the world's own lamps, fire and objects stood round
-        // the subject; the bare browser is the subject on its plot and nothing else.
-        const bool opened =
-            kind_ == Kind::Studio
-                ? bench_.openStudio(ctx.paths.assets, benchWorld, studioStand_, studioFire_,
-                                    ctx.textures)
-                : (args.stage ? bench_.openStage(ctx.paths.assets, benchWorld, ctx.textures)
-                              : bench_.openBrowser(ctx.paths.assets, benchWorld, ctx.textures));
-        if (!opened) {
-            core::logError("the bench did not open");
-            world_.shutdown();
-            return false;
-        }
-        // Where the browser opens, for a run with nobody at the keyboard. Neither is fatal: a
-        // category or a name that is not there has said so, and the viewer is still a viewer.
-        bench_.showBearer(args.bearer);
-        if (!args.category.empty()) bench_.openCategory(args.category, ctx.textures);
-        if (!args.pick.empty()) bench_.pick(args.pick, ctx.textures);
-        core::logf("browser: %s", bench_.browseLine().c_str());
+        if (browsing) {
+            // The stage is the browser with the world's own lamps, fire and objects stood round
+            // the subject; the bare browser is the subject on its plot and nothing else.
+            const bool opened =
+                kind_ == Kind::Studio
+                    ? bench_.openStudio(ctx.paths.assets, benchWorld, studioStand_, studioFire_,
+                                        ctx.textures)
+                    : (args.stage ? bench_.openStage(ctx.paths.assets, benchWorld, ctx.textures)
+                                  : bench_.openBrowser(ctx.paths.assets, benchWorld, ctx.textures));
+            if (!opened) {
+                core::logError("the bench did not open");
+                world_.shutdown();
+                return false;
+            }
+            // Where the browser opens, for a run with nobody at the keyboard. Neither is fatal: a
+            // category or a name that is not there has said so, and the viewer is still a viewer.
+            bench_.showBearer(args.bearer);
+            if (!args.category.empty()) bench_.openCategory(args.category, ctx.textures);
+            if (!args.pick.empty()) bench_.pick(args.pick, ctx.textures);
+            core::logf("browser: %s", bench_.browseLine().c_str());
+            core::Loading::stage("the shine", 0.96f, 1.0f);
         // The shine's sheets out of the showing, always: the Wings of Darkness draw their violet
-        // chrome off Chrome02 at +0 (game/shine.h kShineDarkness). Not fatal.
-        {
-            content::Showing showing;
-            std::string error;
-            if (content::loadShowing(ctx.paths.assets + "/cooked/showing/showing.mus", showing,
-                                     error)) {
-                game::lendShine(showing, ctx.paths.assets, ctx.textures, ctx.renderer);
-                game::WingLook::lendSparks(showing, ctx.paths.assets, ctx.textures);
+            // chrome off Chrome02 at +0 (game/shine.h kShineDarkness). Not fatal.
+            {
+                content::Showing showing;
+                std::string error;
+                if (content::loadShowing(ctx.paths.assets + "/cooked/showing/showing.mus", showing,
+                                         error)) {
+                    game::lendShine(showing, ctx.paths.assets, ctx.textures, ctx.renderer);
+                    game::WingLook::lendSparks(showing, ctx.paths.assets, ctx.textures);
+                }
+            }
+            // The refinement shine, on the subject's items: their rows out of the world's tables
+            // and the two sheets out of the showing. Only when asked, since neither is otherwise
+            // the viewer's business. Not fatal: the subject is still shown, at +0.
+            if (args.plus > 0) {
+                content::Tables tables;
+                content::Showing showing;
+                std::string error;
+                const std::string world = benchWorld.empty() ? std::string("lorencia") : benchWorld;
+                if (!content::loadTables(ctx.paths.assets + "/cooked/" + world + "/" + world + ".mur",
+                                         tables, error)) {
+                    core::logError("--plus: no item rows for %s: %s", world.c_str(), error.c_str());
+                } else if (!content::loadShowing(ctx.paths.assets + "/cooked/showing/showing.mus",
+                                                 showing, error)) {
+                    core::logError("--plus: the showing did not open: %s", error.c_str());
+                } else {
+                    bench_.setPlus(args.plus, tables.items);
+                    game::lendShine(showing, ctx.paths.assets, ctx.textures, ctx.renderer);
+                }
             }
         }
-        // The refinement shine, on the subject's items: their rows out of the world's tables
-        // and the two sheets out of the showing. Only when asked, since neither is otherwise
-        // the viewer's business. Not fatal: the subject is still shown, at +0.
-        if (args.plus > 0) {
-            content::Tables tables;
-            content::Showing showing;
-            std::string error;
-            const std::string world = benchWorld.empty() ? std::string("lorencia") : benchWorld;
-            if (!content::loadTables(ctx.paths.assets + "/cooked/" + world + "/" + world + ".mur",
-                                     tables, error)) {
-                core::logError("--plus: no item rows for %s: %s", world.c_str(), error.c_str());
-            } else if (!content::loadShowing(ctx.paths.assets + "/cooked/showing/showing.mus",
-                                             showing, error)) {
-                core::logError("--plus: the showing did not open: %s", error.c_str());
-            } else {
-                bench_.setPlus(args.plus, tables.items);
-                game::lendShine(showing, ctx.paths.assets, ctx.textures, ctx.renderer);
-            }
-        }
-    }
+        return true;
+    };
+    const bool loaded = kind_ == Kind::Studio
+                            ? Preloader::run(ctx, load, &quitEarly_, false, {}, Preloader::studio())
+                            : load();
+    if (quitEarly_) return true;   // closed under the spinner: a quit, not a failure
+    if (!loaded) return false;
     // The studio's panels, where the list would be; the bench goes on without them if they fail.
     if (kind_ == Kind::Studio) sceneWorld_ = benchWorld;
     // With the panels the studio opens on its Stage (the user's pick, 2026-10-12); the world

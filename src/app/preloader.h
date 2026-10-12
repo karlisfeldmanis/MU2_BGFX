@@ -18,8 +18,22 @@
 
 namespace mu::app {
 
+// How the spinner dresses. The game's (the default) is the ring, its number, MU's letter at
+// the foot and the loading music -- and no word for what is loading (the user, 2026-10-06).
+// The studio's (`studio()`, the user, 2026-10-12: "develop also preloader for this app") is
+// a work tool's: its name over the ring, the stage being loaded under it in place of the
+// letter, and no music.
+struct PreloaderLook {
+    const char* title = nullptr;   // over the ring; none for the game
+    bool stages = false;           // the stage's word under the ring, in place of the letter
+    bool music = true;             // the loading ambient
+};
+
 class Preloader {
 public:
+    using Look = PreloaderLook;
+    static Look studio() { return {"MU Studio", true, false}; }
+
     // `load` runs on the worker and returns whether what it loaded came up. This call returns
     // once it has been joined, so everything `load` touched is this thread's again afterwards.
     //
@@ -37,7 +51,8 @@ public:
     // server's warm-up before the world is shown (Play::settle).
     static bool run(Context& ctx, const std::function<bool()>& load, bool* quitEarly,
                     bool keepAmbient = false,
-                    const std::function<bool(double seconds)>& settle = {});
+                    const std::function<bool(double seconds)>& settle = {},
+                    const PreloaderLook& look = PreloaderLook());
     // The ambient's level, 0 to 1, as the menu's volume changes; a muted run stays silent.
     static void ambientVolume(float level);
     // One sound, once, on the ambient's engine, which outlives the mode that asked: the

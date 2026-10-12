@@ -40,6 +40,7 @@ public:
     void frame(Context& ctx, const Frame& at) override;
     const gfx::Camera& camera() const override { return bench_.camera(); }
     void report(Context& ctx) override;
+    bool quitEarly() const override { return quitEarly_; }
     void shutdown(Context& ctx) override;
 
 private:
@@ -81,6 +82,7 @@ private:
     StudioDesk desk_;
     game::StudioStage stage_;
     bool onStage_ = false;
+    bool quitEarly_ = false;   // the window closed under the studio's preloader
     std::string sceneWorld_;
     std::vector<content::ItemRow> plusRows_;   // studioPlus's rows, once read
 };
