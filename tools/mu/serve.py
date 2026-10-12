@@ -15,6 +15,7 @@ JSON lines back:
     {"op": "jobs"}                                          -> {"jobs": [...]}
     {"op": "watch", "job": 3, "since": 0}                   -> every event since, then live
     {"op": "cancel", "job": 3, "now": false}                -> after the step, or kill it now
+    {"op": "plan", "target": ["Sword01"]}                   -> {"steps": [{name, needed, reason}]}
     {"op": "stop"}
 
 An event is {"seq", "at", "job", "kind", ...}. The kinds: queued, plan (the steps that will run,
@@ -164,8 +165,8 @@ class Server:
                 if needed:
                     changed.add(step.makes)
                     job.plan_index[index] = len(dry)
-                    dry.append({"name": step.name, "estimate": make.estimate(step.name, timings),
-                                "state": "waiting", "seconds": None})
+                    dry.append({"name": step.name, "index": index, "state": "waiting",
+                                "estimate": make.estimate(step.name, timings), "seconds": None})
             job.steps = dry
             self.emit(job, "plan", steps=dry)
             ok, results = make.run(steps, False, say, LOGS, settings.environment(cores),
@@ -201,7 +202,8 @@ class Server:
                 if op == "watch":
                     self.watch(stream, ask.get("job"), ask.get("since", 0))
                     return
-                reply = self.handle(op, ask)
+                # A plan reads dates and asks git, so it is answered here, outside the lock.
+                reply = self.plan(ask) if op == "plan" else self.handle(op, ask)
                 stream.write(json.dumps(reply) + "\n")
                 stream.flush()
 
@@ -235,6 +237,23 @@ class Server:
                 return {"error": f"no op {op}"}
         self.emit(job, "queued", target=job.target)
         return {"job": job.number}
+
+    def plan(self, ask):
+        """What a make of the target would run: each step, whether it is needed, and why.
+        The studio's stale marker; the same walk `mu make X --plan` prints."""
+        try:
+            steps = make.plan(list(ask["target"]), settings.cores()[0], lambda text: None)
+        except NotFound as missing:
+            return {"error": str(missing), "steps": []}
+        except Exception as crash:
+            return {"error": f"{type(crash).__name__}: {crash}", "steps": []}
+        out, changed = [], set()
+        for step in steps:
+            needed, reason = step.test(changed)
+            if needed:
+                changed.add(step.makes)
+            out.append({"name": step.name, "needed": needed, "reason": reason})
+        return {"steps": out}
 
     def find(self, number):
         return next((j for j in self.jobs if j.number == number), None)

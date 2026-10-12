@@ -129,6 +129,10 @@ def find(name):
         for path in glob.glob(os.path.join(SOURCE, top, "**", name + ".json"), recursive=True):
             if not path.endswith(".rig.json"):
                 hits.append(path)
+    if not hits and name.startswith("Arm") and name[3:4].isupper():
+        # The game's name for a held weapon's figure is Arm<recipe> (ArmSword01 is Sword01's),
+        # which is what the studio's browser has in hand.
+        return find(name[3:])
     if not hits:
         raise NotFound(f"no recipe called {name} under source/")
     if len(hits) > 1:

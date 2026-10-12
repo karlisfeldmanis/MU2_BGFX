@@ -21,6 +21,9 @@ The arrows, and why each one points the way it does -- the long form is docs/arc
               renderer that cannot be run on a bench.
     game      depends on all of the above. The play loop, the world, the figures, the
               windows, the effects. This is where the three meet.
+    studio    the editor's panels and the cook's client (docs/order-plan.md §9c): core,
+              content and gfx, never the game -- the mode hands the panels what they show, so
+              they are drawn and tested with no world behind them.
     app       depends on all of the above. The application object and its modes. Nothing
               depends on app: it is the top.
     net       the wire, over sim: a message carries a sim::Command.
@@ -54,7 +57,9 @@ ALLOWED = {
     # sprint C). Below game, so a bot links it without a renderer.
     "client": {"core", "content", "sim", "net", "client"},
     "game": {"core", "content", "sim", "net", "client", "gfx", "game"},
-    "app": {"core", "content", "sim", "net", "client", "gfx", "game", "app"},
+    # The studio's panels and the cook's client (docs/order-plan.md §9c): below app, beside game.
+    "studio": {"core", "content", "gfx", "studio"},
+    "app": {"core", "content", "sim", "net", "client", "gfx", "game", "studio", "app"},
     # The server program, in server/src/ and not src/ (the user, 2026-10-07: "we need that server
     # source is also in /server folder"): the rules and what they read, never a screen or the
     # client. Nothing under src/ may include it -- no layer above lists it.

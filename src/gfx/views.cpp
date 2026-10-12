@@ -68,6 +68,7 @@ const char* viewName(View v) {
         case ViewBloomUp + 2: return "bloom_up2";
         case ViewBloomUp + 3: return "bloom_up1";
         case ViewHud: return "hud";
+        case ViewGui: return "gui";
         default:
             // Named one by one, so the stats csv has no two columns alike.
             if (v >= ViewProbeFace && v < ViewCount) return probeViewNames()[v - ViewProbeFace];
@@ -99,7 +100,8 @@ Account viewAccount(View v) {
         case ViewPresent:
         case ViewOutlineMask:
         case ViewOutline:
-        case ViewHud: return AccountPresent;
+        case ViewHud:
+        case ViewGui: return AccountPresent;
         default:
             if (v == ViewStageBag || v == ViewStageShelf || v == ViewStageQuick ||
                 v == ViewStageTip || v == ViewStageBust || v == ViewStagePortrait) {

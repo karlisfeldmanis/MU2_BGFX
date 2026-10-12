@@ -1042,6 +1042,39 @@ recipe's fields, Cook and Revert. The jobs along the bottom: step bars, the log'
   cancel after the step, a kill, an unknown name failing with its message and exit 1, and
   `--json` throughout; `mu check` green but for three other sessions' files.
 
+### Slice F2: the panels, as done
+
+- `build/mu2 --studio` (the studio's world, its bonfire and its subject, as before) now has
+  three ImGui panels in place of the overlay's list: the **Browser** (the bench's own tabs and
+  names, with a filter), the **Subject** card (its clip and time of day, its `mu make` name,
+  the stale marker with every step that would run and why, and Cook) and the **Jobs** along
+  the bottom (a row a job, newest first: its state, step, bar, the step's own bar and latest
+  word over it, the time left or taken, Stop and Kill, the steps under a fold, and Rehearsal).
+  `--no-list` still turns them off, so tools/studio.py's sweeps are as they were.
+- Dear ImGui is bgfx's own 3rdparty copy, copied into the build at configure time with
+  `src/gfx/gui_config.h` as its imconfig.h (bgfx's wants bx and its example widgets).
+  `gfx/gui.{h,cpp}` draws it with bgfx's precompiled ImGui shaders into a new view,
+  `ViewGui` (73), after the HUD and the stages, and feeds it the Window's input; the window's
+  own cursor stays blank and ImGui draws its arrow. Its atlas is made empty and then
+  filled: a bgfx texture made with its pixels is immutable, and the glyphs ImGui adds later
+  never landed (the first shot's clip line had holes in it).
+- `src/studio/` is a new layer (layercheck: core, content and gfx, never game; app over it).
+  `studio::Cooker` is the client of `mu serve`: the jobs' views out of `jobs` on connect,
+  the events after, `make`, `cancel`, and `plan` on a thread. The server gained the `plan` op
+  (each step's need and reason, outside its lock) and puts each step's plan index in its
+  `plan` event. `studio::Panels` draws from a `Shelf` the mode fills and answers with what was
+  clicked, so neither knows the bench. `app/modes/studio_desk` joins them to the bench.
+- When no server answers, the studio starts `./mu serve` in a session of its own, logged to
+  `workshop/logs/mu/serve.log`. It outlives the studio, so closing a window never ends a cook.
+- `mu`'s find takes the game's name for a held weapon, `Arm<recipe>` (ArmSword01 is Sword01).
+- Proved: `cooker_test` (in `checks`), 27 checks with no window and no server -- events fed by
+  hand, the step map, the time left, a view loaded mid-cook, the panels laid out by ImGui with
+  nothing drawn and a click on a name picking it -- and 34 with `--live` against a running
+  server (a rehearsal watched to its end, 32 bar moves, a plan answered, an unknown name's
+  plan saying so). Two shot runs, with the user's leave: the panels over Lorencia's bonfire
+  with Kris on the bench, a rehearsal's bar moving, and the second, after the fixes, with the
+  studio starting its own server and Sword01's 17 stale steps listed.
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

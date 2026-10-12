@@ -126,6 +126,8 @@ bool BenchMode::open(Context& ctx) {
             }
         }
     }
+    // The studio's panels, where the list would be; the bench goes on without them if they fail.
+    if (kind_ == Kind::Studio && args.list) desk_.open(ctx);
     // The stage's lamps, once, as a world's are: the renderer lays its light grid here.
     if (bench_.hasStage() && args.lampsOn) bench_.stageLamps().light(ctx.renderer);
 
@@ -211,19 +213,25 @@ void BenchMode::drawList(Context& ctx) {
         const float wheel = ctx.window.scroll();
         if (wheel != 0.0f) bench_.stepClip(wheel > 0.0f ? -1 : 1);
     } else {
-        if (ctx.window.held(0)) {
-            float dx = 0.0f, dy = 0.0f;
-            ctx.window.pointerDelta(&dx, &dy);
-            bench_.orbit(dx, dy);
-        }
-        bench_.zoom(ctx.window.scroll());
+        look(ctx);
     }
+}
+
+void BenchMode::look(Context& ctx) {
+    if (ctx.window.held(0)) {
+        float dx = 0.0f, dy = 0.0f;
+        ctx.window.pointerDelta(&dx, &dy);
+        bench_.orbit(dx, dy);
+    }
+    bench_.zoom(ctx.window.scroll());
 }
 
 void BenchMode::frame(Context& ctx, const Frame& at) {
     core::Args& args = ctx.args;
     const float deltaSeconds = float(at.deltaSeconds);
-    steer(ctx);
+    if (desk_.isOpen()) desk_.begin(ctx, deltaSeconds);
+    // A filter being typed into keeps the arrows and Tab: they are the box's then.
+    if (!desk_.wantsKeys()) steer(ctx);
 
     if (kind_ == Kind::Studio) {
         // The sweep: a block of --shot frames an angle, --turns angles a time of day,
@@ -255,7 +263,13 @@ void BenchMode::frame(Context& ctx, const Frame& at) {
         setShine_.update(float(at.deltaSeconds), world_.ground().metresPerTile());
         setShine_.gather(ctx.renderer.effects(), world_.ground(), bench_.camera().position);
         ctx.renderer.draw(bench_.camera(), ctx.lighting, townDrawables_, &world_.ground());
-        drawList(ctx);
+        if (desk_.isOpen()) {
+            desk_.panels(ctx, bench_);
+            if (!desk_.wantsPointer()) look(ctx);
+            desk_.end();
+        } else {
+            drawList(ctx);
+        }
         return;
     }
 
@@ -283,6 +297,7 @@ void BenchMode::report(Context& ctx) {
 }
 
 void BenchMode::shutdown(Context& ctx) {
+    desk_.shutdown();
     bench_.shutdown();
     setShine_.shutdown();
     ctx.renderer.closeStages();

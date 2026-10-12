@@ -436,6 +436,38 @@ target_compile_options(mu_game PRIVATE ${MU_WARNINGS})
 # miniaudio is one vendored header of tens of thousands of lines; its warnings are not ours.
 set_source_files_properties(src/game/miniaudio.cpp PROPERTIES COMPILE_OPTIONS "-w")
 
+# ---- the studio's panels (docs/order-plan.md §9c, the Cooker) ------------------------------
+# Dear ImGui, bgfx's own 3rdparty copy (so its version is the one bootstrap.sh pins), copied
+# into the build with src/gfx/gui_config.h as its imconfig.h: imgui.h includes the imconfig.h
+# beside it whatever IMGUI_USER_CONFIG says, and bgfx's wants bx, its allocator and its widgets.
+# Over it the studio: gfx/gui.cpp draws ImGui on bgfx in ViewGui, studio/ holds the cook's
+# client and the panels. Only mu2 links them; a game frame never opens them, and the server
+# never sees them.
+set(IMGUI_FROM ${CMAKE_SOURCE_DIR}/extern/bgfx.cmake/bgfx/3rdparty/dear-imgui)
+set(IMGUI_DIR ${CMAKE_BINARY_DIR}/imgui)
+foreach(f imgui.cpp imgui_draw.cpp imgui_tables.cpp imgui_widgets.cpp imgui.h imgui_internal.h
+          imstb_rectpack.h imstb_textedit.h imstb_truetype.h)
+  configure_file(${IMGUI_FROM}/${f} ${IMGUI_DIR}/${f} COPYONLY)
+endforeach()
+configure_file(src/gfx/gui_config.h ${IMGUI_DIR}/imconfig.h COPYONLY)
+add_library(mu_imgui STATIC
+  ${IMGUI_DIR}/imgui.cpp
+  ${IMGUI_DIR}/imgui_draw.cpp
+  ${IMGUI_DIR}/imgui_tables.cpp
+  ${IMGUI_DIR}/imgui_widgets.cpp
+)
+target_include_directories(mu_imgui PUBLIC ${IMGUI_DIR} src ${CMAKE_SOURCE_DIR}/extern/bgfx.cmake/bgfx/3rdparty)  # imstb_*.h are stb/*
+target_compile_options(mu_imgui PRIVATE -w)
+
+add_library(mu_studio STATIC
+  src/gfx/gui.cpp
+  src/studio/cooker.cpp
+  src/studio/panels.cpp
+)
+target_include_directories(mu_studio PRIVATE ${CMAKE_SOURCE_DIR}/extern/bgfx.cmake/bgfx/examples/common/imgui)
+target_link_libraries(mu_studio PUBLIC mu_imgui mu_gfx)
+target_compile_options(mu_studio PRIVATE ${MU_WARNINGS})
+
 add_executable(mu2
   src/main.cpp
   src/app/application.cpp
@@ -445,6 +477,7 @@ add_executable(mu2
   src/app/modes/play_mode.cpp
   src/app/modes/lobby_mode.cpp
   src/app/modes/bench_mode.cpp
+  src/app/modes/studio_desk.cpp
 )
 target_include_directories(mu2 PRIVATE src extern ${CMAKE_BINARY_DIR}/generated)
 # The game's version, MAJOR.MINOR.PATCH in VERSION (1.0.0 is the finished game; until then the
@@ -460,7 +493,7 @@ add_custom_target(build_version
   VERBATIM)
 add_dependencies(mu2 build_version)
 # bimg_encode writes the screenshots.
-target_link_libraries(mu2 PRIVATE mu_game bimg_encode)
+target_link_libraries(mu2 PRIVATE mu_game mu_studio bimg_encode)
 target_compile_definitions(mu2 PRIVATE ${MU_DIRS})
 target_compile_options(mu2 PRIVATE ${MU_WARNINGS})
 if(APPLE)
@@ -518,6 +551,17 @@ target_compile_definitions(cooked_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR
 target_compile_options(cooked_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
 if(NOT MU2_SERVER_ONLY)
+# The studio's half with no window: the cook's client fed mu serve's events and the panels
+# drawn by ImGui into nothing, then the client against a real `mu serve` if one is running.
+add_executable(cooker_test EXCLUDE_FROM_ALL
+  tests/cooker_test.cpp
+  src/studio/cooker.cpp
+  src/studio/panels.cpp
+)
+target_link_libraries(cooker_test PRIVATE mu_imgui mu_core)
+target_compile_definitions(cooker_test PRIVATE MU2_ROOT_DIR="${CMAKE_SOURCE_DIR}")
+target_compile_options(cooker_test PRIVATE ${MU_WARNINGS})
+
 # The birds, whose every rule is arithmetic and whose every rule is nearly impossible to review
 # from a picture: a flock arrives from off the frame, crosses in two seconds and then the sky is
 # empty for fifteen to forty-five. `game/world/flight.cpp` is the half with no window in it, so
@@ -650,7 +694,7 @@ endif()
 # lists it, and a listed one may never grow past its size there. It is what stops the hubs
 # growing back (docs/order-plan.md, sprint A).
 add_custom_target(checks
-  DEPENDS cooked_test placement_test sim_test boids_test sound_test save_test server_test
+  DEPENDS cooked_test placement_test sim_test boids_test sound_test save_test server_test cooker_test
   COMMAND ${CMAKE_SOURCE_DIR}/tools/layercheck.py
   COMMAND ${CMAKE_SOURCE_DIR}/tools/sizecheck.py
   COMMAND $<TARGET_FILE:cooked_test>
@@ -660,6 +704,7 @@ add_custom_target(checks
   COMMAND $<TARGET_FILE:sound_test>
   COMMAND $<TARGET_FILE:save_test>
   COMMAND $<TARGET_FILE:server_test>
+  COMMAND $<TARGET_FILE:cooker_test>
   COMMAND ${CMAKE_SOURCE_DIR}/tools/matcheck.py
   COMMENT "running every check that does not need a window"
   USES_TERMINAL

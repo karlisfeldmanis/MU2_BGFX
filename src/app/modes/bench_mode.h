@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "app/mode.h"
+#include "app/modes/studio_desk.h"
 #include "game/bench.h"
 #include "game/fx/set_shine.h"
 #include "game/world/world.h"
@@ -47,6 +48,8 @@ private:
     void steer(Context& ctx);
     // The list down the left, and the pointer it eats while it is under one.
     void drawList(Context& ctx);
+    // A drag orbits the camera and the wheel zooms it: what the pointer does over no list.
+    void look(Context& ctx);
     // The studio's stage: the map's own bonfire nearest the middle of the town, and the
     // subject stood 1.6 m to its -x and +z, which is the left of MU's picture.
     bool openStudioWorld(Context& ctx, const std::string& benchWorld);
@@ -63,6 +66,9 @@ private:
     // The Armour sets tab's suit at --plus 9 and up, lit as a complete set is in play: its arm
     // lights from +9, its flares and ribbons at +10 and +11 (game/fx/set_shine.h).
     game::SetShine setShine_;
+    // The studio's panels (`mu2 --studio`, docs/order-plan.md §9c): in place of the overlay's
+    // list, and closed under --no-list as it was.
+    StudioDesk desk_;
 };
 
 }  // namespace mu::app

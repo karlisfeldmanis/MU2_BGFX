@@ -56,7 +56,10 @@ enum View : uint16_t {
     ViewStageBust = 71,
     // The target frame's portrait: his head and helm, photographed live (game/portrait.h).
     ViewStagePortrait = 72,
-    ViewCount = 73,
+    // The studio's panels (gfx/gui.h, docs/order-plan.md §9c): Dear ImGui over everything,
+    // the HUD and the stages' pictures included, on the backbuffer. No game frame draws it.
+    ViewGui = 73,
+    ViewCount = 74,
 };
 constexpr int kOutlineRings = 4;  // the hover's, and three monsters turning at once
 constexpr int kBloomLevels = 5;
