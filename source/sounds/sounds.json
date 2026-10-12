@@ -2657,6 +2657,26 @@
         "fo_death.wav"
       ],
       "from": "The Forest Orc's death, which MONSTER_BLOODY_ORC shares (GMAida.cpp:1085); w34/fo_death.wav."
+    },
+    "bloodydeathrider_move": {
+      "files": [
+        "dr_idle01.wav",
+        "dr_idle2.wav"
+      ],
+      "from": "MONSTER_BLOODY_DEATH_RIDER shares the Death Rider's sounds (GMAida.cpp:1118-1140): SOUND_AIDA_DEATHRAIDER_MOVE1 + rand() % 2 while it walks; the folder's dr_idle01.wav and dr_idle2.wav, as deathrider_move."
+    },
+    "bloodydeathrider_attack": {
+      "files": [
+        "dr_attack1.wav",
+        "dr_attack2.wav"
+      ],
+      "from": "The Death Rider's blows, which MONSTER_BLOODY_DEATH_RIDER shares; w34/dr_attack1-2.wav. Ours picks either for any blow."
+    },
+    "bloodydeathrider_die": {
+      "files": [
+        "dr_death.wav"
+      ],
+      "from": "The Death Rider's death, which MONSTER_BLOODY_DEATH_RIDER shares; w34/dr_death.wav."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."
