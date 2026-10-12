@@ -272,7 +272,7 @@ bool Realm::passGate(Body& hero, const EnterGate& through) {
     me().banking = -1;
     closeMachine();
     me().gating = -1;
-    me().angeling = -1;
+    me().event.angeling = -1;
     // A gate to a floor of this same map -- the Dungeon's stairs between its three floors, one
     // grid with three regions the router cannot cross -- is not a map change: he is put down
     // there now, as a Town Portal puts him down (realm_items.cpp), the monsters on him lose
@@ -303,7 +303,7 @@ void Realm::setHeroDown(int column, int row, int dx, int dy, int gate) {
     me().banking = -1;
     closeMachine();
     me().gating = -1;
-    me().angeling = -1;
+    me().event.angeling = -1;
     int open = column, openRow = row;
     if (router_.nearestOpen(column, row, content::kWallCharacter, 8, &open, &openRow)) {
         column = open;
@@ -664,9 +664,9 @@ bool Realm::enterCastle(int castle) {
         return false;
     }
     if (castleRefusal(castle) != CastleRefusal::None) return false;
-    me().castleOwed = castle;
+    me().event.castleOwed = castle;
     me().gating = -1;
-    me().angeling = -1;
+    me().event.angeling = -1;
     return true;
 }
 
@@ -677,7 +677,7 @@ void Realm::passCastle(int castle) {
     if (gate == nullptr) return;
     // "You have come to Blood Castle %d" (lMsg 1171): the cloak is spent as he goes.
     me().bag.lift(cloakSlot(castle));
-    me().castlePassed = castle;
+    me().event.castlePassed = castle;
     passGate(hero, *gate);
 }
 
@@ -729,17 +729,17 @@ AngelState Realm::angelState() const {
 }
 
 bool Realm::handInStaff() {
-    if (me().angeling < 0 || !serving(me().angeling) || angelState() != AngelState::Ready) return false;
-    me().staffOwed = true;
+    if (me().event.angeling < 0 || !serving(me().event.angeling) || angelState() != AngelState::Ready) return false;
+    me().event.staffOwed = true;
     return true;
 }
 
 bool Realm::claimCastle() {
-    if (me().angeling < 0 || !serving(me().angeling) || run_.phase != CastlePhase::Won || run_.claimed ||
+    if (me().event.angeling < 0 || !serving(me().event.angeling) || run_.phase != CastlePhase::Won || run_.claimed ||
         mine().id != run_.winner) {
         return false;
     }
-    me().claimOwed = true;
+    me().event.claimOwed = true;
     return true;
 }
 

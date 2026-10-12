@@ -999,6 +999,27 @@ every slice must leave them no longer. The slices, each with sim_test identical:
   (HEAD's own twice too); live on port 44521, three netbots and a client, every link "none
   disagreed", 0 errors.
 
+### Slice I4: a player's event fields as one `EventSeat`, as done
+
+- **`struct EventSeat`** (sim/event.h) holds what Player held loose for the events -- the door
+  (castleOwed, castlePassed, squareOwed, squarePassed, squarePassedWait) and his part in a run
+  (squarePoints, squareRanked, squareExperience, squareZen, squarePaid, squareClaimOwed,
+  angeling, staffOwed, claimOwed) -- and Player has one, `event`. Not into the instances, as the
+  plan first said: the door's half is set in the town's realm, where no instance is, and travels
+  with him to the event's; so the seat is his, owned by the event code. Every `x.field` in sim
+  is `x.event.field`; the Realm's accessors kept their names, so nothing outside sim changed.
+  realm.h is 2385 lines (from 2401).
+- **The snapshot's shape is 11** (a Player is 16 bytes longer, the seat's alignment) and the
+  **protocol 26**, so an old client is told so at hello rather than failing on the snapshot.
+  Saved characters are untouched (their layout is their own). **Hetzner runs protocol 25 until
+  `server/deploy.sh`:** a client built from here cannot join it before then (the user, 2026-10-12:
+  'Do I4, no deploy yet').
+- **Proved:** sim_test identical to HEAD's but for its snapshot's size line (643,930 bytes to
+  643,962: two players, 16 each), 7441 checks, 0 failed, the snapshot's round trip among them;
+  server_test 27 of 27; I2's square and I3's castle replay programs identical to HEAD's; the game,
+  the server, netbot and bot built; live on port 44521 at protocol 26, three netbots and a client,
+  every link "none disagreed", 0 errors.
+
 ## 9c. Sprint F, the plan: the Cooker
 
 The user, 2026-10-12: "we want to build world, monster, item cooker like actual app where we

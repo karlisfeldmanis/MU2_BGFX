@@ -50,7 +50,7 @@ DealWhy Realm::dealBusy(size_t one) const {
     const Player& p = heroes_[one];
     if (p.dealing != 0 || (p.askedBy != 0 && p.askedUntil > tick_)) return DealWhy::Busy;
     if (p.trading >= 0 || p.banking >= 0 || p.mixing >= 0 || p.questing >= 0 || p.gating >= 0 ||
-        p.angeling >= 0) {
+        p.event.angeling >= 0) {
         return DealWhy::Busy;
     }
     if (!bodies_[p.body].alive()) return DealWhy::Dead;
@@ -335,7 +335,7 @@ void Realm::dealTick() {
             else if (std::max(std::abs(him.column() - them.column()), std::abs(him.row() - them.row())) > kDealLeash) {
                 why = DealWhy::Far;
             } else if (p.trading >= 0 || p.banking >= 0 || p.mixing >= 0 || p.questing >= 0 || p.gating >= 0 ||
-                       p.angeling >= 0) {
+                       p.event.angeling >= 0) {
                 why = DealWhy::Busy;
             }
         }

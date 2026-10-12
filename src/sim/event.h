@@ -25,6 +25,29 @@ constexpr EventKind eventOf(uint32_t map) {
                                     : EventKind::None;
 }
 
+// A player's seat in the events (docs/order-plan.md §9e, slice I4): what Player held loose. The door's
+// half -- an Enter asked for and passed at the next tick's start, and which castle or square he
+// went through -- is set in the town's realm and travels with him to the event's, so it is his,
+// not an instance's; the rest is his part in a run.
+struct EventSeat {
+    int castleOwed = 0;    // a castle Enter asked for (Realm::enterCastle), passed next tick
+    int castlePassed = 0;  // see Realm::castlePassed()
+    int squareOwed = 0;    // a square Enter asked for (Realm::enterSquare), passed next tick
+    // The square and the gate's seconds left as he went (Realm::squarePassed).
+    int squarePassed = 0, squarePassedWait = 0;
+    int64_t squarePoints = 0;  // see Realm::squarePoints()
+    // His result (Realm::squareResults): the rank the end gave him, 0 for none, and its row's pay;
+    // paid once, on Claim (squareClaimOwed, at the next tick's start) or as he is sent home.
+    int squareRanked = 0;
+    int64_t squareExperience = 0, squareZen = 0;
+    bool squarePaid = false;
+    bool squareClaimOwed = false;
+    int angeling = -1;  // see Realm::angeling()
+    // The Archangel's staff given back and his thanks taken, at the next tick's start.
+    bool staffOwed = false;
+    bool claimOwed = false;
+};
+
 // **When it opens** is a setting, not a rule: RealmConfig::castle (sim/config.h), hourly from
 // hh:25 for five minutes unless a test asks otherwise.
 // **The run, on his own clock from the moment he is in** (the user: 'when you are in there is

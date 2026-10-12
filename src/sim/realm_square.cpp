@@ -12,8 +12,8 @@
 namespace mu::sim {
 
 bool Realm::claimSquare() {
-    if (square_.phase != SquarePhase::Ended || me().squareRanked <= 0 || me().squarePaid) return false;
-    me().squareClaimOwed = true;
+    if (square_.phase != SquarePhase::Ended || me().event.squareRanked <= 0 || me().event.squarePaid) return false;
+    me().event.squareClaimOwed = true;
     return true;
 }
 
@@ -21,9 +21,9 @@ void Realm::squareResults(std::vector<SquareResult>* out) const {
     out->clear();
     for (size_t p = 0; p < heroes_.size(); ++p) {
         const Player& one = heroes_[p];
-        if (one.squareRanked <= 0) continue;
-        out->push_back({bodies_[one.body].id, one.squareRanked, one.squarePoints,
-                        one.squareExperience, one.squareZen, p == me_});
+        if (one.event.squareRanked <= 0) continue;
+        out->push_back({bodies_[one.body].id, one.event.squareRanked, one.event.squarePoints,
+                        one.event.squareExperience, one.event.squareZen, p == me_});
     }
     std::sort(out->begin(), out->end(),
               [](const SquareResult& a, const SquareResult& b) { return a.rank < b.rank; });
@@ -72,7 +72,7 @@ bool Realm::enterSquare(int square) {
         return false;
     }
     if (squareRefusal(square) != SquareRefusal::None) return false;
-    me().squareOwed = square;
+    me().event.squareOwed = square;
     me().gating = -1;
     return true;
 }
@@ -85,10 +85,10 @@ void Realm::passSquare(int square) {
     // The invitation is spent as he goes (protocol.cpp:18894-18896), and the fight waits for
     // what is left of the gate (sim/square.h), the whole of a held one's kSquareWait.
     me().bag.lift(invitationSlot(square));
-    me().squarePassed = square;
-    me().squarePassedWait = std::max(0, squareDoorLeft());
+    me().event.squarePassed = square;
+    me().event.squarePassedWait = std::max(0, squareDoorLeft());
     core::logf("square: Charon lets him into Devil Square %d, the fight in %d s", square,
-               me().squarePassedWait > 0 ? me().squarePassedWait : kSquareWait);
+               me().event.squarePassedWait > 0 ? me().event.squarePassedWait : kSquareWait);
     passGate(hero, *gate);
 }
 
@@ -134,17 +134,17 @@ int Realm::squareRank(int* of) const { return square_.rankOf(*this, me_, of); }
 // server raises for him. Out of realm.h to pay for the Broker's lines there.
 int Realm::squarePassedOf(uint32_t id) const {
     const int at = playerOfId(id);
-    return at >= 0 ? heroes_[size_t(at)].squarePassed : 0;
+    return at >= 0 ? heroes_[size_t(at)].event.squarePassed : 0;
 }
 
 int Realm::squarePassedWaitOf(uint32_t id) const {
     const int at = playerOfId(id);
-    return at >= 0 ? heroes_[size_t(at)].squarePassedWait : 0;
+    return at >= 0 ? heroes_[size_t(at)].event.squarePassedWait : 0;
 }
 
 int Realm::castlePassedOf(uint32_t id) const {
     const int at = playerOfId(id);
-    return at >= 0 ? heroes_[size_t(at)].castlePassed : 0;
+    return at >= 0 ? heroes_[size_t(at)].event.castlePassed : 0;
 }
 
 }  // namespace mu::sim

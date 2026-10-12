@@ -151,7 +151,7 @@ bool Realm::depart(uint32_t id) {
     // His trade called off now, each side's offer home: left to dealTick, a partner's accept in
     // the same tick as his Leave swapped with a player no longer here.
     if (me().dealing != 0) dealCancel(me_, DealWhy::Gone);
-    me().trading = me().banking = me().mixing = me().gating = me().angeling = me().questing = -1;
+    me().trading = me().banking = me().mixing = me().gating = me().event.angeling = me().questing = -1;
     me().order = Request{};
     me().pending = Request{};
     me().wants = skill::kNone;
@@ -324,19 +324,19 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     routes_.clear();
     happenings_.clear();
     happenings_.reserve(4096);
-    me().castleOwed = 0;
-    me().squareOwed = 0;
-    me().staffOwed = false;
-    me().claimOwed = false;
+    me().event.castleOwed = 0;
+    me().event.squareOwed = 0;
+    me().event.staffOwed = false;
+    me().event.claimOwed = false;
     // Raised on a castle, the run's wait starts and the entrance is shut until it ends
     // (WebZen BloodCastle.cpp:1128-1171: the court's 60 s, the barrier lifted at :887-917).
     // Raised on Devil Square, the wait before the fight starts (sim/square.h), and his points
     // nought.
     square_ = SquareInstance{};
-    me().squarePoints = 0;
-    me().squareRanked = 0;
-    me().squareExperience = me().squareZen = 0;
-    me().squarePaid = me().squareClaimOwed = false;
+    me().event.squarePoints = 0;
+    me().event.squareRanked = 0;
+    me().event.squareExperience = me().event.squareZen = 0;
+    me().event.squarePaid = me().event.squareClaimOwed = false;
     if (event() == EventKind::Square) {
         square_.phase = SquarePhase::Waiting;
         square_.startsAt = int64_t(kSquareWait) * kSquareTicksPerSecond;
@@ -755,7 +755,7 @@ void Realm::accept() {
         me().questing = -1;
         closeMachine();
         me().gating = -1;
-        me().angeling = -1;
+        me().event.angeling = -1;
         // **And a skill still waiting to be thrown is dropped by an order that moves him**: a
         // wish outlives a channel (kWishTicks), so a key pressed during Lightning threw it again
         // round him after he had walked on (the user, 2026-09-30: "when i am done with casting
@@ -1199,14 +1199,14 @@ void Realm::stepAlone() {
 // save carried or a safe zone hid -- his potions, his charge, his recovery, Icarus's wings, the
 // floor he stands on.
 void Realm::heroBefore() {
-    if (me().castleOwed != 0) {
-        const int castle = me().castleOwed;
-        me().castleOwed = 0;
+    if (me().event.castleOwed != 0) {
+        const int castle = me().event.castleOwed;
+        me().event.castleOwed = 0;
         passCastle(castle);
     }
-    if (me().squareOwed != 0) {
-        const int square = me().squareOwed;
-        me().squareOwed = 0;
+    if (me().event.squareOwed != 0) {
+        const int square = me().event.squareOwed;
+        me().event.squareOwed = 0;
         passSquare(square);
     }
     Body& hero = mine();

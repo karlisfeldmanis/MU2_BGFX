@@ -736,7 +736,7 @@ void Realm::warpHome(Body& hero) {
     me().banking = -1;
     closeMachine();
     me().gating = -1;
-    me().angeling = -1;
+    me().event.angeling = -1;
     const std::pair<int, int> landing = haven();
     setDown(hero, landing.first, landing.second);
     hero.facing = hero.aim;

@@ -1150,8 +1150,8 @@ public:
     int squareDoorLeft() const;
     // Which square Charon last passed him into, or 0, and the gate's seconds left as he went:
     // carried by the mode to the square's own realm (setSquare), as castlePassed is.
-    int squarePassed() const { return me().squarePassed; }
-    int squarePassedWait() const { return me().squarePassedWait; }
+    int squarePassed() const { return me().event.squarePassed; }
+    int squarePassedWait() const { return me().event.squarePassedWait; }
     // And any player's, by his body's id: which square the server raises for him.
     int squarePassedOf(uint32_t id) const;
     int squarePassedWaitOf(uint32_t id) const;
@@ -1172,7 +1172,7 @@ public:
     const SquareRun& squareRun() const { return square_; }
     int squareSecondsLeft() const;
     int squareWave() const;
-    int64_t squarePoints() const { return me().squarePoints; }
+    int64_t squarePoints() const { return me().event.squarePoints; }
     int squareRank(int* of = nullptr) const;
     // **The result**, once the time is up (sim/square.h kSquarePay): a row for every player the
     // square ranked, by rank -- his body's id, rank, points and what the rank pays -- `mine` for
@@ -1185,13 +1185,13 @@ public:
     };
     void squareResults(std::vector<SquareResult>* out) const;
     // Whether his row is paid: claimed, or paid as the rest ran out.
-    bool squarePaid() const { return me().squarePaid; }
+    bool squarePaid() const { return me().event.squarePaid; }
     // Claim, on the result: his row paid and he is sent to Noria at the next tick's start, as
     // Blood Castle's Complete sends him to Devias. False with no row or once paid.
     bool claimSquare();
     // The Archangel's page (sim/event.h): his folk row while it is open, what it shows, and Give
     // -- checked now, the staff taken and the win paid at the next tick's start.
-    int angeling() const { return me().angeling; }
+    int angeling() const { return me().event.angeling; }
     AngelState angelState() const;
     int staffSlot() const;
     bool handInStaff();
@@ -1199,7 +1199,7 @@ public:
     // tick's start (the user, 2026-10-05: 'when char clicks it we close window and take items
     // and teleport to devias'). False before the weapon is given or once paid.
     bool claimCastle();
-    void closeAngel() { me().angeling = -1; }
+    void closeAngel() { me().event.angeling = -1; }
     // Farewell: his window shut, as walking away shuts it.
     void closeGate() { me().gating = -1; }
     void closeMachine();
@@ -1353,7 +1353,7 @@ public:
     void setCastle(int castle);
     // Which castle the Messenger last passed him into, or 0: carried by the mode to the
     // castle's own realm (Realm::setCastle).
-    int castlePassed() const { return me().castlePassed; }
+    int castlePassed() const { return me().event.castlePassed; }
     // And any player's, by his body's id, 0 for none: which castle the server raises for him.
     int castlePassedOf(uint32_t id) const;
     // The Archangel weapon this run's Statue of Saint holds -- the staff, the sword or the
@@ -2314,21 +2314,7 @@ private:
         bool jeweled = false;
         int mixing = -1;
         int gating = -1;  // see gating()
-        // A castle Enter asked for, passed at the next tick's start (Realm::enterCastle), or 0.
-        int castleOwed = 0;
-        int castlePassed = 0;  // see castlePassed()
-        int64_t squarePoints = 0;  // see squarePoints()
-        // A square Enter asked for, passed at the next tick's start (Realm::enterSquare), or 0;
-        // and the square and the gate's seconds left as he went (squarePassed).
-        int squareOwed = 0;
-        int squarePassed = 0, squarePassedWait = 0;
-        // His result (squareResults): the rank the end gave him, 0 for none, and its row's pay;
-        // paid once, on Claim (squareClaimOwed, at the next tick's start) or as he is sent home.
-        int squareRanked = 0;
-        int64_t squareExperience = 0, squareZen = 0;
-        bool squarePaid = false;
-        bool squareClaimOwed = false;
-        int angeling = -1;     // see angeling()
+        EventSeat event;  // his door to Blood Castle and Devil Square, and his part in a run
         // A trade with another player (sim/realm_deal.cpp): the other's body id while it is
         // open, 0 for none; who asked him and until when; what he puts up -- the machine's eight
         // by four, each thing with the bag slot it came from -- and his Zen; his Accept; the tick
@@ -2342,8 +2328,6 @@ private:
         bool accepted = false;
         int64_t holdUntil = 0;
         uint32_t dealVersion = 0;
-        bool staffOwed = false;
-        bool claimOwed = false;
         Machine machine;
         bool mixed = false;
         QuestProgress quests[kQuests];

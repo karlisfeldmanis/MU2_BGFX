@@ -300,7 +300,7 @@ bool Realm::travel(int index) {
     me().trading = me().banking = me().questing = -1;
     closeMachine();
     me().gating = -1;
-    me().angeling = -1;
+    me().event.angeling = -1;
     halt(mine());
     // Her summon goes with her (the user, 2026-10-09: "if summon is active for elf and i use fast
     // travel, we need that summon is also active"; it was dismissed since 2026-10-08): held as one
@@ -356,7 +356,7 @@ bool Realm::goBack() {
     me().trading = me().banking = me().questing = -1;
     closeMachine();
     me().gating = -1;
-    me().angeling = -1;
+    me().event.angeling = -1;
     halt(hero);
     if (me().summonSlot >= 0) dismiss(bodies_[size_t(me().summonSlot)]);
     say(What::WentBack, hero, to.map, to.column, to.row);

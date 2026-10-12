@@ -89,8 +89,8 @@ void CastleInstance::tick(Realm& r) {
         Realm::For him(r, p);
         // The staff given back, inside the tick so what it says is this tick's (as enterCastle).
         // "Ah! Great warrior..." (ServerCmd 1,23, NpcTalk.cpp:1461-1588), and GiveReward_Win.
-        if (r.me().staffOwed) {
-            r.me().staffOwed = false;
+        if (r.me().event.staffOwed) {
+            r.me().event.staffOwed = false;
             const int slot = r.staffSlot();
             if (slot >= 0 && phase == CastlePhase::Running) {
                 r.me().bag.lift(slot);
@@ -125,11 +125,11 @@ void CastleInstance::tick(Realm& r) {
             }
         }
         // Complete on his thanks: the win paid, and out to Devias now rather than after the rest.
-        if (r.me().claimOwed) {
-            r.me().claimOwed = false;
+        if (r.me().event.claimOwed) {
+            r.me().event.claimOwed = false;
             if (phase == CastlePhase::Won && !claimed && r.mine().id == winner) {
                 pay(r);
-                r.me().angeling = -1;
+                r.me().event.angeling = -1;
                 leavesAt = r.tick_;
                 sentOut = true;
             }

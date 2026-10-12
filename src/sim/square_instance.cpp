@@ -27,8 +27,8 @@ void SquareInstance::tick(Realm& r) {
         rank(r);
         core::logf("square %d: time is up, %lld points, rank %d, %d bosses down, %lld experience "
                    "and %lld Zen owed",
-                   square, (long long)r.me().squarePoints, r.me().squareRanked,
-                   bossesKilled, (long long)r.me().squareExperience, (long long)r.me().squareZen);
+                   square, (long long)r.me().event.squarePoints, r.me().event.squareRanked,
+                   bossesKilled, (long long)r.me().event.squareExperience, (long long)r.me().event.squareZen);
         for (Body& one : r.bodies_) {
             if (!one.monster()) continue;
             one.risesAt = std::numeric_limits<int64_t>::max();
@@ -70,13 +70,13 @@ void SquareInstance::tick(Realm& r) {
     // Claim on the result: his row paid and home to Noria now, as Blood Castle's Complete is.
     if (phase == SquarePhase::Ended) {
         for (size_t p = 0; p < r.heroes_.size(); ++p) {
-            if (!r.heroes_[p].squareClaimOwed) continue;
-            r.heroes_[p].squareClaimOwed = false;
+            if (!r.heroes_[p].event.squareClaimOwed) continue;
+            r.heroes_[p].event.squareClaimOwed = false;
             Realm::For him(r, p);
-            if (r.mine().gone || r.me().squarePaid) continue;
+            if (r.mine().gone || r.me().event.squarePaid) continue;
             pay(r);
             r.warpHome(r.mine());
-            core::logf("square %d: rank %d claimed, home to Noria", square, r.me().squareRanked);
+            core::logf("square %d: rank %d claimed, home to Noria", square, r.me().event.squareRanked);
         }
     }
     // The rest over: whoever has not claimed is paid on the way out (WebZen pays everyone at the
@@ -86,7 +86,7 @@ void SquareInstance::tick(Realm& r) {
         sentOut = true;
         for (size_t p = 0; p < r.heroes_.size(); ++p) {
             Realm::For him(r, p);
-            if (r.mine().gone || r.me().squarePaid) continue;
+            if (r.mine().gone || r.me().event.squarePaid) continue;
             pay(r);
             r.warpHome(r.mine());
         }
@@ -100,24 +100,24 @@ void SquareInstance::rank(Realm& r) {
         Realm::Player& one = r.heroes_[p];
         if (r.bodies_[one.body].gone) continue;
         int of = 0;
-        one.squareRanked = rankOf(r, p, &of);
-        const int row = squarePayRow(one.squareRanked, of);
+        one.event.squareRanked = rankOf(r, p, &of);
+        const int row = squarePayRow(one.event.squareRanked, of);
         // One level at the square's middle for the first, the rest OpenMU's share of it.
         const int mid = kSquareMidLevel[s];
         const int64_t level = int64_t(neededExperience(mid + 1) - neededExperience(mid));
         // And never under OpenMU's own at the game's rate, which square 1's middle level is.
-        one.squareExperience = std::max(level * kSquarePay[s][row][0] / kSquarePay[s][0][0],
+        one.event.squareExperience = std::max(level * kSquarePay[s][row][0] / kSquarePay[s][0][0],
                                         int64_t(double(kSquarePay[s][row][0]) * kExperienceRate));
-        one.squareZen = kSquarePay[s][row][1];
+        one.event.squareZen = kSquarePay[s][row][1];
     }
 }
 
 void SquareInstance::pay(Realm& r) {
     Realm::Player& one = r.me();
-    if (one.squareRanked <= 0 || one.squarePaid) return;
-    one.squarePaid = true;
-    r.gain(r.mine(), int32_t(std::min<int64_t>(one.squareExperience, INT32_MAX)));
-    one.money += one.squareZen;
+    if (one.event.squareRanked <= 0 || one.event.squarePaid) return;
+    one.event.squarePaid = true;
+    r.gain(r.mine(), int32_t(std::min<int64_t>(one.event.squareExperience, INT32_MAX)));
+    one.money += one.event.squareZen;
 }
 
 bool SquareInstance::owns(const Realm& r, const Body& one) const {
@@ -133,7 +133,7 @@ void SquareInstance::kill(Realm& r, const Body& dead, const Body& scorer) {
     // WebZen's: his share of the monster's health x its level x the square's number, to the last
     // hitter (DevilSquare.cpp:2219-2236). Ours until damage is kept per player: the whole share,
     // the level x the square.
-    r.heroes_[size_t(at)].squarePoints += int64_t(std::max(1, dead.level)) * square;
+    r.heroes_[size_t(at)].event.squarePoints += int64_t(std::max(1, dead.level)) * square;
     if (squareWaveOf(square, r.tables_->kinds[size_t(dead.kind)].number) == kSquareWaves + 1) {
         ++bossesKilled;
     }
@@ -150,7 +150,7 @@ int SquareInstance::rankOf(const Realm& r, size_t at, int* of) const {
         if (body.gone) continue;
         ++count;
         if (&one == &mine) continue;
-        const bool ahead = one.squarePoints != mine.squarePoints ? one.squarePoints > mine.squarePoints
+        const bool ahead = one.event.squarePoints != mine.event.squarePoints ? one.event.squarePoints > mine.event.squarePoints
                            : body.level != self.level            ? body.level < self.level
                                                                  : body.id < self.id;
         rank += ahead ? 1 : 0;

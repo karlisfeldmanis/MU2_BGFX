@@ -322,8 +322,8 @@ void Realm::talk(Body& hero) {
         say(What::Offered, hero, quest, me().questing, int(me().quests[quest].state));
     } else if (one.number == kArchangel) {
         // His page of the Event window: the staff he asks for, and Give.
-        me().angeling = int(me().order.target);
-        say(What::Served, hero, me().angeling, one.number);
+        me().event.angeling = int(me().order.target);
+        say(What::Served, hero, me().event.angeling, one.number);
     } else if (one.number == kMessenger || one.number == kCharon) {
         // His page of the quest window: the ticket he asks for and the door
         // (QuestDialog::kGate).

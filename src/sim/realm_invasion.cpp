@@ -70,7 +70,7 @@ void Realm::invasionRain(bool raining, bool elsewhere) {
 bool Realm::invade(bool now) {
     if (invaderSlot_ < 0 || invasion_.phase != InvasionPhase::Quiet) return false;
     invasionNow_ = now;
-    // Begun on the next tick, inside it, so its happening is that tick's (as me().castleOwed).
+    // Begun on the next tick, inside it, so its happening is that tick's (as me().event.castleOwed).
     invasionOwed_ = true;
     return true;
 }
