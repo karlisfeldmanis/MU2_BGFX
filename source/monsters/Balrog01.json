@@ -814,5 +814,16 @@
     "defense_rate": 99,
     "attack_skill": 50,
     "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. The respawn is rules.drops.regen."
+  },
+  "show": {
+    "aura": {
+      "bone": "Bip01 Spine",
+      "colour": [
+        1.0,
+        0.15,
+        0.05
+      ],
+      "note": "The Balrog's red stream mesh."
+    }
   }
 }

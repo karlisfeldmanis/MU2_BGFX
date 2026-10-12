@@ -511,35 +511,8 @@ constexpr int64_t kEvilSoundTicks = 32;
 // emiter", "like electricy our fire, it could be also weapon"): a faint light in the colour of
 // what a breed burns with, hung on the bone where that is -- its body's spine, or the grip of a
 // weapon that is the effect. fx/shadow_stars.h, the nearest two, after the spells' lights.
-struct AuraLight {
-    const char* figure;
-    float colour[3];
-    const char* bone;
-};
-inline constexpr AuraLight kAuraLights[] = {
-    // The Poison Shadow's own green Light (ZzzCharacter.cpp:11318).
-    {"PoisonShadow01", {0.2f, 0.7f, 0.1f}, "Bip01 Spine"},
-    // The Death Gorgon's AddTerrainLight (1, 0.2, 0) (:6073-6074).
-    {"DeathGorgon01", {1.0f, 0.2f, 0.0f}, "Bip01 Spine"},
-    // The Death Knight's Lightning Sword, its bolts the brightest thing on it: the blue of the
-    // Lightning spell's own light.
-    {"DeathKnight01", {0.4f, 0.6f, 1.0f}, "knife_gdf"},
-    // The Balrog's red stream mesh.
-    {"Balrog01", {1.0f, 0.15f, 0.05f}, "Bip01 Spine"},
-    // The Dark Phoenix's fire, ours (the user, 2026-10-07: 'use red tone lighting for phoenix').
-    {"DarkPhoenix01", {1.0f, 0.25f, 0.08f}, "Bip01 Spine"},
-    // The Vepar's hands, which MU always lights with a lightning, a spark and a shiny sprite
-    // (ZzzCharacter.cpp:11220-11227): a pale blue, on its right hand's link bone.
-    {"Vepar01", {0.4f, 0.6f, 1.0f}, "knife_gdf"},
-    // The Alquamos's star lights' own (0.8, 0.9, 1) (ZzzCharacter.cpp:8794-8795).
-    {"Alquamos01", {0.8f, 0.9f, 1.0f}, "Bip01 Spine"},
-    // The Lizard King's four sparks and shinies (ZzzCharacter.cpp:11228-11238): a pale light on
-    // the first of their bones.
-    {"LizardKing01", {0.7f, 0.8f, 1.0f}, "Box27"},
-    // The Hydra's horn, where MU always hangs a lightning and a shiny sprite (ZzzCharacter.cpp:
-    // 11216-11219): a pale blue.
-    {"Hydra01", {0.5f, 0.6f, 1.0f}, "Cone01"},
-};
+// Which breeds take one, its bone and its colour, are their recipes' show.aura (sprint
+// E4b), each with its citation; Play::fit hangs it.
 // show tag "poison_shadow": PoisonShadow01 (its recipe's show.tags).
 // MONSTER_ALQUAMOS's stars: g_chStar's first nine bones (ZzzCharacter.cpp:165-168, 8797-8801),
 // 10, 18, 37, 38, 51, 52, 58, 59, 66 in Monster51, by name. Its sparks off random bones, three a
@@ -674,20 +647,7 @@ constexpr float kEyeAt[2][3] = {{0.05f, 0.0f, 0.0f}, {-0.05f, 0.0f, 0.0f}};
 // Tarkan's eye trails (fx/eye_trails.h): each breed's MoveEye(o, b, Right, Left) bones, by
 // name, from MoveCharacterVisual (ZzzCharacter.cpp:5836-5984). The Zaikan and the Death Beam
 // Knight are the Tantallos's and the Beam Knight's bodies, so their bones.
-struct EyeTrailRow {
-    const char* figure;
-    const char* right;
-    const char* left;
-};
-inline constexpr EyeTrailRow kEyeTrailRows[] = {
-    {"Mutant01", "Bone03", "Bone04"},          // MoveEye(o, b, 8, 9)
-    {"BloodyWolf01", "eye01", "eye"},          // 11, 12
-    {"IronWheel01", "Bone02", "Bone01"},       // 8, 9
-    {"Tantalos01", "eye02", "eye1"},           // 24, 25
-    {"Zaikan01", "eye02", "eye1"},
-    {"BeamKnight01", "Bone06", "Bone05"},      // 8, 9
-    {"DeathBeamKnight01", "Bone06", "Bone05"},
-};
+// Each breed's pair, right and left, is its recipe's show.eye_trail (sprint E4b).
 // MonsterMoveSandSmoke: one BITMAP_SMOKE + 1 within 100 units of the body each reference frame
 // it walks (ZzzCharacter.cpp:5571-5582). Its callers: the Mutant, the Bloody Wolf, the Tantallos
 // (not the Zaikan), the Golden Wheel and the plain Beam Knight (:5836-5984).

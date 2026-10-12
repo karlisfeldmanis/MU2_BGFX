@@ -951,6 +951,15 @@
     "tags": [
       "death_knight"
     ],
-    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it."
+    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it.",
+    "aura": {
+      "bone": "knife_gdf",
+      "colour": [
+        0.4,
+        0.6,
+        1.0
+      ],
+      "note": "The Death Knight's Lightning Sword, its bolts the brightest thing on it: the blue of the Lightning spell's own light."
+    }
   }
 }

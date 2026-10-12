@@ -55,7 +55,7 @@ public:
     void star(const float at[3], bool poison, float fade);
     // **Ours** (the user, 2026-10-01: "it also probably be a minimal light emiter"): a faint
     // light in `colour` at a monster's effect -- a Poison Shadow's green, a Death Gorgon's
-    // orange, a Death Knight's sword (game/play_tuning.h kAuraLights).
+    // orange, a Death Knight's sword (game/play_tuning.h show.aura).
     void glow(const float at[3], float fade, const float colour[3]);
     // One of an Alquamos's star lights (ZzzCharacter.cpp:8792-8801): MU's BITMAP_LIGHT at Scale
     // 0.6 on a g_chStar bone, added in Luminosity * (0.8, 0.9, 1), Luminosity rolled 0.7-1 a

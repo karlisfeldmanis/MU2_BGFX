@@ -1033,7 +1033,7 @@ private:
         float arcHalf = 0.0f;
         const float* starTint = nullptr;  // the starlights' colour, null for the Alquamos's
         bool blizzard = false;  // her blow's shower (kBlizzardShare)
-        // Its faint light (kAuraLights): the bone it hangs on, -1 for none, and its colour.
+        // Its faint light (show.aura): the bone it hangs on, -1 for none, and its colour.
         int auraBone = -1;
         float auraColour[3] = {0.0f, 0.0f, 0.0f};
         // The one bone its embers rise off (the Death Knight's pelvis), -1 for a random one.
@@ -1118,7 +1118,7 @@ private:
         int eyeBones[2] = {-1, -1};
         float eyeSize = 1.0f;  // RenderEye's fSize: the Crusts' 2
         // A Tarkan monster's two eye trails: MoveEye's Right and Left bones, -1 on everything
-        // else (kEyeTrailRows, fx/eye_trails.h).
+        // else (show.eye_trail, fx/eye_trails.h).
         int trailBones[2] = {-1, -1};
         // MonsterMoveSandSmoke: a puff about it every reference frame it walks
         // (the "walk_sands" tag, Play::exhale). `walkSandOwed` is what of one is left to throw.

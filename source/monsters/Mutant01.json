@@ -513,6 +513,11 @@
     "tags": [
       "walk_sands"
     ],
-    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it."
+    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it.",
+    "eye_trail": {
+      "right": "Bone03",
+      "left": "Bone04",
+      "note": "Its MoveEye(o, b, Right, Left) bones, by name, from MoveCharacterVisual (ZzzCharacter.cpp:5836-5984); fx/eye_trails.h draws them. MU's bones MoveEye(o, b, 8, 9)."
+    }
   }
 }

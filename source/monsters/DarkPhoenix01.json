@@ -290,6 +290,15 @@
     "tags": [
       "phoenix"
     ],
-    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it."
+    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it.",
+    "aura": {
+      "bone": "Bip01 Spine",
+      "colour": [
+        1.0,
+        0.25,
+        0.08
+      ],
+      "note": "The Dark Phoenix's fire, ours (the user, 2026-10-07: 'use red tone lighting for phoenix')."
+    }
   }
 }

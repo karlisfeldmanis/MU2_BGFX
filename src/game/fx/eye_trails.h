@@ -14,7 +14,7 @@
 //   both: Scale 30 (the ribbon 30 units across), Light (0.5, 0.1, 1.0) (:443-444), added.
 //
 // So one long purple streak off one eye and a short one off the other, the asymmetry MU's.
-// The caller finds the eye bones by name (kEyeTrailRows) and feeds the two points every frame
+// The caller finds the eye bones by name (show.eye_trail) and feeds the two points every frame
 // the body is drawn; a trail no longer fed is let go.
 #pragma once
 

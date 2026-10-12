@@ -602,7 +602,7 @@ void Play::shade(float seconds) {
             fade = t * t * (3.0f - 2.0f * t);
         }
         const float origin[3] = {0.0f, 0.0f, 0.0f};
-        // Its faint light, where its effect is (kAuraLights).
+        // Its faint light, where its effect is (show.aura).
         if (one.auraBone >= 0) {
             float at[3];
             if (one.figure.pointOn(one.auraBone, origin, at)) {

@@ -810,6 +810,20 @@ name (aura lights, eye trails, bone lists, the Hydra's heads, the arcs, the infe
     HEAD's (7441 checks, 0 failed), server_test 27 of 27.
   - Live: three netbots and a client, every link "none disagreed", no missing shows.json.
 
+### Slice E4b, first part: the aura lights and eye trails, as done
+
+- **`show.aura` {bone, colour, note} and `show.eye_trail` {right, left, note}** in 16 recipes
+  (the Balrog's is its first `show`), kAuraLights' and kEyeTrailRows' rows with their comments
+  as notes. They were the last tables in the client keyed by a figure's name.
+- **`FigureBody` has `auraBone`, `auraColour` and `eyeTrail[2]`** from shows.json, which the cook
+  now writes with them; `Play::fit` resolves the bones as it did, the row now the body's own.
+- **Proved:** shows.json's aura and eye-trail rows equal HEAD's two tables for all 16 figures and
+  none elsewhere, E4a's tags unchanged; the lookups resolve the same names the same way;
+  sim_test identical to HEAD's (7441 checks, 0 failed), server_test 27 of 27; live in Tarkan, whose
+  monsters carry the eye trails, three netbots and a client, every link "none disagreed", 0 errors.
+- **Left in E4b:** the bone lists and single bones (hand and foot fire, the 35 burning bones,
+  the stars, the shadow joints, the Yeti's and the staff's, the snort and eye bones).
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

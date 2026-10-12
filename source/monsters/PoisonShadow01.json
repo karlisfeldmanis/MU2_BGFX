@@ -47,6 +47,15 @@
     "tags": [
       "poison_shadow"
     ],
-    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it."
+    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it.",
+    "aura": {
+      "bone": "Bip01 Spine",
+      "colour": [
+        0.2,
+        0.7,
+        0.1
+      ],
+      "note": "The Poison Shadow's own green Light (ZzzCharacter.cpp:11318)."
+    }
   }
 }

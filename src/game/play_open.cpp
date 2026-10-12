@@ -666,12 +666,11 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                 one.burns = burning && found == 35;
             }
             one.trailBones[0] = one.trailBones[1] = -1;
-            for (const EyeTrailRow& row : kEyeTrailRows) {
-                if (look->name != row.figure || !look->skeletonMesh) continue;
+            if (!look->eyeTrail[0].empty() && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (size_t b = 0; b < bones.size(); ++b) {
-                    if (bones[b].name == row.right) one.trailBones[0] = int(b);
-                    if (bones[b].name == row.left) one.trailBones[1] = int(b);
+                    if (bones[b].name == look->eyeTrail[0]) one.trailBones[0] = int(b);
+                    if (bones[b].name == look->eyeTrail[1]) one.trailBones[1] = int(b);
                 }
             }
             // The Stone Golem has no corpse either: `o->Live = false`, and the stones.
@@ -841,13 +840,12 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                 }
             }
             one.auraBone = -1;
-            for (const AuraLight& aura : kAuraLights) {
-                if (look->name != aura.figure || !look->skeletonMesh) continue;
+            if (!look->auraBone.empty() && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (size_t b = 0; b < bones.size(); ++b) {
-                    if (bones[b].name == aura.bone) one.auraBone = int(b);
+                    if (bones[b].name == look->auraBone) one.auraBone = int(b);
                 }
-                for (int i = 0; i < 3; ++i) one.auraColour[i] = aura.colour[i];
+                for (int i = 0; i < 3; ++i) one.auraColour[i] = look->auraColour[i];
             }
             // Off the body's own joints: MU's rand() % NumBones takes every bone, and the
             // Gorgon's ground marker (Bip01 Footsteps), its end dummies past the toes, fingers

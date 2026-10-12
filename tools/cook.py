@@ -3474,7 +3474,14 @@ def cook_shows(out_dir):
         with open(os.path.join(folder, name)) as handle:
             doc = json.load(handle)
         if "show" in doc and "item" in doc:
-            shows[doc["item"]] = {"tags": list(doc["show"].get("tags", []))}
+            show = doc["show"]
+            one = {"tags": list(show.get("tags", []))}
+            if "aura" in show:
+                one["aura"] = {"bone": show["aura"]["bone"], "colour": list(show["aura"]["colour"])}
+            if "eye_trail" in show:
+                one["eye_trail"] = {"right": show["eye_trail"]["right"],
+                                    "left": show["eye_trail"]["left"]}
+            shows[doc["item"]] = one
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "shows.json")
     with open(path, "w") as handle:

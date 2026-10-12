@@ -218,6 +218,15 @@
     "tags": [
       "lizard_king"
     ],
-    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it."
+    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it.",
+    "aura": {
+      "bone": "Box27",
+      "colour": [
+        0.7,
+        0.8,
+        1.0
+      ],
+      "note": "The Lizard King's four sparks and shinies (ZzzCharacter.cpp:11228-11238): a pale light on the first of their bones."
+    }
   }
 }

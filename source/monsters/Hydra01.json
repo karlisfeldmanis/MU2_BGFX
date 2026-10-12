@@ -3997,6 +3997,15 @@
     "tags": [
       "hydra"
     ],
-    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it."
+    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it.",
+    "aura": {
+      "bone": "Cone01",
+      "colour": [
+        0.5,
+        0.6,
+        1.0
+      ],
+      "note": "The Hydra's horn, where MU always hangs a lightning and a shiny sprite (ZzzCharacter.cpp:11216-11219): a pale blue."
+    }
   }
 }

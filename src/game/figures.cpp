@@ -1446,7 +1446,14 @@ void Figures::addMonster(const core::Json& entry) {
         made->plantSpeedSafe = made->plantSpeed;
     }
     readShows();
-    if (auto shown = shows_.find(made->name); shown != shows_.end()) made->tags = shown->second;
+    if (auto shown = shows_.find(made->name); shown != shows_.end()) {
+        const Show& show = shown->second;
+        made->tags = show.tags;
+        made->auraBone = show.auraBone;
+        for (int i = 0; i < 3; ++i) made->auraColour[i] = show.auraColour[i];
+        made->eyeTrail[0] = show.eyeTrail[0];
+        made->eyeTrail[1] = show.eyeTrail[1];
+    }
     bodies_[made->name] = std::move(made);
 }
 
@@ -1460,9 +1467,15 @@ void Figures::readShows() {
                    path.c_str());
         return;
     }
-    for (const auto& [name, show] : shows["shows"].members) {
-        std::vector<std::string>& tags = shows_[name];
-        for (const core::Json& tag : show["tags"].items) tags.push_back(tag.string);
+    for (const auto& [name, row] : shows["shows"].members) {
+        Show& show = shows_[name];
+        for (const core::Json& tag : row["tags"].items) show.tags.push_back(tag.string);
+        show.auraBone = row["aura"]["bone"].stringOr("");
+        for (int i = 0; i < 3 && i < int(row["aura"]["colour"].items.size()); ++i) {
+            show.auraColour[i] = float(row["aura"]["colour"].items[size_t(i)].numberOr(0.0));
+        }
+        show.eyeTrail[0] = row["eye_trail"]["right"].stringOr("");
+        show.eyeTrail[1] = row["eye_trail"]["left"].stringOr("");
     }
 }
 

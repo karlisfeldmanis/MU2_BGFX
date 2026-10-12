@@ -435,6 +435,15 @@
     "tags": [
       "vepar"
     ],
-    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it."
+    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it.",
+    "aura": {
+      "bone": "knife_gdf",
+      "colour": [
+        0.4,
+        0.6,
+        1.0
+      ],
+      "note": "The Vepar's hands, which MU always lights with a lightning, a spark and a shiny sprite (ZzzCharacter.cpp:11220-11227): a pale blue, on its right hand's link bone."
+    }
   }
 }

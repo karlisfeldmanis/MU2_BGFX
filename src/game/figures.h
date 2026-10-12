@@ -155,6 +155,11 @@ struct FigureBody {
     bool has(std::string_view tag) const {
         return std::find(tags.begin(), tags.end(), tag) != tags.end();
     }
+    // Its faint light (show.aura): the bone it hangs on, empty for none, and its colour.
+    std::string auraBone;
+    float auraColour[3] = {0.0f, 0.0f, 0.0f};
+    // Its two eye trails' bones, right and left (show.eye_trail), empty for none.
+    std::string eyeTrail[2];
     BodyKind kind = BodyKind::Character;
     std::vector<const content::Mesh*> parts;   // skinned, all against one skeleton
     // How each part's plus shows, beside `parts`; empty, or shorter, is +0. A body
@@ -439,7 +444,13 @@ private:
     // Every figure's show tags, cooked/figures/shows.json, read the first time a monster is added.
     void readShows();
     bool showsRead_ = false;
-    std::unordered_map<std::string, std::vector<std::string>> shows_;
+    struct Show {
+        std::vector<std::string> tags;
+        std::string auraBone;
+        float auraColour[3] = {0.0f, 0.0f, 0.0f};
+        std::string eyeTrail[2];
+    };
+    std::unordered_map<std::string, Show> shows_;
     // Which clips a finished body stands and walks in: the stance's own row, or the idle
     // index.json names for this figure when it names one. Called by open() and by dress(), so
     // that a hero and a guard pick their idle by one rule.

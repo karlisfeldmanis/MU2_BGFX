@@ -35,7 +35,7 @@ constexpr float kRibbonLightHalf = 64.0f * 1.5f * kUnit * 0.5f;
 constexpr float kRibbonDim = 0.6f;
 // A dozen joints a Shadow; room for a pack of them in sight.
 constexpr size_t kStars = 12 * 32;
-// A monster's faint light (play_tuning.h kAuraLights): its colour at this much -- for the Poison
+// A monster's faint light (play_tuning.h show.aura): its colour at this much -- for the Poison
 // Shadow's green about a quarter of the Poison spell's miasma (fx/poison.h) -- over this reach,
 // hung this high; and no more than this many at once, of the renderer's four moving lights.
 constexpr float kGlowDim = 0.3f;
