@@ -369,26 +369,38 @@ def plan_set(suffix, threads, say):
 def plan_placements(world, threads):
     """`mu make placements <w>`: the world's placed objects after they were moved (the studio's
     Place, F6). The cook reads assets/world/<w>/<w>.json, which the index makes out of
-    source/world/<w>/<w>.json, so: the index, the sync, the placements. No model is built."""
+    source/world/<w>/<w>.json, so: the index, the sync, the placements. No model is built.
+
+    And the townsfolk's figures: the index adds placements.json's `spawns` to the placed
+    objects, and the figure cook stands a townsperson only when its model is placed (Aida's
+    Amy and Baz, 2026-10-12, were in its tables but drawn by no one). --no-monsters keeps the
+    world's breeds as they were cooked."""
     source = os.path.join(SOURCE, "world", world, f"{world}.json")
     if not os.path.exists(source):
         from things import NotFound
         raise NotFound(f"no world source/world/{world}/{world}.json")
+    spawns = os.path.join(SOURCE, "world", world, "placements.json")
+    newest = lambda: max(mtime(source), mtime(spawns))
     index_json = os.path.join(WORKSHOP, "index.json")
     placed = os.path.join(ASSETS, "world", world, f"{world}.json")
     return [
         Step("index", ["python3", os.path.join(PIPELINE, "index.py"), SOURCE, WORKSHOP],
-             lambda c: ((mtime(source) > mtime(index_json),
-                         f"{world}.json is newer than the index" if mtime(source) > mtime(index_json)
+             lambda c: ((newest() > mtime(index_json),
+                         f"{world}.json or placements.json is newer than the index"
+                         if newest() > mtime(index_json)
                          else "the index is newer than the placements")), "index"),
         Step("sync", ["python3", os.path.join(TOOLS, "sync.py"), "--src", WORKSHOP, "--dst", ASSETS,
                       "--world", world, "--only-world"],
-             lambda c: ((bool(c & {"index"}) or mtime(source) > mtime(placed),
+             lambda c: ((bool(c & {"index"}) or newest() > mtime(placed),
                          "the workshop changed" if c & {"index"} else "assets/ against the source")),
              "assets"),
         Step(f"placements {world}", COOK + ["--world", world, "--only", "placements"],
              cook_test([os.path.join(COOKED, world, world + ".mut")], [placed], f"{world}.mut"),
              "cooked", lock=world),
+        Step(f"townsfolk {world}", COOK + ["--world", world, "--only", "figures", "--no-monsters"],
+             cook_test([os.path.join(COOKED, "figures", "figures.json" if world == "lorencia"
+                                     else f"figures_{world}.json")], [placed], "the figures table"),
+             "cooked", lock="figures", after=jobs(os.path.join(COOKED, "figures", "jobs.txt"), 60)),
     ]
 
 

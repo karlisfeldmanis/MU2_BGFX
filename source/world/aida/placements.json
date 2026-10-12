@@ -1,0 +1,26 @@
+{
+  "world": "aida",
+  "summary": "What the extraction cannot know, for Aida: its two townspeople, ours (the user's pick, 2026-10-12; MU's 2005 Aida had none). They stand on OpenMU Season Six's two Aida NPC tiles (VersionSeasonSix/Maps/Aida.cs:45-46), as world.json `npcs` does. See docs/aida-port.md.",
+  "spawns": [
+    {
+      "model": "PotionGirlAmy",
+      "who": "Potion Girl Amy",
+      "tile": [
+        78,
+        13
+      ],
+      "facing": 4,
+      "ours": "on Osbourne's tile, facing south-east (Aida.cs:45)"
+    },
+    {
+      "model": "Storage01",
+      "who": "Baz The Vault Keeper",
+      "tile": [
+        86,
+        14
+      ],
+      "facing": 2,
+      "ours": "on Jerridon's tile, facing south-west (Aida.cs:46); NoMove on every grid"
+    }
+  ]
+}
