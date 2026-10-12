@@ -12,21 +12,23 @@ namespace {
 constexpr float kFrame = 0.04f;   // MU's reference frame
 constexpr float kUnit = 0.01f;    // a MU unit, in metres
 constexpr float kLightDim = 0.5f;  // ours: her lights and foot glow at half MU's
-// Ours: her five steady bone lights at 0.4 of MU's size, the 1.7 on zx02 over a metre across
-// (the user, 2026-10-12, of the Bloody Witch Queen's: 'that huge star/sparkle effect is not
-// great'). Her blows' flashes keep MU's.
-constexpr float kBoneLightSize = 0.3f;
-// And smokier (the user, 2026-10-12: 'that start has to be more elegennt more smokey'): each
-// light a dimmer core, kBoneLightCore of its light, and off it a thin wisp of her Chrome03 smoke
-// every kWispEvery reference frames, rising and opening as it fades and turning slowly. Ours.
-constexpr float kBoneLightCore = 0.6f;
-constexpr float kWispEvery = 0.6f;
-constexpr float kWispScale = 0.18f;           // of the 64-texel sheet as it is born
-constexpr float kWispGrow = 0.012f;            // a reference frame, of the sheet
-constexpr float kWispRise = 1.8f * kUnit;     // a reference frame
-constexpr float kWispLife = 30.0f;            // reference frames
+// Ours: the glow under her dress, MU's sub 4 Shiny02 at 4 -- 2.5 m tall, its roll thrown anew
+// every frame so it flickered as a huge star (the user, 2026-10-12, of the Bloody Witch Queen:
+// 'that huge star/sparkle effect is not great', 'that effect which is under body, under the
+// dress', 'more elegennt more smokey'). Now kFootGlowSize of it, held still and kFootGlowDim, and
+// under her hem a low mist of her Chrome03 smoke: a wisp every kWispEvery reference frames
+// within kWispSpread of her feet, rising slowly and opening as it fades.
+constexpr float kFootGlowSize = 0.4f;
+constexpr float kFootGlowDim = 0.6f;
+constexpr float kWispEvery = 0.8f;
+constexpr float kWispSpread = 0.55f;          // metres from her feet
+constexpr float kWispLow = 0.05f, kWispHigh = 0.45f;  // metres over the ground, born
+constexpr float kWispScale = 0.35f;           // of the 64-texel sheet as it is born
+constexpr float kWispGrow = 0.018f;           // a reference frame, of the sheet
+constexpr float kWispRise = 0.9f * kUnit;     // a reference frame
+constexpr float kWispLife = 40.0f;            // reference frames
 constexpr float kWispTint[3] = {0.75f, 0.25f, 0.8f};
-constexpr float kWispLight = 0.32f;
+constexpr float kWispLight = 0.28f;
 constexpr float kBoneScale[5] = {0.8f, 1.1f, 1.0f, 1.7f, 0.8f};
 constexpr const char* kBones[6] = {"Bip01 L Hand", "zx", "zx01", "zx02", "zx04", "Bip01"};
 constexpr float kFootGlow[3] = {0.7f, 0.5f, 0.7f};
@@ -167,15 +169,13 @@ void WitchQueen::watch(uint32_t id, const Figure& figure, int attack, float key,
     while (queen.owed >= 1.0f) {
         queen.owed -= 1.0f;
         queen.roll = std::floor(unit() * 30.0f) / 100.0f + 0.6f;
-        // A wisp off one of her five lights, drawn at random, every kWispEvery frames.
-        queen.wispOwed += 1.0f;
-        if (queen.wispOwed >= kWispEvery) {
-            queen.wispOwed -= kWispEvery;
-            const int k = int(unit() * 5.0f) % 5;
-            float at[3];
-            if (queen.bones[k] >= 0 && figure.pointOn(queen.bones[k], origin, at)) {
-                mote(Mote::Kind::Wisp, at, kWispScale * (0.7f + 0.3f * kBoneScale[k]), fade);
-            }
+        // The mist under her hem, every kWispEvery frames.
+        for (queen.wispOwed += 1.0f; queen.wispOwed >= kWispEvery; queen.wispOwed -= kWispEvery) {
+            const float turn = unit() * 6.2831853f, reach = kWispSpread * std::sqrt(unit());
+            const float at[3] = {feet[0] + std::cos(turn) * reach,
+                                 feet[1] + kWispLow + unit() * (kWispHigh - kWispLow),
+                                 feet[2] + std::sin(turn) * reach};
+            mote(Mote::Kind::Wisp, at, kWispScale * (0.8f + 0.4f * unit()), fade);
         }
         if (attack == 0) continue;
         queen.frames += 1.0f;
@@ -308,14 +308,13 @@ void WitchQueen::gather(gfx::Effects& effects) const {
         const float dim = kLightDim * one.fade;
         if (one.foot) {
             const float colour[3] = {kFootGlow[0] * dim, kFootGlow[1] * dim, kFootGlow[2] * dim};
-            sprite(shiny_, one.at, 0.5f * kShinyWide * one.scale, 0.5f * kShinyTall * one.scale, colour,
-                   one.roll * 20.0f);
+            const float size = one.scale * kFootGlowSize;
+            const float soft[3] = {colour[0] * kFootGlowDim, colour[1] * kFootGlowDim, colour[2] * kFootGlowDim};
+            sprite(shiny_, one.at, 0.5f * kShinyWide * size, 0.5f * kShinyTall * size, soft, 0.0f);
             continue;
         }
-        const float core = dim * kBoneLightCore;
-        const float colour[3] = {(one.roll + 0.5f) * core, (one.roll - 0.05f) * core, (one.roll + 0.5f) * core};
-        const float half = 0.5f * kImpact * one.scale * kBoneLightSize;
-        sprite(impact_, one.at, half, half, colour, 0.0f);
+        const float colour[3] = {(one.roll + 0.5f) * dim, (one.roll - 0.05f) * dim, (one.roll + 0.5f) * dim};
+        sprite(impact_, one.at, 0.5f * kImpact * one.scale, 0.5f * kImpact * one.scale, colour, 0.0f);
     }
     for (const Mote& one : motes_) {
         const float light = one.light;
