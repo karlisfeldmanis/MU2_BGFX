@@ -18,6 +18,7 @@
 #include "core/json.h"
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 namespace mu::studio {
@@ -114,6 +115,10 @@ public:
     void askRecipe(const std::string& target);
     RecipeView recipe() const;
     void forgetRecipe();
+    // Another hand edited a source (the journal, StudioDesk::watchJournal): the inspector's own
+    // copy of the recipe is read again on its next draw. Taken once.
+    void recipeEdited() { recipeEdited_ = true; }
+    bool takeRecipeEdited() { return std::exchange(recipeEdited_, false); }
     // `how` is "set", or tools/mu/edit.py's "insert" (value put in at path: a list's index, or
     // a block's new key) or "remove" (path taken out; value unused).
     bool edit(const std::string& file, const std::string& path, const std::string& value,
@@ -153,6 +158,7 @@ private:
     int serverPid_ = 0;
     std::vector<JobView> jobs_;
     Cores cores_;
+    bool recipeEdited_ = false;
     std::string error_;
 
     mutable std::mutex planLock_;

@@ -93,6 +93,8 @@ void Inspector::tab(Cooker& cooker, RecipeView& view, const std::string& target,
     }
     // Asked once a subject, and kept here: the copy is edited in place after each write
     // rather than read again, so a typed value does not flicker back while the file settles.
+    // Another hand's edit (an agent's `mu edit`, a checklist ticked by `mu research`) is read again.
+    if (!light && cooker.takeRecipeEdited()) view.answered = false;
     if (view.target != target || !view.answered) {
         if (cooker.connected()) cooker.askRecipe(target);
         RecipeView fresh = cooker.recipe();

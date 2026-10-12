@@ -133,6 +133,7 @@ void StudioDesk::watchJournal(Context& ctx, game::World& town, double now) {
     }
     if (!theirs) return;
     cooker_.forgetRecipe();
+    cooker_.recipeEdited();
     cooker_.forgetPlan();
     if (world) {
         if (!objects) place_.reread(ctx);
