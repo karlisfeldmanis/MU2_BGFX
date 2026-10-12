@@ -329,6 +329,12 @@ close without the hero dying in a second.
   melee (the user: visuals only), and ours alternates the two blows where MU's plain blow is Attack
   1 (the user: keep alternating). fantaF and PoundingBall decoded to source/effects/aida as
   `true_fire` and `pounding_ball`. Checklist 11 done, 2 set aside.
+- **Debuffs, ours (2026-10-12)**: no source gives an Aida breed a damage type or debuff (OpenMU no
+  AttackSkill; WebZen has no Monster.txt rows for them and empty MonsterSkill/Unit/Element tables,
+  though its code gives post-Aida monsters a skill attack three blows in four; MuMain only picks
+  animations). The user chose: the Forest Orc and Death Tree poison (`rules.poisons`), and Hell
+  Maine's fire lay, two blows in three, burns (`rules.burns`, kBurners, sim/realm_burn.cpp: a tenth
+  of the blow a second for 5 s, one at a time, fire resistance turns it).
 - **The breeds' rules**: Tarkan's MoneyRate 30 and MaxItemLevel 3, RegTime 10, and OpenMU's x/255
   resistance read raw (Death Tree 18, Forest Orc 19, Death Rider 20, about 95% turned aside; Tarkan's are 8-13).
 
