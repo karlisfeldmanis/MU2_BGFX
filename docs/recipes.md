@@ -82,10 +82,10 @@ Traced from Aida's bring-up (c3d5e637) and Tarkan (about 40 code files over 35 c
    - `pipeline/terrain.py <Data>/WorldN <w> source/world N`, after the manifest's `map` and its
      `pipeline` knobs (hidden types, grass, void, light...) are written (since D2);
    - the tile sheets decoded, and `ground.json` by hand;
-   - `tileset.py` and `ground.py`, the `gates` row in `mu.db` (checkpoint), index and sync;
+   - `tileset.py` and `ground.py`, the manifest's `gates.spawn` (since D6), index and sync;
    - `cook.py --only ground`, and `--only tables` here and in the neighbours.
    Since sprint B, `./mu make ground <w> --folder N` runs all but the dicts, ground.json and
-   the gates row.
+   the spawn gate.
 2. `source/world/<w>/world.json`: its `name` and `show` block (copy the nearest world's;
    sprint D1), and its `rules` (arrival, home, event, floors, move order, summons, drops,
    invasion, treasure, flight, second_class; D4), then `./mu make realm`. Code: `sheets/worlds/<w>.json`, maybe the

@@ -291,7 +291,17 @@
         "target": 2,
         "note": "Gates.cs:185, Lorencia's stair down at DoungeonGate01, level 20, to the Dungeon's exit gate 2. And the Dungeon's own, :186-192: the way out asks nothing, every stair between its three floors asks level 20. Floors are regions of one map, so 5 to 15 lead to the map they stand on (Realm::throughGate). Lorencia to Dungeon 1"
       }
-    ]
+    ],
+    "spawn": {
+      "number": 17,
+      "box": [
+        133,
+        118,
+        151,
+        135
+      ],
+      "note": "OpenMU's spawn gate 17: the box a new character starts in and a dead one stands up in, the .mur's safe gate (pipeline/index.py gate_rows). rules.arrive is its middle. Out of mu.db's gates table in sprint D6."
+    }
   },
   "pipeline": {
     "hidden": {

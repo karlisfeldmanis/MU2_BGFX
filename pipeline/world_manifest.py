@@ -80,6 +80,18 @@ def gate_boxes() -> dict:
     return boxes
 
 
+def spawn_gates() -> dict:
+    """{map: {"x1", "y1", "x2", "y2"}}: each world's spawn gate (its manifest's `gates.spawn`,
+    sprint D6; mu.db's gates table before it), the box a new character starts in."""
+    out = {}
+    for doc in manifests().values():
+        spawn = doc.get("gates", {}).get("spawn")
+        if spawn:
+            x1, y1, x2, y2 = spawn["box"]
+            out[doc["map"]] = {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
+    return out
+
+
 def npcs() -> dict:
     """{map: [(npc, name, figure, column, row, look)]}: the townsfolk each world's manifest
     stands (`npcs`), for the cook's tables (tools/cook.py)."""

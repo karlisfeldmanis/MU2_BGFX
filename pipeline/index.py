@@ -1861,31 +1861,12 @@ def spawn_rows(project: Path) -> dict:
 def gate_rows(project: Path) -> dict:
     """Where a character is put down on each map, by OpenMU's map number.
 
-    OpenMU's Gates.cs, kept in mu.db as the gates table for the reason the spawn boxes are:
-    it is the one place these numbers are written down. Only the spawn gate is carried for
-    now - the box a new character starts in and a dead one stands up in - because it is the
-    only gate anything reads. The rest of the table is for when a map has a door to another.
+    OpenMU's spawn gates, each world's manifest's `gates.spawn` (sprint D6; mu.db's gates table
+    before it). Only the spawn gate is carried - the box a new character starts in and a dead
+    one stands up in - because it is the only gate anything here reads; the doors are the
+    manifests' exits and enters, which the realm and gate_boxes take.
     """
-    store = project / "mu.db"
-
-    if not store.exists():
-        return {}
-
-    with sqlite3.connect(f"file:{store}?mode=ro", uri=True) as db:
-        db.row_factory = sqlite3.Row
-
-        try:
-            rows = db.execute(
-                "SELECT map, x1, y1, x2, y2 FROM gates WHERE spawn = 1 ORDER BY id"
-            ).fetchall()
-        except sqlite3.DatabaseError as bad:
-            print(f"  index      could not read gates ({bad}); no spawn gates")
-            return {}
-
-    return {
-        row["map"]: {"x1": row["x1"], "y1": row["y1"], "x2": row["x2"], "y2": row["y2"]}
-        for row in rows
-    }
+    return world_manifest.spawn_gates()
 
 
 def onset(path: Path) -> float:
@@ -3034,7 +3015,7 @@ def main() -> None:
     listed = worlds(root, build)
 
     # What the server needs of a map that is not in the map's own document: where a
-    # character is put down, from the gates table, and which grade the world is looked at
+    # character is put down, from its manifest's gates.spawn, and which grade the world is looked at
     # through, by the grade sharing the world's name. A world with neither is still listed;
     # the viewer walks it, and the server refuses to raise it and says which is missing.
     gates = gate_rows(root.resolve())

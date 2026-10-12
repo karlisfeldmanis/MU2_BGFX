@@ -159,7 +159,17 @@
         "target": 56,
         "note": "Tarkan to Atlans"
       }
-    ]
+    ],
+    "spawn": {
+      "number": 57,
+      "box": [
+        187,
+        54,
+        203,
+        69
+      ],
+      "note": "OpenMU's spawn gate 57: the box a new character starts in and a dead one stands up in, the .mur's safe gate (pipeline/index.py gate_rows). rules.arrive is its middle. Out of mu.db's gates table in sprint D6."
+    }
   },
   "pipeline": {
     "hidden": {

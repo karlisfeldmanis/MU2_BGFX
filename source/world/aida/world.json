@@ -106,7 +106,17 @@
         "target": 122,
         "note": "Aida's way back to Noria (OpenMU VersionSeasonSix Gates.cs:535). MU asks 10; ours free, the way out as every other map's (the user, 2026-10-11)."
       }
-    ]
+    ],
+    "spawn": {
+      "number": 119,
+      "box": [
+        82,
+        8,
+        87,
+        14
+      ],
+      "note": "OpenMU's spawn gate 119: the box a new character starts in and a dead one stands up in, the .mur's safe gate (pipeline/index.py gate_rows). rules.arrive is its middle. Out of mu.db's gates table in sprint D6."
+    }
   },
   "pipeline": {
     "hidden": {

@@ -669,6 +669,18 @@ session.
   order (37 rows), 0 differ; one changed kind is caught; cook.py imports; the cook reads these
   only by `.get(world)`, so nothing is recooked.
 
+### Slice D6: the spawn gates out of mu.db, as done
+
+- **Each world's spawn gate is its manifest's `gates.spawn` {number, box, note}**, the seven rows
+  of mu.db's `gates` table (all of them spawn gates; Lorencia's, Devias's, Noria's and Aida's
+  were in no manifest before). `world_manifest.spawn_gates()` reads them and `index.py`'s
+  `gate_rows` returns it; the realm's tables ignore the key (`./mu check`'s realm line agrees).
+- **mu.db's `gates` table is dropped**; mu.db holds accounts, characters, items and messages.
+- **Proved:** HEAD's `gate_rows` on HEAD's mu.db against the new one on the manifests, seven maps,
+  identical by value and type, and one changed box is caught; it is the only input of
+  index.json's `gates.safe` that changed, so nothing is recooked; mu.db's other eight tables
+  unchanged dump for dump.
+
 ## 9b. Sprint E, the plan: the breed row
 
 Surveyed 2026-10-11 at 27765619. **Decided (the user, 2026-10-11):** a breed's facts go in its

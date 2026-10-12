@@ -162,7 +162,17 @@
         "target": 54,
         "note": "WebZen's gate.txt 53 and 55 (Season Six Gates.cs:524-525): Atlans's south-west lagoon by the Hydras to Tarkan, and Tarkan's north-east corner back, both level 130 in every source that has them (140 at Tarkan's launch). Ours: the way in asks 100, just over Tarkan's breeds' 72-93 as Atlans's 70 sits over its 43-74, and the way back 70, Atlans's own way in (docs/tarkan-port.md, decision 2). Gate 53's box is half rock (column 14); the walker tests its own tile, as in the Lost Tower's niches. Atlans to Tarkan"
       }
-    ]
+    ],
+    "spawn": {
+      "number": 49,
+      "box": [
+        15,
+        11,
+        27,
+        23
+      ],
+      "note": "OpenMU's spawn gate 49: the box a new character starts in and a dead one stands up in, the .mur's safe gate (pipeline/index.py gate_rows). rules.arrive is its middle. Out of mu.db's gates table in sprint D6."
+    }
   },
   "pipeline": {
     "hidden": {

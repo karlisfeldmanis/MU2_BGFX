@@ -376,7 +376,17 @@
         "fly": true,
         "note": "WebZen's gate.txt 62 and 64 (Season Six Gates.cs:526-527): floor 7's south end to Icarus, and Icarus's first row back. MU asks 160 in, with wings or a Dinorant (`fly`), and 50 (S6) or 80 (WebZen) out. Ours (docs/icarus-port.md, decision 2, the passes' recommendation): 160 in, which the Dinorant asks anyway (source/items/pets/Helper04.json), and the way out free. Lost Tower 7 to Icarus"
       }
-    ]
+    ],
+    "spawn": {
+      "number": 42,
+      "box": [
+        203,
+        70,
+        213,
+        81
+      ],
+      "note": "OpenMU's spawn gate 42: the box a new character starts in and a dead one stands up in, the .mur's safe gate (pipeline/index.py gate_rows). rules.arrive is its middle. Out of mu.db's gates table in sprint D6."
+    }
   },
   "pipeline": {
     "hidden": {

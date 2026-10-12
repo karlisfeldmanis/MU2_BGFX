@@ -247,7 +247,17 @@
         "target": 66,
         "note": "Ours: the Messenger's door into Blood Castle 1 (sim/event.h kCastleEnterGate), a row with a box off the map so no step ever stands in it. His talk sends him through."
       }
-    ]
+    ],
+    "spawn": {
+      "number": 22,
+      "box": [
+        197,
+        35,
+        218,
+        50
+      ],
+      "note": "OpenMU's spawn gate 22: the box a new character starts in and a dead one stands up in, the .mur's safe gate (pipeline/index.py gate_rows). rules.arrive is its middle. Out of mu.db's gates table in sprint D6."
+    }
   },
   "pipeline": {
     "hidden": [
