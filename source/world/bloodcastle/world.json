@@ -165,6 +165,19 @@
     ],
     "light_depth": 1.0,
     "light_chroma": 0.75,
-    "figure_light": 0.5
+    "figure_light": 0.5,
+    "anchor_kinds": {
+      "value": {
+        "Object38": 4
+      },
+      "note": "Blood Castle's nine Object38 (type 37, no .bmd): MU's emitters, which roll BITMAP_ADV_SMOKE and BITMAP_CLOUD up from the court, the bridge, the gap and the castle every other frame on a four-tick cadence (ZzzObject.cpp:3227-3242). Kind 4, the chimney's rising smoke."
+    },
+    "shown_later": {
+      "value": [
+        "Object10",
+        "Object11"
+      ],
+      "note": "Hidden placements a world shows later, cooked with flag 8 so the town holds them back until the game clears it: Blood Castle's lowered drawbridge, Object10's deck and Object11's chains, which MuMain shows as Object37 lands (ActionObject, ZzzObject.cpp:107-123; game/world/ drawbridge.h)."
+    }
   }
 }

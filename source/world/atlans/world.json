@@ -226,6 +226,12 @@
     },
     "lifted": {
       "Object24": 0.06
+    },
+    "anchor_kinds": {
+      "value": {
+        "Object23": 6
+      },
+      "note": "Atlans's 845 bubble vents, Object23 (type 22, hidden): MoveObject's WD_7ATLANSE arm throws a BITMAP_BUBBLE a frame for half of every four seconds (ZzzObject.cpp:4055-4063). Kind 6, a bubble vent: no light; game/world/bubbles.h rolls them."
     }
   }
 }

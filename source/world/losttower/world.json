@@ -410,6 +410,12 @@
     "airs_from": "dungeon",
     "light_reach": 5,
     "object_light_depth": 0.6,
-    "flat_over_void": true
+    "flat_over_void": true,
+    "anchor_kinds": {
+      "value": {
+        "Object25": 5
+      },
+      "note": "The Lost Tower's 95 Flame vents (Object25, hidden): MoveObject's WD_4LOSTTOWER arm lights the wizard's Flame on one a frame in 64 (ZzzObject.cpp:4020-4024). Kind 5, a vent: Lamps rolls it and Play burns it (game/world/lamps.h)."
+    }
   }
 }

@@ -30,7 +30,8 @@ Traced from 84940c86 (Aida's trees) and c571b2cd (ruins and graves).
 7. `tools/cook.py --world <w> --only textures`, then `--only meshes`, then `--only placements`
    **(order: meshes before textures cook white)**.
 8. Maybe: the world manifest's `pipeline` block (`hidden`, `grounded_types`, `lifted`,
-   `chromed`, `flat_over_void`...; since D2), `tools/cook_anchors.py` ANCHOR_KINDS_BY_WORLD,
+   `chromed`, `flat_over_void`...; since D2) and its anchors (`anchor_kinds`, `brazier_bowls`,
+   `shown_later`, `hidden_models`; since D5),
    `game/world/ornaments.cpp` for a glow.
 9. Shots: `./run.sh --world <w> --at X,Y --frames 240 --shot 120 --shot-path <abs> --mute --save <abs>/demo.json`.
 
@@ -95,7 +96,8 @@ Traced from Aida's bring-up (c3d5e637) and Tarkan (about 40 code files over 35 c
 4. Air and music: `sounds.json` and the wav, `--only showing`, then the manifest's `air` and
    `music`.
 5. Objects (above), then monsters (above). Also:
-   - `game/world/ornaments.cpp` glows (by world and model), `cook.py` ANCHOR_KINDS_BY_WORLD;
+   - `game/world/ornaments.cpp` glows (by world and model), the manifest's
+     `pipeline.anchor_kinds` (since D5);
    - `index.py` EFFECTS. A system of its own is a `game/world/` file, a field in
      `world_show.h`, and the manifest naming it.
    - Birds and crawlers: the manifest's `show` `boids` or `crawls`, which the cook also builds
@@ -113,8 +115,8 @@ OPERABLE_BY_MAP and `cook.py`'s 11 per-world dicts and PERCHES are the manifest'
 block: a new map writes no Python. Left: `cook_anchors.py` ANCHOR_KINDS_BY_WORLD and
 the NPCs (D3b). **After D3-D4c:** the gates, townsfolk and map rules are the manifest's too
 (`./mu make realm` writes the sim's tables), so a map with no logic of its own writes no C++:
-its only code is `realm_travel.cpp`'s row and the bot's copy. Left: `cook_anchors.py`
-ANCHOR_KINDS_BY_WORLD and `ornaments.cpp`'s arms (sprint G).
+its only code is `realm_travel.cpp`'s row and the bot's copy. **After D5:** its hidden
+anchors are the manifest's too. Left: `ornaments.cpp`'s arms (sprint G).
 
 ## An item or weapon
 

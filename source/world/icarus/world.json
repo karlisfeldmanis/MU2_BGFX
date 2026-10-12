@@ -132,6 +132,17 @@
       "value": true,
       "note": "MuMain skips RenderTerrain on map 10 (MainScene.cpp:463); the hero walks an unseen plane over the clear's navy. docs/icarus-port.md."
     },
-    "flat_over_void": true
+    "flat_over_void": true,
+    "anchor_kinds": {
+      "value": {
+        "Object01": 12,
+        "Object02": 13,
+        "Object03": 14,
+        "Object04": 15,
+        "Object05": 16,
+        "Object06": 17
+      },
+      "note": "Icarus's cloud banks, Object01-06 (types 0-5, hidden): each throws 20 or 10 standing BITMAP_CLOUD puffs (ZzzObject.cpp:3090-3169), drawn by game/world/sky_clouds.h. Kind 12 + the type. None lights."
+    }
   }
 }

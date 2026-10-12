@@ -656,6 +656,19 @@ session.
   - sim_test's 16,960 lines identical to HEAD's (both built in worktrees), server_test 27 of 27.
   - Live: three netbots and a client, every link "none disagreed".
 
+### Slice D5: the world anchors, as done
+
+- **Sprint D's last per-world tables:** `tools/cook_anchors.py`'s ANCHOR_KINDS_BY_WORLD,
+  BRAZIER_BOWLS, SHOWN_LATER and HIDDEN_BY_WORLD are each world's manifest's `pipeline` knobs
+  `anchor_kinds`, `brazier_bowls`, `shown_later` and `hidden_models` (`hidden` was taken: it is
+  types), each with the comment that stood over its rows as its note; cook_anchors.py reads them
+  through `world_manifest.by_world` under the same names, so cook.py did not change. Seven
+  worlds (charscene, losttower, bloodcastle, atlans, tarkan, icarus, aida). The kinds' shared
+  tables (ANCHOR_KINDS, ANCHOR_LIGHT, SPRAY_KINDS, LIGHT_TWINS) stay: they hold for every world.
+- **Proved:** HEAD's cook_anchors.py against the new one, every table row by value, type and
+  order (37 rows), 0 differ; one changed kind is caught; cook.py imports; the cook reads these
+  only by `.get(world)`, so nothing is recooked.
+
 ## 9b. Sprint E, the plan: the breed row
 
 Surveyed 2026-10-11 at 27765619. **Decided (the user, 2026-10-11):** a breed's facts go in its

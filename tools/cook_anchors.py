@@ -5,6 +5,14 @@ Moved out of tools/cook.py on 2026-10-11 to pay for Aida's waterfall spray under
 which kind (content::EmitterKind), the light each kind throws, and the hidden models a world
 holds back or never draws.
 """
+import os
+import sys
+
+# pipeline/world_manifest.py: each world's own anchors are its manifest's `pipeline` knobs
+# (anchor_kinds, brazier_bowls, shown_later, hidden_models; sprint D's last slice), each with the
+# comment that stood here as its note. The comments below say what each kind is.
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "pipeline"))
+import world_manifest  # noqa: E402
 
 # MU's hidden anchors in Lorencia: MoveObject's WD_0LORENCIA calls CreateFire(0|1|2, o, 0,0,0)
 # on MODEL_LIGHT01..03 and hides the holder (ZzzObject.cpp). Kind 1 is a fire, 4 a smoke.
@@ -19,40 +27,7 @@ ANCHOR_KINDS = {"Light01": 1, "Light02": 4, "Light03": 4}
 # Blood Castle's nine Object38 (type 37, no .bmd): MU's emitters, which roll BITMAP_ADV_SMOKE
 # and BITMAP_CLOUD up from the court, the bridge, the gap and the castle every other frame on a
 # four-tick cadence (ZzzObject.cpp:3227-3242). Kind 4, the chimney's rising smoke.
-ANCHOR_KINDS_BY_WORLD = {"charscene": {"Object80": 1, "Object133": 4},
-                         "losttower": {"Object25": 5},
-                         "bloodcastle": {"Object38": 4},
-                         # Atlans's 845 bubble vents, Object23 (type 22, hidden): MoveObject's
-                         # WD_7ATLANSE arm throws a BITMAP_BUBBLE a frame for half of every
-                         # four seconds (ZzzObject.cpp:4055-4063). Kind 6, a bubble vent: no
-                         # light; game/world/bubbles.h rolls them.
-                         "atlans": {"Object23": 6},
-                         # Tarkan's hidden emitters (RenderObjectVisual's WD_8TARKAN arm,
-                         # ZzzObject.cpp:2994-3065), drawn by game/world/desert_vents.h: 7 the
-                         # falling sand of Object71, 8 the steam vents of Object77, 9 the sand
-                         # geysers of Object84, 10 the cyan glow sprites of Object64. None lights.
-                         # 11 Object61's standing dust clouds (SubType 6, which never dies).
-                         # And Object05, whose .bmd the client does not ship, but whose MoveObject
-                         # arm still adds its white pulsing terrain light (ZzzObject.cpp:4095-4106):
-                         # a lamp, 0.
-                         "tarkan": {"Object71": 7, "Object77": 8, "Object84": 9, "Object64": 10,
-                                    "Object61": 11, "Object05": 0},
-                         # Icarus's cloud banks, Object01-06 (types 0-5, hidden): each throws
-                         # 20 or 10 standing BITMAP_CLOUD puffs (ZzzObject.cpp:3090-3169), drawn
-                         # by game/world/sky_clouds.h. Kind 12 + the type. None lights.
-                         "icarus": {"Object01": 12, "Object02": 13, "Object03": 14,
-                                    "Object04": 15, "Object05": 16, "Object06": 17},
-                         # Aida's waterfall spray boxes (RenderAidaObjectVisual types 56-58,
-                         # GMAida.cpp:166-183), drawn by game/world/waterfall_spray.h: 18 the
-                         # falling drops of Object57, 19 the specks bursting off Object58, 20
-                         # the mist of Object59. None lights; each carries the box's Scale,
-                         # which MU adds to every particle's (SPRAY_KINDS).
-                         "aida": {"Object57": 18, "Object58": 19, "Object59": 20,
-                                  # and Object68's small fires on rocks and ruins (type 67,
-                                  # GMAida.cpp:239-242), game/world/small_fires.h,
-                                  # and Object71's skull ghosts (type 70, :243-252),
-                                  # game/world/skull_ghosts.h.
-                                  "Object68": 21, "Object71": 22}}
+ANCHOR_KINDS_BY_WORLD = world_manifest.by_world("anchor_kinds", dict)
 # The anchor kinds whose particles grow with the box: the box's Scale rides in the emitter's
 # `high`, its reach left 0 so Lamps lights nothing.
 SPRAY_KINDS = (18, 19, 20, 21, 22)
@@ -60,7 +35,7 @@ SPRAY_KINDS = (18, 19, 20, 21, 22)
 # should light is given a second anchor beside it of a light-only kind: Aida's small fires, MU's
 # type 67, which lights nothing in MU -- ours (the user, 2026-10-11: 'fire has to make emiter').
 LIGHT_TWINS = {21: 23}
-BRAZIER_BOWLS = {"charscene": ("Object15",)}
+BRAZIER_BOWLS = world_manifest.by_world("brazier_bowls", tuple)
 # World 74's meshes MU never draws: GMEmpireGuardian4::MoveObject sets HiddenMesh = -2 on types
 # 79 to 86 and 129 to 132 (models Object80.. and Object130..133). Type 129's cloud anchor is
 # Object130, whose green `angeflo_r` glow slabs stood on the wall tops until this was read.
@@ -68,11 +43,9 @@ BRAZIER_BOWLS = {"charscene": ("Object15",)}
 #: the game clears it: Blood Castle's lowered drawbridge, Object10's deck and Object11's chains,
 #: which MuMain shows as Object37 lands (ActionObject, ZzzObject.cpp:107-123; game/world/
 #: drawbridge.h).
-SHOWN_LATER = {"bloodcastle": {"Object10", "Object11"}}
+SHOWN_LATER = world_manifest.by_world("shown_later", set)
 
-HIDDEN_BY_WORLD = {"charscene": {"Object80", "Object81", "Object83", "Object84", "Object85",
-                                 "Object86", "Object87", "Object130", "Object131", "Object132",
-                                 "Object133"}}
+HIDDEN_BY_WORLD = world_manifest.by_world("hidden_models", set)
 # What each throws: CreateFire(0)'s own (ZzzEffectFireLeave.cpp:61) -- L = rand[0.6, 1.1),
 # colour (L, 0.6L, 0.4L), range 4 -- with index.json's flicker for every other fire. Smoke
 # throws no light. Colour, low, high, reach, hz, smoothing.

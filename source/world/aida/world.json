@@ -186,6 +186,16 @@
     "lifted": {
       "value": {"Object27": 0.3, "Object28": 0.3, "Object30": 0.3},
       "note": "Ours: the flower beds' heads 0.3 m over the terrain, among the tips of Aida's 0.45 m grass, so they read as flowers on stems the grass hides."
+    },
+    "anchor_kinds": {
+      "value": {
+        "Object57": 18,
+        "Object58": 19,
+        "Object59": 20,
+        "Object68": 21,
+        "Object71": 22
+      },
+      "note": "Aida's waterfall spray boxes (RenderAidaObjectVisual types 56-58, GMAida.cpp:166-183), drawn by game/world/waterfall_spray.h: 18 the falling drops of Object57, 19 the specks bursting off Object58, 20 the mist of Object59. None lights; each carries the box's Scale, which MU adds to every particle's (SPRAY_KINDS). and Object68's small fires on rocks and ruins (type 67, GMAida.cpp:239-242), game/world/small_fires.h, and Object71's skull ghosts (type 70, :243-252), game/world/skull_ghosts.h."
     }
   }
 }
