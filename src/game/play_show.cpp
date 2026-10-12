@@ -612,7 +612,8 @@ void Play::shade(float seconds) {
         if (one.auraBone >= 0) {
             float at[3];
             if (one.figure.pointOn(one.auraBone, origin, at)) {
-                shadowStars_.glow(at, fade, one.auraColour);
+                if (one.auraReach > 0.0f && ground_) at[1] = ground_->heightAt(at[0], at[2]);
+                shadowStars_.glow(at, fade, one.auraColour, one.auraReach);
                 // The Hydra's gem, its aura bone (the "hydra" tag): MU's two pulsing sprites on it.
                 if (one.beams == Drawn::Beams::Horn) {
                     shadowStars_.flare(at, fade, std::sin(folkClock_ * 2.0f) * 0.3f + 0.7f);
@@ -635,18 +636,8 @@ void Play::shade(float seconds) {
             shadowStars_.roots().watch(one.id, one.figure.clip() == one.attackClip2, one.figure,
                                        one.yaw, fade, seconds);
         }
-        // A Blue Golem's drips, and its first blow drawing a life back from what it hunts.
-        if (one.figure.body() && one.figure.body()->has("blue_golem")) {
-            const sim::Body* golem = realm_.find(one.id);
-            const Drawn* prey = golem ? drawnOf(golem->quarry ? golem->quarry : golem->blowTarget) : nullptr;
-            const FigureBody* aim = prey && prey->placed ? prey->figure.body() : nullptr;
-            const float feet[3] = {aim ? prey->crown[0] : 0.0f,
-                                   aim ? prey->crown[1] - aim->height * aim->scale : 0.0f, aim ? prey->crown[2] : 0.0f};
-            shadowStars_.golemWater().watch(one.id, one.figure, one.figure.clip() == one.attackClip,
-                                            keyOf(one.figure), aim ? feet : nullptr, fade, seconds);
-            for (float burst[3]; shadowStars_.golemWater().takeBurst(burst);)
-                if (heard_.golemBurst >= 0) emit(heard_.golemBurst, burst[0], burst[2]);
-        }
+        // The Blue Golem's water and the Witch Queen's strikes (play_breeds.cpp).
+        breedShows(one, fade, seconds);
         // A Queen Rainer's or a Drakan's crackle along its bones (show.arcs, show.arcs): a
         // fresh few each reference frame.
         if (!one.arcBones.empty() && one.deadFor < 0.0f) {

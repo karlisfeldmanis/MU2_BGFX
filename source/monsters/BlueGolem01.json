@@ -241,7 +241,8 @@
         0.0,
         0.7
       ],
-      "note": "MoveAidaMonsterVisual MODEL_GOLDEN_STONE_GOLEM (GMAida.cpp:496-501): AddTerrainLight at its feet in (0, 0, 0.7), radius 3, every frame. Ours: an aura at the pelvis in MU blue, a stand-in for the ground light; there is no ground-light field for a monster yet."
+      "note": "MoveAidaMonsterVisual MODEL_GOLDEN_STONE_GOLEM (GMAida.cpp:496-501): AddTerrainLight at its feet in (0, 0, 0.7), radius 3, every frame. Ours: the aura laid on the ground under the pelvis over MU's 3 tiles (tiles), at the auras' faint 0.3.",
+      "tiles": 3
     },
     "lands": {
       "key": 5,

@@ -104,6 +104,161 @@
       "note": "MoveAidaBlurEffect's MODEL_DEATH_RIDER (GMAida.cpp:532-560): while AnimationFrame <= 5.06 on Attack 1 or 2, two CreateBlur type 3 (BITMAP_BLUR2), Short, in (1, 1, 1), sub 23 and 24, from 20 units along bone 18 to 100 along bone 20, and 25 to 26: the two arms' blades."
     }
   },
+  "mu_checklist": [
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:368",
+      "in": "M33Aida::CreateAidaMonster",
+      "kind": "body",
+      "lines": 12,
+      "actions": [],
+      "calls": [
+        "CreateCharacter",
+        "RegisterBone"
+      ],
+      "state": "done",
+      "note": "the recipe's monster block (mu new monster)"
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:532",
+      "in": "M33Aida::MoveAidaBlurEffect",
+      "kind": "effect",
+      "lines": 32,
+      "actions": [
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2"
+      ],
+      "calls": [
+        "CreateBlur"
+      ],
+      "state": "done",
+      "note": "show.claws: both blades lay white blur02 ribbons, 20 to 100 units, up to key 5.06 of either swing"
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:872",
+      "in": "M33Aida::RenderAidaMonsterVisual",
+      "kind": "effect",
+      "lines": 43,
+      "actions": [
+        "MONSTER01_WALK",
+        "MONSTER01_RUN",
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2",
+        "MONSTER01_DIE",
+        "MONSTER01_STOP1",
+        "MONSTER01_STOP2"
+      ],
+      "calls": [
+        "CreateSprite",
+        "BITMAP_LIGHT",
+        "CreateParticleFpsChecked",
+        "BITMAP_SPARK",
+        "PlayBuffer",
+        "SOUND_AIDA_DEATHRAIDER_MOVE1",
+        "SOUND_AIDA_DEATHRAIDER_ATTACK1",
+        "SOUND_AIDA_DEATHRAIDER_ATTACK2",
+        "SOUND_AIDA_DEATHRAIDER_DIE"
+      ],
+      "state": "todo",
+      "note": "the head's green light is show.aura on Bip02 Head at MU's (0, 0.25, 0); the BITMAP_SPARK particles are not carried yet"
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:344",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_DEATHRAIDER_MOVE1"
+      ],
+      "file": "Data/Sound/w34/dr_idle1.wav",
+      "state": "done",
+      "note": "as deathrider_move; MU loads dr_idle1.wav but the folder ships dr_idle01.wav, which ours plays"
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:346",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_DEATHRAIDER_ATTACK1"
+      ],
+      "file": "Data/Sound/w34/dr_attack1.wav",
+      "state": "done",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:347",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_DEATHRAIDER_ATTACK2"
+      ],
+      "file": "Data/Sound/w34/dr_attack2.wav",
+      "state": "done",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:348",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_DEATHRAIDER_DIE"
+      ],
+      "file": "Data/Sound/w34/dr_death.wav",
+      "state": "done",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:1358",
+      "in": "M33Aida::RenderAidaMonsterObjectMesh",
+      "kind": "look",
+      "lines": 21,
+      "actions": [],
+      "calls": [
+        "RenderMesh",
+        "RENDER_TEXTURE",
+        "BlendMeshTexCoordU",
+        "BlendMeshTexCoordV",
+        "StreamMesh",
+        "RENDER_BRIGHT",
+        "RENDER_CHROME"
+      ],
+      "state": "done",
+      "note": "glow.prizm: mesh 3 slides on both axes at 0.6 a second over the ice at 0.4; MU's chrome pass over it is not drawn"
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2693",
+      "in": "OpenMonsterModel",
+      "kind": "animation",
+      "lines": 8,
+      "actions": [
+        "MONSTER01_STOP1",
+        "MONSTER01_STOP2",
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2",
+        "MONSTER01_WALK",
+        "MONSTER01_DIE"
+      ],
+      "calls": [],
+      "state": "done",
+      "note": "source/monsters/actions.json action_overrides.102: idles 0.15, walk 0.3, attacks 0.23, death 0.15 (cooked 2026-10-12; the idle loop 0.53 s, 0.32 before)."
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2425",
+      "in": "GetMonsterModelName",
+      "kind": "other",
+      "lines": 1,
+      "actions": [],
+      "calls": [],
+      "state": "skip",
+      "note": "MU's name for the model, for its tools; nothing to carry"
+    }
+  ],
   "islands": [
     {
       "island": 0,
@@ -1534,161 +1689,6 @@
         0.884,
         0.778
       ]
-    }
-  ],
-  "mu_checklist": [
-    {
-      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:368",
-      "in": "M33Aida::CreateAidaMonster",
-      "kind": "body",
-      "lines": 12,
-      "actions": [],
-      "calls": [
-        "CreateCharacter",
-        "RegisterBone"
-      ],
-      "state": "done",
-      "note": "the recipe's monster block (mu new monster)"
-    },
-    {
-      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:532",
-      "in": "M33Aida::MoveAidaBlurEffect",
-      "kind": "effect",
-      "lines": 32,
-      "actions": [
-        "MONSTER01_ATTACK1",
-        "MONSTER01_ATTACK2"
-      ],
-      "calls": [
-        "CreateBlur"
-      ],
-      "state": "done",
-      "note": "show.claws: both blades lay white blur02 ribbons, 20 to 100 units, up to key 5.06 of either swing"
-    },
-    {
-      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:872",
-      "in": "M33Aida::RenderAidaMonsterVisual",
-      "kind": "effect",
-      "lines": 43,
-      "actions": [
-        "MONSTER01_WALK",
-        "MONSTER01_RUN",
-        "MONSTER01_ATTACK1",
-        "MONSTER01_ATTACK2",
-        "MONSTER01_DIE",
-        "MONSTER01_STOP1",
-        "MONSTER01_STOP2"
-      ],
-      "calls": [
-        "CreateSprite",
-        "BITMAP_LIGHT",
-        "CreateParticleFpsChecked",
-        "BITMAP_SPARK",
-        "PlayBuffer",
-        "SOUND_AIDA_DEATHRAIDER_MOVE1",
-        "SOUND_AIDA_DEATHRAIDER_ATTACK1",
-        "SOUND_AIDA_DEATHRAIDER_ATTACK2",
-        "SOUND_AIDA_DEATHRAIDER_DIE"
-      ],
-      "state": "todo",
-      "note": "the head's green light is show.aura on Bip02 Head at MU's (0, 0.25, 0); the BITMAP_SPARK particles are not carried yet"
-    },
-    {
-      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:344",
-      "in": "LoadWaveFile",
-      "kind": "sound",
-      "lines": 1,
-      "actions": [],
-      "calls": [
-        "SOUND_AIDA_DEATHRAIDER_MOVE1"
-      ],
-      "file": "Data/Sound/w34/dr_idle1.wav",
-      "state": "done",
-      "note": "as deathrider_move; MU loads dr_idle1.wav but the folder ships dr_idle01.wav, which ours plays"
-    },
-    {
-      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:346",
-      "in": "LoadWaveFile",
-      "kind": "sound",
-      "lines": 1,
-      "actions": [],
-      "calls": [
-        "SOUND_AIDA_DEATHRAIDER_ATTACK1"
-      ],
-      "file": "Data/Sound/w34/dr_attack1.wav",
-      "state": "done",
-      "note": ""
-    },
-    {
-      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:347",
-      "in": "LoadWaveFile",
-      "kind": "sound",
-      "lines": 1,
-      "actions": [],
-      "calls": [
-        "SOUND_AIDA_DEATHRAIDER_ATTACK2"
-      ],
-      "file": "Data/Sound/w34/dr_attack2.wav",
-      "state": "done",
-      "note": ""
-    },
-    {
-      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:348",
-      "in": "LoadWaveFile",
-      "kind": "sound",
-      "lines": 1,
-      "actions": [],
-      "calls": [
-        "SOUND_AIDA_DEATHRAIDER_DIE"
-      ],
-      "file": "Data/Sound/w34/dr_death.wav",
-      "state": "done",
-      "note": ""
-    },
-    {
-      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:1358",
-      "in": "M33Aida::RenderAidaMonsterObjectMesh",
-      "kind": "look",
-      "lines": 21,
-      "actions": [],
-      "calls": [
-        "RenderMesh",
-        "RENDER_TEXTURE",
-        "BlendMeshTexCoordU",
-        "BlendMeshTexCoordV",
-        "StreamMesh",
-        "RENDER_BRIGHT",
-        "RENDER_CHROME"
-      ],
-      "state": "done",
-      "note": "glow.prizm: mesh 3 slides on both axes at 0.6 a second over the ice at 0.4; MU's chrome pass over it is not drawn"
-    },
-    {
-      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2693",
-      "in": "OpenMonsterModel",
-      "kind": "animation",
-      "lines": 8,
-      "actions": [
-        "MONSTER01_STOP1",
-        "MONSTER01_STOP2",
-        "MONSTER01_ATTACK1",
-        "MONSTER01_ATTACK2",
-        "MONSTER01_WALK",
-        "MONSTER01_DIE"
-      ],
-      "calls": [],
-      "state": "todo",
-      "note": ""
-    },
-    {
-      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2425",
-      "in": "GetMonsterModelName",
-      "kind": "other",
-      "lines": 1,
-      "actions": [],
-      "calls": [],
-      "state": "skip",
-      "note": "MU's name for the model, for its tools; nothing to carry"
     }
   ]
 }

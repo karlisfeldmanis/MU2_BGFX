@@ -622,6 +622,12 @@ EFFECTS = {
     "waterfall_drops": "effects/aida/waterfall1.png",
     "waterfall_mist": "effects/aida/waterfall2.png",
     "waterfall_spray": "effects/aida/waterfall3.png",
+    # The Witch Queen's (game/fx/witch_queen.h): BITMAP_CHROME3, Effect/Chrome03.OZJ
+    # (ZzzOpenData.cpp:5300), a grey cloud her blows' BITMAP_SMOKE sub 27 wears; and
+    # BITMAP_TRUE_BLUE, Effect/fantaB.OZJ (:5186), the blue lick where each of her strikes lands.
+    # 64 squares on black, added.
+    "chrome03": "effects/aida/chrome03.png",
+    "true_blue": "effects/aida/fantab.png",
     # Tarkan's sandstorm, BITMAP_CHROME + 2 and + 3 (MapManager.cpp:143-145): sand01 a soft grey
     # cloud and sand02 sparse white specks, both on black, which RenderOutSides lays over the
     # whole screen added (ZzzInterface.cpp:3677-3689; game/world/sand_haze.h).

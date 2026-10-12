@@ -1036,6 +1036,7 @@ private:
         // Its faint light (show.aura): the bone it hangs on, -1 for none, and its colour.
         int auraBone = -1;
         float auraColour[3] = {0.0f, 0.0f, 0.0f};
+        float auraReach = 0.0f;  // metres on the ground (show.aura.tiles); 0 hangs it at the bone
         // The one bone its embers rise off (the Death Knight's pelvis), -1 for a random one.
         int emberBone = -1;
         float emberEvery = 0.0f;   // reference frames between embers
@@ -1661,6 +1662,7 @@ private:
     ShadowStars shadowStars_;
     // The Shadows' stars, off the same posed frame as the eyes. fx/shadow_stars.h.
     void shade(float seconds);
+    void breedShows(Drawn& one, float fade, float seconds);  // Aida's breeds, play_breeds.cpp
     // The Budge Dragons' fire and dust, after the clips have been advanced this frame.
     void exhale(float seconds);
     // The Bull Fighters' snorts and the Elite's eyes, off the same posed frame.
@@ -1713,7 +1715,7 @@ private:
         int mix = -1, mixBreak = -1;                    // eMix and eBreak: the Chaos Machine
         int meteorite = -1, explosion = -1, golemBurst = -1;  // the Lich's throw and landing; a Blue Golem's fist
         int evil = -1, hellfire = -1;  // the Devil's sEvil and the Balrog's sHellFire
-        int boltThunder = -1;          // eThunder, Lightning's own, on a Hydra's and a Lizard King's bolts
+        int boltThunder = -1, witchThunder = -1;  // eThunder, a Hydra's and Lizard King's bolts; eElec, a Witch Queen's ring
         int rage2 = -1, rage3 = -1;    // Rageful Blow's streaks and its cracks
         int iceCast = -1;                                 // spell_ice, on an Ice Monster's cast
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is

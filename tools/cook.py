@@ -3485,6 +3485,8 @@ def cook_shows(out_dir):
             one = {"tags": list(show.get("tags", []))}
             if "aura" in show:
                 one["aura"] = {"bone": show["aura"]["bone"], "colour": list(show["aura"]["colour"])}
+                if "tiles" in show["aura"]:
+                    one["aura"]["tiles"] = show["aura"]["tiles"]
             if "eye_trail" in show:
                 one["eye_trail"] = {"right": show["eye_trail"]["right"],
                                     "left": show["eye_trail"]["left"]}

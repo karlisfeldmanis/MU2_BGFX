@@ -35,6 +35,7 @@
 #include "content/showing.h"
 #include "content/texture.h"
 #include "game/fx/golem_water.h"
+#include "game/fx/witch_queen.h"
 #include "game/fx/tree_roots.h"
 #include "gfx/effects.h"
 #include "gfx/renderer.h"
@@ -46,6 +47,7 @@ public:
     // A Death Tree's roots and smoke ride along: opened, aged and drawn with these.
     TreeRoots& roots() { return roots_; }
     GolemWater& golemWater() { return golemWater_; }
+    WitchQueen& witchQueen() { return witchQueen_; }
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);
     void shutdown();
@@ -57,8 +59,9 @@ public:
     void star(const float at[3], bool poison, float fade);
     // **Ours** (the user, 2026-10-01: "it also probably be a minimal light emiter"): a faint
     // light in `colour` at a monster's effect -- a Poison Shadow's green, a Death Gorgon's
-    // orange, a Death Knight's sword (game/play_tuning.h show.aura).
-    void glow(const float at[3], float fade, const float colour[3]);
+    // orange, a Death Knight's sword (game/play_tuning.h show.aura). `reach`, metres, is MU's
+    // AddTerrainLight radius for one laid on the ground (show.aura.tiles); 0 keeps kGlowReach.
+    void glow(const float at[3], float fade, const float colour[3], float reach = 0.0f);
     // One of an Alquamos's star lights (ZzzCharacter.cpp:8792-8801): MU's BITMAP_LIGHT at Scale
     // 0.6 on a g_chStar bone, added in Luminosity * (0.8, 0.9, 1), Luminosity rolled 0.7-1 a
     // frame. Ours at kStarlightDim of that and the luminosity passed in, steadier (play_show).
@@ -120,6 +123,7 @@ private:
         float position[3];
         float fade;
         float colour[3];
+        float reach;
     };
     std::vector<Glow> glows_;
     struct Ember {
@@ -177,6 +181,7 @@ private:
     std::vector<Starlight> starlights_;
     TreeRoots roots_;
     GolemWater golemWater_;   // a Blue Golem's drips and drain (fx/golem_water.h)
+    WitchQueen witchQueen_;   // a Witch Queen's lights and strikes (fx/witch_queen.h)
     static constexpr int kRibbonTails = 15;
     struct Ribbon {
         float points[kRibbonTails][3];

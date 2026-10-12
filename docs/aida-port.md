@@ -278,9 +278,30 @@ close without the hero dying in a second.
   both hands and the head every frame; on Attack 1 smoke at the left hand from key 4, the shock
   wave from 5 to 5.5, and from 6.9 the JointLaser01 drain from its prey back to it. MU's play
   speeds, which a missing break in ZzzOpenData sets to the Death Rider's (stand 0.15, walk 0.3,
-  attack 0.23, die 0.15), are actions.json's action_overrides.101. Its hit (number and sound) lands on key 5 of its 8, with the shock wave (`show.lands`, read by play_tuning.h's landingOf; every other breed keeps half the clip). Left: the ground light (the
-  checklist's one to do). The Death Rider (102) has the same speeds in MU and none here yet, and
-  the Death Tree its 0.2 death: each a cook of its own.
+  attack 0.23, die 0.15), are actions.json's action_overrides.101. Its hit (number and sound) lands on key 5 of its 8, with the shock wave (`show.lands`, read by play_tuning.h's landingOf; every other breed keeps half the clip). Its ground light is MU's
+  since 2026-10-12: `show.aura.tiles` 3 lays the (0, 0, 0.7) on the ground under it over 3 tiles.
+  The Death Rider (102) plays the same speeds (actions.json 102) and the Death Tree its 0.2
+  death (104), cooked 2026-10-12; the Death Rider's idle loops in 0.53 s, 0.32 before.
+- **Witch Queen (304)**: WitchQueen01, Monster101 (MONSTER_MODEL 100) at 1.4; ma_1, ma2 and it
+  cloth, ma002 brass, ma001 glass (the wand's tip, cut out), h_r hair (cut out); 6 nests. Her red
+  ground light (0.7, 0.1, 0.1) over 3 tiles is `show.aura` with `tiles`; she dies at MU's 0.2
+  (actions.json 100); hits land on key 6 (`show.lands`). Sounds as witchqueen_move/_attack/_die
+  (MU crosses wq_attack1/2 by action; ours picks either) and witchqueen_thunder, eElec1-2, heard
+  where her ring's first strike falls. game/fx/witch_queen.h, the `witch_queen` tag (hosted by
+  ShadowStars, fed by Play::breedShows in play_breeds.cpp): her five Impack03 lights on L Hand and
+  zx-zx04 rolled a frame at half MU's, the Shiny02 glow under her root; from key 4 of either blow
+  Chrome03 smoke and an Impack03 flash 70 off her root (MU's Footstepst is bone 0, Bip01, at her
+  hips: the first cut put them on the ground, where they cut into it as hard pink blocks); Attack
+  1's Shiny02 at her and her target; Attack 2's thin crackle at the target (Thunder's fork) and,
+  nine frames in, her ring: five points 2.5 m round her at frames 10-18, each struck from 15 m up
+  by Play's Thunder (the wizard's Lightning, MU's wide and thin JOINT_THUNDER; the first cut's own
+  80-wide strips read 'cartoonish'), with MU's fantaB licks (upright, light LifeTime/25: spun and
+  held at full they were cyan balls) and Magic_Ground2 two tiles square. **Ours**, after the
+  user ('work on character impact effects there is some burst and some purple smoke'): the smoke
+  and flash every other frame, the smoke at 0.6; one shine a blow at each place, growing 1.15 a
+  frame, in her magenta (MU throws one a frame growing 1.3, white, which piled into a rayed
+  burst over the knight). Checklist 11 done, 2 set aside. Chrome03 and fantaB decoded to
+  source/effects/aida as `chrome03` and `true_blue`.
 - **The breeds' rules**: Tarkan's MoneyRate 30 and MaxItemLevel 3, RegTime 10, and OpenMU's x/255
   resistance read raw (Death Tree 18, Forest Orc 19, Death Rider 20, about 95% turned aside; Tarkan's are 8-13).
 

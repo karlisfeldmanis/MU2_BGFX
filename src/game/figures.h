@@ -156,9 +156,11 @@ struct FigureBody {
     bool has(std::string_view tag) const {
         return std::find(tags.begin(), tags.end(), tag) != tags.end();
     }
-    // Its faint light (show.aura): the bone it hangs on, empty for none, and its colour.
+    // Its faint light (show.aura): the bone it hangs on, empty for none, and its colour; with
+    // `tiles`, MU's AddTerrainLight radius, it lies on the ground under the bone that far round.
     std::string auraBone;
     float auraColour[3] = {0.0f, 0.0f, 0.0f};
+    float auraTiles = 0.0f;
     // Its two eye trails' bones, right and left (show.eye_trail), empty for none.
     std::string eyeTrail[2];
     // The bones its shows hang on, by role (show.bones, sprint E4b): "hand_flame", "stars",
@@ -513,6 +515,7 @@ private:
         std::vector<std::string> tags;
         std::string auraBone;
         float auraColour[3] = {0.0f, 0.0f, 0.0f};
+        float auraTiles = 0.0f;
         std::string eyeTrail[2];
         std::vector<std::pair<std::string, std::vector<std::string>>> boneRoles;
         float tint[3] = {0.0f, 0.0f, 0.0f};

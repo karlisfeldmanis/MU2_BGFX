@@ -31,6 +31,7 @@ void Figures::readShows() {
         for (int i = 0; i < 3 && i < int(row["aura"]["colour"].items.size()); ++i) {
             show.auraColour[i] = float(row["aura"]["colour"].items[size_t(i)].numberOr(0.0));
         }
+        show.auraTiles = float(row["aura"]["tiles"].numberOr(0.0));
         show.eyeTrail[0] = row["eye_trail"]["right"].stringOr("");
         show.eyeTrail[1] = row["eye_trail"]["left"].stringOr("");
         for (const auto& [role, names] : row["bones"].members) {
@@ -100,6 +101,7 @@ void Figures::addShown(std::unique_ptr<FigureBody> made) {
         body.tags = show.tags;
         body.auraBone = show.auraBone;
         for (int i = 0; i < 3; ++i) body.auraColour[i] = show.auraColour[i];
+        body.auraTiles = show.auraTiles;
         body.eyeTrail[0] = show.eyeTrail[0];
         body.eyeTrail[1] = show.eyeTrail[1];
         body.boneRoles = show.boneRoles;

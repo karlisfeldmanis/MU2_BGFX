@@ -139,6 +139,7 @@ bool ShadowStars::open(const std::string& assetDir, content::Textures& textures,
     flares_.reserve(8);
     roots_.open(assetDir, textures, table);
     golemWater_.open(assetDir, textures, table);
+    witchQueen_.open(assetDir, textures, table);
     stars_.reserve(kStars);
     embers_.reserve(kEmbers);
     open_ = bgfx::isValid(shiny_) && bgfx::isValid(ring_);
@@ -149,12 +150,14 @@ void ShadowStars::shutdown() {
     stars_.clear();
     roots_.shutdown();
     golemWater_.shutdown();
+    witchQueen_.shutdown();
     open_ = false;
 }
 
 void ShadowStars::update(float seconds) {
     roots_.update(seconds);
     golemWater_.update(seconds);
+    witchQueen_.update(seconds);
     stars_.clear();
     starlights_.clear();
     ribbons_.clear();
@@ -204,12 +207,13 @@ void ShadowStars::update(float seconds) {
                   embers_.end());
 }
 
-void ShadowStars::glow(const float at[3], float fade, const float colour[3]) {
+void ShadowStars::glow(const float at[3], float fade, const float colour[3], float reach) {
     if (!open_ || fade <= 0.0f || glows_.size() >= 32) return;
     Glow one;
     for (int i = 0; i < 3; ++i) one.position[i] = at[i];
     one.fade = fade;
     for (int i = 0; i < 3; ++i) one.colour[i] = colour[i];
+    one.reach = reach > 0.0f ? reach : kGlowReach;
     glows_.push_back(one);
 }
 
@@ -339,7 +343,7 @@ uint32_t ShadowStars::lights(gfx::PointLight* out, uint32_t max, const float nea
         if (count >= most) break;
         gfx::PointLight& light = out[count++];
         for (int i = 0; i < 3; ++i) light.position[i] = one->position[i];
-        light.reach = kGlowReach;
+        light.reach = one->reach;
         light.height = kGlowHeight;
         for (int i = 0; i < 3; ++i) light.colour[i] = one->colour[i] * kGlowDim * one->fade;
     }
@@ -378,6 +382,7 @@ void ShadowStars::gather(gfx::Effects& effects) const {
     if (!open_) return;
     roots_.gather(effects);
     golemWater_.gather(effects);
+    witchQueen_.gather(effects);
     if (bgfx::isValid(light_)) {
         for (const Starlight& one : starlights_) {
             gfx::Sprite sprite;

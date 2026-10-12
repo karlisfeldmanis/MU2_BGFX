@@ -535,6 +535,7 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     }
     heard_.explosion = sound_.load("explosion", true);
     heard_.golemBurst = sound_.load("bluegolem_burst", true);
+    heard_.witchThunder = sound_.load("witchqueen_thunder", true);
     // The knight dies to the other branch of the same test a monster does: SOUND_HUMAN_SCREAM04,
     // pMaleDie.wav. The elf is IsFemale's other side of it, pFemaleScream2 -- the figure's own
     // `female`, the flag her poses are chosen by.
@@ -839,6 +840,7 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                 one.arcHalf = look->arcHalf;
             }
             one.auraBone = -1;
+            one.auraReach = look->auraTiles * (ground_ ? ground_->metresPerTile() : 1.0f);
             if (!look->auraBone.empty() && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (size_t b = 0; b < bones.size(); ++b) {

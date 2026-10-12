@@ -78,6 +78,7 @@ constexpr Resistance kResistances[] = {
     {74, 13, 13},  // Alpha Crust
     {75, 15, 15},  // Great Drakan
     {77, 30, 30},  // Dark Phoenix
+    {304, 22, 22},  // Witch Queen
     {305, 21, 21},  // Blue Golem
     {306, 20, 20},  // Death Rider
     {307, 19, 19},  // Forest Orc
@@ -144,6 +145,7 @@ constexpr DropRate kDropRates[] = {
     {74, 14, 3, 10},  // Alpha Crust
     {75, 14, 3, 30},  // Great Drakan
     {77, 14, 4, 150},  // Dark Phoenix
+    {304, 30, 3, 10},  // Witch Queen
     {305, 30, 3, 10},  // Blue Golem
     {306, 30, 3, 10},  // Death Rider
     {307, 30, 3, 10},  // Forest Orc

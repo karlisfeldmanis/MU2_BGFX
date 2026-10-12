@@ -1581,6 +1581,22 @@ adjusting lighting, tonemaps, shadow, sun, daylight for maps".
   (actions.json's "101"). Proved: a scripted fight's shots showed the drips, the smoke, the shock
   wave and the drain; the idle 1.60 s for 7 keys (0.15) where it was 0.96; on a scratch copy a
   tick keeps the old date and a real edit takes a new one; both checklist monsters plan clean.
+- The Witch Queen, and five Cooker fixes found cooking her (2026-10-12):
+  - `show.aura.tiles`: MU's AddTerrainLight radius. With it the aura lies on the ground under its
+    bone that many tiles round (ShadowStars' glow takes a reach). The golem's stand-in became its
+    ground light; the Witch Queen's red one is the same field.
+  - A show tweak cooks shows.json alone: make.py's mtime takes `without`, the build ignoring
+    `show` and `rules`, the realm `show`. One number of the golem's light had planned its
+    Blender build, every world's tables, the realm and a compile.
+  - The showing cook's index runs when pipeline/index.py or anything under source/effects is
+    newer: a new effect sheet had cooked nothing and the game logged `smoke NO`.
+  - The studio's arena knight is undying: a level-94 breed killed him in three blows and walked
+    home out of view.
+  - The breeds' own shows moved out of play_show.cpp (at its size) into play_breeds.cpp's
+    Play::breedShows.
+  Traps: a relink of build/mu2 kills the user's open studio (macOS kills a process whose signed
+  binary changes), so build only between showings and reopen after; an index run reads index.py
+  when it starts, so a row added during a cook's index step is missed.
 
 ## 10. Leave alone
 

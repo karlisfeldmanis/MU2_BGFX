@@ -2585,6 +2585,33 @@
         "eFirebustBoom.wav"
       ],
       "from": "Ours, the user's pick of six (2026-10-12): MU's shock wave at the Blue Golem's left hand on Attack 1 (GMAida.cpp:844-848) is silent, and this is heard on its first frame, once a blow, where the fist meets (fx/golem_water.h). eFirebustBoom.wav is MU's SOUND_ATTACK_FIRE_BUST_EXP (ZzzOpenData.cpp:4870)."
+    },
+    "witchqueen_move": {
+      "files": [
+        "wq_idle1.wav",
+        "wq_idle2.wav"
+      ],
+      "from": "SOUND_AIDA_WITCHQUEEN_MOVE1 + rand() % 2, one frame in 15 while she walks or runs (GMAida.cpp:725-728); MapManager.cpp:365-366 loads w34/wq_idle1.wav and wq_idle2.wav."
+    },
+    "witchqueen_attack": {
+      "files": [
+        "wq_attack1.wav",
+        "wq_attack2.wav"
+      ],
+      "from": "Crossed in MU: ATTACK1 plays SOUND_AIDA_WITCHQUEEN_ATTACK2 (w34/wq_attack2.wav) and ATTACK2 plays ATTACK1 (wq_attack1.wav), once at the action`s start (GMAida.cpp:730-743; MapManager.cpp:367-368). Ours picks either for any blow."
+    },
+    "witchqueen_die": {
+      "files": [
+        "wq_death.wav"
+      ],
+      "from": "SOUND_AIDA_WITCHQUEEN_DIE on MONSTER01_DIE, once (GMAida.cpp:745-750); w34/wq_death.wav (MapManager.cpp:369)."
+    },
+    "witchqueen_thunder": {
+      "files": [
+        "eElec1.wav",
+        "eElec2.wav"
+      ],
+      "from": "SOUND_CHAOS_THUNDER01 + rand() % 2 beside wq_attack1 at the start of her Attack 2 (GMAida.cpp:737-743); eElec1.wav and eElec2.wav (MapManager.cpp:370-371, ZzzOpenData.cpp:4860). Ours: heard as her ring of strikes falls (fx/witch_queen.h)."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."
