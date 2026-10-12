@@ -17,6 +17,7 @@
 #include "core/log.h"
 #include "game/bench.h"
 #include "game/figures.h"
+#include "imgui.h"
 
 extern "C" char** environ;
 
@@ -214,7 +215,11 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
     tookPointer_ = false;
     if (placing_) {
         place_.world(ctx, world);
-        tookPointer_ = swap_ == Swap::Idle && place_.pointer(ctx, town, camera, gui_.wantsPointer());
+        marks_.world(ctx, world);
+        marks_.kind(ctx, placeMode_ == 1 ? StudioMarks::Kind::Gates : StudioMarks::Kind::Townsfolk);
+        const bool idle = swap_ == Swap::Idle;
+        tookPointer_ = idle && (placeMode_ == 0 ? place_.pointer(ctx, town, camera, gui_.wantsPointer())
+                                                : marks_.pointer(ctx, town, camera, gui_.wantsPointer()));
     }
     // The names are read once a tab, not once a frame: the world objects run to hundreds.
     if (int(bench.categoryIndex()) != shelfCategory_ || shelf_.categories.size() != bench.categoryCount()) {
@@ -228,7 +233,7 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
     }
     shelf_.category = shelfCategory_;
     shelf_.selected = int(bench.browseIndex());
-    shelf_.target = placing_ ? "placements " + world : targetOf(bench);
+    shelf_.target = !placing_ ? targetOf(bench) : placeMode_ == 0 ? "placements " + world : marks_.target();
     shelf_.placing = placing_;
     shelf_.clip = bench.hasFigure() ? bench.clipLine() : std::string();
     shelf_.time = std::string(ctx.time.name()) + "    T changes the time of day";
@@ -270,7 +275,18 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
     if (placing_) {
         float side[4];
         panels_.sideRect(side);
-        place_.panel(ctx, town, cooker_, camera, side[0], side[1], side[2], side[3]);
+        const int mode = placeModeBar(side[0], side[1], side[2], placeMode_);
+        if (mode != placeMode_) {
+            placeMode_ = mode;
+            place_.drop();
+            marks_.drop();
+        }
+        const float bar = ImGui::GetFrameHeightWithSpacing() + 2.0f * ImGui::GetStyle().WindowPadding.y + 4.0f;
+        if (placeMode_ == 0) {
+            place_.panel(ctx, town, cooker_, camera, side[0], side[1] + bar, side[2], side[3] - bar);
+        } else {
+            marks_.panel(ctx, town, cooker_, camera, side[0], side[1] + bar, side[2], side[3] - bar);
+        }
     }
     if (asked.arena == 1 && body) openArena(body->name, world);
     if (asked.arena == 0) closeArena();

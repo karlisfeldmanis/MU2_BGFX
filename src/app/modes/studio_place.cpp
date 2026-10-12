@@ -46,16 +46,26 @@ core::Json numberJson(double v) {
 std::string quote(const std::string& words) {
     std::string quoted = "\"";
     for (char c : words) {
-        if (c == '"' || c == '\\') quoted += '\\';
-        quoted += c;
+        if (c == '"' || c == '\\') {
+            quoted += '\\';
+            quoted += c;
+        } else if (c == '\n') {
+            quoted += "\\n";
+        } else if (c == '\t') {
+            quoted += "\\t";
+        } else if (static_cast<unsigned char>(c) >= 0x20) {
+            quoted += c;
+        }
     }
     return quoted + "\"";
 }
 
-// A source object back to JSON text, for an insert. core::Json keeps no int from float, so a
-// whole number is written as the file has it: `at`, `angle` and `scale` with a point (18400.0),
-// the rest (`type`) without.
-std::string text(const core::Json& j, bool floats = false) {
+}  // namespace
+
+// core::Json keeps no int from float, so a whole number is written as the file has it: with
+// `pointed`, a map object's `at`, `angle` and `scale` with a point (18400.0) and the rest
+// (`type`) without; without it, every whole number bare (a manifest's tiles).
+std::string jsonText(const core::Json& j, bool pointed, bool floats) {
     char out[64];
     switch (j.type) {
     case core::Json::Type::Null: return "null";
@@ -70,23 +80,21 @@ std::string text(const core::Json& j, bool floats = false) {
     case core::Json::Type::String: return quote(j.string);
     case core::Json::Type::Array: {
         std::string list = "[";
-        for (size_t i = 0; i < j.items.size(); ++i) list += (i ? ", " : "") + text(j.items[i], floats);
+        for (size_t i = 0; i < j.items.size(); ++i) list += (i ? ", " : "") + jsonText(j.items[i], pointed, floats);
         return list + "]";
     }
     case core::Json::Type::Object: {
         std::string block = "{";
         for (size_t i = 0; i < j.members.size(); ++i) {
             const std::string& key = j.members[i].first;
-            block += (i ? ", " : "") + quote(key) + ": " +
-                     text(j.members[i].second, key == "at" || key == "angle" || key == "scale");
+            const bool point = pointed && (key == "at" || key == "angle" || key == "scale");
+            block += (i ? ", " : "") + quote(key) + ": " + jsonText(j.members[i].second, pointed, point);
         }
         return block + "}";
     }
     }
     return "null";
 }
-
-}  // namespace
 
 void StudioPlace::world(Context& ctx, const std::string& name) {
     if (name == world_) return;
@@ -104,8 +112,7 @@ void StudioPlace::world(Context& ctx, const std::string& name) {
     adding_ = 0;
 }
 
-bool StudioPlace::ray(Context& ctx, const gfx::Camera& camera, float origin[3],
-                      float direction[3]) const {
+bool pointerRay(Context& ctx, const gfx::Camera& camera, float origin[3], float direction[3]) {
     const int width = ctx.window.width(), height = ctx.window.height();
     if (width <= 0 || height <= 0) return false;
     float px = 0.0f, py = 0.0f;
@@ -125,10 +132,9 @@ bool StudioPlace::ray(Context& ctx, const gfx::Camera& camera, float origin[3],
     return true;
 }
 
-bool StudioPlace::groundUnder(Context& ctx, game::World& world, const gfx::Camera& camera,
-                              float at[3]) const {
+bool groundUnderPointer(Context& ctx, game::World& world, const gfx::Camera& camera, float at[3]) {
     float o[3], d[3];
-    if (!ray(ctx, camera, o, d)) return false;
+    if (!pointerRay(ctx, camera, o, d)) return false;
     const content::Ground& ground = world.ground();
     // Down the ray in half metres to the first point under the land, then halved twelve times.
     float low = 0.0f, high = -1.0f;
@@ -148,6 +154,21 @@ bool StudioPlace::groundUnder(Context& ctx, game::World& world, const gfx::Camer
         }
     }
     for (int a = 0; a < 3; ++a) at[a] = o[a] + d[a] * high;
+    return true;
+}
+
+bool toScreen(Context& ctx, const gfx::Camera& camera, const float point[3], float* x, float* y) {
+    float view[16], proj[16], viewProj[16];
+    ctx.renderer.cameraMatrices(camera, view, proj);
+    bx::mtxMul(viewProj, view, proj);
+    const float clip[4] = {
+        viewProj[0] * point[0] + viewProj[4] * point[1] + viewProj[8] * point[2] + viewProj[12],
+        viewProj[1] * point[0] + viewProj[5] * point[1] + viewProj[9] * point[2] + viewProj[13],
+        0.0f,
+        viewProj[3] * point[0] + viewProj[7] * point[1] + viewProj[11] * point[2] + viewProj[15]};
+    if (clip[3] <= 0.0f) return false;   // behind the camera
+    *x = (clip[0] / clip[3] * 0.5f + 0.5f) * float(ctx.window.width());
+    *y = (0.5f - clip[1] / clip[3] * 0.5f) * float(ctx.window.height());
     return true;
 }
 
@@ -179,7 +200,7 @@ bool StudioPlace::pointer(Context& ctx, game::World& world, const gfx::Camera& c
         content::TownInstance& one = town.instanceAt(size_t(picked_));
         if (ctx.window.held(0)) {
             float g[3];
-            if (groundUnder(ctx, world, camera, g)) {
+            if (groundUnderPointer(ctx, world, camera, g)) {
                 one.position[0] = g[0] - grab_[0];
                 one.position[2] = g[2] - grab_[2];
                 one.position[1] = ground.heightAt(one.position[0], one.position[2]) +
@@ -195,7 +216,7 @@ bool StudioPlace::pointer(Context& ctx, game::World& world, const gfx::Camera& c
     if (overPanels || !ctx.window.clicked(0)) return false;
 
     float o[3], d[3];
-    if (!ray(ctx, camera, o, d)) return false;
+    if (!pointerRay(ctx, camera, o, d)) return false;
     const content::CookedTown& cooked = town.cooked();
     int best = -1;
     float bestT = 1e30f;
@@ -232,7 +253,7 @@ bool StudioPlace::pointer(Context& ctx, game::World& world, const gfx::Camera& c
     // A press on it starts a walk, when the source holds it.
     const content::TownInstance& one = cooked.instances[size_t(best)];
     float g[3];
-    if (line_ >= 0 && groundUnder(ctx, world, camera, g)) {
+    if (line_ >= 0 && groundUnderPointer(ctx, world, camera, g)) {
         grab_[0] = g[0] - one.position[0];
         grab_[2] = g[2] - one.position[2];
         heightOver_ = one.position[1] - ground.heightAt(one.position[0], one.position[2]);
@@ -311,7 +332,7 @@ bool StudioPlace::append(game::World& world, studio::Cooker& cooker, const core:
     core::Json* objects = member(source_, "objects");
     if (!objects) return *answer = "the source has no objects", false;
     const size_t at = objects->items.size();
-    if (!cooker.edit(file_, "[\"objects\", " + std::to_string(at) + "]", text(o), answer, "insert")) {
+    if (!cooker.edit(file_, "[\"objects\", " + std::to_string(at) + "]", jsonText(o, true), answer, "insert")) {
         return false;
     }
     objects->items.push_back(o);

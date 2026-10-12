@@ -40,6 +40,15 @@ namespace mu::app {
 
 struct Context;
 
+// The pointer's ray, where it meets the land, and a point back on the screen: Place's, shared
+// with its marks (app/modes/studio_marks.h).
+bool pointerRay(Context& ctx, const gfx::Camera& camera, float origin[3], float direction[3]);
+bool groundUnderPointer(Context& ctx, game::World& world, const gfx::Camera& camera, float at[3]);
+bool toScreen(Context& ctx, const gfx::Camera& camera, const float point[3], float* x, float* y);
+// A value of a source file back to JSON text, for an insert (studio_place.cpp says how whole
+// numbers are written).
+std::string jsonText(const core::Json& j, bool pointed, bool floats = false);
+
 class StudioPlace {
 public:
     // The world the source belongs to, read when it changes. Called each frame with the scene.
@@ -64,8 +73,6 @@ public:
     bool remove(game::World& world, studio::Cooker& cooker, std::string* answer);
 
 private:
-    bool ray(Context& ctx, const gfx::Camera& camera, float origin[3], float direction[3]) const;
-    bool groundUnder(Context& ctx, game::World& world, const gfx::Camera& camera, float at[3]) const;
     void match(game::World& world);
     int lineOf(game::World& world, size_t instance) const;
     void write(Context& ctx, game::World& world, studio::Cooker& cooker);

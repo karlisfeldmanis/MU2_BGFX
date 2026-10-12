@@ -29,6 +29,7 @@
 #include <string>
 #include <vector>
 
+#include "app/modes/studio_marks.h"
 #include "app/modes/studio_place.h"
 #include "gfx/gui.h"
 #include "studio/cooker.h"
@@ -113,6 +114,8 @@ private:
     std::string sceneAsked_;
     int plusAsked_ = -1;
     StudioPlace place_;
+    StudioMarks marks_;   // gates and townsfolk, sprint G
+    int placeMode_ = 0;   // placeModeBar's: 0 objects, 1 gates, 2 townsfolk
     bool placing_ = false, tookPointer_ = false;
     // The control socket's listener and its clients, each with the frame its next line waits for.
     int listener_ = -1;

@@ -1362,6 +1362,38 @@ the monsters tab's "Simulate combat" -- is the game's own arena in a window of i
 - Not yet: gates, NPC spots and the ground (G's rest); an index-added object is still shown and
   not moved; an added model's lamps and fires come with the Cook, as a moved one's do.
 
+### Slice G2: gates and the townsfolk's spots, as done
+
+- Over Place's window a row says what is placed: Objects, Gates or Townsfolk. The two new ones
+  are app/modes/studio_marks.{h,cpp}, reading the world's manifest, source/world/<w>/world.json
+  (D3's `gates.enters`, `gates.exits`, D3b's `npcs`), and drawing each over the land: a gate's
+  box as its outline on the ground (tiles x1..x2 are [x1, x2 + 1)), orange for a way in with
+  "23 > 24, level 20", teal for a way out; a townsperson as a dot and their name at the tile's
+  middle, as play_open.cpp stands them. A click picks (the townsperson within a tile and a half,
+  or the smallest box the tile is in), a drag moves it by whole tiles, and the window holds a
+  list of them and the picked one's numbers: a gate's box, level and target or its faces; a
+  townsperson's column, row and look (1 West clockwise to 8 NorthWest, cook.py's folk). Each is
+  written when let go, one value at a time through mu edit, and the manifest read again.
+- A townsperson is duplicated (a tile east) and deleted with G1's list operations. A gate is not:
+  its number pairs it with a gate in another world.
+- The card's target follows: `realm` for gates (compiled into the sim; a rebuild of the game and
+  the server follows, which the window says), `tables <w>` for townsfolk -- new, one world's
+  tables. Each world's `tables` step now has its manifest as an input (its folk and its safe
+  gate are in the .mur); before, a moved townsperson never made the tables stale.
+- Place's pointer ray, ground hit and JSON writer are free functions in studio_place.h, shared;
+  the writer escapes a note's newlines and writes a manifest's whole numbers bare.
+- Words: `mode objects|gates|townsfolk`, `mark <n>` (a gate's number or a townsperson's index),
+  `budge <dc> <dr>`, `look <n>`; `duplicate` and `delete` follow the mode.
+- Proved by shot runs in Lorencia: Wandering Merchant Harold (npcs[9]) picked, budged, turned,
+  duplicated and the copy deleted, then put back; his dot and name on the land beside the fire,
+  the card "mu make tables lorencia, stale: 1 of 1". Gate 23 budged by (-30, -110) to stand by
+  the fire -- its outline on the ground, white while picked -- and budged back. Refused as they
+  should be: look 0, a gate's duplicate, `mark 99`. world.json's hash as before every run (its
+  mtime is newer, so Lorencia's tables read stale until a cook, which writes the same bytes).
+  cooker_test 27 headless, 38 live; layercheck green.
+- Not yet: the ground (painting tiles.png); townsfolk have no figure in the studio's world, only
+  their mark; adding or deleting a gate (with its pair).
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

@@ -251,10 +251,16 @@ def head(things, threads):
     return steps
 
 
+def manifest(world):
+    """The world's manifest, source/world/<w>/world.json: its tables read its townsfolk (`npcs`)
+    and its safe gate, so a townsperson moved in the studio's Place makes them stale."""
+    return os.path.join(SOURCE, "world", world, "world.json")
+
+
 def tables(threads):
     return [Step(f"tables {w}", COOK + ["--world", w, "--only", "tables"],
                  cook_test([os.path.join(COOKED, w, w + ".mur")],
-                           [os.path.join(ASSETS, "index.json")], f"{w}.mur"),
+                           [os.path.join(ASSETS, "index.json"), manifest(w)], f"{w}.mur"),
                  "tables", lock=w) for w in cooked_worlds()]
 
 
@@ -275,7 +281,7 @@ def world_cook(world, things, threads):
              "cooked", lock=world),
         Step(f"tables {world}", COOK + ["--world", world, "--only", "tables"],
              cook_test([os.path.join(COOKED, world, world + ".mur")],
-                       [os.path.join(ASSETS, "index.json")], f"{world}.mur"),
+                       [os.path.join(ASSETS, "index.json"), manifest(world)], f"{world}.mur"),
              "cooked", lock=world),
     ]
 
@@ -626,6 +632,12 @@ def plan(target, threads, say, folder=None, reimport=False):
         return plan_sounds(threads)
     if target == ["tables"]:
         return plan_tables(threads)
+    if target[0] == "tables" and len(target) == 2:
+        # One world's: what a townsperson moved in the studio needs (its manifest's `npcs`).
+        steps = [s for s in tables(threads) if s.name == f"tables {target[1]}"]
+        if not steps:
+            raise NotFound(f"no cooked world {target[1]}")
+        return steps
     if target in (["realm"], ["gates"]):
         return plan_realm()
     if target == ["rehearsal"]:

@@ -6,6 +6,8 @@
 //   swap                   Read again              arena        Simulate combat
 //   place | pick <model> | nudge <dx> <dz>          Place objects, as the window does
 //   add <model> | duplicate | delete                 ... and sprint G's: add at the view's middle
+//   mode objects|gates|townsfolk                     what Place places; duplicate and delete follow it
+//   mark <n> | budge <dc> <dr> | look <n>            a gate by number or townsperson by index; tiles
 //   tab light              the inspector's Light   hide | show  the panels off and on
 //   shot <abs.png>         this frame to a file    wait <N>     N frames before the next line
 //   status                 what is on the bench    quit         close the studio
@@ -78,6 +80,36 @@ std::string StudioDesk::act(Context& ctx, game::ModelBench& bench, const std::st
         if (place_.line() < 0) return "error nothing picked that the source holds";
         place_.nudge(ctx, town, cooker_, dx, dz);
         return "ok nudged";
+    }
+    if (starts("mode")) {
+        const std::string mode = after("mode");
+        const int asked = mode == "objects" ? 0 : mode == "gates" ? 1 : mode == "townsfolk" ? 2 : -1;
+        if (asked < 0) return "error mode objects|gates|townsfolk";
+        placing_ = true;
+        placeMode_ = asked;
+        place_.drop();
+        marks_.drop();
+        return "ok placing " + mode + " in " + world;
+    }
+    if (placeMode_ != 0 && (starts("mark") || starts("budge") || starts("look") || what == "duplicate" ||
+                            what == "delete")) {
+        marks_.world(ctx, world);
+        marks_.kind(ctx, placeMode_ == 1 ? StudioMarks::Kind::Gates : StudioMarks::Kind::Townsfolk);
+        std::string answer;
+        bool ok = false;
+        int a = 0, b = 0;
+        if (starts("mark")) {
+            ok = marks_.pick(std::atoi(after("mark").c_str()));
+            answer = ok ? "picked " + after("mark") : "no " + after("mark") + " here";
+        } else if (starts("budge")) {
+            if (std::sscanf(after("budge").c_str(), "%d %d", &a, &b) != 2) return "error budge <dc> <dr>";
+            ok = marks_.budge(ctx, cooker_, a, b, &answer);
+        } else if (starts("look")) {
+            ok = marks_.look(ctx, cooker_, std::atoi(after("look").c_str()), &answer);
+        } else {
+            ok = what == "duplicate" ? marks_.duplicate(ctx, cooker_, &answer) : marks_.remove(ctx, cooker_, &answer);
+        }
+        return (ok ? "ok " : "error ") + answer;
     }
     if (starts("add") || what == "duplicate" || what == "delete") {
         place_.world(ctx, world);
