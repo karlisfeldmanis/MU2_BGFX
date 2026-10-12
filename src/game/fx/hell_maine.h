@@ -28,10 +28,12 @@
 //   over a smoke01 decal four tiles square in (0.2, 0, 0) (ZzzEffect.cpp:978-1017, 8967-9006).
 //
 // **Ours, marked.** The lights at kLightDim of MU's (the monster auras' rule: subtle). The hand
-// fire every other frame at kFireSize of MU's: MU's 32 flames a hand at 1.6 m piled into one white
-// bloom in our HDR picture. The storm's smoke every other frame. One laser a blow where MU lays
-// one a frame for its two keys, its flames at kLaserSize, fading over their last five frames, a
-// decal under every fourth at two tiles. Not carried: EarthQuake (the storm shakes MU's camera
+// fire every frame as MU's, at kFireSize (a third) of its size and kFireLight of its light: at MU's light its
+// 32 flames a hand piled into one white bloom in our HDR picture, and thinned to every other frame
+// they read as single balls (the user, 2026-10-12: 'fire does not looks okey'; at half size still 'bubbles'). The storm's smoke
+// every other frame. One laser a blow where MU lays one a frame for its two keys, its flames at
+// kLaserSize and kLaserLight, fading over their last five frames, a decal under every fourth at two
+// tiles. Both blows go at its target. Not carried: EarthQuake (the storm shakes MU's camera
 // every frame it walks), the laser's terrain light, the 10 units off the right hand. MU's numbers
 // are per reference frame, 25 a second, in centimetres. Fed by Play::breedShows from its own
 // clip; nothing here reaches the sim (the realm's blow is a melee, docs/aida-port.md decision 10).
@@ -59,9 +61,11 @@ public:
     void shutdown();
 
     // One Hell Maine this frame: which blow its clip is (0 none, 1 or 2), how far into it
-    // (keyOf), its feet on the ground and its facing, its fade and the frame's seconds.
+    // (keyOf), its feet on the ground and its facing, its target's feet or null, its fade and the
+    // frame's seconds. Its blows go at the target: MU turns a monster to it before it swings, and
+    // the drawn facing went wide of the knight in the studio (2026-10-12).
     void watch(uint32_t id, const Figure& figure, int attack, float key, const float feet[3],
-               float yaw, float fade, float seconds);
+               float yaw, const float* target, float fade, float seconds);
     void update(float seconds);
     void gather(gfx::Effects& effects) const;
     // A stone a storm kicks up, for Play's meteor to throw. False when none are left.
@@ -90,7 +94,7 @@ private:
         bool found = false, seen = false;
         float owed = 0.0f, lastKey = 0.0f, frames = 0.0f, roll = 0.6f;
         int lastAttack = 0;
-        bool stormed = false, lasered = false, odd = false;
+        bool stormed = false, lasered = false;
     };
     struct Light {
         float at[3];

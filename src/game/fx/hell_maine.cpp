@@ -17,7 +17,9 @@ constexpr const char* kBones[7] = {"Bone02", "Bone03", "zx04", "zx03", "zx08", "
 constexpr float kBoneScale[5] = {0.3f, 0.3f, 1.0f, 1.0f, 1.0f};
 // Ours (see the header): MU's sizes and lights brought down where they piled up.
 constexpr float kLightDim = 0.5f;
-constexpr float kFireSize = 0.5f;
+constexpr float kFireSize = 0.33f;   // a third: at a half its cores still read as bubbles
+constexpr float kFireLight = 0.4f;    // every frame as MU, at 0.4: one tongue, not single balls
+constexpr float kLaserLight = 0.5f;
 constexpr float kLaserSize = 0.5f;
 constexpr float kLaserFade = 5.0f;    // its last frames, faded
 constexpr int kDecalEvery = 4;        // a laser decal under every fourth flame
@@ -99,7 +101,7 @@ void HellMaine::mote(Mote::Kind kind, const float at[3], float scale, float ligh
 }
 
 void HellMaine::watch(uint32_t id, const Figure& figure, int attack, float key, const float feet[3],
-                      float yaw, float fade, float seconds) {
+                      float yaw, const float* target, float fade, float seconds) {
     One& one = ones_[id];
     one.seen = true;
     if (!figure.body() || !figure.body()->skeletonMesh || fade <= 0.0f) return;
@@ -131,18 +133,22 @@ void HellMaine::watch(uint32_t id, const Figure& figure, int attack, float key, 
     float hands[2][3];
     const bool left = one.bones[5] >= 0 && figure.pointOn(one.bones[5], origin, hands[0]);
     const bool right = one.bones[6] >= 0 && figure.pointOn(one.bones[6], origin, hands[1]);
-    const float way[2] = {std::sin(yaw), std::cos(yaw)};
+    float way[2] = {std::sin(yaw), std::cos(yaw)};
+    if (target) {
+        const float dx = target[0] - feet[0], dz = target[2] - feet[2];
+        if (const float far = std::sqrt(dx * dx + dz * dz); far > 0.1f) {
+            way[0] = dx / far;
+            way[1] = dz / far;
+        }
+    }
 
     one.owed += seconds / kFrame;
     while (one.owed >= 1.0f) {
         one.owed -= 1.0f;
         one.roll = std::floor(unit() * 8.0f) / 10.0f + 0.6f;
-        one.odd = !one.odd;
-        if (one.odd) {
-            const float big = attack == 2 ? 5.0f : 2.5f;
-            if (left) mote(Mote::Kind::Fire, hands[0], big * kFireSize, fade);
-            if (right) mote(Mote::Kind::Fire, hands[1], (attack == 2 ? 5.0f : 2.1f) * kFireSize, fade);
-        }
+        const float big = attack == 2 ? 5.0f : 2.5f;
+        if (left) mote(Mote::Kind::Fire, hands[0], big * kFireSize, fade * kFireLight);
+        if (right) mote(Mote::Kind::Fire, hands[1], (attack == 2 ? 5.0f : 2.1f) * kFireSize, fade * kFireLight);
         if (attack == 0) continue;
         one.frames += 1.0f;
         // AttackTime 10: the storm nine frames into Attack 1, walking out along its facing.
@@ -154,7 +160,8 @@ void HellMaine::watch(uint32_t id, const Figure& figure, int attack, float key, 
             storm.way[1] = way[1];
             storm.light = fade;
             storms_.push_back(storm);
-            core::logf("hell maine: Attack 1's storm at %.1f, %.1f", feet[0], feet[2]);
+            core::logf("hell maine: Attack 1's storm at %.1f, %.1f toward %.2f, %.2f (%s, yaw %.2f)", feet[0], feet[2],
+                       way[0], way[1], target ? "its target" : "its facing", yaw);
         }
         // Attack 2's fire lay at its right hand from key 9, once a blow.
         if (attack == 2 && !one.lasered && key >= 9.0f && right && lasers_.size() < kMostLasers) {
@@ -166,7 +173,8 @@ void HellMaine::watch(uint32_t id, const Figure& figure, int attack, float key, 
             laser.floor = feet[1];
             laser.light = fade;
             lasers_.push_back(laser);
-            core::logf("hell maine: Attack 2's fire lay from %.1f, %.1f", hands[1][0], hands[1][2]);
+            core::logf("hell maine: Attack 2's fire lay from %.1f, %.1f toward %.2f, %.2f (%s)", hands[1][0], hands[1][2],
+                       way[0], way[1], target ? "its target" : "its facing");
         }
     }
 }
@@ -329,7 +337,7 @@ void HellMaine::gather(gfx::Effects& effects) const {
     // The fire lay: twenty flames out along its facing at its hand's height, a decal under some.
     for (const Laser& one : lasers_) {
         const float left = kLaserLife - one.age;
-        const float light = one.light * std::clamp(left / kLaserFade, 0.0f, 1.0f);
+        const float light = one.light * kLaserLight * std::clamp(left / kLaserFade, 0.0f, 1.0f);
         const float white[3] = {light, light, light};
         const float red[3] = {kLaserDecal * light, 0.0f, 0.0f};
         for (int k = 1; k <= kLaserFlames; ++k) {
