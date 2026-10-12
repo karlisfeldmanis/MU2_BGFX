@@ -18,6 +18,7 @@ JSON lines back:
     {"op": "plan", "target": ["Sword01"]}                   -> {"steps": [{name, needed, reason}]}
     {"op": "recipe", "target": "Sword01"}                   -> {"files": [{file, doc}], "materials"}
     {"op": "edit", "file": f, "path": [...], "value": v}    -> {"edit": the journal's line}
+        "how": "insert" puts value in at path, "remove" takes path out (value unused)
     {"op": "stop"}
 
 An event is {"seq", "at", "job", "kind", ...}. The kinds: queued, plan (the steps that will run,
@@ -269,7 +270,12 @@ class Server:
         try:
             if op == "recipe":
                 return edit.recipe(ask["target"])
-            return {"edit": edit.edit(ask["file"], ask["path"], ask["value"], ask.get("who", "studio"))}
+            how, who = ask.get("how", "set"), ask.get("who", "studio")
+            if how == "remove":
+                return {"edit": edit.remove(ask["file"], ask["path"], who)}
+            if how == "insert":
+                return {"edit": edit.insert(ask["file"], ask["path"], ask["value"], who)}
+            return {"edit": edit.edit(ask["file"], ask["path"], ask["value"], who)}
         except NotFound as refused:
             return {"error": str(refused)}
         except Exception as crash:

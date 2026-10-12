@@ -1331,6 +1331,37 @@ the monsters tab's "Simulate combat" -- is the game's own arena in a window of i
   fitted (the Shadow 12 shade joints, the Poison Shadow its aura bone too). The plain Shadow's
   stars are MU's minus-blended dark ones and barely read over a dark body on the grey plinth.
 
+### Slice G1: objects added, duplicated and deleted, as done
+
+- tools/mu/edit.py has two list operations beside the scalar edit, under the same rule (only
+  the touched text changes, proved against json.loads before the write): `insert` puts a value
+  in at a list's index (its length appends) or a block's new key, written in its neighbours'
+  style -- their separator, their indent, the file's indent step -- so the diff is the new lines
+  alone; `remove` cuts a value and the separator before it. Each is the other's undo, and the
+  journal's line carries `op`. `./mu edit <t> <path> <value> --insert`, `./mu edit <t> <path>
+  --remove`; mu serve's edit takes `"how"`, and Cooker::edit a `how`.
+- Place: a model of the world's source and **Add** stand it on the land at the view's middle
+  (its type, flags, the cook's lift and its light copied from one of the model already there;
+  `at` in whole units); **Duplicate** puts a copy a metre east of the picked object; **Delete**
+  takes the picked out. An add appends to `objects`, so no other line moves; a delete moves the
+  lines after it up one, in the studio's copy of the source as in the file. An added object is
+  a town instance at once (Town::addInstance, drawn by gatherAll, in no chunk); a deleted one is
+  setHidden and no longer picked. **add a scale** writes the cook's 1.0 where the source has
+  none, after which it is dragged. Words: `add <model>`, `duplicate`, `delete`; MU_STUDIO_DO's
+  log line now carries each word's answer.
+- Found on the way, F6's: the studio sent `placements lorencia` to make and plan as one word,
+  so the card said "no recipe called placements lorencia" and its Cook could not have run.
+  Cooker sends a target's words apart, as the command line does.
+- Proved: insert-then-remove over every list and block of all 1695 recipes and sheets (5062
+  round trips, three a file) gave each file back byte for byte, and no insert rewrote more than
+  the one line before it. A shot run in Lorencia picked Bonfire01, duplicated it (the copy on
+  screen a metre east, its flames for the Cook), deleted the copy, added a Furniture01 at the
+  view's middle and deleted it: four journal lines (insert, remove, insert, remove) and
+  lorencia.json's hash as before. The card read "stale: 3 of 3 steps would run". cooker_test 27
+  headless, 38 live; layercheck green.
+- Not yet: gates, NPC spots and the ground (G's rest); an index-added object is still shown and
+  not moved; an added model's lamps and fires come with the Cook, as a moved one's do.
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

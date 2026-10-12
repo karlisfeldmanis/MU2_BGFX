@@ -240,8 +240,8 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
     watchJobs(bench);
     for (const auto& [at, what] : script_) {
         if (at != frame_) continue;
-        core::logf("studio: frame %d does '%s' (MU_STUDIO_DO)", at, what.c_str());
-        act(ctx, bench, world, town, what);
+        const std::string answer = act(ctx, bench, world, town, what);
+        core::logf("studio: frame %d does '%s' (MU_STUDIO_DO): %s", at, what.c_str(), answer.c_str());
     }
     serveControl(ctx, bench, world, town);
     ++frame_;

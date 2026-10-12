@@ -5,6 +5,7 @@
 //   scene <Stage|Home|w>   stand it there          plus <N>     the shine at +N
 //   swap                   Read again              arena        Simulate combat
 //   place | pick <model> | nudge <dx> <dz>          Place objects, as the window does
+//   add <model> | duplicate | delete                 ... and sprint G's: add at the view's middle
 //   tab light              the inspector's Light   hide | show  the panels off and on
 //   shot <abs.png>         this frame to a file    wait <N>     N frames before the next line
 //   status                 what is on the bench    quit         close the studio
@@ -77,6 +78,15 @@ std::string StudioDesk::act(Context& ctx, game::ModelBench& bench, const std::st
         if (place_.line() < 0) return "error nothing picked that the source holds";
         place_.nudge(ctx, town, cooker_, dx, dz);
         return "ok nudged";
+    }
+    if (starts("add") || what == "duplicate" || what == "delete") {
+        place_.world(ctx, world);
+        std::string answer;
+        const bool ok = starts("add") ? place_.add(town, cooker_, after("add"), bench.camera().target[0],
+                                                   bench.camera().target[2], &answer)
+                        : what == "duplicate" ? place_.duplicate(town, cooker_, &answer)
+                                              : place_.remove(town, cooker_, &answer);
+        return (ok ? "ok " : "error ") + answer;
     }
     if (starts("scene")) {
         sceneAsked_ = after("scene");

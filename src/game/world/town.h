@@ -81,6 +81,20 @@ public:
     // One instance to move in place: the studio's Place (app/modes/studio_place.h) moves what
     // gatherAll draws next frame, before the cook has written it. Never in a played world.
     content::TownInstance& instanceAt(size_t index) { return town_.instances[index]; }
+    // And one more, which Place added: drawn by gatherAll from the next frame, in no chunk and
+    // not among the resident casters, which the studio does not use. Its index. A removed one
+    // is setHidden, so no other index moves.
+    uint32_t addInstance(const content::TownInstance& one) {
+        town_.instances.push_back(one);
+        glowLevels_.push_back(1.0f);
+        paletteRows_.push_back(-1);
+        if (!residentSlot_.empty()) {
+            residentSlot_.push_back(kNoSlot);
+            residentBatchOf_.push_back(kNoSlot);
+            isDirty_.push_back(0);
+        }
+        return uint32_t(town_.instances.size() - 1);
+    }
     // How bright a placement's glow parts draw this frame, MU's BlendMeshLight: 1 unless the
     // lamps flicker it. Rides in the instance's fifth vec4 .w, which fs_glow reads.
     void setGlowLevel(uint32_t instance, float level) {

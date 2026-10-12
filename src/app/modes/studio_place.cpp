@@ -3,6 +3,7 @@
 #include <bgfx/bgfx.h>
 #include <bx/math.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 
@@ -35,6 +36,56 @@ std::string number(double v) {
     return text;
 }
 
+core::Json numberJson(double v) {
+    core::Json j;
+    j.type = core::Json::Type::Number;
+    j.number = v;
+    return j;
+}
+
+std::string quote(const std::string& words) {
+    std::string quoted = "\"";
+    for (char c : words) {
+        if (c == '"' || c == '\\') quoted += '\\';
+        quoted += c;
+    }
+    return quoted + "\"";
+}
+
+// A source object back to JSON text, for an insert. core::Json keeps no int from float, so a
+// whole number is written as the file has it: `at`, `angle` and `scale` with a point (18400.0),
+// the rest (`type`) without.
+std::string text(const core::Json& j, bool floats = false) {
+    char out[64];
+    switch (j.type) {
+    case core::Json::Type::Null: return "null";
+    case core::Json::Type::Bool: return j.boolean ? "true" : "false";
+    case core::Json::Type::Number:
+        if (j.number == std::floor(j.number) && std::fabs(j.number) < 1e15) {
+            std::snprintf(out, sizeof(out), floats ? "%.1f" : "%.0f", j.number);
+        } else {
+            std::snprintf(out, sizeof(out), "%.10g", j.number);
+        }
+        return out;
+    case core::Json::Type::String: return quote(j.string);
+    case core::Json::Type::Array: {
+        std::string list = "[";
+        for (size_t i = 0; i < j.items.size(); ++i) list += (i ? ", " : "") + text(j.items[i], floats);
+        return list + "]";
+    }
+    case core::Json::Type::Object: {
+        std::string block = "{";
+        for (size_t i = 0; i < j.members.size(); ++i) {
+            const std::string& key = j.members[i].first;
+            block += (i ? ", " : "") + quote(key) + ": " +
+                     text(j.members[i].second, key == "at" || key == "angle" || key == "scale");
+        }
+        return block + "}";
+    }
+    }
+    return "null";
+}
+
 }  // namespace
 
 void StudioPlace::world(Context& ctx, const std::string& name) {
@@ -45,6 +96,12 @@ void StudioPlace::world(Context& ctx, const std::string& name) {
     file_ = "source/world/" + name + "/" + name + ".json";
     source_ = core::parseJsonFile(ctx.paths.root + "/" + file_);
     perTile_ = source_["units_per_tile"].numberOr(100.0);
+    models_.clear();
+    const core::Json& objects = source_["objects"];
+    for (size_t i = 0; i < objects.size(); ++i) models_.push_back(objects.at(i)["model"].stringOr(""));
+    std::sort(models_.begin(), models_.end());
+    models_.erase(std::unique(models_.begin(), models_.end()), models_.end());
+    adding_ = 0;
 }
 
 bool StudioPlace::ray(Context& ctx, const gfx::Camera& camera, float origin[3],
@@ -94,12 +151,13 @@ bool StudioPlace::groundUnder(Context& ctx, game::World& world, const gfx::Camer
     return true;
 }
 
-void StudioPlace::match(game::World& world) {
-    // The source's line for the picked instance: its model, and where the cook put it --
+void StudioPlace::match(game::World& world) { line_ = lineOf(world, size_t(picked_)); }
+
+int StudioPlace::lineOf(game::World& world, size_t instance) const {
+    // The source's line for an instance: its model, and where the cook put it --
     // x = at[0] / per_tile, z = -at[1] / per_tile (tools/cook.py, cook_placements).
-    line_ = -1;
     const content::CookedTown& town = world.town().cooked();
-    const content::TownInstance& one = town.instances[size_t(picked_)];
+    const content::TownInstance& one = town.instances[instance];
     const std::string& model = town.models[one.model].name;
     const core::Json& objects = source_["objects"];
     for (size_t i = 0; i < objects.size(); ++i) {
@@ -107,11 +165,9 @@ void StudioPlace::match(game::World& world) {
         if (o["model"].stringOr("") != model) continue;
         const double x = o["at"].at(0).numberOr(0.0) / perTile_;
         const double z = -o["at"].at(1).numberOr(0.0) / perTile_;
-        if (std::fabs(x - one.position[0]) < 0.02 && std::fabs(z - one.position[2]) < 0.02) {
-            line_ = int(i);
-            return;
-        }
+        if (std::fabs(x - one.position[0]) < 0.02 && std::fabs(z - one.position[2]) < 0.02) return int(i);
     }
+    return -1;
 }
 
 bool StudioPlace::pointer(Context& ctx, game::World& world, const gfx::Camera& camera,
@@ -145,6 +201,7 @@ bool StudioPlace::pointer(Context& ctx, game::World& world, const gfx::Camera& c
     float bestT = 1e30f;
     for (size_t i = 0; i < cooked.instances.size(); ++i) {
         const content::TownInstance& one = cooked.instances[i];
+        if ((one.flags & 8) != 0) continue;   // held back, or deleted here
         const content::TownModel& model = cooked.models[one.model];
         float c[3], r2 = 0.0f;
         for (int a = 0; a < 3; ++a) {
@@ -190,7 +247,7 @@ bool StudioPlace::pickModel(game::World& world, const std::string& model, const 
     picked_ = -1;
     for (size_t i = 0; i < cooked.instances.size(); ++i) {
         const content::TownInstance& one = cooked.instances[i];
-        if (cooked.models[one.model].name != model) continue;
+        if (cooked.models[one.model].name != model || (one.flags & 8) != 0) continue;
         const float dx = one.position[0] - near[0], dz = one.position[2] - near[2];
         if (dx * dx + dz * dz < best) {
             best = dx * dx + dz * dz;
@@ -247,6 +304,109 @@ void StudioPlace::write(Context& ctx, game::World& world, studio::Cooker& cooker
     if (ok) cooker.forgetPlan();
 }
 
+// ---------------------------------------------------------------------------- sprint G
+
+bool StudioPlace::append(game::World& world, studio::Cooker& cooker, const core::Json& o,
+                         const content::TownInstance& one, std::string* answer) {
+    core::Json* objects = member(source_, "objects");
+    if (!objects) return *answer = "the source has no objects", false;
+    const size_t at = objects->items.size();
+    if (!cooker.edit(file_, "[\"objects\", " + std::to_string(at) + "]", text(o), answer, "insert")) {
+        return false;
+    }
+    objects->items.push_back(o);
+    picked_ = int(world.town().addInstance(one));
+    line_ = int(at);
+    storedY_ = one.position[1];
+    cooker.forgetPlan();
+    return true;
+}
+
+bool StudioPlace::add(game::World& world, studio::Cooker& cooker, const std::string& model, float x,
+                      float z, std::string* answer) {
+    // A template: an instance of the model that the source holds, for its type, its flags, the
+    // cook's lift and its light -- the cook's own numbers until the Cook replaces them.
+    const content::CookedTown& cooked = world.town().cooked();
+    int found = -1, line = -1;
+    for (size_t i = 0; i < cooked.instances.size() && found < 0; ++i) {
+        if (cooked.models[cooked.instances[i].model].name != model) continue;
+        if ((line = lineOf(world, i)) >= 0) found = int(i);
+    }
+    if (found < 0) return *answer = "no " + model + " in " + file_ + " to copy", false;
+    content::TownInstance one = cooked.instances[size_t(found)];
+    core::Json o = source_["objects"].at(size_t(line));
+    const float lift = one.position[1] - float(o["at"].at(2).numberOr(0.0) / perTile_);
+    const float ground = world.ground().heightAt(x, z);
+    one.position[0] = x, one.position[2] = z;
+    one.position[1] = ground + ((one.flags & 1) ? 0.0f : lift);
+    one.yaw = one.pitch = one.roll = 0.0f;
+    one.scale = 1.0f;
+    one.flags = uint16_t(one.flags & ~8);
+    // In whole units, as the map's own are mostly written: float metres would give 18239.99939.
+    member(o, "at")->items = {numberJson(std::round(double(x) * perTile_)), numberJson(std::round(-double(z) * perTile_)),
+                              numberJson(std::round(double(ground) * perTile_))};
+    if (core::Json* angle = member(o, "angle")) angle->items = {numberJson(0), numberJson(0), numberJson(0)};
+    if (core::Json* scale = member(o, "scale")) scale->number = 1.0;
+    if (!append(world, cooker, o, one, answer)) return false;
+    saidOk_ = true;
+    said_ = *answer = model + " added as objects[" + std::to_string(line_) + "]; Cook makes it the cooked truth";
+    return true;
+}
+
+bool StudioPlace::duplicate(game::World& world, studio::Cooker& cooker, std::string* answer) {
+    if (picked_ < 0 || line_ < 0) return *answer = "nothing picked that the source holds", false;
+    content::TownInstance one = world.town().cooked().instances[size_t(picked_)];
+    core::Json o = source_["objects"].at(size_t(line_));
+    // A metre east, at its height over the land: the height in the source by the change, as
+    // write() does, so the cook's lift stays out.
+    const float above = one.position[1] - world.ground().heightAt(one.position[0], one.position[2]);
+    const float y = one.position[1];
+    one.position[0] += 1.0f;
+    one.position[1] = world.ground().heightAt(one.position[0], one.position[2]) + ((one.flags & 1) ? 0.0f : above);
+    core::Json* at = member(o, "at");
+    at->items[0].number += perTile_;
+    if ((one.flags & 1) == 0) at->items[2].number += double(one.position[1] - y) * perTile_;
+    const std::string model = world.town().cooked().models[one.model].name;
+    if (!append(world, cooker, o, one, answer)) return false;
+    saidOk_ = true;
+    said_ = *answer = model + " duplicated as objects[" + std::to_string(line_) + "]";
+    return true;
+}
+
+bool StudioPlace::remove(game::World& world, studio::Cooker& cooker, std::string* answer) {
+    if (picked_ < 0 || line_ < 0) return *answer = "nothing picked that the source holds", false;
+    if (!cooker.edit(file_, "[\"objects\", " + std::to_string(line_) + "]", "", answer, "remove")) return false;
+    core::Json* objects = member(source_, "objects");
+    objects->items.erase(objects->items.begin() + line_);
+    world.town().setHidden(uint32_t(picked_), true);
+    saidOk_ = true;
+    said_ = *answer = "objects[" + std::to_string(line_) + "] deleted; the lines after it moved up one";
+    picked_ = line_ = -1;
+    cooker.forgetPlan();
+    return true;
+}
+
+void StudioPlace::addPanel(game::World& world, studio::Cooker& cooker, const gfx::Camera& camera) {
+    if (models_.empty()) return;
+    ImGui::Separator();
+    adding_ = std::min(adding_, int(models_.size()) - 1);
+    ImGui::SetNextItemWidth(-90.0f);
+    if (ImGui::BeginCombo("##add", models_[size_t(adding_)].c_str(), ImGuiComboFlags_HeightLarge)) {
+        for (size_t i = 0; i < models_.size(); ++i) {
+            if (ImGui::Selectable(models_[i].c_str(), int(i) == adding_)) adding_ = int(i);
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::SameLine();
+    std::string answer;
+    if (ImGui::Button("Add") &&
+        !add(world, cooker, models_[size_t(adding_)], camera.target[0], camera.target[2], &answer)) {
+        saidOk_ = false;
+        said_ = answer;
+    }
+    ImGui::SetItemTooltip("stands it on the land at the view's middle");
+}
+
 void StudioPlace::panel(Context& ctx, game::World& world, studio::Cooker& cooker,
                         const gfx::Camera& camera, float x, float y, float w, float h) {
     ImGui::SetNextWindowPos(ImVec2(x, y));
@@ -265,7 +425,9 @@ void StudioPlace::panel(Context& ctx, game::World& world, studio::Cooker& cooker
     if (picked_ >= 0 && !dragging_ && said_ == "moved; let go writes it") write(ctx, world, cooker);
 
     ImGui::TextColored(kDim, "click an object in %s; drag it over the land", world_.c_str());
+    addPanel(world, cooker, camera);
     if (picked_ < 0) {
+        if (!said_.empty()) ImGui::TextColored(saidOk_ ? kGreen : kRed, "%s", said_.c_str());
         ImGui::PopTextWrapPos();
         ImGui::End();
         return;
@@ -300,8 +462,33 @@ void StudioPlace::panel(Context& ctx, game::World& world, studio::Cooker& cooker
         if (ImGui::DragFloat("scale", &scale, 0.005f, 0.05f, 20.0f)) one.scale = scale;
         done |= ImGui::IsItemDeactivatedAfterEdit();
         ImGui::EndDisabled();
-        if (!scaled) ImGui::SetItemTooltip("the source writes no scale for it (1.0): not added here");
+        std::string answer;
+        if (!scaled) {
+            ImGui::SameLine();
+            if (ImGui::SmallButton("add a scale")) {
+                // The cook's 1.0 written in, after which it is dragged like the rest.
+                saidOk_ = cooker.edit(file_, "[\"objects\", " + std::to_string(line_) + ", \"scale\"]", "1.0",
+                                      &answer, "insert");
+                said_ = answer;
+                if (saidOk_) {
+                    member(source_, "objects")->items[size_t(line_)].members.emplace_back("scale", numberJson(1.0));
+                    cooker.forgetPlan();
+                }
+            }
+            ImGui::SetItemTooltip("the source writes no scale for it (the cook's 1.0): write one in");
+        }
         if (done) write(ctx, world, cooker);
+        if (ImGui::Button("Duplicate") && !duplicate(world, cooker, &answer)) saidOk_ = false, said_ = answer;
+        ImGui::SetItemTooltip("a copy a metre east of it, added to the source");
+        ImGui::SameLine();
+        if (ImGui::Button("Delete") && !remove(world, cooker, &answer)) saidOk_ = false, said_ = answer;
+        ImGui::SetItemTooltip("taken out of the source; hidden until the Cook");
+        if (picked_ < 0) {   // deleted just now
+            ImGui::TextColored(kGreen, "%s", said_.c_str());
+            ImGui::PopTextWrapPos();
+            ImGui::End();
+            return;
+        }
     }
     if (!said_.empty() && said_ != "moved; let go writes it") {
         ImGui::TextColored(saidOk_ ? kGreen : kRed, "%s", said_.c_str());

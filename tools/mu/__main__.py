@@ -17,6 +17,7 @@
     ./mu cores [N]                           how many cores mu's tools may use, kept per machine
     ./mu recipe <name>                       a recipe's file(s), parsed, and the material library
     ./mu edit <name|file> <path> <value>     one value in place (islands.0.material brass), journalled
+              ... --insert / --remove          a value put in at path, or taken out (no value)
     ./mu do "<line>; <line>; ..."            drive an open studio: subject, scene, shot, wait, status...
     ./mu serve                               the cook's job runner; `mu make` hands it its jobs
     ./mu jobs [--watch [N]] | cancel N [--now] what it is cooking, with bars and time left
@@ -69,7 +70,11 @@ def main():
     e = sub.add_parser("edit", parents=[common])
     e.add_argument("target", help="a recipe's name, or a file under source/ or sheets/")
     e.add_argument("path", help="dotted, list indices as numbers: islands.0.material")
-    e.add_argument("value", help="JSON (7, 0.35, true, \"brass\") or a bare word for a string")
+    e.add_argument("value", nargs="?", help="JSON (7, 0.35, true, \"brass\") or a bare word for a string")
+    how = e.add_mutually_exclusive_group()
+    how.add_argument("--insert", action="store_true",
+                     help="put the value in at path: a list's index (its length appends) or a new key")
+    how.add_argument("--remove", action="store_true", help="take the value at path out")
 
     d = sub.add_parser("do", parents=[common])
     d.add_argument("lines", help="the studio's words, ';' between them (app/modes/studio_control.cpp)")
@@ -162,12 +167,19 @@ def dispatch(args, say):
         return True, data
     if args.command == "edit":
         import edit
+        if args.remove:
+            line = edit.remove(args.target, args.path, who="mu")
+            say(f"{line['file']}: {line['path']} removed (was {json.dumps(line['old'])})")
+            return True, line
+        if args.value is None:
+            raise NotFound("a value: mu edit <target> <path> <value>")
         try:
             value = json.loads(args.value)
         except ValueError:
             value = args.value
-        line = edit.edit(args.target, args.path, value, who="mu")
-        say(f"{line['file']}: {line['path']} {json.dumps(line['old'])} -> {json.dumps(line['new'])}")
+        line = (edit.insert if args.insert else edit.edit)(args.target, args.path, value, who="mu")
+        say(f"{line['file']}: {line['path']} {json.dumps(line['old'])} -> {json.dumps(line['new'])}"
+            + (" (inserted)" if args.insert else ""))
         return True, line
     if args.command == "do":
         return drive(args.lines, say)

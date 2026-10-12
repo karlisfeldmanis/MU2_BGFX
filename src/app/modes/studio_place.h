@@ -12,13 +12,20 @@
 //
 // An object is found in the source by its model and where it stands. The index adds objects
 // of its own (assets/ holds more than source/), and those, which no source line holds, are
-// shown but not moved. A `scale` the source does not write is the 1.0 the cook assumes, and
-// is left as it is: an edit only changes a value that is there.
+// shown but not moved. A `scale` the source does not write is the 1.0 the cook assumes; the
+// window's "add a scale" writes one in, after which it is dragged like the rest.
+//
+// Sprint G: an object added (a model of this world's source, at the view's middle), one
+// duplicated (beside itself) and one deleted -- each a list operation of tools/mu/edit.py,
+// written in its neighbours' style, journalled. An added object is a town instance at once,
+// lit as its template; a deleted one is hidden. An add appends to the source's list and a
+// delete takes its line out, so every line after it moves up one, here as in the file.
 #pragma once
 
 #include <string>
 #include <vector>
 
+#include "content/cooked.h"
 #include "core/json.h"
 #include "gfx/renderer.h"
 
@@ -48,12 +55,24 @@ public:
     // the picked one moved by (dx, dz) metres and written, as a drag would.
     bool pickModel(game::World& world, const std::string& model, const float near[3]);
     void nudge(Context& ctx, game::World& world, studio::Cooker& cooker, float dx, float dz);
+    // Sprint G's three, the window's buttons and the control words alike; each answers what it
+    // did or why not. `add` stands `model` on the land at (x, z), picked; `duplicate` puts a
+    // copy of the picked object a metre east of it, picked; `remove` takes the picked out.
+    bool add(game::World& world, studio::Cooker& cooker, const std::string& model, float x, float z,
+             std::string* answer);
+    bool duplicate(game::World& world, studio::Cooker& cooker, std::string* answer);
+    bool remove(game::World& world, studio::Cooker& cooker, std::string* answer);
 
 private:
     bool ray(Context& ctx, const gfx::Camera& camera, float origin[3], float direction[3]) const;
     bool groundUnder(Context& ctx, game::World& world, const gfx::Camera& camera, float at[3]) const;
     void match(game::World& world);
+    int lineOf(game::World& world, size_t instance) const;
     void write(Context& ctx, game::World& world, studio::Cooker& cooker);
+    // The source object `o` appended to the source's list, and the town instance `one` with it.
+    bool append(game::World& world, studio::Cooker& cooker, const core::Json& o,
+                const content::TownInstance& one, std::string* answer);
+    void addPanel(game::World& world, studio::Cooker& cooker, const gfx::Camera& camera);
 public:
     int picked() const { return picked_; }
     int line() const { return line_; }
@@ -71,6 +90,8 @@ private:
     float storedY_ = 0.0f;        // its height when its source line was last read or written
     std::string said_;
     bool saidOk_ = true;
+    std::vector<std::string> models_;   // the source's models, each once: what Add offers
+    int adding_ = 0;                    // the one chosen
 };
 
 }  // namespace mu::app

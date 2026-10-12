@@ -113,8 +113,10 @@ public:
     void askRecipe(const std::string& target);
     RecipeView recipe() const;
     void forgetRecipe();
+    // `how` is "set", or tools/mu/edit.py's "insert" (value put in at path: a list's index, or
+    // a block's new key) or "remove" (path taken out; value unused).
     bool edit(const std::string& file, const std::string& path, const std::string& value,
-              std::string* answer);
+              std::string* answer, const char* how = "set");
 
     const std::vector<JobView>& jobs() const { return jobs_; }
 

@@ -13,6 +13,16 @@ was. A re-dump would not do: 39 of the recipes mix indents within one file (bloc
 scripts at their own depth), and re-dumping them reformats the whole file in git. A list of
 numbers (a colour) is edited one element at a time, by its index.
 
+Two more, for what a world's Place adds and takes away (§9c, sprint G), under the same rule:
+
+    ./mu edit lorencia objects.2870 '{"model": ...}' --insert   a value put in, here at the end
+    ./mu edit lorencia objects.2234 --remove                   one taken out, its separator too
+    ./mu edit lorencia objects.5.scale 1.0 --insert             a key a block did not have
+
+An insert is written in its neighbours' style -- their separator, their indent, the file's
+indent step -- so the diff is the new lines alone; a remove cuts the value and the separator
+before it. Each is the other's undo, and the journal's line names which it was (`op`).
+
 Every edit appends a line to workshop/.mu/journal.log: when, who, the file, the path, the old
 value and the new. That is how the agent reads what the user changed in the window.
 """
@@ -33,10 +43,11 @@ MATERIALS = os.path.join(SOURCE, "materials")
 class Node:
     """A JSON value and where it lies in the text: [start, end)."""
 
-    __slots__ = ("value", "start", "end", "children")
+    __slots__ = ("value", "start", "end", "children", "keys")
 
-    def __init__(self, value, start, end, children=None):
+    def __init__(self, value, start, end, children=None, keys=None):
         self.value, self.start, self.end, self.children = value, start, end, children
+        self.keys = keys   # a block's: each key's own start, where its member's text begins
 
 
 def parse(text):
@@ -57,13 +68,15 @@ def parse(text):
         if c == "{":
             i += 1
             children = {}
+            keys = {}
             out = {}
             space()
             if text[i] == "}":
                 i += 1
-                return Node(out, start, i, children)
+                return Node(out, start, i, children, keys)
             while True:
                 space()
+                keys_at = i
                 key = json.loads(text[i:scan_string(i)])
                 i = scan_string(i)
                 space()
@@ -72,6 +85,7 @@ def parse(text):
                 i += 1
                 child = value()
                 children[key] = child
+                keys[key] = keys_at
                 out[key] = child.value
                 space()
                 if text[i] == ",":
@@ -79,7 +93,7 @@ def parse(text):
                     continue
                 if text[i] == "}":
                     i += 1
-                    return Node(out, start, i, children)
+                    return Node(out, start, i, children, keys)
                 raise ValueError(f"expected , or }} at {i}")
         if c == "[":
             i += 1
@@ -181,11 +195,7 @@ def recipe(target):
 
 def edit(target, path, value, who="mu"):
     """Sets the scalar at `path` (a list, or a dotted string) in `target`'s file to `value`."""
-    files = resolve(target)
-    if len(files) != 1:
-        raise NotFound(f"{target} is {len(files)} files: name one of them "
-                       f"({', '.join(os.path.relpath(f, ROOT) for f in files)})")
-    file = files[0]
+    file = one_file(target)
     if isinstance(path, str):
         path = split_path(path)
     with open(file) as handle:
@@ -205,24 +215,145 @@ def edit(target, path, value, who="mu"):
     new_text = text[:node.start] + written + text[node.end:]
 
     # Proof before the write: the new text parses, and differs from the old in this one place.
-    expect = json.loads(text)
-    holder = expect
-    for step in path[:-1]:
-        holder = holder[step]
-    holder[path[-1]] = value
-    if json.loads(new_text) != expect:
-        raise NotFound("the edit would change more than its one value; not written")
+    proved(text, new_text, path, lambda holder, key: holder.__setitem__(key, value))
+    return commit(file, text, new_text, {"path": ".".join(map(str, path)), "old": old, "new": value}, who)
 
+
+def one_file(target):
+    files = resolve(target)
+    if len(files) != 1:
+        raise NotFound(f"{target} is {len(files)} files: name one of them "
+                       f"({', '.join(os.path.relpath(f, ROOT) for f in files)})")
+    return files[0]
+
+
+def commit(file, text, new_text, what, who):
+    """Writes `new_text` over `text` and journals it; a change to nothing is neither."""
     if new_text != text:
         temporary = file + ".mu-edit"
         with open(temporary, "w") as handle:
             handle.write(new_text)
         os.replace(temporary, file)
     line = {"at": time.strftime("%Y-%m-%d %H:%M:%S"), "who": who,
-            "file": os.path.relpath(file, ROOT), "path": ".".join(map(str, path)),
-            "old": old, "new": value}
+            "file": os.path.relpath(file, ROOT), **what}
     if new_text != text:   # a value set to itself is not news
         os.makedirs(os.path.dirname(JOURNAL), exist_ok=True)
         with open(JOURNAL, "a") as handle:
             handle.write(json.dumps(line, ensure_ascii=False) + "\n")
     return line
+
+
+def proved(text, new_text, path, change):
+    """Raises unless `new_text` is `text` parsed with `change` done at `path`'s holder, and no
+    other difference: the proof before any write."""
+    expect = json.loads(text)
+    holder = expect
+    for step in path[:-1]:
+        holder = holder[step]
+    change(holder, path[-1])
+    if json.loads(new_text) != expect:
+        raise NotFound("the edit would change more than its one value; not written")
+
+
+# ----------------------------------------------------------------------------- insert, remove
+
+def indent_of(text, at):
+    """The whitespace that starts the line `at` is on."""
+    start = text.rfind("\n", 0, at) + 1
+    end = start
+    while end < len(text) and text[end] in " \t":
+        end += 1
+    return text[start:end]
+
+
+def members(node):
+    """A list's or a block's children in order, each as (where its text starts, its node)."""
+    if isinstance(node.children, dict):
+        return [(node.keys[k], child) for k, child in node.children.items()]
+    return [(child.start, child) for child in node.children]
+
+
+def insert(target, path, value, who="mu"):
+    """Puts `value` in at `path`: a list's index (its length appends), or a block's new key."""
+    file = one_file(target)
+    if isinstance(path, str):
+        path = split_path(path)
+    if not path:
+        raise NotFound("insert where? name a list's index or a block's new key")
+    with open(file) as handle:
+        text = handle.read()
+    parent = walk(parse(text), path[:-1])
+    last, dotted = path[-1], ".".join(map(str, path))
+    if isinstance(parent.children, list):
+        if not isinstance(last, int) or not 0 <= last <= len(parent.children):
+            raise NotFound(f"{dotted}: a list of {len(parent.children)} takes an index 0 to "
+                           f"{len(parent.children)}")
+    elif isinstance(parent.children, dict):
+        if not isinstance(last, str) or last in parent.children:
+            raise NotFound(f"{dotted}: {'already there: edit it' if last in parent.children else 'a key is a word'}")
+    else:
+        raise NotFound(f"{'.'.join(map(str, path[:-1])) or 'the file'} is a value, not a list or a block")
+
+    # The neighbours' style: what lies between two of them (or before the first), the indent
+    # they stand at, and the step from the holder's indent to theirs.
+    have = members(parent)
+    if len(have) >= 2:
+        sep = text[have[0][1].end:have[1][0]]
+    elif have:
+        sep = "," + text[parent.start + 1:have[0][0]]
+    else:
+        sep = ""
+    if "\n" in sep:
+        own = sep[sep.rfind("\n") + 1:]
+        outer = indent_of(text, parent.start)
+        step = own[len(outer):] if own.startswith(outer) and len(own) > len(outer) else " "
+        written = json.dumps(value, ensure_ascii=False, indent=step).replace("\n", "\n" + own)
+    else:
+        written = json.dumps(value, ensure_ascii=False)
+    if isinstance(parent.children, dict):
+        written = json.dumps(last, ensure_ascii=False) + ": " + written
+
+    if not have:
+        new_text = text[:parent.start + 1] + written + text[parent.end - 1:]
+    elif isinstance(last, int) and last == 0:
+        at = have[0][0]
+        new_text = text[:at] + written + sep + text[at:]
+    else:
+        at = have[(last if isinstance(last, int) else len(have)) - 1][1].end
+        new_text = text[:at] + sep + written + text[at:]
+
+    def put(holder, key):
+        if isinstance(holder, list):
+            holder.insert(key, value)
+        else:
+            holder[key] = value
+    proved(text, new_text, path, put)
+    return commit(file, text, new_text, {"op": "insert", "path": dotted, "old": None, "new": value}, who)
+
+
+def remove(target, path, who="mu"):
+    """Takes the value at `path` out of its list or block, with the separator before it."""
+    file = one_file(target)
+    if isinstance(path, str):
+        path = split_path(path)
+    if not path:
+        raise NotFound("remove what? name a list's index or a block's key")
+    with open(file) as handle:
+        text = handle.read()
+    parent = walk(parse(text), path[:-1])
+    node = walk(parent, path[-1:])
+    have = members(parent)
+    which = next(n for n, (_at, child) in enumerate(have) if child is node)
+    if which > 0:
+        cut = (have[which - 1][1].end, node.end)
+    elif len(have) > 1:
+        cut = (have[0][0], have[1][0])
+    else:
+        cut = (parent.start + 1, parent.end - 1)
+    new_text = text[:cut[0]] + text[cut[1]:]
+
+    def take(holder, key):
+        del holder[key]
+    proved(text, new_text, path, take)
+    return commit(file, text, new_text,
+                  {"op": "remove", "path": ".".join(map(str, path)), "old": node.value, "new": None}, who)

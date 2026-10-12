@@ -35,6 +35,19 @@ std::string quoted(const std::string& text) {
     return out + "\"";
 }
 
+// A target as `mu make`'s words: "placements lorencia" is two, as on the command line, and
+// make.py's plan reads them apart (one string was "no recipe called placements lorencia").
+std::string words(const std::string& target) {
+    std::string out;
+    for (size_t start = 0; start < target.size();) {
+        size_t end = target.find(' ', start);
+        if (end == std::string::npos) end = target.size();
+        if (end > start) out += (out.empty() ? "" : ", ") + quoted(target.substr(start, end - start));
+        start = end + 1;
+    }
+    return out;
+}
+
 int openSocket(const std::string& path) {
     const int fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd < 0) return -1;
@@ -256,7 +269,7 @@ bool Cooker::startServer() {
 
 int Cooker::make(const std::string& target) {
     std::string reply;
-    if (!request("{\"op\": \"make\", \"target\": [" + quoted(target) + "]}", &reply)) return 0;
+    if (!request("{\"op\": \"make\", \"target\": [" + words(target) + "]}", &reply)) return 0;
     const core::Json answer = core::parseJson(reply.data(), reply.size(), "mu serve's make");
     const int number = int(answer["job"].numberOr(0.0));
     if (number == 0) error_ = answer["error"].stringOr("mu serve refused the job");
@@ -282,7 +295,7 @@ void Cooker::askPlan(const std::string& target) {
         PlanView answer;
         answer.target = target;
         std::string reply;
-        if (!request("{\"op\": \"plan\", \"target\": [" + quoted(target) + "]}", &reply)) {
+        if (!request("{\"op\": \"plan\", \"target\": [" + words(target) + "]}", &reply)) {
             answer.error = "mu serve is not running";
         } else {
             const core::Json j = core::parseJson(reply.data(), reply.size(), "mu serve's plan");
@@ -337,10 +350,11 @@ void Cooker::forgetRecipe() {
 }
 
 bool Cooker::edit(const std::string& file, const std::string& path, const std::string& value,
-                  std::string* answer) {
+                  std::string* answer, const char* how) {
     std::string reply;
-    if (!request("{\"op\": \"edit\", \"file\": " + quoted(file) + ", \"path\": " + path +
-                     ", \"value\": " + value + ", \"who\": \"studio\"}",
+    if (!request("{\"op\": \"edit\", \"how\": \"" + std::string(how) + "\", \"file\": " + quoted(file) +
+                     ", \"path\": " + path + ", \"value\": " + (value.empty() ? "null" : value) +
+                     ", \"who\": \"studio\"}",
                  &reply)) {
         *answer = error_;
         return false;
