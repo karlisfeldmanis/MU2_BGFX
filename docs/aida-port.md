@@ -250,7 +250,7 @@ close without the hero dying in a second.
   (fx/aida_sparks.h, since 2026-10-12, at a third of MU's size); its Attack 2 throws
   Object34's tree_eff roots at its feet, in its facing, and green smoke (fx/tree_roots.h, owned by
   ShadowStars). Its claw's blur on Attack 1 is show.claws with `swing` 1 and `axis` z (grey 0.3,
-  20 along Bip01 R Finger01 to 70 along R Finger0Nub; 2026-10-12). The smoke at MU's
+  20 along Bip01 R Finger01 to 70 along R Finger0Nub; 2026-10-12; judged in the studio: 'Good as is'). The smoke at MU's
   (0.5, 0.7, 0.5) barely shows at noon. A trap: a constexpr array in a header is one copy per
   file, so compare figures by name, not by tint pointer.
 - **Forest Orc (307)**: ForestOrc01, one sheet as skin for now (green hide, bronze-trimmed leather,
@@ -287,7 +287,8 @@ close without the hero dying in a second.
   The Death Rider (102) plays the same speeds (actions.json 102) and the Death Tree its 0.2
   death (104), cooked 2026-10-12; the Death Rider's idle loops in 0.53 s, 0.32 before.
 - **Witch Queen (304)**: WitchQueen01, Monster101 (MONSTER_MODEL 100) at 1.4; ma_1, ma2 and it
-  cloth, ma002 brass, ma001 glass (the wand's tip, cut out), h_r hair (cut out); 6 nests. Her red
+  cloth, ma002 brass, ma001 glass (the wand's tip, cut out), h_r hair (cut out; judged in the
+  studio 2026-10-12: 'Hair is fine'); 6 nests. Her red
   ground light (0.7, 0.1, 0.1) over 3 tiles is `show.aura` with `tiles`; she dies at MU's 0.2
   (actions.json 100); hits land on key 6 (`show.lands`). Sounds as witchqueen_move/_attack/_die
   (MU crosses wq_attack1/2 by action; ours picks either) and witchqueen_thunder, eElec1-2, heard
