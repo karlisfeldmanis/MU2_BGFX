@@ -823,6 +823,48 @@
       "right": "Bone06",
       "left": "Bone05",
       "note": "Its MoveEye(o, b, Right, Left) bones, by name, from MoveCharacterVisual (ZzzCharacter.cpp:5836-5984); fx/eye_trails.h draws them."
+    },
+    "bones": {
+      "burning": {
+        "names": [
+          "Bip01 Neck",
+          "Bip01 Head",
+          "Bip01 R UpperArm",
+          "Box12",
+          "Bip01 R Hand",
+          "Bip01 R Finger31",
+          "Bip01 R Finger32",
+          "Bip01 R Finger21",
+          "Bip01 R Finger22",
+          "Bip01 R Finger11",
+          "Bip01 R Finger12",
+          "Bip01 R Finger01",
+          "Bip01 R Finger02",
+          "Bip01 L UpperArm",
+          "Box11",
+          "Bip01 L Hand",
+          "Bip01 L Finger31",
+          "Bip01 L Finger32",
+          "Bip01 L Finger21",
+          "Bip01 L Finger22",
+          "Bip01 L Finger11",
+          "Bip01 L Finger12",
+          "Bip01 L Finger01",
+          "Bip01 L Finger02",
+          "Box01",
+          "Box03",
+          "Bone02",
+          "Box26",
+          "Box27",
+          "Bone01",
+          "Bip01 Pelvis",
+          "Bip01 L Calf",
+          "Bip01 L Toe0",
+          "Bip01 R Calf",
+          "Bip01 R Toe0"
+        ],
+        "note": "MU's bones by name; play_tuning.h's comment by its tag (\"burning\") says where MU reads them. Sprint E4b moved them here from kBurningBones."
+      }
     }
   }
 }

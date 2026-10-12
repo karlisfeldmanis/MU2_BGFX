@@ -227,6 +227,15 @@
         1.0
       ],
       "note": "The Lizard King's four sparks and shinies (ZzzCharacter.cpp:11228-11238): a pale light on the first of their bones."
+    },
+    "bones": {
+      "hands": {
+        "names": [
+          "knife_gdf",
+          "hand_bofdgne01"
+        ],
+        "note": "MU's bones by name; Play::fit's comment (game/play_open.cpp) says where MU reads them. Sprint E4b moved them here from the code."
+      }
     }
   }
 }

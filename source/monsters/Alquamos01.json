@@ -1059,6 +1059,22 @@
         1.0
       ],
       "note": "The Alquamos's star lights' own (0.8, 0.9, 1) (ZzzCharacter.cpp:8794-8795)."
+    },
+    "bones": {
+      "stars": {
+        "names": [
+          "stt07",
+          "stt06",
+          "stt05",
+          "stt04",
+          "stt",
+          "stt01",
+          "stt09",
+          "stt02",
+          "stt03"
+        ],
+        "note": "MU's bones by name; play_tuning.h's comment by its tag (\"star_ribbons\") says where MU reads them. Sprint E4b moved them here from kStarlightBones."
+      }
     }
   }
 }

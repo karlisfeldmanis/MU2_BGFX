@@ -444,6 +444,15 @@
         1.0
       ],
       "note": "The Vepar's hands, which MU always lights with a lightning, a spark and a shiny sprite (ZzzCharacter.cpp:11220-11227): a pale blue, on its right hand's link bone."
+    },
+    "bones": {
+      "hands": {
+        "names": [
+          "knife_gdf",
+          "hand_bofdgne01"
+        ],
+        "note": "MU's bones by name; Play::fit's comment (game/play_open.cpp) says where MU reads them. Sprint E4b moved them here from the code."
+      }
     }
   }
 }

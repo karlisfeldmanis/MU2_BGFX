@@ -520,8 +520,7 @@ constexpr int64_t kEvilSoundTicks = 32;
 // BITMAP_FLARE sub 7 ribbons round the target (:2140-2150): kStarRibbons a blow, each living
 // 30-39 reference frames, SOUND_METEORITE01 once a blow (MU's four plays at LifeTime 30).
 // show tag "star_ribbons": Alquamos01 (its recipe's show.tags).
-inline constexpr const char* kStarlightBones[] = {"stt07", "stt06", "stt05", "stt04", "stt",
-                                                  "stt01", "stt09", "stt02", "stt03"};
+// Its bones are its recipe's show.bones.stars (sprint E4b).
 inline constexpr int kStarRibbons = 4;
 // MONSTER_QUEEN_RAINER's: a BITMAP_LIGHT at Scale 0.8 on bone 20, Bip01 Head, white
 // (ZzzCharacter.cpp:8815-8818; Light is RenderCharacter's (1, 1, 1), :8498), drawn as an
@@ -559,8 +558,8 @@ constexpr float kBlizzardWait = 4.0f / 25.0f;
 // on each (:978-987), drawn as star bones in its green. Ours: the sprite is the starlight's
 // (0.6, a little wider), its colour doubled against kStarlightDim, and the sparks left out.
 // show tag "death_tree": DeathTree01 (its recipe's show.tags).
-inline constexpr const char* kDeathTreeHorns[] = {"e04", "e1", "e05", "e02", "e06", "e03"};
-constexpr float kDeathTreeGreen[3] = {0.8f, 1.7f, 1.0f};
+// Its bones are its recipe's show.bones.stars (sprint E4b).
+// And its colour its recipe's show.star_tint.
 // MONSTER_FOREST_ORC's blow (GMAida.cpp:564-596): on Attack 1 and Attack 2, three CreateBlur
 // type 3 (BITMAP_BLUR2), Short, in (0.5, 0.5, 0), sub 23-25, one per claw of its right hand, from
 // 20 units along each finger's first bone to 60 along its last: bones 35-37, 39-41 and 43-45. Laid
@@ -587,7 +586,7 @@ constexpr int32_t kDrakanNumber = 73;
 // BITMAP_FIRE at Scale 0.3 on bone 18, stars13, each frame (ZzzCharacter.cpp:8867-8879) -- ours
 // as the Death Knight's embers, one every kGreatDrakanEmberEvery reference frames.
 // show tag "great_drakan": GreatDrakan01 (its recipe's show.tags).
-inline constexpr const char* kGreatDrakanFireBone = "stars13";
+// Its bones are its recipe's show.bones.ember (sprint E4b).
 constexpr float kGreatDrakanEmberEvery = 2.0f;
 constexpr int32_t kGreatDrakanNumber = 75;
 // MONSTER_PHANTOM_KNIGHT's boss blow: 36 BITMAP_JOINT_SPIRIT sub 1 at Scale 60 from a metre over
@@ -611,22 +610,19 @@ constexpr float kPhoenixSpiritWait = 1.0f / 25.0f;   // (2 - 1) / 25 s
 // (gObjSkylandBoss); each time it goes up the bird wears fx/aura's kPhoenixBarrier. The phase
 // is the realm's clock, so it needs nothing from the realm.
 constexpr int64_t kPhoenixShieldTicks = 6 * 20;
-inline constexpr const char* kShadowJoints[] = {
-    "Bip01 Pelvis",     "Bip01 Spine",      "Bip01 Neck",      "Bip01 Head",
-    "Bip01 L UpperArm", "Bip01 L Forearm",  "Bip01 R UpperArm", "Bip01 R Forearm",
-    "Bip01 L Thigh",    "Bip01 L Calf",     "Bip01 R Thigh",    "Bip01 R Calf"};
+// Its bones are its recipe's show.bones.shade (sprint E4b).
 // MODEL_CHAIN_SCORPION, which carries an orange light on its `light_point` bone.
 // show tag "scorpion_light": ChainScorpion01 (its recipe's show.tags).
 // MONSTER_GORGON's Gorgon Staff, whose star RenderCharacter's linked-weapon switch lights for
 // anyone holding it (ZzzCharacter.cpp:10270-10276): BITMAP_SHINY + 1 at Scale 2, 90 units down
 // the link bone (knife_gdf, the Gorgon's 30), in (0.4, 0.8, 0.6) * Luminosity.
 // show tag "star_staff": Gorgon01 (its recipe's show.tags).
-inline constexpr const char* kStarStaffBone = "knife_gdf";
+// Its bones are its recipe's show.bones.star (sprint E4b).
 // MODEL_ELITE_YETI's breath (ZzzCharacter.cpp:6181-6189): `rand_fps_check(4)` puts one
 // BITMAP_SMOKE at bone 22, Box03 under the head, offset zero, with no action gate -- it
 // breathes standing, walking, fighting and falling. The Bull Fighter's snort particle.
 // show tag "yeti_breath": EliteYeti01 (its recipe's show.tags).
-inline constexpr const char* kYetiBreathBone = "Box03";
+// Its bones are its recipe's show.bones.snort (sprint E4b).
 constexpr float kYetiBreathAt[3] = {0.0f, 0.0f, 0.0f};
 // MODEL_HUNTER, whose blow is a bolt out of its arquebus. See Play::hunterShot.
 // show tag "hunter": Hunter01 (its recipe's show.tags).
@@ -664,25 +660,18 @@ constexpr float kWalkSandAlpha = 0.35f;
 // The plain Beam Knight's hand flames (fx/body_flames.h): MoveHumming from bone 55 to 62 and from
 // 70 to 77, a BITMAP_FLAME subtype 1 at Scale 0.2 on each claw (ZzzCharacter.cpp:5925-5946).
 // show tag "hand_flame": BeamKnight01 (its recipe's show.tags).
-inline constexpr const char* kHandFlameBones[4] = {"Box03", "Bone02", "Box27", "Bone01"};
+// Its bones are its recipe's show.bones.hand_flame (sprint E4b).
 constexpr float kHandFlameScale = 0.2f;
 // The Zaikan's foot fires (Breath::footFire): SubType 1's BITMAP_FIRE at bones 6 and 13 each
 // reference frame (ZzzCharacter.cpp:5960-5975). Its -1.3 terrain light under it is not carried:
 // this renderer only adds light.
 // show tag "foot_fire": Zaikan01 (its recipe's show.tags).
-inline constexpr const char* kFootFireBones[2] = {"Bip01 L Foot", "Bip01 R Foot"};
+// Its bones are its recipe's show.bones.foot_fire (sprint E4b).
 // The Death Beam Knight's burning body (fx/body_flames.h): MU's vec_list of 35 bones, by name,
 // and its segments as pairs of indices into it (ZzzCharacter.cpp:138-162, :5843-5925). Its
 // -1.3 terrain light is not carried either.
 // show tag "burning": DeathBeamKnight01 (its recipe's show.tags).
-inline constexpr const char* kBurningBones[35] = {
-    "Bip01 Neck", "Bip01 Head", "Bip01 R UpperArm", "Box12", "Bip01 R Hand",
-    "Bip01 R Finger31", "Bip01 R Finger32", "Bip01 R Finger21", "Bip01 R Finger22",
-    "Bip01 R Finger11", "Bip01 R Finger12", "Bip01 R Finger01", "Bip01 R Finger02",
-    "Bip01 L UpperArm", "Box11", "Bip01 L Hand", "Bip01 L Finger31", "Bip01 L Finger32",
-    "Bip01 L Finger21", "Bip01 L Finger22", "Bip01 L Finger11", "Bip01 L Finger12",
-    "Bip01 L Finger01", "Bip01 L Finger02", "Box01", "Box03", "Bone02", "Box26", "Box27",
-    "Bone01", "Bip01 Pelvis", "Bip01 L Calf", "Bip01 L Toe0", "Bip01 R Calf", "Bip01 R Toe0"};
+// Its bones are its recipe's show.bones.burning (sprint E4b).
 struct BurnSegment {
     int8_t from, to;
     float scale;

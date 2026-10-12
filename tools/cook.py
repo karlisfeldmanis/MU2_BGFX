@@ -3481,6 +3481,10 @@ def cook_shows(out_dir):
             if "eye_trail" in show:
                 one["eye_trail"] = {"right": show["eye_trail"]["right"],
                                     "left": show["eye_trail"]["left"]}
+            if "bones" in show:
+                one["bones"] = {role: list(row["names"]) for role, row in show["bones"].items()}
+            if "star_tint" in show:
+                one["star_tint"] = list(show["star_tint"]["colour"])
             shows[doc["item"]] = one
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "shows.json")

@@ -160,6 +160,25 @@ struct FigureBody {
     float auraColour[3] = {0.0f, 0.0f, 0.0f};
     // Its two eye trails' bones, right and left (show.eye_trail), empty for none.
     std::string eyeTrail[2];
+    // The bones its shows hang on, by role (show.bones, sprint E4b): "hand_flame", "stars",
+    // "shade", "eyes"... each a list of MU's bone names, found once by Play::fit.
+    std::vector<std::pair<std::string, std::vector<std::string>>> boneRoles;
+    const std::vector<std::string>& bonesFor(std::string_view role) const {
+        static const std::vector<std::string> kNone;
+        for (const auto& [name, list] : boneRoles) {
+            if (name == role) return list;
+        }
+        return kNone;
+    }
+    // Whether `bone` is the `i`th name of `role`.
+    bool named(std::string_view role, size_t i, const std::string& bone) const {
+        const std::vector<std::string>& list = bonesFor(role);
+        return i < list.size() && list[i] == bone;
+    }
+    // Its star bones' colour (show.star_tint), or null for the starlight's own.
+    float tint[3] = {0.0f, 0.0f, 0.0f};
+    bool tinted = false;
+    const float* starTint() const { return tinted ? tint : nullptr; }
     BodyKind kind = BodyKind::Character;
     std::vector<const content::Mesh*> parts;   // skinned, all against one skeleton
     // How each part's plus shows, beside `parts`; empty, or shorter, is +0. A body
@@ -449,6 +468,9 @@ private:
         std::string auraBone;
         float auraColour[3] = {0.0f, 0.0f, 0.0f};
         std::string eyeTrail[2];
+        std::vector<std::pair<std::string, std::vector<std::string>>> boneRoles;
+        float tint[3] = {0.0f, 0.0f, 0.0f};
+        bool tinted = false;
     };
     std::unordered_map<std::string, Show> shows_;
     // Which clips a finished body stands and walks in: the stance's own row, or the idle

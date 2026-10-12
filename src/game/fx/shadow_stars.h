@@ -22,7 +22,7 @@
 //
 // **Ours**, the user's asks of 2026-10-01 ("more bluryy", "to active", "it has to be more
 // subtle", "more elegant and subtle"): both sheets blurred, a dozen of the body's joints rather
-// than thirty-nine (play_tuning.h kShadowJoints), both far fainter than MU's, and no
+// than thirty-nine (play_tuning.h show.bones.shade), both far fainter than MU's, and no
 // BITMAP_ENERGY sparks.
 //
 // The caller finds the bones and feeds the points each frame; this draws them.

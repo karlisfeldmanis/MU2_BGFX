@@ -431,6 +431,14 @@
     "tags": [
       "scorpion_light"
     ],
-    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it."
+    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it.",
+    "bones": {
+      "light": {
+        "names": [
+          "light_point"
+        ],
+        "note": "MU's bones by name; Play::fit's comment (game/play_open.cpp) says where MU reads them. Sprint E4b moved them here from the code."
+      }
+    }
   }
 }

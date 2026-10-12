@@ -821,8 +821,25 @@ name (aura lights, eye trails, bone lists, the Hydra's heads, the arcs, the infe
   none elsewhere, E4a's tags unchanged; the lookups resolve the same names the same way;
   sim_test identical to HEAD's (7441 checks, 0 failed), server_test 27 of 27; live in Tarkan, whose
   monsters carry the eye trails, three netbots and a client, every link "none disagreed", 0 errors.
-- **Left in E4b:** the bone lists and single bones (hand and foot fire, the 35 burning bones,
-  the stars, the shadow joints, the Yeti's and the staff's, the snort and eye bones).
+
+### Slice E4b, second part: the bones, as done
+
+- **`show.bones` {role: {names, note}}** in 22 recipes, the names Play::fit looked up out of
+  nine play_tuning.h constants and seven literals in its own code: `hand_flame` (4),
+  `foot_fire` (2), `burning` (35), `star`, `snort` (the Yeti's breath; the bulls' smok_bone),
+  `ember` (the Great Drakan's stars13; the Death Knight's pelvis), `stars` (the Alquamos's
+  nine, the Death Tree's six horns), `shade` (the Shadows' twelve joints), `head`, `light`,
+  `hands` (the Devil's, Vepar's and Lizard King's links), `eyes` (the Crusts'; the elite bulls'
+  top bones). And the Death Tree's `star_tint`. Each note points at the comment by its tag.
+- **`FigureBody` has `boneRoles`, `bonesFor(role)`, `named(role, i, bone)` and `starTint()`.**
+  Every lookup keeps its loop and order; only the name it compares against moved.
+- **Proved:** shows.json's bones and tint equal HEAD's constants and literals for all 22 and none
+  elsewhere, earlier fields unchanged;
+  sim_test identical to HEAD's (7441 checks, 0 failed), server_test 27 of 27; live in the Lost
+  Tower (its Shadows, Death Knight, Devil), three netbots and a client, every link "none disagreed",
+  0 errors.
+- **Left for E4c:** the Queen's and the Drakan's arc blocks (with the Drakan's stars and blue),
+  kHydraHeads with their mouths, kForestOrcClaws' bone pairs and kBurnSegments.
 
 ## 10. Leave alone
 

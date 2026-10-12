@@ -56,6 +56,25 @@
         0.1
       ],
       "note": "The Poison Shadow's own green Light (ZzzCharacter.cpp:11318)."
+    },
+    "bones": {
+      "shade": {
+        "names": [
+          "Bip01 Pelvis",
+          "Bip01 Spine",
+          "Bip01 Neck",
+          "Bip01 Head",
+          "Bip01 L UpperArm",
+          "Bip01 L Forearm",
+          "Bip01 R UpperArm",
+          "Bip01 R Forearm",
+          "Bip01 L Thigh",
+          "Bip01 L Calf",
+          "Bip01 R Thigh",
+          "Bip01 R Calf"
+        ],
+        "note": "MU's bones by name; play_tuning.h's comment by its tag (\"poison_shadow\") says where MU reads them. Sprint E4b moved them here from kShadowJoints."
+      }
     }
   }
 }

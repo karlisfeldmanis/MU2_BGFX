@@ -430,6 +430,15 @@
       "right": "eye02",
       "left": "eye1",
       "note": "Its MoveEye(o, b, Right, Left) bones, by name, from MoveCharacterVisual (ZzzCharacter.cpp:5836-5984); fx/eye_trails.h draws them."
+    },
+    "bones": {
+      "foot_fire": {
+        "names": [
+          "Bip01 L Foot",
+          "Bip01 R Foot"
+        ],
+        "note": "MU's bones by name; play_tuning.h's comment by its tag (\"foot_fire\") says where MU reads them. Sprint E4b moved them here from kFootFireBones."
+      }
     }
   }
 }

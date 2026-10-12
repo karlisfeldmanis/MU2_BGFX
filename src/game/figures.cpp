@@ -1453,6 +1453,9 @@ void Figures::addMonster(const core::Json& entry) {
         for (int i = 0; i < 3; ++i) made->auraColour[i] = show.auraColour[i];
         made->eyeTrail[0] = show.eyeTrail[0];
         made->eyeTrail[1] = show.eyeTrail[1];
+        made->boneRoles = show.boneRoles;
+        for (int i = 0; i < 3; ++i) made->tint[i] = show.tint[i];
+        made->tinted = show.tinted;
     }
     bodies_[made->name] = std::move(made);
 }
@@ -1476,6 +1479,16 @@ void Figures::readShows() {
         }
         show.eyeTrail[0] = row["eye_trail"]["right"].stringOr("");
         show.eyeTrail[1] = row["eye_trail"]["left"].stringOr("");
+        for (const auto& [role, names] : row["bones"].members) {
+            std::vector<std::string> list;
+            for (const core::Json& name : names.items) list.push_back(name.string);
+            show.boneRoles.emplace_back(role, std::move(list));
+        }
+        const core::Json& tint = row["star_tint"];
+        show.tinted = tint.items.size() == 3;
+        for (int i = 0; i < 3 && show.tinted; ++i) {
+            show.tint[i] = float(tint.items[size_t(i)].numberOr(0.0));
+        }
     }
 }
 

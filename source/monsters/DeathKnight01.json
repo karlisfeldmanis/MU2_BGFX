@@ -960,6 +960,14 @@
         1.0
       ],
       "note": "The Death Knight's Lightning Sword, its bolts the brightest thing on it: the blue of the Lightning spell's own light."
+    },
+    "bones": {
+      "ember": {
+        "names": [
+          "Bip01 Pelvis"
+        ],
+        "note": "MU's bones by name; Play::fit's comment (game/play_open.cpp) says where MU reads them. Sprint E4b moved them here from the code."
+      }
     }
   }
 }

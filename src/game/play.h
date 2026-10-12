@@ -1012,7 +1012,7 @@ private:
         // A Death Gorgon: its bones throw embers and it lights orange, rather than wear stars.
         bool embers = false;
         float emberOwed = 0.0f;
-        // An Alquamos: its star bones (kStarlightBones) and whether its blow throws ribbons.
+        // An Alquamos: its star bones (show.bones.stars) and whether its blow throws ribbons.
         std::vector<int> starBones;
         bool starRibbons = false;
         // A Forest Orc's claws (kForestOrcClaws): first and last bone of each, flattened.
@@ -1124,12 +1124,12 @@ private:
         // (the "walk_sands" tag, Play::exhale). `walkSandOwed` is what of one is left to throw.
         bool walkSands = false;
         float walkSandOwed = 0.0f;
-        // The plain Beam Knight's two hand flames (kHandFlameBones, fx/body_flames.h): each
+        // The plain Beam Knight's two hand flames (show.bones.hand_flame, fx/body_flames.h): each
         // hand's root and claw, -1 on everything else, and what of a reference frame is owed.
         int handFlameBones[4] = {-1, -1, -1, -1};
         float handFlameOwed = 0.0f;
-        // The Zaikan's two feet (kFootFireBones) and the Death Beam Knight's 35 burning bones
-        // (kBurningBones), -1 on everything else; `burnFrame` counts reference frames for its
+        // The Zaikan's two feet (show.bones.foot_fire) and the Death Beam Knight's 35 burning bones
+        // (show.bones.burning), -1 on everything else; `burnFrame` counts reference frames for its
         // every-other-frame spine and head.
         int footFireBones[2] = {-1, -1};
         int burnBones[35] = {};

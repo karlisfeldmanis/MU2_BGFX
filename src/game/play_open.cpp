@@ -640,7 +640,9 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (size_t b = 0; b < bones.size(); ++b) {
                     for (int h = 0; h < 4; ++h) {
-                        if (bones[b].name == kHandFlameBones[h]) one.handFlameBones[h] = int(b);
+                        if (look->named("hand_flame", size_t(h), bones[b].name)) {
+                            one.handFlameBones[h] = int(b);
+                        }
                     }
                 }
             }
@@ -654,10 +656,12 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                 for (int i = 0; i < 35; ++i) one.burnBones[i] = -1;
                 for (size_t b = 0; b < bones.size(); ++b) {
                     for (int f = 0; f < 2 && !burning; ++f) {
-                        if (bones[b].name == kFootFireBones[f]) one.footFireBones[f] = int(b);
+                        if (look->named("foot_fire", size_t(f), bones[b].name)) {
+                            one.footFireBones[f] = int(b);
+                        }
                     }
                     for (int i = 0; i < 35 && burning; ++i) {
-                        if (bones[b].name == kBurningBones[i]) {
+                        if (look->named("burning", size_t(i), bones[b].name)) {
                             one.burnBones[i] = int(b);
                             ++found;
                         }
@@ -693,7 +697,7 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                 one.breathes = true;
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (size_t b = 0; b < bones.size(); ++b) {
-                    if (bones[b].name == "Bip01 Head") one.headBone = int(b);
+                    if (look->named("head", 0, bones[b].name)) one.headBone = int(b);
                 }
             }
             // MODEL_BULL_FIGHTER's: smok_bone is MU's 24, and the Elite's eyes are
@@ -701,24 +705,24 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             if (look->has("scorpion_light") && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (size_t b = 0; b < bones.size(); ++b) {
-                    if (bones[b].name == "light_point") one.lightBone = int(b);
+                    if (look->named("light", 0, bones[b].name)) one.lightBone = int(b);
                 }
             }
             one.starBone = -1;
             if (look->has("star_staff") && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (size_t b = 0; b < bones.size(); ++b) {
-                    if (bones[b].name == kStarStaffBone) one.starBone = int(b);
+                    if (look->named("star", 0, bones[b].name)) one.starBone = int(b);
                 }
             }
             if (look->has("yeti_breath") && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (size_t b = 0; b < bones.size(); ++b) {
-                    if (bones[b].name == kYetiBreathBone) one.snortBone = int(b);
+                    if (look->named("snort", 0, bones[b].name)) one.snortBone = int(b);
                 }
                 one.snortAlways = one.snortBone >= 0;
             }
-            // The Shadows' joints, by name (kShadowJoints, fx/shadow_stars.h).
+            // The Shadows' joints, by name (show.bones.shade, fx/shadow_stars.h).
             one.shadeBones.clear();
             const bool shadow = look->has("shadow") || look->has("poison_shadow");
             one.shadePoison = look->has("poison_shadow");
@@ -731,7 +735,7 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             if (look->has("great_drakan") && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (size_t b = 0; b < bones.size(); ++b) {
-                    if (bones[b].name == kGreatDrakanFireBone) one.emberBone = int(b);
+                    if (look->named("ember", 0, bones[b].name)) one.emberBone = int(b);
                 }
             }
             one.handBones[0] = one.handBones[1] = -1;
@@ -760,14 +764,14 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             if (look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (size_t b = 0; b < bones.size(); ++b) {
-                    if (look->has("death_knight") && bones[b].name == "Bip01 Pelvis") {
+                    if (look->has("death_knight") && look->named("ember", 0, bones[b].name)) {
                         one.emberBone = int(b);
                     }
                     // The Vepar's link bones carry the Devil's names (Monster35, 30 and 39).
                     const bool beams = look->has("devil") || look->has("vepar") ||
                                        look->has("lizard_king");
-                    if (beams && bones[b].name == "knife_gdf") one.handBones[0] = int(b);
-                    if (beams && bones[b].name == "hand_bofdgne01") one.handBones[1] = int(b);
+                    if (beams && look->named("hands", 0, bones[b].name)) one.handBones[0] = int(b);
+                    if (beams && look->named("hands", 1, bones[b].name)) one.handBones[1] = int(b);
                 }
             }
             one.starBones.clear();
@@ -776,7 +780,7 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             one.phoenix = look->has("phoenix");
             if (one.starRibbons && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
-                for (const char* name : kStarlightBones) {
+                for (const std::string& name : look->bonesFor("stars")) {
                     for (size_t b = 0; b < bones.size(); ++b) {
                         if (bones[b].name == name) one.starBones.push_back(int(b));
                     }
@@ -801,10 +805,10 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             }
             if (look->has("death_tree") && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
-                for (const char* name : kDeathTreeHorns)
+                for (const std::string& name : look->bonesFor("stars"))
                     for (size_t b = 0; b < bones.size(); ++b)
                         if (bones[b].name == name) one.starBones.push_back(int(b));
-                one.starTint = kDeathTreeGreen;
+                one.starTint = look->starTint();
             }
             if ((one.blizzard || drakan) && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
@@ -865,7 +869,7 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             if (shadow && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (size_t b = 0; b < bones.size(); ++b) {
-                    for (const char* name : kShadowJoints) {
+                    for (const std::string& name : look->bonesFor("shade")) {
                         if (bones[b].name == name) one.shadeBones.push_back(int(b));
                     }
                 }
@@ -875,8 +879,8 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                 look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (size_t b = 0; b < bones.size(); ++b) {
-                    if (bones[b].name == "eye00") one.eyeBones[0] = int(b);
-                    if (bones[b].name == "eye01") one.eyeBones[1] = int(b);
+                    if (look->named("eyes", 0, bones[b].name)) one.eyeBones[0] = int(b);
+                    if (look->named("eyes", 1, bones[b].name)) one.eyeBones[1] = int(b);
                 }
                 one.eyeSize = kCrustEyeSize;
             }
@@ -887,9 +891,9 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                 // MODEL_BULL_FIGHTER's case alone.
                 const bool snorts = !look->has("death_cow");
                 for (size_t b = 0; b < bones.size(); ++b) {
-                    if (snorts && bones[b].name == "smok_bone") one.snortBone = int(b);
-                    if (elite && bones[b].name == "top_bone02") one.eyeBones[0] = int(b);
-                    if (elite && bones[b].name == "top_bone01") one.eyeBones[1] = int(b);
+                    if (snorts && look->named("snort", 0, bones[b].name)) one.snortBone = int(b);
+                    if (elite && look->named("eyes", 0, bones[b].name)) one.eyeBones[0] = int(b);
+                    if (elite && look->named("eyes", 1, bones[b].name)) one.eyeBones[1] = int(b);
                 }
             }
         }
