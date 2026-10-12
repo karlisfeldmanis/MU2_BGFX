@@ -1597,6 +1597,17 @@ adjusting lighting, tonemaps, shadow, sun, daylight for maps".
   Traps: a relink of build/mu2 kills the user's open studio (macOS kills a process whose signed
   binary changes), so build only between showings and reopen after; an index run reads index.py
   when it starts, so a row added during a cook's index step is missed.
+- Hell Maine, the last 2005 breed, and four Cooker fixes found cooking it (2026-10-12):
+  - The Blender build writes only a recipe's islands (pipeline/islands.py splices their span
+    with mu edit's parser): its re-dump had moved every block written after them.
+  - The cooker MCP's `edit` passes a value that is already JSON as it is: '"plate_steel"' had
+    been written as the string "\"plate_steel\"".
+  - tools/chrome_sheets.py writes a monster's `chrome` passes too (source/monsters/chrome): MU's
+    RENDER_CHROME over a monster's mesh is a recipe field now, as a weapon's.
+  - A breed's `<name>_attack2` sound, when it has one, is its Attack 2's cry (Drawn::cryAttack2).
+  Traps: a 1.8 monster's hand reaches past a target at its feet, so aim a hand's effect along the
+  facing, not from the hand; on the studio's camera +z runs down-left, so read a direction off
+  the log (fx/hell_maine.h says where each blow went) before calling it wrong.
 
 ## 10. Leave alone
 

@@ -306,6 +306,28 @@ close without the hero dying in a second.
   frame, in her magenta (MU throws one a frame growing 1.3, white, which piled into a rayed
   burst over the knight). Checklist 11 done, 2 set aside. Chrome03 and fantaB decoded to
   source/effects/aida as `chrome03` and `true_blue`.
+- **Hell Maine (309)**: HellMaine01, Monster106 (MONSTER_MODEL 105) at 1.8; epiboss_armor
+  plate_steel, epibossskin skin, epibosswing leather; 3 nests (108,147; 112,47; 123,103), RegTime
+  150, resist 50 read raw. MU's red chrome, Chrome01 added at RENDER_CHROME's coordinates over the
+  armour in (1, 0, 0) and the wings in (0.5, 0, 0), is the recipe's `chrome` (tools/chrome_sheets.py
+  writes monsters' now); MU draws the armour unlit at full light (StreamMesh 0), ours its sheet
+  added over it at a steady 0.4 (`glow`, the user's 0.4). Its red ground light (1, 0, 0) over 3
+  tiles is `show.aura`; hits land on key 9 (`show.lands`); walk 0.15 (walk_overrides 105). Sounds:
+  hellmaine_move (hm_idle1/2), hellmaine_attack (hm_bloodywind, Attack 1's wind),
+  hellmaine_attack2 (hm_firelay, Attack 2's fire lay: a breed's `_attack2` is its second blow's
+  cry), hellmaine_die. game/fx/hell_maine.h, the `hell_maine` tag: Impack03 on its eyes (Bone02,
+  Bone03) and left arm (zx04, zx03, zx08) in a rolled red at half light; fantaF off both hands every
+  frame at a third of MU's size and 0.4 of its light (at half, every other frame, the user read
+  'bubbles'); Attack 1's storm nine frames in -- **one**, straight at its target (MU's loop of five
+  passes CheckAttackTime for the first only), never drawn, walking 12 a frame for 60 with
+  PoundingBall, a smoke taken out and a white puff every other frame, the meteor's stones, a spun
+  PoundingBall disc, and MU's EarthQuake on the game camera within 5 m; Attack 2's fire lay from
+  key 9, once a blow (MU lays about three): twenty Fire02 out 10 m from its right hand along its
+  facing at half MU's size and light, a red smoke01 decal under every fourth, one red line light
+  down it for MU's twenty terrain lights. The skills (wind, fire lay) are visuals on OpenMU's
+  melee (the user: visuals only), and ours alternates the two blows where MU's plain blow is Attack
+  1 (the user: keep alternating). fantaF and PoundingBall decoded to source/effects/aida as
+  `true_fire` and `pounding_ball`. Checklist 11 done, 2 set aside.
 - **The breeds' rules**: Tarkan's MoneyRate 30 and MaxItemLevel 3, RegTime 10, and OpenMU's x/255
   resistance read raw (Death Tree 18, Forest Orc 19, Death Rider 20, about 95% turned aside; Tarkan's are 8-13).
 
@@ -350,7 +372,7 @@ sheets. Ground luminance (sheet × light) is 29, against Noria's 49, Lorencia's 
   | 306 | Death Rider | 78 | 14 000 | 39 | Monster103 @1.1 | blade blur, sliding chrome |
   | 305 | Blue Golem | 84 | 25 000 | 38 | Monster102 @1.35 | blue light, sliding chrome |
   | 304 | Witch Queen | 94 | 38 500 | 6 | Monster101 @1.4 | red light, force bolt |
-  | 309 | **Hell Maine** | 98 | 50 000 | 3 | Monster106 @1.8 | red chrome, five storms; 150 s respawn |
+  | 309 | **Hell Maine** | 98 | 50 000 | 3 | Monster106 @1.8 | red chrome, one storm (MU's five never fire), fire lay; 150 s respawn; built |
 
   These are OM-only numbers; respawn is 10 s except Hell Maine's (A §4.2). The Blue Golem and Death
   Rider are spread over the whole map, so the level does not climb cleanly with the walk. The ids
