@@ -8,6 +8,7 @@
 #include <filesystem>
 
 #include <bgfx/bgfx.h>
+#include <signal.h>
 #include <spawn.h>
 #include <sys/wait.h>
 
@@ -96,8 +97,46 @@ void StudioDesk::watchJobs(game::ModelBench& bench) {
         if (job.target != here && "Arm" + job.target != here) continue;
         core::logf("studio: job %d cooked %s; swapping it in", job.number, job.target.c_str());
         startSwap(bench, job.target);
+        // And the fight, if one is up: it reads the cooked tables and shows at its start.
+        if (arenaUp()) openArena(arenaBreed_, arenaWorld_);
     }
     seenAll_ = true;
+}
+
+bool StudioDesk::arenaUp() {
+    if (arenaPid_ > 0 && ::waitpid(arenaPid_, nullptr, WNOHANG) == arenaPid_) {
+        core::logf("studio: the arena window was closed");
+        arenaPid_ = 0;
+    }
+    return arenaPid_ > 0;
+}
+
+void StudioDesk::closeArena() {
+    if (!arenaUp()) return;
+    ::kill(arenaPid_, SIGTERM);
+    ::waitpid(arenaPid_, nullptr, 0);
+    arenaPid_ = 0;
+}
+
+void StudioDesk::openArena(const std::string& breed, const std::string& world) {
+    closeArena();
+    // The game binary itself, as the studio is: what is fought there is what players fight.
+    const std::string self = shelfRoot_ + "/build/mu2";
+    const std::string log = shelfRoot_ + "/workshop/logs/mu/arena.log";
+    char* argv[] = {const_cast<char*>(self.c_str()), const_cast<char*>("--arena"),
+                    const_cast<char*>(breed.c_str()), const_cast<char*>("--world"),
+                    const_cast<char*>(world.c_str()), const_cast<char*>("--log"),
+                    const_cast<char*>(log.c_str()), nullptr};
+    pid_t pid = 0;
+    if (posix_spawn(&pid, self.c_str(), nullptr, nullptr, argv, environ) != 0) {
+        core::logError("studio: the arena would not start");
+        return;
+    }
+    arenaPid_ = pid;
+    arenaBreed_ = breed;
+    arenaWorld_ = world;
+    core::logf("studio: the arena for %s in %s (pid %d), its log in workshop/logs/mu/arena.log",
+               breed.c_str(), world.c_str(), pid);
 }
 
 void StudioDesk::startSwap(game::ModelBench& bench, const std::string& name) {
@@ -176,6 +215,9 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
     shelf_.time = std::string(ctx.time.name()) + "    T changes the time of day";
     shelf_.swapped = lastSwap_.empty() ? std::string() : lastSwap_ + "/compare.png";
     shelf_.plus = bench.plus();
+    const game::FigureBody* body = bench.subjectBody();
+    shelf_.monster = body && body->kind == game::BodyKind::Monster;
+    shelf_.arena = arenaUp();
     watchJobs(bench);
     for (const auto& [at, what] : script_) {
         if (at != frame_) continue;
@@ -183,6 +225,7 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
         if (what == "swap" && swap_ == Swap::Idle) startSwap(bench, bench.browseName(bench.browseIndex()));
         if (what.rfind("plus ", 0) == 0) plusAsked_ = std::atoi(what.c_str() + 5);
         if (what == "tab light") panels_.showLight();
+        if (what == "arena" && bench.subjectBody()) openArena(bench.subjectBody()->name, world);
         if (what.rfind("scene ", 0) == 0) {
             sceneAsked_ = what.substr(6);
             for (size_t i = 0; i < shelf_.scenes.size(); ++i) {
@@ -210,6 +253,8 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
     }
     if (asked.reread) startSwap(bench, bench.browseName(bench.browseIndex()));
     if (asked.plus >= 0) plusAsked_ = asked.plus;
+    if (asked.arena == 1 && body) openArena(body->name, world);
+    if (asked.arena == 0) closeArena();
     if (asked.scene >= 0 && asked.scene < int(shelf_.scenes.size())) {
         shelf_.scene = asked.scene;
         sceneAsked_ = shelf_.scenes[size_t(asked.scene)];
@@ -238,6 +283,7 @@ void StudioDesk::end() {
 }
 
 void StudioDesk::shutdown() {
+    closeArena();   // the arena is the studio's window; the cook (mu serve) is not
     cooker_.close();
     gui_.close();
 }

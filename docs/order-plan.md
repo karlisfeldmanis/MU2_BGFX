@@ -1236,6 +1236,33 @@ same day, **a stage and the world**, a switch on the Subject card:
 - Still to come in F4's line: the monster's show live (Figures::readShows has no reload hook
   yet), stats and rules with the arena (F5), placement (F6).
 
+### The studio's preloader, as done
+
+The user, 2026-10-12: "develop also preloader for this app". `mu2 --studio`'s open (its
+world, the figure tables, the wardrobe, the shine: 4 s) runs on the preloader's worker behind
+the spinner, with the studio's own look (`Preloader::studio()`, a `PreloaderLook`): "MU Studio"
+over the ring, the stage being loaded under it in place of MU's letter, no loading music. The
+game's loading screen is unchanged. `MU_PRELOADER_SHOT=<file>` saves one spinner frame.
+
+### Slice F5: monsters, the arena window, as done
+
+The user, 2026-10-12, picked "Arena window first": the show (auras, eye trails, stars, claws,
+burn) is drawn only by Play (play_show.cpp), so the bench keeps the bare body, and the fight --
+the monsters tab's "Simulate combat" -- is the game's own arena in a window of its own.
+
+- A monster's card has **Simulate combat**: `build/mu2 --arena <breed> --world <its world>`,
+  a process of the studio's, logged to workshop/logs/mu/arena.log; the button then reads Stop
+  the arena. When a cook of that monster finishes, the arena is restarted, so it fights with
+  the new tables and shows. The studio closes it when it closes; mu serve it leaves running.
+- A monster's `mu make` now cooks `shows` (cooked/figures/shows.json) as well as its tables
+  and figure: a show edit was nothing on screen without it. Its `rules` stay compiled C++
+  (`mu make realm` and a build), which the studio does not run.
+- MU_STUDIO_DO takes `arena`.
+- Proved: a shot run of Budge Dragon opened the arena (7.6 s behind its spinner), where it
+  swung, missed and died at tick 29 by the hero's blows; the studio closed it on exit, no
+  process left. cooker_test 27/0, layercheck green.
+- Left for sprint H: the show drawn on the bench, once the effect registry takes it out of Play.
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

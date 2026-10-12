@@ -17,7 +17,7 @@
 // The card's Read again runs the same swap with no job, for a cook run by hand.
 //
 // MU_STUDIO_DO="<frame>:<what>;..." does what the card would on those frames, for a shot run
-// with nobody at the mouse: `swap` (Read again), `scene <Stage|Home|world>`, `plus <N>` and `tab light` -- until F7's
+// with nobody at the mouse: `swap` (Read again), `scene <Stage|Home|world>`, `plus <N>`, `tab light` and `arena` -- until F7's
 // control socket drives the studio (docs/order-plan.md §9c). "40:scene Home;200:swap".
 #pragma once
 
@@ -61,6 +61,10 @@ public:
 
 private:
     void watchJobs(game::ModelBench& bench);
+    // The arena window (F5): `mu2 --arena <breed> --world <world>`, a process of its own.
+    void openArena(const std::string& breed, const std::string& world);
+    void closeArena();
+    bool arenaUp();
     void startSwap(game::ModelBench& bench, const std::string& name);
     void stepSwap(Context& ctx, game::ModelBench& bench, const std::string& world);
 
@@ -80,6 +84,8 @@ private:
     std::string shelfRoot_;   // MU2_BGFX: ./mu and shots/ are under it
     std::string lastSwap_;    // the last swap's folder, for the card
     int comparePid_ = 0;
+    int arenaPid_ = 0;
+    std::string arenaBreed_, arenaWorld_;
     int frame_ = 0;   // this desk's frames
     std::vector<std::pair<int, std::string>> script_;   // MU_STUDIO_DO
     std::string sceneAsked_;

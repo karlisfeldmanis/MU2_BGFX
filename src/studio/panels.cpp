@@ -211,6 +211,16 @@ float Panels::subject(const Shelf& shelf, Cooker& cooker, float x, float y, floa
         if (ImGui::SmallButton("Before / after")) asked_.openSheet = true;
         ImGui::SetItemTooltip("%s", shelf.swapped.c_str());
     }
+    if (shelf.monster) {
+        // The fight is a thing asked for (the monsters tab's rule): the real arena, the game's
+        // own AI, blows and show, in a window of its own beside this one.
+        if (ImGui::SmallButton(shelf.arena ? "Stop the arena" : "Simulate combat")) {
+            asked_.arena = shelf.arena ? 0 : 1;
+        }
+        ImGui::SetItemTooltip("the game's arena in its own window: this breed against a hero, "
+                              "restarted after each cook of it");
+        ImGui::SameLine();
+    }
     if (ImGui::SmallButton("Read again")) asked_.reread = true;
     ImGui::SetItemTooltip("what is on disk now, swapped in with a before and after: for a cook "
                           "run by hand or by another session");

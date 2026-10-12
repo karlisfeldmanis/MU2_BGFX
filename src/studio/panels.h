@@ -26,6 +26,8 @@ struct Shelf {
     std::string time;   // the time of day, and the key that changes it
     std::string swapped;  // the last swap's before/after sheet, once one was taken
     int plus = 0;         // the refinement the bench shows
+    bool monster = false; // a monster stands here: it may be fought in the arena
+    bool arena = false;   // the arena window is up
     std::vector<std::string> scenes;   // "Stage", "Home", then the cooked worlds
     int scene = 0;
 };
@@ -37,6 +39,7 @@ struct Asked {
     bool reread = false;     // read the subject again from disk now, as after a cook
     int scene = -1;          // stand it in shelf.scenes[scene]
     int plus = -1;           // show the items at +plus
+    int arena = -1;          // 1 open the arena window, 0 close it
 };
 
 class Panels {

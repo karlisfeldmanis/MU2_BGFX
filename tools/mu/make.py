@@ -311,6 +311,10 @@ def plan_thing(thing, threads):
                           after=jobs(os.path.join(COOKED, "wardrobe", "jobs.txt"), 60)))
         steps += tables(threads)
     elif thing.kind == "monster":
+        # Its show (aura, eye trails, stars, claws...) is in cooked/figures/shows.json, which
+        # plan_realm's `shows` step cooks: a show edit is nothing on screen without it. The
+        # realm's own tables (rules) are compiled C++ and wait for `mu make realm` and a build.
+        steps += [s for s in plan_realm() if s.name == "shows"]
         steps += tables(threads)
         steps.append(Step(f"figure {thing.name}",
                           COOK + ["--world", thing.world, "--only", "figures", "--monsters", thing.name] + t,
