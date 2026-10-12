@@ -23,6 +23,61 @@
   ],
   "why_this_one": "To write.",
   "material_note": "treemonster01: leafy crown and moss, cut out: foliage. treemonster02: the trunk body, bark with dark iron bands: bark.",
+  "rules": {
+    "drops": {
+      "money_rate": 30,
+      "max_plus": 3,
+      "regen": 10
+    },
+    "resist": {
+      "ice": 18,
+      "poison": 18
+    },
+    "note": "Resistance: OpenMU S6 Maps/Aida.cs:458-460 writes 18/255 to poison, ice and fire, read as WebZen's raw 18 the way Tarkan's are (realm_tuning.h); fire is not carried. Drops: no MoneyRate or MaxItemLevel for Aida exists anywhere on disk, so Tarkan's 30 and 3, as docs/aida-port.md's decision 11 says; RegTime 10, OpenMU's RespawnDelay (Aida.cs:446)."
+  },
+  "combat": {
+    "level": 72,
+    "health": 10000,
+    "minimum_damage": 248,
+    "maximum_damage": 272,
+    "defense": 187,
+    "move_range": 4,
+    "attack_range": 1,
+    "view_range": 5,
+    "move_delay": 450,
+    "attack_delay": 1400,
+    "attack_rate": 362,
+    "defense_rate": 120,
+    "attack_skill": null,
+    "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. The respawn is rules.drops.regen."
+  },
+  "show": {
+    "tags": [
+      "death_tree"
+    ],
+    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it.",
+    "bones": {
+      "stars": {
+        "names": [
+          "e04",
+          "e1",
+          "e05",
+          "e02",
+          "e06",
+          "e03"
+        ],
+        "note": "MU's bones by name; play_tuning.h's comment by its tag (\"death_tree\") says where MU reads them. Sprint E4b moved them here from kDeathTreeHorns."
+      }
+    },
+    "star_tint": {
+      "colour": [
+        0.8,
+        1.7,
+        1.0
+      ],
+      "note": "The colour its star bones' lights are drawn in; play_tuning.h's comment by its tag (\"death_tree\") says why. Sprint E4b moved it here from kDeathTreeGreen."
+    }
+  },
   "islands": [
     {
       "island": 0,
@@ -794,60 +849,5 @@
         0.069
       ]
     }
-  ],
-  "rules": {
-    "drops": {
-      "money_rate": 30,
-      "max_plus": 3,
-      "regen": 10
-    },
-    "resist": {
-      "ice": 18,
-      "poison": 18
-    },
-    "note": "Resistance: OpenMU S6 Maps/Aida.cs:458-460 writes 18/255 to poison, ice and fire, read as WebZen's raw 18 the way Tarkan's are (realm_tuning.h); fire is not carried. Drops: no MoneyRate or MaxItemLevel for Aida exists anywhere on disk, so Tarkan's 30 and 3, as docs/aida-port.md's decision 11 says; RegTime 10, OpenMU's RespawnDelay (Aida.cs:446)."
-  },
-  "combat": {
-    "level": 72,
-    "health": 10000,
-    "minimum_damage": 248,
-    "maximum_damage": 272,
-    "defense": 187,
-    "move_range": 4,
-    "attack_range": 1,
-    "view_range": 5,
-    "move_delay": 450,
-    "attack_delay": 1400,
-    "attack_rate": 362,
-    "defense_rate": 120,
-    "attack_skill": null,
-    "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. The respawn is rules.drops.regen."
-  },
-  "show": {
-    "tags": [
-      "death_tree"
-    ],
-    "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it.",
-    "bones": {
-      "stars": {
-        "names": [
-          "e04",
-          "e1",
-          "e05",
-          "e02",
-          "e06",
-          "e03"
-        ],
-        "note": "MU's bones by name; play_tuning.h's comment by its tag (\"death_tree\") says where MU reads them. Sprint E4b moved them here from kDeathTreeHorns."
-      }
-    },
-    "star_tint": {
-      "colour": [
-        0.8,
-        1.7,
-        1.0
-      ],
-      "note": "The colour its star bones' lights are drawn in; play_tuning.h's comment by its tag (\"death_tree\") says why. Sprint E4b moved it here from kDeathTreeGreen."
-    }
-  }
+  ]
 }
