@@ -483,6 +483,7 @@ add_executable(mu2
   src/app/modes/bench_mode.cpp
   src/app/modes/studio_desk.cpp
   src/app/modes/bench_scenes.cpp
+  src/app/modes/studio_place.cpp
 )
 target_include_directories(mu2 PRIVATE src extern ${CMAKE_BINARY_DIR}/generated)
 # The game's version, MAJOR.MINOR.PATCH in VERSION (1.0.0 is the finished game; until then the

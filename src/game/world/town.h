@@ -78,6 +78,9 @@ public:
     // The cooked table itself, for what reads the placements without drawing them: the
     // lamps resolve each light through the placement that carries it.
     const content::CookedTown& cooked() const { return town_; }
+    // One instance to move in place: the studio's Place (app/modes/studio_place.h) moves what
+    // gatherAll draws next frame, before the cook has written it. Never in a played world.
+    content::TownInstance& instanceAt(size_t index) { return town_.instances[index]; }
     // How bright a placement's glow parts draw this frame, MU's BlendMeshLight: 1 unless the
     // lamps flicker it. Rides in the instance's fifth vec4 .w, which fs_glow reads.
     void setGlowLevel(uint32_t instance, float level) {

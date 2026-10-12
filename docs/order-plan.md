@@ -1262,6 +1262,36 @@ the monsters tab's "Simulate combat" -- is the game's own arena in a window of i
   swung, missed and died at tick 29 by the hero's blows; the studio closed it on exit, no
   process left. cooker_test 27/0, layercheck green.
 - Left for sprint H: the show drawn on the bench, once the effect registry takes it out of Play.
+- Then (f9707a17) a monster's make cooks its rules too: plan_realm's `realm` and `shows`, and
+  last `compile the game` (cmake --build build --target mu2 mu2_server under a `build` lock,
+  never netbot), so the arena fights by edited rules. Planned and not run yet: realm is stale
+  from another session's recipe edits, theirs to regenerate.
+
+### Slice F6: placement, as done
+
+- In a world scene the card has **Place objects**; the Place window takes the inspector's spot.
+  A click picks the object under the pointer (the nearest whose box's sphere the ray enters),
+  a drag on it walks it over the land at its height above the ground, and the window holds its
+  x and z, its height over the land, its yaw and its scale. Each shows on the next frame: the
+  studio draws the town from its cooked instances (Town::gatherAll), moved in memory through
+  `Town::instanceAt`. A ring marks the picked object.
+- Let go, it is written to source/world/<w>/<w>.json through mu serve's edit: `at` by the
+  value for x and z, by the change for the height (the cook lifts and lowers some models and
+  those offsets stay out of the source), `angle.2` for the yaw, `scale` only where the source
+  writes one. An object is found in the source by its model and its x, z (x = at[0]/per_tile,
+  z = -at[1]/per_tile, as cook_placements); one the index adds is shown and not moved.
+- While placing, the card's target is `placements <w>` (`mu make placements <w>`: index, sync,
+  `cook.py --only placements`), so the stale marker and Cook speak for the world; when that job
+  finishes the world is read again, and its lamps and fires stand where their objects now are.
+- MU_STUDIO_DO takes `place`, `pick <model>` and `nudge <dx> <dz>`.
+- make.py's streaming and timings moved, unchanged, to tools/mu/progress.py: it had reached 801.
+- Proved: a scripted run picked Lorencia's Bonfire01 (instance 2078, source line 2234) and
+  nudged it 2 m east, which wrote exactly `objects.2234.at.0` 18400.0 -> 18600.0 and one journal
+  line; a second, with a monster framing the fire, moved its stones on screen at once while its
+  flames stayed for the cook. Both were put back with `mu edit`, journalled, and the file is as
+  it was in git. cooker_test 27 headless and 38 live, layercheck green.
+- Not yet: adding and deleting objects (an edit changes only a value that is there), gates and
+  NPC spots, the ground (sprint G's rest).
 
 ## 10. Leave alone
 

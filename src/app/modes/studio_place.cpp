@@ -1,0 +1,327 @@
+#include "app/modes/studio_place.h"
+
+#include <bgfx/bgfx.h>
+#include <bx/math.h>
+
+#include <cmath>
+#include <cstdio>
+
+#include "app/context.h"
+#include "game/world/world.h"
+#include "imgui.h"
+#include "studio/cooker.h"
+
+namespace mu::app {
+namespace {
+
+const ImVec4 kGold(0.86f, 0.72f, 0.42f, 1.0f);
+const ImVec4 kGreen(0.52f, 0.80f, 0.52f, 1.0f);
+const ImVec4 kRed(0.92f, 0.42f, 0.38f, 1.0f);
+const ImVec4 kDim(0.58f, 0.58f, 0.60f, 1.0f);
+
+constexpr float kPi = 3.14159265f;
+
+// core::Json reads only; this is the one place a value of it is changed after a write.
+core::Json* member(core::Json& json, const char* key) {
+    for (auto& [k, v] : json.members) {
+        if (k == key) return &v;
+    }
+    return nullptr;
+}
+
+std::string number(double v) {
+    char text[64];
+    std::snprintf(text, sizeof(text), "%.4f", v);
+    return text;
+}
+
+}  // namespace
+
+void StudioPlace::world(Context& ctx, const std::string& name) {
+    if (name == world_) return;
+    world_ = name;
+    picked_ = line_ = -1;
+    dragging_ = false;
+    file_ = "source/world/" + name + "/" + name + ".json";
+    source_ = core::parseJsonFile(ctx.paths.root + "/" + file_);
+    perTile_ = source_["units_per_tile"].numberOr(100.0);
+}
+
+bool StudioPlace::ray(Context& ctx, const gfx::Camera& camera, float origin[3],
+                      float direction[3]) const {
+    const int width = ctx.window.width(), height = ctx.window.height();
+    if (width <= 0 || height <= 0) return false;
+    float px = 0.0f, py = 0.0f;
+    ctx.window.pointer(&px, &py);
+    // As game/play_pointer.cpp: the pixel into clip space, y flipped, near plane by the caps.
+    float view[16], proj[16], viewProj[16], inverse[16];
+    ctx.renderer.cameraMatrices(camera, view, proj);
+    bx::mtxMul(viewProj, view, proj);
+    bx::mtxInverse(inverse, viewProj);
+    const float ndcX = 2.0f * px / float(width) - 1.0f, ndcY = 1.0f - 2.0f * py / float(height);
+    const float nearZ = bgfx::getCaps()->homogeneousDepth ? -1.0f : 0.0f;
+    const bx::Vec3 nearPoint = bx::mulH({ndcX, ndcY, nearZ}, inverse);
+    const bx::Vec3 farPoint = bx::mulH({ndcX, ndcY, 1.0f}, inverse);
+    const bx::Vec3 d = bx::normalize(bx::sub(farPoint, nearPoint));
+    origin[0] = nearPoint.x, origin[1] = nearPoint.y, origin[2] = nearPoint.z;
+    direction[0] = d.x, direction[1] = d.y, direction[2] = d.z;
+    return true;
+}
+
+bool StudioPlace::groundUnder(Context& ctx, game::World& world, const gfx::Camera& camera,
+                              float at[3]) const {
+    float o[3], d[3];
+    if (!ray(ctx, camera, o, d)) return false;
+    const content::Ground& ground = world.ground();
+    // Down the ray in half metres to the first point under the land, then halved twelve times.
+    float low = 0.0f, high = -1.0f;
+    for (float t = 0.5f; t < 400.0f; t += 0.5f) {
+        if (o[1] + d[1] * t < ground.heightAt(o[0] + d[0] * t, o[2] + d[2] * t)) {
+            low = t - 0.5f, high = t;
+            break;
+        }
+    }
+    if (high < 0.0f) return false;
+    for (int i = 0; i < 12; ++i) {
+        const float mid = 0.5f * (low + high);
+        if (o[1] + d[1] * mid < ground.heightAt(o[0] + d[0] * mid, o[2] + d[2] * mid)) {
+            high = mid;
+        } else {
+            low = mid;
+        }
+    }
+    for (int a = 0; a < 3; ++a) at[a] = o[a] + d[a] * high;
+    return true;
+}
+
+void StudioPlace::match(game::World& world) {
+    // The source's line for the picked instance: its model, and where the cook put it --
+    // x = at[0] / per_tile, z = -at[1] / per_tile (tools/cook.py, cook_placements).
+    line_ = -1;
+    const content::CookedTown& town = world.town().cooked();
+    const content::TownInstance& one = town.instances[size_t(picked_)];
+    const std::string& model = town.models[one.model].name;
+    const core::Json& objects = source_["objects"];
+    for (size_t i = 0; i < objects.size(); ++i) {
+        const core::Json& o = objects.at(i);
+        if (o["model"].stringOr("") != model) continue;
+        const double x = o["at"].at(0).numberOr(0.0) / perTile_;
+        const double z = -o["at"].at(1).numberOr(0.0) / perTile_;
+        if (std::fabs(x - one.position[0]) < 0.02 && std::fabs(z - one.position[2]) < 0.02) {
+            line_ = int(i);
+            return;
+        }
+    }
+}
+
+bool StudioPlace::pointer(Context& ctx, game::World& world, const gfx::Camera& camera,
+                          bool overPanels) {
+    if (!world.town().isOpen() || source_.isNull()) return false;
+    game::Town& town = world.town();
+    const content::Ground& ground = world.ground();
+    if (dragging_) {
+        content::TownInstance& one = town.instanceAt(size_t(picked_));
+        if (ctx.window.held(0)) {
+            float g[3];
+            if (groundUnder(ctx, world, camera, g)) {
+                one.position[0] = g[0] - grab_[0];
+                one.position[2] = g[2] - grab_[2];
+                one.position[1] = ground.heightAt(one.position[0], one.position[2]) +
+                                  ((one.flags & 1) ? 0.0f : heightOver_);
+            }
+            return true;
+        }
+        dragging_ = false;
+        saidOk_ = true;
+        said_ = "moved; let go writes it";
+        return true;   // the release: written by the panel, which holds the cooker
+    }
+    if (overPanels || !ctx.window.clicked(0)) return false;
+
+    float o[3], d[3];
+    if (!ray(ctx, camera, o, d)) return false;
+    const content::CookedTown& cooked = town.cooked();
+    int best = -1;
+    float bestT = 1e30f;
+    for (size_t i = 0; i < cooked.instances.size(); ++i) {
+        const content::TownInstance& one = cooked.instances[i];
+        const content::TownModel& model = cooked.models[one.model];
+        float c[3], r2 = 0.0f;
+        for (int a = 0; a < 3; ++a) {
+            c[a] = one.position[a] + 0.5f * (model.min[a] + model.max[a]) * one.scale;
+            const float half = 0.5f * (model.max[a] - model.min[a]) * one.scale;
+            r2 += half * half;
+        }
+        // The sphere round its box: through it, the nearest entry wins.
+        float oc[3] = {c[0] - o[0], c[1] - o[1], c[2] - o[2]};
+        const float t = oc[0] * d[0] + oc[1] * d[1] + oc[2] * d[2];
+        if (t < 0.0f) continue;
+        const float miss2 = oc[0] * oc[0] + oc[1] * oc[1] + oc[2] * oc[2] - t * t;
+        if (miss2 > r2) continue;
+        const float enter = t - std::sqrt(r2 - miss2);
+        if (enter < bestT) {
+            bestT = enter;
+            best = int(i);
+        }
+    }
+    if (best < 0) {
+        picked_ = line_ = -1;
+        return false;   // the land: a drag there orbits, as ever
+    }
+    picked_ = best;
+    match(world);
+    said_.clear();
+    storedY_ = cooked.instances[size_t(best)].position[1];
+    // A press on it starts a walk, when the source holds it.
+    const content::TownInstance& one = cooked.instances[size_t(best)];
+    float g[3];
+    if (line_ >= 0 && groundUnder(ctx, world, camera, g)) {
+        grab_[0] = g[0] - one.position[0];
+        grab_[2] = g[2] - one.position[2];
+        heightOver_ = one.position[1] - ground.heightAt(one.position[0], one.position[2]);
+        dragging_ = true;
+    }
+    return true;
+}
+
+bool StudioPlace::pickModel(game::World& world, const std::string& model, const float near[3]) {
+    const content::CookedTown& cooked = world.town().cooked();
+    float best = 1e30f;
+    picked_ = -1;
+    for (size_t i = 0; i < cooked.instances.size(); ++i) {
+        const content::TownInstance& one = cooked.instances[i];
+        if (cooked.models[one.model].name != model) continue;
+        const float dx = one.position[0] - near[0], dz = one.position[2] - near[2];
+        if (dx * dx + dz * dz < best) {
+            best = dx * dx + dz * dz;
+            picked_ = int(i);
+        }
+    }
+    if (picked_ < 0) return false;
+    match(world);
+    storedY_ = cooked.instances[size_t(picked_)].position[1];
+    return true;
+}
+
+void StudioPlace::nudge(Context& ctx, game::World& world, studio::Cooker& cooker, float dx, float dz) {
+    if (picked_ < 0 || line_ < 0) return;
+    content::TownInstance& one = world.town().instanceAt(size_t(picked_));
+    const float above = one.position[1] - world.ground().heightAt(one.position[0], one.position[2]);
+    one.position[0] += dx;
+    one.position[2] += dz;
+    one.position[1] = world.ground().heightAt(one.position[0], one.position[2]) + ((one.flags & 1) ? 0.0f : above);
+    write(ctx, world, cooker);
+}
+
+void StudioPlace::write(Context& ctx, game::World& world, studio::Cooker& cooker) {
+    if (picked_ < 0 || line_ < 0) return;
+    const content::TownInstance& one = world.town().cooked().instances[size_t(picked_)];
+    core::Json& o = member(source_, "objects")->items[size_t(line_)];
+    core::Json* at = member(o, "at");
+    core::Json* angle = member(o, "angle");
+    // Height by the change, not by the value: the cook lifts and lowers some models on the way
+    // (LIFTED_BY_WORLD, LOWERED), and those offsets must not be written into the source.
+    const std::string base = "[\"objects\", " + std::to_string(line_) + ", ";
+    const double values[3] = {double(one.position[0]) * perTile_, -double(one.position[2]) * perTile_,
+                              o["at"].at(2).numberOr(0.0) +
+                                  ((one.flags & 1) ? 0.0 : (double(one.position[1]) - storedY_) * perTile_)};
+    std::string answer;
+    bool ok = true;
+    for (int a = 0; a < 3 && ok; ++a) {
+        if (std::fabs(values[a] - o["at"].at(size_t(a)).numberOr(0.0)) < 1e-4) continue;
+        ok = cooker.edit(file_, base + "\"at\", " + std::to_string(a) + "]", number(values[a]), &answer);
+        if (ok && at) at->items[size_t(a)].number = values[a];
+    }
+    const double yawDegrees = double(one.yaw) * 180.0 / kPi;
+    if (ok && std::fabs(yawDegrees - o["angle"].at(2).numberOr(0.0)) > 1e-3) {
+        ok = cooker.edit(file_, base + "\"angle\", 2]", number(yawDegrees), &answer);
+        if (ok && angle) angle->items[2].number = yawDegrees;
+    }
+    if (ok && !o["scale"].isNull() && std::fabs(double(one.scale) - o["scale"].numberOr(1.0)) > 1e-4) {
+        ok = cooker.edit(file_, base + "\"scale\"]", number(one.scale), &answer);
+        if (ok) member(o, "scale")->number = one.scale;
+    }
+    storedY_ = one.position[1];
+    saidOk_ = ok;
+    said_ = ok ? "written to " + file_ + "; Cook makes it the cooked truth" : answer;
+    if (ok) cooker.forgetPlan();
+}
+
+void StudioPlace::panel(Context& ctx, game::World& world, studio::Cooker& cooker,
+                        const gfx::Camera& camera, float x, float y, float w, float h) {
+    ImGui::SetNextWindowPos(ImVec2(x, y));
+    ImGui::SetNextWindowSize(ImVec2(w, h));
+    ImGui::Begin("Place", nullptr,
+                 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
+                     ImGuiWindowFlags_NoSavedSettings);
+    ImGui::PushTextWrapPos(0.0f);
+    if (!world.town().isOpen()) {
+        ImGui::TextColored(kDim, "no town is open: choose a world as the scene");
+        ImGui::PopTextWrapPos();
+        ImGui::End();
+        return;
+    }
+    // A walk just ended: what it moved is written now, by the hand that holds the cooker.
+    if (picked_ >= 0 && !dragging_ && said_ == "moved; let go writes it") write(ctx, world, cooker);
+
+    ImGui::TextColored(kDim, "click an object in %s; drag it over the land", world_.c_str());
+    if (picked_ < 0) {
+        ImGui::PopTextWrapPos();
+        ImGui::End();
+        return;
+    }
+    content::TownInstance& one = world.town().instanceAt(size_t(picked_));
+    const content::TownModel& model = world.town().cooked().models[one.model];
+    ImGui::TextColored(kGold, "%s", model.name.c_str());
+    if (line_ < 0) {
+        ImGui::TextColored(kDim, "placed by the index, not in %s: shown, not moved", file_.c_str());
+    } else {
+        ImGui::TextColored(kDim, "objects[%d] of %s", line_, file_.c_str());
+        const float ground = world.ground().heightAt(one.position[0], one.position[2]);
+        float pos[2] = {one.position[0], one.position[2]};
+        float above = one.position[1] - ground;
+        float yaw = one.yaw * 180.0f / kPi;
+        float scale = one.scale;
+        bool done = false;
+        if (ImGui::DragFloat2("x, z (m)", pos, 0.02f)) {
+            one.position[0] = pos[0];
+            one.position[2] = pos[1];
+            one.position[1] = world.ground().heightAt(pos[0], pos[1]) + above;
+        }
+        done |= ImGui::IsItemDeactivatedAfterEdit();
+        ImGui::BeginDisabled((one.flags & 1) != 0);
+        if (ImGui::DragFloat("over the land (m)", &above, 0.01f)) one.position[1] = ground + above;
+        done |= ImGui::IsItemDeactivatedAfterEdit();
+        ImGui::EndDisabled();
+        if (ImGui::DragFloat("yaw (deg)", &yaw, 0.5f)) one.yaw = yaw * kPi / 180.0f;
+        done |= ImGui::IsItemDeactivatedAfterEdit();
+        const bool scaled = !source_["objects"].at(size_t(line_))["scale"].isNull();
+        ImGui::BeginDisabled(!scaled);
+        if (ImGui::DragFloat("scale", &scale, 0.005f, 0.05f, 20.0f)) one.scale = scale;
+        done |= ImGui::IsItemDeactivatedAfterEdit();
+        ImGui::EndDisabled();
+        if (!scaled) ImGui::SetItemTooltip("the source writes no scale for it (1.0): not added here");
+        if (done) write(ctx, world, cooker);
+    }
+    if (!said_.empty() && said_ != "moved; let go writes it") {
+        ImGui::TextColored(saidOk_ ? kGreen : kRed, "%s", said_.c_str());
+    }
+    if (ImGui::SmallButton("Drop the selection")) picked_ = line_ = -1;
+    ImGui::PopTextWrapPos();
+    ImGui::End();
+
+    // The mark: a ring on the screen round the picked object's middle, over everything.
+    if (picked_ >= 0) {
+        float view[16], proj[16], viewProj[16];
+        ctx.renderer.cameraMatrices(camera, view, proj);
+        bx::mtxMul(viewProj, view, proj);
+        const float mid = 0.5f * (model.min[1] + model.max[1]) * one.scale;
+        const bx::Vec3 clip = bx::mulH({one.position[0], one.position[1] + mid, one.position[2]}, viewProj);
+        const float sx = (clip.x * 0.5f + 0.5f) * float(ctx.window.width());
+        const float sy = (0.5f - clip.y * 0.5f) * float(ctx.window.height());
+        ImGui::GetForegroundDrawList()->AddCircle(ImVec2(sx, sy), 1.6f * ImGui::GetFontSize(),
+                                                  IM_COL32(220, 184, 107, 230), 32, 2.0f);
+    }
+}
+
+}  // namespace mu::app

@@ -28,6 +28,7 @@ struct Shelf {
     int plus = 0;         // the refinement the bench shows
     bool monster = false; // a monster stands here: it may be fought in the arena
     bool arena = false;   // the arena window is up
+    bool placing = false; // the Place window has the inspector's spot
     std::vector<std::string> scenes;   // "Stage", "Home", then the cooked worlds
     int scene = 0;
 };
@@ -40,6 +41,7 @@ struct Asked {
     int scene = -1;          // stand it in shelf.scenes[scene]
     int plus = -1;           // show the items at +plus
     int arena = -1;          // 1 open the arena window, 0 close it
+    int place = -1;          // 1 place objects, 0 stop
 };
 
 class Panels {
@@ -47,6 +49,10 @@ public:
     // `width` and `height` are the window's, in framebuffer pixels; `now` wall seconds.
     Asked draw(const Shelf& shelf, Cooker& cooker, float width, float height, double now);
     void showLight() { inspector_.showLight(); }
+    // Where the inspector stands (x, y, w, h), for the Place window that takes its spot.
+    void sideRect(float out[4]) const {
+        for (int i = 0; i < 4; ++i) out[i] = side_[i];
+    }
 
 private:
     void browser(const Shelf& shelf, Asked& asked, float x, float y, float w, float h);
@@ -56,6 +62,7 @@ private:
 
     char filter_[64] = {};
     Inspector inspector_;
+    float side_[4] = {0, 0, 0, 0};
     Asked asked_;
     size_t finishedSeen_ = 0;
 };

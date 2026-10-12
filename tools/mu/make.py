@@ -354,6 +354,32 @@ def plan_set(suffix, threads, say):
     return builds + steps[first_cook:]
 
 
+def plan_placements(world, threads):
+    """`mu make placements <w>`: the world's placed objects after they were moved (the studio's
+    Place, F6). The cook reads assets/world/<w>/<w>.json, which the index makes out of
+    source/world/<w>/<w>.json, so: the index, the sync, the placements. No model is built."""
+    source = os.path.join(SOURCE, "world", world, f"{world}.json")
+    if not os.path.exists(source):
+        from things import NotFound
+        raise NotFound(f"no world source/world/{world}/{world}.json")
+    index_json = os.path.join(WORKSHOP, "index.json")
+    placed = os.path.join(ASSETS, "world", world, f"{world}.json")
+    return [
+        Step("index", ["python3", os.path.join(PIPELINE, "index.py"), SOURCE, WORKSHOP],
+             lambda c: ((mtime(source) > mtime(index_json),
+                         f"{world}.json is newer than the index" if mtime(source) > mtime(index_json)
+                         else "the index is newer than the placements")), "index"),
+        Step("sync", ["python3", os.path.join(TOOLS, "sync.py"), "--src", WORKSHOP, "--dst", ASSETS,
+                      "--world", world, "--only-world"],
+             lambda c: ((bool(c & {"index"}) or mtime(source) > mtime(placed),
+                         "the workshop changed" if c & {"index"} else "assets/ against the source")),
+             "assets"),
+        Step(f"placements {world}", COOK + ["--world", world, "--only", "placements"],
+             cook_test([os.path.join(COOKED, world, world + ".mut")], [placed], f"{world}.mut"),
+             "cooked", lock=world),
+    ]
+
+
 def plan_world(world, threads):
     things = world_recipes(world)
     return head(things, threads) + world_cook(world, things, threads)
@@ -594,6 +620,8 @@ def plan(target, threads, say, folder=None, reimport=False):
         return plan_ground(target[1], folder, threads, reimport)
     if target[0] == "world" and len(target) == 2:
         return plan_world(target[1], threads)
+    if target[0] == "placements" and len(target) == 2:
+        return plan_placements(target[1], threads)
     if target == ["sounds"]:
         return plan_sounds(threads)
     if target == ["tables"]:
@@ -631,86 +659,9 @@ def plan_rehearsal():
             Step("rehearse tables", script + ["4", "tables"], always("a rehearsal"), "rehearsal")]
 
 
-# ----------------------------------------------------------------------------- what a step says while it runs
-#
-# A step's output goes line by line to its log and, read on the way, to `on` (mu serve's
-# events, docs/order-plan.md §9c). A line `@progress n/m label` is a bar inside the step:
-# asset.sh prints one a sheet and one for the export, texcook one an image. Any other line is
-# the step's latest word. Python steps run unbuffered, or their lines would arrive at the end.
-
-PROGRESS = re.compile(r"^@progress (\d+)/(\d+)\s*(.*)$")
-TIMINGS = os.path.join(LOCKS, "timings.json")
-
-
-def kind_of(name):
-    """'build Sword01' -> 'build', 'tables lorencia' -> 'tables': what an estimate falls back on."""
-    return name.split(" ")[0]
-
-
-def read_timings():
-    try:
-        import json
-        with open(TIMINGS) as handle:
-            return json.load(handle)
-    except (OSError, ValueError):
-        return {}
-
-
-def estimate(name, timings=None):
-    """Seconds this step took last time, else the median of its kind's, else None."""
-    timings = read_timings() if timings is None else timings
-    if name in timings.get("steps", {}):
-        return timings["steps"][name]
-    seen = sorted(timings.get("kinds", {}).get(kind_of(name), []))
-    return seen[len(seen) // 2] if seen else None
-
-
-def remember(name, seconds):
-    import json
-    timings = read_timings()
-    timings.setdefault("steps", {})[name] = seconds
-    kinds = timings.setdefault("kinds", {}).setdefault(kind_of(name), [])
-    kinds.append(seconds)
-    del kinds[:-20]
-    os.makedirs(LOCKS, exist_ok=True)
-    with open(TIMINGS + ".tmp", "w") as handle:
-        json.dump(timings, handle, indent=1)
-    os.replace(TIMINGS + ".tmp", TIMINGS)
-
-
-def stream(cmd, log, env, on, step, stop):
-    """Runs one command niced, its output to `log` and to `on`. Returns its exit code.
-
-    `stop` is the job's: stop.now set kills the step's whole process group (Blender, texcook
-    and all); stop.after alone lets it finish, which is the safe way to end a cook.
-    """
-    env = dict(env or os.environ, PYTHONUNBUFFERED="1")
-    with open(log, "w") as out:
-        proc = subprocess.Popen(["nice", "-n", "10"] + cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT, cwd=ROOT, env=env,
-                                start_new_session=True, bufsize=1, text=True, errors="replace")
-        if stop is not None:
-            stop.proc = proc
-        said = 0.0
-        for line in proc.stdout:
-            out.write(line)
-            line = line.rstrip()
-            mark = PROGRESS.match(line)
-            if mark:
-                on("progress", step=step, n=int(mark.group(1)), of=int(mark.group(2)),
-                   label=mark.group(3))
-            elif line and time.time() - said > 0.2:
-                # The latest word, ten a second at most: Blender alone prints thousands.
-                said = time.time()
-                on("line", step=step, text=line[:300])
-        code = proc.wait()
-        if stop is not None:
-            stop.proc = None
-        return code
-
-
-def quiet(*_, **__):
-    pass
+# What a step says while it runs (the @progress lines) and how long steps take: progress.py.
+from progress import (PROGRESS, TIMINGS, estimate, kind_of, quiet, read_timings,  # noqa: E402,F401
+                      remember, stream)
 
 
 def run(steps, dry, say, logs, env=None, on=None, stop=None):

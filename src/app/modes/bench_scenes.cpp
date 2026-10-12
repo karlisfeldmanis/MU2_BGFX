@@ -18,6 +18,12 @@
 namespace mu::app {
 
 void BenchMode::setScene(Context& ctx, const std::string& scene) {
+    if (scene == "reload") {
+        // The world's placements were cooked again: its town read anew, where it stood.
+        world_.shutdown();
+        setScene(ctx, sceneWorld_);
+        return;
+    }
     if (scene == "Stage") {
         if (!stage_.isOpen() && !stage_.open(ctx.textures)) return;
         stage_.place(studioStand_);

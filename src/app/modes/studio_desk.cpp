@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdio>
 #include <chrono>
 #include <cstdlib>
 #include <ctime>
@@ -95,6 +96,14 @@ void StudioDesk::watchJobs(game::ModelBench& bench) {
         // The Cook button's name, or the recipe's own from a `./mu make` by hand.
         const std::string here = targetOf(bench);
         if (job.target != here && "Arm" + job.target != here) continue;
+        if (job.target.rfind("placements ", 0) == 0) {
+            // The world's placements cooked: read the world again, so the lamps and the fires
+            // stand where their objects now do.
+            core::logf("studio: job %d cooked %s; reading the world again", job.number, job.target.c_str());
+            sceneAsked_ = "reload";
+            place_.drop();
+            continue;
+        }
         core::logf("studio: job %d cooked %s; swapping it in", job.number, job.target.c_str());
         startSwap(bench, job.target);
         // And the fight, if one is up: it reads the cooked tables and shows at its start.
@@ -197,7 +206,15 @@ void StudioDesk::stepSwap(Context& ctx, game::ModelBench& bench, const std::stri
     if (posix_spawn(&pid, "/bin/sh", nullptr, nullptr, argv, environ) == 0) comparePid_ = pid;
 }
 
-void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string& world) {
+void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string& world,
+                        game::World& town, const gfx::Camera& camera, bool onStage) {
+    // Place: only over a town, and before the panels so a pick is this frame's.
+    if (onStage) placing_ = false;
+    tookPointer_ = false;
+    if (placing_) {
+        place_.world(ctx, world);
+        tookPointer_ = swap_ == Swap::Idle && place_.pointer(ctx, town, camera, gui_.wantsPointer());
+    }
     // The names are read once a tab, not once a frame: the world objects run to hundreds.
     if (int(bench.categoryIndex()) != shelfCategory_ || shelf_.categories.size() != bench.categoryCount()) {
         shelfCategory_ = int(bench.categoryIndex());
@@ -210,7 +227,8 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
     }
     shelf_.category = shelfCategory_;
     shelf_.selected = int(bench.browseIndex());
-    shelf_.target = targetOf(bench);
+    shelf_.target = placing_ ? "placements " + world : targetOf(bench);
+    shelf_.placing = placing_;
     shelf_.clip = bench.hasFigure() ? bench.clipLine() : std::string();
     shelf_.time = std::string(ctx.time.name()) + "    T changes the time of day";
     shelf_.swapped = lastSwap_.empty() ? std::string() : lastSwap_ + "/compare.png";
@@ -226,6 +244,20 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
         if (what.rfind("plus ", 0) == 0) plusAsked_ = std::atoi(what.c_str() + 5);
         if (what == "tab light") panels_.showLight();
         if (what == "arena" && bench.subjectBody()) openArena(bench.subjectBody()->name, world);
+        if (what == "place") placing_ = true;
+        if (what.rfind("pick ", 0) == 0) {
+            float near[3];
+            for (int a = 0; a < 3; ++a) near[a] = bench.camera().target[a];
+            place_.world(ctx, world);
+            const bool found = place_.pickModel(town, what.substr(5), near);
+            core::logf("studio: picked %s: instance %d, source line %d", what.substr(5).c_str(),
+                       found ? place_.picked() : -1, place_.line());
+        }
+        if (what.rfind("nudge ", 0) == 0) {
+            float dx = 0.0f, dz = 0.0f;
+            std::sscanf(what.c_str() + 6, "%f %f", &dx, &dz);
+            place_.nudge(ctx, town, cooker_, dx, dz);
+        }
         if (what.rfind("scene ", 0) == 0) {
             sceneAsked_ = what.substr(6);
             for (size_t i = 0; i < shelf_.scenes.size(); ++i) {
@@ -253,6 +285,15 @@ void StudioDesk::panels(Context& ctx, game::ModelBench& bench, const std::string
     }
     if (asked.reread) startSwap(bench, bench.browseName(bench.browseIndex()));
     if (asked.plus >= 0) plusAsked_ = asked.plus;
+    if (asked.place >= 0) {
+        placing_ = asked.place == 1;
+        if (!placing_) place_.drop();
+    }
+    if (placing_) {
+        float side[4];
+        panels_.sideRect(side);
+        place_.panel(ctx, town, cooker_, camera, side[0], side[1], side[2], side[3]);
+    }
     if (asked.arena == 1 && body) openArena(body->name, world);
     if (asked.arena == 0) closeArena();
     if (asked.scene >= 0 && asked.scene < int(shelf_.scenes.size())) {

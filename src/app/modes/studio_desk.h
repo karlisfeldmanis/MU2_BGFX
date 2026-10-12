@@ -24,12 +24,14 @@
 #include <string>
 #include <vector>
 
+#include "app/modes/studio_place.h"
 #include "gfx/gui.h"
 #include "studio/cooker.h"
 #include "studio/panels.h"
 
 namespace mu::game {
 class ModelBench;
+class World;
 }
 
 namespace mu::app {
@@ -42,7 +44,11 @@ public:
     bool isOpen() const { return gui_.isOpen(); }
     void begin(Context& ctx, float deltaSeconds, double elapsed);
     // `world` is the bench's, which a swap reopens the tables of.
-    void panels(Context& ctx, game::ModelBench& bench, const std::string& world);
+    // `town` and `camera` are the scene's, for Place; `onStage` when no town is drawn.
+    void panels(Context& ctx, game::ModelBench& bench, const std::string& world,
+                game::World& town, const gfx::Camera& camera, bool onStage);
+    // Whether Place had the pointer this frame (a pick or a walk), so the camera keeps still.
+    bool tookPointer() const { return tookPointer_; }
     void end();
     // While a swap is shooting: the bench is to be updated at heldSeconds() with no delta.
     bool holding() const { return swap_ != Swap::Idle; }
@@ -90,6 +96,8 @@ private:
     std::vector<std::pair<int, std::string>> script_;   // MU_STUDIO_DO
     std::string sceneAsked_;
     int plusAsked_ = -1;
+    StudioPlace place_;
+    bool placing_ = false, tookPointer_ = false;
 };
 
 }  // namespace mu::app

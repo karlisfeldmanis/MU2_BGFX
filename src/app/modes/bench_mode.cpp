@@ -299,12 +299,12 @@ void BenchMode::frame(Context& ctx, const Frame& at) {
         ctx.renderer.draw(bench_.camera(), ctx.lighting, townDrawables_,
                           onStage_ ? nullptr : &world_.ground());
         if (desk_.isOpen()) {
-            desk_.panels(ctx, bench_, sceneWorld_);
+            desk_.panels(ctx, bench_, sceneWorld_, world_, bench_.camera(), onStage_);
             const std::string scene = desk_.takeScene();
             if (!scene.empty()) setScene(ctx, scene);
             const int plus = desk_.takePlus();
             if (plus >= 0) studioPlus(ctx, plus);
-            if (!desk_.wantsPointer()) look(ctx);
+            if (!desk_.wantsPointer() && !desk_.tookPointer()) look(ctx);
             desk_.end();
         } else {
             drawList(ctx);

@@ -81,7 +81,8 @@ Asked Panels::draw(const Shelf& shelf, Cooker& cooker, float width, float height
     const float cardBottom = subject(shelf, cooker, width - cardW - pad, pad, cardW);
     // The inspector under the card, down to the jobs.
     const float inspectorH = height - jobsH - 2.0f * pad - (cardBottom + pad);
-    if (inspectorH > 6.0f * em) {
+    side_[0] = width - cardW - pad, side_[1] = cardBottom + pad, side_[2] = cardW, side_[3] = inspectorH;
+    if (inspectorH > 6.0f * em && !shelf.placing) {
         const int plus = inspector_.draw(cooker, shelf.target, shelf.plus, width - cardW - pad,
                                          cardBottom + pad, cardW, inspectorH);
         if (plus >= 0) asked.plus = plus;
@@ -220,6 +221,12 @@ float Panels::subject(const Shelf& shelf, Cooker& cooker, float x, float y, floa
         ImGui::SetItemTooltip("the game's arena in its own window: this breed against a hero, "
                               "restarted after each cook of it");
         ImGui::SameLine();
+    }
+    if (shelf.scene > 0 && shelf.scene < int(shelf.scenes.size()) && shelf.scenes[size_t(shelf.scene)] != "Home") {
+        bool placing = shelf.placing;
+        if (ImGui::Checkbox("Place objects", &placing)) asked_.place = placing ? 1 : 0;
+        ImGui::SetItemTooltip("pick this world's objects, drag them over the land, turn them; "
+                              "Cook makes it the cooked truth");
     }
     if (ImGui::SmallButton("Read again")) asked_.reread = true;
     ImGui::SetItemTooltip("what is on disk now, swapped in with a before and after: for a cook "
