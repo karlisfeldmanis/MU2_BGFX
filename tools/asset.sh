@@ -325,9 +325,9 @@ import json,sys
 d=json.load(open(sys.argv[1]))
 print(' '.join(f'--wrap={g}' for g in d.get('wrap', [])))" "$asset" 2>/dev/null || true)"
 
-  local tiled_flag=""
-  local newest_sheet=""
+  local tiled_flag="" newest_sheet="" slot_list=($slots) sheet_at=0
   for one in $slots; do
+    echo "@progress $((sheet_at++))/$((${#slot_list[@]} + 1)) sheet ${one#*=}"  # tools/mu/make.py
     local group="${one%%=*}"
     local file="${one#*=}"
     local raw="$assets/textures/$file"
@@ -911,7 +911,7 @@ raise SystemExit(1)" "$asset" "$assets/textures" 2>/dev/null; then
     cull_flag="--cull"
   fi
 
-  echo "exporting $item..."
+  echo "@progress ${#slot_list[@]}/$((${#slot_list[@]} + 1)) exporting $item..."
   "$blender" --background --python "$pipeline/export_gltf.py" -- \
     "$blend" "$source_albedo" "$glb" ${cut_flag:-} ${tiled_flag:-} ${cull_flag:-} \
     "--islands=$asset" "${rig_args[@]+"${rig_args[@]}"}"

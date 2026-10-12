@@ -926,6 +926,72 @@ show's own drawing and its tunings (colours, dims, lengths, cadences) in play_tu
 bosses' bespoke fights (raid, invasion), the events, quests' kill targets and the traps. A plain
 new breed is a recipe and its art; a new kind of show is a tag or a field and its drawing.
 
+## 9c. Sprint F, the plan: the Cooker
+
+The user, 2026-10-12: "we want to build world, monster, item cooker like actual app where we
+can see processes with progress and instant visual feedback". Decided the same day:
+
+- it lives inside `mu2 --studio`, ImGui on bgfx, with the game's renderer as its viewport;
+- items come first, end to end, then monsters, then worlds;
+- the live knobs (no cook at all) are all four kinds: materials and lighting, the monster's
+  show, placement, and stats and rules;
+- sprint E is finished first, so that the panels edit the recipes and not the old smear.
+
+**The daemon, `mu serve`** (tools/mu). It owns the job queue and runs make.py's steps as they
+are, under the per-world locks they already take. It sends events as JSON lines: queued, step,
+progress, log, done, failed (with the source file and line). The studio, `./mu` and the agent
+are all clients of it. When it is running, `./mu make X` hands the job to it.
+
+**Progress.** The plan gives a job its steps up front, so a job always has a step bar. Inside a
+step, the scripts print `@progress n/m` lines: asset.sh's Blender stages, the upscaler's tiles,
+cook.py's chunks and its tables per world. ETAs come from earlier runs, kept in
+`workshop/.mu/timings.json`.
+
+**The window.** A browser on the left, with stale markers from the plan. The viewport in the
+middle: a turntable, a figure with its clips, or a world. The inspector on the right: the
+recipe's fields, Cook and Revert. The jobs along the bottom: step bars, the log's tail, errors.
+
+**Three levels of feedback:**
+
+| level | time | what | how |
+|---|---|---|---|
+| 0, live | under 0.1 s | materials, lighting, show, stats, placement | applied in memory, written back to `source/` on save, with a line in `studio/journal.log` |
+| 1, re-cook | seconds | cook_one, tables, showing | the engine watches the opened subject's cooked files and swaps them in |
+| 2, rebuild | minutes | Blender, upscale, terrain | a background job with progress; the old version stays until the new one swaps in, then before/after |
+
+**Slices, one a session:**
+
+- F1: `mu serve`, the events, the `@progress` markers and `mu jobs`. Headless, proved without
+  a window.
+- F2: ImGui in `--studio`: the jobs panel and the browser.
+- F3: hot swap of items (level 1), with before and after.
+- F4: the inspector, the live knobs and write-back with the journal (level 0), items first.
+- F5: monsters: the figure, its show and stats live, the sim arena re-run.
+- F6: worlds: open one, re-cook chunks, placements and ground with per-world progress, reload
+  in place. Placement editing here overlaps sprint G.
+- F7: the control socket, so the agent drives a headless studio and never opens the window.
+
+### Slice F1: the job runner, as done
+
+- `./mu serve` (tools/mu/serve.py) holds the queue on `workshop/.mu/serve.sock` and runs one job
+  at a time through make.py's plan, unchanged. Its events go to the socket and to
+  `workshop/.mu/events.jsonl`; the op list and the event kinds are in its docstring.
+- `make.run` streams each step's output line by line to its log as before, and reads it on
+  the way: `@progress n/m label` is a bar inside the step. asset.sh prints one a sheet and one
+  for the export, in the lines it had, so it stays at 961. texcook prints one an image.
+  Python steps run with PYTHONUNBUFFERED.
+- Each step's time goes into `workshop/.mu/timings.json`. A job's ETA is the last time of each
+  step to come, or the median of its kind; inside a step, once its bar moves, the bar wins.
+- `./mu make X` queues X in the server when one runs and prints what it would print here;
+  `--here` runs it in-process; `--plan` always runs here. Ctrl-C stops the watching, never
+  the job. `./mu jobs` lists, `--watch [N]` follows, `cancel N` stops after the step,
+  `--now` kills the step's process group.
+- `./mu make rehearsal`: three steps that print bars and cook nothing, for proving the runner
+  and for F2's panel.
+- Proved with rehearsals: two jobs queued, a listing mid-run with its bar and time left, a
+  cancel after the step, a kill, an unknown name failing with its message and exit 1, and
+  `--json` throughout; `mu check` green but for three other sessions' files.
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:

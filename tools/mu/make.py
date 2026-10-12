@@ -535,10 +535,142 @@ class Lock:
             self.handle.close()
 
 
-def run(steps, dry, say, logs, env=None):
-    """Walks the plan. Returns (ok, results). In dry mode a needed step is assumed to change its tag."""
+def plan(target, threads, say, folder=None, reimport=False):
+    """The steps for what `mu make` was given: shared by the command and by `mu serve`."""
+    from things import NotFound, find
+    if target[0] == "ground" and len(target) == 2:
+        return plan_ground(target[1], folder, threads, reimport)
+    if target[0] == "world" and len(target) == 2:
+        return plan_world(target[1], threads)
+    if target == ["sounds"]:
+        return plan_sounds(threads)
+    if target == ["tables"]:
+        return plan_tables(threads)
+    if target in (["realm"], ["gates"]):
+        return plan_realm()
+    if target == ["rehearsal"]:
+        return plan_rehearsal()
+    if len(target) == 1:
+        thing = find(target[0])
+        say(f"{thing.kind} {thing.build_name}, world {thing.world}: {thing.rel}")
+        return plan_thing(thing, threads)
+    raise NotFound(f"make takes one name, 'world <w>', 'ground <w>', 'sounds', 'tables' or 'realm', "
+                   f"not {' '.join(target)}")
+
+
+REHEARSE = """import sys, time
+steps, label = int(sys.argv[1]), sys.argv[2]
+for i in range(steps):
+    print(f"@progress {i}/{steps} {label} {i + 1}")
+    print(f"working on {label} {i + 1}")
+    time.sleep(0.25)
+sys.exit(int(sys.argv[3]) if len(sys.argv) > 3 else 0)
+"""
+
+
+def plan_rehearsal():
+    """`mu make rehearsal`: three steps that print bars and cook nothing, for proving the job
+    runner and for drawing the studio's jobs panel without touching a file the game reads."""
+    script = ["python3", "-c", REHEARSE]
+    return [Step("rehearse sheets", script + ["8", "sheet"], always("a rehearsal"), "rehearsal"),
+            Step("rehearse compress", script + ["20", "compress"], always("a rehearsal"), "rehearsal"),
+            Step("rehearse tables", script + ["4", "tables"], always("a rehearsal"), "rehearsal")]
+
+
+# ----------------------------------------------------------------------------- what a step says while it runs
+#
+# A step's output goes line by line to its log and, read on the way, to `on` (mu serve's
+# events, docs/order-plan.md §9c). A line `@progress n/m label` is a bar inside the step:
+# asset.sh prints one a sheet and one for the export, texcook one an image. Any other line is
+# the step's latest word. Python steps run unbuffered, or their lines would arrive at the end.
+
+PROGRESS = re.compile(r"^@progress (\d+)/(\d+)\s*(.*)$")
+TIMINGS = os.path.join(LOCKS, "timings.json")
+
+
+def kind_of(name):
+    """'build Sword01' -> 'build', 'tables lorencia' -> 'tables': what an estimate falls back on."""
+    return name.split(" ")[0]
+
+
+def read_timings():
+    try:
+        import json
+        with open(TIMINGS) as handle:
+            return json.load(handle)
+    except (OSError, ValueError):
+        return {}
+
+
+def estimate(name, timings=None):
+    """Seconds this step took last time, else the median of its kind's, else None."""
+    timings = read_timings() if timings is None else timings
+    if name in timings.get("steps", {}):
+        return timings["steps"][name]
+    seen = sorted(timings.get("kinds", {}).get(kind_of(name), []))
+    return seen[len(seen) // 2] if seen else None
+
+
+def remember(name, seconds):
+    import json
+    timings = read_timings()
+    timings.setdefault("steps", {})[name] = seconds
+    kinds = timings.setdefault("kinds", {}).setdefault(kind_of(name), [])
+    kinds.append(seconds)
+    del kinds[:-20]
+    os.makedirs(LOCKS, exist_ok=True)
+    with open(TIMINGS + ".tmp", "w") as handle:
+        json.dump(timings, handle, indent=1)
+    os.replace(TIMINGS + ".tmp", TIMINGS)
+
+
+def stream(cmd, log, env, on, step, stop):
+    """Runs one command niced, its output to `log` and to `on`. Returns its exit code.
+
+    `stop` is the job's: stop.now set kills the step's whole process group (Blender, texcook
+    and all); stop.after alone lets it finish, which is the safe way to end a cook.
+    """
+    env = dict(env or os.environ, PYTHONUNBUFFERED="1")
+    with open(log, "w") as out:
+        proc = subprocess.Popen(["nice", "-n", "10"] + cmd, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT, cwd=ROOT, env=env,
+                                start_new_session=True, bufsize=1, text=True, errors="replace")
+        if stop is not None:
+            stop.proc = proc
+        said = 0.0
+        for line in proc.stdout:
+            out.write(line)
+            line = line.rstrip()
+            mark = PROGRESS.match(line)
+            if mark:
+                on("progress", step=step, n=int(mark.group(1)), of=int(mark.group(2)),
+                   label=mark.group(3))
+            elif line and time.time() - said > 0.2:
+                # The latest word, ten a second at most: Blender alone prints thousands.
+                said = time.time()
+                on("line", step=step, text=line[:300])
+        code = proc.wait()
+        if stop is not None:
+            stop.proc = None
+        return code
+
+
+def quiet(*_, **__):
+    pass
+
+
+def run(steps, dry, say, logs, env=None, on=None, stop=None):
+    """Walks the plan. Returns (ok, results). In dry mode a needed step is assumed to change its tag.
+
+    `on(kind, **fields)` hears the walk as events: step, progress, line, done (mu serve).
+    """
+    on = on or quiet
     changed, results = set(), []
-    for step in steps:
+    for index, step in enumerate(steps):
+        if stop is not None and (stop.after or stop.now):
+            say("stopped before " + step.name)
+            on("stopped", step=index)
+            return False, results
         needed, reason = step.test(changed)
         result = dict(step.result, needed=needed, reason=reason)
         if step.name.startswith("build "):
@@ -547,12 +679,14 @@ def run(steps, dry, say, logs, env=None):
         mark = "run " if needed else "skip"
         say(f"{mark} {step.name:<22} {reason}")
         if not needed:
+            on("skip", step=index, name=step.name, reason=reason)
             continue
         if dry:
             changed.add(step.makes)
             continue
+        on("step", step=index, name=step.name, reason=reason, estimate=estimate(step.name))
         started = time.time()
-        with Lock(step.lock, say):
+        with Lock(step.lock, lambda text: (say(text), on("line", step=index, text=text.strip()))):
             before = mtime(step.thing.glb()) if step.name.startswith("build ") else None
             if step.name == "checkpoint mu.db":
                 checkpoint()
@@ -561,11 +695,12 @@ def run(steps, dry, say, logs, env=None):
                 cmd = build_cmd(step) if step.name.startswith("build ") else step.cmd
                 os.makedirs(logs, exist_ok=True)
                 log = os.path.join(logs, step.name.replace(" ", "_").replace("/", "_") + ".log")
-                with open(log, "w") as out:
-                    code = subprocess.run(["nice", "-n", "10"] + cmd, stdout=out,
-                                          stderr=subprocess.STDOUT, cwd=ROOT, env=env).returncode
+                code = stream(cmd, log, env, on, index, stop)
                 result["log"] = os.path.relpath(log, ROOT)
         result.update(seconds=round(time.time() - started, 1), code=code)
+        if code == 0:
+            remember(step.name, result["seconds"])
+        on("done", step=index, seconds=result["seconds"], code=code, log=result.get("log"))
         if code != 0:
             say(f"     failed with {code}; see {result.get('log', step.name)}")
             return False, results
@@ -579,5 +714,6 @@ def run(steps, dry, say, logs, env=None):
             if warning:
                 result["warning"] = warning
                 say(f"     WARNING {warning}")
+                on("warning", step=index, text=warning)
         say(f"     done in {result['seconds']} s")
     return True, results

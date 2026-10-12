@@ -508,6 +508,7 @@ int main(int argc, char** argv) {
     std::vector<Result> results(jobs.size());
     std::atomic<size_t> nextJob{0};
     std::atomic<size_t> failures{0};
+    std::atomic<size_t> finished{0};
 
     auto run = [&]() {
         // One allocator a thread: bx's default allocator is not documented as shared-safe
@@ -524,6 +525,9 @@ int main(int argc, char** argv) {
                 std::fprintf(stderr, "texcook: %s: %s\n", jobs[index].input.c_str(),
                              results[index].note.c_str());
             }
+            // What mu's job runner reads for a bar (tools/mu/make.py); one line a whole write.
+            std::printf("@progress %zu/%zu compress\n", finished.fetch_add(1) + 1, jobs.size());
+            std::fflush(stdout);
         }
     };
 

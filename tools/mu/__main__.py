@@ -15,6 +15,8 @@
     ./mu shot <world> <col,row> [--time T]   a muted shot at a tile, the save untouched
     ./mu compare <a.png> <b.png>             side by side, labelled, with how much moved
     ./mu cores [N]                           how many cores mu's tools may use, kept per machine
+    ./mu serve                               the cook's job runner; `mu make` hands it its jobs
+    ./mu jobs [--watch [N]] | cancel N [--now] what it is cooking, with bars and time left
 
 Every command takes --json and then prints one JSON object as its last line, for a script or
 an agent to read instead of the prose. Every step runs niced and held to `mu cores` (60% of
@@ -29,10 +31,12 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import check  # noqa: E402
+import jobs  # noqa: E402
 import look  # noqa: E402
 import make  # noqa: E402
+import serve  # noqa: E402
 import settings  # noqa: E402
-from things import WORKSHOP, NotFound, find  # noqa: E402
+from things import WORKSHOP, NotFound  # noqa: E402
 
 
 def main():
@@ -53,6 +57,18 @@ def main():
                    help="with `ground`: read the terrain again from MU's Data")
     m.add_argument("--cores", "--threads", dest="cores", type=int, default=None,
                    help="for this run; `mu cores N` keeps one")
+    m.add_argument("--here", action="store_true",
+                   help="run in this process even when `mu serve` is running")
+
+    v = sub.add_parser("serve", parents=[common])
+    v.add_argument("--stop", action="store_true", help="stop a running one after its job")
+
+    j = sub.add_parser("jobs", parents=[common])
+    j.add_argument("action", nargs="?", choices=("cancel",))
+    j.add_argument("number", nargs="?", type=int)
+    j.add_argument("--watch", nargs="?", type=int, const=0, default=None,
+                   help="live; a job's number, or every job")
+    j.add_argument("--now", action="store_true", help="with cancel: kill the running step")
 
     n = sub.add_parser("new", parents=[common])
     n.add_argument("kind", choices=("object", "monster", "item"))
@@ -118,27 +134,29 @@ def dispatch(args, say):
         cores, source = settings.cores(args.cores)
         args.threads = cores
         say(f"cores: {cores} of {settings.machine()} ({source})")
-        target = args.target
-        if target[0] == "ground" and len(target) == 2:
-            steps = make.plan_ground(target[1], args.folder, args.threads, args.reimport)
-        elif target[0] == "world" and len(target) == 2:
-            steps = make.plan_world(target[1], args.threads)
-        elif target == ["sounds"]:
-            steps = make.plan_sounds(args.threads)
-        elif target == ["tables"]:
-            steps = make.plan_tables(args.threads)
-        elif target in (["realm"], ["gates"]):
-            steps = make.plan_realm()
-        elif len(target) == 1:
-            thing = find(target[0])
-            say(f"{thing.kind} {thing.build_name}, world {thing.world}: {thing.rel}")
-            steps = make.plan_thing(thing, args.threads)
-        else:
-            raise NotFound(f"make takes one name, 'world <w>', 'ground <w>', 'sounds', 'tables' or 'realm', "
-                           f"not {' '.join(target)}")
+        if not args.plan and not args.here and serve.alive():
+            return jobs.hand_off(args.target, args.cores, args.folder, args.reimport, say, args.json)
+        steps = make.plan(args.target, args.threads, say, args.folder, args.reimport)
         ok, results = make.run(steps, args.plan, say, os.path.join(WORKSHOP, "logs", "mu"),
                                settings.environment(cores))
         return ok, {"plan": args.plan, "cores": cores, "steps": results}
+    if args.command == "serve":
+        if args.stop:
+            if not serve.alive():
+                say("mu serve is not running")
+                return False, {"error": "not running"}
+            jobs.ask({"op": "stop"})
+            say("mu serve stops after the job it is running")
+            return True, {}
+        return serve.serve(say)
+    if args.command == "jobs":
+        if args.action == "cancel":
+            if args.number is None:
+                raise NotFound("mu jobs cancel <number>")
+            return jobs.cancel(args.number, args.now, say)
+        if args.watch is not None:
+            return jobs.watch(args.watch or None, say, live=not args.json)
+        return jobs.listing(say)
     if args.command == "new":
         if args.kind == "object":
             import new
