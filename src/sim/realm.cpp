@@ -1281,7 +1281,7 @@ void Realm::heroAfter() {
         burn();
         channel(hero);
         if (hero.blinkAt != 0 && tick_ >= hero.blinkAt) blink(hero);
-        poisonPulse(hero);
+        poisonPulse(hero), burnPulse(hero);   // and a burner's fire lay (kBurners)
         accept();
         // Pushed by a beast's Lightning: he slides as a pushed monster does, and walks on when
         // he lands. The push goes when the bolt lands; one whose beast is far off by then --

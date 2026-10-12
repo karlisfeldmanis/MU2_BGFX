@@ -303,8 +303,8 @@ struct Happening {
     // `rand() % 5 == 0` on A.Type 150, gObjMonster.cpp:1849-1925), its damage the monster's own
     // band as WebZen sends it -- the drawing's cue, nothing else changes.
     bool boss = false;
-    // A bolt blower's lightning blow (kBoltBlowers): the drawing plays its Attack 2 and bolt.
-    bool bolt = false;
+    // A bolt blower's lightning (kBoltBlowers), a burner's fire lay (kBurners): its Attack 2.
+    bool bolt = false, fireLay = false;
     // Where it happened, in tiles. Written for everything that has a place, because a log line
     // with a position in it is the one that catches a sim drifting apart from itself.
     float x = 0.0f, y = 0.0f;
@@ -1684,7 +1684,7 @@ private:
     // The worn rings' stings on a blow he landed for `wound` (sim::ringStingChance).
     void ringStings(Body& hero, Body& struck, int wound);
     // A burning monster's pulse (the Immolate rune), when it is due.
-    void burnPulse(Body& beast);
+    void burnPulse(Body& beast), layFire(Body& by, Body& target, int damage);  // realm_burn.cpp
     // Whether this monster's blow poisons the hero (realm_tuning.h, kPoisoners).
     bool poisons(const Body& monster) const;
     // Whether a tile is within a guard post's clearing on the cleared map, where no nest puts a

@@ -100,11 +100,14 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         bolt = !flame && (everyBlowBolt(number) || attacker.blowsThrown % 3 != 0);
         ++attacker.blowsThrown;
     }
+    // A burner's fire lay, two blows in three (realm_tuning.h kBurners).
+    const bool fireLay = burner(number) && !thrown && attacker.blowsThrown++ % 3 != 0;
     if (!blow.hit) {
         say(What::Missed, attacker, 0, 0, 0, target.id);
         happenings_.back().thrown = thrown;
         happenings_.back().boss = flame;
         happenings_.back().bolt = bolt;
+        happenings_.back().fireLay = fireLay;
         elements(0);
         chillHero(attacker, target);
         // His shield's Evil Spirit, each worn rolling off the sockets' stream -- drawn only
@@ -257,6 +260,8 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     happenings_.back().rune = attacker.player && row == nullptr && !pays;
     happenings_.back().boss = flame;
     happenings_.back().bolt = bolt;
+    happenings_.back().fireLay = fireLay;
+    if (fireLay) layFire(attacker, target, blow.damage);   // realm_burn.cpp
     // The element, after the blow and only on what it left standing: 0.75's order.
     if (row != nullptr && row->pushes && target.alive() && !target.player) push(target, attacker);
     // A beast that strikes with Lightning -- the Thunder Lich and the Devil, whose AttackSkill is
@@ -1445,27 +1450,6 @@ bool Realm::ignite(Body& hero, Body& struck, int wound, double chance) {
     core::logf("immolate: tick %lld, #%u burns for %d a pulse", (long long)tick_, struck.id,
                struck.burnDamage);
     return true;
-}
-
-void Realm::burnPulse(Body& beast) {
-    if (beast.burnUntil == 0 || tick_ < beast.burnNext) return;
-    if (beast.burnNext > beast.burnUntil || !beast.alive()) {
-        beast.burnUntil = 0;
-        return;
-    }
-    beast.burnNext += kBurnRuneEvery;
-    Body* by = body(beast.burnBy);
-    if (by == nullptr || !by->alive()) {
-        beast.burnUntil = 0;
-        return;
-    }
-    const int bite = std::min(beast.burnDamage, beast.health);
-    beast.health -= bite;
-    noteHurt(beast, *by, bite);
-    say(What::Hit, *by, bite, bite, beast.health, beast.id);
-    happenings_.back().thrown = true;
-    happenings_.back().burned = true;
-    if (beast.health <= 0) kill(beast, *by);
 }
 
 void Realm::rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force) {

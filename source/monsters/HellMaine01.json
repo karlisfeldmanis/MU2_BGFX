@@ -235,7 +235,8 @@
       "ice": 50,
       "poison": 50
     },
-    "note": "Resistance: OpenMU S6 Maps/Aida.cs:467-496 writes 50/255 to poison, ice and fire, read as WebZen raw 50 as the other Aida breeds are; fire is not carried. Drops: Tarkan 30 and 3 (docs/aida-port.md decision 11); RegTime 150, OpenMU RespawnDelay (the other Aida breeds 10)."
+    "note": "Resistance: OpenMU S6 Maps/Aida.cs:467-496 writes 50/255 to poison, ice and fire, read as WebZen raw 50 as the other Aida breeds are; fire is not carried. Drops: Tarkan 30 and 3 (docs/aida-port.md decision 11); RegTime 150, OpenMU RespawnDelay (the other Aida breeds 10). Burns: ours, not MU`s (the user, 2026-10-12: `Hell Maine could do burn`, `Yes, on fire lay`): its fire lay, two blows in three, sets him burning (realm_tuning.h kBurners); no source gives an Aida breed a debuff.",
+    "burns": true
   },
   "show": {
     "tags": [

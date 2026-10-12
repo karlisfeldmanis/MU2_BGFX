@@ -6,6 +6,12 @@ constexpr int32_t kPoisoners[] = {
     8,  // Poison Bull
     12,  // Larva
     39,  // Poison Shadow
+    307,  // Forest Orc
+    308,  // Death Tree
+};
+
+constexpr int32_t kBurners[] = {
+    309,  // Hell Maine
 };
 
 constexpr int32_t kBoltBlowers[] = {

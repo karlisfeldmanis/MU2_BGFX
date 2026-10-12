@@ -411,6 +411,22 @@ struct Bulk {
 // above describe, by breed number. `./mu make realm` writes them.
 #include "sim/breeds_table.inc"
 
+// A burner's blows (kBurners, its recipe's `rules.burns`), ours: Hell Maine's (the user,
+// 2026-10-12: 'Hell Maine could do burn', 'Yes, on fire lay'). Two blows in three are its fire
+// lay, MU's ATTACK2, as the drawing's SwordCount % 3 had swung it; a fire lay that lands sets him
+// burning for kHeroBurnTicks, a pulse each kHeroBurnEvery of kHeroBurnShare of the blow, unless
+// his fire resistance turns it aside; one at a time, never his last point, his shield first, as
+// a poison. MU gives Hell Maine no debuff (docs/aida-port.md, Hell Maine).
+constexpr int32_t kHeroBurnTicks = 100;
+constexpr int32_t kHeroBurnEvery = 20;
+constexpr float kHeroBurnShare = 0.1f;
+constexpr bool burner(int32_t number) {
+    for (const int32_t one : kBurners) {
+        if (one == number) return true;
+    }
+    return false;
+}
+
 constexpr bool boltBlower(int32_t number) {
     for (const int32_t one : kBoltBlowers) {
         if (one == number) return true;

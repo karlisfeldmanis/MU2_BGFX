@@ -530,11 +530,12 @@ void Play::snort(float seconds) {
             }
         }
     }
-    // A poisoned monster: green smoke off bones drawn at random while the poison lasts.
+    // A poisoned body, a monster's or a character's (the user, 2026-10-12: 'update char poison
+    // effect same as monster with that subtle smoke'): green smoke off bones drawn at random.
     for (Drawn& one : drawn_) {
         const sim::Body* body = realm_.find(one.id);
         const FigureBody* look = one.figure.body();
-        if (!body || !body->alive() || body->player || body->poisonUntil <= realm_.tick() ||
+        if (!body || !body->alive() || body->poisonUntil <= realm_.tick() ||
             !one.visible || !one.placed || look == nullptr || look->boneCount() < 2) {
             one.sickOwed = 0.0f;
             continue;
@@ -2008,7 +2009,7 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
             // A debuff's light over a murderer's red: MU sets c->Light first and the debuff's
             // BodyLight after it.
             const float* by = poisoned && iced ? kPoisonIcedLight
-                              : poisoned       ? kPoisonedLight
+                              : poisoned       ? (inRealm && inRealm->player ? kPoisonedCharLight : kPoisonedLight)
                               : iced           ? kIcedLight
                               : burning        ? kEmberTint
                               : soused         ? kSousedLight

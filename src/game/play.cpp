@@ -1340,6 +1340,13 @@ void Play::update(double seconds) {
                             swinger->attackClip2 >= 0) {
                             swing = happening.bolt ? swinger->attackClip2 : swinger->attackClip;
                         }
+                        // A burner's (sim kBurners): the realm chose its fire lay, Attack 2.
+                        if (const sim::Body* burner = realm_.find(happening.who);
+                            burner && !burner->player && burner->kind >= 0 &&
+                            size_t(burner->kind) < tables_.kinds.size() &&
+                            sim::burner(tables_.kinds[size_t(burner->kind)].number) && swinger->attackClip2 >= 0) {
+                            swing = happening.fireLay ? swinger->attackClip2 : swinger->attackClip;
+                        }
                     }
                     // On a horse, the weapon's ride swing stands in (docs/mount.md,
                     // ZzzCharacter.cpp:1112-1153), and for an arrow skill too, which plays the

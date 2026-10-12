@@ -164,6 +164,7 @@ add_library(mu_sim STATIC
   src/sim/square_instance.cpp
   src/sim/castle_instance.cpp
   src/sim/realm_fight.cpp
+  src/sim/realm_burn.cpp
   src/sim/realm_skills.cpp
   src/sim/realm_watch.cpp
   src/sim/realm_traps.cpp

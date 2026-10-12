@@ -211,6 +211,9 @@ constexpr int kIcedPlus = 7;
 constexpr float kIcedChrome[3] = {0.35f, 0.6f, 1.0f};
 // A poisoned body's, `eDeBuff_Poison`, and one both poisoned and iced (ZzzObject.cpp:1118-1123).
 constexpr float kPoisonedLight[3] = {0.3f, 1.0f, 0.5f};
+// **Ours.** A character's, a third of MU's green: his green smoke (Poison::sicken) carries the read
+// since 2026-10-12, and under both the user found him 'tintent to much green'.
+constexpr float kPoisonedCharLight[3] = {0.77f, 1.0f, 0.83f};
 constexpr float kPoisonIcedLight[3] = {0.3f, 1.0f, 0.8f};
 // A murderer's light: `if (c->PK >= PVP_MURDERER2) Vector(1.f, 0.1f, 0.1f, c->Light)`
 // (ZzzCharacter.cpp:9990-9993), every part he wears lit blood red. CreateMonster sets the
