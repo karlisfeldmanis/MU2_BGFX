@@ -2794,12 +2794,12 @@ void testCastLock(const content::Tables& tables) {
         const sim::SkillRow& bolt = *sim::skillNumbered(sim::skill::kLightning);
         check(bolt.wizardry && bolt.channelled() && bolt.primary() && !bolt.thrown() &&
                   bolt.pushes && bolt.spread == sim::Spread::Ring && bolt.damage == 17 &&
-                  bolt.mana == 40 && bolt.coolTicks == 0 && bolt.channelTicks == 30,
+                  bolt.mana == 40 && bolt.coolTicks == 0 && bolt.channelTicks == 25,
               "Lightning is a channel, its clip quickened, with no cooldown, and it pushes");
         check(bolt.force == 1.8f && sim::force(bolt, sim::HeroPoints{}) == 1.8f && bolt.reach == 6.0f &&
                   sim::force(*sim::skillNumbered(sim::skill::kFireBall), sim::HeroPoints{}) == 1.8f,
               "and each strike is at 1.8 the band, six tiles a leap, as Fire Ball's is");
-        check(bolt.pulseTicks == 1 && bolt.strikeFrom == 10 && bolt.strikeUntil == 23 &&
+        check(bolt.pulseTicks == 1 && bolt.strikeFrom == 8 && bolt.strikeUntil == 21 &&
                   bolt.strikesEach == 1,
               "and it strikes every tick while his arm is up, once at most a body");
         const int32_t scroll = tables.itemAt(15, 2);

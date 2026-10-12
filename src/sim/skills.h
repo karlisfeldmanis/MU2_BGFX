@@ -550,8 +550,10 @@ int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const con
 // meteor, ice, poison, lighting attack speed for animation"): Meteorite's, Ice's and Poison's
 // clips run this much faster than MagicSpeed alone makes them, and the realm holds him for the
 // shorter clip, which the drawing fits the clip to. Lightning's channel is written shorter on
-// its row by the same factor. Ours.
-constexpr float kSpellQuicken = 1.4f;
+// its row by the same factor. Ours. 1.4 -> 1.7 (the user, 2026-10-12: "increase meteor, ice,
+// poison, comet attack animation speed so it is casted little bit faster", "also lighting",
+// "they all from 1 casting type familiy"): Cometfall's too, and Lightning's row by 1.4/1.7.
+constexpr float kSpellQuicken = 1.7f;
 
 // How long the clip takes at its authored pace, in ticks -- what the drawing plays a knight's
 // skill with a cooldown at (game/play.cpp, `swingPace` 1 on a cast); a primary is fitted to

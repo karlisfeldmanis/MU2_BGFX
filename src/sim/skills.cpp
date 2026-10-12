@@ -306,11 +306,13 @@ constexpr SkillRow kRows[kSkills] = {
     // ice,posion,lighting', 'i am talking how much monsters get the spell', then 'and play it
     // same time how it was before'): the window is the fourteen ticks it was, and the chain ends
     // at `kLightningBodies` (skills.h), his arm held up the rest of it. Six tiles a leap.
+    // **Quicker again** with the other three (2026-10-12, kSpellQuicken 1.4 -> 1.7): the channel
+    // 30 -> 25 ticks and the window 10-23 -> 8-21, the wind-up shorter and the fourteen ticks kept.
     {skill::kLightning, "Lightning", 40, 6.0f, 1.8f, 0.0f, 0, false, Spread::Ring, 0, 1.0f,
      "With his arm raised to the sky, lightning leaps from the body he points at into the next "
      "and the next within six tiles, throwing each back a step.",
-     183, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 30,
-     1, 10, 23, 1},
+     183, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 25,
+     1, 8, 21, 1},
 
     // Meteorite 2: 0.75's row for the damage, `CreateSkill(Meteorite, ..., DamageType.Wizardry,
     // 21, 6, manaConsumption: 12, energyRequirement: 104, elementalModifier: Earth)` -- twenty-one
