@@ -71,7 +71,19 @@ def decode(mu_file, wanted, say):
         say(f"        {wanted} is other art already; this one is {os.path.basename(target)}")
     if not os.path.exists(target):
         os.replace(scratch, target)
-    return os.path.basename(target), "cutting away" in alpha, alpha
+    return os.path.basename(target), "cutting away" in alpha and weak_alpha(target), alpha
+
+
+def weak_alpha(png):
+    """Whether a sheet's alpha is too weak to be its own mask, so `cutout` must key it off
+    brightness (guard_hair.ozt's plume: 0.2% of it solid). A hard mask is left undeclared: the
+    export finds it and alpha-tests it, and declaring it keyed the Spider's dark bristles off
+    their dark ground into orange confetti -- twice, the second time from this scaffold
+    (2026-10-12). pipeline/transfer_albedo.py's carry_alpha has the whole of it."""
+    from PIL import Image
+    alpha = Image.open(png).convert("RGBA").getchannel("A")
+    solid = sum(alpha.histogram()[250:]) / (alpha.width * alpha.height)
+    return solid < 0.1
 
 
 def sheets_for(obj, folder, prefix_unless, say):
@@ -90,6 +102,8 @@ def sheets_for(obj, folder, prefix_unless, say):
         sheets[key] = file
         if cut:
             cutout.append(key)
+        elif "cutting away" in alpha:
+            alpha += "; a hard mask, left to the export (no cutout)"
         say(f"sheet   {key} -> {file}: {alpha}")
     return sheets, cutout
 
