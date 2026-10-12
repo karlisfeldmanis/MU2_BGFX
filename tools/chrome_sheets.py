@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The sheets a weapon's chrome passes draw with, written beside its recipe.
 
-    tools/chrome_sheets.py              every weapon whose recipe has a `chrome` list
+    tools/chrome_sheets.py              every weapon and monster whose recipe has a `chrome` list
     tools/chrome_sheets.py Sword21      one
 
 MuMain draws some weapons again over themselves with one of its chrome images: the Knight
@@ -34,7 +34,9 @@ from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WEAPONS = os.path.join(ROOT, "source", "items", "weapons")
-OUT = os.path.join(WEAPONS, "chrome")
+# A monster's passes too (Hell Maine's red chrome over its armour and wings, GMAida.cpp:
+# 1389-1405), written beside its recipe, where export_gltf looks: source/monsters/chrome/.
+FOLDERS = (WEAPONS, os.path.join(ROOT, "source", "monsters"))
 IMAGES = {"chrome01": "refine/chrome01.png", "chrome02": "refine/chrome02.png",
           "bab2": "refine/bab2.png", "shiny01": "drop/shiny01.png"}
 # Where an alpha-tested sheet counts as cut: MU's own test, alpha under a half
@@ -42,7 +44,7 @@ IMAGES = {"chrome01": "refine/chrome01.png", "chrome02": "refine/chrome02.png",
 CUT_BELOW = 128
 
 
-def write(item, recipe):
+def write(item, recipe, out):
     passes = recipe.get("chrome") or []
     sheets = {k.lower(): v for k, v in (recipe.get("sheets") or {}).items()}
     for n, one in enumerate(passes):
@@ -52,7 +54,7 @@ def write(item, recipe):
         top = max(tint) or 1.0
         bands = [band.point(lambda v, f=c / top: int(round(v * f)))
                  for band, c in zip(image.split(), tint)]
-        Image.merge("RGB", bands).save(os.path.join(OUT, f"{item}_{n}.png"))
+        Image.merge("RGB", bands).save(os.path.join(out, f"{item}_{n}.png"))
 
         if one.get("mask") in IMAGES:
             # A chrome image as the mask: MU's lightmap over a RENDER_METAL pass, read at the
@@ -68,24 +70,26 @@ def write(item, recipe):
             mask = alpha.point(lambda a: 255 if a < CUT_BELOW else 0)
         else:
             mask = Image.new("L", (4, 4), 255)
-        mask.convert("RGB").save(os.path.join(OUT, f"{item}_{n}_mask.png"))
+        mask.convert("RGB").save(os.path.join(out, f"{item}_{n}_mask.png"))
         print(f"  {item} {n}: {one['slot']} {one['image']} {one.get('uv', 'chrome')} "
               f"{one.get('where', 'over')}, tint {tint}")
 
 
 def main():
-    os.makedirs(OUT, exist_ok=True)
     wanted = set(sys.argv[1:])
-    for name in sorted(os.listdir(WEAPONS)):
-        if not name.endswith(".json") or name.endswith(".rig.json"):
-            continue
-        item = name[:-5]
-        if wanted and item not in wanted:
-            continue
-        with open(os.path.join(WEAPONS, name)) as handle:
-            recipe = json.load(handle)
-        if recipe.get("chrome"):
-            write(item, recipe)
+    for folder in FOLDERS:
+        out = os.path.join(folder, "chrome")
+        for name in sorted(os.listdir(folder)):
+            if not name.endswith(".json") or name.endswith(".rig.json"):
+                continue
+            item = name[:-5]
+            if wanted and item not in wanted:
+                continue
+            with open(os.path.join(folder, name)) as handle:
+                recipe = json.load(handle)
+            if recipe.get("chrome"):
+                os.makedirs(out, exist_ok=True)
+                write(item, recipe, out)
 
 
 if __name__ == "__main__":
