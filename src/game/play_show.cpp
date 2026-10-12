@@ -644,6 +644,8 @@ void Play::shade(float seconds) {
                                    aim ? prey->crown[1] - aim->height * aim->scale : 0.0f, aim ? prey->crown[2] : 0.0f};
             shadowStars_.golemWater().watch(one.id, one.figure, one.figure.clip() == one.attackClip,
                                             keyOf(one.figure), aim ? feet : nullptr, fade, seconds);
+            for (float burst[3]; shadowStars_.golemWater().takeBurst(burst);)
+                if (heard_.golemBurst >= 0) emit(heard_.golemBurst, burst[0], burst[2]);
         }
         // A Queen Rainer's or a Drakan's crackle along its bones (show.arcs, show.arcs): a
         // fresh few each reference frame.

@@ -1711,7 +1711,7 @@ private:
         int click = -1, refused = -1, opened = -1;      // the windows
         int repair = -1;                                // SOUND_REPAIR: a counter mended
         int mix = -1, mixBreak = -1;                    // eMix and eBreak: the Chaos Machine
-        int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
+        int meteorite = -1, explosion = -1, golemBurst = -1;  // the Lich's throw and landing; a Blue Golem's fist
         int evil = -1, hellfire = -1;  // the Devil's sEvil and the Balrog's sHellFire
         int boltThunder = -1;          // eThunder, Lightning's own, on a Hydra's and a Lizard King's bolts
         int rage2 = -1, rage3 = -1;    // Rageful Blow's streaks and its cracks

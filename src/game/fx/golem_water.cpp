@@ -56,6 +56,7 @@ void GolemWater::shutdown() {
     motes_.clear();
     joints_.clear();
     golems_.clear();
+    bursts_.clear();
     drip_ = smoke_ = wave_ = laser_ = BGFX_INVALID_HANDLE;
 }
 
@@ -125,6 +126,7 @@ void GolemWater::watch(uint32_t id, const Figure& figure, bool attack1, float ke
     // 6.9 a joint off the target, one a reference frame each.
     if (!attack1 || key < 4.0f) {
         golem.blowOwed = 0.0f;
+        golem.burst = false;
         return;
     }
     golem.blowOwed += seconds / kFrame;
@@ -133,7 +135,11 @@ void GolemWater::watch(uint32_t id, const Figure& figure, bool attack1, float ke
         float hand[3];
         if (golem.bones[0] >= 0 && figure.pointOn(golem.bones[0], kHandAhead, hand)) {
             mote(Mote::Kind::Smoke, hand, fade);
-            if (key >= 5.0f && key <= 5.5f) mote(Mote::Kind::Wave, hand, fade);
+            if (key >= 5.0f && key <= 5.5f) {
+                mote(Mote::Kind::Wave, hand, fade);
+                if (!golem.burst) bursts_.push_back({hand[0], hand[1], hand[2]});
+                golem.burst = true;
+            }
         }
         if (target && key >= 6.9f && joints_.size() < kMostJoints) {
             Joint joint;
@@ -150,6 +156,13 @@ void GolemWater::watch(uint32_t id, const Figure& figure, bool attack1, float ke
             joints_.push_back(joint);
         }
     }
+}
+
+bool GolemWater::takeBurst(float at[3]) {
+    if (bursts_.empty()) return false;
+    for (int i = 0; i < 3; ++i) at[i] = bursts_.back()[size_t(i)];
+    bursts_.pop_back();
+    return true;
 }
 
 void GolemWater::update(float seconds) {

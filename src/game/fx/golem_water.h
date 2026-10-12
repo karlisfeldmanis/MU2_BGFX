@@ -30,6 +30,7 @@
 // golem's own clip; nothing here reaches the sim.
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <string>
 #include <unordered_map>
@@ -58,6 +59,10 @@ public:
                float fade, float seconds);
     void update(float seconds);
     void gather(gfx::Effects& effects) const;
+    // Where a fist burst this frame -- the shock wave's first frame, once a blow -- for the
+    // sound Play plays there (ours, the user's pick: eFirebustBoom; MU's wave is silent). Taken
+    // one at a time; false when there are none left.
+    bool takeBurst(float at[3]);
 
 private:
     struct Mote {
@@ -82,6 +87,7 @@ private:
         int bones[4] = {-1, -1, -1, -1};  // left hand, right hand, head, footsteps
         bool found = false;
         float dripOwed = 0.0f, blowOwed = 0.0f;
+        bool burst = false;   // this blow's burst has been heard
         float home[3] = {0, 0, 0};
         bool seen = false;
     };
@@ -91,6 +97,7 @@ private:
 
     std::vector<Mote> motes_;
     std::vector<Joint> joints_;
+    std::vector<std::array<float, 3>> bursts_;
     std::unordered_map<uint32_t, Golem> golems_;
     float tailStep_ = 0.0f;
     uint32_t seed_ = 0x51ed2705u;

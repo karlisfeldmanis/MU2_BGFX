@@ -534,6 +534,7 @@ void Play::openSound(const std::string& assetDir, bool muted) {
         if (row.sound[0] != '\0') heard_.skill[i] = sound_.load(row.sound, true);
     }
     heard_.explosion = sound_.load("explosion", true);
+    heard_.golemBurst = sound_.load("bluegolem_burst", true);
     // The knight dies to the other branch of the same test a monster does: SOUND_HUMAN_SCREAM04,
     // pMaleDie.wav. The elf is IsFemale's other side of it, pFemaleScream2 -- the figure's own
     // `female`, the flag her poses are chosen by.

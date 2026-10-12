@@ -2579,6 +2579,12 @@
         "bg_death.wav"
       ],
       "from": "SOUND_AIDA_BLUEGOLEM_DIE on MONSTER01_DIE, once (GMAida.cpp:809-834); w34/bg_death.wav."
+    },
+    "bluegolem_burst": {
+      "files": [
+        "eFirebustBoom.wav"
+      ],
+      "from": "Ours, the user's pick of six (2026-10-12): MU's shock wave at the Blue Golem's left hand on Attack 1 (GMAida.cpp:844-848) is silent, and this is heard on its first frame, once a blow, where the fist meets (fx/golem_water.h). eFirebustBoom.wav is MU's SOUND_ATTACK_FIRE_BUST_EXP (ZzzOpenData.cpp:4870)."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."
