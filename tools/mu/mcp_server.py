@@ -274,11 +274,24 @@ def t_research(a):
                                   if a.get("write") else "")
 
 
+def json_text(value):
+    """The value as JSON text for `mu edit`. A client may send a string that is already JSON
+    ('"plate_steel"', '[0.5, 0.5, 0]', as the tool's schema asks); dumped again it was
+    written as the string "\\"plate_steel\\"" into the recipe. A bare word is still a string."""
+    if isinstance(value, str):
+        try:
+            json.loads(value)
+            return value
+        except ValueError:
+            pass
+    return json.dumps(value)
+
+
 def t_edit(a):
     args = ["edit", a["target"], a["path"]]
     how = a.get("how", "set")
     if how != "remove":
-        args.append(json.dumps(a["value"]) if not isinstance(a.get("value"), str) else json.dumps(a["value"]))
+        args.append(json_text(a["value"]))
     if how in ("insert", "remove"):
         args.append("--" + how)
     ok, prose, _ = mu(*args)
@@ -318,7 +331,7 @@ def t_light(a):
         if key:
             return f"{files[layer]} {key}: {json.dumps(sheet.get(key))} (base {json.dumps(base.get(key))})"
         return json.dumps({k: v for k, v in sheet.items() if "note" not in k}, indent=1)
-    args = ["edit", files[layer], a["key"], json.dumps(a["value"])]
+    args = ["edit", files[layer], a["key"], json_text(a["value"])]
     if a["key"] not in sheet:
         args.append("--insert")
     ok, prose, _ = mu(*args)
