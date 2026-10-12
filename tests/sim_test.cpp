@@ -2475,8 +2475,8 @@ void testCastLock(const content::Tables& tables) {
         const sim::SkillRow& rock = *sim::skillNumbered(sim::skill::kMeteorite);
         check(rock.wizardry && rock.primary() && rock.thrown() && rock.damage == 21 &&
                   rock.fallTicks == 7 && rock.clip == 183 && rock.force == 1.6f && rock.splash == 4.0f &&
-                  rock.reach == 9.0f && rock.showers() && rock.aimsAtPointer() && rock.mana == 60,
-              "Meteorite is a thrown standard spell at twenty-one damage, at 1.6 the band, sixty mana, a shower "
+                  rock.reach == 9.0f && rock.showers() && rock.aimsAtPointer() && rock.mana == 40,
+              "Meteorite is a thrown standard spell at twenty-one damage, at 1.6 the band, forty mana, a shower "
               "within four tiles of the ground he names, falling seven ticks, cast in the arm-up clip");
         check(!sim::skillNumbered(sim::skill::kIce)->showers() &&
                   !sim::skillNumbered(sim::skill::kPoison)->showers(),
