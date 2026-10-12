@@ -8,6 +8,7 @@
 //   add <model> | duplicate | delete                 ... and sprint G's: add at the view's middle
 //   mode objects|gates|townsfolk                     what Place places; duplicate and delete follow it
 //   mark <n> | budge <dc> <dr> | look <n>            a gate by number or townsperson by index; tiles
+//   way <world>                                      a gate there at the view's middle, with its pair
 //   tab light              the inspector's Light   hide | show  the panels off and on
 //   shot <abs.png>         this frame to a file    wait <N>     N frames before the next line
 //   status                 what is on the bench    quit         close the studio
@@ -18,6 +19,7 @@
 // frame is, so a script waits before it reads a picture it asked for.
 #include <algorithm>
 #include <cerrno>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 
@@ -32,6 +34,7 @@
 #include "core/log.h"
 #include "game/bench.h"
 #include "game/figures.h"
+#include "game/world/world.h"
 
 namespace mu::app {
 
@@ -91,8 +94,8 @@ std::string StudioDesk::act(Context& ctx, game::ModelBench& bench, const std::st
         marks_.drop();
         return "ok placing " + mode + " in " + world;
     }
-    if (placeMode_ != 0 && (starts("mark") || starts("budge") || starts("look") || what == "duplicate" ||
-                            what == "delete")) {
+    if (placeMode_ != 0 && (starts("mark") || starts("budge") || starts("look") || starts("way") ||
+                            what == "duplicate" || what == "delete")) {
         marks_.world(ctx, world);
         marks_.kind(ctx, placeMode_ == 1 ? StudioMarks::Kind::Gates : StudioMarks::Kind::Townsfolk);
         std::string answer;
@@ -104,6 +107,10 @@ std::string StudioDesk::act(Context& ctx, game::ModelBench& bench, const std::st
         } else if (starts("budge")) {
             if (std::sscanf(after("budge").c_str(), "%d %d", &a, &b) != 2) return "error budge <dc> <dr>";
             ok = marks_.budge(ctx, cooker_, a, b, &answer);
+        } else if (starts("way")) {
+            const float m = town.ground().metresPerTile();
+            ok = marks_.addWay(ctx, cooker_, after("way"), int(std::floor(bench.camera().target[0] / m)),
+                               int(std::floor(-bench.camera().target[2] / m)), &answer);
         } else if (starts("look")) {
             ok = marks_.look(ctx, cooker_, std::atoi(after("look").c_str()), &answer);
         } else {

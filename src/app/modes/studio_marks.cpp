@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <filesystem>
 
 #include "app/context.h"
 #include "app/modes/studio_place.h"
@@ -50,6 +51,15 @@ void StudioMarks::world(Context& ctx, const std::string& name) {
     dragging_ = released_ = false;
     said_.clear();
     load(ctx);
+    worlds_.clear();
+    std::error_code error;
+    for (const auto& dir : std::filesystem::directory_iterator(ctx.paths.root + "/source/world", error)) {
+        const std::string other = dir.path().filename().string();
+        const core::Json doc = core::parseJsonFile(dir.path().string() + "/world.json");
+        if (other != name && !doc["rules"]["arrive"].isNull()) worlds_.push_back(other);
+    }
+    std::sort(worlds_.begin(), worlds_.end());
+    leadsTo_ = 0;
 }
 
 void StudioMarks::kind(Context& ctx, Kind k) {
@@ -233,8 +243,37 @@ bool StudioMarks::duplicate(Context& ctx, studio::Cooker& cooker, std::string* a
     return ok;
 }
 
+bool StudioMarks::addWay(Context& ctx, studio::Cooker& cooker, const std::string& to, int column, int row,
+                         std::string* answer) {
+    int number = 0;
+    const bool ok = cooker.gate("\"how\": \"add\", \"world\": \"" + world_ + "\", \"to\": \"" + to +
+                                    "\", \"column\": " + std::to_string(column) + ", \"row\": " + std::to_string(row),
+                                answer, &number);
+    if (ok) {
+        load(ctx);
+        pick(number);
+        cooker.forgetPlan();
+    }
+    said_ = *answer;
+    saidOk_ = ok;
+    return ok;
+}
+
 bool StudioMarks::remove(Context& ctx, studio::Cooker& cooker, std::string* answer) {
-    if (kind_ == Kind::Gates) return *answer = "a gate's number pairs it with another world's: not taken here", false;
+    if (kind_ == Kind::Gates) {
+        if (picked_ < 0) return *answer = "no gate picked", false;
+        const bool ok = cooker.gate("\"how\": \"remove\", \"world\": \"" + world_ + "\", \"number\": " +
+                                        std::to_string(marks_[size_t(picked_)].number),
+                                    answer);
+        if (ok) {
+            picked_ = -1;
+            load(ctx);
+            cooker.forgetPlan();
+        }
+        said_ = *answer;
+        saidOk_ = ok;
+        return ok;
+    }
     if (picked_ < 0) return *answer = "no townsperson picked", false;
     const int index = marks_[size_t(picked_)].index;
     const bool ok = cooker.edit(file_, "[\"npcs\", " + std::to_string(index) + "]", "", answer, "remove");
@@ -370,7 +409,31 @@ void StudioMarks::panel(Context& ctx, game::World& world, studio::Cooker& cooker
             if (ImGui::Button("Delete")) remove(ctx, cooker, &answer);
             ImGui::SetItemTooltip("taken out of the manifest");
         }
+        if (!folk && picked_ >= 0) {
+            if (ImGui::Button("Delete with its pair")) remove(ctx, cooker, &answer);
+            ImGui::SetItemTooltip("a way in takes its way out (unless another leads there); a way out takes "
+                                  "every way in to it -- in both worlds' manifests");
+        }
         if (picked_ >= 0 && ImGui::SmallButton("Drop the selection")) picked_ = -1;
+    }
+    if (!folk && !worlds_.empty()) {
+        ImGui::Separator();
+        leadsTo_ = std::min(leadsTo_, int(worlds_.size()) - 1);
+        ImGui::SetNextItemWidth(-150.0f);
+        if (ImGui::BeginCombo("##to", worlds_[size_t(leadsTo_)].c_str())) {
+            for (size_t i = 0; i < worlds_.size(); ++i) {
+                if (ImGui::Selectable(worlds_[i].c_str(), int(i) == leadsTo_)) leadsTo_ = int(i);
+            }
+            ImGui::EndCombo();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Add a way there")) {
+            const float m = world.ground().metresPerTile();
+            addWay(ctx, cooker, worlds_[size_t(leadsTo_)], int(std::floor(camera.target[0] / m)),
+                   int(std::floor(-camera.target[2] / m)), &answer);
+        }
+        ImGui::SetItemTooltip("a way in at the view's middle, level 0; its way out on that world's arrival tile, "
+                              "to be moved there");
     }
     if (!said_.empty()) ImGui::TextColored(saidOk_ ? kGreen : kRed, "%s", said_.c_str());
     ImGui::TextColored(kDim, folk ? "the game stands them after `mu make tables <world>`"

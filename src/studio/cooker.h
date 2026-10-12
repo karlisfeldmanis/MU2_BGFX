@@ -117,6 +117,10 @@ public:
     // a block's new key) or "remove" (path taken out; value unused).
     bool edit(const std::string& file, const std::string& path, const std::string& value,
               std::string* answer, const char* how = "set");
+    // A gate with its pair (tools/mu/gates.py): `fields` are the request's own, JSON members --
+    // "how": "add", "world", "to", "column", "row" or "how": "remove", "world", "number". The
+    // answer says what was written; `number` is the new way in's, or 0.
+    bool gate(const std::string& fields, std::string* answer, int* number = nullptr);
 
     const std::vector<JobView>& jobs() const { return jobs_; }
 

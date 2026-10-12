@@ -369,6 +369,31 @@ bool Cooker::edit(const std::string& file, const std::string& path, const std::s
     return true;
 }
 
+bool Cooker::gate(const std::string& fields, std::string* answer, int* number) {
+    std::string reply;
+    if (!request("{\"op\": \"gate\", " + fields + ", \"who\": \"studio\"}", &reply)) {
+        *answer = error_;
+        return false;
+    }
+    const core::Json j = core::parseJson(reply.data(), reply.size(), "mu serve's gate");
+    if (!j["error"].isNull()) {
+        *answer = j["error"].stringOr("refused");
+        return false;
+    }
+    const core::Json& done = j["gate"];
+    if (number) *number = int(done["enter"].numberOr(0.0));
+    if (!done["enter"].isNull()) {
+        *answer = "gate " + std::to_string(int(done["enter"].number)) + " leads to gate " +
+                  std::to_string(int(done["exit"].numberOr(0.0))) + ", its way out on the arrival tile there";
+    } else {
+        *answer = "removed";
+        for (size_t i = 0; i < done["removed"].size(); ++i) {
+            *answer += (i ? ", " : " ") + done["removed"].at(i).stringOr("");
+        }
+    }
+    return true;
+}
+
 void Cooker::forgetPlan() {
     std::lock_guard<std::mutex> hold(planLock_);
     plan_.target.clear();

@@ -19,6 +19,8 @@ JSON lines back:
     {"op": "recipe", "target": "Sword01"}                   -> {"files": [{file, doc}], "materials"}
     {"op": "edit", "file": f, "path": [...], "value": v}    -> {"edit": the journal's line}
         "how": "insert" puts value in at path, "remove" takes path out (value unused)
+    {"op": "gate", "how": "add", "world", "to", "column", "row"} -> {"gate": what was written}
+    {"op": "gate", "how": "remove", "world", "number"}           (tools/mu/gates.py)
     {"op": "stop"}
 
 An event is {"seq", "at", "job", "kind", ...}. The kinds: queued, plan (the steps that will run,
@@ -210,7 +212,7 @@ class Server:
                 # outside the lock, so neither waits on the queue.
                 if op == "plan":
                     reply = self.plan(ask)
-                elif op in ("recipe", "edit"):
+                elif op in ("recipe", "edit", "gate"):
                     reply = self.write(op, ask)
                 else:
                     reply = self.handle(op, ask)
@@ -271,6 +273,11 @@ class Server:
             if op == "recipe":
                 return edit.recipe(ask["target"])
             how, who = ask.get("how", "set"), ask.get("who", "studio")
+            if op == "gate":
+                import gates
+                if how == "add":
+                    return {"gate": gates.add(ask["world"], ask["to"], int(ask["column"]), int(ask["row"]), who)}
+                return {"gate": gates.remove(ask["world"], int(ask["number"]), who)}
             if how == "remove":
                 return {"edit": edit.remove(ask["file"], ask["path"], who)}
             if how == "insert":

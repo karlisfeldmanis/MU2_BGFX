@@ -19,6 +19,8 @@
     ./mu recipe <name>                       a recipe's file(s), parsed, and the material library
     ./mu edit <name|file> <path> <value>     one value in place (islands.0.material brass), journalled
               ... --insert / --remove          a value put in at path, or taken out (no value)
+    ./mu gate add <w> <to> <col> <row>       a way in here and its way out there (tools/mu/gates.py)
+    ./mu gate remove <w> <number>            a gate and its pair
     ./mu do "<line>; <line>; ..."            drive an open studio: subject, scene, shot, wait, status...
     ./mu serve                               the cook's job runner; `mu make` hands it its jobs
     ./mu jobs [--watch [N]] | cancel N [--now] what it is cooking, with bars and time left
@@ -76,6 +78,11 @@ def main():
     how.add_argument("--insert", action="store_true",
                      help="put the value in at path: a list's index (its length appends) or a new key")
     how.add_argument("--remove", action="store_true", help="take the value at path out")
+
+    g = sub.add_parser("gate", parents=[common])
+    g.add_argument("action", choices=["add", "remove"])
+    g.add_argument("world", help="the world the way in stands in (remove: the gate's world)")
+    g.add_argument("rest", nargs="+", help="add: <to-world> <column> <row>; remove: <number>")
 
     d = sub.add_parser("do", parents=[common])
     d.add_argument("lines", help="the studio's words, ';' between them (app/modes/studio_control.cpp)")
@@ -182,6 +189,17 @@ def dispatch(args, say):
         say(f"{line['file']}: {line['path']} {json.dumps(line['old'])} -> {json.dumps(line['new'])}"
             + (" (inserted)" if args.insert else ""))
         return True, line
+    if args.command == "gate":
+        import gates
+        if args.action == "add":
+            if len(args.rest) != 3:
+                raise NotFound("mu gate add <world> <to-world> <column> <row>")
+            done = gates.add(args.world, args.rest[0], int(args.rest[1]), int(args.rest[2]), who="mu")
+            say(f"gate {done['enter']} in {args.world} leads to gate {done['exit']} in {args.rest[0]}")
+        else:
+            done = gates.remove(args.world, int(args.rest[0]), who="mu")
+            say("removed " + ", ".join(done["removed"]))
+        return True, done
     if args.command == "do":
         return drive(args.lines, say)
     if args.command == "serve":

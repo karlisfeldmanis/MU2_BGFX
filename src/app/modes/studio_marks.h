@@ -10,7 +10,8 @@
 // manifest is read again, so what is drawn is what the file says.
 //
 // A townsperson can be duplicated (a tile east) and deleted, list operations of
-// tools/mu/edit.py. A gate cannot: its number pairs it with a gate in another world.
+// tools/mu/edit.py. A gate is added and deleted with its pair, its way in here and its way out
+// in the world it leads to (tools/mu/gates.py, `mu gate`); a gate is not duplicated.
 //
 // Neither shows in the game until it is cooked: the gates are compiled into the realm (`mu
 // make realm`, then a rebuild of the game and the server), the townsfolk stood by the world's
@@ -62,6 +63,10 @@ public:
     bool look(Context& ctx, studio::Cooker& cooker, int look, std::string* answer);
     bool duplicate(Context& ctx, studio::Cooker& cooker, std::string* answer);
     bool remove(Context& ctx, studio::Cooker& cooker, std::string* answer);
+    // A gate with its pair (tools/mu/gates.py): a way in at (column, row) here, its way out on
+    // `to`'s arrival tile, picked. remove() in the gates takes the picked one with its pair.
+    bool addWay(Context& ctx, studio::Cooker& cooker, const std::string& to, int column, int row,
+                std::string* answer);
     int picked() const { return picked_; }
 
 private:
@@ -86,6 +91,8 @@ private:
     Kind kind_ = Kind::Townsfolk;
     core::Json manifest_;
     std::vector<Mark> marks_;   // of the kind
+    std::vector<std::string> worlds_;   // the worlds a new gate may lead to: with rules.arrive
+    int leadsTo_ = 0;
     int picked_ = -1;           // in marks_
     bool dragging_ = false, released_ = false;
     int grab_[2] = {0, 0};      // the pointer's tile less the mark's, at the press

@@ -1407,6 +1407,25 @@ the monsters tab's "Simulate combat" -- is the game's own arena in a window of i
   west and turned to look 6 -- the figure there and turned in the next shot -- and put back,
   world.json's hash as before. cooker_test 27, layercheck green.
 
+### Slice G4: a gate added and deleted with its pair, as done
+
+- tools/mu/gates.py, `mu gate add <w> <to> <col> <row>` and `mu gate remove <w> <number>`, and mu
+  serve's `gate` op: a gate is two rows in two manifests, a way in (`enters`, here) and a way out
+  (`exits`, where it leads), joined by the exit's number, so each is G1's insert and remove across
+  both files, journalled. A new pair takes the first two free numbers from 200 (MU's run to 122;
+  from 1058 are the events' talk gates): a 2x2 way in at the tile, level 0, and a 2x2 way out on
+  the target's `rules.arrive`, facing nowhere, to be moved there. Removing a way in takes its way
+  out unless another way in leads there; removing a way out takes every way in to it; a list
+  emptied goes with its key; a gate a `k...Gate` constant names (66, 58, 1058, 1066) is refused.
+- Place's Gates window: a world to lead to and **Add a way there** (at the view's middle), and
+  **Delete with its pair**. Word: `way <world>`; `delete` in the gates takes the pair.
+- Proved: on a scratch copy of every manifest, add-then-remove from either end, to a world with
+  no `enters` list, all byte for byte; gate 66 and a missing 999 refused. In the studio, Lorencia
+  to Noria at the bonfire (gate 200 to 201, its box and label on the land) and deleted with its
+  pair; then Lorencia's real gate 23 deleted with Noria's exit 24 and both put back with `mu edit
+  --insert` from the journal: both manifests as in git. cooker_test 27 and 38 live, layercheck
+  green. Nothing reaches the game before `mu make realm` and a rebuild.
+
 ## 10. Leave alone
 
 These are kept from structure-plan §5, and still right:
