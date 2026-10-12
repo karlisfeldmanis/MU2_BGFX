@@ -1533,8 +1533,9 @@ adjusting lighting, tonemaps, shadow, sun, daylight for maps".
   - Lorencia's Bonfire01 was edited 2 m east, a copy inserted and removed, and the fire moved
     back, each seen in the next shot; lorencia.json's hash is as before.
   - cooker_test 27 and 38 live; layercheck green.
-- The game's own HUD (orbs, belt, minimap) draws under the panels during a fight, as a player
-  sees it.
+- The fight is watched, not played (PlayMode::watch, the raid's spectator desk): the bars, the
+  names and the blows' figures stay, and the hero's orbs and belt no longer draw under the panels.
+  The minimap and the event herald, readings too, still do.
 
 ## 10. Leave alone
 

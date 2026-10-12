@@ -37,6 +37,10 @@ public:
     }
     void frame(Context& ctx, const Frame& at) override;
     const gfx::Camera& camera() const override { return world_.camera(); }
+    // Watched rather than played: the scene's readings (bars, names, the blows' figures) and none
+    // of the hero's chrome (orbs, belt). The raid's spectator view; the studio's arena too
+    // (app/modes/studio_arena.h), whose panels stand where the chrome would.
+    void watch(bool on) { desk_.setWatching(on); }
     // The world and its realm, for the performance sweep (app/sweep.h).
     game::World& world() { return world_; }
     void report(Context& ctx) override;

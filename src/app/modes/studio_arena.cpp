@@ -69,6 +69,7 @@ bool StudioArena::open(Context& ctx, const std::string& breed, const std::string
         }
         return false;
     }
+    play_->watch(true);   // the fight's readings, not the hero's orbs and belt under the panels
     breed_ = breed;
     world_ = world;
     core::logf("studio: the arena for %s in %s at %d,%d, in the studio", breed.c_str(), world.c_str(), column, row);
