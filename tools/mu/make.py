@@ -551,8 +551,12 @@ def plan_sounds(threads):
         Step("sync", ["python3", os.path.join(TOOLS, "sync.py"), "--src", WORKSHOP, "--dst", ASSETS,
                       "--world", "lorencia", "--only-world"], sync_test([]), "assets"),
         Step("showing", COOK + ["--only", "showing", "--threads", str(threads)],
-             lambda c: ((bool(c & {"index", "assets"}) or newest_in(sounds, ".wav") > mtime(mus),
-                         "a sound is newer than showing.mus, or the index moved")), "cooked", lock="showing"),
+             # And sounds.json: an event added to it whose index a monster's cook ran since
+             # (the Bloody Orc's, 2026-10-12) left the index fresh and showing.mus without it.
+             lambda c: ((bool(c & {"index", "assets"})
+                         or max(newest_in(sounds, ".wav"), newest_in(sounds, ".json")) > mtime(mus),
+                         "a sound or sounds.json is newer than showing.mus, or the index moved")),
+             "cooked", lock="showing"),
     ]
 
 

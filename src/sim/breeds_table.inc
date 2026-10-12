@@ -8,6 +8,7 @@ constexpr int32_t kPoisoners[] = {
     39,  // Poison Shadow
     307,  // Forest Orc
     308,  // Death Tree
+    549,  // Bloody Orc
 };
 
 constexpr int32_t kBurners[] = {
@@ -90,6 +91,7 @@ constexpr Resistance kResistances[] = {
     {307, 19, 19},  // Forest Orc
     {308, 18, 18},  // Death Tree
     {309, 50, 50},  // Hell Maine
+    {549, 20, 20},  // Bloody Orc
 };
 
 constexpr DropRate kDropRates[] = {
@@ -158,6 +160,7 @@ constexpr DropRate kDropRates[] = {
     {307, 30, 3, 10},  // Forest Orc
     {308, 30, 3, 10},  // Death Tree
     {309, 30, 3, 150},  // Hell Maine
+    {549, 30, 3, 8},  // Bloody Orc
 };
 
 constexpr Bulk kBulks[] = {

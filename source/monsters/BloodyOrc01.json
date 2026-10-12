@@ -1,0 +1,1314 @@
+{
+  "item": "BloodyOrc01",
+  "mu_name": "Bloody Orc",
+  "mu_name_from": "OpenMU VersionSeasonSix names number 549 'Bloody Orc' (openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:501); MuMain's MONSTER_BLOODY_ORC (MuMain/src/source/World/GameMaps/GMAida.cpp:424).",
+  "world": "aida",
+  "object_type": 549,
+  "monster": {
+    "model_index": 193,
+    "scale": 1.15
+  },
+  "monster_from": "MuMain/src/source/World/GameMaps/GMAida.cpp:424:\n\ncase MONSTER_BLOODY_ORC:\n    {\n        OpenMonsterModel(MONSTER_MODEL_BLOODY_ORC);\n        pCharacter = CreateCharacter(Key, MODEL_BLOODY_ORC, PosX, PosY);\n        //pCharacter->Object.Scale = 1.15f;\n        pCharacter->Object.Scale = 1.35f;\n        pCharacter->Weapon[0].Type = -1;\n        pCharacter->Weapon[1].Type = -1;\n    }\n    break;",
+  "profile": "monster",
+  "sheets": {
+    "ex01mono3": "bloodyorc_ex01mono3.png",
+    "ex01mono3eye": "bloodyorc_ex01mono3eye.png"
+  },
+  "sheet_materials": {
+    "ex01mono3": "skin",
+    "ex01mono3eye": "skin"
+  },
+  "combat": {
+    "level": 114,
+    "health": 117000,
+    "minimum_damage": 675,
+    "maximum_damage": 710,
+    "defense": 420,
+    "move_range": 4,
+    "attack_range": 2,
+    "view_range": 9,
+    "move_delay": 700,
+    "attack_delay": 1500,
+    "attack_rate": 900,
+    "defense_rate": 820,
+    "attack_skill": null,
+    "note": "OpenMU VersionSeasonSix (openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:501)."
+  },
+  "why_this_one": "To write.",
+  "rules": {
+    "drops": {
+      "money_rate": 30,
+      "max_plus": 3,
+      "regen": 8
+    },
+    "resist": {
+      "ice": 20,
+      "poison": 20
+    },
+    "note": "Resistance: OpenMU S6 Maps/Aida.cs:520-522 writes 20/255 to poison and ice and 150/255 to fire, read as WebZen's raw values the way the Forest Orc's are; fire is not carried. Drops: the Forest Orc's (Tarkan's 30 and 3, docs/aida-port.md decision 11); RegTime 8, OpenMU's RespawnDelay (Aida.cs:508). Poisons: as the Forest Orc it is drawn from (the user, 2026-10-12, for Aida's orcs).",
+    "poisons": true
+  },
+  "show": {
+    "note": "MODEL_BLOODY_ORC's blow is MODEL_FOREST_ORC's (GMAida.cpp:628-660 against :564-596): on Attack 1 and Attack 2, three CreateBlur type 3 in (0.5, 0.5, 0), 20 units along bones 35, 39, 43 to 60 along 37, 41, 45 -- the same three right-hand fingers on its 61-bone rig. So the Forest Orc's show.claws.",
+    "claws": {
+      "from": 0.2,
+      "to": 0.6,
+      "light": [
+        0.5,
+        0.5,
+        0
+      ],
+      "pairs": [
+        [
+          "Bip01 R Finger0",
+          "Bip01 R Finger02"
+        ],
+        [
+          "Bip01 R Finger1",
+          "Bip01 R Finger12"
+        ],
+        [
+          "Bip01 R Finger2",
+          "Bip01 R Finger22"
+        ]
+      ]
+    }
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 14,
+      "area": 2458.7,
+      "along": [
+        -109.5,
+        -74.3
+      ],
+      "mu_uv": [
+        0.139,
+        0.339,
+        0.996,
+        0.994
+      ],
+      "bake_uv": [
+        0.064,
+        0.013,
+        0.895,
+        0.84
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 12,
+      "area": 2227.8,
+      "along": [
+        -44.8,
+        -10.2
+      ],
+      "mu_uv": [
+        0.012,
+        0.348,
+        0.417,
+        0.502
+      ],
+      "bake_uv": [
+        0.014,
+        0.387,
+        0.916,
+        0.62
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 582,
+      "area": 62438.7,
+      "along": [
+        -91.1,
+        92.5
+      ],
+      "mu_uv": [
+        0.002,
+        0.004,
+        0.994,
+        0.994
+      ],
+      "bake_uv": [
+        0.014,
+        0.013,
+        0.988,
+        0.988
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 12,
+      "area": 2227.9,
+      "along": [
+        19.5,
+        53.3
+      ],
+      "mu_uv": [
+        0.012,
+        0.348,
+        0.417,
+        0.502
+      ],
+      "bake_uv": [
+        0.305,
+        0.081,
+        0.916,
+        0.92
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 20,
+      "area": 3722.4,
+      "along": [
+        -101.6,
+        -62.0
+      ],
+      "mu_uv": [
+        0.012,
+        0.348,
+        0.417,
+        0.502
+      ],
+      "bake_uv": [
+        0.014,
+        0.267,
+        0.912,
+        0.928
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 26,
+      "area": 4224.9,
+      "along": [
+        -88.5,
+        -52.6
+      ],
+      "mu_uv": [
+        0.009,
+        0.106,
+        0.337,
+        0.481
+      ],
+      "bake_uv": [
+        0.298,
+        0.099,
+        0.665,
+        0.848
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 32,
+      "area": 3939.9,
+      "along": [
+        -1.9,
+        45.3
+      ],
+      "mu_uv": [
+        0.011,
+        0.438,
+        0.97,
+        0.643
+      ],
+      "bake_uv": [
+        0.013,
+        0.385,
+        0.834,
+        0.787
+      ]
+    },
+    {
+      "island": 7,
+      "material": "skin",
+      "triangles": 32,
+      "area": 3939.9,
+      "along": [
+        -34.3,
+        0.5
+      ],
+      "mu_uv": [
+        0.011,
+        0.438,
+        0.97,
+        0.643
+      ],
+      "bake_uv": [
+        0.162,
+        0.125,
+        0.838,
+        0.479
+      ]
+    },
+    {
+      "island": 8,
+      "material": "skin",
+      "triangles": 16,
+      "area": 2694.2,
+      "along": [
+        0.7,
+        33.6
+      ],
+      "mu_uv": [
+        0.027,
+        0.01,
+        0.994,
+        0.167
+      ],
+      "bake_uv": [
+        0.083,
+        0.181,
+        0.912,
+        0.907
+      ]
+    },
+    {
+      "island": 9,
+      "material": "skin",
+      "triangles": 9,
+      "area": 2045.3,
+      "along": [
+        -30.7,
+        26.6
+      ],
+      "mu_uv": [
+        0.011,
+        0.007,
+        0.987,
+        0.138
+      ],
+      "bake_uv": [
+        0.223,
+        0.278,
+        0.595,
+        0.481
+      ]
+    },
+    {
+      "island": 10,
+      "material": "skin",
+      "triangles": 9,
+      "area": 2261.7,
+      "along": [
+        -35.2,
+        22.1
+      ],
+      "mu_uv": [
+        0.011,
+        0.007,
+        0.987,
+        0.138
+      ],
+      "bake_uv": [
+        0.013,
+        0.105,
+        0.629,
+        0.528
+      ]
+    },
+    {
+      "island": 11,
+      "material": "skin",
+      "triangles": 9,
+      "area": 2796.5,
+      "along": [
+        -22.3,
+        12.6
+      ],
+      "mu_uv": [
+        0.011,
+        0.007,
+        0.987,
+        0.138
+      ],
+      "bake_uv": [
+        0.142,
+        0.505,
+        0.556,
+        0.945
+      ]
+    },
+    {
+      "island": 12,
+      "material": "skin",
+      "triangles": 9,
+      "area": 2278.9,
+      "along": [
+        -10.7,
+        21.7
+      ],
+      "mu_uv": [
+        0.011,
+        0.007,
+        0.987,
+        0.138
+      ],
+      "bake_uv": [
+        0.056,
+        0.551,
+        0.449,
+        0.954
+      ]
+    },
+    {
+      "island": 13,
+      "material": "skin",
+      "triangles": 9,
+      "area": 1949.9,
+      "along": [
+        -21.1,
+        27.4
+      ],
+      "mu_uv": [
+        0.011,
+        0.007,
+        0.987,
+        0.138
+      ],
+      "bake_uv": [
+        0.341,
+        0.552,
+        0.614,
+        0.954
+      ]
+    },
+    {
+      "island": 14,
+      "material": "skin",
+      "triangles": 9,
+      "area": 1676.6,
+      "along": [
+        24.6,
+        41.5
+      ],
+      "mu_uv": [
+        0.011,
+        0.007,
+        0.987,
+        0.138
+      ],
+      "bake_uv": [
+        0.1,
+        0.599,
+        0.905,
+        0.954
+      ]
+    },
+    {
+      "island": 15,
+      "material": "skin",
+      "triangles": 9,
+      "area": 2133.5,
+      "along": [
+        7.7,
+        51.8
+      ],
+      "mu_uv": [
+        0.011,
+        0.007,
+        0.987,
+        0.138
+      ],
+      "bake_uv": [
+        0.014,
+        0.62,
+        0.643,
+        0.962
+      ]
+    },
+    {
+      "island": 16,
+      "material": "skin",
+      "triangles": 9,
+      "area": 1710.1,
+      "along": [
+        25.0,
+        54.4
+      ],
+      "mu_uv": [
+        0.011,
+        0.007,
+        0.987,
+        0.138
+      ],
+      "bake_uv": [
+        0.216,
+        0.306,
+        0.644,
+        0.971
+      ]
+    },
+    {
+      "island": 17,
+      "material": "skin",
+      "triangles": 9,
+      "area": 2460.0,
+      "along": [
+        10.0,
+        41.3
+      ],
+      "mu_uv": [
+        0.011,
+        0.007,
+        0.987,
+        0.138
+      ],
+      "bake_uv": [
+        0.394,
+        0.132,
+        0.749,
+        0.975
+      ]
+    },
+    {
+      "island": 18,
+      "material": "skin",
+      "triangles": 9,
+      "area": 2129.0,
+      "along": [
+        17.7,
+        29.0
+      ],
+      "mu_uv": [
+        0.011,
+        0.007,
+        0.987,
+        0.138
+      ],
+      "bake_uv": [
+        0.096,
+        0.013,
+        0.671,
+        0.979
+      ]
+    },
+    {
+      "island": 19,
+      "material": "skin",
+      "triangles": 9,
+      "area": 1696.4,
+      "along": [
+        15.9,
+        35.0
+      ],
+      "mu_uv": [
+        0.011,
+        0.007,
+        0.987,
+        0.138
+      ],
+      "bake_uv": [
+        0.413,
+        0.063,
+        0.671,
+        0.979
+      ]
+    },
+    {
+      "island": 20,
+      "material": "skin",
+      "triangles": 9,
+      "area": 4687.2,
+      "along": [
+        4.8,
+        24.9
+      ],
+      "mu_uv": [
+        0.011,
+        0.007,
+        0.987,
+        0.138
+      ],
+      "bake_uv": [
+        0.013,
+        0.649,
+        0.979,
+        0.979
+      ]
+    },
+    {
+      "island": 21,
+      "material": "skin",
+      "triangles": 9,
+      "area": 2221.3,
+      "along": [
+        -0.7,
+        14.5
+      ],
+      "mu_uv": [
+        0.011,
+        0.007,
+        0.987,
+        0.138
+      ],
+      "bake_uv": [
+        0.432,
+        0.181,
+        0.69,
+        0.983
+      ]
+    },
+    {
+      "island": 22,
+      "material": "skin",
+      "triangles": 9,
+      "area": 1350.1,
+      "along": [
+        0.2,
+        20.5
+      ],
+      "mu_uv": [
+        0.011,
+        0.007,
+        0.987,
+        0.138
+      ],
+      "bake_uv": [
+        0.299,
+        0.668,
+        0.646,
+        0.988
+      ]
+    },
+    {
+      "island": 23,
+      "material": "skin",
+      "triangles": 20,
+      "area": 3722.4,
+      "along": [
+        66.8,
+        104.7
+      ],
+      "mu_uv": [
+        0.012,
+        0.348,
+        0.417,
+        0.502
+      ],
+      "bake_uv": [
+        0.088,
+        0.444,
+        0.918,
+        0.937
+      ]
+    },
+    {
+      "island": 24,
+      "material": "skin",
+      "triangles": 6,
+      "area": 212.2,
+      "along": [
+        73.1,
+        84.0
+      ],
+      "mu_uv": [
+        0.089,
+        0.513,
+        0.185,
+        0.609
+      ],
+      "bake_uv": [
+        0.92,
+        0.502,
+        0.945,
+        0.528
+      ]
+    },
+    {
+      "island": 25,
+      "material": "skin",
+      "triangles": 6,
+      "area": 212.2,
+      "along": [
+        87.4,
+        98.0
+      ],
+      "mu_uv": [
+        0.089,
+        0.513,
+        0.185,
+        0.609
+      ],
+      "bake_uv": [
+        0.924,
+        0.65,
+        0.95,
+        0.675
+      ]
+    },
+    {
+      "island": 26,
+      "material": "skin",
+      "triangles": 6,
+      "area": 212.2,
+      "along": [
+        90.0,
+        101.0
+      ],
+      "mu_uv": [
+        0.089,
+        0.513,
+        0.185,
+        0.609
+      ],
+      "bake_uv": [
+        0.338,
+        0.928,
+        0.363,
+        0.954
+      ]
+    },
+    {
+      "island": 27,
+      "material": "skin",
+      "triangles": 6,
+      "area": 212.2,
+      "along": [
+        70.8,
+        81.4
+      ],
+      "mu_uv": [
+        0.089,
+        0.513,
+        0.185,
+        0.609
+      ],
+      "bake_uv": [
+        0.648,
+        0.928,
+        0.673,
+        0.954
+      ]
+    },
+    {
+      "island": 28,
+      "material": "skin",
+      "triangles": 6,
+      "area": 212.2,
+      "along": [
+        78.4,
+        89.9
+      ],
+      "mu_uv": [
+        0.089,
+        0.513,
+        0.185,
+        0.609
+      ],
+      "bake_uv": [
+        0.798,
+        0.928,
+        0.823,
+        0.954
+      ]
+    },
+    {
+      "island": 29,
+      "material": "skin",
+      "triangles": 6,
+      "area": 212.2,
+      "along": [
+        82.5,
+        93.5
+      ],
+      "mu_uv": [
+        0.089,
+        0.513,
+        0.185,
+        0.609
+      ],
+      "bake_uv": [
+        0.928,
+        0.312,
+        0.954,
+        0.338
+      ]
+    },
+    {
+      "island": 30,
+      "material": "skin",
+      "triangles": 16,
+      "area": 763.1,
+      "along": [
+        1.7,
+        24.5
+      ],
+      "mu_uv": [
+        0.492,
+        0.396,
+        0.593,
+        0.54
+      ],
+      "bake_uv": [
+        0.013,
+        0.257,
+        0.701,
+        0.682
+      ]
+    },
+    {
+      "island": 31,
+      "material": "skin",
+      "triangles": 36,
+      "area": 4544.0,
+      "along": [
+        -27.3,
+        7.2
+      ],
+      "mu_uv": [
+        0.011,
+        0.436,
+        0.58,
+        0.861
+      ],
+      "bake_uv": [
+        0.056,
+        0.035,
+        0.836,
+        0.346
+      ]
+    },
+    {
+      "island": 32,
+      "material": "skin",
+      "triangles": 16,
+      "area": 930.6,
+      "along": [
+        24.2,
+        43.1
+      ],
+      "mu_uv": [
+        0.009,
+        0.434,
+        0.5,
+        0.944
+      ],
+      "bake_uv": [
+        0.155,
+        0.825,
+        0.981,
+        0.988
+      ]
+    },
+    {
+      "island": 33,
+      "material": "skin",
+      "triangles": 56,
+      "area": 2912.6,
+      "along": [
+        84.4,
+        109.9
+      ],
+      "mu_uv": [
+        0.36,
+        0.273,
+        0.605,
+        0.656
+      ],
+      "bake_uv": [
+        0.865,
+        0.127,
+        0.895,
+        0.528
+      ]
+    },
+    {
+      "island": 34,
+      "material": "skin",
+      "triangles": 58,
+      "area": 4889.7,
+      "along": [
+        -139.9,
+        -85.6
+      ],
+      "mu_uv": [
+        0.32,
+        0.215,
+        0.645,
+        0.934
+      ],
+      "bake_uv": [
+        0.735,
+        0.316,
+        0.966,
+        0.735
+      ]
+    },
+    {
+      "island": 35,
+      "material": "skin",
+      "triangles": 76,
+      "area": 6973.2,
+      "along": [
+        -156.6,
+        -86.5
+      ],
+      "mu_uv": [
+        0.229,
+        0.215,
+        0.645,
+        0.994
+      ],
+      "bake_uv": [
+        0.013,
+        0.203,
+        0.969,
+        0.783
+      ]
+    },
+    {
+      "island": 36,
+      "material": "skin",
+      "triangles": 58,
+      "area": 4051.3,
+      "along": [
+        -144.9,
+        -88.6
+      ],
+      "mu_uv": [
+        0.32,
+        0.215,
+        0.645,
+        0.934
+      ],
+      "bake_uv": [
+        0.773,
+        0.526,
+        0.969,
+        0.865
+      ]
+    },
+    {
+      "island": 37,
+      "material": "skin",
+      "triangles": 41,
+      "area": 3881.0,
+      "along": [
+        55.4,
+        90.9
+      ],
+      "mu_uv": [
+        0.014,
+        0.121,
+        0.187,
+        0.32
+      ],
+      "bake_uv": [
+        0.672,
+        0.014,
+        0.979,
+        0.317
+      ]
+    },
+    {
+      "island": 38,
+      "material": "skin",
+      "triangles": 49,
+      "area": 5943.4,
+      "along": [
+        41.0,
+        77.9
+      ],
+      "mu_uv": [
+        0.014,
+        0.12,
+        0.187,
+        0.321
+      ],
+      "bake_uv": [
+        0.013,
+        0.101,
+        0.983,
+        0.753
+      ]
+    },
+    {
+      "island": 39,
+      "material": "skin",
+      "triangles": 6,
+      "area": 162.4,
+      "along": [
+        63.1,
+        72.7
+      ],
+      "mu_uv": [
+        0.089,
+        0.513,
+        0.185,
+        0.609
+      ],
+      "bake_uv": [
+        0.92,
+        0.013,
+        0.945,
+        0.038
+      ]
+    },
+    {
+      "island": 40,
+      "material": "skin",
+      "triangles": 6,
+      "area": 162.4,
+      "along": [
+        73.6,
+        82.4
+      ],
+      "mu_uv": [
+        0.09,
+        0.512,
+        0.188,
+        0.61
+      ],
+      "bake_uv": [
+        0.24,
+        0.911,
+        0.266,
+        0.937
+      ]
+    },
+    {
+      "island": 41,
+      "material": "skin",
+      "triangles": 6,
+      "area": 162.4,
+      "along": [
+        80.1,
+        90.1
+      ],
+      "mu_uv": [
+        0.089,
+        0.513,
+        0.185,
+        0.609
+      ],
+      "bake_uv": [
+        0.933,
+        0.211,
+        0.958,
+        0.236
+      ]
+    },
+    {
+      "island": 42,
+      "material": "skin",
+      "triangles": 6,
+      "area": 162.4,
+      "along": [
+        63.1,
+        72.6
+      ],
+      "mu_uv": [
+        0.09,
+        0.513,
+        0.185,
+        0.609
+      ],
+      "bake_uv": [
+        0.929,
+        0.802,
+        0.954,
+        0.827
+      ]
+    },
+    {
+      "island": 43,
+      "material": "skin",
+      "triangles": 6,
+      "area": 162.4,
+      "along": [
+        73.7,
+        82.5
+      ],
+      "mu_uv": [
+        0.09,
+        0.512,
+        0.188,
+        0.61
+      ],
+      "bake_uv": [
+        0.712,
+        0.915,
+        0.739,
+        0.941
+      ]
+    },
+    {
+      "island": 44,
+      "material": "skin",
+      "triangles": 6,
+      "area": 252.1,
+      "along": [
+        48.0,
+        61.4
+      ],
+      "mu_uv": [
+        0.089,
+        0.513,
+        0.185,
+        0.609
+      ],
+      "bake_uv": [
+        0.92,
+        0.126,
+        0.945,
+        0.152
+      ]
+    },
+    {
+      "island": 45,
+      "material": "skin",
+      "triangles": 6,
+      "area": 252.1,
+      "along": [
+        52.4,
+        65.5
+      ],
+      "mu_uv": [
+        0.09,
+        0.512,
+        0.188,
+        0.61
+      ],
+      "bake_uv": [
+        0.508,
+        0.911,
+        0.534,
+        0.937
+      ]
+    },
+    {
+      "island": 46,
+      "material": "skin",
+      "triangles": 6,
+      "area": 252.1,
+      "along": [
+        56.2,
+        67.9
+      ],
+      "mu_uv": [
+        0.089,
+        0.513,
+        0.185,
+        0.609
+      ],
+      "bake_uv": [
+        0.933,
+        0.369,
+        0.958,
+        0.395
+      ]
+    },
+    {
+      "island": 47,
+      "material": "skin",
+      "triangles": 6,
+      "area": 252.1,
+      "along": [
+        48.0,
+        61.3
+      ],
+      "mu_uv": [
+        0.09,
+        0.513,
+        0.185,
+        0.609
+      ],
+      "bake_uv": [
+        0.937,
+        0.557,
+        0.962,
+        0.582
+      ]
+    },
+    {
+      "island": 48,
+      "material": "skin",
+      "triangles": 6,
+      "area": 252.1,
+      "along": [
+        52.4,
+        65.5
+      ],
+      "mu_uv": [
+        0.09,
+        0.512,
+        0.188,
+        0.61
+      ],
+      "bake_uv": [
+        0.915,
+        0.746,
+        0.941,
+        0.772
+      ]
+    },
+    {
+      "island": 49,
+      "material": "skin",
+      "triangles": 2,
+      "area": 82.3,
+      "along": [
+        36.6,
+        47.8
+      ],
+      "mu_uv": [
+        0.019,
+        0.057,
+        0.982,
+        0.873
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.434,
+        0.439
+      ]
+    }
+  ],
+  "mu_checklist": [
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:424",
+      "in": "M33Aida::CreateAidaMonster",
+      "kind": "body",
+      "lines": 10,
+      "actions": [],
+      "calls": [
+        "CreateCharacter"
+      ],
+      "state": "done",
+      "note": "the recipe's monster block (mu new monster)"
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:628",
+      "in": "M33Aida::MoveAidaBlurEffect",
+      "kind": "effect",
+      "lines": 36,
+      "actions": [
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2"
+      ],
+      "calls": [
+        "CreateBlur"
+      ],
+      "state": "done",
+      "note": "show.claws: the Forest Orc's three right-hand claw ribbons, the same bones 35-45 on the same 61-bone rig (GMAida.cpp:628-660 = :564-596)."
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:1085",
+      "in": "M33Aida::RenderAidaMonsterVisual",
+      "kind": "sound",
+      "lines": 33,
+      "actions": [
+        "MONSTER01_WALK",
+        "MONSTER01_RUN",
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2",
+        "MONSTER01_DIE",
+        "MONSTER01_STOP1",
+        "MONSTER01_STOP2"
+      ],
+      "calls": [
+        "PlayBuffer",
+        "SOUND_AIDA_FORESTORC_MOVE1",
+        "SOUND_AIDA_FORESTORC_ATTACK1",
+        "SOUND_AIDA_FORESTORC_ATTACK2",
+        "SOUND_AIDA_FORESTORC_DIE"
+      ],
+      "state": "done",
+      "note": "sounds.json bloodyorc_move/_attack/_die on the Forest Orc's w34 files (fo_idle1-2, fo_attack1-2, fo_death); blocks 3-6 are those files."
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:354",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_FORESTORC_MOVE1"
+      ],
+      "file": "Data/Sound/w34/fo_idle1.wav",
+      "state": "done",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:356",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_FORESTORC_ATTACK1"
+      ],
+      "file": "Data/Sound/w34/fo_attack1.wav",
+      "state": "done",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:357",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_FORESTORC_ATTACK2"
+      ],
+      "file": "Data/Sound/w34/fo_attack2.wav",
+      "state": "done",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:358",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_FORESTORC_DIE"
+      ],
+      "file": "Data/Sound/w34/fo_death.wav",
+      "state": "done",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2516",
+      "in": "GetMonsterModelName",
+      "kind": "other",
+      "lines": 1,
+      "actions": [],
+      "calls": [],
+      "state": "skip",
+      "note": "MU's name for the model, for its tools; nothing to carry"
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:3257",
+      "in": "OpenMonsterModel",
+      "kind": "other",
+      "lines": 2,
+      "actions": [],
+      "calls": [],
+      "state": "done",
+      "note": "MONSTER_MODEL_BLOODY_ORC's case is a bare break (ZzzOpenData.cpp:3257-3258): no play speed changed, so the cooked clips' own."
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:1526",
+      "in": "M33Aida::SetCurrentActionAidaMonster",
+      "kind": "other",
+      "lines": 1,
+      "actions": [],
+      "calls": [],
+      "state": "skip",
+      "note": "CheckMonsterSkill, as Hell Maine's: MU's monster skills are visuals only, set aside (the user, 2026-10-12)."
+    }
+  ]
+}
