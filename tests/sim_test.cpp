@@ -574,7 +574,7 @@ void testInvasion(const content::Tables& tables) {
 void testRaid(const content::Tables& tables) {
     std::printf("raid\n");
     std::vector<sim::RaiderKit> party;
-    check(sim::readParty(std::string(MU2_ASSET_DIR) + "/../source/raid/party.json", &party),
+    check(sim::readParty(std::string(MU2_SOURCE_DIR) + "/source/raid/party.json", &party),
           "source/raid/party.json reads");
     checkEqual((long long)party.size(), 10, "ten in the party");
     if (party.size() != 10) return;
