@@ -56,19 +56,11 @@ Three rules keep it clear:
 | `tools/cook*.py`, `sync*`, `voice.py`, `mixamo.py`, ... | `pipeline/` | ~205 |
 | the five root scripts | `./mu` subcommands | the docs and the memory |
 
-- **The game finds its folders through one place**: `MU_DIRS` in `CMakeLists.txt:104`
-  (`MU2_ASSET_DIR`, `MU2_SHEET_DIR`, `MU2_ROOT_DIR`), read in `src/app/application.cpp:133`.
-- **A few files bypass it** and paste `MU2_ROOT_DIR "/extern"` or `"/saves"` into a string:
-  - `src/gfx/face.cpp:24-37`
-  - `src/game/ui/controls.cpp:21`
-  - `src/game/ui/desk.cpp:108`
-  - `src/core/args.cpp:59`
-  - `src/game/headless.cpp:386`
-  - the studio's `workshop/.mu/*.sock` paths
-
-  Those become calls to one `core::paths()`, which the shipped client needs anyway.
-- **The Python side has no single root.** `tools/mu`, `cook.py` and the pipeline each join
-  their own. They get one `paths.py` that the others import, and that change goes first.
+- **The game's folders are named once**, in the `MU_DIRS` block of `CMakeLists.txt` (`MU_ROOT`,
+  `MU_ASSETS` and one `MU2_*_DIR` per folder), and read back through `core::folders()`
+  (`src/core/paths.h`). The tests and tools take `MU2_ASSET_DIR` from the same variable.
+- **The tools' folders are named once** in `tools/paths.py` (str, and `P.*` as pathlib) and
+  `tools/paths.sh`. Every script in `tools/`, `tools/mu/` and `pipeline/` imports or sources them.
 
 ## The order
 
@@ -76,19 +68,26 @@ Each step is one commit and leaves the game, the cook, the Cooker MCP and the se
 and running. Nothing moves while another session has uncommitted work in the folders it touches,
 or while the studio is open: the studio's baked paths would point at nothing.
 
-1. **One root, in each language.** Add `core::paths()` and `pipeline/paths.py`, and route every
-   bypass through them. Nothing moves yet; the result must be byte-identical (`sim_test`, and a
-   shotcheck).
-2. **`third_party/` and `out/`.** Move the ignored folders, change the roots, `.gitignore`,
+1. **One root, in each language.** Done 2026-10-13: `core::folders()` and `tools/paths.py` /
+   `tools/paths.sh`. The binary bakes the same folders as before; `sim_test`, `cooker_test`,
+   `./mu --help` and ten `--plan` captures are unchanged. Left over: `src/game/ui/desk.cpp:108`
+   still pastes `MU2_ROOT_DIR "/extern/..."` (another session's file then); it becomes
+   `gfx::fontPath("Amarante-Regular.ttf")`.
+2. **`third_party/` and `out/`.** Move the ignored folders. Change `MU_DIRS`, the `extern/`
+   include paths in `CMakeLists.txt`, `tools/paths.py`, `tools/paths.sh`, `.gitignore`,
    `bootstrap.sh` and `build.sh`. This needs a clean rebuild, because `build/` moves.
 3. **`content/`.** Use `git mv source content` and `git mv sheets content/sheets`. Then fix:
    - the roots
    - `mu edit`, `gate`, `light` and `paint`
-   - the journal
+   - the journal, and the studio's relative `"source/..."` and `"sheets/..."` keys
+     (`light_panel.cpp`, `studio_place.cpp`, `studio_marks.cpp`, `studio_desk.cpp`)
+   - `tools/asset.sh:90`, which tests a recipe folder's name against `source`
    - `CLAUDE.md`, `docs/cooker.md` and the memory
+   - the docs' own move into `plans/ reference/ content/ game/ worlds/` (docs/README.md), with
+     every citation of a moved doc rewritten in the same commit
 
    Check with `./mu check`, a `./mu make X --plan`, and the studio opening on a monster.
-4. **`pipeline/`.** Move the cook scripts out of `tools/`, then run a `--plan` cook and
+4. **`pipeline/`.** Move the cook scripts and `paths.py`/`paths.sh` out of `tools/`, then run a `--plan` cook and
    `./mu check`.
 5. **`./mu` subcommands.** Retire the root scripts, and update the README and the memory.
 
