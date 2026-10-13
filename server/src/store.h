@@ -14,6 +14,7 @@
 // is made. A deleted one is kept, stamped with when, and never read again. A row of no account
 // is the bench's: the bots' and `--new`'s, played by its token alone.
 
+#include <array>
 #include <condition_variable>
 #include <cstdint>
 #include <mutex>
@@ -96,6 +97,29 @@ public:
     // that writes the characters it moved things for. False when the disk said no, or none yet.
     bool keepBook(const std::vector<uint8_t>& bytes);
     bool findBook(std::vector<uint8_t>& bytes);
+
+    // **The guilds** (docs/guild.md, server/src/guild_store.cpp): a row a guild and a row a
+    // member, by his character's token; written whole whenever the guild changes, as WebZen's
+    // ExDB kept them apart from the characters. The master is the first member.
+    struct GuildRow {
+        struct Member {
+            uint64_t token = 0;
+            std::string name;
+            int kin = 0;
+            int level = 1;
+            int64_t seen = 0;  // unix seconds he last played
+        };
+        uint32_t id = 0;
+        std::string name;
+        std::array<uint8_t, 32> mark{};
+        std::string notice;
+        int64_t made = 0;
+        std::vector<Member> members;
+    };
+    // Every guild on the disk, its tables made the first time. False when the disk said no.
+    bool loadGuilds(std::vector<GuildRow>& out);
+    bool keepGuild(const GuildRow& guild);
+    bool dropGuild(uint32_t id);
 
 private:
     // The journal folded back into the file, on a thread of its own with its own connection, at

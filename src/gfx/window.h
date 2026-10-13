@@ -115,6 +115,7 @@ public:
                  // the bag down, the quest journal (game/ui/desk.cpp)
         Travel,  // M: the travel list, shown and shut (game/ui/travel.h)
         Map,     // Tab, held: the whole map over the middle of the screen (game/ui/minimap.h)
+        Guild,   // G: the guild window, shown and shut (game/ui/guild.h, docs/guild.md)
         Count
     };
     // Neither while a box has the keyboard (setTyping): an I typed into the chat is a letter,

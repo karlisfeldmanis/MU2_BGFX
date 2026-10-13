@@ -161,6 +161,45 @@ server steps ship to Hetzner as one build with the client and netbot (protocol c
 5. **G5 Bots**: netbot answers a guild invite card; the Board makes one bot guild on the server.
 6. **Later**: the mark on the back plate (bone 26 decal); guild war once PvP is decided.
 
+## Built (2026-10-13)
+
+The user: "implement". Everything in the plan but the back plate and war, with the table's
+defaults above taken as decided. Protocol 29.
+
+- **The server** (server/src/guild.cpp, guild_store.cpp; host.h's guild section). `g_guilds` by
+  id, `g_guildOf` by character token; kept whole in characters.db's `guilds` and
+  `guild_members` on every change and each minute for when members were last seen
+  (Store::keepGuild), read back at start (loadGuilds). MU's rules: found at level 100, by the
+  Guild Master (within kGuildMasterReach of his tile, `Realm::folkTile`), a name of 4 to 8
+  letters or digits unique in any case, a mark not blank, free; join at level 6; a cap of the
+  master's level / 10, 40 at most; a master disbands rather than leaves, the name typed. Invites
+  and asks stand 60 s and say so when they run out. Every refusal is a Guild-channel line.
+- **The wire**: GuildAsk (Found, Invite, Ask, Accept, Decline, Leave, Remove, Disband, Notice),
+  GuildState to members on change and every 5 s, GuildMark (name, mark, master) once a line,
+  GuildCall for the card, Who's guild per player.
+- **The chat**: the Guild tab live; `@text` and `/g` to the guild, `@>text` the notice,
+  `/ginvite NAME`, `/gjoin MASTER`, `/gleave`, `/gnotice TEXT`. The party's invite card carries a
+  guild's call: kicker *Guild*, the mark, the guild's name in its green, a quiet line (members,
+  master, map; or the asker's class, level, party and map), Accept and Decline, a bar down its
+  60 s (Chat::guildCalled). Answered by GuildAsk, never by matching text.
+- **The windows** (game/ui/guild.*): GuildMake, opened by the Guild Master's greeting on a server
+  (Play::takeGuildMaster); GuildWindow on G, in the first free column from the right. Both
+  through Desk; their fields hold the keyboard as the Broker's do.
+- **Seen**: the nameplate's guild line (vitals.cpp) is the mark and the name for every player in a
+  guild, `<Bot>` for a bot in none; the target frame's line the same; the Card's [guild]. The
+  player menu's "Invite to guild" (a master, on one in no guild) and "Ask to join guild" (one in
+  none, on a guild's master).
+- **Bots**: netbot accepts a guild invite while in no guild, party or not.
+- **Checked**: server_test's guild (found, refuse, invite across maps, accept, notice, a restart
+  reading it back, remove, ask, leave, disband, the mark on the wire): 50 checks, 0 failed.
+  sim_test 7462, 0 failed. And live on a private port (`mu2_server --kit 150:Zen+5000000`, two
+  netbots, scripted clients): founded Vanguard at the Guild Master, invited both bots by name
+  from the window, they joined from Lorencia; a second client's ask and the master's invite each
+  showed the card; disbanded with the name typed and founded Ember.
+
+Not yet: the mark on the armour's back; guild war and Battle Soccer (no PvP). Deploying is
+separate: client, server and netbot go together (protocol 29).
+
 ## Proposal
 
 UI proposal page: https://claude.ai/artifact/2qCQPGfwWcWmi9XCRvSVvq (create window with a working mark editor, guild window A/B, invite cards, nameplate).

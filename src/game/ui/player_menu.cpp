@@ -37,6 +37,18 @@ void PlayerMenu::show(Play& play, const std::string& name, float x, float y, flo
         rows_.push_back({"Kick", true, true});
     }
     if (!member && (!inParty || leading)) rows_.push_back({"Invite to party"});
+    // The guild's (docs/guild.md): a master invites one in no guild; one in none asks a master.
+    {
+        const net::GuildState& guild = play.guild();
+        const bool master = guild.id != 0 && !guild.members.empty() && guild.members.front().name == me;
+        const uint32_t body = play.playerNamed(name);
+        const uint32_t theirs = body != 0 ? play.guildOfPlayer(body) : 0;
+        if (master && theirs == 0) rows_.push_back({"Invite to guild"});
+        if (guild.id == 0 && theirs != 0) {
+            const net::GuildMark* mark = play.guildMark(theirs);
+            if (mark != nullptr && mark->master == name) rows_.push_back({"Ask to join guild"});
+        }
+    }
     rows_.push_back({"Inspect", false});
     // Trade lives while he is on this map (sim/realm_deal.cpp); the realm refuses one too far.
     rows_.push_back({"Trade", play.playerNamed(name) != 0});
@@ -85,6 +97,12 @@ bool PlayerMenu::update(Play& play, const Pointer& pointer) {
             else if (row == "Kick") play.askParty({net::PartyWhat::Kick, name_});
             else if (row == "Invite to party") play.askParty({net::PartyWhat::Invite, name_});
             else if (row == "Trade") play.dealAsk(play.playerNamed(name_));
+            else if (row == "Invite to guild" || row == "Ask to join guild") {
+                net::GuildAsk asked;
+                asked.what = row == "Invite to guild" ? net::GuildWhat::Invite : net::GuildWhat::Ask;
+                asked.name = name_;
+                play.askGuild(asked);
+            }
         }
         // A greyed row holds the menu open; anything else shuts it, with the window's click.
         if (!inside || hovered_ >= 0 || (pointer.y < top && pointer.pressed)) {

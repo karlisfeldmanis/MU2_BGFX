@@ -24,6 +24,7 @@
 #include "game/ui/mixer.h"
 #include "game/ui/endurance.h"
 #include "game/ui/go_back.h"
+#include "game/ui/guild.h"
 #include "game/ui/herald.h"
 #include "game/ui/cursor.h"
 #include "game/ui/hud.h"
@@ -77,11 +78,14 @@ public:
         else if (text == "tab") scriptTab_ = true;  // M, the travel list
         else if (text == "map") scriptMap_ = true;  // Tab held, the whole map: latched
         else if (text == "journal") scriptJournal_ = true;  // L, the quest journal
+        else if (text == "guild") scriptGuild_ = true;      // G, the guild window
         else scriptTyped_ += text;
     }
     // Whether a box has the keyboard, which the window is told so Escape cancels the box
     // rather than quitting the game.
-    bool typing() const { return amount_.up() || chat_.typing() || broker_.typing(); }
+    bool typing() const {
+        return amount_.up() || chat_.typing() || broker_.typing() || guild_.typing() || guildMake_.typing();
+    }
     // A scripted potion key for the next update, 0 to 3.
     void scriptKey(int key) { scriptedKey_ = key; }
     // A skill key pressed by a script: 0 is Q. `--press q` in a headless run, so the cast path is
@@ -266,7 +270,8 @@ private:
     // The events coming for his level, one line at the top centre (game/ui/herald.h).
     Herald herald_;
     int journal_ = -1;  // the quest the journal (L) is reading, away from its giver, or -1
-    bool scriptJournal_ = false;  // a script's L for the next update (--ui-type FRAME:journal)
+    bool scriptJournal_ = false;
+    bool scriptGuild_ = false;  // a script's G for the next update (--ui-type FRAME:guild)  // a script's L for the next update (--ui-type FRAME:journal)
     // The HUD's quest button, pressed last frame: the journal opens or shuts on this one.
     bool questButton_ = false;
     bool questing_ = false;  // a giver's window was up last frame, so its opening is heard once
@@ -279,6 +284,10 @@ private:
     Chat chat_;
     // The other members of his party, top left (game/ui/party_bar.h).
     PartyBar partyBar_;
+    // The guild's windows (game/ui/guild.h, docs/guild.md): G's, and the Guild Master's.
+    GuildWindow guild_;
+    GuildMake guildMake_;
+    int guildColumn() const;
     // The player picked by a click, over the plate (game/ui/target_frame.h), his face, and the
     // one right-click menu on a player wherever he is clicked (game/ui/player_menu.h).
     TargetFrame targetFrame_;

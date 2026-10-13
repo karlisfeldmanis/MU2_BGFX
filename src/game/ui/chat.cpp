@@ -6,7 +6,9 @@
 
 #include "core/log.h"
 #include "game/play.h"
+#include "game/roster.h"
 #include "game/ui/controls.h"
+#include "game/ui/guild_mark.h"
 #include "game/ui/describe.h"
 #include "game/ui/stage.h"
 #include "game/ui/tip.h"
@@ -67,6 +69,8 @@ constexpr float kInviteLife = 60.0f, kInviteIn = 0.15f, kInviteOut = 1.0f;
 // A trade's ask stands as long as the realm holds it (sim::kDealAskTicks).
 constexpr float kTradeLife = float(sim::kDealAskTicks) / 20.0f;
 constexpr float kInviteAbove = 44.0f, kInviteWide = 440.0f, kInviteTall = 118.0f;
+// A guild's card: its quiet line's room, its mark, and the bar under its buttons.
+constexpr float kGuildCardMore = 30.0f, kGuildMarkSide = 30.0f, kGuildBarWide = 236.0f;
 // The suggestions for a "[" being typed: how many, and a row's height.
 constexpr size_t kSuggestMost = 8;
 constexpr float kSuggestRow = 26.0f;
@@ -178,6 +182,42 @@ void Chat::askedToTrade(const std::string& name, uint32_t who) {
     line.text = line.inviter + " wants to trade with you.";
     line.shown = line.text;
     line.trader = who;
+    log_.push_back(line);
+    if (log_.size() > kKept) log_.erase(log_.begin(), log_.begin() + long(log_.size() - kKept));
+}
+
+std::string Chat::guildSaid(float within) const {
+    for (size_t i = log_.size(); i-- > 0;) {
+        const Line& line = log_[i];
+        if (line.age > within) break;
+        if (line.channel == net::Channel::Guild && line.name.empty() && !line.guild) return line.text;
+    }
+    return {};
+}
+
+void Chat::guildCalled(const net::GuildCall& call) {
+    Line line;
+    line.channel = net::Channel::Guild;
+    line.inviter = call.from.empty() ? std::string("Someone") : call.from;
+    line.guild = true;
+    line.mark = call.mark;
+    line.guildName = call.guildName;
+    line.text = call.ask ? line.inviter + " asks to join " + call.guildName + "."
+                         : line.inviter + " invites you to the guild " + call.guildName + ".";
+    line.shown = line.text;
+    const std::string kin = className(sim::Kin(call.ask ? call.fromKin : call.masterKin));
+    std::string world = call.fromWorld;
+    if (!world.empty()) world[0] = char(std::toupper(uint8_t(world[0])));
+    if (call.ask) {
+        // What he would take in: who asks, and where he stands.
+        line.meta = kin + " " + std::to_string(call.fromLevel) + (call.fromInParty ? " \xC2\xB7 in a party" : " \xC2\xB7 in no party") +
+                    (world.empty() ? std::string() : " \xC2\xB7 " + world);
+    } else {
+        // What he would join: its size, its master and where he stands.
+        line.meta = std::to_string(call.members) + " of " + std::to_string(call.cap) + " members \xC2\xB7 master " +
+                    call.master + ", " + kin + " " + std::to_string(call.masterLevel) +
+                    (world.empty() ? std::string() : " \xC2\xB7 " + world);
+    }
     log_.push_back(line);
     if (log_.size() > kKept) log_.erase(log_.begin(), log_.begin() + long(log_.size() - kKept));
 }
@@ -430,7 +470,22 @@ void Chat::send(Play& play) {
     draft_.clear();
     open_ = false;
     if (text.empty()) return;
-    if (text[0] == '/') {
+    // MU's guild prefixes (GS protocol.cpp:2575-2700): "@>" the master's notice, "@" his guild.
+    if (text.rfind("@>", 0) == 0) {
+        net::GuildAsk asked;
+        asked.what = net::GuildWhat::Notice;
+        asked.text = net::saidText(text.substr(2));
+        if (play.remote()) play.askGuild(asked);
+        return;
+    }
+    if (text[0] == '@') {
+        text = net::saidText(text.substr(1));
+        if (text.empty()) {
+            select("guild");
+            return;
+        }
+        channel = net::Channel::Guild;
+    } else if (text[0] == '/') {
         const size_t space = text.find(' ');
         const std::string command = lower(text.substr(1, space == std::string::npos ? std::string::npos : space - 1));
         std::string rest = space == std::string::npos ? std::string() : net::saidText(text.substr(space + 1));
@@ -480,6 +535,25 @@ void Chat::send(Play& play) {
                 return;
             }
             play.dealAsk(whom);
+            return;
+        } else if (command == "ginvite" || command == "gjoin" || command == "gleave" || command == "gnotice") {
+            // The guild's asks (docs/guild.md): the server answers on the Guild channel.
+            if (!play.remote()) {
+                system(net::Channel::Server, "Guilds are kept on the server: play online to join one.");
+                return;
+            }
+            net::GuildAsk asked;
+            asked.what = command == "ginvite" ? net::GuildWhat::Invite
+                         : command == "gjoin" ? net::GuildWhat::Ask
+                         : command == "gleave" ? net::GuildWhat::Leave
+                                               : net::GuildWhat::Notice;
+            asked.name = rest.substr(0, rest.find(' '));
+            asked.text = rest;
+            if ((asked.what == net::GuildWhat::Invite || asked.what == net::GuildWhat::Ask) && asked.name.empty()) {
+                system(net::Channel::Guild, "/" + command + " whom? Add a name.");
+                return;
+            }
+            play.askGuild(asked);
             return;
         } else if (command == "invite" || command == "leave" || command == "kick" || command == "accept" ||
                    command == "decline" || command == "promote") {
@@ -545,6 +619,14 @@ void Chat::answer(Play& play, long index, const std::string& name, bool accept) 
     // A trade's ask is the realm's to answer, not the server's party.
     if (index >= 0 && log_[size_t(index)].trader != 0) {
         play.dealAnswer(log_[size_t(index)].trader, accept);
+        return;
+    }
+    // A guild's call is the server's guild to answer (docs/guild.md).
+    if (index >= 0 && log_[size_t(index)].guild) {
+        net::GuildAsk asked;
+        asked.what = accept ? net::GuildWhat::Accept : net::GuildWhat::Decline;
+        asked.name = log_[size_t(index)].inviter;
+        play.askGuild(asked);
         return;
     }
     net::PartyAsk asked;
@@ -755,6 +837,7 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
 
     // A party or guild he is no longer in takes its tab with it.
     inParty_ = play.party().members.size() > 1;
+    inGuild_ = play.guild().id != 0;
     if ((tab_ == "party" && !inParty_) || (tab_ == "guild" && !inGuild_)) select("all");
 
     // Where the next line goes: the tab's channel; on All his party's when he has one, else his
@@ -883,8 +966,11 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
 
     const long pending = pendingInvite();
     inviting_ = pending >= 0;
-    inviteCard_ = {width * 0.5f - kInviteWide * 0.5f * u, bottom - (kInviteAbove + kInviteTall) * u,
-                   kInviteWide * u, kInviteTall * u};
+    // A guild's card stands taller, for its line of what joining means (docs/guild.md).
+    const bool guildCard = inviting_ && log_[size_t(pending)].guild;
+    const float inviteTall = kInviteTall + (guildCard ? kGuildCardMore : 0.0f);
+    inviteCard_ = {width * 0.5f - kInviteWide * 0.5f * u, bottom - (kInviteAbove + inviteTall) * u,
+                   kInviteWide * u, inviteTall * u};
     const uint64_t key = signature(u, pointer) ^ (uint64_t(pending + 1) * 0x9E3779B97F4A7C15ull) ^
                          (inviting_ && inviteCard_.has(pointer.x, pointer.y)
                               ? uint64_t(std::lround(pointer.x)) * 31 + uint64_t(std::lround(pointer.y))
@@ -892,7 +978,9 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
                          (inviting_ ? uint64_t(std::min(log_[size_t(pending)].age, kInviteIn) * 100.0f) +
                                           (uint64_t(std::max(0.0f, log_[size_t(pending)].age -
                                                                        (kInviteLife - kInviteOut)) * 30.0f) << 8)
-                                    : 0);
+                                    : 0) ^
+                         // A guild card's bar runs down its minute: redrawn each second.
+                         (guildCard ? uint64_t(log_[size_t(pending)].age) << 20 : 0);
     if (key != built_) {
         built_ = key;
         back_.clear();
@@ -1112,7 +1200,7 @@ void Chat::build(float u, const Pointer& pointer) {
     }
     rule(back_, input_.x, input_.bottom() + 2.0f * u, input_.w, u);
     body(back_, panel_.x + 12.0f * u, panel_.bottom() - 9.0f * u, kHint * u, kHintInk,
-         "/p party  \xC2\xB7  /g guild  \xC2\xB7  /w name  \xC2\xB7  /r reply  \xC2\xB7  /invite name  \xC2\xB7  /promote name  \xC2\xB7  /leave", u);
+         "/p party  \xC2\xB7  /g or @ guild  \xC2\xB7  /w name  \xC2\xB7  /r reply  \xC2\xB7  /invite name  \xC2\xB7  /ginvite name  \xC2\xB7  /leave", u);
 }
 
 long Chat::pendingInvite() const {
@@ -1150,18 +1238,47 @@ void Chat::buildInvite(float u, float width, float bottom, const Pointer& pointe
         }
     }
     // "Party", the question, and the two answers.
-    const std::string kicker = line.trader != 0 ? "Trade" : "Party";
+    const std::string kicker = line.guild ? "Guild" : line.trader != 0 ? "Trade" : "Party";
     word(inviteDrawn_, card.midX() - wordWidth(kTag * u, kicker) * 0.5f, card.y + 18.0f * u, kTag * u,
-         faded(kPartyInk, alpha), kicker, u);
-    // The asker's name in the players' green, the rest in bone, the whole centred.
-    const std::string asks = line.trader != 0 ? " wants to trade with you." : " invites you to a party.";
-    const float wide = bodyWidth(21.0f * u, line.inviter) + bodyWidth(21.0f * u, asks);
+         faded(line.guild ? kGuildInk : kPartyInk, alpha), kicker, u);
+    // The asker's name in the players' green, the rest in bone, the whole centred; a guild's mark
+    // before it, and its quiet line under it.
+    const std::string asks = line.guild ? line.text.substr(std::min(line.inviter.size(), line.text.size()))
+                             : line.trader != 0 ? " wants to trade with you." : " invites you to a party.";
+    const float markRoom = line.guild ? (kGuildMarkSide + 10.0f) * u : 0.0f;
+    const float wide = markRoom + bodyWidth(21.0f * u, line.inviter) + bodyWidth(21.0f * u, asks);
     const float qx = card.midX() - wide * 0.5f;
-    const float named = body(inviteDrawn_, qx, card.y + 50.0f * u, 21.0f * u, faded(kInviterInk, alpha), line.inviter, u);
-    body(inviteDrawn_, qx + named, card.y + 50.0f * u, 21.0f * u, faded(hex(0xf3e8d4), alpha), asks, u);
+    if (line.guild) {
+        const Box well{qx, card.y + 50.0f * u - 22.0f * u, kGuildMarkSide * u, kGuildMarkSide * u};
+        inviteDrawn_.rect({well.x - 2.0f * u, well.y - 2.0f * u, well.w + 4.0f * u, well.h + 4.0f * u}, faded(kIron, alpha));
+        inviteDrawn_.rect({well.x - 1.0f * u, well.y - 1.0f * u, well.w + 2.0f * u, well.h + 2.0f * u}, faded(kVoid, alpha));
+        guildmark::draw(inviteDrawn_, well, line.mark, alpha);
+        const float metaWide = bodyWidth(15.0f * u, line.meta);
+        body(inviteDrawn_, card.midX() - metaWide * 0.5f, card.y + 78.0f * u, 15.0f * u, faded(kQuiet, alpha),
+             line.meta, u);
+        // The minute running down, under the buttons.
+        const float left = std::clamp(1.0f - line.age / life, 0.0f, 1.0f);
+        const Box bar{card.midX() - kGuildBarWide * 0.5f * u, card.bottom() - 3.0f * u, kGuildBarWide * u, 2.0f * u};
+        inviteDrawn_.rect(bar, faded(hex(0x241b15), alpha));
+        inviteDrawn_.rect({bar.x, bar.y, bar.w * left, bar.h}, faded(hex(0xa88b6c), alpha));
+    }
+    const float named = body(inviteDrawn_, qx + markRoom, card.y + 50.0f * u, 21.0f * u, faded(kInviterInk, alpha),
+                             line.inviter, u);
+    // The guild's own name in its green, the rest of the line in bone.
+    const size_t guildAt = line.guild && !line.guildName.empty() ? asks.rfind(line.guildName) : std::string::npos;
+    const float qy = card.y + 50.0f * u;
+    if (guildAt == std::string::npos) {
+        body(inviteDrawn_, qx + markRoom + named, qy, 21.0f * u, faded(hex(0xf3e8d4), alpha), asks, u);
+    } else {
+        float x = qx + markRoom + named;
+        x += body(inviteDrawn_, x, qy, 21.0f * u, faded(hex(0xf3e8d4), alpha), asks.substr(0, guildAt), u);
+        x += body(inviteDrawn_, x, qy, 21.0f * u, faded(kGuildInk, alpha), line.guildName, u);
+        body(inviteDrawn_, x, qy, 21.0f * u, faded(hex(0xf3e8d4), alpha), asks.substr(guildAt + line.guildName.size()), u);
+    }
     const float bw = 112.0f * u, bh = 36.0f * u, gap = 12.0f * u;
     for (const bool accept : {true, false}) {
-        const Box box{card.midX() + (accept ? -gap * 0.5f - bw : gap * 0.5f), card.bottom() - bh - 6.0f * u, bw, bh};
+        const Box box{card.midX() + (accept ? -gap * 0.5f - bw : gap * 0.5f),
+                      card.bottom() - bh - (line.guild ? 12.0f : 6.0f) * u, bw, bh};
         controls::State state;
         state.lift = box.has(pointer.x, pointer.y) ? 1.0f : 0.0f;
         const size_t mark = inviteDrawn_.mark();

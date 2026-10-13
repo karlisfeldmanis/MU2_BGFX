@@ -317,6 +317,66 @@ void put(std::vector<uint8_t>& out, const Who& one) {
             o.str(p.name);
             o.u8(p.bot ? 1 : 0);
         }
+        // Their guilds, after them (protocol 29).
+        for (const Who::One& p : one.players) o.u32(p.guild);
+    });
+}
+
+void put(std::vector<uint8_t>& out, const GuildAsk& one) {
+    frame(out, Kind::GuildAsk, [&](Out& o) {
+        o.u8(uint8_t(one.what));
+        o.str(one.name);
+        o.str(one.text);
+        for (const uint8_t b : one.mark) o.u8(b);
+    });
+}
+
+void put(std::vector<uint8_t>& out, const GuildState& one) {
+    frame(out, Kind::GuildState, [&](Out& o) {
+        o.u32(one.id);
+        o.str(one.name);
+        for (const uint8_t b : one.mark) o.u8(b);
+        o.str(one.notice);
+        o.i32(one.cap);
+        o.u8(uint8_t(std::min<size_t>(one.members.size(), 255)));
+        for (size_t i = 0; i < one.members.size() && i < 255; ++i) {
+            const GuildState::Member& m = one.members[i];
+            o.str(m.name);
+            o.u8(m.kin);
+            o.i32(m.level);
+            o.str(m.world);
+            o.u32(m.here);
+            o.i32(m.seen);
+            o.u8(m.bot ? 1 : 0);
+        }
+    });
+}
+
+void put(std::vector<uint8_t>& out, const GuildMark& one) {
+    frame(out, Kind::GuildMark, [&](Out& o) {
+        o.u32(one.id);
+        o.str(one.name);
+        for (const uint8_t b : one.mark) o.u8(b);
+        o.str(one.master);
+    });
+}
+
+void put(std::vector<uint8_t>& out, const GuildCall& one) {
+    frame(out, Kind::GuildCall, [&](Out& o) {
+        o.u8(one.ask ? 1 : 0);
+        o.str(one.from);
+        o.u8(one.fromKin);
+        o.i32(one.fromLevel);
+        o.str(one.fromWorld);
+        o.u8(one.fromInParty ? 1 : 0);
+        o.u32(one.guild);
+        o.str(one.guildName);
+        for (const uint8_t b : one.mark) o.u8(b);
+        o.i32(one.members);
+        o.i32(one.cap);
+        o.str(one.master);
+        o.u8(one.masterKin);
+        o.i32(one.masterLevel);
     });
 }
 
@@ -544,6 +604,75 @@ bool parse(const std::vector<uint8_t>& body, Who& out) {
         p.bot = in.u8() != 0;
         out.players.push_back(std::move(p));
     }
+    for (Who::One& p : out.players) p.guild = in.u32();
+    return in.done();
+}
+
+namespace {
+void markOf(In& in, GuildMarkBits& mark) {
+    for (uint8_t& b : mark) b = in.u8();
+}
+}  // namespace
+
+bool parse(const std::vector<uint8_t>& body, GuildAsk& out) {
+    In in{body};
+    const uint8_t what = in.u8();
+    out.name = in.str();
+    out.text = in.str();
+    markOf(in, out.mark);
+    if (what > uint8_t(GuildWhat::Notice)) return false;
+    out.what = GuildWhat(what);
+    return in.done();
+}
+
+bool parse(const std::vector<uint8_t>& body, GuildState& out) {
+    In in{body};
+    out.id = in.u32();
+    out.name = in.str();
+    markOf(in, out.mark);
+    out.notice = in.str();
+    out.cap = in.i32();
+    const uint8_t n = in.u8();
+    out.members.clear();
+    for (uint8_t i = 0; i < n && in.ok; ++i) {
+        GuildState::Member m;
+        m.name = in.str();
+        m.kin = in.u8();
+        m.level = in.i32();
+        m.world = in.str();
+        m.here = in.u32();
+        m.seen = in.i32();
+        m.bot = in.u8() != 0;
+        out.members.push_back(std::move(m));
+    }
+    return in.done();
+}
+
+bool parse(const std::vector<uint8_t>& body, GuildMark& out) {
+    In in{body};
+    out.id = in.u32();
+    out.name = in.str();
+    markOf(in, out.mark);
+    out.master = in.str();
+    return in.done();
+}
+
+bool parse(const std::vector<uint8_t>& body, GuildCall& out) {
+    In in{body};
+    out.ask = in.u8() != 0;
+    out.from = in.str();
+    out.fromKin = in.u8();
+    out.fromLevel = in.i32();
+    out.fromWorld = in.str();
+    out.fromInParty = in.u8() != 0;
+    out.guild = in.u32();
+    out.guildName = in.str();
+    markOf(in, out.mark);
+    out.members = in.i32();
+    out.cap = in.i32();
+    out.master = in.str();
+    out.masterKin = in.u8();
+    out.masterLevel = in.i32();
     return in.done();
 }
 

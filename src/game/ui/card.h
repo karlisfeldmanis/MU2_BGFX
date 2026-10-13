@@ -32,6 +32,8 @@ public:
                 const std::string& name, const Pointer& pointer, int* spend, bool* close);
 
     bool covers(float x, float y) const;
+    // His guild's name, in brackets after his own (docs/guild.md); empty for none.
+    void setGuild(const std::string& guild) { guild_ = guild; }
     const gfx::Canvas& canvas() const { return canvas_; }
     uint64_t rebuilds() const { return rebuilds_; }
 
@@ -81,6 +83,7 @@ private:
     bool closing_ = false;
     bool overClose_ = false;
     uint64_t rebuilds_ = 0;
+    std::string guild_;
 };
 
 }  // namespace mu::game

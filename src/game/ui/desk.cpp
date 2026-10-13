@@ -75,6 +75,8 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     shelf_.open(interface_, &arts_);
     chest_.open(interface_, &arts_);
     broker_.open(interface_);
+    guild_.open(interface_, &arts_);
+    guildMake_.open(interface_, &arts_);
     deal_.open(interface_, &arts_);
     mixer_.open(interface_, &arts_);
     amount_.open(interface_, &arts_);
@@ -225,7 +227,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // windows under it do not hear a click on its OK and a 1 typed into it is not the first
     // potion drunk. `typing` is taken before the box answers, so the frame Return closes it on
     // does not hand the same keys on either. The cursor is still drawn where the pointer is.
-    const bool typing = amount_.up() || broker_.typing();
+    const bool typing = amount_.up() || broker_.typing() || guild_.typing() || guildMake_.typing();
     // The chat's keyboard, taken before the box spends the script's: it types only while it is
     // open and no box is up, and its Enter and Escape are then its own.
     const bool chatTyping = chat_.typing() && !typing;
@@ -397,8 +399,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // open it shuts them all, as CNewUIManager's Escape closes the open windows before anything
     // else; only with nothing open does it raise the menu. And up, the menu has it: back a page,
     // or down.
-    const bool windowsOpen =
-        inventoryOpen_ || characterOpen_ || trading_ || banking_ || brokering_ || mixing_ || dealing_ || travel_.up();
+    const bool windowsOpen = inventoryOpen_ || characterOpen_ || trading_ || banking_ || brokering_ || mixing_ ||
+                             dealing_ || travel_.up() || guild_.up() || guildMake_.up();
     {
         std::string place = hero ? placeName(worldName_, hero->column(), hero->row()) : worldName_;
         if (hero) {
@@ -435,6 +437,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 if (mixing_) play.closeMachine();
                 if (dealing_) play.closeDeal();
                 travel_.hide();
+                guild_.hide();
+                guildMake_.hide();
                 fanLatched_ = false;
             } else if (!play.targetName().empty()) {
                 // With nothing open, Escape lets his target go before it raises the menu, as
@@ -482,6 +486,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         characterOpen_ = !characterOpen_;
         click();
     }
+    // G, the guild window (docs/guild.md): on a server; off one there is no guild to show.
+    if (!keysHeld && (window.pressed(gfx::Window::Key::Guild) || scriptGuild_) && play.isOpen()) {
+        guild_.toggle();
+        click();
+    }
+    scriptGuild_ = false;
     // L, the quest journal: the tracked quest's page -- the one under way, else the one resting,
     // else the first on offer -- and L again shuts it. With the bag up L is the bag's repair.
     // Ours: MU 0.75 has no quests, and its L is only the repair.
@@ -644,6 +654,32 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
         // The menu asked for a whisper: the chat opens on his tab.
         if (const std::string whom = playerMenu_.whisper(); !whom.empty()) chat_.whisperTo(whom);
+        // A guild's call: its card in the middle (Chat::guildCalled).
+        net::GuildCall call;
+        while (play.takeGuildCall(call)) chat_.guildCalled(call);
+    }
+    // The guild's windows (game/ui/guild.h): G's, and the Guild Master's when he is spoken to on a
+    // server. Each keeps the pointer while a field of it types, as the Broker's does.
+    if (play.isOpen()) {
+        if (play.takeGuildMaster()) {
+            guildMake_.show();
+            play.ui(Play::Ui::Opened);
+        }
+        const std::string said = chat_.guildSaid(6.0f);
+        GuildRequests asked;
+        GuildKeys keys;
+        if (guildMake_.typing()) keys = {typedNow, window.backspaces(), enterNow, escapeNow};
+        guildMake_.update(seconds, float(window.width()), float(window.height()), 2, play,
+                          guildMake_.typing() && !amount_.up() ? real : pointer, keys, said, &asked);
+        keys = {};
+        if (guild_.typing()) keys = {typedNow, window.backspaces(), enterNow, escapeNow};
+        guild_.update(seconds, float(window.width()), float(window.height()), guildColumn(), play,
+                      guild_.typing() && !amount_.up() ? real : pointer, keys, said, &asked);
+        for (const net::GuildAsk& one : asked.asks) play.askGuild(one);
+        if (!asked.whisper.empty()) chat_.whisperTo(asked.whisper);
+        if (!asked.party.empty()) play.askParty({net::PartyWhat::Invite, asked.party});
+        if (!asked.trade.empty()) play.dealAsk(play.playerNamed(asked.trade));
+        if (asked.clicked) click();
     }
     // Read by the journal's L on the next frame, which runs ahead of the HUD.
     if (toggleQuest) questButton_ = true;
@@ -668,6 +704,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         bool close = false;
         std::string name;
         if (!hero || !play.playerName(hero->id, &name, nullptr)) name = heroName_;
+        card_.setGuild(play.guild().name);
         card_.update(float(window.width()), float(window.height()), hero, &play.realm(), name,
                      pointer, &spend, &close);
         // The stat button clicks whether or not the point lands: CNewUICharacterInfoWindow
@@ -1062,6 +1099,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     minimap_.update(seconds, play, typing || menuHeld ? Pointer{} : pointer,
                     typing || menuHeld ? 0.0f : window.scroll(), window.width(), window.height());
     takesPointer_ = typing || amount_.up() || menuHeld || hud_.covers(pointer.x, pointer.y) ||
+                    guild_.covers(pointer.x, pointer.y) || guildMake_.covers(pointer.x, pointer.y) ||
                     chat_.covers(pointer.x, pointer.y) || partyBar_.covers(pointer.x, pointer.y) ||
                     menuTook_ || playerMenu_.covers(pointer.x, pointer.y) || targetFrame_.covers(pointer.x, pointer.y) ||
                     minimap_.covers(pointer.x, pointer.y) ||
@@ -2113,6 +2151,8 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     const bool dealOnTop = dealing_ && deal_.dragging();
     if (dealing_ && !dealOnTop) interface_.add(deal_.canvas());
     if (inventoryOpen_) interface_.add(bag_.canvas());
+    if (guildMake_.up()) interface_.add(guildMake_.canvas());
+    if (guild_.up()) interface_.add(guild_.canvas());
     if (dealOnTop) interface_.add(deal_.canvas());
     if (vaultOnTop) interface_.add(chest_.canvas());
     if (machineOnTop) interface_.add(mixer_.canvas());
@@ -2158,6 +2198,14 @@ std::string Desk::line() const {
                   (unsigned long long)vitals_.rebuilds(),
                   (unsigned long long)tally_.rebuilds());
     return text;
+}
+
+// The guild window's column: the first free from the right -- beside the bag when it is up, and
+// beside the character window too when both are.
+int Desk::guildColumn() const {
+    if (inventoryOpen_ && characterOpen_) return 3;
+    if (inventoryOpen_ || characterOpen_) return 2;
+    return 1;
 }
 
 }  // namespace mu::game

@@ -96,6 +96,13 @@ public:
     // A trade asked of him by `name` (body `who`): a line, and the invite's card in the middle
     // with Accept and Decline, which answer the realm (Play::dealAnswer) and not the server.
     void askedToTrade(const std::string& name, uint32_t who);
+    // A guild's call (net::GuildCall, docs/guild.md): an invite to him, or a player asking to join
+    // his guild. The party's card in the middle, kicked "Guild", with the mark and a line of what
+    // joining means; Accept and Decline answer the server's guild (net::GuildAsk).
+    void guildCalled(const net::GuildCall& call);
+    // The guild's latest line from the server ("You invited Wren."), heard within `within`
+    // seconds, or empty: the guild windows' foot says it under what was pressed.
+    std::string guildSaid(float within) const;
 
 private:
     struct Line {
@@ -113,6 +120,11 @@ private:
         int answer = 0;
         // A trade's ask instead (Chat::askedToTrade): the asker's body, 0 for a party's invite.
         uint32_t trader = 0;
+        // A guild's call instead (Chat::guildCalled): the card's mark and its quiet line.
+        bool guild = false;
+        net::GuildMarkBits mark{};
+        std::string meta;
+        std::string guildName;  // set in the guild's green on the card
     };
     // One row of the log as it is set: a line wraps into several.
     struct Row {
@@ -196,7 +208,7 @@ private:
     // The channel's word pressed on All: Map, Party or Guild in its place until the tab changes.
     bool chipSet_ = false;
     // Party and Guild show as tabs only while he is in one (the user, 2026-10-09: "dont show
-    // guild, party tabs if there is no guild or party"). No guilds yet: never in one.
+    // guild, party tabs if there is no guild or party"). His guild is the server's (docs/guild.md).
     bool inParty_ = false, inGuild_ = false;
     net::Channel chipChannel_ = net::Channel::Map;
     std::string target_;    // a whisper's

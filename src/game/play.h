@@ -620,6 +620,25 @@ public:
         if (!benchParty_.members.empty()) return benchParty_;
         return link_ ? link_->party() : none;
     }
+    // The guild (docs/guild.md), through the link: nothing off a server.
+    void askGuild(const net::GuildAsk& asked) {
+        if (link_) link_->askGuild(asked);
+    }
+    const net::GuildState& guild() const {
+        static const net::GuildState none;
+        return link_ ? link_->guild() : none;
+    }
+    const net::GuildMark* guildMark(uint32_t id) const { return link_ ? link_->guildMark(id) : nullptr; }
+    // A player's guild by his body's id, 0 for none; and its mark, or null.
+    uint32_t guildOfPlayer(uint32_t id) const { return link_ ? link_->guildOfPlayer(id) : 0; }
+    const net::GuildMark* playerGuild(uint32_t id) const { return guildMark(guildOfPlayer(id)); }
+    bool takeGuildCall(net::GuildCall& out) { return link_ && link_->takeGuildCall(out); }
+    // The Guild Master was spoken to on a server (Shout::Greet): the founding window opens once.
+    bool takeGuildMaster() {
+        const bool was = guildMasterAsked_;
+        guildMasterAsked_ = false;
+        return was;
+    }
     // A line over a body's head, as a guard's is put up (said()): a player's Map or Party line,
     // as MU's chat went up over the speaker (CreateChat). Drawn in the chat's dark glass and not
     // the guards' paper (the user picked "A · Dark glass", 2026-10-11): his last stays above it,
@@ -1495,6 +1514,7 @@ private:
     // --bench-fight's party, as a server would say it: him first, then the bench by its kits'
     // names, refreshed each frame (Play::walkBench); and the names over their heads.
     net::PartyState benchParty_;
+    bool guildMasterAsked_ = false;  // takeGuildMaster
     bool benchName(uint32_t id, std::string* name, bool* bot) const;        // his kit put on in the sim before he was drawn: shown at the first update
     bool benchFight_ = false;
     float benchClock_ = 0.0f;

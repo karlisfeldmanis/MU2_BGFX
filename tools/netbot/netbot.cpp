@@ -470,6 +470,17 @@ private:
         link_->takeHeard(heard_);
         const int64_t now = brain_->clockNow();
         party();
+        // A guild's invite (docs/guild.md): taken while he is in none, whatever party he is in --
+        // a guild is not a party; a master's card a bot never holds.
+        for (net::GuildCall call; link_->takeGuildCall(call);) {
+            if (!call.ask && link_->guild().id == 0) {
+                line("joins %s, %s's guild", call.guildName.c_str(), call.from.c_str());
+                net::GuildAsk accept;
+                accept.what = net::GuildWhat::Accept;
+                accept.name = call.from;
+                link_->askGuild(accept);
+            }
+        }
         for (const net::Heard& one : heard_) {
             // The invite the board told him to wait for, taken; and, while the board has him in
             // no party of its own, anyone's -- a player's /invite is answered (Board::follow).

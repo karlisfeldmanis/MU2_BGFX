@@ -2795,10 +2795,17 @@ void Play::speak(const sim::Happening& happening) {
         // The Guild Master, Sevina or the Messenger, spoken to (Realm's Talk). Ours, the user's of
         // 2026-09-29: MU's guild window has nothing to open alone, so he says it is not ready yet
         // (the user, 2026-09-30), in Devin's plain register.
+        // Off a server (docs/guild.md): the guilds are the server's, so there is none to found.
         static const char* const kGuildMaster[] = {
-            "The guild halls are not ready yet, traveller. Come back another day.",
-            "No banners are being sworn yet. Devias is not ready for guilds.",
-            "Not yet. When the guilds open, you will hear of it first.",
+            "Guilds are sworn among many, traveller. Find others first.",
+            "A banner needs men to follow it. There is no one here to swear to yours.",
+            "Come back when you walk with others. Then we can talk of guilds.",
+        };
+        // On one: his founding window opens (Desk, game/ui/guild_make.h), and he says why.
+        static const char* const kGuildMasterOpen[] = {
+            "So you would raise a banner of your own? Name it, and give it a mark the others will know.",
+            "A guild needs a name and a mark. Show me both.",
+            "Speak, then. What banner would you have the others follow?",
         };
         // Charon, whose Devil Square is still to come (the user, 2026-09-30).
         static const char* const kCharon[] = {
@@ -2865,6 +2872,11 @@ void Play::speak(const sim::Happening& happening) {
                                    : sim::questOf(number) >= 0 ? kDevinNotYet
                                                                : kGuildMaster;
         one.line = lines[realm_.tick() % 3];
+        // His own talk alone: another player's opens nothing here.
+        if (lines == kGuildMaster && remote() && happening.who == realm_.hero().id) {
+            one.line = kGuildMasterOpen[realm_.tick() % 3];
+            guildMasterAsked_ = true;
+        }
         one.folk = folk;
         said_.push_back(one);
         core::logf("greet: tick %lld, %s says \"%s\"", (long long)realm_.tick(),

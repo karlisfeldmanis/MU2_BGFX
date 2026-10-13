@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "game/ui/controls.h"
+#include "game/ui/guild_mark.h"
 #include "game/ui/panel.h"
 #include "game/ui/tip.h"
 #include "game/play.h"
@@ -379,6 +380,10 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
                 if (self) continue;
                 tag.name = "Stranger";
             }
+            if (const net::GuildMark* guild = play.playerGuild(one.id)) {
+                tag.guild = guild->name;
+                tag.mark = guild->mark;
+            }
             near.push_back({d, std::move(tag)});
         }
         std::sort(near.begin(), near.end(), [](const Far& a, const Far& b) { return a.d > b.d; });
@@ -463,17 +468,28 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
             // From the crown up: the guild line, the name. No level or class under the pointer
             // (the user, 2026-10-11: "remove that on hover we show char lvl info").
             const float guildBaseline = t.y - std::round(kGap * u);
+            // A guild's line, or a bot's `<Bot>` while he is in none (docs/guild.md).
+            const bool line = t.bot || !t.guild.empty();
             const float nameBaseline =
-                t.bot ? guildBaseline - std::round((kTagGuild + 3.0f) * u) : guildBaseline;
+                line ? guildBaseline - std::round((kTagGuild + 3.0f) * u) : guildBaseline;
             if (name) {
                 outlined(name, nameTexture, t.x - name->measure(nameSize, t.name) * 0.5f,
                          nameBaseline, nameSize, ink, t.alpha, t.name);
             }
-            // The guild's line; a bot's guild is `<Bot>` until guilds exist.
-            if (t.bot && words) {
-                const std::string guild = "<Bot>";
-                outlined(words, controls::wordTexture(), t.x - words->measure(guildSize, guild) * 0.5f,
-                         guildBaseline, guildSize, ink, t.alpha * 0.9f, guild);
+            // The guild's line: its mark and its name (the user's pick A, 2026-10-13); a bot in no
+            // guild says `<Bot>`.
+            if (line && words) {
+                const std::string guild = t.guild.empty() ? std::string("<Bot>") : t.guild;
+                const float mark = t.guild.empty() ? 0.0f : std::round(guildSize * 0.95f);
+                const float gap = mark > 0.0f ? std::round(3.0f * u) : 0.0f;
+                const float wide = mark + gap + words->measure(guildSize, guild);
+                const float left = t.x - wide * 0.5f;
+                if (mark > 0.0f) {
+                    guildmark::draw(canvas_, {std::round(left), std::round(guildBaseline - mark * 0.86f), mark, mark},
+                                    t.mark, t.alpha, true);
+                }
+                outlined(words, controls::wordTexture(), left + mark + gap, guildBaseline, guildSize, ink,
+                         t.alpha * 0.9f, guild);
             }
         }
     }

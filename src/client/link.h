@@ -77,6 +77,18 @@ public:
         static const net::PartyState none;
         return none;
     }
+    // **The guild** (docs/guild.md, net::GuildAsk and its answers): an ask of it, his guild as the
+    // server last said it (id 0 for none), a guild's name and mark by its id (null for one not
+    // yet said), a player's guild by his body's id (0 for none), and the calls to answer -- an
+    // invite to him, or an ask of his guild -- as they come. Nothing on a realm of this process.
+    virtual void askGuild(const net::GuildAsk& asked) {}
+    virtual const net::GuildState& guild() const {
+        static const net::GuildState none;
+        return none;
+    }
+    virtual const net::GuildMark* guildMark(uint32_t id) const { return nullptr; }
+    virtual uint32_t guildOfPlayer(uint32_t id) const { return 0; }
+    virtual bool takeGuildCall(net::GuildCall& out) { return false; }
     // **The Broker** (docs/broker.md, net/broker_wire.h): an ask of the market, and its answers
     // as they come, oldest first. A realm of this process has no market -- it is the server's,
     // shared by every map -- so its ask is answered Closed.

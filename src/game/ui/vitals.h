@@ -42,6 +42,7 @@
 #include <vector>
 
 #include "gfx/interface.h"
+#include "net/wire.h"
 
 namespace mu::game {
 
@@ -83,9 +84,12 @@ private:
         float alpha = 0, lit = 0;  // the range's fade, and the pointer's lift toward white
         std::string name;
         bool bot = false, dead = false;
+        // His guild's name and mark (docs/guild.md, the user's pick A): the line under his name.
+        std::string guild;
+        net::GuildMarkBits mark{};
         bool operator==(const Tag& o) const {
             return id == o.id && x == o.x && y == o.y && alpha == o.alpha && lit == o.lit &&
-                   name == o.name && bot == o.bot && dead == o.dead;
+                   name == o.name && bot == o.bot && dead == o.dead && guild == o.guild && mark == o.mark;
         }
     };
     // Everything the canvas draws, compared whole to decide a rebuild.

@@ -24,17 +24,20 @@ void bye(Session& one, net::Why why) {
 // after every welcome, so a newcomer learns the rest and the rest learn him.
 void announce(const World& world, const std::vector<std::unique_ptr<Session>>& sessions) {
     net::Who who;
+    std::vector<uint32_t> guilds;  // and the marks of those guilds, each once to each line
     for (const auto& one : sessions) {
         if (one->world == &world && one->welcomed && one->player != 0) {
-            who.players.push_back({one->player, one->name, one->bot});
+            const uint32_t guild = guildOf(one->token);
+            who.players.push_back({one->player, one->name, one->bot, guild});
+            if (guild != 0 && std::find(guilds.begin(), guilds.end(), guild) == guilds.end()) guilds.push_back(guild);
         }
     }
     std::vector<uint8_t> out;
     net::put(out, who);
     for (const auto& one : sessions) {
-        if (one->world == &world && one->welcomed && one->socket.open() && !one->socket.send(out)) {
-            one->socket.close();
-        }
+        if (one->world != &world || !one->welcomed || !one->socket.open()) continue;
+        sendMarks(*one, guilds);
+        if (one->socket.open() && !one->socket.send(out)) one->socket.close();
     }
 }
 
@@ -366,6 +369,7 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
     one.world = world;
     if (!welcome(one, world->realm->hero().id)) return false;
     announce(*world, sessions);
+    guildArrived(one, sessions);
     return true;
 }
 
@@ -587,6 +591,7 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
                 one->socket.close();
             } else {
                 announce(world, sessions);
+                guildArrived(*one, sessions);
             }
         }
     }

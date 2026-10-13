@@ -7,6 +7,7 @@
 #include "game/play.h"
 #include "game/ui/capsule.h"
 #include "game/ui/controls.h"
+#include "game/ui/guild_mark.h"
 #include "game/ui/panel.h"
 #include "game/ui/style.h"
 #include "game/ui/tip.h"
@@ -290,7 +291,13 @@ void TargetFrame::update(float seconds, Play& play, const Pointer& pointer, pane
 
     // Under it: his guild at the left, the monster on him at the right.
     const float base = capTop + tall + kSubDown * u;
-    if (bot) {
+    if (const net::GuildMark* guild = play.playerGuild(id)) {
+        // His guild's mark and name (docs/guild.md), as over his head.
+        const float x = capX + (kTuck + 8.0f) * u;
+        const float side = std::round(kSub * u * 0.9f);
+        guildmark::draw(canvas_, {x, std::round(base - side * 0.88f), side, side}, guild->mark, dead ? 0.5f : 1.0f, true);
+        controls::label(canvas_, x + side + 4.0f * u, base, kSub * u, dead ? style::kAshInk : kGuild, guild->name);
+    } else if (bot) {
         float x = capX + (kTuck + 8.0f) * u;
         x += controls::label(canvas_, x, base, kSub * u, kBracket, "<");
         x += controls::label(canvas_, x, base, kSub * u, dead ? style::kAshInk : kGuild, "Bot");

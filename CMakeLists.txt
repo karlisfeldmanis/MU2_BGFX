@@ -208,6 +208,8 @@ add_executable(mu2_server
   server/src/world.cpp
   server/src/chat.cpp
   server/src/party.cpp
+  server/src/guild.cpp
+  server/src/guild_store.cpp
   server/src/accounts.cpp
   server/src/store.cpp
   server/src/economy.cpp
@@ -226,6 +228,8 @@ add_executable(server_test EXCLUDE_FROM_ALL
   server/src/world.cpp
   server/src/chat.cpp
   server/src/party.cpp
+  server/src/guild.cpp
+  server/src/guild_store.cpp
   server/src/accounts.cpp
   server/src/store.cpp
   server/src/economy.cpp
@@ -429,6 +433,7 @@ add_library(mu_game STATIC
   src/game/ui/tracker.cpp
   src/game/ui/travel.cpp
   src/game/ui/go_back.cpp
+  src/game/ui/guild.cpp
   src/game/ui/herald.cpp
   src/game/ui/minimap.cpp
   src/game/ui/quest_dialog.cpp

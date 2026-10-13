@@ -98,10 +98,17 @@ void say(Session& one, const net::Say& said, std::vector<std::unique_ptr<Session
             core::logf("chat party %s: %s", one.name.c_str(), text.c_str());
             break;
         }
-        case net::Channel::Guild:
-            // No guilds yet (docs/server-plan.md phase 7).
-            chatSystem(one, net::Channel::Guild, "You are not in a guild.");
-            return;
+        case net::Channel::Guild: {
+            // His guild's members online, any map (docs/guild.md).
+            const std::vector<Session*> mates = guildMates(one, sessions);
+            if (mates.empty()) {
+                chatSystem(one, net::Channel::Guild, "You are not in a guild.");
+                return;
+            }
+            for (Session* mate : mates) tell(*mate);
+            core::logf("chat guild %s: %s", one.name.c_str(), text.c_str());
+            break;
+        }
         case net::Channel::Whisper: {
             Session* to = playerNamed(said.to, sessions);
             if (to == nullptr) {

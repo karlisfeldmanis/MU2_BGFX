@@ -219,6 +219,7 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         // No resets and no guilds in the realm yet: the head says 0 and shows no
         // brackets until there are, and then these two read them.
         now_.resets = 0;
+        now_.guild = guild_;
         now_.experience = hero->experience;
         now_.stats[0] = total.strength;
         now_.stats[1] = total.agility;

@@ -397,6 +397,17 @@ void RemoteLink::pump() {
             if (heard_.size() > kHeardMost) heard_.pop_front();
         } else if (ok && kind == net::Kind::PartyState) {
             ok = net::parse(body, party_);
+        } else if (ok && kind == net::Kind::GuildState) {
+            ok = net::parse(body, guild_);
+        } else if (ok && kind == net::Kind::GuildMark) {
+            net::GuildMark mark;
+            ok = net::parse(body, mark);
+            if (ok) marks_[mark.id] = std::move(mark);
+        } else if (ok && kind == net::Kind::GuildCall) {
+            net::GuildCall call;
+            ok = net::parse(body, call);
+            if (ok) guildCalls_.push_back(std::move(call));
+            if (guildCalls_.size() > 8) guildCalls_.pop_front();
         } else if (ok && kind == net::Kind::BrokerView) {
             net::BrokerView view;
             ok = net::parse(body, view);
@@ -446,6 +457,31 @@ void RemoteLink::askParty(const net::PartyAsk& asked) {
     std::vector<uint8_t> out;
     net::put(out, asked);
     put(out);
+}
+
+void RemoteLink::askGuild(const net::GuildAsk& asked) {
+    std::vector<uint8_t> out;
+    net::put(out, asked);
+    put(out);
+}
+
+const net::GuildMark* RemoteLink::guildMark(uint32_t id) const {
+    const auto at = marks_.find(id);
+    return at == marks_.end() ? nullptr : &at->second;
+}
+
+uint32_t RemoteLink::guildOfPlayer(uint32_t id) const {
+    for (const net::Who::One& one : who_.players) {
+        if (one.id == id) return one.guild;
+    }
+    return 0;
+}
+
+bool RemoteLink::takeGuildCall(net::GuildCall& out) {
+    if (guildCalls_.empty()) return false;
+    out = std::move(guildCalls_.front());
+    guildCalls_.pop_front();
+    return true;
 }
 
 void RemoteLink::askBroker(const net::BrokerAsk& asked) {

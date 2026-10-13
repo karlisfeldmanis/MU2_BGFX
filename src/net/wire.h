@@ -43,6 +43,7 @@
 // A frame is a u32 length (of what follows), a u8 kind and the body, little-endian throughout.
 // A frame that does not parse drops that connection, never the server (server-plan §3).
 
+#include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -104,7 +105,9 @@ namespace mu::net {
 //     sale" (the market's redesign B, 2026-10-12).
 // 28: a bleeder's claws (sim kBleeders): Body::bleed and its fellows, Happening::bled (snapshot
 //     shape 12), the Forest and Bloody Orcs' blow a stacking bleed in place of their poison.
-constexpr uint32_t kVersion = 28;
+// 29: the guild (docs/guild.md): a GuildAsk up, a GuildState, GuildMark and GuildCall down, and
+//     each player's guild in Who, after the players.
+constexpr uint32_t kVersion = 29;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
@@ -122,9 +125,10 @@ constexpr uint32_t kMostAsked = 64u << 10;
 enum class Kind : uint8_t { Hello = 1, Welcome = 2, Command = 3, Tick = 4, Hash = 5, Elsewhere = 6,
                           Ping = 7, Account = 8, Roster = 9, Create = 10, Delete = 11, Who = 12,
                           Chat = 13, PartyAsk = 14, PartyState = 15, Bye = 16,
-                          BrokerAsk = 17, BrokerView = 18 };
+                          BrokerAsk = 17, BrokerView = 18, GuildAsk = 19, GuildState = 20,
+                          GuildMark = 21, GuildCall = 22 };
 // The last kind there is: a frame of a higher one is not our protocol (take).
-constexpr Kind kLastKind = Kind::BrokerView;
+constexpr Kind kLastKind = Kind::GuildCall;
 
 struct Hello {
     uint32_t version = kVersion;
@@ -150,6 +154,8 @@ struct Who {
         uint32_t id = 0;
         std::string name;
         bool bot = false;
+        // His guild's id (GuildMark names it), 0 for none. Sent after the players.
+        uint32_t guild = 0;
     };
     std::vector<One> players;
 };
@@ -215,6 +221,73 @@ struct PartyState {
     };
     static constexpr uint8_t kNoShield = 255;
     std::vector<Member> members;
+};
+
+// ---- the guild (docs/guild.md) ---------------------------------------------------------------
+// The server keeps the guilds, as WebZen's ExDB did: a guild spans maps and outlives a login.
+// Its mark is MU's: 8x8 pixels of 4 bits, two a byte, the high nibble first, from a palette of
+// 16 whose first is clear (MuMain ZzzInventory.cpp CreateGuildMark).
+constexpr size_t kGuildMarkBytes = 32;
+using GuildMarkBits = std::array<uint8_t, kGuildMarkBytes>;
+// A mark's pixel, 0 to 15, at column `x` and row `y`.
+inline int guildPixel(const GuildMarkBits& mark, int x, int y) {
+    const uint8_t two = mark[size_t((y * 8 + x) / 2)];
+    return (x % 2) == 0 ? two >> 4 : two & 0x0F;
+}
+// Up: what a player asks of a guild. Found names the guild (`name`) and gives its mark; Invite a
+// player to his guild; Ask to join the guild of the master named; Accept and Decline answer a
+// call by its caller's name (empty for the latest); Remove names a member; Notice gives `text`.
+enum class GuildWhat : uint8_t { Found = 0, Invite = 1, Ask = 2, Accept = 3, Decline = 4, Leave = 5,
+                                 Remove = 6, Disband = 7, Notice = 8 };
+struct GuildAsk {
+    GuildWhat what = GuildWhat::Invite;
+    std::string name;
+    std::string text;
+    GuildMarkBits mark{};
+};
+// Down: his guild as it stands, to every member online when it changes and each few seconds;
+// id 0 when he is in none. The master first. `here` is the member's body in the hearer's own
+// world, 0 elsewhere; `seen` how many seconds ago an offline member last played.
+struct GuildState {
+    struct Member {
+        std::string name;
+        uint8_t kin = 0;
+        int32_t level = 1;
+        std::string world;  // empty while offline
+        uint32_t here = 0;
+        int32_t seen = 0;
+        bool bot = false;
+    };
+    uint32_t id = 0;
+    std::string name;
+    GuildMarkBits mark{};
+    std::string notice;
+    int32_t cap = 0;
+    std::vector<Member> members;
+};
+// Down: a guild's name and mark, once to each client that sees one of its members (Who's guild).
+struct GuildMark {
+    uint32_t id = 0;
+    std::string name;
+    GuildMarkBits mark{};
+    std::string master;  // its master's name: whom a player asks to join (the player menu)
+};
+// Down: the card to answer (game/ui/chat.h's invite card): a master's invite to him, or, to a
+// master, a player asking to join. `from` is the caller; the rest says what joining means.
+struct GuildCall {
+    bool ask = false;  // a player asks to join his guild, rather than an invite to one
+    std::string from;
+    uint8_t fromKin = 0;
+    int32_t fromLevel = 1;
+    std::string fromWorld;
+    bool fromInParty = false;
+    uint32_t guild = 0;
+    std::string guildName;
+    GuildMarkBits mark{};
+    int32_t members = 0, cap = 0;
+    std::string master;
+    uint8_t masterKin = 0;
+    int32_t masterLevel = 1;
 };
 
 // A said line made fit to pass on: control bytes gone, spaces trimmed, cut to kMostSaid at a
@@ -390,6 +463,10 @@ void put(std::vector<uint8_t>& out, const Say& one);
 void put(std::vector<uint8_t>& out, const Heard& one);
 void put(std::vector<uint8_t>& out, const PartyAsk& one);
 void put(std::vector<uint8_t>& out, const PartyState& one);
+void put(std::vector<uint8_t>& out, const GuildAsk& one);
+void put(std::vector<uint8_t>& out, const GuildState& one);
+void put(std::vector<uint8_t>& out, const GuildMark& one);
+void put(std::vector<uint8_t>& out, const GuildCall& one);
 void put(std::vector<uint8_t>& out, const Bye& one);
 
 // One frame off the front of `buffer`, its kind and body. Returns 1 for a frame taken (and
@@ -416,6 +493,10 @@ bool parse(const std::vector<uint8_t>& body, Say& out);
 bool parse(const std::vector<uint8_t>& body, Heard& out);
 bool parse(const std::vector<uint8_t>& body, PartyAsk& out);
 bool parse(const std::vector<uint8_t>& body, PartyState& out);
+bool parse(const std::vector<uint8_t>& body, GuildAsk& out);
+bool parse(const std::vector<uint8_t>& body, GuildState& out);
+bool parse(const std::vector<uint8_t>& body, GuildMark& out);
+bool parse(const std::vector<uint8_t>& body, GuildCall& out);
 
 // A character alone, in the bytes a Welcome or a Tick carries him in: what the server's character
 // store keeps (server/src/store.h). `keptFrom` is false unless the bytes are exactly one.

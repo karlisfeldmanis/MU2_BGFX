@@ -52,6 +52,11 @@ public:
     void takeHeard(std::vector<net::Heard>& into) override;
     void askParty(const net::PartyAsk& asked) override;
     const net::PartyState& party() const override { return party_; }
+    void askGuild(const net::GuildAsk& asked) override;
+    const net::GuildState& guild() const override { return guild_; }
+    const net::GuildMark* guildMark(uint32_t id) const override;
+    uint32_t guildOfPlayer(uint32_t id) const override;
+    bool takeGuildCall(net::GuildCall& out) override;
     void askBroker(const net::BrokerAsk& asked) override;
     bool takeBrokerView(net::BrokerView& out) override;
     const sim::Body* ahead() override;
@@ -158,6 +163,9 @@ private:
     // Chat lines heard and not yet taken; the oldest dropped past kHeardMost, if nobody takes them.
     std::deque<net::Heard> heard_;
     net::PartyState party_;  // his party, the latest the server sent
+    net::GuildState guild_;  // his guild, the latest the server sent
+    std::map<uint32_t, net::GuildMark> marks_;  // the guilds' names and marks, by id
+    std::deque<net::GuildCall> guildCalls_;     // the cards to answer, not yet taken
     std::deque<net::BrokerView> brokerViews_;  // the market's answers, not yet taken
 };
 

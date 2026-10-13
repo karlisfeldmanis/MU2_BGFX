@@ -233,6 +233,8 @@ struct Session {
     uint64_t udpKey = 0;
     net::Address udpAt;
     bool udpKnown = false;
+    // The guilds' marks this line has been sent (GuildMark), so each goes once.
+    std::vector<uint32_t> marksSent;
     // The chat's allowance (sayAllowed): lines he may say at once, refilled with time.
     float sayAllowance = 0.0f;
     Clock::time_point saidAt{};
@@ -272,6 +274,42 @@ inline std::map<uint64_t, Clock::time_point> g_partyAway;
 inline uint32_t g_nextParty = 1;
 constexpr auto kInviteFor = std::chrono::seconds(60);
 constexpr auto kPartyAway = std::chrono::seconds(30);
+
+// ---- the guild (docs/guild.md): its table -------------------------------------------------------
+// The guilds are the server's, as WebZen's ExDB kept them: a guild spans maps and outlives a
+// login, so it is kept on the disk (Store::keepGuild) whenever it changes. By character token,
+// as the party is. The realm knows nothing of them: a guild is names, a mark and a chat.
+struct Guild {
+    using Member = Store::GuildRow::Member;
+    uint32_t id = 0;
+    std::string name;
+    net::GuildMarkBits mark{};
+    std::string notice;
+    int64_t made = 0;
+    std::vector<Member> members;  // the master first
+    bool dirty = false;           // its state owed to its members (guildTick)
+};
+inline std::map<uint32_t, Guild> g_guilds;
+inline std::map<uint64_t, uint32_t> g_guildOf;  // a member's token -> his guild
+// A call out: a master's invite, by the invited's token, or a player's ask, by the asker's.
+struct GuildCalled {
+    uint64_t from = 0;  // the master who invited; for an ask, the master asked
+    uint32_t guild = 0;
+    std::string name;   // the invited's name, or the asker's
+    Clock::time_point at{};
+};
+inline std::map<uint64_t, GuildCalled> g_guildInvites;
+inline std::map<uint64_t, GuildCalled> g_guildAsks;
+inline uint32_t g_nextGuild = 1;
+constexpr auto kGuildCallFor = std::chrono::seconds(60);  // as a party's invite
+// MU's (docs/guild.md): level 100 to found one (GS Gamemain.cpp:3435), 6 to join (protocol.cpp
+// :11738), the master's level / 10 members (:11820) and 40 at most (GuildClass.h:16), a notice
+// of 60 (define.h:4232), a name of 4 to 8 (MuMain NewUIGuildMakeWindow.cpp:21).
+constexpr int kGuildFoundLevel = 100, kGuildJoinLevel = 6, kGuildMost = 40;
+constexpr size_t kGuildNoticeMost = 60, kGuildNameLeast = 4, kGuildNameMost = 8;
+// How near the Guild Master (sim::kGuildMaster) a founder must stand, in tiles: his Talk's reach
+// and a little, since the window opens where the talk ended.
+constexpr float kGuildMasterReach = 8.0f;
 
 // ---- the chat ---------------------------------------------------------------------------------
 // Lines said on a channel (net::Say) passed on as net::Heard, outside the lockstep as Who is: the
@@ -327,6 +365,15 @@ void partyOut(uint64_t token, const std::string& why,
 void partyAsk(Session& one, const net::PartyAsk& ask,
     std::vector<std::unique_ptr<Session>>& sessions);
 void partyTick(std::vector<std::unique_ptr<Session>>& sessions);
+
+// guild.cpp
+void loadGuilds();
+uint32_t guildOf(uint64_t token);
+std::vector<Session*> guildMates(Session& one, std::vector<std::unique_ptr<Session>>& sessions);
+void sendMarks(Session& to, const std::vector<uint32_t>& guilds);
+void guildAsk(Session& one, const net::GuildAsk& ask, std::vector<std::unique_ptr<Session>>& sessions);
+void guildArrived(Session& one, std::vector<std::unique_ptr<Session>>& sessions);
+void guildTick(std::vector<std::unique_ptr<Session>>& sessions);
 
 // accounts.cpp
 bool keyShape(const std::string& key);

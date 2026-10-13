@@ -99,6 +99,10 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
             net::PartyAsk asked;
             if (!net::parse(body, asked)) return false;
             partyAsk(one, asked, sessions);
+        } else if (kind == net::Kind::GuildAsk && one.welcomed) {
+            net::GuildAsk asked;
+            if (!net::parse(body, asked)) return false;
+            guildAsk(one, asked, sessions);
         } else if (kind == net::Kind::Chat && one.welcomed) {
             net::Say said;
             if (!net::parse(body, said)) return false;
@@ -115,7 +119,7 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
             net::put(out, ping);
             if (!one.socket.send(out)) return false;
         } else if ((kind == net::Kind::Command || kind == net::Kind::Chat || kind == net::Kind::PartyAsk ||
-                    kind == net::Kind::BrokerAsk) &&
+                    kind == net::Kind::BrokerAsk || kind == net::Kind::GuildAsk) &&
                    one.joining != 0) {
             // Asked or said before his Welcome: he has no body yet to ask with, and nobody hears
             // him yet. Not a frame out of turn: a client quick on the keys after its Hello.
@@ -197,6 +201,7 @@ int main(int argc, char** argv) {
     }
     economyOpen(store);
     brokerOpen();
+    loadGuilds();
     // The roster's item rows (g_items): a server without them stands the screen's characters bare.
     if (!content::loadTables(assets + "/cooked/lorencia/lorencia.mur", g_items, error)) {
         core::logError("lorencia's tables: %s; the character screen's figures go bare", error.c_str());
@@ -318,6 +323,7 @@ int main(int argc, char** argv) {
         static Clock::time_point partyAt = now;
         if (now - partyAt >= std::chrono::seconds(1)) {
             partyTick(sessions);
+            guildTick(sessions);   // the guilds' calls run out, and their states (docs/guild.md)
             brokerTick(sessions);  // the market's listings run out (broker.h)
             partyAt = now;
         }
