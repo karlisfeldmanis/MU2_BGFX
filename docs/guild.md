@@ -60,7 +60,9 @@ green in the log. OM has no `@>`.
 
 ### What others see
 
-- The **mark is worn on the armour**: a 5x7 plane on bone 26 (the back), hidden in Chaos Castle
+- The **mark is worn on the armour**: a 5x7-unit (5x7 cm) plane at (20, -5, -10) off bone 26,
+  `Bip01 R UpperArm` -- a patch on the right upper arm, not the back (MuMain ZzzCharacter.cpp
+  RenderGuild :6568-6606; corrected 2026-10-13 on reading it) -- hidden in Chaos Castle
   and while cloaked.
 - `[Guild]` shows over the name on hover or speech: your own guild yellow-green, others lavender
   on navy. The name keeps its PK colour; a master gets no colour of his own.
@@ -129,7 +131,7 @@ The scaffolding is half there:
 | member cap | master level / 10, max 40 | **MU's** |
 | ranks | master only | **master only** for now; an Assistant later |
 | leave / kick / disband | personal-ID code | **a confirm in the window**; disband asks for the guild's name typed |
-| mark | worn on the back plate, `[Guild]` on hover | **on the nameplate's guild line** (mark + name, always) first; the back plate later |
+| mark | worn on the right upper arm, `[Guild]` on hover | **on the nameplate's guild line** (mark + name, always) first; the arm patch later |
 | notice | `@>`, 60 characters | **MU's**, also editable in the window |
 | bots | n/a | bots **accept** a guild invite like a party one; a "Wanderers" bot guild on the server |
 | guild war | `/war`, first to 20 | **parked** until PvP exists |
@@ -159,11 +161,11 @@ server steps ship to Hetzner as one build with the client and netbot (protocol c
    target frame and Card; the chat's Guild tab on; player menu rows "Invite to guild" / "Ask to
    join".
 5. **G5 Bots**: netbot answers a guild invite card; the Board makes one bot guild on the server.
-6. **Later**: the mark on the back plate (bone 26 decal); guild war once PvP is decided.
+6. **Later**: the mark on the right upper arm (bone 26); guild war once PvP is decided.
 
 ## Built (2026-10-13)
 
-The user: "implement". Everything in the plan but the back plate and war, with the table's
+The user: "implement". Everything in the plan but the arm patch and war, with the table's
 defaults above taken as decided. Protocol 29.
 
 - **The server** (server/src/guild.cpp, guild_store.cpp; host.h's guild section). `g_guilds` by
@@ -197,7 +199,8 @@ defaults above taken as decided. Protocol 29.
   from the window, they joined from Lorencia; a second client's ask and the master's invite each
   showed the card; disbanded with the name typed and founded Ember.
 
-Not yet: the mark on the armour's back; guild war and Battle Soccer (no PvP). Deploying is
+Not yet: the mark on the right upper arm (rendered in Blender at our camera on 2026-10-13: about
+5 pixels at 1080 lines, a red speck); guild war and Battle Soccer (no PvP). Deploying is
 separate: client, server and netbot go together (protocol 29).
 
 ## Proposal
