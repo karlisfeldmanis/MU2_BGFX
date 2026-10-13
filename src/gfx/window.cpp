@@ -58,6 +58,22 @@ void onGlfwError(int code, const char* what) { core::logError("glfw %d: %s", cod
 
 }  // namespace
 
+namespace {
+
+// The whole primary display in screen points, at the mode it is already in -- no mode switch,
+// so no black flash and no display left in another resolution if the run dies.
+bool displayArea(int* x, int* y, int* width, int* height) {
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = monitor ? glfwGetVideoMode(monitor) : nullptr;
+    if (!mode) return false;
+    glfwGetMonitorPos(monitor, x, y);
+    *width = mode->width;
+    *height = mode->height;
+    return true;
+}
+
+}  // namespace
+
 bool Window::open(const WindowDesc& desc) {
     glfwSetErrorCallback(onGlfwError);
     // In build/MU2.app GLFW would move the working folder into Contents/Resources, and the
@@ -69,27 +85,24 @@ bool Window::open(const WindowDesc& desc) {
     }
     // bgfx makes the Metal layer; GLFW must not make a GL context beside it.
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    // Fullscreen takes the display at the mode it is already in -- no mode switch, so no black
-    // flash and no display left in another resolution if the run dies. On this Mac that is
-    // 2560x1440. The size asked for on the command line is not used then: the display's.
-    GLFWmonitor* monitor = nullptr;
-    int width = desc.width, height = desc.height;
-    if (desc.fullscreen) {
-        monitor = glfwGetPrimaryMonitor();
-        if (const GLFWvidmode* mode = monitor ? glfwGetVideoMode(monitor) : nullptr) {
-            width = mode->width;
-            height = mode->height;
-            glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
-        } else {
-            core::logError("no display to go fullscreen on; staying in a window");
-            monitor = nullptr;
-        }
+    // Fullscreen is borderless: a plain window with no frame over the whole display, the Dock
+    // and the menu bar hidden while the game is in front (setPresentation). The size asked for
+    // on the command line is not used then: the display's. Not GLFW's monitor fullscreen, which
+    // on macOS floats the window over every other one and minimises it when it loses the focus,
+    // so Cmd+Tab left the game on top of the app switched to, or in the Dock with no way back
+    // (the user, 2026-10-13: "allow to use alt + tab, cmd+tab on app").
+    int x = 0, y = 0, width = desc.width, height = desc.height;
+    fullscreen_ = desc.fullscreen && displayArea(&x, &y, &width, &height);
+    if (desc.fullscreen && !fullscreen_) {
+        core::logError("no display to go fullscreen on; staying in a window");
     }
-    handle_ = glfwCreateWindow(width, height, desc.title, monitor, nullptr);
+    glfwWindowHint(GLFW_DECORATED, fullscreen_ ? GLFW_FALSE : GLFW_TRUE);
+    handle_ = glfwCreateWindow(width, height, desc.title, nullptr, nullptr);
     if (!handle_) {
         core::logError("no window");
         return false;
     }
+    if (fullscreen_) glfwSetWindowPos(handle_, x, y);
 
     glfwSetScrollCallback(handle_, onScroll);
     glfwSetCharCallback(handle_, onChar);
@@ -116,7 +129,7 @@ bool Window::open(const WindowDesc& desc) {
             glfwSetInputMode(handle_, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
         }
     }
-    setPresentation(desc.fullscreen);
+    setPresentation(fullscreen_);
 
     // The backbuffer is asked for in pixels, not in points: on a Retina display the two
     // differ by two, and a frame measured at the wrong size is not the frame.
@@ -304,25 +317,27 @@ bool Window::pump() {
     return true;
 }
 
-bool Window::fullscreen() const { return handle_ && glfwGetWindowMonitor(handle_) != nullptr; }
+bool Window::fullscreen() const { return handle_ && fullscreen_; }
 
 void Window::setFullscreen(bool on) {
     if (!handle_ || on == fullscreen()) return;
     if (on) {
-        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-        const GLFWvidmode* mode = monitor ? glfwGetVideoMode(monitor) : nullptr;
-        if (!mode) {
+        int x = 0, y = 0, width = 0, height = 0;
+        if (!displayArea(&x, &y, &width, &height)) {
             core::logError("no display to go fullscreen on; staying in a window");
             return;
         }
         glfwGetWindowPos(handle_, &windowedX_, &windowedY_);
         glfwGetWindowSize(handle_, &windowedW_, &windowedH_);
-        glfwSetWindowMonitor(handle_, monitor, 0, 0, mode->width, mode->height,
-                             mode->refreshRate);
+        // Borderless over the display, as open() makes it (and why there).
+        glfwSetWindowAttrib(handle_, GLFW_DECORATED, GLFW_FALSE);
+        glfwSetWindowMonitor(handle_, nullptr, x, y, width, height, GLFW_DONT_CARE);
     } else {
+        glfwSetWindowAttrib(handle_, GLFW_DECORATED, GLFW_TRUE);
         glfwSetWindowMonitor(handle_, nullptr, windowedX_, windowedY_, windowedW_, windowedH_,
                              GLFW_DONT_CARE);
     }
+    fullscreen_ = on;
     setPresentation(on);
     core::logf("window: %s", on ? "fullscreen" : "windowed");
 }

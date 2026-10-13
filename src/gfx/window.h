@@ -188,6 +188,7 @@ private:
     bool escapeHeld_ = false;
     // Where the window was, and how big, before it went fullscreen.
     int windowedX_ = 80, windowedY_ = 80, windowedW_ = 1920, windowedH_ = 1080;
+    bool fullscreen_ = false;  // borderless over the display (window.cpp, open)
     uint32_t reset_ = 0;
     // Kept whole from init. A resize passes this back with a new size, because a
     // default-constructed SwapChain has a NULL window handle, which bgfx reads as a request
