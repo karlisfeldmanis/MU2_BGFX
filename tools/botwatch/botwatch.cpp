@@ -662,7 +662,8 @@ private:
             return;
         }
         static const char* kSections[][2] = {{"who", ""}, {"stats", "Stats"}, {"gear", "Gear"},
-                                              {"skills", "Skills"}, {"runes", "Runes carried"}, {"quests", "Quests"}};
+                                              {"skills", "Skills"}, {"runes", "Runes carried"}, {"quests", "Quests"},
+                                              {"bag", "Bag"}};
         for (const auto& [key, title] : kSections) {
             bool any = false;
             for (const auto& r : sheet_) any = any || r[0] == key;

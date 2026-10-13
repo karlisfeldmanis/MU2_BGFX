@@ -455,9 +455,14 @@ public:
             // And not held from the counter at all since the same day: every town trip is the
             // Broker's first (Errands), which lists what is selling and leaves the rest to the counter.
             if (castleTicket(r) || squareTicket(r)) continue;
-            const int first = jewelKind(r) || anyHelper(r) || r.teaches != 0 ? 100
-                              : one.sockets > 0                            ? 50 + one.sockets
-                                                                           : sim::excellentCount(one.excellent);
+            // Orbs, scrolls, pets and mounts within the hold, and the counter's when the bag is
+            // tight (2026-10-13): held all with the jewels, the Broker listing only what had sold,
+            // 20 of 50 bots filled their bags with Orbs of Cyclone and Scrolls of Flame and went
+            // "to town: bag full" every two seconds for hours.
+            const int first = jewelKind(r)                    ? 100
+                              : anyHelper(r) || r.teaches != 0 ? 40
+                              : one.sockets > 0                ? 50 + one.sockets
+                                                               : sim::excellentCount(one.excellent);
             priced.push_back({{first, sim::npcValue(*tables_, one)}, slot});
         }
         std::sort(priced.begin(), priced.end(), [](const auto& a, const auto& b) { return a.first > b.first; });
@@ -512,7 +517,10 @@ public:
                 useJewels();
                 gain = std::max(0.0, score() - before);
             }
-            if (gain < 0.5) gain = jewelsHeld(one) < jewelCap(row) ? 1.0 : 0.0;
+            // Not a rune he would only hold (2026-10-13): at a Common's 133,300 the cap's worth
+            // of 1 bought them, and spares() listed them again -- Fenna bought 33 in ten game
+            // hours and set none, Isen 32, the same runes going round the Broker.
+            if (gain < 0.5) gain = !sim::creation(row) && jewelsHeld(one) < jewelCap(row) ? 1.0 : 0.0;
         } else {
             const int slot = scratch.give(one.item, -1, one.refinement, one.durability, one.luck, one.option,
                                           one.excellent, one.sockets, one.powers, one.affixes, false);
@@ -802,9 +810,27 @@ public:
             if (one.empty() || !sim::creation(rowOf(one))) continue;
             const sim::PowerRow* power = sim::powerOf(one.powers[0]);
             row("runes", power ? power->name : "Rune", std::string(runeUsable(one) ? "his" : "not his") +
-                                                         (runeSpare(one, slot) ? ", for the market" : ", kept") +
+                                                         (runeSpare(one, slot) ? (one.bound ? ", for the counter" : ", for the market") : ", kept") +
                                                          (one.bound ? ", bound" : ""));
         }
+        // **His bag** (2026-10-13: 20 of 50 bots went "to town: bag full" every two seconds, and
+        // the sheet could not say with what): each thing, and why he carries it.
+        {
+            const std::set<int> held = brokerHeld();
+            row("bag", "Free cells", std::to_string(freeCells()));
+            for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+                const sim::Held& one = realm_->satchel()[slot];
+                if (one.empty()) continue;
+                const content::ItemRow& r = rowOf(one);
+                std::string why = keepsAt(slot) ? "kept" : held.count(slot) ? "for the Broker" : "to sell";
+                if (r.group == sim::kGroupPotions && one.durability > 1 && (sim::heals(r) || sim::restores(r))) {
+                    why += " · x" + std::to_string(one.durability);
+                }
+                if (one.bound) why += " · bound";
+                row("bag", sim::linkLabel(r, one), why);
+            }
+        }
+        if (const char* step = wingStep()) row("who", "Wing plan", step);
         // The skills he knows and how often he has used each (the user, 2026-10-12: "i want to
         // see what skills bot uses"), the most used first.
         std::vector<std::pair<int, std::string>> skills;
@@ -2872,8 +2898,11 @@ private:
         return power && power->takenBy(options_.kin, realm_->hero().second);
     }
     // Whether this rune (in the bag at `slot`, or -1 for one elsewhere) is past what he keeps.
+    // A bound one too (2026-10-13): quests pay bound runes, which neither the market nor the vault
+    // takes, and kept they filled the bag -- Zora carried 11 with every socket set, Ivo 10, and
+    // neither had room for a quiver or Tersia's reward. Past what he keeps, the counter's.
     bool runeSpare(const sim::Held& one, int slot) const {
-        if (one.empty() || !sim::creation(rowOf(one)) || one.bound) return false;
+        if (one.empty() || !sim::creation(rowOf(one))) return false;
         if (!runeUsable(one)) return true;
         // Better ones he holds, and as good ones before this slot (bag order breaks the tie).
         int better = 0;
@@ -3167,7 +3196,10 @@ private:
         if (!tradeFuse(one)) return true;
         const double common = double(sim::npcValue(*tables_, one));
         const double next = common / sim::kRuneSale[int(sim::Rarity::Common)] * sim::kRuneSale[int(sim::Rarity::Rare)];
-        return double(sim::kFuseCount * price + sim::kFuseZen) <= next * kFuseMargin;
+        // And the Life the box takes (sim::kFuseLife), at what a merchant pays for it.
+        const sim::Held life{tables_->itemAt(14, 16), 0, 1};
+        const int64_t lifeZen = std::max<int64_t>(0, sim::npcValue(*tables_, life)) * sim::kFuseLife;
+        return double(sim::kFuseCount * price + sim::kFuseZen + lifeZen) <= next * kFuseMargin;
     }
     int tradeFuseHeld(int before = sim::kSlots) const {
         int n = 0;
@@ -3470,6 +3502,8 @@ private:
     // potions; the realm makes one of the next rarity his class may set (sim::Service::FuseRunes).
     std::vector<int> fuseSet() const {
         if (chaosCount() <= runesWaiting() + (cloakPairHeld() ? 1 : 0)) return {};
+        // And a Life (sim::kFuseLife), not the one the wing plan holds for its Chaos weapon.
+        if (countJewel(sim::Jewel::Life) < sim::kFuseLife + planJewels(sim::Jewel::Life)) return {};
         if (realm_->money() < sim::kFuseZen + potionReserve()) return {};
         std::vector<int> byRarity[8];
         for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
@@ -3491,12 +3525,18 @@ private:
             const sim::Held& one = realm_->satchel()[slot];
             if (!one.empty() && chaos(rowOf(one))) jewel = slot;
         }
-        if (jewel < 0) return;
+        int life = -1;
+        for (int slot = sim::kWorn; slot < sim::kSlots && life < 0; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (!one.empty() && sim::refiningJewel(rowOf(one)) && sim::jewelOf(rowOf(one)) == sim::Jewel::Life) life = slot;
+        }
+        if (jewel < 0 || life < 0) return;
         const sim::PowerRow* was = sim::powerOf(realm_->satchel()[runes[0]].powers[0]);
         const std::string from = was ? was->name : "?";
         bool in = true;
         for (const int slot : runes) in = in && hand_.putIn(slot) >= 0;
         in = in && hand_.putIn(jewel) >= 0;
+        in = in && hand_.putIn(life) >= 0;
         const bool mixed = in && hand_.mix(sim::Service::FuseRunes);
         std::string made;
         for (int cell = 0; cell < sim::kMachineCells; ++cell) {
@@ -5088,7 +5128,7 @@ private:
         }
         // Only with something to sell or store: a bag full of what he keeps -- jewels, runes,
         // potions, quivers -- sent an elf back to town every thirty-six seconds for three hours.
-        if (freeCells() < 6 && (sellable() > 0 || wantsVault())) return "bag full";
+        if (freeCells() < 6 && clock_ >= bagBackoff_ && (sellable() > 0 || wantsVault())) return "bag full";
         // When he can pay for it: a knight of 19 Zen went to town for his worn gear every three
         // minutes for 36 game hours, never long enough out to earn the mending (level 17).
         if (const int worn = wornDown(); worn >= 0 && !realm_->selfMending() && money >= realm_->repairCost(worn)) {
@@ -5279,9 +5319,42 @@ private:
         const bool pressed = clock_ - freeSince_ > 60 * 20 && hero.health * 10 > hero.maxHealth * 7;
         if (!engaged || pressed) {
             if (const char* why = needsTown()) {
-                say("goes to town: %s", why);
-                startTrip();
-                return;
+                // **A trip that frees nothing is not taken again** (2026-10-13): 20 of 50 bots
+                // went "to town: bag full" every two seconds for hours, the trip ending at once
+                // with the bag as full -- Dace had taken 4 Bless, a Soul and a Scroll out of the
+                // vault for the wing ladder. Back within a minute with no more room: 10 min of
+                // hunting first, and what he thought he could sell said.
+                // And any other reason back within a minute: Zora went "to town: out of arrows"
+                // 5,008 times, her bag with no room for a quiver.
+                const bool bag = std::strcmp(why, "bag full") == 0;
+                if (!bag && lastWhy_ && std::strcmp(why, lastWhy_) == 0 && clock_ - lastWhyAt_ < 60 * 20) {
+                    noTripUntil_ = clock_ + 10 * 60 * 20;
+                    say("back from town still %s: hunts 10 min first (free cells %d)", why, freeCells());
+                    lastWhy_ = nullptr;
+                    why = nullptr;
+                } else if (bag) {
+                    if (clock_ - lastBagTrip_ < 60 * 20 && freeCells() <= lastBagFree_) {
+                        bagBackoff_ = clock_ + 10 * 60 * 20;
+                        std::string what;
+                        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+                            const sim::Held& one = realm_->satchel()[slot];
+                            if (!one.empty() && !keepsAt(slot)) what += (what.empty() ? "" : ", ") + rowOf(one).label;
+                        }
+                        say("bag still full after town (sellable: %s; vault %d): hunts 10 min first",
+                            what.empty() ? "nothing" : what.c_str(), int(wantsVault()));
+                        why = nullptr;
+                    } else {
+                        lastBagTrip_ = clock_;
+                        lastBagFree_ = freeCells();
+                    }
+                }
+                if (why) {
+                    lastWhy_ = why;
+                    lastWhyAt_ = clock_;
+                    say("goes to town: %s", why);
+                    startTrip();
+                    return;
+                }
             }
         }
         // A giver to see, or another map: there first, when nothing is on him.
@@ -6141,7 +6214,8 @@ private:
     }
 
     static constexpr int64_t kQuiverMost = 100;
-    static constexpr int kSquarePotions = 300;
+    // 200 since 2026-10-13 (300 was fifteen cells): Nell drank 157 in a square's twenty minutes.
+    static constexpr int kSquarePotions = 200;
     // An invitation he may use and Charon's gate due: the square's stock, not the field's.
     bool squareStock() const { return !inSquare() && squaresOpen() != 0 && squareTime(); }  // a +0 quiver: arrows 70, bolts 100
     void buyPotions(const sim::Offer* shelf, int count) {
@@ -6179,7 +6253,10 @@ private:
         // improving bots"): a wizard with 250,000 Zen bought twenty-four, drank them in nine
         // minutes in the Dungeon and paid two trips back to Lorencia for the next. Twenty a cell,
         // so it is three cells more.
-        const int deep = realm_->money() > potionPrice(tier) * 40 ? 2 : 1;
+        // Half once the bag is tight (2026-10-13): between trips a bot drank 15-35 healing and
+        // 5-32 mana, and the top ones carried 160-186 and 80 -- Maren's bag held fourteen cells of
+        // potions and no room for Tersia's reward. With room, the stock is as the user asked.
+        const int deep = realm_->money() > potionPrice(tier) * 40 && freeCells() >= 10 ? 2 : 1;
         // The wizard's mana was the dearer from 2026-10-03, when he threw Lightning at 40 a cast;
         // since he chooses his spells by their mana (spell) he went to town for mana twice a day
         // and for health thirty times, so health comes first as everyone's does.
@@ -6367,6 +6444,10 @@ private:
     int64_t clock_ = 0;
     Outcome out_;
     Mode mode_ = Mode::Hunt;
+    int64_t lastBagTrip_ = -(1LL << 40), bagBackoff_ = 0;  // the "bag full" trip's backstop (hunt)
+    int lastBagFree_ = 0;
+    const char* lastWhy_ = nullptr;  // the last trip's reason and when (hunt's backstop)
+    int64_t lastWhyAt_ = 0;
     Aim aim_ = Aim::Grind, lastAim_ = Aim::Grind;
     int ordered_ = -1;  // order(): the map he was told to grind, or -1
     int meet_[2] = {-1, -1};  // meet(): where he waits for the Broker, or -1

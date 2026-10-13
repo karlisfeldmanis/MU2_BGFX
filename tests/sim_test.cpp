@@ -8075,7 +8075,7 @@ void testChaosMachine() {
     }
     check(socketed, "thirty tries put a socket in");
 
-    // Fuse Runes: three rares and a Chaos make an epic.
+    // Fuse Runes: three rares, a Chaos and a Life make an epic.
     int rares[3] = {}, found = 0;
     for (int p = 1; sim::powerOf(uint8_t(p)) && found < 3; ++p) {
         if (sim::powerOf(uint8_t(p))->rarity == sim::Rarity::Rare) rares[found++] = p;
@@ -8087,7 +8087,9 @@ void testChaosMachine() {
     }
     check(!realm.judged(sim::Service::FuseRunes).ready, "not without a Chaos");
     check(realm.putIn(realm.give(chaos)) >= 0, "a Chaos goes in");
-    check(realm.judged(sim::Service::FuseRunes).ready, "three rares and a Chaos are ready");
+    check(!realm.judged(sim::Service::FuseRunes).ready, "not without a Life");
+    check(realm.putIn(realm.give(life)) >= 0, "a Life goes in");
+    check(realm.judged(sim::Service::FuseRunes).ready, "three rares, a Chaos and a Life are ready");
     check(realm.mix(sim::Service::FuseRunes), "the Goblin fuses them");
     const sim::PowerRow* fused = sim::powerOf(realm.machine()[0].powers[0]);
     check(realm.machine()[0].item == rune && fused && fused->rarity == sim::Rarity::Epic,

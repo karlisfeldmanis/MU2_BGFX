@@ -495,6 +495,7 @@ void addSocket(const content::Tables& tables, const Machine& box, const Sorted& 
 void fuseRunes(const content::Tables& tables, const Machine& box, const Sorted& s, Judged& j) {
     need(j, "Runes of one rarity", s.runes, kFuseCount);
     need(j, "Jewel of Chaos", s.chaos, 1);
+    need(j, "Jewel of Life", s.life, kFuseLife);
     j.rate = 100;
     j.zen = kFuseZen;
     int rarity = -1;
@@ -520,8 +521,8 @@ void fuseRunes(const content::Tables& tables, const Machine& box, const Sorted& 
     const char* next = rarityName(nextRarity(Rarity(rarity)));
     j.title = std::string("Fuse into ") + next;
     j.success = std::string("A random ") + next + " rune";
-    j.ready = s.runes == kFuseCount && s.others == 0 && s.chaos == 1 && s.bless == 0 &&
-              s.soul == 0;
+    j.ready = s.runes == kFuseCount && s.others == 0 && s.chaos == 1 && s.life == kFuseLife &&
+              s.bless == 0 && s.soul == 0;
     (void)tables;
 }
 

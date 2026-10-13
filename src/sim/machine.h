@@ -179,6 +179,9 @@ constexpr int64_t kAddSocketZen = 300000;
 constexpr int kAddSocketLife = 1, kAddSocketChaos = 1, kAddSocketSoul = 2, kAddSocketBless = 2;
 constexpr int64_t kFuseZen = 100000;
 constexpr int kFuseCount = 3;
+// And a Jewel of Life beside the Chaos (the user, 2026-10-13: "lets ask for 1 jewel of life also
+// for fusing runes").
+constexpr int kFuseLife = 1;
 
 // One line of what a service takes: how many are in the box and how many it wants. A `need` of
 // 0 is any number, each one raising the rate (the Chaos Weapon's Bless and Soul).
