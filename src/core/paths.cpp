@@ -2,6 +2,7 @@
 
 #ifdef MU2_SHIP
 #include <mach-o/dyld.h>
+#include <unistd.h>
 
 #include <climits>
 #include <cstdlib>
@@ -34,6 +35,26 @@ std::string userFolder() {
     return folder;
 }
 
+// logs/ in the client's folder, the one MU2.app sits in: the log and the crash and freeze
+// reports, where a player who is asked for them finds them (the user, 2026-10-13: "we need to
+// save logs and crash reports inside client folder in folder /logs"). Where that folder cannot
+// be written -- a downloaded app macOS runs from a read-only copy until it is moved
+// (AppTranslocation), or an /Applications the player may not write -- the player's own folder.
+std::string logsFolder(const std::string& resources, const std::string& user) {
+    const std::string client =
+        std::filesystem::path(resources).parent_path().parent_path().parent_path().string();
+    if (client.find("/AppTranslocation/") == std::string::npos) {
+        const std::string logs = client + "/logs";
+        std::error_code error;
+        std::filesystem::create_directories(logs, error);
+        if (!error && ::access(logs.c_str(), W_OK) == 0) return logs;
+    }
+    const std::string logs = user + "/logs";
+    std::error_code error;
+    std::filesystem::create_directories(logs, error);
+    return logs;
+}
+
 }  // namespace
 
 const Folders& folders() {
@@ -49,8 +70,8 @@ const Folders& folders() {
         f.fonts = f.data + "/fonts";
         f.user = userFolder();
         f.shots = f.user + "/shots";
-        f.crashes = f.user + "/crashes";
-        f.log = f.user + "/mu2.log";
+        f.crashes = logsFolder(f.root, f.user);
+        f.log = f.crashes + "/mu2.log";
         f.run = f.user;
         return f;
     }();

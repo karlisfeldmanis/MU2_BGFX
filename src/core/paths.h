@@ -19,7 +19,7 @@ struct Folders {
     std::string work;     // the cook's workshop: the studio's sockets, journal and logs
     std::string user;     // options, characters, layouts, account.key
     std::string shots;    // --shot's pictures, and the studio's swaps
-    std::string crashes;  // a crash's or a freeze's report (core/watch.h)
+    std::string crashes;  // a crash's or a freeze's report (core/watch.h); the player's: logs/
     std::string log;      // the run's log, a file: mu2.log, and mu2.log.previous beside it
     std::string run;      // a developer run's other outputs: the hunt log
 };
