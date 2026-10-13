@@ -111,7 +111,14 @@ The scaffolding is half there:
   The card is found by matching chat text; a guild should have its own field instead.
 - **Free**: the G key; a row in the player menu (player_menu.cpp:21-44).
 
-## Choices for the user
+## The user's picks (2026-10-13)
+
+- **Guild window: B, online first**: two-line member cards (name and map, class and level), Online and All tabs, 8 to a page, the × to kick or leave, Disband and Invite in the foot.
+- **Nameplate: A**: the mark and the guild's name on the line under the name (today's `<Bot>` line), always shown, in the name's own green.
+- **Invites use the party's card** (`Chat::buildInvite`): kicker *Guild* in the guild ink, Accept and Decline, 60 s; a wire field instead of matching chat text.
+- The page follows the Sanctuary design system (the trade page's CSS).
+
+## Choices still open
 
 | question | MU | **(rec.)** |
 |---|---|---|
