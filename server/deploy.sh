@@ -24,8 +24,8 @@ here=$(git rev-parse --show-prefix)
 stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
 git -C "$(git rev-parse --show-toplevel)" archive "HEAD:${here%/}" | tar -x -C "$stage"
-rsync -a --prune-empty-dirs --include='/assets/' --include='/assets/cooked/' --include='/assets/cooked/*/' \
-  --include='/assets/cooked/*/*.mur' --exclude='*' ./ "$stage/"
+rsync -a --prune-empty-dirs --include='/out/' --include='/out/assets/' --include='/out/assets/cooked/' --include='/out/assets/cooked/*/' \
+  --include='/out/assets/cooked/*/*.mur' --exclude='*' ./ "$stage/"
 echo "$commit" > "$stage/server/DEPLOYED"
 # Said, not refused: what the working tree holds beyond the commit stays here.
 if ! git diff --quiet HEAD -- src server tests tools/bot tools/raid source/raid CMakeLists.txt; then
@@ -40,8 +40,8 @@ rsync -az --delete --prune-empty-dirs \
   --include='/tests/' --include='/tests/*.cpp' --include='/tests/fixtures/***' \
   --include='/tools/' --include='/tools/bot/***' --include='/tools/raid/***' \
   --include='/source/' --include='/source/raid/***' \
-  --include='/assets/' --include='/assets/cooked/' --include='/assets/cooked/*/' \
-  --include='/assets/cooked/*/*.mur' \
+  --include='/out/' --include='/out/assets/' --include='/out/assets/cooked/' --include='/out/assets/cooked/*/' \
+  --include='/out/assets/cooked/*/*.mur' \
   --include='/server/***' \
   --exclude='*' "$stage/" $host:$dest/
 echo "copied $commit to $host:$dest"

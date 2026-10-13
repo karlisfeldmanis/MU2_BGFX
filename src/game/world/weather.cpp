@@ -69,7 +69,7 @@ constexpr float kThunderShare = 0.8f;
 // the first hit over -22 dB: for 0.7 s from just before it the hits light at their full, so
 // the crack flickers with its own strokes, and outside that at a quarter, so the rumble's
 // swells are a glow in the cloud. Measured on the seven claps, where every swell lit alike
-// was a five-second strobe. The claps share one level (tools/thunder.py), so a far one is a
+// was a five-second strobe. The claps share one level (they were cut at one), so a far one is a
 // dimmer flash as well as a quieter sound.
 std::vector<float> flashOf(const std::vector<float>& loud) {
     constexpr float kStep = Sound::kLoudStep;

@@ -6,6 +6,6 @@
 #   ./run.sh --frames 300 --stats /tmp/s.csv --budget
 set -e
 cd "$(dirname "$0")"
-[ -x build/mu2 ] || ./build.sh
-mkdir -p shots
-exec build/mu2 "$@"
+[ -x out/build/mu2 ] || ./build.sh
+mkdir -p out/shots
+exec out/build/mu2 "$@"

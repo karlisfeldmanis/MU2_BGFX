@@ -269,7 +269,7 @@ bool Cooker::startServer() {
     }
     serverPid_ = pid;
     nextTry_ = 0.0;
-    core::logf("studio: started mu serve (pid %d), its log in workshop/logs/mu/serve.log", pid);
+    core::logf("studio: started mu serve (pid %d), its log in out/workshop/logs/mu/serve.log", pid);
     return true;
 }
 

@@ -24,7 +24,7 @@
 // And the thunder, which is this game's and not MU's (the user, 2026-09-29: "on top of the
 // rain ... also thunderstorm effect with some screen lighting effect perfectly synced with
 // sound"). Every wet spell is a storm: once the rain is in, a clap every one to three minutes,
-// one of `world_thunder`'s seven (tools/thunder.py cut them from the user's recording). The
+// one of `world_thunder`'s seven, cut from the user's recording. The
 // lightning is not timed beside the sound but read off it: each clap's loudness curve, which
 // Sound measured from its samples at load, is made into a flash curve here once, and every
 // frame the flash is that curve at the point the ear is in the playing clap -- the mixer's own

@@ -71,7 +71,7 @@
 # bow, not an axe.
 set -e
 cd "$(dirname "$0")"
-[ -x build/mu2 ] || ./build.sh
+[ -x out/build/mu2 ] || ./build.sh
 
 # The switch is `--class`, spelled as the character screen would ask it; the field behind it is
 # `kin`, because `class` is a keyword in the language the engine is written in.
@@ -139,13 +139,13 @@ code=0
 # 16.67 ms period is one it fits inside every time and the same refresh every time. Play on
 # 60; measure and hunt on 180. `--cap 0` lets it run free.
 if [ "$lobby" = "yes" ]; then
-  build/mu2 --lobby --fullscreen --vsync --cap 180 --scale 0.99 --remember "${args[@]}" || code=$?
+  out/build/mu2 --lobby --fullscreen --vsync --cap 180 --scale 0.99 --remember "${args[@]}" || code=$?
 else
-  build/mu2 --world lorencia --play --fullscreen --vsync --cap 180 --scale 0.99 --remember --level 1 --class "$kin" "${cradle[@]}" "${args[@]}" ||
+  out/build/mu2 --world lorencia --play --fullscreen --vsync --cap 180 --scale 0.99 --remember --level 1 --class "$kin" "${cradle[@]}" "${args[@]}" ||
     code=$?
 fi
 if [ $code -ne 0 ]; then
-  echo "mu2 stopped with $code. The last of mu2.log:"
-  tail -8 mu2.log
+  echo "mu2 stopped with $code. The last of out/logs/mu2.log:"
+  tail -8 out/logs/mu2.log
 fi
 exit $code

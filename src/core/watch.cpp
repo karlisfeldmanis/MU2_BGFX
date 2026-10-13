@@ -88,7 +88,7 @@ void onCrash(int sig, siginfo_t* info, void*) {
         logWriteTail(fd);
         ::close(fd);
     }
-    say(STDERR_FILENO, "mu2 crashed; the report is in crashes/\n");
+    say(STDERR_FILENO, "mu2 crashed; the report is beside mu2.log, in logs/\n");
     // Handed back to the default, which ends the process and lets macOS write its .ips.
     signal(sig, SIG_DFL);
     raise(sig);
@@ -248,7 +248,7 @@ void watchBeat() {
     }
     if (before < 0) return;  // paused
     const double gone = double(now - before) / 1000.0;
-    if (gone >= kHangSeconds) logf("HANG no frame for %.1f s; the report is in crashes/", gone);
+    if (gone >= kHangSeconds) logf("HANG no frame for %.1f s; the report is beside mu2.log", gone);
 }
 
 void watchPause() {

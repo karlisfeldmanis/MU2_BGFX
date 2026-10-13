@@ -26,13 +26,13 @@ import sys
 import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from paths import ASSETS, EXTERN, ROOT, SHEETS  # noqa: E402
+from paths import ASSETS, EXTERN, OUT, ROOT, SHEETS  # noqa: E402
 
 import manifest  # noqa: E402
 import settings  # noqa: E402
 
-SHIP = os.path.join(ROOT, "build-ship")
-SNAPSHOT = os.path.join(ROOT, "build-ship-src")
+SHIP = os.path.join(OUT, "build-ship")
+SNAPSHOT = os.path.join(OUT, "build-ship-src")
 DIST = os.path.join(ROOT, "dist")
 GLFW = "libglfw.3.dylib"
 

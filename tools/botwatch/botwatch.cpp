@@ -99,7 +99,7 @@ const mu::content::Tables* itemTables() {
         tried = true;
         auto t = std::make_unique<mu::content::Tables>();
         std::string error;
-        const std::string path = std::string(MU2_SOURCE_DIR) + "/assets/cooked/lorencia/lorencia.mur";
+        const std::string path = std::string(MU2_SOURCE_DIR) + "/out/assets/cooked/lorencia/lorencia.mur";
         if (mu::content::loadTables(path, *t, error)) {
             tables = std::move(t);
             std::fprintf(stderr, "botwatch: item tables from %s, %zu items\n", path.c_str(), tables->items.size());
@@ -301,7 +301,7 @@ public:
         char stamp[32];
         const std::time_t now = std::time(nullptr);
         std::strftime(stamp, sizeof stamp, "%Y%m%d-%H%M%S", std::localtime(&now));
-        const std::string run = root_ + "/saves/botwatch/" + stamp;
+        const std::string run = root_ + "/out/saves/botwatch/" + stamp;
         {
             std::lock_guard<std::mutex> hold(shown_);
             if (watch_) old_.push_back(std::move(watch_));  // its poll may still be reading it
@@ -984,7 +984,7 @@ int main(int argc, char** argv) {
     desc.title = "Botwatch";
     if (!window.open(desc)) return 1;
     mu::gfx::Gui gui;
-    if (!gui.open(window, root + "/extern/OpenSans-SemiBold.ttf", 15.0f)) return 1;
+    if (!gui.open(window, root + "/third_party/extern/OpenSans-SemiBold.ttf", 15.0f)) return 1;
     style();
 
     std::signal(SIGTERM, onSignal);

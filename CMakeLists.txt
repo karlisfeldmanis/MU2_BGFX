@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 project(mu2 LANGUAGES C CXX)
+# What bootstrap.sh fetches: bgfx, the headers, zstd and the faces (docs/layout.md, third_party/).
+set(MU_EXTERN ${CMAKE_SOURCE_DIR}/third_party/extern)
 # The server's own build, on a box with no screen (server/README.md phase 4; the Hetzner
 # box): core, the content it reads, the sim and their tests, and no bgfx, glfw, shader or
 # Metal. `cmake -S . -B build-server -G Ninja -DMU2_SERVER_ONLY=ON`.
@@ -50,7 +52,7 @@ set(BGFX_CUSTOM_TARGETS OFF CACHE BOOL "" FORCE)
 # what compiles in bgfx's resource lock, so the preloader's worker may create textures and
 # buffers while the main thread keeps presenting the spinner. src/main.cpp, "The preloader".
 set(BGFX_CONFIG_MULTITHREADED ON CACHE BOOL "" FORCE)
-add_subdirectory(extern/bgfx.cmake EXCLUDE_FROM_ALL)
+add_subdirectory(third_party/extern/bgfx.cmake EXCLUDE_FROM_ALL)
 foreach(t bx bimg bimg_decode bimg_encode bgfx shaderc)
   if(TARGET ${t})
     target_compile_options(${t} PRIVATE -w)   # third-party warnings are not ours to fix
@@ -65,7 +67,7 @@ set(SHADER_DIR ${CMAKE_SOURCE_DIR}/shaders)
 set(SHADER_OUT ${CMAKE_BINARY_DIR}/shaders)
 # Where shaderc finds bgfx_shader.sh. Without it every shader that includes common.sh fails
 # on the include and not on anything of ours.
-set(BGFX_SHADER_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/extern/bgfx.cmake/bgfx/src)
+set(BGFX_SHADER_INCLUDE_PATH ${MU_EXTERN}/bgfx.cmake/bgfx/src)
 # CONFIGURE_DEPENDS so that adding a shader is adding a file. Without it the glob is read
 # once at configure time and a new shader builds nothing, links nothing, and is discovered
 # at run time as "cannot read fs_something.sc.bin".
@@ -111,20 +113,22 @@ set(MU_WARNINGS -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializ
 # Every top-level folder, named once here (docs/layout.md) and read back through core::folders().
 # Moving one is a change to this block and nothing in src/.
 set(MU_ROOT ${CMAKE_SOURCE_DIR})
-set(MU_ASSETS ${MU_ROOT}/assets)
+# Everything a build, a cook or a run makes: deleting it costs a rebuild and a cook, nothing else.
+set(MU_OUT ${MU_ROOT}/out)
+set(MU_ASSETS ${MU_OUT}/assets)
 set(MU_DIRS
   MU2_SHADER_DIR="${SHADER_OUT}/metal"
   MU2_ASSET_DIR="${MU_ASSETS}"
   MU2_SHEET_DIR="${MU_ROOT}/sheets"
   MU2_ROOT_DIR="${MU_ROOT}"
-  MU2_FONT_DIR="${MU_ROOT}/extern"
+  MU2_FONT_DIR="${MU_EXTERN}"
   MU2_CONTENT_DIR="${MU_ROOT}/source"
-  MU2_WORK_DIR="${MU_ROOT}/workshop"
-  MU2_USER_DIR="${MU_ROOT}/saves"
-  MU2_SHOT_DIR="${MU_ROOT}/shots"
-  MU2_CRASH_DIR="${MU_ROOT}/crashes"
-  MU2_LOG_FILE="${MU_ROOT}/mu2.log"
-  MU2_RUN_DIR="${MU_ROOT}/build"
+  MU2_WORK_DIR="${MU_OUT}/workshop"
+  MU2_USER_DIR="${MU_OUT}/saves"
+  MU2_SHOT_DIR="${MU_OUT}/shots"
+  MU2_CRASH_DIR="${MU_OUT}/logs"
+  MU2_LOG_FILE="${MU_OUT}/logs/mu2.log"
+  MU2_RUN_DIR="${MU_OUT}/build"
 )
 
 # Logging, arguments, json, files. Depends on nothing.
@@ -146,11 +150,11 @@ target_compile_options(mu_core PRIVATE ${MU_WARNINGS})
 # (core::setFileSource) that mounting them sets. The game links this; so does the packer.
 if(NOT MU2_SERVER_ONLY)
   file(GLOB MU_ZSTD_SOURCES
-    ${CMAKE_SOURCE_DIR}/extern/zstd/lib/common/*.c
-    ${CMAKE_SOURCE_DIR}/extern/zstd/lib/compress/*.c
-    ${CMAKE_SOURCE_DIR}/extern/zstd/lib/decompress/*.c)
+    ${MU_EXTERN}/zstd/lib/common/*.c
+    ${MU_EXTERN}/zstd/lib/compress/*.c
+    ${MU_EXTERN}/zstd/lib/decompress/*.c)
   add_library(mu_zstd STATIC ${MU_ZSTD_SOURCES})
-  target_include_directories(mu_zstd PUBLIC ${CMAKE_SOURCE_DIR}/extern/zstd/lib)
+  target_include_directories(mu_zstd PUBLIC ${MU_EXTERN}/zstd/lib)
   target_compile_definitions(mu_zstd PRIVATE ZSTD_DISABLE_ASM)
   add_library(mu_pack STATIC src/core/pack.cpp)
   target_link_libraries(mu_pack PUBLIC mu_core mu_zstd)
@@ -283,7 +287,7 @@ add_library(mu_content_gpu STATIC
   src/content/mesh.cpp
   src/content/ground.cpp
 )
-target_include_directories(mu_content_gpu PUBLIC extern)   # cgltf, miniaudio, stb
+target_include_directories(mu_content_gpu PUBLIC ${MU_EXTERN})   # cgltf, miniaudio, stb
 target_link_libraries(mu_content_gpu PUBLIC mu_content_data bgfx bimg_decode)
 target_compile_options(mu_content_gpu PRIVATE ${MU_WARNINGS})
 
@@ -497,7 +501,7 @@ set_source_files_properties(src/game/miniaudio.cpp PROPERTIES COMPILE_OPTIONS "-
 # Over it the studio: gfx/gui.cpp draws ImGui on bgfx in ViewGui, studio/ holds the cook's
 # client and the panels. Only mu2 links them; a game frame never opens them, and the server
 # never sees them.
-set(IMGUI_FROM ${CMAKE_SOURCE_DIR}/extern/bgfx.cmake/bgfx/3rdparty/dear-imgui)
+set(IMGUI_FROM ${MU_EXTERN}/bgfx.cmake/bgfx/3rdparty/dear-imgui)
 set(IMGUI_DIR ${CMAKE_BINARY_DIR}/imgui)
 foreach(f imgui.cpp imgui_draw.cpp imgui_tables.cpp imgui_widgets.cpp imgui.h imgui_internal.h
           imstb_rectpack.h imstb_textedit.h imstb_truetype.h)
@@ -510,7 +514,7 @@ add_library(mu_imgui STATIC
   ${IMGUI_DIR}/imgui_tables.cpp
   ${IMGUI_DIR}/imgui_widgets.cpp
 )
-target_include_directories(mu_imgui PUBLIC ${IMGUI_DIR} src ${CMAKE_SOURCE_DIR}/extern/bgfx.cmake/bgfx/3rdparty)  # imstb_*.h are stb/*
+target_include_directories(mu_imgui PUBLIC ${IMGUI_DIR} src ${MU_EXTERN}/bgfx.cmake/bgfx/3rdparty)  # imstb_*.h are stb/*
 target_compile_options(mu_imgui PRIVATE -w)
 
 add_library(mu_studio STATIC
@@ -521,7 +525,7 @@ add_library(mu_studio STATIC
   src/studio/inspector.cpp
   src/studio/light_panel.cpp
 )
-target_include_directories(mu_studio PRIVATE ${CMAKE_SOURCE_DIR}/extern/bgfx.cmake/bgfx/examples/common/imgui)
+target_include_directories(mu_studio PRIVATE ${MU_EXTERN}/bgfx.cmake/bgfx/examples/common/imgui)
 target_link_libraries(mu_studio PUBLIC mu_imgui mu_gfx)
 target_compile_options(mu_studio PRIVATE ${MU_WARNINGS})
 
@@ -547,7 +551,7 @@ if(NOT MU2_SHIP)
     src/app/modes/studio_control.cpp)
   target_link_libraries(mu2 PRIVATE mu_studio)
 endif()
-target_include_directories(mu2 PRIVATE src extern ${CMAKE_BINARY_DIR}/generated)
+target_include_directories(mu2 PRIVATE src ${MU_EXTERN} ${CMAKE_BINARY_DIR}/generated)
 # The game's version, MAJOR.MINOR.PATCH in VERSION (1.0.0 is the finished game; until then the
 # 0.x line), and the commit this build was made from: the loading screen's corner
 # (app/preloader.cpp) and the bundle's version.
@@ -658,7 +662,7 @@ add_executable(sound_test EXCLUDE_FROM_ALL
   src/game/miniaudio.cpp
 )
 target_link_libraries(sound_test PRIVATE mu_content_data mu_pack)
-target_include_directories(sound_test PRIVATE src extern)
+target_include_directories(sound_test PRIVATE src ${MU_EXTERN})
 target_compile_definitions(sound_test PRIVATE MU2_ASSET_DIR="${MU_ASSETS}")
 target_compile_options(sound_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 if(APPLE)
@@ -686,7 +690,8 @@ add_executable(sim_test EXCLUDE_FROM_ALL
 )
 target_link_libraries(sim_test PRIVATE mu_net mu_sim)
 target_include_directories(sim_test PRIVATE src)
-target_compile_definitions(sim_test PRIVATE MU2_ASSET_DIR="${MU_ASSETS}")
+target_compile_definitions(sim_test PRIVATE MU2_ASSET_DIR="${MU_ASSETS}"
+                                          MU2_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_compile_options(sim_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
 # Sprint 16, step 3: a save names quests, travel rows and skills by what they are, not where

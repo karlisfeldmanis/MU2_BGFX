@@ -32,20 +32,23 @@ PIPELINE = os.path.join(ROOT, "pipeline")
 TOOLS = os.path.join(ROOT, "tools")
 
 # Generated: deleting any of these costs a rebuild or a cook, nothing else.
-WORKSHOP = os.path.join(ROOT, "workshop")      # the pipeline's output, built from CONTENT
-ASSETS = os.path.join(ROOT, "assets")          # what the game reads, synced from WORKSHOP
+OUT = os.path.join(ROOT, "out")              # generated: delete it and rebuild
+WORKSHOP = os.path.join(OUT, "workshop")      # the pipeline's output, built from CONTENT
+ASSETS = os.path.join(OUT, "assets")          # what the game reads, synced from WORKSHOP
 COOKED = os.path.join(ASSETS, "cooked")        # the cook's binaries
-BUILD = os.path.join(ROOT, "build")            # the release build: mu2, texcook
-BUILD_DEBUG = os.path.join(ROOT, "build-debug")
-SHOTS = os.path.join(ROOT, "shots")
-SAVES = os.path.join(ROOT, "saves")
-CRASHES = os.path.join(ROOT, "crashes")
+BUILD = os.path.join(OUT, "build")            # the release build: mu2, texcook
+BUILD_DEBUG = os.path.join(OUT, "build-debug")
+SHOTS = os.path.join(OUT, "shots")
+SAVES = os.path.join(OUT, "saves")
+CRASHES = os.path.join(OUT, "logs")
+LOGS = CRASHES                                 # mu2.log and the crash reports
 
 # Fetched, never ours.
-EXTERN = os.path.join(ROOT, "extern")
-PATCHES = os.path.join(ROOT, "patches")
-WEIGHTS = os.path.join(ROOT, "weights")        # the upscaler's models
-DOWNLOADS = os.path.join(ROOT, "downloads")
+THIRD_PARTY = os.path.join(ROOT, "third_party")
+EXTERN = os.path.join(THIRD_PARTY, "extern")
+PATCHES = os.path.join(THIRD_PARTY, "patches")
+WEIGHTS = os.path.join(THIRD_PARTY, "weights")        # the upscaler's models
+DOWNLOADS = os.path.join(THIRD_PARTY, "downloads")
 
 
 class P:
@@ -55,6 +58,7 @@ class P:
     SHEETS = Path(SHEETS)
     PIPELINE = Path(PIPELINE)
     TOOLS = Path(TOOLS)
+    OUT = Path(OUT)
     WORKSHOP = Path(WORKSHOP)
     ASSETS = Path(ASSETS)
     COOKED = Path(COOKED)
@@ -63,6 +67,8 @@ class P:
     SHOTS = Path(SHOTS)
     SAVES = Path(SAVES)
     CRASHES = Path(CRASHES)
+    LOGS = Path(LOGS)
+    THIRD_PARTY = Path(THIRD_PARTY)
     EXTERN = Path(EXTERN)
     PATCHES = Path(PATCHES)
     WEIGHTS = Path(WEIGHTS)
