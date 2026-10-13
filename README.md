@@ -6,9 +6,9 @@ an MMORPG**: an authoritative server (`server/`, on the Hetzner box) steps every
 client plays a mirror of it in lockstep. `LocalLink`, the realm in the client's own process, is
 kept as the harness the tests, the benches and the headless runs drive, not as a way to play.
 
-**Start here.** `docs/order-plan.md` is where the tree stands and the plan for making it make
-sense: one place for each thing, and the `mu` tool and the studio that build on it. `PLAN.md`
-is the original map and its working rules; `docs/sprints/` what each sprint proved and measured.
+**Start here.** `docs/README.md` is the index of every doc, the working rules, and the sprints'
+one-line history. `docs/order-plan.md` is where the tree stands and the plan for making it make
+sense: one place for each thing, and the `mu` tool and the studio that build on it.
 
 Two pages answer the two questions a newcomer has, and they are deliberately separate:
 
@@ -30,8 +30,8 @@ step; nothing is read from MU2 at run time.
     server/deploy.sh                     build and test on the box, restart the service
     build/mu2 --play --server 37.27.158.226
 
-`server/README.md` has the box, the service and the character store; `docs/server-plan.md` and
-sprints 17-25 how the game became client and server.
+`server/README.md` has the box, the service and the character store, and in its last section how
+the game became client and server.
 
 ## Build and run
 
@@ -89,7 +89,7 @@ Godot: `source/` holds the recipes and MU's imported art (MU2's `assets/`, and `
 `pipeline/` the scripts, `workshop/` their output (MU2's `build/`). Needs Blender and
 python3 with numpy, Pillow and torch. MU's own data is
 [sven-n/MuMain](https://github.com/sven-n/MuMain/tree/main/src/bin/Data), fetched by
-`tools/fetch_mumain.sh`. See `docs/content.md`.
+`tools/fetch_mumain.sh`. See `docs/cooker.md`, "The pipeline underneath".
 
     ./tools/sync.sh                              everything index.json reaches
     ./tools/sync.sh --world lorencia --only-world
