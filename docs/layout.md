@@ -87,6 +87,15 @@ or while the studio is open: the studio's baked paths would point at nothing.
      every citation of a moved doc rewritten in the same commit
 
    Check with `./mu check`, a `./mu make X --plan`, and the studio opening on a monster.
+   - the citations of docs deleted on 2026-10-13 (6a6d9d6f) that sat in other sessions' files
+     then: `docs/party.md:5`, `server/src/host.h`, `src/client/link.h`, `remote_link.{h,cpp}`,
+     `src/game/play.h`, `src/net/wire.h`, `src/sim/items.h`, `machine.cpp`, `rules.h`,
+     `tests/sim_test.cpp` (sprints/NN → "sprint N", server-plan → server/README.md,
+     second-wings → wings.md, drop-boxes and kundun-box-sources → kundun-box.md), and in
+     `source/` through `./mu edit`: MagicBox01/03/08, Quest04, Wing04-07, the 13 recipes and
+     Hommerd01 that say "See docs/devias-drops.md" (drop the sentence), devias' ground.json
+     (devias-ground.md), and `sheets/materials.json:8` ("PLAN.md's rule").
+
 4. **`pipeline/`.** Move the cook scripts and `paths.py`/`paths.sh` out of `tools/`, then run a `--plan` cook and
    `./mu check`.
 5. **`./mu` subcommands.** Retire the root scripts, and update the README and the memory.
