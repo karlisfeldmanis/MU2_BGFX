@@ -76,14 +76,16 @@ def snapshot(ref, say):
     # By content, without times: a file that changed gets today's time and is rebuilt; one
     # that did not keeps its old time and is not. A commit's own times would undo that.
     os.makedirs(SNAPSHOT, exist_ok=True)
-    # extern/ and assets/ are links to this checkout's, made here and kept: git has neither.
-    run(["rsync", "-rlc", "--delete", "--exclude", "/extern", "--exclude", "/assets",
+    # third_party/extern/ and out/assets/ are links to this checkout's, made here and kept: git
+    # has neither.
+    run(["rsync", "-rlc", "--delete", "--exclude", "/third_party/extern", "--exclude", "/out",
          staged + "/", SNAPSHOT + "/"], say)
     shutil.rmtree(staged)
-    for name, target in (("extern", EXTERN), ("assets", ASSETS)):
+    for name, target in (("third_party/extern", EXTERN), ("out/assets", ASSETS)):
         link = os.path.join(SNAPSHOT, name)
+        os.makedirs(os.path.dirname(link), exist_ok=True)
         if not os.path.islink(link):
-            os.symlink(os.path.relpath(target, SNAPSHOT), link)
+            os.symlink(os.path.relpath(target, os.path.dirname(link)), link)
     say(f"the player's build is made from {line} (build-ship-src/)")
     return line
 
