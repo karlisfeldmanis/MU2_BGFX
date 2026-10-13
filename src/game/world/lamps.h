@@ -1,5 +1,5 @@
 // The lamps: what burns in a town, and the three things MU makes of each. Sprint 8a;
-// docs/sprints/08a-the-lamps.md has the design and the MuMain lines behind every number.
+// Sprint 8a's notes (in git) have the design and the MuMain lines behind every number.
 //
 // 1. **The light**, a point light handed to the renderer once as a static set and flickered
 //    every frame through its level.

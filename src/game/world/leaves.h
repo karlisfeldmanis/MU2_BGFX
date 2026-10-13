@@ -105,7 +105,7 @@ public:
 
     // Devias's blizzard, 0 calm to 1 full (game/world/weather.h's rain() on Devias): the snow
     // blows sideways at up to a storm wind in gusts, falls faster, fills a larger pool and
-    // streaks, and what lands is blown on rather than lying. docs/devias-blizzard.md.
+    // streaks, and what lands is blown on rather than lying. docs/devias-port.md §5.5.
     void setStorm(float share) { storm_ = share; }
     // Tarkan's sand, on the snow's pool (opened with `snow`): the flakes tinted sand and blown
     // low, a few motes in the calm and no glints. Ours (docs/tarkan-port.md).

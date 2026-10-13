@@ -3,7 +3,7 @@
 
 The rest pose IS the bind pose in MU2's exports -- every joint's composed world matrix times
 its own inverse bind is the identity, to 1e-5, on every figure measured in
-`docs/sprints/04-figures.census.md`. So composing the rest transforms with the SAME
+sprint 4's figure census (in git). So composing the rest transforms with the SAME
 conventions `src/core/maths.h` uses -- a row-vector quaternion matrix, `local x parent`, then
 `inverseBind x world` -- must give sixty identities. If the quaternion is transposed, or the
 multiply is the other way round, or the inverse bind is applied on the wrong side, this

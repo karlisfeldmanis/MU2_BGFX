@@ -1,5 +1,5 @@
 // The character, kept between runs: where he stands, what he has earned, what he carries and
-// wears, and the four potion keys. PLAN.md's "one versioned file written whole".
+// wears, and the four potion keys. Foundation 11's "one versioned file written whole".
 //
 // Items are written by MU's own (group, number) and never by the cooked table's row: a recook
 // that adds or orders a row differently would otherwise turn a saved sword into whatever now
@@ -111,7 +111,7 @@ sim::Vault resolveVault(const content::Tables& tables, const Saved& saved);
 bool writeVault(const std::string& path, const content::Tables& tables, const sim::Vault& vault);
 
 // **On a server the character is the server's**, under a token it gave him (server/src/store.h).
-// Until accounts (server-plan phase 6) the client keeps that token beside his save -- hero.server
+// Until accounts (server phase 6) the client keeps that token beside his save -- hero.server
 // beside hero.json, a `host:port token` line a server -- so the next run of the game brings him
 // back as he left. 0 for a server that has never seen him.
 std::string tokenPathBeside(const std::string& savePath);

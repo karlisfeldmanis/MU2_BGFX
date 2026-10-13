@@ -2,7 +2,7 @@
 
 // What a realm is raised under that is a setting and not a rule: the timed gates' clocks and
 // the switches a test turns on. Handed to Realm::configure before raise(), and held by the realm
-// it was handed to -- never a global, because the world host of docs/server-plan.md steps every
+// it was handed to -- never a global, because the world host (server/README.md phase 3) steps every
 // map's realm in one process and a mutable global would be shared by all of them (sprint 16,
 // step 2). The default is the real game; app/ fills it from the command line's test switches.
 

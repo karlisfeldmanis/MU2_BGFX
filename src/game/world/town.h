@@ -2,7 +2,7 @@
 //
 // The town owns no rendering. It hands the renderer a list of drawables, which the renderer
 // already turns into one instanced draw per model. What this class exists to decide is
-// *which* placements go into that list, and foundation 7 of PLAN.md says how: by chunk, with
+// *which* placements go into that list, and foundation 7 (architecture.md) says how: by chunk, with
 // the camera and the sun tested separately, against bounds settled at cook time rather than
 // per frame.
 #pragma once

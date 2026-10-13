@@ -1,7 +1,7 @@
 // The gold ring round whatever the pointer is over: a silhouette, measured by drawing the
 // hovered thing a second time into a mask of its own rather than by inflating a hull, and
 // sized in screen pixels so it reads the same on a spider at your feet and one across the
-// square. MU2's Outline.cs, migrated off Godot; see docs/sprints/09-the-ring.md.
+// square. MU2's Outline.cs, migrated off Godot; sprint 9.
 #include "gfx/renderer.h"
 
 #include <bx/math.h>

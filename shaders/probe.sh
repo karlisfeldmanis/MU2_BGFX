@@ -1,4 +1,4 @@
-// The reflection probe's cube, sprint 8c. docs/sprints/08c-the-metal.md.
+// The reflection probe's cube, sprint 8c.
 //
 // One cube round the player, re-rendered a face every other frame, its chain, and a
 // prefiltered copy whose mips are GGX lobes of rising roughness. fs_probe_sky draws a face's

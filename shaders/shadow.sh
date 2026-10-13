@@ -17,7 +17,7 @@ uniform vec4 u_shadowReach;
 // The Vogel disc, written out: tap i of n sits at sqrt((i + 0.5) / n) out and i golden angles
 // round, for the four counts the filter takes. Computed per tap it was a sqrt, a cos and a sin
 // for each of 25 taps on every lit pixel, and the count rides a uniform, so the compiler could
-// fold none of it (docs/perf-audit-2k.md, A1). A turned disc is this one rotated by its phase,
+// fold none of it (budget.md, the 2K audit's A1). A turned disc is this one turned by its phase,
 // which is one cos and one sin a pixel. `static`, since a global const in the HLSL that bgfx's
 // Metal path parses is a uniform, and braces, since that parser takes no array constructor.
 static const vec2 kVogel5[5] = {

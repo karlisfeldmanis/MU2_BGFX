@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 project(mu2 LANGUAGES C CXX)
-# The server's own build, on a box with no screen (docs/server-plan.md phase 4; the Hetzner
+# The server's own build, on a box with no screen (server/README.md phase 4; the Hetzner
 # box): core, the content it reads, the sim and their tests, and no bgfx, glfw, shader or
 # Metal. `cmake -S . -B build-server -G Ninja -DMU2_SERVER_ONLY=ON`.
 option(MU2_SERVER_ONLY "build only what a server links: core, content data, sim, tests" OFF)
@@ -99,7 +99,7 @@ endif()  # NOT MU2_SERVER_ONLY: bgfx, glfw, shaders
 # below it. tools/layercheck.py enforces the include arrows in the `checks` target below; the
 # link enforces the rest: mu_sim cannot reach a bgfx symbol because nothing it links has one.
 # That is what the server needs -- core + content_data + sim, and no window (sprint 16, step 1,
-# and docs/server-plan.md phase 4). Each source is listed once, here; the tools link libraries.
+# and server/README.md phase 4). Each source is listed once, here; the tools link libraries.
 set(MU_WARNINGS -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers)
 # Every top-level folder, named once here (docs/layout.md) and read back through core::folders().
 # Moving one is a change to this block and nothing in src/.
@@ -193,7 +193,7 @@ add_library(mu_sim STATIC
 target_link_libraries(mu_sim PUBLIC mu_content_data)
 target_compile_options(mu_sim PRIVATE ${MU_WARNINGS})
 
-# The wire (docs/sprints/18-the-wire.md): TCP and the protocol, which the client's RemoteLink and
+# The wire (sprint 18): TCP and the protocol, which the client's RemoteLink and
 # the server both speak. Above sim, because a message carries a sim::Command.
 add_library(mu_net STATIC
   src/net/socket.cpp
@@ -207,8 +207,8 @@ target_compile_options(mu_net PRIVATE ${MU_WARNINGS})
 
 # The server (server/src, server/README.md): every map's realm for whoever connects, no window.
 # Built in both modes, so the Mac can run one for the client beside it.
-# Its characters live in a SQLite file of its own (server/src/store.h): the system's library, which
-# the macOS SDK has and the box has from libsqlite3-dev. Never the client's (PLAN.md foundation 11).
+# Its characters live in a SQLite file of its own (server/src/store.h): the system's library,
+# which the macOS SDK has and the box from libsqlite3-dev. Never the client's (foundation 11).
 find_package(SQLite3 REQUIRED)
 # CMake 4.3 renamed its target, and the box's is 4.2.
 if(TARGET SQLite3::SQLite3)

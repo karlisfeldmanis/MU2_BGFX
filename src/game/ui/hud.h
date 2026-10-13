@@ -12,7 +12,7 @@
 //   * the shield bar: 0.75 has no shield, and MU2's bar was Season 3's carried in on purpose;
 //     this sim is smaller and has no such pool, so the bar is not there to hide.
 //   * the ability bar: off in MU2 too (`AbilityShown`), because nothing in 0.75 spends it.
-//   * the buff strip and the skill fan: there are no skills yet (PLAN.md, their own sprint).
+//   * the buff strip and the skill fan: there are no skills yet (skills-dk.md §0).
 //
 // The keys under the boxes are this sprint's: potions on 1 to 4 and skills on Q W E R, decided
 // by the user on 2026-09-21. MuDream's plate paints the other arrangement, so its labels are

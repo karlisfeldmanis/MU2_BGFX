@@ -1,6 +1,7 @@
 # Apostle Devin's quest -- "The White Silence"
 
-Devias's quest giver, agreed with the user 2026-09-29, not yet in `src/sim/quests.cpp`. The same
+Devias's quest giver, agreed with the user 2026-09-29, built as `devin()` in `src/sim/quests.cpp`
+(f96a04b1). The same
 for every class (`natives` all three, no stranger line), repeatable every 12 hours like Marlon's
 and Peia's. Devin is MU's own (Priest Devin 406, Season 6's `Devias.cs:36`, 181,35 SouthEast;
 `Npc/devin.bmd`), not Version075's; his story is ours.

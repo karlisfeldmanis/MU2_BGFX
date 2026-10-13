@@ -137,7 +137,7 @@ def main():
             # This used to be a convention instead -- `<stem>.actions.glb` beside the model --
             # and it matched nothing at all: the library lives in another directory under
             # another stem, so every player, every NPC and the Skeleton Warrior arrived here
-            # with no clips and stood in bind pose. `docs/sprints/04-figures.census.md` §0.
+            # with no clips and stood in bind pose. Sprint 4's figure census, §0 (in git).
             named = (doc.get("extras") or {}).get("actions")
             if named:
                 for twin in (named, named[: -len(".res")] + ".glb" if

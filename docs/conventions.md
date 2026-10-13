@@ -231,7 +231,7 @@ than linear, and it carries MU's baked light in the same attribute. None of that
 model below, and bending the model to hold it would make every other material pay for the
 ground's shape. So `vs_ground`/`fs_ground` exist beside `vs_static`/`fs_static`, and the rule
 is that there are exactly these two — a third means the model was wrong and gets fixed, not
-extended. See `docs/sprints/02-the-ground.md`.
+extended. Sprint 2 (the ground) decided it.
 
 Everything else is one model, closed. Albedo, normal, ORM, emissive, glTF's two scalar
 factors over the ORM, and three flags: **cutout**, **two-sided**, **skinned**. The shader

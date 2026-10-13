@@ -518,7 +518,7 @@ shot or run.
 - `gates.cpp` and `realm_travel.cpp` comments, and tarkan-port's figures, still say 100x experience.
   It is 20x (`rules.h:449`).
 - `kundun-box.md:55-60` has the renewal tiers one step too high. WZ `gObjMonster.cpp:4196-4285` gives
-  Tantalos, Wheel, Golem and Crust +3, as `kundun-box-sources.md` says.
+  Tantalos, Wheel, Golem and Crust +3, as `kundun-box.md` §2 says.
 - MuMain `ZzzOpenData.cpp:2691` has no break after the Golden Stone Golem case, so the Blue Golem plays
   the Death Rider's animation speeds.
 - `GATE_BOXES_BY_MAP` still lacks maps 9 and 11, and `settleFound` still floods each row's landing in
@@ -889,7 +889,7 @@ with `drops_from_monsters`, window [L-15, L] as `src/sim/realm_items.cpp:1135, 1
   (`GetBoxPosition(MapNumber, 1, 1, 255, 255)`) in the post-2009 build, every
   `gGoldenStoneMonsterRegenTIme` **60 min** (`Gamemain.cpp:1264`). It drops **one Box of Kundun
   level 10 = +3** (14,11) to the top damage dealer, with the Golden Tantalos, Wheel and Crust
-  (`gObjMonster.cpp:4240-4250`). This is `docs/kundun-box-sources.md:230`'s "Golem Aida".
+  (`gObjMonster.cpp:4240-4250`). This is the Box of Kundun's sources' "Golem Aida" (`kundun-box.md`).
 - The branch is `#ifdef GAME_VERSION < G_V_S4_5` / `MAP_INDEX_RORENCIA` / `#else` /
   `MAP_INDEX_AIDA` (`EledoradoEvent.cpp:808-812`). `#ifdef` tests only that `GAME_VERSION` is
   defined, so a build that defines it puts the Golem on Lorencia; the intent (Aida from S4.5) is
@@ -995,9 +995,9 @@ The Bloody four (114-120) would sit above every band the game has.
 1. **`docs/kundun-box.md:55-60`'s renewal tiers are one step high.** WZ gives the Titan and Soldier
    level 8 (+1), the Lizard King, Vepar and Golden Devil 9 (+2), the Tantalos, Wheel, Stone Golem and
    Crust 10 (+3), the Satyros and Twintail 11 (+4), the Iron Knight and Napin 12 (+5)
-   (`WZ gObjMonster.cpp:4196-4285`). `docs/kundun-box-sources.md:226-232` has it right.
+   (`WZ gObjMonster.cpp:4196-4285`). The Box of Kundun's sources (`kundun-box.md`) had it right.
 2. **WZ's `#ifdef GAME_VERSION < G_V_S4_5`** (`EledoradoEvent.cpp:808, 853, 898`) is a preprocessor
-   slip: `#ifdef` reads only the name, so the "Lorencia line under an #ifdef" kundun-box-sources
+   slip: `#ifdef` reads only the name, so the "Lorencia line under an #ifdef" the box's sources
    §3.2 calls a test switch is this bug.
 3. **MuMain `ZzzOpenData.cpp:2691-2692`**: `case MONSTER_MODEL_GOLDEN_STONE_GOLEM` has no `break`,
    so the Blue Golem (and the Golden Stone Golem) take the Death Rider's play speeds (stand 0.15,

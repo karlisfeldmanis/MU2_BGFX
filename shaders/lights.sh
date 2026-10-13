@@ -1,5 +1,5 @@
 // The lamps: MU's point lights, read through a grid laid on the ground. Sprint 8a;
-// docs/sprints/08a-the-lamps.md has the design and what was measured.
+// Sprint 8a's notes (in git) have the design and what was measured.
 //
 // Every light the map holds sits in one small texture, a column each: row 0 its position and
 // reach, row 1 its colour times this frame's flicker. The lights never move, so which of them

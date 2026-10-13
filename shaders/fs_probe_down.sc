@@ -6,7 +6,7 @@ $input v_texcoord0
 //
 // Made here and not by bgfx's own mip generation, which on Metal runs when the NEXT view binds
 // a different frame buffer: a probe face is the last thing in a frame, and the filter read
-// whole faces of chain that had never been made. docs/sprints/08c-the-metal.md.
+// whole faces of chain that had never been made. Sprint 8c.
 #include "common.sh"
 #include "probe.sh"
 

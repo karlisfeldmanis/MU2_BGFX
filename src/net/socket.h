@@ -1,6 +1,6 @@
 #pragma once
 
-// TCP, as MU used, one stream per client (docs/server-plan.md phase 4). A thin, non-blocking
+// TCP, as MU used, one stream per client (server/README.md phase 4). A thin, non-blocking
 // wrapper over POSIX sockets, which the Mac and the Linux box both have: connect or listen,
 // accept, and move bytes in and out of a buffer without ever blocking the frame or the tick.
 // Framing is wire.h's.
@@ -41,7 +41,7 @@ public:
     void close();
 
     // What is still to go, and how long it has waited with nothing taken: a far end that stopped
-    // reading holds the server's bytes for him forever otherwise (docs/sprints/24-the-quiet-line.md).
+    // reading holds the server's bytes for him forever otherwise (sprint 24).
     size_t waiting() const { return pending_.size(); }
     double stalledSeconds() const;
 
@@ -59,7 +59,7 @@ struct Address {
     bool operator==(const Address& other) const;
 };
 
-// UDP, beside the stream (docs/sprints/24-the-quiet-line.md): the server's ticks a second way,
+// UDP, beside the stream (sprint 24): the server's ticks a second way,
 // each datagram carrying the last few, so one lost on the stream is not a stall. Non-blocking.
 // A datagram is at most kMostDatagram bytes, under any line's MTU.
 constexpr size_t kMostDatagram = 1200;

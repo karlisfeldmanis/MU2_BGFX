@@ -2,7 +2,7 @@
 
 Started 2026-10-04. The user: "lets find what else items can use 2nd class like weapons and
 armors, we decide which we make", then picked the early sets. The 2nd wings are
-docs/second-wings.md; the class change is docs/class-change-quest.md.
+docs/wings.md; the class change is docs/class-change-quest.md.
 
 ## What MU has
 

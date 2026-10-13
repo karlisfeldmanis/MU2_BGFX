@@ -108,7 +108,7 @@ uint32_t Play::discardFromVault(int cell) {
     return send({.kind = sim::Command::Kind::Discard, .a = cell, .b = 1}, asked);
 }
 
-// The satchel is the truth (docs/sprints/07-the-windows.md) and Realm::rearm already reads
+// The satchel is the truth (sprint 7) and Realm::rearm already reads
 // `hero.weapon` and `hero.shield` off it on every move that touches a worn slot; this is that
 // same rule kept for the picture. Without it the figure kept whatever `Figures::dress` gave
 // him at the door -- Realm::moveItem, "the satchel is the truth" -- and a weapon dragged out
@@ -748,7 +748,7 @@ void Play::answered(const sim::Happening& said) {
             // A Firecracker opens (sim::Realm::crack), and MU's firework starts over the tile
             // (CmdType 0; the user: "it has to be instant"). Zen goes up as a firework all the same
             // (the user, 2026-10-04). A Box of Luck or of Kundun opens with no show, as MU's do
-            // (docs/drop-boxes.md section 1). What it gives waits for the show to end
+            // (docs/kundun-box.md section 9.1). What it gives waits for the show to end
             // (Play::update); an item is held out of sight from now (heldIds_).
             const uint32_t id = cracked && cracked->a >= 0 ? uint32_t(cracked->a) : 0;
             const int64_t zen = cracked && cracked->a < 0 ? int64_t(cracked->c) : 0;

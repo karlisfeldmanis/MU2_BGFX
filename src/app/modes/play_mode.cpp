@@ -157,7 +157,7 @@ void PlayMode::readSave(Context& ctx) {
 
 void PlayMode::keep(Context& ctx) {
     if (savePath_.empty() || !world_.played().isOpen()) return;
-    // On a server the character is the server's (docs/sprints/18-the-wire.md): nothing played
+    // On a server the character is the server's (sprint 18): nothing played
     // there is written over the characters kept here -- but his windows' layout is the client's
     // own, kept beside the save (game::writeLayout).
     if (world_.played().remote()) {
@@ -1248,7 +1248,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             &world_);
     }
     // The lamps flicker, the fires burn, and the glows' levels go into the town before
-    // it is gathered, since each rides in its instance. docs/sprints/08a-the-lamps.md.
+    // it is gathered, since each rides in its instance. Sprint 8a.
     if (args.lampsOn) {
         world_.lamps().update(float(deltaSeconds), world_.town(), ctx.renderer, eye.target);
         // The Lost Tower's vents that caught this frame burn the wizard's Flame, whose light is

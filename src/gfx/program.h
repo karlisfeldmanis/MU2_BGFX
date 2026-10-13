@@ -4,7 +4,7 @@
 // both in an anonymous namespace, both identical -- and effects.cpp would have been the
 // third. The two older copies are deliberately left where they are for now rather than
 // churned in a sprint that is not about them; moving them onto this is a contained job with
-// an obvious acceptance test, which is exactly what PLAN.md hands to the junior.
+// an obvious acceptance test, which is exactly what the junior is handed (docs/README.md).
 #pragma once
 
 #include <string>

@@ -188,7 +188,7 @@ void Play::update(double seconds) {
     drankHealth_ = drankMana_ = 0;
     int stepped = 0;
     // On a server the ticks are the server's: what it sent is read here, and a tick is stepped
-    // only once it has arrived, never dropped (server-plan §3). Ticks the line held up arrive
+    // only once it has arrived, never dropped (server phase 3). Ticks the line held up arrive
     // together; stepped in one frame, as they were, everything walking jumped on by as many
     // ticks' ground (the user, 2026-10-08: "bodies jump while walking"). So a backlog is repaid
     // by running the clock faster, a quarter more for each tick owed past the first, up to

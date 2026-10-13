@@ -4,7 +4,7 @@ Written 2026-09-20, after a Budge Dragon's wings came out glossy. Not a sprint: 
 check, like `cookcheck` and the budget gate, that says whether every surface in this content
 wears the material it ought to.
 
-`PLAN.md`'s foundation 5 closed the material model — albedo, normal, ORM, emissive, and the
+Foundation 5 (`docs/architecture.md`) closed the material model — albedo, normal, ORM, emissive, and the
 three flags — and said MU2's material library would be mapped onto it at cook time. Nothing
 checked that the mapping happened, or that what it produced matched what the library asked
 for. `tools/matcheck.py` is that check.
@@ -12,7 +12,7 @@ for. `tools/matcheck.py` is that check.
     tools/matcheck.py                       # the gate: exits non-zero on a new failure
     tools/matcheck.py --strict              # every failure, baseline or not
     tools/matcheck.py --model BudgeDragon01 # one model, every slot, verbose
-    tools/matcheck.py --census docs/materials.census.md
+    tools/matcheck.py --census shots/materials.census.md
     tools/matcheck.py --record              # rewrite the baseline after a repair
 
 ## Why it takes two halves
@@ -49,7 +49,7 @@ order that matters instead of being rediscovered every time someone looks at a m
 | `MASK` with no holes in its alpha | a discard paid for in four passes that cuts nothing |
 | `OPAQUE` with holes in its alpha | whatever was meant to be cut out is drawn solid; this is how MU's foliage breaks |
 | cooked `.ktx` format per role | BC7-sRGB albedo, BC5 normal, BC7-linear ORM. An ORM read as sRGB turns roughness 0.62 into about 0.35 and makes the whole town glossy at once |
-| mips in every cooked texture | `PLAN.md`'s mip rule, which is not optional |
+| mips in every cooked texture | the mip rule (`docs/architecture.md`), which is not optional |
 
 **The land is checked through its own record**, not through material slots it does not have.
 It has its own shader, it blends two full material sets by a per-vertex weight, and its

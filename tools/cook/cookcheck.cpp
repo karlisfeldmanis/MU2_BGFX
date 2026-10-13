@@ -1,7 +1,7 @@
 // cookcheck: reads back what tools/cook.py wrote and says whether it is what it claims.
 //
 // The cook is the first thing in this engine that produces files nothing has loaded yet, and
-// PLAN.md's rule is that the author of a thing does not get to be the one who says it works.
+// A working rule (docs/README.md): the author of a thing is not the one who says it works.
 // This is not that review -- it is the mechanical half of it, the part that can be checked
 // without an eye: that every .ktx is the format and the chain it is supposed to be, that
 // every .mum's indices point inside its own vertices, and that the one rule the cook exists

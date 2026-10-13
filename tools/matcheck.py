@@ -2,7 +2,7 @@
 """matcheck: does every surface in this content wear the material it ought to?
 
 The engine's material model is closed -- albedo, normal, ORM, emissive, and the three flags
-(cutout, two-sided, skinned) -- and PLAN.md's foundation 5 says MU2's material library is
+(cutout, two-sided, skinned) -- and foundation 5 (architecture.md) says MU2's material library is
 mapped onto it at cook time. Nothing until now checked that the mapping happened, or that what
 it produced matches what the library asked for.
 
@@ -602,7 +602,7 @@ def check_cooked_textures(failures):
             fail(failures, name, name,
                  f"a {role} cooked as {got}, and the role demands {ROLE_FORMAT[role]}")
         if fields[10] <= 1:
-            fail(failures, name, name, "one mip level; PLAN.md's mip rule is not optional")
+            fail(failures, name, name, "one mip level; the mip rule is not optional")
     return checked
 
 
@@ -705,7 +705,7 @@ def read_rulings(library):
         elif "roughness" in rule and "metal" in rule:
             if not rule.get("why"):
                 problems.append(f"ruling {key} invents roughness and metal and gives no why; "
-                                "PLAN.md's rule is traced or marked")
+                                "the rule is traced or marked")
             rulings[key] = {"name": f"{rule['model']}/{rule['slot']} (invention)",
                             "roughness": float(rule["roughness"]),
                             "metallic": float(rule["metal"]),

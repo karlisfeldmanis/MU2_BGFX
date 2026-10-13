@@ -1,5 +1,5 @@
 // The worlds a character can stand in, one row each (the server's as much as the client's: the
-// server lands a player by it, docs/sprints/20-the-world-host.md): what the rest of the game used to assume
+// server lands a player by it, sprint 20): what the rest of the game used to assume
 // was Lorencia by writing 142,126 and "lorencia" wherever it needed a map.
 //
 // A row is only what no cooked file says. The land, the town and the rules are each world's

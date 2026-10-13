@@ -1,5 +1,5 @@
 // The reflection probe: a cube of the sky and the world round a point, filtered down its mips
-// so a roughness picks a level. Sprint 8c built it and docs/sprints/08c-the-metal.md measured
+// so a roughness picks a level. Sprint 8c built it and its notes (in git) measured
 // it at 0.3 ms; metal has nothing to reflect without it.
 #include "gfx/renderer.h"
 

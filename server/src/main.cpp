@@ -1,8 +1,8 @@
-// mu2_server: MU2_BGFX's server (docs/sprints/18-the-wire.md, server/README.md).
+// mu2_server: MU2_BGFX's server (sprint 18, server/README.md).
 //
 //   mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S] [--square-period S] [--map-cap N] [--speed N]
 //
-// **Connections to the same world share it** (docs/sprints/19-many-heroes.md): the first Hello
+// **Connections to the same world share it** (sprint 19): the first Hello
 // for a world raises its realm with him as its first player; each later one comes in by a Join
 // command at the next tick's start, and is welcomed once that tick has let him in -- with the
 // world's start, its last snapshot and every tick since that (at most a minute's, sprint 21),
@@ -10,8 +10,8 @@
 // server stands. A connection that goes leaves by a Leave command, and his character (sim::Kept)
 // is kept under his token in characters.db (store.h): a map change reconnects with it, and he
 // comes into the next world as he left the last -- or, next week, as he left the server
-// (docs/sprints/20-the-world-host.md). A world nobody is in is let go. Every
-// realm steps on one 20 Hz deadline: poll, step every world, flush (server-plan §3).
+// (sprint 20). A world nobody is in is let go. Every
+// realm steps on one 20 Hz deadline: poll, step every world, flush (phase 3).
 // **Where he comes into the next world is the server's:** a gate, a Tab trip, a way home or the
 // end of Blood Castle is read off what the realm said, and the Hello that follows is put down
 // there, whatever tile the client asked for (landingOf). And the store keeps which world he is
@@ -19,7 +19,7 @@
 // Each tick goes to everyone in the world -- the wall clock, the rain, the commands applied, each
 // with its player -- and every second its hash, which a mirror that disagrees says.
 //
-// **The character screen is the server's too** (phase 6, docs/sprints/23-the-account.md): a
+// **The character screen is the server's too** (phase 6, sprint 23): a
 // connection that opens with Account is answered with the account's characters (Roster), and may
 // then Create and Delete; each is answered with the Roster again. An account is a key the client
 // made once, and its characters are played only with it.

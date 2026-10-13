@@ -1,6 +1,6 @@
 // The cooked rules tables: what a breed is, where its nests are, and the map's attribute
 // grid. Written by tools/cook.py's cook_tables, which is the only thing that writes them, and
-// read here whole. No sqlite in the game (PLAN.md foundation 11), and no json either: this is
+// read here whole. No sqlite in the game (foundation 11), and no json either: this is
 // what a fight reads a hundred times a tick.
 //
 // What is NOT here: experience and drops. mu.db holds no such table -- MU has an expression

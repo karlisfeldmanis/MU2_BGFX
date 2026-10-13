@@ -1,6 +1,6 @@
 // The realm: one map, its bodies, and the fixed 20 Hz tick that moves them.
 //
-// This layer has never heard of the renderer (PLAN.md foundation 8). It speaks in two lists:
+// This layer has never heard of the renderer (foundation 8). It speaks in two lists:
 // requests in -- walk here, attack that -- and happenings out -- spawned, stepped, hit, died,
 // gained, levelled. The game draws the happenings; windows raise the requests. That is the
 // mirror rule kept without a wire, and it is what lets the whole thing run with no window at
@@ -264,7 +264,7 @@ struct Happening {
     uint32_t who = 0;
     uint32_t whom = 0;
     // Whom it is for: 0 for everyone who can see it, else the one player's body id -- what he
-    // gained, bought, was answered or was told by his quest giver (docs/server-plan.md phase 2).
+    // gained, bought, was answered or was told by his quest giver (server/README.md phase 2).
     // Every mirror holds every happening; a client shows another player's private ones as
     // nothing, or as the little the rest of the world would see.
     uint32_t audience = 0;
@@ -683,7 +683,7 @@ struct Body {
 // what is worn (Realm::rearm), so they are not here; health and mana ARE, because a hero who
 // quits hurt comes back hurt. Where he stands and his class go to raise(), which already
 // finds a free tile and dresses the class -- this is the rest, laid on top.
-// Go Back! (the user's, 2026-10-03; docs/sprints/22-go-back.md): a Town Portal read in the field
+// Go Back! (the user's, 2026-10-03; sprint 22): a Town Portal read in the field
 // of a dungeon of floors, or a Tab trip out of one, leaves a way back there for five minutes of
 // play. The realm's, so it goes with him between worlds and to the server's disk, and the server
 // sees where it takes him. 0 ticks left with a map set is the closed line, shown for three
@@ -759,7 +759,7 @@ struct HeroRecord {
     AutoDrink autoDrink;
 };
 
-// A character between worlds (docs/sprints/20-the-world-host.md): all of him the server keeps
+// A character between worlds (sprint 20): all of him the server keeps
 // when he leaves one realm and lays on him in the next -- the record a save keeps, his vault
 // and the Chaos Machine's box -- so a gate, a trip or a death sent home costs him nothing.
 struct Kept {
@@ -768,7 +768,7 @@ struct Kept {
     Machine machine;
 };
 
-// What the game asks the sim for. Nothing here is a skill, and that is on purpose: PLAN.md
+// What the game asks the sim for. Nothing here is a skill, and that is on purpose: skills-dk §0
 // decided the skill system is Diablo 3's shape -- learned permanently, four keys, real
 // cooldowns -- and the one thing this sprint owes it is not baking in MU's assumptions. An
 // attack is a request to fight a body, not a swing fired from an item, and the swing clock it
@@ -1478,10 +1478,10 @@ public:
         return me().summonSlot >= 0 ? &bodies_[size_t(me().summonSlot)] : nullptr;
     }
     const Body* find(uint32_t id) const;
-    // A body joining the raised realm -- the next player, in docs/server-plan.md phase 2 -- given
+    // A body joining the raised realm -- the next player, in server/README.md phase 2 -- given
     // the next id and found by find() at once. Between ticks only, never inside step(): it grows
     // `bodies_` under any Body& held there. Bodies never leave yet, so an index stays the body's
-    // own; despawn() waits for the client's figures to go by id (server-plan phase 1).
+    // own; despawn() waits for the client's figures to go by id (server phase 1).
     uint32_t spawn(Body body);
     // A body into the place `at` of one gone for good: the next id, and the old one found no
     // more. Between ticks only, as spawn.
@@ -1489,7 +1489,7 @@ public:
     // How long a player's place stands empty after he leaves before join() gives it to another:
     // what was in flight for him has landed, and every mirror's picture of him has gone.
     static constexpr int64_t kPlaceRest = 30 * 20;
-    // **Another hero into the raised world** (docs/server-plan.md phase 2): raised as raise()
+    // **Another hero into the raised world** (server/README.md phase 2): raised as raise()
     // raises the first -- class, level, the nearest standable tile to (column, row) -- with a
     // Player of his own and his own dormant summon body, both through spawn(). His id, or 0 when
     // he has nowhere to stand. Between ticks, or at a tick's start as a command.
@@ -1541,7 +1541,7 @@ public:
     const Satchel* satchelOf(uint32_t id) const;
     const Vault* vaultOf(uint32_t id) const;  // and his vault: the Broker's (realm_broker.cpp)
     const Body& hero() const { return mine(); }
-    // **The whole realm as bytes** (sim/realm_snapshot.cpp, docs/sprints/21-the-snapshot.md):
+    // **The whole realm as bytes** (sim/realm_snapshot.cpp, sprint 21):
     // every body, player, flight, die and clock, so a mirror can stand where this realm stands
     // without stepping its past. Restored onto a realm raised from the same tables; after it,
     // the two step alike tick for tick. Plain data is copied whole, so the same build on
@@ -2241,7 +2241,7 @@ private:
         bool drunk = false;  // a potion's, and not a kill's life (kKillLifeTicks)
     };
 
-    // ---- the players (docs/server-plan.md phase 2) --------------------------------------------
+    // ---- the players (server/README.md phase 2) --------------------------------------------
     // Everything that is one per hero: what he was told and wishes, what he carries, what he has
     // open, his quests and his summon. The rest of the realm is the world's. `body` is his index
     // in `bodies_`, which never moves (bodies do not leave). The realm is made with one, the

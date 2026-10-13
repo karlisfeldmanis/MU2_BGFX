@@ -2,8 +2,8 @@
 
 // The rules' own sin, cos, atan2 and hypot, the same bits on every machine.
 //
-// The server runs on Linux x86 and the client on this Mac's ARM, and from server-plan phase 4 the
-// client's mirror steps the same realm from the same commands (lockstep, docs/sprints/18-the-wire.md).
+// The server runs on Linux x86 and the client on this Mac's ARM, and from server phase 4 the
+// client's mirror steps the same realm from the same commands (lockstep, sprint 18).
 // That holds only if every number the rules compute comes out identical on both. The C library's
 // transcendental functions do not: Apple's libm and glibc round differently in the last bit, and
 // a seeded fight drifted by a tick over 15,000 ticks (server/README.md, 2026-10-07). So the rules

@@ -51,7 +51,7 @@ ALLOWED = {
     "content": {"core", "content"},
     "sim": {"core", "content", "sim"},
     "gfx": {"core", "content", "gfx"},
-    # The wire: TCP and the protocol (docs/sprints/18-the-wire.md). A message carries a Command.
+    # The wire: TCP and the protocol (sprint 18). A message carries a Command.
     "net": {"core", "content", "sim", "net"},
     # The client's line to the realm: the Link, LocalLink and RemoteLink (docs/order-plan.md
     # sprint C). Below game, so a bot links it without a renderer.
@@ -71,7 +71,7 @@ ALLOWED = {
 
 INCLUDE = re.compile(r'^\s*#\s*include\s+"([^"]+)"', re.M)
 
-# The client sees the realm and never changes it (docs/server-plan.md phase 1): a writable
+# The client sees the realm and never changes it (server/README.md phase 1): a writable
 # sim::Realm -- a reference, a pointer or one of its own -- in game/ or app/ is refused, except at
 # Play's realm and its `local_` (what will be the server's, each use a line to move) and the
 # scripted hand (game/headless.cpp), which plays the server's part in a run with no window. The

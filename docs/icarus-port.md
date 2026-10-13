@@ -585,7 +585,7 @@ WZ's `MAX_MAP` ladder the same way: 10, then 11 with Icarus, then 17 with Blood 
 **What this game already carries from Icarus's own patch**: the class change and its quest items
 (`docs/class-change-quest.md`), the second class's gear (`docs/second-class-gear.md`), the Horn of
 Dinorant (`source/items/pets/Helper04.json`), the 2nd wings and the Loch's Feather
-(`docs/second-wings.md`, `src/sim/items.h:185-192`), the Rune of Creation (`source/items/misc/Jewel22.json`,
+(`docs/wings.md`, `src/sim/items.h:185-192`), the Rune of Creation (`source/items/misc/Jewel22.json`,
 MU's Jewel of Creation repurposed) and the Golden Archer of the Box of Heaven event
 (`docs/golden-archer.md`). Icarus is the map they were all made for.
 
@@ -926,7 +926,7 @@ cannot give (tarkan-port §5, its open question 3). Open question 3.
   monsters of level 82 or over (`OM/VersionSeasonSix/Maps/Icarus.cs:30-37`), so not the Alquamos or the
   Mega Crust. OM 095d has no feather at all. **Ours** (`Quest04`, `drops_from_monsters: false`):
   1 in 500 from monsters of 60 or over in Atlans and the Lost Tower, "this game has no Icarus"
-  (`src/sim/items.h:185-192`; `docs/second-wings.md:30-31`). An Icarus port gives it MU's home back.
+  (`src/sim/items.h:185-192`; `docs/wings.md`, the 2nd wings' feather). An Icarus port gives it MU's home back.
 - **The Crest of Monarch** (13,14 level 1, the Dark Lord's cape) shares S6's second group
   (`OM/VersionSeasonSix/Maps/Icarus.cs:39-47`) and WZ's `m_bMonarchOnlyIcarus`
   (`gObjMonster.cpp:5465-5478`; WZD `commonserver.cfg:334`), with the Dark Horse and Dark Spirit souls
@@ -951,7 +951,7 @@ Life (72) does not drop from monsters here (`source/items/misc/Jewel03.json`).
 - **WZ only, 2009** (`ADD_GOLDEN_EVENT_RENEWAL_20090311`, Season 4.5): `RegenGoldenCrust` puts the
   Golden Crust (496) on a random open tile of the whole map, 1-255 (`a/wzsrc/EledoradoEvent.cpp:841-882`).
   It drops **one Box of Kundun +3** (14,11 level 10) to the top damage dealer (`WZ gObjMonster.cpp:4240-4252`).
-  `docs/kundun-box-sources.md:222-231` already lists it.
+  `docs/kundun-box.md` §2 already lists it.
 - Two traps in that code. The map line is `#ifdef GAME_VERSION < G_V_S4_5`, which tests only that
   `GAME_VERSION` is defined, so the Lorencia branch is the one compiled (`:852-857`). And on Icarus
   "1-255" draws on WZ's server grid (`gMSetBase.GetBoxPosition`), whose open east half (§1.3) the
@@ -1107,7 +1107,7 @@ plus the warp. Icarus touches no other world.
    "Giant Drakan", "Phoenix of Darkness" (`ref62.txt:92, 115, 127`).
 5. **WZ's Golden Crust regen compiles to Lorencia** (`EledoradoEvent.cpp:852-857`, an `#ifdef` with
    a comparison), and the other renewal regens carry the same `#ifdef` shape
-   (kundun-box-sources §3.2 noted the Lorencia lines). Not ours.
+   (the Box of Kundun's sources noted the Lorencia lines). Not ours.
 6. **`gObjSkylandBossSheildAttack` is dead code in WZ** (`gObjMonster.cpp:3153`, no caller in the
    files on disk).
 7. **`src/game/pets.h:43` says "Icarus is not in this game"**, and `src/sim/items.h:186` the same

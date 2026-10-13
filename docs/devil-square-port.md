@@ -27,14 +27,13 @@ Sources:
 
 ## Where it stands
 
-Nothing is built. What already exists:
-- Charon: model `source/npc/DevilNpc01`, his place in Noria (`tools/cook.py` Charon row, `source/world/noria/placements.json`),
-  his hand-light, `kCharon = 237`. He has no window.
-- Every square 1 and 2 breed is already cooked and in mu.db. mu.db has no spawns or gates for map 9.
-- The herald and travel card already announce Devil Square on OpenMU's clock and bands
-  (`src/game/ui/herald.cpp:70-74`, `src/game/ui/travel.cpp:69`).
-- The Firecracker already rolls 1 in 300 on map 9 (`src/sim/items.h`).
-- Item numbers 14/17, 14/18 and 14/19 (Devil's Eye, Devil's Key, Devil's Invitation) are free.
+**Built, squares 1 to 4**, 2026-10-10 and 11: Charon's door and the ticket (3e1e5793), square 1's
+waves (20ae6301), the result and the pay by WebZen's rank rule (e6b9522c), the run in the tracker
+as Blood Castle's (4170e967), square 2 and the server raising a square's run (6d529cf7), the bots
+playing it (cd4affe3), squares 3 and 4 with their four new monsters and the Metal Balrog
+(4df2c4de). Its run is `sim::SquareInstance` since 2026-10-12 (`sim/square_instance.cpp`,
+order-plan's Instance). The research below is the record it was built from; its "will" and
+"would" are the plan as it stood on 2026-10-10.
 
 ## The one thing to know first
 
@@ -112,7 +111,7 @@ Merged from all three parts. Each has a recommendation; nothing is built until t
 
 | # | decision | options | recommendation |
 |---|---|---|---|
-| 1 | **How to build it** (C 2.4) | (a) copy Blood Castle's code; (b) build structure-plan S1's `Instance` interface first; (c) move BC into `realm_castle.cpp`, share five small pieces (door + clock, home on death, held-down nests, tracker view, server instance worlds), Devil Square in its own files | **(c)**; `Instance` when a third event (Chaos Castle) comes |
+| 1 | **How to build it** (C 2.4) | (a) copy Blood Castle's code; (b) build the structure plan's S1 `Instance` interface first; (c) move BC into `realm_castle.cpp`, share five small pieces (door + clock, home on death, held-down nests, tracker view, server instance worlds), Devil Square in its own files | **(c)**; `Instance` when a third event (Chaos Castle) comes |
 | 2 | **Which squares** | 4 (0.97d), 1 first, or 5-7 too (12 new bodies from later maps) | engine for 4; ship square 1, then 2-3; square 4 after Cursed King's body |
 | 3 | **Level bands** | WZ 0.97d: 10-99, 100-179, 180-249, 250+ (MG level x1.5); OM: 15-130, 131-180, 181-230, 231-280 (MG own band) | **WZ**, and fix the herald, which shows OM's |
 | 4 | **Schedule** | WZ: play on odd hours, every 2 h; OM: every 4 h from midnight; hourly like BC (entry hh:25-30), offset so they never clash | WZ's every 2 h, as a `RealmConfig` setting like BC's |
@@ -982,7 +981,7 @@ Anything about Devil Square's rules here is from general MU knowledge and a quic
   (`server/src/main.cpp:1-20`, `net::stateHash`), so the run, the waves and the scores are worked
   out on the client too. The client must be told only **which square** (the Welcome) and **the
   square's clock** (`RealmConfig`). The snapshot must carry the new state as plain data.
-- Recommendation: **do not build structure-plan S1's full `Instance` interface first.** Move BC's
+- Recommendation: **do not build the structure plan's S1 `Instance` interface first.** Move BC's
   code out of `realm_move.cpp` into its own file, generalise the five small pieces both events
   share (the gatekeeper's door, home on death, the held-down nests, the event's tracker panel, the
   server's instance worlds), and write DS beside BC in its own files. Take S1 when a third event
@@ -1139,9 +1138,9 @@ in four boxes of one terrain.
 (`|| map == kDevilSquareMap`).
 - Cost: `realm.h` grows about 60 lines again (BC's share today is about 60 of its 2136). About
   ten hook sites get a second branch. The server's first-player limit is copied too.
-- Risk: low for BC. But it is what structure-plan section 1 calls the cause of the hubs' growth.
+- Risk: low for BC. But it is what the structure plan's section 1 calls the cause of the hubs' growth.
 
-**(b) Build S1's `Instance` interface first** (`docs/structure-plan.md` S1: `raise`, `step`,
+**(b) Build S1's `Instance` interface first** (the structure plan's S1, docs/order-plan.md §7: `raise`, `step`,
 `onKill`, `onDeath`, `allows`), move BC into it, then add DS.
 - The snapshot copies plain data only (`realm_snapshot.cpp:25-58`, `static_assert
   is_trivially_copyable`). A virtual `Instance` cannot be pod'd. Its state would have to be a
@@ -1170,7 +1169,7 @@ spends the largest effort before the smallest proof, on files another session ed
 
 **The hub honesty.** Even (c) touches `realm.h`, `realm.cpp` (step, talk, raise),
 `play_mode.cpp`, `desk.cpp`, `play.h`, `brain.h` (4689 lines) and `sim_test.cpp` (12233 lines).
-There is no size ratchet yet (structure-plan M7; `tools/sizecheck.py` does not exist), so nothing
+There was no size ratchet yet (M7; `tools/sizecheck.py` came on 2026-10-11), so nothing
 stops them growing. Keep each hub edit to registration. Put a new DS test in its own function, and
 in a new file if S7's split has landed by then.
 
@@ -1277,8 +1276,8 @@ statue rising, `realm_fight.cpp:1814-1821`). A wave is the same thing on a timet
   A second player who enters 3 minutes later joins a run 3 minutes old. That was fine for "one
   player alone", the decision of 2026-10-02.
 - DS is a ranked contest of several players. They should start together, as MU's do. The
-  server-plan already lists "the events on a shared schedule instead of each player's own
-  clock" (`docs/server-plan.md:299`).
+  the server plan listed "the events on a shared schedule instead of each player's own
+  clock" (its phase 7, `server/README.md`).
 - **Engine form**: the realm already gets the wall clock in every tick (`Tick::wallClock`,
   `main.cpp:1180-1182`, `Realm::setWallClock`). `squareTick` reads it: in the entry window the run
   is Waiting; at the window's close it records `startsAt = tick_` and runs on ticks from there.

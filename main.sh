@@ -24,7 +24,7 @@
 #   left click on a monster ...... go and fight it until one of you is dead
 #   right click .................. stop
 #
-# Your characters are the server's (docs/sprints/23-the-account.md): the screen asks for them with
+# Your characters are the server's (sprint 23): the screen asks for them with
 # your account's key, saves/account.key, made the first time, and makes and deletes them by asking.
 # A character this machine played there before accounts (saves/characters/Name.server) is claimed
 # onto it. Nothing about a character is written here but his windows' layout, saves/layouts/.

@@ -832,7 +832,7 @@ Args parseArgs(int argc, char** argv) {
     // The arena, likewise decided after the whole line is read, so that `--arena Lich --level 5`
     // and `--level 5 --arena Lich` both give a level-5 hero. It is a played run by definition --
     // the fight is the sim's -- so --play is implied rather than asked for a second time, and
-    // Lorencia is implied because it is the only world with a cook (docs/roadmap.md).
+    // Lorencia is implied because it is the only world with a cook (the roadmap of the time).
     if (!a.arena.empty()) {
         a.play = true;
         if (a.world.empty()) a.world = "lorencia";

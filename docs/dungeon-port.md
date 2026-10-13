@@ -804,7 +804,7 @@ Grep `WD_1DUNGEON`: 17 hits, every one below. No `WorldActive == 1` literal was 
 **Frame, light, sky**
 - **Clear/fog colour: black.** The Dungeon has no arm in `SetWorldClearColor`, so it takes the default `SetClearAndFogColor(0,0,0)` (`Scenes/SceneManager.cpp:402`). That makes the NoGround void (40% of the map) pure black.
 - No sky, no fog value of its own, no weather, no leaves or rain (no Dungeon arm in the weather code, no leaf sheets in World2).
-- **Terrain light** is TerrainLight.OZJ times the per-vertex normal term, as on every map (`devias-ground.md` §3). The baked light is the whole look: mean (108,108,140), blue-violet, with near-white pools at the torches. terrain.py now applies the bottom-up flip (`terrain.py` `baked_light`, `np.flipud`), and the flipped light lines up with the corridors in `prev_l1_attr_height_light.png`.
+- **Terrain light** is TerrainLight.OZJ times the per-vertex normal term, as on every map. The baked light is the whole look: mean (108,108,140), blue-violet, with near-white pools at the torches. terrain.py now applies the bottom-up flip (`terrain.py` `baked_light`, `np.flipud`), and the flipped light lines up with the corridors in `prev_l1_attr_height_light.png`.
 - **Torches are the only dynamic light.** 120 of them: type 41 (64 wall torches) and 42 (56 standing). `CreateFire(0,...)` (`Render/Effects/ZzzEffectFireLeave.cpp:61-83`) gives a BITMAP_FIRE particle every other frame, plus `AddTerrainLight(pos, (L, .6L, .4L), 4 tiles)` with L random 0.6-1.1 each frame, which flickers. The same fire as Lorencia's DoungeonGate/bonfire emitters.
 - No RenderObjectVisual arm for the Dungeon (`ZzzObject.cpp:2776-2864` covers 0, 2 and 3), so objects carry no sprites or glows.
 - No BlendMesh additive arm in CreateObject for the Dungeon (`:4655-4666` has only the operates).
@@ -849,13 +849,13 @@ Grep `WD_1DUNGEON`: 17 hits, every one below. No `WorldActive == 1` literal was 
 
 ### 3. Pipeline route (how Devias came in), and what changes for the Dungeon
 
-The chain is in `docs/content.md`:
+The chain is in `docs/cooker.md` ("The pipeline underneath"); today `./mu make` runs it:
 - import: `source/` via MuExtract, decode_texture.py and terrain.py
 - build: `tools/content.sh` / `tools/asset.sh` into `workshop/`
 - sync: `tools/sync.sh` into `assets/`
 - cook: `tools/cook.py` into `assets/cooked/`
 
-The exact Devias sequence is `docs/devias-port.md` §6 (stages 0-6) and `docs/devias-ground.md` §6. The Devias world files arrived with the subtree import (`c8f4d276 "The world starts from MU's own Lorencia, Noria and Devias"`). The later Devias commits on world/devias are townsfolk `c2e2e60c`, chasms `3a150323`/`596b4e86`, perches `a3e26b08` and hearths `f3683e56`.
+The exact Devias sequence is `docs/devias-port.md` §6 (stages 0-6). The Devias world files arrived with the subtree import (`c8f4d276 "The world starts from MU's own Lorencia, Noria and Devias"`). The later Devias commits on world/devias are townsfolk `c2e2e60c`, chasms `3a150323`/`596b4e86`, perches `a3e26b08` and hearths `f3683e56`.
 
 For the Dungeon (`D=../LEGACY/reference/MuMain/src/bin/Data`, run from MU2_BGFX/):
 

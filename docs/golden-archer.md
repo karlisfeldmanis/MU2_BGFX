@@ -1,9 +1,10 @@
 # The Golden Archer -- the Dungeon's first chain
 
-**First draft, 2026-09-30. Nothing here is agreed yet** except the giver: the user chose the Golden
-Archer on 2026-09-30, from the Lorencia NPCs MuMain draws that MU2_BGFX had not used yet. Not in
-`tools/cook.py` or `src/sim/quests.cpp` yet. The Dungeon's record (gates, floors, breeds) is
-`docs/dungeon-port.md`, and this page only builds a story over it.
+Written 2026-09-30, when the user chose the Golden Archer from the Lorencia NPCs MuMain draws that
+MU2_BGFX had not used yet. **Built**: his three links are built on `archer()` in
+`src/sim/quests.cpp`, with his voices (`golden_archer_1`, `_2`); since 2026-10-09 the chain pays
+one whole set, a piece or two a link, with a rune for every socket. His name is Aldric. The
+Dungeon's record (gates, floors, breeds) is `docs/dungeon-port.md`; this page builds a story over it.
 
 ## Who he is in MU
 

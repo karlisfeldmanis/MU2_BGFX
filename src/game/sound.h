@@ -54,7 +54,7 @@
 // Not the cooked `onset`: that is where a HIT lands in its file, a third of the way up this
 // one's swell, and skipping to it would cut off the swell the flares rise with.
 //
-// It is `game`, as PLAN.md's layers put sound. It holds no state the rules read.
+// It is `game`, as the layers put sound (docs/architecture.md). It holds no state the rules read.
 #pragma once
 
 #include <cstdint>

@@ -1,5 +1,5 @@
 // MU's refinement ladder: what a +3, +5, +7 or +9 item looks like. RenderPartObjectEffect
-// (MuMain ZzzObject.cpp:10284) as fs_shade and fs_stage both draw it. docs/sprints/14-the-shine.md.
+// (MuMain ZzzObject.cpp:10284) as fs_shade and fs_stage both draw it. Sprint 14.
 //
 // MuMain draws it as passes: the item once with its light multiplied by a tint, then the same
 // mesh again, added (GL_ONE, GL_ONE) and unlit, once with Chrome01 and at +9 once more with

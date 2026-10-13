@@ -1,6 +1,6 @@
 // The account's characters: who stands on the character screen's five pedestals.
 //
-// **The server's** (server-plan phase 6, docs/sprints/23-the-account.md): the screen asks for them
+// **The server's** (server phase 6, sprint 23): the screen asks for them
 // with the account's key (net::Account) and is answered with them (net::Roster), and a character
 // is made and deleted by asking (net::Create, net::Delete). Nothing about a character is kept on
 // this machine -- the user, 2026-10-08: "we are going away from local saves, we have to use

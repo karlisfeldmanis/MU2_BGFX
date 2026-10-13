@@ -137,7 +137,7 @@ these, beside its corpse, on the raid's stream:
 
 | Drop | Odds | Source |
 |---|---|---|
-| Box of Luck (14,11 level 0) | always | WZ gObjMonster.cpp:4107; drop-boxes.md §2. On its own it is weak: 20% an item (+0/+1, option always), else 3-6 piles of 1,000 Zen (Event.cpp:2311) |
+| Box of Luck (14,11 level 0) | always | WZ gObjMonster.cpp:4107; kundun-box.md §9.2. On its own it is weak: 20% an item (+0/+1, option always), else 3-6 piles of 1,000 Zen (Event.cpp:2311) |
 | a jewel (Bless, Soul, Life or Chaos, evenly) | 1 in 4 | **invention** |
 | a Rune of Creation (drawn at level 80, his class) | 1 in 10 | **invention** |
 

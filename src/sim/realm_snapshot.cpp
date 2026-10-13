@@ -1,5 +1,5 @@
 // The realm as bytes, and back (Realm::snapshot): what a server sends a newcomer instead of every
-// tick since the world was raised (docs/sprints/21-the-snapshot.md).
+// tick since the world was raised (sprint 21).
 //
 // One field list, serialize(), walked by a writer and by a reader, so the two cannot drift. Plain
 // data -- a Body, a Player, a flight, a die -- goes whole; the few containers go by count. A

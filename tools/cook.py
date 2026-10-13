@@ -14,7 +14,7 @@ reads whole, with no glTF parser and no buffer walk at load.
 
 The third part is the town itself: 2845 placements become one flat list, already in metres,
 already on the right axes, already sorted into the chunks a frame walks. Foundation 7 of
-PLAN.md says chunk bounds and each kind's range are settled once and not per frame, and the
+architecture.md says chunk bounds and each kind's range are settled once, not per frame, and the
 cook is the once.
 
     tools/cook.py --world lorencia [--only textures|meshes|placements|missiles|all] [--chunk 32]
@@ -36,7 +36,7 @@ The .mut format ("MU2 town"), version 2, little-endian:
     glows:     u32 count, then 20 bytes each -- u16 model, u16 spare, f32 low, f32 high,
                f32 flickerHz, f32 smoothSeconds
 
-Version 2 added the last two tables (sprint 8a, docs/sprints/08a-the-lamps.md). An emitter's
+Version 2 added the last two tables (sprint 8a). An emitter's
 `at` is in metres on our axes: in the model's own frame, unscaled -- MU turns the offset by the
 object's angle and never scales it -- or, for an anchor, in the world. `reach` is MU's range in
 tiles, which is metres. A glow is how an object's BlendMesh flickers, one per model, since MU
@@ -729,7 +729,7 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
         if flags & 16 and mode:
             flags |= 128
         # Mode bit 3: a glow's pulse at MU's WorldTime*0.001, four times slower than an item's
-        # 0.004 -- the 2nd wings' `_R` shells (ZzzObject.cpp:9937-9944, docs/second-wings.md).
+        # 0.004 -- the 2nd wings' `_R` shells (ZzzObject.cpp:9937-9944, docs/wings.md).
         if flags & 2 and ((material.get("extras") or {}).get("pulse_rate") == "slow"):
             mode |= 8
             flags |= 128
@@ -884,7 +884,7 @@ def cook_world_clip(model, path, out_path):
     Twenty of MU2's world objects carry a rig this way -- trees, the street lamp's arm, the
     hanging inn sign, curtains, carriages -- MoveObject's per-type `o->Velocity`, traced in
     ZzzObject.cpp. Cooked for all of them here, generically, so the file exists whichever one
-    a later pass plays; only the trees are wired into the renderer today (docs/sprints, and
+    a later pass plays; only the trees are wired into the renderer today (the sprints, and
     the render side is deliberately narrower than this).
     """
     document, binary = read_glb(path)
@@ -1139,7 +1139,7 @@ def cook_clips(document, binary, out_path, names, travel, holds, cloth=False):
         # MuMain plays it the same way (BMD::PlayAnimation wraps key 6 into key 0 and blends
         # across it), so the freeze is MU's own and closing it is OURS: asked for on
         # 2026-09-21 on the measured seam, under the rule that a visible MU pop may be closed
-        # as a marked departure. See docs/sprints/06-the-showing.md.
+        # as a marked departure. See sprint 6.
         #
         # For a clip whose body closes, the little drift left in the secondary bones is spread
         # across the cycle instead -- each key shifted by its share of the gap -- so the last
@@ -2185,7 +2185,7 @@ def cook_tables(world, out_dir):
     MU's own tile coordinates, un-negated: the negation into world z belongs to whoever draws
     them, not to the table (docs/conventions.md, "Space").
 
-    There is no experience table and no drop table here, and PLAN.md foundation 11 used to say
+    There is no experience table and no drop table here, and foundation 11 used to say
     there would be. mu.db holds neither, because MU has an expression per level rather than a
     list of numbers; both are code in src/sim/rules.cpp with their OpenMU lines beside them.
     """

@@ -13,7 +13,7 @@
 #
 # The chain from MU's own files to source/ -- MuExtract for .bmd, decode_texture.py for
 # .OZJ/.OZT, terrain.py for a World folder -- is the import step and is not re-run here: its
-# results are source/, which is kept. docs/content.md says how to run it for a new asset.
+# results are source/, which is kept. docs/cooker.md says how to run it for a new asset.
 
 set -uo pipefail
 

@@ -740,9 +740,9 @@ quest stands. In Tarkan that is the Mutant (72) and the Bloody Wolf (76); MuMain
   Chaos, Soul, Bless and Life jewels, the **Black Dragon set**, the Storm Crow (Atlans) set, Staff
   of Destruction, Saint Crossbow, Sword of Destruction; excellent: the four rings/pendants, Dragon,
   Guardian and Legendary sets, Legendary Staff, Aquagold and Bluewing, and so on. The 2003-08-05
-  launch notice lists the same (`docs/kundun-box-sources.md:303`).
+  launch notice lists the same (`docs/kundun-box.md` §8).
 - **2009 renewal** (Season 4.5): the Tantalos and Wheel both drop **+3** (`WZ gObjMonster.cpp:4240,
-  4278`; kundun-box-sources §3.2). **OM S6**: Golden Wheel 77 / 15 000, Golden Tantallos 90 /
+  4278`; the Box of Kundun's sources). **OM S6**: Golden Wheel 77 / 15 000, Golden Tantallos 90 /
   32 000 with Box +5 (`OM/VersionSeasonSix/InvasionMobsInitialization.cs:169-227`); invasion
   defaults 20 Wheels and 10 Tantalos on Tarkan (`OMGL/PlugIns/InvasionEvents/InvasionConfigurationDefaults.cs:32-33`).
   OM 095d has no golden Tarkan monster (`OM/Version095d/InvasionMobsInitialization.cs:32-201`).
@@ -1670,7 +1670,7 @@ Prices use `docs/budget.md`: 5.5 ms at 1080p; effects account 0.3 ms; shade 2.3;
   - sheets loaded at `MM/World/MapInfra/MapManager.cpp:143-145`. This is Tarkan's whole "sandstorm": a warm grain streaming sideways across the view, always on. (Karutan uses the same layer, `ZzzInterface.cpp:3690-3698`.)
 - **Engine today**: no full-screen overlay helper. But `gfx::Sprite` has `placed` quads with free corners and per-corner UVs and the `Additive` blend (`src/gfx/effects.h:33, 59-67`). Two placed quads set just inside the near plane, sized to the frustum and with UVs advanced by the clock, draw MU's two layers with no renderer change. Where they live: a small `game/world/sand_haze.{h,cpp}` opened on Tarkan, gathered into `gfx::Effects` after the world's sprites. Alternatively, it could be a present-view pass in gfx with a uniform (new code).
 - **Cost**: two full screens of additive overdraw, about **0.036 ms**, in the effects account. Sprites do not take `dusty()`; the haze is its own.
-- **Ours, a decision (4)**: blowing sand in the world as well, from Devias's storm mode in `Leaves` (`setStorm`, sideways streaks, docs/devias-blizzard.md pass 2) re-skinned with a sand mote and a calm/gust cycle from `Weather`. MU has none. It costs today's snow storm (the pool's 150-180 small streaks, well under 0.05 ms).
+- **Ours, a decision (4)**: blowing sand in the world as well, from Devias's storm mode in `Leaves` (`setStorm`, sideways streaks, docs/devias-port.md §5.5) re-skinned with a sand mote and a calm/gust cycle from `Weather`. MU has none. It costs today's snow storm (the pool's 150-180 small streaks, well under 0.05 ms).
 
 #### 3.2 Braziers and warm glows (has it: glows and lamps)
 
@@ -1908,7 +1908,7 @@ Monster sounds go in `sounds.json`. Check after each batch: `sqlite3 -readonly s
 12. **Loch's Feather**: add map 8 to `featherMap` (`items.h:192`, "rare drop, high maps"). *Recommend yes.*
 13. **NPCs**: WZ stands Thompson the Merchant (231), a Guard (240) and Amy (253) in the hall; OM 095d stands none. *Recommend WZ's Guard and Amy* (a potion seller at the far end of Atlans), and Thompson only if a merchant is wanted there.
 14. **Sword and Staff of Destruction**: build them as monster props only, or also as items. They are Season 1 items, outside the 0.75 table. *Recommend props now*; whether they drop belongs to the second-class gear list (docs/second-class-gear.md).
-15. **Gold Medal** (docs/drop-boxes.md:37): when medals are built, Tarkan is one of MU's three gold-medal maps (4, 7, 8). Nothing to decide now.
+15. **Gold Medal** (docs/kundun-box.md §9.2): when medals are built, Tarkan is one of MU's three gold-medal maps (4, 7, 8). Nothing to decide now.
 
 ---
 

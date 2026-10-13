@@ -52,7 +52,7 @@ constexpr double kLongFrame = 0.05;
 constexpr double kSettleSteady = 0.5;
 constexpr int kSettleOwed = 2;
 constexpr double kSettleMost = 6.0;
-// **The cushion** (Play::update, docs/sprints/24-the-quiet-line.md): ticks held in hand on a
+// **The cushion** (Play::update, sprint 24): ticks held in hand on a
 // server so a late one is not a stall. A stall longer than kStallFelt (half a frame at 60 fps;
 // shorter is not seen) counts; kStallsToCushion of them inside kStallWindow seconds hold one tick
 // more, up to kMostCushion; kCalmToLower seconds with none hold one fewer. While short of it the

@@ -57,7 +57,7 @@ struct Material {
     // MU's BlendMesh: drawn ADDED to the frame in the transparent pass, and nowhere else --
     // not in the sun's split, not in the prepass, not in the shade. The fourth flag the
     // closed model gained in sprint 8a, and it costs the walls nothing: a glow is its own
-    // program in its own view, not a variant of fs_shade. docs/sprints/08a-the-lamps.md.
+    // program in its own view, not a variant of fs_shade. Sprint 8a.
     bool glow = false;
     // Whether the albedo's metal is already reflectance. MU2's item bake lifts a metal's
     // painted texels onto the metal's own f0 and writes the result as `<item>_basecolor`
@@ -119,7 +119,7 @@ struct Material {
     // -pulse[1] -- the Gorgon's eye (Renderer::submitBatches).
     float pulse[2] = {0.0f, 1.0f};
     // And at MU's WorldTime*0.001 rather than 0.004: the 2nd wings' slow breath (the cooked
-    // scroll mode's bit 3, docs/second-wings.md).
+    // scroll mode's bit 3, docs/wings.md).
     bool slowPulse = false;
     // A glow MU keeps a levelled item's chrome and metal passes off: its NoneBlendMesh
     // (ZzzBMD.cpp:1425), the Staff of Resurrection's swirl cards and the Light Saber's beam.

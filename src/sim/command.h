@@ -1,7 +1,7 @@
 #pragma once
 
 // What a player asks of the realm that is not an order to walk or fight: a purchase, a vault
-// move, the Chaos Machine. docs/server-plan.md phase 1: every such ask is a Command, queued with
+// move, the Chaos Machine. server/README.md phase 1: every such ask is a Command, queued with
 // Realm::command and applied at the start of the next tick in the order it came, and its answer
 // is a happening (What::Answered) and not a return value. That is the shape a wire carries --
 // the client sends the command and hears the answer a round trip later -- and it is MU's own:
@@ -67,7 +67,7 @@ struct Command {
         EnterCastle,  // a: the castle
         HandInStaff,
         ClaimCastle,
-        // The world's door (docs/sprints/19-many-heroes.md), sent by the server and never by a
+        // The world's door (sprint 19), sent by the server and never by a
         // client: a player in (Realm::join; a: the Kin, b: the level, c: column, d: row; target
         // and zen: his weapon's and shield's arm index plus one, 0 for none, put in his hands as
         // sim::outfit does; answered on HIM with his body id) or out (Realm::depart; `player` is

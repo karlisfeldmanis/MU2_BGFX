@@ -89,7 +89,7 @@ private:
 };
 
 // Go Back! itself -- the way back, its five minutes, where it leads -- is the realm's
-// (sim::WayBack, docs/sprints/22-go-back.md): it goes with the character between worlds and to the
+// (sim::WayBack, sprint 22): it goes with the character between worlds and to the
 // server's disk. What is left here is the drawing's: the next world was come into by magic, and
 // is owed the warp's sound and ring when he is in it -- a Tab trip, a Town Portal to another map,
 // or Go Back! itself. The Application's and not a mode's, because a map change shuts this world's

@@ -1,7 +1,8 @@
 # Magic Gladiator port: the record and the plan
 
 Started 2026-10-06. The user: "we need to migrate also MG, we need to decide which runes he can
-use". Nothing is built yet. This page holds what is decided, what MU says, and the steps.
+use". Built 2026-10-07: his class, creation, skills, gear, body, wings and set (the Steps below
+say what of each). This page holds what is decided, what MU says, and the steps.
 
 Sources: OpenMU `ClassMagicGladiator.cs` and Version095d (the first version with MG; 0.75 has
 none, so every MG rule is past 0.75 and is read from 0.95d, then WebZen 1.00.93 for 0.97d);
@@ -109,7 +110,7 @@ damage (`0b00` / `0b10`), the 2nd wings' damage table. The model is MuMain's `MO
    bench's People tab as "Magic Gladiator, no armour".
 5. **Runes:** the decided rule above, along with `sim_test` rows that MG can set Meteor but not
    Hellfire.
-6. **Wings of Darkness:** cooked 2026-10-07 as ours 12/22, class `gladiator` (docs/second-wings.md's
+6. **Wings of Darkness:** cooked 2026-10-07 as ours 12/22, class `gladiator` (docs/wings.md's
    last section). Still to do once he exists: the 2nd wing mix's answer for him
    (sim/machine.cpp's class switch) and the `isSecond` gate in `sim::fits`, which he must pass
    without a class change. MU's violet chrome pass (game/shine.h kShineDarkness, Chrome02) and

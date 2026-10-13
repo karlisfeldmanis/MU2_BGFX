@@ -70,7 +70,7 @@ struct Lighting {
     // albedo, and this pass divides the diffuse by pi, so at the middle of a pool a lamp of
     // L = 1 then adds what MU's arithmetic adds -- the light a flat surface takes from the sun
     // at sun_strength pi. `glowStrength` multiplies every BlendMesh drawn in the transparent
-    // pass. Both are judged by eye; docs/sprints/08a-the-lamps.md.
+    // pass. Both are judged by eye; sprint 8a.
     float lampStrength = 3.14159265f;
     // How much of the lamps the sun's shadow takes away, 0..1. The lamps cast no shadow of their
     // own (shaders/lights.sh), so where a torch outshines the sun a body stood in its pool with
@@ -317,7 +317,7 @@ struct Lighting {
     // The reflection probe, sprint 8c: a cube round the player that metal and water reflect.
     // `probe` 0 puts the closed-form sky back, which is how its cost is priced. `probeView` N
     // draws the probe's mip N - 1 itself where the town is, the check that its faces are the right way
-    // round. docs/sprints/08c-the-metal.md.
+    // round. Sprint 8c.
     float probe = 1.0f;
     float probeView = 0.0f;
     // What a metal's painted albedo is multiplied by to give its reflectance. MU paints metal
@@ -333,7 +333,7 @@ struct Lighting {
     // the materials as they were. Only texels whose recipe says `weathering`, which tiled_maps
     // writes into the ORM's alpha. Ours, judged by eye.
     float weathering = 1.0f;
-    // The refinement shine (docs/sprints/14-the-shine.md). `refineStrength` multiplies the
+    // The refinement shine (sprint 14). `refineStrength` multiplies the
     // chrome and the star MuMain adds from +7 and +9; 1 is MuMain's own Bright, which it added
     // to an 8-bit frame that clipped, where this frame is HDR under exposure and bloom.
     // `refineTint` is how much of MuMain's tint the lit colour takes, 1 its own. Inventions,

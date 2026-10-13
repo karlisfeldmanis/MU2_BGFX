@@ -126,10 +126,10 @@ struct Args {
     // The world. A name under assets/world/; empty runs the model bench instead.
     std::string world;
     // `--server host:port` (or host, for the default port): play on that server instead of a
-    // realm in this process (docs/sprints/18-the-wire.md). Empty for single player.
+    // realm in this process (sprint 18). Empty for single player.
     std::string server;
     // `--lag MS` and `--jitter MS`: a test's line to that server, its round trip and its jitter
-    // each way held on this Mac (docs/sprints/24-the-quiet-line.md). 0 for the line as it is.
+    // each way held on this Mac (sprint 24). 0 for the line as it is.
     double lag = 0.0, jitter = 0.0;
     // `--invite A,B`: on a server, these players asked into his party every few seconds until
     // they are in -- a review run's party, from bots that take a player's invite (netbot).
@@ -139,7 +139,7 @@ struct Args {
     double loss = 0.0;
     bool udp = true;
     // The server's word for this character, from its last Welcome: carried across a map change so
-    // the next world brings him back whole (docs/sprints/20-the-world-host.md). 0 for a new one.
+    // the next world brings him back whole (sprint 20). 0 for a new one.
     uint64_t serverToken = 0;
     // The account's key the character screen played him with (game::accountKey), for every
     // world's Hello; empty for the bench's characters of no account (`--new`, the bots).
@@ -400,7 +400,7 @@ struct Args {
     // than alone -- how the grip is judged.
     bool bearer = false;
     // The plus every item on the viewer's subject is shown at, 0 to 15: the refinement shine,
-    // judged on the bench (docs/sprints/14-the-shine.md). 0 is the item as it is.
+    // judged on the bench (sprint 14). 0 is the item as it is.
     int plus = 0;
     // The viewer's time of day to open on: noon, dusk or night. sheets/time/<name>.json laid
     // over the lighting sheet; noon is the sheet alone. T walks them with the window open.

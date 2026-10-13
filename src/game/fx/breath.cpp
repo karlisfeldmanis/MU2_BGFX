@@ -28,7 +28,7 @@ constexpr int kFireFrames = 4;
 // Drawn through fs_flame, as the town's fires are, and not in the sheet's own colour: Fire01 is
 // dim red paint, and added as it stands into this HDR frame the breath was a faint orange haze
 // the tonemap all but lost. The flame program reads the sheet as a shape and colours it by heat,
-// which is the town's marked invention (docs/sprints/08b) applied to the same sheet. The
+// which is the town's marked invention (sprint 8b) applied to the same sheet. The
 // gains are the lamps' (lamps.cpp kCellGain): the four cells are painted 1x, 9x, 19x and 19x
 // darker than the first.
 constexpr float kCellGain[kFireFrames] = {1.0f, 8.8f, 19.0f, 19.0f};

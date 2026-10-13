@@ -1,6 +1,6 @@
 #pragma once
 
-// The server's characters on its disk (server-plan phase 3, docs/sprints/20-the-world-host.md):
+// The server's characters on its disk (server phase 3, sprint 20):
 // characters.db, a SQLite file of its own, apart from the content's mu.db. One row a character,
 // by the token his client keeps: the sim::Kept in the wire's own bytes (net::putKept) and the
 // world he is in -- the tile is the Kept's own column and row -- with his class, level and Zen
@@ -8,7 +8,7 @@
 //
 // Written when he leaves a world, every minute for whoever is in one, and when the server stops.
 //
-// **And whose he is** (phase 6, docs/sprints/23-the-account.md): the account's key, his name and
+// **And whose he is** (phase 6, sprint 23): the account's key, his name and
 // his pedestal. A character made on the character screen is a row before he has ever played --
 // layout 0 and no bytes, his class in `kin` -- and his first Hello makes him as a new character
 // is made. A deleted one is kept, stamped with when, and never read again. A row of no account
@@ -124,7 +124,7 @@ public:
 private:
     // The journal folded back into the file, on a thread of its own with its own connection, at
     // a lowered priority (checkpoints): what SQLite did inside whichever commit crossed 4 MB of
-    // journal, on the one thread every world ticks on (docs/sprints/25-the-clear-thread.md).
+    // journal, on the one thread every world ticks on (sprint 25).
     void checkpoints(std::string path);
 
     sqlite3* db_ = nullptr;

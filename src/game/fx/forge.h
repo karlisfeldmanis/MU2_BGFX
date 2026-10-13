@@ -33,7 +33,7 @@
 // Light 1, which in this HDR frame is a flat colour that never passes 1.0 and so never
 // blooms. They are drawn through fs_flame instead, the lamps' embers' program: the sheet's red
 // is the shape, and MU's own fade -- the mote's Light = LifeTime / 16 -- is read as heat, so a
-// spark is born white-hot and cools through orange to red as it dies. docs/sprints/08b.
+// spark is born white-hot and cools through orange to red as it dies. Sprint 8b.
 //
 // **The smoke and the embers are ours, all of them.** MuMain gives the smith no smoke at all
 // (the only smoke in Lorencia's MoveObject is none: its fires are CreateFire and nothing

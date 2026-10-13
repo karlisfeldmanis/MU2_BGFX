@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The size ratchet, enforced instead of reviewed.
 
-docs/order-plan.md, sprint A (structure-plan M7). The hub files -- play.cpp, realm.h, play.h,
+docs/order-plan.md, sprint A (M7). The hub files -- play.cpp, realm.h, play.h,
 desk.cpp, sim_test.cpp -- grow with every feature, because every feature has to register in
 them. Between 2026-10-06 and 2026-10-11 the files over 1500 lines went from 8 to 17. The cost
 lands on every reader: an agent pages a 3000-line file in chunks, needs a unique anchor in it
@@ -37,7 +37,7 @@ LIMITS = {".cpp": 800, ".py": 800, ".sh": 800, ".h": 1000}
 
 # Not held, by name, and each with the reason and the day it ends. tests/sim_test.cpp is where
 # every feature's test lands, so holding it would refuse every feature until it is split into
-# tests/sim/ (structure-plan S7, order-plan "alongside"); it is held again the day that lands.
+# tests/sim/ (S7, order-plan §7); it is held again the day that lands.
 EXEMPT = {"tests/sim_test.cpp"}
 
 

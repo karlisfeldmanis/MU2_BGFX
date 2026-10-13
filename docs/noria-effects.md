@@ -4,10 +4,6 @@ Everything MuMain does in Noria (WD_3NORIA) beyond drawing its objects, and how 
 Researched 2026-09-28 by reading every Noria-specific path in MuMain: the per-world switches, boids, leaves, sounds, NPCs, and the eight monsters OpenMU Version075 spawns there.
 Line numbers are in `LEGACY/reference/MuMain/src/source`.
 
-**Ownership, as of 2026-09-28:** the Noria cook session (mu2-bgfx-86) took items 1 and 6 below.
-Items 2–5 and 7 have no owner.
-Files the cook is editing, not to be touched from elsewhere: `source/world/noria/*.json`, `tools/cook*.py`, `sheets/worlds/noria.json`, and `src/game/world/{leaves,weather,maps}`.
-
 ## 1. Fidelity bug: Noria's glows are brighter and shimmer (taken by the cook)
 
 Every Noria recipe's `emitters_from` note says its glow breathes on `g_Luminosity`, which is `sin(WorldTime * 0.004) * 0.15 + 0.6` (SceneManager.cpp:1283): 0.45 to 0.75 at 0.637 Hz.

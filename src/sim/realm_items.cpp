@@ -2244,7 +2244,7 @@ Cracked Realm::crack(int slot) {
     return cracked;
 }
 
-// WebZen's EledoradoBoxOpenEven (Event.cpp:603, docs/kundun-box-sources.md 2.2) for a Box of
+// WebZen's EledoradoBoxOpenEven (Event.cpp:603, docs/kundun-box.md §3) for a Box of
 // Kundun, and OpenMU's Version095d Box of Luck, in their own order: whether an item comes, then
 // for the Kundun box whether it is excellent, which row, its level, the skill, the luck and the
 // option; else Zen into the purse.

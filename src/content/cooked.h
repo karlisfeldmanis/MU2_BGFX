@@ -2,7 +2,7 @@
 //
 // This header knows nothing about bgfx on purpose. Parsing a file and uploading buffers are
 // two jobs, and only the second needs a device: split, the first can be tested without a
-// window, which is what `tests/cooked_test.cpp` does and what foundation 9 of PLAN.md asks
+// window, which is what `tests/cooked_test.cpp` does and what foundation 9 (architecture.md) asks
 // of everything that can manage it. `content/mesh.cpp` does the upload from what comes out
 // of here.
 //
@@ -189,7 +189,7 @@ struct TownInstance {
 static_assert(sizeof(TownInstance) == 36, "the town instance layout drifted from the cook's");
 
 // One light a model carries, or one the world carries on its own (a hidden anchor). 48 bytes,
-// packed by the cook in exactly this order. docs/sprints/08a-the-lamps.md.
+// packed by the cook in exactly this order. Sprint 8a.
 // Vent: the Lost Tower's Flame vents, dark but for a burst (game/world/lamps.h).
 enum class EmitterKind : uint8_t {
     Lamp = 0, Fire = 1, Candle = 2, Window = 3, Smoke = 4, Vent = 5,

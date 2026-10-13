@@ -1,6 +1,6 @@
 # Recipes: what a new thing touches
 
-Written 2026-10-11 (`docs/order-plan.md` sprint A, structure-plan S11) from two audits of the
+Written 2026-10-11 (`docs/order-plan.md` sprint A, the structure plan's S11) from two audits of the
 tree at 84940c86. Each list is **every place a new thing of that kind has to be written today**,
 traced from a recent commit. It is the progress measure of the order plan: after each sprint
 the lists are counted again, and a list that does not shrink means the sprint missed.
@@ -162,7 +162,7 @@ Traced from 630833af (Tarkan's quests, 23 files).
 5. `sim_test`, and `--talk NAME --quest-ready` shots.
 
 **Today:** 9 code files plus 2 tools. **Goes to:** `source/quests/<giver>.json` with the sim
-keeping the logic (sprint I, structure-plan S10).
+keeping the logic (sprint I, S10 in `docs/order-plan.md` §7).
 
 ## A UI window
 

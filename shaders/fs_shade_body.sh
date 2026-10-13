@@ -176,7 +176,7 @@ void main()
 	// shields sit near 0.05 linear, where iron is 0.55, because the paint carries MU's own
 	// shading. Read straight, armour returns a twentieth of the town round it and reads as
 	// grey card. The sheet's metal_gain lifts the paint towards what the metal would reflect,
-	// keeping its engraving; invention, judged by eye. docs/sprints/08c-the-metal.md.
+	// keeping its engraving; invention, judged by eye. Sprint 8c.
 	//
 	// The gain stops where the brightest channel reaches one, rather than each channel clipping
 	// on its own. Clipped per channel, pale gold paint put its red and green both at one and

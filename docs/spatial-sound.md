@@ -1,7 +1,7 @@
 # Spatial sound: what ARPGs do, and the plan for ours
 
 Written 2026-09-24 on the user's asking how ARPGs make sound feel placed in the world and how
-this game can too. It is research and a plan. It has no sprint number: `docs/roadmap.md` holds
+this game can too. It is research and a plan. It has no sprint number: `docs/order-plan.md` holds
 the order, and this goes where the user puts it.
 
 ## State
@@ -237,7 +237,7 @@ waits for its assets. H comes last or never.
    beside the faithful model?
 2. **Ambience assets for G.** Source CC0 recordings, or wait for later MU clients'
    ambience?
-3. **Where this sits in `roadmap.md`.** It could go before sprint 9 or after 13.
+3. **Where this sits in `docs/order-plan.md`.**
 
 ## Sources
 

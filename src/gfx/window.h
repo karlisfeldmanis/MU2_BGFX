@@ -102,7 +102,7 @@ public:
     // they are, so the binding is written down once, here and in window.cpp.
     //   Inventory  I and V, MU's two
     //   Character  C
-    //   Potion1-4  1 to 4, the quick slots (sprint 7: skills keep Q W E R, PLAN.md)
+    //   Potion1-4  1 to 4, the quick slots (sprint 7: skills keep Q W E R, skills-dk §0)
     // Q W E R T are the skill bar, decided on 2026-09-21 and printed on the plate under its
     // five boxes; 1 to 5 are the potions. MuDream paints the other arrangement and the HUD
     // covers it. T was painted from the first day and did nothing until 2026-09-23, when the

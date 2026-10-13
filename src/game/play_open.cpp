@@ -49,7 +49,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     }
     // On a server (useServer): join it, and raise the mirror from its Welcome -- the seed, the
     // tile, the class and level, the hands and the config the server raised its realm with
-    // (docs/sprints/18-the-wire.md). Nothing below may then change the realm in a way the server
+    // (sprint 18). Nothing below may then change the realm in a way the server
     // does not: the nests are the table's own, and no arena, raid or roads are set up.
     std::string held = weapon, worn = shield;
     int castle = 0;  // the server's Blood Castle, set on the raise as it set it
@@ -249,7 +249,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     });
     if (!raised) return false;
     // On a shared world, everything that happened in it before he came, and the mirror turned to
-    // him: from here on `realm_.hero()` is his own player (docs/sprints/19-many-heroes.md).
+    // him: from here on `realm_.hero()` is his own player (sprint 19).
     if (link_) link_->catchUp();
     if (remote()) {
         const sim::Body& me = realm_.hero();

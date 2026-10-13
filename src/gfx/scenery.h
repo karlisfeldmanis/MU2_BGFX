@@ -7,7 +7,7 @@
 // main thread in Lorencia's town, measured. Here every static model's vertices and indices
 // sit in one buffer pair, and compute steps cull and write the draws:
 //
-// - **The sun's split** (sprint C4 of docs/perf-audit-2k.md): every placement's sphere
+// - **The sun's split** (C4 in docs/budget.md): every placement's sphere
 //   tested against the split, the ones inside copied into their model's run of `out`, one
 //   indirect draw a solid part. Two submits, one and two sided.
 // - **The camera's prepass and shade**: a solid part's three sheets (albedo, normal, ORM) are

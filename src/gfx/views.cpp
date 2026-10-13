@@ -132,7 +132,7 @@ double accountBudgetMs(Account a) {
         // expected to cost nothing most frames and little on the ones it does. Priced before
         // this line claims a number for it, per the plan's own rule.
         case AccountPresent: return 0.5;
-        // Sprint 8c, opened against its measurement: docs/sprints/08c-the-metal.md.
+        // Sprint 8c, opened against its measurement (docs/budget.md).
         case AccountProbe: return 0.3;
         default: return 0.0;
     }

@@ -1,7 +1,7 @@
 // The point lights, and the grid the shade pass reads them out of: the town's static lamps
 // and fires laid once (setPointLights), their levels flickered per frame
 // (setPointLightLevels), and what burns and MOVES handed over every frame including the frame
-// it becomes none (setTransientLights). docs/sprints/08a-the-lamps.md.
+// it becomes none (setTransientLights). Sprint 8a.
 #include "gfx/renderer.h"
 
 #include <bx/math.h>

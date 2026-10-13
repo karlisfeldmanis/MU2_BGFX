@@ -3,7 +3,7 @@
 // A new character's outfitting once his realm is raised: the points his starting weapon asks
 // spent for it, and the weapon and shield put in his hands. Here, in the rules, because the
 // client's mirror and the server must do exactly the same to the same realm before the first
-// tick (docs/sprints/18-the-wire.md); it was Play::open's until 2026-10-07.
+// tick (sprint 18); it was Play::open's until 2026-10-07.
 
 #include <cstdint>
 #include <functional>
@@ -56,7 +56,7 @@ const char* cradleWeapon(Kin kin);
 // The elf is born in Noria, every other class in Lorencia (the user's, game/roster.cpp).
 const char* homeWorld(Kin kin);
 
-// The account's rules for making one, the server's and the character screen's alike (server-plan
+// The account's rules for making one, the server's and the character screen's alike (server
 // phase 6): five characters an account, and a name of letters and digits, four to ten of them --
 // OpenMU's `^[a-zA-Z0-9]{3,10}$` with MuMain's "Type more than 4 letters" -- unique on the server
 // without regard to case. The Magic Gladiator only once a character of the account has reached

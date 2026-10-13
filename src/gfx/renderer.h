@@ -53,7 +53,7 @@ struct Drawable {
     // The item's plus, 0 to 15, which the shade and stage passes turn into MU's refinement
     // ladder: the pulsing tint at +3 and +5, the chrome at +7, the chrome and the star at +9.
     // Per instance, so one mesh's instances can each carry their own. 0 for everything that
-    // is not an item. docs/sprints/14-the-shine.md.
+    // is not an item. Sprint 14.
     int refine = 0;
     // The colour its chrome is added in, MuMain's PartObjectColor; game::shineOf says which.
     // Packed into one float of the instance at hundredths (packRefineColour).
@@ -187,7 +187,7 @@ struct GrassField {
 };
 
 // One point light, in world metres. The renderer knows nothing of lamps, torches or fires:
-// what burns, and how it flickers, is `game`'s. docs/sprints/08a-the-lamps.md.
+// what burns, and how it flickers, is `game`'s. Sprint 8a.
 struct PointLight {
     float position[3] = {0.0f, 0.0f, 0.0f};
     // Metres on the GROUND: the light is zero this far out, measured flat. lights.sh.
@@ -246,7 +246,7 @@ public:
     // at 0 on the first frame, so --fixed-dt reaches the water like it reaches everything else.
     void setClock(float seconds) { elapsed_ = seconds; }
     // The refinement shine's two sheets, Chrome01 and Shiny01, out of the showing table
-    // (docs/sprints/14-the-shine.md). Without them a refined item still takes its tint and adds
+    // (sprint 14). Without them a refined item still takes its tint and adds
     // nothing on top.
     // `chrome2` is Chrome02, the excellent pass's; without it an excellent thing adds nothing.
     void setShine(bgfx::TextureHandle chrome, bgfx::TextureHandle shiny,
@@ -278,7 +278,7 @@ public:
     // `casters` is what the sun's split draws, and it is a SEPARATE list on purpose. A
     // chunk behind the camera still casts into the frame, so culling the shadow pass with
     // the camera's frustum removes the shadow of whatever is just off screen -- the bug
-    // foundation 7 of PLAN.md names. Null means the camera's own list casts, which is right
+    // foundation 7 (architecture.md) names. Null means the camera's own list casts, which is right
     // only when nothing was culled out of it.
     // `grass` may be null, and is null on every bench and every stage: a field of blades is
     // the town's, not a subject's.
@@ -726,7 +726,7 @@ private:
     // A cube round the player: one face drawn a frame with the shade program, the sky behind
     // it, and its chain; the frame after all six are new, the prefiltered copy a mip of
     // roughness at a time. Seven turns a cycle, on every other frame. The
-    // shade pass reads the copy the next frame. docs/sprints/08c-the-metal.md.
+    // shade pass reads the copy the next frame. Sprint 8c.
     bool createProbe(const std::string& shaderDir);
     void destroyProbe();
     void drawProbe(const Camera& camera, const content::Ground* ground,

@@ -22,7 +22,7 @@ namespace mu::sim {
 // had no cooldowns and no reason to press anything but the attack.
 //
 // So the knight takes mana off what he hits. **invention**, and it is Diablo 3's shape, which is
-// what PLAN.md chose for this bar: the basic attack is the generator and the skills are the
+// what skills-dk §0 chose for this bar: the basic attack is the generator and the skills are the
 // spenders, so a fight has a rhythm of its own -- swing, swing, spend -- rather than a bar that
 // empties in three presses and then plays like a game with no skills in it. A LANDED swing only,
 // and never a skill's own blow: hitting is what pays, and a skill does not pay for the next one.

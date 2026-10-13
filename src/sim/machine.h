@@ -99,7 +99,7 @@ enum class Recipe : int8_t {
 };
 
 // **2nd Level Wings** (WebZen 1.00.93 MixSystem.cpp WingChaosMix:2470-2990, OpenMU's number 7;
-// docs/second-wings.md): one 1st level wing, one Jewel of Chaos and one Loch's Feather, and any
+// docs/wings.md): one 1st level wing, one Jewel of Chaos and one Loch's Feather, and any
 // excellent things at +4 or more, nothing else. The rate is the wing's price over 4,000,000 and
 // the excellent things' over 40,000 (:2715-2716), at most 100 (:2736); 5,000,000 Zen (:2690).
 // Success is the hero's class's 2nd wing at +0 (ours, as the 1st wings': WebZen's

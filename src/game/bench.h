@@ -81,7 +81,7 @@ public:
     void setTurn(float degrees) { turn_ = degrees * 3.14159265f / 180.0f; }
     // Every item on the subject at +`plus`, as the game would draw it (game::shineOf), found
     // in `items` by the mesh's own name. The bare body's parts are not items and stay as they
-    // are. --plus; docs/sprints/14-the-shine.md.
+    // are. --plus; sprint 14.
     void setPlus(int plus, const std::vector<content::ItemRow>& items);
     // The Armour sets tab's suit as a complete set, for its light (game/fx/set_shine.h): false
     // on every other subject or below +9. `plus` the asked one, `feet` where it stands,

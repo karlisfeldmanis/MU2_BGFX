@@ -7,7 +7,7 @@
 //   * the chrome's colour is PartObjectColor's (:6536): per model for some weapons and
 //     shields, per set index for the armour, and orange for everything else.
 // Both are MuMain's Season 6 tables cut to the rows that exist in this game's item table.
-// docs/sprints/14-the-shine.md.
+// Sprint 14.
 #pragma once
 
 #include <string>

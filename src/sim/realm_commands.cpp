@@ -1,6 +1,6 @@
 // The windows' asks, applied at the start of a tick (sim/command.h). Each runs the realm's own
 // method for it -- the rules are where they were -- and its answer is said as What::Answered, in
-// the order the asks came. docs/server-plan.md phase 1.
+// the order the asks came. server/README.md phase 1.
 #include "sim/realm.h"
 #include "sim/broker.h"
 

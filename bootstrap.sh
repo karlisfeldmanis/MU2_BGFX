@@ -102,7 +102,7 @@ if [ ! -f extern/Amarante-Regular.ttf ]; then
   echo "$AMARANTE_SHA256  extern/Amarante-Regular.ttf" | shasum -a 256 -c - || { rm -f extern/Amarante-Regular.ttf; exit 1; }
 fi
 
-# glfw is the one PLAN.md point 12 names that is NOT pinned here, and saying so is better
+# glfw is the one foundation 12 (architecture.md) names that is NOT pinned here; saying so is better
 # than the file implying otherwise: it comes from Homebrew, as a built dylib, and pinning it
 # would mean vendoring and building it. It opens a window and reads a mouse; it is not in the
 # frame and it does not move a measurement the way bgfx does. If it ever does, this is the

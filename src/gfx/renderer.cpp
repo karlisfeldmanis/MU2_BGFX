@@ -1127,7 +1127,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             // was lit in full -- two or three material sets, the PCSS lookup, the lamp loop -- and
             // then covered. Drawn second, it fails EQUAL wherever the grass wrote a nearer depth
             // on all four samples, and those pixels showed grass in any case: the same picture
-            // (docs/perf-audit-2k.md, A3).
+            // (docs/budget.md, the 2K audit's A3).
             bgfx::setViewMode(ViewShade, bgfx::ViewMode::Sequential);
             // The grass, and it is the one thing in this view that does not test EQUAL.
             //
@@ -1211,7 +1211,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             if (total > 0 && bgfx::isValid(glowProgram_) && bgfx::isValid(skinnedGlowProgram_)) {
                 // LEQUAL, as MU's GL draws its BlendMesh: a glow shell modelled on its own base
                 // -- the 2nd wings' `_R` meshes, the same vertices again -- lies at exactly the
-                // depth the base wrote and failed LESS on every pixel (docs/second-wings.md).
+                // depth the base wrote and failed LESS on every pixel (docs/wings.md).
                 const uint64_t glowState = BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_LEQUAL |
                                            BGFX_STATE_BLEND_ADD;
                 submitBatches(ViewTransparent, glowProgram_, skinnedGlowProgram_, batches_, idb,
