@@ -104,6 +104,22 @@ Steps 1 and 2 are a session together; steps 3-5 are another.
 
 ## What a player is given
 
+**Built 2026-10-13.** `./mu dist macos` makes `dist/macos/MU2.app`:
+- **Size:** 1.51 GB. The 2.57 GB the game reads compresses to 1.50 GB in 17 packs.
+- **Proof:** all 6166 files read back byte for byte through the game's own reader.
+- **The answer to the stale question:** `tools/mu/manifest.py --stale` proves 1.34 GB of cooked
+  textures are named by nothing. They are outputs of older cooks that the cook never deletes, and
+  the packs leave them out. They still sit in `assets/`.
+- **Still to do:**
+  - build `dist` from a clean checkout of a commit, not the working tree, so another session's
+    half-done edits can't ship;
+  - a Developer ID and notarisation, so another Mac opens it without a warning;
+  - an x86_64 slice for Intel Macs;
+  - a play-through by the user on the live server, whose protocol must match the client's.
+
+The sections below are the design as planned; where they differ from what was built, the code
+is right: `core/pack.h`, `core/paths.cpp`, `src/main.cpp`, `tools/mu/dist.py`.
+
 `./mu dist macos` writes `dist/macos/MU2.app`, and later `MU2.dmg`. Nothing outside the bundle is
 read. Nothing of `content/`, `out/workshop/`, the glb sources or the studio is in it.
 
