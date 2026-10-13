@@ -47,8 +47,11 @@ bool fileExists(const std::string& path) {
 
 int64_t fileModified(const std::string& path) {
     struct stat st;
-    if (::stat(path.c_str(), &st) != 0) return 0;
-    return int64_t(st.st_mtime);
+    if (::stat(path.c_str(), &st) == 0) return int64_t(st.st_mtime);
+    // A file in a pack is there and never changes: one stamp, forever. Not 0, which every
+    // watcher reads as "no such file" -- the player's app ran without its lighting sheet so,
+    // and with it the tonemap, the mist and the grade (the user, 2026-10-14).
+    return g_source && g_source->has(path) ? 1 : 0;
 }
 
 std::vector<std::string> listFiles(const std::string& dir) {

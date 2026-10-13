@@ -25,8 +25,8 @@ bool fileExists(const std::string& path);
 // The leaves of the files directly in `dir`, the packs' and the disk's, sorted.
 std::vector<std::string> listFiles(const std::string& dir);
 
-// The seconds-since-epoch of a file's last write, or 0 (and 0 for a file in a pack, which is
-// never written). A sheet is reloaded when this moves.
+// The seconds-since-epoch of a file's last write, or 0 when there is no such file. A file in a
+// pack is never written, and is always 1. A sheet is reloaded when this moves.
 int64_t fileModified(const std::string& path);
 
 // The directory a path is in, without its trailing slash.
