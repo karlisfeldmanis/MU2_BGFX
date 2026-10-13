@@ -16,6 +16,7 @@
 #include "content/showing.h"
 #include "core/files.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -321,8 +322,10 @@ int main() {
                             clips.clips.size(), clips.bones,
                             clips.rows.size() / (clips.bones * 7));
                 check(clips.bones == 60, "the player rig is 60 bones");
-                // MU's 283 actions and our run, action284 (tools/mixamo.py's OURS, 2026-10-01).
-                check(clips.clips.size() == 284, "the player library is 284 clips, MU's and our run");
+                // MU's 283 actions and our two (tools/mixamo.py's OURS): the run, action284
+                // (2026-10-01), and the stand off a safe zone, action285 (2026-10-09).
+                check(clips.clips.size() == 285,
+                      "the player library is 285 clips, MU's, our run and our stand");
                 // Every clip's frames lie inside the pose array, which is the one thing a
                 // player will index with without asking again.
                 for (const mu::content::CookedClip& clip : clips.clips) {
@@ -463,8 +466,12 @@ int main() {
                 }
                 ++meshes;
                 missileTriangles += mesh.indices.size() / 3;
-                check(mesh.parts.size() == one.parts.size(),
-                      one.name + "'s mesh has one part per row part");
+                // A row may carry a sheet with no faces in the mesh, for its effect's own code to
+                // draw (Death Stab's streaks and flare, game/fx/deathstab.cpp): the cook leaves
+                // it out of the .mum (24a9f862). So the mesh has at most the row's parts, and
+                // each part it has is the row's part with its sheet.
+                check(!mesh.parts.empty() && mesh.parts.size() <= one.parts.size(),
+                      one.name + "'s mesh draws some of the row's parts and no others");
                 check(!mesh.isSkinned(), one.name + " is rigid: MU animates these by keys");
                 // Metres, not MU units. The whole conversion happens in the cook, so the
                 // largest thing thrown here is a meteor a metre and a half across and not a
@@ -473,19 +480,24 @@ int main() {
                     check(mesh.max[axis] - mesh.min[axis] < 10.0f,
                           one.name + " is in metres, as docs/conventions.md asks of a mesh");
                 }
-                for (size_t p = 0; p < mesh.parts.size() && p < one.parts.size(); ++p) {
+                for (size_t p = 0; p < mesh.parts.size(); ++p) {
                     const mu::content::CookedMaterial& material =
                         mesh.materials[mesh.parts[p].material];
+                    const auto row = std::find_if(one.parts.begin(), one.parts.end(),
+                        [&](const auto& part) { return part.sheet == material.albedo; });
+                    if (row == one.parts.end()) {
+                        check(false, one.name + "'s part " + std::to_string(p) +
+                                         " wears a sheet of the row's (" + material.albedo + ")");
+                        continue;
+                    }
                     // The blend the table states and the flag the renderer reads are the
                     // same fact written twice, and they must not drift apart.
-                    check(material.glow == one.parts[p].additive,
+                    check(material.glow == row->additive,
                           one.name + "'s part " + std::to_string(p) +
                               " agrees about being additive");
-                    check(material.albedo == one.parts[p].sheet,
-                          one.name + "'s part " + std::to_string(p) + " wears the row's sheet");
                     check(!mu::core::readFile(assets + "/" + material.albedo).empty(),
                           one.name + "'s sheet is cooked (" + material.albedo + ")");
-                    if (one.parts[p].additive) ++additive;
+                    if (row->additive) ++additive;
                 }
             }
             std::printf("  %zu missiles, %zu meshes parsed, %zu triangles, %zu additive parts\n",
