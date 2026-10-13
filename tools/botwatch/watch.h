@@ -1,7 +1,7 @@
 // **What botwatch reads** (tools/botwatch/botwatch.cpp): a netbot run's logs, the processes
 // on its port, and -- when botwatch starts the run itself -- the server and netbot it started.
 //
-// Everything here is read on botwatch's poll thread every two seconds and handed to the window
+// Everything here is read on botwatch's poll thread twice a second and handed to the window
 // as one Snapshot under a lock; the window draws the last one and never waits on a file or `ps`.
 #pragma once
 
@@ -21,6 +21,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -39,8 +40,23 @@ struct Bot {
     std::string name, kin, map, doing, hp;
     int level = 1, kills = 0, deaths = 0, potions = 0;
     int score = 0;  // his gear score, off his sheet (Bot::score)
+    // Off his sheet's gear too (the user, 2026-10-13: "how many chars has wings 1nd and 2nd and
+    // how many has dyno", "how many players wear excelent items"): his wings' tier, 0 for none;
+    // whether he rides a Dinorant; how many worn pieces carry an excellent option.
+    int wings = 0;
+    bool dinorant = false;
+    int excellent = 0;
     int64_t zen = 0;
-    int clock = 0;  // his game clock, seconds
+    int clock = 0;  // his game clock, seconds, summed over the run's restarts
+    // His log's own clock restarts at 0:00 when the run is resumed (botwatch-run-resumes): the
+    // clock before it, carried, and his last line's, to see one. Else the game time stood at the
+    // first stretch's end and the speed read 0 ("why speed meter is not wroking?", 2026-10-13).
+    int carried = 0, lastAt = 0;
+    int eventTier = 0;  // the castle or square he last went into (its entry line)
+    // His guild and whether he is its master, off netbot --guilds' line (bots/guild/NAME.who;
+    // the user, 2026-10-13: "show guild row in bots list").
+    std::string guild;
+    bool master = false;
 };
 
 struct Line {
@@ -82,14 +98,40 @@ inline std::string detailsOf(const sim::Held& h) {
     return out;
 }
 
+// The tables a link's group and number are looked up in, set by botwatch before the poll starts
+// (a link carries MU's group and number, never a row: unresolved, every Broker card had no row).
+inline const mu::content::Tables* g_linkTables = nullptr;
+
 // An item as netbot writes it: a link ("{i:...|Label}", sim::itemLink) since 2026-10-12, its plain
-// name before. The name, and what the link says of it.
+// name before. The name, and what the link says of it, its row found in g_linkTables.
 inline std::string itemOf(const std::string& text, sim::Held* held) {
     const std::vector<sim::ItemLink> links = sim::findLinks(text);
     if (links.empty()) return text;
     *held = links.front().held;
+    if (g_linkTables && held->item < 0) {
+        for (size_t i = 0; i < g_linkTables->items.size(); ++i) {
+            const mu::content::ItemRow& row = g_linkTables->items[i];
+            if (row.group == links.front().group && row.number == links.front().number) {
+                held->item = int32_t(i);
+                break;
+            }
+        }
+    }
     return links.front().label;
 }
+
+// One Blood Castle or Devil Square run the bots went into (the user, 2026-10-13: "Events tab ... latest
+// events where bots participated and how many"): its entries within kEventWindow of each other,
+// by the bots' clocks summed over restarts, and how each came out.
+struct EventRun {
+    int at = 0;            // the first entry's clock
+    bool castle = true;    // Blood Castle, else Devil Square
+    int tier = 0;
+    std::vector<std::string> bots;
+    std::map<std::string, std::string> result;  // by bot: "won", "over", "rank 2 of 4, 1,240 exp"
+    bool won = false;      // a castle won by any of them
+};
+constexpr int kEventWindow = 15 * 60;
 
 struct Process {
     int pid = 0;
@@ -113,6 +155,7 @@ struct Snapshot {
     std::vector<Offer> offers;  // up now, newest first
     std::vector<Process> processes;
     std::vector<Sample> samples;
+    std::vector<EventRun> events;  // newest first
     int listed = 0, bought = 0, visits = 0, empty = 0;
     int64_t spent = 0;
     int slowLastMinute = 0;
@@ -177,7 +220,7 @@ public:
         static const char* kClasses[] = {"dk", "dw", "elf", "mg", "dk", "dw", "eelf", "mmg", "elf", "eelf"};
         static const char* kNames[] = {
             "Brann", "Tova",  "Mirel", "Oskar", "Lysa",  "Fenna", "Corvin", "Dace",  "Rhea",  "Halvar",
-            "Ulric", "Gorm",  "Bjorn", "Sigrun", "Eirik", "Thane", "Vesna", "Ivo",   "Zora",  "Kael",
+            "Ulric", "Gorm",  "Bjorn", "Sigrun", "Eirik", "Thane", "Vesna", "Ivar",  "Zora",  "Kael",
             "Ainar", "Sylwen", "Nimue", "Ilse", "Maren", "Ragna", "Torvin", "Edda",  "Kolbe", "Varn",
             "Asta",  "Cael",  "Dorn",  "Elva",  "Grim",  "Hild",  "Isen",  "Jora",  "Lorn",  "Moss",
             "Nell",  "Orla",  "Pike",  "Quill", "Rune",  "Sable", "Teal",  "Wren",  "Yara",  "Bastian"};
@@ -191,7 +234,7 @@ public:
             if (serverPid_ <= 0) return false;  // stopped while it waited
             std::vector<std::string> args = {"nice", "-n", "10", netbot, "--server", "127.0.0.1", "--port", port,
                                              "--dir", run_ + "/bots", "--threads", std::to_string(threads),
-                                             "--parties"};
+                                             "--parties", "--guilds"};
             for (int i = first; i < std::min(bots, first + perNetbot); ++i) {
                 std::string name = kNames[i % kNameCount];
                 if (i >= kNameCount) name += std::to_string(i / kNameCount + 1);
@@ -237,7 +280,7 @@ public:
         double runCores = 0.0;
         for (const Process& p : processes_) runCores += p.cores;
         samples_.push_back({seconds(), game, runCores, machine});
-        if (samples_.size() > 900) samples_.pop_front();
+        if (samples_.size() > 3600) samples_.pop_front();  // half an hour at two a second
     }
 
     Snapshot snapshot() {
@@ -255,6 +298,7 @@ public:
         }
         s.processes = processes_;
         s.samples.assign(samples_.begin(), samples_.end());
+        s.events.assign(events_.rbegin(), events_.rend());
         s.listed = listed_, s.bought = bought_, s.visits = visits_, s.empty = empty_, s.spent = spent_;
         const double now = seconds();
         for (const auto& [t, ms] : slow_) {
@@ -438,7 +482,38 @@ private:
             }
             if (startsWith(rest, "party:") || startsWith(rest, "~ ")) continue;  // the board, chat
             Bot& b = bot(who);
-            b.clock = std::max(b.clock, at);
+            // Ten game minutes back is a restart, not lines a little out of order.
+            if (at + 600 < b.lastAt) {
+                b.carried += b.lastAt;
+                b.lastAt = at;
+            } else {
+                b.lastAt = std::max(b.lastAt, at);
+            }
+            b.clock = std::max(b.clock, b.carried + at);
+            // The events (eventEntry), by his clock summed over restarts.
+            {
+                const int clock = b.carried + at;
+                int tier = 0, rank = 0, of = 0, points = 0;
+                long long exp = 0;
+                char kind[16] = {};
+                if (std::sscanf(rest.c_str(), "** gives the Messenger his cloak: into Blood Castle %d", &tier) == 1) {
+                    eventEntry(who, clock, true, tier);
+                    b.eventTier = tier;
+                } else if (std::sscanf(rest.c_str(), "** gives Charon his invitation: into Devil Square %d", &tier) == 1) {
+                    eventEntry(who, clock, false, tier);
+                    b.eventTier = tier;
+                } else if (std::sscanf(rest.c_str(), "Blood Castle %d: ** Blood Castle wo%1[n]", &tier, kind) == 2) {
+                    eventResult(who, true, tier, "won", true);
+                } else if (std::sscanf(rest.c_str(), "Blood Castle %d: the run is ove%1[r]", &tier, kind) == 2) {
+                    eventResult(who, true, tier, "time ran out", false);
+                } else if (std::sscanf(rest.c_str(), "** Devil Square %d: rank %d of %d, %d points, %lld experience", &tier, &rank,
+                                       &of, &points, &exp) == 5) {
+                    eventResult(who, false, tier,
+                                "rank " + std::to_string(rank) + " of " + std::to_string(of) + ", " + std::to_string(points) +
+                                    " points",
+                                rank == 1);
+                }
+            }
             int level = 0, hpNow = 0, hpMax = 0, kills = 0, deaths = 0, potions = 0;
             long long zen = 0;
             // "in noria as #12, Dark Wizard level 59 with 89136 zen, 1 players here"
@@ -497,11 +572,35 @@ private:
     void readSheets() {
         for (auto& [name, b] : bots_) {
             std::ifstream in(run_ + "/bots/" + name + ".sheet");
-            for (std::string line; std::getline(in, line);) {
-                if (startsWith(line, "who\tScore\t")) {
-                    b.score = std::atoi(line.c_str() + 10);
-                    break;
+            b.wings = 0;
+            b.dinorant = false;
+            b.excellent = 0;
+            // NAME\tkin\tsupport\tmagic\ttrader\tlevel\tstrength\tguild id\tguild name\tmaster\t...
+            {
+                std::ifstream who(run_ + "/bots/guild/" + name + ".who");
+                std::string line, field;
+                b.guild.clear();
+                b.master = false;
+                if (std::getline(who, line)) {
+                    std::vector<std::string> f;
+                    std::stringstream fields(line);
+                    while (std::getline(fields, field, '\t')) f.push_back(field);
+                    if (f.size() > 9 && f[8] != "-") b.guild = f[8], b.master = f[9] == "1";
                 }
+            }
+            for (std::string line; std::getline(in, line);) {
+                if (startsWith(line, "who\tScore\t")) b.score = std::atoi(line.c_str() + 10);
+                if (!startsWith(line, "gear\t")) continue;
+                // "gear\tWings\tWings of Satan +5 · ..." -- the first wings are MU's three.
+                if (startsWith(line, "gear\tWings\tWings of ")) {
+                    const bool first = startsWith(line, "gear\tWings\tWings of Elf") ||
+                                       startsWith(line, "gear\tWings\tWings of Heaven") ||
+                                       startsWith(line, "gear\tWings\tWings of Satan");
+                    b.wings = first ? 1 : 2;
+                }
+                if (startsWith(line, "gear\tMount\tHorn of Dinorant")) b.dinorant = true;
+                // "Mace +6 · 2 excellent · +12 option" (Bot::sheet).
+                if (line.find(" excellent") != std::string::npos) ++b.excellent;
             }
         }
     }
@@ -561,6 +660,28 @@ private:
     std::deque<Trade> trades_;
     std::vector<Offer> offers_;
     std::deque<Sample> samples_;
+    std::deque<EventRun> events_;  // oldest first, the last 300
+
+    // An entry ("into Blood Castle 5") joins a run of its kind and tier begun within kEventWindow,
+    // else begins one; a result goes to his latest run of that kind and tier.
+    void eventEntry(const std::string& who, int clock, bool castle, int tier) {
+        for (auto it = events_.rbegin(); it != events_.rend(); ++it) {
+            if (it->castle != castle || it->tier != tier || std::abs(clock - it->at) > kEventWindow) continue;
+            if (std::find(it->bots.begin(), it->bots.end(), who) == it->bots.end()) it->bots.push_back(who);
+            return;
+        }
+        events_.push_back({clock, castle, tier, {who}, {}, false});
+        if (events_.size() > 300) events_.pop_front();
+    }
+    void eventResult(const std::string& who, bool castle, int tier, const std::string& result, bool won) {
+        for (auto it = events_.rbegin(); it != events_.rend(); ++it) {
+            if (it->castle != castle || it->tier != tier) continue;
+            if (std::find(it->bots.begin(), it->bots.end(), who) == it->bots.end()) continue;
+            it->result[who] = result;
+            it->won = it->won || won;
+            return;
+        }
+    }
     std::deque<std::pair<double, double>> slow_;
     std::vector<Process> processes_;
     double machine_ = 0.0;

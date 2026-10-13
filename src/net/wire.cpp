@@ -424,6 +424,7 @@ void put(std::vector<uint8_t>& out, const PartyState& one) {
             o.i32(m.life);
             o.i32(m.lifeMost);
         }
+        o.u8(one.raid ? 1 : 0);
     });
 }
 
@@ -552,6 +553,15 @@ void put(std::vector<uint8_t>& out, const Ping& one) {
 
 void put(std::vector<uint8_t>& out, const Bye& one) {
     frame(out, Kind::Bye, [&](Out& o) { o.u8(uint8_t(one.why)); });
+}
+
+void put(std::vector<uint8_t>& out, const Invasion& one) {
+    frame(out, Kind::Invasion, [&](Out& o) {
+        o.u8(uint8_t(one.phase));
+        o.u32(one.map);
+        o.u8(one.copy);
+        o.u32(uint32_t(uint16_t(one.column)) | uint32_t(uint16_t(one.row)) << 16);
+    });
 }
 
 void put(std::vector<uint8_t>& out, const Hash& one) {
@@ -703,7 +713,7 @@ bool parse(const std::vector<uint8_t>& body, PartyAsk& out) {
     In in{body};
     const uint8_t what = in.u8();
     out.name = in.str();
-    if (what > uint8_t(PartyWhat::Promote)) return false;
+    if (what > uint8_t(PartyWhat::Unraid)) return false;
     out.what = PartyWhat(what);
     return in.done();
 }
@@ -711,8 +721,8 @@ bool parse(const std::vector<uint8_t>& body, PartyAsk& out) {
 bool parse(const std::vector<uint8_t>& body, PartyState& out) {
     In in{body};
     const uint8_t n = in.u8();
-    // Five at most (sim::kPartyMost); a count past that is not one.
-    if (n > 5) return false;
+    // Ten at most, a raid's (sim::kRaidMost); a count past that is not one.
+    if (n > sim::kRaidMost) return false;
     out.members.clear();
     for (uint8_t i = 0; i < n && in.ok; ++i) {
         PartyState::Member m;
@@ -737,6 +747,9 @@ bool parse(const std::vector<uint8_t>& body, PartyState& out) {
             m.lifeMost = in.i32();
         }
     }
+    // And whether it is a raid, after them.
+    out.raid = false;
+    if (in.ok && in.at < body.size()) out.raid = in.u8() != 0;
     return in.done();
 }
 
@@ -884,6 +897,19 @@ bool parse(const std::vector<uint8_t>& body, Ping& out) {
 bool parse(const std::vector<uint8_t>& body, Bye& out) {
     In in{body};
     out.why = Why(in.u8());
+    return in.done();
+}
+
+bool parse(const std::vector<uint8_t>& body, Invasion& out) {
+    In in{body};
+    const uint8_t phase = in.u8();
+    out.map = in.u32();
+    out.copy = in.u8();
+    const uint32_t tile = in.u32();
+    out.column = int16_t(uint16_t(tile));
+    out.row = int16_t(uint16_t(tile >> 16));
+    if (phase > uint8_t(sim::InvasionPhase::Standing)) return false;
+    out.phase = sim::InvasionPhase(phase);
     return in.done();
 }
 

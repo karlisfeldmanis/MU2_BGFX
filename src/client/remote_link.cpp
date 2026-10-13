@@ -422,6 +422,8 @@ void RemoteLink::pump() {
                 close(whyOf(bye.why));
                 break;
             }
+        } else if (ok && kind == net::Kind::Invasion) {
+            ok = net::parse(body, invasion_);
         } else if (ok && kind == net::Kind::Hash) {
             net::Hash hash;
             ok = net::parse(body, hash);
@@ -646,6 +648,15 @@ void RemoteLink::catchUp() {
         core::logf("server: the world's past, %zu ticks, replayed in %.2f s; %d players here", past,
                    std::chrono::duration<double>(std::chrono::steady_clock::now() - from).count(),
                    mirror_.playersHere());
+    }
+}
+
+void RemoteLink::passThrough(int64_t tick) {
+    while (!ticks_.empty() && int64_t(ticks_.front().tick) <= tick) ticks_.pop_front();
+    while (!theirs_.empty() && int64_t(theirs_.front().tick) <= tick) theirs_.pop_front();
+    if (!snapshot_.empty()) {
+        snapshot_.clear();
+        snapshot_.shrink_to_fit();
     }
 }
 

@@ -35,6 +35,9 @@ public:
     // next flush(). False when the far end has gone.
     bool send(const std::vector<uint8_t>& bytes);
     bool flush();
+    // Held for the next flush(), with no call to the kernel now: the server's ticks, flushed
+    // once a pass however many ticks it stepped (server/src/main.cpp).
+    void queue(const std::vector<uint8_t>& bytes);
 
     bool open() const { return fd_ >= 0; }
     int fd() const { return fd_; }

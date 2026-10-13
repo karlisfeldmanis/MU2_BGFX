@@ -42,7 +42,7 @@ public:
     }
 
 private:
-    enum class Step : uint8_t { Walk, Look, Collect, Quote, List, Browse, Buy, Done };
+    enum class Step : uint8_t { Walk, Look, Collect, Quote, List, Browse, Buy, Lower, Done };
     struct Errand {
         Step step = Step::Walk;
         uint32_t waiting = 0;   // the ask whose answer moves it on
@@ -54,6 +54,7 @@ private:
         int64_t price = 0;
         int page = 0;
         bool did = false;       // something listed, bought or collected
+        std::vector<uint32_t> lowered;  // his listings asked down this visit (Step::Lower)
         // The search: each kind of thing in turn, every page within his budget, and what each
         // page offered him (Pick), the best for his Zen bought at the end.
         std::vector<int> kinds;
@@ -87,7 +88,7 @@ private:
 
     // Off on an errand if it is time, there is a Broker on his map and something to do there.
     void start(NetBot& bot) {
-        if (bot.driven() || !bot.alive() || bot.inCastle() || bot.inSquare() || !bot.tables()) return;
+        if (bot.driven() || !bot.alive() || bot.inCastle() || bot.inSquare() || !bot.tables() || bot.guildBusy()) return;
         int column = -1, row = -1;
         for (const content::Townsperson& one : bot.tables()->folk) {
             if (one.number != sim::kBroker) continue;
@@ -249,6 +250,20 @@ private:
         }
         switch (e.step) {
             case Step::Look:
+                // **His wings listed over kWingAsk, brought down to it** (the user, 2026-10-13: "fix
+                // old 73.9M price"): put up at four times the merchant's 18.4M before wings had a
+                // price of their own, they would have sat their 24 hours unsold.
+                for (const net::BrokerRow& row : view.mine) {
+                    if (!wingRow(tables, row.what) || row.price <= kWingAsk) continue;
+                    if (std::find(e.lowered.begin(), e.lowered.end(), row.id) != e.lowered.end()) continue;
+                    e.lowered.push_back(row.id);
+                    std::printf("  [broker] %s lowers %s from %lld to %lld\n", bot.name().c_str(),
+                                sim::itemLink(tables.items[size_t(row.what.item)], row.what).c_str(), (long long)row.price,
+                                (long long)kWingAsk);
+                    e.step = Step::Lower;
+                    ask(bot, e, {.what = net::BrokerWhat::Lower, .price = kWingAsk, .listing = row.id});
+                    return;
+                }
                 // His Collect only with room for it: into a full bag it came back "the rest waits"
                 // 113 times in a day, and its Zen
                 // waits with the rest. The counter makes room on his next trip (Bot::brokerHeld).
@@ -261,6 +276,11 @@ private:
                 for (const net::BrokerRow& row : view.mine) e.partsUp += part(tables, row.what);
                 hold(bot);
                 nextSpare(bot, e, int(view.mine.size()));
+                return;
+            case Step::Lower:
+                if (view.no != uint8_t(sim::BrokerNo::Yes)) std::printf("  [broker] %s: %s\n", bot.name().c_str(), view.said.c_str());
+                e.step = Step::Look;
+                ask(bot, e, {.what = net::BrokerWhat::Look});
                 return;
             case Step::Collect:
                 if (view.no == uint8_t(sim::BrokerNo::Yes)) e.did = true;
@@ -307,6 +327,15 @@ private:
                     }
                 }
                 e.price = std::clamp<int64_t>(price, npc, sim::kBrokerMostPrice);
+                // **Wings at a price a bot can pay** (the user, 2026-10-13, B): a merchant pays
+                // 18.4M for 1st wings and the listing went up at four times that, 73.9M, against
+                // purses of 2-15M -- the wrong class's wings from the mix sat unsold. From
+                // kWingAsk, undercut as anything is, never under kWingLeast; the merchant floor
+                // is not theirs.
+                if (wingRow(tables, e.quoted)) {
+                    const int64_t wing = view.cheapest > 0 || !view.sales.empty() ? std::min(price, kWingAsk) : kWingAsk;
+                    e.price = std::clamp<int64_t>(wing, kWingLeast, kWingAsk);
+                }
                 e.step = Step::List;
                 ask(bot, e, {.what = net::BrokerWhat::List, .slot = e.spares[e.spare], .seen = e.quoted,
                              .price = e.price, .hours = 24});
@@ -407,6 +436,12 @@ private:
     // merchant pays, as a window starts a player, and the merchant pays nothing for what makes a
     // piece wanted -- each excellent option doubles it, each socket half again, a set rune more
     // by its rarity.
+    static constexpr int64_t kWingAsk = 8000000, kWingLeast = 3000000;
+    static bool wingRow(const content::Tables& tables, const sim::Held& what) {
+        if (what.empty() || size_t(what.item) >= tables.items.size()) return false;
+        const content::ItemRow& row = tables.items[size_t(what.item)];
+        return sim::firstWing(row) || sim::secondWing(row);
+    }
     static int64_t askingPrice(const sim::Held& what, int64_t npc) {
         double rate = 1.0 + sim::excellentCount(what.excellent);
         for (int k = 0; k < std::min<int>(what.sockets, 3); ++k) {

@@ -172,6 +172,11 @@ bool Socket::send(const std::vector<uint8_t>& bytes) {
     return flush();
 }
 
+void Socket::queue(const std::vector<uint8_t>& bytes) {
+    if (pending_.empty()) moved_ = std::chrono::steady_clock::now();
+    pending_.insert(pending_.end(), bytes.begin(), bytes.end());
+}
+
 bool Socket::flush() {
     if (fd_ < 0) return false;
     size_t sent = 0;

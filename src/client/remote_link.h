@@ -57,6 +57,7 @@ public:
     const net::GuildMark* guildMark(uint32_t id) const override;
     uint32_t guildOfPlayer(uint32_t id) const override;
     bool takeGuildCall(net::GuildCall& out) override;
+    const net::Invasion& invasion() const override { return invasion_; }
     void askBroker(const net::BrokerAsk& asked) override;
     bool takeBrokerView(net::BrokerView& out) override;
     const sim::Body* ahead() override;
@@ -84,6 +85,14 @@ public:
     // Ticks whose hash the server sent and the mirror matched, and the first one it did not.
     uint32_t agreed() const { return agreed_; }
     uint32_t divergedAt() const { return divergedAt_; }
+
+    // **One mirror, several lines** (tools/netbot, 2026-10-13): every line on a world hears the
+    // same Tick (server/src/world.cpp, tick), so a process with many players there steps one
+    // mirror with whichever line has the next tick, and the others drop what it has stepped --
+    // with the hashes for them, and the Welcome's snapshot, which catchUp would have laid.
+    void passThrough(int64_t tick);
+    // The tick at the front of what is in hand, -1 for none.
+    int64_t nextTick() const { return ticks_.empty() ? -1 : int64_t(ticks_.front().tick); }
 
 private:
     void check();
@@ -166,6 +175,7 @@ private:
     net::GuildState guild_;  // his guild, the latest the server sent
     std::map<uint32_t, net::GuildMark> marks_;  // the guilds' names and marks, by id
     std::deque<net::GuildCall> guildCalls_;     // the cards to answer, not yet taken
+    net::Invasion invasion_;  // where the Golden Dragon is on the server, the latest it sent
     std::deque<net::BrokerView> brokerViews_;  // the market's answers, not yet taken
 };
 

@@ -317,6 +317,12 @@ int main(int argc, char** argv) {
         for (auto& world : worlds) {
             if (world->next < now) world->next = now;  // more than a second behind: start again
         }
+        // The pass's ticks out at once, however many it stepped: one write a line and one
+        // datagram a world's player (world.cpp, tick). The flush below sends what is still owed.
+        for (auto& world : worlds) sendDatagrams(*world, sessions);
+        for (auto& one : sessions) {
+            if (one->socket.open() && !one->socket.flush()) one->socket.close();
+        }
         const double ticksMs = msSince(ticksAt);
         // The parties' upkeep, each second (partyTick).
         const Clock::time_point partyStarted = Clock::now();

@@ -200,6 +200,7 @@ struct World {
     // The last few ticks' frames, oldest first, for the datagrams (net::putTicks): each carries
     // as many as fit, so one datagram lost costs nothing while the next arrives.
     std::deque<std::vector<uint8_t>> recent;
+    bool datagramDue = false;  // a tick since its last datagram went (sendDatagrams)
     // Its own deadline, so one world's early tick moves no other's clock.
     Clock::time_point next = Clock::now();
     Clock::time_point earlyAt{};  // when it last took a tick early
@@ -258,6 +259,10 @@ struct Party {
     };
     uint32_t id = 0;
     std::vector<Member> members;  // the leader first
+    // A raid (net::PartyWhat::Raid): up to sim::kRaidMost, said "raid" in its lines.
+    bool raid = false;
+    int most() const { return raid ? sim::kRaidMost : sim::kPartyMost; }
+    const char* word() const { return raid ? "raid" : "party"; }
 };
 inline std::map<uint32_t, Party> g_parties;
 inline std::map<uint64_t, uint32_t> g_partyOf;  // a member's token -> his party
@@ -336,9 +341,15 @@ std::optional<Landing> landingOf(const World& world, const sim::Happening& said,
     const std::vector<sim::Command>& commands);
 Session* playing(const World& world, std::vector<std::unique_ptr<Session>>& sessions, uint32_t id);
 bool invadedElsewhere(const World& world, const std::vector<std::unique_ptr<World>>& worlds);
+net::Invasion invasionNow(const std::vector<std::unique_ptr<World>>& worlds);
+void sayInvasion(Session& to, const net::Invasion& said);
+void invasionTick(std::vector<std::unique_ptr<Session>>& sessions,
+    const std::vector<std::unique_ptr<World>>& worlds);
 void takePacked(World& world);
 void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
     const std::vector<std::unique_ptr<World>>& worlds, bool early = false);
+// The world's last ticks in one datagram to each of its players, once a pass (tick queues them).
+void sendDatagrams(World& world, std::vector<std::unique_ptr<Session>>& sessions);
 server::Store::Row placeOf(const Session& one);
 void part(Session& one);
 void keepEveryone(std::vector<std::unique_ptr<Session>>& sessions);

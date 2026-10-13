@@ -411,6 +411,12 @@ double killExperience(int killedLevel, int killerLevel);
 // paid a tenth more, ours (the user, 2026-10-09: "if there is 5-man party lets give 10% exp
 // boost").
 constexpr int kPartyMost = 5;
+// **The raid** (docs/party.md, the user, 2026-10-13: "we need to implement funcitonality that party
+// can be converted to raid with max 10 layers"): its leader turns a party into a raid, which takes
+// this many. Ours (WebZen's party is five). The realm sees no difference: a raid is one party, every
+// member near a kill shares it (partyInView) at the five's percent and the full party's tenth, split
+// by level among all of them (the user chose "Whole raid shares"). The server keeps the count.
+constexpr int kRaidMost = 10;
 constexpr float kPartyReach = 10.0f;
 constexpr double kFullPartyBonus = 1.1;
 // **The level gap** (the user, 2026-10-11: "do we have party lvl gap rules? that char which is

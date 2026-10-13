@@ -18,7 +18,7 @@
 // is where a skill pressed and never thrown says why.
 //
 //   build/bot [--kin dk|dw|elf|mg] [--path melee|magic|energy] [--seed N] [--runs N] [--hours H] [--until-jewel]
-//             [--no-quests] [--fights] [--build s,a,v,e] [--no-shop-skills] [--quiet]
+//             [--no-quests] [--fights] [--build s,a,v,e] [--no-shop-skills] [--quiet] [--learn N,N]
 
 #include "brain.h"
 
@@ -55,9 +55,17 @@ int main(int argc, char** argv) {
                         &options.build[3]);
         }
         else if (a == "--quiet") options.quiet = true;
+        else if (a == "--learn") {
+            std::string list = next();
+            for (size_t at = 0; at < list.size();) {
+                const size_t comma = list.find(',', at);
+                options.learn.push_back(std::atoi(list.substr(at, comma - at).c_str()));
+                at = comma == std::string::npos ? list.size() : comma + 1;
+            }
+        }
         else {
             std::printf("usage: bot [--kin dk|dw|elf|mg] [--path melee|magic|energy] [--seed N] [--runs N] [--hours H] "
-                        "[--until-jewel] [--no-quests] [--fights] [--build s,a,v,e] [--no-shop-skills] [--quiet]\n");
+                        "[--until-jewel] [--no-quests] [--fights] [--build s,a,v,e] [--no-shop-skills] [--quiet] [--learn N,N]\n");
             return 2;
         }
     }

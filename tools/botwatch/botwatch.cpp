@@ -28,7 +28,10 @@
 #include "gfx/gui.h"
 #include "gfx/views.h"
 #include "gfx/window.h"
+#include "content/tables.h"
 #include "imgui.h"
+#include "sim/broker.h"
+#include "sim/items.h"
 #include "watch.h"
 
 namespace {
@@ -55,6 +58,8 @@ std::string zenText(int64_t z) {
 }
 
 // Game seconds a wall second, between the last sample and the one `back` seconds before it.
+constexpr int kMostSpeed = 50;  // the fastest botwatch runs a world (Settings::speed)
+
 double speedOf(const std::vector<Sample>& s, double back = 30.0) {
     if (s.size() < 2) return 0.0;
     const Sample& now = s.back();
@@ -76,11 +81,104 @@ const ImVec4 kGreen(0.42f, 0.77f, 0.54f, 1.0f);
 
 // Each class its colour in the bots table (the user, 2026-10-12: "use color coding for classes").
 ImVec4 kinColour(const std::string& kin) {
-    if (kin == "Dark Knight") return ImVec4(0.90f, 0.45f, 0.38f, 1.0f);      // red
-    if (kin == "Dark Wizard") return ImVec4(0.45f, 0.62f, 0.95f, 1.0f);      // blue
-    if (kin == "Fairy Elf") return ImVec4(0.45f, 0.82f, 0.50f, 1.0f);        // green
+    if (kin == "Dark Knight" || kin == "Blade Knight") return ImVec4(0.90f, 0.45f, 0.38f, 1.0f);  // red
+    if (kin == "Dark Wizard" || kin == "Soul Master") return ImVec4(0.45f, 0.62f, 0.95f, 1.0f);   // blue
+    if (kin == "Fairy Elf" || kin == "Muse Elf") return ImVec4(0.45f, 0.82f, 0.50f, 1.0f);        // green
     if (kin == "Magic Gladiator") return ImVec4(0.78f, 0.52f, 0.92f, 1.0f);  // purple
     return kDim;
+}
+
+// **A Broker item's card** (the user, 2026-10-13: "we need to implemnet simple tooltip on Broker so i
+// can see how good is items"): what the game's card leads with -- its damage or defence at +0, its
+// drop level, what it asks to wear (sim::asks, the plus and excellence counted), the options off
+// its link, and what a merchant pays. The rows are Lorencia's cooked tables, read once.
+const mu::content::Tables* itemTables() {
+    static std::unique_ptr<mu::content::Tables> tables;
+    static bool tried = false;
+    if (!tried) {
+        tried = true;
+        auto t = std::make_unique<mu::content::Tables>();
+        std::string error;
+        const std::string path = std::string(MU2_SOURCE_DIR) + "/assets/cooked/lorencia/lorencia.mur";
+        if (mu::content::loadTables(path, *t, error)) {
+            tables = std::move(t);
+            std::fprintf(stderr, "botwatch: item tables from %s, %zu items\n", path.c_str(), tables->items.size());
+        } else {
+            std::fprintf(stderr, "botwatch: no item tables from %s: %s\n", path.c_str(), error.c_str());
+        }
+    }
+    return tables.get();
+}
+// A rune's card lines (the user, 2026-10-13: "on tooltips also show what type of rune it is not only
+// name"): its rarity, what takes it, who sets it, and what it does.
+void runeLines(const sim::PowerRow& p, const char* lead) {
+    const ImVec4 tone = p.rarity == sim::Rarity::Legendary ? ImVec4(1.0f, 0.5f, 0.0f, 1)
+                        : p.rarity == sim::Rarity::Epic    ? ImVec4(0.64f, 0.21f, 0.93f, 1)
+                        : p.rarity == sim::Rarity::Rare    ? ImVec4(0.0f, 0.55f, 1.0f, 1)
+                                                           : ImVec4(0.85f, 0.85f, 0.85f, 1);
+    std::string where;
+    const auto add = [&](uint8_t bit, const char* word) {
+        if (p.slots & bit) where += (where.empty() ? "" : ", ") + std::string(word);
+    };
+    add(sim::kInWeapon, "weapon");
+    add(sim::kInShield, "shield");
+    add(sim::kInArmour, "armour");
+    add(sim::kInJewellery, "jewellery");
+    std::string who;
+    const char* kins[] = {"DW", "Elf", "DK", "MG"};  // sim::Kin order
+    for (int k = 0; k < 4; ++k) {
+        if (p.classes & sim::classBit(sim::Kin(k))) who += (who.empty() ? "" : "/") + std::string(kins[k]);
+    }
+    ImGui::TextColored(tone, "%s%s rune: %s", lead, sim::rarityName(p.rarity), p.name);
+    ImGui::TextDisabled("  in %s · for %s%s%s", where.c_str(), who.c_str(), p.second ? " · 2nd class only" : "",
+                        p.once ? " · one per item" : "");
+    if (p.tells && *p.tells) {
+        ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + 420.0f);
+        ImGui::TextWrapped("  %s", p.tells);
+        ImGui::PopTextWrapPos();
+    }
+}
+void itemTip(const std::string& name, const sim::Held& h) {
+    const mu::content::Tables* tables = itemTables();
+    if (!ImGui::BeginItemTooltip()) return;
+    ImGui::TextColored(h.excellent ? ImVec4(0.1f, 1.0f, 0.5f, 1.0f) : ImVec4(1, 1, 1, 1), "%s%s",
+                       h.excellent ? "Excellent " : "", name.c_str());
+    if (tables && h.item >= 0 && size_t(h.item) < tables->items.size()) {
+        const mu::content::ItemRow& row = tables->items[size_t(h.item)];
+        ImGui::TextDisabled("drop level %d", row.dropLevel);
+        if (row.maximumDamage > 0) ImGui::Text("Damage %d - %d at +0, speed %d", row.minimumDamage, row.maximumDamage, row.attackSpeed);
+        if (row.magicPower > 0) ImGui::Text("Wizardry +%d%% at +0", row.magicPower);
+        if (row.defense > 0) ImGui::Text("Defense %d at +0", row.defense);
+        if (row.defenseRate > 0) ImGui::Text("Block rate %d", row.defenseRate);
+        const sim::Needs n = sim::asks(row, h.refinement, h.excellent != 0);
+        std::string needs;
+        const auto add = [&](const char* what, int v) {
+            if (v > 0) needs += (needs.empty() ? "" : " · ") + std::string(what) + " " + std::to_string(v);
+        };
+        add("level", n.level);
+        add("strength", n.strength);
+        add("agility", n.agility);
+        add("energy", n.energy);
+        add("vitality", n.vitality);
+        if (!needs.empty()) ImGui::Text("Needs %s", needs.c_str());
+        if (!row.tells.empty()) ImGui::TextWrapped("%s", row.tells.c_str());
+        if (!row.teachesName.empty()) ImGui::Text("Teaches %s (level %d, energy %d)", row.teachesName.c_str(), row.teachesLevel, row.teachesEnergy);
+        const std::string details = detailsOf(h);
+        if (!details.empty()) ImGui::TextColored(ImVec4(0.55f, 0.75f, 1.0f, 1.0f), "%s", details.c_str());
+        if (sim::creation(row)) {
+            if (const sim::PowerRow* p = sim::powerOf(h.powers[0])) runeLines(*p, "");
+        } else {
+            for (int k = 0; k < std::min<int>(h.sockets, 3); ++k) {
+                if (const sim::PowerRow* p = h.powers[k] ? sim::powerOf(h.powers[k]) : nullptr) runeLines(*p, "Socket: ");
+                else ImGui::TextDisabled("Socket: empty");
+            }
+        }
+        ImGui::TextDisabled("a merchant pays %lld Zen", (long long)(sim::npcValue(*tables, h) / 3));
+    } else {
+        const std::string details = detailsOf(h);
+        if (!details.empty()) ImGui::Text("%s", details.c_str());
+    }
+    ImGui::EndTooltip();
 }
 
 // An item's name in the game's colour for it (game/ui/describe.cpp qualityOf, tip.cpp colourOf;
@@ -123,6 +221,22 @@ const char* eventOf(const std::string& map) {
     return nullptr;
 }
 const ImVec4 kEvent(1.0f, 0.36f, 0.30f, 1.0f);
+// **Excellent in green** (the user, 2026-10-13: "sho excelent buys/sells in green on broker"): the
+// whole row of an excellent offer or sale tinted, and its name in excellent green whatever its
+// sockets say.
+const ImVec4 kExcellent(0.1f, 1.0f, 0.5f, 1.0f);
+// "[exc] " before an excellent item's name (the user, 2026-10-13: "add tag [exc] for exelent items").
+std::string excTagged(const std::string& name, bool excellent) { return excellent ? "[exc] " + name : name; }
+void excellentRow(const sim::Held& h) {
+    if (h.excellent != 0) ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, ImGui::GetColorU32(ImVec4(0.1f, 0.8f, 0.4f, 0.22f)));
+}
+// **Wings stand out** (the user, 2026-10-13: "highlight wings on broker ... so we can easy spot
+// that somebody sell or buys wings"): the row tinted amber, the name in amber with a "[wings]" tag.
+const ImVec4 kWings(1.0f, 0.62f, 0.15f, 1.0f);
+bool wingsNamed(const std::string& name) { return name.rfind("Wings of ", 0) == 0; }
+void wingsRow(const std::string& name) {
+    if (wingsNamed(name)) ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, ImGui::GetColorU32(ImVec4(1.0f, 0.55f, 0.1f, 0.28f)));
+}
 
 void tile(const char* label, const std::string& value, const std::string& under, ImVec4 colour = ImVec4(1, 1, 1, 1)) {
     ImGui::BeginGroup();
@@ -137,7 +251,9 @@ void tile(const char* label, const std::string& value, const std::string& under,
 }
 
 struct Settings {
-    int bots = 30, speed = 100, threads = 2, port = 44540;
+    // 50: the fastest 70 bots keep up with (2026-10-13: 70 at 70x fell behind, 4 errands a bot a
+    // game hour lost; at 50x 0.1). One thread shares its mirrors (netbot Shared).
+    int bots = 30, speed = 50, threads = 1, port = 44540;
     int perNetbot = 10, waveSeconds = 30;  // bots a netbot process, and the wait between them
     float minutes = 30.0f;
 };
@@ -172,7 +288,9 @@ public:
                         deadline_ = 0.0;
                     }
                 }
-                for (int i = 0; i < 20 && !quit_; ++i) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                // Twice a second (the user, 2026-10-13: "update bot app more frekvently so we have live
+                // feel"): it was every two.
+                for (int i = 0; i < 5 && !quit_; ++i) std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
         });
     }
@@ -297,7 +415,8 @@ private:
         ImGui::SetNextItemWidth(110);
         ImGui::InputInt("port", &settings_.port, 1, 10);
         settings_.bots = std::clamp(settings_.bots, 1, 200);
-        settings_.speed = std::clamp(settings_.speed, 1, 1000);
+        // 50 at most (the user, 2026-10-13: "we dont need sim speed faster tht 50x").
+        settings_.speed = std::clamp(settings_.speed, 1, kMostSpeed);
         settings_.threads = std::clamp(settings_.threads, 1, 4);
         settings_.minutes = std::max(0.0f, settings_.minutes);
         settings_.perNetbot = std::clamp(settings_.perNetbot, 1, 200);
@@ -335,7 +454,15 @@ private:
         for (const Process& p : s.processes) runCores += p.cores;
         const int cores = int(std::thread::hardware_concurrency());
         char a[64], b[96];
-        if (ImGui::BeginTable("tiles", 8, ImGuiTableFlags_SizingStretchSame)) {
+        int wings1 = 0, wings2 = 0, dinorants = 0, excellent = 0, excellentPieces = 0;
+        for (const Bot& one : s.bots) {
+            wings1 += one.wings == 1;
+            wings2 += one.wings == 2;
+            dinorants += one.dinorant;
+            excellent += one.excellent > 0;
+            excellentPieces += one.excellent;
+        }
+        if (ImGui::BeginTable("tiles", 10, ImGuiTableFlags_SizingStretchSame)) {
             ImGui::TableNextColumn();
             int asked = 0;
             for (const Process& p : s.processes) asked = std::max(asked, p.speed);
@@ -378,6 +505,14 @@ private:
                           s.empty);
             tile("Broker sales", std::to_string(s.bought), b, kGreen);
             ImGui::TableNextColumn();
+            // Wings and mounts, and excellent gear worn, off the sheets (the user, 2026-10-13).
+            std::snprintf(a, sizeof a, "%d · %d", wings1, wings2);
+            std::snprintf(b, sizeof b, "1st · 2nd wings · %d ride a Dinorant", dinorants);
+            tile("Wings", a, b, kGold);
+            ImGui::TableNextColumn();
+            std::snprintf(b, sizeof b, "bots wearing it · %d pieces", excellentPieces);
+            tile("Excellent worn", std::to_string(excellent), b, kExcellent);
+            ImGui::TableNextColumn();
             std::snprintf(b, sizeof b, "the server's last minute, worst %.0f ms", s.worstSlowMs);
             tile("Server slow passes", std::to_string(s.slowLastMinute), b,
                  s.slowLastMinute > 30 ? kRed : ImVec4(1, 1, 1, 1));
@@ -386,15 +521,16 @@ private:
     }
 
     void charts(const Snapshot& s) {
-        // Speed: each sample against the one ten before (about 20 s), the last six minutes.
+        // Speed: each sample against the one forty before (about 20 s at two a second), the last
+        // six minutes.
         std::vector<float> speed, run, machine;
-        const size_t from = s.samples.size() > 180 ? s.samples.size() - 180 : 0;
+        const size_t from = s.samples.size() > 720 ? s.samples.size() - 720 : 0;
         for (size_t i = from; i < s.samples.size(); ++i) {
             run.push_back(float(s.samples[i].runCores));
             machine.push_back(float(s.samples[i].machineCores));
-            if (i >= 10) {
-                const double dt = s.samples[i].wall - s.samples[i - 10].wall;
-                speed.push_back(dt > 0 ? float(std::max(0.0, (s.samples[i].game - s.samples[i - 10].game) / dt)) : 0.f);
+            if (i >= 40) {
+                const double dt = s.samples[i].wall - s.samples[i - 40].wall;
+                speed.push_back(dt > 0 ? float(std::max(0.0, (s.samples[i].game - s.samples[i - 40].game) / dt)) : 0.f);
             }
         }
         const float w = (ImGui::GetContentRegionAvail().x - 16) / 3.0f;
@@ -420,13 +556,17 @@ private:
         std::vector<Bot> bots = s.bots;
         const ImGuiTableFlags flags = ImGuiTableFlags_Sortable | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY |
                                       ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_Resizable;
-        if (!ImGui::BeginTable("bots", 10, flags, ImVec2(0, height - 4))) return;
+        if (!ImGui::BeginTable("bots", 11, flags, ImVec2(0, height - 4))) return;
         ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, 80);
         ImGui::TableSetupColumn("Class", ImGuiTableColumnFlags_WidthFixed, 110);
+        // His guild, its master in gold (the user, 2026-10-13: "show guild row in bots list").
+        ImGui::TableSetupColumn("Guild", ImGuiTableColumnFlags_WidthFixed, 75);
         ImGui::TableSetupColumn("Level", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_DefaultSort |
                                              ImGuiTableColumnFlags_PreferSortDescending, 50);
-        ImGui::TableSetupColumn("Gear", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_PreferSortDescending, 50);
+        // Sorted by a click on its header, highest first (the user, 2026-10-13: "allow to order bot
+        // list by gear score").
+        ImGui::TableSetupColumn("Gear score", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_PreferSortDescending, 75);
         ImGui::TableSetupColumn("Zen", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_PreferSortDescending, 60);
         ImGui::TableSetupColumn("Map", ImGuiTableColumnFlags_WidthFixed, 80);
         ImGui::TableSetupColumn("Health", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoSort, 80);
@@ -442,12 +582,13 @@ private:
                 switch (column) {
                     case 0: c = a.name.compare(b.name); break;
                     case 1: c = a.kin.compare(b.kin); break;
-                    case 2: c = a.level - b.level; break;
-                    case 3: c = a.score - b.score; break;
-                    case 4: c = a.zen < b.zen ? -1 : a.zen > b.zen; break;
-                    case 5: c = a.map.compare(b.map); break;
-                    case 7: c = a.kills - b.kills; break;
-                    case 8: c = a.deaths - b.deaths; break;
+                    case 2: c = a.guild != b.guild ? a.guild.compare(b.guild) : int(b.master) - int(a.master); break;
+                    case 3: c = a.level - b.level; break;
+                    case 4: c = a.score - b.score; break;
+                    case 5: c = a.zen < b.zen ? -1 : a.zen > b.zen; break;
+                    case 6: c = a.map.compare(b.map); break;
+                    case 8: c = a.kills - b.kills; break;
+                    case 9: c = a.deaths - b.deaths; break;
                     default: break;
                 }
                 return down ? c > 0 : c < 0;
@@ -468,6 +609,11 @@ private:
             ImGui::TableNextColumn();
             ImGui::TextColored(colour, "%s", b.kin.c_str());
             ImGui::TableNextColumn();
+            if (b.guild.empty()) ImGui::TextColored(kDim, "-");
+            else if (b.master) ImGui::TextColored(kGold, "%s *", b.guild.c_str());
+            else ImGui::TextUnformatted(b.guild.c_str());
+            if (b.master && ImGui::IsItemHovered()) ImGui::SetTooltip("the guild's master");
+            ImGui::TableNextColumn();
             ImGui::Text("%d", b.level);
             ImGui::TableNextColumn();
             if (b.score > 0) ImGui::TextColored(kGold, "%d", b.score);
@@ -475,7 +621,11 @@ private:
             ImGui::TableNextColumn();
             ImGui::TextUnformatted(zenText(b.zen).c_str());
             ImGui::TableNextColumn();
-            if (const char* event = eventOf(b.map)) ImGui::TextColored(kEvent, "%s", event);
+            // Which castle or square (the user, 2026-10-13: "show in which BC,DS bot is inside").
+            if (const char* event = eventOf(b.map)) {
+                if (b.eventTier > 0) ImGui::TextColored(kEvent, "%s %d", event, b.eventTier);
+                else ImGui::TextColored(kEvent, "%s", event);
+            }
             else ImGui::TextUnformatted(b.map.c_str());
             ImGui::TableNextColumn();
             ImGui::TextUnformatted(b.hp.c_str());
@@ -555,11 +705,13 @@ private:
                     ImGui::TableNextColumn();
                     if (ImGui::Selectable(o->seller.c_str(), o->seller == offerSeller_)) offerSeller_ = o->seller, offerItem_.clear();
                     ImGui::TableNextColumn();
-                    ImGui::PushStyleColor(ImGuiCol_Text, itemColour(o->item, o->held));
-                    if (ImGui::Selectable(o->item.c_str(), o->item == offerItem_)) offerItem_ = o->item, offerSeller_.clear();
+                    excellentRow(o->held);
+                    wingsRow(o->item);
+                    ImGui::PushStyleColor(ImGuiCol_Text, wingsNamed(o->item) ? kWings : o->held.excellent ? kExcellent : itemColour(o->item, o->held));
+                    if (ImGui::Selectable(((wingsNamed(o->item) ? "[wings] " : "") + excTagged(o->item, o->held.excellent != 0)).c_str(), o->item == offerItem_)) offerItem_ = o->item, offerSeller_.clear();
                     ImGui::PopStyleColor();
+                    itemTip(o->item, o->held);
                     const std::string details = detailsOf(o->held);
-                    if (!details.empty()) ImGui::SetItemTooltip("%s", details.c_str());
                     ImGui::TableNextColumn();
                     ImGui::TextColored(kDim, "%s", details.c_str());
                     ImGui::TableNextColumn();
@@ -588,11 +740,13 @@ private:
                     ImGui::TableNextColumn();
                     if (ImGui::Selectable(t.buyer.c_str(), false)) offerSeller_ = t.buyer, offerItem_.clear();
                     ImGui::TableNextColumn();
-                    ImGui::PushStyleColor(ImGuiCol_Text, itemColour(t.item, t.held));
-                    if (ImGui::Selectable(t.item.c_str(), false)) offerItem_ = t.item, offerSeller_.clear();
+                    excellentRow(t.held);
+                    wingsRow(t.item);
+                    ImGui::PushStyleColor(ImGuiCol_Text, wingsNamed(t.item) ? kWings : t.held.excellent ? kExcellent : itemColour(t.item, t.held));
+                    if (ImGui::Selectable(((wingsNamed(t.item) ? "[wings] " : "") + excTagged(t.item, t.held.excellent != 0)).c_str(), false)) offerItem_ = t.item, offerSeller_.clear();
                     ImGui::PopStyleColor();
+                    itemTip(t.item, t.held);
                     const std::string details = detailsOf(t.held);
-                    if (!details.empty()) ImGui::SetItemTooltip("%s", details.c_str());
                     ImGui::TableNextColumn();
                     ImGui::TextColored(kDim, "%s", details.c_str());
                     ImGui::TableNextColumn();
@@ -605,6 +759,53 @@ private:
             }
             ImGui::TextColored(kDim, "%d listed  ·  %d sold for %s  ·  %d visits, %d found nothing", s.listed, s.bought,
                                zenText(s.spent).c_str(), s.visits, s.empty);
+            ImGui::EndTabItem();
+        }
+        // **Events** (the user, 2026-10-13: "add new tab near Broken named Events, in events tab we
+        // show latest events where bots participated and how many"): each Blood Castle and Devil
+        // Square run the bots went into, newest first, who went and how each came out.
+        if (ImGui::BeginTabItem("Events", nullptr, open("Events"))) {
+            int castles = 0, won = 0, squares = 0, firsts = 0, castleBots = 0, squareBots = 0;
+            for (const EventRun& e : s.events) {
+                if (e.castle) castles += 1, won += e.won, castleBots += int(e.bots.size());
+                else squares += 1, firsts += e.won, squareBots += int(e.bots.size());
+            }
+            ImGui::TextColored(kDim, "Blood Castle: %d runs, %d won, %d bots went  ·  Devil Square: %d runs, %d won (rank 1), %d bots went",
+                               castles, won, castleBots, squares, firsts, squareBots);
+            if (ImGui::BeginTable("events", 5, ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable,
+                                  ImVec2(0, 0))) {
+                ImGui::TableSetupScrollFreeze(0, 1);
+                ImGui::TableSetupColumn("When", ImGuiTableColumnFlags_WidthFixed, 55);
+                ImGui::TableSetupColumn("Event", ImGuiTableColumnFlags_WidthFixed, 110);
+                ImGui::TableSetupColumn("Bots", ImGuiTableColumnFlags_WidthFixed, 40);
+                ImGui::TableSetupColumn("Result", ImGuiTableColumnFlags_WidthFixed, 110);
+                ImGui::TableSetupColumn("Who, and how", ImGuiTableColumnFlags_WidthStretch);
+                ImGui::TableHeadersRow();
+                int n = 0;
+                for (const EventRun& e : s.events) {
+                    ImGui::PushID(n++);
+                    ImGui::TableNextRow();
+                    ImGui::TableNextColumn();
+                    ImGui::TextColored(kDim, "%s", clockText(e.at).c_str());
+                    ImGui::TableNextColumn();
+                    ImGui::TextColored(kEvent, "%s %d", e.castle ? "Blood Castle" : "Devil Square", e.tier);
+                    ImGui::TableNextColumn();
+                    ImGui::Text("%zu", e.bots.size());
+                    ImGui::TableNextColumn();
+                    if (e.result.empty()) ImGui::TextColored(kDim, "under way");
+                    else if (e.won) ImGui::TextColored(kGreen, "%s", e.castle ? "won" : "a bot first");
+                    else ImGui::TextColored(kRed, "%s", e.castle ? "time ran out" : "no bot first");
+                    ImGui::TableNextColumn();
+                    std::string who;
+                    for (const std::string& b : e.bots) {
+                        const auto r = e.result.find(b);
+                        who += (who.empty() ? "" : "  ·  ") + b + (r != e.result.end() ? " (" + r->second + ")" : "");
+                    }
+                    ImGui::TextWrapped("%s", who.c_str());
+                    ImGui::PopID();
+                }
+                ImGui::EndTable();
+            }
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Economy", nullptr, open("Economy"))) {
@@ -639,17 +840,20 @@ private:
     }
 
     // **The Character tab**: the chosen bot's sheet (bots/NAME.sheet, Bot::sheet), read again
-    // every second -- netbot writes it every five.
+    // twice a second -- netbot writes it every second.
     void character(float height) {
         const double now = ImGui::GetTime();
-        if (now - sheetAt_ > 1.0 && watch_) {
+        if (now - sheetAt_ > 0.5 && watch_) {
             sheetAt_ = now;
             sheet_.clear();
             std::ifstream in(watch_->run() + "/bots/" + chosen_ + ".sheet");
             for (std::string line; std::getline(in, line);) {
                 const size_t a = line.find('\t'), b = a == std::string::npos ? a : line.find('\t', a + 1);
                 if (b == std::string::npos) continue;
-                sheet_.push_back({line.substr(0, a), line.substr(a + 1, b - a - 1), line.substr(b + 1)});
+                // A fourth column, the thing's link, for its card (Bot::sheet).
+                std::string value = line.substr(b + 1), link;
+                if (const size_t c = value.find('\t'); c != std::string::npos) link = value.substr(c + 1), value.resize(c);
+                sheet_.push_back({line.substr(0, a), line.substr(a + 1, b - a - 1), value, link});
             }
         }
         ImGui::BeginChild("sheet", ImVec2(0, height));
@@ -657,7 +861,7 @@ private:
         ImGui::TextColored(kGold, "%s", chosen_.c_str());
         ImGui::PopFont();
         if (sheet_.empty()) {
-            ImGui::TextColored(kDim, "No sheet yet: netbot writes one every five seconds while he plays.");
+            ImGui::TextColored(kDim, "No sheet yet: netbot writes one every second while he plays.");
             ImGui::EndChild();
             return;
         }
@@ -682,9 +886,17 @@ private:
                     ImGui::TableNextColumn();
                     ImGui::TextColored(kDim, "%s", r[1].c_str());
                     ImGui::TableNextColumn();
-                    const bool rare = r[2].find("excellent") != std::string::npos || r[2].find('[') != std::string::npos;
-                    if (rare) ImGui::TextColored(kGreen, "%s", r[2].c_str());
+                    const bool excellent = r[0] == "gear" && r[2].find(" excellent") != std::string::npos;
+                    const bool rare = excellent || r[2].find('[') != std::string::npos;
+                    if (excellent) ImGui::TextColored(kExcellent, "%s", excTagged(r[2], true).c_str());
+                    else if (rare) ImGui::TextColored(kGreen, "%s", r[2].c_str());
                     else ImGui::TextWrapped("%s", r[2].c_str());
+                    // Its card, off the link the sheet carries (the user, 2026-10-13).
+                    if (!r[3].empty()) {
+                        sim::Held held;
+                        const std::string label = itemOf(r[3], &held);
+                        itemTip(label, held);
+                    }
                 }
                 ImGui::EndTable();
             }
@@ -697,7 +909,7 @@ private:
     std::string openTab_;                  // --tab: the side tab to open on
     bool showSheet_ = false;
     double sheetAt_ = 0.0;
-    std::vector<std::array<std::string, 3>> sheet_;
+    std::vector<std::array<std::string, 4>> sheet_;
 
     std::string root_;
     Settings settings_;
@@ -748,7 +960,7 @@ int main(int argc, char** argv) {
         if (a == "--run" && i + 1 < argc) run = argv[++i];
         else if (a == "--port" && i + 1 < argc) port = settings.port = std::atoi(argv[++i]);
         else if (a == "--bots" && i + 1 < argc) settings.bots = std::atoi(argv[++i]);
-        else if (a == "--speed" && i + 1 < argc) settings.speed = std::atoi(argv[++i]);
+        else if (a == "--speed" && i + 1 < argc) settings.speed = std::clamp(std::atoi(argv[++i]), 1, kMostSpeed);
         else if (a == "--minutes" && i + 1 < argc) settings.minutes = float(std::atof(argv[++i]));
         else if (a == "--threads" && i + 1 < argc) settings.threads = std::atoi(argv[++i]);
         else if (a == "--per-netbot" && i + 1 < argc) settings.perNetbot = std::atoi(argv[++i]);
@@ -779,6 +991,7 @@ int main(int argc, char** argv) {
     std::signal(SIGINT, onSignal);
     std::signal(SIGHUP, onSignal);
     {
+        g_linkTables = itemTables();  // the Broker's item cards, read once up front (and said in the log)
         App app(root, run, port, settings);
         app.startPolling();
         if (startNow) app.start();

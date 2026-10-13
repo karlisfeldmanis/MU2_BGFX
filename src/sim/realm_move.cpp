@@ -143,7 +143,9 @@ void Realm::advance(Body& one) {
                                                                            : nullptr;
         for (size_t i = 1; why == nullptr && i < bodies_.size(); ++i) {
             const Body& other = bodies_[i];
-            if (!other.monster() || !other.alive() || other.quarry != one.id) continue;
+            // `quarry` first: one cache line of the body's thirty, and nearly every one is out
+            // there. monster() alone reads three (2026-10-13, netbot's profile).
+            if (other.quarry != one.id || !other.monster() || !other.alive()) continue;
             if (other.temper == Temper::Fighting ||
                 (other.temper == Temper::Chasing && within(one, other, kCombatReach))) {
                 why = "a monster on him";
@@ -232,6 +234,22 @@ void Realm::advance(Body& one) {
 bool Realm::throughGate(Body& hero) {
     const EnterGate* gate = enterGateAt(tables_->map, hero.column(), hero.row());
     if (gate == nullptr) return false;
+    // **Only the gate his walk is for** (2026-10-13, the user: "Sylwen for some reason is not
+    // making dyno or wings"): Atlans's gate to Tarkan stands beside the box Tarkan's sends him
+    // back into, and Tarkan's the same, so a walk from either landing toward the Death Beam
+    // Knights crossed the other gate -- the strongest bots went Atlans, Tarkan, Atlans every two
+    // seconds, 9,424 crossings in an evening. A route that ends in this gate, or none, goes
+    // through; one that only passes over it walks on. Invention: MU's CheckGate takes any tile.
+    // The goal asked counts too: the router moves a goal in a wall to the nearest open tile,
+    // which may lie just outside the box.
+    if (hero.walking && !route(hero).empty()) {
+        const Step& end = route(hero).back();
+        const int at = playerOf(hero);
+        const Request& order = at >= 0 ? heroes_[size_t(at)].order : me().order;
+        const bool asked = order.kind == Request::Kind::WalkTo &&
+                           enterGateAt(tables_->map, order.column, order.row) == gate;
+        if (!asked && enterGateAt(tables_->map, end.column, end.row) != gate) return false;
+    }
     // A sealed gate refuses everyone: Barred with level 0 is the drawing's "sealed".
     if (gate->target < 0) {
         say(What::Barred, hero, gate->number, 0);

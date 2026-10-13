@@ -107,7 +107,10 @@ namespace mu::net {
 //     shape 12), the Forest and Bloody Orcs' blow a stacking bleed in place of their poison.
 // 29: the guild (docs/guild.md): a GuildAsk up, a GuildState, GuildMark and GuildCall down, and
 //     each player's guild in Who, after the players.
-constexpr uint32_t kVersion = 29;
+// 30: the raid (docs/party.md): PartyWhat::Raid and ::Unraid, PartyState::raid after the members'
+//     health, and up to sim::kRaidMost members in a PartyState; and Invasion, where the Golden
+//     Dragon is on the server, to every client on every map.
+constexpr uint32_t kVersion = 30;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
@@ -126,9 +129,9 @@ enum class Kind : uint8_t { Hello = 1, Welcome = 2, Command = 3, Tick = 4, Hash 
                           Ping = 7, Account = 8, Roster = 9, Create = 10, Delete = 11, Who = 12,
                           Chat = 13, PartyAsk = 14, PartyState = 15, Bye = 16,
                           BrokerAsk = 17, BrokerView = 18, GuildAsk = 19, GuildState = 20,
-                          GuildMark = 21, GuildCall = 22 };
+                          GuildMark = 21, GuildCall = 22, Invasion = 23 };
 // The last kind there is: a frame of a higher one is not our protocol (take).
-constexpr Kind kLastKind = Kind::GuildCall;
+constexpr Kind kLastKind = Kind::Invasion;
 
 struct Hello {
     uint32_t version = kVersion;
@@ -193,7 +196,9 @@ struct Heard {
 // who invited him (empty for the latest invite), Leave nobody. The server keeps the parties: they
 // span maps, and a map is a realm.
 // Promote: the leader hands the party to the member named (ours; WebZen's party has no such ask).
-enum class PartyWhat : uint8_t { Invite = 0, Accept = 1, Decline = 2, Leave = 3, Kick = 4, Promote = 5 };
+// Raid: the leader makes his party a raid of up to sim::kRaidMost; Unraid makes it a party again,
+// while it has no more than sim::kPartyMost (ours, as WoW's "Convert to raid").
+enum class PartyWhat : uint8_t { Invite = 0, Accept = 1, Decline = 2, Leave = 3, Kick = 4, Promote = 5, Raid = 6, Unraid = 7 };
 struct PartyAsk {
     PartyWhat what = PartyWhat::Invite;
     std::string name;
@@ -221,6 +226,8 @@ struct PartyState {
     };
     static constexpr uint8_t kNoShield = 255;
     std::vector<Member> members;
+    // A raid, not a party (PartyWhat::Raid): it takes up to sim::kRaidMost.
+    bool raid = false;
 };
 
 // ---- the guild (docs/guild.md) ---------------------------------------------------------------
@@ -441,6 +448,22 @@ struct Bye {
     Why why = Why::Unknown;
 };
 
+// Down: where the Golden Invasion is on the server (sim/invasion.h), to every client on every map
+// whenever it changes and once at his welcome -- a client mirrors only his own map, so a dragon
+// landed on another is known only from this (the user, 2026-10-13: "when dragon fight is
+// happening show on map raid"; the big map and the travel list mark it). One at a time on the
+// server (invadedElsewhere). Quiet for none; while Entering or Standing, the map and its copy
+// it comes down on, and the tile it lands on (Body::homeColumn, homeRow). Outside the lockstep.
+struct Invasion {
+    sim::InvasionPhase phase = sim::InvasionPhase::Quiet;
+    uint32_t map = 0;
+    uint8_t copy = 1;
+    int16_t column = 0, row = 0;
+    bool operator==(const Invasion& o) const {
+        return phase == o.phase && map == o.map && copy == o.copy && column == o.column && row == o.row;
+    }
+};
+
 struct Hash {
     uint32_t tick = 0;
     uint64_t hash = 0;
@@ -468,6 +491,7 @@ void put(std::vector<uint8_t>& out, const GuildState& one);
 void put(std::vector<uint8_t>& out, const GuildMark& one);
 void put(std::vector<uint8_t>& out, const GuildCall& one);
 void put(std::vector<uint8_t>& out, const Bye& one);
+void put(std::vector<uint8_t>& out, const Invasion& one);
 
 // One frame off the front of `buffer`, its kind and body. Returns 1 for a frame taken (and
 // removed), 0 for not all of one there yet, -1 for a buffer that is not our protocol.
@@ -488,6 +512,7 @@ bool parse(const std::vector<uint8_t>& body, Create& out);
 bool parse(const std::vector<uint8_t>& body, Delete& out);
 bool parse(const std::vector<uint8_t>& body, Who& out);
 bool parse(const std::vector<uint8_t>& body, Bye& out);
+bool parse(const std::vector<uint8_t>& body, Invasion& out);
 // A Chat frame is a Say on the server and a Heard on a client.
 bool parse(const std::vector<uint8_t>& body, Say& out);
 bool parse(const std::vector<uint8_t>& body, Heard& out);

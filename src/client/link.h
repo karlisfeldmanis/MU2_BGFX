@@ -89,6 +89,13 @@ public:
     virtual const net::GuildMark* guildMark(uint32_t id) const { return nullptr; }
     virtual uint32_t guildOfPlayer(uint32_t id) const { return 0; }
     virtual bool takeGuildCall(net::GuildCall& out) { return false; }
+    // **The Golden Invasion on the server** (net::Invasion): where its dragon is, on whichever
+    // map, as the server last said -- Quiet for none, and always on a realm of this process,
+    // whose own invasion is read off the realm (Play::dragonLanded).
+    virtual const net::Invasion& invasion() const {
+        static const net::Invasion none;
+        return none;
+    }
     // **The Broker** (docs/broker.md, net/broker_wire.h): an ask of the market, and its answers
     // as they come, oldest first. A realm of this process has no market -- it is the server's,
     // shared by every map -- so its ask is answered Closed.

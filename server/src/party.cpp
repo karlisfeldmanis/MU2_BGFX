@@ -65,6 +65,7 @@ void sendParty(const Party& party, std::vector<std::unique_ptr<Session>>& sessio
         Session* hearer = sessionOfToken(to.token, sessions);
         if (hearer == nullptr) continue;
         net::PartyState state;
+        state.raid = party.raid;
         for (const Party::Member& m : party.members) {
             net::PartyState::Member out;
             out.name = m.name;
@@ -109,9 +110,10 @@ void partyOut(uint64_t token, const std::string& why, std::vector<std::unique_pt
     if (Session* one = sessionOfToken(token, sessions)) {
         partySet(*one, 0);
         sendPartyState(*one, {});
-        chatSystem(*one, net::Channel::Party, why == "was kicked" ? "You were removed from the party." : "You left the party.");
+        chatSystem(*one, net::Channel::Party, std::string(why == "was kicked" ? "You were removed from the " : "You left the ") +
+                                                  party.word() + ".");
     }
-    partyLine(party, name + " " + (why.empty() ? "has left the party." : why + " from the party."), sessions);
+    partyLine(party, name + " " + (why.empty() ? "has left the " : why + " from the ") + party.word() + ".", sessions);
     core::logf("party %u: %s %s", party.id, name.c_str(), why.empty() ? "left" : why.c_str());
     if (party.members.size() < 2) {
         for (const Party::Member& m : party.members) {
@@ -121,13 +123,13 @@ void partyOut(uint64_t token, const std::string& why, std::vector<std::unique_pt
             if (Session* one = sessionOfToken(m.token, sessions)) {
                 partySet(*one, 0);
                 sendPartyState(*one, {});
-                chatSystem(*one, net::Channel::Party, "The party has been disbanded.");
+                chatSystem(*one, net::Channel::Party, std::string("The ") + party.word() + " has been disbanded.");
             }
         }
         g_parties.erase(party.id);
         return;
     }
-    if (leader) partyLine(party, party.members.front().name + " is now the party leader.", sessions);
+    if (leader) partyLine(party, party.members.front().name + " is now the " + party.word() + " leader.", sessions);
     sendParty(party, sessions);
 }
 
@@ -144,12 +146,15 @@ void partyAsk(Session& one, const net::PartyAsk& ask, std::vector<std::unique_pt
             if (them == &one) return tell("You cannot invite yourself.");
             if (g_partyOf.count(them->token)) return tell(them->name + " is already in a party.");
             if (party != nullptr && party->members.front().token != one.token) {
-                return tell("Only the party leader can invite.");
+                return tell(std::string("Only the ") + party->word() + " leader can invite.");
             }
-            if (party != nullptr && int(party->members.size()) >= sim::kPartyMost) return tell("Your party is full.");
+            if (party != nullptr && int(party->members.size()) >= party->most()) {
+                return tell(party->raid ? "Your raid is full." : "Your party is full. Make it a raid (/raid) to take ten.");
+            }
             g_invites[them->token] = {one.token, now};
-            chatSystem(*them, net::Channel::Party, one.name + " invites you to a party. Type /accept or /decline.");
-            tell("You invited " + them->name + " to the party.");
+            const std::string word = party != nullptr ? party->word() : "party";
+            chatSystem(*them, net::Channel::Party, one.name + " invites you to a " + word + ". Type /accept or /decline.");
+            tell("You invited " + them->name + " to the " + word + ".");
             return;
         }
         case net::PartyWhat::Accept: {
@@ -174,7 +179,9 @@ void partyAsk(Session& one, const net::PartyAsk& ask, std::vector<std::unique_pt
             if (joined != nullptr && joined->members.front().token != from) {
                 return tell(inviter->name + " no longer leads a party.");
             }
-            if (joined != nullptr && int(joined->members.size()) >= sim::kPartyMost) return tell("That party is full.");
+            if (joined != nullptr && int(joined->members.size()) >= joined->most()) {
+                return tell(std::string("That ") + joined->word() + " is full.");
+            }
             if (joined == nullptr) {
                 Party made;
                 made.id = g_nextParty++;
@@ -187,7 +194,7 @@ void partyAsk(Session& one, const net::PartyAsk& ask, std::vector<std::unique_pt
             g_partyOf[one.token] = joined->id;
             core::logf("party %u: %s joins (%zu)", joined->id, one.name.c_str(), joined->members.size());
             // Their realms are told at the next upkeep (partyTick), which finds each body.
-            partyLine(*joined, one.name + " has joined the party.", sessions);
+            partyLine(*joined, one.name + " has joined the " + joined->word() + ".", sessions);
             sendParty(*joined, sessions);
             return;
         }
@@ -206,7 +213,9 @@ void partyAsk(Session& one, const net::PartyAsk& ask, std::vector<std::unique_pt
             return;
         case net::PartyWhat::Kick: {
             if (party == nullptr) return tell("You are not in a party.");
-            if (party->members.front().token != one.token) return tell("Only the party leader can remove members.");
+            if (party->members.front().token != one.token) {
+                return tell(std::string("Only the ") + party->word() + " leader can remove members.");
+            }
             for (const Party::Member& m : party->members) {
                 std::string a = m.name, b = ask.name;
                 for (char& c : a) c = char(std::tolower(uint8_t(c)));
@@ -216,11 +225,13 @@ void partyAsk(Session& one, const net::PartyAsk& ask, std::vector<std::unique_pt
                 partyOut(token, "was kicked", sessions);
                 return;
             }
-            return tell(ask.name + " is not in your party.");
+            return tell(ask.name + " is not in your " + party->word() + ".");
         }
         case net::PartyWhat::Promote: {
             if (party == nullptr) return tell("You are not in a party.");
-            if (party->members.front().token != one.token) return tell("Only the party leader can choose another.");
+            if (party->members.front().token != one.token) {
+                return tell(std::string("Only the ") + party->word() + " leader can choose another.");
+            }
             for (size_t i = 1; i < party->members.size(); ++i) {
                 std::string a = party->members[i].name, b = ask.name;
                 for (char& c : a) c = char(std::tolower(uint8_t(c)));
@@ -229,11 +240,37 @@ void partyAsk(Session& one, const net::PartyAsk& ask, std::vector<std::unique_pt
                 // The leader is the first; the old one steps to second.
                 std::swap(party->members[0], party->members[i]);
                 core::logf("party %u: %s hands it to %s", party->id, one.name.c_str(), party->members[0].name.c_str());
-                partyLine(*party, party->members.front().name + " is now the party leader.", sessions);
+                partyLine(*party, party->members.front().name + " is now the " + party->word() + " leader.", sessions);
                 sendParty(*party, sessions);
                 return;
             }
-            return tell(ask.name + " is not in your party.");
+            return tell(ask.name + " is not in your " + party->word() + ".");
+        }
+        // The raid (sim::kRaidMost; the user, 2026-10-13): the leader turns his party into one,
+        // and back while it holds no more than a party's five. It stays a raid until then, however
+        // few are left.
+        case net::PartyWhat::Raid: {
+            if (party == nullptr) return tell("You are not in a party.");
+            if (party->members.front().token != one.token) return tell("Only the party leader can make it a raid.");
+            if (party->raid) return tell("Your party is already a raid.");
+            party->raid = true;
+            core::logf("party %u: %s makes it a raid", party->id, one.name.c_str());
+            partyLine(*party, "The party is now a raid of up to " + std::to_string(sim::kRaidMost) + ".", sessions);
+            sendParty(*party, sessions);
+            return;
+        }
+        case net::PartyWhat::Unraid: {
+            if (party == nullptr || !party->raid) return tell("You are not in a raid.");
+            if (party->members.front().token != one.token) return tell("Only the raid leader can make it a party.");
+            if (int(party->members.size()) > sim::kPartyMost) {
+                return tell("A party holds " + std::to_string(sim::kPartyMost) + ": the raid has " +
+                            std::to_string(party->members.size()) + ".");
+            }
+            party->raid = false;
+            core::logf("party %u: %s makes it a party", party->id, one.name.c_str());
+            partyLine(*party, "The raid is now a party.", sessions);
+            sendParty(*party, sessions);
+            return;
         }
     }
 }

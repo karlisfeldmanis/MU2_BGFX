@@ -370,6 +370,7 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
     if (!welcome(one, world->realm->hero().id)) return false;
     announce(*world, sessions);
     guildArrived(one, sessions);
+    sayInvasion(one, invasionNow(worlds));
     return true;
 }
 
@@ -453,6 +454,46 @@ bool invadedElsewhere(const World& world, const std::vector<std::unique_ptr<Worl
     return false;
 }
 
+// Where the Golden Dragon is on the server (net::Invasion): the one world whose invasion is not
+// Quiet, its map, copy and the tile it comes down on; Quiet when there is none.
+net::Invasion invasionNow(const std::vector<std::unique_ptr<World>>& worlds) {
+    net::Invasion said;
+    for (const auto& world : worlds) {
+        if (!world->realm || world->realm->invasionPhase() == sim::InvasionPhase::Quiet) continue;
+        const sim::Body* dragon = world->realm->invader();
+        if (dragon == nullptr) continue;
+        said.phase = world->realm->invasionPhase();
+        said.map = world->realm->tables()->map;
+        said.copy = uint8_t(std::clamp(world->copy, 1, 255));
+        said.column = int16_t(dragon->homeColumn);
+        said.row = int16_t(dragon->homeRow);
+        break;
+    }
+    return said;
+}
+
+// It said to one welcomed line.
+void sayInvasion(Session& to, const net::Invasion& said) {
+    if (!to.welcomed || !to.socket.open()) return;
+    std::vector<uint8_t> out;
+    net::put(out, said);
+    if (!to.socket.send(out)) to.socket.close();
+}
+
+// It said to every client on every map whenever it changes (a world ticked, or let go), so the
+// big map and the travel list of a player elsewhere mark where it stands; and to each newcomer
+// at his welcome (sayInvasion).
+void invasionTick(std::vector<std::unique_ptr<Session>>& sessions,
+                  const std::vector<std::unique_ptr<World>>& worlds) {
+    static net::Invasion told;
+    const net::Invasion now = invasionNow(worlds);
+    if (now == told) return;
+    told = now;
+    core::logf("invasion: every client told phase %d on map %u copy %d at (%d, %d)", int(now.phase),
+               now.map, int(now.copy), int(now.column), int(now.row));
+    for (auto& one : sessions) sayInvasion(*one, now);
+}
+
 // A snapshot packed on its worker, put in hand: the past it stands after let go.
 void takePacked(World& world) {
     if (!world.packing.valid() ||
@@ -467,6 +508,21 @@ void takePacked(World& world) {
                         return t.tick > done.tick;
                     }));
     ++g_stats.packs;
+}
+
+void sendDatagrams(World& world, std::vector<std::unique_ptr<Session>>& sessions) {
+    if (!world.datagramDue) return;
+    world.datagramDue = false;
+    if (!g_udp.open()) return;
+    std::vector<const std::vector<uint8_t>*> frames;
+    for (const auto& frame : world.recent) frames.push_back(&frame);
+    std::vector<uint8_t> datagram;
+    if (!net::putTicks(datagram, frames) || datagram.empty()) return;  // too big a tick: the stream's alone
+    for (auto& one : sessions) {
+        if (one->world != &world || !one->welcomed || !one->socket.open() || !one->udpKnown) continue;
+        g_udp.send(datagram.data(), datagram.size(), &one->udpAt);
+        g_stats.udpBytes += datagram.size();
+    }
 }
 
 void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
@@ -535,20 +591,15 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
     while (world.recent.size() > kRecentTicks) world.recent.pop_front();
     if (t.tick % kHashEvery == 0) net::put(out, net::Hash{t.tick, net::stateHash(realm)});
     world.log.push_back(std::move(t));
-    std::vector<uint8_t> datagram;
-    if (g_udp.open()) {
-        std::vector<const std::vector<uint8_t>*> frames;
-        for (const auto& frame : world.recent) frames.push_back(&frame);
-        if (!net::putTicks(datagram, frames)) datagram.clear();  // too big a tick: the stream's alone
-    }
+    // **Queued, and sent once a pass** (2026-10-13, 40 bots at --speed 100): a send and a
+    // datagram a tick for every player was 85% of the server's time in the kernel, the realm 10%.
+    // The pass flushes each line once after its ticks, and sends each world one datagram of its
+    // last ticks (sendDatagrams); at --speed 1 a pass is one tick, as before.
+    world.datagramDue = true;
     for (auto& one : sessions) {
         if (one->world != &world || !one->welcomed || !one->socket.open()) continue;
-        if (!one->socket.send(out)) one->socket.close();
+        one->socket.queue(out);
         g_stats.streamBytes += out.size();
-        if (one->udpKnown && !datagram.empty()) {
-            g_udp.send(datagram.data(), datagram.size(), &one->udpAt);
-            g_stats.udpBytes += datagram.size();
-        }
     }
     // The world as it stands after this tick, taken once the tick is on its way (sprint 25), and
     // packed on a worker; the past before it is let go when the pack is in (takePacked). A realm
@@ -592,11 +643,14 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
             } else {
                 announce(world, sessions);
                 guildArrived(*one, sessions);
+                sayInvasion(*one, invasionNow(worlds));
             }
         }
     }
     // Where this tick's Zen came from and went (economy.h).
     economyTick(world, sessions);
+    // Where the Golden Dragon is, to every client when it changed (net::Invasion).
+    invasionTick(sessions, worlds);
 }
 
 // Where he is, to be written: this world at the tile he stands on, or the world the realm has
