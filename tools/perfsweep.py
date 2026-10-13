@@ -30,8 +30,9 @@ import re
 import subprocess
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BINARY = os.path.join(ROOT, "build", "mu2")
+from paths import BUILD, ROOT
+
+BINARY = os.path.join(BUILD, "mu2")
 SPOTS = os.path.join(ROOT, "tools", "perfsweep_spots.json")
 BASELINES = os.path.join(ROOT, "tools", "perf")
 BUDGET_MS = 5.5
@@ -615,7 +616,7 @@ def main():
             ap.error("--world is required (or --report RUN_DIR)")
         worlds = args.world.split(",")
         stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        run_dir = os.path.abspath(args.out or os.path.join(ROOT, "build", "perfsweep",
+        run_dir = os.path.abspath(args.out or os.path.join(BUILD, "perfsweep",
                                                            f"{stamp}-{args.preset}"))
         os.makedirs(run_dir, exist_ok=True)
         if not os.path.exists(BINARY):

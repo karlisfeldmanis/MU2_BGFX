@@ -17,10 +17,12 @@ import numpy as np
 from PIL import Image, ImageFilter
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+# The folders are tools/paths.py's; appended, so nothing there shadows a module here.
+sys.path.append(str(Path(__file__).resolve().parents[1] / "tools"))
 from model_icons import WORKSHOP, render  # noqa: E402
+from paths import P  # noqa: E402
 
-PROJECT = Path(__file__).resolve().parents[1]
-OUT = PROJECT / "source" / "interface" / "win_ghost_mount.png"
+OUT = P.CONTENT / "interface" / "win_ghost_mount.png"
 TURN = 270.0  # side on, head to the right, into the window
 # The longer side, in pixels: the ring's ghost is 41 for a 25-unit cell, a slot_ghosts.py
 # ghost being written at about one and a half times what it is drawn at.

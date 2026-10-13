@@ -30,15 +30,17 @@ import subprocess
 import sys
 import time
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(os.path.dirname(HERE))
+# The folders are tools/paths.py's, one level up.
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from paths import BUILD, CONTENT, ROOT, SHEETS, WORKSHOP  # noqa: E402
+
 MU = os.path.join(ROOT, "mu")
-DOT_MU = os.path.join(ROOT, "workshop", ".mu")
+DOT_MU = os.path.join(WORKSHOP, ".mu")
 STUDIO_SOCK = os.path.join(DOT_MU, "studio.sock")
 SERVE_SOCK = os.path.join(DOT_MU, "serve.sock")
 JOURNAL = os.path.join(DOT_MU, "journal.log")
 SHOTS = os.path.join(DOT_MU, "mcp_shots")
-ARENA_LOG = os.path.join(ROOT, "workshop", "logs", "mu", "arena.log")
+ARENA_LOG = os.path.join(WORKSHOP, "logs", "mu", "arena.log")
 VERSION = "2025-06-18"
 
 
@@ -149,7 +151,7 @@ def t_status(_):
 def t_studio_open(_):
     if os.path.exists(STUDIO_SOCK) and _answers(STUDIO_SOCK):
         return "the studio is already open"
-    subprocess.Popen([os.path.join(ROOT, "build", "mu2"), "--studio", "--mute"], cwd=ROOT,
+    subprocess.Popen([os.path.join(BUILD, "mu2"), "--studio", "--mute"], cwd=ROOT,
                      stdout=open(os.path.join(DOT_MU, "studio_mcp.log"), "w"), stderr=subprocess.STDOUT,
                      start_new_session=True)
     for _ in range(120):
@@ -186,7 +188,7 @@ def _label(kind, name):
     Figure parts entry; a monster's `world`, whose breeds its tab lists."""
     folders = {"monster": ["monsters"], "person": ["npc"]}.get(kind, [])
     for folder in folders:
-        path = os.path.join(ROOT, "source", folder, name + ".json")
+        path = os.path.join(CONTENT, folder, name + ".json")
         if os.path.exists(path):
             with open(path) as handle:
                 doc = json.load(handle)
@@ -314,9 +316,10 @@ def t_light(a):
     """A knob of a map's light: its sheet's value set, or written in when the map inherits it."""
     layer = a.get("layer") or "map"
     world = a.get("world", "")
-    files = {"map": f"sheets/worlds/{world}.json", "base": "sheets/lighting.json",
-             "dusk": "sheets/time/dusk.json", "night": "sheets/time/night.json",
-             "rain": f"sheets/worlds/{world}_rain.json"}
+    files = {"map": f"worlds/{world}.json", "base": "lighting.json", "dusk": "time/dusk.json",
+             "night": "time/night.json", "rain": f"worlds/{world}_rain.json"}
+    # Relative to the root, as `mu edit` takes them and the answers name them.
+    files = {k: os.path.relpath(os.path.join(SHEETS, v), ROOT) for k, v in files.items()}
     if layer not in files or (layer in ("map", "rain") and not world):
         raise Refused("layer is map, rain (both with world), base, dusk or night")
     path = os.path.join(ROOT, files[layer])
@@ -325,7 +328,7 @@ def t_light(a):
     with open(path) as handle:
         sheet = json.load(handle)
     if a.get("value") is None:
-        with open(os.path.join(ROOT, "sheets", "lighting.json")) as handle:
+        with open(os.path.join(SHEETS, "lighting.json")) as handle:
             base = json.load(handle)
         key = a.get("key")
         if key:

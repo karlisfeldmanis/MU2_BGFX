@@ -31,10 +31,9 @@ import json
 import os
 import time
 
-from things import ROOT, SOURCE, WORKSHOP, NotFound
+from things import ROOT, SHEETS, SOURCE, WORKSHOP, NotFound
 
 JOURNAL = os.path.join(WORKSHOP, ".mu", "journal.log")
-SHEETS = os.path.join(ROOT, "sheets")
 MATERIALS = os.path.join(SOURCE, "materials")
 
 

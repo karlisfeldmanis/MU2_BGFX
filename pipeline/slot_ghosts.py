@@ -58,8 +58,12 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageFilter
 
-PROJECT = Path(__file__).resolve().parents[1]
-ASSETS = PROJECT / "source" / "interface"
+# The folders are tools/paths.py's; appended, so nothing there shadows a module here.
+sys.path.append(str(Path(__file__).resolve().parents[1] / "tools"))
+from paths import P  # noqa: E402
+
+PROJECT = P.ROOT
+ASSETS = P.CONTENT / "interface"
 
 #: The rim: gold, and a shadow inside it, none of which is the plate.
 RIM = 10

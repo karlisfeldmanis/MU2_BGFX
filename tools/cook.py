@@ -112,8 +112,7 @@ import zlib
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "pipeline"))
 import world_manifest  # noqa: E402
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ASSETS = os.path.join(ROOT, "assets")
+from paths import ASSETS, BUILD, CONTENT, ROOT  # noqa: E402
 
 # What a new character is holding on the day he is made, by index.json's own names. OpenMU's
 # Version075 character-created plug-ins: AddSmallAxeForDarkKnight puts a Small Axe in the
@@ -478,14 +477,14 @@ def weathering_of(world, model):
     for each sheet, and the entry's `weathering` says what it does. A slot cut out of a sheet
     by `sheet_regions` (`well__timber`) is in `sheet_materials` under its own name.
     """
-    recipe = os.path.join(ROOT, "source", "world", world, model + ".json")
+    recipe = os.path.join(CONTENT, "world", world, model + ".json")
     if not os.path.exists(recipe):
         return {}
     with open(recipe) as handle:
         sheets = json.load(handle).get("sheet_materials") or {}
     out = {}
     for slot, material in sheets.items():
-        definition = os.path.join(ROOT, "source", "materials", material + ".json")
+        definition = os.path.join(CONTENT, "materials", material + ".json")
         if not os.path.exists(definition):
             continue
         with open(definition) as handle:
@@ -3201,7 +3200,7 @@ def cook_figures(world, out_dir, texcook, threads, with_monsters=True, only=None
     # the closing key: Hellfire's leap (154), whose clock otherwise wrapped while it faded out
     # into the stance and played the take-off again (the user, 2026-10-02: "after he jump, land
     # he has to not jump again"), and the short recoil the Skeleton Warrior flinches with (230).
-    with open(os.path.join(ROOT, "source", "players", "rig", "actions.json")) as handle:
+    with open(os.path.join(CONTENT, "players", "rig", "actions.json")) as handle:
         marked = json.load(handle).get("actions", {})
     player_holds |= {int(slot) for slot, entry in marked.items()
                      if isinstance(entry, dict) and entry.get("hold_at_end")}
@@ -3474,7 +3473,7 @@ def cook_shows(out_dir):
     from the recipes, as pipeline/realm_tables.py reads their `rules`; game/figures.cpp gives
     each figure its tags."""
     shows = {}
-    folder = os.path.join(ROOT, "source", "monsters")
+    folder = os.path.join(CONTENT, "monsters")
     for name in sorted(os.listdir(folder)):
         if not name.endswith(".json") or name.endswith(".rig.json"):
             continue
@@ -3527,7 +3526,7 @@ def main():
     parser.add_argument("--world", default="lorencia")
     parser.add_argument("--out", default=os.path.join(ASSETS, "cooked"))
     parser.add_argument("--threads", type=int, default=0)
-    parser.add_argument("--texcook", default=os.path.join(ROOT, "build", "texcook"))
+    parser.add_argument("--texcook", default=os.path.join(BUILD, "texcook"))
     parser.add_argument("--only", choices=("textures", "ground", "meshes", "placements",
                                            "figures", "tables", "showing", "missiles",
                                            "wardrobe", "shows", "all"),

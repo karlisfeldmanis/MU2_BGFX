@@ -26,7 +26,7 @@ Comments count. The house style runs them at 40-50% of the big headers and that 
 import os
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from paths import ROOT
 ALLOW = os.path.join(ROOT, "tools", "sizecheck.allow")
 
 # Where authored code lives. Vendored code (extern/) and the cook's output are not ours.

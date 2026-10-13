@@ -32,11 +32,12 @@ import sys
 
 from PIL import Image
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-WEAPONS = os.path.join(ROOT, "source", "items", "weapons")
+from paths import CONTENT
+
+WEAPONS = os.path.join(CONTENT, "items", "weapons")
 # A monster's passes too (Hell Maine's red chrome over its armour and wings, GMAida.cpp:
 # 1389-1405), written beside its recipe, where export_gltf looks: source/monsters/chrome/.
-FOLDERS = (WEAPONS, os.path.join(ROOT, "source", "monsters"))
+FOLDERS = (WEAPONS, os.path.join(CONTENT, "monsters"))
 IMAGES = {"chrome01": "refine/chrome01.png", "chrome02": "refine/chrome02.png",
           "bab2": "refine/bab2.png", "shiny01": "drop/shiny01.png"}
 # Where an alpha-tested sheet counts as cut: MU's own test, alpha under a half
@@ -48,7 +49,7 @@ def write(item, recipe, out):
     passes = recipe.get("chrome") or []
     sheets = {k.lower(): v for k, v in (recipe.get("sheets") or {}).items()}
     for n, one in enumerate(passes):
-        image = Image.open(os.path.join(ROOT, "source", "effects",
+        image = Image.open(os.path.join(CONTENT, "effects",
                                         IMAGES[one["image"]])).convert("RGB")
         tint = one.get("tint", [1.0, 1.0, 1.0])
         top = max(tint) or 1.0
@@ -59,13 +60,13 @@ def write(item, recipe, out):
         if one.get("mask") in IMAGES:
             # A chrome image as the mask: MU's lightmap over a RENDER_METAL pass, read at the
             # mesh's own UVs and slid (the Archangel's three).
-            mask = Image.open(os.path.join(ROOT, "source", "effects",
+            mask = Image.open(os.path.join(CONTENT, "effects",
                                            IMAGES[one["mask"]])).convert("L")
         elif one.get("where", "over") == "cut":
             sheet = sheets.get(one["slot"].lower())
             if sheet is None:
                 raise SystemExit(f"{item}: chrome pass {n} names '{one['slot']}', no sheet of it")
-            alpha = Image.open(os.path.join(ROOT, "source", "textures", sheet)).convert(
+            alpha = Image.open(os.path.join(CONTENT, "textures", sheet)).convert(
                 "RGBA").getchannel("A")
             mask = alpha.point(lambda a: 255 if a < CUT_BELOW else 0)
         else:

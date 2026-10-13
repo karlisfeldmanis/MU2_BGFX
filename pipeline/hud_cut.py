@@ -29,11 +29,14 @@ from pathlib import Path
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+# The folders are tools/paths.py's; appended, so nothing there shadows a module here.
+sys.path.append(str(Path(__file__).resolve().parents[1] / "tools"))
 
 from decode_texture import decode  # noqa: E402
+from paths import P  # noqa: E402
 
-PROJECT = Path(__file__).resolve().parents[1]
-ASSETS = PROJECT / "source" / "interface"
+PROJECT = P.ROOT
+ASSETS = P.CONTENT / "interface"
 
 #: Where the extracted client usually is. Not in the repository: it is 1.7 GB of someone
 #: else's game, and this script is what turns the few files it needs into ours.

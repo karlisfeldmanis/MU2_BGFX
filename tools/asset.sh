@@ -17,10 +17,10 @@
 
 set -euo pipefail
 
-root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-assets="$root/source"
-workshop="$root/workshop"
-pipeline="$root/pipeline"
+. "$(dirname -- "${BASH_SOURCE[0]}")/paths.sh"
+assets="$CONTENT"
+workshop="$WORKSHOP"
+pipeline="$PIPELINE"
 blender="${BLENDER:-/Applications/Blender.app/Contents/MacOS/Blender}"
 
 # Where an asset lives, found by name rather than by being told its kind.

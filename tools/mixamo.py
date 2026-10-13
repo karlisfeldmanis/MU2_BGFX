@@ -80,6 +80,10 @@ import struct
 import sys
 from pathlib import Path
 
+# Beside this file, which Blender's --python does not put on sys.path.
+sys.path.append(str(Path(__file__).resolve().parent))
+from paths import P  # noqa: E402
+
 #: The Mixamo joint that drives each MU bone. Mixamo's Spine1 has no counterpart — MU's
 #: chest is two bones where Mixamo's is three — and dropping the middle one keeps the
 #: shoulders on the bone that actually carries them.
@@ -595,12 +599,11 @@ def main(argv=None) -> None:
               "[--seconds=<s>] [--library=<rig.glb>]")
         return
 
-    here = Path(__file__).resolve().parent.parent
     clip_path = Path(argv[0])
     name = option("--name")
     seconds_wanted = option("--seconds")
     library_path = Path(option("--library",
-                               str(here / "workshop/players/rig/player.actions.glb")))
+                               str(P.WORKSHOP / "players/rig/player.actions.glb")))
     out_path = Path(option("--out", str(library_path)))
 
     if name is None:

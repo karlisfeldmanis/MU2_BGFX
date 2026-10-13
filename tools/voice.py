@@ -29,9 +29,11 @@ import subprocess
 import sys
 import tempfile
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
+from paths import P
+
+ROOT = P.ROOT
 QUESTS = ROOT / "src" / "sim" / "quests.cpp"
-REFS = ROOT / "source" / "voice" / "ref"
+REFS = P.CONTENT / "voice" / "ref"
 # Every pause in a raw line held to 0.3 s, before any finish: Chatterbox leaves a second or more at
 # a dash or a full stop, and a paragraph's tail, and Peia's first takes stood 4.3 s silent in the
 # middle of her thanks (the user, 2026-09-29: "pretty big pauses"). Her hand-in went 28.7 s to 21.6.
@@ -308,7 +310,7 @@ def main():
     # A chain's links share their giver's voice: golden_archer_2 reads as golden_archer.
     how = VOICES.get(args.voice) or VOICES[re.sub(r"_\d+$", "", args.voice)]
     model = ChatterboxTTS.from_pretrained(device=args.device)
-    out = ROOT / "source" / "voice" / args.voice
+    out = P.CONTENT / "voice" / args.voice
     out.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as scratch:
         for page, paragraphs in wanted.items():

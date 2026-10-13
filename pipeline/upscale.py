@@ -51,6 +51,10 @@ import torch.nn.functional as F
 from PIL import Image
 from torch import nn
 
+# The folders are tools/paths.py's; appended, so nothing there shadows a module here.
+sys.path.append(str(Path(__file__).resolve().parents[1] / "tools"))
+from paths import P  # noqa: E402
+
 #: The one checkpoint this supports, and where MU2 keeps it: weights/, which is
 #: named for what is in it. It was `models` until the project grew player models in
 #: it, at which point a folder called models holding neither was a trap.
@@ -492,7 +496,7 @@ def main() -> None:
     if trust < 1.0:
         print(f"  detail     scaled to {trust:.2f} of it — {smallest} px is under {CONFIDENT_AT}")
 
-    model, device = load(Path(__file__).resolve().parent.parent / "weights", which)
+    model, device = load(P.WEIGHTS, which)
     print(f"  model      {which} ({MODELS[which]['file']}) on {device}, "
           f"{passes} pass{'' if passes == 1 else 'es'}")
     print(f"  context    {PAD} texels, {pad_mode}")

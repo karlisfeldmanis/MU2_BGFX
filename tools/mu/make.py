@@ -29,11 +29,10 @@ import subprocess
 import time
 
 from recipe_dates import BUILD_IGNORES, REALM_IGNORES, recipe_time
-from things import (ASSETS, COOKED, PIPELINE, ROOT, SOURCE, WORKSHOP, cooked_worlds,
+from things import (ASSETS, BUILD, COOKED, PIPELINE, ROOT, SOURCE, TOOLS, WORKSHOP, cooked_worlds,
                     world_recipes)
 
 LOCKS = os.path.join(WORKSHOP, ".mu")
-TOOLS = os.path.join(ROOT, "tools")
 COOK = ["python3", os.path.join(TOOLS, "cook.py")]
 DB = os.path.join(SOURCE, "mu.db")
 
@@ -560,7 +559,6 @@ def plan_sounds(threads):
     ]
 
 
-BUILD = os.path.join(ROOT, "build")
 GAME = os.path.join(BUILD, "mu2")
 
 

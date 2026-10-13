@@ -21,8 +21,11 @@ import sys
 import numpy as np
 from PIL import Image
 
+# The folders are tools/paths.py's; appended, so nothing there shadows a module here.
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tools"))
+from paths import CONTENT  # noqa: E402
+
 CELL = 512
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def smooth_noise(size, cells, rng):
@@ -151,7 +154,7 @@ def smoke(rng):
 
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
-        ROOT, "source/effects/clouds/void_clouds.png")
+        CONTENT, "effects/clouds/void_clouds.png")
     seed = int(sys.argv[2]) if len(sys.argv) > 2 else 11  # Blood Castle's map number
     grid = int(sys.argv[3]) if len(sys.argv) > 3 else 2
     kind = sys.argv[4] if len(sys.argv) > 4 else "cloud"

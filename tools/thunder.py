@@ -20,13 +20,13 @@ reads as distance.
 import subprocess
 import sys
 import wave
-from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parent.parent
-SOURCE = ROOT / "downloads" / "freesound_community-thunderstorm-14708.mp3"
-OUT = ROOT / "source" / "sounds"
+from paths import P
+
+SOURCE = P.DOWNLOADS / "freesound_community-thunderstorm-14708.mp3"
+OUT = P.CONTENT / "sounds"
 RATE = 22050
 WINDOW = 0.02
 

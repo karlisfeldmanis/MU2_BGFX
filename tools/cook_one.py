@@ -33,8 +33,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cook  # noqa: E402  (the cook's own texture and mesh steps, so the two cannot drift)
-from cook import (ASSETS, ROOT, cook_mesh, cook_world_clip, image_bytes, read_glb,  # noqa: E402
-                  roles_of, safe)
+from cook import (cook_mesh, cook_world_clip, image_bytes, read_glb, roles_of, safe)  # noqa: E402
+from paths import ASSETS, BUILD, ROOT, SHOTS  # noqa: E402
 
 LOG = os.path.join(ROOT, "docs", "cook-log.md")
 PIECES = ("Helm", "Armor", "Pant", "Glove", "Boot")
@@ -391,7 +391,7 @@ def shoot(kind, name, extra, world, dist=None):
         "figure": ("monsters", name),
         "world": ("world", name),
     }[kind]
-    out = os.path.join(ROOT, "shots", "cook", safe(name))
+    out = os.path.join(SHOTS, "cook", safe(name))
     os.makedirs(out, exist_ok=True)
     frames = []
     for time in TIMES:
@@ -493,7 +493,7 @@ def main():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("name", nargs="?")
     parser.add_argument("--world", default="lorencia")
-    parser.add_argument("--texcook", default=os.path.join(ROOT, "build", "texcook"))
+    parser.add_argument("--texcook", default=os.path.join(BUILD, "texcook"))
     parser.add_argument("--no-shots", action="store_true")
     parser.add_argument("--dist", type=float, default=None,
                         help="the camera's distance for the shots, for an object too small "

@@ -32,17 +32,21 @@ from __future__ import annotations
 import argparse
 import math
 import random
+import sys
 from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
+# The folders are tools/paths.py's; appended, so nothing there shadows a module here.
+sys.path.append(str(Path(__file__).resolve().parents[1] / "tools"))
+from paths import P  # noqa: E402
+
 CELL_W, CELL_H = 64, 128
 CELLS = 8
 SCALE = 4
 
-ROOT = Path(__file__).resolve().parent.parent
-TARGET = ROOT / "source" / "effects" / "grass" / "wild.png"
+TARGET = P.CONTENT / "effects" / "grass" / "wild.png"
 
 # Greens a little under Noria's lawn (112, 123, 24) and over Lorencia's (69, 64, 16); Turf
 # dims the sheet per world rather than this painting two of them.
@@ -246,7 +250,7 @@ def main() -> None:
     sheet = paint(args.seed)
     TARGET.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(TARGET)
-    print(f"  meadow     {TARGET.relative_to(ROOT.parent)}  {sheet.width}x{sheet.height}")
+    print(f"  meadow     {TARGET.relative_to(P.ROOT.parent)}  {sheet.width}x{sheet.height}")
 
     if args.preview:
         shown = sheet.copy()

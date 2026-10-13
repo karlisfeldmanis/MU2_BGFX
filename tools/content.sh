@@ -17,10 +17,10 @@
 
 set -uo pipefail
 
-root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-source_dir="$root/source"
-workshop="$root/workshop"
-pipeline="$root/pipeline"
+. "$(dirname -- "${BASH_SOURCE[0]}")/paths.sh"
+source_dir="$CONTENT"
+workshop="$WORKSHOP"
+pipeline="$PIPELINE"
 
 worlds=()
 forced=()
@@ -81,7 +81,7 @@ print(json.load(open(sys.argv[1])).get('blocked',''))" "$recipe" 2>/dev/null)"
     continue
   fi
   echo "--- $rel"
-  "$root/tools/asset.sh" "$name" --build-only "${forced[@]+"${forced[@]}"}" \
+  "$TOOLS/asset.sh" "$name" --build-only "${forced[@]+"${forced[@]}"}" \
     || failed+=("$rel")
 done < <(python3 - "$source_dir" <<'PY'
 import json, sys

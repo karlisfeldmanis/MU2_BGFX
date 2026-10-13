@@ -42,10 +42,13 @@ from pathlib import Path
 # Beside this file, which is not on Blender's path — a script run by --python is executed,
 # not imported, so its directory never joins sys.path the way a module's would.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+# The folders are tools/paths.py's; appended, so nothing there shadows a module here.
+sys.path.append(str(Path(__file__).resolve().parents[1] / "tools"))
 
 from export_gltf import (                                            # noqa: E402
     Binary, DEFAULT_PLAY_SPEED, read_closes, read_speeds, skeleton_of, write_animations,
     write_glb, write_skin)
+from paths import P                                                  # noqa: E402
 
 
 def main() -> None:
@@ -101,11 +104,10 @@ def main() -> None:
     # And our own clips back on top: the player's library is this file plus tools/mixamo.py's
     # OURS, and a re-export without them wiped the run once (2026-10-01).
     if rig_path.name == "player.rig.json":
-        tools = Path(__file__).resolve().parent.parent / "tools"
-        sys.path.insert(0, str(tools))
+        sys.path.insert(0, str(P.TOOLS))
         import mixamo  # noqa: E402
         for name, fbx, options in mixamo.OURS:
-            mixamo.main([str(tools.parent / fbx), f"--name={name}",
+            mixamo.main([str(P.ROOT / fbx), f"--name={name}",
                          f"--library={destination}"] + options)
 
     print(

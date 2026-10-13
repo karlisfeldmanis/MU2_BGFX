@@ -22,9 +22,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-PROJECT = Path(__file__).resolve().parents[1]
-OUT = PROJECT / "source" / "interface" / "buffs"
-WORKSHOP = PROJECT / "workshop" / "items"
+# The folders are tools/paths.py's; appended, so nothing there shadows a module here.
+sys.path.append(str(Path(__file__).resolve().parents[1] / "tools"))
+from paths import P  # noqa: E402
+
+OUT = P.CONTENT / "interface" / "buffs"
+WORKSHOP = P.WORKSHOP / "items"
 BLENDER = "/Applications/Blender.app/Contents/MacOS/Blender"
 W, H = 80, 112
 SCALE = 4  # composed at four times and taken down, for clean edges

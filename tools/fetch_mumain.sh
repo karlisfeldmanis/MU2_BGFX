@@ -5,7 +5,8 @@
 #
 # Pinned to the commit the import was made from, for the reason bootstrap.sh pins bgfx.
 set -e
-cd "$(dirname "$0")/.."
+. "$(dirname "$0")/paths.sh"
+cd "$ROOT"
 MUMAIN_REV=c0d74c4ed5edfad527b71899337f72d39bfc49f3
 if [ ! -d reference/MuMain/.git ]; then
   mkdir -p reference

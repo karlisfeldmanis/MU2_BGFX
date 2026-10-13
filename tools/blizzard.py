@@ -13,14 +13,14 @@ equal power so the loop has no seam, and the whole brought to a 0.95 peak.
 import subprocess
 import sys
 import wave
-from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parent.parent
-SOURCE = ROOT / "downloads" / (
+from paths import P
+
+SOURCE = P.DOWNLOADS / (
     "nickpanek-whiteout-valley-blizzard-ambient-loop-with-howling-hillside-winds-563822.mp3")
-OUT = ROOT / "source" / "sounds" / "ablizzard.wav"
+OUT = P.CONTENT / "sounds" / "ablizzard.wav"
 RATE = 22050
 FOLD = 2.0
 

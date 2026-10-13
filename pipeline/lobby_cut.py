@@ -31,11 +31,14 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+# The folders are tools/paths.py's; appended, so nothing there shadows a module here.
+sys.path.append(str(Path(__file__).resolve().parents[1] / "tools"))
 
 from decode_texture import decode  # noqa: E402
+from paths import P  # noqa: E402
 
-PROJECT = Path(__file__).resolve().parents[1]
-ASSETS = PROJECT / "source" / "interface"
+PROJECT = P.ROOT
+ASSETS = P.CONTENT / "interface"
 
 #: Where the extracted client usually is. Not in the repository; see hud_cut.py.
 DEFAULT_SOURCE = Path.home() / "Documents" / "mu-dream-online" / "Data" / "Interface"

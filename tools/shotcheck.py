@@ -64,8 +64,9 @@ import subprocess
 import sys
 import tempfile
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BINARY = os.path.join(ROOT, "build", "mu2")
+from paths import BUILD, ROOT
+
+BINARY = os.path.join(BUILD, "mu2")
 REFERENCE = os.path.join(ROOT, "tests", "reference")
 
 # Every scene is pinned on all four axes that can move a picture: the seed, the tile, the

@@ -42,7 +42,7 @@ import math
 import os
 import struct
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from paths import ASSETS, ROOT
 
 
 def read_glb(path):
@@ -208,7 +208,7 @@ def slide(points, cycle, gait, rate, frames=2000, hz=180.0):
 def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--glb", default="assets/players/rig/player.actions.glb")
+    parser.add_argument("--glb", default=os.path.join(ASSETS, "players/rig/player.actions.glb"))
     parser.add_argument("--old-close", action="store_true",
                         help="append the closing key as the cook did before 2026-09-21")
     parser.add_argument("--clip", default="action17", help="MU's own action name")

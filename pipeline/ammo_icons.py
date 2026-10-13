@@ -17,10 +17,12 @@ import numpy as np
 from PIL import Image, ImageFilter
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+# The folders are tools/paths.py's; appended, so nothing there shadows a module here.
+sys.path.append(str(Path(__file__).resolve().parents[1] / "tools"))
 from model_icons import WORKSHOP, render  # noqa: E402
+from paths import P  # noqa: E402
 
-PROJECT = Path(__file__).resolve().parents[1]
-OUT = PROJECT / "source" / "interface"
+OUT = P.CONTENT / "interface"
 # name: the model, and its lean in degrees anticlockwise. The quiver is thrown across the square;
 # the Bolt's two crossed bolts stand as an even X at 75, its crossing on the box's middle -- at
 # the quiver's 60 the long shafts reached up and right and it read off centre (the user,

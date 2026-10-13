@@ -14,8 +14,9 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sync import glb_json, glb_uris  # noqa: E402
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC, DST = os.path.join(ROOT, "workshop"), os.path.join(ROOT, "assets")
+from paths import ASSETS, WORKSHOP  # noqa: E402
+
+SRC, DST = WORKSHOP, ASSETS
 
 for rel in sys.argv[1:]:
     here = os.path.dirname(rel)

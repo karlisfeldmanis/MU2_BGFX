@@ -25,7 +25,7 @@ import os
 import struct
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from paths import ASSETS, COOKED
 IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
 
 
@@ -117,11 +117,11 @@ def multiply(a, b):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mesh", default=os.path.join(
-        ROOT, "assets/cooked/figures/meshes/ArmorMale10.mum"))
+        COOKED, "figures/meshes/ArmorMale10.mum"))
     parser.add_argument("--rig", default=os.path.join(
-        ROOT, "assets/players/rig/player.actions.glb"))
+        ASSETS, "players/rig/player.actions.glb"))
     parser.add_argument("--clips", default=os.path.join(
-        ROOT, "assets/cooked/figures/clips/player.muc"))
+        COOKED, "figures/clips/player.muc"))
     parser.add_argument("--clip", default="", help="pose this clip's first frame as well")
     parser.add_argument("--tolerance", type=float, default=1e-4)
     args = parser.parse_args()

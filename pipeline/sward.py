@@ -36,17 +36,21 @@ from __future__ import annotations
 import argparse
 import math
 import random
+import sys
 from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
+# The folders are tools/paths.py's; appended, so nothing there shadows a module here.
+sys.path.append(str(Path(__file__).resolve().parents[1] / "tools"))
+from paths import P  # noqa: E402
+
 CELL_W, CELL_H = 128, 256
 CELLS = 8
 SCALE = 3
 
-ROOT = Path(__file__).resolve().parent.parent
-TARGET = ROOT / "assets" / "effects" / "grass" / "sward.png"
+TARGET = P.ASSETS / "effects" / "grass" / "sward.png"
 
 # Greens around MU's own lawn. The shader re-hues by luminance, so the spread that matters here
 # is the spread in VALUE -- these differ in brightness as much as in hue on purpose.
@@ -204,7 +208,7 @@ def main() -> None:
     TARGET.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(TARGET)
     covered = float((np.asarray(sheet)[..., 3] >= 72).mean())
-    print(f"  sward      {TARGET.relative_to(ROOT.parent)}  {sheet.width}x{sheet.height}  "
+    print(f"  sward      {TARGET.relative_to(P.ROOT.parent)}  {sheet.width}x{sheet.height}  "
           f"{covered * 100:.1f}% over the cutout")
 
     if args.preview:

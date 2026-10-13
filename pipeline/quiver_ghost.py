@@ -16,10 +16,12 @@ import numpy as np
 from PIL import Image, ImageFilter
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+# The folders are tools/paths.py's; appended, so nothing there shadows a module here.
+sys.path.append(str(Path(__file__).resolve().parents[1] / "tools"))
 from model_icons import WORKSHOP, render  # noqa: E402
+from paths import P  # noqa: E402
 
-PROJECT = Path(__file__).resolve().parents[1]
-OUT = PROJECT / "source" / "interface" / "win_ghost_quiver.png"
+OUT = P.CONTENT / "interface" / "win_ghost_quiver.png"
 TURN = 90.0  # its length across the camera, the arrows' heads to the right
 # Stood upright and leaned as the shield plate's sword is: degrees, anticlockwise.
 LEAN = 75.0

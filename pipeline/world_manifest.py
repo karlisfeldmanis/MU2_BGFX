@@ -15,9 +15,14 @@ always had, and a dict built from the manifests equals the literal it replaced.
     worlds_with("flat_over_void")  the world folders whose knob is true
 """
 import json
+import sys
 from pathlib import Path
 
-WORLDS = Path(__file__).resolve().parent.parent / "source" / "world"
+# The folders are tools/paths.py's; appended, so nothing there shadows a module here.
+sys.path.append(str(Path(__file__).resolve().parents[1] / "tools"))
+from paths import P  # noqa: E402
+
+WORLDS = P.CONTENT / "world"
 
 _manifests = None
 

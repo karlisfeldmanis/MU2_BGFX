@@ -16,13 +16,12 @@ The kind is the recipe's folder, not something the caller repeats:
 import glob
 import json
 import os
+import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-SOURCE = os.path.join(ROOT, "source")
-WORKSHOP = os.path.join(ROOT, "workshop")
-ASSETS = os.path.join(ROOT, "assets")
-COOKED = os.path.join(ASSETS, "cooked")
-PIPELINE = os.path.join(ROOT, "pipeline")
+# The folders are tools/paths.py's, one level up; mu's modules take them from here.
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from paths import (ASSETS, BUILD, COOKED, PIPELINE, ROOT, SHEETS, SHOTS, TOOLS,  # noqa: E402,F401
+                   WORKSHOP, CONTENT as SOURCE)
 
 # Folders under source/ that hold no recipes of their own.
 NOT_RECIPES = {"textures", "materials", "profiles", "sounds", "voice", "music", "interface",

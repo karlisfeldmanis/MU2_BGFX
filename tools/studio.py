@@ -23,7 +23,7 @@ import os
 import subprocess
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from paths import BUILD, ROOT, SHOTS
 TIMES = ("noon", "dusk", "night")
 
 
@@ -45,7 +45,7 @@ def main():
     safe = "".join(c if c.isalnum() else "_" for c in args.name)
     if args.plus:
         safe += f"_plus{args.plus}"
-    out = os.path.join(ROOT, "shots", "studio", safe)
+    out = os.path.join(SHOTS, "studio", safe)
     frames_dir = os.path.join(out, "frames")
     os.makedirs(frames_dir, exist_ok=True)
     for old in os.listdir(frames_dir):
@@ -53,7 +53,7 @@ def main():
 
     blocks = args.turns * len(TIMES)
     frames = blocks * args.settle + 1
-    command = [os.path.join(ROOT, "build", "mu2"), "--studio", "--still", "--no-list",
+    command = [os.path.join(BUILD, "mu2"), "--studio", "--still", "--no-list",
                "--category", args.category, "--pick", args.name,
                "--turns", str(args.turns), "--shot", str(args.settle),
                "--frames", str(frames), "--shot-path", frames_dir,

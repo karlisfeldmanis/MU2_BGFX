@@ -15,9 +15,10 @@ import subprocess
 import tempfile
 import time
 
-from things import ROOT
+from things import BUILD, ROOT, SHEETS, SHOTS, SOURCE
 
-AREAS = ["src", "server/src", "tests", "tools", "pipeline", "source", "sheets", "docs"]
+AREAS = ["src", "server/src", "tests", "tools", "pipeline",
+         os.path.relpath(SOURCE, ROOT), os.path.relpath(SHEETS, ROOT), "docs"]
 SKIP = (".obj", ".png", ".wav", ".blend", ".glb", ".ktx", ".db")
 
 
@@ -45,11 +46,11 @@ def where(name, say, docs=False):
 
 
 def shot(world, at, when, frames, out, say):
-    out = os.path.abspath(out or os.path.join(ROOT, "shots", "mu", f"{world}_{at.replace(',', '_')}_{when}"))
+    out = os.path.abspath(out or os.path.join(SHOTS, "mu", f"{world}_{at.replace(',', '_')}_{when}"))
     os.makedirs(out, exist_ok=True)
     scratch = tempfile.mkdtemp(prefix="mu-save-")
     at_frame = max(1, frames // 2)
-    cmd = [os.path.join(ROOT, "build", "mu2"), "--world", world, "--at", at, "--time", when,
+    cmd = [os.path.join(BUILD, "mu2"), "--world", world, "--at", at, "--time", when,
            "--frames", str(frames), "--shot", str(at_frame), "--shot-path", out, "--mute",
            "--save", os.path.join(scratch, "demo.json"),
            # Its own log, beside its shots: mu2.log is shared, and another session's run

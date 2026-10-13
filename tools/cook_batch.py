@@ -30,9 +30,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cook_one  # noqa: E402
-from cook import ROOT  # noqa: E402
+from paths import BUILD, ROOT, WORKSHOP  # noqa: E402
 
-WORKSHOP = os.path.join(ROOT, "workshop")
 LOGS = os.path.join(WORKSHOP, "logs")
 
 
@@ -61,7 +60,7 @@ def main():
     parser.add_argument("--no-build", action="store_true")
     parser.add_argument("--no-shots", action="store_true")
     parser.add_argument("--world", default="lorencia")
-    parser.add_argument("--texcook", default=os.path.join(ROOT, "build", "texcook"))
+    parser.add_argument("--texcook", default=os.path.join(BUILD, "texcook"))
     args = parser.parse_args()
     failed = []
     began = time.time()

@@ -51,8 +51,7 @@ import sys
 import numpy as np
 from PIL import Image
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ASSETS = os.path.join(ROOT, "assets")
+from paths import ASSETS, SHEETS
 
 # How far a baked ORM may sit from the library value it claims before it is a failure. The
 # ORM is 8-bit and BC7-compressed, so a texel cannot be exact; 0.04 is about ten codes, which
@@ -689,7 +688,7 @@ def read_rulings(library):
     A ruling either names a library entry -- which keeps it traced -- or gives roughness and
     metal outright, which is an invention and has to say why.
     """
-    path = os.path.join(ROOT, "sheets", "materials.json")
+    path = os.path.join(SHEETS, "materials.json")
     if not os.path.exists(path):
         return {}, []
     sheet = json.load(open(path))
@@ -866,7 +865,7 @@ def main():
     # switched off within a week. Instead the known ones are recorded once and the gate fails
     # on what is new, and on any recorded failure that has since been fixed, so the file
     # shrinks and cannot quietly grow.
-    baseline_path = os.path.join(ROOT, "sheets", "materials.baseline.json")
+    baseline_path = os.path.join(SHEETS, "materials.baseline.json")
     baseline = set()
     if os.path.exists(baseline_path) and not args.record:
         baseline = set(json.load(open(baseline_path))["known"])

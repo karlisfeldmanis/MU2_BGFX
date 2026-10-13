@@ -40,6 +40,8 @@ from pathlib import Path
 
 import bpy
 from mathutils import Vector
+sys.path.append(str(Path(__file__).resolve().parents[1] / "tools"))  # tools/paths.py; appended
+from paths import P  # noqa: E402
 
 #: The layout everything is baked and textured through. See clean_lowpoly.
 BAKE_UV = "bake"
@@ -709,8 +711,7 @@ def material_culls(name: str) -> bool | None:
     if not name:
         return None
 
-    definition = (Path(__file__).resolve().parent.parent
-                  / "source" / "materials" / f"{name}.json")
+    definition = P.CONTENT / "materials" / f"{name}.json"
 
     if not definition.exists():
         return None
@@ -2148,9 +2149,8 @@ def main() -> None:
                              if k.lower() == slot), f"{slot}.png")
                 # The upscaled sheet the bake itself read, beside the output; MU's own
                 # decode in source/textures if the upscale is not there.
-                sheet = destination.parent / f"{Path(file).stem}_x3.png"
-                if not sheet.exists():
-                    sheet = Path(__file__).resolve().parent.parent / "source" / "textures" / file
+                upscaled = destination.parent / f"{Path(file).stem}_x3.png"
+                sheet = upscaled if upscaled.exists() else P.CONTENT / "textures" / file
                 one["material"] = glow_material(document, binary, slot, glowing[slot], sheet)
                 print(f"  glow       {slot}: {sheet.name}, "
                       f"{', '.join(f'{k} {v}' for k, v in glowing[slot].items() if k != 'note') or 'steady'}")
