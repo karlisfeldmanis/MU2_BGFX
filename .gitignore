@@ -17,6 +17,7 @@ build-debug/
 build-trace/
 # The player's build (MU2_SHIP), and what `./mu dist` makes from it: the app a player is given.
 build-ship/
+build-ship-src/
 dist/
 
 # What a run leaves: the log and the pictures.

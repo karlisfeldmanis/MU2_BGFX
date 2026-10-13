@@ -2,8 +2,11 @@
 
 Each step is said as it runs:
 
-  1. The player's build: build-ship/, configured once with MU2_SHIP=ON, and mu2 and mupack
-     built in it. It is the game and nothing else (no studio, bench or developer switch).
+  1. The player's build, from a COMMIT and never from the working tree, where other sessions keep
+     half-done edits (the first app went out at protocol 30, HEAD's 29, the server's 26).
+     build-ship-src/ is that commit's tree, recipes and docs left out, rsynced by content so
+     ninja rebuilds only what changed; build-ship/ is configured from it once with MU2_SHIP=ON,
+     and mu2 and mupack built. The game and nothing else (no studio, bench or developer switch).
   2. The manifest (manifest.py): every file the game reads, grouped into packs. Nothing it does
      not reach goes in: no recipes, no glb sources, no cook intermediates, no stale textures.
   3. The bundle: the player's MU2.app copied into dist/macos/, glfw copied into its Frameworks
@@ -29,17 +32,18 @@ import manifest  # noqa: E402
 import settings  # noqa: E402
 
 SHIP = os.path.join(ROOT, "build-ship")
+SNAPSHOT = os.path.join(ROOT, "build-ship-src")
 DIST = os.path.join(ROOT, "dist")
 GLFW = "libglfw.3.dylib"
 
 
-def source_of(logical, shaders):
+def source_of(logical, shaders, sheets=SHEETS):
     """The file on disk a pack's logical path is made from."""
     top, _, rest = logical.partition("/")
     if top == "assets":
         return os.path.join(ASSETS, rest)
     if top == "sheets":
-        return os.path.join(SHEETS, rest)
+        return os.path.join(sheets, rest)
     if top == "fonts":
         return os.path.join(EXTERN, rest)
     if top == "shaders":
@@ -55,10 +59,40 @@ def run(command, say, **kw):
     return done.stdout
 
 
+def snapshot(ref, say):
+    """The commit's tree in build-ship-src/: what is built, and the sheets the packs carry."""
+    commit = run(["git", "rev-parse", "--verify", ref + "^{commit}"], say, cwd=ROOT).strip()
+    line = run(["git", "log", "-1", "--format=%h %cs", commit], say, cwd=ROOT).strip()
+    staged = SNAPSHOT + ".new"
+    shutil.rmtree(staged, ignore_errors=True)
+    os.makedirs(staged)
+    archive = subprocess.run(["git", "archive", "--format=tar", commit, "--", ".",
+                              ":(exclude)source", ":(exclude)docs"], cwd=ROOT, capture_output=True)
+    if archive.returncode != 0:
+        raise RuntimeError(archive.stderr.decode().strip())
+    subprocess.run(["tar", "-x", "-C", staged], input=archive.stdout, check=True)
+    with open(os.path.join(staged, "COMMIT"), "w") as out:
+        out.write(line + "\n")
+    # By content, without times: a file that changed gets today's time and is rebuilt; one
+    # that did not keeps its old time and is not. A commit's own times would undo that.
+    os.makedirs(SNAPSHOT, exist_ok=True)
+    run(["rsync", "-rlc", "--delete", "--exclude", "/extern", staged + "/", SNAPSHOT + "/"], say)
+    shutil.rmtree(staged)
+    extern = os.path.join(SNAPSHOT, "extern")
+    if not os.path.islink(extern):
+        os.symlink(os.path.relpath(EXTERN, SNAPSHOT), extern)
+    say(f"the player's build is made from {line} (build-ship-src/)")
+    return line
+
+
 def build(cores, say):
+    cache = os.path.join(SHIP, "CMakeCache.txt")
+    if os.path.exists(cache) and f"CMAKE_HOME_DIRECTORY:INTERNAL={SNAPSHOT}\n" not in open(cache).read():
+        say("build-ship/ was configured from another tree; configuring it again from the snapshot")
+        shutil.rmtree(SHIP)
     if not os.path.exists(os.path.join(SHIP, "build.ninja")):
         say("configuring build-ship/ (MU2_SHIP=ON); the first build compiles bgfx")
-        run(["cmake", "-S", ROOT, "-B", SHIP, "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release",
+        run(["cmake", "-S", SNAPSHOT, "-B", SHIP, "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release",
              "-DMU2_SHIP=ON"], say)
     say("building the player's mu2 and mupack")
     run(["cmake", "--build", SHIP, "--target", "mu2", "mupack", "--", f"-j{cores}"], say)
@@ -91,14 +125,16 @@ def bundle(app, say):
             raise RuntimeError(f"the app still links {lib}, which a player's Mac may not have")
 
 
-def dist(target, say, level=12):
+def dist(target, say, ref="HEAD", level=12):
     if target != "macos":
         raise RuntimeError(f"dist {target}: only macos so far (docs/layout.md, Windows and Linux)")
     started = time.time()
     cores, _ = settings.cores()
+    made_from = snapshot(ref, say)
     build(cores, say)
 
     shaders = os.path.join(SHIP, "shaders", "metal")
+    sheets = os.path.join(SNAPSHOT, "sheets")
     found = manifest.runtime(shaders_dir=shaders)
     if found["missing"]:
         say(f"{len(found['missing'])} files are named but not on disk; the packs go without them")
@@ -119,7 +155,7 @@ def dist(target, say, level=12):
             listed = os.path.join(lists, pack + ".txt")
             with open(listed, "w") as out:
                 for logical in sorted(entries):
-                    line = f"{logical}\t{source_of(logical, shaders)}\n"
+                    line = f"{logical}\t{source_of(logical, shaders, sheets)}\n"
                     out.write(line)
                     everything.write(line)
             say(run([mupack, os.path.join(data, pack + ".mupak"), listed, "--level", str(level),
@@ -132,5 +168,7 @@ def dist(target, say, level=12):
     packed = sum(os.path.getsize(os.path.join(data, f)) for f in os.listdir(data))
     total = sum(os.path.getsize(os.path.join(d, f)) for d, _, fs in os.walk(app) for f in fs)
     say(f"{app}: {total / 1e9:.2f} GB ({packed / 1e9:.2f} GB of packs from {size / 1e9:.2f} GB), "
-        f"signed ad hoc, in {time.time() - started:.0f} s")
-    return True, {"app": app, "bytes": total, "packs": packed, "files": files}
+        f"signed ad hoc, from {made_from}, in {time.time() - started:.0f} s")
+    with open(os.path.join(DIST, "macos", "BUILT_FROM"), "w") as out:
+        out.write(made_from + "\n")
+    return True, {"app": app, "bytes": total, "packs": packed, "files": files, "commit": made_from}

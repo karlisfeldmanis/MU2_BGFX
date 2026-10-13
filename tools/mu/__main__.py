@@ -26,7 +26,7 @@
     ./mu do "<line>; <line>; ..."            drive an open studio: subject, scene, shot, wait, status...
     ./mu serve                               the cook's job runner; `mu make` hands it its jobs
     ./mu jobs [--watch [N]] | cancel N [--now] what it is cooking, with bars and time left
-    ./mu dist macos                          the player's app, dist/macos/MU2.app, from packs
+    ./mu dist macos [--commit REF]           the player's app, dist/macos/MU2.app, from a commit
 
 Every command takes --json and then prints one JSON object as its last line, for a script or
 an agent to read instead of the prose. Every step runs niced and held to `mu cores` (60% of
@@ -123,6 +123,7 @@ def main():
     sub.add_parser("check", parents=[common])
     d = sub.add_parser("dist", parents=[common])
     d.add_argument("target", choices=["macos"], help="the platform; macos so far")
+    d.add_argument("--commit", default="HEAD", help="the commit to build it from (HEAD)")
 
     k = sub.add_parser("cores", parents=[common])
     k.add_argument("count", nargs="?", type=int)
@@ -264,7 +265,7 @@ def dispatch(args, say):
     if args.command == "check":
         return check.run(say)
     if args.command == "dist":
-        return dist.dist(args.target, say)
+        return dist.dist(args.target, say, ref=args.commit)
     if args.command == "where":
         return look.where(args.name, say, args.docs)
     if args.command == "shot":

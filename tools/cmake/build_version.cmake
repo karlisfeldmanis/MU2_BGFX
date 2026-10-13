@@ -1,9 +1,16 @@
 # Writes build_version.h with the commit this build was made from, for the loading screen's
 # corner (app/preloader.cpp). Run on every build by the build_version target; the header is
 # rewritten only when the line changes, so an unchanged commit recompiles nothing.
-execute_process(COMMAND git log -1 --format=%h%x20%cs
-                WORKING_DIRECTORY ${SOURCE}
-                OUTPUT_VARIABLE COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+# The snapshot `./mu dist` builds the player's app from has no .git of its own: it carries the
+# commit's line in a COMMIT file instead (tools/mu/dist.py).
+if(EXISTS ${SOURCE}/COMMIT)
+  file(READ ${SOURCE}/COMMIT COMMIT)
+  string(STRIP "${COMMIT}" COMMIT)
+else()
+  execute_process(COMMAND git log -1 --format=%h%x20%cs
+                  WORKING_DIRECTORY ${SOURCE}
+                  OUTPUT_VARIABLE COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+endif()
 if(NOT COMMIT)
   set(COMMIT "unknown")
 endif()
