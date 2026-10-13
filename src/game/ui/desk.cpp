@@ -105,7 +105,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     specimen_.open(interface_);
     interface_.adopt(ground_);
     // Baked at 48 as the controls' faces are, larger than a label is ever drawn, and minified.
-    if (groundFace_.bake(MU2_ROOT_DIR "/extern/Amarante-Regular.ttf", 48.0f, 512, 4, 1, 0)) {
+    if (groundFace_.bake(gfx::fontPath("Amarante-Regular.ttf"), 48.0f, 512, 4, 1, 0)) {
         groundTexture_ = gfx::uploadFace(groundFace_, "ground labels");
         groundFace_.dropPixels();
     } else {
