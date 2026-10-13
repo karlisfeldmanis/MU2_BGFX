@@ -19,7 +19,8 @@ workflow "asks for server and other stuff to open/close client all the time". So
 open and close clients and servers to look at your work. Work in the open studio.**
 
 Underneath are `./mu` (tools/mu/, the command line the MCP tools call) and `./mu serve` (the
-job runner). The history is in docs/order-plan.md §9c (sprints F and G, every "as done").
+job runner). How it was built is one line a slice in docs/order-plan.md §6 (sprints F, G and H);
+what is under `./mu` is "The pipeline underneath", at the end of this page.
 
 ## Working through the MCP
 
@@ -269,3 +270,48 @@ src/app/modes/studio_control.cpp.
 - **Tests:** `build/cooker_test` (27 checks) and `build/cooker_test --live` with `mu serve`
   running (38); `python3 tools/layercheck.py`; `python3 tools/sizecheck.py`, where only the
   violations in your own files are yours.
+
+## The pipeline underneath
+
+What `./mu make` runs, in the order it runs it. Carried over from MU2 on 2026-09-21 so this tree
+makes its own content on any machine, without MU2's Godot projects.
+
+| stage | from | to | tool `./mu make` calls | in git |
+|---|---|---|---|---|
+| import | MU's `Data/` (`tools/fetch_mumain.sh`) | `source/` | MuExtract, `decode_texture.py`, `terrain.py`; or `./mu new` | yes |
+| build | `source/` | `workshop/` | `tools/asset.sh` (Blender, the upscaler), `tools/content.sh` | no |
+| index and sync | `workshop/` | `assets/` | `pipeline/index.py`, `tools/sync.sh` | no |
+| cook | `assets/` | `assets/cooked/` | `tools/cook.py`, `tools/cook_one.py` | no |
+
+The order carries weight (textures before meshes, the index after any build, a new item's tables
+in every world): `./mu make` holds it as the edges of its graph, so reach for the scripts by hand
+only when `mu` has no word for the job.
+
+MU's own files come from [sven-n/MuMain](https://github.com/sven-n/MuMain/tree/main/src/bin/Data)
+at commit `c0d74c4ed5edfad527b71899337f72d39bfc49f3`, the one `tools/fetch_mumain.sh` checks out.
+
+**A new machine.** `./bootstrap.sh` (bgfx and the headers), then `./tools/content.sh` (hours: every
+sheet through the upscaler, every model through Blender), `./tools/sync.sh`, and `./mu make tables`
+or a world's cook. It needs Blender at `/Applications/Blender.app` (or `BLENDER=`) and python3
+with numpy, Pillow and torch; the upscaler's two checkpoints (RealESRGAN_x4plus,
+4x_NMKD-Siax_200k, 67 MB each) are fetched into `weights/` on first use and checked by sha256.
+
+**A build is not byte-reproducible**: `build_maps.py` bakes a random grain, so two builds differ
+(Sword01's ORM by a mean 2.8 of 255). Compare builds by eye or by statistics, not by hash.
+
+**Importing a new asset by hand**, when `./mu new` cannot:
+
+    ./tools/fetch_mumain.sh
+    dotnet run --project tools/MuExtract -- export-obj <X.bmd> source/<...>/<Name>.obj
+    dotnet run --project tools/MuExtract -- export-rig <X.bmd> source/<...>/<Name>.rig.json [--actions=all]
+    python3 pipeline/decode_texture.py <X.OZJ> source/textures/x.png
+    python3 pipeline/terrain.py <Data/WorldN> <world> source/world <N>
+
+Then write the recipe beside the `.obj`; `islands.py` fills in its island list on the first build.
+
+**Where things came from:** `pipeline/` is `MU2/pipeline/*.py`, writing into `source/`;
+`tools/asset.sh` is MU2's per-asset build without the viewer and Godot (the clips stay the
+`.actions.glb`; `sync.py` takes it where a part still names a `.res`); `tools/MuExtract/` is MU2's
+C# importer (`dotnet`, net10.0). The interface sheets (`hud_cut.py`, `lobby_cut.py`,
+`skill_icons.py`, `buff_icons.py`) were cut from MuDream's Season 6 data, not on this machine;
+their output in `source/interface` is kept.

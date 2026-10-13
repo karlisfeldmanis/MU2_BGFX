@@ -18,7 +18,7 @@ that overdraws stops and says so rather than borrowing from spare.
 | probe | 19-61 | 0.3 | sprint 8c's reflection probe: a face, its chain and the filter, and the shade pass's cube read |
 | spare | — | 0.2 | unspent on purpose |
 
-The view numbers moved when the hover ring took 16 and 17 (`docs/sprints/09-the-ring.md`); they had also been stale in this table since sprint 6, which is why present read "6, 7" against a present view of 15.
+The view numbers moved when the hover ring took 16 and 17 (sprint 9, the ring); they had also been stale in this table since sprint 6, which is why present read "6, 7" against a present view of 15.
 
 **The grass owes this page nothing, and that is measured and not assumed** (`docs/grass.md`).
 Lorencia's open field is its worst case, and there it measures **3.90 against 4.02 with the
@@ -95,12 +95,12 @@ dither in fs_shadow was never reached), and `Renderer::draw` grouped the frame's
 thousand drawables into vectors built fresh each frame, against foundation 7's "no
 allocation"; they live on the renderer now.
 
-**The shine (`14-the-shine.md`) costs nothing measurable.** The hero at 148,142 in a +9 Plate suit
+**The shine (sprint 14) costs nothing measurable.** The hero at 148,142 in a +9 Plate suit
 with a +7 axe and a +5 shield, against the same save with every plus at 0, 2560x1273, timers
 off, `--repeat 3` of 600: 6.658 ms against 6.654, spreads 0.010 and 0.026. The ladder is a
 branch on a per-instance number in the shade pass and two small samples on +7 pixels, with no
 draw added. The bag's picture taken every frame while something in it shines added 39 draws
-and moved nothing past noise at 1080p (docs/sprints/14-the-shine.md, step 7). The baseline is
+and moved nothing past noise at 1080p (sprint 14, step 7). The baseline is
 above the table's 6.345 because it is another spot on another day's town; only the difference
 is the price.
 
@@ -142,10 +142,87 @@ crowd, the fountain); walls and ground are pixel-identical. The estimate before 
 
 ### The shadow disc as tables, grass before ground, and SSAO, 1.56 ms at 2K, 2026-10-05
 
-`docs/perf-audit-2k.md` has the audit and the table. The town at 140,126, 2560x1273, `--still`,
-`--repeat 3`, interleaved: **8.61 to 7.05 ms**, the open field at 190,110 8.31 to 6.92. Nearly
-all of it is the PCSS disc: its tap counts rode a uniform, so the loops never unrolled and
-every tap computed a sqrt, a cos and a sin before its read. Pictures match to a level.
+From the 2K audit of 2026-10-05 (a read of the renderer, the shaders and bgfx's Metal backend,
+`docs/perf-audit-2k.md`, deleted 2026-10-13; git keeps it), its items measured the same afternoon.
+The town at 140,126, 2560x1273, `--still`, `--repeat 3`, interleaved, each step against the
+build before it, the picture checked by shots under `--fixed-dt`:
+
+| item | where | before | after | saved | picture |
+|---|---|---|---|---|---|
+| A1, the PCSS disc as constant tables | town | 8.59 | 7.18 | **1.41** | 25 pixels off by one level |
+| A2, render targets in Private storage | town | 7.160 | 7.167 | none | **reverted** |
+| A3, grass drawn before the ground | field 190,110 | 7.15 | 7.02 | **0.13** | 247 pixels |
+| A5, SSAO's spiral by one rotation | town | 7.23 | 7.09 | **0.14** | no pixel off by more than one level |
+| A6, prepass-only varyings | town | 7.08 | 7.08 | none | **reverted** |
+| **all kept** | town / field | 8.61 / 8.31 | 7.05 / 6.92 | **1.56 / 1.40** | 116 fps to 142 |
+
+**A1 was worth ten times its estimate**: the tap counts rode a uniform, so neither loop
+unrolled, and every tap was a dependent sqrt, cos and sin in front of its read. A shader loop
+whose bound is a uniform is the first thing to look for next time. **A3 found a latent fault**:
+`submitGrass` bound none of the shade pass's shared inputs and drew on whatever the ground left
+bound; it binds its own now (`bindShadeInputs`). A2 and A6 were wrong guesses, a build each.
+
+**Measured and declined:** **C1, a cached static shadow** (the sun is fixed, the town does not
+move): frozen after warm-up, the frame fell 0.65-0.76 ms, before the cache's own costs; the user,
+'lets better not cache shadows'. **Not tried yet**, each to be measured with `--repeat 3`: A4
+(the ground's layer means as uniforms, at most 0.017), A7 (the present's tonemap through a LUT,
+0.1-0.2); B1-B5, each a small picture change for the user to judge (the shade target, bloom and
+probe cubes in RG11B10F, the prepass resolved to one sample, the PCSS blocker search on a 1024
+min-depth copy); C2 (MetalFX temporal in place of 4x MSAA, the user's call) and C3 (half precision
+by hand-written Metal). **Looked at and left out:** clustered light culling (the lamp grid bins
+per 2 m cell already), memoryless targets (bgfx #1296), tile shaders and framebuffer fetch (bgfx
+exposes none), dropping the prepass for Apple's HSR (SSAO needs it; 43% of instances are
+cutouts), variable rasterization rate.
+
+### C4: the town's scenery culled and drawn by the GPU, 2026-10-09
+
+The user: "we want to try to move more processes to gpu". A profile of Lorencia's town first:
+the main thread waited on the GPU about 1% of the time, and **about 54% of it was bgfx's Metal
+encoding**, per draw, for 1,100-1,500 draws a frame.
+
+- **The sun's split** (`gfx/scenery.h`): every static town model's vertices and indices in one
+  buffer pair; three compute steps on the sun's view (`shaders/cs_cast_*.sc`) count, test each
+  placement's sphere against the split, and write one indirect draw a solid part. Cutouts,
+  casting glows and skinned models keep their own draws; `--cpu-scenery` is the old way, for A/B.
+  Pictures bit-identical in six worlds; 1080p frame -0.015 ms, shadow view -0.10.
+- **The camera's prepass and shade:** each sheet size's albedo, normal and ORM become texture
+  arrays, a layer a part; the instance carries a seventh vec4 with the layer and material
+  (`Renderer::kInstanceFloats` 28); `cs_scene_rank`, `cs_scene_cull` and `cs_scene_args` draw
+  Lorencia's 137 part draws as 9 groups. CPU a frame -0.25 ms (7%), wall frame -0.10. Three
+  traps, in the code: one vertex shader for merged and plain static draws (two compiled shaders
+  do not land on the same bits, and a glow lying on its body flickers), never a one-layer array
+  (bgfx makes it a plain 2D texture), and ranked, never atomic, appends (an atomic order differed
+  every frame by ~2,600 pixels where two parts meet at equal depth).
+- **The sprites, 375 draws to 1:** `fs_effect` is the one program, the old flame, smoke, dust and
+  breath its functions picked by a kind on the vertex; seven sheets bound a draw; every kind but
+  Minus blends (ONE, INV_SRC_ALPHA). The frame went 941 draws to 563 and the CPU did not move:
+  **draw count is not the CPU's cost; what a draw binds is.**
+
+**The CPU is no longer what holds the frame** (~3.2 ms of 5.0 at 1080p). **Hi-Z occlusion
+culling is not worth building:** skipping every GPU-culled scenery draw, seen or hidden, moved
+the frame by nothing.
+
+### At 2K after C4, a crowd and a fight, 2026-10-09
+
+- **What the 2K frame's pixels cost**, each switched off (Lorencia 140,126): SSAO ~0.5 ms, the PCSS
+  taps ~0.45, reflections ~0.4, lamps ~0.4, bloom ~0.3. Kept: a lamp's reach tested before its
+  third row is read (`lights.sh` lampOne); the probe turns every eighth frame while its eye stands
+  still; and the turned shadow taps (5+8 by screen noise) as the default, the user shown both at
+  2560x1273: "this is good". The town at 2K: **7.34 to 6.62 ms**, 136 fps to 151. Tried and
+  reverted: a PCSS early out (slower), SSAO's taps on a half-resolution depth copy (no change).
+- **A hundred players in Noria** (`--bench-players N`, the raid party's kits, wings): 1080p CPU 3.75
+  to 5.88 ms, only +136 draws, so instancing the crowd buys nothing. Kept: the bone palette is a
+  buffer (`shaders/skin.sh`, CPU 5.88 to 5.48), the poses on every core (`core/jobs.h`,
+  `core::parallelForInOrder`, a worker a performance core but one, at USER_INTERACTIVE), and
+  `--render-thread` as a flag, off. Tried and reverted: the hierarchy walk on the GPU (CPU -0.2, wall
+  +0.25), workers spinning before they sleep.
+- **Sixty players on thirty Balrogs in the Lost Tower** (`--arena Balrog --arena-count 30
+  --arena-undying --bench-players 60 --bench-fight`): bgfx made a new MTLBuffer for every buffer
+  update; `patches/bgfx-metal.patch` now stages them in a persistently mapped ring. Main-thread
+  samples -13%, and the wall frame did not move: this fight is the GPU's (98% busy; the shade
+  target 4.1 ms of fragment). **160 fps at High** is 0.5-0.9 ms of fs_shade's per-pixel cost away;
+  the next step is Xcode's GPU capture with its shader profiler. Found on the way, not chased: "body
+  4 stands on blocked tile (32, 210)", a Balrog put on a blocked tile.
 
 `MU2_SHADER_DIR` in the environment points a binary at another build's shaders, which is
 how two builds are A/B'd in one afternoon: the directory is otherwise compiled in.
@@ -203,7 +280,7 @@ fragment work, shadow 0.59 fragment and 0.63 vertex, the present 0.54, SSAO 0.33
 
 ## The probe account, and the measurement that set it
 
-Sprint 8c, `docs/sprints/08c-the-metal.md`. Lorencia's town, 1920x1080, Release, vsync off,
+Sprint 8c, the metal. Lorencia's town, 1920x1080, Release, vsync off,
 the moving camera, 600 frames x 3, `probe` 1 against 0 in the sheet, twice each:
 
 | | mean of means |
@@ -419,9 +496,6 @@ claim on `shade`, on `gpu`, or on an account that does not exist all exit 2.
 
 ## The sweep
 
-What the sweep cannot tell yet, and the improvements it needs before it can drive
-optimisation that keeps the picture: `docs/perf-sweep.md`.
-
 Found missing on 2026-10-01: the Lost Tower was over budget, and that was known only because
 somebody measured it by hand at tiles they picked (the safe hall 205,79 at 5.29 ms, the lava
 163,40 at 5.54, the Balrog's room 31,209 at 6.31 mid-fight and 6.05 peaceful with the timers
@@ -503,3 +577,26 @@ Dungeon's tile read the same as the sweep, so the difference is the day, not the
 nothing happening, on a different tile each time -- the same length every time, which is a
 timeout's shape rather than a load's. CAMetalLayer's `nextDrawable` waits up to a second; that
 is a guess, not checked. The sweep leaves such a pass out (above), so it moves no baseline.
+
+### What the sweep still lacks
+
+Written the day it landed (c2873ff1; `docs/perf-sweep.md`, deleted 2026-10-13). The sweep says
+**where** a world is slow, never **why**, and nothing about the picture. In the order they pay:
+
+1. **A shot per tile**, at a fixed moment in the settle, compared byte for byte with the
+   baseline's: a faster tile with a changed picture is "faster, picture changed", not an
+   optimisation, until the user has looked at the pair.
+2. **Cost per part**: `--preset ablate`, one switch off a launch (`--no-lamps`, `--msaa 1`,
+   `--shadow-size 2048`, `--no-air`, `--no-figures`, `--scale 0.5`, `grass 0`, `probe 0`), each row
+   marked with whether its switch changes the picture.
+3. **Drawn against seen**: per tile, what the camera and the sun submit against what is on screen,
+   behind the camera, past its range or under the floor. The Lost Tower draws about twice the
+   Dungeon's triangles; over-submission is the cheapest win there is.
+4. **One Metal System Trace at the worst tile** (the Balrog's room, fight and peaceful).
+5. **Trustworthy numbers**: baselines only under a load of about 4, 600 frames and six passes on
+   the hot tiles, the ~1 s stall settled, and baselines for Lorencia, Noria and Devias and a full
+   grid per world (only the Lost Tower and the Dungeon have one).
+
+Then a change lands when it made tiles faster past their noise, none slower, and no picture
+moved. Trading the picture for time (`--scale`, `--msaa 1`, fewer taps or lamps) is the user's
+decision, not an optimisation.

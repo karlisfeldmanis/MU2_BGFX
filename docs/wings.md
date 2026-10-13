@@ -1,9 +1,14 @@
-# The 1st level wings
+# The wings
+
+The 1st level wings, then the 2nd (below, "The 2nd level wings"), and the Magic Gladiator's
+Wings of Darkness at the end.
+
+## The 1st level wings
 
 Started 2026-10-04. The user: "lets work on first wings, we need logic how we can make first
 wings". Wings of Elf, Heaven and Satan, group 12 numbers 0-2, slot 7 (`sim::kWings`).
 
-## How they are made
+### How they are made
 
 Not a recipe of its own in MU: the Chaos Weapon's box with a Chaos weapon in it.
 
@@ -34,7 +39,7 @@ any class; +0, as `CHAOS_MIX_WING_ITEMLEVEL_FIX`, not the base branch's +0..+4. 
 weapons in a box are wings, as WebZen's flag is (OpenMU takes one at most). The +S roll is
 not taken (skills are orbs here).
 
-## The items (OpenMU Version075 `Items/Wings.cs`)
+### The items (OpenMU Version075 `Items/Wings.cs`)
 
 | | number | size | defence | level | class | option |
 |---|---|---|---|---|---|---|
@@ -45,7 +50,7 @@ not taken (skills are orbs here).
 All: drop level 100, durability 200, damage x1.12 and damage taken x0.88 (each raised by the
 wing's plus through OpenMU's per-level tables), luck, CanFly. Level 180 kept (the user).
 
-## What MU draws (MuMain, `ZzzCharacter.cpp`)
+### What MU draws (MuMain, `ZzzCharacter.cpp`)
 
 - The wing is its own model (`Item/Wing01-03.bmd`) with its own flapping action, linked
   rigidly to player bone 47 at (0, 0, 15) (:15400-15430).
@@ -54,7 +59,7 @@ wing's plus through OpenMU's per-level tables), luck, CanFly. Level 180 kept (th
   (:1053-1064). The wing flaps at PlaySpeed 1 while flying, 0.25 otherwise.
 - Speed 15 against a run's 12 out of a safe zone, as on the Horn of Uniria (:6320-6335).
 
-## Steps
+### Steps
 
 1. **The recipe** -- done 2026-10-04. `Recipe::Wings` in `sim/machine.cpp`, ahead of the
    Chaos Weapon; the realm refuses it ("no Wings of Satan is in this world's tables") until
@@ -103,3 +108,78 @@ wing's plus through OpenMU's per-level tables), luck, CanFly. Level 180 kept (th
    standing in the stop fly (`--category wings --pick Satan`). Studio shots at 3.2 m passed
    by eye: the joint between the shoulders, Satan's membrane lit through, Heaven's feathers,
    the Elf's glow.
+
+## The 2nd level wings
+
+Started 2026-10-04. The user: "lets work on second wings, which is for second class". Wings of
+Spirits, Soul and Dragon, MU's 12/3-5, one each for the Muse Elf, the Soul Master and the Blade
+Knight. Sources: WebZen 1.00.93 (base 0.97d unless a flag is named), OpenMU VersionSeasonSix for
+the rows (Version095d has none: they come with NEW_FORSKYLAND2), MuMain for the drawing.
+
+### How they are made
+
+`WingChaosMix` (MixSystem.cpp:2470-2990); OpenMU's "2nd Level Wings", number 7.
+
+- **Box:** exactly one 1st level wing, one Jewel of Chaos, one **Loch's Feather** (13/14), and any
+  excellent things at +4 or more, nothing else. A 2nd wing in the box spoils it.
+- **Chance:** the wing's price / 4,000,000 + the excellent things' price / 40,000, at most 100. A
+  +0 wing alone is 13%, a +9 one about 33%. **Zen:** 5,000,000.
+- **Success:** the hero's class's 2nd wing at +0 (ours; WebZen's is any of four): luck one in
+  five; the option at 4%, 10% or 20% for its third, second and first level; one of three extras
+  one in five; the option's kind one in two. The Magic Gladiator gets Darkness without a class
+  change (`sim/machine.cpp`).
+- **Failure:** the box emptied, the 1st wing with it (WebZen's; the user kept it).
+
+**Loch's Feather** (OpenMU 13/14, drop level 78; MuMain Quest04.bmd, "Used to upgrade wings").
+MU drops it in Icarus alone (gObjMonster.cpp:4620). Here it falls on its own roll
+(`sim::kFeatherOdds`) where a world's manifest says `drops: feather` (Tarkan and Icarus since
+order-plan slice D4b); before Icarus was ported it was ours in Atlans and the Lost Tower.
+
+### The wings
+
+| | ours | MU's | class | size | defence | level |
+|---|---|---|---|---|---|---|
+| Wings of Spirits | 12/13 | 12/3 | Muse Elf | 5x3 | 30 | 215 |
+| Wings of Soul | 12/14 | 12/4 | Soul Master | 5x3 | 30 | 215 |
+| Wings of Dragon | 12/16 | 12/5 | Blade Knight | 3x3 | 45 | 215 |
+| Wings of Darkness | 12/22 | 12/6 | Magic Gladiator | 4x2 | 40 | 215 |
+
+**Our numbers are not MU's.** This project gave 12/3-6 to the knight's orbs (Defense, Uppercut,
+Falling Slash, Lunge) before the wings came (the user, 2026-10-04: 'Move the wings').
+`sim::kSpiritsNumber` and its fellows hold them; read every MU line about 12/3-6 as these. Drop
+level 150, durability 200, never dropped.
+
+- **Fight:** his blows x(132 + plus)%, what reaches him x(75 - 2 a plus)%, 1 Life a blow on Soul
+  and 3 on the others.
+- **Defence** + 2 a plus and the +10 triangle; **level** + 5 a plus.
+- **The option**, +4 a level (regeneration 1%), its kind by `PLUS_WING_OP1_TYPE`: Spirits
+  regeneration or damage, Soul wizardry or regeneration, Dragon damage or regeneration, Darkness
+  wizardry or damage (`sim::wingOption`).
+- **The extras** (`sim::Held::wing`): max life +50 and 5 a plus, max mana the same, or a 3% chance
+  a blow ignores the defence it meets.
+- **The class gate:** `sim::fits` refuses a 2nd wing to a hero who is not his class's second; the
+  card names the second class, red until he is one.
+- **Speed:** Dragon flies at 16 (`sim::kFastFlyFactor`), the others at 15.
+- **Look:** Wing04-06 from MuMain, Spirits added whole; Soul's and Dragon's `_R` shells are MU's
+  Bright meshes, added at a slow pulse (`pulse_rate: "slow"`, cook.py's mode bit 3,
+  `content::Material::slowPulse`), drawn at LEQUAL as MU's GL does. `separate_meshes`, or the
+  weld made a shell and its base one set of faces.
+
+Steps, all done 2026-10-04: the recipe and the feather (`Recipe::SecondWings`, `Held::wing` saved
+as "wing"), the import, wear, the class gate once Sevina's class change landed (1eea5fa0), and the
+drawing; the bench's Wings tab has all of them.
+
+### The Wings of Darkness (2026-10-07)
+
+The user: 'cook MG 2nd wings'. Wing07.bmd on NDEE.OZT, 31 bones, the 8-key flap, class
+`gladiator`. Drawn as MU draws it (the user, 2026-10-07: 'wings look not finished'):
+- **The violet pass:** MU draws it again RENDER_BRIGHT | RENDER_CHROME on Chrome02 at (0.8, 0.6, 1)
+  (ZzzObject.cpp:6970-6976): `game::kShineDarkness` and `shine.sh`'s `shineDarknessAdded`, at **0.4**
+  of MU's strength (at 0.15 invisible, at 1.0 every shard flat cyan).
+- **The sparks** (:9981-10017, `WingLook::sparks`): for ten ribs a flare_blue at the rib's centre
+  bone and two strips to its partner bone, thunder and spirit, both added (MU's EnableAlphaBlend
+  is ONE, ONE; drawn with true alpha the JPEG laid solid blue bands).
+- **The safe-zone pose:** its action 1 instead of the flap on a safe tile (ZzzCharacter.cpp:
+  6973-6976), Darkness alone of the wings.
+- **Its black ends faded** (ours; the user: 'work on transparency for black parts on wings'):
+  ndee.png's alpha by luminance, nothing under 12, full from 70.

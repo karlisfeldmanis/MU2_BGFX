@@ -2,8 +2,9 @@
 
 Research notes, 2026-09-29. Devias is MU server map **2**, client `Data/World3` + `Data/Object3`.
 MU2 never imported it. This page is the map's *record* -- gates, safe zone, warp, monsters,
-NPCs, the object inventory, name collisions -- and every place MU2_BGFX has to learn a third
-world. The terrain is `docs/devias-ground.md`; the effects are `docs/devias-effects.md`.
+NPCs, the object inventory, name collisions -- and what MuMain does there beyond drawing its
+objects (§5), with the blizzard that is ours. **Devias is built and played**; the plan of §6 is
+how it was done.
 
 Paths: MuMain source is `LEGACY/reference/MuMain/src/source/` (MM below), MuMain data
 `LEGACY/reference/MuMain/src/bin/Data/`, OpenMU init
@@ -243,7 +244,7 @@ unnecessary for them. If the house rule is "mu.db says 10", add `19: 3, 20: 3, 2
 
 Nothing the sim does today reads `attack_skill` other than 2: `src/game/play.cpp:733-738`
 special-cases the Lich's meteor. The Yeti's Energy Ball, the Ice Monster's Ice and the Ice
-Queen's Power Wave are showing work (the effects page).
+Queen's Power Wave are showing work (§5).
 
 ---
 
@@ -280,7 +281,7 @@ Per `porting-a-world.md` §4c they play at `CreateObject`'s 0.16; Devias's arm s
 ### 3.1 What MuMain does per type for WD_2DEVIAS
 
 These are the tables `pipeline/terrain.py` and `tools/cook.py` carry per map. The visuals in
-detail are the effects page's.
+detail are in §5.
 
 - **Hidden** (`HiddenMesh = -2`): type **91** (Object92, 44 placements; also `CreateOperate`, a
   40x40x160 lean box, `ZzzObject.cpp:4687-4690`) and type **100** (Object101, 1 placement at
@@ -291,7 +292,7 @@ detail are the effects page's.
 - **Operable** (`CreateOperate`, `:4682-4690`), with the pose from MOVEMENT_OPERATE
   (`MM/Engine/Object/ZzzInterface.cpp:1713-1726`) and the lean cursor on 91 only (`:4054`):
   91 pose + turn; 22, 25, 40, 55 sit + turn; 45, 73 sit. -> `OPERABLE_BY_MAP[2] = {22, 25, 40,
-  45, 55, 73, 91}` and `PERCHES[2]` (§5).
+  45, 55, 73, 91}` and `PERCHES[2]` (the cook's perches, now each world's manifest).
 - **Additive** (`BlendMesh`, `:4691-4702`): 19 -> mesh 0, 92 -> 0, 93 -> 0, 54 -> 1, 56 -> 1,
   78 -> 3. `MoveObject` gives 78 a random `BlendMeshLight` of 0.4-0.7 each frame (`:3902-3904`),
   so its window flickers. -> `BLEND_MESH_BY_MAP[2] = {19: 0, 92: 0, 93: 0, 54: 1, 56: 1, 78: 3}`.
@@ -358,60 +359,98 @@ lights, pot*, winecup), but **badge_01-03, bookshelf, chair2, desk_big, drum, fi
 plate, plate2, tree_03 and treasure_chest differ** from Object1's. The guard's `*_11` parts
 match Object10's and differ from Player's. So decode **all** of Object3 under `dv_`, as Noria
 did with `nr_` (`source/world/noria/Object05.json` `sheet_from`). The ground page reaches the
-same prefix for World3's tiles, where nine of the fourteen collide (`devias-ground.md` §2).
+same prefix for World3's tiles, where nine of the fourteen collide.
 Nothing in the pool starts with `dv_` today.
 
 ---
 
-## 5. Every place MU2_BGFX must learn a third world
+## 5. Devias's effects: what MuMain does there, and the blizzard
 
-Grepped `src/`, `tools/`, `pipeline/`, `sheets/`, `tests/` for noria, lorencia, map numbers and
-world lists. Generic already, needing nothing: `pipeline/index.py` `worlds()` (globs
-`source/world/*/*.json`, number = `map_number - 1`, sorts by number, `:1356-1472`),
-`tools/content.sh` (every `source/world/*/ground.json`), `tools/sync.sh --world`,
-`tools/cook.py --world` (all per-world paths), `mapSheet` (`maps.cpp:61-64`), the per-world
-figure table (`cook.py:1531-1535`, `figures_devias.json`), the held-back breeds
-(`src/game/play_open.cpp:100-126`), `zoneLevels`, and the gate walk in the realm
-(`src/sim/realm_move.cpp:185-212`).
+Researched 2026-09-29 by reading every WD_2DEVIAS path in MuMain (37 references in 13 files, and
+the three `WorldActive == 2` checks), the placements in `EncTerrain3.obj` and OpenMU Version075.
+Line numbers are in `LEGACY/reference/MuMain/src/source`. MU runs at 25 frames a second, so every
+speed is per frame. MuMain's Devias is a Season-6-era file: types 105-111 and Object106-120
+(wedding hall, Christmas, `devgateice`), the Serbis donkey and flag and the Santa-Village warp
+are later events, marked **(later)**.
 
-**Needs Devias added:**
+### 5.1 Snow (`CreateDeviasSnow`, ZzzEffectFireLeave.cpp:274)
 
-| where | what is there | Devias needs |
+MU's leaf pool with a snowflake in it: 80 live flakes (`iMaxLeaves`, :429), a dead slot refilled
+the same frame. `BITMAP_LEAF1` (World3/leaf01, a soft white disc) at scale 5, one in ten
+`BITMAP_LEAF2` (a star glint) at 10. Spawned at hero + (-800..799, -500..899, 200..399), launched
+at -30° with a fall of 6.9-19.9 units a frame and half that drift along -Y, not scaled by
+`FPS_ANIMATION_FACTOR` (:289-293). Each axis random-walks 0.1 x (-8..7) a frame, no damping, no
+gravity (:413-419). On the ground it fades 0.05 a frame and dies in 0.8 s; only the terrain height
+is tested, so a flake falls through a roof. Drawn additive (ONE, ONE), a camera-facing square
+(:568-570). Indoors (`HeroTile == 3 || >= 10`, MainScene.cpp:78-117) the pool freezes and is not
+drawn by the sprite batch. MainScene.cpp draws the leaves twice outdoors (:497-498 and :520-523),
+probably the fork's; judged as one draw, by eye. `DEVIAS_XMAS_EVENT`'s 400 is off, not 0.75.
+
+### 5.2 Sky, light and ground
+
+- Clear and fog colour (0.75, 0.85, 1.0), "light snowy blue" (SceneManager.cpp:383-384); the fog
+  itself is the fork's Orbital camera only. No sky dome.
+- The cold is painted into `World3/TerrainLight.OZJ`: mean (115, 149, 178), against Lorencia's
+  (141, 144, 145). No code tint.
+- Tile 5 `TileWater01` is ice-water with the default UV scroll; tile 1 stands `TileGrass02.OZT`,
+  white wisps: snow tufts. World3 has no `TileGrass01`.
+- The floors that decide "indoors": 3 wooden planks, 10 flagstone, 11 red carpet, 12 black marble,
+  13 granite (MapManager.cpp:1365-1448). The rest are snow, gravel, cobbles, ice and rock.
+
+### 5.3 The objects
+
+| Type (model) | Placed | What MU does |
 |---|---|---|
-| `pipeline/terrain.py:117-120` `HIDDEN_BY_MAP` | 0, 3 | `2: {91, 100}` (before the extraction, so the json carries `hidden`) |
-| `pipeline/terrain.py:133-135` `BLEND_MESH_BY_MAP` | 3 | `2: {19: 0, 92: 0, 93: 0, 54: 1, 56: 1, 78: 3}` |
-| `pipeline/terrain.py:141-144` and `pipeline/index.py:43-46` `OPERABLE_BY_MAP` | 0, 3 | `2: {22, 25, 40, 45, 55, 73, 91}` in both |
-| `pipeline/index.py:537-542` grass sheets | `grass_lorencia_0-2`, `grass_noria_0,2` | `grass_devias_1` only: World3 ships TileGrass02.OZT and no 01/03 OZT (`MapManager.cpp:1461-1472`); the ground page's §4 |
-| `tools/cook.py:1082,1392` `GROUNDED_TYPES` | every world | key by world (§4.1) |
-| `tools/cook.py:1681` `RESPAWN_VERSION075` | 0, 2 | 19: 3, 20: 3, 25: 50, unless mu.db carries them (§2) |
-| `tools/cook.py:1708` `FOLK_VERSION075` | 0, 3 | `2: [...]`, the nine of §1.7 |
-| `tools/cook.py:1751` `PERCHES` | 0, 3 | `2: {91: (3, True, True, True), 22: (2, True, False, False), 25: (2, True, False, False), 40: (2, True, False, False), 55: (2, True, False, False), 45: (2, False, False, False), 73: (2, False, False, False)}` |
-| `tools/cook.py:200-203` `AIRS` | lorencia, noria | nothing: Devias flies no boid (`MM/Engine/AI/GOBoid.cpp:1304-1312` omits it) |
-| `source/world/devias/placements.json` | Noria's `spawns` | the NPC figures: SnowMerchant01, SnowWizard01, SnowSmith01, Master01, Storage01, CrossbowGuard x4 |
-| `source/npc/` | Storage01, CrossbowGuard ... | new recipes SnowMerchant01, SnowSmith01, SnowWizard01, Master01 (+ devin if wanted) |
-| `source/mu.db` | §2 | gate 22, kinds 19-25, 9 spawn boxes |
-| `src/game/world/maps.cpp:12-20` `kMaps` | lorencia, noria | `{"devias", 2, {207, 42}}` **appended last**, so M still goes Lorencia -> Noria and then Noria -> Devias -> Lorencia (`mapAfter`, `:38-44`); update the comment and `maps.h:20` |
-| `src/sim/gates.cpp:9-20` | 23/24/25/26 | exits `{19, 2, {242,34,243,37}, -1, +1}` and `{21, 0, {7,38,8,41}, +1, -1}`; enters `{18, 0, {5,38,6,41}, 15, 19}` and `{20, 2, {244,34,245,37}, 0, 21}`. Leave 28/43/44 out until Lost Tower exists, or the realm will gate him and PlayMode will log "leads to a map this game has no world for" (`play_mode.cpp:537`) with him already stopped; update `gates.h:11-13` |
-| `src/game/ui/minimap.cpp:214-218` `mapName` | 0, 3 | `case 2: return "Devias";` (it names the far side of a gate) |
-| `src/game/ui/arrival.cpp:60` | has `devias` already | -- |
-| `src/game/world/world.cpp:46,297-302` `kIndoorFloor = 4` | one number for all worlds | per world: Devias "indoors" is `tile == 3 \|\| tile >= 10` (§1.4). Also feeds `setRoofsHidden` (`:255`), the leaves/rain `inside` and the wind |
-| `src/game/play_sound.cpp:81,233` | grass on slot 0, wind off indoors | Devias walks on snow outdoors (`pWalk(Snow).wav`, `ZzzOpenData.cpp:4741`; `ZzzCharacter.cpp:5356`); wind loops except indoors |
-| `src/game/world/weather.cpp:102-104` | rain in noria/lorencia | Devias: no rain; its snow is the leaves pool (`CreateDeviasSnow`, `ZzzEffectFireLeave.cpp:274-297`) -- effects page |
-| `src/game/world/leaves.*` | Lorencia's and Noria's creators | Devias's snow creator -- effects page |
-| `src/game/world/ornaments.cpp:101-106,204` | Noria glows by bare name | gate on world (§4.1); Devias's own sprites (type 100 lightning, the braziers) -- effects page |
-| `src/game/world/portal.cpp:40` | Noria's warp only | nothing for 0.75 (the 53,92 warp is Season 6's, §1.6) |
-| `src/game/world/boids.cpp:55-72` | lorencia, noria | nothing (no boid) |
-| `src/sim/market.cpp:161-172` `stockOf` | 248/250/251/253/254/255/242/243 | 244 -> the barmaid's table (`kBarmaid`), 245 Izabel, 246 Zienna -- each offer must be a cooked item (`tests/sim_test.cpp:417-431`'s rule) |
-| `src/sim/wear.cpp:44` `repairsAt` | 251, 243 | + 246 (Zienna) |
-| `src/app/modes/play_mode.cpp:738,759-760` | pub/hunt music by name | nothing now (music off; `SceneManager.cpp:1007-1025` has Devias.mp3 in the safe zone and Church.mp3 at 205-214,13-31, both on disk in `Data/Music`) |
-| `src/game/roster.cpp:172` | home by class | nothing: no 0.75 class starts in Devias |
-| `src/sim/quests.cpp:74-82,157-162` | "Seek Apostle Devin in Devias" | a Devias quest giver when the user wants one (§1.7) |
-| `sheets/worlds/devias.json` (+ `devias_rain.json` not needed) | noria.json | Devias's light. MU clears to (0.75, 0.85, 1.0) "light snowy blue" (`SceneManager.cpp:383-384`), and the TerrainLight mean is 115,149,178; seed from Lorencia's base and tune with the user |
-| `tests/sim_test.cpp:3269-3320` | Lorencia <-> Noria gate test | the same for 18/19 and 20/21, and the level-15 refusal |
-| `docs/roadmap.md:127`, `PLAN.md:179` | "Devias" as a later item | the sprint line |
+| 19 (Object20, `aurora`) | 136, floating 2.2-5.8 m up over the whole map | whole mesh additive: **Devias's aurora**, 136 violet-magenta curtains (ZzzObject.cpp:4697-4701) |
+| 92, 93 (`ice`) | 26, north-west | whole mesh additive: ice that glows |
+| 78 (Object79, `light_02` window) | 23 town walls | the window additive, flickering 0.4-0.7 re-rolled every frame (:4706-4708, :3903-3905) |
+| 54, 56 (candles) | 20, church and houses | the flame submesh additive, no flicker |
+| 66 (Object67, fire) | 9 camp and house fires | `CreateFire` at 50 units up, terrain light radius 4 (:3918-3920) |
+| 30 (Object31) | 2, the south-west hall's doors | `BITMAP_TRUE_FIRE` and subtractive smoke; **probably (later)** |
+| 100 (Object101) | 1, on the Lost Tower gate | hidden mesh; two `BITMAP_LIGHTNING+1` sprites turning opposite ways, drawn only for a hero of level 50 or more: the Lost Tower beacon |
+| 20, 65, 88: swinging doors | 10 | within 2 m the door swings open from its rest yaw, `aDoor.wav` every frame; out of range it turns back 10° a frame (:3921-3955) |
+| 86: sliding doors | 6 | slides up to 4 m along its axis, `aCastleDoor.wav` (:3930-3942) |
+| 103 (`dog_g99`): sled dogs | 2, by the camp fire | an idle with a rare fidget (`rand_fps_check(32)`) |
+| 91 (hidden), 22, 25, 40, 45, 55, 73 | 44 poses, pews, chairs, 32 camp stones | `CreateOperate`: pose or sit, facing the object or keeping his own (ZzzInterface.cpp:1715-1727) |
+| 81, 82, 96, 98, 99: roofs | 81 | fade to 0 while the hero stands on an indoor floor; every roof at once (:3711-3718) |
 
-`src/game/headless.cpp:166` starts any non-Lorencia world on its `arrive`, so `--headless
---world devias` works once the row exists.
+No chimney smoke, snow off roofs or wall torches. No birds, bats or fish (MapManager.cpp:60-89);
+a mount's dust is white snow here (GOBoid.cpp:314). An NPC on tile 3 is clickable only from tile
+3 or 11 (Selection.cpp:192-199).
+
+### 5.4 Sound
+
+- **Wind:** `aWind.wav` looped, stopped indoors (SceneManager.cpp:862-866).
+- **Steps:** `pWalk(Snow).wav` outdoors, `pWalk(Soil).wav` indoors (ZzzCharacter.cpp:5348-5382).
+- **Doors:** `aDoor.wav`, `aCastleDoor.wav`.
+- **Music:** in the safe zone, Church.mp3 in the church (205-214, 13-31), else Devias.mp3
+  (SceneManager.cpp:1007-1026). Ours plays music only in safe zones.
+
+### 5.5 The blizzard (ours)
+
+MU has no blizzard. What the user asked for (2026-09-29): **the rain's logic** (a calm and a storm
+in turn, one share walked between them, everything reading the share); **darker, not white** (a
+cold dark storm, more haze, never a whiteout); **a strong snow wind**; **the hero feels it,
+visually only** (no camera shake, the user said no; no gameplay change). Built 2026-09-29/30:
+
+- **Spell** (`game/world/weather.cpp`): Devias's wet spell is the blizzard, 2-4 min of storm
+  after 10-18 min of calm, built over 18 s; no drops, no thunder. `--weather rain|dry` holds it.
+- **Light** (`sheets/worlds/devias_rain.json`): the sun weak and grey, the sky slate, the haze to
+  0.032 and paler ("stronger snow dust effect", twice), the lamps up so fires glow through it.
+- **Sound** (`world_blizzard`, `source/sounds/ablizzard.wav` cut by `tools/blizzard.py`): its
+  level is the share, muffled to a quarter under a roof, MU's wind under it.
+- **The snow storms** (`world/leaves.cpp`, `setStorm`): along the grass's axis at up to 15 m/s in
+  gusts, falling 2-4 m/s faster ("has to fly faster"), spawned upwind so the stream covers the
+  view, streaked past 2.5 m/s, the pool 180; at a full storm a flake shows 25% of its light ("snow
+  flakes too much visible"). The wind wanders every 6-14 s within about 55° ("we need some
+  randomness like wind changes").
+- **Grass and trees react** ("grass and trees has to react"): the storm's grass wind 0.3, and a
+  steady downwind bow (`u_grassStorm`) from the snow's own strength, so the grass bows without
+  the flicker a turning wave phase gave; the town's sway clips run up to 2.5 times their rate.
+
+Still open: gusts read off the blizzard loop's loudness, as the thunder's flash is; ground drift;
+a denser band of snow round the hero, and cloth and hair fluttering harder; the flake count priced
+at 2K; and the levels heard and seen in game, not only in review shots.
 
 ---
 
@@ -420,7 +459,8 @@ figure table (`cook.py:1531-1535`, `figures_devias.json`), the held-back breeds
 Noria took the path "extract the whole record, stand the bare land up with M travel, then
 objects one by one, then NPCs and monsters breed by breed, then effects"
 (`porting-a-world.md`, commit `9a2f6110`). Devias the same, in MU2_BGFX's own content chain
-(`docs/content.md`). `$D` is `/Users/karlisfeldmanis/Documents/muremaster2/LEGACY/reference/MuMain/src/bin/Data`,
+(`docs/cooker.md`, "The pipeline underneath"). The scripts below were the chain before
+`./mu make`; today `./mu make ground devias` and `./mu make <recipe>` run them in order. `$D` is `/Users/karlisfeldmanis/Documents/muremaster2/LEGACY/reference/MuMain/src/bin/Data`,
 and everything runs from `MU2_BGFX/`.
 
 **Stage 0 -- source.** Done in this research: World3 has `EncTerrain3.{map,att,obj}`,
@@ -438,7 +478,7 @@ python3 pipeline/terrain.py $D/World3 devias source/world 3
 sqlite3 source/mu.db < devias.sql            # §2's rows; then pragma wal_checkpoint(TRUNCATE)
 ```
 
-**Stage 2 -- tile sheets.** The ground page's checklist (`devias-ground.md` §6): 14 sheets
+**Stage 2 -- tile sheets.** 14 sheets
 decoded as `source/textures/dv_*.png`, `source/world/devias/ground.json`, and the grass sheet
 `effects/grass/devias_TileGrass02.png` plus `grass_devias_1` in `index.py`.
 
@@ -496,7 +536,7 @@ judged before the next (`cook.py --only figures --world devias --monsters EliteY
 Noria rule). Worm and Assassin (level 20 and 26, by the town) come first, and the Ice Queen last.
 Hommerd needs the Larkan Axe and the Big Round Shield. The Ice Queen needs the Angelic Staff.
 
-**Stage 6 -- effects.** The effects page: the snow (`CreateDeviasSnow`, alpha-blended leaf
+**Stage 6 -- effects.** §5: the snow (`CreateDeviasSnow`, alpha-blended leaf
 sprites, none indoors), the aurora and ice additives, the flickering windows, 9 braziers, the
 type-30 fire, the Lost Tower door's lightning, the doors swinging open, the ambient wind, the
 snow footsteps, the monster skills, and the grade.

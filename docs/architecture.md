@@ -189,6 +189,51 @@ A `Mode` is a thing the frame loop runs; headless never reaches the loop. Callin
 `HeadlessMode` would have meant a class with a `camera()` and a `frame()` that must never be
 called, which is a worse lie than an `if` at the top of `run()`.
 
+## The foundations
+
+Decided 2026-09-20, before any code, in the first plan (`PLAN.md`, deleted 2026-10-13; git keeps
+it). Code comments cite them as "foundation N". Cheap at the start, a rewrite later; all twelve
+still hold.
+
+1. **The whole frame before any content.** Shadow, prepass, SSAO, blur, shade and present existed
+   at 1080p before the first map loaded. Every later sprint adds content to a complete frame and
+   is priced against it.
+2. **The review loop before the game.** `--frames N --shot K --shot-path` (absolute), a log with
+   every asset loaded and a frame line a second, `--stats file.csv`. Vsync off for every number.
+3. **A budget with accounts.** 5.5 ms at 1080p over Lorencia's town; `--budget` exits non-zero
+   when an account is overdrawn (`docs/budget.md`).
+4. **One conventions page**, written before any loader: `docs/conventions.md`.
+5. **One material model, closed.** Albedo (sRGB), normal (BC5), ORM, emissive, and three flags:
+   cutout, two-sided, skinned. Shader variants are those flags and nothing else. MU2's material
+   library is mapped onto it at cook time (`docs/materials.md`).
+6. **Draws are batches from the start.** One instance buffer a frame read by every pass, bones in
+   one buffer, scenery grouped by model into instanced draws.
+7. **Culling is designed, not retrofitted.** Chunks, not objects; the camera and the sun culled
+   separately (the shadow pass tests the split's box extruded along the sun, never the camera's
+   frustum); a range per kind (grass, leaves, clutter, lamps), casting stopped before drawing;
+   bounds and ranges settled at load, no allocation or sort per frame; the draw and culled counts
+   logged for both passes. Occlusion culling is left out on purpose (measured not worth it,
+   `docs/budget.md`).
+8. **The sim is a library that has never heard of the renderer.** A fixed 20 Hz tick, one seeded
+   random source, no clock but its own, no allocation in a step. Requests in, events out; the game
+   draws events, and windows raise requests and redraw.
+9. **The sim runs without a window.** `--headless --seed S --ticks N` writes the event log, and the
+   same seed gives the same bytes. `tests/` reads cooked files with no window.
+10. **Layers that do not know each other**: the diagram above.
+11. **Tables are cooked, not queried.** No sqlite and no json in the game; the save is one
+    versioned file written whole. Drops and experience are code, not tables: MU has an expression
+    per level, not a list.
+12. **Self-contained and pinned.** No symlinks; `bootstrap.sh` pins bgfx, bx, bimg, cgltf, stb and
+    miniaudio by commit.
+
+Two rules decided with them:
+- **Mipmaps are not optional.** The cook writes the chain into each `.ktx`; trilinear with
+  anisotropy on everything the world wears; data grids (`height.png`, `attributes.png`,
+  `light.png`, the tile grid) point-sampled with no mips; a cutout's alpha rescaled per level to
+  keep its coverage.
+- **Antialiasing:** 4x MSAA on the prepass and shade, alpha-to-coverage for cutout foliage, no
+  TAA (it smears MU's painted detail and ghosts behind a walking figure).
+
 ## Where does a new file go?
 
 1. **Does it decide anything about the game's rules?** → `sim/`, and the constant needs its

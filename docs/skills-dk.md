@@ -2,7 +2,7 @@
 
 Written 2026-09-22 before any code, and **the first skill is now built** — see §6, written the same
 day, for what is in the tree and what is still owed. This is the design for the skill sprint
-`PLAN.md` puts after sprint 9, and it answers four questions in the order they have to be answered:
+the first plan put after sprint 9 (§0 has its decision), and it answers four questions in the order they have to be answered:
 
 1. **What does 0.75 actually say** about the knight's six skills — every number, cited.
 2. **What do WoW and LoL do with cooldowns**, since MU has nothing to copy here.
@@ -13,6 +13,21 @@ day, for what is in the tree and what is still owed. This is the design for the 
 Sources: OpenMU at `LEGACY/reference/openmu` (paths below are relative to `src/`), MuMain at
 `LEGACY/reference/MuMain/src/source`, and `MU2/docs/skills.md`, which is the same research done for
 the Godot client and carried here — with one correction, §1.3.
+
+## 0. Decided 2026-09-20: the skills are Diablo 3's shape, not MU 0.75's
+
+Written into the first plan (`PLAN.md`, deleted 2026-10-13) before any skill code, so nothing was
+built that had to be undone:
+
+- A skill is **learned permanently**, by every class, and is not re-bought, carried as an item or
+  lost.
+- A learned skill is **dragged onto Q, W, E or R**. Those are the bar (T joined later, §3.4).
+- Every skill has a **real cooldown**, so a character cannot use skills continuously. The sim keeps
+  per-skill cooldown state on a figure, and the HUD shows it running down.
+
+This is the one place the rules leave 0.75 on purpose rather than by omission, so it is
+`invention` on a scale the other departures are not. Nothing else may bake in MU's own
+assumptions -- a skill fired from an item, or with no cooldown.
 
 ---
 
@@ -140,7 +155,7 @@ came out of the change and all three are why it is the right base here:
   then a wait — without making it spammable. Not in the first pass; the shape is here so the
   cooldown state is built as a deadline plus a count rather than a deadline alone.
 
-Diablo 3, which `PLAN.md` names as the shape of our bar, stacks cooldown reduction
+Diablo 3, which §0 names as the shape of our bar, stacks cooldown reduction
 **multiplicatively** — `(1−a)(1−b)…` — which also never reaches zero but makes each source worth
 less than the last and is hard to read off a character sheet. **Not copied**: the divisor is the same
 curve with an explanation the tooltip can print.
@@ -152,7 +167,7 @@ per-skill. Not a percentage, not a cap, not multiplicative stacking.
 
 ## 3. Ours, and marked as ours
 
-Everything in §3 is `invention` on the scale `PLAN.md` reserves for the skill system. It is the one
+Everything in §3 is `invention` on the scale §0 reserves for the skill system. It is the one
 place the rules leave 0.75 on purpose.
 
 ### 3.1 The spine: strength is force, agility is speed
@@ -441,7 +456,7 @@ order they bite:
 The passive is the original's, traced: every three seconds, `maximum / 27.5`
 (`GameConfigurationInitializerBase.cs:51`, `CharacterClassInitialization.cs:163`), which alone is
 one cast every twenty-seven seconds against a four-second cooldown. So **a landed swing returns a
-twentieth of the pool** — `invention`, and Diablo 3's shape, which is the one `PLAN.md` chose: the
+twentieth of the pool** — `invention`, and Diablo 3's shape, which is the one §0 chose: the
 basic attack is the generator, the skills are the spenders, and the fight has a rhythm of swing,
 swing, spend. A skill's own blow returns nothing, or it would pay for itself. Measured on the
 hunt: a level-30 knight went from 3 casts in 4 000 ticks to 31 in 6 000, and a level-100 one to 63
@@ -532,7 +547,7 @@ are, the *bar* follows MuMain and is not.
   saying the list would take its place; the list took the GOLD box's place instead, so T is a
   key like the other four (the user, 2026-09-23, trying to drag a skill onto it). Five slots,
   five skills at once, nine learned — that is the Diablo 3 shape
-  `PLAN.md` asked for, and what fills the four is the fan below, the right-click cast
+  §0 asked for, and what fills the four is the fan below, the right-click cast
   (`MU2/docs/skills.md` §9: *left walks and swings, right casts*) staying as it is.
 - **And the list is how the four are chosen.** The user's rule, 2026-09-23, in three steps: they
   asked for MU2's gesture (*"when clicked or hovered on the right-click slot he opened the skill
@@ -638,7 +653,7 @@ cancel a monster's swing, and giving it a wind-up would move every seeded log fo
 
 - **Per-figure cooldowns**: six deadlines in ticks on the fighter, not a map — `realm.h:194-198`
   already says the tick is per-body and separate from the thinking clock, which is the hook.
-- **Requests in, events out**, per `PLAN.md` point 8: a `Cast` request (skill, target) and a `Cast`
+- **Requests in, events out**, per foundation 8 (`docs/architecture.md`): a `Cast` request (skill, target) and a `Cast`
   event (who, skill, at whom); the clip, sound, streak and sparks are the game's to pick from the
   number. `Shove` is one `Place`, for the knock on the three single-target skills; there is no
   `Close`, because nothing moves the knight (§3.1a).

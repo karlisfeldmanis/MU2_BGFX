@@ -1,8 +1,16 @@
 # The Box of Kundun, deep (2026-10-02)
 
-The user: "lets dig deep on Box of Kundun because our game is around that lore". Research only;
-nothing built. The broad survey of every drop-to-open box is drop-boxes.md; this file is the
-Kundun box and everything around it that carries Kundun's name.
+The user: "lets dig deep on Box of Kundun because our game is around that lore". This file is
+the Kundun box and everything around it that carries Kundun's name, and (§9) every other box MU
+opens by a throw, with the Firecracker.
+
+**Where it stands.** Built: the Box of Luck (`MagicBox01`), the Box of Kundun +1 to +3
+(`MagicBox08`, its tier its plus; ours, three tiers, rates rising with the tier, the user
+2026-10-06) and the Firecracker (`MagicBox03`), each a row at a free number, opened by a throw
+(`Realm::crack`, `sim/items.h`). Their sources: quest rewards (`sim/quests.cpp`), the Golden
+Dragon raid's Golden Budge Dragons and Golden Dragon (`docs/golden-dragon-raid.md`), and the
+Firecracker one in 300 off dungeon and event monsters (§9.5). Not built: the +4 and +5 boxes,
+the Eldorado golden monsters, the Marks of Kundun and Kalima (§4).
 
 Sources, highest first: WebZen GameServer 1.00.93 (`WZ`, under `Source/Server Side/GameServer/`,
 0.97d base unless a flag is named), MuMain (`MM`, `src/source/`), OpenMU (`OM`). The repo's
@@ -108,7 +116,7 @@ or a Lost Map.
 | +4 | the four jewels; Dragon, Guardian, Legendary sets, Dragon Shield; Legendary Staff, Aquagold and Bluewing Crossbow, Crystal Sword, Crystal Morning Star, **Balrog's Scythe** | Plate, Spirit sets; Serpent Spear, Lightning Sword, Silver Bow, Gorgon Staff |
 | +5 | the four jewels; Black Dragon, Atlans sets; Staff of Destruction, Saint Crossbow, Sword of Destruction | Dragon, Guardian, Legendary sets, Dragon Shield; Legendary Staff, Aquagold and Bluewing Crossbow, Crystal Sword, Crystal Morning Star, Balrog's Scythe |
 
-(drop-boxes.md's earlier lists, with Kundun Staff in +5, were the 2010 repack.)
+(Earlier lists with Kundun Staff in +5 were the 2010 repack's.)
 
 No fanfare or firework on a Kundun box (the medals and hearts have them). On the ground the box
 glows at item level `(L-8)*2+1`: +1 glows as +1, +2 as +3, +3 as +5, +4 as +7, +5 as +9
@@ -217,4 +225,73 @@ tiered by drop level), whether a box shows a show on opening (MU's does not), wh
   Kundun, only items or zen" (muonline.fandom.com). Today's Global boxes give Zen and jewels only.
 - Not found: Global or Japanese dates, WebZen's Season 4 probability files, Korean player odds.
 
-Full notes with a URL per claim: kundun-box-sources.md.
+The full notes with a URL per claim were `docs/kundun-box-sources.md` (deleted 2026-10-13; git
+keeps them). Two facts its readers cited: MU's own tooltip for its boxes is only "Throw it and
+you may receive some Zen or items" and "Cannot be sold"; and WebZen's notice of the Box of
+Kundun's launch lists the golden monsters as this file's §2 does.
+
+## 9. The other boxes you throw on the ground (2026-10-02)
+
+The survey asked: "make a research of kundun box and other things which player drops and
+something comes from that". Sources as above.
+
+### 9.1 The mechanic
+
+A box is an ordinary item. Dropped on the ground, the server deletes it and rolls a bag instead
+(`WZ protocol.cpp:5284 CGItemDropRequest`, the `14,11` branch): **one item** at the player's feet,
+his, or on a miss **Zen**. Some send a show to everyone near: a **firework** at the tile
+(`0xF3 0x40` CmdType 0, `BITMAP_FIRECRACKER0001`) or the **fanfare** (CmdType 2, `SOUND_MEDAL`).
+No window, no animation of the box: drop, poof, loot. Ours puts the Zen in the purse, as a kill's.
+
+### 9.2 One item, many boxes: 14,11 by level
+
+| Level | Name | Model | Comes from (WZ) | Opens into (WZ) | Show |
+|---|---|---|---|---|---|
+| 0 | Box of Luck | MagicBox01 | Golden Budge Dragon, always (`gObjMonster.cpp:4107`) | 20% an item from `eventitembag.txt`, +0/+1; else 3-6 piles of 1,000 Zen (`Event.cpp:2311`) | none |
+| 1 | Star of Sacred Birth | MagicBox02 | Christmas, monster level >= 17 | 2 in 10 an item from bag 4, else Zen | firework |
+| 2 | Firecracker | MagicBox03 | its event, monster level >= 17 | 2 in 10 bag 5, +5 to +9, else Zen | firework |
+| 3 | Heart of Love | MagicBox05 | its event | 2 in 20 bag 5, else 1,004 Zen | firework |
+| 5 | Silver Medal | MagicBox06 | Dungeon or Devias | 2 in 20 bag 7, +3 to +6, else Zen | fanfare |
+| 6 | Gold Medal | MagicBox07 | Lost Tower, Atlans, Tarkan | 2 in 20 bag 6, +3 to +6, else Zen | fanfare |
+| 7 | Box of Heaven | MagicBox01 | the Golden Archer's chip event | 50% a Rena, else a Box-of-Luck item or 1,000 Zen (`Event.cpp:794`) | fanfare |
+| 8-12 | Box of Kundun +1 to +5 | MagicBox08 | the five golden monsters (§2) | §3 | none |
+
+The rates are WZ's compiled defaults (`Gamemain.cpp:1063-1093, 3698-3797`), each overridable in
+`commonserver.cfg`. Levels 13-15 (Heart of Dark Lord, the lucky pouches) are a real-world lottery
+and regional.
+
+### 9.3 Other things thrown, all later than 0.97d unless said
+
+The Hidden Treasure Box (12,26, 2005: crystals, fireworks, a bag or a lottery), the Christmas 2005
+ribbon boxes, the Valentine's chocolate and candy boxes, the Pumpkin of Luck (Halloween 2006), the
+Christmas Star and later firecrackers, the Cherry Blossom Box (2008), and the Ring of Heroes and of
+Warrior, thrown only at character level 40 and 80 (`protocol.cpp` ~5810-6120).
+
+### 9.4 What each version had
+
+- **0.75:** none of it. No 14,11, no golden monsters, no boxes.
+- **0.95d:** the Box of Luck from the Golden Budge Dragon (OpenMU opens it at 50% into a +6 item,
+  else 10,000 Zen; ours follows), and the Box of Kundun +2 from the Golden Titan.
+- **0.97d:** §9.2 whole: the five Kundun boxes off the Eldorado golden monsters, medals, hearts,
+  firecrackers and stars on their events.
+- **Season 4 (2009):** Kundun bags as probability tables, and a larger golden roster.
+
+### 9.5 The Firecracker, close up
+
+The user likes it, from dungeons only. WebZen's (0.99.60T package):
+- **Drops** only while `FireCrackerEvent` is on, from monsters of level 17 or more, in Korea on
+  maps 0-6, abroad only from party kills; 10 in 10,000 in WebZen's cfg.
+- **Opens** (`WZ Event.cpp:1201`): 2 in 10 an item from `eventitembag5` with a firework, else 2,004
+  Zen (the year). The item is base +5 plus `rand()%5` (+5 to +9), skill 50%, luck 50%, option 20%
+  +12; jewels bare. The list: Rapier to Double Blade, the axes to Larkan, the maces, Berdysh and
+  Serpent Spear, the crossbows and Tiger Bow, Skull and Lightning Staff, five shields, the Leather,
+  Pad, Bronze, Wind, Spirit and Sphinx sets, Bless, Soul and Chaos.
+
+**Built 2026-10-02**, the opening first (the user: "first develop the mechanics, opening
+mechanics, sound"): row 14,11 (`source/items/misc/MagicBox03.json`, MU's MagicBox03.bmd), dragged
+onto the ground it opens with WebZen's rolls (`Realm::crack`, `kFirecrackerBag`, all 61 of bag 5's
+rows); an item brings MU's firework (`game/fx/firework.h`: five rockets, sparks, glitter, a shock
+ring, seven star frames, two sounds); **ours (2026-10-04):** the Zen is 30,000 to 100,000 in tens,
+the band the item would sell for, with the firework too. `sim_test` testFirecracker: 19.9% items
+over 20,000 throws. **Where it drops** (ours): one in 300 (`kFirecrackerOdds`) off the maps whose
+manifest says `drops: firecracker`: the Dungeon, the Lost Tower, Devil Square and Blood Castle.
