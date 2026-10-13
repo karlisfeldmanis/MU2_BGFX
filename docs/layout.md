@@ -153,11 +153,14 @@ wire. It removes the tools and the shortcuts from the player's binary.
 
 - **Reads:** `core::paths()` finds the data next to the executable: `Contents/Resources` on macOS,
   the exe's folder on Windows and Linux. The dev build keeps the repository root.
-- **Writes:** the options, `account.key`, the characters, the layouts, `mu2.log` and `crashes/`
-  go to the player's user folder:
-  - `~/Library/Application Support/MU2` on macOS
-  - `%APPDATA%\MU2` on Windows
-  - `$XDG_DATA_HOME/mu2` on Linux
+- **Writes:**
+  - The log (`mu2.log`) and the crash and freeze reports go to `logs/` in the client's folder,
+    beside `MU2.app` (the user, 2026-10-13). Where that folder can't be written, they go to the
+    user folder's `logs/` instead: a downloaded app runs from a read-only copy until it is moved.
+  - The options, `account.key`, the characters and the layouts go to the player's user folder:
+    - `~/Library/Application Support/MU2` on macOS
+    - `%APPDATA%\MU2` on Windows
+    - `$XDG_DATA_HOME/mu2` on Linux
 
   An installed app must not write inside itself; on macOS, signing forbids it.
 - **Server:** it defaults to the live server (already `kDefaultHost` in `src/net/wire.h:115`).
