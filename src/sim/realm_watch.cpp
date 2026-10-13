@@ -119,11 +119,13 @@ void Realm::watch(Body& guard) {
         for (const Body& one : bodies_) {
             // Never the raid's dragon: a guard's blow is a share of what it strikes, and took
             // 91,200 off it a blow (the user, 2026-10-06: 'guards cant attack dragon').
-            if (!one.monster() || !one.alive() || isBoss(one)) continue;
             // Awake only: a monster asleep is one nobody is near enough to see, and a guard
             // fighting it would be a fight in an empty street -- and would clear what spawns at
-            // his gate before the hero ever walked out to it.
+            // his gate before the hero ever walked out to it. Asked first: one cache line of the
+            // body's thirty, and most of the map sleeps; monster() alone reads three
+            // (2026-10-13, netbot's profile).
             if (one.temper == Temper::Asleep) continue;
+            if (!one.monster() || !one.alive() || isBoss(one)) continue;
             if (!within(guard, one, float(row->viewRange))) continue;
             if (fromPost(guard, one) > watches) continue;
             // One that is on the hero first, whatever else is nearer: he is there to keep the

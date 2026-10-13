@@ -6,6 +6,7 @@
 // field added to the realm must be added there, or a mirror raised from a snapshot will not
 // stand where the server stands, which the lockstep hash says within a second.
 
+#include <algorithm>
 #include <cstring>
 #include <type_traits>
 
@@ -21,19 +22,27 @@ constexpr uint32_t kShape = 12;           // bumped when serialize() changes (4:
 struct Writer {
     static constexpr bool reading = false;
     std::vector<uint8_t>& bytes;
+    size_t at = 0;  // written so far; `bytes` is cut to it at the end (Realm::snapshot)
+    // Copied whole into room already there: vector::insert from a byte pointer copied a byte at
+    // a time here, 2 MB a Noria snapshot, and a resize each time zeroed it first -- the most of
+    // netbot's time once its bots shared a mirror (2026-10-13, tools/netbot Shared). The same
+    // bytes either way.
+    void put(const void* from, size_t size) {
+        if (bytes.size() < at + size) bytes.resize(std::max(at + size, bytes.size() + bytes.size() / 2));
+        std::memcpy(bytes.data() + at, from, size);
+        at += size;
+    }
     template <class T>
     void pod(const T& v) {
         static_assert(std::is_trivially_copyable_v<T>, "a snapshot copies plain data only");
-        const auto* p = reinterpret_cast<const uint8_t*>(&v);
-        bytes.insert(bytes.end(), p, p + sizeof(T));
+        put(&v, sizeof(T));
     }
     template <class T>
     void vec(const std::vector<T>& v) {
         static_assert(std::is_trivially_copyable_v<T>, "a snapshot copies plain data only");
         pod(uint32_t(v.size()));
         if (v.empty()) return;
-        const auto* p = reinterpret_cast<const uint8_t*>(v.data());
-        bytes.insert(bytes.end(), p, p + v.size() * sizeof(T));
+        put(v.data(), v.size() * sizeof(T));
     }
     bool ok = true;
 };
@@ -112,7 +121,9 @@ void Realm::serialize(Archive& a) {
                 a.ok = false;
                 return;
             }
-            routes_.assign(n, {});
+            // Each overwritten whole by vec() below; kept, not freed, so a scratch laid every
+            // decision (tools/netbot) does not ask for a thousand routes again each time.
+            routes_.resize(n);
         }
         for (uint32_t i = 0; i < n && a.ok; ++i) a.vec(routes_[i]);
     }
@@ -229,11 +240,11 @@ void Realm::serialize(Archive& a) {
 
 bool Realm::snapshot(std::vector<uint8_t>& out) const {
     if (!party_.empty()) return false;
-    out.clear();
-    Writer w{out};
+    Writer w{out};  // over what `out` held: its room kept, its bytes all written again
     w.pod(kMagic);
     w.pod(kShape);
     const_cast<Realm*>(this)->serialize(w);
+    out.resize(w.at);
     return w.ok;
 }
 
