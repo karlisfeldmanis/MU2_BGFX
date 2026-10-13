@@ -32,7 +32,7 @@ constexpr uint32_t kOnline = gfx::rgba(0.498f, 0.753f, 0.416f);
 constexpr uint32_t kOffline = gfx::rgba(0.29f, 0.27f, 0.235f);
 
 const char* const kKinds[] = {"Swords and axes", "Bows", "Staves", "Shields", "Armour", "Rings and pendants",
-                              "Jewels", "Runes", "Wings", "Pets", "Event tickets"};
+                              "Jewels", "Runes", "Wings", "Pets", "Event tickets", "Orbs and scrolls"};
 const char* const kFlags[] = {"Usable by me", "Excellent", "+7 and up"};
 
 std::string hoursLeft(int32_t seconds) {

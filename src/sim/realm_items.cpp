@@ -934,6 +934,9 @@ bool Realm::refine(int jewelSlot, int targetSlot) {
     if (settable(*tables_, jewel, thing, hero.kin, hero.second)) {
         const int socket = freeSocket(thing);
         thing.powers[socket] = jewel.powers[0];
+        // A quest's rune binds what it is set in (the user, 2026-10-12: "dont allow to sell any
+        // item on market which is queest reward"): set in a dropped sword, it went to market.
+        if (jewel.bound) thing.bound = true;
         me().bag.lift(jewelSlot);
         me().bag.put(targetSlot, thing);
         if (wearable(targetSlot)) rearm(hero);
@@ -2106,6 +2109,10 @@ uint32_t Realm::discard(int slot) {
     if (!hero.alive() || me().bag[slot].empty()) return 0;
     // Nor a jewel or a +7, which MuMain will not let go of (sim::expensive).
     if (expensive(*tables_, me().bag[slot])) return 0;
+    // Nor a bound thing (the user, 2026-10-12: bound is "not tradable, droped"): a quest's pay
+    // stays in his bag, sold at a counter or kept. A Firecracker or a box is still thrown to
+    // open it (Realm::crack), which is not this.
+    if (me().bag[slot].bound) return 0;
 
     const Held what = me().bag.lift(slot);
     if (wearable(slot)) rearm(hero);
@@ -2168,7 +2175,11 @@ Cracked Realm::crack(int slot) {
     // A box opens its own way (Realm::openBox).
     const content::ItemRow& thrown = tables_->items[size_t(rest.item)];
     if (boxOfLuck(thrown) || boxOfKundun(thrown)) {
-        return openBox(cracked, boxOfLuck(thrown), std::clamp<int>(rest.refinement, 1, kKundunTiers));
+        // A quest's box keeps what it holds to him: what it lays is bound, as the box was.
+        const size_t laid = lying_.size();
+        const Cracked opened = openBox(cracked, boxOfLuck(thrown), std::clamp<int>(rest.refinement, 1, kKundunTiers));
+        for (size_t i = laid; i < lying_.size(); ++i) lying_[i].what.bound = lying_[i].what.bound || rest.bound;
+        return opened;
     }
 
     // The bag's rows this tree has items for, counted then drawn by index as `leave` draws.
@@ -2213,6 +2224,7 @@ Cracked Realm::crack(int slot) {
         one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
         one.owner = mine().id;
         one.id = nextId_++;
+        one.what.bound = rest.bound;  // a quest's Firecracker's item is his alone, as it was
         lying_.push_back(one);
         cracked.id = one.id;
         cracked.item = item;

@@ -791,9 +791,14 @@ constexpr uint8_t kInJewellery = 8;  // the rings and the pendant
 // green, as green is a legendary item's. Last in the enum so the rest keep their numbers.
 enum class Rarity : uint8_t { Rare = 0, Epic = 1, Legendary = 2, Common = 3 };
 constexpr int kRarities = 4;
-// What a Common rune sells for, of the Jewel of Creation's 12,000,000 every other rune fetches:
-// 120,000, so a Lorencia kill does not pay a fortune (seen on the card, 2026-10-06). Ours.
-constexpr double kCommonRuneSale = 0.01;
+// What a rune sells for to a merchant, of the Jewel of Creation's 12,000,000, by its rarity (in
+// Rarity's order: Rare, Epic, Legendary, Common). A Common's 1% since 2026-10-06, so a Lorencia
+// kill does not pay a fortune (seen on the card). **Each rarity about three times the one under
+// it since 2026-10-13** (the user: "this seems like a economy bug?"): every rarer rune fetched the
+// whole 12,000,000, and three Commons (~360,000), a Chaos and the fuse's 100,000 made a Rare a
+// merchant paid 12,000,000 for, at 100%. Three for one, as the fuse takes them, so a fuse about
+// breaks even at the counter and pays only where a buyer values the rune more. Ours.
+constexpr double kRuneSale[kRarities] = {0.03, 0.10, 0.30, 0.01};
 // The rarity a fuse of three makes (sim/machine.h): Common to Rare, Rare to Epic, Epic to
 // Legendary; a Legendary is the top and gives itself back.
 constexpr Rarity nextRarity(Rarity rarity) {
@@ -1295,11 +1300,12 @@ constexpr int castleMaterialLevel(int monsterLevel) {
 // The Zen when no item comes, into the purse as every Zen here (Realm::leave). MU's is
 // MoneyItemDrop(2004, ...), the year; ours rolls kFirecrackerZenLeast to kFirecrackerZenMost
 // (the user, 2026-10-04: 'we need to give much more zen ... because item +9 can sold from a lot
-// of zen'). The band is what the item sells for: over 3,900 cracked items a median of 41,800,
-// most gear 30,000 to 130,000 a piece, the Bless and Soul at 2 and 3 million pulling the mean
-// to 148,270.
-constexpr int64_t kFirecrackerZenLeast = 30000;
-constexpr int64_t kFirecrackerZenMost = 100000;
+// of zen'). The band was what the item sold for then: a median of 41,800 over 3,900 cracked
+// items, the Bless and Soul at 2 and 3 million. Since the jewels went back to MU's old values
+// (a283b023) it is a third of that, 10,000 to 30,000 (the user, 2026-10-12: 'fix Firecrackers',
+// after 30 netbots took 31 M of their 81 M Zen from them in a game day, the most of anything).
+constexpr int64_t kFirecrackerZenLeast = 10000;
+constexpr int64_t kFirecrackerZenMost = 30000;
 // WebZen's eventitembag5.txt (0.99.60T's Data, the Firecracker's and the Heart of Love's bag; its
 // header still calls it the Christmas star's), row for row, by MU's group and number. A row this
 // tree has no item for is left out of the draw, so the draw is even over what is here.

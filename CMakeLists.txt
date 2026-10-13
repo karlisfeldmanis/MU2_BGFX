@@ -679,6 +679,19 @@ target_compile_definitions(netbot PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/ass
 target_compile_options(netbot PRIVATE -Wall -Wextra -Wno-unused-parameter)
 endif()
 
+# Botwatch: a window over a netbot run -- the bots, the Broker, the economy log, the simulation's
+# speed and the cores it takes -- that can start and stop a private run of its own
+# (tools/botwatch/botwatch.cpp). ImGui on bgfx, as the studio's panels; the Mac's alone.
+if(NOT MU2_SERVER_ONLY)
+add_executable(botwatch EXCLUDE_FROM_ALL
+  tools/botwatch/botwatch.cpp
+)
+target_link_libraries(botwatch PRIVATE mu_studio mu_sim)
+target_include_directories(botwatch PRIVATE src)
+target_compile_definitions(botwatch PRIVATE MU2_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_compile_options(botwatch PRIVATE -Wall -Wextra -Wno-unused-parameter)
+endif()
+
 # The raid, headless: the Golden Dragon against source/raid/party.json, played to a kill or a
 # wipe as many times as asked (tools/raid/raid.cpp, docs/golden-dragon-raid.md §2a).
 add_executable(raid EXCLUDE_FROM_ALL

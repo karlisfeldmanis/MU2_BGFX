@@ -29,6 +29,8 @@ struct Offer {
 
 // A merchant's shelf by MU's NPC number, or none (count 0) for anybody who is not one.
 const Offer* stockOf(int npc, int* count);
+// Whether any merchant's shelf holds it (the market's skill rule, broker.cpp).
+bool stocked(int group, int number);
 inline bool sells(int npc) {
     int count = 0;
     stockOf(npc, &count);

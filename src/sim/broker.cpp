@@ -6,6 +6,7 @@
 #include <type_traits>
 
 #include "sim/market.h"
+#include "sim/quests.h"
 #include "sim/wear.h"
 
 namespace mu::sim {
@@ -21,10 +22,9 @@ int64_t npcValue(const content::Tables& tables, const Held& what) {
                                 what.option, excellentCount(what.excellent));
     // Worn gear fetches less: 0.6 of the share gone comes off (CalculateSellingPrice).
     if (wears(row)) paid = wornSellingPrice(paid, what.durability, maximumDurability(row, what));
-    // A Common rune is a sliver of the Jewel of Creation's price (sim/items.h kCommonRuneSale).
-    if (const PowerRow* power = powerOf(what.powers[0]);
-        creation(row) && power != nullptr && power->rarity == Rarity::Common) {
-        paid = int64_t(double(paid) * kCommonRuneSale);
+    // A rune is a share of the Jewel of Creation's price by its rarity (sim/items.h kRuneSale).
+    if (const PowerRow* power = powerOf(what.powers[0]); creation(row) && power != nullptr) {
+        paid = int64_t(double(paid) * kRuneSale[int(power->rarity)]);
     }
     return paid > 0 ? paid : -1;
 }
@@ -39,12 +39,27 @@ BrokerKind brokerKind(const content::ItemRow& row) {
         return BrokerKind::Tickets;
     }
     if (row.group == kGroupPets) return BrokerKind::Pets;
+    if (row.teaches != 0) return BrokerKind::Skills;
     if (row.group == kGroupBows) return BrokerKind::Bows;
     if (row.group == 5) return BrokerKind::Staves;
     if (row.group == kGroupShields) return BrokerKind::Shields;
     if (row.group >= kGroupHelms && row.group <= kGroupBoots) return BrokerKind::Armour;
     if (row.group >= 0 && row.group <= 3) return BrokerKind::Swords;
     return BrokerKind::Count;
+}
+
+// Whether a quest pays this item, as a reward or one of its choices.
+static bool questPaid(const content::Tables& tables, int32_t item) {
+    for (int q = 0; q < kQuests; ++q) {
+        const QuestRow& row = questAt(q);
+        for (int i = 0; i < row.paidCount; ++i) {
+            if (row.paid[i].item && tables.itemNamed(row.paid[i].item) == item) return true;
+        }
+        for (int i = 0; i < row.choiceCount; ++i) {
+            if (row.choices[i].item && tables.itemNamed(row.choices[i].item) == item) return true;
+        }
+    }
+    return false;
 }
 
 BrokerNo brokerable(const content::Tables& tables, const Held& what) {
@@ -55,6 +70,13 @@ BrokerNo brokerable(const content::Tables& tables, const Held& what) {
     // The user's goods (2026-10-11): gear, jewels, runes, wings, pets and the events' tickets and
     // parts -- not potions, ammunition, scrolls or orbs.
     if (ammunition(row) || brokerKind(row) == BrokerKind::Count) return BrokerNo::Kind;
+    // An orb or a scroll no merchant sells (the user, 2026-10-12: "tech bots to sell scrolls and
+    // orbs which is not on vendors so bots can use strong skills"); a shelf's own stays a shelf's.
+    // Nor one a quest pays (the user, 2026-10-12, of the Orb of Skillshot: "i doont think so is
+    // good sells becusse elfs can get that from quest").
+    if (brokerKind(row) == BrokerKind::Skills && (stocked(row.group, row.number) || questPaid(tables, what.item))) {
+        return BrokerNo::Kind;
+    }
     // "Must be repaired to list" (the user, 2026-10-11).
     if (wears(row) && what.durability < maximumDurability(row, what)) return BrokerNo::Worn;
     return BrokerNo::Yes;

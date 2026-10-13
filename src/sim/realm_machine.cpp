@@ -330,6 +330,9 @@ bool Realm::mix(Service service, int socket) {
             Held thing = me().machine[j.target];
             Held freed{rune, 0, 1};
             freed.powers[0] = thing.powers[j.socket];
+            // Out of a bound piece, the rune stays his (the user, 2026-10-12: no quest reward
+            // on the market) -- a quest's piece and its rune would otherwise come apart free.
+            freed.bound = thing.bound;
             thing.powers[j.socket] = 0;
             spendAllBut(j.target);
             me().machine.put(j.target, thing);
@@ -374,6 +377,8 @@ bool Realm::mix(Service service, int socket) {
                 if (int(row.rarity) != rarity || (mine && !drawable(row))) continue;
                 if (pick-- == 0) fused.powers[0] = uint8_t(p);
             }
+            // Fused from a quest's runes, the new one is bound as they were.
+            for (int cell = 0; cell < kMachineCells; ++cell) fused.bound = fused.bound || me().machine[cell].bound;
             me().machine.clear();
             me().machine.put(0, fused);
             break;

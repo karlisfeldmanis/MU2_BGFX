@@ -1130,8 +1130,13 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     }
     // What never changes hands: a quest's pay (sim::Held::bound) and the quest items MuMain will
     // not trade (IsTradeBan), WoW's "Soulbound" in the same place.
-    if (!sim::tradeable(row, what)) {
-        sheet.bound = sheet.bound.empty() ? std::string("Cannot be traded") : "Cannot be traded or dropped";
+    // Named "Bound" (the user, 2026-10-12: "show bound label for items which is not tradable,
+    // droped"): neither traded, nor sold at the Broker, nor anyone's but his.
+    if (what.bound) {
+        sheet.bound = "Bound \xC2\xB7 cannot be traded or dropped";  // Realm::discard refuses it
+    } else if (!sim::tradeable(row, what)) {
+        sheet.bound = sheet.bound.empty() ? std::string("Bound \xC2\xB7 cannot be traded")
+                                          : "Bound \xC2\xB7 cannot be traded or dropped";
     }
 
     // ---- the foot -----------------------------------------------------------------------------

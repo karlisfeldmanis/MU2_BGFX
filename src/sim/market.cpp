@@ -281,6 +281,17 @@ const Offer* stockOf(int npc, int* count) {
     }
 }
 
+bool stocked(int group, int number) {
+    for (const int npc : {248, 250, 251, 253, 254, 255, 244, 245, 246, 242, 243}) {
+        int count = 0;
+        const Offer* shelf = stockOf(npc, &count);
+        for (int i = 0; i < count; ++i) {
+            if (shelf[i].group == group && shelf[i].number == number) return true;
+        }
+    }
+    return false;
+}
+
 int64_t buyingPrice(const content::ItemRow& row, int refinement, int pieces, bool skill,
                     int shots, int full, bool luck, int option, int excellent) {
     if (row.group == kBows && quiver(row.number, refinement) > 0) {

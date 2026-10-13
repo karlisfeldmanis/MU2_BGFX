@@ -6,9 +6,9 @@ namespace mu::server {
 namespace {
 
 // What a change in a player's Zen is put down to. The order is the line's.
-enum Why : int { Kills, Crackers, Sold, Quests, Shop, Repair, Machine, Travel, Events, Other, kWhys };
+enum Why : int { Kills, Crackers, Sold, Quests, Shop, Repair, Machine, Travel, Events, Market, Other, kWhys };
 const char* const kWhyNames[kWhys] = {"kills",  "crackers", "sold",   "quests", "shop",
-                                      "repair", "machine",  "travel", "events", "other"};
+                                      "repair", "machine",  "travel", "events", "market", "other"};
 
 // One side's hour: Zen in and out by why, and what trades moved.
 struct Ledger {
@@ -43,6 +43,8 @@ int answered(int32_t kind) {
         case Kind::Travel: case Kind::GoBack: return Travel;
         case Kind::CompleteQuest: return Quests;
         case Kind::EnterCastle: case Kind::HandInStaff: case Kind::ClaimCastle: return Events;
+        // The Broker's: a buy pays out, a Collect's Zen comes in.
+        case Kind::BrokerBuy: case Kind::BrokerZen: return Market;
         default: return -1;
     }
 }
@@ -121,7 +123,7 @@ void economyTick(World& world, const std::vector<std::unique_ptr<Session>>& sess
                 why = w;
                 break;
             }
-            if (w >= 0 && w == Events) why = w;  // an event may take (a ticket) or pay
+            if (w >= 0 && (w == Events || w == Market)) why = w;  // either way
         }
         Ledger& l = one->bot ? g_bots : g_players;
         if (trade && why < 0) {

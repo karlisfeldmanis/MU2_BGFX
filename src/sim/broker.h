@@ -31,7 +31,7 @@ enum class BrokerNo : uint8_t {
     Yes = 0,
     Bound,    // bound to its earner, or a thing MuMain will not trade (tradeable)
     Quest,    // a quest's thing: Loch's Feather
-    Kind,     // a potion, ammunition, a scroll or orb: not the market's
+    Kind,     // a potion, ammunition, or an orb or scroll a merchant sells: not the market's
     Worn,     // not mended: repair it first
     Low,      // under what the NPC pays for it
     High,     // over kBrokerMostPrice
@@ -56,7 +56,7 @@ constexpr int64_t kBrokerCollectSeconds = 30 * 24 * 3600;  // then gone, as WoW'
 
 // The window's categories, in its order.
 enum class BrokerKind : uint8_t {
-    Swords, Bows, Staves, Shields, Armour, Jewellery, Jewels, Runes, Wings, Pets, Tickets, Count
+    Swords, Bows, Staves, Shields, Armour, Jewellery, Jewels, Runes, Wings, Pets, Tickets, Skills, Count
 };
 
 // What the NPC counter pays for it (Realm::sellValue's price, without the counter), -1 for a thing

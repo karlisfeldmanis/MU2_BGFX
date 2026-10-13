@@ -20,6 +20,7 @@
 #include "content/tables.h"
 #include "net/wire.h"
 #include "sim/audit.h"
+#include "sim/broker.h"
 #include "sim/event.h"
 #include "sim/items.h"
 #include "sim/raid_party.h"
@@ -7372,9 +7373,10 @@ void testCharon() {
     checkEqual(ask(1, 0, 50), int(sim::SquareRefusal::NotYet), "and with no clock at all");
     checkEqual(ask(2, at(10, 57), 50), int(sim::SquareRefusal::NoInvitation), "a +2 is not square 1's");
     checkEqual(ask(1, at(10, 57), 5), int(sim::SquareRefusal::TooLow), "level 5 is under the band");
-    checkEqual(ask(1, at(10, 57), 120), int(sim::SquareRefusal::TooHigh), "120 is over it");
-    checkEqual(ask(1, at(10, 57), 70, 1, sim::Kin::MagicGladiator), int(sim::SquareRefusal::TooHigh),
-               "a Magic Gladiator of 70 counts as 105");
+    // The floor only since 2026-10-13, as the castle's: over the band is let in.
+    checkEqual(ask(1, at(10, 57), 120), -1, "120 is over it, and let in");
+    checkEqual(ask(1, at(10, 57), 70, 1, sim::Kin::MagicGladiator), -1,
+               "a Magic Gladiator of 70 counts as 105, and is let in");
     checkEqual(ask(3, at(10, 57), 200, 3), -1, "square 3 lets a +3 in at 200");
     checkEqual(ask(4, at(10, 57), 300, 4), -1, "and square 4 a +4 at 300");
     checkEqual(ask(2, at(10, 57), 150, 2), -1, "square 2 lets a +2 in at 150");
@@ -8791,6 +8793,22 @@ void testRunes(const content::Tables& tables) {
         check(realm.discard(sword) != 0, "and the socketed sword goes on the ground");
     }
 
+    // A quest's rune binds what it is set in (the user, 2026-10-12: "dont allow to sell any item
+    // on market which is queest reward"), so it cannot leave by way of a dropped sword.
+    {
+        sim::Realm realm;
+        check(realm.raise(&tables, 11, 138, 124), "a realm raises for a bound rune");
+        const int sword = realm.give(serpent, -1, 0, -1, false, 0, 0, 2);
+        const uint8_t one[3] = {storm, 0, 0}, two[3] = {meteor, 0, 0};
+        const int found = realm.give(rune, -1, 0, 1, false, 0, 0, 0, one);
+        const int paid = realm.give(rune, -1, 0, 1, false, 0, 0, 0, two, nullptr, true);
+        check(sword >= 0 && found >= 0 && paid >= 0, "a sword, a found rune and a quest's");
+        check(realm.refine(found, sword) && !realm.satchel()[sword].bound, "a found rune leaves the sword free");
+        check(sim::brokerable(tables, realm.satchel()[sword]) == sim::BrokerNo::Yes, "and on the market");
+        check(realm.refine(paid, sword) && realm.satchel()[sword].bound, "a quest's rune binds it");
+        check(sim::brokerable(tables, realm.satchel()[sword]) == sim::BrokerNo::Bound, "and off the market");
+    }
+
     // A knight in the hunting ground, swinging at the nearest thing: with a power worn, some of
     // his landed swings call it, each on a monster other than the one he struck; with the same
     // sword and its sockets empty, none do.
@@ -9550,6 +9568,18 @@ void testGroupRunes(const content::Tables& tables) {
           "Commons go where their Legendaries go");
     check(sim::nextRarity(sim::Rarity::Common) == sim::Rarity::Rare,
           "three Commons fuse into a Rare");
+    // **A fuse does not mint Zen at a merchant** (2026-10-13, the user: "this seems like a economy
+    // bug?"): every rune past a Common sold for the Jewel of Creation's 12,000,000, so three
+    // Commons, a Chaos and 100,000 made a Rare worth a hundred times them (sim/items.h kRuneSale).
+    if (const int runeItem = tables.itemAt(14, 22); runeItem >= 0) {
+        sim::Held common{runeItem, int16_t(0), int16_t(1)};
+        common.powers[0] = uint8_t(Power::Cinder);
+        sim::Held rare{runeItem, int16_t(0), int16_t(1)};
+        rare.powers[0] = uint8_t(Power::KeenEye);
+        const int64_t c = sim::npcValue(tables, common), r = sim::npcValue(tables, rare);
+        check(c > 0 && r >= 2 * c && r <= 4 * c, "a Rare sells to a merchant for about three Commons");
+        check(sim::kFuseCount * c + sim::kFuseZen >= r, "so three Commons and the fuse's Zen are not a profit there");
+    }
     {
         sim::Realm realm;
         realm.raise(&tables, 7, 190, 110, Kin::DarkKnight, 30);
@@ -12269,17 +12299,13 @@ void testDeal(const content::Tables& tables) {
     checkEqual(realm.dealPut(boundAt, -1), -1, "a bound thing is refused in a trade");
     check(realm.dealPut(freeAt, -1) >= 0, "and a free one of the same kind is taken");
     realm.closeDeal();
-    // Thrown down, it is his alone: the other may not take it. A potion: a jewel is too dear to drop.
+    // Not thrown down at all (the user, 2026-10-12: bound is "not tradable, droped"): it stays in
+    // her bag. A potion: a jewel is too dear to drop anyway.
     const int potionAt = realm.give(tables.itemNamed("Potion01"), -1, 0, 1, false, 0, 0, 0, nullptr, nullptr, true);
-    const uint32_t thrown = realm.discard(potionAt);
-    const sim::Lying* lying = nullptr;
-    for (const sim::Lying& one : realm.lying()) if (one.id == thrown) lying = &one;
-    check(lying != nullptr && lying->owner == b, "thrown down, it lies as hers");
-    if (lying != nullptr) {
-        check(realm.mayTake(*lying), "she may take it back");
-        realm.lookAs(a);
-        check(!realm.mayTake(*lying), "and nobody else may, party or not");
-    }
+    checkEqual(int(realm.discard(potionAt)), 0, "a bound thing is not thrown down");
+    check(!realm.satchel()[potionAt].empty() && realm.satchel()[potionAt].bound, "it stays in her bag");
+    const int freeAt2 = realm.give(tables.itemNamed("Potion01"), -1, 0, 1);
+    check(realm.discard(freeAt2) != 0, "and a free one of the same kind is");
 }
 
 // **Threat** (docs/party.md): a knight with his guard up holds a monster against a wizard of his

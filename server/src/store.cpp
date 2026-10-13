@@ -99,6 +99,11 @@ void Store::checkpoints(std::string path) {
         return;
     }
     sqlite3_busy_timeout(db, 2000);
+    // **One read first** (2026-10-12): a connection that has read nothing has not opened the
+    // journal, and sqlite3_wal_checkpoint_v2 on it answers OK and copies nothing -- a 150-bot
+    // run's journal grew to 2 GB in half an hour with characters.db at 4 KB, and only the close
+    // folded it back. Reading the schema opens the journal, and it stays open for the thread.
+    exec(db, "SELECT count(*) FROM sqlite_master");
     std::unique_lock<std::mutex> lock(mutex_);
     while (!wake_.wait_for(lock, kCheckpointEvery, [&] { return stopping_; })) {
         lock.unlock();

@@ -60,8 +60,10 @@ SquareRefusal Realm::squareRefusal(int square) const {
     if (squareDoorLeft() == 0) return SquareRefusal::NotYet;
     const Body& hero = mine();
     const int level = squareLevel(hero.level, hero.kin == Kin::MagicGladiator);
+    // The band's floor only, as Blood Castle's since 2026-10-04 (the user, 2026-10-13: "bots can use
+    // lower tire BC,DS they dont have to use higher tiers always"): WebZen's ceiling, TooHigh, is
+    // never said.
     if (level < kSquareBands[square - 1][0]) return SquareRefusal::TooLow;
-    if (kSquareBands[square - 1][1] != 0 && level > kSquareBands[square - 1][1]) return SquareRefusal::TooHigh;
     return SquareRefusal::None;
 }
 
