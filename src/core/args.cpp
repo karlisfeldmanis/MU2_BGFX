@@ -9,6 +9,7 @@
 #include <filesystem>
 
 #include "core/log.h"
+#include "core/paths.h"
 
 namespace mu::core {
 namespace {
@@ -56,7 +57,7 @@ void readOptions(Args& a) {
 }  // namespace
 
 std::string userFolder() {
-    const std::string folder = std::string(MU2_ROOT_DIR) + "/saves";
+    const std::string folder = folders().user;
     std::error_code error;
     std::filesystem::create_directories(folder, error);
     return folder;

@@ -14,6 +14,7 @@
 
 #include "core/json.h"
 #include "core/log.h"
+#include "core/paths.h"
 
 extern char** environ;
 
@@ -122,7 +123,7 @@ Cooker::~Cooker() { close(); }
 
 void Cooker::open(const std::string& root) {
     root_ = root;
-    socket_ = root + "/workshop/.mu/serve.sock";
+    socket_ = core::folders().work + "/.mu/serve.sock";
 }
 
 void Cooker::close() {
@@ -241,9 +242,10 @@ bool Cooker::startServer() {
         return false;
     }
     const std::string mu = root_ + "/mu";
-    const std::string log = root_ + "/workshop/logs/mu/serve.log";
-    ::mkdir((root_ + "/workshop/logs").c_str(), 0755);
-    ::mkdir((root_ + "/workshop/logs/mu").c_str(), 0755);
+    const std::string logs = core::folders().work + "/logs";
+    const std::string log = logs + "/mu/serve.log";
+    ::mkdir(logs.c_str(), 0755);
+    ::mkdir((logs + "/mu").c_str(), 0755);
     posix_spawn_file_actions_t files;
     posix_spawn_file_actions_init(&files);
     posix_spawn_file_actions_addopen(&files, 0, "/dev/null", O_RDONLY, 0);

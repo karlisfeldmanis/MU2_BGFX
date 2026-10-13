@@ -2,7 +2,7 @@
 // a force-quit writes no macOS report, and mu2.log is renamed away by the next run, so a
 // review run started while the game was up took the player's log with it.
 //
-// watchStart puts a report in <root>/crashes/ for each:
+// watchStart puts a report in `dir` (core::folders().crashes) for each:
 //   crash-<when>.txt  a fatal signal (a bad pointer, an abort, an uncaught throw): the signal,
 //                     the address, the crashing thread's stack and the last 64 KB of the log.
 //                     The signal is then raised again, so macOS still writes its own .ips.
@@ -16,7 +16,7 @@
 namespace mu::core {
 
 // Starts watching, from the main thread: the signal handlers now, the hang watch at the first watchBeat.
-void watchStart(const char* root);
+void watchStart(const char* dir);
 // A frame was finished. Called once per frame from the main loop.
 void watchBeat();
 // Before a wait that is known and long -- a world loading on a handoff -- until the next beat.

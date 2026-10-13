@@ -26,12 +26,12 @@ namespace mu::app {
 // Where the build put things, and where this run was told to put its own. The first four are
 // the compile definitions in CMakeLists.txt; the last two are what the arguments made of them.
 struct Paths {
-    std::string assets;   // MU2_ASSET_DIR -- the cook's output
-    std::string shaders;  // MU2_SHADER_DIR -- the compiled metal binaries
-    std::string sheets;   // MU2_SHEET_DIR -- lighting.json and time/
-    std::string root;     // MU2_ROOT_DIR
-    std::string shots;    // --shot-path, or root/shots; made rather than assumed
-    std::string log;      // --log, or root/mu2.log
+    std::string assets;   // core::folders().assets -- the cook's output
+    std::string shaders;  // core::folders().shaders, or $MU2_SHADER_DIR -- the metal binaries
+    std::string sheets;   // core::folders().sheets -- lighting.json and time/
+    std::string root;     // core::folders().root
+    std::string shots;    // --shot-path, or core::folders().shots; made rather than assumed
+    std::string log;      // --log, or core::folders().log
     std::string sheet;    // --sheet, or sheets/lighting.json
 
     std::string under(const std::string& dir, const std::string& name) const {

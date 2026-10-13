@@ -99,7 +99,10 @@ private:
     int spreadTexels_ = 0;
 };
 
-// Where the face is on disk: extern/, fetched and pinned by bootstrap.sh.
+// A face file's whole path, in core::folders().fonts: fetched and pinned by bootstrap.sh. Made
+// once a file and kept, so the pointer stays good.
+const char* fontPath(const char* file);
+// Where the face is on disk.
 const char* facePath();
 // The arrival's title face, Cinzel Medium, from the same place.
 const char* titleFacePath();

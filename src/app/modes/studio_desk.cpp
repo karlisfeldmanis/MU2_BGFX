@@ -16,9 +16,11 @@
 #include "app/context.h"
 #include "core/json.h"
 #include "core/log.h"
+#include "core/paths.h"
 #include "game/bench.h"
 #include "game/figures.h"
 #include "game/world/world.h"
+#include "gfx/face.h"
 #include "imgui.h"
 
 extern "C" char** environ;
@@ -27,7 +29,7 @@ namespace mu::app {
 
 bool StudioDesk::open(Context& ctx) {
     // Open Sans, the face the game's warnings are set in; ImGui's own if it is not there.
-    if (!gui_.open(ctx.window, ctx.paths.root + "/extern/OpenSans-SemiBold.ttf", 15.0f)) {
+    if (!gui_.open(ctx.window, gfx::facePath(), 15.0f)) {
         core::logError("studio: the panels did not open; the bench runs without them");
         return false;
     }
@@ -97,7 +99,7 @@ void StudioDesk::watchJournal(Context& ctx, game::World& town, double now) {
     // as it is made (the user, 2026-10-12: "we see realtime how objects are made and improved").
     if (now - journalLooked_ < 0.5) return;
     journalLooked_ = now;
-    const std::string path = shelfRoot_ + "/workshop/.mu/journal.log";
+    const std::string path = core::folders().work + "/.mu/journal.log";
     std::error_code error;
     const long long size = (long long)std::filesystem::file_size(path, error);
     if (error) return;
@@ -191,7 +193,7 @@ void StudioDesk::startSwap(game::ModelBench& bench, const std::string& name) {
         for (char& c : safe) {
             if (!std::isalnum(static_cast<unsigned char>(c))) c = '_';
         }
-        swapDir_ = shelfRoot_ + "/shots/studio/swaps/" + safe + "_" + when;
+        swapDir_ = core::folders().shots + "/studio/swaps/" + safe + "_" + when;
         std::error_code ignored;
         std::filesystem::create_directories(swapDir_, ignored);
         swap_ = Swap::Before;

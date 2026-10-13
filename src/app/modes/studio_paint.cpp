@@ -7,6 +7,7 @@
 #include "app/context.h"
 #include "app/modes/studio_place.h"
 #include "core/json.h"
+#include "core/paths.h"
 #include "game/world/world.h"
 #include "imgui.h"
 #include "studio/cooker.h"
@@ -36,7 +37,7 @@ void StudioPaint::world(Context& ctx, const std::string& name) {
     strokes_.clear();
     said_.clear();
     slotNames_.clear();
-    const core::Json doc = core::parseJsonFile(ctx.paths.root + "/source/world/" + name + "/" + name + ".json");
+    const core::Json doc = core::parseJsonFile(core::folders().content + "/world/" + name + "/" + name + ".json");
     for (const auto& [key, value] : doc["tile_slots"].members) {
         const int slot = std::atoi(key.c_str());
         if (slot < 0 || slot > 255) continue;

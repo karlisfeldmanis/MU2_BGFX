@@ -7,6 +7,7 @@
 
 #include "app/context.h"
 #include "app/modes/studio_place.h"
+#include "core/paths.h"
 #include "game/world/world.h"
 #include "imgui.h"
 #include "studio/cooker.h"
@@ -53,7 +54,7 @@ void StudioMarks::world(Context& ctx, const std::string& name) {
     load(ctx);
     worlds_.clear();
     std::error_code error;
-    for (const auto& dir : std::filesystem::directory_iterator(ctx.paths.root + "/source/world", error)) {
+    for (const auto& dir : std::filesystem::directory_iterator(core::folders().content + "/world", error)) {
         const std::string other = dir.path().filename().string();
         const core::Json doc = core::parseJsonFile(dir.path().string() + "/world.json");
         if (other != name && !doc["rules"]["arrive"].isNull()) worlds_.push_back(other);

@@ -10,6 +10,7 @@
 #include "content/tables.h"
 #include "core/files.h"
 #include "core/log.h"
+#include "core/paths.h"
 #include "game/play_tuning.h"
 #include "game/world/maps.h"
 #include "sim/audit.h"
@@ -383,7 +384,7 @@ int runHeadless(const core::Args& args, const char* assetDir) {
     }
 
     const std::string logPath = args.simLog.empty()
-                                    ? std::string(MU2_ROOT_DIR) + "/build/hunt.log"
+                                    ? core::folders().run + "/hunt.log"
                                     : args.simLog;
     FILE* handle = std::fopen(logPath.c_str(), "wb");
     if (!handle) {

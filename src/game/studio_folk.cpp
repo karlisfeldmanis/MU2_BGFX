@@ -8,6 +8,7 @@
 #include "content/ground.h"
 #include "core/json.h"
 #include "core/log.h"
+#include "core/paths.h"
 #include "game/figures.h"
 #include "sim/realm.h"
 
@@ -29,7 +30,7 @@ void StudioFolk::follow(const std::string& root, const std::string& world, const
     }
     if (world == world_ && stamp_ != -1 && seconds - lookedAt_ < 0.5) return;
     lookedAt_ = seconds;
-    const std::string path = root + "/source/world/" + world + "/world.json";
+    const std::string path = core::folders().content + "/world/" + world + "/world.json";
     std::error_code error;
     const auto when = std::filesystem::last_write_time(path, error);
     const long long stamp = error ? 0 : (long long)when.time_since_epoch().count();

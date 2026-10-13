@@ -213,8 +213,8 @@ void watch() {
 
 }  // namespace
 
-void watchStart(const char* root) {
-    g_dir = std::string(root) + "/crashes";
+void watchStart(const char* dir) {
+    g_dir = dir;
     ::mkdir(g_dir.c_str(), 0755);
     std::snprintf(g_crashPath, sizeof(g_crashPath), "%s/crash-%s.txt", g_dir.c_str(),
                   stamp().c_str());

@@ -19,6 +19,7 @@
 #include "app/sweep.h"
 #include "content/showing.h"
 #include "core/log.h"
+#include "core/paths.h"
 #include "core/watch.h"
 #include "game/headless.h"
 #include "game/world/world_show.h"
@@ -130,17 +131,18 @@ void Application::teardown() {
 int Application::run(int argc, char** argv) {
     args_ = core::parseArgs(argc, argv);
 
-    paths_.assets = MU2_ASSET_DIR;
+    const core::Folders& folders = core::folders();
+    paths_.assets = folders.assets;
     // Every world's manifest is read from there on first asking (game/world/world_show.h).
     game::openWorldShows(paths_.assets);
-    paths_.shaders = MU2_SHADER_DIR;
+    paths_.shaders = folders.shaders;
     // A copy of another build's shaders, for an A/B of two binaries in one afternoon: the
     // directory is compiled in, so a baseline binary would otherwise read the new shaders.
     if (const char* dir = std::getenv("MU2_SHADER_DIR")) paths_.shaders = dir;
-    paths_.sheets = MU2_SHEET_DIR;
-    paths_.root = MU2_ROOT_DIR;
-    paths_.log = args_.logPath.empty() ? paths_.under(paths_.root, "mu2.log") : args_.logPath;
-    paths_.shots = args_.shotPath.empty() ? paths_.under(paths_.root, "shots") : args_.shotPath;
+    paths_.sheets = folders.sheets;
+    paths_.root = folders.root;
+    paths_.log = args_.logPath.empty() ? folders.log : args_.logPath;
+    paths_.shots = args_.shotPath.empty() ? folders.shots : args_.shotPath;
     paths_.sheet =
         args_.sheet.empty() ? paths_.under(paths_.sheets, "lighting.json") : args_.sheet;
 
@@ -164,7 +166,7 @@ int Application::run(int argc, char** argv) {
     if (args_.shotEvery) ::mkdir(paths_.shots.c_str(), 0755);
 
     // A crash or a freeze leaves a report in crashes/ (core/watch.h).
-    core::watchStart(paths_.root.c_str());
+    core::watchStart(folders.crashes.c_str());
 
     if (!boot()) {
         core::logClose();

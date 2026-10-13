@@ -11,6 +11,7 @@
 
 #include "core/files.h"
 #include "core/log.h"
+#include "core/paths.h"
 
 namespace mu::gfx {
 namespace {
@@ -21,20 +22,20 @@ namespace {
 // Read from extern/ at run time rather than compiled in. It is 150 kB, it is the one asset gfx
 // reads that is not the game's own, and a header holding it as a byte array is a header nobody
 // can read. The cost is that it can be missing, and every owner has a fallback for that.
-constexpr const char* kFacePath = MU2_ROOT_DIR "/extern/OpenSans-SemiBold.ttf";
+constexpr const char* kFace = "OpenSans-SemiBold.ttf";
 // The arrival's map name: Cinzel Medium, Google Fonts' static instance, which is what the
 // design page the user chose on 2026-09-22 was drawn in. bootstrap.sh fetches it.
-constexpr const char* kTitleFacePath = MU2_ROOT_DIR "/extern/Cinzel-Medium.ttf";
+constexpr const char* kTitleFace = "Cinzel-Medium.ttf";
 // The damage figures: Philosopher Bold, the user's pick on 2026-10-02 off a page of fourteen
 // faces drawn over a Lorencia fight, at that page's smallest sizes. Cinzel Bold had them from
 // 2026-09-23; what survives of the B2 page is still the ramp, the flatness, and no event for a
 // critical.
-constexpr const char* kFigureFacePath = MU2_ROOT_DIR "/extern/Philosopher-Bold.ttf";
+constexpr const char* kFigureFace = "Philosopher-Bold.ttf";
 // The death, and the halo the gain lane borrows: still Cinzel Bold, the map name's voice.
-constexpr const char* kDeathFacePath = MU2_ROOT_DIR "/extern/Cinzel-Bold.ttf";
+constexpr const char* kDeathFace = "Cinzel-Bold.ttf";
 // The gain lane and the death, in the map name's own Medium: quieter than the fight by a whole
 // weight, and the same face the player already reads a town's name in.
-constexpr const char* kQuietFacePath = MU2_ROOT_DIR "/extern/Cinzel-Medium.ttf";
+constexpr const char* kQuietFace = "Cinzel-Medium.ttf";
 
 // The rows at the bottom kept out of the packing, for the solid texel a panel draws with. A
 // whole band rather than one texel because the face is sampled bilinear, and a solid texel
@@ -67,11 +68,21 @@ void remember(const std::string& key, const Face& face) {
 
 }  // namespace
 
-const char* facePath() { return kFacePath; }
-const char* titleFacePath() { return kTitleFacePath; }
-const char* figureFacePath() { return kFigureFacePath; }
-const char* deathFacePath() { return kDeathFacePath; }
-const char* quietFacePath() { return kQuietFacePath; }
+// A face's whole path, in core::folders().fonts.
+const char* fontPath(const char* file) {
+    static std::mutex lock;
+    static std::map<std::string, std::string> paths;
+    std::lock_guard<std::mutex> hold(lock);
+    std::string& path = paths[file];
+    if (path.empty()) path = core::folders().fonts + "/" + file;
+    return path.c_str();
+}
+
+const char* facePath() { return fontPath(kFace); }
+const char* titleFacePath() { return fontPath(kTitleFace); }
+const char* figureFacePath() { return fontPath(kFigureFace); }
+const char* deathFacePath() { return fontPath(kDeathFace); }
+const char* quietFacePath() { return fontPath(kQuietFace); }
 
 bool Face::bake(const std::string& path, float pixels, int size, int padding, int oversample,
                 int margin) {

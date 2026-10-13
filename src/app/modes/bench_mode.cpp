@@ -7,6 +7,7 @@
 #include "content/tables.h"
 #include "core/loading.h"
 #include "core/log.h"
+#include "core/paths.h"
 #include "game/world/maps.h"
 #include "game/shine.h"
 #include "game/wings.h"
@@ -276,7 +277,7 @@ void BenchMode::steerArena(Context& ctx) {
             column = int(std::floor(studioStand_[0] / m));
             row = int(std::floor(-studioStand_[2] / m));
         }
-        arena_.open(ctx, breed, world, column, row, ctx.paths.root + "/workshop/logs/mu/arena.log");
+        arena_.open(ctx, breed, world, column, row, core::folders().work + "/logs/mu/arena.log");
     }
     desk_.arenaIs(arena_.up());
 }

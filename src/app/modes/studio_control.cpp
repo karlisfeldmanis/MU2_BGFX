@@ -34,6 +34,7 @@
 #include "app/context.h"
 #include "app/modes/studio_desk.h"
 #include "core/log.h"
+#include "core/paths.h"
 #include "game/bench.h"
 #include "game/figures.h"
 #include "game/world/world.h"
@@ -201,7 +202,7 @@ std::string StudioDesk::act(Context& ctx, game::ModelBench& bench, const std::st
 }
 
 void StudioDesk::openControl(Context& ctx) {
-    controlPath_ = ctx.paths.root + "/workshop/.mu/studio.sock";
+    controlPath_ = core::folders().work + "/.mu/studio.sock";
     ::unlink(controlPath_.c_str());   // one studio at a time listens; the last one opened wins
     listener_ = ::socket(AF_UNIX, SOCK_STREAM, 0);
     sockaddr_un address{};

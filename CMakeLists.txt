@@ -101,11 +101,23 @@ endif()  # NOT MU2_SERVER_ONLY: bgfx, glfw, shaders
 # That is what the server needs -- core + content_data + sim, and no window (sprint 16, step 1,
 # and docs/server-plan.md phase 4). Each source is listed once, here; the tools link libraries.
 set(MU_WARNINGS -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers)
+# Every top-level folder, named once here (docs/layout.md) and read back through core::folders().
+# Moving one is a change to this block and nothing in src/.
+set(MU_ROOT ${CMAKE_SOURCE_DIR})
+set(MU_ASSETS ${MU_ROOT}/assets)
 set(MU_DIRS
   MU2_SHADER_DIR="${SHADER_OUT}/metal"
-  MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets"
-  MU2_SHEET_DIR="${CMAKE_SOURCE_DIR}/sheets"
-  MU2_ROOT_DIR="${CMAKE_SOURCE_DIR}"
+  MU2_ASSET_DIR="${MU_ASSETS}"
+  MU2_SHEET_DIR="${MU_ROOT}/sheets"
+  MU2_ROOT_DIR="${MU_ROOT}"
+  MU2_FONT_DIR="${MU_ROOT}/extern"
+  MU2_CONTENT_DIR="${MU_ROOT}/source"
+  MU2_WORK_DIR="${MU_ROOT}/workshop"
+  MU2_USER_DIR="${MU_ROOT}/saves"
+  MU2_SHOT_DIR="${MU_ROOT}/shots"
+  MU2_CRASH_DIR="${MU_ROOT}/crashes"
+  MU2_LOG_FILE="${MU_ROOT}/mu2.log"
+  MU2_RUN_DIR="${MU_ROOT}/build"
 )
 
 # Logging, arguments, json, files. Depends on nothing.
@@ -116,9 +128,10 @@ add_library(mu_core STATIC
   src/core/args.cpp
   src/core/files.cpp
   src/core/json.cpp
+  src/core/paths.cpp
 )
 target_include_directories(mu_core PUBLIC src)
-target_compile_definitions(mu_core PRIVATE MU2_ROOT_DIR="${CMAKE_SOURCE_DIR}")
+target_compile_definitions(mu_core PRIVATE ${MU_DIRS})
 target_compile_options(mu_core PRIVATE ${MU_WARNINGS})
 
 # What the cook wrote, read back, with no GPU in it: the tables, the grids, the cooked meshes'
@@ -217,7 +230,7 @@ add_executable(mu2_server
 )
 target_include_directories(mu2_server PRIVATE src)
 target_link_libraries(mu2_server PRIVATE mu_net ${MU_SQLITE})
-target_compile_definitions(mu2_server PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
+target_compile_definitions(mu2_server PRIVATE MU2_ASSET_DIR="${MU_ASSETS}")
 target_compile_options(mu2_server PRIVATE ${MU_WARNINGS})
 
 # The server's own checks, with no socket: the store, the account's rules, the chat's allowance,
@@ -237,7 +250,7 @@ add_executable(server_test EXCLUDE_FROM_ALL
 )
 target_include_directories(server_test PRIVATE src server/src)
 target_link_libraries(server_test PRIVATE mu_net ${MU_SQLITE})
-target_compile_definitions(server_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
+target_compile_definitions(server_test PRIVATE MU2_ASSET_DIR="${MU_ASSETS}")
 target_compile_options(server_test PRIVATE ${MU_WARNINGS})
 
 if(NOT MU2_SERVER_ONLY)
@@ -573,7 +586,7 @@ add_executable(cooked_test EXCLUDE_FROM_ALL
 )
 target_link_libraries(cooked_test PRIVATE mu_content_data)
 target_include_directories(cooked_test PRIVATE src)
-target_compile_definitions(cooked_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
+target_compile_definitions(cooked_test PRIVATE MU2_ASSET_DIR="${MU_ASSETS}")
 target_compile_options(cooked_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
 if(NOT MU2_SERVER_ONLY)
@@ -588,7 +601,7 @@ add_executable(cooker_test EXCLUDE_FROM_ALL
   src/studio/light_panel.cpp
 )
 target_link_libraries(cooker_test PRIVATE mu_imgui mu_core)
-target_compile_definitions(cooker_test PRIVATE MU2_ROOT_DIR="${CMAKE_SOURCE_DIR}")
+target_compile_definitions(cooker_test PRIVATE MU2_ROOT_DIR="${MU_ROOT}")
 target_compile_options(cooker_test PRIVATE ${MU_WARNINGS})
 
 # The birds, whose every rule is arithmetic and whose every rule is nearly impossible to review
@@ -612,7 +625,7 @@ add_executable(sound_test EXCLUDE_FROM_ALL
 )
 target_link_libraries(sound_test PRIVATE mu_content_data)
 target_include_directories(sound_test PRIVATE src extern)
-target_compile_definitions(sound_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
+target_compile_definitions(sound_test PRIVATE MU2_ASSET_DIR="${MU_ASSETS}")
 target_compile_options(sound_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 if(APPLE)
   target_link_libraries(sound_test PRIVATE "-framework CoreAudio" "-framework AudioToolbox"
@@ -639,7 +652,7 @@ add_executable(sim_test EXCLUDE_FROM_ALL
 )
 target_link_libraries(sim_test PRIVATE mu_net mu_sim)
 target_include_directories(sim_test PRIVATE src)
-target_compile_definitions(sim_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
+target_compile_definitions(sim_test PRIVATE MU2_ASSET_DIR="${MU_ASSETS}")
 target_compile_options(sim_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
 # Sprint 16, step 3: a save names quests, travel rows and skills by what they are, not where
@@ -651,7 +664,7 @@ add_executable(save_test EXCLUDE_FROM_ALL
   src/game/save.cpp
 )
 target_link_libraries(save_test PRIVATE mu_sim)
-target_compile_definitions(save_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets"
+target_compile_definitions(save_test PRIVATE MU2_ASSET_DIR="${MU_ASSETS}"
                                              MU2_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_compile_options(save_test PRIVATE ${MU_WARNINGS})
 
@@ -662,7 +675,7 @@ add_executable(bot EXCLUDE_FROM_ALL
 )
 target_link_libraries(bot PRIVATE mu_sim)
 target_include_directories(bot PRIVATE src)
-target_compile_definitions(bot PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
+target_compile_definitions(bot PRIVATE MU2_ASSET_DIR="${MU_ASSETS}")
 target_compile_options(bot PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
 # The net bot: Lorencia characters played on the server as a client plays them -- a mirror of
@@ -675,7 +688,7 @@ add_executable(netbot EXCLUDE_FROM_ALL
 )
 target_link_libraries(netbot PRIVATE mu_client)
 target_include_directories(netbot PRIVATE src)
-target_compile_definitions(netbot PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
+target_compile_definitions(netbot PRIVATE MU2_ASSET_DIR="${MU_ASSETS}")
 target_compile_options(netbot PRIVATE -Wall -Wextra -Wno-unused-parameter)
 endif()
 
@@ -699,7 +712,7 @@ add_executable(raid EXCLUDE_FROM_ALL
 )
 target_link_libraries(raid PRIVATE mu_sim)
 target_include_directories(raid PRIVATE src)
-target_compile_definitions(raid PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets"
+target_compile_definitions(raid PRIVATE MU2_ASSET_DIR="${MU_ASSETS}"
                                         MU2_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_compile_options(raid PRIVATE -Wall -Wextra -Wno-unused-parameter)
 

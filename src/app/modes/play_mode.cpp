@@ -17,6 +17,7 @@
 #include "core/files.h"
 #include "core/loading.h"
 #include "core/log.h"
+#include "core/paths.h"
 #include "game/roster.h"
 #include "game/shine.h"
 #include "game/wings.h"
@@ -139,7 +140,7 @@ void PlayMode::readSave(Context& ctx) {
     // the realm (sim::Realm::setRaid) -- whatever a save said (docs/golden-dragon-raid.md).
     if (args.raid > 0) {
         resumed_ = false;
-        const std::string party = ctx.paths.assets + "/../source/raid/party.json";
+        const std::string party = core::folders().content + "/raid/party.json";
         if (sim::readParty(party, &raidParty()) && !raidParty().empty()) {
             args.kin = int(raidParty()[0].kin);
             args.level = raidParty()[0].level;
@@ -338,7 +339,7 @@ bool PlayMode::open(Context& ctx) {
             world_.played().setSyncGear(args.syncGear);
             if (args.benchPlayers > 0) {
                 std::vector<sim::RaiderKit> kits;
-                const std::string party = ctx.paths.assets + "/../source/raid/party.json";
+                const std::string party = core::folders().content + "/raid/party.json";
                 if (!sim::readParty(party, &kits)) core::logError("--bench-players: %s did not read", party.c_str());
                 world_.played().setBench(args.benchPlayers, std::move(kits), args.benchFight);
             }
