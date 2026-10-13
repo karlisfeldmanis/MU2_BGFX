@@ -26,6 +26,7 @@
     ./mu do "<line>; <line>; ..."            drive an open studio: subject, scene, shot, wait, status...
     ./mu serve                               the cook's job runner; `mu make` hands it its jobs
     ./mu jobs [--watch [N]] | cancel N [--now] what it is cooking, with bars and time left
+    ./mu dist macos                          the player's app, dist/macos/MU2.app, from packs
 
 Every command takes --json and then prints one JSON object as its last line, for a script or
 an agent to read instead of the prose. Every step runs niced and held to `mu cores` (60% of
@@ -40,6 +41,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import check  # noqa: E402
+import dist  # noqa: E402
 import jobs  # noqa: E402
 import look  # noqa: E402
 import make  # noqa: E402
@@ -119,6 +121,8 @@ def main():
     n.add_argument("--prefix", help="the sheet prefix; read off the world's recipes by default")
 
     sub.add_parser("check", parents=[common])
+    d = sub.add_parser("dist", parents=[common])
+    d.add_argument("target", choices=["macos"], help="the platform; macos so far")
 
     k = sub.add_parser("cores", parents=[common])
     k.add_argument("count", nargs="?", type=int)
@@ -259,6 +263,8 @@ def dispatch(args, say):
         return new_figure.new_item(args.target, args.db, say)
     if args.command == "check":
         return check.run(say)
+    if args.command == "dist":
+        return dist.dist(args.target, say)
     if args.command == "where":
         return look.where(args.name, say, args.docs)
     if args.command == "shot":

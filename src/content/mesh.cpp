@@ -1,17 +1,38 @@
 #include "content/mesh.h"
 
+// Its declarations first, so the implementation below is the one cgltf.h included with it.
+#include "content/gltf_files.h"
 #define CGLTF_IMPLEMENTATION
 #include <cgltf.h>
 
 #include <bx/math.h>
 
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 
 #include "core/files.h"
 #include "core/log.h"
 
 namespace mu::content {
+
+cgltf_options gltfOptions() {
+    cgltf_options options = {};
+    options.file.read = [](const cgltf_memory_options*, const cgltf_file_options*, const char* path,
+                           cgltf_size* size, void** data) {
+        const std::vector<uint8_t> bytes = core::readFile(path);
+        if (bytes.empty()) return cgltf_result_file_not_found;
+        void* copy = std::malloc(bytes.size());
+        if (copy == nullptr) return cgltf_result_out_of_memory;
+        std::memcpy(copy, bytes.data(), bytes.size());
+        *size = bytes.size();
+        *data = copy;
+        return cgltf_result_success;
+    };
+    options.file.release = [](const cgltf_memory_options*, const cgltf_file_options*, void* data,
+                              cgltf_size) { std::free(data); };
+    return options;
+}
 namespace {
 
 bgfx::VertexLayout g_layout;
@@ -103,7 +124,7 @@ bool Mesh::load(const std::string& path, Textures& textures) {
     name_ = baseName(path);
     const std::string dir = core::directoryOf(path);
 
-    cgltf_options options = {};
+    cgltf_options options = gltfOptions();
     cgltf_data* data = nullptr;
     if (cgltf_parse_file(&options, path.c_str(), &data) != cgltf_result_success) {
         core::logError("%s is not a glTF cgltf can read", path.c_str());

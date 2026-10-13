@@ -2,7 +2,6 @@
 
 #include <chrono>
 
-#include <filesystem>
 
 #include <bx/timer.h>
 
@@ -1456,11 +1455,9 @@ bool Figures::borrow(const std::string& name) {
     if (bodies_.count(name) != 0) return true;
     if (textures_ == nullptr) return false;
     const std::string dir = core::join(assetDir_, "cooked/figures");
-    std::error_code error;
-    for (const auto& file : std::filesystem::directory_iterator(dir, error)) {
-        const std::string leaf = file.path().filename().string();
-        if (leaf.rfind("figures", 0) != 0 || file.path().extension() != ".json") continue;
-        core::Json manifest = core::parseJsonFile(file.path().string());
+    for (const std::string& leaf : core::listFiles(dir)) {  // the packs' as well as the disk's
+        if (leaf.rfind("figures", 0) != 0 || !leaf.ends_with(".json")) continue;
+        core::Json manifest = core::parseJsonFile(core::join(dir, leaf));
         if (manifest.isNull()) continue;
         for (const core::Json& entry : manifest["monsters"].items) {
             if (entry["name"].string != name) continue;

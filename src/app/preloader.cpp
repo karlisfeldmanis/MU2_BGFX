@@ -20,6 +20,7 @@
 #include "core/loading.h"
 #include "core/log.h"
 #include "core/files.h"
+#include "game/sound.h"
 #include "gfx/views.h"
 
 namespace mu::app {
@@ -98,7 +99,10 @@ struct Ambient {
             ma_decoder_config_init(ma_format_f32, kChannels, ma_engine_get_sample_rate(&engine));
         ma_uint64 count = 0;
         void* decoded = nullptr;
-        if (ma_decode_file(path.c_str(), &config, &count, &decoded) != MA_SUCCESS) return false;
+        if (ma_decode_from_vfs(game::packSoundFiles(), path.c_str(), &config, &count, &decoded) !=
+            MA_SUCCESS) {
+            return false;
+        }
         frames = static_cast<float*>(decoded);
         const ma_uint64 seam = std::min<ma_uint64>(
             ma_uint64(kSeamSeconds * float(config.sampleRate)), count / 4);
@@ -123,6 +127,7 @@ struct Ambient {
             tried = true;
             if (!core::fileExists(path)) return;
             ma_engine_config config = ma_engine_config_init();
+            config.pResourceManagerVFS = game::packSoundFiles();
             if (ma_engine_init(&config, &engine) != MA_SUCCESS) return;
             if (!openLoop(path) ||
                 ma_sound_init_from_data_source(&engine, &loop, MA_SOUND_FLAG_NO_SPATIALIZATION,

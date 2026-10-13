@@ -836,13 +836,12 @@ Args parseArgs(int argc, char** argv) {
     if (!a.arena.empty()) {
         a.play = true;
         if (a.world.empty()) a.world = "lorencia";
-        // The arena hero's level. 80, which is an invention: no MU number says what an arena
-        // hero should be, and what this one has to be is a hero who is still standing when the
-        // breed falls. Lorencia's worst is the Skeleton Warrior at 525 health and 66 a blow,
-        // and at 80 -- with the points spent, which Play::open does for an arena and for
-        // nothing else -- the knight has about five times that blow in health and takes the
-        // skeleton down in single figures. `--level` takes it back, and the points move with
-        // it.
+        // The arena hero's level. 80, which is an invention: no MU number says what an arena hero
+        // should be, and what this one has to be is a hero who is still standing when the breed
+        // falls. Lorencia's worst is the Skeleton Warrior at 525 health and 66 a blow, and at 80 --
+        // with the points spent, which Play::open does for an arena and for nothing else -- the
+        // knight has about five times that blow in health and takes the skeleton down in single
+        // figures. `--level` takes it back, and the points move with it.
         constexpr int kArenaLevel = 80;
         if (!a.levelAsked) a.level = kArenaLevel;
         // And something in his hand, because a swing is what is being photographed and a bare

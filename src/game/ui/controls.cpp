@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "core/log.h"
-#include "core/paths.h"
 #include "game/ui/panel.h"
 #include "game/ui/style.h"
 #include "game/ui/tip.h"
@@ -19,10 +18,10 @@ using gfx::Box;
 
 // ---- the faces -------------------------------------------------------------------------------
 
-const char* const kWordFace = "AlegreyaSansSC-Bold.ttf";
-const char* const kLabelFace = "AlegreyaSans-Medium.ttf";
+const char* const kWordFacePath = gfx::fontPath("AlegreyaSansSC-Bold.ttf");
+const char* const kLabelFacePath = gfx::fontPath("AlegreyaSans-Medium.ttf");
 // WoW's UNIT_NAME_FONT, Fonts\\FRIZQT__.TTF: Friz Quadrata, the names over the players' heads.
-const char* const kNameFace = "FrizQuadrata-Regular.ttf";
+const char* const kNameFacePath = gfx::fontPath("FrizQuadrata-Regular.ttf");
 // Baked once, larger than any control draws them, and minified through the mips: a word is 13
 // to 18 units, which is 22 to 30 pixels on this Mac's 1800-line backbuffer.
 constexpr float kBake = 48.0f;
@@ -466,9 +465,6 @@ bool s_opened = false;
 bool open() {
     if (s_opens++ > 0) return s_opened;
     bool ok = true;
-    const char* kWordFacePath = gfx::fontPath(kWordFace);
-    const char* kLabelFacePath = gfx::fontPath(kLabelFace);
-    const char* kNameFacePath = gfx::fontPath(kNameFace);
     if (!bakeFace(s_word, s_wordTexture, kWordFacePath, "button words")) {
         core::logError("controls: the button face did not bake (%s); buttons keep the body face",
                        kWordFacePath);

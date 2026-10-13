@@ -9,7 +9,8 @@ namespace mu::core {
 // find its data beside the executable and write into the player's own user folder. Nothing else
 // in src/ names a top-level folder.
 struct Folders {
-    std::string root;     // the checkout
+    std::string root;     // the checkout; in the player's build, the bundle's Resources
+    std::string data;     // the player's build only: where its packs are (core/pack.h)
     std::string assets;   // the cook's output
     std::string sheets;   // lighting, the times of day, the lobby, the worlds' light
     std::string shaders;  // the compiled Metal binaries

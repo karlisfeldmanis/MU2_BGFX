@@ -13,12 +13,15 @@
 #include <string>
 #include <thread>
 
+#ifndef MU2_SHIP
 #include "app/modes/bench_mode.h"
+#endif
 #include "app/modes/lobby_mode.h"
 #include "app/modes/play_mode.h"
 #include "app/sweep.h"
 #include "content/showing.h"
 #include "core/log.h"
+#include "core/pack.h"
 #include "core/paths.h"
 #include "core/watch.h"
 #include "game/headless.h"
@@ -147,6 +150,13 @@ int Application::run(int argc, char** argv) {
         args_.sheet.empty() ? paths_.under(paths_.sheets, "lighting.json") : args_.sheet;
 
     core::logOpen(paths_.log.c_str());
+    // The player's build reads its data from the packs in the bundle (core/pack.h), and has
+    // nothing to play without them.
+    if (!folders.data.empty() && core::mountPacks(folders.data) == 0) {
+        core::logError("no packs in %s: the game's data is missing", folders.data.c_str());
+        core::logClose();
+        return 1;
+    }
     if (!args_.valid) {
         core::logf("nothing run");
         core::logClose();
@@ -180,9 +190,14 @@ int Application::run(int argc, char** argv) {
     // the camera belongs to whichever it is.
     // Or the character screen, which hands the run to a world when a character is picked.
     std::unique_ptr<Mode> mode;
+#ifdef MU2_SHIP
+    // The player's build is the game and nothing else: always the character screen.
+    mode = std::make_unique<LobbyMode>();
+#else
     if (args_.lobby) mode = std::make_unique<LobbyMode>();
     else if (!args_.world.empty()) mode = std::make_unique<PlayMode>();
     else mode = std::make_unique<BenchMode>();
+#endif
 
     if (!mode->open(ctx)) {
         teardown();

@@ -66,6 +66,11 @@
 
 namespace mu::game {
 
+// miniaudio's file system over the player's packs (core/pack.h), as an ma_vfs*, or null for
+// miniaudio's own when no pack is mounted. Every engine the game opens takes it as its
+// resource manager's: the Sound below, and the preloader's.
+void* packSoundFiles();
+
 class Sound {
 public:
     Sound();

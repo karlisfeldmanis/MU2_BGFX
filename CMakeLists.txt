@@ -4,6 +4,13 @@ project(mu2 LANGUAGES C CXX)
 # box): core, the content it reads, the sim and their tests, and no bgfx, glfw, shader or
 # Metal. `cmake -S . -B build-server -G Ninja -DMU2_SERVER_ONLY=ON`.
 option(MU2_SERVER_ONLY "build only what a server links: core, content data, sim, tests" OFF)
+# The player's build (docs/layout.md, "What a player is given"): the game and nothing else -- no
+# studio, bench or developer switch -- reading its data from the packs inside the bundle and
+# writing into the player's own folder. Configured in a folder of its own by `./mu dist`.
+option(MU2_SHIP "the player's build: lobby only, player switches only, data from packs" OFF)
+if(MU2_SHIP)
+  add_compile_definitions(MU2_SHIP)
+endif()
 if(APPLE AND NOT MU2_SERVER_ONLY)
   enable_language(OBJCXX)
 endif()
@@ -133,6 +140,22 @@ add_library(mu_core STATIC
 target_include_directories(mu_core PUBLIC src)
 target_compile_definitions(mu_core PRIVATE ${MU_DIRS})
 target_compile_options(mu_core PRIVATE ${MU_WARNINGS})
+
+# The player's packs (core/pack.h) and zstd under them. Apart from mu_core so that the server,
+# which never reads a pack, builds without zstd: core::readFile asks the packs through a hook
+# (core::setFileSource) that mounting them sets. The game links this; so does the packer.
+if(NOT MU2_SERVER_ONLY)
+  file(GLOB MU_ZSTD_SOURCES
+    ${CMAKE_SOURCE_DIR}/extern/zstd/lib/common/*.c
+    ${CMAKE_SOURCE_DIR}/extern/zstd/lib/compress/*.c
+    ${CMAKE_SOURCE_DIR}/extern/zstd/lib/decompress/*.c)
+  add_library(mu_zstd STATIC ${MU_ZSTD_SOURCES})
+  target_include_directories(mu_zstd PUBLIC ${CMAKE_SOURCE_DIR}/extern/zstd/lib)
+  target_compile_definitions(mu_zstd PRIVATE ZSTD_DISABLE_ASM)
+  add_library(mu_pack STATIC src/core/pack.cpp)
+  target_link_libraries(mu_pack PUBLIC mu_core mu_zstd)
+  target_compile_options(mu_pack PRIVATE ${MU_WARNINGS})
+endif()
 
 # What the cook wrote, read back, with no GPU in it: the tables, the grids, the cooked meshes'
 # bytes, the showing and the missiles. The half of content a server reads.
@@ -414,6 +437,7 @@ add_library(mu_game STATIC
   src/game/fx/firebreath.cpp
   src/game/fx/bolt.cpp
   src/game/sound.cpp
+  src/game/sound_files.cpp
   src/game/miniaudio.cpp
   src/game/ui/panel.cpp
   src/game/ui/sheet.cpp
@@ -460,7 +484,7 @@ add_library(mu_game STATIC
   src/game/fx/gleam.cpp
   src/game/ui/outline.cpp
 )
-target_link_libraries(mu_game PUBLIC mu_gfx mu_sim mu_net mu_client)
+target_link_libraries(mu_game PUBLIC mu_gfx mu_sim mu_net mu_client mu_pack)
 target_compile_definitions(mu_game PRIVATE ${MU_DIRS})
 target_compile_options(mu_game PRIVATE ${MU_WARNINGS})
 # miniaudio is one vendored header of tens of thousands of lines; its warnings are not ours.
@@ -509,15 +533,20 @@ add_executable(mu2
   src/app/sweep.cpp
   src/app/modes/play_mode.cpp
   src/app/modes/lobby_mode.cpp
-  src/app/modes/bench_mode.cpp
-  src/app/modes/studio_desk.cpp
-  src/app/modes/bench_scenes.cpp
-  src/app/modes/studio_place.cpp
-  src/app/modes/studio_marks.cpp
-  src/app/modes/studio_paint.cpp
-  src/app/modes/studio_arena.cpp
-  src/app/modes/studio_control.cpp
 )
+# The bench and the studio are a developer's, and not in the player's build.
+if(NOT MU2_SHIP)
+  target_sources(mu2 PRIVATE
+    src/app/modes/bench_mode.cpp
+    src/app/modes/studio_desk.cpp
+    src/app/modes/bench_scenes.cpp
+    src/app/modes/studio_place.cpp
+    src/app/modes/studio_marks.cpp
+    src/app/modes/studio_paint.cpp
+    src/app/modes/studio_arena.cpp
+    src/app/modes/studio_control.cpp)
+  target_link_libraries(mu2 PRIVATE mu_studio)
+endif()
 target_include_directories(mu2 PRIVATE src extern ${CMAKE_BINARY_DIR}/generated)
 # The game's version, MAJOR.MINOR.PATCH in VERSION (1.0.0 is the finished game; until then the
 # 0.x line), and the commit this build was made from: the loading screen's corner
@@ -532,7 +561,7 @@ add_custom_target(build_version
   VERBATIM)
 add_dependencies(mu2 build_version)
 # bimg_encode writes the screenshots.
-target_link_libraries(mu2 PRIVATE mu_game mu_studio bimg_encode)
+target_link_libraries(mu2 PRIVATE mu_game bimg_encode)
 target_compile_definitions(mu2 PRIVATE ${MU_DIRS})
 target_compile_options(mu2 PRIVATE ${MU_WARNINGS})
 if(APPLE)
@@ -564,6 +593,10 @@ add_dependencies(mu2 mu2_shaders)
 # rule this cook exists to keep -- a cutout's coverage held down the chain -- has to be
 # applied between the levels. See the header of tools/cook/texcook.cpp.
 add_executable(texcook EXCLUDE_FROM_ALL tools/cook/texcook.cpp)
+# The packer: the player's .mupak files from `./mu dist`'s lists (tools/pack/mupack.cpp).
+add_executable(mupack EXCLUDE_FROM_ALL tools/pack/mupack.cpp)
+target_link_libraries(mupack PRIVATE mu_pack)
+target_compile_options(mupack PRIVATE ${MU_WARNINGS})
 target_link_libraries(texcook PRIVATE bimg_decode bimg_encode bimg bx)
 target_compile_options(texcook PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
@@ -621,9 +654,10 @@ target_compile_options(boids_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 add_executable(sound_test EXCLUDE_FROM_ALL
   tests/sound_test.cpp
   src/game/sound.cpp
+  src/game/sound_files.cpp
   src/game/miniaudio.cpp
 )
-target_link_libraries(sound_test PRIVATE mu_content_data)
+target_link_libraries(sound_test PRIVATE mu_content_data mu_pack)
 target_include_directories(sound_test PRIVATE src extern)
 target_compile_definitions(sound_test PRIVATE MU2_ASSET_DIR="${MU_ASSETS}")
 target_compile_options(sound_test PRIVATE -Wall -Wextra -Wno-unused-parameter)

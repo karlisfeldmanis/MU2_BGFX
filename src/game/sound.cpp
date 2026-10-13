@@ -70,9 +70,8 @@ constexpr float kCutoffStep = 0.04f;
 constexpr int kVoicesTotal = 24;
 // What is near enough to the hero to outrank the crowd: the monsters on him.
 constexpr float kNear = 6.0f;
-// A play of an event on the same frame as another of it, within this, joins it: its level
-// rises as the square root of how many -- +3 dB a doubling, as uncorrelated sources sum --
-// up to four.
+// A play of an event on the same frame as another of it, within this, joins it: its level rises as
+// the square root of how many -- +3 dB a doubling, as uncorrelated sources sum -- up to four.
 constexpr float kMergeReach = 3.0f;
 constexpr int kMergeMost = 4;
 
@@ -468,6 +467,7 @@ bool Sound::open(const std::string& assetDir, const content::Showing& table, boo
     shutdown();
     ma_engine_config config = ma_engine_config_init();
     config.periodSizeInMilliseconds = kPeriodMs;
+    config.pResourceManagerVFS = packSoundFiles();
     if (offline) {
         config.noDevice = MA_TRUE;
         config.channels = 2;
@@ -595,10 +595,11 @@ int Sound::load(const std::string& name, bool placed, bool quietly) {
         ma_decoder_config decode = ma_decoder_config_init(ma_format_f32, 1, 0);
         ma_uint64 frames = 0;
         void* pcm = nullptr;
-        if (ma_decode_file(path.c_str(), &decode, &frames, &pcm) == MA_SUCCESS && pcm) {
+        if (ma_decode_from_vfs(packSoundFiles(), path.c_str(), &decode, &frames, &pcm) ==
+                MA_SUCCESS && pcm) {
             ma_decoder probe;
             ma_uint32 fileRate = 0;
-            if (ma_decoder_init_file(path.c_str(), nullptr, &probe) == MA_SUCCESS) {
+            if (ma_decoder_init_vfs(packSoundFiles(), path.c_str(), nullptr, &probe) == MA_SUCCESS) {
                 fileRate = probe.outputSampleRate;
                 ma_decoder_uninit(&probe);
             }
@@ -995,12 +996,11 @@ void Sound::playAt(int handle, float x, float y, float z, uint32_t following) {
     }
     // A free voice, the round-robin's own first. When both still sound, **MU's rule and not a
     // restart**: PlayBuffer calls Play() on the next channel's buffer without stopping it, and
-    // Play() on a buffer that is playing leaves it playing -- the new cry is swallowed and the
-    // one sounding is heard out. Restarting it instead is what made a pack of walking spiders
-    // stutter: at one in sixteen frames each, four of them ask for a cry every tenth of a
-    // second, and every one cut the last off a few milliseconds in. The hero's own sounds are
-    // the exception, ours: his swing is the one noise that must go with what his hands do, so
-    // it takes the older voice.
+    // Play() on a buffer that is playing leaves it playing -- the new cry is swallowed and the one
+    // sounding is heard out. Restarting it instead is what made a pack of walking spiders stutter:
+    // at one in sixteen frames each, four of them ask for a cry every tenth of a second, and every
+    // one cut the last off a few milliseconds in. The hero's own sounds are the exception, ours:
+    // his swing is the one noise that must go with what his hands do, so it takes the older voice.
     int voice = -1;
     for (int k = 0; k < kVoices && voice < 0; ++k) {
         const int v = (event.next + k) % kVoices;

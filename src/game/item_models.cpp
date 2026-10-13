@@ -1,6 +1,5 @@
 #include "game/item_models.h"
 
-#include <cstdio>
 #include <vector>
 
 #include "content/cooked.h"
@@ -89,10 +88,7 @@ const content::Mesh* ItemModels::read(const std::string& glb, const std::string&
     // core::readFile would log a missing file as an error for every one of them, which is a
     // run with errors in it and nothing wrong.
     std::vector<uint8_t> bytes;
-    if (std::FILE* file = std::fopen(cookedPath.c_str(), "rb")) {
-        std::fclose(file);
-        bytes = core::readFile(cookedPath);
-    }
+    if (core::fileExists(cookedPath)) bytes = core::readFile(cookedPath);
     content::CookedMesh cooked;
     std::string error;
     bool parsed = !bytes.empty() && content::parseCookedMesh(bytes, cooked, error);

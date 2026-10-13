@@ -38,6 +38,18 @@ done
 [ -f extern/stb_image.h ] || curl -sSL -o extern/stb_image.h https://raw.githubusercontent.com/nothings/stb/$STB_REV/stb_image.h
 [ -f extern/stb_truetype.h ] || curl -sSL -o extern/stb_truetype.h https://raw.githubusercontent.com/nothings/stb/$STB_REV/stb_truetype.h
 [ -f extern/miniaudio.h ] || curl -sSL -o extern/miniaudio.h https://raw.githubusercontent.com/mackron/miniaudio/$MINIAUDIO_REV/miniaudio.h
+# zstd 1.5.7, for the player's packs (docs/layout.md): the packer writes them and the game reads
+# them. Its lib/ only, built into the game by CMakeLists.txt, so a player's Mac needs no
+# Homebrew for it. The release tarball, pinned by the checksum zstd publishes beside it.
+ZSTD_URL=https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz
+ZSTD_SHA256=eb33e51f49a15e023950cd7825ca74a4a2b43db8354825ac24fc1b7ee09e6fa3
+if [ ! -f extern/zstd/lib/zstd.h ]; then
+  curl -sSL -o extern/zstd.tar.gz $ZSTD_URL
+  echo "$ZSTD_SHA256  extern/zstd.tar.gz" | shasum -a 256 -c - || { rm -f extern/zstd.tar.gz; exit 1; }
+  mkdir -p extern/zstd
+  tar -xzf extern/zstd.tar.gz -C extern/zstd --strip-components=1 zstd-1.5.7/lib zstd-1.5.7/LICENSE
+  rm -f extern/zstd.tar.gz
+fi
 # The overlay's typeface, and it is MU2's by inheritance rather than by choice of ours: MU2
 # sets no theme font in either of its Godot projects, so every label it draws is Godot's own
 # fallback, which is Open Sans SemiBold. Taking the same file here is what makes a viewer

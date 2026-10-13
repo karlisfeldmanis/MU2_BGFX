@@ -11,6 +11,7 @@
 #include <cmath>
 #include <cstring>
 
+#include "content/gltf_files.h"
 #include "core/files.h"
 #include "core/json.h"
 #include "core/log.h"
@@ -79,10 +80,9 @@ std::vector<uint8_t> buildFlow(int side, const std::vector<float>& wet,
         }
     }
 
-    // How far every corner of the region is from the nearest of some points, walked through
-    // the region: the guess the solve starts from, which on a river 250 tiles long is most
-    // of the answer. From a flat guess the east river had not settled in three thousand
-    // sweeps.
+    // How far every corner of the region is from the nearest of some points, walked through the
+    // region: the guess the solve starts from, which on a river 250 tiles long is most of the
+    // answer. From a flat guess the east river had not settled in three thousand sweeps.
     std::vector<uint8_t> fixed(cells, 0);
     std::vector<float> level(cells, 0.5f);
     auto walk = [&](const std::vector<std::array<int, 2>>& points, float value) {
@@ -886,7 +886,7 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     // unshared vertices, already in metres and already with rows running -z, cut into one
     // primitive per surface pair.
     const std::string meshPath = core::join(worldDir, worldName + "_ground.glb");
-    cgltf_options options = {};
+    cgltf_options options = gltfOptions();
     cgltf_data* data = nullptr;
     if (cgltf_parse_file(&options, meshPath.c_str(), &data) != cgltf_result_success) {
         core::logError("%s is not a glTF cgltf can read", meshPath.c_str());
