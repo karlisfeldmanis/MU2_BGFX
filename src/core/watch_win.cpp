@@ -45,6 +45,7 @@ std::thread g_watcher;
 std::mutex g_lock;
 std::condition_variable g_wake;
 bool g_stopping = false;
+std::atomic<bool> g_reported{false};
 
 int64_t nowMs() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -143,6 +144,7 @@ void dumpInto(const char* path, EXCEPTION_POINTERS* info) {
 }
 
 LONG WINAPI onCrash(EXCEPTION_POINTERS* info) {
+    if (g_reported) return EXCEPTION_CONTINUE_SEARCH;  // watchReport said it already
     const DWORD code = info && info->ExceptionRecord ? info->ExceptionRecord->ExceptionCode : 0;
     void* at = info && info->ExceptionRecord ? info->ExceptionRecord->ExceptionAddress : nullptr;
     const int fd = _open(g_crashPath, _O_WRONLY | _O_CREAT | _O_TRUNC | _O_BINARY, 0644);
@@ -177,8 +179,12 @@ void onTerminate() {
             std::rethrow_exception(thrown);
         } catch (const std::exception& e) {
             logf("CRASH an uncaught exception: %s", e.what());
+            char what[300];
+            std::snprintf(what, sizeof(what), "an uncaught exception: %s", e.what());
+            watchReport(what);
         } catch (...) {
             logf("CRASH an uncaught exception that is not a std::exception");
+            watchReport("an uncaught exception that is not a std::exception");
         }
     }
     std::abort();
@@ -244,6 +250,29 @@ void watchStart(const char* dir, const char* name) {
     SetThreadStackGuarantee(&reserve);
     SetUnhandledExceptionFilter(onCrash);
     std::set_terminate(onTerminate);
+}
+
+void watchReport(const char* what) {
+    const int fd = _open(g_crashPath, _O_WRONLY | _O_CREAT | _O_TRUNC | _O_BINARY, 0644);
+    if (fd >= 0) {
+        char line[1600];
+        std::snprintf(line, sizeof(line),
+                      "mu2 stopped: %s, pid %lu\n"
+                      "the exe is loaded at %p; every thread's stack is in %s\n",
+                      what, (unsigned long)GetCurrentProcessId(), (void*)GetModuleHandleA(nullptr),
+                      g_crashDump);
+        say(fd, line);
+        sayNotes(fd);
+        say(fd, "\nthe thread that stopped it:\n");
+        CONTEXT here{};
+        RtlCaptureContext(&here);
+        sayStack(fd, &here);
+        say(fd, "\nthe last of the log:\n");
+        logWriteTail(fd);
+        _close(fd);
+    }
+    dumpInto(g_crashDump, nullptr);
+    g_reported = true;
 }
 
 void watchNote(const char* line) {

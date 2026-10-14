@@ -30,5 +30,8 @@ void watchBeat();
 void watchPause();
 // Before an exit: a clean close is not a hang.
 void watchStop();
+// A stop the program chose, before it aborts -- bgfx's fatal (a device lost), an uncaught throw:
+// the crash report written now, with `what` first, since on Windows abort() passes no handler.
+void watchReport(const char* what);
 
 }  // namespace mu::core

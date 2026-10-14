@@ -51,6 +51,8 @@ std::mutex g_lock;
 std::condition_variable g_wake;
 bool g_stopping = false;
 char g_altStack[64 * 1024];
+// watchReport wrote the crash report: the signal that follows (abort's) adds a line to it.
+std::atomic<bool> g_reported{false};
 // The thread that beats, and where its stack goes when the watch stops it (onMainStack).
 pthread_t g_main;
 char g_hangPath[1024];
@@ -100,6 +102,18 @@ void* faultPc(void* context) {
 }
 
 void onCrash(int sig, siginfo_t* info, void* context) {
+    if (g_reported) {
+        const int fd = ::open(g_crashPath, O_WRONLY | O_APPEND);
+        if (fd >= 0) {
+            say(fd, "\nand then ");
+            say(fd, signalName(sig));
+            say(fd, "\n");
+            ::close(fd);
+        }
+        signal(sig, SIG_DFL);
+        raise(sig);
+        return;
+    }
     const int fd = ::open(g_crashPath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd >= 0) {
         char line[768];
@@ -147,8 +161,12 @@ void onTerminate() {
             std::rethrow_exception(thrown);
         } catch (const std::exception& e) {
             logf("CRASH an uncaught exception: %s", e.what());
+            char what[300];
+            std::snprintf(what, sizeof(what), "an uncaught exception: %s", e.what());
+            watchReport(what);
         } catch (...) {
             logf("CRASH an uncaught exception that is not a std::exception");
+            watchReport("an uncaught exception that is not a std::exception");
         }
     }
     std::abort();
@@ -284,6 +302,29 @@ void watchStart(const char* dir, const char* name) {
     sigemptyset(&stack.sa_mask);
     sigaction(SIGUSR2, &stack, nullptr);
     std::set_terminate(onTerminate);
+}
+
+void watchReport(const char* what) {
+    const int fd = ::open(g_crashPath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd >= 0) {
+        char line[512];
+        std::snprintf(line, sizeof(line), "mu2 stopped: %s, pid %d\n", what, int(getpid()));
+        say(fd, line);
+        sayNotes(fd);
+#ifdef __APPLE__
+        std::snprintf(line, sizeof(line), "the binary is loaded at %p\n",
+                      static_cast<const void*>(_dyld_get_image_header(0)));
+        say(fd, line);
+#endif
+        say(fd, "\nthe thread that stopped it (names mangled: pipe through c++filt):\n");
+        void* frames[128];
+        const int n = backtrace(frames, 128);
+        backtrace_symbols_fd(frames, n, fd);
+        say(fd, "\nthe last of the log:\n");
+        logWriteTail(fd);
+        ::close(fd);
+        g_reported = true;
+    }
 }
 
 void watchNote(const char* line) {

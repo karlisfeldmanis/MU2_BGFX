@@ -3,12 +3,25 @@
 #include <bimg/encode.h>
 #include <bx/file.h>
 
+#include <cstdio>
+
 #include "core/log.h"
+#include "core/watch.h"
 
 namespace mu::gfx {
 
 void Callback::fatal(const char* filePath, uint16_t line, bgfx::Fatal::Enum code, const char* str) {
     core::logError("bgfx fatal %d at %s:%u: %s", int(code), filePath, unsigned(line), str);
+    // Into a crash report before the abort, which on Windows reaches no handler (core/watch.h):
+    // a device lost -- the driver's own crash or a GPU timeout -- read as one, sent home.
+    const char* name = code == bgfx::Fatal::DeviceLost             ? "DeviceLost (the GPU or its driver stopped)"
+                       : code == bgfx::Fatal::UnableToInitialize    ? "UnableToInitialize"
+                       : code == bgfx::Fatal::UnableToCreateTexture ? "UnableToCreateTexture"
+                       : code == bgfx::Fatal::InvalidShader         ? "InvalidShader"
+                                                                    : "DebugCheck";
+    char what[600];
+    std::snprintf(what, sizeof(what), "bgfx fatal %s at %s:%u: %s", name, filePath, unsigned(line), str);
+    core::watchReport(what);
     core::logClose();
     abort();
 }
