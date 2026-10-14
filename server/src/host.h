@@ -130,6 +130,11 @@ inline int g_mapCap = 100;
 // The tick datagrams' socket, on the game's port; closed if it would not bind, and then the
 // stream alone carries the ticks, as before sprint 24.
 inline net::Datagram g_udp;
+// Players only through the launcher (--launcher-only, with --accounts): from anywhere but this
+// machine, an Account or a Hello must carry a website token. A machine key, or a Hello of no
+// account, is a game started without the launcher, or one made to look like it. The bots, which
+// play with no account, come from this machine (tools/netbot) and are let in.
+inline bool g_launcherOnly = false;
 // How many recent ticks a datagram may carry: four, a fifth of a second of a line's losses.
 constexpr size_t kRecentTicks = 4;
 
@@ -222,6 +227,7 @@ struct Session {
     std::string account;   // the character screen's, once an Account has been said
     std::string name;      // what he is called over his head (net::Who)
     bool bot = false;      // a character of no account: for now, the bots (tools/netbot)
+    bool local = false;    // the line comes from this machine (g_launcherOnly lets it in)
     // The realm sent him to another world (g_due) and this line has not gone yet: what he asks
     // here now is a lagging client's, and dropped. His next line, to the world he is due in, is
     // a new Session.
@@ -415,6 +421,8 @@ void takeTokensFrom(const std::string& address);
 bool takesTokens();
 bool isToken(const std::string& key);
 bool reservedKey(const std::string& key);
+// Whether a connection's other end is this machine (127.0.0.0/8 or ::1).
+bool fromHere(int fd);
 Door door(Session& one, std::string& key);
 // The website's answer, once it has come: true, with his account's key, or "" for a token it does
 // not keep, or "!" when it could not be asked.

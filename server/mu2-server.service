@@ -6,7 +6,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-ExecStart=/opt/mu2/build/mu2_server --port 44406 --assets /opt/mu2/out/assets --store /var/lib/mu2/characters.db --accounts http://127.0.0.1:8080
+ExecStart=/opt/mu2/build/mu2_server --port 44406 --assets /opt/mu2/out/assets --store /var/lib/mu2/characters.db --accounts http://127.0.0.1:8080 --launcher-only
 Restart=always
 RestartSec=2
 # Its own throwaway user, and one folder it may write: /var/lib/mu2, the characters

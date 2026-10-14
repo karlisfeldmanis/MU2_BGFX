@@ -671,6 +671,7 @@ target_compile_options(mu_studio PRIVATE ${MU_WARNINGS})
 
 add_executable(mu2
   src/main.cpp
+  src/app/alert.cpp
   src/app/application.cpp
   src/app/context.cpp
   src/app/preloader.cpp

@@ -71,6 +71,10 @@ bool heard(Session& one, std::vector<std::unique_ptr<World>>& worlds,
         } else if (kind == net::Kind::Hello && one.world == nullptr) {
             net::Hello said;
             if (!net::parse(body, said)) return false;
+            if (said.account.empty() && g_launcherOnly && !one.local) {
+                core::logf("%s: a Hello of no account from outside, turned away", one.who.c_str());
+                return false;
+            }
             if (!said.account.empty()) {
                 const Door through = door(one, said.account);
                 if (through == Door::Refuse) {
@@ -205,6 +209,8 @@ int main(int argc, char** argv) {
         else if (a == "--store" && i + 1 < argc) store = argv[++i];
         // The website's account service on this machine (web/server.py): takes launchers' tokens.
         else if (a == "--accounts" && i + 1 < argc) takeTokensFrom(argv[++i]);
+        // Players only through the launcher (host.h g_launcherOnly).
+        else if (a == "--launcher-only") g_launcherOnly = true;
         else if (a == "--speed" && i + 1 < argc) {
             g_speed = std::max(1, std::atoi(argv[++i]));
             g_tick /= g_speed;
@@ -238,7 +244,7 @@ int main(int argc, char** argv) {
             const int s = std::max(2, std::atoi(argv[++i]));
             config.square = {s, s / 2, s / 2};
         } else {
-            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--accounts HOST:PORT] [--castle-period S] [--square-period S] [--kit LEVEL:STEM+N,...] [--storm] [--invasion] [--map-cap N] [--speed N]\n");
+            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--accounts HOST:PORT] [--launcher-only] [--castle-period S] [--square-period S] [--kit LEVEL:STEM+N,...] [--storm] [--invasion] [--map-cap N] [--speed N]\n");
             return 2;
         }
     }
@@ -293,6 +299,7 @@ int main(int argc, char** argv) {
             auto one = std::make_unique<Session>();
             one->socket = std::move(s);
             one->who = "player " + std::to_string(++arrivals);
+            one->local = fromHere(one->socket.fd());
             do one->udpKey = seeds(); while (one->udpKey == 0);
             core::logf("%s: connected", one->who.c_str());
             sessions.push_back(std::move(one));

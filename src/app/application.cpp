@@ -23,6 +23,7 @@
 #include "core/log.h"
 #include "core/pack.h"
 #include "core/paths.h"
+#include "app/alert.h"
 #include "core/watch.h"
 #ifdef MU2_CRASH_UPLOAD
 #include "launcher/crash_upload.h"
@@ -154,6 +155,18 @@ int Application::run(int argc, char** argv) {
         args_.sheet.empty() ? paths_.under(paths_.sheets, "lighting.json") : args_.sheet;
 
     core::logOpen(paths_.log.c_str());
+#if defined(MU2_SHIP) && defined(MU2_CRASH_UPLOAD)
+    // The player's game plays only through the launcher, which signs him in and keeps the game up
+    // to date; the server turns away any other way in (server --launcher-only). Said here in words
+    // rather than as a connection that fails at the character screen.
+    if (launcher::sessionFromEnvironment().empty() && !args_.headless) {
+        core::logError("started without the launcher: nothing run");
+        systemAlert("MU2", "Open MU2 Launcher to play.\n\nThe launcher signs you in and keeps the "
+                           "game up to date. Sign in there and press Play.");
+        core::logClose();
+        return 1;
+    }
+#endif
     // The player's build reads its data from the packs in the bundle (core/pack.h), and has
     // nothing to play without them.
     if (!folders.data.empty() && core::mountPacks(folders.data) == 0) {

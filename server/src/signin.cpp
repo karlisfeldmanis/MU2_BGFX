@@ -138,7 +138,26 @@ bool isToken(const std::string& key) {
 
 bool reservedKey(const std::string& key) { return key.rfind("account", 0) == 0; }
 
+bool fromHere(int fd) {
+    sockaddr_storage peer{};
+    socklen_t size = sizeof peer;
+    if (getpeername(fd, reinterpret_cast<sockaddr*>(&peer), &size) != 0) return false;
+    if (peer.ss_family == AF_INET) {
+        return (ntohl(reinterpret_cast<sockaddr_in*>(&peer)->sin_addr.s_addr) >> 24) == 127;
+    }
+    if (peer.ss_family == AF_INET6) {
+        const in6_addr& a = reinterpret_cast<sockaddr_in6*>(&peer)->sin6_addr;
+        return IN6_IS_ADDR_LOOPBACK(&a) ||
+               (IN6_IS_ADDR_V4MAPPED(&a) && a.s6_addr[12] == 127);
+    }
+    return false;
+}
+
 Door door(Session& one, std::string& key) {
+    if (g_launcherOnly && takesTokens() && !isToken(key) && !one.local) {
+        core::logf("%s: a game started without the launcher, turned away", one.who.c_str());
+        return Door::Refuse;
+    }
     if (!takesTokens() || !isToken(key)) return reservedKey(key) ? Door::Refuse : Door::Pass;
     std::string account;
     if (lookedUp(key, account)) {
