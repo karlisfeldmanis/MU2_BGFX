@@ -121,7 +121,7 @@ def release(target, say, dry=False):
     subprocess.run(["rsync", "-a", named, f"{HOST}:{root}/manifests/"], check=True)
     # Caddy's own user reads them; the Mac's openrsync takes no --chmod=F644.
     ssh(f"chmod -R a+rX {root}")
-    ssh(f"cp{root}/manifests/{commit}.json {root}/manifest.json.new && mv {root}/manifest.json.new {root}/manifest.json")
+    ssh(f"cp {root}/manifests/{commit}.json {root}/manifest.json.new && mv {root}/manifest.json.new {root}/manifest.json")
     say(f"manifest.json is {commit}")
 
     # The newest KEEP releases' files stay; any other goes.
