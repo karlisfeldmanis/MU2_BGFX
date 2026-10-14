@@ -112,14 +112,16 @@ def release(target, say, dry=False):
         os.link(f["local"], os.path.join(stage, "files", f["sha256"]))
     if missing:
         say(f"sending {len(missing)} files (rsync, resumable)")
-        subprocess.run(["rsync", "-a", "--partial", "--chmod=F644", "--progress",
+        subprocess.run(["rsync", "-a", "--partial", "--progress",
                         os.path.join(stage, "files") + "/", f"{HOST}:{root}/files/"], check=True)
 
     named = os.path.join(stage, f"{commit}.json")
     with open(named, "w") as out:
         json.dump(manifest, out, indent=1)
-    subprocess.run(["rsync", "-a", "--chmod=F644", named, f"{HOST}:{root}/manifests/"], check=True)
-    ssh(f"cp {root}/manifests/{commit}.json {root}/manifest.json.new && mv {root}/manifest.json.new {root}/manifest.json")
+    subprocess.run(["rsync", "-a", named, f"{HOST}:{root}/manifests/"], check=True)
+    # Caddy's own user reads them; the Mac's openrsync takes no --chmod=F644.
+    ssh(f"chmod -R a+rX {root}")
+    ssh(f"cp{root}/manifests/{commit}.json {root}/manifest.json.new && mv {root}/manifest.json.new {root}/manifest.json")
     say(f"manifest.json is {commit}")
 
     # The newest KEEP releases' files stay; any other goes.
