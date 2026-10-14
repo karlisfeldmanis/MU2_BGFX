@@ -365,17 +365,17 @@ bgfx::TextureHandle Textures::loadFromMemory(const std::string& name, const void
     // before the next line runs.
     const bgfx::TextureFormat::Enum format = bgfx::TextureFormat::Enum(image->m_format);
     const uint8_t mips = image->m_numMips;
-    const uint32_t size = image->m_size;
-    const bgfx::Memory* mem = bgfx::makeRef(image->m_data, size, releaseImage, image);
+    const uint32_t imageBytes = image->m_size;
+    const bgfx::Memory* mem = bgfx::makeRef(image->m_data, imageBytes, releaseImage, image);
     bgfx::TextureHandle handle = bgfx::createTexture2D(
         uint16_t(width), uint16_t(height), mips > 1, image->m_numLayers, format, flags, mem);
 
     if (!bgfx::isValid(handle)) {
         core::logError("%s did not become a texture", name.c_str());
     } else {
-        bytes_ += size;
+        bytes_ += imageBytes;
         core::logf("texture %s %ux%u %s mips %u %.1f KB", name.c_str(), width, height, roleName,
-                   mips, double(size) / 1024.0);
+                   mips, double(imageBytes) / 1024.0);
         sizes_[handle.idx] = {width, height, format, mips, flags};
     }
     byPath_[name] = handle;
