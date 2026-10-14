@@ -57,9 +57,14 @@ W1 to W4 are done, and W3 is done in Lorencia and the lobby:
   type after each SPIR-V build.
 - **Wine only: Rosetta can vanish.** A macOS update removed it, and `wine` said "bad CPU type".
   Reinstall it with `softwareupdate --install-rosetta --agree-to-license`.
-- **A GPU page fault (`VK_ERROR_DEVICE_LOST`)** came in roughly one run in five at -O3, and in
-  none of the runs since -O2. It was most likely the same miscompile reaching the GPU. Watch
-  for it.
+- **A GPU page fault (`VK_ERROR_DEVICE_LOST`) is still open.** It came in about one run in five
+  at -O3, and in one of the first 13 player runs at -O2. It always comes in the first frames
+  after the loading screen hands over to the scene (2.4 to 3.0 s). MoltenVK reports "GPU
+  Address Fault (kIOGPUCommandBufferCallbackErrorPageFault)". It is not caused by a cold shader
+  cache or a fresh unzip; four of each were clean. It may be Wine and MoltenVK's own, or a real
+  out-of-bounds read; the preloader's worker creates resources while the main thread draws. To
+  catch it, run with `MTL_SHADER_VALIDATION=1` until one run faults; the validation names the
+  shader and the buffer.
 - **`./mu dist` looked for the sheets in `sheets/`**, not `content/sheets/`, after the folder
   move. That broke `dist macos` too; it is fixed.
 
