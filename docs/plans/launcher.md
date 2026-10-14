@@ -87,7 +87,11 @@ by mingw like `MU2.exe`, linking `mu_gfx` and the few UI sources it draws with.
   app built from 3965dc81, the server deployed with `--accounts` (7466 sim checks, 22 characters
   kept). Under Wine the launcher reaches the box through tools/wine_https_relay.py, Wine here
   having no TLS: `wine MU2Launcher.exe --site http://127.0.0.1:8096`.
-- **Not yet tried by hand:** typing, clicking, a real sign-in and install through the window
+- **The full cycle, by the user under Wine (2026-10-14):** signed in on the live site, the whole
+  release fetched (MU2.exe and 17 packs), Play: the server took the token as account 1, he made
+  "windowskar", played Lorencia, left, and came back to the character screen with 1 character
+  under `account000000001`. Log out and sign in again both worked.
+- **Before it was tried by hand:** typing, clicking, a real sign-in and install through the window
   (the engine under it was checked headless). Next: the user tries it; then signing the exe,
   and L4.
 
