@@ -244,6 +244,9 @@ def dist_launcher(say):
     homebrew = run(["brew", "--prefix", "glfw"], say).strip()
     glfw = os.path.join(homebrew, "lib", GLFW)
     shutil.copy2(glfw, os.path.join(app, "Contents", "Frameworks", GLFW))
+    # Homebrew's dylib is read-only, and a drag out of the DMG keeps the mode -- a 444 file then
+    # refuses the quarantine strip that a player's first right-click needs.
+    os.chmod(os.path.join(app, "Contents", "Frameworks", GLFW), 0o644)
     run(["install_name_tool", "-change", glfw, f"@executable_path/../Frameworks/{GLFW}",
          os.path.join(mac, "MU2Launcher")], say)
     with open(os.path.join(app, "Contents", "Info.plist"), "w") as out:
