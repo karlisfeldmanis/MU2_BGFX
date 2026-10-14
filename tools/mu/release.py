@@ -104,8 +104,15 @@ def release(target, say, dry=False):
 
     root = f"{REMOTE}/{target}"
     ssh(f"mkdir -p {root}/files {root}/manifests")
-    have = set(ssh(f"ls {root}/files").split())
-    missing = [f for f in files if f["sha256"] not in have]
+    # What the box has, by name AND size: a name alone is no proof -- the first macos upload died
+    # mid-rsync and left a truncated file that the next run took for already sent.
+    listed = ssh(f"cd {root}/files && stat -c '%n %s' * 2>/dev/null || true")
+    sizes = {}
+    for line in listed.splitlines():
+        parts = line.split()
+        if len(parts) == 2 and parts[1].isdigit():
+            sizes[parts[0]] = int(parts[1])
+    missing = [f for f in files if sizes.get(f["sha256"]) != f["size"]]
     sending = sum(f["size"] for f in missing)
     say(f"the box has {len(files) - len(missing)} of them; {len(missing)} to send, {sending / 1e9:.2f} GB")
 
@@ -162,6 +169,17 @@ def release(target, say, dry=False):
         "print(gone)\n"
         "EOF").strip()
     say(f"{pruned} files of older releases removed; the newest {KEEP} kept")
+
+    # Every file the box holds, size against the manifest, before anything is declared done.
+    listed = ssh(f"cd {root}/files && stat -c '%n %s' * 2>/dev/null || true")
+    on_box = {}
+    for line in listed.splitlines():
+        parts = line.split()
+        if len(parts) == 2 and parts[1].isdigit():
+            on_box[parts[0]] = int(parts[1])
+    short = [f for f in files if on_box.get(f["sha256"]) != f["size"]]
+    if short:
+        raise RuntimeError(f"{len(short)} files on the box are missing or truncated, e.g. {short[0]['path']}")
 
     # As the launcher will read it.
     got = subprocess.run(["curl", "-sf", f"{SITE}/game/{target}/manifest.json"], capture_output=True, text=True)
