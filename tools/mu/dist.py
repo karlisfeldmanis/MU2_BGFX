@@ -247,6 +247,33 @@ echo "Installed in $where. Opening..."
 open "$where/MU2Launcher.app"
 """
 
+# The same install as a file to double-click, for users who will not type a command: Finder
+# opens it in Terminal, Terminal asks its own "downloaded from the Internet" question -- which
+# has an Open button, unlike Gatekeeper's app dialog -- and the script does the rest. Dropping
+# its own quarantine here means the second double-click asks nothing.
+INSTALL_COMMAND = """#!/bin/bash
+# MU Classic's launcher for macOS. Double-click, then Open in Terminal's question.
+xattr -d com.apple.quarantine "$0" 2>/dev/null
+where="$HOME/Applications"
+if pgrep -x MU2Launcher >/dev/null 2>&1; then
+    echo "The launcher is running -- close it first, then double-click this file again."
+    read -r -p "Press Enter to close. "
+    exit 1
+fi
+mkdir -p "$where"
+echo "Fetching MU Classic's launcher..."
+if ! curl -fsSL https://mu-classic.com/downloads/MU2Launcher.tar.gz -o "$where/.MU2Launcher.tgz"; then
+    echo "The download failed. Check your connection and try again."
+    read -r -p "Press Enter to close. "
+    exit 1
+fi
+rm -rf "$where/MU2Launcher.app"
+tar -xzf "$where/.MU2Launcher.tgz" -C "$where"
+rm -f "$where/.MU2Launcher.tgz"
+echo "Done. Opening the launcher -- make an account or sign in, then press Install."
+open "$where/MU2Launcher.app"
+"""
+
 
 def dist_launcher(say):
     """dist/launcher/MU2Launcher.app and MU2.dmg: the launcher for the Mac (docs/plans/launcher.md,
@@ -298,6 +325,9 @@ def dist_launcher(say):
     run(["tar", "-czf", tared, "-C", stage, "MU2Launcher.app"], say)
     with open(os.path.join(stage, "install-macos.sh"), "w") as out:
         out.write(INSTALL_SH)
+    with open(os.path.join(stage, "MU2Install.command"), "w") as out:
+        out.write(INSTALL_COMMAND)
+    os.chmod(os.path.join(stage, "MU2Install.command"), 0o755)
     say(f"{dmg}: {total / 1e6:.0f} MB, app signed ad hoc, in {time.time() - started:.0f} s")
     return True, {"dmg": dmg, "app": app, "bytes": total}
 
