@@ -1,0 +1,39 @@
+# Caddy on the Hetzner box: HTTPS for MU2's site, in front of web/server.py on 127.0.0.1:8080.
+# Installed by web/deploy.sh to /etc/caddy/Caddyfile.
+#
+# No domain yet (the user, 2026-10-14: "use the IP for now"), so the certificate names the IP.
+# Let's Encrypt issues IP certificates only under its six-day "shortlived" profile; Caddy renews
+# them by itself. With a domain, put it in place of the IP and drop the tls block.
+
+37.27.158.226 {
+	tls {
+		issuer acme {
+			profile shortlived
+		}
+	}
+
+	encode zstd gzip
+
+	# The installers, served from disk by Caddy itself (big files, ranges, resumes).
+	handle /downloads/* {
+		root * /srv/mu2-web
+		file_server
+	}
+
+	# For mu2_server on this machine only, never from outside.
+	handle /internal/* {
+		respond 404
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:8080
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		X-Frame-Options DENY
+		-Server
+	}
+}

@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MU Classic</title>
+<meta name="description" content="Create an account and download the MU Classic client for Windows and macOS.">
+<link rel="icon" href="/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Alegreya+Sans+SC:wght@700&family=Alegreya+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* The game's own palette and buttons (src/game/ui/style.h, controls.cpp), as the launcher has them. */
+:root {
+  --ground: #0D0B0A; --card: rgba(15,11,9,0.88); --edge: #2B221B;
+  --bone-hi: #F3E8D4; --bone: #D9CFBD; --label: #C9BFAE; --quiet: #8F8575;
+  --blood: #C2362B; --danger: #E07A6C; --live: #7FD66A;
+  --field: #050303; --field-edge: #241B15; --field-focus: #A88B6C;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--ground); color: var(--bone); font: 17px/1.5 'Alegreya Sans', system-ui, sans-serif; }
+a { color: var(--label); text-decoration: none; }
+a:hover { color: var(--bone-hi); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.mu-primary, .mu-secondary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 56px; padding: 0 24px;
+  border: 1px solid transparent; border-radius: 4px; font: 700 18px/1 'Alegreya Sans SC', sans-serif; letter-spacing: 0;
+  cursor: pointer; transition: background .12s, box-shadow .12s, color .12s;
+}
+.mu-primary {
+  background: linear-gradient(#7A1A13, #3A0B07) padding-box, linear-gradient(#D4493B, #5E150E) border-box;
+  color: #F6E7D0; text-shadow: 0 1px 0 rgba(0,0,0,.75);
+  box-shadow: inset 0 1px 0 rgba(255,180,160,.25), 0 0 10px rgba(194,54,43,.18), 0 3px 6px rgba(0,0,0,.6);
+}
+.mu-primary:hover { background: linear-gradient(#94231A, #4A0F0A) padding-box, linear-gradient(#F0614F, #7A1C13) border-box; color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,180,160,.3), 0 0 16px rgba(194,54,43,.42), 0 3px 6px rgba(0,0,0,.6); }
+.mu-primary:active { background: linear-gradient(#2A0805, #5A120C) padding-box, linear-gradient(#5E150E, #D4493B) border-box;
+  box-shadow: inset 0 6px 8px rgba(0,0,0,.55); transform: translateY(1px); }
+.mu-secondary {
+  background: linear-gradient(#241B16, #110C0A) padding-box, linear-gradient(#6B5645, #2B221B) border-box;
+  color: var(--label); box-shadow: inset 0 1px 0 rgba(255,235,210,.06), 0 3px 6px rgba(0,0,0,.6);
+}
+.mu-secondary:hover { background: linear-gradient(#2E2219, #150F0D) padding-box, linear-gradient(#A88B6C, #4A3A2E) border-box; color: #FFF4E2;
+  box-shadow: inset 0 -14px 14px -6px rgba(194,54,43,.30), 0 0 10px rgba(194,54,43,.12), 0 3px 6px rgba(0,0,0,.6); }
+.mu-primary:disabled, .mu-primary[aria-disabled="true"], .mu-secondary[aria-disabled="true"] {
+  background: linear-gradient(#181210, #0D0908) padding-box, linear-gradient(#2E251E, #1A1411) border-box;
+  color: var(--quiet); text-shadow: none; box-shadow: none; cursor: default; transform: none;
+}
+.mu-primary:focus-visible, .mu-secondary:focus-visible { outline: 2px solid var(--field-focus); outline-offset: 2px; }
+
+/* Register */
+.hero { position: relative; overflow: hidden; }
+.hero > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+.hero::after { content: ""; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 50% 70% at 50% 55%, rgba(13,11,10,.8) 0%, rgba(13,11,10,.45) 100%),
+              linear-gradient(180deg, rgba(13,11,10,0) 70%, var(--ground) 100%); }
+.hero-inner { position: relative; z-index: 1; max-width: 440px; margin: 0 auto; padding: 56px 24px 96px;
+  display: flex; flex-direction: column; align-items: center; }
+.logo { display: block; width: min(200px, 60%); height: auto; }
+.card { margin-top: 40px; width: 100%; padding: 36px 32px; border-radius: 4px; background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--edge), 0 24px 48px rgba(0,0,0,.5); }
+form { display: flex; flex-direction: column; gap: 18px; }
+.row { display: flex; flex-direction: column; gap: 8px; }
+label { font-size: 15px; font-weight: 500; color: var(--label); }
+input { height: 48px; padding: 0 14px; border: 1px solid var(--field-edge); border-radius: 3px; background: var(--field);
+  color: var(--bone); font: inherit; font-size: 16px; }
+input:focus { outline: 2px solid var(--field-focus); outline-offset: -1px; }
+input[aria-invalid="true"] { border-color: var(--blood); }
+.hint { font-size: 14px; color: var(--quiet); }
+.err { font-size: 14px; color: var(--danger); }
+.err:empty { display: none; }
+.hint.bad { color: var(--danger); }
+.alert { padding: 12px 14px; border-radius: 3px; background: #9E2A1F; color: #fff; font-size: 15px; line-height: 1.45; }
+.alert[hidden] { display: none; }
+form .mu-primary { margin-top: 4px; width: 100%; }
+.done { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; padding: 8px 0; }
+.done[hidden], form[hidden] { display: none; }
+.done h2 { margin: 4px 0 0; font: 600 24px/1.2 Cinzel, serif; letter-spacing: .1em; text-transform: uppercase; color: var(--bone-hi); }
+.done p { margin: 0; color: var(--label); }
+.done strong { color: var(--bone-hi); font-weight: 500; }
+
+/* Footer: the download, then the letter */
+footer { padding: 64px 24px 40px; box-shadow: inset 0 1px 0 #1E1814; display: flex; flex-direction: column; align-items: center;
+  gap: 56px; text-align: center; }
+#download { width: 100%; max-width: 640px; }
+#download h2 { margin: 0; font: 600 22px/1.3 Cinzel, serif; letter-spacing: .12em; text-transform: uppercase; color: var(--bone-hi); }
+.downloads { margin-top: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.downloads > div { display: flex; flex-direction: column; gap: 8px; }
+.downloads .mu-primary, .downloads .mu-secondary { height: 52px; font-size: 17px; }
+.downloads small { font-size: 14px; color: var(--quiet); }
+.letter { margin: 0; max-width: 780px; font-size: 14px; line-height: 1.55; color: rgba(212,200,184,.62); }
+</style>
+</head>
+<body>
+
+<section id="register" class="hero" aria-label="Create account">
+<img src="/wallpaper.jpg" alt="">
+<div class="hero-inner">
+<img class="logo" src="/logo.png" alt="MU Classic" width="421" height="231">
+
+<div class="card">
+<form id="form" novalidate>
+<div id="alert" class="alert" role="alert" hidden></div>
+
+<div class="row">
+<label for="email">Email</label>
+<input id="email" name="email" type="email" autocomplete="email" maxlength="254" aria-describedby="email-err">
+<span id="email-err" class="err"></span>
+</div>
+
+<div class="row">
+<label for="password">Password</label>
+<input id="password" name="password" type="password" autocomplete="new-password" maxlength="128" aria-describedby="password-hint">
+<span id="password-hint" class="hint">At least 8 characters.</span>
+</div>
+
+<div class="row">
+<label for="repeat">Repeat password</label>
+<input id="repeat" name="repeat" type="password" autocomplete="new-password" maxlength="128" aria-describedby="repeat-err">
+<span id="repeat-err" class="err"></span>
+</div>
+
+<button id="submit" type="submit" class="mu-primary">Create account</button>
+</form>
+
+<div id="done" class="done" role="status" hidden>
+<svg aria-hidden="true" width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="#7FD66A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="24" r="21" stroke-opacity="0.35"></circle><path d="M15 24.5l6 6L33 18"></path></svg>
+<h2>Account created</h2>
+<p>Sign in to the launcher with<br><strong id="done-email"></strong></p>
+</div>
+</div>
+</div>
+</section>
+
+<footer>
+<section id="download" aria-labelledby="download-title">
+<h2 id="download-title">Download the client</h2>
+<div class="downloads">
+<div>
+<a id="dl-windows" class="mu-primary" href="/downloads/MU2Setup.exe" download>
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.2l7.4-1v7.2H3zM11.4 4.1L21 2.8v8.6h-9.6zM3 12.6h7.4v7.2L3 18.8zM11.4 12.6H21v8.6l-9.6-1.3z"></path></svg>
+Download for Windows
+</a>
+<small id="dl-windows-note">Windows 10 or 11, 64-bit</small>
+</div>
+<div>
+<a id="dl-macos" class="mu-secondary" href="/downloads/MU2.dmg" download>
+<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"></path></svg>
+Download for macOS
+</a>
+<small id="dl-macos-note">Apple silicon and Intel</small>
+</div>
+</div>
+</section>
+
+<!-- The loading screen's letter, word for word (src/app/preloader.cpp kLetter). -->
+<p class="letter">To WebZen, and to MU Online fans across the years: This is a love letter, not a business. MU Online was part of our childhood: the first steps out of Lorencia, the nights spent hunting in Dungeon and Devias, the friends we made and the hours we lost together in a world that felt like our own. For many of us, those memories never faded, and this game was made out of that love. Every character, item, monster, map, sound and name in it belongs to WebZen Inc., who created MU and gave a whole generation those memories. This is not our game; it's a tribute to theirs.</p>
+</footer>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const form = $('form'), email = $('email'), password = $('password'), repeat = $('repeat');
+  const alertBox = $('alert'), submit = $('submit'), hint = $('password-hint');
+  const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+  function fieldError(input, out, message) {
+    input.setAttribute('aria-invalid', message ? 'true' : 'false');
+    if (out) out.textContent = message || '';
+  }
+  function passwordError(message) {
+    password.setAttribute('aria-invalid', message ? 'true' : 'false');
+    hint.textContent = message || 'At least 8 characters.';
+    hint.classList.toggle('bad', !!message);
+  }
+  function showAlert(message) {
+    alertBox.textContent = message || '';
+    alertBox.hidden = !message;
+  }
+  function check() {
+    const e = email.value.trim();
+    const emailMsg = !e ? 'Enter your email.' : EMAIL.test(e) ? '' : 'Enter a valid email address.';
+    const passMsg = password.value.length < 8 ? 'Use at least 8 characters.' : '';
+    const repeatMsg = !repeat.value ? 'Repeat your password.' : repeat.value !== password.value ? 'Passwords don’t match.' : '';
+    fieldError(email, $('email-err'), emailMsg);
+    passwordError(passMsg);
+    fieldError(repeat, $('repeat-err'), repeatMsg);
+    const first = emailMsg ? email : passMsg ? password : repeatMsg ? repeat : null;
+    if (first) first.focus();
+    return !first;
+  }
+
+  email.addEventListener('input', () => { showAlert(''); });
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    showAlert('');
+    if (!check()) return;
+    submit.disabled = true;
+    submit.textContent = 'Creating account…';
+    try {
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.value.trim(), password: password.value }),
+      });
+      const said = await res.json().catch(() => ({}));
+      if (res.status === 201) {
+        $('done-email').textContent = email.value.trim().toLowerCase();
+        form.hidden = true;
+        $('done').hidden = false;
+        return;
+      }
+      if (res.status === 409) {
+        showAlert('An account with this email already exists. Sign in to the launcher, or use another email.');
+      } else if (res.status === 400 && said.field === 'email') {
+        fieldError(email, $('email-err'), said.error);
+      } else if (res.status === 400 && said.field === 'password') {
+        passwordError(said.error);
+      } else {
+        showAlert(said.error || 'Something went wrong. Try again in a minute.');
+      }
+    } catch (err) {
+      showAlert('Can’t reach the server. Check your connection and try again.');
+    }
+    submit.disabled = false;
+    submit.textContent = 'Create account';
+  });
+
+  // Each installer's size, or "Coming soon" while it is not up yet.
+  const mb = (n) => (n / 1048576).toFixed(0) + ' MB';
+  fetch('/api/downloads').then((r) => r.json()).then((list) => {
+    for (const [system, base] of [['windows', 'Windows 10 or 11, 64-bit'], ['macos', 'Apple silicon and Intel']]) {
+      const link = $('dl-' + system), note = $('dl-' + system + '-note'), file = list[system];
+      if (file) {
+        link.href = file.file;
+        note.textContent = base + ' · ' + mb(file.bytes);
+      } else {
+        link.removeAttribute('href');
+        link.setAttribute('aria-disabled', 'true');
+        note.textContent = base + ' · coming soon';
+      }
+    }
+  }).catch(() => {});
+})();
+</script>
+</body>
+</html>
