@@ -20,6 +20,16 @@
 		file_server
 	}
 
+	# The game's releases for the launcher (tools/mu/release.py): files under their SHA-256, which
+	# never change and are kept forever by anyone; the manifest, which changes, kept by no one.
+	handle /game/* {
+		root * /srv/mu2-web
+		@files path_regexp ^/game/[a-z]+/files/[0-9a-f]{64}$
+		header @files Cache-Control "public, max-age=31536000, immutable"
+		header /game/*/manifest.json Cache-Control "no-cache"
+		file_server
+	}
+
 	# For mu2_server on this machine only, never from outside.
 	handle /internal/* {
 		respond 404

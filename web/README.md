@@ -32,6 +32,12 @@ On the box: `sqlite3 /var/lib/mu2-web/accounts.db 'select id, email, created fro
 To delete one by hand, start with `PRAGMA foreign_keys=ON;` or its sessions stay behind: the
 sqlite3 shell does not cascade unless told.
 
+## Game releases (the launcher's)
+
+`./mu release windows` puts `dist/windows/MU2/` under `/srv/mu2-web/game/windows/`: each file
+at `files/<sha256>`, and `manifest.json` (version, protocol, every file's path, size and hash),
+written last. https://37.27.158.226/game/windows/manifest.json is what the launcher reads.
+
 ## Installers
 
 Copy them to `/srv/mu2-web/downloads/` as `MU2Setup.exe` and `MU2.dmg`. The page asks

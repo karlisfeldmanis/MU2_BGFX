@@ -33,6 +33,7 @@
     ./mu bootstrap                           fetch third_party/extern at its pins
     ./mu dist macos [--commit REF]           the player's app, dist/macos/MU2.app, from a commit
     ./mu dist windows [--commit REF]         the Windows client, dist/windows/MU2/ and its zip
+    ./mu release windows [--dry]             that client on the box for the launcher, by hash
 
 Every command takes --json and then prints one JSON object as its last line, for a script or
 an agent to read instead of the prose. Every step runs niced and held to `mu cores` (60% of
@@ -48,6 +49,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import check  # noqa: E402
 import dist  # noqa: E402
+import release  # noqa: E402
 import jobs  # noqa: E402
 import look  # noqa: E402
 import make  # noqa: E402
@@ -139,6 +141,10 @@ def main():
     d = sub.add_parser("dist", parents=[common])
     d.add_argument("target", choices=["macos", "windows"], help="the platform")
     d.add_argument("--commit", default="HEAD", help="the commit to build it from (HEAD)")
+
+    rl = sub.add_parser("release", parents=[common])
+    rl.add_argument("target", choices=["windows"], help="the platform")
+    rl.add_argument("--dry", action="store_true", help="hash and compare with the box, send nothing")
 
     k = sub.add_parser("cores", parents=[common])
     k.add_argument("count", nargs="?", type=int)
@@ -281,6 +287,8 @@ def dispatch(args, say):
         return check.run(say)
     if args.command == "dist":
         return dist.dist(args.target, say, ref=args.commit)
+    if args.command == "release":
+        return release.release(args.target, say, dry=args.dry)
     if args.command == "where":
         return look.where(args.name, say, args.docs)
     if args.command == "shot":
