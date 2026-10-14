@@ -48,6 +48,11 @@ The look is the "MU2 Launcher" canvas (claude.ai/artifact/AvN3tu56TjFCX1SbYvnPmT
 `/srv/mu2-web/game/windows/`, every file named by its SHA-256, and writes `manifest.json` last:
 the version, the protocol, and each file's path, size and hash. Only new files travel. Caddy
 serves them, with ranges, so a broken download resumes.
+- **Done 2026-10-14** (tools/mu/release.py). The first release is the client dist last made,
+  354bb0d9, protocol 30 like the live server: 19 files, 1.53 GB, at
+  https://37.27.158.226/game/windows/manifest.json. Sent at about 23 MB/s; a second run sent
+  nothing and took 4 s. Read back over HTTPS: MU2.exe and a pack, sizes and SHA-256 right; the
+  files immutable with ranges, the manifest `no-cache`.
 
 **L3. The launcher.** `src/launcher/`, the executable `mu2_launcher` (`MU2Launcher.exe`), built
 by mingw like `MU2.exe`, linking `mu_gfx` and the few UI sources it draws with.
