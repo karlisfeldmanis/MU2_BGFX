@@ -62,6 +62,16 @@ std::vector<Seat> seatsOf(const net::Roster& roster, const content::Tables& tabl
 }
 
 std::string accountKey() {
+    // Started by the launcher, signed in: its token is the account (docs/plans/launcher.md, L1).
+    // Never logged: whoever reads the log could play him.
+    if (const char* session = std::getenv("MU2_SESSION")) {
+        const std::string token = session;
+        if (token.size() == 64 && token.find_first_not_of("0123456789abcdef") == std::string::npos) {
+            core::logf("account: the launcher's sign-in");
+            return token;
+        }
+        core::logError("account: MU2_SESSION is not a sign-in token; the machine's key instead");
+    }
     const fs::path path = fs::path(core::userFolder()) / "account.key";
     std::string key;
     if (std::FILE* f = std::fopen(path.string().c_str(), "rb")) {

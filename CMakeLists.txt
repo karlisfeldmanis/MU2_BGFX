@@ -325,6 +325,7 @@ add_executable(mu2_server
   server/src/guild.cpp
   server/src/guild_store.cpp
   server/src/accounts.cpp
+  server/src/signin.cpp
   server/src/store.cpp
   server/src/economy.cpp
   server/src/broker.cpp
@@ -345,6 +346,7 @@ add_executable(server_test EXCLUDE_FROM_ALL
   server/src/guild.cpp
   server/src/guild_store.cpp
   server/src/accounts.cpp
+  server/src/signin.cpp
   server/src/store.cpp
   server/src/economy.cpp
   server/src/broker.cpp

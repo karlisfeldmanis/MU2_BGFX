@@ -98,7 +98,9 @@ bool account(Session& one, const net::Account& said) {
             core::logf("%s: %s claimed onto his account, slot %d", one.who.c_str(), claim.name.c_str(), slot);
         }
     }
-    one.who += " (" + one.account.substr(0, 6) + ")";
+    // A website account by its number; a machine key by its first six letters, never whole.
+    one.who += reservedKey(one.account) ? " (account " + std::to_string(std::atoll(one.account.c_str() + 7)) + ")"
+                                        : " (" + one.account.substr(0, 6) + ")";
     core::logf("%s: at the character screen, %zu character(s)", one.who.c_str(),
                g_store.list(one.account).size());
     return answer(one, net::Refused::None);

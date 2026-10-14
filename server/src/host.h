@@ -244,6 +244,13 @@ struct Session {
     Clock::time_point heardAt = Clock::now();
     // Commands taken from him for the coming tick (kMostCommands), counted afresh each tick.
     int asked = 0;
+    // The website asked whose his token is (signin.cpp), and what he said with it, held until the
+    // answer comes: an Account or a Hello. Nothing more of his is read meanwhile.
+    std::future<std::string> signing;
+    std::string signingToken;
+    net::Kind signingKind{};
+    net::Account signingAccount;
+    net::Hello signingHello;
 };
 
 // ---- the party (docs/game/party.md): its table ------------------------------------------------------
@@ -397,6 +404,21 @@ bool create(Session& one, const net::Create& asked, std::mt19937_64& seeds,
     const std::vector<std::unique_ptr<Session>>& sessions);
 bool drop(Session& one, const net::Delete& asked,
     const std::vector<std::unique_ptr<Session>>& sessions);
+
+// signin.cpp: the website's accounts at the door (docs/plans/launcher.md, L1).
+// What the door does with a key an Account or a Hello carries: lets it in (a token already known is
+// turned into its account's key in place), sends it away (a key only the door may give), or makes
+// it wait for the website (Session::signing).
+enum class Door { Pass, Refuse, Wait };
+std::string accountKeyOf(long long id);
+void takeTokensFrom(const std::string& address);
+bool takesTokens();
+bool isToken(const std::string& key);
+bool reservedKey(const std::string& key);
+Door door(Session& one, std::string& key);
+// The website's answer, once it has come: true, with his account's key, or "" for a token it does
+// not keep, or "!" when it could not be asked.
+bool signed_(Session& one, std::string& account);
 
 // main.cpp
 bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,

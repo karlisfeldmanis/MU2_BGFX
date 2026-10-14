@@ -1,6 +1,6 @@
 // mu2_server: MU2_BGFX's server (sprint 18, server/README.md).
 //
-//   mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S] [--square-period S] [--map-cap N] [--speed N]
+//   mu2_server [--port N] [--assets DIR] [--store FILE] [--accounts HOST:PORT] [--castle-period S] [--square-period S] [--map-cap N] [--speed N]
 //
 // **Connections to the same world share it** (sprint 19): the first Hello
 // for a world raises its realm with him as its first player; each later one comes in by a Join
@@ -33,16 +33,15 @@
 namespace mu::server {
 
 
-// Everything that arrived on one connection. False when it must go.
-bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
-          std::vector<std::unique_ptr<Session>>& sessions, const std::string& assets,
-          const sim::RealmConfig& config, std::mt19937_64& seeds) {
-    const size_t had = one.in.size();
-    if (!one.socket.receive(one.in)) return false;
-    if (one.in.size() != had) one.heardAt = Clock::now();
+// What one connection has said and not yet been heard, frame by frame. False when it must go.
+bool heard(Session& one, std::vector<std::unique_ptr<World>>& worlds,
+           std::vector<std::unique_ptr<Session>>& sessions, const std::string& assets,
+           const sim::RealmConfig& config, std::mt19937_64& seeds) {
     net::Kind kind{};
     std::vector<uint8_t> body;
     while (true) {
+        // Waiting on the website for whose his token is: the rest keeps till it answers (settle).
+        if (one.signing.valid()) return true;
         const int took = net::take(one.in, kind, body, net::kMostAsked);
         if (took == 0) return true;
         if (took < 0) {
@@ -51,7 +50,18 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
         }
         if (kind == net::Kind::Account && one.world == nullptr && one.account.empty()) {
             net::Account said;
-            if (!net::parse(body, said) || !account(one, said)) return false;
+            if (!net::parse(body, said)) return false;
+            const Door through = door(one, said.key);
+            if (through == Door::Refuse) {
+                core::logError("%s: an account key only the website's sign-in gives", one.who.c_str());
+                return false;
+            }
+            if (through == Door::Wait) {
+                one.signingKind = kind;
+                one.signingAccount = std::move(said);
+                continue;
+            }
+            if (!account(one, said)) return false;
         } else if (kind == net::Kind::Create && one.world == nullptr && !one.account.empty()) {
             net::Create asked;
             if (!net::parse(body, asked) || !create(one, asked, seeds, sessions)) return false;
@@ -60,9 +70,20 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
             if (!net::parse(body, asked) || !drop(one, asked, sessions)) return false;
         } else if (kind == net::Kind::Hello && one.world == nullptr) {
             net::Hello said;
-            if (!net::parse(body, said) || !hello(one, said, worlds, sessions, assets, config, seeds)) {
-                return false;
+            if (!net::parse(body, said)) return false;
+            if (!said.account.empty()) {
+                const Door through = door(one, said.account);
+                if (through == Door::Refuse) {
+                    core::logError("%s: an account key only the website's sign-in gives", one.who.c_str());
+                    return false;
+                }
+                if (through == Door::Wait) {
+                    one.signingKind = kind;
+                    one.signingHello = std::move(said);
+                    continue;
+                }
             }
+            if (!hello(one, said, worlds, sessions, assets, config, seeds)) return false;
         } else if (kind == net::Kind::Command && one.welcomed) {
             sim::Command command;
             if (!net::parse(body, command)) return false;
@@ -131,6 +152,40 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
     }
 }
 
+// Everything that arrived on one connection. False when it must go.
+bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
+          std::vector<std::unique_ptr<Session>>& sessions, const std::string& assets,
+          const sim::RealmConfig& config, std::mt19937_64& seeds) {
+    const size_t had = one.in.size();
+    if (!one.socket.receive(one.in)) return false;
+    if (one.in.size() != had) one.heardAt = Clock::now();
+    return heard(one, worlds, sessions, assets, config, seeds);
+}
+
+// One waiting on the website (signin.cpp), once it has answered: what he said is heard as his
+// account's, then whatever came after it. A token it does not keep is told to sign in again at the
+// character screen, and dropped at a world's door. False when he must go.
+bool settle(Session& one, std::vector<std::unique_ptr<World>>& worlds,
+            std::vector<std::unique_ptr<Session>>& sessions, const std::string& assets,
+            const sim::RealmConfig& config, std::mt19937_64& seeds) {
+    std::string key;
+    if (!signed_(one, key)) return true;
+    if (key.empty()) {
+        if (one.signingKind != net::Kind::Account) return false;
+        one.in.clear();
+        return answer(one, net::Refused::SignIn);
+    }
+    if (key == "!") return false;
+    if (one.signingKind == net::Kind::Account) {
+        one.signingAccount.key = key;
+        if (!account(one, one.signingAccount)) return false;
+    } else {
+        one.signingHello.account = key;
+        if (!hello(one, one.signingHello, worlds, sessions, assets, config, seeds)) return false;
+    }
+    return heard(one, worlds, sessions, assets, config, seeds);
+}
+
 
 }  // namespace mu::server
 
@@ -148,6 +203,8 @@ int main(int argc, char** argv) {
         if (a == "--port" && i + 1 < argc) port = std::atoi(argv[++i]);
         else if (a == "--assets" && i + 1 < argc) assets = argv[++i];
         else if (a == "--store" && i + 1 < argc) store = argv[++i];
+        // The website's account service on this machine (web/server.py): takes launchers' tokens.
+        else if (a == "--accounts" && i + 1 < argc) takeTokensFrom(argv[++i]);
         else if (a == "--speed" && i + 1 < argc) {
             g_speed = std::max(1, std::atoi(argv[++i]));
             g_tick /= g_speed;
@@ -181,7 +238,7 @@ int main(int argc, char** argv) {
             const int s = std::max(2, std::atoi(argv[++i]));
             config.square = {s, s / 2, s / 2};
         } else {
-            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--castle-period S] [--square-period S] [--kit LEVEL:STEM+N,...] [--storm] [--invasion] [--map-cap N] [--speed N]\n");
+            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--accounts HOST:PORT] [--castle-period S] [--square-period S] [--kit LEVEL:STEM+N,...] [--storm] [--invasion] [--map-cap N] [--speed N]\n");
             return 2;
         }
     }
@@ -254,6 +311,12 @@ int main(int argc, char** argv) {
                 }
                 one->udpAt = from;
                 one->udpKnown = true;
+            }
+        }
+        // Those the website has answered for since the last pass (signin.cpp).
+        for (auto& one : sessions) {
+            if (one->signing.valid() && one->socket.open() && !settle(*one, worlds, sessions, assets, config, seeds)) {
+                bye(*one, net::Why::Protocol);
             }
         }
         for (size_t i = 0; i < sessions.size(); ++i) {

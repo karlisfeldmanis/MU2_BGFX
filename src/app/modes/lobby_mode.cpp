@@ -175,6 +175,9 @@ void LobbyMode::answered(const net::Roster& roster) {
         case net::Refused::NotYours:
             lobby_.notice("The character could not be deleted.");
             break;
+        case net::Refused::SignIn:
+            lobby_.notice("Your sign-in has expired. Sign in again in the launcher.", true);
+            break;
     }
     if (refused_ >= 0) sound_.play(refused_);
 }

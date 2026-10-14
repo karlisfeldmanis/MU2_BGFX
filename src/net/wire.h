@@ -110,7 +110,9 @@ namespace mu::net {
 // 30: the raid (docs/game/party.md): PartyWhat::Raid and ::Unraid, PartyState::raid after the members'
 //     health, and up to sim::kRaidMost members in a PartyState; and Invasion, where the Golden
 //     Dragon is on the server, to every client on every map.
-constexpr uint32_t kVersion = 30;
+// 31: the website's accounts (docs/plans/launcher.md): an Account's key may be the launcher's
+//     sign-in token, and a Roster refused SignIn when the website does not keep it.
+constexpr uint32_t kVersion = 31;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
@@ -325,7 +327,8 @@ struct Delete {
 };
 
 // How the last ask went, in the screen's own words (game/ui/lobby.h).
-enum class Refused : uint8_t { None = 0, Taken = 1, NoRoom = 2, BadName = 3, NotYours = 4, Playing = 5 };
+enum class Refused : uint8_t { None = 0, Taken = 1, NoRoom = 2, BadName = 3, NotYours = 4, Playing = 5,
+                               SignIn = 6 };
 
 // One character as the screen stands him: on his pedestal, in what he wears.
 struct Seat {

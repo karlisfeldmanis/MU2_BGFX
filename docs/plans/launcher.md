@@ -36,6 +36,13 @@ The look is the "MU2 Launcher" canvas (claude.ai/artifact/AvN3tu56TjFCX1SbYvnPmT
 - **Done when:** on a private port, a token from a local web service opens the lobby with that
   account's characters; a made-up token is refused with the sign-in line; a machine key still
   works; `sim_test` unchanged.
+- **Done 2026-10-14** (server/src/signin.cpp). On a private port against a local web service: a
+  token opens the character screen as `account000000001`; the same token again is served from the
+  ten-minute memory without asking; a made-up one gets `Refused::SignIn`; a machine key still
+  works; a key that starts `account` is turned away, so no one can name himself into an account; a
+  character made under the token enters Lorencia with the token in its Hello. server_test 64/64.
+  The box's service file takes `--accounts http://127.0.0.1:8080`; **not deployed**: protocol 31
+  goes to the box with the first client that speaks it.
 
 **L2. Releases on the box.** `./mu release windows` puts `dist/windows/MU2/` on the box under
 `/srv/mu2-web/game/windows/`, every file named by its SHA-256, and writes `manifest.json` last:
