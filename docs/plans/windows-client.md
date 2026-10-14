@@ -24,7 +24,7 @@ W1 to W4 are done, and W3 is done in Lorencia and the lobby:
 **How it is built.**
 - Windows is always the player's build: CMake sets `MU2_SHIP` on `WIN32`.
 - `tools/cmake/mingw.cmake` is the toolchain.
-- zlib and GLFW 3.4 come from source (`bootstrap.sh`).
+- zlib and GLFW 3.4 come from source (`mu bootstrap`).
 - The shaders are SPIR-V, made by the Mac's own shaderc (`MU2_HOST_SHADERC`).
 - The Windows halves are `core/watch_win.cpp` (SEH and minidumps), `gfx/window_win.cpp` (no MetalFX) and the `_WIN32` parts of `net/socket.cpp` (Winsock), `core/pack.cpp` (`ReadFile` for `pread`) and `core/paths.cpp`. `paths.cpp` puts `data/` and `logs/` beside the exe and the player's files in `%APPDATA%\MU2`.
 - `src/app/mu2.manifest` sets UTF-8, PerMonitorV2 DPI and long paths.
@@ -39,8 +39,15 @@ W1 to W4 are done, and W3 is done in Lorencia and the lobby:
   The log's `formats:` line says what a GPU lacks.
 - **Vulkan does not zero new textures.** With bloom off, nothing wrote bloom level 0, yet the
   present sampled it times 0. Metal's memory was zeros; Vulkan's held NaNs, and NaN × 0 is NaN.
-  Red and blue died in the tone curve and the whole scene went green, and with bloom on the
-  same garbage made white blobs. `Renderer::bloom` now clears level 0 once when bloom is off.
+  Red and blue died in the tone curve and the whole scene went green. `Renderer::bloom` now
+  clears level 0 once when bloom is off.
+- **mingw's GCC 15.2 miscompiles at -O3.** The vectoriser wrote `Renderer::setPointLights`'s
+  loop with a runtime overlap check that read each light's colour four bytes early. Every
+  lamp then lit in (position y, position z, reach): negative green, which the bloom blew up into
+  white blobs over the scene. Without vectorising that file the colours were right, so the whole
+  Windows build is -O2 now, which vectorises only loops that need no such check. Lockstep is
+  unchanged (`sim_test.exe` the same 17,752 lines), and the lobby is faster, about 176 fps
+  against 150. A Mac build never showed it: clang does not vectorise the loop that way.
 - **Vulkan takes instance data by position, Metal by name.** bgfx puts `i_dataN` at the
   locations after the vertex attributes, in order. `vs_depth` and `vs_skinned_depth` skipped
   `i_data4`, so their `i_data5` received `i_data4`'s bytes. They now declare it.
@@ -50,8 +57,9 @@ W1 to W4 are done, and W3 is done in Lorencia and the lobby:
   type after each SPIR-V build.
 - **Wine only: Rosetta can vanish.** A macOS update removed it, and `wine` said "bad CPU type".
   Reinstall it with `softwareupdate --install-rosetta --agree-to-license`.
-- **Seen once, not since:** a GPU page fault (`VK_ERROR_DEVICE_LOST`) on the very first run.
-  Eight runs since, cold and warm, were clean. Watch for it.
+- **A GPU page fault (`VK_ERROR_DEVICE_LOST`)** came in roughly one run in five at -O3, and in
+  none of the runs since -O2. It was most likely the same miscompile reaching the GPU. Watch
+  for it.
 - **`./mu dist` looked for the sheets in `sheets/`**, not `content/sheets/`, after the folder
   move. That broke `dist macos` too; it is fixed.
 

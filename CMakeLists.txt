@@ -33,6 +33,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Windows (docs/plans/windows-client.md): one static .exe, no mingw DLLs beside it, and
 # <windows.h> without its min/max macros, wherever a file includes it.
 if(WIN32)
+  # -O2, not -O3: mingw's GCC 15.2 vectorised Renderer::setPointLights at -O3 with a runtime
+  # overlap check that read each light's colour four bytes early, so every lamp lit in
+  # (position y, position z, reach) -- negative green, the bloom blew it into white blobs. -O2
+  # vectorises only loops that need no such check. The rules' results are the same at either
+  # level (-ffp-contract=off, no fast math); sim_test.exe proves it (docs/plans/windows-client.md).
+  foreach(lang C CXX)
+    string(REPLACE "-O3" "-O2" CMAKE_${lang}_FLAGS_RELEASE "${CMAKE_${lang}_FLAGS_RELEASE}")
+  endforeach()
   add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN _WIN32_WINNT=0x0A00
     _POSIX_THREAD_SAFE_FUNCTIONS)   # localtime_r and gmtime_r, as on the Mac and the server
   add_link_options(-static -static-libgcc -static-libstdc++)
@@ -83,7 +91,7 @@ foreach(t bx bimg bimg_decode bimg_encode bgfx shaderc)
 endforeach()
 
 if(WIN32)
-  # GLFW 3.4 from source (bootstrap.sh), static, for Windows' window and input.
+  # GLFW 3.4 from source (mu bootstrap), static, for Windows' window and input.
   set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
   set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
   set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -280,7 +288,7 @@ add_library(mu_net STATIC
   src/net/broker_wire.cpp
 )
 # zlib packs the Welcome's snapshot (net::pack): the system's on the Mac, zlib1g-dev on the box.
-# Windows has no system zlib: bootstrap.sh fetches its source, built here.
+# Windows has no system zlib: mu bootstrap fetches its source, built here.
 if(WIN32)
   file(GLOB MU_ZLIB_SOURCES ${MU_EXTERN}/zlib/*.c)
   add_library(mu_zlib STATIC ${MU_ZLIB_SOURCES})
