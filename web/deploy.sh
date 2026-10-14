@@ -18,6 +18,8 @@ stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
 git -C "$(git rev-parse --show-toplevel)" archive "HEAD:${here}web" | tar -x -C "$stage"
 echo "$commit" > "$stage/DEPLOYED"
+# mktemp makes the folder 0700 and rsync -a carries that over; the service's own user must read it.
+chmod -R a+rX "$stage"
 if ! git diff --quiet HEAD -- web; then
   echo "note: web/ differs from HEAD; HEAD $commit goes, not those edits"
 fi
