@@ -89,8 +89,11 @@ void Bust::resize(int width, int height) {
         bgfx::createTexture2D(uint16_t(width), uint16_t(height), false, 1,
                               bgfx::TextureFormat::RGBA8,
                               BGFX_TEXTURE_RT_MSAA_X4 | BGFX_SAMPLER_UVW_CLAMP);
+    // D32F, not D24S8: Apple GPUs have no 24-bit depth (bgfx's Metal swapped in 32-bit float
+    // unasked) and neither do AMD's Vulkan drivers, where the target was never made and the
+    // bust drew over the screen's corner (docs/plans/windows-client.md). Nothing uses stencil.
     const bgfx::TextureHandle depth = bgfx::createTexture2D(
-        uint16_t(width), uint16_t(height), false, 1, bgfx::TextureFormat::D24S8,
+        uint16_t(width), uint16_t(height), false, 1, bgfx::TextureFormat::D32F,
         BGFX_TEXTURE_RT_WRITE_ONLY | BGFX_TEXTURE_RT_MSAA_X4);
     const bgfx::TextureHandle both[2] = {colour, depth};
     target_ = bgfx::createFrameBuffer(2, both, true);

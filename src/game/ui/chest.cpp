@@ -1,6 +1,7 @@
 #include "game/ui/chest.h"
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 
 #include "game/ui/controls.h"

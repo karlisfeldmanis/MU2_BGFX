@@ -10,6 +10,11 @@ option(MU2_SERVER_ONLY "build only what a server links: core, content data, sim,
 # studio, bench or developer switch -- reading its data from the packs inside the bundle and
 # writing into the player's own folder. Configured in a folder of its own by `./mu dist`.
 option(MU2_SHIP "the player's build: lobby only, player switches only, data from packs" OFF)
+# Windows is only ever the player's client (docs/plans/windows-client.md): the studio, the bench
+# and the server stay on the Mac and the box.
+if(WIN32 AND NOT MU2_SERVER_ONLY)
+  set(MU2_SHIP ON)
+endif()
 if(MU2_SHIP)
   add_compile_definitions(MU2_SHIP)
 endif()
@@ -25,6 +30,13 @@ set(CMAKE_CXX_STANDARD 20)
 # header is compiled into the client's files too.
 add_compile_options(-ffp-contract=off)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Windows (docs/plans/windows-client.md): one static .exe, no mingw DLLs beside it, and
+# <windows.h> without its min/max macros, wherever a file includes it.
+if(WIN32)
+  add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN _WIN32_WINNT=0x0A00
+    _POSIX_THREAD_SAFE_FUNCTIONS)   # localtime_r and gmtime_r, as on the Mac and the server
+  add_link_options(-static -static-libgcc -static-libstdc++)
+endif()
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
 endif()
@@ -52,6 +64,17 @@ set(BGFX_CUSTOM_TARGETS OFF CACHE BOOL "" FORCE)
 # what compiles in bgfx's resource lock, so the preloader's worker may create textures and
 # buffers while the main thread keeps presenting the spinner. src/main.cpp, "The preloader".
 set(BGFX_CONFIG_MULTITHREADED ON CACHE BOOL "" FORCE)
+# Cross-compiled for Windows (docs/plans/windows-client.md), shaderc would be a Windows program
+# this Mac cannot run: the Mac's own builds the shaders, named by MU2_HOST_SHADERC (`./mu build
+# windows` passes the one out/build made). bgfx's shader functions exist once a bgfx::shaderc does.
+if(CMAKE_CROSSCOMPILING)
+  set(BGFX_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+  if(NOT MU2_HOST_SHADERC)
+    set(MU2_HOST_SHADERC ${CMAKE_SOURCE_DIR}/out/build/third_party/extern/bgfx.cmake/cmake/bgfx/shaderc)
+  endif()
+  add_executable(bgfx::shaderc IMPORTED GLOBAL)
+  set_target_properties(bgfx::shaderc PROPERTIES IMPORTED_LOCATION ${MU2_HOST_SHADERC})
+endif()
 add_subdirectory(third_party/extern/bgfx.cmake EXCLUDE_FROM_ALL)
 foreach(t bx bimg bimg_decode bimg_encode bgfx shaderc)
   if(TARGET ${t})
@@ -59,10 +82,26 @@ foreach(t bx bimg bimg_decode bimg_encode bgfx shaderc)
   endif()
 endforeach()
 
-find_package(glfw3 3.3 REQUIRED)
+if(WIN32)
+  # GLFW 3.4 from source (bootstrap.sh), static, for Windows' window and input.
+  set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+  set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+  set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+  set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+  add_subdirectory(${MU_EXTERN}/glfw ${CMAKE_BINARY_DIR}/glfw EXCLUDE_FROM_ALL)
+  target_compile_options(glfw PRIVATE -w)
+else()
+  find_package(glfw3 3.3 REQUIRED)
+endif()
 
 # ---- shaders ------------------------------------------------------------------------------
-# Metal only, by decision; see docs/reference/conventions.md.
+# Metal on the Mac (docs/reference/conventions.md); SPIR-V for Vulkan on Windows
+# (docs/plans/windows-client.md).
+if(WIN32)
+  set(MU_SHADER_PROFILE spirv)
+else()
+  set(MU_SHADER_PROFILE metal)
+endif()
 set(SHADER_DIR ${CMAKE_SOURCE_DIR}/shaders)
 set(SHADER_OUT ${CMAKE_BINARY_DIR}/shaders)
 # Where shaderc finds bgfx_shader.sh. Without it every shader that includes common.sh fails
@@ -76,19 +115,19 @@ file(GLOB FS_FILES CONFIGURE_DEPENDS ${SHADER_DIR}/fs_*.sc)
 if(VS_FILES)
   bgfx_compile_shaders(TYPE VERTEX SHADERS ${VS_FILES}
     VARYING_DEF ${SHADER_DIR}/varying.def.sc OUTPUT_DIR ${SHADER_OUT}
-    OUT_FILES_VAR VS_OUT PROFILES metal)
+    OUT_FILES_VAR VS_OUT PROFILES ${MU_SHADER_PROFILE})
 endif()
 if(FS_FILES)
   bgfx_compile_shaders(TYPE FRAGMENT SHADERS ${FS_FILES}
     VARYING_DEF ${SHADER_DIR}/varying.def.sc OUTPUT_DIR ${SHADER_OUT}
-    OUT_FILES_VAR FS_OUT PROFILES metal)
+    OUT_FILES_VAR FS_OUT PROFILES ${MU_SHADER_PROFILE})
 endif()
 # Compute: the town's scenery culled and drawn by the GPU itself (gfx/scenery.h).
 file(GLOB CS_FILES CONFIGURE_DEPENDS ${SHADER_DIR}/cs_*.sc)
 if(CS_FILES)
   bgfx_compile_shaders(TYPE COMPUTE SHADERS ${CS_FILES}
     VARYING_DEF ${SHADER_DIR}/varying.def.sc OUTPUT_DIR ${SHADER_OUT}
-    OUT_FILES_VAR CS_OUT PROFILES metal)
+    OUT_FILES_VAR CS_OUT PROFILES ${MU_SHADER_PROFILE})
 endif()
 # And the includes. bgfx_compile_shaders makes each shader depend on its own .sc and on
 # varying.def.sc and on nothing else, so an edit to common.sh, shadow.sh or lights.sh rebuilt
@@ -98,6 +137,13 @@ endif()
 file(GLOB SHADER_INCLUDES CONFIGURE_DEPENDS ${SHADER_DIR}/*.sh)
 foreach(out ${VS_OUT} ${FS_OUT} ${CS_OUT})
   add_custom_command(OUTPUT ${out} APPEND DEPENDS ${SHADER_INCLUDES})
+  # SPIR-V's buffer types renamed apart from their variables, for MoltenVK under Wine
+  # (tools/cmake/spirv_names.py).
+  if(MU_SHADER_PROFILE STREQUAL "spirv")
+    add_custom_command(OUTPUT ${out} APPEND
+      COMMAND python3 ${CMAKE_SOURCE_DIR}/tools/cmake/spirv_names.py ${out}
+      DEPENDS ${CMAKE_SOURCE_DIR}/tools/cmake/spirv_names.py)
+  endif()
 endforeach()
 add_custom_target(mu2_shaders DEPENDS ${VS_OUT} ${FS_OUT} ${CS_OUT})
 
@@ -117,7 +163,7 @@ set(MU_ROOT ${CMAKE_SOURCE_DIR})
 set(MU_OUT ${MU_ROOT}/out)
 set(MU_ASSETS ${MU_OUT}/assets)
 set(MU_DIRS
-  MU2_SHADER_DIR="${SHADER_OUT}/metal"
+  MU2_SHADER_DIR="${SHADER_OUT}/${MU_SHADER_PROFILE}"
   MU2_ASSET_DIR="${MU_ASSETS}"
   MU2_SHEET_DIR="${MU_ROOT}/content/sheets"
   MU2_ROOT_DIR="${MU_ROOT}"
@@ -142,6 +188,12 @@ add_library(mu_core STATIC
   src/core/paths.cpp
 )
 target_include_directories(mu_core PUBLIC src)
+# Windows' own black box: SEH and minidumps in place of signals and backtrace().
+if(WIN32)
+  set_source_files_properties(src/core/watch.cpp PROPERTIES HEADER_FILE_ONLY ON)
+  target_sources(mu_core PRIVATE src/core/watch_win.cpp)
+  target_link_libraries(mu_core PUBLIC dbghelp)
+endif()
 target_compile_definitions(mu_core PRIVATE ${MU_DIRS})
 target_compile_options(mu_core PRIVATE ${MU_WARNINGS})
 
@@ -228,14 +280,28 @@ add_library(mu_net STATIC
   src/net/broker_wire.cpp
 )
 # zlib packs the Welcome's snapshot (net::pack): the system's on the Mac, zlib1g-dev on the box.
-find_package(ZLIB REQUIRED)
+# Windows has no system zlib: bootstrap.sh fetches its source, built here.
+if(WIN32)
+  file(GLOB MU_ZLIB_SOURCES ${MU_EXTERN}/zlib/*.c)
+  add_library(mu_zlib STATIC ${MU_ZLIB_SOURCES})
+  target_include_directories(mu_zlib PUBLIC ${MU_EXTERN}/zlib)
+  target_compile_options(mu_zlib PRIVATE -w)
+  add_library(ZLIB::ZLIB ALIAS mu_zlib)
+else()
+  find_package(ZLIB REQUIRED)
+endif()
 target_link_libraries(mu_net PUBLIC mu_sim ZLIB::ZLIB)
+if(WIN32)
+  target_link_libraries(mu_net PUBLIC ws2_32)
+endif()
 target_compile_options(mu_net PRIVATE ${MU_WARNINGS})
 
 # The server (server/src, server/README.md): every map's realm for whoever connects, no window.
 # Built in both modes, so the Mac can run one for the client beside it.
 # Its characters live in a SQLite file of its own (server/src/store.h): the system's library,
 # which the macOS SDK has and the box from libsqlite3-dev. Never the client's (foundation 11).
+# Not on Windows: the server runs on Linux, and a Windows build is the player's client.
+if(NOT WIN32)
 find_package(SQLite3 REQUIRED)
 # CMake 4.3 renamed its target, and the box's is 4.2.
 if(TARGET SQLite3::SQLite3)
@@ -279,6 +345,7 @@ target_include_directories(server_test PRIVATE src server/src)
 target_link_libraries(server_test PRIVATE mu_net ${MU_SQLITE})
 target_compile_definitions(server_test PRIVATE MU2_ASSET_DIR="${MU_ASSETS}")
 target_compile_options(server_test PRIVATE ${MU_WARNINGS})
+endif()  # NOT WIN32: the server
 
 if(NOT MU2_SERVER_ONLY)
 # The half of content that uploads: textures, meshes and the ground, into bgfx.
@@ -299,8 +366,6 @@ add_library(mu_gfx STATIC
   src/gfx/lighting.cpp
   src/gfx/renderer.cpp
   src/gfx/renderer_setup.cpp
-  src/gfx/metalfx.mm
-  src/gfx/window_mac.mm
   src/gfx/renderer_probe.cpp
   src/gfx/renderer_scenery.cpp
   src/gfx/scenery.cpp
@@ -317,7 +382,13 @@ target_link_libraries(mu_gfx PUBLIC mu_content_gpu glfw)
 target_compile_definitions(mu_gfx PRIVATE ${MU_DIRS})
 target_compile_options(mu_gfx PRIVATE ${MU_WARNINGS})
 if(APPLE)
+  target_sources(mu_gfx PRIVATE src/gfx/metalfx.mm src/gfx/window_mac.mm)
   target_compile_definitions(mu_gfx PRIVATE GLFW_EXPOSE_NATIVE_COCOA)
+elseif(WIN32)
+  # No MetalFX and no menu bar: gfx/window_win.cpp says so (docs/plans/windows-client.md).
+  target_sources(mu_gfx PRIVATE src/gfx/window_win.cpp)
+  target_compile_definitions(mu_gfx PRIVATE GLFW_EXPOSE_NATIVE_WIN32)
+  target_include_directories(mu_gfx PUBLIC ${MU_EXTERN}/bgfx.cmake/bx/include/compat/mingw)
 endif()
 
 # The client's line to the realm (src/client, docs/plans/order-plan.md sprint C): the Link, the
@@ -568,6 +639,23 @@ add_dependencies(mu2 build_version)
 target_link_libraries(mu2 PRIVATE mu_game bimg_encode)
 target_compile_definitions(mu2 PRIVATE ${MU_DIRS})
 target_compile_options(mu2 PRIVATE ${MU_WARNINGS})
+if(WIN32)
+  # MU2.exe: no console window; the manifest and version (src/app/mu2.rc); binmode.o, so every
+  # fopen and open is binary as on the Mac, not Windows' text mode that turns \n into \r\n;
+  # winmm for timeBeginPeriod (src/main.cpp).
+  string(REPLACE "." ";" MU2_VERSION_PARTS ${MU2_VERSION})
+  list(GET MU2_VERSION_PARTS 0 MU2_VERSION_MAJOR)
+  list(GET MU2_VERSION_PARTS 1 MU2_VERSION_MINOR)
+  list(GET MU2_VERSION_PARTS 2 MU2_VERSION_PATCH)
+  target_sources(mu2 PRIVATE src/app/mu2.rc)
+  set_source_files_properties(src/app/mu2.rc PROPERTIES
+    COMPILE_DEFINITIONS "MU2_VERSION_MAJOR=${MU2_VERSION_MAJOR};MU2_VERSION_MINOR=${MU2_VERSION_MINOR};MU2_VERSION_PATCH=${MU2_VERSION_PATCH}"
+    OBJECT_DEPENDS ${CMAKE_SOURCE_DIR}/src/app/mu2.manifest)
+  execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=binmode.o
+                  OUTPUT_VARIABLE MU_BINMODE OUTPUT_STRIP_TRAILING_WHITESPACE)
+  target_link_libraries(mu2 PRIVATE ${MU_BINMODE} winmm)
+  set_target_properties(mu2 PROPERTIES OUTPUT_NAME MU2 WIN32_EXECUTABLE TRUE)
+endif()
 if(APPLE)
   target_compile_definitions(mu2 PRIVATE GLFW_EXPOSE_NATIVE_COCOA)
   target_link_libraries(mu2 PRIVATE "-framework Cocoa" "-framework Metal" "-framework MetalFX" "-framework QuartzCore" "-framework IOKit")
@@ -757,6 +845,9 @@ target_compile_options(raid PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
 # The server build's own: every test that runs without a window, a sound device or the client's
 # meshes (cooked_test reads those; a server has only the tables).
+if(MU2_SERVER_ONLY AND WIN32)
+  return()   # Windows' tests run under Wine, by hand (docs/plans/windows-client.md)
+endif()
 if(MU2_SERVER_ONLY)
   add_custom_target(checks
     DEPENDS placement_test sim_test save_test server_test
@@ -787,6 +878,11 @@ endif()
 # sizecheck is the third: a file over 800 lines (a header 1000) fails unless tools/sizecheck.allow
 # lists it, and a listed one may never grow past its size there. It is what stops the hubs
 # growing back (docs/plans/order-plan.md, sprint A).
+# Not on Windows: the checks run on the Mac, and the Windows build's own (sim_test.exe under Wine)
+# by hand (docs/plans/windows-client.md).
+if(WIN32)
+  return()
+endif()
 add_custom_target(checks
   DEPENDS cooked_test placement_test sim_test boids_test sound_test save_test server_test cooker_test
   COMMAND ${CMAKE_SOURCE_DIR}/tools/layercheck.py

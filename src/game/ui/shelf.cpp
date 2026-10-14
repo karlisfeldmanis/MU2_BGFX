@@ -1,6 +1,7 @@
 #include "game/ui/shelf.h"
 
 #include <algorithm>
+#include <cmath>
 
 #include "game/ui/controls.h"
 #include "game/ui/describe.h"

@@ -32,6 +32,7 @@
     ./mu build [--debug|--trace]             the game into out/build (or out/build-debug)
     ./mu bootstrap                           fetch third_party/extern at its pins
     ./mu dist macos [--commit REF]           the player's app, dist/macos/MU2.app, from a commit
+    ./mu dist windows [--commit REF]         the Windows client, dist/windows/MU2/ and its zip
 
 Every command takes --json and then prints one JSON object as its last line, for a script or
 an agent to read instead of the prose. Every step runs niced and held to `mu cores` (60% of
@@ -136,7 +137,7 @@ def main():
 
     sub.add_parser("check", parents=[common])
     d = sub.add_parser("dist", parents=[common])
-    d.add_argument("target", choices=["macos"], help="the platform; macos so far")
+    d.add_argument("target", choices=["macos", "windows"], help="the platform")
     d.add_argument("--commit", default="HEAD", help="the commit to build it from (HEAD)")
 
     k = sub.add_parser("cores", parents=[common])

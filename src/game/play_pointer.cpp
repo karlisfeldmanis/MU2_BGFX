@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cstring>
 
 #include "core/files.h"
 #include "core/log.h"

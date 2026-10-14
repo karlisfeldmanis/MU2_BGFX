@@ -50,6 +50,28 @@ if [ ! -f third_party/extern/zstd/lib/zstd.h ]; then
   tar -xzf third_party/extern/zstd.tar.gz -C third_party/extern/zstd --strip-components=1 zstd-1.5.7/lib zstd-1.5.7/LICENSE
   rm -f third_party/extern/zstd.tar.gz
 fi
+# For the Windows client only (docs/plans/windows-client.md): the Mac has both in its SDK and
+# Homebrew, a Windows build has neither, so it builds them from source. zlib 1.3.1 packs the
+# Welcome's snapshot (net::pack) and GLFW 3.4 opens the window. Pinned by the checksums the
+# projects publish.
+ZLIB_URL=https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz
+ZLIB_SHA256=9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23
+if [ ! -f third_party/extern/zlib/zlib.h ]; then
+  curl -sSL -o third_party/extern/zlib.tar.gz $ZLIB_URL
+  echo "$ZLIB_SHA256  third_party/extern/zlib.tar.gz" | shasum -a 256 -c - || { rm -f third_party/extern/zlib.tar.gz; exit 1; }
+  mkdir -p third_party/extern/zlib
+  tar -xzf third_party/extern/zlib.tar.gz -C third_party/extern/zlib --strip-components=1
+  rm -f third_party/extern/zlib.tar.gz
+fi
+GLFW_URL=https://github.com/glfw/glfw/releases/download/3.4/glfw-3.4.zip
+GLFW_SHA256=b5ec004b2712fd08e8861dc271428f048775200a2df719ccf575143ba749a3e9
+if [ ! -f third_party/extern/glfw/include/GLFW/glfw3.h ]; then
+  curl -sSL -o third_party/extern/glfw.zip $GLFW_URL
+  echo "$GLFW_SHA256  third_party/extern/glfw.zip" | shasum -a 256 -c - || { rm -f third_party/extern/glfw.zip; exit 1; }
+  unzip -q -o third_party/extern/glfw.zip -d third_party/extern
+  mv third_party/extern/glfw-3.4 third_party/extern/glfw
+  rm -f third_party/extern/glfw.zip
+fi
 # The overlay's typeface, and it is MU2's by inheritance rather than by choice of ours: MU2
 # sets no theme font in either of its Godot projects, so every label it draws is Godot's own
 # fallback, which is Open Sans SemiBold. Taking the same file here is what makes a viewer

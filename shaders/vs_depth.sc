@@ -1,4 +1,4 @@
-$input a_position, a_texcoord0, i_data0, i_data1, i_data2, i_data3, i_data5
+$input a_position, a_texcoord0, i_data0, i_data1, i_data2, i_data3, i_data4, i_data5
 $output v_texcoord0, v_light
 
 // Depth only, for the shadow pass: position and texcoord and nothing else. The texcoord is

@@ -4,7 +4,7 @@
 #include <bx/math.h>
 #include <bx/timer.h>
 
-#include <sys/stat.h>
+#include <filesystem>
 
 #include <chrono>
 #include <cstdio>
@@ -173,7 +173,10 @@ int Application::run(int argc, char** argv) {
 
     // Made rather than assumed: a --shot-path that does not exist turned every shot into a
     // logged failure and the run's exit code into 1, long after the run was worth repeating.
-    if (args_.shotEvery) ::mkdir(paths_.shots.c_str(), 0755);
+    if (args_.shotEvery) {
+        std::error_code ignored;
+        std::filesystem::create_directories(paths_.shots, ignored);
+    }
 
     // A crash or a freeze leaves a report in crashes/ (core/watch.h).
     core::watchStart(folders.crashes.c_str());

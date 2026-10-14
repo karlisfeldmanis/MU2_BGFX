@@ -720,6 +720,11 @@ private:
     bgfx::TextureHandle bloomTex_[kBloomLevels] = {};
     bgfx::FrameBufferHandle bloomFb_[kBloomLevels] = {};
     uint16_t bloomW_[kBloomLevels] = {}, bloomH_[kBloomLevels] = {};
+    // Level 0 has never been written since it was made. With bloom off nothing draws into it,
+    // yet the present samples it (times a strength of 0): Metal hands out zeroed memory, Vulkan
+    // whatever was there, and a NaN times 0 is NaN -- the green Windows client
+    // (docs/plans/windows-client.md). bloom() clears it once when it is off.
+    bool bloomUnwritten_ = true;
     void bloom(const Lighting& lighting);
 
     // --- the reflection probe, sprint 8c ---------------------------------------------------

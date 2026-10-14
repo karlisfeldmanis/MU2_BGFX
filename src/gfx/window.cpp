@@ -1,9 +1,11 @@
 #include "gfx/window.h"
 
 #include <GLFW/glfw3.h>
-#include <GLFW/glfw3native.h>  // GLFW_EXPOSE_NATIVE_COCOA comes from CMake
+#include <GLFW/glfw3native.h>  // GLFW_EXPOSE_NATIVE_COCOA or _WIN32 comes from CMake
 
 #include <bgfx/bgfx.h>
+
+#include <string>
 
 #include "core/log.h"
 #include "gfx/callback.h"
@@ -136,7 +138,12 @@ bool Window::open(const WindowDesc& desc) {
     glfwGetFramebufferSize(handle_, &width_, &height_);
 
     bgfx::Init init;
-    init.type = bgfx::RendererType::Metal;  // this Mac only; see docs/reference/conventions.md
+#ifdef _WIN32
+    // Vulkan on Windows, the renderer Wine on this Mac runs for real (docs/plans/windows-client.md).
+    init.type = bgfx::RendererType::Vulkan;
+#else
+    init.type = bgfx::RendererType::Metal;  // the Mac; see docs/reference/conventions.md
+#endif
     // The window goes on the swap chain, not on platformData: this bgfx asks for it there,
     // and it is the swap chain that carries the size, the formats and the latency. Kept in
     // chain_ so a resize can hand the same description back with only the size changed.
@@ -146,7 +153,11 @@ bool Window::open(const WindowDesc& desc) {
     // buffers; handing the bare one to bgfx makes CAMetalLayer throw on setPixelFormat
     // before the first frame.
     chain_ = init.swapChain;
+#ifdef _WIN32
+    chain_.nwh = glfwGetWin32Window(handle_);
+#else
     chain_.nwh = glfwGetCocoaWindow(handle_);
+#endif
     chain_.width = uint32_t(width_);
     chain_.height = uint32_t(height_);
     init.swapChain = chain_;
@@ -196,6 +207,28 @@ bool Window::open(const WindowDesc& desc) {
     core::logf("homogeneous depth %d, origin bottom left %d, max texture %u, 32-bit indices %d",
                caps->homogeneousDepth, caps->originBottomLeft, caps->limits.maxTextureSize,
                (caps->supported & BGFX_CAPS_INDEX32) != 0);
+    // What this GPU does with each format the renderer asks for: sampled (2d), drawn into (fb),
+    // multisampled (msaa), or only emulated by a conversion on upload. A player's log then says
+    // which one their GPU lacks (docs/plans/windows-client.md: D24S8 was missing on Vulkan).
+    struct Wanted { bgfx::TextureFormat::Enum format; const char* name; };
+    static const Wanted kWanted[] = {
+        {bgfx::TextureFormat::RGBA8, "RGBA8"},     {bgfx::TextureFormat::RGBA16, "RGBA16"},
+        {bgfx::TextureFormat::RGBA16F, "RGBA16F"}, {bgfx::TextureFormat::RGBA32F, "RGBA32F"},
+        {bgfx::TextureFormat::RG16F, "RG16F"},     {bgfx::TextureFormat::R16F, "R16F"},
+        {bgfx::TextureFormat::R8, "R8"},           {bgfx::TextureFormat::D16, "D16"},
+        {bgfx::TextureFormat::D32F, "D32F"},       {bgfx::TextureFormat::BC7, "BC7"},
+        {bgfx::TextureFormat::BC5, "BC5"},
+    };
+    std::string formats;
+    for (const Wanted& one : kWanted) {
+        const uint32_t f = caps->formats[one.format];
+        formats += std::string(formats.empty() ? "" : ", ") + one.name + " " +
+                   (f & BGFX_CAPS_FORMAT_TEXTURE_2D ? "2d" : "-") +
+                   (f & BGFX_CAPS_FORMAT_TEXTURE_2D_EMULATED ? "(emulated)" : "") +
+                   (f & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER ? " fb" : "") +
+                   (f & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA ? " msaa" : "");
+    }
+    core::logf("formats: %s", formats.c_str());
     return true;
 }
 

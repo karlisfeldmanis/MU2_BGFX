@@ -44,7 +44,7 @@ void Portrait::render(gfx::Renderer& renderer, const std::vector<gfx::Drawable>&
         const bgfx::TextureHandle colour = bgfx::createTexture2D(
             kSide, kSide, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_RT_MSAA_X4 | BGFX_SAMPLER_UVW_CLAMP);
         const bgfx::TextureHandle depth = bgfx::createTexture2D(
-            kSide, kSide, false, 1, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT_WRITE_ONLY | BGFX_TEXTURE_RT_MSAA_X4);
+            kSide, kSide, false, 1, bgfx::TextureFormat::D32F, BGFX_TEXTURE_RT_WRITE_ONLY | BGFX_TEXTURE_RT_MSAA_X4);
         const bgfx::TextureHandle both[2] = {colour, depth};
         target_ = bgfx::createFrameBuffer(2, both, true);
         picture_.handle = colour;

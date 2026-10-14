@@ -32,6 +32,7 @@ import manifest  # noqa: E402
 import settings  # noqa: E402
 
 SHIP = os.path.join(OUT, "build-ship")
+WIN = os.path.join(OUT, "build-windows")
 SNAPSHOT = os.path.join(OUT, "build-ship-src")
 DIST = os.path.join(ROOT, "dist")
 GLFW = "libglfw.3.dylib"
@@ -130,44 +131,92 @@ def bundle(app, say):
             raise RuntimeError(f"the app still links {lib}, which a player's Mac may not have")
 
 
-def dist(target, say, ref="HEAD", level=12):
-    if target != "macos":
-        raise RuntimeError(f"dist {target}: only macos so far (docs/plans/layout.md, Windows and Linux)")
-    started = time.time()
-    cores, _ = settings.cores()
-    made_from = snapshot(ref, say)
-    build(cores, say)
+def build_windows(cores, say):
+    """MU2.exe, cross-compiled from the same snapshot by mingw (docs/plans/windows-client.md). Its
+    shaders are SPIR-V, made by build-ship's own shaderc, the one this Mac can run."""
+    cache = os.path.join(WIN, "CMakeCache.txt")
+    if os.path.exists(cache) and f"CMAKE_HOME_DIRECTORY:INTERNAL={SNAPSHOT}\n" not in open(cache).read():
+        shutil.rmtree(WIN)
+    if not os.path.exists(os.path.join(WIN, "build.ninja")):
+        say("configuring build-windows/ (mingw); the first build compiles bgfx and glfw")
+        shaderc = os.path.join(SHIP, "third_party", "extern", "bgfx.cmake", "cmake", "bgfx", "shaderc")
+        run(["cmake", "-S", SNAPSHOT, "-B", WIN, "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release",
+             "-DCMAKE_TOOLCHAIN_FILE=" + os.path.join(SNAPSHOT, "tools", "cmake", "mingw.cmake"),
+             "-DMU2_HOST_SHADERC=" + shaderc], say)
+    say("building MU2.exe")
+    run(["cmake", "--build", WIN, "--target", "mu2", "--", f"-j{cores}"], say)
 
-    shaders = os.path.join(SHIP, "shaders", "metal")
-    sheets = os.path.join(SNAPSHOT, "sheets")
-    found = manifest.runtime(shaders_dir=shaders)
+
+def pack(data, shaders, profile, lists, cores, level, say):
+    """The manifest's packs into `data`, then every file read back through the game's reader."""
+    sheets = os.path.join(SNAPSHOT, "content", "sheets")  # the commit's, since layout step 3
+    found = manifest.runtime(shaders_dir=shaders, profile=profile)
     if found["missing"]:
         say(f"{len(found['missing'])} files are named but not on disk; the packs go without them")
     files = sum(len(p) for p in found["packs"].values())
     size = sum(sum(p.values()) for p in found["packs"].values())
     say(f"the manifest: {files} files, {size / 1e9:.2f} GB in {len(found['packs'])} packs")
-
-    app = os.path.join(DIST, "macos", "MU2.app")
-    bundle(app, say)
-    data = os.path.join(app, "Contents", "Resources", "data")
     os.makedirs(data, exist_ok=True)
-    lists = os.path.join(DIST, "macos", "lists")
     os.makedirs(lists, exist_ok=True)
     mupack = os.path.join(SHIP, "mupack")
     every = os.path.join(lists, "all.txt")
     with open(every, "w") as everything:
-        for pack, entries in sorted(found["packs"].items()):
-            listed = os.path.join(lists, pack + ".txt")
+        for name, entries in sorted(found["packs"].items()):
+            listed = os.path.join(lists, name + ".txt")
             with open(listed, "w") as out:
                 for logical in sorted(entries):
                     line = f"{logical}\t{source_of(logical, shaders, sheets)}\n"
                     out.write(line)
                     everything.write(line)
-            say(run([mupack, os.path.join(data, pack + ".mupak"), listed, "--level", str(level),
+            say(run([mupack, os.path.join(data, name + ".mupak"), listed, "--level", str(level),
                      "--threads", str(cores)], say).strip())
-
     say("reading every file back through the game's reader")
     say(run([mupack, "--check", data, every], say).strip().splitlines()[-1])
+    return files, size
+
+
+def dist_windows(say, ref, level):
+    """dist/windows/MU2/: MU2.exe, data/*.mupak and logs/, and MU2-windows.zip of it. The packs
+    are the Mac's but for the shaders, which are SPIR-V for Vulkan."""
+    started = time.time()
+    cores, _ = settings.cores()
+    made_from = snapshot(ref, say)
+    build(cores, say)  # the Mac's mupack and shaderc
+    build_windows(cores, say)
+    client = os.path.join(DIST, "windows", "MU2")
+    shutil.rmtree(client, ignore_errors=True)
+    os.makedirs(os.path.join(client, "logs"))
+    shutil.copy2(os.path.join(WIN, "MU2.exe"), client)
+    files, size = pack(os.path.join(client, "data"), os.path.join(WIN, "shaders", "spirv"), "spirv",
+                       os.path.join(DIST, "windows", "lists"), cores, level, say)
+    with open(os.path.join(client, "BUILT_FROM"), "w") as out:
+        out.write(made_from + "\n")
+    zipped = os.path.join(DIST, "windows", "MU2-windows.zip")
+    if os.path.exists(zipped):
+        os.remove(zipped)
+    say("zipping it (the packs are compressed already, so stored)")
+    run(["zip", "-r", "-0", "-q", zipped, "MU2"], say, cwd=os.path.join(DIST, "windows"))
+    total = os.path.getsize(zipped)
+    say(f"{zipped}: {total / 1e9:.2f} GB from {made_from}, in {time.time() - started:.0f} s; "
+        f"unzip anywhere and run MU2.exe")
+    return True, {"client": client, "zip": zipped, "bytes": total, "files": files, "commit": made_from}
+
+
+def dist(target, say, ref="HEAD", level=12):
+    if target == "windows":
+        return dist_windows(say, ref, level)
+    if target != "macos":
+        raise RuntimeError(f"dist {target}: macos or windows")
+    started = time.time()
+    cores, _ = settings.cores()
+    made_from = snapshot(ref, say)
+    build(cores, say)
+
+    app = os.path.join(DIST, "macos", "MU2.app")
+    bundle(app, say)
+    data = os.path.join(app, "Contents", "Resources", "data")
+    files, size = pack(data, os.path.join(SHIP, "shaders", "metal"), "metal",
+                       os.path.join(DIST, "macos", "lists"), cores, level, say)
 
     run(["codesign", "--force", "--deep", "--sign", "-", app], say)
     packed = sum(os.path.getsize(os.path.join(data, f)) for f in os.listdir(data))

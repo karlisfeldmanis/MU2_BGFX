@@ -428,6 +428,7 @@ bool Renderer::createTargets(int width, int height) {
         bloomTex_[i] = bgfx::createTexture2D(bloomW_[i], bloomH_[i], false, 1,
                                              bgfx::TextureFormat::RGBA16F, rt | clamp);
         bloomFb_[i] = bgfx::createFrameBuffer(1, &bloomTex_[i], true);
+        bloomUnwritten_ = true;
         if (!bgfx::isValid(bloomFb_[i])) core::logError("bloom level %d did not survive", i);
     }
 

@@ -241,7 +241,7 @@ def printf_glob(text):
     return re.sub(r"%0?\d*[ds]", "*", text)
 
 
-def runtime(shaders_dir=None):
+def runtime(shaders_dir=None, profile="metal"):
     """The runtime file set. Returns a dict:
 
       packs:     {pack: {logical path: bytes}}
@@ -250,6 +250,9 @@ def runtime(shaders_dir=None):
       stale:     {ASSETS-relative ktx: bytes} (cooked textures nothing reaches)
       missing:   {path named somewhere: who named it} (named, not on disk)
       seconds:   how long it took
+
+    `profile` is the shaders' folder in the packs: metal for the Mac, spirv for Windows
+    (docs/plans/windows-client.md).
     """
     started = time.time()
     shaders_dir = shaders_dir or os.path.join(BUILD, "shaders", "metal")
@@ -427,7 +430,7 @@ def runtime(shaders_dir=None):
     if os.path.isdir(shaders_dir):
         for name in sorted(os.listdir(shaders_dir)):
             if name.endswith(".sc.bin"):
-                put("common", "shaders/metal/" + name,
+                put("common", f"shaders/{profile}/" + name,
                     os.path.getsize(os.path.join(shaders_dir, name)), "proven", "gfx/program.h")
 
     # --- 5. what is left out, and why ------------------------------------------------------

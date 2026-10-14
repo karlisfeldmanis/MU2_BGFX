@@ -1,0 +1,22 @@
+// MU2.exe's resources: the manifest (1, RT_MANIFEST) and the version a player's Explorer shows.
+#include <winver.h>
+1 24 "mu2.manifest"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION MU2_VERSION_MAJOR, MU2_VERSION_MINOR, MU2_VERSION_PATCH, 0
+PRODUCTVERSION MU2_VERSION_MAJOR, MU2_VERSION_MINOR, MU2_VERSION_PATCH, 0
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904b0"
+    BEGIN
+      VALUE "ProductName", "MU2"
+      VALUE "FileDescription", "MU2"
+      VALUE "OriginalFilename", "MU2.exe"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1200
+  END
+END

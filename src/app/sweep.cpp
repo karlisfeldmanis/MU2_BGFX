@@ -16,7 +16,7 @@ namespace mu::app {
 namespace {
 
 // A JSON string's own escapes, enough for a log line and a breed's label.
-std::string quoted(const std::string& s) {
+std::string jsonQuoted(const std::string& s) {
     std::string out = "\"";
     for (char c : s) {
         if (c == '"' || c == '\\') {
@@ -144,7 +144,7 @@ bool Sweep::open(Context& ctx, Mode& mode) {
                  "{\"header\": true, \"world\": %s, \"width\": %d, \"height\": %d, "
                  "\"peaceful\": %s, \"fight\": %s, \"level\": %d, \"settle\": %d, "
                  "\"frames\": %d, \"passes\": %d, \"size\": %d, \"mask_step\": %d, \"mask\": [",
-                 quoted(ctx.args.world).c_str(), ctx.window.width(), ctx.window.height(),
+                 jsonQuoted(ctx.args.world).c_str(), ctx.window.width(), ctx.window.height(),
                  ctx.args.peaceful ? "true" : "false", fight_ ? "true" : "false",
                  ctx.args.level, settle_, frames_, passes_, grid.size(), kMaskStep);
     for (int row = 0; row < grid.size(); row += kMaskStep) {
@@ -152,7 +152,7 @@ bool Sweep::open(Context& ctx, Mode& mode) {
         for (int column = 0; column < grid.size(); column += kMaskStep) {
             line += grid.open(column, row) ? '1' : '0';
         }
-        std::fprintf(out_, "%s%s", row ? ", " : "", quoted(line).c_str());
+        std::fprintf(out_, "%s%s", row ? ", " : "", jsonQuoted(line).c_str());
     }
     std::fprintf(out_, "]}\n");
     std::fflush(out_);
@@ -344,11 +344,11 @@ void Sweep::writeSpot() {
                  "\"tick_ms\": %.4f, \"ticks\": %d, \"awake\": %d, \"near\": %.2f, "
                  "\"blows\": %d, \"kills\": %d, \"deaths\": %d, \"settle_worst\": %.3f, "
                  "\"settle_cause\": %s, \"hitches\": [",
-                 pass_, quoted(spot.name).c_str(), spot.hot ? "true" : "false", spot.column,
+                 pass_, jsonQuoted(spot.name).c_str(), spot.hot ? "true" : "false", spot.column,
                  spot.row, landedColumn_, landedRow_, samples_.size(), mean, p99, worst, gpu / n,
                  draws / n, tris / n, ticks_ ? tickMsSum_ / ticks_ : 0.0, ticks_, awakeMost_,
                  nearSum_ / n, blows_, kills_, deaths_, settleWorst_,
-                 settleWorstCause_ >= 0 ? quoted(causes_[size_t(settleWorstCause_)]).c_str()
+                 settleWorstCause_ >= 0 ? jsonQuoted(causes_[size_t(settleWorstCause_)]).c_str()
                                         : "null");
     // A hitch is a frame over twice the tile's mean: what happened on it, and on the frame
     // before, since a tick's happening is drawn -- and its sheet first read -- a frame later.
@@ -364,7 +364,7 @@ void Sweep::writeSpot() {
         }
         std::fprintf(out_, "%s{\"frame\": %zu, \"ms\": %.3f, \"x\": %.2f, \"cause\": %s}",
                      first ? "" : ", ", i, samples_[i].ms, samples_[i].ms / mean,
-                     cause.empty() ? "null" : quoted(cause).c_str());
+                     cause.empty() ? "null" : jsonQuoted(cause).c_str());
         first = false;
         ++listed;
     }

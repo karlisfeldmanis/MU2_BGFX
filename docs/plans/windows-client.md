@@ -10,6 +10,61 @@ our shaderc), pack it here (`./mu dist windows`), and play it here (Wine). The p
 
 The server does not change. A Windows player joins the same Hetzner server as a Mac player.
 
+## Where it stands (2026-10-14)
+
+W1 to W4 are done, and W3 is done in Lorencia and the lobby:
+
+- `sim_test.exe` under Wine prints the same 17,752 lines as the Mac.
+- `./mu dist windows` writes `dist/windows/MU2/` (`MU2.exe`, 17 packs, `logs/`) and its zip, 1.53 GB.
+- Under Wine, `MU2.exe`:
+  - connects to the box and draws the lobby as the Mac does;
+  - enters Lorencia on a scratch server and plays 900 frames at about 140 fps;
+  - shows "11 of the server's hashes agreed with the mirror, none disagreed".
+
+**How it is built.**
+- Windows is always the player's build: CMake sets `MU2_SHIP` on `WIN32`.
+- `tools/cmake/mingw.cmake` is the toolchain.
+- zlib and GLFW 3.4 come from source (`bootstrap.sh`).
+- The shaders are SPIR-V, made by the Mac's own shaderc (`MU2_HOST_SHADERC`).
+- The Windows halves are `core/watch_win.cpp` (SEH and minidumps), `gfx/window_win.cpp` (no MetalFX) and the `_WIN32` parts of `net/socket.cpp` (Winsock), `core/pack.cpp` (`ReadFile` for `pread`) and `core/paths.cpp`. `paths.cpp` puts `data/` and `logs/` beside the exe and the player's files in `%APPDATA%\MU2`.
+- `src/app/mu2.manifest` sets UTF-8, PerMonitorV2 DPI and long paths.
+- `binmode.o` makes every `fopen` binary.
+- `main.cpp` calls `timeBeginPeriod(1)`.
+
+**Traps found on the way.** Each was a real Windows bug, not a Wine one, unless it says so:
+
+- **D24S8 does not exist on Apple GPUs or on AMD's Vulkan.** bgfx's Metal backend swapped in a
+  32-bit depth unasked. On Vulkan the bust's, the portrait's and the item stage's targets were
+  never made, and the bust drew over the screen's corner. They are D32F now; nothing used stencil.
+  The log's `formats:` line says what a GPU lacks.
+- **Vulkan does not zero new textures.** With bloom off, nothing wrote bloom level 0, yet the
+  present sampled it times 0. Metal's memory was zeros; Vulkan's held NaNs, and NaN × 0 is NaN.
+  Red and blue died in the tone curve and the whole scene went green, and with bloom on the
+  same garbage made white blobs. `Renderer::bloom` now clears level 0 once when bloom is off.
+- **Vulkan takes instance data by position, Metal by name.** bgfx puts `i_dataN` at the
+  locations after the vertex attributes, in order. `vs_depth` and `vs_skinned_depth` skipped
+  `i_data4`, so their `i_data5` received `i_data4`'s bytes. They now declare it.
+- **Wine only: MoltenVK and SPIR-V names.** bgfx's shaderc names a compute buffer's type and
+  variable alike, and MoltenVK's Metal source does not compile that. The GPU scenery's compute
+  shaders failed and the game hung on entering Lorencia. `tools/cmake/spirv_names.py` renames the
+  type after each SPIR-V build.
+- **Wine only: Rosetta can vanish.** A macOS update removed it, and `wine` said "bad CPU type".
+  Reinstall it with `softwareupdate --install-rosetta --agree-to-license`.
+- **Seen once, not since:** a GPU page fault (`VK_ERROR_DEVICE_LOST`) on the very first run.
+  Eight runs since, cold and warm, were clean. Watch for it.
+- **`./mu dist` looked for the sheets in `sheets/`**, not `content/sheets/`, after the folder
+  move. That broke `dist macos` too; it is fixed.
+
+**How to look at it.** Run the exe under Wine with `--shot`, and compare it with the Mac's
+player build from the same tree, reading the same packs plus a pack of Metal shaders. A test
+shader goes into a small `zz-*.mupak` beside the others; the last pack wins.
+
+**Left:**
+- W3's checks under Wine: the `Jānis` prefix, 120 and 144 dpi, and saves while the game runs.
+- W5, the quality preset.
+- W6, the first Windows players.
+- W7, signing and an installer.
+
 ## The decisions
 
 | Question | Choice | Why |

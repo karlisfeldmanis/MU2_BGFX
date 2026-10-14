@@ -418,8 +418,19 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
 
 void Renderer::bloom(const Lighting& lighting) {
     if (!bgfx::isValid(bloomDownProgram_) || !bgfx::isValid(bloomUpProgram_)) return;
-    // Off in Options is a strength of 0, and nine passes that add nothing are not drawn.
-    if (lighting.bloomStrength <= 0.0f) return;
+    // Off in Options is a strength of 0, and nine passes that add nothing are not drawn. Level 0
+    // is cleared once instead, so the present's read of it is a black and not a NaN.
+    if (lighting.bloomStrength <= 0.0f) {
+        if (bloomUnwritten_) {
+            bgfx::setViewFrameBuffer(ViewBloomDown, bloomFb_[0]);
+            bgfx::setViewRect(ViewBloomDown, 0, 0, bloomW_[0], bloomH_[0]);
+            bgfx::setViewClear(ViewBloomDown, BGFX_CLEAR_COLOR, 0x00000000, 1.0f, 0);
+            bgfx::touch(ViewBloomDown);
+            bloomUnwritten_ = false;
+        }
+        return;
+    }
+    bloomUnwritten_ = false;
     // Down: the shade target into level 0 with the threshold, then each level into the next.
     for (int i = 0; i < kBloomLevels; ++i) {
         const bgfx::ViewId view = bgfx::ViewId(ViewBloomDown + i);

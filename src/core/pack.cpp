@@ -1,7 +1,12 @@
 #include "core/pack.h"
 
 #include <fcntl.h>
+#ifdef _WIN32
+#include <windows.h>
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
 
 #include <algorithm>
 #include <cstring>
@@ -48,9 +53,25 @@ uint64_t u64(const uint8_t* p) {
     return v;
 }
 
+#ifdef _WIN32
+// Windows has no pread. ReadFile with the offset in an OVERLAPPED is its positional read, and
+// like pread it leaves the descriptor's own position alone, so job threads read side by side.
+ssize_t pread(int fd, void* out, size_t n, uint64_t at) {
+    OVERLAPPED where{};
+    where.Offset = DWORD(at & 0xffffffffu);
+    where.OffsetHigh = DWORD(at >> 32);
+    DWORD got = 0;
+    const DWORD asked = DWORD(std::min<size_t>(n, 1u << 30));
+    if (!ReadFile(HANDLE(_get_osfhandle(fd)), out, asked, &got, &where)) return -1;
+    return ssize_t(got);
+}
+#else
+using ::pread;
+#endif
+
 bool readAt(int fd, uint8_t* out, size_t n, uint64_t at) {
     while (n > 0) {
-        const ssize_t got = ::pread(fd, out, n, off_t(at));
+        const ssize_t got = pread(fd, out, n, at);
         if (got <= 0) return false;
         out += got;
         n -= size_t(got);
@@ -62,13 +83,16 @@ bool readAt(int fd, uint8_t* out, size_t n, uint64_t at) {
 // The logical path of `path`, or empty when it is not under the mounted folder.
 std::string logical(const std::string& path) {
     if (g_root.empty()) return {};
-    std::string normal = std::filesystem::path(path).lexically_normal().string();
+    std::string normal = std::filesystem::path(path).lexically_normal().generic_string();
     if (normal.compare(0, g_root.size(), g_root) != 0) return {};
     return normal.substr(g_root.size());
 }
 
 bool mountOne(const std::string& file) {
-    const int fd = ::open(file.c_str(), O_RDONLY);
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+    const int fd = ::open(file.c_str(), O_RDONLY | O_BINARY);
     if (fd < 0) {
         logError("pack: %s does not open", file.c_str());
         return false;
@@ -116,7 +140,7 @@ bool mountOne(const std::string& file) {
         at += 17;
         g_entries[name] = entry;  // a later pack wins: a patch pack replaces a file
     }
-    logf("pack: %s, %u files", std::filesystem::path(file).filename().c_str(), count);
+    logf("pack: %s, %u files", std::filesystem::path(file).filename().string().c_str(), count);
     return true;
 }
 
@@ -136,11 +160,11 @@ int mountPacks(const std::string& dir) {
     std::vector<std::string> files;
     std::error_code error;
     for (const auto& file : std::filesystem::directory_iterator(dir, error)) {
-        if (file.path().extension() == ".mupak") files.push_back(file.path().string());
+        if (file.path().extension() == ".mupak") files.push_back(file.path().generic_string());
     }
     // In name order, so which pack wins a path is the same on every machine.
     std::sort(files.begin(), files.end());
-    g_root = std::filesystem::path(dir).lexically_normal().string();
+    g_root = std::filesystem::path(dir).lexically_normal().generic_string();
     if (g_root.empty() || g_root.back() != '/') g_root += '/';
     int mounted = 0;
     for (const std::string& file : files) mounted += mountOne(file) ? 1 : 0;

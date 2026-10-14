@@ -12,6 +12,13 @@
 #include <cstring>
 #include <vector>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <timeapi.h>
+// A laptop with two GPUs runs a program on the weak one unless the program asks, by exporting
+// NvOptimusEnablement and AmdPowerXpressRequestHighPerformance. bgfx.cpp exports both already.
+#endif
+
 namespace {
 
 #ifdef MU2_SHIP
@@ -65,6 +72,15 @@ int main(int argc, char** argv) {
         argc = sizeof(play) / sizeof(play[0]) - 1;
         argv = const_cast<char**>(play);
     }
+#ifdef _WIN32
+    // Windows' sleeps and waits are 15.6 ms coarse by default, which a 60 fps frame and the
+    // realm's tick cannot live with: 1 ms while the game runs.
+    timeBeginPeriod(1);
+#endif
     mu::app::Application application;
-    return application.run(argc, argv);
+    const int code = application.run(argc, argv);
+#ifdef _WIN32
+    timeEndPeriod(1);
+#endif
+    return code;
 }

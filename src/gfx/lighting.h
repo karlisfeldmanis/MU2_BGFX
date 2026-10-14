@@ -3,6 +3,7 @@
 // same file for the same reason; this is its own, in this engine's terms.
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 namespace mu::core {
