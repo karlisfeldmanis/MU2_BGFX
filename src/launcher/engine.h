@@ -129,4 +129,9 @@ std::string installedVersion(const fs::path& install);
 // on its command line (game::accountKey).
 bool play(const fs::path& install, const Manifest& manifest, const Signed& who, std::string& error);
 
+// Where crash and freeze reports wait to be sent (launcher/crash_upload.h): the game's logs/ in
+// the install, and the user folder's, which holds the launcher's own and the game's where the
+// install could not be written.
+std::vector<fs::path> crashFolders(const fs::path& install);
+
 }  // namespace mu::launcher

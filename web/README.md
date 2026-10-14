@@ -53,3 +53,20 @@ the accounts and never touched by web/deploy.sh. Read it on the box:
 
     curl -s http://127.0.0.1:8080/internal/machines   # counted: launches, machines, cards, drivers
     tail -5 /var/lib/mu2-web/machines.jsonl           # the raw reports
+
+## Crash reports
+
+A crash or a freeze of the game or the launcher leaves a report in the player's `logs/`
+(src/core/watch.h); the launcher sends what is waiting when it opens and 20 s after Play, the game
+when it starts (src/launcher/crash_upload.h), to `POST /api/crash`. Each lands in
+`/var/lib/mu2-web/crashes/<day>/` -- the .txt, and on Windows its minidump -- with a line in
+`crashes.jsonl`: which program, the platform, the card, the build, the module it died in, and the
+account's id when the launcher signed in. Read them on the box:
+
+    curl -s http://127.0.0.1:8080/internal/crashes    # counted by module, and the latest thirty
+    ls /var/lib/mu2-web/crashes/$(date -u +%F)/
+
+A report's first lines say where: `in nvwgf2umx.dll+0x1a2b3c` is NVIDIA's driver, `in MU2.exe+0x…`
+is ours -- `x86_64-w64-mingw32-addr2line -f -C -e MU2.exe 0x140000000+offset` against that
+release's exe (its sha256 is in the manifest; the box keeps every file under /srv/mu2-web/game/).
+On the Mac, `atos -o MU2.app/Contents/MacOS/MU2 -l <loaded at> <address>`.

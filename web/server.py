@@ -14,10 +14,17 @@ The routes:
     POST /api/machine    {gpu, driver, cpu, ...}    -> 200 {ok} | 400 {error} | 429
          the launcher's report of the machine it runs on (docs/plans/launcher.md, L7): one JSON
          line per report in machines.jsonl beside the database, never anything about the account.
+    POST /api/crash      {file, platform, sender, text, dump?, gpu?, driver?}  [Bearer T]
+                                                    -> 200 {ok} | 400 | 413 | 429
+         a crash or freeze report from the launcher or the game (src/launcher/crash_upload.h),
+         text and dump in base64: kept under crashes/<day>/ beside the database, a line for it in
+         crashes.jsonl. A token, when sent, files it under its account's id; the token is not kept.
     GET  /api/me         Authorization: Bearer T    -> 200 {email}         | 401
     GET  /api/downloads                             -> 200 {windows: {file, bytes} | null, macos: ...}
     GET  /internal/session?token=T  (127.0.0.1 only, never proxied) -> 200 {account} | 404
          for mu2_server to turn a launcher's token into the account its characters belong to.
+    GET  /internal/crashes          (127.0.0.1 only) -> 200 {reports, where, last}
+         the crash reports counted by the module they died in, and the latest thirty.
 
 A token is 64 hex digits, the shape the game's Account message already carries (net::kMostKey,
 server/src/accounts.cpp keyShape). Only its SHA-256 is stored, so a copy of the database signs
@@ -60,6 +67,14 @@ MACHINE_KEYS = {"gpu": 160, "vendor": 8, "driver": 64, "date": 32, "cpu": 128, "
                 "vulkan": 4, "old": 4, "software": 4, "tuned": 4}
 # What one machine is counted by: the card, the CPU and the memory around it, and the OS.
 MACHINE_FINGERPRINT = ("gpu", "cpu", "ram", "os")
+
+# A crash report's request: a megabyte of text and three of minidump at most (crash_upload.cpp),
+# in base64, with room for the fields around them.
+MOST_CRASH_BODY = 6 * 1024 * 1024
+# The most a day keeps, whoever sends them: a crash loop on many machines does not fill the disk.
+MOST_CRASHES_A_DAY = 2000
+CRASH_FIELDS = {"platform": 16, "sender": 16, "gpu": 160, "driver": 64}
+CRASH_FILE = re.compile(r"^[A-Za-z0-9_.-]{1,96}\.txt$")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS accounts (
@@ -120,6 +135,16 @@ class Store:
         # and never touched by the accounts (web/README.md).
         self.machines_path = path.parent / "machines.jsonl"
         self.machine_lock = threading.Lock()
+        # The crash reports, each a file, and a line for each in crashes.jsonl (crash()).
+        self.crashes_dir = path.parent / "crashes"
+        self.crashes_path = path.parent / "crashes.jsonl"
+        self.crash_lock = threading.Lock()
+        self.crash_seen = set()
+        self.crash_days = {}
+        for row in self.crash_rows():
+            self.crash_seen.add(row.get("sha"))
+            day = str(row.get("day", ""))
+            self.crash_days[day] = self.crash_days.get(day, 0) + 1
         with self.db() as db:
             db.executescript(SCHEMA)
 
@@ -178,6 +203,49 @@ class Store:
             with self.machines_path.open("a") as f:
                 f.write(json.dumps(row, separators=(",", ":")) + "\n")
 
+    def crash_rows(self) -> list:
+        rows = []
+        if self.crashes_path.is_file():
+            with self.crashes_path.open() as f:
+                for line in f:
+                    try:
+                        row = json.loads(line)
+                    except ValueError:
+                        continue
+                    if isinstance(row, dict):
+                        rows.append(row)
+        return rows
+
+    def crash(self, row: dict, text: bytes, dump: bytes) -> str:
+        """Keeps one report: "kept", "seen" (the same text came before) or "full" (the day's done)."""
+        with self.crash_lock:
+            if row["sha"] in self.crash_seen:
+                return "seen"
+            day = row["day"]
+            if self.crash_days.get(day, 0) >= MOST_CRASHES_A_DAY:
+                return "full"
+            folder = self.crashes_dir / day
+            folder.mkdir(parents=True, exist_ok=True)
+            stem = f"{time.strftime('%H%M%S', time.gmtime(row['at']))}-{row['sha'][:8]}-{row['file'][:-4]}"
+            (folder / f"{stem}.txt").write_bytes(text)
+            if dump:
+                (folder / f"{stem}.dmp").write_bytes(dump)
+            row["saved"] = f"{day}/{stem}.txt"
+            with self.crashes_path.open("a") as f:
+                f.write(json.dumps(row, separators=(",", ":")) + "\n")
+            self.crash_seen.add(row["sha"])
+            self.crash_days[day] = self.crash_days.get(day, 0) + 1
+            return "kept"
+
+    def crashes_report(self) -> dict:
+        rows = self.crash_rows()
+        where = {}
+        for row in rows:
+            name = str(row.get("where", "")).split("+")[0] or "?"
+            where[name] = where.get(name, 0) + 1
+        return {"reports": len(rows), "where": dict(sorted(where.items(), key=lambda one: -one[1])),
+                "last": rows[-30:][::-1]}
+
     def machines_report(self) -> dict:
         """What has been reported, counted: a driver-targeted update is read off this."""
         rows = []
@@ -233,6 +301,8 @@ LOGIN_LIMIT = Limit(10, 60)
 # A report a run: a player never opens the launcher sixty times in an hour, and a machine that
 # tries to fill the file is refused after the sixty-first.
 MACHINE_LIMIT = Limit(60, 3600)
+# Eight a start (crash_upload.cpp kMostAStart), a few starts an hour.
+CRASH_LIMIT = Limit(24, 3600)
 
 
 # ---- the handler ---------------------------------------------------------------------------------
@@ -268,9 +338,9 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
-    def body(self):
+    def body(self, most: int = MOST_BODY):
         length = int(self.headers.get("Content-Length") or 0)
-        if length <= 0 or length > MOST_BODY:
+        if length <= 0 or length > most:
             return None
         try:
             data = json.loads(self.rfile.read(length))
@@ -295,6 +365,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(200, {"ok": True})
         if path == "/api/machine":
             return self.machine()
+        if path == "/api/crash":
+            return self.crash()
         self.reply(404, {"error": "not found"})
 
     def register(self):
@@ -355,6 +427,54 @@ class Handler(BaseHTTPRequestHandler):
               flush=True)
         self.reply(200, {"ok": True})
 
+    def crash(self):
+        """One crash or freeze report (src/launcher/crash_upload.h), kept with its dump."""
+        if int(self.headers.get("Content-Length") or 0) > MOST_CRASH_BODY:
+            return self.reply(413, {"error": "too big"})
+        if not CRASH_LIMIT.allow(self.client()):
+            return self.reply(429, {"error": "later"})
+        said = self.body(MOST_CRASH_BODY)
+        if said is None:
+            return self.reply(400, {"error": "bad request"})
+        name = str(said.get("file", ""))
+        if not CRASH_FILE.match(name):
+            return self.reply(400, {"error": "bad file"})
+        try:
+            text = base64.b64decode(str(said.get("text", "")), validate=True)
+            dump = base64.b64decode(str(said.get("dump", "")), validate=True)
+        except ValueError:
+            return self.reply(400, {"error": "bad base64"})
+        if not text:
+            return self.reply(400, {"error": "empty"})
+        row = {"at": int(time.time()), "day": time.strftime("%Y-%m-%d", time.gmtime()), "file": name,
+               "sha": hashlib.sha256(text).hexdigest()}
+        for key, room in CRASH_FIELDS.items():
+            value = said.get(key)
+            if isinstance(value, str) and value.strip():
+                row[key] = value[:room]
+        row["program"] = "launcher" if name.startswith("launcher-") else "game"
+        row["kind"] = "hang" if "hang-" in name else "crash"
+        lines = text.decode("utf-8", "replace").splitlines()
+        row["what"] = (lines[0] if lines else "")[:200]
+        # Windows names the module the fault is in on a line of its own (core/watch_win.cpp).
+        row["where"] = next((line[3:].strip()[:120] for line in lines[:4] if line.startswith("in ")), "")
+        for line in lines[:12]:
+            if line.startswith("MU2 "):
+                row["build"] = line[4:].strip()[:64]
+            elif " gpu " in line and " on " in line:
+                row["renderer"] = line.strip()[:120]
+        signed = self.store.session(self.bearer()) if self.bearer() else None
+        if signed:
+            row["account"] = signed[0]
+        if dump:
+            row["dump"] = len(dump)
+        kept = self.store.crash(row, text, dump)
+        if kept == "full":
+            return self.reply(429, {"error": "later"})
+        print(f"{self.client()} crash {kept}: {row['program']} {row['kind']} {row.get('platform', '?')} "
+              f"{row.get('gpu') or row.get('renderer', '')} | {row['what']} {row['where']}", flush=True)
+        self.reply(200, {"ok": True})
+
     # -- GET
 
     def do_GET(self):
@@ -364,6 +484,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(200, {"email": row[1]}) if row else self.reply(401, {"error": "signed out"})
         if url.path == "/api/downloads":
             return self.reply(200, self.listing())
+        if url.path == "/internal/crashes":
+            if not self.direct():
+                return self.reply(404, {"error": "not found"})
+            return self.reply(200, self.store.crashes_report())
         if url.path == "/internal/machines":
             if not self.direct():
                 return self.reply(404, {"error": "not found"})

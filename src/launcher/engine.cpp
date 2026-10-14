@@ -468,6 +468,10 @@ bool update(const Place& place, const fs::path& install, const Manifest& manifes
     return true;
 }
 
+std::vector<fs::path> crashFolders(const fs::path& install) {
+    return {install / "logs", userFolder() / "logs"};
+}
+
 bool play(const fs::path& install, const Manifest& manifest, const Signed& who, std::string& error) {
     const fs::path exe = install / pathOf(manifest.exe);
 #ifdef _WIN32

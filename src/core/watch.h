@@ -11,12 +11,19 @@
 //                     every thread for two seconds. Taken again at kHangAgainSeconds if the
 //                     game is still stuck, and the log says how long the frame was gone if it
 //                     comes back. It only reports -- the game is never killed.
+// Each report starts with the run's notes (watchNote): which build, which card, which renderer.
+// The launcher's own are launcher-crash-<when>.txt, its `name` in front. The launcher and the
+// game send them to the website on their next start (launcher/crash_upload.h).
 #pragma once
 
 namespace mu::core {
 
 // Starts watching, from the main thread: the signal handlers now, the hang watch at the first watchBeat.
-void watchStart(const char* dir);
+// `name` goes in front of each report's file name ("launcher-").
+void watchStart(const char* dir, const char* name = "");
+// A line every report from here on starts with ("MU2 0.9.4 3965dc81", "Vulkan, NVIDIA 10de:2882").
+// Kept in a fixed buffer, so the crash handler reads it without allocating.
+void watchNote(const char* line);
 // A frame was finished. Called once per frame from the main loop.
 void watchBeat();
 // Before a wait that is known and long -- a world loading on a handoff -- until the next beat.

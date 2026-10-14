@@ -24,6 +24,10 @@
 #include "core/pack.h"
 #include "core/paths.h"
 #include "core/watch.h"
+#ifdef MU2_CRASH_UPLOAD
+#include "launcher/crash_upload.h"
+#endif
+#include "build_version.h"
 #include "game/headless.h"
 #include "game/world/world_show.h"
 #include "gfx/stats.h"
@@ -180,6 +184,29 @@ int Application::run(int argc, char** argv) {
 
     // A crash or a freeze leaves a report in crashes/ (core/watch.h).
     core::watchStart(folders.crashes.c_str());
+    core::watchNote("MU2 " MU2_BUILD_VERSION);
+#ifdef MU2_CRASH_UPLOAD
+    // What earlier runs left there goes to the website (launcher/crash_upload.h): the player's
+    // build always, a developer's only when MU2_CRASH_SITE names a site to try it against.
+    {
+        const char* asked = std::getenv("MU2_CRASH_SITE");
+#ifdef MU2_SHIP
+        const std::string site = asked && *asked ? asked : launcher::kCrashSite;
+#else
+        const std::string site = asked ? asked : "";
+#endif
+        if (!site.empty()) {
+#ifdef _WIN32
+            const char* platform = "windows";
+#else
+            const char* platform = "macos";
+#endif
+            launcher::CrashFrom from{site, platform, "game", launcher::sessionFromEnvironment(), {}, {}};
+            std::vector<std::filesystem::path> where = {std::filesystem::path(folders.crashes)};
+            std::thread([where, from] { launcher::sendCrashes(where, from); }).detach();
+        }
+    }
+#endif
 
     if (!boot()) {
         core::logClose();

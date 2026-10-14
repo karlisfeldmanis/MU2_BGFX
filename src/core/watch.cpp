@@ -10,7 +10,13 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <dlfcn.h>
+#include <sys/ucontext.h>
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -33,6 +39,10 @@ constexpr double kHangSeconds = 5.0;
 constexpr double kHangAgainSeconds = 30.0;
 
 std::string g_dir;
+std::string g_name;
+// watchNote's lines, read by the crash handler as they stand.
+char g_note[1024];
+std::atomic<size_t> g_noteUsed{0};
 // Made up front: a signal handler may not allocate, so the crash report's name is ready.
 char g_crashPath[1024];
 std::atomic<int64_t> g_beatMs{0};
@@ -61,6 +71,8 @@ std::string stamp() {
 
 void say(int fd, const char* text) { (void)!::write(fd, text, std::strlen(text)); }
 
+void sayNotes(int fd) { (void)!::write(fd, g_note, g_noteUsed.load()); }
+
 const char* signalName(int sig) {
     switch (sig) {
     case SIGSEGV: return "SIGSEGV (a bad pointer)";
@@ -73,14 +85,48 @@ const char* signalName(int sig) {
     }
 }
 
-void onCrash(int sig, siginfo_t* info, void*) {
+// Where the crashing thread was: its program counter, from the registers the signal saved.
+void* faultPc(void* context) {
+#if defined(__APPLE__) && defined(__arm64__)
+    return context ? reinterpret_cast<void*>(static_cast<ucontext_t*>(context)->uc_mcontext->__ss.__pc)
+                   : nullptr;
+#elif defined(__APPLE__) && defined(__x86_64__)
+    return context ? reinterpret_cast<void*>(static_cast<ucontext_t*>(context)->uc_mcontext->__ss.__rip)
+                   : nullptr;
+#else
+    (void)context;
+    return nullptr;
+#endif
+}
+
+void onCrash(int sig, siginfo_t* info, void* context) {
     const int fd = ::open(g_crashPath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd >= 0) {
-        char line[256];
-        std::snprintf(line, sizeof(line), "mu2 crashed: %s at address %p, pid %d\n\n",
+        char line[768];
+        std::snprintf(line, sizeof(line), "mu2 crashed: %s at address %p, pid %d\n",
                       signalName(sig), info ? info->si_addr : nullptr, int(getpid()));
         say(fd, line);
-        say(fd, "the crashing thread (names mangled: pipe through c++filt):\n");
+        // The image the fault is in, by name, and how far into it: "in Metal+0x1a2b", as
+        // Windows' report says it (core/watch_win.cpp), so the site counts both alike.
+        Dl_info in{};
+        void* pc = faultPc(context);
+        if (pc && dladdr(pc, &in) && in.dli_fname && in.dli_fbase) {
+            const char* name = in.dli_fname;
+            for (const char* c = in.dli_fname; *c; ++c)
+                if (*c == '/') name = c + 1;
+            std::snprintf(line, sizeof(line), "in %s+0x%lx\n", name,
+                          (unsigned long)(static_cast<char*>(pc) - static_cast<char*>(in.dli_fbase)));
+            say(fd, line);
+        }
+        say(fd, "\n");
+        sayNotes(fd);
+#ifdef __APPLE__
+        // ASLR moves the binary each run: `atos -o MU2 -l <this> <address>` reads a frame.
+        std::snprintf(line, sizeof(line), "the binary is loaded at %p\n",
+                      static_cast<const void*>(_dyld_get_image_header(0)));
+        say(fd, line);
+#endif
+        say(fd, "\nthe crashing thread (names mangled: pipe through c++filt):\n");
         void* frames[128];
         const int n = backtrace(frames, 128);
         backtrace_symbols_fd(frames, n, fd);
@@ -129,10 +175,10 @@ void sampleInto(const std::string& path, double goneSeconds) {
     {
         FILE* f = std::fopen(path.c_str(), "w");
         if (!f) return;
-        std::fprintf(f, "mu2 froze: no frame for %.1f s, pid %d\n"
+        std::fprintf(f, "mu2 froze: no frame for %.1f s, pid %d\n%.*s"
                         "The main thread's stack, then the log's tail, then /usr/bin/sample's "
                         "look at every thread.\n\n",
-                     goneSeconds, int(getpid()));
+                     goneSeconds, int(getpid()), int(g_noteUsed.load()), g_note);
         std::fclose(f);
     }
     // Said before the sample, not after: 11:36 on 2026-10-03 the game was closed during the
@@ -197,7 +243,7 @@ void watch() {
         }
         if (reports == 0 || (reports == 1 && gone >= kHangAgainSeconds)) {
             ++reports;
-            const std::string path = g_dir + "/hang-" + stamp() + ".txt";
+            const std::string path = g_dir + "/" + g_name + "hang-" + stamp() + ".txt";
             hold.unlock();
             sampleInto(path, gone);
             // Said in mu2.log too, after the report is written: a freeze's log otherwise just
@@ -213,10 +259,11 @@ void watch() {
 
 }  // namespace
 
-void watchStart(const char* dir) {
+void watchStart(const char* dir, const char* name) {
     g_dir = dir;
+    g_name = name;
     ::mkdir(g_dir.c_str(), 0755);
-    std::snprintf(g_crashPath, sizeof(g_crashPath), "%s/crash-%s.txt", g_dir.c_str(),
+    std::snprintf(g_crashPath, sizeof(g_crashPath), "%s/%scrash-%s.txt", g_dir.c_str(), name,
                   stamp().c_str());
 
     // Its own stack, or a stack overflow has none left to report on.
@@ -237,6 +284,12 @@ void watchStart(const char* dir) {
     sigemptyset(&stack.sa_mask);
     sigaction(SIGUSR2, &stack, nullptr);
     std::set_terminate(onTerminate);
+}
+
+void watchNote(const char* line) {
+    const size_t used = g_noteUsed.load();
+    const int n = std::snprintf(g_note + used, sizeof(g_note) - used, "%s\n", line);
+    if (n > 0) g_noteUsed = std::min(sizeof(g_note) - 1, used + size_t(n));
 }
 
 void watchBeat() {

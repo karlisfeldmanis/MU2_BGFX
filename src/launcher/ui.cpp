@@ -36,6 +36,7 @@ extern char** environ;
 #include "gfx/callback.h"
 #include "gfx/face.h"
 #include "gfx/interface.h"
+#include "launcher/crash_upload.h"
 #include "launcher/embedded.h"
 #include "launcher/gpu.h"
 
@@ -144,6 +145,7 @@ private:
     void check();
     void install();
     void playNow();
+    void sendCrashesAfter(int delay);
     void logOut();
     void openUrl(const std::string& url);
     void pickFolder();
@@ -336,7 +338,20 @@ void Launcher::playNow() {
         home_ = Home::Failed;
         return;
     }
+    sendCrashesAfter(20);
     glfwIconifyWindow(window_);
+}
+
+// What crashed or froze, sent home on a thread of its own after `delay` (launcher/crash_upload.h):
+// at the start, and again after Play, so a game that dies while starting is heard from the same
+// evening. Copies only, so the window may close while it runs.
+void Launcher::sendCrashesAfter(int delay) {
+    const std::vector<fs::path> folders = crashFolders(settings_.install);
+    const CrashFrom from{place_.site, place_.platform, "launcher", who_.token, gpu_.name, gpu_.driver};
+    std::thread([folders, from, delay] {
+        std::this_thread::sleep_for(std::chrono::seconds(delay));
+        sendCrashes(folders, from);
+    }).detach();
 }
 
 void Launcher::logOut() {
@@ -960,6 +975,7 @@ int Launcher::run() {
     } else {
         focus_ = settings_.email.empty() ? 0 : 1;
     }
+    sendCrashesAfter(0);
     while (!glfwWindowShouldClose(window_)) {
         // Asleep between events, but awake enough for the caret and a moving download.
         glfwWaitEventsTimeout(working_ || home_ == Home::Downloading ? 1.0 / 30.0 : 0.25);

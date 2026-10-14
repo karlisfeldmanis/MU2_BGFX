@@ -13,6 +13,9 @@
 #include <cstring>
 #include <string>
 
+#include "core/log.h"
+#include "core/watch.h"
+#include "launcher/crash_upload.h"
 #include "launcher/engine.h"
 #include "launcher/gpu.h"
 #include "launcher/ui.h"
@@ -92,6 +95,10 @@ int check(Place place, fs::path dir, const std::string& only, bool start) {
     if (!step("update", fetched, fetched ? rate : error)) return 1;
     const std::vector<Entry> after = stale(dir, manifest, progress);
     if (!step("nothing stale after", after.empty(), "installed " + installedVersion(dir))) return 1;
+    // What crashed or froze is sent home as the window sends it (launcher/crash_upload.h).
+    const int reports = sendCrashes(crashFolders(dir), {place.site, place.platform, "launcher", back.token,
+                                                     gpu.name, gpu.driver});
+    step("crash reports", true, std::to_string(reports) + " sent");
     if (start) {
         if (!step("play", play(dir, manifest, back, error), error)) return 1;
     }
@@ -119,5 +126,17 @@ int main(int argc, char** argv) {
     }
     if (checking) return check(place, dir, only, start);
     ui.place = place;
-    return runUi(ui);
+    // The window's own log and black box, in the user folder: a launcher that dies after the
+    // sign-in leaves launcher-crash-<when>.txt, sent on its next start.
+    if (ui.shot.empty()) {
+        const fs::path logs = userFolder() / "logs";
+        std::error_code ec;
+        fs::create_directories(logs, ec);
+        mu::core::logOpen(utf8Of(logs / "launcher.log").c_str());
+        mu::core::watchStart(utf8Of(logs).c_str(), "launcher-");
+        mu::core::watchNote("MU2Launcher");
+    }
+    const int code = runUi(ui);
+    mu::core::logClose();
+    return code;
 }

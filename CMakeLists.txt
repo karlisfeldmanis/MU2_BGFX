@@ -425,6 +425,19 @@ if(WIN32 OR APPLE)
     COMMAND python3 ${CMAKE_SOURCE_DIR}/tools/cmake/embed.py ${CMAKE_BINARY_DIR}/generated/launcher_embedded.cpp ${MU_LAUNCHER_EMBED}
     DEPENDS ${CMAKE_SOURCE_DIR}/tools/cmake/embed.py ${MU_LAUNCHER_EMBED_FILES} mu2_shaders
     COMMENT "the launcher's files, inside it")
+  # HTTPS and the crash reports sent home (launcher/crash_upload.h): the launcher's, and linked
+  # by the game too, which sends what is waiting when it was started without the launcher.
+  add_library(mu_report STATIC src/launcher/crash_upload.cpp)
+  target_link_libraries(mu_report PUBLIC mu_core)
+  target_compile_options(mu_report PRIVATE ${MU_WARNINGS})
+  if(WIN32)
+    target_sources(mu_report PRIVATE src/launcher/https_win.cpp)
+    target_link_libraries(mu_report PUBLIC winhttp)
+  else()
+    find_package(CURL REQUIRED)
+    target_sources(mu_report PRIVATE src/launcher/https_curl.cpp)
+    target_link_libraries(mu_report PUBLIC CURL::libcurl)
+  endif()
   add_executable(mu2_launcher
     src/launcher/main.cpp
     src/launcher/ui.cpp
@@ -433,16 +446,15 @@ if(WIN32 OR APPLE)
     ${CMAKE_BINARY_DIR}/generated/launcher_embedded.cpp
   )
   add_dependencies(mu2_launcher mu2_shaders)
-  target_link_libraries(mu2_launcher PRIVATE mu_gfx mu_core)
+  target_link_libraries(mu2_launcher PRIVATE mu_gfx mu_core mu_report)
   target_compile_options(mu2_launcher PRIVATE ${MU_WARNINGS})
   if(WIN32)
-    target_sources(mu2_launcher PRIVATE src/launcher/https_win.cpp src/launcher/gpu_win.cpp)
-    target_link_libraries(mu2_launcher PRIVATE winhttp crypt32 shell32 ole32 uuid dxgi setupapi advapi32)
+    target_sources(mu2_launcher PRIVATE src/launcher/gpu_win.cpp)
+    target_link_libraries(mu2_launcher PRIVATE crypt32 shell32 ole32 uuid dxgi setupapi advapi32)
     set_target_properties(mu2_launcher PROPERTIES OUTPUT_NAME MU2Launcher WIN32_EXECUTABLE TRUE)
   else()
-    find_package(CURL REQUIRED)
-    target_sources(mu2_launcher PRIVATE src/launcher/https_curl.cpp src/launcher/gpu_mac.mm)
-    target_link_libraries(mu2_launcher PRIVATE CURL::libcurl "-framework Cocoa" "-framework Metal"
+    target_sources(mu2_launcher PRIVATE src/launcher/gpu_mac.mm)
+    target_link_libraries(mu2_launcher PRIVATE "-framework Cocoa" "-framework Metal"
       "-framework QuartzCore" "-framework IOKit")
     set_target_properties(mu2_launcher PROPERTIES OUTPUT_NAME MU2Launcher)
   endif()
@@ -694,6 +706,10 @@ add_custom_target(build_version
 add_dependencies(mu2 build_version)
 # bimg_encode writes the screenshots.
 target_link_libraries(mu2 PRIVATE mu_game bimg_encode)
+if(TARGET mu_report)
+  target_link_libraries(mu2 PRIVATE mu_report)
+  target_compile_definitions(mu2 PRIVATE MU2_CRASH_UPLOAD)
+endif()
 target_compile_definitions(mu2 PRIVATE ${MU_DIRS})
 target_compile_options(mu2 PRIVATE ${MU_WARNINGS})
 if(WIN32)

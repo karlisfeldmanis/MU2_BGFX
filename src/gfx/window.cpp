@@ -8,6 +8,7 @@
 #include <string>
 
 #include "core/log.h"
+#include "core/watch.h"
 #include "gfx/callback.h"
 #include "gfx/views.h"
 
@@ -203,6 +204,21 @@ bool Window::open(const WindowDesc& desc) {
     const bgfx::Caps* caps = bgfx::getCaps();
     core::logf("%s, %dx%d, vsync %s", bgfx::getRendererName(caps->rendererType), width_, height_,
                desc.vsync ? "on" : "off");
+    {
+        // Which card drew, at the top of any crash report from here on (core/watch.h).
+        const uint16_t vendor = caps->vendorId;
+        const char* maker = vendor == BGFX_PCI_ID_NVIDIA ? "NVIDIA"
+                            : vendor == BGFX_PCI_ID_AMD ? "AMD"
+                            : vendor == BGFX_PCI_ID_INTEL ? "Intel"
+                            : vendor == BGFX_PCI_ID_APPLE ? "Apple"
+                            : vendor == BGFX_PCI_ID_MICROSOFT ? "Microsoft (software)"
+                                                              : "an unknown maker";
+        char note[160];
+        std::snprintf(note, sizeof note, "%s on %s, gpu %04x:%04x", bgfx::getRendererName(caps->rendererType),
+                      maker, vendor, caps->deviceId);
+        core::watchNote(note);
+        core::logf("gpu: %s", note);
+    }
     // Logged because docs/reference/conventions.md refuses to assume any of them.
     core::logf("homogeneous depth %d, origin bottom left %d, max texture %u, 32-bit indices %d",
                caps->homogeneousDepth, caps->originBottomLeft, caps->limits.maxTextureSize,
