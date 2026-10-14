@@ -1,0 +1,388 @@
+#include "launcher/engine.h"
+
+#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+#include <fstream>
+#include <map>
+#include <sstream>
+
+#include "core/json.h"
+#include "core/log.h"
+#include "launcher/https.h"
+#include "launcher/sha256.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#include <dpapi.h>
+#include <shlobj.h>
+#else
+#include <spawn.h>
+#include <sys/stat.h>
+#include <unistd.h>
+extern char** environ;
+#endif
+
+namespace mu::launcher {
+
+namespace {
+
+std::string quoted(const std::string& s) {
+    std::string out = "\"";
+    for (unsigned char c : s) {
+        if (c == '"' || c == '\\') {
+            out += '\\';
+            out += char(c);
+        } else if (c < 0x20) {
+            char esc[8];
+            std::snprintf(esc, sizeof esc, "\\u%04x", c);
+            out += esc;
+        } else {
+            out += char(c);
+        }
+    }
+    return out + "\"";
+}
+
+std::string readFile(const fs::path& path) {
+    std::ifstream in(path, std::ios::binary);
+    std::stringstream all;
+    all << in.rdbuf();
+    return all.str();
+}
+
+bool writeFile(const fs::path& path, const std::string& bytes) {
+    std::error_code ec;
+    fs::create_directories(path.parent_path(), ec);
+    const fs::path part = path.string() + ".new";
+    {
+        std::ofstream out(part, std::ios::binary | std::ios::trunc);
+        if (!out) return false;
+        out.write(bytes.data(), std::streamsize(bytes.size()));
+        if (!out) return false;
+    }
+    fs::remove(path, ec);
+    fs::rename(part, path, ec);
+    return !ec;
+}
+
+core::Json parse(const std::string& text, const char* what) {
+    return text.empty() ? core::Json{} : core::parseJson(text.data(), text.size(), what);
+}
+
+const char* kJson = "Content-Type: application/json";
+
+// A file's time as its clock's count, in a string: past what a JSON number (a double) holds exactly.
+std::string stamp(const fs::path& path) {
+    std::error_code ec;
+    return std::to_string(int64_t(fs::last_write_time(path, ec).time_since_epoch().count()));
+}
+
+}  // namespace
+
+// ---- the account --------------------------------------------------------------------------------
+
+Answer signIn(const Place& place, const std::string& email, const std::string& password, Signed& out,
+              std::string& message) {
+    const Reply reply = request("POST", place.site + "/api/login",
+                                "{\"email\":" + quoted(email) + ",\"password\":" + quoted(password) + "}", {kJson});
+    if (reply.status == 0) {
+        core::logError("launcher: sign-in: %s", reply.error.c_str());
+        message = "Can't reach the server. Check your connection.";
+        return Answer::Offline;
+    }
+    const core::Json said = parse(reply.body, "the sign-in's answer");
+    if (reply.status == 200) {
+        out.token = said["token"].stringOr("");
+        out.email = said["email"].stringOr(email.c_str());
+        if (out.token.size() == 64) return Answer::Ok;
+        message = "The server's answer made no sense. Try again.";
+        return Answer::Offline;
+    }
+    message = said["error"].stringOr(reply.status == 429 ? "Too many tries. Wait a minute." : "Wrong email or password.");
+    return reply.status == 429 ? Answer::Busy : Answer::Wrong;
+}
+
+Answer stillSigned(const Place& place, const Signed& who) {
+    const Reply reply = request("GET", place.site + "/api/me", {}, {"Authorization: Bearer " + who.token});
+    if (reply.status == 200) return Answer::Ok;
+    if (reply.status == 401) return Answer::Wrong;
+    return Answer::Offline;
+}
+
+void signOut(const Place& place, const Signed& who) {
+    if (!who.token.empty()) request("POST", place.site + "/api/logout", "{}", {kJson, "Authorization: Bearer " + who.token});
+    forget();
+}
+
+// ---- the launcher's own files -------------------------------------------------------------------
+
+#ifdef _WIN32
+namespace {
+fs::path known(REFKNOWNFOLDERID id) {
+    PWSTR path = nullptr;
+    fs::path out;
+    if (SUCCEEDED(SHGetKnownFolderPath(id, 0, nullptr, &path))) out = fs::path(path);
+    CoTaskMemFree(path);
+    return out;
+}
+}  // namespace
+
+fs::path userFolder() { return known(FOLDERID_RoamingAppData) / "MU2"; }
+fs::path defaultInstall() { return known(FOLDERID_LocalAppData) / "Programs" / "MU2"; }
+
+bool keep(const Signed& who) {
+    const std::string plain = who.token + "\n" + who.email;
+    DATA_BLOB in{DWORD(plain.size()), (BYTE*)plain.data()}, out{};
+    if (!CryptProtectData(&in, L"MU2 sign-in", nullptr, nullptr, nullptr, CRYPTPROTECT_UI_FORBIDDEN, &out)) {
+        core::logError("launcher: the sign-in could not be sealed (%lu)", GetLastError());
+        return false;
+    }
+    const bool ok = writeFile(userFolder() / "session", std::string((const char*)out.pbData, out.cbData));
+    LocalFree(out.pbData);
+    return ok;
+}
+
+bool kept(Signed& who) {
+    const std::string sealed = readFile(userFolder() / "session");
+    if (sealed.empty()) return false;
+    DATA_BLOB in{DWORD(sealed.size()), (BYTE*)sealed.data()}, out{};
+    if (!CryptUnprotectData(&in, nullptr, nullptr, nullptr, nullptr, CRYPTPROTECT_UI_FORBIDDEN, &out)) return false;
+    const std::string plain((const char*)out.pbData, out.cbData);
+    LocalFree(out.pbData);
+    const size_t line = plain.find('\n');
+    who.token = plain.substr(0, line);
+    who.email = line == std::string::npos ? "" : plain.substr(line + 1);
+    return who.token.size() == 64;
+}
+#else
+fs::path userFolder() {
+    const char* home = std::getenv("HOME");
+    return fs::path(home ? home : ".") / "Library" / "Application Support" / "MU2";
+}
+fs::path defaultInstall() { return userFolder() / "Game"; }
+
+bool keep(const Signed& who) {
+    const fs::path path = userFolder() / "session";
+    if (!writeFile(path, who.token + "\n" + who.email)) return false;
+    ::chmod(path.c_str(), 0600);
+    return true;
+}
+
+bool kept(Signed& who) {
+    const std::string plain = readFile(userFolder() / "session");
+    const size_t line = plain.find('\n');
+    who.token = plain.substr(0, line);
+    who.email = line == std::string::npos ? "" : plain.substr(line + 1);
+    return who.token.size() == 64;
+}
+#endif
+
+void forget() {
+    std::error_code ec;
+    fs::remove(userFolder() / "session", ec);
+}
+
+Settings loadSettings() {
+    Settings settings;
+    const core::Json said = parse(readFile(userFolder() / "launcher.json"), "launcher.json");
+    const std::string install = said["install"].stringOr("");
+    settings.install = install.empty() ? defaultInstall() : pathOf(install);
+    settings.email = said["email"].stringOr("");
+    return settings;
+}
+
+void saveSettings(const Settings& settings) {
+    writeFile(userFolder() / "launcher.json",
+              "{\"install\": " + quoted(utf8Of(settings.install)) + ", \"email\": " + quoted(settings.email) + "}\n");
+}
+
+// ---- the release --------------------------------------------------------------------------------
+
+bool fetchManifest(const Place& place, Manifest& out, std::string& error) {
+    const Reply reply = request("GET", place.site + "/game/" + place.platform + "/manifest.json");
+    if (reply.status != 200) {
+        error = reply.status == 0 ? reply.error : "status " + std::to_string(reply.status);
+        return false;
+    }
+    const core::Json said = parse(reply.body, "the release's manifest");
+    out.version = said["version"].stringOr("");
+    out.protocol = int(said["protocol"].numberOr(0));
+    out.exe = said["exe"].stringOr("MU2.exe");
+    out.bytes = uint64_t(said["bytes"].numberOr(0));
+    out.files.clear();
+    const core::Json& files = said["files"];
+    for (size_t i = 0; i < files.size(); ++i) {
+        const core::Json& f = files.at(i);
+        Entry e{f["path"].stringOr(""), uint64_t(f["size"].numberOr(0)), f["sha256"].stringOr("")};
+        // Nothing outside the install: no absolute path, no "..".
+        if (e.path.empty() || e.path[0] == '/' || e.path.find("..") != std::string::npos || e.sha256.size() != 64) {
+            error = "a file of no shape in the manifest";
+            return false;
+        }
+        out.files.push_back(std::move(e));
+    }
+    if (out.version.empty() || out.files.empty()) {
+        error = "an empty manifest";
+        return false;
+    }
+    return true;
+}
+
+namespace {
+
+struct Record {
+    uint64_t size = 0;
+    std::string stamp;
+    std::string sha256;
+};
+
+std::map<std::string, Record> records(const fs::path& install, std::string* version = nullptr) {
+    std::map<std::string, Record> out;
+    const core::Json said = parse(readFile(install / "installed.json"), "installed.json");
+    if (version) *version = said["version"].stringOr("");
+    const core::Json& files = said["files"];
+    for (const auto& [path, f] : files.members) {
+        out[path] = Record{uint64_t(f["size"].numberOr(0)), f["stamp"].stringOr(""), f["sha256"].stringOr("")};
+    }
+    return out;
+}
+
+void record(const fs::path& install, const Manifest& manifest) {
+    std::string json = "{\"version\": " + quoted(manifest.version) + ", \"files\": {";
+    bool first = true;
+    for (const Entry& e : manifest.files) {
+        const fs::path at = install / pathOf(e.path);
+        json += (first ? "\n " : ",\n ") + quoted(e.path) + ": {\"size\": " + std::to_string(e.size) +
+                ", \"stamp\": " + quoted(stamp(at)) + ", \"sha256\": " + quoted(e.sha256) + "}";
+        first = false;
+    }
+    writeFile(install / "installed.json", json + "\n}}\n");
+}
+
+}  // namespace
+
+std::string installedVersion(const fs::path& install) {
+    std::string version;
+    records(install, &version);
+    return version;
+}
+
+std::vector<Entry> stale(const fs::path& install, const Manifest& manifest, Progress& progress) {
+    const auto known = records(install);
+    std::vector<Entry> out;
+    progress.done = 0;
+    progress.total = manifest.bytes;
+    progress.files = int(manifest.files.size());
+    for (size_t i = 0; i < manifest.files.size(); ++i) {
+        const Entry& e = manifest.files[i];
+        progress.file = int(i);
+        const fs::path at = install / pathOf(e.path);
+        std::error_code ec;
+        const uint64_t size = fs::exists(at, ec) ? fs::file_size(at, ec) : UINT64_MAX;
+        if (size != e.size) {
+            out.push_back(e);
+            progress.done += e.size;
+            continue;
+        }
+        const auto it = known.find(e.path);
+        if (it != known.end() && it->second.size == size && it->second.stamp == stamp(at)) {
+            if (it->second.sha256 != e.sha256) out.push_back(e);
+            progress.done += e.size;
+            continue;
+        }
+        if (sha256File(at, [&](uint64_t n) { progress.done += n; }) != e.sha256) out.push_back(e);
+    }
+    return out;
+}
+
+bool update(const Place& place, const fs::path& install, const Manifest& manifest, const std::vector<Entry>& todo,
+            Progress& progress, const std::atomic<bool>& stop, std::string& error) {
+    uint64_t total = 0;
+    for (const Entry& e : todo) total += e.size;
+    progress.done = 0;
+    progress.total = total;
+    progress.files = int(todo.size());
+    for (size_t i = 0; i < todo.size(); ++i) {
+        const Entry& e = todo[i];
+        progress.file = int(i);
+        const fs::path at = install / pathOf(e.path);
+        const fs::path part = at.string() + ".part";
+        std::error_code ec;
+        fs::create_directories(at.parent_path(), ec);
+        const uint64_t before = progress.done;
+        const std::string url = place.site + "/game/" + place.platform + "/files/" + e.sha256;
+        bool whole = false;
+        // Twice at most: a part left by an earlier run that turns out wrong is fetched again clean.
+        for (int attempt = 0; attempt < 2 && !whole; ++attempt) {
+            const uint64_t had = fs::exists(part, ec) ? fs::file_size(part, ec) : 0;
+            progress.done = before + (attempt == 0 ? std::min(had, e.size) : 0);
+            if (!download(url, part, attempt == 0 && had < e.size, [&](uint64_t n) { progress.done += n; }, stop, error)) {
+                if (stop.load()) return false;
+                core::logError("launcher: %s: %s", e.path.c_str(), error.c_str());
+                fs::remove(part, ec);
+                continue;
+            }
+            if (sha256File(part) == e.sha256) {
+                whole = true;
+            } else {
+                core::logError("launcher: %s came down wrong; fetched again", e.path.c_str());
+                fs::remove(part, ec);
+            }
+        }
+        if (!whole) {
+            error = "Could not download " + e.path + ". Check your connection and try again.";
+            return false;
+        }
+        fs::remove(at, ec);
+        fs::rename(part, at, ec);
+        if (ec) {
+            error = "Could not replace " + e.path + ". Close the game and try again.";
+            return false;
+        }
+        progress.done = before + e.size;
+    }
+    record(install, manifest);
+    return true;
+}
+
+bool play(const fs::path& install, const Manifest& manifest, const Signed& who, std::string& error) {
+    const fs::path exe = install / pathOf(manifest.exe);
+#ifdef _WIN32
+    // Inherited from ours, set only around the start so it never lingers here.
+    SetEnvironmentVariableW(L"MU2_SESSION", std::wstring(who.token.begin(), who.token.end()).c_str());
+    std::wstring line = L"\"" + exe.wstring() + L"\"";
+    STARTUPINFOW start{};
+    start.cb = sizeof start;
+    PROCESS_INFORMATION running{};
+    const BOOL ok = CreateProcessW(exe.wstring().c_str(), line.data(), nullptr, nullptr, FALSE, 0, nullptr,
+                                   install.wstring().c_str(), &start, &running);
+    SetEnvironmentVariableW(L"MU2_SESSION", nullptr);
+    if (!ok) {
+        error = "Could not start the game (" + std::to_string(GetLastError()) + ").";
+        return false;
+    }
+    CloseHandle(running.hThread);
+    CloseHandle(running.hProcess);
+    return true;
+#else
+    std::vector<std::string> env;
+    for (char** e = environ; *e; ++e) {
+        if (std::string(*e).rfind("MU2_SESSION=", 0) != 0) env.emplace_back(*e);
+    }
+    env.push_back("MU2_SESSION=" + who.token);
+    std::vector<char*> envp;
+    for (std::string& s : env) envp.push_back(s.data());
+    envp.push_back(nullptr);
+    std::string path = exe.string();
+    char* argv[] = {path.data(), nullptr};
+    pid_t pid = 0;
+    if (posix_spawn(&pid, path.c_str(), nullptr, nullptr, argv, envp.data()) != 0) {
+        error = "Could not start the game.";
+        return false;
+    }
+    return true;
+#endif
+}
+
+}  // namespace mu::launcher

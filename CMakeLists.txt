@@ -205,6 +205,28 @@ endif()
 target_compile_definitions(mu_core PRIVATE ${MU_DIRS})
 target_compile_options(mu_core PRIVATE ${MU_WARNINGS})
 
+# MU2Launcher (docs/plans/launcher.md, L3): signs in on the website, installs and updates the game
+# from the box, starts it. HTTPS is the system's: WinHTTP on Windows, libcurl on the Mac. Not on
+# the Linux box, which never runs it.
+if(WIN32 OR APPLE)
+  add_executable(mu2_launcher
+    src/launcher/main.cpp
+    src/launcher/engine.cpp
+    src/launcher/sha256.cpp
+  )
+  target_link_libraries(mu2_launcher PRIVATE mu_core)
+  target_compile_options(mu2_launcher PRIVATE ${MU_WARNINGS})
+  if(WIN32)
+    target_sources(mu2_launcher PRIVATE src/launcher/https_win.cpp)
+    target_link_libraries(mu2_launcher PRIVATE winhttp crypt32 shell32 ole32)
+    set_target_properties(mu2_launcher PROPERTIES OUTPUT_NAME MU2Launcher)
+  else()
+    find_package(CURL REQUIRED)
+    target_sources(mu2_launcher PRIVATE src/launcher/https_curl.cpp)
+    target_link_libraries(mu2_launcher PRIVATE CURL::libcurl)
+  endif()
+endif()
+
 # The player's packs (core/pack.h) and zstd under them. Apart from mu_core so that the server,
 # which never reads a pack, builds without zstd: core::readFile asks the packs through a hook
 # (core::setFileSource) that mounting them sets. The game links this; so does the packer.

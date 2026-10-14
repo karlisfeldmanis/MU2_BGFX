@@ -65,6 +65,18 @@ by mingw like `MU2.exe`, linking `mu_gfx` and the few UI sources it draws with.
   replace when whole. Play stays off until every file matches.
 - Play: `CreateProcessW` on `MU2.exe` with `MU2_SESSION` set; the launcher minimises.
 - Its own update: a newer launcher in the manifest is fetched beside it, swapped in on the next start.
+- **The engine is done (2026-10-14)**, src/launcher/ with no screens yet: `mu2_launcher --check`
+  signs in, keeps the token, reads the manifest, finds what is stale, fetches it and checks it.
+  - On the Mac against the box: a whole install, 19 files and 1.53 GB in 34 s, every hash right;
+    a pack with one flipped byte and another left half-fetched as a `.part` were the only two found
+    stale and both came down right; a third run found nothing.
+  - `MU2Launcher.exe` under Wine: WinHTTP signs in, the token is sealed by DPAPI (the file is a
+    sealed blob, not the token), two files fetched into `C:\MU2check` and recorded.
+  - **Wine here has no TLS** (no GnuTLS for its schannel): every HTTPS call fails with WinHTTP
+    12157, so the Wine check runs over plain HTTP against a local web/server.py. Real Windows does
+    TLS itself; TLS 1.2 and 1.3 are asked for outright.
+- **Next: the screens.** A GLFW window and bgfx, the four screens of the canvas, the game's slab
+  buttons; shaders, fonts, the wallpaper and the logo inside the exe.
 
 **L4. The website offers the launcher.** The Windows button downloads `MU2Launcher.exe`, a few MB,
 in place of the 1.5 GB zip.
