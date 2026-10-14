@@ -29,6 +29,8 @@ back. Only the token's SHA-256 is stored. The token has the shape of the game's 
 `T`'s id instead of the machine key. Caddy answers 404 for `/internal/` from outside.
 
 On the box: `sqlite3 /var/lib/mu2-web/accounts.db 'select id, email, created from accounts'`.
+To delete one by hand, start with `PRAGMA foreign_keys=ON;` or its sessions stay behind: the
+sqlite3 shell does not cascade unless told.
 
 ## Installers
 
