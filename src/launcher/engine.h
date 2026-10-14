@@ -15,10 +15,11 @@ namespace fs = std::filesystem;
 
 // The site (web/) and the platform its releases are under (tools/mu/release.py).
 struct Place {
-    std::string site = "https://37.27.158.226";
+    std::string site = "https://mu-classic.com";
     // Where the player's links go (Create account, Forgot password, Edit account): always the
-    // public website, even when `site` is a local one for a test.
-    std::string web = "https://37.27.158.226";
+    // public website, even when `site` is a local one for a test. Launchers built before the
+    // domain (2026-10-14) carry https://37.27.158.226 here, which Caddy still answers.
+    std::string web = "https://mu-classic.com";
 #ifdef _WIN32
     std::string platform = "windows";
 #else

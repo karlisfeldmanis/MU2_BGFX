@@ -15,7 +15,7 @@
 The manifest:
   {"platform": "windows", "version": "<commit>", "built": "<date>", "protocol": 31, "exe": "MU2.exe",
    "bytes": N, "files": [{"path": "MU2.exe", "size": N, "sha256": "..."}, ...]}
-served at https://37.27.158.226/game/windows/manifest.json, each file at .../files/<sha256>.
+served at https://mu-classic.com/game/windows/manifest.json, each file at .../files/<sha256>.
 """
 import hashlib
 import json
@@ -30,7 +30,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from paths import OUT, ROOT  # noqa: E402
 
 HOST = "hetzner"                 # ~/.ssh/config: root@37.27.158.226
-SITE = "https://37.27.158.226"
+SITE = "https://mu-classic.com"
 REMOTE = "/srv/mu2-web/game"
 KEEP = 2                         # releases whose files stay on the box
 LEFT_OUT = {"BUILT_FROM"}        # dist's own note; logs/ is the player's

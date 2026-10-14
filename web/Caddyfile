@@ -1,17 +1,14 @@
-# Caddy on the Hetzner box: HTTPS for MU2's site, in front of web/server.py on 127.0.0.1:8080.
+# Caddy on the Hetzner box: HTTPS for MU's site, in front of web/server.py on 127.0.0.1:8080.
 # Installed by web/deploy.sh to /etc/caddy/Caddyfile.
 #
-# No domain yet (the user, 2026-10-14: "use the IP for now"), so the certificate names the IP.
-# Let's Encrypt issues IP certificates only under its six-day "shortlived" profile; Caddy renews
-# them by itself. With a domain, put it in place of the IP and drop the tls block.
+# mu-classic.com is the name players see (2026-10-14: bought, DNS on Hetzner). The bare IP still
+# answers in its own block: every launcher already on a player's machine has
+# https://37.27.158.226 built into it (src/launcher/engine.h Place::site) and must keep signing
+# in. An IP certificate exists only under Let's Encrypt's six-day "shortlived" profile; a
+# domain's is ordinary and Caddy renews it by itself.
 
-37.27.158.226 {
-	tls {
-		issuer acme {
-			profile shortlived
-		}
-	}
-
+# What every site below answers, written once.
+(mu2) {
 	encode zstd gzip
 
 	# The installers, served from disk by Caddy itself (big files, ranges, resumes).
@@ -46,4 +43,17 @@
 		X-Frame-Options DENY
 		-Server
 	}
+}
+
+mu-classic.com {
+	import mu2
+}
+
+37.27.158.226 {
+	tls {
+		issuer acme {
+			profile shortlived
+		}
+	}
+	import mu2
 }

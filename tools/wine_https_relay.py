@@ -6,7 +6,7 @@ The program is pointed at http://127.0.0.1:PORT, and this passes each request on
 over HTTPS and its answer back, streamed: the same accounts, the same manifest, the same files.
 Only the TLS hop is the Mac's. A real Windows does TLS itself and never needs this.
 
-    python3 -I tools/wine_https_relay.py [--port 8096] [--site https://37.27.158.226]
+    python3 -I tools/wine_https_relay.py [--port 8096] [--site https://mu-classic.com]
     wine MU2Launcher.exe --site http://127.0.0.1:8096
 """
 import argparse
@@ -64,7 +64,7 @@ class Relay(BaseHTTPRequestHandler):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--port", type=int, default=8096)
-    ap.add_argument("--site", default="https://37.27.158.226")
+    ap.add_argument("--site", default="https://mu-classic.com")
     args = ap.parse_args()
     Relay.site = urlparse(args.site)
     print(f"relay on http://127.0.0.1:{args.port} -> {args.site}", flush=True)

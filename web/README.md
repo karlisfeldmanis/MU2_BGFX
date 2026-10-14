@@ -8,7 +8,7 @@ Design: the "MU2 Launcher" canvas, Website page.
 | --- | --- |
 | `server.py` | the page, `/api/register`, `/api/login`, `/api/logout`, `/api/me`, `/api/downloads`, and `/internal/session` for mu2_server |
 | `site/` | `index.html` and the logo |
-| `Caddyfile` | HTTPS on 37.27.158.226 (a Let's Encrypt IP certificate), installers from disk, the rest to server.py |
+| `Caddyfile` | HTTPS on mu-classic.com (and still on 37.27.158.226 for launchers already out), installers from disk, the rest to server.py |
 | `mu2-web.service` | the systemd unit; accounts in `/var/lib/mu2-web/accounts.db` |
 | `deploy.sh` | HEAD's `web/` to `/opt/mu2-web`, Caddy installed if missing, both restarted |
 
@@ -36,7 +36,8 @@ sqlite3 shell does not cascade unless told.
 
 `./mu release windows` puts `dist/windows/MU2/` under `/srv/mu2-web/game/windows/`: each file
 at `files/<sha256>`, and `manifest.json` (version, protocol, every file's path, size and hash),
-written last. https://37.27.158.226/game/windows/manifest.json is what the launcher reads.
+written last. https://mu-classic.com/game/windows/manifest.json is what the launcher reads (the
+launchers built before the domain still read it off 37.27.158.226, which Caddy answers too).
 
 ## Installers
 
