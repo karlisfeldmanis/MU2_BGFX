@@ -1,5 +1,5 @@
 // The cooked rules tables: what a breed is, where its nests are, and the map's attribute
-// grid. Written by tools/cook.py's cook_tables, which is the only thing that writes them, and
+// grid. Written by pipeline/cook.py's cook_tables, which is the only thing that writes them, and
 // read here whole. No sqlite in the game (foundation 11), and no json either: this is
 // what a fight reads a hundred times a tick.
 //
@@ -132,7 +132,7 @@ struct ItemRow {
 };
 
 // One of the town's people: who, where, which way, and what draws them. See FOLK_VERSION075
-// in tools/cook.py for the source. `figure` is empty where the world's own placements already
+// in pipeline/cook.py for the source. `figure` is empty where the world's own placements already
 // stand them.
 struct Townsperson {
     std::string name;
@@ -153,7 +153,7 @@ struct PlayerAction {
 };
 
 // Something in the town a character can sit on, lean against or hang off: MU's
-// MOVEMENT_OPERATE, transcribed by map and object type in tools/cook.py's PERCHES (MU2's
+// MOVEMENT_OPERATE, transcribed by map and object type in pipeline/cook.py's PERCHES (MU2's
 // Poses.cs). `pose` is OpenMU's CharacterPose number -- 2 sitting, 3 leaning, 4 hanging.
 struct Perch {
     uint8_t pose = 0;

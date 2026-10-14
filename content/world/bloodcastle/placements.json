@@ -1,6 +1,6 @@
 {
  "world": "bloodcastle",
- "summary": "What the extraction cannot know, for Blood Castle: the Archangel in the safe court. The game stands him from tools/cook.py's FOLK_VERSION075[11]; this row is what puts his figure in the castle's figure cook.",
+ "summary": "What the extraction cannot know, for Blood Castle: the Archangel in the safe court. The game stands him from pipeline/cook.py's FOLK_VERSION075[11]; this row is what puts his figure in the castle's figure cook.",
  "spawns": [
   {
    "model": "BloodCastle01",

@@ -34,7 +34,7 @@ public:
         return take(&value, sizeof(T));
     }
 
-    // A length-prefixed string, as write_string() in tools/cook.py writes it.
+    // A length-prefixed string, as write_string() in pipeline/cook.py writes it.
     bool readString(std::string& value) {
         uint16_t length = 0;
         if (!read(length)) return false;

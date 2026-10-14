@@ -40,7 +40,7 @@
   "cutout": [
     "shield11"
   ],
-  "cutout_note": "Declared, not sniffed (tools/asset.sh reads `cutout`). shield11 is a TGA and its frame is fretwork.",
+  "cutout_note": "Declared, not sniffed (pipeline/asset.sh reads `cutout`). shield11 is a TGA and its frame is fretwork.",
   "material_overrides": {
     "steel": {
       "roughness": 0.45

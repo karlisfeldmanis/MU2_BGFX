@@ -1,5 +1,5 @@
 // Icarus's cloud road: MU's RenderObjectVisual arm for WD_10HEAVEN (ZzzObject.cpp:3090-3169), six
-// kinds of box MU never draws, cooked as world anchors (tools/cook.py ANCHOR_KINDS_BY_WORLD,
+// kinds of box MU never draws, cooked as world anchors (pipeline/cook.py ANCHOR_KINDS_BY_WORLD,
 // EmitterKind::Cloud0 + the box's type):
 //
 //   Object01-03 (types 0-2): on their first drawn frame 20 BITMAP_CLOUD particles of SubType =

@@ -54,7 +54,7 @@ float SetShine::unit() {
 bool SetShine::open(const std::string& assetDir, content::Textures& textures) {
     const std::string path = assetDir + "/effects/levelup/flare.png";
     if (!core::fileExists(path)) {
-        core::logError("set shine: no %s (tools/sync.sh)", path.c_str());
+        core::logError("set shine: no %s (pipeline/sync.sh)", path.c_str());
         return false;
     }
     flare_ = textures.load(path, content::TextureRole::Albedo);

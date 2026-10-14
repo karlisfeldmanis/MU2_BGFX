@@ -63,7 +63,7 @@
       "where": "over"
     }
   ],
-  "chrome_from": "RenderPartObjectBody (ZzzObject.cpp:7053-7058): mesh 0 (crossbow06_R) is drawn RENDER_TEXTURE | RENDER_METAL -- Shiny01 at RENDER_METAL's coordinates off the normal (ZzzBMD.cpp:1499-1502, 1683-1687), solid -- and then RENDER_LIGHTMAP with Chrome01 at its own UVs, V sliding at WorldTime*0.0001, a tenth of a sheet a second, which multiplies it: a polished sheen with chrome streaks running along it. Its own _R sheet is never drawn. Here the pass is Shiny01 times the sliding Chrome01 (its mask), added over the baked mesh rather than standing in for it (scrolls_per_second 0.1, the renderer's offset being minus the rate). tools/chrome_sheets.py.",
+  "chrome_from": "RenderPartObjectBody (ZzzObject.cpp:7053-7058): mesh 0 (crossbow06_R) is drawn RENDER_TEXTURE | RENDER_METAL -- Shiny01 at RENDER_METAL's coordinates off the normal (ZzzBMD.cpp:1499-1502, 1683-1687), solid -- and then RENDER_LIGHTMAP with Chrome01 at its own UVs, V sliding at WorldTime*0.0001, a tenth of a sheet a second, which multiplies it: a polished sheen with chrome streaks running along it. Its own _R sheet is never drawn. Here the pass is Shiny01 times the sliding Chrome01 (its mask), added over the baked mesh rather than standing in for it (scrolls_per_second 0.1, the renderer's offset being minus the rate). pipeline/chrome_sheets.py.",
   "islands": [
     {
       "island": 0,

@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
 """Cooks ONE thing, reports it, shoots it on the viewer's stage, and logs it for a look.
 
-    tools/cook_one.py Scale              an armour set, by its label or suffix (Male07)
-    tools/cook_one.py "Light Crossbow"   a weapon or a shield, by label or file name
-    tools/cook_one.py Hound01            a figure's mesh -- a monster, a person, a part
-    tools/cook_one.py Cannon01           a world object, in --world (lorencia)
-    tools/cook_one.py Scale --no-shots   cook and report only
-    tools/cook_one.py --pass Scale "gold reads as gold at dusk"
-    tools/cook_one.py --fail Scale "the gloves are chrome"
+    pipeline/cook_one.py Scale              an armour set, by its label or suffix (Male07)
+    pipeline/cook_one.py "Light Crossbow"   a weapon or a shield, by label or file name
+    pipeline/cook_one.py Hound01            a figure's mesh -- a monster, a person, a part
+    pipeline/cook_one.py Cannon01           a world object, in --world (lorencia)
+    pipeline/cook_one.py Scale --no-shots   cook and report only
+    pipeline/cook_one.py --pass Scale "gold reads as gold at dusk"
+    pipeline/cook_one.py --fail Scale "the gloves are chrome"
 
 Why this exists: a full cook changes a hundred things at once and nobody looks at each of
 them, so a mistake is found much later and far from its cause. This is the day-to-day way:
 one item, its report, its shots, a look, and a line in docs/content/cook-log.md saying whether it
-passed -- then the next. `tools/cook.py` still rebuilds everything, for when that is wanted.
+passed -- then the next. `pipeline/cook.py` still rebuilds everything, for when that is wanted.
 
 What it touches and nothing else: that item's textures (compressed only if not already
 there -- a .ktx is named by the sha1 of its source bytes, so existence is the up-to-date
 test), that item's meshes, and that item's entries in the area's textures.json and table
 (wardrobe.json, figures.json). Every other entry in them is left as it was. A world object
-new to the town still needs `tools/cook.py --only placements` to be stood anywhere; this
+new to the town still needs `pipeline/cook.py --only placements` to be stood anywhere; this
 says so rather than doing it.
 """
 
@@ -32,6 +32,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tools"))
 import cook  # noqa: E402  (the cook's own texture and mesh steps, so the two cannot drift)
 from cook import (cook_mesh, cook_world_clip, image_bytes, read_glb, roles_of, safe)  # noqa: E402
 from paths import ASSETS, BUILD, ROOT, SHOTS  # noqa: E402
@@ -324,7 +325,7 @@ def cook_item(kind, area, meshes, extra, texcook, world="lorencia"):
     else:
         town = os.path.join(area_dir, f"{area}.mut")
         print(f"cook_one: a world object's mesh is rewritten in place; if it is new to the "
-              f"town, `tools/cook.py --only placements` stands it ({os.path.relpath(town, ROOT)})")
+              f"town, `pipeline/cook.py --only placements` stands it ({os.path.relpath(town, ROOT)})")
         # Its own embedded animation, if it carries one -- see cook_world_clip.
         clips_path = os.path.join(area_dir, "clips.json")
         clips = load_json(clips_path, {"version": 1, "clips": {}})
@@ -398,7 +399,7 @@ def shoot(kind, name, extra, world, dist=None):
         where = os.path.join(out, time)
         os.makedirs(where, exist_ok=True)
         # No --world: with it the viewer opens the whole map rather than its stage.
-        command = [os.path.join(ROOT, "viewer.sh"), "--category", category,
+        command = [os.path.join(ROOT, "mu viewer"), "--category", category,
                    "--pick", pick, "--time", time, "--frames", "90", "--shot", "89",
                    "--shot-path", where, "--log", os.path.join(out, f"{time}.log")]
         # Close enough to read a material on what is worn; a weapon frames itself, the bench
@@ -440,9 +441,9 @@ def shoot(kind, name, extra, world, dist=None):
 
 HEADER = """# Cook log
 
-One line per item cooked with `tools/cook_one.py`: when, what, and whether its shots passed
+One line per item cooked with `pipeline/cook_one.py`: when, what, and whether its shots passed
 a look. An item is not done when it is cooked; it is done when this says `passed`. Mark it
-with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
+with `pipeline/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 
 | item | kind | cooked | look | note |
 |---|---|---|---|---|

@@ -1,7 +1,7 @@
 {
   "item": "Bat01",
   "mu_name": "Bat01",
-  "mu_name_from": "Object2/Bat01.bmd, which is not a placement: GOBoid.cpp's boid slot takes MODEL_BAT01 in the Dungeon and the Lost Tower (GOBoid.cpp:1327-1328) and keeps five of them around whoever is playing, as Lorencia's Bird01. Built like any world model and named in tools/cook.py's AIRS, since nothing on the map refers to it.",
+  "mu_name_from": "Object2/Bat01.bmd, which is not a placement: GOBoid.cpp's boid slot takes MODEL_BAT01 in the Dungeon and the Lost Tower (GOBoid.cpp:1327-1328) and keeps five of them around whoever is playing, as Lorencia's Bird01. Built like any world model and named in pipeline/cook.py's AIRS, since nothing on the map refers to it.",
   "world": "dungeon",
   "object_type": -1,
   "why_this_one": "The Dungeon's bats: 38 triangles, 8 bones, one 4-key wing beat. MoveBat holds them 2 to 3.5 m over the floor, bobbing (GOBoid.cpp:925-930), flocking as the birds do, and one in 256 frames within six tiles each squeaks aBat.wav.",

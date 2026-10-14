@@ -26,6 +26,11 @@
     ./mu do "<line>; <line>; ..."            drive an open studio: subject, scene, shot, wait, status...
     ./mu serve                               the cook's job runner; `mu make` hands it its jobs
     ./mu jobs [--watch [N]] | cancel N [--now] what it is cooking, with bars and time left
+    ./mu play [switches]                     the game, as a player: the character screen, fullscreen
+    ./mu run [switches]                      the game with any switches (a review run, a shot)
+    ./mu viewer [switches]                   the object viewer over the cooked models
+    ./mu build [--debug|--trace]             the game into out/build (or out/build-debug)
+    ./mu bootstrap                           fetch third_party/extern at its pins
     ./mu dist macos [--commit REF]           the player's app, dist/macos/MU2.app, from a commit
 
 Every command takes --json and then prints one JSON object as its last line, for a script or
@@ -50,7 +55,16 @@ import settings  # noqa: E402
 from things import WORKSHOP, NotFound  # noqa: E402
 
 
+# The scripts that were the root's (docs/plans/layout.md step 5), run as they were: every word
+# after the command is theirs, so argparse never sees it.
+RUN = os.path.join(os.path.dirname(os.path.abspath(__file__)), "run")
+SCRIPTS = ("play", "run", "viewer", "build", "bootstrap")
+
+
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] in SCRIPTS:
+        script = os.path.join(RUN, sys.argv[1] + ".sh")
+        os.execvp("zsh", ["zsh", script] + sys.argv[2:])
     parser = argparse.ArgumentParser(prog="mu", description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--json", action="store_true", help="end with one JSON object")

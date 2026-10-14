@@ -176,7 +176,7 @@ void StudioPlace::match(game::World& world) { line_ = lineOf(world, size_t(picke
 
 int StudioPlace::lineOf(game::World& world, size_t instance) const {
     // The source's line for an instance: its model, and where the cook put it --
-    // x = at[0] / per_tile, z = -at[1] / per_tile (tools/cook.py, cook_placements).
+    // x = at[0] / per_tile, z = -at[1] / per_tile (pipeline/cook.py, cook_placements).
     const content::CookedTown& town = world.town().cooked();
     const content::TownInstance& one = town.instances[instance];
     const std::string& model = town.models[one.model].name;

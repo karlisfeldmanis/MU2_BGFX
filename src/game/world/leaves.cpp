@@ -179,7 +179,7 @@ bool Leaves::open(const std::string& assetDir, content::Textures& textures,
         const content::EffectSheet* mote = table.effect("mote");
         if (mote == nullptr) {
             core::logError("leaves: no cooked effect named 'mote'; nothing drifts in Atlans "
-                           "(tools/cook.py --only showing)");
+                           "(pipeline/cook.py --only showing)");
             return false;
         }
         motes_ = true;
@@ -193,7 +193,7 @@ bool Leaves::open(const std::string& assetDir, content::Textures& textures,
         const content::EffectSheet* star = table.effect("snow_star");
         if (flake == nullptr || star == nullptr) {
             core::logError("leaves: no cooked effect named 'snow' or 'snow_star'; nothing falls "
-                           "on Devias (tools/cook.py --only showing)");
+                           "on Devias (pipeline/cook.py --only showing)");
             return false;
         }
         sheet_ = textures.load(assetDir + "/" + flake->path, content::TextureRole::Albedo);

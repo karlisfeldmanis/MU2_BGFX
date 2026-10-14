@@ -49,7 +49,7 @@
       "gladiator"
     ],
     "class_level": 1,
-    "class_level_note": "The Magic Gladiator's, class level 1: he has no second class. 'gladiator' is a class bit ahead of his class (tools/cook.py's kClass), so nobody wears it until he is in.",
+    "class_level_note": "The Magic Gladiator's, class level 1: he has no second class. 'gladiator' is a class bit ahead of his class (pipeline/cook.py's kClass), so nobody wears it until he is in.",
     "power_note": "As the other 2nd wings: his blows x(132 + plus)%, what reaches him x(75 - 2 a plus)%, defence + 2 a plus, level + 5 a plus; the option wizardry or damage by its kind bit (sim::wingOption).",
     "number_note": "MU's 12/6; ours 12/22, a number this game leaves free (12/6 is the knight's Orb of Lunge here). docs/game/wings.md."
   },

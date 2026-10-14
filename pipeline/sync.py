@@ -13,7 +13,7 @@ list that shipped a town with no attribute grid and no sound):
 Rule 2 is applied to the files rule 1 brought, and rule 3 to the models, until nothing new
 is found, because a json can name a json.
 
-Nothing here cooks: this is a copy. tools/cook.py (sprint 3) turns the result into what the
+Nothing here cooks: this is a copy. pipeline/cook.py (sprint 3) turns the result into what the
 engine loads.
 """
 

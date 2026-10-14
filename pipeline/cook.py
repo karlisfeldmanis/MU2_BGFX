@@ -17,7 +17,7 @@ already on the right axes, already sorted into the chunks a frame walks. Foundat
 architecture.md says chunk bounds and each kind's range are settled once, not per frame, and the
 cook is the once.
 
-    tools/cook.py --world lorencia [--only textures|meshes|placements|missiles|all] [--chunk 32]
+    pipeline/cook.py --world lorencia [--only textures|meshes|placements|missiles|all] [--chunk 32]
 
 The .mut format ("MU2 town"), version 2, little-endian:
 
@@ -109,7 +109,7 @@ import zlib
 
 # Each world's manifest, content/world/<w>/world.json (docs/plans/order-plan.md sprint D), read by
 # pipeline/world_manifest.py. Appended, so nothing in pipeline/ shadows a module of ours.
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "pipeline"))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tools"))
 import world_manifest  # noqa: E402
 
 from paths import ASSETS, BUILD, CONTENT, ROOT  # noqa: E402
@@ -1396,7 +1396,7 @@ LOWERED = {("Stone04", 3076.018, 14026.856): 1.53,
            ("Object49", 23456.195, 2655.718): 0.276,
            ("Object50", 23462.506, 2375.241): 0.281}
 
-# The world anchors' tables are tools/cook_anchors.py's.
+# The world anchors' tables are pipeline/cook_anchors.py's.
 from cook_anchors import (ANCHOR_KINDS, ANCHOR_KINDS_BY_WORLD, ANCHOR_LIGHT,  # noqa: E402
                           BRAZIER_BOWLS, HIDDEN_BY_WORLD, LIGHT_TWINS, SHOWN_LATER,
                           SPRAY_KINDS)
@@ -2431,7 +2431,7 @@ def cook_tables(world, out_dir):
     return 0
 
 
-# The sound helpers are tools/cook_sound.py's.
+# The sound helpers are pipeline/cook_sound.py's.
 from cook_sound import SOUND_RATE, fade_tail, read_wav, resample, write_wav  # noqa: E402
 
 
@@ -3166,7 +3166,7 @@ def cook_figures(world, out_dir, texcook, threads, with_monsters=True, only=None
                 library = library[: -len(".res")] + ".glb"
             if not os.path.exists(library):
                 print(f"cook: {name} names {os.path.relpath(library, ASSETS)} and it is not "
-                      f"here -- tools/sync.sh copies it", file=sys.stderr)
+                      f"here -- pipeline/sync.sh copies it", file=sys.stderr)
                 continue
             stem = os.path.basename(library)[: -len(".actions.glb")]
             if stem == "player" and stem not in libraries:
@@ -3178,7 +3178,7 @@ def cook_figures(world, out_dir, texcook, threads, with_monsters=True, only=None
                 lost = [n for n, _fbx, _options in mixamo.OURS if n not in have]
                 if lost:
                     sys.exit(f"cook: {os.path.relpath(library, ASSETS)} has lost "
-                             f"{', '.join(lost)} -- put them back with tools/mixamo.py "
+                             f"{', '.join(lost)} -- put them back with pipeline/mixamo.py "
                              f"(its OURS list), sync_one, then cook")
             libraries[stem] = library
             clip_of[name] = stem
@@ -3311,7 +3311,7 @@ def cook_wardrobe(out_dir, texcook, threads):
         name = os.path.splitext(os.path.basename(glb))[0]
         full = os.path.join(ASSETS, glb)
         if not os.path.exists(full):
-            print(f"cook: {name} is in index.json and not on disk; tools/sync.sh copies it",
+            print(f"cook: {name} is in index.json and not on disk; pipeline/sync.sh copies it",
                   file=sys.stderr)
             continue
         rows[name] = (one, full)

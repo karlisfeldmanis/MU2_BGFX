@@ -1,6 +1,6 @@
 // The cooked missiles: what a blow throws, and the mesh it throws.
 //
-// Written by tools/cook.py's cook_missiles, which is the only thing that writes it. A row
+// Written by pipeline/cook.py's cook_missiles, which is the only thing that writes it. A row
 // names a .mum exactly like the town's models and the wardrobe's items, so the thing thrown
 // is loaded with content::parseCookedMesh and drawn as an ordinary lit gfx::Drawable --
 // there is no run-time .obj parser and no second material model on this path any more.

@@ -88,7 +88,7 @@ bool TrapShow::open(const std::string& assetDir, const std::string& world,
         content::CookedMesh cooked;
         std::string error;
         if (bytes.empty() || !content::parseCookedMesh(bytes, cooked, error)) {
-            core::logError("traps: no cooked %s in %s (tools/cook_one.py %s --world %s)", model,
+            core::logError("traps: no cooked %s in %s (pipeline/cook_one.py %s --world %s)", model,
                            dir.c_str(), model, world.c_str());
             return nullptr;
         }

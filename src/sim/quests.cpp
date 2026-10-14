@@ -670,7 +670,7 @@ QuestRow tersiaDoor() {
                                  .firstOnly = true};
     // And the guild's horse: the Horn of Uniria, level 60, the first mount.
     row.paid[row.paidCount++] = {.item = "Helper03", .firstOnly = true};
-    row.voice = "tersia_1";  // tools/voice.py, VOICES["tersia"]
+    row.voice = "tersia_1";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }
 
@@ -720,7 +720,7 @@ QuestRow tersiaSecond() {
     row.paid[row.paidCount++] = {.item = "Ring02", .sockets = 1, .firstOnly = true};  // of Poison
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Kinship),
                                  .firstOnly = true};
-    row.voice = "tersia_2";  // tools/voice.py, VOICES["tersia"]
+    row.voice = "tersia_2";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }
 
@@ -760,7 +760,7 @@ QuestRow tersiaThird() {
                                  .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::SecondWind),
                                  .firstOnly = true};
-    row.voice = "tersia_3";  // tools/voice.py, VOICES["tersia"]
+    row.voice = "tersia_3";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }
 
@@ -801,7 +801,7 @@ QuestRow tersiaFourth() {
                                  .affixes = {uint8_t(Affix::Wisdom), uint8_t(Affix::Fortune)}};
     // And the knight's Slash, the Halls' until 2026-10-09: its orb asks level 104, this floor's.
     row.paid[row.paidCount++] = {.item = "OrbSlash", .kin = knight, .firstOnly = true};
-    row.voice = "tersia_4";  // tools/voice.py, VOICES["tersia"]
+    row.voice = "tersia_4";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }
 
@@ -850,7 +850,7 @@ QuestRow tersiaFifth() {
     row.paid[row.paidCount++] = {.item = "Ring01", .kin = elf, .sockets = 1, .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Renewal),
                                  .firstOnly = true};
-    row.voice = "tersia_5";  // tools/voice.py, VOICES["tersia"]
+    row.voice = "tersia_5";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }
 
@@ -897,7 +897,7 @@ QuestRow tersiaSixth() {
     // where to give that"): its orb asks level 130, and this floor 140.
     row.paid[row.paidCount++] = {.item = "OrbPenetration", .kin = elf, .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "MagicBox08", .plus = 1};  // a Box of Kundun +1
-    row.voice = "tersia_6";  // tools/voice.py, VOICES["tersia"]
+    row.voice = "tersia_6";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }
 
@@ -963,7 +963,7 @@ QuestRow tersiaBalrog() {
     row.paid[row.paidCount++] = {.item = "OrbRagefulBlow", .kin = knight, .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Book14", .kin = wizard, .firstOnly = true};  // Inferno
     row.paid[row.paidCount++] = {.item = "Gem05", .plus = 5, .kin = elf, .firstOnly = true};
-    row.voice = "tersia_7";  // tools/voice.py, VOICES["tersia"]
+    row.voice = "tersia_7";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }
 
@@ -1039,7 +1039,7 @@ QuestRow tersiaSkyDoor() {
     // Plague, the Epic it had, is the wizard's at Tarkan now.
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::GreaterAscendance),
                                  .firstOnly = true};
-    row.voice = "tersia_8";  // tools/voice.py, VOICES["tersia"]
+    row.voice = "tersia_8";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }
 
@@ -1114,7 +1114,7 @@ QuestRow tersiaPhoenix() {
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight,
                                  .power = uint8_t(Power::Bulwark), .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "MagicBox08", .plus = 3};  // a Box of Kundun +3
-    row.voice = "tersia_9";  // tools/voice.py, VOICES["tersia"]
+    row.voice = "tersia_9";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }
 
@@ -1138,7 +1138,7 @@ QuestRow sevinaTrial() {
     row.giverName = "Sevina";
     row.place = "Devias";
     row.title = "The Emperor's Treasures";
-    row.voice = "sevina_1";  // tools/voice.py, VOICES["sevina"]
+    row.voice = "sevina_1";  // pipeline/voice.py, VOICES["sevina"]
     row.offer[0] = "\"You came back, child. And this time the gods can hear you.\"";
     row.offer[1] =
         "\"When Muren, the first emperor, united MU, the peoples swore loyalty to him and gave "
@@ -1222,7 +1222,7 @@ QuestRow brokenSword() {
     // his Twisting Slash, after the Swirl and Eddy kin (the ladder, 2026-10-09; Tarkan's before).
     row.paid[row.paidCount++] = {.item = "ArmorMale18", .sockets = 1};  // Dark Phoenix
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Whirlwind)};
-    row.voice = "sevina_2";  // tools/voice.py, VOICES["sevina"]; her resting is sevinaTreasure's
+    row.voice = "sevina_2";  // pipeline/voice.py, VOICES["sevina"]; her resting is sevinaTreasure's
     row.offer[0] =
         "\"Seek out the 'Broken Sword' that the ancient dark knights offered at the "
         "commemoration of peace. A few dark knights have found it in Atlans and the Lost "
@@ -1248,7 +1248,7 @@ QuestRow soulOfWizard() {
     row.paid[row.paidCount++] = {.item = "ArmorMale19", .sockets = 1};  // Grand Soul
     row.paid[row.paidCount++] = {.item = "Shield16", .sockets = 1};     // Grand Soul Shield
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Pyroblast)};
-    row.voice = "sevina_3";  // tools/voice.py, VOICES["sevina"]; her resting is sevinaTreasure's
+    row.voice = "sevina_3";  // pipeline/voice.py, VOICES["sevina"]; her resting is sevinaTreasure's
     row.offer[0] =
         "\"Go find the 'Soul of Wizard'. According to the ancient dark wizards, it was last "
         "seen around the Lost Tower and Atlans.\"";
@@ -1271,7 +1271,7 @@ QuestRow tearOfElf() {
     // after Split Arrow and Scatter Volley (2026-10-09).
     row.paid[row.paidCount++] = {.item = "ArmorMale20", .sockets = 1};  // Divine
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Volley)};
-    row.voice = "sevina_4";  // tools/voice.py, VOICES["sevina"]; her resting is sevinaTreasure's
+    row.voice = "sevina_4";  // pipeline/voice.py, VOICES["sevina"]; her resting is sevinaTreasure's
     row.offer[0] =
         "\"Go find the crystal 'Tear of Elf', made by the ancient elves with the strength of the "
         "spirit. Some adventurous elves have seen it in the Lost Tower and Atlans.\"";
@@ -1343,7 +1343,7 @@ QuestRow drownedSong() {
         "\"Someone from Noria, down here, under the sea? Then Peia still listens for me. Forgive "
         "the silence, traveller. I did not stop singing. I was made to.\"";
     row.resting = "\"Her song carries again. Thank you, traveller.\"";
-    // Peia's voice (tools/voice.py, VOICES["peia"] by the stem) on her offer, Lirien's own on the
+    // Peia's voice (pipeline/voice.py, VOICES["peia"] by the stem) on her offer, Lirien's own on the
     // hand-in (VOICES["lirien"]).
     row.voice = "peia_2";
     row.receiverVoice = "lirien";
@@ -1394,7 +1394,7 @@ QuestRow lirienHalls() {
         "\"Take these, with the thanks of Noria's envoy. They will gather again. When they do, "
         "come back to me.\"";
     row.resting = "\"Rest. The Hydra's brood will rise again by morning.\"";
-    // Her own voice (tools/voice.py, VOICES["lirien"] by the stem).
+    // Her own voice (pipeline/voice.py, VOICES["lirien"] by the stem).
     row.voice = "lirien_1";
     row.steps[0] = {QuestStepKind::Clear, 45, 40, "Bahamuts"};          // level 43
     row.steps[1] = {QuestStepKind::Clear, 46, 35, "Vepars"};            // 45
@@ -1494,7 +1494,7 @@ QuestRow roadOfKantur() {
         "\"The Hydra is dead? And the road is open again... Kantur waited a long time to hear "
         "that.\"";
     row.resting = "\"Sit, traveller. The road is long and the sand is longer.\"";
-    // Lirien's voice on her offer (tools/voice.py, VOICES["lirien"] by the stem), the Keeper's
+    // Lirien's voice on her offer (pipeline/voice.py, VOICES["lirien"] by the stem), the Keeper's
     // own on the hand-in (VOICES["keeper"], an old man out of Common Voice).
     row.voice = "lirien_2";
     row.receiverVoice = "keeper";
@@ -1652,7 +1652,7 @@ QuestRow towerErrand() {
         "\"A messenger from Devin? Then Devias still stands. Come in, quickly, before the walls "
         "hear us.\"";
     row.resting = "\"Tersia has my word now. Go, and keep her alive.\"";
-    // Devin's voice on his offer (tools/voice.py, VOICES["devin"] by the stem), Tersia's own on the
+    // Devin's voice on his offer (pipeline/voice.py, VOICES["devin"] by the stem), Tersia's own on the
     // hand-in (VOICES["tersia"]).
     row.voice = "devin_2";
     row.receiverVoice = "tersia";

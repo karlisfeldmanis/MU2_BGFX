@@ -1,6 +1,6 @@
 {
   "world": "tarkan",
-  "summary": "What the extraction cannot know, for Tarkan: its townspeople in the safe hall. MU's client stands nobody here (docs/worlds/tarkan-port.md §1.2); the repack stands Thompson, Baz and Amy (WZD MonsterSetBase.txt:36-38), of whom Baz and Amy stand here as in Atlans, and the Keeper of Kantur is ours (docs/game/tarkan-quest.md). The game stands them from tools/cook.py's FOLK_VERSION075[8]; these rows are what puts their figures in Tarkan's figure cook.",
+  "summary": "What the extraction cannot know, for Tarkan: its townspeople in the safe hall. MU's client stands nobody here (docs/worlds/tarkan-port.md §1.2); the repack stands Thompson, Baz and Amy (WZD MonsterSetBase.txt:36-38), of whom Baz and Amy stand here as in Atlans, and the Keeper of Kantur is ours (docs/game/tarkan-quest.md). The game stands them from pipeline/cook.py's FOLK_VERSION075[8]; these rows are what puts their figures in Tarkan's figure cook.",
   "spawns": [
     {
       "model": "Storage01",

@@ -74,7 +74,7 @@ bool Showing::open(const std::string& assetDir, content::Textures& textures) {
     std::string error;
     const std::string path = assetDir + "/cooked/showing/showing.mus";
     if (!content::loadShowing(path, table_, error)) {
-        core::logError("the showing did not open: %s (tools/cook.py --only showing)",
+        core::logError("the showing did not open: %s (pipeline/cook.py --only showing)",
                        error.c_str());
         return false;
     }

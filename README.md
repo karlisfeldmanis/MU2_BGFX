@@ -35,22 +35,22 @@ the game became client and server.
 
 ## Build and run
 
-    ./bootstrap.sh        # once: fetches bgfx, bx, bimg, cgltf, stb_image into extern/
-    ./build.sh            # Ninja, Release, ccache when it is there
-    ./build.sh --trace    # bgfx's own trace in the log, where Metal's refusals show
-    ./main.sh             # the game: the character screen, then the one you enter
-    ./main.sh --new       # past it: a new Dark Knight straight into Lorencia
-    ./run.sh              # the same binary with nothing decided for you; esc quits
+    ./mu bootstrap        # once: fetches bgfx, bx, bimg, cgltf, stb_image into extern/
+    ./mu build            # Ninja, Release, ccache when it is there
+    ./mu build --trace    # bgfx's own trace in the log, where Metal's refusals show
+    ./mu play             # the game: the character screen, then the one you enter
+    ./mu play --new       # past it: a new Dark Knight straight into Lorencia
+    ./mu run              # the same binary with nothing decided for you; esc quits
 
-`main.sh` is the one that plays. It opens on the character screen, where characters are
+`mu play` is the one that plays. It opens on the character screen, where characters are
 made, picked and deleted, and enters the world on the one you pick. `--new` passes it by and
 makes a character the way MU makes one — the naked class
 body, level one, with the Small Axe his class is given and nothing else — puts him down in
 Lorencia's square, and turns vsync on, because a frame paced to the display is what a game
-wants and a number is what `run.sh` is for. Left click walks, left click on a monster fights
+wants and a number is what `mu run` is for. Left click walks, left click on a monster fights
 it, right click stops. The spiders are the nest east of the town.
 
-`run.sh` is the same binary with every switch left to the caller, which is how every bench
+`mu run` is the same binary with every switch left to the caller, which is how every bench
 and every measurement below is taken.
 
 Needs `brew install cmake ninja glfw ccache`.
@@ -60,8 +60,8 @@ Needs `brew install cmake ninja glfw ccache`.
 Every run writes `mu2.log`: what it loaded, what it refused, a frame line a second, and a
 summary table of the budget accounts. Shots land in `shots/` as PNG.
 
-    ./run.sh --frames 300 --shot 100
-    ./run.sh --frames 300 --stats /tmp/s.csv --budget
+    ./mu run --frames 300 --shot 100
+    ./mu run --frames 300 --stats /tmp/s.csv --budget
 
 `--stats` writes a row a frame with the CPU and GPU times, the draw count and a column per
 view. `--budget` turns an overdrawn account into exit code 2; `--budget shade=1.0` replaces
@@ -81,26 +81,26 @@ Paths on the command line must be absolute.
 works and says why each step runs. Reach for the scripts themselves when mu has no word for
 the job yet: a new world's ground, `content.sh`'s everything.
 
-    ./tools/content.sh                           content/ -> workshop/, whatever is stale
-    ./tools/asset.sh Sword01                     one recipe, the same way
+    ./pipeline/content.sh                           content/ -> workshop/, whatever is stale
+    ./pipeline/asset.sh Sword01                     one recipe, the same way
 
 MU2's pipeline, carried here on 2026-09-21 so this tree builds its own content without MU2 or
 Godot: `content/` holds the recipes and MU's imported art (MU2's `assets/`, and `mu.db`),
 `pipeline/` the scripts, `workshop/` their output (MU2's `build/`). Needs Blender and
 python3 with numpy, Pillow and torch. MU's own data is
 [sven-n/MuMain](https://github.com/sven-n/MuMain/tree/main/src/bin/Data), fetched by
-`tools/fetch_mumain.sh`. See `docs/content/cooker.md`, "The pipeline underneath".
+`pipeline/fetch_mumain.sh`. See `docs/content/cooker.md`, "The pipeline underneath".
 
-    ./tools/sync.sh                              everything index.json reaches
-    ./tools/sync.sh --world lorencia --only-world
+    ./pipeline/sync.sh                              everything index.json reaches
+    ./pipeline/sync.sh --world lorencia --only-world
 
 Copies `workshop/` into `assets/` here by MU2's own three rules — plus the clip library a
 model names in its own glTF `extras`, which is where the 283 player animations live.
 `MU2_BUILD=../MU2/build` copies from MU2's build instead.
 
-    ./tools/cook.py --world lorencia             the land, the town and their textures
-    ./tools/cook.py --world lorencia --only figures    the bodies, the armour and the clips
-    ./tools/cook.py --only showing               the effect sheets and the sounds
+    ./pipeline/cook.py --world lorencia             the land, the town and their textures
+    ./pipeline/cook.py --world lorencia --only figures    the bodies, the armour and the clips
+    ./pipeline/cook.py --only showing               the effect sheets and the sounds
 
 The cook turns `assets/` into what the engine loads: BC7 and BC5 `.ktx` with their mip
 chains, flat `.mum` meshes, the town's `.mut`, the figures' `.muc` clip libraries baked
@@ -131,8 +131,8 @@ what it found and what to do about each kind.
 
 ## Benches
 
-    ./run.sh --figure BullFighter01 --clip 2 --frames 300 --shot 100
-    ./run.sh --world lorencia --crowd 30 --frames 600 --repeat 6 --still
+    ./mu run --figure BullFighter01 --clip 2 --frames 300 --shot 100
+    ./mu run --world lorencia --crowd 30 --frames 600 --repeat 6 --still
 
 `--figure` puts one figure on the bench ground under the game's own light and prints, every
 second, which clip is running, **where its clock stands and how long the clip is** — a clip
@@ -143,7 +143,7 @@ two: a monster's 4 is its second swing and a player's 4 is "Stop sword".
 `--crowd N` is how many monsters stand in the town, in the map's own spawn mix; `--crowd -1`
 is every one its spawn table names, which for Lorencia is 290.
 
-    ./run.sh --world lorencia --frames 400 --effects 64 --effect-size 2 --effect-sheet blood
+    ./mu run --world lorencia --frames 400 --effects 64 --effect-size 2 --effect-sheet blood
 
 `--effects N` puts N sprites through the transparent pass, to price it. It is a probe and
 not a look: the cost of that pass is **fill rate**, so what decides its account is how much
@@ -151,7 +151,7 @@ of the screen the sprites cover rather than how many there are, and `--effect-si
 drives that. 64 sprites half a metre across cost nothing measurable; 64 sprites 60 m across
 cost 1.19 ms. `docs/reference/budget.md` has the table and the rate derived from it.
 
-    ./run.sh --world lorencia --still --no-figures --frames 60 --shot 1 --shot-path /abs/slide --shadow-slide 3
+    ./mu run --world lorencia --still --no-figures --frames 60 --shot 1 --shot-path /abs/slide --shadow-slide 3
     tools/shimmer.py /abs/slide --heat /abs/heat.png --allow 200
 
 The shadow shimmer test. The camera holds and only the sun's split moves, so any pixel that

@@ -2,11 +2,11 @@
 # The game. The character screen -- world 74 with your characters on its five pedestals -- and
 # the game after it on the one you enter.
 #
-#   ./main.sh                     play fullscreen on the whole display
-#   ./main.sh --windowed          in a 1920x1080 window instead
-#   ./main.sh --no-vsync          torn rather than paced to the refresh; --cap still holds
-#   ./main.sh --scale 1           every pixel the display has, rather than 85% magnified
-#   ./main.sh --server HOST[:PORT]
+#   ./mu play                     play fullscreen on the whole display
+#   ./mu play --windowed          in a 1920x1080 window instead
+#   ./mu play --no-vsync          torn rather than paced to the refresh; --cap still holds
+#   ./mu play --scale 1           every pixel the display has, rather than 85% magnified
+#   ./mu play --server HOST[:PORT]
 #                                 another server than the Hetzner box (37.27.158.226), which the
 #                                 character screen asks for your characters by default
 #
@@ -32,13 +32,13 @@
 # `--new` passes the character screen by and puts a fresh one straight into Lorencia, which is
 # what a quick try of one thing wants:
 #
-#   ./main.sh --new               a new Dark Knight, the axe his class is given and nothing else
-#   ./main.sh --new --at 185,120  start out in the spider field instead of in town
-#   ./main.sh --new --class 1     a Fairy Elf, who is given a Short Bow
+#   ./mu play --new               a new Dark Knight, the axe his class is given and nothing else
+#   ./mu play --new --at 185,120  start out in the spider field instead of in town
+#   ./mu play --new --class 1     a Fairy Elf, who is given a Short Bow
 #                                 (still in Lorencia: an elf's home is Noria and the map a
 #                                 class is made on is sprint 9's, with the gate between them)
-#   ./main.sh --new --level 10    a character further along, his points already spent
-#   ./main.sh --new --level 13 --quest-ready
+#   ./mu play --new --level 10    a character further along, his points already spent
+#   ./mu play --new --level 13 --quest-ready
 #                                 Lorencia already cleared: Marlon wears a ? and the talk is the
 #                                 hand-in and its reward; nothing is saved
 #
@@ -59,19 +59,19 @@
 #   nest east of the town, tiles 180-226 by 90-244 in `mu.db`'s own spawn row: 45 of them at
 #   level 2 with 30 health, which is what a level-one knight is meant to start on.
 #
-# It is the same binary `run.sh` and `viewer.sh` launch -- there is no server anywhere in this
+# It is the same binary `mu run` and `mu viewer` launch -- there is no server anywhere in this
 # tree and nothing to start beside it -- with the switches that make a run a game rather than a
 # measurement: vsync ON, so the frame is paced to the display and the machine is not spun to
 # 470 fps for nothing, and no `--frames`, no `--shot` and no `--stats`, because a number taken
-# while somebody is playing is not a number. Take those with `run.sh`, which is what it is for.
+# while somebody is playing is not a number. Take those with `mu run`, which is what it is for.
 #
-# Anything given here is passed through and a later switch wins, so `./main.sh --weapon Sword01`
+# Anything given here is passed through and a later switch wins, so `./mu play --weapon Sword01`
 # arms him with a Kris instead. The one thing the script decides for itself is which weapon the
 # cradle gives, because that follows from the class: `--class 1` is an elf and an elf is given a
 # bow, not an axe.
 set -e
-cd "$(dirname "$0")"
-[ -x out/build/mu2 ] || ./build.sh
+cd "$(dirname "$0")/../../.."
+[ -x out/build/mu2 ] || ./mu build
 
 # The switch is `--class`, spelled as the character screen would ask it; the field behind it is
 # `kin`, because `class` is a keyword in the language the engine is written in.

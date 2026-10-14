@@ -97,11 +97,11 @@ std::pair<int, int> stanceActions(const std::string& stance, bool female) {
 }
 
 // The one run, whatever is carried: it is run with the weapon on the back (sim::kRunFactor), so
-// the stance has nothing to say. A Mixamo clip put on Bip01 by tools/mixamo.py, not MU's.
+// the stance has nothing to say. A Mixamo clip put on Bip01 by pipeline/mixamo.py, not MU's.
 constexpr int kRunAction = 284;
 // And the one stand off a safe zone, whatever is drawn (the user, 2026-10-09: "use
 // Idle_combat when character is not in safe zone"). A Mixamo clip too, its quiet drawn out so
-// he looks about once in some thirteen seconds (tools/mixamo.py OURS). A player's only (Play
+// he looks about once in some thirteen seconds (pipeline/mixamo.py OURS). A player's only (Play
 // asks sim::Body::player): the guards share this rig and keep MU's stances and named idles.
 constexpr int kCombatIdleAction = 285;
 
@@ -623,7 +623,7 @@ void Figures::readWardrobe() {
     const core::Json manifest = core::parseJsonFile(path);
     if (manifest.isNull()) {
         core::logError("no wardrobe at %s, so nothing he puts on can be drawn on him "
-                       "(tools/cook.py --only wardrobe)", path.c_str());
+                       "(pipeline/cook.py --only wardrobe)", path.c_str());
         return;
     }
     for (const auto& [name, entry] : manifest["meshes"].members) {
@@ -861,7 +861,7 @@ const FigureBody* Figures::dress(const std::string& name, const std::string& bas
             // silently punches, and the reason is in the cook and not in the game.
             if (!pending_.count(wanted)) {
                 core::logError("%s has no cooked mesh, so %s holds nothing in that hand "
-                               "(tools/cook.py --only wardrobe)", wanted.c_str(), name.c_str());
+                               "(pipeline/cook.py --only wardrobe)", wanted.c_str(), name.c_str());
             }
             continue;
         }
@@ -996,7 +996,7 @@ bool Figures::openWardrobe(const std::string& assetDir, content::Textures& textu
     core::Json manifest = core::parseJsonFile(path);
     if (manifest.isNull()) {
         core::logf("no wardrobe at %s -- the viewer's armour and weapon tabs will be empty. "
-                   "tools/cook.py --only wardrobe writes it, and --only all deliberately "
+                   "pipeline/cook.py --only wardrobe writes it, and --only all deliberately "
                    "does not", path.c_str());
         return false;
     }
@@ -1133,13 +1133,13 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
     const std::string dir = core::join(assetDir, "cooked/figures");
     // One table a world, over meshes and clips every world shares: figures_<world>.json, and
     // the older figures.json -- Lorencia's, cooked before there was a second world -- when a
-    // world has none of its own. tools/cook.py's figures_table.
+    // world has none of its own. pipeline/cook.py's figures_table.
     std::string path = core::join(dir, "figures_" + world + ".json");
     if (!core::fileExists(path)) path = core::join(dir, "figures.json");
     core::Json manifest = core::parseJsonFile(path);
     if (manifest.isNull()) {
         core::logf("no cooked figures at %s -- the town will stand empty of people. "
-                   "tools/cook.py --only figures writes it", path.c_str());
+                   "pipeline/cook.py --only figures writes it", path.c_str());
         return false;
     }
 

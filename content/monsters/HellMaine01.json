@@ -282,7 +282,7 @@
       "where": "over"
     }
   ],
-  "chrome_from": "RenderAidaMonsterObjectMesh MODEL_HELL_MAINE (GMAida.cpp:1379-1411): mesh 0 (epiboss_armor) drawn again RENDER_TEXTURE | RENDER_BRIGHT | RENDER_CHROME in (1, 0, 0), mesh 2 (epibosswing) in (0.5, 0, 0): BITMAP_CHROME (Effect/Chrome01) added at RENDER_CHROME`s coordinates off the normal, sliding with WorldTime (ZzzBMD.cpp:1409-1497, 1677-1680). The skin (mesh 1) is not. Its StreamMesh passes change nothing it draws (mesh 0 at full light, unlit, which our lit body stands in for). Sheets by tools/chrome_sheets.py into content/monsters/chrome.",
+  "chrome_from": "RenderAidaMonsterObjectMesh MODEL_HELL_MAINE (GMAida.cpp:1379-1411): mesh 0 (epiboss_armor) drawn again RENDER_TEXTURE | RENDER_BRIGHT | RENDER_CHROME in (1, 0, 0), mesh 2 (epibosswing) in (0.5, 0, 0): BITMAP_CHROME (Effect/Chrome01) added at RENDER_CHROME`s coordinates off the normal, sliding with WorldTime (ZzzBMD.cpp:1409-1497, 1677-1680). The skin (mesh 1) is not. Its StreamMesh passes change nothing it draws (mesh 0 at full light, unlit, which our lit body stands in for). Sheets by pipeline/chrome_sheets.py into content/monsters/chrome.",
   "islands": [
     {
       "island": 0,

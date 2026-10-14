@@ -14,7 +14,7 @@ struct Folders {
     std::string assets;   // the cook's output
     std::string sheets;   // lighting, the times of day, the lobby, the worlds' light
     std::string shaders;  // the compiled Metal binaries
-    std::string fonts;    // the .ttf faces bootstrap.sh fetches
+    std::string fonts;    // the .ttf faces mu bootstrap fetches
     std::string content;  // what we author: the recipes the studio edits
     std::string work;     // the cook's workshop: the studio's sockets, journal and logs
     std::string user;     // options, characters, layouts, account.key

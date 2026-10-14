@@ -90,12 +90,12 @@ void printUsage() {
         "  --width N --height N      backbuffer size (default 1920x1080)\n"
         "  --fullscreen              the whole display at its own mode; --width/--height are "
         "ignored\n"
-        "  --windowed                and back into a window, which is how main.sh's own "
+        "  --windowed                and back into a window, which is how mu play's own "
         "--fullscreen is taken back\n"
         "  --remember                the game menu's Options as last chosen, and kept when "
-        "changed (main.sh's)\n"
+        "changed (mu play's)\n"
         "  --vsync                   cap to the display; off by default so a number is a number\n"
-        "  --no-vsync                and off again, which is how main.sh's own --vsync is "
+        "  --no-vsync                and off again, which is how mu play's own --vsync is "
         "taken back\n"
         "  --cap N                   hold the picture to N frames a second (0 free, the "
         "default); with --vsync, a divisor of the refresh\n"
@@ -525,7 +525,7 @@ Args parseArgs(int argc, char** argv) {
             }
         } else if (!std::strcmp(s, "--model")) {
             // Not required to be absolute: a bare path is under assets/, which is where
-            // tools/sync.sh puts MU2's content. Nothing is read from MU2 at run time.
+            // pipeline/sync.sh puts MU2's content. Nothing is read from MU2 at run time.
             if (const char* v = next(s)) a.model = v;
         } else if (!std::strcmp(s, "--sheet")) {
             if (const char* v = next(s)) {

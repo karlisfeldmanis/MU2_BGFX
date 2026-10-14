@@ -148,7 +148,7 @@ Breeds, `OM/Version075/Maps/Devias.cs:73-285`:
 MuMain's arms: `MM/Engine/Object/ZzzCharacter.cpp:13997-14045`; the file is
 `Monster{Type+1}.bmd` (`MM/Engine/Object/ZzzOpenData.cpp:2561`, `_enum.h:4162-4168`), all seven
 on disk in `Data/Monster`. Skill numbers are `OM/Skills/SkillNumber.cs:17-32`. The respawns
-are the reason `tools/cook.py:1681`'s `RESPAWN_VERSION075` exists: mu.db's flattening to 10
+are the reason `pipeline/cook.py:1681`'s `RESPAWN_VERSION075` exists: mu.db's flattening to 10
 would make the Elite Yetis refill three times slower and the Ice Queen five times faster.
 
 **The Yeti (19) is defined here and spawned nowhere in Version075** -- no map file names
@@ -176,7 +176,7 @@ correcting the grid from `075_Terrain3.att`, or accepting the client's grid.
 ### 1.7 NPCs
 
 `OM/Version075/Maps/Devias.cs:46-54`. The facing is OpenMU's `Direction` number, which is
-also MU2's Look (`tools/cook.py:1698-1700`; Noria's rows use it unchanged):
+also MU2's Look (`pipeline/cook.py:1698-1700`; Noria's rows use it unchanged):
 
 | NPC | name | tile | facing | window / store | MuMain model (`ZzzCharacter.cpp:14416-14468`, `ZzzOpenData.cpp:1874-1895`) |
 |---:|---|---|---|---|---|
@@ -211,7 +211,7 @@ because the realm moves an arrival to the nearest free tile.
 - `monster_kinds`: 0-4, 6, 7, 14, 26-33. **None of 19-25.**
 - `monster_spawns`: map 0 (9 boxes, 290) and map 3 (8 boxes, 1005). **No map 2.**
 - `npc_spawns`: Lorencia's 14 only. Noria's NPCs never went into mu.db either. They are
-  `tools/cook.py:1708` `FOLK_VERSION075[3]` and `content/world/noria/placements.json` `spawns`,
+  `pipeline/cook.py:1708` `FOLK_VERSION075[3]` and `content/world/noria/placements.json` `spawns`,
   and that is the pattern Devias should follow.
 - `items`: names and drop levels only. Shops are `src/sim/market.cpp`.
 
@@ -240,7 +240,7 @@ insert into monster_spawns (id, number, x1, x2, y1, y2, count, map) values
 (Spawn ids: check `select max(id) from monster_spawns` first. The existing rows' ids are not
 OpenMU's.) Writing the true respawns into the new rows makes a `RESPAWN_VERSION075` entry
 unnecessary for them. If the house rule is "mu.db says 10", add `19: 3, 20: 3, 25: 50` to
-`tools/cook.py:1681` instead. Elemental resistances (`IceResistance` etc.) have no column.
+`pipeline/cook.py:1681` instead. Elemental resistances (`IceResistance` etc.) have no column.
 
 Nothing the sim does today reads `attack_skill` other than 2: `src/game/play.cpp:733-738`
 special-cases the Lich's meteor. The Yeti's Energy Ball, the Ice Monster's Ice and the Ice
@@ -280,7 +280,7 @@ Per `porting-a-world.md` §4c they play at `CreateObject`'s 0.16; Devias's arm s
 
 ### 3.1 What MuMain does per type for WD_2DEVIAS
 
-These are the tables `pipeline/terrain.py` and `tools/cook.py` carry per map. The visuals in
+These are the tables `pipeline/terrain.py` and `pipeline/cook.py` carry per map. The visuals in
 detail are in §5.
 
 - **Hidden** (`HiddenMesh = -2`): type **91** (Object92, 44 placements; also `CreateOperate`, a
@@ -321,11 +321,11 @@ What holds:
 
 - `pipeline/index.py:2293-2294` writes `"world": <folder>` on every scenery entry, and
   `built()` resolves a name against the asset's own folder first (`index.py:739-767`).
-- `tools/cook.py` reads a world's models from `assets/world/<world>/<model>/<model>.glb`
+- `pipeline/cook.py` reads a world's models from `assets/world/<world>/<model>/<model>.glb`
   (`boid_glb`, `cook.py:205-210`; `collect :224-240`) and writes `cooked/<world>/meshes`, so
   two worlds' `Object06` never meet in the cook. `carried` (lights and glows) is world-gated
   (`cook.py:1288-1290`). Texture stems carry a content digest (`cook.py:262`).
-- `tools/asset.sh` takes `devias/Object06` (`asset.sh:37-42,94-97`), and `content.sh` names a
+- `pipeline/asset.sh` takes `devias/Object06` (`asset.sh:37-42,94-97`), and `content.sh` names a
   world recipe `<world>/<stem>` (`content.sh`, the `world/*` case).
 
 What leaks, both keyed on bare names or type numbers with no world:
@@ -335,7 +335,7 @@ What leaks, both keyed on bare names or type numbers with no world:
    (Devias's Object02, 18 and 40 have 1, 1 and 4 bones). But **Devias's Object10 (3 bones,
    6 placements) and Object36 (5 bones, 6 placements) would each sprout Noria's blue light**
    on bone 1 and bone 3. Gate the table on the world.
-2. **`tools/cook.py:1082,1392`**: `GROUNDED_TYPES = range(20, 28)` is "Lorencia's grass and
+2. **`pipeline/cook.py:1082,1392`**: `GROUNDED_TYPES = range(20, 28)` is "Lorencia's grass and
    fern block" (`:1074`). It is applied by **type number in every world**, and it drops pitch
    and roll and puts the model at terrain height. In Devias, types 20-27 are the doors
    (Object21), the benches (Object23, 22 placements), desks (Object24), benches (Object26) and
@@ -485,11 +485,11 @@ decoded as `content/textures/dv_*.png`, `content/world/devias/ground.json`, and 
 **Stage 3 -- the ground, standing and travellable. This is the first sprint's finish line.**
 
 ```sh
-./tools/content.sh --world devias            # tileset.py + ground.py + index.py
-./tools/sync.sh --world devias --only-world
-./tools/sync.sh                              # index.json with the devias world entry and gates.safe
-./tools/cook.py --world devias --only ground # the land's sheets alone, as Noria's first day
-./tools/cook.py --world devias --only tables # devias.mur: grid, safe gate 22, spawns, folk, perches
+./pipeline/content.sh --world devias            # tileset.py + ground.py + index.py
+./pipeline/sync.sh --world devias --only-world
+./pipeline/sync.sh                              # index.json with the devias world entry and gates.safe
+./pipeline/cook.py --world devias --only ground # the land's sheets alone, as Noria's first day
+./pipeline/cook.py --world devias --only tables # devias.mur: grid, safe gate 22, spawns, folk, perches
 ```
 
 Code in the same sprint: the `kMaps` row, the two gate pairs, `mapName`, the per-world indoor
@@ -497,13 +497,13 @@ test (without it, snow and wind decisions are wrong, but nothing breaks), the
 `ornaments.cpp` and `GROUNDED_TYPES` world gates, and a sim test for 18 -> 19 and 20 -> 21. Then:
 
 ```sh
-./build.sh
-./run.sh --headless --world devias --ticks 30000 --level 30   # the sim alone raises all 560 at 207,42;
+./mu build
+./mu run --headless --world devias --ticks 30000 --level 30   # the sim alone raises all 560 at 207,42;
                                                               # the audit must count none in the safe zone
-./run.sh --world devias --play --fresh --frames 300 --shot 250  # a --frames review: read mu2.log + shots/
+./mu run --world devias --play --fresh --frames 300 --shot 250  # a --frames review: read mu2.log + shots/
 # its log should say "play: 560 monsters of devias held back, their figures not cooked"
-./run.sh --world lorencia --play --fresh --level 20 --travel-at 60 --frames 400   # M: lorencia -> noria (unchanged)
-./run.sh --world noria --play --fresh --travel-at 60 --frames 400                 # M: noria -> devias
+./mu run --world lorencia --play --fresh --level 20 --travel-at 60 --frames 400   # M: lorencia -> noria (unchanged)
+./mu run --world noria --play --fresh --travel-at 60 --frames 400                 # M: noria -> devias
 ```
 
 Walking gate 18 at Lorencia 5,38 as a level-15 hero, and gate 20 back, is the proof the pair is
@@ -517,16 +517,16 @@ walk to it and back, the save resumes on it, and no monster stands invisible.
 (136) are half the map:
 
 ```sh
-dotnet run --project tools/MuExtract -- export-obj $D/Object3/Object01.bmd content/world/devias/Object01.obj
-dotnet run --project tools/MuExtract -- export-rig $D/Object3/Object01.bmd content/world/devias/Object01.rig.json
+dotnet run --project pipeline/MuExtract -- export-obj $D/Object3/Object01.bmd content/world/devias/Object01.obj
+dotnet run --project pipeline/MuExtract -- export-rig $D/Object3/Object01.bmd content/world/devias/Object01.rig.json
 python3 pipeline/decode_texture.py $D/Object3/stree.OZJ content/textures/dv_stree.png   # and stree.OZT
-./tools/asset.sh devias/Object01 --build-only && python3 pipeline/index.py source workshop
-./tools/sync_one.py ... && ./tools/cook_one.py Object01 --world devias                 # judge in world
-./tools/cook.py --world devias --only textures && ./tools/cook.py --world devias --only meshes \
-  && ./tools/cook.py --world devias --only placements
+./pipeline/asset.sh devias/Object01 --build-only && python3 pipeline/index.py source workshop
+./pipeline/sync_one.py ... && ./pipeline/cook_one.py Object01 --world devias                 # judge in world
+./pipeline/cook.py --world devias --only textures && ./pipeline/cook.py --world devias --only meshes \
+  && ./pipeline/cook.py --world devias --only placements
 ```
 
-(`dotnet bin/Debug/net10.0/muextract.dll` from `tools/MuExtract` is ten times faster than
+(`dotnet bin/Debug/net10.0/muextract.dll` from `pipeline/MuExtract` is ten times faster than
 `dotnet run` for a batch.) Skip the hidden 91 and 100, and the unplaced and stub slots. The
 Season corners (types 101-111) wait on the ruling.
 

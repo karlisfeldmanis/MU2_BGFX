@@ -10,7 +10,7 @@
 // tiles of wherever the hero is standing, steers them by a flocking rule, and lets them expire
 // when they wander off. None of it is placed on the map: it exists only near whoever is
 // looking, which is why walking across Lorencia never runs out of birds, and why the cook has
-// to be told the model by name (tools/cook.py's AIRS) -- nothing else reaches it.
+// to be told the model by name (pipeline/cook.py's AIRS) -- nothing else reaches it.
 //
 // Ported from MU2's `client/core/Boids.cs`, which traced the client's numbers down to the odd
 // ones and then judged four of them. Both halves are carried:
@@ -102,13 +102,13 @@ struct Airs {
 
 // What a world flies, by the model name the cook knows it by, and how it flies, is its
 // manifest's `boids` (game/world/world_show.h): MU's own `switch (gMapManager.WorldActive)`.
-// The name must agree with tools/cook.py's AIRS, which is the only reason the model is in the
+// The name must agree with pipeline/cook.py's AIRS, which is the only reason the model is in the
 // cooked directory at all; a world named in neither flies nothing, which is most of them.
 
 class Boids {
 public:
     // Opens the pool over a world. The mesh and the clip are `cooked/<world>/meshes/<model>.mum`
-    // and `cooked/<world>/clips/<model>.muc`, which tools/cook.py writes for the boid although
+    // and `cooked/<world>/clips/<model>.muc`, which pipeline/cook.py writes for the boid although
     // nothing places it. A world with no cooked boid opens silently and flies nothing -- it is
     // not an error, it is a map with no wildlife.
     bool open(const std::string& assetDir, const std::string& world, const std::string& model,

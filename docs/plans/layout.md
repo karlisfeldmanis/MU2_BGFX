@@ -18,11 +18,11 @@ MU2_BGFX/
 ├─ shaders/      the .sc sources
 ├─ content/      was source/; what we author, the Cooker's truth
 │   sheets/      was sheets/: lighting, time, lobby, worlds, materials
-├─ pipeline/     the Python cook: pipeline/ plus tools/cook*.py, sync*, voice, mixamo, ...
+├─ pipeline/     the Python cook: pipeline/ plus pipeline/cook*.py, sync*, voice, mixamo, ...
 ├─ tools/        mu's own code, bot, netbot, botwatch, perf, the checks, portdemo
 ├─ docs/         README.md the index; plans/ reference/ content/ game/ worlds/
 │
-├─ third_party/  fetched, never ours (ignored; bootstrap.sh fills it)
+├─ third_party/  fetched, never ours (ignored; mu bootstrap fills it)
 │   extern/ patches/ weights/ downloads/
 ├─ out/          generated, ignored; deleting it costs a rebuild and a cook, nothing else
 │   build/ build-debug/ build-ship/ assets/ workshop/ shots/ saves/ logs/ (mu2.log, crashes)
@@ -39,7 +39,7 @@ Three rules keep it clear:
   that reads what the cook wrote, which is a different thing from the content folder.
 - `saves/` under `out/` is the developer's saves only. A player's saves are in their user folder
   (see below).
-- `main.sh`, `run.sh`, `viewer.sh`, `build.sh` and `bootstrap.sh` become `./mu play`,
+- `mu play`, `mu run`, `mu viewer`, `mu build` and `mu bootstrap` become `./mu play`,
   `./mu run`, `./mu viewer`, `./mu build` and `./mu bootstrap`, with the same switches.
 
 ## What moves where
@@ -53,7 +53,7 @@ Three rules keep it clear:
 | `build/`, `build-debug/` | `out/build/`, `out/build-debug/` | ~85 |
 | `shots/`, `screenshots/`, `crashes/`, `saves/`, `mu2.log` | `out/...` | ~35 |
 | `extern/`, `patches/`, `weights/`, `downloads/` | `third_party/...` | ~70 |
-| `tools/cook*.py`, `sync*`, `voice.py`, `mixamo.py`, ... | `pipeline/` | ~205 |
+| `pipeline/cook*.py`, `sync*`, `voice.py`, `mixamo.py`, ... | `pipeline/` | ~205 |
 | the five root scripts | `./mu` subcommands | the docs and the memory |
 
 - **The game's folders are named once**, in the `MU_DIRS` block of `CMakeLists.txt` (`MU_ROOT`,
@@ -75,13 +75,13 @@ or while the studio is open: the studio's baked paths would point at nothing.
    `gfx::fontPath("Amarante-Regular.ttf")`.
 2. **`third_party/` and `out/`.** Done 2026-10-14 (out/build configured fresh). Move the ignored folders. Change `MU_DIRS`, the `extern/`
    include paths in `CMakeLists.txt`, `tools/paths.py`, `tools/paths.sh`, `.gitignore`,
-   `bootstrap.sh` and `build.sh`. This needs a clean rebuild, because `build/` moves.
+   `mu bootstrap` and `mu build`. This needs a clean rebuild, because `build/` moves.
 3. **`content/`.** Done 2026-10-14 (0cb37cf8; recipes through `mu` edit, journalled). Used `git mv source content` and `git mv sheets content/sheets`. Then fix:
    - the roots
    - `mu edit`, `gate`, `light` and `paint`
    - the journal, and the studio's relative `"content/..."` and `"content/sheets/..."` keys
      (`light_panel.cpp`, `studio_place.cpp`, `studio_marks.cpp`, `studio_desk.cpp`)
-   - `tools/asset.sh:90`, which tests a recipe folder's name against `source`
+   - `pipeline/asset.sh:90`, which tests a recipe folder's name against `source`
    - `CLAUDE.md`, `docs/content/cooker.md` and the memory
    - the docs' own move into `plans/ reference/ content/ game/ worlds/` (docs/README.md), with
      every citation of a moved doc rewritten in the same commit

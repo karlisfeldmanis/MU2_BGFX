@@ -33,7 +33,7 @@ keeps a rule from meaning one thing on the server and another in the client.
 
 ## Playing on it
 
-    ./main.sh                                  the character screen, asking the box for your characters
+    ./mu play                                  the character screen, asking the box for your characters
     build/mu2 --play --server 37.27.158.226    straight in
 
 The client joins on port 44406, raises its mirror from the server's answer and plays every tick

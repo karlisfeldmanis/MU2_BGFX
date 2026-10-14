@@ -72,7 +72,7 @@ bool Marker::open(const std::string& assetDir, content::Textures& textures) {
     const auto take = [&](const char* name) -> bgfx::TextureHandle {
         const std::string path = dir + name;
         if (!core::fileExists(path)) {
-            core::logError("marker: no %s (tools/sync.sh)", path.c_str());
+            core::logError("marker: no %s (pipeline/sync.sh)", path.c_str());
             return BGFX_INVALID_HANDLE;
         }
         return textures.load(path, content::TextureRole::Albedo);

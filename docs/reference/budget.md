@@ -123,7 +123,7 @@ the frame is the GPU's, and a render thread costs a frame of latency, so it stay
 Apple's GPUs render a pass in on-chip tiles and write each attachment back to memory at its
 end. bgfx's Metal backend asked for every write back: all four samples of the shade pass's
 RGBA16F colour beside its resolve, and the D32F depth after the shade and transparent pass,
-which nothing reads again. `patches/bgfx-metal.patch` (applied by bootstrap.sh)
+which nothing reads again. `patches/bgfx-metal.patch` (applied by mu bootstrap)
 plans the frame from its sort keys and drops a resolved MSAA colour's samples, and a
 write-only depth, after the last pass that binds them. The prepass's depth is still written
 back, since the shade pass loads it; its MSAA_SAMPLE normals are untouched, since SSAO reads

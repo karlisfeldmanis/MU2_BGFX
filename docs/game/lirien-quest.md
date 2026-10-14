@@ -3,7 +3,7 @@
 Atlans's quests, both ours (the user, 2026-10-05). Lirien, the elf envoy Noria's queen kept in
 Atlans before the sea took it, stands in the safe basin at 25,24 by the arch, facing the vault:
 `content/npc/ElfEnvoy.json` (Divine set +7, Celestial Bow +7, Wings of Spirits), NPC number 700
-(ours), voiced by Kokoro-82M's af_heart (`tools/voice.py` VOICES `"lirien"`).
+(ours), voiced by Kokoro-82M's af_heart (`pipeline/voice.py` VOICES `"lirien"`).
 
 ## 1. The Drowned Song (Peia, quest 18)
 

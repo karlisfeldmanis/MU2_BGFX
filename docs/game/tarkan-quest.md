@@ -30,7 +30,7 @@ safe hall, 187,54-203,69; spot to be picked on the grid, near 195,65). The figur
 **`content/npc/NpcSenatus.json`**: MU's Senior (MODEL_NPC_SENATUS), an old white-bearded man in
 a deep blue hooded robe with a thin staff. It's built but stands nowhere yet, so it would need
 indexing and cooking. NPC number ours, as Lirien's 700 (701). Voice: an old man's, picked in
-`tools/voice.py`.
+`pipeline/voice.py`.
 
 ## 1. The Road of Kantur (Lirien, the hook)
 

@@ -206,7 +206,7 @@ tests raise one player.
   names him "Charon". OM `Version095d/NpcInitialization.cs:55-62` gives him `NpcWindow.DevilSquare`.
 - **Where he stands**: OM `Version095d/Maps/Noria.cs:32` has **171,105, SouthEast**. The repack has 171,104 dir 3
   (`WZD MonsterSetBase.txt:24`). MU2_BGFX already stands him at OM's 171,105 dir 4 (`content/world/noria/placements.json:73-79`,
-  `tools/cook.py:2124-2127`, model `DevilNpc01`).
+  `pipeline/cook.py:2124-2127`, model `DevilNpc01`).
 - Talk, `NpcRusipher NpcTalk.cpp:1005-1048`:
   - Event off in the cfg: nothing happens (`:1007-1008`).
   - No invitation (14/19) in the bag: ServerCmd 1,2 (`:1020-1023`). The client shows text 652: "The Devil Square is a place where
@@ -925,7 +925,7 @@ How MuMain shows them:
 - Table entries for key 9:
   - `GRASS_BY_MAP[9] = []` is needed.
   - No HIDDEN, BLEND_MESH, VOID or OPERABLE entries.
-  - `ANCHOR_LIGHT` in `tools/cook.py:1383-1398` is keyed by object type, not map, so no light entry either.
+  - `ANCHOR_LIGHT` in `pipeline/cook.py:1383-1398` is keyed by object type, not map, so no light entry either.
 - Recipes:
   - Object03 and Object04 are rigged figures with one 4-key idle. They need the rigged-world-object path (the 20 rigged objects already sway, per memory).
   - Object01/02/05-07 are bacc00/bacc01 stone.
@@ -1092,9 +1092,9 @@ DS does not need it.
 |---|---|---|---|
 | D1 | `pipeline/terrain.py:134` `HIDDEN_BY_MAP[11]`; `:193` `GRASS_BY_MAP[11] = []`; `:240` `VOID_BY_MAP`; `:292` `OPEN_BY_MAP`; `:304` `FLOOR_BY_MAP`; `:313` `VOID_FILL_BY_MAP`; `:365, 373, 381` light rows | keyed map_number-1 | Part B: key **9** (`World10`), grass `[]` probably, a void fill from the four landings |
 | D2 | `pipeline/index.py:58-` `GATE_BOXES_BY_MAP` | BC never added | add the four landings 58-61 |
-| D3 | `tools/cook.py:203` `AIRS`; `:1346` anchors; `:1375` `SHOWN_LATER`; `:1398` anchor light | | Part B |
-| D4 | `tools/cook.py:2124-2127` Charon at Noria 171,105 dir 4 (`content/world/noria/placements.json:75`) | | **done**; he stays |
-| D5 | `tools/cook.py:2199-2202` folk on map 11 (the Archangel) | | DS has no folk inside *(A)* |
+| D3 | `pipeline/cook.py:203` `AIRS`; `:1346` anchors; `:1375` `SHOWN_LATER`; `:1398` anchor light | | Part B |
+| D4 | `pipeline/cook.py:2124-2127` Charon at Noria 171,105 dir 4 (`content/world/noria/placements.json:75`) | | **done**; he stays |
+| D5 | `pipeline/cook.py:2199-2202` folk on map 11 (the Archangel) | | DS has no folk inside *(A)* |
 | D6 | `content/mu.db` `monster_spawns` (map 11: 96 rows) | | map 9: the waves' nests, four squares (3.2) |
 | D7 | `content/sounds/sounds.json:1433` `world_bloodcastle` | | a bed if chosen (memory: new sound needs the showing cook) |
 | D8 | `content/sheets/worlds/bloodcastle.json` | | `content/sheets/worlds/devilsquare.json` |
@@ -1376,12 +1376,12 @@ Each step is small and lands on its own. Run from `MU2_BGFX/`. `checks` = `cmake
 
 **Step 1. Ground.**
 - `pipeline/terrain.py` rows for key 9 (Part B), `python3 pipeline/terrain.py
-  $D/World10 devilsquare content/world 10`, `ground.json` with `ds_` sheets, `tools/content.sh`,
+  $D/World10 devilsquare content/world 10`, `ground.json` with `ds_` sheets, `pipeline/content.sh`,
   sync, `cook.py --world devilsquare --only ground` and `--only tables`, `pipeline/index.py`
   (memory: build-only skips the index).
 - Rows: `kMaps` `{"devilsquare", 9, {137, 95}, true, 3, true}`, `arrival.cpp` kPlaces,
   `minimap.cpp` `case 9`, `content/sheets/worlds/devilsquare.json`, `GATE_BOXES_BY_MAP[9]`.
-- Done when: `./run.sh --headless --world devilsquare --ticks 200 --no-hand` logs `map 9`;
+- Done when: `./mu run --headless --world devilsquare --ticks 200 --no-hand` logs `map 9`;
   the hero raises inside gate 58's box; a router plan from 137,95 reaches the square's monster box
   and not another square's.
 

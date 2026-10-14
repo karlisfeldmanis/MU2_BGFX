@@ -13,7 +13,7 @@ last bit. A tolerance would be a place for a regression to hide, so there isn't 
 
 **A reference is pinned to a COOK as well as to code, and that is the thing to know before
 reading a red result.** These scenes draw what is in `assets/`, which is gitignored, mutable
-and rebuilt by `tools/cook.py`. Re-cook the tables or the art and the picture legitimately
+and rebuilt by `pipeline/cook.py`. Re-cook the tables or the art and the picture legitimately
 moves, with no source change at all, and the references must be blessed again.
 
 That is not hypothetical: on 2026-09-22 this check went red on `town` and the difference was
@@ -119,7 +119,7 @@ def main():
     args = parser.parse_args()
 
     if not os.path.exists(BINARY):
-        print(f"shotcheck: no binary at {BINARY}; run ./build.sh")
+        print(f"shotcheck: no binary at {BINARY}; run ./mu build")
         return 1
     names = args.scenes or list(SCENES)
     for name in names:

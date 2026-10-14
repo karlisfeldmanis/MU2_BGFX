@@ -41,7 +41,7 @@ Shot muted at 20,215, 207,80, 162,90, 108,116, 90,102, 234,54 and 8,243. The for
 **Lights and emitters (2026-10-05, the user: 'now work on tarkan light and fire emiters').** MU's Tarkan has no fire at all; its light is these:
 - glowing objects, `tk_` sheets: Object83 (60 light shafts, light01 added), Object62 (2 sun-gears) and Object66 (the forge gear, its own clip), gearB added and slid a sheet a second, pulsing, each with MU's orange terrain light over 2 tiles; Object68 (6 gears, no arm, plain); Object82 (the golden orbs, brass for MU's chrome pass); Object03 (4 cyan rings, U slid); Object73 (red lava, added, V slid a sheet in 5 s); Object74/76/80 (orange lava falls, runs and pools: MU's StreamMesh carried as an added slide, a marked departure as the Dungeon's tentacles);
 - **`game/world/desert_vents.*`**, the hidden emitters cooked as world anchors 7-10 (`ANCHOR_KINDS_BY_WORLD["tarkan"]`): Object71's falling sand (3), Object77's steam vents (19, in step, the last 0.5 s of every 5), Object84's sand geysers (10, 0.5 s of every 10, staggered by a position hash in place of MU's turn, throwing the meteor's stones), Object64's cyan Impack03 glow sprites (18, the showing's new `impact`). Only within 28 m of the camera; smoke at half MU's light. Object61's one-off dust burst is left out;
-- **`tools/cook.py`'s roof and water-sway sets are per world now**: Devias's roofs Object82/83 had made Tarkan's orbs and shafts roofs, which an underground map hides.
+- **`pipeline/cook.py`'s roof and water-sway sets are per world now**: Devias's roofs Object82/83 had made Tarkan's orbs and shafts roofs, which an underground map hides.
 
 Seen in muted 60 fps runs, a shot every half second: the forge corner (8,245), the crater geysers at 109,237 bursting with stones (frames 210-330), the shrine (70,185), the rings and a shaft (155,235).
 
@@ -72,7 +72,7 @@ Monsters started before the user turned it to the world: kinds 57-63 and the 217
 **Animations, lights and effects audited (2026-10-05, 'now work on baked in animations and light or other effects for tarkan objects if they are not done').**
 - Every Object9 .bmd was exported with all its actions: nine carry a clip of more than one key (Object07 8, 09 11, 30 6, 31 6, 51 32, 58 31, 60 16, 66 20, 68 20), all nine have rigs and all 662 of their placements play (Sway's log, none held). MU sets a Velocity for type 8 alone (Object09, 4x), carried.
 - Every MoveObject, RenderObjectVisual and RenderObject arm for WD_8TARKAN is carried, and one more now: **Object05**, a model the client does not ship, whose arm still adds a white pulsing terrain light over three tiles (ZzzObject.cpp:4095-4106) -- cooked as a world lamp anchor (kind 0, `ANCHOR_LIGHT[0]`). 102 lights in all.
-- Object82's RENDER_CHROME | RENDER_BRIGHT second pass (ZzzObject.cpp:1067-1073), then the user: 'Not done: the golden orbs' chrome shine'. `CHROMED_BY_WORLD` in tools/cook.py sets a placement's instance bit 5, and `Town::drawableOf` draws it at the +7 chrome in white (`Drawable::refine`, which the town's records already packed), as a figure's `plus` carries the Silver Valkyrie's. Shot at the shrine, 70,186: a white chrome streak over the gold.
+- Object82's RENDER_CHROME | RENDER_BRIGHT second pass (ZzzObject.cpp:1067-1073), then the user: 'Not done: the golden orbs' chrome shine'. `CHROMED_BY_WORLD` in pipeline/cook.py sets a placement's instance bit 5, and `Town::drawableOf` draws it at the +7 chrome in white (`Drawable::refine`, which the town's records already packed), as a figure's `plus` carries the Silver Valkyrie's. Shot at the shrine, 70,186: a white chrome streak over the gold.
 
 **The desert vibe (2026-10-05, the user after exploring: 'make thos bugs smaller also there is some flaoting grass objects, lets also work on tonemaping and dust effect which has devias', then 'tarkan storm has to happpen all the time but not so strong like its in devias').**
 - **Plants laid on the terrain**: MU perches 71 of Tarkan's plants on rocks, trees and cliff tops, up to 3 m up (68 within 2 m of a solid object). `GROUNDED_TYPES["tarkan"]`, the plant types {6, 15-22, 24-26, 30, 53}: 1019 placements laid on the ground, ours.
@@ -1214,16 +1214,16 @@ python3 pipeline/decode_texture.py $D/Object9/sand01.OZJ content/textures/tk_san
 python3 pipeline/decode_texture.py $D/Object9/sand02.OZJ content/textures/tk_sand02.png
 python3 pipeline/decode_texture.py $D/Object9/Impack03.OZJ content/textures/tk_impack03.png
 #    content/world/tarkan/ground.json on Atlans's shape, sheets -> tk_*
-./tools/content.sh --world tarkan && ./tools/sync.sh --world tarkan --only-world && ./tools/sync.sh
-./tools/cook.py --world tarkan --only ground && ./tools/cook.py --world tarkan --only tables
+./pipeline/content.sh --world tarkan && ./pipeline/sync.sh --world tarkan --only-world && ./pipeline/sync.sh
+./pipeline/cook.py --world tarkan --only ground && ./pipeline/cook.py --world tarkan --only tables
 #    then index.py (house rule: build-only skips the index), and every world's tables after new items
 # objects: export per kind into content/world/tarkan/, sheets tk_-prefixed
-dotnet tools/MuExtract/bin/Debug/net10.0/muextract.dll export-obj $D/Object9/Object07.bmd content/world/tarkan/Object07.obj
-dotnet tools/MuExtract/bin/Debug/net10.0/muextract.dll export-rig $D/Object9/Object07.bmd content/world/tarkan/Object07.rig.json --actions=all
+dotnet pipeline/MuExtract/bin/Debug/net10.0/muextract.dll export-obj $D/Object9/Object07.bmd content/world/tarkan/Object07.obj
+dotnet pipeline/MuExtract/bin/Debug/net10.0/muextract.dll export-rig $D/Object9/Object07.bmd content/world/tarkan/Object07.rig.json --actions=all
 #   rigs for 07, 09, 30, 31, 51, 58, 60, 66, 68 and Bug02
-./tools/asset.sh tarkan/Object07 --build-only && python3 pipeline/index.py source workshop
-./tools/cook.py --world tarkan --only textures   # textures before --only meshes (house rule)
-./tools/cook.py --world tarkan --only meshes / placements
+./pipeline/asset.sh tarkan/Object07 --build-only && python3 pipeline/index.py source workshop
+./pipeline/cook.py --world tarkan --only textures   # textures before --only meshes (house rule)
+./pipeline/cook.py --world tarkan --only meshes / placements
 ```
 
 **Sheet prefix: `tk_`.** Nothing in `content/textures` uses it today. Names that collide without one:
@@ -1251,7 +1251,7 @@ dotnet tools/MuExtract/bin/Debug/net10.0/muextract.dll export-rig $D/Object9/Obj
 **What else differs from the worlds already built:**
 - **The void is half the map and its edge is walled.** Unlike the Lost Tower's causeways (bare edges into black), Tarkan's plateaus end at Object41 cliff faces standing in the void. Two consequences:
   - The default void cut may suffice under the walls.
-  - The buried test in cook.py (`FLAT_OVER_VOID`, `tools/cook.py:1206`) must not flag Object41/40/42-44/51 for reaching 3-5 m under the void's heights. Add `tarkan`, or skip by kind.
+  - The buried test in cook.py (`FLAT_OVER_VOID`, `pipeline/cook.py:1206`) must not flag Object41/40/42-44/51 for reaching 3-5 m under the void's heights. Add `tarkan`, or skip by kind.
 - **Hidden types must survive as markers:**
   - 60 dust bursts ×82
   - 63 cyan glows ×18
@@ -1351,7 +1351,7 @@ Every one of the five spawns two BITMAP_JOINT_ENERGY ribbons, subtypes 2 and 3. 
 | mutant1, mutant2, mutant_attack1 | 320006, 345490, 137198 | no | Mutant (`:3711-3717`) |
 | Music/**tarkan.mp3** | 3049328 | no | `PlayMp3(MUSIC_TARKAN)` always on the map (`SceneManager.cpp:1061-1066`) |
 
-That is 18 new wavs and one mp3. There are no footstep changes and no wind loop (`SOUND_WIND01` is stopped here). New sounds go through `index.py` and then `tools/cook.py --only showing` (house rule).
+That is 18 new wavs and one mp3. There are no footstep changes and no wind loop (`SOUND_WIND01` is stopped here). New sounds go through `index.py` and then `pipeline/cook.py --only showing` (house rule).
 
 ---
 
@@ -1558,12 +1558,12 @@ There is still **no single registry**, and `MapRow` has not been widened since a
 | P5 | `terrain.py:203` `VOID_BY_MAP`, `:238` `LAVA_SPILL`, `:251` `OPEN_BY_MAP`, `:272` `VOID_FILL`, `:324` `LIGHT_DEPTH`, `:342` `WATER_FLOW_BY_MAP` | None expected (no void and no lava). TileWater01 is 0.9%: a `WATER_FLOW_BY_MAP[8]` entry only if its pools should run one way; otherwise MU's slide, at half speed (§3.7) |
 | P6 | `pipeline/terrain.py:367-373` and `pipeline/index.py:44-50` `OPERABLE_BY_MAP` (two copies) | `8: {78}` in both: MOVEMENT_OPERATE's Tarkan arm, `case 78: Sit = true` (`MM/Engine/Object/ZzzInterface.cpp:1743-1749`), on Object79 x13 |
 | P7 | `pipeline/index.py:57-71` `GATE_BOXES_BY_MAP` | `8: [(187,54,203,69), (248,40,251,44), (246,40,247,44), (91,160,93,161) or (96,143,100,146)]`. Add `(14,225,15,230), (16,225,17,230)` to `7` for Atlans's door. Maps 4 and 11 are still missing from this table (a side finding three Part Cs old) |
-| P8 | `content/world/tarkan/ground.json` -> `tools/content.sh` | `tk_` prefix (as `at_`, `lt_`, `bc_`); 11 sheets from World9 including its real TileWater01. Pass B |
+| P8 | `content/world/tarkan/ground.json` -> `pipeline/content.sh` | `tk_` prefix (as `at_`, `lt_`, `bc_`); 11 sheets from World9 including its real TileWater01. Pass B |
 | P9 | `content/mu.db` `gates` | `insert into gates values (57, 8, 187, 54, 203, 69, 1)` (WZ's box, the whole safe hall). **This one row keeps a death in Tarkan** (§4.4) |
 | P10 | `pipeline/index.py worlds()` (`:1476-`) | Automatic once the ground is built. Run index.py after `--build-only` (memory) |
-| P11 | `pipeline/index.py:88-` `EFFECTS` (Atlans's rows at `:596-605`) | New rows: `"sand"` (Object9/sand01), `"sand_fine"` (Object9/sand02), `"impact"` (Object9/Impack03) and the bug's trail sheet if built; then `tools/cook.py --only showing` |
+| P11 | `pipeline/index.py:88-` `EFFECTS` (Atlans's rows at `:596-605`) | New rows: `"sand"` (Object9/sand01), `"sand_fine"` (Object9/sand02), `"impact"` (Object9/Impack03) and the bug's trail sheet if built; then `pipeline/cook.py --only showing` |
 
-#### 1.2 The cook (`tools/cook.py`)
+#### 1.2 The cook (`pipeline/cook.py`)
 
 | key | line | Tarkan |
 |---|---|---|
@@ -1685,7 +1685,7 @@ The MoveObject Tarkan arm (`ZzzObject.cpp:4087-4180`):
 - type 8 (Object09 x10): plays its clip **4x** faster (`:3727-3735`).
 
 The engine has all of these:
-- glow materials with pulse and scroll (`tools/cook.py` glow pulse, `Material` scroll modes, `content/mesh.h:97`);
+- glow materials with pulse and scroll (`pipeline/cook.py` glow pulse, `Material` scroll modes, `content/mesh.h:97`);
 - recipe lamps for the terrain light (the tower's and Atlans's precedent: 216 Atlans lamps, dense cells dropping their farthest);
 - the chrome second pass (`plus.colour`, the Silver Valkyrie's);
 - per-placement clip speed (Sway `play_speed`).
@@ -1805,7 +1805,7 @@ The fix, which atlans-port.md §4.3 wrote and Atlans never needed, is ~10 lines:
 - Tarkan **has its own safe zone** (1 872 tiles), so death and the Town Portal stay in Tarkan. MuMain allows the Portal there (`MM/World/MapInfra/PortalMgr.cpp:54`).
 - This needs exactly **one mu.db row**, `gates (57, 8, 187, 54, 203, 69, 1)`. With it:
   - index.py writes `gates.safe`;
-  - the cook writes it into `tarkan.mur`'s header (`tools/cook.py` `cook_tables :2117-`; the header's safe gate x1..y2);
+  - the cook writes it into `tarkan.mur`'s header (`pipeline/cook.py` `cook_tables :2117-`; the header's safe gate x1..y2);
   - `haven()` finds it, and `MapRow.home` stays 0.
 - **Without the row every death in Tarkan silently goes to Lorencia: Devias's gate-22 bug of `1ad73855` again** (docs/worlds/lost-tower-port.md:30-38, 1431-1436).
 - Check after step 1: the `.mur` header reads `map 8 ... 187, 54, 203, 69`. A zero box is the bug.
@@ -1838,7 +1838,7 @@ The fix, which atlans-port.md §4.3 wrote and Atlans never needed, is ~10 lines:
    - the count is 217, by kind 57x23, 58x63, 59x1, 60x32, 61x56, 62x41, 63x1;
    - every kind is in 57-63;
    - none is on rock (already checked on pass B's grid: 0 closed, 0 safe).
-4. Checkpoint the WAL; run `pipeline/index.py`; run `tools/cook.py --world tarkan --only tables`, **then the other eight worlds' tables** (kinds are global in every `.mur`; memory: new items need every world's tables).
+4. Checkpoint the WAL; run `pipeline/index.py`; run `pipeline/cook.py --world tarkan --only tables`, **then the other eight worlds' tables** (kinds are global in every `.mur`; memory: new items need every world's tables).
 5. Figures one breed at a time: `--only figures --world tarkan --monsters <Name>`. The headless run raises every breed; the window holds back uncooked ones (`play_open.cpp`).
 6. `realm_tuning.h` rows: `kResistances`, `kDropRates`, and `kBosses` (+59, +63; 58 is decision 5's twin).
 7. Folk (decision 13): `FOLK_VERSION075[8]` from WZ's three, or none.
@@ -1855,10 +1855,10 @@ The fix, which atlans-port.md §4.3 wrote and Atlans never needed, is ~10 lines:
 **Step 1: bare land, reachable by `--world tarkan`.**
 - `terrain.py`: `HIDDEN_BY_MAP[8]`, `BLEND_MESH_BY_MAP[8]`, `OPERABLE_BY_MAP[8] = {78}`, and the same in index.py. index.py: `GATE_BOXES_BY_MAP[8]` and `[7] +=`.
 - Run `python3 pipeline/terrain.py $D/World9 tarkan content/world 9` (expect pass B's 36.4% walkable, 2.9% safe, 3381 placed).
-- `content/world/tarkan/ground.json` with `tk_` sheets (pass B), then `tools/content.sh --world tarkan`, sync, `--only ground`.
+- `content/world/tarkan/ground.json` with `tk_` sheets (pass B), then `pipeline/content.sh --world tarkan`, sync, `--only ground`.
 - mu.db gate 57; checkpoint; index.py; `--only tables`.
 - `maps.cpp` row `{"tarkan", 8, {195, 65}, true}`, `arrival.cpp`, `minimap.cpp case 8`, `content/sheets/worlds/tarkan.json` with `water_flow` 0.5 and a warm `dust_*`.
-- Check: `./run.sh --headless --world tarkan --ticks 200 --no-hand` logs `grid 256 ... map 8`; the `.mur` header's safe box reads 187,54,203,69; `checks`. **Seen**: muted shots at the hall (195,65), the Atlans door (247,42), Tarkan 2 (95,150) and the far south-west (11,241), with fps from the log.
+- Check: `./mu run --headless --world tarkan --ticks 200 --no-hand` logs `grid 256 ... map 8`; the `.mur` header's safe box reads 187,54,203,69; `checks`. **Seen**: muted shots at the hall (195,65), the Atlans door (247,42), Tarkan 2 (95,150) and the far south-west (11,241), with fps from the log.
 
 **Step 2: the gates.** `gates.cpp` 53/54/55/56/57 (§4.1, levels per decision 2); Atlans's tables recooked for its boxes; `testTarkanGates`. Check: `checks`; headless Atlans `--at 15,227 --level L` logs `Gated 53`, and one level lower `Barred L`. **Seen**: walking the lagoon door both ways in a muted run.
 

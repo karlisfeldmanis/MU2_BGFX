@@ -4,7 +4,7 @@
 # Generated: the builds, the cook's output and workshop, the runs' saves, shots and logs.
 # Deleting out/ costs a rebuild and a cook, nothing else.
 /out/
-# Fetched by bootstrap.sh (extern/) or by hand (weights/, downloads/). patches/ is ours, in git.
+# Fetched by mu bootstrap (extern/) or by hand (weights/, downloads/). patches/ is ours, in git.
 /third_party/*
 !/third_party/patches/
 # What players are given: `./mu dist` writes it.

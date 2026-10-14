@@ -49,7 +49,7 @@ Seen in muted `--play` runs at 21,46: a bare wizard, a knight with Sword05 slung
 **Lights (2026-10-03, the user: 'now lets work on light and fire emiters').** MU's Atlans has no fire and no object light (B §2): its light is the TerrainLight and five additive kinds, now built from Part B's exports under `content/world/atlans`, sheets `at_`-prefixed:
 - **Object24**: the caustic pool, 10 of them, the user's "gates", lying in the carved rim.
   - It steps through MU's 32 water frames at 25 a second. That is a new scroll mode, `water_frames` (mode bit 2, `Material::waterFrames`). In it the renderer binds the ground's raw caustic sheet, and `fs_glow` cuts the frame's cell out with the mip read unwrapped. The asset's own upscaled atlas had bled frames together into seams.
-  - It is lifted 6 cm (`LIFTED_BY_WORLD` in tools/cook.py), because at MU's 0.5 cm over the floor the ground fought it. The user: 'its not smooth its like it cuttent something wrong'.
+  - It is lifted 6 cm (`LIFTED_BY_WORLD` in pipeline/cook.py), because at MU's 0.5 cm over the floor the ground fought it. The user: 'its not smooth its like it cuttent something wrong'.
   - It breathes 0.012-0.05: MU's 0.2-0.8 went white, and 0.08-0.3 was 'to light'.
 - **Object33**: the glyph stones, 105 of them. `wood05` rock, with the `wood052` glyph added, breathing 0.1-1.0 as MU's 0-1.
 - **Object35**: the glyph rims, 25 of them, flat frames lying on the floor round the pools. The same stone and glyph as Object33.
@@ -122,7 +122,7 @@ It coils round the wrecks, about 56,56 and along the court's west edge. Under th
 **Every placed object kind is built: 38 models, 4366 placements.** The two hidden kinds are anchors and lean boxes; Object22 is never placed. Frame with everything in, 1080p, 3 x 1200, nothing else running: 198,90 at 4.51 ms (GPU 4.77), 138,114 at 4.27 (4.53), 56,56 among the octopuses at 4.92 (5.05). All under 5.5 ms. A first 198,90 run at 7.42 ms, with the machine otherwise loaded, was discarded. The sun's shadow pass draws all 4366 placements unculled (the town log's `sun 59 chunks and 4366 placements, unculled`): a cost to watch as monsters arrive.
 
 **The hidden kinds and Object22 (2026-10-03, the user: 'do: two hidden ones (bubble vents and lean boxes) and Object22').**
-- Object40, the four lean boxes in the basin (15,23, 28,8, 16,24, 23,26), now lean: `PERCHES[7] = {39: (3, True, False, False)}` in tools/cook.py, after MU's `Pose = true`, turned to the box (ZzzInterface.cpp:1736-1742). They are not on MU's lean-cursor list and have no tall box. The tables cook says 4 perches. Hidden as MU hides them.
+- Object40, the four lean boxes in the basin (15,23, 28,8, 16,24, 23,26), now lean: `PERCHES[7] = {39: (3, True, False, False)}` in pipeline/cook.py, after MU's `Pose = true`, turned to the box (ZzzInterface.cpp:1736-1742). They are not on MU's lean-cursor list and have no tall box. The tables cook says 4 perches. Hidden as MU hides them.
 - Object23's 845 vents stay hidden: MU draws no mesh there; they are the bubble vents (game/world/bubbles.h).
 - Object22 is two triangles of `bu02` that no placement uses; built, it would never show, so it is not.
 
@@ -147,7 +147,7 @@ It coils round the wrecks, about 56,56 and along the court's west edge. Under th
 Free ways out stay free; Atlans's way back keeps 60. The sim_test gate checks follow. The Tab travel window's warp levels are doubled the same way (realm_travel.cpp kRows; the user: 'fix tab travels also'): Lorencia and Noria 20, Devias 40, the Dungeon 60/80/100, the Lost Tower 100/100/100/120/120/140/140. Prices stay MU's.
 
 **Fish, the school (2026-10-04, the user: 'what abour prodecual atlans grass and fish boids?').** Step 6, its first half:
-- Fish02 is built as a world model nothing places, as the Bat is: 0.35 m, 5 bones, an 8-key swim, `bfish04`. It is named in tools/cook.py's `AIRS`.
+- Fish02 is built as a world model nothing places, as the Bat is: 0.35 m, 5 bones, an 8-key swim, `bfish04`. It is named in pipeline/cook.py's `AIRS`.
 - `Flight` has a fish mode (`setFish`, `school`, `swim`) and a pool of `kMaxSlots` 40; birds still use the first 5, and boids_test is unchanged.
 - As CreateAtlanseFish and MoveBoid's Atlans arm (GOBoid.cpp:886-918, 1141-1160):
   - every slot is born again as it empties while the hero is north of row 128, and none south of it;
@@ -233,7 +233,7 @@ Drops are the general ones by level (§5: 0.75 has nothing Atlans-specific), wit
 5. **Three warp rows on one region.** `settleFound` (`realm_travel.cpp:75-121`) gives a connected
    region's tiles to its first row, so Atlans 2/3 would never open. A multi-source flood fixes it, and
    gives the Dungeon and the Lost Tower the same result as today.
-6. **`AIRS`/`CRAWLS` in `tools/cook.py` hold one model a world**; the fish need lists.
+6. **`AIRS`/`CRAWLS` in `pipeline/cook.py` hold one model a world**; the fish need lists.
 7. **Sheet names.** Use the prefix `at_`, which is free.
 8. **Another session's Blood Castle work** is uncommitted in `src/sim/realm*`, `tracker.*` and
    `sim_test.cpp`. Read `git diff` before staging Atlans changes there.
@@ -657,7 +657,7 @@ In MU2_BGFX today: Bluewing Crossbow (`content/items/weapons/CrossBow06.json`, d
 Scroll of Aqua Beam (`content/items/misc/Book12.json`, drop 74) are cooked, but **no monster
 reaches 68**, so they drop nowhere yet. **Not cooked: `Staff07` (Staff of Resurrection), `Mace06`
 (Crystal Sword), `CrossBow07` (Aquagold Crossbow)**, though mu.db's `items` names all three. Items
-come into the game through `index.json`'s asset rows (`tools/cook.py:2031-2083`), so a drop with no
+come into the game through `index.json`'s asset rows (`pipeline/cook.py:2031-2083`), so a drop with no
 asset is not in the pool.
 
 **Jewels.** Bless (25) and Soul (30) reach every breed. **Chaos stops at 66** (`OM/Version075/Items/Jewels.cs:86-87`
@@ -1058,14 +1058,14 @@ for n in TileGrass01 TileGround01 TileGround03 TileRock01 TileRock02 TileRock03 
 #    (TileGrass02 and TileWood01 are unused; there is no TileWater01 to decode)
 for i in $(seq -w 0 31); do python3 pipeline/decode_texture.py $D/Object8/wt$i.OZJ content/textures/at_wt$i.png; done   # the caustics
 #    content/world/atlans/ground.json on Devias's/Noria's shape, sheets -> at_*
-./tools/content.sh --world atlans && ./tools/sync.sh --world atlans --only-world && ./tools/sync.sh
-./tools/cook.py --world atlans --only ground && ./tools/cook.py --world atlans --only tables
+./pipeline/content.sh --world atlans && ./pipeline/sync.sh --world atlans --only-world && ./pipeline/sync.sh
+./pipeline/cook.py --world atlans --only ground && ./pipeline/cook.py --world atlans --only tables
 # objects: export per kind into content/world/atlans/, sheets at_-prefixed
-dotnet tools/MuExtract/bin/Debug/net10.0/muextract.dll export-obj $D/Object8/Object26.bmd content/world/atlans/Object26.obj
-dotnet tools/MuExtract/bin/Debug/net10.0/muextract.dll export-rig $D/Object8/Object26.bmd content/world/atlans/Object26.rig.json --actions=all
+dotnet pipeline/MuExtract/bin/Debug/net10.0/muextract.dll export-obj $D/Object8/Object26.bmd content/world/atlans/Object26.obj
+dotnet pipeline/MuExtract/bin/Debug/net10.0/muextract.dll export-rig $D/Object8/Object26.bmd content/world/atlans/Object26.rig.json --actions=all
 #   rigs for 08-11, 25, 26, 28, 29, 32, 34, 38, 41 and the fish
-./tools/asset.sh atlans/Object26 --build-only && python3 pipeline/index.py source workshop
-./tools/cook.py --world atlans --only textures / meshes / placements
+./pipeline/asset.sh atlans/Object26 --build-only && python3 pipeline/index.py source workshop
+./pipeline/cook.py --world atlans --only textures / meshes / placements
 ```
 
 **Sheet prefix: `at_`.** Nothing in `content/textures` starts with `at_` today. The prefixes in use are dv, nr, lt, dn, bc, cs, npc. Collisions without one:
@@ -1180,7 +1180,7 @@ The body file is `Monster{MONSTER_MODEL+1:02}.bmd` (`Core/Globals/_enum.h:4182-4
 | sEvil | — | yes | Vepar attack |
 | Music/**atlans.mp3** | 4526396 | no | `PlayMp3(MUSIC_ATLANS)` always on the map (`SceneManager.cpp:1047-1052`) |
 
-That is 11 new wavs and one mp3. New sounds go through `index.py` and then `tools/cook.py --only showing` (house rule).
+That is 11 new wavs and one mp3. New sounds go through `index.py` and then `pipeline/cook.py --only showing` (house rule).
 
 ---
 
@@ -1386,12 +1386,12 @@ pipeline tables are **MU's map number** (terrain.py's `map_number - 1`): Atlans 
 | P5 | `terrain.py:194, 216, 229, 238, 290, 292` `VOID_BY_MAP`, `LAVA_SPILL_BY_MAP`, `OPEN_BY_MAP`, `VOID_FILL_BY_MAP`, `LIGHT_DEPTH_BY_MAP`, `WATER_FLOW_BY_MAP` | none (no void, no lava, no river; `LIGHT_DEPTH` only if the blue baked light wants keeping whole -- pass B) |
 | P6 | `pipeline/terrain.py:317-322` and `pipeline/index.py:44-49` `OPERABLE_BY_MAP` | `7: {39}` in both -- MOVEMENT_OPERATE's Atlans arm, `case 39: Pose` (`MM/Engine/Object/ZzzInterface.cpp:1736-1741`) |
 | P7 | `pipeline/index.py:56-66` `GATE_BOXES_BY_MAP` | `7: [(14,11,27,23), (14,12,15,13), (9,9,11,12), (225,50,228,53), (62,157,68,163)]`; `3 +=` `(242,240,245,243), (240,240,241,243)` (Noria's 45 and 48). NB `4` and `11` and Devias's tower boxes are still missing (side finding) |
-| P8 | `content/world/atlans/ground.json` -> `tools/content.sh:35-36, 54-60` | `at_` prefix (as `lt_`/`bc_`); 9 sheets from World8; slot 5 has **no** World8 sheet -- see §3.1 |
+| P8 | `content/world/atlans/ground.json` -> `pipeline/content.sh:35-36, 54-60` | `at_` prefix (as `lt_`/`bc_`); 9 sheets from World8; slot 5 has **no** World8 sheet -- see §3.1 |
 | P9 | `content/mu.db` `gates` | `insert into gates values (49, 7, 14, 11, 27, 23, 1)` (WZ box; OM's starts at 15) -- **the one row that keeps a death in Atlans** |
 | P10 | `pipeline/index.py worlds()` | automatic once ground is built (`build-only skips the index`: run index.py after) |
 | P11 | effects in `pipeline/index.py` (`"leaf"` `:560`, `"snow"` `:565`, `"flare"` `:509`) | new rows `"bubble"` (Object8/drop01), `"caustic"` (wt00-31 as one strip), `"mote"` (World8/leaf01), then `--only showing` |
 
-#### 1.2 The cook (`tools/cook.py`)
+#### 1.2 The cook (`pipeline/cook.py`)
 
 | key | line | Atlans |
 |---|---|---|
@@ -1460,7 +1460,7 @@ Grep: `grep -rnI -E '"(dungeon|devias|noria|lorencia|losttower|bloodcastle)"' sr
 | 17 | `src/game/play_pointer.cpp:412-435` `shoots` | Hunter, bow/crossbow stances | **Valkyrie (and Silver Valkyrie)** shoot arrows: MU's `o->Type == MODEL_VALKYRIE -> CreateArrows` (`ZzzCharacter.cpp:4831-4856`) | a figure-name row beside `kHunterFigure` (MODEL_VALKYRIE is one model for 47 and 52) |
 | 18 | `src/game/play.cpp:1077-1160` attack shows by `attackSkill` | meteor 2, ice 7, power wave 11, lightning 3, boss | Vepar 17 Energy Ball (no monster arm today -- check `play_open.cpp:578` `skillNumbered`), Lizard King 3 (free: thunder; MU draws 6 BITMAP_JOINT_THUNDER from both hands, `ZzzCharacter.cpp:2330-2342`), Silver Valkyrie 7 (free: the Ice cast) | Energy Ball for a monster is new showing work unless `skillNumbered(17)` already routes it |
 | 19 | `MM ZzzObject.cpp:800-806, 875-881, 1011-1017` | -- | MU draws **every body's shadow at alpha 0.2 in Atlans** (0.7 elsewhere) | sheet only: a weak key and strong fill (no shadow-opacity knob exists; `lamp_shadow` is the lamps') |
-| 20 | `tools/cook.py:202-214, 1224-1226`; `pipeline/*_BY_MAP` | | §1 | rows |
+| 20 | `pipeline/cook.py:202-214, 1224-1226`; `pipeline/*_BY_MAP` | | §1 | rows |
 
 **The refactor to do first, now overdue:** three Part Cs in a row have found the air, the grass step,
 the boid and now the swim as string tests. Widen `MapRow` (`maps.h:18-36`) with
@@ -1546,7 +1546,7 @@ shade 2.3, spare 0.2; sprite overdraw ~0.018 ms per full screen at 1080p per the
   rows are shared with the crowd and the sway (§3.6), so watch `paletteRowsRefused()`.
 - `Scurry` (`scurry.cpp:41-`) the same: one model, `kMaxRats = 3`. Atlans: 10, four north models
   and two south (Fish08/09 glow). A model list keyed by the hero's row.
-- Cook: `AIRS`/`CRAWLS` take a tuple per world (`tools/cook.py:202-214`, `boid_glb`), or a separate
+- Cook: `AIRS`/`CRAWLS` take a tuple per world (`pipeline/cook.py:202-214`, `boid_glb`), or a separate
   `SCHOOLS` table. Fish02-09 are unplaced, so the cook must name them or they never cook.
 
 #### 3.5 Swimming (has the clips; the stance chooser lacks the rule)
@@ -1579,7 +1579,7 @@ shade 2.3, spare 0.2; sprite overdraw ~0.018 ms per full screen at 1080p per the
 
 - Types 23 and 40 `BlendMeshLight = sin(WorldTime*0.002 / 0.004)*0.3 + 0.5`, 32/34
   `sin(WorldTime*0.004)*0.5 + 0.5` (`ZzzObject.cpp:4064-4083`). The cook's glow pulse is
-  `sin(WorldTime*0.004)*a + b` (`tools/cook.py:636-671`, `renderer.cpp:220`): 32, 34, 40 fit as-is;
+  `sin(WorldTime*0.004)*a + b` (`pipeline/cook.py:636-671`, `renderer.cpp:220`): 32, 34, 40 fit as-is;
   23's half rate does not (a rate float per material, or accept 0.004).
 
 #### 3.8 The monsters' shows
@@ -1683,7 +1683,7 @@ on the tower.
    regex-reads the `.cs` (`CreateMonsterSpawn\(\d+, this\.NpcDictionary\[(\d+)\], (\d+), (\d+)\)`)
    and inserts in one transaction, as the tower's 448 were loaded; check the count is 337 and
    that every row's kind is 45-52. A few spots may fall on rock: the realm's nearestOpen places them.
-4. Checkpoint; `pipeline/index.py`; `tools/cook.py --world atlans --only tables`, and the other six
+4. Checkpoint; `pipeline/index.py`; `pipeline/cook.py --world atlans --only tables`, and the other six
    worlds' tables (kinds are global in every `.mur`).
 5. Figures one breed at a time (`--only figures --world atlans --monsters <Name>`); headless raises
    all, the window holds back the uncooked (`play_open.cpp:117-141`).
@@ -1710,10 +1710,10 @@ Check: `checks`; headless `--world dungeon|losttower|noria --ticks 2000 --seed 7
 `OPERABLE_BY_MAP[7] = {39}` (and index.py's); `index.py` `GATE_BOXES_BY_MAP[7]` and `[3] +=` (§1.1);
 `python3 pipeline/terrain.py $D/World8 atlans content/world 8` (expect 0.00-3.83 m, 8 slots, 35.5%
 walkable, 0.6% safe, 5215 placed / 40 kinds, none missing); `content/world/atlans/ground.json` with
-`at_` sheets, slot 5 parked on a neighbour's sheet until step 3; `tools/content.sh --world atlans`;
+`at_` sheets, slot 5 parked on a neighbour's sheet until step 3; `pipeline/content.sh --world atlans`;
 sync; `--only ground`; mu.db gate 49; index.py; `--only tables`. `maps.cpp` row `{"atlans", 7,
 {20, 17}}`, `arrival.cpp`, `minimap.cpp case 7`, `content/sheets/worlds/atlans.json` (a blue `dust_*`,
-weak key, strong blue fill -- MU's shadows are 0.2). Check: `./run.sh --headless --world atlans
+weak key, strong blue fill -- MU's shadows are 0.2). Check: `./mu run --headless --world atlans
 --ticks 200 --no-hand` logs `grid 256 ... map 7`; the `.mur` header's safe box reads 14,11,27,23
 (zero is the gate-22 bug); `checks`.
 

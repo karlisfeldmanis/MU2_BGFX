@@ -48,7 +48,7 @@ bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& er
     }
     if (version != kVersion) {
         error = "a .mur of version " + std::to_string(version) + ", and this reads " +
-                std::to_string(kVersion) + "; recook (tools/cook.py --only tables)";
+                std::to_string(kVersion) + "; recook (pipeline/cook.py --only tables)";
         return false;
     }
     if (out.hz != kSimHz) {

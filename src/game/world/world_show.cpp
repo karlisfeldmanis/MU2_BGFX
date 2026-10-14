@@ -175,7 +175,7 @@ const WorldShow& worldShow(const std::string& world) {
         const core::Json manifest = core::parseJsonFile(path);
         if (manifest.isNull()) {
             core::logf("world %s: no manifest at %s, so MU's wind and nothing of its own "
-                       "(content/world/%s/world.json, then tools/sync.sh)",
+                       "(content/world/%s/world.json, then pipeline/sync.sh)",
                        world.c_str(), path.c_str(), world.c_str());
         } else {
             readString(manifest, "name", &show->name);

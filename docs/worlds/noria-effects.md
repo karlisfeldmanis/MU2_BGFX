@@ -98,7 +98,7 @@ OpenMU Version075 Noria spawns monsters 26–33: Goblin, Chain Scorpion, Beetle 
 | `CreateAtlanseLeaf`: `BITMAP_LEAF1` around the hero, where the wind turns round and drops to a crawl near the camera (ZzzEffectFireLeave.cpp:299) | `src/game/world/leaves.cpp` |
 | Scrolling textures: type 18 V at 1/s, type 41 V at 0.5/s, types 42 and 43 U in opposite directions (ZzzObject.cpp ~:3967) | The Object19/42/43 recipes (`glow` `scrolls_per_second`) |
 | `BlendMesh` per type: 1 → 1, 9 → 3, 18 → 2, 17/19/37 → 0, 39 → 1 (ZzzObject.cpp ~:4740) | The recipes' `additive` |
-| Perches: type 8 sit, type 38 kneel and heal (the `PLAYER_HEALING1` pose) (ZzzInterface.cpp:1728) | `tools/cook.py` `PERCHES[3]` |
+| Perches: type 8 sit, type 38 kneel and heal (the `PLAYER_HEALING1` pose) (ZzzInterface.cpp:1728) | `pipeline/cook.py` `PERCHES[3]` |
 | `SOUND_WIND01` looping, `SOUND_FOREST01` on `rand_fps_check(512)` (SceneManager.cpp:868) | `world_wind`, `world_forest` |
 | Grass footsteps on HeroTile 0 (ZzzCharacter.cpp:5364) | `player_step_grass` |
 | Water tile UV scroll (`WaterMove`, ZzzLodTerrain.cpp:3595) | The ground shader's water layer |

@@ -149,7 +149,7 @@ bool Mesh::load(const std::string& path, Textures& textures) {
         if (m.has_pbr_metallic_roughness) {
             out.albedo = textureFrom(m.pbr_metallic_roughness.base_color_texture, dir, textures,
                                      TextureRole::Albedo);
-            // The same test the cook makes: see tools/cook.py and Material::calibrated.
+            // The same test the cook makes: see pipeline/cook.py and Material::calibrated.
             const cgltf_texture* base = m.pbr_metallic_roughness.base_color_texture.texture;
             const char* named = base && base->image && base->image->name ? base->image->name : "";
             const size_t length = std::strlen(named);
@@ -162,7 +162,7 @@ bool Mesh::load(const std::string& path, Textures& textures) {
             // glTF multiplies the map by these, and MU2's pipeline uses that split rather
             // than ignoring it: a material whose relief was read out of its art has a map and
             // both factors at 1.0, and one whose material declares no grain has no map and
-            // says everything here. See tools/cook.py's orm_factors.
+            // says everything here. See pipeline/cook.py's orm_factors.
             out.roughnessFactor = m.pbr_metallic_roughness.roughness_factor;
             out.metalFactor = m.pbr_metallic_roughness.metallic_factor;
         }

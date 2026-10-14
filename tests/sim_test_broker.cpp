@@ -280,7 +280,7 @@ void testBrokerRealm(const content::Tables& tables) {
 
     check(!realm.atBroker(me), "nobody is at a Broker who stands at Baz");
 
-    // Orsin, Lorencia's Broker (tools/cook.py FOLK_VERSION075): talked to, his window opens and
+    // Orsin, Lorencia's Broker (pipeline/cook.py FOLK_VERSION075): talked to, his window opens and
     // the server would serve the hero; walking off closes it.
     int orsin = -1;
     for (size_t i = 0; i < tables.folk.size(); ++i) {

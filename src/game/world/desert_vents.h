@@ -1,5 +1,5 @@
 // Tarkan's hidden emitters: MU's RenderObjectVisual arm for WD_8TARKAN (ZzzObject.cpp:2994-3065),
-// four kinds of box MU never draws, cooked as world anchors (tools/cook.py ANCHOR_KINDS_BY_WORLD):
+// four kinds of box MU never draws, cooked as world anchors (pipeline/cook.py ANCHOR_KINDS_BY_WORLD):
 //
 //   SandFall   Object71, 3: one frame in five a BITMAP_SMOKE SubType 7, sand-coloured
 //              (0.725, 0.572, 0.333), that falls faster as it goes and swells, 30 frames.

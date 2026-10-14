@@ -47,7 +47,7 @@ void Skulls::open(const std::string& world, const Town& town, float metresPerTil
         Piece piece;
         piece.instance = i;
         // Our (x, y, z) is MU's (x, z, -y); the cook's pitch is MU's Angle[0] and its roll
-        // MU's Angle[1] negated (tools/cook.py).
+        // MU's Angle[1] negated (pipeline/cook.py).
         piece.position[0] = at.position[0] / metresPerUnit_;
         piece.position[1] = -at.position[2] / metresPerUnit_;
         piece.angle[0] = at.pitch * 180.0f / kPi;

@@ -1,5 +1,5 @@
 // The cooked showing: which sheet an effect draws with, and which files an event sounds.
-// Written by tools/cook.py's cook_showing, which is the only thing that writes it.
+// Written by pipeline/cook.py's cook_showing, which is the only thing that writes it.
 //
 // Like content/tables.h and content/cooked.h, this header knows nothing about bgfx: parsing
 // a file and uploading a texture are two jobs and only the second needs a device. That is

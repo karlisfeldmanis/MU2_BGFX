@@ -7,7 +7,7 @@ ground: the run writes, a row a frame, where each point of a fixed grid on the l
 screen (`--shadow-points`), and this samples each shot at those spots. A shadow that belongs
 to the world keeps its value at a spot however the camera moves; one that fizzes does not.
 
-    ./run.sh --world lorencia --no-figures --shadow-view --fixed-dt 16.6667 --frames 120 \\
+    ./mu run --world lorencia --no-figures --shadow-view --fixed-dt 16.6667 --frames 120 \\
              --shot 1 --shot-path /abs/pan --shadow-points /abs/pan.csv [--shadow-noise ...]
     tools/pan.py /abs/pan /abs/pan.csv
 

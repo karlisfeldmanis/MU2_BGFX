@@ -83,7 +83,7 @@ All three rune services are invention, and their numbers are the proposal's firs
 
 ## Trying it
 
-    ./main.sh --new --windowed --world noria --at 182,106 --level 50 --zen 20000000 \
+    ./mu play --new --windowed --world noria --at 182,106 --level 50 --zen 20000000 \
       --give "Sword01:1:+9,Jewel15,Jewel01,Jewel02" --talk "Chaos Goblin" --save /tmp/mix.json
 
 `tests/sim_test.cpp` `testChaosMachine` runs +10 until it makes one, checks +11's rate and price,

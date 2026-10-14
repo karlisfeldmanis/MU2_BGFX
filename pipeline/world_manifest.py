@@ -1,6 +1,6 @@
 """Each world's manifest, content/world/<w>/world.json, as the pipeline reads it.
 
-The order plan's sprint D (docs/plans/order-plan.md): what terrain.py, index.py and tools/cook.py kept
+The order plan's sprint D (docs/plans/order-plan.md): what terrain.py, index.py and pipeline/cook.py kept
 as one dict per fact with a row per world is each world's own `pipeline` block, so a new map is
 its manifest and its art. The scripts keep what a knob does and why; the manifest keeps which
 worlds take it and with what, each row's citation beside it as a `note`.
@@ -99,7 +99,7 @@ def spawn_gates() -> dict:
 
 def npcs() -> dict:
     """{map: [(npc, name, figure, column, row, look)]}: the townsfolk each world's manifest
-    stands (`npcs`), for the cook's tables (tools/cook.py)."""
+    stands (`npcs`), for the cook's tables (pipeline/cook.py)."""
     return {doc["map"]: [(row["npc"], row["name"], row["figure"], row["at"][0], row["at"][1], row["look"])
                          for row in doc["npcs"]]
             for doc in manifests().values() if "npcs" in doc}

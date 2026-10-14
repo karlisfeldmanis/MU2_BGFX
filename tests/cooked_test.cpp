@@ -43,7 +43,7 @@ int main() {
     // --- the town ----------------------------------------------------------------------
     std::vector<uint8_t> bytes = mu::core::readFile(cooked + "/lorencia.mut");
     if (bytes.empty()) {
-        std::printf("cooked_test: no %s/lorencia.mut -- run tools/cook.py first\n",
+        std::printf("cooked_test: no %s/lorencia.mut -- run pipeline/cook.py first\n",
                     cooked.c_str());
         return 2;
     }
@@ -322,7 +322,7 @@ int main() {
                             clips.clips.size(), clips.bones,
                             clips.rows.size() / (clips.bones * 7));
                 check(clips.bones == 60, "the player rig is 60 bones");
-                // MU's 283 actions and our two (tools/mixamo.py's OURS): the run, action284
+                // MU's 283 actions and our two (pipeline/mixamo.py's OURS): the run, action284
                 // (2026-10-01), and the stand off a safe zone, action285 (2026-10-09).
                 check(clips.clips.size() == 285,
                       "the player library is 285 clips, MU's, our run and our stand");
@@ -369,7 +369,7 @@ int main() {
         const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/showing/showing.mus";
         std::vector<uint8_t> showingBytes = mu::core::readFile(path);
         if (showingBytes.empty()) {
-            std::printf("cooked_test: no showing.mus -- run tools/cook.py --only showing\n");
+            std::printf("cooked_test: no showing.mus -- run pipeline/cook.py --only showing\n");
             ++g_failures;
         } else {
             mu::content::Showing showing;
@@ -441,7 +441,7 @@ int main() {
         const std::string assets = std::string(MU2_ASSET_DIR);
         mu::content::Missiles missiles;
         if (!missiles.read(assets + "/cooked/showing/missiles.mup")) {
-            std::printf("cooked_test: no missiles.mup -- run tools/cook.py --only missiles\n");
+            std::printf("cooked_test: no missiles.mup -- run pipeline/cook.py --only missiles\n");
             ++g_failures;
         } else {
             check(missiles.rows.size() >= 18, "index.json's eighteen missiles are cooked");

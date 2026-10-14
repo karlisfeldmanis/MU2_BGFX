@@ -1,7 +1,7 @@
 {
   "item": "Bug02",
   "mu_name": "Bug02",
-  "mu_name_from": "Object9/Bug02.bmd, which is not a placement: MoveFishs gives the fish slot MODEL_BUG01 + 1 in Tarkan (GOBoid.cpp:1726-1733; MapManager.cpp:143-148) and keeps ten around whoever is playing, on floor tiles only. Named in tools/cook.py's CRAWLS.",
+  "mu_name_from": "Object9/Bug02.bmd, which is not a placement: MoveFishs gives the fish slot MODEL_BUG01 + 1 in Tarkan (GOBoid.cpp:1726-1733; MapManager.cpp:143-148) and keeps ten around whoever is playing, on floor tiles only. Named in pipeline/cook.py's CRAWLS.",
   "world": "tarkan",
   "object_type": -1,
   "why_this_one": "Tarkan's scarabs: 19 triangles, 6 bones, a 3-key run, a 35 cm black beetle with spiked legs. Ten of them dash at 2.5/scale units a frame, scale 0.8 to 1.1, turning 9 degrees a frame, and turn back at the void (GOBoid.cpp:1664-1760). The user, 2026-10-05: 'continou'. docs/worlds/tarkan-port.md.",

@@ -60,7 +60,7 @@ void Bust::show(sim::Kin kin) {
     const FigureBody* body = figures_ ? figures_->body(pose.model) : nullptr;
     figure_ = Figure{};
     if (!body) {
-        core::logError("lobby: no bust %s in the cooked figures (tools/cook_one.py %s)",
+        core::logError("lobby: no bust %s in the cooked figures (pipeline/cook_one.py %s)",
                        pose.model, pose.model);
         return;
     }

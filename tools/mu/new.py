@@ -27,14 +27,14 @@ from things import ROOT, SOURCE, NotFound
 UNCHOSEN = "CHOOSE"
 DATA_ROOTS = [os.path.join(ROOT, "reference", "MuMain", "src", "bin", "Data"),
               os.path.join(ROOT, "..", "LEGACY", "reference", "MuMain", "src", "bin", "Data")]
-MUEXTRACT = os.path.join(ROOT, "tools", "MuExtract", "bin", "Release", "net10.0", "muextract.dll")
+MUEXTRACT = os.path.join(ROOT, "pipeline", "MuExtract", "bin", "Release", "net10.0", "muextract.dll")
 
 
 def data_root():
     for root in DATA_ROOTS:
         if os.path.isdir(root):
             return os.path.normpath(root)
-    raise NotFound("no MuMain Data: run tools/fetch_mumain.sh")
+    raise NotFound("no MuMain Data: run pipeline/fetch_mumain.sh")
 
 
 def world_doc(world):

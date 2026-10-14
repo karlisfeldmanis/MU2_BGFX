@@ -585,7 +585,7 @@ int Sound::load(const std::string& name, bool placed, bool quietly) {
     for (const std::string& relative : cooked->files) {
         const std::string path = impl_->assetDir + "/" + relative;
         if (!core::fileExists(path)) {
-            core::logError("sound: no %s (tools/cook.py --only showing)", path.c_str());
+            core::logError("sound: no %s (pipeline/cook.py --only showing)", path.c_str());
             continue;
         }
         auto file = std::make_unique<Impl::File>();
@@ -738,7 +738,7 @@ void Sound::voice(const std::string& relative) {
     stopVoice();
     const std::string path = im.assetDir + "/" + relative;
     if (!core::fileExists(path)) {
-        core::logError("sound: no voice %s (tools/sync.sh copies content/voice)", path.c_str());
+        core::logError("sound: no voice %s (pipeline/sync.sh copies content/voice)", path.c_str());
         return;
     }
     // Straight to the engine as the music is: no room's reverb on a man talking to you.
@@ -770,7 +770,7 @@ void Sound::stinger(const std::string& relative, float gain) {
     }
     const std::string path = im.assetDir + "/" + relative;
     if (!core::fileExists(path)) {
-        core::logError("sound: no stinger %s (tools/sync.sh copies content/music)", path.c_str());
+        core::logError("sound: no stinger %s (pipeline/sync.sh copies content/music)", path.c_str());
         return;
     }
     // As the voice is: streamed at the file's own stereo and rate, straight to the engine.

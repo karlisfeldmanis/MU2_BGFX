@@ -72,7 +72,7 @@ void Application::openProbe() {
     std::string error;
     const std::string showingPath = paths_.assets + "/cooked/showing/showing.mus";
     if (!content::loadShowing(showingPath, showing, error)) {
-        core::logError("the showing table did not open: %s (tools/cook.py --only showing)",
+        core::logError("the showing table did not open: %s (pipeline/cook.py --only showing)",
                        error.c_str());
         probeSprites_ = 0;
         return;

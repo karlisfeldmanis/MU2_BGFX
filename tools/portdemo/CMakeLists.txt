@@ -1,4 +1,4 @@
-# The port test, docs/reference/windows-linux-test.md. Built by build.sh: cross-compiled for Windows with
+# The port test, docs/reference/windows-linux-test.md. Built by mu build: cross-compiled for Windows with
 # mingw.cmake, or natively inside a Linux machine. bgfx is MU2's own copy in extern/.
 cmake_minimum_required(VERSION 3.16)
 project(portdemo CXX C)
@@ -14,7 +14,7 @@ target_include_directories(portdemo PRIVATE ${EXTERN} ${EXTERN}/bgfx.cmake/bgfx/
                            ${EXTERN}/bgfx.cmake/bx/include)
 target_compile_definitions(portdemo PRIVATE BX_CONFIG_DEBUG=0)
 if(WIN32)
-  # GLFW's prebuilt mingw library, fetched by build.sh; everything static, so the .exe runs
+  # GLFW's prebuilt mingw library, fetched by mu build; everything static, so the .exe runs
   # under Wine with no DLLs beside it.
   set_target_properties(portdemo PROPERTIES WIN32_EXECUTABLE TRUE)
   target_include_directories(portdemo PRIVATE ${GLFW_DIR}/include ${EXTERN}/bgfx.cmake/bx/include/compat/mingw)

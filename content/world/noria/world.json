@@ -2,7 +2,7 @@
   "world": "noria",
   "name": "Noria",
   "map": 3,
-  "note": "The world's manifest (docs/plans/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "note": "The world's manifest (docs/plans/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by pipeline/sync.sh.",
   "rules": {
     "arrive": [
       174,

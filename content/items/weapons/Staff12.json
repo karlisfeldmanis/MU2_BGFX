@@ -92,7 +92,7 @@
       "where": "over"
     }
   ],
-  "chrome_from": "RenderPartObjectBody's MODEL_STAFF_OF_KUNDUN arm (ZzzObject.cpp:7989-7996): mesh 1 (kundunStic, the shaft) again RENDER_CHROME | RENDER_BRIGHT at 0.2 -- a faint Chrome01 sheen -- and mesh 0 (kundunStic_R, the head) RENDER_CHROME4 | RENDER_BRIGHT, Chrome02 (BITMAP_CHROME2) at the RENDER_CHROME4 coordinates (ZzzBMD.cpp:1648-1654) on its BlendMeshLight, sin(WorldTime*0.004)*0.3 + 0.7 (:5252-5255): a sheen that swings round the head as its light vector turns. Its third pass, mesh 0 RENDER_TEXTURE | RENDER_BRIGHT at sin(WorldTime*0.005), is the head's own glow here (glow kundunStic_R). tools/chrome_sheets.py.",
+  "chrome_from": "RenderPartObjectBody's MODEL_STAFF_OF_KUNDUN arm (ZzzObject.cpp:7989-7996): mesh 1 (kundunStic, the shaft) again RENDER_CHROME | RENDER_BRIGHT at 0.2 -- a faint Chrome01 sheen -- and mesh 0 (kundunStic_R, the head) RENDER_CHROME4 | RENDER_BRIGHT, Chrome02 (BITMAP_CHROME2) at the RENDER_CHROME4 coordinates (ZzzBMD.cpp:1648-1654) on its BlendMeshLight, sin(WorldTime*0.004)*0.3 + 0.7 (:5252-5255): a sheen that swings round the head as its light vector turns. Its third pass, mesh 0 RENDER_TEXTURE | RENDER_BRIGHT at sin(WorldTime*0.005), is the head's own glow here (glow kundunStic_R). pipeline/chrome_sheets.py.",
   "islands": [
     {
       "island": 0,

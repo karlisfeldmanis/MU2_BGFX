@@ -4,7 +4,7 @@
   "mu_name_from": "MuMain's _enum.h:4182: MONSTER_MODEL_BALI = 32, so OpenMonsterModel loads Monster{32 + 1}, Monster33.bmd; the server's type is MONSTER_BALI = 150 (_enum.h:4521). The client's name is 발리 (ZzzCharacter.cpp:13817-13822). OpenMU's Version075 SkillsInitializer.cs:94-123 (CreateSpecialSummonMonsters) makes number 150 'Bali' at level 52 with 5000 health, 165-170 damage, 100 defense, MoveRange 3, AttackRange 1, ViewRange 7, AttackDelay 1600, attack rate 260, defense rate 75 -- the row put in mu.db's monster_kinds. It lives on no 0.75 map: it is the Fairy Elf's sixth summon (skill 35, the Orb of Summoning at +5), and nothing else.",
   "world": "noria",
   "summoned_in": "noria",
-  "summoned_in_from": "Bali spawns nowhere, and a world cooks only the breeds that spawn in it (tools/cook.py figure_set). It is cooked with Noria, the elf's home, and the other maps borrow it as they borrow the Goblin (Figures::borrow).",
+  "summoned_in_from": "Bali spawns nowhere, and a world cooks only the breeds that spawn in it (pipeline/cook.py figure_set). It is cooked with Noria, the elf's home, and the other maps borrow it as they borrow the Goblin (Figures::borrow).",
   "object_type": 150,
   "monster": {
     "model_index": 32,

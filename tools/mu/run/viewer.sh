@@ -26,21 +26,21 @@
 #
 # The last two come out of the WARDROBE, which is its own cook and its own manifest:
 #
-#   python3 tools/cook.py --only wardrobe
+#   python3 pipeline/cook.py --only wardrobe
 #
 # It is not part of `--only all` and the game never loads it. Ninety item files is what the
 # figures cook deliberately does not take -- the game wants the five the town wears -- and
 # what a viewer exists to show.
 #
-#   ./viewer.sh                       the list, one at a time, esc to quit
-#   ./viewer.sh --dist 3              hold one distance instead of re-framing per model
-#   ./viewer.sh --spin                turn the camera; it is held still by default, because
+#   ./mu viewer                       the list, one at a time, esc to quit
+#   ./mu viewer --dist 3              hold one distance instead of re-framing per model
+#   ./mu viewer --spin                turn the camera; it is held still by default, because
 #                                     a turntable is motion you did not ask for when you are
 #                                     trying to look at one face of a thing
-#   ./viewer.sh --category monsters --pick spider                opens on one thing
-#   ./viewer.sh --category armour                                and the same for a suit
-#   ./viewer.sh --category weapons --pick spear --bearer         a weapon in its bearer's hands
-#   ./viewer.sh --frames 200 --shot 100 --shot-path /abs/dir     a review run
+#   ./mu viewer --category monsters --pick spider                opens on one thing
+#   ./mu viewer --category armour                                and the same for a suit
+#   ./mu viewer --category weapons --pick spear --bearer         a weapon in its bearer's hands
+#   ./mu viewer --frames 200 --shot 100 --shot-path /abs/dir     a review run
 #
 #   left / right ..... one entry            tab .............. next category
 #   down / up ........ ten                  [ / ] ............ the figure's next clip
@@ -55,8 +55,8 @@
 # sun it will actually live under, and against the same plot every time. See
 # docs/content/materials.md.
 set -e
-cd "$(dirname "$0")"
-[ -x out/build/mu2 ] || ./build.sh
+cd "$(dirname "$0")/../../.."
+[ -x out/build/mu2 ] || ./mu build
 mkdir -p out/shots
 # --still first so a --spin on the command line takes it back. --stage stands the world's own
 # bonfire, street lamp, wall and railing round the subject and runs the world's lamps on them,

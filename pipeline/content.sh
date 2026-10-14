@@ -3,12 +3,12 @@
 # Builds workshop/ from content/ -- every recipe, every world's ground, every grade, then the
 # index -- which is what MU2 did by hand, one mu2.sh call and one pipeline script at a time.
 #
-#   ./tools/content.sh                    everything that is stale
-#   ./tools/content.sh --world lorencia   one world's ground and objects, plus everything that
+#   ./pipeline/content.sh                    everything that is stale
+#   ./pipeline/content.sh --world lorencia   one world's ground and objects, plus everything that
 #                                         is not a world object (players, items, monsters...)
-#   ./tools/content.sh --rebuild          all of it, whatever the dates say
+#   ./pipeline/content.sh --rebuild          all of it, whatever the dates say
 #
-# Then ./tools/sync.sh and ./tools/cook.py, as before. A full build from nothing is hours:
+# Then ./pipeline/sync.sh and ./pipeline/cook.py, as before. A full build from nothing is hours:
 # every sheet goes through the upscaler and every model through Blender.
 #
 # The chain from MU's own files to content/ -- MuExtract for .bmd, decode_texture.py for
@@ -17,7 +17,7 @@
 
 set -uo pipefail
 
-. "$(dirname -- "${BASH_SOURCE[0]}")/paths.sh"
+. "$(dirname -- "${BASH_SOURCE[0]}")/../tools/paths.sh"
 source_dir="$CONTENT"
 workshop="$WORKSHOP"
 pipeline="$PIPELINE"
@@ -81,7 +81,7 @@ print(json.load(open(sys.argv[1])).get('blocked',''))" "$recipe" 2>/dev/null)"
     continue
   fi
   echo "--- $rel"
-  "$TOOLS/asset.sh" "$name" --build-only "${forced[@]+"${forced[@]}"}" \
+  "$PIPELINE/asset.sh" "$name" --build-only "${forced[@]+"${forced[@]}"}" \
     || failed+=("$rel")
 done < <(python3 - "$source_dir" <<'PY'
 import json, sys
@@ -108,4 +108,4 @@ if [[ ${#failed[@]} -gt 0 ]]; then
   printf '  %s\n' "${failed[@]}"
   exit 1
 fi
-echo "workshop is built; now ./tools/sync.sh"
+echo "workshop is built; now ./pipeline/sync.sh"

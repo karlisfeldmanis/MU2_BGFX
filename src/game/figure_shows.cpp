@@ -20,7 +20,7 @@ void Figures::readShows() {
     const std::string path = core::join(assetDir_, "cooked/figures/shows.json");
     core::Json shows = core::parseJsonFile(path);
     if (shows.isNull()) {
-        core::logf("no %s: every monster draws without its own shows. tools/cook.py --only shows",
+        core::logf("no %s: every monster draws without its own shows. pipeline/cook.py --only shows",
                    path.c_str());
         return;
     }

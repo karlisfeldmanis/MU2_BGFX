@@ -7,7 +7,7 @@
 // expressed through bimg's texturec, which builds its chain internally.
 //
 // It is a tool, not a library: it links bx and bimg and knows nothing about the game. The
-// driver is tools/cook.py, which decides what each image is for.
+// driver is pipeline/cook.py, which decides what each image is for.
 //
 // Three things about the pinned bimg, each found by reading its source rather than by
 // guessing, and each of which silently writes a wrong file if ignored:

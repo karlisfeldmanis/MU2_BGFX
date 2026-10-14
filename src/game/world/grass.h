@@ -155,7 +155,7 @@ private:
     Counts counts_;
 
     // Where the town's stone stands in the lawn: two words a tile, row-major, read from the
-    // cook's `<world>.walls` (tools/cook.py, cook_walls). A tile is six by six squares and a
+    // cook's `<world>.walls` (pipeline/cook.py, cook_walls). A tile is six by six squares and a
     // set bit is one some object's surface crosses at the ground -- the rim of a flower bed,
     // a wall's foot -- which grass.sh keeps every card out of. Empty when the world was
     // cooked before the file existed, and then nothing is walled.

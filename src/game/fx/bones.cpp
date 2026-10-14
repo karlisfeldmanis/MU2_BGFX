@@ -34,7 +34,7 @@ bool Bones::open(const std::string& assetDir, content::Textures& textures,
     // whole of what this wants out of eighteen rows.
     content::Missiles missiles;
     if (!missiles.read(core::join(assetDir, "cooked/showing/missiles.mup"))) {
-        core::logError("bones: no cooked missiles (tools/cook.py --only missiles)");
+        core::logError("bones: no cooked missiles (pipeline/cook.py --only missiles)");
         return false;
     }
     const auto take = [&](const char* name, Model& into) {

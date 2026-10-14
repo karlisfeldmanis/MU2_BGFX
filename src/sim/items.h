@@ -458,7 +458,7 @@ struct Wearer {
 };
 // Whether this character may wear it at all: his class, and every requirement met.
 bool fits(const content::Tables& tables, const Wearer& who, const Held& what);
-// Whether it asks its class's second (OpenMU's class level 2, tools/cook.py's bits 8-10): the
+// Whether it asks its class's second (OpenMU's class level 2, pipeline/cook.py's bits 8-10): the
 // 2nd wings and the second class's gear (docs/game/second-class-gear.md).
 inline bool secondClassOnly(const content::ItemRow& row) { return ((row.classes >> 8) & 7) != 0; }
 // Whether it asks `kin` in particular for his second class: the bit eight above his. The Staff of

@@ -1,7 +1,7 @@
 {
   "item": "Crow01",
   "mu_name": "Crow01",
-  "mu_name_from": "Object12/Crow01.bmd, MODEL_CROW (MapManager.cpp:167-168), which is not a placement: GOBoid.cpp's boid slot takes it in every Blood Castle (GOBoid.cpp:1310, 1342-1345) and keeps a few round whoever is playing, as Lorencia's Bird01. Built like any world model and named in tools/cook.py's AIRS, since nothing on the map refers to it.",
+  "mu_name_from": "Object12/Crow01.bmd, MODEL_CROW (MapManager.cpp:167-168), which is not a placement: GOBoid.cpp's boid slot takes it in every Blood Castle (GOBoid.cpp:1310, 1342-1345) and keeps a few round whoever is playing, as Lorencia's Bird01. Built like any world model and named in pipeline/cook.py's AIRS, since nothing on the map refers to it.",
   "world": "bloodcastle",
   "object_type": -1,
   "why_this_one": "Blood Castle's crows: 48 triangles, 12 bones, a 5-key wing beat. MU flies them as its birds (Velocity 1, lit by the ground), with two red eyes, BITMAP_LIGHT at bone 1 five units either side, Scale 0.1, (1, 0.2, 0) times 1.28-1.59 rolled each frame (GOBoid.cpp:1573-1585), and caws eCrow.wav one frame in 128, only over a safe-zone tile (:1495-1501).",

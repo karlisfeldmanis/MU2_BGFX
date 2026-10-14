@@ -16,7 +16,7 @@
 // Neither shows in the game until it is cooked: the gates are compiled into the realm (`mu
 // make realm`, then a rebuild of the game and the server), the townsfolk stood by the world's
 // tables (`mu make tables <w>`). The card's target says which. A townsperson's look is MU2's
-// Look, 1 West clockwise to 8 NorthWest (tools/cook.py's folk).
+// Look, 1 West clockwise to 8 NorthWest (pipeline/cook.py's folk).
 #pragma once
 
 #include <string>

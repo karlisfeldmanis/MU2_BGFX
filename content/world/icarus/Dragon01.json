@@ -1,7 +1,7 @@
 {
   "item": "Dragon01",
   "mu_name": "Monster32",
-  "mu_name_from": "MODEL_DRAGON_, MuMain's MONSTER_MODEL_DRAGON (31), Data/Monster/Monster32.bmd: the Red Dragon's body, which CreateDragon opens for Icarus's boids (GOBoid.cpp:824-851). Named Dragon01 here as a boid, as Bird01 and Fish02 are; tools/cook.py's AIRS cooks it.",
+  "mu_name_from": "MODEL_DRAGON_, MuMain's MONSTER_MODEL_DRAGON (31), Data/Monster/Monster32.bmd: the Red Dragon's body, which CreateDragon opens for Icarus's boids (GOBoid.cpp:824-851). Named Dragon01 here as a boid, as Bird01 and Fish02 are; pipeline/cook.py's AIRS cooks it.",
   "world": "icarus",
   "profile": "world",
   "sheets": {

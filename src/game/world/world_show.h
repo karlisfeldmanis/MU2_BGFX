@@ -1,5 +1,5 @@
 // How a world is shown, played and heard: its manifest's `show` block (content/world/<w>/world.json,
-// copied to assets/world/<w>/world.json by tools/sync.sh). The order plan's MapShow, sprint D
+// copied to assets/world/<w>/world.json by pipeline/sync.sh). The order plan's MapShow, sprint D
 // (docs/plans/order-plan.md): what used to be `world == "atlans"` in twenty files is read here once, and
 // a world system opens from its own field -- a world that names no bubbles has none -- so a new
 // map is its json and its art, with no system taught its name.

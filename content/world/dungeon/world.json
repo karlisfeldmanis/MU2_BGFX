@@ -2,7 +2,7 @@
   "world": "dungeon",
   "name": "Dungeon",
   "map": 1,
-  "note": "The world's manifest (docs/plans/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "note": "The world's manifest (docs/plans/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by pipeline/sync.sh.",
   "rules": {
     "arrive": [
       108,
@@ -70,7 +70,7 @@
     "crawls": {
       "model": "Rat01",
       "squeaks": true,
-      "note": "MoveFishs' WD_1DUNGEON arm (GOBoid.cpp:1720-1722). Agrees with tools/cook.py's CRAWLS."
+      "note": "MoveFishs' WD_1DUNGEON arm (GOBoid.cpp:1720-1722). Agrees with pipeline/cook.py's CRAWLS."
     },
     "traps": "dungeon",
     "void_clouds": {

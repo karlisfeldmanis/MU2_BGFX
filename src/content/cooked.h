@@ -6,7 +6,7 @@
 // of everything that can manage it. `content/mesh.cpp` does the upload from what comes out
 // of here.
 //
-// The formats themselves are written down in tools/cook.py, which is the only thing that
+// The formats themselves are written down in pipeline/cook.py, which is the only thing that
 // writes them. Every count in a file is treated as hostile here: a truncated or edited file
 // must be refused with a reason, never walked off the end of.
 #pragma once
@@ -18,7 +18,7 @@
 namespace mu::content {
 
 // A vertex exactly as the cook writes it and as the static draw's layout wants it. The
-// assert is the contract between tools/cook.py and content/mesh.h.
+// assert is the contract between pipeline/cook.py and content/mesh.h.
 struct CookedVertex {
     float position[3];
     float normal[3];
@@ -181,7 +181,7 @@ struct TownInstance {
     uint16_t model;
     uint16_t flags;    // bit 0: laid on the terrain rather than placed as the map stores it;
                        // bit 1: a roof; bit 2: buried, its clip held; bit 3: held back
-                       // until the game shows it (tools/cook.py SHOWN_LATER); bit 4: a still
+                       // until the game shows it (pipeline/cook.py SHOWN_LATER); bit 4: a still
                        // model that sways in the water (the recipe's `sway`, vs_static)
     uint8_t light[3];  // MU's baked terrain light at this tile
     uint8_t spare;
@@ -203,7 +203,7 @@ enum class EmitterKind : uint8_t {
     // Aida's small fires, game/world/small_fires.h, and skull ghosts, skull_ghosts.h; `high`
     // carries the box's Scale too.
     SmallFire = 21, SkullGhost = 22,
-    // A small fire's light, beside it (tools/cook_anchors.py LIGHT_TWINS): Lamps lights it.
+    // A small fire's light, beside it (pipeline/cook_anchors.py LIGHT_TWINS): Lamps lights it.
     SmallFireLight = 23
 };
 struct TownEmitter {

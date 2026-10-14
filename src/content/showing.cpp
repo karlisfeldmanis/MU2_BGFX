@@ -40,7 +40,7 @@ bool parseShowing(const std::vector<uint8_t>& bytes, Showing& out, std::string& 
     }
     if (version != kVersion) {
         error = "a .mus of version " + std::to_string(version) + ", and this reads " +
-                std::to_string(kVersion) + "; recook (tools/cook.py --only showing)";
+                std::to_string(kVersion) + "; recook (pipeline/cook.py --only showing)";
         return false;
     }
     // Checked and not trusted, for the reason the rules tables check their tick rate: a file

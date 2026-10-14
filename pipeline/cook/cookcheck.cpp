@@ -1,4 +1,4 @@
-// cookcheck: reads back what tools/cook.py wrote and says whether it is what it claims.
+// cookcheck: reads back what pipeline/cook.py wrote and says whether it is what it claims.
 //
 // The cook is the first thing in this engine that produces files nothing has loaded yet, and
 // A working rule (docs/README.md): the author of a thing is not the one who says it works.

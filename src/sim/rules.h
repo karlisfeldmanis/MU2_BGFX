@@ -260,7 +260,7 @@ Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice);
 // byte -- MU writes a Dark Knight as 0x10 and a Blade Knight as 0x11 (Beast.cs:2460-2466), and a
 // save file that stored the wire value and a loader that read this one would make a Dark Knight a
 // Dark Wizard. Sprint 9's save writes this enumeration and says so. The Magic Gladiator is the
-// fourth, 3, which is his class bit 8 in the cooked tables (tools/cook.py kClass) and MU's own
+// fourth, 3, which is his class bit 8 in the cooked tables (pipeline/cook.py kClass) and MU's own
 // third class (CLASS_DARK_LORD is the fifth); he has no second class (docs/worlds/mg-port.md).
 enum class Kin : uint8_t {
     DarkWizard = 0,

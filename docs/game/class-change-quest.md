@@ -47,7 +47,7 @@ kept for exactly this.
 - Neither part repeats.
 - Sevina's voice (2026-10-04, the user: 'its a women give some samples, very mythical quest giver
   low voice', the first of eight). Kokoro's bf_emma cloned by Chatterbox at 0.8, three semitones
-  down with a faint octave-under voice and a temple's echo (tools/voice.py `VOICES["sevina"]`).
+  down with a faint octave-under voice and a temple's echo (pipeline/voice.py `VOICES["sevina"]`).
   Every page of her four rows, `sevina_1` (the trial) to `sevina_4` (the elf's treasure): the
   offer, "not found yet", the hand-in and the rest. The treasures' rest line is
   `sevinaTreasure`'s, which voice.py now reads through the helper.

@@ -89,7 +89,7 @@ the helm baked black until each took a neighbouring corner's coordinate in the .
 The user, 2026-10-10: "what is logic next sets and weapons for our heros after strongest they
 have right now", then "cook them", "cook them individual, check, make fixes if needed". The
 next set and the strongest pre-Season 2 drop of each class's line, from MuMain's .bmds through
-tools/MuExtract on OpenMU's Season 6 rows (Armors.cs, Weapons.cs), each cooked alone, judged on
+pipeline/MuExtract on OpenMU's Season 6 rows (Armors.cs, Weapons.cs), each cooked alone, judged on
 its studio sheet and passed in docs/content/cook-log.md.
 
 | class | set (files, MU index) | drops | arm (file, MU number) | drop |

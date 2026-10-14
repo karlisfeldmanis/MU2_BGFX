@@ -164,7 +164,7 @@ Bench: `build/mu2 --model items/pets/Rider01/Rider01.glb --dist 4`.
 ## Steps
 
 1. **Import and build** `Rider01.bmd` (horse, clips 0/2/3/6) and `Helper03.bmd` (the bag item)
-   through `content/` + `tools/asset.sh`; cook. Bench the horse alone.
+   through `content/` + `pipeline/asset.sh`; cook. Bench the horse alone.
 2. **Sim**: 13/2 in `PetPower`, the speed in `realm_move.cpp` (mounted and off a safe tile: 16,
    combat or not), wear in `Realm::wearOnTaken`, the price and shelf, `testMount` in sim_test.
 3. **Figure**: a second figure at the rider's position and yaw, the rider's clip table switched

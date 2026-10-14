@@ -25,7 +25,7 @@ texels keeps the same fractional texel phase every frame however the camera move
 | `camera_lag_mm` | how far the camera's target trails the drawn character | 0 |
 | `dt_ms`, `focus_x/z`, `hero_x/z`, `texel_mm` | the context | |
 
-    ./run.sh --world lorencia --play --click-every 120 --frames 1500 --shadow-log /abs/walk.csv
+    ./mu run --world lorencia --play --click-every 120 --frames 1500 --shadow-log /abs/walk.csv
 
 **The pixels: `--shadow-slide MM`.** Holds everything still and moves only the split, MM
 millimetres a frame along both ground axes. With the camera held and no figures, the only
@@ -33,7 +33,7 @@ thing that can change a pixel between frames is the shadow. A correct split draw
 picture every frame. `tools/shimmer.py` counts the changed pixels in each pair of frames and
 writes a heat map of where they changed.
 
-    ./run.sh --world lorencia --still --no-figures --frames 60 --shot 1 \
+    ./mu run --world lorencia --still --no-figures --frames 60 --shot 1 \
              --shot-path /abs/slide --shadow-slide 3
     tools/shimmer.py /abs/slide --heat /abs/heat.png --allow 200
 
@@ -89,7 +89,7 @@ tools/shimmer.py needs the camera held. This one compares ground with ground ins
 writes where a fixed 60 × 60 grid of ground points lands on screen each frame, and the tool
 samples each shot there. Without `--still`, the world camera glides across the town.
 
-    ./run.sh --world lorencia --no-figures --shadow-view --fixed-dt 16.6667 --frames 120 \
+    ./mu run --world lorencia --no-figures --shadow-view --fixed-dt 16.6667 --frames 120 \
              --shot 1 --shot-path /abs/pan --shadow-points /abs/pan.csv [--shadow-noise ...]
     tools/pan.py /abs/pan /abs/pan.csv
 

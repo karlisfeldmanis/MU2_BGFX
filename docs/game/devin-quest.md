@@ -58,13 +58,13 @@ brackets). Devias's breeds (19-25) are not in mu.db yet.
 
 ## Voice
 
-`tools/voice.py` VOICES `"devin"`: low, a trace of a Nordic accent. The user heard three full
+`pipeline/voice.py` VOICES `"devin"`: low, a trace of a Nordic accent. The user heard three full
 accents (Swedish, Norwegian, Danish, from Chatterbox's multilingual model) as too strong, and the
 Swedish read cloned by the English model as perfect. The pages are already recorded in
-content/voice/devin; do NOT re-read them with `tools/voice.py devin` -- its main() reads
+content/voice/devin; do NOT re-read them with `pipeline/voice.py devin` -- its main() reads
 sentence-joined, squeezes pauses to 0.3 s and would undo the approved reading below.
 
-The reading the user approved (2026-09-29), recorded by hand, not by `tools/voice.py`'s main():
+The reading the user approved (2026-09-29), recorded by hand, not by `pipeline/voice.py`'s main():
 each paragraph read WHOLE, not sentence by sentence (stitched sentences sounded cropped and
 unnatural); reference `devin_sv_dramatic.wav` (a heroic line read as Swedish at exaggeration 0.9 --
 the calm devin_sv.wav gave a monotone Devin, "without any personality"); exaggeration 0.9,

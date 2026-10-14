@@ -59,7 +59,7 @@
       "pulse_rate": "slow"
     }
   },
-  "glow_note": "`case MODEL_RED_SPIRIT_PANTS: case MODEL_RED_SPIRIT_HELM`: BlendMeshLight = sin(WorldTime*0.001)*0.4+0.6 (ZzzObject.cpp:5248-5250, again at :9945-9948), and FShoots_R's `_R` makes TextureScript draw that mesh bright (TextureScript.cpp:38): the violet band breathes, added, at the 2nd wings' slow rate (pulse_rate slow, tools/cook.py mode bit 3).",
+  "glow_note": "`case MODEL_RED_SPIRIT_PANTS: case MODEL_RED_SPIRIT_HELM`: BlendMeshLight = sin(WorldTime*0.001)*0.4+0.6 (ZzzObject.cpp:5248-5250, again at :9945-9948), and FShoots_R's `_R` makes TextureScript draw that mesh bright (TextureScript.cpp:38): the violet band breathes, added, at the 2nd wings' slow rate (pulse_rate slow, pipeline/cook.py mode bit 3).",
   "sheet_materials": {
     "level_man033": "hair",
     "FHelm": "painted_steel",

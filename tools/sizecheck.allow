@@ -43,8 +43,8 @@ src/sim/realm_move.cpp 763
 src/sim/realm_raid.cpp 1412
 src/sim/realm_skills.cpp 1021
 src/sim/skills.cpp 1161
-tools/asset.sh 961
+pipeline/asset.sh 961
 tools/bot/brain.h 5277
-tools/cook.py 3813
+pipeline/cook.py 3813
 tools/matcheck.py 983
 tools/netbot/netbot.cpp 1767

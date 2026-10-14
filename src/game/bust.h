@@ -3,7 +3,7 @@
 // MuMain's CharMakeWin, by way of MU2's Lobby.Bust. `Data/Logo/NewFace0N.bmd` -- one per class,
 // the file number the class plus one in MU's own count, so 01 is the Dark Wizard, 02 the Dark
 // Knight and 03 the Fairy Elf (ZzzOpenData.cpp:5102). Not player models and not portraits: a
-// hundred bones and two actions each, cooked here as standalone figures (tools/cook_one.py).
+// hundred bones and two actions each, cooked here as standalone figures (pipeline/cook_one.py).
 //
 // Every number is MU's (CharMakeWin.cpp:97, :481):
 //   camera   the model's position plus (10, -500, 48) MU units, level, a ten-degree VERTICAL

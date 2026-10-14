@@ -97,7 +97,7 @@ struct HeldItem {
     // That plus as the recipe gives it, before the item table turns it into `shine`.
     int plus = 0;
     // The weapon's own clip, where its model carries a rig of its own: the bows' and the
-    // crossbows' string (tools/cook.py bakes it to cooked/wardrobe/clips/<mesh>.muc). Null on
+    // crossbows' string (pipeline/cook.py bakes it to cooked/wardrobe/clips/<mesh>.muc). Null on
     // everything rigid. See Figure::poseHeld.
     const content::CookedClips* clip = nullptr;
     // Whether it plays on the shot, as MU plays a bow's or a crossbow's action 0 only while
@@ -131,7 +131,7 @@ struct HeldItem {
 // itself draws (Twisting Slash's wheel, fx/wheel.h).
 bool inRightHand(const HeldItem& item);
 
-// The most bones a held item's own rig may have and still play its own clip: tools/cook.py's
+// The most bones a held item's own rig may have and still play its own clip: pipeline/cook.py's
 // wardrobe bakes a clip for no more. 24 since the Staff of Resurrection's 17 (2026-10-03).
 constexpr size_t kHeldBones = 24;
 
@@ -365,7 +365,7 @@ struct Breed {
 struct ItemRow {
     std::string kind;
     std::string stance;
-    // A bow's or a crossbow's shot, off its asset through the cook (tools/cook.py shot_of): the
+    // A bow's or a crossbow's shot, off its asset through the cook (pipeline/cook.py shot_of): the
     // fraction of its own clip the string goes at, the bone the missile leaves from, the bone
     // behind it on the rail, and where off the first the missile sits (MU units). Empty bones
     // on everything that does not shoot, and on the three whose rig marks none.
@@ -422,7 +422,7 @@ public:
 
     // The wardrobe: every suit of armour and every weapon index.json carries, worn and held
     // rather than laid out. It is a SECOND manifest and a second directory on purpose --
-    // `tools/cook.py --only wardrobe` writes it and `--only all` does not -- because these
+    // `pipeline/cook.py --only wardrobe` writes it and `--only all` does not -- because these
     // are ninety item files the game never loads and the viewer shows one at a time. Called
     // by the viewer only, and after open(), whose bare class bodies it dresses.
     bool openWardrobe(const std::string& assetDir, content::Textures& textures);

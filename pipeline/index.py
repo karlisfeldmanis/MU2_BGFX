@@ -2060,7 +2060,7 @@ def _models(root: Path, build: Path, folder_name: str) -> dict:
 
     So the geometry travels as MU2 keeps geometry: the .obj muextract wrote, copied whole.
     The viewer reads it into a mesh at load. That is the format this project already
-    declares as its own - see tools/MuExtract - and a four-triangle streak is not worth a
+    declares as its own - see pipeline/MuExtract - and a four-triangle streak is not worth a
     detour through Blender to arrive as a .glb with a PBR material it would then have to be
     stripped of.
     """
@@ -2899,7 +2899,7 @@ def main() -> None:
             # Everything else MU animates is frames in a .bmd and this builds from .obj.
             if (glow := document.get("glow")):
                 entry["glow"] = glow
-            # And a weapon's chrome passes (tools/chrome_sheets.py), whose slides the wardrobe
+            # And a weapon's chrome passes (pipeline/chrome_sheets.py), whose slides the wardrobe
             # cook reads by the pass's material name, as it reads a glow's.
             if (chrome := document.get("chrome")):
                 entry["chrome"] = chrome

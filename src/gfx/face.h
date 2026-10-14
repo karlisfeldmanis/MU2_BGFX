@@ -99,7 +99,7 @@ private:
     int spreadTexels_ = 0;
 };
 
-// A face file's whole path, in core::folders().fonts: fetched and pinned by bootstrap.sh. Made
+// A face file's whole path, in core::folders().fonts: fetched and pinned by mu bootstrap. Made
 // once a file and kept, so the pointer stays good.
 const char* fontPath(const char* file);
 // Where the face is on disk.

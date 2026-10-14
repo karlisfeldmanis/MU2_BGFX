@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
     mu::content::Showing showing;
     std::string error;
     if (!mu::content::loadShowing(assets + "/cooked/showing/showing.mus", showing, error)) {
-        std::printf("sound_test: %s -- run tools/cook.py --only showing\n", error.c_str());
+        std::printf("sound_test: %s -- run pipeline/cook.py --only showing\n", error.c_str());
         return 1;
     }
     Bench b;

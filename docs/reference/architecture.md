@@ -96,7 +96,7 @@ Meshes, textures, the ground, the placement transform, the tables, the cooked `.
 the showing's table, the missiles. It knows file formats and owns no rules. `content/grid.h`
 is the single definition of "blocked", shared with the sim's router.
 
-`tools/cook.py` and `tools/cook/texcook.cpp` write what this layer reads, and `cookcheck`
+`pipeline/cook.py` and `pipeline/cook/texcook.cpp` write what this layer reads, and `cookcheck`
 reads it back with a second implementation. When the cook's output changes, three places move
 together: the cook, this layer's reader, and `tests/cooked_test.cpp`.
 
@@ -223,7 +223,7 @@ still hold.
 11. **Tables are cooked, not queried.** No sqlite and no json in the game; the save is one
     versioned file written whole. Drops and experience are code, not tables: MU has an expression
     per level, not a list.
-12. **Self-contained and pinned.** No symlinks; `bootstrap.sh` pins bgfx, bx, bimg, cgltf, stb and
+12. **Self-contained and pinned.** No symlinks; `mu bootstrap` pins bgfx, bx, bimg, cgltf, stb and
     miniaudio by commit.
 
 Two rules decided with them:
@@ -273,7 +273,7 @@ A reference moves only when the change was *meant* to move it: look at both pict
 to turn a red check green is the one thing that would make it worthless.
 
 **A reference is pinned to a cook as well as to code.** These scenes draw what is in `assets/`,
-which is gitignored, mutable and rebuilt by `tools/cook.py`. Re-cook the tables or the art and
+which is gitignored, mutable and rebuilt by `pipeline/cook.py`. Re-cook the tables or the art and
 the picture legitimately moves with no source change at all, and the references must be
 blessed again.
 

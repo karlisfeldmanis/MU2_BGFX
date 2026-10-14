@@ -17,14 +17,14 @@ namespace mu::gfx {
 namespace {
 
 // MU2's by inheritance: MU2 sets no theme font in either of its Godot projects, so every label
-// it draws is Godot's fallback, Open Sans SemiBold. bootstrap.sh fetches the same file, pinned.
+// it draws is Godot's fallback, Open Sans SemiBold. mu bootstrap fetches the same file, pinned.
 //
 // Read from extern/ at run time rather than compiled in. It is 150 kB, it is the one asset gfx
 // reads that is not the game's own, and a header holding it as a byte array is a header nobody
 // can read. The cost is that it can be missing, and every owner has a fallback for that.
 constexpr const char* kFace = "OpenSans-SemiBold.ttf";
 // The arrival's map name: Cinzel Medium, Google Fonts' static instance, which is what the
-// design page the user chose on 2026-09-22 was drawn in. bootstrap.sh fetches it.
+// design page the user chose on 2026-09-22 was drawn in. mu bootstrap fetches it.
 constexpr const char* kTitleFace = "Cinzel-Medium.ttf";
 // The damage figures: Philosopher Bold, the user's pick on 2026-10-02 off a page of fourteen
 // faces drawn over a Lorencia fight, at that page's smallest sizes. Cinzel Bold had them from
@@ -99,7 +99,7 @@ bool Face::bakeNew(const std::string& path, float pixels, int size, int padding,
                    int margin) {
     const std::vector<uint8_t> ttf = core::readFile(path);
     if (ttf.empty()) {
-        core::logError("no face at %s. ./bootstrap.sh fetches it", path.c_str());
+        core::logError("no face at %s. ./mu bootstrap fetches it", path.c_str());
         return false;
     }
     stbtt_fontinfo info;

@@ -33,7 +33,7 @@
     "ship": 0.12
   },
   "bake_share_note": "Her bottles are the potions' 32-px and 16-px sheets drawn nineteen times over, the violet bottle's sheet four times, and the carved sandstone one 128 tile laid a dozen times round her seat; clean_lowpoly.match_density counted every repeat at full weight and left her robe and face 6% of the map. As Mace03's chain: the shares bring each repeated sheet back to about one sheet's room, so the page MU painted her on gets the most of it.",
-  "obj_from": "tools/MuExtract export-obj and export-rig --actions=all off kalnpc.bmd, with one hand fix: the ship mesh carries two vertices no triangle uses (the 294th and 295th of its 310, OBJ 1599 and 1600), which Blender's OBJ import drops, and clean_lowpoly then refused the rig's 310 bindings against 308 vertices. Both are taken out of the .obj (faces renumbered) and out of the rig's ship vertex_bones (bone 50, as all of ship's are). Nothing drawn changes.",
+  "obj_from": "pipeline/MuExtract export-obj and export-rig --actions=all off kalnpc.bmd, with one hand fix: the ship mesh carries two vertices no triangle uses (the 294th and 295th of its 310, OBJ 1599 and 1600), which Blender's OBJ import drops, and clean_lowpoly then refused the rig's 310 bindings against 308 vertices. Both are taken out of the .obj (faces renumbered) and out of the rig's ship vertex_bones (bone 50, as all of ship's are). Nothing drawn changes.",
   "islands": [
     {
       "island": 0,

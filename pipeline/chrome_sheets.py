@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """The sheets a weapon's chrome passes draw with, written beside its recipe.
 
-    tools/chrome_sheets.py              every weapon and monster whose recipe has a `chrome` list
-    tools/chrome_sheets.py Sword21      one
+    pipeline/chrome_sheets.py              every weapon and monster whose recipe has a `chrome` list
+    pipeline/chrome_sheets.py Sword21      one
 
 MuMain draws some weapons again over themselves with one of its chrome images: the Knight
 Blade's violet blade, the Staff of Kundun's two sheens, the Bill of Balrog's blue veins, the
@@ -32,6 +32,9 @@ import sys
 
 from PIL import Image
 
+import os as _os
+import sys as _sys
+_sys.path.append(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "tools"))
 from paths import CONTENT
 
 WEAPONS = os.path.join(CONTENT, "items", "weapons")

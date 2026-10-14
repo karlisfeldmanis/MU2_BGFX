@@ -38,9 +38,9 @@ struct Args {
     bool fullscreen = false;
     bool vsync = false;  // off for every measurement; see docs/reference/budget.md
     // --remember: the game menu's Options kept across runs, in optionsPath(). Read where the
-    // switch stands on the line, so main.sh's own --fullscreen and --vsync before it give way to
+    // switch stands on the line, so mu play's own --fullscreen and --vsync before it give way to
     // what the player chose and a switch after it still wins; written back whenever Options
-    // changes something. Only main.sh asks for it, so no measurement run reads a player's file.
+    // changes something. Only mu play asks for it, so no measurement run reads a player's file.
     bool remember = false;
     int volume = 100;  // percent: the Options page's Volume row
     // How much of the backbuffer the WORLD is drawn at, 1 for all of it. The present pass
@@ -293,7 +293,7 @@ struct Args {
     // the same thing as --model, which reads one glb: this reads what the game loads.
     bool browse = false;
     // The browser on its stage: a bonfire, a lamp and a wall of the world's own stood round the
-    // subject, with the world's lamps built from them. viewer.sh passes it.
+    // subject, with the world's lamps built from them. mu viewer passes it.
     bool stage = false;
     // The studio: the browser in the world the game draws, its subject beside one of the map's
     // own bonfires. With --turns N and --shot E it sweeps: N angles round the subject,

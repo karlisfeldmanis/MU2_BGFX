@@ -60,7 +60,7 @@ is, and there is no "not 0.75" corner to rule on (A §1.5, B opening).
 3. **Indoors flips at random.** `kIndoorFloor = 4` is TileGround03 here, 0.6% of tiles (C §3 row 8).
 4. **Same-map gates lock up.** `travel()` returns when the target world is the current one, and
    `gated_` is never cleared, so every later gate goes dead (C §4).
-5. **`GROUNDED_TYPES` in `tools/cook.py` is not keyed by world** for types 20-27 (B §3).
+5. **`GROUNDED_TYPES` in `pipeline/cook.py` is not keyed by world** for types 20-27 (B §3).
 6. **Sheet name collisions.** Object2's `bons`, `cobweb`, `wood01` and `TileRock01` collide, and so do
    the tiles, so every Dungeon sheet takes a prefix. **Use `dn_`**: the reports proposed both `dn_`
    and `dg_`, and this page settles on `dn_`.
@@ -851,9 +851,9 @@ Grep `WD_1DUNGEON`: 17 hits, every one below. No `WorldActive == 1` literal was 
 
 The chain is in `docs/content/cooker.md` ("The pipeline underneath"); today `./mu make` runs it:
 - import: `content/` via MuExtract, decode_texture.py and terrain.py
-- build: `tools/content.sh` / `tools/asset.sh` into `workshop/`
-- sync: `tools/sync.sh` into `assets/`
-- cook: `tools/cook.py` into `assets/cooked/`
+- build: `pipeline/content.sh` / `pipeline/asset.sh` into `workshop/`
+- sync: `pipeline/sync.sh` into `assets/`
+- cook: `pipeline/cook.py` into `assets/cooked/`
 
 The exact Devias sequence is `docs/worlds/devias-port.md` §6 (stages 0-6). The Devias world files arrived with the subtree import (`c8f4d276 "The world starts from MU's own Lorencia, Noria and Devias"`). The later Devias commits on world/devias are townsfolk `c2e2e60c`, chasms `3a150323`/`596b4e86`, perches `a3e26b08` and hearths `f3683e56`.
 
@@ -870,13 +870,13 @@ for n in TileGrass01 TileGrass02 TileGround01 TileGround02 TileGround03 TileWate
   python3 pipeline/decode_texture.py $D/World2/$n.OZJ content/textures/dn_$(echo $n | tr A-Z a-z).png; done
 #    content/world/dungeon/ground.json on Devias's shape: 9 sheets -> dn_*, sheet_materials
 #    (slot 0 flagstone, NOT grass; 5 dark rock/earth, not water; 7 rock; 1/6/8 sand/earth; 4 cobble)
-./tools/content.sh --world dungeon && ./tools/sync.sh --world dungeon --only-world && ./tools/sync.sh
-./tools/cook.py --world dungeon --only ground && ./tools/cook.py --world dungeon --only tables
+./pipeline/content.sh --world dungeon && ./pipeline/sync.sh --world dungeon --only-world && ./pipeline/sync.sh
+./pipeline/cook.py --world dungeon --only ground && ./pipeline/cook.py --world dungeon --only tables
 # objects: per kind, dn_-prefixed sheets (Object2 sheet names collide: bons, cobweb, wood01, TileRock01 ...)
-dotnet tools/MuExtract/bin/Debug/net10.0/muextract.dll export-obj $D/Object2/Object01.bmd content/world/dungeon/Object01.obj
-dotnet tools/MuExtract/bin/Debug/net10.0/muextract.dll export-rig $D/Object2/Object12.bmd content/world/dungeon/Object12.rig.json --actions=all   # animated kinds only
-./tools/asset.sh dungeon/Object01 --build-only && python3 pipeline/index.py source workshop
-./tools/cook.py --world dungeon --only textures / meshes / placements
+dotnet pipeline/MuExtract/bin/Debug/net10.0/muextract.dll export-obj $D/Object2/Object01.bmd content/world/dungeon/Object01.obj
+dotnet pipeline/MuExtract/bin/Debug/net10.0/muextract.dll export-rig $D/Object2/Object12.bmd content/world/dungeon/Object12.rig.json --actions=all   # animated kinds only
+./pipeline/asset.sh dungeon/Object01 --build-only && python3 pipeline/index.py source workshop
+./pipeline/cook.py --world dungeon --only textures / meshes / placements
 ```
 
 What is different for a dungeon (grep the per-world code as devias-port §5 did):
@@ -894,7 +894,7 @@ What is different for a dungeon (grep the per-world code as devias-port §5 did)
 - **Traps** are a sim and figure question for the record agent: 59 trap NPCs whose figure is the world model.
 - **kMaps and gates.** `src/game/world/maps.cpp:19-23` needs a row (map 1; arrival e.g. the middle of exit gate 2, 108,247). Gate 1 in `src/sim/gates.cpp:34` must be unsealed, and inner gates 3/5/7/9/11/13 plus exits 2/4/6/8/10/12/14/16 added. Also `minimap.cpp` `mapName` case 1.
 - **Safe zone.** The Dungeon has none (0 tiles). The arrival and the town-portal rules must cope, since OpenMU's spawn gate is Lorencia's.
-- **GROUNDED_TYPES** (`tools/cook.py`, devias-port §4.1): types 20-27 here are wood props, the squid streams and plaques. Key it by world before cooking the Dungeon.
+- **GROUNDED_TYPES** (`pipeline/cook.py`, devias-port §4.1): types 20-27 here are wood props, the squid streams and plaques. Key it by world before cooking the Dungeon.
 
 ---
 
@@ -1032,7 +1032,7 @@ There is no single registry; a world is a folder name found by convention, plus 
 units_per_tile, height_factor, height/tiles/attributes/light` png names, `tile_slots`,
 optional `grass_slots`, `water_flow`, `void`, `objects[]`, `blocked[]`), the four PNGs,
 `ground.json` (`tileset, mu_name, profile, sheets, sheet_from, sheet_materials` -- the tile
-sheets, read by `tools/content.sh` -> tileset.py/ground.py), `placements.json` (corrections, NPC
+sheets, read by `pipeline/content.sh` -> tileset.py/ground.py), `placements.json` (corrections, NPC
 `spawns`), and one `ObjectNN.json` recipe (+ .obj/.rig.json) per model.
 Per-map constants that terrain.py/index.py bake in, keyed by **map number - 0-based**:
 `HIDDEN_BY_MAP` `pipeline/terrain.py:118`, `BLEND_MESH_BY_MAP` `:135`, `GRASS_BY_MAP` `:148`,
@@ -1042,7 +1042,7 @@ grass sheets `pipeline/index.py:555-563`.
 The ground reader's `void` block (`src/content/ground.cpp:642-646`: `fade, sink, start, depth`) and
 the NoGround abyss (`buildAbyss` `:1042`) are generic -- Devias's chasms proved them.
 
-#### 1.3 The cook (`tools/cook.py main` `:3151-3270`)
+#### 1.3 The cook (`pipeline/cook.py main` `:3151-3270`)
 
 `--world W --only {textures, ground, meshes, placements, figures, tables, showing, missiles,
 wardrobe, all}`:
@@ -1060,8 +1060,8 @@ wardrobe, all}`:
 
 **"New items need every world's tables"** is structural: the item table is copied into each
 world's `.mur` (`cook_tables` `:2066`), so after any item import every world needs
-`tools/cook.py --world W --only tables`. Nothing loops the worlds for you (only
-`tools/content.sh:36` globs `content/world/*/ground.json`, and it does not cook tables). Adding
+`pipeline/cook.py --world W --only tables`. Nothing loops the worlds for you (only
+`pipeline/content.sh:36` globs `content/world/*/ground.json`, and it does not cook tables). Adding
 `dungeon` makes it four runs: lorencia, noria, devias, dungeon.
 
 #### 1.4 The runtime load
@@ -1220,7 +1220,7 @@ from the wrong one routes nowhere -- that is correct and needs nothing.
 
 The Dungeon's death and Town Portal must send him to **Lorencia** (§0). Proposed:
 - cook: a `safe_map` on the world entry (index.py `:2838-2843`, from OpenMU's rule "no spawn
-  gate -> Lorencia"), written into the `.mur` header (bump v9 -> v10: `tools/cook.py:2131`,
+  gate -> Lorencia"), written into the `.mur` header (bump v9 -> v10: `pipeline/cook.py:2131`,
   `src/content/tables.cpp:43`, `tests/cooked_test.cpp` and cookcheck move together, per
   `docs/reference/architecture.md` "content").
 - sim: `haven()` / `reviveHero` / the portal branch: when `safeMap != map`, set him down where he
@@ -1234,7 +1234,7 @@ The Dungeon's death and Town Portal must send him to **Lorencia** (§0). Propose
 
 - Breeds and nests come from mu.db `monster_kinds` / `monster_spawns(map)`, through
   index.json `breeds[].spawns` (index.py `:1625-1715` per devias-port.md) into `cook_tables`.
-- NPCs: `FOLK_VERSION075[number]` (`tools/cook.py:1746`) + `placements.json` `spawns` for the
+- NPCs: `FOLK_VERSION075[number]` (`pipeline/cook.py:1746`) + `placements.json` `spawns` for the
   figure; the dungeon has none.
 - Held back until cooked: a breed with no figure never raises in the window
   (`play_open.cpp:108-131`); headless raises everything (`headless.cpp:148-170`).
@@ -1244,7 +1244,7 @@ The Dungeon's death and Town Portal must send him to **Lorencia** (§0). Propose
     their sounds in `content/sounds/m*.wav`, `docs/content/cook-log.md`.
   - `fb667b0d` Elite Yeti: recipe + texture, breath hook in `play_open.cpp` / `play_show.cpp` /
     `play_tuning.h` (`Play::snort`, `Drawn::snortAlways`).
-  - `f0d4b119` Ice Monster: recipe, `pipeline/index.py` (+5, the glow), `tools/cook.py` and
+  - `f0d4b119` Ice Monster: recipe, `pipeline/index.py` (+5, the glow), `pipeline/cook.py` and
     `cook_one.py` (glow scroll into the .mum), `game/fx/ice.*`, `play.cpp/h` (`iceCasts_`),
     `play_show.cpp` (`sandOnDeath` shatter), `play_tuning.h`.
   Per breed: `cook.py --only figures --world W --monsters Name01`, judged one at a time.
@@ -1278,15 +1278,15 @@ reviews read through `mu2.log` + the PNG (MU2_BGFX allows those; ask the user be
   **`GRASS_BY_MAP[1] = []`**. Types 22-24 are a V-scrolled StreamMesh (`ZzzObject.cpp:3880-3884`),
   not a blend -- the Ice Monster's glow scroll (`f0d4b119`, cook.py/cook_one.py) is the precedent.
 - `python3 pipeline/terrain.py $D/World2 dungeon content/world 2`; `content/world/dungeon/ground.json`
-  (prefix `dn_` for its tile sheets, as `nr_`/`dv_`); `tools/content.sh --world dungeon`;
-  `tools/sync.sh --world dungeon --only-world`; `tools/sync.sh`;
-  `tools/cook.py --world dungeon --only ground`; `--only tables`.
+  (prefix `dn_` for its tile sheets, as `nr_`/`dv_`); `pipeline/content.sh --world dungeon`;
+  `pipeline/sync.sh --world dungeon --only-world`; `pipeline/sync.sh`;
+  `pipeline/cook.py --world dungeon --only ground`; `--only tables`.
 - `src/game/world/maps.cpp:19-23`: `{"dungeon", 1, {108, 247}}` (exit gate 2's middle; there is no
   spawn gate) appended last; comments in `maps.h:20-23`.
 - `arrival.cpp:57-61` `{"dungeon", "Dungeon", ""}`; `minimap.cpp:246-253` `case 1: "Dungeon"`.
-- Check: `./run.sh --headless --world dungeon --ticks 200 --no-hand` logs
+- Check: `./mu run --headless --world dungeon --ticks 200 --no-hand` logs
   `tables: ... grid 256 tiles a side ... map 1`; `python3 -c` on `assets/cooked/dungeon/dungeon.mur`
-  header (`'MU2R', 9, ..., map 1`). Window, when allowed: `./run.sh --world devias --play --fresh
+  header (`'MU2R', 9, ..., map 1`). Window, when allowed: `./mu run --world devias --play --fresh
   --travel-at 60 --frames 300 --shot 250` -> log `travel: devias to dungeon`, `world dungeon:
   looking at tile 108,247`.
 
@@ -1297,7 +1297,7 @@ reviews read through `mu2.log` + the PNG (MU2_BGFX allows those; ask the user be
 - `pipeline/index.py:55` `GATE_BOXES_BY_MAP[0] += (121,231,123,233)`, `[1] = [...]` every box.
 - `tests/sim_test.cpp`: gate 1 at level 20 -> Gated 1 with a tile in 107-110,247; level 19 ->
   Barred 20. Check: `cmake --build build --target checks`.
-- Window check: `./run.sh --world lorencia --play --fresh --level 20 --at 122,229 --walk-to
+- Window check: `./mu run --world lorencia --play --fresh --level 20 --at 122,229 --walk-to
   122,232 --frames 400` -> `travel: lorencia to dungeon, coming in at 10x,247`.
 
 **Step 3 -- the three levels (same-map gates).**

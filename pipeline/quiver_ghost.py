@@ -33,7 +33,7 @@ LOW, HIGH = 110, 255
 def main() -> int:
     glb = WORKSHOP / "weapons" / "Arrows02" / "Arrows02.glb"
     if not glb.exists():
-        print(f"missing {glb}: build it with tools/asset.sh Arrows02", file=sys.stderr)
+        print(f"missing {glb}: build it with pipeline/asset.sh Arrows02", file=sys.stderr)
         return 1
     figure = glb.with_name("Arrows02_ghost_figure.png")
     if not figure.exists() or figure.stat().st_mtime < glb.stat().st_mtime:

@@ -1590,7 +1590,7 @@ def chrome_material(document: dict, binary: "Binary", n: int, said: dict, sheet:
                     mask: Path) -> int:
     """A chrome pass: MU's RenderMesh of one mesh again, RENDER_BRIGHT, with a chrome image.
 
-    The sheet is the pass's chrome image already tinted (tools/chrome_sheets.py), the emissive
+    The sheet is the pass's chrome image already tinted (pipeline/chrome_sheets.py), the emissive
     its mask in the mesh's own UVs: where the pass shows. Both ride one glow material, drawn
     added as an item's glow is, its brightness `light` (or `pulse`) times the tint's largest
     channel, which the sheet could not hold. Its UVs are MU's own (the part is `swapped`), so
@@ -1599,7 +1599,7 @@ def chrome_material(document: dict, binary: "Binary", n: int, said: dict, sheet:
     images = []
     for path in (sheet, mask):
         if not path.exists():
-            raise SystemExit(f"chrome pass {n}: {path} is missing -- run tools/chrome_sheets.py")
+            raise SystemExit(f"chrome pass {n}: {path} is missing -- run pipeline/chrome_sheets.py")
         data = path.read_bytes()
         document.setdefault("images", []).append({
             "name": path.stem,
@@ -1947,7 +1947,7 @@ def main() -> None:
 
     # The chrome passes: a slot drawn again, added, with one of MU's chrome images -- at
     # coordinates off its normal, or at its own UVs sliding -- and only where the pass's mask
-    # says (tools/chrome_sheets.py writes both sheets). Each is a part of its own, chrome:<n>,
+    # says (pipeline/chrome_sheets.py writes both sheets). Each is a part of its own, chrome:<n>,
     # over the bake. See chrome_material.
     chrome_passes: list = (recipe.get("chrome") or []) if not slots else []
     if chrome_passes:

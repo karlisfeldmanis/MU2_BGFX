@@ -65,7 +65,7 @@ public:
     // wall and a railing behind it -- and the world's own lamps built from them. So a thing is
     // judged with a fire's light and flicker on it, with the town's objects in its reflection,
     // under MU's camera, at noon, dusk or night: every system the game draws a thing with.
-    // `./viewer.sh`, which passes --stage.
+    // `./mu viewer`, which passes --stage.
     bool openStage(const std::string& assetDir, const std::string& world,
                    content::Textures& textures);
     // The studio: the browser standing its subject in the world the game draws -- the town

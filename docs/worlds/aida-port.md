@@ -138,7 +138,7 @@ water if there is any').
   MU's BITMAP_FLARE at bone 4, Scale 3, turning 100 degrees a second, as an Ornaments arm
   (`src/game/world/ornaments.cpp`). MU's light is white, but Flare's sheet is gold with a
   white core, so it burns gold in the ring.
-- **Waterfall spray**: the 84 hidden boxes are world anchors 18-20 (`tools/cook_anchors.py`),
+- **Waterfall spray**: the 84 hidden boxes are world anchors 18-20 (`pipeline/cook_anchors.py`),
   each carrying its box's Scale in the emitter's `high`, drawn by `game/world/waterfall_spray.h`
   on MU's numbers: Object57's cyan drops falling off the lip, Object58's white specks bursting up
   and dropping about 4 m, Object59's grey mist, from `Effect/waterFall1-3` (decoded to
@@ -152,7 +152,7 @@ water if there is any').
 - Shot muted at the hall (79,9), the dark serpents (25,197), the green serpents (228,80), the
   south falls (117,207) and the north-east pit (186,108), 0 errors, about 200-230 fps
   (unmeasured).
-- To pay the size ratchet: cook.py's world-anchor tables moved to `tools/cook_anchors.py`,
+- To pay the size ratchet: cook.py's world-anchor tables moved to `pipeline/cook_anchors.py`,
   index.py's `GATE_BOXES_BY_MAP` to `pipeline/gate_boxes.py`, and play_mode's void clouds,
   castle sparks and spray calls into `World::throwAround`. aida.mut, tarkan.mut, lorencia.mut
   and workshop/index.json were byte-identical across the moves.
@@ -183,8 +183,8 @@ use also rain for aida how it was on noria'). In `content/world/aida/world.json`
 - `boids`: Noria's butterfly row (MU throws them off 20 hidden Object61 boxes; ours is Noria's
   pool round the hero), built from Lorencia's Butterfly01 (`airs_from`).
 - `crawls`: Tarkan's scarab, Bug02, at MU's 3 (GOBoid.cpp:1668-1675), built from Tarkan's
-  (`crawls_from`, a new knob: `tools/cook.py` CRAWLS_FROM, `boid_glb` redirects a crawler too).
-- `small_fires`: Object68's 11 boxes as world anchors of kind 21 (`tools/cook_anchors.py`), drawn
+  (`crawls_from`, a new knob: `pipeline/cook.py` CRAWLS_FROM, `boid_glb` redirects a crawler too).
+- `small_fires`: Object68's 11 boxes as world anchors of kind 21 (`pipeline/cook_anchors.py`), drawn
   by `game/world/small_fires.h` on MU's BITMAP_FLAME SubType 7 numbers: a tongue a reference
   frame, Flame01 added at 0.3, rising (1.8-2.8) x Scale units a frame, shrinking by that / 95.
 - `indoors.everywhere` false: the first cut's 'underground air' held the butterflies on the ground.
@@ -310,7 +310,7 @@ close without the hero dying in a second.
 - **Hell Maine (309)**: HellMaine01, Monster106 (MONSTER_MODEL 105) at 1.8; epiboss_armor
   plate_steel, epibossskin skin, epibosswing leather; 3 nests (108,147; 112,47; 123,103), RegTime
   150, resist 50 read raw. MU's red chrome, Chrome01 added at RENDER_CHROME's coordinates over the
-  armour in (1, 0, 0) and the wings in (0.5, 0, 0), is the recipe's `chrome` (tools/chrome_sheets.py
+  armour in (1, 0, 0) and the wings in (0.5, 0, 0), is the recipe's `chrome` (pipeline/chrome_sheets.py
   writes monsters' now); MU draws the armour unlit at full light (StreamMesh 0), ours its sheet
   added over it at a steady 0.4 (`glow`, the user's 0.4). Its red ground light (1, 0, 0) over 3
   tiles is `show.aura`; hits land on key 9 (`show.lands`); walk 0.15 (walk_overrides 105). Sounds:
@@ -1280,8 +1280,8 @@ for n in TileGrass01 TileGrass02 TileGround01 TileGround02 TileGround03 TileWate
   python3 pipeline/decode_texture.py $D/World34/$n.OZJ content/textures/ai_$(echo $n | tr A-Z a-z).png; done
 python3 pipeline/decode_texture.py $D/World34/TileGrass01.OZT content/effects/grass/aida_TileGrass01.png  # MU's blades, if used
 #    content/world/aida/ground.json on Tarkan's shape, sheets -> ai_*, materials below
-./tools/content.sh --world aida && ./tools/sync.sh --world aida --only-world && ./tools/sync.sh
-./tools/cook.py --world aida --only ground && ./tools/cook.py --world aida --only tables
+./pipeline/content.sh --world aida && ./pipeline/sync.sh --world aida --only-world && ./pipeline/sync.sh
+./pipeline/cook.py --world aida --only ground && ./pipeline/cook.py --world aida --only tables
 #    then index.py (house rule), and every world's tables after new items
 ```
 
@@ -1316,7 +1316,7 @@ Each with its `_over` twin, as Tarkan's.
 
 ### 4. What differs from the worlds already built
 
-1. **The walls are tall and deep.** Object18-20 (350) are 11 m high at their scale and sunk 4.6-4.8 m, at every void lip. The buried test (`FLAT_OVER_VOID`, tools/cook.py) must take `aida`: Object25 (164 animated cards over void), the waterfalls (20 over void) and the walls reach well under the void's height.
+1. **The walls are tall and deep.** Object18-20 (350) are 11 m high at their scale and sunk 4.6-4.8 m, at every void lip. The buried test (`FLAT_OVER_VOID`, pipeline/cook.py) must take `aida`: Object25 (164 animated cards over void), the waterfalls (20 over void) and the walls reach well under the void's height.
 2. **Do not ground the high foliage.** Object07/25 (915 cards, 3.3-3.9 m up on rocks), Object16 (56 vines, +3.4 m) and the sunbeams Object42 (+2.4 m) are meant to be up. Tarkan's `GROUNDED_TYPES` must not be copied. The flower beds Object27/28/30 read +1.1 m in the OBJ's pose; check a posed bake before deciding (their root bone is at the origin, the cards are not).
 3. **Hidden types survive as markers / anchors:** spray 56/57/58 (84), butterflies 60 (20), fires 67 (11), ghosts 70 (5); the mist boxes 59/62/63 (91) are MU's dead intent, kept for void clouds.
 4. **Lights: 183 small flickering lamps** (155 green, 28 red, radius 2 tiles), plus spark sprites on their bulbs and 11 small fires. Noria's "reduce sun so we see the light emitters" applies.
@@ -1444,7 +1444,7 @@ Written 2026-10-11, read-only: no repo file was edited, nothing was cooked, mu.d
 - MM = `LEGACY/reference/MuMain/src/source/`;
 - D = `LEGACY/reference/MuMain/src/bin/Data`.
 
-Line numbers are HEAD `390d0e7c` plus the working tree as found. Every file a step below touches was clean in `git status` (`pipeline/`, `tools/cook.py`, `src/sim/gates.cpp`, `src/sim/maps.cpp`, `src/game/ui/{minimap,arrival}.cpp`, `src/game/play_{open,sound}.cpp`, `src/app/modes/play_mode.cpp`, `src/game/world/`, `content/sheets/`, `content/sounds/`). Other sessions hold uncommitted edits in `server/src/{main,store}.cpp`, `src/sim/{realm,rules}.cpp`, `src/sim/{realm,skills}.h`, `src/app/modes/play_mode.h` and `src/game/{remote_link,ui/bag,ui/tip}.cpp`. Read `git diff` before staging any of those (memory: another session edits the same files; commit through a private index).
+Line numbers are HEAD `390d0e7c` plus the working tree as found. Every file a step below touches was clean in `git status` (`pipeline/`, `pipeline/cook.py`, `src/sim/gates.cpp`, `src/sim/maps.cpp`, `src/game/ui/{minimap,arrival}.cpp`, `src/game/play_{open,sound}.cpp`, `src/app/modes/play_mode.cpp`, `src/game/world/`, `content/sheets/`, `content/sounds/`). Other sessions hold uncommitted edits in `server/src/{main,store}.cpp`, `src/sim/{realm,rules}.cpp`, `src/sim/{realm,skills}.h`, `src/app/modes/play_mode.h` and `src/game/{remote_link,ui/bag,ui/tip}.cpp`. Read `git diff` before staging any of those (memory: another session edits the same files; commit through a private index).
 
 Scratch (`/private/tmp/claude-501/-Users-karlisfeldmanis-Documents-muremaster2-MU2-BGFX/9b2c4cc5-bd84-45e7-b350-052f3cd63116/scratchpad/aida/c/`):
 - `world/aida/`: a dry run of `pipeline/terrain.py` on World34, scratch only;
@@ -1535,7 +1535,7 @@ There is still no single registry. Icarus and Devil Square each added one row in
 | P10 | `pipeline/index.py worlds()` (`:1536-`) | automatic once the ground is built |
 | P11 | `content/sounds/sounds.json` (`world_desert` at `:1503-1511`, `world_heaven` `:1512-1520`) | a `world_aida` event, `aida_ambi.wav` into `content/sounds/` (§5) |
 
-#### 2.2 The cook (`tools/cook.py`)
+#### 2.2 The cook (`pipeline/cook.py`)
 
 | key | line | Aida |
 |---|---|---|
@@ -1613,7 +1613,7 @@ All 154 MuMain lines were read (`c/mm_aida.txt`). Placement counts are from the 
 | every object | `PlayBuffer(SOUND_AIDA_AMBIENT)` (`:92`) | the air bed | §5 |
 | -- | 3 Bug02 crawlers with energy trails (`GOBoid.cpp:1691, 1726-1733, 1830`) | Scurry | row |
 | -- | `IsInAidaSection2` (x 54.5-178.2, y 67.8-224.2 tiles) gates `CreateMist`, which returns false either way (`:23-28, 1563-1571`) | -- | nothing |
-| -- | `IsInAida()` is also true in `WD_54CHARACTERSCENE` (`:18-21`) | our `charscene` is world 74's (EmpireGuardian4, `tools/cook.py:1404-1450`), so no overlap | nothing |
+| -- | `IsInAida()` is also true in `WD_54CHARACTERSCENE` (`:18-21`) | our `charscene` is world 74's (EmpireGuardian4, `pipeline/cook.py:1404-1450`), so no overlap | nothing |
 
 Nothing in the terrain code names Aida: no grass rule, water rule or clear colour (`grep` of `ZzzLodTerrain.cpp` and `SceneManager.cpp:371-403`). MuMain draws its ground, unlike Icarus.
 
@@ -1633,7 +1633,7 @@ Nothing in the terrain code names Aida: no grass rule, water rule or clear colou
   - Route: three EFFECTS rows (`"waterfall"`, `"waterfall_splash"`, `"waterfall_spray"`), then `--only showing`, and a small `game/world/falls.{h,cpp}` drawer on `desert_vents`' pattern (anchors in reach, a seeded roll a frame, a sprite pool). Kinds 18-20.
 - **Butterflies** (type 60, 20 anchors): one butterfly a second per anchor, each living 10 s, so about **10 live per anchor**.
   - The model is Noria's Butterfly01 (cooked into `cooked/noria`).
-  - Route: kind 21, drawn by `Boids` (as a second "released" pool) or a small `game/world/flutters` using the boid's mesh and clip. The cook needs the glb found the way `AIRS_FROM` finds Noria's (`tools/cook.py:225-230`).
+  - Route: kind 21, drawn by `Boids` (as a second "released" pool) or a small `game/world/flutters` using the boid's mesh and clip. The cook needs the glb found the way `AIRS_FROM` finds Noria's (`pipeline/cook.py:225-230`).
   - **Cap it** (ours): 3 per anchor and only within reach. MU's ten each over 20 anchors would be up to 200 skinned figures.
 - **Flame** (type 67, 11 anchors): the existing fire anchor, kind 1 (`ANCHOR_KINDS`, `cook.py:1403`), as Lorencia's Light01. Light 0.3 is dimmer than CreateFire's; the anchor's light row may want a dimmer twin.
 - **Ghost** (type 70, 5 anchors): MODEL_GHOST is a figure effect we do not have, and it fires about once a second for a frame or two. Leave it out (decision 5).
@@ -1664,7 +1664,7 @@ Nothing in the terrain code names Aida: no grass rule, water rule or clear colou
 | Death Tree 308 (Scale 1.2) | blur on attack; MODEL_TREE_ATTACK (`Object34/tree_eff`, `MapManager.cpp:329-330`), sparks, smoke | `fx/effect_mesh` | tree_eff built as an effect model |
 | Hell Maine 309 (Scale 1.8, boss) | red light; eye and arm glows; true fire `fantaF.jpg` (`ZzzOpenData.cpp:5185`); BITMAP_BOSS_LASER; MODEL_STORM | `fx/storm`, `fx/flame`, `fx/body_flames` | rows + a laser |
 
-- Breeds over 255: `monster_kinds.number` is INTEGER, `.mur` kinds are i32 (`tools/cook.py:2324-2340`), and `kResistances`/`kDropRates` are int32 (`src/sim/realm_tuning.h:425-494`). No u8 carries a monster number in `src/sim` or `src/net` by grep. **Still run `checks` and a headless Aida raise before trusting it.** These are the first breeds past 255 (mu.db's highest is 150).
+- Breeds over 255: `monster_kinds.number` is INTEGER, `.mur` kinds are i32 (`pipeline/cook.py:2324-2340`), and `kResistances`/`kDropRates` are int32 (`src/sim/realm_tuning.h:425-494`). No u8 carries a monster number in `src/sim` or `src/net` by grep. **Still run `checks` and a headless Aida raise before trusting it.** These are the first breeds past 255 (mu.db's highest is 150).
 
 #### 3.7 What it costs, all together
 
@@ -1732,7 +1732,7 @@ The fixed lines are under 0.1 ms. Measure at each step with `--budget --stats --
   - Binding is the string in that arm; nothing is cooked for music.
 - **The air**: `D/Sound/w34/aida_ambi.wav`. It is 10.1 s, stereo, 16-bit, 22 050 Hz, **RMS -24.0 dBFS**.
   - MU loads it 3D-enabled with one channel (`MapManager.cpp:338`) and replays it unplaced from MoveAidaObject every frame (`GMAida.cpp:92`), which makes it a continuous bed over the whole map, as desert.wav is Tarkan's.
-  - Route: copy it to `content/sounds/aida_ambi.wav`, and add `world_aida` to `content/sounds/sounds.json` beside `world_heaven` (`:1512-1520`) with `"loop": true` and **`"gain_db": -20.0`** (puts it on the same -44 dB bed). Then `python3 pipeline/index.py source assets` and `python3 tools/cook.py --only showing` (memory: new sound needs the showing cook; it is mono 22 kHz after the cook).
+  - Route: copy it to `content/sounds/aida_ambi.wav`, and add `world_aida` to `content/sounds/sounds.json` beside `world_heaven` (`:1512-1520`) with `"loop": true` and **`"gain_db": -20.0`** (puts it on the same -44 dB bed). Then `python3 pipeline/index.py source assets` and `python3 pipeline/cook.py --only showing` (memory: new sound needs the showing cook; it is mono 22 kHz after the cook).
   - Check: the log has no "no cooked event 'world_aida'" line, and `afinfo assets/cooked/showing/sounds/aida_ambi*` shows about 10.1 s.
 - **Monster sounds** (step 7): 31 wavs in `D/Sound/w34/` (`MapManager.cpp:339-369`).
   - **Trap:** MuMain asks `dr_idle1.wav`, but the folder ships `dr_idle01.wav`. Name the file that exists.
@@ -1764,16 +1764,16 @@ The fixed lines are under 0.1 ms. Measure at each step with `--budget --stats --
 3. Extract: `nice python3 pipeline/terrain.py $D/World34 aida content/world 34`. Expect 0.00-3.27 m, 11 slots, 35.5% walkable, 0.8% safe, 3 752 placed / 74 kinds, no `objects dropped` line.
 4. Decode the tile sheets pass B names under `ad_`, each with `python3 pipeline/decode_texture.py $D/World34/<Tile>.OZJ content/textures/ad_<tile>.png`. Only the slots in use: TileGrass01/02, TileGround01-03, TileWater01, TileWood01, TileRock01-03, TileRock05.
 5. Write `content/world/aida/ground.json` on Tarkan's shape (`tileset`, `mu_name`, `profile: "tiles"`, `sheets`, `sheet_from`, `slot_note`, `sheet_materials` including the `_over` slots).
-6. Build the ground only, not `tools/content.sh --world aida`, which rebuilds every stale asset in the tree (memory):
+6. Build the ground only, not `pipeline/content.sh --world aida`, which rebuilds every stale asset in the tree (memory):
    `python3 pipeline/tileset.py content/world/aida/ground.json workshop/world/aida && python3 pipeline/ground.py content/world/aida workshop/world/aida content/textures`.
-   If a sheet is replaced later: `tools/asset.sh <recipe> --rebuild` (memory: the x3 cache is keyed by name).
+   If a sheet is replaced later: `pipeline/asset.sh <recipe> --rebuild` (memory: the x3 cache is keyed by name).
 7. mu.db, only when no session is live (the `-shm` was touched at 00:26):
    `sqlite3 content/mu.db "insert into gates values (119, 33, 82, 8, 87, 14, 1); pragma wal_checkpoint(TRUNCATE);"`
-8. Index and sync: `python3 pipeline/index.py source workshop && ./tools/sync.sh --world aida --only-world`.
+8. Index and sync: `python3 pipeline/index.py source workshop && ./pipeline/sync.sh --world aida --only-world`.
 9. Cook what changed, in order, and check `wc -l assets/cooked/aida/jobs.txt` stays small:
-   - `python3 tools/cook.py --world aida --only ground --threads 4`
-   - `python3 tools/cook.py --world aida --only tables`
-   - `python3 tools/cook.py --world noria --only tables` (Noria's gate boxes)
+   - `python3 pipeline/cook.py --world aida --only ground --threads 4`
+   - `python3 pipeline/cook.py --world aida --only tables`
+   - `python3 pipeline/cook.py --world noria --only tables` (Noria's gate boxes)
    - Skip `--only placements` until objects exist.
 10. Code:
     - `src/sim/maps.cpp`: append `{"aida", 33, {84, 11}, true}` with its comment (spawn gate 119's middle, OM S6 Gates.cs:265; underground for its air until step 3; MU's black clear and no leaves);
@@ -1783,11 +1783,11 @@ The fixed lines are under 0.1 ms. Measure at each step with `--budget --stats --
 12. Build: `cmake --build build -j 6`.
 
 - **Check:**
-  - `./run.sh --headless --world aida --ticks 200 --no-hand` logs the grid and map 33 with no error;
+  - `./mu run --headless --world aida --ticks 200 --no-hand` logs the grid and map 33 with no error;
   - `python3 -c` (or `grep -a`) shows the `.mur` header's safe box 82,8,87,14;
   - `checks`;
   - `sqlite3 'file:content/mu.db?mode=ro' "select * from gates where id=119"`.
-- **Seen**, muted, one launch with several shots: `./run.sh --world aida --at 84,11 --time noon --frames 240 --shot 120 --shot-path $S/shots --mute --save $S/demo.json`, repeated `--at` for:
+- **Seen**, muted, one launch with several shots: `./mu run --world aida --at 84,11 --time noon --frames 240 --shot 120 --shot-path $S/shots --mute --save $S/demo.json`, repeated `--at` for:
   - the hall (84,11);
   - the Aida 2 clearing (188,175);
   - the south basin in Section 2 (116,145);
@@ -1810,8 +1810,8 @@ The fixed lines are under 0.1 ms. Measure at each step with `--budget --stats --
 
 **Step 4: objects**, in pass B's small batches (3-6 kinds built, cooked, shot and shown before the next):
 - recipes under `content/world/aida/ObjectNN.json` with `ad_` sheets;
-- `tools/asset.sh aida/ObjectNN --build-only` per kind;
-- `python3 pipeline/index.py source workshop`; `./tools/sync.sh --world aida --only-world`;
+- `pipeline/asset.sh aida/ObjectNN --build-only` per kind;
+- `python3 pipeline/index.py source workshop`; `./pipeline/sync.sh --world aida --only-world`;
 - then `--only textures`, then `--only meshes`, then `--only placements` (**textures before meshes**, or every `.mum` loses its links; memory).
 
 Suggested order: the trees and rocks (Object25 x488, Object07 x427, Object10 x235); then the walls; the flowers Object31/Object72 with their recipe lamps; the scrolling kinds (26, 29, 66, 67, 78, 79) and Object42's added pass; Object65's 0.05 clip.
@@ -1857,7 +1857,7 @@ Suggested order: the trees and rocks (Object25 x488, Object07 x427, Object10 x23
 11. **Noria's tables** must be recooked after `GATE_BOXES_BY_MAP[3]` changes, or the solid-stamping may close a door tile.
 12. **The lockstep server.** `gates.cpp` and `maps.cpp` change the sim: the Hetzner server must be rebuilt and redeployed before a client with Aida can play there. Protocol is unchanged, but the sim hash is not.
 13. **mu.db is open in another session.** Write only when none is live, then `wal_checkpoint(TRUNCATE)` (memory). The brief's `MU2/mu.db` path is a 0-byte file.
-14. **`tools/content.sh --world aida`** rebuilds every stale asset in the tree. Use `tileset.py` + `ground.py` + `asset.sh` by name.
+14. **`pipeline/content.sh --world aida`** rebuilds every stale asset in the tree. Use `tileset.py` + `ground.py` + `asset.sh` by name.
 15. **`--only showing`** recompresses every effect sheet (minutes). Batch the waterfall sheets and the air into one showing cook.
 
 ---

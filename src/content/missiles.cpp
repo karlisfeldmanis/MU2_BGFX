@@ -9,7 +9,7 @@
 namespace mu::content {
 namespace {
 
-// tools/cook.py's MISSILE_VERSION. A mismatch is refused rather than defaulted, as the .mum's
+// pipeline/cook.py's MISSILE_VERSION. A mismatch is refused rather than defaulted, as the .mum's
 // is: every field in a row is a number the flight is drawn from, and a reader that invented
 // one would throw the wrong size of rock at the wrong height and look like it had worked.
 constexpr uint32_t kVersion = 1;
@@ -26,7 +26,7 @@ bool Missiles::read(const std::string& path) {
     rows.clear();
     const std::vector<uint8_t> bytes = core::readFile(path);
     if (bytes.empty()) {
-        core::logError("missiles: %s did not read (tools/cook.py --only missiles)",
+        core::logError("missiles: %s did not read (pipeline/cook.py --only missiles)",
                        path.c_str());
         return false;
     }
@@ -43,7 +43,7 @@ bool Missiles::read(const std::string& path) {
     }
     if (version != kVersion) {
         core::logError("missiles: %s is of version %u and this reads %u; recook "
-                       "(tools/cook.py --only missiles)", path.c_str(), version, kVersion);
+                       "(pipeline/cook.py --only missiles)", path.c_str(), version, kVersion);
         return false;
     }
     if (!plausible(reader, count, kLeastRow)) {

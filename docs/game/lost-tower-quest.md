@@ -23,7 +23,7 @@ asks 80 now, not 100. The user: "we need seperated quest for devian which asks c
 quest giver, similiar like Noria quest giver asks to go to atlans, because there is lvl requirment
 for LT1 and it make sense". His own hand-in no longer names Tersia: "Take these. And when you are
 ready, speak with me again. Your road does not end in Devias." Voices: `devin_2` (his offer),
-`tersia` (her hand-in), and `devin_handin` read again by `tools/voice.py`.
+`tersia` (her hand-in), and `devin_handin` read again by `pipeline/voice.py`.
 
 | | Thompson the Merchant | Tersia |
 |---|---|---|
@@ -161,7 +161,7 @@ new runes for the chain are the user's to choose (see below).
 
 ## Open
 
-- Voices: Tersia is voiced, `tersia_1` to `tersia_7` (tools/voice.py `VOICES["tersia"]`: since
+- Voices: Tersia is voiced, `tersia_1` to `tersia_7` (pipeline/voice.py `VOICES["tersia"]`: since
   2026-10-02 Kokoro's bf_isabella reading a hushed line as the reference, cloned by Chatterbox at
   0.5, a semitone and a half down with a soft echo -- the user's "lower more mystical" pick of four;
   bm_fable's shaky read before it). Devin's hand-in was read again for Tersia on 2026-10-02

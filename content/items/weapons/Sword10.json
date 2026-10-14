@@ -44,7 +44,7 @@
   "cutout": [
     "sword11_tga"
   ],
-  "cutout_note": "Declared, not sniffed (tools/asset.sh reads `cutout` from the recipe). Without it the card draws as a solid quad.",
+  "cutout_note": "Declared, not sniffed (pipeline/asset.sh reads `cutout` from the recipe). Without it the card draws as a solid quad.",
   "material_overrides": {
     "steel": {
       "roughness": 0.45

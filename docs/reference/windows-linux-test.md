@@ -33,7 +33,7 @@ shaders built for it yet.
 ## Windows, under Wine
 
 - **Toolchain:** `x86_64-w64-mingw32-gcc` 15.2 from Homebrew, using `mingw.cmake`. GLFW is
-  the official 3.4 WIN64 zip (its `lib-mingw-w64`), which `build.sh` fetches into
+  the official 3.4 WIN64 zip (its `lib-mingw-w64`), which `mu build` fetches into
   `build/portdemo-glfw/`. The exe is linked fully static, about 16 MB, and needs no DLLs.
 - **Wine:** "Wine Stable" from Homebrew, an x86_64 build. **It needs Rosetta**: without it,
   `wine` fails with "bad CPU type in executable". Rosetta was installed with

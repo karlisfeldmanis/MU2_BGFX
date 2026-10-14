@@ -3,7 +3,7 @@
 // One store for both, so a sword seen in the bag and the same sword on the grass are one
 // mesh read once. The cooked copy first -- `cooked/wardrobe/meshes/<name>.mum`, BC7 and
 // flattened, the copy the studio passed -- and the row's own glb where the cook wrote none,
-// which today is the potions, jewels, scrolls and Zen (tools/cook.py's wardrobe takes the
+// which today is the potions, jewels, scrolls and Zen (pipeline/cook.py's wardrobe takes the
 // weapons and armour only). Read the first time a row is asked for and kept: a session sees a
 // few dozen kinds of item, and a hitch on the first sight of each is MU2's Stockroom without
 // the loading curtain.

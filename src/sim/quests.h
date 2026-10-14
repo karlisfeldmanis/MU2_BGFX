@@ -215,7 +215,7 @@ const QuestRow& questAt(int index);
 inline constexpr int kDemoQuests[1] = {17};
 // Peia's 'The Drowned Song', handed in to Lirien in Atlans.
 inline constexpr int kDrownedSong = 18;
-// Lirien, the elf envoy in Atlans's safe basin: our own NPC number, no MU NPC's (tools/cook.py's
+// Lirien, the elf envoy in Atlans's safe basin: our own NPC number, no MU NPC's (pipeline/cook.py's
 // Atlans folk, content/npc/ElfEnvoy.json).
 inline constexpr int32_t kLirienNumber = 700;
 // Lirien's own: Atlans cleared, the Hydra last, offered once 'The Drowned Song' is handed in.
@@ -223,7 +223,7 @@ inline constexpr int kDrownedHalls = 19;
 // Lirien's second, the hook to Tarkan: 'The Road of Kantur', handed in to the Keeper there
 // (docs/game/tarkan-quest.md).
 inline constexpr int kRoadOfKantur = 20;
-// The Keeper of Kantur, in Tarkan's safe hall: our own NPC number, as Lirien's (tools/cook.py's
+// The Keeper of Kantur, in Tarkan's safe hall: our own NPC number, as Lirien's (pipeline/cook.py's
 // Tarkan folk, content/npc/NpcSenatus.json, MU's Senior).
 inline constexpr int32_t kKeeperNumber = 701;
 // The Keeper's own: Tarkan cleared, the Zaikan and the Death Beam Knight last.

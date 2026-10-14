@@ -1,6 +1,6 @@
 // Aida's small fires: MU's RenderAidaObjectVisual arm for type 67 (GMAida.cpp:239-242), Object68,
 // 11 hidden boxes on rocks and ruins (x 81-204, y 18-205), cooked as world anchors of kind 21
-// (tools/cook_anchors.py) with the box's Scale in the emitter's `high`.
+// (pipeline/cook_anchors.py) with the box's Scale in the emitter's `high`.
 //
 // Every reference frame each throws a BITMAP_FLAME SubType 7 (Effect/Flame01, 64 texels, added)
 // at light (0.3, 0.3, 0.3) (ZzzEffectParticle.cpp:589-604, 4852-4868):

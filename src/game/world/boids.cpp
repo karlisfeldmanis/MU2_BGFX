@@ -82,7 +82,7 @@ bool Boids::open(const std::string& assetDir, const std::string& world, const st
     std::vector<uint8_t> meshBytes = core::readFile(meshPath);
     if (meshBytes.empty()) {
         // Not an error and not silent: a world whose boid has not been cooked flies nothing, and
-        // the log says which file would have made it fly. tools/cook.py's AIRS names it.
+        // the log says which file would have made it fly. pipeline/cook.py's AIRS names it.
         core::logf("boids: no cooked %s at %s -- nothing flies over %s", model.c_str(),
                    meshPath.c_str(), world.c_str());
         return true;

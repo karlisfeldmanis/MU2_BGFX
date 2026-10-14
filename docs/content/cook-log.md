@@ -1,8 +1,8 @@
 # Cook log
 
-One line per item cooked with `tools/cook_one.py`: when, what, and whether its shots passed
+One line per item cooked with `pipeline/cook_one.py`: when, what, and whether its shots passed
 a look. An item is not done when it is cooked; it is done when this says `passed`. Mark it
-with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
+with `pipeline/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 
 | item | kind | cooked | look | note |
 |---|---|---|---|---|

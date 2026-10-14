@@ -357,7 +357,7 @@ bool ModelBench::fillBrowser(const std::string& assetDir, const std::string& wor
     for (const BrowseCategory& one : categories_) total += one.entries.size();
     if (total == 0) {
         categories_.clear();
-        core::logError("browser: nothing cooked under %s. Run tools/cook.py first: this "
+        core::logError("browser: nothing cooked under %s. Run pipeline/cook.py first: this "
                        "walks what the cook wrote, not the glb it was made from",
                        cooked.c_str());
         return false;

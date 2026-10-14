@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 project(mu2 LANGUAGES C CXX)
-# What bootstrap.sh fetches: bgfx, the headers, zstd and the faces (docs/plans/layout.md, third_party/).
+# What mu bootstrap fetches: bgfx, the headers, zstd and the faces (docs/plans/layout.md, third_party/).
 set(MU_EXTERN ${CMAKE_SOURCE_DIR}/third_party/extern)
 # The server's own build, on a box with no screen (server/README.md phase 4; the Hetzner
 # box): core, the content it reads, the sim and their tests, and no bgfx, glfw, shader or
@@ -28,7 +28,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
 endif()
-# Ninja is what build.sh generates. ccache, when it is installed, makes a rebuild after a
+# Ninja is what mu build generates. ccache, when it is installed, makes a rebuild after a
 # header change a matter of seconds; bgfx alone is a few hundred translation units.
 find_program(CCACHE ccache)
 if(CCACHE)
@@ -37,7 +37,7 @@ if(CCACHE)
 endif()
 
 if(NOT MU2_SERVER_ONLY)
-# ---- bgfx, bx and bimg (extern/, fetched by bootstrap.sh) --------------------------------
+# ---- bgfx, bx and bimg (extern/, fetched by mu bootstrap) --------------------------------
 set(BGFX_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BGFX_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(BGFX_INSTALL OFF CACHE BOOL "" FORCE)
@@ -495,7 +495,7 @@ target_compile_options(mu_game PRIVATE ${MU_WARNINGS})
 set_source_files_properties(src/game/miniaudio.cpp PROPERTIES COMPILE_OPTIONS "-w")
 
 # ---- the studio's panels (docs/plans/order-plan.md §9c, the Cooker) ------------------------------
-# Dear ImGui, bgfx's own 3rdparty copy (so its version is the one bootstrap.sh pins), copied
+# Dear ImGui, bgfx's own 3rdparty copy (so its version is the one mu bootstrap pins), copied
 # into the build with src/gfx/gui_config.h as its imconfig.h: imgui.h includes the imconfig.h
 # beside it whatever IMGUI_USER_CONFIG says, and bgfx's wants bx, its allocator and its widgets.
 # Over it the studio: gfx/gui.cpp draws ImGui on bgfx in ViewGui, studio/ holds the cook's
@@ -574,7 +574,7 @@ if(APPLE)
   # The game is build/MU2.app, so macOS reads it as a game (src/app/Info.plist.in) and Game
   # Mode can take it. build/mu2 is a link to the binary inside, which is what every script
   # runs; macOS resolves the link and finds the bundle. A double click with no switches plays
-  # as main.sh does (src/main.cpp). The data stays in this folder: MU2_ROOT_DIR above.
+  # as mu play does (src/main.cpp). The data stays in this folder: MU2_ROOT_DIR above.
   set_target_properties(mu2 PROPERTIES
     MACOSX_BUNDLE TRUE
     OUTPUT_NAME MU2
@@ -592,11 +592,11 @@ add_dependencies(mu2 mu2_shaders)
 
 # ---- the cook ------------------------------------------------------------------------------
 # Built on demand and never by the game's own build: `cmake --build build --target texcook`,
-# which is what tools/cook.py runs. It links bimg's encoders directly rather than turning
+# which is what pipeline/cook.py runs. It links bimg's encoders directly rather than turning
 # BGFX_BUILD_TOOLS_TEXTURE on, because texturec builds its mip chain internally and the one
 # rule this cook exists to keep -- a cutout's coverage held down the chain -- has to be
-# applied between the levels. See the header of tools/cook/texcook.cpp.
-add_executable(texcook EXCLUDE_FROM_ALL tools/cook/texcook.cpp)
+# applied between the levels. See the header of pipeline/cook/texcook.cpp.
+add_executable(texcook EXCLUDE_FROM_ALL pipeline/cook/texcook.cpp)
 # The packer: the player's .mupak files from `./mu dist`'s lists (tools/pack/mupack.cpp).
 add_executable(mupack EXCLUDE_FROM_ALL tools/pack/mupack.cpp)
 target_link_libraries(mupack PRIVATE mu_pack)
@@ -607,7 +607,7 @@ target_compile_options(texcook PRIVATE -Wall -Wextra -Wno-unused-parameter)
 # Reads the cook's own output back and checks it against what it claims: formats, chains,
 # and the coverage a cutout's mips are supposed to hold. `cmake --build build --target
 # cookcheck`, then `build/cookcheck assets/cooked/lorencia`.
-add_executable(cookcheck EXCLUDE_FROM_ALL tools/cook/cookcheck.cpp)
+add_executable(cookcheck EXCLUDE_FROM_ALL pipeline/cook/cookcheck.cpp)
 target_link_libraries(cookcheck PRIVATE bimg_decode bimg bx)
 target_compile_options(cookcheck PRIVATE -Wall -Wextra -Wno-unused-parameter)
 

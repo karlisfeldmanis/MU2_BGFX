@@ -37,7 +37,7 @@ constexpr float kPi = 3.14159265358979f;
 bool Warp::open(const std::string& assetDir, content::Textures& textures) {
     const auto take = [&](const std::string& path) -> bgfx::TextureHandle {
         if (!core::fileExists(path)) {
-            core::logError("warp: no %s (tools/sync.sh)", path.c_str());
+            core::logError("warp: no %s (pipeline/sync.sh)", path.c_str());
             return BGFX_INVALID_HANDLE;
         }
         return textures.load(path, content::TextureRole::Albedo);

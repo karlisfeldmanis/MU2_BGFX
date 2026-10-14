@@ -1,6 +1,6 @@
 // Aida's waterfall spray: MU's RenderAidaObjectVisual arms for types 56, 57 and 58
 // (GMAida.cpp:166-183), three kinds of box MU never draws, standing with the Object26 falls (81 of
-// the 84 within 2 m of one), cooked as world anchors (tools/cook.py ANCHOR_KINDS_BY_WORLD):
+// the 84 within 2 m of one), cooked as world anchors (pipeline/cook.py ANCHOR_KINDS_BY_WORLD):
 //
 //   Drops  Object57, 22: one frame in two a BITMAP_WATERFALL_1 SubType 2 (Effect/waterFall1, cyan
 //          droplets): 30 frames, falling 7-11 units a frame and slowing 0.1 a frame, Scale

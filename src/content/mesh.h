@@ -68,7 +68,7 @@ struct Material {
     bool calibrated = false;
     // Which weathering fs_shade gives the surface: 1 wood, 2 stone, 3 plaster, 0 none. The cook
     // reads it from the recipe's sheet_materials and the library's `weathering`
-    // (tools/cook.py weathering_of); it travels in u_material.y's fraction, a sixteenth a kind,
+    // (pipeline/cook.py weathering_of); it travels in u_material.y's fraction, a sixteenth a kind,
     // so every whole-number flag and threshold there reads as it did.
     uint8_t weathering = 0;
     // glTF's own scalars, and the shader multiplies the ORM by them: roughness = orm.g * this,
@@ -125,7 +125,7 @@ struct Material {
     // (ZzzBMD.cpp:1425), the Staff of Resurrection's swirl cards and the Light Saber's beam.
     // Every other item glow takes them in fs_glow. The cook's mode bit 5.
     bool noChrome = false;
-    // A weapon's chrome pass (tools/chrome_sheets.py): MU's RenderMesh of one mesh again,
+    // A weapon's chrome pass (pipeline/chrome_sheets.py): MU's RenderMesh of one mesh again,
     // RENDER_BRIGHT, with a chrome image -- the Knight Blade's violet, the Bill of Balrog's
     // blue veins. Its albedo is the tinted chrome image and its emissive the mask of where it
     // shows, in the mesh's own UVs. 0 for every other material; 1 the chrome at its own UVs

@@ -51,7 +51,7 @@ bool Portal::open(const std::string& assetDir, const std::string& world,
             row ? core::readFile(core::join(assetDir, row->mesh)) : std::vector<uint8_t>();
         if (bytes.empty() || !content::parseCookedMesh(bytes, cooked, error) ||
             cooked.materials.empty()) {
-            core::logf("portal: no cooked %s (tools/cook.py --only missiles); Noria's warp is "
+            core::logf("portal: no cooked %s (pipeline/cook.py --only missiles); Noria's warp is "
                        "not stood",
                        name);
             shapes_.clear();

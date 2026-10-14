@@ -2,11 +2,11 @@
 #
 # Builds one asset from its recipe under content/ into workshop/, the way MU2's mu2.sh did,
 # without Godot and without a viewer. workshop/ is to this tree what MU2/build was to MU2:
-# the pipeline's output, which tools/sync.sh copies into assets/ and tools/cook.py cooks.
+# the pipeline's output, which pipeline/sync.sh copies into assets/ and pipeline/cook.py cooks.
 #
-#   ./tools/asset.sh Sword01              build what is stale
-#   ./tools/asset.sh Sword01 --rebuild    rebuild the lot, whatever the dates say
-#   ./tools/asset.sh lorencia/Object02    a world object, named with its world
+#   ./pipeline/asset.sh Sword01              build what is stale
+#   ./pipeline/asset.sh Sword01 --rebuild    rebuild the lot, whatever the dates say
+#   ./pipeline/asset.sh lorencia/Object02    a world object, named with its world
 #
 # Ported from MU2/mu2.sh on 2026-09-21, which carries the history of every rule below. Two
 # things differ: the clips are left as the .actions.glb export_actions writes (the .res Godot
@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-. "$(dirname -- "${BASH_SOURCE[0]}")/paths.sh"
+. "$(dirname -- "${BASH_SOURCE[0]}")/../tools/paths.sh"
 assets="$CONTENT"
 workshop="$WORKSHOP"
 pipeline="$PIPELINE"
@@ -69,7 +69,7 @@ find_asset() {
 
 item="${1:-}"
 if [[ -z $item ]]; then
-  echo "usage: tools/asset.sh <Name> [--rebuild]" >&2
+  echo "usage: pipeline/asset.sh <Name> [--rebuild]" >&2
   exit 1
 fi
 shift
@@ -180,7 +180,7 @@ glb="$out/$item.glb"
 # export_actions knows what MU means — the closing key, the locked walks, the per-action play
 # speed — and writes glTF. MU2 then had Godot pack that into an .actions.res; the cook reads
 # the .glb, so that second step is gone. The part still records the .res name, as MU2's did,
-# and tools/sync.py takes the .glb beside it.
+# and pipeline/sync.py takes the .glb beside it.
 build_actions() {
   local rig="$1"
   local speeds="${2:-}"

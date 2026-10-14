@@ -9,7 +9,7 @@ is 0.75 too and is not in this pass.
   itself `fairy.smd`) and `Player/Helper02.bmd` (Imp, `satan.smd`), each 2 meshes, 8 bones and
   one 7-key action; sheets `Item/fairy.OZJ` 16², `fairy2.OZJ` 32², `satan.OZJ` 16²,
   `satan2.ozt` 32² with alpha. Recipes in `content/items/pets/`, sheets in `content/textures/`.
-- **Built** with `tools/asset.sh Helper01|Helper02` and synced into `assets/items/pets/` with
+- **Built** with `pipeline/asset.sh Helper01|Helper02` and synced into `assets/items/pets/` with
   `sync_one.py`. The Angel is `tiled` so its wings (MU's `BlendMesh = 1`) are additive and on a
   shadowless node; the Imp bakes, wings cut by their own alpha. Both play action 0 at MU's 0.5.
 - **Not indexed and not cooked**, on purpose: `index.json` is the drop pool, and both are in
@@ -105,7 +105,7 @@ cross-checked against a Season 6 1.00.90 decompile and the 0.97k emulator:
   ride in the jewel drop group but are not jewels: no gold name, droppable, not bold on the ground.
 - **Buff strip** (`game/ui/hud.cpp`): the pet's cell first, its Life as the bar. The two icons are
   ours, rendered from the pets' own models by `pipeline/model_icons.py` (MuDream has no pet cell).
-- **Drawn** (`game/pets.h`): cooked as standalone figures on every map (`tools/cook.py`). The Imp
+- **Drawn** (`game/pets.h`): cooked as standalone figures on every map (`pipeline/cook.py`). The Imp
   rides `Bip01 L Clavicle` at (20,0,0) in the bone's frame (`Figure::mount`); the Angel flies
   GOBoid's steering at 25 Hz, drawn between its last two steps with an eased heading, at 0.7.
 

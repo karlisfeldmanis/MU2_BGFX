@@ -82,7 +82,7 @@
       "where": "over"
     }
   ],
-  "chrome_from": "RenderPartObjectBody's MODEL_KNIGHT_BLADE arm (ZzzObject.cpp:7613-7624): after the body and its two added meshes, mesh 3 (nks01, the blade) again RENDER_BRIGHT | RENDER_CHROME under glColor3f(0.43, 0.14, 0.6): Chrome01 at RENDER_CHROME's coordinates off the normal, sliding with MU's ten-second wave -- a violet sheen running down the blade. MU passes it a U and V slide as well, which RENDER_CHROME's own coordinates do not take (ZzzBMD.cpp:1971-1975); not carried, as there. tools/chrome_sheets.py writes its sheets.",
+  "chrome_from": "RenderPartObjectBody's MODEL_KNIGHT_BLADE arm (ZzzObject.cpp:7613-7624): after the body and its two added meshes, mesh 3 (nks01, the blade) again RENDER_BRIGHT | RENDER_CHROME under glColor3f(0.43, 0.14, 0.6): Chrome01 at RENDER_CHROME's coordinates off the normal, sliding with MU's ten-second wave -- a violet sheen running down the blade. MU passes it a U and V slide as well, which RENDER_CHROME's own coordinates do not take (ZzzBMD.cpp:1971-1975); not carried, as there. pipeline/chrome_sheets.py writes its sheets.",
   "islands": [
     {
       "island": 0,

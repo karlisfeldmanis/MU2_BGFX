@@ -732,7 +732,7 @@ reaches group 12 yet), which is what would let §3.3 take Lunge and Slash back o
 re-cut of the three icons at MuDream's 80×112 the day that container opens.
 
 **Twisting Slash, from MuMain (2026-10-01).** It plays MU's own `PLAYER_ATTACK_SKILL_WHEEL`,
-action 65 (13 keys at 0.24), and no longer borrows Cyclone's sword-spin; `tools/cook.py` carries
+action 65 (13 keys at 0.24), and no longer borrows Cyclone's sword-spin; `pipeline/cook.py` carries
 the clip into every world's tables, so its cooldown floor is the longer wheel. And it draws
 MuMain's WHEEL1/WHEEL2 (`game/fx/wheel.h`). Fifteen frames in, five copies of his right hand's
 weapon orbit him 1.5 tiles out (1.8 with a polearm), lying flat a metre up and spinning. They

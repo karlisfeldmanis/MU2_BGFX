@@ -49,7 +49,7 @@
   ],
   "cutout_alpha_from": "The sheet's own alpha, not its brightness: the paint is dark.",
   "material_note": "painted_steel: violet lacquer with magenta and gold lines painted on, as the Dark Phoenix's blue.",
-  "chrome_note": "RenderPartObjectBody (ZzzObject.cpp:7065-7075) draws the one mesh twice before the body: a violet (0.8, 0, 0.8) RENDER_LIGHTMAP of Chrome01 sliding U at -WorldTime*0.0002, and RENDER_CHROME | RENDER_BRIGHT with BITMAP_CHROME + 1, bab2, at the body's light. The body covers both but where Eccross's alpha is cut: the grooves along the limbs and the stock. Carried: the bab2 chrome, added in those grooves. Not carried: the lightmap, which multiplies what shows through the groove by the violet chrome; added it would be a different thing. tools/chrome_sheets.py.",
+  "chrome_note": "RenderPartObjectBody (ZzzObject.cpp:7065-7075) draws the one mesh twice before the body: a violet (0.8, 0, 0.8) RENDER_LIGHTMAP of Chrome01 sliding U at -WorldTime*0.0002, and RENDER_CHROME | RENDER_BRIGHT with BITMAP_CHROME + 1, bab2, at the body's light. The body covers both but where Eccross's alpha is cut: the grooves along the limbs and the stock. Carried: the bab2 chrome, added in those grooves. Not carried: the lightmap, which multiplies what shows through the groove by the violet chrome; added it would be a different thing. pipeline/chrome_sheets.py.",
   "rig_note": "CrossBow20.rig.json from export-rig --actions=all: six bones, one action of one key, nothing moves; kept for bones 1-5, where MuMain hangs a blue BITMAP_SHINY+1 and a BITMAP_LIGHT (the fifth white) while it is held (ZzzCharacter.cpp:7541-7558; fx/held_lights).",
   "chrome": [
     {

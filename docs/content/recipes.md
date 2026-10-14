@@ -18,22 +18,22 @@ hand-written parts -- recipes, mu.db rows, C++ tables -- are still the list.
 
 Traced from 84940c86 (Aida's trees) and c571b2cd (ruins and graves).
 
-1. `dotnet run --project tools/MuExtract -- export-obj <Data>/WorldN/ObjectNN.bmd content/world/<w>/ObjectNN.obj`
+1. `dotnet run --project pipeline/MuExtract -- export-obj <Data>/WorldN/ObjectNN.bmd content/world/<w>/ObjectNN.obj`
    (and `export-rig` if it sways).
 2. `python3 pipeline/model_sheets.py <bmd>`, then `pipeline/decode_texture.py` per sheet into
    `content/textures/<prefix>_<name>.png`. The prefix (`ai_`, `ad_`, ...) is required: names
    collide across worlds.
 3. Write `content/world/<w>/ObjectNN.json` by hand: sheets, sheet_materials, cutout.
-4. `tools/asset.sh <w>/ObjectNN --build-only` per kind (Blender, minutes each).
+4. `pipeline/asset.sh <w>/ObjectNN --build-only` per kind (Blender, minutes each).
 5. `python3 pipeline/index.py source workshop` **(order: `--build-only` skips it)**.
-6. `tools/sync.sh --world <w> --only-world`.
-7. `tools/cook.py --world <w> --only textures`, then `--only meshes`, then `--only placements`
+6. `pipeline/sync.sh --world <w> --only-world`.
+7. `pipeline/cook.py --world <w> --only textures`, then `--only meshes`, then `--only placements`
    **(order: meshes before textures cook white)**.
 8. Maybe: the world manifest's `pipeline` block (`hidden`, `grounded_types`, `lifted`,
    `chromed`, `flat_over_void`...; since D2) and its anchors (`anchor_kinds`, `brazier_bowls`,
    `shown_later`, `hidden_models`; since D5),
    `game/world/ornaments.cpp` for a glow.
-9. Shots: `./run.sh --world <w> --at X,Y --frames 240 --shot 120 --shot-path <abs> --mute --save <abs>/demo.json`.
+9. Shots: `./mu run --world <w> --at X,Y --frames 240 --shot 120 --shot-path <abs> --mute --save <abs>/demo.json`.
 
 **Since sprint B:** `./mu new object <w>/ObjectNN` does steps 1-3 but the materials, and
 `./mu make <w>/ObjectNN` steps 4-7.
@@ -49,15 +49,15 @@ Traced from ebe25845 (Queen Rainer).
    sheets. Two models into one body: `pipeline/merge_rigs.py`.
 2. `content/monsters/<Name>.json` by hand. Read MuMain's code for its effects, sounds and lights
    first.
-3. `tools/asset.sh <Name>`.
+3. `pipeline/asset.sh <Name>`.
 4. The recipe's `combat` (level, health, damage, ranges, delays, rates, attack skill; since
    E2) and its nests in each world's `content/world/<w>/nests.json` (since E3): `./mu new
    monster <number> --db` writes both from OpenMU.
 5. `pipeline/index.py source workshop` (it reads the nests), then merge that map's spawns into
    `assets/index.json` by hand **(order: figures before the merge leave it invisible)**, then
-   `tools/sync_one.py`.
-6. `tools/cook.py --world <w> --only tables` for **every world**.
-7. `tools/cook.py --world <w> --only figures --monsters <Name> --threads 4`.
+   `pipeline/sync_one.py`.
+6. `pipeline/cook.py --world <w> --only tables` for **every world**.
+7. `pipeline/cook.py --world <w> --only figures --monsters <Name> --threads 4`.
 8. The recipe's `rules` (drops, resist, poisons, chill_odds, bolt, boss, split, bulk; E1) and
    `show` (tags, aura, eye_trail, bones, star_tint, arcs, heads, beam_material, claws, burn,
    inferno, blow; E4), then `./mu make realm`, which writes `sim/breeds_table.inc` and
@@ -124,7 +124,7 @@ anchors are the manifest's too. Left: `ornaments.cpp`'s arms (sprint G).
 2. `asset.sh`, then `index.py`, then `sync_one.py`, then `cook_one.py`.
 3. `cook.py --world lorencia --only wardrobe --threads 3`, and `--only tables` for **every
    world**.
-4. Chrome: `tools/chrome_sheets.py`. Judge it: `tools/studio.py <Name> [--plus 9]`.
+4. Chrome: `pipeline/chrome_sheets.py`. Judge it: `tools/studio.py <Name> [--plus 9]`.
 5. If it is sold: `sim/market.cpp`. If it does something: `sim/items.cpp`, `game/ui/describe.cpp`.
 
 **Since sprint B:** `./mu new item "<name>" --db` writes the recipe, stats and mu.db row of a
@@ -158,7 +158,7 @@ Traced from 630833af (Tarkan's quests, 23 files).
 3. The NPC: a row in its world's manifest's `npcs` (`content/world/<w>/world.json`: npc, name,
    figure, at, look, note; since D3b), then `./mu make tables`. `mu.db npc_spawns` is not read.
    Plus an npc recipe, `asset.sh` and a figures cook.
-4. Voice: `tools/voice.py <giver>`, which reads the text out of `quests.cpp`, then `sync.sh`.
+4. Voice: `pipeline/voice.py <giver>`, which reads the text out of `quests.cpp`, then `sync.sh`.
 5. `sim_test`, and `--talk NAME --quest-ready` shots.
 
 **Today:** 9 code files plus 2 tools. **Goes to:** `content/quests/<giver>.json` with the sim
@@ -186,7 +186,7 @@ and the call where it plays.
 ## Lighting and a material
 
 - **Lighting is live:** edit `content/sheets/lighting.json`, `content/sheets/time/*.json` or
-  `content/sheets/worlds/<w>.json` while the game or `viewer.sh` runs. It reloads in 250 ms; T steps the
+  `content/sheets/worlds/<w>.json` while the game or `mu viewer` runs. It reloads in 250 ms; T steps the
   time of day.
 - **A material is not live:** `content/materials/<m>.json` or the recipe's `material_overrides` /
   `sheet_roughness`, then `asset.sh --rebuild` per wearer **(order: a changed sheet needs

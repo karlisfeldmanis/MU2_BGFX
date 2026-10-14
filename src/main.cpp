@@ -47,7 +47,7 @@ std::vector<char*> playersOnly(int argc, char** argv) {
 
 int main(int argc, char** argv) {
     // Opened from Finder or the Dock: started by its path inside build/MU2.app, with no
-    // switches (or only the process serial number an older macOS adds). It plays as main.sh's
+    // switches (or only the process serial number an older macOS adds). It plays as mu play's
     // lobby does. A run through the build/mu2 link is argv[0] "build/mu2" and keeps its own.
 #ifdef MU2_SHIP
     std::vector<char*> players = playersOnly(argc, argv);

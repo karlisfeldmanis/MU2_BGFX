@@ -432,7 +432,7 @@ bool Renderer::createTargets(int width, int height) {
     }
 
     // The screen-sized target MetalFX writes the scaled world into, ahead of the present.
-    // Not above 0.9: the user plays at 0.99 as a sharpness setting (main.sh), where the
+    // Not above 0.9: the user plays at 0.99 as a sharpness setting (mu play), where the
     // present's own read is all but one to one and MetalFX would only add its 0.55 ms.
     if (scale_ <= 0.9f && metalfx_ && metalfx::supported()) {
         upscaled_ = bgfx::createTexture2D(uint16_t(outWidth_), uint16_t(outHeight_), false, 1,

@@ -1,9 +1,9 @@
 """A quest giver's voice: his pages in src/sim/quests.cpp read aloud, one WAV a dialog page.
 
-    tools/voice.py marlon                 every page
-    tools/voice.py marlon --page offer    one page
+    pipeline/voice.py marlon                 every page
+    pipeline/voice.py marlon --page offer    one page
 
-Writes content/voice/<voice>/<voice>_{offer,underway,handin,resting}.wav, which tools/sync.sh
+Writes content/voice/<voice>/<voice>_{offer,underway,handin,resting}.wav, which pipeline/sync.sh
 copies to assets/voice, where the quest window plays them (Desk, QuestRow::voice). The words
 are read out of quests.cpp itself, so what he says and what the window shows are one text.
 
@@ -17,7 +17,7 @@ Needs its own Python, which this repo does not carry:
 
     uv venv -p 3.11 ~/.cache/mu2-voice
     uv pip install -p ~/.cache/mu2-voice/bin/python chatterbox-tts faster-whisper "setuptools<81"
-    ~/.cache/mu2-voice/bin/python tools/voice.py marlon
+    ~/.cache/mu2-voice/bin/python pipeline/voice.py marlon
 
 About a minute of CPU a line on this Mac; MPS was slower. The seed is fixed, so a page read
 twice is the same take.
@@ -29,6 +29,9 @@ import subprocess
 import sys
 import tempfile
 
+import os as _os
+import sys as _sys
+_sys.path.append(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "tools"))
 from paths import P
 
 ROOT = P.ROOT

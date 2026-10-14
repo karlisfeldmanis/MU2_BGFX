@@ -3,7 +3,7 @@
   "mu_name": "Magic Gladiator bust",
   "mu_name_from": "Data/Logo/NewFace04.bmd, MODEL_FACE + 3 for CLASS_DARK, the Magic Gladiator (ZzzOpenData.cpp:5102, NewFace{class + 1}), and the magum_* sheets beside it in Data/Logo.",
   "trade": 3,
-  "why_this_one": "The bust in the character-creation window, which CharMakeWin draws into the top-left 410x335 of its 454x406 through a ten-degree lens (CharMakeWin.cpp:476). It is not a player model and not a portrait: it is a rigged bust of its own with a hundred bones and two actions, one played once on selecting the class and one it settles into. His, imported 2026-10-07 for his creation (docs/worlds/mg-port.md step 2): tools/MuExtract export-obj, export-rig --actions=0,1 (112 bones), the .OZJ/.OZT sheets unwrapped as the other busts' were.",
+  "why_this_one": "The bust in the character-creation window, which CharMakeWin draws into the top-left 410x335 of its 454x406 through a ten-degree lens (CharMakeWin.cpp:476). It is not a player model and not a portrait: it is a rigged bust of its own with a hundred bones and two actions, one played once on selecting the class and one it settles into. His, imported 2026-10-07 for his creation (docs/worlds/mg-port.md step 2): pipeline/MuExtract export-obj, export-rig --actions=0,1 (112 bones), the .OZJ/.OZT sheets unwrapped as the other busts' were.",
   "profile": "npc",
   "profile_from": "The npc profile, which is this project's recipe for a rigged .bmd that is nobody's placement: its own skeleton, its own clips, one material a sheet. A bust is that shape exactly.",
   "playable": false,

@@ -539,7 +539,7 @@ objects, the same 148 tiles as OM's trap rows, multiset for multiset** -- no ext
 0-byte files): `monster_kinds` holds 0-33 (the Dungeon's 5-18 are in now), **none of 34-41 or 103**;
 `monster_spawns` maps 0-3 (map 1: 258 rows, the Dungeon's one-per-spot); `gates` rows 17, 22, 27 --
 **no 42**; `npc_spawns` has **no map column** (Lorencia's 14 rows; other worlds' folk are in
-`tools/cook.py` `FOLK_VERSION075`, `:1772ff`). `src/sim/realm_tuning.h:271-276` already lists the
+`pipeline/cook.py` `FOLK_VERSION075`, `:1772ff`). `src/sim/realm_tuning.h:271-276` already lists the
 Poison Shadow (39) as a poisoner (`kPoisoners = {8, 12, 39}`).
 
 Rows to add, in dungeon-port.md §2's form (spawn ids after `select max(id)` = 385 today):
@@ -681,7 +681,7 @@ Balrog's 66 (OM `L <= MaximumDropLevel`; WZ "13-66", webzen-audit). MU2_BGFX nee
    with WZD's data trusted only for Monster.txt, which agrees with OM on every stat but respawn,
    ItemRate/MoneyRate/MaxItemLevel and the two bosses' attack type.
 8. **`npc_spawns` has no map column** and Lost Tower NPCs need one (or `FOLK_VERSION075[4]` in
-   `tools/cook.py`, as Noria's folk are carried).
+   `pipeline/cook.py`, as Noria's folk are carried).
 
 ---
 
@@ -1013,13 +1013,13 @@ python3 pipeline/terrain.py $D/World5 losttower content/world 5
 for n in TileGrass01 TileGrass02 TileGround01 TileGround03 TileWater01 TileWood01 TileRock01 TileRock02 TileRock03 TileRock04; do
   python3 pipeline/decode_texture.py $D/World5/$n.OZJ content/textures/lt_$(echo $n | tr A-Z a-z).png; done
 #    content/world/losttower/ground.json on the Dungeon's shape, sheets -> lt_*
-./tools/content.sh --world losttower && ./tools/sync.sh --world losttower --only-world && ./tools/sync.sh
-./tools/cook.py --world losttower --only ground && ./tools/cook.py --world losttower --only tables
+./pipeline/content.sh --world losttower && ./pipeline/sync.sh --world losttower --only-world && ./pipeline/sync.sh
+./pipeline/cook.py --world losttower --only ground && ./pipeline/cook.py --world losttower --only tables
 # objects: export per kind into content/world/losttower/, sheets lt_-prefixed
-dotnet tools/MuExtract/bin/Debug/net10.0/muextract.dll export-obj $D/Object5/Object02.bmd content/world/losttower/Object02.obj
-dotnet tools/MuExtract/bin/Debug/net10.0/muextract.dll export-rig $D/Object5/Object20.bmd content/world/losttower/Object20.rig.json --actions=all  # 20, 21, 24, 35-38 only
-./tools/asset.sh losttower/Object02 --build-only && python3 pipeline/index.py source workshop
-./tools/cook.py --world losttower --only textures / meshes / placements
+dotnet pipeline/MuExtract/bin/Debug/net10.0/muextract.dll export-obj $D/Object5/Object02.bmd content/world/losttower/Object02.obj
+dotnet pipeline/MuExtract/bin/Debug/net10.0/muextract.dll export-rig $D/Object5/Object20.bmd content/world/losttower/Object20.rig.json --actions=all  # 20, 21, 24, 35-38 only
+./pipeline/asset.sh losttower/Object02 --build-only && python3 pipeline/index.py source workshop
+./pipeline/cook.py --world losttower --only textures / meshes / placements
 ```
 
 **Sheet prefix: `lt_`.**
@@ -1152,7 +1152,7 @@ The model file is `Monster{MONSTER_MODEL+1}.bmd`. MuExtract output is in `S/mon/
 | Music/**lost_tower_a.mp3** (4.0 MB) | no | `PlayMp3(MUSIC_LOSTTOWER_A)` always on the map (`SceneManager.cpp:1068-1073`) |
 | Music/lost_tower_b.mp3 (3.1 MB) | no | **unused** (`_enum.h:180` only) |
 
-New sounds go through `index.py` and then `tools/cook.py --only showing` (house rule).
+New sounds go through `index.py` and then `pipeline/cook.py --only showing` (house rule).
 
 ---
 
@@ -1288,11 +1288,11 @@ output folder; every lookup is by this string).
 |---|---|---|
 | extraction | `pipeline/terrain.py main` (`:433-440`, args `<World> <name> <out> <map_number>`) | `python3 pipeline/terrain.py D/World5 losttower content/world 5` |
 | per-map tables, keyed **map_number - 1** | `HIDDEN_BY_MAP` `pipeline/terrain.py:118-126`; `BLEND_MESH_BY_MAP` `:139-142`; `GRASS_BY_MAP` `:152-158`; `WATER_FLOW_BY_MAP` `:165-179`; `OPERABLE_BY_MAP` `:190-195` and again `pipeline/index.py:44-49`; `GATE_BOXES_BY_MAP` `pipeline/index.py:56-66` | `HIDDEN_BY_MAP[4] = {24, 25}` (MoveObject sets HiddenMesh -2 on both, `MM/Engine/Object/ZzzObject.cpp:4020-4028`: 24 the flame emitter x95, 25 the Meteorite trap pad x148); `BLEND_MESH_BY_MAP[4] = {18: 1, 19: 4, 20: 4, 23: 1}` (`ZzzObject.cpp:4007-4017`) -- pass B owns the look; **`GRASS_BY_MAP[4] = []`** (World5 ships no TileGrass .OZT; slot 0 is 64.7% of the floor); `WATER_FLOW_BY_MAP[4]` only if TileWater01 (10.5%) is judged a stream; `OPERABLE_BY_MAP[4]`: none found (no WD_4LOSTTOWER arm in MOVEMENT_OPERATE -- confirm in pass B); `GATE_BOXES_BY_MAP[4]` = all 15 boxes of §0, and `[2] +=` gate 28 (2,248,3,249) and exit 44 (2,246,3,247), which today are open by luck of the grid (Devias tiles 2-3 x 246-249 are word 0) rather than kept |
-| ground sheets | `content/world/<w>/ground.json` -> `tools/content.sh:54-60` (tileset.py, ground.py); content.sh globs every `content/world/*/ground.json` (`:35-36`) | `content/world/losttower/ground.json`, a `lt_` prefix as `dn_`/`dv_`/`nr_` |
+| ground sheets | `content/world/<w>/ground.json` -> `pipeline/content.sh:54-60` (tileset.py, ground.py); content.sh globs every `content/world/*/ground.json` (`:35-36`) | `content/world/losttower/ground.json`, a `lt_` prefix as `dn_`/`dv_`/`nr_` |
 | objects | one `content/world/losttower/ObjectNN.json` recipe per kind | 39 kinds, Object41 has no .bmd (one placement, type 40, the lightning sprite stand -- §5) |
 | index | `pipeline/index.py worlds()` `:1392-1480` (globs worlds, `number = map_number - 1` `:1476`); safe box `gate_rows` `:1755-1780` -> `world["gates"]["safe"]` `:2866-2869` | automatic once the ground is built and **mu.db has gate 42** (§3.4). index.py reads `content/mu.db` (`:2201`). NB a stray 0-byte untracked `MU2_BGFX/mu.db` appeared 2026-10-01 09:49; harmless, but not the store |
 
-#### 1.2 The cook (`tools/cook.py`)
+#### 1.2 The cook (`pipeline/cook.py`)
 
 `main` `:3216-`; `--only {textures, ground, meshes, placements, figures, tables, showing,
 missiles, wardrobe, all}` (`:3222`). Per-world keys in cook.py:
@@ -1313,7 +1313,7 @@ missiles, wardrobe, all}` (`:3222`). Per-world keys in cook.py:
 | `cook_tables` | `:1885-2200` | automatic: every breed, this map's spawns (`spawn["map"] != number` `:2002`), the safe box from index.json (`:2176-2180`). `.mur` stays **v9** -- the tower needs no new header field (§3.4) |
 
 **Every world's tables after an item change** is still five runs now
-(lorencia, noria, devias, dungeon, losttower); nothing loops them (`tools/content.sh` cooks
+(lorencia, noria, devias, dungeon, losttower); nothing loops them (`pipeline/content.sh` cooks
 no tables).
 
 #### 1.3 The runtime registry -- every place a sixth world is named
@@ -1367,8 +1367,8 @@ the map-number tables. 31 files hit; the ones that decide behaviour:
 | 18 | `src/sim/realm_tuning.h:270-276` `kPoisoners = {8, 12, 39}` | already lists the Poison Shadow (39) | free | -- |
 | 19 | `src/sim/quests.cpp:226-231` Devin's hand-in names the Lost Tower, `row.next = ""` | | pass A | -- |
 | 20 | `src/game/headless.cpp:148,166` default world / Lorencia's old start tile | generic through `mapOf` | free | -- |
-| 21 | `tools/cook.py:1463` `if world != "dungeon" and ...` (no "buried" flag underground) | | **yes**, same flat-sheet-over-void ground | a set (§1.2) |
-| 22 | `tools/cook.py:202-212` AIRS/CRAWLS/TRAP_MODELS/AIRS_FROM | | §1.2 | rows |
+| 21 | `pipeline/cook.py:1463` `if world != "dungeon" and ...` (no "buried" flag underground) | | **yes**, same flat-sheet-over-void ground | a set (§1.2) |
+| 22 | `pipeline/cook.py:202-212` AIRS/CRAWLS/TRAP_MODELS/AIRS_FROM | | §1.2 | rows |
 | 23 | `pipeline/terrain.py` / `pipeline/index.py` `*_BY_MAP` | | §1.1 | rows |
 | 24 | `src/game/play_open.cpp:150-154` Noria's roads; `doors.cpp:44` Devias's doors; `portal.cpp:40` Noria's portal; `lobby_mode.cpp:21`, `roster.cpp:175`, `args.cpp:665`, `bench_mode.cpp:59,102` | defaults and other worlds' features | no | -- |
 
@@ -1430,7 +1430,7 @@ to cost more than the row.
    doc so nobody "fixes" it.
 3. **Its own safe box -- no `home` trip.** mu.db needs the spawn row `(42, 4, 203, 70, 213, 81, 1)`;
    then index.py writes `gates.safe`, the cook writes it into `losttower.mur`'s header
-   (`tools/cook.py:2176-2180`), `haven()` finds it, and `home` stays 0. **Without the row the
+   (`pipeline/cook.py:2176-2180`), `haven()` finds it, and `home` stays 0. **Without the row the
    tower would silently send every death to Lorencia** (the Dungeon's path), which is the
    Devias gate-22 bug of `1ad73855` again. The safe flag on the grid (cols 187-214, rows 70-83)
    is already there for `worth()` and the traps.
@@ -1487,7 +1487,7 @@ to cost more than the row.
   3 -> 8 / 1005. `max(id)` = 385, so new rows start at **386**. Columns `id, number, x1, x2,
   y1, y2, count, map` (note x2 before y1).
 - `gates`: 17 (map 0), 22 (map 2), 27 (map 3), all `spawn = 1`. **No 42.**
-- `npc_spawns` (14 rows) is not what the cook reads for folk; `FOLK_VERSION075` is (`tools/cook.py:1773`).
+- `npc_spawns` (14 rows) is not what the cook reads for folk; `FOLK_VERSION075` is (`pipeline/cook.py:1773`).
 - The WAL is empty (`content/mu.db-wal` 0 bytes), so the file is current; after the inserts,
   `pragma wal_checkpoint(TRUNCATE)` before committing (memory: "mu.db writes sit in the WAL").
 
@@ -1528,7 +1528,7 @@ to cost more than the row.
 - **Held back** in the window until each breed's figure is cooked
   (`src/game/play_open.cpp:117-141`, "play: N monsters of losttower held back"); headless
   raises everything (`src/game/headless.cpp:148-170`). Per breed:
-  `tools/cook.py --world losttower --only figures --monsters <Name>01` into
+  `pipeline/cook.py --world losttower --only figures --monsters <Name>01` into
   `figures_losttower.json` (`cook.py:1585`), one at a time, judged on the stage.
 - **Traps are not mu.db**: they are `src/sim/traps.cpp` rows (Dungeon's 58, `:16-~100`) and
   `realm_traps.cpp`. The tower adds:
@@ -1595,7 +1595,7 @@ the map in the whole client, read in full):
   - Data: the placements are hidden (§1.1), so they never reach the `.mut`. The Dungeon solved
     the same problem for its ceiling stones by copying 29 markers into code
     (`trap_show.cpp:20-54`); 95 is too many to hand-copy. **Better: `ANCHOR_KINDS_BY_WORLD`**
-    (`tools/cook.py:1151`), the character screen's precedent for hidden fire placements
+    (`pipeline/cook.py:1151`), the character screen's precedent for hidden fire placements
     (`:1147-1150`): `{"losttower": {"Object25": <a new kind>}}` writes each vent as a world-anchored
     emitter (`model 0xFFFF`, `:1553`), which `Lamps::open` already collects (`lamps.cpp:150-156`).
   - Drawing: a vent driver (in `Lamps` or a small `game/world/vents.*`) that rolls each anchored
@@ -1685,13 +1685,13 @@ seven-floor naming, and the air/footstep/boid switches still being string tests.
   (§1.1); `pipeline/index.py:56-66` `GATE_BOXES_BY_MAP[4]` (15 boxes) and `[2] +=` 28 and 44.
 - `python3 pipeline/terrain.py $D/World5 losttower content/world 5` (expect: 0.00-3.19 m, 10 slots,
   46.1% walkable, 0.6% safe, 5380 placed / 39 kinds, missing Object41 -- §0.1);
-  `content/world/losttower/ground.json` with `lt_` sheets; `tools/content.sh --world losttower`;
-  sync; `tools/cook.py --world losttower --only ground`.
+  `content/world/losttower/ground.json` with `lt_` sheets; `pipeline/content.sh --world losttower`;
+  sync; `pipeline/cook.py --world losttower --only ground`.
 - `content/mu.db`: `insert into gates values (42, 4, 203, 70, 213, 81, 1)`; checkpoint; index.py;
-  `tools/cook.py --world losttower --only tables`.
+  `pipeline/cook.py --world losttower --only tables`.
 - `maps.cpp` `{"losttower", 4, {208, 75}, ...}`; `arrival.cpp` `kPlaces`; `minimap.cpp` `mapName`;
   `content/sheets/worlds/losttower.json` copied from the Dungeon's.
-- Check: `./run.sh --headless --world losttower --ticks 200 --no-hand` logs `grid 256 tiles a side
+- Check: `./mu run --headless --world losttower --ticks 200 --no-hand` logs `grid 256 tiles a side
   ... map 4`; `python3 -c` on `assets/cooked/losttower/losttower.mur`'s header:
   `'MU2R', 9, ..., map 4, 256, 203, 70, 213, 81` (a zero box here is the gate-22 bug).
 
@@ -1708,8 +1708,8 @@ seven-floor naming, and the air/footstep/boid switches still being string tests.
 **Step 3 -- underground: air, bats, no leaves, no grass.**
 - `MapRow` row flags for the tower (underground, `air = "world_tower"`, boid Bat01);
   `content/sounds/sounds.json` `world_tower: aTower.wav` (+ copy `$D/Sound/aTower.wav`), then
-  `pipeline/index.py` and `tools/cook.py --only showing` (memory: "new sound needs the showing
-  cook"); `tools/cook.py` `AIRS["losttower"] = "Bat01"`, `AIRS_FROM["losttower"] = "dungeon"`,
+  `pipeline/index.py` and `pipeline/cook.py --only showing` (memory: "new sound needs the showing
+  cook"); `pipeline/cook.py` `AIRS["losttower"] = "Bat01"`, `AIRS_FROM["losttower"] = "dungeon"`,
   and the `:1463` buried-test exemption as a set.
 - Check: a `--frames 300 --shot 250 --mute` review only when allowed; headless can only check the
   tables. The log should carry no `leaves:` line and the boids' Bat01; then `--budget --stats`.
@@ -1725,7 +1725,7 @@ Object20/Object21's six sprites (bones 15, 19, 21; 0.3/0.3/1.5; red magic for Ob
 lightning for Object21; spin `WorldTime*0.1`), Object10's orange flare at bone 1 (the stadium
 fall-through, marked). Check: the `ornaments:` log line's lantern count (20x6 + 200 = 320).
 
-**Step 6 -- the vents.** `tools/cook.py` `ANCHOR_KINDS_BY_WORLD["losttower"] = {"Object25": vent}`
+**Step 6 -- the vents.** `pipeline/cook.py` `ANCHOR_KINDS_BY_WORLD["losttower"] = {"Object25": vent}`
 and an `ANCHOR_LIGHT` row; a vent driver rolling one in 64 reference frames per anchored vent in
 range and calling `Flame::light`; `kFires` 8 -> ~16; the vent's static light levelled by its fire.
 Check: the `lamps:` log line counts 95 anchors and the light grid's "crowded" cells

@@ -101,7 +101,7 @@ def main() -> None:
 
     write_glb(destination, document, binary.blob)
 
-    # And our own clips back on top: the player's library is this file plus tools/mixamo.py's
+    # And our own clips back on top: the player's library is this file plus pipeline/mixamo.py's
     # OURS, and a re-export without them wiped the run once (2026-10-01).
     if rig_path.name == "player.rig.json":
         sys.path.insert(0, str(P.TOOLS))

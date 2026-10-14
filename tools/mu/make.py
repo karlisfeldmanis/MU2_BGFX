@@ -33,7 +33,7 @@ from things import (ASSETS, BUILD, COOKED, PIPELINE, ROOT, SOURCE, TOOLS, WORKSH
                     world_recipes)
 
 LOCKS = os.path.join(WORKSHOP, ".mu")
-COOK = ["python3", os.path.join(TOOLS, "cook.py")]
+COOK = ["python3", os.path.join(PIPELINE, "cook.py")]
 DB = os.path.join(SOURCE, "mu.db")
 
 
@@ -66,7 +66,7 @@ def build_scripts():
     worklist.py made every model in the tree stale -- minutes of Blender each, for nothing.
     mu asks only about the scripts a build runs; index.py is left out, it is the next step.
     """
-    with open(os.path.join(TOOLS, "asset.sh")) as handle:
+    with open(os.path.join(PIPELINE, "asset.sh")) as handle:
         names = set(re.findall(r"pipeline/([a-z_]+\.py)", handle.read()))
     return [os.path.join(PIPELINE, n) for n in sorted(names - {"index.py"})]
 
@@ -249,7 +249,7 @@ def head(things, threads):
     steps.append(Step("index", ["python3", os.path.join(PIPELINE, "index.py"), SOURCE, WORKSHOP],
                       index_test(things), "index"))
     worlds = sorted({t.world for t in things})
-    sync = ["python3", os.path.join(TOOLS, "sync.py"), "--src", WORKSHOP, "--dst", ASSETS]
+    sync = ["python3", os.path.join(PIPELINE, "sync.py"), "--src", WORKSHOP, "--dst", ASSETS]
     for world in worlds:
         sync += ["--world", world]
     steps.append(Step("sync", sync + ["--only-world"], sync_test(things), "assets"))
@@ -313,7 +313,7 @@ def plan_thing(thing, threads):
         steps += world_cook(thing.world, [thing], threads)
     elif thing.kind == "item":
         steps.append(Step(f"cook_one {thing.name}",
-                          ["python3", os.path.join(TOOLS, "cook_one.py"), cook_one_name(thing), "--no-shots"],
+                          ["python3", os.path.join(PIPELINE, "cook_one.py"), cook_one_name(thing), "--no-shots"],
                           cook_test([os.path.join(COOKED, "wardrobe", "wardrobe.json")], [glb], "the wardrobe entry"),
                           "cooked", lock="wardrobe"))
         steps.append(Step("wardrobe", COOK + ["--only", "wardrobe"] + t,
@@ -338,7 +338,7 @@ def plan_thing(thing, threads):
         steps.append(build_game(threads))
     else:
         steps.append(Step(f"cook_one {thing.name}",
-                          ["python3", os.path.join(TOOLS, "cook_one.py"), thing.name, "--no-shots",
+                          ["python3", os.path.join(PIPELINE, "cook_one.py"), thing.name, "--no-shots",
                            "--world", thing.world],
                           always("cook_one keeps no date of its own"), "cooked", lock=thing.world))
     return steps
@@ -388,7 +388,7 @@ def plan_placements(world, threads):
                          f"{world}.json or placements.json is newer than the index"
                          if newest() > mtime(index_json)
                          else "the index is newer than the placements")), "index"),
-        Step("sync", ["python3", os.path.join(TOOLS, "sync.py"), "--src", WORKSHOP, "--dst", ASSETS,
+        Step("sync", ["python3", os.path.join(PIPELINE, "sync.py"), "--src", WORKSHOP, "--dst", ASSETS,
                       "--world", world, "--only-world"],
              lambda c: ((bool(c & {"index"}) or newest() > mtime(placed),
                          "the workshop changed" if c & {"index"} else "assets/ against the source")),
@@ -502,7 +502,7 @@ def plan_ground(world, folder, threads, reimport=False):
         Step("ground", ["python3", os.path.join(PIPELINE, "ground.py"), src, work, os.path.join(SOURCE, "textures")],
              ground_test, "land"),
         Step("index", ["python3", os.path.join(PIPELINE, "index.py"), SOURCE, WORKSHOP], index_ground, "index"),
-        Step("sync", ["python3", os.path.join(TOOLS, "sync.py"), "--src", WORKSHOP, "--dst", ASSETS,
+        Step("sync", ["python3", os.path.join(PIPELINE, "sync.py"), "--src", WORKSHOP, "--dst", ASSETS,
                       "--world", world, "--only-world"], sync_ground, "assets"),
         Step(f"{only} {world}", COOK + ["--world", world, "--only", only, "--threads", str(threads)],
              cook_test([os.path.join(COOKED, world, "textures.json")],
@@ -547,7 +547,7 @@ def plan_sounds(threads):
     return [
         Step("index", ["python3", os.path.join(PIPELINE, "index.py"), SOURCE, WORKSHOP],
              index_stale, "index"),
-        Step("sync", ["python3", os.path.join(TOOLS, "sync.py"), "--src", WORKSHOP, "--dst", ASSETS,
+        Step("sync", ["python3", os.path.join(PIPELINE, "sync.py"), "--src", WORKSHOP, "--dst", ASSETS,
                       "--world", "lorencia", "--only-world"], sync_test([]), "assets"),
         Step("showing", COOK + ["--only", "showing", "--threads", str(threads)],
              # And sounds.json: an event added to it whose index a monster's cook ran since
@@ -616,7 +616,7 @@ def plan_realm():
     # And the client's half of a recipe: every monster's show tags, cooked/figures/shows.json
     # (sprint E4a), which game/figures.cpp reads.
     shows = os.path.join(ASSETS, "cooked", "figures", "shows.json")
-    cook = os.path.join(TOOLS, "cook.py")
+    cook = os.path.join(PIPELINE, "cook.py")
     shown = newest([cook] + [m for m in manifests if os.path.exists(m)]) > mtime(shows)
     return [Step("realm", ["python3", script],
                  lambda c: (stale, "a manifest or the script is newer than the realm's tables" if stale
@@ -631,7 +631,7 @@ def plan_realm():
 # ----------------------------------------------------------------------------- running
 
 def build_cmd(step):
-    cmd = [os.path.join(TOOLS, "asset.sh"), step.thing.build_name]
+    cmd = [os.path.join(PIPELINE, "asset.sh"), step.thing.build_name]
     if getattr(step.thing, "rebuild", False):
         cmd.append("--rebuild")
     return cmd

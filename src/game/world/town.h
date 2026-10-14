@@ -128,7 +128,7 @@ public:
     }
     // A placement left out of the frame and the sun's list, or put back: Blood Castle's
     // drawbridge, whose door goes as its lowered deck comes (game/world/drawbridge.h). Bit 3 of
-    // the flags, which the cook sets on what it holds back for later (tools/cook.py SHOWN_LATER).
+    // the flags, which the cook sets on what it holds back for later (pipeline/cook.py SHOWN_LATER).
     void setHidden(uint32_t instance, bool hidden) {
         if (instance >= town_.instances.size()) return;
         uint16_t& flags = town_.instances[instance].flags;

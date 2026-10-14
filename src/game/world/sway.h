@@ -3,7 +3,7 @@
 // sign, curtains, the tents, the carriages and the merchants' animals, two houses and two
 // stretches of wall, the fountain's spout -- at the per-type `o->Velocity` CreateObject gives
 // them in ZzzObject.cpp. Each carries its one clip in the same glb as its mesh, and
-// tools/cook.py's cook_world_clip bakes every one of them into cooked/<world>/clips.json.
+// pipeline/cook.py's cook_world_clip bakes every one of them into cooked/<world>/clips.json.
 //
 // The rate is already in the clip: MU2's exporter wrote each at its own velocity (0.16 by
 // default, 0.3 for a lamp, a candle and a sign -- `play_speed` in its recipe), so every model

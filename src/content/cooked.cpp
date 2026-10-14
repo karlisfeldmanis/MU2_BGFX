@@ -284,7 +284,7 @@ bool parseCookedTown(const std::vector<uint8_t>& bytes, CookedTown& out, std::st
         return false;
     }
     // Version 1 had no lights. Refused rather than read as a dark town, which is what it
-    // would look like: tools/cook.py --world W --only placements writes version 2.
+    // would look like: pipeline/cook.py --world W --only placements writes version 2.
     if (version != 2) {
         error = "a .mut of version " + std::to_string(version) + ", and this reads version 2";
         return false;

@@ -192,7 +192,7 @@ def main() -> None:
     parser.add_argument("--mumain", action="store_true",
                         help="cut from MuMain's own 256 sheet, enlarged 3x (see MUMAIN_SHEET)")
     parser.add_argument("--mumain-sheet", type=Path, default=MUMAIN_SHEET,
-                        help="where that sheet is, if tools/fetch_mumain.sh has not been run")
+                        help="where that sheet is, if pipeline/fetch_mumain.sh has not been run")
     parser.add_argument("--only", type=int, nargs="+", default=[],
                         help="cut only these skill numbers, leaving every other icon alone")
     args = parser.parse_args()

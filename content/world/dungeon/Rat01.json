@@ -1,7 +1,7 @@
 {
   "item": "Rat01",
   "mu_name": "Rat01",
-  "mu_name_from": "Object2/Rat01.bmd, which is not a placement: MoveFishs gives the fish slot MODEL_RAT01 in the Dungeon (GOBoid.cpp:1720-1722) and keeps three around whoever is playing, on floor tiles only. Named in tools/cook.py's AIRS beside the bat.",
+  "mu_name_from": "Object2/Rat01.bmd, which is not a placement: MoveFishs gives the fish slot MODEL_RAT01 in the Dungeon (GOBoid.cpp:1720-1722) and keeps three around whoever is playing, on floor tiles only. Named in pipeline/cook.py's AIRS beside the bat.",
   "world": "dungeon",
   "object_type": -1,
   "why_this_one": "The Dungeon's rats: 36 triangles, 6 bones, a 5-key run. They dash in bursts at 0.6/scale units a frame, turn back at the void and stop to sit, scale 0.4 to 0.7, one in 256 frames within six tiles squeaking aMouse.wav (GOBoid.cpp:1659-1860).",

@@ -10,7 +10,7 @@ this says which files go into which pack. It is worked out by REACHABILITY, not 
   2. From there every file reached is read for the paths it names, and those are followed:
      a json's string values, a glb's external uris, and the plain path strings inside the
      cooked binaries (.mum .muc .mut .mur .mus .mup, magic MU2M/MU2C/MU2T/MU2R/MU2S/MU2P,
-     which carry `cooked/lorencia/textures/x.ktx` as written by tools/cook.py write_string).
+     which carry `cooked/lorencia/textures/x.ktx` as written by pipeline/cook.py write_string).
   3. What src/ reaches by a name it makes at runtime -- a folder it lists, a file it names
      out of a table -- is taken a folder at a time and marked "dynamic", with the src line.
   4. Whatever is kept without a proof that the game reads it is marked "unproven" and kept:
@@ -64,7 +64,7 @@ COOKED_EXT = {".mum", ".muc", ".mut", ".mur", ".mus", ".mup"}
 # match is non-greedy from the folder so a printable length byte before it is not taken in.
 TOPS = r"(?:cooked|effects|interface|items|music|voice|world|sounds|grades|npc|players|assets)"
 EXTS = r"(?:ktx|mum|muc|mut|mur|mus|mup|walls|json|png|jpg|obj|glb|bin|wav|mp3|MP3|ogg)"
-# In a cooked binary a string is tools/cook.py's write_string: a little-endian u16 length and
+# In a cooked binary a string is pipeline/cook.py's write_string: a little-endian u16 length and
 # the bytes. A path is taken whole by its own length, never by pattern: a stem can hold a
 # second extension ("Tree06_tree_02.jpg_x3_albedo_<sha>.ktx") and a pattern stops at the first.
 TOP_IN_BYTES = re.compile(TOPS.encode() + rb"/")
@@ -483,7 +483,7 @@ KTX_NAME = re.compile(r"_(albedo|normal|orm|emissive)_([0-9a-f]{16})\.ktx$")
 
 
 def source_digests(roots):
-    """{(sha1[:16], role)} for every image in every glb under `roots`, as tools/cook.py
+    """{(sha1[:16], role)} for every image in every glb under `roots`, as pipeline/cook.py
     `collect`/`cook_figures` name a cooked texture: `<model>_<image>_<role>_<sha1 of the source
     bytes>[:16]`. Role is taken as any of the four, since the role comes from the material."""
     digests = set()

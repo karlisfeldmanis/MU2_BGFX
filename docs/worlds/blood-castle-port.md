@@ -29,7 +29,7 @@ model and the castle's monsters, contact sheets) is in
 - The sheet's `glow_strength` is 0.9 and its saturation 0.8.
 
 **Voices and the court's auras (2026-10-04).**
-- **Blood Castle has no voices** since 2026-10-05: the Messenger's two clips went first, then all ten of the Archangel's and his reference (the user: 'lets not use audio on archangel at all', after auditions for a deeper, then a dying, then a natural voice). Their pages are read in silence; `tools/voice.py` no longer knows him.
+- **Blood Castle has no voices** since 2026-10-05: the Messenger's two clips went first, then all ten of the Archangel's and his reference (the user: 'lets not use audio on archangel at all', after auditions for a deeper, then a dying, then a natural voice). Their pages are read in silence; `pipeline/voice.py` no longer knows him.
 - **Ours, the court's auras:** the safe court lets a boon, a mend or a might be cast on oneself to prepare for the fight (`SkillRow::aura`). Summons and aimed skills are still refused.
 
 **The run, WebZen's again (2026-10-08, the user: "lets make BC how it was on webzen").** From 2026-10-05 it lasted 10 min and asked a fixed 400 kills and 20 sorcerers, which no player alone could meet. Now it lasts **15 min** (`kCastleRun`). The drawbridge asks **40 kills for each player alive in the castle as the run starts** (`kCastleKillsEach`, `CastleRun::killsWanted`). The courtyard asks **2 Spirit Sorcerer kills for each player alive as the bridge falls, at most 10** (`kCastleSorcerersEach`, `kCastleMostSorcerers`, `CastleRun::sorcerersWanted`), and that many rise. Still ours: the garrison and a dead sorcerer rise again until the quota is met, and the rewards are unchanged. The bot (`tools/bot`) wins castle 1 alone: a knight of level ~150 in about 12 minutes, an elf of ~160 in 7. The Statue of Saint takes no chill or freeze and does not spin under Evil Spirit. Handing in the weapon clears the castle: every monster is gone on that tick, without a fall, and none rises again (`Realm::castleTick`). His thanks then show the win with one button, **Complete**: it pays the win into the bag (a full bag drops the rest at his feet), shuts the window and sends him to Devias at once (`Realm::claimCastle`). Unclaimed, the win is paid when the minute's rest sends him out.
@@ -98,7 +98,7 @@ castle, the party-completion rules and the time-attack score come in at 0.99B. L
   `NpcWindow.BloodCastle`; WZD `Monster.txt:318` names him "Spirit of Archangel".
 - **Where he stands disagrees.** WZD `MonsterSetBase.txt:2536-2537` has Devias **209,30 dir 1** and **219,9 dir 3**. OM S6
   `Maps/Devias.cs:45-46` has **217,29** and **217,20**, both SouthEast. MU2_BGFX already stands him at OM's 217,29 dir 4
-  (`tools/cook.py:1943-1946`, `content/world/devias/placements.json:124`, model `BloodCastle02`).
+  (`pipeline/cook.py:1943-1946`, `content/world/devias/placements.json:124`, model `BloodCastle02`).
 - Talk (`NpcTalk.cpp:1655-1753`):
   - A murderer (PK level > default) is refused (`:1664-1676`; a 2006 flag).
   - With a cloak, and the cloak's castle CLOSED with entry open, the BC window opens (0x30 result 6, `:1731-1742`).
@@ -396,7 +396,7 @@ Zen and score on a win (`BloodCastle.h:192-205, 238-252`):
 - `content/world/bloodcastle/` holds terrain.py's World12 output (`bloodcastle.json` `"map_number": 12`, height, tiles, attributes,
   light, ground.json): the pipeline's client-number convention.
 - The Messenger stands in Devias at 217,29 facing 4 and tells the hero BC is not ready (`src/sim/realm.h:140-142` `kMessenger = 233`;
-  `src/game/play.cpp:1677-1680`; `tools/cook.py:1943-1946`).
+  `src/game/play.cpp:1677-1680`; `pipeline/cook.py:1943-1946`).
 - The travel card counts down a "Blood Castle" event on Devias every **7200 s, 1200 s long**, taken from OM (`src/game/ui/travel.cpp:44-59`).
   **WZ says hourly at :30 and 15 min of play (16 with the wait).** Re-time it if the user takes WZ.
 - Nothing for items 13/16-19, NPC 232, breeds 84-89/131-134, gate 66 or the event itself.
@@ -892,11 +892,11 @@ folder). The Lost Tower's §2 refactor was done only in part: `MapRow` gained `u
 | P6 | `pipeline/terrain.py:195, :244, :246` `LAVA_SPILL_BY_MAP`, `LIGHT_DEPTH_BY_MAP`, `WATER_FLOW_BY_MAP` **[new]** | | none |
 | P7 | `pipeline/terrain.py:271` and `pipeline/index.py:44` `OPERABLE_BY_MAP` | seats | none |
 | P8 | `pipeline/index.py:56-66` `GATE_BOXES_BY_MAP` | keep gate tiles open | `11: [(12,5,14,10)]` (exit 66). NB `[4]` and Devias's tower boxes were never added (still only 0-3) |
-| P9 | `content/world/bloodcastle/ground.json` -> `tools/content.sh` globs it | ground sheets | one slot in use; `bc_` prefix as `lt_`/`dn_`/`dv_` |
+| P9 | `content/world/bloodcastle/ground.json` -> `pipeline/content.sh` globs it | ground sheets | one slot in use; `bc_` prefix as `lt_`/`dn_`/`dv_` |
 | P10 | `content/mu.db` `gates` | spawn box | **no row for map 11** (see §3.6: the death goes to Devias, not the start room) |
 | P11 | `pipeline/index.py worlds()` `:1414-` | index | automatic once the ground is built |
 
-### 1.2 The cook (`tools/cook.py`)
+### 1.2 The cook (`pipeline/cook.py`)
 
 | key | line | Blood Castle |
 |---|---|---|
@@ -957,8 +957,8 @@ breeds without a figure held back `:142`) -> `realm_.raise(&tables_, ...)` (`pla
 7. **A new look knob end to end** (only because lava needed one): `lighting.h/.cpp` (`water_glow`
    read and listed among known keys), `renderer.h/.cpp/_setup.cpp` (uniform create, set, destroy),
    `shaders/fs_ground.sc` (+6).
-8. Not in the commit but implied by its message: `tools/content.sh --world losttower`, sync,
-   `tools/cook.py --world losttower --only ground` and `--only tables`, `pipeline/index.py`
+8. Not in the commit but implied by its message: `pipeline/content.sh --world losttower`, sync,
+   `pipeline/cook.py --world losttower --only ground` and `--only tables`, `pipeline/index.py`
    (build-only skips the index -- memory). No gates, objects, monsters or air in step 1.
 
 **Blood Castle's step 1 is the same minus 4 and 7**: no mu.db row (Devias is the safe map), no
@@ -970,13 +970,13 @@ new shader knob unless the look asks.
 
 | piece | where | state |
 |---|---|---|
-| **Messenger of Archangel (233)** in Devias | `tools/cook.py:1943-1946` `(233, "Messenger of Archangel", "", 217, 29, 4)` (S6's tile, `VersionSeasonSix/Maps/Devias.cs:45`) | stands, cooked figure (its plate is drawn opaque+added, `pipeline/export_gltf.py:1870`) |
+| **Messenger of Archangel (233)** in Devias | `pipeline/cook.py:1943-1946` `(233, "Messenger of Archangel", "", 217, 29, 4)` (S6's tile, `VersionSeasonSix/Maps/Devias.cs:45`) | stands, cooked figure (its plate is drawn opaque+added, `pipeline/export_gltf.py:1870`) |
 | his number | `src/sim/realm.h:140-142` `kMessenger = 233` | |
 | his talk | `src/sim/realm.cpp:596-609`: grouped with Guild Master/Sevina/Charon/Thompson -> `What::Shouted` `Shout::Greet` | the hook a "enter Blood Castle" branch replaces |
 | his lines | `src/game/play.cpp:1668-1673` `kMessenger[]` ("not open yet"), chosen at `:1715-1721` | three not-ready lines |
 | test | `tests/sim_test.cpp:3889-3908` "walked to the Messenger and he said Blood Castle is not ready" | must change when he opens a door |
 | **countdown** | `src/game/ui/travel.cpp:47-60` `kEvents = {{"Blood Castle", 2, 7200, 1200}, {"Devil Square", 3, 14400, 1500}}`, drawn `:199-215` and `:386-405` off `realm.wallClock()` (`src/sim/realm.h:748-749`, set each frame `src/game/ui/desk.cpp:185`) | UI only: gold count-down 30 min before, red "now" for 20 min, on the Devias card. **Nothing gates on it.** Its map is 2 (Devias), not 11 |
-| **Chaos Goblin (238)** | `tools/cook.py:1906` in Noria at 180,103; Noria's Chaos Machine sparks `src/app/modes/play_mode.cpp:993-1000`, `src/game/world/ornaments.h:68` | **decoration only** -- no mix. `src/sim/items.h:13` "No refining, no chaos machine, no trade"; `:307-310` `kRefineCap = 9` "until the Chaos Machine exists" |
+| **Chaos Goblin (238)** | `pipeline/cook.py:1906` in Noria at 180,103; Noria's Chaos Machine sparks `src/app/modes/play_mode.cpp:993-1000`, `src/game/world/ornaments.h:68` | **decoration only** -- no mix. `src/sim/items.h:13` "No refining, no chaos machine, no trade"; `:307-310` `kRefineCap = 9` "until the Chaos Machine exists" |
 | Jewel of Chaos (12,15) | `content/items/misc/Jewel15.json`, drop rules `src/sim/items.h:505-515`, a quest pay `src/sim/quests.cpp:673` | exists, droppable |
 | Invisibility Cloak 13/18, Blood Bone 13/17, Scroll of Archangel 13/16, Weapon of Archangel 13/19 | `content/items/**` (group 13 has Helper01-04 only: Angel, Imp, Uniria, Dinorant); mu.db `items` holds groups 0-11 and 14 only (166 rows) | **none exist** -- no recipe, no model export, no table row |
 | Divine Archangel weapons (0/19, 2/13, 4/18, 5/10) | MuMain `_enum.h:1514-1604` | none |
@@ -1133,13 +1133,13 @@ cooked_test, placement_test, sim_test, boids_test, sound_test, matcheck; `CMakeL
   agrees (ZzzObject.cpp:4185-4199); `pipeline/index.py` `GATE_BOXES_BY_MAP[11] = [(12,5,14,10)]`.
 - `python3 pipeline/terrain.py $D/World12 bloodcastle content/world 12` (expect: 0.00-3.03 m,
   5 slots, 83.2% "walkable" (see §0.1), 0.1% safe, 210 placed / 35 kinds, missing Object38);
-  `content/world/bloodcastle/ground.json` with `bc_` sheets; `tools/content.sh --world bloodcastle`;
-  sync; `tools/cook.py --world bloodcastle --only ground` and `--only tables`; `pipeline/index.py`.
+  `content/world/bloodcastle/ground.json` with `bc_` sheets; `pipeline/content.sh --world bloodcastle`;
+  sync; `pipeline/cook.py --world bloodcastle --only ground` and `--only tables`; `pipeline/index.py`.
 - `maps.cpp` row `{"bloodcastle", 11, {13, 8}, true}`; `arrival.cpp` kPlaces; `minimap.cpp`
   `case 11`; `content/sheets/worlds/bloodcastle.json` from losttower.json.
 - No mu.db row; no Tab row. Reached by `--world bloodcastle` (headless) or `--travel-at` (window,
   `play_mode.cpp:643-648`, `mapAfter` -- it is last in `kMaps`, so after the Lost Tower).
-- Check: `./run.sh --headless --world bloodcastle --ticks 200 --no-hand` logs
+- Check: `./mu run --headless --world bloodcastle --ticks 200 --no-hand` logs
   `tables: 0 breeds ... grid 256 tiles a side (... blocked), map 11`; the `.mur` header's safe box
   is zero (python struct read, as the tower's check); the hero raises in 8-19 x 3-14.
   `checks` green apart from the known three.

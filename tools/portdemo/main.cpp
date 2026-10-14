@@ -1,6 +1,6 @@
 // The Windows/Linux port test: one MU monster from its glb, skinned on the CPU, its clips
 // played in turn, drawn by bgfx through Vulkan. Not the game -- a check that bgfx, GLFW,
-// cgltf and our shaders work off the Mac. docs/reference/windows-linux-test.md; built by build.sh.
+// cgltf and our shaders work off the Mac. docs/reference/windows-linux-test.md; built by mu build.
 #include <bgfx/bgfx.h>
 #include <bx/math.h>
 #if defined(_WIN32)

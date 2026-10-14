@@ -161,7 +161,7 @@ def main() -> int:
     for name, (item, centre, edge, glow, turn) in PETS.items():
         glb = WORKSHOP / item / f"{Path(item).name}.glb"
         if not glb.exists():
-            print(f"missing {glb}: build it with tools/asset.sh {Path(item).name}",
+            print(f"missing {glb}: build it with pipeline/asset.sh {Path(item).name}",
                   file=sys.stderr)
             return 1
         # The render is kept beside the model in workshop/ and reused while the model is older,

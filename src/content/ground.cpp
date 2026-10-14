@@ -316,7 +316,7 @@ bool readLayer(const core::Json& node, const std::string& dir, const core::Json&
     // The cooked sheet if the cook has been run, the source .png if it has not. The land's
     // 27 sheets are 1536 square and are half of everything the cook writes, so reading them
     // as BC7 with their mip chains already in them is most of what the cook is for. The
-    // manifest is asked rather than the name being rebuilt here: tools/cook.py decides what
+    // manifest is asked rather than the name being rebuilt here: pipeline/cook.py decides what
     // a cooked file is called and this should not hold a second opinion.
     auto sheet = [&](const std::string& name, TextureRole role, const char* roleName) {
         bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;

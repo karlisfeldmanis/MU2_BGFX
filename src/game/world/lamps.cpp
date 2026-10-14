@@ -369,7 +369,7 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
     }
     if (!bgfx::isValid(sheet_) && !fires_.empty()) {
         core::logError("no cooked 'fire' sheet: %zu fires will burn with no flame drawn "
-                       "(tools/cook.py --only showing)", fires_.size());
+                       "(pipeline/cook.py --only showing)", fires_.size());
     }
     core::logf("lamps: %zu lights (%zu lighting only their own side of their holder, %u left out "
                "by spacing), %zu fires, %zu flickering glows; sheets: fire %s, ember %s, smoke %s",

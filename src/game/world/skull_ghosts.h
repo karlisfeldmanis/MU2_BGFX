@@ -1,6 +1,6 @@
 // Aida's skull ghosts: MU's RenderAidaObjectVisual arm for type 70 (GMAida.cpp:243-252),
 // Object71, five hidden skulls (tiles 91,174 to 242,46), cooked as world anchors of kind 22
-// (tools/cook_anchors.py) with the box's Scale in the emitter's `high`.
+// (pipeline/cook_anchors.py) with the box's Scale in the emitter's `high`.
 //
 // In the first 30 ms of every 1024 ms of the clock, one reference frame in five, a box raises
 // a MODEL_GHOST -- about one a skull every seven seconds. Its life (ZzzEffect.cpp:572-588,

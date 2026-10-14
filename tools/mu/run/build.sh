@@ -3,8 +3,8 @@
 # docs is a Release number. --debug builds beside it; --trace builds bgfx's own trace in,
 # which is where Metal's pipeline refusals become visible.
 set -e
-cd "$(dirname "$0")"
-[ -d third_party/extern/bgfx.cmake/bgfx ] || ./bootstrap.sh
+cd "$(dirname "$0")/../../.."
+[ -d third_party/extern/bgfx.cmake/bgfx ] || ./mu bootstrap
 
 dir=out/build; type=Release; extra=()
 case "$1" in

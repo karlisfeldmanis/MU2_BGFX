@@ -57,7 +57,7 @@ inline void fillSettings(const gfx::Window& window, const core::Args& args,
 
 // What the rows changed, onto the window: the display, the window's size while it is one, and
 // v-sync. The volume is the caller's to hand its sound. All of it goes back into the run's args,
-// so the other screen opens on it too, and into options.txt when the run is main.sh's
+// so the other screen opens on it too, and into options.txt when the run is mu play's
 // --remember one. The window's new size reaches the renderer on the next pump.
 inline void applySettings(gfx::Window& window, const game::Menu::Settings& set,
                           core::Args& args) {

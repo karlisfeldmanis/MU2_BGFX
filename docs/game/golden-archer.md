@@ -196,7 +196,7 @@ Only seven Skeleton Archers spawn on Dungeon 1. Either keep the count at seven, 
   Marlon's, Peia's and Devin's do, or does each link repeat on its own?
 - **The Gorgon.** Step 4 asks for one kill. The Gorgon's respawn (10 s in OpenMU) is dungeon-port
   decision 4, and a boss pace would make the kill mean more.
-- **Voice: chosen 2026-09-30.** `tools/voice.py` VOICES `"golden_archer"`: bm_george, three
+- **Voice: chosen 2026-09-30.** `pipeline/voice.py` VOICES `"golden_archer"`: bm_george, three
   semitones down, with an undertone an octave below, a hollow ring and a crypt echo. The user
   heard five finishes on "Stop there... You are alive, and you mean to go down. Few who do...
   come back." and took the second, "two voices". The pages get read once the text is final and

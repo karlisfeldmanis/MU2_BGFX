@@ -1,6 +1,6 @@
 {
   "world": "atlans",
-  "summary": "What the extraction cannot know, for Atlans: its townspeople in the safe basin. Version075's one (Atlans.cs:51-54) and Amy, who is the repack's. The game stands them from tools/cook.py's FOLK_VERSION075[7]; these rows are what puts their figures in Atlans's figure cook.",
+  "summary": "What the extraction cannot know, for Atlans: its townspeople in the safe basin. Version075's one (Atlans.cs:51-54) and Amy, who is the repack's. The game stands them from pipeline/cook.py's FOLK_VERSION075[7]; these rows are what puts their figures in Atlans's figure cook.",
   "spawns": [
     {
       "model": "Storage01",

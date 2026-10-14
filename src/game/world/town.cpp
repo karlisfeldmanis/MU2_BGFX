@@ -59,7 +59,7 @@ bool Town::readTable(const std::string& assetDir, const std::string& world) {
 
     std::vector<uint8_t> bytes = core::readFile(townPath);
     if (bytes.empty()) {
-        core::logf("no cooked town at %s -- the land will stand empty. tools/cook.py writes it",
+        core::logf("no cooked town at %s -- the land will stand empty. pipeline/cook.py writes it",
                    townPath.c_str());
         return false;
     }
@@ -196,7 +196,7 @@ void Town::append(const content::TownInstance& instance, std::vector<gfx::Drawab
 
 bool Town::drawableOf(const content::TownInstance& instance, gfx::Drawable& drawable) const {
     if (instance.model >= meshes_.size()) return false;
-    // Bit 1 is a roof. tools/cook.py.
+    // Bit 1 is a roof. pipeline/cook.py.
     if (roofsHidden_ && (instance.flags & 2) != 0) return false;
     // Bit 3 is held back: cooked hidden until the world shows it, or hidden since (setHidden).
     if ((instance.flags & 8) != 0) return false;
@@ -221,7 +221,7 @@ bool Town::drawableOf(const content::TownInstance& instance, gfx::Drawable& draw
     // way from the day the cook started writing them skinned. See Renderer::kBindRow.
     drawable.paletteRow = paletteRows_[index];
     drawable.sway = (instance.flags & 16) != 0;
-    // Bit 5: MU draws it again in RENDER_CHROME | RENDER_BRIGHT (tools/cook.py CHROMED_BY_WORLD,
+    // Bit 5: MU draws it again in RENDER_CHROME | RENDER_BRIGHT (pipeline/cook.py CHROMED_BY_WORLD,
     // Tarkan's golden orbs) -- the +7 chrome in white, as a figure's `plus` carries it.
     if ((instance.flags & 32) != 0) {
         drawable.refine = 7;

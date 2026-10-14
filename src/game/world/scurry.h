@@ -39,7 +39,7 @@ namespace mu::game {
 class Sound;
 
 // What a world runs along its floor is its manifest's `crawls` (game/world/world_show.h), by the
-// model name tools/cook.py's CRAWLS cooks it under: the Dungeon's rats and Tarkan's scarabs.
+// model name pipeline/cook.py's CRAWLS cooks it under: the Dungeon's rats and Tarkan's scarabs.
 // MoveFishs' other arms are Lorencia's fish (not built, see boids.h) and maps this game does not
 // have.
 

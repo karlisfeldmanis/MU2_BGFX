@@ -43,7 +43,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     const std::string path = core::join(assetDir, "cooked/" + world + "/" + world + ".mur");
     std::string error;
     if (!content::loadTables(path, tables_, error)) {
-        core::logError("no rules for %s: %s (tools/cook.py --world %s --only tables)",
+        core::logError("no rules for %s: %s (pipeline/cook.py --world %s --only tables)",
                        world.c_str(), error.c_str(), world.c_str());
         return false;
     }
@@ -177,7 +177,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // and a monster nobody can see that hits the hero from the grass is a bug in any world --
     // it is what Noria's goblins were on the day its land was first stood up bare (2026-09-28),
     // with not one of its 16 breeds cooked. The nests come back breed by breed as each is
-    // cooked (tools/cook.py --only figures), with no change here. Lorencia cooks every breed
+    // cooked (pipeline/cook.py --only figures), with no change here. Lorencia cooks every breed
     // it spawns, so this takes nothing from it. The headless hunt raises the whole table: it
     // draws nothing, so there is nothing to be invisible in. Nor on a server, whose realm has
     // every nest: a breed not cooked here is drawn as nothing and still fought.

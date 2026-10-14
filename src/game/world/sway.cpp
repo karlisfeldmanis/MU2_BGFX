@@ -138,7 +138,7 @@ bool Sway::open(const std::string& assetDir, const std::string& world, const Tow
         instance.figure.smoothKeys(true);
         // MU's `o->Velocity = 0.f`: its first key, forever. And, OURS, a placement the cook
         // found buried past 60% of its height (bit 2): MU's thicket of sunk Tree01 crowns,
-        // which swaying as whole trees read as bushes on springs. tools/cook.py says more.
+        // which swaying as whole trees read as bushes on springs. pipeline/cook.py says more.
         if (still.count(name) || (placement.flags & 4)) {
             instance.clipRate = 0.0f;
             ++held;

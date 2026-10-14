@@ -4765,7 +4765,7 @@ void testPerches(const content::Tables& tables) {
           "a box on a NoMove tile is refused where he stands");
 }
 
-// Atlans's four lean boxes in the basin (tools/cook.py PERCHES[7]): MU's Pose, turned to the box.
+// Atlans's four lean boxes in the basin (pipeline/cook.py PERCHES[7]): MU's Pose, turned to the box.
 // 15,23 stands on one of the eleven tiles MuMain's grid closes and WebZen's official grid leaves
 // open (pipeline/terrain.py OPEN_BY_MAP[7]), so it leans; 23,26 is NoMove in every grid, MU's
 // included, and is refused where he stands, as MU's click on it is.
@@ -12947,7 +12947,7 @@ int main() {
     std::string error;
     if (!content::loadTables(path, tables, error)) {
         std::printf("sim_test: %s: %s\n", path.c_str(), error.c_str());
-        std::printf("  (run tools/cook.py --world lorencia --only tables first)\n");
+        std::printf("  (run pipeline/cook.py --world lorencia --only tables first)\n");
         return 1;
     }
     std::printf("tables: %zu breeds, %zu nests, %u monsters, grid %d\n", tables.kinds.size(),

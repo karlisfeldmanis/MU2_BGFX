@@ -1,6 +1,6 @@
 #!/bin/zsh
 # Fetches what the build needs and git does not keep: bgfx (with bx and bimg), cgltf,
-# stb_image and miniaudio. Run once; build.sh calls it when third_party/extern/ is missing.
+# stb_image and miniaudio. Run once; mu build calls it when third_party/extern/ is missing.
 #
 # Pinned by commit. An unpinned dependency moves under the frame and a number measured last
 # week stops meaning anything -- which this file said at the top while fetching two of its
@@ -8,7 +8,7 @@
 # BYTE-IDENTICAL to the copy in third_party/extern/ that every number in docs/ was measured against, so
 # the pins record what is here rather than changing it.
 set -e
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../../.."
 
 # bgfx.cmake, with bgfx, bx and bimg as submodules. This is the revision MU4 was built and
 # measured against; its submodules come with it.

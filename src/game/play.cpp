@@ -569,7 +569,7 @@ void Play::update(double seconds) {
                     const std::string& figure = tables_.kinds[size_t(summon->kind)].figure;
                     const FigureBody* look = figures_->body(figure);
                     // A breed this world's figure table does not carry fights undrawn, and says
-                    // so: cooked per world (tools/cook.py --only figures), a summon is only as
+                    // so: cooked per world (pipeline/cook.py --only figures), a summon is only as
                     // visible as the world she raised it in lets it be.
                     if (!look) {
                         core::logError("summon: %s has no figure in this world", figure.c_str());

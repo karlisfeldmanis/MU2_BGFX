@@ -1073,7 +1073,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             // A box that has the keyboard has Escape too, which otherwise quits.
             ctx.window.setTyping(desk_.typing());
             // What the menu's Options changed: the display, the window's size, v-sync, the
-            // volume and the counter in the corner. Kept in options.txt when main.sh ran us
+            // volume and the counter in the corner. Kept in options.txt when mu play ran us
             // (--remember). The window's new size reaches the renderer on the next pump.
             if (desk_.settingsChanged()) {
                 const game::Menu::Settings& set = desk_.settings();

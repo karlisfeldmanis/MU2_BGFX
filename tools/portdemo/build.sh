@@ -18,7 +18,7 @@ MONSTER=DeathKnight01
 OUT=$ROOT/build/portdemo-$OS
 mkdir -p $OUT/shaders/spirv
 
-# The shaders, by the Mac's own shaderc (build.sh's build makes it); SPIR-V is one file for both.
+# The shaders, by the Mac's own shaderc (mu build's build makes it); SPIR-V is one file for both.
 SHADERC=$ROOT/build/extern/bgfx.cmake/cmake/bgfx/shaderc
 SRC=$ROOT/tools/portdemo/shaders
 for kind in vertex:vs fragment:fs; do

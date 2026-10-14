@@ -36,7 +36,7 @@ HALO = 5     # pixels of shadow round the figure
 def one(name: str, stem: str, lean: float) -> int:
     glb = WORKSHOP / "weapons" / stem / f"{stem}.glb"
     if not glb.exists():
-        print(f"missing {glb}: build it with tools/asset.sh {stem}", file=sys.stderr)
+        print(f"missing {glb}: build it with pipeline/asset.sh {stem}", file=sys.stderr)
         return 1
     figure = glb.with_name(f"{stem}_ghost_figure.png")
     if not figure.exists() or figure.stat().st_mtime < glb.stat().st_mtime:

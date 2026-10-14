@@ -151,7 +151,7 @@ The sprint 4 lesson that put that rule there still holds and is kept where it be
 blue is metal 1.0, a metal surface has no diffuse, and a material whose ORM failed to load drew
 black while looking like a loading bug. It cannot recur through the factors, because the cook
 writes metal 0 where a material states neither a map nor a `metallicFactor`, deliberately
-departing from glTF's default of 1.0. See `tools/cook.py`'s `orm_factors`.
+departing from glTF's default of 1.0. See `pipeline/cook.py`'s `orm_factors`.
 
 `light.png` is MU's baked terrain light. The ground mesh carries it per vertex in
 `COLOR_0.rgb` rather than sampling the picture, and **it multiplies the albedo, before any
@@ -177,7 +177,7 @@ a mipped attribute grid averages walkable together with blocked and nothing comp
 down a chain thins a leaf until it vanishes at distance, and the answer is to rescale each
 level's alpha so it holds the coverage the top level had. `content/texture.cpp` does not do
 it: it averages alpha flat and says so on the line that does it. That rescale belongs in
-`tools/cook.py` in sprint 3, with the BC7 blocks, because it wants the whole chain in hand
+`pipeline/cook.py` in sprint 3, with the BC7 blocks, because it wants the whole chain in hand
 and it is not worth paying for at load — and until sprint 3 there is no cutout content in
 this engine to thin. A rule nothing keeps is worse than no rule, so it is written here as
 what is owed rather than as what is done.
@@ -197,11 +197,11 @@ These are bgfx-on-Metal facts, found by MU4 the slow way.
 - **A depth texture can be read twice**, once through the compare sampler and once as plain
   depth on another stage. The soft shadow needs both.
 - **Debugging a refusal**: a second build directory configured with `-DBX_CONFIG_DEBUG=ON`
-  (`./build.sh --trace`) routes bgfx's own trace into our log, which is where the refusals
+  (`./mu build --trace`) routes bgfx's own trace into our log, which is where the refusals
   become visible at all.
 
 And this bgfx revision's own API, which is newer than most writing about it (pinned in
-`bootstrap.sh`; these four cost an afternoon between them):
+`mu bootstrap`; these four cost an afternoon between them):
 
 - **The window goes on `Init::swapChain.nwh`**, with the size, the colour and depth formats
   and the frame latency beside it. `Init::resolution` is gone, and `platformData.nwh` alone

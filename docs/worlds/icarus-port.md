@@ -47,7 +47,7 @@ Seen in muted `--play` runs at the door (15,13): flying on Satan's wings in a fa
 
 **The cloud road (2026-10-06, the user: 'lets migrate other effects which icarus had for that sky
 effect').** Step 5's banks, MU's own (decision 3's first half):
-- `game/world/sky_clouds.*`: the 335 Object01-06 boxes cooked as world anchors, kinds 12-17 (`EmitterKind::Cloud0` + the box's type; `tools/cook.py` `ANCHOR_KINDS_BY_WORLD["icarus"]`, no light). Each throws MU's 20 (types 0-2) or 10 (3-5) standing `clouds.jpg` puffs: scattered +-2.5 m and 20-39 units up, Scale 1.8-2.0 of the 256-texel sheet (4.6-5.1 m), light 0.1, added, bobbing 20 units on a 31 s sine, turning about a turn in sixteen seconds one way or the other by the type (or by index for 0 and 3). 3800 puffs in all; drawn within 30 m of the camera's point (400 at the door, 730 at 55,75).
+- `game/world/sky_clouds.*`: the 335 Object01-06 boxes cooked as world anchors, kinds 12-17 (`EmitterKind::Cloud0` + the box's type; `pipeline/cook.py` `ANCHOR_KINDS_BY_WORLD["icarus"]`, no light). Each throws MU's 20 (types 0-2) or 10 (3-5) standing `clouds.jpg` puffs: scattered +-2.5 m and 20-39 units up, Scale 1.8-2.0 of the 256-texel sheet (4.6-5.1 m), light 0.1, added, bobbing 20 units on a 31 s sine, turning about a turn in sixteen seconds one way or the other by the type (or by index for 0 and 3). 3800 puffs in all; drawn within 30 m of the camera's point (400 at the door, 730 at 55,75).
 - The lit edge: on MU's flash (one frame in fifty), one time in ten a bank in reach takes `cloudLight.jpg` at Scale 0.5 in a dim random colour, shrinking out over eight frames.
 - Effect sheets `cloud` and `cloud_light` (`content/effects/clouds/`, decoded from `Effect/clouds.OZJ` and `cloudLight.OZJ`).
 
@@ -106,7 +106,7 @@ session's texcook was at 563% CPU and the view timers summed past the frame; the
 **Objects batch 1: the balustrade (2026-10-06, the user: 'lets start to work with icarus objects
 if we are done with effects').** Object11, 180 placements, from `content/world/icarus/Object11.{json,obj}`:
 sheets `ic_top02_r` and `ic_gyg_r` (both marble), built static (its six bones hold one key; bone 3,
-Bone01 at -139.9, 0, 500.6 units, is where the motes will rise from). `tools/cook.py` `FLAT_OVER_VOID`
+Bone01 at -139.9, 0, 500.6 units, is where the motes will rise from). `pipeline/cook.py` `FLAT_OVER_VOID`
 takes icarus, so none of the placements, which stand 3 m under the plane as MU's, is held as buried.
 MU's height kept (decision 4). MU draws the gyg_R statue card opaque (a 0.65 x 1.7 m card on the
 pillar's face, two on the arch's spandrels); in our light they read as photographs in black boxes
@@ -149,7 +149,7 @@ ribbons drifting round him, 258 fps. At MU's light; not yet judged.
 
 **The dragons (2026-10-06, the user: 'next').** MU's Monster32 (MODEL_DRAGON_, the Red Dragon's
 body) built as `content/world/icarus/Dragon01` with its one clip, action 7 (MONSTER01_DIE + 1), its
-sheets `ic_drr_01-03` (chitin), and cooked through `tools/cook.py` AIRS. `game/world/flight`'s new
+sheets `ic_drr_01-03` (chitin), and cooked through `pipeline/cook.py` AIRS. `game/world/flight`'s new
 dragon mode is CreateDragon and MoveBoidGroup (`GOBoid.cpp:824-851, 1140-1196`): three, born again
 the frame one is gone, within 20 m of him and 6 m under him, a random heading, Scale 0.30-0.40,
 Velocity 0.2-0.38: gliding straight at Velocity x 25 units a frame (MoveBoid would turn one by
@@ -1345,23 +1345,23 @@ python3 pipeline/decode_texture.py $D/Object11/cloud.OZJ content/textures/ic_clo
 python3 pipeline/decode_texture.py $D/Object11/top02_R.OZJ content/textures/ic_top02_r.png
 python3 pipeline/decode_texture.py $D/Object11/gyg_R.OZJ content/textures/ic_gyg_r.png
 #    content/world/icarus/ground.json: no sheet_materials while undrawn
-./tools/content.sh --world icarus && ./tools/sync.sh --world icarus --only-world && ./tools/sync.sh
-./tools/cook.py --world icarus --only tables
+./pipeline/content.sh --world icarus && ./pipeline/sync.sh --world icarus --only-world && ./pipeline/sync.sh
+./pipeline/cook.py --world icarus --only tables
 #    then index.py (house rule: build-only skips the index), and every world's tables after new items
 # objects: export per kind into content/world/icarus/, sheets ic_-prefixed
-dotnet tools/MuExtract/bin/Debug/net10.0/muextract.dll export-obj $D/Object11/Object11.bmd content/world/icarus/Object11.obj
-dotnet tools/MuExtract/bin/Debug/net10.0/muextract.dll export-rig $D/Object11/Object11.bmd content/world/icarus/Object11.rig.json --actions=all
+dotnet pipeline/MuExtract/bin/Debug/net10.0/muextract.dll export-obj $D/Object11/Object11.bmd content/world/icarus/Object11.obj
+dotnet pipeline/MuExtract/bin/Debug/net10.0/muextract.dll export-rig $D/Object11/Object11.bmd content/world/icarus/Object11.rig.json --actions=all
 #   rigs for 08, 09, 10 (animated); 11 and 15 carry static bones
-./tools/asset.sh icarus/Object11 --build-only && python3 pipeline/index.py source workshop
-./tools/cook.py --world icarus --only textures   # textures before --only meshes (house rule)
-./tools/cook.py --world icarus --only meshes / placements
+./pipeline/asset.sh icarus/Object11 --build-only && python3 pipeline/index.py source workshop
+./pipeline/cook.py --world icarus --only textures   # textures before --only meshes (house rule)
+./pipeline/cook.py --world icarus --only meshes / placements
 ```
 
 **Sheet prefix: `ic_`.** Nothing in `content/textures` uses it today. Names that collide without one: `cloud` (generic), `top02_R` (the Lost Tower and others have `top*` sheets), `test12_H`, Effect's `clouds` (Blood Castle's void clouds use their own sheet, `pipeline/cloud_sheet.py`).
 
 **What else differs from the worlds already built:**
 - **No ground mesh at all** (above). Every placement stands three metres under the walking plane, so:
-  - `FLAT_OVER_VOID` (`tools/cook.py:1233`) must include `icarus`, or the buried test flags every object (their feet are 3 m under the "ground").
+  - `FLAT_OVER_VOID` (`pipeline/cook.py:1233`) must include `icarus`, or the buried test flags every object (their feet are 3 m under the "ground").
   - `GROUNDED_TYPES` must stay empty: grounding would lift the ruins onto the invisible plane.
   - The figure's light: MU lights a character by the TerrainLight under it (BodyLight). Icarus's paint is grey 50 off the strip and white 180-255 along the west stem; it would flicker a walker from dark to bright as he crosses its blots. Decision 4.
 - **Hidden types survive as emitters:** 335 cloud anchors, a new `ANCHOR_KINDS_BY_WORLD["icarus"]` kind (e.g. 12, "cloud bank", no light) for a new `game/world/cloud_road.*` or an extension of `void_clouds`. They carry the road's whole look.
@@ -1441,7 +1441,7 @@ The body file is `Monster{MONSTER_MODEL + 1:02}.bmd` (`MM/Engine/Object/ZzzOpenD
 | mPhoenix1, mPhoenixAttack1 | 215314, 132234 | no | Dark Phoenix (`:3782-3788`; no death sound, `-1`). `mPhoenix2.wav` 96740 and `ePhoenixExp.wav` 26270 ship but this path does not load them |
 | Music/**icarus.mp3** | 3292999 | no | `PlayMp3(MUSIC_ICARUS)` always on the map (`SceneManager.cpp:1054-1059`) |
 
-That is 16 monster wavs, the ambient bed and one mp3. There are no footsteps while flying (`ZzzCharacter.cpp:5349-5353`) and no wind loop (`SOUND_WIND01` stopped). New sounds go through `index.py` and then `tools/cook.py --only showing` (house rule).
+That is 16 monster wavs, the ambient bed and one mp3. There are no footsteps while flying (`ZzzCharacter.cpp:5349-5353`) and no wind loop (`SOUND_WIND01` stopped). New sounds go through `index.py` and then `pipeline/cook.py --only showing` (house rule).
 
 ---
 
@@ -1544,7 +1544,7 @@ Written 2026-10-06, read-only: no repo file was edited, no cook was run, no wind
 - WZ = the 99z repack data an earlier session extracted (`/private/tmp/claude-501/-Users-karlisfeldmanis-Documents-muremaster2-MU2-BGFX/5770e6b4-410c-4720-aca8-388135fec063/scratchpad/wz/Data`, cp949, not in the repo). The 2012 repack, not WebZen's official data; read its numbers with care.
 - WZS = WebZen GameServer 1.00.93's partial source an earlier session saved (`/private/tmp/claude-501/-Users-karlisfeldmanis-Documents-muremaster2-MU2-BGFX/9142efc4-e29e-4d88-9ee6-bb4831450426/scratchpad/wz/Source/Server Side/GameServer/`: `user.cpp`, `protocol.cpp`, `gObjMonster.cpp` only). Icarus there is `NEW_SKILL_FORSKYLAND` and `MAP_INDEX_ICARUS`.
 
-Line numbers are HEAD `ecf5089e` plus the working tree as found. `git status` in MU2_BGFX at the start: modified `docs/game/tarkan-quest.md`, `content/npc/NpcSenatus.json`, `tools/cook.py` (+7), `tools/voice.py` (+8); untracked `content/voice/keeper/`, `keeper_1/`, `lirien_2/`, `content/voice/ref/keeper_cv_eighties.wav` and `content/world/tarkan/placements.json`. Another session is live: `content/mu.db-shm` was touched at 17:03 today, the WAL is 0 bytes. Any Icarus step that touches `tools/cook.py` must read `git diff` first (memory: another session edits the same files).
+Line numbers are HEAD `ecf5089e` plus the working tree as found. `git status` in MU2_BGFX at the start: modified `docs/game/tarkan-quest.md`, `content/npc/NpcSenatus.json`, `pipeline/cook.py` (+7), `pipeline/voice.py` (+8); untracked `content/voice/keeper/`, `keeper_1/`, `lirien_2/`, `content/voice/ref/keeper_cv_eighties.wav` and `content/world/tarkan/placements.json`. Another session is live: `content/mu.db-shm` was touched at 17:03 today, the WAL is 0 bytes. Any Icarus step that touches `pipeline/cook.py` must read `git diff` first (memory: another session edits the same files).
 
 Template: tarkan-port.md Part C (`docs/worlds/tarkan-port.md:1472-1923`), checked against what Tarkan's build really needed (its "Where it stands", `:16-91`, and "Traps", `:183-205`) and atlans-port.md Part C (`:1281-1791`).
 
@@ -1626,13 +1626,13 @@ Models and scales are MuMain's `CreateMonster` (`MM/Engine/Object/ZzzCharacter.c
 | P5 | `terrain.py:216-259` `VOID_BY_MAP`, `:274` `OPEN_BY_MAP`, `:295` `VOID_FILL_BY_MAP` | new: a **sky** row (§3.1). The cheapest form is a world-json key, `"sky": true`, that terrain.py writes from a `SKY_BY_MAP = {10}` set and the runtime reads (no attribute changes) |
 | P6 | `terrain.py:390-397` and `pipeline/index.py:44-51` `OPERABLE_BY_MAP` | none: MOVEMENT_OPERATE has no Heaven arm |
 | P7 | `pipeline/index.py:58-78` `GATE_BOXES_BY_MAP` | `10: [(14, 12, 16, 12), (14, 13, 16, 13)]`, and **a map 4 row**, which does not exist yet: at least `(17, 249, 19, 249), (17, 250, 19, 250)` for the LT7 door, and the tower's own stairs while it is open (the fourth Part C to note that 4 and 11 are missing). Then recook **both** worlds' tables |
-| P8 | `content/world/icarus/ground.json` -> `tools/content.sh` | **a ground must still be built**: `index.py worlds()` skips a world whose `<name>_ground.glb` is missing (`:1519-1527`), and `Ground::load` needs its surfaces. The cheapest: one sheet for the flat TileGrass01, built and never drawn (P5). Prefix `ic_` if any sheet is named (pass B) |
+| P8 | `content/world/icarus/ground.json` -> `pipeline/content.sh` | **a ground must still be built**: `index.py worlds()` skips a world whose `<name>_ground.glb` is missing (`:1519-1527`), and `Ground::load` needs its surfaces. The cheapest: one sheet for the flat TileGrass01, built and never drawn (P5). Prefix `ic_` if any sheet is named (pass B) |
 | P9 | `content/mu.db` `gates` | **no row**: Icarus has no spawn gate. The death landing is `MapRow.home` (§4.4) |
 | P10 | `pipeline/index.py worlds()` (`:1503-`) | automatic once the ground is built; run index.py after `--build-only` (memory) |
-| P11 | `pipeline/index.py` `EFFECTS` | new rows: `"cloud"` (`Effect/clouds.jpg`, BITMAP_CLOUD) and `"cloud_light"` (`Effect/cloudLight.jpg`). Already there: `joint_spirit` (`:575`), `rain` (`:641`), `void_clouds` (`:337`), `light`. Then `tools/cook.py --only showing` |
+| P11 | `pipeline/index.py` `EFFECTS` | new rows: `"cloud"` (`Effect/clouds.jpg`, BITMAP_CLOUD) and `"cloud_light"` (`Effect/cloudLight.jpg`). Already there: `joint_spirit` (`:575`), `rain` (`:641`), `void_clouds` (`:337`), `light`. Then `pipeline/cook.py --only showing` |
 | P12 | the effect model `Object11/cloud.bmd` | MoveHeavenThunder's MODEL_CLOUD (§3.4). An `_models(root, build, "icarus")` folder beside `"tarkan"` (`index.py:2057`), if it is built |
 
-#### 1.2 The cook (`tools/cook.py`)
+#### 1.2 The cook (`pipeline/cook.py`)
 
 | key | line | Icarus |
 |---|---|---|
@@ -1902,7 +1902,7 @@ Append after "Tarkan" (`realm_travel.cpp:47`): `kTravels` becomes 16 (`travel.h:
    - the count is 65, by kind 69x11, 70x6, 71x10, 72x12, 73x6, 74x6, 75x12, 77x1;
    - none on a closed tile (already checked on the scratch grid: 0 of 64 closed);
    - the Phoenix at 34,238.
-4. Checkpoint the WAL; run `pipeline/index.py`; `tools/cook.py --world icarus --only tables`, **then the other nine worlds' tables**.
+4. Checkpoint the WAL; run `pipeline/index.py`; `pipeline/cook.py --world icarus --only tables`, **then the other nine worlds' tables**.
 5. Figures one breed at a time: `--only figures --world icarus --monsters <Name>`. Monster51-57 are in `D/Monster`; none is in `content/monsters/` yet.
 6. `realm_tuning.h` rows: `kResistances`, `kDropRates`, `kBosses` (+77; decision 7).
 7. Sounds: `sounds.json` monster events from §0's wavs, plus `world_heaven`; `index.py`; `--only showing`.
@@ -1918,9 +1918,9 @@ Append after "Tarkan" (`realm_travel.cpp:47`): `kTravels` becomes 16 (`travel.h:
 **Step 1: cook the ground and set the lighting** (bare sky, reachable by `--world icarus`).
 - `terrain.py`: `HIDDEN_BY_MAP[10] = {0..5}`, `GRASS_BY_MAP[10] = []`, `SKY_BY_MAP = {10}` writing `"sky": true`. index.py `GATE_BOXES_BY_MAP[10]` and `[4]`.
 - Run `python3 pipeline/terrain.py $D/World11 icarus content/world 11` (expect flat 2.85 m, 10.7% walkable, 0.0% safe, 670 placed).
-- `content/world/icarus/ground.json` (one TileGrass01 sheet, built so `worlds()` lists it, never drawn), `tools/content.sh --world icarus`, sync, `--only ground`, `index.py`, `--only tables`.
+- `content/world/icarus/ground.json` (one TileGrass01 sheet, built so `worlds()` lists it, never drawn), `pipeline/content.sh --world icarus`, sync, `--only ground`, `index.py`, `--only tables`.
 - Engine: `Ground` honours `sky`; the sheet's `clear_colour` reaches `renderer.cpp:979`; `maps.cpp` row `{"icarus", 10, {15, 13}, false, 2}`; `arrival.cpp`; `minimap.cpp case 10`; `content/sheets/worlds/icarus.json` with `clear_colour` (3, 25, 44)/256 in linear and `dust_colour` matching it (pass B's look on top).
-- Check: `./run.sh --headless --world icarus --ticks 200 --no-hand` logs `grid 256 ... map 10` and the ground's part count **0**; the `.mur` header's safe box is zero; a headless death lands in Devias at 207,42; `checks`. **Seen**: muted shots at the door (15,13), the Alquamos (25,35), the Drakans (55,75) and the Phoenix's island (34,236): blue under everything, no grass plain, fps from the log.
+- Check: `./mu run --headless --world icarus --ticks 200 --no-hand` logs `grid 256 ... map 10` and the ground's part count **0**; the `.mur` header's safe box is zero; a headless death lands in Devias at 207,42; `checks`. **Seen**: muted shots at the door (15,13), the Alquamos (25,35), the Drakans (55,75) and the Phoenix's island (34,236): blue under everything, no grass plain, fps from the log.
 
 **Step 2: the gates and the flight rule.** `gates.cpp` 62/63/64/65 (levels per decision 2), `EnterGate::fly`, the Barred reason and its line, `canFly`, Uniria's refusal, the unequip refusal, the home-when-grounded check, no summons on 10; the Lost Tower's tables recooked for its boxes; `testIcarusEntry`, `testIcarusGates`. Check: `checks`; headless LT7 `--at 18,250 --level L --give <wing stem>` logs `Gated 62`, and without the wing `Barred` for flight. **Seen**: a muted walk through the door both ways, flying.
 
