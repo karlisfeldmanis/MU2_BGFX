@@ -52,10 +52,6 @@ a:hover { color: var(--bone-hi); }
 
 /* Register */
 .hero { position: relative; overflow: hidden; }
-.hero > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
-.hero::after { content: ""; position: absolute; inset: 0;
-  background: radial-gradient(ellipse 50% 70% at 50% 55%, rgba(13,11,10,.8) 0%, rgba(13,11,10,.45) 100%),
-              linear-gradient(180deg, rgba(13,11,10,0) 70%, var(--ground) 100%); }
 .hero-inner { position: relative; z-index: 1; max-width: 440px; margin: 0 auto; padding: 56px 24px 96px;
   display: flex; flex-direction: column; align-items: center; }
 .logo { display: block; width: min(200px, 60%); height: auto; }
@@ -96,7 +92,6 @@ footer { padding: 64px 24px 40px; box-shadow: inset 0 1px 0 #1E1814; display: fl
 <body>
 
 <section id="register" class="hero" aria-label="Create account">
-<img src="/wallpaper.jpg" alt="">
 <div class="hero-inner">
 <img class="logo" src="/logo.png" alt="MU Classic" width="421" height="231">
 

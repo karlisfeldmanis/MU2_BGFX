@@ -7,7 +7,7 @@ Design: the "MU2 Launcher" canvas, Website page.
 | File | What |
 | --- | --- |
 | `server.py` | the page, `/api/register`, `/api/login`, `/api/logout`, `/api/me`, `/api/downloads`, and `/internal/session` for mu2_server |
-| `site/` | `index.html`, the wallpaper and the logo |
+| `site/` | `index.html` and the logo |
 | `Caddyfile` | HTTPS on 37.27.158.226 (a Let's Encrypt IP certificate), installers from disk, the rest to server.py |
 | `mu2-web.service` | the systemd unit; accounts in `/var/lib/mu2-web/accounts.db` |
 | `deploy.sh` | HEAD's `web/` to `/opt/mu2-web`, Caddy installed if missing, both restarted |
