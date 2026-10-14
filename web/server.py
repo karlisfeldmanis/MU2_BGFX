@@ -47,10 +47,10 @@ EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]+\.[^@\s]+$")
 SCRYPT = dict(n=2**14, r=8, p=1, maxmem=64 * 1024 * 1024, dklen=32)
 
 # What the page offers each system: on Windows the launcher (src/launcher/), which installs and
-# updates the game itself (docs/plans/launcher.md, L4); on the Mac the double-click installer,
-# MU2Install.command (L5 -- it fetches the launcher without quarantine; the DMG is beside it for
-# those who rather drag the app themselves). A file not there leaves its button saying so.
-DOWNLOADS = {"windows": "MU2Launcher.exe", "macos": "MU2Install.command"}
+# updates the game itself (docs/plans/launcher.md, L4); on the Mac the app in a DMG (L5 -- the
+# double-click installer file is served too for macOS before 27, which let quarantined scripts
+# run; 27 refuses them outright). A file not there leaves its button saying so.
+DOWNLOADS = {"windows": "MU2Launcher.exe", "macos": "MU2.dmg"}
 
 # What a machine report may carry, and how long each field may be (the launcher's engine,
 # reportMachine). The values are kept as they arrive -- a string cut to size, a number whole --
