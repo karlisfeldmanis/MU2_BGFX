@@ -35,7 +35,7 @@ mat4 boneMatrix(int bone, int base)
 
 // Joint indices arrive as uvec4: Metal reads an unsigned byte attribute only into an
 // unsigned shader type, and an ivec4 has the pipeline refused at link with no error and no
-// geometry. docs/conventions.md.
+// geometry. docs/reference/conventions.md.
 mat4 skinMatrix(uvec4 indices, vec4 weights, int base)
 {
 	mat4 m = boneMatrix(int(indices.x), base) * weights.x;

@@ -25,7 +25,7 @@ mechanised:
 
   * **The judged half.** No checker knows that a Budge Dragon's wing membrane should not wear
     `leather`. That is the user's call, it is made once by reading a shot, and it is written
-    down in `sheets/materials.json` as a ruling. After that the audit is mechanical again: a
+    down in `content/sheets/materials.json` as a ruling. After that the audit is mechanical again: a
     slot with a ruling must match its ruling, and a slot without one is listed as unruled so
     the list shrinks instead of being rediscovered.
 
@@ -246,7 +246,7 @@ class Slot:
 # The land is the documented exception to the closed material model: it has its own shader,
 # it blends two full material sets by a per-vertex weight, and its surfaces come from a
 # world's `ground_surfaces.json` rather than from a glTF material slot. Auditing its slots
-# against the library would be measuring the wrong thing. See docs/conventions.md, Materials.
+# against the library would be measuring the wrong thing. See docs/reference/conventions.md, Materials.
 def is_ground(model):
     return model.endswith("_ground")
 
@@ -560,7 +560,7 @@ KTX_FORMATS = {
     0x8C72: "BC5",
 }
 
-# What each role's cooked texture must be, from docs/conventions.md's table. A role in the
+# What each role's cooked texture must be, from docs/reference/conventions.md's table. A role in the
 # wrong colour space is the one material bug that is invisible in the source and obvious on
 # screen: an ORM read as sRGB turns roughness 0.62 into 0.35 and every surface goes glossy.
 ROLE_FORMAT = {
@@ -683,7 +683,7 @@ def check_ground(library, failures, notes):
 # ---------------------------------------------------------------------------- the sheet
 
 def read_rulings(library):
-    """sheets/materials.json: the judged half, per model and slot.
+    """content/sheets/materials.json: the judged half, per model and slot.
 
     A ruling either names a library entry -- which keeps it traced -- or gives roughness and
     metal outright, which is an invention and has to say why.

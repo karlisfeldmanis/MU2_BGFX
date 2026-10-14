@@ -10,8 +10,8 @@
 # in BASH_SOURCE, zsh in $0.
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")/.." && pwd)"
 
-CONTENT="$ROOT/source"
-SHEETS="$ROOT/sheets"
+CONTENT="$ROOT/content"
+SHEETS="$CONTENT/sheets"
 PIPELINE="$ROOT/pipeline"
 TOOLS="$ROOT/tools"
 

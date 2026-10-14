@@ -8,12 +8,12 @@ overlapping blobs, eaten into by warped noise so the edge is ragged and torn, an
 side by the density's own slope, so the tops billow and the hollows sit in shade. Grey in the
 colour, the cloud in the alpha, nothing at a cell's border. Ours, not MU's.
 
-    python3 pipeline/cloud_sheet.py [out.png]    default source/effects/clouds/void_clouds.png
+    python3 pipeline/cloud_sheet.py [out.png]    default content/effects/clouds/void_clouds.png
     python3 pipeline/cloud_sheet.py out.png SEED GRID   GRID x GRID clouds on one sheet
     python3 pipeline/cloud_sheet.py out.png SEED GRID smoke   smoky wisps instead (smoke())
 
 Icarus's road clouds are nine of these under its own seed (10, its map number), a 3x3 sheet:
-source/effects/clouds/sky_clouds.png, game/world/sky_clouds.h.
+content/effects/clouds/sky_clouds.png, game/world/sky_clouds.h.
 """
 import os
 import sys

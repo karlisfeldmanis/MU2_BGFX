@@ -1,4 +1,4 @@
-// The studio's Place (docs/order-plan.md §9c, F6): a world's objects picked, moved, turned and
+// The studio's Place (docs/plans/order-plan.md §9c, F6): a world's objects picked, moved, turned and
 // scaled where they stand, in a world scene (not the Stage).
 //
 // A click on the world picks the object under the pointer -- the nearest whose box's sphere
@@ -6,12 +6,12 @@
 // the ground as it was. The Place window holds its numbers: where, how high, its yaw, its
 // scale. Every change shows on the next frame, because the studio draws the town from its
 // cooked instances each frame (Town::gatherAll) and the instance is moved in memory; it is
-// written to source/world/<w>/<w>.json when let go, through mu serve's edit (a line in the
+// written to content/world/<w>/<w>.json when let go, through mu serve's edit (a line in the
 // journal), and the card's Cook -- `mu make placements <w>` -- makes it the cooked truth, after
 // which the world is read again. Lamps and fires move with their object only then.
 //
 // An object is found in the source by its model and where it stands. The index adds objects
-// of its own (assets/ holds more than source/), and those, which no source line holds, are
+// of its own (assets/ holds more than content/), and those, which no source line holds, are
 // shown but not moved. A `scale` the source does not write is the 1.0 the cook assumes; the
 // window's "add a scale" writes one in, after which it is dragged like the rest.
 //

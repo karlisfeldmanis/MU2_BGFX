@@ -463,7 +463,7 @@ float measurePlant(const FigureBody& body, int clip) {
             if (ranged[i] < enough) continue;
             if (now[i * 3 + 1] > lowest + nearGround) continue;
             if (was[i * 3 + 1] > lowest + nearGround) continue;
-            // A model looks down +z (docs/conventions.md), so ground passing a planted foot
+            // A model looks down +z (docs/reference/conventions.md), so ground passing a planted foot
             // carries it in -z. A foot going the other way is in the air, whatever its height.
             const float dz = now[i * 3 + 2] - was[i * 3 + 2];
             if (dz >= 0.0f) continue;

@@ -1,7 +1,7 @@
 // The skills a character can throw: what one costs, what it does to the blow, and how long it
 // is before it can be thrown again.
 //
-// `docs/skills-dk.md` is the argument; this is the table and the two formulas. Three layers, and
+// `docs/game/skills-dk.md` is the argument; this is the table and the two formulas. Three layers, and
 // which layer a number comes from is written beside it:
 //
 //   * **0.75, traced.** The mana, the clip and the knock are OpenMU's
@@ -13,7 +13,7 @@
 //     multiplier, because the user asked for the wizard's shape with the knight's stat; and the
 //     reach, because nothing here closes a gap.
 //   * **Not MU's range.** Every skill is thrown at the knight's own reach. `movesToTarget` is
-//     not implemented at all -- see `docs/skills-dk.md` §3.1a.
+//     not implemented at all -- see `docs/game/skills-dk.md` §3.1a.
 #pragma once
 
 #include <cstdint>
@@ -35,7 +35,7 @@ constexpr int32_t kCyclone = 22;
 constexpr int32_t kSlash = 23;
 // The three past 0.75, and their numbers and names are MU's own: `skill_eng.bmd`, the client's
 // string table, reads 41 Twisting Slash, 42 Rageful Blow, 43 Death Stab (the decode is
-// `docs/mu-scrolls-and-orbs.md` §7). 41 is 0.95d's and the other two are Season 6's -- they are
+// `docs/reference/mu-scrolls-and-orbs.md` §7). 41 is 0.95d's and the other two are Season 6's -- they are
 // here because §3.1b gates a skill on the weapon family and 0.75's five leave three families
 // with one key each. What each one DOES here is ours; only the name, the number and the icon
 // are MU's.
@@ -49,7 +49,7 @@ constexpr int32_t kEnergyBall = 17;
 // And his guard, the knight's Defense in the wizard's hand: MU's `AT_SKILL_SOUL_BARRIER`, taught
 // by the Scroll of Soul Barrier (group 15 number 15). Season 6 in OpenMU's tree and not 0.75; it
 // is here because the user asked for the two classes to stand level behind a shield
-// (docs/skills-dw.md, 2026-09-28).
+// (docs/game/skills-dw.md, 2026-09-28).
 constexpr int32_t kSoulBarrier = 16;
 // His first spell that has to be earned: MU's `AT_SKILL_FIREBALL`, off the Scroll of Fire Ball
 // (group 15 number 3, `Book04`), which asks forty energy to read. 0.75's own row.
@@ -158,7 +158,7 @@ constexpr int32_t kBurnEvery = 16;
 constexpr int32_t kStormFirst = 11;
 constexpr int32_t kStormEvery = 12;
 
-// ---- the weapon families (docs/skills-dk.md §3.1b) ------------------------------------------
+// ---- the weapon families (docs/game/skills-dk.md §3.1b) ------------------------------------------
 //
 // **A skill belongs to a kind of weapon, and is thrown with that kind or not at all.** The
 // user's rule, 2026-09-23. It is not an invention so much as 0.75's own arrangement made
@@ -524,7 +524,7 @@ int skillIndexOf(int32_t number);
 // 'MG can use shield skill, and also can use Soul barrier').
 bool skillFor(const SkillRow& row, Kin kin);
 
-// ---- the two formulas (docs/skills-dk.md §3.2) --------------------------------------------
+// ---- the two formulas (docs/game/skills-dk.md §3.2) --------------------------------------------
 
 // 250 weighted points would double the casts; 300 is the tuned number and is the one knob that
 // decides WHEN a build runs out of cooldown. See the anchor table in the doc.

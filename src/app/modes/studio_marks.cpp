@@ -47,7 +47,7 @@ int placeModeBar(float x, float y, float w, int mode) {
 void StudioMarks::world(Context& ctx, const std::string& name) {
     if (name == world_) return;
     world_ = name;
-    file_ = "source/world/" + name + "/world.json";
+    file_ = "content/world/" + name + "/world.json";
     picked_ = -1;
     dragging_ = released_ = false;
     said_.clear();

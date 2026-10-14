@@ -1,4 +1,4 @@
-// The studio's desk: the panels over the bench in `mu2 --studio` (docs/order-plan.md §9c, F2).
+// The studio's desk: the panels over the bench in `mu2 --studio` (docs/plans/order-plan.md §9c, F2).
 //
 // The bench mode's Studio kind owns one and calls it at four points of its frame: begin before
 // its steering, panels where the overlay's list was drawn, end after the world, and wantsPointer
@@ -23,7 +23,7 @@
 //
 // MU_STUDIO_DO="<frame>:<what>;..." does what the card would on those frames, for a shot run
 // with nobody at the mouse: `swap` (Read again), `scene <Stage|Home|world>`, `plus <N>`, `tab light` and `arena` -- until F7's
-// control socket drives the studio (docs/order-plan.md §9c). "40:scene Home;200:swap".
+// control socket drives the studio (docs/plans/order-plan.md §9c). "40:scene Home;200:swap".
 #pragma once
 
 #include <string>

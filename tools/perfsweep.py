@@ -19,7 +19,7 @@ full adds every walkable tile on a 16-tile lattice, read off the cooked grid by 
 Baselines are tools/perf/baseline_<world>.json, merged per tile by --update-baseline. A run
 flags a tile over 5.5 ms mean, a tile slower than its baseline by more than the spread (never
 under 0.1 ms, and 0.2 when a single pass gives no spread), and hitch causes the baseline never
-saw. docs/budget.md, "The sweep", says how to read the report.
+saw. docs/reference/budget.md, "The sweep", says how to read the report.
 """
 
 import argparse
@@ -36,7 +36,7 @@ BINARY = os.path.join(BUILD, "mu2")
 SPOTS = os.path.join(ROOT, "tools", "perfsweep_spots.json")
 BASELINES = os.path.join(ROOT, "tools", "perf")
 BUDGET_MS = 5.5
-# A frame this long is the machine, not the game (docs/budget.md: one frame in 570 at about a
+# A frame this long is the machine, not the game (docs/reference/budget.md: one frame in 570 at about a
 # second, a hitch that lands in some segments and not others). A pass holding one is left out
 # of the tile's mean when another pass is there to stand for it, and the report says so.
 STALL_MS = 250.0
@@ -48,7 +48,7 @@ LIST_BARE_OVER = 4.0
 # 2x frame is as likely the hump as the blow.
 ATTRIBUTE_OVER = 3.0
 # What a tile must move, beyond its launch's common drift, to be called slower: the noise floor
-# a quiet machine gives between launches (docs/budget.md, 0.2 to 2 ms), never less.
+# a quiet machine gives between launches (docs/reference/budget.md, 0.2 to 2 ms), never less.
 CHANGE_FLOOR = 0.2
 MODES = ("fight", "peaceful")
 
@@ -67,7 +67,7 @@ def say(*a):
 
 def busy():
     """What else holds the machine: the load average, any other mu2 window, and anything over
-    a third of a core. A measurement's conditions, said beside it (docs/budget.md)."""
+    a third of a core. A measurement's conditions, said beside it (docs/reference/budget.md)."""
     others = []
     try:
         out = subprocess.run(["ps", "-Ao", "pid=,pcpu=,comm="], capture_output=True,
@@ -221,7 +221,7 @@ def aggregate(rows):
 
 def threshold(now, base):
     """What a difference must clear to be called one: the larger spread, never under 0.1,
-    and 0.2 (the quiet machine's floor, docs/budget.md) when no spread was measured."""
+    and 0.2 (the quiet machine's floor, docs/reference/budget.md) when no spread was measured."""
     spreads = [s for s in (now.get("spread"), base.get("spread")) if s is not None]
     return max(max(spreads) if spreads else 0.0, CHANGE_FLOOR)
 
@@ -435,7 +435,7 @@ def report(run_dir, results, flags, conditions):
     lines.append(f"Listed: hitches put down to a cause (over {ATTRIBUTE_OVER:.0f}x with a "
                  f"happening, or anything logged on the frame), and any over "
                  f"{LIST_BARE_OVER:.0f}x. The rest are counted: on this Mac a 2-3x frame is the "
-                 "drawable wait landing twice (docs/budget.md, the two humps), and in a fight a "
+                 "drawable wait landing twice (docs/reference/budget.md, the two humps), and in a fight a "
                  "tick falls on one frame in ten whether or not it is the cause.")
     lines.append("")
     any_hitch = False

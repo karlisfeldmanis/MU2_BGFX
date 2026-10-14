@@ -41,7 +41,7 @@ class Lobby {
 public:
     // The class buttons' order, which is MU's create window's (Screens.Trades), the Magic
     // Gladiator fourth as MU's CLASS_DARK, once a character on the account has reached
-    // kGladiatorLevel (the user, 2026-10-07: both the set and the gate; docs/mg-port.md).
+    // kGladiatorLevel (the user, 2026-10-07: both the set and the gate; docs/worlds/mg-port.md).
     static constexpr int kClassRows = 4;
     // The level a character on the account must have reached before the Magic Gladiator may be
     // made: OpenMU's LevelRequirementByCreation (ClassMagicGladiator.cs:36). Under it his button

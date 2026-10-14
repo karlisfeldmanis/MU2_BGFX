@@ -137,7 +137,7 @@ void PlayMode::readSave(Context& ctx) {
         game::loadVault(game::vaultPathBeside(savePath_), saved_);
     }
     // --raid: the party's first kit is who he is -- its class and level, its gear laid on him by
-    // the realm (sim::Realm::setRaid) -- whatever a save said (docs/golden-dragon-raid.md).
+    // the realm (sim::Realm::setRaid) -- whatever a save said (docs/game/golden-dragon-raid.md).
     if (args.raid > 0) {
         resumed_ = false;
         const std::string party = core::folders().content + "/raid/party.json";
@@ -266,7 +266,7 @@ bool PlayMode::open(Context& ctx) {
     // The world's own light over the base sheet -- Noria's tropical day over Lorencia's night --
     // or the base alone when the world has no sheet (game/world/maps.h).
     ctx.time.setScene(game::mapSheet(ctx.paths.sheets, args.world));
-    // And its rain, when it has one: sheets/worlds/<world>_rain.json, blended in by the share.
+    // And its rain, when it has one: content/sheets/worlds/<world>_rain.json, blended in by the share.
     ctx.time.setWet(game::mapSheet(ctx.paths.sheets, args.world + "_rain"));
 
     // The game's own entrance, only when somebody is playing.
@@ -756,7 +756,7 @@ void PlayMode::openProbes(Context& ctx) {
                                         "screen\n", pointGrid_.size() / 3);
         }
     }
-    // The shadow probe's csv. docs/shadow-probe.md reads it.
+    // The shadow probe's csv. docs/reference/shadow-probe.md reads it.
     if (!args.shadowLog.empty()) {
         shadowLog_ = std::fopen(args.shadowLog.c_str(), "w");
         if (shadowLog_) {
@@ -1142,7 +1142,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // before the step, it followed where he stood a frame ago: the town and every
     // shadow in it slid under him by his step length times the frame time, which
     // changes every frame -- 16 mm median and 79 mm worst over a walk, on a shadow
-    // texel of 29 mm. docs/shadow-probe.md.
+    // texel of 29 mm. docs/reference/shadow-probe.md.
     world_.update(at.elapsed, args.still);
     // What the frame is drawn from, taken off the camera just placed. It was taken at the top of
     // the frame, which drew every frame with the one before's camera -- the lag the note above
@@ -1599,7 +1599,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // The near field's blades, gathered last because the field is measured from where the
     // camera ended up standing this frame and the follow spring has only just decided that.
     // One instanced draw in the shade pass; never in the prepass and never in the sun's
-    // split. docs/grass.md.
+    // split. docs/reference/grass.md.
     gfx::GrassField grassField;
     bool grassDrawn = false;
     // The Options page's Graphics rows: the targets' quality, and the sheet as drawn.

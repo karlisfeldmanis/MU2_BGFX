@@ -1,7 +1,7 @@
 // The performance sweep: one launch, the world loaded once, the hero put down on a list of
 // tiles in turn, and each tile's frames measured and written as a JSON row.
 //
-// tools/perfsweep.py writes the list and reads the rows; docs/budget.md ("The sweep") says how
+// tools/perfsweep.py writes the list and reads the rows; docs/reference/budget.md ("The sweep") says how
 // to read them. It exists because the Lost Tower was found over budget on 2026-10-01 only
 // because somebody happened to measure it by hand: a world now gets walked for its bad places
 // rather than sampled at the one spot somebody chose.

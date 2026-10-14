@@ -5,7 +5,7 @@ $input v_wpos, v_texcoord0, v_normal, v_colour, v_vnormal, v_vpos, v_light
 //
 // The sheet is the art and is not argued with: it is MU's grass, painted, with its own
 // lighting already in it. What this shader adds is the four aggregate tricks out of
-// docs/grass.md -- Black Ops 4's list -- which are what make a scattered field read as a field
+// docs/reference/grass.md -- Black Ops 4's list -- which are what make a scattered field read as a field
 // rather than as a lot of identical stickers. Each of them is one or two instructions.
 #include "grass.sh"
 
@@ -22,7 +22,7 @@ void main()
 	// something a few pixels wide, under 4x MSAA with no TAA to hold it still, crawls: half a
 	// texel of camera movement flips whole runs of pixels between grass and ground. That
 	// crawl was measured at 12.4 levels of per-pixel change a frame against the ground's 4.9,
-	// and it is the whole of what a field of this shimmering looks like. docs/grass.md.
+	// and it is the whole of what a field of this shimmering looks like. docs/reference/grass.md.
 	//
 	// So instead: a ramp about one PIXEL wide across the threshold. fwidth is how fast the
 	// sheet's alpha changes over this pixel, so the ramp stays a pixel wide wherever the card
@@ -181,7 +181,7 @@ void main()
 	//
 	// ONE tap, not the ground's thirteen. See sunShadowHard: a penumbra across a painted blade
 	// is a penumbra nobody can see, and the soft edge the eye reads is the one the turf under
-	// the field still draws with the full filter. Measured at 0.41 ms. docs/grass.md.
+	// the field still draws with the full filter. Measured at 0.41 ms. docs/reference/grass.md.
 	float shadow = sunShadowHard(v_wpos, n, saturate(ndotl));
 	if (u_shadowDebug.x > 0.5)
 	{

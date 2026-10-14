@@ -56,7 +56,7 @@ std::string number(double v) {
 
 void LightPanel::read(const std::string& root) {
     base_ = core::parseJsonFile(root + "/sheets/lighting.json");
-    sheet_ = file_ == "sheets/lighting.json" ? base_ : core::parseJsonFile(root + "/" + file_);
+    sheet_ = file_ == "content/sheets/lighting.json" ? base_ : core::parseJsonFile(root + "/" + file_);
     stamps_[0] = core::fileModified(root + "/sheets/lighting.json");
     stamps_[1] = core::fileModified(root + "/" + file_);
 }
@@ -69,7 +69,7 @@ bool LightPanel::write(Cooker& cooker, const std::string& path, const std::strin
 }
 
 void LightPanel::knob(Cooker& cooker, const std::string& key) {
-    const bool onBase = file_ == "sheets/lighting.json";
+    const bool onBase = file_ == "content/sheets/lighting.json";
     const core::Json& own = sheet_[key.c_str()];
     const core::Json& inherited = base_[key.c_str()];
     const core::Json& shown = own.isNull() ? inherited : own;
@@ -130,12 +130,12 @@ int LightPanel::draw(Cooker& cooker, const std::string& root, const std::string&
     if (world != world_ || layers_.empty()) {
         world_ = world;
         layers_.clear();
-        if (!world.empty()) layers_.push_back({"this map: " + world, "sheets/worlds/" + world + ".json"});
-        layers_.push_back({"everywhere (the base)", "sheets/lighting.json"});
-        layers_.push_back({"dusk, over every map", "sheets/time/dusk.json"});
-        layers_.push_back({"night, over every map", "sheets/time/night.json"});
+        if (!world.empty()) layers_.push_back({"this map: " + world, "content/sheets/worlds/" + world + ".json"});
+        layers_.push_back({"everywhere (the base)", "content/sheets/lighting.json"});
+        layers_.push_back({"dusk, over every map", "content/sheets/time/dusk.json"});
+        layers_.push_back({"night, over every map", "content/sheets/time/night.json"});
         if (!world.empty() && core::fileExists(root + "/sheets/worlds/" + world + "_rain.json")) {
-            layers_.push_back({"this map in rain", "sheets/worlds/" + world + "_rain.json"});
+            layers_.push_back({"this map in rain", "content/sheets/worlds/" + world + "_rain.json"});
         }
         layer_ = 0;
         file_.clear();
@@ -169,7 +169,7 @@ int LightPanel::draw(Cooker& cooker, const std::string& root, const std::string&
         ImGui::TextColored(kDim, "the Stage wears the base alone: choose a world as the scene to tune its map");
     }
     ImGui::TextColored(kDim, "%s%s", file_.c_str(),
-                       file_ == "sheets/lighting.json" ? ": every map's light" : ", over the base");
+                       file_ == "content/sheets/lighting.json" ? ": every map's light" : ", over the base");
     // The layer's note is its history, at length (Aida's runs to a page): folded until asked.
     if (!sheet_["note"].isNull() && ImGui::TreeNode("why it is lit so (the sheet's note)")) {
         ImGui::TextColored(kDim, "%s", sheet_["note"].stringOr("").c_str());

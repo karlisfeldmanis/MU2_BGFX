@@ -1,7 +1,7 @@
-// The studio's world marks (docs/order-plan.md §9c, sprint G): a world's gates and its
+// The studio's world marks (docs/plans/order-plan.md §9c, sprint G): a world's gates and its
 // townsfolk's spots, drawn over the land in Place and moved there.
 //
-// Both are the world's manifest, source/world/<w>/world.json (sprint D3): `gates.enters` (a
+// Both are the world's manifest, content/world/<w>/world.json (sprint D3): `gates.enters` (a
 // box of tiles, the level it asks, the gate it sends to) and `gates.exits` (a box and the way
 // a character comes out facing), and `npcs` (a townsperson's tile and the way they look). A
 // click on the land picks the mark there -- the townsperson within a tile and a half, or the

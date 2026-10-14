@@ -1,5 +1,5 @@
 // Images into bgfx textures, with the two rules that matter: which of them are sRGB, and
-// which of them are pictures rather than data. docs/conventions.md has the table.
+// which of them are pictures rather than data. docs/reference/conventions.md has the table.
 #pragma once
 
 #include <string>
@@ -40,7 +40,7 @@ enum class TextureRole {
     // wink in and out frame by frame. A field of that twinkles, and twinkling is what a
     // scattered cut-out field must not do -- there is no TAA in this engine to hold it still.
     // The note in downsample() named this exact failure and said there was no cutout content
-    // to suffer it. The grass is that content. docs/grass.md.
+    // to suffer it. The grass is that content. docs/reference/grass.md.
     Cutout,
     // An effect's sheet laid once across its model and never tiled -- Hellfire's sigil, whose
     // quarter star runs to the sheet's edge. sRGB and decoded like an albedo, but clamped, so the

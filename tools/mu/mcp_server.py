@@ -1,5 +1,5 @@
 """The Cooker as an MCP server: an agent works in the studio the user has open, and the user
-watches it happen (docs/cooker.md).
+watches it happen (docs/content/cooker.md).
 
 The user, 2026-10-12: "cooker has to work similar like MCP, that it's opened and we see
 realtime how objects are made and improved and bug fixed ... if we cook a new monster on Aida,
@@ -396,10 +396,10 @@ TOOLS = [
     ("shot", t_shot, "See the studio as the user sees it now: a picture of its window.",
      {"clean": {"type": "boolean", "description": "hide the panels for the picture"}}),
     ("do", t_do,
-     "Any of the studio's words, ';' between them (docs/cooker.md, 'The studio's words'): subject, scene, plus, "
+     "Any of the studio's words, ';' between them (docs/content/cooker.md, 'The studio's words'): subject, scene, plus, "
      "swap, arena, place, mode, pick, nudge, add, duplicate, delete, mark, budge, look, way, brush, dab, undo, "
      "tab light, hide, show, wait N, status. Place's edits made this way show at once and are written to "
-     "source/.",
+     "content/.",
      {"words": {"type": "string"}}, ["words"]),
     ("plan", t_plan, "What `mu make <target>` would run and why, running nothing. Always before cook.",
      {"target": {"type": "string", "description": "Sword01, world/Bonfire01, BudgeDragon01, placements aida, "
@@ -422,11 +422,11 @@ TOOLS = [
      "states already set are kept), which the studio's inspector shows.",
      {"name": {"type": "string"}, "write": {"type": "boolean"}}, ["name"]),
     ("edit", t_edit,
-     "Change source/ in place, journalled, only the touched text: how=set (one value), insert (a value put in "
+     "Change content/ in place, journalled, only the touched text: how=set (one value), insert (a value put in "
      "at path: a list's index, or a new key), remove (path taken out). The studio's inspector shows it at once, "
      "and an edit of the scene world's objects (objects.N.at / angle.2 / scale, an insert or a remove) moves "
      "them on screen as soon as it is written.",
-     {"target": {"type": "string", "description": "a recipe's name or a file under source/ or sheets/"},
+     {"target": {"type": "string", "description": "a recipe's name or a file under content/ or content/sheets/"},
       "path": {"type": "string", "description": "dotted, list indices as numbers: islands.0.material"},
       "value": {"description": "JSON value (not for remove)"},
       "how": {"type": "string", "enum": ["set", "insert", "remove"]}},
@@ -441,11 +441,11 @@ TOOLS = [
      "sky and daylight (sky_colour, ambient_strength, dust_*), shadows (shadow_range, shadow_bias_metres, "
      "ssao_*), tonemap (exposure, contrast, saturation, split, tint_low, tint_high), bloom. Without value: read "
      "the layer (or one key, with the base's value beside it). With value: set it; a key the map inherits is "
-     "written in. layer: map (default; sheets/worlds/<world>.json), rain, base (every map), dusk, night. Put "
+     "written in. layer: map (default; content/sheets/worlds/<world>.json), rain, base (every map), dusk, night. Put "
      "the world on screen first (do 'scene <world>'), and 'time dusk' to see dusk.",
      {"world": {"type": "string"}, "key": {"type": "string"}, "value": {"description": "a number or [r, g, b]"},
       "layer": {"type": "string", "enum": ["map", "rain", "base", "dusk", "night"]}}),
-    ("journal", t_journal, "The last edits to source/, the user's in the studio (who=studio) and the agents'.",
+    ("journal", t_journal, "The last edits to content/, the user's in the studio (who=studio) and the agents'.",
      {"last": {"type": "integer"}, "who": {"type": "string"}}),
     ("arena_log", t_arena_log, "The arena's log: how the fight on screen is going (hits, misses, deaths).",
      {"last": {"type": "integer"}}),
@@ -491,7 +491,7 @@ def main():
                       "capabilities": {"tools": {}},
                       "serverInfo": {"name": "cooker", "version": "1"},
                       "instructions": "The Cooker: work in the studio the user has open, so they watch. "
-                                      "Start with status, then show the thing you work on. docs/cooker.md."}
+                                      "Start with status, then show the thing you work on. docs/content/cooker.md."}
         elif method == "tools/list":
             result = {"tools": listed()}
         elif method == "tools/call":

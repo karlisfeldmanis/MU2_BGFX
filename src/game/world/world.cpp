@@ -30,7 +30,7 @@ constexpr float kYawDegrees = 45.0f;
 // come out on screen. Each of those was tuned at one framing and each has a worst case, and
 // with the wheel in the player's hand the worst case was whatever he had last scrolled to --
 // so a frame measured at 8 m proved nothing about the frame he was looking at. Fixed, the
-// cull set is the same set every frame, the numbers in docs/budget.md are numbers about the
+// cull set is the same set every frame, the numbers in docs/reference/budget.md are numbers about the
 // game, and a spike has one fewer thing it can be.
 // INVENTION, 2026-09-24, and the one number on this page that is not MU's: the user asked
 // for a little more ground round the character than MU's 800 units showed. 9.5 m is 950 of
@@ -69,7 +69,7 @@ float smoothDamp(float current, float target, float& velocity, float time, float
 }  // namespace
 
 void World::tileToMetres(float column, float row, float* x, float* z) const {
-    // A tile's CENTRE, and in the world's own metres per tile. docs/conventions.md states
+    // A tile's CENTRE, and in the world's own metres per tile. docs/reference/conventions.md states
     // the centre as (column + 0.5, -(row + 0.5)); this dropped the half and hard-coded one
     // metre to the tile, so the camera stood on the corner of the tile it named and any map
     // whose units_per_tile is not 100 would have put it somewhere else entirely -- the very
@@ -144,7 +144,7 @@ bool World::open(const std::string& assetDir, const std::string& name,
     // The near field: the card strip, built once, and MU's own painted grass sheets for
     // whichever tile slots this world calls grass. Which TILES are grassy is not settled here
     // -- it is asked of the ground every frame, because the disc moves with the camera.
-    // docs/grass.md.
+    // docs/reference/grass.md.
     grass_.build(assetDir, name, ground_, textures);
     // Noria's decorative warp, and nothing anywhere else. See game/world/portal.h.
     portal_.open(assetDir, name, ground_, textures);
@@ -288,7 +288,7 @@ void World::update(double seconds, bool still) {
         row += float(std::cos(seconds * 0.11) * 12.0);
     }
 
-    // Column is +x and row is -z. docs/conventions.md.
+    // Column is +x and row is -z. docs/reference/conventions.md.
     float x = 0.0f, z = 0.0f;
     tileToMetres(column, row, &x, &z);
     float groundY = ground_.heightAt(x, z);
@@ -389,7 +389,7 @@ void World::update(double seconds, bool still) {
     // Walk.cs's own back vector: sin(yaw)cos(pitch), -sin(pitch), cos(yaw)cos(pitch).
     const float back[3] = {std::sin(yaw) * std::cos(pitch), -std::sin(pitch),
                            std::cos(yaw) * std::cos(pitch)};
-    // Drawn back near a big monster (Play::cameraPull, docs/golden-dragon-raid.md §2c): MU's
+    // Drawn back near a big monster (Play::cameraPull, docs/game/golden-dragon-raid.md §2c): MU's
     // TW_CAMERA_UP shape, eased, nought everywhere else.
     const float distance = kDistance + (play_.isOpen() ? play_.cameraPull() : 0.0f);
     for (int i = 0; i < 3; ++i) camera_.position[i] = camera_.target[i] + back[i] * distance;
@@ -461,7 +461,7 @@ void World::markBridgeDecks() {
 }
 
 bool World::indoors(float x, float z) const {
-    // Column is +x and row is -z. docs/conventions.md.
+    // Column is +x and row is -z. docs/reference/conventions.md.
     const float metresPerTile = ground_.metresPerTile();
     const int column = int(std::floor(x / metresPerTile));
     const int row = int(std::floor(-z / metresPerTile));

@@ -2,7 +2,7 @@ $input v_wpos, v_texcoord0, v_normal, v_colour, v_vnormal, v_vpos, v_weight
 
 // The land, lit. Up to three full material sets blended by the weights Ground::splat shares
 // between every tile on a corner, under MU's own baked terrain light. This is the one surface that does not fit the closed
-// material model in docs/conventions.md, and it is a second shader rather than a fourth flag.
+// material model in docs/reference/conventions.md, and it is a second shader rather than a fourth flag.
 // Stage 15 is the probe's, which the land never reads. abyss() in common.sh.
 #define MU2_ABYSS 15
 #include "common.sh"

@@ -76,7 +76,7 @@ bool Realm::dressNew(Body& hero, Kin kin, int level, int playerColumn, int playe
     hero.temper = Temper::Wandering;
     // **And no skills.** A character is raised knowing nothing, which is the design whole at
     // last: the orbs are cooked and Hanzo sells all nine, so a key on the bar is one that was
-    // bought or found and read (docs/skills-dk.md §3.3). Two stand-ins stood here and both are
+    // bought or found and read (docs/game/skills-dk.md §3.3). Two stand-ins stood here and both are
     // gone -- the flat hand-over of every built skill, and the ladder that handed them over by
     // level. What replaced them is `Realm::useItem`'s own branch, and the level is asked there,
     // off the item, where a requirement belongs.
@@ -861,7 +861,7 @@ void Realm::press() {
     if (!hero.alive()) return;
 
     // The key, before the order, and it does not replace it: a press spends the next swing on a
-    // skill and leaves the knight fighting what he was fighting (docs/skills-dk.md §3.1a). A wish
+    // skill and leaves the knight fighting what he was fighting (docs/game/skills-dk.md §3.1a). A wish
     // that cannot be thrown -- cooling, no mana, out of reach, nothing learned -- falls through
     // and the ordinary blow lands, which is what "auto-attack is the floor" means.
     //
@@ -980,7 +980,7 @@ void Realm::press() {
     //
     // A skill that is only COOLING is not a reason to close in: a thrown one waits at its own
     // range for the cooldown, and a knight's, whose reach is his arm's, swings through it --
-    // which is the auto-attack floor docs/skills-dk.md §3.1a already gave him.
+    // which is the auto-attack floor docs/game/skills-dk.md §3.1a already gave him.
     const bool sheltered = tables_->grid.safe(target->column(), target->row());
     const int bulk = bulkOf(numberOf(*target));
     if (me().order.skill != skill::kNone) {

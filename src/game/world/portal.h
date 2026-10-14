@@ -12,7 +12,7 @@
 // degrees and takes the colour `sin(WorldTime * 0.0011 / 0.0017 / 0.0013) * 0.2 + 0.01` in
 // its three channels -- a faint drifting tint that goes to black and back.
 //
-// The meshes are cooked with the missiles (source/effects/missiles/Warp01..03). They are drawn
+// The meshes are cooked with the missiles (content/effects/missiles/Warp01..03). They are drawn
 // through the transparent pass as textured triangles rather than as model instances, because
 // the glow shader carries one brightness per instance and MU's warp is a COLOUR per disc. 98
 // triangles a ring, 2 for the centre: 396 a frame, and none when the hero is far away.

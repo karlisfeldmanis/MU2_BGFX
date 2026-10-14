@@ -34,7 +34,7 @@ constexpr float kAngelLost = 1500.0f;
 constexpr float kHeadingEase = 10.0f;
 // How long the horse takes to come and go at a safe zone's edge. MU sets its Alpha to 0 on the
 // tile and back (GOBoid.cpp:498-502), a cut; **ours**, a short fade, as a pop on screen is
-// closed (docs/mount.md).
+// closed (docs/game/mount.md).
 constexpr float kHorseFade = 0.25f;
 
 // This engine's world against MU's: x east alike, MU's y north is -z, MU's z up is y.
@@ -128,7 +128,7 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
     mounted_ = worn;
     // The Horn of Uniria's horse: GOBoid.cpp's MODEL_UNICON, on the rider's own spot and facing
     // (:515, :524) at scale 1.0 (:684-691). No bone joins them; the seat is in his ride clips.
-    // The Dinorant's dragon, Rider02, MODEL_PEGASUS, by the same code (docs/mount.md).
+    // The Dinorant's dragon, Rider02, MODEL_PEGASUS, by the same code (docs/game/mount.md).
     const FigureBody* mount = mounted_ == 2 ? horseBody_ : mounted_ == 3 ? dragonBody_ : nullptr;
     if (!mount) {
         horseIn_ = 0.0f;

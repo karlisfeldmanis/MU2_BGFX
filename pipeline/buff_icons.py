@@ -1,4 +1,4 @@
-"""Cuts one icon per 0.75 buff or debuff out of MuDream's status sheet, into source/interface/buffs.
+"""Cuts one icon per 0.75 buff or debuff out of MuDream's status sheet, into content/interface/buffs.
 
     python3 pipeline/buff_icons.py [--source <MuDream>/Data/Interface]
 

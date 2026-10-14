@@ -1,7 +1,7 @@
 """Doubles a sheet's resolution, keeping MU's drawing and taking only fine detail from a model.
 
     python3 pipeline/upscale.py \
-        source/textures/sword02_npc.png workshop/items/Sword01/sword02_npc_x2.png 0.35
+        content/textures/sword02_npc.png workshop/items/Sword01/sword02_npc_x2.png 0.35
 
 The last resort, and it is used because the alternatives ran out. Sword01's art is
 Data/NPC/sword02.OZJ at 173x39, and there is nothing larger of it anywhere in MU's own

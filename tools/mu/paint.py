@@ -1,9 +1,9 @@
-"""`mu paint`: a world's ground painted, tile by tile, in source/world/<w>/tiles.png.
+"""`mu paint`: a world's ground painted, tile by tile, in content/world/<w>/tiles.png.
 
 tiles.png is MU's terrain mapping as pipeline/terrain.py wrote it: red the base slot (layer1),
 green the overlay slot (layer2), blue how far the overlay is painted over the base (alpha,
 0..255). A slot is an index into the world's `tile_slots` (<w>.json): Lorencia's 0 is
-TileGrass01. The studio's Place paints with this (docs/order-plan.md §9c, sprint G); the game
+TileGrass01. The studio's Place paints with this (docs/plans/order-plan.md §9c, sprint G); the game
 sees it after `mu make ground <w>`, which cooks the ground mesh again.
 
     ./mu paint lorencia 183 136 2                    tile (183, 136) floored with slot 2

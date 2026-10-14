@@ -30,7 +30,7 @@
 
 Every command takes --json and then prints one JSON object as its last line, for a script or
 an agent to read instead of the prose. Every step runs niced and held to `mu cores` (60% of
-the machine unless set; settings.py), Blender and torch included, never every core. docs/order-plan.md, sprint B; the steps and the traps they close are in make.py.
+the machine unless set; settings.py), Blender and torch included, never every core. docs/plans/order-plan.md, sprint B; the steps and the traps they close are in make.py.
 """
 
 import argparse
@@ -79,7 +79,7 @@ def main():
     q.add_argument("--write", action="store_true", help="into the recipe as mu_checklist, journalled")
 
     e = sub.add_parser("edit", parents=[common])
-    e.add_argument("target", help="a recipe's name, or a file under source/ or sheets/")
+    e.add_argument("target", help="a recipe's name, or a file under content/ or content/sheets/")
     e.add_argument("path", help="dotted, list indices as numbers: islands.0.material")
     e.add_argument("value", nargs="?", help="JSON (7, 0.35, true, \"brass\") or a bare word for a string")
     how = e.add_mutually_exclusive_group()

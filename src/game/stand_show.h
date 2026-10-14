@@ -1,4 +1,4 @@
-// A figure's show while it stands: the studio's Stage (docs/order-plan.md §9c, after F7).
+// A figure's show while it stands: the studio's Stage (docs/plans/order-plan.md §9c, after F7).
 //
 // Play draws a monster's show -- its aura, its stars, its eye trails, its flames -- for the
 // bodies of a played world, its rules resolved per body in Play::fit (play_open.cpp) and fed

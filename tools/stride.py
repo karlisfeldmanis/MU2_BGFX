@@ -193,7 +193,7 @@ def slide(points, cycle, gait, rate, frames=2000, hz=180.0):
     for _ in range(frames):
         clock += step * rate
         now = {name: at(track, clock) for name, track in points.items()}
-        # The model looks down +z (docs/conventions.md), so the ground goes past a foot in -z.
+        # The model looks down +z (docs/reference/conventions.md), so the ground goes past a foot in -z.
         over = []
         for name in points:
             dz = (now[name][2] - was[name][2]) + gait * step

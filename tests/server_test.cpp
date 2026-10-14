@@ -1,4 +1,4 @@
-// The server's own checks, without a socket (docs/order-plan.md sprint C). Until the server was
+// The server's own checks, without a socket (docs/plans/order-plan.md sprint C). Until the server was
 // split out of one main.cpp nothing in it could be linked into a test, and nothing was: the
 // character store, the account's rules, the chat's allowance and -- the one lockstep stands on --
 // that a world the server raises and the mirror a client raises from its Welcome are the same
@@ -165,7 +165,7 @@ void testRaise() {
     lockstep(*again->realm, keptMirror, 600, "a kept character's world and its mirror, 600 ticks");
 }
 
-// ---- the guild (docs/guild.md) -------------------------------------------------------------
+// ---- the guild (docs/game/guild.md) -------------------------------------------------------------
 
 // A welcomed player on a line whose far end nobody reads: what the server sends him goes into
 // the socket's buffer, and sessionOfToken finds him open.

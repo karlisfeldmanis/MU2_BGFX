@@ -1,0 +1,43 @@
+{
+  "world": "charscene",
+  "name": "Character scene",
+  "map": 74,
+  "note": "The world's manifest (docs/plans/order-plan.md, sprint D). The character screen's land: the pipeline's knobs alone, as no one plays here.",
+  "pipeline": {
+    "grass": {
+      "value": [
+        "TileGrass01"
+      ],
+      "note": "The character screen. Its TileGround03 wears the grass recipe, but MU's sheet is BITMAP_MAPGRASS + layer1 and there are only the three TileGrass sheets, so slot 4 grows nothing in MU; asked for by recipe, it went looking for a TileGround03.png that never was. TileGrass02 here is a brown diamond floor (ground.json's material_note)."
+    },
+    "anchor_kinds": {
+      "value": {
+        "Object80": 1,
+        "Object133": 4
+      },
+      "note": "And world 74's, the character screen's, which are placements with no mesh rather than hidden ones: GMEmpireGuardian4 hides types 79 and 132 (HiddenMesh = -2) and hangs a fire off 79 -- a light sprite and flame particles, RenderObjectVisual case 79 -- and smoke off 132 (case 132). Type 129's blue cloud is not carried: the user keeps that sky black."
+    },
+    "brazier_bowls": {
+      "value": [
+        "Object15"
+      ],
+      "note": "The brazier bowls MU lights in world 74 (cook_anchors.py's comment by BRAZIER_BOWLS)."
+    },
+    "hidden_models": {
+      "value": [
+        "Object130",
+        "Object131",
+        "Object132",
+        "Object133",
+        "Object80",
+        "Object81",
+        "Object83",
+        "Object84",
+        "Object85",
+        "Object86",
+        "Object87"
+      ],
+      "note": "World 74's meshes MU never draws: GMEmpireGuardian4::MoveObject sets HiddenMesh = -2 on types 79 to 86 and 129 to 132 (models Object80.. and Object130..133). Type 129's cloud anchor is Object130, whose green `angeflo_r` glow slabs stood on the wall tops until this was read. Hidden placements a world shows later, cooked with flag 8 so the town holds them back until the game clears it: Blood Castle's lowered drawbridge, Object10's deck and Object11's chains, which MuMain shows as Object37 lands (ActionObject, ZzzObject.cpp:107-123; game/world/ drawbridge.h)."
+    }
+  }
+}

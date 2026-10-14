@@ -118,7 +118,7 @@ void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seco
         // A jewel is shown as it was modelled, as a worn piece is. It is an octahedron a hair
         // wider than it is tall -- the Soul 0.224 across and 0.219 high -- so the longest-axis
         // rule below laid the Soul on its side and stood the Bless on its point, on a margin
-        // that is not a fact about the item. MU2's `upright`, docs/refining.md there.
+        // that is not a fact about the item. MU2's `upright`, docs/game/refining.md there.
         // And so is the Invisibility Cloak, hung as it was modelled: it is all but a cube, 0.94
         // across, 0.89 high and 0.88 deep, so the rule laid it on its side by a hair. MU stands
         // it face-on and leans it back 20 degrees, `Vector(290, 0, 0)` against the 270 that is

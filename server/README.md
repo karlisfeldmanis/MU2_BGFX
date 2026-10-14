@@ -2,7 +2,7 @@
 
 MU2_BGFX's server runs on a Hetzner box; players run only the client (the user's decision of
 2026-10-07). How it was built, in phases and sprints 17-25, is "How it got here" below; what
-comes next is `docs/order-plan.md`.
+comes next is `docs/plans/order-plan.md`.
 
 Everything that is the server's alone is in this folder (the user, 2026-10-07: *"we need that
 server source is also in /server folder"*):
@@ -52,7 +52,7 @@ them, and a character comes back **in the world he left**.
 `sqlite3 /var/lib/private/mu2/characters.db .tables` shows the store. `server/deploy.sh` puts a
 new build there and restarts the service.
 
-What is in `server/src/` (split out of one 1900-line `main.cpp` in `docs/order-plan.md` sprint C):
+What is in `server/src/` (split out of one 1900-line `main.cpp` in `docs/plans/order-plan.md` sprint C):
 
 | file | what |
 |---|---|
@@ -84,7 +84,7 @@ build takes a few minutes on the one core; `sim_test` runs in about 10 s.
 
 ## How it got here
 
-The plan was `docs/server-plan.md` (2026-10-05, from an audit of `src/sim` and of MU's netcode),
+The plan was `server/README.md` (2026-10-05, from an audit of `src/sim` and of MU's netcode),
 and each sprint had its file under `docs/sprints/`. Both were deleted on 2026-10-13 once built;
 git keeps them. Code comments cite them as "phase N" and "sprint N".
 
@@ -96,5 +96,5 @@ git keeps them. Code comments cite them as "phase N" and "sprint N".
 | 4, the wire | TCP, length-framed, little-endian; a frame that does not parse drops that connection, never the server; lockstep: the mirror steps the server's commands and the hashes are compared | 18, the wire (brought forward); 21, the snapshot (a newcomer gets the realm as bytes, not its past); 22, nothing the client says (the client decides nothing the server does not) |
 | 5, feel | `--lag` to test a slow line; the ticks a second way by UDP beside the stream; a cushion of held ticks; the hero's own body predicted ahead of the mirror | 24, the quiet line; 25, the clear thread (the server's own timing) |
 | 6, accounts | the character screen asks the server; a machine key now, name and password later | 23, the account |
-| 7, playing together | other players drawn, chat, party (`docs/party.md`), trade (`sim/realm_deal.cpp`), guilds (`docs/guild.md`), the events' doors on one wall clock (`sim/config.h`). PvP and the PK system are still open (`docs/order-plan.md` §7) | after 25 |
+| 7, playing together | other players drawn, chat, party (`docs/game/party.md`), trade (`sim/realm_deal.cpp`), guilds (`docs/game/guild.md`), the events' doors on one wall clock (`sim/config.h`). PvP and the PK system are still open (`docs/plans/order-plan.md` §7) | after 25 |
 

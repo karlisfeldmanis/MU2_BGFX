@@ -1,7 +1,7 @@
 #!/bin/zsh
-# Fetches MU's own data -- the files everything in source/ was imported from -- into
-# reference/MuMain. Only needed to import a new asset (docs/cooker.md); building workshop/
-# from source/ does not read it. About 1.1 GB.
+# Fetches MU's own data -- the files everything in content/ was imported from -- into
+# reference/MuMain. Only needed to import a new asset (docs/content/cooker.md); building workshop/
+# from content/ does not read it. About 1.1 GB.
 #
 # Pinned to the commit the import was made from, for the reason bootstrap.sh pins bgfx.
 set -e

@@ -5,7 +5,7 @@ CMakeLists.txt has said since sprint 1 that "gfx never includes game or sim, and
 includes gfx -- nothing enforces that but review". This is the enforcement. It reads every
 `#include "layer/file.h"` in src/ and refuses an arrow the architecture does not allow.
 
-The arrows, and why each one points the way it does -- the long form is docs/architecture.md:
+The arrows, and why each one points the way it does -- the long form is docs/reference/architecture.md:
 
     core      depends on nothing. Logging, argument parsing, json, files, maths. It is the
               only layer a test may link on its own without dragging a renderer in.
@@ -21,7 +21,7 @@ The arrows, and why each one points the way it does -- the long form is docs/arc
               renderer that cannot be run on a bench.
     game      depends on all of the above. The play loop, the world, the figures, the
               windows, the effects. This is where the three meet.
-    studio    the editor's panels and the cook's client (docs/order-plan.md §9c): core,
+    studio    the editor's panels and the cook's client (docs/plans/order-plan.md §9c): core,
               content and gfx, never the game -- the mode hands the panels what they show, so
               they are drawn and tested with no world behind them.
     app       depends on all of the above. The application object and its modes. Nothing
@@ -53,11 +53,11 @@ ALLOWED = {
     "gfx": {"core", "content", "gfx"},
     # The wire: TCP and the protocol (sprint 18). A message carries a Command.
     "net": {"core", "content", "sim", "net"},
-    # The client's line to the realm: the Link, LocalLink and RemoteLink (docs/order-plan.md
+    # The client's line to the realm: the Link, LocalLink and RemoteLink (docs/plans/order-plan.md
     # sprint C). Below game, so a bot links it without a renderer.
     "client": {"core", "content", "sim", "net", "client"},
     "game": {"core", "content", "sim", "net", "client", "gfx", "game"},
-    # The studio's panels and the cook's client (docs/order-plan.md §9c): below app, beside game.
+    # The studio's panels and the cook's client (docs/plans/order-plan.md §9c): below app, beside game.
     "studio": {"core", "content", "gfx", "studio"},
     "app": {"core", "content", "sim", "net", "client", "gfx", "game", "studio", "app"},
     # The server program, in server/src/ and not src/ (the user, 2026-10-07: "we need that server
@@ -138,7 +138,7 @@ def main():
                     )
 
     if violations:
-        print(f"layercheck: {len(violations)} violation(s) of docs/architecture.md")
+        print(f"layercheck: {len(violations)} violation(s) of docs/reference/architecture.md")
         for line in violations:
             print(f"  {line}")
         return 1

@@ -1,4 +1,4 @@
-// The Broker's window (docs/broker.md): the market, Buy, Sell and My listings, three of the
+// The Broker's window (docs/game/broker.md): the market, Buy, Sell and My listings, three of the
 // panels' columns wide (618 x 429 units) at the vault's place, the bag in its own column beside
 // it. Designed on the canvas https://claude.ai/artifact/1f7nUNsQRELX6BMbnf84Bk and picked by the
 // user on 2026-10-11; redrawn as the canvas's variant B on 2026-10-12 (game/ui/broker_layout.h).

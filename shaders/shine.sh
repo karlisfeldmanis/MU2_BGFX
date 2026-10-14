@@ -90,7 +90,7 @@ vec3 shineTint(float plus)
 
 // What is added on top: RENDER_CHROME from +7, RENDER_METAL as well from +9. `n` is the
 // vertex normal in world space, as MuMain's bone-rotated normal is. MU's (x, y, z) is our
-// (x, z, -y) (docs/conventions.md), so MU's n.z is our n.y and MU's n.y is our -n.z:
+// (x, z, -y) (docs/reference/conventions.md), so MU's n.z is our n.y and MU's n.y is our -n.z:
 //   CHROME  u = n.z * 0.5 + wave     v = n.y * 0.5 + wave * 2   (ZzzBMD.cpp, Chrome01, repeat)
 //   METAL   u = n.z * 0.5 + 0.2      v = n.y * 0.5 + 0.5        (Shiny01, clamped)
 // `colour` is PartObjectColor's, per item (game::shineOf), carried in v_refine.yzw.

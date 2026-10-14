@@ -1,6 +1,6 @@
 """The shipped client's file set: what the game reads at runtime, and nothing else, in packs.
 
-docs/layout.md, "What a player is given". The player build reads its data out of .mupak packs;
+docs/plans/layout.md, "What a player is given". The player build reads its data out of .mupak packs;
 this says which files go into which pack. It is worked out by REACHABILITY, not by folder:
 
   1. The roots are what src/ names outright -- the string literals of the player build (the
@@ -48,9 +48,9 @@ from paths import ASSETS, BUILD, COOKED, EXTERN, ROOT, SHEETS, WORKSHOP  # noqa:
 
 SRC = os.path.join(ROOT, "src")
 
-# What the player build leaves out (docs/layout.md "The player build"): the studio, the bench
+# What the player build leaves out (docs/plans/layout.md "The player build"): the studio, the bench
 # and its scenes, the sweep and headless. Their literals name files only the tools read --
-# bench_scenes.cpp opens Lorencia's tables for a bench, studio_marks.cpp source/world -- and
+# bench_scenes.cpp opens Lorencia's tables for a bench, studio_marks.cpp content/world -- and
 # counting them would prove files the player never opens.
 NOT_SHIPPED = re.compile(r"^(studio/|app/modes/studio_|app/modes/bench|game/bench|app/sweep|"
                          r"game/headless|game/studio_)")
@@ -125,8 +125,8 @@ def json_strings(node):
     if isinstance(node, str):
         yield node
     elif isinstance(node, dict):
-        # A "note" is prose for whoever reads the json: it cites source/ files the game never
-        # opens (world.json's "source/npc/ElfEnvoy.json").
+        # A "note" is prose for whoever reads the json: it cites content/ files the game never
+        # opens (world.json's "content/npc/ElfEnvoy.json").
         for key, value in node.items():
             if not key.startswith("note"):
                 yield from json_strings(value)
@@ -161,7 +161,7 @@ def src_literals():
                 continue
             with open(full, encoding="utf-8", errors="replace") as handle:
                 text = handle.read()
-            # Comments dropped: they cite paths (source/players/rig/...) the code never opens.
+            # Comments dropped: they cite paths (content/players/rig/...) the code never opens.
             text = re.sub(r"//[^\n]*", "", text)
             out[rel] = literal.findall(text)
     return out

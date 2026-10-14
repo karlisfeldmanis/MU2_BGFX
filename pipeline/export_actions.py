@@ -1,9 +1,9 @@
 """Writes a rig's clips out once, as a file with a skeleton in it and no model.
 
     Blender --background --python pipeline/export_actions.py -- \
-        source/players/rig/player.rig.json \
+        content/players/rig/player.rig.json \
         workshop/players/rig/actions/player.glb \
-        --speeds=source/players/rig/actions.json
+        --speeds=content/players/rig/actions.json
 
 The counterpart to export_gltf's --no-clips. A character is five worn parts skinned to one
 sixty-bone rig, and until this existed each part shipped its own copy of all 283 of that

@@ -1,0 +1,235 @@
+{
+  "world": "aida",
+  "name": "Aida",
+  "map": 33,
+  "note": "The world's manifest (docs/plans/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "rules": {
+    "arrive": [
+      84,
+      11
+    ],
+    "home": 0,
+    "event": false,
+    "floors": false,
+    "move_order": 7,
+    "note": "Aida, MU's map 33, entered from Noria's north-east door: its spawn gate 119, 82,8 to 87,14, the small safe hall in the north-west (OpenMU VersionSeasonSix Gates.cs:265; docs/worlds/aida-port.md), where a death and the Town Portal land too. Not 0.75's: MU added it in 2005 (Season 1). MU draws it on its black clear with no leaves, birds or weather (GMAida.cpp, SceneManager.cpp:371-402), so for now it takes the underground's air."
+  },
+  "show": {
+    "air": {
+      "loop": "world_aida",
+      "everywhere": true,
+      "room": "open",
+      "note": "SOUND_AIDA_AMBIENT, aida_ambi.wav, which MoveAidaObject keeps playing from every object every frame (GMAida.cpp:92): always on, the whole map, under open forest sky (MU draws it on its black clear)."
+    },
+    "indoors": {
+      "everywhere": false,
+      "note": "Open forest: the first cut held every tile indoors ('underground air'), which kept the butterflies on the ground (flight is held indoors for anything but a bat). MU draws Aida on its black clear with no sky, and its air (world_aida) plays everywhere anyway."
+    },
+    "waterfall_spray": {
+      "note": "Its falls' drops, spray and mist (game/world/waterfall_spray.h)."
+    },
+    "music": {
+      "track": "/music/Aida.mp3",
+      "where": "safe",
+      "note": "MUSIC_BC_ADIA, which MU plays the whole time in Aida (SceneManager.cpp:1089-1094); here in the safe hall only, the house rule (the user, 2026-10-11: 'we play music on safezones only')."
+    },
+    "boids": {
+      "model": "Butterfly01",
+      "speed": 0.3,
+      "lit": false,
+      "tint": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "calls": false,
+      "flap": 6.25,
+      "note": "Ours: MU throws MODEL_BUTTERFLY01 off 20 hidden Object61 boxes, one in 25 frames each (type 60, GMAida.cpp:195-204); here Noria's butterfly pool on Noria's numbers flies round the hero instead. MODEL_BUTTERFLY01 (MapManager.cpp:89; GOBoid.cpp:1335: Velocity 0.3, LightEnable false, Light 1). 6.25: the cook's 0.25 s keys over MU's 0.04 s."
+    },
+    "crawls": {
+      "model": "Bug02",
+      "most": 3,
+      "scale_least": 8,
+      "speed": 2.5,
+      "turn": 9.0,
+      "life": 100,
+      "trail": true,
+      "drawn": 0.55,
+      "note": "MoveFishs' scarabs, MODEL_BUG01 + 1, Tarkan's numbers (GOBoid.cpp:1726-1733); Aida is not exempt from the 3-slot cap (:1668-1675), so 3; drawn at Tarkan's 0.55."
+    },
+    "small_fires": {
+      "note": "Object68's small fires on rocks and ruins (type 67, GMAida.cpp:239-242; game/world/small_fires.h)."
+    },
+    "skull_ghosts": {
+      "note": "Object71's skull ghosts, MODEL_GHOST out of the five hidden skulls (type 70, GMAida.cpp:243-252; game/world/skull_ghosts.h). MuMain loads no model for it in Aida, so only its trail shows; ours adds a soft blurred head."
+    },
+    "weather": {
+      "kind": "rain",
+      "jungle": true,
+      "bed": "world_crickets",
+      "note": "Ours: MU has no weather in Aida. Noria's rain (the user, 2026-10-11: 'we will use also rain for aida how it was on noria'), its light content/sheets/worlds/aida_rain.json. And a bed in the dry spells, as Noria's jungle plays, under Aida's own air, aida_ambi: first Noria's jungle ('lets use noria forest sound also'), then crickets and bugs at night ('not noria jungle')."
+    },
+    "leaves": "leaf",
+    "leaf_field": {
+      "count": 120,
+      "size": 1.3,
+      "note": "Ours (the user, 2026-10-11: 'we need leaves when its not raining'): they did fall in every dry spell, but the game's 80 specks were lost on Aida's dark moss; 120, a little over the speck (twice it was 'to large'; the pool's whole 180 'little bit to much')."
+    }
+  },
+  "gates": {
+    "exits": [
+      {
+        "number": 113,
+        "box": [
+          76,
+          9,
+          78,
+          16
+        ],
+        "faces": [
+          0,
+          0
+        ],
+        "note": "Aida, from Noria, with no direction (OpenMU VersionSeasonSix Gates.cs:267)."
+      }
+    ],
+    "enters": [
+      {
+        "number": 121,
+        "box": [
+          74,
+          9,
+          74,
+          13
+        ],
+        "level": 0,
+        "target": 122,
+        "note": "Aida's way back to Noria (OpenMU VersionSeasonSix Gates.cs:535). MU asks 10; ours free, the way out as every other map's (the user, 2026-10-11)."
+      }
+    ],
+    "spawn": {
+      "number": 119,
+      "box": [
+        82,
+        8,
+        87,
+        14
+      ],
+      "note": "OpenMU's spawn gate 119: the box a new character starts in and a dead one stands up in, the .mur's safe gate (pipeline/index.py gate_rows). rules.arrive is its middle. Out of mu.db's gates table in sprint D6."
+    }
+  },
+  "pipeline": {
+    "hidden": {
+      "value": [
+        56,
+        57,
+        58,
+        59,
+        60,
+        62,
+        63,
+        67,
+        70
+      ],
+      "note": "Aida's nine (MoveAidaObject, GMAida.cpp:77-86; 60 in RenderAidaObjectVisual :195-204): 56, 57 and 58 the waterfall spray boxes, 84 of them; 59, 62 and 63 the mist boxes, 91, which never emit in MU (their emitter is gated on the HiddenMesh the move sets first, :184-226); 60 the butterflies, 20; 67 the small fires, 11; 70 the skull ghost, 5. All emitters, drawn by no mesh. docs/worlds/aida-port.md."
+    },
+    "grass": {
+      "value": [
+        "TileGrass01"
+      ],
+      "note": "Aida ships TileGrass01.OZT, dark olive blades, which MU grows on slot 0 (ZzzLodTerrain.cpp:2077-2120), 14 473 drawn tiles; TileGrass02.OZT is fully transparent, so slot 1 grows nothing. docs/worlds/aida-port.md."
+    },
+    "void": {
+      "value": {
+        "start": 0.5,
+        "depth": 4.5,
+        "blend": 1.5
+      },
+      "note": "Aida: Devias's way, as Tarkan. A NoGround ravine from the entrance to the north-east, walled by Object18-20's 13 m rock faces sunk about 4.7 m, with 40 waterfalls falling into it. Deeper than Tarkan's because the walls and falls reach 4.7-6 m down. And `blend`: where no wall or rock stands on a lip, MU leaves the tile edge as a jagged cut against the black (the user, 2026-10-11: 'there still was some black holes', then 'Soft fade on bare inner edges'), so the ground goes dark into the void over a tile and a half. Only the ground's own shader reads it (abyssEdge, fs_ground), so the walls and rocks on the lips keep their light. No `rim`, which slopes the lips and would hide the walls. docs/worlds/aida-port.md, Part B 5."
+    },
+    "void_fill": {
+      "value": [
+        [
+          83,
+          10
+        ]
+      ],
+      "note": "Aida, from the safe hall: 177 open tiles in seven crumbs on rows 253-255 that no walk reaches, beyond the walls. docs/worlds/aida-port.md."
+    },
+    "border_fill": {
+      "walls": [
+        17,
+        18,
+        19
+      ],
+      "clear": 4,
+      "keep": [
+        [
+          65,
+          0,
+          240,
+          165
+        ]
+      ]
+    },
+    "blend_keep_near": {
+      "walls": [
+        17,
+        18,
+        19
+      ],
+      "reach": 2.5
+    },
+    "flat_over_void": true,
+    "airs_from": {
+      "value": "lorencia",
+      "note": "MuMain loads MODEL_BUTTERFLY01 from Data/Object1, Lorencia's objects (MapManager.cpp:89), as for Noria."
+    },
+    "crawls_from": {
+      "value": "tarkan",
+      "note": "The scarab, MODEL_BUG01 + 1, is built in Tarkan (Object9's Bug02)."
+    },
+    "grounded_types": {
+      "value": [26, 27, 29],
+      "note": "Ours: the flower beds Object27, 28 and 30, flat cards of flower heads with no stems, which MU stores 0.85-2 m over the ground (median 1.1 m). Over MU's bare ground that passed; in our grass they hung in the air (the user, 2026-10-11: 'those flowers is flaoting in air without any base'). Laid on the terrain and lifted (below)."
+    },
+    "lifted": {
+      "value": {"Object27": 0.3, "Object28": 0.3, "Object30": 0.3},
+      "note": "Ours: the flower beds' heads 0.3 m over the terrain, among the tips of Aida's 0.45 m grass, so they read as flowers on stems the grass hides."
+    },
+    "anchor_kinds": {
+      "value": {
+        "Object57": 18,
+        "Object58": 19,
+        "Object59": 20,
+        "Object68": 21,
+        "Object71": 22
+      },
+      "note": "Aida's waterfall spray boxes (RenderAidaObjectVisual types 56-58, GMAida.cpp:166-183), drawn by game/world/waterfall_spray.h: 18 the falling drops of Object57, 19 the specks bursting off Object58, 20 the mist of Object59. None lights; each carries the box's Scale, which MU adds to every particle's (SPRAY_KINDS). and Object68's small fires on rocks and ruins (type 67, GMAida.cpp:239-242), game/world/small_fires.h, and Object71's skull ghosts (type 70, :243-252), game/world/skull_ghosts.h."
+    }
+  },
+  "npcs": [
+    {
+      "npc": 253,
+      "name": "Potion Girl Amy",
+      "figure": "PotionGirlAmy",
+      "at": [
+        78,
+        13
+      ],
+      "look": 4,
+      "note": "Ours, not 2005's (Aida's town had no one): the user's pick, 2026-10-12, on OpenMU Season Six's first NPC tile, Osbourne's 78,13 facing south-east (VersionSeasonSix/Maps/Aida.cs:45)."
+    },
+    {
+      "npc": 240,
+      "name": "Baz The Vault Keeper",
+      "figure": "",
+      "at": [
+        86,
+        14
+      ],
+      "look": 2,
+      "note": "Ours, the user's pick, 2026-10-12, on OpenMU Season Six's second NPC tile, Jerridon's 86,14 facing south-west (Aida.cs:46), NoMove on every grid."
+    }
+  ]
+}

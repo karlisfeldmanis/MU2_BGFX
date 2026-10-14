@@ -111,7 +111,7 @@ public:
     int clipIndex() const;
     std::string clipName(size_t index) const;
     bool playClip(size_t index);
-    // **After a cook** (the studio's swap, docs/order-plan.md §9c F3; game/bench_reload.cpp):
+    // **After a cook** (the studio's swap, docs/plans/order-plan.md §9c F3; game/bench_reload.cpp):
     // the figure tables and the wardrobe read again from disk, the textures under them that
     // the cook rewrote forgotten first, the lists refilled, and the same tab, the same name
     // and the same clip put back. False when the subject is no longer there.

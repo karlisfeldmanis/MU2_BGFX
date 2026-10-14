@@ -84,7 +84,7 @@ private:
         float alpha = 0, lit = 0;  // the range's fade, and the pointer's lift toward white
         std::string name;
         bool bot = false, dead = false;
-        // His guild's name and mark (docs/guild.md, the user's pick A): the line under his name.
+        // His guild's name and mark (docs/game/guild.md, the user's pick A): the line under his name.
         std::string guild;
         net::GuildMarkBits mark{};
         bool operator==(const Tag& o) const {

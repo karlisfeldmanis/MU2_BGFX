@@ -1,0 +1,852 @@
+# The Dark Knight's skills: 0.75's formulas, and the cooldowns that replace them
+
+Written 2026-09-22 before any code, and **the first skill is now built** — see §6, written the same
+day, for what is in the tree and what is still owed. This is the design for the skill sprint
+the first plan put after sprint 9 (§0 has its decision), and it answers four questions in the order they have to be answered:
+
+1. **What does 0.75 actually say** about the knight's six skills — every number, cited.
+2. **What do WoW and LoL do with cooldowns**, since MU has nothing to copy here.
+3. **What is ours**, marked `invention`: the orb route, the QWER bar, and the two formulas — skill
+   damage off strength, cooldown off agility.
+4. **What is already in this tree**, so the sprint does not rebuild it.
+
+Sources: OpenMU at `LEGACY/reference/openmu` (paths below are relative to `src/`), MuMain at
+`LEGACY/reference/MuMain/src/source`, and `MU2/docs/skills.md`, which is the same research done for
+the Godot client and carried here — with one correction, §1.3.
+
+## 0. Decided 2026-09-20: the skills are Diablo 3's shape, not MU 0.75's
+
+Written into the first plan (`PLAN.md`, deleted 2026-10-13) before any skill code, so nothing was
+built that had to be undone:
+
+- A skill is **learned permanently**, by every class, and is not re-bought, carried as an item or
+  lost.
+- A learned skill is **dragged onto Q, W, E or R**. Those are the bar (T joined later, §3.4).
+- Every skill has a **real cooldown**, so a character cannot use skills continuously. The sim keeps
+  per-skill cooldown state on a figure, and the HUD shows it running down.
+
+This is the one place the rules leave 0.75 on purpose rather than by omission, so it is
+`invention` on a scale the other departures are not. Nothing else may bake in MU's own
+assumptions -- a skill fired from an item, or with no cooldown.
+
+---
+
+## 1. MU 0.75, traced
+
+### 1.1 The six skills
+
+`Version075/SkillsInitializer.cs:58-63`, argument order from
+`Skills/SkillsInitializerBase.cs:51-71`.
+
+| № | skill | damage | range | mana | AG | moves to target | moves target | clip | play speed |
+|---|---|---|---|---|---|---|---|---|---|
+| 18 | Defense | — | 0 (self) | 30 | 0 | — | — | `PLAYER_DEFENSE1` (187) | 0.32 |
+| 19 | Falling Slash | 0 | 3 | 9 | 0 | yes | yes | `…SKILL_SWORD1` (60) | 0.30 |
+| 20 | Lunge | 0 | 2 | 9 | 0 | yes | yes | `…SKILL_SWORD2` (61) | 0.30 |
+| 21 | Uppercut | 0 | 2 | 8 | 0 | yes | yes | `…SKILL_SWORD3` (62) | 0.27 |
+| 22 | Cyclone | 0 | 2 | 9 | 0 | yes | yes | `…SKILL_SWORD4` (63) | 0.30 |
+| 23 | Slash | 0 | 2 | 10 | 0 | yes | yes | `…SKILL_SWORD5` (64) | 0.24 |
+
+- **No level requirement, no energy requirement, no ability cost, no cooldown, no skill level.**
+  `CreateSkill` is called with mana and nothing else to qualify for — the wizard's twelve all carry
+  an energy requirement and the knight's carry none.
+- **`movesToTarget` is a gap-closer**: the knight is placed *on the target's tile* before the blow.
+  **`movesTarget` is a knock**: the monster is shoved one tile at random. **We keep the knock and
+  throw the gap-closer away** — see §3.1a, which is a decision of the user's and the reason the
+  `range` column above is only history.
+- **The range check is `Range + 2`**, not `Range` (`TargetedSkillDefaultPlugin`), and mana is taken
+  **after** the range test and **before** the moves. That order is behaviour, not presentation.
+- **Defense** is `SkillType.Buff`, `targetRestriction: Self`, and its effect is
+  `DamageReceiveDecrement × 0.50 for 4 seconds` (`Skills/DefenseEffectInitializer.cs`). Half damage
+  taken, flat, four seconds, thirty mana. `sim/rules.h:43` already carries `damageTaken` for it.
+- **Sounds** (`ZzzOpenData.cpp:4784-4788`): `sKnightDefense`, `sKnightSkill1..4` — Cyclone and Slash
+  share `SOUND_SKILL_SWORD4`, which is MU's own reuse.
+- **Slash alternates** its clip on an odd swing counter (`WSclient.cpp:4308`).
+- **Every skill swing lays a weapon streak**, whatever the weapon: `CreateWeaponBlur` tests
+  `PLAYER_ATTACK_SKILL_SWORD1..5` before it asks what is in the hand, drawn white off
+  `motion_blur_r.jpg` (mapping 2). An axe that streaks nothing on an ordinary swing streaks on a
+  skill.
+
+### 1.2 How a knight got a skill in 0.75 — and why we are leaving it
+
+**He did not learn one. He picked one up, and had it only while it was in his hand.** The item *is*
+the grant (`Version075/Items/Weapons.cs:278`, `skillNumber` as the fourth argument), there is no
+knight scroll (`Version075/Items/Scrolls.cs` is twelve wizard rows), and there is no knight orb —
+0.75's four orbs are all Fairy Elf (`docs/reference/mu-scrolls-and-orbs.md` §2).
+
+| skill | carried by (lowest drop level first) | first carrier | its drop level |
+|---|---|---|---|
+| Defense 18 | Buckler, Skull, Spiked, Tower, Big Round, Serpent, Bronze, Dragon Slayer, Plate | Buckler | 6 |
+| Uppercut 21 | Sword of Assassin, Falchion, Serpent Sword | Sword of Assassin | 12 |
+| Falling Slash 19 | Morning Star, Double Axe, Tomahawk, Battle Axe, Nikkea Axe | Morning Star | 13 |
+| Lunge 20 | Gladius | Gladius | 20 |
+| Cyclone 22 | Blade, Berdysh, Great Scythe | Blade | 36 |
+| Slash 23 | Giant Sword, Crystal Sword, Chaos Dragon Axe | Giant Sword | 52 |
+
+`Version075/Items/Weapons.cs:93-132`, `Armors.cs:40`. That ladder — 6, 12, 13, 20, 36, 52 — is worth
+keeping even though the route is being replaced: it is MU's own answer to *when* a knight should meet
+each skill, and §3.3 uses it as the orbs' drop levels.
+
+### 1.3 A knight's skill does about **twice** his swing, and `MU2/docs/skills.md` says otherwise
+
+`MU2/docs/skills.md` states "a knight's skill does exactly the damage his swing does. Not more."
+That reading is **wrong** and this document corrects it. `skill.AttackDamage` is indeed 0 on all
+five, so nothing is added to the band — but the multiplier at the end of the calculation is not 1:
+
+```
+// AttackableExtensions.cs:226-247, and it runs for every hit that has a skill
+if (skill != null) {
+    var multiplier = attacker.Attributes[Stats.SkillMultiplier];
+    ...
+    dmg = (int)(dmg * multiplier * damageFactor);
+}
+```
+
+and the Dark Knight's class row sets that attribute outright:
+
+```
+// ClassDarkKnight.cs:74  and  :112
+AttributeRelationship(Stats.SkillMultiplier, 0.001f, Stats.TotalEnergy);
+ConstValueAttribute(2, Stats.SkillMultiplier);
+```
+
+So **`SkillMultiplier = 2 + energy/1000`** for a knight, applied after defence, the level floor and
+`AttackDamageIncrease`. The Dark Wizard's own base is `1` (`ClassDarkWizard.cs:112`) — his spells get
+their force from `MinimumWizBaseDmg = energy/9`, `MaximumWizBaseDmg = energy/4` (`:72-73`) plus the
+skill's own `AttackDamage`, which is where the wizard's "spells scale with energy" comes from.
+
+Checked against the version gate: the per-skill multipliers in
+`Updates/FixSkillMultipliersPlugIn.cs` are `DataInitializationKey => VersionSeasonSix`, so they are
+**not** 0.75. 0.75's knight has one flat multiplier for all five skills.
+
+**This matters for §3, because it means the thing the user asked for already exists in 0.75's own
+shape** — a skill multiplier that grows with a stat. What we change is which stat, and how fast.
+
+---
+
+## 2. How WoW and LoL build cooldowns
+
+MU has no cooldown to transcribe — `cooldownMinutes` is 0 on every 0.75 skill, and the client's
+`SkillAttribute[].Delay` (`GameLogic/Skills/SkillManager.cpp:140-170`) is a Season 6 field that is
+zero for all six of these. So the shape has to be borrowed, and these are the two systems worth
+borrowing from.
+
+**LoL — Ability Haste.** Since the 2021 preseason, a cooldown is
+`base × 100 / (100 + AH)`, equivalently `base / (1 + AH/100)`, and the effective reduction is
+`AH / (AH + 100)`. It replaced a flat "cooldown reduction" percentage that had to be **capped at
+40%**, because a percentage subtracted from 1 reaches zero and has to be fenced. Three properties
+came out of the change and all three are why it is the right base here:
+
+- **No cap is needed.** The function approaches zero and never touches it, so stacking can be left
+  open-ended without a special case at the end.
+- **Every point is worth the same.** 100 haste is +100% casts, 200 is +200%: the stat is linear in
+  *casts per minute*, which is the thing the player feels, rather than in seconds saved. A flat
+  percentage is worth more the closer you are to the cap, which is a balance trap.
+- **It is the same maths as armour**, so it composes with everything else additively in the stat and
+  multiplicatively in the outcome.
+
+**WoW — haste.** Same divisor: `base / (1 + haste)`. Two extra ideas worth taking:
+
+- **A floor, not a zero.** The global cooldown is 1.5 s and haste takes it to **0.75 s and no
+  further**. Blizzard did not let the number reach zero; it hits a wall and the animation becomes
+  the limiter. That is how "no cooldown" is delivered in a game that never divides by zero.
+- **Charges.** An ability can hold 2–3 uses with a recharge timer that haste also shortens. This is
+  the tool for a skill that should come in a burst and then be gone — two Uppercuts back to back and
+  then a wait — without making it spammable. Not in the first pass; the shape is here so the
+  cooldown state is built as a deadline plus a count rather than a deadline alone.
+
+Diablo 3, which §0 names as the shape of our bar, stacks cooldown reduction
+**multiplicatively** — `(1−a)(1−b)…` — which also never reaches zero but makes each source worth
+less than the last and is hard to read off a character sheet. **Not copied**: the divisor is the same
+curve with an explanation the tooltip can print.
+
+**The conclusion for us**: one haste number per character, `cd = base / (1 + haste)`, floored
+per-skill. Not a percentage, not a cap, not multiplicative stacking.
+
+---
+
+## 3. Ours, and marked as ours
+
+Everything in §3 is `invention` on the scale §0 reserves for the skill system. It is the one
+place the rules leave 0.75 on purpose.
+
+### 3.1 The spine: strength is force, agility is speed
+
+The user's rule, 2026-09-22: *"like it is for DW spells — they get stronger when the main stat is
+bigger, energy for DW; for DK it is strength. And agility probably reduces the cooldown."* That maps
+onto 0.75's own arithmetic cleanly, because both hooks already exist:
+
+| what | 0.75's own version | ours | why it is the same shape |
+|---|---|---|---|
+| skill damage | `SkillMultiplier = 2 + energy/1000` (`ClassDarkKnight.cs:74`, `:112`) | `M = M₀ + strength/K_dmg` (+ the energy term kept) | the attribute and its place in the calculation are unchanged; the input stat and the slope are ours |
+| cooldown | nothing | `H = agility/K_cd`, `cd = base/(1 + H)` | new, §2's divisor |
+| attack speed | `AttackSpeed += agility/15` (`ClassDarkKnight.cs:58`) | unchanged | agility is *already* the knight's speed stat; the cooldown follows the stat that was always about rate |
+
+Strength and agility are both already load-bearing (`sim/rules.cpp` reads strength for the damage
+band and agility for attack rate, defence and swing speed), so neither formula introduces a stat
+the character sheet does not already explain.
+
+### 3.1a Close combat only: no leaps, and the skill is punctuation in an auto-attack fight
+
+The user's rule, 2026-09-22: *"don't use tile gaps for DK skills, they have to be close combat only —
+only the AOE is different"*, and *"most of the time the DK starts combat with auto attack and then he
+can use skills."* Both are departures from 0.75 and both narrow the design, so they are written out
+before the numbers that depend on them.
+
+**Every skill is cast at the knight's own reach.** `kHeroAttackRange = 1` in `realm_tuning.h:77`,
+measured MU's way (the larger of the two axis distances) — the same test a swing already passes, and
+the same number a weapon's own reach will replace in sprint 7. **`movesToTarget` is not
+implemented at all**: no skill moves the knight, ever. He walks to the monster on his own feet, as he
+already does, and then presses a key. There is no `Close`, no leap, no dash, and nothing to
+desynchronise between the sim and the drawn body.
+
+**One consequence to accept knowingly.** In 0.75 a knight's skills bought him *reach and movement*
+and not force (Falling Slash at three tiles was the pull). Taking the movement away leaves the skills
+with nothing but damage, area and the knock — so **the multipliers in §3.2 are now the whole reason to
+press a key**, rather than a bonus on top of a gap-closer. If the skills feel pointless in play, that
+table is the knob, not the range.
+
+**What each skill is, then:**
+
+| skill | reach | who it hits | knock | why |
+|---|---|---|---|---|
+| Falling Slash 19 | 1 | one | off | the overhead: the heaviest single blow |
+| Lunge 20 | 1 | one | off | the cheap jab — shortest cooldown, smallest multiplier |
+| Uppercut 21 | 1 | one | off | the rising blow, between the two |
+| Cyclone 22 | 1 | **everything within 1 tile** — all eight neighbours and his own | no | he spins; it is the crowd answer |
+| Slash 23 | 1 | **the three tiles in the facing arc** (ahead and the two diagonals beside it) | no | a wide two-handed sweep, heavy and slow |
+| Defense 18 | self | himself | — | the guard |
+
+- **The two area skills are the only thing that is not one target**, which is what "only the AOE is
+  different" means: the *area* is different, the *range* never is. Both are centred on the knight, not
+  thrown at a tile, so neither needs a ground target, a cursor mode or a frustum — Cyclone is a
+  radius-1 ring test and Slash is three named tiles off his facing. That is two lines of geometry and
+  no new aiming.
+- **The knock is dropped on the two area skills** and kept on the three single ones. Shoving a crowd
+  apart is the opposite of what a crowd skill is for: the knight who just gathered four monsters
+  around him would scatter them out of his own reach. This is ours, not MU's — MU had `movesTarget`
+  on all five.
+- **Area damage is per target, rolled per target**, so one Cyclone into four monsters is four
+  `strike()` calls with four hit rolls. Seeded-log order is therefore fixed: nearest first, then
+  clockwise from north, so the same seed gives the same bytes.
+
+**A skill needs the hand it is thrown with.** The user's rule, 2026-09-22, and it is 0.75's own
+arrangement restored rather than a new gate: in the original the weapon *was* the skill, so "no
+weapon, no Falling Slash" was true by construction, and learning a skill permanently is exactly
+what took that away. So:
+
+- **The five attacks need a blade in the right hand** -- not empty, not a shield, not a bow or a
+  crossbow, because all five clips are `PLAYER_ATTACK_SKILL_SWORD1..5` and the streak MU lays on
+  them is a blade's.
+- **Defense needs a shield on the arm**, which is where skill 18 lived: the Buckler and the nine
+  shields after it (`Version075/Items/Armors.cs:40`).
+- The box is drawn **disabled** when the hand is wrong or the mana is short -- cold-tinted and
+  washed, a different state from the cooldown's dark, because those two must not read as each
+  other.
+
+**Superseded on 2026-09-23 by §3.1b, which asks the same question of a narrower hand:** not "is
+there a blade" but "is it *this skill's* kind of weapon". The three bullets above still hold --
+they are what falls out of the new column when a hand belongs to no family at all.
+
+**The fight's rhythm: auto-attack is the floor, a skill is the beat.** The knight opens by clicking a
+monster and keeps swinging — that standing order is already in the tree. A skill press does **not**
+cancel it:
+
+- Pressing Q..R while an attack order stands **spends this swing on the skill and then goes on
+  swinging.** (Revised 2026-09-22 to stop the auto-attack, and revised back 2026-09-23 on the
+  user's word — *"DK char has to continue auto attack after skill used"*. The order is left
+  standing, which is what the first pass did and what `throwSkill` does again: it never touches
+  `order_`.) A skill is the punctuation inside the exchange, not the end of it, and it costs no
+  second click. A skill on cooldown changes nothing and the ordinary blow lands.
+- **He does not turn or move while the clip runs.** The blow is thrown where he was standing and
+  facing when he threw it: no re-aim at a quarry that shuffles round him, no re-path, no step. A
+  body that swivels or slides under its own animation reads as a teleport, which is the same
+  objection that took the gap-closers out.
+- **And the knock is off for the same reason.** 0.75's `movesTarget` puts the monster on a
+  neighbouring tile at once, which is a one-tile teleport of somebody else. The column and
+  `Realm::shove` are kept and unreached; they come back the day a body can be pushed over a few
+  ticks rather than moved.
+- **A cast pays the swing timer** (`Fighter.swingsAt`), so a skill cannot be squeezed between two
+  swings for free. This is the real global floor under §3.2's cooldowns, and it is MU's own number
+  rather than an invented GCD.
+- **A skill with no target under the order does nothing** if it needs one, and Defense casts on
+  himself regardless — MuMain's split holds: left walks and swings, right and the keys cast.
+  **An area skill does not need one** (2026-09-23): it is thrown *around* him rather than *at*
+  somebody, so what it asks for is a body inside the shape. A knight whose quarry died a moment
+  ago still spins into the three standing on him; a spin into empty air is the one thing refused,
+  because it would spend mana and a cooldown on nothing.
+
+### 3.1b The weapon families: a skill belongs to a kind of weapon
+
+The user's rule, 2026-09-23: *"we need some variations for DK skills, my idea that they are for
+specific weapon types so there is deeper system behind it"* — and, asked which of three shapes,
+they chose the strictest one: **a skill needs its own family and is dark without it.** Not a bonus
+with the right weapon, not a different version per weapon. Either that hand may throw it or it may
+not.
+
+**This is 0.75's own arrangement, written down.** §1.2 is the whole derivation: in the original a
+knight *had* a skill only while he held the weapon that carried it, so Falling Slash was an axe's
+blow and Slash was the two-hander's. Learning a skill permanently — our departure, §1.2 — is what
+quietly threw that away and left one knight with all six off a Kris. The `families` column takes it
+back, and **for the five attacks it is traced rather than chosen**: the families are exactly the
+weapons `Version075/Items/Weapons.cs:93-132` granted each skill on.
+
+MuMain gates its own later skills the same way, which is worth having as precedent for the shape
+rather than for the numbers: `SkillWarrior` (`GameLogic/Combat/SkillCast.cpp:145-170`) refuses
+Impale without a spear and Spiral Slash without a sword, *before* it spends any mana — the same
+order `throwSkill` refuses in.
+
+**Eight families**, MU's own item groups split by the hands they need. One-handed and two-handed
+are told apart by the footprint's width, which is where OpenMU keeps two-handedness
+(`if (group < Bows && width == 2)`): a Double Axe is one cell across and a Battle Axe is two, and
+they are different weapons to swing. Every polearm in MU is two-handed, so the spear has one bit.
+A shield is a family too — it is the hand Defense asks for — so one column answers both questions
+instead of two rules that can drift apart.
+
+| family | group | in Lorencia |
+|---|---|---|
+| one-handed sword | 0, width 1 | Kris, Short Sword, Rapier, Katache, Sword of Assassin, Blade, Gladius, Falchion, Serpent Sword |
+| two-handed sword | 0, width 2 | Giant Sword |
+| one-handed axe | 1, width 1 | Small Axe, Hand Axe, Double Axe, Tomahawk |
+| two-handed axe | 1, width 2 | Battle Axe, Nikkea Axe |
+| mace | 2 | Mace, Morning Star |
+| spear | 3 | Spear, Dragon Lance, Berdysh, Great Scythe |
+| shield | 6 | the twelve |
+
+**Who may throw what**, and the right-hand column is the provenance:
+
+| skill | families | why |
+|---|---|---|
+| Falling Slash 19 | axes and maces, either hand | its carriers: Morning Star, Double Axe, Tomahawk, Battle Axe, Nikkea Axe. MU painted it an **axe** for an icon |
+| Lunge 20 | one-handed sword | its carrier: the Gladius. MU's own line says "used with weapons like Gladius and Katana" |
+| Uppercut 21 | one-handed sword | its carriers: Sword of Assassin, Falchion, Serpent Sword |
+| Cyclone 22 | one-handed sword, spear | its carriers: Blade, Berdysh, Great Scythe |
+| Slash 23 | two-handed sword, two-handed axe | its carriers: Giant Sword, Crystal Sword, Chaos Dragon Axe — which is MU's own description word for word |
+| Defense 18 | shield | `Version075/Items/Armors.cs:40`, the Buckler and the nine after it |
+| Twisting Slash 41 | **any weapon** | MU puts no weapon requirement on it at all; it is the knight's staple |
+| Rageful Blow 42 | **any weapon** | **ours**, and MU puts no weapon requirement on it either |
+| Death Stab 43 | spear | **ours**, and MU gates it on the hand too (`SkillCast.cpp:157`) |
+
+**Three rows past 0.75, and why the design needs them.** Gating the five on their own carriers
+leaves a one-handed axe, a mace and a spear with *one key each* — which is the dead bar this
+project would rightly refuse. So three more skills, and they are not invented from nothing: 41, 42
+and 43 are the knight's own later skills, and their numbers and names are the client's
+(`skill_eng.bmd` reads `41 Twisting Slash`, `42 Rageful Blow`, `43 Death Stab`; the decode is
+`docs/reference/mu-scrolls-and-orbs.md` §7). Their icons are MU's own cells off `newui_skill`. **What they do
+is ours**, in §3.2's shape — there is no 0.75 row to follow and inventing one and calling it traced
+would be worse than saying this. Their clips are 0.75's five, reused: the sword-spin for the spin,
+the overhead for the crush, the thrust for the stab.
+
+**What each family can press, which is the number that decides whether this is a system or a
+punishment:**
+
+| in his hand | keys | with a shield |
+|---|---|---|
+| one-handed sword | Lunge, Uppercut, Cyclone, Twisting Slash, Rageful Blow | + Defense = 6 |
+| two-handed sword | Slash, Twisting Slash, Rageful Blow | 3 |
+| one-handed axe | Falling Slash, Twisting Slash, Rageful Blow | + Defense = 4 |
+| two-handed axe | Falling Slash, Slash, Twisting Slash, Rageful Blow | 4 |
+| mace | Falling Slash, Twisting Slash, Rageful Blow | + Defense = 4 |
+| spear | Cyclone, Twisting Slash, Death Stab, Rageful Blow | 4 |
+
+**Twisting Slash and Rageful Blow are the two every hand has** — the wide answer and the heavy one
+— which is the user's rule of 2026-09-23 and is also what MU does: neither carries a weapon
+requirement anywhere. Everything else is its family's own.
+
+Three at worst, six at best against a bar of five — so no weapon leaves a knight with a bar he
+cannot fill, and **every weapon leaves him with a different one**, which is the depth the user
+asked for. A two-hander trades Defense for the heavy arc; a spear is the only hand that throws the
+hardest single blow in the table; the one-handed sword is the widest bar and the lightest hits.
+`tests/sim_test.cpp` checks the "three at worst" as a rule, not as a fact about today's table.
+
+**And the interface says it once.** The card's first row is `Weapon`, in MU's own requirement
+colours — white where the hand meets it, red where it does not — one family a line so nothing
+overruns the label. There is no sentence under the numbers: the user's rule of 2026-09-23 is that
+the card must not print the same fact twice, and a red row over a cold key is the fact. The safe
+zone is unsaid for the same reason and one more — a player can see where he is standing.
+
+### 3.2 The two formulas
+
+**Damage.** For a skill hit, everything runs exactly as `sim::strike` runs it today — the band, the
+hit roll, defence, the level floor — and then:
+
+```
+M = M₀ + strength/K_dmg + energy/1000        // energy term is 0.75's own, kept
+damage = strike(...) × M
+```
+
+| skill | hits | M₀ | K_dmg | at 28 str (level 1) | at 500 str | at 1000 str | at 2000 str |
+|---|---|---|---|---|---|---|---|
+| Lunge 20 | one | 1.4 | 1400 | 1.42 | 1.76 | 2.11 | 2.83 |
+| Uppercut 21 | one | 1.7 | 1200 | 1.72 | 2.12 | 2.53 | 3.37 |
+| Falling Slash 19 | one | 2.0 | 1000 | 2.03 | 2.50 | 3.00 | 4.00 |
+| Cyclone 22 | up to 9 | 1.3 | 1400 | 1.32 | 1.66 | 2.01 | 2.73 |
+| Slash 23 | up to 3 | 1.8 | 1000 | 1.83 | 2.30 | 2.80 | 3.80 |
+| Twisting Slash 41 | up to 9 | 1.5 | 1500 | 1.52 | 1.83 | 2.17 | 2.83 |
+| Rageful Blow 42 | up to 3 | 3.0 | 900 | 3.03 | 3.56 | 4.11 | 5.22 |
+| Death Stab 43 | one | 2.3 | 900 | 2.33 | 2.86 | 3.41 | 4.52 |
+
+The last three are §3.1b's, and they sit where the shape says they should: Twisting Slash under
+Cyclone, because it is the key every family has and nothing every family has should be the best
+one; Rageful Blow and Death Stab above Falling Slash, because each is the *only* heavy blow its
+family owns and pays for it in cooldown (8.5 s and 5.5 s against Falling Slash's 4.0).
+
+**Moved 2026-10-02** (the user: "ragefull blow will be cooldown spell with some multiplier, also
+twisting slash needs multiplier"): Twisting Slash 1.2 to 1.5 and Rageful Blow 2.1 to 3.0, its 8.5 s
+kept, so the spin now sits over Cyclone and Rageful Blow is the hardest blow in the table, paid for
+by the longest wait. At the old numbers the bot pressed them 71 and 33 times in three hours against
+Falling Slash's 790; now about 100-150 each. The wizard's three primaries moved on the same word
+(Energy Ball 1.5, Fire Ball 1.8, Power Wave 1.6, all from 1.0; `src/sim/skills.cpp`).
+
+`M₀ = 2.0` on Falling Slash is 0.75's own number, and it is the anchor the other four are spread
+around — **Falling Slash is the heaviest single blow and the two area skills are paid in coverage
+rather than in force.** Cyclone's 1.3 is per target, so it is the weakest key against one monster and
+by far the strongest against four; that trade is the only thing making the two kinds of skill
+different now that none of them closes a gap. **The damage grows twice over** — the band itself is `strength/6` to `strength/4`
+(`ClassDarkKnight.cs:71-72`) — so a level-400 strength knight is not 4× a level-1 one, he is roughly
+4× the multiplier on top of ~70× the band. That compounding is intended and is the reason the slopes
+are per-mille rather than per-hundred.
+
+**Cooldown.**
+
+```
+H  = agility / K_cd                    K_cd = 300
+cd = max(floor, base / (1 + H))
+```
+
+| skill | base cd | floor | at 20 agi | at 300 agi | at 600 agi | at 1000 agi | at 1500 agi |
+|---|---|---|---|---|---|---|---|
+| Lunge 20 | 3.0 s | clip (~0.9 s) | 2.8 | 1.5 | 1.0 | **0.9** | **0.9** |
+| Uppercut 21 | 3.0 s | clip (~0.9 s) | 2.8 | 1.5 | 1.0 | **0.9** | **0.9** |
+| Falling Slash 19 | 4.0 s | clip (~1.0 s) | 3.8 | 2.0 | 1.3 | 1.0 | **1.0** |
+| Cyclone 22 | 5.0 s | clip (~1.0 s) | 4.7 | 2.5 | 1.7 | 1.2 | **1.0** |
+| Slash 23 | 6.0 s | clip (~1.1 s) | 5.6 | 3.0 | 2.0 | 1.4 | 1.1 |
+| Twisting Slash 41 | 4.5 s | clip 65, MU's wheel (13 keys at 0.24, slower than the others) | 4.2 | 2.3 | 1.5 | 1.1 | **1.0** |
+| Rageful Blow 42 | 8.5 s | clip (~1.0 s) | 8.0 | 4.3 | 2.8 | 2.0 | 1.6 |
+| Death Stab 43 | 5.5 s | clip (~0.9 s) | 5.2 | 2.8 | 1.8 | 1.3 | 1.0 |
+| Defense 18 | 12.0 s | duration + 2 s | 11.3 | 6.0 | **6.0** | **6.0** | **6.0** |
+
+Defense is floor-bound from about 300 agility onward, and its floor is the only one that moves: it is
+`duration + 2`, so a knight who spends on vitality buys both a longer guard and a longer wait for it
+(6 s at vitality 0, 12 s at the 10 s cap).
+
+A knight gets 5 points a level (`PointsPerLevelUp 5`) on top of 28/20/25/10, so agility 300 is about
+level 60 if he spends half on agility, 1000 is about level 200, and 1500 about level 300 for an
+agility-first build. **The short skills stop having a cooldown somewhere around level 170–200 and the
+heavy ones never quite do** — which is the pacing worth having: the jab becomes free, the big sweep
+always has a beat.
+
+**Where "no cooldown" comes from, and why it is a floor rather than a zero.** Three walls, in the
+order they bite:
+
+1. **The clip.** A skill cannot be fired faster than its own animation
+   (`length = keys / ((speed + attackSpeed × 0.004) × 25)`, `sim/swings.cpp`), and that length itself
+   shrinks with attack speed, which agility also buys. When the cooldown drops under the clip there
+   *is* no cooldown: the button is ready before the knight has finished swinging. This is WoW's GCD
+   floor and it is what the user's "at some point there is no cooldown at all" should mean.
+2. **The swing timer.** `Fighter.swingsAt` already paces blows; a cast is a blow and pays it. So even
+   a floorless skill cannot outrun the weapon.
+3. **A buff's own duration.** Defense must not become permanent 50% damage reduction, so its floor is
+   **its duration + 2 s**, computed rather than constant — and its duration is where vitality goes:
+   `seconds = 4 + vitality/100`, capped at 10 s (`invention`; 0.75's four seconds is the value at
+   vitality 0). At vitality 800 that is 12 s of cooldown for 10 s of half damage, which is a strong
+   button and not an always-on one.
+
+**Mana stays 0.75's** — 8, 9, 9, 9, 10, 30 — and what comes back changed instead (2026-09-23).
+The passive is the original's, traced: every three seconds, `maximum / 27.5`
+(`GameConfigurationInitializerBase.cs:51`, `CharacterClassInitialization.cs:163`), which alone is
+one cast every twenty-seven seconds against a four-second cooldown. So **a landed swing returns a
+twentieth of the pool** — `invention`, and Diablo 3's shape, which is the one §0 chose: the
+basic attack is the generator, the skills are the spenders, and the fight has a rhythm of swing,
+swing, spend. A skill's own blow returns nothing, or it would pay for itself. Measured on the
+hunt: a level-30 knight went from 3 casts in 4 000 ticks to 31 in 6 000, and a level-100 one to 63
+of a possible 80 — mana binds early and the cooldown binds late, which is the right way round.
+
+**Mana stays 0.75's in cost** — It stops being the limiter by about level 30, and that is
+fine: the cooldown is the new cost, and this is one fewer number invented. If mana should keep
+mattering, the knob is `mana = base × M` (the skill costs what it hits for) — **not** recommended for
+the first pass, because it re-introduces the potion spam the cooldown exists to replace.
+
+**One tuning knob each.** `K_cd = 300` decides *when* a build runs out of cooldown; `K_dmg` per skill
+decides how much strength is worth. Both belong in a live-reloaded sheet
+(`content/sheets/skills.json`), like `lighting.json`, so a session can judge the pacing without a rebuild.
+
+### 3.3 The orbs
+
+The user's route: *bought or dropped, right-click to learn, permanent* — **built on 2026-09-23**,
+and it is now the only way a knight has a skill at all. Nine orbs, one a skill, and the numbers
+come from three places:
+
+- **Three are MU's own rows.** 0.95d wrote the first knight orb, `Orb of Twisting Slash` at group
+  12 number 7 (`Version095d/Items/Orbs.cs:32`), and Season 6 wrote `Orb of Rageful Blow` at 12 and
+  `Orb of Death Stab` at 19 (`…/Orbs.cs:43, :49`). Those three keep MU's numbers.
+- **Six are invented**, because 0.75 has no knight orb to transcribe — its four orbs are the elf's
+  (`docs/reference/mu-scrolls-and-orbs.md` §2). Group 12 in 0.75 is the three wings (0–2), those four orbs
+  (8–11) and the Jewel of Chaos (15), so 3–6, 20 and 25 are free there. (They are wings and Dark
+  Lord scrolls in later versions, which this project does not have and does not plan. Cyclone's
+  orb sat at 7 in the first draft of this table and moved to 25 when Twisting Slash arrived with
+  a real claim on 7.)
+- **Every level is §1.2's ladder**: the drop level of the first weapon that carried that skill in
+  the original, so a knight meets his skills in the order MU gave them to him.
+
+| item | № | teaches | req. level | drop level | price |
+|---|---|---|---|---|---|
+| Orb of Defense | 3 | Defense 18 | 6 | 6 | 500 |
+| Orb of Uppercut | 4 | Uppercut 21 | 12 | 12 | 2,500 |
+| Orb of Falling Slash | 5 | Falling Slash 19 | 13 | 13 | 3,000 |
+| Orb of Lunge | 6 | Lunge 20 | 20 | 20 | 8,000 |
+| Orb of Twisting Slash | **7** (0.95d's own) | Twisting Slash 41 | **60** | 60 | 50,000 |
+| Orb of Cyclone | 25 | Cyclone 22 | 36 | 36 | 25,000 |
+| Orb of Rageful Blow | **12** (Season 6's own) | Rageful Blow 42 | **120** | 120 | 150,000 |
+| Orb of Slash | 20 | Slash 23 | 52 | 52 | 60,000 |
+| Orb of Death Stab | **19** (Season 6's own) | Death Stab 43 | 60 | 60 | 90,000 |
+
+**Raised 2026-10-02** (the user: "lets increase lvl requirments", then "increase ragefull lvl
+requirtment to 120 and twisting to 60"): Twisting Slash 28 to 60 and Rageful Blow 44 to 120, the day their multipliers went to 1.5 and 3.0 — so Rageful Blow, the hardest
+blow in the table, is now the last orb on the ladder, and the two are off §1.2's ladder by choice.
+
+The three past 0.75 are placed *between* the six rather than after them, because each is a key
+that keeps a family alive and a family should not wait until 60 to have three.
+
+**All nine are on Hanzo the Blacksmith's shelf**, slots 96–104, which is the two rows under his
+swords. §3.3 first kept Lunge and Slash off it to leave something for the hunt; nothing in the
+tree drops an orb yet, and a skill that can only drop is a skill that cannot be tested, so the
+whole ladder is over the counter until the drops exist. The prices above are what the recipes
+record; what the shop actually charges is `Market`'s own cubic over the drop level, as for
+everything else on a shelf.
+
+- **The drop levels are §1.2's ladder**, so a knight meets his skills in the order 0.75 gave him
+  them. One line of provenance for six numbers.
+- **And nothing is handed over any more.** A character is raised knowing no skills at all. Two
+  stand-ins came and went in one day — a flat grant of every built skill at raise, and then a
+  ladder that granted by level — and both are gone now that the orbs exist. `Realm::useItem` is
+  the whole of the route: the class first (a wizard may buy a knight's orb and cannot read it),
+  then the level, then `learn`, then the orb is spent. A second orb of a skill he knows is
+  refused at the reading and stays in the bag to be sold, which is MU's own texture: the shop
+  sells you as many as you can pay for.
+- **The requirements are raw**, not run through `(3 × drop level × raw/100) + 20`:
+  `docs/reference/mu-scrolls-and-orbs.md` §4 establishes that a non-wearable row's requirement is used
+  verbatim, and `sim/items.cpp asks()` currently applies the formula unconditionally — so this is a
+  real branch the sprint must add, not a value to pick.
+- **Level only, no strength or energy gate.** The stats are what make a skill *good* (§3.2); gating
+  them behind the same stats would charge twice.
+- One cell wide, one tall, `dropsFromMonsters: true`, durability 1 — the elf orbs' own shape
+  (`Version075/Items/Orbs.cs:63-67`).
+- Lunge and Slash are drop-only on purpose: 0.75 had exactly this texture (the Gladius was the one
+  skill carrier Hanzo's store dropped), and two of six unbuyable keeps the hunt in it.
+
+**Learning is permanent and saved.** A right-click consumes the orb and sets a bit; `save.cpp` gets a
+version bump and a `learned` mask (nine bits now, one word is plenty; the mask is by TABLE INDEX, so a new skill is appended to `kRows` and never inserted). 0.75's hotkey bindings are
+**not** saved (`MU2/docs/skills.md` §10, checked against MuMain) — the *learned skills* are ours and
+are, the *bar* follows MuMain and is not.
+
+### 3.4 The bar and the frame
+
+- **Q W E R T.** `src/game/ui/hud.h:17` already records the decision of 2026-09-21: potions on
+  1–5, skills on the plate's own five boxes. The fifth was drawn dead for two sprints on a note
+  saying the list would take its place; the list took the GOLD box's place instead, so T is a
+  key like the other four (the user, 2026-09-23, trying to drag a skill onto it). Five slots,
+  five skills at once, nine learned — that is the Diablo 3 shape
+  §0 asked for, and what fills the four is the fan below, the right-click cast
+  (`MU2/docs/skills.md` §9: *left walks and swings, right casts*) staying as it is.
+- **And the list is how the four are chosen.** The user's rule, 2026-09-23, in three steps: they
+  asked for MU2's gesture (*"when clicked or hovered on the right-click slot he opened the skill
+  list where he can use drag and drop"*), rejected a side window and then a rail of named pills
+  (*"if the DK will have a lot of skills there will be issues, the skill icon has to be big
+  enough"*), and chose the shape from a page of four drawn over a real frame at true scale.
+  **The chosen shape is a grid of large icons**, and the page is
+  `https://claude.ai/artifact/JHMNuF39AL7xNeFfeaQdRU`, drawn at twelve skills rather than at
+  today's four because that is the case that decides a layout.
+  - **Anchored to the gold box** -- the one a right-click casts from in MU, which is where
+    `CNewUISkillList` opens its own list and where MU2's `Fan.cs` puts it. It opens while the
+    pointer rests on that box and a click latches it open; MU2 latches only, and the hover is
+    this bench's because it makes the gesture one movement instead of two.
+  - **Six cells across, then it wraps**, so a knight with twelve skills has a list twice as tall
+    and no wider. The cell is 56 px at 1080 lines, a fifth LARGER than the bar's own box: the
+    list is what you are looking at while it is open, and the bar is furniture you glance at.
+  - **Icons only.** A name beside every icon costs 180 px an entry and six of them spanned half
+    the screen, which is the rail the user threw out. What a name is for, the card under the
+    pointer does better -- and it is the same card the keys already raise.
+  - **In the item card's own style**, which was the user's other rule (*"you did a very good job
+    with the map message and the tooltips, it has to be the same style"*): the container is
+    literally `tip::glass` -- the graded near-black body, the warm gold hairline ring, the three
+    falloffs of shadow -- the kicker is the card's tracked caps over the map message's fading
+    hairline, and the inks are `tip::ink`, exported from the card so the two cannot drift. None
+    of it is MuDream's bevelled box art, which is what the first pass used.
+  Four gestures and no more -- `Hud::setFan` and `Desk::skillKeys`:
+  - a cell dragged from the list onto a key **binds** it there; if that skill already sat on
+    another key it **moves** rather than doubling, and the key it lands on gives up what it held
+    to the key it left;
+  - a key's own icon dragged onto another key **swaps** the two, which is what makes a full bar
+    rearrangeable without an empty key to stage through;
+  - a key's icon dragged **off the bar clears** that key, wherever it lands -- the list, the
+    frame, the grass; nothing is lost, because the list is where every learned skill lives. (A
+    plain click on a key lands on the key it came from and changes nothing.)
+  - a cell dragged out of the list and let go on nothing is a drag abandoned.
+  A newly learned skill still takes the first free key, but **once** (`Desk::autoBound_`), and
+  the mark goes on before a key is looked for rather than after one is found: a knight knows six
+  and the bar holds five, so the one that never finds a key would otherwise drop into the first
+  slot the player cleared by hand. A cell carries the key it is on in a gilt chip, and one he
+  could not throw -- no mana, or the wrong hand -- is drawn cold, the same two questions
+  `throwSkill` asks.
+  **And it is saved** (2026-09-23), which departs from 0.75 on the user's word and for the
+  reason the departure was made in the first place: MuMain has no `SaveHotKey` because MU's bar
+  could not be arranged -- a knight's skill was whatever weapon was in his hand. This one can be
+  arranged, so the arrangement is his. `Saved::bar` holds four of MU's own skill numbers beside
+  the potion keys, absent in an older file and read as four empty keys; a restored bar marks
+  every skill he already knew as having had its free key (`Desk::barRestored_`), so the
+  convenience cannot put back what he took off, while a skill learned afterwards still takes
+  one.
+- **A box is dark for two different reasons and they must not read alike.** The cooldown is a
+  wipe with the seconds over it; **inactive** is a cold tint and a wash, and it now asks every
+  question `throwSkill` asks before the key is even pressed -- the wrong hand, a safe zone
+  (where nothing at all may be thrown, the guard included), the mana, and being down -- so a box
+  that looks live and a press that does nothing can no longer disagree (the user, 2026-09-23).
+  **The list is never dimmed**: it is the catalogue of what he has learned, to be chosen from
+  and dragged out of, and in town every cell in it went grey at once and read as broken.
+- **The cooldown is drawn on the box**: a dark sweep over the icon and the seconds printed when more
+  than one remains — LoL's and WoW's shared convention, and the reason both read at a glance. Grey
+  the icon when the mana is not there (MuMain dims it too).
+- **The blade leaves a ribbon, and it is the one effect a skill has of its own.**
+  `CreateWeaponBlur` tests `PLAYER_ATTACK_SKILL_SWORD1..5` **before** it asks what is in the hand,
+  so a skill swing streaks whatever the weapon is — and the axes and maces are tested nowhere
+  else, which means an axe that leaves nothing on an ordinary swing streaks on a skill. Ours is
+  `fx/streak.cpp`, off MU2's `Trails.cs`: 29 pairs, 2.9 reference frames of span kept as a
+  duration rather than a count, a sixth of the blade to the tip read as fractions of the weapon's
+  own measured length, three keys of wind-up before it marks, and the `motion_blur_r` sheet
+  (`trail_skill`) added white — the refinement colours belong to mapping 0 and a +9 axe streaks
+  the same as a plain one. Sampled once a rendered frame rather than MU's ten sub-steps, because
+  the pose is already there. The ordinary swing's own streak — mapping 0, refined, swords only —
+  is deliberately not built: it is a different rule and it belongs with the swing.
+- **A skill's clip blends in longer than a swing's** -- 0.28 s against the 0.18 s everything else
+  uses -- and a step does not cancel it. A swing is a jab out of a stance and the short blend hides
+  the join; a skill is a wind-up, and at the swing's blend the body stands in the pose before the
+  arm has begun to move, which is what "the animation looks instant" means. The step rule is the
+  drawing agreeing with the realm: `throwSkill` holds him still for the whole clip, so a walk
+  arriving over a skill is interpolation catching up rather than a step he is taking.
+- **The box's card is the item tooltip's card** (`tip::Sheet`), not the gauges' two-line strip:
+  what the skill does in a line, the blow's multiplier with its breakdown (`x2.06 of a swing`,
+  `x2.00 base`, `+0.05 from 50 strength`), the reach, the cooldown with the haste that shortened it
+  (`3.5 s`, `4.0 s base, -11% from 40 agility`) and what is left of it while it runs, the mana
+  against what he has, and -- when the key is dark -- the reason in words.
+- **The tooltip must print the formula's result**, not just the number: `Cooldown 1.4 s (base 6.0,
+  −77% from 1000 agility)` and `Damage ×3.85 (base 2.6, +1.25 from 1000 strength)`. This is the
+  whole point of stat-driven cooldowns — a player who cannot see agility working will not spend on
+  it. `src/game/ui/describe.cpp` already builds exactly this kind of sheet for items.
+- **The icons are already in the tree**: `assets/interface/skills/skill_18.png` … `skill_23.png`, cut
+  by `pipeline/skill_icons.py`. Nothing reads them yet.
+
+### 3.4a The blow is begun and then landed
+
+Found by the player on 2026-09-23 and fixed the same day, and it is not a skill bug at all: the
+sim settled a blow on the tick the swing was *decided*, while the drawing has always shown it
+halfway through the clip (`Showing::kLandingPoint`). So a click that cancelled an attack cancelled
+the animation and not the damage — "cancel the attack with a click to move and the damage is still
+done."
+
+A swing is now two halves. `Realm::begin` says `Swung` and puts the blow in the air, half the clip
+ahead; `Realm::land` resolves it when the arm comes down, and an order that is not the same attack
+drops it whole. A cast is the same, over its own clip. **A monster is unchanged** — nothing can
+cancel a monster's swing, and giving it a wind-up would move every seeded log for no gain.
+
+### 3.5 The sim's shape
+
+- **Per-figure cooldowns**: six deadlines in ticks on the fighter, not a map — `realm.h:194-198`
+  already says the tick is per-body and separate from the thinking clock, which is the hook.
+- **Requests in, events out**, per foundation 8 (`docs/reference/architecture.md`): a `Cast` request (skill, target) and a `Cast`
+  event (who, skill, at whom); the clip, sound, streak and sparks are the game's to pick from the
+  number. `Shove` is one `Place`, for the knock on the three single-target skills; there is no
+  `Close`, because nothing moves the knight (§3.1a).
+- **Refusal order is 0.75's, with its range test replaced**: safe zone, learned, cooldown, reach
+  (`kHeroAttackRange`, not `Range + 2` — the generosity in the original was for a target that might
+  have drifted out of sync at three tiles, and at one tile a swing's own test is the right one), mana,
+  then the blow, then the knock. Mana is taken before the blow and a refusal is silent.
+- **The boon list** — a general timed-effect list on a figure, not a special case for Defense, since
+  ale and the elf's two Greaters are the same shape. It feeds `Fighter.damageTaken`, which is already
+  there and already 1.0.
+- **Headless tests**: a seeded cast run that logs the same bytes twice; invariants that nothing casts
+  while cooling, nothing casts what it has not learned, and no cooldown is ever below its floor.
+
+---
+
+## 4. The one decision left to the user
+
+**A floor, or a true zero?** §3.2 floors every cooldown at the animation, so "no cooldown" means *the
+button is ready before the swing ends* — WoW's answer, and the reason nothing divides by zero, no
+buff becomes permanent, and no skill can be fired twice inside one clip. A literal `0.0 s` is
+available instead by using `cd = base × (1 − agility/K)` clamped at zero, which reaches zero at a
+stated agility and is what a player counting seconds would call "no cooldown" — at the price of a
+cap, a permanent Defense unless it is special-cased, and a spam rate limited only by the swing timer.
+**Recommended: the floor.** It delivers the same feel and costs nothing later.
+
+---
+
+## 5. Order of work, when the sprint opens
+
+1. `content/sheets/skills.json` and the skill table in `content` — the six rows, their mana, range, clips,
+   `M₀`, `K_dmg`, base cooldown and floor. Live-reloaded.
+2. The six orbs in the cook, with the raw-requirement branch in `items.cpp asks()`, and the learned
+   mask in the save.
+3. The boon list and Defense, first, while exactly one thing uses it.
+4. `Realm::cast` with the refusals in order, the multiplier on the blow, the knock's one `Place`, and
+   the two area shapes — Cyclone's radius-1 ring and Slash's three-tile arc, both rolled per target in
+   a fixed order so the seeded log stays byte-identical. A skill press keeps the standing attack
+   order (§3.1a) and pays the swing timer.
+5. The bar: icons, QWER, the sweep, the grey, the tooltip with the arithmetic printed.
+6. The showing: clip, sound, white streak, sparks at the far end — all four already exist in this
+   tree for swings.
+7. The headless run and its invariants; then a tuning pass on `K_cd` with the numbers written down.
+
+
+---
+
+## 6. What is built
+
+### 6.0 The weapon families and the ladder, 2026-09-23
+
+**Nine skills, each gated on a kind of weapon, each met at a level.** §3.1b is the argument and
+§3.3's table is the ladder; this is what landed.
+
+- `SkillRow` grew two columns: `families`, a mask of `sim::arms::` bits, and `needLevel`. Both are
+  read by the realm and by the plate through the same calls (`row.suits(familyOf(hand))`), so a
+  key drawn dark and a press that does nothing cannot disagree.
+- `Realm::throwSkill` asks the family instead of "is there a blade"; the old rule survives inside
+  the new one, because an empty hand, a bow, a crossbow and a staff are all no family at all.
+- **The orbs, and they are the only way in.** Nine recipes in `content/items/misc`, all nine on
+  Hanzo's shelf, read with a right-click in the bag (`Realm::useItem`). Nothing is granted at a
+  raise, on a level or out of a save any more — a character is made knowing nothing.
+- Three rows past 0.75 — Twisting Slash 41, Rageful Blow 42, Death Stab 43 — with MU's own names,
+  numbers and icons and our own behaviour. `pipeline/skill_icons.py --mumain` cut the icons from
+  MuMain's own 256 sheet through a 3× enlargement, because MuDream's sharper sheet sits in an
+  application container macOS will not open from here.
+- The card says it once: `Weapon` is its first row, in MU's requirement colours, one family a line
+  so nothing overruns the label; `Learned at` is its last. Both sentences under the numbers were
+  dropped on the user's word — the safe zone because it is obvious, the weapon because the red row
+  above already said it. The keys still go cold for both.
+- `tests/sim_test.cpp`: the gate, the families a cooked weapon reports, the ladder at three
+  heights and through the restore door, and the hunt is run four times over — one-handed sword,
+  two-handed sword, axe, spear — so every shape in the table is thrown by something.
+
+**Owed.** An orb that DROPS (the rows say `dropsFromMonsters`, and nothing in the loot tables
+reaches group 12 yet), which is what would let §3.3 take Lunge and Slash back off the shelf; and a
+re-cut of the three icons at MuDream's 80×112 the day that container opens.
+
+**Twisting Slash, from MuMain (2026-10-01).** It plays MU's own `PLAYER_ATTACK_SKILL_WHEEL`,
+action 65 (13 keys at 0.24), and no longer borrows Cyclone's sword-spin; `tools/cook.py` carries
+the clip into every world's tables, so its cooldown floor is the longer wheel. And it draws
+MuMain's WHEEL1/WHEEL2 (`game/fx/wheel.h`). Fifteen frames in, five copies of his right hand's
+weapon orbit him 1.5 tiles out (1.8 with a polearm), lying flat a metre up and spinning. They
+fade 1, 1, 0.6, 0.5, 0.4, and each throws smoke, sparks and a flare where it passes. SOUND_SKILL_SWORD4
+plays as the wheel starts, and there is no blade streak, as MU has none on that action. The sparks
+are calmed as the forge's are, and the five ground lights are one at the hub; both are ours.
+
+### 6.1 The four on the bar, 2026-09-23
+
+**Falling Slash, Lunge, Uppercut and Cyclone — which is Q W E R full.** The two area shapes are
+written, and Slash's Arc with them; only Defense is unbuilt.
+
+- **`Spread::Ring` and `Spread::Arc`** (`Realm::gather`, `Realm::strikeAround`). Both are centred
+  on the knight and measured with his own reach, so neither needs a ground target, a cursor mode
+  or a frustum: Ring is everything within a tile, Arc is the same ring cut to 67.5° either side of
+  where he is facing — the facing eighth and the two beside it, written as an angle rather than as
+  three named tiles because a body stands at a fractional position and a tile test drops a monster
+  straddling the line. **One `strike()` and one hit roll a target**, nearest first, then clockwise
+  from north, then by id; two runs of one seed draw the same dice in the same order and the log
+  stays byte-identical (checked: the 4 000-tick hunt is `cmp`-identical across runs).
+- **An area skill resolves at the landing, not at the throw** — `Realm::land` measures the shape
+  when the arm comes down, so a monster that walked into the spin is caught and one that walked
+  out is not. He cannot have moved or turned himself in between; `castUntil` holds him.
+- **Lunge and Uppercut cost a `built = true` each**, as expected: they are Falling Slash with
+  other numbers.
+- **`Realm::raise` now hands a knight every built skill**, still in the marked temporary block:
+  four skills and four keys. Slash's row is `built = false` for that reason alone — the sim does
+  it, the bar has nowhere to put it, and it is one word the day a learned-skills list can drag a
+  fifth onto Q W E R.
+- **The auto-attack goes on after a cast** (the user's word, 2026-09-23): the `order_ = Request{}`
+  that stood in `throwSkill` for a day is gone. §3.1a is rewritten to match.
+- **The drawing latches `Drawn::landing`** instead of clearing it on the first `Hit`. A spin says
+  one `Swung` and then a `Hit` per target on the same tick, and clearing the flag made the second
+  of them look like a monster's one-part blow — replaying the clip, the wave and the swing counter
+  for every body caught.
+- **Three invariants** in `sim/audit.h`, read off the log rather than off the formula that made
+  it: nothing casts what it has not learned, nothing casts again inside the cooldown its last
+  throw declared, and no boon is ever longer than the cooldown that gates it.
+- **`tests/sim_test.cpp` grew a `skills` section**: the cooldown is monotone in agility and never
+  under its floor, 300 agility halves it, and a 6 000-tick hunt shows the shapes catching only
+  what is inside them, nearest first. Cyclone caught two at once; Slash, learned by hand because
+  it has no key, caught one a throw.
+- **The headless hand presses its keys in turn** rather than always the first one ready — mana is
+  the limiter at level 30, and a hand that scanned from the top threw Falling Slash twenty-five
+  times and Cyclone never.
+
+Measured on the standing hunt (`--headless --seed 7 --ticks 4000 --level 30 --at 190,110 --weapon
+Axe01`): 27 casts spread 5 / 10 / 9 / 3 over the four, invariants all kept, fingerprint
+`d50b9b6d89895571` twice.
+
+### 6.2 Defense, and the last of the six, 2026-09-23
+
+**All six rows are built.** `built` used to carry a second meaning -- *and the bar has a key for
+it* -- which is why Slash sat unbuilt with its arc written and tested; the list holds every
+learned skill and the four keys are filled from it, so the two questions came apart.
+
+- **The guard itself** was already in the sim (the boon fields, the shield gate, the lapse in
+  `press`); what it needed was `Realm::keepBoon`. `reckon` starts a fighter from his class and
+  his points and so writes `damageTaken` back to 1 -- and it runs on every level-up and every
+  change of armour, so a guard raised beforehand lapsed silently in the middle of its four
+  seconds. It is put back after each of the four `reckon` calls.
+- **The barrier**, `fx/aura.cpp`. MU2's `Aura.cs` carried two recipes and this engine carried
+  one, saying so: *"its second recipe, the knight's Defense barrier, was a bench invention on a
+  skill this engine does not have yet."* It has the skill now, so the class takes a `Recipe` and
+  the second one is written: five ribbons evenly round a ring of twenty units, standing at five
+  heights up 150 units of him rather than climbing away -- MU's climb is what makes the
+  level-up's flares *leave* -- one turn of the ring for a tail, in green, under one flash of
+  MU's ground circle, following the body and lapsing with the boon (`Aura::guard`, `follow`,
+  `release`). What it is drawn from is still not traced: MuMain gives skill 18 a clip and a
+  sound and nothing else, and the vocabulary is borrowed from the elf's Greater Defense
+  (`ZzzCharacter.cpp:4925`), MU's one drawn defensive skill.
+- **The buff strip**, `Hud::setBoon`: MuDream's own place for it, a 30-pixel square over the
+  shield bar's left end (MU2's `Hud.BuffsAt`, number for number), in `buff_defense` -- the icon
+  `pipeline/buff_icons.py` cut -- with a hairline across its foot for what is left of it. A
+  strip at all is the bench's, as it was MU2's.
+
+**Measured**: the 4 000-tick hunt is identical across two runs (fingerprint
+`29a7cf30030ffe97`), invariants all kept, 170 checks in `sim_test`. Defense is not thrown on
+that hunt and cannot be -- the hand carries no shield -- which is the refusal working.
+
+**Still owed:** the orbs (§3.3), so a skill is found or bought rather than handed over in
+`Realm::raise`.
+
+### 6.3 Falling Slash and the machinery, 2026-09-22
+
+**Falling Slash, and the whole cooldown machinery under it.** The other five are rows in the table
+with `built = false`: adding one is a row's behaviour, not a row.
+
+- `src/sim/skills.h/.cpp` — the six rows, `force()`, `castTicks()`, `cooldownTicks()` and
+  `floorTicksFor()`. The two formulas live here and nowhere else.
+- `src/sim/realm_skills.cpp` — `invoke` (the press, held for 30 ticks so a key pressed mid-swing is
+  not lost), `learn`/`knows`/`cooling`/`coolsFor`, `throwSkill` with the refusals in order, and the
+  knock. A cast pays its cooldown **and** the longer of the swing clock and its own clip.
+- `Realm::press` throws the wish before the standing order acts, so a skill spends the next swing
+  and the knight goes on fighting; `Realm::strikeAt` takes the multiplier; `What::Cast`,
+  `What::Shoved` and `What::Learned` are in the log and the save carries `learned`.
+- The bar: `Q W E R` on the window, the icon from `skill_19`, a top-down wipe for the cooldown with
+  the seconds printed over it, and the cold disabled tint. `--ui-skill F:K` presses a key in a
+  scripted run.
+- The clip: action 60 with a 0.28 s blend, the `sKnightSkill1` wave, and a step that no longer cuts
+  it short. The cook now carries actions 60–64 and 187 so the sim can read their lengths.
+
+**Measured on a headless hunt** (`--headless --at 190,110 --level 200`): at 20 agility the cooldown
+is 75 ticks, at 1015 agility it is 18 — the clip's own floor — and a strength build's blow comes out
+at ×3.02 of the swing, which is `2 + 1023/1000` to the digit.
+
+**Three things are owed, and two of them are the user's to decide:**
+
+1. **Mana is now the real limiter, not the cooldown.** A level-30 knight has about 35 mana and the
+   skill costs 9, so he throws three and then swings for the rest of the fight — the cooldown never
+   gets a chance to matter. 0.75's answer is potions, and they exist; the alternatives are a
+   regeneration, a smaller cost, or leaving it as the reason to carry blue potions.
+2. **It one-shots Lorencia's trash.** ×2 of a swing kills a Spider outright at level 20. That may be
+   exactly right for a skill on a four-second cooldown, and it may be too much; the knob is `force`
+   in `sim/skills.cpp` and nothing else reads it.
+3. **The orbs are not cooked**, so `Realm::raise` hands a knight Falling Slash and says so in a
+   marked block. §3.3 is what replaces that line.

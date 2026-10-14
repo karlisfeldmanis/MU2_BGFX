@@ -2,7 +2,7 @@
 
 // What the server's files share: the clock, its constants, its globals and the types every job
 // reads -- World, Session, Party -- and each job's functions. Split out of a single main.cpp of
-// 1850 lines on 2026-10-11 (docs/order-plan.md sprint C), code moved verbatim: chat.cpp, party.cpp,
+// 1850 lines on 2026-10-11 (docs/plans/order-plan.md sprint C), code moved verbatim: chat.cpp, party.cpp,
 // accounts.cpp, world.cpp (raise, hello, the tick, landing, keeping) and main.cpp (flags, the
 // frame dispatch, the loop). The file comment that was main.cpp's is still main.cpp's.
 
@@ -246,7 +246,7 @@ struct Session {
     int asked = 0;
 };
 
-// ---- the party (docs/party.md): its table ------------------------------------------------------
+// ---- the party (docs/game/party.md): its table ------------------------------------------------------
 // The parties are the server's, as WebZen's gParty is: a party spans maps, and a map is a realm.
 // Each realm learns its own members' party from Command::Kind::PartySet (partyTick), and shares a
 // kill's experience and quest count among those near it. Kept by character token, so a member
@@ -280,7 +280,7 @@ inline uint32_t g_nextParty = 1;
 constexpr auto kInviteFor = std::chrono::seconds(60);
 constexpr auto kPartyAway = std::chrono::seconds(30);
 
-// ---- the guild (docs/guild.md): its table -------------------------------------------------------
+// ---- the guild (docs/game/guild.md): its table -------------------------------------------------------
 // The guilds are the server's, as WebZen's ExDB kept them: a guild spans maps and outlives a
 // login, so it is kept on the disk (Store::keepGuild) whenever it changes. By character token,
 // as the party is. The realm knows nothing of them: a guild is names, a mark and a chat.
@@ -307,7 +307,7 @@ inline std::map<uint64_t, GuildCalled> g_guildInvites;
 inline std::map<uint64_t, GuildCalled> g_guildAsks;
 inline uint32_t g_nextGuild = 1;
 constexpr auto kGuildCallFor = std::chrono::seconds(60);  // as a party's invite
-// MU's (docs/guild.md): level 100 to found one (GS Gamemain.cpp:3435), 6 to join (protocol.cpp
+// MU's (docs/game/guild.md): level 100 to found one (GS Gamemain.cpp:3435), 6 to join (protocol.cpp
 // :11738), the master's level / 10 members (:11820) and 40 at most (GuildClass.h:16), a notice
 // of 60 (define.h:4232), a name of 4 to 8 (MuMain NewUIGuildMakeWindow.cpp:21).
 constexpr int kGuildFoundLevel = 100, kGuildJoinLevel = 6, kGuildMost = 40;

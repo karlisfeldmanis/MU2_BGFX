@@ -571,7 +571,7 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
     // Blood Castle's run: up the whole time it lasts, in the quest's place (the user, 2026-10-03:
     // 'Lets use already UI which is for quests, but also sho timer there').
     const sim::CastleRun& run = realm.castleRun();
-    // And Devil Square's, in the same place (docs/devil-square-port.md, "The goal and how it is
+    // And Devil Square's, in the same place (docs/worlds/devil-square-port.md, "The goal and how it is
     // shown"; the user, 2026-10-10: 'similiar like it was for BC').
     const sim::SquareRun& square = realm.squareRun();
     const bool inSquare = square.phase != sim::SquarePhase::None;
@@ -845,7 +845,7 @@ void Tracker::rebuild(const Play& play, int width, int height) {
 
 // Blood Castle's run in the tracker's place, in its own words and marks: the castle, the clock --
 // the court's wait before it starts, then its time -- and the run's steps, MU's in order
-// (docs/blood-castle-port.md §5): the road's 40 kills drop the bridge, two Spirit Sorcerers open
+// (docs/worlds/blood-castle-port.md §5): the road's 40 kills drop the bridge, two Spirit Sorcerers open
 // the door, the statue gives up the staff, and the Archangel takes it back. The step being
 // fought for is live, the rest wait; a quota met is a check.
 void Tracker::rebuildEvent(int width) {

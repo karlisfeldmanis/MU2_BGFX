@@ -1,6 +1,6 @@
 """What a step says while it runs, and how long steps take: make.run's half for mu serve.
 
-Out of make.py (the size ratchet, docs/order-plan.md §9c F6), unchanged.
+Out of make.py (the size ratchet, docs/plans/order-plan.md §9c F6), unchanged.
 """
 
 import json
@@ -16,7 +16,7 @@ LOCKS = os.path.join(WORKSHOP, ".mu")
 # ----------------------------------------------------------------------------- what a step says while it runs
 #
 # A step's output goes line by line to its log and, read on the way, to `on` (mu serve's
-# events, docs/order-plan.md §9c). A line `@progress n/m label` is a bar inside the step:
+# events, docs/plans/order-plan.md §9c). A line `@progress n/m label` is a bar inside the step:
 # asset.sh prints one a sheet and one for the export, texcook one an image. Any other line is
 # the step's latest word. Python steps run unbuffered, or their lines would arrive at the end.
 

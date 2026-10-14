@@ -394,7 +394,7 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             // DEPTH_TEST_EQUAL leaves the samples it drops unshaded and every leaf grows a
             // black fringe, and the prepass has no channel free for coverage until its
             // normal is packed octahedrally. That is sprint 3's work, with the grass that
-            // needs it and can test it. See docs/conventions.md.
+            // needs it and can test it. See docs/reference/conventions.md.
 
             // Per draw, like the shadow map and the AO above and for the same reason:
             // bgfx::submit discards its bindings, so a palette bound once a view reaches
@@ -716,7 +716,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     // Right-handed, said out loud. bx defaults every one of these to Handedness::Left, and
     // a left-handed view mirrors the frame left to right and makes view-space z positive in
     // front of the eye -- which silently turned the whole prepass depth negative and made
-    // the SSAO take its "this is sky" path on every pixel of the screen. docs/conventions.md
+    // the SSAO take its "this is sky" path on every pixel of the screen. docs/reference/conventions.md
     // says right-handed; this is where that has to be enforced.
     float view[16];
     float proj[16];
@@ -891,7 +891,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             // and float noise either side of zero flipped it a whole texel now and then. Depth
             // was never snapped, so every stored depth re-rounded each frame: flickering acne
             // on every wall facing the sun. tools/shimmer.py measured all three;
-            // docs/shadow-probe.md.
+            // docs/reference/shadow-probe.md.
             const float texel = side / float(shadowSize_);
             const float quantum = back * 2.0f / 65535.0f;
             const bx::Vec3 e = bx::mul(eye, worldAxes);
@@ -1127,7 +1127,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             // was lit in full -- two or three material sets, the PCSS lookup, the lamp loop -- and
             // then covered. Drawn second, it fails EQUAL wherever the grass wrote a nearer depth
             // on all four samples, and those pixels showed grass in any case: the same picture
-            // (docs/budget.md, the 2K audit's A3).
+            // (docs/reference/budget.md, the 2K audit's A3).
             bgfx::setViewMode(ViewShade, bgfx::ViewMode::Sequential);
             // The grass, and it is the one thing in this view that does not test EQUAL.
             //
@@ -1142,7 +1142,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             // under the field is shaded and then covered, where before the field's own prepass
             // depth made the ground fail EQUAL and skip its two blended material sets, its
             // PCSS lookup and its lamp loop. That saving was worth -0.26 ms -- the field was
-            // FASTER than no field. It was spent on not shimmering. docs/grass.md. Drawing the
+            // FASTER than no field. It was spent on not shimmering. docs/reference/grass.md. Drawing the
             // field before the ground (above) takes it back wherever a pixel is grass throughout.
             //
             // Alpha to coverage only where there are samples to cover: at --msaa 1 there is
@@ -1211,7 +1211,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             if (total > 0 && bgfx::isValid(glowProgram_) && bgfx::isValid(skinnedGlowProgram_)) {
                 // LEQUAL, as MU's GL draws its BlendMesh: a glow shell modelled on its own base
                 // -- the 2nd wings' `_R` meshes, the same vertices again -- lies at exactly the
-                // depth the base wrote and failed LESS on every pixel (docs/wings.md).
+                // depth the base wrote and failed LESS on every pixel (docs/game/wings.md).
                 const uint64_t glowState = BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_LEQUAL |
                                            BGFX_STATE_BLEND_ADD;
                 submitBatches(ViewTransparent, glowProgram_, skinnedGlowProgram_, batches_, idb,

@@ -1,4 +1,4 @@
-// The frame: eight views, in the order docs/conventions.md fixes them. Knows meshes and
+// The frame: eight views, in the order docs/reference/conventions.md fixes them. Knows meshes and
 // materials and nothing about the game — no map, no figure, no rules.
 #pragma once
 
@@ -87,7 +87,7 @@ inline float packRefineColour(const float c[3]) {
 // Two draws come out of it, the prepass and the shade pass, off ONE vertex shader. The shade
 // pass tests depth EQUAL against the prepass, so the two passes must place a blade at exactly
 // the same point; two shaders that compute the same thing are not the same thing, and the
-// only way to be certain is for them to be the same compiled code. docs/grass.md.
+// only way to be certain is for them to be the same compiled code. docs/reference/grass.md.
 //
 // Never the shadow pass. MU's own grass casts nothing, and a field of blades in the sun's
 // split is a shadow map full of noise.
@@ -107,7 +107,7 @@ struct GrassField {
         // The sheet's own size in texels. Per axis, and it must be: MU's sheets are 256 by 64
         // and 256 by 128, and a mip level worked out from the width alone is two whole levels
         // of blur on the short axis. That was the first version of this and it is what made
-        // the field look smeared. docs/grass.md.
+        // the field look smeared. docs/reference/grass.md.
         float width = 256.0f;
         float height = 64.0f;
     };
@@ -142,7 +142,7 @@ struct GrassField {
     // card shrinks into the turf, z where the thinning with distance begins and w where it
     // has taken all it takes. From the eye, not the focus, because MU's camera is rigid to the
     // player: a distance from the eye is a place on the SCREEN, so every band this describes
-    // sits still in the frame as the player walks and nothing crosses it. docs/grass.md.
+    // sits still in the frame as the player walks and nothing crosses it. docs/reference/grass.md.
     float reach[4] = {26.0f, 4.0f, 9.0f, 24.0f};
     // The walkers: the feet of whoever stands in the field, world metres, and in w how far
     // round each the sward is pushed aside. w at 0 is an empty slot, which is what a world
@@ -344,7 +344,7 @@ public:
     }
     // The probe's two switches. `view` 1 draws the sun's visibility alone, as grey. `noise`
     // is where the penumbra's disc turn is anchored: 0 the screen, 1 the world's texel grid,
-    // 2 nowhere, which is the default; a negative one keeps it. docs/shadow-probe.md.
+    // 2 nowhere, which is the default; a negative one keeps it. docs/reference/shadow-probe.md.
     void setShadowDebug(int view, int noise) {
         shadowDebug_[0] = float(view);
         if (noise >= 0) shadowDebug_[1] = float(noise);
@@ -547,7 +547,7 @@ private:
     // of a 6.3 ms frame at 2560x1273 -- but the saving was the discards that actually run,
     // on the foliage cards (18% of the draws and 43% of the instances), and a solid material
     // drawn with a program that cannot discard measured no different from one drawn with the
-    // branch. The picture needs those discards; the twins bought nothing. docs/budget.md.
+    // branch. The picture needs those discards; the twins bought nothing. docs/reference/budget.md.
     //
     // `glowPass` picks which parts: false draws every part but the glows, which is what the
     // shadow, the prepass and the shade want -- a glow casts nothing, occludes nothing and is
@@ -603,7 +603,7 @@ private:
     // split stepped a texel, the town read the new map through the old matrix and every
     // shadow in it jumped for one frame -- a flicker at every texel the walk crossed. And
     // u_camPos a frame late is specular a frame late whenever the camera moves.
-    // tools/shimmer.py found it; docs/shadow-probe.md.
+    // tools/shimmer.py found it; docs/reference/shadow-probe.md.
     void bindShadeInputs();
     struct ShadeUniforms {
         float sunDir[4], sunColour[4], skyColour[4], groundColour[4], dust[4], camPos[4], params[4];
@@ -667,7 +667,7 @@ private:
     void screenPass(bgfx::ViewId view, bgfx::ProgramHandle program);
     // The land. Its own vertex layout and its own shader: it blends two full material sets
     // by a per-vertex weight and carries MU's baked light, which the closed material model
-    // has no room for. docs/conventions.md.
+    // has no room for. docs/reference/conventions.md.
     // One instanced draw per painted sheet, once a frame, in the shade pass. See GrassField.
     void submitGrass(bgfx::ViewId view, bgfx::ProgramHandle program, const GrassField& grass,
                      uint64_t state);

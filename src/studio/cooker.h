@@ -1,4 +1,4 @@
-// The studio's end of `mu serve`, the cook's job runner (tools/mu/serve.py, docs/order-plan.md
+// The studio's end of `mu serve`, the cook's job runner (tools/mu/serve.py, docs/plans/order-plan.md
 // §9c). No ImGui and no bgfx here, so cooker_test drives it with no window.
 //
 // The server runs the jobs; this keeps a copy of what they are doing, from the events it

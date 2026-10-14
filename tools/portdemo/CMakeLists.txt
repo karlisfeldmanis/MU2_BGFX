@@ -1,4 +1,4 @@
-# The port test, docs/windows-linux-test.md. Built by build.sh: cross-compiled for Windows with
+# The port test, docs/reference/windows-linux-test.md. Built by build.sh: cross-compiled for Windows with
 # mingw.cmake, or natively inside a Linux machine. bgfx is MU2's own copy in extern/.
 cmake_minimum_required(VERSION 3.16)
 project(portdemo CXX C)

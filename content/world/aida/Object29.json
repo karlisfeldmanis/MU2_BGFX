@@ -1,0 +1,53 @@
+{
+  "item": "Object29",
+  "mu_name": "Object29",
+  "mu_name_from": "aida's object slot: type N is Object{N+1}.bmd, from Data/Object34.",
+  "world": "aida",
+  "object_type": 28,
+  "placements": 4,
+  "profile": "world",
+  "sheets": {
+    "waterfall_R": "ai_waterfall_r.png"
+  },
+  "sheet_from": "Data/Object34/, decoded under the ai_ prefix by `mu new`.",
+  "sheet_materials": {
+    "waterfall_R": "lamplight"
+  },
+  "material_note": "waterfall_R: cyan-white streaked water on black, added.",
+  "why_this_one": "A still, wider waterfall, 4 of them at scale 2.8-3.5 (three in the north-east pit, one in the south). Glow batch (the user, 2026-10-11: 'Glow sheets batch'). docs/worlds/aida-port.md.",
+  "additive": [
+    "waterfall_R"
+  ],
+  "additive_from": "An _R sheet: MU's TextureScript marks a name with _R after its underscore bright (TextureScript.cpp:16-58) and RenderBody makes that mesh the blend mesh (ZzzBMD.cpp:2236-2242), so it is drawn added, as Tarkan's chogatea02_R.",
+  "glow": {
+    "waterfall_R": {
+      "scrolls_per_second": 0.375
+    }
+  },
+  "glow_from": "MoveAidaObject, types 25 and 28: BlendMeshTexCoordV -= 0.015 a frame (GMAida.cpp:48-57): 0.375 sheet a second at MU's 25 Hz, the water running down.",
+  "effects_note": "One key, no sway; the slide is its effect.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 80,
+      "area": 4465.9,
+      "along": [
+        -28.8,
+        5.1
+      ],
+      "mu_uv": [
+        -0.004,
+        -1.103,
+        1.008,
+        3.333
+      ],
+      "bake_uv": [
+        -0.004,
+        -1.103,
+        1.008,
+        3.333
+      ]
+    }
+  ]
+}

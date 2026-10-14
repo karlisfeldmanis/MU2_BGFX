@@ -1,4 +1,4 @@
-// The guild (docs/guild.md): founding at the Guild Master, invites and asks, members, the
+// The guild (docs/game/guild.md): founding at the Guild Master, invites and asks, members, the
 // notice, and the guild's state and marks to whoever needs them. MU's rules (WebZen GameServer
 // 1.00.93 and MuMain, traced in the doc); the realm knows nothing of guilds.
 

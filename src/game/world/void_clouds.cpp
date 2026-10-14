@@ -171,7 +171,7 @@ float VoidClouds::bank(float x, float z, int layer) const {
 }
 
 bool VoidClouds::voidAt(float x, float z) const {
-    // Column is +x and row is -z, each tile's centre at its half (docs/conventions.md).
+    // Column is +x and row is -z, each tile's centre at its half (docs/reference/conventions.md).
     const int c = int(std::floor(x / metresPerTile_));
     const int r = int(std::floor(-z / metresPerTile_));
     if (c < 0 || r < 0 || c >= size_ || r >= size_) return true;  // past the map is void too

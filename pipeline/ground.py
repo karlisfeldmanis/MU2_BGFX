@@ -1,6 +1,6 @@
 """Builds a world's ground into a .glb, from what terrain.py extracted.
 
-    python3 pipeline/ground.py source/world/lorencia workshop/world/lorencia
+    python3 pipeline/ground.py content/world/lorencia workshop/world/lorencia
 
 The heightmap says the shape and the tile map says what each square is made of, and the
 awkward part is the second one: every tile wears its own texture, so the ground cannot be one

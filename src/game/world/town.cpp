@@ -212,7 +212,7 @@ bool Town::drawableOf(const content::TownInstance& instance, gfx::Drawable& draw
 
     // The cook stored MU's light as bytes; the shader wants it linear. It is a lit result
     // and not an albedo, so it does NOT go through the sRGB curve -- the same rule
-    // docs/conventions.md states for light.png on the ground.
+    // docs/reference/conventions.md states for light.png on the ground.
     for (int i = 0; i < 3; ++i) drawable.light[i] = float(instance.light[i]) / 255.0f;
     const size_t index = size_t(&instance - town_.instances.data());
     drawable.light[3] = glowLevels_[index];

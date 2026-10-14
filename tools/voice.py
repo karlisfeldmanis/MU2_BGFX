@@ -3,13 +3,13 @@
     tools/voice.py marlon                 every page
     tools/voice.py marlon --page offer    one page
 
-Writes source/voice/<voice>/<voice>_{offer,underway,handin,resting}.wav, which tools/sync.sh
+Writes content/voice/<voice>/<voice>_{offer,underway,handin,resting}.wav, which tools/sync.sh
 copies to assets/voice, where the quest window plays them (Desk, QuestRow::voice). The words
 are read out of quests.cpp itself, so what he says and what the window shows are one text.
 
 The model is Chatterbox (Resemble AI, MIT), local, chosen 2026-09-29 for its `exaggeration`:
 the user wanted him dramatic, a man asking for help, and Kokoro read him flat. Each giver's
-voice is cloned from a line Kokoro-82M (Apache 2.0) read, in source/voice/ref, and read to the
+voice is cloned from a line Kokoro-82M (Apache 2.0) read, in content/voice/ref, and read to the
 settings in VOICES. No reverb on Marlon: the user heard one on his first take and called it
 weird. Peia, low and mystical, carries a faint echo, and Devin the same one.
 
@@ -67,7 +67,7 @@ VOICES = {
     # his finished WAVs took it afterwards, echo then loudnorm, since their raw takes are not kept.
     # His pages were NOT read by main(): each paragraph read whole (stitched sentences sounded
     # cropped), seed 11, then the sentence gaps stretched and the paragraphs joined 0.9 s apart
-    # -- see docs/devin-quest.md and source/voice/devin/recorded_with.py.txt. main() would undo that.
+    # -- see docs/game/devin-quest.md and content/voice/devin/recorded_with.py.txt. main() would undo that.
     "devin": dict(ref="devin_sv_dramatic.wav", exaggeration=0.9, cfg_weight=0.3,
                   polish="asetrate=24000*0.89,aresample=24000,atempo=1.1236,"
                          "aecho=0.8:0.5:70|140:0.18|0.1,bass=g=3:f=100," + POLISH),
@@ -89,7 +89,7 @@ VOICES = {
     # scared", "to much echo", "without reverb, and minimal echo" -- and then picked the third of
     # three auditions, "third woman voice was nice", and a woman to match. Her reference is
     # Kokoro-82M's bm_fable (Apache 2.0) reading a frightened, exhausted line at 0.78 speed,
-    # source/voice/ref/tersia_fable_scared.wav; cloned at 0.6 and 0.3, seed 11 -- 0.3 read her pages
+    # content/voice/ref/tersia_fable_scared.wav; cloned at 0.6 and 0.3, seed 11 -- 0.3 read her pages
     # "very monotome, lack of emotion", and of 0.6, 0.85 and 1.1 the user took 0.6. Aged and
     # shaken, not pitched: 8% slower, a tremble in volume and pitch, a thinner bottom, one faint
     # echo at 90 ms. One voice for her seven floors, tersia_1 to tersia_7 (VOICES by the stem).
@@ -97,7 +97,7 @@ VOICES = {
     # sentences"), so each full stop is widened back to 0.6 s after it (sentence_gap). The same day
     # the user asked for "some other woman voice ... with lower more mystical tembre" and took the
     # second of four auditions, "second one is perfect": Kokoro-82M's bf_isabella (Apache 2.0)
-    # reading a hushed shrine line at 0.85 speed, source/voice/ref/tersia_isabella_mystic.wav,
+    # reading a hushed shrine line at 0.85 speed, content/voice/ref/tersia_isabella_mystic.wav,
     # cloned at an even 0.5; a semitone and a half down (asetrate 0.917, tempo nearly put back),
     # more chest, and a soft three-tap echo. The bm_fable reference and its tremble are retired.
     "tersia": dict(ref="tersia_isabella_mystic.wav", exaggeration=0.5, cfg_weight=0.3, seed=11,
@@ -108,7 +108,7 @@ VOICES = {
                           "apad=pad_dur=0.3,loudnorm=I=-17:TP=-1.5:LRA=11"),
     # Sevina the Priestess, the class change's giver: a woman, "very mythical ... low voice" (the
     # user, 2026-10-04), the first of eight auditions. Kokoro-82M's bf_emma (Apache 2.0) reading
-    # an oracle's line at 0.8 speed, source/voice/ref/sevina_emma_oracle.wav, cloned at 0.8 and
+    # an oracle's line at 0.8 speed, content/voice/ref/sevina_emma_oracle.wav, cloned at 0.8 and
     # 0.3, seed 11. The "oracle" finish: three semitones down and tempo put back, the same voice an
     # octave lower at 0.28 under it, more chest, a temple's tail at 140 to 800 ms. Her paragraphs
     # pad 0.35 s, not the audition's 1.2. One voice for her four rows, sevina_1 to sevina_4.
@@ -122,15 +122,15 @@ VOICES = {
     # Lirien, the elf envoy in Atlans who takes back Peia's 'The Drowned Song': "a completely
     # different women audio model" from Peia's (the user, 2026-10-05), the first of eight
     # auditions, "first one". Kokoro-82M's af_heart (Apache 2.0) reading a tide line at 0.85
-    # speed, source/voice/ref/lirien_heart_tide.wav, cloned at Peia's 0.4 and 0.3 with Peia's faint
+    # speed, content/voice/ref/lirien_heart_tide.wav, cloned at Peia's 0.4 and 0.3 with Peia's faint
     # echo, at her own pitch. She reads only the hand-ins she takes back (row.receiverVoice).
     "lirien": dict(ref="lirien_heart_tide.wav", exaggeration=0.4, cfg_weight=0.3,
                    polish="aecho=0.8:0.5:70|140:0.18|0.1," + POLISH),
-    # The Keeper of Kantur in Tarkan (docs/tarkan-quest.md): a real old man, not a young voice
+    # The Keeper of Kantur in Tarkan (docs/game/tarkan-quest.md): a real old man, not a young voice
     # aged. Five Kokoro voices pitched down and trembled were tried first; the user asked for
     # "actual old man voice", and picked G of six elderly men from Mozilla Common Voice (CC0),
     # OpenSound/CommonVoice_elderly shard 0, rows 141, 142 and 144, a man in his eighties,
-    # joined and levelled as source/voice/ref/keeper_cv_eighties.wav (2026-10-06: 'lets use G').
+    # joined and levelled as content/voice/ref/keeper_cv_eighties.wav (2026-10-06: 'lets use G').
     # His own age is the finish: no pitch, no tremble, a faint stone hall.
     "keeper": dict(ref="keeper_cv_eighties.wav", exaggeration=0.45, cfg_weight=0.3,
                    polish="highpass=f=70,aecho=0.8:0.5:90|180:0.12|0.06," + POLISH),

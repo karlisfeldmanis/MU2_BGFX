@@ -33,9 +33,9 @@
 //
 // And Devias's blizzard, which is the rain's shape for snow and this game's too (the user,
 // 2026-09-29): a calm and a storm in turn, the share walked between them over eighteen seconds,
-// the light blended to sheets/worlds/devias_rain.json by it -- darker, not a whiteout, so
+// the light blended to content/sheets/worlds/devias_rain.json by it -- darker, not a whiteout, so
 // the game stays playable -- and `world_blizzard` howling at the share, muffled under a roof
-// rather than cut. No drops and no thunder. The wind in the snow is docs/devias-port.md §5.5's
+// rather than cut. No drops and no thunder. The wind in the snow is docs/worlds/devias-port.md §5.5's
 // second pass.
 #pragma once
 

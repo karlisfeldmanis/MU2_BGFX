@@ -1,7 +1,7 @@
 #pragma once
 
 // The Golden Dragon as a raid boss: its four stages, what it throws in each, and the party of
-// end-game characters who fight it. docs/golden-dragon-raid.md is the design, with every rule
+// end-game characters who fight it. docs/game/golden-dragon-raid.md is the design, with every rule
 // below traced there or marked "invention" in it; the comments here say which is which.
 //
 // The realm's part (realm_raid.cpp) is the whole fight -- the stages, the telegraphs and the
@@ -38,7 +38,7 @@ constexpr int kLastStandAt = 15;
 // party, the kill about 7:39); since 2026-10-08 it is one number for any count.
 // **Its health is one number** (the user, 2026-10-08: "boss always has same amount of hp"),
 // however many come: "only very stroung group can kill him", and "before first reset strong group
-// can kill him". Tuned against source/raid/party.json, ten bots at level 400 and +11 -- the best a
+// can kill him". Tuned against content/raid/party.json, ten bots at level 400 and +11 -- the best a
 // character is before any reset -- killing it inside its clock (kHardEnrage) most fights, and the
 // strongest of them alone never: ten bots strike only about a third more than the best one alone
 // (their walks, their dodges, the healer), so the window is narrow. Real players do better than
@@ -273,7 +273,7 @@ struct KitPiece {
 };
 
 // One character of the party: class, level, points and what he wears. Read from
-// source/raid/party.json by whoever raises a raid (tools/raid, sim_test); the realm only checks
+// content/raid/party.json by whoever raises a raid (tools/raid, sim_test); the realm only checks
 // it is legal (`Realm::kitRefusal`).
 struct RaiderKit {
     std::string name;

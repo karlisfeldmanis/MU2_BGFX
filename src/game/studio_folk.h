@@ -1,5 +1,5 @@
-// The townsfolk standing in the studio's world (docs/order-plan.md §9c, sprint G): each
-// townsperson of the world's manifest, source/world/<w>/world.json `npcs`, stood where it says
+// The townsfolk standing in the studio's world (docs/plans/order-plan.md §9c, sprint G): each
+// townsperson of the world's manifest, content/world/<w>/world.json `npcs`, stood where it says
 // and turned the way it looks, by the lines Play stands them with (game/play_open.cpp): the
 // tile's middle, the look's yaw, the body's scale (Tersia at 0.93), the idle `stand` chooses.
 //

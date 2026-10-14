@@ -995,7 +995,7 @@ void Play::update(double seconds) {
                         for (int a = 0; a < count; ++a) {
                             const int step = (a + 1) / 2;
                             // World z runs against the grid's rows, so a turn the realm makes
-                            // one way is drawn the other (docs/conventions.md).
+                            // one way is drawn the other (docs/reference/conventions.md).
                             const float turn = -float(a % 2 == 1 ? step : -step) *
                                                sim::kFanDegrees * 3.14159265f / 180.0f;
                             const float far[3] = {
@@ -1349,7 +1349,7 @@ void Play::update(double seconds) {
                             swing = happening.fireLay ? swinger->attackClip2 : swinger->attackClip;
                         }
                     }
-                    // On a horse, the weapon's ride swing stands in (docs/mount.md,
+                    // On a horse, the weapon's ride swing stands in (docs/game/mount.md,
                     // ZzzCharacter.cpp:1112-1153), and for an arrow skill too, which plays the
                     // bow's swing; a spell's ride cast was chosen with castClip. A clip the
                     // library lacks keeps the standing one.
@@ -2795,7 +2795,7 @@ void Play::speak(const sim::Happening& happening) {
         // The Guild Master, Sevina or the Messenger, spoken to (Realm's Talk). Ours, the user's of
         // 2026-09-29: MU's guild window has nothing to open alone, so he says it is not ready yet
         // (the user, 2026-09-30), in Devin's plain register.
-        // Off a server (docs/guild.md): the guilds are the server's, so there is none to found.
+        // Off a server (docs/game/guild.md): the guilds are the server's, so there is none to found.
         static const char* const kGuildMaster[] = {
             "Guilds are sworn among many, traveller. Find others first.",
             "A banner needs men to follow it. There is no one here to swear to yours.",
@@ -2835,7 +2835,7 @@ void Play::speak(const sim::Happening& happening) {
             "The south is not safe yet. Finish there, and Devias will be waiting.",
         };
         // Thompson, a Devias trader with nothing to sell the hero, and his memory of the Lost
-        // Tower; and Tersia before Devin's quest is handed in (docs/lost-tower-quest.md, ours,
+        // Tower; and Tersia before Devin's quest is handed in (docs/game/lost-tower-quest.md, ours,
         // 2026-10-01).
         static const char* const kThompson[] = {
             "I carried bread and lamp oil to the Lost Tower's keeper for years. No wagon goes there now.",
@@ -2850,7 +2850,7 @@ void Play::speak(const sim::Happening& happening) {
             "Mind the Valkyries beyond the basin. They were mine, once.",
         };
         // The Keeper of Kantur, in Tarkan's hall, with nothing to offer: before Lirien's road
-        // is handed in or below its level, and while his legion rests (docs/tarkan-quest.md; ours,
+        // is handed in or below its level, and while his legion rests (docs/game/tarkan-quest.md; ours,
         // 2026-10-06, in place of Devin's lines, which sent the hero back to Lorencia).
         static const char* const kKeeper[] = {
             "Three hundred years I have watched that road. A little longer will not hurt me.",

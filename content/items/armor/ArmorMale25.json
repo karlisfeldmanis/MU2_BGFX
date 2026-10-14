@@ -1,0 +1,256 @@
+{
+  "item": "ArmorMale25",
+  "mu_name": "Red Spirit Armor",
+  "mu_name_from": "MuMain loads the set at index 24 from Data/Player/ArmorMale25.bmd (ZzzOpenData.cpp:200-210: the sets at index 21-24 are files 22-25, `22 + i`). MU's group 8 number 24.",
+  "why_this_one": "The Muse Elf's second set, after Divine (the user, 2026-10-10: 'cook them', the next sets and weapons after the strongest the heroes have). docs/game/second-class-gear.md.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have no second-class sets).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:141.",
+    "call": "CreateArmor(24, 3, 2, 2, \"Red Sprit Armor\", 109, 55, 80, 0, 52, 115, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0)",
+    "group": 8,
+    "number": 24,
+    "drop_level": 109,
+    "drops_from_monsters": true,
+    "slot": 3,
+    "width": 2,
+    "height": 2,
+    "defense": 55,
+    "durability": 80,
+    "requires": {
+      "level": 0,
+      "strength": 52,
+      "agility": 115,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Muse Elf's alone: OpenMU's elfClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "sheets": {
+    "FArmor": "farmor.png",
+    "level_man01": "level_man01.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: red lacquered plate traced in silver over a red pleated skirt and black leather; FShoots_R a violet band; level_man033 her own head and hair, level_man01 the leather under the plate; hide is MU's black cap over the openings.",
+  "material_note": "painted_steel with plate_steel's cast grain at Divine's depth, as her first set: red lacquer, silver painted on. FPants01, the pleated skirt, is cloth; level_man01 under the plate is leather; level_man033 is her hair and face.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "As Divine's: plate_steel's cast grain, at depth 0.02 and range 0.03, since on a glossy lacquer a deeper pit catches its own glint (2026-10-04, 'micro white points').",
+  "effects_note": "MuMain's only arms for the set are the helm's and the pants' slow breath on FShoots_R (see glow_note); no chrome pass.",
+  "sheet_materials": {
+    "FArmor": "painted_steel",
+    "level_man01": "leather"
+  },
+  "mu_name_note": "OpenMU's row spells it 'Red Sprit Armor'; MuMain's and WebZen's item name is 'Red Spirit Armor'.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 174,
+      "area": 5413.5,
+      "along": [
+        -19.4,
+        21.4
+      ],
+      "mu_uv": [
+        0.004,
+        0.333,
+        0.996,
+        0.997
+      ],
+      "bake_uv": [
+        0.009,
+        0.01,
+        0.726,
+        0.991
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 6,
+      "area": 31.3,
+      "along": [
+        12.7,
+        17.9
+      ],
+      "mu_uv": [
+        0.512,
+        0.864,
+        0.569,
+        0.963
+      ],
+      "bake_uv": [
+        0.344,
+        0.155,
+        0.444,
+        0.338
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 72,
+      "area": 2217.0,
+      "along": [
+        -18.5,
+        8.3
+      ],
+      "mu_uv": [
+        0.038,
+        0.005,
+        0.98,
+        0.46
+      ],
+      "bake_uv": [
+        0.061,
+        0.129,
+        0.97,
+        0.806
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 32,
+      "area": 515.6,
+      "along": [
+        -11.2,
+        4.7
+      ],
+      "mu_uv": [
+        0.024,
+        0.023,
+        0.361,
+        0.32
+      ],
+      "bake_uv": [
+        0.779,
+        0.524,
+        0.991,
+        0.968
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 72,
+      "area": 2217.0,
+      "along": [
+        -22.0,
+        8.1
+      ],
+      "mu_uv": [
+        0.038,
+        0.005,
+        0.98,
+        0.46
+      ],
+      "bake_uv": [
+        0.042,
+        0.009,
+        0.979,
+        0.51
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 32,
+      "area": 515.6,
+      "along": [
+        -21.1,
+        -5.0
+      ],
+      "mu_uv": [
+        0.024,
+        0.023,
+        0.361,
+        0.32
+      ],
+      "bake_uv": [
+        0.555,
+        0.011,
+        0.983,
+        0.76
+      ]
+    },
+    {
+      "island": 6,
+      "material": "leather",
+      "triangles": 21,
+      "area": 560.2,
+      "along": [
+        -8.7,
+        -0.8
+      ],
+      "mu_uv": [
+        0.917,
+        0.006,
+        0.997,
+        0.157
+      ],
+      "bake_uv": [
+        0.01,
+        0.569,
+        0.459,
+        0.685
+      ]
+    },
+    {
+      "island": 7,
+      "material": "leather",
+      "triangles": 26,
+      "area": 869.0,
+      "along": [
+        -3.5,
+        19.1
+      ],
+      "mu_uv": [
+        0.274,
+        0.535,
+        0.531,
+        0.74
+      ],
+      "bake_uv": [
+        0.009,
+        0.01,
+        0.555,
+        0.567
+      ]
+    },
+    {
+      "island": 8,
+      "material": "leather",
+      "triangles": 21,
+      "area": 529.9,
+      "along": [
+        -28.3,
+        -11.6
+      ],
+      "mu_uv": [
+        0.917,
+        0.006,
+        0.997,
+        0.157
+      ],
+      "bake_uv": [
+        0.479,
+        0.451,
+        0.652,
+        0.689
+      ]
+    }
+  ]
+}

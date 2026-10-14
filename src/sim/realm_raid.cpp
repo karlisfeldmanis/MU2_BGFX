@@ -1,4 +1,4 @@
-// The Golden Dragon as a raid boss (sim/raid.h; docs/golden-dragon-raid.md is the design).
+// The Golden Dragon as a raid boss (sim/raid.h; docs/game/golden-dragon-raid.md is the design).
 //
 // What the realm does: when the invasion's dragon stands, its health is the raid's (raidHealth),
 // and four stages follow on its health -- the ground's bite, breath and roar; the flight's
@@ -6,7 +6,7 @@
 // wings' shadows its only shelter, and the hard enrage after eight minutes. Every big blow is a
 // Hazard told before it lands (What::Raid, RaidEvent::Tell) so the drawing can mark the ground.
 //
-// And the party: the end-game characters of source/raid/party.json, the first worn by the hero
+// And the party: the end-game characters of content/raid/party.json, the first worn by the hero
 // and the rest raised as raiders -- bodies reckoned from their own kit by the hero's own rearm,
 // whose blows roll as a guard's and a summon's do, and who stay down when they fall. Their mind
 // (`raid`) is ours, as small as it can be and still play the fight: a role's place and target, the

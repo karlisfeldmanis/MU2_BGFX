@@ -81,7 +81,7 @@ namespace mu::net {
 //     (docs/sprints/24-the-quiet-line.md).
 // 14: a Kept carries 25 quests, Devin's errand to Tersia the 25th (layout 5).
 // 15: Chat, a Say up and a Heard down.
-// 16: the party (docs/party.md): a PartyAsk up and a PartyState down, and the realm's
+// 16: the party (docs/game/party.md): a PartyAsk up and a PartyState down, and the realm's
 //     Command::Kind::PartySet and Body::party (snapshot shape 2).
 // 17: a Kept carries the perch he sat or leant on (layout 6).
 // 18: the trade between players (sim/realm_deal.cpp): Command::Kind::DealAsk and its fellows, and
@@ -98,16 +98,16 @@ namespace mu::net {
 // 23: Bye, why the server is closing his line, sent just before it does.
 // 24: auto-drink (sim::AutoDrink): Command::Kind::AutoDrink, a Kept's lines (layout 7) and a
 //     Player's (snapshot shape 9).
-// 25: the Broker (docs/broker.md): a BrokerAsk up and a BrokerView down (net/broker_wire.h),
+// 25: the Broker (docs/game/broker.md): a BrokerAsk up and a BrokerView down (net/broker_wire.h),
 //     Command::Kind::BrokerTake and its fellows, and a Player's Broker (snapshot shape 10).
 // 26: a Player's event fields as one EventSeat (snapshot shape 11; order-plan §9e, I4).
 // 27: a Broker row's last sale of the same thing (BrokerRow::lastSale), the Buy list's "vs last
 //     sale" (the market's redesign B, 2026-10-12).
 // 28: a bleeder's claws (sim kBleeders): Body::bleed and its fellows, Happening::bled (snapshot
 //     shape 12), the Forest and Bloody Orcs' blow a stacking bleed in place of their poison.
-// 29: the guild (docs/guild.md): a GuildAsk up, a GuildState, GuildMark and GuildCall down, and
+// 29: the guild (docs/game/guild.md): a GuildAsk up, a GuildState, GuildMark and GuildCall down, and
 //     each player's guild in Who, after the players.
-// 30: the raid (docs/party.md): PartyWhat::Raid and ::Unraid, PartyState::raid after the members'
+// 30: the raid (docs/game/party.md): PartyWhat::Raid and ::Unraid, PartyState::raid after the members'
 //     health, and up to sim::kRaidMost members in a PartyState; and Invasion, where the Golden
 //     Dragon is on the server, to every client on every map.
 constexpr uint32_t kVersion = 30;
@@ -191,7 +191,7 @@ struct Heard {
     bool bot = false;
 };
 
-// ---- the party (docs/party.md) ---------------------------------------------------------------
+// ---- the party (docs/game/party.md) ---------------------------------------------------------------
 // Up: what a player asks of the party. Invite and Kick name a player, Accept and Decline the one
 // who invited him (empty for the latest invite), Leave nobody. The server keeps the parties: they
 // span maps, and a map is a realm.
@@ -230,7 +230,7 @@ struct PartyState {
     bool raid = false;
 };
 
-// ---- the guild (docs/guild.md) ---------------------------------------------------------------
+// ---- the guild (docs/game/guild.md) ---------------------------------------------------------------
 // The server keeps the guilds, as WebZen's ExDB did: a guild spans maps and outlives a login.
 // Its mark is MU's: 8x8 pixels of 4 bits, two a byte, the high nibble first, from a palette of
 // 16 whose first is clear (MuMain ZzzInventory.cpp CreateGuildMark).

@@ -63,7 +63,7 @@ public:
             // And it presses its skill whenever the key would light up, which is what a player
             // does: the realm refuses it while it cools and the ordinary swing lands instead, so
             // the hunt is auto-attack with a skill folded into it -- exactly the rhythm
-            // docs/skills-dk.md §3.1a describes, and the reason the cast path is exercised by
+            // docs/game/skills-dk.md §3.1a describes, and the reason the cast path is exercised by
             // every headless run rather than by a test of its own.
             // In turn, and not always the first one ready: mana is the real limiter at low level,
             // so a hand that scanned from the top of the table every time threw Falling Slash

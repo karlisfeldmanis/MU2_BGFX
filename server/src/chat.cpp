@@ -99,7 +99,7 @@ void say(Session& one, const net::Say& said, std::vector<std::unique_ptr<Session
             break;
         }
         case net::Channel::Guild: {
-            // His guild's members online, any map (docs/guild.md).
+            // His guild's members online, any map (docs/game/guild.md).
             const std::vector<Session*> mates = guildMates(one, sessions);
             if (mates.empty()) {
                 chatSystem(one, net::Channel::Guild, "You are not in a guild.");

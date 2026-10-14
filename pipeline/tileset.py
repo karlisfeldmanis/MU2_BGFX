@@ -1,6 +1,6 @@
 """Prepares a world's ground sheets: upscaled, enlarged, and given their surface maps.
 
-    python3 pipeline/tileset.py source/world/lorencia/ground.json workshop/world/lorencia
+    python3 pipeline/tileset.py content/world/lorencia/ground.json workshop/world/lorencia
 
 The tiles profile is the one that has no model in it. Every other asset here is a thing — an
 .obj arrives, a .glb leaves, and the sheets exist to be put on it — but TileGrass01 is not a

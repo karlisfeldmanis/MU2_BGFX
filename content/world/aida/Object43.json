@@ -1,0 +1,43 @@
+{
+  "item": "Object43",
+  "mu_name": "Object43",
+  "mu_name_from": "Aida's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "aida",
+  "object_type": 42,
+  "placements": 198,
+  "profile": "world",
+  "sheets": {
+    "ida_st01": "ai_ida_st01.png"
+  },
+  "sheet_from": "Data/Object34/, from MuMain, decoded under an ai_ prefix: assets/textures is one flat pool, and Crywolf's Object35 ships the same names.",
+  "sheet_materials": {
+    "ida_st01": "rock"
+  },
+  "material_note": "ida_st01: weathered dark stone with a carved frieze band: rock.",
+  "why_this_one": "a carved stone outcrop, 4 m: the ruins' rock shelves along the pits. Batch 2, rocks and foliage (the user, 2026-10-11: 'still was some holes', then 'Build rocks+foliage first'): the kinds that stand on the most void edge the walls leave bare, Object25 470 tiles, Object43 267, Object09 98, Object10 83 (scratchpad edges2.py). docs/worlds/aida-port.md.",
+  "effects_note": "No arm in MuMain's GMAida.cpp for this type: one static mesh, no light, no blend mesh.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 75,
+      "area": 162364.4,
+      "along": [
+        -94.5,
+        94.4
+      ],
+      "mu_uv": [
+        -0.34,
+        0.012,
+        1.335,
+        1.084
+      ],
+      "bake_uv": [
+        -0.34,
+        0.012,
+        1.335,
+        1.084
+      ]
+    }
+  ]
+}

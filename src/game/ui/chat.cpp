@@ -537,7 +537,7 @@ void Chat::send(Play& play) {
             play.dealAsk(whom);
             return;
         } else if (command == "ginvite" || command == "gjoin" || command == "gleave" || command == "gnotice") {
-            // The guild's asks (docs/guild.md): the server answers on the Guild channel.
+            // The guild's asks (docs/game/guild.md): the server answers on the Guild channel.
             if (!play.remote()) {
                 system(net::Channel::Server, "Guilds are kept on the server: play online to join one.");
                 return;
@@ -557,7 +557,7 @@ void Chat::send(Play& play) {
             return;
         } else if (command == "invite" || command == "leave" || command == "kick" || command == "accept" ||
                    command == "decline" || command == "promote") {
-            // The party's asks (docs/party.md): the server answers on the Party channel.
+            // The party's asks (docs/game/party.md): the server answers on the Party channel.
             net::PartyAsk asked;
             asked.what = command == "invite"   ? net::PartyWhat::Invite
                          : command == "leave"  ? net::PartyWhat::Leave
@@ -621,7 +621,7 @@ void Chat::answer(Play& play, long index, const std::string& name, bool accept) 
         play.dealAnswer(log_[size_t(index)].trader, accept);
         return;
     }
-    // A guild's call is the server's guild to answer (docs/guild.md).
+    // A guild's call is the server's guild to answer (docs/game/guild.md).
     if (index >= 0 && log_[size_t(index)].guild) {
         net::GuildAsk asked;
         asked.what = accept ? net::GuildWhat::Accept : net::GuildWhat::Decline;
@@ -966,7 +966,7 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
 
     const long pending = pendingInvite();
     inviting_ = pending >= 0;
-    // A guild's card stands taller, for its line of what joining means (docs/guild.md).
+    // A guild's card stands taller, for its line of what joining means (docs/game/guild.md).
     const bool guildCard = inviting_ && log_[size_t(pending)].guild;
     const float inviteTall = kInviteTall + (guildCard ? kGuildCardMore : 0.0f);
     inviteCard_ = {width * 0.5f - kInviteWide * 0.5f * u, bottom - (kInviteAbove + inviteTall) * u,

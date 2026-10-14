@@ -1,7 +1,7 @@
 """Enlarges MU's sheet to HD without letting one part of it bleed into the next.
 
     python3 pipeline/enlarge.py \
-        source/textures/sword02_npc.png source/items/Sword01/Sword01.json \
+        content/textures/sword02_npc.png content/items/Sword01/Sword01.json \
         workshop/items/Sword01/sword02_hd.png 16
 
 The atlas an item is baked into is 2048 square and MU's sheet for that item is 64x16. The

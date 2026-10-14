@@ -389,7 +389,7 @@ void Play::emit(int event, float x, float z, uint32_t following) {
         if (!frustum.holds(centre, kHeardReach)) return;
     }
     sound_.playAt(event, x, y, z, following);
-    // The hero's big moments lean the world back (docs/spatial-sound.md, C): his fall, and a
+    // The hero's big moments lean the world back (docs/reference/spatial-sound.md, C): his fall, and a
     // skill he casts. Not a landed blow, which is every second of a fight.
     const uint32_t him = realm_.hero().id;
     bool big = event == heard_.die || event == heard_.dieFemale;
@@ -420,7 +420,7 @@ void Play::hear(const gfx::Camera& camera, bool indoors) {
     // (NewBloodCastleSystem.cpp:42-43, 63-64).
     sound_.loop(heard_.castleBed, realm_.castleRun().phase == sim::CastlePhase::Running);
     // And the same switch is the room: a slap off the town's walls in the open, a small room
-    // under a roof (docs/spatial-sound.md, E).
+    // under a roof (docs/reference/spatial-sound.md, E).
     // The Dungeon and the Lost Tower are stone buildings throughout: a hall's reverb, on every
     // step, voice and blow the world's bus carries.
     // Atlans is open water, though "underground" for its air: its own room, the world muffled.

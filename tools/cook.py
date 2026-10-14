@@ -5,7 +5,7 @@ What it does today is the textures, which are the load time and the VRAM: Lorenc
 carries 587 images inside 97.6 MB of .glb, and the engine decodes every one of them and
 builds its mip chain at startup. Cooked, they are BC7 and BC5 blocks in .ktx files with the
 chain already in them, and a cutout's alpha has been rescaled down that chain so a leaf
-keeps its coverage -- the rule docs/conventions.md records as owed.
+keeps its coverage -- the rule docs/reference/conventions.md records as owed.
 
 The meshes are the other half, and they are here for a reason that is not the triangles:
 the town's 105 models are 17 790 triangles inside 97.6 MB of .glb, because nearly all of
@@ -107,7 +107,7 @@ import time
 import wave
 import zlib
 
-# Each world's manifest, source/world/<w>/world.json (docs/order-plan.md sprint D), read by
+# Each world's manifest, content/world/<w>/world.json (docs/plans/order-plan.md sprint D), read by
 # pipeline/world_manifest.py. Appended, so nothing in pipeline/ shadows a module of ours.
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "pipeline"))
 import world_manifest  # noqa: E402
@@ -729,7 +729,7 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
         if flags & 16 and mode:
             flags |= 128
         # Mode bit 3: a glow's pulse at MU's WorldTime*0.001, four times slower than an item's
-        # 0.004 -- the 2nd wings' `_R` shells (ZzzObject.cpp:9937-9944, docs/wings.md).
+        # 0.004 -- the 2nd wings' `_R` shells (ZzzObject.cpp:9937-9944, docs/game/wings.md).
         if flags & 2 and ((material.get("extras") or {}).get("pulse_rate") == "slow"):
             mode |= 8
             flags |= 128
@@ -1343,9 +1343,9 @@ def read_png(path):
 # Tarkan's too: its plateaus stand over a void half the map, and the debris clouds (Object51)
 # and rock falls (Object58) MU churns up 3-5 m out of it read as buried here while MU plays them.
 # Icarus's: no ground is drawn at all, and MU stands every object about 3 m under the walking
-# plane (docs/icarus-port.md B §1.2), so every placement reads as buried.
+# plane (docs/worlds/icarus-port.md B §1.2), so every placement reads as buried.
 # Aida's: a ravine and two pits of NoGround, walled by Object18-20 sunk 4.7 m, with 40 waterfalls
-# and 164 of Object25's foliage cards hanging into it (docs/aida-port.md B 4).
+# and 164 of Object25's foliage cards hanging into it (docs/worlds/aida-port.md B 4).
 FLAT_OVER_VOID = world_manifest.worlds_with("flat_over_void")
 
 LIGHT_REACH_BY_WORLD = world_manifest.by_world("light_reach")
@@ -1542,7 +1542,7 @@ def cook_placements(world, out_dir, chunk_tiles):
     size = int(map_data["size"])
     per_tile = float(map_data["units_per_tile"])
     height_factor = float(map_data["height_factor"])
-    metres_per_tile = 1.0                      # docs/conventions.md: one tile is one metre
+    metres_per_tile = 1.0                      # docs/reference/conventions.md: one tile is one metre
     mesh_dir = os.path.join(out_dir, "meshes")
 
     # The models that have a mesh, and the bounds the cook already wrote into each .mum.
@@ -1709,7 +1709,7 @@ def cook_placements(world, out_dir, chunk_tiles):
             dropped_model += 1
             continue
 
-        # MU stores z up and y south; ours is y up and row -z. docs/conventions.md.
+        # MU stores z up and y south; ours is y up and row -z. docs/reference/conventions.md.
         stored_x, stored_y, stored_z = one["at"]
         column = stored_x / per_tile
         row = stored_y / per_tile
@@ -1830,7 +1830,7 @@ def cook_placements(world, out_dir, chunk_tiles):
     for model_index, (name, _mesh, _bounds, count) in enumerate(models):
         entry = carried.get(name, {})
         for one in entry.get("emitters", []):
-            # MU z-up, y south, in units; ours y-up, -z, in metres. docs/conventions.md.
+            # MU z-up, y south, in units; ours y-up, -z, in metres. docs/reference/conventions.md.
             mx, my, mz = one.get("at", (0, 0, 0))
             high = float(one.get("high", 1.0))
             emitters += emitter(model_index, kinds.get(one.get("kind", "lamp"), 0),
@@ -2050,7 +2050,7 @@ def figure_set(world):
             continue
         stored_x, stored_y, stored_z = one["at"]
         pitch, _unused, yaw = (math.radians(a) for a in one["angle"])
-        # MU stores z up and y south, and one tile is one metre. docs/conventions.md.
+        # MU stores z up and y south, and one tile is one metre. docs/reference/conventions.md.
         placements.append({"figure": one["model"],
                            "at": [stored_x / per_tile, stored_z / per_tile,
                                   -stored_y / per_tile],
@@ -2084,7 +2084,7 @@ def ticks_of(milliseconds, what, name, remainders):
 # 1 West ... 3 South ... 5 East ... 7 North, clockwise from West), and the cooked figure that
 # stands for them. Transcribed from MU2's shared/Folk.cs `Townsfolk.Spawns`, which is OpenMU's
 # Version075/Maps/Lorencia.cs and Noria.cs NPC spawns. Each world's manifest's `npcs`
-# (source/world/<w>/world.json, docs/order-plan.md sprint D), every row with its source;
+# (content/world/<w>/world.json, docs/plans/order-plan.md sprint D), every row with its source;
 # mu.db's npc_spawns (Lorencia alone, never read) was dropped in sprint E3.
 #
 # A figure of "" is a townsperson the world's own placements already stand -- Hanzo is
@@ -2183,7 +2183,7 @@ def cook_tables(world, out_dir):
     All sixteen kinds are written whatever map this is -- the breed table is not a map's --
     and only this map's spawn rectangles. `x` is the attribute grid's column and `y` its row,
     MU's own tile coordinates, un-negated: the negation into world z belongs to whoever draws
-    them, not to the table (docs/conventions.md, "Space").
+    them, not to the table (docs/reference/conventions.md, "Space").
 
     There is no experience table and no drop table here, and foundation 11 used to say
     there would be. mu.db holds neither, because MU has an expression per level rather than a
@@ -2224,7 +2224,7 @@ def cook_tables(world, out_dir):
     # fist, 39-45 the sword ladder, 46-49 spear and scythe, 50 and 51 the bow and the crossbow.
     #
     # And the skill clips, 60 to 64 and Defense's 187, for the same reason rather than a new one:
-    # a skill's cooldown can never be shorter than the animation it plays (docs/skills-dk.md
+    # a skill's cooldown can never be shorter than the animation it plays (docs/game/skills-dk.md
     # §3.2), and the animation's length is these same two numbers. The sim asks
     # `sim::castTicks` for it, which reads this table. And the wizard's two hands, 147 and 148
     # (`PLAYER_SKILL_HAND1..2`), which is how long an Energy Ball takes to throw. And 183, "Skill
@@ -2234,7 +2234,7 @@ def cook_tables(world, out_dir):
     # Twisting Slash's own spin (SkillCast.cpp:306-312), 13 keys at 0.24. And 66,
     # `PLAYER_ATTACK_SKILL_FURY_STRIKE`, Rageful Blow's own (ClassAttack.cpp:986), 11 keys at 0.38.
     # And 154, `PLAYER_SKILL_HELL`, Hellfire's own (ClassAttack.cpp:1202-1210), 18 keys at 0.5 --
-    # player.muc's 154, one before the enum's (source/players/rig/actions.json). And 153,
+    # player.muc's 154, one before the enum's (content/players/rig/actions.json). And 153,
     # `PLAYER_SKILL_INFERNO`, Inferno's own (ClassAttack.cpp:1212-1221) at 0.6, one before too.
     # And 152, `PLAYER_SKILL_FLASH`, Aqua Beam's (ClassAttack.cpp:1365-1376) at 0.4, one before.
     # And 71, `PLAYER_ATTACK_DEATHSTAB`, Death Stab's own (SkillCast.cpp:302-304), 7 keys at 0.25.
@@ -2295,7 +2295,7 @@ def cook_tables(world, out_dir):
     # grids -- which is where this looked first, and a missing gate is not an error there, so a
     # dead character quietly stood up where he fell instead of in town.
     # Every weapon and shield with a combat row, in name order so the table is stable.
-    # "gladiator" is the Magic Gladiator's bit, sim::Kin 3, ahead of his class (docs/mg-port.md):
+    # "gladiator" is the Magic Gladiator's bit, sim::Kin 3, ahead of his class (docs/worlds/mg-port.md):
     # an unknown name would be 0, which is every class.
     kClass = {"wizard": 1, "elf": 2, "knight": 4, "gladiator": 8}
     # Two-handedness, a bow and a crossbow off the stance the cook already reads from the item's
@@ -2538,7 +2538,7 @@ def cook_showing(out_dir, texcook, threads):
     cooked = {}
     rows_sound = []
     # A sound is cooked again only when its source's bytes or this cook's code changed. The
-    # key is content and not a date: a wav replaced in source/ can carry an older date than
+    # key is content and not a date: a wav replaced in content/ can carry an older date than
     # its cooked copy, and the game then kept the old sound with no error (2026-09-29). Every
     # one of the 278 used to be read, resampled and written on every showing cook (~8 s).
     digests_path = os.path.join(out_dir, "sounds", "digests.json")
@@ -2669,7 +2669,7 @@ def obj_part(at, normals, uvs, triangles, per_tile):
     thing about these files that is worth writing down. MuExtract builds every mesh with
     `ConvertAxes` on (BmdMeshBuilder, AxisConvention.ToEngine), so MU's `(x, y, z)` with z up
     was turned into `(x, z, -y)` when the .obj was written -- the same swap
-    docs/conventions.md states, done once at import. What is left to do here is the other
+    docs/reference/conventions.md states, done once at import. What is left to do here is the other
     half of that page: MU counts 100 units to a tile and a tile is a metre, so the whole
     thing is divided by the worlds' own `units_per_tile` rather than by a 100 written in.
     A second axis swap here would lay every missile on its side.
@@ -2782,7 +2782,7 @@ def cook_missiles(out_dir, texcook, threads):
     library and never will:
 
       * `invention`: roughness 1.0 and metal 0 on every part, stated in the factors as
-        docs/conventions.md requires of a material with no ORM map. A thrown bone is not
+        docs/reference/conventions.md requires of a material with no ORM map. A thrown bone is not
         metal and MU painted no grain for it.
       * `invention`: every part is two-sided. MU's effect meshes are open shells and single
         cards -- a flame is four cards through a ball -- and a card seen from its back face
@@ -2813,7 +2813,7 @@ def cook_missiles(out_dir, texcook, threads):
     missiles = index.get("missiles") or {}
     worlds = index.get("worlds") or []
 
-    # docs/conventions.md: never hard-code 100. A missile belongs to no world, so the value
+    # docs/reference/conventions.md: never hard-code 100. A missile belongs to no world, so the value
     # is taken from the worlds that do state one and they are required to agree -- the day a
     # map arrives on another scale, this says so instead of silently halving a rock.
     scales = sorted({float(one["units_per_tile"]) for one in worlds if "units_per_tile" in one})
@@ -2856,7 +2856,7 @@ def cook_missiles(out_dir, texcook, threads):
                 # hold down its mip chain. cook_showing's note says why at length. Skipped when
                 # it is there, as cook_showing's are: the stem carries the sheet's sha1. Without
                 # it every showing cook re-compressed all 35 missile sheets, ~36 s of the 45
-                # (2026-10-11, docs/order-plan.md sprint B).
+                # (2026-10-11, docs/plans/order-plan.md sprint B).
                 if not os.path.exists(ktx_path):
                     jobs.append(("albedo", -1.0, source, ktx_path))
             sheets[relative] = os.path.relpath(ktx_path, ASSETS)
@@ -2938,7 +2938,7 @@ def cook_missiles(out_dir, texcook, threads):
             for _ in range(3):      # normal, orm, emissive: MU paints none of the three
                 materials += write_string("")
             # invention: rough and not metal, stated in the factors because there is no ORM
-            # map to multiply. docs/conventions.md's rule for a material with no map.
+            # map to multiply. docs/reference/conventions.md's rule for a material with no map.
             materials += struct.pack("<2f", 1.0, 0.0)
 
         header = struct.pack("<4sIIIII", b"MU2M", 3, vertex_count, len(indices) // 4,
@@ -3362,7 +3362,7 @@ def cook_wardrobe(out_dir, texcook, threads):
 
     # --- the wings: each worn on the back of the class that may wear it ---------------------
     # Its mesh and its one clip, the flap, are cooked below with the arms'; the viewer stands
-    # the class's bare body and hangs the wing on its Bone05 (game/wings.h, docs/wings.md).
+    # the class's bare body and hangs the wing on its Bone05 (game/wings.h, docs/game/wings.md).
     wings = []
     for name, (one, _full) in sorted(rows.items()):
         if one.get("kind") != "wing":

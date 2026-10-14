@@ -10,7 +10,7 @@
 namespace mu::gfx {
 namespace {
 
-// The plain average of the samples. It is the figure docs/budget.md enforces the frame on,
+// The plain average of the samples. It is the figure docs/reference/budget.md enforces the frame on,
 // because frame time here is bimodal and a median of it lands in the empty gap -- see the
 // note in `finish`. (This comment used to be `quantile`'s, left behind when the two were
 // written; a function described as something else is a function nobody reads twice.)
@@ -252,7 +252,7 @@ bool Stats::finish(bool enforce) {
 
     // The GPU figure is reported and NOT enforced. bgfx's gpuTimeEnd - gpuTimeBegin counts
     // waiting as well as work: measured here it is larger than the wall time of the frame it
-    // sits in, which is impossible for work alone. It is the same complaint docs/budget.md
+    // sits in, which is impossible for work alone. It is the same complaint docs/reference/budget.md
     // already makes of the per-view timers, and it applies to the frame too.
     const double frameBudget = frameBudgetMs();
     const bool frameOver = frameMean > frameBudget;
@@ -315,7 +315,7 @@ bool Stats::finish(bool enforce) {
 
     const bool overdrawn = frameOver || claimBroken;
     if (!enforce) return true;
-    if (overdrawn) core::logError("the budget is overdrawn; see docs/budget.md");
+    if (overdrawn) core::logError("the budget is overdrawn; see docs/reference/budget.md");
     return !overdrawn;
 }
 

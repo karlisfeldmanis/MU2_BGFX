@@ -1,6 +1,6 @@
 """Bakes a colour grade into a lookup table the engine can apply in one instruction.
 
-    python3 pipeline/grade.py source/grades/lorencia.json workshop/grades
+    python3 pipeline/grade.py content/grades/lorencia.json workshop/grades
 
 Three sliders — brightness, contrast, saturation — are what a renderer gives you for free and
 they cannot express a look. They move every colour the same way. What separates a graded

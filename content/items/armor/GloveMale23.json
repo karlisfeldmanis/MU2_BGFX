@@ -1,0 +1,133 @@
+{
+  "item": "GloveMale23",
+  "mu_name": "Dark Soul Gloves",
+  "mu_name_from": "MuMain loads the set at index 22 from Data/Player/GloveMale23.bmd (ZzzOpenData.cpp:200-210: the sets at index 21-24 are files 22-25, `22 + i`). MU's group 10 number 22.",
+  "why_this_one": "The Soul Master's second set, after Grand Soul (the user, 2026-10-10: 'cook them', the next sets and weapons after the strongest the heroes have). docs/game/second-class-gear.md.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have no second-class sets).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:257.",
+    "call": "CreateGloves(22, \"Dark Soul Gloves\", 87, 30, 6, 75, 0, 55, 18, 2, 0, 0, 0, 0, 0)",
+    "group": 10,
+    "number": 22,
+    "drop_level": 87,
+    "drops_from_monsters": true,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 30,
+    "durability": 75,
+    "requires": {
+      "level": 0,
+      "strength": 55,
+      "agility": 18,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "attack_speed": 6,
+    "class_level": 2,
+    "class_level_note": "The Soul Master's alone: OpenMU's darkWizardClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "sheets": {
+    "gloves_15m": "gloves_15m.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: a dark navy robe traced in gold; hide is MU's black cap over the openings.",
+  "material_note": "cloth, as Grand Soul's: a navy robe with its gold painted on, not plate.",
+  "effects_note": "MuMain's one arm for the set is the pants' CPhysicsClothMesh (ZzzObject.cpp:10782-10784, iCloth 3, a tail hung behind), not built: this game has no cloth. No glow or chrome pass.",
+  "sheet_materials": {
+    "gloves_15m": "cloth"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 78,
+      "area": 1995.7,
+      "along": [
+        -10.3,
+        10.5
+      ],
+      "mu_uv": [
+        0.013,
+        0.0,
+        0.735,
+        0.964
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.674,
+        0.576
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 46,
+      "area": 1126.6,
+      "along": [
+        -15.1,
+        15.9
+      ],
+      "mu_uv": [
+        0.718,
+        0.034,
+        0.989,
+        1.001
+      ],
+      "bake_uv": [
+        0.151,
+        0.007,
+        0.917,
+        0.871
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 78,
+      "area": 1995.7,
+      "along": [
+        -10.3,
+        10.5
+      ],
+      "mu_uv": [
+        0.013,
+        0.0,
+        0.735,
+        0.964
+      ],
+      "bake_uv": [
+        0.17,
+        0.006,
+        0.521,
+        0.521
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 46,
+      "area": 1126.6,
+      "along": [
+        -15.1,
+        15.9
+      ],
+      "mu_uv": [
+        0.718,
+        0.034,
+        0.989,
+        1.001
+      ],
+      "bake_uv": [
+        0.007,
+        0.384,
+        0.994,
+        0.964
+      ]
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "note": "Devil Square's light, laid over lighting.json while a character stands in map 9 (game/world/maps.h). Started 2026-10-10 from Blood Castle's sheet as the user tuned it, the nearest look: MU draws Devil Square on its default black clear and fog with no sky and no music, under steady rain and silent lightning (docs/worlds/devil-square-port.md, Part B 2 and 7). Its painted TerrainLight is one flat dark teal, (63, 103, 115), on 98% of the tiles; only arena A has painted highlights. So Blood Castle's numbers with the mist a cool dark grey. Not yet judged by the user. No wet ground (the user, 2026-10-10: 'forget about wet effect'): Blood Castle's ground_wet and ground_puddles came over with its numbers, only darkened the stone, and put a white glint under each lightning flash. Then 'DS need darker vibe similiar like LT' (the user, 2026-10-10): the Lost Tower's own light laid over it -- its cold blue key at 60 degrees, 2.2 over a fill of 1.6, the exposure 3.1 to 2.3, its dark cold sky, its warm-cold split and its darker dust at 0.006. Then 'little bit to contrasted and to dark': the exposure 2.3 to 2.6, the fill 1.6 to 1.9 under a key 2.2 to 2.0, and the curve's contrast 0.45 to 0.38.",
+  "elevation": 60.0,
+  "sun_colour": [
+    0.55,
+    0.62,
+    0.85
+  ],
+  "sun_strength": 2.0,
+  "sky_colour": [
+    0.08,
+    0.09,
+    0.15
+  ],
+  "horizon_paleness": 0.2,
+  "ground_colour": [
+    0.03,
+    0.025,
+    0.02
+  ],
+  "ambient_strength": 1.9,
+  "exposure": 2.6,
+  "dust_colour": [
+    0.3,
+    0.28,
+    0.26
+  ],
+  "dust_density": 0.006,
+  "lamp_strength": 10.0,
+  "flame_strength": 8.0,
+  "glow_strength": 0.9,
+  "bloom_threshold": 0.9,
+  "bloom_strength": 0.45,
+  "contrast": 0.38,
+  "saturation": 0.85,
+  "split": 0.55,
+  "tint_low": [
+    0.88,
+    0.97,
+    1.1
+  ],
+  "tint_high": [
+    1.12,
+    1.0,
+    0.84
+  ],
+  "ssao_strength": 1.35,
+  "grass": 0.0,
+  "probe": 0.0,
+  "water_flow": 0.0,
+  "tonemap": 1,
+  "lamp_shadow": 0.85,
+  "water_sheen": 0.0,
+  "ground_variety": 1.0
+}

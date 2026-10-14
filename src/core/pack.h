@@ -6,7 +6,7 @@
 
 namespace mu::core {
 
-// The player's packs (docs/layout.md, "What a player is given"). A .mupak holds files under
+// The player's packs (docs/plans/layout.md, "What a player is given"). A .mupak holds files under
 // logical paths -- "assets/cooked/lorencia/lorencia.mur", "sheets/lighting.json",
 // "fonts/Cinzel-Bold.ttf" -- each zstd-compressed, behind a table of contents. The player's build
 // mounts every pack in its data folder at start; from then core::readFile, fileExists and
@@ -22,7 +22,7 @@ namespace mu::core {
 //
 // Scrambled is an XOR with a keystream seeded by where the bytes sit. It is not encryption and
 // does not pretend to be: it keeps a pack from opening as a zstd stream or a list of names in
-// any tool that is not ours. What protects the game is the server (docs/layout.md).
+// any tool that is not ours. What protects the game is the server (docs/plans/layout.md).
 constexpr uint32_t kPackMagic = 0x4b50554d;  // "MUPK"
 constexpr uint32_t kPackVersion = 1;
 constexpr uint8_t kPackStored = 0;

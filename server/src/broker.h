@@ -1,6 +1,6 @@
 #pragma once
 
-// The Broker's service (server/src/broker.cpp, docs/broker.md): the market, the server's as the
+// The Broker's service (server/src/broker.cpp, docs/game/broker.md): the market, the server's as the
 // party is, since it spans maps.
 
 #include <memory>

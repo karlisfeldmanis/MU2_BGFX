@@ -32,7 +32,7 @@ struct Paths {
     std::string root;     // core::folders().root
     std::string shots;    // --shot-path, or core::folders().shots; made rather than assumed
     std::string log;      // --log, or core::folders().log
-    std::string sheet;    // --sheet, or sheets/lighting.json
+    std::string sheet;    // --sheet, or content/sheets/lighting.json
 
     std::string under(const std::string& dir, const std::string& name) const {
         return dir + "/" + name;
@@ -41,7 +41,7 @@ struct Paths {
 
 // The times of day the viewer's T key walks and the studio's sweep steps.
 //
-// The sheet alone is noon; dusk and night are sheets/time/<name>.json laid over it. Rebuilt
+// The sheet alone is noon; dusk and night are content/sheets/time/<name>.json laid over it. Rebuilt
 // from the sheet on every change rather than patched, so going from night back to noon cannot
 // leave a night value behind -- which it did, when this was three lambdas and two locals in
 // main() and the rebuild was one of them.
@@ -60,9 +60,9 @@ public:
     // hundred times a second. Re-applies when either the sheet or the overlay has moved.
     void reloadIfChanged();
     // A sheet of the scene's own, laid over the base and the time of day: the character screen's
-    // clearer air (sheets/lobby.json). Empty takes it off. Watched and re-applied as the others are.
+    // clearer air (content/sheets/lobby.json). Empty takes it off. Watched and re-applied as the others are.
     void setScene(const std::string& path);
-    // The scene's wet sheet, laid over the scene for rain: sheets/worlds/<world>_rain.json.
+    // The scene's wet sheet, laid over the scene for rain: content/sheets/worlds/<world>_rain.json.
     // Empty takes it off. rain() then blends the frame's light between the two by the weather's
     // share, 0 dry to 1 raining (game/world/weather.h) -- the rain darkens the world as it comes
     // in and lifts as it goes, rather than switching. `flash` is the lightning over it, 0 to 1

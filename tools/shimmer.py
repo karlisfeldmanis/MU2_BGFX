@@ -11,7 +11,7 @@ the same picture every frame, and the answer is zero.
 Prints a row per pair and a summary; writes a heat map where every pixel that ever changed
 is lit by how many pairs it changed in, over the first shot darkened, so the crawl can be
 seen on the edges it crawls along. Exit 1 when more than --allow pixels changed in any pair.
-docs/shadow-probe.md.
+docs/reference/shadow-probe.md.
 """
 import argparse
 import os

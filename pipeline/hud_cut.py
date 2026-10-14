@@ -1,4 +1,4 @@
-"""Copies the frame's art out of MuDream's LegendHUD sheets, into source/interface.
+"""Copies the frame's art out of MuDream's LegendHUD sheets, into content/interface.
 
     python3 pipeline/hud_cut.py [--source <MuDream>/Data/Interface]
 

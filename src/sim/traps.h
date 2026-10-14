@@ -11,7 +11,7 @@
 //   AttackRange (2) and whose direction from it is the way it faces, off a safe tile.
 // - **Lance Trap (100)**: OpenMU gives it the Iron Stick's "when pressed", but all 27 stand on
 //   tiles nobody can enter, so as OpenMU has them they never fire. Fired here as the Fire Trap
-//   fires, at its own AttackRange 4 -- ours, the user's (2026-09-30), docs/dungeon-port.md
+//   fires, at its own AttackRange 4 -- ours, the user's (2026-09-30), docs/worlds/dungeon-port.md
 //   decision 2.
 //
 // - **Meteorite Trap (103)**, the Lost Tower's, AttackAreaWhenPressedTrapIntelligence: when a

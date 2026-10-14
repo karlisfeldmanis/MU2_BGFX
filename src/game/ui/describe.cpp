@@ -58,7 +58,7 @@ std::string kindOf(const content::ItemRow& row) {
     if (sim::devilsEye(row) || sim::devilsKey(row)) return "Ticket material";
     if (row.weapon()) return row.twoHanded() ? "Two-handed weapon" : "One-handed weapon";
     if (row.shield()) return "Shield";
-    // Before the pets: the rings and pendants share their group 13 (docs/jewellery.md).
+    // Before the pets: the rings and pendants share their group 13 (docs/game/jewellery.md).
     if (sim::ring(row)) return "Ring";
     if (sim::pendant(row)) return "Pendant";
     // In the pets' group 13 too, and no pet: what the 2nd wings are made of.
@@ -496,7 +496,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // The row's own line: what the thing does, for the six rows no column speaks for -- the
     // Ale, the Antidote, the Town Portal Scroll, and the three jewels, whose sentences are
     // MU's own (GT 572, 573, 574, 157). It leads the section, because on every one of those
-    // rows it is the section. See ItemRow::tells and docs/mu-tooltip-lines.md section 2.9.
+    // rows it is the section. See ItemRow::tells and docs/reference/mu-tooltip-lines.md section 2.9.
     if (!row.tells.empty()) {
         Row line;
         line.free = row.tells;
@@ -508,7 +508,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // ITEM_IMP (ZzzInventory.cpp:4258-4268; Game.en.resx "Absorb %d%% of Damage", "Max HP +%d
     // increased", "Increase 30%% of attacking & Wizardry Dmg"), with the numbers off the rule the
     // realm fights by (sim::petPower), so the card and the blow cannot disagree.
-    // A ring's or a pendant's resistance, 1 a plus in its element (docs/jewellery.md); MuMain's
+    // A ring's or a pendant's resistance, 1 a plus in its element (docs/game/jewellery.md); MuMain's
     // card says it as "Ice Resistance +%d" and the rest alike.
     if (sim::jewellery(row) && sim::elementOf(row) != sim::Element::None) {
         static const char* const kElement[] = {"", "Ice resistance", "Poison resistance",
@@ -633,7 +633,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // ---- its options ----------------------------------------------------------------------------
     // GetSpecialOptionText's lines in SetItemAttributes' order -- luck, then the additional
     // option -- every one TEXT_COLOR_BLUE, and luck's two lines as ZzzInventory.cpp:5162-5172
-    // prints them. MU's own English (GT 87, 94, 88-91), docs/mu-tooltip-lines.md section 3(d).
+    // prints them. MU's own English (GT 87, 94, 88-91), docs/reference/mu-tooltip-lines.md section 3(d).
     //
     // Set in the card's affix grammar (2026-09-27): what the option does first, its value last
     // and heavier, and a mark in the gutter that says which kind it is -- a blue diamond for
@@ -694,7 +694,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             else if (row.magicPower > 0) rolled("", "Additional Wizardry Dmg +" + value);
             else rolled("", "Additional Dmg +" + value);
         }
-        // A 2nd wing's extras in MuMain's words (GT 740-742, docs/mu-tooltip-lines.md), its
+        // A 2nd wing's extras in MuMain's words (GT 740-742, docs/reference/mu-tooltip-lines.md), its
         // numbers WebZen's: 50 and 5 a plus (zzzitem.cpp:3039-3044).
         if (sim::secondWing(row) && (what.wing & (sim::kWingMaxLife | sim::kWingMaxMana |
                                                   sim::kWingIgnoreDefense))) {

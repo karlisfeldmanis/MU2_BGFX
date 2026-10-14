@@ -1,5 +1,5 @@
 // Blood Castle's run (sim/castle_instance.h): which castle, the clock, the drawbridge and its
-// sorcerers, the quotas, the win and its pay (sim/event.h, docs/blood-castle-port.md). Moved out
+// sorcerers, the quotas, the win and its pay (sim/event.h, docs/worlds/blood-castle-port.md). Moved out
 // of realm_move.cpp unchanged but for how it reaches the realm (the Instance's I3).
 
 #include "sim/castle_instance.h"
@@ -211,7 +211,7 @@ void CastleInstance::kill(Realm& r, const Body& dead) {
     if (castleStatue(number)) {
         // Broken, it lets fall the weapon it held -- the staff, the sword or the crossbow, by
         // which of the three it was -- on the stone where it lay, to be carried back to the
-        // Archangel (the user, 2026-10-03; docs/blood-castle-port.md 5). Ours: WebZen's statue
+        // Archangel (the user, 2026-10-03; docs/worlds/blood-castle-port.md 5). Ours: WebZen's statue
         // drops nothing by the drop table (gObjMonster.cpp:3985) and its weapon comes by another
         // way. It lies there until the run's time is up.
         statueBroken = true;

@@ -1,4 +1,4 @@
-// A worn wing, drawn: the 1st level wings on the bearer's back (docs/wings.md). Drawing only --
+// A worn wing, drawn: the 1st level wings on the bearer's back (docs/game/wings.md). Drawing only --
 // whether he wears one and whether he flies are the realm's (sim::kWings, sim::Body::flying).
 //
 // MuMain draws c->Wing as its own model playing its own action, linked to player bone 47 --

@@ -40,7 +40,7 @@ constexpr int kVoices = 2;
 // and a crowd's worth of them read as the sound breaking. An invention, as the loop's fade is.
 constexpr float kReleaseMs = 25.0f;
 
-// --- docs/spatial-sound.md, steps A to D. Every number below is an invention. -------------
+// --- docs/reference/spatial-sound.md, steps A to D. Every number below is an invention. -------------
 
 // How wide the screen is heard: a thing at the frame's side edge is panned this far and no
 // further. Miniaudio's balance pan leaves the far ear at one minus this, -10 dB -- to one side,
@@ -738,7 +738,7 @@ void Sound::voice(const std::string& relative) {
     stopVoice();
     const std::string path = im.assetDir + "/" + relative;
     if (!core::fileExists(path)) {
-        core::logError("sound: no voice %s (tools/sync.sh copies source/voice)", path.c_str());
+        core::logError("sound: no voice %s (tools/sync.sh copies content/voice)", path.c_str());
         return;
     }
     // Straight to the engine as the music is: no room's reverb on a man talking to you.
@@ -770,7 +770,7 @@ void Sound::stinger(const std::string& relative, float gain) {
     }
     const std::string path = im.assetDir + "/" + relative;
     if (!core::fileExists(path)) {
-        core::logError("sound: no stinger %s (tools/sync.sh copies source/music)", path.c_str());
+        core::logError("sound: no stinger %s (tools/sync.sh copies content/music)", path.c_str());
         return;
     }
     // As the voice is: streamed at the file's own stereo and rate, straight to the engine.

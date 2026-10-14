@@ -1,4 +1,4 @@
-// The studio's Stage (docs/order-plan.md §9c, F3b): a neutral place to work on a thing, in
+// The studio's Stage (docs/plans/order-plan.md §9c, F3b): a neutral place to work on a thing, in
 // place of the town round the bonfire.
 //
 // The user, 2026-10-12, picked "a stage and the world": the world to judge a thing in the

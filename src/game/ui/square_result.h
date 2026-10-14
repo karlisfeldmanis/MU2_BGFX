@@ -8,7 +8,7 @@
 // user's pick of four (2026-10-10, claude.ai/artifact/4yeSN9PmTeqdS7PXpLN6P3, "C · Your result
 // first"): his rank the headline in Cinzel ("2nd of 6"), what he earned in a well under it --
 // points, experience, Zen -- then the square's ranks small, and one answer: Claim, his row paid and home to Noria now, as Blood Castle's Complete sends him to
-// Devias (docs/devil-square-port.md, "The goal and how it is shown"). Shut with its cross, or
+// Devias (docs/worlds/devil-square-port.md, "The goal and how it is shown"). Shut with its cross, or
 // never answered, it pays as the minute's rest runs out and everyone goes home; the clock to that
 // is in its foot.
 //

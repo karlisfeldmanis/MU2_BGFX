@@ -468,7 +468,7 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
             // From the crown up: the guild line, the name. No level or class under the pointer
             // (the user, 2026-10-11: "remove that on hover we show char lvl info").
             const float guildBaseline = t.y - std::round(kGap * u);
-            // A guild's line, or a bot's `<Bot>` while he is in none (docs/guild.md).
+            // A guild's line, or a bot's `<Bot>` while he is in none (docs/game/guild.md).
             const bool line = t.bot || !t.guild.empty();
             const float nameBaseline =
                 line ? guildBaseline - std::round((kTagGuild + 3.0f) * u) : guildBaseline;

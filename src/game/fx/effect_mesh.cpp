@@ -25,7 +25,7 @@ bool loadEffectObj(const std::string& path, float scale, const std::string& grou
         EffectCorner c;
         c.x = at[size_t(v - 1) * 3 + 0] * scale;
         c.y = at[size_t(v - 1) * 3 + 1] * scale;
-        // MU's Y runs south and this engine's Z runs north: docs/conventions.md, and the one
+        // MU's Y runs south and this engine's Z runs north: docs/reference/conventions.md, and the one
         // negation belongs here at the edge rather than in the motion.
         c.z = -at[size_t(v - 1) * 3 + 2] * scale;
         c.u = t > 0 && size_t(t) * 2 <= uv.size() ? uv[size_t(t - 1) * 2] : 0.5f;

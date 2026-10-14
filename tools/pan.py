@@ -17,7 +17,7 @@ shadow's. Without --still the world camera glides across the town, which is the 
 The numbers are for comparing runs taken the same way. A buried point (behind a wall, under
 the fountain) moves as the view changes whatever the shadow does, and bilinear resampling
 has a floor of its own, so `--shadow-noise none` is the floor to read the others against.
-docs/shadow-probe.md.
+docs/reference/shadow-probe.md.
 """
 import argparse
 import os

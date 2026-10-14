@@ -173,13 +173,13 @@ void StudioPaint::panel(Context& ctx, game::World& world, studio::Cooker& cooker
         write(cooker, &answer);
     }
     if (slotNames_.empty()) {
-        ImGui::TextColored(kRed, "source/world/%s/%s.json names no tile_slots: nothing to paint with", world_.c_str(),
+        ImGui::TextColored(kRed, "content/world/%s/%s.json names no tile_slots: nothing to paint with", world_.c_str(),
                            world_.c_str());
         ImGui::PopTextWrapPos();
         ImGui::End();
         return;
     }
-    ImGui::TextColored(kDim, "source/world/%s/tiles.png: a left drag on the land paints, a right drag turns the "
+    ImGui::TextColored(kDim, "content/world/%s/tiles.png: a left drag on the land paints, a right drag turns the "
                              "camera", world_.c_str());
     for (size_t i = 0; i < slotNames_.size(); ++i) {
         if (slotNames_[i].empty()) continue;

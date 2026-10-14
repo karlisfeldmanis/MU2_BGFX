@@ -1,11 +1,11 @@
 """`mu edit` and `mu recipe`: one value of a recipe or a sheet changed in place, and journalled.
 
-The studio's inspector (docs/order-plan.md §9c, F4) and the agent both write through here, so
+The studio's inspector (docs/plans/order-plan.md §9c, F4) and the agent both write through here, so
 a recipe edited from the window and one edited by hand land the same way:
 
     ./mu recipe Sword01                          the recipe's file(s), parsed, and the library
     ./mu edit Sword01 islands.0.material brass   one value; the path's numbers are list indices
-    ./mu edit sheets/lighting.json sun_strength 1.6
+    ./mu edit content/sheets/lighting.json sun_strength 1.6
 
 Only a value already there, and only a scalar -- a number, a string, a bool, null -- is
 changed, and only its own span of text is replaced: every other byte of the file stays as it
@@ -156,12 +156,12 @@ def split_path(dotted):
 # ----------------------------------------------------------------------------- files
 
 def resolve(target):
-    """A recipe's name (or Set<suffix>, or Arm<recipe>) or a path under source/ or sheets/ ->
+    """A recipe's name (or Set<suffix>, or Arm<recipe>) or a path under content/ or content/sheets/ ->
     the absolute files it is, refusing anything outside those two folders."""
     if target.endswith(".json"):
         path = os.path.realpath(target if os.path.isabs(target) else os.path.join(ROOT, target))
         if not (path.startswith(SOURCE + os.sep) or path.startswith(SHEETS + os.sep)):
-            raise NotFound(f"{target}: only files under source/ and sheets/ are edited here")
+            raise NotFound(f"{target}: only files under content/ and content/sheets/ are edited here")
         if not os.path.exists(path):
             raise NotFound(f"no file {target}")
         return [path]
@@ -174,7 +174,7 @@ def resolve(target):
             except NotFound:
                 continue
         if not files:
-            raise NotFound(f"no piece of the set {target[3:]} under source/")
+            raise NotFound(f"no piece of the set {target[3:]} under content/")
         return files
     return [find(target).recipe]
 

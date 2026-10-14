@@ -4,7 +4,7 @@
 //
 // Counted in AttackTime -- a frame a frame from the cast -- read here as a share of the clip:
 // the thrust lands at half of it (the right hand from 77 units behind him to 71 ahead between
-// keys 2 and 3 of 6; action 71 in source/players/rig/player.rig.json), AttackTime 12 of the 24
+// keys 2 and 3 of 6; action 71 in content/players/rig/player.rig.json), AttackTime 12 of the 24
 // frames the clip runs at 0.25. Three things, all MU's own, traced line by line after two cuts
 // the user called buggy (2026-10-02: "go deeper in mumaiin and find what you do wrong"):
 //

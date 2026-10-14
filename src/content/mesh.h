@@ -23,7 +23,7 @@ static_assert(sizeof(Vertex) == 48, "the vertex layout drifted");
 // The same 48 bytes with the skin on the end: four joint bytes and four normalised weight
 // bytes, 56. One byte holds the largest rig in this content twice over, and the joints reach
 // the shader as `uvec4` -- Metal reads an unsigned byte attribute into an unsigned type and
-// refuses the pipeline for an `ivec4`, silently drawing nothing. docs/conventions.md.
+// refuses the pipeline for an `ivec4`, silently drawing nothing. docs/reference/conventions.md.
 struct SkinnedVertex {
     float position[3];
     float normal[3];
@@ -44,7 +44,7 @@ struct Bone {
     float inverseBind[16];
 };
 
-// One material, closed: four maps and three flags, and nothing else. docs/conventions.md.
+// One material, closed: four maps and three flags, and nothing else. docs/reference/conventions.md.
 struct Material {
     bgfx::TextureHandle albedo = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle normal = BGFX_INVALID_HANDLE;
@@ -119,7 +119,7 @@ struct Material {
     // -pulse[1] -- the Gorgon's eye (Renderer::submitBatches).
     float pulse[2] = {0.0f, 1.0f};
     // And at MU's WorldTime*0.001 rather than 0.004: the 2nd wings' slow breath (the cooked
-    // scroll mode's bit 3, docs/wings.md).
+    // scroll mode's bit 3, docs/game/wings.md).
     bool slowPulse = false;
     // A glow MU keeps a levelled item's chrome and metal passes off: its NoneBlendMesh
     // (ZzzBMD.cpp:1425), the Staff of Resurrection's swirl cards and the Light Saber's beam.

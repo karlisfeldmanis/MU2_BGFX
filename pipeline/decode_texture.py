@@ -2,7 +2,7 @@
 
     python3 pipeline/decode_texture.py \
         LEGACY/reference/remaster_one/Data/Item/sword02.OZJ \
-        source/textures/sword02.png
+        content/textures/sword02.png
 
 The first link in the texture chain, and the one that has to be beyond question. Every map
 this pipeline ever produces is derived from what comes out of here, so this step decodes

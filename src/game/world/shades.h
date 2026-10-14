@@ -7,7 +7,7 @@
 // 0.25 -- and from MU's camera it is what stands between the eye and the water seen through
 // under the span. Without it the river runs on under the deck as a lit wall of water.
 //
-// The recipes skip it out of the model (source/world/lorencia/Bridge01.json, `skip_sheets`),
+// The recipes skip it out of the model (content/world/lorencia/Bridge01.json, `skip_sheets`),
 // because the opaque pass has no blend and the material model is kept closed. So it is laid
 // here instead, in the transparent pass, at every placement of either model, from the quad's
 // own corners in the .bmd. Nothing here reaches the sim.

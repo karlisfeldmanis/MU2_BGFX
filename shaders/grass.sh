@@ -5,7 +5,7 @@
 // -- and stands them on the land. MU2's Godot client did the same and scattered them, and that
 // is the method here, because a painted column is eight or ten blades of grass for the fill of
 // ONE quad. A geometric blade buys one blade for one strip; this was measured both ways in this
-// engine and the card wins on everything the camera can see. docs/grass.md.
+// engine and the card wins on everything the camera can see. docs/reference/grass.md.
 //
 // What is new is everything round the card. MU's client stands one quad on each grass tile's
 // own edge and calls it done; MU2 scattered them at a flat density with a jitter. Here a card's
@@ -115,7 +115,7 @@ float grassField(vec2 p, float metres, float salt)
 //   i_data3 = the paving at the same four corners as the heights, in the same order
 //
 // The two height pairs are the v = 0 and v = 1 edges of the tile, where v runs along +z. See
-// docs/conventions.md: column is +x, row is -z, so the tile's corner is (column, -(row + 1)).
+// docs/reference/conventions.md: column is +x, row is -z, so the tile's corner is (column, -(row + 1)).
 Card grassCard(vec4 d0, vec4 d1, vec4 d3, float wallsHigh, float index)
 {
 	// The meadow draw and the sward draw share this function and differ in a few places
@@ -458,7 +458,7 @@ Card grassCard(vec4 d0, vec4 d1, vec4 d3, float wallsHigh, float index)
 	c.width = height * u_grassCard.y * (0.66 + grassHash(id + 31.7) * 0.74) *
 	          mix(1.0, 0.72, rank);
 
-	// The distance widening, out of docs/grass.md. It was the other half of a thinning that is
+	// The distance widening, out of docs/reference/grass.md. It was the other half of a thinning that is
 	// gone (a thinned card grew as the player neared it); what it still does is keep the
 	// painted blades on a far card over a pixel wide, and a sub-pixel painted blade under 4x
 	// MSAA with no TAA is the one aliasing problem this field really has.
@@ -514,7 +514,7 @@ vec4 grassSheet(vec2 uv)
 	// step of 1 along u crosses 256. Scaling both by the width -- which this did at first --
 	// overstates the v derivative fourfold, and log2 of a fourfold derivative is TWO WHOLE MIP
 	// LEVELS. Every card in the field was being read two levels blurrier than it should be,
-	// which is what made the whole thing look smeared. docs/grass.md.
+	// which is what made the whole thing look smeared. docs/reference/grass.md.
 	vec2 texel = uv * u_grassSize.xy;
 	vec2 dx = dFdx(texel);
 	vec2 dy = dFdy(texel);

@@ -706,7 +706,7 @@ bool elementServes(Element element, Kin kin) {
         case Kin::DarkKnight: return element != Element::None;
         // Fire Ball, Flame, Meteorite, Hellfire; Ice; Poison; Lightning; Twister (wind).
         case Kin::DarkWizard: return element != Element::None;
-        // The Magic Gladiator casts the wizard's and swings the knight's (docs/mg-port.md).
+        // The Magic Gladiator casts the wizard's and swings the knight's (docs/worlds/mg-port.md).
         case Kin::MagicGladiator: return element != Element::None;
         // Frost Arrow's wound; Penetration (wind).
         case Kin::FairyElf: return element == Element::Ice || element == Element::Wind;
@@ -980,7 +980,7 @@ bool fits(const content::Tables& tables, const Wearer& who, const Held& what) {
     // mu.db's class enumeration, bit 0 wizard, bit 1 elf, bit 2 knight; none named is anybody.
     if (row->classes != 0 && (row->classes & (1 << int(who.kin))) == 0) return false;
     // A 2nd level wing and the second class's gear are its class's second's: OpenMU's class
-    // level 2 (docs/second-class-gear.md).
+    // level 2 (docs/game/second-class-gear.md).
     if (secondClassFor(*row, who.kin) && !who.second) return false;
     return shortOf(asks(*row, what.refinement, what.excellent != 0), who.level, who.points).none();
 }

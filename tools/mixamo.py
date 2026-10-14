@@ -2,7 +2,7 @@
 """Puts a Mixamo clip onto MU's Bip01 rig, into the player's clip library, as an action number.
 
     Blender --background --python tools/mixamo.py -- \
-        source/players/rig/mixamo/SlowRun.fbx --name=action284 --even
+        content/players/rig/mixamo/SlowRun.fbx --name=action284 --even
     tools/sync_one.py players/rig/player.actions.glb
     tools/cook.py --only figures
 
@@ -16,8 +16,8 @@ player.rig.json. It wiped the run once (2026-10-01, a re-export at 16:46, the kn
 everywhere by evening), so now pipeline/export_actions.py puts every clip in OURS back itself,
 and tools/cook.py refuses a player library missing one of them. A new clip goes in OURS.
 
-    action284  source/players/rig/mixamo/SlowRun.fbx --even  the out-of-combat run, weapon on the back
-    action285  source/players/rig/mixamo/CombatIdle.fbx --calm=109:7 --hold=10  the stand off a safe zone
+    action284  content/players/rig/mixamo/SlowRun.fbx --even  the out-of-combat run, weapon on the back
+    action285  content/players/rig/mixamo/CombatIdle.fbx --calm=109:7 --hold=10  the stand off a safe zone
 
 This is MU3's tools/retarget.py by way of MU4's tools/mixamo.py (its account of the retarget is
 below): a new clip's channels are cloned from MU's own walk (action15) and every one of them is
@@ -137,9 +137,9 @@ NEUTRAL_CLIP = "action15"
 # options it was made with). Read by pipeline/export_actions.py, which re-applies them after
 # a re-export, and by tools/cook.py, which refuses a library missing one.
 OURS = [
-    ("action284", "source/players/rig/mixamo/SlowRun.fbx", ["--even"]),  # the run
+    ("action284", "content/players/rig/mixamo/SlowRun.fbx", ["--even"]),  # the run
     # The stand off a safe zone, looking about once in some thirteen seconds and not every four.
-    ("action285", "source/players/rig/mixamo/CombatIdle.fbx", ["--calm=109:7", "--hold=10"]),
+    ("action285", "content/players/rig/mixamo/CombatIdle.fbx", ["--calm=109:7", "--hold=10"]),
 ]
 
 #: Bones whose long axis is stood upright after posing, however the clip left them.

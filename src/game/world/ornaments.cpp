@@ -133,7 +133,7 @@ constexpr float kTowerTexels = 128.0f;
 // with Luminosity = sin((Angle[2] * 20 + WorldTime) * 0.001) * 0.5 + 0.5: a six-second breath,
 // put out of step by the placement's turn. Type 13 (Object14, the monks; :3219-3225): a white
 // BITMAP_FLARE at bone 3, the lamp, Luminosity = sin(WorldTime * 0.001) * 0.3 + 0.7 and Scale
-// Luminosity + 0.5. docs/blood-castle-port.md, Part B section 2.
+// Luminosity + 0.5. docs/worlds/blood-castle-port.md, Part B section 2.
 constexpr int kCandleBones[7] = {1, 2, 4, 6, 9, 10, 11};
 constexpr float kCandleColour[3] = {1.0f, 0.5f, 0.0f};
 constexpr int kMonkBone = 3;
@@ -143,7 +143,7 @@ constexpr float kDegreesPerRadian = 57.2957795f;
 //
 // Object76: a BITMAP_FLARE at bone 4's own origin, Scale 3, in white -- the sine computed above
 // it is overwritten before CreateSprite -- turned `WorldTime / 10` degrees, the stars' 100 a
-// second. docs/aida-port.md, Part B section 2, item 21.
+// second. docs/worlds/aida-port.md, Part B section 2, item 21.
 constexpr int kRingStatueBone = 4;
 constexpr float kRingStatueScale = 3.0f;
 // And the light-flowers, types 30 and 71 (Object31, Object72; GMAida.cpp:106-150, 253-297): at

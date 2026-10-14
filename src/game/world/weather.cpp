@@ -14,7 +14,7 @@ namespace {
 constexpr float kSandShare = 0.2f;
 // Icarus's rain: MU's never stops (CreateHeavenRain, RainTarget = MAX_LEAVES / 2,
 // ZzzEffectFireLeave.cpp:431-434), every leaf slot a drop; ours a faint steady share of the
-// pool, under Lorencia's drizzle (the user's 'rain faint'). docs/icarus-port.md.
+// pool, under Lorencia's drizzle (the user's 'rain faint'). docs/worlds/icarus-port.md.
 constexpr float kSkyShare = 0.25f;
 // Devil Square's rain, never stopping: a quarter of Lorencia's drizzle of the pool, so the
 // streaks and their rings are fewer (the user, 2026-10-10: 'make rain less vissible' at 0.33, then 'stil to much' at 0.18).
@@ -175,9 +175,9 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
     // And thin: a third of the pool at its heaviest (the user: "rain in lorencia too much
     // visible"), a drizzle under the moon rather than Noria's downpour.
     // Devias's wet spell is the blizzard: no drops (its peak is nought, so pour() is), no
-    // thunder, and its own loop; its light is sheets/worlds/devias_rain.json like any wet spell.
+    // thunder, and its own loop; its light is content/sheets/worlds/devias_rain.json like any wet spell.
     // Tarkan's sandstorm is Devias's blizzard's shape too, its sand blown by the same pool
-    // (Leaves::setSand) and its light sheets/worlds/tarkan_rain.json. Ours, as Devias's is (the
+    // (Leaves::setSand) and its light content/sheets/worlds/tarkan_rain.json. Ours, as Devias's is (the
     // user, 2026-10-05: 'dust effect which has devias, this is a desert style map').
     // Which of these a world has is its manifest's `weather` (game/world/world_show.h).
     const WorldShow& show = worldShow(world);

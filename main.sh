@@ -132,7 +132,7 @@ code=0
 # 0.99 is the user's choice, made on 2026-09-24, and it is a sharpness setting rather than a
 # frame one: it buys 0.08 ms, which is inside the spread between two runs of the same thing.
 # `--scale 1` is the one that costs nothing at all and resamples nothing, and every number in
-# docs/budget.md is taken there. `--scale 0.9` is where the saving starts to be worth having.
+# docs/reference/budget.md is taken there. `--scale 0.9` is where the saving starts to be worth having.
 #
 # `--cap 60` is the other setting, and the smooth one: the frame is 7.6 ms in the middle and
 # 12.3 at the 99th, so at 180 it steps between 90 and 60 several times a second, while a

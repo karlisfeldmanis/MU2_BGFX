@@ -105,18 +105,18 @@ public:
 
     // Devias's blizzard, 0 calm to 1 full (game/world/weather.h's rain() on Devias): the snow
     // blows sideways at up to a storm wind in gusts, falls faster, fills a larger pool and
-    // streaks, and what lands is blown on rather than lying. docs/devias-port.md §5.5.
+    // streaks, and what lands is blown on rather than lying. docs/worlds/devias-port.md §5.5.
     void setStorm(float share) { storm_ = share; }
     // Tarkan's sand, on the snow's pool (opened with `snow`): the flakes tinted sand and blown
-    // low, a few motes in the calm and no glints. Ours (docs/tarkan-port.md).
+    // low, a few motes in the calm and no glints. Ours (docs/worlds/tarkan-port.md).
     void setSand(bool sand) { sand_ = sand; }
     // Icarus's rain, over a map MU draws no ground on: open air though the map is "underground"
     // for its leaves, and a drop dies at the unseen plane with no ring, as MU kills it there
-    // (ZzzEffectFireLeave.cpp:376-377). docs/icarus-port.md.
+    // (ZzzEffectFireLeave.cpp:376-377). docs/worlds/icarus-port.md.
     void setSky(bool sky) { sky_ = sky; }
     // Devil Square's rain: open air though the map is "underground" for its wind, and a drop
     // rings where it lands, as MU's MoveDevilSquareRain does one in four (ZzzEffectFireLeave.cpp:
-    // 322-345). docs/devil-square-port.md.
+    // 322-345). docs/worlds/devil-square-port.md.
     void setRoofless(bool on) { roofless_ = on; }
     // Whether its air is open though the map is "underground": Atlans's motes, Tarkan's sand.
     bool openAir() const { return motes_ || sand_ || sky_ || roofless_; }

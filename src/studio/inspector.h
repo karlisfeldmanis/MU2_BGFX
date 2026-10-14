@@ -1,4 +1,4 @@
-// The studio's inspector (docs/order-plan.md §9c, F4): the subject's recipe and the light,
+// The studio's inspector (docs/plans/order-plan.md §9c, F4): the subject's recipe and the light,
 // edited in place under the Subject card.
 //
 // Two tabs. **Recipe** is the subject's own file -- or each piece of an armour set -- as a

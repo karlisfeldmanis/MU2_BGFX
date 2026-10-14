@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The size ratchet, enforced instead of reviewed.
 
-docs/order-plan.md, sprint A (M7). The hub files -- play.cpp, realm.h, play.h,
+docs/plans/order-plan.md, sprint A (M7). The hub files -- play.cpp, realm.h, play.h,
 desk.cpp, sim_test.cpp -- grow with every feature, because every feature has to register in
 them. Between 2026-10-06 and 2026-10-11 the files over 1500 lines went from 8 to 17. The cost
 lands on every reader: an agent pages a 3000-line file in chunks, needs a unique anchor in it
@@ -124,7 +124,7 @@ def main():
             violations.append(f"{path}: {size} lines, over the {limit} limit -- split it")
 
     if violations:
-        print(f"sizecheck: {len(violations)} violation(s) of the size ratchet (docs/order-plan.md)")
+        print(f"sizecheck: {len(violations)} violation(s) of the size ratchet (docs/plans/order-plan.md)")
         for line in violations:
             print(f"  {line}")
         return 1

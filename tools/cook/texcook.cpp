@@ -2,7 +2,7 @@
 //
 // This is half of sprint 3's cook. It exists because the engine currently decodes 587
 // embedded PNGs and builds their mip chains at load, which is the load time and 297 MB of
-// RGBA8 in VRAM, and because the one rule docs/conventions.md records as *owed* -- a
+// RGBA8 in VRAM, and because the one rule docs/reference/conventions.md records as *owed* -- a
 // cutout's alpha rescaled down the chain so a leaf keeps its coverage -- cannot be
 // expressed through bimg's texturec, which builds its chain internally.
 //
@@ -173,7 +173,7 @@ float coverage(const std::vector<uint8_t>& level, float threshold, float scale) 
     return float(kept) / float(texels);
 }
 
-// The rule docs/conventions.md records as owed. Averaging alpha down a chain thins a leaf
+// The rule docs/reference/conventions.md records as owed. Averaging alpha down a chain thins a leaf
 // until it vanishes at distance -- a grass blade covering a third of its texels at the top
 // level covers a tenth of them four levels down, and the failure reads as "the draw range
 // is too short" rather than as a texture bug. So each level's alpha is scaled until the

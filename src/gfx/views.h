@@ -1,6 +1,6 @@
 // The frame's views and the budget accounts they answer to. Fixed from the first commit so
 // that every sprint adds content to a complete frame and is priced against it; see
-// docs/budget.md and docs/conventions.md.
+// docs/reference/budget.md and docs/reference/conventions.md.
 #pragma once
 
 #include <cstdint>
@@ -56,7 +56,7 @@ enum View : uint16_t {
     ViewStageBust = 71,
     // The target frame's portrait: his head and helm, photographed live (game/portrait.h).
     ViewStagePortrait = 72,
-    // The studio's panels (gfx/gui.h, docs/order-plan.md §9c): Dear ImGui over everything,
+    // The studio's panels (gfx/gui.h, docs/plans/order-plan.md §9c): Dear ImGui over everything,
     // the HUD and the stages' pictures included, on the backbuffer. No game frame draws it.
     ViewGui = 73,
     ViewCount = 74,

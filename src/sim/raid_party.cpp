@@ -1,4 +1,4 @@
-// source/raid/party.json read into the raid's kits (sim/raid.h). The realm checks a kit is
+// content/raid/party.json read into the raid's kits (sim/raid.h). The realm checks a kit is
 // legal (Realm::kitRefusal); this only says what the file holds, and refuses a file it cannot
 // read whole.
 #include "sim/raid_party.h"

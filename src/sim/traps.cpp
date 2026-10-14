@@ -13,7 +13,7 @@ constexpr TrapKind kKinds[] = {
     {101, "Iron Stick Trap", "Object41", 0, true, 80, 110, 130, 400.0f, 500.0f},
     {102, "Fire Trap", "Object52", 2, false, 80, 130, 150, 400.0f, 500.0f},
     // LostTower.cs:919-945: the Meteorite Trap, level 90, 160-190, attack rate 450, AttackRange 3
-    // -- OpenMU's 3 and not WebZen's 5, the user's (2026-10-01; docs/lost-tower-port.md
+    // -- OpenMU's 3 and not WebZen's 5, the user's (2026-10-01; docs/worlds/lost-tower-port.md
     // decision 4) -- AttackDelay 1000 ms, Flame of Evil.
     {103, "Meteorite Trap", "Object26", 3, true, 90, 160, 190, 450.0f, 500.0f},
 };

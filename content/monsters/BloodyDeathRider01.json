@@ -1,0 +1,1703 @@
+{
+  "item": "BloodyDeathRider01",
+  "mu_name": "Bloody Death Rider",
+  "mu_name_from": "OpenMU VersionSeasonSix names number 550 'Bloody Death Rider' (openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:532); MuMain's MONSTER_BLOODY_DEATH_RIDER (MuMain/src/source/World/GameMaps/GMAida.cpp:434).",
+  "world": "aida",
+  "object_type": 550,
+  "monster": {
+    "model_index": 194,
+    "scale": 1.1
+  },
+  "monster_from": "MuMain/src/source/World/GameMaps/GMAida.cpp:434:\n\ncase MONSTER_BLOODY_DEATH_RIDER:\n    {\n        OpenMonsterModel(MONSTER_MODEL_BLOODY_DEATH_RIDER);\n        pCharacter = CreateCharacter(Key, MODEL_BLOODY_DEATH_RIDER, PosX, PosY);\n        //pCharacter->Object.Scale = 1.1f;\n        pCharacter->Object.Scale = 1.2f;\n        pCharacter->Weapon[0].Type = -1;\n        pCharacter->Weapon[1].Type = -1;\n\n        BoneManager::RegisterBone(pCharacter, L\"Monster102_Footstepst\", 0);\n        BoneManager::RegisterBone(pCharacter, L\"Monster102_Head\", 6);\n    }\n    break;",
+  "profile": "monster",
+  "sheets": {
+    "ex01branch": "bloodydeathrider_ex01branch.png",
+    "ex01leaves": "bloodydeathrider_ex01leaves.png",
+    "ex01forestgost": "bloodydeathrider_ex01forestgost.png",
+    "ex01prizm": "bloodydeathrider_ex01prizm.png",
+    "ex01forestgost_should": "bloodydeathrider_ex01forestgost_should.png"
+  },
+  "sheet_materials": {
+    "ex01branch": "bark",
+    "ex01leaves": "foliage",
+    "ex01forestgost": "rock",
+    "ex01prizm": "ice",
+    "ex01forestgost_should": "rock"
+  },
+  "combat": {
+    "level": 115,
+    "health": 88000,
+    "minimum_damage": 795,
+    "maximum_damage": 830,
+    "defense": 460,
+    "move_range": 4,
+    "attack_range": 2,
+    "view_range": 9,
+    "move_delay": 700,
+    "attack_delay": 2500,
+    "attack_rate": 1100,
+    "defense_rate": 430,
+    "attack_skill": null,
+    "note": "OpenMU VersionSeasonSix (openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:532)."
+  },
+  "why_this_one": "To write.",
+  "material_note": "Read off the sheets, the Death Rider's five in Season 5's blood: ex01branch, the antler-branches, bark; ex01leaves, the cut-out sprigs, foliage; ex01forestgost, the mossy stone body with a red-banded blade painted in, rock; ex01forestgost_should, the stone shoulders, rock; ex01prizm, mesh 3's crystal, red here where the Death Rider's is pale blue, ice.",
+  "cutout": [
+    "ex01leaves"
+  ],
+  "glow": {
+    "ex01prizm": {
+      "scrolls_per_second": 0.6,
+      "axis": "uv",
+      "over": true,
+      "pulse": [
+        0.0,
+        0.4
+      ]
+    }
+  },
+  "glow_from": "RenderAidaMonsterObjectMesh's MODEL_BLOODY_DEATH_RIDER (GMAida.cpp:1413) is the Death Rider's: mesh 3 (ex01prizm) under StreamMesh 0, slid on both axes at 0.6 a second, then RENDER_BRIGHT | RENDER_CHROME. Ours as the Death Rider's glow.prizm: the lit crystal and the sliding sheet over it at a steady 0.4.",
+  "show": {
+    "tags": [
+      "death_rider"
+    ],
+    "note": "MODEL_BLOODY_DEATH_RIDER's head light and sparks (GMAida.cpp:1118-1128) and its blades' blur (:664-692) are MODEL_DEATH_RIDER's line for line (:872-881, :532-560), on the same 71-bone rig (bones 6, 18, 20, 25, 26 the same names), so the Death Rider's show: its tag (fx/aida_sparks.h), aura and claws.",
+    "aura": {
+      "bone": "Bip02 Head",
+      "colour": [
+        0.0,
+        0.25,
+        0.0
+      ]
+    },
+    "claws": {
+      "pairs": [
+        [
+          "Bip02 L UpperArm",
+          "Bip02 L Hand"
+        ],
+        [
+          "Bip02 R Forearm",
+          "Bip02 R Hand"
+        ]
+      ],
+      "from": 0.2,
+      "to": 1.0,
+      "light": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "until": 5.06
+    }
+  },
+  "rules": {
+    "drops": {
+      "money_rate": 30,
+      "max_plus": 3,
+      "regen": 10
+    },
+    "resist": {
+      "ice": 20,
+      "poison": 20
+    },
+    "note": "Resistance: OpenMU S6 Maps/Aida.cs writes 20/255 to poison and ice and 150/255 to fire for 550, read as WebZen raw values as the Death Rider's are; fire is not carried. Drops: the Death Rider's (Tarkan's 30 and 3, docs/worlds/aida-port.md decision 11); RegTime 10, OpenMU's RespawnDelay."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "bark",
+      "triangles": 34,
+      "area": 1809.8,
+      "along": [
+        -77.2,
+        11.5
+      ],
+      "mu_uv": [
+        0.109,
+        0.006,
+        0.891,
+        0.995
+      ],
+      "bake_uv": [
+        0.203,
+        0.273,
+        0.591,
+        0.987
+      ]
+    },
+    {
+      "island": 1,
+      "material": "bark",
+      "triangles": 28,
+      "area": 1034.4,
+      "along": [
+        -37.7,
+        17.3
+      ],
+      "mu_uv": [
+        0.201,
+        0.012,
+        0.799,
+        0.989
+      ],
+      "bake_uv": [
+        0.012,
+        0.28,
+        0.873,
+        0.892
+      ]
+    },
+    {
+      "island": 2,
+      "material": "bark",
+      "triangles": 34,
+      "area": 1126.3,
+      "along": [
+        -31.4,
+        16.7
+      ],
+      "mu_uv": [
+        0.201,
+        0.012,
+        0.799,
+        0.989
+      ],
+      "bake_uv": [
+        0.012,
+        0.525,
+        0.266,
+        0.985
+      ]
+    },
+    {
+      "island": 3,
+      "material": "bark",
+      "triangles": 28,
+      "area": 766.9,
+      "along": [
+        -42.6,
+        18.8
+      ],
+      "mu_uv": [
+        0.438,
+        0.21,
+        0.562,
+        0.813
+      ],
+      "bake_uv": [
+        0.856,
+        0.013,
+        0.903,
+        0.522
+      ]
+    },
+    {
+      "island": 4,
+      "material": "bark",
+      "triangles": 28,
+      "area": 1076.0,
+      "along": [
+        -47.1,
+        18.6
+      ],
+      "mu_uv": [
+        0.132,
+        0.009,
+        0.868,
+        0.992
+      ],
+      "bake_uv": [
+        0.526,
+        0.011,
+        0.698,
+        0.241
+      ]
+    },
+    {
+      "island": 5,
+      "material": "bark",
+      "triangles": 34,
+      "area": 1399.1,
+      "along": [
+        -64.5,
+        18.2
+      ],
+      "mu_uv": [
+        0.404,
+        0.009,
+        0.828,
+        0.992
+      ],
+      "bake_uv": [
+        0.012,
+        0.27,
+        0.598,
+        0.987
+      ]
+    },
+    {
+      "island": 6,
+      "material": "bark",
+      "triangles": 20,
+      "area": 226.6,
+      "along": [
+        -33.0,
+        -17.5
+      ],
+      "mu_uv": [
+        0.0,
+        0.219,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.268,
+        0.017,
+        0.502,
+        0.199
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 36,
+      "area": 5016.0,
+      "along": [
+        -39.9,
+        -2.9
+      ],
+      "mu_uv": [
+        0.644,
+        0.623,
+        0.938,
+        0.929
+      ],
+      "bake_uv": [
+        0.07,
+        0.625,
+        0.645,
+        0.892
+      ]
+    },
+    {
+      "island": 8,
+      "material": "rock",
+      "triangles": 870,
+      "area": 87356.5,
+      "along": [
+        -142.8,
+        64.8
+      ],
+      "mu_uv": [
+        0.002,
+        0.005,
+        0.994,
+        0.973
+      ],
+      "bake_uv": [
+        0.012,
+        0.013,
+        0.945,
+        0.947
+      ]
+    },
+    {
+      "island": 9,
+      "material": "rock",
+      "triangles": 36,
+      "area": 5016.5,
+      "along": [
+        -40.0,
+        -2.9
+      ],
+      "mu_uv": [
+        0.644,
+        0.623,
+        0.938,
+        0.929
+      ],
+      "bake_uv": [
+        0.722,
+        0.013,
+        0.827,
+        0.251
+      ]
+    },
+    {
+      "island": 10,
+      "material": "rock",
+      "triangles": 60,
+      "area": 9477.6,
+      "along": [
+        -41.8,
+        54.5
+      ],
+      "mu_uv": [
+        0.002,
+        0.517,
+        0.588,
+        0.997
+      ],
+      "bake_uv": [
+        0.271,
+        0.21,
+        0.814,
+        0.835
+      ]
+    },
+    {
+      "island": 11,
+      "material": "rock",
+      "triangles": 60,
+      "area": 9477.6,
+      "along": [
+        -41.8,
+        54.5
+      ],
+      "mu_uv": [
+        0.002,
+        0.517,
+        0.588,
+        0.997
+      ],
+      "bake_uv": [
+        0.294,
+        0.203,
+        0.835,
+        0.808
+      ]
+    },
+    {
+      "island": 12,
+      "material": "rock",
+      "triangles": 42,
+      "area": 4968.8,
+      "along": [
+        -14.6,
+        28.6
+      ],
+      "mu_uv": [
+        -0.143,
+        0.109,
+        1.099,
+        0.879
+      ],
+      "bake_uv": [
+        0.344,
+        0.527,
+        0.649,
+        0.903
+      ]
+    },
+    {
+      "island": 13,
+      "material": "rock",
+      "triangles": 42,
+      "area": 4968.8,
+      "along": [
+        -14.5,
+        28.7
+      ],
+      "mu_uv": [
+        -0.143,
+        0.109,
+        1.099,
+        0.879
+      ],
+      "bake_uv": [
+        0.461,
+        0.333,
+        0.85,
+        0.919
+      ]
+    },
+    {
+      "island": 14,
+      "material": "foliage",
+      "triangles": 4,
+      "area": 6801.3,
+      "along": [
+        -78.8,
+        11.9
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.245,
+        0.245
+      ]
+    },
+    {
+      "island": 15,
+      "material": "foliage",
+      "triangles": 4,
+      "area": 3329.2,
+      "along": [
+        -50.4,
+        15.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.152,
+        0.268,
+        0.385,
+        0.502
+      ]
+    },
+    {
+      "island": 16,
+      "material": "ice",
+      "triangles": 30,
+      "area": 1500.8,
+      "along": [
+        26.4,
+        45.2
+      ],
+      "mu_uv": [
+        0.067,
+        0.014,
+        0.892,
+        0.977
+      ],
+      "bake_uv": [
+        0.105,
+        0.012,
+        0.968,
+        0.97
+      ]
+    },
+    {
+      "island": 17,
+      "material": "ice",
+      "triangles": 30,
+      "area": 1527.1,
+      "along": [
+        26.4,
+        45.2
+      ],
+      "mu_uv": [
+        0.067,
+        0.014,
+        0.892,
+        0.977
+      ],
+      "bake_uv": [
+        0.141,
+        0.24,
+        0.968,
+        0.966
+      ]
+    },
+    {
+      "island": 18,
+      "material": "ice",
+      "triangles": 5,
+      "area": 805.2,
+      "along": [
+        6.1,
+        28.5
+      ],
+      "mu_uv": [
+        0.371,
+        0.638,
+        0.766,
+        0.852
+      ],
+      "bake_uv": [
+        0.558,
+        0.619,
+        0.571,
+        0.626
+      ]
+    },
+    {
+      "island": 19,
+      "material": "ice",
+      "triangles": 5,
+      "area": 208.3,
+      "along": [
+        9.3,
+        22.3
+      ],
+      "mu_uv": [
+        0.371,
+        0.638,
+        0.766,
+        0.852
+      ],
+      "bake_uv": [
+        0.799,
+        0.469,
+        0.812,
+        0.476
+      ]
+    },
+    {
+      "island": 20,
+      "material": "ice",
+      "triangles": 4,
+      "area": 150.3,
+      "along": [
+        11.5,
+        20.0
+      ],
+      "mu_uv": [
+        0.218,
+        0.761,
+        0.517,
+        0.913
+      ],
+      "bake_uv": [
+        0.177,
+        0.587,
+        0.974,
+        0.981
+      ]
+    },
+    {
+      "island": 21,
+      "material": "ice",
+      "triangles": 5,
+      "area": 534.6,
+      "along": [
+        9.4,
+        32.5
+      ],
+      "mu_uv": [
+        0.371,
+        0.725,
+        0.585,
+        0.939
+      ],
+      "bake_uv": [
+        0.748,
+        0.942,
+        0.755,
+        0.949
+      ]
+    },
+    {
+      "island": 22,
+      "material": "ice",
+      "triangles": 5,
+      "area": 442.0,
+      "along": [
+        48.5,
+        68.3
+      ],
+      "mu_uv": [
+        0.226,
+        0.761,
+        0.329,
+        0.913
+      ],
+      "bake_uv": [
+        0.97,
+        0.206,
+        0.983,
+        0.827
+      ]
+    },
+    {
+      "island": 23,
+      "material": "ice",
+      "triangles": 5,
+      "area": 448.6,
+      "along": [
+        55.3,
+        74.1
+      ],
+      "mu_uv": [
+        0.226,
+        0.757,
+        0.329,
+        0.913
+      ],
+      "bake_uv": [
+        0.012,
+        0.954,
+        0.983,
+        0.979
+      ]
+    },
+    {
+      "island": 24,
+      "material": "ice",
+      "triangles": 5,
+      "area": 455.4,
+      "along": [
+        7.3,
+        26.2
+      ],
+      "mu_uv": [
+        0.226,
+        0.757,
+        0.329,
+        0.913
+      ],
+      "bake_uv": [
+        0.036,
+        0.975,
+        0.734,
+        0.989
+      ]
+    },
+    {
+      "island": 25,
+      "material": "ice",
+      "triangles": 5,
+      "area": 460.5,
+      "along": [
+        0.5,
+        20.4
+      ],
+      "mu_uv": [
+        0.226,
+        0.761,
+        0.329,
+        0.913
+      ],
+      "bake_uv": [
+        0.314,
+        0.178,
+        0.985,
+        0.975
+      ]
+    },
+    {
+      "island": 26,
+      "material": "ice",
+      "triangles": 5,
+      "area": 473.5,
+      "along": [
+        -83.1,
+        -65.1
+      ],
+      "mu_uv": [
+        0.226,
+        0.735,
+        0.329,
+        0.934
+      ],
+      "bake_uv": [
+        0.424,
+        0.133,
+        0.979,
+        0.972
+      ]
+    },
+    {
+      "island": 27,
+      "material": "ice",
+      "triangles": 5,
+      "area": 536.7,
+      "along": [
+        -88.5,
+        -67.2
+      ],
+      "mu_uv": [
+        0.225,
+        0.311,
+        0.475,
+        0.474
+      ],
+      "bake_uv": [
+        0.358,
+        0.504,
+        0.968,
+        0.983
+      ]
+    },
+    {
+      "island": 28,
+      "material": "ice",
+      "triangles": 5,
+      "area": 473.3,
+      "along": [
+        -120.1,
+        -102.8
+      ],
+      "mu_uv": [
+        0.226,
+        0.735,
+        0.329,
+        0.934
+      ],
+      "bake_uv": [
+        0.537,
+        0.703,
+        0.981,
+        0.974
+      ]
+    },
+    {
+      "island": 29,
+      "material": "ice",
+      "triangles": 5,
+      "area": 536.4,
+      "along": [
+        -122.4,
+        -100.5
+      ],
+      "mu_uv": [
+        0.225,
+        0.311,
+        0.475,
+        0.474
+      ],
+      "bake_uv": [
+        0.077,
+        0.865,
+        0.979,
+        0.981
+      ]
+    },
+    {
+      "island": 30,
+      "material": "ice",
+      "triangles": 8,
+      "area": 1135.4,
+      "along": [
+        -119.0,
+        -96.3
+      ],
+      "mu_uv": [
+        0.371,
+        0.725,
+        0.585,
+        0.939
+      ],
+      "bake_uv": [
+        0.569,
+        0.188,
+        0.951,
+        0.968
+      ]
+    },
+    {
+      "island": 31,
+      "material": "ice",
+      "triangles": 4,
+      "area": 494.4,
+      "along": [
+        -112.6,
+        -92.9
+      ],
+      "mu_uv": [
+        0.259,
+        0.617,
+        0.897,
+        0.963
+      ],
+      "bake_uv": [
+        0.048,
+        0.325,
+        0.966,
+        0.964
+      ]
+    },
+    {
+      "island": 32,
+      "material": "ice",
+      "triangles": 20,
+      "area": 733.8,
+      "along": [
+        4.2,
+        23.1
+      ],
+      "mu_uv": [
+        0.118,
+        0.009,
+        0.892,
+        0.976
+      ],
+      "bake_uv": [
+        0.821,
+        0.868,
+        0.846,
+        0.9
+      ]
+    },
+    {
+      "island": 33,
+      "material": "ice",
+      "triangles": 12,
+      "area": 350.2,
+      "along": [
+        9.7,
+        20.2
+      ],
+      "mu_uv": [
+        0.345,
+        0.014,
+        0.668,
+        0.683
+      ],
+      "bake_uv": [
+        0.893,
+        0.013,
+        0.974,
+        0.953
+      ]
+    },
+    {
+      "island": 34,
+      "material": "ice",
+      "triangles": 20,
+      "area": 733.8,
+      "along": [
+        4.2,
+        23.1
+      ],
+      "mu_uv": [
+        0.118,
+        0.009,
+        0.892,
+        0.976
+      ],
+      "bake_uv": [
+        0.878,
+        0.34,
+        0.903,
+        0.372
+      ]
+    },
+    {
+      "island": 35,
+      "material": "ice",
+      "triangles": 9,
+      "area": 311.9,
+      "along": [
+        6.1,
+        19.2
+      ],
+      "mu_uv": [
+        0.405,
+        0.371,
+        0.615,
+        0.565
+      ],
+      "bake_uv": [
+        0.638,
+        0.053,
+        0.97,
+        0.9
+      ]
+    },
+    {
+      "island": 36,
+      "material": "ice",
+      "triangles": 9,
+      "area": 235.8,
+      "along": [
+        1.4,
+        15.8
+      ],
+      "mu_uv": [
+        0.405,
+        0.371,
+        0.615,
+        0.565
+      ],
+      "bake_uv": [
+        0.7,
+        0.098,
+        0.968,
+        0.649
+      ]
+    },
+    {
+      "island": 37,
+      "material": "ice",
+      "triangles": 4,
+      "area": 132.8,
+      "along": [
+        33.0,
+        39.9
+      ],
+      "mu_uv": [
+        0.371,
+        0.638,
+        0.766,
+        0.852
+      ],
+      "bake_uv": [
+        0.807,
+        0.305,
+        0.966,
+        0.807
+      ]
+    },
+    {
+      "island": 38,
+      "material": "ice",
+      "triangles": 4,
+      "area": 159.0,
+      "along": [
+        29.9,
+        40.3
+      ],
+      "mu_uv": [
+        0.371,
+        0.638,
+        0.766,
+        0.852
+      ],
+      "bake_uv": [
+        0.421,
+        0.245,
+        0.514,
+        0.941
+      ]
+    },
+    {
+      "island": 39,
+      "material": "ice",
+      "triangles": 4,
+      "area": 127.9,
+      "along": [
+        30.7,
+        37.2
+      ],
+      "mu_uv": [
+        0.371,
+        0.638,
+        0.766,
+        0.852
+      ],
+      "bake_uv": [
+        0.148,
+        0.778,
+        0.292,
+        0.945
+      ]
+    },
+    {
+      "island": 40,
+      "material": "ice",
+      "triangles": 4,
+      "area": 197.5,
+      "along": [
+        26.8,
+        37.7
+      ],
+      "mu_uv": [
+        0.371,
+        0.638,
+        0.766,
+        0.852
+      ],
+      "bake_uv": [
+        0.539,
+        0.738,
+        0.795,
+        0.896
+      ]
+    },
+    {
+      "island": 41,
+      "material": "ice",
+      "triangles": 12,
+      "area": 957.8,
+      "along": [
+        -51.3,
+        -16.8
+      ],
+      "mu_uv": [
+        0.231,
+        -0.013,
+        0.792,
+        0.499
+      ],
+      "bake_uv": [
+        0.32,
+        0.22,
+        0.93,
+        0.941
+      ]
+    },
+    {
+      "island": 42,
+      "material": "ice",
+      "triangles": 12,
+      "area": 745.6,
+      "along": [
+        -45.1,
+        -16.5
+      ],
+      "mu_uv": [
+        0.231,
+        -0.013,
+        0.792,
+        0.499
+      ],
+      "bake_uv": [
+        0.043,
+        0.757,
+        0.586,
+        0.937
+      ]
+    },
+    {
+      "island": 43,
+      "material": "ice",
+      "triangles": 9,
+      "area": 397.7,
+      "along": [
+        -30.6,
+        -13.6
+      ],
+      "mu_uv": [
+        0.231,
+        -0.013,
+        0.651,
+        0.499
+      ],
+      "bake_uv": [
+        0.899,
+        0.179,
+        0.937,
+        0.852
+      ]
+    },
+    {
+      "island": 44,
+      "material": "ice",
+      "triangles": 12,
+      "area": 585.5,
+      "along": [
+        -35.4,
+        -12.6
+      ],
+      "mu_uv": [
+        0.231,
+        -0.013,
+        0.792,
+        0.492
+      ],
+      "bake_uv": [
+        0.834,
+        0.109,
+        0.945,
+        0.947
+      ]
+    },
+    {
+      "island": 45,
+      "material": "ice",
+      "triangles": 12,
+      "area": 1180.6,
+      "along": [
+        -46.6,
+        -11.0
+      ],
+      "mu_uv": [
+        0.231,
+        -0.013,
+        0.792,
+        0.499
+      ],
+      "bake_uv": [
+        0.075,
+        0.795,
+        0.937,
+        0.934
+      ]
+    },
+    {
+      "island": 46,
+      "material": "ice",
+      "triangles": 12,
+      "area": 1284.3,
+      "along": [
+        -45.6,
+        -12.1
+      ],
+      "mu_uv": [
+        0.231,
+        -0.013,
+        0.792,
+        0.499
+      ],
+      "bake_uv": [
+        0.012,
+        0.261,
+        0.934,
+        0.941
+      ]
+    },
+    {
+      "island": 47,
+      "material": "ice",
+      "triangles": 12,
+      "area": 910.4,
+      "along": [
+        -25.6,
+        -4.0
+      ],
+      "mu_uv": [
+        0.231,
+        -0.013,
+        0.792,
+        0.499
+      ],
+      "bake_uv": [
+        0.804,
+        0.303,
+        0.934,
+        0.941
+      ]
+    },
+    {
+      "island": 48,
+      "material": "ice",
+      "triangles": 12,
+      "area": 485.1,
+      "along": [
+        -22.9,
+        -3.4
+      ],
+      "mu_uv": [
+        0.231,
+        -0.013,
+        0.792,
+        0.499
+      ],
+      "bake_uv": [
+        0.124,
+        0.347,
+        0.941,
+        0.919
+      ]
+    },
+    {
+      "island": 49,
+      "material": "ice",
+      "triangles": 9,
+      "area": 431.0,
+      "along": [
+        -11.6,
+        8.5
+      ],
+      "mu_uv": [
+        0.231,
+        0.014,
+        0.792,
+        0.492
+      ],
+      "bake_uv": [
+        0.472,
+        0.391,
+        0.934,
+        0.945
+      ]
+    },
+    {
+      "island": 50,
+      "material": "ice",
+      "triangles": 4,
+      "area": 252.3,
+      "along": [
+        -62.9,
+        -49.7
+      ],
+      "mu_uv": [
+        0.233,
+        0.405,
+        0.792,
+        0.499
+      ],
+      "bake_uv": [
+        0.119,
+        0.441,
+        0.972,
+        0.974
+      ]
+    },
+    {
+      "island": 51,
+      "material": "ice",
+      "triangles": 4,
+      "area": 189.4,
+      "along": [
+        -71.4,
+        -61.5
+      ],
+      "mu_uv": [
+        0.546,
+        0.12,
+        1.213,
+        0.389
+      ],
+      "bake_uv": [
+        0.568,
+        0.891,
+        0.59,
+        0.9
+      ]
+    },
+    {
+      "island": 52,
+      "material": "ice",
+      "triangles": 4,
+      "area": 190.7,
+      "along": [
+        -78.1,
+        -66.2
+      ],
+      "mu_uv": [
+        0.233,
+        0.405,
+        0.792,
+        0.499
+      ],
+      "bake_uv": [
+        0.261,
+        0.682,
+        0.956,
+        0.974
+      ]
+    },
+    {
+      "island": 53,
+      "material": "ice",
+      "triangles": 4,
+      "area": 344.9,
+      "along": [
+        -63.6,
+        -49.4
+      ],
+      "mu_uv": [
+        0.371,
+        0.638,
+        0.766,
+        0.852
+      ],
+      "bake_uv": [
+        0.541,
+        0.782,
+        0.674,
+        0.945
+      ]
+    },
+    {
+      "island": 54,
+      "material": "ice",
+      "triangles": 9,
+      "area": 366.0,
+      "along": [
+        -58.0,
+        -38.9
+      ],
+      "mu_uv": [
+        0.231,
+        -0.013,
+        0.651,
+        0.499
+      ],
+      "bake_uv": [
+        0.381,
+        0.012,
+        0.915,
+        0.941
+      ]
+    },
+    {
+      "island": 55,
+      "material": "ice",
+      "triangles": 9,
+      "area": 330.7,
+      "along": [
+        -48.9,
+        -35.4
+      ],
+      "mu_uv": [
+        0.231,
+        -0.013,
+        0.651,
+        0.499
+      ],
+      "bake_uv": [
+        0.91,
+        0.059,
+        0.943,
+        0.945
+      ]
+    },
+    {
+      "island": 56,
+      "material": "ice",
+      "triangles": 4,
+      "area": 280.6,
+      "along": [
+        -50.4,
+        -36.3
+      ],
+      "mu_uv": [
+        0.371,
+        0.638,
+        0.766,
+        0.852
+      ],
+      "bake_uv": [
+        0.182,
+        0.935,
+        0.706,
+        0.979
+      ]
+    },
+    {
+      "island": 57,
+      "material": "ice",
+      "triangles": 12,
+      "area": 674.7,
+      "along": [
+        -43.5,
+        -23.8
+      ],
+      "mu_uv": [
+        0.231,
+        -0.013,
+        0.792,
+        0.499
+      ],
+      "bake_uv": [
+        0.411,
+        0.106,
+        0.934,
+        0.941
+      ]
+    },
+    {
+      "island": 58,
+      "material": "ice",
+      "triangles": 9,
+      "area": 469.6,
+      "along": [
+        -48.5,
+        -22.8
+      ],
+      "mu_uv": [
+        0.231,
+        -0.013,
+        0.651,
+        0.499
+      ],
+      "bake_uv": [
+        0.249,
+        0.013,
+        0.945,
+        0.922
+      ]
+    },
+    {
+      "island": 59,
+      "material": "ice",
+      "triangles": 5,
+      "area": 717.1,
+      "along": [
+        -7.2,
+        22.8
+      ],
+      "mu_uv": [
+        0.371,
+        0.725,
+        0.585,
+        0.939
+      ],
+      "bake_uv": [
+        0.949,
+        0.832,
+        0.956,
+        0.839
+      ]
+    },
+    {
+      "island": 60,
+      "material": "ice",
+      "triangles": 5,
+      "area": 360.8,
+      "along": [
+        7.0,
+        24.4
+      ],
+      "mu_uv": [
+        0.371,
+        0.725,
+        0.585,
+        0.939
+      ],
+      "bake_uv": [
+        0.82,
+        0.684,
+        0.827,
+        0.691
+      ]
+    },
+    {
+      "island": 61,
+      "material": "ice",
+      "triangles": 14,
+      "area": 726.1,
+      "along": [
+        -4.8,
+        23.1
+      ],
+      "mu_uv": [
+        0.616,
+        0.176,
+        1.099,
+        0.664
+      ],
+      "bake_uv": [
+        0.318,
+        0.256,
+        0.968,
+        0.97
+      ]
+    },
+    {
+      "island": 62,
+      "material": "ice",
+      "triangles": 5,
+      "area": 213.9,
+      "along": [
+        17.1,
+        25.2
+      ],
+      "mu_uv": [
+        0.169,
+        0.569,
+        0.828,
+        0.874
+      ],
+      "bake_uv": [
+        0.601,
+        0.61,
+        0.622,
+        0.621
+      ]
+    },
+    {
+      "island": 63,
+      "material": "ice",
+      "triangles": 5,
+      "area": 415.6,
+      "along": [
+        -24.6,
+        -7.2
+      ],
+      "mu_uv": [
+        0.169,
+        0.569,
+        0.828,
+        0.874
+      ],
+      "bake_uv": [
+        0.711,
+        0.84,
+        0.733,
+        0.85
+      ]
+    },
+    {
+      "island": 64,
+      "material": "ice",
+      "triangles": 5,
+      "area": 415.6,
+      "along": [
+        -24.6,
+        -7.2
+      ],
+      "mu_uv": [
+        0.169,
+        0.569,
+        0.828,
+        0.874
+      ],
+      "bake_uv": [
+        0.863,
+        0.768,
+        0.884,
+        0.778
+      ]
+    }
+  ],
+  "mu_checklist": [
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:434",
+      "in": "M33Aida::CreateAidaMonster",
+      "kind": "body",
+      "lines": 13,
+      "actions": [],
+      "calls": [
+        "CreateCharacter",
+        "RegisterBone"
+      ],
+      "state": "done",
+      "note": "the recipe's monster block (mu new monster)"
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:1118",
+      "in": "M33Aida::RenderAidaMonsterVisual",
+      "kind": "effect",
+      "lines": 43,
+      "actions": [
+        "MONSTER01_WALK",
+        "MONSTER01_RUN",
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2",
+        "MONSTER01_DIE",
+        "MONSTER01_STOP1",
+        "MONSTER01_STOP2"
+      ],
+      "calls": [
+        "CreateSprite",
+        "BITMAP_LIGHT",
+        "CreateParticleFpsChecked",
+        "BITMAP_SPARK",
+        "PlayBuffer",
+        "SOUND_AIDA_DEATHRAIDER_MOVE1",
+        "SOUND_AIDA_DEATHRAIDER_ATTACK1",
+        "SOUND_AIDA_DEATHRAIDER_ATTACK2",
+        "SOUND_AIDA_DEATHRAIDER_DIE"
+      ],
+      "state": "done",
+      "note": "The Death Rider's (GMAida.cpp:872-881, line for line): show.aura on Bip02 Head and the death_rider tag's head sparks (fx/aida_sparks.h); its sounds, blocks 3-6."
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:664",
+      "in": "M33Aida::MoveAidaBlurEffect",
+      "kind": "effect",
+      "lines": 32,
+      "actions": [
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2"
+      ],
+      "calls": [
+        "CreateBlur"
+      ],
+      "state": "done",
+      "note": "show.claws: the Death Rider's blades, bones 18-20 and 25-26 the same names on the same 71-bone rig, white blur02 to key 5.06."
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:344",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_DEATHRAIDER_MOVE1"
+      ],
+      "file": "Data/Sound/w34/dr_idle1.wav",
+      "state": "done",
+      "note": "bloodydeathrider_move: the folder's dr_idle01.wav and dr_idle2.wav, as the Death Rider's."
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:346",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_DEATHRAIDER_ATTACK1"
+      ],
+      "file": "Data/Sound/w34/dr_attack1.wav",
+      "state": "done",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:347",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_DEATHRAIDER_ATTACK2"
+      ],
+      "file": "Data/Sound/w34/dr_attack2.wav",
+      "state": "done",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:348",
+      "in": "LoadWaveFile",
+      "kind": "sound",
+      "lines": 1,
+      "actions": [],
+      "calls": [
+        "SOUND_AIDA_DEATHRAIDER_DIE"
+      ],
+      "file": "Data/Sound/w34/dr_death.wav",
+      "state": "done",
+      "note": ""
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:1413",
+      "in": "M33Aida::RenderAidaMonsterObjectMesh",
+      "kind": "look",
+      "lines": 21,
+      "actions": [],
+      "calls": [
+        "RenderMesh",
+        "RENDER_TEXTURE",
+        "BlendMeshTexCoordU",
+        "BlendMeshTexCoordV",
+        "StreamMesh",
+        "RENDER_BRIGHT",
+        "RENDER_CHROME"
+      ],
+      "state": "done",
+      "note": "glow.ex01prizm: the Death Rider's glow.prizm, the crystal's sheet sliding on both axes at 0.6 a second over the lit crystal at 0.4."
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:3259",
+      "in": "OpenMonsterModel",
+      "kind": "animation",
+      "lines": 8,
+      "actions": [
+        "MONSTER01_STOP1",
+        "MONSTER01_STOP2",
+        "MONSTER01_ATTACK1",
+        "MONSTER01_ATTACK2",
+        "MONSTER01_WALK",
+        "MONSTER01_DIE"
+      ],
+      "calls": [],
+      "state": "done",
+      "note": "actions.json action_overrides.194: MU's idles 0.15, walk 0.3, attacks 0.23, death 0.15 (ZzzOpenData.cpp:3259-3266), the Death Rider's own."
+    },
+    {
+      "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2517",
+      "in": "GetMonsterModelName",
+      "kind": "other",
+      "lines": 1,
+      "actions": [],
+      "calls": [],
+      "state": "skip",
+      "note": "MU's name for the model, for its tools; nothing to carry"
+    },
+    {
+      "at": "MuMain/src/source/World/GameMaps/GMAida.cpp:1526",
+      "in": "M33Aida::SetCurrentActionAidaMonster",
+      "kind": "other",
+      "lines": 3,
+      "actions": [],
+      "calls": [],
+      "state": "skip",
+      "note": "CheckMonsterSkill, as Hell Maine's and the Bloody Orc's: MU's monster skills are visuals only, set aside (the user, 2026-10-12)."
+    }
+  ]
+}

@@ -383,7 +383,7 @@ bool Renderer::createTargets(int width, int height) {
     }
 
     // The shadow map is read twice: through the compare sampler for the filtered result,
-    // and as plain depth to find the blocker. docs/conventions.md.
+    // and as plain depth to find the blocker. docs/reference/conventions.md.
     shadowMap_ = bgfx::createTexture2D(shadowSize_, shadowSize_, false, 1,
                                        bgfx::TextureFormat::D16, rt | clamp);
     shadowFb_ = bgfx::createFrameBuffer(1, &shadowMap_, true);

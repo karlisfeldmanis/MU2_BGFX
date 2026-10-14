@@ -6,7 +6,7 @@ namespace mu::server {
 
 
 // The welcomed sessions in his party, himself first, on any map. The party's section owns this
-// (docs/party.md); until a party exists he is a party of one.
+// (docs/game/party.md); until a party exists he is a party of one.
 std::vector<Session*> partyMates(Session& one, std::vector<std::unique_ptr<Session>>& sessions) {
     const auto at = g_partyOf.find(one.token);
     if (at == g_partyOf.end()) return {&one};
@@ -23,7 +23,7 @@ std::vector<Session*> partyMates(Session& one, std::vector<std::unique_ptr<Sessi
     return out;
 }
 
-// ---- the party (docs/party.md): its asks and its upkeep ----------------------------------------
+// ---- the party (docs/game/party.md): its asks and its upkeep ----------------------------------------
 
 // The welcomed connection his character is on, or nullptr.
 Session* sessionOfToken(uint64_t token, std::vector<std::unique_ptr<Session>>& sessions) {

@@ -22,7 +22,7 @@ class Realm;
 struct Kept;
 
 // How a world's realm is raised: the server's, every client's mirror's and every netbot's, one
-// sequence (docs/order-plan.md sprint C). It was written three times -- server/src/main.cpp,
+// sequence (docs/plans/order-plan.md sprint C). It was written three times -- server/src/main.cpp,
 // Play::open and netbot -- and lockstep needs the three to agree bit for bit; they had already
 // drifted in shape (the server outfitted a new character OR restored a kept one, the mirrors did
 // both, equal only because outfitting with no arms spends nothing). The server now raises its

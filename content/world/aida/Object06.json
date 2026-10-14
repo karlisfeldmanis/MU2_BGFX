@@ -1,0 +1,47 @@
+{
+  "item": "Object06",
+  "mu_name": "Object06",
+  "mu_name_from": "Aida's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "aida",
+  "object_type": 5,
+  "placements": 80,
+  "profile": "world",
+  "sheets": {
+    "Pool002": "ai_pool002.png"
+  },
+  "sheet_from": "Data/Object34/, from MuMain, decoded under an ai_ prefix: assets/textures is one flat pool, and Crywolf's Object35 ships the same names.",
+  "sheet_materials": {
+    "Pool002": "foliage"
+  },
+  "material_note": "Pool002: reed stems, cut out: foliage.",
+  "cutout": [
+    "Pool002"
+  ],
+  "cutout_from": "Pool002 .OZT carries a real alpha channel, as decode_texture reports it.",
+  "why_this_one": "tall reed cards, 2 m, swaying. Batch 5, plants (the user, 2026-10-11: 'lets just continou to add objects and lets see how map develops'). docs/worlds/aida-port.md.",
+  "effects_note": "No arm in MuMain's GMAida.cpp for this type.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "foliage",
+      "triangles": 16,
+      "area": 15723.9,
+      "along": [
+        -18.6,
+        0.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ]
+    }
+  ]
+}

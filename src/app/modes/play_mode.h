@@ -100,7 +100,7 @@ private:
     // The scripted hands: --give, --zen, --talk, and the windows --windows opens.
     void runScript(Context& ctx);
     // --shadow-points and --shadow-log, both of them measurement apparatus and neither of them
-    // fatal. docs/shadow-probe.md reads the second.
+    // fatal. docs/reference/shadow-probe.md reads the second.
     void openProbes(Context& ctx);
     void writeProbes(Context& ctx, const Frame& at);
     // The arena's hand, and the scripted pointer (--demo-clicks). Both raise exactly the

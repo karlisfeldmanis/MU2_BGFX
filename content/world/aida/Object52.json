@@ -1,0 +1,265 @@
+{
+  "item": "Object52",
+  "mu_name": "Object52",
+  "mu_name_from": "Aida's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "aida",
+  "object_type": 51,
+  "placements": 2,
+  "profile": "world",
+  "sheets": {
+    "Guan01": "ai_guan01.png",
+    "mangbon": "ai_mangbon.png"
+  },
+  "sheet_from": "Data/Object34/, from MuMain, decoded under an ai_ prefix: assets/textures is one flat pool, and Crywolf's Object35 ships the same names.",
+  "sheet_materials": {
+    "Guan01": "rock",
+    "mangbon": "bone"
+  },
+  "material_note": "Guan01: grey stone coffins: rock; mangbon: bones and skulls: bone.",
+  "why_this_one": "a coffin with bones. Batch 6, small rocks, statues, coffins and bones (the user, 2026-10-11: 'lets just continou to add objects and lets see how map develops'). docs/worlds/aida-port.md.",
+  "effects_note": "No arm in MuMain's GMAida.cpp for this type.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 48,
+      "area": 18069.0,
+      "along": [
+        -98.1,
+        120.9
+      ],
+      "mu_uv": [
+        0.526,
+        -0.002,
+        0.997,
+        0.975
+      ],
+      "bake_uv": [
+        0.307,
+        0.026,
+        0.569,
+        0.569
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 68,
+      "area": 43090.9,
+      "along": [
+        -96.8,
+        118.4
+      ],
+      "mu_uv": [
+        0.008,
+        0.007,
+        0.519,
+        1.0
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.699,
+        0.693
+      ]
+    },
+    {
+      "island": 2,
+      "material": "bone",
+      "triangles": 28,
+      "area": 2485.8,
+      "along": [
+        -20.9,
+        17.4
+      ],
+      "mu_uv": [
+        -0.002,
+        0.514,
+        0.411,
+        0.997
+      ],
+      "bake_uv": [
+        0.097,
+        0.46,
+        0.752,
+        0.846
+      ]
+    },
+    {
+      "island": 3,
+      "material": "bone",
+      "triangles": 16,
+      "area": 363.7,
+      "along": [
+        -63.9,
+        -22.1
+      ],
+      "mu_uv": [
+        0.935,
+        0.475,
+        0.996,
+        0.957
+      ],
+      "bake_uv": [
+        0.918,
+        0.293,
+        0.966,
+        0.958
+      ]
+    },
+    {
+      "island": 4,
+      "material": "bone",
+      "triangles": 17,
+      "area": 320.8,
+      "along": [
+        -28.6,
+        15.2
+      ],
+      "mu_uv": [
+        0.543,
+        0.119,
+        0.988,
+        0.529
+      ],
+      "bake_uv": [
+        0.275,
+        0.009,
+        0.796,
+        0.575
+      ]
+    },
+    {
+      "island": 5,
+      "material": "bone",
+      "triangles": 67,
+      "area": 1273.0,
+      "along": [
+        -52.3,
+        -25.0
+      ],
+      "mu_uv": [
+        0.449,
+        0.4,
+        0.725,
+        0.713
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.496,
+        0.839
+      ]
+    },
+    {
+      "island": 6,
+      "material": "bone",
+      "triangles": 22,
+      "area": 1276.8,
+      "along": [
+        5.7,
+        42.5
+      ],
+      "mu_uv": [
+        0.011,
+        0.486,
+        0.398,
+        0.881
+      ],
+      "bake_uv": [
+        0.685,
+        0.219,
+        0.9,
+        0.439
+      ]
+    },
+    {
+      "island": 7,
+      "material": "bone",
+      "triangles": 16,
+      "area": 408.7,
+      "along": [
+        -15.7,
+        27.7
+      ],
+      "mu_uv": [
+        0.781,
+        0.499,
+        0.828,
+        0.979
+      ],
+      "bake_uv": [
+        0.959,
+        0.008,
+        0.993,
+        0.816
+      ]
+    },
+    {
+      "island": 8,
+      "material": "bone",
+      "triangles": 20,
+      "area": 1079.4,
+      "along": [
+        23.5,
+        88.7
+      ],
+      "mu_uv": [
+        0.523,
+        0.017,
+        0.837,
+        0.53
+      ],
+      "bake_uv": [
+        0.494,
+        0.009,
+        0.798,
+        0.969
+      ]
+    },
+    {
+      "island": 9,
+      "material": "bone",
+      "triangles": 15,
+      "area": 399.1,
+      "along": [
+        26.0,
+        68.9
+      ],
+      "mu_uv": [
+        0.734,
+        0.499,
+        0.828,
+        0.979
+      ],
+      "bake_uv": [
+        0.887,
+        0.008,
+        0.939,
+        0.275
+      ]
+    },
+    {
+      "island": 10,
+      "material": "bone",
+      "triangles": 25,
+      "area": 1340.3,
+      "along": [
+        50.0,
+        110.6
+      ],
+      "mu_uv": [
+        0.523,
+        0.017,
+        0.837,
+        0.53
+      ],
+      "bake_uv": [
+        0.009,
+        0.459,
+        0.919,
+        0.962
+      ]
+    }
+  ]
+}

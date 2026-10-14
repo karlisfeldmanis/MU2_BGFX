@@ -1,0 +1,43 @@
+{
+  "item": "Object08",
+  "mu_name": "Object08",
+  "mu_name_from": "Aida's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "aida",
+  "object_type": 7,
+  "placements": 4,
+  "profile": "world",
+  "sheets": {
+    "qwq": "ai_qwq.png"
+  },
+  "sheet_from": "Data/Object34/, from MuMain, decoded under an ai_ prefix: assets/textures is one flat pool, and Crywolf's Object35 ships the same names.",
+  "sheet_materials": {
+    "qwq": "rock"
+  },
+  "material_note": "qwq: mossy rock: rock.",
+  "why_this_one": "a mossy rock heap. Batch 6, small rocks, statues, coffins and bones (the user, 2026-10-11: 'lets just continou to add objects and lets see how map develops'). docs/worlds/aida-port.md.",
+  "effects_note": "No arm in MuMain's GMAida.cpp for this type.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 126,
+      "area": 162483.0,
+      "along": [
+        -59.6,
+        84.5
+      ],
+      "mu_uv": [
+        -0.971,
+        0.016,
+        1.001,
+        0.995
+      ],
+      "bake_uv": [
+        -0.971,
+        0.016,
+        1.001,
+        0.995
+      ]
+    }
+  ]
+}

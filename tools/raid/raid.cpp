@@ -1,5 +1,5 @@
-// The raid, headless: the Golden Dragon against source/raid/party.json, played to a kill, a wipe
-// or its thirty minutes, as many times as asked, and what happened (docs/golden-dragon-raid.md
+// The raid, headless: the Golden Dragon against content/raid/party.json, played to a kill, a wipe
+// or its thirty minutes, as many times as asked, and what happened (docs/game/golden-dragon-raid.md
 // §2a, "how tough is measured").
 //
 // Each run raises Lorencia with the party in the town square, begins the invasion, and lets the
@@ -41,7 +41,7 @@ const char* roleName(sim::RaidRole role) {
 struct Options {
     int runs = 10;
     uint64_t seed = 1;
-    std::string party = std::string(MU2_SOURCE_DIR) + "/source/raid/party.json";
+    std::string party = std::string(MU2_SOURCE_DIR) + "/content/raid/party.json";
     int players = sim::kRaidPlayers;
     int box = -1;
     int stage = 0;

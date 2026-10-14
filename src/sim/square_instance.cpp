@@ -1,5 +1,5 @@
 // Devil Square's run (sim/square_instance.h): the clock, the waves, the points, and the ranks and
-// pay at the end (sim/square.h, docs/devil-square-port.md "The goal and how it is shown"). Moved
+// pay at the end (sim/square.h, docs/worlds/devil-square-port.md "The goal and how it is shown"). Moved
 // out of realm_square.cpp unchanged but for how it reaches the realm (the Instance's I2).
 
 #include "sim/square_instance.h"

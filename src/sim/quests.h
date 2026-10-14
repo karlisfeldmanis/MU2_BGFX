@@ -216,19 +216,19 @@ inline constexpr int kDemoQuests[1] = {17};
 // Peia's 'The Drowned Song', handed in to Lirien in Atlans.
 inline constexpr int kDrownedSong = 18;
 // Lirien, the elf envoy in Atlans's safe basin: our own NPC number, no MU NPC's (tools/cook.py's
-// Atlans folk, source/npc/ElfEnvoy.json).
+// Atlans folk, content/npc/ElfEnvoy.json).
 inline constexpr int32_t kLirienNumber = 700;
 // Lirien's own: Atlans cleared, the Hydra last, offered once 'The Drowned Song' is handed in.
 inline constexpr int kDrownedHalls = 19;
 // Lirien's second, the hook to Tarkan: 'The Road of Kantur', handed in to the Keeper there
-// (docs/tarkan-quest.md).
+// (docs/game/tarkan-quest.md).
 inline constexpr int kRoadOfKantur = 20;
 // The Keeper of Kantur, in Tarkan's safe hall: our own NPC number, as Lirien's (tools/cook.py's
-// Tarkan folk, source/npc/NpcSenatus.json, MU's Senior).
+// Tarkan folk, content/npc/NpcSenatus.json, MU's Senior).
 inline constexpr int32_t kKeeperNumber = 701;
 // The Keeper's own: Tarkan cleared, the Zaikan and the Death Beam Knight last.
 inline constexpr int kKantursLegion = 21;
-// Tersia's Icarus links (docs/icarus-quest.md): the door held, then the Dark Phoenix. Taking the
+// Tersia's Icarus links (docs/game/icarus-quest.md): the door held, then the Dark Phoenix. Taking the
 // first opens Icarus's travel row.
 inline constexpr int kSkyDoor = 22;
 inline constexpr int kPhoenixContract = 23;
@@ -267,7 +267,7 @@ struct QuestProgress {
     uint32_t completions = 0;
 };
 
-// Sevina's class change (docs/class-change-quest.md): the trial, a hunt in the Lost Tower's
+// Sevina's class change (docs/game/class-change-quest.md): the trial, a hunt in the Lost Tower's
 // seventh floor and Atlans from level 200, then each class's treasure, found on the same ground,
 // whose hand-in makes him the second class. By sim::Kin, the treasure quest's index.
 inline constexpr int kSevinaTrial = 13;

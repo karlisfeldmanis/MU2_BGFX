@@ -38,7 +38,7 @@ done
 [ -f third_party/extern/stb_image.h ] || curl -sSL -o third_party/extern/stb_image.h https://raw.githubusercontent.com/nothings/stb/$STB_REV/stb_image.h
 [ -f third_party/extern/stb_truetype.h ] || curl -sSL -o third_party/extern/stb_truetype.h https://raw.githubusercontent.com/nothings/stb/$STB_REV/stb_truetype.h
 [ -f third_party/extern/miniaudio.h ] || curl -sSL -o third_party/extern/miniaudio.h https://raw.githubusercontent.com/mackron/miniaudio/$MINIAUDIO_REV/miniaudio.h
-# zstd 1.5.7, for the player's packs (docs/layout.md): the packer writes them and the game reads
+# zstd 1.5.7, for the player's packs (docs/plans/layout.md): the packer writes them and the game reads
 # them. Its lib/ only, built into the game by CMakeLists.txt, so a player's Mac needs no
 # Homebrew for it. The release tarball, pinned by the checksum zstd publishes beside it.
 ZSTD_URL=https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz

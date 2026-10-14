@@ -11,7 +11,7 @@
 //   * the funnel (Storm01, typhoon) added at `BlendMeshLight = LifeTime * 0.1`, which glColor
 //     clamps at one, its sheet scrolled `BlendMeshTexCoordU = -LifeTime * 0.1` along U, and its
 //     one action stepped at 0.3 keys a frame -- nineteen of its thirty keys reached, each blended
-//     with the next as BMD::Animation blends them (source/effects/storm/Storm01.json);
+//     with the next as BMD::Animation blends them (content/effects/storm/Storm01.json);
 //   * a BITMAP_SMOKE sub-type 3 puff at its foot: LifeTime 10, scale 0.8 to 1.11, thrown 40-47
 //     units a frame at a pitch of -45 to 45 and a random yaw, its speed 0.4 of itself a frame,
 //     growing a tenth a frame, lit (0.8, 0.8, 1) at `LifeTime / 8`;

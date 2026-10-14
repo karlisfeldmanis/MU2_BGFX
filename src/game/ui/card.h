@@ -32,7 +32,7 @@ public:
                 const std::string& name, const Pointer& pointer, int* spend, bool* close);
 
     bool covers(float x, float y) const;
-    // His guild's name, in brackets after his own (docs/guild.md); empty for none.
+    // His guild's name, in brackets after his own (docs/game/guild.md); empty for none.
     void setGuild(const std::string& guild) { guild_ = guild; }
     const gfx::Canvas& canvas() const { return canvas_; }
     uint64_t rebuilds() const { return rebuilds_; }

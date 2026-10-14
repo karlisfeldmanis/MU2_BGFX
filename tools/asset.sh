@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Builds one asset from its recipe under source/ into workshop/, the way MU2's mu2.sh did,
+# Builds one asset from its recipe under content/ into workshop/, the way MU2's mu2.sh did,
 # without Godot and without a viewer. workshop/ is to this tree what MU2/build was to MU2:
 # the pipeline's output, which tools/sync.sh copies into assets/ and tools/cook.py cooks.
 #
@@ -76,18 +76,18 @@ shift
 
 if ! asset="$(find_asset "$item")"; then
   echo "error: no asset called '$item' under $assets" >&2
-  echo "       the recipes are source/<kind>/<category>/<Name>.json" >&2
+  echo "       the recipes are content/<kind>/<category>/<Name>.json" >&2
   exit 1
 fi
 
 source_dir="$(dirname "$asset")"
 category="$(basename "$source_dir")"
 kind="$(basename "$(dirname "$source_dir")")"
-# A recipe one folder down -- source/monsters, source/npc, source/lobby -- has no kind above
+# A recipe one folder down -- content/monsters, content/npc, content/lobby -- has no kind above
 # its category, and the parent's name is `source` itself. MU2 built those under assets/, and
 # index.json still says assets/monsters/Hound01/Hound01.glb, so that is where they go: named
 # `source`, the Hound built into workshop/source/monsters and nothing ever synced it.
-[[ $kind == source ]] && kind=assets
+[[ $kind == content ]] && kind=assets
 
 # The asset's own name, which is not always what was typed to find it.
 #
@@ -603,7 +603,7 @@ for pair in sys.argv[4:]:
         **({"cutout_at": float(cutout_at[group])} if group in cutout_at else {}),
         "additive": group in additive,
         # And an added sheet's item glow, its pulse as the baked path's glow_material reads it
-        # (the 2nd wings' `_R` shells, docs/wings.md).
+        # (the 2nd wings' `_R` shells, docs/game/wings.md).
         **({"glow": asset["glow"][group]} if group in (asset.get("glow") or {}) else {}),
         "skip": group in set(asset.get("skip_sheets", [])),
         # How much of a metal sheet's painting survives its f0, where the sheet wants other

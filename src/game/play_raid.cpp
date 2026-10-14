@@ -1,4 +1,4 @@
-// The Golden Dragon's raid as it is drawn (docs/golden-dragon-raid.md, sprint 2). The realm
+// The Golden Dragon's raid as it is drawn (docs/game/golden-dragon-raid.md, sprint 2). The realm
 // decides it all (sim/realm_raid.cpp) and says it as What::Raid; this shows it:
 //
 //   * every told Hazard marked on the ground for its tell (fx/omen.h): a disc where fire falls

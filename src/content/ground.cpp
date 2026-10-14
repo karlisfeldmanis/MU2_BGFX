@@ -442,7 +442,7 @@ bool Ground::readGrids(const std::string& worldDir, const std::string& heightFil
         return false;
     }
     // A height byte is worth height_factor of MU's units, and MU's units are a hundredth of
-    // a tile. docs/conventions.md.
+    // a tile. docs/reference/conventions.md.
     height_.resize(raw.size());
     const float perByte = heightFactor_ / 100.0f;
     for (size_t i = 0; i < raw.size(); ++i) height_[i] = float(raw[i]) * perByte;
@@ -638,7 +638,7 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     const float unitsPerTile = float(doc["units_per_tile"].numberOr(100.0));
     heightFactor_ = float(doc["height_factor"].numberOr(1.5));
     // The world is metres and one tile is one metre; the content counts a hundred units to
-    // the tile and is divided on the way in. docs/conventions.md.
+    // the tile and is divided on the way in. docs/reference/conventions.md.
     metresPerTile_ = unitsPerTile / 100.0f;
     const core::Json chasm = doc["void"];
     voidFade_ = float(chasm["fade"].numberOr(0.0));
@@ -1798,7 +1798,7 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
 
 float Ground::heightAt(float x, float z) const {
     if (height_.empty() || size_ <= 0) return 0.0f;
-    // Column is +x and row is -z, in tiles. docs/conventions.md.
+    // Column is +x and row is -z, in tiles. docs/reference/conventions.md.
     const float column = x / metresPerTile_;
     const float row = -z / metresPerTile_;
     if (column < 0.0f || row < 0.0f) return 0.0f;

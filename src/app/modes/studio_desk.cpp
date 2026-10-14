@@ -82,7 +82,7 @@ std::string StudioDesk::targetOf(const game::ModelBench& bench) {
     const game::BrowseEntry& entry = tab.entries[tab.at];
     if (entry.body) return entry.body->name;
     // A cooked world object, .../cooked/<world>/meshes/<Name>.mum: its recipe is
-    // source/world/<world>/<Name>.json, which `mu make <world>/<Name>` finds.
+    // content/world/<world>/<Name>.json, which `mu make <world>/<Name>` finds.
     const std::string& path = entry.path;
     const size_t meshes = path.rfind("/meshes/");
     if (meshes == std::string::npos) return "";
@@ -128,7 +128,7 @@ void StudioDesk::watchJournal(Context& ctx, game::World& town, double now) {
         if (place_.follow(town, line)) {
             objects = true;
         } else {
-            world |= file.rfind("source/world/", 0) == 0;
+            world |= file.rfind("content/world/", 0) == 0;
         }
         core::logf("studio: %s changed %s %s; read again", line["who"].stringOr("?").c_str(), file.c_str(),
                    line["path"].stringOr(line["op"].stringOr("").c_str()).c_str());

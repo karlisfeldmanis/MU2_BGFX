@@ -74,7 +74,7 @@ uint8_t linearToSrgbByte(float v) {
 // darker than the texture it came from, and a town reads as though the sun went in as the
 // camera pulls back. Alpha is always averaged as stored, because alpha is a coverage and
 // not a colour -- a flat average, with no coverage rescale: that rescale is the cook's job
-// in sprint 3 and docs/conventions.md says so. Until then a cutout's leaf would thin with
+// in sprint 3 and docs/reference/conventions.md says so. Until then a cutout's leaf would thin with
 // distance, and there is no cutout content in this engine to thin.
 void downsample(const uint8_t* src, uint32_t srcW, uint32_t srcH, uint8_t* dst, uint32_t dstW,
                 uint32_t dstH, TextureRole role) {

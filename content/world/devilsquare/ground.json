@@ -1,0 +1,15 @@
+{
+  "tileset": "devilsquare",
+  "mu_name": "Devil Square ground",
+  "profile": "tiles",
+  "sheets": {
+    "TileGrass01": "ds_tilegrass01.png"
+  },
+  "sheet_from": "Data/World10/TileGrass01.OZJ, from MuMain, decoded under a ds_ prefix: assets/textures is one flat pool and every name is another world's too. World10 is all four squares' data, and squares 5-7 load it too (MapManager.cpp:1178-1181). Its other sheets (TileGrass02, TileGround01/03, TileRock01-04, TileWood01) are in the folder but no tile wears them, so they are not decoded. docs/worlds/devil-square-port.md.",
+  "slot_note": "One slot on every tile, no blend layer. MU sows no grass here (no TileGrass .OZT ships); terrain.py GRASS_BY_MAP[9] is empty. Four walkable arenas of about 32 by 36 tiles -- A at 118-151 x 78-115 (square 1), B at 119-152 x 149-184 (square 2), C at 49-81 x 137-173 (square 3), D at 53-84 x 72-109 (square 4) -- each in a rim rising to 3.83 m on its south and east. The rest is the same stone, flat at 2.235 m and NoMove, which MU draws out into its black fog.",
+  "sheet_materials": {
+    "TileGrass01": "rock",
+    "TileGrass01_over": "rock"
+  },
+  "material_note": "Read off the art; the name lies. TileGrass01 is grey-green worn stone, pitted and stained, with no joints: rock, never grass and not flagstone."
+}

@@ -1,6 +1,6 @@
 """Works out what one asset's build settings actually are, and prints them for a shell.
 
-    python3 pipeline/settings.py source/items/Sword01/Sword01.json source/profiles
+    python3 pipeline/settings.py content/items/Sword01/Sword01.json content/profiles
 
 Two places can say how an asset is built and they are not equals. A *profile* is a
 statement about a kind of thing — every weapon's sheet is an atlas, so its pad is

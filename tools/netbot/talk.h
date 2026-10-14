@@ -13,7 +13,7 @@
 // Two bots never talk forever: a bot answers only an OPENING line (opens()), and no answer is
 // one, so every exchange is a line and its answers. And he never answers a bot's whisper.
 //
-// The party's lines -- asking for one, accepting -- are the party's (docs/party.md): it says them
+// The party's lines -- asking for one, accepting -- are the party's (docs/game/party.md): it says them
 // through say(), as anything else may.
 
 #include <cctype>

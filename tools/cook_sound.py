@@ -1,7 +1,7 @@
 """The showing cook's sounds: read any of MU's WAV formats, make it mono 16-bit at one rate.
 
 Moved out of tools/cook.py on 2026-10-11 to pay for the showing cook's skip rules under the size
-ratchet (docs/order-plan.md sprint B). cook.py imports these; cook_showing's note says why the
+ratchet (docs/plans/order-plan.md sprint B). cook.py imports these; cook_showing's note says why the
 format is what it is.
 """
 

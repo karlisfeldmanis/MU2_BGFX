@@ -92,13 +92,13 @@ public:
 
     int count();
 
-    // **The Broker's book** (sim::Book, docs/broker.md): the market's listings and every Collect,
+    // **The Broker's book** (sim::Book, docs/game/broker.md): the market's listings and every Collect,
     // one row of its own bytes beside the characters. Written whenever it changed, in the pass
     // that writes the characters it moved things for. False when the disk said no, or none yet.
     bool keepBook(const std::vector<uint8_t>& bytes);
     bool findBook(std::vector<uint8_t>& bytes);
 
-    // **The guilds** (docs/guild.md, server/src/guild_store.cpp): a row a guild and a row a
+    // **The guilds** (docs/game/guild.md, server/src/guild_store.cpp): a row a guild and a row a
     // member, by his character's token; written whole whenever the guild changes, as WebZen's
     // ExDB kept them apart from the characters. The master is the first member.
     struct GuildRow {

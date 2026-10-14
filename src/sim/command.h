@@ -74,7 +74,7 @@ struct Command {
         // who leaves).
         Join,
         Leave,
-        // **A body's party** (docs/party.md), sent by the server and never by a client, as the
+        // **A body's party** (docs/game/party.md), sent by the server and never by a client, as the
         // door is: a the party's number, 0 for none; target the body. Parties are the server's,
         // since a party spans maps and a map is a realm (Realm::setParty).
         PartySet,
@@ -93,7 +93,7 @@ struct Command {
         // His auto-drink (Realm::setAutoDrink; a: the health percent, b: the mana percent, 0 for
         // never).
         AutoDrink,
-        // **The Broker's** (sim/broker.h, docs/broker.md), sent by the server and never by a
+        // **The Broker's** (sim/broker.h, docs/game/broker.md), sent by the server and never by a
         // client, as PartySet is: the market spans maps, so it is the server's, and these move
         // his things inside the lockstep. Each carries a whole Held in a, b, c, d and target
         // (sim::packHeld).

@@ -7,22 +7,22 @@ client plays a mirror of it in lockstep. `LocalLink`, the realm in the client's 
 kept as the harness the tests, the benches and the headless runs drive, not as a way to play.
 
 **Start here.** `docs/README.md` is the index of every doc, the working rules, and the sprints'
-one-line history. `docs/order-plan.md` is where the tree stands and the plan for making it make
+one-line history. `docs/plans/order-plan.md` is where the tree stands and the plan for making it make
 sense: one place for each thing, and the `mu` tool and the studio that build on it.
 
 Two pages answer the two questions a newcomer has, and they are deliberately separate:
 
-* **`docs/architecture.md` — where does code go?** The layers, the arrows between them (which
+* **`docs/reference/architecture.md` — where does code go?** The layers, the arrows between them (which
   `tools/layercheck.py` enforces rather than suggests), what lives in each folder, and a
   numbered list for placing a new file.
-* **`docs/conventions.md` — what has one right answer and a silent wrong one?** The axis swap,
+* **`docs/reference/conventions.md` — what has one right answer and a silent wrong one?** The axis swap,
   the matrix layout, the colour space, what Metal refuses. Read it before writing a loader.
 
-`docs/recipes.md` lists what each kind of new thing — a monster, a map, an effect, a quest, a
-window — has to touch today. `docs/budget.md` holds the frame's accounts.
+`docs/content/recipes.md` lists what each kind of new thing — a monster, a map, an effect, a quest, a
+window — has to touch today. `docs/reference/budget.md` holds the frame's accounts.
 
 The rules are written fresh and smaller than MU2's, and still traced to 0.75 or marked
-`invention`. `source/`, `pipeline/` and `source/mu.db` are the content source behind a cook
+`invention`. `content/`, `pipeline/` and `content/mu.db` are the content source behind a cook
 step; nothing is read from MU2 at run time.
 
 ## The server
@@ -72,24 +72,24 @@ Paths on the command line must be absolute.
 
 ## Content
 
-    ./mu make Sword01                            one recipe from source/ to cooked, only what is stale
+    ./mu make Sword01                            one recipe from content/ to cooked, only what is stale
     ./mu make aida/Object11 --plan               what would run and why, running nothing
     ./mu check                                   the quick gates: layers, sizes, WAL, index, white meshes, tables
     ./mu cores 4                                 how many cores every tool mu runs may use, kept per machine
 
-`mu` (`tools/mu/`, docs/order-plan.md sprint B) runs the scripts below in the one order that
+`mu` (`tools/mu/`, docs/plans/order-plan.md sprint B) runs the scripts below in the one order that
 works and says why each step runs. Reach for the scripts themselves when mu has no word for
 the job yet: a new world's ground, `content.sh`'s everything.
 
-    ./tools/content.sh                           source/ -> workshop/, whatever is stale
+    ./tools/content.sh                           content/ -> workshop/, whatever is stale
     ./tools/asset.sh Sword01                     one recipe, the same way
 
 MU2's pipeline, carried here on 2026-09-21 so this tree builds its own content without MU2 or
-Godot: `source/` holds the recipes and MU's imported art (MU2's `assets/`, and `mu.db`),
+Godot: `content/` holds the recipes and MU's imported art (MU2's `assets/`, and `mu.db`),
 `pipeline/` the scripts, `workshop/` their output (MU2's `build/`). Needs Blender and
 python3 with numpy, Pillow and torch. MU's own data is
 [sven-n/MuMain](https://github.com/sven-n/MuMain/tree/main/src/bin/Data), fetched by
-`tools/fetch_mumain.sh`. See `docs/cooker.md`, "The pipeline underneath".
+`tools/fetch_mumain.sh`. See `docs/content/cooker.md`, "The pipeline underneath".
 
     ./tools/sync.sh                              everything index.json reaches
     ./tools/sync.sh --world lorencia --only-world
@@ -120,13 +120,13 @@ positioned audio could not have used.
     cmake --build build --target checks          everything that can say no without a window
 
 Runs the tests, `tools/layercheck.py` (the layer arrows), `tools/sizecheck.py` (no file grows
-past its recorded size: the hubs may only shrink, see `docs/order-plan.md`), and
+past its recorded size: the hubs may only shrink, see `docs/plans/order-plan.md`), and
 `tools/matcheck.py` — the material audit. That one asks whether every
 surface wears the material it ought to: a name that resolves to `index.json`'s library, a baked
 ORM that agrees with it, a relief the normal map actually carries, a cutout with holes to cut,
 a cooked texture in its role's format. It is a gate, not a report: the faults known on the day
-it was written are in `sheets/materials.baseline.json`, and it fails on a new one or on a
-recorded one that has since been fixed, so the list can only shrink. `docs/materials.md` has
+it was written are in `content/sheets/materials.baseline.json`, and it fails on a new one or on a
+recorded one that has since been fixed, so the list can only shrink. `docs/content/materials.md` has
 what it found and what to do about each kind.
 
 ## Benches
@@ -149,7 +149,7 @@ is every one its spawn table names, which for Lorencia is 290.
 not a look: the cost of that pass is **fill rate**, so what decides its account is how much
 of the screen the sprites cover rather than how many there are, and `--effect-size` is what
 drives that. 64 sprites half a metre across cost nothing measurable; 64 sprites 60 m across
-cost 1.19 ms. `docs/budget.md` has the table and the rate derived from it.
+cost 1.19 ms. `docs/reference/budget.md` has the table and the rate derived from it.
 
     ./run.sh --world lorencia --still --no-figures --frames 60 --shot 1 --shot-path /abs/slide --shadow-slide 3
     tools/shimmer.py /abs/slide --heat /abs/heat.png --allow 200
@@ -157,7 +157,7 @@ cost 1.19 ms. `docs/budget.md` has the table and the rate derived from it.
 The shadow shimmer test. The camera holds and only the sun's split moves, so any pixel that
 changes between two frames is the shadow's fault. `--shadow-log PATH` writes the split's
 texel phase on a world-fixed grid and the camera's lag behind the character, one row a frame,
-and works on a `--play` walk. `docs/shadow-probe.md` has how to read both, and the three
+and works on a `--play` walk. `docs/reference/shadow-probe.md` has how to read both, and the three
 faults they found. `tools/pan.py` measures the same with the camera moving, at fixed spots on
 the ground, and `tools/shadowref.py` measures the character's own shadow against a much finer
 map on identical frames (`--fixed-dt`). `--shadow-view` draws the sun's visibility alone.

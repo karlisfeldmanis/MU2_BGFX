@@ -11,7 +11,7 @@ It does not read here. A card narrow enough to draw a blade-width blade is 12 cm
 threshold from 0.28 to 0.68 was tried on it and the field went from overlapping plates
 straight to nothing, with no setting in between where a blade came apart from its neighbour.
 The strokes are soft, broad and joined at the root because they were painted to be seen as a
-tuft. docs/grass.md has the sweep.
+tuft. docs/reference/grass.md has the sweep.
 
 So the sheet is the limit, not the method. This paints one that is not: eight columns of
 separate blades, each its own height, lean, width and green, at a resolution where a blade is

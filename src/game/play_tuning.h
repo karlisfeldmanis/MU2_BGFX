@@ -23,7 +23,7 @@
 
 namespace mu::game {
 
-// The sim's own rate. docs/conventions.md, "Time": the tick never reads the frame's delta and
+// The sim's own rate. docs/reference/conventions.md, "Time": the tick never reads the frame's delta and
 // the frame never decides how many ticks have passed except by this number.
 constexpr double kTickSeconds = 1.0 / 20.0;
 // The longest a hero's shot waits for her string (Play::nocking_): her clip cut short -- a
@@ -142,7 +142,7 @@ inline int32_t arenaBreed(const content::Tables& tables, const std::string& name
 }
 
 // MONSTER01_DIE: every monster model shares this twelve-slot layout in this one order
-// (source/monsters/actions.json), so slot 6 is the death whether the model is a spider or a
+// (content/monsters/actions.json), so slot 6 is the death whether the model is a spider or a
 // giant, and the cook already marks it `hold` -- it plays once and holds its last frame, a
 // corpse pose, rather than looping.
 constexpr int kMonsterDieSlot = 6;
@@ -173,7 +173,7 @@ constexpr int kPlayerShockSlot = 230;
 // The HERO keeps none on his Drawn, and that is a decision rather than an omission. MU's quake
 // loop excludes the hero outright, so he never flinches for a meteor. His flinch from a blow
 // looks this slot up itself: Play::flinch.
-// PLAYER_DIE1, which the cook also holds (source/players/rig/actions.json, hold_at_end). The
+// PLAYER_DIE1, which the cook also holds (content/players/rig/actions.json, hold_at_end). The
 // hero plays it and lies there until the realm revives him at the gate -- no fade: MU leaves
 // the player's body on the ground for the whole wait.
 constexpr int kPlayerDieSlot = 232;

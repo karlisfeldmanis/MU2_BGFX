@@ -1,7 +1,7 @@
 """What a world is still missing, in the order that filling it in pays off most.
 
-    python3 pipeline/worklist.py source/world/lorencia workshop
-    python3 pipeline/worklist.py source/world/lorencia workshop --all
+    python3 pipeline/worklist.py content/world/lorencia workshop
+    python3 pipeline/worklist.py content/world/lorencia workshop --all
 
 Nothing has to be wired up to put a new object into the town. The map's placement list already
 says where every one of them stands, at what angle and what size, and the viewer matches a

@@ -1,0 +1,394 @@
+{
+  "world": "noria",
+  "name": "Noria",
+  "map": 3,
+  "note": "The world's manifest (docs/plans/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "rules": {
+    "arrive": [
+      174,
+      112
+    ],
+    "home": 0,
+    "event": false,
+    "floors": false,
+    "move_order": 1,
+    "invasion": true,
+    "note": "The Golden Dragon invades here, on its own clock (sim/invasion.h; OpenMU VersionSeasonSix InvasionMobsInitialization.cs:74-101): Lorencia first, Devias and Noria since 2026-10-08 (the user: 'dragon can land on devias,lorencia,noria')."
+  },
+  "show": {
+    "air": {
+      "loop": "",
+      "note": "No wind: its jungle bed is the whole of its air (the user, 2026-09-29)."
+    },
+    "steps": "grass",
+    "music": {
+      "track": "/music/Noria.mp3",
+      "where": "safe",
+      "note": "MUSIC_NORIA in its safe zone (SceneManager.cpp:1028-1036; the user, 2026-10-05)."
+    },
+    "weather": {
+      "kind": "rain",
+      "jungle": true
+    },
+    "leaves": "leaf",
+    "roads": [
+      "TileRock01",
+      "TileRock02",
+      "TileWood01"
+    ],
+    "boids": {
+      "model": "Butterfly01",
+      "speed": 0.3,
+      "lit": false,
+      "tint": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "calls": false,
+      "flap": 6.25,
+      "note": "MODEL_BUTTERFLY01 (MapManager.cpp:89; GOBoid.cpp:1335: Velocity 0.3, LightEnable false, Light 1). 6.25: the cook's 0.25 s keys over MU's 0.04 s."
+    },
+    "portal": {
+      "note": "Noria's decorative warp (game/world/portal.h)."
+    }
+  },
+  "npcs": [
+    {
+      "npc": 253,
+      "name": "Potion Girl Amy",
+      "figure": "PotionGirlAmy",
+      "at": [
+        169,
+        109
+      ],
+      "look": 4
+    },
+    {
+      "npc": 253,
+      "name": "Potion Girl Amy",
+      "figure": "PotionGirlAmy",
+      "at": [
+        193,
+        110
+      ],
+      "look": 3
+    },
+    {
+      "npc": 242,
+      "name": "Elf Lala",
+      "figure": "",
+      "at": [
+        173,
+        125
+      ],
+      "look": 2
+    },
+    {
+      "npc": 243,
+      "name": "Eo the Craftsman",
+      "figure": "",
+      "at": [
+        195,
+        124
+      ],
+      "look": 3
+    },
+    {
+      "npc": 240,
+      "name": "Baz The Vault Keeper",
+      "figure": "",
+      "at": [
+        172,
+        96
+      ],
+      "look": 4
+    },
+    {
+      "npc": 238,
+      "name": "Chaos Goblin",
+      "figure": "",
+      "at": [
+        180,
+        103
+      ],
+      "look": 2
+    },
+    {
+      "npc": 257,
+      "name": "Peia",
+      "figure": "Peia",
+      "at": [
+        171,
+        118
+      ],
+      "look": 3,
+      "note": "Ours, not Version075's: the elf's quest giver. MuMain's MONSTER_ELF_SOLDIER, whom its Korean client names Peia, in the flower bed under the town's great tree where the user put her (2026-09-29) -- OpenMU Season Six stands her four tiles west, at 167,118."
+    },
+    {
+      "npc": 237,
+      "name": "Charon",
+      "figure": "",
+      "at": [
+        171,
+        105
+      ],
+      "look": 4,
+      "note": "Ours: Charon (237), Devil Square's gatekeeper, where 0.95d stands him (Version095d/Maps/Noria.cs:32). 0.75 has no Devil Square; until it is written he says the hero is not ready (the user, 2026-09-30)."
+    },
+    {
+      "npc": 900,
+      "name": "Liane the Broker",
+      "figure": "mirazu",
+      "at": [
+        175,
+        96
+      ],
+      "look": 4,
+      "note": "Ours: the Broker (docs/game/broker.md), beside Baz, in MuMain's Mirage (Npc/mirazu.bmd), the Broker's one figure in all three towns."
+    },
+    {
+      "npc": 247,
+      "name": "Elf Archer",
+      "figure": "ElfArcher",
+      "at": [
+        166,
+        80
+      ],
+      "look": 3,
+      "note": "Ours: Noria's watch (the user, 2026-09-29), which neither Version075 nor MuMain has. An archer and a crossbow at each of the town's three roads, a tile outside the safe bit. Every one fights on the Crossbow Guard's row, 247 -- five tiles is a bow's reach as much as a crossbow's -- and the figure says which weapon she draws."
+    },
+    {
+      "npc": 247,
+      "name": "Elf Crossbow Guard",
+      "figure": "ElfCrossbowGuard",
+      "at": [
+        163,
+        83
+      ],
+      "look": 2
+    },
+    {
+      "npc": 247,
+      "name": "Elf Archer",
+      "figure": "ElfArcher",
+      "at": [
+        157,
+        112
+      ],
+      "look": 1
+    },
+    {
+      "npc": 247,
+      "name": "Elf Crossbow Guard",
+      "figure": "ElfCrossbowGuard",
+      "at": [
+        157,
+        116
+      ],
+      "look": 1
+    },
+    {
+      "npc": 247,
+      "name": "Elf Archer",
+      "figure": "ElfArcher",
+      "at": [
+        208,
+        128
+      ],
+      "look": 6
+    },
+    {
+      "npc": 247,
+      "name": "Elf Crossbow Guard",
+      "figure": "ElfCrossbowGuard",
+      "at": [
+        204,
+        131
+      ],
+      "look": 6
+    }
+  ],
+  "gates": {
+    "exits": [
+      {
+        "number": 24,
+        "box": [
+          148,
+          5,
+          155,
+          6
+        ],
+        "faces": [
+          1,
+          1
+        ],
+        "note": "Noria, from Lorencia"
+      },
+      {
+        "number": 48,
+        "box": [
+          240,
+          240,
+          241,
+          243
+        ],
+        "faces": [
+          -1,
+          1
+        ],
+        "note": "Atlans's and Noria's, Gates.cs:135 and 148-149 (docs/worlds/atlans-port.md A §2.1). 48 is Direction.North (7), (-1,+1), into Noria and away from gate 45 beside it; 46 is Direction.South (3), (+1,-1), into the basin and away from gate 47; 49 is the spawn gate, the safe basin, with no direction: a death and the Town Portal land there. Noria, from Atlans"
+      },
+      {
+        "number": 122,
+        "box": [
+          220,
+          31,
+          226,
+          34
+        ],
+        "faces": [
+          0,
+          0
+        ],
+        "note": "Noria, back from Aida, with no direction (OpenMU VersionSeasonSix Gates.cs:170)."
+      }
+    ],
+    "enters": [
+      {
+        "number": 25,
+        "box": [
+          148,
+          3,
+          155,
+          4
+        ],
+        "level": 20,
+        "target": 26,
+        "note": "Noria to Lorencia"
+      },
+      {
+        "number": 45,
+        "box": [
+          242,
+          240,
+          245,
+          243
+        ],
+        "level": 70,
+        "target": 46,
+        "note": "Gates.cs:205-206: Noria's far south-east corner to Atlans, and the basin's corner back, both level 60 in every source (OM 075, WebZen's official gate.txt; docs/worlds/atlans-port.md A §2.2). The user, 2026-10-04: 'lets migrate noria -> atlans gates and add lvl requirments for gates'. Then 'increase lvl requirment to 120', and back down to 70 once the monsters' 43-74 showed 120 made the map trivial ('gate back toward 60-70'): the way in asks 70, ours, Season Six's Atlans warp level; the way out keeps MU's 60. Noria to Atlans"
+      },
+      {
+        "number": 1058,
+        "box": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "level": 0,
+        "target": 58,
+        "note": "And Charon's into Devil Square 1 (sim/square.h kSquareEnterGate), from Noria."
+      },
+      {
+        "number": 1059,
+        "box": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "level": 0,
+        "target": 59
+      },
+      {
+        "number": 1060,
+        "box": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "level": 0,
+        "target": 60
+      },
+      {
+        "number": 1061,
+        "box": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "level": 0,
+        "target": 61
+      },
+      {
+        "number": 120,
+        "box": [
+          220,
+          30,
+          226,
+          30
+        ],
+        "level": 300,
+        "target": 113,
+        "note": "Noria's door to Aida (OpenMU VersionSeasonSix Gates.cs:534; docs/worlds/aida-port.md). MU asks 130; ours 300, Aida a late-game place (the user, 2026-10-11: 'lets ask LVL 300 its a late game activity'), 200 for the Magic Gladiator, who pays two thirds."
+      }
+    ],
+    "spawn": {
+      "number": 27,
+      "box": [
+        171,
+        108,
+        177,
+        117
+      ],
+      "note": "OpenMU's spawn gate 27: the box a new character starts in and a dead one stands up in, the .mur's safe gate (pipeline/index.py gate_rows). rules.arrive is its middle. Out of mu.db's gates table in sprint D6."
+    }
+  },
+  "pipeline": {
+    "hidden": [
+      38
+    ],
+    "blend_mesh": {
+      "1": 1,
+      "9": 3,
+      "17": 0,
+      "18": 2,
+      "19": 0,
+      "37": 0
+    },
+    "grass": [
+      "TileGrass01",
+      "TileGrass02"
+    ],
+    "perches": {
+      "value": {
+        "38": {
+          "pose": 4,
+          "turns": true,
+          "leans": true,
+          "tall": false,
+          "model": "the hanging tree, invisible"
+        },
+        "8": {
+          "pose": 2,
+          "turns": false,
+          "leans": false,
+          "tall": false,
+          "model": "the stump"
+        }
+      },
+      "note": "Noria"
+    },
+    "airs_from": "lorencia",
+    "grounded_types": {
+      "range": [
+        20,
+        28
+      ]
+    }
+  }
+}

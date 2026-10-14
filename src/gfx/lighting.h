@@ -12,7 +12,7 @@ class Json;
 namespace mu::gfx {
 
 // Everything here is in metres, which is MU2's own scene scale: one tile, one metre.
-// docs/conventions.md.
+// docs/reference/conventions.md.
 struct Lighting {
     // The sun. `azimuth` and `elevation` are degrees; the direction is worked out from them
     // so a sheet can be written by eye rather than as a vector.
@@ -53,7 +53,7 @@ struct Lighting {
     // visible surface is between the eye and where the frustum meets that plane, so that
     // hull, seen from the sun, is all the split has to cover. 0 keeps the fixed square above,
     // which is centred on the target and spends half its texels behind the camera.
-    // docs/shadow-probe.md measured it. `shadowRange` stays the depth the sun looks back.
+    // docs/reference/shadow-probe.md measured it. `shadowRange` stays the depth the sun looks back.
     float shadowFitBelow = 0.0f;
     // Both biases are metres, which is the only unit either of them means anything in.
     // An NDC bias hides its own size: 0.0015 over a 120 m split is 18 cm of peter-panning
@@ -94,7 +94,7 @@ struct Lighting {
     float waterSheen = 0.0f;
     // A light of the water sheet's own, in its own colours, times this: the Lost Tower's lava,
     // which MU slides as water and paints bright orange under its TerrainLight, and which in a
-    // tower with no torch is the only warm light (docs/lost-tower-port.md). Ours. 0 everywhere
+    // tower with no torch is the only warm light (docs/worlds/lost-tower-port.md). Ours. 0 everywhere
     // else, so their water is as it was.
     float waterGlow[3] = {0.0f, 0.0f, 0.0f};
     // The light that lava throws on what stands beside it, linear, on the albedo: the walls of
@@ -116,7 +116,7 @@ struct Lighting {
     // What the frame shows where nothing is drawn, in the shade target's linear light before
     // the exposure and the tonemap. Black, as MU clears every map but two: Icarus is navy,
     // rgb (3, 25, 44)/256 (SceneManager.cpp:385), and with no ground drawn there it is the sky
-    // under the islands (docs/icarus-port.md). 0 everywhere else, so their void stays black.
+    // under the islands (docs/worlds/icarus-port.md). 0 everywhere else, so their void stays black.
     float clearColour[3] = {0.0f, 0.0f, 0.0f};
     // Wet ground, where the sheet asks (ground_wet, 0 to 1): stone darkened as water darkens it
     // and given a low, glassy sheen for the lamps and the sun or moon to streak across; and
@@ -169,7 +169,7 @@ struct Lighting {
     float ssaoRadius = 0.5f;
     float ssaoStrength = 1.0f;
 
-    // The grass, docs/grass.md. Painted blades, cut out and scattered over every grass tile the
+    // The grass, docs/reference/grass.md. Painted blades, cut out and scattered over every grass tile the
     // camera can see; past the reach the ground texture takes over. These are its knobs. They live
     // in the lighting sheet rather than in one of their own because a field of grass is look,
     // and this is the sheet the look is tuned on with the window open -- which is the only way
@@ -177,7 +177,7 @@ struct Lighting {
     //
     // `grass` 0 grows nothing at all, which is how the field's cost is priced: one run with it
     // and one without, wall frame against wall frame, since the per-view GPU timers cannot
-    // price a pass on Metal. docs/budget.md.
+    // price a pass on Metal. docs/reference/budget.md.
     float grass = 1.0f;
     // The reach, from the EYE, per card. MU's 8 m camera sees the ground out to 21 m at the
     // top of the frame and 28.5 m at its far corners; 30 with a 1.5 m fade keeps the whole of
@@ -191,7 +191,7 @@ struct Lighting {
     float grassThin = 12.0f;     // metres from the eye where the widening with distance begins
     // A bias on the mip level the sheet is read at; negative is sharper. Sharper is more
     // painted blade and more crawl, since a crisper edge under 4x MSAA with no TAA moves more
-    // as the camera walks; docs/grass.md has the sweep that set this. -0.4 was tuned against
+    // as the camera walks; docs/reference/grass.md has the sweep that set this. -0.4 was tuned against
     // a sheet that was, by accident, three levels blurrier than this number said (grass.cpp);
     // with that gone, half a level softer than the filter's own pick keeps the blades and
     // lets the sward read as a mass.
@@ -245,7 +245,7 @@ struct Lighting {
     float grassVary = 0.0f;
     // How far a card may be widened at the far edge of the disc. The thinning with distance and
     // this widening are one mechanism: coverage is held while the card count falls, and a
-    // painted blade is kept over a pixel wide where it would otherwise crawl. docs/grass.md.
+    // painted blade is kept over a pixel wide where it would otherwise crawl. docs/reference/grass.md.
     float grassWiden = 1.3f;
     // What MU's painted sheet is MULTIPLIED by, root and top. Not a colour: the sheet is the
     // art and carries its own green. This is the gradient laid over it -- cool and dark at the
@@ -277,7 +277,7 @@ struct Lighting {
     // It defaults to the blade sheet because MU's cannot draw a blade at this scale and that
     // was measured, not assumed: at a card narrow enough for blade-width blades, MU's tuft is
     // sixteen pixels of soft overlapping strokes, and every cutout from 0.28 to 0.68 took the
-    // field from overlapping plates straight to nothing. docs/grass.md has the sweep. MU's
+    // field from overlapping plates straight to nothing. docs/reference/grass.md has the sweep. MU's
     // sheet stays loaded and one number away, because it is MU's and this is a remaster.
     float grassPainted = 0.0f;
     float grassRootAo = 0.62f;      // the height ramp's floor: how dark the root sits
@@ -362,7 +362,7 @@ struct Lighting {
     bool reloadIfChanged(const std::string& path);
 
     // Lays a second sheet over the values in hand: the keys it names win and the rest stand.
-    // The viewer's times of day are these -- sheets/time/dusk.json is a dozen keys, not a
+    // The viewer's times of day are these -- content/sheets/time/dusk.json is a dozen keys, not a
     // second copy of lighting.json that drifts from it. Reads every time it is asked.
     bool readOverlay(const std::string& path);
 

@@ -8,7 +8,7 @@ namespace {
 // **The reward ladder** (the user, 2026-10-09: "very logical and make sense progression, so
 // character can understand all new runes and they are not given too soon or too late"; "make
 // armor sets, get weapon upgrades, shields, jewels, firecrackers and other stuff").
-// docs/quest-rewards.md has it as a table. Its rules, ours:
+// docs/game/quest-rewards.md has it as a table. Its rules, ours:
 //  - A first clear's rune is never rarer than its own map's monsters let fall (kRuneRarityLevel):
 //    Common and Rare at home, Epic from Devias (the Ice Queen, 52), Legendary from the Hydra and
 //    the Lost Tower's fourth floor (60). A second class's rune waits for Icarus, the class change's
@@ -111,7 +111,7 @@ QuestRow marlon() {
     // Apostle Devin is MU's own there (MONSTER 406, the third class's quest in Season Two and
     // after, not 0.75); Devias is not built yet, so for now this is only the tip.
     row.next = "Seek Apostle Devin in Devias";
-    // Read by Chatterbox (Resemble AI, MIT) off Kokoro's bm_lewis, heroic: source/voice.
+    // Read by Chatterbox (Resemble AI, MIT) off Kokoro's bm_lewis, heroic: content/voice.
     row.voice = "marlon";
     row.steps[0] = {QuestStepKind::Clear, 3, 40, "Spiders"};
     row.steps[1] = {QuestStepKind::Clear, 2, 35, "Budge Dragons"};
@@ -242,7 +242,7 @@ QuestRow peia() {
     return row;
 }
 
-// Apostle Devin's, and Devias's: "The White Silence", for every class (docs/devin-quest.md, the
+// Apostle Devin's, and Devias's: "The White Silence", for every class (docs/game/devin-quest.md, the
 // user's of 2026-09-29). Devin is MU's own (Priest Devin 406, Season Six), his story is ours:
 // serious, short and clear, the Ice Queens the real danger and the Lost Tower named once, at the
 // hand-in. The steps are Devias's breeds weakest first on Marlon's ladder shape (Version075
@@ -283,7 +283,7 @@ QuestRow devin() {
     // The way on (the user, 2026-10-01): the Lost Tower and its keeper, Tersia's chain -- through
     // his errand to her since 2026-10-09 (towerErrand).
     row.next = "Apostle Devin has one more road for you";
-    // Read by hand, not by voice.py's main(): source/voice/devin/recorded_with.py.txt. The
+    // Read by hand, not by voice.py's main(): content/voice/devin/recorded_with.py.txt. The
     // hand-in was read again for Tersia on 2026-10-02, both paragraphs, the same way.
     row.voice = "devin";
     row.steps[0] = {QuestStepKind::Clear, 24, 40, "Worms"};
@@ -358,7 +358,7 @@ QuestRow devin() {
     return row;
 }
 
-// The Golden Archer's chain, the Dungeon's (docs/golden-archer.md): three links, a floor each,
+// The Golden Archer's chain, the Dungeon's (docs/game/golden-archer.md): three links, a floor each,
 // each unlocked by the one before, every one paying and the first time of each also a socketed
 // item and a rune (the user, 2026-09-30). MU's NPC 236, a gold skeleton at the Dungeon's arch;
 // the story is ours: the knights' archer, the last of the oath's last company, who fell to the
@@ -582,7 +582,7 @@ QuestRow pit() {
     return row;
 }
 
-// The Lost Tower's way in (docs/lost-tower-quest.md, the user's of 2026-10-01): Devin's hand-in
+// The Lost Tower's way in (docs/game/lost-tower-quest.md, the user's of 2026-10-01): Devin's hand-in
 // sends the hero to the tower, where its last keeper gives the first quest and her hall opens on
 // the travel list. She is MU's own, not 0.75's: Tersia (566, Npc/tersia.bmd, MuMain's MODEL_TERSIA;
 // its Korean ID 길드관리인 테르시아, "Guild Manager Tersia", which OpenMU and the English client
@@ -593,7 +593,7 @@ QuestRow pit() {
 // Tersia's chain, the Lost Tower's (the user, 2026-10-01: "similar like golden archer where
 // char has to clear each floor and gets rewards"): seven links, a floor each, each offered once the
 // one before is handed in, the first once Devin's is. Each link's steps are its floor's breeds
-// (docs/lost-tower-port.md A §4.1), counts about half the floor; the last ends on the Balrog. The
+// (docs/worlds/lost-tower-port.md A §4.1), counts about half the floor; the last ends on the Balrog. The
 // travel row to floors 2-7 opens once its link is taken, as the Dungeon's do (Realm::travelQuest;
 // handed in until 2026-10-03); the hall's opens as she is spoken to; the stairs ask only their levels. Every class's, each link repeatable every twelve hours.
 // What she says of the tower is Webzen's (above) or the game's own (the Cursed Wizards' reach,
@@ -967,7 +967,7 @@ QuestRow tersiaBalrog() {
     return row;
 }
 
-// Icarus's two (docs/icarus-quest.md, the user's of 2026-10-07: 'there will be not quest giver in
+// Icarus's two (docs/game/icarus-quest.md, the user's of 2026-10-07: 'there will be not quest giver in
 // icarus, but there will be quest in LT quest giver'): links 8 and 9 of Tersia's chain, taken and
 // handed in at her desk, since Icarus has no safe tile and no NPC. The door above the seventh
 // floor, the wings or Dinorant it asks, the Phoenix ruling the sky and Loch's Feather falling
@@ -1118,7 +1118,7 @@ QuestRow tersiaPhoenix() {
     return row;
 }
 
-// Sevina's class change (docs/class-change-quest.md), the user's of 2026-10-04: "this quest first
+// Sevina's class change (docs/game/class-change-quest.md), the user's of 2026-10-04: "this quest first
 // part will be kill quest on lt7 and atlans, and it starts at lvl 200. second part is quest item
 // drop which can drop in lt7 or atlans". MU's own giver (Sevina the Priestess, 235, Devias) and
 // MU's own treasures and words where MU has them (MuMain Localization/Dialog.en.resx, Text_50-82:
@@ -1128,7 +1128,7 @@ QuestRow tersiaPhoenix() {
 // is repeatable. The second class is the name and MU's bare bodies (HelmClass201-203 and their
 // fellows) and nothing else yet, the user's of the same day.
 //
-// The Atlans steps waited on Atlans's monsters (docs/atlans-port.md step 8); all seven breeds
+// The Atlans steps waited on Atlans's monsters (docs/worlds/atlans-port.md step 8); all seven breeds
 // stand there since 2026-10-04, so the trial is the seventh floor's and the sea's.
 constexpr bool kAtlansHunted = true;
 
@@ -1365,7 +1365,7 @@ QuestRow drownedSong() {
 // it self'). Offered once Peia's 'The Drowned Song' is handed in to her. Ours, as Devin's: every
 // breed of the map weakest first on Marlon's ladder (40, 35, 30, 30, 25, 20), and the Hydra, the
 // boss, all four of it last -- 184 kills, between Devin's 170 and Marlon's 210 (the user,
-// 'calculate number of kill which chars has to do'; docs/lirien-quest.md). The first
+// 'calculate number of kill which chars has to do'; docs/game/lirien-quest.md). The first
 // clear pays each class its third weapon and its first Legendary (below); every clear two Jewels
 // of Soul and a Jewel of Life.
 QuestRow lirienHalls() {
@@ -1460,7 +1460,7 @@ QuestRow lirienHalls() {
 }
 
 // The Road of Kantur, the hook to Tarkan: Lirien's second, once her halls have been cleared,
-// handed in to the Keeper of Kantur in Tarkan's safe hall (docs/tarkan-quest.md; the user,
+// handed in to the Keeper of Kantur in Tarkan's safe hall (docs/game/tarkan-quest.md; the user,
 // 2026-10-06: 'we need a lore for atlans quest give and min lvl requirment to go to tarkan and
 // meet next quest giver', then 'lets implement it'). As The Drowned Song: no hunt, the errand is
 // the meeting. Ours, on MU's own facts: Kantur built Atlans, WebZen calls Tarkan's golden Tantalos
@@ -1551,7 +1551,7 @@ QuestRow kantursLegion() {
         "\"Take these, with Kantur's thanks, what is left of it. The legion mends itself. When it "
         "marches again, come back.\"";
     row.resting = "\"Rest. By morning the wheels will turn again.\"";
-    // His own voice (VOICES["keeper"] by the stem), read off docs/tarkan-quest.md's six
+    // His own voice (VOICES["keeper"] by the stem), read off docs/game/tarkan-quest.md's six
     // paragraphs; the window's fifth holds the last two.
     row.voice = "keeper_1";
     row.steps[0] = {QuestStepKind::Clear, 62, 40, "Mutants"};            // level 72

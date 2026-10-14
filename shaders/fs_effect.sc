@@ -3,7 +3,7 @@ $input v_texcoord0, v_colour, v_material
 // The effect material, whole: a sheet and a tint, and nothing else -- and, since 2026-10-09,
 // every kind of sprite in one program.
 //
-// This is deliberately NOT the world's material model. docs/conventions.md keeps that one
+// This is deliberately NOT the world's material model. docs/reference/conventions.md keeps that one
 // closed -- albedo, normal, ORM, emissive, and the three flags cutout, two-sided and skinned
 // -- and an effect has none of it. It is not lit, it casts nothing, it has no normal and no
 // roughness, and adding `additive` as a fourth flag over there would make every wall in

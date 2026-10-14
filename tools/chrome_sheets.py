@@ -13,12 +13,12 @@ Great Reign Crossbow's grooves (RenderPartObjectBody, ZzzObject.cpp:7065-7075, 7
      "where": "over"}
 
 `image` is MU's chrome01 (BITMAP_CHROME), chrome02 (BITMAP_CHROME2) or bab2 (BITMAP_CHROME + 1),
-out of source/effects/refine, or shiny01 (BITMAP_SHINY, RENDER_METAL's). `mask`, when it names one
+out of content/effects/refine, or shiny01 (BITMAP_SHINY, RENDER_METAL's). `mask`, when it names one
 of those, is that image as the mask -- MU's Chrome01 lightmap over a metal pass. `where` is "over" for the whole mesh, or "cut" for where its own
 sheet's alpha is cut away: MU draws those passes before the body, so they only show through the
 holes its alpha test leaves.
 
-Two files a pass, in source/items/weapons/chrome/:
+Two files a pass, in content/items/weapons/chrome/:
 
   * `<item>_<n>.png`, the chrome image times the tint over its largest channel -- a sheet holds
     no more than 1, and export_gltf.chrome_material carries that largest channel in the glow's
@@ -36,7 +36,7 @@ from paths import CONTENT
 
 WEAPONS = os.path.join(CONTENT, "items", "weapons")
 # A monster's passes too (Hell Maine's red chrome over its armour and wings, GMAida.cpp:
-# 1389-1405), written beside its recipe, where export_gltf looks: source/monsters/chrome/.
+# 1389-1405), written beside its recipe, where export_gltf looks: content/monsters/chrome/.
 FOLDERS = (WEAPONS, os.path.join(CONTENT, "monsters"))
 IMAGES = {"chrome01": "refine/chrome01.png", "chrome02": "refine/chrome02.png",
           "bab2": "refine/bab2.png", "shiny01": "drop/shiny01.png"}

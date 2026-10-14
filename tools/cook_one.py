@@ -11,7 +11,7 @@
 
 Why this exists: a full cook changes a hundred things at once and nobody looks at each of
 them, so a mistake is found much later and far from its cause. This is the day-to-day way:
-one item, its report, its shots, a look, and a line in docs/cook-log.md saying whether it
+one item, its report, its shots, a look, and a line in docs/content/cook-log.md saying whether it
 passed -- then the next. `tools/cook.py` still rebuilds everything, for when that is wanted.
 
 What it touches and nothing else: that item's textures (compressed only if not already
@@ -36,7 +36,7 @@ import cook  # noqa: E402  (the cook's own texture and mesh steps, so the two ca
 from cook import (cook_mesh, cook_world_clip, image_bytes, read_glb, roles_of, safe)  # noqa: E402
 from paths import ASSETS, BUILD, ROOT, SHOTS  # noqa: E402
 
-LOG = os.path.join(ROOT, "docs", "cook-log.md")
+LOG = os.path.join(ROOT, "docs", "content", "cook-log.md")
 PIECES = ("Helm", "Armor", "Pant", "Glove", "Boot")
 TIMES = ("noon", "dusk", "night")
 

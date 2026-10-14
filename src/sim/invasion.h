@@ -22,7 +22,7 @@ namespace mu::sim {
 // (79, VersionSeasonSix InvasionMobsInitialization.cs:74-101), MuMain's MONSTER_MODEL_DRAGON body.
 // Lorencia's first; Devias and Noria since 2026-10-08 (the user: "dragon can land on
 // devias,lorencia,noria") -- OpenMU's three towns too.
-// Each a manifest's `rules.invasion` (source/world/<w>/world.json, sim::MapRow).
+// Each a manifest's `rules.invasion` (content/world/<w>/world.json, sim::MapRow).
 inline bool invasionMap(uint32_t map) { return rulesOf(map).invasion; }
 constexpr int32_t kGoldenDragonNumber = 79;
 

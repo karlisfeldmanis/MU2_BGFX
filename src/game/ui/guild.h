@@ -1,4 +1,4 @@
-// The guild's two windows (docs/guild.md; the user's picks on the proposal page,
+// The guild's two windows (docs/game/guild.md; the user's picks on the proposal page,
 // claude.ai/artifact/2qCQPGfwWcWmi9XCRvSVvq, 2026-10-13):
 //
 //   * **GuildWindow**, G: "B · Online first". The mark, the name, members over the cap and how

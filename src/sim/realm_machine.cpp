@@ -1,4 +1,4 @@
-// The Chaos Machine's half of the realm (sim/machine.h, docs/chaos-machine.md).
+// The Chaos Machine's half of the realm (sim/machine.h, docs/game/chaos-machine.md).
 //
 // The moves are the vault's: each looks for its room before anything leaves where it was, so a
 // refusal changes nothing, and a stack let go on a stack of its kind pours into it. The mix is

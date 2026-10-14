@@ -1,4 +1,4 @@
-"""Copies the character screen's art out of MuDream, into source/interface.
+"""Copies the character screen's art out of MuDream, into content/interface.
 
     python3 pipeline/lobby_cut.py [--source <MuDream>/Data/Interface]
 

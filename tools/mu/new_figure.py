@@ -1,6 +1,6 @@
 """`mu new monster <number>` and `mu new item <name>`: recipes whose facts are copied, not typed.
 
-A monster (docs/recipes.md, "A monster", steps 1-4):
+A monster (docs/content/recipes.md, "A monster", steps 1-4):
   - its row and its spawns from OpenMU, the number being the server's (Agon is 31);
   - its model, scale, name and weapons from MuMain's CreateMonster case for that number:
     OpenMonsterModel(MONSTER_MODEL_X) is Data/Monster/Monster{X+1}.bmd;
@@ -59,7 +59,7 @@ def textures_of(obj):
 
 
 def decode(mu_file, wanted, say):
-    """Decodes into source/textures/<wanted>, or beside it if that name already holds other art."""
+    """Decodes into content/textures/<wanted>, or beside it if that name already holds other art."""
     target = os.path.join(SOURCE, "textures", wanted)
     scratch = os.path.join(tempfile.mkdtemp(prefix="mu-sheet-"), wanted)
     done = subprocess.run(["python3", os.path.join(ROOT, "pipeline", "decode_texture.py"), mu_file, scratch],
@@ -109,7 +109,7 @@ def sheets_for(obj, folder, prefix_unless, say):
 
 
 def world_of(map_number):
-    """The world whose manifest is MU's map `map_number` (source/world/<w>/world.json)."""
+    """The world whose manifest is MU's map `map_number` (content/world/<w>/world.json)."""
     return world_manifest.world_of_map(map_number)
 
 

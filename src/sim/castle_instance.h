@@ -1,4 +1,4 @@
-// Blood Castle's run as an instance (docs/order-plan.md §9e, slice I3): the run's state -- the
+// Blood Castle's run as an instance (docs/plans/order-plan.md §9e, slice I3): the run's state -- the
 // CastleRun the snapshot writes whole -- and the code that drives it: which castle it is, its
 // clock and its bridge each tick, a kill against its quotas, the win's pay, and the test commands
 // that open it. The Realm holds one (Realm::run_) and hands it itself; the door to it -- the

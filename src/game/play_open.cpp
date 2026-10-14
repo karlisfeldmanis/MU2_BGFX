@@ -99,7 +99,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
 
     // The two copies of the attribute grid, compared -- the one the cook wrote into the tables
     // and the one the ground read out of attributes.png. This is the only run in which both
-    // are in memory at once, and docs/conventions.md promised the check the day there was one.
+    // are in memory at once, and docs/reference/conventions.md promised the check the day there was one.
     if (ground_ && !ground_->grid().empty()) {
         if (ground_->grid().size() != tables_.grid.size()) {
             core::logError("the ground's grid is %d tiles a side and the tables' is %d",

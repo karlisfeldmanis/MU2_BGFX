@@ -1,4 +1,4 @@
-// The Golden Dragon's bar and its party's (docs/golden-dragon-raid.md §3, the user, 2026-10-06:
+// The Golden Dragon's bar and its party's (docs/game/golden-dragon-raid.md §3, the user, 2026-10-06:
 // 'we will probaly need improvment monster label which shows that this is a special monster').
 //
 // While he is in its fight (Play::raidFighting): a wide bar at the top of the screen under the

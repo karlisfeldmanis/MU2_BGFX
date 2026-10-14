@@ -76,7 +76,7 @@ bgfx::TextureHandle textureFrom(const cgltf_texture_view& view, const std::strin
 // own `alpha_mode` and `alpha_cutoff`, which is what MU2's pipeline writes -- no pixel of
 // the albedo is inspected here, and the cook of sprint 3 is where looking at the alpha
 // would belong if the flag ever turns out to disagree with the texture. Decided once at
-// load and not guessed in the shader; see docs/conventions.md.
+// load and not guessed in the shader; see docs/reference/conventions.md.
 float cutoutFor(const cgltf_material* material) {
     if (!material) return -1.0f;
     if (material->alpha_mode == cgltf_alpha_mode_mask) {

@@ -17,7 +17,7 @@
 //    tree's four, the bluebell's, the Chaos Machine's five white ones -- in (0.4, 0.7, 1.0)
 //    times the frame's Luminosity, and the machine's star: two BITMAP_LIGHTNING+1 sprites at
 //    bone 57 spinning opposite ways at `(int)(WorldTime * 0.1) % 360`, a hundred degrees a
-//    second. The table is kNoriaGlows in ornaments.cpp; docs/noria-effects.md, items 2 and 6.
+//    second. The table is kNoriaGlows in ornaments.cpp; docs/worlds/noria-effects.md, items 2 and 6.
 // 5. **Aida's ring statue.** RenderAidaObjectVisual type 75: a white BITMAP_FLARE at Object76's
 //    bone 4, Scale 3, turning a hundred degrees a second (GMAida.cpp:298-307). And its
 //    light-flowers', Object31 blue and Object72 red: a Spark03 glow and a dim core at each of

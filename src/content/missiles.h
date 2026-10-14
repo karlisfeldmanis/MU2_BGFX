@@ -7,7 +7,7 @@
 //
 // Like content/showing.h and content/cooked.h, this header knows nothing about bgfx:
 // parsing a file and uploading a texture are two jobs and only the second needs a device.
-// That is what lets tests/ read one without a window, as foundation 9 asks (docs/architecture.md).
+// That is what lets tests/ read one without a window, as foundation 9 asks (docs/reference/architecture.md).
 //
 // Not per-world, and beside the effect sheets and the sounds in assets/cooked/showing for
 // the same reason they are: a missile belongs to a blow and not to a map.

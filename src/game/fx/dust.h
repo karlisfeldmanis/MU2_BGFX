@@ -7,7 +7,7 @@
 //
 // Devias's white puff is BITMAP_SMOKE, the Bull Fighter's (fx/snort.h), and the caller hands it
 // there; this is the other one, BITMAP_SMOKE + 1, Effect/smoke02.tga, brown dust on every other
-// map (docs/mount.md). Subtype 0 (ZzzEffectParticle.cpp:1663-1690, 7054-7072): LifeTime 32,
+// map (docs/game/mount.md). Subtype 0 (ZzzEffectParticle.cpp:1663-1690, 7054-7072): LifeTime 32,
 // born +-8 more on the ground's two axes, Scale (rand()%32 + 32) * 0.01, a Velocity of 3 along
 // the mount's local +Y -- behind it, as MU's models look down -Y -- and then every reference
 // frame Light = LifeTime / 32, Scale += 0.08, Position += Velocity, Velocity *= 0.9, and the

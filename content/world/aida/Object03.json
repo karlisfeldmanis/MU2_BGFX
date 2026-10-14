@@ -1,0 +1,43 @@
+{
+  "item": "Object03",
+  "mu_name": "Object03",
+  "mu_name_from": "Aida's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "aida",
+  "object_type": 2,
+  "placements": 97,
+  "profile": "world",
+  "sheets": {
+    "Atree01": "ai_atree01.png"
+  },
+  "sheet_from": "Data/Object34/, from MuMain, decoded under an ai_ prefix: assets/textures is one flat pool, and Crywolf's Object35 ships the same names.",
+  "sheet_materials": {
+    "Atree01": "bark"
+  },
+  "material_note": "Atree01: mossy green-brown bark: bark.",
+  "why_this_one": "a 5 m thin bare trunk. Batch 4, trees and wood (the user, 2026-10-11: 'lets just continou to add objects and lets see how map develops'). docs/worlds/aida-port.md.",
+  "effects_note": "No arm in MuMain's GMAida.cpp for this type.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "bark",
+      "triangles": 35,
+      "area": 56397.2,
+      "along": [
+        -25.1,
+        29.0
+      ],
+      "mu_uv": [
+        0.023,
+        -3.328,
+        0.977,
+        5.117
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.554,
+        0.997
+      ]
+    }
+  ]
+}

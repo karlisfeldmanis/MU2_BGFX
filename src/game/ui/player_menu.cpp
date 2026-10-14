@@ -37,7 +37,7 @@ void PlayerMenu::show(Play& play, const std::string& name, float x, float y, flo
         rows_.push_back({"Kick", true, true});
     }
     if (!member && (!inParty || leading)) rows_.push_back({"Invite to party"});
-    // The guild's (docs/guild.md): a master invites one in no guild; one in none asks a master.
+    // The guild's (docs/game/guild.md): a master invites one in no guild; one in none asks a master.
     {
         const net::GuildState& guild = play.guild();
         const bool master = guild.id != 0 && !guild.members.empty() && guild.members.front().name == me;

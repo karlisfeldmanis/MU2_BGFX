@@ -1,6 +1,6 @@
 #pragma once
 
-// The Broker on the wire (docs/broker.md): a BrokerAsk up and a BrokerView down, outside the
+// The Broker on the wire (docs/game/broker.md): a BrokerAsk up and a BrokerView down, outside the
 // lockstep as the chat and the party are -- the market is the server's, and spans maps. What
 // moves a player's things is the realm's (Command::Kind::BrokerTake and its fellows), which the
 // server queues into his world's tick. Its own file: net/wire.cpp is at its size.

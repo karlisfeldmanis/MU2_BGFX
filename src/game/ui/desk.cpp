@@ -486,7 +486,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         characterOpen_ = !characterOpen_;
         click();
     }
-    // G, the guild window (docs/guild.md): on a server; off one there is no guild to show.
+    // G, the guild window (docs/game/guild.md): on a server; off one there is no guild to show.
     if (!keysHeld && (window.pressed(gfx::Window::Key::Guild) || scriptGuild_) && play.isOpen()) {
         guild_.toggle();
         click();
@@ -1316,7 +1316,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
                                      ? &tables.arms[size_t(hero.shield)]
                                      : nullptr;
     // Which family is in each hand, by the realm's own call: a skill is thrown with its kind of
-    // weapon or not at all (docs/skills-dk.md §3.1b), so the plate asks `row.suits()` exactly as
+    // weapon or not at all (docs/game/skills-dk.md §3.1b), so the plate asks `row.suits()` exactly as
     // `Realm::throwSkill` does and cannot hold a different opinion about a dark key.
     const uint32_t inHand = sim::familyOf(weapon);
     const uint32_t onArm = sim::armFamily(hero, shield);
@@ -1689,14 +1689,14 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     // "x2.00 base, +0.08 from strength" and the "4.0 s base, -6% from agility". The derivations
     // were the teaching bit and they are the first thing to go all the same: what a player acts on
     // is the multiplier his blow HAS and the wait he actually faces, and both of those already
-    // carry the stat inside them. The formulas live in docs/skills-dk.md, where they are read
+    // carry the stat inside them. The formulas live in docs/game/skills-dk.md, where they are read
     // once, rather than on a card read fifty times a fight.
     tip::Section facts;
     const int64_t left = realm.cooling(row.number);
     const float seconds = float(realm.coolsFor(row.number)) * 0.05f;
 
     // **What it is thrown with, and it is the first row on the card.** Added 2026-09-23 with the
-    // families themselves (docs/skills-dk.md §3.1b): once a skill can only be thrown with its own
+    // families themselves (docs/game/skills-dk.md §3.1b): once a skill can only be thrown with its own
     // kind of weapon, that is the first thing a player needs off the card -- ahead of what it
     // hits for, because it decides whether he can throw it at all and because it is what a
     // weapon in the bag is now judged against.
@@ -1776,7 +1776,7 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     // And the level it was met at, when there is one. On a card this is history rather than a
     // requirement -- a skill he can read about is one he has already learned -- but it is the
     // one line that says why the bar grew a key this level, and it is the number the orb will
-    // ask for when the orbs exist (docs/skills-dk.md §3.3).
+    // ask for when the orbs exist (docs/game/skills-dk.md §3.3).
     if (row.needLevel > 0) {
         facts.rows.push_back(line("Learned at", "level " + std::to_string(row.needLevel),
                                   tip::Tone::Gray));

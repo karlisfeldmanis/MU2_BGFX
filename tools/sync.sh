@@ -19,7 +19,7 @@ mkdir -p "$ASSETS"
 python3 "$TOOLS/sync.py" --src "$SRC" --dst "$ASSETS" "$@"
 # The quest givers' voices, finished WAVs out of tools/voice.py: copied as they are.
 [ -d "$CONTENT/voice" ] && rsync -a --exclude ref "$CONTENT/voice/" "$ASSETS/voice/"
-# Each world's manifest (source/world/<w>/world.json, docs/order-plan.md sprint D): copied as it is,
+# Each world's manifest (content/world/<w>/world.json, docs/plans/order-plan.md sprint D): copied as it is,
 # beside the world's ground, for the client's game/world/world_show.cpp.
 for manifest in $(ls "$CONTENT"/world/*/world.json 2>/dev/null); do
     world=$(basename "$(dirname "$manifest")")

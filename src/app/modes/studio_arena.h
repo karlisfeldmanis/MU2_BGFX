@@ -1,4 +1,4 @@
-// The studio's arena (docs/order-plan.md §9c): a monster fought inside the studio's own window.
+// The studio's arena (docs/plans/order-plan.md §9c): a monster fought inside the studio's own window.
 //
 // The user, 2026-10-12: "if we cook new monster on aida, we see it on aida map where it will be
 // placed and character fighting monster" -- and the fight in the studio, not in a second window.

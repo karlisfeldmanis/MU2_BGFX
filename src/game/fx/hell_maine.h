@@ -37,7 +37,7 @@
 // flickering, orange, fading to the far end, thrown out from the hand. Both blows go at its target. Not carried: EarthQuake (the storm shakes MU's camera
 // every frame it walks), the laser's terrain light, the 10 units off the right hand. MU's numbers
 // are per reference frame, 25 a second, in centimetres. Fed by Play::breedShows from its own
-// clip; nothing here reaches the sim (the realm's blow is a melee, docs/aida-port.md decision 10).
+// clip; nothing here reaches the sim (the realm's blow is a melee, docs/worlds/aida-port.md decision 10).
 #pragma once
 
 #include <cstdint>

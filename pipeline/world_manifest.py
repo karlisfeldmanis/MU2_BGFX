@@ -1,6 +1,6 @@
-"""Each world's manifest, source/world/<w>/world.json, as the pipeline reads it.
+"""Each world's manifest, content/world/<w>/world.json, as the pipeline reads it.
 
-The order plan's sprint D (docs/order-plan.md): what terrain.py, index.py and tools/cook.py kept
+The order plan's sprint D (docs/plans/order-plan.md): what terrain.py, index.py and tools/cook.py kept
 as one dict per fact with a row per world is each world's own `pipeline` block, so a new map is
 its manifest and its art. The scripts keep what a knob does and why; the manifest keeps which
 worlds take it and with what, each row's citation beside it as a `note`.
@@ -145,7 +145,7 @@ def as_operable(value) -> set:
 
 
 # ---- the monsters' nests (sprint E3) -------------------------------------------------------------
-# A world's nests are source/world/<w>/nests.json (mu.db's monster_spawns before it): each a box
+# A world's nests are content/world/<w>/nests.json (mu.db's monster_spawns before it): each a box
 # of tiles holding `count` of one breed. Their ids order them across every world, which is the
 # order the realm raises them in.
 

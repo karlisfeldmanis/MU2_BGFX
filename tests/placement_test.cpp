@@ -64,7 +64,7 @@ void turnLikeMu(const float angles[3], const float in[3], float out[3]) {
     }
 }
 
-// docs/conventions.md: MU's (x, y, z) is our (x, z, -y).
+// docs/reference/conventions.md: MU's (x, y, z) is our (x, z, -y).
 void toOurs(const float mu[3], float out[3]) {
     out[0] = mu[0];
     out[1] = mu[2];

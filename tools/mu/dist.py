@@ -1,4 +1,4 @@
-"""`mu dist macos`: the app a player is given, dist/macos/MU2.app (docs/layout.md).
+"""`mu dist macos`: the app a player is given, dist/macos/MU2.app (docs/plans/layout.md).
 
 Each step is said as it runs:
 
@@ -132,7 +132,7 @@ def bundle(app, say):
 
 def dist(target, say, ref="HEAD", level=12):
     if target != "macos":
-        raise RuntimeError(f"dist {target}: only macos so far (docs/layout.md, Windows and Linux)")
+        raise RuntimeError(f"dist {target}: only macos so far (docs/plans/layout.md, Windows and Linux)")
     started = time.time()
     cores, _ = settings.cores()
     made_from = snapshot(ref, say)

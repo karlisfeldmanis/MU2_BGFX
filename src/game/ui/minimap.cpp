@@ -284,7 +284,7 @@ uint32_t toneOf(Minimap::Glyph glyph) {
     }
 }
 
-// The Dungeon's floor an exit gate lets out on (Gates.cs:119-125, docs/dungeon-port.md): its
+// The Dungeon's floor an exit gate lets out on (Gates.cs:119-125, docs/worlds/dungeon-port.md): its
 // three floors are regions of one map, and the stairs between them are named by where they go.
 const char* floorName(int32_t exitGate) {
     switch (exitGate) {
@@ -500,7 +500,7 @@ bool Minimap::bakeChart(const content::Tables& tables, const content::Ground* gr
 
 void Minimap::setView(const float* view) {
     // bx's view matrix keeps the camera's axes in its columns: right is (0, 4, 8) and up is
-    // (1, 5, 9). On the ground a column is +x and a row is -z (docs/conventions.md), so each
+    // (1, 5, 9). On the ground a column is +x and a row is -z (docs/reference/conventions.md), so each
     // becomes a tile vector with its z negated. Up on the ground is where the camera looks,
     // since it looks down at a slant; flattened, the two are square to one another.
     const auto flat = [](float x, float z, float* out) {

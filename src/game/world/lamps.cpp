@@ -13,7 +13,7 @@
 namespace mu::game {
 namespace {
 
-// MU's units. Its rates are per frame of its 25 Hz reference clock, and docs/conventions.md
+// MU's units. Its rates are per frame of its 25 Hz reference clock, and docs/reference/conventions.md
 // carries the trap: a speed takes one factor of 25, an acceleration two.
 constexpr float kPerMetre = 100.0f;
 
@@ -255,7 +255,7 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
         const char* rides = riddenBone(model);
         // OURS: the Dungeon's dragons breathe. MU hid a wall torch, Object42, inside each of
         // the two heads an Object17 carries -- at the mouth, turned the way the head faces
-        // (docs/dungeon-port.md) -- and its fire rises there like any torch's, which on a
+        // (docs/worlds/dungeon-port.md) -- and its fire rises there like any torch's, which on a
         // dragon reads as a head on fire (the user, 2026-09-30: "it has to go from mouth and
         // more horizontally"). A torch within kBreathReach of an Object17's origin throws its
         // flames out along its drift instead. Only the Dungeon's Object42 carries a fire.

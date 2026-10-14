@@ -1,5 +1,5 @@
 // The studio driven by words: StudioDesk::act, the one list of what MU_STUDIO_DO and the
-// control socket may ask, and the socket itself (docs/order-plan.md §9c, F7).
+// control socket may ask, and the socket itself (docs/plans/order-plan.md §9c, F7).
 //
 //   subject <tab>|<name>   open a tab of the browser and put a name of it on the bench
 //   scene <Stage|Home|w>   stand it there          plus <N>     the shine at +N

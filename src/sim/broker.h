@@ -1,6 +1,6 @@
 #pragma once
 
-// The Broker's book (docs/broker.md): the market a Broker opens in Lorencia, Devias and Noria,
+// The Broker's book (docs/game/broker.md): the market a Broker opens in Lorencia, Devias and Noria,
 // one for all three -- the listings and every character's Collect box, and the rules over them.
 // Ours, WoW's auction house on the user's word (2026-10-11); MU 0.75 has no market.
 //

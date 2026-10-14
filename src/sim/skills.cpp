@@ -17,7 +17,7 @@ namespace {
 // first and forever, and anything new is appended. A row inserted in the middle would hand a
 // saved knight a skill he never learned.
 //
-// The three invented columns, and the reasoning is `docs/skills-dk.md` §3.2:
+// The three invented columns, and the reasoning is `docs/game/skills-dk.md` §3.2:
 //   * `force` spreads around Falling Slash's 2.0, which is the class's own multiplier in 0.75.
 //     The two area skills were paid in coverage rather than in force (Cyclone 1.3), until
 //     Twisting Slash, a free ring at 1.7, left Cyclone nothing to be for. The user, 2026-10-08
@@ -107,7 +107,7 @@ constexpr SkillRow kRows[kSkills] = {
     // it is the knight's staple, "whirl his weapon violently around him" -- so it is the one row
     // here that every family may throw, and it is what keeps the mace and the spear from having
     // a bar of two. Its mana is MU's: MuMain's own orb tooltip reads `Twisting Slash Skill
-    // (Mana:22)` (docs/mu-scrolls-and-orbs.md §5).
+    // (Mana:22)` (docs/reference/mu-scrolls-and-orbs.md §5).
     //
     // **Learned at 60 and not 28, Rageful Blow at 120 and not 44** (the user, 2026-10-02: "lets
     // increase lvl requirments", then "increase ragefull lvl requirtment to 120 and twisting to
@@ -615,7 +615,7 @@ constexpr SkillRow kRows[kSkills] = {
     // band. WebZen holds each blow 200 ms (gObjAddAttackProcMsgSendDelay); here it lands on the
     // let-go with the circle. Its clip is MU's own PLAYER_SKILL_HELL (0.5: ClassAttack.cpp:
     // 1202-1210, ZzzCharacter.cpp:945), the leap and the landing with a hand on the ground --
-    // action 154 in player.muc, one before the enum's 155 (source/players/rig/actions.json); the
+    // action 154 in player.muc, one before the enum's 155 (content/players/rig/actions.json); the
     // landing is half the clip, where the realm lets it go. Its circle and sHellFire are
     // game/fx/hellfire.h.
     //
@@ -626,7 +626,7 @@ constexpr SkillRow kRows[kSkills] = {
     //
     // **Let go on the landing**, not at half the clip (the user, 2026-10-02: "animation has to be
     // in sync with spell. when char lands than there is hellfire"): the clip's hips are over three
-    // metres up from key 1 to key 5 and down at key 6 of 18 (source/players/rig/player.rig.json,
+    // metres up from key 1 to key 5 and down at key 6 of 18 (content/players/rig/player.rig.json,
     // action 154's Bip01 track), so the circle and every blow are a third of the way in.
     //
     // **The wizard's ladder** (the user, 2026-10-05: "hell fire is stroonger than evil spirit,
@@ -684,7 +684,7 @@ constexpr SkillRow kRows[kSkills] = {
     // four tiles of him, once, his wizardry band -- Hellfire's `Spread::Ring` at `reach` 4.
     //
     // Its clip is MU's own PLAYER_SKILL_INFERNO at 0.6 (ClassAttack.cpp:1212-1221, ZzzCharacter.
-    // cpp:944): player.muc's 153, one before the enum's 154, as Hellfire's is (source/players/
+    // cpp:944): player.muc's 153, one before the enum's 154, as Hellfire's is (content/players/
     // rig/actions.json; on the bench 2026-10-02 the low crouch with both arms driven out at the
     // ground). Let go at half the clip, the let-go MU makes the ring of blasts and MODEL_SKILL_
     // INFERNO in (ZzzCharacter.cpp:4574-4583). No cooldown, as Hellfire. Its ring and its
@@ -708,11 +708,11 @@ constexpr SkillRow kRows[kSkills] = {
     //
     // Its clip is MU's own PLAYER_SKILL_FLASH at 0.4 (ClassAttack.cpp:1365-1376, ZzzCharacter.cpp:
     // 943): player.muc's 152, one before the enum's 153, as Inferno's and Hellfire's are
-    // (source/players/rig/actions.json). MU makes the beam with SOUND_FLASH at the let-go
+    // (content/players/rig/actions.json). MU makes the beam with SOUND_FLASH at the let-go
     // (ZzzCharacter.cpp:4551-4554). **Let go as the arm is thrown**, key 5 of 12, not at half the
     // clip (the user, 2026-10-02: "aqua beam cast has to be perfectly synced with cast
     // animation"): the right hand is up over his head to key 5 and out in front of him at key 6,
-    // 187 units on in one key (action 152 in source/players/rig/player.rig.json), and let go at
+    // 187 units on in one key (action 152 in content/players/rig/player.rig.json), and let go at
     // half the beam came two frames after the arm in the arena. No cooldown, a standard spell.
     // Its beam and sAquaFlash are game/fx/aqua.h. 2.0 the band, the top of Hellfire's ladder.
     {.number = skill::kAquaBeam, .name = "Aqua Beam", .mana = 140, .reach = 6.0f, .force = 2.0f,
@@ -846,7 +846,7 @@ constexpr int32_t kBoonGapTicks = 40;
 
 }  // namespace
 
-// ---- the families (docs/skills-dk.md §3.1b) -------------------------------------------------
+// ---- the families (docs/game/skills-dk.md §3.1b) -------------------------------------------------
 
 uint32_t familyOf(const content::Arm* weapon) {
     if (!weapon) return arms::kNone;

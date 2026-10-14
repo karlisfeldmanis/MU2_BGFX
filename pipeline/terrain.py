@@ -1,6 +1,6 @@
 """Reads a MU world out of the client's data, into things the pipeline can build from.
 
-    python3 pipeline/terrain.py <Data/World1> lorencia source/world
+    python3 pipeline/terrain.py <Data/World1> lorencia content/world
 
 A map is four separate files that only mean anything together:
 
@@ -109,7 +109,7 @@ LORENCIA_RANGES = [
 #: though the model is not.
 
 #: Per world, by the server's map number: each world's manifest's `pipeline.hidden`
-#: (source/world/<w>/world.json, read by world_manifest.py), with each row's citation.
+#: (content/world/<w>/world.json, read by world_manifest.py), with each row's citation.
 #:
 #: Read off each world's arm of CreateObject in ZzzObject.cpp, which is where every
 #: `HiddenMesh = -2` in the client is written. Noria has exactly one: type 38, which
@@ -189,7 +189,7 @@ LAVA_SPILL_BY_MAP = world_manifest.by_map("lava_spill")
 #: MuMain skips RenderTerrain on map 10 (MainScene.cpp:463), and the hero walks an unseen plane
 #: at 2.85 m over the clear's navy, the cloud emitters' puffs round him. Every tile keeps its
 #: height and flags -- NoGround would close the road, as the walker counts 0x08 -- so the
-#: switch is the world's, not the tiles'. docs/icarus-port.md.
+#: switch is the world's, not the tiles'. docs/worlds/icarus-port.md.
 SKY_BY_MAP = world_manifest.maps_with("sky")
 
 #: Boxes of a map's grid opened at import, as (x1, y1, x2, y2, bits cleared), inclusive tiles.
@@ -216,7 +216,7 @@ FLOOR_BY_MAP = world_manifest.by_map("floor", world_manifest.as_tuples)
 #: here reaches becomes NoGround, drawn as the void. Ours, marked. Blood Castle's grid is a strip
 #: at x 0-35 in a flat filler plain of 32 000 open tiles at 1.65 m, east and south of it, that no
 #: path reaches; MU's 4:3 camera never showed it, and at 16:9 pulled back it stood round the
-#: castle as a brick field where the user's MuMain shots have black (docs/blood-castle-port.md,
+#: castle as a brick field where the user's MuMain shots have black (docs/worlds/blood-castle-port.md,
 #: Part B decision 1). From the safe court, the statue court and the courtyard's east pocket, which the
 #: run opens and the closed grid does not, so the castle itself stays ground.
 VOID_FILL_BY_MAP = world_manifest.by_map("void_fill", world_manifest.as_tuples)
@@ -230,7 +230,7 @@ VOID_FILL_BY_MAP = world_manifest.by_map("void_fill", world_manifest.as_tuples)
 #: placement standing in a `keep` box: so the walled ravine, which MU means as a chasm, stays
 #: void, and the walls along the map's own edge get ground behind them. The enclosed pits are
 #: never reached. Every tile it reaches copies its nearest ground tile -- height, sheets,
-#: painted light -- and is NoMove. docs/aida-port.md.
+#: painted light -- and is NoMove. docs/worlds/aida-port.md.
 BORDER_FILL_BY_MAP = world_manifest.by_map("border_fill", world_manifest.as_walls)
 
 #: Where a world's void.blend leaves the ground lit, by map number: every tile whose middle is

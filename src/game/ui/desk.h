@@ -284,7 +284,7 @@ private:
     Chat chat_;
     // The other members of his party, top left (game/ui/party_bar.h).
     PartyBar partyBar_;
-    // The guild's windows (game/ui/guild.h, docs/guild.md): G's, and the Guild Master's.
+    // The guild's windows (game/ui/guild.h, docs/game/guild.md): G's, and the Guild Master's.
     GuildWindow guild_;
     GuildMake guildMake_;
     int guildColumn() const;
@@ -369,7 +369,7 @@ private:
     // ONCE -- `autoBound_` is what stops it coming back the moment the player takes it off -- and
     // after that the bar is his: right-click a box to open the list, drag a row onto a key, drag
     // a key's skill onto another to swap the two, drag it back into the list to clear it
-    // (docs/skills-dk.md §3.4, and the user's own gesture, 2026-09-23).
+    // (docs/game/skills-dk.md §3.4, and the user's own gesture, 2026-09-23).
     // Not saved, which is faithful -- there is no SaveHotKey anywhere in MuMain.
     // And the sixth, `Hud::kRightSlot`: what a right-click on a monster throws.
     int32_t bound_[Hud::kSkillBoxes] = {0, 0, 0, 0, 0, 0};

@@ -2,7 +2,7 @@
 // says what each of its parts wears, and the grids that say how high and how walkable each
 // tile is.
 //
-// The ground does not fit the closed material model in docs/conventions.md, and is the one
+// The ground does not fit the closed material model in docs/reference/conventions.md, and is the one
 // thing allowed not to: it blends up to three full material sets by weights shared across
 // every tile on a corner, and carries MU's own baked light in its vertex colour. That is a
 // second shader, not a fourth flag.
@@ -130,7 +130,7 @@ public:
     // MU's baked TerrainLight at a tile, linear, 0..1 a channel. The same light the ground
     // mesh carries in its vertex colour, read off the grid instead so that something standing
     // ON the ground can be given the light of the tile it stands on. NOT sRGB-decoded: it is
-    // a lit result and not an albedo. docs/conventions.md.
+    // a lit result and not an albedo. docs/reference/conventions.md.
     void lightAt(int column, int row, float* rgb) const;
     // What a figure standing at (column, row) -- tiles, fractional -- is lit by, where the world
     // asks for it (`figure_light`, 0 off): MU's painted light through the ground's own curve
@@ -167,7 +167,7 @@ public:
     // A world with no ground drawn at all (the world json's `sky`): Icarus, where MU skips
     // RenderTerrain (MainScene.cpp:463) and the hero walks an unseen plane over the clear's
     // navy. The grid, the heights and the painted light stand for every foot, drop and click;
-    // only the drawing is gone. docs/icarus-port.md.
+    // only the drawing is gone. docs/worlds/icarus-port.md.
     bool sky() const { return sky_; }
     // MU's caustics, where a world has them: the sheet of 32 frames (the showing's `caustic`)
     // and the slot it is laid over, TileWater01's, which MU draws as those frames added rather

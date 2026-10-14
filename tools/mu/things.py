@@ -1,4 +1,4 @@
-"""What a name on the command line is: a recipe in source/, and what it takes to make it.
+"""What a name on the command line is: a recipe in content/, and what it takes to make it.
 
 A Thing knows its kind (object, item, monster, npc, other), its world, its recipe, the files
 the recipe is built from, and where the build puts its .glb. Nothing here runs a tool; make.py
@@ -6,10 +6,10 @@ reads these facts to decide what is stale.
 
 The kind is the recipe's folder, not something the caller repeats:
 
-    source/world/<w>/<Name>.json        object   built as "<w>/<Name>", cooked in <w>
-    source/items/<category>/<Name>.json item     cooked into the wardrobe and every world's tables
-    source/monsters/<Name>.json         monster  cooked as a figure in the recipe's `world`
-    source/npc/<Name>.json              npc      cooked by cook_one
+    content/world/<w>/<Name>.json        object   built as "<w>/<Name>", cooked in <w>
+    content/items/<category>/<Name>.json item     cooked into the wardrobe and every world's tables
+    content/monsters/<Name>.json         monster  cooked as a figure in the recipe's `world`
+    content/npc/<Name>.json              npc      cooked by cook_one
     anything else                       other    cooked by cook_one
 """
 
@@ -23,9 +23,9 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from paths import (ASSETS, BUILD, COOKED, PIPELINE, ROOT, SHEETS, SHOTS, TOOLS,  # noqa: E402,F401
                    WORKSHOP, CONTENT as SOURCE)
 
-# Folders under source/ that hold no recipes of their own.
+# Folders under content/ that hold no recipes of their own.
 NOT_RECIPES = {"textures", "materials", "profiles", "sounds", "voice", "music", "interface",
-               "grades", "lobby"}
+               "grades", "lobby", "sheets"}
 
 
 class NotFound(Exception):
@@ -66,7 +66,7 @@ class Thing:
         return path if os.path.exists(path) else None
 
     def sheets(self):
-        """Every source/textures/*.png the recipe names, by any key."""
+        """Every content/textures/*.png the recipe names, by any key."""
         found = set()
 
         def walk(node):
@@ -120,7 +120,7 @@ def find(name):
                           os.path.join(SOURCE, name + ".json")):
             if os.path.exists(candidate):
                 return Thing(candidate)
-        raise NotFound(f"no recipe source/world/{name}.json or source/{name}.json")
+        raise NotFound(f"no recipe content/world/{name}.json or content/{name}.json")
     hits = []
     for top in sorted(os.listdir(SOURCE)):
         if top in NOT_RECIPES or not os.path.isdir(os.path.join(SOURCE, top)):
@@ -133,7 +133,7 @@ def find(name):
         # which is what the studio's browser has in hand.
         return find(name[3:])
     if not hits:
-        raise NotFound(f"no recipe called {name} under source/")
+        raise NotFound(f"no recipe called {name} under content/")
     if len(hits) > 1:
         names = ", ".join(os.path.relpath(h, SOURCE)[:-5] for h in sorted(hits))
         raise NotFound(f"{name} is more than one recipe, name its folder: {names}")
@@ -143,7 +143,7 @@ def find(name):
 def world_recipes(world):
     folder = os.path.join(SOURCE, "world", world)
     if not os.path.isdir(folder):
-        raise NotFound(f"no world source/world/{world}")
+        raise NotFound(f"no world content/world/{world}")
     return [Thing(p) for p in sorted(glob.glob(os.path.join(folder, "*.json")))
             if not p.endswith(".rig.json") and _is_recipe(p)]
 

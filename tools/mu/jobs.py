@@ -1,4 +1,4 @@
-"""`mu jobs`: what `mu serve` is cooking, and `mu make` handed to it (docs/order-plan.md §9c, F1).
+"""`mu jobs`: what `mu serve` is cooking, and `mu make` handed to it (docs/plans/order-plan.md §9c, F1).
 
     ./mu jobs                   the last jobs: state, the step and its bar, time left
     ./mu jobs --watch [N]       live, until job N (or every job) is finished; Ctrl-C only stops watching

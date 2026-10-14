@@ -69,7 +69,7 @@ constexpr Offer kMartin[] = {
 
 // Hanzo (shop0): the knight's first weapons, the Bronze set, Scale gloves and boots and three
 // shields. **And the knight's four early orbs after them, which are ours**: in 0.75 the weapon
-// WAS the skill (docs/skills-dk.md §1.2), and this shelf is the route that replaces it -- in the
+// WAS the skill (docs/game/skills-dk.md §1.2), and this shelf is the route that replaces it -- in the
 // ladder's own order, the level each asks being the drop level of the first weapon that carried
 // that skill. Only Defense, Uppercut, Falling Slash and Lunge, drop level 20 and under (the user,
 // 2026-10-02: "dont sell best orbs but sell only early game orbs and scrolls"); Cyclone, Slash,
@@ -114,7 +114,7 @@ constexpr Offer kBarmaid[] = {
 };
 
 // **And Lumen's own, which is ours** (the user, 2026-09-30): the same bar, the Horns of Uniria
-// and Dinorant beside the pets (docs/mount.md, ours: 0.75 sells neither, and the Dinorant is
+// and Dinorant beside the pets (docs/game/mount.md, ours: 0.75 sells neither, and the Dinorant is
 // made in a Chaos Machine this game does not have -- the user's pick), with Amy's potions on
 // the two rows below it, laid out as Amy lays them, a single over its three. Lorencia only --
 // Caren keeps the plain bar, since Izabel sells the potions in Devias. **The pets and the mounts
@@ -224,7 +224,7 @@ int orb(int number) {
         case 8: return 800;
         // 9, the Orb of Greater Defense, is not 0.75's 3000 any more: it is the elf's guard and
         // costs what the Orb of Defense and the Scroll of Soul Barrier cost -- the curve at drop
-        // level 6, which its row now carries (the user, 2026-09-28; source/items/misc/Gem03.json).
+        // level 6, which its row now carries (the user, 2026-09-28; content/items/misc/Gem03.json).
         case 10: return 7000;
         case 11: return 150;
         default: return 0;

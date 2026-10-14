@@ -1,0 +1,146 @@
+{
+  "item": "GloveMale25",
+  "mu_name": "Red Spirit Gloves",
+  "mu_name_from": "MuMain loads the set at index 24 from Data/Player/GloveMale25.bmd (ZzzOpenData.cpp:200-210: the sets at index 21-24 are files 22-25, `22 + i`). MU's group 10 number 24.",
+  "why_this_one": "The Muse Elf's second set, after Divine (the user, 2026-10-10: 'cook them', the next sets and weapons after the strongest the heroes have). docs/game/second-class-gear.md.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have no second-class sets).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:259.",
+    "call": "CreateGloves(24, \"Red Spirit Gloves\", 84, 38, 6, 80, 0, 52, 115, 0, 0, 2, 0, 0, 0)",
+    "group": 10,
+    "number": 24,
+    "drop_level": 84,
+    "drops_from_monsters": true,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 38,
+    "durability": 80,
+    "requires": {
+      "level": 0,
+      "strength": 52,
+      "agility": 115,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "attack_speed": 6,
+    "class_level": 2,
+    "class_level_note": "The Muse Elf's alone: OpenMU's elfClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "sheets": {
+    "FGlove": "fglove.png",
+    "hide": "hide.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: red lacquered plate traced in silver over a red pleated skirt and black leather; FShoots_R a violet band; level_man033 her own head and hair, level_man01 the leather under the plate; hide is MU's black cap over the openings.",
+  "material_note": "painted_steel with plate_steel's cast grain at Divine's depth, as her first set: red lacquer, silver painted on. FPants01, the pleated skirt, is cloth; level_man01 under the plate is leather; level_man033 is her hair and face.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "As Divine's: plate_steel's cast grain, at depth 0.02 and range 0.03, since on a glossy lacquer a deeper pit catches its own glint (2026-10-04, 'micro white points').",
+  "effects_note": "MuMain's only arms for the set are the helm's and the pants' slow breath on FShoots_R (see glow_note); no chrome pass.",
+  "sheet_materials": {
+    "FGlove": "painted_steel",
+    "hide": "painted_steel"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 56,
+      "area": 1071.3,
+      "along": [
+        -4.4,
+        8.7
+      ],
+      "mu_uv": [
+        0.018,
+        0.027,
+        0.981,
+        0.964
+      ],
+      "bake_uv": [
+        0.009,
+        0.008,
+        0.94,
+        0.952
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 41,
+      "area": 1414.2,
+      "along": [
+        -7.4,
+        7.5
+      ],
+      "mu_uv": [
+        0.018,
+        0.026,
+        0.947,
+        0.99
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.936,
+        0.938
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 56,
+      "area": 1071.5,
+      "along": [
+        -4.4,
+        8.7
+      ],
+      "mu_uv": [
+        0.018,
+        0.027,
+        0.981,
+        0.964
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.566,
+        0.992
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 41,
+      "area": 1414.5,
+      "along": [
+        -7.4,
+        7.5
+      ],
+      "mu_uv": [
+        0.018,
+        0.026,
+        0.947,
+        0.99
+      ],
+      "bake_uv": [
+        0.009,
+        0.008,
+        0.739,
+        0.741
+      ]
+    }
+  ]
+}

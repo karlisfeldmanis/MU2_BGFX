@@ -101,7 +101,7 @@ void StudioPlace::world(Context& ctx, const std::string& name) {
     world_ = name;
     picked_ = line_ = -1;
     dragging_ = false;
-    file_ = "source/world/" + name + "/" + name + ".json";
+    file_ = "content/world/" + name + "/" + name + ".json";
     source_ = core::parseJsonFile(ctx.paths.root + "/" + file_);
     perTile_ = source_["units_per_tile"].numberOr(100.0);
     models_.clear();

@@ -1,7 +1,7 @@
 // The small maths the engine owns rather than borrows: quaternions, and what a pose does
 // with them.
 //
-// This file exists because of one line in docs/conventions.md: `bx::mtxFromQuaternion`
+// This file exists because of one line in docs/reference/conventions.md: `bx::mtxFromQuaternion`
 // writes a COLUMN-vector matrix into bx's row-vector layout, which is the inverse rotation,
 // and every figure in the project is about to be built out of sixty of them. A rotation that
 // is inverted looks like a bad export rather than like a bug, so there is exactly one

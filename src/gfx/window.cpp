@@ -136,7 +136,7 @@ bool Window::open(const WindowDesc& desc) {
     glfwGetFramebufferSize(handle_, &width_, &height_);
 
     bgfx::Init init;
-    init.type = bgfx::RendererType::Metal;  // this Mac only; see docs/conventions.md
+    init.type = bgfx::RendererType::Metal;  // this Mac only; see docs/reference/conventions.md
     // The window goes on the swap chain, not on platformData: this bgfx asks for it there,
     // and it is the swap chain that carries the size, the formats and the latency. Kept in
     // chain_ so a resize can hand the same description back with only the size changed.
@@ -163,7 +163,7 @@ bool Window::open(const WindowDesc& desc) {
     // Priced on 2026-09-24 with the call taken out, so bgfx ran its own render thread: the
     // same at 2560x1273 (6.34 and 6.31 ms against 6.31 and 6.93, interleaved) and 0.08 ms
     // faster at half scale. The frame is the GPU's, not the encoder's, and a render thread
-    // costs a frame of latency, so it stays on this thread. docs/budget.md.
+    // costs a frame of latency, so it stays on this thread. docs/reference/budget.md.
     //
     // Unless asked (--render-thread, 2026-10-09): a hundred players in Noria put the frame back
     // on the CPU, with 43% of the main thread in bgfx's Metal encoding. On its own thread that
@@ -192,7 +192,7 @@ bool Window::open(const WindowDesc& desc) {
     const bgfx::Caps* caps = bgfx::getCaps();
     core::logf("%s, %dx%d, vsync %s", bgfx::getRendererName(caps->rendererType), width_, height_,
                desc.vsync ? "on" : "off");
-    // Logged because docs/conventions.md refuses to assume any of them.
+    // Logged because docs/reference/conventions.md refuses to assume any of them.
     core::logf("homogeneous depth %d, origin bottom left %d, max texture %u, 32-bit indices %d",
                caps->homogeneousDepth, caps->originBottomLeft, caps->limits.maxTextureSize,
                (caps->supported & BGFX_CAPS_INDEX32) != 0);

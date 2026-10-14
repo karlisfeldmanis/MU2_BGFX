@@ -5,7 +5,7 @@
 // (OpenMU's NpcWindow.ChaosMachine). A cell here is `row * 8 + column`, from 0 to 31, with an
 // item recorded once at the top-left of the rectangle it covers, as in the bag and the vault.
 //
-// **What it makes** (docs/chaos-machine.md), in the order a box is matched against them:
+// **What it makes** (docs/game/chaos-machine.md), in the order a box is matched against them:
 //
 //   * **+10 and +11**, OpenMU's Version095d `ItemLevelUpgradeCrafting`: one thing at +9 (+10),
 //     one Chaos, one Bless and one Soul (two of each for +11), and nothing else. 50% (45%), a
@@ -99,7 +99,7 @@ enum class Recipe : int8_t {
 };
 
 // **2nd Level Wings** (WebZen 1.00.93 MixSystem.cpp WingChaosMix:2470-2990, OpenMU's number 7;
-// docs/wings.md): one 1st level wing, one Jewel of Chaos and one Loch's Feather, and any
+// docs/game/wings.md): one 1st level wing, one Jewel of Chaos and one Loch's Feather, and any
 // excellent things at +4 or more, nothing else. The rate is the wing's price over 4,000,000 and
 // the excellent things' over 40,000 (:2715-2716), at most 100 (:2736); 5,000,000 Zen (:2690).
 // Success is the hero's class's 2nd wing at +0 (ours, as the 1st wings': WebZen's
@@ -116,7 +116,7 @@ const char* secondWingName(Kin kin);
 int firstWingOf(Kin kin);
 const char* firstWingName(Kin kin);
 
-// **The services** (the user, 2026-10-02, docs/chaos-machine.md "Phase two"): the Goblin's box
+// **The services** (the user, 2026-10-02, docs/game/chaos-machine.md "Phase two"): the Goblin's box
 // read four ways, picked on the window's service row. Combine is MU's machine; the other three
 // work the Runes of Creation and their sockets and are invention, all of them.
 //
@@ -216,9 +216,9 @@ Judged judge(const content::Tables& tables, const Machine& box,
              Service service = Service::Combine, int socket = -1, Kin kin = Kin::DarkKnight);
 
 // The Dinorant (WebZen 1.00.93 MixSystem.cpp:2141-2290, PegasiaChaosMix under NEW_FORSKYLAND2,
-// as docs/mount.md takes it): ten Horns of Uniria at their full 255 life and one Chaos, 70%,
+// as docs/game/mount.md takes it): ten Horns of Uniria at their full 255 life and one Chaos, 70%,
 // 500,000 Zen; a failure takes the box. Its three options (30%, then one in five a second) are
-// not rolled: the Dinorant's options are not built (docs/mount.md).
+// not rolled: the Dinorant's options are not built (docs/game/mount.md).
 constexpr int kDinorantHorns = 10;
 constexpr int kDinorantRate = 70;
 constexpr int64_t kDinorantZen = 500000;

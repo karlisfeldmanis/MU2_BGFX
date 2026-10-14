@@ -1,5 +1,5 @@
 // What every pass shares: the uniform block, and the sky that both the ambient and the
-// reflections are read out of. See docs/conventions.md for what is linear and what is not.
+// reflections are read out of. See docs/reference/conventions.md for what is linear and what is not.
 #ifndef MU2_COMMON_SH
 #define MU2_COMMON_SH
 
@@ -41,7 +41,7 @@ SAMPLER2D(s_orm,      2);
 SAMPLER2D(s_emissive, 3);
 
 // The shadow map is read twice, which Metal allows: once through the compare sampler for
-// the filtered result, once as plain depth to find the blocker. docs/conventions.md.
+// the filtered result, once as plain depth to find the blocker. docs/reference/conventions.md.
 SAMPLER2DSHADOW(s_shadowCompare, 4);
 SAMPLER2D(s_shadowDepth, 5);
 
@@ -126,7 +126,7 @@ vec3 dusty(vec3 colour, vec3 wpos)
 	vec3 air = mix(colour, u_dust.rgb * lit, amount);
 	if (u_edge.z <= 0.0) return air;
 	// How far this point is from the nearest of the map's four sides. Columns run +x and rows
-	// run -z (docs/conventions.md), so the map is the box (0,0) to (u_edge.x, -u_edge.y).
+	// run -z (docs/reference/conventions.md), so the map is the box (0,0) to (u_edge.x, -u_edge.y).
 	float toEdge = min(min(wpos.x, u_edge.x - wpos.x), min(-wpos.z, u_edge.y + wpos.z));
 	// Smooth, so the band has no edge of its own to be seen: a straight ramp would put a line
 	// where the darkening begins, which is the same fault a few metres further in. Nothing at

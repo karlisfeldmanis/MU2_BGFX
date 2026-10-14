@@ -6,7 +6,7 @@
 // implementing the one `Realm` declared in `realm.h`. This was its anonymous namespace, and it
 // had to become something all four can see.
 //
-// It is a better place for them than the top of one .cpp. docs/conventions.md's rule for this
+// It is a better place for them than the top of one .cpp. docs/reference/conventions.md's rule for this
 // layer is that "every constant is traced to OpenMU's Version075, MuMain's own C++ or mu.db,
 // with the source named in a comment, and a departure is marked `invention` on the line that
 // makes it" -- and a reader checking that rule now has one page to read rather than a file to
@@ -197,7 +197,7 @@ struct WardenRow {
 constexpr WardenRow kWardens[] = {
     {247, 90, 10000, 180, 195, 70, 5, 7, 8, 30, 300, 100},  // Crossbow Guard
     {249, 90, 10000, 180, 195, 70, 2, 7, 8, 30, 300, 100},  // Berdysh Guard
-    // The Golden Archer at the Dungeon's arch (docs/golden-archer.md), ours, the user's of
+    // The Golden Archer at the Dungeon's arch (docs/game/golden-archer.md), ours, the user's of
     // 2026-09-30: "has to protect the gate, by one shoting monster which come close ... dont
     // move to much just 1". A crossbow's six tiles, a step off his post at most, and a blow of
     // twice what it hits -- the band's spread and the defence cannot save it -- at an attack rate
@@ -346,14 +346,14 @@ struct Chiller {
 // The Lost Tower's Death Gorgon (35) and Balrog (38), A.Type 150 in WebZen's Monster.txt: one blow
 // in five is skill 50, Flame of Evil, on everyone within five tiles (gObjMonster.cpp:1849-1925,
 // 1738-1752) -- with one player, the blow on him, at the monster's own damage band. OpenMU 075
-// never creates its skill 150, so there they only melee; WebZen's, docs/lost-tower-port.md.
-// And Atlans's Hydra (49), A.Type 150 the same (Monster.txt:72; docs/atlans-port.md 4.2).
+// never creates its skill 150, so there they only melee; WebZen's, docs/worlds/lost-tower-port.md.
+// And Atlans's Hydra (49), A.Type 150 the same (Monster.txt:72; docs/worlds/atlans-port.md 4.2).
 // And Tarkan's Tantallos (58), Zaikan (59) and Death Beam Knight (63), A.Type 150 (WebZen
-// Monster.txt:61, :73, :74; docs/tarkan-port.md 4.2): all 63 Tantallos, not only the bosses.
+// Monster.txt:61, :73, :74; docs/worlds/tarkan-port.md 4.2): all 63 Tantallos, not only the bosses.
 // And the Golden Dragon (79), A.Type 150 in WZD Monster.txt:287 -- the raid's boss
-// (docs/golden-dragon-raid.md).
+// (docs/game/golden-dragon-raid.md).
 // And Icarus's Drakan (73), Phantom Knight (72) and Great Drakan (75), A.Type 150 (WZO
-// Monster.txt:56-66; docs/icarus-port.md A 4.2).
+// Monster.txt:56-66; docs/worlds/icarus-port.md A 4.2).
 // And the Dark Phoenix (77), WZO's boss (Monster.txt:76).
 
 // ---- blows split into parts --------------------------------------------------------------------
@@ -419,7 +419,7 @@ struct Bulk {
 };
 
 // ---- the breeds' rows ------------------------------------------------------------------------
-// Each monster recipe's `rules` (source/monsters/<Name>.json, sprint E1): the lists the blocks
+// Each monster recipe's `rules` (content/monsters/<Name>.json, sprint E1): the lists the blocks
 // above describe, by breed number. `./mu make realm` writes them.
 #include "sim/breeds_table.inc"
 
@@ -428,7 +428,7 @@ struct Bulk {
 // lay, MU's ATTACK2, as the drawing's SwordCount % 3 had swung it; a fire lay that lands sets him
 // burning for kHeroBurnTicks, a pulse each kHeroBurnEvery of kHeroBurnShare of the blow, unless
 // his fire resistance turns it aside; one at a time, never his last point, his shield first, as
-// a poison. MU gives Hell Maine no debuff (docs/aida-port.md, Hell Maine).
+// a poison. MU gives Hell Maine no debuff (docs/worlds/aida-port.md, Hell Maine).
 constexpr int32_t kHeroBurnTicks = 100;
 constexpr int32_t kHeroBurnEvery = 20;
 constexpr float kHeroBurnShare = 0.1f;

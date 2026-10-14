@@ -1,0 +1,357 @@
+{
+  "item": "HelmMale25",
+  "mu_name": "Red Spirit Helm",
+  "mu_name_from": "MuMain loads the set at index 24 from Data/Player/HelmMale25.bmd (ZzzOpenData.cpp:200-210: the sets at index 21-24 are files 22-25, `22 + i`). MU's group 7 number 24.",
+  "why_this_one": "The Muse Elf's second set, after Divine (the user, 2026-10-10: 'cook them', the next sets and weapons after the strongest the heroes have). docs/game/second-class-gear.md.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have no second-class sets).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:86.",
+    "call": "CreateArmor(24, 2, 2, 2, \"Red Spirit Helm\", 93, 46, 80, 0, 52, 115, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0)",
+    "group": 7,
+    "number": 24,
+    "drop_level": 93,
+    "drops_from_monsters": true,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 46,
+    "durability": 80,
+    "requires": {
+      "level": 0,
+      "strength": 52,
+      "agility": 115,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Muse Elf's alone: OpenMU's elfClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "sheets": {
+    "level_man033": "level_man033.png",
+    "FHelm": "fhelm.png",
+    "hide": "hide.png",
+    "FShoots_R": "fshoots_r.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: red lacquered plate traced in silver over a red pleated skirt and black leather; FShoots_R a violet band; level_man033 her own head and hair, level_man01 the leather under the plate; hide is MU's black cap over the openings.",
+  "material_note": "painted_steel with plate_steel's cast grain at Divine's depth, as her first set: red lacquer, silver painted on. FPants01, the pleated skirt, is cloth; level_man01 under the plate is leather; level_man033 is her hair and face.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "As Divine's: plate_steel's cast grain, at depth 0.02 and range 0.03, since on a glossy lacquer a deeper pit catches its own glint (2026-10-04, 'micro white points').",
+  "effects_note": "MuMain's only arms for the set are the helm's and the pants' slow breath on FShoots_R (see glow_note); no chrome pass.",
+  "glow": {
+    "FShoots_R": {
+      "pulse": [
+        0.4,
+        0.6
+      ],
+      "pulse_rate": "slow"
+    }
+  },
+  "glow_note": "`case MODEL_RED_SPIRIT_PANTS: case MODEL_RED_SPIRIT_HELM`: BlendMeshLight = sin(WorldTime*0.001)*0.4+0.6 (ZzzObject.cpp:5248-5250, again at :9945-9948), and FShoots_R's `_R` makes TextureScript draw that mesh bright (TextureScript.cpp:38): the violet band breathes, added, at the 2nd wings' slow rate (pulse_rate slow, tools/cook.py mode bit 3).",
+  "sheet_materials": {
+    "level_man033": "hair",
+    "FHelm": "painted_steel",
+    "hide": "painted_steel",
+    "FShoots_R": "painted_steel"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 272,
+      "area": 2286.9,
+      "along": [
+        -11.4,
+        19.0
+      ],
+      "mu_uv": [
+        -0.157,
+        0.014,
+        0.985,
+        1.008
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.979,
+        0.988
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 21,
+      "area": 179.8,
+      "along": [
+        -0.3,
+        9.9
+      ],
+      "mu_uv": [
+        0.749,
+        0.006,
+        0.985,
+        0.356
+      ],
+      "bake_uv": [
+        0.594,
+        0.227,
+        0.822,
+        0.563
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 21,
+      "area": 179.8,
+      "along": [
+        -0.3,
+        9.9
+      ],
+      "mu_uv": [
+        0.749,
+        0.006,
+        0.985,
+        0.356
+      ],
+      "bake_uv": [
+        0.581,
+        0.013,
+        0.834,
+        0.259
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 4,
+      "area": 50.9,
+      "along": [
+        -16.2,
+        1.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.013,
+        0.971,
+        0.996
+      ],
+      "bake_uv": [
+        0.59,
+        0.814,
+        0.66,
+        0.885
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 4,
+      "area": 79.8,
+      "along": [
+        -22.0,
+        1.5
+      ],
+      "mu_uv": [
+        0.0,
+        0.013,
+        0.971,
+        0.996
+      ],
+      "bake_uv": [
+        0.836,
+        0.012,
+        0.906,
+        0.083
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 4,
+      "area": 144.4,
+      "along": [
+        -29.0,
+        2.0
+      ],
+      "mu_uv": [
+        0.0,
+        0.013,
+        0.971,
+        0.996
+      ],
+      "bake_uv": [
+        0.836,
+        0.483,
+        0.906,
+        0.554
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 4,
+      "area": 87.0,
+      "along": [
+        -20.1,
+        3.4
+      ],
+      "mu_uv": [
+        0.0,
+        0.013,
+        0.971,
+        0.996
+      ],
+      "bake_uv": [
+        0.848,
+        0.684,
+        0.918,
+        0.755
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 4,
+      "area": 50.9,
+      "along": [
+        -16.2,
+        1.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.013,
+        0.971,
+        0.996
+      ],
+      "bake_uv": [
+        0.219,
+        0.852,
+        0.289,
+        0.923
+      ]
+    },
+    {
+      "island": 8,
+      "material": "painted_steel",
+      "triangles": 4,
+      "area": 79.8,
+      "along": [
+        -22.0,
+        1.5
+      ],
+      "mu_uv": [
+        0.0,
+        0.013,
+        0.971,
+        0.996
+      ],
+      "bake_uv": [
+        0.86,
+        0.107,
+        0.93,
+        0.178
+      ]
+    },
+    {
+      "island": 9,
+      "material": "painted_steel",
+      "triangles": 4,
+      "area": 144.4,
+      "along": [
+        -29.0,
+        2.0
+      ],
+      "mu_uv": [
+        0.0,
+        0.013,
+        0.971,
+        0.996
+      ],
+      "bake_uv": [
+        0.855,
+        0.88,
+        0.925,
+        0.951
+      ]
+    },
+    {
+      "island": 10,
+      "material": "painted_steel",
+      "triangles": 4,
+      "area": 87.0,
+      "along": [
+        -20.1,
+        3.4
+      ],
+      "mu_uv": [
+        0.0,
+        0.013,
+        0.971,
+        0.996
+      ],
+      "bake_uv": [
+        0.459,
+        0.889,
+        0.529,
+        0.96
+      ]
+    },
+    {
+      "island": 11,
+      "material": "painted_steel",
+      "triangles": 12,
+      "area": 842.2,
+      "along": [
+        -20.6,
+        7.1
+      ],
+      "mu_uv": [
+        -0.535,
+        0.001,
+        1.535,
+        0.999
+      ],
+      "bake_uv": [
+        0.72,
+        0.587,
+        0.869,
+        0.659
+      ]
+    },
+    {
+      "island": 12,
+      "material": "hair",
+      "triangles": 112,
+      "area": 2972.0,
+      "along": [
+        -13.0,
+        18.3
+      ],
+      "mu_uv": [
+        0.502,
+        0.606,
+        0.993,
+        1.0
+      ],
+      "bake_uv": [
+        0.014,
+        0.013,
+        0.872,
+        0.946
+      ]
+    }
+  ]
+}

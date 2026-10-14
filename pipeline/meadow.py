@@ -1,4 +1,4 @@
-"""Paints the meadow's wild plants into one sheet, source/effects/grass/wild.png.
+"""Paints the meadow's wild plants into one sheet, content/effects/grass/wild.png.
 
     python3 pipeline/meadow.py [--seed 7] [--preview out.png]
 

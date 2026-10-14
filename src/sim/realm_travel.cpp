@@ -12,7 +12,7 @@ namespace {
 
 // `OM/Version075/Gates.cs:45-50`. The towns land on their spawn gates, whose middles are
 // game/world/maps.cpp's arrival tiles (gates 17, 27, 22), and face nowhere in particular; the
-// Dungeon's three on exit gates 2, 6 and 10 (docs/dungeon-port.md §1.2-1.3), facing as those do.
+// Dungeon's three on exit gates 2, 6 and 10 (docs/worlds/dungeon-port.md §1.2-1.3), facing as those do.
 // Every level here is MU's doubled, ours, as the gates' are (sim/gates.cpp; the user, 2026-10-04:
 // 'fix tab travels also'): the experience is 100x. The prices are MU's. The two towns ask no
 // level, ours (the user, 2026-10-04: 'allow to fast travel to noria and lorencia from the
@@ -26,7 +26,7 @@ constexpr TravelRow kRows[kTravels] = {
     {"Dungeon", 1, 40, 3000, 108, 247, -1, -1, "dungeon"},
     {"Dungeon 2", 1, 80, 3500, 232, 126, -1, -1, "dungeon_2"},
     {"Dungeon 3", 1, 100, 4000, 3, 84, 1, -1, "dungeon_3"},
-    // `Gates.cs:51-57` (docs/lost-tower-port.md §2.3): LostTower lands in the safe hall, on spawn
+    // `Gates.cs:51-57` (docs/worlds/lost-tower-port.md §2.3): LostTower lands in the safe hall, on spawn
     // gate 42, facing nowhere; LostTower2-7 on each floor's arrival gate, 31-41, as those face.
     // The hall at the Devias door's 80, not 100 (the user, 2026-10-09): Devin's errand sends the
     // hero to Tersia from 80, and speaking to her opens this row.
@@ -46,12 +46,12 @@ constexpr TravelRow kRows[kTravels] = {
     // Zen at 140 on spawn gate 57 (Gates.cs:67). Ours: level 100 as the Atlans door asks, landing
     // on the town at 195,65 (WZ's middle, 195,61, is a closed statue block), facing nowhere. It
     // opens when he speaks to the Keeper of Kantur there, a quest giver since 2026-10-06
-    // (docs/tarkan-quest.md), or with The Road of Kantur handed in. docs/tarkan-port.md.
+    // (docs/game/tarkan-quest.md), or with The Road of Kantur handed in. docs/worlds/tarkan-port.md.
     {"Tarkan", 8, 100, 8000, 195, 65, 0, 0, "tarkan"},
-    // Icarus, after it for the same reason (docs/icarus-port.md step 8, decision 1): Season Six's
+    // Icarus, after it for the same reason (docs/worlds/icarus-port.md step 8, decision 1): Season Six's
     // 10,000 Zen, landing at the door, 15,13, facing nowhere; level 160 as the door asks (gate
     // 62), and refused without wings or a Dinorant worn, as the door refuses (Wings). It opens
-    // when Tersia's The Sky Door is taken (docs/icarus-quest.md), or as he stands in Icarus.
+    // when Tersia's The Sky Door is taken (docs/game/icarus-quest.md), or as he stands in Icarus.
     {"Icarus", 10, 160, 10000, 15, 13, 0, 0, "icarus"},
 };
 
@@ -68,7 +68,7 @@ constexpr Chain kChains[] = {{1, 236, 0}, {4, 566, 1}};
 
 // Where a quest's hunt is: the breeds standing on a row's ground, by MU number, so a quest that
 // sends him to hunt them opens the trip there (Realm::openChained). The Lost Tower's floors as
-// docs/lost-tower-port.md's spawn count has them; Atlans's seven (docs/atlans-port.md).
+// docs/worlds/lost-tower-port.md's spawn count has them; Atlans's seven (docs/worlds/atlans-port.md).
 struct Hunted {
     const char* row;
     int32_t breeds[8];
@@ -119,7 +119,7 @@ void Realm::discover(int32_t map) {
 
 void Realm::settleFound(uint32_t saved) {
     // The floors, once: a Dungeon's are separate walkable regions of the one map, and two of them
-    // share a bounding box (docs/dungeon-port.md §1.2), so each is filled from its landing.
+    // share a bounding box (docs/worlds/dungeon-port.md §1.2), so each is filled from its landing.
     const uint32_t rows = travelRowsOf(int32_t(tables_->map));
     floors_.clear();
     if (rows & (rows - 1)) {
@@ -168,7 +168,7 @@ void Realm::settleFound(uint32_t saved) {
     }
     // Unless its floors are its own: a map split into floors with no quest chain over them -- the
     // Lost Tower -- opens each floor's row as he stands on it (reachFloor), so the hall does not
-    // open the warp to the seventh floor (docs/lost-tower-port.md, Decision 1). The Dungeon's
+    // open the warp to the seventh floor (docs/worlds/lost-tower-port.md, Decision 1). The Dungeon's
     // floors are the Golden Archer's chain's, and open with the map as before.
     bool chained = false;
     for (int i = 0; i < kTravels; ++i) {

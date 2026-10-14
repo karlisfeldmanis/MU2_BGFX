@@ -1,4 +1,4 @@
-// The party, down the left side at middle height (docs/party.md, sprint 2): each other member's
+// The party, down the left side at middle height (docs/game/party.md, sprint 2): each other member's
 // name and level, his shield, health and mana, as the server last said them (net::PartyState, a
 // second apart). In the Golden Dragon's fight, the rest of the raid under them, a line each.
 //

@@ -15,11 +15,11 @@
 // on player bone 34 -- Bip01 L Clavicle -- at (20, 0, 0) in the bone's frame, in the bone's
 // own rotation, at the character's scale, PlaySpeed 0.5 (ZzzCharacter.cpp:15433-15466).
 //
-// **The Horn of Uniria is ridden** (docs/mount.md): its horse, Rider01, stands on his spot
+// **The Horn of Uniria is ridden** (docs/game/mount.md): its horse, Rider01, stands on his spot
 // facing his way, under his ride clips, and is hidden in town where he walks.
 //
 // Not yet here: the Angel's four grey sparks a frame and green BITMAP_LIGHT, and the Imp's red
-// one (docs/pets.md).
+// one (docs/game/pets.md).
 #pragma once
 
 #include <algorithm>

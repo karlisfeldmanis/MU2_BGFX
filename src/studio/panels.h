@@ -1,4 +1,4 @@
-// The studio's panels, F2 of the Cooker (docs/order-plan.md §9c): the browser down the left,
+// The studio's panels, F2 of the Cooker (docs/plans/order-plan.md §9c): the browser down the left,
 // the subject's card at the top right, the jobs along the bottom. ImGui, drawn between
 // gfx::Gui's begin() and end(); no bgfx and no bench here, so cooker_test draws them with no
 // window. What the panels see of the bench is Shelf, filled by the mode; what a click asks

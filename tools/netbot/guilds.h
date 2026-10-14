@@ -1,4 +1,4 @@
-// **The guilds' board** (docs/guild.md, "Bots"; netbot --guilds). The user, 2026-10-13: "idea is
+// **The guilds' board** (docs/game/guild.md, "Bots"; netbot --guilds). The user, 2026-10-13: "idea is
 // that in guild bots has to act different their goal is to be stronger as group", with the picks:
 // bots found their own guilds, at level 100 at the Guild Master in Devias as a player does; a
 // master invites and a guildless bot asks; a master recruits for what the guild lacks (a tank, an

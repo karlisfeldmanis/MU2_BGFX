@@ -8,7 +8,7 @@
 namespace mu::game {
 namespace {
 
-// MU's reference clock. Every rate in this file is per frame of it, and docs/conventions.md
+// MU's reference clock. Every rate in this file is per frame of it, and docs/reference/conventions.md
 // carries the trap: a speed takes one factor of 25 and an acceleration two.
 constexpr float kReference = 25.0f;
 // MU's units in a metre. A tile is a hundred of them and a tile is a metre here.

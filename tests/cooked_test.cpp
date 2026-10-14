@@ -58,7 +58,7 @@ int main() {
                 town.instances.size(), town.chunks.size(), town.chunkTiles, town.models.size(),
                 town.size);
 
-    check(town.metresPerTile == 1.0f, "one tile is one metre, as docs/conventions.md says");
+    check(town.metresPerTile == 1.0f, "one tile is one metre, as docs/reference/conventions.md says");
     check(town.size % town.chunkTiles == 0 || town.chunks.size() > 0, "the chunk grid covers the map");
 
     // The lamps, sprint 8a. Eleven of Lorencia's models carry fifteen lights between them
@@ -478,7 +478,7 @@ int main() {
                 // rock 150 m wide -- which is the failure this bound exists to catch.
                 for (int axis = 0; axis < 3; ++axis) {
                     check(mesh.max[axis] - mesh.min[axis] < 10.0f,
-                          one.name + " is in metres, as docs/conventions.md asks of a mesh");
+                          one.name + " is in metres, as docs/reference/conventions.md asks of a mesh");
                 }
                 for (size_t p = 0; p < mesh.parts.size(); ++p) {
                     const mu::content::CookedMaterial& material =

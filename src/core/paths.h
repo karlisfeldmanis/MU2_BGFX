@@ -4,7 +4,7 @@
 
 namespace mu::core {
 
-// Every folder the game reads or writes, decided in one place (docs/layout.md). A developer's
+// Every folder the game reads or writes, decided in one place (docs/plans/layout.md). A developer's
 // build finds them where CMake's MU_DIRS says the checkout keeps them; the player's build will
 // find its data beside the executable and write into the player's own user folder. Nothing else
 // in src/ names a top-level folder.

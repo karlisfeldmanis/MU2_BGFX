@@ -1,6 +1,6 @@
 #pragma once
 
-// The one door between the client and the realm (docs/server-plan.md phase 1, batch 4 of
+// The one door between the client and the realm (server/README.md phase 1, batch 4 of
 // docs/sprints/17-the-seam.md). The client asks through `send` -- every click, key and window
 // action is a sim::Command -- and moves the world on through `step`; it reads what happened and
 // what is there, and changes nothing else.
@@ -70,14 +70,14 @@ public:
     // oldest first, appended to `into`. Nothing on a realm of this process: no one to hear.
     virtual void say(const net::Say& said) {}
     virtual void takeHeard(std::vector<net::Heard>& into) {}
-    // **The party** (docs/party.md, net::PartyAsk, net::PartyState): an ask of it, and his party
+    // **The party** (docs/game/party.md, net::PartyAsk, net::PartyState): an ask of it, and his party
     // as the server last said it -- empty for none. Nothing on a realm of this process.
     virtual void askParty(const net::PartyAsk& asked) {}
     virtual const net::PartyState& party() const {
         static const net::PartyState none;
         return none;
     }
-    // **The guild** (docs/guild.md, net::GuildAsk and its answers): an ask of it, his guild as the
+    // **The guild** (docs/game/guild.md, net::GuildAsk and its answers): an ask of it, his guild as the
     // server last said it (id 0 for none), a guild's name and mark by its id (null for one not
     // yet said), a player's guild by his body's id (0 for none), and the calls to answer -- an
     // invite to him, or an ask of his guild -- as they come. Nothing on a realm of this process.
@@ -96,7 +96,7 @@ public:
         static const net::Invasion none;
         return none;
     }
-    // **The Broker** (docs/broker.md, net/broker_wire.h): an ask of the market, and its answers
+    // **The Broker** (docs/game/broker.md, net/broker_wire.h): an ask of the market, and its answers
     // as they come, oldest first. A realm of this process has no market -- it is the server's,
     // shared by every map -- so its ask is answered Closed.
     virtual void askBroker(const net::BrokerAsk& asked) { closedAsk_ = asked.ask; }

@@ -1,7 +1,7 @@
 // The ear, with no device: `build/sound_test`.
 //
 // Foundation 9 -- what can be checked without a window is checked without one, and sound
-// cannot be looked at at all. Everything docs/spatial-sound.md's steps A to D promise is a
+// cannot be looked at at all. Everything docs/reference/spatial-sound.md's steps A to D promise is a
 // number in the mix: which ear a thing on the right of the screen is in, how quiet it is at
 // the frame's edge, how dull it is far off, how loud six plays on one tick are, and how many
 // voices a crowd gets. So the game's own Sound is opened offline, over the cooked showing,

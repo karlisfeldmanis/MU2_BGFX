@@ -1,4 +1,4 @@
-"""Cuts the silhouette out of each of MU's empty-slot plates, into source/interface.
+"""Cuts the silhouette out of each of MU's empty-slot plates, into content/interface.
 
 MU paints an empty worn slot with `win_slot_*.png`: a gold-rimmed plate of dark leather with a
 diamond weave, and the shape of what goes there -- a helm, a boot, a sword -- painted a little

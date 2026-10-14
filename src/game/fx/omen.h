@@ -1,4 +1,4 @@
-// The raid's tells on the ground (docs/golden-dragon-raid.md §1, "a clear telegraph before every
+// The raid's tells on the ground (docs/game/golden-dragon-raid.md §1, "a clear telegraph before every
 // big hit"): where the Golden Dragon's next blow lands, marked before it lands.
 //
 // **Ours, all of it.** MU marks nothing on the ground before a monster's blow -- its bosses roar

@@ -1,4 +1,4 @@
-// Dear ImGui on bgfx, for the studio's panels and nothing else (docs/order-plan.md §9c, F2).
+// Dear ImGui on bgfx, for the studio's panels and nothing else (docs/plans/order-plan.md §9c, F2).
 //
 // The user's pick, 2026-10-11: the editor's panels are ImGui, the game's own UI stays as it
 // is. So this is drawn only by the studio, into its own view after the HUD (ViewGui), and no

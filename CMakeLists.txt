@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.22)
 project(mu2 LANGUAGES C CXX)
-# What bootstrap.sh fetches: bgfx, the headers, zstd and the faces (docs/layout.md, third_party/).
+# What bootstrap.sh fetches: bgfx, the headers, zstd and the faces (docs/plans/layout.md, third_party/).
 set(MU_EXTERN ${CMAKE_SOURCE_DIR}/third_party/extern)
 # The server's own build, on a box with no screen (server/README.md phase 4; the Hetzner
 # box): core, the content it reads, the sim and their tests, and no bgfx, glfw, shader or
 # Metal. `cmake -S . -B build-server -G Ninja -DMU2_SERVER_ONLY=ON`.
 option(MU2_SERVER_ONLY "build only what a server links: core, content data, sim, tests" OFF)
-# The player's build (docs/layout.md, "What a player is given"): the game and nothing else -- no
+# The player's build (docs/plans/layout.md, "What a player is given"): the game and nothing else -- no
 # studio, bench or developer switch -- reading its data from the packs inside the bundle and
 # writing into the player's own folder. Configured in a folder of its own by `./mu dist`.
 option(MU2_SHIP "the player's build: lobby only, player switches only, data from packs" OFF)
@@ -62,7 +62,7 @@ endforeach()
 find_package(glfw3 3.3 REQUIRED)
 
 # ---- shaders ------------------------------------------------------------------------------
-# Metal only, by decision; see docs/conventions.md.
+# Metal only, by decision; see docs/reference/conventions.md.
 set(SHADER_DIR ${CMAKE_SOURCE_DIR}/shaders)
 set(SHADER_OUT ${CMAKE_BINARY_DIR}/shaders)
 # Where shaderc finds bgfx_shader.sh. Without it every shader that includes common.sh fails
@@ -104,13 +104,13 @@ add_custom_target(mu2_shaders DEPENDS ${VS_OUT} ${FS_OUT} ${CS_OUT})
 endif()  # NOT MU2_SERVER_ONLY: bgfx, glfw, shaders
 
 # ---- the game -----------------------------------------------------------------------------
-# The layers of docs/architecture.md, one static library each, and each linking only what is
+# The layers of docs/reference/architecture.md, one static library each, and each linking only what is
 # below it. tools/layercheck.py enforces the include arrows in the `checks` target below; the
 # link enforces the rest: mu_sim cannot reach a bgfx symbol because nothing it links has one.
 # That is what the server needs -- core + content_data + sim, and no window (sprint 16, step 1,
 # and server/README.md phase 4). Each source is listed once, here; the tools link libraries.
 set(MU_WARNINGS -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers)
-# Every top-level folder, named once here (docs/layout.md) and read back through core::folders().
+# Every top-level folder, named once here (docs/plans/layout.md) and read back through core::folders().
 # Moving one is a change to this block and nothing in src/.
 set(MU_ROOT ${CMAKE_SOURCE_DIR})
 # Everything a build, a cook or a run makes: deleting it costs a rebuild and a cook, nothing else.
@@ -119,10 +119,10 @@ set(MU_ASSETS ${MU_OUT}/assets)
 set(MU_DIRS
   MU2_SHADER_DIR="${SHADER_OUT}/metal"
   MU2_ASSET_DIR="${MU_ASSETS}"
-  MU2_SHEET_DIR="${MU_ROOT}/sheets"
+  MU2_SHEET_DIR="${MU_ROOT}/content/sheets"
   MU2_ROOT_DIR="${MU_ROOT}"
   MU2_FONT_DIR="${MU_EXTERN}"
-  MU2_CONTENT_DIR="${MU_ROOT}/source"
+  MU2_CONTENT_DIR="${MU_ROOT}/content"
   MU2_WORK_DIR="${MU_OUT}/workshop"
   MU2_USER_DIR="${MU_OUT}/saves"
   MU2_SHOT_DIR="${MU_OUT}/shots"
@@ -261,7 +261,7 @@ target_compile_definitions(mu2_server PRIVATE MU2_ASSET_DIR="${MU_ASSETS}")
 target_compile_options(mu2_server PRIVATE ${MU_WARNINGS})
 
 # The server's own checks, with no socket: the store, the account's rules, the chat's allowance,
-# and a world raised by the server against a mirror raised from its Welcome (docs/order-plan.md
+# and a world raised by the server against a mirror raised from its Welcome (docs/plans/order-plan.md
 # sprint C). Its jobs' files, without main.cpp's loop.
 add_executable(server_test EXCLUDE_FROM_ALL
   tests/server_test.cpp
@@ -320,7 +320,7 @@ if(APPLE)
   target_compile_definitions(mu_gfx PRIVATE GLFW_EXPOSE_NATIVE_COCOA)
 endif()
 
-# The client's line to the realm (src/client, docs/order-plan.md sprint C): the Link, the
+# The client's line to the realm (src/client, docs/plans/order-plan.md sprint C): the Link, the
 # in-process LocalLink and the RemoteLink a mirror plays the server's ticks through. Below game,
 # so the net bot links it without the renderer.
 add_library(mu_client STATIC
@@ -494,7 +494,7 @@ target_compile_options(mu_game PRIVATE ${MU_WARNINGS})
 # miniaudio is one vendored header of tens of thousands of lines; its warnings are not ours.
 set_source_files_properties(src/game/miniaudio.cpp PROPERTIES COMPILE_OPTIONS "-w")
 
-# ---- the studio's panels (docs/order-plan.md §9c, the Cooker) ------------------------------
+# ---- the studio's panels (docs/plans/order-plan.md §9c, the Cooker) ------------------------------
 # Dear ImGui, bgfx's own 3rdparty copy (so its version is the one bootstrap.sh pins), copied
 # into the build with src/gfx/gui_config.h as its imconfig.h: imgui.h includes the imconfig.h
 # beside it whatever IMGUI_USER_CONFIG says, and bgfx's wants bx, its allocator and its widgets.
@@ -654,7 +654,7 @@ target_compile_options(boids_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
 # The mix, which cannot be looked at: the game's own Sound opened with no device over the
 # cooked showing, played at, and measured -- pan, the frame's edge, the air, the merge and the
-# budget. docs/spatial-sound.md. Writes sound_test.wav beside itself for the ear.
+# budget. docs/reference/spatial-sound.md. Writes sound_test.wav beside itself for the ear.
 add_executable(sound_test EXCLUDE_FROM_ALL
   tests/sound_test.cpp
   src/game/sound.cpp
@@ -744,8 +744,8 @@ target_compile_definitions(botwatch PRIVATE MU2_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
 target_compile_options(botwatch PRIVATE -Wall -Wextra -Wno-unused-parameter)
 endif()
 
-# The raid, headless: the Golden Dragon against source/raid/party.json, played to a kill or a
-# wipe as many times as asked (tools/raid/raid.cpp, docs/golden-dragon-raid.md §2a).
+# The raid, headless: the Golden Dragon against content/raid/party.json, played to a kill or a
+# wipe as many times as asked (tools/raid/raid.cpp, docs/game/golden-dragon-raid.md §2a).
 add_executable(raid EXCLUDE_FROM_ALL
   tools/raid/raid.cpp
 )
@@ -776,17 +776,17 @@ endif()
 # cannot do if nobody calls it. `cmake --build build --target checks`.
 #
 # matcheck is a gate rather than a report: it fails on a material fault that is not in
-# sheets/materials.baseline.json, and on a recorded one that has since been fixed. See
-# docs/materials.md.
+# content/sheets/materials.baseline.json, and on a recorded one that has since been fixed. See
+# docs/content/materials.md.
 #
 # layercheck is the other gate, and it is here because the line above the source list --
 # "gfx never includes game or sim, and sim never includes gfx; nothing enforces that but
 # review" -- was a rule with nobody keeping it. It reads every include in src/ against the
-# arrows in docs/architecture.md and fails on one that is not allowed. It costs milliseconds.
+# arrows in docs/reference/architecture.md and fails on one that is not allowed. It costs milliseconds.
 #
 # sizecheck is the third: a file over 800 lines (a header 1000) fails unless tools/sizecheck.allow
 # lists it, and a listed one may never grow past its size there. It is what stops the hubs
-# growing back (docs/order-plan.md, sprint A).
+# growing back (docs/plans/order-plan.md, sprint A).
 add_custom_target(checks
   DEPENDS cooked_test placement_test sim_test boids_test sound_test save_test server_test cooker_test
   COMMAND ${CMAKE_SOURCE_DIR}/tools/layercheck.py

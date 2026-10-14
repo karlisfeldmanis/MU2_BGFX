@@ -215,7 +215,7 @@ constexpr int kSevina = 235;
 constexpr int kMessenger = 233;
 // Thompson the Merchant, MU's NPC 231, a Devias trader who once supplied the Lost Tower's shrine
 // and has only lines about it; and Tersia, MU's 566 (OpenMU's Mercenary Guild Felicia), its last guard and the tower's quest giver
-// (sim/quests.cpp, docs/lost-tower-quest.md).
+// (sim/quests.cpp, docs/game/lost-tower-quest.md).
 constexpr int kThompson = 231;
 constexpr int kTersia = 566;
 // Charon, MU's NPC 237: Devil Square's gatekeeper in Noria, likewise (the user, 2026-09-30).
@@ -322,11 +322,11 @@ constexpr float kRunFactor = 14.0f / 12.0f;
 // (ZzzCharacter.cpp:6320-6335; OpenMU's BasicMountMovementSpeed), which is our run's 14 plus a
 // notch, and the user, 2026-10-02: "mount has to be faster that runing". 17, MU's own number for
 // the later mounts (OpenMU's HorseOrFenrirMovementSpeed), was then 'litttle bit to fast'.
-// **ours**: 16. In a fight too: MU's rider never walks (docs/mount.md).
+// **ours**: 16. In a fight too: MU's rider never walks (docs/game/mount.md).
 constexpr float kRideFactor = 16.0f / 12.0f;
 // Flying on the 1st level wings: CharacterMoveSpeed's 15 off a safe tile, in a fight or out
 // (ZzzCharacter.cpp:6320-6335, the wing beside the horn). MU's own number, between our run's
-// 14 and our ride's 16 (docs/wings.md).
+// 14 and our ride's 16 (docs/game/wings.md).
 constexpr float kFlyFactor = 15.0f / 12.0f;
 // And the Wings of Dragon's 16 (ZzzCharacter.cpp:6324-6331), our ride's.
 constexpr float kFastFlyFactor = 16.0f / 12.0f;
@@ -471,7 +471,7 @@ struct Body {
 
     Temper temper = Temper::Asleep;
     uint32_t quarry = 0;  // an id, 0 for nobody
-    // **Its threat** (docs/party.md): who of a party has struck or healed against it and how
+    // **Its threat** (docs/game/party.md): who of a party has struck or healed against it and how
     // much, by id, 0 an empty slot. Kept only for party members' blows; a blow from one in no
     // party turns it as it always did. Cleared as it dies.
     static constexpr int kThreatSlots = 6;
@@ -501,7 +501,7 @@ struct Body {
     uint64_t experience = 0;
     int32_t pointsInHand = 0;  // won by levelling and not yet spent
 
-    // ---- skills (docs/skills-dk.md) --------------------------------------------------------
+    // ---- skills (docs/game/skills-dk.md) --------------------------------------------------------
     // What he has learned, as a bit per row of the skill table and NOT per skill number: the
     // mask is six wide and the save writes it whole. Learned permanently -- a skill is not a
     // property of what is in his hands, which is 0.75's shape and is the one the design leaves
@@ -667,7 +667,7 @@ struct Body {
     // fight the dragon beside him. Not a monster, and not the player: its blows roll off its own
     // reckoned stats, as a guard's do, and a dead one stays down for the fight.
     int32_t raider = -1;
-    // **His party** (docs/party.md): the server's number for it, 0 for none. The server keeps the
+    // **His party** (docs/game/party.md): the server's number for it, 0 for none. The server keeps the
     // parties -- they span maps, and a map is a realm -- and says each change into every world a
     // member stands in (Command::Kind::PartySet); the realm reads it to share a kill's
     // experience and its quest count among the members near it (Realm::kill).
@@ -814,7 +814,7 @@ public:
     // and answered there with What::Answered (realm_commands.cpp).
     void command(const Command& command) { commands_.push_back(command); }
 
-    // ---- skills (docs/skills-dk.md) --------------------------------------------------------
+    // ---- skills (docs/game/skills-dk.md) --------------------------------------------------------
     // A key pressed: throw this skill at this body. NOT a Request, and that is the design and
     // not a shortcut -- a press does not replace the standing attack order, it spends the next
     // swing on the skill and leaves the order standing, so the knight goes on fighting
@@ -972,7 +972,7 @@ public:
     // An excellent item off `rows`, on `dice`, as a Box of Kundun gives one: +0, luck at a half,
     // the option where the luck missed, NewOptionRand's options. False with none to draw.
     bool excellentOf(const BagRow* rows, size_t count, Random& dice, Held* out);
-    // The raid's dragon's hoard round its corpse (docs/golden-dragon-raid.md section 1).
+    // The raid's dragon's hoard round its corpse (docs/game/golden-dragon-raid.md section 1).
     void dragonHoard(const Body& dragon);
     // The bench's, and no rule of MU's: a thing laid on the ground beside him as a kill's drop
     // lies, from nobody's bag, for looking at a drop Lorencia never leaves. Its id, or 0.
@@ -1073,7 +1073,7 @@ public:
     void closeVault() { me().banking = -1; }
     const Vault& vault() const { return me().vault; }
 
-    // ---- the Broker (sim/broker.h, docs/broker.md; sim/realm_broker.cpp) --------------------
+    // ---- the Broker (sim/broker.h, docs/game/broker.md; sim/realm_broker.cpp) --------------------
     // Opened by a Talk with a Broker, as the vault is; the server's four commands move his things.
     int brokering() const { return me().brokering; }
     void closeBroker() { me().brokering = -1; }
@@ -1504,10 +1504,10 @@ public:
     // windows shut (the machine's box back into his bag), his things in the air spent, and
     // whatever held him forgets him. Says Left. False for no player, or one already gone.
     bool depart(uint32_t id);
-    // **A body's party** (docs/party.md, Command::Kind::PartySet): the server's number for it, 0
+    // **A body's party** (docs/game/party.md, Command::Kind::PartySet): the server's number for it, 0
     // for none. False for no player of that id.
     bool setParty(uint32_t id, uint32_t party);
-    // **Threat** (realm_party.cpp, docs/party.md): whether he is a party's tank -- a knight or a
+    // **Threat** (realm_party.cpp, docs/game/party.md): whether he is a party's tank -- a knight or a
     // Magic Gladiator with his Defense guard up -- and what he holds on a monster. And for the
     // tests, a party member's blow of `damage` on a monster as the fight lands it (partyBlow).
     bool tanking(const Body& one) const;
@@ -1698,7 +1698,7 @@ private:
     // Whether a monster turns Ice's or Poison's element aside: its OpenMU resistance, rolled on
     // `dice` only when it has one, so a breed with none takes no draw (kResistances).
     bool resists(const Body& target, bool ice, Random& dice) const;
-    // Whether his worn resistance `resistance` turns an element aside (docs/jewellery.md).
+    // Whether his worn resistance `resistance` turns an element aside (docs/game/jewellery.md).
     bool heroResists(int resistance);
     // Teleport: where a blink toward `column, row` lands -- pulled back to its reach, and off a
     // wall toward him -- or false when nowhere on the line will take him.
@@ -1813,7 +1813,7 @@ private:
     // look toward the nearest of its kind still standing.
     void pointOn(Body& guard, const Body& dead);
     void gain(Body& hero, int32_t award);
-    // **A kill paid to a party** (realm_party.cpp, docs/party.md): `earner` is whom the kill is
+    // **A kill paid to a party** (realm_party.cpp, docs/game/party.md): `earner` is whom the kill is
     // paid to by Realm::kill's rules; with no party, or none of it in view, it is his alone, as
     // it was. In view: the members alive on this map within kPartyReach of the dead.
     // `gapped`, when given, takes the members near it left out past kPartyGap.
@@ -2106,7 +2106,7 @@ private:
     } raid_;
     int raidPlayers_ = kRaidPlayers;
     // Whether a raid was asked for (setRaid). Until the drawing shows the raid (sprint 2 of
-    // docs/golden-dragon-raid.md), an invasion with none is the plain one: no raid health, no
+    // docs/game/golden-dragon-raid.md), an invasion with none is the plain one: no raid health, no
     // minions, no stages.
     bool raidAsked_ = false;
     int raidLanding_ = -1;

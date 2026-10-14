@@ -137,7 +137,7 @@ void main()
 	// vector lying flat in the tangent plane with no component along the surface's own
 	// normal at all -- and the whole town shades black. A unit vector's third component is
 	// what is left, and for the three-channel PNGs the bench still loads this recovers the
-	// same number they stored. docs/conventions.md has said BC5 with z rebuilt since before
+	// same number they stored. docs/reference/conventions.md has said BC5 with z rebuilt since before
 	// there was a cook; this is the line that keeps it.
 	vec2 nxy = materialSample(s_normal, v_texcoord0).xy * 2.0 - 1.0;
 	float nz = sqrt(max(0.0, 1.0 - dot(nxy, nxy)));
@@ -229,7 +229,7 @@ void main()
 	}
 
 	// The probe's view: the sun's visibility and nothing else, so that a pixel which changes
-	// between two frames changed because the shadow did. docs/shadow-probe.md.
+	// between two frames changed because the shadow did. docs/reference/shadow-probe.md.
 	if (u_shadowDebug.x > 0.5)
 	{
 		gl_FragColor = vec4_splat(sunShadow(v_wpos, ng, saturate(dot(ng, l)), pixel));

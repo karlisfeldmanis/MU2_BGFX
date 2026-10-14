@@ -4,9 +4,9 @@
 //
 // A row is only what no cooked file says. The land, the town and the rules are each world's
 // own cook (assets/world/<name>, cooked/<name>/<name>.mut and .mur) and are found by the name;
-// the lighting laid over the base sheet is sheets/worlds/<name>.json when there is one. What is
+// the lighting laid over the base sheet is content/sheets/worlds/<name>.json when there is one. What is
 // left is where a character comes in, which is MU's spawn gate for the map. The rows are each
-// world's manifest's `rules` (source/world/<w>/world.json), compiled in through
+// world's manifest's `rules` (content/world/<w>/world.json), compiled in through
 // pipeline/realm_tables.py's sim/maps_table.inc: `./mu make realm`. How a world looks, sounds
 // and blows is its manifest's `show`, which the client reads (game/world/world_show.h).
 #pragma once

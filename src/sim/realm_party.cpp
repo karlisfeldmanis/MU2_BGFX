@@ -1,4 +1,4 @@
-// The party, the realm's half (docs/party.md): which of its bodies share one, and a kill's
+// The party, the realm's half (docs/game/party.md): which of its bodies share one, and a kill's
 // experience and quest count shared among the members near it. The parties themselves are the
 // server's, since a party spans maps and a map is a realm; it says each change in as
 // Command::Kind::PartySet.

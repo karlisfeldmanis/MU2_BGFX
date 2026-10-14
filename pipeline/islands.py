@@ -1,7 +1,7 @@
 """Finds the pieces an item is made of, and writes the file that says what each one is.
 
     Blender --background --python pipeline/islands.py -- \
-        workshop/items/Sword01/Sword01_low.blend source/items/Sword01/Sword01.json
+        workshop/items/Sword01/Sword01_low.blend content/items/Sword01/Sword01.json
 
 A material has to be attached to *something*, and the something this pipeline uses is the
 UV island: a run of faces joined across the surface and cut off from the rest by a seam.

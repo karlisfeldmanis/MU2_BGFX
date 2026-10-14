@@ -1,6 +1,6 @@
 #pragma once
 
-// source/raid/party.json, the raid's ten end-game characters (sim/raid.h, docs/golden-dragon-raid.md).
+// content/raid/party.json, the raid's ten end-game characters (sim/raid.h, docs/game/golden-dragon-raid.md).
 
 #include <string>
 #include <vector>

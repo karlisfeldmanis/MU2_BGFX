@@ -1,5 +1,5 @@
 #!/bin/zsh
-# The Windows/Linux port test (docs/windows-linux-test.md): builds the demo and the folder it
+# The Windows/Linux port test (docs/reference/windows-linux-test.md): builds the demo and the folder it
 # runs from, build/portdemo-<os>/ (the program, shaders/spirv/, and the monster's glb).
 #
 #   tools/portdemo/build.sh windows      mingw cross-compile on this Mac, then run it:

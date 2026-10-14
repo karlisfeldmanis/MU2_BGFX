@@ -3,7 +3,7 @@
 //
 // Like content/tables.h and content/cooked.h, this header knows nothing about bgfx: parsing
 // a file and uploading a texture are two jobs and only the second needs a device. That is
-// what lets tests/ read one without a window, as foundation 9 asks (docs/architecture.md).
+// what lets tests/ read one without a window, as foundation 9 asks (docs/reference/architecture.md).
 //
 // Neither half is per-world. An effect belongs to a blow and a sound to an event, so both
 // live in assets/cooked/showing beside the figures rather than under a map.

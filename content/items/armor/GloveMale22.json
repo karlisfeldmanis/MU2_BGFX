@@ -1,0 +1,142 @@
+{
+  "item": "GloveMale22",
+  "mu_name": "Great Dragon Gloves",
+  "mu_name_from": "MuMain loads the set at index 21 from Data/Player/GloveMale22.bmd (ZzzOpenData.cpp:200-210: the sets at index 21-24 are files 22-25, `22 + i`). MU's group 10 number 21.",
+  "why_this_one": "The Blade Knight's second set, after Dark Phoenix (the user, 2026-10-10: 'cook them', the next sets and weapons after the strongest the heroes have). docs/game/second-class-gear.md.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have no second-class sets).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:256.",
+    "call": "CreateGloves(21, \"Great Dragon Gloves\", 94, 48, 6, 86, 0, 200, 58, 0, 2, 0, 0, 0, 0)",
+    "group": 10,
+    "number": 21,
+    "drop_level": 94,
+    "drops_from_monsters": true,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 48,
+    "durability": 86,
+    "requires": {
+      "level": 0,
+      "strength": 200,
+      "agility": 58,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "attack_speed": 6,
+    "class_level": 2,
+    "class_level_note": "The Blade Knight's alone: OpenMU's darkKnightClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "sheets": {
+    "hide": "hide.png",
+    "glove22": "glove22.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: dark red lacquered plate traced in gold; hide is MU's black cap over the openings.",
+  "material_note": "painted_steel, as Dark Phoenix's: dark red lacquer with gold traced on, MU's paint the look.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.05,
+        "roughness_range": 0.06
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain has no render arm for MODEL_GREAT_DRAGON_* (no ItemObjectAttribute glow, no chrome pass): drawn as its sheet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 68,
+      "area": 1596.3,
+      "along": [
+        -10.1,
+        6.6
+      ],
+      "mu_uv": [
+        0.013,
+        0.02,
+        0.651,
+        0.989
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.858,
+        0.476
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 30,
+      "area": 1662.0,
+      "along": [
+        -15.2,
+        9.3
+      ],
+      "mu_uv": [
+        0.499,
+        0.025,
+        0.995,
+        0.857
+      ],
+      "bake_uv": [
+        0.008,
+        0.155,
+        0.932,
+        0.96
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 68,
+      "area": 1596.6,
+      "along": [
+        -10.1,
+        6.6
+      ],
+      "mu_uv": [
+        0.013,
+        0.02,
+        0.651,
+        0.989
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.98,
+        0.989
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 30,
+      "area": 1662.4,
+      "along": [
+        -15.2,
+        9.3
+      ],
+      "mu_uv": [
+        0.499,
+        0.025,
+        0.995,
+        0.857
+      ],
+      "bake_uv": [
+        0.075,
+        0.102,
+        0.993,
+        0.95
+      ]
+    }
+  ]
+}

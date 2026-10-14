@@ -53,13 +53,13 @@
 # is a synthetic plot wearing a real surface out of the world's own ground_surfaces.json,
 # under the game's own lighting sheet -- so a material is judged against the shader and the
 # sun it will actually live under, and against the same plot every time. See
-# docs/materials.md.
+# docs/content/materials.md.
 set -e
 cd "$(dirname "$0")"
 [ -x out/build/mu2 ] || ./build.sh
 mkdir -p out/shots
 # --still first so a --spin on the command line takes it back. --stage stands the world's own
 # bonfire, street lamp, wall and railing round the subject and runs the world's lamps on them,
-# under MU's own camera; T walks noon, dusk and night (sheets/time/). --browse alone is the
+# under MU's own camera; T walks noon, dusk and night (content/sheets/time/). --browse alone is the
 # subject on its bare plot and nothing else.
 exec out/build/mu2 --stage --still "$@"

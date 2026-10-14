@@ -292,7 +292,7 @@ void TargetFrame::update(float seconds, Play& play, const Pointer& pointer, pane
     // Under it: his guild at the left, the monster on him at the right.
     const float base = capTop + tall + kSubDown * u;
     if (const net::GuildMark* guild = play.playerGuild(id)) {
-        // His guild's mark and name (docs/guild.md), as over his head.
+        // His guild's mark and name (docs/game/guild.md), as over his head.
         const float x = capX + (kTuck + 8.0f) * u;
         const float side = std::round(kSub * u * 0.9f);
         guildmark::draw(canvas_, {x, std::round(base - side * 0.88f), side, side}, guild->mark, dead ? 0.5f : 1.0f, true);

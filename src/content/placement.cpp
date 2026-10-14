@@ -10,7 +10,7 @@ namespace {
 // toward -z, which is what MU's z-rotation does once its axes are swapped into ours.
 //
 // These are written out rather than taken from bx, whose mtxRotate* and mtxSRT turn the
-// other way -- the same trap docs/conventions.md records for mtxFromQuaternion. Negating
+// other way -- the same trap docs/reference/conventions.md records for mtxFromQuaternion. Negating
 // every angle on the way into bx worked and read as a correction of MU rather than of bx,
 // which is how the *order* went unnoticed behind it.
 void rotateY(float angle, float* m) {

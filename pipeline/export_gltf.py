@@ -2148,7 +2148,7 @@ def main() -> None:
                 file = next((f for k, f in (recipe.get("sheets") or {}).items()
                              if k.lower() == slot), f"{slot}.png")
                 # The upscaled sheet the bake itself read, beside the output; MU's own
-                # decode in source/textures if the upscale is not there.
+                # decode in content/textures if the upscale is not there.
                 upscaled = destination.parent / f"{Path(file).stem}_x3.png"
                 sheet = upscaled if upscaled.exists() else P.CONTENT / "textures" / file
                 one["material"] = glow_material(document, binary, slot, glowing[slot], sheet)

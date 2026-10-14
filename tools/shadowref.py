@@ -11,7 +11,7 @@ is the flicker. Both runs with --shadow-view, so the picture is the sun's visibi
     tools/shadowref.py /abs/candidate /abs/reference [--box 0.4,0.5]
 
 `--box` is the middle of the frame, as fractions of its width and height, which is where
-MU's camera keeps the character and his shadow. docs/shadow-probe.md.
+MU's camera keeps the character and his shadow. docs/reference/shadow-probe.md.
 """
 import argparse
 import os

@@ -329,7 +329,7 @@ int main(int argc, char** argv) {
         static Clock::time_point partyAt = now;
         if (now - partyAt >= std::chrono::seconds(1)) {
             partyTick(sessions);
-            guildTick(sessions);   // the guilds' calls run out, and their states (docs/guild.md)
+            guildTick(sessions);   // the guilds' calls run out, and their states (docs/game/guild.md)
             brokerTick(sessions);  // the market's listings run out (broker.h)
             partyAt = now;
         }

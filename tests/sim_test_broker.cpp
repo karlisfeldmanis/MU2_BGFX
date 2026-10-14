@@ -1,4 +1,4 @@
-// The Broker (sim/broker.h, docs/broker.md): the book's rules, its bytes, the Buy tab's search,
+// The Broker (sim/broker.h, docs/game/broker.md): the book's rules, its bytes, the Buy tab's search,
 // and the realm's four commands that move a player's things in and out of the market. Part of
 // sim_test (tests/sim_test.cpp's check and main); a file of its own so that one stops growing.
 #include <cstdio>

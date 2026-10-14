@@ -1,11 +1,11 @@
 """`mu new object <world>/<ObjectNN>`: a world object's recipe, with everything a tool can know filled in.
 
-What the Aida batches did by hand, per kind (docs/recipes.md, "A world object"):
+What the Aida batches did by hand, per kind (docs/content/recipes.md, "A world object"):
 
-  1. export the mesh out of MU's .bmd (MuExtract export-obj), into source/world/<w>/;
+  1. export the mesh out of MU's .bmd (MuExtract export-obj), into content/world/<w>/;
   2. read which sheets it wears -- MuExtract writes them into the .obj as `# texture:` lines,
      which pipeline/model_sheets.py cannot do for the version-12 models Aida ships;
-  3. decode each into source/textures under the world's prefix (ai_, ad_ ...: the pool is flat
+  3. decode each into content/textures under the world's prefix (ai_, ad_ ...: the pool is flat
      and names collide across worlds), and read decode_texture's alpha verdict for the cutout;
   4. count its placements and read its object type out of the terrain import (<w>.json);
   5. write the recipe.

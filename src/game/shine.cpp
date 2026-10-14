@@ -112,7 +112,7 @@ int sweepOf(int group, int number) {
 }
 
 // The models MuMain draws at a level of their own (ZzzObject.cpp:9531-9650). Group 12 is
-// numbered the same in OpenMU and MuMain (docs/mu-scrolls-and-orbs.md).
+// numbered the same in OpenMU and MuMain (docs/reference/mu-scrolls-and-orbs.md).
 int levelOf(int group, int number, int plus) {
     if (group == 14 && (number == 13 || number == 14)) return 8;  // JEWEL_OF_BLESS, _SOUL
     if (group == 12 && number == 15) return 8;                    // JEWEL_OF_CHAOS

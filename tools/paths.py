@@ -1,6 +1,6 @@
 """Where the repository's folders are: one root, found once, for every Python script.
 
-docs/layout.md step 1. Every script in tools/, tools/mu/ and pipeline/ takes its folders from
+docs/plans/layout.md step 1. Every script in tools/, tools/mu/ and pipeline/ takes its folders from
 here rather than joining "source" or "assets" onto a root of its own, so that moving a folder
 (steps 2-4) is a change to this file. tools/paths.sh says the same for the shell scripts.
 
@@ -23,10 +23,10 @@ from pathlib import Path
 # This file is tools/paths.py; the root is the folder above tools/.
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# What we author: the recipes, the Cooker's truth (content/ in docs/layout.md; source/ today).
-CONTENT = os.path.join(ROOT, "source")
+# What we author: the recipes, the Cooker's truth (content/ in docs/plans/layout.md; content/ today).
+CONTENT = os.path.join(ROOT, "content")
 # The hand-tuned sheets: lighting, time, lobby, worlds, materials.
-SHEETS = os.path.join(ROOT, "sheets")
+SHEETS = os.path.join(CONTENT, "sheets")
 # The pipeline's own code and mu's.
 PIPELINE = os.path.join(ROOT, "pipeline")
 TOOLS = os.path.join(ROOT, "tools")

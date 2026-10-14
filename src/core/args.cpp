@@ -121,7 +121,7 @@ void printUsage() {
         "  --views                   bgfx's per-view GPU timers, which cost 0.8 ms a frame at\n"
         "                            2K; on by themselves with --stats or --budget NAME=MS\n"
         "  --model PATH              a .glb under assets/, or an absolute path\n"
-        "  --sheet PATH              the lighting sheet (default sheets/lighting.json)\n"
+        "  --sheet PATH              the lighting sheet (default content/sheets/lighting.json)\n"
         "  --dist N                  camera distance in world units\n"
         "  --still                   hold the camera instead of turning it\n"
         "  --spin                    turn it after all, undoing an earlier --still\n"

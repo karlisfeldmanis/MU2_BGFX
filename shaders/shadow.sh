@@ -6,7 +6,7 @@
 
 uniform mat4 u_shadowMtx;
 uniform vec4 u_shadowParams;  // x: depth bias  y: penumbra scale  z: map texel  w: normal bias
-// x: 1 draws the sun's visibility alone, as grey -- the probe's view, docs/shadow-probe.md
+// x: 1 draws the sun's visibility alone, as grey -- the probe's view, docs/reference/shadow-probe.md
 // y: where the disc's turn is anchored: 0 the screen, 1 the world, 2 nowhere (no turn)
 // zw: the map's corner on the world's texel grid, which is what `1` anchors to
 uniform vec4 u_shadowDebug;
@@ -80,7 +80,7 @@ vec2 turnTap(vec2 tap, vec2 turn)
 // tools/pan.py measured both at twice the resampling floor on the 60 m split and 2.3 times
 // it on the fitted 4096 one, where the widest penumbra spans 78 texels. So the default is no
 // turn and more taps: every input fixed to the snapped grid, and a spot on the ground keeps
-// its value however the camera moves. What that costs is in docs/shadow-probe.md.
+// its value however the camera moves. What that costs is in docs/reference/shadow-probe.md.
 float discTurn(vec2 uv, vec2 pixel)
 {
 	if (u_shadowDebug.y > 1.5) return 0.0;
@@ -103,7 +103,7 @@ float discTurn(vec2 uv, vec2 pixel)
 // full filter, so the shadow the eye actually reads -- the house's, the tree's, on the turf --
 // keeps its soft edge; this only decides whether a blade is in that shadow or out of it.
 //
-// Measured: it is most of what the field costs. See docs/grass.md.
+// Measured: it is most of what the field costs. See docs/reference/grass.md.
 float sunShadowHard(vec3 wpos, vec3 normal, float ndotl)
 {
 	vec4 sc = mul(u_shadowMtx, vec4(wpos + normal * u_shadowParams.w, 1.0));

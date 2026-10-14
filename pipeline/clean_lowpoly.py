@@ -1,7 +1,7 @@
 """Turns MU's drawn triangle soup into a mesh that can be unwrapped and baked onto.
 
     Blender --background --python pipeline/clean_lowpoly.py -- \
-        source/items/Sword01/Sword01.obj workshop/items/Sword01/Sword01_low.blend
+        content/items/Sword01/Sword01.obj workshop/items/Sword01/Sword01_low.blend
 
 Three things are wrong with a BMD as geometry, and all three stop a bake:
 

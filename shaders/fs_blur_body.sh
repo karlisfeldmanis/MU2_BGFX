@@ -9,7 +9,7 @@ void main()
 {
 	// The depths come from the SSAO target's g, where fs_ssao left the depth it read at each
 	// texel: one half-resolution RG16F texel a tap, not one of the multisampled prepass
-	// (docs/budget.md, the 2K audit's A5). A tap's uv lands on a corner between texels, and the texel
+	// (docs/reference/budget.md, the 2K audit's A5). A tap's uv lands on a corner between texels, and the texel
 	// past that corner is the one whose depth is read, by fetch, never averaged across an edge.
 	ivec2 here = ivec2(gl_FragCoord.xy);
 	ivec2 last = ivec2(1.0 / u_viewTexel.xy + 0.5) - ivec2(1, 1);

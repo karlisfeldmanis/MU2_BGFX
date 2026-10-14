@@ -1,4 +1,4 @@
-// The realm's side of the Broker (sim/broker.h, docs/broker.md): the four commands the server
+// The realm's side of the Broker (sim/broker.h, docs/game/broker.md): the four commands the server
 // sends to move a player's things in and out of the market inside the lockstep, so every mirror
 // sees his bag change as the server's realm does. The market itself -- the listings, the prices,
 // the Collect boxes -- is the server's book and none of the realm's.

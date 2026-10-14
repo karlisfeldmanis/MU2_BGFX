@@ -1,7 +1,7 @@
 #pragma once
 
 // Devil Square's run: its clock, its waves, each player's points, and the ranks and pay at its end
-// (docs/devil-square-port.md, "The goal and how it is shown"). Squares 1-4 are rooms of the same
+// (docs/worlds/devil-square-port.md, "The goal and how it is shown"). Squares 1-4 are rooms of the same
 // map 9 and differ in their breeds, their arena and their pay.
 
 #include <cstdint>
@@ -11,7 +11,7 @@ namespace mu::sim {
 // MU's map number for squares 1-4 (WD_9DEVILSQUARE).
 constexpr uint32_t kDevilSquareMap = 9;
 
-// **Charon's door** (docs/devil-square-port.md A 2.1-2.2; WebZen NpcRusipher, NpcTalk.cpp:
+// **Charon's door** (docs/worlds/devil-square-port.md A 2.1-2.2; WebZen NpcRusipher, NpcTalk.cpp:
 // 1005-1048, and GCReqmoveDevilSquare, protocol.cpp:18587-18923): spoken to with a Devil's
 // Invitation while the gate is open, he takes it and sends him to the square's gate -- 58 for
 // square 1, 59 to 61 for the rest, each in its arena (OpenMU 0.95d Gates.cs:141-144). MU has no
@@ -62,7 +62,7 @@ enum class SquareRefusal : int32_t {
 // and bone (sim/items.h). WebZen keeps them in every monster's drop list at one in two
 // (EyesOfDevilSquareDropRate, Gamemain.cpp:3635-3636); OpenMU makes them a flat 1% each
 // (EventTicketItems.cs:34-73). Ours: OpenMU's 1%, as Blood Castle's ingredients were raised
-// (docs/devil-square-port.md decision 13).
+// (docs/worlds/devil-square-port.md decision 13).
 constexpr int kDevilsEyeIn10000 = 100;
 constexpr int kDevilsKeyIn10000 = 100;
 // Their level by the monster's, WebZen 0.97d's table (user.cpp:8346-8366): none at 15 or under,
@@ -114,7 +114,7 @@ constexpr int squareWaveOf(int square, int32_t number) {
     return 0;
 }
 
-// **The pay**, a row by rank (docs/devil-square-port.md 5.2): OpenMU's 0.95d table
+// **The pay**, a row by rank (docs/worlds/devil-square-port.md 5.2): OpenMU's 0.95d table
 // (Version095d/Events/DevilSquareInitializer.cs:47-83), very likely WebZen's own lost dat (the
 // repack's is exactly 100x it), each row {experience, Zen}. The Zen is paid as it stands. **The
 // experience is ours** (the user, 2026-10-11: 'we need to increase exp rewards on finishing DS'):

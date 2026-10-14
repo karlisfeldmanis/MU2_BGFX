@@ -34,7 +34,7 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     if (!isOpen() || !ground_ || width <= 0 || height <= 0) return;
 
     // The pixel into a direction. bgfx's clip space on this Metal is 0..1 in z and the origin
-    // is top left -- both asked for rather than assumed, as docs/conventions.md insists -- so
+    // is top left -- both asked for rather than assumed, as docs/reference/conventions.md insists -- so
     // only y is flipped here and the near plane is z = 0.
     const float ndcX = (2.0f * pixelX / float(width)) - 1.0f;
     const float ndcY = 1.0f - (2.0f * pixelY / float(height));
@@ -728,7 +728,7 @@ void Play::benchFace(float acrossX, float acrossZ) {
     const float flat = std::max(1e-4f, std::sqrt(acrossX * acrossX + acrossZ * acrossZ));
     sim::Request request;
     request.kind = sim::Request::Kind::WalkTo;
-    // World x is the column and world z the negated row (docs/conventions.md).
+    // World x is the column and world z the negated row (docs/reference/conventions.md).
     request.column = realm_.hero().column() + int(std::lround(acrossX / flat));
     request.row = realm_.hero().row() - int(std::lround(acrossZ / flat));
     orderHero(request);

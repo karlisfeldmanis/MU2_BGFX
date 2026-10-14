@@ -1,0 +1,247 @@
+{
+  "world": "atlans",
+  "name": "Atlans",
+  "map": 7,
+  "note": "The world's manifest (docs/plans/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "rules": {
+    "arrive": [
+      21,
+      17
+    ],
+    "home": 0,
+    "event": false,
+    "floors": false,
+    "move_order": 5,
+    "drops": [
+      "nova_scroll",
+      "second_gear"
+    ],
+    "treasure": "map",
+    "note": "Atlans, MU's map 7: its spawn gate 49, 15,11 to 27,23, the safe basin in the north-west corner (OpenMU Version075 Gates.cs:148; docs/worlds/atlans-port.md), where a death and the Town Portal land too. The sea floor, open water over it; MU draws it on its black clear with no weather, so for now it takes the underground's air: no wind, no leaves. The Scroll of Nova falls here (sim/items.h novaScrollMap): a kill of level 60 or over, one in 1500 (the user, 2026-10-07: 'Scroll of Nova drop'; 'Scroll of Nova should drop also in tarkan'). Ours: MU's comes off Kanturu's bags. All of it is a class's treasure ground (Realm::treasureGround; the user, 2026-10-04: 'quest item drop which can drop in lt7 or atlans'). Its strongest, level 43 or over, leave a random piece of the second class's gear, one in 400 (sim::kAtlansGearOdds; the user, 2026-10-04: 'strongest monsters from atlans also can drop some'). Ours."
+  },
+  "show": {
+    "air": {
+      "loop": "world_water",
+      "everywhere": true,
+      "room": "water",
+      "note": "aWater over the whole map (SceneManager.cpp:879-881); the world muffled."
+    },
+    "swims": true,
+    "music": {
+      "track": "/music/atlans.mp3",
+      "where": "safe",
+      "note": "MUSIC_ATLANS in its basin (SceneManager.cpp:1047-1073; the user, 2026-10-05)."
+    },
+    "leaves": "motes",
+    "indoors": {
+      "everywhere": true,
+      "note": "No open sky on any tile (MU draws it on its black clear, SceneManager.cpp:402)."
+    },
+    "caustic": "caustic",
+    "boids": {
+      "model": "Fish02",
+      "lit": false,
+      "tint": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "calls": false,
+      "call": [
+        "",
+        ""
+      ],
+      "note": "MODEL_FISH01 + 1 (CreateAtlanseFish, GOBoid.cpp:886-918): LightEnable false, Light 1, no calls. MU rolls + 1 or + 2; Fish02 alone until Fish03 is cooked."
+    },
+    "bubbles": {
+      "note": "game/world/bubbles.h."
+    }
+  },
+  "npcs": [
+    {
+      "npc": 240,
+      "name": "Baz The Vault Keeper",
+      "figure": "Storage01",
+      "at": [
+        23,
+        17
+      ],
+      "look": 2,
+      "note": "Storage01 as in the Lost Tower, since the basin has no vault placement for him to take. WebZen's official 0.99.60T data stands nobody here (docs/worlds/atlans-port.md §1)."
+    },
+    {
+      "npc": 253,
+      "name": "Potion Girl Amy",
+      "figure": "PotionGirlAmy",
+      "at": [
+        17,
+        24
+      ],
+      "look": 4,
+      "note": "Ours: Potion Girl Amy, the repack's (WZD MonsterSetBase.txt:48, 16,24), a tile east of hers because 16,24 is a lean box; without her the nearest potions are in Noria."
+    },
+    {
+      "npc": 700,
+      "name": "Lirien",
+      "figure": "ElfEnvoy",
+      "at": [
+        25,
+        24
+      ],
+      "look": 3,
+      "note": "Ours: Lirien, the elf envoy who stayed when Atlans sank (content/npc/ElfEnvoy.json), whom Peia's 'The Drowned Song' sends the hero to meet; by the arch at the basin's edge where the user stood and said 'put her here' (2026-10-05). 700 is ours, no MU NPC's."
+    }
+  ],
+  "gates": {
+    "exits": [
+      {
+        "number": 46,
+        "box": [
+          14,
+          12,
+          15,
+          13
+        ],
+        "faces": [
+          1,
+          -1
+        ],
+        "note": "Atlans, from Noria"
+      },
+      {
+        "number": 49,
+        "box": [
+          15,
+          11,
+          27,
+          23
+        ],
+        "faces": [
+          0,
+          0
+        ],
+        "note": "Atlans's basin: death, Town Portal"
+      },
+      {
+        "number": 56,
+        "box": [
+          16,
+          225,
+          17,
+          230
+        ],
+        "faces": [
+          1,
+          -1
+        ],
+        "note": "Atlans, from Tarkan"
+      }
+    ],
+    "enters": [
+      {
+        "number": 47,
+        "box": [
+          9,
+          9,
+          11,
+          12
+        ],
+        "level": 60,
+        "target": 48,
+        "note": "Atlans to Noria"
+      },
+      {
+        "number": 53,
+        "box": [
+          14,
+          225,
+          15,
+          230
+        ],
+        "level": 100,
+        "target": 54,
+        "note": "WebZen's gate.txt 53 and 55 (Season Six Gates.cs:524-525): Atlans's south-west lagoon by the Hydras to Tarkan, and Tarkan's north-east corner back, both level 130 in every source that has them (140 at Tarkan's launch). Ours: the way in asks 100, just over Tarkan's breeds' 72-93 as Atlans's 70 sits over its 43-74, and the way back 70, Atlans's own way in (docs/worlds/tarkan-port.md, decision 2). Gate 53's box is half rock (column 14); the walker tests its own tile, as in the Lost Tower's niches. Atlans to Tarkan"
+      }
+    ],
+    "spawn": {
+      "number": 49,
+      "box": [
+        15,
+        11,
+        27,
+        23
+      ],
+      "note": "OpenMU's spawn gate 49: the box a new character starts in and a dead one stands up in, the .mur's safe gate (pipeline/index.py gate_rows). rules.arrive is its middle. Out of mu.db's gates table in sprint D6."
+    }
+  },
+  "pipeline": {
+    "hidden": {
+      "value": [
+        22,
+        39
+      ],
+      "note": "Atlans's two (ZzzObject.cpp:4059, 4772): 22, the bubble vents, 845 of them, and 39 the lean box. docs/worlds/atlans-port.md."
+    },
+    "blend_mesh": {
+      "value": {
+        "23": 0,
+        "32": 1,
+        "34": 1,
+        "38": 0,
+        "40": 0
+      },
+      "note": "Atlans's (MoveObject, ZzzObject.cpp:4067-4083): the light shafts, the glyph stones and arches, the magic circles and the caustic sheets. docs/worlds/atlans-port.md."
+    },
+    "grass": {
+      "value": [],
+      "note": "Atlans ships no TileGrass .OZT and MU turns grass off by map (ZzzLodTerrain.cpp:3619); its TileGrass01 is the sea floor's sand. docs/worlds/atlans-port.md."
+    },
+    "open": {
+      "value": [
+        [
+          12,
+          17,
+          14,
+          18,
+          4
+        ],
+        [
+          13,
+          21,
+          14,
+          22,
+          4
+        ],
+        [
+          15,
+          23,
+          15,
+          23,
+          4
+        ]
+      ],
+      "note": "Atlans: the eleven basin tiles MuMain's EncTerrain8.att closes and WebZen's official 2005 Terrain8.att (and OpenMU's) leave open -- a later door's footing, docs/worlds/atlans-port.md A §3 -- among them 15,23, a lean box MU at 0.75 lets him lean on (the user, 2026-10-03, clicking it: nothing)."
+    },
+    "perches": {
+      "value": {
+        "39": {
+          "pose": 3,
+          "turns": true,
+          "leans": false,
+          "tall": false,
+          "model": "Object40, the lean box, invisible"
+        }
+      },
+      "note": "Atlans: MOVEMENT_OPERATE's WD_7ATLANSE arm, `Pose = true` and turned to the box (ZzzInterface.cpp:1736-1742); CreateOperate and hidden (ZzzObject.cpp:4769-4776). Not on RenderCursor's lean list (:4051-4055) and given no tall box. The four lean boxes at the safe basin. The user, 2026-10-03: 'do: two hidden ones ... and Object22'."
+    },
+    "lifted": {
+      "Object24": 0.06
+    },
+    "anchor_kinds": {
+      "value": {
+        "Object23": 6
+      },
+      "note": "Atlans's 845 bubble vents, Object23 (type 22, hidden): MoveObject's WD_7ATLANSE arm throws a BITMAP_BUBBLE a frame for half of every four seconds (ZzzObject.cpp:4055-4063). Kind 6, a bubble vent: no light; game/world/bubbles.h rolls them."
+    }
+  }
+}

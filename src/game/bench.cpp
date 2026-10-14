@@ -95,7 +95,7 @@ bool ModelBench::raiseWorldGround(const std::string& assetDir, const std::string
     // subject sat below a terrain it was not on and the camera looked at its underside --
     // which, the land being the one single-sided surface in the engine, is nothing at all.
     // A black shot with the model floating in it, and no error anywhere. See
-    // docs/conventions.md and Ground::heightAt.
+    // docs/reference/conventions.md and Ground::heightAt.
     const float middle = float(worldGround_.size()) * 0.5f * worldGround_.metresPerTile();
     stand_[0] = middle;
     stand_[2] = -middle;

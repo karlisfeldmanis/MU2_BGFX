@@ -1,4 +1,4 @@
-// Devil Square's run as an instance (docs/order-plan.md §9e, slice I2): the run's state -- the
+// Devil Square's run as an instance (docs/plans/order-plan.md §9e, slice I2): the run's state -- the
 // SquareRun the snapshot writes whole -- and the code that drives it: its clock and waves each
 // tick, a kill's points, the ranks and the pay. The Realm holds one (Realm::square_) and hands it
 // itself; the door to it -- Charon, the invitation, the gate's hours -- stays the Realm's, in Noria

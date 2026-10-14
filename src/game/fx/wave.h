@@ -2,7 +2,7 @@
 //
 // MU's whole spell is `CreateEffect(MODEL_MAGIC2, o->Position, Angle, o->Light)` and
 // `PlayBuffer(SOUND_MAGIC)` (ZzzCharacter.cpp:5045). MU2's `client/core/Wave.cs` read the rest
-// and is ported here; `source/effects/wave/Magic02.json` carries every number with its line.
+// and is ported here; `content/effects/wave/Magic02.json` carries every number with its line.
 //
 // **The one spell that does not arrive.** The bolt and the fireball end on their target; this
 // one's mover never calls `CheckTargetRange`, so it runs its twenty frames out -- twelve tiles,

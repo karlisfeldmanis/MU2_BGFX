@@ -315,12 +315,12 @@ struct FigureBody {
     // one clip for every stance, -1 on a rig without it. Its own plant speed for the same reason.
     int runClip = -1;
     float plantSpeedRun = 0.0f;
-    // And on a horse (sim::Body::riding, docs/mount.md): MU's PLAYER_STOP_RIDE 13 and _WEAPON 14,
+    // And on a horse (sim::Body::riding, docs/game/mount.md): MU's PLAYER_STOP_RIDE 13 and _WEAPON 14,
     // PLAYER_RUN_RIDE 36 and _WEAPON 37 (ZzzCharacter.cpp:283-291, 567-583). A rider never walks:
     // the run ride is his only gait. Bare while the weapon is slung, armed while it is drawn.
     int rideIdleClip = -1, rideIdleArmedClip = -1;
     int rideRunClip = -1, rideRunArmedClip = -1;
-    // And on wings, off a safe zone (docs/wings.md): MU's PLAYER_STOP_FLY 11 where he stands
+    // And on wings, off a safe zone (docs/game/wings.md): MU's PLAYER_STOP_FLY 11 where he stands
     // (PLAYER_STOP_FLY_CROSSBOW 12 with a crossbow) and PLAYER_FLY 34 where he goes
     // (PLAYER_FLY_CROSSBOW 35), ZzzCharacter.cpp:298-326, 615-621. Played at MU's 0.34, the
     // run ride's (ZzzOpenData.cpp:511-516): nothing plants in the air.

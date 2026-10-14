@@ -11,7 +11,7 @@
 //     before DirectSound, whose minimum distance is 1.0. kCarry in sound.cpp.
 //
 // What an ARPG does over that, and MU does not -- **every one of these is an invention**, from
-// docs/spatial-sound.md, steps A to D:
+// docs/reference/spatial-sound.md, steps A to D:
 //   * **Left and right come from the screen.** A placed voice is not spatialised by miniaudio:
 //     its pan is where the frame shows it, projected through the shot, narrowed so nothing
 //     sits in one ear alone. MU turned the offset by the camera's yaw, which approximates the
@@ -54,7 +54,7 @@
 // Not the cooked `onset`: that is where a HIT lands in its file, a third of the way up this
 // one's swell, and skipping to it would cut off the swell the flares rise with.
 //
-// It is `game`, as the layers put sound (docs/architecture.md). It holds no state the rules read.
+// It is `game`, as the layers put sound (docs/reference/architecture.md). It holds no state the rules read.
 #pragma once
 
 #include <cstdint>

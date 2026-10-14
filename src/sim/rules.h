@@ -27,12 +27,12 @@ constexpr int kGladiatorPointsPerLevel = 7;
 // What a worn pet does while it has life left: OpenMU's Version075/Items/Pets.cs:32-35, the
 // base power-ups CreatePet hangs on the row, and ItemPowerUpFactory.cs:38-41 drops them at 0 --
 // corrected where WebZen's own GameServer says otherwise (1.00.93, ObjAttack.cpp:1041-1087 and
-// user.cpp gObjSpriteDamage; docs/pets.md, 2026-09-30):
+// user.cpp gObjSpriteDamage; docs/game/pets.md, 2026-09-30):
 //   Guardian Angel  damage taken x0.7 (the x0.8 is NEW_FORSKYLAND3's later cut), max HP +50,
 //                   damage dealt x0.8 (ours, the user's, no server has it),
 //                   wears damage x 3/10 / 10 a hit taken
 //   Imp             damage dealt x1.3 for 3 of his own life a blow, wears damage x 2/10 / 10
-//   Horn of Uniria  nothing but the ride (kRideFactor), wears damage x 1/10 / 10 (docs/mount.md)
+//   Horn of Uniria  nothing but the ride (kRideFactor), wears damage x 1/10 / 10 (docs/game/mount.md)
 //   Horn of Dinorant the ride, damage dealt x1.15 for 1 of his own life a blow and taken x0.9,
 //                   wears damage x 1/200 (0.95d's, not 0.75's)
 struct PetPower {
@@ -123,7 +123,7 @@ struct Excellence {
     float volleySide = 0.0f;
     // A wizard's Kindles, each raising his Fire Ball by sim::kKindleForce.
     int kindles = 0;
-    // Not options either: the rings' and the pendant's (docs/jewellery.md). The largest
+    // Not options either: the rings' and the pendant's (docs/game/jewellery.md). The largest
     // resistance worn in each element and the resistance powers on top: Ice and Poison each turn
     // the element aside r times in r + 1, as Lightning does a beast's push; Fire cuts a fire blow
     // (sim::kResistanceCut).
@@ -261,7 +261,7 @@ Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice);
 // save file that stored the wire value and a loader that read this one would make a Dark Knight a
 // Dark Wizard. Sprint 9's save writes this enumeration and says so. The Magic Gladiator is the
 // fourth, 3, which is his class bit 8 in the cooked tables (tools/cook.py kClass) and MU's own
-// third class (CLASS_DARK_LORD is the fifth); he has no second class (docs/mg-port.md).
+// third class (CLASS_DARK_LORD is the fifth); he has no second class (docs/worlds/mg-port.md).
 enum class Kin : uint8_t {
     DarkWizard = 0,
     FairyElf = 1,
@@ -357,7 +357,7 @@ struct Arms {
     int quiverPlus = 0;
     // Greater Damage while it stands (Fighter::greaterDamage).
     int greaterDamage = 0;
-    // A worn wing's option (docs/wings.md): Satan's on both ends of every band he swings, and
+    // A worn wing's option (docs/game/wings.md): Satan's on both ends of every band he swings, and
     // Heaven's on his wizardry, 4 a level, PlusSpecial's AT_IMPROVE_DAMAGE and AT_IMPROVE_MAGIC
     // (ObjCalCharacter.cpp:473-477, :582-583).
     int wingDamage = 0;
@@ -406,12 +406,12 @@ uint64_t neededExperience(int level);
 // `killerLevel` is a float in the original and the division is float division: an integer port
 // gives 0 for every kill more than ten levels down and silently stops all low-level farming.
 double killExperience(int killedLevel, int killerLevel);
-// **The party** (docs/party.md): five at most (WebZen's MAX_PARTYUSER); a member shares a kill
+// **The party** (docs/game/party.md): five at most (WebZen's MAX_PARTYUSER); a member shares a kill
 // within ten tiles of it (`gObjCalDistance < 10`, gObjExpParty); and a full five in view is
 // paid a tenth more, ours (the user, 2026-10-09: "if there is 5-man party lets give 10% exp
 // boost").
 constexpr int kPartyMost = 5;
-// **The raid** (docs/party.md, the user, 2026-10-13: "we need to implement funcitonality that party
+// **The raid** (docs/game/party.md, the user, 2026-10-13: "we need to implement funcitonality that party
 // can be converted to raid with max 10 layers"): its leader turns a party into a raid, which takes
 // this many. Ours (WebZen's party is five). The realm sees no difference: a raid is one party, every
 // member near a kill shares it (partyInView) at the five's percent and the full party's tenth, split
@@ -426,7 +426,7 @@ constexpr double kFullPartyBonus = 1.1;
 // damped it (UPDATE_LOWLEVEL_SUPPORT_1_20051215: one 200 or more below the top counted as his
 // level + 200) and never refused the invite; neither do we.
 constexpr int kPartyGap = 100;
-// **Threat** (docs/party.md, the user's of 2026-10-09: "how tank will be able to hold threat if
+// **Threat** (docs/game/party.md, the user's of 2026-10-09: "how tank will be able to hold threat if
 // DW does more damage?", "what about MG, he also can be tank"), ours: a tank's blow -- a knight
 // or a Magic Gladiator with his Defense guard up -- counts three times; his first on a monster
 // adds a tenth of its health; a monster turns to another only when he holds this much more than
@@ -438,7 +438,7 @@ constexpr double kThreatMarginNear = 1.1;
 constexpr double kThreatMarginFar = 1.3;
 constexpr float kThreatNear = 2.5f;
 constexpr double kHealThreat = 0.5;
-// How far off an elf's Heal, Greater Defense and Greater Damage reach a party member (docs/party.md;
+// How far off an elf's Heal, Greater Defense and Greater Damage reach a party member (docs/game/party.md;
 // MU casts them on a player): ours, about a screen's middle.
 constexpr float kPartyAidReach = 8.0f;
 // What a kill pays a party with `inView` members in view whose levels sum to `totalLevel`,

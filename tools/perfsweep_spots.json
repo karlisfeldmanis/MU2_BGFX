@@ -1,8 +1,8 @@
 {
-  "_comment": "Hand-picked tiles tools/perfsweep.py measures in every preset (column, row as --at takes them). The light preset is these alone; the full preset adds a walkable grid. Arrivals are sim/realm_travel.cpp's rows; the five 2026-10-01 numbers are docs/budget.md's 'The sweep'.",
+  "_comment": "Hand-picked tiles tools/perfsweep.py measures in every preset (column, row as --at takes them). The light preset is these alone; the full preset adds a walkable grid. Arrivals are sim/realm_travel.cpp's rows; the five 2026-10-01 numbers are docs/reference/budget.md's 'The sweep'.",
   "lorencia": [
     {"name": "square", "at": [142, 126], "note": "town square, the travel arrival"},
-    {"name": "hero-spot", "at": [148, 142], "note": "the shine's measuring tile, docs/budget.md"},
+    {"name": "hero-spot", "at": [148, 142], "note": "the shine's measuring tile, docs/reference/budget.md"},
     {"name": "field-east", "at": [180, 130], "note": "the open field east of town"},
     {"name": "noria-gate", "at": [64, 243], "note": "the road out to Noria"}
   ],

@@ -10,7 +10,7 @@ namespace {
 
 // The rate the cook converted every delay at. A table cooked at one rate and read by a sim
 // running at another is a fight that is quietly the wrong speed, and nothing about it looks
-// wrong -- so it is checked rather than trusted. docs/conventions.md, "Time".
+// wrong -- so it is checked rather than trusted. docs/reference/conventions.md, "Time".
 constexpr uint32_t kSimHz = 20;
 
 // Version 2 added the arms, version 3 the attack actions a swing rate is made of, and version

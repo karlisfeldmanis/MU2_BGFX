@@ -1,5 +1,5 @@
 // What a run measured. A row a frame while it runs, and a table of medians and 99th
-// percentiles per account when it ends; the gate reads the medians. See docs/budget.md.
+// percentiles per account when it ends; the gate reads the medians. See docs/reference/budget.md.
 #pragma once
 
 #include <cstdio>

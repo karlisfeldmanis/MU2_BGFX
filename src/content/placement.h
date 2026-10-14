@@ -8,7 +8,7 @@
 //     // matrix = (Z * Y) * X
 //
 // So a point is turned by X first, then Y, then Z, in MU's z-up frame. Under the axis swap
-// of docs/conventions.md -- MU's (x, y, z) becomes our (x, z, -y) -- MU's z is our yaw, its
+// of docs/reference/conventions.md -- MU's (x, y, z) becomes our (x, z, -y) -- MU's z is our yaw, its
 // x our pitch and its y our roll, and the order carries over with them: pitch first, then
 // roll, then yaw. `bx::mtxSRT` composes them the other way and with the opposite sense, so
 // it is not used here at all.

@@ -1,4 +1,4 @@
-// A guild's mark (docs/guild.md): MU's 8x8 of 16 colours, drawn a rect a pixel wherever it is
+// A guild's mark (docs/game/guild.md): MU's 8x8 of 16 colours, drawn a rect a pixel wherever it is
 // shown -- the nameplate, the target frame, the Card, the chat's card and the guild's windows.
 // Sixty-four quads at most, a handful of marks on screen: no atlas is worth it.
 #pragma once

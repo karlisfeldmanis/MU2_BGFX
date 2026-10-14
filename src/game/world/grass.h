@@ -1,4 +1,4 @@
-// The near field: MU's own painted grass, scattered. docs/grass.md has the research this came
+// The near field: MU's own painted grass, scattered. docs/reference/grass.md has the research this came
 // out of, the camera arithmetic that sized it, and what was measured.
 //
 // **This is MU2's Turf, with the placement rebuilt.** MU does not model blades. It paints a
@@ -141,7 +141,7 @@ private:
     // MU2_BGFX's own blade sheet, pipeline/sward.py: eight cells of separate blades, each its
     // own height, lean, width and green, at a resolution where a blade is six to ten pixels
     // across. It exists because MU's sheet cannot draw one -- see that file's own note, and
-    // docs/grass.md for the cutout sweep that proved it. MU's tuft is still loaded and is one
+    // docs/reference/grass.md for the cutout sweep that proved it. MU's tuft is still loaded and is one
     // knob away (`grass_painted`).
     bgfx::TextureHandle sward_ = BGFX_INVALID_HANDLE;
     std::pair<float, float> swardSize_ = {1024.0f, 256.0f};

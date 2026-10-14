@@ -19,7 +19,7 @@ namespace mu::gfx {
 // what is behind it; `Additive` is a flame, a spark or a glow, which only ever brightens.
 //
 // There is deliberately no `Opaque`: an opaque effect is a mesh and belongs in the shade
-// pass with the rest of the world's material model, which docs/conventions.md keeps closed.
+// pass with the rest of the world's material model, which docs/reference/conventions.md keeps closed.
 //
 // Sprint 8b added two that are a blend AND a look: `Flame` is added like `Additive` but read
 // through fs_flame's heat ramp, so its colour carries the particle rather than a tint (see that

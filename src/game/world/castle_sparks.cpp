@@ -146,7 +146,7 @@ void CastleSparks::update(float seconds, const float hero[3]) {
         owed_ -= kEvery;
         if (sparks_.size() >= kMost) continue;
         Spark one;
-        // MU's x is our x and its y our -z (docs/conventions.md): -3 to +6 m in each.
+        // MU's x is our x and its y our -z (docs/reference/conventions.md): -3 to +6 m in each.
         one.start[0] = hero[0] + (unit() * 9.0f - 3.0f);
         one.start[2] = hero[2] - (unit() * 9.0f - 3.0f);
         one.start[1] = hero[1] + 2.5f + unit() * 0.5f;

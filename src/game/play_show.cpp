@@ -1298,7 +1298,7 @@ void Play::follow(float seconds) {
 
         // Between the two ticks either side of where the clock stands. Presentation only:
         // every reach, aim and hit in the sim used the sim's own position, and this one is
-        // never read back into it. docs/conventions.md, "Time".
+        // never read back into it. docs/reference/conventions.md, "Time".
         //
         // Not always evenly, though. The tick a walk ends on covers only what was left of the
         // last tile -- 0.74 of a step, say -- and spread over the whole 50 ms that is the body
@@ -1359,7 +1359,7 @@ void Play::follow(float seconds) {
         // +x is the column and +y is the row -- and the row runs south, which is -z. So the
         // direction of travel in the world is (cos facing, -sin facing) and the yaw that
         // points a model down it is atan2 of those two, in that order.
-        // docs/conventions.md, "Space" and "Matrices".
+        // docs/reference/conventions.md, "Space" and "Matrices".
         // The facing between the same two ticks the position is taken between, the short way
         // round. Read raw off the sim it snaps up to 45 degrees at a time; see Drawn::wasFacing.
         const float facing =

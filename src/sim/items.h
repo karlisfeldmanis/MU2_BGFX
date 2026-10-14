@@ -41,7 +41,7 @@ enum : int {
     kRingRight = 10,
     kRingLeft = 11,
     // The mount's own slot, past MU's twelve: there Uniria and Dinorant are helpers in slot 8
-    // and shut the pets out. Ours, the user's (2026-10-02, docs/mount.md): a pet and a mount
+    // and shut the pets out. Ours, the user's (2026-10-02, docs/game/mount.md): a pet and a mount
     // together.
     kMount = 12,
     kWorn = 13,  // MU's MAX_EQUIPMENT and the mount, and the first bag slot
@@ -81,12 +81,12 @@ struct Held {
     // The two options 0.75 rolls on a dropped weapon, piece of armour or shield (OpenMU's
     // `ApplyRandomOptions` over `CreateLuckOptionDefinition` and `CreateOptionDefinition`):
     // luck, and the additional option's level, 0 for none, 1 to 4 for +4 to +16 (+5 to +20 on a
-    // shield's defence rate). See `takesOptions`, `optionValue` and docs/refining.md.
+    // shield's defence rate). See `takesOptions`, `optionValue` and docs/game/refining.md.
     bool luck = false;
     int8_t option = 0;
     // Its excellent options, a bit each, MuMain's `ExcellentFlags & 63`: bit 0 is option 1 of
     // its family (sim::excellentLine), up to bit 5. None on anything a drop did not make
-    // excellent. See docs/refining.md, "Excellent".
+    // excellent. See docs/game/refining.md, "Excellent".
     uint8_t excellent = 0;
     // Its sockets (see "sockets and the Rune of Creation" below): how many it rolled, 0 to 3,
     // and the power set in each -- 0 for an empty one. A Rune of Creation carries its own power
@@ -140,7 +140,7 @@ bool placesIn(const content::ItemRow& row, Kin kin, int slot);
 // 13/2 and Dinorant 13/3. Nothing for any other row, and nothing -- the caller's to check -- for one whose life is gone.
 PetPower petPower(const content::ItemRow& row);
 
-// ---- the 1st level wings (docs/wings.md) ----------------------------------------------------
+// ---- the 1st level wings (docs/game/wings.md) ----------------------------------------------------
 // Wings of Elf, Heaven and Satan, 12/0-2, slot 7, on WebZen 1.00.93's base 0.97d branch.
 bool firstWing(const content::ItemRow& row);
 // Its defence at a plus: the row's, 3 a plus, and from +10 the triangle every worn thing takes
@@ -157,14 +157,14 @@ PetPower wingPower(const content::ItemRow& row, int refinement);
 constexpr int64_t kWingWearTicks = 10 * 20;
 constexpr double kWingWearSteps = 565.0;
 
-// ---- the 2nd level wings (docs/second-wings.md) ----------------------------------------------
+// ---- the 2nd level wings (docs/game/wings.md) ----------------------------------------------
 // Wings of Spirits, Soul and Dragon: the Muse Elf's, the Soul Master's and the Blade Knight's
 // (OpenMU VersionSeasonSix Wings.cs, class level 2). MU's 12/3, 12/4 and 12/5, which this project
 // gave the knight's orbs (OrbDefense and its fellows, 12/3-6), so **ours** are 12/13, 12/14 and
 // 12/16, numbers 0.75 leaves empty (the user, 2026-10-04: 'Move the wings'). And the Magic
 // Gladiator's Wings of Darkness, MU's 12/6, **ours 12/22** (the user, 2026-10-07: 'cook MG 2nd
 // wings'): his alone, worn without a class change, so nobody wears it until his class is in
-// (docs/mg-port.md).
+// (docs/worlds/mg-port.md).
 constexpr int kSpiritsNumber = 13, kSoulNumber = 14, kDragonNumber = 16, kDarknessNumber = 22;
 bool secondWing(const content::ItemRow& row);
 // Either level: what slot 7 takes and every rule below reads.
@@ -200,7 +200,7 @@ enum : uint8_t {
 bool lochsFeather(const content::ItemRow& row);
 constexpr int kFeatherOdds = 500;
 constexpr int kFeatherFromLevel = 60;
-// **The Scroll of Nova** (15, 18; source/items/misc/Book19.json), the Soul Master's: in the
+// **The Scroll of Nova** (15, 18; content/items/misc/Book19.json), the Soul Master's: in the
 // Lost Tower, Atlans, Tarkan and Icarus (novaScrollMap), a kill of
 // kNovaScrollFromLevel or over leaves one, one in kNovaScrollOdds, its own roll (the user,
 // 2026-10-07: 'Scroll of Nova drop'; 'Scroll of Nova should drop also in tarkan'). Ours: MU's
@@ -208,7 +208,7 @@ constexpr int kFeatherFromLevel = 60;
 bool scrollOfNova(const content::ItemRow& row);
 constexpr int kNovaScrollOdds = 1500;
 constexpr int kNovaScrollFromLevel = 60;
-// The maps are their manifests' `rules.drops` (source/world/<w>/world.json, sim::MapRow).
+// The maps are their manifests' `rules.drops` (content/world/<w>/world.json, sim::MapRow).
 inline bool novaScrollMap(uint32_t map) { return rulesOf(map).novaScroll; }
 // Tarkan and Icarus; Blood Castle (11) only in castle 6, which the caller asks itself.
 inline bool featherMap(uint32_t map) { return rulesOf(map).feather; }
@@ -219,7 +219,7 @@ constexpr int kFeatherCastle = 6;
 // MondownFlag 0 on 12/0-2, OpenMU's DropsFromMonsters = false.
 constexpr int kIcarusWingOdds = 1000;
 
-// ---- rings and pendants (docs/jewellery.md) ------------------------------------------------
+// ---- rings and pendants (docs/game/jewellery.md) ------------------------------------------------
 //
 // The four 0.75 pieces in group 13 beside the pets: the Rings of Ice (8) and Poison (9), worn in
 // either ring slot, and the Pendants of Lightning (12) and Fire (13), worn as the amulet. A
@@ -263,7 +263,7 @@ constexpr float kRingBoltForce = 0.5f;
 constexpr float kRingGustForce = 0.5f;
 constexpr int64_t kJewelleryRegenTicks = 7 * 20;  // m_LifeFillCount > 6, once a second
 
-// ---- powered rings and pendants (docs/jewellery.md, "Powers") -----------------------------
+// ---- powered rings and pendants (docs/game/jewellery.md, "Powers") -----------------------------
 //
 // Ours, every number (the user, 2026-10-03: "lets make new rings and pendants, which make sense
 // from classical ARPG experience, like exp gain, zen gain"). Five pieces in group 13's free 21-25,
@@ -278,7 +278,7 @@ constexpr int64_t kJewelleryRegenTicks = 7 * 20;  // m_LifeFillCount > 6, once a
 // aside the chill, the poison and the push r times in r + 1, WebZen's ResistanceCheck
 // (ObjBaseAttack.cpp:558); Fire, which turns nothing aside in MU, takes kResistanceCut a point
 // off a monster's fire blow, to kResistanceCutMost (ours). Which monster casts what:
-// docs/jewellery.md "Resistances".
+// docs/game/jewellery.md "Resistances".
 enum class Affix : uint8_t {
     None = 0,
     Wisdom,
@@ -459,7 +459,7 @@ struct Wearer {
 // Whether this character may wear it at all: his class, and every requirement met.
 bool fits(const content::Tables& tables, const Wearer& who, const Held& what);
 // Whether it asks its class's second (OpenMU's class level 2, tools/cook.py's bits 8-10): the
-// 2nd wings and the second class's gear (docs/second-class-gear.md).
+// 2nd wings and the second class's gear (docs/game/second-class-gear.md).
 inline bool secondClassOnly(const content::ItemRow& row) { return ((row.classes >> 8) & 7) != 0; }
 // Whether it asks `kin` in particular for his second class: the bit eight above his. The Staff of
 // Kundun is the Soul Master's and the Magic Gladiator's, who has no second (OpenMU S6
@@ -539,7 +539,7 @@ int pour(const content::Tables& tables, Grid& grid, int first, int last, Held wh
     return landed;
 }
 
-// ---- refining with jewels (docs/refining.md) ----------------------------------------------
+// ---- refining with jewels (docs/game/refining.md) ----------------------------------------------
 //
 // The highest plus a jewel or a drop gives: the Soul stops at +9 on its own, and a drop must not
 // hand out what only the machine makes. MU2's Refine.Cap. The Chaos Machine's +10 and +11 go
@@ -615,7 +615,7 @@ constexpr int kExcellentOptions = 6;
 // for weapons -- a staff's reading wizardry for damage -- and none for anything else.
 bool excellentable(const content::ItemRow& row);
 // The option at `bit` (0 to 5, OpenMU's option number less one) in MuMain's own English
-// (GT 622-635, docs/mu-tooltip-lines.md section 3(d)), or empty.
+// (GT 622-635, docs/reference/mu-tooltip-lines.md section 3(d)), or empty.
 std::string excellentLine(const content::ItemRow& row, int bit);
 // What being excellent adds to the thing itself, whatever its options:
 // ItemPowerUpFactory.CreateExcellentAndAncientBasePowerUpWrappers, which MuMain's CalcDamageMin,
@@ -770,7 +770,7 @@ constexpr uint8_t kElfOnly = classBit(Kin::FairyElf);
 constexpr uint8_t kKnightOnly = classBit(Kin::DarkKnight);
 // The Magic Gladiator's bit: every class's runes, and the knight's and the wizard's Common and
 // Epic ones beside them, never their Legendaries (the user, 2026-10-06: 'allow him to use same
-// weaker runes from DW and DK'; docs/mg-port.md).
+// weaker runes from DW and DK'; docs/worlds/mg-port.md).
 constexpr uint8_t kGladiatorOnly = classBit(Kin::MagicGladiator);
 constexpr uint8_t kEveryClass = kWizardOnly | kElfOnly | kKnightOnly | kGladiatorOnly;
 constexpr uint8_t kInWeapon = 1;     // either hand's weapon, never a shield
@@ -894,7 +894,7 @@ const PowerRow* powerOf(uint8_t power);
 // wizard's, from a giver's path -- comes as its weaker kin he may: Arcane Echo as Faint Echo,
 // Pyroblaster as Scorch, Whirlwind as Eddy, Fireburst as Sparkburst, Hellfire as Brimstone,
 // Bulwark as Buckler, Twister as Gust, Greater Ascendance as Lesser, Evil Spirit as Wisp. Ours
-// (docs/mg-port.md). Anything else as it is.
+// (docs/worlds/mg-port.md). Anything else as it is.
 uint8_t gladiatorRune(uint8_t power);
 // The Rune of Creation's row: 14, 22.
 bool creation(const content::ItemRow& row);
@@ -1110,7 +1110,7 @@ constexpr float kWispForce = 0.5f;
 // **The weaker kin** (the user, 2026-10-09: "we need weaker version of some runes which only has
 // legendary versions", then "also common versions"): every Legendary that stood alone gets an Epic
 // and a Common beneath it, first-class all and, the knight's and the wizard's, the Magic
-// Gladiator's too (docs/mg-port.md), each its Legendary's own blow at less. **Sparkburst** and
+// Gladiator's too (docs/worlds/mg-port.md), each its Legendary's own blow at less. **Sparkburst** and
 // **Ember** Fireburst's chain, two hops and one; **Brimstone** and **Ashfall** the Hellfire ring;
 // **Eddy** and **Swirl** Whirlwind's harder Twisting Slash and its pull; **Scatter Volley** and
 // **Split Arrow** Piercing Volley's fan, the two side arrows at a share of the straight one's
@@ -1212,9 +1212,9 @@ Element elementOf(Power power);
 // Whether `kin` throws anything of `element`, so a rune of it would do something in his hands.
 bool elementServes(Element element, Kin kin);
 
-// ---- the Firecracker (docs/drop-boxes.md §8) ------------------------------------------------
+// ---- the Firecracker (docs/game/kundun-box.md §8) ------------------------------------------------
 //
-// MU's Box of Luck at level 2 (14, 11), its own row here (source/items/misc/MagicBox03.json).
+// MU's Box of Luck at level 2 (14, 11), its own row here (content/items/misc/MagicBox03.json).
 // Thrown on the ground it is spent and opens: WebZen's FireCrackerOpenEven (Event.cpp:1201, the
 // MODIFY_DROP_ITEM_OF_FIRE_CRACKER_EVENT_20050316 body 1.00.93 builds). Two in ten an item off
 // eventitembag5 at the thrower's feet with a firework over it, else Zen (kFirecrackerZenLeast).
@@ -1239,20 +1239,20 @@ inline bool firecrackerMap(uint32_t map) { return rulesOf(map).firecracker; }  /
 // safe tile, as MU rides (the user, 2026-10-05: 'allow to use mount in dungeons and BC', undoing
 // 2026-10-04's open maps alone).
 inline bool rideMap(uint32_t) { return true; }
-// **Icarus**, MU's map 10, the sky land (docs/icarus-port.md): entered, and stood in, only by one
+// **Icarus**, MU's map 10, the sky land (docs/worlds/icarus-port.md): entered, and stood in, only by one
 // who can fly. Any wing worn (WebZen asks its presence, not its life) or a Horn of Dinorant with
 // life left, and never with the Horn of Uniria worn (gObjMoveGate, user.cpp:27201-27220; OpenMU
 // 0.95d's CanFly, Icarus.cs:46-50; MuMain's inventory will not equip Uniria there,
 // NewUIMyInventory.cpp:351-354). Its manifest's `rules.flight`.
 constexpr uint32_t kIcarusMap = 10;
 bool canFly(const content::Tables& tables, const Satchel& bag);
-// **Blood Castle's ticket** (docs/blood-castle-port.md, Part A 2.2): the Scroll of Archangel
+// **Blood Castle's ticket** (docs/worlds/blood-castle-port.md, Part A 2.2): the Scroll of Archangel
 // (13, 16) and the Blood Bone (13, 17) of one level make the Invisibility Cloak (13, 18) of that
 // level in the Chaos Machine. The level is the castle's, carried in the refinement.
 bool scrollOfArchangel(const content::ItemRow& row);
 bool bloodBone(const content::ItemRow& row);
 bool invisibilityCloak(const content::ItemRow& row);
-// **Devil Square's ticket** (docs/devil-square-port.md A 2.3): the Devil's Eye (14, 17) and the
+// **Devil Square's ticket** (docs/worlds/devil-square-port.md A 2.3): the Devil's Eye (14, 17) and the
 // Devil's Key (14, 18) of one level make the Devil's Invitation (14, 19) of that level in the
 // Chaos Machine; the level is the square's, +0 for any (protocol.cpp:18725-18749).
 bool devilsEye(const content::ItemRow& row);
@@ -1265,7 +1265,7 @@ bool divineStaff(const content::ItemRow& row);
 // Any of the three Archangel weapons a Statue of Saint gives up -- the Divine Staff, Sword and
 // Crossbow (sim/event.h kArchangelWeapons): quest items, worn by nobody, never sold.
 bool archangelWeapon(const content::ItemRow& row);
-// **Sevina's treasures** (sim/quests.cpp, docs/class-change-quest.md): MU's Broken Sword (14, 24),
+// **Sevina's treasures** (sim/quests.cpp, docs/game/class-change-quest.md): MU's Broken Sword (14, 24),
 // Tear of Elf (14, 25) and Soul of Wizard (14, 26), each a class's, carried back to her and
 // never sold. They fall on the Lost Tower's last floor and in Atlans (Realm::treasure), one kill
 // in 50 while the class's quest stands -- the rate ours (the user, 2026-10-06: 1 in 150 was too
@@ -1313,18 +1313,18 @@ struct BagRow {
     int8_t group = 0;
     int16_t number = 0;
 };
-// ---- the Box of Luck and the Box of Kundun (docs/kundun-box.md, drop-boxes.md section 2) --------
+// ---- the Box of Luck and the Box of Kundun (docs/game/kundun-box.md, drop-boxes.md section 2) --------
 //
 // MU's 14, 11 at level 0 and at levels 8-12; here, as the Firecracker, a row each at a free number
-// (source/items/misc/MagicBox01.json and MagicBox08.json), the Kundun box's tier its plus, +1 to
+// (content/items/misc/MagicBox01.json and MagicBox08.json), the Kundun box's tier its plus, +1 to
 // +3 (invention). Thrown on the ground each is spent and opens (Realm::crack), with no show, as
 // MU's open with none. The raid's: the Golden Budge Dragons' and the Golden Dragon's
-// (docs/golden-dragon-raid.md section 1, Loot).
+// (docs/game/golden-dragon-raid.md section 1, Loot).
 bool boxOfLuck(const content::ItemRow& row);
 bool boxOfKundun(const content::ItemRow& row);
 constexpr int kKundunTiers = 3;
 // An item, of which an excellent one; else the Zen (EledoradoBoxOpenEven, Event.cpp:603,
-// docs/kundun-box-sources.md 2.2-2.3). **Ours, rising with the tier** (the user, 2026-10-06: 'we
+// docs/game/kundun-box.md 2.2-2.3). **Ours, rising with the tier** (the user, 2026-10-06: 'we
 // need that there is decenet excelent drop for any drop of kundum', 'but not to crasy'): an
 // excellent in 12, 17.5 and 24 boxes in a hundred ('we need better excelent drop rate from box
 // of kundum'). WebZen's shipped rates (0.99.60T
@@ -1354,7 +1354,7 @@ inline constexpr BagRow kLuckBag[] = {
     {7, 8}, {8, 8}, {9, 8}, {10, 8}, {11, 8}, {7, 10}, {8, 10}, {9, 10}, {10, 10}, {11, 10},
     {7, 11}, {8, 11}, {9, 11}, {10, 11}, {11, 11}, {7, 12}, {8, 12}, {9, 12}, {10, 12}, {11, 12},
 };
-// WebZen's eventitembag8..10.txt (0.99.60T; docs/kundun-box-sources.md 2.4), each in its two
+// WebZen's eventitembag8..10.txt (0.99.60T; docs/game/kundun-box.md 2.4), each in its two
 // pools: the plain rows (`//일반아이템`) and the excellent ones (`//엑설런트`). By name off our own
 // rows; Thunder Staff is 0.75's Lightning Staff and Katache its Katana.
 inline constexpr BagRow kKundunPlain1[] = {

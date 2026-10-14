@@ -1,4 +1,4 @@
-// The Broker's service (docs/broker.md): the market a Broker opens in Lorencia, Devias and Noria,
+// The Broker's service (docs/game/broker.md): the market a Broker opens in Lorencia, Devias and Noria,
 // one book for all three, as the party is one table for every map. It hears a BrokerAsk, checks
 // he stands at a Broker, and answers with a BrokerView; what moves his things is the realm's,
 // four commands it queues into his world's next tick with tickets of its own (kBrokerTickets)

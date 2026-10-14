@@ -1,4 +1,4 @@
-"""`mu serve`: the cook's job runner, the Cooker's first slice (docs/order-plan.md §9c, F1).
+"""`mu serve`: the cook's job runner, the Cooker's first slice (docs/plans/order-plan.md §9c, F1).
 
 One process holds the queue and runs make.py's plans one job at a time -- one heavy job, never
 every core (settings.py) -- and tells whoever listens what it is doing. The studio, `./mu` and

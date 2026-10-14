@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Builds workshop/ from source/ -- every recipe, every world's ground, every grade, then the
+# Builds workshop/ from content/ -- every recipe, every world's ground, every grade, then the
 # index -- which is what MU2 did by hand, one mu2.sh call and one pipeline script at a time.
 #
 #   ./tools/content.sh                    everything that is stale
@@ -11,9 +11,9 @@
 # Then ./tools/sync.sh and ./tools/cook.py, as before. A full build from nothing is hours:
 # every sheet goes through the upscaler and every model through Blender.
 #
-# The chain from MU's own files to source/ -- MuExtract for .bmd, decode_texture.py for
+# The chain from MU's own files to content/ -- MuExtract for .bmd, decode_texture.py for
 # .OZJ/.OZT, terrain.py for a World folder -- is the import step and is not re-run here: its
-# results are source/, which is kept. docs/cooker.md says how to run it for a new asset.
+# results are content/, which is kept. docs/content/cooker.md says how to run it for a new asset.
 
 set -uo pipefail
 
@@ -42,7 +42,7 @@ mkdir -p "$workshop/grades"
 # The sward's blade sheet. It writes straight into assets/ rather than through workshop/, as
 # MU2's meadow.py does for wild.png -- it is painted from nothing and has no source to cook.
 # assets/ is gitignored, so a fresh checkout has no sheet until this runs and the field falls
-# back to MU's painted tuft, which says so in the log. docs/grass.md.
+# back to MU's painted tuft, which says so in the log. docs/reference/grass.md.
 echo "=== sward"
 python3 "$pipeline/sward.py" || failed+=("sward")
 

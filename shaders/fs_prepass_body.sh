@@ -19,7 +19,7 @@ void main()
 		if (materialSample(s_albedo, v_texcoord0).a < MATERIAL.x) discard;
 	}
 	// gl_FrontFacing on Metal is the opposite sense from the winding CULL_CW keeps, so the
-	// facing is taken from the view direction instead. docs/conventions.md.
+	// facing is taken from the view direction instead. docs/reference/conventions.md.
 	// Turned to the side of the TRIANGLE that faces the eye, not tested per pixel against the
 	// view: most of the town's normals are inverted and smoothed, and the per-pixel test split
 	// a triangle into turned and unturned halves. fs_shade says more.

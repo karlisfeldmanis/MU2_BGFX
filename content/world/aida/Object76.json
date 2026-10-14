@@ -1,0 +1,155 @@
+{
+  "item": "Object76",
+  "mu_name": "Object76",
+  "mu_name_from": "aida's object slot: type N is Object{N+1}.bmd, from Data/Object34.",
+  "world": "aida",
+  "object_type": 75,
+  "placements": 1,
+  "profile": "world",
+  "sheets": {
+    "song_k202w1": "ai_song_k202w1.png",
+    "song_k3metal0103": "ai_song_k3metal0103.png"
+  },
+  "sheet_from": "Data/Object34/, decoded under the ai_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k202w1": "rock",
+    "song_k3metal0103": "rock"
+  },
+  "material_note": "song_k202w1: a carved stone wheel and runic pillars; song_k3metal0103: carved stone friezes, its name says metal, the art is weathered stone: both rock.",
+  "why_this_one": "The ring statue just south of the hall at 82,20, the only one, its 10-key clip; a white flare turns at bone 4 (game/world/ornaments.cpp). Serpents batch (the user, 2026-10-11: 'next batch'). docs/worlds/aida-port.md.",
+  "effects_note": "RenderAidaObjectVisual type 75 (GMAida.cpp:298-307): a BITMAP_FLARE at bone 4's origin, Scale 3, Light (1, 1, 1) (the sine above it is overwritten), turned WorldTime / 10 degrees, 100 a second. Drawn by Ornaments' Aida arm.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 64,
+      "area": 26925.9,
+      "along": [
+        -48.7,
+        51.1
+      ],
+      "mu_uv": [
+        0.073,
+        -0.083,
+        1.31,
+        3.658
+      ],
+      "bake_uv": [
+        0.093,
+        0.011,
+        0.873,
+        0.877
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 64,
+      "area": 47365.0,
+      "along": [
+        -84.4,
+        86.8
+      ],
+      "mu_uv": [
+        0.074,
+        -3.231,
+        1.318,
+        2.313
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.941,
+        0.948
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 64,
+      "area": 84449.0,
+      "along": [
+        -134.1,
+        136.5
+      ],
+      "mu_uv": [
+        0.078,
+        -3.424,
+        1.308,
+        3.794
+      ],
+      "bake_uv": [
+        0.056,
+        0.011,
+        0.834,
+        0.989
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 42,
+      "area": 13193.9,
+      "along": [
+        -13.1,
+        45.3
+      ],
+      "mu_uv": [
+        -0.964,
+        0.007,
+        1.998,
+        1.992
+      ],
+      "bake_uv": [
+        0.176,
+        0.158,
+        0.877,
+        0.87
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 68,
+      "area": 97555.6,
+      "along": [
+        -157.2,
+        159.2
+      ],
+      "mu_uv": [
+        0.38,
+        0.013,
+        1.765,
+        0.965
+      ],
+      "bake_uv": [
+        0.26,
+        0.011,
+        0.69,
+        0.64
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 12,
+      "area": 10491.7,
+      "along": [
+        -11.1,
+        13.1
+      ],
+      "mu_uv": [
+        0.035,
+        0.418,
+        1.368,
+        0.972
+      ],
+      "bake_uv": [
+        0.363,
+        0.011,
+        0.722,
+        0.745
+      ]
+    }
+  ]
+}

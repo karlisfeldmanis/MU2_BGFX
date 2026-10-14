@@ -4,7 +4,7 @@
 // Every number these turn on is in sim/realm_tuning.h with its source named. The one worth
 // repeating here is that a walk is a line whose length takes the time -- A*'s 5-straight
 // 7-diagonal is a SEARCH cost and counting it twice makes diagonals 41%% slow
-// (docs/conventions.md, "Time").
+// (docs/reference/conventions.md, "Time").
 #include "sim/realm.h"
 #include "sim/fmath.h"
 

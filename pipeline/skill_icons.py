@@ -1,4 +1,4 @@
-"""Cuts one icon per 0.75 skill out of MuDream's skill sheet, into source/interface/skills.
+"""Cuts one icon per 0.75 skill out of MuDream's skill sheet, into content/interface/skills.
 
     python3 pipeline/skill_icons.py [--source <MuDream>/Data/Interface]
 
@@ -30,7 +30,7 @@ catalogue that will one day hand it out.
 Three past 0.75 ARE cut, on 2026-09-23, and they are the exception that proves that rule — the
 game now has them. Twisting Slash 41 (0.95d), Rageful Blow 42 and Death Stab 43 (Season 6) are
 the knight's own, and they exist here because his skills are gated on the weapon family
-(docs/skills-dk.md §3.1b): gating 0.75's five leaves a one-handed axe, a mace and a spear with
+(docs/game/skills-dk.md §3.1b): gating 0.75's five leaves a one-handed axe, a mace and a spear with
 one key each. Nothing else on the sheet is cut speculatively.
 """
 
@@ -97,10 +97,10 @@ SKILLS = {
     34: ("Fairy Elf", "Summon Dark Knight"),
     35: ("Fairy Elf", "Summon Bali"),
     # The three past 0.75, cut on 2026-09-23 because the knight's skills are now gated on the
-    # weapon family (docs/skills-dk.md §3.1b) and gating 0.75's five leaves an axe, a mace and a
+    # weapon family (docs/game/skills-dk.md §3.1b) and gating 0.75's five leaves an axe, a mace and a
     # spear with one key each. The names and the numbers are the client's own -- `skill_eng.bmd`,
     # decoded with MU's three-byte XOR, reads 41 Twisting Slash, 42 Rageful Blow, 43 Death Stab
-    # (docs/mu-scrolls-and-orbs.md §7 is the decode) -- so only WHICH HAND each one asks for is
+    # (docs/reference/mu-scrolls-and-orbs.md §7 is the decode) -- so only WHICH HAND each one asks for is
     # ours. Twisting Slash is 0.95d's; the other two are Season 6's. This is the "should the
     # hybrid want it" case the docstring above left the arithmetic for.
     41: ("Dark Knight", "Twisting Slash"),
@@ -109,7 +109,7 @@ SKILLS = {
     # And the wizard's answer to Defense, cut on 2026-09-28: Soul Barrier, whose scroll is
     # group 15 number 15 (MuMain's ITEM_SCROLL_OF_SOUL_BARRIER, _enum.h). Season 6 in OpenMU's
     # tree and not 0.75, and here because the user asked for the wizard to have a guard the
-    # knight's size (docs/skills-dw.md).
+    # knight's size (docs/game/skills-dw.md).
     16: ("Dark Wizard", "Soul Barrier"),
     # And Inferno, cut on 2026-10-02 because the game now has it (the user: "now work on
     # inferno"): 0.95d's (Version095d/SkillsInitializer.cs:59), off the Scroll of Inferno, group

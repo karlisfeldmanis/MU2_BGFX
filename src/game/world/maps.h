@@ -3,7 +3,7 @@
 //
 // A row is only what no cooked file says. The land, the town and the rules are each world's
 // own cook (assets/world/<name>, cooked/<name>/<name>.mut and .mur) and are found by the name;
-// the lighting laid over the base sheet is sheets/worlds/<name>.json when there is one. What is
+// the lighting laid over the base sheet is content/sheets/worlds/<name>.json when there is one. What is
 // left is where a character comes in, which is MU's spawn gate for the map.
 #pragma once
 
@@ -31,12 +31,12 @@ std::string zoneLevels(const content::Tables& tables);
 
 // The name to show for a tile of `world`: "Dungeon 1", "Dungeon 2" or "Dungeon 3" by the floor
 // the tile is on -- three disconnected regions of one map, the Move list's Dungeon, Dungeon2 and
-// Dungeon3 (OpenMU Version075 Gates.cs:48-50; docs/dungeon-port.md §1.2) -- and `world` itself
+// Dungeon3 (OpenMU Version075 Gates.cs:48-50; docs/worlds/dungeon-port.md §1.2) -- and `world` itself
 // on every other map. The user's, 2026-09-30. The regions are the manifest's `places`
 // (game/world/world_show.h).
 std::string placeName(const std::string& world, int column, int row);
 
-// The lighting overlay for a world, laid over sheets/lighting.json by TimeOfDay::setScene:
+// The lighting overlay for a world, laid over content/sheets/lighting.json by TimeOfDay::setScene:
 // `sheetsDir`/worlds/<world>.json when the file exists, and empty -- the base sheet alone --
 // when it does not.
 std::string mapSheet(const std::string& sheetsDir, const std::string& world);

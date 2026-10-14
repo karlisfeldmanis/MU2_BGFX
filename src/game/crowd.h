@@ -61,7 +61,7 @@ public:
     // Seats whatever plays on a saddle: Bip01, the pelvis and both legs are taken from `clip`,
     // on its own clock, and the spine and everything above it from the clip playing. A rider's
     // standing swing -- the knight's paired blows, which MU has no ride clip for -- keeps his
-    // seat (docs/mount.md, option 1). -1 lets the legs follow the clip again. `handsOnly` seats
+    // seat (docs/game/mount.md, option 1). -1 lets the legs follow the clip again. `handsOnly` seats
     // all but the arms: everything from the clavicles out from the clip playing, the rest -- the
     // spine and the head with the legs -- from `clip`. A buff cast on a horse (the user: "we need
     // that only hands do the job").

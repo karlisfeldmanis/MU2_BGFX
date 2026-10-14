@@ -1,8 +1,8 @@
-// The studio's Light tab (docs/order-plan.md §9c): a map's light, tuned in its own world.
+// The studio's Light tab (docs/plans/order-plan.md §9c): a map's light, tuned in its own world.
 //
-// The game lays its light in layers (app/context.h, TimeOfDay): sheets/lighting.json under
-// everything, the map's own sheets/worlds/<w>.json over it, then dusk's or night's
-// sheets/time/<t>.json, and in rain the map's <w>_rain.json blended in. Each is watched and
+// The game lays its light in layers (app/context.h, TimeOfDay): content/sheets/lighting.json under
+// everything, the map's own content/sheets/worlds/<w>.json over it, then dusk's or night's
+// content/sheets/time/<t>.json, and in rain the map's <w>_rain.json blended in. Each is watched and
 // re-applied within a quarter of a second, so a value dragged here is seen at once, in the
 // world it is for.
 //
@@ -42,7 +42,7 @@ private:
     std::string world_;
     std::string file_;         // the layer shown
     long long stamps_[2] = {-1, -1};   // the base's and the layer's dates when read
-    core::Json base_, sheet_;  // sheets/lighting.json, and the layer (the same on the base)
+    core::Json base_, sheet_;  // content/sheets/lighting.json, and the layer (the same on the base)
     std::string said_;
     bool saidOk_ = true;
 };

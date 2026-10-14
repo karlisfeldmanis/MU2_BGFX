@@ -155,7 +155,7 @@ def index_test(things):
             return True, "workshop/index.json is missing"
         at = mtime(index)
         if mtime(DB) > at:
-            return True, "source/mu.db is newer than the index"
+            return True, "content/mu.db is newer than the index"
         # A world's monster nests (sprint E3) are read by the index too.
         worlds = os.path.join(SOURCE, "world")
         for world in sorted(os.listdir(worlds)):
@@ -257,7 +257,7 @@ def head(things, threads):
 
 
 def manifest(world):
-    """The world's manifest, source/world/<w>/world.json: its tables read its townsfolk (`npcs`)
+    """The world's manifest, content/world/<w>/world.json: its tables read its townsfolk (`npcs`)
     and its safe gate, so a townsperson moved in the studio's Place makes them stale."""
     return os.path.join(SOURCE, "world", world, "world.json")
 
@@ -356,7 +356,7 @@ def plan_set(suffix, threads, say):
         except NotFound:
             continue
     if not pieces:
-        raise NotFound(f"no piece of the set {suffix} under source/ (Helm{suffix}, Armor{suffix}, ...)")
+        raise NotFound(f"no piece of the set {suffix} under content/ (Helm{suffix}, Armor{suffix}, ...)")
     say(f"set {suffix}: {', '.join(p.name for p in pieces)}")
     steps = plan_thing(pieces[0], threads)
     builds = head(pieces, threads)
@@ -368,7 +368,7 @@ def plan_set(suffix, threads, say):
 def plan_placements(world, threads):
     """`mu make placements <w>`: the world's placed objects after they were moved (the studio's
     Place, F6). The cook reads assets/world/<w>/<w>.json, which the index makes out of
-    source/world/<w>/<w>.json, so: the index, the sync, the placements. No model is built.
+    content/world/<w>/<w>.json, so: the index, the sync, the placements. No model is built.
 
     And the townsfolk's figures: the index adds placements.json's `spawns` to the placed
     objects, and the figure cook stands a townsperson only when its model is placed (Aida's
@@ -377,7 +377,7 @@ def plan_placements(world, threads):
     source = os.path.join(SOURCE, "world", world, f"{world}.json")
     if not os.path.exists(source):
         from things import NotFound
-        raise NotFound(f"no world source/world/{world}/{world}.json")
+        raise NotFound(f"no world content/world/{world}/{world}.json")
     spawns = os.path.join(SOURCE, "world", world, "placements.json")
     newest = lambda: max(mtime(source), mtime(spawns))
     index_json = os.path.join(WORKSHOP, "index.json")
@@ -416,8 +416,8 @@ GRIDS = ("height.png", "tiles.png", "attributes.png", "light.png", "blend_keep.p
 def plan_ground(world, folder, threads, reimport=False):
     """A world's bare land: terrain import, the tile sheets, the ground, then index, sync, cook.
 
-    docs/aida-port.md step 1 and the cook-trap memories, in order:
-      - terrain.py writes the grids and <w>.json into source/ from MU's Data/World<N>. It runs on
+    docs/worlds/aida-port.md step 1 and the cook-trap memories, in order:
+      - terrain.py writes the grids and <w>.json into content/ from MU's Data/World<N>. It runs on
         a world never imported (--folder N), or when asked (--import). Never by itself: those
         files are tracked, and terrain.py's per-map tables change for one world at a time -- an
         Aida edit made every world look stale, and re-importing Lorencia for it would rewrite
@@ -449,7 +449,7 @@ def plan_ground(world, folder, threads, reimport=False):
             if reimport:
                 return True, f"--import: World{folder} read again"
             if changed_at(os.path.join(PIPELINE, "terrain.py")) > mtime(placed):
-                return False, "terrain.py changed since the import; --import re-reads it (rewrites source/world/" + world + ")"
+                return False, "terrain.py changed since the import; --import re-reads it (rewrites content/world/" + world + ")"
             return False, f"imported from World{folder}, terrain.py unchanged since"
         steps.append(Step("terrain", ["python3", os.path.join(PIPELINE, "terrain.py"),
                                       os.path.join(data_root(), f"World{folder}"), world,
@@ -533,7 +533,7 @@ def plan_sounds(threads):
     mus = os.path.join(COOKED, "showing", "showing.mus")
 
     # The effect sheets ride the same index (index.py's table of names, the PNGs under
-    # source/effects): a new sheet for a monster's show made nothing stale, and the game
+    # content/effects): a new sheet for a monster's show made nothing stale, and the game
     # said `smoke NO` (2026-10-12, the Witch Queen's Chrome03 and fantaB).
     def index_stale(changed):
         at = mtime(os.path.join(WORKSHOP, "index.json"))
@@ -542,7 +542,7 @@ def plan_sounds(threads):
         if changed_at(os.path.join(PIPELINE, "index.py")) > at:
             return True, "pipeline/index.py, its table of effect sheets, is newer than the index"
         if newest_under(os.path.join(SOURCE, "effects")) > at:
-            return True, "an effect sheet under source/effects is newer than the index"
+            return True, "an effect sheet under content/effects is newer than the index"
         return False, "the index is newer than sounds.json and the effect sheets"
     return [
         Step("index", ["python3", os.path.join(PIPELINE, "index.py"), SOURCE, WORKSHOP],

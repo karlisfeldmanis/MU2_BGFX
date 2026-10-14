@@ -3,7 +3,7 @@
 //
 // MuMain's `CNewUIMixInventory` (NewUIMixInventory.cpp) on the bag's frame and at its scale, in the
 // column to its left as the vault is -- MU opens INTERFACE_MIXINVENTORY with the inventory. Phase
-// two (docs/chaos-machine.md, the user's "proposed version is perfect", 2026-10-02) keeps that
+// two (docs/game/chaos-machine.md, the user's "proposed version is perfect", 2026-10-02) keeps that
 // window and its box and lays the rest out in the parts the other windows already draw:
 //
 //   * a **service row** under the title, Options' setting row with its two chevrons, the service

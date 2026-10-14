@@ -1,0 +1,54 @@
+{
+  "item": "Object42",
+  "mu_name": "Object42",
+  "mu_name_from": "aida's object slot: type N is Object{N+1}.bmd, from Data/Object34.",
+  "world": "aida",
+  "object_type": 41,
+  "placements": 21,
+  "profile": "world",
+  "sheets": {
+    "sunlight2_R": "ai_sunlight2_r.png"
+  },
+  "sheet_from": "Data/Object34/, decoded under the ai_ prefix by `mu new`.",
+  "sheet_materials": {
+    "sunlight2_R": "lamplight"
+  },
+  "material_note": "sunlight2_R: soft grey vertical shafts on black, added.",
+  "why_this_one": "A sunbeam slanting through the canopy, 21 of them, mostly along the west edge and the south-east. Glow batch (the user, 2026-10-11: 'Glow sheets batch'). docs/worlds/aida-port.md.",
+  "additive": [
+    "sunlight2_R"
+  ],
+  "additive_from": "An _R sheet: MU's TextureScript marks a name with _R after its underscore bright (TextureScript.cpp:16-58) and RenderBody makes that mesh the blend mesh (ZzzBMD.cpp:2236-2242), so it is drawn added, as Tarkan's chogatea02_R.",
+  "glow": {
+    "sunlight2_R": {
+      "low": 1.0,
+      "high": 1.0
+    }
+  },
+  "glow_from": "MoveAidaObject type 41 sets Alpha 0.5 (GMAida.cpp:72-76) and RenderAidaObjectVisual draws mesh 0 again RENDER_TEXTURE|RENDER_BRIGHT at BodyLight 0.52 (:151-165): two added passes of a half-strength beam, about one full one. So one added pass, steady at 1.0.",
+  "effects_note": "The second bright pass is folded into the one glow.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 2,
+      "area": 261497.5,
+      "along": [
+        -150.8,
+        156.1
+      ],
+      "mu_uv": [
+        0.006,
+        0.004,
+        0.992,
+        0.995
+      ],
+      "bake_uv": [
+        0.006,
+        0.004,
+        0.992,
+        0.995
+      ]
+    }
+  ]
+}

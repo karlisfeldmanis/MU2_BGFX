@@ -1,6 +1,6 @@
 """`mu gate`: a gate added with its pair, or taken out with it -- across two worlds' manifests.
 
-A gate is two rows in two files (docs/order-plan.md §9c, sprint G): a way in, `gates.enters`
+A gate is two rows in two files (docs/plans/order-plan.md §9c, sprint G): a way in, `gates.enters`
 in the world it stands in (its box, the level it asks, the `target` it sends to), and a way out,
 `gates.exits` in the world it lets out on (its box and the way one comes out facing), joined by
 the exit's number. So adding one is two inserts and taking one out is two removes or more,
@@ -76,7 +76,7 @@ def add(world, to, column, row, who="mu"):
     docs = manifests()
     for name in (world, to):
         if name not in docs:
-            raise NotFound(f"no world {name} (source/world/<w>/world.json)")
+            raise NotFound(f"no world {name} (content/world/<w>/world.json)")
     arrive = docs[to][1].get("rules", {}).get("arrive")
     if not arrive:
         raise NotFound(f"{to} has no rules.arrive to put the way out on")

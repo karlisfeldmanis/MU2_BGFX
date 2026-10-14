@@ -568,14 +568,14 @@ void testInvasion(const content::Tables& tables) {
           "and not again until a new rain begins");
 }
 
-// The Golden Dragon's raid (realm_raid.cpp, docs/golden-dragon-raid.md): the party legal and
+// The Golden Dragon's raid (realm_raid.cpp, docs/game/golden-dragon-raid.md): the party legal and
 // raised, each stage begun at its health, nothing but what flies reaching it aloft, the storm's
 // rocks and their pools, the Inferno's shadows, the fallen rising in town, and one seed one fight.
 void testRaid(const content::Tables& tables) {
     std::printf("raid\n");
     std::vector<sim::RaiderKit> party;
-    check(sim::readParty(std::string(MU2_SOURCE_DIR) + "/source/raid/party.json", &party),
-          "source/raid/party.json reads");
+    check(sim::readParty(std::string(MU2_SOURCE_DIR) + "/content/raid/party.json", &party),
+          "content/raid/party.json reads");
     checkEqual((long long)party.size(), 10, "ten in the party");
     if (party.size() != 10) return;
     {
@@ -1249,7 +1249,7 @@ void testNoMoonwalk(const content::Tables& tables) {
     checkEqual(backwards, 0, "and none of them turns him from where he walks");
 }
 
-// The Magic Gladiator's skills (docs/mg-port.md): the wizard's spells and the knight's skills but
+// The Magic Gladiator's skills (docs/worlds/mg-port.md): the wizard's spells and the knight's skills but
 // Teleport, Nova, Rageful Blow and Death Stab; Magic Shield his; Defense thrown on a shield.
 void testGladiatorSkills(const content::Tables& tables) {
     const sim::Kin mg = sim::Kin::MagicGladiator;
@@ -1637,7 +1637,7 @@ void testCastLock(const content::Tables& tables) {
         checkEqual(spells, 0, "and throws nothing it cannot pay for");
     }
 
-    // ---- Fire Ball (docs/skills-dw.md §2b) ----------------------------------------------------
+    // ---- Fire Ball (docs/game/skills-dw.md §2b) ----------------------------------------------------
     //
     // 0.75's row, and a primary as Energy Ball is: thrown over and over with no wait, flying
     // slower than the bolt, and learned off its scroll only at forty energy.
@@ -4052,7 +4052,7 @@ void testSkills(const content::Tables& tables) {
     std::printf("skills\n");
 
     // The formulas first, which need no realm at all. Monotone in agility, never under the
-    // floor, and the floor is the wall: docs/skills-dk.md §3.2's "a floor and not a zero".
+    // floor, and the floor is the wall: docs/game/skills-dk.md §3.2's "a floor and not a zero".
     const sim::SkillRow& cyclone = *sim::skillNumbered(sim::skill::kCyclone);
     const sim::SkillRow& guard = *sim::skillNumbered(sim::skill::kDefense);
     int32_t last = sim::cooldownTicks(cyclone, 0, 20);
@@ -4121,7 +4121,7 @@ void testSkills(const content::Tables& tables) {
     // `given`, so a level-120 knight's strength is not what this is testing.
     check(realm.equip(tables.armNamed("Sword03"), -1, true), "and a blade is put in his hand");
 
-    // ---- and nothing in his head (docs/skills-dk.md §3.3) ------------------------------------
+    // ---- and nothing in his head (docs/game/skills-dk.md §3.3) ------------------------------------
     //
     // **A character is raised knowing no skills at all**, which is the whole design as of
     // 2026-09-23: the orbs are the route, and both stand-ins that came before -- the flat grant
@@ -4209,7 +4209,7 @@ void testSkills(const content::Tables& tables) {
     }
     check(!realm.learn(sim::skill::kSlash), "and learning one twice is refused");
 
-    // ---- what the orb asks (docs/skills-dk.md §3.3) -------------------------------------------
+    // ---- what the orb asks (docs/game/skills-dk.md §3.3) -------------------------------------------
     //
     // The level is the ITEM's, checked when it is read: 0.75's own ladder of carriers, so a
     // knight meets his skills in the order MU gave them to him. And the class is the item's too.
@@ -4287,7 +4287,7 @@ void testSkills(const content::Tables& tables) {
     }
     check(!realm.learn(sim::skill::kSlash), "and learning one twice is refused");
 
-    // ---- the wizard's guard: Soul Barrier (docs/skills-dw.md) --------------------------------
+    // ---- the wizard's guard: Soul Barrier (docs/game/skills-dw.md) --------------------------------
     //
     // The user's rule of 2026-09-28: bought as a scroll at Pasi's, read once, thrown on himself
     // behind a shield, and at the start of the game within a point of what the knight's Defense
@@ -4386,7 +4386,7 @@ void testSkills(const content::Tables& tables) {
         check(his >= 0 && !knightRealm.useItem(his), "and cannot read the wizard's scroll");
     }
 
-    // ---- the families, before the hunt (docs/skills-dk.md §3.1b) -----------------------------
+    // ---- the families, before the hunt (docs/game/skills-dk.md §3.1b) -----------------------------
     //
     // The gate itself, asked of the table rather than of a fight: every attack names the hands
     // that may throw it, no attack is thrown bare-handed or off a bow, and the guard asks for a
@@ -5918,7 +5918,7 @@ void testMonstersThroughWalls() {
     checkEqual(walled, 0, "and no monster strikes him through a wall");
 }
 
-// The Lost Tower's way in (docs/lost-tower-quest.md, 2026-10-01): Devin's hand-in sends the hero
+// The Lost Tower's way in (docs/game/lost-tower-quest.md, 2026-10-01): Devin's hand-in sends the hero
 // to Tersia in the tower's hall; her chain of seven floors waits on Devin's, speaking to her
 // opens the hall's row, and each deeper floor's row waits on its link taken.
 // Thompson in Devias only answers with a line.
@@ -5950,7 +5950,7 @@ void testTowerKeeper() {
         before = q;
         for (int i = 0; i < row.paidCount; ++i) unmade += tower.itemNamed(row.paid[i].item) < 0;
     }
-    // A floor each, then Icarus's two above the tower (docs/icarus-quest.md).
+    // A floor each, then Icarus's two above the tower (docs/game/icarus-quest.md).
     checkEqual(links, 9, "seven links, a floor each, and Icarus's two");
     checkEqual(chained, 8, "each after the one before");
     checkEqual(sim::questAt(sim::kSkyDoor).giver, sim::kTersia, "The Sky Door is Tersia's");
@@ -6075,7 +6075,7 @@ void testTowerKeeper() {
                "the third floor's still waits on its own");
 }
 
-// Sevina's class change (docs/class-change-quest.md, the user's of 2026-10-04): a hunt on the
+// Sevina's class change (docs/game/class-change-quest.md, the user's of 2026-10-04): a hunt on the
 // Lost Tower's last floor (and Atlans, once it has monsters) from level 200; then each class's
 // treasure, falling only there while its quest stands, whose hand-in makes him the second class.
 void testClassChange() {
@@ -6773,7 +6773,7 @@ void testRecovery(const content::Tables& tables) {
 // Lorencia's gate 23 to Noria (sim/gates.h): a level 10 hero walked into it goes through to a
 // tile of Noria's gate 24 and stops; a level 1 hero is told it asks level 20 (MU's 10, doubled)
 // and does not.
-// The Dungeon's gates (sim/gates.cpp, docs/dungeon-port.md): Lorencia's stair down and the way
+// The Dungeon's gates (sim/gates.cpp, docs/worlds/dungeon-port.md): Lorencia's stair down and the way
 // back to the arch, and a stair between floors -- one map, so the realm puts him down in place
 // (What::Climbed) and the tables stay the Dungeon's.
 // The Dungeon's traps (sim/traps.h), each kind on its own rule: the hero stood in its reach is
@@ -6865,7 +6865,7 @@ void testTraps() {
 }
 
 // Noria's corner to Atlans and back, Gates.cs:135, 148-149 and 205-206, both level 60; the
-// refusal is the level's (docs/atlans-port.md A §2).
+// refusal is the level's (docs/worlds/atlans-port.md A §2).
 void testAtlansGates() {
     std::printf("atlans gates\n");
     struct Seen { int gated = 0, barred = 0, column = 0, row = 0; };
@@ -7031,13 +7031,13 @@ void testTarkanGates() {
     s = walk(tarkan, 249, 42, 246, 42, 69);
     checkEqual(s.barred, 70, "and asks level 70");
     // A death in Tarkan rises in its own town, spawn gate 57 (WebZen's gate.txt, mu.db gates
-    // 57), not in Lorencia: the Devias gate-22 lesson (docs/lost-tower-port.md).
+    // 57), not in Lorencia: the Devias gate-22 lesson (docs/worlds/lost-tower-port.md).
     check(tarkan.safeGate[0] == 187 && tarkan.safeGate[1] == 54 && tarkan.safeGate[2] == 203 &&
               tarkan.safeGate[3] == 69,
           "Tarkan's safe box is the town, 187,54 to 203,69, so a death rises there");
 }
 
-// Icarus's door (docs/icarus-port.md step 2): the Lost Tower's floor 7 to Icarus asks level 160
+// Icarus's door (docs/worlds/icarus-port.md step 2): the Lost Tower's floor 7 to Icarus asks level 160
 // and that he can fly -- any wing, or a Horn of Dinorant, never with the Horn of Uniria on -- and
 // the way back is free. In Icarus nothing that lets him fly comes off, and one who cannot fly is
 // sent home.
@@ -7856,7 +7856,7 @@ void testChaosMachine() {
                 checkEqual(int(smith.machine()[got].durability), 200, "whole, at 200");
             }
 
-            // Worn on slot 7 from level 180, and off a safe tile he flies (docs/wings.md).
+            // Worn on slot 7 from level 180, and off a safe tile he flies (docs/game/wings.md).
             const int young = smith.give(satan);
             check(young >= 0 && !smith.moveItem(young, sim::kWings), "a level 50 knight cannot wear it");
             int column = -1, row = -1;
@@ -7875,7 +7875,7 @@ void testChaosMachine() {
             check(flier.hero().flying, "a tick off the safe zone and he flies");
             checkEqual(sim::strideFactor(flier.hero()), sim::kFlyFactor, "at MU's 15 against 12");
 
-            // Its powers, WebZen's base 0.97d (docs/wings.md step 3).
+            // Its powers, WebZen's base 0.97d (docs/game/wings.md step 3).
             const content::ItemRow& satanRow = noria.items[size_t(satan)];
             checkNear(flier.hero().stats.damageDealt, 1.12, 1e-9, "his blows x1.12 at +0");
             checkNear(flier.hero().stats.damageTaken, 0.88, 1e-9, "what reaches him x0.88");
@@ -7899,7 +7899,7 @@ void testChaosMachine() {
             const int worn = flier.hero().wornDefense;
             check(worn >= 20, "its defence is in his");
 
-            // The 2nd wings' box (docs/second-wings.md): a 1st wing, Loch's Feather, a Chaos.
+            // The 2nd wings' box (docs/game/wings.md): a 1st wing, Loch's Feather, a Chaos.
             const int32_t feather = noria.itemAt(13, 14);
             check(feather >= 0, "Loch's Feather is in Noria's tables");
             if (feather >= 0) {
@@ -7968,7 +7968,7 @@ void testChaosMachine() {
                 }
                 check(flew, "sixty tries make one");
 
-                // The 2nd wings' rules (docs/second-wings.md step 3).
+                // The 2nd wings' rules (docs/game/wings.md step 3).
                 if (dragon >= 0) {
                     const content::ItemRow& dr = noria.items[size_t(dragon)];
                     checkNear(sim::wingPower(dr, 0).dealt, 1.32, 1e-9, "a 2nd wing x1.32 at +0");
@@ -8708,7 +8708,7 @@ void testRunes(const content::Tables& tables) {
         check(serpentShield < 0 || sim::settable(tables, spirit, held(serpentShield, 1, 0), dk, true),
               "and in the knight's Serpent Shield");
         check(!sim::settable(tables, spirit, held(serpent, 1, 0), dk, true), "nor in a weapon");
-        // The Pit's ring (docs/jewellery.md): Evil Spirit and every armour rune, from any class.
+        // The Pit's ring (docs/game/jewellery.md): Evil Spirit and every armour rune, from any class.
         const int ice = tables.itemNamed("Ring01");
         check(ice >= 0, "the Ring of Ice is in the table");
         for (sim::Kin kin : {sim::Kin::DarkWizard, sim::Kin::FairyElf, sim::Kin::DarkKnight}) {
@@ -9721,7 +9721,7 @@ void testRuneRarity(const content::Tables& tables) {
     }
 }
 
-// The pets at WebZen's word (docs/pets.md, 2026-09-30): the Angel's 30%, the Imp's 3 life a
+// The pets at WebZen's word (docs/game/pets.md, 2026-09-30): the Angel's 30%, the Imp's 3 life a
 // landed blow, and their wear.
 // The Dungeon's runes (sim/items.h) and Devin's Renewal, by what they DO in a fight, each against
 // the same seeded fight without it: Keen Eye's crits, Bloodwell's life on a wound, Frenzy's
@@ -9927,7 +9927,7 @@ void testDungeonRunes(const content::Tables& tables) {
     (void)bareMost;
 }
 
-// The four 0.75 pieces (docs/jewellery.md): where they go, what they carry, what they do worn.
+// The four 0.75 pieces (docs/game/jewellery.md): where they go, what they carry, what they do worn.
 void testJewellery(const content::Tables& tables) {
     std::printf("rings and pendants\n");
     const int ice = tables.itemAt(13, 8), poison = tables.itemAt(13, 9);
@@ -10001,7 +10001,7 @@ void testGearScore(const content::Tables& tables) {
     checkEqual(sim::gearRung(1500), 4, "1,500 legendary");
 }
 
-// The powered rings and pendant (sim::Affix, docs/jewellery.md "Powers"): the curve, every worn
+// The powered rings and pendant (sim::Affix, docs/game/jewellery.md "Powers"): the curve, every worn
 // piece's sum, what each power does, the colour's count at the drop, and the refining.
 void testPoweredJewellery(const content::Tables& tables) {
     std::printf("powered rings and pendants\n");
@@ -10166,7 +10166,7 @@ void testPets(const content::Tables& tables) {
     check(price > 2.5 && price < 3.5, "the Imp costs 3 life a landed blow");
 }
 
-// The Horn of Uniria (docs/mount.md): the mount's slot, no power but the ride, faster than the
+// The Horn of Uniria (docs/game/mount.md): the mount's slot, no power but the ride, faster than the
 // run off a safe tile and gone in town, worn by a hundredth of each hit taken.
 void testMount(const content::Tables& tables) {
     std::printf("the Horn of Uniria\n");
@@ -10242,7 +10242,7 @@ void testMount(const content::Tables& tables) {
           "and he rides with the Angel's guard on him");
 }
 
-// The Horn of Dinorant (docs/mount.md, 0.95d's): ridden as Uniria is, and MU's powers with it.
+// The Horn of Dinorant (docs/game/mount.md, 0.95d's): ridden as Uniria is, and MU's powers with it.
 void testDinorant(const content::Tables& tables) {
     std::printf("the Horn of Dinorant\n");
     const int horn = tables.itemAt(13, 3);
@@ -11289,7 +11289,7 @@ void testDrownedSong() {
     checkEqual(kills, 184, "184 kills, on Marlon's ladder with the Hydra's four");
 }
 
-// Lirien's second and the Keeper's own (docs/tarkan-quest.md; the user, 2026-10-06): the road to
+// Lirien's second and the Keeper's own (docs/game/tarkan-quest.md; the user, 2026-10-06): the road to
 // Tarkan from level 100 once her halls are cleared, handed in to the Keeper, which opens Tarkan's
 // travel row and his clear of the map; its first clear pays each class its second's gear and
 // Legendary runes, every clear the jewels and a Loch's Feather.
@@ -11577,7 +11577,7 @@ void testQuestFirecrackers(const content::Tables& tables) {
                "and the stack keeps the rest");
 }
 
-// Where the second class's gear falls (docs/second-class-gear.md): Blood Castle 6 and Tarkan by
+// Where the second class's gear falls (docs/game/second-class-gear.md): Blood Castle 6 and Tarkan by
 // the level window, Atlans's strongest one in kAtlansGearOdds, nowhere else.
 void testSecondClassDrops() {
     std::printf("second class gear drops\n");
@@ -11946,7 +11946,7 @@ void testCommands(const content::Tables& tables) {
 }
 
 // Sprint 16, step 4: a body joins a realm that is already running -- what the next player
-// arriving is (docs/server-plan.md phase 2). Spawned between ticks, found by id at once, alive
+// arriving is (server/README.md phase 2). Spawned between ticks, found by id at once, alive
 // through a thousand ticks, and the hero's id still finds the hero.
 void testSpawn(const content::Tables& tables) {
     sim::Realm realm;
@@ -12058,7 +12058,7 @@ uint64_t twoHeroHunt(const content::Tables& tables, uint32_t* ids, int* gainedRi
     return hash;
 }
 
-// **The party** (docs/party.md, realm_party.cpp): WebZen's party experience, ours on a full
+// **The party** (docs/game/party.md, realm_party.cpp): WebZen's party experience, ours on a full
 // five, and a kill's quest count for every member near it.
 void testParty(const content::Tables& tables) {
     std::printf("party\n");
@@ -12310,7 +12310,7 @@ void testDeal(const content::Tables& tables) {
     check(realm.discard(freeAt2) != 0, "and a free one of the same kind is");
 }
 
-// **Threat** (docs/party.md): a knight with his guard up holds a monster against a wizard of his
+// **Threat** (docs/game/party.md): a knight with his guard up holds a monster against a wizard of his
 // party dealing three times his damage, and loses it only past the margin.
 void testThreat(const content::Tables& tables) {
     std::printf("threat\n");
@@ -12514,7 +12514,7 @@ void testTwoHeroes(const content::Tables& tables) {
 // through the wire as a Tick's arrival, and laid on the newcomer another realm's Join lets in --
 // all of him, bag, purse, points, vault and box.
 // The chat's frames (net::Say, net::Heard): both ways through one Kind, and a said line made fit.
-// The party's wire (docs/party.md): an ask and a state back whole, and a tick's PartySet reaching
+// The party's wire (docs/game/party.md): an ask and a state back whole, and a tick's PartySet reaching
 // the mirror as itself -- capped at Leave, it was read as None and every mirror parted from the
 // server at the first hash after a party formed.
 // Devil Square on the wire (protocol 19): the Welcome's square and its wait, the config's square
@@ -12836,7 +12836,7 @@ void testGoBack(const content::Tables& lorencia) {
     check(said && !town.wayBack().open(), "taken, the realm says where -- the tile it kept, not the ask's");
 }
 
-// Devil Square's end (sim/square.h, docs/devil-square-port.md 5.2): WebZen's rank rule, OpenMU's
+// Devil Square's end (sim/square.h, docs/worlds/devil-square-port.md 5.2): WebZen's rank rule, OpenMU's
 // pay, ranked by points, paid once -- on Claim, home at once, or as the rest runs out.
 void testSquareResult() {
     std::printf("devil square's result\n");

@@ -2,7 +2,7 @@
 //
 // This file was 1663 lines: argument dispatch, a save reader, a preloader with its own thread
 // and its spinner, a model-browser list widget, three frame loops wearing one `if` ladder, and
-// a teardown. It is `app/` now -- docs/architecture.md has the shape, and app/application.h
+// a teardown. It is `app/` now -- docs/reference/architecture.md has the shape, and app/application.h
 // states the division of labour between the Application and a Mode.
 //
 // See docs/README.md for what any of it is for.
@@ -15,7 +15,7 @@
 namespace {
 
 #ifdef MU2_SHIP
-// The player's build takes the player's switches and no other (docs/layout.md): the review,
+// The player's build takes the player's switches and no other (docs/plans/layout.md): the review,
 // the bench, the studio and every request that changes a world are a developer's. A refused
 // one is said on stderr -- the log is not open yet -- and the run goes on without it.
 std::vector<char*> playersOnly(int argc, char** argv) {

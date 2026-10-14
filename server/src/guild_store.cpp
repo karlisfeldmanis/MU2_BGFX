@@ -1,4 +1,4 @@
-// The guilds on the disk (docs/guild.md): Store's guild rows, in characters.db beside the
+// The guilds on the disk (docs/game/guild.md): Store's guild rows, in characters.db beside the
 // characters and the Broker's book. Kept out of store.cpp, which is the characters'.
 
 #include <sqlite3.h>

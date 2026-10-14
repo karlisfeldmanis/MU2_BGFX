@@ -3,7 +3,7 @@
 // The rain's rhythm: how long a dry spell and a wet one last. The server's World keeps the clock
 // and sends `rain` with every tick, and the client's Weather draws what it is told -- or, run
 // without a server, keeps the same rhythm itself (game/world/weather.cpp). The numbers were
-// written twice, once in each, with a comment owning up to it; here once (docs/order-plan.md
+// written twice, once in each, with a comment owning up to it; here once (docs/plans/order-plan.md
 // sprint C). Lengthened 2026-09-29 by the user: "rain is happening longer and daytime also is
 // longer", then "we need bigger intervals between daytime and rain".
 

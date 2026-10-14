@@ -1,4 +1,4 @@
-// **The Broker's errands** (docs/broker.md, phase 4; the user, 2026-10-11: players and bots alike
+// **The Broker's errands** (docs/game/broker.md, phase 4; the user, 2026-10-11: players and bots alike
 // use the market, and a bot may price up to 5% under the cheapest). Now and then a bot whose map
 // has a Broker walks to him, takes in his Collect, lists what he would otherwise sell at the
 // counter (Bot::spares, at most kListed up at once) and buys the best upgrade on sale that he

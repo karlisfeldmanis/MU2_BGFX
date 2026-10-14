@@ -319,7 +319,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         const Body* holder = find(target.quarry);
         const bool held = attacker.player && holder != nullptr && holder->alive() &&
                           holder->summoner == attacker.id;
-        // **A party member's blow builds threat** (docs/party.md): the monster turns to whoever
+        // **A party member's blow builds threat** (docs/game/party.md): the monster turns to whoever
         // holds the most, past the margin, so a knight with his guard up keeps it off the
         // wizard. Anyone else's turns it, as it always did.
         if (!held && attacker.player && attacker.party != 0) {
@@ -2053,7 +2053,7 @@ void Realm::reviveHero() {
     // the user, 2026-10-01: "if char dies in dungeon, he has to respawn at lorencia"). `c` says
     // the map change is owed; the mode takes it (Play::takeHome).
     // And Blood Castle, whose dead are out of the run and back in Devias (the user's pick of
-    // 2026-10-03, 'death sends you out to Devias'; docs/blood-castle-port.md 5).
+    // 2026-10-03, 'death sends you out to Devias'; docs/worlds/blood-castle-port.md 5).
     const int32_t* box = tables_->safeGate;
     const bool home = !(box[2] > box[0] && box[3] > box[1]) || event() == EventKind::Castle;
     say(What::Rose, hero, hero.level, hero.health, home ? 1 : 0);

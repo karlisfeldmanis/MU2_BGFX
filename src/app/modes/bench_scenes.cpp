@@ -1,5 +1,5 @@
 // The studio's scenes: BenchMode::setScene (app/modes/bench_mode.h), out of bench_mode.cpp so
-// the scene rules sit in one place. docs/order-plan.md §9c, F3b.
+// the scene rules sit in one place. docs/plans/order-plan.md §9c, F3b.
 //
 // The user, 2026-10-12, picked "a stage and the world": the Stage to work on a thing, with
 // nothing moving round it, and the world to judge it where the game puts it. Home is that

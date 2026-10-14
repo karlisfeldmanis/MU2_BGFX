@@ -1,7 +1,7 @@
 """The placements cook's world anchors: MU's hidden boxes that throw something, by world.
 
 Moved out of tools/cook.py on 2026-10-11 to pay for Aida's waterfall spray under the size ratchet
-(docs/order-plan.md). cook.py imports these: which hidden models become world anchors and of
+(docs/plans/order-plan.md). cook.py imports these: which hidden models become world anchors and of
 which kind (content::EmitterKind), the light each kind throws, and the hidden models a world
 holds back or never draws.
 """

@@ -130,7 +130,7 @@ public:
         //   * light.png -- MU's baked terrain light averages 209 of 255 here against 135 on the
         //     equally flat and empty patch north of the town, which was where this stood first
         //     and photographed as a fight in a brown twilight. The baked light multiplies the
-        //     ground's albedo before any lighting (docs/conventions.md), so it decides the
+        //     ground's albedo before any lighting (docs/reference/conventions.md), so it decides the
         //     exposure of the whole shot and no lighting sheet will win it back.
         static constexpr int kColumn = 171;
         static constexpr int kRow = 66;
@@ -280,7 +280,7 @@ public:
     uint32_t discardFromVault(int cell);
     // A skill key pressed: throw this skill at whatever the fight is on, or at `at` when the
     // window knows a target. Not an order and it does not cancel one -- the realm spends the next
-    // swing on it and the knight goes on fighting (docs/skills-dk.md §3.1a). The realm refuses
+    // swing on it and the knight goes on fighting (docs/game/skills-dk.md §3.1a). The realm refuses
     // silently, so this returns nothing: the box's own sweep is what tells the player it is
     // cooling, and the plate reads that from the realm like everything else.
     void castSkill(int32_t skill, uint32_t at = 0);
@@ -353,7 +353,7 @@ public:
     bool give(const std::string& name, int count, const std::string& extras = "");
     // --lay's: a thing laid on the ground beside him, heard landing. See Realm::lay.
     bool lay(const std::string& name);
-    // ---- the windows' commands (sim/command.h; docs/server-plan.md phase 1) -------------------
+    // ---- the windows' commands (sim/command.h; server/README.md phase 1) -------------------
     // The counter's, the vault's and the machine's asks below are Commands: each is sent, applied
     // at the start of the next tick, and answered there. Each returns its ticket -- never 0 -- and
     // the answer comes back in answers() after the step that applied it; the sound, the redress
@@ -387,7 +387,7 @@ public:
     uint32_t depositZen(int64_t zen);
     uint32_t withdrawZen(int64_t zen);
     void closeVault() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Vault)}); }
-    // The Broker (docs/broker.md): his market asks, its answers, and walking away from it.
+    // The Broker (docs/game/broker.md): his market asks, its answers, and walking away from it.
     void askBroker(const net::BrokerAsk& asked) { if (link_) link_->askBroker(asked); }
     bool takeBrokerView(net::BrokerView& out) { return link_ && link_->takeBrokerView(out); }
     void closeBroker() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Broker)}); }
@@ -447,9 +447,9 @@ public:
     // world's weather answers to that (Weather::summon).
     void invasionRain(bool raining) { if (!remote()) local_.invasionRain(raining); }
     bool invade(bool now = false) { return here("--invasion") && local_.invade(now); }
-    // ---- the Golden Dragon's raid (play_raid.cpp, docs/golden-dragon-raid.md) ---------------
+    // ---- the Golden Dragon's raid (play_raid.cpp, docs/game/golden-dragon-raid.md) ---------------
     // Set BEFORE open() or not at all, as the arena is: the raid tough for `players`, and the
-    // party of source/raid/party.json, the hero wearing its first kit (sim::Realm::setRaid).
+    // party of content/raid/party.json, the hero wearing its first kit (sim::Realm::setRaid).
     // `watched`: the hero is the raiders' mind's too and the player only watches (--raid-watch).
     // `landing`: which of sim::kRaidLandings, or -1 for the invasion's dice (--raid-box).
     // The realm's settings (sim/config.h), set BEFORE open() as the raid is.
@@ -508,7 +508,7 @@ public:
     // Whether he is in the dragon's fight now: it stands, roused, and he is alive within its
     // field. What its music plays on (the user, 2026-10-06), and the camera's pull.
     bool raidFighting() const;
-    // How far the camera stands back past its own, in metres, eased (docs/golden-dragon-raid.md
+    // How far the camera stands back past its own, in metres, eased (docs/game/golden-dragon-raid.md
     // §2c): MU's TW_CAMERA_UP shape, keyed to a boss near him.
     float cameraPull() const { return cameraPull_; }
     void openInvasionSky(bgfx::TextureHandle glow, bgfx::TextureHandle haze);
@@ -620,7 +620,7 @@ public:
         if (!benchParty_.members.empty()) return benchParty_;
         return link_ ? link_->party() : none;
     }
-    // The guild (docs/guild.md), through the link: nothing off a server.
+    // The guild (docs/game/guild.md), through the link: nothing off a server.
     void askGuild(const net::GuildAsk& asked) {
         if (link_) link_->askGuild(asked);
     }

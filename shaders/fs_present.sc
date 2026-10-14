@@ -2,7 +2,7 @@ $input v_texcoord0
 
 // The only place tonemapping and the sRGB write happen: a tone curve, the grade, then the
 // backbuffer.
-// docs/conventions.md.
+// docs/reference/conventions.md.
 #include "common.sh"
 
 // The bloom chain's top level, half resolution, added before the tonemap. Sprint 8b.

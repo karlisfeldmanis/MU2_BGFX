@@ -1,0 +1,87 @@
+{
+  "item": "Object45",
+  "mu_name": "Object45",
+  "mu_name_from": "Aida's object slot, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "aida",
+  "object_type": 44,
+  "placements": 6,
+  "profile": "world",
+  "sheets": {
+    "GirlDongSang": "ai_girldongsang.png"
+  },
+  "sheet_from": "Data/Object34/, from MuMain, decoded under an ai_ prefix: assets/textures is one flat pool, and Crywolf's Object35 ships the same names.",
+  "sheet_materials": {
+    "GirlDongSang": "rock"
+  },
+  "material_note": "GirlDongSang: a grey stone statue: rock.",
+  "why_this_one": "a girl statue with wings. Batch 6, small rocks, statues, coffins and bones (the user, 2026-10-11: 'lets just continou to add objects and lets see how map develops'). docs/worlds/aida-port.md.",
+  "effects_note": "No arm in MuMain's GMAida.cpp for this type.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 392,
+      "area": 45043.7,
+      "along": [
+        -62.0,
+        31.0
+      ],
+      "mu_uv": [
+        0.004,
+        0.003,
+        0.934,
+        0.993
+      ],
+      "bake_uv": [
+        0.006,
+        0.005,
+        0.995,
+        0.986
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 99,
+      "area": 18403.7,
+      "along": [
+        -34.6,
+        -0.5
+      ],
+      "mu_uv": [
+        0.285,
+        0.221,
+        0.995,
+        1.003
+      ],
+      "bake_uv": [
+        0.005,
+        0.006,
+        0.556,
+        0.612
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 50,
+      "area": 535.8,
+      "along": [
+        -27.9,
+        -15.4
+      ],
+      "mu_uv": [
+        0.574,
+        0.008,
+        0.989,
+        0.185
+      ],
+      "bake_uv": [
+        0.007,
+        0.005,
+        0.9,
+        0.922
+      ]
+    }
+  ]
+}

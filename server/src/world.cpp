@@ -68,7 +68,7 @@ World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello&
     const sim::Kin kin =
         kept ? kept->hero.kin : sim::Kin(std::min<int>(hello.kin, int(sim::Kin::MagicGladiator)));
     // The Welcome first, and the realm raised from it: every mirror raises its own from the same
-    // frame by the same sim::raiseFrom, so the two cannot differ (docs/order-plan.md sprint C).
+    // frame by the same sim::raiseFrom, so the two cannot differ (docs/plans/order-plan.md sprint C).
     net::Welcome& w = world->start;
     w.seed = seed;
     w.world = hello.world;

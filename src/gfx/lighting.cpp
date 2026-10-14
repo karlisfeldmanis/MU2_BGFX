@@ -13,7 +13,7 @@ void Lighting::sunDirection(float out[3]) const {
     const float el = elevation * 3.14159265f / 180.0f;
     const float cosEl = std::cos(el);
     // Towards the sun: y is up, and the azimuth turns from +x towards -z, which is the way
-    // a row runs on MU's grid. docs/conventions.md.
+    // a row runs on MU's grid. docs/reference/conventions.md.
     out[0] = cosEl * std::cos(az);
     out[1] = std::sin(el);
     out[2] = -cosEl * std::sin(az);
@@ -126,7 +126,7 @@ bool Lighting::reloadIfChanged(const std::string& path) {
     const int64_t stamp = core::fileModified(path);
     if (stamp == 0) {
         // No sheet is not an error: the defaults in the header are a working rig, and this
-        // is what a fresh checkout with no sheets/ does.
+        // is what a fresh checkout with no content/sheets/ does.
         if (!everRead_) {
             everRead_ = true;
             core::logf("no lighting sheet at %s; the engine's own defaults stand", path.c_str());

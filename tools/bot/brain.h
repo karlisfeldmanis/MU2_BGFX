@@ -402,7 +402,7 @@ public:
     }
     int ordered() const { return ordered_; }
 
-    // ---- the Broker (tools/netbot's Errands, docs/broker.md) ------------------------------
+    // ---- the Broker (tools/netbot's Errands, docs/game/broker.md) ------------------------------
     // The user, 2026-10-11: "we now have trading in our game, that means we need to teach bots do
     // some trading so they can collabrate and become better", and 2026-10-12: "we need to teach
     // our bots use marketplace, and get rid of chat trades". He lists what one bot would sell and
@@ -638,7 +638,7 @@ public:
     void unmeet() { meet_[0] = meet_[1] = -1; }
     bool meeting() const { return meet_[0] >= 0; }
 
-    // ---- the party (docs/party.md; tools/netbot's board) ------------------------------------
+    // ---- the party (docs/game/party.md; tools/netbot's board) ------------------------------------
     // The user, 2026-10-09: "lets implement party system, so bots can form 5-man party when they
     // can kill some quest monsters, elfs can heal, dk can tank, and 2 dps", and "we need to be
     // smart about how they will fill quests, because some will need more kill some already will
@@ -835,7 +835,7 @@ public:
     // party (netbot Board::form) never gathered anyone, and a party takes it together.
     bool castleTime() const { return castlesOpen() != 0 && castleDoorSoon(); }
     bool inCastle() const { return map() == int(sim::kBloodCastleMap); }
-    // **Devil Square together**, the same way (docs/devil-square-port.md C 4.6): the squares he
+    // **Devil Square together**, the same way (docs/worlds/devil-square-port.md C 4.6): the squares he
     // could go into (his invitation and his band, a bit each), whether Charon's gate is due, and
     // whether he is in one.
     int squaresOpen() const {
@@ -2334,7 +2334,7 @@ private:
     double jewelleryWorth(const sim::Held& one) const {
         const content::ItemRow& row = tables_->items[size_t(one.item)];
         // A point of resistance, every element's: Ice, Poison and Lightning turn the chill, the
-        // poison and the push aside, Fire cuts fire blows (docs/jewellery.md).
+        // poison and the push aside, Fire cuts fire blows (docs/game/jewellery.md).
         double worth = sim::resistanceOf(row, one.refinement) + one.option * 2.0 +
                        (one.luck ? 5.0 : 0.0);
         // A rune set is worth a power; an empty socket a little, for the rune he may set later.
@@ -2479,7 +2479,7 @@ private:
         return machineOwed_;
     }
 
-    // ---- the wing ladder (docs/wings.md, sim/machine.h) -------------------------------------
+    // ---- the wing ladder (docs/game/wings.md, sim/machine.h) -------------------------------------
     // The user, 2026-10-08: "chaos machine". A thing at +4 or better with an option (or a socket,
     // ours) and a Chaos make a Chaos weapon at the Goblin; that weapon raised to +4 with Bless and
     // given an option with Life, and a Chaos, make his class's 1st wings. The rate is the box's
@@ -2836,7 +2836,7 @@ private:
         }
     }
 
-    // ---- pets and mounts (docs/pets.md, docs/mount.md) -------------------------------------
+    // ---- pets and mounts (docs/game/pets.md, docs/game/mount.md) -------------------------------------
     // The user, 2026-10-08: "satan, guardian angle use", "mounts". The Guardian Angel (13/0) takes
     // 30% off every blow on him and adds 50 health, and his own blows lose a fifth; the Imp (13/1)
     // adds 30% to his blows for 3 of his life each; both wear out under blows taken and are gone
@@ -3862,7 +3862,7 @@ private:
                castleTicket(row) || squareTicket(row);
     }
 
-    // ---- Blood Castle (sim/event.h, docs/blood-castle-port.md) -----------------------------
+    // ---- Blood Castle (sim/event.h, docs/worlds/blood-castle-port.md) -----------------------------
     // The user, 2026-10-08: "ideas is that bots are doing quests and BC". A Scroll of Archangel
     // and a Blood Bone of one level, with a Chaos, make the Invisibility Cloak of that level at the
     // Chaos Goblin; with a cloak he may use, he is at the Messenger in Devias when the hourly door
@@ -4294,7 +4294,7 @@ private:
     sim::CastlePhase lastPhase_ = sim::CastlePhase::None;
     uint32_t castleOn_ = 0;  // the statue or sorcerer he is on
 
-    // ---- Devil Square (sim/square.h, docs/devil-square-port.md) ----------------------------
+    // ---- Devil Square (sim/square.h, docs/worlds/devil-square-port.md) ----------------------------
     // The handoff's step 4 (the user, 2026-10-10: 'All, in order'): a Devil's Eye and Key of one
     // level, with a Chaos, make the Devil's Invitation at the Goblin; with one he may use, he is at
     // Charon in Noria when the two-hourly gate opens, and inside he fights the waves to the end,
@@ -4927,7 +4927,7 @@ private:
         const bool drinks = home == kIcarus || q == sim::questOf(406);
         return takes(kind, share) || (drinks && drinksThrough(kind));
     }
-    // **A kill's cost to him in a party** (docs/party.md): the party's blows shorten the kill by
+    // **A kill's cost to him in a party** (docs/game/party.md): the party's blows shorten the kill by
     // its members, and the tank takes its blows -- a damage dealer's cost is half again under it,
     // and the elf's heals halve what is left. kTogether is what the board weighs a party by
     // before it is formed: three or more about him, a tank and an elf among them.
@@ -5484,7 +5484,7 @@ private:
     std::map<std::pair<int32_t, uint32_t>, int64_t> aidTried_;
     std::map<std::string, int> aidsOf_;
     std::map<std::string, int> deathsOf_;  // what killed him and where (printKills)  // her casts on the others of her party, by skill (status)
-    // **A damage dealer's target** (docs/party.md, the threat): what the tank has struck, so the
+    // **A damage dealer's target** (docs/game/party.md, the threat): what the tank has struck, so the
     // monster stays on him -- the one closest to dying, among those his own threat on is under
     // kEaseOff of the tank's. None struck yet: he waits for the tank's first blow. 0 for none.
     static constexpr double kEaseOff = 0.9;

@@ -1,7 +1,7 @@
 """Resolves MU's three layers of monster play speed into the one table the exporter takes.
 
     python3 pipeline/monster_speeds.py \
-        source/monsters/actions.json 9 \
+        content/monsters/actions.json 9 \
         workshop/assets/monsters/Spider01/Spider01_speeds.json
 
 The exporter wants what the player's rig already hands it: a flat `{"actions": {index:

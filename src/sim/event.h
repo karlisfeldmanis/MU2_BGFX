@@ -1,7 +1,7 @@
 #pragma once
 
 // Blood Castle's run: when the Messenger lets him in, how long it runs, and the castle's grid
-// boxes that the run opens. docs/blood-castle-port.md,
+// boxes that the run opens. docs/worlds/blood-castle-port.md,
 // Part A section 4.3. Castle 1 only for now; castles 2-7 share the terrain (MapManager.cpp:
 // 1104-1106) and differ only in their monsters.
 
@@ -25,7 +25,7 @@ constexpr EventKind eventOf(uint32_t map) {
                                     : EventKind::None;
 }
 
-// A player's seat in the events (docs/order-plan.md §9e, slice I4): what Player held loose. The door's
+// A player's seat in the events (docs/plans/order-plan.md §9e, slice I4): what Player held loose. The door's
 // half -- an Enter asked for and passed at the next tick's start, and which castle or square he
 // went through -- is set in the town's realm and travels with him to the event's, so it is his,
 // not an instance's; the rest is his part in a run.
@@ -95,7 +95,7 @@ enum class CastleRefusal : int32_t {
     NotBuilt = 5,   // ours: a castle past kCastlesBuilt
 };
 
-// **The run** (docs/blood-castle-port.md §5; the user, 2026-10-03: 'lets test scnearou that
+// **The run** (docs/worlds/blood-castle-port.md §5; the user, 2026-10-03: 'lets test scnearou that
 // character is already in there is timer to start BC, gates are locked'). Raised on the castle,
 // he waits kCastleWait in the safe court with the entrance shut, then the run's kCastleRun
 // starts and the entrance opens. WebZen's quotas for one player (SetMonsterKillCount,
@@ -212,7 +212,7 @@ constexpr int kCastleRewardJewels[6][4][3] = {
     {{12, 15, 4}, {14, 13, 3}, {14, 14, 3}, {14, 16, 5}},
 };
 // After the run, won or timed out, WebZen's PLAYEND rest: a minute, then everyone left in the
-// castle is moved to Devias, gate 22 (BloodCastle.cpp:1066-1077; docs/blood-castle-port.md).
+// castle is moved to Devias, gate 22 (BloodCastle.cpp:1066-1077; docs/worlds/blood-castle-port.md).
 constexpr int kCastleRest = 60;
 // What the Archangel's page shows (QuestDialog::kArchangel).
 enum class AngelState : uint8_t { NotYet, NoStaff, Ready, Done };

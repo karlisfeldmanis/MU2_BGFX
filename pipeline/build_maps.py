@@ -1,8 +1,8 @@
 """Turns the material assignment into the maps a modern renderer actually reads.
 
     Blender --background --python pipeline/build_maps.py -- \
-        workshop/items/Sword01/Sword01_low.blend source/items/Sword01/Sword01.json \
-        workshop/items/Sword01 2048 source/materials
+        workshop/items/Sword01/Sword01_low.blend content/items/Sword01/Sword01.json \
+        workshop/items/Sword01 2048 content/materials
 
 MU gave an item one picture and expected it to answer every question: what colour is this,
 how shiny is it, which way is it facing. A metallic-roughness renderer asks those
@@ -24,7 +24,7 @@ this scale does not exist in the original art and cannot be recovered from it â€
 blade is forty texels of blurred JPEG. What can be stated truthfully is what the surface
 *is*: rolled steel has a directional grain, cast brass has pitting, a leather cord wrap has
 bands running across it. Those are facts about the material, they are written down in
-source/materials, and generating them from there is a description rather than a guess.
+content/materials, and generating them from there is a description rather than a guess.
 
 *Padding.* Every map is dilated past the edge of its island. A renderer filtering a texel
 on the seam mixes it with its neighbours, and a neighbour that is empty pulls the edge of

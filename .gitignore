@@ -1,4 +1,4 @@
-# Nothing here is authored: everything is rebuilt from source/, pipeline/ and tools/, or fetched.
+# Nothing here is authored: everything is rebuilt from content/, pipeline/ and tools/, or fetched.
 # docs/layout.md has the tree.
 
 # Generated: the builds, the cook's output and workshop, the runs' saves, shots and logs.

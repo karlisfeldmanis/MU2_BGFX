@@ -1,7 +1,7 @@
 // Throwing a skill: what a key press asks for, the refusals in OpenMU's own order, the cooldown
 // it sets, and the knock at the far end.
 //
-// `docs/skills-dk.md` is the design and `sim/skills.cpp` is the table. Three things about the
+// `docs/game/skills-dk.md` is the design and `sim/skills.cpp` is the table. Three things about the
 // shape are worth having at the top, because each of them was a decision:
 //
 //   * **A press is not an order.** `invoke` remembers a wish; it never replaces the standing
@@ -242,7 +242,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // A Bulwark answers for the shield (sim::armFamily).
         if (!row.suits(armFamily(hero, shield))) return false;
         // A self-cast has no target to be far from and reads its victim off the caster -- but for
-        // **an elf's Heal, Greater Defense and Greater Damage on one of her party** (docs/party.md,
+        // **an elf's Heal, Greater Defense and Greater Damage on one of her party** (docs/game/party.md,
         // the user's of 2026-10-09: "elfs can heal"), aimed at him and within kPartyAidReach;
         // reckoned off her own energy and agility, as on herself.
         Body* aid = nullptr;
@@ -313,7 +313,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         Body* target = body(at);
         // The reach, and it is the knight's own. 0.75 gave each skill a range and then added two
         // tiles of slack because three of the five were thrown from a step or two out and closed
-        // the gap themselves; nothing closes a gap here (docs/skills-dk.md §3.1a), so the test
+        // the gap themselves; nothing closes a gap here (docs/game/skills-dk.md §3.1a), so the test
         // is the swing's.
         const bool aimed = target && target->alive() && target->monster() &&
                            within(hero, *target, row.reach + float(bulkOf(numberOf(*target))));
@@ -557,7 +557,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     return true;
 }
 
-// ---- the two area shapes (docs/skills-dk.md §3.1a) ------------------------------------------
+// ---- the two area shapes (docs/game/skills-dk.md §3.1a) ------------------------------------------
 //
 // **Only the area differs, never the range.** Both shapes are centred on the knight and measured
 // with his own reach, so neither needs a ground target, a cursor mode or a frustum: Ring is

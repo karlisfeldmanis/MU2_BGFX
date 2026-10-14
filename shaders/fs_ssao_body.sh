@@ -12,13 +12,13 @@ uniform vec4 u_camRay;  // xy: tan of half the field of view, across and up
 vec3 viewPosAt(vec2 uv, float depth)
 {
 	vec2 ndc = uv * 2.0 - 1.0;
-	ndc.y = -ndc.y;  // Metal's origin is the top left; docs/conventions.md
+	ndc.y = -ndc.y;  // Metal's origin is the top left; docs/reference/conventions.md
 	return vec3(ndc * u_camRay.xy * depth, -depth);
 }
 
 // The spiral's taps at no turn: tap i at t = (i + 0.5) / 12, sqrt(t) out and t * 3 turns round.
 // The turn rotates the table, one cos and one sin a pixel where there were twelve of each
-// (docs/budget.md, the 2K audit's A5). `static` and braces for the HLSL bgfx's Metal path parses.
+// (docs/reference/budget.md, the 2K audit's A5). `static` and braces for the HLSL bgfx's Metal path parses.
 // Note what the numbers show: t * 3 turns is (i + 0.5) quarter turns, so the twelve taps lie
 // on four diagonals, rotated together per pixel. Kept exactly as it was drawn.
 static const vec2 kSpiral[12] = {

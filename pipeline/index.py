@@ -609,7 +609,7 @@ EFFECTS = {
     # eight frames to a row, which fs_ground steps through. BITMAP_BUBBLE is drop01.jpg, nine
     # 16-texel bubbles on black (MapManager.cpp:41), and the motes are World8's leaf01.jpg,
     # a soft white dot MU blows as its leaves and adds (ZzzEffectFireLeave.cpp:299-319, 525).
-    # docs/atlans-port.md.
+    # docs/worlds/atlans-port.md.
     "caustic": "effects/atlans/caustic.png",
     "bubble": "effects/atlans/drop01.png",
     "mote": "effects/atlans/mote01.png",
@@ -641,7 +641,7 @@ EFFECTS = {
     # Cometfall's (game/fx/comet.h): BITMAP_JOINT_ENERGY, Effect/JointLaser01.jpg, the ribbon each
     # comet drags down (sub-type 5, ZzzEffectJoint.cpp:485-491), and BITMAP_SHINY + 4,
     # Effect/ring.jpg, the blue star where it lands (MoveHandlers.cpp:2550-2580). Both on black,
-    # both added. source/effects/comet/Blast01.json.
+    # both added. content/effects/comet/Blast01.json.
     "comet_trail": "effects/comet/joint_laser01.png",
     "comet_flash": "effects/comet/ring.png",
     # Cometfall's cast, Meteorite's burn in blue (fx/meteor.h, Meteor::burn): MU's fire01 with
@@ -1796,8 +1796,8 @@ def strides(rig: Path) -> dict:
 
 def combat_rows(project: Path) -> dict:
     """Every monster's combat row, by monster number: its recipe's `combat`
-    (source/monsters/<Name>.json, sprint E2; mu.db's monster_kinds before it), or
-    source/monsters/unbuilt.json's for a breed with no recipe yet. The label is the recipe's
+    (content/monsters/<Name>.json, sprint E2; mu.db's monster_kinds before it), or
+    content/monsters/unbuilt.json's for a breed with no recipe yet. The label is the recipe's
     `mu_name`.
 
     Read here rather than by the viewer because the viewer is given build/ and nothing else.
@@ -1845,7 +1845,7 @@ def spawn_rows(project: Path) -> dict:
     table matters.
 
     Read here for the reason combat_rows gives: the viewer is handed build/ and nothing else.
-    Each world's source/world/<w>/nests.json (sprint E3; mu.db's monster_spawns before it).
+    Each world's content/world/<w>/nests.json (sprint E3; mu.db's monster_spawns before it).
     """
     found: dict = {}
 
@@ -2315,7 +2315,7 @@ def main() -> None:
     root, build = Path(sys.argv[1]), Path(sys.argv[2])
     characters, objects, monsters = [], [], []
 
-    # The monsters' combat is their recipes'; mu.db (spawns) sits in source/ beside them.
+    # The monsters' combat is their recipes'; mu.db (spawns) sits in content/ beside them.
     combat = combat_rows(root.resolve())
     spawns = spawn_rows(root.resolve())
 
@@ -2750,7 +2750,7 @@ def main() -> None:
                     entry["stats"]["classes"] = list(classes)
 
                 # And the class level it asks, where it asks the second class: Blade Knight,
-                # Soul Master, Muse Elf (OpenMU's class level 2; docs/second-class-gear.md).
+                # Soul Master, Muse Elf (OpenMU's class level 2; docs/game/second-class-gear.md).
                 if int(stats.get("class_level") or 1) >= 2:
                     entry["stats"]["class_level"] = int(stats["class_level"])
                     if (seconds := stats.get("second_classes")):
@@ -2808,7 +2808,7 @@ def main() -> None:
             # Where MU ships its own line for a row - GT 572, 573, 574 for the jewels, GT 157
             # for the scroll - the asset carries MU's English letter for letter rather than a
             # paraphrase of it, and where MU ships none the asset says so in tells_from. See
-            # docs/mu-tooltip-lines.md section 2.9.
+            # docs/reference/mu-tooltip-lines.md section 2.9.
             if document.get("tells"):
                 entry["tells"] = str(document["tells"])
 

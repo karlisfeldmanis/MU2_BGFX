@@ -1,4 +1,4 @@
-// The studio's half with no window (docs/order-plan.md §9c, F2): the cook's client and the
+// The studio's half with no window (docs/plans/order-plan.md §9c, F2): the cook's client and the
 // panels, without bgfx and without a display.
 //
 //   cooker_test          mu serve's events fed by hand: the bar, the step map, the time left,
@@ -218,7 +218,7 @@ void live() {
     }
     const mu::studio::RecipeView recipe = cooker.recipe();
     check(recipe.answered && recipe.files.size() == 1 &&
-              recipe.files[0].path == "source/items/weapons/Sword01.json" &&
+              recipe.files[0].path == "content/items/weapons/Sword01.json" &&
               recipe.files[0].doc["stats"]["minimum_damage"].numberOr(0) == 6.0,
           "live: Sword01's recipe read");
     check(recipe.materials.size() > 10, "live: the material library with it");

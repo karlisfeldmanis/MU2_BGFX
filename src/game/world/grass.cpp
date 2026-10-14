@@ -12,7 +12,7 @@ namespace mu::game {
 namespace {
 
 // A card: root pair, middle pair, top pair. Four triangles, twelve indices, six vertices.
-// Two segments is what a card at MU's camera earns -- see docs/grass.md, where a tuft works
+// Two segments is what a card at MU's camera earns -- see docs/reference/grass.md, where a tuft works
 // out at some thirty pixels tall at the nearest the zoom goes. The middle row is not detail,
 // it is what lets the card ARCH: with four vertices a leaning card is a flat parallelogram,
 // and MU's grass leans hard.
@@ -307,7 +307,7 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
     // The reach is measured from the EYE, and the shader does the measuring per card. What the
     // CPU does is coarser: it walks the square of tiles the reach could touch and hands the
     // frustum every patch whose nearest corner is inside it. The square is centred on where
-    // the eye stands over the ground -- column is +x and row is -z, docs/conventions.md.
+    // the eye stands over the ground -- column is +x and row is -z, docs/reference/conventions.md.
     const float eyeColumn = eye[0] / metres;
     const float eyeRow = -eye[2] / metres;
     const int reach = int(std::ceil(radius / metres)) + 1;

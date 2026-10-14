@@ -1,4 +1,4 @@
-// The studio's ground painting (docs/order-plan.md §9c, sprint G): a world's tiles.png painted
+// The studio's ground painting (docs/plans/order-plan.md §9c, sprint G): a world's tiles.png painted
 // in Place, a brush of tiles at a time.
 //
 // tiles.png is MU's terrain mapping (pipeline/terrain.py): red the base slot, green the

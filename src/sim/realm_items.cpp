@@ -466,7 +466,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
     }
     // The rings and the pendant: the largest resistance worn in each element (Max3), the
     // resistance powers summed on top, and every piece's life regeneration summed
-    // (docs/jewellery.md).
+    // (docs/game/jewellery.md).
     int resistancePowers[kElements] = {};
     for (int slot : {kAmulet, kRingRight, kRingLeft}) {
         const content::ItemRow* row = rowAt(slot);
@@ -500,7 +500,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
         }
         e.lifeRegen += optionValue(*row, kit[slot].option);
         // A powered piece's signature and its further powers, every worn piece's added
-        // (sim::Affix, docs/jewellery.md "Powers").
+        // (sim::Affix, docs/game/jewellery.md "Powers").
         if (!powered(*row)) continue;
         const Held& held = kit[slot];
         const auto add = [&](Affix affix) {
@@ -603,7 +603,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
     }
     // And the wing, while it has life (gObjWingSprite), after Kinship: the ring lifts a pet's
     // price, not the wing's. Its option by its kind: the Elf's life regeneration beside the
-    // rings', Heaven's wizardry, Satan's damage (docs/wings.md).
+    // rings', Heaven's wizardry, Satan's damage (docs/game/wings.md).
     hero.wingDamage = hero.wingWizardry = 0;
     if (const content::ItemRow* wing = rowAt(kWings);
         wing && anyWing(*wing) && kit[kWings].durability > 0) {
@@ -784,7 +784,7 @@ bool Realm::useItem(int slot) {
 
     // ---- an orb is read, and what is left is the skill ----------------------------------------
     //
-    // The route the user asked for on 2026-09-23 and the one docs/skills-dk.md §3.3 always
+    // The route the user asked for on 2026-09-23 and the one docs/game/skills-dk.md §3.3 always
     // described: *bought or dropped, right-click to learn, permanent*. Nothing is handed over any
     // more -- a knight is made with an empty bar and every key on it was bought at Hanzo's or
     // found. `SkillRow::needLevel` is gone with the grant; the level lives on the ITEM, which is
@@ -1470,7 +1470,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
         one.what.durability = int16_t(maximumDurability(row, one.what));
     } else if ((roll -= excellentItemChance) <= itemChance) {
         // Prize.TakesRefinement: the weapon and armour groups, ammunition taken back out.
-        // A ring's and a pendant's the same way, to +4 (GetLevelItem, docs/jewellery.md).
+        // A ring's and a pendant's the same way, to +4 (GetLevelItem, docs/game/jewellery.md).
         const auto plusOf = [level, kMostRefined](const content::ItemRow& r) {
             const bool refinable = r.group <= kGroupBoots && !ammunition(r);
             if (jewellery(r)) return std::clamp((level - r.dropLevel) / 3, 0, kJewelleryMostPlus);
@@ -2244,7 +2244,7 @@ Cracked Realm::crack(int slot) {
     return cracked;
 }
 
-// WebZen's EledoradoBoxOpenEven (Event.cpp:603, docs/kundun-box.md §3) for a Box of
+// WebZen's EledoradoBoxOpenEven (Event.cpp:603, docs/game/kundun-box.md §3) for a Box of
 // Kundun, and OpenMU's Version095d Box of Luck, in their own order: whether an item comes, then
 // for the Kundun box whether it is excellent, which row, its level, the skill, the luck and the
 // option; else Zen into the purse.

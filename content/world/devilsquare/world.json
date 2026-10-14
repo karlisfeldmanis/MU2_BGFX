@@ -1,0 +1,100 @@
+{
+  "world": "devilsquare",
+  "name": "Devil Square",
+  "map": 9,
+  "note": "The world's manifest (docs/plans/order-plan.md, sprint D). `show` is MapShow, read by game/world/world_show.cpp: what the client draws, plays and hears here. A system opens only where its field is set. Copied to assets/world/<w>/world.json by tools/sync.sh.",
+  "rules": {
+    "arrive": [
+      137,
+      95
+    ],
+    "home": 3,
+    "event": true,
+    "floors": false,
+    "move_order": 10,
+    "drops": [
+      "firecracker"
+    ],
+    "note": "Devil Square, MU's map 9: four arenas on one terrain, one a square. Square 1's arrival gate 58, 133,91 to 141,99, in the middle of arena A (OpenMU Version095d Gates.cs:141; docs/worlds/devil-square-port.md). Not 0.75's: OpenMU first has it at 0.95d. MU draws it on its black clear and fog, so it takes the underground's air until its rain. Its town is Noria: a death, a Town Portal and the end of the event all land there (WebZen gate 27). The firecracker falls here (sim/items.h firecrackerMap): a kill of level 17 or over, one in 300 (the user, 2026-10-02: 'only from dungeons like dungeon, lost-tower, bc, and devil square', then 'lets do 1 of 300 to all dungeons'). Ours: MU's was any map under Atlans while its event ran."
+  },
+  "show": {
+    "air": {
+      "loop": ""
+    },
+    "weather": {
+      "kind": "square",
+      "note": "Never stops (CreateDevilSquareRain, ZzzEffectFireLeave.cpp:121-170, 431-457)."
+    },
+    "leaves": "square",
+    "indoors": {
+      "everywhere": true,
+      "note": "No open sky on any tile (MU draws it on its black clear, SceneManager.cpp:402)."
+    }
+  },
+  "gates": {
+    "exits": [
+      {
+        "number": 58,
+        "box": [
+          133,
+          91,
+          141,
+          99
+        ],
+        "faces": [
+          0,
+          0
+        ],
+        "note": "Devil Square 1's, OpenMU 0.95d Gates.cs:141: the arena's box, with no direction. Reached only through Charon (sim/square.h)."
+      },
+      {
+        "number": 59,
+        "box": [
+          135,
+          162,
+          142,
+          170
+        ],
+        "faces": [
+          0,
+          0
+        ],
+        "note": "Devil Square 2, Gates.cs:142"
+      },
+      {
+        "number": 60,
+        "box": [
+          62,
+          150,
+          70,
+          158
+        ],
+        "faces": [
+          0,
+          0
+        ],
+        "note": "3, :143"
+      },
+      {
+        "number": 61,
+        "box": [
+          66,
+          84,
+          74,
+          92
+        ],
+        "faces": [
+          0,
+          0
+        ],
+        "note": "4, :144"
+      }
+    ]
+  },
+  "pipeline": {
+    "grass": {
+      "value": [],
+      "note": "Devil Square ships no TileGrass .OZT (ZzzLodTerrain.cpp:2081-2088), and its TileGrass01, on every tile, is the arenas' worn stone. docs/worlds/devil-square-port.md."
+    }
+  }
+}

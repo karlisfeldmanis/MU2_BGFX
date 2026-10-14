@@ -1,4 +1,4 @@
-// The Golden Invasion as an instance (docs/order-plan.md §9e, slice J1): its run, the dragon's
+// The Golden Invasion as an instance (docs/plans/order-plan.md §9e, slice J1): its run, the dragon's
 // slot in the realm's bodies, and the begin owed to the next tick -- and the code that raises the
 // dragon down, rolls for it as a wet spell begins, brings it down, stands it and ends it. The
 // Realm holds one (Realm::invasion_) and hands it itself; the raid (realm_raid.cpp) reads it.

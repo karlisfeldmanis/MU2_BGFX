@@ -1,5 +1,5 @@
 // The command line. Every switch a review run needs is here, and nothing that belongs in a
-// sheet: a number that is tuned belongs in sheets/, a number that describes the run belongs
+// sheet: a number that is tuned belongs in content/sheets/, a number that describes the run belongs
 // here.
 #pragma once
 
@@ -15,7 +15,7 @@ struct BudgetOverride {
 };
 
 // The Graphics page's presets, which --graphics names too. What each row costs at 2K is
-// docs/budget.md's table: the scale is most of it, then the shadows' taps and map, MSAA,
+// docs/reference/budget.md's table: the scale is most of it, then the shadows' taps and map, MSAA,
 // bloom, reflections and grass. High is the game as it was drawn before there was a choice.
 struct GraphicsPreset {
     const char* name;
@@ -36,7 +36,7 @@ struct Args {
     // The whole display, at its own mode, and --width/--height ignored. A measurement is
     // taken windowed at 1080p; this is for playing it.
     bool fullscreen = false;
-    bool vsync = false;  // off for every measurement; see docs/budget.md
+    bool vsync = false;  // off for every measurement; see docs/reference/budget.md
     // --remember: the game menu's Options kept across runs, in optionsPath(). Read where the
     // switch stands on the line, so main.sh's own --fullscreen and --vsync before it give way to
     // what the player chose and a switch after it still wins; written back whenever Options
@@ -89,13 +89,13 @@ struct Args {
 
     // The bench. A model is a path to a .glb; empty raises the ground alone.
     std::string model;
-    std::string sheet;       // absolute; sheets/lighting.json by default
+    std::string sheet;       // absolute; content/sheets/lighting.json by default
     float distance = 0.0f;   // camera distance in world units; 0 frames on the model
     bool still = false;      // hold the camera instead of turning it
     // The shadow probe. `--shadow-log` writes a csv row a frame of where the sun's split
     // stood against a grid fixed to the world, and how far the camera trails the character;
     // `--shadow-slide` moves the split alone this many millimetres a frame, so that with the
-    // camera held any pixel that changes is the shadow's. docs/shadow-probe.md.
+    // camera held any pixel that changes is the shadow's. docs/reference/shadow-probe.md.
     std::string shadowLog;   // absolute
     float shadowSlideMm = 0.0f;
     // `--shadow-points` writes, a row a frame, where a fixed grid of ground points lands on
@@ -219,8 +219,8 @@ struct Args {
     bool castleOpen = false;    // `--castle-open`: the Messenger's door open at any hour (a test)
     int castlePeriod = 0;       // `--castle-period S`: the castle opens every S seconds for S/2 (a test; 0 is hourly)
     bool invasion = false;      // `--invasion`: the map's Golden Invasion begun at once (a test)
-    // `--raid N`: the Golden Dragon's raid (docs/golden-dragon-raid.md) -- the party of
-    // source/raid/party.json in one of WebZen's Lorencia Dragon Event boxes, the invasion begun at
+    // `--raid N`: the Golden Dragon's raid (docs/game/golden-dragon-raid.md) -- the party of
+    // content/raid/party.json in one of WebZen's Lorencia Dragon Event boxes, the invasion begun at
     // once, the dragon tough for N; the hero wears the first kit. 0 for none.
     int raid = 0;
     // --bench-players N: N other heroes in the raid party's gear joined round him, half walking
@@ -402,7 +402,7 @@ struct Args {
     // The plus every item on the viewer's subject is shown at, 0 to 15: the refinement shine,
     // judged on the bench (sprint 14). 0 is the item as it is.
     int plus = 0;
-    // The viewer's time of day to open on: noon, dusk or night. sheets/time/<name>.json laid
+    // The viewer's time of day to open on: noon, dusk or night. content/sheets/time/<name>.json laid
     // over the lighting sheet; noon is the sheet alone. T walks them with the window open.
     std::string time = "noon";
     std::string figure;

@@ -59,7 +59,7 @@ private:
     // The studio's stage: the map's own bonfire nearest the middle of the town, and the
     // subject stood 1.6 m to its -x and +z, which is the left of MU's picture.
     bool openStudioWorld(Context& ctx, const std::string& benchWorld);
-    // The studio's scenes (app/modes/bench_scenes.cpp, docs/order-plan.md §9c F3b): "Stage",
+    // The studio's scenes (app/modes/bench_scenes.cpp, docs/plans/order-plan.md §9c F3b): "Stage",
     // "Home" (the subject's own place: a monster at its spawn, an armour set on the character
     // screen's middle pedestal, anything else at Lorencia's bonfire) or a world by name.
     void setScene(Context& ctx, const std::string& scene);
@@ -81,7 +81,7 @@ private:
     // The Armour sets tab's suit at --plus 9 and up, lit as a complete set is in play: its arm
     // lights from +9, its flares and ribbons at +10 and +11 (game/fx/set_shine.h).
     game::SetShine setShine_;
-    // The studio's panels (`mu2 --studio`, docs/order-plan.md §9c): in place of the overlay's
+    // The studio's panels (`mu2 --studio`, docs/plans/order-plan.md §9c): in place of the overlay's
     // list, and closed under --no-list as it was.
     StudioDesk desk_;
     game::StudioStage stage_;

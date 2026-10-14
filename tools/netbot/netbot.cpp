@@ -22,7 +22,7 @@
 //
 // CLASS is dk, dw, elf, eelf (the energy elf, her points to energy for heals and buffs) or mg (a
 // new elf is born in Noria). --party makes the run's bots one party
-// (docs/party.md), the first named its leader; --parties lets them form their own, for the quests
+// (docs/game/party.md), the first named its leader; --parties lets them form their own, for the quests
 // they cannot take alone (Board). --claude DIR makes the first named the Claude
 // bot (claude.h): his chat and his choice of ground are the model's, through files in DIR.
 // The run's bots trade at the Broker (Errands, errands.h) unless --no-trades: they list their
@@ -295,7 +295,7 @@ public:
         }
     }
 
-    // ---- the party (docs/party.md): what the board (Board, below) reads and says ----------
+    // ---- the party (docs/game/party.md): what the board (Board, below) reads and says ----------
     const std::string& name() const { return name_; }
     sim::Kin kin() const { return kin_; }
     bool up() const { return link_ && link_->connected() && shared_ && ready_; }
@@ -784,7 +784,7 @@ private:
         link_->takeHeard(heard_);
         const int64_t now = brain()->clockNow();
         party();
-        // A guild's cards (docs/guild.md): an invite to him, or, a master, a player asking in --
+        // A guild's cards (docs/game/guild.md): an invite to him, or, a master, a player asking in --
         // answered by the guilds' board (guilds.h), which knows what the guild wants.
         for (net::GuildCall call; link_->takeGuildCall(call);) guildCalls_.push_back(std::move(call));
         for (const net::Heard& one : heard_) {
@@ -1049,7 +1049,7 @@ bool Pool::advance() {
     return behind;
 }
 
-// **The board** (docs/party.md): the run's bots' parties, formed and led. The user, 2026-10-09:
+// **The board** (docs/game/party.md): the run's bots' parties, formed and led. The user, 2026-10-09:
 // "lets implement party system, so bots can form 5-man party when they can kill some quest
 // monsters, elfs can heal, dk can tank, and 2 dps", "it make sense they go together on
 // dungeons", "we need to be smart about how they will fill quests, because some will need more
@@ -2612,7 +2612,7 @@ int main(int argc, char** argv) {
             return 2;
         }
     }
-    // The server's own bots (docs/party.md, the user's of 2026-10-09: "DK, Elf, DW, MG and a
+    // The server's own bots (docs/game/party.md, the user's of 2026-10-09: "DK, Elf, DW, MG and a
     // second DK"): Ragnar and Elora, and an elf, a gladiator and a second knight beside them.
     if (wanted.empty()) {
         wanted = {{"Ragnar", sim::Kin::DarkKnight}, {"Elora", sim::Kin::DarkWizard}, {"Ilaria", sim::Kin::FairyElf},

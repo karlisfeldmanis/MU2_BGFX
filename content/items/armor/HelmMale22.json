@@ -1,0 +1,296 @@
+{
+  "item": "HelmMale22",
+  "mu_name": "Great Dragon Helm",
+  "mu_name_from": "MuMain loads the set at index 21 from Data/Player/HelmMale22.bmd (ZzzOpenData.cpp:200-210: the sets at index 21-24 are files 22-25, `22 + i`). MU's group 7 number 21.",
+  "why_this_one": "The Blade Knight's second set, after Dark Phoenix (the user, 2026-10-10: 'cook them', the next sets and weapons after the strongest the heroes have). docs/game/second-class-gear.md.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have no second-class sets).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:84.",
+    "call": "CreateArmor(21, 2, 2, 2, \"Great Dragon Helm\", 104, 53, 86, 0, 200, 58, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0)",
+    "group": 7,
+    "number": 21,
+    "drop_level": 104,
+    "drops_from_monsters": true,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 53,
+    "durability": 86,
+    "requires": {
+      "level": 0,
+      "strength": 200,
+      "agility": 58,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Blade Knight's alone: OpenMU's darkKnightClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "sheets": {
+    "head22": "head22.png",
+    "level_man01": "level_man01.png",
+    "boots22": "boots22.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py: dark red lacquered plate traced in gold; hide is MU's black cap over the openings.",
+  "material_note": "painted_steel, as Dark Phoenix's: dark red lacquer with gold traced on, MU's paint the look.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.05,
+        "roughness_range": 0.06
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain has no render arm for MODEL_GREAT_DRAGON_* (no ItemObjectAttribute glow, no chrome pass): drawn as its sheet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 9,
+      "area": 262.3,
+      "along": [
+        -12.0,
+        7.2
+      ],
+      "mu_uv": [
+        0.694,
+        0.681,
+        0.971,
+        0.976
+      ],
+      "bake_uv": [
+        0.01,
+        0.713,
+        0.335,
+        0.963
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 7,
+      "area": 117.6,
+      "along": [
+        1.1,
+        10.2
+      ],
+      "mu_uv": [
+        0.151,
+        0.034,
+        0.368,
+        0.452
+      ],
+      "bake_uv": [
+        0.517,
+        0.01,
+        0.705,
+        0.502
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 9,
+      "area": 226.0,
+      "along": [
+        -8.9,
+        6.6
+      ],
+      "mu_uv": [
+        0.694,
+        0.681,
+        0.971,
+        0.976
+      ],
+      "bake_uv": [
+        0.331,
+        0.757,
+        0.837,
+        0.967
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 7,
+      "area": 183.7,
+      "along": [
+        2.0,
+        11.1
+      ],
+      "mu_uv": [
+        0.151,
+        0.034,
+        0.368,
+        0.452
+      ],
+      "bake_uv": [
+        0.637,
+        0.01,
+        0.76,
+        0.757
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 9,
+      "area": 262.3,
+      "along": [
+        -12.0,
+        7.2
+      ],
+      "mu_uv": [
+        0.694,
+        0.681,
+        0.971,
+        0.976
+      ],
+      "bake_uv": [
+        0.568,
+        0.249,
+        0.951,
+        0.987
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 7,
+      "area": 117.6,
+      "along": [
+        1.1,
+        10.2
+      ],
+      "mu_uv": [
+        0.151,
+        0.034,
+        0.368,
+        0.452
+      ],
+      "bake_uv": [
+        0.493,
+        0.266,
+        0.827,
+        0.835
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 9,
+      "area": 226.0,
+      "along": [
+        -8.9,
+        6.6
+      ],
+      "mu_uv": [
+        0.694,
+        0.681,
+        0.971,
+        0.976
+      ],
+      "bake_uv": [
+        0.803,
+        0.47,
+        0.991,
+        0.911
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 7,
+      "area": 183.7,
+      "along": [
+        2.0,
+        11.1
+      ],
+      "mu_uv": [
+        0.151,
+        0.034,
+        0.368,
+        0.452
+      ],
+      "bake_uv": [
+        0.76,
+        0.011,
+        0.883,
+        0.758
+      ]
+    },
+    {
+      "island": 8,
+      "material": "painted_steel",
+      "triangles": 104,
+      "area": 3354.0,
+      "along": [
+        -20.0,
+        21.4
+      ],
+      "mu_uv": [
+        0.018,
+        0.039,
+        0.897,
+        0.943
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.931,
+        0.911
+      ]
+    },
+    {
+      "island": 9,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 165.2,
+      "along": [
+        11.2,
+        19.7
+      ],
+      "mu_uv": [
+        0.756,
+        0.392,
+        0.991,
+        0.843
+      ],
+      "bake_uv": [
+        0.43,
+        0.103,
+        0.617,
+        0.618
+      ]
+    },
+    {
+      "island": 10,
+      "material": "painted_steel",
+      "triangles": 53,
+      "area": 839.9,
+      "along": [
+        -4.7,
+        16.9
+      ],
+      "mu_uv": [
+        0.282,
+        0.273,
+        0.766,
+        0.985
+      ],
+      "bake_uv": [
+        0.009,
+        0.012,
+        0.927,
+        0.947
+      ]
+    }
+  ]
+}

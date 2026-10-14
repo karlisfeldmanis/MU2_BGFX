@@ -4,7 +4,7 @@
     mu shot aida 118,87        a muted shot at a tile: noon by default, the hero's save untouched
     mu compare A.png B.png     the two side by side, labelled, with how much changed
 
-`where` is the measure docs/recipes.md asks for: a thing named in one folder is a thing with
+`where` is the measure docs/content/recipes.md asks for: a thing named in one folder is a thing with
 a home. `shot` is the memory's run line, which every session retyped: --mute, a scratch
 --save, an absolute --shot-path. `compare` is for me as much as anyone: one labelled sheet
 reads in a single look where two loose PNGs take two and a guess.
