@@ -16,6 +16,9 @@ namespace fs = std::filesystem;
 // The site (web/) and the platform its releases are under (tools/mu/release.py).
 struct Place {
     std::string site = "https://37.27.158.226";
+    // Where the player's links go (Create account, Forgot password, Edit account): always the
+    // public website, even when `site` is a local one for a test.
+    std::string web = "https://37.27.158.226";
 #ifdef _WIN32
     std::string platform = "windows";
 #else
