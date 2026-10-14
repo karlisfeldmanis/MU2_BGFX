@@ -16,16 +16,16 @@ MU2_BGFX/
 ├─ server/       the server's C++, deploy.sh, the service file
 ├─ tests/        the C++ tests and shotcheck's reference pictures
 ├─ shaders/      the .sc sources
-├─ content/      was content/; what we author, the Cooker's truth
-│   content/sheets/      was content/sheets/: lighting, time, lobby, worlds, materials
+├─ content/      was source/; what we author, the Cooker's truth
+│   sheets/      was sheets/: lighting, time, lobby, worlds, materials
 ├─ pipeline/     the Python cook: pipeline/ plus tools/cook*.py, sync*, voice, mixamo, ...
 ├─ tools/        mu's own code, bot, netbot, botwatch, perf, the checks, portdemo
-├─ docs/
+├─ docs/         README.md the index; plans/ reference/ content/ game/ worlds/
 │
 ├─ third_party/  fetched, never ours (ignored; bootstrap.sh fills it)
 │   extern/ patches/ weights/ downloads/
 ├─ out/          generated, ignored; deleting it costs a rebuild and a cook, nothing else
-│   build/ build-debug/ assets/ workshop/ shots/ screenshots/ crashes/ saves/ mu2.log
+│   build/ build-debug/ build-ship/ assets/ workshop/ shots/ saves/ logs/ (mu2.log, crashes)
 └─ dist/         what players are given (ignored; `./mu dist` writes it)
     macos/MU2.app   windows/   linux/
 ```
@@ -73,10 +73,10 @@ or while the studio is open: the studio's baked paths would point at nothing.
    `./mu --help` and ten `--plan` captures are unchanged. Left over: `src/game/ui/desk.cpp:108`
    still pastes `MU2_ROOT_DIR "/extern/..."` (another session's file then); it becomes
    `gfx::fontPath("Amarante-Regular.ttf")`.
-2. **`third_party/` and `out/`.** Move the ignored folders. Change `MU_DIRS`, the `extern/`
+2. **`third_party/` and `out/`.** Done 2026-10-14 (out/build configured fresh). Move the ignored folders. Change `MU_DIRS`, the `extern/`
    include paths in `CMakeLists.txt`, `tools/paths.py`, `tools/paths.sh`, `.gitignore`,
    `bootstrap.sh` and `build.sh`. This needs a clean rebuild, because `build/` moves.
-3. **`content/`.** Use `git mv source content` and `git mv sheets content/sheets`. Then fix:
+3. **`content/`.** Done 2026-10-14 (0cb37cf8; recipes through `mu` edit, journalled). Used `git mv source content` and `git mv sheets content/sheets`. Then fix:
    - the roots
    - `mu edit`, `gate`, `light` and `paint`
    - the journal, and the studio's relative `"content/..."` and `"content/sheets/..."` keys
