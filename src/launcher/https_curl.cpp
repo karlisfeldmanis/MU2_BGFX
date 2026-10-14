@@ -58,7 +58,7 @@ Reply request(const std::string& method, const std::string& url, const std::stri
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &reply.body);
     curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "MU2Launcher");
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, kAgent);
     const CURLcode done = curl_easy_perform(curl);
     if (done == CURLE_OK) {
         long status = 0;
@@ -92,7 +92,7 @@ bool download(const std::string& url, const std::filesystem::path& to, bool resu
     // A line that stops moving for a minute is given up on; the next try resumes.
     curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 1L);
     curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 60L);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "MU2Launcher");
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, kAgent);
     if (have > 0) curl_easy_setopt(curl, CURLOPT_RESUME_FROM_LARGE, curl_off_t(have));
     const CURLcode done = curl_easy_perform(curl);
     long status = 0;

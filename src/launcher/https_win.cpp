@@ -37,7 +37,7 @@ struct Handle {
 // One session for the launcher's life: WinHTTP keeps its connections warm inside it.
 HINTERNET session() {
     static HINTERNET one = [] {
-        HINTERNET h = WinHttpOpen(L"MU2Launcher", WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME,
+        HINTERNET h = WinHttpOpen(wide(kAgent).c_str(), WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME,
                                   WINHTTP_NO_PROXY_BYPASS, 0);
         // TLS 1.2 and 1.3 said outright: an older Windows 10's WinHTTP offers 1.2 only when asked.
         DWORD protocols = WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;

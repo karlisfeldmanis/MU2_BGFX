@@ -10,6 +10,7 @@ Python's standard library only (the user, 2026-10-14: no packages on the box). I
 The routes:
     POST /api/register   {email, password}          -> 201 {ok}            | 400 {field, error} | 409 {error: taken}
     POST /api/login      {email, password}          -> 200 {token, email}  | 401 {error}
+                                                    | 426 {error} from a launcher too old (OLD_LAUNCHER)
     POST /api/logout     Authorization: Bearer T    -> 200 {ok}
     POST /api/machine    {gpu, driver, cpu, ...}    -> 200 {ok} | 400 {error} | 429
          the launcher's report of the machine it runs on (docs/plans/launcher.md, L7): one JSON
@@ -75,6 +76,15 @@ MOST_CRASH_BODY = 6 * 1024 * 1024
 MOST_CRASHES_A_DAY = 2000
 CRASH_FIELDS = {"platform": 16, "sender": 16, "gpu": 160, "driver": 64}
 CRASH_FILE = re.compile(r"^[A-Za-z0-9_.-]{1,96}\.txt$")
+
+# The launchers that must be replaced: they cannot update themselves, so the site tells them so.
+# A launcher says "MU2Launcher/<build>" (src/launcher/https.h kAgent); those before crash reports
+# said "MU2Launcher" alone. Their sign-in is refused with words their screen shows as they are
+# (one line, 250 units wide at most), and a kept sign-in is not known to them, which brings them to
+# that screen. Browsers and the game are not launchers and are never turned away.
+LAUNCHER_AGENT = re.compile(r"^MU2Launcher(?:/(\d+))?$")
+LAUNCHER_NEEDED = 2
+OLD_LAUNCHER = "Download the new launcher."
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS accounts (
@@ -348,6 +358,10 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, UnicodeDecodeError):
             return None
 
+    def old_launcher(self) -> bool:
+        said = LAUNCHER_AGENT.match(self.headers.get("User-Agent", "").strip())
+        return bool(said) and int(said.group(1) or 1) < LAUNCHER_NEEDED
+
     def bearer(self) -> str:
         said = self.headers.get("Authorization", "")
         return said[7:].strip() if said.startswith("Bearer ") else ""
@@ -394,6 +408,9 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(400, {"error": "bad request"})
         if not LOGIN_LIMIT.allow(self.client()):
             return self.reply(429, {"error": "Too many tries. Wait a minute."})
+        if self.old_launcher():
+            print(f"{self.client()} an old launcher was told to download the new one", flush=True)
+            return self.reply(426, {"error": OLD_LAUNCHER})
         email = str(said.get("email", "")).strip().lower()
         password = str(said.get("password", ""))
         signed = self.store.login(email, password) if email and password else None
@@ -480,6 +497,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         url = urlparse(self.path)
         if url.path == "/api/me":
+            if self.old_launcher():
+                return self.reply(401, {"error": OLD_LAUNCHER})
             row = self.store.session(self.bearer())
             return self.reply(200, {"email": row[1]}) if row else self.reply(401, {"error": "signed out"})
         if url.path == "/api/downloads":
