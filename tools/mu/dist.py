@@ -225,6 +225,29 @@ LAUNCHER_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 
+# The one line the site offers beside the Mac button. A browser download carries the quarantine
+# that Gatekeeper then stands behind ("Apple could not verify", macOS 15+ with no right-click
+# door); a fetch by curl carries none, so this route opens the app straight away.
+INSTALL_SH = """#!/bin/sh
+# MU Classic's launcher for macOS, installed from Terminal: curl carries no quarantine, so
+# macOS opens the app with no Gatekeeper step. The game it installs comes the same way.
+set -e
+where="$HOME/Applications"
+if pgrep -x MU2Launcher >/dev/null 2>&1; then
+    echo "The launcher is running -- close it first."
+    exit 1
+fi
+mkdir -p "$where"
+echo "Fetching the launcher..."
+curl -fsSL https://mu-classic.com/downloads/MU2Launcher.tar.gz -o "$where/.MU2Launcher.tgz"
+rm -rf "$where/MU2Launcher.app"
+tar -xzf "$where/.MU2Launcher.tgz" -C "$where"
+rm -f "$where/.MU2Launcher.tgz"
+echo "Installed in $where. Opening..."
+open "$where/MU2Launcher.app"
+"""
+
+
 def dist_launcher(say):
     """dist/launcher/MU2Launcher.app and MU2.dmg: the launcher for the Mac (docs/plans/launcher.md,
     L5). Built from the working tree -- it is one small program and no game content -- and the DMG
@@ -265,6 +288,16 @@ def dist_launcher(say):
          dmg], say)
     shutil.rmtree(into)
     total = os.path.getsize(dmg)
+
+    # The same app as a tarball, for the Terminal install: a download by curl carries no
+    # quarantine, so the app opens with no Gatekeeper step at all (docs/plans/launcher.md, L5).
+    # The script the site offers next to the DMG's button is written here too, saying this URL.
+    tared = os.path.join(stage, "MU2Launcher.tar.gz")
+    if os.path.exists(tared):
+        os.remove(tared)
+    run(["tar", "-czf", tared, "-C", stage, "MU2Launcher.app"], say)
+    with open(os.path.join(stage, "install-macos.sh"), "w") as out:
+        out.write(INSTALL_SH)
     say(f"{dmg}: {total / 1e6:.0f} MB, app signed ad hoc, in {time.time() - started:.0f} s")
     return True, {"dmg": dmg, "app": app, "bytes": total}
 

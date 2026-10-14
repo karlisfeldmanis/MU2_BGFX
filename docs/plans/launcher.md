@@ -111,6 +111,14 @@ macos, with install and everything").
   note reads "first launch: allow in Privacy & Security": on macOS 15 and later the right-click
   door is shut and that pane's "Open Anyway" is the only one -- all until there is a Developer
   ID to sign and notarise with, after which there is no door at all.
+- The site offers a second way past Gatekeeper under the Mac button: one line in Terminal,
+  `curl -fsSL https://mu-classic.com/downloads/install-macos.sh | sh` (the script and
+  MU2Launcher.tar.gz sit beside the DMG in /downloads/). A browser download carries the
+  quarantine flag; a fetch by curl carries none, so the app opens at once -- no dialog, no
+  Settings pane, nothing. Checked live: the line installed to ~/Applications and opened, and the
+  extracted bundle held no quarantine attribute. The script refuses while a MU2Launcher is
+  running, and the game MU2.app never needs any of this: the launcher's own fetches carry no
+  quarantine either.
 - `./mu release macos` puts dist/macos/MU2.app on the box under /game/macos/ exactly as the
   Windows client goes under /game/windows/ (release.py walks the bundle, exe
   MU2.app/Contents/MacOS/MU2). _CodeSignature is left out: macOS refuses to hard-link its files,
