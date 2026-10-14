@@ -7,8 +7,10 @@
 #include <map>
 #include <sstream>
 
+#include "core/args.h"
 #include "core/json.h"
 #include "core/log.h"
+#include "launcher/gpu.h"
 #include "launcher/https.h"
 #include "launcher/sha256.h"
 
@@ -77,6 +79,55 @@ std::string stamp(const fs::path& path) {
     std::error_code ec;
     return std::to_string(int64_t(fs::last_write_time(path, ec).time_since_epoch().count()));
 }
+
+#ifdef _WIN32
+// ---- what a report says about the machine around the card ----------------------------------------
+
+std::string wide(const wchar_t* text) {
+    if (!text || !*text) return {};
+    const int size = WideCharToMultiByte(CP_UTF8, 0, text, -1, nullptr, 0, nullptr, nullptr);
+    if (size <= 1) return {};
+    std::string out(size_t(size - 1), '\0');
+    WideCharToMultiByte(CP_UTF8, 0, text, -1, out.data(), size, nullptr, nullptr);
+    return out;
+}
+
+// The name the CPU was sold under: HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0.
+std::string cpuName() {
+    HKEY key = nullptr;
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", 0, KEY_READ,
+                      &key) != ERROR_SUCCESS) {
+        return {};
+    }
+    wchar_t name[96] = {};
+    DWORD type = 0, size = sizeof name - sizeof(wchar_t);
+    const bool got = RegQueryValueExW(key, L"ProcessorNameString", nullptr, &type,
+                                      reinterpret_cast<LPBYTE>(name), &size) == ERROR_SUCCESS &&
+                     type == REG_SZ;
+    RegCloseKey(key);
+    return got ? wide(name) : std::string{};
+}
+
+// All the memory the machine has, in MB.
+int ramMb() {
+    MEMORYSTATUSEX memory{};
+    memory.dwLength = sizeof memory;
+    return GlobalMemoryStatusEx(&memory) ? int(memory.ullTotalPhys >> 20) : 0;
+}
+
+// Windows as its own kernel reports it: "10.0.26100". GetVersionEx would lie without a manifest;
+// RtlGetVersion does not, and ntdll has had it in every Windows the game runs on.
+std::string osVersion() {
+    using RtlGetVersion = LONG(WINAPI*)(OSVERSIONINFOW*);
+    const HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
+    const auto rtl = ntdll ? reinterpret_cast<RtlGetVersion>(GetProcAddress(ntdll, "RtlGetVersion")) : nullptr;
+    OSVERSIONINFOW version{};
+    version.dwOSVersionInfoSize = sizeof version;
+    if (rtl == nullptr || rtl(&version) != 0) return {};
+    return std::to_string(version.dwMajorVersion) + "." + std::to_string(version.dwMinorVersion) + "." +
+           std::to_string(version.dwBuildNumber);
+}
+#endif
 
 }  // namespace
 
@@ -195,6 +246,59 @@ Settings loadSettings() {
 void saveSettings(const Settings& settings) {
     writeFile(userFolder() / "launcher.json",
               "{\"install\": " + quoted(utf8Of(settings.install)) + ", \"email\": " + quoted(settings.email) + "}\n");
+}
+
+// The first run's graphics, in the keys the game's readOptions knows (core/args.cpp): the preset
+// this machine can draw -- Low, Medium or High -- and nothing else, so the run's own switches for
+// the display, the frame cap and the volume stay as they are. The file is the player's from the
+// moment it exists: the game writes it back whole whenever he changes a row in Options, and a
+// launcher that overwrote it on every start would lose his choices.
+bool firstRunGraphics(const Gpu& gpu) {
+    if (gpu.preset < 0) return false;
+    const fs::path options = userFolder() / "options.txt";
+    std::error_code error;
+    if (fs::exists(options, error)) return false;
+    const core::GraphicsPreset& set = core::kGraphicsPresets[gpu.preset];
+    const std::string keys = "scale " + std::to_string(set.scale) + "\nmsaa " + std::to_string(set.msaa) +
+                             "\nshadows " + std::to_string(set.shadows) + "\nssao " + (set.ssao ? "1" : "0") +
+                             "\nbloom " + (set.bloom ? "1" : "0") + "\nreflections " +
+                             (set.reflections ? "1" : "0") + "\ngrass " + std::to_string(set.grass) + "\n";
+    if (!writeFile(options, keys)) return false;
+    core::logf("launcher: graphics: first run at %s for %s", set.name, gpu.name.c_str());
+    return true;
+}
+
+// The machine, told to the site once a run (web/server.py /api/machine): which card, which
+// driver behind it, what runs around it -- the fleet an update has to fit, read off
+// machines.jsonl on the box. Where no probe ran (the Mac until L5) no report goes: an empty card
+// is not fleet data, and nothing an account could be found by is ever in the body.
+bool reportMachine(const Place& place, const Gpu& gpu, bool tuned) {
+    if (!gpu.known) return false;
+#ifdef _WIN32
+    const std::string cpu = cpuName(), os = osVersion();
+    const int ram = ramMb();
+#else
+    const std::string cpu, os;
+    const int ram = 0;
+#endif
+    char vendor[8];
+    std::snprintf(vendor, sizeof vendor, "%04x", gpu.vendorId);
+    const std::string body =
+        "{\"gpu\":" + quoted(gpu.name) + ",\"vendor\":\"" + vendor + "\",\"driver\":" + quoted(gpu.driver) +
+        ",\"date\":" + quoted(gpu.date) + ",\"vulkan\":" + (gpu.vulkan ? "1" : "0") +
+        ",\"old\":" + (gpu.driverOld ? "1" : "0") + ",\"software\":" + (gpu.software ? "1" : "0") +
+        ",\"memory\":" + std::to_string(gpu.dedicated >> 20) + ",\"graphics\":" +
+        quoted(gpu.preset >= 0 ? core::kGraphicsPresets[gpu.preset].name : "") + ",\"tuned\":" +
+        (tuned ? "1" : "0") + ",\"cpu\":" + quoted(cpu) + ",\"ram\":" + std::to_string(ram) +
+        ",\"os\":" + quoted(os) + "}";
+    const Reply reply = request("POST", place.site + "/api/machine", body, {kJson});
+    if (reply.status != 200) {
+        core::logError("launcher: machine report: %s",
+                       reply.status ? ("HTTP " + std::to_string(reply.status)).c_str() : reply.error.c_str());
+        return false;
+    }
+    core::logf("launcher: machine report sent");
+    return true;
 }
 
 // ---- the release --------------------------------------------------------------------------------

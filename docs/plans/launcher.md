@@ -106,6 +106,70 @@ in place of the 1.5 GB zip.
 **L5. The Mac launcher.** The same program: NSURLSession for HTTPS, the Keychain for the token,
 `~/Applications/MU2` for the game. Later, as the user said.
 
+**L6. The machine's graphics.** The launcher reads what the machine has to draw with -- which
+adapter the game will run on, the driver behind it and whether Vulkan is there -- sets a first
+run's graphics to what that machine can draw, and says so when the driver is the thing in the way
+(the user: "we also need that launcher understand which drivers is missing so game can run at
+full capacity of pc with integrated graphic card"). src/launcher/gpu.h, gpu_win.cpp.
+- The probe: DXGI's adapters, the one with video memory of its own preferred and the software
+  adapter never (src/main.cpp exports the symbols that make Windows start a two-card machine on
+  the real card); that adapter's display-class driver key for the driver's version and date
+  (SetupAPI, matched by the adapter's own name); and vulkan-1.dll, the loader gfx/window.cpp's
+  renderer opens. Intel (0x8086), NVIDIA (0x10de) and AMD (0x1002) each carry their download page.
+- What it chooses: no Vulkan or no hardware adapter is Low; 2 GB or more of video memory is High
+  and less (an integrated card sharing the machine's) Medium; a driver three years old or more
+  costs one step, since a card on an old driver runs below what it is. On the first run only --
+  when %APPDATA%\MU2\options.txt is not there yet -- the preset's graphics keys are written in
+  the keys core/args.cpp's readOptions knows (engine.cpp firstRunGraphics), and nothing else:
+  the run's own switches for the display, the cap and the volume stay. The player's options.txt
+  is never touched again; his rows in the game's Options write it back whole.
+- On the screens: the adapter and the driver along the top of Home, "Graphics set to N for this
+  PC" under Up to date on the run that wrote it, and a red line with an "Update driver" link when
+  the driver has no Vulkan or is three years old -- to the vendor's page (ui.cpp openUrl).
+- `mu2_launcher --check` says what was probed and whether the graphics were set or kept.
+- **Done 2026-10-14.** Built on the Mac and cross-compiled by mingw (`MU2Launcher.exe`, out/
+  build-launcher-win). Under Wine DXVK's own DXGI answers E_FAIL (80004005), so the probe falls
+  back to the display class -- which there names the host card: `gpu ok Apple M1 Pro, driver
+  35.0.10.1000 of 2026-10-14, vulkan yes, Medium graphics`; the first run wrote options.txt
+  ("first run set to Medium"), the second kept it ("kept, options.txt is there"). A REG_SZ
+  DriverDate arrives month-day-year ("10-14-2026") and is brought to yyyy-mm-dd (dateOf). The
+  Mac's own check says "no probe on this system" and sets nothing. The screens, as
+  `--shot --screen ready`: the adapter and driver along the top, "Graphics set to High for this
+  PC" under Up to date, and with a driver three years old the red line with "Update driver" and
+  the preset held back a step to Medium. **Not yet run:** the DXGI path itself, which wants a
+  real Windows machine (`MU2Launcher.exe --check` there).
+
+**L7. The machine, told to the site.** Every run the launcher says what machine it opened on --
+which card, which driver behind it, and what runs around it -- so the fleet the updates must fit
+is read off data rather than guessed (the user: "when i launch launcher on other pc we send
+information about that pc back to server"). engine.cpp reportMachine, web/server.py.
+- `POST /api/machine`: `gpu, vendor, driver, date, vulkan, old, software, memory` (the probe's
+  own words), `graphics` and `tuned` (the preset and whether this run set it), and `cpu, ram, os`
+  -- the CPU's name from the processor key, total memory in MB, Windows as RtlGetVersion says it.
+  **Nothing an account could be found by:** no email, no token, nothing about who signed in.
+  Fire and forget: sent from the check job once a run, before the manifest is read; a report that
+  does not land is a log line and nothing else; `--check` prints `machine ...`. The Mac sends
+  none until L5 gives it a probe.
+- The site keeps one JSON line per report in machines.jsonl beside the database (web/README.md):
+  fields named and sized by MACHINE_KEYS, anything else dropped, 60 an hour per address
+  (MACHINE_LIMIT), each line fingerprinted by card+cpu+ram+os so one machine counts once.
+  `GET /internal/machines` (loopback only; Caddy answers 404 outside) counts the file: launches,
+  machines, cards, drivers, presets and the last ten reports -- the answer to "which drivers are
+  the players on, and what should the next update meet".
+- **Done 2026-10-14.** Local end-to-end against `web/server.py` on 127.0.0.1:8096: a Wine
+  MU2Launcher.exe --check sent `Apple M1 Pro, cpu "VirtualApple @ 2.50GHz", os 10.0.19043,
+  ram 32767, graphics Medium` (`machine ok sent to the site`); a `junk` field sent by curl was
+  dropped; /internal/machines counted both reports by fingerprint; the Mac's check said
+  "no probe to send".
+- **Deployed 2026-10-14.** web/deploy.sh put server.py on the box (mu2-web restarted, local 200)
+  and the stripped exe -- 5,686,784 bytes -- at /srv/mu2-web/downloads/MU2Launcher.exe, which
+  `/api/downloads` already names; a live POST /api/machine answered {ok} over the site's HTTPS
+  and `/internal/machines` on the box counted it (the test line then taken out of the file).
+  So the launcher on another PC reports the moment it opens. **Still open:** the launcher's own
+  update (L3's line about a newer launcher in the manifest) is not built -- the manifest carries
+  no launcher, so a machine holding an older MU2Launcher.exe only gets this one by downloading it
+  again from the site.
+
 **Later:** signing (Authenticode) before strangers download it (windows-client.md W7); the server
 refusing machine keys once every player has the launcher; Edit account (change password) on the
 website.

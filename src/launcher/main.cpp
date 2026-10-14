@@ -14,6 +14,7 @@
 #include <string>
 
 #include "launcher/engine.h"
+#include "launcher/gpu.h"
 #include "launcher/ui.h"
 
 using namespace mu::launcher;
@@ -25,6 +26,25 @@ int check(Place place, fs::path dir, const std::string& only, bool start) {
         std::printf("%-28s %s%s%s\n", what, ok ? "ok" : "FAILED", more.empty() ? "" : "  ", more.c_str());
         return ok;
     };
+    // The machine first: no network, and the first run's graphics are set here (gpu.h).
+    const Gpu gpu = probeGpu();
+    const bool tuned = firstRunGraphics(gpu);
+    std::string seen = gpu.name.empty() ? "Graphics adapter" : gpu.name;
+    if (!gpu.driver.empty()) seen += ", driver " + gpu.driver + (gpu.date.empty() ? "" : " of " + gpu.date);
+    seen += gpu.vulkan ? ", vulkan yes" : ", vulkan MISSING";
+    if (gpu.preset >= 0) seen += ", " + std::string(mu::core::kGraphicsPresets[gpu.preset].name) + " graphics";
+    if (gpu.driverOld) seen += ", driver old";
+    step("gpu", true, gpu.known ? seen : "no probe on this system");
+    const bool have = fs::exists(userFolder() / "options.txt");
+    const std::string graphics =
+        tuned ? "first run set to " + std::string(mu::core::kGraphicsPresets[gpu.preset].name)
+              : gpu.preset < 0 ? std::string("nothing to set")
+              : have ? std::string("kept, options.txt is there")
+                     : std::string("options.txt could not be written");
+    step("graphics", tuned || gpu.preset < 0 || have, graphics);
+    const bool sent = reportMachine(place, gpu, tuned);
+    step("machine", sent || !gpu.known,
+         sent ? "sent to the site" : gpu.known ? "could not send" : "no probe to send");
     Signed who;
     const char* email = std::getenv("MU2_EMAIL");
     const char* password = std::getenv("MU2_PASSWORD");

@@ -37,6 +37,7 @@ extern char** environ;
 #include "gfx/face.h"
 #include "gfx/interface.h"
 #include "launcher/embedded.h"
+#include "launcher/gpu.h"
 
 namespace mu::launcher {
 
@@ -154,6 +155,9 @@ private:
     const UiOptions options_;
     Place place_;
     Settings settings_;
+    Gpu gpu_;                // what this machine draws with, probed once at start
+    bool tuned_ = false;     // firstRunGraphics wrote options.txt this run
+    bool reported_ = false;  // this run's machine report is away (engine.cpp reportMachine)
     Signed who_;
     Manifest manifest_;
     std::vector<Entry> todo_;
@@ -263,6 +267,13 @@ void Launcher::check() {
     message_.clear();
     const fs::path install = settings_.install;
     work([this, install] {
+        // The machine, told once a run (engine.cpp reportMachine): the site's fleet of cards and
+        // drivers, which is what an update has to fit. It is small, and a report that does not
+        // land is logged there and holds nothing else up.
+        if (!reported_) {
+            reported_ = true;
+            reportMachine(place_, gpu_, tuned_);
+        }
         const Answer still = stillSigned(place_, who_);
         if (still == Answer::Wrong) {
             post([this] {
@@ -670,6 +681,11 @@ void Launcher::drawHome() {
             if (button(main, "Play", true, false, 20.0f)) playNow();
             panel(px({textX, rowY + 24.0f, 8.0f, 8.0f}), 4.0f * s_, hex(0x7FD66A), hex(0x7FD66A));
             words(textX + 16.0f, rowY + 33.0f, "Up to date", hex(kQuiet), 15.0f);
+            if (tuned_) {
+                words(textX + 16.0f, rowY + 53.0f,
+                      std::string("Graphics set to ") + core::kGraphicsPresets[gpu_.preset].name + " for this PC",
+                      hex(kQuiet), 13.0f);
+            }
             break;
         }
         case Home::Offline:
@@ -678,6 +694,24 @@ void Launcher::drawHome() {
             alert({textX, rowY + 6.0f, 520.0f, 44.0f},
                   home_ == Home::Offline ? "Can't reach the server. Check your connection." : message_);
             break;
+        }
+    }
+    // The machine along the top: the adapter and the driver the game will run on, and the warning
+    // when the driver is the thing in the way (docs/plans/launcher.md, L6).
+#ifdef _WIN32
+    const float machineX = x;  // Windows has no chrome at the left of the strip
+#else
+    const float machineX = 80.0f;  // past the window's own lights, which take the first 68
+#endif
+    if (gpu_.known) words(machineX, 26.0f, gpu_.line(), hex(kQuiet), 13.0f);
+    if (gpu_.known && (!gpu_.vulkan || gpu_.driverOld)) {
+        const Box warn{textX, rowY - 64.0f, 520.0f, 44.0f};
+        alert(warn, !gpu_.vulkan ? "This driver can't run the game. Update it to play."
+                                 : "Your graphics driver is old. Update it to play at full quality.");
+        const std::string what = "Update driver";
+        if (link(warn.right() - measure(what, 15.0f) - 14.0f, warn.y + 27.0f, what, kBoneHi)) {
+            const std::string url = driverUrl(gpu_);
+            if (!url.empty()) openUrl(url);
         }
     }
     if (!manifest_.version.empty()) {
@@ -877,6 +911,10 @@ int Launcher::run() {
     settings_ = loadSettings();
     fields_[0].text = settings_.email;
     fields_[1].secret = true;
+    // What the machine draws with: the line on the home screen, the warning when the driver is in
+    // the way, and the first run's graphics (engine.cpp firstRunGraphics).
+    gpu_ = probeGpu();
+    tuned_ = firstRunGraphics(gpu_);
     if (!open()) {
         core::logError("launcher: the window did not open");
         close();
@@ -896,6 +934,17 @@ int Launcher::run() {
             home_ = which == "install" ? Home::Install : which == "downloading" ? Home::Downloading : Home::Ready;
             progress_.total = todoBytes_;
             progress_.done = todoBytes_ * 38 / 100;
+        }
+        // The probe is Windows'; a shot taken where there is none shows the line and the first
+        // run's message as a Windows machine with this card would see them.
+        if (!gpu_.known) {
+            gpu_.known = true;
+            gpu_.name = "NVIDIA GeForce RTX 3060";
+            gpu_.date = "2024-05-31";
+            gpu_.dedicated = uint64_t(6) << 30;
+            gpu_.vulkan = true;
+            gpu_.preset = presetFor(gpu_);
+            tuned_ = true;
         }
         for (int i = 0; i < 6; ++i) frame();
         bgfx::requestScreenShot(BGFX_INVALID_HANDLE, options_.shot.c_str());

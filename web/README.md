@@ -43,3 +43,12 @@ written last. https://37.27.158.226/game/windows/manifest.json is what the launc
 Copy them to `/srv/mu2-web/downloads/`: `MU2Launcher.exe` (the launcher, stripped with
 `x86_64-w64-mingw32-strip`, which installs the game from `/game/windows/`) and `MU2.dmg`. The page asks
 `/api/downloads` and shows each one's size, or "coming soon" while it is missing.
+
+## Machine reports
+
+The launcher's report of the machine it opened on -- card, driver, memory, OS, no account in it
+(docs/plans/launcher.md, L7): one JSON line per run in `/var/lib/mu2-web/machines.jsonl`, beside
+the accounts and never touched by web/deploy.sh. Read it on the box:
+
+    curl -s http://127.0.0.1:8080/internal/machines   # counted: launches, machines, cards, drivers
+    tail -5 /var/lib/mu2-web/machines.jsonl           # the raw reports

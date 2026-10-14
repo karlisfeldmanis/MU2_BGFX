@@ -11,6 +11,9 @@ The routes:
     POST /api/register   {email, password}          -> 201 {ok}            | 400 {field, error} | 409 {error: taken}
     POST /api/login      {email, password}          -> 200 {token, email}  | 401 {error}
     POST /api/logout     Authorization: Bearer T    -> 200 {ok}
+    POST /api/machine    {gpu, driver, cpu, ...}    -> 200 {ok} | 400 {error} | 429
+         the launcher's report of the machine it runs on (docs/plans/launcher.md, L7): one JSON
+         line per report in machines.jsonl beside the database, never anything about the account.
     GET  /api/me         Authorization: Bearer T    -> 200 {email}         | 401
     GET  /api/downloads                             -> 200 {windows: {file, bytes} | null, macos: ...}
     GET  /internal/session?token=T  (127.0.0.1 only, never proxied) -> 200 {account} | 404
@@ -47,6 +50,15 @@ SCRYPT = dict(n=2**14, r=8, p=1, maxmem=64 * 1024 * 1024, dklen=32)
 # updates the game itself (docs/plans/launcher.md, L4); on the Mac the app, when there is one. A
 # file not there leaves its button saying so instead of linking nowhere.
 DOWNLOADS = {"windows": "MU2Launcher.exe", "macos": "MU2.dmg"}
+
+# What a machine report may carry, and how long each field may be (the launcher's engine,
+# reportMachine). The values are kept as they arrive -- a string cut to size, a number whole --
+# and any field not named here is dropped, so the file holds what the fleet says and nothing else.
+MACHINE_KEYS = {"gpu": 160, "vendor": 8, "driver": 64, "date": 32, "cpu": 128, "os": 48,
+                "memory": 16, "ram": 16, "graphics": 16,
+                "vulkan": 4, "old": 4, "software": 4, "tuned": 4}
+# What one machine is counted by: the card, the CPU and the memory around it, and the OS.
+MACHINE_FINGERPRINT = ("gpu", "cpu", "ram", "os")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS accounts (
@@ -103,6 +115,10 @@ class Store:
         path.parent.mkdir(parents=True, exist_ok=True)
         self.path = str(path)
         self.local = threading.local()
+        # The machine reports, one JSON line each, beside the database: append-only, greppable,
+        # and never touched by the accounts (web/README.md).
+        self.machines_path = path.parent / "machines.jsonl"
+        self.machine_lock = threading.Lock()
         with self.db() as db:
             db.executescript(SCHEMA)
 
@@ -156,6 +172,36 @@ class Store:
     def logout(self, token: str):
         self.db().execute("DELETE FROM sessions WHERE token_hash = ?", (token_hash(token or ""),))
 
+    def machine(self, row: dict):
+        with self.machine_lock:
+            with self.machines_path.open("a") as f:
+                f.write(json.dumps(row, separators=(",", ":")) + "\n")
+
+    def machines_report(self) -> dict:
+        """What has been reported, counted: a driver-targeted update is read off this."""
+        rows = []
+        if self.machines_path.is_file():
+            with self.machines_path.open() as f:
+                for line in f:
+                    try:
+                        row = json.loads(line)
+                    except ValueError:
+                        continue
+                    if isinstance(row, dict):
+                        rows.append(row)
+
+        def tally(key: str) -> dict:
+            counts = {}
+            for row in rows:
+                name = str(row.get(key, ""))
+                counts[name] = counts.get(name, 0) + 1
+            return dict(sorted(counts.items(), key=lambda one: -one[1]))
+
+        return {"launches": len(rows),
+                "machines": len({row.get("fp") for row in rows if row.get("fp")}),
+                "gpu": tally("gpu"), "driver": tally("driver"), "graphics": tally("graphics"),
+                "last": rows[-10:][::-1]}
+
 
 # ---- a little rate limit, per client address ------------------------------------------------------
 
@@ -183,6 +229,9 @@ class Limit:
 
 REGISTER_LIMIT = Limit(5, 3600)
 LOGIN_LIMIT = Limit(10, 60)
+# A report a run: a player never opens the launcher sixty times in an hour, and a machine that
+# tries to fill the file is refused after the sixty-first.
+MACHINE_LIMIT = Limit(60, 3600)
 
 
 # ---- the handler ---------------------------------------------------------------------------------
@@ -243,6 +292,8 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/logout":
             self.store.logout(self.bearer())
             return self.reply(200, {"ok": True})
+        if path == "/api/machine":
+            return self.machine()
         self.reply(404, {"error": "not found"})
 
     def register(self):
@@ -277,6 +328,32 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(401, {"error": "Wrong email or password."})
         self.reply(200, {"token": signed[0], "email": signed[1]})
 
+    def machine(self):
+        """One launcher's report of its machine: kept as it came, inside MACHINE_KEYS."""
+        said = self.body()
+        if said is None:
+            return self.reply(400, {"error": "bad request"})
+        if not MACHINE_LIMIT.allow(self.client()):
+            return self.reply(429, {"error": "later"})
+        report = {}
+        for key, room in MACHINE_KEYS.items():
+            value = said.get(key)
+            if isinstance(value, bool):
+                report[key] = int(value)
+            elif isinstance(value, (int, float)):
+                report[key] = value
+            elif isinstance(value, str) and value.strip():
+                report[key] = value[:room]
+        if not report.get("gpu"):
+            return self.reply(400, {"error": "no machine"})
+        report["at"] = int(time.time())
+        joined = "|".join(str(report.get(key, "")) for key in MACHINE_FINGERPRINT)
+        report["fp"] = hashlib.sha256(joined.encode()).hexdigest()[:16]
+        self.store.machine(report)
+        print(f"{self.client()} machine {report['fp']} {report.get('gpu')} driver {report.get('driver', '?')}",
+              flush=True)
+        self.reply(200, {"ok": True})
+
     # -- GET
 
     def do_GET(self):
@@ -286,6 +363,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(200, {"email": row[1]}) if row else self.reply(401, {"error": "signed out"})
         if url.path == "/api/downloads":
             return self.reply(200, self.listing())
+        if url.path == "/internal/machines":
+            if not self.direct():
+                return self.reply(404, {"error": "not found"})
+            return self.reply(200, self.store.machines_report())
         if url.path == "/internal/session":
             if not self.direct():
                 return self.reply(404, {"error": "not found"})
