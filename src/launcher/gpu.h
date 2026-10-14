@@ -19,7 +19,7 @@ struct Gpu {
     std::string date;        // the driver key's date: "2024-05-31"
     uint64_t dedicated = 0;  // the adapter's own video memory in bytes; 0 on an integrated card
     bool software = false;   // only Microsoft's Basic Render Adapter answered
-    bool vulkan = false;     // vulkan-1.dll loads
+    bool vulkan = false;     // the renderer the game needs is there: vulkan-1.dll on Windows, Metal on a Mac
     bool driverOld = false;  // kDriverYears or more behind the newest driver
     int preset = -1;         // index into core::kGraphicsPresets: what this machine should open on
 

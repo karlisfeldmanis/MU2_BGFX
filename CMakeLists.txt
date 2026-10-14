@@ -441,9 +441,10 @@ if(WIN32 OR APPLE)
     set_target_properties(mu2_launcher PROPERTIES OUTPUT_NAME MU2Launcher WIN32_EXECUTABLE TRUE)
   else()
     find_package(CURL REQUIRED)
-    target_sources(mu2_launcher PRIVATE src/launcher/https_curl.cpp src/launcher/gpu_mac.cpp)
+    target_sources(mu2_launcher PRIVATE src/launcher/https_curl.cpp src/launcher/gpu_mac.mm)
     target_link_libraries(mu2_launcher PRIVATE CURL::libcurl "-framework Cocoa" "-framework Metal"
       "-framework QuartzCore" "-framework IOKit")
+    set_target_properties(mu2_launcher PROPERTIES OUTPUT_NAME MU2Launcher)
   endif()
 endif()
 

@@ -202,7 +202,73 @@ def dist_windows(say, ref, level):
     return True, {"client": client, "zip": zipped, "bytes": total, "files": files, "commit": made_from}
 
 
+# The launcher itself, as the site gives it out: the same bundle shape the game's has -- glfw
+# inside, signed ad hoc -- and a DMG holding it next to the link to Applications to drag it onto.
+LAUNCHER_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+\t<key>CFBundleDevelopmentRegion</key><string>en</string>
+\t<key>CFBundleDisplayName</key><string>MU2 Launcher</string>
+\t<key>CFBundleExecutable</key><string>MU2Launcher</string>
+\t<key>CFBundleIdentifier</key><string>com.mu2.launcher</string>
+\t<key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+\t<key>CFBundleName</key><string>MU2Launcher</string>
+\t<key>CFBundlePackageType</key><string>APPL</string>
+\t<key>CFBundleShortVersionString</key><string>1.0</string>
+\t<key>CFBundleVersion</key><string>1</string>
+\t<key>LSApplicationCategoryType</key><string>public.app-category.games</string>
+\t<key>LSMinimumSystemVersion</key><string>11.0</string>
+\t<key>NSHighResolutionCapable</key><true/>
+</dict>
+</plist>
+"""
+
+
+def dist_launcher(say):
+    """dist/launcher/MU2Launcher.app and MU2.dmg: the launcher for the Mac (docs/plans/launcher.md,
+    L5). Built from the working tree -- it is one small program and no game content -- and the DMG
+    holds the app with the Applications link beside it, to drag one onto the other."""
+    started = time.time()
+    say("building the launcher")
+    build_dir = os.path.join(OUT, "build")
+    run(["cmake", "--build", build_dir, "--target", "mu2_launcher"], say)
+    stage = os.path.join(DIST, "launcher")
+    app = os.path.join(stage, "MU2Launcher.app")
+    shutil.rmtree(app, ignore_errors=True)
+    mac = os.path.join(app, "Contents", "MacOS")
+    os.makedirs(mac)
+    os.makedirs(os.path.join(app, "Contents", "Frameworks"))
+    shutil.copy2(os.path.join(build_dir, "MU2Launcher"), mac)
+    # glfw, as the game's bundle carries it (bundle() above): inside, and pointed at.
+    homebrew = run(["brew", "--prefix", "glfw"], say).strip()
+    glfw = os.path.join(homebrew, "lib", GLFW)
+    shutil.copy2(glfw, os.path.join(app, "Contents", "Frameworks", GLFW))
+    run(["install_name_tool", "-change", glfw, f"@executable_path/../Frameworks/{GLFW}",
+         os.path.join(mac, "MU2Launcher")], say)
+    with open(os.path.join(app, "Contents", "Info.plist"), "w") as out:
+        out.write(LAUNCHER_PLIST)
+    run(["codesign", "--force", "--deep", "--sign", "-", app], say)
+
+    dmg = os.path.join(stage, "MU2.dmg")
+    if os.path.exists(dmg):
+        os.remove(dmg)
+    into = os.path.join(stage, "image")
+    shutil.rmtree(into, ignore_errors=True)
+    os.makedirs(into)
+    shutil.copytree(app, os.path.join(into, "MU2Launcher.app"))
+    os.symlink("/Applications", os.path.join(into, "Applications"))
+    run(["hdiutil", "create", "-volname", "MU2 Launcher", "-srcfolder", into, "-ov", "-format", "UDZO",
+         dmg], say)
+    shutil.rmtree(into)
+    total = os.path.getsize(dmg)
+    say(f"{dmg}: {total / 1e6:.0f} MB, app signed ad hoc, in {time.time() - started:.0f} s")
+    return True, {"dmg": dmg, "app": app, "bytes": total}
+
+
 def dist(target, say, ref="HEAD", level=12):
+    if target == "launcher":
+        return dist_launcher(say)
     if target == "windows":
         return dist_windows(say, ref, level)
     if target != "macos":

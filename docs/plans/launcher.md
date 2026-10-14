@@ -103,8 +103,28 @@ in place of the 1.5 GB zip.
   "Windows 10 or 11, 64-bit · 5 MB". A new launcher goes up the same way: build, strip
   (`x86_64-w64-mingw32-strip`), rsync to /srv/mu2-web/downloads/.
 
-**L5. The Mac launcher.** The same program: NSURLSession for HTTPS, the Keychain for the token,
-`~/Applications/MU2` for the game. Later, as the user said.
+**L5. The Mac launcher.** The same program, as a Mac app (the user: "we need also launcher for
+macos, with install and everything").
+- `./mu dist launcher` makes dist/launcher/MU2Launcher.app -- the binary, glfw in its Frameworks
+  pointed at, Info.plist, signed ad hoc -- and MU2.dmg of it beside the Applications link to drag
+  onto. The DMG goes to /srv/mu2-web/downloads/MU2.dmg and lights the site's Mac button, whose
+  note reads "first launch: right-click, Open": all an ad-hoc-signed app can say until there is a
+  Developer ID to sign and notarise with.
+- `./mu release macos` puts dist/macos/MU2.app on the box under /game/macos/ exactly as the
+  Windows client goes under /game/windows/ (release.py walks the bundle, exe
+  MU2.app/Contents/MacOS/MU2). _CodeSignature is left out: macOS refuses to hard-link its files,
+  the launcher's fetches need no signature, and an update could never replace it.
+- The launcher itself needed little: its engine takes the platform from Place already. What was
+  Mac's own: the install folder is ~/Applications, so MU2.app lands where a Mac player looks
+  (defaultInstall); the probe is Metal (gpu_mac.mm -- Apple's own card or Radeon High, Intel
+  integrated Medium, no driver date to be old); the machine report's cpu, ram and os come from
+  sysctl. The token is still the owner-only file rather than the Keychain: the one piece of this
+  step left.
+- **Done 2026-10-14.** `release macos`: 3965dc81's app, 20 files (1.4 GB -- the packs are few and
+  big) up under /game/macos/manifest.json; MU2.dmg (2.7 MB) up and named by /api/downloads; the
+  packaged app's own --check against the live site probed "Apple M1 Pro, High graphics" and sent
+  its machine report. A Mac install through the window -- sign in, MU2.app into ~/Applications,
+  Play -- is the user's to make.
 
 **L6. The machine's graphics.** The launcher reads what the machine has to draw with -- which
 adapter the game will run on, the driver behind it and whether Vulkan is there -- sets a first

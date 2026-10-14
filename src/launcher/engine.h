@@ -61,8 +61,8 @@ void forget();
 // %APPDATA%\MU2 on Windows (the game's own user folder, core/paths.cpp), ~/Library/Application
 // Support/MU2 on the Mac.
 fs::path userFolder();
-// Where the game goes unless the player picks another: %LOCALAPPDATA%\Programs\MU2, which needs
-// no administrator; on the Mac, inside the user folder until L5 decides.
+// Where the game goes unless the player picks another: %LOCALAPPDATA%\Programs\MU2 on Windows,
+// which needs no administrator; ~/Applications on the Mac, where a MU2.app belongs (L5).
 fs::path defaultInstall();
 
 struct Settings {

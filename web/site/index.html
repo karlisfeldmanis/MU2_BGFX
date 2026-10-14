@@ -227,7 +227,7 @@ Download for macOS
   // Each installer's size, or "Coming soon" while it is not up yet.
   const mb = (n) => (n / 1048576).toFixed(0) + ' MB';
   fetch('/api/downloads').then((r) => r.json()).then((list) => {
-    for (const [system, base] of [['windows', 'Windows 10 or 11, 64-bit'], ['macos', 'Apple silicon and Intel']]) {
+    for (const [system, base] of [['windows', 'Windows 10 or 11, 64-bit'], ['macos', 'Apple silicon and Intel · first launch: right-click, Open']]) {
       const link = $('dl-' + system), note = $('dl-' + system + '-note'), file = list[system];
       if (file) {
         link.href = file.file;

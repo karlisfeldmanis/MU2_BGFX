@@ -21,6 +21,7 @@
 #else
 #include <spawn.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 #include <unistd.h>
 extern char** environ;
 #endif
@@ -127,6 +128,24 @@ std::string osVersion() {
     return std::to_string(version.dwMajorVersion) + "." + std::to_string(version.dwMinorVersion) + "." +
            std::to_string(version.dwBuildNumber);
 }
+#else
+// The same three for a Mac (docs/plans/launcher.md, L5), from sysctl: the CPU's trade name, the
+// memory the machine sells with, and the system's own version string ("14.5").
+std::string sysctlText(const char* what) {
+    char text[128] = {};
+    size_t size = sizeof text - 1;
+    return sysctlbyname(what, text, &size, nullptr, 0) == 0 ? std::string(text) : std::string{};
+}
+
+std::string cpuName() { return sysctlText("machdep.cpu.brand_string"); }
+
+int ramMb() {
+    uint64_t bytes = 0;
+    size_t size = sizeof bytes;
+    return sysctlbyname("hw.memsize", &bytes, &size, nullptr, 0) == 0 ? int(bytes >> 20) : 0;
+}
+
+std::string osVersion() { return sysctlText("kern.osproductversion"); }
 #endif
 
 }  // namespace
@@ -211,7 +230,11 @@ fs::path userFolder() {
     const char* home = std::getenv("HOME");
     return fs::path(home ? home : ".") / "Library" / "Application Support" / "MU2";
 }
-fs::path defaultInstall() { return userFolder() / "Game"; }
+fs::path defaultInstall() {
+    // ~/Applications, so the game's MU2.app lands where a Mac player looks for one (L5).
+    const char* home = std::getenv("HOME");
+    return fs::path(home ? home : ".") / "Applications";
+}
 
 bool keep(const Signed& who) {
     const fs::path path = userFolder() / "session";
@@ -274,13 +297,8 @@ bool firstRunGraphics(const Gpu& gpu) {
 // is not fleet data, and nothing an account could be found by is ever in the body.
 bool reportMachine(const Place& place, const Gpu& gpu, bool tuned) {
     if (!gpu.known) return false;
-#ifdef _WIN32
     const std::string cpu = cpuName(), os = osVersion();
     const int ram = ramMb();
-#else
-    const std::string cpu, os;
-    const int ram = 0;
-#endif
     char vendor[8];
     std::snprintf(vendor, sizeof vendor, "%04x", gpu.vendorId);
     const std::string body =

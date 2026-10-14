@@ -1,21 +1,23 @@
-"""`mu release windows`: the client `mu dist windows` made, put on the box for the launcher
-(docs/plans/launcher.md, L2).
+"""`mu release windows|macos`: the client `mu dist` made, put on the box for the launcher
+(docs/plans/launcher.md, L2 and L5).
 
-  1. What dist made: dist/windows/MU2/, its BUILT_FROM commit, and the protocol that commit speaks.
+  1. What dist made: dist/windows/MU2/ or dist/macos/MU2.app, its BUILT_FROM commit, and the
+     protocol that commit speaks.
   2. Every file hashed (SHA-256). On the box a file is kept under its hash,
-     /srv/mu2-web/game/windows/files/<sha256>, so one that did not change between releases is never
-     sent again and never kept twice.
+     /srv/mu2-web/game/<platform>/files/<sha256>, so one that did not change between releases is
+     never sent again and never kept twice.
   3. Only what the box lacks travels (rsync, resumable), hard-linked under its hash in
-     out/release/windows/ first so nothing is copied here.
+     out/release/<platform>/ first so nothing is copied here.
   4. The manifest last: manifests/<commit>.json, then moved over manifest.json in one rename, so a
      launcher reading it mid-release sees the old release whole or the new one whole.
   5. Files no longer named by the newest KEEP manifests are deleted.
   6. Checked over HTTPS as a launcher will read it: the manifest, and one file's bytes.
 
 The manifest:
-  {"platform": "windows", "version": "<commit>", "built": "<date>", "protocol": 31, "exe": "MU2.exe",
-   "bytes": N, "files": [{"path": "MU2.exe", "size": N, "sha256": "..."}, ...]}
-served at https://mu-classic.com/game/windows/manifest.json, each file at .../files/<sha256>.
+  {"platform": "windows"|"macos", "version": "<commit>", "built": "<date>", "protocol": 31,
+   "exe": "MU2.exe" | "MU2.app/Contents/MacOS/MU2", "bytes": N,
+   "files": [{"path": "MU2.exe", "size": N, "sha256": "..."}, ...]}
+served at https://mu-classic.com/game/<platform>/manifest.json, each file at .../files/<sha256>.
 """
 import hashlib
 import json
@@ -62,16 +64,19 @@ def ssh(command, say=None):
 
 
 def release(target, say, dry=False):
-    if target != "windows":
-        raise RuntimeError("release: windows only for now (docs/plans/launcher.md; the Mac is L5)")
+    if target not in ("windows", "macos"):
+        raise RuntimeError("release: windows or macos (docs/plans/launcher.md, L2 and L5)")
     started = time.time()
-    client = os.path.join(ROOT, "dist", "windows", "MU2")
-    built_from = os.path.join(client, "BUILT_FROM")
+    # What is walked: the Windows client is a folder of MU2.exe and its packs; the Mac's is the app
+    # bundle, with BUILT_FROM beside it in dist/macos/.
+    client = os.path.join(ROOT, "dist", target, "MU2" if target == "windows" else "MU2.app")
+    built_from = os.path.join(ROOT, "dist", target, "BUILT_FROM")
     if not os.path.isfile(built_from):
-        raise RuntimeError(f"no {built_from}: run `./mu dist windows` first")
+        raise RuntimeError(f"no {built_from}: run `./mu dist {target}` first")
     commit, _, built = open(built_from).read().strip().partition(" ")
     protocol = protocol_of(commit)
-    say(f"dist/windows/MU2 from {commit} ({built or 'undated'}), protocol {protocol}")
+    say(f"dist/{target} from {commit} ({built or 'undated'}), protocol {protocol}")
+    exe_path = "MU2.exe" if target == "windows" else "MU2.app/Contents/MacOS/MU2"
 
     files = []
     for folder, dirs, names in os.walk(client):
@@ -81,11 +86,19 @@ def release(target, say, dry=False):
         dirs[:] = [d for d in dirs if not (rel_folder == "." and d == "logs")]
         for name in sorted(names):
             rel = os.path.normpath(os.path.join(rel_folder, name)).replace(os.sep, "/")
-            if rel in LEFT_OUT or name.startswith("."):
+            # _CodeSignature is macOS's own and cannot be moved about (its files refuse a hard
+            # link); the copy a launcher fetches needs no signature -- nothing quarantines what
+            # the launcher writes -- and an update could never replace it anyway.
+            if rel in LEFT_OUT or name.startswith(".") or "_CodeSignature" in rel:
                 continue
             path = os.path.join(folder, name)
             files.append({"path": rel, "size": os.path.getsize(path), "sha256": sha256(path), "local": path})
     files.sort(key=lambda f: f["path"])
+    # The manifest speaks paths from the player's install root: MU2.exe sits at the Windows'
+    # root; the Mac's install root takes the bundle, so its files carry MU2.app/ before them.
+    if target == "macos":
+        for f in files:
+            f["path"] = "MU2.app/" + f["path"]
     total = sum(f["size"] for f in files)
     say(f"{len(files)} files, {total / 1e9:.2f} GB, hashed")
 
@@ -97,7 +110,7 @@ def release(target, say, dry=False):
     say(f"the box has {len(files) - len(missing)} of them; {len(missing)} to send, {sending / 1e9:.2f} GB")
 
     manifest = {
-        "platform": target, "version": commit, "built": built, "protocol": protocol, "exe": "MU2.exe",
+        "platform": target, "version": commit, "built": built, "protocol": protocol, "exe": exe_path,
         "bytes": total, "files": [{k: f[k] for k in ("path", "size", "sha256")} for f in files],
     }
     if dry:
@@ -109,7 +122,13 @@ def release(target, say, dry=False):
     shutil.rmtree(stage, ignore_errors=True)
     os.makedirs(os.path.join(stage, "files"))
     for f in missing:
-        os.link(f["local"], os.path.join(stage, "files", f["sha256"]))
+        staged = os.path.join(stage, "files", f["sha256"])
+        try:
+            os.link(f["local"], staged)
+        except OSError:
+            # macOS refuses to hard-link a code signature's files; a copy does the same job, and
+            # only the files it refuses ever take this path.
+            shutil.copy2(f["local"], staged)
     if missing:
         say(f"sending {len(missing)} files (rsync, resumable)")
         subprocess.run(["rsync", "-a", "--partial", "--progress",

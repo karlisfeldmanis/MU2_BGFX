@@ -139,11 +139,11 @@ def main():
 
     sub.add_parser("check", parents=[common])
     d = sub.add_parser("dist", parents=[common])
-    d.add_argument("target", choices=["macos", "windows"], help="the platform")
+    d.add_argument("target", choices=["macos", "windows", "launcher"], help="the platform, or the launcher's own dmg")
     d.add_argument("--commit", default="HEAD", help="the commit to build it from (HEAD)")
 
     rl = sub.add_parser("release", parents=[common])
-    rl.add_argument("target", choices=["windows"], help="the platform")
+    rl.add_argument("target", choices=["windows", "macos"], help="the platform")
     rl.add_argument("--dry", action="store_true", help="hash and compare with the box, send nothing")
 
     k = sub.add_parser("cores", parents=[common])
