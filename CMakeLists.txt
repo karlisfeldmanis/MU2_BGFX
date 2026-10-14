@@ -205,28 +205,6 @@ endif()
 target_compile_definitions(mu_core PRIVATE ${MU_DIRS})
 target_compile_options(mu_core PRIVATE ${MU_WARNINGS})
 
-# MU2Launcher (docs/plans/launcher.md, L3): signs in on the website, installs and updates the game
-# from the box, starts it. HTTPS is the system's: WinHTTP on Windows, libcurl on the Mac. Not on
-# the Linux box, which never runs it.
-if(WIN32 OR APPLE)
-  add_executable(mu2_launcher
-    src/launcher/main.cpp
-    src/launcher/engine.cpp
-    src/launcher/sha256.cpp
-  )
-  target_link_libraries(mu2_launcher PRIVATE mu_core)
-  target_compile_options(mu2_launcher PRIVATE ${MU_WARNINGS})
-  if(WIN32)
-    target_sources(mu2_launcher PRIVATE src/launcher/https_win.cpp)
-    target_link_libraries(mu2_launcher PRIVATE winhttp crypt32 shell32 ole32)
-    set_target_properties(mu2_launcher PROPERTIES OUTPUT_NAME MU2Launcher)
-  else()
-    find_package(CURL REQUIRED)
-    target_sources(mu2_launcher PRIVATE src/launcher/https_curl.cpp)
-    target_link_libraries(mu2_launcher PRIVATE CURL::libcurl)
-  endif()
-endif()
-
 # The player's packs (core/pack.h) and zstd under them. Apart from mu_core so that the server,
 # which never reads a pack, builds without zstd: core::readFile asks the packs through a hook
 # (core::setFileSource) that mounting them sets. The game links this; so does the packer.
@@ -421,6 +399,52 @@ elseif(WIN32)
   target_sources(mu_gfx PRIVATE src/gfx/window_win.cpp)
   target_compile_definitions(mu_gfx PRIVATE GLFW_EXPOSE_NATIVE_WIN32)
   target_include_directories(mu_gfx PUBLIC ${MU_EXTERN}/bgfx.cmake/bx/include/compat/mingw)
+endif()
+
+# MU2Launcher (docs/plans/launcher.md, L3): signs in on the website, installs and updates the game
+# from the box, starts it. One exe: its two shaders, its fonts, the wallpaper and the logo are
+# inside it (tools/cmake/embed.py). Drawn with the game's canvas (mu_gfx), none of the game linked.
+# HTTPS is the system's: WinHTTP on Windows, libcurl on the Mac.
+if(WIN32 OR APPLE)
+  set(MU_LAUNCHER_SHADERS ${SHADER_OUT}/${MU_SHADER_PROFILE})
+  set(MU_LAUNCHER_EMBED
+    vs_overlay.sc.bin=${MU_LAUNCHER_SHADERS}/vs_overlay.sc.bin
+    fs_interface.sc.bin=${MU_LAUNCHER_SHADERS}/fs_interface.sc.bin
+    OpenSans-SemiBold.ttf=${MU_EXTERN}/OpenSans-SemiBold.ttf
+    AlegreyaSansSC-Bold.ttf=${MU_EXTERN}/AlegreyaSansSC-Bold.ttf
+    AlegreyaSans-Medium.ttf=${MU_EXTERN}/AlegreyaSans-Medium.ttf
+    wallpaper.jpg=${CMAKE_SOURCE_DIR}/src/launcher/art/wallpaper.jpg
+    logo.png=${CMAKE_SOURCE_DIR}/src/launcher/art/logo.png)
+  set(MU_LAUNCHER_EMBED_FILES)
+  foreach(pair ${MU_LAUNCHER_EMBED})
+    string(REGEX REPLACE "^[^=]*=" "" file ${pair})
+    list(APPEND MU_LAUNCHER_EMBED_FILES ${file})
+  endforeach()
+  add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/generated/launcher_embedded.cpp
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/tools/cmake/embed.py ${CMAKE_BINARY_DIR}/generated/launcher_embedded.cpp ${MU_LAUNCHER_EMBED}
+    DEPENDS ${CMAKE_SOURCE_DIR}/tools/cmake/embed.py ${MU_LAUNCHER_EMBED_FILES} mu2_shaders
+    COMMENT "the launcher's files, inside it")
+  add_executable(mu2_launcher
+    src/launcher/main.cpp
+    src/launcher/ui.cpp
+    src/launcher/engine.cpp
+    src/launcher/sha256.cpp
+    ${CMAKE_BINARY_DIR}/generated/launcher_embedded.cpp
+  )
+  add_dependencies(mu2_launcher mu2_shaders)
+  target_link_libraries(mu2_launcher PRIVATE mu_gfx mu_core)
+  target_compile_options(mu2_launcher PRIVATE ${MU_WARNINGS})
+  if(WIN32)
+    target_sources(mu2_launcher PRIVATE src/launcher/https_win.cpp)
+    target_link_libraries(mu2_launcher PRIVATE winhttp crypt32 shell32 ole32 uuid)
+    set_target_properties(mu2_launcher PROPERTIES OUTPUT_NAME MU2Launcher WIN32_EXECUTABLE TRUE)
+  else()
+    find_package(CURL REQUIRED)
+    target_sources(mu2_launcher PRIVATE src/launcher/https_curl.cpp)
+    target_link_libraries(mu2_launcher PRIVATE CURL::libcurl "-framework Cocoa" "-framework Metal"
+      "-framework QuartzCore" "-framework IOKit")
+  endif()
 endif()
 
 # The client's line to the realm (src/client, docs/plans/order-plan.md sprint C): the Link, the

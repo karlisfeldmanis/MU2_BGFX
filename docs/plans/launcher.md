@@ -75,8 +75,17 @@ by mingw like `MU2.exe`, linking `mu_gfx` and the few UI sources it draws with.
   - **Wine here has no TLS** (no GnuTLS for its schannel): every HTTPS call fails with WinHTTP
     12157, so the Wine check runs over plain HTTP against a local web/server.py. Real Windows does
     TLS itself; TLS 1.2 and 1.3 are asked for outright.
-- **Next: the screens.** A GLFW window and bgfx, the four screens of the canvas, the game's slab
-  buttons; shaders, fonts, the wallpaper and the logo inside the exe.
+- **The screens are drawn (2026-10-14)**, src/launcher/ui.cpp: one 960×540 window with no system
+  frame (its own close and minimise; dragged by its top strip), the game's canvas and the game's
+  slab looks copied from controls.cpp, so it links mu_gfx and none of the game. Sign in (email,
+  password, stay signed in, the website's refusal on a red box), then one screen that checks,
+  installs or updates (a bar, MB/s, time left, pause), and plays. Its two shaders, three fonts,
+  the wallpaper and the logo are inside the exe (tools/cmake/embed.py), served to core::readFile.
+  `--shot FILE --screen NAME` draws one screen in a hidden window: checked on the Mac (Metal) and
+  as MU2Launcher.exe under Wine (Vulkan), 22 MB.
+- **Not yet tried by hand:** typing, clicking, a real sign-in and install through the window
+  (the engine under it was checked headless). Next: the user tries it; then signing the exe,
+  and L4.
 
 **L4. The website offers the launcher.** The Windows button downloads `MU2Launcher.exe`, a few MB,
 in place of the 1.5 GB zip.

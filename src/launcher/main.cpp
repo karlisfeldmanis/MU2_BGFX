@@ -1,6 +1,8 @@
-// MU2Launcher (docs/plans/launcher.md, L3). For now its engine with no screens: `--check` walks it
-// end to end against a site, as the screens will.
+// MU2Launcher (docs/plans/launcher.md, L3): its window (ui.cpp), or its engine walked end to end
+// with no window (`--check`).
 //
+//   mu2_launcher [--site URL] [--platform P]                     the window
+//   mu2_launcher --shot FILE --screen signin|error|install|downloading|ready   one screen, saved
 //   mu2_launcher --check [--site URL] [--platform windows] [--dir DIR] [--only TEXT] [--play]
 //
 // The email and password come from MU2_EMAIL and MU2_PASSWORD, never the command line. --only
@@ -12,6 +14,7 @@
 #include <string>
 
 #include "launcher/engine.h"
+#include "launcher/ui.h"
 
 using namespace mu::launcher;
 
@@ -82,6 +85,7 @@ int main(int argc, char** argv) {
     fs::path dir;
     std::string only;
     bool checking = false, start = false;
+    UiOptions ui;
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
         if (a == "--check") checking = true;
@@ -90,10 +94,10 @@ int main(int argc, char** argv) {
         else if (a == "--platform" && i + 1 < argc) place.platform = argv[++i];
         else if (a == "--dir" && i + 1 < argc) dir = pathOf(argv[++i]);
         else if (a == "--only" && i + 1 < argc) only = argv[++i];
+        else if (a == "--shot" && i + 1 < argc) ui.shot = argv[++i];
+        else if (a == "--screen" && i + 1 < argc) ui.shotScreen = argv[++i];
     }
-    if (!checking) {
-        std::fprintf(stderr, "usage: mu2_launcher --check [--site URL] [--platform P] [--dir DIR] [--only TEXT] [--play]\n");
-        return 2;
-    }
-    return check(place, dir, only, start);
+    if (checking) return check(place, dir, only, start);
+    ui.place = place;
+    return runUi(ui);
 }
