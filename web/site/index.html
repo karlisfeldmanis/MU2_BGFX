@@ -147,7 +147,7 @@ Download for Windows
 Download for macOS
 </a>
 <small id="dl-macos-note">Apple silicon and Intel</small>
-<small>Opens the launcher with no warnings: double-click the file, then Open.<br>Prefer the app itself? <a href="/downloads/MU2.dmg" download>MU2.dmg</a> &mdash; first launch: allow in Privacy &amp; Security.</small>
+<small>Double-click the file, then Open &mdash; the launcher opens with no warnings. Prefer the app itself? <a href="/downloads/MU2.dmg" download>MU2.dmg</a> (first launch: allow in Privacy &amp; Security).</small>
 </div>
 </div>
 </section>
@@ -227,13 +227,13 @@ Download for macOS
   });
 
   // Each installer's size, or "Coming soon" while it is not up yet.
-  const mb = (n) => (n / 1048576).toFixed(0) + ' MB';
+  const size = (n) => (n < 1048576 ? (n / 1024).toFixed(0) + ' KB' : (n / 1048576).toFixed(1) + ' MB');
   fetch('/api/downloads').then((r) => r.json()).then((list) => {
-    for (const [system, base] of [['windows', 'Windows 10 or 11, 64-bit'], ['macos', 'Apple silicon and Intel · first launch: allow in Privacy & Security']]) {
+    for (const [system, base] of [['windows', 'Windows 10 or 11, 64-bit'], ['macos', 'Apple silicon and Intel']]) {
       const link = $('dl-' + system), note = $('dl-' + system + '-note'), file = list[system];
       if (file) {
         link.href = file.file;
-        note.textContent = base + ' · ' + mb(file.bytes);
+        note.textContent = base + ' · ' + size(file.bytes);
       } else {
         link.removeAttribute('href');
         link.setAttribute('aria-disabled', 'true');
