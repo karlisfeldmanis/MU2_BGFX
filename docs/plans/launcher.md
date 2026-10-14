@@ -83,6 +83,10 @@ by mingw like `MU2.exe`, linking `mu_gfx` and the few UI sources it draws with.
   the wallpaper and the logo are inside the exe (tools/cmake/embed.py), served to core::readFile.
   `--shot FILE --screen NAME` draws one screen in a hidden window: checked on the Mac (Metal) and
   as MU2Launcher.exe under Wine (Vulkan), 22 MB.
+- **Live on protocol 31 (2026-10-14, the user: "deploy now").** The Windows release and the Mac
+  app built from 3965dc81, the server deployed with `--accounts` (7466 sim checks, 22 characters
+  kept). Under Wine the launcher reaches the box through tools/wine_https_relay.py, Wine here
+  having no TLS: `wine MU2Launcher.exe --site http://127.0.0.1:8096`.
 - **Not yet tried by hand:** typing, clicking, a real sign-in and install through the window
   (the engine under it was checked headless). Next: the user tries it; then signing the exe,
   and L4.
