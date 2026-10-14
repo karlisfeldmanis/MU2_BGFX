@@ -43,9 +43,10 @@ MOST_BODY = 4096
 EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]+\.[^@\s]+$")
 SCRYPT = dict(n=2**14, r=8, p=1, maxmem=64 * 1024 * 1024, dklen=32)
 
-# The two installers the page offers, by the names the dist step will give them; a file not
-# there yet leaves its button saying so instead of linking nowhere.
-DOWNLOADS = {"windows": "MU2Setup.exe", "macos": "MU2.dmg"}
+# What the page offers each system: on Windows the launcher (src/launcher/), which installs and
+# updates the game itself (docs/plans/launcher.md, L4); on the Mac the app, when there is one. A
+# file not there leaves its button saying so instead of linking nowhere.
+DOWNLOADS = {"windows": "MU2Launcher.exe", "macos": "MU2.dmg"}
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS accounts (

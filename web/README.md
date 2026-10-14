@@ -40,5 +40,6 @@ written last. https://37.27.158.226/game/windows/manifest.json is what the launc
 
 ## Installers
 
-Copy them to `/srv/mu2-web/downloads/` as `MU2Setup.exe` and `MU2.dmg`. The page asks
+Copy them to `/srv/mu2-web/downloads/`: `MU2Launcher.exe` (the launcher, stripped with
+`x86_64-w64-mingw32-strip`, which installs the game from `/game/windows/`) and `MU2.dmg`. The page asks
 `/api/downloads` and shows each one's size, or "coming soon" while it is missing.
