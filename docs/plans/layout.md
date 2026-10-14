@@ -96,9 +96,9 @@ or while the studio is open: the studio's baked paths would point at nothing.
      Hommerd01 that say "See docs/worlds/devias-port.md" (drop the sentence), devias' ground.json
      (devias-ground.md), and `content/sheets/materials.json:8` ("PLAN.md's rule").
 
-4. **`pipeline/`.** Move the cook scripts and `paths.py`/`paths.sh` out of `tools/`, then run a `--plan` cook and
+4. **`pipeline/`.** Done 2026-10-14 (08f08603). Move the cook scripts and `paths.py`/`paths.sh` out of `tools/`, then run a `--plan` cook and
    `./mu check`.
-5. **`./mu` subcommands.** Retire the root scripts, and update the README and the memory.
+5. **`./mu` subcommands.** Done 2026-10-14 (08f08603): `./mu play|run|viewer|build|bootstrap`, the scripts in `tools/mu/run/`. Retire the root scripts, and update the README and the memory.
 
 Steps 1 and 2 are a session together; steps 3-5 are another.
 
