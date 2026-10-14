@@ -98,6 +98,11 @@ by mingw like `MU2.exe`, linking `mu_gfx` and the few UI sources it draws with.
 **L4. The website offers the launcher.** The Windows button downloads `MU2Launcher.exe`, a few MB,
 in place of the 1.5 GB zip.
 
+- **Done 2026-10-14** (b5e2fb85): MU2Launcher.exe, stripped to 5.6 MB, at
+  https://37.27.158.226/downloads/MU2Launcher.exe; the site's Windows button links it and shows
+  "Windows 10 or 11, 64-bit · 5 MB". A new launcher goes up the same way: build, strip
+  (`x86_64-w64-mingw32-strip`), rsync to /srv/mu2-web/downloads/.
+
 **L5. The Mac launcher.** The same program: NSURLSession for HTTPS, the Keychain for the token,
 `~/Applications/MU2` for the game. Later, as the user said.
 
