@@ -108,8 +108,9 @@ macos, with install and everything").
 - `./mu dist launcher` makes dist/launcher/MU2Launcher.app -- the binary, glfw in its Frameworks
   pointed at, Info.plist, signed ad hoc -- and MU2.dmg of it beside the Applications link to drag
   onto. The DMG goes to /srv/mu2-web/downloads/MU2.dmg and lights the site's Mac button, whose
-  note reads "first launch: right-click, Open": all an ad-hoc-signed app can say until there is a
-  Developer ID to sign and notarise with.
+  note reads "first launch: allow in Privacy & Security": on macOS 15 and later the right-click
+  door is shut and that pane's "Open Anyway" is the only one -- all until there is a Developer
+  ID to sign and notarise with, after which there is no door at all.
 - `./mu release macos` puts dist/macos/MU2.app on the box under /game/macos/ exactly as the
   Windows client goes under /game/windows/ (release.py walks the bundle, exe
   MU2.app/Contents/MacOS/MU2). _CodeSignature is left out: macOS refuses to hard-link its files,
