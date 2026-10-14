@@ -391,6 +391,9 @@ public:
     // with half a palette is a figure with a hand left in the bind pose -- visible, where a
     // silent refusal would have looked like a missing clip.
     static constexpr int kMaxBones = 128;
+    // The stage the palette is bound on, shaders/skin.sh's b_bones. Not one any fragment shader
+    // paired with a skinned vertex shader reads: on Vulkan a stage is one binding for both.
+    static constexpr uint8_t kPaletteStage = 5;
     static constexpr int kMaxPaletteRows = 512;
     void resetPalettes();
     // `rows12` is `bones` lots of twelve floats -- three rows of a 4x3, already transposed by
@@ -856,7 +859,6 @@ private:
     bgfx::UniformHandle sOrm_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sEmissive_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sShadowCompare_ = BGFX_INVALID_HANDLE;
-    bgfx::UniformHandle sShadowDepth_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sPrepass_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sAo_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sColour_ = BGFX_INVALID_HANDLE;

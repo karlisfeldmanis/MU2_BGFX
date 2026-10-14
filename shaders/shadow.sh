@@ -2,7 +2,7 @@
 // two copies once, and two copies of a filter drift: one of them had a comment the other had
 // lost, and a fix to one is a fix to half the picture.
 //
-// Needs common.sh first, for s_shadowCompare, s_shadowDepth and gradientNoise.
+// Needs common.sh first, for s_shadowCompare and gradientNoise.
 
 uniform mat4 u_shadowMtx;
 uniform vec4 u_shadowParams;  // x: depth bias  y: penumbra scale  z: map texel  w: normal bias
@@ -93,6 +93,19 @@ float discTurn(vec2 uv, vec2 pixel)
 	return gradientNoise(pixel) * 6.2831853;
 }
 
+// The plain depth under `uv`, for the blocker search: the compare sampler's own texture, read
+// as the point-sampled, clamped tap a second sampler on stage 5 used to give. One stage and
+// not two, because on Vulkan a stage is one binding shared by a program's vertex and fragment
+// shaders: the skinned shade's bones (skin.sh) and the weathering's noise both sat on 12 there,
+// and a weathered figure -- Lorencia's swaying trees -- read the bones' buffer as a texture,
+// which was the GPU page fault on the first frame of a world (docs/plans/windows-client.md).
+float shadowDepthAt(vec2 uv)
+{
+	float size = 1.0 / u_shadowParams.z;
+	vec2 texel = clamp(floor(uv * size), vec2_splat(0.0), vec2_splat(size - 1.0));
+	return s_shadowCompare.m_texture.Load(ivec3(ivec2(texel), 0)).r;
+}
+
 // The shadow hardens on contact. Five taps look for a blocker; where there is none the
 // pixel is lit and done, which is most of the ground. Otherwise the penumbra is as wide as
 // the blocker is far, for a sun four degrees across -- an invention, since the real half
@@ -138,7 +151,7 @@ float sunShadow(vec3 wpos, vec3 normal, float ndotl, vec2 pixel)
 	// Two loops of fixed length rather than one of a uniform's, so each unrolls over its table.
 #define MU2_SEARCH_TAP(TAP) \
 	{ \
-		float d = texture2D(s_shadowDepth, sc.xy + turnTap(TAP, turn) * searchRadius).r; \
+		float d = shadowDepthAt(sc.xy + turnTap(TAP, turn) * searchRadius); \
 		if (d < receiver) \
 		{ \
 			blockerSum += d; \

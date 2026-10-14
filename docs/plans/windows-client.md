@@ -57,14 +57,20 @@ W1 to W4 are done, and W3 is done in Lorencia and the lobby:
   type after each SPIR-V build.
 - **Wine only: Rosetta can vanish.** A macOS update removed it, and `wine` said "bad CPU type".
   Reinstall it with `softwareupdate --install-rosetta --agree-to-license`.
-- **A GPU page fault (`VK_ERROR_DEVICE_LOST`) is still open.** It came in about one run in five
-  at -O3, and in one of the first 13 player runs at -O2. It always comes in the first frames
-  after the loading screen hands over to the scene (2.4 to 3.0 s). MoltenVK reports "GPU
-  Address Fault (kIOGPUCommandBufferCallbackErrorPageFault)". It is not caused by a cold shader
-  cache or a fresh unzip; four of each were clean. It may be Wine and MoltenVK's own, or a real
-  out-of-bounds read; the preloader's worker creates resources while the main thread draws. To
-  catch it, run with `MTL_SHADER_VALIDATION=1` until one run faults; the validation names the
-  shader and the buffer.
+- **On Vulkan a stage is one binding for the whole program.** The GPU page fault
+  (`VK_ERROR_DEVICE_LOST`, MoltenVK's "GPU Address Fault") came in about one run in twelve, always
+  in the first frame that drew the world after the loading screen (30 blank frames first moved
+  it to frame 30). The skinned vertex shaders read the bones from a buffer on stage 12, and
+  `fs_shade` read the weathering's noise from a texture on stage 12. Metal gives each shader its
+  own slots; Vulkan makes them one binding, keeps the vertex shader's type, and the fragment
+  shader of a weathered skinned model (the town's swaying trees and signs) read the bones'
+  buffer as a texture. bgfx said so only in a `-DBX_CONFIG_DEBUG=ON` build ("Mismatching
+  descriptor types"). The bones are on stage 5 now (`Renderer::kPaletteStage`); stage 5 was the
+  shadow map's second, plain-depth sampler, and the blocker search reads that depth out of the
+  compare sampler's own texture instead (shadow.sh's `shadowDepthAt`), the same texel. Before:
+  11 faults in 130 lobby runs; after: none in 40 lobby runs and Lorencia entries on a scratch
+  server. Ruled out on the way: the -O3 miscompile, the shader cache, vsync,
+  `MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS`, bgfx's memory recycling. Metal validation hides it.
 - **`./mu dist` looked for the sheets in `sheets/`**, not `content/sheets/`, after the folder
   move. That broke `dist macos` too; it is fixed.
 

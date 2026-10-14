@@ -101,7 +101,7 @@ void Renderer::drawStage(bgfx::ViewId viewId, bgfx::FrameBufferHandle target, ui
                                  material.glowClamped()
                                      ? BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
                                      : UINT32_MAX);
-                if (skinned) bgfx::setBuffer(12, palette_, bgfx::Access::Read);
+                if (skinned) bgfx::setBuffer(kPaletteStage, palette_, bgfx::Access::Read);
                 bgfx::setVertexBuffer(0, mesh.vertexBuffer());
                 bgfx::setIndexBuffer(mesh.indexBuffer(), part.firstIndex, part.indexCount);
                 bgfx::setInstanceDataBuffer(&idb, i, 1);
@@ -121,7 +121,7 @@ void Renderer::drawStage(bgfx::ViewId viewId, bgfx::FrameBufferHandle target, ui
             bgfx::setTexture(1, sNormal_, material.normal);
             bgfx::setTexture(2, sOrm_, material.orm);
             bgfx::setTexture(3, sEmissive_, material.emissive);
-            if (skinned) bgfx::setBuffer(12, palette_, bgfx::Access::Read);
+            if (skinned) bgfx::setBuffer(kPaletteStage, palette_, bgfx::Access::Read);
             bindShine(true);
             uint64_t state = base;
             if (!material.twoSided) state |= cullBit_;

@@ -171,7 +171,6 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     sOrm_ = bgfx::createUniform("s_orm", bgfx::UniformType::Sampler);
     sEmissive_ = bgfx::createUniform("s_emissive", bgfx::UniformType::Sampler);
     sShadowCompare_ = bgfx::createUniform("s_shadowCompare", bgfx::UniformType::Sampler);
-    sShadowDepth_ = bgfx::createUniform("s_shadowDepth", bgfx::UniformType::Sampler);
     sPrepass_ = bgfx::createUniform("s_prepass", bgfx::UniformType::Sampler);
     sAo_ = bgfx::createUniform("s_ao", bgfx::UniformType::Sampler);
     sColour_ = bgfx::createUniform("s_colour", bgfx::UniformType::Sampler);
@@ -549,7 +548,7 @@ void Renderer::shutdown() {
     for (bgfx::UniformHandle* u :
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uDust_, &uEdge_, &uAbyss_, &sAbyss_, &uLava_, &uLavaMap_, &sLava_, &uGrassStorm_, &uCamPos_, &uParams_,
           &uMaterial_, &uCast_, &uCastPlanes_, &uTranslucency_, &uRefine_, &uRefineStar_, &sChrome_, &sShiny_, &sChrome2_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGroundRelief_, &uWaterGlow_, &uGroundWet_, &uCaustic_, &uSway_, &uGroundSlots_, &uGroundWeights_, &sGroundWeights_, &sAlbedo3_, &sNormal3_, &sOrm3_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassThrough_, &uGrassShape_, &uGrassSheet_, &uGrassSize_, &uGrassReach_, &uGrassWalkers_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
-          &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
+          &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sPrepass_, &sAo_,
           &uGrassSteps_, &uGrassWake_,
           &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &uTransientAt_, &uTransientColour_, &uTransientTo_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uGrade_, &uTintLow_, &uTintHigh_, &uBloomTexel_,
           &sBloom_, &uWeather_, &sWeather_}) {

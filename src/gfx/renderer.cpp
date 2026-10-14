@@ -72,8 +72,6 @@ void Renderer::bindShadeInputs() {
     bgfx::setUniform(uShadowReach_, shade_.shadowReach);
     bgfx::setTexture(4, sShadowCompare_, shadowMap_,
                      BGFX_SAMPLER_COMPARE_LEQUAL | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
-    bgfx::setTexture(5, sShadowDepth_, shadowMap_,
-                     BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
     bgfx::setTexture(7, sAo_, probePass_ || !aoOn_ ? whiteAo_ : blurTex_);
     // Stage 12, the weathering's noise; repeating, since it is read in world metres.
     bgfx::setUniform(uWeather_, weather_);
@@ -400,7 +398,7 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             // bgfx::submit discards its bindings, so a palette bound once a view reaches
             // the first figure and leaves every other one reading an unbound stage -- which
             // is a pose of zeroes, and a figure collapsed into a point at the origin.
-            if (skinned) bgfx::setBuffer(12, palette_, bgfx::Access::Read);
+            if (skinned) bgfx::setBuffer(kPaletteStage, palette_, bgfx::Access::Read);
 
             bgfx::setVertexBuffer(0, mesh.vertexBuffer());
             bgfx::setIndexBuffer(mesh.indexBuffer(), part.firstIndex, part.indexCount);
@@ -1125,8 +1123,6 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             bgfx::setTexture(4, sShadowCompare_, shadowMap_,
                              BGFX_SAMPLER_COMPARE_LEQUAL | BGFX_SAMPLER_U_CLAMP |
                                  BGFX_SAMPLER_V_CLAMP);
-            bgfx::setTexture(5, sShadowDepth_, shadowMap_,
-                             BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
             bgfx::setTexture(7, sAo_, aoOn_ ? blurTex_ : whiteAo_);
 
             // Depth EQUAL against what the prepass laid down, and no depth write: nothing

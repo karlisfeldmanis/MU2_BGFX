@@ -19,7 +19,10 @@
 
 #include <bgfx_compute.sh>
 
-BUFFER_RO(b_bones, vec4, 12);
+// Stage 5, which no fragment shader a skinned program is paired with reads: on Vulkan a
+// stage is one binding for both halves of a program, and on 12 the bones shared fs_shade's
+// weathering noise (shadow.sh's shadowDepthAt has the rest). Renderer::kPaletteStage.
+BUFFER_RO(b_bones, vec4, 5);
 
 mat4 boneMatrix(int bone, int base)
 {

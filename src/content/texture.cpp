@@ -360,19 +360,22 @@ bgfx::TextureHandle Textures::loadFromMemory(const std::string& name, const void
     }
 
     // --- no chain: a grid, or an image that arrived with one --------------------------
+    // Everything the rest needs is read out of the image first: once createTexture2D returns it
+    // is bgfx's, and on the preloader's worker the main thread's frame() can free it (releaseImage)
+    // before the next line runs.
     const bgfx::TextureFormat::Enum format = bgfx::TextureFormat::Enum(image->m_format);
     const uint8_t mips = image->m_numMips;
-    const bgfx::Memory* mem = bgfx::makeRef(image->m_data, image->m_size, releaseImage, image);
+    const uint32_t size = image->m_size;
+    const bgfx::Memory* mem = bgfx::makeRef(image->m_data, size, releaseImage, image);
     bgfx::TextureHandle handle = bgfx::createTexture2D(
-        uint16_t(width), uint16_t(height), image->m_numMips > 1, image->m_numLayers,
-        bgfx::TextureFormat::Enum(image->m_format), flags, mem);
+        uint16_t(width), uint16_t(height), mips > 1, image->m_numLayers, format, flags, mem);
 
     if (!bgfx::isValid(handle)) {
         core::logError("%s did not become a texture", name.c_str());
     } else {
-        bytes_ += image->m_size;
+        bytes_ += size;
         core::logf("texture %s %ux%u %s mips %u %.1f KB", name.c_str(), width, height, roleName,
-                   image->m_numMips, double(image->m_size) / 1024.0);
+                   mips, double(size) / 1024.0);
         sizes_[handle.idx] = {width, height, format, mips, flags};
     }
     byPath_[name] = handle;

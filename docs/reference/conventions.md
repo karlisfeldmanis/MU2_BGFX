@@ -195,7 +195,15 @@ These are bgfx-on-Metal facts, found by MU4 the slow way.
 - **`gl_FrontFacing` is the opposite sense** from the winding `BGFX_STATE_CULL_CW` keeps.
   Shaders flip a normal on the view direction instead of on that flag.
 - **A depth texture can be read twice**, once through the compare sampler and once as plain
-  depth on another stage. The soft shadow needs both.
+  depth. The soft shadow needs both, and takes both from the one stage: the plain depth is a
+  `Load` of the compare sampler's own texture (shadow.sh's `shadowDepthAt`), so it costs no
+  second stage.
+- **A stage is one slot per shader on Metal, and one for the whole program on Vulkan.** On
+  Metal a vertex buffer and a fragment texture can share a stage number; on Vulkan they are
+  one binding, the vertex shader's type wins, and the fragment shader reads the buffer as a
+  texture: a GPU page fault (docs/plans/windows-client.md). So a vertex shader's buffer takes
+  a stage no fragment shader it is paired with uses: the bones are on 5 (`skin.sh`,
+  `Renderer::kPaletteStage`), and `fs_shade` has every other one of the sixteen.
 - **Debugging a refusal**: a second build directory configured with `-DBX_CONFIG_DEBUG=ON`
   (`./mu build --trace`) routes bgfx's own trace into our log, which is where the refusals
   become visible at all.

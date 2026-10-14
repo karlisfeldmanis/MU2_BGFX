@@ -40,10 +40,10 @@ SAMPLER2D(s_orm,      2);
 #endif
 SAMPLER2D(s_emissive, 3);
 
-// The shadow map is read twice, which Metal allows: once through the compare sampler for
-// the filtered result, once as plain depth to find the blocker. docs/reference/conventions.md.
+// The shadow map, through the compare sampler for the filtered result. The blocker search's
+// plain depth is read out of the same texture (shadow.sh's shadowDepthAt), not through a
+// second stage: stage 5 is the skinned vertex shaders' bones (skin.sh).
 SAMPLER2DSHADOW(s_shadowCompare, 4);
-SAMPLER2D(s_shadowDepth, 5);
 
 // The prepass, read two different ways.
 //
