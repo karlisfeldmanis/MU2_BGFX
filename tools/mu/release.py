@@ -70,7 +70,10 @@ def release(target, say, dry=False):
     # What is walked: the Windows client is a folder of MU2.exe and its packs; the Mac's is the app
     # bundle, with BUILT_FROM beside it in dist/macos/.
     client = os.path.join(ROOT, "dist", target, "MU2" if target == "windows" else "MU2.app")
-    built_from = os.path.join(ROOT, "dist", target, "BUILT_FROM")
+    # dist writes Windows' note inside the client folder (dist.py), the Mac's beside the bundle.
+    built_from = os.path.join(client, "BUILT_FROM")
+    if target != "windows" or not os.path.isfile(built_from):
+        built_from = os.path.join(ROOT, "dist", target, "BUILT_FROM")
     if not os.path.isfile(built_from):
         raise RuntimeError(f"no {built_from}: run `./mu dist {target}` first")
     commit, _, built = open(built_from).read().strip().partition(" ")
