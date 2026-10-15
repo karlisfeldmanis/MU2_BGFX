@@ -82,7 +82,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     amount_.open(interface_, &arts_);
     questDialog_.open(interface_);
     tracker_.open(interface_);
-    travel_.open(interface_, assetDir);
+    travel_.open(interface_, assetDir, &arts_);
     goBack_.open(interface_);
     squareResult_.open(interface_);
     herald_.open(interface_);

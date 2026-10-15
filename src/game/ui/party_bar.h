@@ -86,6 +86,8 @@ private:
     std::string menuAsk_;  // takeMenuAsk
     int onMore_ = -1;      // the capsule whose button is under the pointer, as last drawn
     gfx::Box leave_;       // "Leave" on his own line, empty when there is none
+    gfx::Box convert_;     // "Make raid" or "Make party" beside it, the leader's, empty when there is none
+    bool raidDrawn_ = false;  // whether the state last drawn was a raid's
     uint64_t facesTaken_ = 0;
     // His own numbers as last drawn, which redraw the bar as they change.
     struct Self {

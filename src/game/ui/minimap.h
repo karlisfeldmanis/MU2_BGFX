@@ -23,6 +23,10 @@
 //
 // M lays the whole map over the middle of the screen instead (setFull): the same chart and marks,
 // fitted whole and darkening the world behind it, until M or Escape takes it down. Ours too.
+// While the Golden Dragon stands it is named there in its gold -- on his map beside its mark, on
+// another map in a line under the chart, "Golden Dragon has landed in Noria  ·  199, 168", from
+// the server's word (net::Invasion; the user, 2026-10-13: "when dragon fight is happening show on
+// map raid").
 //
 // Turned by the camera's heading, read off the view matrix each frame, so up on the square is
 // up on the screen and a step to the right is to the right. MU 0.75 has no minimap (Season 3's
@@ -168,10 +172,16 @@ private:
         bool full = false;
         int hovered = -1;
         std::vector<Mark> marks;
+        // The whole map's line under the chart: the Golden Dragon landed on another map (or
+        // copy), MU's map number -1 for none, its copy and the tile it came down on
+        // (Play::dragonLanded, net::Invasion).
+        int dragonMap = -1, dragonCopy = 0, dragonColumn = 0, dragonRow = 0;
         bool operator==(const Face& o) const {
             return width == o.width && height == o.height && column == o.column &&
                    row == o.row && heroX == o.heroX && heroY == o.heroY && turn == o.turn &&
-                   zoom == o.zoom && full == o.full && hovered == o.hovered && marks == o.marks;
+                   zoom == o.zoom && full == o.full && hovered == o.hovered && marks == o.marks &&
+                   dragonMap == o.dragonMap && dragonCopy == o.dragonCopy &&
+                   dragonColumn == o.dragonColumn && dragonRow == o.dragonRow;
         }
     };
     Face now_, drawn_;

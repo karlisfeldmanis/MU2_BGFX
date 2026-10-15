@@ -273,3 +273,25 @@ container for each player", then "we need to see who is party/raid leader":
   or the menu shut clicks (window_click).
 - `--invite A,B` asks them into his party until they are in: a review run's party from local
   netbots (`--parties` takes a player's invite).
+
+## The raid (2026-10-13)
+
+The user: "we need to implement funcitonality that party can be converted to raid with max 10
+layers". Their picks:
+
+| question | decision |
+|---|---|
+| experience | **the whole raid shares**: every member within 10 tiles of a kill, at the five's percent (220%, a set 300%) and the full party's tenth, split by level among all of them |
+| converting | **the leader converts, and it stays**: "Make raid" over the bar (or `/raid`); "Make party" (or `/raid off`) only while it holds five or fewer |
+| the bar | **all ten as capsules**, the same plates as a party's |
+
+- `sim::kRaidMost` 10 (rules.h). The realm sees no raid: a raid is one party id, and
+  partyInView, payKill and countPartyKill already take any number. A raid of ten shares a kill
+  as five would, ten ways, so a member earns about half what he would in a full party: a raid is
+  for fights a party can't take (the Golden Dragon, the higher castles), not for levelling.
+- Protocol 30: `PartyWhat::Raid` and `::Unraid`; `PartyState::raid` after the members' health;
+  a PartyState of up to ten. The server's `Party::raid`, `most()`, and its lines say "raid"
+  ("Ivo has joined the raid.", "The party is now a raid of up to 10.").
+- Not changed: a monster's threat table keeps six (Body::kThreatSlots); with ten on it, the
+  weakest four are left out of its choice. The board's bot parties are still five; the bots
+  don't raid yet.

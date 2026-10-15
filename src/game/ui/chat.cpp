@@ -231,11 +231,14 @@ void Chat::hear(const net::Heard& heard) {
     line.bot = heard.bot;
     // The server's invite (server/src/main.cpp, partyAsk): its asker, and the line without the
     // typing it asks for, since the line wears its own buttons.
+    // A raid's invite is said so (server: Party::word()).
     constexpr const char* kInvites = " invites you to a party.";
-    const size_t at = line.text.find(kInvites);
+    constexpr const char* kRaidInvites = " invites you to a raid.";
+    const size_t partyAt = line.text.find(kInvites);
+    const size_t at = partyAt != std::string::npos ? partyAt : line.text.find(kRaidInvites);
     if (line.channel == net::Channel::Party && line.name.empty() && at != std::string::npos && at > 0) {
         line.inviter = line.text.substr(0, at);
-        line.text = line.inviter + kInvites;
+        line.text = line.inviter + (partyAt != std::string::npos ? kInvites : kRaidInvites);
     }
     read(line);
     log_.push_back(line);
@@ -554,6 +557,15 @@ void Chat::send(Play& play) {
                 return;
             }
             play.askGuild(asked);
+            return;
+        } else if (command == "raid") {
+            // The raid (docs/game/party.md): "/raid" makes his party one, "/raid off" a party again.
+            if (!play.remote()) {
+                system(net::Channel::Server, "No one is here to raid with: this world is not on a server.");
+                return;
+            }
+            const bool off = rest.rfind("off", 0) == 0;
+            play.askParty({off ? net::PartyWhat::Unraid : net::PartyWhat::Raid, std::string()});
             return;
         } else if (command == "invite" || command == "leave" || command == "kick" || command == "accept" ||
                    command == "decline" || command == "promote") {
@@ -1244,7 +1256,9 @@ void Chat::buildInvite(float u, float width, float bottom, const Pointer& pointe
     // The asker's name in the players' green, the rest in bone, the whole centred; a guild's mark
     // before it, and its quiet line under it.
     const std::string asks = line.guild ? line.text.substr(std::min(line.inviter.size(), line.text.size()))
-                             : line.trader != 0 ? " wants to trade with you." : " invites you to a party.";
+                             : line.trader != 0 ? " wants to trade with you."
+                             : line.text.size() > line.inviter.size() ? line.text.substr(line.inviter.size())
+                                                                      : " invites you to a party.";
     const float markRoom = line.guild ? (kGuildMarkSide + 10.0f) * u : 0.0f;
     const float wide = markRoom + bodyWidth(21.0f * u, line.inviter) + bodyWidth(21.0f * u, asks);
     const float qx = card.midX() - wide * 0.5f;

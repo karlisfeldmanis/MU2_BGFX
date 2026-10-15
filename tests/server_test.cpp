@@ -316,6 +316,102 @@ void testGuild() {
           "a mark crosses the wire, its last pixel the low nibble");
 }
 
+// ---- the raid (docs/game/party.md): a party turned into one takes ten -----------------------------
+
+void testRaid() {
+    std::printf("raid\n");
+    const std::string assets = MU2_ASSET_DIR;
+    std::vector<std::unique_ptr<World>> worlds;
+    sim::RealmConfig config;
+    net::Hello hello;
+    hello.world = "lorencia";
+    hello.kin = uint8_t(sim::Kin::DarkKnight);
+    hello.level = 200;
+    hello.column = 142;
+    hello.row = 126;
+    hello.weapon = "Axe01";
+    World* lorencia = raiseWorld(worlds, hello, assets, config, 1, "test", nullptr, 0);
+    check(lorencia != nullptr, "the server raises Lorencia for a raid");
+    if (!lorencia) return;
+    std::vector<std::unique_ptr<Session>> sessions;
+    for (int i = 0; i < 12; ++i) sessions.push_back(player(lorencia, uint64_t(100 + i), "Raider" + std::to_string(i)));
+    Session& leader = *sessions[0];
+    const auto bring = [&](int i) {
+        partyAsk(leader, {net::PartyWhat::Invite, sessions[size_t(i)]->name}, sessions);
+        partyAsk(*sessions[size_t(i)], {net::PartyWhat::Accept, leader.name}, sessions);
+    };
+    const auto partyOfLeader = [&]() -> Party* {
+        const auto at = g_partyOf.find(leader.token);
+        return at != g_partyOf.end() ? &g_parties[at->second] : nullptr;
+    };
+    for (int i = 1; i <= 5; ++i) bring(i);
+    Party* party = partyOfLeader();
+    check(party != nullptr && party->members.size() == size_t(sim::kPartyMost) && !party->raid,
+          "a party takes five and refuses the sixth");
+    if (!party) return;
+    partyAsk(*sessions[1], {net::PartyWhat::Raid, {}}, sessions);
+    check(!party->raid, "a member does not make it a raid");
+    partyAsk(leader, {net::PartyWhat::Raid, {}}, sessions);
+    check(party->raid, "the leader does");
+    for (int i = 5; i <= 11; ++i) bring(i);
+    check(party->members.size() == size_t(sim::kRaidMost), "a raid takes ten and refuses the eleventh");
+    partyAsk(leader, {net::PartyWhat::Unraid, {}}, sessions);
+    check(party->raid, "a raid of ten is not made a party");
+    for (int i = 9; i >= 5; --i) partyAsk(*sessions[size_t(i)], {net::PartyWhat::Leave, {}}, sessions);
+    check(party->raid && party->members.size() == 5, "five left, it is a raid still");
+    partyAsk(leader, {net::PartyWhat::Unraid, {}}, sessions);
+    check(!party->raid, "and its leader makes it a party again");
+    for (int i = 1; i <= 4; ++i) partyAsk(*sessions[size_t(i)], {net::PartyWhat::Leave, {}}, sessions);
+    check(g_parties.empty() && g_partyOf.empty(), "and it disbands as a party does");
+}
+
+// ---- the Golden Invasion told to every map (net::Invasion) ---------------------------------------
+
+void testInvasion() {
+    std::printf("invasion\n");
+    // The wire: its phase, map, copy and tile survive the trip, and a phase past Standing does not.
+    net::Invasion said;
+    said.phase = sim::InvasionPhase::Standing;
+    said.map = 3;
+    said.copy = 2;
+    said.column = 199;
+    said.row = 168;
+    std::vector<uint8_t> bytes;
+    net::put(bytes, said);
+    std::vector<uint8_t> body;
+    net::Kind kind{};
+    net::Invasion back;
+    check(net::take(bytes, kind, body) == 1 && kind == net::Kind::Invasion && net::parse(body, back) &&
+              back == said,
+          "where the dragon stands crosses the wire");
+    body[0] = 3;
+    check(!net::parse(body, back), "and a phase there is not is refused");
+
+    // The server's word: Quiet with no invasion, then the map and the tile it comes down on.
+    const std::string assets = MU2_ASSET_DIR;
+    std::vector<std::unique_ptr<World>> worlds;
+    sim::RealmConfig config;
+    net::Hello hello;
+    hello.world = "lorencia";
+    hello.kin = uint8_t(sim::Kin::DarkKnight);
+    hello.level = 200;
+    hello.column = 142;
+    hello.row = 126;
+    hello.weapon = "Axe01";
+    World* lorencia = raiseWorld(worlds, hello, assets, config, 7, "test", nullptr, 0);
+    check(lorencia != nullptr, "the server raises Lorencia for an invasion");
+    if (!lorencia) return;
+    std::vector<std::unique_ptr<Session>> sessions;
+    check(invasionNow(worlds).phase == sim::InvasionPhase::Quiet, "no dragon, nothing to tell");
+    lorencia->realm->invade(true);
+    for (int i = 0; i < 4; ++i) tick(*lorencia, sessions, worlds);
+    const net::Invasion now = invasionNow(worlds);
+    const sim::Body* dragon = lorencia->realm->invader();
+    check(now.phase == sim::InvasionPhase::Standing && now.map == 0 && now.copy == 1 && dragon != nullptr &&
+              now.column == dragon->homeColumn && now.row == dragon->homeRow && now.column > 0,
+          "landed: Lorencia, at (" + std::to_string(now.column) + ", " + std::to_string(now.row) + ")");
+}
+
 }  // namespace
 
 int main() {
@@ -325,6 +421,8 @@ int main() {
     testChat();
     testRaise();
     testGuild();
+    testRaid();
+    testInvasion();
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures == 0 ? 0 : 1;
 }

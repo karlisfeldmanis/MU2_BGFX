@@ -37,6 +37,7 @@ constexpr float kFace = 36.0f, kRing = 2.0f, kTuck = 10.0f;
 // The menu's button at the capsule's right end, and its gap from it.
 constexpr float kMore = 16.0f, kMoreGap = 4.0f;
 constexpr int kSelf = -2;  // onMore_: "Leave" on his own line
+constexpr int kConvert = -3;  // onMore_: "Make raid" or "Make party" beside it
 constexpr float kBetween = 16.0f;  // between the party and the rest of the raid, with no heading
 constexpr uint32_t kChosen = gfx::rgba(0.878f, 0.714f, 0.361f, 0.95f);  // the target's edge, the leader's gold
 constexpr float kTrailRate = 4.0f;  // the trail closes by e^-rate a second
@@ -116,6 +117,7 @@ bool PartyBar::covers(float x, float y) const {
         if (hit.box.has(x, y) || (hit.more.w > 0.0f && hit.more.has(x, y))) return true;
     }
     if (leave_.w > 0.0f && leave_.has(x, y)) return true;
+    if (convert_.w > 0.0f && convert_.has(x, y)) return true;
     return false;
 }
 
@@ -143,6 +145,15 @@ void PartyBar::update(float seconds, Play& play, const Pointer& pointer,
         onMore = kSelf;
         if (pointer.pressed) {
             play.askParty({net::PartyWhat::Leave, std::string()});
+            play.ui(Play::Ui::Click);
+            took_ = true;
+        }
+    }
+    // The leader's "Make raid" (a party) or "Make party" (a raid of five or fewer) beside it.
+    if (onMore == -1 && convert_.w > 0.0f && convert_.has(pointer.x, pointer.y)) {
+        onMore = kConvert;
+        if (pointer.pressed) {
+            play.askParty({party.raid ? net::PartyWhat::Unraid : net::PartyWhat::Raid, std::string()});
             play.ui(Play::Ui::Click);
             took_ = true;
         }
@@ -205,17 +216,19 @@ void PartyBar::update(float seconds, Play& play, const Pointer& pointer,
     for (const Raider& one : raid) ease(one.name, float(one.health) / 100.0f, one.health > 0);
     clock_ = moving ? clock_ + seconds : 0.0f;
 
-    if (same(party, drawn_) && raid == raid_ && me == me_ && u == unit_ && !moving && !targetMoved && !moreMoved &&
-        !facesMoved && !selfMoved) {
+    if (same(party, drawn_) && party.raid == raidDrawn_ && raid == raid_ && me == me_ && u == unit_ && !moving &&
+        !targetMoved && !moreMoved && !facesMoved && !selfMoved) {
         return;  // redrawn on a change only, or while something moves
     }
     drawn_ = party;
+    raidDrawn_ = party.raid;
     raid_ = std::move(raid);
     me_ = me;
     unit_ = u;
     canvas_.clear();
     hits_.clear();
     leave_ = {};
+    convert_ = {};
     // The target's capsule wears a thin gold edge a little outside its rim.
     const auto chosen = [&](const gfx::Box& box) {
         const float g = 3.0f * u;
@@ -257,6 +270,17 @@ void PartyBar::update(float seconds, Play& play, const Pointer& pointer,
             leave_ = {right - w - 4.0f * u, base - 14.0f * u, w + 8.0f * u, 19.0f * u};
             controls::label(canvas_, right - w, base, size,
                             onMore_ == kSelf ? style::kDanger : capsule::faded(style::kDanger, 0.7f), "Leave");
+            // The leader turns his party into a raid of ten, and a raid of five or fewer back
+            // (the user, 2026-10-13: "party can be converted to raid with max 10 layers").
+            const bool leading = party.members.front().name == me;
+            if (leading && (!party.raid || int(party.members.size()) <= sim::kPartyMost)) {
+                const char* word = party.raid ? "Make party" : "Make raid";
+                const float cw = controls::labelWidth(size, word);
+                const float cright = leave_.x - 14.0f * u;
+                convert_ = {cright - cw - 4.0f * u, base - 14.0f * u, cw + 8.0f * u, 19.0f * u};
+                controls::label(canvas_, cright - cw, base, size,
+                                onMore_ == kConvert ? style::kBoneHi : capsule::faded(style::kBoneHi, 0.7f), word);
+            }
         }
     }
     // **His own capsule first** (the user, 2026-10-11: "i need to see also my self party label on

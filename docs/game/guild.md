@@ -191,13 +191,54 @@ defaults above taken as decided. Protocol 29.
   guild, `<Bot>` for a bot in none; the target frame's line the same; the Card's [guild]. The
   player menu's "Invite to guild" (a master, on one in no guild) and "Ask to join guild" (one in
   none, on a guild's master).
-- **Bots**: netbot accepts a guild invite while in no guild, party or not.
+- **Bots**: netbot accepts a guild invite while in no guild, party or not (since 2026-10-13, `--guilds` plays the whole guild: below).
 - **Checked**: server_test's guild (found, refuse, invite across maps, accept, notice, a restart
   reading it back, remove, ask, leave, disband, the mark on the wire): 50 checks, 0 failed.
   sim_test 7462, 0 failed. And live on a private port (`mu2_server --kit 150:Zen+5000000`, two
   netbots, scripted clients): founded Vanguard at the Guild Master, invited both bots by name
   from the window, they joined from Lorencia; a second client's ask and the master's invite each
   showed the card; disbanded with the name typed and founded Ember.
+
+## The bots' guilds (2026-10-13)
+
+The user: "test with fresh bot server with 100 bots", "idea is that in guild bots has to act
+different their goal is to be stronger as group", "tardes has to happpen anywhere". Picks: bots
+found their own (no head start: level 100 at the Guild Master like anyone); masters invite and
+the guildless ask; members hunt together, share gear, share jewels and Zen, and the strong carry
+the weak; masters set the notice; members leave, are removed, guilds disband; recruiting for what
+the guild lacks; a guild power score; no rivalry yet. `netbot --guilds` (tools/netbot/guilds.h):
+
+- **One folder for every netbot** (`--dir`/guild/): each bot's line (NAME.who, every 3 s), each
+  guild's plan by its master's netbot (NAME.plan: size, cap, roles lacking, power, parties), and
+  the gifts' offers and claims. A guild spans netbots as the server's does.
+- **Founding**: a guildless bot of level 100+, not a trader, while fewer than one guild per ten
+  bots stands and no guild with room lacks his role, goes to Devias (Bot::order), to the Guild
+  Master, and founds one of twenty names with a mirrored two-colour mark. One founder at a time
+  per netbot. Given up after 40 game minutes.
+- **Roles**: a tank (knight, melee gladiator), a healer (energy elf), damage (wizard, magic
+  gladiator, agility elf). A guild wants three tenths tanks and two tenths healers of its cap.
+- **Recruiting**: every 5 game minutes the master invites the best guildless bot -- a role the
+  guild lacks first, then strength against the guild's middle (Bot::strength). Asked in, he takes
+  one his guild lacks or one as strong as its middle. Full, he removes the weakest for a candidate
+  1.5 times as strong (not one whose role would fall short), once every two game hours.
+- **The guildless** ask, every 30 game minutes, the guild that most lacks their role. Invites are
+  always taken.
+- **Parties**: the master plans the online members (no traders) into parties of five: the
+  strongest left leads, a tank and a healer within 40 levels join him, then the weakest within 40
+  -- carried. Each is a Board group (Board::guildPlan), kept and farming the most experience an
+  hour they stand together as the elite's are; a member on another netbot follows its leader as he
+  would a player. Guild members are out of the elite, duos and quest parties.
+- **The notice**: "Hunt with LEADERS. Spares to guildmates.", or what the guild is recruiting.
+- **Gifts**: each member offers his spares (Bot::spares, what he would sell) and the Zen over 3M +
+  20k a level; each guildmate tries each on himself (Bot::worth) and claims what helps him, and
+  Zen while under 200k + 15k a level. A giver on the same map as the claimant walks to him, asks a
+  trade, puts the things and the Zen in and accepts; the taker stands, says yes and accepts. Any
+  map but an event's. Done inside each bot's tick (NetBot::giftStep, takeStep): at --speed 100 a
+  trade's ask stands 0.2 s of the wall.
+- **Churn**: a member of a guild of two or fewer for six game hours leaves for one lacking his
+  role; a master of two or fewer for six game hours disbands while another has room.
+- **The report**: `tools/netbot/guild_report.py sample RUN` / `report RUN`: what the guilds did, the
+  guilds at the end, and levels and strength gained an hour in a guild and out, by level band.
 
 Not yet: the mark on the right upper arm (rendered in Blender at our camera on 2026-10-13: about
 5 pixels at 1080 lines, a red speck); guild war and Battle Soccer (no PvP). Deploying is

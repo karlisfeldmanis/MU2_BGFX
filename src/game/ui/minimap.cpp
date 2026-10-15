@@ -751,6 +751,15 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
     now_.turn = int(std::lround(std::atan2(right_[1], right_[0]) * 1800.0f / 3.14159265f));
     now_.zoom = zoom_;
     now_.full = full_;
+    // The Golden Dragon on another map or copy, for the whole map's line under the chart.
+    now_.dragonMap = -1;
+    now_.dragonCopy = now_.dragonColumn = now_.dragonRow = 0;
+    if (Play::Landed landed; full_ && play.dragonLanded(&landed) && !landed.here) {
+        now_.dragonMap = int(landed.map);
+        now_.dragonCopy = landed.copy;
+        now_.dragonColumn = landed.column;
+        now_.dragonRow = landed.row;
+    }
     now_.column = int(std::lround(hero.x));
     now_.row = int(std::lround(hero.y));
     showing_ = true;
@@ -795,6 +804,33 @@ void Minimap::fullChart(const Play& play) {
     const float wide = controls::labelWidth(size, title);
     controls::label(canvas_, std::round(cx - wide * 0.5f), std::round(std::max(top - 10.0f * u, size * 1.2f)),
                     size, style::kBone, title);
+    // The Golden Dragon landed on another map: one line under the chart, its mark and name in
+    // its gold, where in bone -- the map (and its copy, where copies are in play) and the tile it
+    // came down on, MU's "(199, 168)" as the corner's own reading is. Nothing to click: the
+    // travel list (M) takes him there, and marks the map too.
+    if (now_.dragonMap >= 0) {
+        float bottom = xy[1];
+        for (int i = 1; i < 4; ++i) bottom = std::max(bottom, xy[i * 2 + 1]);
+        const float line = kFullTitle * 0.75f * u;
+        const float base = std::round(std::min(bottom + 12.0f * u + line, float(now_.height) - line * 0.6f));
+        const bool copies = now_.dragonCopy > 1 || play.mapCopy() > 1;
+        const std::string name = "Golden Dragon";
+        const std::string where = "  has landed in " + mapName(uint32_t(now_.dragonMap)) +
+                                  (copies ? " " + std::to_string(now_.dragonCopy) : std::string()) +
+                                  "  \xC2\xB7  " + std::to_string(now_.dragonColumn) + ", " +
+                                  std::to_string(now_.dragonRow);
+        const float cellPx = float(cell_);
+        const float gap = 4.0f * u;
+        const float named = controls::labelWidth(line, name);
+        const float total = cellPx + gap + named + controls::labelWidth(line, where);
+        float x = std::round(cx - total * 0.5f);
+        const float from = float(int(Glyph::Dragon)) * cellPx;
+        canvas_.region(glyphs_, {x, std::round(base - line * 0.36f - cellPx * 0.5f), cellPx, cellPx},
+                       {from, 0.0f, cellPx, cellPx}, kDragonGold);
+        x += cellPx + gap;
+        x += controls::label(canvas_, x, base, line, kDragonGold, name);
+        controls::label(canvas_, x, base, line, style::kBone2, where);
+    }
 }
 
 void Minimap::rebuild(const Play& play) {
@@ -937,6 +973,22 @@ void Minimap::rebuild(const Play& play) {
         // to whole pixels swims on it as he walks.
         canvas_.region(glyphs_, {x - cellPx * 0.5f, y - cellPx * 0.5f, cellPx, cellPx},
                        {from, 0.0f, cellPx, cellPx}, tone);
+    }
+
+    // The Golden Dragon named where it stands on the whole map, so the fight is found at a glance
+    // (the user, 2026-10-13: "when dragon fight is happening show on map raid"): its name in its
+    // gold under its mark, unless the pointer's hint names it already.
+    if (full_) {
+        for (size_t i = 0; i < now_.marks.size(); ++i) {
+            const Mark& mark = now_.marks[i];
+            if (mark.glyph != Glyph::Dragon || int(i) == now_.hovered) continue;
+            const float size = 14.0f * u;
+            const std::string name = "Golden Dragon";
+            const float wide = controls::labelWidth(size, name);
+            controls::label(canvas_, std::round(float(mark.x) / 16.0f - wide * 0.5f),
+                            std::round(float(mark.y) / 16.0f + cellPx * 0.5f + size * 0.9f), size,
+                            kDragonGold, name);
+        }
     }
 
     // Where he stands, MU's own "(130, 127)" (CNewUIHeroPositionInfo), under the disc, on the

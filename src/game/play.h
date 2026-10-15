@@ -633,6 +633,33 @@ public:
     uint32_t guildOfPlayer(uint32_t id) const { return link_ ? link_->guildOfPlayer(id) : 0; }
     const net::GuildMark* playerGuild(uint32_t id) const { return guildMark(guildOfPlayer(id)); }
     bool takeGuildCall(net::GuildCall& out) { return link_ && link_->takeGuildCall(out); }
+    // **The Golden Dragon, landed** (the user, 2026-10-13: "when dragon fight is happening show
+    // on map raid"): the map and copy it stands on and the tile it came down on, for the big map
+    // and the travel list. His own map's is the mirror's, the truth there; another map's is the
+    // server's word (net::Invasion), as a client steps only his own. False while none stands.
+    struct Landed {
+        uint32_t map = 0;
+        int copy = 1;
+        int column = 0, row = 0;
+        bool here = false;  // on the map he is on
+    };
+    bool dragonLanded(Landed* out) const {
+        if (!isOpen()) return false;
+        const sim::Realm& realm = realm_;
+        const uint32_t map = realm.tables()->map;
+        if (const sim::Body* dragon = realm.invader();
+            dragon != nullptr && dragon->alive() && realm.invasionPhase() == sim::InvasionPhase::Standing) {
+            *out = {map, mapCopy(), int(dragon->homeColumn), int(dragon->homeRow), true};
+            return true;
+        }
+        if (!link_) return false;
+        const net::Invasion& far = link_->invasion();
+        if (far.phase != sim::InvasionPhase::Standing) return false;
+        // On his own map and copy the mirror is the truth: not landed yet, or gone, this tick.
+        if (far.map == map && int(far.copy) == mapCopy()) return false;
+        *out = {far.map, int(far.copy), int(far.column), int(far.row), false};
+        return true;
+    }
     // The Guild Master was spoken to on a server (Shout::Greet): the founding window opens once.
     bool takeGuildMaster() {
         const bool was = guildMasterAsked_;

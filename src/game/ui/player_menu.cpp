@@ -36,7 +36,7 @@ void PlayerMenu::show(Play& play, const std::string& name, float x, float y, flo
         rows_.push_back({"Make leader"});
         rows_.push_back({"Kick", true, true});
     }
-    if (!member && (!inParty || leading)) rows_.push_back({"Invite to party"});
+    if (!member && (!inParty || leading)) rows_.push_back({party.raid ? "Invite to raid" : "Invite to party"});
     // The guild's (docs/game/guild.md): a master invites one in no guild; one in none asks a master.
     {
         const net::GuildState& guild = play.guild();
@@ -95,7 +95,7 @@ bool PlayerMenu::update(Play& play, const Pointer& pointer) {
             if (row == "Whisper") whisper_ = name_;
             else if (row == "Make leader") play.askParty({net::PartyWhat::Promote, name_});
             else if (row == "Kick") play.askParty({net::PartyWhat::Kick, name_});
-            else if (row == "Invite to party") play.askParty({net::PartyWhat::Invite, name_});
+            else if (row == "Invite to party" || row == "Invite to raid") play.askParty({net::PartyWhat::Invite, name_});
             else if (row == "Trade") play.dealAsk(play.playerNamed(name_));
             else if (row == "Invite to guild" || row == "Ask to join guild") {
                 net::GuildAsk asked;

@@ -11,6 +11,7 @@
 #include "core/log.h"
 #include "game/play.h"
 #include "game/ui/controls.h"
+#include "game/ui/describe.h"
 #include "game/ui/panel.h"
 #include "game/ui/style.h"
 #include "game/ui/tip.h"
@@ -27,7 +28,7 @@ using gfx::Box;
 // The proposal's measures, in tip::unit() at 1080 lines.
 constexpr float kLeft = 24.0f;    // the column's left edge; it stands in the screen's middle
 constexpr float kTop = 24.0f;     // and never higher than this
-constexpr float kWide = 252.0f;   // a button
+constexpr float kWide = 272.0f;   // a button: Lost Tower's seven floors and its price fit
 constexpr float kTall = 56.0f;
 constexpr float kGap = 6.0f;      // between buttons
 constexpr float kRuleGap = 7.0f;  // either side of the rule over the maps he cannot use
@@ -39,8 +40,8 @@ constexpr float kNameSize = 16.0f;
 constexpr float kLevelSize = 13.0f;
 constexpr float kChipSize = 11.5f;
 constexpr float kScrim = 420.0f;  // how far in from the left edge the dark reaches
-constexpr float kPriceGap = 12.0f;  // from a button's right edge to its trip's price
-constexpr float kPriceSize = 16.0f;
+constexpr float kPriceSize = 13.0f;  // the trip's price, at the right of the second line
+constexpr float kCoinTall = 15.0f;   // MU's Zen coin before it
 
 // **Gold for the map he is on**, on the user's word (2026-09-30), though style.h keeps gold for
 // loot: the quest marker's own old gold (game/ui/beacon.cpp), so it reads as the giver's.
@@ -68,6 +69,10 @@ constexpr Event kEvents[] = {
     {"Blood Castle", 2, 0, 0},
     {"Devil Square", 3, -1, 0}};
 constexpr int kSoonSeconds = 1800;
+// A card's event while the Golden Dragon stands on its map, beside 1 soon and 2 on (Drawn::events).
+constexpr uint8_t kDragonLanded = 3;
+// Its gold: the minimap's dragon mark's (game/ui/minimap.cpp kDragonGold).
+constexpr uint32_t kDragonGold = gfx::rgba(1.00f, 0.84f, 0.30f);
 
 // A small dot, drawn as a fan: the canvas has no circle.
 void dot(gfx::Canvas& canvas, float cx, float cy, float r, uint32_t ink) {
@@ -187,8 +192,10 @@ bool Travel::Drawn::operator==(const Drawn& o) const {
     return pulse == o.pulse;
 }
 
-void Travel::open(const gfx::Interface& interface, const std::string& assetDir) {
+void Travel::open(const gfx::Interface& interface, const std::string& assetDir,
+                  panel::Arts* arts) {
     interface.adopt(canvas_);
+    arts_ = arts;
     places_.clear();
     for (int i = 0; i < sim::kTravels; ++i) {
         const sim::TravelRow& row = sim::travelAt(i);
@@ -289,9 +296,20 @@ int Travel::update(const Play& play, const Pointer& pointer, int width, int heig
             }
         }
     }
+    // The Golden Dragon landed (Play::dragonLanded: his own map's off the mirror, another's from
+    // the server, net::Invasion): its map's card says so in place of anything else there, a
+    // breathing dot in the dragon's gold and its name (the user, 2026-10-13: "when dragon fight is
+    // happening show on map raid"). A press takes him to the map's town, as ever.
+    if (Play::Landed landed; play.dragonLanded(&landed)) {
+        for (size_t p = 0; p < places_.size() && p < size_t(kPlaces); ++p) {
+            if (places_[p].map != int32_t(landed.map)) continue;
+            now.events[p] = kDragonLanded;
+            now.eventSeconds[p] = 0;
+        }
+    }
     // An open gate's dot breathes: the card is drawn again a breath's 36th at a time while one is.
     for (int p = 0; p < kPlaces; ++p) {
-        if (now.events[p] != 2) continue;
+        if (now.events[p] < 2) continue;
         const double t = std::chrono::duration<double>(
                               std::chrono::steady_clock::now().time_since_epoch()).count();
         now.pulse = int(std::fmod(t, double(style::kLiveSeconds)) / style::kLiveSeconds * 36.0);
@@ -467,9 +485,26 @@ void Travel::rebuild(const Drawn& now) {
             continue;
         }
         if (over) b.y -= line;
-        // The trip's price, beside the button on the dark: the floor under the pointer's, else
+        tip::shadowUnder(canvas_, b, u * (over ? 0.7f : 0.45f), r);
+        const uint32_t rim = here ? kGoldDk : over ? style::kIronHi : style::kIronLo;
+        tip::panel(canvas_, b, r, rim, rim);
+        const Box in = b.grown(-line);
+        if (over) tip::panel(canvas_, in, r - line, style::kAsh4, style::kAsh2);
+        else tip::panel(canvas_, in, r - line, style::kAsh3, style::kAsh1);
+        if (here) {
+            // The gold: a wash from the left, a stripe down the edge.
+            canvas_.shade({in.x, in.y, in.w * 0.75f, in.h}, alpha(kGold, 0.18f), alpha(kGold, 0.0f),
+                          alpha(kGold, 0.0f), alpha(kGold, 0.18f));
+            canvas_.rect({b.x, b.y + 8.0f * u, std::round(2.0f * u), b.h - 16.0f * u}, kGold);
+        }
+
+        // The trip's price, inside the button at the right of its second line: MU's Zen coin
+        // (the bag's) and the figure in the purse's gold (the user, 2026-10-13: "map travel cost
+        // is not insdie map label with zen icon and color"). The floor under the pointer's, else
         // the row a press on the button takes, else the first he is short of. Red when his purse
-        // is short of it; none where a press goes nowhere (his own safe zone).
+        // is short of it; none where a press goes nowhere (his own safe zone). What else the line
+        // says keeps left of priceLeft.
+        float priceLeft = b.right() - kPadX * u;
         {
             int priced = -1;
             if (hit.place == now.hoverPlace && now.hoverFloor >= 0) priced = hit.chipRow[now.hoverFloor];
@@ -482,27 +517,24 @@ void Travel::rebuild(const Drawn& now) {
             const uint8_t why = priced >= 0 ? now.refusals[priced] : uint8_t(sim::TravelRefusal::Unknown);
             if (why == uint8_t(sim::TravelRefusal::None) || why == uint8_t(sim::TravelRefusal::Zen)) {
                 const bool short_ = why == uint8_t(sim::TravelRefusal::Zen);
-                const gfx::Face* label = controls::labelFace();
-                const float mid = b.midY();
-                float px = b.right() + kPriceGap * u;
-                px += inked(canvas_, label, controls::labelTexture(), px, mid, kPriceSize * u, '0',
-                            short_ ? style::kBloodHi : style::kBoneHi,
-                            panel::commas(sim::travelAt(priced).zen)) + 4.0f * u;
-                inked(canvas_, label, controls::labelTexture(), px, mid, 12.5f * u, 'Z',
-                      short_ ? style::kBlood : style::kAshInk, "Zen");
+                const long long zen = sim::travelAt(priced).zen;
+                const std::string figure = panel::commas(zen);
+                const float size = kPriceSize * u;
+                const float right = b.right() - kPadX * u;
+                const float top = b.y + kLine2 * u;
+                controls::ranged(canvas_, right, controls::middle(top, kLineTall * u, size), size,
+                                 short_ ? style::kBloodHi : moneyColour(zen), figure);
+                priceLeft = right - controls::labelWidth(size, figure);
+                const gfx::Art* coin = arts_ != nullptr ? &arts_->get("bag_zen") : nullptr;
+                if (coin != nullptr && coin->valid()) {
+                    const float side = std::round(kCoinTall * u);
+                    const float cw = std::round(side * coin->width / std::max(1.0f, coin->height));
+                    priceLeft -= 4.0f * u + cw;
+                    canvas_.image(*coin, {std::round(priceLeft),
+                                          std::round(top + (kLineTall * u - side) * 0.5f), cw, side});
+                }
+                priceLeft -= 10.0f * u;
             }
-        }
-        tip::shadowUnder(canvas_, b, u * (over ? 0.7f : 0.45f), r);
-        const uint32_t rim = here ? kGoldDk : over ? style::kIronHi : style::kIronLo;
-        tip::panel(canvas_, b, r, rim, rim);
-        const Box in = b.grown(-line);
-        if (over) tip::panel(canvas_, in, r - line, style::kAsh4, style::kAsh2);
-        else tip::panel(canvas_, in, r - line, style::kAsh3, style::kAsh1);
-        if (here) {
-            // The gold: a wash from the left, a stripe down the edge.
-            canvas_.shade({in.x, in.y, in.w * 0.75f, in.h}, alpha(kGold, 0.18f), alpha(kGold, 0.0f),
-                          alpha(kGold, 0.0f), alpha(kGold, 0.18f));
-            canvas_.rect({b.x, b.y + 8.0f * u, std::round(2.0f * u), b.h - 16.0f * u}, kGold);
         }
 
         // First line: the name, and the monsters' levels ranged right.
@@ -520,18 +552,25 @@ void Travel::rebuild(const Drawn& now) {
             for (const Event& one : kEvents) {
                 if (one.map == place.map) event = &one;
             }
-            const bool on = now.events[p] == 2;
+            const bool dragon = now.events[p] == kDragonLanded;
+            if (dragon) event = nullptr;
+            const bool on = now.events[p] == 2 || dragon;
             const int s = now.eventSeconds[p];
             char when[16];
             std::snprintf(when, sizeof(when), "%d:%02d", s / 60, s % 60);
-            const std::string name = event ? event->name : "";
+            const std::string name = dragon ? "Golden Dragon" : event ? event->name : "";
             const char* const state = "gate open";
             const float nameSize = 12.5f * u, stateSize = 13.0f * u, clockSize = 13.0f * u;
             const float gap = 7.0f * u, r = 3.2f * u;
             const gfx::Face* label = controls::labelFace();
             const gfx::Face* word = controls::wordFace();
-            float wide = inkedWidth(label, nameSize, name) + gap + inkedWidth(label, clockSize, when);
-            if (on) wide += r * 2.0f + gap + inkedWidth(word, stateSize, state) + gap;
+            // The dragon's is its dot and name alone: no gate, and no clock it keeps to.
+            const uint32_t live = dragon ? kDragonGold : style::kLive;
+            const uint32_t liveHi = dragon ? gfx::rgba(1.00f, 0.93f, 0.66f) : style::kLiveHi;
+            float wide = inkedWidth(label, nameSize, name);
+            if (!dragon) wide += gap + inkedWidth(label, clockSize, when);
+            if (on) wide += r * 2.0f + gap;
+            if (on && !dragon) wide += inkedWidth(word, stateSize, state) + gap;
             const float mid = b.y + (kLine1 + kLineTall * 0.5f) * u;
             float x = b.right() - kPadX * u - wide;
             if (on) {
@@ -540,19 +579,19 @@ void Travel::rebuild(const Drawn& now) {
                 const float wave = 1.0f - (1.0f - t) * (1.0f - t) * (1.0f - t);
                 const float cx = x + r;
                 hoop(canvas_, cx, mid, r * 2.0f * (0.6f + 1.2f * wave), std::max(1.0f, u),
-                     alpha(style::kLive, 0.75f * (1.0f - wave)));
-                dot(canvas_, cx, mid, r * 2.2f, alpha(style::kLive, 0.10f + 0.12f * breath));
-                dot(canvas_, cx, mid, r * 1.5f, alpha(style::kLive, 0.18f + 0.18f * breath));
-                dot(canvas_, cx, mid, r, mixed(style::kLive, style::kLiveHi, breath));
+                     alpha(live, 0.75f * (1.0f - wave)));
+                dot(canvas_, cx, mid, r * 2.2f, alpha(live, 0.10f + 0.12f * breath));
+                dot(canvas_, cx, mid, r * 1.5f, alpha(live, 0.18f + 0.18f * breath));
+                dot(canvas_, cx, mid, r, mixed(live, liveHi, breath));
                 x += r * 2.0f + gap;
             }
             x += inked(canvas_, label, controls::labelTexture(), x, mid, nameSize, 'H',
-                       style::kBone2, name) + gap;
-            if (on) {
+                       dragon ? kDragonGold : style::kBone2, name) + gap;
+            if (on && !dragon) {
                 x += inked(canvas_, word, controls::wordTexture(), x, mid, stateSize, 'x', kGoldHi,
                            state) + gap;
             }
-            inked(canvas_, label, controls::labelTexture(), x, mid, clockSize, '0', kGoldHi, when);
+            if (!dragon) inked(canvas_, label, controls::labelTexture(), x, mid, clockSize, '0', kGoldHi, when);
         } else if (!lv.empty()) {
             controls::ranged(canvas_, b.right() - kPadX * u,
                              controls::middle(b.y + kLine1 * u, kLineTall * u, kLevelSize * u),
@@ -612,19 +651,20 @@ void Travel::rebuild(const Drawn& now) {
                                                          : std::to_string(now.shares[q]) + "%";
                 if (done) {
                     const int m = now.restMinutes[q];
-                    right = "Done";
-                    if (m >= 60) right += " \xC2\xB7 " + std::to_string(m / 60) + "h " + std::to_string(m % 60) + "m";
-                    else if (m > 0) right += " \xC2\xB7 " + std::to_string(m) + "m";
+                    // The tick says done; the price beside it leaves room for the time alone.
+                    right = m >= 60  ? std::to_string(m / 60) + "h " + std::to_string(m % 60) + "m"
+                            : m > 0 ? std::to_string(m) + "m"
+                                    : "Done";
                 }
                 const float rightW = right.empty() ? 0.0f : controls::labelWidth(size, right);
                 if (!right.empty()) {
-                    controls::ranged(canvas_, b.right() - kPadX * u, base, size,
+                    controls::ranged(canvas_, priceLeft, base, size,
                                      ready ? hi : done ? kAgainHi : style::kAshInk, right);
                 }
                 // The title, trimmed to the room left between the mark and the figure.
                 const float tx = x0 + 12.0f * u;
                 std::string title = sim::questAt(q).title;
-                const float room = b.right() - kPadX * u - rightW - (right.empty() ? 0.0f : 8.0f * u) - tx;
+                const float room = priceLeft - rightW - (right.empty() ? 0.0f : 8.0f * u) - tx;
                 while (title.size() > 1 && controls::labelWidth(size, title) > room) {
                     title.pop_back();
                     while (!title.empty() && (uint8_t(title.back()) & 0xC0) == 0x80) title.pop_back();

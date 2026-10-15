@@ -6,8 +6,9 @@
 // buttons all one height; each a thin iron rim, the name and the monster levels on its first
 // line and on its second the marks for a quest giver and merchants, or a dungeon's floors. The
 // map he is on is gold. A map he cannot use -- not opened, or out of his reach -- is its name
-// alone, dimmed, under a rule. Nothing is hidden behind a hover. Beside each button, on the dark,
-// what the trip costs in Zen; red, and the button stays above the rule, when he is short of it.
+// alone, dimmed, under a rule. Nothing is hidden behind a hover. Inside each button, at the right
+// of its second line, MU's Zen coin and what the trip costs, in the purse's gold; red, and the
+// button stays above the rule, when he is short of it (the user, 2026-10-13).
 //
 // Ours: 0.75 has no Move window at all, only the `/move` command.
 #pragma once
@@ -21,6 +22,9 @@
 #include "sim/travel.h"
 
 namespace mu::game {
+namespace panel {
+class Arts;
+}
 
 class Play;
 
@@ -28,7 +32,8 @@ class Travel {
 public:
     // Reads what each map's row says -- its monsters' levels, whether a quest giver and a
     // merchant stand in it -- from each world's cooked rules, once.
-    void open(const gfx::Interface& interface, const std::string& assetDir);
+    // The coin beside each price is the bag's (panel::Arts "bag_zen").
+    void open(const gfx::Interface& interface, const std::string& assetDir, panel::Arts* arts);
     void close();
 
     bool up() const { return up_; }
@@ -60,8 +65,8 @@ private:
         int width = 0, height = 0;
         int32_t here = -1;
         int floor = -1;  // the row of the floor he stands on, on a map of several
-        // Each place's event, as shown: 0 none, 1 soon, 2 on; and its seconds, to the start or
-        // to the end.
+        // Each place's event, as shown: 0 none, 1 soon, 2 on, 3 the Golden Dragon landed there
+        // (Play::dragonLanded); and its seconds, to the start or to the end.
         uint8_t events[kPlaces] = {};
         int eventSeconds[kPlaces] = {};
         // While a gate is open, where its dot is in its breath, in 36ths (style::kLiveSeconds).
@@ -82,6 +87,7 @@ private:
     void rebuild(const Drawn& now);
 
     gfx::Canvas canvas_;
+    panel::Arts* arts_ = nullptr;
     bool up_ = false;
     bool built_ = false;
     Drawn drawn_;
