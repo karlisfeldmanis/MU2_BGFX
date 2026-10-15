@@ -267,7 +267,7 @@ bool Realm::treasureGround(int column, int row) const {
     if (ground != Treasure::LastFloor) return false;
     int last = -1;
     for (int i = 0; i < kTravels; ++i) {
-        if (travelAt(i).map == tables_->map) last = i;
+        if (uint32_t(travelAt(i).map) == tables_->map) last = i;  // as == converted it anyway
     }
     return last >= 0 && floorAt(column, row) == last;
 }

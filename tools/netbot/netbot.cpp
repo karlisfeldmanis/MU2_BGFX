@@ -856,7 +856,6 @@ private:
     // A decision on the scratch, laid from the mirror as it stands, once the last one's answers
     // are in; what it asked, to the server.
     void think() {
-        const int64_t now = brain()->clockNow();
         if (pending_ != 0 && std::chrono::steady_clock::now() - pendingSince_ < kAnswerWait) return;
         // Every one kept until its answer, however late: cleared at the wait's end, an answer 45
         // s late (a net bot behind its server) found no trip of his and he stayed, the server

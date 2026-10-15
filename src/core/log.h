@@ -23,7 +23,12 @@ void logTap(LogTap fn, void* user);
 
 void logv(const char* fmt, va_list args);
 
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__MINGW32__)
+// mingw's `printf` archetype is msvcrt's, which has no %zu or %lld, and every log line with a
+// size_t warned (390 of the Windows build's 417 warnings, 2026-10-15). g++ builds with
+// __USE_MINGW_ANSI_STDIO, so the vsnprintf behind logv is mingw's C99 one: checked as that.
+#define MU_PRINTF(a, b) __attribute__((format(__MINGW_PRINTF_FORMAT, a, b)))
+#elif defined(__GNUC__) || defined(__clang__)
 #define MU_PRINTF(a, b) __attribute__((format(printf, a, b)))
 #else
 #define MU_PRINTF(a, b)

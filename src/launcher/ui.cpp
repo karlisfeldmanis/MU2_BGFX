@@ -102,7 +102,7 @@ constexpr Look kOff{{0.180f, 0.145f, 0.118f}, {0.102f, 0.078f, 0.067f}, {0.094f,
                     {0.051f, 0.035f, 0.031f}, {0.361f, 0.322f, 0.286f}, 0.0f, 0.0f, 0.0f};
 constexpr float kBlood[3] = {0.761f, 0.212f, 0.169f};
 
-constexpr uint32_t kBoneHi = 0xF3E8D4, kBone = 0xD9CFBD, kLabel = 0xC9BFAE, kQuiet = 0x8F8575, kDanger = 0xE07A6C;
+constexpr uint32_t kBoneHi = 0xF3E8D4, kBone = 0xD9CFBD, kLabel = 0xC9BFAE, kQuiet = 0x8F8575;
 
 // ---- the window's state -------------------------------------------------------------------------
 

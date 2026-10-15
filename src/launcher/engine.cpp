@@ -133,7 +133,10 @@ int ramMb() {
 std::string osVersion() {
     using RtlGetVersion = LONG(WINAPI*)(OSVERSIONINFOW*);
     const HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
-    const auto rtl = ntdll ? reinterpret_cast<RtlGetVersion>(GetProcAddress(ntdll, "RtlGetVersion")) : nullptr;
+    // Through void(*)(), GCC's own way to say a FARPROC is cast on purpose.
+    const auto rtl = ntdll ? reinterpret_cast<RtlGetVersion>(reinterpret_cast<void (*)()>(
+                                 GetProcAddress(ntdll, "RtlGetVersion")))
+                           : nullptr;
     OSVERSIONINFOW version{};
     version.dwOSVersionInfoSize = sizeof version;
     if (rtl == nullptr || rtl(&version) != 0) return {};

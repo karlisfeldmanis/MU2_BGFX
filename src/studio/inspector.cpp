@@ -8,7 +8,6 @@
 namespace mu::studio {
 namespace {
 
-const ImVec4 kGold(0.86f, 0.72f, 0.42f, 1.0f);
 const ImVec4 kGreen(0.52f, 0.80f, 0.52f, 1.0f);
 const ImVec4 kRed(0.92f, 0.42f, 0.38f, 1.0f);
 const ImVec4 kDim(0.58f, 0.58f, 0.60f, 1.0f);

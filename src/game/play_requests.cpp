@@ -840,9 +840,15 @@ void Play::answered(const sim::Happening& said) {
         case Kind::GoBack:
         // Set and nothing to show; the realm's drinks are heard off its Drank (Play::step).
         case Kind::AutoDrink:
-        // The server's, never a client's: the world's door.
+        // The server's, never a client's: the world's door, the party's count and the Broker's
+        // moves (sim/command.h), none of them a ticket of his.
         case Kind::Join:
         case Kind::Leave:
+        case Kind::PartySet:
+        case Kind::BrokerTake:
+        case Kind::BrokerBuy:
+        case Kind::BrokerGive:
+        case Kind::BrokerZen:
         case Kind::None: break;
     }
     answers_.push_back({asked.ticket, kind, said.b});
