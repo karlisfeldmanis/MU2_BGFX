@@ -35,6 +35,14 @@ HOST = "hetzner"                 # ~/.ssh/config: root@37.27.158.226
 SITE = "https://mu-classic.com"
 REMOTE = "/srv/mu2-web/game"
 KEEP = 2                         # releases whose files stay on the box
+# Where the game's files are kept instead of the box (the user, 2026-10-15: "i dont want to hold
+# them on box server"): an FTP account on aurorarave.lv whose home is its httpdocs/muclassic, so
+# a file put at /game/<platform>/files/<sha256> is served at FILES_URL/game/<platform>/files/<sha256>.
+# FTPS to the name its certificate carries. The login is the user's, in FILES_NETRC (0600), never
+# here. Without it, the files go to the box as before.
+FILES_HOST = "webhost.dualnode.com"
+FILES_URL = "https://aurorarave.lv/muclassic"
+FILES_NETRC = os.path.expanduser("~/.config/mu2/ftp.netrc")
 LEFT_OUT = {"BUILT_FROM"}        # dist's own note; logs/ is the player's
 
 
@@ -61,6 +69,54 @@ def ssh(command, say=None):
     if done.returncode != 0:
         raise RuntimeError(f"ssh {HOST}: {command[:60]}...: {done.stderr.strip()}")
     return done.stdout
+
+
+def files_elsewhere():
+    """Whether the files go to FILES_HOST: its login is on this machine."""
+    try:
+        with open(FILES_NETRC) as f:
+            return f"machine {FILES_HOST}" in f.read()
+    except OSError:
+        return False
+
+
+def ftp(path, *extra, check=True, timeout=None):
+    """curl over FTPS to FILES_HOST, the login from FILES_NETRC."""
+    cmd = ["curl", "-s", "-S", "--netrc-file", FILES_NETRC, "--ssl-reqd", "--ftp-create-dirs",
+           f"ftp://{FILES_HOST}/{path}", *extra]
+    return subprocess.run(cmd, capture_output=True, text=True, check=check, timeout=timeout)
+
+
+def ftp_sizes(folder):
+    """{name: size} of a folder on FILES_HOST, from its LIST; {} when there is none."""
+    done = ftp(folder.rstrip("/") + "/", check=False, timeout=120)
+    sizes = {}
+    for line in done.stdout.splitlines():
+        parts = line.split()
+        if len(parts) >= 9 and parts[4].isdigit():
+            sizes[parts[-1]] = int(parts[4])
+    return sizes
+
+
+def ftp_rename(folder, old, new):
+    """Within `folder`: curl has gone into it before a quote runs, so the names are bare."""
+    moved = ftp(f"{folder}/", "-Q", f"-RNFR {old}", "-Q", f"-RNTO {new}", "-o", os.devnull,
+                check=False, timeout=120)
+    return moved.returncode == 0
+
+
+def ftp_put(local, folder, name, say, have_part=False):
+    """One file in as <name>.part, then renamed: a name on the host is only ever a whole file. A
+    .part already there whole (an earlier run that died before its rename) is only renamed."""
+    if have_part and ftp_rename(folder, f"{name}.part", name):
+        return True
+    for attempt in range(3):
+        sent = ftp(f"{folder}/{name}.part", "-T", local, check=False, timeout=3600)
+        if sent.returncode == 0:
+            if ftp_rename(folder, f"{name}.part", name):
+                return True
+        say(f"  {name[:12]}: try {attempt + 1} failed: {(sent.stderr or '').strip()[:120]}")
+    return False
 
 
 def release(target, say, dry=False):
@@ -107,22 +163,32 @@ def release(target, say, dry=False):
 
     root = f"{REMOTE}/{target}"
     ssh(f"mkdir -p {root}/files {root}/manifests")
-    # What the box has, by name AND size: a name alone is no proof -- the first macos upload died
+    elsewhere = files_elsewhere()
+    folder = f"game/{target}/files"
+    # What the host has, by name AND size: a name alone is no proof -- the first macos upload died
     # mid-rsync and left a truncated file that the next run took for already sent.
-    listed = ssh(f"cd {root}/files && stat -c '%n %s' * 2>/dev/null || true")
-    sizes = {}
-    for line in listed.splitlines():
-        parts = line.split()
-        if len(parts) == 2 and parts[1].isdigit():
-            sizes[parts[0]] = int(parts[1])
+    if elsewhere:
+        sizes = ftp_sizes(folder)
+        host = FILES_URL
+    else:
+        listed = ssh(f"cd {root}/files && stat -c '%n %s' * 2>/dev/null || true")
+        sizes = {}
+        for line in listed.splitlines():
+            parts = line.split()
+            if len(parts) == 2 and parts[1].isdigit():
+                sizes[parts[0]] = int(parts[1])
+        host = "the box"
     missing = [f for f in files if sizes.get(f["sha256"]) != f["size"]]
     sending = sum(f["size"] for f in missing)
-    say(f"the box has {len(files) - len(missing)} of them; {len(missing)} to send, {sending / 1e9:.2f} GB")
+    say(f"{host} has {len(files) - len(missing)} of them; {len(missing)} to send, {sending / 1e9:.2f} GB")
 
     manifest = {
         "platform": target, "version": commit, "built": built, "protocol": protocol, "exe": exe_path,
         "bytes": total, "files": [{k: f[k] for k in ("path", "size", "sha256")} for f in files],
     }
+    if elsewhere:
+        # The launcher fetches each file from here, falling back to the box (engine.cpp update).
+        manifest["files_url"] = f"{FILES_URL}/{folder}/"
     if dry:
         say("dry run: nothing sent")
         return True, {"commit": commit, "protocol": protocol, "files": len(files), "send": len(missing),
@@ -131,6 +197,9 @@ def release(target, say, dry=False):
     stage = os.path.join(OUT, "release", target)
     shutil.rmtree(stage, ignore_errors=True)
     os.makedirs(os.path.join(stage, "files"))
+    if elsewhere:
+        return release_elsewhere(target, say, commit, protocol, files, missing, sending, manifest,
+                                 stage, root, folder, total, started)
     for f in missing:
         staged = os.path.join(stage, "files", f["sha256"])
         try:
@@ -198,6 +267,74 @@ def release(target, say, dry=False):
         f"in {time.time() - started:.0f} s")
     return True, {"commit": commit, "protocol": protocol, "files": len(files), "sent": len(missing),
                   "sent_bytes": sending, "manifest": f"{SITE}/game/{target}/manifest.json"}
+
+
+def release_elsewhere(target, say, commit, protocol, files, missing, sending, manifest, stage, root,
+                      folder, total, started):
+    """The files to FILES_HOST over FTPS, three at a time, each whole before it has its name; every
+    one checked there by size, the exe read over HTTPS; then the manifest on the box, last, in one
+    rename; then what no kept release names is pruned there. The box's own copies are left alone:
+    they are the launcher's fallback until they are removed on purpose."""
+    from concurrent.futures import ThreadPoolExecutor
+    if missing:
+        say(f"sending {len(missing)} files to {FILES_HOST} (FTPS, 3 at a time)")
+        done = [0]
+        parts = ftp_sizes(folder)
+        def put(f):
+            ok = ftp_put(f["local"], folder, f["sha256"], say,
+                         have_part=parts.get(f["sha256"] + ".part") == f["size"])
+            done[0] += 1
+            if done[0] % 5 == 0 or done[0] == len(missing):
+                say(f"  {done[0]} of {len(missing)}")
+            return ok
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            failed = [f for f, ok in zip(missing, pool.map(put, missing)) if not ok]
+        if failed:
+            raise RuntimeError(f"{len(failed)} files did not reach {FILES_HOST}, e.g. {failed[0]['path']}")
+    sizes = ftp_sizes(folder)
+    short = [f for f in files if sizes.get(f["sha256"]) != f["size"]]
+    if short:
+        raise RuntimeError(f"{len(short)} files on {FILES_HOST} are missing or truncated, e.g. {short[0]['path']}")
+    exe = next(f for f in files if f["path"] == manifest["exe"])
+    head = subprocess.run(["curl", "-sfI", f"{manifest['files_url']}{exe['sha256']}"], capture_output=True, text=True)
+    length = re.search(r"(?im)^content-length:\s*(\d+)", head.stdout)
+    if not length or int(length.group(1)) != exe["size"]:
+        raise RuntimeError(f"{manifest['files_url']}{exe['sha256']} is not {manifest['exe']}'s {exe['size']} bytes")
+
+    named = os.path.join(stage, f"{commit}.json")
+    with open(named, "w") as out:
+        json.dump(manifest, out, indent=1)
+    subprocess.run(["rsync", "-a", named, f"{HOST}:{root}/manifests/"], check=True)
+    ssh(f"chmod -R a+rX {root}")
+    ssh(f"cp {root}/manifests/{commit}.json {root}/manifest.json.new && mv {root}/manifest.json.new {root}/manifest.json")
+    say(f"manifest.json is {commit}, its files at {manifest['files_url']}")
+
+    # What the newest KEEP manifests name stays there; anything else goes.
+    keep = set(json.loads(ssh(
+        "python3 - <<'EOF'\n"
+        "import json, os\n"
+        f"root = '{root}'\n"
+        "ms = sorted((os.path.join(root, 'manifests', n) for n in os.listdir(os.path.join(root, 'manifests'))),"
+        " key=os.path.getmtime, reverse=True)\n"
+        "keep = set()\n"
+        f"for m in ms[:{KEEP}]:\n"
+        "    keep |= {f['sha256'] for f in json.load(open(m))['files']}\n"
+        "print(json.dumps(sorted(keep)))\n"
+        "EOF")))
+    gone = [n for n in ftp_sizes(folder) if n not in keep]
+    for n in gone:
+        ftp(f"{folder}/", "-Q", f"-DELE {n}", "-o", os.devnull, check=False, timeout=120)
+    say(f"{len(gone)} files of older releases removed from {FILES_HOST}; the newest {KEEP} kept")
+
+    got = subprocess.run(["curl", "-sf", f"{SITE}/game/{target}/manifest.json"], capture_output=True, text=True)
+    if got.returncode != 0 or json.loads(got.stdout).get("version") != commit:
+        raise RuntimeError(f"{SITE}/game/{target}/manifest.json does not say {commit}")
+    shutil.rmtree(stage, ignore_errors=True)
+    say(f"{SITE}/game/{target}/manifest.json: {commit}, protocol {protocol}, {total / 1e9:.2f} GB at "
+        f"{FILES_URL}, in {time.time() - started:.0f} s")
+    return True, {"commit": commit, "protocol": protocol, "files": len(files), "sent": len(missing),
+                  "sent_bytes": sending, "manifest": f"{SITE}/game/{target}/manifest.json",
+                  "files_url": manifest["files_url"]}
 
 
 # ---- the launcher ---------------------------------------------------------------------------------

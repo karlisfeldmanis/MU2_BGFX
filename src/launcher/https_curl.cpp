@@ -59,6 +59,10 @@ Reply request(const std::string& method, const std::string& url, const std::stri
     curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, kAgent);
+    // A moved file is followed, as WinHTTP does on Windows, and only over HTTPS.
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 5L);
+    curl_easy_setopt(curl, CURLOPT_REDIR_PROTOCOLS_STR, "https");
     const CURLcode done = curl_easy_perform(curl);
     if (done == CURLE_OK) {
         long status = 0;
@@ -93,6 +97,10 @@ bool download(const std::string& url, const std::filesystem::path& to, bool resu
     curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 1L);
     curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 60L);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, kAgent);
+    // A moved file is followed, as WinHTTP does on Windows, and only over HTTPS.
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 5L);
+    curl_easy_setopt(curl, CURLOPT_REDIR_PROTOCOLS_STR, "https");
     if (have > 0) curl_easy_setopt(curl, CURLOPT_RESUME_FROM_LARGE, curl_off_t(have));
     const CURLcode done = curl_easy_perform(curl);
     long status = 0;

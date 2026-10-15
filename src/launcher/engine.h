@@ -100,6 +100,9 @@ struct Manifest {
     std::string exe;
     uint64_t bytes = 0;
     std::vector<Entry> files;
+    // Where the files are kept when not on the box: "https://.../files/", each file at its
+    // sha256 under it (tools/mu/release.py). Empty: the site's own /game/<platform>/files/.
+    std::string filesUrl;
 };
 
 bool fetchManifest(const Place& place, Manifest& out, std::string& error);

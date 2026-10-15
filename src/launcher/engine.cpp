@@ -332,6 +332,10 @@ bool fetchManifest(const Place& place, Manifest& out, std::string& error) {
     out.protocol = int(said["protocol"].numberOr(0));
     out.exe = said["exe"].stringOr("MU2.exe");
     out.bytes = uint64_t(said["bytes"].numberOr(0));
+    // HTTPS only, and a folder: the hash is added to it.
+    out.filesUrl = said["files_url"].stringOr("");
+    if (out.filesUrl.rfind("https://", 0) != 0) out.filesUrl.clear();
+    if (!out.filesUrl.empty() && out.filesUrl.back() != '/') out.filesUrl += '/';
     out.files.clear();
     const core::Json& files = said["files"];
     for (size_t i = 0; i < files.size(); ++i) {
@@ -433,10 +437,15 @@ bool update(const Place& place, const fs::path& install, const Manifest& manifes
         std::error_code ec;
         fs::create_directories(at.parent_path(), ec);
         const uint64_t before = progress.done;
-        const std::string url = place.site + "/game/" + place.platform + "/files/" + e.sha256;
+        // From where the manifest keeps its files, twice; then once more from the box, which
+        // holds them until a release has moved off it. Every copy is checked by its hash.
+        const std::string box = place.site + "/game/" + place.platform + "/files/" + e.sha256;
+        const bool elsewhere = !manifest.filesUrl.empty();
+        const std::string primary = elsewhere ? manifest.filesUrl + e.sha256 : box;
         bool whole = false;
         // Twice at most: a part left by an earlier run that turns out wrong is fetched again clean.
-        for (int attempt = 0; attempt < 2 && !whole; ++attempt) {
+        for (int attempt = 0; attempt < (elsewhere ? 3 : 2) && !whole; ++attempt) {
+            const std::string& url = attempt < 2 ? primary : box;
             const uint64_t had = fs::exists(part, ec) ? fs::file_size(part, ec) : 0;
             progress.done = before + (attempt == 0 ? std::min(had, e.size) : 0);
             if (!download(url, part, attempt == 0 && had < e.size, [&](uint64_t n) { progress.done += n; }, stop, error)) {
