@@ -153,6 +153,14 @@ def strip_keeping(binary, made_from, platform, say, strip_to=None):
     say(f"stripped {before / 1e6:.1f} -> {after / 1e6:.1f} MB; the symbols kept in {kept}")
 
 
+def check_manifests(root, say):
+    """Each Windows manifest, parsed as strictly as Windows parses it. Wine runs an exe whose
+    manifest is not XML (a "--" in a comment); Windows refuses to start it, "side-by-side
+    configuration is incorrect" (the launcher, 2026-10-15)."""
+    for name in ("src/app/mu2.manifest", "src/launcher/launcher.manifest"):
+        run(["xmllint", "--noout", os.path.join(root, name)], say)
+
+
 def build_windows(cores, say):
     """MU2.exe, cross-compiled from the same snapshot by mingw (docs/plans/windows-client.md). Its
     shaders are SPIR-V, made by build-ship's own shaderc, the one this Mac can run."""
@@ -165,6 +173,7 @@ def build_windows(cores, say):
         run(["cmake", "-S", SNAPSHOT, "-B", WIN, "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release",
              "-DCMAKE_TOOLCHAIN_FILE=" + os.path.join(SNAPSHOT, "tools", "cmake", "mingw.cmake"),
              "-DMU2_HOST_SHADERC=" + shaderc], say)
+    check_manifests(SNAPSHOT, say)
     say("building MU2.exe")
     run(["cmake", "--build", WIN, "--target", "mu2", "--", f"-j{cores}"], say)
 
@@ -357,6 +366,7 @@ def dist_launcher(say):
     win = os.path.join(OUT, "build-launcher-win")
     exe = os.path.join(stage, "MU2Launcher.exe")
     if os.path.isdir(win):
+        check_manifests(ROOT, say)
         run(["cmake", "--build", win, "--target", "mu2_launcher"], say)
         run(["x86_64-w64-mingw32-strip", "-o", exe, os.path.join(win, "MU2Launcher.exe")], say)
         say(f"{exe}: {os.path.getsize(exe) / 1e6:.1f} MB, stripped")
