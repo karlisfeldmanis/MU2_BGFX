@@ -662,7 +662,7 @@ void Launcher::drawSignIn() {
     if (tickHot && released_) stay_ = !stay_;
     words(x + 26.0f, y + 21.0f, "Stay signed in", hex(kLabel), 15.0f);
     const float forgot = measure("Forgot password?", 15.0f);
-    if (link(x + w - forgot, y + 21.0f, "Forgot password?", kQuiet)) openUrl(place_.web + "/");
+    if (link(x + w - forgot, y + 21.0f, "Forgot password?", kQuiet)) openUrl(place_.web + "/account");
     y += 44.0f;
     if (button({x, y, w, 56.0f}, busy_ ? "Signing in..." : "Sign in", true, busy_) || (enter_ && !busy_)) signIn();
     y += 56.0f + 16.0f;
@@ -686,7 +686,7 @@ void Launcher::drawHome() {
         logOut();
         return;
     }
-    if (flat(right - logOutWide - 4.0f, top, "Edit account")) openUrl(place_.web + "/");
+    if (flat(right - logOutWide - 4.0f, top, "Edit account")) openUrl(place_.web + "/account");
 
     const float x = 40.0f;
     const float logoW = 160.0f, logoH = logoW * logo_.height / std::max(1.0f, logo_.width);
