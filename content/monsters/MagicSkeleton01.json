@@ -44,6 +44,10 @@
   "glow_from": "ZzzObject.cpp:1250-1254, the render switch, MODEL_MAGIC_SKELETON: RenderBody as usual, then RenderMesh(2, RENDER_TEXTURE, ..., BlendMesh 2, light 1.0) -- mesh 2, bsh02, drawn again with its own index as the BlendMesh, so added and unlit at full light. Here it is drawn as that glow alone.",
   "sounds_from": "ZzzOpenData.cpp:3793-3797: mMagicSkull loaded twice, SetMonsterSound(..., 186, -1, -1, -1, 187) -- offsets from SOUND_MONSTER_BULL1 = 210: 396 MAGICSKULL1 to walk, 397 MAGICSKULL2 (the same file) to die, no attack sound (DSPlaySound.h:337-338). Wired as magicskeleton_* in sounds.json.",
   "islands_from": "40 islands for 804 triangles. Island 0 (56, u 0.45-0.72) is the .obj's whole bons group, the skull -- bone; 12-39, two triangles each over the whole sheet, are bsh03's 28 wisp quads; the rest bsh01's robe and plate and bsh02's strip. All but the skull cloth. They arrived as skin, the monster profile's default.",
+  "plus": {
+    "right_hand": 11
+  },
+  "plus_from": "MU's Level 11 (ZzzCharacter.cpp:13403): the held weapon drawn at its plus, as the Balrog's Bill of Balrog at +9.",
   "islands": [
     {
       "island": 0,
@@ -926,10 +930,6 @@
       ]
     }
   ],
-  "plus": {
-    "right_hand": 11
-  },
-  "plus_from": "MU's Level 11 (ZzzCharacter.cpp:13403): the held weapon drawn at its plus, as the Balrog's Bill of Balrog at +9.",
   "combat": {
     "level": 51,
     "health": 3700,

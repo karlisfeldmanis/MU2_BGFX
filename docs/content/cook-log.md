@@ -11,7 +11,7 @@ with `pipeline/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Brass | set | 2026-09-21 17:25 | passed | gold again with plate_steel's grey pull off (desaturation 1.0, roughness 0.46, as Bronze); olive in the hollows as MU painted it; rebuilt after the bake flip fix |
 | Scale | set | 2026-09-21 17:36 | passed | teal-green steel, aged not wet at roughness 0.55; scales and the chest face read; helm's green face plate is MU's paint; lighter than the sheet because the lift puts steel at its f0; rebuilt after the flip fix |
 | Sphinx | set | 2026-09-21 17:47 | passed | aged gold over black as the recipe asks: gold stays gold at desaturation 0.88 (hue 37, sat ~0.3), not neon; nemes, collar and limb bands read as one set; rebuilt after the flip fix, which had it worst |
-| Sword01 | arm | 2026-09-21 18:22 | passed | steel 0.2: sky sheen and a highlight along the wave at noon, warm at dusk; bronze-ish guard is MU's paint; shown without its bearer |
+| Sword01 | arm | 2026-10-12 12:48 | awaiting |  |
 | Pad | set | 2026-09-21 17:58 | passed | wizard's own silver head shows under the winged gilt band (keeps_head, 6 parts); olive-and-gold cloth jerkin stays dielectric, brass gloves/boots/pant plates read gilt; flat gold wings are MU's cards; rebuilt after the flip fix |
 | Vine | set | 2026-09-21 18:15 | passed | elf's own blonde head under the vine circlet (keeps_head); dark warm leather with the vine raised in the same brown; skin reads as skin, hip blades as bone; rebuilt after the flip fix |
 | Sword02 | arm | 2026-09-21 19:13 | passed | steel 0.4 on this flat blade: grey steel with MU's paint legible, soft sheen at noon; no longer black |
@@ -71,7 +71,7 @@ with `pipeline/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | BullFighter01 | figure | 2026-09-22 09:11 | passed | rebuilt after the flip fix: brown fur with pale horns and hooves; the Elite shares this mesh and keeps its crest; no metal, no blowouts |
 | Giant01 | figure | 2026-09-22 09:13 | passed | rebuilt after the flip fix: painted plate armour, metallic 0 by the recipe's own override (MU painted the highlights in); reads at every time of day |
 | Lich01 | figure | 2026-09-22 09:14 | passed | rebuilt after the flip fix: black robe with red trim, pale skull mask and hands; cloth, bone and skin read apart |
-| Spider01 | figure | 2026-09-22 09:15 | passed | rebuilt after the flip fix: dark carapace with MU's pale patch, banded legs read against the grass; no metal |
+| Spider01 | figure | 2026-10-11 00:23 | awaiting |  |
 | Skeleton01 | figure | 2026-09-22 09:16 | passed | rebuilt after the flip fix: the Skeleton Warrior's body; bones read dark-ivory as MU paints them, at noon, dusk and night |
 | Axe07 | arm | 2026-09-22 09:23 | passed | the Bull Fighter's axe: steel 0.55 as Axe01/02 -- at 0.2 the spike threw a white dot even at night; now the double head shows its engraving, no blowouts |
 | Spear08 | arm | 2026-09-22 09:18 | passed | the Elite Bull Fighter's Berdysh: steel head and plate_steel shaft read grey along their length, no blowouts |
@@ -328,3 +328,8 @@ with `pipeline/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Staff12 | arm | 2026-10-10 18:24 | passed | re-cooked after its chrome pass; looked at on the bench and in a fight |
 | Bow20 | arm | 2026-10-10 19:27 | passed | glows at MU's 0.002 breath |
 | Axe05 | arm | 2026-10-10 19:34 | awaiting |  |
+| Carriage02 | world | 2026-10-11 00:16 | awaiting |  |
+| Carriage01 | world | 2026-10-11 00:17 | awaiting |  |
+| Carriage04 | world | 2026-10-11 00:18 | awaiting |  |
+| Cannon03 | world | 2026-10-11 00:19 | awaiting |  |
+| HouseEtc02 | world | 2026-10-11 00:22 | awaiting |  |

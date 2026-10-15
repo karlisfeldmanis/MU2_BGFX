@@ -21,6 +21,12 @@
   "actions_from": "Two idles, both kept (export-rig --actions=all): MoveCharacter's MODEL_DEVIAS_TRADER case (ZzzCharacter.cpp:3746-3754) picks action 1 with a 1-in-32 chance each time a clip ends, otherwise action 0 again.",
   "effects_from": "MoveCharacterVisual's MODEL_DEVIAS_TRADER case (ZzzCharacter.cpp:6112-6131), not drawn yet: while he plays action 0 the sharpening throws sparks -- a terrain light (Luminosity*0.5, *0.3, 0) radius 3 on his tile, and at bone 37 (BoneP1, the wheel's edge) offset (0, 5, 10), up to four BITMAP_JOINT_SPARK joints a frame at angle (rand%60+90, 0, rand%30), each with a BITMAP_SPARK particle one time in two. No BlendMesh, no scale, no RenderCharacter case: he is drawn as he is.",
   "islands_from": "Found by the build, then assigned by sheet. Island 7 (516 triangles) is all of man, so skin. Islands 8-10 are sword03 (44 triangles) laid out exactly as Sword02's three: 10 the blade (steel), 9 the gold guard (brass), 8 the black grip (leather_wrap), as Sword02's own measured note gives them. Islands 0-6 are knifestone (98): 6 is the round stone disc on the sheet's left half and 0 the grey plate beside it, both rock; 1-5 are the frame's timber, hardwood.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.4
+    }
+  },
+  "material_overrides_note": "Sword02's, for the same broad flat blade: at the library's 0.2 it mirrors the ground and renders near black.",
   "islands": [
     {
       "island": 0,
@@ -264,11 +270,5 @@
         0.456
       ]
     }
-  ],
-  "material_overrides": {
-    "steel": {
-      "roughness": 0.4
-    }
-  },
-  "material_overrides_note": "Sword02's, for the same broad flat blade: at the library's 0.2 it mirrors the ground and renders near black."
+  ]
 }

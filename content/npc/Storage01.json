@@ -1,10 +1,10 @@
 {
   "item": "Storage01",
   "mu_name": "Storage01",
-  "mu_name_from": "NPC/Storage01.bmd \u2014 the Safety Guardian, and in LEGACY's own spawn table 'Baz The Vault Keeper'. Type 240, standing at two places in Lorencia.",
+  "mu_name_from": "NPC/Storage01.bmd — the Safety Guardian, and in LEGACY's own spawn table 'Baz The Vault Keeper'. Type 240, standing at two places in Lorencia.",
   "world": "lorencia",
   "object_type": -1,
-  "why_this_one": "The last of the single-file NPCs, and the largest by a distance: 1512 triangles across fourteen sheets, where the smith is 730 across five. He comes with his vault \u2014 the chest is part of the same .bmd, the way the smith's anvil is \u2014 which is where most of that goes.\n\nFourteen sheets on one figure is worth noting rather than tidying. MU dresses him out of the same wardrobe it dresses players from: upper_12 and lower_12 and boots_12 are an armour set, head_02 and head_07 are faces from two others. Nothing here is bespoke, which is why a townsperson costs so little in a game that already has armour.",
+  "why_this_one": "The last of the single-file NPCs, and the largest by a distance: 1512 triangles across fourteen sheets, where the smith is 730 across five. He comes with his vault — the chest is part of the same .bmd, the way the smith's anvil is — which is where most of that goes.\n\nFourteen sheets on one figure is worth noting rather than tidying. MU dresses him out of the same wardrobe it dresses players from: upper_12 and lower_12 and boots_12 are an armour set, head_02 and head_07 are faces from two others. Nothing here is bespoke, which is why a townsperson costs so little in a game that already has armour.",
   "profile": "npc",
   "sheets": {
     "gloves_12": "gloves_12.png",
@@ -39,12 +39,12 @@
     "gloves_07": "leather_wrap",
     "head_07": "skin"
   },
-  "sheet_materials_from": "Skin wherever the sheet carries flesh, and that is most of them. MU paints a townsperson's face on the same page as his clothes, so the material chosen for the clothes is also the material on the face \u2014 and cloth declares a weave along u at scale 140, which put fabric grain down Amy's cheek. skin declares no grain, which is the safe way to be wrong: a dress missing a weave nobody could resolve at 128 pixels costs nothing.\n\nWhat is plainly not flesh keeps its own material: the smith's forge is lamplight, his anvil is rock, the vault keeper's plate is steel and his chest is timber.",
+  "sheet_materials_from": "Skin wherever the sheet carries flesh, and that is most of them. MU paints a townsperson's face on the same page as his clothes, so the material chosen for the clothes is also the material on the face — and cloth declares a weave along u at scale 140, which put fabric grain down Amy's cheek. skin declares no grain, which is the safe way to be wrong: a dress missing a weave nobody could resolve at 128 pixels costs nothing.\n\nWhat is plainly not flesh keeps its own material: the smith's forge is lamplight, his anvil is rock, the vault keeper's plate is steel and his chest is timber.",
   "cutout": [
     "upper_02b_m"
   ],
   "cutout_from": "Declared from the sheets rather than guessed: these are the ones that arrived with a real alpha channel, which is MU saying the shape is cut rather than modelled.",
-  "islands_from": "Reassigned when the sheets moved from cloth to skin. The islands are what the bake actually reads \u2014 sheet_materials names a material per sheet, and an island is a piece of geometry, so the two are not the same list and the second one wins. Changing only the sheets left every one of these still baking cloth's weave, which is the striping that ran down Amy's face.",
+  "islands_from": "Reassigned when the sheets moved from cloth to skin. The islands are what the bake actually reads — sheet_materials names a material per sheet, and an island is a piece of geometry, so the two are not the same list and the second one wins. Changing only the sheets left every one of these still baking cloth's weave, which is the striping that ran down Amy's face.",
   "islands": [
     {
       "island": 0,

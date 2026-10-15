@@ -42,7 +42,7 @@
       "smooth_seconds": 0.34
     }
   },
-  "glow_from": "MoveObject's per-type case for object 117, by way of the old port's own table. The client animates the self-luminous submesh alone and not through the model's skeleton: BlendMeshLight scales its brightness and BlendMeshTexCoordV slides its texture, both off the world clock, so every placement of a type moves in step.\n\nThat 'in step' is what makes it cheap \u2014 the glow of a type is one material shared by every placement, so it costs one material write a frame however many stand in the town.\n\nA candle behind dirty glass, which neither jumps nor sits still. Both numbers do opposite jobs. Eight draws a second rather than three and a half keeps the glow always on its way somewhere; at the slower rate it arrived, waited visibly, then set off again, which is what read as a flicker. A third of a second to travel rather than a fifth means it never arrives before the next draw. Twelve steps rather than four, because four quantises the range into levels you can count. Put out on 2026-09-24, the user's call. light_02 here is not a window but three light shafts slanting out of the side window down to the ground by the smithy, and from there a slice of one shows through the gap under the carved panel, clipped hard by the blocks in front of it: a crisp yellow blade that changed shape as he walked and read as a shadow fault. Halved to MU's own brightness it was still a blade, so it is at 0, and the submesh draws nothing. MU draws it (0.50 to 0.78); this is a departure.",
+  "glow_from": "MoveObject's per-type case for object 117, by way of the old port's own table. The client animates the self-luminous submesh alone and not through the model's skeleton: BlendMeshLight scales its brightness and BlendMeshTexCoordV slides its texture, both off the world clock, so every placement of a type moves in step.\n\nThat 'in step' is what makes it cheap — the glow of a type is one material shared by every placement, so it costs one material write a frame however many stand in the town.\n\nA candle behind dirty glass, which neither jumps nor sits still. Both numbers do opposite jobs. Eight draws a second rather than three and a half keeps the glow always on its way somewhere; at the slower rate it arrived, waited visibly, then set off again, which is what read as a flicker. A third of a second to travel rather than a fifth means it never arrives before the next draw. Twelve steps rather than four, because four quantises the range into levels you can count. Put out on 2026-09-24, the user's call. light_02 here is not a window but three light shafts slanting out of the side window down to the ground by the smithy, and from there a slice of one shows through the gap under the carved panel, clipped hard by the blocks in front of it: a crisp yellow blade that changed shape as he walked and read as a shadow fault. Halved to MU's own brightness it was still a blade, so it is at 0, and the submesh draws nothing. MU draws it (0.50 to 0.78); this is a departure.",
   "emitters": [
     {
       "kind": "window",
@@ -63,7 +63,7 @@
       ]
     }
   ],
-  "emitters_from": "A departure, and a deliberate one: MU does not light from windows. MoveObject has no AddTerrainLight for these types \u2014 the client draws the glow submesh and stops there, so a lit window in the original throws exactly nothing onto the wall around it. That reads as a sticker at any distance you would stand at, and it reads worse the darker the town gets: the point of dropping the ambient is that light sources start to matter.\n\nThe position starts from the glow submesh's own bounding box, so the light is where the light is painted, and is then pushed more than a tile *out* of the wall and most of a tile *down*. That offset is the whole lesson of the first attempt. A lamp put at the glow's own centre sits inside the quad it belongs to and lights the wall the quad is seen against \u2014 so the pane went invisible, not because it stopped being drawn but because its backdrop came up to meet it. Half a day went into the sheet chasing that: feather, blur, emissive strength, an additive blend, all of it looking for a fault in the glow that was in the light beside it. Taking the emitter away brought the pane straight back.\n\nOut and down, because out alone was not enough: a pool centred on the wall face raises the whole face, and the pane is read against that face. Real window light spills onto the ground in front, so that is where this is aimed \u2014 0.05 to 0.08 over 1.7 tiles, landing on the street rather than on the stone the glow hangs in, which is all the evidence the glow needs in order to read as real. The glow stays the thing you see. It flickers on the same numbers the glow does, so the pool and the pane breathe together.",
+  "emitters_from": "A departure, and a deliberate one: MU does not light from windows. MoveObject has no AddTerrainLight for these types — the client draws the glow submesh and stops there, so a lit window in the original throws exactly nothing onto the wall around it. That reads as a sticker at any distance you would stand at, and it reads worse the darker the town gets: the point of dropping the ambient is that light sources start to matter.\n\nThe position starts from the glow submesh's own bounding box, so the light is where the light is painted, and is then pushed more than a tile *out* of the wall and most of a tile *down*. That offset is the whole lesson of the first attempt. A lamp put at the glow's own centre sits inside the quad it belongs to and lights the wall the quad is seen against — so the pane went invisible, not because it stopped being drawn but because its backdrop came up to meet it. Half a day went into the sheet chasing that: feather, blur, emissive strength, an additive blend, all of it looking for a fault in the glow that was in the light beside it. Taking the emitter away brought the pane straight back.\n\nOut and down, because out alone was not enough: a pool centred on the wall face raises the whole face, and the pane is read against that face. Real window light spills onto the ground in front, so that is where this is aimed — 0.05 to 0.08 over 1.7 tiles, landing on the street rather than on the stone the glow hangs in, which is all the evidence the glow needs in order to read as real. The glow stays the thing you see. It flickers on the same numbers the glow does, so the pool and the pane breathe together.",
   "islands": [
     {
       "island": 0,
@@ -81,10 +81,10 @@
         0.149
       ],
       "bake_uv": [
-        0.386,
-        0.947,
-        0.473,
-        0.947
+        0.339,
+        0.638,
+        0.351,
+        0.638
       ]
     },
     {
@@ -103,10 +103,10 @@
         0.999
       ],
       "bake_uv": [
-        0.576,
-        0.563,
-        0.662,
-        0.643
+        0.34,
+        0.819,
+        0.353,
+        0.83
       ]
     },
     {
@@ -125,10 +125,10 @@
         0.999
       ],
       "bake_uv": [
-        0.682,
-        0.142,
-        0.769,
-        0.222
+        0.34,
+        0.85,
+        0.353,
+        0.862
       ]
     },
     {
@@ -149,7 +149,7 @@
       "bake_uv": [
         0.01,
         0.01,
-        0.933,
+        0.736,
         0.972
       ]
     },
@@ -169,10 +169,10 @@
         2.634
       ],
       "bake_uv": [
-        0.333,
-        0.024,
-        0.945,
-        0.682
+        0.75,
+        0.01,
+        0.92,
+        0.696
       ]
     },
     {
@@ -191,10 +191,10 @@
         0.513
       ],
       "bake_uv": [
-        0.355,
-        0.256,
-        0.928,
-        0.916
+        0.339,
+        0.521,
+        0.6,
+        0.94
       ]
     },
     {
@@ -213,10 +213,10 @@
         0.999
       ],
       "bake_uv": [
-        0.3,
-        0.79,
-        0.716,
-        0.982
+        0.62,
+        0.573,
+        0.694,
+        0.925
       ]
     },
     {
@@ -236,9 +236,9 @@
       ],
       "bake_uv": [
         0.01,
-        0.024,
-        0.979,
-        0.973
+        0.222,
+        0.926,
+        0.99
       ]
     },
     {
@@ -257,10 +257,10 @@
         2.634
       ],
       "bake_uv": [
-        0.778,
-        0.024,
-        0.857,
-        0.954
+        0.788,
+        0.01,
+        0.958,
+        0.696
       ]
     },
     {
@@ -279,10 +279,10 @@
         2.634
       ],
       "bake_uv": [
-        0.3,
-        0.024,
-        0.869,
-        0.956
+        0.826,
+        0.01,
+        0.871,
+        0.972
       ]
     },
     {
@@ -301,10 +301,10 @@
         2.634
       ],
       "bake_uv": [
-        0.338,
-        0.024,
-        0.907,
-        0.956
+        0.302,
+        0.01,
+        0.882,
+        0.973
       ]
     },
     {
@@ -323,10 +323,10 @@
         0.513
       ],
       "bake_uv": [
-        0.355,
-        0.674,
-        0.631,
-        0.965
+        0.339,
+        0.144,
+        0.942,
+        0.933
       ]
     },
     {
@@ -345,10 +345,10 @@
         0.513
       ],
       "bake_uv": [
-        0.45,
-        0.142,
-        0.973,
-        0.965
+        0.34,
+        0.183,
+        0.724,
+        0.975
       ]
     },
     {
@@ -367,10 +367,10 @@
         0.999
       ],
       "bake_uv": [
-        0.386,
-        0.853,
-        0.99,
-        0.982
+        0.62,
+        0.803,
+        0.73,
+        0.951
       ]
     },
     {
@@ -389,10 +389,10 @@
         1.929
       ],
       "bake_uv": [
-        0.058,
-        0.058,
-        0.979,
-        0.973
+        0.059,
+        0.573,
+        0.926,
+        0.99
       ]
     },
     {
@@ -412,9 +412,9 @@
       ],
       "bake_uv": [
         0.107,
-        0.092,
-        0.979,
-        0.973
+        0.301,
+        0.975,
+        0.99
       ]
     },
     {
@@ -433,10 +433,10 @@
         1.929
       ],
       "bake_uv": [
-        0.155,
-        0.126,
-        0.979,
-        0.973
+        0.156,
+        0.595,
+        0.975,
+        0.99
       ]
     },
     {
@@ -455,10 +455,10 @@
         1.929
       ],
       "bake_uv": [
-        0.203,
-        0.16,
-        0.979,
-        0.973
+        0.205,
+        0.716,
+        0.785,
+        0.99
       ]
     },
     {
@@ -477,10 +477,10 @@
         1.929
       ],
       "bake_uv": [
-        0.252,
-        0.194,
-        0.979,
-        0.973
+        0.253,
+        0.716,
+        0.833,
+        0.99
       ]
     },
     {
@@ -499,10 +499,10 @@
         0.999
       ],
       "bake_uv": [
-        0.568,
-        0.142,
-        0.662,
-        0.236
+        0.578,
+        0.144,
+        0.674,
+        0.24
       ]
     },
     {
@@ -521,10 +521,10 @@
         0.999
       ],
       "bake_uv": [
-        0.737,
-        0.01,
-        0.778,
-        0.104
+        0.586,
+        0.573,
+        0.628,
+        0.669
       ]
     }
   ]

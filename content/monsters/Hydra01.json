@@ -60,6 +60,7 @@
   ],
   "soft_alpha_from": "bbb01.OZT and bbb02.OZT are drawn by MU tested and blended (EnableAlphaTest, ZzzOpenglUtil.cpp:366-393), as the Bahamut's fins: the membranes seen through, the claws' edges soft.",
   "sounds_from": "ZzzOpenData.cpp:3671-3677: SetMonsterSound(..., 141, 141, 142, 142, 141), offsets from SOUND_MONSTER_BULL1 = 210 -- 351 HYDRA1 (mHydra1.wav) to move and die, 352 HYDRAATTACK1 (mHydraAttack1.wav) to attack and flinch. Wired as hydra_* in sounds.json.",
+  "islands_from": "177 islands for 2994 triangles, read by sheet out of the low blend: the necks and heads (uo00, 1088), the hide's own (bbbb00, 272), the red glow (bbbb03, 32) and the overlay's copy of the hide (bbbb, 909) are skin; 19 triangles of membrane alone (bbb01) are leather and blended; one island of 646 joins the hide to 9 membrane triangles and takes the hide's skin, so those 9 are cut rather than blended; the claws with the cyan swirl (bbb02 and bbbb02, 28) are bone. They arrived as skin.",
   "islands": [
     {
       "island": 0,
@@ -3956,7 +3957,6 @@
       ]
     }
   ],
-  "islands_from": "177 islands for 2994 triangles, read by sheet out of the low blend: the necks and heads (uo00, 1088), the hide's own (bbbb00, 272), the red glow (bbbb03, 32) and the overlay's copy of the hide (bbbb, 909) are skin; 19 triangles of membrane alone (bbb01) are leather and blended; one island of 646 joins the hide to 9 membrane triangles and takes the hide's skin, so those 9 are cut rather than blended; the claws with the cyan swirl (bbb02 and bbbb02, 28) are bone. They arrived as skin.",
   "rules": {
     "drops": {
       "money_rate": 14,

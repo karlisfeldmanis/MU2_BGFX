@@ -34,6 +34,9 @@
     }
   },
   "material_overrides_note": "As steel the staff went black in the castle's night -- nothing for its metal to reflect -- where MU's chrome pass lights it; painted_steel keeps the red crystal and the shaft as painted, the grain out as the castle's plate.",
+  "islands_from": "18 islands: 0-9 (448 triangles) the statue, rock, as SaintStatue01's; 10-17 the baked weapon, painted_steel. They arrived as skin, the monster profile's default.",
+  "summoned_in": "bloodcastle",
+  "summoned_in_from": "It spawns on no map of ours: a run raises it on the statue's one nest in place of SaintStatue01's, one of the three at random (Realm::setCastle).",
   "islands": [
     {
       "island": 0,
@@ -432,9 +435,6 @@
       ]
     }
   ],
-  "islands_from": "18 islands: 0-9 (448 triangles) the statue, rock, as SaintStatue01's; 10-17 the baked weapon, painted_steel. They arrived as skin, the monster profile's default.",
-  "summoned_in": "bloodcastle",
-  "summoned_in_from": "It spawns on no map of ours: a run raises it on the statue's one nest in place of SaintStatue01's, one of the three at random (Realm::setCastle).",
   "combat": {
     "level": 0,
     "health": 65000,
