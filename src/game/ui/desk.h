@@ -108,6 +108,8 @@ public:
 
     // Whether the pointer this frame belongs to a window rather than to the ground.
     bool takesPointer() const { return takesPointer_; }
+    // Whether a window, the HUD or a box covers this pixel, as the windows stand now.
+    bool overWindows(float x, float y) const;
     // The drop whose name plate is under this pixel, or 0. The last drawn is on top and wins.
     uint32_t labelUnder(float x, float y) const;
 
@@ -404,6 +406,8 @@ private:
     Specimen specimen_;
     bool specimenOpen_ = false;
     bool takesPointer_ = false;
+    // Whether the press now held began over a window (Desk::update): the world hears none of it.
+    bool pressOnWindow_ = false;
     bool scripted_ = false;
     Pointer script_;
 };

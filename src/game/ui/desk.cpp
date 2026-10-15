@@ -142,6 +142,22 @@ void Desk::expect(uint32_t ticket, Then then, int key) {
     if (ticket != 0) waiting_.push_back({ticket, then, key});
 }
 
+bool Desk::overWindows(float x, float y) const {
+    return amount_.up() || menu_.up() || hud_.covers(x, y) || guild_.covers(x, y) ||
+           guildMake_.covers(x, y) || chat_.covers(x, y) || partyBar_.covers(x, y) ||
+           playerMenu_.covers(x, y) || targetFrame_.covers(x, y) || minimap_.covers(x, y) ||
+           questDialog_.covers(x, y) || travel_.covers(x, y) || goBack_.covers(x, y) ||
+           herald_.covers(x, y) || squareResult_.covers(x, y) ||
+           (specimenOpen_ && specimen_.covers(x, y)) ||
+           (characterOpen_ && card_.covers(x, y)) ||
+           (inventoryOpen_ && (bag_.covers(x, y) || bag_.dragging())) ||
+           (trading_ && shelf_.covers(x, y)) ||
+           (banking_ && (chest_.covers(x, y) || chest_.dragging())) ||
+           (brokering_ && broker_.covers(x, y)) ||
+           (mixing_ && (mixer_.covers(x, y) || mixer_.dragging())) ||
+           (dealing_ && (deal_.covers(x, y) || deal_.dragging()));
+}
+
 void Desk::update(float seconds, const gfx::Window& window, Play& play, float pointerX,
                   float pointerY) {
     // The store is handed in from outside, with the item rows already in it; until it is, the
@@ -160,6 +176,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
 
     panel::setScreen(float(window.height()));
     panel::setFloor(hud_.plateTop());
+    // Asked before any window answers the press, while what the player clicked on is still up.
+    const bool pressedOnWindow = pointer.pressed && overWindows(pointer.x, pointer.y);
     arrival_.update(seconds, float(window.width()), float(window.height()));
     const sim::Body* hero = play.isOpen() ? &play.realm().hero() : nullptr;
     hud_.follow(hero);
@@ -613,11 +631,17 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     }
 
     bool toggleInventory = false, toggleCharacter = false, toggleMenu = false;
-    bool toggleQuest = false, toggleChat = false;
+    bool toggleQuest = false, toggleChat = false, toggleGuild = false;
     hud_.setChatOpen(chat_.typing());
+    hud_.setGuildOpen(guild_.up());
     hud_.update(seconds, float(window.width()), float(window.height()), pointer, inventoryOpen_,
                 characterOpen_, &toggleInventory, &toggleCharacter, &toggleMenu, journal_ >= 0,
-                &toggleQuest, &toggleChat);
+                &toggleQuest, &toggleChat, &toggleGuild);
+    // The HUD's guild button asks what G does, before the guild window's own frame below.
+    if (toggleGuild && play.isOpen()) {
+        guild_.toggle();
+        click();
+    }
     // The chat: Enter opens it when nothing else has the keyboard, and then it has it.
     if (!watching_ && play.isOpen()) {
         const float u = tip::unit();
@@ -1098,23 +1122,14 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // and neither while a box or the menu has the screen.
     minimap_.update(seconds, play, typing || menuHeld ? Pointer{} : pointer,
                     typing || menuHeld ? 0.0f : window.scroll(), window.width(), window.height());
-    takesPointer_ = typing || amount_.up() || menuHeld || hud_.covers(pointer.x, pointer.y) ||
-                    guild_.covers(pointer.x, pointer.y) || guildMake_.covers(pointer.x, pointer.y) ||
-                    chat_.covers(pointer.x, pointer.y) || partyBar_.covers(pointer.x, pointer.y) ||
-                    menuTook_ || playerMenu_.covers(pointer.x, pointer.y) || targetFrame_.covers(pointer.x, pointer.y) ||
-                    minimap_.covers(pointer.x, pointer.y) ||
-                    questDialog_.covers(pointer.x, pointer.y) ||
-                    travelPressed || travel_.covers(pointer.x, pointer.y) || goBack_.covers(pointer.x, pointer.y) ||
-                    herald_.covers(pointer.x, pointer.y) || squareResult_.covers(pointer.x, pointer.y) ||
-                    (specimenOpen_ && specimen_.covers(pointer.x, pointer.y)) || carrying_ != 0 ||
-                    liftedQuick_ >= 0 ||
-                    (characterOpen_ && card_.covers(pointer.x, pointer.y)) ||
-                    (inventoryOpen_ && (bag_.covers(pointer.x, pointer.y) || bag_.dragging())) ||
-                    (trading_ && shelf_.covers(pointer.x, pointer.y)) ||
-                    (banking_ && (chest_.covers(pointer.x, pointer.y) || chest_.dragging())) ||
-                    (brokering_ && broker_.covers(pointer.x, pointer.y)) ||
-                    (mixing_ && (mixer_.covers(pointer.x, pointer.y) || mixer_.dragging())) ||
-                    (dealing_ && (deal_.covers(pointer.x, pointer.y) || deal_.dragging()));
+    // A press that began over a window stays the window's until the button comes up, even when
+    // the press shut the window: the Guild Master's "Not now" hid its box in this frame's update,
+    // and the same press, asked again below with the box gone, walked him to where it had been
+    // (the user, 2026-10-16: "we need that never click to move triggers on any UI window button").
+    if (pressedOnWindow) pressOnWindow_ = true;
+    else if (!pointer.held && !pointer.pressed) pressOnWindow_ = false;
+    takesPointer_ = typing || menuHeld || menuTook_ || travelPressed || carrying_ != 0 ||
+                    liftedQuick_ >= 0 || pressOnWindow_ || overWindows(pointer.x, pointer.y);
 
     // The pointer, drawn last of all: MU2's Pointer.Show and Step in one call. The flags are
     // last frame's raycast (Play::point runs after this, on the same frame it is drawn), which

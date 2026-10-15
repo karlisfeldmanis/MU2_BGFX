@@ -260,6 +260,8 @@ public:
     float plateTop() const;
     // The chat open (game/ui/chat.h): its button is drawn lit, as the bag's is while the bag is up.
     void setChatOpen(bool open) { chatOpen_ = open; }
+    // And the guild window (game/ui/guild.h), for the guild's button.
+    void setGuildOpen(bool open) { guildOpen_ = open; }
     // The left edge of the buffs' strip over the plate: as far right as the chat may reach.
     float buffsLeft() const;
     // The worn-gear warning's `i`th cell (game/ui/endurance.h), in backbuffer pixels: the buff
@@ -272,7 +274,8 @@ public:
     void update(float seconds, float width, float height, const Pointer& pointer,
                 bool inventoryOpen, bool characterOpen, bool* toggleInventory,
                 bool* toggleCharacter, bool* toggleMenu = nullptr, bool questOpen = false,
-                bool* toggleQuest = nullptr, bool* toggleChat = nullptr);
+                bool* toggleQuest = nullptr, bool* toggleChat = nullptr,
+                bool* toggleGuild = nullptr);
 
     // Whether a point is over the frame -- plate, rail or a side button -- so a click there
     // is the frame's and not the ground's. The plate's transparent corners count: a click in
@@ -295,7 +298,7 @@ private:
             level = 0;
         int gem = 0;
         float slid = 0;
-        bool inventory = false, character = false, quest = false, chat = false;
+        bool inventory = false, character = false, quest = false, chat = false, guild = false;
         int hovered = -1;  // which button or slot is lit
         bool tip = false;  // a tip is up, so the pointer's place is part of the picture
         float pointerX = 0, pointerY = 0;
@@ -360,6 +363,7 @@ private:
     Stage* stage_ = nullptr;
     std::vector<Standing> standing_;
     bool chatOpen_ = false;
+    bool guildOpen_ = false;
 };
 
 }  // namespace mu::game

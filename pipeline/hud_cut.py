@@ -209,6 +209,11 @@ MUMAIN_ICONS = {
     "hud_button_quest": ("newui_chainfo_btn_quest.OZT", (36, 58), 2, (0, 1, 0, 1),
                          ((6, 3, 30, 27), (6, 3, 30, 27), (5, 2, 29, 26), (5, 2, 29, 26)),
                          True, (1.0, 1.0, 0.7, 0.7)),
+    # The guild's (the user, 2026-10-16: "lets add guild button in hud near chat and menu"): the
+    # chat window's guild-channel toggle, MU's own "@", cut as the chat's bubble is -- the same
+    # 27 by 52 sheet, lit first, the grey kept as the rest -- and not flipped.
+    "hud_button_guild": ("newui_Bt_Chat_guild.OZJ", (27, 52), 2, (1, 0),
+                         ((7, 6, 22, 22), (6, 5, 21, 21)), False, None),
 }
 
 
