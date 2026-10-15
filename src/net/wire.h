@@ -115,8 +115,9 @@ namespace mu::net {
 // 32: the game's pass (net/pass.h, docs/plans/security.md) where the token went, in an Account's
 //     key and a Hello's account: the token itself no longer crosses the line.
 constexpr uint32_t kVersion = 32;
-// The server the game plays on when it is not told another (server/README.md): the Hetzner box.
-constexpr const char* kDefaultHost = "37.27.158.226";
+// The server the game plays on when it is not told another (server/README.md): the Hetzner box,
+// by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
+constexpr const char* kDefaultHost = "mu-classic.com";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
 // keeps beside each row. 3 is protocol 3's; 4 adds the way back; 5 a 25th quest (Devin's errand to
 // Tersia, 2026-10-09), where 3 and 4 carry 24; 6 the perch he logged out on (2026-10-09); 7 his auto-drink lines (2026-10-11).

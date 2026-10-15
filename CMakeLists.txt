@@ -454,7 +454,7 @@ if(WIN32 OR APPLE)
   if(WIN32)
     target_sources(mu2_launcher PRIVATE src/launcher/gpu_win.cpp src/launcher/launcher.rc)
     set_source_files_properties(src/launcher/launcher.rc PROPERTIES
-      OBJECT_DEPENDS ${CMAKE_SOURCE_DIR}/src/launcher/launcher.manifest)
+      OBJECT_DEPENDS "${CMAKE_SOURCE_DIR}/src/launcher/launcher.manifest;${CMAKE_SOURCE_DIR}/src/app/mu2.ico")
     target_link_libraries(mu2_launcher PRIVATE crypt32 shell32 ole32 uuid dxgi setupapi advapi32)
     set_target_properties(mu2_launcher PROPERTIES OUTPUT_NAME MU2Launcher WIN32_EXECUTABLE TRUE)
   else()
@@ -729,7 +729,12 @@ if(WIN32)
   target_sources(mu2 PRIVATE src/app/mu2.rc)
   set_source_files_properties(src/app/mu2.rc PROPERTIES
     COMPILE_DEFINITIONS "MU2_VERSION_MAJOR=${MU2_VERSION_MAJOR};MU2_VERSION_MINOR=${MU2_VERSION_MINOR};MU2_VERSION_PATCH=${MU2_VERSION_PATCH}"
-    OBJECT_DEPENDS ${CMAKE_SOURCE_DIR}/src/app/mu2.manifest)
+    OBJECT_DEPENDS "${CMAKE_SOURCE_DIR}/src/app/mu2.manifest;${CMAKE_SOURCE_DIR}/src/app/mu2.ico")
+  # The launcher's version is the game's (src/launcher/launcher.rc).
+  if(TARGET mu2_launcher)
+    set_source_files_properties(src/launcher/launcher.rc PROPERTIES
+      COMPILE_DEFINITIONS "MU2_VERSION_MAJOR=${MU2_VERSION_MAJOR};MU2_VERSION_MINOR=${MU2_VERSION_MINOR};MU2_VERSION_PATCH=${MU2_VERSION_PATCH}")
+  endif()
   execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=binmode.o
                   OUTPUT_VARIABLE MU_BINMODE OUTPUT_STRIP_TRAILING_WHITESPACE)
   target_link_libraries(mu2 PRIVATE ${MU_BINMODE} winmm)
