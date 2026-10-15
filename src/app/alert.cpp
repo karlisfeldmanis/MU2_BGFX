@@ -7,6 +7,12 @@
 #include <string>
 #elif defined(__APPLE__)
 #include <CoreFoundation/CoreFoundation.h>
+#elif defined(__linux__)
+#include <spawn.h>
+#include <sys/wait.h>
+
+#include <initializer_list>
+extern char** environ;
 #endif
 
 namespace mu::app {
@@ -28,6 +34,19 @@ void systemAlert(const char* title, const char* text) {
                                    CFSTR("OK"), nullptr, nullptr, &pressed);
     CFRelease(head);
     CFRelease(body);
+#elif defined(__linux__)
+    // Linux has no one system box: GNOME's zenity, else KDE's kdialog, whichever the desktop has
+    // (docs/plans/linux-release.md). Either way stderr and the log have it too.
+    std::fprintf(stderr, "%s: %s\n", title, text);
+    const char* zenity[] = {"zenity", "--info", "--no-wrap", "--title", title, "--text", text, nullptr};
+    const char* kdialog[] = {"kdialog", "--title", title, "--msgbox", text, nullptr};
+    for (const char* const* line : {zenity, kdialog}) {
+        pid_t child = 0;
+        if (posix_spawnp(&child, line[0], nullptr, nullptr, const_cast<char* const*>(line), environ) != 0) continue;
+        int status = 0;
+        waitpid(child, &status, 0);
+        if (WIFEXITED(status) && WEXITSTATUS(status) != 127) return;
+    }
 #else
     std::fprintf(stderr, "%s: %s\n", title, text);
 #endif

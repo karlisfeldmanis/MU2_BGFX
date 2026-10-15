@@ -84,6 +84,15 @@ bool Window::open(const WindowDesc& desc) {
     // In build/MU2.app GLFW would move the working folder into Contents/Resources, and the
     // scripts' relative --shot paths with it.
     glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, GLFW_FALSE);
+#ifdef __linux__
+    // X11, which every Wayland desktop also runs through XWayland, until native Wayland has been
+    // judged (docs/plans/linux-release.md, X6); MU2_WAYLAND=1 asks for it now.
+    {
+        const char* wayland = std::getenv("MU2_WAYLAND");
+        const bool native = wayland && *wayland == '1' && glfwPlatformSupported(GLFW_PLATFORM_WAYLAND);
+        glfwInitHint(GLFW_PLATFORM, native ? GLFW_PLATFORM_WAYLAND : GLFW_PLATFORM_X11);
+    }
+#endif
     if (!glfwInit()) {
         core::logError("glfw did not start");
         return false;
@@ -155,6 +164,9 @@ bool Window::open(const WindowDesc& desc) {
     // UHD on old drivers (docs/plans/low-end-windows.md, P7). Its DXBC shaders ship beside the
     // SPIR-V, so this fallback can draw ours.
     init.type = desc.renderer == 2 ? bgfx::RendererType::Direct3D11 : bgfx::RendererType::Vulkan;
+#elif defined(__linux__)
+    // Vulkan and nothing else on Linux, with the same SPIR-V as Windows (docs/plans/linux-release.md).
+    init.type = bgfx::RendererType::Vulkan;
 #else
     init.type = bgfx::RendererType::Metal;  // the Mac; see docs/reference/conventions.md
 #ifndef MU2_SHIP
@@ -177,6 +189,16 @@ bool Window::open(const WindowDesc& desc) {
     chain_ = init.swapChain;
 #ifdef _WIN32
     chain_.nwh = glfwGetWin32Window(handle_);
+#elif defined(__linux__)
+    // The window and its display, X11's or Wayland's; bgfx must be told which of the two it is.
+    if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND) {
+        chain_.nwh = glfwGetWaylandWindow(handle_);
+        chain_.ndt = glfwGetWaylandDisplay();
+        init.platformData.type = bgfx::NativeWindowHandleType::Wayland;
+    } else {
+        chain_.nwh = reinterpret_cast<void*>(uintptr_t(glfwGetX11Window(handle_)));
+        chain_.ndt = glfwGetX11Display();
+    }
 #else
     chain_.nwh = glfwGetCocoaWindow(handle_);
 #endif

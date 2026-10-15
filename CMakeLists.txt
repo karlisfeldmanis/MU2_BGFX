@@ -15,6 +15,16 @@ option(MU2_SHIP "the player's build: lobby only, player switches only, data from
 if(WIN32 AND NOT MU2_SERVER_ONLY)
   set(MU2_SHIP ON)
 endif()
+# Linux's client is only ever the player's too (docs/plans/linux-release.md), built by `./mu build
+# linux` in the x86_64 Ubuntu 22.04 machine. A switch of its own, so the box's server build and
+# every other Linux build stay as they are.
+option(MU2_LINUX_CLIENT "the player's client for Linux: Vulkan, X11 and Wayland" OFF)
+if(MU2_LINUX_CLIENT)
+  if(APPLE OR WIN32 OR MU2_SERVER_ONLY)
+    message(FATAL_ERROR "MU2_LINUX_CLIENT is a Linux client build")
+  endif()
+  set(MU2_SHIP ON)
+endif()
 if(MU2_SHIP)
   add_compile_definitions(MU2_SHIP)
 endif()
@@ -44,6 +54,15 @@ if(WIN32)
   add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN _WIN32_WINNT=0x0A00
     _POSIX_THREAD_SAFE_FUNCTIONS)   # localtime_r and gmtime_r, as on the Mac and the server
   add_link_options(-static -static-libgcc -static-libstdc++)
+endif()
+# Linux: -O2 for the reason Windows is (the same GCC 15.2), and the C++ runtime inside the
+# program, so a player's distro and its libstdc++ do not matter; glibc stays the system's, and
+# building on 22.04's 2.35 is what lets the one program run on every newer one.
+if(MU2_LINUX_CLIENT)
+  foreach(lang C CXX)
+    string(REPLACE "-O3" "-O2" CMAKE_${lang}_FLAGS_RELEASE "${CMAKE_${lang}_FLAGS_RELEASE}")
+  endforeach()
+  add_link_options(-static-libgcc -static-libstdc++)
 endif()
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
@@ -107,12 +126,17 @@ if(APPLE AND TARGET shaderc)
     ${MU_EXTERN}/bgfx.cmake/bgfx/3rdparty/directx-headers/include/wsl/stubs)
 endif()
 
-if(WIN32)
-  # GLFW 3.4 from source (mu bootstrap), static, for Windows' window and input.
+if(WIN32 OR MU2_LINUX_CLIENT)
+  # GLFW 3.4 from source (mu bootstrap), static, for Windows' window and input -- and Linux's,
+  # X11 and Wayland both, picked when the game starts.
   set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
   set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
   set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
   set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+  if(MU2_LINUX_CLIENT)
+    set(GLFW_BUILD_X11 ON CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_WAYLAND ON CACHE BOOL "" FORCE)
+  endif()
   add_subdirectory(${MU_EXTERN}/glfw ${CMAKE_BINARY_DIR}/glfw EXCLUDE_FROM_ALL)
   target_compile_options(glfw PRIVATE -w)
 else()
@@ -127,6 +151,9 @@ endif()
 if(WIN32)
   set(MU_SHADER_PROFILE spirv)
   set(MU_SHADER_PROFILES spirv s_5_0)
+elseif(MU2_LINUX_CLIENT)
+  set(MU_SHADER_PROFILE spirv)   # Vulkan only (docs/plans/linux-release.md)
+  set(MU_SHADER_PROFILES spirv)
 else()
   set(MU_SHADER_PROFILE metal)
   set(MU_SHADER_PROFILES metal)
@@ -441,6 +468,10 @@ elseif(WIN32)
   target_sources(mu_gfx PRIVATE src/gfx/window_win.cpp)
   target_compile_definitions(mu_gfx PRIVATE GLFW_EXPOSE_NATIVE_WIN32)
   target_include_directories(mu_gfx PUBLIC ${MU_EXTERN}/bgfx.cmake/bx/include/compat/mingw)
+elseif(MU2_LINUX_CLIENT)
+  # No MetalFX and no menu bar, as on Windows: gfx/window_linux.cpp.
+  target_sources(mu_gfx PRIVATE src/gfx/window_linux.cpp)
+  target_compile_definitions(mu_gfx PRIVATE GLFW_EXPOSE_NATIVE_X11 GLFW_EXPOSE_NATIVE_WAYLAND)
 endif()
 
 # MU2Launcher (docs/plans/launcher.md, L3): signs in on the website, installs and updates the game
@@ -788,6 +819,9 @@ if(WIN32)
   target_link_libraries(mu2 PRIVATE ${MU_BINMODE} winmm)
   set_target_properties(mu2 PROPERTIES OUTPUT_NAME MU2 WIN32_EXECUTABLE TRUE)
 endif()
+if(MU2_LINUX_CLIENT)
+  set_target_properties(mu2 PROPERTIES OUTPUT_NAME MU2)
+endif()
 if(APPLE)
   target_compile_definitions(mu2 PRIVATE GLFW_EXPOSE_NATIVE_COCOA)
   target_link_libraries(mu2 PRIVATE "-framework Cocoa" "-framework Metal" "-framework MetalFX" "-framework QuartzCore" "-framework IOKit")
@@ -1015,7 +1049,7 @@ endif()
 # growing back (docs/plans/order-plan.md, sprint A).
 # Not on Windows: the checks run on the Mac, and the Windows build's own (sim_test.exe under Wine)
 # by hand (docs/plans/windows-client.md).
-if(WIN32)
+if(WIN32 OR MU2_LINUX_CLIENT)
   return()
 endif()
 add_custom_target(checks

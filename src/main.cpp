@@ -19,6 +19,11 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <timeapi.h>
+#elif defined(__linux__)
+#include <unistd.h>
+#include <spawn.h>
+#include <climits>
+extern char** environ;
 #else
 #include <mach-o/dyld.h>
 #include <spawn.h>
@@ -83,8 +88,12 @@ void startAgain(char** started) {
 #else
     setenv("MU2_PASS_COUNT", count.c_str(), 1);
     char exe[PATH_MAX] = {};
+#ifdef __linux__
+    if (readlink("/proc/self/exe", exe, sizeof exe - 1) <= 0) return;
+#else
     uint32_t size = sizeof exe;
     if (_NSGetExecutablePath(exe, &size) != 0) return;
+#endif
     pid_t child = 0;
     posix_spawn(&child, exe, nullptr, nullptr, started, environ);
 #endif

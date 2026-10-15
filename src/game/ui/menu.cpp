@@ -185,7 +185,7 @@ std::vector<int> stepsOf(int row, int now) {
         // Auto is Vulkan, and Direct3D 11 when Vulkan does not start (gfx/window.cpp).
         case kGRenderer: steps = {0, 1, 2}; break;
 #else
-        case kGRenderer: steps = {now}; break;  // the Mac draws with Metal and nothing else
+        case kGRenderer: steps = {now}; break;  // the Mac draws with Metal, Linux with Vulkan, and nothing else
 #endif
         default: return steps;
     }
@@ -231,6 +231,8 @@ std::string wordOf(int row, const Menu::Settings& set) {
         case kGRenderer:
 #ifdef _WIN32
             return set.renderer == 2 ? "Direct3D 11" : set.renderer == 1 ? "Vulkan" : "Auto";
+#elif defined(__linux__)
+            return "Vulkan";
 #else
             return "Metal";
 #endif

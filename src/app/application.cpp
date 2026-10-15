@@ -221,6 +221,8 @@ int Application::run(int argc, char** argv) {
         if (!site.empty()) {
 #ifdef _WIN32
             const char* platform = "windows";
+#elif defined(__linux__)
+            const char* platform = "linux";
 #else
             const char* platform = "macos";
 #endif
@@ -239,6 +241,10 @@ int Application::run(int argc, char** argv) {
         systemAlert("MU2", "MU2 could not start its graphics.\n\nUpdate your graphics card's driver "
                            "(NVIDIA, AMD or Intel, from their site) and try again. MU2 needs Vulkan "
                            "or DirectX 11 on Windows.");
+#elif defined(__linux__)
+        systemAlert("MU2", "MU2 could not start its graphics.\n\nMU2 needs Vulkan. Install your "
+                           "distribution's Vulkan driver (Mesa's, or NVIDIA's own) and its loader "
+                           "(libvulkan1 or vulkan-loader), then try again.");
 #else
         systemAlert("MU2", "MU2 could not start its graphics.\n\nUpdate macOS and try again.");
 #endif

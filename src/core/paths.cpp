@@ -6,6 +6,11 @@
 
 #include <cstdio>
 #include <filesystem>
+#elif defined(MU2_SHIP) && defined(__linux__)
+#include <unistd.h>
+
+#include <cstdlib>
+#include <filesystem>
 #elif defined(MU2_SHIP)
 #include <mach-o/dyld.h>
 #include <unistd.h>
@@ -72,6 +77,66 @@ std::string logsFolder(const std::string& client, const std::string& user) {
             std::remove(probe.c_str());
             return logs;
         }
+    }
+    return user;
+}
+
+}  // namespace
+
+const Folders& folders() {
+    static const Folders folders = [] {
+        Folders f;
+        f.root = clientFolder();
+        f.data = f.root + "/data";
+        f.assets = f.data + "/assets";
+        f.sheets = f.data + "/sheets";
+        f.shaders = f.data + "/shaders/spirv";
+        f.fonts = f.data + "/fonts";
+        f.user = userFolder();
+        f.shots = f.user + "/shots";
+        f.crashes = logsFolder(f.root, f.user);
+        f.log = f.crashes + "/mu2.log";
+        f.run = f.user;
+        return f;
+    }();
+    return folders;
+}
+
+#elif defined(MU2_SHIP) && defined(__linux__)
+
+namespace {
+
+// Linux (docs/plans/linux-release.md): the client's folder is the one MU2 is in, with data/ and
+// logs/ beside it, as on Windows.
+std::string clientFolder() {
+    std::error_code error;
+    const std::filesystem::path exe = std::filesystem::read_symlink("/proc/self/exe", error);
+    return error ? std::string(".") : exe.parent_path().string();
+}
+
+// $XDG_DATA_HOME/MU2, which is ~/.local/share/MU2 when it is not set: the player's settings,
+// saves and shots.
+std::string userFolder() {
+    std::string folder;
+    if (const char* xdg = std::getenv("XDG_DATA_HOME"); xdg && *xdg == '/') {
+        folder = std::string(xdg) + "/MU2";
+    } else if (const char* home = std::getenv("HOME"); home && *home) {
+        folder = std::string(home) + "/.local/share/MU2";
+    } else {
+        folder = clientFolder() + "/user";
+    }
+    std::error_code error;
+    std::filesystem::create_directories(folder, error);
+    return folder;
+}
+
+// logs/ in the client's folder; where it cannot be written (an install a packager put under
+// /opt), the player's own folder.
+std::string logsFolder(const std::string& client, const std::string& user) {
+    for (const std::string& logs : {client + "/logs", user + "/logs"}) {
+        std::error_code error;
+        std::filesystem::create_directories(logs, error);
+        if (!error && ::access(logs.c_str(), W_OK) == 0) return logs;
     }
     return user;
 }

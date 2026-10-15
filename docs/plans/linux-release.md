@@ -20,6 +20,39 @@ docs/plans/launcher.md), and most of that road is already built:
 What is missing is mostly the `#else` branches that mean "the Mac" today, plus a way to build,
 test and ship without a Linux PC.
 
+## Where it stands (2026-10-15)
+
+**X1 is done, and X2 is done but for `./mu build linux`.**
+- **The machine:** OrbStack `mu2linux64`, Ubuntu 22.04.5 amd64 (glibc 2.35), with GCC 15.2 from
+  the toolchain PPA (the box's own version) and the client's dev packages.
+- **The build:** `-DMU2_LINUX_CLIENT=ON` is its own switch, so the box's server build is
+  untouched. It turns on `MU2_SHIP`, -O2 and a static libstdc++, and uses GLFW 3.4 from
+  `third_party/` with X11 and Wayland, SPIR-V shaders only, and `gfx/window_linux.cpp`.
+  ```
+  orb -m mu2linux64 sh -c 'cd <repo> && CC=gcc-15 CXX=g++-15 cmake -S . -B out/build-linux -G Ninja \
+      -DCMAKE_BUILD_TYPE=Release -DMU2_LINUX_CLIENT=ON && nice cmake --build out/build-linux --target mu2 sim_test -j 6'
+  ```
+  The whole game needed two compile fixes.
+- **What it links:** `ldd MU2` names only libz, libm and libc. GLFW opens X11 or Wayland, and bgfx
+  opens Vulkan, when the game starts.
+- **Lockstep:** `sim_test` on Linux gives all 18,162 lines the same as the Mac's once the
+  timestamps are left out.
+- **It runs:** next to the Windows dist's `data/`, on Xvfb with lavapipe, `MU2` reads the 17 packs,
+  starts Vulkan and draws the lobby as the Mac does. That runs at 0.5 fps on CPU Vulkan under
+  Rosetta, which says nothing about real machines. The live server turns it away with "Cannot
+  reach the server", as it does any game started without the launcher's ticket (protocol 32).
+  The freeze watch wrote a stack with offsets for `addr2line`.
+- **New code:**
+  - `paths.cpp` puts `data/` and `logs/` beside the program and the player's files in
+    `$XDG_DATA_HOME/MU2`;
+  - `main.cpp`'s restart reads `/proc/self/exe`;
+  - `alert.cpp` uses zenity or kdialog;
+  - start-up failures say "MU2 needs Vulkan";
+  - the Renderer row reads Vulkan;
+  - native Wayland is opt-in with `MU2_WAYLAND=1` until X6.
+
+**Next:** `./mu build linux` in `tools/mu`, then X3 on a private server port.
+
 ## What is Mac-only today, and needs a Linux half
 
 Surveyed 2026-10-15:
