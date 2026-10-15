@@ -824,6 +824,9 @@
         0.05
       ],
       "note": "The Balrog's red stream mesh."
-    }
+    },
+    "tags": [
+      "bleeds"
+    ]
   }
 }

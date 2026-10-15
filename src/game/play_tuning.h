@@ -358,9 +358,11 @@ constexpr float kCrustEyeSize = 2.0f;
 // it out and throws ten MODEL_ICE_SMALL (ZzzCharacter.cpp:3521-3528, ZzzEffectBlurSpark.cpp:449).
 // show tag "shatters": IceMonster01 (its recipe's show.tags).
 // Every other breed MU gives a BoneHead and no `c->Blood` bleeds instead: two stains by the head
-// (CreateBlood's other branch, fx/stains.h, Drawn::bleeds). So far Lorencia's breeds:
-// show tag "bleeds": BullFighter01, EliteBullFighter01, Hound01, BudgeDragon01,
-// GoldenBudgeDragon01, DarkKnight01, Lich01, Giant01.
+// (CreateBlood's other branch, fx/stains.h, Drawn::bleeds). Show tag "bleeds": every recipe whose
+// monster.model_index is a MONSTER_MODEL OpenMonsterModel gives a BoneHead (0-5, 8, 10-13, 19,
+// 21-30, 32, 34-36, 39-48, 70-72), less the Ghost, Assassin, Ice Monster and Ice Queen, the
+// skeletons (`c->Blood = true`) and the bodies that come apart with no death clip (Stone Golem,
+// Death Cow): 55 figures. Our head is the rig's Bip01 Head, not MU's BoneHead number.
 // MODEL_BUDGE_DRAGON's hop while it walks (Drawn::hops). Show tag "hops": BudgeDragon01,
 // GoldenBudgeDragon01.
 // MONSTER_GHOST, drawn seen-through: CreateMonster sets `c->Object.AlphaTarget = 0.4f`

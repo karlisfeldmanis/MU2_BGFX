@@ -204,7 +204,8 @@
   },
   "show": {
     "tags": [
-      "pierces"
+      "pierces",
+      "bleeds"
     ],
     "note": "The client's own shows for this figure, by tag (src/game: `has(\"tag\")`); sprint E4a moved them out of play_tuning.h's figure-name constants, where each tag's comment says what it draws and where MU does it."
   }
