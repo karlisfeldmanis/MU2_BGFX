@@ -560,10 +560,15 @@ void settleLauncher(const fs::path& install, bool fresh) {
         }
         core::logf("launcher: moved into %s", utf8Of(home).c_str());
     }
-    if (!fresh && !moved) return;
-
     const fs::path desktop = known(FOLDERID_Desktop);
     if (desktop.empty()) return;
+    if (!fresh && !moved) {
+        // Launchers before 4eed2ef4 had no icon, and Explorer keeps what it drew for a shortcut
+        // after the exe under it is replaced: told the shortcut changed, it reads the icon again.
+        const fs::path shortcut = desktop / "MU Classic.lnk";
+        if (fs::exists(shortcut, ec)) SHChangeNotify(SHCNE_UPDATEITEM, SHCNF_PATHW, shortcut.c_str(), nullptr);
+        return;
+    }
     const HRESULT com = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     IShellLinkW* link = nullptr;
     bool made = false;
