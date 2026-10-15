@@ -90,6 +90,11 @@ struct Recipe {
     // ribbon (subtype 18, ZzzEffectJoint.cpp:5385-5390), Velocity += 0.1 and Scale += 0.2.
     float orbitGrows = 0.0f;
     float wideGrows = 0.0f;
+    // Ours: at the end of its life the head stops where it got to and the tail runs on up into
+    // it, fading as it shortens, over the trail's own ticks -- rather than MU's ten ticks of
+    // dimming and then the whole strip gone in one frame, which on the +11 ribbon read as a pop
+    // at his head (the user, 2026-10-16).
+    bool runsOut = false;
 };
 
 // MU's level-up: fifteen flares on a ring of forty, climbing away and dimming. The circle is

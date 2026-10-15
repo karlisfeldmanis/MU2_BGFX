@@ -22,11 +22,16 @@ namespace {
 // level-up's light ('subtle but very nice'). And its ring is 58 and its cross 12, not MU's 40 and
 // 10: on our second-class suits, broad at the chest and spiked at the shoulder, a ring of 40 ran
 // inside the armour from the waist up and only its turn round the feet was seen.
-constexpr Recipe kSetRibbon{1,     58.0f, 12.0f, 100.0f, 1.6f, 1.6f, 19.0f, 0.0f,
+// 2026-10-16, the user: 'it has to be closer to armor' -- 50, picked over 45 and a ring that
+// narrows as it climbs; and it 'suddenly disappears when reaches head', so it runs out
+// (Recipe::runsOut): the tail climbs into the stopped head and fades, about 0.8 s. Then 'it has
+// to end little bit higher': 1.85 a tick, 185 units, where 1.6 stopped at 160, under his head.
+constexpr Recipe kSetRibbon{1,     50.0f, 12.0f, 100.0f, 1.85f, 1.85f, 19.0f, 0.0f,
                             false, false, false, {0.9f, 0.9f, 0.9f}, {0.4f, 0.6f, 1.0f}, 0.15f,
-                            10.0f};
-// A new one this many reference ticks after the last was thrown: its hundred, and a pause.
-constexpr float kRibbonEvery = 120.0f;
+                            10.0f, 0.0f,  0.0f,  true};
+// A new one this many reference ticks after the last was thrown: its hundred, the nineteen of its
+// tail running out, and a breath.
+constexpr float kRibbonEvery = 125.0f;
 // A flare one frame in four (ours; MU's one in twenty -- 'sparkles has to be more').
 constexpr float kFlareChance = 1.0f / 4.0f;
 // Invention, the level-up's (game/fx/aura.cpp kStrength): Flare added at 1 burned white in this

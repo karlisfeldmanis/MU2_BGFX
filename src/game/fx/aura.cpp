@@ -263,7 +263,8 @@ void Aura::update(float seconds) {
     for (Burst& b : bursts_) {
         if (!b.living) continue;
         b.age += ticks;
-        const float ends = b.r.circle ? std::max(b.r.ticks, kRingTicks) : b.r.ticks;
+        float ends = b.r.circle ? std::max(b.r.ticks, kRingTicks) : b.r.ticks;
+        if (b.r.runsOut) ends = std::max(ends, b.r.ticks + b.r.trail);
         if (b.age > ends) {
             b.living = false;
             if (guarding_ >= 0 && &b == &bursts_[guarding_]) guarding_ = -1;
@@ -325,15 +326,22 @@ void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
     for (const Burst& b : bursts_) {
         if (!b.living) continue;
         if (b.r.circle) gatherCircle(effects, ground, b);
-        if (b.age > b.r.ticks) continue;
+        // Past its life a strip that runs out (Recipe::runsOut) is drawn from where its head
+        // stopped, `over` ticks back, to its tail: the tail still climbing, the strip shortening.
+        const float over = b.r.runsOut ? std::max(0.0f, b.age - b.r.ticks) : 0.0f;
+        if (b.age > b.r.ticks && !b.r.runsOut) continue;
 
         // Light *= 1/1.3 a tick while under ten ticks of LifeTime are left, one light for all
-        // fifteen: the same curve, read at the burst's age rather than multiplied down.
+        // fifteen: the same curve, read at the burst's age rather than multiplied down. One that
+        // runs out keeps its light through its life and loses it as it shortens instead.
         const float light =
-            kStrength * std::pow(kDim, std::max(0.0f, b.age - (b.r.ticks - kDims)));
-        // How long the trail is, in ticks: it grows from nothing to its own length and holds.
-        const float length = std::min(b.age, b.r.trail);
-        if (length <= 0.0f) continue;
+            b.r.runsOut
+                ? kStrength * (1.0f - smoothstep(0.0f, b.r.trail, over))
+                : kStrength * std::pow(kDim, std::max(0.0f, b.age - (b.r.ticks - kDims)));
+        // How long the trail is, in ticks: it grows from nothing to its own length and holds,
+        // and running out, shrinks to nothing as its tail reaches the head.
+        const float length = std::min(b.age, b.r.trail) - over;
+        if (length <= 0.0f || light <= 0.0f) continue;
         const int steps = std::max(1, int(std::ceil(length * float(kSamples))));
         const float half = (b.r.wide + b.r.wideGrows * b.age) * 0.5f * b.per;
         const float up[3] = {0.0f, 1.0f, 0.0f};
@@ -396,12 +404,12 @@ void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
         for (int k = 0; k < b.r.joints; ++k) {
             const Joint& j = b.joints[k];
             float p0[3], p1[3];
-            at(b, j, 0.0f, p0);
+            at(b, j, over, p0);
             float u0 = 1.0f;
             for (int s = 1; s <= steps; ++s) {
-                const float back = length * float(s) / float(steps);
+                const float back = over + length * float(s) / float(steps);
                 at(b, j, back, p1);
-                const float u1 = (length - back) / length;
+                const float u1 = (length - (back - over)) / length;
                 segment(p0, p1, up, u0, u1, true);        // the upright strip
                 segment(p0, p1, b.across, u0, u1, false); // and the flat one across it
                 std::copy(p1, p1 + 3, p0);
