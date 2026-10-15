@@ -261,6 +261,7 @@ void PlayMode::warmItems() {
 }
 
 bool PlayMode::open(Context& ctx) {
+    hudHidden_ = ctx.args.noHud;  // --no-hud: a scripted picture's F11
     core::Args& args = ctx.args;
     const std::string& assets = ctx.paths.assets;
 

@@ -151,6 +151,7 @@ void printUsage() {
         "  --no-fps                  no frame rate in the corner (already off with --still, "
         "--budget or --stats)\n"
         "  --fps                     the frame rate anyway, in a run that would have it off\n"
+        "  --no-hud                  the world with the HUD hidden, as F11 hides it (F11 or H shows it)\n"
         "  --category WORD           world|monsters|people|armour|weapons|wings|parts\n"
         "  --plus N                  the viewer's items at +N, 0 to 15: the refinement shine\n"
         "  --windows LIST            open these from the first frame: inventory,character; menu,\n"
@@ -630,6 +631,8 @@ Args parseArgs(int argc, char** argv) {
         } else if (!std::strcmp(s, "--no-fps")) {
             a.fps = false;
             a.fpsAsked = true;
+        } else if (!std::strcmp(s, "--no-hud")) {
+            a.noHud = true;
         } else if (!std::strcmp(s, "--turns")) {
             if (const char* v = next(s)) a.turns = std::atoi(v);
         } else if (!std::strcmp(s, "--effects")) {

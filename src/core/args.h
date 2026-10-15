@@ -326,6 +326,8 @@ struct Args {
     // --spin, where the script sets a default and the person running it takes it back.
     bool fps = true;
     bool fpsAsked = false;  // --fps or --no-fps was named, so the run's own kind does not decide
+    // --no-hud: the world opens with the HUD hidden, as F11 hides it -- a scripted picture's.
+    bool noHud = false;
 
     // The transparent pass's probe: N effect sprites in front of the camera, so that a pass
     // which has no account yet can be priced against the same scene with it empty.
