@@ -21,6 +21,10 @@ if (args.Length == 0)
               The skeleton, the bone each built vertex is bound to, and the animation
               tracks. --actions selects which; the default is the rest pose alone, and
               'all' is rarely what anyone wants — player.bmd has 284.
+
+          check-bmd <folder> [--all]
+              Reads every .bmd under the folder and lists those that do not come out as
+              a model, by version; proves a decryption. --all lists every failure.
         """);
 
     return 1;
@@ -32,6 +36,7 @@ try
     {
         "export-obj" => ObjCommands.ExportObj(args[1..]),
         "export-rig" => RigCommands.ExportRig(args[1..]),
+        "check-bmd" => CheckCommands.CheckBmd(args[1..]),
         _ => Unknown(args[0]),
     };
 }

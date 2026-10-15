@@ -10,8 +10,8 @@ namespace MuAssets.Models;
 /// <remarks>
 /// The file opens with the ASCII tag <c>BMD</c> and a version byte. Version 10
 /// stores its body in the clear; version 12 stores a 32-bit payload length
-/// followed by a map-encrypted body. Version 14 uses a different key and is not
-/// handled here.
+/// followed by a map-encrypted body. Version 14, the later seasons', stores the same
+/// length followed by a body wrapped by Webzen's ModulusCryptor (<see cref="ModulusCrypt"/>).
 /// <para>
 /// The body is a straight dump of the client's in-memory structs, so records are
 /// laid out with C struct padding — see the <c>ByteLength</c> constants on the
@@ -72,8 +72,17 @@ public static class BmdReader
             }
 
             case VersionWebzenEncrypted:
-                throw new NotSupportedException(
-                    "BMD version 14 uses a separate encryption key and is not supported yet.");
+            {
+                var payloadLength = BinaryPrimitives.ReadInt32LittleEndian(file[4..]);
+                if (payloadLength < 0 || 8 + payloadLength > file.Length)
+                {
+                    throw new InvalidDataException(
+                        $"Encrypted payload declares {payloadLength} bytes but only {file.Length - 8} remain.");
+                }
+
+                var decrypted = ModulusCrypt.Decrypt(file.Slice(8, payloadLength));
+                return ParseBody(decrypted, version);
+            }
 
             default:
                 throw new NotSupportedException($"Unknown BMD version {version}.");
