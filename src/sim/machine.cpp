@@ -354,7 +354,8 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             j.zen = kMixZenPerPoint * j.rate;
             if (j.nearest == Recipe::Wings) {
                 j.target = s.chaosWeaponCell;
-                j.success = firstWingName(kin);
+                // Any of the three (Realm::mix), not his class's alone.
+                j.success = "Wings of Elf, Heaven or Satan";
             } else {
                 j.success = "A Chaos weapon, +0 to +4";
             }

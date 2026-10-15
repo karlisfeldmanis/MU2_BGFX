@@ -1919,9 +1919,9 @@ void testCastLock(const content::Tables& tables) {
         check(sim::skillIndexOf(sim::skill::kFlame) + 1 == sim::skillIndexOf(sim::skill::kEvilSpirit),
               "and its row is past the elf's, so no save's learned bit moves");
         const sim::SkillRow& spirit = *sim::skillNumbered(sim::skill::kEvilSpirit);
-        check(spirit.wizardry && spirit.primary() && spirit.damage == 45 && spirit.mana == 60 &&
+        check(spirit.wizardry && spirit.primary() && spirit.damage == 45 && spirit.mana == 30 &&
                   spirit.built && spirit.kin == sim::Kin::DarkWizard,
-              "Evil Spirit is a no-cooldown spell of forty-five damage and sixty mana");
+              "Evil Spirit is a no-cooldown spell of forty-five damage and thirty mana");
         check(sim::skillIndexOf(sim::skill::kEvilSpirit) + 1 ==
                   sim::skillIndexOf(sim::skill::kHellfire),
               "and its row is past Flame's");
@@ -7537,7 +7537,7 @@ void testChaosMachine() {
         checkEqual(sim::castleMaterialLevel(31), 1, "a level 31 monster drops +1");
         checkEqual(sim::castleMaterialLevel(32), 2, "a level 32 one +2");
         checkEqual(sim::castleMaterialLevel(83), 6, "83 +6");
-        checkEqual(sim::castleMaterialLevel(84), 7, "84 +7, which no box takes");
+        checkEqual(sim::castleMaterialLevel(84), 6, "84 +6 too: no castle takes a +7 (the user, 2026-10-13)");
         // Run by the Goblin until one is made: the box goes either way.
         for (int cell = 0; cell < sim::kMachineCells; ++cell) {
             if (!realm.machine()[cell].empty()) realm.takeOut(cell);
@@ -7696,13 +7696,10 @@ void testChaosMachine() {
             sim::Judged w = sim::judge(noria, wings, sim::Service::Combine, -1, sim::Kin::DarkKnight);
             check(w.recipe == sim::Recipe::Wings, "a +4 Chaos weapon with an option and a Chaos are wings");
             checkEqual(w.target, 0, "worked on the Chaos weapon");
-            check(w.success == "Wings of Satan", "a knight's are the Wings of Satan");
-            check(sim::judge(noria, wings, sim::Service::Combine, -1, sim::Kin::DarkWizard).success ==
-                      "Wings of Heaven",
-                  "a wizard's the Wings of Heaven");
-            check(sim::judge(noria, wings, sim::Service::Combine, -1, sim::Kin::FairyElf).success ==
-                      "Wings of Elf",
-                  "an elf's the Wings of Elf");
+            // Any of the three, whatever the class (the user, 2026-10-13: MU's mix is not his class's).
+            check(w.success == "Wings of Elf, Heaven or Satan", "a knight's are any of the three wings");
+            check(sim::judge(noria, wings, sim::Service::Combine, -1, sim::Kin::FairyElf).success == w.success,
+                  "and an elf's the same three");
             const int64_t wingWorth = sim::mixValue(noria, chaosAxe) + 40000;
             checkEqual(w.rate, int(std::min<int64_t>(100, wingWorth / 20000)),
                        "at the Chaos Weapon's rate, the old price over 20,000");
@@ -8809,6 +8806,19 @@ void testRunes(const content::Tables& tables) {
         check(sim::brokerable(tables, realm.satchel()[sword]) == sim::BrokerNo::Yes, "and on the market");
         check(realm.refine(paid, sword) && realm.satchel()[sword].bound, "a quest's rune binds it");
         check(sim::brokerable(tables, realm.satchel()[sword]) == sim::BrokerNo::Bound, "and off the market");
+    }
+
+    // A scroll a quest pays is the market's, one a merchant sells is not (the user, 2026-10-13:
+    // "fix it", then "but dont put orbs whoich is on vendor").
+    {
+        const int32_t spirit = tables.itemAt(15, 8), damage = tables.itemAt(12, 10);
+        check(spirit >= 0 && damage >= 0, "the Scroll of Evil Spirit and the Orb of Greater Damage are rows");
+        sim::Held one;
+        one.item = spirit;
+        one.durability = 1;
+        check(sim::brokerable(tables, one) == sim::BrokerNo::Yes, "a quest's Scroll of Evil Spirit, dropped, is listed");
+        one.item = damage;
+        check(sim::brokerable(tables, one) == sim::BrokerNo::Kind, "an Orb of Greater Damage, on the elf's shelf, is not");
     }
 
     // A knight in the hunting ground, swinging at the nearest thing: with a power worn, some of
@@ -12073,6 +12083,10 @@ void testParty(const content::Tables& tables) {
           "a full set party of five, 300% and the tenth on top");
     check(std::abs(sim::partyExperience(20, 500, 5, false) - solo * 2.2 * sim::kFullPartyBonus) < 1e-6,
           "a full party of no set, 220% and the tenth");
+    // A raid of ten (sim::kRaidMost; the user chose "Whole raid shares"): the five's percent and
+    // tenth, reckoned once and split ten ways.
+    check(std::abs(sim::partyExperience(20, 1000, 10, false) - solo * 2.2 * sim::kFullPartyBonus) < 1e-6,
+          "a raid of ten in view: the full party's 220% and tenth, shared ten ways");
 
     // Through the realm: a knight kills a Spider beside a wizard of his party, who is on Marlon's
     // quest; a stranger stands beside them, and a member stands far off.
@@ -12572,6 +12586,27 @@ void testPartyWire() {
               back.members[0].world == "devias" && back.members[0].here == 12 &&
               back.members[0].health == 80 && back.members[0].bot && back.members[1].here == 0,
           "a party's state parses back whole");
+    // A raid of ten crosses too, its flag after the members (protocol 30).
+    {
+        std::vector<uint8_t> raidBytes;
+        net::PartyState raid;
+        raid.raid = true;
+        for (int i = 0; i < sim::kRaidMost; ++i) {
+            raid.members.push_back({"Raider" + std::to_string(i), uint8_t(sim::Kin::DarkKnight), 300, "lorencia", 0, 90, 50, true});
+        }
+        net::put(raidBytes, raid);
+        net::PartyState raidBack;
+        net::Kind raidKind{};
+        std::vector<uint8_t> raidBody;
+        check(net::take(raidBytes, raidKind, raidBody) == 1 && net::parse(raidBody, raidBack) && raidBack.raid &&
+                  raidBack.members.size() == size_t(sim::kRaidMost) && raidBack.members[9].name == "Raider9",
+              "a raid of ten parses back, a raid");
+        raid.members.push_back(raid.members.front());
+        raidBytes.clear();
+        net::put(raidBytes, raid);
+        check(net::take(raidBytes, raidKind, raidBody) == 1 && !net::parse(raidBody, raidBack),
+              "eleven is no raid's state");
+    }
     net::Tick read;
     check(net::take(bytes, kind, body) == 1 && kind == net::Kind::Tick && net::parse(body, read) &&
               read.commands.size() == 1 && read.commands[0].kind == sim::Command::Kind::PartySet &&

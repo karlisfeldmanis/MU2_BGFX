@@ -154,13 +154,18 @@ bool Realm::mix(Service service, int socket) {
         }
     }
     if (j.recipe == Recipe::Wings) {
-        // The hero's class's wing alone (sim/machine.h), so the pick below has one choice.
-        const int32_t wing = tables_->itemAt(12, firstWingOf(hero.kin));
-        if (wing < 0) {
+        // **Any of the three, as MU's** (the user, 2026-10-13: "in original mumain not always was
+        // guarantee that wings will craft for class 100%"): the Wings of Elf, of Heaven or of
+        // Satan, the pick below one of them -- WebZen's ChaosBox draws the wing's number, not the
+        // mixer's class. One his class cannot wear is a thing to trade. It was the class's alone.
+        for (int number = 0; number < 3; ++number) {
+            const int32_t wing = tables_->itemAt(12, number);
+            if (wing >= 0) answers[choices++] = wing;
+        }
+        if (choices == 0) {
             refusal_ = std::string("no ") + firstWingName(hero.kin) + " is in this world's tables";
             return false;
         }
-        answers[choices++] = wing;
     }
     const int32_t secondWingItem =
         j.recipe == Recipe::SecondWings ? tables_->itemAt(12, secondWingOf(hero.kin)) : -1;

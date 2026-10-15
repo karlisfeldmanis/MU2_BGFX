@@ -277,7 +277,14 @@ bool Realm::treasureGround(int column, int row) const {
 // the quest rolls what it always did. Ours: MU drops the treasures from monsters of their maps
 // while the quest stands (WebZen's QuestUtil), at its own rate; this one is a proposal.
 void Realm::treasure(const Body& dead) {
-    if (!tables_ || !treasureGround(dead.column(), dead.row())) return;
+    if (!tables_) return;
+    // And Blood Castle and Devil Square, from a kill as strong as the trial's ground (the user,
+    // 2026-10-13: "allow to get 2nd quest drop from BC and DS which is in same monsters lvls as
+    // lt7 and atlans"): kTreasureLevel, LT7's Death Knight; the Death Gorgons were the slow step.
+    const bool event = tables_->map == kBloodCastleMap || tables_->map == kDevilSquareMap;
+    const bool strong = event && dead.kind >= 0 && size_t(dead.kind) < tables_->kinds.size() &&
+                        tables_->kinds[size_t(dead.kind)].level >= kTreasureLevel;
+    if (!strong && !treasureGround(dead.column(), dead.row())) return;
     for (int index = 0; index < kQuests; ++index) {
         if (me().quests[index].state != QuestState::Active) continue;
         const QuestRow& row = questAt(index);

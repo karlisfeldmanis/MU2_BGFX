@@ -233,7 +233,9 @@ int orb(int number) {
 // The jewels are priced by name, not by the curve, at MU's old values since 2026-10-11 (the user:
 // "i dont like idea that something simple as jewels cost millions"): 100k the Bless, 70k the Soul,
 // 40k the Chaos, OpenMU's SpecialItemOldValueDictionary and the machine's own (sim::mixValue);
-// 500k the Life and 400k the Creation -- our Rune -- ours, in proportion to the Bless. They were
+// 500k the Life and 400k the Creation -- our Rune -- ours, in proportion to the Bless; the Life
+// 250k since 2026-10-13 (the user: "jewel of life sell price is very hight", then "price has to be
+// decent hight but not to crazy because you can farm it in BC"). They were
 // WebZen's CItem::Value (zzzitem.cpp:1787-1806, 1.00.93): 9M, 6M, 810k, 45M and 36M, so every
 // jewel a merchant took paid a third of that and Zen flooded the realm.
 int64_t jewel(int group, int number) {
@@ -242,7 +244,7 @@ int64_t jewel(int group, int number) {
     switch (number) {
         case 13: return 100000;
         case 14: return 70000;
-        case 16: return 500000;
+        case 16: return 250000;
         case 22: return 400000;
         default: return 0;
     }

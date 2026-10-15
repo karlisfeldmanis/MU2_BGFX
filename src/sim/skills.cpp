@@ -595,9 +595,10 @@ constexpr SkillRow kRows[kSkills] = {
     // one a spirit struck ~180 on a 689-energy wizard to a Meteorite rock's ~240 (its 21 at 1.6);
     // at 1.8 a spirit is ~320. The shield's rune lets its spirits go at its own 1.0.
     //
-    // **Sixty mana**, Twister's, not 0.75's ninety (the user, 2026-10-12: "reduce the mana cost
-    // for evil spirits for DW").
-    {.number = skill::kEvilSpirit, .name = "Evil Spirit", .mana = 60, .reach = 9.0f,
+    // **Thirty mana**: Twister's sixty, not 0.75's ninety (the user, 2026-10-12: "reduce the mana
+    // cost for evil spirits for DW"), then half of that (2026-10-13: "lets reduce mana cost for
+    // evil spirits") -- the pack spell the casters are taught to open with.
+    {.number = skill::kEvilSpirit, .name = "Evil Spirit", .mana = 30, .reach = 9.0f,
      .force = 1.8f, .spread = Spread::One,
      .tells = "Lets evil spirits loose around him, which strike most of the monsters within "
               "ten tiles.",

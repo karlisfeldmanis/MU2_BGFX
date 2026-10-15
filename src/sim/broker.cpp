@@ -48,20 +48,6 @@ BrokerKind brokerKind(const content::ItemRow& row) {
     return BrokerKind::Count;
 }
 
-// Whether a quest pays this item, as a reward or one of its choices.
-static bool questPaid(const content::Tables& tables, int32_t item) {
-    for (int q = 0; q < kQuests; ++q) {
-        const QuestRow& row = questAt(q);
-        for (int i = 0; i < row.paidCount; ++i) {
-            if (row.paid[i].item && tables.itemNamed(row.paid[i].item) == item) return true;
-        }
-        for (int i = 0; i < row.choiceCount; ++i) {
-            if (row.choices[i].item && tables.itemNamed(row.choices[i].item) == item) return true;
-        }
-    }
-    return false;
-}
-
 BrokerNo brokerable(const content::Tables& tables, const Held& what) {
     if (what.empty() || size_t(what.item) >= tables.items.size()) return BrokerNo::Empty;
     const content::ItemRow& row = tables.items[size_t(what.item)];
@@ -72,9 +58,10 @@ BrokerNo brokerable(const content::Tables& tables, const Held& what) {
     if (ammunition(row) || brokerKind(row) == BrokerKind::Count) return BrokerNo::Kind;
     // An orb or a scroll no merchant sells (the user, 2026-10-12: "tech bots to sell scrolls and
     // orbs which is not on vendors so bots can use strong skills"); a shelf's own stays a shelf's.
-    // Nor one a quest pays (the user, 2026-10-12, of the Orb of Skillshot: "i doont think so is
-    // good sells becusse elfs can get that from quest").
-    if (brokerKind(row) == BrokerKind::Skills && (stocked(row.group, row.number) || questPaid(tables, what.item))) {
+    // One a quest pays is the market's again (the user, 2026-10-13: "why bots dont put scroll of
+    // evil spirits or great orb son market so much?", then "fix it"): kept off since 2026-10-12,
+    // only Poison and Nova could be listed, and spare Evil Spirits went to the merchant.
+    if (brokerKind(row) == BrokerKind::Skills && stocked(row.group, row.number)) {
         return BrokerNo::Kind;
     }
     // "Must be repaired to list" (the user, 2026-10-11).

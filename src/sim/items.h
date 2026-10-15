@@ -1279,6 +1279,10 @@ inline bool tradeable(const content::ItemRow& row, const Held& what) {
     return !what.bound && !archangelWeapon(row) && !classTreasure(row);
 }
 constexpr int kTreasureIn10000 = 200;
+// The weakest breed of the trial's ground, LT7's Death Knight: a Blood Castle or Devil Square
+// kill of this level or more may leave the treasure too (Realm::treasure). Atlans's own trial
+// breeds are 66-70.
+constexpr int kTreasureLevel = 62;
 constexpr uint32_t kLostTowerMap = 4, kAtlansMap = 7;
 // A treasure lies twice the time an ordinary drop does, so it is not lost to a fight. Ours.
 constexpr int kTreasureLingerSeconds = 120;
@@ -1291,10 +1295,12 @@ constexpr int kScrollOfArchangelIn10000 = 100;
 constexpr int kBloodBoneIn10000 = 100;
 inline bool bloodCastleMap(uint32_t map) { return map >= 11 && map <= 17; }
 // Its level by the monster's: +1 under 32, +2 under 45, +3 under 57, +4 under 68, +5 under 76,
-// +6 under 84, +7 from there (gObjMonster.cpp:5863-5900; a +7 cannot be combined at 0.97d).
+// +6 from 76 (gObjMonster.cpp:5863-5900). WebZen's +7 from 84 is ours no more (the user,
+// 2026-10-13, "+7 parts become +6"): no castle takes a +7 (kCastlesBuilt 6), so Tarkan's and
+// Icarus's kills feed the sixth castle's cloaks.
 constexpr int castleMaterialLevel(int monsterLevel) {
     return monsterLevel < 32 ? 1 : monsterLevel < 45 ? 2 : monsterLevel < 57 ? 3
-         : monsterLevel < 68 ? 4 : monsterLevel < 76 ? 5 : monsterLevel < 84 ? 6 : 7;
+         : monsterLevel < 68 ? 4 : monsterLevel < 76 ? 5 : 6;
 }
 
 // The Zen when no item comes, into the purse as every Zen here (Realm::leave). MU's is
