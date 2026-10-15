@@ -133,3 +133,54 @@ Don't redo these; do check them for regressions.
 2. Fixes for the critical ones, each tested as above and committed with a clear message.
 3. A short report for the user: what was fixed and proven, what was fixed but not proven, what is
    still open, and the builds ready to release. Don't release them.
+
+## The first pass (2026-10-15)
+
+No new crash data: the five reports on the box were all from builds before the acquire patch.
+The hunt was a reading of the code in three parts (the network, the files and the Windows
+environment, the GPU and the threads), then a fix and a Wine test for each item below. The
+tools are in that session's scratchpad: a stand-in `vulkan-1.dll` that fails the acquire, the
+surface, the swapchain or the device on a flag file and counts presents; `hold.exe` (the
+system's move loop, checked with `GUI_INMOVESIZE`); `boxtext.exe` and `boxok.exe` (read and press
+a dialog box).
+
+**Fixed and shown under Wine** (before, then after):
+
+| What | Commit | Before | After |
+|---|---|---|---|
+| Title bar held: no frames, the line unread, a false hang report | ef19f3b8 | HANG at 5.2 s, two reports | none; pings answered through 30 s |
+| Surface lost and not made again; swapchain refused | c275a873 | picture never back; Wine's assert (a PC's driver fault) | back within a frame of the fault ending |
+| Window closed while connecting: the load could not give up | a80a2a21 | 8.7 s to exit (up to ~80 s) | 0.7 s |
+| Device lost: the game vanished with no word | 5073aa58 | gone, crash report only | a box saying what to do, then gone |
+| A pack's header damaged: up to 8 GB asked for before the crash watch | 0d8f2caf | 3 s zeroing 8 GB here (bad_alloc on a small PC) | refused in 13 ms |
+
+**Fixed, not reproducible here:** the crash upload's thread meeting the static destructors at
+exit (66e4e9c5, `_Exit` in the player's Windows build); folder walks that threw part-way
+(a08ad97d, b580c87a); a refused connect on Windows 10 before 2004 (a80a2a21, `select`).
+
+**Wine traps found on the way:** a dispatched `WM_TIMER` ends Wine's keyboard move loop, so the
+hold timer is taken by a `WH_MSGFILTER` hook instead; a `MessageBoxW` with `MB_TOPMOST |
+MB_SETFOREGROUND` closes itself after ~5 s under Wine.
+
+**Still open**, most severe first:
+1. **The hang watch dumps its own process** (`core/watch_win.cpp`, `dumpInto` from `hangInto`).
+   `MiniDumpWriteDump(GetCurrentProcess())` suspends the other threads; if one holds the heap
+   or loader lock, the watcher can block for ever and a stall the game would have survived
+   becomes a freeze. The five real dumps were written fine. Fix: `PssCaptureSnapshot` and dump
+   the snapshot, or drop the .dmp for hangs. Wine may not have `PssCaptureSnapshot`.
+2. **No Vulkan pipeline cache** (`gfx/callback.h`, `cacheRead`/`cacheWrite` empty): every run
+   compiles its pipelines on the first world frame, a hitch that can file a false hang.
+3. **The server can drop a slow-loading player**: the join comes at about half the load, and
+   nothing reads the line until the load ends (`play_mode.cpp` load stages); a slow PC in a busy
+   town owes more than kStalledSeconds. Fix: pump the link between stages, or join last.
+4. **`net::take` erases the buffer's front once per frame** (`net/wire.cpp`): quadratic on a
+   big backlog, which eats into the join's 60 s.
+5. **The launcher's close waits for its worker** (`launcher/ui.cpp` `close()` joins; `check()`
+   hashes gigabytes and does not look at `stop_`): "Not Responding" on a close during Checking.
+6. **`options.txt` is written in place** (`core/args.cpp`): a power cut leaves it empty, and the
+   launcher then never gives back the card's preset. Write and rename, as saves do.
+7. **A second copy of the game** truncates the first's `mu2.log` and sends its reports twice.
+   A named mutex at start.
+8. **Non-ASCII paths** outside the UTF-8 code page (Windows before 1903): narrow strings into
+   `std::filesystem::path` in pack, files and roster; `path.string() + ".new"` in the launcher.
+   The Jānis prefix check is still not done.
