@@ -145,6 +145,7 @@ private:
     void check();
     void install();
     void playNow();
+    void start();
     void sendCrashesAfter(int delay);
     void logOut();
     void openUrl(const std::string& url);
@@ -162,6 +163,13 @@ private:
     bool reported_ = false;  // this run's machine report is away (engine.cpp reportMachine)
     Signed who_;
     Manifest manifest_;
+    // When the release was last asked about, and what follows from it: an update found is
+    // fetched as soon as the worker is free (autoInstall_), and a Play that asked first starts
+    // the game once the install is current (playAfter_). Players leave the launcher open, so it
+    // asks again on Play and every kRecheck (frame), not only when it opens.
+    Clock::time_point checkedAt_{};
+    bool autoInstall_ = false;
+    bool playAfter_ = false;
     std::vector<Entry> todo_;
     uint64_t todoBytes_ = 0;
 
@@ -300,6 +308,15 @@ void Launcher::check() {
             todoBytes_ = 0;
             for (const Entry& e : todo_) todoBytes_ += e.size;
             home_ = todo_.empty() ? Home::Ready : fresh ? Home::Install : Home::Update;
+            checkedAt_ = Clock::now();
+            // An update is fetched without asking: the game a player has is the one a fix has
+            // to reach. The first install waits for its button, where the folder is chosen.
+            if (home_ == Home::Update) autoInstall_ = true;
+            if (home_ == Home::Install) playAfter_ = false;
+            if (home_ == Home::Ready && playAfter_) {
+                playAfter_ = false;
+                start();
+            }
         });
     });
 }
@@ -321,6 +338,10 @@ void Launcher::install() {
             if (done) {
                 todo_.clear();
                 home_ = Home::Ready;
+                if (playAfter_) {
+                    playAfter_ = false;
+                    start();
+                }
             } else if (paused) {
                 home_ = Home::Paused;
             } else {
@@ -331,7 +352,18 @@ void Launcher::install() {
     });
 }
 
+// Play: the release asked about first unless that was a moment ago, so a launcher left open
+// since yesterday does not start yesterday's game. Updated if need be, then started.
 void Launcher::playNow() {
+    if (Clock::now() - checkedAt_ > std::chrono::seconds(30)) {
+        playAfter_ = true;
+        check();
+        return;
+    }
+    start();
+}
+
+void Launcher::start() {
     std::string error;
     if (!play(settings_.install, manifest_, who_, error)) {
         message_ = error;
@@ -852,6 +884,16 @@ void Launcher::frame() {
         then.swap(then_);
     }
     for (auto& f : then) f();
+    // What the worker's answers asked for, once the worker is free to take it.
+    if (!working_.load()) {
+        constexpr auto kRecheck = std::chrono::minutes(10);
+        if (autoInstall_ && home_ == Home::Update) {
+            autoInstall_ = false;
+            install();
+        } else if (screen_ == Screen::Home && home_ == Home::Ready && Clock::now() - checkedAt_ > kRecheck) {
+            check();
+        }
+    }
 
     // The pointer, in framebuffer pixels; a press on the top strip that is no button moves the window.
     double cx = 0, cy = 0;
