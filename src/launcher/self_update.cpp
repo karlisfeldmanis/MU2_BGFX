@@ -12,6 +12,11 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#elif defined(__linux__)
+#include <spawn.h>
+#include <sys/stat.h>
+#include <unistd.h>
+extern char** environ;
 #else
 #include <mach-o/dyld.h>
 #include <spawn.h>
@@ -30,7 +35,7 @@ constexpr int kMostTries = 2;
 struct Newest {
     std::string version;     // the commit it was built from, for the log
     std::string exeSha;      // the program's own hash: what a current launcher's file hashes to
-    std::string packageSha;  // what is downloaded: the exe itself on Windows, the app's tar.gz on the Mac
+    std::string packageSha;  // what is downloaded: the program itself on Windows and Linux, the app's tar.gz on the Mac
     uint64_t packageSize = 0;
 };
 
@@ -49,6 +54,10 @@ fs::path ownProgram() {
     const DWORD n = GetModuleFileNameW(nullptr, buffer.data(), DWORD(buffer.size()));
     buffer.resize(n);
     return fs::path(buffer);
+#elif defined(__linux__)
+    std::error_code ec;
+    const fs::path self = fs::read_symlink("/proc/self/exe", ec);
+    return ec ? fs::path{} : self;
 #else
     char buffer[4096];
     uint32_t size = sizeof buffer;
@@ -140,6 +149,21 @@ bool startProgram(const fs::path& exe, const std::vector<std::string>& args) {
 fs::path oldOf(const fs::path& program) {
     return program.parent_path() / (program.stem().wstring() + L".old.exe");
 }
+#elif defined(__linux__)
+// Linux replaces the program as Windows does (docs/plans/linux-release.md, X5): the new file
+// beside it, the running one renamed aside -- a running program may be -- and the new one started.
+bool startProgram(const fs::path& exe, const std::vector<std::string>& args) {
+    std::vector<std::string> copy = {exe.string()};
+    copy.insert(copy.end(), args.begin(), args.end());
+    std::vector<char*> raw;
+    for (std::string& s : copy) raw.push_back(s.data());
+    raw.push_back(nullptr);
+    pid_t pid = 0;
+    return posix_spawn(&pid, raw[0], nullptr, nullptr, raw.data(), environ) == 0;
+}
+
+fs::path oldOf(const fs::path& program) { return program.parent_path() / (program.filename().string() + ".old"); }
+fs::path freshOf(const fs::path& program) { return program.parent_path() / (program.filename().string() + ".update"); }
 #else
 // The app bundle a program runs from: .../MU2Launcher.app/Contents/MacOS/MU2Launcher.
 fs::path bundleOf(const fs::path& program) {
@@ -219,6 +243,30 @@ SelfUpdate selfUpdate(const Place& place, const std::vector<std::string>& args, 
         fs::remove(fresh, back);
         return SelfUpdate::Skipped;
     }
+#elif defined(__linux__)
+    const fs::path fresh = freshOf(program), old = oldOf(program);
+    if (access(program.parent_path().c_str(), W_OK) != 0) {
+        note = "cannot write " + utf8Of(program.parent_path());
+        return SelfUpdate::Skipped;
+    }
+    if (!fetch(place, newest, fresh, note)) return SelfUpdate::Skipped;
+    ::chmod(fresh.c_str(), 0755);
+    fs::remove(old, ec);
+    fs::rename(program, old, ec);
+    if (ec) {
+        note = "cannot move this launcher aside: " + ec.message();
+        fs::remove(fresh, ec);
+        return SelfUpdate::Skipped;
+    }
+    fs::rename(fresh, program, ec);
+    if (ec || !startProgram(program, args)) {
+        note = "the new launcher would not take its place; the old one is back";
+        std::error_code back;
+        fs::remove(program, back);
+        fs::rename(old, program, back);
+        fs::remove(fresh, back);
+        return SelfUpdate::Skipped;
+    }
 #else
     const fs::path bundle = bundleOf(program);
     if (bundle.empty()) {
@@ -283,6 +331,9 @@ void cleanAfterSelfUpdate() {
     // The old one may still be closing: then it goes on the next start.
     fs::remove(oldOf(program), ec);
     fs::remove(program.parent_path() / (program.stem().wstring() + L".update.exe"), ec);
+#elif defined(__linux__)
+    fs::remove(oldOf(program), ec);
+    fs::remove(freshOf(program), ec);
 #else
     const fs::path bundle = bundleOf(program);
     if (bundle.empty()) return;

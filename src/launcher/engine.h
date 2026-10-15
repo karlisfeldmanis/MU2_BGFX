@@ -22,6 +22,8 @@ struct Place {
     std::string web = "https://mu-classic.com";
 #ifdef _WIN32
     std::string platform = "windows";
+#elif defined(__linux__)
+    std::string platform = "linux";
 #else
     std::string platform = "macos";
 #endif

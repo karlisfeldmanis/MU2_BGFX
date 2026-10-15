@@ -362,6 +362,9 @@ def release_elsewhere(target, say, commit, protocol, files, missing, sending, ma
 
 DOWNLOADS = "/srv/mu2-web/downloads"
 LAUNCHER_FILES = ["MU2Launcher.exe", "MU2.dmg", "MU2Launcher.tar.gz", "install-macos.sh", "MU2Install.command"]
+# Linux's, when `mu dist launcher` could build it (docs/plans/linux-release.md, X5): the program, the
+# script `curl ... | sh` runs, and the menu entry's icon.
+LINUX_LAUNCHER_FILES = ["MU2Launcher-linux", "install-linux.sh", "mu2.png"]
 
 
 def release_launcher(say, dry=False):
@@ -370,7 +373,7 @@ def release_launcher(say, dry=False):
     and for the site's buttons.
 
     For each platform, /srv/mu2-web/game/launcher-<platform>/:
-      files/<sha256>   the package: MU2Launcher.exe itself; the Mac's MU2Launcher.tar.gz
+      files/<sha256>   the package: MU2Launcher.exe or MU2Launcher-linux itself; the Mac's MU2Launcher.tar.gz
       manifest.json    {"platform", "version", "built", "exe_sha256", "package": {"sha256", "size"}}
     exe_sha256 is the program's own hash, which is how a launcher knows it is current. As for the
     game: the package first, the manifest last in one rename, the previous package kept. Then the
@@ -385,7 +388,11 @@ def release_launcher(say, dry=False):
         ("macos", os.path.join(stage, "MU2Launcher.tar.gz"),
          os.path.join(stage, "MU2Launcher.app", "Contents", "MacOS", "MU2Launcher")),
     ]
-    for name in LAUNCHER_FILES:
+    files = list(LAUNCHER_FILES)
+    if os.path.isfile(os.path.join(stage, "MU2Launcher-linux")):
+        plans.append(("linux", os.path.join(stage, "MU2Launcher-linux"), os.path.join(stage, "MU2Launcher-linux")))
+        files += LINUX_LAUNCHER_FILES
+    for name in files:
         if not os.path.isfile(os.path.join(stage, name)):
             raise RuntimeError(f"no dist/launcher/{name}: run `./mu dist launcher` first")
     made = {}
@@ -419,16 +426,16 @@ def release_launcher(say, dry=False):
 
     # The site's buttons serve the same launcher.
     ssh(f"mkdir -p {DOWNLOADS}/.incoming")
-    subprocess.run(["rsync", "-a"] + [os.path.join(stage, n) for n in LAUNCHER_FILES]
+    subprocess.run(["rsync", "-a"] + [os.path.join(stage, n) for n in files]
                    + [f"{HOST}:{DOWNLOADS}/.incoming/"], check=True)
-    ssh(f"cd {DOWNLOADS} && for f in {' '.join(LAUNCHER_FILES)}; do mv -f .incoming/$f $f; done && "
-        f"rmdir .incoming && chmod a+r {' '.join(LAUNCHER_FILES)}")
-    sums = ssh(f"cd {DOWNLOADS} && sha256sum {' '.join(LAUNCHER_FILES)}")
+    ssh(f"cd {DOWNLOADS} && for f in {' '.join(files)}; do mv -f .incoming/$f $f; done && "
+        f"rmdir .incoming && chmod a+r {' '.join(files)}")
+    sums = ssh(f"cd {DOWNLOADS} && sha256sum {' '.join(files)}")
     for line in sums.splitlines():
         digest, name = line.split()
         if digest != sha256(os.path.join(stage, name)):
             raise RuntimeError(f"downloads/{name} on the box is not dist/launcher's")
-    say(f"downloads: {', '.join(LAUNCHER_FILES)}")
+    say(f"downloads: {', '.join(files)}")
 
     # As a launcher will read it.
     for platform, _, _ in plans:
@@ -442,5 +449,5 @@ def release_launcher(say, dry=False):
         length = re.search(r"(?im)^content-length:\s*(\d+)", head.stdout)
         if not length or int(length.group(1)) != manifest["package"]["size"]:
             raise RuntimeError(f"{url} is not the package's {manifest['package']['size']} bytes")
-    say(f"launcher {commit} published for windows and macos, in {time.time() - started:.0f} s")
+    say(f"launcher {commit} published for {', '.join(p for p, _, _ in plans)}, in {time.time() - started:.0f} s")
     return True, {"commit": commit, "manifests": made}

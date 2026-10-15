@@ -477,8 +477,8 @@ endif()
 # MU2Launcher (docs/plans/launcher.md, L3): signs in on the website, installs and updates the game
 # from the box, starts it. One exe: its two shaders, its fonts, the wallpaper and the logo are
 # inside it (tools/cmake/embed.py). Drawn with the game's canvas (mu_gfx), none of the game linked.
-# HTTPS is the system's: WinHTTP on Windows, libcurl on the Mac and Linux. Linux has no launcher yet
-# (docs/plans/linux-release.md, X5), but its game sends its crash reports the same way.
+# HTTPS is the system's: WinHTTP on Windows, libcurl on the Mac and Linux (opened at run time there,
+# docs/plans/linux-release.md).
 if(WIN32 OR APPLE OR MU2_LINUX_CLIENT)
   # Its two shaders for each renderer it may open on, by profile folder: spirv/ and dxbc/ on
   # Windows (Vulkan, else Direct3D 11), metal/ on the Mac. launcher/ui.cpp asks for its own.
@@ -527,7 +527,7 @@ if(WIN32 OR APPLE OR MU2_LINUX_CLIENT)
     target_sources(mu_report PRIVATE src/launcher/https_curl.cpp)
     target_link_libraries(mu_report PUBLIC CURL::libcurl)
   endif()
-  if(WIN32 OR APPLE)
+  if(WIN32 OR APPLE OR MU2_LINUX_CLIENT)
   add_executable(mu2_launcher
     src/launcher/main.cpp
     src/launcher/ui.cpp
@@ -545,13 +545,20 @@ if(WIN32 OR APPLE OR MU2_LINUX_CLIENT)
       OBJECT_DEPENDS "${CMAKE_SOURCE_DIR}/src/launcher/launcher.manifest;${CMAKE_SOURCE_DIR}/src/app/mu2.ico")
     target_link_libraries(mu2_launcher PRIVATE crypt32 shell32 ole32 uuid dxgi setupapi advapi32)
     set_target_properties(mu2_launcher PROPERTIES OUTPUT_NAME MU2Launcher WIN32_EXECUTABLE TRUE)
+  elseif(MU2_LINUX_CLIENT)
+    # Its probe asks Vulkan itself, opened by hand as bgfx opens it, with the headers bgfx carries
+    # (docs/plans/linux-release.md, X5).
+    target_sources(mu2_launcher PRIVATE src/launcher/gpu_linux.cpp)
+    target_include_directories(mu2_launcher PRIVATE ${MU_EXTERN}/bgfx.cmake/bgfx/3rdparty/khronos)
+    target_link_libraries(mu2_launcher PRIVATE ${CMAKE_DL_LIBS})
+    set_target_properties(mu2_launcher PROPERTIES OUTPUT_NAME MU2Launcher)
   else()
     target_sources(mu2_launcher PRIVATE src/launcher/gpu_mac.mm)
     target_link_libraries(mu2_launcher PRIVATE "-framework Cocoa" "-framework Metal"
       "-framework QuartzCore" "-framework IOKit")
     set_target_properties(mu2_launcher PROPERTIES OUTPUT_NAME MU2Launcher)
   endif()
-  endif()  # WIN32 OR APPLE: the launcher
+  endif()  # the launcher
 endif()
 
 # The client's line to the realm (src/client, docs/plans/order-plan.md sprint C): the Link, the

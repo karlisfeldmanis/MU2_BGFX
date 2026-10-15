@@ -99,7 +99,34 @@ then builds `MU2` from that snapshot in `mu2linux64` (`build-linux-ship/`), keep
   both. Fedora 44's GNU tar cannot write in that emulated machine ("Function not implemented");
   bsdtar can. The launcher fetches files, not the tarball, so players never meet this.
 
-**Next:** `./mu release linux` once the packs agree with the cook, then the launcher (X5).
+**The launcher, X5 (2026-10-15).** `MU2Launcher` for Linux is built from the same sources as the
+Windows and Mac ones (`MU2_LINUX_CLIENT`). It needs only libc and libm: Vulkan, libcurl and X11 are
+opened at run time.
+- **Folders.** The player's files go in `$XDG_DATA_HOME/MU2` (`~/.local/share/MU2`), the game's
+  own folder, so the first run's `options.txt` is the game's. The game goes in
+  `~/.local/share/MU2/MU Classic` and installs at once, as on the Mac. The sign-in is kept in a
+  `0600` file, as on the Mac.
+- **The probe** (`gpu_linux.cpp`) asks Vulkan through `libvulkan.so.1`, opened by hand, for the
+  card bgfx would take: its name, type, own memory, and the driver's own words ("Mesa 24.2.8").
+  The CPU's llvmpipe counts as no Vulkan, so Lowest.
+- **The window** is X11 and Vulkan, with Windows' minimise and close at the top right. Links open
+  with `xdg-open`. A window that cannot open is said in zenity or kdialog.
+- **Self-update** swaps the program as Windows does: the new file beside it, the running one
+  renamed `.old`, the new one started, and `.old` cleared on its next start.
+- **`install-linux.sh`** is written by `./mu dist launcher` and published by
+  `./mu release launcher` with `MU2Launcher-linux` and `mu2.png`, when the Linux launcher was
+  built. The site's download row has a Linux button that copies
+  `curl -fsSL https://mu-classic.com/downloads/install-linux.sh | sh`.
+- **Proven on clean Debian 12 and Fedora 44** against a scratch `web/server.py` serving a
+  hash-laid `/game/linux/`:
+  - the install command put the launcher, `mu2-launcher` and the menu entry in place;
+  - `--check` signed in, kept the sign-in (0600), read the manifest, installed 1.52 GB in 37 s,
+    verified every hash, set Lowest for llvmpipe, and sent the machine report;
+  - self-update took a newer launcher, swapped it in, started it, and cleared `.old`.
+- **Not proven:** Play against the live server, on any real GPU.
+
+**Next:** a fresh `./mu dist linux` once the packs agree with the cook. Then, with the user's word,
+`./mu release linux`, `./mu release launcher` and the site's page, and the community test (X7).
 
 ## What is Mac-only today, and needs a Linux half
 

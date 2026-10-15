@@ -40,10 +40,17 @@ Windows
 </button>
 <small>Terminal command · 1 line</small>
 </div>
+<div>
+<button id="dl-linux" class="btn btn-dark" type="button">
+<svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l6 6-6 6M12 19h8"/></svg>
+<span>Linux</span>
+</button>
+<small>Terminal command · 64-bit, Vulkan</small>
+</div>
 </div>
 <div id="copied" class="copied" role="status" hidden>
-<span style="color: var(--bone-hi)">Copied. Open <b>Terminal</b>, press ⌘V, then Return.</span>
-<code>curl -fsSL https://mu-classic.com/downloads/install-macos.sh | sh</code>
+<span id="copied-how" style="color: var(--bone-hi)">Copied. Open <b>Terminal</b>, press ⌘V, then Return.</span>
+<code id="copied-line">curl -fsSL https://mu-classic.com/downloads/install-macos.sh | sh</code>
 </div>
 </div>
 </div>
@@ -163,13 +170,24 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
     if (file) { link.href = file.file; note.textContent = 'Installer · Windows 10/11 · ' + size(file.bytes); }
     else { link.removeAttribute('href'); link.setAttribute('aria-disabled', 'true'); note.textContent = 'Windows · coming soon'; }
   }).catch(() => {});
-  const TERMINAL = 'curl -fsSL https://mu-classic.com/downloads/install-macos.sh | sh';
-  $('dl-macos').addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(TERMINAL); }
-    catch (e) { const t = el('textarea'); t.value = TERMINAL; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
-    $('dl-macos').querySelector('span').textContent = 'Copied';
-    $('copied').hidden = false;
-  });
+  // The Mac's and Linux's installs are one line each, copied, and said how to paste.
+  const TERMINALS = {
+    'dl-macos': ['curl -fsSL https://mu-classic.com/downloads/install-macos.sh | sh',
+                 'Copied. Open <b>Terminal</b>, press ⌘V, then Return.', 'macOS'],
+    'dl-linux': ['curl -fsSL https://mu-classic.com/downloads/install-linux.sh | sh',
+                 'Copied. Open a <b>terminal</b>, press Ctrl+Shift+V, then Enter.', 'Linux'],
+  };
+  for (const [id, [line, how]] of Object.entries(TERMINALS)) {
+    $(id).addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(line); }
+      catch (e) { const t = el('textarea'); t.value = line; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+      for (const [other, [, , label]] of Object.entries(TERMINALS)) $(other).querySelector('span').textContent = label;
+      $(id).querySelector('span').textContent = 'Copied';
+      $('copied-how').innerHTML = how;
+      $('copied-line').textContent = line;
+      $('copied').hidden = false;
+    });
+  }
 
   // ---- screenshots: an endless row, the middle one large
   const SHOTS = [

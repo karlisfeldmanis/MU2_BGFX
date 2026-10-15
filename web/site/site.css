@@ -57,7 +57,7 @@ header.top { position: relative; overflow: hidden; }
 .hero h1 { margin: 0; font: 700 clamp(40px, 5.6vw, 76px)/1.05 Cinzel, serif; color: var(--bone-hi); letter-spacing: .03em;
   text-shadow: 0 2px 24px rgba(0,0,0,.6); }
 .hero p { margin: 0; max-width: 680px; font-size: 20px; line-height: 1.5; }
-.get { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; width: 100%; max-width: 460px; margin-top: 8px; }
+.get { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; width: 100%; max-width: 640px; margin-top: 8px; }
 .get > div { display: flex; flex-direction: column; gap: 6px; }
 .get small { font-size: 14px; color: var(--quiet); text-align: center; }
 .copied { max-width: 460px; display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border-radius: 4px; background: rgba(5,3,3,.85);

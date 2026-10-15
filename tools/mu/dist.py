@@ -320,6 +320,97 @@ echo "Installed in $where. Opening..."
 open "$where/MU2Launcher.app"
 """
 
+# Linux's install, from a terminal (docs/plans/linux-release.md, X5): `curl -fsSL
+# https://mu-classic.com/downloads/install-linux.sh | sh`. POSIX sh, since it is piped into sh, and
+# never root: the launcher goes in the player's own ~/.local/share/MU2/launcher, a mu2-launcher
+# command in ~/.local/bin, and a menu entry. Run again, it is the repair; after that the launcher
+# keeps itself up to date (self_update.h).
+INSTALL_LINUX_SH = r"""#!/bin/sh
+# MU Classic's launcher for Linux. Nothing here needs root.
+set -e
+site="https://mu-classic.com/downloads"
+say() { printf '%s\n' "$*"; }
+fail() { printf 'MU Classic: %s\n' "$*" >&2; exit 1; }
+
+case "$(uname -m)" in
+    x86_64|amd64) ;;
+    *) fail "this PC is $(uname -m); MU Classic runs on 64-bit PCs (x86_64) only." ;;
+esac
+glibc=$(ldd --version 2>&1 | head -n 1 | grep -o '[0-9][0-9]*\.[0-9][0-9]*$' || true)
+case "$glibc" in
+    "") fail "this system has no GNU C library (glibc); MU Classic needs glibc 2.35 or newer." ;;
+esac
+major=${glibc%%.*}; minor=${glibc#*.}
+if [ "$major" -lt 2 ] || { [ "$major" -eq 2 ] && [ "$minor" -lt 35 ]; }; then
+    fail "glibc $glibc is too old; MU Classic needs 2.35 or newer (Ubuntu 22.04, Debian 12, Fedora 36 or later)."
+fi
+
+# Vulkan: only a warning, since the launcher still opens to sign in, but the game will not start.
+vulkan=no
+for lib in /usr/lib/x86_64-linux-gnu/libvulkan.so.1 /usr/lib64/libvulkan.so.1 /usr/lib/libvulkan.so.1; do
+    [ -e "$lib" ] && vulkan=yes
+done
+if [ "$vulkan" = no ] && command -v ldconfig >/dev/null 2>&1 && ldconfig -p 2>/dev/null | grep -q 'libvulkan\.so\.1'; then
+    vulkan=yes
+fi
+if [ "$vulkan" = no ] && [ -x /sbin/ldconfig ] && /sbin/ldconfig -p 2>/dev/null | grep -q 'libvulkan\.so\.1'; then
+    vulkan=yes
+fi
+if [ "$vulkan" = no ]; then
+    distro=$( . /etc/os-release 2>/dev/null; printf '%s %s' "$ID" "$ID_LIKE")
+    case "$distro" in
+        *arch*) pkgs="vulkan-icd-loader, and vulkan-radeon, vulkan-intel or nvidia-utils for your card" ;;
+        *fedora*|*rhel*|*suse*) pkgs="vulkan-loader and mesa-vulkan-drivers (or NVIDIA's own driver)" ;;
+        *) pkgs="libvulkan1 and mesa-vulkan-drivers (or NVIDIA's own driver)" ;;
+    esac
+    say "Warning: no Vulkan found. MU Classic draws with Vulkan; install $pkgs."
+fi
+
+if command -v pgrep >/dev/null 2>&1 && pgrep -x MU2Launcher >/dev/null 2>&1; then
+    fail "the launcher is running -- close it first."
+fi
+
+data="${XDG_DATA_HOME:-$HOME/.local/share}"
+where="$data/MU2/launcher"
+mkdir -p "$where"
+fetch() {
+    if command -v curl >/dev/null 2>&1; then curl -fsSL "$1" -o "$2"
+    elif command -v wget >/dev/null 2>&1; then wget -q "$1" -O "$2"
+    else fail "neither curl nor wget is installed."; fi
+}
+say "Fetching the launcher..."
+fetch "$site/MU2Launcher-linux" "$where/.MU2Launcher.part" || fail "the download failed; check your connection and try again."
+chmod 755 "$where/.MU2Launcher.part"
+mv -f "$where/.MU2Launcher.part" "$where/MU2Launcher"
+fetch "$site/mu2.png" "$where/mu2.png" || true
+
+mkdir -p "$HOME/.local/bin"
+ln -sf "$where/MU2Launcher" "$HOME/.local/bin/mu2-launcher"
+apps="$data/applications"
+mkdir -p "$apps"
+cat > "$apps/mu-classic.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=MU Classic
+Comment=Sign in, update and play MU Classic
+Exec="$where/MU2Launcher"
+Icon=$where/mu2.png
+Terminal=false
+Categories=Game;
+EOF
+command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$apps" >/dev/null 2>&1 || true
+
+say "Installed in $where; MU Classic is in your applications menu."
+case ":$PATH:" in
+    *":$HOME/.local/bin:"*) say "From a terminal: mu2-launcher" ;;
+    *) say "From a terminal: $where/MU2Launcher (or add ~/.local/bin to your PATH for mu2-launcher)" ;;
+esac
+if [ -n "$DISPLAY" ] || [ -n "$WAYLAND_DISPLAY" ]; then
+    say "Opening..."
+    nohup "$where/MU2Launcher" >/dev/null 2>&1 &
+fi
+"""
+
 # The same install as a file to double-click, for users who will not type a command: Finder
 # opens it in Terminal, Terminal asks its own "downloaded from the Internet" question -- which
 # has an Open button, unlike Gatekeeper's app dialog -- and the script does the rest. Dropping
@@ -405,6 +496,25 @@ def dist_launcher(say):
         out.write(INSTALL_COMMAND)
     os.chmod(os.path.join(stage, "MU2Install.command"), 0o755)
     say(f"{dmg}: {total / 1e6:.0f} MB, app signed ad hoc, in {time.time() - started:.0f} s")
+
+    # Linux's beside them, from the working tree's MU2_LINUX_CLIENT build in the Ubuntu 22.04
+    # machine, stripped; the install script and the menu's icon with it (docs/plans/linux-release.md,
+    # X5). Without that machine the Linux launcher is left out, and `mu release launcher` with it.
+    linux = os.path.join(OUT, "build-linux")
+    if subprocess.run(["orb", "-m", LINUX_MACHINE, "true"], capture_output=True).returncode == 0:
+        if not os.path.exists(os.path.join(linux, "build.ninja")):
+            in_linux(f"CC=gcc-15 CXX=g++-15 cmake -S {ROOT} -B {linux} -G Ninja -DCMAKE_BUILD_TYPE=Release "
+                     f"-DMU2_LINUX_CLIENT=ON", say)
+        in_linux(f"cmake --build {linux} --target mu2_launcher", say)
+        in_linux(f"strip -o {stage}/MU2Launcher-linux {linux}/MU2Launcher", say)
+        os.chmod(os.path.join(stage, "MU2Launcher-linux"), 0o755)
+        with open(os.path.join(stage, "install-linux.sh"), "w") as out:
+            out.write(INSTALL_LINUX_SH)
+        run(["sips", "-s", "format", "png", "-z", "256", "256", os.path.join(ROOT, "src", "app", "mu2.icns"),
+             "--out", os.path.join(stage, "mu2.png")], say)
+        say(f"{stage}/MU2Launcher-linux: {os.path.getsize(os.path.join(stage, 'MU2Launcher-linux')) / 1e6:.1f} MB, stripped")
+    else:
+        say(f"no OrbStack machine {LINUX_MACHINE}: the Linux launcher was not built")
 
     # The Windows launcher beside it, from the mingw build of the working tree, stripped: what
     # `mu release launcher` publishes for both (src/launcher/self_update.h).

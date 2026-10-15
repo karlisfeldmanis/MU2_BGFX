@@ -26,7 +26,11 @@
 #else
 #include <spawn.h>
 #include <sys/stat.h>
+#ifdef __linux__
+#include <sys/sysinfo.h>
+#else
 #include <sys/sysctl.h>
+#endif
 #include <unistd.h>
 extern char** environ;
 #endif
@@ -143,6 +147,32 @@ std::string osVersion() {
     return std::to_string(version.dwMajorVersion) + "." + std::to_string(version.dwMinorVersion) + "." +
            std::to_string(version.dwBuildNumber);
 }
+#elif defined(__linux__)
+// The same three for Linux (docs/plans/linux-release.md, X5): the CPU's name from /proc/cpuinfo,
+// the machine's memory, and the distro as it names itself ("Ubuntu 24.04.1 LTS").
+std::string fieldOf(const fs::path& file, const std::string& key, char split) {
+    std::ifstream in(file);
+    std::string line;
+    while (std::getline(in, line)) {
+        if (line.rfind(key, 0) != 0) continue;
+        const size_t at = line.find(split);
+        if (at == std::string::npos) continue;
+        std::string value = line.substr(at + 1);
+        while (!value.empty() && (value.front() == ' ' || value.front() == '\t' || value.front() == '"')) value.erase(0, 1);
+        while (!value.empty() && (value.back() == '"' || value.back() == ' ')) value.pop_back();
+        return value;
+    }
+    return {};
+}
+
+std::string cpuName() { return fieldOf("/proc/cpuinfo", "model name", ':'); }
+
+int ramMb() {
+    struct sysinfo info {};
+    return sysinfo(&info) == 0 ? int((uint64_t(info.totalram) * info.mem_unit) >> 20) : 0;
+}
+
+std::string osVersion() { return fieldOf("/etc/os-release", "PRETTY_NAME", '='); }
 #else
 // The same three for a Mac (docs/plans/launcher.md, L5), from sysctl: the CPU's trade name, the
 // memory the machine sells with, and the system's own version string ("14.5").
@@ -260,6 +290,16 @@ bool kept(Signed& who) {
     who.email = line == std::string::npos ? "" : plain.substr(line + 1);
     return who.token.size() == 64;
 }
+#elif defined(__linux__)
+// $XDG_DATA_HOME/MU2, ~/.local/share/MU2 without it: the game's own user folder (core/paths.cpp),
+// so the first run's options.txt is the one the game reads.
+fs::path userFolder() {
+    if (const char* xdg = std::getenv("XDG_DATA_HOME"); xdg && *xdg == '/') return fs::path(xdg) / "MU2";
+    const char* home = std::getenv("HOME");
+    return fs::path(home ? home : ".") / ".local" / "share" / "MU2";
+}
+// Beside the player's files, in a folder of its own that an uninstall may remove whole.
+fs::path defaultInstall() { return userFolder() / "MU Classic"; }
 #else
 fs::path userFolder() {
     const char* home = std::getenv("HOME");
@@ -270,7 +310,10 @@ fs::path defaultInstall() {
     const char* home = std::getenv("HOME");
     return fs::path(home ? home : ".") / "Applications";
 }
+#endif
 
+#ifndef _WIN32
+// The Mac and Linux keep the sign-in in a file only its owner may read.
 bool keep(const Signed& who) {
     const fs::path path = userFolder() / "session";
     if (!writeFile(path, who.token + "\n" + who.email)) return false;

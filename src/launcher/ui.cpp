@@ -13,6 +13,15 @@
 #include <windows.h>
 #include <shellapi.h>
 #include <shobjidl.h>
+#elif defined(__linux__)
+// X11, as the game (gfx/window.cpp): every Wayland desktop runs it through XWayland.
+#define GLFW_EXPOSE_NATIVE_X11
+#include <spawn.h>
+#include <sys/wait.h>
+
+#include <cstdio>
+#include <initializer_list>
+extern char** environ;
 #else
 #define GLFW_EXPOSE_NATIVE_COCOA
 #include <spawn.h>
@@ -320,9 +329,10 @@ void Launcher::check() {
             checkedAt_ = Clock::now();
             // An update is fetched without asking: the game a player has is the one a fix has
             // to reach. The first install waits for its button on Windows, where the folder can
-            // be changed beside it; the Mac's is always ~/Applications, so it starts at once.
+            // be changed beside it; the Mac's is always ~/Applications and Linux's always
+            // ~/.local/share/MU2/MU Classic, so there it starts at once.
             if (home_ == Home::Update) autoInstall_ = true;
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__linux__)
             if (home_ == Home::Install) autoInstall_ = true;
 #endif
             if (home_ == Home::Install) playAfter_ = false;
@@ -472,10 +482,14 @@ void Launcher::openUrl(const std::string& url) {
 #ifdef _WIN32
     ShellExecuteW(nullptr, L"open", std::wstring(url.begin(), url.end()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 #else
+#ifdef __linux__
+    std::string open = "xdg-open", target = url;  // the desktop's own browser
+#else
     std::string open = "/usr/bin/open", target = url;
+#endif
     char* argv[] = {open.data(), target.data(), nullptr};
     pid_t pid = 0;
-    posix_spawn(&pid, open.c_str(), nullptr, nullptr, argv, environ);
+    posix_spawnp(&pid, open.c_str(), nullptr, nullptr, argv, environ);
 #endif
 }
 
@@ -640,8 +654,9 @@ void Launcher::alert(const Box& b, const std::string& message) {
 }
 
 void Launcher::drawChrome() {
-    // The window's own buttons, and the strip across its top that moves it.
-#ifdef _WIN32
+    // The window's own buttons, and the strip across its top that moves it. Linux's at the right,
+    // as Windows' are and most Linux desktops' too.
+#if defined(_WIN32) || defined(__linux__)
     const Box close{kW - 46.0f, 0, 46.0f, 32.0f}, minimise{kW - 92.0f, 0, 46.0f, 32.0f};
     for (int which = 0; which < 2; ++which) {
         const Box b = which == 0 ? minimise : close;
@@ -715,7 +730,7 @@ void Launcher::drawHome() {
     canvas_.shade(px({0, kH * 0.45f, kW, kH * 0.45f}), hex(0x0D0B0A, 0.0f), hex(0x0D0B0A, 0.0f), hex(0x0D0B0A, 0.95f),
                   hex(0x0D0B0A, 0.95f));
     canvas_.rect(px({0, kH * 0.9f, kW, kH * 0.1f + 1.0f}), hex(0x0D0B0A, 0.95f));
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__linux__)
     const float right = kW - 100.0f, top = 0.0f;
 #else
     const float right = kW - 30.0f, top = 4.0f;
@@ -838,8 +853,8 @@ void Launcher::drawHome() {
     }
     // The machine along the top: the adapter and the driver the game will run on, and the warning
     // when the driver is the thing in the way (docs/plans/launcher.md, L6).
-#ifdef _WIN32
-    const float machineX = x;  // Windows has no chrome at the left of the strip
+#if defined(_WIN32) || defined(__linux__)
+    const float machineX = x;  // nothing of the window's own at the left of the strip
 #else
     const float machineX = 80.0f;  // past the window's own lights, which take the first 68
 #endif
@@ -897,6 +912,9 @@ bool Launcher::open() {
 #ifdef _WIN32
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);  // for the folder picker
 #endif
+#ifdef __linux__
+    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+#endif
     if (!glfwInit()) return false;
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
@@ -932,6 +950,8 @@ bool Launcher::open() {
     // where --renderer asks. Otherwise Vulkan, and Direct3D 11 if that does not start.
     const int renderer = options_.renderer >= 0 ? options_.renderer : gpu_.renderer;
     init.type = renderer == 2 ? bgfx::RendererType::Direct3D11 : bgfx::RendererType::Vulkan;
+#elif defined(__linux__)
+    init.type = bgfx::RendererType::Vulkan;
 #else
     init.type = bgfx::RendererType::Metal;
 #endif
@@ -941,6 +961,9 @@ bool Launcher::open() {
     chain_ = init.swapChain;
 #ifdef _WIN32
     chain_.nwh = glfwGetWin32Window(window_);
+#elif defined(__linux__)
+    chain_.nwh = reinterpret_cast<void*>(uintptr_t(glfwGetX11Window(window_)));
+    chain_.ndt = glfwGetX11Display();
 #else
     chain_.nwh = glfwGetCocoaWindow(window_);
 #endif
@@ -1104,6 +1127,23 @@ int Launcher::run() {
                         L"neither Vulkan nor DirectX 11.\n\nUpdate your graphics card's driver "
                         L"(NVIDIA, AMD or Intel, from their site) and open MU2 Launcher again.",
                         L"MU Classic", MB_OK | MB_ICONWARNING);
+        }
+#elif defined(__linux__)
+        // Linux's box is the desktop's own, zenity or kdialog, as the game's (app/alert.cpp).
+        if (options_.shot.empty()) {
+            const char* text = "MU Classic could not open its window: it needs Vulkan.\n\nInstall your "
+                               "distribution's Vulkan driver (Mesa's, or NVIDIA's own) and its loader "
+                               "(libvulkan1 or vulkan-loader), then open the launcher again.";
+            std::fprintf(stderr, "MU Classic: %s\n", text);
+            const char* zenity[] = {"zenity", "--warning", "--no-wrap", "--title", "MU Classic", "--text", text, nullptr};
+            const char* kdialog[] = {"kdialog", "--title", "MU Classic", "--sorry", text, nullptr};
+            for (const char* const* line : {zenity, kdialog}) {
+                pid_t child = 0;
+                if (posix_spawnp(&child, line[0], nullptr, nullptr, const_cast<char* const*>(line), environ) != 0) continue;
+                int status = 0;
+                waitpid(child, &status, 0);
+                if (WIFEXITED(status) && WEXITSTATUS(status) != 127) break;
+            }
         }
 #endif
         return 1;
