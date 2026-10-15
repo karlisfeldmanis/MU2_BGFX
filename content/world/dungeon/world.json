@@ -80,6 +80,11 @@
         0.29
       ],
       "note": "In its cellar's warm grey rather than the castle's cold one (the user, 2026-10-02: 'really nice clouds for BC, lets alos use them on dungeon black voids')."
+    },
+    "music": {
+      "track": "/music/Dungeon.mp3",
+      "where": "everywhere",
+      "note": "MUSIC_DUNGEON, which MU plays the whole time in the Dungeon (SceneManager.cpp:1038-1045). Map-wide, against the safe-zone rule: the user, 2026-10-15, \"play Dungeon.mp3 maybe its good\"."
     }
   },
   "gates": {
