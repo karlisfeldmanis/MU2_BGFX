@@ -89,6 +89,23 @@ foreach(t bx bimg bimg_decode bimg_encode bgfx shaderc)
     target_compile_options(${t} PRIVATE -w)   # third-party warnings are not ours to fix
   endif()
 endforeach()
+# Direct3D 11's shaders (docs/plans/low-end-windows.md, P7) made on this Mac: shaderc hands the
+# HLSL to Microsoft's own d3dcompiler_47.dll, run under Wine by bgfx's d3d4linux.exe (the copy
+# beside shaderc is in the shaders block below). bgfx's header turns this on for Linux only;
+# the code is the Mac's too. tools/cmake/d3d4mac holds the one header bgfx's copy lacks.
+if(APPLE AND TARGET shaderc)
+  find_program(MU_WINE wine)
+  target_compile_definitions(shaderc PRIVATE SHADERC_CONFIG_HAS_D3DCOMPILER=1)
+  if(MU_WINE)
+    target_compile_definitions(shaderc PRIVATE D3D4LINUX_WINE="${MU_WINE}")
+  endif()
+  target_include_directories(shaderc PRIVATE
+    ${CMAKE_SOURCE_DIR}/tools/cmake/d3d4mac
+    ${MU_EXTERN}/bgfx.cmake/bgfx/3rdparty/d3d4linux/include
+    ${MU_EXTERN}/bgfx.cmake/bgfx/3rdparty/directx-headers/include/directx
+    ${MU_EXTERN}/bgfx.cmake/bgfx/3rdparty/directx-headers/include
+    ${MU_EXTERN}/bgfx.cmake/bgfx/3rdparty/directx-headers/include/wsl/stubs)
+endif()
 
 if(WIN32)
   # GLFW 3.4 from source (mu bootstrap), static, for Windows' window and input.
@@ -104,11 +121,15 @@ endif()
 
 # ---- shaders ------------------------------------------------------------------------------
 # Metal on the Mac (docs/reference/conventions.md); SPIR-V for Vulkan on Windows
-# (docs/plans/windows-client.md).
+# (docs/plans/windows-client.md), and DXBC beside it for Direct3D 11, the renderer of the cards
+# Vulkan does not serve (docs/plans/low-end-windows.md, P7). MU_SHADER_PROFILE is the folder
+# the build names; the game turns spirv into dxbc when it runs on Direct3D 11.
 if(WIN32)
   set(MU_SHADER_PROFILE spirv)
+  set(MU_SHADER_PROFILES spirv s_5_0)
 else()
   set(MU_SHADER_PROFILE metal)
+  set(MU_SHADER_PROFILES metal)
 endif()
 set(SHADER_DIR ${CMAKE_SOURCE_DIR}/shaders)
 set(SHADER_OUT ${CMAKE_BINARY_DIR}/shaders)
@@ -123,19 +144,19 @@ file(GLOB FS_FILES CONFIGURE_DEPENDS ${SHADER_DIR}/fs_*.sc)
 if(VS_FILES)
   bgfx_compile_shaders(TYPE VERTEX SHADERS ${VS_FILES}
     VARYING_DEF ${SHADER_DIR}/varying.def.sc OUTPUT_DIR ${SHADER_OUT}
-    OUT_FILES_VAR VS_OUT PROFILES ${MU_SHADER_PROFILE})
+    OUT_FILES_VAR VS_OUT PROFILES ${MU_SHADER_PROFILES})
 endif()
 if(FS_FILES)
   bgfx_compile_shaders(TYPE FRAGMENT SHADERS ${FS_FILES}
     VARYING_DEF ${SHADER_DIR}/varying.def.sc OUTPUT_DIR ${SHADER_OUT}
-    OUT_FILES_VAR FS_OUT PROFILES ${MU_SHADER_PROFILE})
+    OUT_FILES_VAR FS_OUT PROFILES ${MU_SHADER_PROFILES})
 endif()
 # Compute: the town's scenery culled and drawn by the GPU itself (gfx/scenery.h).
 file(GLOB CS_FILES CONFIGURE_DEPENDS ${SHADER_DIR}/cs_*.sc)
 if(CS_FILES)
   bgfx_compile_shaders(TYPE COMPUTE SHADERS ${CS_FILES}
     VARYING_DEF ${SHADER_DIR}/varying.def.sc OUTPUT_DIR ${SHADER_OUT}
-    OUT_FILES_VAR CS_OUT PROFILES ${MU_SHADER_PROFILE})
+    OUT_FILES_VAR CS_OUT PROFILES ${MU_SHADER_PROFILES})
 endif()
 # And the includes. bgfx_compile_shaders makes each shader depend on its own .sc and on
 # varying.def.sc and on nothing else, so an edit to common.sh, shadow.sh or lights.sh rebuilt
@@ -147,12 +168,31 @@ foreach(out ${VS_OUT} ${FS_OUT} ${CS_OUT})
   add_custom_command(OUTPUT ${out} APPEND DEPENDS ${SHADER_INCLUDES})
   # SPIR-V's buffer types renamed apart from their variables, for MoltenVK under Wine
   # (tools/cmake/spirv_names.py).
-  if(MU_SHADER_PROFILE STREQUAL "spirv")
+  if(out MATCHES "/spirv/")
     add_custom_command(OUTPUT ${out} APPEND
       COMMAND python3 ${CMAKE_SOURCE_DIR}/tools/cmake/spirv_names.py ${out}
       DEPENDS ${CMAKE_SOURCE_DIR}/tools/cmake/spirv_names.py)
   endif()
 endforeach()
+# Direct3D's compiler and the Wine program that runs it, where the Mac's shaderc looks for them:
+# ../windows beside itself. Both ship in bgfx's tools/bin/windows.
+if(WIN32)
+  if(CMAKE_CROSSCOMPILING)
+    get_filename_component(MU_SHADERC_DIR ${MU2_HOST_SHADERC} DIRECTORY)
+  else()
+    set(MU_SHADERC_DIR $<TARGET_FILE_DIR:shaderc>)
+  endif()
+  set(MU_D3D_TOOLS ${MU_EXTERN}/bgfx.cmake/bgfx/tools/bin/windows)
+  set(MU_D3D4LINUX ${MU_SHADERC_DIR}/../windows/d3d4linux.exe ${MU_SHADERC_DIR}/../windows/d3dcompiler_47.dll)
+  add_custom_command(OUTPUT ${MU_D3D4LINUX}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${MU_SHADERC_DIR}/../windows
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      ${MU_D3D_TOOLS}/d3d4linux.exe ${MU_D3D_TOOLS}/d3dcompiler_47.dll ${MU_SHADERC_DIR}/../windows
+    DEPENDS ${MU_D3D_TOOLS}/d3d4linux.exe ${MU_D3D_TOOLS}/d3dcompiler_47.dll)
+  foreach(out ${VS_OUT} ${FS_OUT} ${CS_OUT})
+    add_custom_command(OUTPUT ${out} APPEND DEPENDS ${MU_D3D4LINUX})
+  endforeach()
+endif()
 add_custom_target(mu2_shaders DEPENDS ${VS_OUT} ${FS_OUT} ${CS_OUT})
 
 endif()  # NOT MU2_SERVER_ONLY: bgfx, glfw, shaders
@@ -408,10 +448,18 @@ endif()
 # inside it (tools/cmake/embed.py). Drawn with the game's canvas (mu_gfx), none of the game linked.
 # HTTPS is the system's: WinHTTP on Windows, libcurl on the Mac.
 if(WIN32 OR APPLE)
-  set(MU_LAUNCHER_SHADERS ${SHADER_OUT}/${MU_SHADER_PROFILE})
-  set(MU_LAUNCHER_EMBED
-    vs_overlay.sc.bin=${MU_LAUNCHER_SHADERS}/vs_overlay.sc.bin
-    fs_interface.sc.bin=${MU_LAUNCHER_SHADERS}/fs_interface.sc.bin
+  # Its two shaders for each renderer it may open on, by profile folder: spirv/ and dxbc/ on
+  # Windows (Vulkan, else Direct3D 11), metal/ on the Mac. launcher/ui.cpp asks for its own.
+  set(MU_LAUNCHER_EMBED)
+  foreach(profile ${MU_SHADER_PROFILES})
+    if(profile STREQUAL "s_5_0")
+      set(profile dxbc)
+    endif()
+    list(APPEND MU_LAUNCHER_EMBED
+      ${profile}/vs_overlay.sc.bin=${SHADER_OUT}/${profile}/vs_overlay.sc.bin
+      ${profile}/fs_interface.sc.bin=${SHADER_OUT}/${profile}/fs_interface.sc.bin)
+  endforeach()
+  list(APPEND MU_LAUNCHER_EMBED
     OpenSans-SemiBold.ttf=${MU_EXTERN}/OpenSans-SemiBold.ttf
     AlegreyaSansSC-Bold.ttf=${MU_EXTERN}/AlegreyaSansSC-Bold.ttf
     AlegreyaSans-Medium.ttf=${MU_EXTERN}/AlegreyaSans-Medium.ttf

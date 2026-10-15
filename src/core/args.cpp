@@ -50,6 +50,7 @@ void readOptions(Args& a) {
         else if (!std::strcmp(key, "cap") && value >= 0) a.cap = value;
         else if (!std::strcmp(key, "lights")) a.lights = value != 0;
         else if (!std::strcmp(key, "textures") && value >= 0 && value <= 1) a.textures = value;
+        else if (!std::strcmp(key, "renderer") && value >= 0 && value <= 2) a.renderer = value;
     }
     std::fclose(file);
     logf("options: %s from %s, %dx%d", a.fullscreen ? "fullscreen" : "windowed",
@@ -80,9 +81,9 @@ void saveOptions(const Args& a) {
                  a.fullscreen ? 1 : 0, a.width, a.height, a.vsync ? 1 : 0, a.volume,
                  a.fps ? 1 : 0);
     std::fprintf(file, "scale %d\nmsaa %d\nshadows %d\nssao %d\nbloom %d\nreflections %d\n"
-                       "grass %d\ncap %d\nlights %d\ntextures %d\n",
+                       "grass %d\ncap %d\nlights %d\ntextures %d\nrenderer %d\n",
                  int(a.scale * 100.0f + 0.5f), a.msaa, a.shadows, a.ssao ? 1 : 0, a.bloom ? 1 : 0,
-                 a.reflections ? 1 : 0, a.grass, a.cap, a.lights ? 1 : 0, a.textures);
+                 a.reflections ? 1 : 0, a.grass, a.cap, a.lights ? 1 : 0, a.textures, a.renderer);
     std::fclose(file);
 }
 
@@ -107,6 +108,7 @@ void printUsage() {
         "  --no-metalfx              under --scale, the present stretches the world itself,\n"
         "                            sharply: faster, and a little softer\n"
         "  --render-thread           bgfx encodes the frame on its own thread, beside the next (a frame of latency)\n"
+        "  --renderer R              Windows: auto (Vulkan, else Direct3D 11), vulkan or d3d11\n"
         "  --cpu-scenery             the town's scenery as a draw a model part, not the "
         "GPU's cull\n"
         "  --sync-gear               another player's gear loaded on the frame, not on a worker\n"
@@ -347,6 +349,16 @@ Args parseArgs(int argc, char** argv) {
             a.safe = true;
         } else if (!std::strcmp(s, "--render-thread")) {
             a.renderThread = true;
+        } else if (!std::strcmp(s, "--renderer")) {
+            if (const char* v = next(s)) {
+                if (!std::strcmp(v, "auto")) a.renderer = 0;
+                else if (!std::strcmp(v, "vulkan")) a.renderer = 1;
+                else if (!std::strcmp(v, "d3d11")) a.renderer = 2;
+                else {
+                    logError("--renderer takes auto, vulkan or d3d11, not '%s'", v);
+                    a.valid = false;
+                }
+            }
         } else if (!std::strcmp(s, "--bench-fight")) {
             a.benchFight = true;
         } else if (!std::strcmp(s, "--bench-players")) {

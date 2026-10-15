@@ -150,8 +150,11 @@ bool Window::open(const WindowDesc& desc) {
     // lets the game say why (application.cpp, "could not start its graphics").
     init.fallback = false;
 #ifdef _WIN32
-    // Vulkan on Windows, the renderer Wine on this Mac runs for real (docs/plans/windows-client.md).
-    init.type = bgfx::RendererType::Vulkan;
+    // Vulkan on Windows, the renderer Wine on this Mac runs for real (docs/plans/windows-client.md),
+    // or Direct3D 11 when asked: the cards with no Vulkan or a broken one, mostly Intel's HD and
+    // UHD on old drivers (docs/plans/low-end-windows.md, P7). Its DXBC shaders ship beside the
+    // SPIR-V, so this fallback can draw ours.
+    init.type = desc.renderer == 2 ? bgfx::RendererType::Direct3D11 : bgfx::RendererType::Vulkan;
 #else
     init.type = bgfx::RendererType::Metal;  // the Mac; see docs/reference/conventions.md
 #ifndef MU2_SHIP
@@ -201,7 +204,18 @@ bool Window::open(const WindowDesc& desc) {
     // from its renderer (gfx/metalfx.mm) -- and the preloader's worker already creates through
     // bgfx's resource lock.
     if (!desc.renderThread) bgfx::renderFrame();
-    if (!bgfx::init(init)) {
+    bool up = bgfx::init(init);
+#ifdef _WIN32
+    // Auto: a machine with no Vulkan, or a driver whose Vulkan does not start, draws through
+    // Direct3D 11 instead. bgfx undoes a failed init whole, so it can be asked again.
+    if (!up && desc.renderer == 0) {
+        core::logError("graphics: Vulkan did not start; trying Direct3D 11");
+        init.type = bgfx::RendererType::Direct3D11;
+        if (!desc.renderThread) bgfx::renderFrame();
+        up = bgfx::init(init);
+    }
+#endif
+    if (!up) {
         core::logError("bgfx did not start");
         return false;
     }
@@ -502,6 +516,21 @@ void Window::pointer(float* x, float* y) const {
 
 bool Window::escapePressed() const {
     return !escapeHeld_ && !typing_ && !escapeSwallowed_ && glfwGetKey(handle_, GLFW_KEY_ESCAPE) == GLFW_PRESS;
+}
+
+const char* shaderProfile() {
+    switch (bgfx::getRendererType()) {
+        case bgfx::RendererType::Metal: return "metal";
+        case bgfx::RendererType::Direct3D11: return "dxbc";
+        default: return "spirv";
+    }
+}
+
+std::string shadersFor(const std::string& folder) {
+    const size_t slash = folder.find_last_of("/\\");
+    const std::string last = slash == std::string::npos ? folder : folder.substr(slash + 1);
+    if (last != "metal" && last != "spirv" && last != "dxbc") return folder;
+    return folder.substr(0, slash == std::string::npos ? 0 : slash + 1) + shaderProfile();
 }
 
 }  // namespace mu::gfx

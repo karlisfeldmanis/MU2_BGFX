@@ -43,7 +43,7 @@ void main()
 	// +16: both axes by the one offset (the Dark Reign Blade's blade); +32 times a weapon's
 	// chrome pass, 1 to 3 (content::Material::chromePass, shine.sh's chromePassUv).
 	float both = mod(floor(mode * 0.0625), 2.0);
-	float pass = floor(mod(mode, 256.0) / 32.0);
+	float chromePass = floor(mod(mode, 256.0) / 32.0);
 	// +256: a second slide along V at its own rate, in x; w then slides U alone.
 	float two = floor(mode / 256.0);
 	vec2 along = both > 0.5 ? vec2_splat(1.0) : vec2(alongU, 1.0 - alongU);
@@ -52,13 +52,13 @@ void main()
 	// A chrome pass: the tinted chrome image at its coordinates, added where its mask (the
 	// emissive, in the mesh's own UVs) says, at its brightness. Its w is the slide for its own
 	// UVs and MU's WorldTime * 0.001 for RENDER_CHROME4. No refinement over it: it is a chrome.
-	if (pass > 0.5)
+	if (chromePass > 0.5)
 	{
 		float fade = v_light.w >= 2.0 ? figureFade(v_light.w) : v_light.w;
-		vec2 at = chromePassUv(pass, normalize(v_normal), v_texcoord0,
+		vec2 at = chromePassUv(chromePass, normalize(v_normal), v_texcoord0,
 		                       u_material.w * along, u_material.w);
 		vec3 chrome = texture2D(s_albedo, at).rgb;
-		float mask = texture2D(s_emissive, chromePassMaskUv(pass, v_texcoord0,
+		float mask = texture2D(s_emissive, chromePassMaskUv(chromePass, v_texcoord0,
 		                                                    u_material.w * along)).r;
 		gl_FragColor = vec4(chrome * (mask * fade * u_material.z), 1.0);
 		return;

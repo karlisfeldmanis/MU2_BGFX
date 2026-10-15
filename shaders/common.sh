@@ -4,6 +4,7 @@
 #define MU2_COMMON_SH
 
 #include <bgfx_shader.sh>
+#include "fxc.sh"  // Direct3D 11's compiler, and nothing elsewhere
 
 uniform vec4 u_sunDir;      // xyz: towards the sun, world space. w: its strength
 uniform vec4 u_sunColour;   // rgb: linear. w: ambient strength

@@ -206,6 +206,7 @@ Gpu probeGpu() {
         ageDriver(gpu);
     }
     gpu.preset = presetFor(gpu);
+    gpu.renderer = rendererFor(gpu);
     for (const Adapter& one : found) {
         core::logf("launcher: gpu: %s%s, %llu MB%s", one.name.c_str(), one.software ? " (software)" : "",
                    static_cast<unsigned long long>(one.dedicated >> 20),

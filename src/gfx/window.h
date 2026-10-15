@@ -23,8 +23,17 @@ struct WindowDesc {
     // bgfx's own render thread (--render-thread): the Metal encoding of frame N runs beside the
     // game's frame N+1, for a frame of latency. Off, rendering stays on this thread.
     bool renderThread = false;
+    // core::Args::renderer: 0 Vulkan and then Direct3D 11, 1 Vulkan, 2 Direct3D 11. Windows only.
+    int renderer = 0;
     const char* title = "MU2";
 };
+
+// The shaders' folder for the renderer bgfx is running: metal, spirv or dxbc (CMakeLists.txt,
+// "shaders"). Asked after Window::open, since on Windows the renderer is known only then.
+const char* shaderProfile();
+// `folder` with its last part made shaderProfile() when that part names a profile: what the
+// build and the packs call spirv is dxbc on a Direct3D 11 run. Any other folder is kept.
+std::string shadersFor(const std::string& folder);
 
 class Window {
 public:

@@ -52,7 +52,8 @@ def source_of(logical, shaders, sheets=SHEETS):
     if top == "fonts":
         return os.path.join(EXTERN, rest)
     if top == "shaders":
-        return os.path.join(shaders, rest.partition("/")[2])
+        kind, _, name = rest.partition("/")
+        return os.path.join(shaders[kind], name)
     raise ValueError(f"no source for {logical}")
 
 
@@ -163,7 +164,8 @@ def check_manifests(root, say):
 
 def build_windows(cores, say):
     """MU2.exe, cross-compiled from the same snapshot by mingw (docs/plans/windows-client.md). Its
-    shaders are SPIR-V, made by build-ship's own shaderc, the one this Mac can run."""
+    shaders are SPIR-V and DXBC, made by build-ship's own shaderc, the one this Mac can run (DXBC
+    through Wine, CMakeLists.txt "Direct3D 11's shaders")."""
     cache = os.path.join(WIN, "CMakeCache.txt")
     if os.path.exists(cache) and f"CMAKE_HOME_DIRECTORY:INTERNAL={SNAPSHOT}\n" not in open(cache).read():
         shutil.rmtree(WIN)
@@ -178,10 +180,12 @@ def build_windows(cores, say):
     run(["cmake", "--build", WIN, "--target", "mu2", "--", f"-j{cores}"], say)
 
 
-def pack(data, shaders, profile, lists, cores, level, say):
-    """The manifest's packs into `data`, then every file read back through the game's reader."""
+def pack(data, shaders, lists, cores, level, say):
+    """The manifest's packs into `data`, then every file read back through the game's reader.
+    `shaders` is {profile: folder}, each packed as shaders/<profile>/."""
     sheets = os.path.join(SNAPSHOT, "content", "sheets")  # the commit's, since layout step 3
-    found = manifest.runtime(shaders_dir=shaders, profile=profile)
+    first, *rest = shaders.items()
+    found = manifest.runtime(shaders_dir=first[1], profile=first[0], also=dict(rest))
     if found["missing"]:
         say(f"{len(found['missing'])} files are named but not on disk; the packs go without them")
     files = sum(len(p) for p in found["packs"].values())
@@ -208,7 +212,7 @@ def pack(data, shaders, profile, lists, cores, level, say):
 
 def dist_windows(say, ref, level):
     """dist/windows/MU2/: MU2.exe, data/*.mupak and logs/, and MU2-windows.zip of it. The packs
-    are the Mac's but for the shaders, which are SPIR-V for Vulkan."""
+    are the Mac's but for the shaders: SPIR-V for Vulkan and DXBC for Direct3D 11."""
     started = time.time()
     cores, _ = settings.cores()
     made_from = snapshot(ref, say)
@@ -218,7 +222,8 @@ def dist_windows(say, ref, level):
     shutil.rmtree(client, ignore_errors=True)
     os.makedirs(os.path.join(client, "logs"))
     strip_keeping(os.path.join(WIN, "MU2.exe"), made_from, "windows", say, os.path.join(client, "MU2.exe"))
-    files, size = pack(os.path.join(client, "data"), os.path.join(WIN, "shaders", "spirv"), "spirv",
+    shaders = {"spirv": os.path.join(WIN, "shaders", "spirv"), "dxbc": os.path.join(WIN, "shaders", "dxbc")}
+    files, size = pack(os.path.join(client, "data"), shaders,
                        os.path.join(DIST, "windows", "lists"), cores, level, say)
     with open(os.path.join(client, "BUILT_FROM"), "w") as out:
         out.write(made_from + "\n")
@@ -395,7 +400,7 @@ def dist(target, say, ref="HEAD", level=12):
     bundle(app, say)
     strip_keeping(os.path.join(app, "Contents", "MacOS", "MU2"), made_from, "macos", say)
     data = os.path.join(app, "Contents", "Resources", "data")
-    files, size = pack(data, os.path.join(SHIP, "shaders", "metal"), "metal",
+    files, size = pack(data, {"metal": os.path.join(SHIP, "shaders", "metal")},
                        os.path.join(DIST, "macos", "lists"), cores, level, say)
 
     run(["codesign", "--force", "--deep", "--sign", "-", app], say)

@@ -14,6 +14,9 @@ struct UiOptions {
     // --shot FILE: a hidden window, the screen named by `shotScreen` drawn and saved, then out.
     std::string shot;
     std::string shotScreen;  // signin, error, install, downloading, ready
+    // --renderer vulkan|d3d11 (Windows): what its window draws with, over the probe's pick
+    // (gpu.h rendererFor). -1 is the probe's.
+    int renderer = -1;
     // --no-self-update: this launcher stays as it is (launcher/self_update.h).
     bool selfUpdate = true;
     // What it was started with, handed on to a newer launcher that takes its place.

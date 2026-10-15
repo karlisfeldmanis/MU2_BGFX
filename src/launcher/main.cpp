@@ -3,6 +3,7 @@
 //
 //   mu2_launcher [--site URL] [--platform P]                     the window
 //   mu2_launcher --shot FILE --screen signin|error|install|downloading|ready   one screen, saved
+//   mu2_launcher --renderer vulkan|d3d11                         Windows: the window drawn with that
 //   mu2_launcher --check [--site URL] [--platform windows] [--dir DIR] [--only TEXT] [--play]
 //
 // The email and password come from MU2_EMAIL and MU2_PASSWORD, never the command line. --only
@@ -176,6 +177,10 @@ int main(int argc, char** argv) {
         else if (a == "--only" && i + 1 < argc) only = argv[++i];
         else if (a == "--shot" && i + 1 < argc) ui.shot = argv[++i];
         else if (a == "--screen" && i + 1 < argc) ui.shotScreen = argv[++i];
+        else if (a == "--renderer" && i + 1 < argc) {
+            const std::string r = argv[++i];
+            ui.renderer = r == "d3d11" ? 2 : r == "vulkan" ? 1 : -1;
+        }
         else if (a == "--no-self-update") ui.selfUpdate = false;
     }
     // Handed on to a newer launcher: where it was pointed, and nothing else.

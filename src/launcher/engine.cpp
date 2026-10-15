@@ -322,9 +322,10 @@ bool firstRunGraphics(const Gpu& gpu) {
                              "\nbloom " + (set.bloom ? "1" : "0") + "\nreflections " +
                              (set.reflections ? "1" : "0") + "\ngrass " + std::to_string(set.grass) +
                              "\nlights " + (set.lights ? "1" : "0") + "\ntextures " +
-                             std::to_string(set.textures) + "\n";
+                             std::to_string(set.textures) + "\nrenderer " + std::to_string(gpu.renderer) + "\n";
     if (!writeFile(options, keys)) return false;
-    core::logf("launcher: graphics: first run at %s for %s", set.name, gpu.name.c_str());
+    core::logf("launcher: graphics: first run at %s on %s for %s", set.name,
+               gpu.renderer == 2 ? "Direct3D 11" : "Vulkan", gpu.name.c_str());
     return true;
 }
 
@@ -345,7 +346,8 @@ bool reportMachine(const Place& place, const Gpu& gpu, bool tuned, const std::st
         ",\"date\":" + quoted(gpu.date) + ",\"vulkan\":" + (gpu.vulkan ? "1" : "0") +
         ",\"old\":" + (gpu.driverOld ? "1" : "0") + ",\"software\":" + (gpu.software ? "1" : "0") +
         ",\"memory\":" + std::to_string(gpu.dedicated >> 20) + ",\"graphics\":" +
-        quoted(gpu.preset >= 0 ? core::kGraphicsPresets[gpu.preset].name : "") + ",\"tuned\":" +
+        quoted(gpu.preset >= 0 ? core::kGraphicsPresets[gpu.preset].name : "") +
+        ",\"renderer\":" + std::to_string(gpu.renderer) + ",\"tuned\":" +
         (tuned ? "1" : "0") + ",\"cpu\":" + quoted(cpu) + ",\"ram\":" + std::to_string(ram) +
         ",\"os\":" + quoted(os) + "}";
     std::vector<std::string> headers = {kJson};

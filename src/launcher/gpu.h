@@ -1,6 +1,6 @@
 // What the machine has to draw with (docs/plans/launcher.md, L6): the adapter the game will run
-// on, the driver behind it, and whether Vulkan -- the game's renderer on Windows (src/gfx/
-// window.cpp) -- is there at all. The probe is Windows' own (gpu_win.cpp); where there is none
+// on, the driver behind it, and whether Vulkan -- the game's first renderer on Windows, before
+// Direct3D 11 (src/gfx/window.cpp) -- is there at all. The probe is Windows' own (gpu_win.cpp); where there is none
 // `known` is false, nothing is tuned and nothing is said on the screens.
 #pragma once
 
@@ -22,6 +22,7 @@ struct Gpu {
     bool vulkan = false;     // the renderer the game needs is there: vulkan-1.dll on Windows, Metal on a Mac
     bool driverOld = false;  // kDriverYears or more behind the newest driver
     int preset = -1;         // index into core::kGraphicsPresets: what this machine should open on
+    int renderer = 0;        // core::Args::renderer: 0 Vulkan then Direct3D 11, 2 Direct3D 11
 
     // One line for the top of the home screen. The face draws ASCII and the middle dot (gfx/face.h
     // kMiddleDot) and nothing else, so the separators are \xB7 and not UTF-8.
@@ -38,6 +39,12 @@ struct Gpu {
 // one and the Vulkan loader.
 Gpu probeGpu();
 
+// Intel's integrated cards before Xe: HD and UHD Graphics, Iris Plus.
+inline bool olderIntel(const Gpu& gpu) {
+    return gpu.vendorId == 0x8086 && gpu.dedicated < (uint64_t(2) << 30) &&
+           gpu.name.find("Xe") == std::string::npos && gpu.name.find("Arc") == std::string::npos;
+}
+
 // What this machine's first run opens on. No Vulkan or no hardware adapter is Lowest; two
 // gigabytes of the adapter's own memory or more is High, less (an integrated card sharing the
 // machine's) Low, and Lowest for Intel's older integrated cards; a driver kDriverYears old or
@@ -53,11 +60,20 @@ inline int presetFor(const Gpu& gpu) {
         // at 100% (the user, 2026-10-15), and Salvi's Iris Plus G7 lost its device on Low (55-63
         // ms a frame in Lorencia's rain, then a driver reset): every Intel card before Xe opens
         // on Lowest. Iris Xe, Intel's Arc and AMD's APUs are about twice it.
-        const bool oldIntel = gpu.vendorId == 0x8086 && gpu.name.find("Xe") == std::string::npos &&
-                              gpu.name.find("Arc") == std::string::npos;
-        preset = oldIntel ? kPresetLowest : kPresetLow;
+        preset = olderIntel(gpu) ? kPresetLowest : kPresetLow;
     }
     return gpu.driverOld && preset > kPresetLowest ? preset - 1 : preset;
+}
+
+// What this machine's first run draws with (docs/plans/low-end-windows.md, P7). Direct3D 11 where
+// there is no Vulkan loader at all, and on Intel's older chips with an old driver, whose Vulkan is
+// the weak part of a driver Intel no longer develops; Direct3D 11 is the path it has been tested
+// on most. Everyone else is Vulkan, and Direct3D 11 still if Vulkan does not start
+// (gfx/window.cpp). Unmeasured on a real card: P1 decides whether the Intel rule widens.
+inline int rendererFor(const Gpu& gpu) {
+    if (!gpu.known) return 0;
+    if (!gpu.vulkan) return 2;
+    return olderIntel(gpu) && gpu.driverOld ? 2 : 0;
 }
 
 // Where this card's driver is downloaded, or "" when the vendor is not one that can be named.

@@ -241,7 +241,7 @@ def printf_glob(text):
     return re.sub(r"%0?\d*[ds]", "*", text)
 
 
-def runtime(shaders_dir=None, profile="metal"):
+def runtime(shaders_dir=None, profile="metal", also=None):
     """The runtime file set. Returns a dict:
 
       packs:     {pack: {logical path: bytes}}
@@ -252,7 +252,8 @@ def runtime(shaders_dir=None, profile="metal"):
       seconds:   how long it took
 
     `profile` is the shaders' folder in the packs: metal for the Mac, spirv for Windows
-    (docs/plans/windows-client.md).
+    (docs/plans/windows-client.md). `also` is {profile: folder} for more of them: Windows' dxbc,
+    for Direct3D 11 (docs/plans/low-end-windows.md, P7).
     """
     started = time.time()
     shaders_dir = shaders_dir or os.path.join(BUILD, "shaders", "metal")
@@ -427,11 +428,13 @@ def runtime(shaders_dir=None, profile="metal"):
                 put("common", "fonts/" + face, os.path.getsize(os.path.join(EXTERN, face)),
                     "proven", "src/" + rel_src)
     # Shaders: every .sc.bin the build made (gfx/program.h names them by stem).
-    if os.path.isdir(shaders_dir):
-        for name in sorted(os.listdir(shaders_dir)):
+    for kind, folder in {profile: shaders_dir, **(also or {})}.items():
+        if not os.path.isdir(folder):
+            continue
+        for name in sorted(os.listdir(folder)):
             if name.endswith(".sc.bin"):
-                put("common", f"shaders/{profile}/" + name,
-                    os.path.getsize(os.path.join(shaders_dir, name)), "proven", "gfx/program.h")
+                put("common", f"shaders/{kind}/" + name,
+                    os.path.getsize(os.path.join(folder, name)), "proven", "gfx/program.h")
 
     # --- 5. what is left out, and why ------------------------------------------------------
     excluded = {}

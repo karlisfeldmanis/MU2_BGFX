@@ -36,6 +36,7 @@ extern char** environ;
 #include "gfx/callback.h"
 #include "gfx/face.h"
 #include "gfx/interface.h"
+#include "gfx/window.h"  // gfx::shaderProfile
 #include "launcher/crash_upload.h"
 #include "launcher/embedded.h"
 #include "launcher/gpu.h"
@@ -52,15 +53,14 @@ constexpr float kW = 960.0f, kH = 540.0f;  // the design's units
 
 // ---- files inside the exe -----------------------------------------------------------------------
 
-std::string leaf(const std::string& path) {
-    const size_t slash = path.find_last_of("/\\");
-    return slash == std::string::npos ? path : path.substr(slash + 1);
-}
-
+// By the end of the path: a font or a picture by its leaf, a shader by its profile folder and
+// leaf ("embedded/dxbc/vs_overlay.sc.bin" is "dxbc/vs_overlay.sc.bin").
 const Embedded* find(const std::string& path) {
-    const std::string name = leaf(path);
     for (const Embedded& e : embedded()) {
-        if (name == e.name) return &e;
+        const size_t n = std::char_traits<char>::length(e.name);
+        if (path.size() >= n && path.compare(path.size() - n, n, e.name) == 0 &&
+            (path.size() == n || path[path.size() - n - 1] == '/' || path[path.size() - n - 1] == '\\'))
+            return &e;
     }
     return nullptr;
 }
@@ -844,10 +844,10 @@ void Launcher::drawHome() {
     const float machineX = 80.0f;  // past the window's own lights, which take the first 68
 #endif
     if (gpu_.known) words(machineX, 26.0f, gpu_.line(), hex(kQuiet), 13.0f);
-    if (gpu_.known && (!gpu_.vulkan || gpu_.driverOld)) {
+    // No Vulkan is no longer in the way: the game draws through Direct3D 11 then (gfx/window.cpp).
+    if (gpu_.known && gpu_.driverOld) {
         const Box warn{textX, rowY - 64.0f, 520.0f, 44.0f};
-        alert(warn, !gpu_.vulkan ? "This driver can't run the game. Update it to play."
-                                 : "Your graphics driver is old. Update it to play at full quality.");
+        alert(warn, "Your graphics driver is old. Update it to play at full quality.");
         const std::string what = "Update driver";
         if (link(warn.right() - measure(what, 15.0f) - 14.0f, warn.y + 27.0f, what, kBoneHi)) {
             const std::string url = driverUrl(gpu_);
@@ -928,11 +928,14 @@ bool Launcher::open() {
 
     bgfx::Init init;
 #ifdef _WIN32
-    init.type = bgfx::RendererType::Vulkan;
+    // As the game's first run will: Direct3D 11 where the probe said so (gpu.h rendererFor), or
+    // where --renderer asks. Otherwise Vulkan, and Direct3D 11 if that does not start.
+    const int renderer = options_.renderer >= 0 ? options_.renderer : gpu_.renderer;
+    init.type = renderer == 2 ? bgfx::RendererType::Direct3D11 : bgfx::RendererType::Vulkan;
 #else
     init.type = bgfx::RendererType::Metal;
 #endif
-    // That renderer or none (gfx/window.cpp says why): the box below, not Direct3D's crash.
+    // That renderer or the one named below, never bgfx's own pick (gfx/window.cpp says why).
     init.fallback = false;
     // The window on the swap chain, taken from init's own so its formats stay (gfx/window.cpp).
     chain_ = init.swapChain;
@@ -947,9 +950,20 @@ bool Launcher::open() {
     init.reset = BGFX_RESET_VSYNC;
     init.callback = &callback_;
     bgfx::renderFrame();
-    if (!bgfx::init(init)) return false;
+    bool up = bgfx::init(init);
+#ifdef _WIN32
+    // Direct3D 11 where Vulkan does not start, as the game does (gfx/window.cpp).
+    if (!up && renderer == 0) {
+        core::logError("launcher: Vulkan did not start; trying Direct3D 11");
+        init.type = bgfx::RendererType::Direct3D11;
+        bgfx::renderFrame();
+        up = bgfx::init(init);
+    }
+#endif
+    if (!up) return false;
     bgfxUp_ = true;
-    if (!iface_.init("embedded")) return false;
+    core::logf("launcher: drawn with %s", bgfx::getRendererName(bgfx::getRendererType()));
+    if (!iface_.init(std::string("embedded/") + gfx::shaderProfile())) return false;
     iface_.adopt(canvas_);
     if (word_.bake("AlegreyaSansSC-Bold.ttf", 48.0f, 512, 4, 1, 0)) wordTex_ = gfx::uploadFace(word_, "launcher words");
     if (body_.bake("AlegreyaSans-Medium.ttf", 48.0f, 512, 4, 1, 0)) bodyTex_ = gfx::uploadFace(body_, "launcher body");
@@ -1081,14 +1095,14 @@ int Launcher::run() {
         core::logError("launcher: the window did not open");
         close();
 #ifdef _WIN32
-        // The launcher draws with Vulkan as the game does: a PC with no Vulkan driver gets this box
-        // rather than nothing at all (the Windows audit, 2026-10-15). The home screen's own
-        // driver warning cannot be drawn without it.
+        // The launcher draws with Vulkan or Direct3D 11 as the game does: a PC with neither gets
+        // this box rather than nothing at all (the Windows audit, 2026-10-15). The home screen's
+        // own driver warning cannot be drawn without them.
         if (options_.shot.empty()) {
             MessageBoxW(nullptr,
-                        L"MU Classic could not open its window: this PC's graphics driver has no "
-                        L"Vulkan.\n\nUpdate your graphics card's driver (NVIDIA, AMD or Intel, from "
-                        L"their site) and open MU2 Launcher again.",
+                        L"MU Classic could not open its window: this PC's graphics driver runs "
+                        L"neither Vulkan nor DirectX 11.\n\nUpdate your graphics card's driver "
+                        L"(NVIDIA, AMD or Intel, from their site) and open MU2 Launcher again.",
                         L"MU Classic", MB_OK | MB_ICONWARNING);
         }
 #endif

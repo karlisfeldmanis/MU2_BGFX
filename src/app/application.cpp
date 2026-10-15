@@ -45,7 +45,10 @@ bool Application::boot() {
     desc.profileViews =
         args_.views || !args_.statsPath.empty() || !args_.budgetOverrides.empty();
     desc.renderThread = args_.renderThread;
+    desc.renderer = args_.renderer;
     if (!window_.open(desc)) return false;
+    // The build names the SPIR-V; a run that came up on Direct3D 11 reads the DXBC beside it.
+    paths_.shaders = gfx::shadersFor(paths_.shaders);
 
     textures_.createDefaults();
     // The Graphics page's Textures, read once: a change waits for the next start.
@@ -234,7 +237,7 @@ int Application::run(int argc, char** argv) {
 #ifdef _WIN32
         systemAlert("MU2", "MU2 could not start its graphics.\n\nUpdate your graphics card's driver "
                            "(NVIDIA, AMD or Intel, from their site) and try again. MU2 needs Vulkan "
-                           "on Windows.");
+                           "or DirectX 11 on Windows.");
 #else
         systemAlert("MU2", "MU2 could not start its graphics.\n\nUpdate macOS and try again.");
 #endif

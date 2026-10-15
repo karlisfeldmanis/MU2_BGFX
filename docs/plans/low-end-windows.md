@@ -95,6 +95,33 @@ it costs the picture.
 - **Drivers:** the launcher already says when the driver is years old. On Intel, an old driver
   is often a broken Vulkan driver too: say so plainly, with the download link.
 
+## P7. Direct3D 11 beside Vulkan
+
+**Built 2026-10-15** (the user: "lets do Direct3D"). bgfx already has the renderer; what was
+missing was our shaders for it. Why: Intel's HD 4000-5500 have no Vulkan on Windows at all, so
+the game could not start there; Intel's pre-Xe chips run a legacy driver whose Vulkan is its
+weakest part; and the Vulkan swap chain is where our two Windows hangs were.
+
+- **Shaders.** `cmake` on Windows makes `shaders/dxbc/` beside `shaders/spirv/` (profile
+  `s_5_0`). The Mac's shaderc compiles them with Microsoft's own `d3dcompiler_47.dll`, which
+  bgfx ships, run under Wine by bgfx's `d3d4linux.exe` (CMakeLists.txt, "Direct3D 11's
+  shaders"; `tools/cmake/d3d4mac/sal.h` is the one header bgfx's copy lacks). Two shader fixes
+  were needed, both drawing the same on Metal and Vulkan: `pass` is an HLSL keyword
+  (shine.sh's `chromePass`), and fs_outline's taps take `at`'s gradients from outside its loops
+  (`texture2DGrad`), since fxc cannot unroll loops that break.
+- **Packs.** `mu dist windows` packs both (`shaders/spirv/`, `shaders/dxbc/`).
+- **Choice.** `renderer` in options.txt, `--renderer auto|vulkan|d3d11`: 0 is Vulkan and, when
+  Vulkan does not start, Direct3D 11 in the same run (gfx/window.cpp); 2 is Direct3D 11. The
+  game reads the folder that matches what came up (`gfx::shadersFor`).
+- **Launcher.** It draws itself through the same fallback, with both of its shader pairs inside
+  it. The first run writes `renderer 2` where there is no Vulkan loader, or for an Intel chip
+  before Xe on an old driver (gpu.h `rendererFor`); its machine report carries `renderer`
+  (web/server.py keeps it once deployed). "This driver can't run the game" is gone: no Vulkan
+  is no longer that.
+- **Not done:** a Renderer row on the Graphics page; numbers from a real card (P1). Under Wine
+  on this Mac, Direct3D 11 runs through wined3d on OpenGL 4.1 -- no compute, so the scenery takes
+  its CPU path (gfx/scenery.cpp checks the caps) -- which proves it starts and draws, not its speed.
+
 ## Order
 
 P1 first, and nothing else until it has numbers. Then P2 and P6's discrete-card check (both

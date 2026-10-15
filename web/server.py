@@ -98,7 +98,7 @@ DOWNLOADS = {"windows": "MU2Launcher.exe", "macos": "MU2.dmg"}
 # and any field not named here is dropped, so the file holds what the fleet says and nothing else.
 MACHINE_KEYS = {"gpu": 160, "vendor": 8, "driver": 64, "date": 32, "cpu": 128, "os": 48,
                 "memory": 16, "ram": 16, "graphics": 16,
-                "vulkan": 4, "old": 4, "software": 4, "tuned": 4}
+                "vulkan": 4, "old": 4, "software": 4, "tuned": 4, "renderer": 4}
 # What one machine is counted by: the card, the CPU and the memory around it, and the OS.
 MACHINE_FINGERPRINT = ("gpu", "cpu", "ram", "os")
 

@@ -185,13 +185,13 @@ vec3 shineCrowAdded(float crow, vec3 n, vec3 albedo)
 //   4  RENDER_METAL's, u = n.z * 0.5 + 0.2, v = n.y * 0.5 + 0.5, on Shiny01, clamped as MU
 //      loads it; its mask is the one that slides (the Archangel's three, chromePassMaskUv)
 // in MU's axes, whose (x, y, z) is our (x, -z, y) for a normal. `seconds` is WorldTime * 0.001.
-vec2 chromePassUv(float pass, vec3 n, vec2 uv, vec2 slide, float seconds)
+vec2 chromePassUv(float chromePass, vec3 n, vec2 uv, vec2 slide, float seconds)
 {
 	float wave = u_refine.y;
-	if (pass < 1.5) return uv + slide;
+	if (chromePass < 1.5) return uv + slide;
 	vec3 m = vec3(n.x, -n.z, n.y);
-	if (pass > 3.5) return clamp(vec2(m.z * 0.5 + 0.2, m.y * 0.5 + 0.5), 0.0, 1.0);
-	if (pass < 2.5) return vec2(m.z * 0.5 + wave, m.y * 0.5 + wave * 2.0);
+	if (chromePass > 3.5) return clamp(vec2(m.z * 0.5 + 0.2, m.y * 0.5 + 0.5), 0.0, 1.0);
+	if (chromePass < 2.5) return vec2(m.z * 0.5 + wave, m.y * 0.5 + wave * 2.0);
 	vec3 l = vec3(cos(seconds), sin(seconds * 2.0), 1.0);
 	float d = dot(m, l);
 	return vec2(d + m.y * 0.5 + l.y * 3.0, 1.0 - d - (m.z * 0.5 + wave * 3.0));
@@ -199,9 +199,9 @@ vec2 chromePassUv(float pass, vec3 n, vec2 uv, vec2 slide, float seconds)
 
 // And where its mask is read: still, but for RENDER_METAL's pass, whose mask is MU's Chrome01
 // lightmap sliding over it (ZzzObject.cpp:7042-7059).
-vec2 chromePassMaskUv(float pass, vec2 uv, vec2 slide)
+vec2 chromePassMaskUv(float chromePass, vec2 uv, vec2 slide)
 {
-	return pass > 3.5 ? uv + slide : uv;
+	return chromePass > 3.5 ? uv + slide : uv;
 }
 
 // How much of a glow card a refined item's added passes may cover: where the card itself glows,

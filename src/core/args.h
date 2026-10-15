@@ -137,6 +137,12 @@ struct Args {
     // `texturesLoaded` is what this run draws with and a change waits for the next start.
     int textures = 1;
     int texturesLoaded = 1;
+    // Which of bgfx's renderers draws on Windows (docs/plans/low-end-windows.md, P7): 0 Vulkan,
+    // and Direct3D 11 when Vulkan does not start; 1 Vulkan only; 2 Direct3D 11, for the cards
+    // with no Vulkan or a broken one (Intel's HD and UHD on old drivers). Kept in options.txt as
+    // `renderer`, written there by the launcher's first pick; read once, at the window. The Mac
+    // is Metal whatever this says.
+    int renderer = 0;
 
     // The world. A name under assets/world/; empty runs the model bench instead.
     std::string world;

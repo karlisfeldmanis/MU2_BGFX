@@ -56,18 +56,25 @@ const int RINGS = 6;
 //
 // Clamping to the drawn corner reads the cleared margin instead, which is empty, and the box
 // is fitted with a margin round the model precisely so that this margin exists.
-float maskAt(vec2 uv, vec2 lo, vec2 hi)
+//
+// The mip is picked from `at`'s own gradients, taken once in main(): every tap is `at` moved
+// by an amount the same over the whole pixel quad, so its gradients are `at`'s. Read inside the
+// searches' loops, which break early, texture2D's own gradients are what Direct3D's compiler
+// cannot take (it tries to unroll the loop to find them and gives up, X3511).
+float maskAt(vec2 uv, vec2 lo, vec2 hi, vec2 dx, vec2 dy)
 {
-	return texture2D(s_mask, clamp(uv, lo, hi)).r;
+	return texture2DGrad(s_mask, clamp(uv, lo, hi), dx, dy).r;
 }
 
 void main()
 {
 	vec2 at = v_texcoord0 * u_outlineScale.xy;
+	vec2 dx = dFdx(at);
+	vec2 dy = dFdy(at);
 	// The corner of the texture this frame drew into, half a texel in from its own edge.
 	vec2 lo = u_outlinePixel.xy * 0.5;
 	vec2 hi = u_outlineScale.xy - u_outlinePixel.xy * 0.5;
-	float here = maskAt(at, lo, hi);
+	float here = maskAt(at, lo, hi, dx, dy);
 
 	float width = u_outlineParams.x;
 	float feather = u_outlineParams.y;
@@ -103,7 +110,7 @@ void main()
 			{
 				float turn = float(i) * (6.2831853 / float(STEPS));
 				vec2 along = vec2(cos(turn), sin(turn));
-				found = max(found, maskAt(at + along * u_outlinePixel.xy * span, lo, hi));
+				found = max(found, maskAt(at + along * u_outlinePixel.xy * span, lo, hi, dx, dy));
 			}
 			if (found > 0.5)
 			{
@@ -127,7 +134,7 @@ void main()
 				{
 					float turn = (float(i) + 0.5 * float(ring)) * (6.2831853 / float(STEPS));
 					vec2 along = vec2(cos(turn), sin(turn));
-					found = max(found, maskAt(at + along * u_outlinePixel.xy * span, lo, hi));
+					found = max(found, maskAt(at + along * u_outlinePixel.xy * span, lo, hi, dx, dy));
 				}
 				if (found > 0.5)
 				{
@@ -147,13 +154,13 @@ void main()
 	if (shade > 0.0)
 	{
 		vec2 from = at - u_outlineDrift.xy * u_outlinePixel.xy;
-		float sum = maskAt(from, lo, hi);
+		float sum = maskAt(from, lo, hi, dx, dy);
 		for (int i = 0; i < STEPS; i++)
 		{
 			float turn = float(i) * (6.2831853 / float(STEPS));
 			vec2 along = vec2(cos(turn), sin(turn));
-			sum += maskAt(from + along * u_outlinePixel.xy * u_outlineDrift.z * 0.35, lo, hi);
-			sum += maskAt(from + along * u_outlinePixel.xy * u_outlineDrift.z, lo, hi);
+			sum += maskAt(from + along * u_outlinePixel.xy * u_outlineDrift.z * 0.35, lo, hi, dx, dy);
+			sum += maskAt(from + along * u_outlinePixel.xy * u_outlineDrift.z, lo, hi, dx, dy);
 		}
 		dark = sum / float(1 + STEPS * 2) * shade;
 	}
