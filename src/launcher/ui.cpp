@@ -288,7 +288,7 @@ void Launcher::check() {
         // land is logged there and holds nothing else up.
         if (!reported_) {
             reported_ = true;
-            reportMachine(place_, gpu_, tuned_);
+            reportMachine(place_, gpu_, tuned_, who_.token);
         }
         const Answer still = stillSigned(place_, who_);
         if (still == Answer::Wrong) {

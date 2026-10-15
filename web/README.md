@@ -7,7 +7,7 @@ Design: the "MU2 Launcher" canvas, Website page.
 | File | What |
 | --- | --- |
 | `server.py` | the page, `/api/register`, `/api/login`, `/api/logout`, `/api/me`, `/api/ticket`, `/api/downloads`, the account page's `/api/account`, `/api/name`, `/api/password`, `/api/sessions/end`, `/api/delete`, the updates' `/api/comments`, and `/internal/ticket` for mu2_server |
-| `site/` | `index.html` (one page: download, sign up, account, updates), `posts.json` (the updates, newest first), `hero.jpg`, `shots/`, `logo.svg` and `logo.png` |
+| `site/` | `index.html` (the front page: download, screenshots, sign up, updates), `account.html` (served at `/account`: sign in, the account), `site.css` and `site.js` (what both share), `posts.json` (the updates, newest first), `hero.jpg`, `shots/`, `logo.svg` and `logo.png` |
 | `Caddyfile` | HTTPS on mu-classic.com (and still on 37.27.158.226 for launchers already out), installers from disk, the rest to server.py |
 | `mu2-web.service` | the systemd unit; accounts in `/var/lib/mu2-web/accounts.db` |
 | `deploy.sh` | HEAD's `web/` to `/opt/mu2-web`, Caddy installed if missing, both restarted |
@@ -21,7 +21,7 @@ Design: the "MU2 Launcher" canvas, Website page.
 
     accounts(id, email UNIQUE NOCASE, password 'scrypt$n$r$p$salt$key', created, name UNIQUE NOCASE)
     sessions(token_hash, account_id, created, expires, last_used, ip, agent)   -- 90 days
-    plays(account_id, at, ip)                  -- each Play (a ticket asked), 30 days
+    plays(account_id, at, ip, fp)              -- each Play (a ticket asked), 30 days, and its machine
     devices(account_id, fp, report, ip, seen)  -- a machine report sent with the account's token
     comments(id, post, account_id, text, at)   -- on the posts of site/posts.json
 
@@ -29,6 +29,12 @@ An update is a post in `site/posts.json` (id, date, title, body, changes as [kin
 New, Fixed or Improved), committed and deployed with the page. Its comments are the database's.
 The account page shows each sign-in's address with its last half hidden (`short_ip`), never whole.
 Deleting an account takes everything under it with it (ON DELETE CASCADE).
+
+A Play's machine: the launcher reports its machine as it opens and asks a ticket when Play is
+pressed, from the same address. The server keeps each address's last report in memory for six
+hours (never on disk beside the report), and a ticket asked from that address files the machine
+under the account and on the play. A launcher built after 2026-10-15 also sends its token with
+the report, which files the machine at once.
 
 The launcher posts `{email, password}` to `/api/login` and keeps the 64-hex-digit token it gets
 back. Only the token's SHA-256 is stored, and the token goes only over HTTPS: it never reaches the

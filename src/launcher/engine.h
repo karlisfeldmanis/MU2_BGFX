@@ -92,7 +92,7 @@ bool firstRunGraphics(const Gpu& gpu);
 // The machine told to the site once a run (POST /api/machine, docs/plans/launcher.md, L7): the
 // card, the driver, the memory and the OS -- the fleet the updates have to fit. Nothing about
 // who is signed in: no email, no token. True when the report landed; only the log depends on it.
-bool reportMachine(const Place& place, const Gpu& gpu, bool tuned);
+bool reportMachine(const Place& place, const Gpu& gpu, bool tuned, const std::string& token = {});
 
 // ---- the release --------------------------------------------------------------------------------
 

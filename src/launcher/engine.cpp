@@ -323,8 +323,10 @@ bool firstRunGraphics(const Gpu& gpu) {
 // The machine, told to the site once a run (web/server.py /api/machine): which card, which
 // driver behind it, what runs around it -- the fleet an update has to fit, read off
 // machines.jsonl on the box. Where no probe ran (the Mac until L5) no report goes: an empty card
-// is not fleet data, and nothing an account could be found by is ever in the body.
-bool reportMachine(const Place& place, const Gpu& gpu, bool tuned) {
+// is not fleet data, and nothing an account could be found by is ever in the body. A signed-in
+// launcher sends its token beside it, so the account page lists the machine (web/server.py);
+// the fleet's file still holds no account.
+bool reportMachine(const Place& place, const Gpu& gpu, bool tuned, const std::string& token) {
     if (!gpu.known) return false;
     const std::string cpu = cpuName(), os = osVersion();
     const int ram = ramMb();
@@ -338,7 +340,9 @@ bool reportMachine(const Place& place, const Gpu& gpu, bool tuned) {
         quoted(gpu.preset >= 0 ? core::kGraphicsPresets[gpu.preset].name : "") + ",\"tuned\":" +
         (tuned ? "1" : "0") + ",\"cpu\":" + quoted(cpu) + ",\"ram\":" + std::to_string(ram) +
         ",\"os\":" + quoted(os) + "}";
-    const Reply reply = request("POST", place.site + "/api/machine", body, {kJson});
+    std::vector<std::string> headers = {kJson};
+    if (!token.empty()) headers.push_back("Authorization: Bearer " + token);
+    const Reply reply = request("POST", place.site + "/api/machine", body, headers);
     if (reply.status != 200) {
         core::logError("launcher: machine report: %s",
                        reply.status ? ("HTTP " + std::to_string(reply.status)).c_str() : reply.error.c_str());

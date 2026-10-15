@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your account — MU Classic</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Alegreya+Sans+SC:wght@700&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+
+<div class="wrap">
+<div class="bar">
+<a href="/"><img src="/logo.svg" alt="MU Classic home" width="435" height="261"></a>
+<a href="/" style="font-weight: 500">Home</a>
+</div>
+</div>
+
+<main class="account-page">
+<div class="wrap">
+
+<!-- Signed out: sign in -->
+<div id="v-signin" class="form" hidden>
+<h1 class="page-title">Sign in</h1>
+<div id="in-alert" class="alert" role="alert" hidden></div>
+<div class="field"><label for="in-email">Email</label><input id="in-email" type="email" autocomplete="email" maxlength="254"></div>
+<div class="field"><label for="in-pass">Password</label><input id="in-pass" type="password" autocomplete="current-password" maxlength="128"></div>
+<button id="in-go" class="btn btn-red" type="button">Sign in</button>
+<span class="center muted">New here? <a href="/#account" style="color: var(--label); text-decoration: underline">Create account</a> · <button type="button" class="link" id="forgot-open">Forgot password</button></span>
+<p id="forgot" class="center muted" hidden>Password resets by email aren't ready yet. Ask for one in the <a href="https://forum.ragezone.com/threads/dev-mu-classic-%E2%80%94-modern-c-remaster-public-beta-demo-live-windows-macos.1275230/" style="color: var(--bone); text-decoration: underline" rel="noopener" target="_blank">beta thread</a>.</p>
+</div>
+
+<!-- Signed in -->
+<div id="v-account" class="form" style="gap: 20px" hidden>
+<h1 class="page-title">Your account</h1>
+<span id="a-who" class="center"></span>
+
+<div id="a-pickname" class="form" hidden>
+<span class="muted" style="font-size: 15px">Pick the name shown on your comments.</span>
+<div style="display: flex; gap: 8px; align-items: flex-start">
+<div class="field" style="flex: 1"><label for="n-name" class="sr">Name</label><input id="n-name" type="text" maxlength="16" aria-describedby="n-err"><span id="n-err" class="err"></span></div>
+<button id="n-go" class="btn btn-dark" type="button" style="min-height: 44px">Save</button>
+</div>
+</div>
+
+<div>
+<div class="muted" style="font-size: 15px">Signed in on</div>
+<div id="a-sessions"></div>
+</div>
+<div id="a-devices-box" hidden>
+<div class="muted" style="font-size: 15px">Machines</div>
+<div id="a-devices"></div>
+</div>
+<div>
+<div class="muted" style="font-size: 15px">Recent play</div>
+<div id="a-plays"></div>
+</div>
+
+<div id="p-box" class="form" hidden>
+<div id="p-done" role="status" class="muted" hidden>Password changed. Every other device was signed out.</div>
+<div class="field"><label for="p-old">Current password</label><input id="p-old" type="password" autocomplete="current-password" maxlength="128" aria-describedby="p-old-err"><span id="p-old-err" class="err"></span></div>
+<div class="field"><label for="p-new">New password</label><input id="p-new" type="password" autocomplete="new-password" maxlength="128" aria-describedby="p-new-err"><span id="p-new-err" class="err"></span></div>
+<button id="p-go" class="btn btn-red" type="button">Save password</button>
+</div>
+
+<div id="d-box" class="form" hidden>
+<span class="danger">Deletes your account and every character on it, at once. It can't be undone.</span>
+<div class="field"><label for="d-pass">Password</label><input id="d-pass" type="password" autocomplete="current-password" maxlength="128" aria-describedby="d-err"><span id="d-err" class="err"></span></div>
+<div class="field"><label for="d-confirm">Type DELETE to confirm</label><input id="d-confirm" type="text" autocomplete="off"></div>
+<button id="d-go" class="btn btn-red" type="button" disabled>Delete account</button>
+</div>
+
+<span class="center"><button type="button" class="link" id="a-password">Change password</button> <span class="muted">·</span> <button type="button" class="link" id="a-delete">Delete account</button> <span class="muted">·</span> <button type="button" class="link" id="a-out">Sign out</button></span>
+</div>
+
+</div>
+</main>
+
+<footer>
+<div class="wrap">
+<img src="/logo.svg" alt="MU Classic" width="435" height="261">
+</div>
+</footer>
+
+<script src="/site.js"></script>
+<script>
+(() => {
+  const { $, el, token, api, account, when, fieldError, alertOn, busy, OFFLINE, NAME } = MU;
+
+  function view(name) {
+    $('v-signin').hidden = name !== 'signin';
+    $('v-account').hidden = name !== 'account';
+  }
+  $('forgot-open').addEventListener('click', () => { $('forgot').hidden = false; });
+
+  // Sign in
+  async function signIn() {
+    const email = $('in-email').value.trim(), password = $('in-pass').value;
+    alertOn($('in-alert'), '');
+    $('in-alert').style.background = '';
+    if (!email || !password) return alertOn($('in-alert'), 'Enter your email and password.');
+    busy($('in-go'), 'Signing in…');
+    try {
+      const { status, said } = await api('/api/login', { email, password });
+      if (status === 200) { token.set(said.token); $('in-pass').value = ''; await load(); }
+      else alertOn($('in-alert'), said.error || 'Something went wrong. Try again in a minute.');
+    } catch (e) { alertOn($('in-alert'), OFFLINE); }
+    busy($('in-go'));
+  }
+  $('in-go').addEventListener('click', signIn);
+  $('in-pass').addEventListener('keydown', (e) => { if (e.key === 'Enter') signIn(); });
+
+  // Signed in
+  function line(title, sub, action) {
+    const row = el('div', 'line'), text = el('div');
+    text.appendChild(el('span', '', title));
+    for (const s of [].concat(sub)) if (s) text.appendChild(el('span', 'sub', s));
+    row.appendChild(text);
+    if (action) row.appendChild(action);
+    return row;
+  }
+  // The system as the launcher reports it: Windows "10.0.<build>" (22000 and later is Windows 11),
+  // the Mac its bare version ("27.0.1").
+  function osName(os) {
+    if (!os) return '';
+    if (/^10\.0\./.test(os)) return parseInt(String(os).split('.')[2] || '0', 10) >= 22000 ? 'Windows 11' : 'Windows 10';
+    if (/^\d+(\.\d+)*$/.test(os)) return 'macOS ' + os;
+    return String(os);
+  }
+  function render(a) {
+    $('a-who').textContent = (a.name ? a.name + ' · ' : '') + a.email;
+    $('a-pickname').hidden = !!a.name;
+    const sessions = $('a-sessions');
+    sessions.replaceChildren();
+    for (const s of a.sessions) {
+      let action;
+      if (s.current) action = el('span', 'sub', 'This device');
+      else {
+        action = el('button', 'link', 'Sign out');
+        action.type = 'button';
+        action.style.fontSize = '15px';
+        action.addEventListener('click', async () => { await api('/api/sessions/end', { id: s.id }); load(); });
+      }
+      sessions.appendChild(line(s.agent, (s.ip ? s.ip + ' · ' : '') + 'last ' + when(s.last), action));
+    }
+    const devices = $('a-devices');
+    devices.replaceChildren();
+    for (const d of a.devices) {
+      const card = [d.gpu, d.date ? 'driver ' + d.date : d.driver ? 'driver ' + d.driver : '', d.graphics ? 'graphics ' + d.graphics : ''].filter(Boolean).join(' · ');
+      const rest = [d.cpu, d.ram ? Math.round(d.ram / 1024) + ' GB RAM' : ''].filter(Boolean).join(' · ');
+      devices.appendChild(line(osName(d.os) || 'Machine', [card, rest, (d.ip ? d.ip + ' · ' : '') + when(d.seen)]));
+    }
+    $('a-devices-box').hidden = !a.devices.length;
+    const plays = $('a-plays');
+    plays.replaceChildren();
+    if (!a.plays.length) plays.appendChild(line('Nothing yet', 'Press Play in the launcher and it shows here.'));
+    for (const p of a.plays.slice(0, 8)) {
+      const machine = [osName(p.os), p.gpu, p.graphics ? 'graphics ' + p.graphics : ''].filter(Boolean).join(' · ');
+      plays.appendChild(line(when(p.at), [machine || 'Machine not reported', p.ip]));
+    }
+    view('account');
+  }
+  async function load() {
+    const a = await account();
+    if (a) render(a); else view('signin');
+  }
+
+  $('a-out').addEventListener('click', async () => {
+    try { await api('/api/logout', {}); } catch (e) {}
+    token.set('');
+    view('signin');
+  });
+  $('n-go').addEventListener('click', async () => {
+    const name = $('n-name').value.trim();
+    if (!NAME.test(name)) return fieldError($('n-name'), $('n-err'), '3 to 16 letters, digits or _.');
+    const { status, said } = await api('/api/name', { name });
+    if (status === 200) load(); else fieldError($('n-name'), $('n-err'), said.error || 'Try another name.');
+  });
+  $('a-password').addEventListener('click', () => { $('p-box').hidden = !$('p-box').hidden; $('d-box').hidden = true; });
+  $('a-delete').addEventListener('click', () => { $('d-box').hidden = !$('d-box').hidden; $('p-box').hidden = true; });
+  $('p-go').addEventListener('click', async () => {
+    fieldError($('p-old'), $('p-old-err'), '');
+    fieldError($('p-new'), $('p-new-err'), '');
+    if ($('p-new').value.length < 8) return fieldError($('p-new'), $('p-new-err'), 'Use at least 8 characters.');
+    busy($('p-go'), 'Saving…');
+    try {
+      const { status, said } = await api('/api/password', { old: $('p-old').value, new: $('p-new').value });
+      if (status === 200) { $('p-old').value = $('p-new').value = ''; $('p-done').hidden = false; load(); }
+      else if (said.field === 'old') fieldError($('p-old'), $('p-old-err'), said.error);
+      else fieldError($('p-new'), $('p-new-err'), said.error || 'Something went wrong.');
+    } catch (e) { fieldError($('p-new'), $('p-new-err'), OFFLINE); }
+    busy($('p-go'));
+  });
+  $('d-confirm').addEventListener('input', () => { $('d-go').disabled = $('d-confirm').value.trim() !== 'DELETE'; });
+  $('d-go').addEventListener('click', async () => {
+    fieldError($('d-pass'), $('d-err'), '');
+    busy($('d-go'), 'Deleting…');
+    try {
+      const { status, said } = await api('/api/delete', { password: $('d-pass').value });
+      if (status === 200) {
+        token.set('');
+        view('signin');
+        alertOn($('in-alert'), 'Your account was deleted.');
+        $('in-alert').style.background = '#2B221B';
+      } else fieldError($('d-pass'), $('d-err'), said.error || 'Something went wrong.');
+    } catch (e) { fieldError($('d-pass'), $('d-err'), OFFLINE); }
+    busy($('d-go'));
+    $('d-go').disabled = $('d-confirm').value.trim() !== 'DELETE';
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

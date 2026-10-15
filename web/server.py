@@ -28,7 +28,8 @@ The routes:
     GET  /api/me         Authorization: Bearer T    -> 200 {email}         | 401
     GET  /api/account    Bearer T                   -> 200 {email, name, created, sessions, devices, plays} | 401
          the account page: each sign-in (browser or launcher, its address shortened), each machine
-         its launcher reported while signed in, and each Play of the last PLAYS_DAYS days.
+         its launcher reported (with the token, or from the address that pressed Play within
+         RECENT_MACHINE_SECONDS), and each Play of the last PLAYS_DAYS days with its machine.
     POST /api/name       Bearer T {name}            -> 200 {ok} | 400 {field, error} | 409
     POST /api/password   Bearer T {old, new}        -> 200 {ok} | 400 {field, error} | 401
          every other sign-in of the account is ended; the one that asked stays.
@@ -71,6 +72,10 @@ from urllib.parse import parse_qs, urlparse
 SESSION_DAYS = 90
 # The plays an account page lists, and how long each is kept.
 PLAYS_DAYS = 30
+# A launcher reports its machine when it opens and asks a ticket when Play is pressed, both from
+# the same address; a report this recent from the address that asks is that Play's machine. The
+# address is kept only in memory and only this long, never written down beside the report.
+RECENT_MACHINE_SECONDS = 6 * 3600
 NAME = re.compile(r"^[A-Za-z0-9_]{3,16}$")
 MOST_COMMENT = 500
 # A ticket waits this long for the server to ask about it: the game starts and opens the character
@@ -132,7 +137,8 @@ CREATE INDEX IF NOT EXISTS sessions_account ON sessions(account_id);
 CREATE TABLE IF NOT EXISTS plays (
     account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
     at         INTEGER NOT NULL,
-    ip         TEXT NOT NULL
+    ip         TEXT NOT NULL,
+    fp         TEXT NOT NULL DEFAULT ''   -- the machine it was played on (devices.fp), '' unknown
 );
 CREATE INDEX IF NOT EXISTS plays_account ON plays(account_id, at);
 CREATE TABLE IF NOT EXISTS devices (
@@ -224,6 +230,8 @@ class Store:
         # and never touched by the accounts (web/README.md).
         self.machines_path = path.parent / "machines.jsonl"
         self.machine_lock = threading.Lock()
+        # The last report from each address, for RECENT_MACHINE_SECONDS (remember(), recent()).
+        self.recent_machines = {}
         # The crash reports, each a file, and a line for each in crashes.jsonl (crash()).
         self.crashes_dir = path.parent / "crashes"
         self.crashes_path = path.parent / "crashes.jsonl"
@@ -242,6 +250,8 @@ class Store:
             if "name" not in have:
                 db.execute("ALTER TABLE accounts ADD COLUMN name TEXT")
             db.execute("CREATE UNIQUE INDEX IF NOT EXISTS accounts_name ON accounts(name COLLATE NOCASE)")
+            if "fp" not in {row[1] for row in db.execute("PRAGMA table_info(plays)")}:
+                db.execute("ALTER TABLE plays ADD COLUMN fp TEXT NOT NULL DEFAULT ''")
             have = {row[1] for row in db.execute("PRAGMA table_info(sessions)")}
             for column in ("ip", "agent"):
                 if column not in have:
@@ -315,11 +325,25 @@ class Store:
         return self.db().execute("DELETE FROM sessions WHERE account_id = ? AND substr(token_hash, 1, 16) = ?",
                                  (account, sid)).rowcount > 0
 
-    def played(self, account: int, ip: str):
+    def played(self, account: int, ip: str, fp: str = ""):
         now = int(time.time())
         db = self.db()
         db.execute("DELETE FROM plays WHERE at < ?", (now - PLAYS_DAYS * 86400,))
-        db.execute("INSERT INTO plays VALUES (?, ?, ?)", (account, now, ip))
+        db.execute("INSERT INTO plays (account_id, at, ip, fp) VALUES (?, ?, ?, ?)", (account, now, ip, fp))
+
+    def remember(self, ip: str, report: dict):
+        with self.machine_lock:
+            now = time.time()
+            self.recent_machines[ip] = (now, report)
+            if len(self.recent_machines) > 5000:
+                self.recent_machines = {k: v for k, v in self.recent_machines.items()
+                                        if now - v[0] < RECENT_MACHINE_SECONDS}
+
+    def recent(self, ip: str):
+        """The machine last reported from this address, if within RECENT_MACHINE_SECONDS."""
+        with self.machine_lock:
+            seen = self.recent_machines.get(ip)
+        return seen[1] if seen and time.time() - seen[0] < RECENT_MACHINE_SECONDS else None
 
     def device(self, account: int, report: dict, ip: str):
         self.db().execute("INSERT OR REPLACE INTO devices VALUES (?, ?, ?, ?, ?)",
@@ -341,8 +365,14 @@ class Store:
             row = json.loads(report)
             devices.append({key: row.get(key) for key in ("gpu", "driver", "date", "cpu", "ram", "os", "graphics")}
                            | {"ip": short_ip(ip), "seen": seen})
-        plays = [{"at": at, "ip": short_ip(ip)} for at, ip in
-                 db.execute("SELECT at, ip FROM plays WHERE account_id = ? ORDER BY at DESC LIMIT 20", (account,))]
+        plays = []
+        for at, ip, report in db.execute(
+                "SELECT p.at, p.ip, d.report FROM plays p LEFT JOIN devices d "
+                "ON d.account_id = p.account_id AND d.fp = p.fp AND p.fp != '' "
+                "WHERE p.account_id = ? ORDER BY p.at DESC LIMIT 20", (account,)):
+            row = json.loads(report) if report else {}
+            plays.append({"at": at, "ip": short_ip(ip)} |
+                         {key: row.get(key) for key in ("gpu", "os", "graphics") if row.get(key)})
         return {"email": email, "name": name or "", "created": created, "sessions": sessions,
                 "devices": devices, "plays": plays}
 
@@ -662,6 +692,7 @@ class Handler(BaseHTTPRequestHandler):
         joined = "|".join(str(report.get(key, "")) for key in MACHINE_FINGERPRINT)
         report["fp"] = hashlib.sha256(joined.encode()).hexdigest()[:16]
         self.store.machine(report)
+        self.store.remember(self.client(), report)
         # A launcher that says its token files the machine under the account too, for the
         # account page; the fleet's file above still holds nothing about who.
         signed = self.store.session(self.bearer()) if self.bearer() else None
@@ -729,7 +760,11 @@ class Handler(BaseHTTPRequestHandler):
         if row is None:
             return self.reply(401, {"error": "signed out"})
         ticket, secret = self.store.ticket(row[0])
-        self.store.played(row[0], self.client())
+        # The Play's machine: the one this address reported as its launcher opened.
+        machine = self.store.recent(self.client())
+        if machine:
+            self.store.device(row[0], machine, self.client())
+        self.store.played(row[0], self.client(), machine["fp"] if machine else "")
         self.reply(200, {"ticket": ticket, "secret": secret})
 
     # -- the account page
@@ -861,6 +896,8 @@ class Handler(BaseHTTPRequestHandler):
         # The page and its pictures. Caddy serves /downloads/ itself; this answers for local runs.
         if path in ("", "/"):
             path = "/index.html"
+        elif path in ("/account", "/account/"):
+            path = "/account.html"
         root = self.downloads if path.startswith("/downloads/") else self.site
         rel = path[len("/downloads/"):] if root is self.downloads else path.lstrip("/")
         target = (root / rel).resolve()
