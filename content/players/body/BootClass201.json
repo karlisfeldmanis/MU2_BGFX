@@ -5,57 +5,58 @@
   "why_this_one": "Sevina's class change (the user, 2026-10-04: 'second class quest where char beccomes second class with new skins'; 'MU's way': the second class's body under any slot left empty). docs/game/class-change-quest.md.",
   "profile": "armour",
   "sheets": {
-    "level_man022": "level_man022.png"
+    "HQlevel_man022": "HQlevel_man022.png"
   },
-  "sheet_from": "Data/Player/level_man022.OZJ (256x256), from MuMain. All five of the Soul Master's parts name it.",
+  "sheet_from": "Data/Player/HQlevel_man022.OZJ (256x256), from the Season 17 client (third_party/MuClient_S17_v1.19.74). All five of the Soul Master's parts name it.",
   "unstack": false,
   "unstack_why": "As BootClass01's.",
-  "sheet_warning": "Read off the .bmd, not guessed from the number: the Soul Master (201) names level_man022 and the Blade Knight (202) level_man01, as the first classes' sheets are named against their classes too (HelmClass01's sheet_warning).",
-  "material_note": "Dark boots: leather.",
+  "model_from": "Season 17's remake of MU's Soul Master body, read out of Data/Player/BootClass201.bmd in the S17 client: a version-14 file, which MuExtract opens through Webzen's ModulusCryptor (pipeline/MuExtract/MuAssets/Crypto). It replaced MuMain's BootClass201 on 2026-10-15 at the user's call (\"okey lets make new dw and sm then\", after seeing the two side by side). Its 51 bones are the first 51 of player.bmd's, by name and order, so it rides our rig and clips as MuMain's did.",
+  "part_note": "The boots, 252 triangles. Bound to 38 on Bip01 R Foot, 37 on Bip01 L Foot, 36 on Bip01 L Calf, 35 on Bip01 R Calf, 20 on Bip01 L Thigh, 20 on Bip01 R Thigh.",
   "islands": [
     {
       "island": 0,
       "material": "leather",
-      "triangles": 83,
-      "area": 5303.8,
+      "triangles": 126,
+      "area": 4944.8,
       "along": [
-        -12.7,
-        21.1
+        -13.6,
+        20.4
       ],
       "mu_uv": [
-        0.638,
-        0.258,
-        0.988,
-        0.735
+        0.326,
+        0.006,
+        0.625,
+        0.422
       ],
       "bake_uv": [
-        0.638,
-        0.258,
-        0.988,
-        0.735
+        0.326,
+        0.006,
+        0.625,
+        0.422
       ]
     },
     {
       "island": 1,
       "material": "leather",
-      "triangles": 83,
-      "area": 5303.8,
+      "triangles": 126,
+      "area": 4944.8,
       "along": [
-        -12.7,
-        21.1
+        -13.6,
+        20.4
       ],
       "mu_uv": [
-        0.638,
-        0.258,
-        0.988,
-        0.735
+        0.326,
+        0.006,
+        0.625,
+        0.422
       ],
       "bake_uv": [
-        0.638,
-        0.258,
-        0.988,
-        0.735
+        0.326,
+        0.006,
+        0.625,
+        0.422
       ]
     }
-  ]
+  ],
+  "material_note": "leather, as MuMain's were."
 }

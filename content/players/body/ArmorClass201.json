@@ -5,79 +5,51 @@
   "why_this_one": "Sevina's class change (the user, 2026-10-04: 'second class quest where char beccomes second class with new skins'; 'MU's way': the second class's body under any slot left empty). docs/game/class-change-quest.md.",
   "profile": "armour",
   "sheets": {
-    "level_man022": "level_man022.png"
+    "HQlevel_man022": "HQlevel_man022.png"
   },
-  "sheet_from": "Data/Player/level_man022.OZJ (256x256), from MuMain. All five of the Soul Master's parts name it.",
+  "sheet_from": "Data/Player/HQlevel_man022.OZJ (256x256), from the Season 17 client (third_party/MuClient_S17_v1.19.74). All five of the Soul Master's parts name it.",
   "unstack": false,
   "unstack_why": "As ArmorClass01's.",
-  "sheet_warning": "Read off the .bmd, not guessed from the number: the Soul Master (201) names level_man022 and the Blade Knight (202) level_man01, as the first classes' sheets are named against their classes too (HelmClass01's sheet_warning).",
-  "material_note": "A dark blue robe under a leather harness: cloth, as the Dark Wizard's. The two small islands are the sleeves' ends, cloth here where his were bare wrists.",
+  "model_from": "Season 17's remake of MU's Soul Master body, read out of Data/Player/ArmorClass201.bmd in the S17 client: a version-14 file, which MuExtract opens through Webzen's ModulusCryptor (pipeline/MuExtract/MuAssets/Crypto). It replaced MuMain's ArmorClass201 on 2026-10-15 at the user's call (\"okey lets make new dw and sm then\", after seeing the two side by side). Its 51 bones are the first 51 of player.bmd's, by name and order, so it rides our rig and clips as MuMain's did.",
+  "part_note": "The torso, 266 triangles. Bound to 52 on Bip01 Spine1, 39 on Bip01 Spine, 32 on Bip01 L UpperArm, 32 on Bip01 R UpperArm, 10 on Bone02, 6 on Bip01 L Forearm, 6 on Bip01 R Forearm, 3 on Bone06.",
   "islands": [
     {
       "island": 0,
       "material": "cloth",
-      "triangles": 120,
-      "area": 6113.5,
+      "triangles": 266,
+      "area": 7691.2,
       "along": [
-        -12.2,
-        13.1
+        -14.6,
+        14.2
       ],
       "mu_uv": [
-        0.016,
-        0.507,
-        0.461,
-        0.995
+        0.007,
+        0.01,
+        0.601,
+        0.997
       ],
       "bake_uv": [
-        0.016,
-        0.507,
-        0.461,
-        0.995
-      ]
-    },
-    {
-      "island": 1,
-      "material": "cloth",
-      "triangles": 15,
-      "area": 958.6,
-      "along": [
-        -11.6,
-        7.5
-      ],
-      "mu_uv": [
-        0.646,
-        0.6,
-        0.799,
-        0.734
-      ],
-      "bake_uv": [
-        0.646,
-        0.6,
-        0.799,
-        0.734
-      ]
-    },
-    {
-      "island": 2,
-      "material": "cloth",
-      "triangles": 15,
-      "area": 958.6,
-      "along": [
-        -11.6,
-        7.5
-      ],
-      "mu_uv": [
-        0.646,
-        0.6,
-        0.799,
-        0.734
-      ],
-      "bake_uv": [
-        0.646,
-        0.6,
-        0.799,
-        0.734
+        0.007,
+        0.01,
+        0.601,
+        0.997
       ]
     }
-  ]
+  ],
+  "uv_overrides": [
+    {
+      "material": "leather",
+      "u": [
+        0.0,
+        0.34
+      ],
+      "v": [
+        0.0,
+        0.34
+      ],
+      "why": "The dark shoulder pad, the sheet's bottom-left block."
+    }
+  ],
+  "uv_overrides_why": "One shell carries the robe and the shoulder pads. The Soul Master has no bare arm here: the block where the Dark Wizard's arm is painted is a dark green pad, 120 faces, all dark under the sampling.",
+  "material_note": "cloth for the robe and its gold trim; leather for the shoulder pads, by uv_overrides."
 }

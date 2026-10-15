@@ -231,6 +231,7 @@ src/app/modes/studio_control.cpp.
 | `subject <tab>\|<name>` | put a thing on the bench; tabs: World objects, Monsters, People, Armour sets, Weapons, Wings, Figure parts |
 | `scene Stage\|Home\|<world>` | the plain stage, the subject's own place, or a world |
 | `plus <N>`, `swap`, `arena`, `arena off` | the item's shine at +N, read the cooked subject again, a monster's fight in the studio |
+| `clip <n\|word>` | the subject plays a clip, by number or the first whose name holds the word (`clip walk`, `clip ttack`) |
 | `place`, `mode objects\|gates\|townsfolk\|ground` | open Place, and what it edits |
 | `pick <model>`, `nudge <dx> <dz>`, `add <model>`, `duplicate`, `delete` | objects, at the view's middle (the subject's spot) |
 | `mark <n>`, `budge <dc> <dr>`, `look <n>`, `way <world>` | a gate by number or a townsperson by index; a new gate pair |

@@ -4,6 +4,7 @@
 //   subject <tab>|<name>   open a tab of the browser and put a name of it on the bench
 //   scene <Stage|Home|w>   stand it there          plus <N>     the shine at +N
 //   swap                   Read again              arena [off]  Simulate combat, in the studio
+//   clip <n|word>          the subject plays its clip by number, or the first named with word
 //   place | pick <model> | nudge <dx> <dz>          Place objects, as the window does
 //   add <model> | duplicate | delete                 ... and sprint G's: add at the view's middle
 //   mode objects|gates|townsfolk|ground              what Place places; duplicate and delete follow it
@@ -182,6 +183,24 @@ std::string StudioDesk::act(Context& ctx, game::ModelBench& bench, const std::st
         if (path.empty() || path[0] != '/') return "error shot takes an absolute path";
         bgfx::requestScreenShot(BGFX_INVALID_HANDLE, path.c_str());
         return "ok " + path + " when this frame is drawn";
+    }
+    if (starts("clip")) {
+        // By number, or the first whose name holds the word: "clip walk", "clip 12". The keys
+        // the window steps with ([ and ]) were the only way, so no script could show a body
+        // moving (the S17 Dark Wizard, 2026-10-15: "what about animations? will it work?").
+        const std::string want = after("clip");
+        const size_t count = bench.clipCount();
+        if (count == 0) return "error the bench has no clips";
+        size_t index = count;
+        if (!want.empty() && want.find_first_not_of("0123456789") == std::string::npos) {
+            index = size_t(std::atoi(want.c_str()));
+        } else {
+            for (size_t i = 0; i < count && index == count; ++i) {
+                if (bench.clipName(i).find(want) != std::string::npos) index = i;
+            }
+        }
+        if (!bench.playClip(index)) return "error no clip " + want + " of " + std::to_string(count);
+        return "ok " + bench.clipName(index);
     }
     if (what == "hide" || what == "show") {
         hidden_ = what == "hide";

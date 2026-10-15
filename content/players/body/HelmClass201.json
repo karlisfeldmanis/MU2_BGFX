@@ -5,59 +5,321 @@
   "why_this_one": "Sevina's class change (the user, 2026-10-04: 'second class quest where char beccomes second class with new skins'; 'MU's way': the second class's body under any slot left empty). docs/game/class-change-quest.md.",
   "profile": "armour",
   "sheets": {
-    "level_man022": "level_man022.png"
+    "HQlevel_man022": "HQlevel_man022.png"
   },
-  "sheet_from": "Data/Player/level_man022.OZJ (256x256), from MuMain. All five of the Soul Master's parts name it.",
+  "sheet_from": "Data/Player/HQlevel_man022.OZJ (256x256), from the Season 17 client (third_party/MuClient_S17_v1.19.74). All five of the Soul Master's parts name it.",
   "cull": false,
   "unstack": false,
   "cull_from": "As HelmClass01's: MU's hair is single-sided fins.",
   "unstack_why": "As HelmClass01's.",
-  "sheet_warning": "Read off the .bmd, not guessed from the number: the Soul Master (201) names level_man022 and the Blade Knight (202) level_man01, as the first classes' sheets are named against their classes too (HelmClass01's sheet_warning).",
-  "material_note": "As HelmClass01's: skin on the face block, hair on the white mane below it.",
+  "model_from": "Season 17's remake of MU's Soul Master body, read out of Data/Player/HelmClass201.bmd in the S17 client: a version-14 file, which MuExtract opens through Webzen's ModulusCryptor (pipeline/MuExtract/MuAssets/Crypto). It replaced MuMain's HelmClass201 on 2026-10-15 at the user's call (\"okey lets make new dw and sm then\", after seeing the two side by side). Its 51 bones are the first 51 of player.bmd's, by name and order, so it rides our rig and clips as MuMain's did.",
+  "part_note": "The head, 521 triangles. Bound to 389 on Bip01 Head, 14 on Bip01 Spine1.",
   "islands": [
     {
       "island": 0,
-      "material": "skin",
-      "triangles": 50,
-      "area": 850.7,
+      "material": "hair",
+      "triangles": 226,
+      "area": 1002.1,
       "along": [
-        -16.4,
-        12.0
+        -6.9,
+        13.4
       ],
       "mu_uv": [
-        0.528,
-        0.754,
-        0.994,
-        0.982
+        0.548,
+        0.237,
+        0.995,
+        0.996
       ],
       "bake_uv": [
-        0.528,
-        0.754,
-        0.994,
-        0.982
+        0.548,
+        0.237,
+        0.995,
+        0.996
       ]
     },
     {
       "island": 1,
       "material": "hair",
-      "triangles": 64,
-      "area": 2958.3,
+      "triangles": 4,
+      "area": 68.6,
       "along": [
-        -16.4,
-        18.3
+        -3.3,
+        4.0
       ],
       "mu_uv": [
-        0.514,
-        0.0,
-        0.783,
-        0.153
+        0.479,
+        0.356,
+        0.606,
+        0.493
       ],
       "bake_uv": [
-        0.514,
-        0.0,
-        0.783,
-        0.153
+        0.479,
+        0.356,
+        0.606,
+        0.493
+      ]
+    },
+    {
+      "island": 2,
+      "material": "hair",
+      "triangles": 4,
+      "area": 60.5,
+      "along": [
+        -1.4,
+        4.7
+      ],
+      "mu_uv": [
+        0.479,
+        0.356,
+        0.606,
+        0.493
+      ],
+      "bake_uv": [
+        0.479,
+        0.356,
+        0.606,
+        0.493
+      ]
+    },
+    {
+      "island": 3,
+      "material": "hair",
+      "triangles": 195,
+      "area": 1865.5,
+      "along": [
+        -14.2,
+        15.6
+      ],
+      "mu_uv": [
+        0.455,
+        0.017,
+        0.997,
+        0.748
+      ],
+      "bake_uv": [
+        0.455,
+        0.017,
+        0.997,
+        0.748
+      ]
+    },
+    {
+      "island": 4,
+      "material": "hair",
+      "triangles": 54,
+      "area": 565.8,
+      "along": [
+        -14.1,
+        4.9
+      ],
+      "mu_uv": [
+        0.648,
+        0.416,
+        0.865,
+        0.691
+      ],
+      "bake_uv": [
+        0.648,
+        0.416,
+        0.865,
+        0.691
+      ]
+    },
+    {
+      "island": 5,
+      "material": "hair",
+      "triangles": 6,
+      "area": 25.8,
+      "along": [
+        1.6,
+        10.4
+      ],
+      "mu_uv": [
+        0.841,
+        0.587,
+        0.893,
+        0.714
+      ],
+      "bake_uv": [
+        0.841,
+        0.587,
+        0.893,
+        0.714
+      ]
+    },
+    {
+      "island": 6,
+      "material": "hair",
+      "triangles": 10,
+      "area": 20.4,
+      "along": [
+        9.1,
+        15.5
+      ],
+      "mu_uv": [
+        0.533,
+        0.141,
+        0.596,
+        0.219
+      ],
+      "bake_uv": [
+        0.533,
+        0.141,
+        0.596,
+        0.219
+      ]
+    },
+    {
+      "island": 7,
+      "material": "hair",
+      "triangles": 7,
+      "area": 30.0,
+      "along": [
+        -1.2,
+        8.3
+      ],
+      "mu_uv": [
+        0.884,
+        0.614,
+        0.939,
+        0.748
+      ],
+      "bake_uv": [
+        0.884,
+        0.614,
+        0.939,
+        0.748
+      ]
+    },
+    {
+      "island": 8,
+      "material": "hair",
+      "triangles": 7,
+      "area": 58.3,
+      "along": [
+        1.7,
+        12.4
+      ],
+      "mu_uv": [
+        0.476,
+        0.38,
+        0.616,
+        0.499
+      ],
+      "bake_uv": [
+        0.476,
+        0.38,
+        0.616,
+        0.499
+      ]
+    },
+    {
+      "island": 9,
+      "material": "hair",
+      "triangles": 4,
+      "area": 67.2,
+      "along": [
+        -3.3,
+        4.0
+      ],
+      "mu_uv": [
+        0.479,
+        0.356,
+        0.606,
+        0.493
+      ],
+      "bake_uv": [
+        0.479,
+        0.356,
+        0.606,
+        0.493
+      ]
+    },
+    {
+      "island": 10,
+      "material": "hair",
+      "triangles": 4,
+      "area": 59.3,
+      "along": [
+        -1.4,
+        4.6
+      ],
+      "mu_uv": [
+        0.479,
+        0.356,
+        0.606,
+        0.493
+      ],
+      "bake_uv": [
+        0.479,
+        0.356,
+        0.606,
+        0.493
       ]
     }
-  ]
+  ],
+  "uv_overrides": [
+    {
+      "material": "hair",
+      "u": [
+        0.84,
+        1.0
+      ],
+      "v": [
+        0.85,
+        1.0
+      ],
+      "why": "The white forelock painted into the face block's top right."
+    },
+    {
+      "material": "hair",
+      "u": [
+        0.8,
+        0.9
+      ],
+      "v": [
+        0.7,
+        0.75
+      ],
+      "why": "A strand that crosses the bottom of the face block."
+    },
+    {
+      "material": "skin",
+      "u": [
+        0.64,
+        1.0
+      ],
+      "v": [
+        0.7,
+        1.0
+      ],
+      "why": "The face block, the ear at its right edge; the eyes and brows on it stay skin."
+    },
+    {
+      "material": "skin",
+      "u": [
+        0.55,
+        0.68
+      ],
+      "v": [
+        0.58,
+        0.8
+      ],
+      "why": "The neck piece left of the face."
+    },
+    {
+      "material": "skin",
+      "u": [
+        0.53,
+        0.63
+      ],
+      "v": [
+        0.22,
+        0.3
+      ],
+      "why": "The small skin patch below the hair."
+    }
+  ],
+  "uv_overrides_why": "S17's head is a few shells that each carry face and hair together, so the islands are hair and these lift the skin out by where it lands on the sheet, first rule winning. Found by sampling the sheet under every face's UV centre (2026-10-15): of 521 faces, the skin rules take 200 that read warm and light, the hair rules keep the painted forelock out of the face, and what is left outside them reads grey, the hair.",
+  "material_note": "hair for the white mane, skin for the face, ears and neck, as MuMain's head was; the split is uv_overrides, below."
 }
