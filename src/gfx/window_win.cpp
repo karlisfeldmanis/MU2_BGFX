@@ -6,11 +6,52 @@
 
 #include <windows.h>
 
+#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>  // GLFW_EXPOSE_NATIVE_WIN32 comes from CMake
+
 #include <string>
 
 namespace mu::gfx {
 
 void Window::setPresentation(bool) {}
+
+namespace {
+
+// One window, so one: the hook's call carries no pointer of ours.
+Window* g_heldWindow = nullptr;
+HHOOK g_heldHook = nullptr;
+constexpr UINT_PTR kHeldTimer = 0x4d55;
+
+// The system's move, size and menu loops hand each message they take to this thread's
+// message filter (CallMsgFilter, MSGF_SIZE / MSGF_MENU) before acting on it, which is what
+// reaches the game while they hold the thread. The timer's message is taken here and not
+// passed on: Wine's move loop ends on a WM_TIMER it dispatches, and nothing else wants ours.
+// glfwPollEvents' own loop calls no filter, so while frames run the timer is ignored.
+LRESULT CALLBACK onHeldFilter(int code, WPARAM wparam, LPARAM lparam) {
+    const MSG* msg = reinterpret_cast<const MSG*>(lparam);
+    if (code >= 0 && msg && msg->message == WM_TIMER && msg->wParam == kHeldTimer) {
+        if (g_heldWindow) g_heldWindow->heldTick();
+        return 1;
+    }
+    return CallNextHookEx(g_heldHook, code, wparam, lparam);
+}
+
+}  // namespace
+
+void Window::armHeld(bool on) {
+    HWND hwnd = glfwGetWin32Window(handle_);
+    if (!hwnd) return;
+    if (on) {
+        g_heldWindow = this;
+        SetTimer(hwnd, kHeldTimer, 100, nullptr);
+        if (!g_heldHook) g_heldHook = SetWindowsHookExW(WH_MSGFILTER, onHeldFilter, nullptr, GetCurrentThreadId());
+    } else {
+        KillTimer(hwnd, kHeldTimer);
+        if (g_heldHook) UnhookWindowsHookEx(g_heldHook);
+        g_heldHook = nullptr;
+        g_heldWindow = nullptr;
+    }
+}
 
 std::string Window::focusOwner() {
     HWND front = GetForegroundWindow();

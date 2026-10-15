@@ -172,6 +172,9 @@ public:
     // the line has been steady for kSettleSteady with a ping answered, or after kSettleMost.
     // Off a server it is true at once.
     bool settle(double seconds);
+    // The server's line read and written with no frame run: the window is held by the OS
+    // (app::Mode::held). What comes is kept for the next frame to step, as after any long one.
+    void keepLine() { if (link_ && link_->remote()) link_->pump(); }
 
     // The pointer, and what a click does with it. The ray is cast against the land's own
     // height field rather than against a flat plane: the town is up to two metres of relief

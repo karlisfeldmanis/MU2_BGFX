@@ -64,6 +64,11 @@ public:
     // The once-a-second lines, under the Application's own frame-rate line. Nothing by default.
     virtual void report(Context& ctx) {}
 
+    // No frame is running because the OS holds the main thread -- Windows' loop for a dragged
+    // title bar (gfx::Window::whileHeld). Called about ten times a second until frames come back:
+    // whatever has to be kept up by the clock, a line to the server, is kept up here.
+    virtual void held() {}
+
     // Before the renderer, the textures and the window go. Each mode tears down in its own
     // order -- the order is load-bearing and differs between them, which is why this is not
     // one sequence in the Application.

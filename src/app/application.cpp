@@ -302,6 +302,14 @@ int Application::run(int argc, char** argv) {
 
     bool quitEarly = mode->quitEarly();
     bool handoffFailed = false;
+    // The mode the OS's hold reaches, while it is running frames: not while one opens behind
+    // the preloader, nor once it is shut down. The freeze watch is told the frames stopped
+    // on purpose, so a held title bar files no report (gfx::Window::whileHeld).
+    Mode* framing = mode.get();
+    window_.whileHeld([&framing] {
+        core::watchPause();
+        if (framing) framing->held();
+    });
     while (!quitEarly && !mode->quitting() && window_.pump() && !window_.escapePressed()) {
         core::watchBeat();
         renderer_.resize(window_.width(), window_.height());
@@ -432,6 +440,7 @@ int Application::run(int argc, char** argv) {
         if (const Mode::Next next = mode->next(); next != Mode::Next::None) {
             sweep.abort("the world handed the run on (a gate, or the lobby)");
             core::watchPause();
+            framing = nullptr;
             mode->shutdown(ctx);
             mode.reset();
             renderer_.setPointLights(nullptr, 0, 0.0f, 0.0f, 0.0f);
@@ -454,6 +463,7 @@ int Application::run(int argc, char** argv) {
             }
             // The load is not a frame: the next one is timed from here.
             last = bx::getHPCounter();
+            framing = mode.get();
         }
 
         ++at.index;
@@ -482,6 +492,8 @@ int Application::run(int argc, char** argv) {
     if (sweep.active()) sweep.abort("the window closed or the frames ran out");
     sweep.close();
 
+    framing = nullptr;
+    window_.whileHeld(nullptr);
     if (!handoffFailed) mode->shutdown(ctx);
     mode.reset();
     teardown();

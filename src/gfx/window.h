@@ -2,6 +2,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <string>
 
 #include <bgfx/bgfx.h>
@@ -163,6 +164,18 @@ public:
     bool focused() const;
     void toFront();
 
+    // **While the OS holds this thread** (2026-10-15): on Windows a title bar held or dragged,
+    // a window edge dragged, or the system menu open puts glfwPollEvents inside the system's own
+    // loop, and no frame runs until it lets go. The server's line went unread -- it lets a line
+    // go after 20 s of owing it (server/src/host.h, kStalledSeconds) -- and the freeze watch
+    // filed a report at 5 s. A timer those loops hand to the thread's message filter calls `call`
+    // about ten times a second once no pump has come back for a quarter of one; never while
+    // frames run.
+    // The Mac's drags do not stop the loop, so it is never called there.
+    void whileHeld(std::function<void()> call) { whileHeld_ = std::move(call); }
+    // The message filter's own (window_win.cpp).
+    void heldTick();
+
 private:
     // The window that has the focus when this one has not: "title (program.exe)" on Windows,
     // the front app's name on the Mac. window_win.cpp, window_mac.mm.
@@ -172,8 +185,13 @@ private:
     // Fullscreen hides the menu bar and the Dock outright rather than letting them slide in
     // at an edge, which brought the system's arrow with them. window_mac.mm.
     static void setPresentation(bool fullscreen);
+    // Arms and disarms whileHeld's timer and filter on the window. window_win.cpp; nothing on the Mac.
+    void armHeld(bool on);
 
     GLFWwindow* handle_ = nullptr;
+    std::function<void()> whileHeld_;
+    double pumpedAt_ = 0.0;  // glfwGetTime when the last pump came back
+    double heldSince_ = 0.0;  // when a hold began, 0 when none is on
     // A fully transparent cursor the window wears in place of the system's. See open().
     GLFWcursor* blank_ = nullptr;
     double cursorDue_ = 0.0;  // when pump() next re-asserts blank_ (glfwGetTime seconds)

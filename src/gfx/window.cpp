@@ -137,6 +137,7 @@ bool Window::open(const WindowDesc& desc) {
     setPresentation(fullscreen_);
     glfwSetWindowFocusCallback(handle_, onFocus);
     toFront();
+    armHeld(true);
 
     // The backbuffer is asked for in pixels, not in points: on a Retina display the two
     // differ by two, and a frame measured at the wrong size is not the frame.
@@ -266,6 +267,7 @@ bool Window::open(const WindowDesc& desc) {
 }
 
 void Window::close() {
+    if (handle_) armHeld(false);
     bgfx::shutdown();
     if (handle_) glfwDestroyWindow(handle_);
     if (blank_) glfwDestroyCursor(blank_);
@@ -382,7 +384,21 @@ bool Window::pump() {
         bgfx::reset(reset_, &chain_);
         core::logf("resized to %dx%d", w, h);
     }
+    pumpedAt_ = glfwGetTime();
+    if (heldSince_) {
+        core::logf("window: let go after %.1f s", pumpedAt_ - heldSince_);
+        heldSince_ = 0.0;
+    }
     return true;
+}
+
+void Window::heldTick() {
+    if (!whileHeld_ || !handle_ || glfwGetTime() - pumpedAt_ < 0.25) return;
+    if (!heldSince_) {
+        heldSince_ = pumpedAt_;
+        core::logf("window: held by the system (a title bar or an edge); the line is kept up");
+    }
+    whileHeld_();
 }
 
 bool Window::fullscreen() const { return handle_ && fullscreen_; }

@@ -20,4 +20,6 @@ void Window::setPresentation(bool fullscreen) {
     if ([NSApp presentationOptions] != options) [NSApp setPresentationOptions:options];
 }
 
+void Window::armHeld(bool) {}
+
 }  // namespace mu::gfx

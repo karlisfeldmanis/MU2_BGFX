@@ -48,6 +48,7 @@ public:
     // The world and its realm, for the performance sweep (app/sweep.h).
     game::World& world() { return world_; }
     void report(Context& ctx) override;
+    void held() override { world_.played().keepLine(); }
     void shutdown(Context& ctx) override;
 
 private:
