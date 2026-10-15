@@ -10,10 +10,13 @@
 #include <cmath>
 #include <cctype>
 #include <cstdlib>
+#include <ctime>
+#include <filesystem>
 #include <unordered_map>
 
 #include "app/options.h"
 #include "app/preloader.h"
+#include "core/args.h"
 #include "core/files.h"
 #include "core/loading.h"
 #include "core/log.h"
@@ -885,6 +888,24 @@ bool PlayMode::scriptedPointer(Context& ctx, const Frame& at, const float* view,
     return true;
 }
 
+// F12: the frame as presented, with the HUD or without as F11 left it, into the player's own
+// screenshots folder beside their options (core::userFolder), named by the time it was taken.
+// bgfx writes it when the frame ends (gfx::Callback::screenShot), a PNG at the window's size.
+void PlayMode::takeShot() {
+    const std::string folder = core::userFolder() + "/screenshots";
+    std::error_code error;
+    std::filesystem::create_directories(folder, error);
+    const std::time_t now = std::time(nullptr);
+    char stamp[32];
+    std::strftime(stamp, sizeof stamp, "%Y-%m-%d %H-%M-%S", std::localtime(&now));
+    std::string path = folder + "/MU Classic " + stamp + ".png";
+    for (int n = 2; std::filesystem::exists(path, error) && n < 100; ++n) {
+        path = folder + "/MU Classic " + stamp + " (" + std::to_string(n) + ").png";
+    }
+    bgfx::requestScreenShot(BGFX_INVALID_HANDLE, path.c_str());
+    core::logf("screenshot asked: %s", path.c_str());
+}
+
 void PlayMode::frame(Context& ctx, const Frame& at) {
     core::Args& args = ctx.args;
     const double deltaSeconds = at.deltaSeconds;
@@ -1632,7 +1653,11 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // it, the same order Godot's CanvasLayer(-1) kept the ring in. Shown whenever
     // Play::point found something, exactly as MU2's own Ringed did: it is not gated
     // on the pointer being clear of a window, only the click a monster answers to is.
-    if (!hoverDrawables_.empty()) {
+    if (ctx.window.pressed(gfx::Window::Key::HideHud)) {
+        hudHidden_ = !hudHidden_;
+        core::logf("HUD %s", hudHidden_ ? "hidden (F11 or H shows it)" : "shown");
+    }
+    if (!hoverDrawables_.empty() && !hudHidden_) {
         float outlineView[16], outlineProj[16];
         ctx.renderer.cameraMatrices(eye, outlineView, outlineProj);
         const bool player = world_.played().pointedPlayer() != 0;
@@ -1646,7 +1671,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // And a monster that has just turned on him flashes red, in rings of its own after the
     // gold, so a hovered one blinks red over its gold and back (Play::watchAggro). A halo
     // of kFlashGlow pixels past the ring, "add some glow to that flash" (2026-09-30).
-    if (!flashes_.empty()) {
+    if (!flashes_.empty() && !hudHidden_) {
         constexpr float kFlashGlow = 12.0f;
         float outlineView[16], outlineProj[16];
         ctx.renderer.cameraMatrices(eye, outlineView, outlineProj);
@@ -1659,9 +1684,11 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                           ctx.window.height(), flashOne_, false, int(i) + 1, red, kFlashGlow);
         }
     }
-    if (desk_.ready()) desk_.submit(gfx::ViewHud, ctx.window.width(), ctx.window.height());
-    if (args.fps) ctx.readout.draw(ctx.overlay, ctx.window.width(), ctx.window.height(),
-                                    world_.played().rttMs());
+    if (desk_.ready() && !hudHidden_) desk_.submit(gfx::ViewHud, ctx.window.width(), ctx.window.height());
+    if (args.fps && !hudHidden_) ctx.readout.draw(ctx.overlay, ctx.window.width(), ctx.window.height(),
+                                                  world_.played().rttMs());
+    // Asked now, taken by bgfx when this frame is presented: the picture is what is on screen.
+    if (ctx.window.pressed(gfx::Window::Key::Shot)) takeShot();
     if (entrance_ && ctx.curtain.ready()) {
         if (at.index >= 2) entranceSeconds_ += float(deltaSeconds);
         const float t = std::min(1.0f, entranceSeconds_ / 0.1f);

@@ -140,6 +140,12 @@ private:
     bool entrance_ = false;
     float entranceSeconds_ = 0.0f;
 
+    // F11 or H: the HUD, its readout and the rings over the pointed-at hidden, so a picture
+    // is the world alone; F12 then saves the frame as drawn (the user, 2026-10-15: "cool
+    // screenshots with max graphics"). Nothing the world draws changes.
+    bool hudHidden_ = false;
+    void takeShot();
+
     // Who the arena's hand is fighting. Kept here rather than read off the hero, because what
     // the hero has been ordered to attack is the realm's private `order_` and is deliberately
     // not published -- a window asks and redraws, it does not read the order back. So the hand

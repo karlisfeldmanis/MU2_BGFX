@@ -117,6 +117,8 @@ public:
         Travel,  // M: the travel list, shown and shut (game/ui/travel.h)
         Map,     // Tab, held: the whole map over the middle of the screen (game/ui/minimap.h)
         Guild,   // G: the guild window, shown and shut (game/ui/guild.h, docs/game/guild.md)
+        HideHud, // F11 or H: the HUD and its readout hidden and shown, for a clean picture
+        Shot,    // F12: the frame as drawn, a PNG in the player's screenshots folder
         Count
     };
     // Neither while a box has the keyboard (setTyping): an I typed into the chat is a letter,
