@@ -310,8 +310,12 @@ void Launcher::check() {
             home_ = todo_.empty() ? Home::Ready : fresh ? Home::Install : Home::Update;
             checkedAt_ = Clock::now();
             // An update is fetched without asking: the game a player has is the one a fix has
-            // to reach. The first install waits for its button, where the folder is chosen.
+            // to reach. The first install waits for its button on Windows, where the folder can
+            // be changed beside it; the Mac's is always ~/Applications, so it starts at once.
             if (home_ == Home::Update) autoInstall_ = true;
+#ifdef __APPLE__
+            if (home_ == Home::Install) autoInstall_ = true;
+#endif
             if (home_ == Home::Install) playAfter_ = false;
             if (home_ == Home::Ready && playAfter_) {
                 playAfter_ = false;
@@ -887,7 +891,7 @@ void Launcher::frame() {
     // What the worker's answers asked for, once the worker is free to take it.
     if (!working_.load()) {
         constexpr auto kRecheck = std::chrono::minutes(10);
-        if (autoInstall_ && home_ == Home::Update) {
+        if (autoInstall_ && (home_ == Home::Update || home_ == Home::Install)) {
             autoInstall_ = false;
             install();
         } else if (screen_ == Screen::Home && home_ == Home::Ready && Clock::now() - checkedAt_ > kRecheck) {
