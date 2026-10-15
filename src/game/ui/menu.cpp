@@ -59,7 +59,7 @@ constexpr float kOptionsFoot = kOptionsBack + style::kButtonM + 14.0f;
 constexpr float kOptionsTall = kOptionsFoot + kFootTall;
 
 // Graphics: the preset under Quality, nine rows under Detail, the limit under Frame rate, a
-// rule, Back, and the foot. As wide as Options, so the chevrons line up turning between them.
+// rule, a line for what waits on a restart, Back and Apply side by side, and the foot. As wide as Options, so the chevrons line up turning between them.
 constexpr float kGraphicsWide = kOptionsWide;
 constexpr float kQualityKicker = style::kHead + 20.0f;
 constexpr float kQualityRows = kQualityKicker + 24.0f;
@@ -68,7 +68,8 @@ constexpr float kDetailRows = kDetailKicker + 24.0f;
 constexpr float kRateKicker = kDetailRows + kRowStep * 9.0f + 8.0f;
 constexpr float kRateRows = kRateKicker + 24.0f;
 constexpr float kGraphicsRule = kRateRows + style::kRow + 14.0f;
-constexpr float kGraphicsBack = kGraphicsRule + 12.0f;
+constexpr float kGraphicsNote = kGraphicsRule + 10.0f;
+constexpr float kGraphicsBack = kGraphicsNote + 26.0f;
 constexpr float kGraphicsFoot = kGraphicsBack + style::kButtonM + 14.0f;
 constexpr float kGraphicsTall = kGraphicsFoot + kFootTall;
 
@@ -82,7 +83,8 @@ float unit() { return tip::unit() * kScale; }
 constexpr float kCentreShare = 0.46f;
 
 enum Target : int {
-    kOptions = 0, kSwitch = 1, kExit = 2, kReconnect = 3, kBack = 4, kGraphics = 5, kClose = 9,
+    kOptions = 0, kSwitch = 1, kExit = 2, kReconnect = 3, kBack = 4, kGraphics = 5, kApply = 6,
+    kClose = 9,
     // The Options page's own: two chevrons a stepped row, two halves a switch, and the slider.
     kDisplayDown = 10, kDisplayUp, kSizeDown, kSizeUp, kVsyncOff, kVsyncOn, kCounterOff,
     kCounterOn, kVolume,
@@ -116,6 +118,26 @@ auto switchOf(int row, Set* set) -> decltype(&set->ssao) {
         case kGLights: return &set->lights;
         default: return nullptr;
     }
+}
+
+// The Graphics page's own fields, which Apply hands over and nothing else: the display's, the
+// window's and the volume stay the Options page's.
+void takeGraphics(const Menu::Settings& from, Menu::Settings* to) {
+    to->scale = from.scale;
+    to->msaa = from.msaa;
+    to->shadows = from.shadows;
+    to->ssao = from.ssao;
+    to->bloom = from.bloom;
+    to->reflections = from.reflections;
+    to->grass = from.grass;
+    to->lights = from.lights;
+    to->textures = from.textures;
+    to->cap = from.cap;
+}
+bool sameGraphics(const Menu::Settings& a, const Menu::Settings& b) {
+    Menu::Settings c = b;
+    takeGraphics(a, &c);
+    return c == b;
 }
 
 using Preset = core::GraphicsPreset;
@@ -196,11 +218,7 @@ std::string wordOf(int row, const Menu::Settings& set) {
         case kGAntialias: return set.msaa <= 1 ? "Off" : std::to_string(set.msaa) + "x MSAA";
         case kGShadows: return set.shadows < 0 ? "Off" : kLevels[std::clamp(set.shadows, 0, 2)];
         case kGGrass: return set.grass <= 0 ? "Off" : set.grass == 1 ? "Low" : "High";
-        case kGTextures: {
-            // Read when they load, so a change is drawn from the next start, and the row says so.
-            const char* word = set.textures <= 0 ? "Half" : "Full";
-            return set.textures == set.texturesLoaded ? word : std::string(word) + " (restart)";
-        }
+        case kGTextures: return set.textures <= 0 ? "Half" : "Full";
         case kGLimit: return set.cap <= 0 ? "Unlimited" : std::to_string(set.cap) + " fps";
         default: return "";
     }
@@ -252,7 +270,11 @@ Box boxOf(Menu::Page page, int target) {
     }
     const float inner = wide - kOptionsInset * 2.0f;
     if (page == Menu::Page::Graphics) {
-        if (target == kBack) return {kOptionsInset, kGraphicsBack, inner, style::kButtonM};
+        const float half = (inner - 10.0f) * 0.5f;
+        if (target == kBack) return {kOptionsInset, kGraphicsBack, half, style::kButtonM};
+        if (target == kApply) {
+            return {kOptionsInset + half + 10.0f, kGraphicsBack, half, style::kButtonM};
+        }
         if (target < kGraphicsFirst || target >= kGraphicsFirst + kGraphicsRows * 2) return {};
         const int row = (target - kGraphicsFirst) / 2;
         const bool second = (target - kGraphicsFirst) % 2 == 1;
@@ -301,6 +323,7 @@ void Menu::open(const gfx::Interface& interface) { interface.adopt(canvas_); }
 void Menu::show(Page page) {
     up_ = true;
     page_ = page;
+    editing_ = false;
     over_ = pressing_ = -1;
     std::fill(std::begin(lift_), std::end(lift_), 0.0f);
 }
@@ -309,6 +332,8 @@ int Menu::hitAt(float x, float y) const {
     for (int target = 0; target < kTargets; ++target) {
         const Box design = boxOf(page_, target);
         if (design.w <= 0.0f || (target == kSwitch && !switchable_)) continue;
+        // Apply answers only when a row has changed.
+        if (target == kApply && sameGraphics(graphicsShown(), settings_)) continue;
         // The window's size does not step while the display is the whole screen.
         if (settings_.fullscreen && (target == kSizeDown || target == kSizeUp)) continue;
         if (at(x_, y_, design).has(x, y)) return target;
@@ -353,6 +378,7 @@ void Menu::update(float seconds, float width, float height, const Pointer& point
 
         const auto turn = [&](Page to) {
             page_ = to;
+            editing_ = false;
             over_ = pressing_ = -1;
             std::fill(std::begin(lift_), std::end(lift_), 0.0f);
             result.clicked = true;
@@ -381,6 +407,11 @@ void Menu::update(float seconds, float width, float height, const Pointer& point
                     break;
                 case kBack: turn(page_ == Page::Graphics ? Page::Options : Page::Main); break;
                 case kGraphics: turn(Page::Graphics); break;
+                case kApply:
+                    takeGraphics(graphicsShown(), &settings_);
+                    editing_ = false;
+                    result.settings = result.clicked = true;
+                    break;
                 case kExit:
                     result.quit = result.clicked = true;
                     break;
@@ -394,7 +425,10 @@ void Menu::update(float seconds, float width, float height, const Pointer& point
                     break;
                 default:
                     if (page_ == Page::Graphics && fired >= kGraphicsFirst) {
-                        Settings& set = settings_;
+                        // The page's copy: nothing reaches the game before Apply.
+                        if (!editing_) pending_ = settings_;
+                        editing_ = true;
+                        Settings& set = pending_;
                         const int row = (fired - kGraphicsFirst) / 2;
                         const bool up = (fired - kGraphicsFirst) % 2 == 1;
                         if (row == kGPreset) {
@@ -410,7 +444,7 @@ void Menu::update(float seconds, float width, float height, const Pointer& point
                             const int at = int(std::find(steps.begin(), steps.end(), *value) - steps.begin());
                             *value = steps[size_t(std::clamp(at + (up ? 1 : -1), 0, int(steps.size()) - 1))];
                         }
-                        result.settings = result.clicked = true;
+                        result.clicked = true;
                         break;
                     }
                     if (fired >= kDisplayDown && fired <= kCounterOn) {
@@ -448,6 +482,7 @@ void Menu::update(float seconds, float width, float height, const Pointer& point
     if (up_) {
         now_.page = page_;
         now_.settings = settings_;
+        now_.pending = graphicsShown();
         now_.place = place_;
         now_.width = width_;
         now_.height = height_;
@@ -540,8 +575,8 @@ void Menu::rebuild() {
         return;
     }
 
-    // Graphics: the preset, then a row a setting, stepped or switched.
-    const Settings& set = settings_;
+    // Graphics: the preset, then a row a setting, stepped or switched, as chosen on the page.
+    const Settings& set = graphics ? graphicsShown() : settings_;
     const float inset = kOptionsInset * u;
     if (graphics) {
         controls::kicker(canvas_, sheet.x + inset, y_ + (kQualityKicker + 12.0f) * u, "QUALITY", u);
@@ -567,8 +602,19 @@ void Menu::rebuild() {
         }
         controls::rule(canvas_, sheet.x + inset, y_ + kGraphicsRule * u,
                        (kGraphicsWide - kOptionsInset * 2.0f) * u, u);
+        // The textures are read when the game starts, so a change to them says when it lands.
+        if (set.textures != set.texturesLoaded) {
+            const char* words = "Textures change the next time the game starts.";
+            const float px = style::kBodySize * u;
+            const float wide = controls::labelWidth(px, words);
+            controls::label(canvas_, std::round(sheet.x + (sheet.w - wide) * 0.5f),
+                            controls::middle(y_ + kGraphicsNote * u, 22.0f * u, px), px,
+                            style::kAshInk, words);
+        }
         controls::button(canvas_, at(x_, y_, boxOf(page_, kBack)), "Back", Kind::Secondary,
                          state(kBack), u);
+        controls::button(canvas_, at(x_, y_, boxOf(page_, kApply)), "Apply", Kind::Primary,
+                         state(kApply, sameGraphics(set, settings_)), u);
         return;
     }
 
