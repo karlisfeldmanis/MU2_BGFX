@@ -87,13 +87,6 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
 </div>
 </section>
 
-<section id="updates" aria-labelledby="updates-title">
-<div class="wrap">
-<h2 class="h2" id="updates-title" style="margin-bottom: 8px">Updates</h2>
-<div id="posts"></div>
-</div>
-</section>
-
 <footer>
 <div class="wrap">
 <img src="/logo.svg" alt="MU Classic" width="435" height="261">
@@ -105,7 +98,7 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
 <script src="/site.js"></script>
 <script>
 (() => {
-  const { $, el, api, account, when, fieldError, hintError, alertOn, busy, bar, OFFLINE, NAME, EMAIL } = MU;
+  const { $, el, api, account, fieldError, hintError, alertOn, busy, bar, OFFLINE, NAME, EMAIL } = MU;
   let me = null;
 
   // ---- downloads
@@ -200,69 +193,6 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
     busy($('r-go'));
   });
 
-  // ---- updates, each with its comments
-  let posts = [];
-  const open = new Set();
-  const dateOf = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-  async function thread(post, box, toggle) {
-    box.replaceChildren(el('span', 'muted', 'Loading…'));
-    let list = [];
-    try { list = (await api('/api/comments?post=' + encodeURIComponent(post.id))).said.comments || []; } catch (e) {}
-    box.replaceChildren();
-    for (const c of list) {
-      const one = el('div');
-      one.append(el('span', 'who', c.name), el('span', 'muted', ' · ' + when(c.at)), el('div', 'text', c.text));
-      box.appendChild(one);
-    }
-    toggle.textContent = 'Hide comments';
-    if (me && me.name) {
-      const form = el('div', 'comment'), input = el('input'), send = el('button', 'btn btn-dark', 'Post');
-      input.type = 'text'; input.maxLength = 500; input.placeholder = 'Write a comment'; input.setAttribute('aria-label', 'Write a comment');
-      send.type = 'button';
-      const go = async () => {
-        const text = input.value.trim();
-        if (!text) return;
-        send.disabled = true;
-        const { status, said } = await api('/api/comments', { post: post.id, text });
-        send.disabled = false;
-        if (status === 201) thread(post, box, toggle);
-        else input.placeholder = said.error || 'Could not post.';
-      };
-      send.addEventListener('click', go);
-      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
-      form.append(input, send);
-      box.appendChild(form);
-    } else {
-      const note = el('span', 'muted'), link = el('a', '', me ? 'Pick a name' : 'Sign in');
-      link.href = '/account'; link.style.cssText = 'color: var(--bone); text-decoration: underline';
-      note.append(link, me ? ' in your account to comment.' : ' to comment.');
-      box.appendChild(note);
-    }
-  }
-  function renderPosts() {
-    const root = $('posts');
-    root.replaceChildren();
-    for (const post of posts) {
-      const art = el('article', 'post');
-      const time = el('time', 'muted', dateOf(post.date)); time.dateTime = post.date; time.style.fontSize = '14px';
-      art.append(time, el('h3', '', post.title), el('p', '', post.body));
-      const ul = el('ul', 'changes');
-      for (const [kind, text] of post.changes || []) {
-        const li = el('li'); li.append(el('b', 'k-' + kind, kind), ' ' + text); ul.appendChild(li);
-      }
-      art.appendChild(ul);
-      const toggle = el('button', 'link', 'Comments'); toggle.type = 'button';
-      const box = el('div', 'thread'); box.hidden = true;
-      toggle.addEventListener('click', () => {
-        if (open.has(post.id)) { open.delete(post.id); box.hidden = true; toggle.textContent = 'Comments'; }
-        else { open.add(post.id); box.hidden = false; thread(post, box, toggle); }
-      });
-      art.append(toggle, box);
-      if (open.has(post.id)) { box.hidden = false; thread(post, box, toggle); }
-      root.appendChild(art);
-    }
-  }
-
   // ---- who is here: a visitor sees the sign-up; a signed-in player a line to the account instead
   (async () => {
     me = await account();
@@ -272,12 +202,6 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
       $('signed-name').textContent = me.name || me.email;
       $('v-signed').hidden = false;
     }
-    try {
-      const list = await (await fetch('/posts.json')).json();
-      posts = Array.isArray(list) ? list : [];
-    } catch (e) {}
-    if (posts[0]) open.add(posts[0].id);
-    renderPosts();
   })();
 })();
 </script>
