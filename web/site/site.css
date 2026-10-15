@@ -106,9 +106,14 @@ header.top { position: relative; overflow: hidden; }
 /* System requirements: a card a platform, above the footer */
 #requirements { padding: 56px 0 64px; }
 #requirements .wrap { max-width: 1160px; }
-.reqs { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
-.req { display: flex; flex-direction: column; gap: 14px; padding: 26px 26px 22px; border-radius: 8px;
+.reqs { display: grid; grid-template-columns: repeat(3, 1fr); border-radius: 8px; overflow: hidden;
   background: linear-gradient(180deg, #1A130F, #120D0B); box-shadow: inset 0 0 0 1px #33271F; }
+.req { display: flex; flex-direction: column; gap: 14px; padding: 26px 26px 22px; }
+.req + .req { box-shadow: inset 1px 0 0 #33271F; }
+@media (max-width: 900px) {
+  .reqs { grid-template-columns: 1fr; }
+  .req + .req { box-shadow: inset 0 1px 0 #33271F; }
+}
 .req h3 { display: flex; align-items: center; gap: 10px; margin: 0; font: 700 19px/1.25 Cinzel, serif; letter-spacing: .03em; color: var(--bone-hi); }
 .req h3 svg { color: #C9A27E; flex: none; }
 .req dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 10px 16px; }
