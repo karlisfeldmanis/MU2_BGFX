@@ -69,6 +69,23 @@ ssize_t pread(int fd, void* out, size_t n, uint64_t at) {
 using ::pread;
 #endif
 
+// The pack's length, or 0 when it cannot be had.
+uint64_t lengthOf(int fd) {
+#ifdef _WIN32
+    const __int64 n = _filelengthi64(fd);
+#else
+    const off_t n = ::lseek(fd, 0, SEEK_END);
+#endif
+    return n > 0 ? uint64_t(n) : 0;
+}
+
+// The most a table or a file in a pack may say it holds. A pack whose header or table was
+// damaged with its size and stamp unchanged -- which the launcher does not hash again -- asked
+// for up to 4 GB a vector: bad_alloc in mountPacks, before the crash watch starts, and the game
+// gone with no report and no box. The largest file shipped is under 17 MB (2026-10-15).
+constexpr uint64_t kMostTable = 256ull << 20;
+constexpr uint64_t kMostFile = 1ull << 30;
+
 bool readAt(int fd, uint8_t* out, size_t n, uint64_t at) {
     while (n > 0) {
         const ssize_t got = pread(fd, out, n, at);
@@ -108,6 +125,12 @@ bool mountOne(const std::string& file) {
     const uint32_t tocPacked = u32(header + 12);
     const uint32_t tocSize = u32(header + 16);
     const uint64_t tocAt = u64(header + 24);
+    const uint64_t fileLength = lengthOf(fd);
+    if (tocAt > fileLength || tocPacked > fileLength - tocAt || tocSize > kMostTable) {
+        logError("pack: %s's header is damaged", file.c_str());
+        ::close(fd);
+        return false;
+    }
     std::vector<uint8_t> packed(tocPacked), toc(tocSize);
     if (!readAt(fd, packed.data(), packed.size(), tocAt)) {
         logError("pack: %s's table is cut short", file.c_str());
@@ -138,6 +161,10 @@ bool mountOne(const std::string& file) {
         entry.size = u32(&toc[at + 12]);
         entry.method = toc[at + 16];
         at += 17;
+        if (entry.at > fileLength || entry.packed > fileLength - entry.at || entry.size > kMostFile) {
+            logError("pack: %s's entry for %s is damaged; left out", file.c_str(), name.c_str());
+            continue;
+        }
         g_entries[name] = entry;  // a later pack wins: a patch pack replaces a file
     }
     logf("pack: %s, %u files", std::filesystem::path(file).filename().string().c_str(), count);
