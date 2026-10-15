@@ -48,7 +48,7 @@
 </div>
 
 <div>
-<div class="muted" style="font-size: 15px">Signed in on</div>
+<div class="muted" style="font-size: 15px">Launchers signed in</div>
 <div id="a-sessions"></div>
 </div>
 <div id="a-devices-box" hidden>
@@ -136,7 +136,10 @@
     $('a-pickname').hidden = !!a.name;
     const sessions = $('a-sessions');
     sessions.replaceChildren();
-    for (const s of a.sessions) {
+    // Only the launchers: a browser's sign-in is this page itself, not where the game is played.
+    const launchers = a.sessions.filter((s) => s.agent === 'MU Classic launcher');
+    if (!launchers.length) sessions.appendChild(line('No launcher yet', 'Sign in to the launcher and it shows here.'));
+    for (const s of launchers) {
       let action;
       if (s.current) action = el('span', 'sub', 'This device');
       else {
@@ -145,7 +148,7 @@
         action.style.fontSize = '15px';
         action.addEventListener('click', async () => { await api('/api/sessions/end', { id: s.id }); load(); });
       }
-      sessions.appendChild(line(s.agent, (s.ip ? s.ip + ' · ' : '') + 'last ' + when(s.last), action));
+      sessions.appendChild(line('MU Classic launcher', (s.ip ? s.ip + ' · ' : '') + 'last used ' + when(s.last), action));
     }
     const devices = $('a-devices');
     devices.replaceChildren();
