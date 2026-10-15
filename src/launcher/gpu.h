@@ -65,15 +65,15 @@ inline int presetFor(const Gpu& gpu) {
     return gpu.driverOld && preset > kPresetLowest ? preset - 1 : preset;
 }
 
-// What this machine's first run draws with (docs/plans/low-end-windows.md, P7). Direct3D 11 where
-// there is no Vulkan loader at all, and on Intel's older chips with an old driver, whose Vulkan is
-// the weak part of a driver Intel no longer develops; Direct3D 11 is the path it has been tested
-// on most. Everyone else is Vulkan, and Direct3D 11 still if Vulkan does not start
-// (gfx/window.cpp). Unmeasured on a real card: P1 decides whether the Intel rule widens.
+// What this machine draws with (docs/plans/low-end-windows.md, P7): Direct3D 11 on a low-end PC --
+// the user, 2026-10-15: "if we know that pc is low-end we should use direct3d" -- which is what
+// presetFor already calls one: Lowest or Low, so an integrated card, no Vulkan loader or only
+// the software adapter. Their drivers' Direct3D 11 is the path most tested; Intel's integrated
+// Vulkan is the weak part of a driver it no longer develops. Everyone else is Vulkan, and
+// Direct3D 11 still if Vulkan does not start (gfx/window.cpp).
 inline int rendererFor(const Gpu& gpu) {
-    if (!gpu.known) return 0;
-    if (!gpu.vulkan) return 2;
-    return olderIntel(gpu) && gpu.driverOld ? 2 : 0;
+    if (!gpu.known || gpu.preset < 0) return 0;
+    return !gpu.vulkan || gpu.preset <= core::kPresetLow ? 2 : 0;
 }
 
 // Where this card's driver is downloaded, or "" when the vendor is not one that can be named.

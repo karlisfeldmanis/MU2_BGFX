@@ -114,8 +114,8 @@ weakest part; and the Vulkan swap chain is where our two Windows hangs were.
   Vulkan does not start, Direct3D 11 in the same run (gfx/window.cpp); 2 is Direct3D 11. The
   game reads the folder that matches what came up (`gfx::shadersFor`).
 - **Launcher.** It draws itself through the same fallback, with both of its shader pairs inside
-  it. The first run writes `renderer 2` where there is no Vulkan loader, or for an Intel chip
-  before Xe on an old driver (gpu.h `rendererFor`); its machine report carries `renderer`
+  it. The first run writes `renderer 2` on a low-end PC -- what the probe opens on Lowest or
+  Low: an integrated card, no Vulkan loader or the software adapter (gpu.h `rendererFor`); its machine report carries `renderer`
   (web/server.py keeps it once deployed). "This driver can't run the game" is gone: no Vulkan
   is no longer that.
 - **Not done:** a Renderer row on the Graphics page; numbers from a real card (P1). Under Wine
