@@ -61,6 +61,9 @@ private:
     std::string key_;  // the account's (game::accountKey)
     client::AccountLink link_;
     bool offline_ = false;  // the server did not answer on the way in
+    // The server turned the launcher's ticket away (net::Refused::SignIn): nothing can be made or
+    // entered on this line, so the screen says so and opens no create window.
+    bool signedOut_ = false;
     // What was last asked, for what the next Roster says of it: a name being made, or a deletion.
     std::string making_;
     bool deleting_ = false;

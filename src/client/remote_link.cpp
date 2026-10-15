@@ -701,7 +701,11 @@ bool AccountLink::open(const std::string& host, int port, const net::Account& ac
     const auto until = std::chrono::steady_clock::now() + std::chrono::duration<double>(seconds);
     while (socket_.open() && std::chrono::steady_clock::now() < until && !net::waitsAbandoned()) {
         if (poll(roster)) {
-            core::logf("account: %s:%d has %zu character(s) on it", host.c_str(), port, roster.seats.size());
+            if (roster.refused == net::Refused::SignIn) {
+                core::logError("account: %s:%d turned the sign-in away", host.c_str(), port);
+            } else {
+                core::logf("account: %s:%d has %zu character(s) on it", host.c_str(), port, roster.seats.size());
+            }
             return true;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(5));

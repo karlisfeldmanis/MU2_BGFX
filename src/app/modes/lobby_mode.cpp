@@ -176,7 +176,9 @@ void LobbyMode::answered(const net::Roster& roster) {
             lobby_.notice("The character could not be deleted.");
             break;
         case net::Refused::SignIn:
-            lobby_.notice("Your sign-in has expired. Sign in again in the launcher.", true);
+            // No create window after it: there is no account on this line to make one on.
+            signedOut_ = true;
+            lobby_.notice("Your sign-in has expired. Sign in again in the launcher.");
             break;
     }
     if (refused_ >= 0) sound_.play(refused_);
@@ -243,6 +245,7 @@ bool LobbyMode::open(Context& ctx) {
         account.claims = game::claimsFor(server_);
         net::Roster answer;
         offline_ = !link_.open(host_, port_, account, answer);
+        signedOut_ = !offline_ && answer.refused == net::Refused::SignIn;
         roster_ = offline_ ? std::vector<game::Seat>{} : game::seatsOf(answer, tables_);
         pedestals_.raise(roster_);
 
@@ -326,6 +329,10 @@ bool LobbyMode::open(Context& ctx) {
     // create new character which is not correct").
     if (offline_) {
         lobby_.notice("Cannot reach the server.");
+    } else if (signedOut_) {
+        // A refused sign-in is not an empty account: the server keeps no account for this line,
+        // and a character made here would be turned away as a frame out of turn.
+        lobby_.notice("Your sign-in has expired. Sign in again in the launcher.");
     } else if (roster_.empty() && !lobby_.creating()) {
         lobby_.openCreate(1);
     }
@@ -334,6 +341,7 @@ bool LobbyMode::open(Context& ctx) {
     fadeSeconds_ = 0.0f;
     core::logf("lobby: %zu character(s) on world 74 from %s; %s", roster_.size(), server_.c_str(),
                offline_ ? "the server did not answer"
+               : signedOut_ ? "the sign-in was turned away"
                : roster_.empty() ? "the create window is up" : "pick one and enter");
     return true;
 }
@@ -462,6 +470,9 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
             case game::Refusal::None:
                 if (!link_.up()) {
                     lobby_.notice("Cannot reach the server.", true);
+                    play(refused_);
+                } else if (signedOut_) {
+                    lobby_.notice("Your sign-in has expired. Sign in again in the launcher.");
                     play(refused_);
                 } else if (making_.empty() && !deleting_) {
                     making_ = asked.name;
