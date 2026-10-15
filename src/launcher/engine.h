@@ -138,7 +138,18 @@ std::string installedVersion(const fs::path& install);
 
 // MU2.exe started in the install, signed in: the ticket and its secret in its environment as
 // MU2_TICKET, never on its command line (game::accountKey). The token stays with the launcher.
-bool play(const fs::path& install, const Manifest& manifest, const GameTicket& ticket, std::string& error);
+// `pid`, when given, is the game's process, for handFront.
+bool play(const fs::path& install, const Manifest& manifest, const GameTicket& ticket, std::string& error,
+          unsigned long* pid = nullptr);
+
+// **The game's window in front, handed by the launcher** (the user, 2026-10-15, on a Windows PC:
+// the game still opened minimised behind everything). Windows lets a window come forward only
+// from the program in front, and the launcher minimised itself the moment the game started, so
+// by the time the game's window was up the front was someone else's and its own ask was refused.
+// Waits, up to a minute, for the game's window to show, then puts it in front while the launcher
+// still is; the caller minimises the launcher after. Returns at once on the Mac, or if the game
+// exits first. Blocks: call it on a thread of its own.
+void handFront(unsigned long pid);
 
 // Where crash and freeze reports wait to be sent (launcher/crash_upload.h): the game's logs/ in
 // the install, and the user folder's, which holds the launcher's own and the game's where the

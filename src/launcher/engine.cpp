@@ -537,7 +537,8 @@ std::vector<fs::path> crashFolders(const fs::path& install) {
     return {install / "logs", userFolder() / "logs"};
 }
 
-bool play(const fs::path& install, const Manifest& manifest, const GameTicket& ticket, std::string& error) {
+bool play(const fs::path& install, const Manifest& manifest, const GameTicket& ticket, std::string& error,
+          unsigned long* pid) {
     const fs::path exe = install / pathOf(manifest.exe);
     const std::string handed = ticket.ticket + ":" + ticket.secret;
 #ifdef _WIN32
@@ -558,6 +559,7 @@ bool play(const fs::path& install, const Manifest& manifest, const GameTicket& t
     // forward only from the program the player last used, and the launcher minimises itself
     // next, before the game's window is up -- it opened behind (the user, 2026-10-15).
     AllowSetForegroundWindow(running.dwProcessId);
+    if (pid) *pid = running.dwProcessId;
     CloseHandle(running.hThread);
     CloseHandle(running.hProcess);
     return true;
@@ -579,12 +581,49 @@ bool play(const fs::path& install, const Manifest& manifest, const GameTicket& t
     fs::permissions(exe, fs::perms::owner_all | fs::perms::group_read | fs::perms::others_read, ec);
     std::string path = exe.string();
     char* argv[] = {path.data(), nullptr};
-    pid_t pid = 0;
-    if (posix_spawn(&pid, path.c_str(), nullptr, nullptr, argv, envp.data()) != 0) {
+    pid_t child = 0;
+    if (posix_spawn(&child, path.c_str(), nullptr, nullptr, argv, envp.data()) != 0) {
         error = "Could not start the game.";
         return false;
     }
+    if (pid) *pid = static_cast<unsigned long>(child);
     return true;
+#endif
+}
+
+void handFront(unsigned long pid) {
+#ifdef _WIN32
+    HANDLE process = OpenProcess(SYNCHRONIZE, FALSE, pid);
+    if (!process) return;
+    struct Search {
+        DWORD pid;
+        HWND found;
+    } search{pid, nullptr};
+    // The game's own window: visible, top-level, owned by nothing (not a console or a box).
+    const auto look = [](HWND w, LPARAM data) -> BOOL {
+        auto* s = reinterpret_cast<Search*>(data);
+        DWORD owner = 0;
+        GetWindowThreadProcessId(w, &owner);
+        if (owner == s->pid && IsWindowVisible(w) && !GetWindow(w, GW_OWNER)) {
+            s->found = w;
+            return FALSE;
+        }
+        return TRUE;
+    };
+    for (int i = 0; i < 600 && !search.found; ++i) {
+        if (WaitForSingleObject(process, 100) != WAIT_TIMEOUT) break;  // gone, or asked wrong
+        EnumWindows(look, reinterpret_cast<LPARAM>(&search));
+    }
+    CloseHandle(process);
+    if (!search.found) {
+        core::logf("play: the game's window never showed; the launcher minimises anyway");
+        return;
+    }
+    if (IsIconic(search.found)) ShowWindow(search.found, SW_RESTORE);
+    const bool ok = SetForegroundWindow(search.found);
+    core::logf("play: the game's window %s", ok ? "handed the front" : "refused the front");
+#else
+    (void)pid;
 #endif
 }
 

@@ -395,13 +395,19 @@ void Launcher::start() {
                 return;
             }
             std::string error;
-            if (a != Answer::Ok || !play(settings_.install, manifest_, ticket, error)) {
+            unsigned long pid = 0;
+            if (a != Answer::Ok || !play(settings_.install, manifest_, ticket, error, &pid)) {
                 message_ = a != Answer::Ok ? message : error;
                 home_ = Home::Failed;
                 return;
             }
             sendCrashesAfter(20);
-            glfwIconifyWindow(window_);
+            // Minimised only once the game's window has the front (engine.h handFront).
+            std::thread([this, pid] {
+                handFront(pid);
+                post([this] { glfwIconifyWindow(window_); });
+                glfwPostEmptyEvent();
+            }).detach();
         });
         glfwPostEmptyEvent();
     }).detach();
