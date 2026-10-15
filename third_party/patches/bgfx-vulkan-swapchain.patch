@@ -1,0 +1,67 @@
+--- a/src/renderer_vk.cpp
++++ b/src/renderer_vk.cpp
+@@ -8282,7 +8282,13 @@
+ 					VkResult result = createSurface();
+ 					if (VK_SUCCESS != result)
+ 					{
++						// MU2_BGFX: asked again on the next frame. bgfx let both go here, with the
++						// surface already released: the next frame's update rebuilt the swapchain on
++						// VK_NULL_HANDLE (Wine asserts; a Windows driver faults), and without that
++						// nothing ever made the surface again -- no picture until the game closed.
+ 						BX_TRACE("Surface lost.");
++						m_needToRecreateSurface   = true;
++						m_needToRecreateSwapchain = true;
+ 						return;
+ 					}
+ 				}
+@@ -8317,10 +8323,38 @@
+ 					s_renderVK->kick(true);
+ 
+ 					m_needToRecreateSwapchain = true;
++					// MU2_BGFX: a surface the display took away (a monitor unplugged, a mode
++					// change) is made again, not asked about every frame for ever.
++					if (VK_ERROR_SURFACE_LOST_KHR == result)
++					{
++						m_needToRecreateSurface = true;
++					}
+ 					return;
+ 				}
+ 
+-				VK_CHECK(createSwapChain() );
++				// MU2_BGFX: a swapchain the driver refused is asked for again on the next frame.
++				// bgfx's VK_CHECK is nothing in a release build: the failure went unseen, the
++				// attachments were built over no images, nothing asked again, and the next try
++				// handed the driver an oldSwapchain already destroyed.
++				const VkResult created = createSwapChain();
++				if (VK_SUCCESS != created)
++				{
++					BX_TRACE("Create swapchain failed %d: %s.", created, getName(created) );
++					if (m_sci.oldSwapchain != m_swapChain)
++					{
++						m_swapChain = VK_NULL_HANDLE;  // vkCreateSwapchainKHR itself failed
++					}
++					releaseSwapChain();
++					m_sci.oldSwapchain = VK_NULL_HANDLE;
++					s_renderVK->kick(true);
++
++					m_needToRecreateSwapchain = true;
++					if (VK_ERROR_SURFACE_LOST_KHR == created)
++					{
++						m_needToRecreateSurface = true;
++					}
++					return;
++				}
+ 			}
+ 
+ 			VK_CHECK(createAttachments(_commandBuffer) );
+@@ -9493,8 +9527,9 @@
+ 		BX_ASSERT(NULL != m_nwh, "FrameBufferVK::acquire is only valid for swap-chain framebuffers.");
+ 		BGFX_PROFILER_SCOPE("FrameBufferVK::acquire", kColorFrame);
+ 
++		// MU2_BGFX: a surface that could not be made again is retried too (SwapChainVK::update).
+ 		if (    UINT16_MAX != m_denseIdx
+-		&&  VK_NULL_HANDLE != m_swapChain.m_surface
++		&& (VK_NULL_HANDLE != m_swapChain.m_surface || m_swapChain.m_needToRecreateSurface)
+ 		&& (m_swapChain.m_needToRecreateSwapchain || m_swapChain.m_needToRecreateSurface) )
+ 		{
+ 			const SwapChain desc = m_swapChain.m_desc;
