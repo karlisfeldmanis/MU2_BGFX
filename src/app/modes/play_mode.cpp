@@ -27,6 +27,7 @@
 #include "game/world/maps.h"
 #include "game/world/world_show.h"
 #include "gfx/views.h"
+#include "gfx/window.h"
 #include "sim/gates.h"
 #include "sim/items.h"
 #include "sim/market.h"
@@ -910,7 +911,7 @@ void PlayMode::takeShot() {
     for (int n = 2; std::filesystem::exists(path, error) && n < 100; ++n) {
         path = folder + "/MU Classic " + stamp + " (" + std::to_string(n) + ").png";
     }
-    bgfx::requestScreenShot(BGFX_INVALID_HANDLE, path.c_str());
+    bgfx::requestScreenShot(gfx::screenTarget(), path.c_str());
     core::logf("screenshot asked: %s", path.c_str());
 }
 

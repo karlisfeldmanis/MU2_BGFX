@@ -13,6 +13,7 @@
 #include "core/log.h"
 #include "gfx/scenery.h"
 #include "gfx/views.h"
+#include "gfx/window.h"
 
 namespace mu::gfx {
 
@@ -1318,7 +1319,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     bgfx::setUniform(uTintLow_, tintLow);
     bgfx::setUniform(uTintHigh_, tintHigh);
     bgfx::setTexture(9, sBloom_, bloomTex_[0]);
-    bgfx::setViewFrameBuffer(ViewPresent, BGFX_INVALID_HANDLE);
+    bgfx::setViewFrameBuffer(ViewPresent, screenTarget());
     // The screen's own size, not the world's: this is the pass that magnifies a scaled world
     // onto the backbuffer, and its rect is the backbuffer. The sharpen's step above stays one
     // texel of the SOURCE, which is what it samples; a step of one screen pixel on a scaled
@@ -1332,7 +1333,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
 
     // View 7 is the HUD's, and is submitted empty until sprint 7 fills it. A view bgfx sees
     // nothing in is dropped, and an account with no rows reads as free rather than unbuilt.
-    bgfx::setViewFrameBuffer(ViewHud, BGFX_INVALID_HANDLE);
+    bgfx::setViewFrameBuffer(ViewHud, screenTarget());
     bgfx::setViewRect(ViewHud, 0, 0, uint16_t(outWidth_), uint16_t(outHeight_));
     bgfx::touch(ViewHud);
 }

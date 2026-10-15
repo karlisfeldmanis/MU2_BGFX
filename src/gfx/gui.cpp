@@ -201,7 +201,7 @@ void Gui::render(ImDrawData* data) {
     if (width <= 0.0f || height <= 0.0f) return;
     bgfx::setViewName(ViewGui, "gui");
     bgfx::setViewMode(ViewGui, bgfx::ViewMode::Sequential);
-    bgfx::setViewFrameBuffer(ViewGui, BGFX_INVALID_HANDLE);
+    bgfx::setViewFrameBuffer(ViewGui, screenTarget());
     bgfx::setViewRect(ViewGui, 0, 0, uint16_t(width), uint16_t(height));
     float ortho[16];
     bx::mtxOrtho(ortho, 0.0f, width, height, 0.0f, 0.0f, 1000.0f, 0.0f,

@@ -33,6 +33,7 @@
 #include "game/world/world_show.h"
 #include "gfx/stats.h"
 #include "gfx/views.h"
+#include "gfx/window.h"
 
 namespace mu::app {
 
@@ -361,10 +362,11 @@ int Application::run(int argc, char** argv) {
             // The name is ours whole: bgfx hands the path to the callback unchanged and
             // appends nothing, and a shot called 00100 with no suffix is a file nothing opens.
             std::snprintf(path, sizeof(path), "%s/%05d.png", paths_.shots.c_str(), at.index);
-            bgfx::requestScreenShot(BGFX_INVALID_HANDLE, path);
+            bgfx::requestScreenShot(gfx::screenTarget(), path);
         }
 
-        bgfx::frame();
+        gfx::beforeFrame();
+        gfx::afterFrame(bgfx::frame());
 
         // The work: from the end of the last frame's wait to the end of this present. The
         // pacing wait below is deliberately outside it, so `cpu` stays the frame's cost and

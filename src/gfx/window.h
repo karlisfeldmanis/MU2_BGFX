@@ -35,6 +35,16 @@ const char* shaderProfile();
 // build and the packs call spirv is dxbc on a Direct3D 11 run. Any other folder is kept.
 std::string shadersFor(const std::string& folder);
 
+// The screen the last views draw to: the backbuffer (BGFX_INVALID_HANDLE), or, on a Linux run
+// with MU2_COPY_PRESENT=1, the frame copied into the window by hand (gfx/window_linux.cpp) -- a
+// developer's way to watch the Linux client on a GPU that can draw but not present, as the Mac's
+// own through Venus in a libkrun machine (docs/plans/linux-release.md).
+bgfx::FrameBufferHandle screenTarget();
+// Around each bgfx::frame(): the copy's blit and read asked before, its picture put in the window
+// after. Nothing at all on any other run.
+void beforeFrame();
+void afterFrame(uint32_t frame);
+
 class Window {
 public:
     bool open(const WindowDesc& desc);
@@ -198,6 +208,9 @@ private:
     // The window that has the focus when this one has not: "title (program.exe)" on Windows,
     // the front app's name on the Mac. window_win.cpp, window_mac.mm.
     static std::string focusOwner();
+    // What bgfx::reset is handed: the window's swap chain, or none when bgfx was given no window
+    // (MU2_COPY_PRESENT), which it refuses one for.
+    const bgfx::SwapChain* swapChain() const { return chain_.nwh ? &chain_ : nullptr; }
     static void onFocus(GLFWwindow* window, int focused);
 
     // Fullscreen hides the menu bar and the Dock outright rather than letting them slide in

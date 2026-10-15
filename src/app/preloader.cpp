@@ -22,6 +22,7 @@
 #include "core/files.h"
 #include "game/sound.h"
 #include "gfx/views.h"
+#include "gfx/window.h"
 #include "net/socket.h"
 
 namespace mu::app {
@@ -246,7 +247,7 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
             else if (shown < ceiling) shown += (ceiling - shown) * std::min(1.0f, dt * 0.25f);
         }
         const int w = ctx.window.width(), h = ctx.window.height();
-        bgfx::setViewFrameBuffer(gfx::ViewHud, BGFX_INVALID_HANDLE);
+        bgfx::setViewFrameBuffer(gfx::ViewHud, gfx::screenTarget());
         bgfx::setViewRect(gfx::ViewHud, 0, 0, uint16_t(w), uint16_t(h));
         bgfx::setViewClear(gfx::ViewHud, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff,
                            1.0f, 0);
@@ -376,9 +377,10 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
         static bool shotTaken = false;
         if (shot && !shotTaken && seconds >= 1.0 && alpha >= 1.0f) {
             shotTaken = true;
-            bgfx::requestScreenShot(BGFX_INVALID_HANDLE, shot);
+            bgfx::requestScreenShot(gfx::screenTarget(), shot);
         }
-        bgfx::frame();
+        gfx::beforeFrame();
+        gfx::afterFrame(bgfx::frame());
     };
     const int64_t spun = bx::getHPCounter();
     const auto since = [&](int64_t from) {
@@ -456,7 +458,7 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
             frameCost += cost;
         }
         if (spinShot != nullptr && !spinShotTaken && since(spun) > 1.0) {
-            bgfx::requestScreenShot(BGFX_INVALID_HANDLE, spinShot);
+            bgfx::requestScreenShot(gfx::screenTarget(), spinShot);
             spinShotTaken = true;
         }
         due += period;

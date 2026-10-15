@@ -51,7 +51,31 @@ test and ship without a Linux PC.
   - the Renderer row reads Vulkan;
   - native Wayland is opt-in with `MU2_WAYLAND=1` until X6.
 
-**Next:** `./mu build linux` in `tools/mu`, then X3 on a private server port.
+**On this Mac's GPU (2026-10-15).** The ARM build runs on the M1 in a podman machine on libkrun.
+Mesa's Venus driver (the krunkit author's patched Mesa, EL9 only, so AlmaLinux 9:
+`tools/linux/gpu.Containerfile`) speaks Vulkan to krunkit, which runs it on MoltenVK. Vulkan
+reports "Virtio-GPU Venus (Apple M1 Pro)".
+- **No swap chain.** Venus there draws but cannot present, so `MU2_COPY_PRESENT=1` (a developer's
+  switch in `gfx/window_linux.cpp`) starts bgfx with no window. Every screen view draws into a
+  frame of the window's size (`gfx::screenTarget()`), and each finished frame is read back and put
+  into the X11 window with Xlib.
+- **The bgfx patch.** Without a window, bgfx asked for `VK_KHR_swapchain` anyway, so
+  `third_party/patches/bgfx-vulkan-headless.patch` asks only when the device has it.
+- **How to look.** Xvfb, x11vnc and an SSH tunnel to Screen Sharing on `localhost:5901`.
+  xdotool plays it: hold each click 0.1 s, since the game reads the button once a frame.
+- **What it showed.** The lobby at about 80 fps (GPU 4.3 ms). Against a private `mu2_server` on
+  the Mac (reached as `192.168.127.254`), it created a Dark Knight, entered Lorencia (120-130 fps
+  in town, 70-80 in the fields), fought an Elite Bull Fighter, died and came back.
+- **What it doesn't test:** the swap chain, x86_64, and any PC driver.
+- **Machine traps:**
+  - krunkit 1.1.1 does not know podman 6.1.4's `--timesync`; a wrapper in
+    `~/.config/containers/helpers/` drops it.
+  - virtio-fs shares answer "Connection refused", so the sources and packs go in over SSH with tar.
+  - A debug bgfx (`-DBX_CONFIG_DEBUG=ON`) stops on `s_shadowCompare` set twice in one draw. That
+    is our renderer's, and harmless in a normal build.
+
+**Next:** crash and log reports from the Linux game, `./mu dist linux` and `./mu release linux`
+(X4), then the launcher (X5).
 
 ## What is Mac-only today, and needs a Linux half
 

@@ -13,6 +13,7 @@
 #include "core/log.h"
 #include "gfx/renderer_internal.h"
 #include "gfx/views.h"
+#include "gfx/window.h"
 
 namespace mu::gfx {
 
@@ -192,7 +193,7 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
     ringGlows_ = false;
 
     // --- the ring: one screen pass, its view rect the thing's own box of the backbuffer ---
-    bgfx::setViewFrameBuffer(ringView, BGFX_INVALID_HANDLE);
+    bgfx::setViewFrameBuffer(ringView, screenTarget());
     bgfx::setViewRect(ringView, uint16_t(std::max(0, params.screenX)),
                       uint16_t(std::max(0, params.screenY)), uint16_t(params.screenW),
                       uint16_t(params.screenH));

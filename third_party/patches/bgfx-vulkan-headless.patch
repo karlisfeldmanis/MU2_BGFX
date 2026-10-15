@@ -1,0 +1,31 @@
+--- a/src/renderer_vk.cpp
++++ b/src/renderer_vk.cpp
+@@ -2163,8 +2163,26 @@
+ 
+ 				enabledExtension[numEnabledExtensions++] = VK_KHR_MAINTENANCE1_EXTENSION_NAME;
+ 
+-				if (!headless
+-				||  wsiSurfaceSupported() )
++				// MU2_BGFX: a headless device is asked for the swap chain only when it has one.
++				// Venus in a libkrun machine on a Mac draws but presents nothing: its instance
++				// makes X11 and Wayland surfaces, its device has no VK_KHR_swapchain, and asking
++				// for it failed vkCreateDevice (docs/plans/linux-release.md, the copy present).
++				bool deviceSwapchain = !headless;
++				if (headless
++				&&  wsiSurfaceSupported() )
++				{
++					uint32_t numDeviceExtensions = 0;
++					vkEnumerateDeviceExtensionProperties(m_physicalDevice, NULL, &numDeviceExtensions, NULL);
++					VkExtensionProperties* deviceExtensions = (VkExtensionProperties*)bx::alloc(g_allocator, numDeviceExtensions * sizeof(VkExtensionProperties) );
++					vkEnumerateDeviceExtensionProperties(m_physicalDevice, NULL, &numDeviceExtensions, deviceExtensions);
++					for (uint32_t ii = 0; ii < numDeviceExtensions && !deviceSwapchain; ++ii)
++					{
++						deviceSwapchain = 0 == bx::strCmp(deviceExtensions[ii].extensionName, VK_KHR_SWAPCHAIN_EXTENSION_NAME);
++					}
++					bx::free(g_allocator, deviceExtensions);
++				}
++
++				if (deviceSwapchain)
+ 				{
+ 					enabledExtension[numEnabledExtensions++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+ 				}

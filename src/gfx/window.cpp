@@ -15,6 +15,14 @@
 #include "gfx/views.h"
 
 namespace mu::gfx {
+
+#ifdef __linux__
+// gfx/window_linux.cpp: the frame copied into the window by hand (MU2_COPY_PRESENT=1).
+bool copyPresentAsked();
+void copyPresentOpen(GLFWwindow* window, int width, int height);
+void copyPresentClose();
+#endif
+
 namespace {
 
 // GLFW reports the wheel through a callback and nothing else, so it is accumulated here and
@@ -85,6 +93,7 @@ bool Window::open(const WindowDesc& desc) {
     // scripts' relative --shot paths with it.
     glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, GLFW_FALSE);
 #ifdef __linux__
+    const bool copying = copyPresentAsked();
     // X11, which every Wayland desktop also runs through XWayland, until native Wayland has been
     // judged (docs/plans/linux-release.md, X6); MU2_WAYLAND=1 asks for it now.
     {
@@ -111,6 +120,10 @@ bool Window::open(const WindowDesc& desc) {
         core::logError("no display to go fullscreen on; staying in a window");
     }
     glfwWindowHint(GLFW_DECORATED, fullscreen_ ? GLFW_FALSE : GLFW_TRUE);
+#ifdef __linux__
+    // The copied frame is made once, at the window's size (gfx/window_linux.cpp).
+    if (copying) glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+#endif
     handle_ = glfwCreateWindow(width, height, desc.title, nullptr, nullptr);
     if (!handle_) {
         core::logError("no window");
@@ -199,11 +212,14 @@ bool Window::open(const WindowDesc& desc) {
         chain_.nwh = reinterpret_cast<void*>(uintptr_t(glfwGetX11Window(handle_)));
         chain_.ndt = glfwGetX11Display();
     }
+    // No window for bgfx at all when the frame is copied by hand: bgfx then makes no swap chain.
+    if (copying) chain_.nwh = chain_.ndt = nullptr;
 #else
     chain_.nwh = glfwGetCocoaWindow(handle_);
 #endif
-    chain_.width = uint32_t(width_);
-    chain_.height = uint32_t(height_);
+    // With no window bgfx makes no backbuffer, and refuses any size for it but 0x0.
+    chain_.width = chain_.nwh ? uint32_t(width_) : 0;
+    chain_.height = chain_.nwh ? uint32_t(height_) : 0;
     init.swapChain = chain_;
     // `profile` is what fills bgfx::Stats::viewStats, which is where every account's time
     // comes from. It stays on: a run that cannot be priced is a run wasted.
@@ -241,6 +257,9 @@ bool Window::open(const WindowDesc& desc) {
         core::logError("bgfx did not start");
         return false;
     }
+#ifdef __linux__
+    if (copying) copyPresentOpen(handle_, width_, height_);
+#endif
 
     // Per-view GPU times are what the budget accounts are made of, and on Metal bgfx only
     // takes them when this debug flag is set — `Init::profile` alone leaves viewStats empty
@@ -304,6 +323,9 @@ bool Window::open(const WindowDesc& desc) {
 
 void Window::close() {
     if (handle_) armHeld(false);
+#ifdef __linux__
+    copyPresentClose();
+#endif
     bgfx::shutdown();
     if (handle_) glfwDestroyWindow(handle_);
     if (blank_) glfwDestroyCursor(blank_);
@@ -416,9 +438,9 @@ bool Window::pump() {
     if ((w != width_ || h != height_) && w > 0 && h > 0) {
         width_ = w;
         height_ = h;
-        chain_.width = uint32_t(w);
-        chain_.height = uint32_t(h);
-        bgfx::reset(reset_, &chain_);
+        chain_.width = chain_.nwh ? uint32_t(w) : 0;
+        chain_.height = chain_.nwh ? uint32_t(h) : 0;
+        bgfx::reset(reset_, swapChain());
         core::logf("resized to %dx%d", w, h);
     }
     pumpedAt_ = glfwGetTime();
@@ -510,12 +532,12 @@ void Window::displaySize(int* width, int* height) const {
 
 void Window::setVsync(bool on) {
     reset_ = on ? (reset_ | BGFX_RESET_VSYNC) : (reset_ & ~uint32_t(BGFX_RESET_VSYNC));
-    bgfx::reset(reset_, &chain_);
+    bgfx::reset(reset_, swapChain());
     core::logf("window: vsync %s", on ? "on" : "off");
 }
 
 void Window::holdVsync(bool off) {
-    bgfx::reset(off ? (reset_ & ~uint32_t(BGFX_RESET_VSYNC)) : reset_, &chain_);
+    bgfx::reset(off ? (reset_ & ~uint32_t(BGFX_RESET_VSYNC)) : reset_, swapChain());
 }
 
 float Window::contentScale() const {
@@ -560,5 +582,11 @@ std::string shadersFor(const std::string& folder) {
     if (last != "metal" && last != "spirv" && last != "dxbc") return folder;
     return folder.substr(0, slash == std::string::npos ? 0 : slash + 1) + shaderProfile();
 }
+
+#ifndef __linux__
+bgfx::FrameBufferHandle screenTarget() { return BGFX_INVALID_HANDLE; }
+void beforeFrame() {}
+void afterFrame(uint32_t) {}
+#endif
 
 }  // namespace mu::gfx
