@@ -1,0 +1,35 @@
+diff --git a/src/renderer_vk.cpp b/src/renderer_vk.cpp
+index 89c588637..5bb93b7ce 100644
+--- a/src/renderer_vk.cpp
++++ b/src/renderer_vk.cpp
+@@ -9085,19 +9085,27 @@ VK_DESTROY
+ 			{
+ 				BGFX_PROFILER_SCOPE("vkAcquireNextImageKHR", kColorFrame);
+ 
++				// MU2_BGFX: never forever. NVIDIA's Windows driver holds the back buffer's next
++				// image while the window is not on screen -- a game that opened behind another
++				// window, or with a capture hook in it -- and an endless wait here froze the whole
++				// game until Alt+Tab, its line to the server unanswered (hang reports 2026-10-15,
++				// RTX 3080). A tenth of a second at most, then the frame is skipped as an
++				// out-of-date swapchain's is, and the loop goes on.
+ 				result = vkAcquireNextImageKHR(
+ 					  device
+ 					, m_swapChain
+-					, _block ? UINT64_MAX : 1000000
++					, _block ? UINT64_C(100000000) : 1000000
+ 					, m_lastImageAcquiredSemaphore
+ 					, VK_NULL_HANDLE
+ 					, &m_backBufferColorIdx
+ 					);
+ 			}
+ 
+-			if (!_block
+-			&& (VK_NOT_READY == result || VK_TIMEOUT == result) )
++			if (VK_NOT_READY == result || VK_TIMEOUT == result)
+ 			{
++				// Not signalled and nothing pending on it (the spec, for a timed-out acquire):
++				// no submit may wait on it, or the queue waits for ever instead of this thread.
++				m_lastImageAcquiredSemaphore = VK_NULL_HANDLE;
+ 				m_currentSemaphore = (m_currentSemaphore + kMaxBackBuffers - 1) % kMaxBackBuffers;
+ 				return false;
+ 			}
