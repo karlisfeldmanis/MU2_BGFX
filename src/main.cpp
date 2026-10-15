@@ -31,7 +31,7 @@ std::vector<char*> playersOnly(int argc, char** argv) {
                                          "--no-vsync", "--remember", "--fps", "--no-fps",
                                          "--metalfx", "--no-metalfx", "--mute", "--render-thread"};
     static const char* const kValued[] = {"--server", "--cap", "--scale", "--graphics",
-                                          "--msaa", "--width", "--height"};
+                                          "--msaa", "--width", "--height", "--renderer"};
     auto among = [](const char* s, const auto& list) {
         for (const char* one : list) if (!std::strcmp(s, one)) return true;
         return false;
