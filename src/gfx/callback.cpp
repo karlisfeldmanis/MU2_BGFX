@@ -5,6 +5,12 @@
 
 #include <cstdio>
 
+#if defined(_WIN32) && defined(MU2_SHIP)
+#include <windows.h>
+
+#include <thread>
+#endif
+
 #include "core/log.h"
 #include "core/watch.h"
 
@@ -22,6 +28,36 @@ void Callback::fatal(const char* filePath, uint16_t line, bgfx::Fatal::Enum code
     char what[600];
     std::snprintf(what, sizeof(what), "bgfx fatal %s at %s:%u: %s", name, filePath, unsigned(line), str);
     core::watchReport(what);
+#if defined(_WIN32) && defined(MU2_SHIP)
+    // The player is told, rather than left looking at a game that vanished (the GPU audit,
+    // 2026-10-15): a lost device is a driver reset (TDR), a driver update or a card that
+    // stopped. The freeze watch stops first, since the box holds the frame; then the process
+    // ends without abort(), whose fast fail would put Windows' own error box after ours.
+    core::watchStop();
+    core::logClose();
+    const wchar_t* text =
+        code == bgfx::Fatal::DeviceLost
+            ? L"MU2's graphics stopped: the graphics card or its driver stopped answering.\n\n"
+              L"Update your graphics card's driver (NVIDIA, AMD or Intel, from their site) and "
+              L"start MU2 again. If it happens again, close programs that draw over games "
+              L"(recording or overlay tools) and try once more."
+            : L"MU2's graphics stopped with an error.\n\nStart MU2 again; if it happens again, "
+              L"update your graphics card's driver.";
+    // The game's own windows hidden first, so the box is not under a borderless fullscreen one;
+    // then the box on a thread of its own, whose queue neither GLFW's window nor its hold timer
+    // (gfx/window_win.cpp) reaches. Not MB_TOPMOST or MB_SETFOREGROUND: under Wine those boxes
+    // close themselves after a few seconds, as if OK were pressed.
+    EnumWindows(
+        [](HWND window, LPARAM) -> BOOL {
+            DWORD pid = 0;
+            GetWindowThreadProcessId(window, &pid);
+            if (pid == GetCurrentProcessId()) ShowWindow(window, SW_HIDE);
+            return TRUE;
+        },
+        0);
+    std::thread([text] { MessageBoxW(nullptr, text, L"MU2", MB_OK | MB_ICONERROR); }).join();
+    TerminateProcess(GetCurrentProcess(), 3);
+#endif
     core::logClose();
     abort();
 }
