@@ -1,0 +1,33 @@
+[
+  {
+    "id": "2026-10-15",
+    "date": "2026-10-15",
+    "title": "The Golden Dragon arrives",
+    "body": "Gather your friends: the Golden Dragon raid is open. This patch also fixes a crash some players had on NVIDIA RTX cards.",
+    "changes": [
+      ["New", "Golden Dragon raid: \"Make raid\" or /raid"],
+      ["Fixed", "Crash on start on NVIDIA RTX cards"],
+      ["Improved", "The launcher updates itself and the game"]
+    ]
+  },
+  {
+    "id": "2026-10-14",
+    "date": "2026-10-14",
+    "title": "The launcher is here",
+    "body": "One small launcher for Windows and macOS installs the game, keeps it up to date and picks graphics settings for your PC.",
+    "changes": [
+      ["New", "Launcher for Windows and macOS"],
+      ["Fixed", "First Mac install stopping part way"]
+    ]
+  },
+  {
+    "id": "2026-10-13",
+    "date": "2026-10-13",
+    "title": "Guilds and the market",
+    "body": "Found a guild, wear its mark, and trade at the Broker in three cities. Aida opens with all six of its monsters.",
+    "changes": [
+      ["New", "Guilds and the Broker's market"],
+      ["New", "Aida"]
+    ]
+  }
+]

@@ -8,7 +8,7 @@ Python's standard library only (the user, 2026-10-14: no packages on the box). I
     web/server.py --db X --port 8090 --site web/site  elsewhere
 
 The routes:
-    POST /api/register   {email, password}          -> 201 {ok}            | 400 {field, error} | 409 {error: taken}
+    POST /api/register   {email, password, name}    -> 201 {ok}            | 400 {field, error} | 409 {field, error}
     POST /api/login      {email, password}          -> 200 {token, email}  | 401 {error}
                                                     | 426 {error} from a launcher too old (OLD_LAUNCHER)
     POST /api/logout     Authorization: Bearer T    -> 200 {ok}
@@ -26,6 +26,18 @@ The routes:
          for the game, good once and for TICKET_SECONDS. The game never sees the token, and says
          only the ticket and proofs made with the secret on its line (src/net/pass.h).
     GET  /api/me         Authorization: Bearer T    -> 200 {email}         | 401
+    GET  /api/account    Bearer T                   -> 200 {email, name, created, sessions, devices, plays} | 401
+         the account page: each sign-in (browser or launcher, its address shortened), each machine
+         its launcher reported while signed in, and each Play of the last PLAYS_DAYS days.
+    POST /api/name       Bearer T {name}            -> 200 {ok} | 400 {field, error} | 409
+    POST /api/password   Bearer T {old, new}        -> 200 {ok} | 400 {field, error} | 401
+         every other sign-in of the account is ended; the one that asked stays.
+    POST /api/sessions/end  Bearer T {id}           -> 200 {ok} | 404     one sign-in ended, by the id /api/account gave
+    POST /api/delete     Bearer T {password}        -> 200 {ok} | 400 {field, error} | 401
+         the account and everything under it (sign-ins, tickets, plays, machines, comments) gone at once.
+    GET  /api/comments?post=ID                      -> 200 {comments: [{name, text, at}]}
+    POST /api/comments   Bearer T {post, text}      -> 201 {ok} | 400 {error} | 401 | 429
+         on the posts of site/posts.json, under the account's name.
     GET  /api/downloads                             -> 200 {windows: {file, bytes} | null, macos: ...}
     GET  /internal/ticket?ticket=X  (127.0.0.1 only, never proxied) -> 200 {account, secret} | 404
          for mu2_server to learn whose a game's ticket is and the secret its proofs are made with.
@@ -57,6 +69,10 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 SESSION_DAYS = 90
+# The plays an account page lists, and how long each is kept.
+PLAYS_DAYS = 30
+NAME = re.compile(r"^[A-Za-z0-9_]{3,16}$")
+MOST_COMMENT = 500
 # A ticket waits this long for the server to ask about it: the game starts and opens the character
 # screen in seconds, a slow machine's first start in under a minute.
 TICKET_SECONDS = 120
@@ -113,6 +129,28 @@ CREATE TABLE IF NOT EXISTS sessions (
     last_used  INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS sessions_account ON sessions(account_id);
+CREATE TABLE IF NOT EXISTS plays (
+    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    at         INTEGER NOT NULL,
+    ip         TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS plays_account ON plays(account_id, at);
+CREATE TABLE IF NOT EXISTS devices (
+    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    fp         TEXT NOT NULL,
+    report     TEXT NOT NULL,      -- the machine report as /api/machine kept it, JSON
+    ip         TEXT NOT NULL,
+    seen       INTEGER NOT NULL,
+    PRIMARY KEY (account_id, fp)
+);
+CREATE TABLE IF NOT EXISTS comments (
+    id         INTEGER PRIMARY KEY,
+    post       TEXT NOT NULL,
+    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    text       TEXT NOT NULL,
+    at         INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS comments_post ON comments(post, at);
 CREATE TABLE IF NOT EXISTS tickets (
     ticket      TEXT PRIMARY KEY,
     account_id  INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
@@ -153,6 +191,28 @@ def token_hash(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
+# ---- what the account page shows of a sign-in ------------------------------------------------------
+
+def short_ip(ip: str) -> str:
+    """An address with its last half hidden: enough to tell home from elsewhere, not to find anyone."""
+    if ":" in ip:
+        return ":".join(ip.split(":")[:2]) + ":…"
+    parts = ip.split(".")
+    return ".".join(parts[:2] + ["x", "x"]) if len(parts) == 4 else ""
+
+
+def agent_name(agent: str) -> str:
+    """'MU Classic launcher' or the browser and its system, read off the User-Agent."""
+    if LAUNCHER_AGENT.match(agent.strip()):
+        return "MU Classic launcher"
+    system = next((name for key, name in (("iPhone", "iPhone"), ("iPad", "iPad"), ("Android", "Android"),
+                                          ("Windows", "Windows"), ("Mac OS X", "macOS"), ("Linux", "Linux"))
+                   if key in agent), "")
+    browser = next((name for key, name in (("Edg/", "Edge"), ("Firefox/", "Firefox"), ("Chrome/", "Chrome"),
+                                           ("Safari/", "Safari")) if key in agent), "Browser")
+    return f"{browser} on {system}" if system else browser
+
+
 # ---- the store -----------------------------------------------------------------------------------
 
 class Store:
@@ -176,6 +236,16 @@ class Store:
             self.crash_days[day] = self.crash_days.get(day, 0) + 1
         with self.db() as db:
             db.executescript(SCHEMA)
+            # Columns added after the first accounts: an account's public name (comments), and
+            # where and with what each sign-in was made (the account page).
+            have = {row[1] for row in db.execute("PRAGMA table_info(accounts)")}
+            if "name" not in have:
+                db.execute("ALTER TABLE accounts ADD COLUMN name TEXT")
+            db.execute("CREATE UNIQUE INDEX IF NOT EXISTS accounts_name ON accounts(name COLLATE NOCASE)")
+            have = {row[1] for row in db.execute("PRAGMA table_info(sessions)")}
+            for column in ("ip", "agent"):
+                if column not in have:
+                    db.execute(f"ALTER TABLE sessions ADD COLUMN {column} TEXT NOT NULL DEFAULT ''")
 
     def db(self) -> sqlite3.Connection:
         db = getattr(self.local, "db", None)
@@ -187,15 +257,21 @@ class Store:
             self.local.db = db
         return db
 
-    def register(self, email: str, password: str) -> bool:
+    def register(self, email: str, password: str, name: str):
+        """None when made, else which of the two is taken: "email" or "name"."""
+        db = self.db()
+        if db.execute("SELECT 1 FROM accounts WHERE email = ?", (email,)).fetchone():
+            return "email"
+        if name and db.execute("SELECT 1 FROM accounts WHERE name = ? COLLATE NOCASE", (name,)).fetchone():
+            return "name"
         try:
-            self.db().execute("INSERT INTO accounts (email, password, created) VALUES (?, ?, ?)",
-                              (email, hash_password(password), int(time.time())))
-            return True
+            db.execute("INSERT INTO accounts (email, password, created, name) VALUES (?, ?, ?, ?)",
+                       (email, hash_password(password), int(time.time()), name or None))
+            return None
         except sqlite3.IntegrityError:
-            return False
+            return "email"
 
-    def login(self, email: str, password: str):
+    def login(self, email: str, password: str, ip: str = "", agent: str = ""):
         row = self.db().execute("SELECT id, email, password FROM accounts WHERE email = ?",
                                 (email,)).fetchone()
         if row is None:
@@ -207,17 +283,85 @@ class Store:
         now = int(time.time())
         db = self.db()
         db.execute("DELETE FROM sessions WHERE expires < ?", (now,))
-        db.execute("INSERT INTO sessions VALUES (?, ?, ?, ?, ?)",
-                   (token_hash(token), row[0], now, now + SESSION_DAYS * 86400, now))
+        db.execute("INSERT INTO sessions (token_hash, account_id, created, expires, last_used, ip, agent) "
+                   "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                   (token_hash(token), row[0], now, now + SESSION_DAYS * 86400, now, ip, agent[:200]))
         return token, row[1]
 
+    def check(self, account: int, password: str) -> bool:
+        row = self.db().execute("SELECT password FROM accounts WHERE id = ?", (account,)).fetchone()
+        return bool(row) and check_password(password, row[0])
+
+    def set_password(self, account: int, password: str, keep: str):
+        """The new password, and every sign-in but `keep` (a token) ended."""
+        db = self.db()
+        db.execute("UPDATE accounts SET password = ? WHERE id = ?", (hash_password(password), account))
+        db.execute("DELETE FROM sessions WHERE account_id = ? AND token_hash != ?", (account, token_hash(keep)))
+
+    def set_name(self, account: int, name: str) -> bool:
+        try:
+            self.db().execute("UPDATE accounts SET name = ? WHERE id = ?", (name, account))
+            return True
+        except sqlite3.IntegrityError:
+            return False
+
+    def delete(self, account: int):
+        self.db().execute("DELETE FROM accounts WHERE id = ?", (account,))
+
+    def end_session(self, account: int, sid: str) -> bool:
+        """Ends the account's sign-in whose id (its hash's first 16 digits) is `sid`."""
+        if not re.fullmatch(r"[0-9a-f]{16}", sid or ""):
+            return False
+        return self.db().execute("DELETE FROM sessions WHERE account_id = ? AND substr(token_hash, 1, 16) = ?",
+                                 (account, sid)).rowcount > 0
+
+    def played(self, account: int, ip: str):
+        now = int(time.time())
+        db = self.db()
+        db.execute("DELETE FROM plays WHERE at < ?", (now - PLAYS_DAYS * 86400,))
+        db.execute("INSERT INTO plays VALUES (?, ?, ?)", (account, now, ip))
+
+    def device(self, account: int, report: dict, ip: str):
+        self.db().execute("INSERT OR REPLACE INTO devices VALUES (?, ?, ?, ?, ?)",
+                          (account, report["fp"], json.dumps(report, separators=(",", ":")), ip, report["at"]))
+
+    def account(self, account: int, token: str) -> dict:
+        db = self.db()
+        email, name, created = db.execute("SELECT email, name, created FROM accounts WHERE id = ?",
+                                          (account,)).fetchone()
+        mine = token_hash(token)
+        sessions = [{"id": row[0][:16], "current": row[0] == mine, "created": row[1], "last": row[2],
+                     "ip": short_ip(row[3]), "agent": agent_name(row[4])}
+                    for row in db.execute("SELECT token_hash, created, last_used, ip, agent FROM sessions "
+                                          "WHERE account_id = ? AND expires >= ? ORDER BY last_used DESC",
+                                          (account, int(time.time())))]
+        devices = []
+        for report, ip, seen in db.execute("SELECT report, ip, seen FROM devices WHERE account_id = ? "
+                                           "ORDER BY seen DESC LIMIT 10", (account,)):
+            row = json.loads(report)
+            devices.append({key: row.get(key) for key in ("gpu", "driver", "date", "cpu", "ram", "os", "graphics")}
+                           | {"ip": short_ip(ip), "seen": seen})
+        plays = [{"at": at, "ip": short_ip(ip)} for at, ip in
+                 db.execute("SELECT at, ip FROM plays WHERE account_id = ? ORDER BY at DESC LIMIT 20", (account,))]
+        return {"email": email, "name": name or "", "created": created, "sessions": sessions,
+                "devices": devices, "plays": plays}
+
+    def comments(self, post: str) -> list:
+        return [{"name": name, "text": text, "at": at} for name, text, at in self.db().execute(
+            "SELECT a.name, c.text, c.at FROM comments c JOIN accounts a ON a.id = c.account_id "
+            "WHERE c.post = ? ORDER BY c.at LIMIT 200", (post,))]
+
+    def comment(self, post: str, account: int, text: str):
+        self.db().execute("INSERT INTO comments (post, account_id, text, at) VALUES (?, ?, ?, ?)",
+                          (post, account, text, int(time.time())))
+
     def session(self, token: str):
-        """The account a live token belongs to, as (id, email), or None."""
+        """The account a live token belongs to, as (id, email, name), or None."""
         if not re.fullmatch(r"[0-9a-f]{64}", token or ""):
             return None
         now = int(time.time())
         row = self.db().execute(
-            "SELECT a.id, a.email FROM sessions s JOIN accounts a ON a.id = s.account_id "
+            "SELECT a.id, a.email, a.name FROM sessions s JOIN accounts a ON a.id = s.account_id "
             "WHERE s.token_hash = ? AND s.expires >= ?", (token_hash(token), now)).fetchone()
         if row is not None:
             self.db().execute("UPDATE sessions SET last_used = ? WHERE token_hash = ?",
@@ -369,6 +513,8 @@ MACHINE_LIMIT = Limit(60, 3600)
 CRASH_LIMIT = Limit(24, 3600)
 # A ticket a Play: sixty an hour is a player who starts the game every minute.
 TICKET_LIMIT = Limit(60, 3600)
+# Comments, per account: a conversation, not a flood.
+COMMENT_LIMIT = Limit(10, 600)
 
 
 # ---- the handler ---------------------------------------------------------------------------------
@@ -439,6 +585,16 @@ class Handler(BaseHTTPRequestHandler):
             return self.crash()
         if path == "/api/ticket":
             return self.ticket()
+        if path == "/api/name":
+            return self.name()
+        if path == "/api/password":
+            return self.password()
+        if path == "/api/sessions/end":
+            return self.end_session()
+        if path == "/api/delete":
+            return self.delete()
+        if path == "/api/comments":
+            return self.comment()
         self.reply(404, {"error": "not found"})
 
     def register(self):
@@ -447,16 +603,23 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(400, {"error": "bad request"})
         email = str(said.get("email", "")).strip().lower()
         password = str(said.get("password", ""))
+        # The name is asked by the page since comments came (2026-10-15); an older page sends none.
+        name = str(said.get("name", "")).strip()
         if not EMAIL.match(email) or len(email) > 254:
             return self.reply(400, {"field": "email", "error": "Enter a valid email address."})
+        if name and not NAME.match(name):
+            return self.reply(400, {"field": "name", "error": "3 to 16 letters, digits or _."})
         if len(password) < 8:
             return self.reply(400, {"field": "password", "error": "Use at least 8 characters."})
         if len(password) > 128:
             return self.reply(400, {"field": "password", "error": "Use at most 128 characters."})
         if not REGISTER_LIMIT.allow(self.client()):
             return self.reply(429, {"error": "Too many accounts from here. Try again later."})
-        if not self.store.register(email, password):
-            return self.reply(409, {"error": "taken"})
+        taken = self.store.register(email, password, name)
+        if taken == "name":
+            return self.reply(409, {"field": "name", "error": "That name is taken."})
+        if taken:
+            return self.reply(409, {"field": "email", "error": "taken"})
         print(f"{self.client()} registered account {email}", flush=True)
         self.reply(201, {"ok": True})
 
@@ -471,7 +634,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(426, {"error": OLD_LAUNCHER})
         email = str(said.get("email", "")).strip().lower()
         password = str(said.get("password", ""))
-        signed = self.store.login(email, password) if email and password else None
+        signed = (self.store.login(email, password, self.client(), self.headers.get("User-Agent", ""))
+                  if email and password else None)
         if signed is None:
             return self.reply(401, {"error": "Wrong email or password."})
         self.reply(200, {"token": signed[0], "email": signed[1]})
@@ -498,6 +662,11 @@ class Handler(BaseHTTPRequestHandler):
         joined = "|".join(str(report.get(key, "")) for key in MACHINE_FINGERPRINT)
         report["fp"] = hashlib.sha256(joined.encode()).hexdigest()[:16]
         self.store.machine(report)
+        # A launcher that says its token files the machine under the account too, for the
+        # account page; the fleet's file above still holds nothing about who.
+        signed = self.store.session(self.bearer()) if self.bearer() else None
+        if signed:
+            self.store.device(signed[0], report, self.client())
         print(f"{self.client()} machine {report['fp']} {report.get('gpu')} driver {report.get('driver', '?')}",
               flush=True)
         self.reply(200, {"ok": True})
@@ -560,7 +729,90 @@ class Handler(BaseHTTPRequestHandler):
         if row is None:
             return self.reply(401, {"error": "signed out"})
         ticket, secret = self.store.ticket(row[0])
+        self.store.played(row[0], self.client())
         self.reply(200, {"ticket": ticket, "secret": secret})
+
+    # -- the account page
+
+    def signed(self):
+        """The account the request's token is, or None with 401 already answered."""
+        row = self.store.session(self.bearer())
+        if row is None:
+            self.reply(401, {"error": "signed out"})
+        return row
+
+    def name(self):
+        row = self.signed()
+        if row is None:
+            return
+        said = self.body() or {}
+        name = str(said.get("name", "")).strip()
+        if not NAME.match(name):
+            return self.reply(400, {"field": "name", "error": "3 to 16 letters, digits or _."})
+        if not self.store.set_name(row[0], name):
+            return self.reply(409, {"field": "name", "error": "That name is taken."})
+        self.reply(200, {"ok": True})
+
+    def password(self):
+        row = self.signed()
+        if row is None:
+            return
+        said = self.body() or {}
+        old, new = str(said.get("old", "")), str(said.get("new", ""))
+        if not LOGIN_LIMIT.allow(self.client()):
+            return self.reply(429, {"error": "Too many tries. Wait a minute."})
+        if not self.store.check(row[0], old):
+            return self.reply(400, {"field": "old", "error": "That is not your password."})
+        if not 8 <= len(new) <= 128:
+            return self.reply(400, {"field": "new", "error": "Use 8 to 128 characters."})
+        self.store.set_password(row[0], new, self.bearer())
+        print(f"{self.client()} account {row[0]} changed its password", flush=True)
+        self.reply(200, {"ok": True})
+
+    def end_session(self):
+        row = self.signed()
+        if row is None:
+            return
+        said = self.body() or {}
+        if not self.store.end_session(row[0], str(said.get("id", ""))):
+            return self.reply(404, {"error": "no such sign-in"})
+        self.reply(200, {"ok": True})
+
+    def delete(self):
+        row = self.signed()
+        if row is None:
+            return
+        said = self.body() or {}
+        if not LOGIN_LIMIT.allow(self.client()):
+            return self.reply(429, {"error": "Too many tries. Wait a minute."})
+        if not self.store.check(row[0], str(said.get("password", ""))):
+            return self.reply(400, {"field": "password", "error": "That is not your password."})
+        self.store.delete(row[0])
+        print(f"{self.client()} account {row[0]} deleted itself", flush=True)
+        self.reply(200, {"ok": True})
+
+    def posts(self) -> set:
+        try:
+            return {str(post.get("id")) for post in json.loads((self.site / "posts.json").read_text())}
+        except (OSError, ValueError, AttributeError):
+            return set()
+
+    def comment(self):
+        row = self.signed()
+        if row is None:
+            return
+        said = self.body() or {}
+        post, text = str(said.get("post", "")), str(said.get("text", "")).strip()
+        if post not in self.posts():
+            return self.reply(400, {"error": "no such post"})
+        if not text or len(text) > MOST_COMMENT:
+            return self.reply(400, {"error": f"Write 1 to {MOST_COMMENT} characters."})
+        if not row[2]:
+            return self.reply(400, {"error": "Pick a name first."})
+        if not COMMENT_LIMIT.allow(str(row[0])):
+            return self.reply(429, {"error": "Slow down a little."})
+        self.store.comment(post, row[0], text)
+        self.reply(201, {"ok": True})
 
     # -- GET
 
@@ -573,6 +825,14 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(200, {"email": row[1]}) if row else self.reply(401, {"error": "signed out"})
         if url.path == "/api/downloads":
             return self.reply(200, self.listing())
+        if url.path == "/api/account":
+            row = self.signed()
+            return self.reply(200, self.store.account(row[0], self.bearer())) if row else None
+        if url.path == "/api/comments":
+            post = parse_qs(url.query).get("post", [""])[0]
+            if post not in self.posts():
+                return self.reply(404, {"error": "no such post"})
+            return self.reply(200, {"comments": self.store.comments(post)})
         if url.path == "/internal/crashes":
             if not self.direct():
                 return self.reply(404, {"error": "not found"})
