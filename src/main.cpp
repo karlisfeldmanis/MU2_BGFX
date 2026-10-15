@@ -11,11 +11,21 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 #include <vector>
+
+#include "game/roster.h"  // game::passCount, handed to a restart
 
 #ifdef _WIN32
 #include <windows.h>
 #include <timeapi.h>
+#else
+#include <mach-o/dyld.h>
+#include <spawn.h>
+#include <climits>
+extern char** environ;
+#endif
+#ifdef _WIN32
 // A laptop with two GPUs runs a program on the weak one unless the program asks, by exporting
 // NvOptimusEnablement and AmdPowerXpressRequestHighPerformance. bgfx.cpp exports both already.
 #endif
@@ -51,9 +61,39 @@ std::vector<char*> playersOnly(int argc, char** argv) {
 }
 #endif
 
+// Graphics' Apply changed what only a new start takes -- Textures or Renderer (core::Args::restart)
+// -- and the run has ended as Exit Game ends it: the same program again, with the switches it was
+// started with, so a player's build opens on the character screen with the options it just wrote.
+// The sign-in's count goes with it (game::passCount): a pass counted from 1 again would be refused.
+void startAgain(char** started) {
+    const std::string count = std::to_string(mu::game::passCount());
+#ifdef _WIN32
+    SetEnvironmentVariableA("MU2_PASS_COUNT", count.c_str());
+    wchar_t exe[MAX_PATH] = {};
+    if (!GetModuleFileNameW(nullptr, exe, MAX_PATH)) return;
+    std::wstring line = GetCommandLineW();
+    STARTUPINFOW startup{};
+    startup.cb = sizeof startup;
+    PROCESS_INFORMATION process{};
+    if (CreateProcessW(exe, line.data(), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startup,
+                       &process)) {
+        CloseHandle(process.hThread);
+        CloseHandle(process.hProcess);
+    }
+#else
+    setenv("MU2_PASS_COUNT", count.c_str(), 1);
+    char exe[PATH_MAX] = {};
+    uint32_t size = sizeof exe;
+    if (_NSGetExecutablePath(exe, &size) != 0) return;
+    pid_t child = 0;
+    posix_spawn(&child, exe, nullptr, nullptr, started, environ);
+#endif
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
+    char** const started = argv;  // as the system gave them, for a restart to give again
     // Opened from Finder or the Dock: started by its path inside build/MU2.app, with no
     // switches (or only the process serial number an older macOS adds). It plays as mu play's
     // lobby does. A run through the build/mu2 link is argv[0] "build/mu2" and keeps its own.
@@ -79,10 +119,13 @@ int main(int argc, char** argv) {
     timeBeginPeriod(1);
 #endif
     int code = 0;
+    bool again = false;
     {
         mu::app::Application application;
         code = application.run(argc, argv);
+        again = application.restartAsked();
     }
+    if (again) startAgain(started);
 #ifdef _WIN32
     timeEndPeriod(1);
 #endif

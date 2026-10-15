@@ -209,7 +209,11 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
     // this ring is written to (one width in screen pixels, a spider at your feet and one
     // across the square ringed the same). Never under a texel, or the search would land on
     // one sample and band.
-    const float texels = std::max(1.0f, kOutlineWidth * fit);
+    //
+    // Its pixels are the tuned Retina Mac's, scaled to this display's: 2.6 there, 1.3 on a
+    // 100% screen, where each pixel is twice as wide to the eye.
+    const float display = std::clamp(displayScale_, 1.0f, 4.0f) / 2.0f;
+    const float texels = std::max(1.0f, kOutlineWidth * display * fit);
     const float outlineParams[4] = {texels, 0.9f, params.shadow ? 0.5f : 0.0f,
                                     params.glow > 0.0f ? std::max(1.0f, params.glow * fit) : 0.0f};
     // One texel of the PHYSICAL mask texture, not of the box: the box fills only its own
@@ -218,7 +222,8 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
     // how much smaller than the cap the box happened to be.
     const float pixel[4] = {1.0f / float(kOutlineMaskSize), 1.0f / float(kOutlineMaskSize), 0.0f,
                             0.0f};
-    const float drift[4] = {2.0f * fit, 3.0f * fit, std::max(1.0f, 4.0f * fit), 0.0f};
+    const float drift[4] = {2.0f * display * fit, 3.0f * display * fit,
+                            std::max(1.0f, 4.0f * display * fit), 0.0f};
     const float scale[4] = {float(maskW) / float(kOutlineMaskSize),
                             float(maskH) / float(kOutlineMaskSize), 0.0f, 0.0f};
     bgfx::setUniform(uOutlineEdge_, edge);

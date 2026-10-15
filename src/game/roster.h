@@ -49,6 +49,10 @@ std::string accountKey();
 // What a line says for `key`, an Account's or a Hello's, asked afresh for each line: the launcher's
 // ticket as a pass with the next count (net/pass.h), any other key as it is.
 std::string sealedKey(const std::string& key);
+// The last pass's count. A game that starts itself again (Graphics' Apply, app/restart.h) hands it
+// on in MU2_PASS_COUNT, and the new one counts on from there: the server refuses a pass whose
+// count it has already seen, so a restart counting from 1 again would be turned away.
+uint64_t passCount();
 
 // The characters this machine played on `server` (host:port) before accounts: each save in
 // saves/characters with a token for it beside it (Name.server), to be claimed onto the account.

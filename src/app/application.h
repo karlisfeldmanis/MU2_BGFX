@@ -27,6 +27,8 @@ public:
     // argc/argv straight from main(). The return is the process's: 0 for a clean run, 1 for a
     // failure or a run that logged errors, 2 for a frame budget overdrawn.
     int run(int argc, char** argv);
+    // Whether the run ended for Graphics' Apply, to be started again (app/restart.h).
+    bool restartAsked() const { return args_.restart; }
 
 private:
     // The window, the device and the textures. False having already said why in the log.

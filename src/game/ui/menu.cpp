@@ -617,14 +617,14 @@ void Menu::rebuild() {
         }
         controls::rule(canvas_, sheet.x + inset, y_ + kGraphicsRule * u,
                        (kGraphicsWide - kOptionsInset * 2.0f) * u, u);
-        // The textures and the renderer are taken when the game starts, so a change to either
-        // says when it lands.
+        // The textures and the renderer are taken when the game starts, so Apply restarts it
+        // (app/restart.h), and says so before it is pressed.
         const bool textures = set.textures != set.texturesLoaded;
         const bool renderer = set.renderer != set.rendererLoaded;
         if (textures || renderer) {
-            const char* words = textures && renderer ? "Textures and renderer change on the next start."
-                                : renderer           ? "The renderer changes the next time the game starts."
-                                                     : "Textures change the next time the game starts.";
+            const char* words = textures && renderer ? "Apply restarts the game for textures and renderer."
+                                : renderer           ? "Apply restarts the game to change the renderer."
+                                                     : "Apply restarts the game to change textures.";
             const float px = style::kBodySize * u;
             const float wide = controls::labelWidth(px, words);
             controls::label(canvas_, std::round(sheet.x + (sheet.w - wide) * 0.5f),

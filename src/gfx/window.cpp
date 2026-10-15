@@ -496,6 +496,12 @@ void Window::holdVsync(bool off) {
     bgfx::reset(off ? (reset_ & ~uint32_t(BGFX_RESET_VSYNC)) : reset_, &chain_);
 }
 
+float Window::contentScale() const {
+    float x = 1.0f, y = 1.0f;
+    if (handle_) glfwGetWindowContentScale(handle_, &x, &y);
+    return x > 0.0f ? x : 1.0f;
+}
+
 int Window::refreshHz() const {
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = monitor ? glfwGetVideoMode(monitor) : nullptr;

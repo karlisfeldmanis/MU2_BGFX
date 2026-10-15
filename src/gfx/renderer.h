@@ -320,6 +320,8 @@ public:
     // --cpu-scenery) draws them as batches like the rest.
     void setGpuScenery(GpuScenery* scenery) { gpuScenery_ = scenery; }
     void setGpuSceneryOn(bool on) { gpuSceneryOn_ = on; }
+    // The display's scale (Window::contentScale), which the hover ring's width is measured by.
+    void setDisplayScale(float scale) { displayScale_ = scale; }
 
     // --- the shadow probe -------------------------------------------------------------
     // Where the sun's split stood this frame, measured against a grid fixed to the WORLD --
@@ -501,6 +503,9 @@ public:
     // How wide the ring is and how far its box must be grown to hold it, in pixels of the
     // real screen -- shared with game/outline.cpp's own box fit so the two agree on how much
     // room the ring needs without the literal being written twice.
+    // Both tuned on a Retina Mac, at a display scale of 2: drawOutline scales them by the
+    // display's own, so a 100% Windows screen's ring is as thin to the eye (the user,
+    // 2026-10-15: "to thick it was little bit thinner on vulkan/metal").
     static constexpr float kOutlineWidth = 2.6f;
     static constexpr float kOutlineReach = 7.0f;  // the drop shadow's own further reach
     // The mask's own cap, pixels on a side. One fixed target, so it never reallocates;
@@ -801,6 +806,7 @@ private:
     bgfx::ProgramHandle outlineProgram_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uOutlineEdge_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uOutlineParams_ = BGFX_INVALID_HANDLE;
+    float displayScale_ = 2.0f;  // setDisplayScale; 2 is the scale the ring was tuned at
     bgfx::UniformHandle uOutlinePixel_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uOutlineDrift_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uOutlineScale_ = BGFX_INVALID_HANDLE;

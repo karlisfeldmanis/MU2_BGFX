@@ -80,7 +80,12 @@ std::string accountKey() {
         const std::string ticket = said.substr(0, colon);
         const std::string secret = colon == std::string::npos ? std::string() : said.substr(colon + 1);
         if (net::isTicket(ticket) && net::isSecret(secret)) {
-            if (g_ticket != ticket) core::logf("account: the launcher's sign-in");
+            if (g_ticket != ticket) {
+                core::logf("account: the launcher's sign-in");
+                if (const char* counted = std::getenv("MU2_PASS_COUNT")) {
+                    g_count = std::strtoull(counted, nullptr, 10);
+                }
+            }
             g_ticket = ticket;
             g_secret = secret;
             return ticket;
@@ -108,6 +113,8 @@ std::string accountKey() {
     }
     return key;
 }
+
+uint64_t passCount() { return g_count; }
 
 std::string sealedKey(const std::string& key) {
     if (g_ticket.empty() || key != g_ticket) return key;

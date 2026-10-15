@@ -144,6 +144,9 @@ struct Args {
     // is Metal whatever this says.
     int renderer = 0;
     int rendererLoaded = 0;  // what this run started with; the Graphics page's note compares
+    // Set by Apply when Textures or Renderer changed, which only a new start takes: the run
+    // ends as Exit Game ends it, and main() starts the game again (app/restart.h).
+    bool restart = false;
 
     // The world. A name under assets/world/; empty runs the model bench instead.
     std::string world;

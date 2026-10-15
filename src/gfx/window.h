@@ -53,6 +53,10 @@ public:
     // itself by this: it presents unsynced, so it has to know what it is pacing to.
     int refreshHz() const;
 
+    // The display's scale: 2 on a Retina Mac, 1.5 on a Windows display at 150%, 1 at 100%.
+    // GLFW's content scale, 1 when it cannot be had.
+    float contentScale() const;
+
     // Escape as the application quits on: held down, and not while something is typing --
     // an Escape that cancels a number box must not also end the game. Once swallowed it stays
     // swallowed until the key comes up, so the frame after the box closes does not quit either.

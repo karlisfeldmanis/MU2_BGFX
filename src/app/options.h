@@ -88,6 +88,11 @@ inline void applySettings(gfx::Window& window, const game::Menu::Settings& set,
     args.lights = set.lights;
     args.textures = set.textures;
     args.renderer = set.renderer;
+    // Both are taken only when the game starts: the run ends and starts itself again. Only a
+    // run that keeps its options (--remember, as every player's does) has them to start with.
+    if (args.remember && (set.textures != set.texturesLoaded || set.renderer != set.rendererLoaded)) {
+        args.restart = true;
+    }
     args.cap = set.cap;
     // The window's size as asked for, not as the window reports it yet, and kept through
     // fullscreen so going back to a window after a restart comes back to it.

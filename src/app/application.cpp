@@ -317,9 +317,11 @@ int Application::run(int argc, char** argv) {
         core::watchPause();
         if (framing) framing->held();
     });
-    while (!quitEarly && !mode->quitting() && window_.pump() && !window_.escapePressed()) {
+    while (!quitEarly && !mode->quitting() && !args_.restart && window_.pump() &&
+           !window_.escapePressed()) {
         core::watchBeat();
         renderer_.resize(window_.width(), window_.height());
+        renderer_.setDisplayScale(window_.contentScale());
 
         // Four times a second, counted in milliseconds rather than frames: the point is to
         // tune with the window open, and at 470 fps a count of frames was stat'ing the file
