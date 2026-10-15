@@ -45,6 +45,13 @@ bool paintedInSrgb(TextureRole role) { return isSrgb(role) || role == TextureRol
 
 bool wantsMips(TextureRole role) { return role != TextureRole::Grid; }
 
+// Which textures Textures::setHalf takes the top level off: the world's, at 256 or more across.
+// A window's art is drawn texel for texel and a grid is data, so both stay whole.
+bool halvable(TextureRole role, uint32_t width, uint32_t height) {
+    return role != TextureRole::Interface && role != TextureRole::Grid &&
+           std::max(width, height) >= 256;
+}
+
 // sRGB to linear and back, the real curve rather than a 2.2 power. Tabulated one way
 // because the decode runs once per texel per level and the table is 1 KB.
 const float* srgbToLinearTable() {
@@ -338,22 +345,30 @@ bgfx::TextureHandle Textures::loadFromMemory(const std::string& name, const void
             }
         }
 
-        const bgfx::Memory* mem =
-            bgfx::makeRef(chain->data(), uint32_t(chain->size()), releaseBytes, chain);
-        bgfx::TextureHandle handle =
-            bgfx::createTexture2D(uint16_t(width), uint16_t(height), true, 1,
-                                  bgfx::TextureFormat::RGBA8, flags, mem);
+        // Half: the chain from its second level, which is a whole chain for half the size.
         const size_t topLevel = size_t(width) * height * 4;
+        const bool half = half_ && halvable(role, width, height);
+        const size_t skip = half ? topLevel : 0;
+        const uint32_t drawnW = half ? std::max(1u, width / 2) : width;
+        const uint32_t drawnH = half ? std::max(1u, height / 2) : height;
+        const bgfx::Memory* mem = bgfx::makeRef(chain->data() + skip,
+                                                uint32_t(chain->size() - skip), releaseBytes, chain);
+        bgfx::TextureHandle handle =
+            bgfx::createTexture2D(uint16_t(drawnW), uint16_t(drawnH), true, 1,
+                                  bgfx::TextureFormat::RGBA8, flags, mem);
         bimg::imageFree(image);
         if (!bgfx::isValid(handle)) {
             core::logError("%s did not become a texture", name.c_str());
         } else {
-            bytes_ += topLevel;
-            mipBytes_ += total - topLevel;
-            core::logf("texture %s %ux%u %s %u mips %.1f KB (+%.1f KB of mips)", name.c_str(),
-                       width, height, roleName, levels, double(topLevel) / 1024.0,
-                       double(total - topLevel) / 1024.0);
-            sizes_[handle.idx] = {width, height, bgfx::TextureFormat::RGBA8, levels, flags};
+            const size_t top = size_t(drawnW) * drawnH * 4;
+            const size_t rest = total - skip - top;
+            bytes_ += top;
+            mipBytes_ += rest;
+            core::logf("texture %s %ux%u %s %u mips %.1f KB (+%.1f KB of mips)%s", name.c_str(),
+                       drawnW, drawnH, roleName, unsigned(levels - (half ? 1 : 0)),
+                       double(top) / 1024.0, double(rest) / 1024.0, half ? ", halved" : "");
+            sizes_[handle.idx] = {drawnW, drawnH, bgfx::TextureFormat::RGBA8,
+                                  uint8_t(levels - (half ? 1 : 0)), flags};
         }
         byPath_[name] = handle;
         return handle;
@@ -364,6 +379,40 @@ bgfx::TextureHandle Textures::loadFromMemory(const std::string& name, const void
     // is bgfx's, and on the preloader's worker the main thread's frame() can free it (releaseImage)
     // before the next line runs.
     const bgfx::TextureFormat::Enum format = bgfx::TextureFormat::Enum(image->m_format);
+    // Half: a cooked KTX holds its whole chain already, so the levels under the top are copied
+    // out as a chain of their own, and the file's image freed here.
+    if (half_ && halvable(role, width, height) && image->m_numLayers == 1 && !image->m_cubeMap &&
+        image->m_numMips > 1 && image->m_numMips == mipCount(width, height)) {
+        const uint8_t mips = uint8_t(image->m_numMips - 1);
+        uint32_t below = 0;
+        bimg::ImageMip mip;
+        for (uint8_t lod = 1; lod <= mips; ++lod) {
+            if (!bimg::imageGetRawData(*image, 0, lod, image->m_data, image->m_size, mip)) break;
+            below += mip.m_size;
+        }
+        auto* chain = new std::vector<uint8_t>(below);
+        uint32_t at = 0;
+        for (uint8_t lod = 1; lod <= mips && at < below; ++lod) {
+            if (!bimg::imageGetRawData(*image, 0, lod, image->m_data, image->m_size, mip)) break;
+            std::memcpy(chain->data() + at, mip.m_data, mip.m_size);
+            at += mip.m_size;
+        }
+        bimg::imageFree(image);
+        const bgfx::Memory* mem = bgfx::makeRef(chain->data(), below, releaseBytes, chain);
+        const uint32_t drawnW = std::max(1u, width / 2), drawnH = std::max(1u, height / 2);
+        bgfx::TextureHandle handle = bgfx::createTexture2D(uint16_t(drawnW), uint16_t(drawnH),
+                                                           mips > 1, 1, format, flags, mem);
+        if (!bgfx::isValid(handle)) {
+            core::logError("%s did not become a texture", name.c_str());
+        } else {
+            bytes_ += below;
+            core::logf("texture %s %ux%u %s mips %u %.1f KB, halved", name.c_str(), drawnW,
+                       drawnH, roleName, unsigned(mips), double(below) / 1024.0);
+            sizes_[handle.idx] = {drawnW, drawnH, format, mips, flags};
+        }
+        byPath_[name] = handle;
+        return handle;
+    }
     const uint8_t mips = image->m_numMips;
     const uint32_t imageBytes = image->m_size;
     const bgfx::Memory* mem = bgfx::makeRef(image->m_data, imageBytes, releaseImage, image);

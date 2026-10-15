@@ -34,6 +34,16 @@ steady 30 fps at 1280x720 or more, in a crowd. On a mid-range desktop GPU, the g
 
 ## P2. A "Lowest" preset and an honest first pick
 
+**Built 2026-10-15** (the user: "we need more settings in client so users can turn off more fancy
+staff ... for potato laptops with integrated UHD cards its not working on 60fps"). The Graphics
+page now has Shadows **Off** (no sun pass; every lookup lit at once), **Point lights** On/Off
+(live; flames and spell light stay), **Textures** Full/Half (Half drops each world texture's top
+mip at load, from the next start), and the **Lowest** preset: 50%, no MSAA, shadows, SSAO,
+bloom, reflections, grass or point lights, half textures. The launcher's first run: integrated
+is Low, Intel UHD/HD Graphics Lowest. On this Mac in Lorencia's square at 1080p, Lowest is
+2.5 ms of GPU against High's 7.4. Not done from the list below: the sharpen and the 60 fps cap
+in Lowest, and no numbers from a real UHD card yet (P1).
+
 Cheap, and it needs no new rendering: every switch below already exists.
 - **Lowest**, for integrated cards: 50-60% scale, no MSAA, no shadows, no SSAO, no bloom, no
   reflections probe, grass thinned, no lamps' point lights (flames stay), sharpen off, and a

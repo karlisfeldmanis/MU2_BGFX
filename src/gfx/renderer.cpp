@@ -87,7 +87,12 @@ void Renderer::bindShadeInputs() {
         bgfx::setTexture(15, sProbe_, read ? probeFiltered_ : blackCube_);
     }
     bgfx::setUniform(uLampGrid_, lampGridUniform_);
-    bgfx::setUniform(uLampParams_, lampParams_);
+    if (lightsOn_) {
+        bgfx::setUniform(uLampParams_, lampParams_);
+    } else {
+        const float none[4] = {lampParams_[0], 0.0f, lampParams_[2], lampParams_[3]};
+        bgfx::setUniform(uLampParams_, none);
+    }
     // Only when there are any. This runs on EVERY shaded draw in the frame, so the common
     // case -- nothing burning -- must not pay two uniform uploads a draw for an array the
     // shader's loop is about to not read. lampParams_.z is 0 then, and that is what stops it.
@@ -961,22 +966,25 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             // to carry the whole job on its own.
             const uint64_t depthState = BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS;
             bgfx::setUniform(uMaterial_, noCutout);
-            if (ground) submitGround(ViewShadow, groundShadowProgram_, *ground, depthState, false);
-            // The resident casters' solid parts, culled to the split and drawn by the GPU
-            // (gfx/scenery.h); the batches then draw the rest of themselves.
-            skipMerged_ = separateCasters && resident != nullptr && scenery != nullptr &&
-                          drawGpuCasters(*scenery, lightViewProj, depthState);
-            if (!shadowBatches.empty()) {
-                submitBatches(ViewShadow, shadowProgram_, skinnedShadowProgram_, shadowBatches,
-                              idb, depthState, false);
-            }
-            skipMerged_ = false;
-            // A fading figure still casts, dithered by fs_shadow. It is in the casters' own
-            // list already when the camera culls separately (group() takes that list whole);
-            // when it does not, that list IS the camera's, which is the one it was kept out of.
-            if (!separateCasters && !fadeBatches_.empty()) {
-                submitBatches(ViewShadow, shadowProgram_, skinnedShadowProgram_, fadeBatches_,
-                              idb, depthState, false);
+            // Shadows Off: the view keeps its clear and the scenery's blits, and casts nothing.
+            if (shadowsOn_) {
+                if (ground) submitGround(ViewShadow, groundShadowProgram_, *ground, depthState, false);
+                // The resident casters' solid parts, culled to the split and drawn by the GPU
+                // (gfx/scenery.h); the batches then draw the rest of themselves.
+                skipMerged_ = separateCasters && resident != nullptr && scenery != nullptr &&
+                              drawGpuCasters(*scenery, lightViewProj, depthState);
+                if (!shadowBatches.empty()) {
+                    submitBatches(ViewShadow, shadowProgram_, skinnedShadowProgram_, shadowBatches,
+                                  idb, depthState, false);
+                }
+                skipMerged_ = false;
+                // A fading figure still casts, dithered by fs_shadow. It is in the casters' own
+                // list already when the camera culls separately (group() takes that list whole);
+                // when it does not, that list IS the camera's, which is the one it was kept out of.
+                if (!separateCasters && !fadeBatches_.empty()) {
+                    submitBatches(ViewShadow, shadowProgram_, skinnedShadowProgram_, fadeBatches_,
+                                  idb, depthState, false);
+                }
             }
 
             // --- view 1: the prepass -------------------------------------------------
@@ -1074,6 +1082,15 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                 bias[14] = 0.5f;
             }
             bx::mtxMul(shadowMtx, lightViewProj, bias);
+            if (!shadowsOn_) {
+                // Every pixel four maps to the left of the split: shadow.sh's edge test
+                // answers lit, and no tap is read.
+                float aside[16];
+                bx::mtxTranslate(aside, -4.0f, 0.0f, 0.0f);
+                float lit[16];
+                bx::mtxMul(lit, shadowMtx, aside);
+                std::memcpy(shadowMtx, lit, sizeof(shadowMtx));
+            }
 
             // The split's depth runs 0..1 over this many metres, which is what turns a
             // depth difference back into a distance.

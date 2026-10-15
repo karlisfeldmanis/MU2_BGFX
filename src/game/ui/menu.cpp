@@ -58,14 +58,14 @@ constexpr float kOptionsBack = kOptionsGraphics + style::kButtonM + 10.0f;
 constexpr float kOptionsFoot = kOptionsBack + style::kButtonM + 14.0f;
 constexpr float kOptionsTall = kOptionsFoot + kFootTall;
 
-// Graphics: the preset under Quality, seven rows under Detail, the limit under Frame rate, a
+// Graphics: the preset under Quality, nine rows under Detail, the limit under Frame rate, a
 // rule, Back, and the foot. As wide as Options, so the chevrons line up turning between them.
 constexpr float kGraphicsWide = kOptionsWide;
 constexpr float kQualityKicker = style::kHead + 20.0f;
 constexpr float kQualityRows = kQualityKicker + 24.0f;
 constexpr float kDetailKicker = kQualityRows + kRowStep + 8.0f;
 constexpr float kDetailRows = kDetailKicker + 24.0f;
-constexpr float kRateKicker = kDetailRows + kRowStep * 7.0f + 8.0f;
+constexpr float kRateKicker = kDetailRows + kRowStep * 9.0f + 8.0f;
 constexpr float kRateRows = kRateKicker + 24.0f;
 constexpr float kGraphicsRule = kRateRows + style::kRow + 14.0f;
 constexpr float kGraphicsBack = kGraphicsRule + 12.0f;
@@ -97,13 +97,26 @@ constexpr const char* kRowNames[kRows] = {"Display", "Resolution", "V-sync", "Fr
 
 // The Graphics rows, top to bottom.
 enum GraphicsRow : int {
-    kGPreset = 0, kGScale, kGAntialias, kGShadows, kGOcclusion, kGBloom, kGReflections, kGGrass, kGLimit,
-    kGraphicsRows,
+    kGPreset = 0, kGScale, kGAntialias, kGShadows, kGOcclusion, kGBloom, kGReflections, kGGrass,
+    kGLights, kGTextures, kGLimit, kGraphicsRows,
 };
 constexpr const char* kGraphicsNames[kGraphicsRows] = {
     "Preset", "Render scale", "Anti-aliasing", "Shadows", "Ambient occlusion", "Bloom",
-    "Reflections", "Grass", "Frame rate limit"};
-bool switched(int row) { return row == kGOcclusion || row == kGBloom || row == kGReflections; }
+    "Reflections", "Grass", "Point lights", "Textures", "Frame rate limit"};
+bool switched(int row) {
+    return row == kGOcclusion || row == kGBloom || row == kGReflections || row == kGLights;
+}
+// A switched row's value, for the click (Settings*) and the draw (const Settings*).
+template <typename Set>
+auto switchOf(int row, Set* set) -> decltype(&set->ssao) {
+    switch (row) {
+        case kGOcclusion: return &set->ssao;
+        case kGBloom: return &set->bloom;
+        case kGReflections: return &set->reflections;
+        case kGLights: return &set->lights;
+        default: return nullptr;
+    }
+}
 
 using Preset = core::GraphicsPreset;
 constexpr const Preset* kPresets = core::kGraphicsPresets;
@@ -114,7 +127,7 @@ int presetOf(const Menu::Settings& set) {
         const Preset& p = kPresets[i];
         if (set.scale == p.scale && set.msaa == p.msaa && set.shadows == p.shadows &&
             set.ssao == p.ssao && set.bloom == p.bloom && set.reflections == p.reflections &&
-            set.grass == p.grass) {
+            set.grass == p.grass && set.lights == p.lights && set.textures == p.textures) {
             return i;
         }
     }
@@ -130,6 +143,8 @@ void takePreset(int i, Menu::Settings* set) {
     set->bloom = p.bloom;
     set->reflections = p.reflections;
     set->grass = p.grass;
+    set->lights = p.lights;
+    set->textures = p.textures;
 }
 
 // A stepped row's values, and the one it holds now among them whatever it is: a --scale 0.99
@@ -139,8 +154,9 @@ std::vector<int> stepsOf(int row, int now) {
     switch (row) {
         case kGScale: steps = {50, 67, 75, 85, 90, 100}; break;
         case kGAntialias: steps = {1, 2, 4}; break;
-        case kGShadows: steps = {0, 1, 2}; break;
+        case kGShadows: steps = {-1, 0, 1, 2}; break;
         case kGGrass: steps = {0, 1, 2}; break;
+        case kGTextures: steps = {0, 1}; break;
         case kGLimit: steps = {0, 60, 90, 120, 180}; break;
         default: return steps;
     }
@@ -157,6 +173,7 @@ int* valueOf(int row, Menu::Settings* set) {
         case kGAntialias: return &set->msaa;
         case kGShadows: return &set->shadows;
         case kGGrass: return &set->grass;
+        case kGTextures: return &set->textures;
         case kGLimit: return &set->cap;
         default: return nullptr;
     }
@@ -170,11 +187,20 @@ std::string wordOf(int row, const Menu::Settings& set) {
             return p < 0 ? "Custom" : kPresets[p].name;
         }
         case kGScale:
+#if defined(__APPLE__)
             // MetalFX takes over the magnifying at 90% and under (gfx/renderer_setup.cpp).
             return std::to_string(set.scale) + (set.scale <= 90 ? "% MetalFX" : "%");
+#else
+            return std::to_string(set.scale) + "%";
+#endif
         case kGAntialias: return set.msaa <= 1 ? "Off" : std::to_string(set.msaa) + "x MSAA";
-        case kGShadows: return kLevels[std::clamp(set.shadows, 0, 2)];
+        case kGShadows: return set.shadows < 0 ? "Off" : kLevels[std::clamp(set.shadows, 0, 2)];
         case kGGrass: return set.grass <= 0 ? "Off" : set.grass == 1 ? "Low" : "High";
+        case kGTextures: {
+            // Read when they load, so a change is drawn from the next start, and the row says so.
+            const char* word = set.textures <= 0 ? "Half" : "Full";
+            return set.textures == set.texturesLoaded ? word : std::string(word) + " (restart)";
+        }
         case kGLimit: return set.cap <= 0 ? "Unlimited" : std::to_string(set.cap) + " fps";
         default: return "";
     }
@@ -377,12 +403,8 @@ void Menu::update(float seconds, float width, float height, const Pointer& point
                             const int to = now < 0 ? kPresetCount - 1
                                                    : std::clamp(now + (up ? 1 : -1), 0, kPresetCount - 1);
                             takePreset(to, &set);
-                        } else if (row == kGOcclusion) {
-                            set.ssao = up;
-                        } else if (row == kGBloom) {
-                            set.bloom = up;
-                        } else if (row == kGReflections) {
-                            set.reflections = up;
+                        } else if (bool* on = switchOf(row, &set)) {
+                            *on = up;
                         } else if (int* value = valueOf(row, &set)) {
                             const std::vector<int> steps = stepsOf(row, *value);
                             const int at = int(std::find(steps.begin(), steps.end(), *value) - steps.begin());
@@ -531,9 +553,8 @@ void Menu::rebuild() {
             controls::row(canvas_, row, kGraphicsNames[i], std::max(eased(a), eased(b)), u);
             const Box down = at(x_, y_, boxOf(page_, a)), up = at(x_, y_, boxOf(page_, b));
             if (switched(i)) {
-                const bool on = i == kGOcclusion ? set.ssao : i == kGBloom ? set.bloom : set.reflections;
                 controls::toggle(canvas_, {down.x, down.y, up.right() - down.x, down.h}, "Off", "On",
-                                 on, u);
+                                 *switchOf(i, &set), u);
                 continue;
             }
             controls::chevron(canvas_, down, false, eased(a), u);

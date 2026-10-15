@@ -48,6 +48,9 @@ bool Application::boot() {
     if (!window_.open(desc)) return false;
 
     textures_.createDefaults();
+    // The Graphics page's Textures, read once: a change waits for the next start.
+    textures_.setHalf(args_.textures == 0);
+    args_.texturesLoaded = args_.textures;
 
     if (!renderer_.init(window_.width(), window_.height(), paths_.shaders.c_str(), args_.msaa,
                         uint16_t(args_.shadowSize), args_.scale, args_.metalfx)) {

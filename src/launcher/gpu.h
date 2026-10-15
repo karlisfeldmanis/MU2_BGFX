@@ -38,15 +38,25 @@ struct Gpu {
 // one and the Vulkan loader.
 Gpu probeGpu();
 
-// What this machine's first run opens on. No Vulkan or no hardware adapter leaves Low; two
+// What this machine's first run opens on. No Vulkan or no hardware adapter is Lowest; two
 // gigabytes of the adapter's own memory or more is High, less (an integrated card sharing the
-// machine's) Medium; a driver kDriverYears old or more costs one step, because a card on an old
-// driver runs below what it is. -1 where nothing was probed.
+// machine's) Low, and Lowest for Intel's UHD and HD Graphics; a driver kDriverYears old or more
+// costs one step, because a card on an old driver runs below what it is. -1 where nothing was
+// probed.
 inline int presetFor(const Gpu& gpu) {
+    using namespace core;
     if (!gpu.known) return -1;
-    if (!gpu.vulkan || gpu.software) return 0;
-    const int preset = gpu.dedicated >= (uint64_t(2) << 30) ? 2 : 1;
-    return gpu.driverOld && preset > 0 ? preset - 1 : preset;
+    if (!gpu.vulkan || gpu.software) return kPresetLowest;
+    int preset = kPresetHigh;
+    if (gpu.dedicated < (uint64_t(2) << 30)) {
+        // Integrated. Intel's UHD and HD Graphics, the most common laptop chip, did not hold 60
+        // at 100% (the user, 2026-10-15); Iris Xe and AMD's APUs are about twice it.
+        const bool plainIntel = gpu.vendorId == 0x8086 &&
+                                (gpu.name.find("UHD") != std::string::npos ||
+                                 gpu.name.find("HD Graphics") != std::string::npos);
+        preset = plainIntel ? kPresetLowest : kPresetLow;
+    }
+    return gpu.driverOld && preset > kPresetLowest ? preset - 1 : preset;
 }
 
 // Where this card's driver is downloaded, or "" when the vendor is not one that can be named.

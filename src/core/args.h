@@ -17,18 +17,24 @@ struct BudgetOverride {
 // The Graphics page's presets, which --graphics names too. What each row costs at 2K is
 // docs/reference/budget.md's table: the scale is most of it, then the shadows' taps and map, MSAA,
 // bloom, reflections and grass. High is the game as it was drawn before there was a choice.
+// Lowest is for an integrated card (docs/plans/low-end-windows.md, P2): the user, 2026-10-15,
+// "for potato laptops with integrated UHD cards its not working on 60fps".
 struct GraphicsPreset {
     const char* name;
     int scale, msaa, shadows;
     bool ssao, bloom, reflections;
     int grass;
+    bool lights;
+    int textures;
 };
 inline constexpr GraphicsPreset kGraphicsPresets[] = {
-    {"Low", 67, 1, 0, false, false, false, 1},
-    {"Medium", 85, 2, 1, true, true, false, 2},
-    {"High", 100, 4, 2, true, true, true, 2},
+    {"Lowest", 50, 1, -1, false, false, false, 0, false, 0},
+    {"Low", 67, 1, 0, false, false, false, 1, true, 1},
+    {"Medium", 85, 2, 1, true, true, false, 2, true, 1},
+    {"High", 100, 4, 2, true, true, true, 2, true, 1},
 };
-inline constexpr int kGraphicsPresetCount = 3;
+inline constexpr int kGraphicsPresetCount = 4;
+inline constexpr int kPresetLowest = 0, kPresetLow = 1, kPresetMedium = 2, kPresetHigh = 3;
 
 struct Args {
     int width = 1920;
@@ -114,14 +120,23 @@ struct Args {
     // The Options page's Graphics rows (app/options.h), kept in options.txt with `scale`,
     // `msaa` and `cap`. `shadows` is the map's side: 0 1024, 1 2048, 2 4096, all
     // with the turned taps since 2026-10-09 (app/options.h); it was the side and the taps
-    // together, 2048 turned, 4096 turned and 4096 still. --shadow-size and --shadow-noise
-    // name their own and outrank it.
+    // together, 2048 turned, 4096 turned and 4096 still. -1 is none: the sun's split is not
+    // drawn and every lookup is lit. --shadow-size and --shadow-noise name their own and
+    // outrank it.
     int shadows = 2;
     bool shadowAsked = false;
     bool ssao = true;
     bool bloom = true;
     bool reflections = true;  // the sky probe
     int grass = 2;            // 0 none, 1 thinned and nearer, 2 as the world's sheet has it
+    // The point lights in the shading, live: off, no pixel walks the lamp grid. The flames and
+    // a spell's own light stay. Not --no-lamps, which takes the lamps out of the world at load.
+    bool lights = true;
+    // 1 every texture whole, 0 each without its top mip: a quarter of the memory, for a card
+    // that shares the machine's. Read once, when the textures load (app/application.cpp), so
+    // `texturesLoaded` is what this run draws with and a change waits for the next start.
+    int textures = 1;
+    int texturesLoaded = 1;
 
     // The world. A name under assets/world/; empty runs the model bench instead.
     std::string world;

@@ -349,6 +349,13 @@ public:
         shadowDebug_[0] = float(view);
         if (noise >= 0) shadowDebug_[1] = float(noise);
     }
+    // The Graphics page's Shadows Off (app/options.h): nothing is drawn into the sun's map, and
+    // the matrix every lookup reads puts each pixel off the map's edge, where shadow.sh returns
+    // lit before its first tap.
+    void setShadowsOn(bool on) { shadowsOn_ = on; }
+    // The Graphics page's Point lights: off, no lit pixel walks the lamp grid (lights.sh's
+    // u_lampParams.y). A spell's own light, the transient four, stays.
+    void setLightsOn(bool on) { lightsOn_ = on; }
     // The split's width this frame, in metres, which the fit may have chosen.
     float splitSide() const { return splitSide_; }
 
@@ -626,6 +633,8 @@ private:
     float lavaMap_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float lavaLight_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float lampParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    bool shadowsOn_ = true;
+    bool lightsOn_ = true;
     float lampGridUniform_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float glowStrength_ = 1.0f;
     // MU's world clock, which MoveObject scrolls a glow's additive submesh off: seconds of

@@ -31,6 +31,9 @@ inline void fillSettings(const gfx::Window& window, const core::Args& args,
     set->bloom = args.bloom;
     set->reflections = args.reflections;
     set->grass = args.grass;
+    set->lights = args.lights;
+    set->textures = args.textures;
+    set->texturesLoaded = args.texturesLoaded;
     set->cap = args.cap;
     int dw = 0, dh = 0;
     window.displaySize(&dw, &dh);
@@ -80,6 +83,8 @@ inline void applySettings(gfx::Window& window, const game::Menu::Settings& set,
     args.bloom = set.bloom;
     args.reflections = set.reflections;
     args.grass = set.grass;
+    args.lights = set.lights;
+    args.textures = set.textures;
     args.cap = set.cap;
     // The window's size as asked for, not as the window reports it yet, and kept through
     // fullscreen so going back to a window after a restart comes back to it.
@@ -101,9 +106,14 @@ inline void applyGraphics(gfx::Renderer& renderer, const core::Args& args) {
     // the user, shown the two at 2560x1273, took the turned ("this is good"). So the levels are
     // the map's side alone. The still taps are --shadow-noise none.
     static constexpr uint16_t kSides[] = {1024, 2048, 4096};
+    // Off keeps a small map bound, since the shaders still sample one, and draws nothing in it.
+    const bool shadowsOn = args.shadowAsked || args.shadows >= 0;
     const uint16_t side = args.shadowAsked ? uint16_t(args.shadowSize)
-                                           : kSides[std::clamp(args.shadows, 0, 2)];
+                        : shadowsOn        ? kSides[std::clamp(args.shadows, 0, 2)]
+                                           : uint16_t(256);
     renderer.setQuality(args.scale, args.msaa, side);
+    renderer.setShadowsOn(shadowsOn);
+    renderer.setLightsOn(args.lights);
     // 0 the turned taps, 2 the still ones (shadow.sh); -1 leaves the renderer's own.
     const int noise = args.shadowAsked ? args.shadowNoise : 0;
     renderer.setShadowDebug(args.shadowView ? 1 : 0, noise);

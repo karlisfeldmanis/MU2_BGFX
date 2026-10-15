@@ -304,7 +304,7 @@ void saveSettings(const Settings& settings) {
 }
 
 // The first run's graphics, in the keys the game's readOptions knows (core/args.cpp): the preset
-// this machine can draw -- Low, Medium or High -- and nothing else, so the run's own switches for
+// this machine can draw -- Lowest, Low, Medium or High -- and nothing else, so the run's own switches for
 // the display, the frame cap and the volume stay as they are. The file is the player's from the
 // moment it exists: the game writes it back whole whenever he changes a row in Options, and a
 // launcher that overwrote it on every start would lose his choices.
@@ -317,7 +317,9 @@ bool firstRunGraphics(const Gpu& gpu) {
     const std::string keys = "scale " + std::to_string(set.scale) + "\nmsaa " + std::to_string(set.msaa) +
                              "\nshadows " + std::to_string(set.shadows) + "\nssao " + (set.ssao ? "1" : "0") +
                              "\nbloom " + (set.bloom ? "1" : "0") + "\nreflections " +
-                             (set.reflections ? "1" : "0") + "\ngrass " + std::to_string(set.grass) + "\n";
+                             (set.reflections ? "1" : "0") + "\ngrass " + std::to_string(set.grass) +
+                             "\nlights " + (set.lights ? "1" : "0") + "\ntextures " +
+                             std::to_string(set.textures) + "\n";
     if (!writeFile(options, keys)) return false;
     core::logf("launcher: graphics: first run at %s for %s", set.name, gpu.name.c_str());
     return true;

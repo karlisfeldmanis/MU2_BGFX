@@ -78,6 +78,10 @@ public:
     // How many texels across the anisotropic filter may reach. 1 turns it off. A sheet
     // value, set before anything loads.
     void setAnisotropy(int level) { anisotropy_ = level; }
+    // The Graphics page's Textures Half (core::Args::textures 0): every world texture 256 or
+    // more across loads without its top mip, a quarter of its memory, for a card that shares
+    // the machine's. The windows' art and the grids stay whole. Set before anything loads.
+    void setHalf(bool half) { half_ = half; }
 
     // Loads from disk, or returns the handle already loaded. Invalid on failure, and the
     // failure is in the log with the path.
@@ -126,6 +130,7 @@ private:
     uint64_t bytes_ = 0;
     uint64_t mipBytes_ = 0;
     int anisotropy_ = 8;
+    bool half_ = false;
 };
 
 }  // namespace mu::content

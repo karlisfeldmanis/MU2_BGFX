@@ -26,7 +26,7 @@ Gpu probeGpu() {
         gpu.vendorId = 0x1002;                 // AMD
         gpu.dedicated = uint64_t(4) << 30;     // a card of its own: High
     } else if (gpu.name.find("Intel") != std::string::npos) {
-        gpu.vendorId = 0x8086;                 // integrated: Medium (no dedicated memory)
+        gpu.vendorId = 0x8086;                 // integrated: Low, Lowest for UHD (gpu.h)
     }
     gpu.preset = presetFor(gpu);
     core::logf("launcher: gpu: %s, %s graphics", gpu.name.c_str(),

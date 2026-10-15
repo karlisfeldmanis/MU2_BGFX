@@ -12,7 +12,8 @@
 // game runs -- the display (a window or the whole screen), the window's size, v-sync, the
 // volume and the frame-rate counter; and Graphics, behind a button on Options, with a quality
 // preset over the rows it sets -- render scale, anti-aliasing, shadows, ambient occlusion,
-// bloom, reflections, grass -- and the frame-rate limit, as a modern game's has them (the
+// bloom, reflections, grass, point lights, texture size -- and the frame-rate limit, as a
+// modern game's has them (the
 // user, 2026-10-02: *"add more options ... so user can adjust graphics settings based on his
 // machine capabilities"*, *"similar like it is on any modern game"*). Switch Character goes back to the
 // character screen (game/ui/lobby.h) when the run came through one, and stands there inactive
@@ -60,8 +61,10 @@ public:
         int volume = 100;  // percent
         bool fps = true;
         // The Graphics page's, applied every frame by app/options.h: the world's scale in
-        // percent (MetalFX under 91), MSAA samples, shadows 0..2, the three effects, grass
-        // 0 none 1 thinned 2 full, and the frame-rate limit (0 none).
+        // percent (MetalFX under 91), MSAA samples, shadows -1 none and 0..2, the three
+        // effects, grass 0 none 1 thinned 2 full, the point lights, the textures 0 half 1 full,
+        // and the frame-rate limit (0 none). `texturesLoaded` is what this run loaded, which a
+        // changed Textures row waits on a restart to become.
         int scale = 100;
         int msaa = 4;
         int shadows = 2;
@@ -69,13 +72,17 @@ public:
         bool bloom = true;
         bool reflections = true;
         int grass = 2;
+        bool lights = true;
+        int textures = 1;
+        int texturesLoaded = 1;
         int cap = 0;
         bool operator==(const Settings& o) const {
             return fullscreen == o.fullscreen && sizes == o.sizes && size == o.size &&
                    display == o.display && vsync == o.vsync && volume == o.volume && fps == o.fps &&
                    scale == o.scale && msaa == o.msaa && shadows == o.shadows && ssao == o.ssao &&
                    bloom == o.bloom && reflections == o.reflections && grass == o.grass &&
-                   cap == o.cap;
+                   lights == o.lights && textures == o.textures &&
+                   texturesLoaded == o.texturesLoaded && cap == o.cap;
         }
     };
 
@@ -120,7 +127,7 @@ private:
     float width_ = 0.0f, height_ = 0.0f;
     float x_ = 0.0f, y_ = 0.0f;  // the sheet's corner, in pixels
     int over_ = -1, pressing_ = -1;
-    static constexpr int kTargets = 40;
+    static constexpr int kTargets = 48;
     float lift_[kTargets] = {};
     struct Drawn {
         bool up = false;

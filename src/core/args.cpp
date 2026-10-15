@@ -42,12 +42,14 @@ void readOptions(Args& a) {
         }
         else if (!std::strcmp(key, "scale") && value >= 50 && value <= 100) a.scale = float(value) / 100.0f;
         else if (!std::strcmp(key, "msaa") && (value == 1 || value == 2 || value == 4)) a.msaa = value;
-        else if (!std::strcmp(key, "shadows") && value >= 0 && value <= 2) a.shadows = value;
+        else if (!std::strcmp(key, "shadows") && value >= -1 && value <= 2) a.shadows = value;
         else if (!std::strcmp(key, "ssao")) a.ssao = value != 0;
         else if (!std::strcmp(key, "bloom")) a.bloom = value != 0;
         else if (!std::strcmp(key, "reflections")) a.reflections = value != 0;
         else if (!std::strcmp(key, "grass") && value >= 0 && value <= 2) a.grass = value;
         else if (!std::strcmp(key, "cap") && value >= 0) a.cap = value;
+        else if (!std::strcmp(key, "lights")) a.lights = value != 0;
+        else if (!std::strcmp(key, "textures") && value >= 0 && value <= 1) a.textures = value;
     }
     std::fclose(file);
     logf("options: %s from %s, %dx%d", a.fullscreen ? "fullscreen" : "windowed",
@@ -78,9 +80,9 @@ void saveOptions(const Args& a) {
                  a.fullscreen ? 1 : 0, a.width, a.height, a.vsync ? 1 : 0, a.volume,
                  a.fps ? 1 : 0);
     std::fprintf(file, "scale %d\nmsaa %d\nshadows %d\nssao %d\nbloom %d\nreflections %d\n"
-                       "grass %d\ncap %d\n",
+                       "grass %d\ncap %d\nlights %d\ntextures %d\n",
                  int(a.scale * 100.0f + 0.5f), a.msaa, a.shadows, a.ssao ? 1 : 0, a.bloom ? 1 : 0,
-                 a.reflections ? 1 : 0, a.grass, a.cap);
+                 a.reflections ? 1 : 0, a.grass, a.cap, a.lights ? 1 : 0, a.textures);
     std::fclose(file);
 }
 
@@ -108,7 +110,7 @@ void printUsage() {
         "  --cpu-scenery             the town's scenery as a draw a model part, not the "
         "GPU's cull\n"
         "  --sync-gear               another player's gear loaded on the frame, not on a worker\n"
-        "  --graphics P              the Options page's preset: low, medium or high\n"
+        "  --graphics P              the Options page's preset: lowest, low, medium or high\n"
         "  --no-ssao, --no-bloom, --no-reflections   the Graphics page's switches, off\n"
         "  --frames N                quit after N frames\n"
         "  --repeat N                measure N segments of --frames, loading the world once\n"
@@ -286,10 +288,12 @@ Args parseArgs(int argc, char** argv) {
                 a.bloom = p.bloom;
                 a.reflections = p.reflections;
                 a.grass = p.grass;
+                a.lights = p.lights;
+                a.textures = p.textures;
                 known = true;
             }
             if (!known) {
-                logError("--graphics is low, medium or high, got %s", v ? v : "");
+                logError("--graphics is lowest, low, medium or high, got %s", v ? v : "");
                 a.valid = false;
             }
         } else if (!std::strcmp(s, "--no-ssao")) {
