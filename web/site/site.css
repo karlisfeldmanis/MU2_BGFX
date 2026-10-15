@@ -51,11 +51,12 @@ header.top { position: relative; overflow: hidden; }
 .bar { position: relative; display: flex; justify-content: space-between; align-items: center; height: 84px;
   padding: 0 clamp(16px, 3vw, 40px); font-size: 18px; }
 .bar img { height: 50px; width: auto; display: block; }
-.hero { max-width: 640px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 88px 0 40px; }
+.hero { max-width: 900px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 88px 0 40px; }
 .live { display: inline-flex; align-items: center; gap: 9px; color: #A8E89A; font-weight: 700; }
 .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--live); box-shadow: 0 0 8px var(--live); }
-.hero h1 { margin: 0; font: 700 48px/1.1 Cinzel, serif; color: var(--bone-hi); letter-spacing: .04em; }
-.hero p { margin: 0; font-size: 20px; line-height: 1.5; }
+.hero h1 { margin: 0; font: 700 clamp(40px, 5.6vw, 76px)/1.05 Cinzel, serif; color: var(--bone-hi); letter-spacing: .03em;
+  text-shadow: 0 2px 24px rgba(0,0,0,.6); }
+.hero p { margin: 0; max-width: 680px; font-size: 20px; line-height: 1.5; }
 .get { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; width: 100%; max-width: 460px; margin-top: 8px; }
 .get > div { display: flex; flex-direction: column; gap: 6px; }
 .get small { font-size: 14px; color: var(--quiet); text-align: center; }
@@ -140,7 +141,6 @@ footer img { height: 56px; width: auto; opacity: .3; }
 footer p { margin: 0 auto; max-width: 760px; text-align: center; font-size: 13px; line-height: 1.6; color: rgba(212,200,184,.55); }
 
 @media (max-width: 700px) {
-  .hero h1 { font-size: 36px; }
   .intro strong { font-size: 27px; }
   .track { aspect-ratio: 16 / 7.8; }
   .slide { width: 84%; }
