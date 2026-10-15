@@ -86,7 +86,20 @@ without libcurl plays on and sends nothing. Redirects stay HTTPS-only through
 - **Still to come:** the log digests are the launcher's, so they arrive with X5. As on Windows,
   the player's build plays only when started by the launcher (`MU2_TICKET`).
 
-**Next:** `./mu dist linux` and `./mu release linux` (X4), then the launcher (X5).
+**`./mu dist linux` (2026-10-15).** It snapshots the commit and builds `mupack` on the Mac. It
+then builds `MU2` from that snapshot in `mu2linux64` (`build-linux-ship/`), keeps its symbols in
+`out/symbols/<commit>/linux/` and strips it.
+- **The packs** are the Windows ones with SPIR-V alone, read back whole. The result is
+  `dist/linux/MU2/` and `MU2-linux.tar.gz`: 1.51 GB, about 17 minutes the first time.
+- **The library check.** It refuses a binary that links anything past libc, libm, libz and the
+  loader.
+- **`./mu release linux`** puts it under `/game/linux/` as for Windows, with `"exe": "MU2"`.
+- **Clean distros.** The fb997fad tarball, unpacked on clean OrbStack Debian 12 (glibc 2.36) and
+  Fedora 44 (glibc 2.43) with only Mesa's Vulkan and Xvfb, started Vulkan and reached a server on
+  both. Fedora 44's GNU tar cannot write in that emulated machine ("Function not implemented");
+  bsdtar can. The launcher fetches files, not the tarball, so players never meet this.
+
+**Next:** `./mu release linux` once the packs agree with the cook, then the launcher (X5).
 
 ## What is Mac-only today, and needs a Linux half
 

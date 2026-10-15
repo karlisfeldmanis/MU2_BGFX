@@ -36,6 +36,14 @@ import settings  # noqa: E402
 
 SHIP = os.path.join(OUT, "build-ship")
 WIN = os.path.join(OUT, "build-windows")
+LINUX = os.path.join(OUT, "build-linux-ship")
+# The machine the Linux client is built in (docs/plans/linux-release.md): OrbStack's x86_64 Ubuntu
+# 22.04, whose glibc 2.35 is the oldest the build runs on, with GCC 15 as the box has. It sees this
+# Mac's /Users at the same paths, so it builds the snapshot where it lies.
+LINUX_MACHINE = "mu2linux64"
+# What the player's MU2 may link on Linux: the C library and zlib, which every distro has. GLFW
+# opens X11 or Wayland, bgfx Vulkan and the reports libcurl, each when the game starts.
+LINUX_LIBS = ("linux-vdso.so", "libz.so.1", "libm.so.6", "libc.so.6", "ld-linux-x86-64.so.2")
 SNAPSHOT = os.path.join(OUT, "build-ship-src")
 SYMBOLS = os.path.join(OUT, "symbols")
 DIST = os.path.join(ROOT, "dist")
@@ -178,6 +186,34 @@ def build_windows(cores, say):
     check_manifests(SNAPSHOT, say)
     say("building MU2.exe")
     run(["cmake", "--build", WIN, "--target", "mu2", "--", f"-j{cores}"], say)
+
+
+def in_linux(command, say):
+    """A shell line run in the Linux build machine, niced."""
+    return run(["orb", "-m", LINUX_MACHINE, "sh", "-c", f"nice -n 10 sh -c '{command}'"], say)
+
+
+def build_linux(cores, say):
+    """MU2 for Linux from the same snapshot, in the Ubuntu 22.04 machine: MU2_LINUX_CLIENT, Vulkan
+    with SPIR-V made by that build's own shaderc (docs/plans/linux-release.md)."""
+    if subprocess.run(["orb", "-m", LINUX_MACHINE, "true"], capture_output=True).returncode != 0:
+        raise RuntimeError(f"no OrbStack machine {LINUX_MACHINE}: docs/plans/linux-release.md, X1, says how it is made")
+    cache = os.path.join(LINUX, "CMakeCache.txt")
+    if os.path.exists(cache) and f"CMAKE_HOME_DIRECTORY:INTERNAL={SNAPSHOT}\n" not in open(cache).read():
+        shutil.rmtree(LINUX)
+    if not os.path.exists(os.path.join(LINUX, "build.ninja")):
+        say(f"configuring build-linux-ship/ in {LINUX_MACHINE}; the first build compiles bgfx, glfw and shaderc")
+        in_linux(f"CC=gcc-15 CXX=g++-15 cmake -S {SNAPSHOT} -B {LINUX} -G Ninja -DCMAKE_BUILD_TYPE=Release "
+                 f"-DMU2_LINUX_CLIENT=ON", say)
+    say("building MU2 for Linux")
+    in_linux(f"cmake --build {LINUX} --target mu2 -- -j{cores}", say)
+    # Nothing a player's distro might lack: anything past LINUX_LIBS is a library to open at run
+    # time instead, or to build in.
+    linked = in_linux(f"ldd {LINUX}/MU2", say)
+    for line in linked.splitlines():
+        name = line.strip().split()[0] if line.strip() else ""
+        if name and not name.startswith(LINUX_LIBS) and "/ld-linux" not in name:
+            raise RuntimeError(f"MU2 for Linux links {name}, which a player's distro may not have")
 
 
 def pack(data, shaders, lists, cores, level, say):
@@ -384,13 +420,49 @@ def dist_launcher(say):
     return True, {"dmg": dmg, "app": app, "bytes": total}
 
 
+def dist_linux(say, ref, level):
+    """dist/linux/MU2/: MU2, data/*.mupak and logs/, and MU2-linux.tar.gz of it. The packs are the
+    Windows client's but for the shaders: SPIR-V alone, Vulkan being Linux's only renderer."""
+    started = time.time()
+    cores, _ = settings.cores()
+    made_from = snapshot(ref, say)
+    build(cores, say)  # the Mac's mupack
+    build_linux(cores, say)
+    client = os.path.join(DIST, "linux", "MU2")
+    shutil.rmtree(client, ignore_errors=True)
+    os.makedirs(os.path.join(client, "logs"))
+    kept = os.path.join(SYMBOLS, made_from.split()[0], "linux")
+    os.makedirs(kept, exist_ok=True)
+    shutil.copy2(os.path.join(LINUX, "MU2"), kept)
+    in_linux(f"strip -o {client}/MU2 {LINUX}/MU2", say)
+    os.chmod(os.path.join(client, "MU2"), 0o755)
+    say(f"stripped {os.path.getsize(os.path.join(LINUX, 'MU2')) / 1e6:.1f} -> "
+        f"{os.path.getsize(os.path.join(client, 'MU2')) / 1e6:.1f} MB; the symbols kept in {kept}")
+    files, size = pack(os.path.join(client, "data"), {"spirv": os.path.join(LINUX, "shaders", "spirv")},
+                       os.path.join(DIST, "linux", "lists"), cores, level, say)
+    with open(os.path.join(client, "BUILT_FROM"), "w") as out:
+        out.write(made_from + "\n")
+    tared = os.path.join(DIST, "linux", "MU2-linux.tar.gz")
+    if os.path.exists(tared):
+        os.remove(tared)
+    say("tarring it (the packs are compressed already, so gzip at its fastest)")
+    run(["sh", "-c", f"COPYFILE_DISABLE=1 tar --no-xattrs -cf - MU2 | gzip -1 > '{tared}'"], say,
+        cwd=os.path.join(DIST, "linux"))
+    total = os.path.getsize(tared)
+    say(f"{tared}: {total / 1e9:.2f} GB from {made_from}, in {time.time() - started:.0f} s; "
+        f"unpack anywhere and start MU2 through the launcher")
+    return True, {"client": client, "tar": tared, "bytes": total, "files": files, "commit": made_from}
+
+
 def dist(target, say, ref="HEAD", level=12):
     if target == "launcher":
         return dist_launcher(say)
     if target == "windows":
         return dist_windows(say, ref, level)
+    if target == "linux":
+        return dist_linux(say, ref, level)
     if target != "macos":
-        raise RuntimeError(f"dist {target}: macos or windows")
+        raise RuntimeError(f"dist {target}: macos, windows or linux")
     started = time.time()
     cores, _ = settings.cores()
     made_from = snapshot(ref, say)

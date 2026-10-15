@@ -1,7 +1,7 @@
-"""`mu release windows|macos`: the client `mu dist` made, put on the box for the launcher
-(docs/plans/launcher.md, L2 and L5).
+"""`mu release windows|macos|linux`: the client `mu dist` made, put on the box for the launcher
+(docs/plans/launcher.md, L2 and L5; docs/plans/linux-release.md, X4).
 
-  1. What dist made: dist/windows/MU2/ or dist/macos/MU2.app, its BUILT_FROM commit, and the
+  1. What dist made: dist/windows/MU2/, dist/linux/MU2/ or dist/macos/MU2.app, its BUILT_FROM commit, and the
      protocol that commit speaks.
   2. Every file hashed (SHA-256). On the box a file is kept under its hash,
      /srv/mu2-web/game/<platform>/files/<sha256>, so one that did not change between releases is
@@ -18,8 +18,8 @@ to SYMBOLS on the box, which no web server serves: a crash report is read agains
 machine, and deleting out/ here loses nothing.
 
 The manifest:
-  {"platform": "windows"|"macos", "version": "<commit>", "built": "<date>", "protocol": 31,
-   "exe": "MU2.exe" | "MU2.app/Contents/MacOS/MU2", "bytes": N,
+  {"platform": "windows"|"macos"|"linux", "version": "<commit>", "built": "<date>", "protocol": 31,
+   "exe": "MU2.exe" | "MU2.app/Contents/MacOS/MU2" | "MU2", "bytes": N,
    "files": [{"path": "MU2.exe", "size": N, "sha256": "..."}, ...]}
 served at https://mu-classic.com/game/<platform>/manifest.json, each file at .../files/<sha256>.
 """
@@ -138,15 +138,16 @@ def ftp_put(local, folder, name, say, have_part=False):
 
 
 def release(target, say, dry=False):
-    if target not in ("windows", "macos"):
-        raise RuntimeError("release: windows or macos (docs/plans/launcher.md, L2 and L5)")
+    if target not in ("windows", "macos", "linux"):
+        raise RuntimeError("release: windows, macos or linux (docs/plans/launcher.md, L2 and L5)")
     started = time.time()
-    # What is walked: the Windows client is a folder of MU2.exe and its packs; the Mac's is the app
-    # bundle, with BUILT_FROM beside it in dist/macos/.
-    client = os.path.join(ROOT, "dist", target, "MU2" if target == "windows" else "MU2.app")
-    # dist writes Windows' note inside the client folder (dist.py), the Mac's beside the bundle.
+    # What is walked: the Windows and Linux clients are a folder of the program and its packs; the
+    # Mac's is the app bundle, with BUILT_FROM beside it in dist/macos/.
+    folder_client = target in ("windows", "linux")
+    client = os.path.join(ROOT, "dist", target, "MU2" if folder_client else "MU2.app")
+    # dist writes the folder clients' note inside the folder (dist.py), the Mac's beside the bundle.
     built_from = os.path.join(client, "BUILT_FROM")
-    if target != "windows" or not os.path.isfile(built_from):
+    if not folder_client or not os.path.isfile(built_from):
         built_from = os.path.join(ROOT, "dist", target, "BUILT_FROM")
     if not os.path.isfile(built_from):
         raise RuntimeError(f"no {built_from}: run `./mu dist {target}` first")
@@ -155,7 +156,7 @@ def release(target, say, dry=False):
     say(f"dist/{target} from {commit} ({built or 'undated'}), protocol {protocol}")
     if not dry:
         keep_symbols(target, commit, say)
-    exe_path = "MU2.exe" if target == "windows" else "MU2.app/Contents/MacOS/MU2"
+    exe_path = {"windows": "MU2.exe", "linux": "MU2"}.get(target, "MU2.app/Contents/MacOS/MU2")
 
     files = []
     for folder, dirs, names in os.walk(client):

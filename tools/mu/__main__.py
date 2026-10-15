@@ -34,7 +34,9 @@
     ./mu bootstrap                           fetch third_party/extern at its pins
     ./mu dist macos [--commit REF]           the player's app, dist/macos/MU2.app, from a commit
     ./mu dist windows [--commit REF]         the Windows client, dist/windows/MU2/ and its zip
+    ./mu dist linux [--commit REF]           the Linux client, dist/linux/MU2/ and its tar.gz
     ./mu release windows [--dry]             that client on the box for the launcher, by hash
+    ./mu release linux [--dry]               the Linux client the same way, under /game/linux/
 
 Every command takes --json and then prints one JSON object as its last line, for a script or
 an agent to read instead of the prose. Every step runs niced and held to `mu cores` (60% of
@@ -140,11 +142,11 @@ def main():
 
     sub.add_parser("check", parents=[common])
     d = sub.add_parser("dist", parents=[common])
-    d.add_argument("target", choices=["macos", "windows", "launcher"], help="the platform, or the launcher's own dmg")
+    d.add_argument("target", choices=["macos", "windows", "linux", "launcher"], help="the platform, or the launcher's own dmg")
     d.add_argument("--commit", default="HEAD", help="the commit to build it from (HEAD)")
 
     rl = sub.add_parser("release", parents=[common])
-    rl.add_argument("target", choices=["windows", "macos", "launcher"],
+    rl.add_argument("target", choices=["windows", "macos", "linux", "launcher"],
                     help="the platform's game, or the launcher for both (self_update.h)")
     rl.add_argument("--dry", action="store_true", help="hash and compare with the box, send nothing")
 
