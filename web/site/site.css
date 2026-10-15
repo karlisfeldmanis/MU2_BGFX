@@ -47,8 +47,10 @@ header.top { position: relative; overflow: hidden; }
   background: radial-gradient(ellipse 60% 70% at 50% 55%, rgba(13,11,10,.82) 0%, rgba(13,11,10,.55) 60%, rgba(13,11,10,.3) 100%),
               linear-gradient(0deg, var(--ground) 0%, rgba(13,11,10,0) 35%); }
 .top .wrap { position: relative; }
-.bar { display: flex; justify-content: space-between; align-items: center; height: 72px; }
-.bar img { height: 36px; width: auto; display: block; }
+/* The top bar spans the whole width, the logo at the left edge and the link at the right. */
+.bar { position: relative; display: flex; justify-content: space-between; align-items: center; height: 84px;
+  padding: 0 clamp(16px, 3vw, 40px); font-size: 18px; }
+.bar img { height: 50px; width: auto; display: block; }
 .hero { max-width: 640px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 88px 0 40px; }
 .live { display: inline-flex; align-items: center; gap: 9px; color: #A8E89A; font-weight: 700; }
 .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--live); box-shadow: 0 0 8px var(--live); }
@@ -146,6 +148,6 @@ footer p { margin: 0 auto; max-width: 760px; text-align: center; font-size: 13px
 }
 
 /* The account page */
-.account-page { min-height: calc(100vh - 72px - 220px); padding: 48px 0 64px; }
+.account-page { min-height: calc(100vh - 84px - 220px); padding: 48px 0 64px; }
 .page-title { margin: 0 0 8px; font: 700 34px/1.2 Cinzel, serif; letter-spacing: .04em; color: var(--bone-hi); text-align: center; }
 .signed-note { text-align: center; font-size: 16px; color: var(--label); }
