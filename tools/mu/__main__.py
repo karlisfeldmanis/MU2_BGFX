@@ -30,6 +30,7 @@
     ./mu run [switches]                      the game with any switches (a review run, a shot)
     ./mu viewer [switches]                   the object viewer over the cooked models
     ./mu build [--debug|--trace]             the game into out/build (or out/build-debug)
+    ./mu dragon [map] [--port N|--host H]    the Golden Dragon called on a running server now
     ./mu bootstrap                           fetch third_party/extern at its pins
     ./mu dist macos [--commit REF]           the player's app, dist/macos/MU2.app, from a commit
     ./mu dist windows [--commit REF]         the Windows client, dist/windows/MU2/ and its zip
@@ -61,7 +62,7 @@ from things import WORKSHOP, NotFound  # noqa: E402
 # The scripts that were the root's (docs/plans/layout.md step 5), run as they were: every word
 # after the command is theirs, so argparse never sees it.
 RUN = os.path.join(os.path.dirname(os.path.abspath(__file__)), "run")
-SCRIPTS = ("play", "run", "viewer", "build", "bootstrap")
+SCRIPTS = ("play", "run", "viewer", "build", "bootstrap", "dragon")
 
 
 def main():

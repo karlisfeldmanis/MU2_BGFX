@@ -255,6 +255,7 @@ int main(int argc, char** argv) {
     std::signal(SIGINT, onSignal);
     std::signal(SIGTERM, onSignal);
     std::signal(SIGPIPE, SIG_IGN);
+    std::signal(SIGUSR1, onDragonCall);
 
     std::string error;
     // A server that cannot keep its characters does not open: whatever was played on it would
@@ -362,6 +363,12 @@ int main(int argc, char** argv) {
                 worldMostName = name;
             }
         };
+        // `mu dragon`: the map it names, if any, in dragon.call beside the store.
+        if (g_dragonCalled) {
+            g_dragonCalled = 0;
+            const size_t slash = store.find_last_of('/');
+            callDragon(worlds, (slash == std::string::npos ? std::string() : store.substr(0, slash + 1)) + "dragon.call");
+        }
         for (auto& world : worlds) {
             takePacked(*world);
             const bool early = world->wantsEarly && world->next - now > kEarlyWithin &&

@@ -48,6 +48,10 @@ using namespace mu;
 
 inline volatile std::sig_atomic_t g_stop = 0;
 inline void onSignal(int) { g_stop = 1; }
+// The Golden Dragon called by whoever runs the server (`mu dragon`, SIGUSR1): taken by the main
+// loop's next pass (callDragon, world.cpp).
+inline volatile std::sig_atomic_t g_dragonCalled = 0;
+inline void onDragonCall(int) { g_dragonCalled = 1; }
 
 using Clock = std::chrono::steady_clock;
 constexpr double kTickSeconds = 0.05;  // 20 Hz, the realm's own (sim/realm.h)
@@ -214,6 +218,8 @@ struct World {
 
     // The rain's clock (sim/rain.h): `rain` goes out with every tick.
     sim::RainClock weather;
+    // The dragon called here (callDragon): Realm::invade on its next tick, and on every mirror's.
+    bool dragonCalled = false;
 };
 
 // What the website said of a pass's ticket (signin.cpp): the account's key, "" for a ticket it does
@@ -363,6 +369,9 @@ std::optional<Landing> landingOf(const World& world, const sim::Happening& said,
     const std::vector<sim::Command>& commands);
 Session* playing(const World& world, std::vector<std::unique_ptr<Session>>& sessions, uint32_t id);
 bool invadedElsewhere(const World& world, const std::vector<std::unique_ptr<World>>& worlds);
+// SIGUSR1's: the Golden Dragon called on a world now, the map named in `request` (a file, read and
+// removed) or, with none, the first raised of Lorencia, Devias and Noria.
+void callDragon(std::vector<std::unique_ptr<World>>& worlds, const std::string& request);
 net::Invasion invasionNow(const std::vector<std::unique_ptr<World>>& worlds);
 void sayInvasion(Session& to, const net::Invasion& said);
 void invasionTick(std::vector<std::unique_ptr<Session>>& sessions,

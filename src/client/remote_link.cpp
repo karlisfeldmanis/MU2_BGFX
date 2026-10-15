@@ -526,6 +526,7 @@ void RemoteLink::step() {
     mirror_.setWallClock(tick.wallClock);
     serverRain_ = tick.rain ? 1 : 0;
     mirror_.invasionRain(tick.rain, tick.invasionElsewhere);
+    if (tick.invade) mirror_.invade();
     for (const net::Arrival& one : tick.arrivals) mirror_.carry(one.ticket, one.kept);
     for (const sim::Command& one : tick.commands) mirror_.command(one);
     mirror_.step();

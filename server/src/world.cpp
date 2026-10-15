@@ -5,6 +5,9 @@
 #include "broker.h"
 #include "economy.h"
 
+#include <cctype>
+#include <cstdio>
+
 namespace mu::server {
 
 
@@ -454,6 +457,41 @@ bool invadedElsewhere(const World& world, const std::vector<std::unique_ptr<Worl
     return false;
 }
 
+void callDragon(std::vector<std::unique_ptr<World>>& worlds, const std::string& request) {
+    std::string asked;
+    if (std::FILE* f = std::fopen(request.c_str(), "r")) {
+        char line[64] = {};
+        if (std::fgets(line, sizeof line, f)) asked = line;
+        std::fclose(f);
+        std::remove(request.c_str());
+        while (!asked.empty() && std::isspace(static_cast<unsigned char>(asked.back()))) asked.pop_back();
+    }
+    for (const auto& one : worlds) {
+        if (one->realm && one->realm->invasionPhase() != sim::InvasionPhase::Quiet) {
+            core::logf("dragon: called, but it is on %s already", one->name.c_str());
+            return;
+        }
+    }
+    const std::vector<std::string> order =
+        asked.empty() ? std::vector<std::string>{"lorencia", "devias", "noria"} : std::vector<std::string>{asked};
+    for (const std::string& name : order) {
+        for (auto& one : worlds) {
+            if (one->realm && one->name == name && sim::invasionMap(one->realm->tables()->map)) {
+                one->dragonCalled = true;
+                // Its storm, as a wet spell beginning: the dragons come in the rain (sim/invasion.h).
+                if (!one->weather.wet) {
+                    one->weather.wet = true;
+                    one->weather.left = sim::kWetHigh;
+                }
+                core::logf("dragon: called on %s%s", name.c_str(),
+                           one->copy > 1 ? (" copy " + std::to_string(one->copy)).c_str() : "");
+                return;
+            }
+        }
+    }
+    core::logf("dragon: called on %s, but nobody is on a map it lands on", asked.empty() ? "any map" : asked.c_str());
+}
+
 // Where the Golden Dragon is on the server (net::Invasion): the one world whose invasion is not
 // Quiet, its map, copy and the tile it comes down on; Quiet when there is none.
 net::Invasion invasionNow(const std::vector<std::unique_ptr<World>>& worlds) {
@@ -542,6 +580,10 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
     sim::Realm& realm = *world.realm;
     realm.setWallClock(t.wallClock);
     realm.invasionRain(t.rain, t.invasionElsewhere);
+    // Called by hand (callDragon): after the rain, as every mirror takes it (RemoteLink::step).
+    t.invade = world.dragonCalled && !t.invasionElsewhere;
+    world.dragonCalled = false;
+    if (t.invade && !realm.invade()) t.invade = false;
     for (const net::Arrival& a : t.arrivals) realm.carry(a.ticket, a.kept);
     for (const sim::Command& c : t.commands) realm.command(c);
     const bool castleOut = realm.castleRun().sentOut;

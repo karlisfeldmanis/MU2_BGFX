@@ -426,6 +426,9 @@ struct Tick {
     // And whether the Golden Dragon is on another map of the server's now: one dragon at a time
     // (the user, 2026-10-08), so a storm beginning here does not roll for it. In the rain's byte.
     bool invasionElsewhere = false;
+    // And the dragon called this tick by whoever runs the server (`mu dragon`, SIGUSR1):
+    // Realm::invade after the rain, on every mirror as on the server. In the rain's byte too.
+    bool invade = false;
     std::vector<sim::Command> commands;  // Realm::command each, in order, before the step
     std::vector<Arrival> arrivals;       // Realm::carry each, before the commands
     // Taken before its deadline, for an order that set a standing player off (server/src/main.cpp,
