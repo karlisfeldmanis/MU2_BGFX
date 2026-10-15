@@ -2,81 +2,91 @@
   "item": "HelmClass04",
   "mu_name": "Magic Gladiator head",
   "mu_name_from": "ZzzOpenData.cpp:115-120: MODEL_BODY_HELM + i and its fellows load HelmClass{i+1}, ArmorClass{i+1} and the rest, and a character with no armour wears MODEL_BODY_* + SkinIndex (ZzzCharacter.cpp:12124-12346), numbered one over MU's zero-based classes -- so Class04 is the Magic Gladiator, class 3.",
-  "part_note": "The head, its red hair and the high collar. 158 triangles. 37 vertices are bound to Bip01 Spine1 -- the hair and collar on the nape and shoulders, 1.54 to 1.70 m -- and 73 to Bip01 Head; MU's binding is kept, as it is the hair resting on his back (the Dark Knight's head is repaired because his seam was a ring at the neck, HelmClass02.json's rebind).",
+  "part_note": "The head, 337 triangles. Bound to 215 on Bip01 Head, 12 on Bip01 Spine1. The Spine1 ring is taken onto the head by rebind, as on the other S17 heads.",
   "profile": "armour",
   "sheets": {
-    "skin_special_01": "skin_special_01.png"
+    "HQSkin_special_01": "HQSkin_special_01.png"
   },
-  "sheet_from": "Data/Player/skin_special_01.OZJ (256x256), from MuMain. All five parts name this one sheet: the red hair, the face, and the navy outfit with its gold trim and the sun on the chest.",
+  "sheet_from": "Data/Player/HQSkin_special_01.OZJ (256x256), from the Season 17 client (third_party/MuClient_S17_v1.19.74). All five of the Magic Gladiator's parts name it.",
   "cull": false,
   "cull_from": "As HelmClass02: MU's hair is flat single-sided fins, and culled they wink out as the head turns (HelmClass02.json's cull_note).",
-  "material_note": "Read off the sheet (the islands' mu_uv count V from its foot): 0 is the face, top right -- skin; 1 the red hair strip along the bottom -- hair; 2 the navy collar piece in the bottom right corner -- cloth.",
+  "model_from": "Season 17's remake of MU's Magic Gladiator body, read out of Data/Player/HelmClass04.bmd in the S17 client: a version-14 file, which MuExtract opens through Webzen's ModulusCryptor (pipeline/MuExtract/MuAssets/Crypto). It replaced MuMain's HelmClass04 on 2026-10-15 at the user's call (\"now fairy elf, then MG\"). Its 51 bones are the first 51 of player.bmd's, by name and order, so it rides our rig and clips as MuMain's did.",
+  "rebind": {
+    "Bip01 Spine1": "Bip01 Head"
+  },
+  "rebind_from": "As HelmClass02's: S17's head binds 215 vertices to Bip01 Head and a ring of 12 at the base of the neck to Bip01 Spine1, two joints down, and the head turns a long way from the chest in MU's poses (56 degrees in action 5), so a rigidly bound ring is wrung by all of it. Taken onto the head, as on every S17 head (the user, 2026-10-15).",
   "islands": [
     {
       "island": 0,
-      "material": "skin",
-      "triangles": 50,
-      "area": 749.5,
+      "material": "hair",
+      "triangles": 79,
+      "area": 2010.0,
       "along": [
-        -6.9,
-        11.7
+        -21.2,
+        11.4
       ],
       "mu_uv": [
-        0.528,
-        0.754,
-        0.994,
-        0.982
+        0.113,
+        0.379,
+        0.814,
+        0.837
       ],
       "bake_uv": [
-        0.007,
-        0.008,
-        0.677,
-        0.335
+        0.006,
+        0.006,
+        0.934,
+        0.942
       ]
     },
     {
       "island": 1,
       "material": "hair",
-      "triangles": 82,
-      "area": 2005.0,
+      "triangles": 258,
+      "area": 1048.0,
       "along": [
-        -20.0,
-        13.8
+        -7.8,
+        12.7
       ],
       "mu_uv": [
-        0.496,
-        -0.002,
-        0.835,
-        0.187
+        0.006,
+        0.599,
+        0.208,
+        0.996
       ],
       "bake_uv": [
-        0.007,
-        0.126,
-        0.803,
-        0.926
-      ]
-    },
-    {
-      "island": 2,
-      "material": "cloth",
-      "triangles": 26,
-      "area": 1960.1,
-      "along": [
-        -16.8,
-        22.4
-      ],
-      "mu_uv": [
-        0.853,
-        0.003,
-        0.995,
-        0.24
-      ],
-      "bake_uv": [
-        0.131,
-        0.127,
-        0.992,
-        0.993
+        0.006,
+        0.006,
+        0.955,
+        0.995
       ]
     }
-  ]
+  ],
+  "uv_overrides": [
+    {
+      "material": "skin",
+      "u": [
+        0.0,
+        0.22
+      ],
+      "v": [
+        0.75,
+        1.0
+      ],
+      "why": "The face block, top left."
+    },
+    {
+      "material": "skin",
+      "u": [
+        0.0,
+        0.14
+      ],
+      "v": [
+        0.58,
+        0.75
+      ],
+      "why": "The neck under it."
+    }
+  ],
+  "uv_overrides_why": "The face and the red mane share shells; the islands are hair and the face and neck are lifted out. Read off the sheet with the UV layout drawn over it (2026-10-15).",
+  "material_note": "hair for the red feathered mane, skin for the face and neck."
 }

@@ -2,36 +2,183 @@
   "item": "PantClass03",
   "mu_name": "Fairy Elf legs",
   "mu_name_from": "MuPlayer.PartsForClass in the old client: the body a class wears with no armour equipped is HelmClass{NN}, ArmorClass{NN}, PantClass{NN}, GloveClass{NN}, BootClass{NN}. The numbering runs one over MU's zero-based classes, so Class01 is the Dark Wizard, Class02 the Dark Knight and Class03 the Fairy Elf.",
-  "part_note": "The hips and thighs. 110 triangles.",
+  "part_note": "The legs, 340 triangles. Bound to 90 on Bip01 L Thigh, 90 on Bip01 R Thigh, 57 on Bip01 Pelvis, 32 on Bip01 Spine, 14 on Bip01 L Calf, 14 on Bip01 R Calf.",
   "profile": "armour",
   "sheets": {
-    "skin_warrior_01": "skin_warrior_01.png"
+    "HQSkinClass103": "HQSkinClass103.png"
   },
-  "sheet_from": "Data/Player/skin_warrior_01.OZJ (256x256), from MuMain. All five parts name this one sheet.",
-  "sheet_warning": "The sheet name says nothing about which class wears it, and this pair is the proof: the Fairy Elf's body is painted on skin_warrior_01 and the Dark Knight's on skin_wizard_01. Reading the name as the class picks the wrong sheet for both of them.",
-  "material_note": "(130, 119, 93) reads olive rather than flesh, which is the one assignment here that is not obvious. Taken as skin on the sibling's precedent - PantClass02 is skin - and on the likelihood that a single bounding box over a leg has caught the sheet's background. Worth a look on the Objects tab before it is trusted.\n\nRead off the sheet by cropping each island at its own mu_uv with V flipped, the way the other bodies were. It is a coarse reading - an island's bounding box can take in neighbouring regions - so where it disagreed with the sibling part on Class02 the disagreement is written down rather than settled quietly.",
+  "sheet_from": "Data/Player/HQSkinClass103.OZJ (256x256), from the Season 17 client (third_party/MuClient_S17_v1.19.74). All five of the Fairy Elf's parts name it.",
+  "model_from": "Season 17's remake of MU's Fairy Elf body, read out of Data/Player/PantClass03.bmd in the S17 client: a version-14 file, which MuExtract opens through Webzen's ModulusCryptor (pipeline/MuExtract/MuAssets/Crypto). It replaced MuMain's PantClass03 on 2026-10-15 at the user's call (\"now fairy elf, then MG\"). Its 51 bones are the first 51 of player.bmd's, by name and order, so it rides our rig and clips as MuMain's did.",
   "islands": [
     {
       "island": 0,
-      "material": "skin",
-      "triangles": 110,
-      "area": 7794.1,
+      "material": "cloth",
+      "triangles": 208,
+      "area": 7297.5,
       "along": [
-        -18.6,
-        19.9
+        -15.0,
+        11.0
       ],
       "mu_uv": [
-        -0.0,
-        0.0,
-        0.707,
-        0.501
+        0.004,
+        0.003,
+        0.836,
+        0.374
       ],
       "bake_uv": [
-        -0.0,
-        0.0,
-        0.707,
-        0.501
+        0.007,
+        0.008,
+        0.784,
+        0.852
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 20,
+      "area": 189.7,
+      "along": [
+        -11.1,
+        9.3
+      ],
+      "mu_uv": [
+        0.005,
+        0.573,
+        0.108,
+        0.706
+      ],
+      "bake_uv": [
+        0.795,
+        0.074,
+        0.954,
+        0.467
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 26,
+      "area": 239.5,
+      "along": [
+        -8.8,
+        8.0
+      ],
+      "mu_uv": [
+        0.58,
+        0.574,
+        0.772,
+        0.733
+      ],
+      "bake_uv": [
+        0.007,
+        0.408,
+        0.571,
+        0.893
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 20,
+      "area": 231.2,
+      "along": [
+        -8.8,
+        8.0
+      ],
+      "mu_uv": [
+        0.58,
+        0.574,
+        0.772,
+        0.733
+      ],
+      "bake_uv": [
+        0.125,
+        0.496,
+        0.922,
+        0.678
+      ]
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 20,
+      "area": 189.7,
+      "along": [
+        -11.1,
+        9.3
+      ],
+      "mu_uv": [
+        0.005,
+        0.573,
+        0.108,
+        0.706
+      ],
+      "bake_uv": [
+        0.262,
+        0.607,
+        0.978,
+        0.993
+      ]
+    },
+    {
+      "island": 5,
+      "material": "cloth",
+      "triangles": 26,
+      "area": 239.5,
+      "along": [
+        -8.8,
+        8.0
+      ],
+      "mu_uv": [
+        0.58,
+        0.574,
+        0.772,
+        0.733
+      ],
+      "bake_uv": [
+        0.64,
+        0.678,
+        0.955,
+        0.957
+      ]
+    },
+    {
+      "island": 6,
+      "material": "cloth",
+      "triangles": 20,
+      "area": 231.2,
+      "along": [
+        -8.8,
+        8.0
+      ],
+      "mu_uv": [
+        0.58,
+        0.574,
+        0.772,
+        0.733
+      ],
+      "bake_uv": [
+        0.486,
+        0.256,
+        0.874,
+        0.993
       ]
     }
-  ]
+  ],
+  "uv_overrides": [
+    {
+      "material": "skin",
+      "u": [
+        0.0,
+        0.37
+      ],
+      "v": [
+        0.0,
+        0.26
+      ],
+      "why": "The thighs under the garters, the sheet's bottom-left block."
+    }
+  ],
+  "uv_overrides_why": "The shorts are cloth; the garter piece is bare thigh with a green band painted on, and goes to skin. Read off the sheet with the UV layout drawn over it (2026-10-15).",
+  "material_note": "cloth for the green shorts, skin for the thighs, by uv_overrides."
 }

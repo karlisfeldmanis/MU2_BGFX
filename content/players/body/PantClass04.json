@@ -2,35 +2,36 @@
   "item": "PantClass04",
   "mu_name": "Magic Gladiator legs",
   "mu_name_from": "ZzzOpenData.cpp:115-120: MODEL_BODY_HELM + i and its fellows load HelmClass{i+1}, ArmorClass{i+1} and the rest, and a character with no armour wears MODEL_BODY_* + SkinIndex (ZzzCharacter.cpp:12124-12346), numbered one over MU's zero-based classes -- so Class04 is the Magic Gladiator, class 3.",
-  "part_note": "The navy trousers and the tunic's skirt. 92 triangles.",
+  "part_note": "The legs, 168 triangles. Bound to 30 on Bip01 L Thigh, 30 on Bip01 R Thigh, 16 on Bip01 Spine, 15 on Bip01 Pelvis, 7 on Bone02, 7 on Bone06, 5 on Bip01 L Calf, 5 on Bip01 R Calf.",
   "profile": "armour",
   "sheets": {
-    "skin_special_01": "skin_special_01.png"
+    "HQSkin_special_01": "HQSkin_special_01.png"
   },
-  "sheet_from": "Data/Player/skin_special_01.OZJ (256x256), from MuMain. All five parts name this one sheet: the red hair, the face, and the navy outfit with its gold trim and the sun on the chest.",
-  "material_note": "One island, the skirt panels and the dark trousers in the sheet's bottom left. Cloth.",
+  "sheet_from": "Data/Player/HQSkin_special_01.OZJ (256x256), from the Season 17 client (third_party/MuClient_S17_v1.19.74). All five of the Magic Gladiator's parts name it.",
+  "model_from": "Season 17's remake of MU's Magic Gladiator body, read out of Data/Player/PantClass04.bmd in the S17 client: a version-14 file, which MuExtract opens through Webzen's ModulusCryptor (pipeline/MuExtract/MuAssets/Crypto). It replaced MuMain's PantClass04 on 2026-10-15 at the user's call (\"now fairy elf, then MG\"). Its 51 bones are the first 51 of player.bmd's, by name and order, so it rides our rig and clips as MuMain's did.",
   "islands": [
     {
       "island": 0,
       "material": "cloth",
-      "triangles": 92,
-      "area": 7329.1,
+      "triangles": 168,
+      "area": 8490.4,
       "along": [
-        -15.5,
-        20.2
+        -20.6,
+        16.3
       ],
       "mu_uv": [
-        0.005,
-        0.003,
-        0.498,
-        0.508
+        0.011,
+        0.007,
+        0.965,
+        0.855
       ],
       "bake_uv": [
-        0.005,
-        0.003,
-        0.498,
-        0.508
+        0.004,
+        0.004,
+        0.996,
+        0.994
       ]
     }
-  ]
+  ],
+  "material_note": "cloth, the blue trousers."
 }
