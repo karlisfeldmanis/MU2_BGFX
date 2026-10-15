@@ -39,13 +39,6 @@
 <h1 class="page-title">Your account</h1>
 <span id="a-who" class="center"></span>
 
-<div id="a-pickname" class="form" hidden>
-<span class="muted" style="font-size: 15px">Pick the name shown on your comments.</span>
-<div style="display: flex; gap: 8px; align-items: flex-start">
-<div class="field" style="flex: 1"><label for="n-name" class="sr">Name</label><input id="n-name" type="text" maxlength="16" aria-describedby="n-err"><span id="n-err" class="err"></span></div>
-<button id="n-go" class="btn btn-dark" type="button" style="min-height: 44px">Save</button>
-</div>
-</div>
 
 <div>
 <div class="muted" style="font-size: 15px">Launchers signed in</div>
@@ -89,7 +82,7 @@
 <script src="/site.js"></script>
 <script>
 (() => {
-  const { $, el, token, api, account, when, fieldError, alertOn, busy, OFFLINE, NAME } = MU;
+  const { $, el, token, api, account, when, fieldError, alertOn, busy, OFFLINE } = MU;
 
   function view(name) {
     $('v-signin').hidden = name !== 'signin';
@@ -133,7 +126,6 @@
   }
   function render(a) {
     $('a-who').textContent = (a.name ? a.name + ' · ' : '') + a.email;
-    $('a-pickname').hidden = !!a.name;
     const sessions = $('a-sessions');
     sessions.replaceChildren();
     // Only the launchers: a browser's sign-in is this page itself, not where the game is played.
@@ -176,12 +168,6 @@
     try { await api('/api/logout', {}); } catch (e) {}
     token.set('');
     view('signin');
-  });
-  $('n-go').addEventListener('click', async () => {
-    const name = $('n-name').value.trim();
-    if (!NAME.test(name)) return fieldError($('n-name'), $('n-err'), '3 to 16 letters, digits or _.');
-    const { status, said } = await api('/api/name', { name });
-    if (status === 200) load(); else fieldError($('n-name'), $('n-err'), said.error || 'Try another name.');
   });
   $('a-password').addEventListener('click', () => { $('p-box').hidden = !$('p-box').hidden; $('d-box').hidden = true; });
   $('a-delete').addEventListener('click', () => { $('d-box').hidden = !$('d-box').hidden; $('p-box').hidden = true; });

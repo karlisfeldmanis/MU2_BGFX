@@ -67,7 +67,6 @@ Windows
 <div id="r-form" class="form">
 <div id="r-alert" class="alert" role="alert" hidden></div>
 <div class="field"><label for="r-email">Email</label><input id="r-email" type="email" autocomplete="email" maxlength="254" aria-describedby="r-email-err"><span id="r-email-err" class="err"></span></div>
-<div class="field"><label for="r-name">Name shown on comments</label><input id="r-name" type="text" autocomplete="nickname" maxlength="16" aria-describedby="r-name-hint"><span id="r-name-hint" class="hint">3 to 16 letters, digits or _.</span></div>
 <div class="field"><label for="r-pass">Password</label><input id="r-pass" type="password" autocomplete="new-password" maxlength="128" aria-describedby="r-pass-hint"><span id="r-pass-hint" class="hint">At least 8 characters.</span></div>
 <div class="field"><label for="r-rep">Repeat password</label><input id="r-rep" type="password" autocomplete="new-password" maxlength="128" aria-describedby="r-rep-err"><span id="r-rep-err" class="err"></span></div>
 <button id="r-go" class="btn btn-red" type="button">Create account</button>
@@ -98,7 +97,7 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
 <script src="/site.js"></script>
 <script>
 (() => {
-  const { $, el, api, account, fieldError, hintError, alertOn, busy, bar, OFFLINE, NAME, EMAIL } = MU;
+  const { $, el, api, account, fieldError, hintError, alertOn, busy, bar, OFFLINE, EMAIL } = MU;
   let me = null;
 
   // ---- downloads
@@ -165,27 +164,24 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
 
   // ---- create account
   $('r-go').addEventListener('click', async () => {
-    const email = $('r-email').value.trim(), name = $('r-name').value.trim(), pass = $('r-pass').value, rep = $('r-rep').value;
+    const email = $('r-email').value.trim(), pass = $('r-pass').value, rep = $('r-rep').value;
     alertOn($('r-alert'), '');
     const eMsg = !email ? 'Enter your email.' : EMAIL.test(email) ? '' : 'Enter a valid email address.';
-    const nMsg = NAME.test(name) ? '' : '3 to 16 letters, digits or _.';
     const pMsg = pass.length < 8 ? 'Use at least 8 characters.' : '';
     const rMsg = !rep ? 'Repeat your password.' : rep !== pass ? 'Passwords don’t match.' : '';
     fieldError($('r-email'), $('r-email-err'), eMsg);
-    hintError($('r-name'), $('r-name-hint'), nMsg, '3 to 16 letters, digits or _.');
     hintError($('r-pass'), $('r-pass-hint'), pMsg, 'At least 8 characters.');
     fieldError($('r-rep'), $('r-rep-err'), rMsg);
-    const first = eMsg ? 'r-email' : nMsg ? 'r-name' : pMsg ? 'r-pass' : rMsg ? 'r-rep' : '';
+    const first = eMsg ? 'r-email' : pMsg ? 'r-pass' : rMsg ? 'r-rep' : '';
     if (first) return $(first).focus();
     busy($('r-go'), 'Creating account…');
     try {
-      const { status, said } = await api('/api/register', { email, name, password: pass });
+      const { status, said } = await api('/api/register', { email, password: pass });
       if (status === 201) {
         $('r-done-email').textContent = email.toLowerCase();
         $('r-form').hidden = true;
         $('r-done').hidden = false;
-      } else if (said.field === 'name') hintError($('r-name'), $('r-name-hint'), said.error, '');
-      else if (status === 409) alertOn($('r-alert'), 'An account with this email already exists. Sign in, or use another email.');
+      } else if (status === 409) alertOn($('r-alert'), 'An account with this email already exists. Sign in, or use another email.');
       else if (said.field === 'email') fieldError($('r-email'), $('r-email-err'), said.error);
       else if (said.field === 'password') hintError($('r-pass'), $('r-pass-hint'), said.error, '');
       else alertOn($('r-alert'), said.error || 'Something went wrong. Try again in a minute.');
