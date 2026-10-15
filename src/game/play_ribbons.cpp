@@ -76,7 +76,8 @@ void Play::debuffShows(float frames) {
         if (one.burningDice == 0) one.burningDice = 0x9e3779b9u ^ (one.id * 2654435761u);
         const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
         const float origin[3] = {0.0f, 0.0f, 0.0f};
-        one.sickOwed += frames * kSickPuffs;
+        const bool character = body->player;
+        one.sickOwed += frames * (character ? kSickCharPuffs : kSickPuffs);
         while (one.sickOwed >= 1.0f) {
             one.sickOwed -= 1.0f;
             one.burningDice ^= one.burningDice << 13;
@@ -85,7 +86,8 @@ void Play::debuffShows(float frames) {
             const int b = int(one.burningDice % uint32_t(bones.size()));
             float at[3];
             if (one.figure.pointOn(b, origin, at)) {
-                poison_.sicken(at, std::clamp(look->height * look->scale / 1.8f, 0.7f, 2.0f));
+                poison_.sicken(at, std::clamp(look->height * look->scale / 1.8f, 0.7f, 2.0f),
+                               character ? kSickCharGlow : 1.0f);
             }
         }
     }

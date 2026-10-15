@@ -35,8 +35,9 @@ public:
     // **Sickness on a poisoned body** (the user, 2026-10-06: 'beter green smoke effect on monster
     // mesh to show poison efect not just simple tint'), ours: one slow green smoke puff born at
     // `at`, a point on its skeleton the caller draws at random, rising and opening as it fades.
-    // `scale` its size for the body's (its height over a man's).
-    void sicken(const float at[3], float scale = 1.0f);
+    // `scale` its size for the body's (its height over a man's), `glow` its light (a character's
+    // fainter, play_tuning.h kSickCharGlow).
+    void sicken(const float at[3], float scale = 1.0f, float glow = 1.0f);
     void update(float seconds);
     void gather(gfx::Effects& effects) const;
     uint32_t lights(gfx::PointLight* out, uint32_t max) const;
@@ -60,6 +61,7 @@ private:
         float spin = 0.0f;
         bool fume = false;
         bool sick = false;  // `sicken`'s
+        float glow = 1.0f;  // and its light
     };
 
     static constexpr float kFps = 25.0f;

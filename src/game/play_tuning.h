@@ -660,6 +660,10 @@ constexpr float kPlagueArrowTint[3] = {0.55f, 1.0f, 0.5f};
 // A poisoned monster's smoke (fx/poison.h Poison::sicken), beside its green: this many puffs a
 // reference frame, each off a bone drawn at random. Ours.
 constexpr float kSickPuffs = 0.5f;
+// And a poisoned character's, fewer and fainter (the user, 2026-10-15: 'poison smoke effect from
+// poisoned character is little bit to much'). Ours.
+constexpr float kSickCharPuffs = 0.3f;
+constexpr float kSickCharGlow = 0.7f;
 // A bleeding body's drips (sim kBleeders, ours): this many a reference frame for each stack,
 // each a drop of the blow's own blood off a bone drawn at random, falling to the ground.
 constexpr float kBleedDrips = 0.15f;

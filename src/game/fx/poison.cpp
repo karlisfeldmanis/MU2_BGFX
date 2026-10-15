@@ -107,12 +107,13 @@ void Poison::fume(const float feet[3], float tall, float seconds) {
     }
 }
 
-void Poison::sicken(const float at[3], float scale) {
+void Poison::sicken(const float at[3], float scale, float glow) {
     Puff* puff = freePuff();
     if (puff == nullptr) return;
     *puff = Puff{};
     puff->alive = true;
     puff->sick = true;
+    puff->glow = glow;
     for (int k = 0; k < 3; ++k) puff->at[k] = at[k];
     const float turn = unit() * kTwoPi;
     puff->velocity[0] = std::cos(turn) * 0.08f;
@@ -173,7 +174,7 @@ void Poison::gather(gfx::Effects& effects) const {
         const float open = std::min(1.0f, t / 0.15f);
         const float out = 1.0f - t;
         const float* tint = one.sick ? kSick : one.fume ? kCasterFume : kFume;
-        const float bright = one.sick ? kSickBright : one.fume ? 1.0f : 0.45f;
+        const float bright = one.sick ? kSickBright * one.glow : one.fume ? 1.0f : 0.45f;
         gfx::Sprite sprite;
         for (int k = 0; k < 3; ++k) sprite.position[k] = one.at[k];
         sprite.halfWidth = sprite.halfHeight = one.size * 0.5f;
