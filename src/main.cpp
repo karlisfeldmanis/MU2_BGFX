@@ -9,6 +9,7 @@
 #include "app/application.h"
 
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <vector>
 
@@ -77,10 +78,23 @@ int main(int argc, char** argv) {
     // realm's tick cannot live with: 1 ms while the game runs.
     timeBeginPeriod(1);
 #endif
-    mu::app::Application application;
-    const int code = application.run(argc, argv);
+    int code = 0;
+    {
+        mu::app::Application application;
+        code = application.run(argc, argv);
+    }
 #ifdef _WIN32
     timeEndPeriod(1);
+#endif
+#if defined(_WIN32) && defined(MU2_SHIP)
+    // Out without the static destructors (the Windows audit, 2026-10-15). The crash reports go
+    // home on a detached thread (Application::run) that can be inside WinHTTP or the log when
+    // the player quits; exit() would destroy the log's mutex and buffer under it, a fault after
+    // the game had closed cleanly, filed as a crash on the next start. Everything that matters
+    // is shut down and the log closed by now; a report still going is cut and sent next time,
+    // since only one that landed is marked sent.
+    std::fflush(nullptr);
+    std::_Exit(code);
 #endif
     return code;
 }
