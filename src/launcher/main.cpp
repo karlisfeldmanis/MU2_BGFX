@@ -21,9 +21,49 @@
 #include "launcher/self_update.h"
 #include "launcher/ui.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 using namespace mu::launcher;
 
 namespace {
+
+#ifdef _WIN32
+// **One launcher at a time** (2026-10-15). Two at once lost the launcher's last log -- the second
+// could not move the first's open launcher.log aside, so the digest sent home had no launcher in
+// it -- and could fetch the same update twice. A launcher that has just replaced itself starts
+// the new one while it is still closing, so the new one waits for it a while; one that is still
+// there after that is a player's open launcher, brought forward, and this one leaves. The handle
+// is held for the life of the process and let go by Windows at its end, however it ends.
+bool onlyLauncher() {
+    HANDLE one = CreateMutexW(nullptr, TRUE, L"Local\\MU2Launcher");
+    if (!one || GetLastError() != ERROR_ALREADY_EXISTS) return true;
+    const DWORD waited = WaitForSingleObject(one, 5000);
+    if (waited == WAIT_OBJECT_0 || waited == WAIT_ABANDONED) return true;
+    // The other launcher's window: a visible top-level window of a program named MU2Launcher*.
+    EnumWindows(
+        [](HWND w, LPARAM) -> BOOL {
+            if (!IsWindowVisible(w) || GetWindow(w, GW_OWNER)) return TRUE;
+            DWORD pid = 0;
+            GetWindowThreadProcessId(w, &pid);
+            if (pid == GetCurrentProcessId()) return TRUE;
+            wchar_t exe[MAX_PATH] = {};
+            DWORD size = MAX_PATH;
+            HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+            if (!process) return TRUE;
+            const bool ours = QueryFullProcessImageNameW(process, 0, exe, &size) &&
+                              std::wstring(exe).find(L"MU2Launcher") != std::wstring::npos;
+            CloseHandle(process);
+            if (!ours) return TRUE;
+            if (IsIconic(w)) ShowWindow(w, SW_RESTORE);
+            SetForegroundWindow(w);
+            return FALSE;
+        },
+        0);
+    return false;
+}
+#endif
 
 int check(Place place, fs::path dir, const std::string& only, bool start) {
     auto step = [](const char* what, bool ok, const std::string& more = {}) {
@@ -168,6 +208,9 @@ int main(int argc, char** argv) {
         return 0;
     }
     ui.place = place;
+#ifdef _WIN32
+    if (ui.shot.empty() && !onlyLauncher()) return 0;
+#endif
     // The window's own log and black box, in the user folder: a launcher that dies after the
     // sign-in leaves launcher-crash-<when>.txt, sent on its next start.
     if (ui.shot.empty()) {

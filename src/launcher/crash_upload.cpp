@@ -94,8 +94,8 @@ bool telling(const std::string& line) {
     for (const char* s : kSkip) {
         if (line.find(s) != std::string::npos) return false;
     }
-    static const char* const kKeep[] = {"window", "focus", "front", "error", "Error", "fail", "freeze",
-                                        "hang", "held", "gpu", "Vulkan", "targets ", "drawn at", "graphics",
+    static const char* const kKeep[] = {"window:", "focus", "front", "error", "Error", "fail", "freeze",
+                                        "hang", "held by", "gpu", "Vulkan", "targets ", "drawn at", "graphics",
                                         "fps", "join", "enter", "lost", "launcher:", "play:", "self-update",
                                         "crash", "could not", "cannot", "refused"};
     for (const char* s : kKeep) {
