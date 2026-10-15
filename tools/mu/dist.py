@@ -242,6 +242,7 @@ LAUNCHER_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
 \t<key>CFBundleDevelopmentRegion</key><string>en</string>
 \t<key>CFBundleDisplayName</key><string>MU2 Launcher</string>
 \t<key>CFBundleExecutable</key><string>MU2Launcher</string>
+\t<key>CFBundleIconFile</key><string>mu2</string>
 \t<key>CFBundleIdentifier</key><string>com.mu2.launcher</string>
 \t<key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
 \t<key>CFBundleName</key><string>MU2Launcher</string>
@@ -330,6 +331,9 @@ def dist_launcher(say):
     os.chmod(os.path.join(app, "Contents", "Frameworks", GLFW), 0o644)
     run(["install_name_tool", "-change", glfw, f"@executable_path/../Frameworks/{GLFW}",
          os.path.join(mac, "MU2Launcher")], say)
+    # The game's icon (tools/make_icons.py), named by the plist's CFBundleIconFile.
+    os.makedirs(os.path.join(app, "Contents", "Resources"))
+    shutil.copy2(os.path.join(ROOT, "src", "app", "mu2.icns"), os.path.join(app, "Contents", "Resources"))
     with open(os.path.join(app, "Contents", "Info.plist"), "w") as out:
         out.write(LAUNCHER_PLIST)
     run(["codesign", "--force", "--deep", "--sign", "-", app], say)

@@ -747,6 +747,9 @@ if(APPLE)
   # Mode can take it. build/mu2 is a link to the binary inside, which is what every script
   # runs; macOS resolves the link and finds the bundle. A double click with no switches plays
   # as mu play does (src/main.cpp). The data stays in this folder: MU2_ROOT_DIR above.
+  # The icon (tools/make_icons.py) in Contents/Resources, named by the plist's CFBundleIconFile.
+  target_sources(mu2 PRIVATE src/app/mu2.icns)
+  set_source_files_properties(src/app/mu2.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
   set_target_properties(mu2 PROPERTIES
     MACOSX_BUNDLE TRUE
     OUTPUT_NAME MU2
