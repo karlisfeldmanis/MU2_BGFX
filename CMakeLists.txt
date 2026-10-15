@@ -477,8 +477,9 @@ endif()
 # MU2Launcher (docs/plans/launcher.md, L3): signs in on the website, installs and updates the game
 # from the box, starts it. One exe: its two shaders, its fonts, the wallpaper and the logo are
 # inside it (tools/cmake/embed.py). Drawn with the game's canvas (mu_gfx), none of the game linked.
-# HTTPS is the system's: WinHTTP on Windows, libcurl on the Mac.
-if(WIN32 OR APPLE)
+# HTTPS is the system's: WinHTTP on Windows, libcurl on the Mac and Linux. Linux has no launcher yet
+# (docs/plans/linux-release.md, X5), but its game sends its crash reports the same way.
+if(WIN32 OR APPLE OR MU2_LINUX_CLIENT)
   # Its two shaders for each renderer it may open on, by profile folder: spirv/ and dxbc/ on
   # Windows (Vulkan, else Direct3D 11), metal/ on the Mac. launcher/ui.cpp asks for its own.
   set(MU_LAUNCHER_EMBED)
@@ -514,11 +515,19 @@ if(WIN32 OR APPLE)
   if(WIN32)
     target_sources(mu_report PRIVATE src/launcher/https_win.cpp)
     target_link_libraries(mu_report PUBLIC winhttp)
+  elseif(MU2_LINUX_CLIENT)
+    # libcurl's header only: the library is opened when a report goes (launcher/https_curl.cpp),
+    # so the game starts on a distro whose libcurl is built apart from the one built against.
+    find_package(CURL REQUIRED)
+    target_sources(mu_report PRIVATE src/launcher/https_curl.cpp)
+    target_include_directories(mu_report PRIVATE ${CURL_INCLUDE_DIRS})
+    target_link_libraries(mu_report PUBLIC ${CMAKE_DL_LIBS})
   else()
     find_package(CURL REQUIRED)
     target_sources(mu_report PRIVATE src/launcher/https_curl.cpp)
     target_link_libraries(mu_report PUBLIC CURL::libcurl)
   endif()
+  if(WIN32 OR APPLE)
   add_executable(mu2_launcher
     src/launcher/main.cpp
     src/launcher/ui.cpp
@@ -542,6 +551,7 @@ if(WIN32 OR APPLE)
       "-framework QuartzCore" "-framework IOKit")
     set_target_properties(mu2_launcher PROPERTIES OUTPUT_NAME MU2Launcher)
   endif()
+  endif()  # WIN32 OR APPLE: the launcher
 endif()
 
 # The client's line to the realm (src/client, docs/plans/order-plan.md sprint C): the Link, the

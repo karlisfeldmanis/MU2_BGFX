@@ -74,8 +74,19 @@ reports "Virtio-GPU Venus (Apple M1 Pro)".
   - A debug bgfx (`-DBX_CONFIG_DEBUG=ON`) stops on `s_shadowCompare` set twice in one draw. That
     is our renderer's, and harmless in a normal build.
 
-**Next:** crash and log reports from the Linux game, `./mu dist linux` and `./mu release linux`
-(X4), then the launcher (X5).
+**Crash reports (2026-10-15).** The Linux game sends its crash and freeze reports home at each
+start, as the Windows and Mac games do (`launcher/crash_upload.h`, platform "linux"). libcurl is
+opened at run time, not linked: `libcurl.so.4`, else the GnuTLS build's `libcurl-gnutls.so.4`
+(`launcher/https_curl.cpp`). So `ldd MU2` still names only libc, libm and libz, and a machine
+without libcurl plays on and sends nothing. Redirects stay HTTPS-only through
+`CURLOPT_REDIR_PROTOCOLS_STR`, or the older bitmask on Ubuntu 22.04's libcurl 7.81.
+- **Proven:** the x86_64 build, against a scratch `web/server.py` (OrbStack reaches the Mac as
+  `0.250.250.254`; `host.orb.internal` answers IPv6 first), sent a waiting report. The site
+  filed it as "game crash linux", and the file became `.sent`.
+- **Still to come:** the log digests are the launcher's, so they arrive with X5. As on Windows,
+  the player's build plays only when started by the launcher (`MU2_TICKET`).
+
+**Next:** `./mu dist linux` and `./mu release linux` (X4), then the launcher (X5).
 
 ## What is Mac-only today, and needs a Linux half
 
