@@ -346,6 +346,9 @@ const char* Hud::artOf(const Boon& one) {
            : one.dragonfire       ? "buff_dragonfire"
            : one.bleed            ? "buff_bleed"
            : one.chill            ? "buff_ice"
+           // A monster's burn and freeze (Vitals): the Flame's pillar and the Ice spell's shard.
+           : one.burn             ? "skill_5"
+           : one.frozen           ? "skill_7"
            : one.ale              ? "buff_ale"
            : one.frenzy           ? "buff_frenzy"
            : one.potion == 0      ? "buff_healing"

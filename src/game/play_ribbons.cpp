@@ -87,7 +87,7 @@ void Play::debuffShows(float frames) {
             float at[3];
             if (one.figure.pointOn(b, origin, at)) {
                 poison_.sicken(at, std::clamp(look->height * look->scale / 1.8f, 0.7f, 2.0f),
-                               character ? kSickCharGlow : 1.0f);
+                               character ? kSickCharGlow : kSickGlow);
             }
         }
     }

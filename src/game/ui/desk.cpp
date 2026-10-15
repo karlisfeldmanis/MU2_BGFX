@@ -94,7 +94,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     menu_.open(interface_);
     endurance_.open(interface_, &arts_);
     cursor_.open(interface_, &arts_);
-    vitals_.open(interface_);
+    vitals_.open(interface_, &arts_);
     bossBar_.open(interface_);
     speech_.open(interface_);
     beacon_.open(interface_);

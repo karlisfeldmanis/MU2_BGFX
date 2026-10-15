@@ -35,6 +35,13 @@
 // he is ringed green, app/modes/play_mode.cpp); dead, it is grey. It fades out toward the edge of
 // the range, and the nearer names are drawn over the farther. No bar. Pointed at, a small line
 // under it all gives his level and class (the user chose W4 of the WoW names page, 2026-10-08).
+//
+// **And what the fight laid on the monster, under its bar** (the user, 2026-10-16: "we need to show
+// debufs under monster hp bar, for example if char does poison,fire,bleed,slow,etc"): a small cell
+// each for poison, burning, bleeding (its stacks in the corner), iced and frozen, in the HUD's own
+// icons and the target frame's red edge, each one's time a clock swept round it. A debuff's whole
+// is not on the body -- a poison lasts as long as the skill that laid it says -- so the longest
+// time left seen on this monster stands for it, and a fresh one starts its clock full.
 #pragma once
 
 #include <cstdint>
@@ -47,10 +54,16 @@
 namespace mu::game {
 
 class Play;
+namespace panel {
+class Arts;
+}
 
 class Vitals {
 public:
-    void open(const gfx::Interface& interface) { interface.adopt(canvas_); }
+    void open(const gfx::Interface& interface, panel::Arts* arts) {
+        interface.adopt(canvas_);
+        arts_ = arts;
+    }
 
     // A frame. `pointed` is the body under the pointer or 0, polled every frame as MU2's Show
     // was -- what is on screen after the pointer leaves is the last monster's bar living out its
@@ -92,6 +105,17 @@ private:
                    name == o.name && bot == o.bot && dead == o.dead && guild == o.guild && mark == o.mark;
         }
     };
+    // One debuff's cell under the monster's bar: its icon (Hud::artOf), what is left of it in
+    // sixteenths, and a bleed's stacks.
+    struct Bane {
+        const char* art = nullptr;
+        float share = 0;
+        int stacks = 0;
+        bool operator==(const Bane& o) const {
+            return art == o.art && share == o.share && stacks == o.stacks;
+        }
+    };
+    static constexpr int kBanes = 5;  // poison, burning, bleeding, iced, frozen
     // Everything the canvas draws, compared whole to decide a rebuild.
     struct Readout {
         uint32_t on = 0;
@@ -99,6 +123,7 @@ private:
         float shown = 0, lag = 0, health = 0;
         int reading = 0, maximum = 0;
         float unit = 0;
+        std::vector<Bane> banes;
         int folk = -1;
         float folkX = 0, folkY = 0, folkShown = 0;
         // Her summon's escort bar, 0 for none showing (sprint 15).
@@ -110,7 +135,7 @@ private:
         bool operator==(const Readout& o) const {
             return on == o.on && x == o.x && y == o.y && shown == o.shown && lag == o.lag &&
                    health == o.health && reading == o.reading && maximum == o.maximum &&
-                   unit == o.unit && folk == o.folk && folkX == o.folkX && folkY == o.folkY &&
+                   unit == o.unit && banes == o.banes && folk == o.folk && folkX == o.folkX && folkY == o.folkY &&
                    folkShown == o.folkShown && escort == o.escort && escortX == o.escortX &&
                    escortY == o.escortY && escortHealth == o.escortHealth &&
                    escortReading == o.escortReading && escortMaximum == o.escortMaximum &&
@@ -122,6 +147,10 @@ private:
     void rebuild(const Play& play, const Readout& r);
 
     gfx::Canvas canvas_;
+    panel::Arts* arts_ = nullptr;
+    // The longest time left seen of each of the monster's debuffs, in ticks, in kBanes' order:
+    // what its clock sweeps against. Let go when the debuff is, and when the bar moves to another.
+    int64_t baneWhole_[kBanes] = {};
     uint32_t on_ = 0;
     bool alive_ = false;   // whether it was alive last frame, so the kill can be caught
     float left_ = 0.0f;    // seconds of the linger left

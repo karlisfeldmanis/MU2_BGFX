@@ -7,6 +7,7 @@
 
 #include "game/ui/controls.h"
 #include "game/ui/guild_mark.h"
+#include "game/ui/hud.h"
 #include "game/ui/panel.h"
 #include "game/ui/tip.h"
 #include "game/play.h"
@@ -53,6 +54,14 @@ constexpr float kCastSpread = 1.75f;
 constexpr float kNameTall = 8.0f;
 constexpr float kReadingTall = 5.0f;
 constexpr float kGap = 4.0f;      // clears the shadow before it starts being a gap
+// The debuffs' cells under the bar: about a WoW nameplate's, so a row of five is under the bar's
+// width; their gap, and how far under the bar's shadow the row starts.
+constexpr float kBane = 10.0f;
+constexpr float kBaneGap = 1.5f;
+constexpr float kBaneDown = 2.5f;
+constexpr uint32_t kBaneBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.55f);
+constexpr uint32_t kBaneEdge = gfx::rgba(0.784f, 0.188f, 0.173f, 0.95f);  // the target frame's red
+constexpr uint32_t kBaneGone = gfx::rgba(0.0f, 0.0f, 0.0f, 0.58f);       // the clock's dark
 // The other players' names (WoW's), in tip::unit() pixels: the name and the guild line under it.
 constexpr float kTagName = 15.0f;
 constexpr float kTagGuild = 11.0f;
@@ -211,6 +220,7 @@ uint32_t faded(uint32_t abgr, float alpha) {
 void Vitals::dismiss() {
     if (on_ == 0) return;
     on_ = 0;
+    std::fill(baneWhole_, baneWhole_ + kBanes, int64_t(0));
     shown_ = 0.0f;
 }
 
@@ -245,6 +255,7 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
     const sim::Body* hovered = pointed != 0 ? realm.find(pointed) : nullptr;
     if (hovered && play.shownAlive(pointed) && !hovered->player && !paneled) {
         if (on_ != pointed) {
+            std::fill(baneWhole_, baneWhole_ + kBanes, int64_t(0));
             lag_ = was_ = fraction(pointed);
             holding_ = 0.0f;
             alive_ = true;
@@ -333,6 +344,32 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
         now.health = was_;
         now.reading = play.shownHealth(on_);
         now.maximum = beast->maxHealth;
+        // What stands on it, in kBanes' order; none once it is dying.
+        const int64_t tick = realm.tick();
+        Hud::Boon kinds[kBanes];
+        kinds[0].poison = true;
+        kinds[1].burn = true;
+        kinds[2].bleed = true;
+        kinds[3].chill = true;
+        kinds[4].frozen = true;
+        const int64_t until[kBanes] = {beast->poisonUntil, beast->burnUntil,
+                                       beast->bleed > 0 ? beast->bleedUntil : 0,
+                                       beast->chilledUntil, beast->frozenUntil};
+        for (int k = 0; k < kBanes; ++k) {
+            const int64_t left = alive_ ? until[k] - tick : 0;
+            if (left <= 0) {
+                baneWhole_[k] = 0;
+                continue;
+            }
+            // A fresh one, or one laid again, is longer than what was left: its clock starts full.
+            baneWhole_[k] = std::max(baneWhole_[k], left);
+            Bane one;
+            one.art = Hud::artOf(kinds[k]);
+            // In sixteenths, so the sweep rebuilds the canvas a few times a second and no more.
+            one.share = std::round(float(left) / float(baneWhole_[k]) * 16.0f) / 16.0f;
+            one.stacks = k == 2 ? beast->bleed : 0;
+            now.banes.push_back(one);
+        }
     }
     // Her summon, whenever it stands: no pointer, no linger, no fade.
     if (const sim::Body* summon = realm.summoned();
@@ -551,6 +588,30 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
         bar.midY() + (face.ascent(readSize) - face.descent(readSize)) * 0.5f;
     type(canvas_, std::round(bar.midX() - face.measure(readSize, reading) * 0.5f),
          std::round(baseline), readSize, alpha, reading);
+
+    // The debuffs, a row centred under the bar: the icon, the clock's dark swept over what has
+    // gone, a bleed's stacks in the corner, and the debuff's red edge round it.
+    if (!r.banes.empty() && arts_ != nullptr) {
+        const float side = std::round(kBane * unit), gap = std::round(kBaneGap * unit);
+        const float wide = float(r.banes.size()) * side + float(r.banes.size() - 1) * gap;
+        float x = std::round(r.x - wide * 0.5f);
+        const float top = bar.bottom() + std::round(kBaneDown * unit);
+        const float rim = std::max(1.0f, std::round(0.75f * unit));
+        for (const Bane& one : r.banes) {
+            const gfx::Box cell{x, top, side, side};
+            canvas_.rect(cell, faded(kBaneBack, alpha));
+            const gfx::Art& icon = arts_->get(one.art);
+            if (icon.valid()) canvas_.image(icon, cell, faded(0xFFFFFFFFu, alpha));
+            controls::sweep(canvas_, cell, 1.0f - one.share, faded(kBaneGone, alpha));
+            if (one.stacks > 1) {
+                const float size = points(6.0f * unit);
+                type(canvas_, cell.right() - face.measure(size, std::to_string(one.stacks)),
+                     cell.bottom() - std::round(0.5f * unit), size, alpha, std::to_string(one.stacks));
+            }
+            canvas_.outline(cell, rim, faded(kBaneEdge, alpha));
+            x += side + gap;
+        }
+    }
 }
 
 }  // namespace mu::game

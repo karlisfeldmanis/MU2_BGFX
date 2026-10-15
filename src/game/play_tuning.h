@@ -666,8 +666,10 @@ constexpr float kEmberTint[3] = {1.0f, 0.55f, 0.35f};
 // poison green, softer than the Chaos Nature Bow's (fx/arrow.h kNatureFire). Ours.
 constexpr float kPlagueArrowTint[3] = {0.55f, 1.0f, 0.5f};
 // A poisoned monster's smoke (fx/poison.h Poison::sicken), beside its green: this many puffs a
-// reference frame, each off a bone drawn at random. Ours.
-constexpr float kSickPuffs = 0.5f;
+// reference frame, each off a bone drawn at random, at this share of its light (the user,
+// 2026-10-16: 'the poison effect smoke for monsters is little bit to much', at 0.5 and 1). Ours.
+constexpr float kSickPuffs = 0.3f;
+constexpr float kSickGlow = 0.7f;
 // And a poisoned character's, fewer and fainter (the user, 2026-10-15: 'poison smoke effect from
 // poisoned character is little bit to much', then at 0.3 and 0.7 'still little bit to much coming
 // from char'). Ours.
