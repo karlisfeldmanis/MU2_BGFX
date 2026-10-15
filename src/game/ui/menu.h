@@ -75,6 +75,10 @@ public:
         bool lights = true;
         int textures = 1;
         int texturesLoaded = 1;
+        // core::Args::renderer: 0 Auto, 1 Vulkan, 2 Direct3D 11, and what this run started with.
+        // Read when the window opens, so a change waits on a restart as the textures do.
+        int renderer = 0;
+        int rendererLoaded = 0;
         int cap = 0;
         bool operator==(const Settings& o) const {
             return fullscreen == o.fullscreen && sizes == o.sizes && size == o.size &&
@@ -82,7 +86,8 @@ public:
                    scale == o.scale && msaa == o.msaa && shadows == o.shadows && ssao == o.ssao &&
                    bloom == o.bloom && reflections == o.reflections && grass == o.grass &&
                    lights == o.lights && textures == o.textures &&
-                   texturesLoaded == o.texturesLoaded && cap == o.cap;
+                   texturesLoaded == o.texturesLoaded && renderer == o.renderer &&
+                   rendererLoaded == o.rendererLoaded && cap == o.cap;
         }
     };
 

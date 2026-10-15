@@ -46,6 +46,7 @@ bool Application::boot() {
         args_.views || !args_.statsPath.empty() || !args_.budgetOverrides.empty();
     desc.renderThread = args_.renderThread;
     desc.renderer = args_.renderer;
+    args_.rendererLoaded = args_.renderer;
     if (!window_.open(desc)) return false;
     // The build names the SPIR-V; a run that came up on Direct3D 11 reads the DXBC beside it.
     paths_.shaders = gfx::shadersFor(paths_.shaders);

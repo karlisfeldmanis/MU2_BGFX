@@ -143,6 +143,7 @@ struct Args {
     // `renderer`, written there by the launcher's first pick; read once, at the window. The Mac
     // is Metal whatever this says.
     int renderer = 0;
+    int rendererLoaded = 0;  // what this run started with; the Graphics page's note compares
 
     // The world. A name under assets/world/; empty runs the model bench instead.
     std::string world;

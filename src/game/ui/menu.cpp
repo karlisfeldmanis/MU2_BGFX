@@ -58,8 +58,8 @@ constexpr float kOptionsBack = kOptionsGraphics + style::kButtonM + 10.0f;
 constexpr float kOptionsFoot = kOptionsBack + style::kButtonM + 14.0f;
 constexpr float kOptionsTall = kOptionsFoot + kFootTall;
 
-// Graphics: the preset under Quality, nine rows under Detail, the limit under Frame rate, a
-// rule, a line for what waits on a restart, Back and Apply side by side, and the foot. As wide as Options, so the chevrons line up turning between them.
+// Graphics: the preset under Quality, nine rows under Detail, the limit and the renderer under
+// System, a rule, a line for what waits on a restart, Back and Apply side by side, and the foot. As wide as Options, so the chevrons line up turning between them.
 constexpr float kGraphicsWide = kOptionsWide;
 constexpr float kQualityKicker = style::kHead + 20.0f;
 constexpr float kQualityRows = kQualityKicker + 24.0f;
@@ -67,7 +67,7 @@ constexpr float kDetailKicker = kQualityRows + kRowStep + 8.0f;
 constexpr float kDetailRows = kDetailKicker + 24.0f;
 constexpr float kRateKicker = kDetailRows + kRowStep * 9.0f + 8.0f;
 constexpr float kRateRows = kRateKicker + 24.0f;
-constexpr float kGraphicsRule = kRateRows + style::kRow + 14.0f;
+constexpr float kGraphicsRule = kRateRows + kRowStep + style::kRow + 14.0f;
 constexpr float kGraphicsNote = kGraphicsRule + 10.0f;
 constexpr float kGraphicsBack = kGraphicsNote + 26.0f;
 constexpr float kGraphicsFoot = kGraphicsBack + style::kButtonM + 14.0f;
@@ -100,11 +100,11 @@ constexpr const char* kRowNames[kRows] = {"Display", "Resolution", "V-sync", "Fr
 // The Graphics rows, top to bottom.
 enum GraphicsRow : int {
     kGPreset = 0, kGScale, kGAntialias, kGShadows, kGOcclusion, kGBloom, kGReflections, kGGrass,
-    kGLights, kGTextures, kGLimit, kGraphicsRows,
+    kGLights, kGTextures, kGLimit, kGRenderer, kGraphicsRows,
 };
 constexpr const char* kGraphicsNames[kGraphicsRows] = {
     "Preset", "Render scale", "Anti-aliasing", "Shadows", "Ambient occlusion", "Bloom",
-    "Reflections", "Grass", "Point lights", "Textures", "Frame rate limit"};
+    "Reflections", "Grass", "Point lights", "Textures", "Frame rate limit", "Renderer"};
 bool switched(int row) {
     return row == kGOcclusion || row == kGBloom || row == kGReflections || row == kGLights;
 }
@@ -132,6 +132,7 @@ void takeGraphics(const Menu::Settings& from, Menu::Settings* to) {
     to->grass = from.grass;
     to->lights = from.lights;
     to->textures = from.textures;
+    to->renderer = from.renderer;
     to->cap = from.cap;
 }
 bool sameGraphics(const Menu::Settings& a, const Menu::Settings& b) {
@@ -180,6 +181,12 @@ std::vector<int> stepsOf(int row, int now) {
         case kGGrass: steps = {0, 1, 2}; break;
         case kGTextures: steps = {0, 1}; break;
         case kGLimit: steps = {0, 60, 90, 120, 180}; break;
+#ifdef _WIN32
+        // Auto is Vulkan, and Direct3D 11 when Vulkan does not start (gfx/window.cpp).
+        case kGRenderer: steps = {0, 1, 2}; break;
+#else
+        case kGRenderer: steps = {now}; break;  // the Mac draws with Metal and nothing else
+#endif
         default: return steps;
     }
     if (std::find(steps.begin(), steps.end(), now) == steps.end()) {
@@ -197,6 +204,7 @@ int* valueOf(int row, Menu::Settings* set) {
         case kGGrass: return &set->grass;
         case kGTextures: return &set->textures;
         case kGLimit: return &set->cap;
+        case kGRenderer: return &set->renderer;
         default: return nullptr;
     }
 }
@@ -220,6 +228,12 @@ std::string wordOf(int row, const Menu::Settings& set) {
         case kGGrass: return set.grass <= 0 ? "Off" : set.grass == 1 ? "Low" : "High";
         case kGTextures: return set.textures <= 0 ? "Half" : "Full";
         case kGLimit: return set.cap <= 0 ? "Unlimited" : std::to_string(set.cap) + " fps";
+        case kGRenderer:
+#ifdef _WIN32
+            return set.renderer == 2 ? "Direct3D 11" : set.renderer == 1 ? "Vulkan" : "Auto";
+#else
+            return "Metal";
+#endif
         default: return "";
     }
 }
@@ -237,6 +251,7 @@ float tallOf(Menu::Page page) {
 Box graphicsRowBox(int row) {
     const float top = row == kGPreset ? kQualityRows
                     : row == kGLimit  ? kRateRows
+                    : row == kGRenderer ? kRateRows + kRowStep
                                      : kDetailRows + float(row - kGScale) * kRowStep;
     return {kOptionsInset, top, kGraphicsWide - kOptionsInset * 2.0f, style::kRow};
 }
@@ -581,7 +596,7 @@ void Menu::rebuild() {
     if (graphics) {
         controls::kicker(canvas_, sheet.x + inset, y_ + (kQualityKicker + 12.0f) * u, "QUALITY", u);
         controls::kicker(canvas_, sheet.x + inset, y_ + (kDetailKicker + 12.0f) * u, "DETAIL", u);
-        controls::kicker(canvas_, sheet.x + inset, y_ + (kRateKicker + 12.0f) * u, "FRAME RATE", u);
+        controls::kicker(canvas_, sheet.x + inset, y_ + (kRateKicker + 12.0f) * u, "SYSTEM", u);
         for (int i = 0; i < kGraphicsRows; ++i) {
             const Box row = at(x_, y_, graphicsRowBox(i));
             const int a = kGraphicsFirst + i * 2, b = a + 1;
@@ -602,9 +617,14 @@ void Menu::rebuild() {
         }
         controls::rule(canvas_, sheet.x + inset, y_ + kGraphicsRule * u,
                        (kGraphicsWide - kOptionsInset * 2.0f) * u, u);
-        // The textures are read when the game starts, so a change to them says when it lands.
-        if (set.textures != set.texturesLoaded) {
-            const char* words = "Textures change the next time the game starts.";
+        // The textures and the renderer are taken when the game starts, so a change to either
+        // says when it lands.
+        const bool textures = set.textures != set.texturesLoaded;
+        const bool renderer = set.renderer != set.rendererLoaded;
+        if (textures || renderer) {
+            const char* words = textures && renderer ? "Textures and renderer change on the next start."
+                                : renderer           ? "The renderer changes the next time the game starts."
+                                                     : "Textures change the next time the game starts.";
             const float px = style::kBodySize * u;
             const float wide = controls::labelWidth(px, words);
             controls::label(canvas_, std::round(sheet.x + (sheet.w - wide) * 0.5f),

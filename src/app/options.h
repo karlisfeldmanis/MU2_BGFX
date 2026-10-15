@@ -34,6 +34,8 @@ inline void fillSettings(const gfx::Window& window, const core::Args& args,
     set->lights = args.lights;
     set->textures = args.textures;
     set->texturesLoaded = args.texturesLoaded;
+    set->renderer = args.renderer;
+    set->rendererLoaded = args.rendererLoaded;
     set->cap = args.cap;
     int dw = 0, dh = 0;
     window.displaySize(&dw, &dh);
@@ -85,6 +87,7 @@ inline void applySettings(gfx::Window& window, const game::Menu::Settings& set,
     args.grass = set.grass;
     args.lights = set.lights;
     args.textures = set.textures;
+    args.renderer = set.renderer;
     args.cap = set.cap;
     // The window's size as asked for, not as the window reports it yet, and kept through
     // fullscreen so going back to a window after a restart comes back to it.
