@@ -332,6 +332,12 @@ bool ammunition(const content::ItemRow& row);
 // Whether it is drunk for a pool: the apple and three healing potions, the three mana potions.
 bool heals(const content::ItemRow& row);
 bool restores(const content::ItemRow& row);
+// What one of them pours into its pool, all three instalments together: MU2's Realm.Consume, off
+// OpenMU's RecoverConsumeHandlerPlugIn. The rank in its family (0 the apple, 1 to 3 the potions)
+// buys ten percent of the pool each, the plus one more each, and a flat (rank + 1) x 50 less the
+// level, never below nothing. `pool` is the top of the pool it fills. Realm::useItem and the
+// potion's card both ask it, so the card cannot promise what the drink does not pour.
+int potionPours(const content::ItemRow& row, int refinement, int pool, int level);
 
 // The Ale (14, 9): OpenMU's AlcoholEffectInitializer, which Version075 hangs on the row as its
 // ConsumeEffect -- a flat +20 on AttackSpeedAny for 80 seconds. MuMain's client says the same
@@ -455,6 +461,8 @@ struct Wearer {
     // His points with the stat runes in (Body::totalPoints): what a card's damage reads.
     // `points` stays the spent ones, which is what an item's asks are met by.
     HeroPoints totals;
+    // His two pools at their tops, so a potion's card can say what one pours (`potionPours`).
+    int maxHealth = 0, maxMana = 0;
 };
 // Whether this character may wear it at all: his class, and every requirement met.
 bool fits(const content::Tables& tables, const Wearer& who, const Held& what);

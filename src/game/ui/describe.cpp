@@ -615,12 +615,23 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         say("Life -" + std::to_string(power.lifeCost) + " for each successful attack", Tone::Red);
     }
     if (sim::heals(row) || sim::restores(row)) {
-        Row line;
-        line.free = sim::heals(row) ? "Restores life when it goes down."
-                                    : "Restores mana when it goes down.";
-        line.freeTone = Tone::White;
-        line.mark = tip::Mark::Diamond;
-        does.rows.push_back(line);
+        // What one drink pours for him as he is now, the realm's own sum (sim::potionPours),
+        // so it grows with his pool: the user, 2026-10-15, 'show on tooltips how much mana or
+        // life chars gets from potion'.
+        const bool life = sim::heals(row);
+        const int pool = life ? who.maxHealth : who.maxMana;
+        if (pool > 0) {
+            does.rows.push_back(stat(life ? "Restores Life" : "Restores Mana",
+                                     std::to_string(sim::potionPours(row, what.refinement, pool,
+                                                                     who.level)),
+                                     Tone::White));
+        } else {
+            Row line;
+            line.free = life ? "Restores life when it goes down." : "Restores mana when it goes down.";
+            line.freeTone = Tone::White;
+            line.mark = tip::Mark::Diamond;
+            does.rows.push_back(line);
+        }
     }
     // A stack says how many, as MU's `Number of items` does; a quiver's shots are its wear and
     // go in the foot with everything else that is spent.

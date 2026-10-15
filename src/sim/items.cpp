@@ -841,6 +841,13 @@ bool restores(const content::ItemRow& row) {
     return row.group == kGroupPotions && row.number >= 4 && row.number <= 6;
 }
 
+int potionPours(const content::ItemRow& row, int refinement, int pool, int level) {
+    const int rank = restores(row) ? row.number - 4 + 1 : row.number;
+    const int percent = rank * 10 + refinement;
+    const int flat = std::max(0, (rank + 1) * 50 - level);
+    return int(double(pool) * double(percent) / 100.0 + double(flat));
+}
+
 bool ale(const content::ItemRow& row) { return row.group == kGroupPotions && row.number == 9; }
 bool summoningOrb(const content::ItemRow& row) { return row.group == 12 && row.number == 11; }
 

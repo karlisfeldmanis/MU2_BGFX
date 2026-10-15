@@ -680,6 +680,8 @@ Wearer Realm::wearer() const {
                   armFamily(hero, armAt(hero.shield))};
     who.second = hero.second;
     who.totals = hero.totalPoints();
+    who.maxHealth = hero.maxHealth;
+    who.maxMana = hero.maxMana;
     return who;
 }
 
@@ -881,14 +883,9 @@ bool Realm::useItem(int slot) {
     // A yes that has not come round yet, not a no. MU2's Realm.Consume.
     if (tick_ < me().potionUntil) return false;
 
-    // MU2's Realm.Consume, off OpenMU's RecoverConsumeHandlerPlugIn: the rank in its family
-    // (0 the apple, 1 to 3 the potions) buys ten percent of the pool each, the plus one more
-    // each, and a flat (rank + 1) x 50 less the level, never below nothing.
-    const int rank = mana ? row.number - 4 + 1 : row.number;
-    const int pool = mana ? hero.maxMana : hero.maxHealth;
-    const int percent = rank * 10 + potion.refinement;
-    const int flat = std::max(0, (rank + 1) * 50 - hero.level);
-    const int total = int(double(pool) * double(percent) / 100.0 + double(flat));
+    // MU2's Realm.Consume, off OpenMU's RecoverConsumeHandlerPlugIn (sim::potionPours).
+    const int total = potionPours(row, potion.refinement, mana ? hero.maxMana : hero.maxHealth,
+                                  hero.level);
     // The three instalments, at 200, 600 and 200 ms after one another: 4, 12 and 4 ticks.
     const int64_t steps[3] = {4, 12, 4};  // kPourTicks in all
     const int shares[3] = {20, 60, 20};
