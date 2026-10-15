@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
     Place place;
     fs::path dir;
     std::string only;
-    bool checking = false, start = false, settling = false, removing = false;
+    bool checking = false, start = false, settling = false, removing = false, digesting = false;
     UiOptions ui;
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
@@ -129,6 +129,7 @@ int main(int argc, char** argv) {
         else if (a == "--play") start = true;
         else if (a == "--settle") settling = true;
         else if (a == "--uninstall") removing = true;
+        else if (a == "--digest") digesting = true;
         else if (a == "--site" && i + 1 < argc) place.site = argv[++i];
         else if (a == "--platform" && i + 1 < argc) place.platform = argv[++i];
         else if (a == "--dir" && i + 1 < argc) dir = pathOf(argv[++i]);
@@ -149,6 +150,13 @@ int main(int argc, char** argv) {
     // The install's own steps, with no site: --settle moves this launcher into --dir and puts the
     // shortcut on the desktop as a first install does; --uninstall removes what installed.json
     // lists there (engine.h). What a Wine run checks them by.
+    // --digest: the log digest the launcher sends home (crash_upload.h), of --dir's logs/ and
+    // the launcher's launcher.log, written there and not sent.
+    if (digesting) {
+        if (dir.empty()) dir = loadSettings().install;
+        writeLogDigest({dir / "logs"}, dir / "logs" / "launcher.log", dir / "logs");
+        return 0;
+    }
     if (settling || removing) {
         if (dir.empty()) dir = loadSettings().install;
         if (settling) settleLauncher(dir, true);

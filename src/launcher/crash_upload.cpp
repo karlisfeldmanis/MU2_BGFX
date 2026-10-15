@@ -5,7 +5,10 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdio>
 #include <cstdlib>
+#include <ctime>
+#include <sstream>
 #include <fstream>
 #include <mutex>
 
@@ -80,7 +83,56 @@ std::string quoted(const std::string& s) {
 bool isReport(const fs::path& path) {
     const std::string name = path.filename().string();
     if (path.extension() != ".txt") return false;
-    return name.find("crash-") != std::string::npos || name.find("hang-") != std::string::npos;
+    return name.find("crash-") != std::string::npos || name.find("hang-") != std::string::npos ||
+           name.rfind("log-", 0) == 0;
+}
+
+// A log's lines that say what went wrong, not what loaded: what a report on a player's machine
+// needs (the minimised window on Leo's PC, 2026-10-15). Its head and tail come whole besides.
+bool telling(const std::string& line) {
+    static const char* const kSkip[] = {"] texture ", "] model ", "]   bounds", "] pack: "};
+    for (const char* s : kSkip) {
+        if (line.find(s) != std::string::npos) return false;
+    }
+    static const char* const kKeep[] = {"window", "focus", "front", "error", "Error", "fail", "freeze",
+                                        "hang", "held", "gpu", "Vulkan", "targets ", "drawn at", "graphics",
+                                        "fps", "join", "enter", "lost", "launcher:", "play:", "self-update",
+                                        "crash", "could not", "cannot", "refused"};
+    for (const char* s : kKeep) {
+        if (line.find(s) != std::string::npos) return true;
+    }
+    return false;
+}
+
+std::string digestOf(const fs::path& log, const char* name) {
+    std::string all;
+    if (!readAll(log, all, 64u << 20) || all.empty()) return {};
+    std::vector<std::string> lines;
+    std::istringstream in(all);
+    for (std::string line; std::getline(in, line);) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        lines.push_back(std::move(line));
+    }
+    constexpr size_t kHead = 3, kTail = 80, kMostKept = 600;
+    std::string out = std::string("== ") + name + ", " + std::to_string(lines.size()) + " lines ==\n";
+    size_t kept = 0;
+    for (size_t i = 0; i < lines.size(); ++i) {
+        const bool tail = i + kTail >= lines.size();
+        if (i < kHead || tail || (kept < kMostKept && telling(lines[i]))) {
+            if (!tail && i >= kHead) ++kept;
+            out += lines[i] + "\n";
+        }
+    }
+    return out;
+}
+
+// A file's size and time, which say whether it changed since the last digest.
+std::string stampOf(const fs::path& path) {
+    std::error_code ec;
+    const auto size = fs::file_size(path, ec);
+    if (ec) return "-";
+    const auto when = fs::last_write_time(path, ec).time_since_epoch().count();
+    return std::to_string(uint64_t(size)) + "@" + std::to_string(int64_t(when));
 }
 
 void mark(const fs::path& path, const char* as) {
@@ -128,6 +180,48 @@ int sendOne(const fs::path& text, const CrashFrom& from) {
 
 }  // namespace
 
+void writeLogDigest(const std::vector<fs::path>& gameLogs, const fs::path& launcherLog, const fs::path& into) {
+    std::lock_guard<std::mutex> hold(g_sending);
+    fs::path game;
+    fs::file_time_type newest{};
+    for (const fs::path& folder : gameLogs) {
+        std::error_code ec;
+        const fs::path log = folder / "mu2.log";
+        const auto when = fs::last_write_time(log, ec);
+        if (!ec && (game.empty() || when > newest)) {
+            game = log;
+            newest = when;
+        }
+    }
+    const std::string stamp = stampOf(launcherLog) + " " + (game.empty() ? "-" : stampOf(game));
+    const fs::path last = into / "log-digest.last";
+    std::string before;
+    readAll(last, before, 256);
+    if (before == stamp) return;
+
+    std::string text = digestOf(launcherLog, launcherLog.filename().string().c_str());
+    if (!game.empty()) text += digestOf(game, "mu2.log");
+    if (text.empty()) return;
+    const std::time_t now = std::time(nullptr);
+    char when[32];
+    std::strftime(when, sizeof when, "%Y%m%d-%H%M%S", std::localtime(&now));
+    // The first line is the report's headline on the site (web/server.py row "what").
+    text = std::string("Logs from ") + when + "\n" + text;
+    if (text.size() > kMostText) text = text.substr(0, kMostText / 2) + "\n[... cut to fit ...]\n" + text.substr(text.size() - kMostText / 2);
+    std::error_code ec;
+    fs::create_directories(into, ec);
+    const fs::path out = into / (std::string("log-") + when + ".txt");
+    {
+        std::ofstream file(out, std::ios::binary);
+        if (!file) return;
+        file << text;
+    }
+    // Whole the moment it is closed: dated back past kSettled, so the next send takes it.
+    fs::last_write_time(out, fs::file_time_type::clock::now() - std::chrono::minutes(1), ec);
+    std::ofstream(last, std::ios::binary) << stamp;
+    core::logf("logs: %s written", out.filename().string().c_str());
+}
+
 int sendCrashes(const std::vector<fs::path>& folders, const CrashFrom& from) {
     std::lock_guard<std::mutex> hold(g_sending);
     std::vector<fs::path> waiting;
@@ -135,7 +229,10 @@ int sendCrashes(const std::vector<fs::path>& folders, const CrashFrom& from) {
     for (const fs::path& folder : folders) {
         std::error_code ec;
         if (!fs::is_directory(folder, ec)) continue;
-        for (const fs::directory_entry& entry : fs::directory_iterator(folder, ec)) {
+        // increment(walk): the range-for's ++ throws, on this thread a terminate.
+        std::error_code walk;
+        for (fs::directory_iterator it(folder, walk), end; !walk && it != end; it.increment(walk)) {
+            const fs::directory_entry& entry = *it;
             if (!entry.is_regular_file(ec) || !isReport(entry.path())) continue;
             const auto age = now - entry.last_write_time(ec);
             if (ec || age < kSettled || age > kOldest) continue;

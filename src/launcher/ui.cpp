@@ -148,7 +148,7 @@ private:
     void uninstallNow();
     void playNow();
     void start();
-    void sendCrashesAfter(int delay);
+    void sendCrashesAfter(int delay, const char* launcherLog = nullptr);
     void logOut();
     void openUrl(const std::string& url);
     void pickFolder();
@@ -429,6 +429,9 @@ void Launcher::start() {
                 return;
             }
             sendCrashesAfter(20);
+            // The logs as the game starts and the player goes in: a window that opened behind,
+            // a freeze in the load (writeLogDigest). The whole session follows at the next start.
+            sendCrashesAfter(150, "launcher.log");
             // Minimised only once the game's window has the front (engine.h handFront).
             std::thread([this, pid] {
                 handFront(pid);
@@ -443,11 +446,14 @@ void Launcher::start() {
 // What crashed or froze, sent home on a thread of its own after `delay` (launcher/crash_upload.h):
 // at the start, and again after Play, so a game that dies while starting is heard from the same
 // evening. Copies only, so the window may close while it runs.
-void Launcher::sendCrashesAfter(int delay) {
+void Launcher::sendCrashesAfter(int delay, const char* launcherLog) {
     const std::vector<fs::path> folders = crashFolders(settings_.install);
     const CrashFrom from{place_.site, place_.platform, "launcher", who_.token, gpu_.name, gpu_.driver};
-    std::thread([folders, from, delay] {
+    const fs::path logs = userFolder() / "logs";
+    const fs::path log = launcherLog ? logs / launcherLog : fs::path();
+    std::thread([folders, from, delay, logs, log] {
         std::this_thread::sleep_for(std::chrono::seconds(delay));
+        if (!log.empty()) writeLogDigest(folders, log, logs);
         sendCrashes(folders, from);
     }).detach();
 }
@@ -1155,7 +1161,8 @@ int Launcher::run() {
     } else {
         checkPending_ = true;
     }
-    sendCrashesAfter(0);
+    // The last run's logs, the launcher's and the game's whole session (writeLogDigest).
+    sendCrashesAfter(0, "launcher.log.previous");
     while (!glfwWindowShouldClose(window_)) {
         // Asleep between events, but awake enough for the caret and a moving download.
         glfwWaitEventsTimeout(working_ || home_ == Home::Downloading ? 1.0 / 30.0 : 0.25);

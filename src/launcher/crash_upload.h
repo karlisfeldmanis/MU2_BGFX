@@ -27,6 +27,16 @@ struct CrashFrom {
     std::string driver;
 };
 
+// **The logs sent home** (the user, 2026-10-15: "we need to send also game launching logs to
+// server so we can see the problems like it was for Leo"). A digest of the launcher's log
+// `launcherLog` and the newest mu2.log in `gameLogs`: each one's head, the lines that say what
+// went wrong (the window and its focus, the GPU and the targets, freezes, errors, the launcher's
+// moves and updates), and its last lines. Written as log-<when>.txt in `into`, one of the folders
+// sendCrashes reads, so it goes home as a report does and is kept beside the crashes (web/server.py,
+// kind "log"). Nothing is written when neither log changed since the last digest.
+void writeLogDigest(const std::vector<std::filesystem::path>& gameLogs, const std::filesystem::path& launcherLog,
+                    const std::filesystem::path& into);
+
 // Sends what is waiting in `folders`. Returns how many landed. Blocks: run it on a thread.
 int sendCrashes(const std::vector<std::filesystem::path>& folders, const CrashFrom& from);
 

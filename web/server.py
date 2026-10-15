@@ -485,6 +485,8 @@ class Store:
         rows = self.crash_rows()
         where = {}
         for row in rows:
+            if row.get("kind") == "log":
+                continue  # a log digest died nowhere
             name = str(row.get("where", "")).split("+")[0] or "?"
             where[name] = where.get(name, 0) + 1
         return {"reports": len(rows), "where": dict(sorted(where.items(), key=lambda one: -one[1])),
@@ -738,7 +740,8 @@ class Handler(BaseHTTPRequestHandler):
             if isinstance(value, str) and value.strip():
                 row[key] = value[:room]
         row["program"] = "launcher" if name.startswith("launcher-") else "game"
-        row["kind"] = "hang" if "hang-" in name else "crash"
+        # log-<when>.txt is the launcher's digest of its own log and the game's, not a crash.
+        row["kind"] = "log" if name.startswith("log-") else "hang" if "hang-" in name else "crash"
         lines = text.decode("utf-8", "replace").splitlines()
         row["what"] = (lines[0] if lines else "")[:200]
         # Windows names the module the fault is in on a line of its own (core/watch_win.cpp).
