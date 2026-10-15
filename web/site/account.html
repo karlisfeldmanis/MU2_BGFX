@@ -165,7 +165,7 @@
   $('a-out').addEventListener('click', async () => {
     try { await api('/api/logout', {}); } catch (e) {}
     token.set('');
-    view('signin');
+    location.href = '/';
   });
   $('a-password').addEventListener('click', () => { $('p-box').hidden = !$('p-box').hidden; $('d-box').hidden = true; });
   $('a-delete').addEventListener('click', () => { $('d-box').hidden = !$('d-box').hidden; $('p-box').hidden = true; });
