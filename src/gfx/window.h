@@ -155,7 +155,20 @@ public:
     bool vsync() const { return (reset_ & BGFX_RESET_VSYNC) != 0; }
     void setVsync(bool on);
 
+    // **In front** (the user, 2026-10-15, on a Windows PC: the game opened behind the launcher's
+    // desktop, and again behind something after entering the world, each time until Alt+Tab).
+    // open() brings the window forward once it is made; the launcher has let it (engine.cpp
+    // play, AllowSetForegroundWindow). focused() is whether it has the keys. Every loss of the
+    // focus is logged with who took it (focusOwner), which is what says why on the next report.
+    bool focused() const;
+    void toFront();
+
 private:
+    // The window that has the focus when this one has not: "title (program.exe)" on Windows,
+    // the front app's name on the Mac. window_win.cpp, window_mac.mm.
+    static std::string focusOwner();
+    static void onFocus(GLFWwindow* window, int focused);
+
     // Fullscreen hides the menu bar and the Dock outright rather than letting them slide in
     // at an edge, which brought the system's arrow with them. window_mac.mm.
     static void setPresentation(bool fullscreen);

@@ -135,6 +135,8 @@ bool Window::open(const WindowDesc& desc) {
         }
     }
     setPresentation(fullscreen_);
+    glfwSetWindowFocusCallback(handle_, onFocus);
+    toFront();
 
     // The backbuffer is asked for in pixels, not in points: on a Retina display the two
     // differ by two, and a frame measured at the wrong size is not the frame.
@@ -377,6 +379,23 @@ bool Window::pump() {
 }
 
 bool Window::fullscreen() const { return handle_ && fullscreen_; }
+
+bool Window::focused() const { return handle_ && glfwGetWindowAttrib(handle_, GLFW_FOCUSED); }
+
+void Window::toFront() {
+    if (!handle_ || focused()) return;
+    glfwShowWindow(handle_);
+    glfwFocusWindow(handle_);  // SetForegroundWindow on Windows, which the system may refuse
+    if (!focused()) core::logf("window: asked to come to the front; %s has it", focusOwner().c_str());
+}
+
+void Window::onFocus(GLFWwindow*, int focused) {
+    if (focused) {
+        core::logf("window: focus back");
+    } else {
+        core::logf("window: focus lost to %s", focusOwner().c_str());
+    }
+}
 
 void Window::setFullscreen(bool on) {
     if (!handle_ || on == fullscreen()) return;

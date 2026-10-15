@@ -518,6 +518,10 @@ bool play(const fs::path& install, const Manifest& manifest, const GameTicket& t
         error = "Could not start the game (" + std::to_string(GetLastError()) + ").";
         return false;
     }
+    // The game may take the front from us (gfx::Window::toFront): Windows lets a window come
+    // forward only from the program the player last used, and the launcher minimises itself
+    // next, before the game's window is up -- it opened behind (the user, 2026-10-15).
+    AllowSetForegroundWindow(running.dwProcessId);
     CloseHandle(running.hThread);
     CloseHandle(running.hProcess);
     return true;

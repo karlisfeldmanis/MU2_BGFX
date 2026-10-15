@@ -193,6 +193,10 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
                         ctx.args.mute ? 0.0f : float(ctx.args.volume) / 100.0f);
     }
     std::thread loader([&]() { loaded.store(load() ? 1 : -1); });
+    // In front when the load began, in front when it ends (gfx::Window::toFront): something took
+    // the focus while the world came up on a Windows PC, and the player had to Alt+Tab back
+    // (the user, 2026-10-15). One he moved away from himself is left where he put it.
+    const bool inFront = ctx.window.focused();
 
     ctx.curtain.init(ctx.paths.shaders);
     // The spinner's dot: a soft disc, made here in a few lines rather than loaded, because
@@ -455,6 +459,7 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
         }
     }
     if (!joined) loader.join();
+    if (inFront && !ctx.window.focused()) ctx.window.toFront();
     if (!keepAmbient) ambient().stop();
     ctx.window.holdVsync(false);
     if (bgfx::isValid(dot)) bgfx::destroy(dot);
