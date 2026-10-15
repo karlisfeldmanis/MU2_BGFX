@@ -1,0 +1,42 @@
+--- a/src/renderer_vk.cpp
++++ b/src/renderer_vk.cpp
+@@ -406,6 +406,7 @@
+ 			KHR_xcb_surface,
+ #	elif BX_PLATFORM_WINDOWS
+ 			KHR_win32_surface,
++			EXT_full_screen_exclusive,
+ #	elif BX_PLATFORM_OSX
+ 			MVK_macos_surface,
+ #	elif BX_PLATFORM_NX
+@@ -453,6 +454,7 @@
+ 		{ VK_KHR_XCB_SURFACE_EXTENSION_NAME,        1, false, false, true,                                                          Layer::Count },
+ #	elif BX_PLATFORM_WINDOWS
+ 		{ VK_KHR_WIN32_SURFACE_EXTENSION_NAME,      1, false, false, true,                                                          Layer::Count },
++		{ VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME, 1, false, false, true,                                                       Layer::Count },
+ #	elif BX_PLATFORM_OSX
+ 		{ VK_MVK_MACOS_SURFACE_EXTENSION_NAME,      1, false, false, true,                                                          Layer::Count },
+ #	elif BX_PLATFORM_NX
+@@ -8707,6 +8709,23 @@
+ 			m_sci.pNext = &modesInfo;
+ 		}
+ 
++#if BX_PLATFORM_WINDOWS
++		// MU2_BGFX: never exclusive fullscreen. A borderless window over the whole display is
++		// taken exclusive by some drivers on their own (Intel's, 2026-10-15): the screen went
++		// black, then the game was minimised to the taskbar while it still had the focus, at
++		// its start and again on entering the world, each time until Alt+Tab. Disallowed, the
++		// window stays an ordinary window the desktop composes, as on a Mac.
++		VkSurfaceFullScreenExclusiveInfoEXT exclusiveInfo;
++		if (s_extension[Extension::EXT_full_screen_exclusive].m_supported
++		&&  s_extension[Extension::KHR_get_surface_capabilities2].m_supported)
++		{
++			exclusiveInfo.sType               = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT;
++			exclusiveInfo.pNext               = const_cast<void*>(m_sci.pNext);
++			exclusiveInfo.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT;
++			m_sci.pNext = &exclusiveInfo;
++		}
++#endif // BX_PLATFORM_WINDOWS
++
+ 		result = vkCreateSwapchainKHR(device, &m_sci, allocatorCb, &m_swapChain);
+ 		if (VK_SUCCESS != result)
+ 		{
