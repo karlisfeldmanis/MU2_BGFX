@@ -360,7 +360,10 @@ void main()
 	float metal = orm.b;
 
 	vec2 pixel = gl_FragCoord.xy;
-	ao *= texture2D(s_ao, pixel * u_viewTexel.xy).r;
+	// g is the sun's contact shadow, as fs_shade reads it.
+	vec2 screenAo = texture2D(s_ao, pixel * u_viewTexel.xy).rg;
+	ao *= screenAo.x;
+	float contactLit = 1.0 - screenAo.y;
 
 	// MU's baked TerrainLight rides in the vertex colour and multiplies the ALBEDO, which is
 	// what glTF says a vertex colour does and what MU2's own ground shader does:
@@ -404,14 +407,14 @@ void main()
 	// The probe's view, as fs_shade draws it.
 	if (u_shadowDebug.x > 0.5)
 	{
-		gl_FragColor = vec4_splat(sunShadow(v_wpos, ng, saturate(dot(ng, l)), pixel));
+		gl_FragColor = vec4_splat(min(sunShadow(v_wpos, ng, saturate(dot(ng, l)), pixel), contactLit));
 		return;
 	}
 	// The sun's shadow, kept for the lamps too where the sheet asks (lamp_shadow, u_lampParams.w).
 	float sunLit = 1.0;
 	if (ndotl > 0.0)
 	{
-		float shadow = sunShadow(v_wpos, ng, saturate(dot(ng, l)), pixel);
+		float shadow = min(sunShadow(v_wpos, ng, saturate(dot(ng, l)), pixel), contactLit);
 		sunLit = shadow;
 		// Diffuse only. See the note under the ambient.
 		vec3 kd = diffuseColour / 3.14159265;

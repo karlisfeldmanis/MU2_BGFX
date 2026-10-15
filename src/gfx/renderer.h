@@ -838,6 +838,7 @@ private:
     bgfx::UniformHandle uShadowDebug_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uShadowReach_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uCamRay_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uContact_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uPrepassSize_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundRepeat_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundBlend_ = BGFX_INVALID_HANDLE;

@@ -14,13 +14,14 @@ void main()
 	ivec2 here = ivec2(gl_FragCoord.xy);
 	ivec2 last = ivec2(1.0 / u_viewTexel.xy + 0.5) - ivec2(1, 1);
 	float centreDepth = texelFetch(s_ao, here, 0).g;
+	// r the occlusion, g the contact shadow (fs_ssao_body.sh's contactShadow), 0 being lit.
 	if (centreDepth <= 0.0)
 	{
-		gl_FragColor = vec4_splat(1.0);
+		gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 		return;
 	}
 
-	float sum = 0.0;
+	vec2 sum = vec2_splat(0.0);
 	float weightSum = 0.0;
 	for (int y = -2; y < 2; ++y)
 	{
@@ -32,9 +33,9 @@ void main()
 			if (depth <= 0.0) continue;
 			// Within a tenth of the depth counts fully, and it falls off from there.
 			float w = saturate(1.0 - abs(depth - centreDepth) / (centreDepth * 0.1 + 1e-4));
-			sum += texture2D(s_ao, uv).r * w;
+			sum += texture2D(s_ao, uv).rb * w;
 			weightSum += w;
 		}
 	}
-	gl_FragColor = vec4_splat(weightSum > 0.0 ? sum / weightSum : 1.0);
+	gl_FragColor = weightSum > 0.0 ? vec4(sum / weightSum, 0.0, 1.0) : vec4(1.0, 0.0, 0.0, 1.0);
 }

@@ -169,8 +169,11 @@ void main()
 	// The screen-space AO multiplies the baked one. gl_FragCoord is in pixels; the AO target
 	// is half resolution but is sampled by uv, so the halving needs no arithmetic here.
 	vec2 pixel = gl_FragCoord.xy;
-	float ssao = texture2D(s_ao, pixel * u_viewTexel.xy).r;
-	ao *= ssao;
+	// g is the sun's contact shadow (fs_ssao_body.sh), 0 lit; a probe face's white R8 texel
+	// reads 0 there too.
+	vec2 screenAo = texture2D(s_ao, pixel * u_viewTexel.xy).rg;
+	ao *= screenAo.x;
+	float contactLit = 1.0 - screenAo.y;
 
 	// A metal's reflectance is its albedo, and MU's painted metal is dark: the plate and the
 	// shields sit near 0.05 linear, where iron is 0.55, because the paint carries MU's own
@@ -232,7 +235,7 @@ void main()
 	// between two frames changed because the shadow did. docs/reference/shadow-probe.md.
 	if (u_shadowDebug.x > 0.5)
 	{
-		gl_FragColor = vec4_splat(sunShadow(v_wpos, ng, saturate(dot(ng, l)), pixel));
+		gl_FragColor = vec4_splat(min(sunShadow(v_wpos, ng, saturate(dot(ng, l)), pixel), contactLit));
 		return;
 	}
 
@@ -240,7 +243,7 @@ void main()
 	float sunLit = 1.0;
 	if (ndotl > 0.0)
 	{
-		float shadow = sunShadow(v_wpos, ng, saturate(dot(ng, l)), pixel);
+		float shadow = min(sunShadow(v_wpos, ng, saturate(dot(ng, l)), pixel), contactLit);
 		sunLit = shadow;
 		vec3 h = normalize(l + v);
 		float ndoth = saturate(dot(n, h));

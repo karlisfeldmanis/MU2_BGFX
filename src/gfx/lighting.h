@@ -169,6 +169,16 @@ struct Lighting {
 
     float ssaoRadius = 0.5f;
     float ssaoStrength = 1.0f;
+    // The sun's contact shadow (shaders/fs_ssao_body.sh): a march this many metres towards the
+    // sun through the prepass, for what the split is too coarse to draw. Every world's sun is
+    // at azimuth 0, about 28 degrees behind the camera's fixed 45-degree yaw, so most contact
+    // falls behind its caster: what it adds is leaves over leaves and soil, and the folds of a
+    // figure's clothes. `contact_thickness` is how deep behind a surface still counts as in its
+    // shadow; `contact_strength` 0 is off. Drawn in the SSAO pass, so the Graphics page's
+    // occlusion row turns it off with the AO, and so does Shadows Off.
+    float contactLength = 0.4f;
+    float contactThickness = 0.2f;
+    float contactStrength = 0.8f;
 
     // The grass, docs/reference/grass.md. Painted blades, cut out and scattered over every grass tile the
     // camera can see; past the reach the ground texture takes over. These are its knobs. They live

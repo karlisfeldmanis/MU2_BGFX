@@ -132,6 +132,8 @@ inline void applyGraphics(gfx::Renderer& renderer, const core::Args& args) {
 inline gfx::Lighting graphicsLook(const gfx::Lighting& sheet, const core::Args& args) {
     gfx::Lighting look = sheet;
     if (!args.ssao) look.ssaoStrength = 0.0f;
+    // The contact shadow is drawn in the AO's pass and only darkens the sun's shadow.
+    if (!args.ssao || !(args.shadowAsked || args.shadows >= 0)) look.contactStrength = 0.0f;
     if (!args.bloom) look.bloomStrength = 0.0f;
     if (!args.reflections) look.probe = 0.0f;
     if (args.grass == 0) {

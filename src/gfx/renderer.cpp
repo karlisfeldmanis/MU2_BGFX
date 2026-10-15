@@ -722,7 +722,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     lampParams_[3] = lighting.lampShadow;
     glowStrength_ = lighting.glowStrength;
     probeOn_ = lighting.probe > 0.5f;
-    aoOn_ = lighting.ssaoStrength > 0.0f;
+    aoOn_ = lighting.ssaoStrength > 0.0f || lighting.contactStrength > 0.0f;
     probeView_ = lighting.probeView;
     // Switched off, the cube is forgotten: switched back on, it starts from a whole new one
     // rather than reading one taken wherever the player stood when it went off.
@@ -1048,14 +1048,30 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                 bgfx::setViewTransform(ViewSsao, nullptr, nullptr);
                 bgfx::setUniform(uParams_, params);
                 const float tanHalfY = std::tan(camera.fovDegrees * 0.5f * 3.14159265f / 180.0f);
-                const float camRay[4] = {tanHalfY * float(width_) / float(height_), tanHalfY, 0.0f,
-                                         0.0f};
+                const float camRay[4] = {tanHalfY * float(width_) / float(height_), tanHalfY,
+                                         lighting.contactThickness, lighting.contactStrength};
                 bgfx::setUniform(uCamRay_, camRay);
+                // The sun into the view's axes, which are the prepass's: the contact march.
+                const bx::Vec3 sunView =
+                    bx::mulXyz0(bx::Vec3(sunDir[0], sunDir[1], sunDir[2]), view);
+                const float contact[4] = {sunView.x, sunView.y, sunView.z,
+                                          lighting.contactStrength > 0.0f ? lighting.contactLength
+                                                                          : 0.0f};
+                bgfx::setUniform(uContact_, contact);
                 const float prepassSize[4] = {float(width_), float(height_), 1.0f / float(width_),
                                               1.0f / float(height_)};
                 bgfx::setUniform(uPrepassSize_, prepassSize);
                 bgfx::setTexture(6, sPrepass_, prepassColour_);
-                screenPass(ViewSsao, msaa_ > 1 ? ssaoMsProgram_ : ssaoProgram_);
+                // One sample of the multisampled prepass, except on Metal: bgfx's Metal
+                // backend binds a render target's RESOLVED texture for sampling whatever
+                // BGFX_TEXTURE_MSAA_SAMPLE says (renderer_mtl.cpp's getTextureView returns
+                // m_ptr, never m_ptrMsaa), so a texture2d_ms read there was reading a plain
+                // texture as multisampled -- one texel for the whole screen, and the SSAO did
+                // nothing at MSAA 2-8 on the Mac. There the resolved prepass is read instead,
+                // with the silhouette rim 8367d2c0 measured (0.15% of a screen with one house).
+                const bool prepassMs =
+                    msaa_ > 1 && bgfx::getRendererType() != bgfx::RendererType::Metal;
+                screenPass(ViewSsao, prepassMs ? ssaoMsProgram_ : ssaoProgram_);
 
                 bgfx::setViewFrameBuffer(ViewBlur, blurFb_);
                 bgfx::setViewRect(ViewBlur, 0, 0, hw, hh);
@@ -1065,7 +1081,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                 bgfx::setUniform(uPrepassSize_, prepassSize);
                 bgfx::setTexture(6, sPrepass_, prepassColour_);
                 bgfx::setTexture(7, sAo_, ssaoTex_);
-                screenPass(ViewBlur, msaa_ > 1 ? blurMsProgram_ : blurProgram_);
+                screenPass(ViewBlur, prepassMs ? blurMsProgram_ : blurProgram_);
             }
 
             // --- view 4: the one lit pass --------------------------------------------

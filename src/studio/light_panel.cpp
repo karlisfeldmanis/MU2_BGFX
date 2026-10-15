@@ -25,7 +25,7 @@ const std::vector<Group>& groups() {
         {"Sky and daylight", {"sky_colour", "horizon_paleness", "ground_colour", "ambient_strength", "dust_colour",
                               "dust_density", "probe_diffuse"}},
         {"Shadows", {"shadow_range", "shadow_fit_below", "shadow_bias_metres", "shadow_normal_bias", "ssao_radius",
-                     "ssao_strength"}},
+                     "ssao_strength", "contact_length", "contact_thickness", "contact_strength"}},
         {"Tonemap", {"exposure", "contrast", "saturation", "split", "tint_low", "tint_high", "sharpen"}},
         {"Bloom and glow", {"bloom_threshold", "bloom_knee", "bloom_strength", "lamp_strength", "glow_strength",
                             "flame_strength"}},

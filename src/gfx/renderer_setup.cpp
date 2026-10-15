@@ -133,6 +133,7 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uShadowDebug_ = bgfx::createUniform("u_shadowDebug", bgfx::UniformType::Vec4);
     uShadowReach_ = bgfx::createUniform("u_shadowReach", bgfx::UniformType::Vec4);
     uCamRay_ = bgfx::createUniform("u_camRay", bgfx::UniformType::Vec4);
+    uContact_ = bgfx::createUniform("u_contact", bgfx::UniformType::Vec4);
     uPrepassSize_ = bgfx::createUniform("u_prepassSize", bgfx::UniformType::Vec4);
     uGroundRepeat_ = bgfx::createUniform("u_groundRepeat", bgfx::UniformType::Vec4);
     uGroundBlend_ = bgfx::createUniform("u_groundBlend", bgfx::UniformType::Vec4);
@@ -405,11 +406,12 @@ bool Renderer::createTargets(int width, int height) {
     bgfx::TextureHandle prepassAttachments[] = {prepassColour_, sceneDepth_};
     prepassFb_ = bgfx::createFrameBuffer(2, prepassAttachments, false);
 
-    // RG16F: the occlusion in r and the depth it was taken at in g, which the blur reads
-    // instead of the multisampled prepass (fs_ssao_body.sh).
-    ssaoTex_ = bgfx::createTexture2D(hw, hh, false, 1, bgfx::TextureFormat::RG16F, rt | clamp);
+    // RGBA16F: the occlusion in r, the depth it was taken at in g, which the blur reads
+    // instead of the multisampled prepass, and the sun's contact shadow in b (fs_ssao_body.sh).
+    ssaoTex_ = bgfx::createTexture2D(hw, hh, false, 1, bgfx::TextureFormat::RGBA16F, rt | clamp);
     ssaoFb_ = bgfx::createFrameBuffer(1, &ssaoTex_, true);
-    blurTex_ = bgfx::createTexture2D(hw, hh, false, 1, bgfx::TextureFormat::R8, rt | clamp);
+    // RG16F: the blurred occlusion and contact shadow, which fs_shade and fs_ground read.
+    blurTex_ = bgfx::createTexture2D(hw, hh, false, 1, bgfx::TextureFormat::RG16F, rt | clamp);
     blurFb_ = bgfx::createFrameBuffer(1, &blurTex_, true);
 
     // The shade pass shares the prepass's depth so it can test EQUAL against it. That
@@ -547,7 +549,7 @@ void Renderer::shutdown() {
     }
     for (bgfx::UniformHandle* u :
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uDust_, &uEdge_, &uAbyss_, &sAbyss_, &uLava_, &uLavaMap_, &sLava_, &uGrassStorm_, &uCamPos_, &uParams_,
-          &uMaterial_, &uCast_, &uCastPlanes_, &uTranslucency_, &uRefine_, &uRefineStar_, &sChrome_, &sShiny_, &sChrome2_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGroundRelief_, &uWaterGlow_, &uGroundWet_, &uCaustic_, &uSway_, &uGroundSlots_, &uGroundWeights_, &sGroundWeights_, &sAlbedo3_, &sNormal3_, &sOrm3_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassThrough_, &uGrassShape_, &uGrassSheet_, &uGrassSize_, &uGrassReach_, &uGrassWalkers_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
+          &uMaterial_, &uCast_, &uCastPlanes_, &uTranslucency_, &uRefine_, &uRefineStar_, &sChrome_, &sShiny_, &sChrome2_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uContact_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGroundRelief_, &uWaterGlow_, &uGroundWet_, &uCaustic_, &uSway_, &uGroundSlots_, &uGroundWeights_, &sGroundWeights_, &sAlbedo3_, &sNormal3_, &sOrm3_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassThrough_, &uGrassShape_, &uGrassSheet_, &uGrassSize_, &uGrassReach_, &uGrassWalkers_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sPrepass_, &sAo_,
           &uGrassSteps_, &uGrassWake_,
           &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &uTransientAt_, &uTransientColour_, &uTransientTo_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uGrade_, &uTintLow_, &uTintHigh_, &uBloomTexel_,
