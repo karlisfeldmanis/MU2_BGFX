@@ -5,55 +5,56 @@
   "why_this_one": "Sevina's class change (the user, 2026-10-04: 'second class quest where char beccomes second class with new skins'; 'MU's way': the second class's body under any slot left empty). docs/game/class-change-quest.md.",
   "profile": "armour",
   "sheets": {
-    "level_man01": "level_man01.png"
+    "HQSkinClass202": "HQSkinClass202.png"
   },
-  "sheet_from": "Data/Player/level_man01.OZJ (256x256), from MuMain. All five of the Blade Knight's parts name it.",
-  "sheet_warning": "Read off the .bmd, not guessed from the number: the Soul Master (201) names level_man022 and the Blade Knight (202) level_man01, as the first classes' sheets are named against their classes too (HelmClass01's sheet_warning).",
-  "material_note": "Brown laced bracers with brass studs: leather_wrap, as the first bodies' gloves.",
+  "sheet_from": "Data/Player/HQSkinClass202.OZJ (256x256), from the Season 17 client (third_party/MuClient_S17_v1.19.74). All five of the Blade Knight's parts name it.",
+  "model_from": "Season 17's remake of MU's Blade Knight body, read out of Data/Player/GloveClass202.bmd in the S17 client: a version-14 file, which MuExtract opens through Webzen's ModulusCryptor (pipeline/MuExtract/MuAssets/Crypto). It replaced MuMain's GloveClass202 on 2026-10-15 at the user's call (\"now DK and BK\", after the Dark Wizard and Soul Master). Its 51 bones are the first 51 of player.bmd's, by name and order, so it rides our rig and clips as MuMain's did.",
+  "part_note": "The arms and hands, 166 triangles. Bound to 32 on Bip01 R Hand, 31 on Bip01 L Hand, 29 on Bip01 R Forearm, 28 on Bip01 L Forearm, 2 on Bip01 R UpperArm, 2 on Bip01 L UpperArm.",
   "islands": [
     {
       "island": 0,
-      "material": "leather_wrap",
-      "triangles": 65,
-      "area": 1443.3,
+      "material": "leather",
+      "triangles": 85,
+      "area": 1508.7,
       "along": [
-        -6.3,
-        7.9
+        -7.8,
+        7.2
       ],
       "mu_uv": [
-        0.504,
-        0.505,
-        0.623,
-        0.751
+        0.005,
+        0.326,
+        0.346,
+        0.584
       ],
       "bake_uv": [
-        0.004,
-        0.004,
-        0.977,
-        0.996
+        0.091,
+        0.475,
+        0.779,
+        0.998
       ]
     },
     {
       "island": 1,
-      "material": "leather_wrap",
-      "triangles": 65,
-      "area": 1441.8,
+      "material": "leather",
+      "triangles": 81,
+      "area": 1480.6,
       "along": [
-        -6.3,
-        7.9
+        -7.8,
+        7.2
       ],
       "mu_uv": [
-        0.504,
-        0.505,
-        0.623,
-        0.751
+        0.005,
+        0.326,
+        0.346,
+        0.584
       ],
       "bake_uv": [
-        0.006,
-        0.004,
-        0.74,
-        0.996
+        0.003,
+        0.003,
+        0.691,
+        0.526
       ]
     }
-  ]
+  ],
+  "material_note": "leather, the studded bracer and glove."
 }

@@ -5,33 +5,34 @@
   "why_this_one": "Sevina's class change (the user, 2026-10-04: 'second class quest where char beccomes second class with new skins'; 'MU's way': the second class's body under any slot left empty). docs/game/class-change-quest.md.",
   "profile": "armour",
   "sheets": {
-    "level_man01": "level_man01.png"
+    "HQSkinClass202": "HQSkinClass202.png"
   },
-  "sheet_from": "Data/Player/level_man01.OZJ (256x256), from MuMain. All five of the Blade Knight's parts name it.",
-  "sheet_warning": "Read off the .bmd, not guessed from the number: the Soul Master (201) names level_man022 and the Blade Knight (202) level_man01, as the first classes' sheets are named against their classes too (HelmClass01's sheet_warning).",
-  "material_note": "Dark leather breeches, the coat's: leather.",
+  "sheet_from": "Data/Player/HQSkinClass202.OZJ (256x256), from the Season 17 client (third_party/MuClient_S17_v1.19.74). All five of the Blade Knight's parts name it.",
+  "model_from": "Season 17's remake of MU's Blade Knight body, read out of Data/Player/PantClass202.bmd in the S17 client: a version-14 file, which MuExtract opens through Webzen's ModulusCryptor (pipeline/MuExtract/MuAssets/Crypto). It replaced MuMain's PantClass202 on 2026-10-15 at the user's call (\"now DK and BK\", after the Dark Wizard and Soul Master). Its 51 bones are the first 51 of player.bmd's, by name and order, so it rides our rig and clips as MuMain's did.",
+  "part_note": "The legs, 160 triangles. Bound to 30 on Bip01 L Thigh, 30 on Bip01 R Thigh, 15 on Bip01 Pelvis, 8 on Bip01 Spine, 7 on Bip01 L Calf, 7 on Bip01 R Calf.",
   "islands": [
     {
       "island": 0,
-      "material": "leather",
-      "triangles": 102,
-      "area": 8583.5,
+      "material": "cloth",
+      "triangles": 160,
+      "area": 7458.3,
       "along": [
-        -21.5,
-        16.9
+        -14.1,
+        10.8
       ],
       "mu_uv": [
-        0.011,
-        0.001,
-        0.743,
-        0.508
+        0.665,
+        0.019,
+        0.994,
+        0.428
       ],
       "bake_uv": [
-        0.011,
-        0.001,
-        0.743,
-        0.508
+        0.003,
+        0.003,
+        0.998,
+        0.993
       ]
     }
-  ]
+  ],
+  "material_note": "cloth, the whole of it: one shell of trouser."
 }

@@ -5,61 +5,211 @@
   "why_this_one": "Sevina's class change (the user, 2026-10-04: 'second class quest where char beccomes second class with new skins'; 'MU's way': the second class's body under any slot left empty). docs/game/class-change-quest.md.",
   "profile": "armour",
   "sheets": {
-    "level_man01": "level_man01.png"
+    "HQSkinClass202": "HQSkinClass202.png"
   },
-  "sheet_from": "Data/Player/level_man01.OZJ (256x256), from MuMain. All five of the Blade Knight's parts name it.",
+  "sheet_from": "Data/Player/HQSkinClass202.OZJ (256x256), from the Season 17 client (third_party/MuClient_S17_v1.19.74). All five of the Blade Knight's parts name it.",
   "rebind": {
     "Bip01 Spine1": "Bip01 Head"
   },
   "cull": false,
   "rebind_from": "As HelmClass02: MU binds the base of the neck rigidly to Bip01 Spine1 and the rest of the head to Bip01 Head, and the head turns a long way from the chest.",
   "cull_from": "As HelmClass02's: MU's hair is single-sided fins.",
-  "sheet_warning": "Read off the .bmd, not guessed from the number: the Soul Master (201) names level_man022 and the Blade Knight (202) level_man01, as the first classes' sheets are named against their classes too (HelmClass01's sheet_warning).",
-  "material_note": "As HelmClass02's: skin on the face block, hair on the small patch MU cut from the hair's own corner.",
+  "model_from": "Season 17's remake of MU's Blade Knight body, read out of Data/Player/HelmClass202.bmd in the S17 client: a version-14 file, which MuExtract opens through Webzen's ModulusCryptor (pipeline/MuExtract/MuAssets/Crypto). It replaced MuMain's HelmClass202 on 2026-10-15 at the user's call (\"now DK and BK\", after the Dark Wizard and Soul Master). Its 51 bones are the first 51 of player.bmd's, by name and order, so it rides our rig and clips as MuMain's did.",
+  "part_note": "The head, 510 triangles. Bound to 362 on Bip01 Head, 14 on Bip01 Spine1. The Spine1 ring is the one MuMain's head had, and rebind still takes it onto the head.",
   "islands": [
     {
       "island": 0,
-      "material": "skin",
-      "triangles": 93,
-      "area": 1627.2,
+      "material": "hair",
+      "triangles": 6,
+      "area": 13.9,
       "along": [
-        -12.9,
-        12.0
+        11.4,
+        13.8
       ],
       "mu_uv": [
-        0.503,
-        0.754,
-        0.994,
-        0.998
+        0.683,
+        0.399,
+        0.716,
+        0.465
       ],
       "bake_uv": [
-        0.002,
-        0.002,
-        0.998,
-        0.754
+        0.207,
+        0.008,
+        0.25,
+        0.093
       ]
     },
     {
       "island": 1,
       "material": "hair",
-      "triangles": 25,
-      "area": 606.7,
+      "triangles": 5,
+      "area": 37.1,
       "along": [
-        -15.0,
-        13.4
+        -3.8,
+        9.0
       ],
       "mu_uv": [
-        0.505,
-        0.869,
-        0.652,
-        0.989
+        0.685,
+        0.506,
+        0.732,
+        0.653
       ],
       "bake_uv": [
-        0.002,
-        0.502,
-        0.575,
-        0.746
+        0.015,
+        0.223,
+        0.077,
+        0.414
+      ]
+    },
+    {
+      "island": 2,
+      "material": "hair",
+      "triangles": 5,
+      "area": 31.9,
+      "along": [
+        -4.7,
+        5.9
+      ],
+      "mu_uv": [
+        0.685,
+        0.506,
+        0.732,
+        0.653
+      ],
+      "bake_uv": [
+        0.496,
+        0.033,
+        0.558,
+        0.225
+      ]
+    },
+    {
+      "island": 3,
+      "material": "hair",
+      "triangles": 244,
+      "area": 991.1,
+      "along": [
+        -7.4,
+        13.1
+      ],
+      "mu_uv": [
+        0.719,
+        0.569,
+        0.997,
+        0.98
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.939,
+        0.994
+      ]
+    },
+    {
+      "island": 4,
+      "material": "hair",
+      "triangles": 120,
+      "area": 1034.0,
+      "along": [
+        -9.5,
+        13.1
+      ],
+      "mu_uv": [
+        0.716,
+        0.421,
+        0.99,
+        0.722
+      ],
+      "bake_uv": [
+        0.278,
+        0.007,
+        0.943,
+        0.915
+      ]
+    },
+    {
+      "island": 5,
+      "material": "hair",
+      "triangles": 65,
+      "area": 611.4,
+      "along": [
+        -10.6,
+        14.5
+      ],
+      "mu_uv": [
+        0.512,
+        0.338,
+        0.815,
+        0.674
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.403,
+        0.446
+      ]
+    },
+    {
+      "island": 6,
+      "material": "hair",
+      "triangles": 65,
+      "area": 566.7,
+      "along": [
+        -10.0,
+        14.2
+      ],
+      "mu_uv": [
+        0.512,
+        0.338,
+        0.815,
+        0.674
+      ],
+      "bake_uv": [
+        0.301,
+        0.224,
+        0.697,
+        0.663
       ]
     }
-  ]
+  ],
+  "uv_overrides": [
+    {
+      "material": "hair",
+      "u": [
+        0.86,
+        1.0
+      ],
+      "v": [
+        0.9,
+        1.0
+      ],
+      "why": "The hair painted into the face block's top right."
+    },
+    {
+      "material": "skin",
+      "u": [
+        0.71,
+        1.0
+      ],
+      "v": [
+        0.72,
+        1.0
+      ],
+      "why": "The face block, the ear at its right edge."
+    },
+    {
+      "material": "skin",
+      "u": [
+        0.88,
+        1.0
+      ],
+      "v": [
+        0.55,
+        0.76
+      ],
+      "why": "The neck strip right of the hair."
+    }
+  ],
+  "uv_overrides_why": "S17's head is a few shells that carry face and hair together, so the islands are hair and these lift the skin out by where it lands on the sheet, first rule winning; the layout is the same on both knights' sheets. Read off the sheet with the UV layout drawn over it (2026-10-15).",
+  "material_note": "hair for the brown spikes, skin for the face, ears and neck; the split is uv_overrides, below. rebind still takes the Spine1 ring onto the head."
 }

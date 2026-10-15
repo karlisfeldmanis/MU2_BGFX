@@ -5,99 +5,56 @@
   "why_this_one": "Sevina's class change (the user, 2026-10-04: 'second class quest where char beccomes second class with new skins'; 'MU's way': the second class's body under any slot left empty). docs/game/class-change-quest.md.",
   "profile": "armour",
   "sheets": {
-    "level_man01": "level_man01.png"
+    "HQSkinClass202": "HQSkinClass202.png"
   },
-  "sheet_from": "Data/Player/level_man01.OZJ (256x256), from MuMain. All five of the Blade Knight's parts name it.",
-  "sheet_warning": "Read off the .bmd, not guessed from the number: the Soul Master (201) names level_man022 and the Blade Knight (202) level_man01, as the first classes' sheets are named against their classes too (HelmClass01's sheet_warning).",
-  "material_note": "Black riding boots and their soles: leather.",
+  "sheet_from": "Data/Player/HQSkinClass202.OZJ (256x256), from the Season 17 client (third_party/MuClient_S17_v1.19.74). All five of the Blade Knight's parts name it.",
+  "model_from": "Season 17's remake of MU's Blade Knight body, read out of Data/Player/BootClass202.bmd in the S17 client: a version-14 file, which MuExtract opens through Webzen's ModulusCryptor (pipeline/MuExtract/MuAssets/Crypto). It replaced MuMain's BootClass202 on 2026-10-15 at the user's call (\"now DK and BK\", after the Dark Wizard and Soul Master). Its 51 bones are the first 51 of player.bmd's, by name and order, so it rides our rig and clips as MuMain's did.",
+  "part_note": "The boots, 324 triangles. Bound to 101 on Bip01 L Calf, 101 on Bip01 R Calf, 29 on Bip01 L Foot, 29 on Bip01 R Foot.",
   "islands": [
     {
       "island": 0,
-      "material": "leather",
-      "triangles": 53,
-      "area": 3035.0,
+      "material": "plate_steel",
+      "triangles": 162,
+      "area": 4048.1,
       "along": [
-        -10.2,
-        21.4
+        -13.3,
+        21.0
       ],
       "mu_uv": [
-        0.786,
-        0.258,
-        0.988,
-        0.665
+        0.426,
+        0.003,
+        0.657,
+        0.388
       ],
       "bake_uv": [
-        0.054,
-        0.005,
-        0.772,
-        0.796
+        0.006,
+        0.006,
+        0.894,
+        0.604
       ]
     },
     {
       "island": 1,
-      "material": "leather",
-      "triangles": 53,
-      "area": 3039.6,
+      "material": "plate_steel",
+      "triangles": 162,
+      "area": 4048.1,
       "along": [
-        -10.2,
-        21.4
+        -13.3,
+        21.0
       ],
       "mu_uv": [
-        0.786,
-        0.258,
-        0.988,
-        0.665
+        0.426,
+        0.003,
+        0.657,
+        0.388
       ],
       "bake_uv": [
+        0.007,
         0.006,
-        0.005,
-        0.985,
-        0.783
-      ]
-    },
-    {
-      "island": 2,
-      "material": "leather",
-      "triangles": 4,
-      "area": 258.5,
-      "along": [
-        1.4,
-        13.2
-      ],
-      "mu_uv": [
-        0.779,
-        0.045,
-        0.971,
-        0.224
-      ],
-      "bake_uv": [
-        0.157,
-        0.603,
-        0.472,
-        0.898
-      ]
-    },
-    {
-      "island": 3,
-      "material": "leather",
-      "triangles": 4,
-      "area": 257.4,
-      "along": [
-        1.4,
-        13.2
-      ],
-      "mu_uv": [
-        0.797,
-        0.036,
-        0.98,
-        0.22
-      ],
-      "bake_uv": [
-        0.402,
-        0.692,
-        0.702,
+        0.995,
         0.995
       ]
     }
-  ]
+  ],
+  "material_note": "plate_steel, the greaves and sabatons the Blade Knight's boots are."
 }

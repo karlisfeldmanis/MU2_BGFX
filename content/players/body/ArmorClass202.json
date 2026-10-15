@@ -5,33 +5,205 @@
   "why_this_one": "Sevina's class change (the user, 2026-10-04: 'second class quest where char beccomes second class with new skins'; 'MU's way': the second class's body under any slot left empty). docs/game/class-change-quest.md.",
   "profile": "armour",
   "sheets": {
-    "level_man01": "level_man01.png"
+    "HQSkinClass202": "HQSkinClass202.png"
   },
-  "sheet_from": "Data/Player/level_man01.OZJ (256x256), from MuMain. All five of the Blade Knight's parts name it.",
-  "sheet_warning": "Read off the .bmd, not guessed from the number: the Soul Master (201) names level_man022 and the Blade Knight (202) level_man01, as the first classes' sheets are named against their classes too (HelmClass01's sheet_warning).",
-  "material_note": "A dark leather coat with gold trim, a brass-buckled belt and harness: leather.",
+  "sheet_from": "Data/Player/HQSkinClass202.OZJ (256x256), from the Season 17 client (third_party/MuClient_S17_v1.19.74). All five of the Blade Knight's parts name it.",
+  "model_from": "Season 17's remake of MU's Blade Knight body, read out of Data/Player/ArmorClass202.bmd in the S17 client: a version-14 file, which MuExtract opens through Webzen's ModulusCryptor (pipeline/MuExtract/MuAssets/Crypto). It replaced MuMain's ArmorClass202 on 2026-10-15 at the user's call (\"now DK and BK\", after the Dark Wizard and Soul Master). Its 51 bones are the first 51 of player.bmd's, by name and order, so it rides our rig and clips as MuMain's did.",
+  "part_note": "The torso, 380 triangles. Bound to 171 on Bip01 L UpperArm, 60 on Bip01 Spine1, 34 on Bip01 Spine, 25 on Bip01 R UpperArm, 12 on Bone02, 12 on Bone06, 4 on Bip01 L Forearm, 4 on Bip01 R Forearm.",
   "islands": [
     {
       "island": 0,
-      "material": "leather",
-      "triangles": 120,
-      "area": 6113.5,
+      "material": "cloth",
+      "triangles": 204,
+      "area": 6574.3,
       "along": [
-        -12.2,
+        -14.9,
         13.1
       ],
       "mu_uv": [
-        0.016,
-        0.507,
-        0.461,
+        0.009,
+        0.007,
+        0.65,
         0.995
       ],
       "bake_uv": [
-        0.016,
-        0.507,
-        0.461,
-        0.995
+        0.006,
+        0.007,
+        0.914,
+        0.758
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 48,
+      "area": 787.9,
+      "along": [
+        -10.1,
+        7.8
+      ],
+      "mu_uv": [
+        0.339,
+        0.812,
+        0.467,
+        0.996
+      ],
+      "bake_uv": [
+        0.007,
+        0.232,
+        0.863,
+        0.863
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 96,
+      "area": 1160.3,
+      "along": [
+        -12.5,
+        9.2
+      ],
+      "mu_uv": [
+        0.368,
+        0.34,
+        0.594,
+        0.581
+      ],
+      "bake_uv": [
+        0.007,
+        0.346,
+        0.72,
+        0.838
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 8,
+      "area": 643.0,
+      "along": [
+        6.6,
+        15.6
+      ],
+      "mu_uv": [
+        0.004,
+        0.001,
+        0.114,
+        0.287
+      ],
+      "bake_uv": [
+        0.773,
+        0.56,
+        0.876,
+        0.828
+      ]
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 8,
+      "area": 649.5,
+      "along": [
+        -21.2,
+        -8.2
+      ],
+      "mu_uv": [
+        0.004,
+        0.001,
+        0.114,
+        0.287
+      ],
+      "bake_uv": [
+        0.889,
+        0.697,
+        0.992,
+        0.964
+      ]
+    },
+    {
+      "island": 5,
+      "material": "cloth",
+      "triangles": 8,
+      "area": 643.0,
+      "along": [
+        6.5,
+        15.6
+      ],
+      "mu_uv": [
+        0.004,
+        0.001,
+        0.114,
+        0.287
+      ],
+      "bake_uv": [
+        0.129,
+        0.697,
+        0.232,
+        0.964
+      ]
+    },
+    {
+      "island": 6,
+      "material": "cloth",
+      "triangles": 8,
+      "area": 649.5,
+      "along": [
+        -21.2,
+        -8.2
+      ],
+      "mu_uv": [
+        0.004,
+        0.001,
+        0.114,
+        0.287
+      ],
+      "bake_uv": [
+        0.891,
+        0.381,
+        0.994,
+        0.649
       ]
     }
-  ]
+  ],
+  "uv_overrides": [
+    {
+      "material": "leather",
+      "u": [
+        0.0,
+        0.11
+      ],
+      "v": [
+        0.0,
+        0.32
+      ],
+      "why": "The strap strip, the sheet's bottom-left column."
+    },
+    {
+      "material": "plate_steel",
+      "u": [
+        0.33,
+        0.56
+      ],
+      "v": [
+        0.36,
+        0.6
+      ],
+      "why": "The steel shoulder plate."
+    },
+    {
+      "material": "plate_steel",
+      "u": [
+        0.32,
+        0.44
+      ],
+      "v": [
+        0.84,
+        1.0
+      ],
+      "why": "The small steel plate on the chest strap."
+    }
+  ],
+  "uv_overrides_why": "One shell carries the tunic, the steel plates, the strap and the blue sleeve. The sleeve is cloth like the tunic, so only the plates and the strap are lifted out.",
+  "material_note": "cloth for the tunic with its gold dragon and the blue sleeves; plate_steel for the shoulder and strap plates; leather for the strap, by uv_overrides."
 }
