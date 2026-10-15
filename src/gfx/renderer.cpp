@@ -345,9 +345,14 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                                                  : material.roughnessFactor,
                                              glowPass ? scrollOffset : material.metalFactor};
             bgfx::setUniform(uMaterial_, materialParams);
-            // A chrome pass reads where it shows from its emissive (fs_glow).
-            if (glowPass && material.chromePass != 0) {
-                bgfx::setTexture(3, sEmissive_, material.emissive);
+            // A chrome pass reads where it shows from its emissive (fs_glow). Bound for every
+            // glow, white where there is no chrome: Vulkan wants each sampler a shader declares
+            // written, read or not, and NVIDIA's driver faults on one that is not (submitGround).
+            if (glowPass) {
+                bgfx::setTexture(3, sEmissive_,
+                                 material.chromePass != 0 && bgfx::isValid(material.emissive)
+                                     ? material.emissive
+                                     : whiteAo_);
             }
             // The water's sway (common.sh's swayed), for the still plants marked to take it.
             // z and w: an opaque stream's slide (MU's StreamMesh) and its axis, 0 V, 1 U, 2 both,
@@ -615,6 +620,13 @@ void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
             // bindShadeInputs (above, first, so nothing below is overwritten) put it on 6.
             bgfx::setTexture(15, sAbyss_, bgfx::isValid(abyss_) ? abyss_ : whiteAo_,
                              BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+        } else {
+            // The shadow's fs_shadow reads s_albedo's alpha even with nothing to cut, as the
+            // scenery's casters bind white for (renderer_scenery.cpp). Unbound, Vulkan reads a
+            // descriptor never written -- on Metal and MoltenVK a wrong texel, on NVIDIA's driver
+            // whatever freed texture last sat in that slot: a page fault, the device lost, the
+            // game gone 7-37 s into the world for two RTX players (2026-10-14, tools/vkcheck.sh).
+            bgfx::setTexture(0, sAlbedo_, whiteAo_);
         }
         bgfx::setVertexBuffer(0, g.vertexBuffer());
         bgfx::setIndexBuffer(g.indexBuffer(), part.firstIndex, part.indexCount);

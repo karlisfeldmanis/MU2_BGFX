@@ -94,7 +94,11 @@ void Renderer::drawStage(bgfx::ViewId viewId, bgfx::FrameBufferHandle target, ui
                                        (material.noChrome ? 8.0f : 0.0f) +
                                            32.0f * float(material.chromePass),
                                        material.pulse[1], 0.0f};
-                if (material.chromePass != 0) bgfx::setTexture(3, sEmissive_, material.emissive);
+                // White where there is no chrome: every declared sampler bound (renderer.cpp).
+                bgfx::setTexture(3, sEmissive_,
+                                 material.chromePass != 0 && bgfx::isValid(material.emissive)
+                                     ? material.emissive
+                                     : whiteAo_);
                 bgfx::setUniform(uMaterial_, glow);
                 bindShine(true);
                 bgfx::setTexture(0, sAlbedo_, material.albedo,

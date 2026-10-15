@@ -7,6 +7,8 @@
 
 #include <string>
 
+#include <cstdlib>
+
 #include "core/log.h"
 #include "core/watch.h"
 #include "gfx/callback.h"
@@ -144,6 +146,14 @@ bool Window::open(const WindowDesc& desc) {
     init.type = bgfx::RendererType::Vulkan;
 #else
     init.type = bgfx::RendererType::Metal;  // the Mac; see docs/reference/conventions.md
+#ifndef MU2_SHIP
+    // MU2_VULKAN=1: the Windows renderer, Vulkan, drawn here through MoltenVK -- with the Windows
+    // build's SPIR-V (MU2_SHADER_DIR) and --no-metalfx -- so Khronos' validation layer can check
+    // what NVIDIA's driver is handed (tools/vkcheck.sh). A developer's switch, never the player's.
+    if (const char* vulkan = std::getenv("MU2_VULKAN"); vulkan && *vulkan == '1') {
+        init.type = bgfx::RendererType::Vulkan;
+    }
+#endif
 #endif
     // The window goes on the swap chain, not on platformData: this bgfx asks for it there,
     // and it is the swap chain that carries the size, the formats and the latency. Kept in
