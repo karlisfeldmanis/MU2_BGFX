@@ -871,6 +871,8 @@ bool Launcher::open() {
 #else
     init.type = bgfx::RendererType::Metal;
 #endif
+    // That renderer or none (gfx/window.cpp says why): the box below, not Direct3D's crash.
+    init.fallback = false;
     // The window on the swap chain, taken from init's own so its formats stay (gfx/window.cpp).
     chain_ = init.swapChain;
 #ifdef _WIN32

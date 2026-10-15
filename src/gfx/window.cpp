@@ -143,6 +143,11 @@ bool Window::open(const WindowDesc& desc) {
     glfwGetFramebufferSize(handle_, &width_, &height_);
 
     bgfx::Init init;
+    // The renderer asked for, or none: the shaders are SPIR-V on Windows and Metal on the Mac, so
+    // bgfx's own fallback -- Direct3D 11 and 12 on Windows -- can draw nothing of ours, and with no
+    // Vulkan under it Wine's crashed at address 0 in dxgi.dll (2026-10-15). A clean refusal is what
+    // lets the game say why (application.cpp, "could not start its graphics").
+    init.fallback = false;
 #ifdef _WIN32
     // Vulkan on Windows, the renderer Wine on this Mac runs for real (docs/plans/windows-client.md).
     init.type = bgfx::RendererType::Vulkan;
