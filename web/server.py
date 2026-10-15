@@ -83,7 +83,7 @@ CRASH_FILE = re.compile(r"^[A-Za-z0-9_.-]{1,96}\.txt$")
 # (one line, 250 units wide at most), and a kept sign-in is not known to them, which brings them to
 # that screen. Browsers and the game are not launchers and are never turned away.
 LAUNCHER_AGENT = re.compile(r"^MU2Launcher(?:/(\d+))?$")
-LAUNCHER_NEEDED = 2
+LAUNCHER_NEEDED = 3
 OLD_LAUNCHER = "Download the new launcher."
 
 SCHEMA = """

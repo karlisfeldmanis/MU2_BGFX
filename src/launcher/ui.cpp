@@ -39,6 +39,7 @@ extern char** environ;
 #include "launcher/crash_upload.h"
 #include "launcher/embedded.h"
 #include "launcher/gpu.h"
+#include "launcher/self_update.h"
 
 namespace mu::launcher {
 
@@ -170,6 +171,9 @@ private:
     Clock::time_point checkedAt_{};
     bool autoInstall_ = false;
     bool playAfter_ = false;
+    // The game's check waits for the launcher's own update (run): set by its answer, taken by
+    // frame() once the worker is free.
+    bool checkPending_ = false;
     std::vector<Entry> todo_;
     uint64_t todoBytes_ = 0;
 
@@ -891,7 +895,10 @@ void Launcher::frame() {
     // What the worker's answers asked for, once the worker is free to take it.
     if (!working_.load()) {
         constexpr auto kRecheck = std::chrono::minutes(10);
-        if (autoInstall_ && (home_ == Home::Update || home_ == Home::Install)) {
+        if (checkPending_) {
+            checkPending_ = false;
+            if (screen_ == Screen::Home) check();
+        } else if (autoInstall_ && (home_ == Home::Update || home_ == Home::Install)) {
             autoInstall_ = false;
             install();
         } else if (screen_ == Screen::Home && home_ == Home::Ready && Clock::now() - checkedAt_ > kRecheck) {
@@ -1017,9 +1024,32 @@ int Launcher::run() {
     if (launcher::kept(kept)) {
         who_ = kept;
         screen_ = Screen::Home;
-        check();
+        home_ = Home::Checking;
     } else {
         focus_ = settings_.email.empty() ? 0 : 1;
+    }
+    // The launcher itself before the game (launcher/self_update.h): a newer one replaces this one
+    // and starts, and this window closes; otherwise the game's own check follows.
+    cleanAfterSelfUpdate();
+    if (options_.selfUpdate) {
+        busy_ = true;
+        const Place place = place_;
+        const std::vector<std::string> args = options_.args;
+        work([this, place, args] {
+            std::string note;
+            const SelfUpdate done = selfUpdate(place, args, note);
+            core::logf("launcher: self-update: %s", note.c_str());
+            post([this, done] {
+                busy_ = false;
+                if (done == SelfUpdate::Started) {
+                    glfwSetWindowShouldClose(window_, GLFW_TRUE);
+                    return;
+                }
+                checkPending_ = true;
+            });
+        });
+    } else {
+        checkPending_ = true;
     }
     sendCrashesAfter(0);
     while (!glfwWindowShouldClose(window_)) {

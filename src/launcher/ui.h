@@ -3,6 +3,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "launcher/engine.h"
 
@@ -13,6 +14,10 @@ struct UiOptions {
     // --shot FILE: a hidden window, the screen named by `shotScreen` drawn and saved, then out.
     std::string shot;
     std::string shotScreen;  // signin, error, install, downloading, ready
+    // --no-self-update: this launcher stays as it is (launcher/self_update.h).
+    bool selfUpdate = true;
+    // What it was started with, handed on to a newer launcher that takes its place.
+    std::vector<std::string> args;
 };
 
 int runUi(const UiOptions& options);

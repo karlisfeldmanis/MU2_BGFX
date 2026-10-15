@@ -198,3 +198,91 @@ def release(target, say, dry=False):
         f"in {time.time() - started:.0f} s")
     return True, {"commit": commit, "protocol": protocol, "files": len(files), "sent": len(missing),
                   "sent_bytes": sending, "manifest": f"{SITE}/game/{target}/manifest.json"}
+
+
+# ---- the launcher ---------------------------------------------------------------------------------
+
+DOWNLOADS = "/srv/mu2-web/downloads"
+LAUNCHER_FILES = ["MU2Launcher.exe", "MU2.dmg", "MU2Launcher.tar.gz", "install-macos.sh", "MU2Install.command"]
+
+
+def release_launcher(say, dry=False):
+    """`mu release launcher`: what `mu dist launcher` made in dist/launcher, published for the
+    launchers already on players' machines to replace themselves with (src/launcher/self_update.h),
+    and for the site's buttons.
+
+    For each platform, /srv/mu2-web/game/launcher-<platform>/:
+      files/<sha256>   the package: MU2Launcher.exe itself; the Mac's MU2Launcher.tar.gz
+      manifest.json    {"platform", "version", "built", "exe_sha256", "package": {"sha256", "size"}}
+    exe_sha256 is the program's own hash, which is how a launcher knows it is current. As for the
+    game: the package first, the manifest last in one rename, the previous package kept. Then the
+    download page's copies, each in by a rename, and all of it checked over HTTPS."""
+    started = time.time()
+    stage = os.path.join(ROOT, "dist", "launcher")
+    commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True,
+                            text=True, check=True).stdout.strip()
+    built = time.strftime("%Y-%m-%d")
+    plans = [
+        ("windows", os.path.join(stage, "MU2Launcher.exe"), os.path.join(stage, "MU2Launcher.exe")),
+        ("macos", os.path.join(stage, "MU2Launcher.tar.gz"),
+         os.path.join(stage, "MU2Launcher.app", "Contents", "MacOS", "MU2Launcher")),
+    ]
+    for name in LAUNCHER_FILES:
+        if not os.path.isfile(os.path.join(stage, name)):
+            raise RuntimeError(f"no dist/launcher/{name}: run `./mu dist launcher` first")
+    made = {}
+    for platform, package, exe in plans:
+        manifest = {"platform": platform, "version": commit, "built": built,
+                    "exe_sha256": sha256(exe),
+                    "package": {"sha256": sha256(package), "size": os.path.getsize(package)}}
+        made[platform] = manifest
+        say(f"launcher {platform}: {commit}, program {manifest['exe_sha256'][:12]}, "
+            f"package {manifest['package']['size'] / 1e6:.1f} MB")
+    if dry:
+        say("dry run: nothing sent")
+        return True, {"commit": commit, "manifests": made}
+
+    for platform, package, _ in plans:
+        manifest = made[platform]
+        root = f"{REMOTE}/launcher-{platform}"
+        sha = manifest["package"]["sha256"]
+        ssh(f"mkdir -p {root}/files")
+        subprocess.run(["rsync", "-a", "--partial", package, f"{HOST}:{root}/files/{sha}.part"], check=True)
+        ssh(f"mv {root}/files/{sha}.part {root}/files/{sha}")
+        local = os.path.join(OUT, "release", f"launcher-{platform}.json")
+        os.makedirs(os.path.dirname(local), exist_ok=True)
+        with open(local, "w") as out:
+            json.dump(manifest, out, indent=1)
+        subprocess.run(["rsync", "-a", local, f"{HOST}:{root}/manifest.json.new"], check=True)
+        ssh(f"chmod -R a+rX {root} && mv {root}/manifest.json.new {root}/manifest.json")
+        # This package and the one before it stay: a launcher mid-download finishes its file.
+        ssh(f"cd {root}/files && ls -t | grep -v '\\.part$' | tail -n +3 | xargs -r rm -f")
+        say(f"launcher-{platform}/manifest.json is {commit}")
+
+    # The site's buttons serve the same launcher.
+    ssh(f"mkdir -p {DOWNLOADS}/.incoming")
+    subprocess.run(["rsync", "-a"] + [os.path.join(stage, n) for n in LAUNCHER_FILES]
+                   + [f"{HOST}:{DOWNLOADS}/.incoming/"], check=True)
+    ssh(f"cd {DOWNLOADS} && for f in {' '.join(LAUNCHER_FILES)}; do mv -f .incoming/$f $f; done && "
+        f"rmdir .incoming && chmod a+r {' '.join(LAUNCHER_FILES)}")
+    sums = ssh(f"cd {DOWNLOADS} && sha256sum {' '.join(LAUNCHER_FILES)}")
+    for line in sums.splitlines():
+        digest, name = line.split()
+        if digest != sha256(os.path.join(stage, name)):
+            raise RuntimeError(f"downloads/{name} on the box is not dist/launcher's")
+    say(f"downloads: {', '.join(LAUNCHER_FILES)}")
+
+    # As a launcher will read it.
+    for platform, _, _ in plans:
+        manifest = made[platform]
+        got = subprocess.run(["curl", "-sf", f"{SITE}/game/launcher-{platform}/manifest.json"],
+                             capture_output=True, text=True)
+        if got.returncode != 0 or json.loads(got.stdout).get("exe_sha256") != manifest["exe_sha256"]:
+            raise RuntimeError(f"{SITE}/game/launcher-{platform}/manifest.json is not this release")
+        url = f"{SITE}/game/launcher-{platform}/files/{manifest['package']['sha256']}"
+        head = subprocess.run(["curl", "-sfI", url], capture_output=True, text=True)
+        length = re.search(r"(?im)^content-length:\s*(\d+)", head.stdout)
+        if not length or int(length.group(1)) != manifest["package"]["size"]:
+            raise RuntimeError(f"{url} is not the package's {manifest['package']['size']} bytes")
+    say(f"launcher {commit} published for windows and macos, in {time.time() - started:.0f} s")
+    return True, {"commit": commit, "manifests": made}

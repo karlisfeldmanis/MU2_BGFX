@@ -18,6 +18,7 @@
 #include "launcher/crash_upload.h"
 #include "launcher/engine.h"
 #include "launcher/gpu.h"
+#include "launcher/self_update.h"
 #include "launcher/ui.h"
 
 using namespace mu::launcher;
@@ -30,6 +31,12 @@ int check(Place place, fs::path dir, const std::string& only, bool start) {
         return ok;
     };
     // The machine first: no network, and the first run's graphics are set here (gpu.h).
+    // The launcher itself first: is it the site's newest (launcher/self_update.h)? Only said.
+    {
+        std::string note;
+        const SelfUpdate is = launcherCurrent(place, note);
+        step("launcher", is == SelfUpdate::Current, note);
+    }
     const Gpu gpu = probeGpu();
     const bool tuned = firstRunGraphics(gpu);
     std::string seen = gpu.name.empty() ? "Graphics adapter" : gpu.name;
@@ -123,6 +130,15 @@ int main(int argc, char** argv) {
         else if (a == "--only" && i + 1 < argc) only = argv[++i];
         else if (a == "--shot" && i + 1 < argc) ui.shot = argv[++i];
         else if (a == "--screen" && i + 1 < argc) ui.shotScreen = argv[++i];
+        else if (a == "--no-self-update") ui.selfUpdate = false;
+    }
+    // Handed on to a newer launcher: where it was pointed, and nothing else.
+    for (int i = 1; i < argc; ++i) {
+        const std::string a = argv[i];
+        if ((a == "--site" || a == "--platform") && i + 1 < argc) {
+            ui.args.push_back(a);
+            ui.args.push_back(argv[i + 1]);
+        }
     }
     if (checking) return check(place, dir, only, start);
     ui.place = place;

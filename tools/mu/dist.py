@@ -329,6 +329,17 @@ def dist_launcher(say):
         out.write(INSTALL_COMMAND)
     os.chmod(os.path.join(stage, "MU2Install.command"), 0o755)
     say(f"{dmg}: {total / 1e6:.0f} MB, app signed ad hoc, in {time.time() - started:.0f} s")
+
+    # The Windows launcher beside it, from the mingw build of the working tree, stripped: what
+    # `mu release launcher` publishes for both (src/launcher/self_update.h).
+    win = os.path.join(OUT, "build-launcher-win")
+    exe = os.path.join(stage, "MU2Launcher.exe")
+    if os.path.isdir(win):
+        run(["cmake", "--build", win, "--target", "mu2_launcher"], say)
+        run(["x86_64-w64-mingw32-strip", "-o", exe, os.path.join(win, "MU2Launcher.exe")], say)
+        say(f"{exe}: {os.path.getsize(exe) / 1e6:.1f} MB, stripped")
+    else:
+        say(f"no {win}: the Windows launcher was not built")
     return True, {"dmg": dmg, "app": app, "bytes": total}
 
 

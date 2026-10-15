@@ -16,7 +16,7 @@ namespace mu::launcher {
 // Who asks, as the site hears it. The number is the launcher's build: the site turns away the
 // launchers that said plain "MU2Launcher" (web/server.py OLD_LAUNCHER), which cannot update
 // themselves, with the words to download the new one. Raised when a launcher must be replaced.
-inline constexpr const char* kAgent = "MU2Launcher/2";
+inline constexpr const char* kAgent = "MU2Launcher/3";
 
 struct Reply {
     int status = 0;        // the HTTP status, 0 when nothing came back

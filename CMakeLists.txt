@@ -442,6 +442,7 @@ if(WIN32 OR APPLE)
     src/launcher/main.cpp
     src/launcher/ui.cpp
     src/launcher/engine.cpp
+    src/launcher/self_update.cpp
     src/launcher/sha256.cpp
     ${CMAKE_BINARY_DIR}/generated/launcher_embedded.cpp
   )

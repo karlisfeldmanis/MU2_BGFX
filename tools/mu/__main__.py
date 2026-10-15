@@ -143,7 +143,8 @@ def main():
     d.add_argument("--commit", default="HEAD", help="the commit to build it from (HEAD)")
 
     rl = sub.add_parser("release", parents=[common])
-    rl.add_argument("target", choices=["windows", "macos"], help="the platform")
+    rl.add_argument("target", choices=["windows", "macos", "launcher"],
+                    help="the platform's game, or the launcher for both (self_update.h)")
     rl.add_argument("--dry", action="store_true", help="hash and compare with the box, send nothing")
 
     k = sub.add_parser("cores", parents=[common])
@@ -288,6 +289,8 @@ def dispatch(args, say):
     if args.command == "dist":
         return dist.dist(args.target, say, ref=args.commit)
     if args.command == "release":
+        if args.target == "launcher":
+            return release.release_launcher(say, dry=args.dry)
         return release.release(args.target, say, dry=args.dry)
     if args.command == "where":
         return look.where(args.name, say, args.docs)
