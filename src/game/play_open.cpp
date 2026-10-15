@@ -573,6 +573,19 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
     one.figure.stand(look, at, 0.0f, look->scale);
     one.seeThrough = look->has("see_through") ? kSeeThroughAlpha : 1.0f;
     one.murderer = look->has("murderer");
+    // MU's CreateBlood needs a head bone (BoneHead 20 for MODEL_PLAYER), and a monster bleeds
+    // only where its recipe says so: MU sets BoneHead for some breeds and not others, and leaves
+    // out the Ghost, the Assassin, the Ice Queen and the skeletons (`c->Blood`).
+    one.bleeds = body.player || look->has("bleeds");
+    one.bled = false;
+    one.bloodBone = -1;
+    if (one.bleeds && look->skeletonMesh) {
+        const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+        for (size_t b = 0; b < bones.size(); ++b) {
+            if (bones[b].name == "Bip01 Head") one.bloodBone = int(b);
+        }
+    }
+    one.hops = !body.player && look->has("hops");
     // The swing, found once, and **which TABLE it is looked up in is decided by the
     // rig and not by whether the body is the player**. MU draws its Skeleton Warrior
     // as a MODEL_PLAYER with a skeleton sub-type, so `SetPlayerAttack` takes the

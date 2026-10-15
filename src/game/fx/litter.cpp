@@ -31,6 +31,11 @@ constexpr int kFewestCoins = 3, kMostCoins = 80;
 constexpr float kCoinSpread = 20.0f;
 constexpr float kCoinLowest = 0.35f;
 constexpr float kCoinTossLeast = 2.0f / kUnits * kFps, kCoinTossMost = 14.0f / kUnits * kFps;
+// CreateShiny's 48 frames between sparkles; BITMAP_SHINY's 18-frame life and Shiny01's 16
+// pixels, which are its width in units.
+constexpr float kSparkleEvery = 48.0f;
+constexpr float kSparkleLife = 18.0f;
+constexpr float kSparkleSize = 16.0f / kUnits;
 
 // Drops.Turn: the yaw is hashed from the drop's own id, so it needs no state and is the same
 // answer every frame for as long as the thing lies there.
@@ -212,8 +217,12 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
 
     float toCentre[16], yaw[16], place[16], a[16];
     bx::mtxTranslate(toCentre, -centre[0], -centre[1], -centre[2]);
-    bx::mtxRotateY(yaw, sim::jewelOf(row) == sim::Jewel::Life ? facingCamera(one.id) : turn(one.id));
+    drop.yaw = sim::jewelOf(row) == sim::Jewel::Life ? facingCamera(one.id) : turn(one.id);
+    bx::mtxRotateY(yaw, drop.yaw);
     bx::mtxTranslate(place, x, y, z);
+    drop.at[0] = x;
+    drop.at[1] = y - standing * 0.5f - kClearance;
+    drop.at[2] = z;
     Piece piece;
     piece.mesh = mesh;
     bx::mtxMul(a, toCentre, basis);
@@ -236,6 +245,10 @@ void Litter::buildHeap(const sim::Lying& one, Drop& drop) {
     const float x = (float(one.column) + 0.5f) * metresPerTile;
     const float z = -(float(one.row) + 0.5f) * metresPerTile;
     const float floor = ground_->heightAt(x, z) + standing * 0.5f + kClearance;
+    drop.at[0] = x;
+    drop.at[1] = ground_->heightAt(x, z);
+    drop.at[2] = z;
+    drop.yaw = turn(one.id);
 
     // Drops.Heap: how many coins a pile is drawn with, whatever it is worth, and how wide.
     const int many = std::clamp(int(std::sqrt(double(std::max<int64_t>(one.zen, 0))) / 2.0),
@@ -297,6 +310,36 @@ void Litter::update(const sim::Realm& realm, double seconds,
 
     const float dt = float(seconds);
     clock_ = std::fmod(clock_ + dt, 3600.0f);  // an hour, past any float drift that shows
+
+    // CreateShiny: `SubType++ % 48 == 0`, a step every reference frame (rand_fps_check(1)).
+    const float frames = dt * kFps;
+    for (Twinkle& one : twinkles_) {
+        one.left -= frames;
+        one.spin -= 12.0f * frames * bx::kPi / 180.0f;
+    }
+    twinkles_.erase(std::remove_if(twinkles_.begin(), twinkles_.end(),
+                                   [](const Twinkle& t) { return t.left <= 0.0f; }),
+                    twinkles_.end());
+    const auto next = [this](int n) {
+        dice_ ^= dice_ << 13;
+        dice_ ^= dice_ >> 17;
+        dice_ ^= dice_ << 5;
+        return float(dice_ % uint32_t(n));
+    };
+    for (Drop& drop : drops_) {
+        drop.sparkleIn -= frames;
+        if (drop.sparkleIn > 0.0f) continue;
+        drop.sparkleIn += kSparkleEvery;
+        // Vector(rand % 32 + 16, 0, rand % 32 + 16) turned by the item's angle: along its turn
+        // and up.
+        const float along = (next(32) + 16.0f) / kUnits, up = (next(32) + 16.0f) / kUnits;
+        Twinkle one;
+        one.at[0] = drop.at[0] + std::cos(drop.yaw) * along;
+        one.at[1] = drop.at[1] + up;
+        one.at[2] = drop.at[2] - std::sin(drop.yaw) * along;
+        one.left = kSparkleLife;
+        twinkles_.push_back(one);
+    }
     settled_.clear();
     for (Drop& drop : drops_) {
         bool still = true;
@@ -406,6 +449,26 @@ uint32_t Litter::lights(gfx::PointLight* out, uint32_t max, const float near[3])
     return count;
 }
 
+
+void Litter::gatherSparkle(gfx::Effects& effects) const {
+    if (!bgfx::isValid(shiny_)) return;
+    for (const Twinkle& one : twinkles_) {
+        // Scale = sin(LifeTime * 10 degrees): nothing, full at its middle, nothing.
+        const float scale = std::sin(one.left * 10.0f * bx::kPi / 180.0f);
+        if (scale <= 0.0f) continue;
+        for (int star = 0; star < 2; ++star) {
+            gfx::Sprite sprite;
+            for (int k = 0; k < 3; ++k) sprite.position[k] = one.at[k];
+            // Sub-type 1: Scale *= 0.75 and turning.
+            const float size = kSparkleSize * scale * (star == 1 ? 0.75f : 1.0f);
+            sprite.halfWidth = sprite.halfHeight = size * 0.5f;
+            sprite.spin = star == 1 ? one.spin : 0.0f;
+            sprite.sheet = shiny_;
+            sprite.blend = gfx::Blend::Additive;
+            effects.add(sprite);
+        }
+    }
+}
 
 void Litter::gatherBeams(gfx::Effects& effects, const float eye[3]) const {
     if (!bgfx::isValid(beam_) || !ground_) return;

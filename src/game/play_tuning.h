@@ -357,6 +357,12 @@ constexpr float kCrustEyeSize = 2.0f;
 // death action ends, EtcStopAnimationSetting calls CreateBlood, and CreateBlood's own case puts
 // it out and throws ten MODEL_ICE_SMALL (ZzzCharacter.cpp:3521-3528, ZzzEffectBlurSpark.cpp:449).
 // show tag "shatters": IceMonster01 (its recipe's show.tags).
+// Every other breed MU gives a BoneHead and no `c->Blood` bleeds instead: two stains by the head
+// (CreateBlood's other branch, fx/stains.h, Drawn::bleeds). So far Lorencia's breeds:
+// show tag "bleeds": BullFighter01, EliteBullFighter01, Hound01, BudgeDragon01,
+// GoldenBudgeDragon01, DarkKnight01, Lich01, Giant01.
+// MODEL_BUDGE_DRAGON's hop while it walks (Drawn::hops). Show tag "hops": BudgeDragon01,
+// GoldenBudgeDragon01.
 // MONSTER_GHOST, drawn seen-through: CreateMonster sets `c->Object.AlphaTarget = 0.4f`
 // (ZzzCharacter.cpp:14103), so the whole body is at 40%. It rides the body's own fade (its own
 // depth first, then blended, and its shadow dithered by the same number), times its death's.

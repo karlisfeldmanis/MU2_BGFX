@@ -47,6 +47,26 @@ void Play::sandOnDeath() {
         // takes a body off the screen in Play::follow.
         one.deadFor = kDeathTotal;
     }
+    // MU's CreateBlood for every other body that has one: the same moment, the death action's
+    // end (EtcStopAnimationSetting, PlayerStopAnimationSetting), two stains by the head.
+    for (Drawn& one : drawn_) {
+        if (!one.bleeds || one.bloodBone < 0) continue;
+        const sim::Body* body = realm_.find(one.id);
+        if (body && body->alive()) {
+            one.bled = false;
+            continue;
+        }
+        if (!body || body->gone || one.bled || !one.placed || !one.visible || one.deadFor < 0.0f) continue;
+        const FigureBody* look = one.figure.body();
+        const int dieSlot = body->player ? kPlayerDieSlot : kMonsterDieSlot;
+        if (!look || !look->library || slotOf(one.figure) != dieSlot) continue;
+        const content::CookedClip& clip = look->library->clips.clips[size_t(one.figure.clip())];
+        if (keyOf(one.figure) < float(clip.frames - 1) - 0.01f) continue;
+        one.bled = true;
+        const float origin[3] = {0.0f, 0.0f, 0.0f};
+        float head[3];
+        if (one.figure.pointOn(one.bloodBone, origin, head)) stains_.spill(head);
+    }
     for (Drawn& one : drawn_) {
         if (!one.sands) continue;
         const sim::Body* body = realm_.find(one.id);
@@ -1413,6 +1433,12 @@ void Play::follow(float seconds) {
         // And the Golden Dragon aloft, drawn up off the ground and round its circle
         // (play_raid.cpp).
         lift += raidLift(*body);
+        // A Budge Dragon's hop, while the drawn body covers ground; stood still, it is on the
+        // ground at once, as MoveMonsterClient puts it (Drawn::hops).
+        if (one.hops && moving) {
+            one.hopClock = std::fmod(one.hopClock + 0.15f * 25.0f * seconds, 3.14159265f);
+            lift += (1.0f - std::fabs(std::sin(one.hopClock))) * 0.7f * metresPerTile;
+        }
         float flyX = x, flyZ = z;
         // And flung back from him while it falls (Nova::flung).
         if (one.novaKilled && one.deadFor >= 0.0f) {

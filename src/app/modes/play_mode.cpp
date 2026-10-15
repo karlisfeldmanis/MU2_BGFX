@@ -217,9 +217,14 @@ void PlayMode::openItems(Context& ctx) {
     itemModels_.open(world_.played().realm().tables(), ctx.paths.assets, &ctx.textures);
     // The quest items' column (fx/litter.h): MU's chasellight, the lobby's own copy.
     const std::string beam = core::join(ctx.paths.assets, "effects/lobby/chasellight.png");
+    // And CreateShiny's star: Shiny01, the showing table's "shiny".
+    const content::EffectSheet* shiny = world_.played().showing().table().effect("shiny");
     litter_.open(&itemModels_, &world_.ground(),
                  core::fileExists(beam) ? ctx.textures.load(beam, content::TextureRole::Albedo)
-                                        : bgfx::TextureHandle BGFX_INVALID_HANDLE);
+                                        : bgfx::TextureHandle BGFX_INVALID_HANDLE,
+                 shiny ? ctx.textures.load(core::join(ctx.paths.assets, shiny->path),
+                                           content::TextureRole::Albedo)
+                       : bgfx::TextureHandle BGFX_INVALID_HANDLE);
     desk_.useModels(&itemModels_);
 }
 
@@ -491,6 +496,8 @@ bool PlayMode::open(Context& ctx) {
                                              world_.played().showing().table());
                 world_.played().ice().open(assets, ctx.textures,
                                            world_.played().showing().table());
+                world_.played().stains().open(assets, ctx.textures,
+                                              world_.played().showing().table());
                 world_.played().trapShow().open(assets, args.world, ctx.textures,
                                                 world_.played().showing().table());
                 world_.played().trapShow().stand(world_.played().realm().traps(), world_.ground());
@@ -1539,6 +1546,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().showing().gather(ctx.renderer.effects());
         world_.played().gatherMarker(ctx.renderer.effects());
         world_.played().gatherOmen(ctx.renderer.effects());
+        world_.played().gatherStains(ctx.renderer.effects());
         world_.played().gatherAura(ctx.renderer.effects(), eye.position);
         world_.played().gatherWarp(ctx.renderer.effects());
         world_.played().breath().gather(ctx.renderer.effects());
@@ -1589,6 +1597,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().setSettledDrops(litter_.settled());
         litter_.gather(townDrawables_, casters ? &townCasters_ : nullptr);
         litter_.gatherBeams(ctx.renderer.effects(), eye.position);
+        litter_.gatherSparkle(ctx.renderer.effects());
         // The hover ring's own subject, if a drop is what is pointed at rather than a
         // body or a townsperson -- see Play::gather's `hover` for the other two, and
         // leftClick's own ladder, which this stays behind: pointedLying() can be set

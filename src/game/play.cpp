@@ -2178,6 +2178,7 @@ void Play::update(double seconds) {
     wave_.update(float(seconds));
     blink_.update(float(seconds));
     ice_.update(float(seconds));
+    stains_.update(float(seconds));
     poison_.update(float(seconds));
     flame_.update(float(seconds));
     // Each rocket's burst rings eExplosion.wav off the blast born with it, and the first of a

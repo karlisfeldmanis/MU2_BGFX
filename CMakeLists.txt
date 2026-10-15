@@ -648,6 +648,7 @@ add_library(mu_game STATIC
   src/game/fx/thunder.cpp
   src/game/fx/blink.cpp
   src/game/fx/ice.cpp
+  src/game/fx/stains.cpp
   src/game/fx/poison.cpp
   src/game/fx/flame.cpp
   src/game/fx/spirits.cpp

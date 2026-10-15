@@ -42,6 +42,7 @@
 #include "game/fx/arrow.h"
 #include "game/fx/blink.h"
 #include "game/fx/ice.h"
+#include "game/fx/stains.h"
 #include "game/world/trap_show.h"
 #include "game/fx/poison.h"
 #include "game/fx/flame.h"
@@ -877,6 +878,11 @@ public:
     Blink& blink() { return blink_; }
     // And his Ice. fx/ice.h.
     Ice& ice() { return ice_; }
+    // What a death leaves by the head: MU's CreateBlood. fx/stains.h.
+    Stains& stains() { return stains_; }
+    void gatherStains(gfx::Effects& effects) const {
+        if (ground_) stains_.gather(effects, *ground_);
+    }
     // The Dungeon's traps, drawn (game/world/trap_show.h).
     TrapShow& trapShow() { return trapShow_; }
     // And his Poison. fx/poison.h.
@@ -1159,6 +1165,16 @@ private:
         // An Ice Monster: at the end of its death clip it is put out and bursts into ten ice
         // shards (CreateBlood). `shattered` latches it, cleared if it stands again.
         bool shatters = false, shattered = false;
+        // Two blood stains by its head when its death clip has played out (MU's CreateBlood,
+        // fx/stains.h): every player, and a monster whose recipe has the "bleeds" tag. `bled`
+        // latches it, cleared if it stands again; `bloodBone` is Bip01 Head, MU's BoneHead.
+        bool bleeds = false, bled = false;
+        int bloodBone = -1;
+        // A Budge Dragon hops while it walks: MoveCharacterPosition lifts MODEL_BUDGE_DRAGON
+        // (-|sin Timer| * 70 + 70) units, Timer 0.15 a frame on, and puts it back on the ground
+        // when it stops (ZzzCharacter.cpp:6392-6395, :6454-6457). The "hops" tag.
+        bool hops = false;
+        float hopClock = 0.0f;
         int headBone = -1;
         float fireOwed = 0.0f, dustOwed = 0.0f;
         // A Bull Fighter, either variant: smok_bone, which it snorts out of, and what of half
@@ -1629,6 +1645,7 @@ private:
     int64_t lastEvilTick_ = -1000;
     Blink blink_;
     Ice ice_;
+    Stains stains_;
     TrapShow trapShow_;
     Poison poison_;
     Flame flame_;

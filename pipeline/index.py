@@ -462,6 +462,13 @@ EFFECTS = {
     # the sparkle read as dust off the item rather than as light off it.
     "shiny": "effects/drop/shiny01.png",
 
+    # What a death leaves by the head. See game/fx/stains.h.
+    #
+    # BITMAP_BLOOD, which ZzzOpenData loads from Effect/blood01.tga: a 64-pixel red stain cut
+    # out by its own alpha, which CreateBlood lays on the land a tile across and lights
+    # (0.1, 0, 0), so it reads nearly black. Not the hit's blood.png, which is BITMAP_BLOOD + 1.
+    "blood_pool": "effects/drop/blood01.png",
+
     # What a +7 and a +9 are drawn with. See Shine.
     #
     # BITMAP_CHROME, which ZzzOpenData loads from Effect/Chrome01.jpg with GL_REPEAT: a 64

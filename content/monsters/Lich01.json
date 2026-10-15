@@ -240,5 +240,10 @@
     "defense_rate": 14,
     "attack_skill": 2,
     "note": "mu.db's monster_kinds row, moved here in sprint E2 (2026-10-11); where the numbers come from is the recipe's mu_name_from. The respawn is rules.drops.regen."
+  },
+  "show": {
+    "tags": [
+      "bleeds"
+    ]
   }
 }

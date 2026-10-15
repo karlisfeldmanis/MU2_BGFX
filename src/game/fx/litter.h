@@ -17,7 +17,12 @@
 //   * a yaw of the drop's own, hashed from its id, where MU gives everything -45 degrees and
 //     lays a whole field out in parallel;
 //   * Zen as a heap of Gold01, coin by coin, spread by how much it is worth.
-// Not kept yet: the sparkle (`CreateShiny`), which is owed with the effects it would use.
+//
+// And MU's sparkle, CreateShiny (ZzzObject.cpp:6271-6286, from MoveItems): every 48th frame a
+// thing lies there, two BITMAP_SHINY stars at one spot 16-47 units off it along its turn and
+// 16-47 up, white, one still and one at three quarters turning 12 degrees a frame, each
+// 18 frames at sin(LifeTime * 10 degrees) of the sheet's 16 pixels (ZzzEffectParticle.cpp,
+// BITMAP_SHINY sub-types 0 and 1).
 #pragma once
 
 #include <cstdint>
@@ -36,11 +41,15 @@ namespace mu::game {
 class Litter {
 public:
     void open(ItemModels* models, const content::Ground* ground,
-              bgfx::TextureHandle beam = BGFX_INVALID_HANDLE) {
+              bgfx::TextureHandle beam = BGFX_INVALID_HANDLE,
+              bgfx::TextureHandle shiny = BGFX_INVALID_HANDLE) {
         models_ = models;
         ground_ = ground;
         beam_ = beam;
+        shiny_ = shiny;
     }
+    // The stars CreateShiny throws off everything lying down.
+    void gatherSparkle(gfx::Effects& effects) const;
     // **A quest item lying down is seen from across the screen** (the user, 2026-10-04: 'quest
     // items needs to be well vissible'). Ours: MU drops a quest item as any other. Sevina's
     // treasures (sim::classTreasure) stand under a violet column of light -- MU's chasellight, the
@@ -93,7 +102,15 @@ private:
         ShineLook shine;  // how the item's plus shows; a heap of Zen has none
         int glow = 0;     // 0 none, 1 a jewel, 2 a Rune of Creation, 3 the column (quest, legendary)
         float glowColour[3] = {1.0f, 1.0f, 1.0f};
+        float at[3] = {};          // on the ground under it, world metres
+        float yaw = 0.0f;          // its turn, which the sparkle's offset follows
+        float sparkleIn = 0.0f;    // reference frames to its next sparkle: the first at once
         std::vector<Piece> pieces;
+    };
+    struct Twinkle {
+        float at[3] = {};
+        float left = 0.0f;   // reference frames
+        float spin = 0.0f;   // radians, the turning star's
     };
 
     void build(const sim::Lying& one, Drop& drop);
@@ -101,6 +118,9 @@ private:
     void buildHeap(const sim::Lying& one, Drop& drop);
 
     bgfx::TextureHandle beam_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle shiny_ = BGFX_INVALID_HANDLE;
+    std::vector<Twinkle> twinkles_;
+    uint32_t dice_ = 0x9e3779b9u;
     std::vector<uint32_t> settled_;
     float clock_ = 0.0f;  // seconds, wrapped: the glow's breath
     ItemModels* models_ = nullptr;
