@@ -40,9 +40,9 @@ Gpu probeGpu();
 
 // What this machine's first run opens on. No Vulkan or no hardware adapter is Lowest; two
 // gigabytes of the adapter's own memory or more is High, less (an integrated card sharing the
-// machine's) Low, and Lowest for Intel's UHD and HD Graphics; a driver kDriverYears old or more
-// costs one step, because a card on an old driver runs below what it is. -1 where nothing was
-// probed.
+// machine's) Low, and Lowest for Intel's older integrated cards; a driver kDriverYears old or
+// more costs one step, because a card on an old driver runs below what it is. -1 where nothing
+// was probed.
 inline int presetFor(const Gpu& gpu) {
     using namespace core;
     if (!gpu.known) return -1;
@@ -50,11 +50,12 @@ inline int presetFor(const Gpu& gpu) {
     int preset = kPresetHigh;
     if (gpu.dedicated < (uint64_t(2) << 30)) {
         // Integrated. Intel's UHD and HD Graphics, the most common laptop chip, did not hold 60
-        // at 100% (the user, 2026-10-15); Iris Xe and AMD's APUs are about twice it.
-        const bool plainIntel = gpu.vendorId == 0x8086 &&
-                                (gpu.name.find("UHD") != std::string::npos ||
-                                 gpu.name.find("HD Graphics") != std::string::npos);
-        preset = plainIntel ? kPresetLowest : kPresetLow;
+        // at 100% (the user, 2026-10-15), and Salvi's Iris Plus G7 lost its device on Low (55-63
+        // ms a frame in Lorencia's rain, then a driver reset): every Intel card before Xe opens
+        // on Lowest. Iris Xe, Intel's Arc and AMD's APUs are about twice it.
+        const bool oldIntel = gpu.vendorId == 0x8086 && gpu.name.find("Xe") == std::string::npos &&
+                              gpu.name.find("Arc") == std::string::npos;
+        preset = oldIntel ? kPresetLowest : kPresetLow;
     }
     return gpu.driverOld && preset > kPresetLowest ? preset - 1 : preset;
 }
