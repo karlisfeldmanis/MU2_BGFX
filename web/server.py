@@ -385,8 +385,10 @@ class Store:
         self.db().execute("INSERT INTO comments (post, account_id, text, at) VALUES (?, ?, ?, ?)",
                           (post, account, text, int(time.time())))
 
-    def session(self, token: str):
-        """The account a live token belongs to, as (id, email, name), or None."""
+    def session(self, token: str, ip: str = "", agent: str = ""):
+        """The account a live token belongs to, as (id, email, name), or None. The sign-in learns
+        where and with what it was last used: those made before 2026-10-15 kept neither, and a
+        launcher says itself on every start (/api/me, /api/ticket)."""
         if not re.fullmatch(r"[0-9a-f]{64}", token or ""):
             return None
         now = int(time.time())
@@ -394,8 +396,12 @@ class Store:
             "SELECT a.id, a.email, a.name FROM sessions s JOIN accounts a ON a.id = s.account_id "
             "WHERE s.token_hash = ? AND s.expires >= ?", (token_hash(token), now)).fetchone()
         if row is not None:
-            self.db().execute("UPDATE sessions SET last_used = ? WHERE token_hash = ?",
-                              (now, token_hash(token)))
+            if agent:
+                self.db().execute("UPDATE sessions SET last_used = ?, ip = ?, agent = ? WHERE token_hash = ?",
+                                  (now, ip, agent[:200], token_hash(token)))
+            else:
+                self.db().execute("UPDATE sessions SET last_used = ? WHERE token_hash = ?",
+                                  (now, token_hash(token)))
         return row
 
     def ticket(self, account: int):
@@ -594,6 +600,10 @@ class Handler(BaseHTTPRequestHandler):
         said = LAUNCHER_AGENT.match(self.headers.get("User-Agent", "").strip())
         return bool(said) and int(said.group(1) or 1) < LAUNCHER_NEEDED
 
+    def who(self):
+        """The account the request's token is, the sign-in told where and with what it came."""
+        return self.store.session(self.bearer(), self.client(), self.headers.get("User-Agent", ""))
+
     def bearer(self) -> str:
         said = self.headers.get("Authorization", "")
         return said[7:].strip() if said.startswith("Bearer ") else ""
@@ -695,7 +705,7 @@ class Handler(BaseHTTPRequestHandler):
         self.store.remember(self.client(), report)
         # A launcher that says its token files the machine under the account too, for the
         # account page; the fleet's file above still holds nothing about who.
-        signed = self.store.session(self.bearer()) if self.bearer() else None
+        signed = self.who() if self.bearer() else None
         if signed:
             self.store.device(signed[0], report, self.client())
         print(f"{self.client()} machine {report['fp']} {report.get('gpu')} driver {report.get('driver', '?')}",
@@ -738,7 +748,7 @@ class Handler(BaseHTTPRequestHandler):
                 row["build"] = line[4:].strip()[:64]
             elif " gpu " in line and " on " in line:
                 row["renderer"] = line.strip()[:120]
-        signed = self.store.session(self.bearer()) if self.bearer() else None
+        signed = self.who() if self.bearer() else None
         account = signed[0] if signed else self.store.ticket_account(self.bearer())
         if account:
             row["account"] = account
@@ -756,7 +766,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(426, {"error": OLD_LAUNCHER})
         if not TICKET_LIMIT.allow(self.client()):
             return self.reply(429, {"error": "Too many starts. Wait a minute."})
-        row = self.store.session(self.bearer())
+        row = self.who()
         if row is None:
             return self.reply(401, {"error": "signed out"})
         ticket, secret = self.store.ticket(row[0])
@@ -771,7 +781,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def signed(self):
         """The account the request's token is, or None with 401 already answered."""
-        row = self.store.session(self.bearer())
+        row = self.who()
         if row is None:
             self.reply(401, {"error": "signed out"})
         return row
@@ -856,7 +866,7 @@ class Handler(BaseHTTPRequestHandler):
         if url.path == "/api/me":
             if self.old_launcher():
                 return self.reply(401, {"error": OLD_LAUNCHER})
-            row = self.store.session(self.bearer())
+            row = self.who()
             return self.reply(200, {"email": row[1]}) if row else self.reply(401, {"error": "signed out"})
         if url.path == "/api/downloads":
             return self.reply(200, self.listing())
