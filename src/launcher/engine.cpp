@@ -1,11 +1,13 @@
 #include "launcher/engine.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
 #include <map>
 #include <sstream>
+#include <thread>
 
 #include "core/args.h"
 #include "core/json.h"
@@ -64,9 +66,16 @@ bool writeFile(const fs::path& path, const std::string& bytes) {
         out.write(bytes.data(), std::streamsize(bytes.size()));
         if (!out) return false;
     }
-    fs::remove(path, ec);
-    fs::rename(part, path, ec);
-    return !ec;
+    // Over the old one in one step (MoveFileEx's replace on Windows): removing it first lost the
+    // sign-in, the settings or installed.json whenever the rename then failed -- an antivirus
+    // holding the new file a moment, on a player's PC.
+    for (int attempt = 0; attempt < 5; ++attempt) {
+        ec.clear();
+        fs::rename(part, path, ec);
+        if (!ec) return true;
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
+    return false;
 }
 
 core::Json parse(const std::string& text, const char* what) {
@@ -361,8 +370,10 @@ bool fetchManifest(const Place& place, Manifest& out, std::string& error) {
     for (size_t i = 0; i < files.size(); ++i) {
         const core::Json& f = files.at(i);
         Entry e{f["path"].stringOr(""), uint64_t(f["size"].numberOr(0)), f["sha256"].stringOr("")};
-        // Nothing outside the install: no absolute path, no "..".
-        if (e.path.empty() || e.path[0] == '/' || e.path.find("..") != std::string::npos || e.sha256.size() != 64) {
+        // Nothing outside the install: no absolute path, no "..", and on Windows no drive ("C:")
+        // and no backslash, either of which makes `install / path` a path of its own.
+        if (e.path.empty() || e.path[0] == '/' || e.path.find("..") != std::string::npos ||
+            e.path.find_first_of(":\\") != std::string::npos || e.sha256.size() != 64) {
             error = "a file of no shape in the manifest";
             return false;
         }
@@ -449,6 +460,21 @@ bool update(const Place& place, const fs::path& install, const Manifest& manifes
     progress.done = 0;
     progress.total = total;
     progress.files = int(todo.size());
+    // A folder the player may not write -- Program Files, a read-only drive -- said as that, not
+    // as the download that fails after it.
+    {
+        std::error_code ec;
+        fs::create_directories(install, ec);
+        const fs::path probe = install / ".mu2-write-test";
+        std::ofstream test(probe, std::ios::binary | std::ios::trunc);
+        const bool writable = bool(test);
+        test.close();
+        fs::remove(probe, ec);
+        if (!writable) {
+            error = "Can't write to " + utf8Of(install) + ". Choose another folder.";
+            return false;
+        }
+    }
     for (size_t i = 0; i < todo.size(); ++i) {
         const Entry& e = todo[i];
         progress.file = int(i);
@@ -485,8 +511,14 @@ bool update(const Place& place, const fs::path& install, const Manifest& manifes
             error = "Could not download " + e.path + ". Check your connection and try again.";
             return false;
         }
-        fs::remove(at, ec);
-        fs::rename(part, at, ec);
+        // Over the old file in one step, a few times: an antivirus scanning the fresh part, or
+        // the old exe a moment after the game closed, refuses it for a second or so.
+        for (int attempt = 0; attempt < 10; ++attempt) {
+            ec.clear();
+            fs::rename(part, at, ec);
+            if (!ec) break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        }
         if (ec) {
             error = "Could not replace " + e.path + ". Close the game and try again.";
             return false;

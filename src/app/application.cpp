@@ -171,6 +171,9 @@ int Application::run(int argc, char** argv) {
     // nothing to play without them.
     if (!folders.data.empty() && core::mountPacks(folders.data) == 0) {
         core::logError("no packs in %s: the game's data is missing", folders.data.c_str());
+#ifdef MU2_SHIP
+        systemAlert("MU2", "The game's files are missing or damaged.\n\nOpen MU2 Launcher; it puts them back.");
+#endif
         core::logClose();
         return 1;
     }
@@ -222,6 +225,17 @@ int Application::run(int argc, char** argv) {
 #endif
 
     if (!boot()) {
+#ifdef MU2_SHIP
+        // Said in the system's own box: the launcher has minimised itself by now, and a game that
+        // only logs leaves the player looking at nothing (the Windows audit, 2026-10-15).
+#ifdef _WIN32
+        systemAlert("MU2", "MU2 could not start its graphics.\n\nUpdate your graphics card's driver "
+                           "(NVIDIA, AMD or Intel, from their site) and try again. MU2 needs Vulkan "
+                           "on Windows.");
+#else
+        systemAlert("MU2", "MU2 could not start its graphics.\n\nUpdate macOS and try again.");
+#endif
+#endif
         core::logClose();
         return 1;
     }

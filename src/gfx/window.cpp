@@ -367,7 +367,9 @@ bool Window::pump() {
 
     int w = 0, h = 0;
     glfwGetFramebufferSize(handle_, &w, &h);
-    if (w != width_ || h != height_) {
+    // Minimised, Windows says 0x0: kept at the last real size, so the renderer is not rebuilt at
+    // nothing and every width a HUD or a projection divides by stays a width.
+    if ((w != width_ || h != height_) && w > 0 && h > 0) {
         width_ = w;
         height_ = h;
         chain_.width = uint32_t(w);

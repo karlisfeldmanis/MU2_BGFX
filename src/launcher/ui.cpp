@@ -1010,6 +1010,18 @@ int Launcher::run() {
     if (!open()) {
         core::logError("launcher: the window did not open");
         close();
+#ifdef _WIN32
+        // The launcher draws with Vulkan as the game does: a PC with no Vulkan driver gets this box
+        // rather than nothing at all (the Windows audit, 2026-10-15). The home screen's own
+        // driver warning cannot be drawn without it.
+        if (options_.shot.empty()) {
+            MessageBoxW(nullptr,
+                        L"MU Classic could not open its window: this PC's graphics driver has no "
+                        L"Vulkan.\n\nUpdate your graphics card's driver (NVIDIA, AMD or Intel, from "
+                        L"their site) and open MU2 Launcher again.",
+                        L"MU Classic", MB_OK | MB_ICONWARNING);
+        }
+#endif
         return 1;
     }
     if (!options_.shot.empty()) {
