@@ -70,8 +70,9 @@ the launcher; closing it and opening it again updates it.
 ## 2. Symbols (built)
 
 `mu dist` strips the players' binaries and keeps each build's unstripped one privately in
-`out/symbols/<commit>/<platform>/` (and a dSYM on the Mac). Crash reports are read against it
-(web/README.md, Crash reports). Deleting `out/` loses them. The launcher exe was stripped already.
+`out/symbols/<commit>/<platform>/` (and a dSYM on the Mac), and `mu release` copies them to
+`/var/lib/mu2-symbols/<commit>/` on the box (root's, served by nothing). Crash reports are read
+against them (web/README.md, Crash reports). The launcher exe was stripped already.
 
 ## 3. Next, to propose before building
 

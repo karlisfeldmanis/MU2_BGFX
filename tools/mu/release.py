@@ -13,6 +13,10 @@
   5. Files no longer named by the newest KEEP manifests are deleted.
   6. Checked over HTTPS as a launcher will read it: the manifest, and one file's bytes.
 
+And first, the release's symbols (dist.py strip_keeping, out/symbols/<commit>/<platform>/) copied
+to SYMBOLS on the box, which no web server serves: a crash report is read against them from any
+machine, and deleting out/ here loses nothing.
+
 The manifest:
   {"platform": "windows"|"macos", "version": "<commit>", "built": "<date>", "protocol": 31,
    "exe": "MU2.exe" | "MU2.app/Contents/MacOS/MU2", "bytes": N,
@@ -43,6 +47,7 @@ KEEP = 2                         # releases whose files stay on the box
 FILES_HOST = "webhost.dualnode.com"
 FILES_URL = "https://aurorarave.lv/muclassic"
 FILES_NETRC = os.path.expanduser("~/.config/mu2/ftp.netrc")
+SYMBOLS = "/var/lib/mu2-symbols"  # on the box, root's alone; never under /srv
 LEFT_OUT = {"BUILT_FROM"}        # dist's own note; logs/ is the player's
 
 
@@ -69,6 +74,19 @@ def ssh(command, say=None):
     if done.returncode != 0:
         raise RuntimeError(f"ssh {HOST}: {command[:60]}...: {done.stderr.strip()}")
     return done.stdout
+
+
+def keep_symbols(target, commit, say):
+    """out/symbols/<commit>/<target>/ to the box's SYMBOLS, beside every release's before it."""
+    kept = os.path.join(OUT, "symbols", commit, target)
+    if not os.path.isdir(kept):
+        say(f"no {kept}: this build's symbols were not kept (a dist from before 26bdd9cd)")
+        return
+    ssh(f"mkdir -p {SYMBOLS}/{commit} && chmod 700 {SYMBOLS}")
+    done = subprocess.run(["rsync", "-a", kept, f"{HOST}:{SYMBOLS}/{commit}/"], capture_output=True, text=True)
+    if done.returncode != 0:
+        raise RuntimeError(f"the symbols did not go to {HOST}: {done.stderr.strip()}")
+    say(f"symbols kept on {HOST}:{SYMBOLS}/{commit}/{target}/")
 
 
 def files_elsewhere():
@@ -135,6 +153,8 @@ def release(target, say, dry=False):
     commit, _, built = open(built_from).read().strip().partition(" ")
     protocol = protocol_of(commit)
     say(f"dist/{target} from {commit} ({built or 'undated'}), protocol {protocol}")
+    if not dry:
+        keep_symbols(target, commit, say)
     exe_path = "MU2.exe" if target == "windows" else "MU2.app/Contents/MacOS/MU2"
 
     files = []

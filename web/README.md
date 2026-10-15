@@ -73,9 +73,10 @@ them on the box:
 
 A report's first lines say where: `in nvwgf2umx.dll+0x1a2b3c` is NVIDIA's driver, `in MU2.exe+0x…`
 is ours. The players' binaries are stripped (`mu dist`), so a report is read against the
-unstripped one `mu dist` kept for that build, on the Mac that made the release, in
-`out/symbols/<commit>/<platform>/` -- never uploaded, and the report's build line names the
-commit. Keep that folder: deleting `out/` loses it, and a release's reports with it.
+unstripped one `mu dist` kept for that build: `out/symbols/<commit>/<platform>/` on the Mac that
+made it, and a copy `mu release` puts on the box in `/var/lib/mu2-symbols/<commit>/<platform>/`
+(root's, 700, served by nothing). The report's build line names the commit.
 
+    scp -r hetzner:/var/lib/mu2-symbols/<commit> out/symbols/     # on another Mac, or after a clean
     x86_64-w64-mingw32-addr2line -f -C -e out/symbols/<commit>/windows/MU2.exe 0x140000000+offset
     atos -o out/symbols/<commit>/macos/MU2 -l <loaded at> <address>
