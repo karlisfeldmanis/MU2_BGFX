@@ -51,7 +51,7 @@ public:
                 float hudTop);
     // Takes everything down now: leaving the world, not the fight.
     void dismiss();
-    // A bound thing refused by the vault or a trade (Held::bound), said in the lane in the level
+    // A bound thing refused by a trade (Held::bound), said in the lane in the level
     // gap's red: "Bound items stay with their character" (the user, 2026-10-11).
     void bound();
 

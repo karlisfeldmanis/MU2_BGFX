@@ -751,10 +751,10 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
     now_.turn = int(std::lround(std::atan2(right_[1], right_[0]) * 1800.0f / 3.14159265f));
     now_.zoom = zoom_;
     now_.full = full_;
-    // The Golden Dragon on another map or copy, for the whole map's line under the chart.
+    // The Golden Dragon on another map or copy, for the line under the chart or the disc.
     now_.dragonMap = -1;
     now_.dragonCopy = now_.dragonColumn = now_.dragonRow = 0;
-    if (Play::Landed landed; full_ && play.dragonLanded(&landed) && !landed.here) {
+    if (Play::Landed landed; play.dragonLanded(&landed) && !landed.here) {
         now_.dragonMap = int(landed.map);
         now_.dragonCopy = landed.copy;
         now_.dragonColumn = landed.column;
@@ -1007,6 +1007,30 @@ void Minimap::rebuild(const Play& play) {
         const float wide = controls::labelWidth(figure, where);
         controls::label(canvas_, std::round(cx - wide * 0.5f), std::round(line + figure * 1.2f),
                         figure, style::kBone2, where);
+        // The Golden Dragon landed on another map, under it for every player wherever he is (the
+        // user, 2026-10-15: "all players has to see dragon on minimap if its landed"): its mark
+        // and name in its gold, then the map and the tile in bone, two lines to stay in the disc's
+        // width. On his own map its mark is on the disc, held to the edge.
+        if (now_.dragonMap >= 0) {
+            const float cellPx = float(cell_);
+            const float gap = 3.0f * u;
+            const std::string name = "Golden Dragon";
+            const float top = std::round(line + figure * 2.7f);
+            const float named = cellPx + gap + controls::labelWidth(figure, name);
+            float x = std::round(cx - named * 0.5f);
+            const float from = float(int(Glyph::Dragon)) * cellPx;
+            canvas_.region(glyphs_, {x, std::round(top - figure * 0.36f - cellPx * 0.5f), cellPx, cellPx},
+                           {from, 0.0f, cellPx, cellPx}, kDragonGold);
+            controls::label(canvas_, x + cellPx + gap, top, figure, kDragonGold, name);
+            const bool copies = now_.dragonCopy > 1 || play.mapCopy() > 1;
+            const std::string at = std::string(mapName(uint32_t(now_.dragonMap))) +
+                                   (copies ? " " + std::to_string(now_.dragonCopy) : std::string()) +
+                                   "  \xC2\xB7  " + std::to_string(now_.dragonColumn) + ", " +
+                                   std::to_string(now_.dragonRow);
+            const float atWide = controls::labelWidth(figure, at);
+            controls::label(canvas_, std::round(cx - atWide * 0.5f), std::round(top + figure * 1.2f),
+                            figure, style::kBone2, at);
+        }
     }
 
     // The name of the mark under the pointer, over it and inside the screen.

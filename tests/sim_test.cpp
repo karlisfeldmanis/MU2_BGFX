@@ -6444,14 +6444,17 @@ void testVault(const content::Tables& tables) {
                   realm.satchel()[sim::kWeaponRight].item == wornWas.item && realm.vault()[40].empty(),
               "and from the vault back into his hand");
     }
-    // A bound thing stays with its character (the user, 2026-10-11): the vault is the account's.
+    // A bound thing may be kept in the vault, and comes back still bound (the user, 2026-10-15).
     {
         const int boundAt = realm.give(sword, -1, 0, -1, false, 0, 0, 0, nullptr, nullptr, true);
         check(boundAt >= sim::kWorn && realm.satchel()[boundAt].bound, "a bound sword in the bag");
-        check(realm.deposit(boundAt) < 0 && realm.deposit(boundAt, 40) < 0 &&
-                  !realm.satchel()[boundAt].empty(),
-              "a bound thing is refused by the vault, let go anywhere or not");
-        realm.discard(boundAt);
+        check(realm.deposit(boundAt, 40) == 40 && realm.satchel()[boundAt].empty() &&
+                  realm.vault()[40].bound,
+              "a bound thing goes into the vault, still bound");
+        const int backAt = realm.withdraw(40);
+        check(backAt >= sim::kWorn && realm.satchel()[backAt].bound && realm.vault()[40].empty(),
+              "and comes back to the bag bound");
+        realm.discard(backAt);
     }
     const int cell = realm.deposit(slot, (sim::kVaultRows - tall + 1) * sim::kVaultColumns);
     check(cell < 0 && !realm.satchel()[slot].empty(), "a sword does not start where it runs off the foot");

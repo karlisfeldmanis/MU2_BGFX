@@ -1845,8 +1845,9 @@ int Realm::repairAll() {
 // ---- the vault ------------------------------------------------------------------------------
 //
 // Each move looks for the room at its own footprint BEFORE anything leaves where it was, so a
-// refusal changes nothing: the realm's own rule for a purchase. A bound thing never goes in
-// (the user, 2026-10-11: "bound items is per character"; the vault is the account's). A stack
+// refusal changes nothing: the realm's own rule for a purchase. A bound thing goes in as any
+// other and stays bound there (the user, 2026-10-15: "allow store bounded items on warehouse";
+// it had been refused since 2026-10-11, the vault being the account's). A stack
 // let go on a stack of its kind pours into it and leaves behind what does not fit, and one sent
 // to no cell in particular tops up the stacks there first (kStackMost).
 
@@ -1865,7 +1866,6 @@ void unstack(Grid& grid, int at, int went) {
 
 int Realm::deposit(int bagSlot, int cell) {
     if (!banked() || bagSlot < 0 || bagSlot >= kSlots || me().bag[bagSlot].empty()) return -1;
-    if (me().bag[bagSlot].bound) return -1;
     const content::ItemRow& row = tables_->items[size_t(me().bag[bagSlot].item)];
     const bool worn = wearable(bagSlot);
     if (cell < 0) {
@@ -1938,9 +1938,9 @@ int Realm::wearFromVault(int cell, int worn) {
         if (trial[s].empty()) continue;
         const Held off = trial[s];
         const content::ItemRow& row = tables_->items[size_t(off.item)];
-        int into = !off.bound && first && me().vault.room(*tables_, cell, row.width, row.height)
+        int into = first && me().vault.room(*tables_, cell, row.width, row.height)
                        ? cell
-                       : off.bound ? -1 : me().vault.free(*tables_, row.width, row.height);
+                       : me().vault.free(*tables_, row.width, row.height);
         first = false;
         if (into >= 0) {
             me().vault.put(into, off);

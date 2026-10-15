@@ -175,7 +175,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     const auto took = [&]() {
         if (play.isOpen()) play.ui(Play::Ui::Took);
     };
-    // Whether the bag slot holds a bound thing, so the vault's or a trade's no can say why.
+    // Whether the bag slot holds a bound thing, so a trade's no can say why.
     const auto carriesBound = [&](int slot) { return play.isOpen() && slot >= 0 && play.realm().satchel()[slot].bound; };
     // The answers to what this window asked, heard now (Play::answers).
     for (const Play::Answer& one : play.answers()) {
@@ -1036,7 +1036,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             // Into the vault cell under the pointer; over the foot or the head, the first cell
             // it fits in.
             expect(play.deposit(asked.outside, chest_.cellUnder(asked.outsideX, asked.outsideY)),
-                   carriesBound(asked.outside) ? Then::Bound : Then::TookOrRefused);
+                   Then::TookOrRefused);
         } else if (asked.outside >= 0 && brokering_ && broker_.covers(asked.outsideX, asked.outsideY)) {
             broker_.offer(asked.outside);  // dropped on the market: chosen to sell
             click();

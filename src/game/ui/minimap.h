@@ -26,7 +26,8 @@
 // While the Golden Dragon stands it is named there in its gold -- on his map beside its mark, on
 // another map in a line under the chart, "Golden Dragon has landed in Noria  ·  199, 168", from
 // the server's word (net::Invasion; the user, 2026-10-13: "when dragon fight is happening show on
-// map raid").
+// map raid"). The square has the same under where he stands, for every player on
+// every map (the user, 2026-10-15: "all players has to see dragon on minimap if its landed").
 //
 // Turned by the camera's heading, read off the view matrix each frame, so up on the square is
 // up on the screen and a step to the right is to the right. MU 0.75 has no minimap (Season 3's

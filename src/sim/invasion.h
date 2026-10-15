@@ -48,12 +48,13 @@ constexpr int64_t kInvasionLandTicks = 30 * 20;
 // **How long it stays** once landed: OpenMU's TaskDuration, thirty minutes. Then it goes, out
 // of the picture without a fall (CleanUpMonstersAsync), as a summon is dismissed.
 constexpr int64_t kInvasionStandTicks = 30 * 60 * 20;
-// **Unless nobody comes**: landed and not struck within three minutes, it leaves as it does when
+// **Unless nobody comes**: landed and not struck within two minutes, it leaves as it does when
 // not killed in time -- up, and away (Realm::raidTick) -- (the user, 2026-10-11: "if dragon is
 // not started to hit on next 3 minutes after the landing he flies away", and "if some bot get
-// aggro from dragon it does not count as started fight"). Ours. Struck is a player's blow,
+// aggro from dragon it does not count as started fight"); two since 2026-10-15: "if nobody
+// attack dragon on 2 minutes then it flies away"). Ours. Struck is a player's blow,
 // rune, poison or fire taking its health; its turning on someone is not.
-constexpr int64_t kInvasionUnstruckTicks = 3 * 60 * 20;
+constexpr int64_t kInvasionUnstruckTicks = 2 * 60 * 20;
 
 // **Where it comes down**: one of its map's three fields, drawn at random (the user, 2026-10-08:
 // "each for 3 random spots"), on the nearest standable tile out of the safe zone within
