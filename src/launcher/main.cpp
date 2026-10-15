@@ -121,12 +121,14 @@ int main(int argc, char** argv) {
     Place place;
     fs::path dir;
     std::string only;
-    bool checking = false, start = false;
+    bool checking = false, start = false, settling = false, removing = false;
     UiOptions ui;
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
         if (a == "--check") checking = true;
         else if (a == "--play") start = true;
+        else if (a == "--settle") settling = true;
+        else if (a == "--uninstall") removing = true;
         else if (a == "--site" && i + 1 < argc) place.site = argv[++i];
         else if (a == "--platform" && i + 1 < argc) place.platform = argv[++i];
         else if (a == "--dir" && i + 1 < argc) dir = pathOf(argv[++i]);
@@ -144,6 +146,19 @@ int main(int argc, char** argv) {
         }
     }
     if (checking) return check(place, dir, only, start);
+    // The install's own steps, with no site: --settle moves this launcher into --dir and puts the
+    // shortcut on the desktop as a first install does; --uninstall removes what installed.json
+    // lists there (engine.h). What a Wine run checks them by.
+    if (settling || removing) {
+        if (dir.empty()) dir = loadSettings().install;
+        if (settling) settleLauncher(dir, true);
+        std::string error;
+        if (removing && !uninstall(dir, Manifest{}, error)) {
+            std::fprintf(stderr, "uninstall: %s\n", error.c_str());
+            return 1;
+        }
+        return 0;
+    }
     ui.place = place;
     // The window's own log and black box, in the user folder: a launcher that dies after the
     // sign-in leaves launcher-crash-<when>.txt, sent on its next start.

@@ -33,6 +33,11 @@ SelfUpdate selfUpdate(const Place& place, const std::vector<std::string>& args, 
 // Whether this launcher is the site's newest, without changing anything (--check's line).
 SelfUpdate launcherCurrent(const Place& place, std::string& note);
 
+// This launcher's own program file, and whether it is a developer's (built in out/), which is
+// never replaced by the site's and never moved into an install (engine.h placeLauncher).
+fs::path ownProgram();
+bool developers(const fs::path& program);
+
 // What a swap left behind: the old program, the staged download. Called at every start.
 void cleanAfterSelfUpdate();
 

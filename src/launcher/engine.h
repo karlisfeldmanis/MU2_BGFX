@@ -151,6 +151,26 @@ bool play(const fs::path& install, const Manifest& manifest, const GameTicket& t
 // exits first. Blocks: call it on a thread of its own.
 void handFront(unsigned long pid);
 
+// **The launcher at home in the install** (the user, 2026-10-15: "when mu is installed we need to
+// move launcher to install folder so users is not launcher game from downloads folder", and "on
+// install we need to create shortcut on desktop"). On Windows the running launcher is moved to
+// <install>\MU2Launcher.exe -- a running program may be renamed on its own drive -- or copied
+// there from another drive, and "MU Classic" is put on the desktop pointing at it: after a first
+// install (`fresh`), or whenever the launcher has just been moved, since a shortcut made before
+// then points at Downloads. A launcher already there, or a developer's (out/build), stays as it
+// is; nothing on the Mac, where the launcher is an app kept where the player put it. Logged,
+// never fatal: the game plays whatever this manages.
+void settleLauncher(const fs::path& install, bool fresh);
+
+// **Uninstall** (the user, 2026-10-15: "so we can try reinstall again"): the game's files --
+// installed.json's list and the release's, so a half-made install goes too -- with each one's
+// download left half done, installed.json, the folders that are empty after, and options.txt in
+// the user folder, so the next install sets the graphics for this PC again. Kept: the launcher
+// and its shortcut, so Install is one press away; the sign-in; logs and screenshots, which a
+// report may still need. False, and `error` for the player, when a file would not go (on
+// Windows, a game still running).
+bool uninstall(const fs::path& install, const Manifest& manifest, std::string& error);
+
 // Where crash and freeze reports wait to be sent (launcher/crash_upload.h): the game's logs/ in
 // the install, and the user folder's, which holds the launcher's own and the game's where the
 // install could not be written.

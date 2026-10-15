@@ -41,6 +41,8 @@ std::string readAll(const fs::path& path) {
     return all.str();
 }
 
+}  // namespace
+
 fs::path ownProgram() {
 #ifdef _WIN32
     std::wstring buffer(32768, L'\0');
@@ -62,6 +64,8 @@ bool developers(const fs::path& program) {
     const std::string p = utf8Of(program);
     return p.find("/out/build") != std::string::npos || p.find("\\out\\build") != std::string::npos;
 }
+
+namespace {
 
 bool askNewest(const Place& place, Newest& out, std::string& note) {
     const Reply reply = request("GET", place.site + "/game/launcher-" + place.platform + "/manifest.json");

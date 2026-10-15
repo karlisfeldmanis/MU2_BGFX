@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <map>
+#include <set>
 #include <sstream>
 #include <thread>
 
@@ -14,12 +15,14 @@
 #include "core/log.h"
 #include "launcher/gpu.h"
 #include "launcher/https.h"
+#include "launcher/self_update.h"
 #include "launcher/sha256.h"
 
 #ifdef _WIN32
 #include <windows.h>
 #include <dpapi.h>
 #include <shlobj.h>
+#include <shobjidl.h>
 #else
 #include <spawn.h>
 #include <sys/stat.h>
@@ -530,6 +533,101 @@ bool update(const Place& place, const fs::path& install, const Manifest& manifes
         progress.done = before + e.size;
     }
     record(install, manifest);
+    return true;
+}
+
+void settleLauncher(const fs::path& install, bool fresh) {
+#ifdef _WIN32
+    const fs::path self = ownProgram();
+    if (self.empty() || developers(self)) return;
+    const fs::path home = install / "MU2Launcher.exe";
+    std::error_code ec;
+    bool moved = false;
+    if (!fs::equivalent(self, home, ec)) {
+        fs::create_directories(install, ec);
+        if (MoveFileExW(self.c_str(), home.c_str(), MOVEFILE_REPLACE_EXISTING)) {
+            moved = true;
+        } else if (CopyFileW(self.c_str(), home.c_str(), FALSE)) {
+            moved = true;  // another drive: the one in Downloads stays, but is no longer the shortcut's
+        } else {
+            core::logError("launcher: could not move itself into %s (%lu)", utf8Of(install).c_str(), GetLastError());
+            return;
+        }
+        core::logf("launcher: moved into %s", utf8Of(home).c_str());
+    }
+    if (!fresh && !moved) return;
+
+    const fs::path desktop = known(FOLDERID_Desktop);
+    if (desktop.empty()) return;
+    const HRESULT com = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+    IShellLinkW* link = nullptr;
+    bool made = false;
+    if (SUCCEEDED(CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&link)))) {
+        link->SetPath(home.c_str());
+        link->SetWorkingDirectory(install.c_str());
+        link->SetDescription(L"MU Classic");
+        link->SetIconLocation(home.c_str(), 0);
+        IPersistFile* file = nullptr;
+        if (SUCCEEDED(link->QueryInterface(IID_PPV_ARGS(&file)))) {
+            made = SUCCEEDED(file->Save((desktop / "MU Classic.lnk").c_str(), TRUE));
+            file->Release();
+        }
+        link->Release();
+    }
+    if (SUCCEEDED(com)) CoUninitialize();
+    core::logf("launcher: desktop shortcut %s", made ? "made" : "not made");
+#else
+    (void)install;
+    (void)fresh;
+#endif
+}
+
+bool uninstall(const fs::path& install, const Manifest& manifest, std::string& error) {
+    std::set<std::string> paths;
+    for (const auto& [path, recorded] : records(install)) paths.insert(path);
+    for (const Entry& e : manifest.files) paths.insert(e.path);
+    std::set<fs::path> folders;
+    int removed = 0, stuck = 0;
+    for (const std::string& path : paths) {
+        const fs::path relative = pathOf(path);
+        // Only what lies inside the install: a list that names anything else is not obeyed.
+        if (relative.empty() || relative.is_absolute() ||
+            std::any_of(relative.begin(), relative.end(), [](const fs::path& part) { return part == ".."; })) {
+            continue;
+        }
+        const fs::path at = install / relative;
+        fs::path part = at;
+        part += ".part";
+        for (const fs::path& file : {at, part}) {
+            std::error_code ec;
+            if (!fs::exists(file, ec)) continue;
+            if (fs::remove(file, ec)) {
+                ++removed;
+            } else {
+                ++stuck;
+                core::logError("launcher: uninstall: %s stays (%s)", utf8Of(file).c_str(), ec.message().c_str());
+            }
+        }
+        for (fs::path d = at.parent_path(); d != install && !d.empty() && d != d.parent_path(); d = d.parent_path()) {
+            folders.insert(d);
+        }
+    }
+    if (stuck) {
+        error = "Couldn't remove " + std::to_string(stuck) + (stuck == 1 ? " file" : " files") +
+                ". Close the game and try again.";
+        return false;
+    }
+    std::error_code ec;
+    fs::remove(install / "installed.json", ec);
+    // The deepest first; a folder with anything else in it (logs, the launcher) stays.
+    std::vector<fs::path> deepest(folders.begin(), folders.end());
+    std::sort(deepest.begin(), deepest.end(),
+              [](const fs::path& a, const fs::path& b) { return a.native().size() > b.native().size(); });
+    for (const fs::path& d : deepest) fs::remove(d, ec);
+    // The install itself only when it is the game's own folder, never a ~/Applications.
+    if (install.filename() == "MU2" || install.filename() == "MU Classic") fs::remove(install, ec);
+    fs::remove(userFolder() / "options.txt", ec);
+    core::logf("launcher: uninstalled from %s, %d files", utf8Of(install).c_str(), removed);
     return true;
 }
 

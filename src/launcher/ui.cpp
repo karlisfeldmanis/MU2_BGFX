@@ -107,7 +107,7 @@ constexpr uint32_t kBoneHi = 0xF3E8D4, kBone = 0xD9CFBD, kLabel = 0xC9BFAE, kQui
 // ---- the window's state -------------------------------------------------------------------------
 
 enum class Screen { SignIn, Home };
-enum class Home { Checking, Install, Update, Downloading, Paused, Ready, Offline, Failed };
+enum class Home { Checking, Install, Update, Downloading, Paused, Ready, Offline, Failed, Uninstall, Removing };
 
 struct Field {
     std::string text;
@@ -145,6 +145,7 @@ private:
     void signIn();
     void check();
     void install();
+    void uninstallNow();
     void playNow();
     void start();
     void sendCrashesAfter(int delay);
@@ -308,6 +309,8 @@ void Launcher::check() {
         }
         std::vector<Entry> todo = stale(install, manifest, progress_);
         const bool fresh = installedVersion(install).empty();
+        // A game installed before the launcher moved itself in: it moves now (engine.h).
+        if (!fresh) settleLauncher(install, false);
         post([this, manifest, todo, fresh] {
             manifest_ = manifest;
             todo_ = todo;
@@ -331,6 +334,28 @@ void Launcher::check() {
     });
 }
 
+// Uninstall, once asked twice (the Uninstall link, then its button): the game's files go and the
+// launcher stays, so the next check offers Install (engine.h uninstall).
+void Launcher::uninstallNow() {
+    home_ = Home::Removing;
+    message_.clear();
+    const fs::path install = settings_.install;
+    const Manifest manifest = manifest_;
+    work([this, install, manifest] {
+        std::string error;
+        const bool done = uninstall(install, manifest, error);
+        post([this, done, error] {
+            if (done) {
+                todo_.clear();
+                check();
+            } else {
+                message_ = error;
+                home_ = Home::Failed;
+            }
+        });
+    });
+}
+
 void Launcher::install() {
     home_ = Home::Downloading;
     message_.clear();
@@ -342,7 +367,9 @@ void Launcher::install() {
     const std::vector<Entry> todo = todo_;
     work([this, install, manifest, todo] {
         std::string error;
+        const bool fresh = installedVersion(install).empty();
         const bool done = update(place_, install, manifest, todo, progress_, stop_, error);
+        if (done) settleLauncher(install, fresh);
         const bool paused = !done && stop_.load();
         post([this, done, paused, error] {
             if (done) {
@@ -706,6 +733,11 @@ void Launcher::drawHome() {
                       bytes >= 1000000000ull ? double(bytes) / 1e9 : double(bytes) / 1e6);
         return std::string(s);
     };
+    // Uninstall at the row's right, where a game is there to remove and nothing is under way.
+    const auto offerUninstall = [&] {
+        const std::string what = "Uninstall";
+        if (link(kW - 40.0f - measure(what, 15.0f), rowY + 33.0f, what, kQuiet)) home_ = Home::Uninstall;
+    };
     switch (home_) {
         case Home::Checking: {
             button(main, "Install", true, true);
@@ -726,6 +758,7 @@ void Launcher::drawHome() {
 #ifdef _WIN32
             if (fresh && link(textX + measure(folder, 15.0f) + 8.0f, rowY + 46.0f, "Change", kLabel)) pickFolder();
 #endif
+            if (!fresh) offerUninstall();
             break;
         }
         case Home::Downloading:
@@ -772,6 +805,21 @@ void Launcher::drawHome() {
                       std::string("Graphics set to ") + core::kGraphicsPresets[gpu_.preset].name + " for this PC",
                       hex(kQuiet), 13.0f);
             }
+            if (!starting_) offerUninstall();
+            break;
+        }
+        case Home::Uninstall: {
+            if (button(main, "Uninstall", true)) uninstallNow();
+            const Box cancel{main.right() + 12.0f, rowY, 130.0f, 56.0f};
+            if (button(cancel, "Cancel", false)) check();
+            const float askX = cancel.right() + 20.0f;
+            words(askX, rowY + 24.0f, "Remove the game from this computer?", hex(kBone), 15.0f);
+            words(askX, rowY + 46.0f, "You stay signed in. Install again here any time.", hex(kQuiet), 15.0f);
+            break;
+        }
+        case Home::Removing: {
+            button(main, "Uninstalling...", true, true);
+            words(textX, rowY + 34.0f, "Removing the game's files...", hex(kQuiet), 15.0f);
             break;
         }
         case Home::Offline:
@@ -1045,13 +1093,17 @@ int Launcher::run() {
         const std::string& which = options_.shotScreen;
         manifest_.version = "354bb0d9";
         settings_.install = defaultInstall();
+        checkedAt_ = Clock::now();  // or Ready's ten-minute recheck starts a real one in the shot
         if (which == "error") {
             fields_[0].text = "jaanis@example.com";
             message_ = "Wrong email or password.";
         } else if (which != "signin") {
             screen_ = Screen::Home;
             todoBytes_ = 1528000000ull;
-            home_ = which == "install" ? Home::Install : which == "downloading" ? Home::Downloading : Home::Ready;
+            home_ = which == "install"       ? Home::Install
+                    : which == "downloading" ? Home::Downloading
+                    : which == "uninstall"   ? Home::Uninstall
+                                             : Home::Ready;
             progress_.total = todoBytes_;
             progress_.done = todoBytes_ * 38 / 100;
         }
