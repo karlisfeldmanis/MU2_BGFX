@@ -532,6 +532,11 @@ bool play(const fs::path& install, const Manifest& manifest, const GameTicket& t
     std::vector<char*> envp;
     for (std::string& s : env) envp.push_back(s.data());
     envp.push_back(nullptr);
+    // The fetches carry content, not modes: the game's own binary lands 644 from curl, and a
+    // spawn of it fails until it is executable. Set every run, before the first -- a permission
+    // the file was given once is not a permission the launcher can trust to still be there.
+    std::error_code ec;
+    fs::permissions(exe, fs::perms::owner_all | fs::perms::group_read | fs::perms::others_read, ec);
     std::string path = exe.string();
     char* argv[] = {path.data(), nullptr};
     pid_t pid = 0;

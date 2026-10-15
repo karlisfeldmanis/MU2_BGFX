@@ -118,6 +118,11 @@ macos, with install and everything").
   button therefore keeps the DMG with the Open Anyway instruction, and the Terminal one-liner
   (install-macos.sh) stays as the no-dialog route. After this, the only way to a clean
   double-click on current macOS is the Developer ID.
+- **The fetches carry content, not modes** (found in the user's first real Mac install): the game's
+  binary landed 644 from curl and posix_spawn refused it -- "Could not start the game". The game
+  was installed whole; only its executable bit was missing. play() now sets755 on the binary
+  before every spawn (engine.cpp), and the user's install -- one chmod -- was playing straight
+  away.
 - `./mu release macos` puts dist/macos/MU2.app on the box under /game/macos/ exactly as the
   Windows client goes under /game/windows/ (release.py walks the bundle, exe
   MU2.app/Contents/MacOS/MU2). _CodeSignature is left out: macOS refuses to hard-link its files,
