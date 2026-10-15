@@ -139,9 +139,10 @@ Aura::Burst* Aura::throwOne(const Recipe& recipe, const float feet[3], float yaw
             break;
         }
     }
-    if (slot == nullptr) return nullptr;  // a third level in two seconds is not drawn
+    if (slot == nullptr) return nullptr;  // none free: not drawn
     Burst& b = *slot;
     b.living = true;
+    b.owner = 0;
     b.r = recipe;
     for (int k = 0; k < 3; ++k) b.feet[k] = feet[k];
     // Forward is (sin yaw, cos yaw), so the joint's local X lies at (cos yaw, -sin yaw).
@@ -226,22 +227,25 @@ void Aura::learn(const float feet[3], float metresPerTile) {
     }
 }
 
-void Aura::guard(const float feet[3], float yaw, float metresPerTile, float seconds) {
-    // One at a time: a guard thrown again replaces the one standing, which is what the realm
+void Aura::guard(uint32_t owner, const float feet[3], float yaw, float metresPerTile,
+                 float seconds) {
+    // One a body: a guard thrown again replaces the one standing, which is what the realm
     // does with the boon (`throwSkill` overwrites it) and what MU does with its own
     // `g_isCharacterBuff` test -- the circle flashes again and no second set of ribbons is made.
-    release();
+    release(owner);
     Recipe recipe = kGuarding;
     recipe.ticks = std::max(1.0f, seconds * kReference);
     // A hundred units over the whole of it, however long that is: the climb is the boon's.
     recipe.slowRise = recipe.fastRise = 100.0f / recipe.ticks;
     Burst* b = throwOne(recipe, feet, yaw, metresPerTile);
-    if (b != nullptr) guarding_ = int(b - bursts_);
+    if (b != nullptr) b->owner = owner;
 }
 
-void Aura::follow(const float feet[3]) {
-    if (guarding_ < 0 || !bursts_[guarding_].living) return;
-    for (int k = 0; k < 3; ++k) bursts_[guarding_].feet[k] = feet[k];
+void Aura::follow(uint32_t owner, const float feet[3]) {
+    for (Burst& b : bursts_) {
+        if (!b.living || b.owner != owner) continue;
+        for (int k = 0; k < 3; ++k) b.feet[k] = feet[k];
+    }
 }
 
 void Aura::followAll(const float feet[3]) {
@@ -251,9 +255,17 @@ void Aura::followAll(const float feet[3]) {
     }
 }
 
-void Aura::release() {
-    if (guarding_ >= 0) bursts_[guarding_].living = false;
-    guarding_ = -1;
+void Aura::release(uint32_t owner) {
+    for (Burst& b : bursts_) {
+        if (b.living && b.owner == owner) b.living = false;
+    }
+}
+
+bool Aura::guarding(uint32_t owner) const {
+    for (const Burst& b : bursts_) {
+        if (b.living && b.owner == owner) return true;
+    }
+    return false;
 }
 
 void Aura::update(float seconds) {
@@ -265,10 +277,7 @@ void Aura::update(float seconds) {
         b.age += ticks;
         float ends = b.r.circle ? std::max(b.r.ticks, kRingTicks) : b.r.ticks;
         if (b.r.runsOut) ends = std::max(ends, b.r.ticks + b.r.trail);
-        if (b.age > ends) {
-            b.living = false;
-            if (guarding_ >= 0 && &b == &bursts_[guarding_]) guarding_ = -1;
-        }
+        if (b.age > ends) b.living = false;
     }
     for (Puff& p : puffs_) {
         if (!p.living) continue;

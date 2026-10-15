@@ -1046,6 +1046,15 @@ void Play::rise() {
     sound_.play("player_level_up");
 }
 
+void Play::riseOn(uint32_t who) {
+    const Drawn* one = drawnOf(who);
+    if (one == nullptr || !one->placed || !one->visible || ground_ == nullptr) return;
+    const float feet[3] = {one->crown[0], ground_->heightAt(one->crown[0], one->crown[2]),
+                           one->crown[2]};
+    aura_.rise(feet, one->yaw, ground_->metresPerTile());
+    core::logf("level: #%u rises", who);
+}
+
 // A skill read off an orb or a scroll: the smoke and its sound on the same frame.
 //
 // Written as `rise`'s twin and calling the two in the same order for the same reason -- the
@@ -1109,16 +1118,17 @@ void Play::landed() {
 // Two calls and not one because the barrier follows the body, which the level-up's flares do
 // not: MU leaves a burst where it was thrown (`TargetPosition` is never assigned), and a guard
 // that stayed behind while he walked out of it would be a guard around nobody.
-void Play::guardRise(float seconds) {
-    const Drawn* hero = drawnOf(realm_.hero().id);
-    if (hero == nullptr || !hero->placed || ground_ == nullptr) return;
-    const float feet[3] = {hero->crown[0], ground_->heightAt(hero->crown[0], hero->crown[2]),
-                           hero->crown[2]};
-    aura_.guard(feet, hero->yaw, ground_->metresPerTile(), seconds);
+void Play::guardRise(uint32_t who, float seconds) {
+    const Drawn* caster = drawnOf(who);
+    if (caster == nullptr || !caster->placed || ground_ == nullptr) return;
+    const float feet[3] = {caster->crown[0],
+                           ground_->heightAt(caster->crown[0], caster->crown[2]),
+                           caster->crown[2]};
+    aura_.guard(who, feet, caster->yaw, ground_->metresPerTile(), seconds);
 }
 
 void Play::showGuard() {
-    guardRise(kGuardShowSeconds);
+    guardRise(realm_.hero().id, kGuardShowSeconds);
     guardPreview_ = realm_.tick() + int64_t(kGuardShowSeconds / kTickSeconds);
 }
 
@@ -1126,26 +1136,25 @@ void Play::guardStep() {
     if (ground_ == nullptr) return;
     const sim::Body& hero = realm_.hero();
     // A `--guard` preview has no boon behind it, and is held for its own two seconds instead.
-    if (realm_.tick() < guardPreview_) {
-        if (const Drawn* drawn = drawnOf(hero.id); drawn != nullptr && drawn->placed) {
-            const float feet[3] = {drawn->crown[0],
-                                   ground_->heightAt(drawn->crown[0], drawn->crown[2]),
-                                   drawn->crown[2]};
-            aura_.follow(feet);
-        }
-        return;
-    }
+    const bool preview = realm_.tick() < guardPreview_;
     // The realm decides when it lapses, as it decides everything else; the drawing reads it.
     // Both halves matter: a boon that ran out and a character who died take the ribbons away.
-    if (!hero.alive() || hero.boonUntil <= realm_.tick()) {
-        aura_.release();
-        return;
+    // Every player's, the hero's and the street's (Aura::guard keeps one a body).
+    const std::vector<sim::Body>& bodies = realm_.bodies();
+    for (size_t i = 0; i < bodies.size() && i < drawn_.size(); ++i) {
+        const sim::Body& body = bodies[i];
+        const Drawn& drawn = drawn_[i];
+        if (!body.player || drawn.id != body.id || !aura_.guarding(body.id)) continue;
+        const bool held = preview && body.id == hero.id;
+        if (!held && (!body.alive() || body.boonUntil <= realm_.tick())) {
+            aura_.release(body.id);
+            continue;
+        }
+        if (!drawn.placed) continue;
+        const float feet[3] = {drawn.crown[0], ground_->heightAt(drawn.crown[0], drawn.crown[2]),
+                               drawn.crown[2]};
+        aura_.follow(body.id, feet);
     }
-    const Drawn* drawn = drawnOf(hero.id);
-    if (drawn == nullptr || !drawn->placed) return;
-    const float feet[3] = {drawn->crown[0], ground_->heightAt(drawn->crown[0], drawn->crown[2]),
-                           drawn->crown[2]};
-    aura_.follow(feet);
 }
 
 void Play::releaseDrops() {

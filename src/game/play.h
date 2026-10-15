@@ -853,8 +853,9 @@ public:
         warpOwed_ = false;
         return was;
     }
-    // The guard: thrown when Defense lands, and kept on the body every frame after.
-    void guardRise(float seconds);
+    // The guard: thrown when Defense lands, and kept on the body every frame after -- on
+    // whichever player cast it, the hero or another.
+    void guardRise(uint32_t who, float seconds);
     void guardStep();
     // The realm tick a `showGuard` preview holds the cage until; zero when none is running.
     int64_t guardPreview_ = 0;
@@ -1002,6 +1003,8 @@ public:
     // Throws the level-up on the hero where he is drawn now. What a `Levelled` does once the
     // blow that earned it has landed, and what `--rise` does for a review run.
     void rise();
+    // Another player's level, the flares alone: his sound is his own client's.
+    void riseOn(uint32_t who);
     // And the orb's: the ribbons and the swoosh together, thrown by `useItem` when what was
     // read taught something, and by `--learn` for a review run.
     void learned();
@@ -1826,6 +1829,12 @@ private:
     // and a replay cuts it, so at 1.2 s every level chopped the last one's ring off at full
     // level; at 2 it is cut on its tail. Ours.
     static constexpr float kLevelApart = 2.0f;
+    // And another player's, waiting the same way on the blow that killed `on` (0 for none).
+    // One a level-up: a kill's levels rise once, as the hero's do.
+    struct OwedRise {
+        uint32_t who = 0, on = 0;
+    };
+    std::vector<OwedRise> othersRise_;
     // Whether the next Walked the hero says came from a click, and so puts the marker down.
     // Cleared when the hero's Walked or Refused arrives, which for a local realm is the first
     // tick after the click, and for a remote one is the tick the server sent back with the

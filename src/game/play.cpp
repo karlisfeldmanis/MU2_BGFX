@@ -351,6 +351,8 @@ void Play::update(double seconds) {
         lastDrank_ = lastWarped_ = lastCracked_ = lastRefined_ = nullptr;
         levelledSince_ = 0;
         levelsBefore_ = levelsOwed_;
+        // Who each other player killed this tick: his level, said after the death, waits on it.
+        std::vector<OwedRise> killedBy;
         for (const sim::Happening& happening : realm_.happenings()) {
             // The arena's own line first, so that what the log says happened on a tick is in
             // the log before anything the drawing decides to do about it. Nothing in an
@@ -516,6 +518,8 @@ void Play::update(double seconds) {
                 const sim::Body* killer = realm_.find(happening.whom);
                 if (happening.whom == heroId || (killer && killer->warden >= 0)) {
                     levelOn_ = happening.who;
+                } else if (killer && killer->player) {
+                    killedBy.push_back({happening.whom, happening.who});
                 }
             } else if (happening.what == sim::What::Shouted) {
                 // A salute is a pose as well as a line: MU's PLAYER_SALUTE1, played once and
@@ -550,6 +554,18 @@ void Play::update(double seconds) {
                 // already owed covers this one too.
                 levelsOwed_ = std::max(levelsOwed_, 1);
                 ++levelledSince_;
+            } else if (happening.what == sim::What::Levelled) {
+                // Another player's, the street's to see (the user, 2026-10-16: "i dont see other
+                // player lvl gain effect"): once, on the blow that earned it, as his own is.
+                const auto owed = std::find_if(othersRise_.begin(), othersRise_.end(),
+                                               [&](const OwedRise& one) { return one.who == happening.who; });
+                if (owed == othersRise_.end()) {
+                    uint32_t on = 0;
+                    for (const OwedRise& kill : killedBy) {
+                        if (kill.who == happening.who) on = kill.on;
+                    }
+                    othersRise_.push_back({happening.who, on});
+                }
             } else if (happening.what == sim::What::Rose) {
                 if (Drawn* risen = drawnOf(happening.who)) stand(*risen);
                 // Risen on a map with no safe zone: owed Lorencia, as a Town Portal read there is.
@@ -664,13 +680,14 @@ void Play::update(double seconds) {
                     // two seconds at the cast, not for the guard's whole five minutes. The
                     // user's, 2026-09-25. A guard's alone -- Defense, Soul Barrier and the elf's
                     // Greater Defense -- and not her Heal or Greater Damage, which raise none.
-                    if (row && row->boonTicks > 0 && happening.who == heroId) {
-                        guardRise(kGuardShowSeconds);
+                    // Any player's, not the hero's alone (the user, 2026-10-16).
+                    if (row && row->boonTicks > 0 && (happening.who == heroId || caster->visible)) {
+                        guardRise(happening.who, kGuardShowSeconds);
                     }
                     // Her Heal and Greater Damage: a burst where she stands, once (fx/aura.h,
                     // kMending and kMight -- ours, MU draws neither).
-                    if (row && (row->mends || row->mightTicks > 0) && happening.who == heroId &&
-                        caster->placed && ground_) {
+                    if (row && (row->mends || row->mightTicks > 0) &&
+                        (happening.who == heroId || caster->visible) && caster->placed && ground_) {
                         const float feet[3] = {
                             caster->crown[0],
                             ground_->heightAt(caster->crown[0], caster->crown[2]),
@@ -2603,6 +2620,17 @@ void Play::update(double seconds) {
                    levelsOwed_);
         rise();
     }
+    // And the street's, each on its own blow; gone with the body that earned it.
+    othersRise_.erase(std::remove_if(othersRise_.begin(), othersRise_.end(),
+                                     [&](const OwedRise& one) {
+                                         if (one.on != 0 && showing_.awaits(one.on) &&
+                                             drawnOf(one.who) != nullptr) {
+                                             return false;
+                                         }
+                                         riseOn(one.who);
+                                         return true;
+                                     }),
+                      othersRise_.end());
     releaseDrops();
     watchAggro(float(seconds));
     showing_.update(float(seconds));

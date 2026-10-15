@@ -174,14 +174,17 @@ public:
     // The knight's guard: thrown like a burst, but it lives for `seconds` -- the boon's own
     // duration, so the picture and the sim lapse together -- and follows the body until then.
     // Thrown again while one stands replaces it, which is what the realm does with the boon.
-    void guard(const float feet[3], float yaw, float metresPerTile, float seconds);
+    // `owner` is the body it stands round: every player's guard is drawn, one to a body.
+    void guard(uint32_t owner, const float feet[3], float yaw, float metresPerTile, float seconds);
     // Where the body is now, every frame it is drawn: the one thing a following burst needs.
-    void follow(const float feet[3]);
+    void follow(uint32_t owner, const float feet[3]);
     // Every living burst moved to where the body is now: an Aura of one body's own, as a set's
     // ribbons are (game/fx/set_shine.h).
     void followAll(const float feet[3]);
     // And the guard put down early -- a boon that lapsed, or a character who died.
-    void release();
+    void release(uint32_t owner);
+    // Whether `owner` has a guard standing.
+    bool guarding(uint32_t owner) const;
 
     // Ages every burst on MU's clock. `seconds` is the frame's own.
     void update(float seconds);
@@ -197,9 +200,11 @@ public:
     static constexpr int kTrailTicks = 19;
     // Points sampled a tick: the ring turns 0.5 rad a tick, so four is a 7-degree chord.
     static constexpr int kSamples = 4;
-    // Two at once is a level earned while the last is still in the air, and the third slot is
-    // the guard's, which stands for seconds at a time and must not take a level-up's place.
-    static constexpr int kBursts = 3;
+    // Every player's in sight, not the hero's alone: a street's levels and guards at once
+    // (the user, 2026-10-16: "i dont see other player lvl gain effect and auras"). A burst
+    // thrown with none free is not drawn. A set's Aura (game/fx/set_shine.h) is one of these
+    // too, a wearer's own.
+    static constexpr int kBursts = 24;
     // Room for two skills read inside a second of each other; a third's puffs are not drawn.
     static constexpr int kPuffs = 64;
 
@@ -211,6 +216,7 @@ private:
     };
     struct Burst {
         bool living = false;
+        uint32_t owner = 0;  // the body a guard stands round, 0 for any other burst
         Recipe r;
         float feet[3] = {0.0f, 0.0f, 0.0f};
         float across[3] = {1.0f, 0.0f, 0.0f};  // the joint's local X, turned by the hero's yaw
@@ -246,7 +252,6 @@ private:
     Puff puffs_[kPuffs];
     void gatherPuffs(gfx::Effects& effects) const;
     bool circle_ = false;
-    int guarding_ = -1;  // which burst is the standing guard, or -1
     Burst bursts_[kBursts];
     Burst* throwOne(const Recipe& recipe, const float feet[3], float yaw, float metresPerTile);
 
