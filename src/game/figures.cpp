@@ -400,21 +400,51 @@ float measurePlant(const FigureBody& body, int clip) {
         // The player's own library only, which is the one whose walks the cook now closes by
         // their own last key. A monster keeps the generic test, and its seam with it, until
         // that is asked for too: see cook_clips.
+        // And the Golden Dragon's (the user, 2026-10-15: "dragon was sliding not walking"): the
+        // generic test put its plant at 4.34 m/s, where its feet plant at about 3.35, so its walk
+        // played at 0.64 where stride.py finds the feet stillest at 0.80.
         const bool player = body.library && body.library->name == "player";
-        if (player && feet[0] >= 0 && feet[1] >= 0) {
+        const bool dragon = body.library && body.library->name == "GoldenDragon01";
+        if ((player || dragon) && feet[0] >= 0 && feet[1] >= 0) {
+            // Which way is back along the walk: -z on the man's rig; on the dragon's, the way its
+            // feet go while they are down, as stride.py reads it off the clip.
+            // Down: within 5 cm of its lowest on the man; on the dragon, in the lower half of its
+            // lift, since its foot rises as it pushes back (0.36 to 0.72 m over its four keys down).
+            const auto lowOf = [&](int foot) {
+                float low = 1e30f, high = -1e30f;
+                for (uint32_t frame = 0; frame < one.frames; ++frame) {
+                    const float y = track[(size_t(frame) * count + size_t(foot)) * 3 + 1];
+                    low = std::min(low, y);
+                    high = std::max(high, y);
+                }
+                return dragon ? low + 0.5f * (high - low) : low + 0.05f;
+            };
+            float back[2] = {0.0f, -1.0f};
+            if (dragon) {
+                float sum[2] = {0.0f, 0.0f};
+                for (int foot : feet) {
+                    const float low = lowOf(foot);
+                    for (uint32_t frame = 1; frame < one.frames; ++frame) {
+                        const float* a = &track[(size_t(frame - 1) * count + size_t(foot)) * 3];
+                        const float* b = &track[(size_t(frame) * count + size_t(foot)) * 3];
+                        if (a[1] > low || b[1] > low) continue;
+                        sum[0] += b[0] - a[0];
+                        sum[1] += b[2] - a[2];
+                    }
+                }
+                const float length = std::sqrt(sum[0] * sum[0] + sum[1] * sum[1]);
+                if (length > 1e-4f) back[0] = sum[0] / length, back[1] = sum[1] / length;
+            }
             float far = 0.0f, took = 0.0f;
             for (int foot : feet) {
-                float low = 1e30f;
-                for (uint32_t frame = 0; frame < one.frames; ++frame) {
-                    low = std::min(low, track[(size_t(frame) * count + size_t(foot)) * 3 + 1]);
-                }
-                low += 0.05f;
+                const float low = lowOf(foot);
                 for (uint32_t frame = 1; frame < one.frames; ++frame) {
                     const float* a = &track[(size_t(frame - 1) * count + size_t(foot)) * 3];
                     const float* b = &track[(size_t(frame) * count + size_t(foot)) * 3];
-                    if (b[2] - a[2] >= 0.0f) continue;   // forward: the swing
+                    const float went = (b[0] - a[0]) * back[0] + (b[2] - a[2]) * back[1];
+                    if (went <= 0.0f) continue;              // forward: the swing
                     if (a[1] > low || b[1] > low) continue;  // in the air at either end
-                    far += a[2] - b[2];
+                    far += went;
                     took += step;
                 }
             }
