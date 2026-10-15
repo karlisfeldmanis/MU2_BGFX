@@ -26,8 +26,8 @@ mingw and bundled on both platforms, and a certificate; it can still go on top l
 How it goes (`src/net/pass.h`):
 
 1. Play: the launcher posts its token to `POST /api/ticket` over HTTPS and gets
-   `{ticket, secret}` -- 32 and 64 hex digits, good for two minutes, kept in the website's memory
-   only (`engine.cpp gameTicket`).
+   `{ticket, secret}` -- 32 and 64 hex digits, good for two minutes (`engine.cpp gameTicket`).
+   The website keeps the secret until the server is told it, then its SHA-256 for a day.
 2. The game is started with `MU2_TICKET=<ticket>:<secret>` in its environment; the token stays
    with the launcher (`engine.cpp play`).
 3. Each line the game opens -- the character screen's Account, every world's Hello -- says
@@ -35,15 +35,18 @@ How it goes (`src/net/pass.h`):
    proof HMAC-SHA256 of `"mu2 pass <ticket> <count>"` under the secret (`game::sealedKey`).
 4. The first time the server sees a ticket, it asks `GET /internal/ticket?ticket=X` on the box
    (loopback, never proxied). The website tells `{account, secret}` once and forgets the ticket.
-   The server checks the proof and keeps the secret for 24 hours after its last proof.
+   The server checks the proof and keeps the secret for 24 hours after its last proof, in memory
+   and in characters.db (`passes`), so a restart of the server does not sign anyone out.
 5. From then on the server checks each line itself: the proof must be the secret's and the count
    higher than the last proven. A line someone read and says again is turned away; so is the
    website's raw token, and a ticket the website no longer keeps.
 
 What it does not do: hide the game's traffic, or stop someone who can rewrite packets on the path
-from taking over a line already open. A server restart forgets the secrets: the player presses
-Play again. The game's own crash reports go without the account (it never has the token); the
-launcher's still carry it.
+from taking over a line already open. The game's own crash reports carry its `ticket:secret` as
+their Bearer over HTTPS, which the website files under the ticket's account for a day.
+
+Since 2026-10-15 (second pass): a server restart keeps the passes, tested by restarting mid-session
+on a private port; and the game's crash reports name the account again.
 
 Tested on a private port (2026-10-15): a real client through the character screen, a world, a
 map change and back, five lines on one ticket and one website ask; replayed, lower and

@@ -25,6 +25,10 @@ The look is the "MU2 Launcher" canvas (claude.ai/artifact/AvN3tu56TjFCX1SbYvnPmT
 ## The steps
 
 **L1. Accounts in the game.** The launcher's token goes where the machine key goes now.
+*Superseded at protocol 32 (2026-10-15, docs/plans/security.md): the token never reaches the game.
+The launcher hands it `MU2_TICKET` (a ticket and its secret from `POST /api/ticket`), the game
+says a pass made with them on each line, and the server asks `/internal/ticket` in place of
+`/internal/session`. The lines below are L1 as it was built.*
 - The client sends `MU2_SESSION` (an environment variable the launcher sets) as the Account's key
   when it is there, and its machine key when it is not (dev runs, bots, the Mac until L5).
 - `mu2_server --accounts http://127.0.0.1:8080`: a key of 64 hex digits is a token. The server
@@ -63,7 +67,7 @@ by mingw like `MU2.exe`, linking `mu_gfx` and the few UI sources it draws with.
 - The game in `%LOCALAPPDATA%\Programs\MU2` by default, no administrator asked; Change picks another.
 - Update: fetch the manifest, hash what is there, fetch what differs into a temporary name,
   replace when whole. Play stays off until every file matches.
-- Play: `CreateProcessW` on `MU2.exe` with `MU2_SESSION` set; the launcher minimises.
+- Play: `CreateProcessW` on `MU2.exe` with `MU2_TICKET` set (`MU2_SESSION` before protocol 32); the launcher minimises.
 - Its own update: a newer launcher in the manifest is fetched beside it, swapped in on the next start.
 - **The engine is done (2026-10-14)**, src/launcher/ with no screens yet: `mu2_launcher --check`
   signs in, keeps the token, reads the manifest, finds what is stale, fetches it and checks it.

@@ -121,6 +121,22 @@ public:
     bool keepGuild(const GuildRow& guild);
     bool dropGuild(uint32_t id);
 
+    // **The game's passes** (signin.cpp, docs/plans/security.md): a launcher ticket's account,
+    // the secret its proofs are made with and the highest count proven, until `until` (unix
+    // seconds), so a restarted server still knows the players who were on it and nobody has to
+    // press Play again. Written at each proof; the website tells a ticket only once.
+    struct PassRow {
+        std::string ticket;
+        std::string account;
+        std::string secret;
+        uint64_t count = 0;
+        int64_t until = 0;
+    };
+    // The ticket's row, when it has one not past its time.
+    bool findPass(const std::string& ticket, PassRow& out);
+    // Written or overwritten; the ones past their time go as it is written.
+    bool keepPass(const PassRow& pass);
+
 private:
     // The journal folded back into the file, on a thread of its own with its own connection, at
     // a lowered priority (checkpoints): what SQLite did inside whichever commit crossed 4 MB of

@@ -27,8 +27,10 @@ back. Only the token's SHA-256 is stored, and the token goes only over HTTPS: it
 game (docs/plans/security.md). At each Play the launcher posts it to `/api/ticket` and hands the
 game the ticket and secret it gets back. mu2_server asks
 `GET http://127.0.0.1:8080/internal/ticket?ticket=X` the first time the game says that ticket,
-learns the account and the secret, and checks every later line's proof itself. Tickets live in
-memory for two minutes and are told once. Caddy answers 404 for `/internal/` from outside.
+learns the account and the secret, and checks every later line's proof itself. A ticket is told
+once and within two minutes; its row (`tickets`, the secret's SHA-256 after it is told) stays a
+day, so the game's crash reports, sent with `ticket:secret`, are filed under the account. Caddy
+answers 404 for `/internal/` from outside.
 
 On the box: `sqlite3 /var/lib/mu2-web/accounts.db 'select id, email, created from accounts'`.
 To delete one by hand, start with `PRAGMA foreign_keys=ON;` or its sessions stay behind: the
@@ -63,8 +65,8 @@ A crash or a freeze of the game or the launcher leaves a report in the player's 
 when it starts (src/launcher/crash_upload.h), to `POST /api/crash`. Each lands in
 `/var/lib/mu2-web/crashes/<day>/` -- the .txt, and on Windows its minidump -- with a line in
 `crashes.jsonl`: which program, the platform, the card, the build, the module it died in, and the
-account's id when the launcher sent it (the game's own reports carry none: it never has the
-token). Read them on the box:
+account's id when the sender named it (the launcher by its token, the game by its ticket). Read
+them on the box:
 
     curl -s http://127.0.0.1:8080/internal/crashes    # counted by module, and the latest thirty
     ls /var/lib/mu2-web/crashes/$(date -u +%F)/

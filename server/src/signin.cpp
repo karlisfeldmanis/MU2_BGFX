@@ -9,9 +9,10 @@
 //
 // The asking is a job, never the loop's: a few milliseconds when the website is well, seconds when
 // it is not, and the loop must not wait either. The secret is kept for kPassFor after its last
-// proof, so a player changing maps, each a new line with a new Hello and a count one higher, is
-// checked here and never asked about again. A count no higher than the last proven is a line
-// someone read and said again, and is turned away.
+// proof, in memory and in characters.db (Store::keepPass), so a player changing maps, each a new
+// line with a new Hello and a count one higher, is checked here and never asked about again --
+// across a restart of the server too. A count no higher than the last proven is a line someone
+// read and said again, and is turned away.
 
 #include "host.h"
 
@@ -22,6 +23,7 @@
 #include <unistd.h>
 
 #include <cstring>
+#include <ctime>
 #include <future>
 #include <mutex>
 #include <unordered_map>
@@ -33,15 +35,28 @@ namespace {
 std::string g_host;   // the website's account service; empty when the server takes no passes
 int g_port = 0;
 
-constexpr auto kPassFor = std::chrono::hours(24);
+constexpr int64_t kPassFor = 24 * 3600;  // seconds after its last proof
 constexpr size_t kMostRemembered = 20000;
-struct Known {
-    std::string account;
-    std::string secret;
-    uint64_t count = 0;  // the highest proven: a pass must come with a higher one
-    Clock::time_point until;
-};
-std::unordered_map<std::string, Known> g_known;  // by ticket
+// By ticket: the disk's rows (Store::PassRow) as they were last read or written. `count` is the
+// highest proven, and a pass must come with a higher one.
+std::unordered_map<std::string, Store::PassRow> g_known;
+
+int64_t now() { return int64_t(std::time(nullptr)); }
+
+// The ticket's row, from memory or else the disk (a restart): nullptr for one neither keeps.
+Store::PassRow* knownPass(const std::string& ticket) {
+    auto it = g_known.find(ticket);
+    if (it == g_known.end()) {
+        Store::PassRow row;
+        if (!g_store.findPass(ticket, row)) return nullptr;
+        it = g_known.emplace(ticket, row).first;
+    }
+    if (it->second.until < now()) {
+        g_known.erase(it);
+        return nullptr;
+    }
+    return &it->second;
+}
 
 const std::string kUnknown = "";
 const std::string kAway = "!";
@@ -109,13 +124,14 @@ bool isToken(const std::string& key) {
 
 void remember(const net::Pass& pass, const Redeemed& his) {
     if (g_known.size() >= kMostRemembered) {
-        const auto now = Clock::now();
         for (auto it = g_known.begin(); it != g_known.end();) {
-            it = now > it->second.until ? g_known.erase(it) : std::next(it);
+            it = it->second.until < now() ? g_known.erase(it) : std::next(it);
         }
-        if (g_known.size() >= kMostRemembered) g_known.clear();
+        if (g_known.size() >= kMostRemembered) g_known.clear();  // the disk has them still
     }
-    g_known[pass.ticket] = Known{his.account, his.secret, pass.count, Clock::now() + kPassFor};
+    Store::PassRow& row = g_known[pass.ticket];
+    row = {pass.ticket, his.account, his.secret, pass.count, now() + kPassFor};
+    if (!g_store.keepPass(row)) core::logError("passes: ticket %.6s not written", pass.ticket.c_str());
 }
 
 }  // namespace
@@ -168,21 +184,17 @@ Door door(Session& one, std::string& key) {
         return Door::Refuse;
     }
     if (!passed) return reservedKey(key) ? Door::Refuse : Door::Pass;
-    auto it = g_known.find(pass.ticket);
-    if (it != g_known.end() && Clock::now() > it->second.until) {
-        g_known.erase(it);
-        it = g_known.end();
-    }
-    if (it != g_known.end()) {
-        if (!net::proven(pass, it->second.secret) || pass.count <= it->second.count) {
+    if (Store::PassRow* known = knownPass(pass.ticket)) {
+        if (!net::proven(pass, known->secret) || pass.count <= known->count) {
             core::logError("%s: a pass of ticket %.6s that does not prove itself (count %llu, last %llu)",
                            one.who.c_str(), pass.ticket.c_str(), (unsigned long long)pass.count,
-                           (unsigned long long)it->second.count);
+                           (unsigned long long)known->count);
             return Door::Refuse;
         }
-        it->second.count = pass.count;
-        it->second.until = Clock::now() + kPassFor;
-        key = it->second.account;
+        known->count = pass.count;
+        known->until = now() + kPassFor;
+        if (!g_store.keepPass(*known)) core::logError("passes: ticket %.6s not written", pass.ticket.c_str());
+        key = known->account;
         return Door::Pass;
     }
     const std::string host = g_host, ticket = pass.ticket;

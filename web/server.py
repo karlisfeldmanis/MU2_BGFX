@@ -19,7 +19,8 @@ The routes:
                                                     -> 200 {ok} | 400 | 413 | 429
          a crash or freeze report from the launcher or the game (src/launcher/crash_upload.h),
          text and dump in base64: kept under crashes/<day>/ beside the database, a line for it in
-         crashes.jsonl. A token, when sent, files it under its account's id; the token is not kept.
+         crashes.jsonl. A token, or the game's `ticket:secret` (Bearer), files it under its
+         account's id; neither is kept.
     POST /api/ticket     Authorization: Bearer T    -> 200 {ticket, secret} | 401 | 426 | 429
          the launcher's ask when Play is pressed (docs/plans/security.md): a ticket and its secret
          for the game, good once and for TICKET_SECONDS. The game never sees the token, and says
@@ -33,8 +34,9 @@ The routes:
          the crash reports counted by the module they died in, and the latest thirty.
 
 A token is 64 hex digits, and goes only over HTTPS. Only its SHA-256 is stored, so a copy of the
-database signs nobody in. Tickets live in memory alone: a restart forgets those not yet told, and
-the player presses Play again. Passwords are scrypt (n=2^14, r=8, p=1), each with its own salt.
+database signs nobody in. A ticket's secret is kept until the server is told it, then only its
+SHA-256, for a day, which files the game's crash reports under the account. Passwords are scrypt
+(n=2^14, r=8, p=1), each with its own salt.
 """
 
 import argparse
@@ -58,6 +60,8 @@ SESSION_DAYS = 90
 # A ticket waits this long for the server to ask about it: the game starts and opens the character
 # screen in seconds, a slow machine's first start in under a minute.
 TICKET_SECONDS = 120
+# And a ticket's account is known this long, for the crash reports the game sends as it starts.
+TICKET_KEPT_SECONDS = 86400
 MOST_BODY = 4096
 EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]+\.[^@\s]+$")
 SCRYPT = dict(n=2**14, r=8, p=1, maxmem=64 * 1024 * 1024, dklen=32)
@@ -109,6 +113,13 @@ CREATE TABLE IF NOT EXISTS sessions (
     last_used  INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS sessions_account ON sessions(account_id);
+CREATE TABLE IF NOT EXISTS tickets (
+    ticket      TEXT PRIMARY KEY,
+    account_id  INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    secret      TEXT NOT NULL,      -- '' once the server has been told it
+    secret_hash TEXT NOT NULL,
+    created     INTEGER NOT NULL
+);
 """
 
 
@@ -165,9 +176,6 @@ class Store:
             self.crash_days[day] = self.crash_days.get(day, 0) + 1
         with self.db() as db:
             db.executescript(SCHEMA)
-        # Tickets not yet told to the server: ticket -> (account id, secret, expires).
-        self.tickets = {}
-        self.ticket_lock = threading.Lock()
 
     def db(self) -> sqlite3.Connection:
         db = getattr(self.local, "db", None)
@@ -219,19 +227,37 @@ class Store:
     def ticket(self, account: int):
         """A new ticket for the account, and its secret."""
         ticket, secret = secrets.token_hex(16), secrets.token_hex(32)
-        now = time.monotonic()
-        with self.ticket_lock:
-            self.tickets = {k: v for k, v in self.tickets.items() if v[2] > now}
-            self.tickets[ticket] = (account, secret, now + TICKET_SECONDS)
+        now = int(time.time())
+        db = self.db()
+        db.execute("DELETE FROM tickets WHERE created < ?", (now - TICKET_KEPT_SECONDS,))
+        db.execute("INSERT INTO tickets VALUES (?, ?, ?, ?, ?)",
+                   (ticket, account, secret, token_hash(secret), now))
         return ticket, secret
 
     def redeem(self, ticket: str):
-        """A ticket's (account id, secret), once: it is forgotten as it is told. None for one not kept."""
-        with self.ticket_lock:
-            row = self.tickets.pop(ticket or "", None)
-        if row is None or row[2] < time.monotonic():
+        """A ticket's (account id, secret), once and within TICKET_SECONDS. None for one not kept."""
+        if not re.fullmatch(r"[0-9a-f]{32}", ticket or ""):
+            return None
+        db = self.db()
+        row = db.execute("SELECT account_id, secret FROM tickets WHERE ticket = ? AND secret != '' AND created >= ?",
+                         (ticket, int(time.time()) - TICKET_SECONDS)).fetchone()
+        if row is None:
+            return None
+        # Told once: whoever asks second -- a line read and said again -- is told nothing.
+        if db.execute("UPDATE tickets SET secret = '' WHERE ticket = ? AND secret != ''", (ticket,)).rowcount != 1:
             return None
         return row[0], row[1]
+
+    def ticket_account(self, said: str):
+        """The account of a game's `ticket:secret`, within TICKET_KEPT_SECONDS, or None."""
+        found = re.fullmatch(r"([0-9a-f]{32}):([0-9a-f]{64})", said or "")
+        if not found:
+            return None
+        row = self.db().execute("SELECT account_id, secret_hash FROM tickets WHERE ticket = ? AND created >= ?",
+                                (found.group(1), int(time.time()) - TICKET_KEPT_SECONDS)).fetchone()
+        if row is None or not hmac.compare_digest(row[1], token_hash(found.group(2))):
+            return None
+        return row[0]
 
     def logout(self, token: str):
         self.db().execute("DELETE FROM sessions WHERE token_hash = ?", (token_hash(token or ""),))
@@ -513,8 +539,9 @@ class Handler(BaseHTTPRequestHandler):
             elif " gpu " in line and " on " in line:
                 row["renderer"] = line.strip()[:120]
         signed = self.store.session(self.bearer()) if self.bearer() else None
-        if signed:
-            row["account"] = signed[0]
+        account = signed[0] if signed else self.store.ticket_account(self.bearer())
+        if account:
+            row["account"] = account
         if dump:
             row["dump"] = len(dump)
         kept = self.store.crash(row, text, dump)

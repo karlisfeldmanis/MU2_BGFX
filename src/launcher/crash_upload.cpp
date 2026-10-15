@@ -156,12 +156,13 @@ int sendCrashes(const std::vector<fs::path>& folders, const CrashFrom& from) {
     return landed;
 }
 
-bool startedByLauncher() {
+std::string ticketFromEnvironment() {
     const char* handed = std::getenv("MU2_TICKET");
-    if (!handed) return false;
+    if (!handed) return {};
     const std::string said = handed;
-    return said.size() == 32 + 1 + 64 && said[32] == ':' &&
-           said.find_first_not_of("0123456789abcdef:") == std::string::npos;
+    const bool shaped = said.size() == 32 + 1 + 64 && said[32] == ':' &&
+                        said.find_first_not_of("0123456789abcdef:") == std::string::npos;
+    return shaped ? said : std::string();
 }
 
 }  // namespace mu::launcher

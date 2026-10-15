@@ -135,7 +135,9 @@ bool Store::open(const std::string& path, std::string& error) {
     if (!exec(db_, "PRAGMA journal_mode=WAL") || !exec(db_, "PRAGMA synchronous=NORMAL") ||
         !exec(db_, "PRAGMA wal_autocheckpoint=0") || !exec(db_, kSchema) ||
         !exec(db_, "CREATE TABLE IF NOT EXISTS broker (id INTEGER PRIMARY KEY, book BLOB NOT NULL,"
-                   " saved INTEGER NOT NULL)")) {
+                   " saved INTEGER NOT NULL)") ||
+        !exec(db_, "CREATE TABLE IF NOT EXISTS passes (ticket TEXT PRIMARY KEY, account TEXT NOT NULL,"
+                   " secret TEXT NOT NULL, count INTEGER NOT NULL, until INTEGER NOT NULL)")) {
         error = path + ": " + sqlite3_errmsg(db_);
         return false;
     }
@@ -339,6 +341,40 @@ bool Store::findBook(std::vector<uint8_t>& bytes) {
     const auto* at = static_cast<const uint8_t*>(sqlite3_column_blob(q.s, 0));
     bytes.assign(at, at + sqlite3_column_bytes(q.s, 0));
     return true;
+}
+
+bool Store::findPass(const std::string& ticket, PassRow& out) {
+    if (db_ == nullptr) return false;
+    Statement q(db_, "SELECT account, secret, count, until FROM passes WHERE ticket = ? AND until >= ?");
+    if (!q) return false;
+    sqlite3_bind_text(q.s, 1, ticket.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int64(q.s, 2, int64_t(std::time(nullptr)));
+    if (sqlite3_step(q.s) != SQLITE_ROW) return false;
+    out.ticket = ticket;
+    out.account = text(q.s, 0);
+    out.secret = text(q.s, 1);
+    out.count = uint64_t(sqlite3_column_int64(q.s, 2));
+    out.until = sqlite3_column_int64(q.s, 3);
+    return true;
+}
+
+bool Store::keepPass(const PassRow& pass) {
+    if (db_ == nullptr) return false;
+    {
+        Statement old(db_, "DELETE FROM passes WHERE until < ?");
+        if (old) {
+            sqlite3_bind_int64(old.s, 1, int64_t(std::time(nullptr)));
+            sqlite3_step(old.s);
+        }
+    }
+    Statement q(db_, "INSERT OR REPLACE INTO passes (ticket, account, secret, count, until) VALUES (?, ?, ?, ?, ?)");
+    if (!q) return false;
+    sqlite3_bind_text(q.s, 1, pass.ticket.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(q.s, 2, pass.account.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(q.s, 3, pass.secret.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int64(q.s, 4, sqlite3_int64(pass.count));
+    sqlite3_bind_int64(q.s, 5, pass.until);
+    return sqlite3_step(q.s) == SQLITE_DONE;
 }
 
 }  // namespace mu::server

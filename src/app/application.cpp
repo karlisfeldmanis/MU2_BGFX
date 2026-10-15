@@ -214,7 +214,7 @@ int Application::run(int argc, char** argv) {
 #else
             const char* platform = "macos";
 #endif
-            launcher::CrashFrom from{site, platform, "game", {}, {}, {}};
+            launcher::CrashFrom from{site, platform, "game", launcher::ticketFromEnvironment(), {}, {}};
             std::vector<std::filesystem::path> where = {std::filesystem::path(folders.crashes)};
             std::thread([where, from] { launcher::sendCrashes(where, from); }).detach();
         }

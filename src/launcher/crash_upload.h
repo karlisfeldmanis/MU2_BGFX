@@ -22,7 +22,7 @@ struct CrashFrom {
     std::string site;      // "https://mu-classic.com"
     std::string platform;  // "windows" or "macos"
     std::string sender;    // "launcher" or "game": which program is sending, not which crashed
-    std::string token;     // the launcher's sign-in, so the report is filed under the account; or ""
+    std::string token;     // the launcher's sign-in or the game's ticket, so the report is filed under the account; or ""
     std::string gpu;       // the launcher's probe (gpu.h), when it has one
     std::string driver;
 };
@@ -30,8 +30,10 @@ struct CrashFrom {
 // Sends what is waiting in `folders`. Returns how many landed. Blocks: run it on a thread.
 int sendCrashes(const std::vector<std::filesystem::path>& folders, const CrashFrom& from);
 
-// Whether the game was started by a signed-in launcher: it was handed a ticket (MU2_TICKET,
-// engine.h GameTicket). The game's own reports go without the account; the launcher's carry it.
-bool startedByLauncher();
+// The ticket a signed-in launcher handed the game (MU2_TICKET, engine.h GameTicket), as
+// "ticket:secret", or "" when it was not started so. Sent as the game's own reports' Bearer, over
+// HTTPS only, which files them under the account (web/server.py ticket_account).
+std::string ticketFromEnvironment();
+inline bool startedByLauncher() { return !ticketFromEnvironment().empty(); }
 
 }  // namespace mu::launcher
