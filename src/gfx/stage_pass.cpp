@@ -118,7 +118,8 @@ void Renderer::drawStage(bgfx::ViewId viewId, bgfx::FrameBufferHandle target, ui
             }
             const float params[4] = {material.cutout,
                                      (material.twoSided ? 1.0f : 0.0f) +
-                                         (material.calibrated ? 2.0f : 0.0f),
+                                         (material.calibrated ? 2.0f : 0.0f) +
+                                         (material.skinSheet ? 8.0f : 0.0f),
                                      material.roughnessFactor, material.metalFactor};
             bgfx::setUniform(uMaterial_, params);
             bgfx::setTexture(0, sAlbedo_, material.albedo);

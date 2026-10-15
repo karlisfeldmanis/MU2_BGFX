@@ -54,6 +54,9 @@ void main()
 	// whole-number flags are read without.
 	float flags = floor(MATERIAL.y + 0.01);
 	float weathered = floor((MATERIAL.y - flags) * 16.0 + 0.5);
+	// 8: a skin or hair sheet inside an armour piece, which the piece's plus leaves bare.
+	float skinSheet = step(7.5, flags);
+	flags -= 8.0 * skinSheet;
 	float soft = step(3.5, flags);
 	float flagsLow = flags - 4.0 * soft;
 	float calibrated = step(1.5, flagsLow);
@@ -312,7 +315,9 @@ void main()
 	// The lamps, on the texture's own albedo rather than on the albedo times MU's baked
 	// light: lights.sh says why.
 	// On refined steel the lamps' share is coloured by the chrome first: shine.sh's shineLamps.
-	float plus = shinePlus(v_refine.x);
+	// Skin takes none of it: the plus is the armour's (content::Material::skinSheet).
+	float refine = v_refine.x * (1.0 - skinSheet);
+	float plus = shinePlus(refine);
 	// The lamps take the energy as a scalar on their Fresnel: their specular argument.
 	vec3 lamps = lampLight(v_wpos, n, v, paint * (1.0 - metal), f0, roughness, ndotv,
 	                       dot(energy, vec3_splat(1.0 / 3.0)))
@@ -323,10 +328,10 @@ void main()
 	// everything lit above, and adds its chrome unlit, so that goes on after. shine.sh.
 	colour *= shineTint(plus);
 	colour += shineAdded(plus, normalize(v_normal), v_refine.yzw);
-	colour += shineExcellentAdded(shineExcellent(v_refine.x), normalize(v_normal));
-	colour += shineSweepAdded(plus, shineSweep(v_refine.x), normalize(v_normal));
-	colour += shineDarknessAdded(shineDarkness(v_refine.x), normalize(v_normal));
-	colour += shineCrowAdded(shineCrow(v_refine.x), normalize(v_normal), albedoTex.rgb);
+	colour += shineExcellentAdded(shineExcellent(refine), normalize(v_normal));
+	colour += shineSweepAdded(plus, shineSweep(refine), normalize(v_normal));
+	colour += shineDarknessAdded(shineDarkness(refine), normalize(v_normal));
+	colour += shineCrowAdded(shineCrow(refine), normalize(v_normal), albedoTex.rgb);
 
 	// The emissive, or on foliage the light through it. MU2's pipeline writes a leaf's own
 	// sheet as its emissive at a fraction, standing in for transmission, and that fraction

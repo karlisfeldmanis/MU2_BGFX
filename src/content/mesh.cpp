@@ -10,6 +10,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <strings.h>
 
 #include "core/files.h"
 #include "core/log.h"
@@ -85,6 +86,17 @@ float cutoutFor(const cgltf_material* material) {
     return -1.0f;
 }
 
+// MU's skin and hair sheets, by the first letters of the name as LoadData.cpp:85 reads them:
+// skin*, level* (the faces under the later helms) and hair*. HQSkinClass is a class's bare
+// body, which carries no plus, and is left alone.
+bool isSkinSheet(const std::string& name) {
+    const auto starts = [&](const char* word) {
+        const size_t n = std::strlen(word);
+        return name.size() >= n && strncasecmp(name.c_str(), word, n) == 0;
+    };
+    return starts("skin") || starts("level") || starts("hair");
+}
+
 }  // namespace
 
 const bgfx::VertexLayout& Mesh::layout() {
@@ -142,6 +154,7 @@ bool Mesh::load(const std::string& path, Textures& textures) {
         const cgltf_material& m = data->materials[i];
         Material out;
         out.name = m.name ? m.name : "material";
+        out.skinSheet = isSkinSheet(out.name);
         out.twoSided = m.double_sided;
         out.cutout = cutoutFor(&m);
         // The bench's glb path agrees with the cook's: a BLEND material is a glow.
@@ -412,6 +425,7 @@ bool Mesh::buildFromCooked(const CookedMesh& cooked, const std::string& name,
     for (const CookedMaterial& from : cooked.materials) {
         Material out;
         out.name = from.name;
+        out.skinSheet = isSkinSheet(out.name);
         out.cutout = from.cutout;
         out.twoSided = from.twoSided;
         out.glow = from.glow;

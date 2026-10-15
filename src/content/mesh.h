@@ -125,6 +125,10 @@ struct Material {
     // (ZzzBMD.cpp:1425), the Staff of Resurrection's swirl cards and the Light Saber's beam.
     // Every other item glow takes them in fs_glow. The cook's mode bit 5.
     bool noChrome = false;
+    // Skin or hair inside an armour piece: the bare arms of a padded armour, the face under an
+    // open helm. MU names those sheets skin*, level* and hair* (LoadData.cpp:85, IsSkin and
+    // IsHair); the piece's plus shines on its armour and not on these (Renderer::submitBatches).
+    bool skinSheet = false;
     // A weapon's chrome pass (pipeline/chrome_sheets.py): MU's RenderMesh of one mesh again,
     // RENDER_BRIGHT, with a chrome image -- the Knight Blade's violet, the Bill of Balrog's
     // blue veins. Its albedo is the tinted chrome image and its emissive the mask of where it

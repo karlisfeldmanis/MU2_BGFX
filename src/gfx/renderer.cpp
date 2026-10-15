@@ -341,7 +341,10 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                                                  // dither left holes the ring traced as
                                                  // dots (the user, 2026-10-04: 'tiiny yellow
                                                  // dots ono hover outline'). The plain cut.
-                                                 (material.softAlpha && !ringView ? 4.0f : 0.0f),
+                                                 (material.softAlpha && !ringView ? 4.0f : 0.0f) +
+                                                 // 8: skin, which the plus does not
+                                                 // shine on (content::Material::skinSheet).
+                                                 (material.skinSheet ? 8.0f : 0.0f),
                                              glowPass ? glowLevel
                                              // In a depth-only pass z is how much of the
                                              // shadow is thinned away by fs_shadow's dither:
