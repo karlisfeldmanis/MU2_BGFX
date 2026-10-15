@@ -48,6 +48,14 @@ Answer signIn(const Place& place, const std::string& email, const std::string& p
               std::string& message);
 // GET /api/me: Ok while the token is good, Wrong once the website no longer keeps it.
 Answer stillSigned(const Place& place, const Signed& who);
+// What the game is handed in place of the token (net/pass.h, docs/plans/security.md): a ticket the
+// server may ask about once, and the secret the game proves itself with on its line.
+struct GameTicket {
+    std::string ticket;  // 32 hex digits
+    std::string secret;  // 64 hex digits
+};
+// POST /api/ticket, at each Play. Wrong once the website no longer keeps the token.
+Answer gameTicket(const Place& place, const Signed& who, GameTicket& out, std::string& message);
 void signOut(const Place& place, const Signed& who);
 
 // The token kept between runs: DPAPI-sealed on Windows, so only this Windows user can open it;
@@ -128,9 +136,9 @@ bool update(const Place& place, const fs::path& install, const Manifest& manifes
 // The release the install was last brought up to, or "".
 std::string installedVersion(const fs::path& install);
 
-// MU2.exe started in the install, signed in: the token in its environment as MU2_SESSION, never
-// on its command line (game::accountKey).
-bool play(const fs::path& install, const Manifest& manifest, const Signed& who, std::string& error);
+// MU2.exe started in the install, signed in: the ticket and its secret in its environment as
+// MU2_TICKET, never on its command line (game::accountKey). The token stays with the launcher.
+bool play(const fs::path& install, const Manifest& manifest, const GameTicket& ticket, std::string& error);
 
 // Where crash and freeze reports wait to be sent (launcher/crash_upload.h): the game's logs/ in
 // the install, and the user folder's, which holds the launcher's own and the game's where the

@@ -40,7 +40,7 @@ bool heard(Session& one, std::vector<std::unique_ptr<World>>& worlds,
     net::Kind kind{};
     std::vector<uint8_t> body;
     while (true) {
-        // Waiting on the website for whose his token is: the rest keeps till it answers (settle).
+        // Waiting on the website for whose his ticket is: the rest keeps till it answers (settle).
         if (one.signing.valid()) return true;
         const int took = net::take(one.in, kind, body, net::kMostAsked);
         if (took == 0) return true;
@@ -167,8 +167,9 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
 }
 
 // One waiting on the website (signin.cpp), once it has answered: what he said is heard as his
-// account's, then whatever came after it. A token it does not keep is told to sign in again at the
-// character screen, and dropped at a world's door. False when he must go.
+// account's, then whatever came after it. A ticket it does not keep, or a pass that does not prove
+// itself, is told to sign in again at the character screen, and dropped at a world's door. False
+// when he must go.
 bool settle(Session& one, std::vector<std::unique_ptr<World>>& worlds,
             std::vector<std::unique_ptr<Session>>& sessions, const std::string& assets,
             const sim::RealmConfig& config, std::mt19937_64& seeds) {

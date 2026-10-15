@@ -30,7 +30,8 @@ struct CrashFrom {
 // Sends what is waiting in `folders`. Returns how many landed. Blocks: run it on a thread.
 int sendCrashes(const std::vector<std::filesystem::path>& folders, const CrashFrom& from);
 
-// The launcher's sign-in as the game is handed it (MU2_SESSION), or "" when there is none.
-std::string sessionFromEnvironment();
+// Whether the game was started by a signed-in launcher: it was handed a ticket (MU2_TICKET,
+// engine.h GameTicket). The game's own reports go without the account; the launcher's carry it.
+bool startedByLauncher();
 
 }  // namespace mu::launcher

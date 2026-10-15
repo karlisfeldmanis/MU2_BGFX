@@ -112,7 +112,9 @@ namespace mu::net {
 //     Dragon is on the server, to every client on every map.
 // 31: the website's accounts (docs/plans/launcher.md): an Account's key may be the launcher's
 //     sign-in token, and a Roster refused SignIn when the website does not keep it.
-constexpr uint32_t kVersion = 31;
+// 32: the game's pass (net/pass.h, docs/plans/security.md) where the token went, in an Account's
+//     key and a Hello's account: the token itself no longer crosses the line.
+constexpr uint32_t kVersion = 32;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box.
 constexpr const char* kDefaultHost = "37.27.158.226";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store

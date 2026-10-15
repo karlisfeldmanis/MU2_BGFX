@@ -68,7 +68,7 @@ void Sha256::add(const void* bytes, size_t size) {
     held_ = size;
 }
 
-std::string Sha256::hex() {
+void Sha256::digest(uint8_t out[32]) {
     const uint64_t bits = length_ * 8;
     const uint8_t one = 0x80, zero = 0;
     add(&one, 1);
@@ -76,8 +76,14 @@ std::string Sha256::hex() {
     uint8_t tail[8];
     for (int i = 0; i < 8; ++i) tail[i] = uint8_t(bits >> (56 - 8 * i));
     add(tail, 8);
+    for (int i = 0; i < 32; ++i) out[i] = uint8_t(h_[i / 4] >> (24 - 8 * (i % 4)));
+}
+
+std::string Sha256::hex() {
+    uint8_t bytes[32];
+    digest(bytes);
     char out[65];
-    for (int i = 0; i < 8; ++i) std::snprintf(out + i * 8, 9, "%08x", h_[i]);
+    for (int i = 0; i < 32; ++i) std::snprintf(out + i * 2, 3, "%02x", bytes[i]);
     return std::string(out, 64);
 }
 

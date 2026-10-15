@@ -4,6 +4,7 @@
 // Found ONCE, at open, and never per frame: an attack slot, a death clip or a cry looked up by
 // name while a fight is running is a string compare in the middle of the thing it is timing.
 #include "game/play.h"
+#include "game/roster.h"
 
 #include "sim/cradle.h"
 #include "sim/quests.h"
@@ -68,7 +69,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         hello.weapon = weapon;
         hello.shield = shield;
         hello.token = serverToken_;
-        hello.account = serverAccount_;
+        hello.account = game::sealedKey(serverAccount_);
         net::Welcome welcome;
         elsewhere_ = {};
         if (!remote->join(serverHost_, serverPort_, hello, welcome, &elsewhere_)) return false;

@@ -30,6 +30,7 @@
 
 #include "content/tables.h"
 #include "core/log.h"
+#include "net/pass.h"
 #include "net/socket.h"
 #include "net/wire.h"
 #include "sim/cradle.h"
@@ -215,6 +216,14 @@ struct World {
     sim::RainClock weather;
 };
 
+// What the website said of a pass's ticket (signin.cpp): the account's key, "" for a ticket it does
+// not keep (never given, given already, or past its two minutes), "!" when it could not be asked;
+// and the secret its proofs are made with.
+struct Redeemed {
+    std::string account;
+    std::string secret;
+};
+
 struct Session {
     net::Socket socket;
     std::vector<uint8_t> in;
@@ -250,10 +259,10 @@ struct Session {
     Clock::time_point heardAt = Clock::now();
     // Commands taken from him for the coming tick (kMostCommands), counted afresh each tick.
     int asked = 0;
-    // The website asked whose his token is (signin.cpp), and what he said with it, held until the
-    // answer comes: an Account or a Hello. Nothing more of his is read meanwhile.
-    std::future<std::string> signing;
-    std::string signingToken;
+    // The website asked whose his pass's ticket is (signin.cpp), and what he said with it, held until
+    // the answer comes: an Account or a Hello. Nothing more of his is read meanwhile.
+    std::future<Redeemed> signing;
+    net::Pass signingPass;
     net::Kind signingKind{};
     net::Account signingAccount;
     net::Hello signingHello;
@@ -411,21 +420,21 @@ bool create(Session& one, const net::Create& asked, std::mt19937_64& seeds,
 bool drop(Session& one, const net::Delete& asked,
     const std::vector<std::unique_ptr<Session>>& sessions);
 
-// signin.cpp: the website's accounts at the door (docs/plans/launcher.md, L1).
-// What the door does with a key an Account or a Hello carries: lets it in (a token already known is
-// turned into its account's key in place), sends it away (a key only the door may give), or makes
-// it wait for the website (Session::signing).
+// signin.cpp: the website's accounts at the door (docs/plans/launcher.md, L1; docs/plans/security.md).
+// What the door does with a key an Account or a Hello carries: lets it in (a pass already known and
+// proven is turned into its account's key in place), sends it away (a key only the door may give,
+// a pass that does not prove itself, or the website's own token), or makes it wait for the website
+// (Session::signing).
 enum class Door { Pass, Refuse, Wait };
 std::string accountKeyOf(long long id);
 void takeTokensFrom(const std::string& address);
 bool takesTokens();
-bool isToken(const std::string& key);
 bool reservedKey(const std::string& key);
 // Whether a connection's other end is this machine (127.0.0.0/8 or ::1).
 bool fromHere(int fd);
 Door door(Session& one, std::string& key);
-// The website's answer, once it has come: true, with his account's key, or "" for a token it does
-// not keep, or "!" when it could not be asked.
+// The website's answer, once it has come: true, with his account's key, or "" for a ticket it does
+// not keep or a pass that does not prove itself, or "!" when it could not be asked.
 bool signed_(Session& one, std::string& account);
 
 // main.cpp

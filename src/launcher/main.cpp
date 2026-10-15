@@ -107,7 +107,10 @@ int check(Place place, fs::path dir, const std::string& only, bool start) {
                                                      gpu.name, gpu.driver});
     step("crash reports", true, std::to_string(reports) + " sent");
     if (start) {
-        if (!step("play", play(dir, manifest, back, error), error)) return 1;
+        GameTicket ticket;
+        const bool ticketed = gameTicket(place, back, ticket, error) == Answer::Ok;
+        if (!step("the game's ticket", ticketed, ticketed ? "ticket " + ticket.ticket.substr(0, 6) : error)) return 1;
+        if (!step("play", play(dir, manifest, ticket, error), error)) return 1;
     }
     return 0;
 }

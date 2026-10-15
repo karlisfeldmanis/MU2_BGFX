@@ -239,7 +239,7 @@ bool LobbyMode::open(Context& ctx) {
         // character it played there before accounts claimed onto it (game/roster.h).
         key_ = game::accountKey();
         net::Account account;
-        account.key = key_;
+        account.key = game::sealedKey(key_);
         account.claims = game::claimsFor(server_);
         net::Roster answer;
         offline_ = !link_.open(host_, port_, account, answer);

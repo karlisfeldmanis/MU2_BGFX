@@ -20,16 +20,21 @@ The routes:
          a crash or freeze report from the launcher or the game (src/launcher/crash_upload.h),
          text and dump in base64: kept under crashes/<day>/ beside the database, a line for it in
          crashes.jsonl. A token, when sent, files it under its account's id; the token is not kept.
+    POST /api/ticket     Authorization: Bearer T    -> 200 {ticket, secret} | 401 | 426 | 429
+         the launcher's ask when Play is pressed (docs/plans/security.md): a ticket and its secret
+         for the game, good once and for TICKET_SECONDS. The game never sees the token, and says
+         only the ticket and proofs made with the secret on its line (src/net/pass.h).
     GET  /api/me         Authorization: Bearer T    -> 200 {email}         | 401
     GET  /api/downloads                             -> 200 {windows: {file, bytes} | null, macos: ...}
-    GET  /internal/session?token=T  (127.0.0.1 only, never proxied) -> 200 {account} | 404
-         for mu2_server to turn a launcher's token into the account its characters belong to.
+    GET  /internal/ticket?ticket=X  (127.0.0.1 only, never proxied) -> 200 {account, secret} | 404
+         for mu2_server to learn whose a game's ticket is and the secret its proofs are made with.
+         Each ticket is told once, and forgotten here as it is told.
     GET  /internal/crashes          (127.0.0.1 only) -> 200 {reports, where, last}
          the crash reports counted by the module they died in, and the latest thirty.
 
-A token is 64 hex digits, the shape the game's Account message already carries (net::kMostKey,
-server/src/accounts.cpp keyShape). Only its SHA-256 is stored, so a copy of the database signs
-nobody in. Passwords are scrypt (n=2^14, r=8, p=1), each with its own salt.
+A token is 64 hex digits, and goes only over HTTPS. Only its SHA-256 is stored, so a copy of the
+database signs nobody in. Tickets live in memory alone: a restart forgets those not yet told, and
+the player presses Play again. Passwords are scrypt (n=2^14, r=8, p=1), each with its own salt.
 """
 
 import argparse
@@ -50,6 +55,9 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 SESSION_DAYS = 90
+# A ticket waits this long for the server to ask about it: the game starts and opens the character
+# screen in seconds, a slow machine's first start in under a minute.
+TICKET_SECONDS = 120
 MOST_BODY = 4096
 EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]+\.[^@\s]+$")
 SCRYPT = dict(n=2**14, r=8, p=1, maxmem=64 * 1024 * 1024, dklen=32)
@@ -83,7 +91,7 @@ CRASH_FILE = re.compile(r"^[A-Za-z0-9_.-]{1,96}\.txt$")
 # (one line, 250 units wide at most), and a kept sign-in is not known to them, which brings them to
 # that screen. Browsers and the game are not launchers and are never turned away.
 LAUNCHER_AGENT = re.compile(r"^MU2Launcher(?:/(\d+))?$")
-LAUNCHER_NEEDED = 3
+LAUNCHER_NEEDED = 4
 OLD_LAUNCHER = "Download the new launcher."
 
 SCHEMA = """
@@ -157,6 +165,9 @@ class Store:
             self.crash_days[day] = self.crash_days.get(day, 0) + 1
         with self.db() as db:
             db.executescript(SCHEMA)
+        # Tickets not yet told to the server: ticket -> (account id, secret, expires).
+        self.tickets = {}
+        self.ticket_lock = threading.Lock()
 
     def db(self) -> sqlite3.Connection:
         db = getattr(self.local, "db", None)
@@ -204,6 +215,23 @@ class Store:
             self.db().execute("UPDATE sessions SET last_used = ? WHERE token_hash = ?",
                               (now, token_hash(token)))
         return row
+
+    def ticket(self, account: int):
+        """A new ticket for the account, and its secret."""
+        ticket, secret = secrets.token_hex(16), secrets.token_hex(32)
+        now = time.monotonic()
+        with self.ticket_lock:
+            self.tickets = {k: v for k, v in self.tickets.items() if v[2] > now}
+            self.tickets[ticket] = (account, secret, now + TICKET_SECONDS)
+        return ticket, secret
+
+    def redeem(self, ticket: str):
+        """A ticket's (account id, secret), once: it is forgotten as it is told. None for one not kept."""
+        with self.ticket_lock:
+            row = self.tickets.pop(ticket or "", None)
+        if row is None or row[2] < time.monotonic():
+            return None
+        return row[0], row[1]
 
     def logout(self, token: str):
         self.db().execute("DELETE FROM sessions WHERE token_hash = ?", (token_hash(token or ""),))
@@ -313,6 +341,8 @@ LOGIN_LIMIT = Limit(10, 60)
 MACHINE_LIMIT = Limit(60, 3600)
 # Eight a start (crash_upload.cpp kMostAStart), a few starts an hour.
 CRASH_LIMIT = Limit(24, 3600)
+# A ticket a Play: sixty an hour is a player who starts the game every minute.
+TICKET_LIMIT = Limit(60, 3600)
 
 
 # ---- the handler ---------------------------------------------------------------------------------
@@ -381,6 +411,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.machine()
         if path == "/api/crash":
             return self.crash()
+        if path == "/api/ticket":
+            return self.ticket()
         self.reply(404, {"error": "not found"})
 
     def register(self):
@@ -492,6 +524,17 @@ class Handler(BaseHTTPRequestHandler):
               f"{row.get('gpu') or row.get('renderer', '')} | {row['what']} {row['where']}", flush=True)
         self.reply(200, {"ok": True})
 
+    def ticket(self):
+        if self.old_launcher():
+            return self.reply(426, {"error": OLD_LAUNCHER})
+        if not TICKET_LIMIT.allow(self.client()):
+            return self.reply(429, {"error": "Too many starts. Wait a minute."})
+        row = self.store.session(self.bearer())
+        if row is None:
+            return self.reply(401, {"error": "signed out"})
+        ticket, secret = self.store.ticket(row[0])
+        self.reply(200, {"ticket": ticket, "secret": secret})
+
     # -- GET
 
     def do_GET(self):
@@ -511,11 +554,11 @@ class Handler(BaseHTTPRequestHandler):
             if not self.direct():
                 return self.reply(404, {"error": "not found"})
             return self.reply(200, self.store.machines_report())
-        if url.path == "/internal/session":
+        if url.path == "/internal/ticket":
             if not self.direct():
                 return self.reply(404, {"error": "not found"})
-            row = self.store.session(parse_qs(url.query).get("token", [""])[0])
-            return self.reply(200, {"account": row[0]}) if row else self.reply(404, {"error": "no session"})
+            row = self.store.redeem(parse_qs(url.query).get("ticket", [""])[0])
+            return self.reply(200, {"account": row[0], "secret": row[1]}) if row else self.reply(404, {"error": "no ticket"})
         if url.path.startswith("/api/"):
             return self.reply(404, {"error": "not found"})
         self.file(url.path)

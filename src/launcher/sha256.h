@@ -1,5 +1,6 @@
 // SHA-256, for the launcher's check of each game file against the release's manifest
-// (tools/mu/release.py names every file on the box by it). FIPS 180-4, nothing more.
+// (tools/mu/release.py names every file on the box by it), and for the game's pass (net/pass.h),
+// which the client and the server both prove with. FIPS 180-4, nothing more.
 #pragma once
 
 #include <cstddef>
@@ -14,7 +15,8 @@ class Sha256 {
 public:
     Sha256();
     void add(const void* bytes, size_t size);
-    std::string hex();  // the digest as 64 lower-case hex digits; the hash is spent after
+    void digest(uint8_t out[32]);  // the hash is spent after
+    std::string hex();             // the digest as 64 lower-case hex digits
 
 private:
     void block(const uint8_t* p);

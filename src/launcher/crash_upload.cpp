@@ -156,12 +156,12 @@ int sendCrashes(const std::vector<fs::path>& folders, const CrashFrom& from) {
     return landed;
 }
 
-std::string sessionFromEnvironment() {
-    const char* session = std::getenv("MU2_SESSION");
-    if (!session) return {};
-    const std::string token = session;
-    if (token.size() != 64 || token.find_first_not_of("0123456789abcdef") != std::string::npos) return {};
-    return token;
+bool startedByLauncher() {
+    const char* handed = std::getenv("MU2_TICKET");
+    if (!handed) return false;
+    const std::string said = handed;
+    return said.size() == 32 + 1 + 64 && said[32] == ':' &&
+           said.find_first_not_of("0123456789abcdef:") == std::string::npos;
 }
 
 }  // namespace mu::launcher

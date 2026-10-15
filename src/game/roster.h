@@ -43,8 +43,12 @@ struct Seat {
 std::vector<Seat> seatsOf(const net::Roster& roster, const content::Tables& tables);
 
 // The account's key: saves/account.key in the client folder, made the first time it is asked for
-// -- 32 hex digits off the system's entropy. It is the account until there is a login screen.
+// -- 32 hex digits off the system's entropy. Started by the launcher, it is the launcher's ticket
+// instead (MU2_TICKET), which is never said on the line as it is: see sealedKey.
 std::string accountKey();
+// What a line says for `key`, an Account's or a Hello's, asked afresh for each line: the launcher's
+// ticket as a pass with the next count (net/pass.h), any other key as it is.
+std::string sealedKey(const std::string& key);
 
 // The characters this machine played on `server` (host:port) before accounts: each save in
 // saves/characters with a token for it beside it (Name.server), to be claimed onto the account.

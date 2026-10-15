@@ -1,6 +1,7 @@
 #include "game/roster.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
@@ -11,6 +12,7 @@
 #include "core/args.h"
 #include "core/log.h"
 #include "game/figures.h"
+#include "net/pass.h"
 #include "sim/cradle.h"
 #include "sim/quests.h"
 
@@ -61,16 +63,29 @@ std::vector<Seat> seatsOf(const net::Roster& roster, const content::Tables& tabl
     return seats;
 }
 
+namespace {
+
+// The launcher's ticket and its secret, once read (accountKey), and the lines sealed with them.
+std::string g_ticket, g_secret;
+std::atomic<uint64_t> g_count{0};
+
+}  // namespace
+
 std::string accountKey() {
-    // Started by the launcher, signed in: its token is the account (docs/plans/launcher.md, L1).
-    // Never logged: whoever reads the log could play him.
-    if (const char* session = std::getenv("MU2_SESSION")) {
-        const std::string token = session;
-        if (token.size() == 64 && token.find_first_not_of("0123456789abcdef") == std::string::npos) {
-            core::logf("account: the launcher's sign-in");
-            return token;
+    // Started by the launcher, signed in: its ticket is the account (docs/plans/security.md).
+    // The secret is never logged or sent: whoever had it could play him.
+    if (const char* handed = std::getenv("MU2_TICKET")) {
+        const std::string said = handed;
+        const size_t colon = said.find(':');
+        const std::string ticket = said.substr(0, colon);
+        const std::string secret = colon == std::string::npos ? std::string() : said.substr(colon + 1);
+        if (net::isTicket(ticket) && net::isSecret(secret)) {
+            if (g_ticket != ticket) core::logf("account: the launcher's sign-in");
+            g_ticket = ticket;
+            g_secret = secret;
+            return ticket;
         }
-        core::logError("account: MU2_SESSION is not a sign-in token; the machine's key instead");
+        core::logError("account: MU2_TICKET is not a launcher's ticket; the machine's key instead");
     }
     const fs::path path = fs::path(core::userFolder()) / "account.key";
     std::string key;
@@ -92,6 +107,11 @@ std::string accountKey() {
         core::logf("account: a new key in %s", path.string().c_str());
     }
     return key;
+}
+
+std::string sealedKey(const std::string& key) {
+    if (g_ticket.empty() || key != g_ticket) return key;
+    return net::sealPass(g_ticket, g_secret, ++g_count);
 }
 
 std::vector<net::Claim> claimsFor(const std::string& server) {

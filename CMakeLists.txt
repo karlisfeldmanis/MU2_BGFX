@@ -286,6 +286,8 @@ add_library(mu_net STATIC
   src/net/socket.cpp
   src/net/wire.cpp
   src/net/broker_wire.cpp
+  src/net/pass.cpp
+  src/launcher/sha256.cpp
 )
 # zlib packs the Welcome's snapshot (net::pack): the system's on the Mac, zlib1g-dev on the box.
 # Windows has no system zlib: mu bootstrap fetches its source, built here.

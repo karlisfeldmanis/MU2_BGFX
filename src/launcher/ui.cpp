@@ -181,6 +181,7 @@ private:
     Home home_ = Home::Checking;
     std::string message_;  // the sign-in's refusal, or why the home screen failed
     bool busy_ = false;    // the sign-in's worker is out
+    bool starting_ = false;  // Play's ticket is being asked for (start)
     bool stay_ = true;
 
     Field fields_[2];  // email, password
@@ -371,15 +372,38 @@ void Launcher::playNow() {
     start();
 }
 
+// The game's ticket asked for on a thread of its own (the worker may still be finishing the check
+// that called this), then the game started with it (engine.h GameTicket).
 void Launcher::start() {
-    std::string error;
-    if (!play(settings_.install, manifest_, who_, error)) {
-        message_ = error;
-        home_ = Home::Failed;
-        return;
-    }
-    sendCrashesAfter(20);
-    glfwIconifyWindow(window_);
+    if (starting_) return;
+    starting_ = true;
+    message_.clear();
+    const Place place = place_;
+    const Signed who = who_;
+    std::thread([this, place, who] {
+        GameTicket ticket;
+        std::string message;
+        const Answer a = gameTicket(place, who, ticket, message);
+        post([this, a, ticket, message] {
+            starting_ = false;
+            if (a == Answer::Wrong) {
+                forget();
+                who_ = {};
+                screen_ = Screen::SignIn;
+                message_ = "Your sign-in has expired. Sign in again.";
+                return;
+            }
+            std::string error;
+            if (a != Answer::Ok || !play(settings_.install, manifest_, ticket, error)) {
+                message_ = a != Answer::Ok ? message : error;
+                home_ = Home::Failed;
+                return;
+            }
+            sendCrashesAfter(20);
+            glfwIconifyWindow(window_);
+        });
+        glfwPostEmptyEvent();
+    }).detach();
 }
 
 // What crashed or froze, sent home on a thread of its own after `delay` (launcher/crash_upload.h):
@@ -733,7 +757,7 @@ void Launcher::drawHome() {
             break;
         }
         case Home::Ready: {
-            if (button(main, "Play", true, false, 20.0f)) playNow();
+            if (button(main, starting_ ? "Starting..." : "Play", true, starting_, 20.0f)) playNow();
             panel(px({textX, rowY + 24.0f, 8.0f, 8.0f}), 4.0f * s_, hex(0x7FD66A), hex(0x7FD66A));
             words(textX + 16.0f, rowY + 33.0f, "Up to date", hex(kQuiet), 15.0f);
             if (tuned_) {
@@ -952,7 +976,7 @@ void Launcher::frame() {
             enter_ = false;
         }
     }
-    if (screen_ == Screen::Home && enter_ && home_ == Home::Ready) playNow();
+    if (screen_ == Screen::Home && enter_ && home_ == Home::Ready && !starting_) playNow();
     typed_.clear();
     backspaces_ = 0;
     tab_ = paste_ = false;

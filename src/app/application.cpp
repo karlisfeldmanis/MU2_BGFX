@@ -159,7 +159,7 @@ int Application::run(int argc, char** argv) {
     // The player's game plays only through the launcher, which signs him in and keeps the game up
     // to date; the server turns away any other way in (server --launcher-only). Said here in words
     // rather than as a connection that fails at the character screen.
-    if (launcher::sessionFromEnvironment().empty() && !args_.headless) {
+    if (!launcher::startedByLauncher() && !args_.headless) {
         core::logError("started without the launcher: nothing run");
         systemAlert("MU2", "Open MU2 Launcher to play.\n\nThe launcher signs you in and keeps the "
                            "game up to date. Sign in there and press Play.");
@@ -214,7 +214,7 @@ int Application::run(int argc, char** argv) {
 #else
             const char* platform = "macos";
 #endif
-            launcher::CrashFrom from{site, platform, "game", launcher::sessionFromEnvironment(), {}, {}};
+            launcher::CrashFrom from{site, platform, "game", {}, {}, {}};
             std::vector<std::filesystem::path> where = {std::filesystem::path(folders.crashes)};
             std::thread([where, from] { launcher::sendCrashes(where, from); }).detach();
         }

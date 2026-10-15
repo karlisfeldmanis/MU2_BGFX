@@ -180,6 +180,26 @@ Answer stillSigned(const Place& place, const Signed& who) {
     return Answer::Offline;
 }
 
+Answer gameTicket(const Place& place, const Signed& who, GameTicket& out, std::string& message) {
+    const Reply reply = request("POST", place.site + "/api/ticket", "{}", {kJson, "Authorization: Bearer " + who.token});
+    if (reply.status == 0) {
+        core::logError("launcher: ticket: %s", reply.error.c_str());
+        message = "Can't reach the server. Check your connection.";
+        return Answer::Offline;
+    }
+    const core::Json said = parse(reply.body, "the ticket's answer");
+    if (reply.status == 200) {
+        out.ticket = said["ticket"].stringOr("");
+        out.secret = said["secret"].stringOr("");
+        if (out.ticket.size() == 32 && out.secret.size() == 64) return Answer::Ok;
+        message = "The server's answer made no sense. Try again.";
+        return Answer::Offline;
+    }
+    if (reply.status == 401) return Answer::Wrong;
+    message = said["error"].stringOr("The server would not start the game. Try again.");
+    return reply.status == 429 ? Answer::Busy : Answer::Offline;
+}
+
 void signOut(const Place& place, const Signed& who) {
     if (!who.token.empty()) request("POST", place.site + "/api/logout", "{}", {kJson, "Authorization: Bearer " + who.token});
     forget();
@@ -481,18 +501,19 @@ std::vector<fs::path> crashFolders(const fs::path& install) {
     return {install / "logs", userFolder() / "logs"};
 }
 
-bool play(const fs::path& install, const Manifest& manifest, const Signed& who, std::string& error) {
+bool play(const fs::path& install, const Manifest& manifest, const GameTicket& ticket, std::string& error) {
     const fs::path exe = install / pathOf(manifest.exe);
+    const std::string handed = ticket.ticket + ":" + ticket.secret;
 #ifdef _WIN32
     // Inherited from ours, set only around the start so it never lingers here.
-    SetEnvironmentVariableW(L"MU2_SESSION", std::wstring(who.token.begin(), who.token.end()).c_str());
+    SetEnvironmentVariableW(L"MU2_TICKET", std::wstring(handed.begin(), handed.end()).c_str());
     std::wstring line = L"\"" + exe.wstring() + L"\"";
     STARTUPINFOW start{};
     start.cb = sizeof start;
     PROCESS_INFORMATION running{};
     const BOOL ok = CreateProcessW(exe.wstring().c_str(), line.data(), nullptr, nullptr, FALSE, 0, nullptr,
                                    install.wstring().c_str(), &start, &running);
-    SetEnvironmentVariableW(L"MU2_SESSION", nullptr);
+    SetEnvironmentVariableW(L"MU2_TICKET", nullptr);
     if (!ok) {
         error = "Could not start the game (" + std::to_string(GetLastError()) + ").";
         return false;
@@ -503,9 +524,11 @@ bool play(const fs::path& install, const Manifest& manifest, const Signed& who, 
 #else
     std::vector<std::string> env;
     for (char** e = environ; *e; ++e) {
-        if (std::string(*e).rfind("MU2_SESSION=", 0) != 0) env.emplace_back(*e);
+        if (std::string(*e).rfind("MU2_TICKET=", 0) != 0 && std::string(*e).rfind("MU2_SESSION=", 0) != 0) {
+            env.emplace_back(*e);
+        }
     }
-    env.push_back("MU2_SESSION=" + who.token);
+    env.push_back("MU2_TICKET=" + handed);
     std::vector<char*> envp;
     for (std::string& s : env) envp.push_back(s.data());
     envp.push_back(nullptr);
