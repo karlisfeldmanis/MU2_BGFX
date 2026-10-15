@@ -41,8 +41,11 @@ uniform vec4 u_outlineScale;
 // Sixteen taps over each of six widening rings: fine enough that the distance found does not
 // band at the feather's own width, and cheap enough that it runs only over the few thousand
 // pixels the fitted view rect now is.
-const int STEPS = 16;
-const int RINGS = 6;
+// static, as every shader's own constants are (shadow.sh, fs_ssao_body.sh): in HLSL a global
+// `const` without it is a uniform, which bgfx never sets, so on Direct3D 11 both read 0, the
+// searches never ran and no ring was drawn.
+static const int STEPS = 16;
+static const int RINGS = 6;
 
 // One tap, held inside the corner of the texture this frame actually drew into.
 //
