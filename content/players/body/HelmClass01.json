@@ -320,5 +320,9 @@
     }
   ],
   "uv_overrides_why": "S17's head is a few shells that each carry face and hair together, so the islands are hair and these lift the skin out by where it lands on the sheet, first rule winning. Found by sampling the sheet under every face's UV centre (2026-10-15): of 521 faces, the skin rules take 200 that read warm and light, the hair rules keep the painted forelock out of the face, and what is left outside them reads grey, the hair.",
-  "material_note": "hair for the white mane, skin for the face, ears and neck, as MuMain's head was; the split is uv_overrides, below."
+  "material_note": "hair for the white mane, skin for the face, ears and neck, as MuMain's head was; the split is uv_overrides, below.",
+  "rebind": {
+    "Bip01 Spine1": "Bip01 Head"
+  },
+  "rebind_from": "As HelmClass02's: S17's head binds 394 vertices to Bip01 Head and a ring of 9 at the base of the neck to Bip01 Spine1, two joints down, and the head turns a long way from the chest in MU's poses (56 degrees in action 5), so a rigidly bound ring is wrung by all of it. Taken onto the head, the fix the knights' heads carry (the user, 2026-10-15)."
 }
