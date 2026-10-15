@@ -12,6 +12,13 @@
 
 namespace mu::net {
 
+// Every wait on a server -- a connect, a join's Welcome and the world's past, the account's
+// answer -- given up from here on: the player closed the window while one was going, and the
+// load behind the spinner has to come back for the game to end (app/preloader.cpp). One way:
+// the run is ending. The server never calls it.
+void abandonWaits();
+bool waitsAbandoned();
+
 class Socket {
 public:
     Socket() = default;
@@ -22,7 +29,8 @@ public:
     Socket(Socket&& other) noexcept : fd_(other.fd_) { other.fd_ = -1; }
     Socket& operator=(Socket&& other) noexcept;
 
-    // A connection to host:port, blocking for at most `seconds`, then made non-blocking.
+    // A connection to host:port, blocking for at most `seconds` (or until abandonWaits), then
+    // made non-blocking.
     bool connect(const std::string& host, int port, double seconds, std::string& error);
     // A listening socket on every address, non-blocking.
     bool listen(int port, std::string& error);

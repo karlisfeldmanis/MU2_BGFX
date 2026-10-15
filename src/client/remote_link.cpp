@@ -28,7 +28,7 @@ bool RemoteLink::join(const std::string& host, int port, const net::Hello& hello
     // The one wait the client makes on the server: before the world is raised, nothing is
     // drawn that the wait could hold up.
     const auto until = std::chrono::steady_clock::now() + std::chrono::duration<double>(seconds);
-    while (std::chrono::steady_clock::now() < until) {
+    while (std::chrono::steady_clock::now() < until && !net::waitsAbandoned()) {
         // What came before a close is read first: an Elsewhere is said and the line shut.
         const bool open = socket_.receive(in_) && socket_.flush();
         net::Kind kind{};
@@ -70,7 +70,7 @@ bool RemoteLink::join(const std::string& host, int port, const net::Hello& hello
             // world is raised, so catchUp steps it whole. A long-running world's is a few MB.
             const auto pastUntil = std::chrono::steady_clock::now() + std::chrono::seconds(60);
             while (ticks_.size() < welcome.backlog) {
-                if (std::chrono::steady_clock::now() > pastUntil || !socket_.open()) {
+                if (std::chrono::steady_clock::now() > pastUntil || !socket_.open() || net::waitsAbandoned()) {
                     core::logError("server: %zu of %u ticks of the world's past came", ticks_.size(),
                                    welcome.backlog);
                     socket_.close();
@@ -83,7 +83,11 @@ bool RemoteLink::join(const std::string& host, int port, const net::Hello& hello
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
-    core::logError("server: %s:%d said nothing in %.0f s", host.c_str(), port, seconds);
+    if (net::waitsAbandoned()) {
+        core::logf("server: the wait for %s:%d given up; the window closed", host.c_str(), port);
+    } else {
+        core::logError("server: %s:%d said nothing in %.0f s", host.c_str(), port, seconds);
+    }
     socket_.close();
     return false;
 }
@@ -694,7 +698,7 @@ bool AccountLink::open(const std::string& host, int port, const net::Account& ac
     net::put(out, account);
     put(out);
     const auto until = std::chrono::steady_clock::now() + std::chrono::duration<double>(seconds);
-    while (socket_.open() && std::chrono::steady_clock::now() < until) {
+    while (socket_.open() && std::chrono::steady_clock::now() < until && !net::waitsAbandoned()) {
         if (poll(roster)) {
             core::logf("account: %s:%d has %zu character(s) on it", host.c_str(), port, roster.seats.size());
             return true;

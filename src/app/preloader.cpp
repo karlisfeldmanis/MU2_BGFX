@@ -22,6 +22,7 @@
 #include "core/files.h"
 #include "game/sound.h"
 #include "gfx/views.h"
+#include "net/socket.h"
 
 namespace mu::app {
 
@@ -428,7 +429,18 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
             settled = *quitEarly || settle(settledAt < 0.0 ? 0.0 : now - settledAt);
             settledAt = now;
         }
-        if (!*quitEarly && (!ctx.window.pump() || ctx.window.escapePressed())) *quitEarly = true;
+        // Closed during the load: gone for the player now, the system still answered, and every
+        // wait on the server given up, so the load comes back in a tenth of a second rather than
+        // at the end of a connect's or a Welcome's timeout -- up to 80 s that Windows showed as
+        // "Not Responding" (the network audit, 2026-10-15).
+        if (*quitEarly) {
+            ctx.window.pump();
+        } else if (!ctx.window.pump() || ctx.window.escapePressed()) {
+            *quitEarly = true;
+            net::abandonWaits();
+            ctx.window.hide();
+            core::logf("preloader: the window closed during the load; its waits given up");
+        }
         if (!*quitEarly) {
             const double at = since(spun);
             // After the first three: the first frame compiles the pass's pipeline and the

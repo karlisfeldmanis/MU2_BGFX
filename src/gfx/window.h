@@ -165,6 +165,9 @@ public:
     // focus is logged with who took it (focusOwner), which is what says why on the next report.
     bool focused() const;
     void toFront();
+    // Off the screen and the taskbar, still pumped: a window closed during a load is gone for the
+    // player at once, while the load behind it comes back (app/preloader.cpp).
+    void hide();
 
     // **While the OS holds this thread** (2026-10-15): on Windows a title bar held or dragged,
     // a window edge dragged, or the system menu open puts glfwPollEvents inside the system's own

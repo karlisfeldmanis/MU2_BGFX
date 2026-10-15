@@ -402,6 +402,10 @@ void Window::heldTick() {
     whileHeld_();
 }
 
+void Window::hide() {
+    if (handle_) glfwHideWindow(handle_);
+}
+
 bool Window::fullscreen() const { return handle_ && fullscreen_; }
 
 bool Window::focused() const { return handle_ && glfwGetWindowAttrib(handle_, GLFW_FOCUSED); }

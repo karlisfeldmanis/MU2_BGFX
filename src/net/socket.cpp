@@ -1,6 +1,7 @@
 #include "net/socket.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cerrno>
 #include <cstring>
 
@@ -51,6 +52,18 @@ int pollOne(int fd, short events, int ms) {
     WSAPOLLFD wait{SOCKET(fd), events, 0};
     return WSAPoll(&wait, 1, ms);
 }
+// Whether a connect under way has finished, either way, within `ms`. select, not WSAPoll:
+// before Windows 10 2004 WSAPoll never reported a refused connect, and a server that was down
+// waited out the whole timeout. A failed connect is in the except set on every Windows.
+bool connectDone(int fd, int ms) {
+    fd_set wrote, failed;
+    FD_ZERO(&wrote);
+    FD_ZERO(&failed);
+    FD_SET(SOCKET(fd), &wrote);
+    FD_SET(SOCKET(fd), &failed);
+    timeval wait{ms / 1000, (ms % 1000) * 1000};
+    return select(0, nullptr, &wrote, &failed, &wait) > 0;
+}
 bool nonBlocking(int fd) {
     u_long on = 1;
     return ioctlsocket(SOCKET(fd), FIONBIO, &on) == 0;
@@ -68,6 +81,7 @@ int pollOne(int fd, short events, int ms) {
     pollfd wait{fd, events, 0};
     return poll(&wait, 1, ms);
 }
+bool connectDone(int fd, int ms) { return pollOne(fd, POLLOUT, ms) == 1; }
 bool nonBlocking(int fd) {
     const int flags = fcntl(fd, F_GETFL, 0);
     return flags >= 0 && fcntl(fd, F_SETFL, flags | O_NONBLOCK) == 0;
@@ -94,7 +108,12 @@ constexpr int kSendFlags = MSG_NOSIGNAL;
 constexpr int kSendFlags = 0;
 #endif
 
+std::atomic<bool> g_abandoned{false};
+
 }  // namespace
+
+void abandonWaits() { g_abandoned = true; }
+bool waitsAbandoned() { return g_abandoned.load(); }
 
 Socket& Socket::operator=(Socket&& other) noexcept {
     if (this != &other) {
@@ -124,7 +143,7 @@ bool Socket::connect(const std::string& host, int port, double seconds, std::str
         error = std::string("cannot resolve ") + host + ": " + gai_strerror(status);
         return false;
     }
-    for (addrinfo* one = found; one != nullptr && fd_ < 0; one = one->ai_next) {
+    for (addrinfo* one = found; one != nullptr && fd_ < 0 && !waitsAbandoned(); one = one->ai_next) {
         const int fd = openSocket(one->ai_family, one->ai_socktype, one->ai_protocol);
         if (fd < 0) continue;
         nonBlocking(fd);
@@ -132,13 +151,22 @@ bool Socket::connect(const std::string& host, int port, double seconds, std::str
         int problem = status != 0 ? socketError() : 0;
         std::string why;
         if (status != 0 && connecting(problem)) {
-            if (pollOne(fd, POLLOUT, int(seconds * 1000.0)) == 1) {
+            // A tenth of a second at a time, so a window closed while it waits is not held
+            // for the rest of `seconds` (abandonWaits).
+            const auto until = std::chrono::steady_clock::now() + std::chrono::duration<double>(seconds);
+            bool done = false;
+            while (!done && !waitsAbandoned() && std::chrono::steady_clock::now() < until) {
+                const auto left = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    until - std::chrono::steady_clock::now()).count();
+                done = connectDone(fd, int(std::clamp<long long>(left, 0, 100)));
+            }
+            if (done) {
                 problem = 0;
                 socklen_t size = sizeof problem;
                 getsockopt(fd, SOL_SOCKET, SO_ERROR, bytesOf(&problem), &size);
                 status = problem == 0 ? 0 : -1;
             } else {
-                why = "timed out";
+                why = waitsAbandoned() ? "given up, the window closed" : "timed out";
             }
         }
         if (status == 0) {
