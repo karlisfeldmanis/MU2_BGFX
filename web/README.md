@@ -6,7 +6,7 @@ Design: the "MU2 Launcher" canvas, Website page.
 
 | File | What |
 | --- | --- |
-| `server.py` | the page, `/api/register`, `/api/login`, `/api/logout`, `/api/me`, `/api/downloads`, and `/internal/session` for mu2_server |
+| `server.py` | the page, `/api/register`, `/api/login`, `/api/logout`, `/api/me`, `/api/ticket`, `/api/downloads`, and `/internal/ticket` for mu2_server |
 | `site/` | `index.html` and the logo |
 | `Caddyfile` | HTTPS on mu-classic.com (and still on 37.27.158.226 for launchers already out), installers from disk, the rest to server.py |
 | `mu2-web.service` | the systemd unit; accounts in `/var/lib/mu2-web/accounts.db` |
@@ -23,10 +23,12 @@ Design: the "MU2 Launcher" canvas, Website page.
     sessions(token_hash, account_id, created, expires, last_used)   -- 90 days
 
 The launcher posts `{email, password}` to `/api/login` and keeps the 64-hex-digit token it gets
-back. Only the token's SHA-256 is stored. The token has the shape of the game's account key
-(`net::Account`, `keyShape` in server/src/accounts.cpp); the next step is for mu2_server to ask
-`GET http://127.0.0.1:8080/internal/session?token=T` and put the player's characters on account
-`T`'s id instead of the machine key. Caddy answers 404 for `/internal/` from outside.
+back. Only the token's SHA-256 is stored, and the token goes only over HTTPS: it never reaches the
+game (docs/plans/security.md). At each Play the launcher posts it to `/api/ticket` and hands the
+game the ticket and secret it gets back. mu2_server asks
+`GET http://127.0.0.1:8080/internal/ticket?ticket=X` the first time the game says that ticket,
+learns the account and the secret, and checks every later line's proof itself. Tickets live in
+memory for two minutes and are told once. Caddy answers 404 for `/internal/` from outside.
 
 On the box: `sqlite3 /var/lib/mu2-web/accounts.db 'select id, email, created from accounts'`.
 To delete one by hand, start with `PRAGMA foreign_keys=ON;` or its sessions stay behind: the
@@ -61,12 +63,17 @@ A crash or a freeze of the game or the launcher leaves a report in the player's 
 when it starts (src/launcher/crash_upload.h), to `POST /api/crash`. Each lands in
 `/var/lib/mu2-web/crashes/<day>/` -- the .txt, and on Windows its minidump -- with a line in
 `crashes.jsonl`: which program, the platform, the card, the build, the module it died in, and the
-account's id when the launcher signed in. Read them on the box:
+account's id when the launcher sent it (the game's own reports carry none: it never has the
+token). Read them on the box:
 
     curl -s http://127.0.0.1:8080/internal/crashes    # counted by module, and the latest thirty
     ls /var/lib/mu2-web/crashes/$(date -u +%F)/
 
 A report's first lines say where: `in nvwgf2umx.dll+0x1a2b3c` is NVIDIA's driver, `in MU2.exe+0x…`
-is ours -- `x86_64-w64-mingw32-addr2line -f -C -e MU2.exe 0x140000000+offset` against that
-release's exe (its sha256 is in the manifest; the box keeps every file under /srv/mu2-web/game/).
-On the Mac, `atos -o MU2.app/Contents/MacOS/MU2 -l <loaded at> <address>`.
+is ours. The players' binaries are stripped (`mu dist`), so a report is read against the
+unstripped one `mu dist` kept for that build, on the Mac that made the release, in
+`out/symbols/<commit>/<platform>/` -- never uploaded, and the report's build line names the
+commit. Keep that folder: deleting `out/` loses it, and a release's reports with it.
+
+    x86_64-w64-mingw32-addr2line -f -C -e out/symbols/<commit>/windows/MU2.exe 0x140000000+offset
+    atos -o out/symbols/<commit>/macos/MU2 -l <loaded at> <address>

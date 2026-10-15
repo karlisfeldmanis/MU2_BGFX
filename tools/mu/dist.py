@@ -14,7 +14,10 @@ Each step is said as it runs:
   4. The packs: a list a pack, and mupack writes each into Contents/Resources/data/.
   5. The proof: `mupack --check` mounts the packs as the game does and reads every file back
      through the game's own reader, byte for byte against its source.
-  6. Signed ad hoc, so it opens here. A Developer ID and notarisation are what let another Mac
+  6. The symbols kept and taken out: the unstripped binary goes to out/symbols/<commit>/<platform>/,
+     which is never uploaded, and the player's binary is stripped, so it does not carry our names
+     for every function (web/README.md, Crash reports, reads a report against the kept one).
+  7. Signed ad hoc, so it opens here. A Developer ID and notarisation are what let another Mac
      open it without a warning; that is a step this does not take.
 
 Every step runs niced, the packer held to `mu cores`.
@@ -34,6 +37,7 @@ import settings  # noqa: E402
 SHIP = os.path.join(OUT, "build-ship")
 WIN = os.path.join(OUT, "build-windows")
 SNAPSHOT = os.path.join(OUT, "build-ship-src")
+SYMBOLS = os.path.join(OUT, "symbols")
 DIST = os.path.join(ROOT, "dist")
 GLFW = "libglfw.3.dylib"
 
@@ -131,6 +135,24 @@ def bundle(app, say):
             raise RuntimeError(f"the app still links {lib}, which a player's Mac may not have")
 
 
+def strip_keeping(binary, made_from, platform, say, strip_to=None):
+    """The unstripped `binary` copied to out/symbols/<commit>/<platform>/, then stripped: in place
+    on the Mac, into `strip_to` for Windows, whose exe is copied out of the build that way."""
+    kept = os.path.join(SYMBOLS, made_from.split()[0], platform)
+    os.makedirs(kept, exist_ok=True)
+    shutil.copy2(binary, kept)
+    before = os.path.getsize(binary)
+    if platform == "windows":
+        run(["x86_64-w64-mingw32-strip", "-o", strip_to, binary], say)
+        after = os.path.getsize(strip_to)
+    else:
+        # A dSYM beside it as well, for atos's file and line where the build has them.
+        run(["dsymutil", binary, "-o", os.path.join(kept, os.path.basename(binary) + ".dSYM")], say)
+        run(["strip", binary], say)
+        after = os.path.getsize(binary)
+    say(f"stripped {before / 1e6:.1f} -> {after / 1e6:.1f} MB; the symbols kept in {kept}")
+
+
 def build_windows(cores, say):
     """MU2.exe, cross-compiled from the same snapshot by mingw (docs/plans/windows-client.md). Its
     shaders are SPIR-V, made by build-ship's own shaderc, the one this Mac can run."""
@@ -186,7 +208,7 @@ def dist_windows(say, ref, level):
     client = os.path.join(DIST, "windows", "MU2")
     shutil.rmtree(client, ignore_errors=True)
     os.makedirs(os.path.join(client, "logs"))
-    shutil.copy2(os.path.join(WIN, "MU2.exe"), client)
+    strip_keeping(os.path.join(WIN, "MU2.exe"), made_from, "windows", say, os.path.join(client, "MU2.exe"))
     files, size = pack(os.path.join(client, "data"), os.path.join(WIN, "shaders", "spirv"), "spirv",
                        os.path.join(DIST, "windows", "lists"), cores, level, say)
     with open(os.path.join(client, "BUILT_FROM"), "w") as out:
@@ -357,6 +379,7 @@ def dist(target, say, ref="HEAD", level=12):
 
     app = os.path.join(DIST, "macos", "MU2.app")
     bundle(app, say)
+    strip_keeping(os.path.join(app, "Contents", "MacOS", "MU2"), made_from, "macos", say)
     data = os.path.join(app, "Contents", "Resources", "data")
     files, size = pack(data, os.path.join(SHIP, "shaders", "metal"), "metal",
                        os.path.join(DIST, "macos", "lists"), cores, level, say)
