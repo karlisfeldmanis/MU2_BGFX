@@ -37,6 +37,7 @@ rsync -az --delete --prune-empty-dirs \
   --include='/CMakeLists.txt' \
   --include='/src/' --include='/src/net/***' --include='/src/core/***' --include='/src/content/***' --include='/src/sim/***' \
   --include='/src/game/' --include='/src/game/save.cpp' --include='/src/game/save.h' \
+  --include='/src/launcher/' --include='/src/launcher/sha256.cpp' --include='/src/launcher/sha256.h' \
   --include='/tests/' --include='/tests/*.cpp' --include='/tests/fixtures/***' \
   --include='/tools/' --include='/tools/bot/***' --include='/tools/raid/***' \
   --include='/content/' --include='/content/raid/***' \
