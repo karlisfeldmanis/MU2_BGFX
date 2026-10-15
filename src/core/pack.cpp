@@ -159,7 +159,10 @@ void packScramble(uint8_t* bytes, size_t n, uint64_t at) {
 int mountPacks(const std::string& dir) {
     std::vector<std::string> files;
     std::error_code error;
-    for (const auto& file : std::filesystem::directory_iterator(dir, error)) {
+    // increment(error), not the range-for's ++, which throws on a folder that fails part-way
+    // (an antivirus or a sync driver in the way): an uncaught throw before the crash watch.
+    for (std::filesystem::directory_iterator it(dir, error), end; !error && it != end; it.increment(error)) {
+        const std::filesystem::directory_entry& file = *it;
         if (file.path().extension() == ".mupak") files.push_back(file.path().generic_string());
     }
     // In name order, so which pack wins a path is the same on every machine.

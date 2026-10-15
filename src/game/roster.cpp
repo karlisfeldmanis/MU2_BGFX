@@ -119,8 +119,12 @@ std::vector<net::Claim> claimsFor(const std::string& server) {
     const fs::path folder = fs::path(core::userFolder()) / "characters";
     std::error_code error;
     if (!fs::is_directory(folder, error)) return claims;
-    for (const fs::directory_entry& entry : fs::directory_iterator(folder, error)) {
-        if (!entry.is_regular_file() || entry.path().extension() != ".json" ||
+    // increment(error) and is_regular_file(error): the throwing forms ended the lobby on a
+    // folder that failed part-way (an antivirus or a sync driver in the way).
+    for (fs::directory_iterator it(folder, error), end; !error && it != end; it.increment(error)) {
+        const fs::directory_entry& entry = *it;
+        std::error_code kind;
+        if (!entry.is_regular_file(kind) || entry.path().extension() != ".json" ||
             entry.path().filename() == "vault.json") {
             continue;
         }

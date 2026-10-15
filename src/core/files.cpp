@@ -58,8 +58,11 @@ std::vector<std::string> listFiles(const std::string& dir) {
     std::vector<std::string> leaves;
     if (g_source) leaves = g_source->list(dir);
     std::error_code error;
-    for (const auto& file : std::filesystem::directory_iterator(dir, error)) {
-        if (!file.is_regular_file(error)) continue;
+    // increment(error): the range-for's ++ throws on a folder that fails part-way.
+    for (std::filesystem::directory_iterator it(dir, error), end; !error && it != end; it.increment(error)) {
+        const std::filesystem::directory_entry& file = *it;
+        std::error_code kind;  // its own: one unreadable entry is skipped, not the rest
+        if (!file.is_regular_file(kind)) continue;
         std::string leaf = file.path().filename().string();
         if (!std::binary_search(leaves.begin(), leaves.end(), leaf)) leaves.push_back(leaf);
     }
