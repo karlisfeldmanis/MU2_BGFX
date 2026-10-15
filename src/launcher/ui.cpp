@@ -182,6 +182,7 @@ private:
     std::string message_;  // the sign-in's refusal, or why the home screen failed
     bool busy_ = false;    // the sign-in's worker is out
     bool starting_ = false;  // Play's ticket is being asked for (start)
+    bool bgfxUp_ = false;    // bgfx started (open): close() shuts down only what started
     bool stay_ = true;
 
     Field fields_[2];  // email, password
@@ -887,6 +888,7 @@ bool Launcher::open() {
     init.callback = &callback_;
     bgfx::renderFrame();
     if (!bgfx::init(init)) return false;
+    bgfxUp_ = true;
     if (!iface_.init("embedded")) return false;
     iface_.adopt(canvas_);
     if (word_.bake("AlegreyaSansSC-Bold.ttf", 48.0f, 512, 4, 1, 0)) wordTex_ = gfx::uploadFace(word_, "launcher words");
@@ -901,12 +903,18 @@ bool Launcher::open() {
 void Launcher::close() {
     stop_ = true;
     if (worker_.joinable()) worker_.join();
-    for (bgfx::TextureHandle t : {wordTex_, bodyTex_, wallpaper_.handle, logo_.handle}) {
-        if (bgfx::isValid(t)) bgfx::destroy(t);
+    // With no Vulkan, bgfx never started: shutting it down then crashed the launcher before its
+    // box could say why (Wine with vulkan-1.dll off, 2026-10-15).
+    if (bgfxUp_) {
+        for (bgfx::TextureHandle t : {wordTex_, bodyTex_, wallpaper_.handle, logo_.handle}) {
+            if (bgfx::isValid(t)) bgfx::destroy(t);
+        }
+        iface_.shutdown();
+        bgfx::shutdown();
+        bgfxUp_ = false;
     }
-    iface_.shutdown();
-    bgfx::shutdown();
     if (window_) glfwDestroyWindow(window_);
+    window_ = nullptr;
     glfwTerminate();
 }
 
