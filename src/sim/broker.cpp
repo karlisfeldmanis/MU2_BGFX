@@ -427,6 +427,49 @@ std::vector<uint8_t> Book::write() const {
     return bytes;
 }
 
+void Book::renumber(const std::vector<int32_t>& map) {
+    const auto to = [&](int32_t item) {
+        return item >= 0 && item < int32_t(map.size()) ? map[size_t(item)] : -1;
+    };
+    const auto move = [&](Held& what) {
+        if (what.empty()) return true;
+        what.item = to(what.item);
+        return what.item >= 0;
+    };
+    listings_.erase(std::remove_if(listings_.begin(), listings_.end(),
+                                   [&](Listing& one) { return !move(one.what); }),
+                    listings_.end());
+    for (auto& [owner, parcels] : collect_) {
+        for (Parcel& p : parcels) {
+            if (!move(p.what)) p.what = Held{};  // its Zen still comes
+        }
+    }
+    std::map<int32_t, std::vector<Sale>> sales;
+    for (auto& [item, list] : sales_) {
+        const int32_t moved = to(item);
+        if (moved < 0) continue;
+        for (Sale& s : list) move(s.what);
+        sales[moved] = std::move(list);
+    }
+    sales_ = std::move(sales);
+    for (auto& [seller, list] : soldBy_) {
+        for (Sale& s : list) move(s.what);
+    }
+    // A watch on a kind is watchItem's: its row in the low half.
+    for (auto& [who, keys] : watches_) {
+        std::vector<uint64_t> kept;
+        for (const uint64_t key : keys) {
+            if (key < watchItem(0)) {
+                kept.push_back(key);
+            } else if (const int32_t moved = to(int32_t(uint32_t(key))); moved >= 0) {
+                kept.push_back(watchItem(moved));
+            }
+        }
+        keys = std::move(kept);
+    }
+    ++version_;
+}
+
 bool Book::read(const std::vector<uint8_t>& bytes) {
     Reader r{bytes};
     if (r.u32() != kBookMagic) return false;

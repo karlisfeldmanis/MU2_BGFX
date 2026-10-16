@@ -17,12 +17,14 @@
 #include <array>
 #include <condition_variable>
 #include <cstdint>
+#include <map>
 #include <mutex>
 #include <string>
 #include <thread>
 #include <utility>
 #include <vector>
 
+#include "content/tables.h"
 #include "sim/realm.h"
 
 struct sqlite3;
@@ -38,6 +40,20 @@ public:
 
     // Opens or makes the file. False, with the reason in `error`, when it cannot.
     bool open(const std::string& path, std::string& error);
+
+    // **The item rows a save's numbers mean** (2026-10-17). A Held carries its row's index in
+    // the tables, and the tables are in name order, so a new item moves every row after it: the
+    // Pendant of Haste (row 177, a3d4dc48) made every saved thing past it read as the row above
+    // -- an Apple as Red Spirit Pants laid over its neighbours, a Ring of Ice +2 as a Loch's
+    // Feather +2, Guardian Pants as Spirit Pants (muclassic, 2026-10-16). Each row now names the
+    // item list it was written with (item_tables), and one written with another list has its
+    // things renumbered by name as it is read; a thing whose item is gone reads as nothing.
+    // Called after open and before any character or the book is read. False when the file
+    // would not take the list.
+    bool useItems(const content::Tables& tables, std::string& error);
+    // Renumbers a book read by findBook to this server's items (sim::Book::renumber's map), or
+    // null when it needs none.
+    const std::vector<int32_t>* bookRenumber() const { return bookRenumber_; }
 
     // A character as kept: under his token, in his world.
     struct Row {
@@ -155,8 +171,14 @@ private:
     // a lowered priority (checkpoints): what SQLite did inside whichever commit crossed 4 MB of
     // journal, on the one thread every world ticks on (sprint 25).
     void checkpoints(std::string path);
+    // A read character's things to this server's rows, from the list his row was written with.
+    void renumber(sim::Kept& kept, int items) const;
 
     sqlite3* db_ = nullptr;
+    // useItems': this server's list in item_tables, and every other list's old-to-new rows.
+    int items_ = 0;
+    std::map<int, std::vector<int32_t>> renumbers_;
+    const std::vector<int32_t>* bookRenumber_ = nullptr;
     std::thread checkpointer_;
     std::mutex mutex_;
     std::condition_variable wake_;

@@ -67,6 +67,62 @@ void testStore() {
     check(store.list("abcdef0123456789").empty(), "and listed no more");
 }
 
+// ---- a save's item numbers across a new item -------------------------------------------------
+//
+// muclassic, 2026-10-16: the Pendant of Haste went in at row 177 and every saved thing past it
+// read as the row above -- his Ring of Ice +2 a Loch's Feather +2, an Apple as Red Spirit Pants.
+// A row written before item lists were kept is read by the list without the pendant; one this
+// server writes reads back as it was written.
+void testItemRows() {
+    std::printf("item rows\n");
+    const std::string assets = MU2_ASSET_DIR;
+    content::Tables tables;
+    std::string error;
+    check(content::loadTables(assets + "/cooked/lorencia/lorencia.mur", tables, error), "tables: " + error);
+    const int32_t haste = tables.itemNamed("NecklaceHaste");
+    const int32_t ring = tables.itemNamed("Ring01");     // Ring of Ice
+    const int32_t apple = tables.itemNamed("Potion01");  // Apple
+    const int32_t sword = tables.itemNamed("Axe01");     // before the pendant, never moved
+    check(haste >= 0 && ring > haste && apple > haste && sword >= 0 && sword < haste,
+          "the pendant sits before the ring and the apple");
+
+    // An old server's save: its numbers one short past the pendant, written with no list.
+    const std::string file = scratchFile("items.db");
+    std::remove(file.c_str());
+    {
+        Store old;
+        check(old.open(file, error), "the old store opens: " + error);
+        Store::Row row;
+        row.token = 9;
+        row.kept.hero.slots[sim::kWorn] = sim::Held{ring - 1, 2, 1};
+        row.kept.hero.slots[sim::kWorn + 1] = sim::Held{apple - 1, 0, 1};
+        row.kept.hero.slots[sim::kWeaponRight] = sim::Held{sword, 3, 20};
+        row.kept.vault.put(0, sim::Held{ring - 1, 0, 1});
+        check(old.keep(row), "an old save kept");
+    }
+    Store store;
+    check(store.open(file, error) && store.useItems(tables, error), "the store takes its items: " + error);
+    sim::Kept back;
+    std::string world;
+    check(store.find(9, back, world), "the old save found");
+    check(back.hero.slots[sim::kWorn].item == ring && back.hero.slots[sim::kWorn].refinement == 2,
+          "the Ring of Ice +2 is a Ring of Ice again, not a Loch's Feather");
+    check(back.hero.slots[sim::kWorn + 1].item == apple, "the Apple an Apple, not Red Spirit Pants");
+    check(back.hero.slots[sim::kWeaponRight].item == sword, "a thing before the pendant unmoved");
+    check(back.vault[0].item == ring, "and the vault the same");
+
+    // Written again by this server, it reads back as written, and a second open moves nothing.
+    Store::Row again{9, "", back};
+    check(store.keep(again), "kept again");
+    Store reopened;
+    check(reopened.open(file, error) && reopened.useItems(tables, error), "reopened: " + error);
+    sim::Kept twice;
+    check(reopened.find(9, twice, world), "found again");
+    check(twice.hero.slots[sim::kWorn].item == ring && twice.hero.slots[sim::kWorn + 1].item == apple,
+          "renumbered once, never twice");
+    check(reopened.bookRenumber() == nullptr, "and no book to renumber");
+}
+
 // ---- the account's and the world's names --------------------------------------------------------
 
 void testNames() {
@@ -417,6 +473,7 @@ void testInvasion() {
 int main() {
     core::logSilence(true);
     testStore();
+    testItemRows();
     testNames();
     testChat();
     testRaise();

@@ -141,6 +141,10 @@ public:
 
     std::vector<uint8_t> write() const;
     bool read(const std::vector<uint8_t>& bytes);
+    // Every thing in it moved from the rows it was written with to these (old row -> new, -1 for
+    // an item no longer made): server::Store::bookRenumber's, for a book from another item list.
+    // A listing or a parcel of a gone item is dropped, and a watch on one forgotten.
+    void renumber(const std::vector<int32_t>& map);
 
 private:
     std::vector<Listing> listings_;

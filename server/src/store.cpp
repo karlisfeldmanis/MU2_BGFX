@@ -43,7 +43,57 @@ constexpr const char* kAdded[][2] = {
     {"name", "ALTER TABLE characters ADD COLUMN name TEXT NOT NULL DEFAULT ''"},
     {"slot", "ALTER TABLE characters ADD COLUMN slot INTEGER NOT NULL DEFAULT -1"},
     {"deleted", "ALTER TABLE characters ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0"},
+    // The item list (item_tables) his things are numbered by, 0 for a row from before lists
+    // were kept (Store::useItems).
+    {"items", "ALTER TABLE characters ADD COLUMN items INTEGER NOT NULL DEFAULT 0"},
 };
+
+// **The list every row had before lists were kept**: this server's rows less the one added on
+// 2026-10-16, the Pendant of Haste (a3d4dc48), which the server took at 19:20 UTC that day with
+// nothing to renumber. Every item before it was added since the server last started fresh
+// (2026-10-11) was there before any character was. Stored once, as list 1, the first time a
+// file is opened by a server that keeps lists, so a later new item never moves it.
+constexpr const char* kAddedOn20261016 = "NecklaceHaste";
+
+// A list as item_tables keeps it: the rows' names in order, one a line.
+std::string namesOf(const content::Tables& tables, const char* without = nullptr) {
+    std::string names;
+    for (const content::ItemRow& row : tables.items) {
+        if (without != nullptr && row.name == without) continue;
+        names += row.name;
+        names += '\n';
+    }
+    return names;
+}
+
+// Old row to this server's, by name; -1 for an item this server no longer has.
+std::vector<int32_t> renumbering(const std::string& names, const content::Tables& tables) {
+    std::vector<int32_t> map;
+    size_t at = 0;
+    while (at < names.size()) {
+        const size_t end = names.find('\n', at);
+        map.push_back(tables.itemNamed(names.substr(at, end - at)));
+        if (end == std::string::npos) break;
+        at = end + 1;
+    }
+    return map;
+}
+
+bool identity(const std::vector<int32_t>& map, size_t rows) {
+    if (map.size() != rows) return false;
+    for (size_t i = 0; i < map.size(); ++i) {
+        if (map[i] != int32_t(i)) return false;
+    }
+    return true;
+}
+
+sim::Held renumbered(const sim::Held& what, const std::vector<int32_t>& map) {
+    if (what.empty()) return what;
+    if (what.item >= int32_t(map.size()) || map[size_t(what.item)] < 0) return sim::Held{};
+    sim::Held moved = what;
+    moved.item = map[size_t(what.item)];
+    return moved;
+}
 
 std::string text(sqlite3_stmt* s, int column) {
     const auto* t = reinterpret_cast<const char*>(sqlite3_column_text(s, column));
@@ -155,8 +205,95 @@ bool Store::open(const std::string& path, std::string& error) {
             return false;
         }
     }
+    // And the Broker's book its list, as a character has his.
+    has.clear();
+    {
+        Statement q(db_, "PRAGMA table_info(broker)");
+        while (q && sqlite3_step(q.s) == SQLITE_ROW) has.push_back(text(q.s, 1));
+    }
+    if (std::find(has.begin(), has.end(), "items") == has.end() &&
+        !exec(db_, "ALTER TABLE broker ADD COLUMN items INTEGER NOT NULL DEFAULT 0")) {
+        error = path + ": " + sqlite3_errmsg(db_);
+        return false;
+    }
+    if (!exec(db_, "CREATE TABLE IF NOT EXISTS item_tables (id INTEGER PRIMARY KEY, names TEXT NOT NULL)")) {
+        error = path + ": " + sqlite3_errmsg(db_);
+        return false;
+    }
     if (path != ":memory:") checkpointer_ = std::thread(&Store::checkpoints, this, path);
     return true;
+}
+
+bool Store::useItems(const content::Tables& tables, std::string& error) {
+    if (db_ == nullptr || tables.items.empty()) {
+        error = "characters.db: no item rows to number its things by";
+        return false;
+    }
+    const auto add = [&](const std::string& names, int id) {
+        Statement q(db_, id > 0 ? "INSERT INTO item_tables (id, names) VALUES (?, ?)"
+                                : "INSERT INTO item_tables (names) VALUES (?)");
+        if (!q) return 0;
+        int at = 1;
+        if (id > 0) sqlite3_bind_int(q.s, at++, id);
+        sqlite3_bind_text(q.s, at, names.c_str(), int(names.size()), SQLITE_TRANSIENT);
+        return sqlite3_step(q.s) == SQLITE_DONE ? int(sqlite3_last_insert_rowid(db_)) : 0;
+    };
+    std::map<int, std::string> lists;
+    {
+        Statement q(db_, "SELECT id, names FROM item_tables");
+        while (q && sqlite3_step(q.s) == SQLITE_ROW) lists[sqlite3_column_int(q.s, 0)] = text(q.s, 1);
+    }
+    if (lists.find(1) == lists.end()) {
+        const std::string before = namesOf(tables, kAddedOn20261016);
+        if (add(before, 1) != 1) {
+            error = std::string("characters.db: item_tables: ") + sqlite3_errmsg(db_);
+            return false;
+        }
+        lists[1] = before;
+    }
+    const std::string mine = namesOf(tables);
+    items_ = 0;
+    for (const auto& [id, names] : lists) {
+        if (names == mine) items_ = id;
+    }
+    if (items_ == 0) {
+        items_ = add(mine, 0);
+        if (items_ == 0) {
+            error = std::string("characters.db: item_tables: ") + sqlite3_errmsg(db_);
+            return false;
+        }
+        lists[items_] = mine;
+    }
+    renumbers_.clear();
+    for (const auto& [id, names] : lists) {
+        if (id == items_) continue;
+        std::vector<int32_t> map = renumbering(names, tables);
+        if (!identity(map, tables.items.size())) renumbers_[id] = std::move(map);
+    }
+    // A row from before lists were kept was written with list 1.
+    if (const auto first = renumbers_.find(1); first != renumbers_.end()) renumbers_[0] = first->second;
+    bookRenumber_ = nullptr;
+    {
+        Statement q(db_, "SELECT items FROM broker WHERE id = 1");
+        if (q && sqlite3_step(q.s) == SQLITE_ROW) {
+            const auto found = renumbers_.find(sqlite3_column_int(q.s, 0));
+            if (found != renumbers_.end()) bookRenumber_ = &found->second;
+        }
+    }
+    core::logf("characters.db: %zu item rows, list %d; %zu older list(s) renumbered as read", tables.items.size(),
+               items_, renumbers_.count(0) ? renumbers_.size() - 1 : renumbers_.size());
+    return true;
+}
+
+void Store::renumber(sim::Kept& kept, int items) const {
+    const auto found = renumbers_.find(items);
+    if (found == renumbers_.end()) return;
+    const std::vector<int32_t>& map = found->second;
+    for (sim::Held& h : kept.hero.slots) h = renumbered(h, map);
+    for (int cell = 0; cell < sim::kVaultCells; ++cell) kept.vault.put(cell, renumbered(kept.vault[cell], map));
+    for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+        kept.machine.put(cell, renumbered(kept.machine[cell], map));
+    }
 }
 
 bool Store::who(uint64_t token, Who& out) {
@@ -177,7 +314,7 @@ std::vector<Store::Roll> Store::everyone() {
     std::vector<Roll> all;
     if (db_ == nullptr) return all;
     Statement q(db_,
-                "SELECT account, name, world, kin, level, saved, layout, kept FROM characters"
+                "SELECT account, name, world, kin, level, saved, layout, kept, items FROM characters"
                 " WHERE account != '' AND deleted = 0 ORDER BY saved DESC");
     if (!q) return all;
     while (sqlite3_step(q.s) == SQLITE_ROW) {
@@ -194,6 +331,7 @@ std::vector<Store::Roll> Store::everyone() {
             const auto* bytes = static_cast<const uint8_t*>(sqlite3_column_blob(q.s, 7));
             const std::vector<uint8_t> kept(bytes, bytes + sqlite3_column_bytes(q.s, 7));
             one.read = net::keptFrom(kept, one.kept, layout);
+            if (one.read) renumber(one.kept, sqlite3_column_int(q.s, 8));
         }
         all.push_back(std::move(one));
     }
@@ -204,7 +342,7 @@ std::vector<Store::Listed> Store::list(const std::string& account) {
     std::vector<Listed> all;
     if (db_ == nullptr || account.empty()) return all;
     Statement q(db_,
-                "SELECT token, name, slot, world, layout, kept, kin FROM characters"
+                "SELECT token, name, slot, world, layout, kept, kin, items FROM characters"
                 " WHERE account = ? AND deleted = 0 ORDER BY slot");
     if (!q) return all;
     sqlite3_bind_text(q.s, 1, account.c_str(), -1, SQLITE_TRANSIENT);
@@ -225,6 +363,7 @@ std::vector<Store::Listed> Store::list(const std::string& account) {
                                (unsigned long long)one.token);
                 continue;
             }
+            renumber(one.kept, sqlite3_column_int(q.s, 7));
         }
         all.push_back(std::move(one));
     }
@@ -285,7 +424,7 @@ bool Store::claim(const std::string& account, uint64_t token, const std::string&
 
 bool Store::find(uint64_t token, sim::Kept& out, std::string& world) {
     if (db_ == nullptr) return false;
-    Statement q(db_, "SELECT layout, kept, world FROM characters WHERE token = ? AND layout > 0 AND deleted = 0");
+    Statement q(db_, "SELECT layout, kept, world, items FROM characters WHERE token = ? AND layout > 0 AND deleted = 0");
     if (!q) return false;
     sqlite3_bind_int64(q.s, 1, sqlite3_int64(token));
     if (sqlite3_step(q.s) != SQLITE_ROW) return false;
@@ -297,6 +436,7 @@ bool Store::find(uint64_t token, sim::Kept& out, std::string& world) {
                        (unsigned long long)token, layout, kLayout);
         return false;
     }
+    renumber(out, sqlite3_column_int(q.s, 3));
     const auto* named = reinterpret_cast<const char*>(sqlite3_column_text(q.s, 2));
     world = named ? named : "";
     return true;
@@ -314,12 +454,12 @@ bool Store::keep(const std::vector<Row>& characters) {
     if (db_ == nullptr || characters.empty()) return db_ != nullptr;
     if (!exec(db_, "BEGIN")) return false;
     Statement q(db_,
-                "INSERT INTO characters (token, layout, kept, kin, level, money, saved, world)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+                "INSERT INTO characters (token, layout, kept, kin, level, money, saved, world, items)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 // Whose he is, his name and his pedestal are the account's to set, never a save's.
                 " ON CONFLICT(token) DO UPDATE SET layout = excluded.layout, kept = excluded.kept,"
                 " kin = excluded.kin, level = excluded.level, money = excluded.money,"
-                " saved = excluded.saved, world = excluded.world");
+                " saved = excluded.saved, world = excluded.world, items = excluded.items");
     bool ok = bool(q);
     const int64_t now = int64_t(std::time(nullptr));
     std::vector<uint8_t> bytes;
@@ -335,6 +475,7 @@ bool Store::keep(const std::vector<Row>& characters) {
         sqlite3_bind_int64(q.s, 6, kept.hero.money);
         sqlite3_bind_int64(q.s, 7, now);
         sqlite3_bind_text(q.s, 8, world.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(q.s, 9, items_);
         ok = sqlite3_step(q.s) == SQLITE_DONE;
         if (!ok) core::logError("characters.db: %s", sqlite3_errmsg(db_));
         sqlite3_reset(q.s);
@@ -350,10 +491,11 @@ int Store::count() {
 
 bool Store::keepBook(const std::vector<uint8_t>& bytes) {
     if (db_ == nullptr) return false;
-    Statement q(db_, "INSERT OR REPLACE INTO broker (id, book, saved) VALUES (1, ?, ?)");
+    Statement q(db_, "INSERT OR REPLACE INTO broker (id, book, saved, items) VALUES (1, ?, ?, ?)");
     if (!q) return false;
     sqlite3_bind_blob(q.s, 1, bytes.data(), int(bytes.size()), SQLITE_TRANSIENT);
     sqlite3_bind_int64(q.s, 2, sqlite3_int64(std::time(nullptr)));
+    sqlite3_bind_int(q.s, 3, items_);
     if (sqlite3_step(q.s) != SQLITE_DONE) {
         core::logError("characters.db: the Broker's book: %s", sqlite3_errmsg(db_));
         return false;

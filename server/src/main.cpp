@@ -286,13 +286,20 @@ int main(int argc, char** argv) {
         core::logError("%s", error.c_str());
         return 1;
     }
+    // The item rows (g_items), before any character or the book is read: a saved thing is its
+    // row's number, and the store renumbers one written with another list (Store::useItems). A
+    // server without them would read every bag by the wrong rows, so it does not open.
+    if (!content::loadTables(assets + "/cooked/lorencia/lorencia.mur", g_items, error)) {
+        core::logError("lorencia's tables: %s; not opened", error.c_str());
+        return 1;
+    }
+    if (!g_store.useItems(g_items, error)) {
+        core::logError("%s", error.c_str());
+        return 1;
+    }
     economyOpen(store);
     brokerOpen();
     loadGuilds();
-    // The roster's item rows (g_items): a server without them stands the screen's characters bare.
-    if (!content::loadTables(assets + "/cooked/lorencia/lorencia.mur", g_items, error)) {
-        core::logError("lorencia's tables: %s; the character screen's figures go bare", error.c_str());
-    }
     if (marketSample > 0) brokerSample(marketSample);
     net::Socket listener;
     if (!listener.listen(port, error)) {

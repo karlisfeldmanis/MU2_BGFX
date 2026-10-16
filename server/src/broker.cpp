@@ -478,6 +478,11 @@ void brokerOpen() {
     } else if (!g_book.read(bytes)) {
         core::logError("broker: the book in characters.db could not be read; a new one");
     } else {
+        // A book written with another item list, its things to this server's rows (Store::useItems).
+        if (const std::vector<int32_t>* map = g_store.bookRenumber()) {
+            g_book.renumber(*map);
+            core::logf("broker: the book renumbered to this server's items");
+        }
         core::logf("broker: %zu listings", g_book.listings().size());
     }
     g_bookKept = g_book.version();
