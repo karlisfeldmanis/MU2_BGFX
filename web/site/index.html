@@ -252,6 +252,7 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
     ['bloodcastle', 'A party breaking the Statue of Saint in Blood Castle'],
     ['devias', 'A Dark Knight in the snow of Devias beside a fallen Yeti and a dropped scroll'],
     ['losttower', 'A Dark Wizard casting Hellfire on a Death Knight beside the lava of the Lost Tower'],
+    ['atlans', 'A party of five, levels 128 to 145, against Lizard Kings and their lightning by a sunken ship in Atlans'],
     ['devilsquare', 'A party in Devil Square with dropped items on the ground and the wave tracker'],
     ['icarus', 'A winged party of five, levels 215 to 246, fighting Great Drakans in the skies of Icarus'],
     ['dungeon', 'A party of five, levels 55 to 64, grinding Ghosts by a torch in the Dungeon'],
@@ -316,6 +317,17 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
     });
   };
   const ytApi = el('script'); ytApi.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(ytApi);
+  // A finger's drag, in pixels, the row follows until it is let go (the swipe below).
+  function lay(drag) {
+    const n = slides.length;
+    slides.forEach((f, j) => {
+      let off = ((j - at) % n + n) % n;
+      if (off > n / 2) off -= n;
+      const far = Math.abs(off);
+      f.style.transition = drag ? 'none' : '';
+      f.style.transform = `translate(calc(-50% + ${off * 78}% + ${drag}px), -50%) scale(${off === 0 ? 1 : far === 1 ? 0.78 : 0.6})`;
+    });
+  }
   function show(i) {
     const n = slides.length;
     at = ((i % n) + n) % n;
@@ -323,6 +335,7 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
       let off = ((j - at) % n + n) % n;
       if (off > n / 2) off -= n;
       const far = Math.abs(off);
+      f.style.transition = '';
       f.style.transform = `translate(calc(-50% + ${off * 78}%), -50%) scale(${off === 0 ? 1 : far === 1 ? 0.78 : 0.6})`;
       f.style.opacity = off === 0 ? 1 : far === 1 ? 0.5 : far === 2 ? 0.2 : 0;
       f.style.zIndex = 10 - far;
@@ -342,6 +355,33 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
   track.querySelector('.next').addEventListener('click', () => show(at + 1));
   track.addEventListener('mouseenter', () => clearInterval(timer));
   track.addEventListener('mouseleave', restart);
+  // Swipe: a finger dragged sideways moves the row with it; let go past a fifth of a slide (or
+  // flicked) and it turns to the next one. Up and down still scroll the page (touch-action pan-y).
+  let x0 = 0, y0 = 0, t0 = 0, dx = 0, dragging = false, swiped = false;
+  track.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now(); dx = 0;
+    dragging = true; swiped = false; clearInterval(timer);
+  }, { passive: true });
+  track.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    dx = e.touches[0].clientX - x0;
+    if (!swiped && Math.abs(e.touches[0].clientY - y0) > Math.abs(dx)) { dragging = false; lay(0); restart(); return; }
+    if (Math.abs(dx) > 8) swiped = true;
+    if (swiped) lay(dx);
+  }, { passive: true });
+  const letGo = () => {
+    if (!dragging) return;
+    dragging = false;
+    const wide = slides[at].getBoundingClientRect().width || 1;
+    const fast = Math.abs(dx) > 30 && Date.now() - t0 < 300;
+    if (swiped && (Math.abs(dx) > wide / 5 || fast)) show(at + (dx < 0 ? 1 : -1));
+    else { lay(0); restart(); }
+  };
+  track.addEventListener('touchend', letGo);
+  track.addEventListener('touchcancel', letGo);
+  // The tap a swipe ends in is not a click on the slide under the finger.
+  track.addEventListener('click', e => { if (swiped) { e.stopPropagation(); e.preventDefault(); swiped = false; } }, true);
   show(0);
 
   // ---- create account
