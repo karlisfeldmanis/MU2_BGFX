@@ -11,6 +11,8 @@
 #pragma once
 
 #include <cstdio>
+#include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -115,6 +117,16 @@ private:
     game::World world_;
     // The windows, over a played world and nowhere else: a bench has nobody to show them for.
     game::Desk desk_;
+    // A bug report on its way to the website (launcher/bug_report.h): the thread sending it
+    // fills this, and the frame hands the answer to the report window. Shared, so a run that
+    // ends while one is out leaves the thread something to write to.
+    struct BugSending {
+        std::mutex lock;
+        bool done = false, sent = false;
+        std::string why;
+    };
+    std::shared_ptr<BugSending> bugSending_;
+    void sendBug(const Context& ctx, const game::Desk::BugAsk& ask);
     // One store of item models for both the windows' pictures and what lies on the grass.
     game::ItemModels itemModels_;
     game::Litter litter_;

@@ -15,6 +15,13 @@
 #include <unordered_map>
 
 #include "app/options.h"
+#ifdef MU2_CRASH_UPLOAD
+#include <thread>
+
+#include "build_version.h"
+#include "launcher/bug_report.h"
+#include "launcher/crash_upload.h"
+#endif
 #include "app/preloader.h"
 #include "core/args.h"
 #include "core/files.h"
@@ -1235,6 +1242,15 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                 if (at.index == frame) desk_.scriptType(text);
             }
             desk_.update(float(deltaSeconds), ctx.window, world_.played(), pointerX, pointerY);
+            // A bug report written: sent on a thread, and its answer back to the window.
+            if (game::Desk::BugAsk ask; desk_.takeReport(&ask)) sendBug(ctx, ask);
+            if (bugSending_) {
+                std::lock_guard<std::mutex> hold(bugSending_->lock);
+                if (bugSending_->done) {
+                    desk_.reportAnswered(bugSending_->sent, bugSending_->why);
+                    bugSending_.reset();
+                }
+            }
             // A box that has the keyboard has Escape too, which otherwise quits.
             ctx.window.setTyping(desk_.typing());
             // What the menu's Options changed: the display, the window's size, v-sync, the
@@ -2075,6 +2091,69 @@ void PlayMode::shutdown(Context& ctx) {
     itemModels_.shutdown();
     desk_.shutdown();
     world_.shutdown();
+}
+
+}  // namespace mu::app
+
+namespace mu::app {
+
+// The player's bug report to the website, on a thread of its own: the game goes on while it is
+// out, and the window says "Sending..." until the answer comes (game/ui/report.h). The site is
+// the crash reports' (application.cpp): the player's build always, a developer's only when
+// MU2_CRASH_SITE names one to try it against.
+void PlayMode::sendBug(const Context& ctx, const game::Desk::BugAsk& ask) {
+    bugSending_ = std::make_shared<BugSending>();
+#ifdef MU2_CRASH_UPLOAD
+    const char* asked = std::getenv("MU2_CRASH_SITE");
+#ifdef MU2_SHIP
+    const std::string site = asked && *asked ? asked : launcher::kCrashSite;
+#else
+    const std::string site = asked ? asked : "";
+#endif
+    if (site.empty()) {
+        core::logError("bug report not sent: a developer's build sends only to MU2_CRASH_SITE");
+        bugSending_->done = true;
+        bugSending_->why = "This build has no website to send to (MU2_CRASH_SITE).";
+        return;
+    }
+    launcher::BugReport report;
+    report.text = ask.text;
+    report.world = ask.world;
+    report.x = ask.x;
+    report.y = ask.y;
+    report.character = ask.character;
+    report.kind = ask.kind;
+    report.level = ask.level;
+#ifdef _WIN32
+    report.platform = "windows";
+#elif defined(__linux__)
+    report.platform = "linux";
+#else
+    report.platform = "macos";
+#endif
+    report.build = MU2_BUILD_VERSION;
+    report.renderer = bgfx::getRendererName(bgfx::getRendererType());
+    if (const bgfx::Caps* caps = bgfx::getCaps()) {
+        char gpu[16];
+        std::snprintf(gpu, sizeof gpu, "%04x:%04x", unsigned(caps->vendorId), unsigned(caps->deviceId));
+        report.gpu = gpu;
+    }
+    report.server = ctx.args.server;
+    const std::string token = launcher::ticketFromEnvironment();
+    std::thread([site, token, report, sending = bugSending_] {
+        std::string why;
+        const bool sent = launcher::sendBug(site, token, report, &why);
+        std::lock_guard<std::mutex> hold(sending->lock);
+        sending->done = true;
+        sending->sent = sent;
+        sending->why = why;
+    }).detach();
+#else
+    (void)ctx;
+    (void)ask;
+    bugSending_->done = true;
+    bugSending_->why = "This build cannot send reports.";
+#endif
 }
 
 }  // namespace mu::app

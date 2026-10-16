@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bug reports — MU Classic</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#0D0B0A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Alegreya+Sans+SC:wght@700&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+<style>
+/* The admins' page: the bug reports players sent from the game (server.py /api/bugs). */
+.bugs-page .wrap { max-width: 920px; }
+.filters { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.filters button { background: none; border: 0; border-radius: 3px; padding: 6px 12px; font: 500 15px/1.2 'Alegreya Sans', sans-serif;
+  color: var(--label); cursor: pointer; }
+.filters button b { font-weight: 500; color: var(--quiet); margin-left: 6px; font-variant-numeric: tabular-nums; }
+.filters button:hover { color: var(--bone-hi); }
+.filters button[aria-pressed="true"] { color: var(--bone-hi); background: rgba(243,232,212,.07); }
+.filters button[aria-pressed="true"] b { color: var(--bone); }
+.bug { padding: 18px 0; box-shadow: inset 0 -1px 0 var(--line); display: flex; flex-direction: column; gap: 8px; }
+.bug header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.bug .at { font-size: 14px; color: var(--quiet); font-variant-numeric: tabular-nums; }
+.bug .text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--bone-hi); font-size: 17px; }
+.bug .where { font-size: 14px; color: var(--quiet); overflow-wrap: anywhere; }
+.bug .where span + span::before { content: ' · '; }
+.bug.done .text { color: var(--label); }
+.state { height: 32px; padding: 0 8px; border: 1px solid var(--field-edge); border-radius: 3px; background: var(--field);
+  color: var(--bone); font: 15px 'Alegreya Sans', sans-serif; cursor: pointer; }
+.state:focus-visible, .filters button:focus-visible { outline: 2px solid var(--field-focus); outline-offset: 2px; }
+.state.new { color: var(--bone-hi); border-color: #5A4433; }
+.state.fixed { color: var(--live); }
+</style>
+</head>
+<body>
+
+<div class="bar">
+<a href="/"><img src="/logo.svg" alt="MU Classic home" width="435" height="261"></a>
+<span style="display: flex; gap: 20px">
+<a href="/online" style="font-weight: 500">Online</a>
+<a href="/account" style="font-weight: 500">Account</a>
+</span>
+</div>
+
+<main class="account-page bugs-page">
+<div class="wrap">
+<h1 class="page-title">Bug reports</h1>
+
+<p id="v-none" class="center muted" hidden>This page is for admins. <a href="/account" style="text-decoration: underline">Sign in</a> with an admin account.</p>
+
+<div id="v-list" class="form" style="gap: 12px" hidden>
+<div class="filters" id="filters" role="group" aria-label="Show"></div>
+<p id="err" class="err center" hidden></p>
+<div id="rows"></div>
+<p class="center muted" style="font-size: 14px" id="told"></p>
+</div>
+
+</div>
+</main>
+
+<footer>
+<div class="wrap">
+<img src="/logo.svg" alt="MU Classic" width="435" height="261">
+</div>
+</footer>
+
+<script src="/site.js"></script>
+<script>
+(() => {
+  const { $, el, api, when } = MU;
+
+  const STATES = [['new', 'New'], ['seen', 'Seen'], ['fixed', 'Fixed'], ['wontfix', 'Won’t fix']];
+  const map = (w) => String(w || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const PLATFORM = { windows: 'Windows', macos: 'macOS', linux: 'Linux' };
+  let bugs = [], showing = '';
+  try { showing = localStorage.getItem('mu-bugs-filter') || 'new'; } catch (e) { showing = 'new'; }
+
+  function local(seconds) {
+    return new Date(seconds * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function filters() {
+    const box = $('filters');
+    box.replaceChildren();
+    for (const [key, label] of [['', 'All']].concat(STATES)) {
+      const b = el('button', '', label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(showing === key));
+      b.appendChild(el('b', '', String(key ? bugs.filter((x) => x.state === key).length : bugs.length)));
+      b.addEventListener('click', () => {
+        showing = key;
+        try { localStorage.setItem('mu-bugs-filter', key); } catch (e) {}
+        render();
+      });
+      box.appendChild(b);
+    }
+  }
+
+  // Who and where: the character, the account, the machine, the server, each left out when not sent.
+  function where(b) {
+    const line = el('div', 'where');
+    const who = b.character ? b.character + (b.class ? ', ' + b.class : '') + (b.level != null ? ' ' + b.level : '') : '';
+    const at = b.world ? map(b.world) + (b.x != null && b.y != null ? ' ' + b.x + ',' + b.y : '') : '';
+    const account = b.account ? (b.account_name ? b.account_name + ' ' : '') + (b.email || '#' + b.account) : 'no account';
+    const machine = [b.renderer, b.gpu].filter(Boolean).join(', ');
+    for (const part of [who, at, account, PLATFORM[b.platform] || b.platform, b.build, machine, b.server]) {
+      if (part) line.appendChild(el('span', '', part));
+    }
+    return line;
+  }
+
+  function stateSelect(b) {
+    const s = el('select', 'state ' + b.state);
+    s.setAttribute('aria-label', 'State of report ' + b.id);
+    for (const [key, label] of STATES) {
+      const o = el('option', '', label);
+      o.value = key;
+      o.selected = b.state === key;
+      s.appendChild(o);
+    }
+    s.addEventListener('change', async () => {
+      const was = b.state, want = s.value;
+      s.disabled = true;
+      let ok = false;
+      try { ok = (await api('/api/bugs/state', { id: b.id, state: want })).status === 200; } catch (e) {}
+      s.disabled = false;
+      if (!ok) {
+        s.value = was;
+        $('err').textContent = 'Could not mark report ' + b.id + '. Try again.';
+        $('err').hidden = false;
+        return;
+      }
+      $('err').hidden = true;
+      b.state = want;
+      render();
+    });
+    return s;
+  }
+
+  function render() {
+    filters();
+    const rows = $('rows');
+    rows.replaceChildren();
+    const shown = showing ? bugs.filter((b) => b.state === showing) : bugs;
+    if (!shown.length) rows.appendChild(el('p', 'center muted', bugs.length ? 'None here.' : 'No reports yet.'));
+    for (const b of shown) {
+      const item = el('article', 'bug' + (b.state === 'fixed' || b.state === 'wontfix' ? ' done' : ''));
+      const head = el('header');
+      head.appendChild(el('span', 'at', '#' + b.id + ' · ' + local(b.at)));
+      head.appendChild(stateSelect(b));
+      item.appendChild(head);
+      item.appendChild(el('p', 'text', b.text));
+      item.appendChild(where(b));
+      rows.appendChild(item);
+    }
+    $('v-list').hidden = false;
+    $('v-none').hidden = true;
+  }
+
+  async function load() {
+    try {
+      const { status, said } = await api('/api/bugs');
+      if (status !== 200) { $('v-list').hidden = true; $('v-none').hidden = false; return; }
+      bugs = said.bugs || [];
+      $('told').textContent = 'Updated ' + when(Date.now() / 1000) + ' · refreshes every minute';
+      // A select held open is not redrawn under the pointer; the next minute catches it up.
+      if (!(document.activeElement && document.activeElement.classList.contains('state'))) render();
+    } catch (e) { /* the next turn tries again */ }
+  }
+  load();
+  setInterval(() => { if (!document.hidden) load(); }, 60000);
+})();
+</script>
+</body>
+</html>

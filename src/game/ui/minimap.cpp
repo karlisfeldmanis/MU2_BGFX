@@ -53,6 +53,9 @@ constexpr float kRimIn = 0.5f;      // of kFade, where the ring sits inside the 
 constexpr float kRimLine = 2.0f;    // its width
 constexpr float kRimAlpha = 0.55f;
 constexpr float kRimShadow = 0.5f;  // the dark hairline outside it
+// The bug button (game/ui/report.h): on the rim, cos 45 of the way out down and to the left.
+constexpr float kBugAt = 0.7071068f;
+constexpr float kBugRadius = 15.0f;
 // Tiles across the square, near to far; the wheel steps between them.
 constexpr float kSpans[] = {40.0f, 64.0f, 100.0f};
 constexpr int kZooms = int(sizeof kSpans / sizeof kSpans[0]);
@@ -558,6 +561,24 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
         focusX_ = heroX_;
         focusY_ = heroY_;
     }
+    // The bug button: on the rim at half past seven, clear of the map's name under the disc.
+    if (full_) {
+        bugR_ = 0.0f;
+        bugPressing_ = false;
+    } else {
+        const float rim = radius_ - kFade * u * kRimIn;
+        bugX_ = std::round(map_.midX() - rim * kBugAt);
+        bugY_ = std::round(map_.midY() + rim * kBugAt);
+        bugR_ = std::round(kBugRadius * u);
+        const bool over = overBug(pointer.x, pointer.y);
+        const float step = seconds / style::kHoverSeconds;
+        bugLift_ = over || reporting_ ? std::min(1.0f, bugLift_ + step) : std::max(0.0f, bugLift_ - step);
+        if (pointer.pressed) bugPressing_ = over;
+        if (pointer.released) {
+            if (bugPressing_ && over) reportAsked_ = true;
+            bugPressing_ = false;
+        }
+    }
 
     // His facing, eased round the short way.
     const sim::Body& hero = realm.hero();
@@ -762,6 +783,9 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
     }
     now_.column = int(std::lround(hero.x));
     now_.row = int(std::lround(hero.y));
+    now_.bugLift = int(std::lround(bugLift_ * 8.0f));
+    now_.bugPressed = bugPressing_ && overBug(pointer.x, pointer.y);
+    now_.reporting = reporting_;
     showing_ = true;
     if (built_ && now_ == drawn_) return;
     rebuild(play);
@@ -1073,6 +1097,72 @@ void Minimap::rebuild(const Play& play) {
             if (bottom - 24.0f * u < 4.0f * u) bottom = float(mark.y) / 16.0f + cellPx * 0.4f + 24.0f * u;
             controls::hint(canvas_, x, bottom, words, u);
         }
+    }
+    if (!full_) drawBug();
+}
+
+// A dark disc on the rim, an iron ring round it that lights under the pointer and goes blood
+// while the window is up, and a bug in bone: a round body split down its back, a head, two
+// feelers and three legs a side, all flat shapes, baked in code as the map's glyphs are.
+void Minimap::drawBug() {
+    if (bugR_ <= 0.0f) return;
+    const float u = tip::unit();
+    const float lift = float(now_.bugLift) / 8.0f;
+    const float cx = bugX_, cy = bugY_ + (now_.bugPressed ? 1.0f * u : 0.0f);
+    const auto disc = [&](float x, float y, float rx, float ry, uint32_t tone) {
+        constexpr int kSides = 24;
+        float xy[kSides * 2];
+        uint32_t tones[kSides];
+        for (int i = 0; i < kSides; ++i) {
+            const float t = 6.2831853f * float(i) / float(kSides);
+            xy[i * 2] = x + std::cos(t) * rx;
+            xy[i * 2 + 1] = y + std::sin(t) * ry;
+            tones[i] = tone;
+        }
+        canvas_.polygon(xy, tones, kSides);
+    };
+    const auto stroke = [&](float x0, float y0, float x1, float y1, float w, uint32_t tone) {
+        const float dx = x1 - x0, dy = y1 - y0, len = std::max(0.001f, std::sqrt(dx * dx + dy * dy));
+        const float nx = -dy / len * w * 0.5f, ny = dx / len * w * 0.5f;
+        const float xy[8] = {x0 + nx, y0 + ny, x1 + nx, y1 + ny, x1 - nx, y1 - ny, x0 - nx, y0 - ny};
+        const uint32_t tones[4] = {tone, tone, tone, tone};
+        canvas_.polygon(xy, tones, 4);
+    };
+    const auto mix = [](uint32_t a, uint32_t b, float t) {
+        uint32_t out = 0;
+        for (int shift = 0; shift < 32; shift += 8) {
+            const float x = float((a >> shift) & 0xFF), y = float((b >> shift) & 0xFF);
+            out |= uint32_t(std::lround(x + (y - x) * t)) << shift;
+        }
+        return out;
+    };
+    const float r = bugR_;
+    disc(cx, cy, r + std::max(1.0f, u), r + std::max(1.0f, u), style::kSeam);
+    disc(cx, cy, r, r, now_.reporting ? style::kBlood : mix(style::kIron, style::kIronHi, lift));
+    disc(cx, cy, r - std::max(1.0f, 1.5f * u), r - std::max(1.0f, 1.5f * u), mix(style::kAsh1, style::kAsh3, lift));
+
+    const uint32_t ink = now_.reporting ? style::kBoneHi : mix(style::kBone2, style::kBoneHi, lift);
+    const float s = r * 0.62f;  // the bug's half height
+    const float w = std::max(1.0f, 1.3f * u);
+    // Three legs a side, from the body's flank, the front pair forward and the back pair back.
+    for (int side = -1; side <= 1; side += 2) {
+        const float f = float(side);
+        stroke(cx + f * s * 0.30f, cy - s * 0.05f, cx + f * s * 0.80f, cy - s * 0.35f, w, ink);
+        stroke(cx + f * s * 0.35f, cy + s * 0.25f, cx + f * s * 0.85f, cy + s * 0.25f, w, ink);
+        stroke(cx + f * s * 0.30f, cy + s * 0.55f, cx + f * s * 0.75f, cy + s * 0.90f, w, ink);
+        // A feeler off the head.
+        stroke(cx + f * s * 0.12f, cy - s * 0.55f, cx + f * s * 0.40f, cy - s * 0.95f, w, ink);
+    }
+    disc(cx, cy + s * 0.28f, s * 0.40f, s * 0.58f, ink);           // the body
+    disc(cx, cy - s * 0.42f, s * 0.24f, s * 0.20f, ink);           // the head
+    stroke(cx, cy - s * 0.18f, cx, cy + s * 0.82f, w, mix(style::kAsh1, style::kAsh3, lift));  // its back's seam
+
+    // Named under the pointer, left of the button, inside the screen.
+    if (now_.bugLift >= 8 && !now_.reporting) {
+        const std::string words = "Report a bug";
+        const float wide = controls::labelWidth(13.0f * u, words) + 16.0f * u;
+        const float x = std::max(wide * 0.5f + 4.0f * u, cx - r - 6.0f * u - wide * 0.5f);
+        controls::hint(canvas_, x, cy + 12.0f * u, words, u);
     }
 }
 

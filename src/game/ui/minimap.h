@@ -83,8 +83,18 @@ public:
     bool covers(float x, float y) const {
         if (full_) return false;
         const float dx = x - map_.midX(), dy = y - map_.midY();
-        return showing_ && dx * dx + dy * dy < radius_ * radius_;
+        return showing_ && (dx * dx + dy * dy < radius_ * radius_ || overBug(x, y));
     }
+    // **The bug button** on the rim, low on the left (game/ui/report.h): WoW's place for the
+    // small buttons that are always there, out of the fight's way and beside the place a report
+    // sends. Pressed, it asks for the report window, which takeReport() hands on once; lit while
+    // that window is up (setReporting).
+    bool takeReport() {
+        const bool asked = reportAsked_;
+        reportAsked_ = false;
+        return asked;
+    }
+    void setReporting(bool on) { reporting_ = on; }
     // The land the chart reads its water from, by the floor MU paints it with. Null charts
     // everything unwalkable alike.
     void setGround(const content::Ground* ground) { ground_ = ground; }
@@ -121,6 +131,15 @@ private:
     void fullChart(const Play& play);
     // Screen offset from the square's middle, in pixels, of a point `dc, dr` tiles from him.
     void place(float dc, float dr, float* sx, float* sy) const;
+    bool overBug(float x, float y) const {
+        const float dx = x - bugX_, dy = y - bugY_;
+        return showing_ && !full_ && bugR_ > 0.0f && dx * dx + dy * dy < bugR_ * bugR_;
+    }
+    // The bug button, drawn over the rim.
+    void drawBug();
+    float bugX_ = 0.0f, bugY_ = 0.0f, bugR_ = 0.0f;  // its middle and radius, in pixels
+    float bugLift_ = 0.0f;
+    bool bugPressing_ = false, reportAsked_ = false, reporting_ = false;
 
     gfx::Canvas canvas_;
     bool showing_ = false;
@@ -177,7 +196,11 @@ private:
         // copy), MU's map number -1 for none, its copy and the tile it came down on
         // (Play::dragonLanded, net::Invasion).
         int dragonMap = -1, dragonCopy = 0, dragonColumn = 0, dragonRow = 0;
+        // The bug button: its hover in eighths, pressed, and lit for the window being up.
+        int bugLift = 0;
+        bool bugPressed = false, reporting = false;
         bool operator==(const Face& o) const {
+            if (bugLift != o.bugLift || bugPressed != o.bugPressed || reporting != o.reporting) return false;
             return width == o.width && height == o.height && column == o.column &&
                    row == o.row && heroX == o.heroX && heroY == o.heroY && turn == o.turn &&
                    zoom == o.zoom && full == o.full && hovered == o.hovered && marks == o.marks &&

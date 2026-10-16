@@ -509,7 +509,7 @@ if(WIN32 OR APPLE OR MU2_LINUX_CLIENT)
     COMMENT "the launcher's files, inside it")
   # HTTPS and the crash reports sent home (launcher/crash_upload.h): the launcher's, and linked
   # by the game too, which sends what is waiting when it was started without the launcher.
-  add_library(mu_report STATIC src/launcher/crash_upload.cpp)
+  add_library(mu_report STATIC src/launcher/crash_upload.cpp src/launcher/bug_report.cpp)
   target_link_libraries(mu_report PUBLIC mu_core)
   target_compile_options(mu_report PRIVATE ${MU_WARNINGS})
   if(WIN32)
@@ -700,6 +700,7 @@ add_library(mu_game STATIC
   src/game/ui/broker_draw.cpp
   src/game/ui/mixer.cpp
   src/game/ui/amount.cpp
+  src/game/ui/report.cpp
   src/game/ui/square_result.cpp
   src/game/ui/menu.cpp
   src/game/ui/slab.cpp

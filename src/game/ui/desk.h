@@ -33,6 +33,7 @@
 #include "game/ui/menu.h"
 #include "game/ui/minimap.h"
 #include "game/ui/quest_dialog.h"
+#include "game/ui/report.h"
 #include "game/ui/square_result.h"
 #include "game/ui/tracker.h"
 #include "game/ui/travel.h"
@@ -90,7 +91,7 @@ public:
     // Whether a box has the keyboard, which the window is told so Escape cancels the box
     // rather than quitting the game.
     bool typing() const {
-        return amount_.up() || chat_.typing() || broker_.typing() || guild_.typing() || guildMake_.typing();
+        return amount_.up() || report_.up() || chat_.typing() || broker_.typing() || guild_.typing() || guildMake_.typing();
     }
     // A scripted potion key for the next update, 0 to 3.
     void scriptKey(int key) { scriptedKey_ = key; }
@@ -207,6 +208,20 @@ public:
     bool menuUp() const { return menu_.up(); }
     // Exit Game was pressed: the run ends after this frame, and shutdown saves.
     bool quitAsked() const { return quitAsked_; }
+    // A bug report written and Send pressed (game/ui/report.h): his words and where he stood,
+    // handed on once, for the mode to send (launcher/bug_report.h); its answer comes back
+    // through reportAnswered.
+    struct BugAsk {
+        std::string text, world, character, kind;
+        int x = 0, y = 0, level = 0;
+    };
+    bool takeReport(BugAsk* ask) {
+        if (!reportReady_) return false;
+        reportReady_ = false;
+        *ask = reportAsk_;
+        return true;
+    }
+    void reportAnswered(bool sent, const std::string& why) { report_.answered(sent, why); }
     // Switch Character was pressed: the run goes back to the character screen after this frame.
     bool switchAsked() const { return switchAsked_; }
     void allowSwitch(bool on) { menu_.allowSwitch(on); }
@@ -262,6 +277,9 @@ private:
     bool bagForMachine_ = false;
     // The number box the vault's coin buttons open. Modal: see Desk::update.
     Amount amount_;
+    Report report_;
+    BugAsk reportAsk_;
+    bool reportReady_ = false;
     // A quest giver's window and the quest on screen (game/ui/quest_dialog.h, tracker.h).
     QuestDialog questDialog_;
     // The travel list, Tab's (game/ui/travel.h).

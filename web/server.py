@@ -40,6 +40,15 @@ The routes:
     POST /api/comments   Bearer T {post, text}      -> 201 {ok} | 400 {error} | 401 | 429
          on the posts of site/posts.json, under the account's name.
     GET  /api/downloads                             -> 200 {windows: {file, bytes} | null, macos: ...}
+    POST /api/bug        {text, platform?, build?, renderer?, gpu?, world?, x?, y?, character?, class?,
+                          level?, server?}  [Bearer T]  -> 200 {ok, id} | 400 {error} | 413 | 429 {error: "later"}
+         a player's bug report from the game: their words (1 to MOST_BUG_TEXT characters) and where
+         they stood. A line in bugs.jsonl beside the database; a token, or the game's `ticket:secret`,
+         files it under its account, as for /api/crash. BUG_LIMIT an address, MOST_BUGS_A_DAY in all.
+    GET  /api/bugs       Bearer T of an admin       -> 200 {bugs: [...]} | 404 for anyone else
+         every report, newest first, each with its state and its account's email and name (the /bugs page).
+    POST /api/bugs/state Bearer T of an admin {id, state}  -> 200 {ok} | 400 | 404
+         a report marked one of BUG_STATES; kept as a line of its own in bugs.jsonl.
     GET  /api/online     Bearer T of an admin       -> 200 {at, fresh, players: [...]} | 404 for anyone else
          who is on the game server now, as mu2_server last told it (the admins' /online page), and
          `recent`: the last RECENT_SHOWN plays of the last RECENT_DAYS days, bots left out; and
@@ -136,6 +145,17 @@ MOST_CRASH_BODY = 6 * 1024 * 1024
 MOST_CRASHES_A_DAY = 2000
 CRASH_FIELDS = {"platform": 16, "sender": 16, "gpu": 160, "driver": 64}
 CRASH_FILE = re.compile(r"^[A-Za-z0-9_.-]{1,96}\.txt$")
+
+# A bug report from the game: the player's words, and where and with what they played. Each field
+# is cut to its length here and any other key is dropped; the numbers are kept only as whole numbers.
+MOST_BUG_BODY = 16 * 1024
+MOST_BUG_TEXT = 2000
+MOST_BUGS_A_DAY = 1000
+BUG_FIELDS = {"build": 64, "renderer": 120, "gpu": 160, "world": 32, "character": 32, "class": 32, "server": 64}
+BUG_NUMBERS = ("x", "y", "level")
+BUG_PLATFORMS = ("windows", "macos", "linux")
+# What an admin marks a report: every one comes in "new".
+BUG_STATES = ("new", "seen", "fixed", "wontfix")
 
 # The launchers that must be replaced: they cannot update themselves, so the site tells them so.
 # A launcher says "MU2Launcher/<build>" (src/launcher/https.h kAgent); those before crash reports
@@ -281,6 +301,28 @@ class Store:
         self.games_swept = 0
         # Every character of an account, as mu2_server last listed it (told_characters).
         self.characters = []
+        # The bug reports (bug()), in bugs.jsonl beside the database: a line for each report, and a
+        # line {id, state, at} for each time an admin marks one, folded onto it as the file is read.
+        # Kept in memory too, by id: a few thousand short lines at most.
+        self.bugs_path = path.parent / "bugs.jsonl"
+        self.bug_lock = threading.Lock()
+        self.bugs = {}
+        self.bug_days = {}
+        if self.bugs_path.is_file():
+            with self.bugs_path.open() as f:
+                for line in f:
+                    try:
+                        row = json.loads(line)
+                    except ValueError:
+                        continue
+                    if not isinstance(row, dict) or not isinstance(row.get("id"), int):
+                        continue
+                    if "text" in row:
+                        self.bugs[row["id"]] = row
+                        day = time.strftime("%Y-%m-%d", time.gmtime(row.get("at", 0)))
+                        self.bug_days[day] = self.bug_days.get(day, 0) + 1
+                    elif row["id"] in self.bugs and row.get("state") in BUG_STATES:
+                        self.bugs[row["id"]] |= {"state": row["state"], "state_at": row.get("at", 0)}
         self.crash_days = {}
         for row in self.crash_rows():
             self.crash_seen.add(row.get("sha"))
@@ -644,6 +686,46 @@ class Store:
             self.crash_days[day] = self.crash_days.get(day, 0) + 1
             return "kept"
 
+    def bug(self, row: dict):
+        """Keeps one bug report under the next id, and returns the id; None when the day is full."""
+        with self.bug_lock:
+            day = time.strftime("%Y-%m-%d", time.gmtime(row["at"]))
+            if self.bug_days.get(day, 0) >= MOST_BUGS_A_DAY:
+                return None
+            row = {"id": max(self.bugs, default=0) + 1} | row | {"state": "new"}
+            with self.bugs_path.open("a") as f:
+                f.write(json.dumps(row, separators=(",", ":")) + "\n")
+            self.bugs[row["id"]] = row
+            self.bug_days[day] = self.bug_days.get(day, 0) + 1
+            return row["id"]
+
+    def set_bug_state(self, bug: int, state: str) -> bool:
+        with self.bug_lock:
+            if bug not in self.bugs:
+                return False
+            now = int(time.time())
+            with self.bugs_path.open("a") as f:
+                f.write(json.dumps({"id": bug, "state": state, "at": now}, separators=(",", ":")) + "\n")
+            self.bugs[bug] |= {"state": state, "state_at": now}
+            return True
+
+    def bugs_report(self) -> list:
+        """Every report, newest first, with its account's email and name."""
+        with self.bug_lock:
+            rows = [dict(row) for row in self.bugs.values()]
+        rows.sort(key=lambda row: -row["id"])
+        ids = sorted({row["account"] for row in rows if isinstance(row.get("account"), int)})
+        accounts = {}
+        for start in range(0, len(ids), 500):
+            chunk = ids[start:start + 500]
+            accounts |= {row[0]: (row[1], row[2] or "") for row in self.db().execute(
+                f"SELECT id, email, name FROM accounts WHERE id IN ({','.join('?' * len(chunk))})", chunk)}
+        for row in rows:
+            if "account" in row:
+                email, name = accounts.get(row["account"], ("", ""))
+                row |= {"email": email, "account_name": name}
+        return rows
+
     def crashes_report(self) -> dict:
         rows = self.crash_rows()
         where = {}
@@ -712,6 +794,8 @@ LOGIN_LIMIT = Limit(10, 60)
 MACHINE_LIMIT = Limit(60, 3600)
 # Eight a start (crash_upload.cpp kMostAStart), a few starts an hour.
 CRASH_LIMIT = Limit(24, 3600)
+# Bug reports: a player who finds ten in an hour has said what there is to say.
+BUG_LIMIT = Limit(10, 3600)
 # A ticket a Play: sixty an hour is a player who starts the game every minute.
 TICKET_LIMIT = Limit(60, 3600)
 # Comments, per account: a conversation, not a flood.
@@ -788,6 +872,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.machine()
         if path == "/api/crash":
             return self.crash()
+        if path == "/api/bug":
+            return self.bug()
+        if path == "/api/bugs/state":
+            return self.bug_state()
         if path == "/api/ticket":
             return self.ticket()
         if path == "/api/name":
@@ -929,6 +1017,63 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(429, {"error": "later"})
         print(f"{self.client()} crash {kept}: {row['program']} {row['kind']} {row.get('platform', '?')} "
               f"{row.get('gpu') or row.get('renderer', '')} | {row['what']} {row['where']}", flush=True)
+        self.reply(200, {"ok": True})
+
+    def bug(self):
+        """A player's bug report from the game, with where they stood when they wrote it."""
+        if int(self.headers.get("Content-Length") or 0) > MOST_BUG_BODY:
+            return self.reply(413, {"error": "too big"})
+        if not BUG_LIMIT.allow(self.client()):
+            return self.reply(429, {"error": "later"})
+        said = self.body(MOST_BUG_BODY)
+        if said is None:
+            return self.reply(400, {"error": "bad request"})
+        text = said.get("text")
+        text = text.strip() if isinstance(text, str) else ""
+        if not 1 <= len(text) <= MOST_BUG_TEXT:
+            return self.reply(400, {"error": f"Write 1 to {MOST_BUG_TEXT} characters."})
+        row = {"at": int(time.time())}
+        signed = self.who() if self.bearer() else None
+        account = signed[0] if signed else self.store.ticket_account(self.bearer())
+        if account:
+            row["account"] = account
+        row["text"] = text
+        if said.get("platform") in BUG_PLATFORMS:
+            row["platform"] = said["platform"]
+        for key, room in BUG_FIELDS.items():
+            value = said.get(key)
+            if isinstance(value, str) and value.strip():
+                row[key] = value.strip()[:room]
+        for key in BUG_NUMBERS:
+            value = said.get(key)
+            if isinstance(value, int) and not isinstance(value, bool) and abs(value) < 1_000_000:
+                row[key] = value
+        bug = self.store.bug(row)
+        if bug is None:
+            return self.reply(429, {"error": "later"})
+        print(f"{self.client()} bug {bug}: {row.get('character', '?')} in {row.get('world', '?')} "
+              f"{row.get('platform', '?')} | {text[:80]!r}", flush=True)
+        self.reply(200, {"ok": True, "id": bug})
+
+    def admin(self):
+        """The admin's account, or None with 404 already answered (as for a page that does not exist)."""
+        row = self.who()
+        if row is None or row[3] != "admin":
+            self.reply(404, {"error": "not found"})
+            return None
+        return row
+
+    def bug_state(self):
+        row = self.admin()
+        if row is None:
+            return
+        said = self.body() or {}
+        bug, state = said.get("id"), said.get("state")
+        if state not in BUG_STATES or not isinstance(bug, int) or isinstance(bug, bool):
+            return self.reply(400, {"error": f"state is one of {', '.join(BUG_STATES)}"})
+        if not self.store.set_bug_state(bug, state):
+            return self.reply(404, {"error": "no such report"})
+        print(f"{self.client()} account {row[0]} marked bug {bug} {state}", flush=True)
         self.reply(200, {"ok": True})
 
     def told_online(self):
@@ -1073,6 +1218,8 @@ class Handler(BaseHTTPRequestHandler):
             if row is None or row[3] != "admin":
                 return self.reply(404, {"error": "not found"})
             return self.reply(200, self.store.online_report())
+        if url.path == "/api/bugs":
+            return self.reply(200, {"bugs": self.store.bugs_report()}) if self.admin() else None
         if url.path == "/api/character":
             row = self.who()
             if row is None or row[3] != "admin":
@@ -1121,6 +1268,8 @@ class Handler(BaseHTTPRequestHandler):
             path = "/account.html"
         elif path in ("/online", "/online/"):
             path = "/online.html"
+        elif path in ("/bugs", "/bugs/"):
+            path = "/bugs.html"
         root = self.downloads if path.startswith("/downloads/") else self.site
         rel = path[len("/downloads/"):] if root is self.downloads else path.lstrip("/")
         target = (root / rel).resolve()

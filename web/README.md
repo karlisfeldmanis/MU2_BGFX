@@ -6,8 +6,8 @@ Design: the "MU2 Launcher" canvas, Website page.
 
 | File | What |
 | --- | --- |
-| `server.py` | the page, `/api/register`, `/api/login`, `/api/logout`, `/api/me`, `/api/ticket`, `/api/downloads`, the account page's `/api/account`, `/api/name`, `/api/password`, `/api/sessions/end`, `/api/delete`, the updates' `/api/comments`, and `/internal/ticket` for mu2_server |
-| `site/` | `index.html` (the front page: download, screenshots, sign up, updates), `account.html` (served at `/account`: sign in, the account), `site.css` and `site.js` (what both share), `posts.json` (the updates, newest first), `hero.jpg`, `shots/`, `logo.svg` and `logo.png` |
+| `server.py` | the page, `/api/register`, `/api/login`, `/api/logout`, `/api/me`, `/api/ticket`, `/api/downloads`, the account page's `/api/account`, `/api/name`, `/api/password`, `/api/sessions/end`, `/api/delete`, the updates' `/api/comments`, the game's `/api/bug` and the admins' `/api/bugs` and `/api/bugs/state`, and `/internal/ticket` for mu2_server |
+| `site/` | `index.html` (the front page: download, screenshots, sign up, updates), `account.html` (served at `/account`: sign in, the account), `online.html` and `bugs.html` (the admins' `/online` and `/bugs`), `site.css` and `site.js` (what both share), `posts.json` (the updates, newest first), `hero.jpg`, `shots/`, `logo.svg` and `logo.png` |
 | `Caddyfile` | HTTPS on mu-classic.com (and still on 37.27.158.226 for launchers already out), installers from disk, the rest to server.py |
 | `mu2-web.service` | the systemd unit; accounts in `/var/lib/mu2-web/accounts.db` |
 | `deploy.sh` | HEAD's `web/` to `/opt/mu2-web`, Caddy installed if missing, both restarted |
@@ -105,3 +105,20 @@ made it, and a copy `mu release` puts on the box in `/var/lib/mu2-symbols/<commi
     scp -r hetzner:/var/lib/mu2-symbols/<commit> out/symbols/     # on another Mac, or after a clean
     x86_64-w64-mingw32-addr2line -f -C -e out/symbols/<commit>/windows/MU2.exe 0x140000000+offset
     atos -o out/symbols/<commit>/macos/MU2 -l <loaded at> <address>
+
+## Bug reports
+
+A player writes a report in the game, which posts it to `POST /api/bug`: their words (`text`, 1 to
+2000 characters, required) and where they stood -- `platform` (windows, macos or linux), `build`,
+`renderer`, `gpu`, `world`, `x`, `y`, `character`, `class`, `level`, `server` -- each cut to its
+length, any other key dropped. The game's `ticket:secret` (or a token) as Bearer files it under the
+account, as for crash reports. 16 KB a request at most (413), ten an hour from one address and a
+thousand a day in all (429 `{"error":"later"}`); the reply is `{"ok":true,"id":N}`.
+
+Each lands as a line in `/var/lib/mu2-web/bugs.jsonl` with its id, time, account and state "new".
+An admin reads them at `/bugs` (linked from `/online` and the account page) and marks each new,
+seen, fixed or won't fix (`POST /api/bugs/state {id, state}`); a mark is a line of its own,
+`{"id":N,"state":S,"at":T}`, folded onto its report when the website starts. Anyone not an admin
+asking `/api/bugs` is answered 404. On the box:
+
+    tail -5 /var/lib/mu2-web/bugs.jsonl
