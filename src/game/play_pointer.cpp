@@ -299,6 +299,10 @@ void Play::leftClick() {
     // walk to, plus the early tick under it, would be the drawing promising what the rules have
     // already said no to. An Attack is let through, as it is there.
     if (realm_.held() && request.kind != sim::Request::Kind::Attack) return;
+    leftWalking_ = request.kind == sim::Request::Kind::WalkTo;
+    leftColumn_ = request.column;
+    leftRow_ = request.row;
+    leftAskedTick_ = realm_.tick();
     // A flinch does NOT hold the click, and that is ours: MU refuses it in PLAYER_SHOCK
     // (ZzzInterface.cpp:3127), and the user turned that down on 2026-09-29 -- a click to move
     // while he is struck is a click to get out, and eating it read as the game not answering.
@@ -312,6 +316,29 @@ void Play::leftClick() {
     // as MU2's did -- an attack never shows one.
     mark_ = request.kind != sim::Request::Kind::Attack;
     if (!mark_) marker_.dismiss();
+}
+
+// How often the held left button may ask its walk again, in realm ticks: five times a second.
+// Every ask is a route planned on the server (a failed one costs milliseconds of its tick), so
+// a pointer swept across the ground does not ask one a frame.
+constexpr int64_t kLeftAskEvery = 4;
+
+void Play::leftHeld() {
+    if (!isOpen() || !leftWalking_ || pointedColumn_ < 0) return;
+    // The tile under the pointer, whatever stands on it: held, the button only walks. To fight
+    // or pick up is a fresh press.
+    if (pointedColumn_ == leftColumn_ && pointedRow_ == leftRow_) return;
+    if (realm_.tick() - leftAskedTick_ < kLeftAskEvery || realm_.held()) return;
+    sim::Request request;
+    request.kind = sim::Request::Kind::WalkTo;
+    request.column = pointedColumn_;
+    request.row = pointedRow_;
+    leftColumn_ = pointedColumn_;
+    leftRow_ = pointedRow_;
+    leftAskedTick_ = realm_.tick();
+    orderHero(request);
+    // The marker goes where the new walk ends; no early tick, he is already walking.
+    mark_ = true;
 }
 
 // The arena's hand. It raises the SAME request a click on a body raises and decides nothing
