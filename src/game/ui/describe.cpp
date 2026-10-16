@@ -546,6 +546,14 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             line.tail = "+" + std::to_string(value) + (count ? "" : "%");
             line.freeTone = ink;
             does.rows.push_back(line);
+            // Fury's second half, its critical chance (sim::furyChance).
+            if (affix == sim::Affix::Fury) {
+                Row chance;
+                chance.free = "Critical chance";
+                chance.tail = "+" + std::to_string(sim::furyChance(what.refinement)) + "%";
+                chance.freeTone = ink;
+                does.rows.push_back(chance);
+            }
         };
         power(sim::signatureOf(row), Tone::White);
         for (uint8_t a : what.affixes) {

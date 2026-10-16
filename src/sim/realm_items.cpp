@@ -510,7 +510,10 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
                 case Affix::Wealth: e.moreZen += value; break;
                 case Affix::Fortune: e.itemFind += value; break;
                 case Affix::Leech: e.lifeOnHit += value; break;
-                case Affix::Fury: e.criticalDamage += value; break;
+                case Affix::Fury:
+                    e.criticalDamage += value;
+                    e.runeCritical += double(furyChance(held.refinement)) / 100.0;
+                    break;
                 case Affix::Haste:
                     e.haste += value;
                     e.speed += value;

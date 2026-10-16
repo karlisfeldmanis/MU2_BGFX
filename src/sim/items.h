@@ -258,6 +258,12 @@ inline double ringStingChance(int refinement) {
     return std::min(kRingStingChanceMost,
                     kRingStingChance + kRingStingChancePerPlus * std::max(0, refinement));
 }
+// The Ring of Fire's burn and the Ring of Poison's poison take this share of the blow that lit
+// them a pulse, and nothing of the monster's life: on its maximum, as Immolate's and Spirit
+// Plague's runes take it, a +4 ring from a level-31 kill hunted the Dungeon 30 to 60% faster
+// (the user, 2026-10-16: nerf them). At 0.35 a geared knight's hunt runs Fire 8 to 13% and
+// Poison 5 to 7% faster, beside Lightning's and Wind's 8 to 16%.
+constexpr double kRingPulseShare = 0.35;
 constexpr float kRingFrostForce = 0.5f;
 constexpr float kRingBoltForce = 0.5f;
 constexpr float kRingGustForce = 0.5f;
@@ -321,6 +327,9 @@ int gearRung(int score);
 // A power's value at a plus: lo + (hi - lo) x (plus / 9)^2, rounded. Percent for all but the
 // Leech, whose is life a blow.
 int affixValue(Affix affix, int refinement);
+// The Pendant of Fury's second half, its critical chance in percent at a plus, 2 at +0 to 10 at
+// +9 on the same curve (2026-10-16): critical damage alone was nothing on a chance of luck's 5%.
+int furyChance(int refinement);
 const char* affixName(Affix affix);   // the card's words: "Experience from kills", ...
 // The share of drops each count takes (1 to 4 powers), and the monster level the three- and
 // four-power pieces start at -- the runes' kRuneRarityLevel Epic and Legendary.

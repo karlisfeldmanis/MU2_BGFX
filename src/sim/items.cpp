@@ -196,12 +196,19 @@ int affixValue(Affix affix, int refinement) {
     // +0 and +9, the user's of 2026-10-03 ("+9 still to OP", then "its better").
     // The resistances 1 to 4 points, MU's own ring at +4 (2026-10-04). Haste 2 to 10 speed, the
     // excellent option's 14 and one Frenzy stack's 8 above it (2026-10-16).
-    static const int kLow[kAffixes + 1] = {0, 1, 2, 1, 1, 2, 1, 1, 1, 1, 2};
-    static const int kHigh[kAffixes + 1] = {0, 8, 12, 10, 5, 12, 4, 4, 4, 4, 10};
+    // The Leech 3 to 20 and Fury 10 to 50 since 2026-10-16: at 1 to 5 life and 2 to 12% neither
+    // moved a hunt.
+    static const int kLow[kAffixes + 1] = {0, 1, 2, 1, 3, 10, 1, 1, 1, 1, 2};
+    static const int kHigh[kAffixes + 1] = {0, 8, 12, 10, 20, 50, 4, 4, 4, 4, 10};
     const int at = int(affix);
     if (at <= 0 || at > kAffixes) return 0;
     const double t = double(std::clamp(refinement, 0, kRefineCap)) / double(kRefineCap);
     return int(std::lround(kLow[at] + (kHigh[at] - kLow[at]) * t * t));
+}
+
+int furyChance(int refinement) {
+    const double t = double(std::clamp(refinement, 0, kRefineCap)) / double(kRefineCap);
+    return int(std::lround(2.0 + 8.0 * t * t));
 }
 
 const char* affixName(Affix affix) {

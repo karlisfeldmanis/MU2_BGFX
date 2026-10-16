@@ -671,9 +671,11 @@ void Realm::ringStings(Body& hero, Body& struck, int wound) {
     const auto rolls = [&](int ring) {
         return ring > 0 && struck.alive() && runeDice_.nextBool(ringStingChance(ring - 1));
     };
-    if (e.poisonRing > 0 && !poisoned(struck) && rolls(e.poisonRing)) envenom(hero, struck, wound);
+    if (e.poisonRing > 0 && !poisoned(struck) && rolls(e.poisonRing)) {
+        envenom(hero, struck, wound, true);
+    }
     if (e.fireRing > 0 && struck.burnUntil < tick_ && rolls(e.fireRing)) {
-        ignite(hero, struck, wound, 1.0);
+        ignite(hero, struck, wound, 1.0, true);
     }
     // Ice: Ice's chill on it, and a frost bite beside it; never the Statue of Saint, which takes
     // no chill (the raid's dragon takes the bite and not the chill).
@@ -768,13 +770,14 @@ void Realm::plague(Body& hero, Body& target, int blowDamage, int worn) {
     envenom(hero, target, blowDamage);
 }
 
-void Realm::envenom(Body& hero, Body& target, int blowDamage) {
+void Realm::envenom(Body& hero, Body& target, int blowDamage, bool ring) {
     const SkillRow* poison = skillNumbered(skill::kPoison);
     if (poison == nullptr || !target.alive() || !target.monster() || venomProof(target)) return;
     blowDamage = std::max(1, blowDamage);
-    const int share = int(std::max(float(target.maxHealth) * float(kPlagueShare),
-                                   float(blowDamage) * float(kBurnRuneFloor)) *
-                          elementForce(hero, Element::Poison));
+    const float base = ring ? float(blowDamage) * float(kRingPulseShare)
+                            : std::max(float(target.maxHealth) * float(kPlagueShare),
+                                       float(blowDamage) * float(kBurnRuneFloor));
+    const int share = int(base * elementForce(hero, Element::Poison));
     target.poisonUntil = tick_ + poison->poisonTicks;
     target.poisonNext = tick_ + kPoisonFirst;
     target.poisonDamage = std::max(1, std::min(share, blowDamage));
@@ -1436,15 +1439,16 @@ void Realm::poisonPulse(Body& beast) {
 
 // Immolate's or Scorch's roll and its burn (sim/items.h kBurnRuneChance), off a knight's swing
 // or a wizard's fire spell that landed for `wound`.
-bool Realm::ignite(Body& hero, Body& struck, int wound, double chance) {
+bool Realm::ignite(Body& hero, Body& struck, int wound, double chance, bool ring) {
     if (chance < 1.0 && !runeDice_.nextBool(chance)) return false;
     if (!struck.alive() || !struck.monster()) return false;
     const float fire = elementForce(hero, Element::Fire);
     // Its life's share, or on a small monster whose share is a point or two, the floor:
-    // kBurnRuneFloor of the blow that lit it.
-    const int share = int(std::max(float(struck.maxHealth) * float(kBurnRuneShare),
-                                   float(wound) * float(kBurnRuneFloor)) *
-                          fire);
+    // kBurnRuneFloor of the blow that lit it. A ring's is the blow's share alone.
+    const float base = ring ? float(std::max(1, wound)) * float(kRingPulseShare)
+                            : std::max(float(struck.maxHealth) * float(kBurnRuneShare),
+                                       float(wound) * float(kBurnRuneFloor));
+    const int share = int(base * fire);
     // Never past his top swing or the blow itself, whichever is more: a wizard's staff swing is
     // small beside his spell.
     const int most =

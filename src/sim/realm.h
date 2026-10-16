@@ -1667,7 +1667,9 @@ private:
     void poisonPulse(Body& beast);
     // Immolate's or Scorch's roll, and the burn it lights on `struck` off a blow of `wound`;
     // whether it lit.
-    bool ignite(Body& hero, Body& struck, int wound, double chance = kBurnRuneChance);
+    // `ring`: the Ring of Fire's, each pulse kRingPulseShare of the wound and nothing of its life.
+    bool ignite(Body& hero, Body& struck, int wound, double chance = kBurnRuneChance,
+                bool ring = false);
     // The worn rings' stings on a blow he landed for `wound` (sim::ringStingChance).
     void ringStings(Body& hero, Body& struck, int wound);
     // A burning monster's pulse (the Immolate rune), when it is due.
@@ -1759,7 +1761,8 @@ private:
     // Spirit Plague's and Plague Arrows' poison on what a blow of `blowDamage` struck.
     void plague(Body& hero, Body& target, int blowDamage, int worn);
     // That poison laid on, unrolled: a Plague Arrows lane's arrow.
-    void envenom(Body& hero, Body& target, int blowDamage);
+    // `ring`: the Ring of Poison's, each pulse kRingPulseShare of the blow and nothing of its life.
+    void envenom(Body& hero, Body& target, int blowDamage, bool ring = false);
     // Set while a Plague Arrows lane's arrows are loosed, so their flights carry the poison.
     bool loosingPlague_ = false;
     // The Lightning push: one tile straight away from `from`, slid over `kPushTicks`, onto
