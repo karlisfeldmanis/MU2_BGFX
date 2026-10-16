@@ -237,19 +237,66 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
     ['lorencia-town', 'A new character in the sunlit square of Lorencia beside the well'],
     ['atlans', 'A character on the pale sea floor of Atlans among stone ruins'],
   ];
+  // The first slide is the world showcase on YouTube, playing muted; its button turns the sound
+  // on. While it plays in the middle the row waits, and moves on when it ends.
+  const VIDEO = 'EUM3ctMJfu8';
+  SHOTS.unshift(['video', 'MU Classic world showcase']);
   const track = $('track');
   const slides = SHOTS.map(([name, alt], i) => {
     const f = el('figure', 'slide');
     f.setAttribute('role', 'group'); f.setAttribute('aria-roledescription', 'slide'); f.setAttribute('aria-label', (i + 1) + ' of ' + SHOTS.length);
-    const img = el('img'); img.src = '/shots/' + name + '.jpg'; img.alt = alt;
-    img.loading = i < 2 || i === SHOTS.length - 1 ? 'eager' : 'lazy';
-    f.appendChild(img);
+    if (name === 'video') {
+      f.classList.add('video');
+      const frame = el('div'); frame.id = 'showcase';
+      const sound = el('button', 'sound'); sound.type = 'button';
+      sound.addEventListener('click', e => { e.stopPropagation(); toggleSound(); });
+      f.append(frame, sound);
+    } else {
+      const img = el('img'); img.src = '/shots/' + name + '.jpg'; img.alt = alt;
+      img.loading = i < 2 || i === SHOTS.length - 1 ? 'eager' : 'lazy';
+      f.appendChild(img);
+    }
     f.addEventListener('click', () => show(i));
     track.insertBefore(f, track.firstChild);
     return f;
   });
-  let at = 0, timer = 0;
+  let at = 0, timer = 0, player = null, playing = false, muted = true;
   const still = matchMedia('(prefers-reduced-motion: reduce)');
+  const SPEAKER = '<path d="M11 5L6 9H3v6h3l5 4z"/>';
+  function soundButton() {
+    const b = track.querySelector('.sound');
+    b.setAttribute('aria-label', muted ? 'Turn sound on' : 'Turn sound off');
+    b.innerHTML = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+      + SPEAKER + (muted ? '<path d="M16 9l5 6M21 9l-5 6"/>' : '<path d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13"/>') + '</svg>'
+      + '<span>' + (muted ? 'Sound on' : 'Sound off') + '</span>';
+  }
+  function toggleSound() {
+    if (!player) return;
+    muted = !muted;
+    if (muted) player.mute(); else { player.unMute(); player.setVolume(80); player.playVideo(); }
+    soundButton();
+  }
+  soundButton();
+  window.onYouTubeIframeAPIReady = () => {
+    player = new YT.Player('showcase', {
+      host: 'https://www.youtube-nocookie.com', videoId: VIDEO,
+      playerVars: { autoplay: still.matches ? 0 : 1, mute: 1, controls: 0, playsinline: 1, rel: 0,
+                    modestbranding: 1, iv_load_policy: 3, disablekb: 1, origin: location.origin },
+      events: {
+        onReady: () => {
+          player.getIframe().setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+          player.mute();
+          if (at === 0 && !still.matches) player.playVideo();
+        },
+        onStateChange: e => {
+          playing = e.data === YT.PlayerState.PLAYING;
+          if (e.data === YT.PlayerState.ENDED && at === 0) show(1);
+          else restart();
+        },
+      },
+    });
+  };
+  const ytApi = el('script'); ytApi.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(ytApi);
   function show(i) {
     const n = slides.length;
     at = ((i % n) + n) % n;
@@ -264,11 +311,13 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
       f.style.boxShadow = off === 0 ? '0 24px 60px rgba(0,0,0,.6)' : 'none';
       f.setAttribute('aria-hidden', off === 0 ? 'false' : 'true');
     });
+    if (player && player.playVideo) { if (at === 0) player.playVideo(); else player.pauseVideo(); }
     restart();
   }
   function restart() {
     clearInterval(timer);
-    if (!still.matches) timer = setInterval(() => show(at + 1), 6000);
+    if (still.matches || (at === 0 && playing)) return;
+    timer = setInterval(() => show(at + 1), 6000);
   }
   track.querySelector('.prev').addEventListener('click', () => show(at - 1));
   track.querySelector('.next').addEventListener('click', () => show(at + 1));
