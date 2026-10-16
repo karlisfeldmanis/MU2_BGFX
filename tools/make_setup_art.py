@@ -64,9 +64,10 @@ def small(scale):
     w, h = round(SMALL[0] * scale / 100), round(SMALL[1] * scale / 100)
     picture = Image.new("RGB", (w, h), GROUND)
     logo = Image.open(os.path.join(ART, "logo.png")).convert("RGBA")
-    lw = w
+    # Clear of the square's sides: the page's title runs up to its left edge, the window's to its right.
+    lw = round(w * 0.74)
     logo = logo.resize((lw, round(logo.height * lw / logo.width)), Image.LANCZOS)
-    picture.paste(logo, (0, (h - logo.height) // 2), logo)
+    picture.paste(logo, ((w - lw) // 2, (h - logo.height) // 2), logo)
     return picture
 
 
