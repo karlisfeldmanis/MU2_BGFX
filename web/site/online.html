@@ -27,6 +27,30 @@
 .who .sub { display: block; font-size: 14px; color: var(--quiet); }
 .who tr.bot td { color: var(--quiet); }
 .who .char + .char { margin-top: 6px; }
+.who .open { background: none; border: 0; padding: 0; font: inherit; color: var(--bone-hi); text-decoration: underline;
+  text-decoration-color: rgba(201,162,126,.45); text-underline-offset: 3px; cursor: pointer; text-align: left; }
+.who .open:hover { color: #fff; text-decoration-color: currentColor; }
+.who .open:focus-visible, .card .x:focus-visible { outline: 2px solid var(--field-focus); outline-offset: 2px; }
+/* One character's card: stats, what he wears, what he carries. */
+.card { width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 0; border-radius: 8px; color: var(--bone);
+  border: 1px solid #3A2D24; background: linear-gradient(180deg, #1C1410, #110C0A); box-shadow: 0 30px 80px rgba(0,0,0,.7); }
+.card::backdrop { background: rgba(5,3,3,.72); }
+.card .in { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+.card header { display: flex; justify-content: space-between; align-items: start; gap: 16px; }
+.card h2 { margin: 0; font: 700 26px/1.2 Cinzel, serif; color: var(--bone-hi); letter-spacing: .03em; }
+.card .x { background: none; border: 0; color: var(--label); font-size: 28px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.card .x:hover { color: var(--bone-hi); }
+.card h3 { margin: 0 0 6px; font: 700 15px/1.2 'Alegreya Sans SC', sans-serif; color: var(--quiet); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.stats div { padding: 8px 10px; border-radius: 4px; background: rgba(5,3,3,.5); box-shadow: inset 0 0 0 1px var(--line); }
+.stats span { display: block; font-size: 13px; color: var(--quiet); }
+.stats b { font-weight: 500; color: var(--bone-hi); font-variant-numeric: tabular-nums; }
+.gear div.item { display: flex; gap: 12px; justify-content: space-between; padding: 7px 0; box-shadow: inset 0 -1px 0 var(--line); }
+.gear .slot { flex: 0 0 96px; color: var(--quiet); font-size: 14px; }
+.gear .what { flex: 1; min-width: 0; }
+.gear .what .sub { display: block; font-size: 14px; color: var(--quiet); }
+.gear .exc { color: #8FD3A0; }
+.gear .rare { color: #E8C978; }
 /* At phone width the table becomes one card a player. */
 @media (max-width: 680px) {
   .who thead { display: none; }
@@ -82,6 +106,18 @@
 
 </div>
 </main>
+
+<dialog id="card" class="card" aria-labelledby="c-name">
+<div class="in">
+<header><div><h2 id="c-name"></h2><span id="c-sub" class="muted"></span></div><button type="button" class="x" id="c-close" aria-label="Close">×</button></header>
+<p id="c-wait" class="muted" hidden></p>
+<div id="c-body">
+<div><h3>Stats</h3><div class="stats" id="c-stats"></div></div>
+<div class="gear" style="margin-top: 18px"><h3>Equipment</h3><div id="c-worn"></div></div>
+<div class="gear" style="margin-top: 18px"><h3 id="c-bag-title">Bag</h3><div id="c-bag"></div></div>
+</div>
+</div>
+</dialog>
 
 <footer>
 <div class="wrap">
@@ -146,6 +182,66 @@
     }
   }
 
+  // A character's card (/api/character): asked when its name is clicked, as the server last listed it.
+  const fmt = (n) => Number(n || 0).toLocaleString('en-GB');
+  function itemLine(it) {
+    const row = el('div', 'item');
+    row.appendChild(el('span', 'slot', it.where));
+    const what = el('div', 'what');
+    const name = el('span', it.excellent ? 'exc' : it.plus >= 7 ? 'rare' : '', (it.excellent ? 'Excellent ' : '') + it.name + (it.plus ? ' +' + it.plus : ''));
+    what.appendChild(name);
+    const bits = [it.skill ? 'skill' : '', it.luck ? 'luck' : '', it.option ? 'option +' + it.option : '',
+                  it.sockets ? 'sockets: ' + it.sockets.join(', ') : '', it.bound ? 'bound' : '',
+                  it.durability ? 'durability ' + it.durability : ''].filter(Boolean);
+    if (bits.length) what.appendChild(el('span', 'sub', bits.join(' · ')));
+    for (const line of it.excellent || []) what.appendChild(el('span', 'sub exc', line));
+    row.appendChild(what);
+    return row;
+  }
+  async function openCard(account, name) {
+    const card = $('card');
+    $('c-name').textContent = name;
+    $('c-sub').textContent = '';
+    $('c-body').hidden = true;
+    $('c-wait').hidden = false;
+    $('c-wait').textContent = 'Loading…';
+    if (!card.open) card.showModal();
+    let got;
+    try { got = await api('/api/character?account=' + encodeURIComponent(account) + '&name=' + encodeURIComponent(name)); }
+    catch (e) { $('c-wait').textContent = 'Can’t reach the website.'; return; }
+    const c = got.said;
+    if (got.status !== 200) { $('c-wait').textContent = 'The game server has not listed this character yet. It lists them once a minute.'; return; }
+    $('c-sub').textContent = c.class + ' · level ' + c.level + ' · ' + map(c.world) + (c.saved ? ' · saved ' + when(c.saved) : '');
+    if (c.fresh || !c.points) { $('c-wait').textContent = c.fresh ? 'Made, never played: nothing to show yet.' : 'Its saved data could not be read.'; return; }
+    const stats = $('c-stats');
+    stats.replaceChildren();
+    for (const [k, v] of [['Strength', c.points.strength], ['Agility', c.points.agility], ['Vitality', c.points.vitality],
+                          ['Energy', c.points.energy], ['Points to spend', c.points.free], ['Experience', c.experience], ['Zen', c.zen]]) {
+      const d = el('div');
+      d.appendChild(el('span', '', k));
+      d.appendChild(el('b', '', fmt(v)));
+      stats.appendChild(d);
+    }
+    $('c-worn').replaceChildren(...(c.worn.length ? c.worn.map(itemLine) : [el('p', 'muted', 'Nothing worn.')]));
+    $('c-bag-title').textContent = 'Bag (' + c.bag.length + ')';
+    $('c-bag').replaceChildren(...(c.bag.length ? c.bag.map(itemLine) : [el('p', 'muted', 'Empty.')]));
+    $('c-wait').hidden = true;
+    $('c-body').hidden = false;
+  }
+  $('c-close').addEventListener('click', () => $('card').close());
+  $('card').addEventListener('click', (e) => { if (e.target === $('card')) $('card').close(); });
+  // A character's name, a button that opens its card; plain text for one of no account (a bot).
+  function nameCell(account, name, sub) {
+    if (!account) return cell(name || '—', sub);
+    const td = el('td');
+    const b = el('button', 'open', name);
+    b.type = 'button';
+    b.addEventListener('click', () => openCard(account, name));
+    td.appendChild(b);
+    if (sub) td.appendChild(el('span', 'sub', sub));
+    return td;
+  }
+
   function render(o) {
     const people = o.players.filter((p) => !p.bot), bots = o.players.length - people.length;
     const maps = new Set(o.players.map((p) => p.world)).size;
@@ -171,7 +267,7 @@
     }
     for (const p of o.players) {
       const tr = el('tr', p.bot ? 'bot' : '');
-      tr.appendChild(cell(p.name || '—', p.class + (p.bot ? ' · bot' : '')));
+      tr.appendChild(p.bot ? cell(p.name || '—', p.class + ' · bot') : nameCell(p.account, p.name, p.class));
       tr.appendChild(cell(p.account_name || p.email || (p.account ? '#' + p.account : 'none'),
                           p.account_name && p.email ? p.email : '', 'Account'));
       tr.appendChild(cell(String(p.level), '', 'Level', 'num'));
@@ -191,7 +287,7 @@
     }
     for (const g of o.recent) {
       const tr = el('tr');
-      tr.appendChild(cell(g.name, g.class));
+      tr.appendChild(nameCell(g.account, g.name, g.class));
       tr.appendChild(cell(g.account_name || g.email, g.account_name ? g.email : '', 'Account'));
       tr.appendChild(cell(String(g.level), '', 'Level', 'num'));
       tr.appendChild(cell(map(g.world), '', 'Last map'));
@@ -226,7 +322,11 @@
       const td = el('td');
       td.dataset.k = 'Characters';
       for (const c of a.characters) {
-        const line = el('div', 'char', c.name);
+        const line = el('div', 'char');
+        const b = el('button', 'open', c.name);
+        b.type = 'button';
+        b.addEventListener('click', () => openCard(a.account, c.name));
+        line.appendChild(b);
         line.appendChild(el('span', 'sub', c.class + ' ' + c.level + ' · ' + map(c.world) + (c.fresh ? ' · never played' : '')));
         td.appendChild(line);
       }

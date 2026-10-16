@@ -46,6 +46,9 @@ The routes:
          `machines`: by account id, the machine its launcher last reported (devices); and `everyone`:
          every account with a character, its characters as mu2_server last listed them (a minute
          apart), and its Plays (launcher starts) of the last PLAYS_DAYS days.
+    GET  /api/character?account=N&name=X   Bearer T of an admin -> 200 {name, class, level, world, saved,
+         second, experience, zen, points, worn, bag} | 404: one character's stats and gear, as mu2_server
+         last listed it (a minute apart).
     POST /internal/online   (127.0.0.1 only) {players: [{account, name, class, level, world, copy, x, y, bot}],
                              characters?: [{account, name, class, level, world, saved, fresh}]}
          mu2_server's list of who is on, every 5 s (server/src/signin.cpp tellOnline); kept in memory.
@@ -99,7 +102,7 @@ MOST_BODY = 4096
 # An account's role: "player", or "admin", who may open the /online page (/internal/role sets it).
 ROLES = ("player", "admin")
 # mu2_server's list of who is on: a few hundred players at most, each line under 200 bytes.
-MOST_ONLINE_BODY = 512 * 1024
+MOST_ONLINE_BODY = 8 * 1024 * 1024  # and once a minute every character's gear, a few KB each
 # The list is told every 5 s; one older than this is a server that stopped telling (down, or restarting).
 ONLINE_STALE_SECONDS = 20
 # A play: one character on the server from when he came on until he was last on a list, kept this
@@ -550,10 +553,17 @@ class Store:
             played = [int(c.get("saved") or 0) for c in chars if not c.get("fresh")]
             out.append({"account": account, "email": email, "account_name": name or "", "created": created,
                         "plays": count, "last_play": last_play or 0, "last": max(played + [last_play or 0]),
-                        "characters": [{key: c.get(key) for key in ("name", "class", "level", "world", "saved", "fresh")}
+                        "characters": [{key: c.get(key) for key in ("name", "class", "level", "world", "saved", "fresh", "zen")}
                                        for c in chars]})
         out.sort(key=lambda a: -a["last"])
         return out
+
+    def character(self, account: int, name: str):
+        with self.online_lock:
+            for c in self.characters:
+                if c.get("account") == account and str(c.get("name", "")).lower() == name.lower():
+                    return c
+        return None
 
     def online_report(self) -> dict:
         with self.online_lock:
@@ -1063,6 +1073,17 @@ class Handler(BaseHTTPRequestHandler):
             if row is None or row[3] != "admin":
                 return self.reply(404, {"error": "not found"})
             return self.reply(200, self.store.online_report())
+        if url.path == "/api/character":
+            row = self.who()
+            if row is None or row[3] != "admin":
+                return self.reply(404, {"error": "not found"})
+            asked = parse_qs(url.query)
+            try:
+                account = int(asked.get("account", ["0"])[0])
+            except ValueError:
+                account = 0
+            found = self.store.character(account, asked.get("name", [""])[0])
+            return self.reply(200, found) if found else self.reply(404, {"error": "not listed"})
         if url.path == "/api/comments":
             post = parse_qs(url.query).get("post", [""])[0]
             if post not in self.posts():

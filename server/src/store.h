@@ -77,6 +77,8 @@ public:
         int level = 1;
         int64_t saved = 0;
         bool fresh = false;
+        sim::Kept kept;  // only when not fresh and it read
+        bool read = false;
     };
     std::vector<Roll> everyone();
     // Whether a character not deleted already has this name, any case.

@@ -239,6 +239,67 @@ std::string jsonText(const std::string& text) {
     return out + "\"";
 }
 
+// One item as the Online page's card shows it: its name, plus, luck, option, excellent lines,
+// sockets and wear, by the rows' own words (sim::excellentLine, powerOf).
+std::string itemJson(const sim::Held& held, const char* where) {
+    if (held.item < 0 || size_t(held.item) >= g_items.items.size()) return {};
+    const content::ItemRow& row = g_items.items[size_t(held.item)];
+    std::string out = "{\"where\":" + jsonText(where) + ",\"name\":" + jsonText(row.label.empty() ? row.name : row.label) +
+                      ",\"plus\":" + std::to_string(held.refinement) + ",\"luck\":" + (held.luck ? "true" : "false") +
+                      ",\"skill\":" + (held.skill ? "true" : "false") + ",\"durability\":" + std::to_string(held.durability);
+    if (held.option > 0 && sim::takesOptions(row)) out += ",\"option\":" + std::to_string(sim::optionValue(row, held.option));
+    if (held.excellent != 0) {
+        out += ",\"excellent\":[";
+        bool first = true;
+        for (int bit = 0; bit < 6; ++bit) {
+            if (!(held.excellent & (1 << bit))) continue;
+            out += (first ? "" : ",") + jsonText(sim::excellentLine(row, bit));
+            first = false;
+        }
+        out += "]";
+    }
+    if (held.sockets > 0) {
+        out += ",\"sockets\":[";
+        for (int s = 0; s < held.sockets && s < 3; ++s) {
+            const sim::PowerRow* power = held.powers[s] ? sim::powerOf(held.powers[s]) : nullptr;
+            out += (s ? "," : "") + jsonText(power ? power->name : "empty");
+        }
+        out += "]";
+    }
+    if (held.bound) out += ",\"bound\":true";
+    return out + "}";
+}
+
+// What a kept character is: his points, his experience and Zen, what he wears and what he carries.
+std::string heroJson(const sim::HeroRecord& hero) {
+    static const char* const kWhere[sim::kWorn] = {"Right hand", "Left hand", "Helm", "Armour", "Pants",
+                                                   "Gloves", "Boots", "Wings", "Pet", "Pendant",
+                                                   "Right ring", "Left ring", "Mount"};
+    std::string out = ",\"second\":" + std::string(sim::promoted(hero.quests, int(hero.kin)) ? "true" : "false") +
+                      ",\"experience\":" + std::to_string(hero.experience) + ",\"zen\":" + std::to_string(hero.money) +
+                      ",\"points\":{\"strength\":" + std::to_string(hero.points.strength) +
+                      ",\"agility\":" + std::to_string(hero.points.agility) +
+                      ",\"vitality\":" + std::to_string(hero.points.vitality) +
+                      ",\"energy\":" + std::to_string(hero.points.energy) +
+                      ",\"free\":" + std::to_string(hero.pointsInHand) + "},\"worn\":[";
+    bool first = true;
+    for (int slot = 0; slot < sim::kWorn; ++slot) {
+        const std::string item = itemJson(hero.slots[slot], kWhere[slot]);
+        if (item.empty()) continue;
+        out += (first ? "" : ",") + item;
+        first = false;
+    }
+    out += "],\"bag\":[";
+    first = true;
+    for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+        const std::string item = itemJson(hero.slots[slot], "Bag");
+        if (item.empty()) continue;
+        out += (first ? "" : ",") + item;
+        first = false;
+    }
+    return out + "]";
+}
+
 std::future<void> g_telling;
 Clock::time_point g_toldAt{}, g_rollAt{};
 constexpr auto kTellEvery = std::chrono::seconds(5);
@@ -281,14 +342,17 @@ void tellOnline(const std::vector<std::unique_ptr<Session>>& sessions) {
         for (const Store::Roll& one : g_store.everyone()) {
             const long long id = reservedKey(one.account) ? std::atoll(one.account.c_str() + 7) : 0;
             if (id <= 0) continue;
+            const bool second = one.read && sim::promoted(one.kept.hero.quests, int(one.kin));
             char line[384];
             std::snprintf(line, sizeof line,
                           "%s{\"account\":%lld,\"name\":%s,\"class\":%s,\"level\":%d,\"world\":%s,"
-                          "\"saved\":%lld,\"fresh\":%s}",
+                          "\"saved\":%lld,\"fresh\":%s",
                           first ? "" : ",", id, jsonText(one.name).c_str(),
-                          jsonText(sim::className(int(one.kin), false)).c_str(), one.level,
+                          jsonText(sim::className(int(one.kin), second)).c_str(), one.level,
                           jsonText(one.world).c_str(), (long long)one.saved, one.fresh ? "true" : "false");
             body += line;
+            if (one.read) body += heroJson(one.kept.hero);
+            body += "}";
             first = false;
         }
         body += "]";

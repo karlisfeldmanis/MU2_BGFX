@@ -177,7 +177,7 @@ std::vector<Store::Roll> Store::everyone() {
     std::vector<Roll> all;
     if (db_ == nullptr) return all;
     Statement q(db_,
-                "SELECT account, name, world, kin, level, saved, layout FROM characters"
+                "SELECT account, name, world, kin, level, saved, layout, kept FROM characters"
                 " WHERE account != '' AND deleted = 0 ORDER BY saved DESC");
     if (!q) return all;
     while (sqlite3_step(q.s) == SQLITE_ROW) {
@@ -188,7 +188,13 @@ std::vector<Store::Roll> Store::everyone() {
         one.kin = sim::Kin(std::clamp(sqlite3_column_int(q.s, 3), 0, int(sim::Kin::MagicGladiator)));
         one.level = sqlite3_column_int(q.s, 4);
         one.saved = sqlite3_column_int64(q.s, 5);
-        one.fresh = sqlite3_column_int(q.s, 6) == 0;
+        const int layout = sqlite3_column_int(q.s, 6);
+        one.fresh = layout == 0;
+        if (!one.fresh && layout >= kOldestLayout && layout <= kLayout) {
+            const auto* bytes = static_cast<const uint8_t*>(sqlite3_column_blob(q.s, 7));
+            const std::vector<uint8_t> kept(bytes, bytes + sqlite3_column_bytes(q.s, 7));
+            one.read = net::keptFrom(kept, one.kept, layout);
+        }
         all.push_back(std::move(one));
     }
     return all;
