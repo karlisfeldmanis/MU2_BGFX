@@ -159,6 +159,12 @@ void afterFrame(uint32_t frame) {
     c.reading = false;
 }
 
+// No --offscreen here (gfx/window.cpp's is not built on Linux): a shot goes through bgfx's
+// own request, and there is never one to wait for.
+bool offscreenShot(const char*) { return false; }
+bool offscreenRaw(const char*) { return false; }
+void offscreenFlush() {}
+
 namespace metalfx {
 
 bool supported() { return false; }
