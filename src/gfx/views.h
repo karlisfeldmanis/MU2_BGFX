@@ -59,7 +59,10 @@ enum View : uint16_t {
     // The studio's panels (gfx/gui.h, docs/plans/order-plan.md §9c): Dear ImGui over everything,
     // the HUD and the stages' pictures included, on the backbuffer. No game frame draws it.
     ViewGui = 73,
-    ViewCount = 74,
+    // The inspect window's items (game/ui/inspect.h): another player's worn pieces on a stage of
+    // their own, beside the bag's, since the two windows stand open together.
+    ViewStageInspect = 74,
+    ViewCount = 75,
 };
 constexpr int kOutlineRings = 4;  // the hover's, and three monsters turning at once
 constexpr int kBloomLevels = 5;

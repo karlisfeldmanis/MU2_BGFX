@@ -616,6 +616,19 @@ public:
     // was, his facing and his size against a man's: the portrait's to photograph. Empty when
     // he is not drawn.
     const std::vector<gfx::Drawable>& targetDrawables() const { return targetDrawables_; }
+    // **The inspect window's doll** (game/ui/inspect.h): the player `id` dressed as he is and
+    // standing as in a safe zone -- his weapons slung on his back, the unarmed idle, his wings on
+    // -- wherever he really stands (the user, 2026-10-16: "figure has to be with weapons on back
+    // with option to rotate the figure"). A figure of its own, never in the world. 0 lets it go.
+    void wantDoll(uint32_t id);
+    // Whether what he wears has changed since the doll was last posed, or it never was.
+    bool dollStale() const;
+    // Poses him into this frame's palette turned `turn` radians from facing the lens, and hands
+    // back his drawables and his wings', his head joint and his size against a man's: the
+    // portrait's to photograph (Portrait's figure). After Play::gather, before the scene's draw.
+    // False with nobody to draw.
+    bool poseDoll(gfx::Renderer& renderer, float turn, std::vector<gfx::Drawable>& out, float head[3],
+                  float* scale);
     const float* targetHead() const { return targetHead_; }
     float targetYaw() const { return targetYaw_; }
     float targetScale() const { return targetScale_; }
@@ -2018,6 +2031,15 @@ private:
     uint32_t targetId_ = 0;
     bool targetFresh_ = false;
     std::vector<gfx::Drawable> targetDrawables_;
+    // The inspect window's doll (wantDoll): his figure and wings, whose they are, and the gear it
+    // was dressed in (gearOf, and the wing's row).
+    Figure doll_;
+    WingLook dollWing_;
+    uint32_t dollId_ = 0;
+    uint64_t dollGear_ = 0;
+    bool dollDressed_ = false;
+    std::vector<float> dollRows_;
+    uint64_t dollGearOf(const sim::Body& body) const;
     float targetHead_[3] = {};
     float targetYaw_ = 0.0f, targetScale_ = 1.0f;
     std::vector<uint32_t> faceIds_;  // wantFaces

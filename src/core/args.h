@@ -366,7 +366,7 @@ struct Args {
     // has nobody at the keyboard to press tab.
     std::string category;
     // Windows open from the first frame, for a scripted run that has to photograph them:
-    // any of "inventory", "character", comma separated.
+    // any of "inventory", "character", "inspect" (the first other player here), comma separated.
     std::string windows;
     // Scripted presses on the windows, for a run with nobody at the mouse: FRAME:X:Y, X and Y
     // as fractions of the screen, pressed on FRAME and released on the next -- or

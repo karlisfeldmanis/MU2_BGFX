@@ -89,6 +89,8 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     mixer_.useTipStage(&tipStagePicture_);
     questDialog_.useTipStage(&tipStagePicture_);
     chat_.useTipStage(&tipStagePicture_);
+    inspect_.useTipStage(&tipStagePicture_);
+    inspect_.open(interface_, &arts_);
     card_.open(interface_, &arts_);
     bag_.open(interface_, &arts_);
     shelf_.open(interface_, &arts_);
@@ -149,6 +151,8 @@ void Desk::shutdown() {
     shelfStagePicture_.shutdown();
     quickStagePicture_.shutdown();
     tipStagePicture_.shutdown();
+    inspectStagePicture_.shutdown();
+    inspectFigure_.shutdown();
     arrival_.shutdown();
     tally_.shutdown();
     beacon_.close();
@@ -169,7 +173,7 @@ bool Desk::overWindows(float x, float y) const {
            questDialog_.covers(x, y) || travel_.covers(x, y) || goBack_.covers(x, y) ||
            herald_.covers(x, y) || squareResult_.covers(x, y) ||
            (specimenOpen_ && specimen_.covers(x, y)) ||
-           (characterOpen_ && card_.covers(x, y)) ||
+           (characterOpen_ && card_.covers(x, y)) || inspect_.covers(x, y) ||
            (inventoryOpen_ && (bag_.covers(x, y) || bag_.dragging())) ||
            (trading_ && shelf_.covers(x, y)) ||
            (banking_ && (chest_.covers(x, y) || chest_.dragging())) ||
@@ -454,6 +458,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // into the map it left, so the town's name comes up at once, as it does on the way in.
     if (play.takeWarp()) {
         inventoryOpen_ = characterOpen_ = false;
+        closeInspect();
         fanLatched_ = false;
         arrival_.announce(hero ? placeName(worldName_, hero->column(), hero->row()) : worldName_,
                           0.0f, play.zoneLevels());
@@ -463,7 +468,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // else; only with nothing open does it raise the menu. And up, the menu has it: back a page,
     // or down.
     const bool windowsOpen = inventoryOpen_ || characterOpen_ || trading_ || banking_ || brokering_ || mixing_ ||
-                             dealing_ || travel_.up() || guild_.up() || guildMake_.up();
+                             dealing_ || travel_.up() || guild_.up() || guildMake_.up() || inspecting();
     {
         std::string place = hero ? placeName(worldName_, hero->column(), hero->row()) : worldName_;
         if (hero) {
@@ -494,6 +499,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 playerMenu_.hide();
             } else if (windowsOpen) {
                 inventoryOpen_ = characterOpen_ = false;
+                closeInspect();
                 if (trading_) play.closeTrade();
                 if (banking_) play.closeVault();
                 if (brokering_) play.closeBroker();
@@ -724,6 +730,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
         // The menu asked for a whisper: the chat opens on his tab.
         if (const std::string whom = playerMenu_.whisper(); !whom.empty()) chat_.whisperTo(whom);
+        // And to inspect him: his window in the character window's column.
+        if (const std::string whom = playerMenu_.inspect(); !whom.empty()) openInspect(play, whom);
         // A guild's call: its card in the middle (Chat::guildCalled).
         net::GuildCall call;
         while (play.takeGuildCall(call)) {
@@ -794,6 +802,45 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         if (close) {
             characterOpen_ = false;
             click();
+        }
+    }
+
+    // **The inspect window** (game/ui/inspect.h), while it is up: out of the mirror, so he must be
+    // on this map. The character window takes the column back (C), a counter, the vault, the
+    // market, the machine or a trade shut it, and so does his leaving.
+    if (scriptInspect_ && !inspecting() && hero) {
+        for (int i = 0; i < play.realm().playersHere(); ++i) {
+            const sim::Body& one = play.realm().playerAt(i);
+            std::string his;
+            if (one.gone || one.id == hero->id || !inspectable(play.realm(), one.id) ||
+                !play.playerName(one.id, &his, nullptr) || his.empty()) {
+                continue;
+            }
+            openInspect(play, his);
+            scriptInspect_ = false;
+            break;
+        }
+    }
+    if (inspecting()) {
+        const uint32_t id = play.playerNamed(inspectName_);
+        const sim::Body* who = id != 0 ? play.realm().find(id) : nullptr;
+        const sim::Satchel* worn = id != 0 ? play.realm().satchelOf(id) : nullptr;
+        if (!who || !worn || !inspectable(play.realm(), id) || characterOpen_ || trading_ || banking_ ||
+            brokering_ || mixing_ || dealing_) {
+            closeInspect();
+        } else {
+            inspectId_ = id;
+            const net::GuildMark* guild = play.playerGuild(id);
+            InspectRequests asked;
+            inspect_.update(float(window.width()), float(window.height()), 1, play.realm(), *who, *worn,
+                            inspectName_, guild ? guild->name : std::string(),
+                            inspectFigure_.taken() ? &inspectFigure_.picture() : nullptr, pointer,
+                            &inspectStagePicture_, &asked);
+            if (asked.whisper) chat_.whisperTo(inspectName_);
+            if (asked.trade) play.dealAsk(id);
+            if (asked.invite) play.askParty({net::PartyWhat::Invite, inspectName_});
+            if (asked.clicked) click();
+            if (asked.close) closeInspect();
         }
     }
 
@@ -1068,7 +1115,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 bagPointer.pressed = false;
             }
         }
-        bag_.update(float(window.width()), float(window.height()), characterOpen_ ? 2 : 1,
+        bag_.update(float(window.width()), float(window.height()), characterOpen_ || inspecting() ? 2 : 1,
                     play.realm(), bagPointer, bagStage_, &asked);
         if (asked.toggleDock) click();
         // A line set on the dock is a request; the dock redraws when the realm takes it.
@@ -2145,6 +2192,7 @@ void Desk::photograph(gfx::Renderer& renderer, double seconds) {
     if (!models_ || !models_->tables() || !renderer.openStages(shaderDir_)) return;
     const float pixelsPerUnit = panel::scale();
     if (inventoryOpen_) bagStagePicture_.render(renderer, pixelsPerUnit, seconds);
+    if (inspecting()) inspectStagePicture_.render(renderer, pixelsPerUnit, seconds);
     if (trading_ || banking_ || brokering_ || mixing_ || dealing_) {
         shelfStagePicture_.render(renderer, pixelsPerUnit, seconds);
     }
@@ -2160,6 +2208,22 @@ void Desk::photograph(gfx::Renderer& renderer, double seconds) {
 
 void Desk::portrait(gfx::Renderer& renderer, Play& play) {
     if (play.targetChanged()) portrait_.forget();
+    // The inspected player whole, first: his window is the one being read.
+    // His doll (Play::poseDoll), not his body in the world: weapons on his back, as in a safe zone.
+    // Taken again only when he is turned or what he wears changes.
+    if (inspecting()) {
+        const float turn = inspect_.turn();
+        if (play.dollStale() || turn != inspectTurned_ || !inspectFigure_.taken()) {
+            if (!renderer.openStages(shaderDir_)) return;
+            float head[3] = {}, scale = 1.0f;
+            if (play.poseDoll(renderer, turn, inspectBody_, head, &scale)) {
+                // A fixed lens (yaw 0): he turns in front of it.
+                inspectFigure_.render(renderer, inspectBody_, head, 0.0f, scale);
+                inspectTurned_ = turn;
+                return;
+            }
+        }
+    }
     // A still: taken once, and again only when what he wears changes. One a frame, the target's
     // first: every face is drawn on the one portrait stage.
     if (targetFrame_.showing() && !play.targetDrawables().empty() && !portrait_.same(play.targetDrawables())) {
@@ -2239,6 +2303,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     // A party invite, centred over the plate where a fight's Zen is said.
     if (chat_.inviting()) interface_.add(chat_.invite());
     if (characterOpen_) interface_.add(card_.canvas());
+    if (inspecting()) interface_.add(inspect_.canvas());
     if (trading_) interface_.add(shelf_.canvas());
     // The window something is dragged out of goes over the other, so what rides the pointer is
     // never under a window it is carried across -- a vault piece over the bag hid behind it.
@@ -2267,6 +2332,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (dealing_) interface_.add(deal_.tipCanvas());
     if (mixing_) interface_.add(mixer_.tipCanvas());
     if (inventoryOpen_) interface_.add(bag_.tipCanvas());
+    if (inspecting()) interface_.add(inspect_.tipCanvas());
     if (endurance_.showing()) interface_.add(endurance_.tipCanvas());
     if (chat_.tipping()) interface_.add(chat_.tipCanvas());
     // Last of all, over every window too: MU2's own CanvasLayer{Layer=128} -- a pointer is over
@@ -2303,9 +2369,36 @@ std::string Desk::line() const {
 // The guild window's column: the first free from the right -- beside the bag when it is up, and
 // beside the character window too when both are.
 int Desk::guildColumn() const {
-    if (inventoryOpen_ && characterOpen_) return 3;
-    if (inventoryOpen_ || characterOpen_) return 2;
+    const bool first = characterOpen_ || inspecting();
+    if (inventoryOpen_ && first) return 3;
+    if (inventoryOpen_ || first) return 2;
     return 1;
+}
+
+void Desk::openInspect(Play& play, const std::string& name) {
+    const uint32_t id = play.playerNamed(name);
+    if (!inspectable(play.realm(), id)) return;
+    if (name != inspectName_) {
+        inspectFigure_.forget();
+        inspect_.hide();
+    }
+    inspectName_ = name;
+    inspectId_ = id;
+    // His doll is photographed for the window (Play::wantDoll); the target frame shows whom it is about.
+    play.wantDoll(id);
+    inspect_.resetTurn();
+    play.target(name, id);
+    characterOpen_ = false;
+    play.ui(Play::Ui::Opened);
+    core::logf("window: inspecting %s (#%u)", name.c_str(), id);
+}
+
+void Desk::closeInspect() {
+    if (!inspecting()) return;
+    core::logf("window: inspect of %s shut", inspectName_.c_str());
+    inspectName_.clear();
+    inspectId_ = 0;
+    inspect_.hide();
 }
 
 }  // namespace mu::game

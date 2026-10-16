@@ -46,6 +46,7 @@
 #include "game/ui/panel.h"
 #include "game/ui/party_bar.h"
 #include "game/ui/player_menu.h"
+#include "game/ui/inspect.h"
 #include "game/ui/target_frame.h"
 #include "game/portrait.h"
 #include "gfx/interface.h"
@@ -136,6 +137,7 @@ public:
         shelfStagePicture_.open(models, gfx::ViewStageShelf);
         quickStagePicture_.open(models, gfx::ViewStageQuick);
         tipStagePicture_.open(models, gfx::ViewStageTip);
+        inspectStagePicture_.open(models, gfx::ViewStageInspect);
     }
 
     void submit(bgfx::ViewId view, int width, int height);
@@ -151,6 +153,9 @@ public:
         if (key >= 0 && key < Hud::kQuickKeys) quick_[key] = item;
     }
     void setCharacterOpen(bool open) { characterOpen_ = open; }
+    // `--windows inspect`: the inspect window on the first other player standing on this map, as
+    // soon as there is one (a review run has nobody to right-click him).
+    void setInspectFirst(bool on) { scriptInspect_ = on; }
     // The Sanctuary bench (game/ui/specimen.h), from `--windows sanctuary`.
     void setSpecimenOpen(bool open) { specimenOpen_ = open; }
     // The game menu up on a page, for a review: --windows menu, options or graphics.
@@ -326,6 +331,19 @@ private:
     std::vector<uint32_t> faceIds_;  // whose faces Play gathers (Play::wantFaces)
     PlayerMenu playerMenu_;
     bool menuTook_ = false;  // the player menu took this frame's press
+    // Another player, inspected (game/ui/inspect.h): by name, and the body he was when it opened.
+    // In the character window's column, which it shuts; his figure is his doll (Play::wantDoll),
+    // photographed whole (Portrait's figure), and opening it targets him.
+    Inspect inspect_;
+    std::string inspectName_;
+    uint32_t inspectId_ = 0;
+    Portrait inspectFigure_{true};
+    std::vector<gfx::Drawable> inspectBody_;  // his doll's drawables and its wings', photographed together
+    float inspectTurned_ = 0.0f;               // the turn the picture was taken at
+    bool scriptInspect_ = false;
+    bool inspecting() const { return !inspectName_.empty(); }
+    void openInspect(Play& play, const std::string& name);
+    void closeInspect();
     // The map around him, top right over the tracker, always up in a played world (game/ui/minimap.h).
     Minimap minimap_;
     Menu menu_;
@@ -350,6 +368,7 @@ private:
     Arrival arrival_;
     ItemModels* models_ = nullptr;
     ItemStage bagStagePicture_, shelfStagePicture_, quickStagePicture_, tipStagePicture_;
+    ItemStage inspectStagePicture_;  // the inspect window's, open beside the bag's
     std::string shaderDir_, assetDir_;
     content::Textures* textures_ = nullptr;
     Stage* bagStage_ = nullptr;

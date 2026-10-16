@@ -5,6 +5,7 @@
 #include "game/play.h"
 #include "game/ui/capsule.h"
 #include "game/ui/controls.h"
+#include "game/ui/inspect.h"
 #include "game/ui/style.h"
 #include "game/ui/tip.h"
 
@@ -49,7 +50,8 @@ void PlayerMenu::show(Play& play, const std::string& name, float x, float y, flo
             if (mark != nullptr && mark->master == name) rows_.push_back({"Ask to join guild"});
         }
     }
-    rows_.push_back({"Inspect", false});
+    // Inspect reads him out of the mirror (game/ui/inspect.h), so he must be on this map.
+    rows_.push_back({"Inspect", inspectable(play.realm(), play.playerNamed(name))});
     // Trade lives while he is on this map (sim/realm_deal.cpp); the realm refuses one too far.
     rows_.push_back({"Trade", play.playerNamed(name) != 0});
     place(play, x, y, width, height);
@@ -97,6 +99,7 @@ bool PlayerMenu::update(Play& play, const Pointer& pointer) {
             else if (row == "Kick") play.askParty({net::PartyWhat::Kick, name_});
             else if (row == "Invite to party" || row == "Invite to raid") play.askParty({net::PartyWhat::Invite, name_});
             else if (row == "Trade") play.dealAsk(play.playerNamed(name_));
+            else if (row == "Inspect") inspect_ = name_;
             else if (row == "Invite to guild" || row == "Ask to join guild") {
                 net::GuildAsk asked;
                 asked.what = row == "Invite to guild" ? net::GuildWhat::Invite : net::GuildWhat::Ask;

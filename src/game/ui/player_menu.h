@@ -6,8 +6,8 @@
 // Headed by his name, then a row each: Whisper; while you lead, Make leader and Kick on a member;
 // Invite to party on anyone of no party of yours while you lead or are in none; Inspect and Trade.
 // Leave party is never on another player's menu: it is "Leave" on your own line over the party
-// bar (the user, 2026-10-11). Inspect and Trade are drawn and greyed until the game has
-// them: player trade and inspection are not built yet. The asks go to the server
+// bar (the user, 2026-10-11). Inspect and Trade live while he is on this map, the mirror's own
+// (game/ui/inspect.h; sim/realm_deal.cpp), and greyed when he is not. The asks go to the server
 // (Play::askParty); a whisper is the chat's, taken by the desk from whisper(). On a server only:
 // off one there is nobody to ask.
 #pragma once
@@ -38,6 +38,8 @@ public:
     bool up() const { return up_; }
     bool covers(float x, float y) const { return up_ && box_.has(x, y); }
     std::string whisper() { return std::exchange(whisper_, std::string()); }
+    // And the one whose Inspect row was taken, once: the desk opens his window.
+    std::string inspect() { return std::exchange(inspect_, std::string()); }
     const gfx::Canvas& canvas() const { return canvas_; }
 
 private:
@@ -58,6 +60,7 @@ private:
     int hovered_ = -1;
     float unit_ = 0.0f;
     std::string whisper_;
+    std::string inspect_;
 };
 
 }  // namespace mu::game

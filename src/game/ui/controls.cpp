@@ -431,6 +431,40 @@ void glyph(gfx::Canvas& canvas, const Box& box, Glyph which, uint32_t ink, float
             canvas.rect({cx - s * 0.08f, by - r - s * 0.15f, s * 0.16f, std::max(1.0f, t)}, ink);
             break;
         }
+        case Glyph::Whisper: {
+            // A speech bubble: a wide box of four bars with a tail down from its lower left.
+            const float w = s * 0.34f, h = s * 0.24f, top = cy - s * 0.2f, low = top + h * 2.0f;
+            const float l = cx - w, r = cx + w;
+            bar(canvas, l, top, r, top, t, ink);
+            bar(canvas, r, top, r, low, t, ink);
+            bar(canvas, l, top, l, low, t, ink);
+            bar(canvas, l, low, l + w * 0.35f, low, t, ink);
+            bar(canvas, l + w * 0.85f, low, r, low, t, ink);
+            bar(canvas, l + w * 0.35f, low, l + w * 0.2f, low + s * 0.16f, t, ink);
+            bar(canvas, l + w * 0.2f, low + s * 0.16f, l + w * 0.85f, low, t, ink);
+            break;
+        }
+        case Glyph::Trade: {
+            // Two arrows passing: right along the upper line, left along the lower.
+            const float a = s * 0.32f, y0 = cy - s * 0.13f, y1 = cy + s * 0.13f, head = s * 0.12f;
+            bar(canvas, cx - a, y0, cx + a, y0, t, ink);
+            bar(canvas, cx + a, y0, cx + a - head, y0 - head, t, ink);
+            bar(canvas, cx + a, y0, cx + a - head, y0 + head, t, ink);
+            bar(canvas, cx + a, y1, cx - a, y1, t, ink);
+            bar(canvas, cx - a, y1, cx - a + head, y1 - head, t, ink);
+            bar(canvas, cx - a, y1, cx - a + head, y1 + head, t, ink);
+            break;
+        }
+        case Glyph::Invite: {
+            // A head and shoulders, a little left, and a plus at the right.
+            const float hx = cx - s * 0.1f;
+            ring(canvas, hx, cy - s * 0.12f, s * 0.12f, std::max(1.0f, t), ink);
+            featheredArc(canvas, hx, cy + s * 0.3f, s * 0.22f, std::max(0.5f, t * 0.5f), 3.1416f, 6.2832f, ink);
+            const float px = cx + s * 0.27f, py = cy - s * 0.06f, p = s * 0.1f;
+            bar(canvas, px - p, py, px + p, py, t, ink);
+            bar(canvas, px, py - p, px, py + p, t, ink);
+            break;
+        }
         case Glyph::Undo: {
             // An arrow turning back on itself: most of a ring open at the left, and a solid head
             // at its upper end pointing down into the gap. Feathered, both of it, because the
@@ -752,6 +786,26 @@ void button(gfx::Canvas& canvas, const Box& box, const std::string& text, Kind k
     const Look look = lookOf(kind, state);
     const Box body = slabOf(canvas, b, look, state.held && !state.off, state.off, u);
     word(canvas, body, size, look.ink, text);
+}
+
+void button(gfx::Canvas& canvas, const Box& box, const std::string& text, Glyph icon, Kind kind,
+            const State& state, float u, float wordSize) {
+    const Box b{std::round(box.x), std::round(box.y), std::round(box.w), std::round(box.h)};
+    const float size = wordSize > 0.0f ? wordSize
+                       : (b.h >= style::kButtonL * u - 0.5f   ? style::kButtonWordL
+                          : b.h >= style::kButtonM * u - 0.5f ? style::kButtonWordM
+                                                              : style::kButtonWordS) *
+                             u;
+    const Look look = lookOf(kind, state);
+    const Box body = kind == Kind::Quiet ? b : slabOf(canvas, b, look, state.held && !state.off, state.off, u);
+    const Tone ink = kind == Kind::Quiet ? Tone{0.561f, 0.522f, 0.459f, 1}.mix({0.953f, 0.910f, 0.831f, 1}, state.lift)
+                                         : look.ink;
+    // The icon's square is two of the word's sizes: the glyphs fill about two thirds of it.
+    const float side = std::round(size * 1.9f), gap = std::round(size * 0.1f);
+    const float wide = wordReady() ? s_word.measure(size, text) : canvas.face().measure(size, text);
+    const float from = std::round(body.midX() - (side + gap + wide) * 0.5f);
+    glyph(canvas, {from, std::round(body.midY() - side * 0.5f), side, side}, icon, ink.packed(), u);
+    word(canvas, {from + side + gap, body.y, wide, body.h}, size, ink, text);
 }
 
 void tab(gfx::Canvas& canvas, const Box& box, const std::string& text, bool chosen,

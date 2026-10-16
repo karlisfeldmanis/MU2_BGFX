@@ -620,6 +620,7 @@ add_library(mu_game STATIC
   src/game/play.cpp
   src/game/play_invasion.cpp
   src/game/play_raid.cpp
+  src/game/play_doll.cpp
   src/game/play_open.cpp
   src/game/play_sound.cpp
   src/game/play_show.cpp
@@ -635,6 +636,7 @@ add_library(mu_game STATIC
   src/game/ui/party_bar.cpp
   src/game/ui/capsule.cpp
   src/game/ui/player_menu.cpp
+  src/game/ui/inspect.cpp
   src/game/ui/target_frame.cpp
   src/game/portrait.cpp
   src/game/fx/aura.cpp

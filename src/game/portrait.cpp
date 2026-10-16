@@ -20,6 +20,17 @@ constexpr float kLift = 0.06f;
 constexpr float kLookUp = 0.08f;  // where the lens points, over the joint: the face, not the neck
 constexpr float kFovDegrees = 18.0f;
 
+// **The whole figure** (the inspect window): a tall picture, him from a little above his middle
+// and further off, so his helm's crest and his boots both fit and a raised shield or a wing's
+// root reaches the sides. Metres again for a man of 1.8 m; the picture's shape is the window's
+// figure box (game/ui/inspect.cpp, kFigure).
+constexpr int kFigureWide = 432, kFigureTall = 640;
+constexpr float kFigureDrop = 0.52f;   // the lens's aim, under his head joint: over his middle,
+                                       // so he stands low with his wings' tips inside the top
+constexpr float kFigureLift = 0.30f;   // the eye over that aim
+constexpr float kFigureAway = 5.8f;
+constexpr float kFigureFov = 26.0f;    // vertical
+
 }  // namespace
 
 void Portrait::shutdown() {
@@ -40,30 +51,36 @@ bool Portrait::same(const std::vector<gfx::Drawable>& drawables) const {
 void Portrait::render(gfx::Renderer& renderer, const std::vector<gfx::Drawable>& drawables,
                       const float head[3], float yaw, float scale) {
     if (drawables.empty()) return;
+    const int wide = figure_ ? kFigureWide : kSide, tall = figure_ ? kFigureTall : kSide;
     if (!bgfx::isValid(target_)) {
         const bgfx::TextureHandle colour = bgfx::createTexture2D(
-            kSide, kSide, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_RT_MSAA_X4 | BGFX_SAMPLER_UVW_CLAMP);
+            uint16_t(wide), uint16_t(tall), false, 1, bgfx::TextureFormat::RGBA8,
+            BGFX_TEXTURE_RT_MSAA_X4 | BGFX_SAMPLER_UVW_CLAMP);
         const bgfx::TextureHandle depth = bgfx::createTexture2D(
-            kSide, kSide, false, 1, bgfx::TextureFormat::D32F, BGFX_TEXTURE_RT_WRITE_ONLY | BGFX_TEXTURE_RT_MSAA_X4);
+            uint16_t(wide), uint16_t(tall), false, 1, bgfx::TextureFormat::D32F,
+            BGFX_TEXTURE_RT_WRITE_ONLY | BGFX_TEXTURE_RT_MSAA_X4);
         const bgfx::TextureHandle both[2] = {colour, depth};
         target_ = bgfx::createFrameBuffer(2, both, true);
         picture_.handle = colour;
-        picture_.width = float(kSide);
-        picture_.height = float(kSide);
+        picture_.width = float(wide);
+        picture_.height = float(tall);
     }
     // Before him along his facing, turned a little: a figure at yaw 0 faces +z, as the bust's
     // does toward its camera (game/bust.cpp).
     const float turn = yaw + kTurnDegrees * bx::kPi / 180.0f;
     const float s = scale > 0.2f && scale < 5.0f ? scale : 1.0f;
-    const bx::Vec3 at(head[0], head[1] + kLookUp * s, head[2]);
-    const bx::Vec3 eye(head[0] + std::sin(turn) * kAway * s, head[1] + (kLookUp + kLift) * s,
-                       head[2] + std::cos(turn) * kAway * s);
+    const float aimY = figure_ ? head[1] - kFigureDrop * s : head[1] + kLookUp * s;
+    const float away = (figure_ ? kFigureAway : kAway) * s;
+    const float lift = (figure_ ? kFigureLift : kLift) * s;
+    const bx::Vec3 at(head[0], aimY, head[2]);
+    const bx::Vec3 eye(head[0] + std::sin(turn) * away, aimY + lift, head[2] + std::cos(turn) * away);
     float view[16], proj[16];
     bx::mtxLookAt(view, eye, at, bx::Vec3(0.0f, 1.0f, 0.0f), bx::Handedness::Right);
-    bx::mtxProj(proj, kFovDegrees, 1.0f, 0.05f, 20.0f, bgfx::getCaps()->homogeneousDepth, bx::Handedness::Right);
+    bx::mtxProj(proj, figure_ ? kFigureFov : kFovDegrees, float(wide) / float(tall), 0.05f, 40.0f,
+                bgfx::getCaps()->homogeneousDepth, bx::Handedness::Right);
     plain_.assign(drawables.begin(), drawables.end());
     for (gfx::Drawable& d : plain_) d.refine = 0;
-    renderer.drawStage(gfx::ViewStagePortrait, target_, kSide, kSide, view, proj, plain_);
+    renderer.drawStage(gfx::ViewStagePortrait, target_, uint16_t(wide), uint16_t(tall), view, proj, plain_);
     worn_.clear();
     for (const gfx::Drawable& d : drawables) worn_.push_back(d.mesh);
     taken_ = true;

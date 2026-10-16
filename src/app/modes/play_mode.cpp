@@ -778,6 +778,7 @@ void PlayMode::runScript(Context& ctx) {
     }
     if (args.windows.find("inventory") != std::string::npos) desk_.setInventoryOpen(true);
     if (args.windows.find("character") != std::string::npos) desk_.setCharacterOpen(true);
+    if (args.windows.find("inspect") != std::string::npos) desk_.setInspectFirst(true);
     if (args.windows.find("sanctuary") != std::string::npos) desk_.setSpecimenOpen(true);
     if (args.windows.find("graphics") != std::string::npos) {
         desk_.showMenu(game::Menu::Page::Graphics);

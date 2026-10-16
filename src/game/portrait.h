@@ -23,6 +23,11 @@ namespace mu::game {
 
 class Portrait {
 public:
+    // A face, as the target frame and the party's capsules take one; or `figure`, the whole of him
+    // head to foot and his wings as the inspect window shows him (game/ui/inspect.h), on a tall
+    // picture. Both without the shine of his plus, which washes a +11 set into one green-gold
+    // sheet; the plus is on each slot.
+    explicit Portrait(bool figure = false) : figure_(figure) {}
     void shutdown();
 
     // Photographs `drawables` (his, this frame) from in front of `head`, his head joint in the
@@ -48,6 +53,7 @@ private:
     bgfx::FrameBufferHandle target_ = BGFX_INVALID_HANDLE;
     gfx::Art picture_;
     bool taken_ = false;
+    bool figure_ = false;
 };
 
 }  // namespace mu::game
