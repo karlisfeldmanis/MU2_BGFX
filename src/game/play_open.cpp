@@ -286,6 +286,9 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     if (arena_.learn != 0 && local_.learn(arena_.learn)) {
         core::logf("arena: the hero is taught skill %d", arena_.learn);
     }
+    for (const int32_t skill : arena_.teach) {
+        if (local_.learn(skill)) core::logf("arena: the hero is taught skill %d", skill);
+    }
     // And a plain run too, to explore a world without dying in it.
     if (arena_.undying) {
         local_.undying(true);

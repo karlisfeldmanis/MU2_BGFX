@@ -204,27 +204,35 @@ def stride_at(strides, frame):
 def reel(path, seconds, keep, say):
     """Takes, one a world, cut hard on the same stride: each take's own stretch of
     [preroll, preroll + window) seconds, the next one's stride clocks pinned on its first frame to
-    those the last one had on the frame after its own (Play::Stride)."""
+    those the last one had on the frame after its own (Play::Stride).
+
+    A take with its own `cue` (a list of cue lines) plays that instead of the run, with its own
+    `args`, `preroll` and `window` when it has them; nothing is pinned across its cuts."""
     spec = json.load(open(path))
     name = os.path.basename(path)[:-len(".reel.json")]
     fps, preroll, window = spec["fps"], spec["preroll"], spec["window"]
     change, (dx, dy) = spec.get("change", 0.0), spec["direction"]
     stages = spec["stages"]
     takes = spec["takes"][:int(seconds // window) + 1] if seconds else spec["takes"]
-    first, length = int(round(preroll * fps)), int(round(window * fps))
     os.makedirs(OUT, exist_ok=True)
     work = tempfile.mkdtemp(prefix=f"{name}-", dir=OUT)
     started = time.time()
     pin = None
     parts = []
     for i, one in enumerate(takes):
+        own_preroll, own_window = one.get("preroll", preroll), one.get("window", window)
+        first, length = int(round(own_preroll * fps)), int(round(own_window * fps))
         gear = ",".join(stages[s] for s in one["wears"])
         switches = ["--world", one["world"], "--play", "--at", f"{one['at'][0]},{one['at'][1]}",
-                    "--give", gear] + shlex.split(spec.get("args", ""))
+                    "--give", gear] + shlex.split(spec.get("args", "")) + \
+                   shlex.split(one.get("args", ""))
         if one.get("weather"):
             switches += ["--weather", one["weather"]]
-        at_change = preroll + change
-        lines = ["0.0 move 0.55 0.6", f"0.1 run {dx} {dy}"]
+        at_change = own_preroll + change
+        if "cue" in one:
+            lines, pin = list(one["cue"]), None
+        else:
+            lines = ["0.0 move 0.55 0.6", f"0.1 run {dx} {dy}"]
         if pin is not None:
             lines.append(f"{first / fps:.6f} pin " + " ".join(pin))
         for slot in one.get("unwear", []):
@@ -245,18 +253,18 @@ def reel(path, seconds, keep, say):
         errors = errors_in(log)
         for line in errors[:3]:
             say(f"  {line}")
-        parts.append((video, wav))
+        parts.append((video, wav, first, length))
 
     # Each take's own stretch, frame-exact and sample-exact, joined; 5 ms fades keep the sound's
     # seams from clicking.
     inputs, chains = [], []
-    for i, (video, wav) in enumerate(parts):
+    for i, (video, wav, first, length) in enumerate(parts):
         inputs += ["-i", video, "-i", wav]
         start, end = first / fps, (first + length) / fps
         chains.append(f"[{2 * i}:v]trim=start_frame={first}:end_frame={first + length},"
                       f"setpts=PTS-STARTPTS[v{i}]")
         chains.append(f"[{2 * i + 1}:a]atrim=start={start:.6f}:end={end:.6f},asetpts=PTS-STARTPTS,"
-                      f"afade=t=in:d=0.005,afade=t=out:st={window - 0.005:.3f}:d=0.005[a{i}]")
+                      f"afade=t=in:d=0.005,afade=t=out:st={end - start - 0.005:.3f}:d=0.005[a{i}]")
     joined = "".join(f"[v{i}][a{i}]" for i in range(len(parts)))
     chains.append(f"{joined}concat=n={len(parts)}:v=1:a=1[v][a0]")
     chains.append("[a0]alimiter=limit=0.9:level=disabled[a]")
@@ -269,7 +277,7 @@ def reel(path, seconds, keep, say):
         say(f"FAILED: ffmpeg's cut; the takes are kept in {work}")
         return False, {"work": work}
     if not keep:
-        for video, _ in parts:
+        for video, *_ in parts:
             os.remove(video)
     say(f"recorded {mp4}  ({os.path.getsize(mp4) / 1e6:.1f} MB, {len(parts)} takes,"
         f" {time.time() - started:.0f} s; the takes' logs and sound in {work})")

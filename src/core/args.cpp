@@ -214,6 +214,7 @@ void printUsage() {
         "                            --world lorencia when no world is named\n"
         "  --arena-count N           how many of them (default 1)\n"
         "  --arena-learn N           the hero is taught skill N and the arena fights with it\n"
+        "  --teach N,N,...           the hero is taught these skills, bound to the bar as learned\n"
         "  --arena-undying           a blow that would fell the hero fills his health, arena or not\n"
         "  --wing-demo               every kill in Icarus leaves his class's first wings (a demo)\n"
         "  --peaceful                no monsters on the map at all: a place to walk and run\n"
@@ -404,6 +405,14 @@ Args parseArgs(int argc, char** argv) {
             }
         } else if (!std::strcmp(s, "--arena-learn")) {
             if (const char* v = next(s)) a.arenaLearn = std::atoi(v);
+        } else if (!std::strcmp(s, "--teach")) {
+            if (const char* v = next(s)) {
+                for (const char* p = v; *p != '\0';) {
+                    a.teach.push_back(std::atoi(p));
+                    while (*p != '\0' && *p != ',') ++p;
+                    if (*p == ',') ++p;
+                }
+            }
         } else if (!std::strcmp(s, "--arena-gap")) {
             if (const char* v = next(s)) a.arenaGap = std::max(0, std::atoi(v));
         } else if (!std::strcmp(s, "--arena-undying")) {

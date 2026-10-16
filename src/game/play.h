@@ -105,6 +105,9 @@ public:
         // A skill the arena's hero is taught when he is raised, by MU's number (0 for none), and the
         // arena's hand attacks with it (Play::fight). For filming.
         int32_t learn = 0;
+        // `--teach`: more skills taught at the start, for a recording; unlike `learn` the hand
+        // is left alone, and the bar binds them as it binds any skill learned.
+        std::vector<int32_t> teach;
         // `--arena-undying`: the hero is never felled, so a long fight can be watched.
         bool undying = false;
         // `--unseen`: no monster notices him (sim::Realm::unseen).

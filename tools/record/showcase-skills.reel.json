@@ -1,0 +1,31 @@
+{
+  "about": "The reworked spells, one class a world: the Dark Wizard's Hellfire, Inferno and Nova in Lost Tower 7 and his Evil Spirit, Aqua Beam and Cometfall in Atlans, the Dark Knight's Twisting Slash, Rageful Blow and Death Stab in Tarkan, the Fairy Elf's Penetration and her Bali in Noria. Real fights (--arena, undying), the game's own camera and HUD, the cursor casting; --teach puts each take's three on Q W E in table order, a primary (Twisting Slash, Penetration) on the right button. ./mu record showcase-skills",
+  "fps": 60,
+  "preroll": 1.0,
+  "window": 15.0,
+  "direction": [1, 0],
+  "args": "--level 350 --arena-undying",
+  "stages": {
+    "darksoul": "ArmorMale23:1:+11LW,HelmMale23:1:+11LW,PantMale23:1:+11LW,GloveMale23:1:+11LW,BootMale23:1:+11LW,Staff10:1:+11LW,Wing05:1:W",
+    "greatdragon": "ArmorMale22:1:+11LW,HelmMale22:1:+11LW,PantMale22:1:+11LW,GloveMale22:1:+11LW,BootMale22:1:+11LW,Spear11:1:+11LW,Wing06:1:W",
+    "guardian": "ArmorElf05:1:+11LW,HelmElf05:1:+11LW,PantElf05:1:+11LW,GloveElf05:1:+11LW,BootElf05:1:+11LW,Bow18:1:+11LW,Arrows02:1:W,Wing04:1:W"
+  },
+  "takes": [
+    {"world": "losttower", "at": [12, 121], "wears": ["darksoul"],
+     "args": "--class 0 --arena DeathKnight01 --arena-count 4 --teach 10,14,40",
+     "cue": ["0.0 move 0.62 0.45", "0.3 aim monster 0.5",
+             "1.4 skill q", "6.0 skill w", "10.6 skill e"]},
+    {"world": "atlans", "at": [20, 32], "wears": ["darksoul"],
+     "args": "--class 0 --arena Vepar01 --arena-count 4 --teach 9,12,13",
+     "cue": ["0.0 move 0.62 0.45", "0.3 aim monster 0.5",
+             "1.4 skill q", "6.0 skill w", "10.6 skill e"]},
+    {"world": "tarkan", "at": [79, 163], "wears": ["greatdragon"], "weather": "dry",
+     "args": "--class 2 --arena BeamKnight01 --arena-count 4 --teach 41,42,43",
+     "cue": ["0.0 move 0.62 0.45", "0.3 aim monster 0.5",
+             "1.2 rhold 3.4", "5.6 skill q", "9.6 skill w", "12.0 rhold 3.0"]},
+    {"world": "noria", "at": [184, 176], "wears": ["guardian"],
+     "args": "--class 1 --arena Agon01 --arena-count 6 --teach 35,52",
+     "cue": ["0.0 move 0.62 0.45", "0.3 aim monster 0.5",
+             "1.4 skill q", "3.6 rhold 11.0"]}
+  ]
+}
