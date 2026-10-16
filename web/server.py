@@ -41,7 +41,8 @@ The routes:
          on the posts of site/posts.json, under the account's name.
     GET  /api/downloads                             -> 200 {windows: {file, bytes} | null, macos: ...}
     GET  /api/online     Bearer T of an admin       -> 200 {at, fresh, players: [...]} | 404 for anyone else
-         who is on the game server now, as mu2_server last told it (the admins' /online page).
+         who is on the game server now, as mu2_server last told it (the admins' /online page), and
+         `recent`: the last RECENT_SHOWN plays of the last RECENT_DAYS days, bots left out.
     POST /internal/online   (127.0.0.1 only) {players: [{account, name, class, level, world, copy, x, y, bot}]}
          mu2_server's list of who is on, every 5 s (server/src/signin.cpp tellOnline); kept in memory.
     POST /internal/role     (127.0.0.1 only) {email, role}  -> 200 {ok} | 404
@@ -97,6 +98,12 @@ ROLES = ("player", "admin")
 MOST_ONLINE_BODY = 512 * 1024
 # The list is told every 5 s; one older than this is a server that stopped telling (down, or restarting).
 ONLINE_STALE_SECONDS = 20
+# A play: one character on the server from when he came on until he was last on a list, kept this
+# long (the `games` table). Off a list no longer than RECENT_GAP -- the website restarting -- he is
+# still on the same play.
+RECENT_DAYS = 30
+RECENT_SHOWN = 100
+RECENT_GAP = 30
 EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]+\.[^@\s]+$")
 SCRYPT = dict(n=2**14, r=8, p=1, maxmem=64 * 1024 * 1024, dklen=32)
 
@@ -170,6 +177,17 @@ CREATE TABLE IF NOT EXISTS comments (
     at         INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS comments_post ON comments(post, at);
+CREATE TABLE IF NOT EXISTS games (
+    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    name       TEXT NOT NULL,       -- the character
+    class      TEXT NOT NULL,
+    level      INTEGER NOT NULL,    -- as he was last on a list
+    world      TEXT NOT NULL,
+    since      INTEGER NOT NULL,
+    until      INTEGER NOT NULL,    -- the last list he was on
+    PRIMARY KEY (account_id, name, since)
+);
+CREATE INDEX IF NOT EXISTS games_until ON games(until);
 CREATE TABLE IF NOT EXISTS tickets (
     ticket      TEXT PRIMARY KEY,
     account_id  INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
@@ -253,6 +271,7 @@ class Store:
         # Who is on the game server, as mu2_server last told it (told_online); never on disk.
         self.online_lock = threading.Lock()
         self.online = {"at": 0, "players": []}
+        self.games_swept = 0
         self.crash_days = {}
         for row in self.crash_rows():
             self.crash_seen.add(row.get("sha"))
@@ -461,12 +480,37 @@ class Store:
         return self.db().execute("UPDATE accounts SET role = ? WHERE email = ?", (role, email)).rowcount > 0
 
     def told_online(self, players: list):
-        """mu2_server's list, each player's since carried over from the last list he was on."""
+        """mu2_server's list, each player's since carried over from the last list he was on, and
+        each one with an account written down as his play (`games`)."""
         now = int(time.time())
+        db = self.db()
         with self.online_lock:
             before = {(p.get("account"), p.get("name")): p.get("since", now) for p in self.online["players"]}
-            for p in players:
-                p["since"] = before.get((p.get("account"), p.get("name")), now)
+            db.execute("BEGIN")
+            try:
+                for p in players:
+                    key = (p.get("account"), p.get("name"))
+                    account = p.get("account") if isinstance(p.get("account"), int) else 0
+                    if key not in before and account > 0 and not p.get("bot"):
+                        # The website restarted under him: the play he was on goes on.
+                        row = db.execute("SELECT max(since) FROM games WHERE account_id = ? AND name = ? AND until >= ?",
+                                         (account, str(p.get("name")), now - RECENT_GAP)).fetchone()
+                        if row and row[0]:
+                            before[key] = row[0]
+                    p["since"] = before.get(key, now)
+                    if account > 0 and not p.get("bot"):
+                        db.execute("INSERT INTO games VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO UPDATE SET "
+                                   "class = excluded.class, level = excluded.level, world = excluded.world, "
+                                   "until = excluded.until",
+                                   (account, str(p.get("name"))[:32], str(p.get("class"))[:32],
+                                    int(p.get("level") or 0), str(p.get("world"))[:32], p["since"], now))
+                if now - self.games_swept > 3600:
+                    db.execute("DELETE FROM games WHERE until < ?", (now - RECENT_DAYS * 86400,))
+                    self.games_swept = now
+                db.execute("COMMIT")
+            except (sqlite3.Error, ValueError, TypeError):
+                db.execute("ROLLBACK")
+                raise
             self.online = {"at": now, "players": players}
 
     def online_report(self) -> dict:
@@ -483,7 +527,16 @@ class Store:
             email, name = accounts.get(p.get("account"), ("", ""))
             players.append(p | {"email": email, "account_name": name})
         players.sort(key=lambda p: (p.get("bot", False), str(p.get("world")), -int(p.get("level") or 0)))
-        return {"at": told["at"], "fresh": time.time() - told["at"] < ONLINE_STALE_SECONDS, "players": players}
+        on = {(p.get("account"), p.get("name"), p.get("since")) for p in told["players"]}
+        recent = [{"account": account, "email": email, "account_name": name or "", "name": who, "class": kind,
+                   "level": level, "world": world, "since": since, "until": until,
+                   "online": (account, who, since) in on}
+                  for account, email, name, who, kind, level, world, since, until in self.db().execute(
+                      "SELECT g.account_id, a.email, a.name, g.name, g.class, g.level, g.world, g.since, g.until "
+                      "FROM games g JOIN accounts a ON a.id = g.account_id WHERE g.until >= ? "
+                      "ORDER BY g.until DESC LIMIT ?", (int(time.time()) - RECENT_DAYS * 86400, RECENT_SHOWN))]
+        return {"at": told["at"], "fresh": time.time() - told["at"] < ONLINE_STALE_SECONDS, "players": players,
+                "recent": recent}
 
     def logout(self, token: str):
         self.db().execute("DELETE FROM sessions WHERE token_hash = ?", (token_hash(token or ""),))

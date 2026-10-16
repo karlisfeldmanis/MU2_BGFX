@@ -54,6 +54,13 @@
 <tbody id="rows"></tbody>
 </table>
 <p class="center muted" style="font-size: 14px" id="told"></p>
+
+<h2 class="h2" style="margin-top: 24px">Recent plays</h2>
+<table class="who">
+<thead><tr><th>Character</th><th>Account</th><th>Level</th><th>Last map</th><th>Started</th><th>Played</th></tr></thead>
+<tbody id="recent"></tbody>
+</table>
+<p class="center muted" style="font-size: 14px">The last 100 of 30 days, bots left out.</p>
 </div>
 
 </div>
@@ -71,10 +78,11 @@
   const { $, el, api, when } = MU;
 
   const map = (w) => String(w || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-  function since(seconds) {
-    const m = Math.max(0, Math.floor((Date.now() / 1000 - seconds) / 60));
-    return m < 1 ? 'just now' : m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min';
+  function span(seconds) {
+    const m = Math.max(0, Math.floor(seconds / 60));
+    return m < 1 ? 'under a minute' : m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min';
   }
+  const since = (seconds) => { const s = Date.now() / 1000 - seconds; return s < 60 ? 'just now' : span(s); };
   function cell(text, sub, key, cls) {
     const td = el('td', cls || '', text);
     if (key) td.dataset.k = key;
@@ -114,6 +122,27 @@
       tr.appendChild(cell(map(p.world) + (p.copy > 1 ? ' ' + p.copy : ''), p.x + ', ' + p.y, 'Map'));
       tr.appendChild(cell(since(p.since), '', 'Online for'));
       rows.appendChild(tr);
+    }
+    const recent = $('recent');
+    recent.replaceChildren();
+    if (!o.recent.length) {
+      const tr = el('tr');
+      const td = cell('Nobody has played yet since this list began.', '', '', 'muted');
+      td.colSpan = 6;
+      tr.appendChild(td);
+      recent.appendChild(tr);
+    }
+    for (const g of o.recent) {
+      const tr = el('tr');
+      tr.appendChild(cell(g.name, g.class));
+      tr.appendChild(cell(g.account_name || g.email, g.account_name ? g.email : '', 'Account'));
+      tr.appendChild(cell(String(g.level), '', 'Level', 'num'));
+      tr.appendChild(cell(map(g.world), '', 'Last map'));
+      tr.appendChild(cell(when(g.since), '', 'Started'));
+      const played = cell(g.online ? 'online now' : span(g.until - g.since), g.online ? 'for ' + span(g.until - g.since) : '', 'Played');
+      if (g.online) played.style.color = 'var(--live)';
+      tr.appendChild(played);
+      recent.appendChild(tr);
     }
     $('told').textContent = o.at ? 'Updated ' + when(o.at) + ' · refreshes every 10 s' : '';
     $('v-list').hidden = false;
