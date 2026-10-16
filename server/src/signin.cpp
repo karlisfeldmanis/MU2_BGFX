@@ -315,7 +315,7 @@ void tellOnline(const std::vector<std::unique_ptr<Session>>& sessions) {
     // The last one still on its way (the website slow or gone): this one waits for the next turn.
     if (g_telling.valid() && g_telling.wait_for(std::chrono::seconds(0)) != std::future_status::ready) return;
     g_toldAt = now;
-    std::string body = "{\"players\":[";
+    std::string body = "{\"region\":" + jsonText(g_region) + ",\"players\":[";
     bool first = true;
     for (const auto& one : sessions) {
         if (!one->welcomed || !one->socket.open() || one->world == nullptr) continue;
@@ -326,11 +326,11 @@ void tellOnline(const std::vector<std::unique_ptr<Session>>& sessions) {
         char line[512];
         std::snprintf(line, sizeof line,
                       "%s{\"account\":%lld,\"name\":%s,\"class\":%s,\"level\":%d,\"world\":%s,\"copy\":%d,"
-                      "\"x\":%d,\"y\":%d,\"bot\":%s}",
+                      "\"x\":%d,\"y\":%d,\"bot\":%s,\"ms\":%d}",
                       first ? "" : ",", id, jsonText(one->name).c_str(),
                       jsonText(sim::className(int(him->kin), him->second)).c_str(), int(him->level),
                       jsonText(one->world->name).c_str(), one->world->copy, int(him->x), int(him->y),
-                      one->bot ? "true" : "false");
+                      one->bot ? "true" : "false", one->socket.rttMs());
         body += line;
         first = false;
     }

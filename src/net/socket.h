@@ -50,6 +50,10 @@ public:
     bool open() const { return fd_ >= 0; }
     int fd() const { return fd_; }
     void close();
+    // The connection's round trip as the kernel smooths it from its own acknowledgements, in ms:
+    // nothing sent for it (TCP_INFO on Linux, TCP_CONNECTION_INFO on the Mac). -1 where there is
+    // none, or no connection. The website's Online page shows it for each player.
+    int rttMs() const;
 
     // What is still to go, and how long it has waited with nothing taken: a far end that stopped
     // reading holds the server's bytes for him forever otherwise (sprint 24).

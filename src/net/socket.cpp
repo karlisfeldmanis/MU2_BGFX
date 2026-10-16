@@ -126,6 +126,23 @@ Socket& Socket::operator=(Socket&& other) noexcept {
     return *this;
 }
 
+int Socket::rttMs() const {
+    if (fd_ < 0) return -1;
+#if defined(__linux__)
+    tcp_info info{};
+    socklen_t size = sizeof info;
+    if (getsockopt(fd_, IPPROTO_TCP, TCP_INFO, &info, &size) != 0) return -1;
+    return int((info.tcpi_rtt + 500) / 1000);  // microseconds
+#elif defined(__APPLE__)
+    tcp_connection_info info{};
+    socklen_t size = sizeof info;
+    if (getsockopt(fd_, IPPROTO_TCP, TCP_CONNECTION_INFO, &info, &size) != 0) return -1;
+    return int(info.tcpi_srtt);  // milliseconds
+#else
+    return -1;
+#endif
+}
+
 void Socket::close() {
     if (fd_ >= 0) closeFd(fd_);
     fd_ = -1;

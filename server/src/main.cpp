@@ -214,6 +214,7 @@ int main(int argc, char** argv) {
     std::string store = "characters.db";
     int marketSample = 0;  // --market-sample N (broker.h)
     sim::RealmConfig config;
+    if (const char* region = std::getenv("MU2_REGION"); region != nullptr && *region) g_region = region;
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
         if (a == "--port" && i + 1 < argc) port = std::atoi(argv[++i]);
@@ -223,6 +224,7 @@ int main(int argc, char** argv) {
         else if (a == "--accounts" && i + 1 < argc) takeTokensFrom(argv[++i]);
         // Players only through the launcher (host.h g_launcherOnly).
         else if (a == "--launcher-only") g_launcherOnly = true;
+        else if (a == "--region" && i + 1 < argc) g_region = argv[++i];
         else if (a == "--speed" && i + 1 < argc) {
             g_speed = std::max(1, std::atoi(argv[++i]));
             g_tick /= g_speed;
@@ -265,7 +267,7 @@ int main(int argc, char** argv) {
             const int s = std::max(2, std::atoi(argv[++i]));
             config.square = {s, s / 2, s / 2};
         } else {
-            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--accounts HOST:PORT] [--launcher-only] [--castle-period S] [--square-period S] [--kit LEVEL:STEM+N,...] [--kit-done Q,...] [--storm] [--invasion] [--map-cap N] [--speed N]\n");
+            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--accounts HOST:PORT] [--launcher-only] [--region NAME] [--castle-period S] [--square-period S] [--kit LEVEL:STEM+N,...] [--kit-done Q,...] [--storm] [--invasion] [--map-cap N] [--speed N]\n");
             return 2;
         }
     }

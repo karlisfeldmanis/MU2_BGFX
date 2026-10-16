@@ -58,9 +58,10 @@ The routes:
     GET  /api/character?account=N&name=X   Bearer T of an admin -> 200 {name, class, level, world, saved,
          second, experience, zen, points, worn, bag} | 404: one character's stats and gear, as mu2_server
          last listed it (a minute apart).
-    POST /internal/online   (127.0.0.1 only) {players: [{account, name, class, level, world, copy, x, y, bot}],
+    POST /internal/online   (127.0.0.1 only) {region?, players: [{account, name, class, level, world, copy, x, y, bot, ms}],
                              characters?: [{account, name, class, level, world, saved, fresh}]}
-         mu2_server's list of who is on, every 5 s (server/src/signin.cpp tellOnline); kept in memory.
+         a region's mu2_server's list of who is on, every 5 s (server/src/signin.cpp tellOnline); kept in
+         memory, one list a region (DEFAULT_REGION when it names none). `ms`: his line's round trip.
     POST /internal/role     (127.0.0.1 only) {email, role}  -> 200 {ok} | 404
          an account made "admin" or back to "player": on the box,
          curl -s -d '{"email":"X","role":"admin"}' http://127.0.0.1:8080/internal/role
@@ -114,6 +115,11 @@ ROLES = ("player", "admin")
 MOST_ONLINE_BODY = 8 * 1024 * 1024  # and once a minute every character's gear, a few KB each
 # The list is told every 5 s; one older than this is a server that stopped telling (down, or restarting).
 ONLINE_STALE_SECONDS = 20
+# Each game server is a region of the launcher's (src/launcher/engine.cpp regions()) and tells its own
+# list, named by "region"; a server from before regions names none and is Helsinki's. A region silent
+# this long is a server taken away, and its list is left off the page.
+DEFAULT_REGION = "North Europe"
+REGION_GONE_SECONDS = 600
 # A play: one character on the server from when he came on until he was last on a list, kept this
 # long (the `games` table). Off a list no longer than RECENT_GAP -- the website restarting -- he is
 # still on the same play.
@@ -310,12 +316,14 @@ class Store:
         self.crashes_path = path.parent / "crashes.jsonl"
         self.crash_lock = threading.Lock()
         self.crash_seen = set()
-        # Who is on the game server, as mu2_server last told it (told_online); never on disk.
+        # Who is on each region's game server, as its mu2_server last told it (told_online): region ->
+        # {at, players}, each player carrying his region; never on disk.
         self.online_lock = threading.Lock()
-        self.online = {"at": 0, "players": []}
+        self.online = {}
         self.games_swept = 0
-        # Every character of an account, as mu2_server last listed it (told_characters).
-        self.characters = []
+        # Every character of an account, as each region's mu2_server last listed it (told_characters):
+        # region -> [character], each carrying its region.
+        self.characters = {}
         # The bug reports (bug()), in bugs.jsonl beside the database: a line for each report, and a
         # line {id, state, at} for each time an admin marks one, folded onto it as the file is read.
         # Kept in memory too, by id: a few thousand short lines at most.
@@ -545,13 +553,16 @@ class Store:
     def set_role(self, email: str, role: str) -> bool:
         return self.db().execute("UPDATE accounts SET role = ? WHERE email = ?", (role, email)).rowcount > 0
 
-    def told_online(self, players: list):
-        """mu2_server's list, each player's since carried over from the last list he was on, and
-        each one with an account written down as his play (`games`)."""
+    def told_online(self, players: list, region: str = DEFAULT_REGION):
+        """A region's mu2_server's list, each player's since carried over from the last list he was
+        on (in any region), and each one with an account written down as his play (`games`)."""
         now = int(time.time())
         db = self.db()
+        for p in players:
+            p["region"] = region
         with self.online_lock:
-            before = {(p.get("account"), p.get("name")): p.get("since", now) for p in self.online["players"]}
+            before = {(p.get("account"), p.get("name")): p.get("since", now)
+                      for told in self.online.values() for p in told["players"]}
             db.execute("BEGIN")
             try:
                 for p in players:
@@ -577,16 +588,27 @@ class Store:
             except (sqlite3.Error, ValueError, TypeError):
                 db.execute("ROLLBACK")
                 raise
-            self.online = {"at": now, "players": players}
+            self.online[region] = {"at": now, "players": players}
 
-    def told_characters(self, characters: list):
+    def told_characters(self, characters: list, region: str = DEFAULT_REGION):
+        for c in characters:
+            c["region"] = region
         with self.online_lock:
-            self.characters = characters
+            self.characters[region] = characters
+
+    def regions_told(self) -> dict:
+        """The regions whose servers still tell (REGION_GONE_SECONDS): region -> {at, players}."""
+        now = time.time()
+        with self.online_lock:
+            return {region: told for region, told in self.online.items() if now - told["at"] < REGION_GONE_SECONDS}
+
+    def all_characters(self) -> list:
+        with self.online_lock:
+            return [c for region in self.characters.values() for c in region]
 
     def everyone(self) -> list:
         """Each account with a character: its characters, newest played first, and its Plays."""
-        with self.online_lock:
-            characters = list(self.characters)
+        characters = self.all_characters()
         by = {}
         for c in characters:
             if isinstance(c.get("account"), int) and c["account"] > 0:
@@ -610,21 +632,24 @@ class Store:
             played = [int(c.get("saved") or 0) for c in chars if not c.get("fresh")]
             out.append({"account": account, "email": email, "account_name": name or "", "created": created,
                         "plays": count, "last_play": last_play or 0, "last": max(played + [last_play or 0]),
-                        "characters": [{key: c.get(key) for key in ("name", "class", "level", "world", "saved", "fresh", "zen")}
+                        "characters": [{key: c.get(key) for key in ("name", "class", "level", "world", "saved", "fresh", "zen", "region")}
                                        for c in chars]})
         out.sort(key=lambda a: -a["last"])
         return out
 
     def character(self, account: int, name: str):
-        with self.online_lock:
-            for c in self.characters:
-                if c.get("account") == account and str(c.get("name", "")).lower() == name.lower():
-                    return c
+        for c in self.all_characters():
+            if c.get("account") == account and str(c.get("name", "")).lower() == name.lower():
+                return c
         return None
 
     def online_report(self) -> dict:
-        with self.online_lock:
-            told = self.online
+        # Every region's list as one: newest told, fresh only while every region still tells.
+        regions = self.regions_told()
+        now = time.time()
+        told = {"at": max([r["at"] for r in regions.values()] + [0]),
+                "players": [p for r in regions.values() for p in r["players"]]}
+        stale = sorted(region for region, r in regions.items() if now - r["at"] >= ONLINE_STALE_SECONDS)
         ids = sorted({p["account"] for p in told["players"] if p.get("account")})
         accounts = {}
         if ids:
@@ -656,7 +681,9 @@ class Store:
                 row = json.loads(report)
                 machines[str(account)] = {key: row.get(key) for key in
                                           ("gpu", "vendor", "driver", "date", "cpu", "ram", "os", "graphics", "renderer")}
-        return {"at": told["at"], "fresh": time.time() - told["at"] < ONLINE_STALE_SECONDS, "players": players,
+        return {"at": told["at"], "fresh": bool(regions) and not stale, "stale": stale, "players": players,
+                "regions": [{"name": region, "at": r["at"], "players": len(r["players"])}
+                            for region, r in sorted(regions.items())],
                 "recent": recent, "machines": machines, "everyone": everyone}
 
     def logout(self, token: str):
@@ -1098,9 +1125,11 @@ class Handler(BaseHTTPRequestHandler):
         players = said.get("players") if said else None
         if not isinstance(players, list):
             return self.reply(400, {"error": "bad request"})
-        self.store.told_online([p for p in players if isinstance(p, dict)])
+        region = said.get("region") if isinstance(said.get("region"), str) and said.get("region") else DEFAULT_REGION
+        region = region[:32]
+        self.store.told_online([p for p in players if isinstance(p, dict)], region)
         if isinstance(said.get("characters"), list):
-            self.store.told_characters([c for c in said["characters"] if isinstance(c, dict)])
+            self.store.told_characters([c for c in said["characters"] if isinstance(c, dict)], region)
         self.reply(200, {"ok": True})
 
     def role(self):

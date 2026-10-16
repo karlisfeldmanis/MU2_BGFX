@@ -144,6 +144,10 @@ inline net::Datagram g_udp;
 // account, is a game started without the launcher, or one made to look like it. The bots, which
 // play with no account, come from this machine (tools/netbot) and are let in.
 inline bool g_launcherOnly = false;
+// The launcher's region this server is (src/launcher/engine.cpp regions()), told to the website
+// with who is on (tellOnline) so its Online page says where each player plays: --region NAME, or
+// MU2_REGION in the environment (the box's /etc/default/mu2-server), else Helsinki's.
+inline std::string g_region = "North Europe";
 // How many recent ticks a datagram may carry: four, a fifth of a second of a line's losses.
 constexpr size_t kRecentTicks = 4;
 
