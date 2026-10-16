@@ -1,28 +1,5 @@
 [
   {
-    "id": "2026-10-16",
-    "date": "2026-10-16",
-    "title": "A New Era",
-    "body": "Inspect other players, report bugs from inside the game, and a new pendant to hunt. Rings and pendants are rebalanced, and Noria's meadows turn gold. The first time you log in, a few slides show what's new.",
-    "changes": [
-      ["New", "What's New: slides on your first login after an update"],
-      ["New", "Inspect: see another player's gear, figure and stats from the player menu"],
-      ["New", "Report a bug from the button on the minimap"],
-      ["New", "Pendant of Haste: a powered pendant for attack speed"],
-      ["New", "Jewel of Chaos drops from every monster level 12 and up"],
-      ["New", "Aida on the travel list"],
-      ["Improved", "Hold the left mouse button to keep walking toward the pointer"],
-      ["Improved", "Rings and pendants rebalanced: Fire and Poison weaker, Fury stronger"],
-      ["Improved", "Legendary rings and pendants show orange, and their cards say what each line does"],
-      ["Improved", "Noria's meadows get golden and amber grass; Lorencia's grass fits its slopes"],
-      ["Improved", "Low-end PCs start on lighter settings with Direct3D 11"],
-      ["Improved", "Party and guild speech bubbles are cleaner"],
-      ["Fixed", "Inventory drag and drop: items overlapping, dropped behind windows, or landing off the pointer"],
-      ["Fixed", "No sound when another player levels up"],
-      ["Fixed", "The minimap called players \"Bot\""]
-    ]
-  },
-  {
     "id": "2026-10-15",
     "date": "2026-10-15",
     "title": "The Golden Dragon arrives",
