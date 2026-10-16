@@ -680,7 +680,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         if (const std::string whom = playerMenu_.whisper(); !whom.empty()) chat_.whisperTo(whom);
         // A guild's call: its card in the middle (Chat::guildCalled).
         net::GuildCall call;
-        while (play.takeGuildCall(call)) chat_.guildCalled(call);
+        while (play.takeGuildCall(call)) {
+            chat_.guildCalled(call);
+            play.ui(Play::Ui::Invited);
+        }
     }
     // The guild's windows (game/ui/guild.h): G's, and the Guild Master's when he is spoken to on a
     // server. Each keeps the pointer while a field of it types, as the Broker's does.

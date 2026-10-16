@@ -31,7 +31,7 @@ void Desk::dealNews(Play& play) {
                 // Said to both: the one asked holds the ask.
                 if (play.realm().dealAskedBy() == said.whom) {
                     chat_.askedToTrade(name, said.whom);
-                    play.ui(Play::Ui::Opened);
+                    play.ui(Play::Ui::Invited);
                 } else {
                     chat_.notice("You asked " + name + " to trade.");
                 }

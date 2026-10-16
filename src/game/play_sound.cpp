@@ -403,6 +403,7 @@ void Play::ui(Ui which) {
         case Ui::Refused: sound_.play(heard_.refused); break;
         case Ui::Took: sound_.play(heard_.take); break;
         case Ui::Opened: sound_.play(heard_.opened); break;
+        case Ui::Invited: sound_.play(heard_.invited); break;
     }
 }
 

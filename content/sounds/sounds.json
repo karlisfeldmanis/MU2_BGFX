@@ -694,6 +694,15 @@
       "from": "SOUND_INTERFACE01, which ZzzOpenData loads from Data\\Sound\\iCreateWindow.wav. ReceiveTalk ends on PlayBuffer(SOUND_CLICK01) and PlayBuffer(SOUND_INTERFACE01) together, so a merchant's counter opens on both. MuMain also plays it for NPC dialogue, quest and guild windows, none of which Lorencia's 0.75 has.",
       "note": "Unplaced, as every interface sound is."
     },
+    "window_invite": {
+      "files": [
+        "iinvite.wav"
+      ],
+      "from": "Not MU's file. freesound_community '11 virus metaltank' (Pixabay 92589, downloads/), given by the user 2026-10-16 for an invite: 4.1 s of 24 kHz stereo MP3 made 22 kHz mono 16-bit, cut at 2.45 s where its tail falls silent, with a 0.2 s fade out. An RMS of -23.0 dB, peaking at -1.7.",
+      "gain_db": -3.0,
+      "gain_note": "Three down, so its peak sits near window_open's and it stands out without jumping.",
+      "note": "**An invention, marked.** The user (2026-10-16): 'use it when player gets invited to party, guild or trade'. Played as the card in the middle comes up: a party or raid invite (Chat::hear), a guild's invite or a player asking to join his guild (Chat::guildCalled), a trade asked of him (desk_deal.cpp), in place of window_open there. Unplaced, as every interface sound is."
+    },
     "window_refused": {
       "files": [
         "ibuttonerror.wav"

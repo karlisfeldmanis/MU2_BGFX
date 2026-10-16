@@ -800,6 +800,10 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
             core::logf("chat: %s%s%s: %s", line.name.empty() ? "(server) " : "", line.name.c_str(),
                        line.to.empty() ? "" : (" to " + line.to).c_str(), line.text.c_str());
             hear(line);
+            // A party's or raid's invite to him: its card's sound (window_invite).
+            if (!log_.empty() && log_.back().channel == net::Channel::Party && !log_.back().inviter.empty()) {
+                play.ui(Play::Ui::Invited);
+            }
             // A Map, Party or Guild line said by someone in view: over his head too, links and all;
             // the bubble cuts it to its own three lines and tints the private ones
             // (game/ui/speech.cpp).
