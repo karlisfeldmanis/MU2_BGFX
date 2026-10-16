@@ -230,7 +230,7 @@ void post(const std::string& host, int port, const std::string& path, const std:
 }
 
 // A name as a JSON string: the server's names are letters and digits, but nothing is trusted.
-std::string quoted(const std::string& text) {
+std::string jsonText(const std::string& text) {
     std::string out = "\"";
     for (const char c : text) {
         if (c == '"' || c == '\\') out += '\\';
@@ -264,9 +264,9 @@ void tellOnline(const std::vector<std::unique_ptr<Session>>& sessions) {
         std::snprintf(line, sizeof line,
                       "%s{\"account\":%lld,\"name\":%s,\"class\":%s,\"level\":%d,\"world\":%s,\"copy\":%d,"
                       "\"x\":%d,\"y\":%d,\"bot\":%s}",
-                      first ? "" : ",", id, quoted(one->name).c_str(),
-                      quoted(sim::className(int(him->kin), him->second)).c_str(), int(him->level),
-                      quoted(one->world->name).c_str(), one->world->copy, int(him->x), int(him->y),
+                      first ? "" : ",", id, jsonText(one->name).c_str(),
+                      jsonText(sim::className(int(him->kin), him->second)).c_str(), int(him->level),
+                      jsonText(one->world->name).c_str(), one->world->copy, int(him->x), int(him->y),
                       one->bot ? "true" : "false");
         body += line;
         first = false;
