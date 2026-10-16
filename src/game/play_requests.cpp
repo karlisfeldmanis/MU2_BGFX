@@ -384,15 +384,19 @@ bool Play::lay(const std::string& asked) {
     bool luck = false;
     uint8_t excellent = 0;
     int sockets = 0;
+    uint8_t affixes[3] = {};
     if (colon != std::string::npos) {
-        readExtras(asked.substr(colon + 1), &plus, &luck, &option, &excellent, nullptr, &sockets);
+        // A<n> too: a legendary ring on the ground for its column (RingWisdom::+4A2A3A4).
+        readExtras(asked.substr(colon + 1), &plus, &luck, &option, &excellent, nullptr, &sockets,
+                   nullptr, nullptr, affixes);
     }
     const int32_t item = tables_.itemNamed(name);
     if (item < 0) {
         core::logError("--lay: no item named %s", name.c_str());
         return false;
     }
-    const uint32_t id = local_.lay(item, plus, luck, option, excellent, uint8_t(sockets));
+    const uint32_t id =
+        local_.lay(item, plus, luck, option, excellent, uint8_t(sockets), affixes);
     core::logf("laid %s on the ground (drop %u)", tables_.items[size_t(item)].label.c_str(), id);
     if (id == 0) return false;
     landed(id);

@@ -510,26 +510,85 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // ITEM_IMP (ZzzInventory.cpp:4258-4268; Game.en.resx "Absorb %d%% of Damage", "Max HP +%d
     // increased", "Increase 30%% of attacking & Wizardry Dmg"), with the numbers off the rule the
     // realm fights by (sim::petPower), so the card and the blow cannot disagree.
-    // A ring's or a pendant's resistance, 1 a plus in its element (docs/game/jewellery.md); MuMain's
-    // card says it as "Ice Resistance +%d" and the rest alike.
+    // A ring's or a pendant's lines, inline as its powers are (the user, 2026-10-16: one layout
+    // on the card, "Poison resistance +2"), each with what it does under it in gray: a number
+    // alone did not say a point of poison resistance turns one poisoning in two aside.
+    const auto inlineLine = [&](const std::string& words, const std::string& value, Tone ink) {
+        Row line;
+        line.free = words;
+        line.tail = value;
+        line.freeTone = ink;
+        does.rows.push_back(line);
+    };
+    const auto explain = [&](const std::string& text) {
+        Row line;
+        line.free = text;
+        line.freeTone = Tone::Gray;
+        does.rows.push_back(line);
+    };
+    // What r points in an element do (sim::Excellence): Ice, Poison and Lightning turn the
+    // chill, the poison and the push aside r times in r + 1 (WebZen's ResistanceCheck); Fire and
+    // Wind take kResistanceCut a point off a blow, to kResistanceCutMost.
+    const auto resistsSay = [&](sim::Element element, int points) -> std::string {
+        const std::string odds = std::to_string(points) + " in " + std::to_string(points + 1);
+        const int cut = int(std::lround(
+            std::min(sim::kResistanceCutMost, sim::kResistanceCut * points) * 100.0));
+        switch (element) {
+            case sim::Element::Ice: return "turns aside " + odds + " chills";
+            case sim::Element::Poison: return "turns aside " + odds + " poisonings";
+            case sim::Element::Lightning: return "turns aside " + odds + " lightning pushes";
+            case sim::Element::Fire: return std::to_string(cut) + "% less from fire blows";
+            case sim::Element::Wind: return std::to_string(cut) + "% less from wind blows";
+            default: return std::string();
+        }
+    };
     if (sim::jewellery(row) && sim::elementOf(row) != sim::Element::None) {
         static const char* const kElement[] = {"", "Ice resistance", "Poison resistance",
                                                "Lightning resistance", "Fire resistance",
                                                "Wind resistance"};
+        const sim::Element element = sim::elementOf(row);
         // None printed at +0, where it read as a broken line (the tooltip audit, 2026-10-05).
         const int resists = sim::resistanceOf(row, what.refinement);
         if (resists > 0) {
-            does.rows.push_back(stat(kElement[int(sim::elementOf(row))],
-                                     "+" + std::to_string(resists), Tone::White));
+            inlineLine(kElement[int(element)], "+" + std::to_string(resists), Tone::White);
+            explain(resistsSay(element, resists));
         }
-        // And a ring's sting, at every plus (sim::ringStingChance).
+        // And a ring's sting, at every plus (sim::ringStingChance), said as what it does.
         if (sim::ring(row)) {
-            static const char* const kSting[] = {"", "Ice damage", "Poison damage",
-                                                 "Lightning damage", "Fire damage", "Wind damage"};
-            const int chance =
-                int(std::lround(sim::ringStingChance(what.refinement) * 100.0));
-            does.rows.push_back(stat(kSting[int(sim::elementOf(row))],
-                                     std::to_string(chance) + "% chance on hit", Tone::White));
+            const std::string chance =
+                std::to_string(int(std::lround(sim::ringStingChance(what.refinement) * 100.0))) +
+                "%";
+            const int share = int(std::lround(sim::kRingPulseShare * 100.0));
+            const sim::SkillRow* poison = sim::skillNumbered(sim::skill::kPoison);
+            const int poisonSeconds = poison ? int(poison->poisonTicks / 20) : 0;
+            const int bite = int(std::lround(double(sim::kRingFrostForce) * 100.0));
+            switch (element) {
+                case sim::Element::Ice:
+                    inlineLine("Chills on hit", chance, Tone::White);
+                    explain("half speed, and a frost bite of " + std::to_string(bite) +
+                            "% of a blow");
+                    break;
+                case sim::Element::Poison:
+                    inlineLine("Poisons on hit", chance, Tone::White);
+                    explain(std::to_string(share) + "% of the blow every " +
+                            std::to_string(sim::kPoisonEvery / 20) + " s for " +
+                            std::to_string(poisonSeconds) + " s");
+                    break;
+                case sim::Element::Lightning:
+                    inlineLine("Lightning on hit", chance, Tone::White);
+                    explain("a bolt of " + std::to_string(bite) + "% of a blow that pushes it");
+                    break;
+                case sim::Element::Fire:
+                    inlineLine("Burns on hit", chance, Tone::White);
+                    explain(std::to_string(share) + "% of the blow every second for " +
+                            std::to_string(sim::kBurnRuneTicks / 20) + " s");
+                    break;
+                case sim::Element::Wind:
+                    inlineLine("Gust on hit", chance, Tone::White);
+                    explain("a gust of " + std::to_string(bite) + "% of a blow that knocks it back");
+                    break;
+                default: break;
+            }
         }
     }
     // A powered piece's powers at its plus (sim::affixValue): its signature first, white, and the
@@ -546,6 +605,10 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             line.tail = "+" + std::to_string(value) + (count ? "" : "%");
             line.freeTone = ink;
             does.rows.push_back(line);
+            // A resistance power says what its points do, as MU's own resistance does above.
+            if (sim::affixElement(affix) != sim::Element::None) {
+                explain(resistsSay(sim::affixElement(affix), value));
+            }
             // Fury's second half, its critical chance (sim::furyChance).
             if (affix == sim::Affix::Fury) {
                 Row chance;
@@ -665,8 +728,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         (what.luck || what.option > 0 || what.excellent != 0 || carriesSkill ||
          (sim::secondWing(row) && what.wing != 0))) {
         Section options;
-        // MU's line split at its last word where that word is the value: "Increase Max HP +4%"
-        // is the prose "Increase Max HP" and the value "+4%". A line whose last word is not a
+        // MU's line split at its last word where that word is the value: "Max life +8%"
+        // is the prose "Max life" and the value "+8%". A line whose last word is not a
         // value -- "+life/8" is one, "+Mana/8" another -- keeps it as its value all the same.
         const auto option = [&](const std::string& keyword, const std::string& text,
                                 tip::Mark mark, Tone markTone) {

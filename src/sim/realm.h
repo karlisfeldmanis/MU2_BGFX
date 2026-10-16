@@ -979,8 +979,9 @@ public:
     void dragonHoard(const Body& dragon);
     // The bench's, and no rule of MU's: a thing laid on the ground beside him as a kill's drop
     // lies, from nobody's bag, for looking at a drop Lorencia never leaves. Its id, or 0.
+    // `affixes`: a powered ring's or pendant's further powers, up to three (sim::Affix).
     uint32_t lay(int32_t item, int refinement = 0, bool luck = false, int option = 0,
-                 uint8_t excellent = 0, uint8_t sockets = 0);
+                 uint8_t excellent = 0, uint8_t sockets = 0, const uint8_t* affixes = nullptr);
     // The tests', and no rule of MU's: a death's drop as `leave` rolls it, for a monster of
     // `level` slain by him beside him, with no hunt. What falls is in lying() and happenings().
     void dropFor(int level);

@@ -5153,7 +5153,7 @@ void testOptions(const content::Tables& tables) {
     // Excellent: its lines, its price, and that it will not be thrown away.
     check(sim::excellentLine(tables.items[size_t(leather)], 0).find("Zen") != std::string::npos,
           "armour's first excellent option is the Zen");
-    check(sim::excellentLine(krisRow, 5).find("Excellent Damage") != std::string::npos,
+    check(sim::excellentLine(krisRow, 5).find("Excellent damage") != std::string::npos,
           "a weapon's sixth is the excellent damage rate");
     check(sim::excellentLine(tables.items[size_t(soul)], 0).empty(), "a jewel has none");
     const int64_t one = sim::buyingPrice(krisRow, 0, 1, false, 1, 1, false, 0, 1);
@@ -9999,8 +9999,8 @@ void testJewellery(const content::Tables& tables) {
           "the Angel is still a pet");
     check(!sim::takesOptions(ring) && sim::excellentable(ring), "no luck, but excellent");
     checkEqual(sim::optionValue(ring, 3), 3, "its option is 3% regeneration at 3");
-    check(sim::excellentLine(ring, 5) == "Increase Max HP +8%", "a ring's family is the armour's");
-    check(sim::excellentLine(tables.items[size_t(lightning)], 3) == "Increase Wizardry Dmg +4%",
+    check(sim::excellentLine(ring, 5) == "Max life +8%", "a ring's family is the armour's");
+    check(sim::excellentLine(tables.items[size_t(lightning)], 3) == "Wizardry damage +4%",
           "the Pendant of Lightning's is the staff's");
     checkEqual(sim::resistanceOf(ring, 0), 0, "+0 resists nothing");
     checkEqual(sim::resistanceOf(ring, 4), 4, "+4 resists four");

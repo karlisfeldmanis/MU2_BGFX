@@ -102,6 +102,9 @@ private:
         ShineLook shine;  // how the item's plus shows; a heap of Zen has none
         int glow = 0;     // 0 none, 1 a jewel, 2 a Rune of Creation, 3 the column (quest, legendary)
         float glowColour[3] = {1.0f, 1.0f, 1.0f};
+        // The column's added light times this: the streak's sheet is pale blue, so an orange's
+        // red came out of it at about half and the legendary column read as nothing.
+        float beamLift = 1.0f;
         float at[3] = {};          // on the ground under it, world metres
         float yaw = 0.0f;          // its turn, which the sparkle's offset follows
         float sparkleIn = 0.0f;    // reference frames to its next sparkle: the first at once

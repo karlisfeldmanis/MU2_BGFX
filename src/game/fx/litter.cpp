@@ -125,6 +125,9 @@ constexpr float kQuestViolet[3] = {0.72f, 0.38f, 1.0f};  // the user's purple
 // A legendary's, a rune's or a ring's (the user, 2026-10-16), redder than its name's #ff8000:
 // under the night's grade a half green read olive in the column.
 constexpr float kRuneOrange[3] = {1.0f, 0.3f, 0.0f};
+// Its column's added light lifted, the beam sheet being blue (Drop::beamLift; 2026-10-16: no
+// legendary column showed at all, ring or rune, beside an excellent's green).
+constexpr float kOrangeBeamLift = 2.2f;
 constexpr float kExcellentGreen[3] = {0.15f, 1.0f, 0.25f};  // MU's excellent green, less blue: 0.5 read teal
 // Its beam: metres tall and wide, and the core's share of the width.
 constexpr float kBeamTall = 5.5f, kBeamWide = 1.6f, kCoreShare = 0.45f;
@@ -183,6 +186,7 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
         // light for legendary drops'), in the orange its name is drawn in.
         drop.glow = 3;
         for (int k = 0; k < 3; ++k) drop.glowColour[k] = kRuneOrange[k];
+        drop.beamLift = kOrangeBeamLift;
     } else if (one.what.excellent != 0) {
         // And an excellent one, in MU's excellent green its name is drawn in (the user,
         // 2026-10-04: 'excelnt drops needs also light', then 'excelent has to be green').
@@ -501,8 +505,8 @@ void Litter::gatherBeams(gfx::Effects& effects, const float eye[3]) const {
                 // The taken-away layer by the square root of the complement, so a colour with a
                 // half channel (orange's green) still clears the grass's green under it.
                 beam.colour[k] = layer == 0 ? std::sqrt(1.0f - c) * 0.9f
-                                 : layer == 1 ? 0.65f * c
-                                              : 0.08f + 0.5f * c;
+                                 : layer == 1 ? 0.65f * c * drop.beamLift
+                                              : (0.08f + 0.5f * c) * drop.beamLift;
             }
             beam.colour[3] = (layer == 2 ? 1.0f : 0.9f) * breath;
             const float low = footY - 0.05f, high = footY + kBeamTall;

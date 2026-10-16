@@ -342,33 +342,36 @@ int setPieces(const content::Tables& tables, const Satchel& bag) {
 
 std::string excellentLine(const content::ItemRow& row, int bit) {
     if (!excellentable(row) || bit < 0 || bit >= kExcellentOptions) return std::string();
-    // ExcellentOptions.CreateDefenseOptions, number 1 to 6. The Zen line is written with
-    // OpenMU's 40 (MoneyAmountRate 1.4) where MuMain's GT 627 reads +30%: the line says what
-    // the rule does, and the rule is the server's. Every number twice MU's (2026-10-06).
+    // ExcellentOptions.CreateDefenseOptions, number 1 to 6, said short (the user, 2026-10-16:
+    // MuMain's "Increases acquisition rate of Zen after hunting monsters" wrapped on two lines),
+    // the words first and the figure after its last space, which the card's option rows split
+    // off as their tail. The Zen line is OpenMU's 40 (MoneyAmountRate 1.4) where MuMain's GT 627
+    // reads +30%: the line says what the rule does, and the rule is the server's. Every number
+    // twice MU's (2026-10-06).
     static const char* const kDefense[kExcellentOptions] = {
-        "Increases acquisition rate of Zen after hunting monsters +80%",
+        "Zen from kills +80%",
         "Defense success rate +20%",
-        "Reflect Damage +10%",
-        "Damage Decrease +8%",
-        "Increase Max Mana +8%",
-        "Increase Max HP +8%",
+        "Reflect damage +10%",
+        "Damage decrease +8%",
+        "Max mana +8%",
+        "Max life +8%",
     };
     // CreatePhysicalAttackOptions and CreateWizardryAttackOptions, number 1 to 6.
     static const char* const kAttack[kExcellentOptions] = {
-        "Increases acquisition rate of Mana after hunting monsters +Mana/4",
-        "Increases acquisition rate of Life after hunting monsters +life/4",
-        "Increase Attacking(Wizardry)speed +14",
-        "Increase Damage +4%",
-        "Increase Damage +level/10",
-        "Excellent Damage rate +20%",
+        "Mana per kill +mana/4",
+        "Life per kill +life/4",
+        "Attack speed +14",
+        "Damage +4%",
+        "Damage +level/10",
+        "Excellent damage chance +20%",
     };
     static const char* const kWizardry[kExcellentOptions] = {
-        "Increases acquisition rate of Mana after hunting monsters +Mana/4",
-        "Increases acquisition rate of Life after hunting monsters +life/4",
-        "Increase Attacking(Wizardry)speed +14",
-        "Increase Wizardry Dmg +4%",
-        "Increase Wizardry Dmg +level/10",
-        "Excellent Damage rate +20%",
+        "Mana per kill +mana/4",
+        "Life per kill +life/4",
+        "Attack speed +14",
+        "Wizardry damage +4%",
+        "Wizardry damage +level/10",
+        "Excellent damage chance +20%",
     };
     if (row.armour() || row.shield() || ring(row)) return kDefense[bit];
     return row.magicPower > 0 || elementOf(row) == Element::Lightning ? kWizardry[bit]
