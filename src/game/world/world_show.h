@@ -43,6 +43,8 @@ struct WorldShow {
     std::string music;       // the track under assets, "/music/Noria.mp3"; empty for none
     std::string musicWhere;  // "safe", "indoors", "safe_indoors", "everywhere"
     bool musicLoops = false; // round and round while there, rather than once and rested
+    float musicRest = -1.0f; // seconds of silence after it ends before it plays again; < 0 is
+                             // the towns' rule, kMusicRestSeconds after it last began
 
     // ---- Weather (game/world/weather.cpp) ----
     std::string weather;  // "rain", "snow", "sand", "sky", "square"; empty for none

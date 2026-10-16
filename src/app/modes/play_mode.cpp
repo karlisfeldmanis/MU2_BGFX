@@ -80,6 +80,12 @@ std::unordered_map<std::string, double>& musicBegan() {
     static std::unordered_map<std::string, double> began;
     return began;
 }
+// And when each was last heard playing: a world's own `rest` counts from there, so the silence
+// between hearings is the same however long the track runs.
+std::unordered_map<std::string, double>& musicHeard() {
+    static std::unordered_map<std::string, double> heard;
+    return heard;
+}
 double runSeconds() {
     return double(bx::getHPCounter()) / double(bx::getHPFrequency());
 }
@@ -1329,13 +1335,20 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // fight music anymore").
         const std::string path = ctx.paths.assets + (pub ? roofTrack : "");
         game::Sound& sound = world_.played().sound();
+        if (pub && sound.musicPlaying(path)) musicHeard()[path] = runSeconds();
         if (pub && loops && core::fileExists(path) && !sound.musicPlaying(path)) {
             sound.music(path, 0.6f, true);
         } else if (pub && core::fileExists(path) && !sound.musicPlaying(path)) {
-            // Once through, and only when it has rested since it last began.
+            // Once through, and only when it has rested: the world's own `rest` after it ended
+            // (the Dungeon's, the user, 2026-10-16: "make some intervals after the music plays
+            // so it dont get to repeatative"), or the towns' kMusicRestSeconds since it began.
             const double now = runSeconds();
             const auto last = musicBegan().find(path);
-            if (last == musicBegan().end() || now - last->second >= kMusicRestSeconds) {
+            const auto heard = musicHeard().find(path);
+            const bool rested = show.musicRest >= 0.0f
+                                    ? heard == musicHeard().end() || now - heard->second >= show.musicRest
+                                    : last == musicBegan().end() || now - last->second >= kMusicRestSeconds;
+            if (rested) {
                 sound.music(path, 0.6f, false);
                 musicBegan()[path] = now;
             }
