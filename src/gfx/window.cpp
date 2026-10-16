@@ -6,6 +6,8 @@
 #include <bgfx/bgfx.h>
 
 #include <string>
+#include <thread>
+#include <vector>
 
 #include <cstdlib>
 
@@ -21,6 +23,10 @@ namespace mu::gfx {
 bool copyPresentAsked();
 void copyPresentOpen(GLFWwindow* window, int width, int height);
 void copyPresentClose();
+#endif
+#ifndef __linux__
+void offscreenOpen(int width, int height);
+void offscreenClose();
 #endif
 
 namespace {
@@ -124,6 +130,14 @@ bool Window::open(const WindowDesc& desc) {
     // The copied frame is made once, at the window's size (gfx/window_linux.cpp).
     if (copying) glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 #endif
+    offscreen_ = desc.offscreen;
+    // Never shown and never the focus: nothing of the game appears on the screen.
+    if (offscreen_) {
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_FOCUSED, GLFW_FALSE);
+        glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    }
     handle_ = glfwCreateWindow(width, height, desc.title, nullptr, nullptr);
     if (!handle_) {
         core::logError("no window");
@@ -158,12 +172,17 @@ bool Window::open(const WindowDesc& desc) {
     }
     setPresentation(fullscreen_);
     glfwSetWindowFocusCallback(handle_, onFocus);
-    toFront();
+    if (!offscreen_) toFront();
     armHeld(true);
 
     // The backbuffer is asked for in pixels, not in points: on a Retina display the two
-    // differ by two, and a frame measured at the wrong size is not the frame.
+    // differ by two, and a frame measured at the wrong size is not the frame. Offscreen, the
+    // frame is the size asked for, in pixels, whatever the display's scale.
     glfwGetFramebufferSize(handle_, &width_, &height_);
+    if (offscreen_) {
+        width_ = desc.width;
+        height_ = desc.height;
+    }
 
     bgfx::Init init;
     // The renderer asked for, or none: the shaders are SPIR-V on Windows and Metal on the Mac, so
@@ -202,6 +221,7 @@ bool Window::open(const WindowDesc& desc) {
     chain_ = init.swapChain;
 #ifdef _WIN32
     chain_.nwh = glfwGetWin32Window(handle_);
+    if (offscreen_) chain_.nwh = nullptr;
 #elif defined(__linux__)
     // The window and its display, X11's or Wayland's; bgfx must be told which of the two it is.
     if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND) {
@@ -217,6 +237,7 @@ bool Window::open(const WindowDesc& desc) {
 #else
     chain_.nwh = glfwGetCocoaWindow(handle_);
 #endif
+    if (offscreen_) chain_.nwh = chain_.ndt = nullptr;
     // With no window bgfx makes no backbuffer, and refuses any size for it but 0x0.
     chain_.width = chain_.nwh ? uint32_t(width_) : 0;
     chain_.height = chain_.nwh ? uint32_t(height_) : 0;
@@ -259,6 +280,8 @@ bool Window::open(const WindowDesc& desc) {
     }
 #ifdef __linux__
     if (copying) copyPresentOpen(handle_, width_, height_);
+#else
+    if (offscreen_) offscreenOpen(width_, height_);
 #endif
 
     // Per-view GPU times are what the budget accounts are made of, and on Metal bgfx only
@@ -325,6 +348,8 @@ void Window::close() {
     if (handle_) armHeld(false);
 #ifdef __linux__
     copyPresentClose();
+#else
+    offscreenClose();
 #endif
     bgfx::shutdown();
     if (handle_) glfwDestroyWindow(handle_);
@@ -435,7 +460,7 @@ bool Window::pump() {
     glfwGetFramebufferSize(handle_, &w, &h);
     // Minimised, Windows says 0x0: kept at the last real size, so the renderer is not rebuilt at
     // nothing and every width a HUD or a projection divides by stays a width.
-    if ((w != width_ || h != height_) && w > 0 && h > 0) {
+    if (!offscreen_ && (w != width_ || h != height_) && w > 0 && h > 0) {
         width_ = w;
         height_ = h;
         chain_.width = chain_.nwh ? uint32_t(w) : 0;
@@ -584,9 +609,213 @@ std::string shadersFor(const std::string& folder) {
 }
 
 #ifndef __linux__
-bgfx::FrameBufferHandle screenTarget() { return BGFX_INVALID_HANDLE; }
-void beforeFrame() {}
-void afterFrame(uint32_t) {}
+namespace {
+
+// --offscreen. bgfx's Metal backend photographs a swap chain and nothing else, so the frame is
+// read back by hand: blitted into one of a few read-back textures on the last view, read, and
+// written as a PNG on its own thread once the pixels land -- two frames later, with the main
+// thread never waiting unless every slot is still in flight.
+constexpr bgfx::ViewId kReadView = 255;
+constexpr int kSlots = 6;
+
+struct Slot {
+    bgfx::TextureHandle read = BGFX_INVALID_HANDLE;
+    std::vector<uint8_t> pixels;
+    uint32_t readyAt = 0;
+    bool reading = false;
+    std::string path;
+    std::thread writer;
+    uint32_t sequence = 0;
+};
+
+struct Offscreen {
+    bool on = false;
+    int width = 0, height = 0;
+    bool flip = false;
+    bgfx::TextureHandle colour = BGFX_INVALID_HANDLE, depth = BGFX_INVALID_HANDLE;
+    bgfx::FrameBufferHandle frame = BGFX_INVALID_HANDLE;
+    Slot slots[kSlots];
+    std::string asked;
+    uint32_t lastFrame = 0;
+    // --raw-frames: every shot's pixels, BGRA top row first, written in order to this file --
+    // a pipe into ffmpeg (tools/mu/record.py) -- instead of a PNG. A 1080p PNG takes a quarter
+    // of a second to compress, forty times what the frame takes to draw.
+    std::FILE* raw = nullptr;
+    uint32_t sequence = 0, written = 0;
+};
+Offscreen g_off;
+
+void writePng(Slot* slot, int width, int height, bool flip) {
+    g_callback.screenShot(slot->path.c_str(), uint32_t(width), uint32_t(height),
+                          uint32_t(width) * 4, bgfx::TextureFormat::BGRA8, slot->pixels.data(),
+                          uint32_t(slot->pixels.size()), flip);
+}
+
+void writeRaw(Slot* slot) {
+    Offscreen& o = g_off;
+    const size_t row = size_t(o.width) * 4;
+    if (!o.flip) {
+        std::fwrite(slot->pixels.data(), 1, slot->pixels.size(), o.raw);
+    } else {
+        for (int y = o.height - 1; y >= 0; --y) {
+            std::fwrite(slot->pixels.data() + size_t(y) * row, 1, row, o.raw);
+        }
+    }
+}
+
+void land(uint32_t frame) {
+    Offscreen& o = g_off;
+    if (o.raw) {
+        // In the order they were asked, whatever order the slots are in.
+        for (bool more = true; more;) {
+            more = false;
+            for (Slot& slot : o.slots) {
+                if (!slot.reading || frame < slot.readyAt || slot.sequence != o.written) continue;
+                slot.reading = false;
+                writeRaw(&slot);
+                ++o.written;
+                more = true;
+            }
+        }
+        return;
+    }
+    for (Slot& slot : o.slots) {
+        if (!slot.reading || frame < slot.readyAt) continue;
+        slot.reading = false;
+        slot.writer = std::thread(writePng, &slot, o.width, o.height, o.flip);
+    }
+}
+
+}  // namespace
+
+void offscreenOpen(int width, int height) {
+    Offscreen& o = g_off;
+    o.width = width;
+    o.height = height;
+    o.flip = bgfx::getCaps()->originBottomLeft;
+    o.colour = bgfx::createTexture2D(uint16_t(width), uint16_t(height), false, 1,
+                                     bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT);
+    o.depth = bgfx::createTexture2D(uint16_t(width), uint16_t(height), false, 1,
+                                    bgfx::TextureFormat::D32F, BGFX_TEXTURE_RT_WRITE_ONLY);
+    const bgfx::TextureHandle targets[] = {o.colour, o.depth};
+    o.frame = bgfx::createFrameBuffer(2, targets, false);
+    for (Slot& slot : o.slots) {
+        slot.read = bgfx::createTexture2D(uint16_t(width), uint16_t(height), false, 1,
+                                          bgfx::TextureFormat::BGRA8,
+                                          BGFX_TEXTURE_BLIT_DST | BGFX_TEXTURE_READ_BACK);
+        slot.pixels.assign(size_t(width) * size_t(height) * 4, 0);
+    }
+    // Every view starts on the frame, as it would on the backbuffer; a view the game points at
+    // a target of its own keeps it, and those that name the backbuffer ask screenTarget().
+    for (int view = 0; view <= kReadView; ++view) {
+        bgfx::setViewFrameBuffer(bgfx::ViewId(view), o.frame);
+    }
+    o.on = bgfx::isValid(o.frame);
+    core::logf("offscreen: %s, %dx%d, no window on the screen", o.on ? "on" : "FAILED", width,
+               height);
+}
+
+void offscreenClose() {
+    Offscreen& o = g_off;
+    if (!o.on) return;
+    offscreenFlush();
+    o.on = false;
+    for (Slot& slot : o.slots) {
+        if (slot.writer.joinable()) slot.writer.join();
+        if (bgfx::isValid(slot.read)) bgfx::destroy(slot.read);
+    }
+    if (bgfx::isValid(o.frame)) bgfx::destroy(o.frame);
+    if (bgfx::isValid(o.colour)) bgfx::destroy(o.colour);
+    if (bgfx::isValid(o.depth)) bgfx::destroy(o.depth);
+}
+
+bgfx::FrameBufferHandle screenTarget() {
+    if (g_off.on) return g_off.frame;
+    return BGFX_INVALID_HANDLE;
+}
+
+bool offscreenRaw(const char* path) {
+    Offscreen& o = g_off;
+    if (!o.on) return false;
+    o.raw = std::fopen(path, "wb");
+    if (!o.raw) {
+        core::logError("offscreen: cannot write the raw frames to %s", path);
+        return false;
+    }
+    core::logf("offscreen: raw %dx%d BGRA frames to %s", o.width, o.height, path);
+    return true;
+}
+
+bool offscreenShot(const char* path) {
+    if (!g_off.on) return false;
+    g_off.asked = path;
+    return true;
+}
+
+void beforeFrame() {
+    Offscreen& o = g_off;
+    if (!o.on || o.asked.empty()) return;
+    Slot* free = nullptr;
+    // A slot whose pixels have been written; when all six are still in flight, the oldest
+    // writer is waited for -- the one place this ever stalls.
+    for (Slot& slot : o.slots) {
+        if (slot.reading) continue;
+        if (!slot.writer.joinable()) {
+            free = &slot;
+            break;
+        }
+    }
+    if (!free) {
+        for (Slot& slot : o.slots) {
+            if (slot.reading || !slot.writer.joinable()) continue;
+            slot.writer.join();
+            free = &slot;
+            break;
+        }
+    }
+    if (!free) {
+        core::logError("offscreen: every read-back slot is busy; %s dropped", o.asked.c_str());
+        o.asked.clear();
+        return;
+    }
+    if (free->writer.joinable()) free->writer.join();
+    bgfx::touch(kReadView);
+    bgfx::TextureRegion to, from, whole;
+    to.init(free->read);
+    from.init(o.colour);
+    whole.init(free->read);
+    bgfx::blit(kReadView, to, from);
+    free->readyAt = bgfx::read(whole, free->pixels.data());
+    free->reading = true;
+    free->sequence = o.sequence++;
+    free->path = o.asked;
+    o.asked.clear();
+}
+
+void afterFrame(uint32_t frame) {
+    if (!g_off.on) return;
+    g_off.lastFrame = frame;
+    land(frame);
+}
+
+void offscreenFlush() {
+    Offscreen& o = g_off;
+    if (!o.on) return;
+    for (int i = 0; i < 16; ++i) {
+        bool waiting = false;
+        for (const Slot& slot : o.slots) waiting = waiting || slot.reading;
+        if (!waiting) break;
+        land(bgfx::frame());
+    }
+    for (Slot& slot : o.slots) {
+        if (slot.writer.joinable()) slot.writer.join();
+    }
+    if (o.raw) {
+        std::fclose(o.raw);
+        o.raw = nullptr;
+        core::logf("offscreen: %u raw frames written", o.written);
+    }
+}
 #endif
 
 }  // namespace mu::gfx

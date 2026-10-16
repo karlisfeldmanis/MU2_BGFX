@@ -119,8 +119,10 @@ bool Application::boot() {
         args_.views || !args_.statsPath.empty() || !args_.budgetOverrides.empty();
     desc.renderThread = args_.renderThread;
     desc.renderer = args_.renderer;
+    desc.offscreen = args_.offscreen;
     args_.rendererLoaded = args_.renderer;
     if (!window_.open(desc)) return false;
+    if (!args_.rawFrames.empty() && !gfx::offscreenRaw(args_.rawFrames.c_str())) return false;
     // The build names the SPIR-V; a run that came up on Direct3D 11 reads the DXBC beside it.
     paths_.shaders = gfx::shadersFor(paths_.shaders);
 
@@ -209,6 +211,8 @@ void Application::submitProbe(Mode& mode) {
 }
 
 void Application::teardown() {
+    // An --offscreen run's last shots are still being read back; they land before anything goes.
+    gfx::offscreenFlush();
     overlay_.shutdown();
     curtain_.shutdown();
     renderer_.shutdown();
@@ -436,7 +440,7 @@ int Application::run(int argc, char** argv) {
             // The name is ours whole: bgfx hands the path to the callback unchanged and
             // appends nothing, and a shot called 00100 with no suffix is a file nothing opens.
             std::snprintf(path, sizeof(path), "%s/%05d.png", paths_.shots.c_str(), at.index);
-            bgfx::requestScreenShot(gfx::screenTarget(), path);
+            if (!gfx::offscreenShot(path)) bgfx::requestScreenShot(gfx::screenTarget(), path);
         }
 
         gfx::beforeFrame();

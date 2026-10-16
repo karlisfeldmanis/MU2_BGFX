@@ -403,6 +403,10 @@ struct Args {
     // device and pulled a frame's length at a time, so it keeps step with --fixed-dt and the
     // --shot frames however slowly they are drawn. A recording's sound; tools/mu/record.py.
     std::string tape;
+    // No window on the screen: drawn into a frame of exactly --width x --height (gfx::WindowDesc).
+    bool offscreen = false;
+    // With --offscreen: the --shot frames as raw BGRA into this file or pipe, not as PNGs.
+    std::string rawFrames;
     // A cue file that plays the pointer and the keys (app/modes/director.h); the mouse is not
     // read while it runs.
     std::string script;

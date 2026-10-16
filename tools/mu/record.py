@@ -3,17 +3,19 @@
     ./mu record <scene>                 tools/record/<scene>.cue -> out/recordings/<scene>.mp4
     ./mu record <scene> --fps 30        30 frames a second (60 by default)
     ./mu record <scene> --seconds 5     only the first 5 s, to try a cue file
+    ./mu record <scene> --window        drawn in a window on the screen, through PNGs (slow)
     ./mu record                         the scenes there are
 
 A scene is a cue file (src/app/modes/director.h has the verbs): its `args` lines are the game's
 switches, `end N` is its length, and every other line plays the pointer and the keys at a second
-of game time. The game is run with a window in front of you -- bgfx needs one -- but it ignores
-your mouse: the pointer you see is the script's.
+of game time. The mouse is never read: the pointer in the picture is the script's.
 
-The run is not real time. Every frame advances the world by exactly 1/fps (--fixed-dt) and is
-written as a PNG, and the sound is opened with no device and pulled a frame's length at a time
-into a WAV (--tape), so picture and sound stay frame-exact however slowly it draws (about three
-frames a second at 1080p). ffmpeg then joins them and the PNGs are thrown away.
+Headless by default: the game runs --offscreen, with no window on the screen, drawing into a
+frame of exactly 1920x1080 and piping every frame raw into ffmpeg (--raw-frames, a FIFO), so
+nothing is compressed to PNG and nothing lands on disk but the MP4. It still needs this Mac's
+GPU. Every frame advances the world by exactly 1/fps (--fixed-dt) and the sound is opened with
+no device and pulled a frame's length at a time into a WAV (--tape), so picture and sound stay
+frame-exact however fast or slowly it draws. The WAV is muxed in at the end.
 """
 
 import os
@@ -27,6 +29,10 @@ from things import BUILD, ROOT, NotFound
 
 SCENES = os.path.join(ROOT, "tools", "record")
 OUT = os.path.join(ROOT, "out", "recordings")
+WIDTH, HEIGHT = 1920, 1080
+X264 = ["-c:v", "libx264", "-preset", "slow", "-crf", "16", "-tune", "film", "-pix_fmt", "yuv420p"]
+# The game's mix peaks at full scale in a crowd; a limiter keeps the AAC from clipping.
+AUDIO = ["-af", "alimiter=limit=0.9:level=disabled", "-c:a", "aac", "-b:a", "256k"]
 
 
 def scenes():
@@ -47,7 +53,15 @@ def read(path):
     return switches, end
 
 
-def record(scene, fps, seconds, keep, say):
+def errors_in(log):
+    try:
+        with open(log) as handle:
+            return [l.strip() for l in handle if "ERROR" in l][:10]
+    except OSError:
+        return []
+
+
+def record(scene, fps, seconds, keep, say, window=False):
     if not scene:
         for name in scenes():
             say(name)
@@ -65,51 +79,73 @@ def record(scene, fps, seconds, keep, say):
 
     os.makedirs(OUT, exist_ok=True)
     work = tempfile.mkdtemp(prefix=f"{name}-", dir=OUT)
-    frames_dir = os.path.join(work, "frames")
-    os.makedirs(frames_dir)
     wav = os.path.join(work, "sound.wav")
+    log = os.path.join(work, "run.log")
     frames = int(round(length * fps))
-    cmd = ["nice", os.path.join(BUILD, "mu2"),
-           "--width", "1920", "--height", "1080", "--windowed",
-           "--fixed-dt", f"{1000.0 / fps:.6f}", "--frames", str(frames),
-           "--shot", "1", "--shot-path", frames_dir, "--tape", wav,
-           "--script", os.path.abspath(cue), "--no-fps",
-           # A scratch save, so a scene never touches the player's (and starts the same).
-           "--save", os.path.join(work, "save.mus"),
-           "--log", os.path.join(work, "run.log")] + switches
-    say(" ".join(shlex.quote(c) for c in cmd))
-    say(f"{frames} frames at {fps} fps, {length:g} s; the game's window will open -- leave it be")
+    game = ["nice", os.path.join(BUILD, "mu2"),
+            "--width", str(WIDTH), "--height", str(HEIGHT), "--windowed",
+            "--fixed-dt", f"{1000.0 / fps:.6f}", "--frames", str(frames), "--shot", "1",
+            "--tape", wav, "--script", os.path.abspath(cue), "--no-fps",
+            # A scratch save, so a scene never touches the player's (and starts the same).
+            "--save", os.path.join(work, "save.mus"), "--log", log]
+    mp4 = os.path.join(OUT, f"{name}.mp4")
     started = time.time()
-    done = subprocess.run(cmd, cwd=ROOT)
-    pngs = sorted(f for f in os.listdir(frames_dir) if f.endswith(".png"))
-    say(f"drawn {len(pngs)} frames in {time.time() - started:.0f} s")
-    errors = []
-    try:
-        with open(os.path.join(work, "run.log")) as handle:
-            errors = [l.strip() for l in handle if "ERROR" in l][:10]
-    except OSError:
-        pass
+
+    if window:
+        frames_dir = os.path.join(work, "frames")
+        os.makedirs(frames_dir)
+        game += ["--shot-path", frames_dir] + switches
+        say(" ".join(shlex.quote(c) for c in game))
+        say(f"{frames} frames at {fps} fps, {length:g} s, in a window -- leave it be")
+        done = subprocess.run(game, cwd=ROOT)
+        pngs = [f for f in os.listdir(frames_dir) if f.endswith(".png")]
+        if done.returncode != 0 or not pngs:
+            say(f"FAILED: the game left with {done.returncode}; the run is kept in {work}")
+            return False, {"work": work, "errors": errors_in(log), "code": done.returncode}
+        say(f"drawn {len(pngs)} frames in {time.time() - started:.0f} s; encoding")
+        encode = ["nice", "ffmpeg", "-y", "-loglevel", "error",
+                  "-framerate", str(fps), "-i", os.path.join(frames_dir, "%05d.png"), "-i", wav,
+                  # Exactly 1920x1080 whatever the display's scale made the backbuffer.
+                  "-vf", f"scale={WIDTH}:{HEIGHT}:flags=lanczos"] + X264 + AUDIO + \
+                 ["-movflags", "+faststart", "-shortest", mp4]
+        if subprocess.run(encode).returncode != 0:
+            say(f"FAILED: ffmpeg; the frames are kept in {work}")
+            return False, {"work": work}
+        if not keep:
+            shutil.rmtree(frames_dir, ignore_errors=True)
+    else:
+        # ffmpeg reads the FIFO the game writes: opened first, or the game's open would wait.
+        fifo = os.path.join(work, "frames.fifo")
+        os.mkfifo(fifo)
+        video = os.path.join(work, "video.mp4")
+        encoder = subprocess.Popen(
+            ["nice", "ffmpeg", "-y", "-loglevel", "error",
+             "-f", "rawvideo", "-pix_fmt", "bgra", "-s", f"{WIDTH}x{HEIGHT}", "-r", str(fps),
+             "-i", fifo] + X264 + [video])
+        game += ["--offscreen", "--raw-frames", fifo] + switches
+        say(" ".join(shlex.quote(c) for c in game))
+        say(f"{frames} frames at {fps} fps, {length:g} s, offscreen")
+        done = subprocess.run(game, cwd=ROOT)
+        if done.returncode != 0:
+            encoder.kill()
+            say(f"FAILED: the game left with {done.returncode}; the run is kept in {work}")
+            return False, {"work": work, "errors": errors_in(log), "code": done.returncode}
+        if encoder.wait() != 0 or not os.path.isfile(video):
+            say(f"FAILED: ffmpeg; the run is kept in {work}")
+            return False, {"work": work}
+        say(f"drawn and encoded {frames} frames in {time.time() - started:.0f} s; adding the sound")
+        mux = ["nice", "ffmpeg", "-y", "-loglevel", "error", "-i", video, "-i", wav,
+               "-c:v", "copy"] + AUDIO + ["-movflags", "+faststart", "-shortest", mp4]
+        if subprocess.run(mux).returncode != 0:
+            say(f"FAILED: ffmpeg's mux; the run is kept in {work}")
+            return False, {"work": work}
+        os.remove(fifo)
+        if not keep:
+            os.remove(video)
+
+    errors = errors_in(log)
     for line in errors:
         say(f"  {line}")
-    if done.returncode != 0 or not pngs:
-        say(f"FAILED: the game left with {done.returncode}; the run is kept in {work}")
-        return False, {"work": work, "errors": errors, "code": done.returncode}
-
-    mp4 = os.path.join(OUT, f"{name}.mp4")
-    encode = ["nice", "ffmpeg", "-y", "-loglevel", "error", "-stats",
-              "-framerate", str(fps), "-i", os.path.join(frames_dir, "%05d.png"),
-              "-i", wav,
-              # Exactly 1920x1080 whatever the display's scale made the backbuffer.
-              "-vf", "scale=1920:1080:flags=lanczos,format=yuv420p",
-              "-c:v", "libx264", "-preset", "slow", "-crf", "16", "-tune", "film",
-              # The game's mix peaks at full scale in a crowd; a limiter keeps the AAC from clipping.
-              "-af", "alimiter=limit=0.9:level=disabled",
-              "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart", "-shortest", mp4]
-    say("encoding " + mp4)
-    if subprocess.run(encode).returncode != 0:
-        say(f"FAILED: ffmpeg; the frames are kept in {work}")
-        return False, {"work": work}
-    if not keep:
-        shutil.rmtree(frames_dir, ignore_errors=True)
-    say(f"recorded {mp4}  ({os.path.getsize(mp4) / 1e6:.1f} MB; the log and sound in {work})")
-    return True, {"mp4": mp4, "work": work, "frames": len(pngs), "errors": errors}
+    say(f"recorded {mp4}  ({os.path.getsize(mp4) / 1e6:.1f} MB, {time.time() - started:.0f} s;"
+        f" the log and sound in {work})")
+    return True, {"mp4": mp4, "work": work, "frames": frames, "errors": errors}

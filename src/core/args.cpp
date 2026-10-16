@@ -169,6 +169,8 @@ void printUsage() {
         "  --learn F                 throw a learned skill's smoke and its sound on frame F; drawing only\n"
         "  --guard F                 throw the guard's cage on frame F; drawing only\n"
         "  --mute                    every sound plays and is logged, at no volume\n"
+        "  --offscreen               no window on the screen; frames of exactly --width x --height\n"
+        "  --raw-frames PATH         with --offscreen, the shots as raw BGRA into PATH (a pipe)\n"
         "  --script FILE             the pointer and the keys played from a cue file (director.h)\n"
         "  --tape PATH.wav           the world's mix written there in game time, not played\n"
         "  --zen N                   start with N Zen\n"
@@ -700,6 +702,10 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.perch = std::atoi(v);
         } else if (!std::strcmp(s, "--mute")) {
             a.mute = true;
+        } else if (!std::strcmp(s, "--offscreen")) {
+            a.offscreen = true;
+        } else if (!std::strcmp(s, "--raw-frames")) {
+            if (const char* v = next(s)) a.rawFrames = v;
         } else if (!std::strcmp(s, "--script")) {
             if (const char* v = next(s)) a.script = v;
         } else if (!std::strcmp(s, "--tape")) {

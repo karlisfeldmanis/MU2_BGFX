@@ -170,7 +170,8 @@ def main():
     r.add_argument("scene", nargs="?", help="tools/record/<scene>.cue, or a .cue path; none lists them")
     r.add_argument("--fps", type=int, default=60)
     r.add_argument("--seconds", type=float, help="only the first N seconds, to try a scene")
-    r.add_argument("--keep", action="store_true", help="keep the PNG frames")
+    r.add_argument("--keep", action="store_true", help="keep the frames (PNGs, or the silent video)")
+    r.add_argument("--window", action="store_true", help="in a window on the screen, through PNGs")
 
     c = sub.add_parser("compare", parents=[common])
     c.add_argument("a")
@@ -308,7 +309,7 @@ def dispatch(args, say):
     if args.command == "shot":
         return look.shot(args.world, args.at, args.time, args.frames, args.out, say)
     if args.command == "record":
-        return record.record(args.scene, args.fps, args.seconds, args.keep, say)
+        return record.record(args.scene, args.fps, args.seconds, args.keep, say, args.window)
     if args.command == "compare":
         return look.compare(args.a, args.b, args.out, say)
     raise NotFound(f"no command {args.command}")

@@ -26,6 +26,10 @@ struct WindowDesc {
     // core::Args::renderer: 0 Vulkan and then Direct3D 11, 1 Vulkan, 2 Direct3D 11. Windows only.
     int renderer = 0;
     const char* title = "MU2";
+    // --offscreen: no window on the screen and no swap chain. Every frame is drawn into a
+    // framebuffer of exactly width x height pixels, and shots are read back from it
+    // (offscreenShot). A recording's, made while the Mac is used for something else.
+    bool offscreen = false;
 };
 
 // The shaders' folder for the renderer bgfx is running: metal, spirv or dxbc (CMakeLists.txt,
@@ -44,6 +48,13 @@ bgfx::FrameBufferHandle screenTarget();
 // after. Nothing at all on any other run.
 void beforeFrame();
 void afterFrame(uint32_t frame);
+// An --offscreen run's screenshot: the frame being drawn, read back a few frames later and
+// written as a PNG off the main thread, so no frame waits for it. False when not offscreen.
+bool offscreenShot(const char* path);
+// Shots as raw BGRA frames, in order, into this file or pipe rather than as PNGs.
+bool offscreenRaw(const char* path);
+// Every shot asked for is on disk when this returns: frames are run until the reads land.
+void offscreenFlush();
 
 class Window {
 public:
@@ -211,6 +222,7 @@ private:
     // What bgfx::reset is handed: the window's swap chain, or none when bgfx was given no window
     // (MU2_COPY_PRESENT), which it refuses one for.
     const bgfx::SwapChain* swapChain() const { return chain_.nwh ? &chain_ : nullptr; }
+    bool offscreen_ = false;
     static void onFocus(GLFWwindow* window, int focused);
 
     // Fullscreen hides the menu bar and the Dock outright rather than letting them slide in
