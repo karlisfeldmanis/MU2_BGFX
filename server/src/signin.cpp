@@ -240,8 +240,10 @@ std::string jsonText(const std::string& text) {
 }
 
 std::future<void> g_telling;
-Clock::time_point g_toldAt{};
+Clock::time_point g_toldAt{}, g_rollAt{};
 constexpr auto kTellEvery = std::chrono::seconds(5);
+// And every character of an account, for the All players list: a minute apart, and with the first.
+constexpr auto kRollEvery = std::chrono::seconds(60);
 
 }  // namespace
 
@@ -271,7 +273,27 @@ void tellOnline(const std::vector<std::unique_ptr<Session>>& sessions) {
         body += line;
         first = false;
     }
-    body += "]}";
+    body += "]";
+    if (g_rollAt == Clock::time_point{} || now - g_rollAt >= kRollEvery) {
+        g_rollAt = now;
+        body += ",\"characters\":[";
+        first = true;
+        for (const Store::Roll& one : g_store.everyone()) {
+            const long long id = reservedKey(one.account) ? std::atoll(one.account.c_str() + 7) : 0;
+            if (id <= 0) continue;
+            char line[384];
+            std::snprintf(line, sizeof line,
+                          "%s{\"account\":%lld,\"name\":%s,\"class\":%s,\"level\":%d,\"world\":%s,"
+                          "\"saved\":%lld,\"fresh\":%s}",
+                          first ? "" : ",", id, jsonText(one.name).c_str(),
+                          jsonText(sim::className(int(one.kin), false)).c_str(), one.level,
+                          jsonText(one.world).c_str(), (long long)one.saved, one.fresh ? "true" : "false");
+            body += line;
+            first = false;
+        }
+        body += "]";
+    }
+    body += "}";
     const std::string host = g_host;
     const int port = g_port;
     g_telling = std::async(std::launch::async, [host, port, body] { post(host, port, "/internal/online", body); });

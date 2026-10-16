@@ -173,6 +173,27 @@ bool Store::who(uint64_t token, Who& out) {
     return true;
 }
 
+std::vector<Store::Roll> Store::everyone() {
+    std::vector<Roll> all;
+    if (db_ == nullptr) return all;
+    Statement q(db_,
+                "SELECT account, name, world, kin, level, saved, layout FROM characters"
+                " WHERE account != '' AND deleted = 0 ORDER BY saved DESC");
+    if (!q) return all;
+    while (sqlite3_step(q.s) == SQLITE_ROW) {
+        Roll one;
+        one.account = text(q.s, 0);
+        one.name = text(q.s, 1);
+        one.world = text(q.s, 2);
+        one.kin = sim::Kin(std::clamp(sqlite3_column_int(q.s, 3), 0, int(sim::Kin::MagicGladiator)));
+        one.level = sqlite3_column_int(q.s, 4);
+        one.saved = sqlite3_column_int64(q.s, 5);
+        one.fresh = sqlite3_column_int(q.s, 6) == 0;
+        all.push_back(std::move(one));
+    }
+    return all;
+}
+
 std::vector<Store::Listed> Store::list(const std::string& account) {
     std::vector<Listed> all;
     if (db_ == nullptr || account.empty()) return all;

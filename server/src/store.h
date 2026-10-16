@@ -68,6 +68,17 @@ public:
         sim::Kept kept;  // only when not fresh
     };
     std::vector<Listed> list(const std::string& account);
+    // Every character of an account, not deleted, as its row's columns say (the website's All players,
+    // tellOnline): never his bytes. `saved` is when he was last written, unix seconds; `fresh` one made
+    // and never played.
+    struct Roll {
+        std::string account, name, world;
+        sim::Kin kin = sim::Kin::DarkKnight;
+        int level = 1;
+        int64_t saved = 0;
+        bool fresh = false;
+    };
+    std::vector<Roll> everyone();
     // Whether a character not deleted already has this name, any case.
     bool named(const std::string& name);
     // A new character on the account, never played, in `slot`. False when the disk said no.

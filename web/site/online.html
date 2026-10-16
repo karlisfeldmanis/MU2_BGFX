@@ -26,6 +26,7 @@
 .who td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .who .sub { display: block; font-size: 14px; color: var(--quiet); }
 .who tr.bot td { color: var(--quiet); }
+.who .char + .char { margin-top: 6px; }
 /* At phone width the table becomes one card a player. */
 @media (max-width: 680px) {
   .who thead { display: none; }
@@ -65,6 +66,14 @@
 <tbody id="recent"></tbody>
 </table>
 <p class="center muted" style="font-size: 14px">The last 100 of 30 days, bots left out.</p>
+
+<h2 class="h2" style="margin-top: 24px">All players</h2>
+<div class="count" id="all-count"></div>
+<table class="who">
+<thead><tr><th>Account</th><th>Characters</th><th>Machine</th><th>Last played</th><th>Plays</th></tr></thead>
+<tbody id="all"></tbody>
+</table>
+<p class="center muted" style="font-size: 14px">Every account with a character. Plays are launcher starts in the last 30 days.</p>
 
 <h2 class="h2" style="margin-top: 24px">Players' machines</h2>
 <div class="tally" id="tally"></div>
@@ -113,7 +122,7 @@
     return cell(m.gpu || 'unknown card', [osName(m.os), ram(m), m.graphics ? 'graphics ' + m.graphics : ''].filter(Boolean).join(' · '), key);
   }
   function tally(o) {
-    const accounts = [...new Set(o.players.concat(o.recent).filter((p) => !p.bot && p.account).map((p) => String(p.account)))];
+    const accounts = [...new Set(o.players.concat(o.recent, o.everyone).filter((p) => !p.bot && p.account).map((p) => String(p.account)))];
     const box = $('tally');
     box.replaceChildren();
     const groups = [['System', (m) => osName(m.os)], ['Graphics card', (m) => m.gpu], ['Memory', (m) => ram(m)], ['Graphics setting', (m) => m.graphics]];
@@ -192,6 +201,40 @@
       if (g.online) played.style.color = 'var(--live)';
       tr.appendChild(played);
       recent.appendChild(tr);
+    }
+    const all = $('all');
+    all.replaceChildren();
+    const chars = o.everyone.reduce((n, a) => n + a.characters.length, 0);
+    const allCount = $('all-count');
+    allCount.replaceChildren();
+    for (const [n, word] of [[o.everyone.length, o.everyone.length === 1 ? 'account' : 'accounts'], [chars, chars === 1 ? 'character' : 'characters']]) {
+      const s = el('span');
+      s.appendChild(el('b', '', String(n)));
+      s.appendChild(document.createTextNode(word));
+      allCount.appendChild(s);
+    }
+    if (!o.everyone.length) {
+      const tr = el('tr');
+      const td = cell('The game server has not listed its characters yet; it does once a minute.', '', '', 'muted');
+      td.colSpan = 5;
+      tr.appendChild(td);
+      all.appendChild(tr);
+    }
+    for (const a of o.everyone) {
+      const tr = el('tr');
+      tr.appendChild(cell(a.account_name || a.email, (a.account_name ? a.email + ' · ' : '') + 'joined ' + when(a.created)));
+      const td = el('td');
+      td.dataset.k = 'Characters';
+      for (const c of a.characters) {
+        const line = el('div', 'char', c.name);
+        line.appendChild(el('span', 'sub', c.class + ' ' + c.level + ' · ' + map(c.world) + (c.fresh ? ' · never played' : '')));
+        td.appendChild(line);
+      }
+      tr.appendChild(td);
+      tr.appendChild(machine(o, a.account, 'Machine'));
+      tr.appendChild(cell(a.last ? when(a.last) : 'never', '', 'Last played'));
+      tr.appendChild(cell(String(a.plays), '', 'Plays', 'num'));
+      all.appendChild(tr);
     }
     tally(o);
     $('told').textContent = o.at ? 'Updated ' + when(o.at) + ' · refreshes every 10 s' : '';

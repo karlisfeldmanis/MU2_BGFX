@@ -43,8 +43,11 @@ The routes:
     GET  /api/online     Bearer T of an admin       -> 200 {at, fresh, players: [...]} | 404 for anyone else
          who is on the game server now, as mu2_server last told it (the admins' /online page), and
          `recent`: the last RECENT_SHOWN plays of the last RECENT_DAYS days, bots left out; and
-         `machines`: by account id, the machine its launcher last reported (devices).
-    POST /internal/online   (127.0.0.1 only) {players: [{account, name, class, level, world, copy, x, y, bot}]}
+         `machines`: by account id, the machine its launcher last reported (devices); and `everyone`:
+         every account with a character, its characters as mu2_server last listed them (a minute
+         apart), and its Plays (launcher starts) of the last PLAYS_DAYS days.
+    POST /internal/online   (127.0.0.1 only) {players: [{account, name, class, level, world, copy, x, y, bot}],
+                             characters?: [{account, name, class, level, world, saved, fresh}]}
          mu2_server's list of who is on, every 5 s (server/src/signin.cpp tellOnline); kept in memory.
     POST /internal/role     (127.0.0.1 only) {email, role}  -> 200 {ok} | 404
          an account made "admin" or back to "player": on the box,
@@ -273,6 +276,8 @@ class Store:
         self.online_lock = threading.Lock()
         self.online = {"at": 0, "players": []}
         self.games_swept = 0
+        # Every character of an account, as mu2_server last listed it (told_characters).
+        self.characters = []
         self.crash_days = {}
         for row in self.crash_rows():
             self.crash_seen.add(row.get("sha"))
@@ -514,6 +519,42 @@ class Store:
                 raise
             self.online = {"at": now, "players": players}
 
+    def told_characters(self, characters: list):
+        with self.online_lock:
+            self.characters = characters
+
+    def everyone(self) -> list:
+        """Each account with a character: its characters, newest played first, and its Plays."""
+        with self.online_lock:
+            characters = list(self.characters)
+        by = {}
+        for c in characters:
+            if isinstance(c.get("account"), int) and c["account"] > 0:
+                by.setdefault(c["account"], []).append(c)
+        if not by:
+            return []
+        ids = sorted(by)
+        marks = ",".join("?" * len(ids))
+        db = self.db()
+        accounts = {row[0]: row[1:] for row in db.execute(
+            f"SELECT id, email, name, created FROM accounts WHERE id IN ({marks})", ids)}
+        plays = {row[0]: row[1:] for row in db.execute(
+            f"SELECT account_id, count(*), max(at) FROM plays WHERE account_id IN ({marks}) GROUP BY account_id", ids)}
+        out = []
+        for account, chars in by.items():
+            if account not in accounts:
+                continue  # an account deleted since: its characters go with the next list
+            email, name, created = accounts[account]
+            count, last_play = plays.get(account, (0, 0))
+            chars.sort(key=lambda c: -int(c.get("saved") or 0))
+            played = [int(c.get("saved") or 0) for c in chars if not c.get("fresh")]
+            out.append({"account": account, "email": email, "account_name": name or "", "created": created,
+                        "plays": count, "last_play": last_play or 0, "last": max(played + [last_play or 0]),
+                        "characters": [{key: c.get(key) for key in ("name", "class", "level", "world", "saved", "fresh")}
+                                       for c in chars]})
+        out.sort(key=lambda a: -a["last"])
+        return out
+
     def online_report(self) -> dict:
         with self.online_lock:
             told = self.online
@@ -538,7 +579,9 @@ class Store:
                       "ORDER BY g.until DESC LIMIT ?", (int(time.time()) - RECENT_DAYS * 86400, RECENT_SHOWN))]
         # Each account's machine: the one its launcher reported last (the account page's own rows).
         machines = {}
-        ids = sorted({p["account"] for p in players + recent if isinstance(p.get("account"), int) and p["account"] > 0})
+        everyone = self.everyone()
+        ids = sorted({p["account"] for p in players + recent + everyone
+                      if isinstance(p.get("account"), int) and p["account"] > 0})
         if ids:
             marks = ",".join("?" * len(ids))
             for account, report in self.db().execute(
@@ -547,7 +590,7 @@ class Store:
                 machines[str(account)] = {key: row.get(key) for key in
                                           ("gpu", "vendor", "driver", "date", "cpu", "ram", "os", "graphics", "renderer")}
         return {"at": told["at"], "fresh": time.time() - told["at"] < ONLINE_STALE_SECONDS, "players": players,
-                "recent": recent, "machines": machines}
+                "recent": recent, "machines": machines, "everyone": everyone}
 
     def logout(self, token: str):
         self.db().execute("DELETE FROM sessions WHERE token_hash = ?", (token_hash(token or ""),))
@@ -886,6 +929,8 @@ class Handler(BaseHTTPRequestHandler):
         if not isinstance(players, list):
             return self.reply(400, {"error": "bad request"})
         self.store.told_online([p for p in players if isinstance(p, dict)])
+        if isinstance(said.get("characters"), list):
+            self.store.told_characters([c for c in said["characters"] if isinstance(c, dict)])
         self.reply(200, {"ok": True})
 
     def role(self):
