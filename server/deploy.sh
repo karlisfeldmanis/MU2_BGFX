@@ -14,9 +14,12 @@
 # `git archive`, so another session's edit in progress never reaches the box and never splits
 # the server's rules from a client built from HEAD. The cooked tables are not in git; they come
 # from the working tree as the cook last wrote them.
+#
+# MU2_HOST picks the box: hetzner by default (North Europe), root@216.238.127.33 for South America
+# (Vultr, São Paulo; its accounts tunnel in server/README.md).
 set -e
 cd "$(dirname "$0")/.."
-host=hetzner          # ~/.ssh/config: root@37.27.158.226
+host=${MU2_HOST:-hetzner}   # ~/.ssh/config: root@37.27.158.226
 dest=/opt/mu2
 
 commit=$(git rev-parse --short HEAD)

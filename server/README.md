@@ -31,6 +31,21 @@ keeps a rule from meaning one thing on the server and another in the client.
 | packages | `libsqlite3-dev` for the character store and `sqlite3` to read it; `deploy.sh` installs them if missing |
 | code | `/opt/mu2`, put there by `deploy.sh` |
 
+## The South America box
+
+A second region (the launcher's `regions()`, src/launcher/engine.cpp), rented 2026-10-17 for a
+player in Argentina at ~250 ms from Helsinki. Its own world and its own `characters.db`; the
+accounts stay the website's, on the Hetzner box.
+
+| | |
+|---|---|
+| name | `mu2-saopaulo`, Vultr São Paulo, label "MU2 South America", $7.50/month, no backups |
+| address | 216.238.127.33 |
+| login | `ssh root@216.238.127.33` (`~/.ssh/id_ed25519`, put in by cloud-init) |
+| system | Ubuntu 26.04.1, x86_64, 1 vCPU, 950 MB, 2.3 GB swap; g++ 15.2, the same as Helsinki's |
+| deploy | `MU2_HOST=root@216.238.127.33 server/deploy.sh` |
+| accounts | the game asks the website about a ticket at `127.0.0.1:8080/internal/ticket`, which only the Hetzner box answers. An SSH tunnel brings it here: the key `/root/.ssh/mu2_accounts`, which Helsinki's `authorized_keys` lets forward to `127.0.0.1:8080` and nothing else (no shell). |
+
 ## Playing on it
 
     ./mu play                                  the character screen, asking the box for your characters
