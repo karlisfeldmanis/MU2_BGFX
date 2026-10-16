@@ -187,6 +187,7 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
     if (known && !whose.name.empty()) one.who += " (" + whose.name + ")";
     // His name over his head: the account's for its characters, the Hello's for one of none.
     one.bot = asked.account.empty();
+    one.playedFor = asked.account;
     one.name = known && !whose.name.empty() ? whose.name
                : one.bot && sim::goodName(asked.name) ? asked.name
                                                       : std::string();

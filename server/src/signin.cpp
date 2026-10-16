@@ -259,7 +259,7 @@ void tellOnline(const std::vector<std::unique_ptr<Session>>& sessions) {
         const sim::Body* him = one->world->realm->find(one->player);
         if (him == nullptr) continue;
         // account000000042 -> 42; a character of no account (a bot, a local run) 0.
-        const long long id = one->account.rfind("account", 0) == 0 ? std::atoll(one->account.c_str() + 7) : 0;
+        const long long id = reservedKey(one->playedFor) ? std::atoll(one->playedFor.c_str() + 7) : 0;
         char line[512];
         std::snprintf(line, sizeof line,
                       "%s{\"account\":%lld,\"name\":%s,\"class\":%s,\"level\":%d,\"world\":%s,\"copy\":%d,"

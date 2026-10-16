@@ -241,6 +241,10 @@ struct Session {
     uint64_t token = 0;    // his character's: kept under it when he goes
     std::string account;   // the character screen's, once an Account has been said
     std::string name;      // what he is called over his head (net::Who)
+    // The account his character is played under, as the Hello said it: for the website's online list
+    // alone (tellOnline). `account` stays the character screen's, and empty in a world, since the
+    // Broker keys a world line's listings by its token when it is (broker.cpp accountOf).
+    std::string playedFor;
     bool bot = false;      // a character of no account: for now, the bots (tools/netbot)
     bool local = false;    // the line comes from this machine (g_launcherOnly lets it in)
     // The realm sent him to another world (g_due) and this line has not gone yet: what he asks
