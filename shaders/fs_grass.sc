@@ -137,8 +137,7 @@ void main()
 		// kept a little green. `grass_dry` says how far; tropic only, so Lorencia is as it was.
 		// A wide ramp and a blend, not a step: green fades into gold over metres, and gold into
 		// amber card by card (the user: "it has to be gradually changing").
-		float straw = smoothstep(0.3, 1.0, vigour);
-		straw *= straw * saturate(u_grassVary.w * 3.0) * tropic;
+		float straw = smoothstep(0.1, 0.9, vigour) * saturate(u_grassVary.w * 3.0) * tropic;
 		vec3 sere = mix(vec3(2.0, 1.12, 0.34), vec3(1.75, 1.3, 0.42), v_light.w);
 		albedo = mix(albedo, lit * sere, straw * (0.4 + 0.5 * crown));
 		// And each card a little off its neighbour on top of all that.
