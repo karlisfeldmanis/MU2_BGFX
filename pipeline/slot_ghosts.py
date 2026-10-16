@@ -64,6 +64,9 @@ from paths import P  # noqa: E402
 
 PROJECT = P.ROOT
 ASSETS = P.CONTENT / "interface"
+#: The slots whose ghosts are rendered from MU's items by worn_ghosts.py, and left alone here.
+MODELLED = {"helm", "armour", "pants", "gloves", "boots", "wings", "weapon_left",
+            "weapon_right", "pet", "ring"}
 
 #: The rim: gold, and a shadow inside it, none of which is the plate.
 RIM = 10
@@ -268,6 +271,9 @@ def main() -> None:
         for path, plate in group:
             slot = path.stem[len("win_slot_"):]
             if wanted and slot not in wanted:
+                continue
+            # Drawn from the items now (worn_ghosts.py); only the pendant is still cut here.
+            if slot in MODELLED:
                 continue
             target = cut(path, plate, leather)
             with Image.open(target) as ghost:
