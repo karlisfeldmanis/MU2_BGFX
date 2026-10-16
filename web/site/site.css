@@ -159,15 +159,15 @@ header.top { position: relative; overflow: hidden; }
   background: linear-gradient(180deg, #1C1410, #110C0A) padding-box, linear-gradient(180deg, #5A4636, #33271F 40%, #1E1712) border-box;
   box-shadow: inset 0 1px 0 rgba(255,236,210,.05), 0 18px 44px rgba(0,0,0,.45); }
 .fixes h3 { margin: 0; padding-bottom: 14px; font: 700 19px/1.25 Cinzel, serif; letter-spacing: .03em; color: var(--bone-hi); box-shadow: inset 0 -1px 0 #2A211A; }
-.fixes p { margin: 14px 0 6px; font-size: 15px; color: var(--quiet); }
-.fixes ul { margin: 0; padding: 0; list-style: none; }
-.fixes li { display: grid; grid-template-columns: 120px 1fr; gap: 18px; padding: 11px 0; font-size: 15.5px; line-height: 1.5; color: var(--bone); }
-.fixes li + li { box-shadow: inset 0 1px 0 #2A211A; }
-.fix-date { font: 700 13px/1.6 'Alegreya Sans SC', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: #A88A6E; white-space: nowrap; padding-top: 1px; }
-.fix-date.soon { color: #E0B25A; }
+.fix-group { padding: 18px 0 4px; }
+.fix-group + .fix-group { margin-top: 10px; box-shadow: inset 0 1px 0 #2A211A; }
+.fixes h4 { margin: 0 0 10px; font: 700 13px/1.6 'Alegreya Sans SC', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: #A88A6E; }
+.fixes h4.soon { color: #E0B25A; }
+.fixes ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 15.5px; line-height: 1.5; color: var(--bone); }
+.fixes li::marker { color: #C9A27E; }
+.fixes p { margin: 14px 0 0; font-size: 15px; color: var(--quiet); }
 @media (max-width: 600px) {
   .fixes { padding: 20px 18px; }
-  .fixes li { grid-template-columns: 1fr; gap: 2px; }
 }
 @media (max-width: 900px) {
   .reqs { grid-template-columns: 1fr; }
