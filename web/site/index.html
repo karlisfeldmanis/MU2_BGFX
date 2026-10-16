@@ -43,11 +43,12 @@
 <p>The MU you grew up with, rebuilt from the ground up on a modern engine. Every world, monster and item you remember, with reworked skills, auras and animations, rebalanced mechanics and scaling, and new lighting and detail. Free to play.</p>
 <div class="get">
 <div>
-<a id="dl-windows" class="btn btn-dark" href="/downloads/MU2Launcher.exe" download>
+<a id="dl-windows" class="btn btn-dark" href="/downloads/MU2Setup.exe" download>
 <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.2l7.4-1v7.2H3zM11.4 4.1L21 2.8v8.6h-9.6zM3 12.6h7.4v7.2L3 18.8zM11.4 12.6H21v8.6l-9.6-1.3z"/></svg>
 Windows
 </a>
 <small id="dl-windows-note">Installer · Windows 10/11</small>
+<small id="dl-windows-sum" class="sum" title="SHA-256 of the installer: click to copy" hidden></small>
 </div>
 <div>
 <button id="dl-macos" class="btn btn-dark" type="button">
@@ -225,6 +226,7 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
 <img src="/logo.svg" alt="MU Classic" width="435" height="261">
 <!-- The loading screen's letter, word for word (src/app/preloader.cpp kLetter). -->
 <p>To WebZen, and to MU Online fans across the years: This is a love letter, not a business. MU Online was part of our childhood: the first steps out of Lorencia, the nights spent hunting in Dungeon and Devias, the friends we made and the hours we lost together in a world that felt like our own. For many of us, those memories never faded, and this game was made out of that love. Every character, item, monster, map, sound and name in it belongs to WebZen Inc., who created MU and gave a whole generation those memories. This is not our game; it's a tribute to theirs.</p>
+<nav class="foot-links"><a href="/privacy">Privacy</a><a href="/contact">Contact</a></nav>
 </div>
 </footer>
 
@@ -238,7 +240,16 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
   const size = (n) => (n < 1048576 ? (n / 1024).toFixed(0) + ' KB' : (n / 1048576).toFixed(1) + ' MB');
   fetch('/api/downloads').then((r) => r.json()).then((list) => {
     const file = list.windows, link = $('dl-windows'), note = $('dl-windows-note');
-    if (file) { link.href = file.file; note.textContent = 'Installer · Windows 10/11 · ' + size(file.bytes); }
+    if (file) {
+      link.href = file.file; note.textContent = 'Installer · Windows 10/11 · ' + size(file.bytes);
+      // Its SHA-256, for a player whose antivirus doubts it (/contact): shortened, copied whole.
+      const sum = $('dl-windows-sum');
+      if (file.sha256) {
+        sum.textContent = 'SHA-256 ' + file.sha256.slice(0, 16) + '…';
+        sum.addEventListener('click', () => { navigator.clipboard.writeText(file.sha256).then(() => { sum.textContent = 'SHA-256 copied'; }).catch(() => { sum.textContent = file.sha256; }); });
+        sum.hidden = false;
+      }
+    }
     else { link.removeAttribute('href'); link.setAttribute('aria-disabled', 'true'); note.textContent = 'Windows · coming soon'; }
   }).catch(() => {});
   // The Mac's and Linux's installs are one line each, copied, and said how to paste.

@@ -1,5 +1,10 @@
 // MU2.exe's resources: the manifest (1, RT_MANIFEST), the icon and the version a player's Explorer shows.
 #include <winver.h>
+// The version as text too, "0.1.0.0": an exe that names its numbers only in the binary block
+// reads as half-filled to the heuristics that judge an unsigned file.
+#define MU2_TEXT2(x) #x
+#define MU2_TEXT(x) MU2_TEXT2(x)
+#define MU2_VERSION_TEXT MU2_TEXT(MU2_VERSION_MAJOR) "." MU2_TEXT(MU2_VERSION_MINOR) "." MU2_TEXT(MU2_VERSION_PATCH) ".0"
 1 24 "mu2.manifest"
 1 ICON "mu2.ico"
 
@@ -16,6 +21,10 @@ BEGIN
       VALUE "FileDescription", "MU Classic"
       VALUE "InternalName", "MU2"
       VALUE "OriginalFilename", "MU2.exe"
+      VALUE "FileVersion", MU2_VERSION_TEXT
+      VALUE "ProductVersion", MU2_VERSION_TEXT
+      VALUE "LegalCopyright", "Copyright (C) 2026 MU Classic. MU Online is a trademark of WebZen Inc."
+      VALUE "Comments", "https://mu-classic.com"
     END
   END
   BLOCK "VarFileInfo"

@@ -439,6 +439,29 @@ open "$where/MU2Launcher.app"
 """
 
 
+# Inno Setup 6's compiler, installed into Wine's default prefix (src/launcher/mu2setup.iss).
+ISCC = os.path.expanduser("~/.wine/drive_c/Program Files (x86)/Inno Setup 6/ISCC.exe")
+
+
+def setup_windows(exe, stage, say):
+    """dist/launcher/MU2Setup.exe: the site's Windows download, the launcher inside Inno Setup's
+    wizard (src/launcher/mu2setup.iss says why). ISCC runs under Wine and is handed Windows paths."""
+    if not os.path.isfile(ISCC):
+        raise RuntimeError(f"no {ISCC}: install Inno Setup 6 into Wine (src/launcher/mu2setup.iss)")
+    with open(os.path.join(ROOT, "VERSION")) as f:
+        version = f.readline().strip()
+    winpath = lambda p: "Z:" + os.path.abspath(p).replace("/", "\\")
+    setup = os.path.join(stage, "MU2Setup.exe")
+    if os.path.exists(setup):
+        os.remove(setup)
+    run(["wine", ISCC, "/Q", f"/DVersion={version}", f"/DLauncher={winpath(exe)}", f"/O{winpath(stage)}",
+         winpath(os.path.join(ROOT, "src", "launcher", "mu2setup.iss"))], say,
+        env={**os.environ, "WINEDEBUG": "-all"})
+    if not os.path.isfile(setup):
+        raise RuntimeError("Inno Setup made no MU2Setup.exe")
+    say(f"{setup}: {os.path.getsize(setup) / 1e6:.1f} MB")
+
+
 def dist_launcher(say):
     """dist/launcher/MU2Launcher.app and MU2.dmg: the launcher for the Mac (docs/plans/launcher.md,
     L5). Built from the working tree -- it is one small program and no game content -- and the DMG
@@ -525,6 +548,7 @@ def dist_launcher(say):
         run(["cmake", "--build", win, "--target", "mu2_launcher"], say)
         run(["x86_64-w64-mingw32-strip", "-o", exe, os.path.join(win, "MU2Launcher.exe")], say)
         say(f"{exe}: {os.path.getsize(exe) / 1e6:.1f} MB, stripped")
+        setup_windows(exe, stage, say)
     else:
         say(f"no {win}: the Windows launcher was not built")
     return True, {"dmg": dmg, "app": app, "bytes": total}

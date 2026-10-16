@@ -39,7 +39,7 @@ The routes:
     GET  /api/comments?post=ID                      -> 200 {comments: [{name, text, at}]}
     POST /api/comments   Bearer T {post, text}      -> 201 {ok} | 400 {error} | 401 | 429
          on the posts of site/posts.json, under the account's name.
-    GET  /api/downloads                             -> 200 {windows: {file, bytes} | null, macos: ...}
+    GET  /api/downloads                             -> 200 {windows: {file, bytes, sha256} | null, macos: ...}
     POST /api/bug        {text, platform?, build?, renderer?, gpu?, world?, x?, y?, character?, class?,
                           level?, server?}  [Bearer T]  -> 200 {ok, id} | 400 {error} | 413 | 429 {error: "later"}
          a player's bug report from the game: their words (1 to MOST_BUG_TEXT characters) and where
@@ -127,7 +127,22 @@ SCRYPT = dict(n=2**14, r=8, p=1, maxmem=64 * 1024 * 1024, dklen=32)
 # updates the game itself (docs/plans/launcher.md, L4); on the Mac the app in a DMG (L5 -- the
 # double-click installer file is served too for macOS before 27, which let quarantined scripts
 # run; 27 refuses them outright). A file not there leaves its button saying so.
-DOWNLOADS = {"windows": "MU2Launcher.exe", "macos": "MU2.dmg"}
+# The Windows button gives MU2Setup.exe (src/launcher/mu2setup.iss), and its SHA-256 under it.
+DOWNLOADS = {"windows": "MU2Setup.exe", "macos": "MU2.dmg"}
+# Each download's SHA-256 by (path, size, mtime): read once a release, not once an ask.
+DOWNLOAD_SUMS = {}
+
+
+def download_sum(f: Path) -> str:
+    st = f.stat()
+    key = (str(f), st.st_size, st.st_mtime_ns)
+    if key not in DOWNLOAD_SUMS:
+        digest = hashlib.sha256()
+        with open(f, "rb") as data:
+            for block in iter(lambda: data.read(1 << 20), b""):
+                digest.update(block)
+        DOWNLOAD_SUMS[key] = digest.hexdigest()
+    return DOWNLOAD_SUMS[key]
 
 # What a machine report may carry, and how long each field may be (the launcher's engine,
 # reportMachine). The values are kept as they arrive -- a string cut to size, a number whole --
@@ -1257,7 +1272,8 @@ class Handler(BaseHTTPRequestHandler):
         out = {}
         for system, name in DOWNLOADS.items():
             f = self.downloads / name
-            out[system] = {"file": f"/downloads/{name}", "bytes": f.stat().st_size} if f.is_file() else None
+            out[system] = ({"file": f"/downloads/{name}", "bytes": f.stat().st_size, "sha256": download_sum(f)}
+                           if f.is_file() else None)
         return out
 
     def file(self, path: str):
@@ -1270,6 +1286,10 @@ class Handler(BaseHTTPRequestHandler):
             path = "/online.html"
         elif path in ("/bugs", "/bugs/"):
             path = "/bugs.html"
+        elif path in ("/privacy", "/privacy/"):
+            path = "/privacy.html"
+        elif path in ("/contact", "/contact/"):
+            path = "/contact.html"
         root = self.downloads if path.startswith("/downloads/") else self.site
         rel = path[len("/downloads/"):] if root is self.downloads else path.lstrip("/")
         target = (root / rel).resolve()

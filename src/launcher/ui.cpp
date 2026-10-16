@@ -318,8 +318,7 @@ void Launcher::check() {
         }
         std::vector<Entry> todo = stale(install, manifest, progress_);
         const bool fresh = installedVersion(install).empty();
-        // A game installed before the launcher moved itself in: it moves now (engine.h).
-        if (!fresh) settleLauncher(install, false);
+        if (!fresh) refreshShortcut();
         post([this, manifest, todo, fresh] {
             manifest_ = manifest;
             todo_ = todo;
@@ -377,9 +376,7 @@ void Launcher::install() {
     const std::vector<Entry> todo = todo_;
     work([this, install, manifest, todo] {
         std::string error;
-        const bool fresh = installedVersion(install).empty();
         const bool done = update(place_, install, manifest, todo, progress_, stop_, error);
-        if (done) settleLauncher(install, fresh);
         const bool paused = !done && stop_.load();
         post([this, done, paused, error] {
             if (done) {

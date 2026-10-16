@@ -361,7 +361,9 @@ def release_elsewhere(target, say, commit, protocol, files, missing, sending, ma
 # ---- the launcher ---------------------------------------------------------------------------------
 
 DOWNLOADS = "/srv/mu2-web/downloads"
-LAUNCHER_FILES = ["MU2Launcher.exe", "MU2.dmg", "MU2Launcher.tar.gz", "install-macos.sh", "MU2Install.command"]
+# MU2Setup.exe is the site's Windows button (src/launcher/mu2setup.iss); MU2Launcher.exe stays for
+# links made before it.
+LAUNCHER_FILES = ["MU2Setup.exe", "MU2Launcher.exe", "MU2.dmg", "MU2Launcher.tar.gz", "install-macos.sh", "MU2Install.command"]
 # Linux's, when `mu dist launcher` could build it (docs/plans/linux-release.md, X5): the program, the
 # script `curl ... | sh` runs, and the menu entry's icon.
 LINUX_LAUNCHER_FILES = ["MU2Launcher-linux", "install-linux.sh", "mu2.png"]

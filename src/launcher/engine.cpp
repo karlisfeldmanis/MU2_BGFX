@@ -589,54 +589,15 @@ bool update(const Place& place, const fs::path& install, const Manifest& manifes
     return true;
 }
 
-void settleLauncher(const fs::path& install, bool fresh) {
+void refreshShortcut() {
 #ifdef _WIN32
-    const fs::path self = ownProgram();
-    if (self.empty() || developers(self)) return;
-    const fs::path home = install / "MU2Launcher.exe";
-    std::error_code ec;
-    bool moved = false;
-    if (!fs::equivalent(self, home, ec)) {
-        fs::create_directories(install, ec);
-        if (MoveFileExW(self.c_str(), home.c_str(), MOVEFILE_REPLACE_EXISTING)) {
-            moved = true;
-        } else if (CopyFileW(self.c_str(), home.c_str(), FALSE)) {
-            moved = true;  // another drive: the one in Downloads stays, but is no longer the shortcut's
-        } else {
-            core::logError("launcher: could not move itself into %s (%lu)", utf8Of(install).c_str(), GetLastError());
-            return;
-        }
-        core::logf("launcher: moved into %s", utf8Of(home).c_str());
-    }
+    // Launchers before 4eed2ef4 had no icon, and Explorer keeps what it drew for a shortcut
+    // after the exe under it is replaced: told the shortcut changed, it reads the icon again.
     const fs::path desktop = known(FOLDERID_Desktop);
     if (desktop.empty()) return;
-    if (!fresh && !moved) {
-        // Launchers before 4eed2ef4 had no icon, and Explorer keeps what it drew for a shortcut
-        // after the exe under it is replaced: told the shortcut changed, it reads the icon again.
-        const fs::path shortcut = desktop / "MU Classic.lnk";
-        if (fs::exists(shortcut, ec)) SHChangeNotify(SHCNE_UPDATEITEM, SHCNF_PATHW, shortcut.c_str(), nullptr);
-        return;
-    }
-    const HRESULT com = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-    IShellLinkW* link = nullptr;
-    bool made = false;
-    if (SUCCEEDED(CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&link)))) {
-        link->SetPath(home.c_str());
-        link->SetWorkingDirectory(install.c_str());
-        link->SetDescription(L"MU Classic");
-        link->SetIconLocation(home.c_str(), 0);
-        IPersistFile* file = nullptr;
-        if (SUCCEEDED(link->QueryInterface(IID_PPV_ARGS(&file)))) {
-            made = SUCCEEDED(file->Save((desktop / "MU Classic.lnk").c_str(), TRUE));
-            file->Release();
-        }
-        link->Release();
-    }
-    if (SUCCEEDED(com)) CoUninitialize();
-    core::logf("launcher: desktop shortcut %s", made ? "made" : "not made");
-#else
-    (void)install;
-    (void)fresh;
+    const fs::path shortcut = desktop / "MU Classic.lnk";
+    std::error_code ec;
+    if (fs::exists(shortcut, ec)) SHChangeNotify(SHCNE_UPDATEITEM, SHCNF_PATHW, shortcut.c_str(), nullptr);
 #endif
 }
 

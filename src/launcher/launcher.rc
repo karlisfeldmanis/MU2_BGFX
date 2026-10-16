@@ -2,6 +2,11 @@
 // game's icon, and the version Explorer shows. A blank exe that downloads and starts another is
 // what antivirus heuristics distrust; these say what it is.
 #include <winver.h>
+// The version as text too, "0.1.0.0": an exe that names its numbers only in the binary block
+// reads as half-filled to the heuristics that judge an unsigned file.
+#define MU2_TEXT2(x) #x
+#define MU2_TEXT(x) MU2_TEXT2(x)
+#define MU2_VERSION_TEXT MU2_TEXT(MU2_VERSION_MAJOR) "." MU2_TEXT(MU2_VERSION_MINOR) "." MU2_TEXT(MU2_VERSION_PATCH) ".0"
 1 24 "launcher.manifest"
 1 ICON "../app/mu2.ico"
 
@@ -18,6 +23,10 @@ BEGIN
       VALUE "FileDescription", "MU Classic Launcher"
       VALUE "InternalName", "MU2Launcher"
       VALUE "OriginalFilename", "MU2Launcher.exe"
+      VALUE "FileVersion", MU2_VERSION_TEXT
+      VALUE "ProductVersion", MU2_VERSION_TEXT
+      VALUE "LegalCopyright", "Copyright (C) 2026 MU Classic. MU Online is a trademark of WebZen Inc."
+      VALUE "Comments", "https://mu-classic.com"
     END
   END
   BLOCK "VarFileInfo"

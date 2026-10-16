@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy — MU Classic</title>
+<meta name="description" content="What MU Classic's website, launcher and game keep about you, and how to have it removed.">
+<link rel="canonical" href="https://mu-classic.com/privacy">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#0D0B0A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Alegreya+Sans+SC:wght@700&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+
+<div class="bar">
+<a href="/"><img src="/logo.svg" alt="MU Classic home" width="435" height="261"></a>
+<a href="/" style="font-weight: 500">Home</a>
+</div>
+
+<!-- What web/server.py, the launcher (src/launcher/) and the game send and keep, as of 2026-10-16.
+     A new field sent home belongs on this page in the same change. -->
+<main class="account-page">
+<div class="wrap text-page">
+<h1 class="page-title">Privacy</h1>
+<p class="center muted">Last updated 16 October 2026</p>
+
+<p>MU Classic is a free fan remaster of MU Online, made by a small team. We keep only what the game needs to run and what helps us fix it. We show no ads, sell nothing to anyone and use no trackers or analytics.</p>
+
+<h2>Your account</h2>
+<ul>
+<li><b>Email and display name</b>, to sign in and to show your name on comments.</li>
+<li><b>Your password</b>, only as a scrypt hash. We can't read it.</li>
+<li><b>Sign-ins</b> (on the website or the launcher): when, and a shortened network address, so you can see them on your account page and end them. Each lasts up to 90 days.</li>
+</ul>
+
+<h2>What the launcher sends</h2>
+<ul>
+<li><b>Your machine</b>: graphics card, its driver, processor, Windows/macOS version, memory and the graphics setting you picked. This tells us which hardware the game breaks on. You see it on your account page.</li>
+<li><b>Plays</b>: when you pressed Play, for 30 days.</li>
+<li><b>Crash and freeze reports</b>: what the game or launcher was doing when it stopped, a short summary of its log, sometimes a memory dump of the program. These are filed under your account so we can tell you when it's fixed.</li>
+</ul>
+<p>The launcher downloads only the game's own files, checks each against its SHA-256, and installs into your user folder without administrator rights. It installs nothing else.</p>
+
+<h2>In the game</h2>
+<ul>
+<li><b>Your characters</b>: their level, stats, items and where they stand, as any online game keeps them.</li>
+<li><b>Bug reports</b> you send with the in-game button: your words, plus where you stood and the game's version and graphics card.</li>
+</ul>
+
+<h2>The website</h2>
+<p>The site keeps your sign-in in your browser's local storage, not in a cookie. It loads fonts from Google Fonts, and the front page plays a video from YouTube's privacy-enhanced player (youtube-nocookie.com). Those services see your network address when they serve them.</p>
+
+<h2>Removing it</h2>
+<p><b>Delete account</b> on your <a href="/account" style="text-decoration: underline">account page</a> removes the account at once, with its sign-ins, machines, plays and comments. Crash reports, bug reports and characters already on the game server are kept until we remove them. <a href="/contact" style="text-decoration: underline">Contact us</a> and we will.</p>
+
+<p>Everything is kept on our own server at Hetzner in Helsinki, Finland, and is never shared with anyone else.</p>
+</div>
+</main>
+
+<footer>
+<div class="wrap">
+<img src="/logo.svg" alt="MU Classic" width="435" height="261">
+<nav class="foot-links"><a href="/privacy">Privacy</a><a href="/contact">Contact</a></nav>
+</div>
+</footer>
+
+</body>
+</html>
