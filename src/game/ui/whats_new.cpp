@@ -69,7 +69,7 @@ struct Slide {
 // user signed off; every "never had" on the last was checked against MuMain (LEGACY/reference).
 const std::vector<Slide>& deck() {
     static const std::vector<Slide> slides = {
-        {"whatsnew_welcome", "Welcome back", "The realm has changed",
+        {"whatsnew_welcome", "Welcome back", "A New Era",
          "MU as you remember it, with new things to learn. Pick one, or walk through them in order.",
          {{"Runes", "Sockets and their powers"},
           {"Raids", "Ten together, anywhere"},
