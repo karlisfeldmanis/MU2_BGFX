@@ -152,3 +152,21 @@ the socket it fits.
 4. **His spot** in the hall, picked on the grid when he is built.
 5. **His light.** MU's bone-39 flare pulses white at scale 2. Keep MU's, or smaller (the user's
    rule for glows: small first).
+
+## His voice
+
+Picked 2026-10-16 from six auditions of the hand-in, then three quieter takes of the user's
+favourite ('E is pretty good but can we make not sot noisy?', then 'E1 is the best'). Kept as
+`content/voice/ref/seed_master_audition_e1.wav`.
+
+- **Read:** Chatterbox cloning the Keeper's reference, `keeper_cv_eighties.wav` (a man in his
+  eighties, Common Voice, CC0), exaggeration 0.6, cfg_weight 0.3, temperature 0.8, seed 7.
+- **The goblin:** `pipeline/world_shift.py --pitch 0.95 --formant 1.25 --jitter 0.03`: the
+  spectral envelope raised a quarter (a small throat) with the pitch a touch lower, and a slow
+  wobble in it. No `--rasp`: at 0.2 it was the noise the user heard.
+- **The finish** (ffmpeg): voice.py's SQUEEZE, then `highpass=f=110`, `equalizer=f=320:t=q:w=1:g=-3`,
+  `equalizer=f=1400:t=q:w=1.3:g=5` (the nose), `aecho=0.8:0.5:60|130:0.15|0.08` (a faint cave),
+  and voice.py's POLISH (compressor, 0.4 s pad, loudnorm -16).
+
+Not yet in `pipeline/voice.py`'s VOICES: its finish is one ffmpeg chain, and this one needs the WORLD
+step between the take and the chain. Add a `world` key there when his pages exist in quests.cpp.
