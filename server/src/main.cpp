@@ -91,9 +91,14 @@ bool heard(Session& one, std::vector<std::unique_ptr<World>>& worlds,
         } else if (kind == net::Kind::Command && one.welcomed) {
             sim::Command command;
             if (!net::parse(body, command)) return false;
-            // The world's door is the server's own.
-            if (command.kind == sim::Command::Kind::Join || command.kind == sim::Command::Kind::Leave ||
-                command.kind == sim::Command::Kind::PartySet) {
+            // The world's door is the server's own, and so are the Broker's four: each moves Zen or
+            // a whole Held it carries into his bag (Realm::brokerZen, brokerGive), so one written
+            // by a client was any sum or any item for nothing. The server's book sends them
+            // (server/src/broker.cpp), straight into the queue.
+            using K = sim::Command::Kind;
+            if (command.kind == K::Join || command.kind == K::Leave || command.kind == K::PartySet ||
+                command.kind == K::BrokerTake || command.kind == K::BrokerBuy ||
+                command.kind == K::BrokerGive || command.kind == K::BrokerZen) {
                 continue;
             }
             // Sent to another world already (sentAway): nothing more of his here. A client behind
