@@ -833,10 +833,24 @@ void Launcher::drawHome() {
         }
         case Home::Ready: {
             if (button(main, starting_ ? "Starting..." : "Play", true, starting_, 20.0f)) playNow();
-            panel(px({textX, rowY + 24.0f, 8.0f, 8.0f}), 4.0f * s_, hex(0x7FD66A), hex(0x7FD66A));
-            words(textX + 16.0f, rowY + 33.0f, "Up to date", hex(kQuiet), 15.0f);
+            panel(px({textX, rowY + 11.0f, 8.0f, 8.0f}), 4.0f * s_, hex(0x7FD66A), hex(0x7FD66A));
+            words(textX + 16.0f, rowY + 20.0f, "Up to date", hex(kQuiet), 15.0f);
+            // Where Play goes (the user, 2026-10-17: "so users see the region"): the region, its
+            // ping, and the way to another.
+            {
+                const auto& all = regions();
+                const Region& region = regionNamed(settings_.region);
+                size_t at = 0;
+                while (at < all.size() && all[at].id != region.id) ++at;
+                std::string line = "Region: " + region.name;
+                if (at < pings_.size() && pings_[at] >= 0.0) line += " (" + std::to_string(int(pings_[at] + 0.5)) + " ms)";
+                words(textX + 16.0f, rowY + 41.0f, line, hex(kBone), 15.0f);
+                if (!starting_ && link(textX + 16.0f + measure(line, 15.0f) + 10.0f, rowY + 41.0f, "Change", kLabel)) {
+                    regionsOpen_ = true;
+                }
+            }
             if (tuned_) {
-                words(textX + 16.0f, rowY + 53.0f,
+                words(textX + 16.0f, rowY + 59.0f,
                       std::string("Graphics set to ") + firstRunSet(gpu_).name + " for this PC",
                       hex(kQuiet), 13.0f);
             }
@@ -922,7 +936,7 @@ void Launcher::measureRegions() {
 // opens the list under it. Returns its left edge.
 float Launcher::drawRegion(float right, float y) {
     const Region& region = regionNamed(settings_.region);
-    const std::string word = region.name;
+    const std::string word = "Region: " + region.name;
     const float wide = measure(word, 15.0f) + 20.0f + 14.0f;
     const Box b{right - wide, y, wide, 32.0f};
     regionAt_ = b;
