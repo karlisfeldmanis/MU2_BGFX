@@ -347,10 +347,10 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
                 0.05f, true);
             // The logo, its foot a little over the letter's first line, in the logo's own cream.
             if (bgfx::isValid(logo)) {
-                const float half = 100.0f * unit;
+                const float half = 65.0f * unit;
                 gfx::Sprite s;
                 s.position[0] = cx;
-                s.position[1] = letterTop - 28.0f * unit - half * logoAspect;
+                s.position[1] = letterTop - 22.0f * unit - half * logoAspect;
                 s.halfWidth = half;
                 s.halfHeight = half * logoAspect;
                 s.sheet = logo;
