@@ -137,16 +137,26 @@ VOICES = {
     # His own age is the finish: no pitch, no tremble, a faint stone hall.
     "keeper": dict(ref="keeper_cv_eighties.wav", exaggeration=0.45, cfg_weight=0.3,
                    polish="highpass=f=70,aecho=0.8:0.5:90|180:0.12|0.06," + POLISH),
-    # The Seed Master, Aida's goblin (docs/game/aida-quest.md, "His voice"): E1 of nine auditions
-    # (the user, 2026-10-16: 'E1 is the best'). The Keeper's old man read a little more dramatic,
-    # then made a goblin by WORLD (`world`, pipeline/world_shift.py): a quarter smaller throat, the
-    # pitch a touch lower, a slow wobble. No rasp: it was the noise the user heard in E. A nose
-    # (1.4 kHz up, 320 Hz down) and a faint cave.
+    # The Seed Master, Aida's goblin (docs/game/aida-quest.md, "His voice"). The Keeper's old man
+    # read a little more dramatic. The user first took E1, a WORLD goblin (pipeline/world_shift.py),
+    # then heard it 'little bit destroyed not clean' (2026-10-16), so the vocoder is out: a plain
+    # 10% speed-up with the tempo put back (a semitone and a half up, a smaller throat), a nose at
+    # 1.4 kHz, and of four 'mythical' finishes the second, L2 'shimmer': his voice an octave up,
+    # high-passed, only inside a bright 1.5 s tail at 0.1, and a short dark wood reverb at 0.12
+    # (the first round's 0.3-0.35 and 2 s were 'to much reverb'). The two tails are generated
+    # impulses in ref/: seed_master_ir_wood.wav (1.1 s, decay 0.22 s, one-pole dark 0.55) and
+    # seed_master_ir_shimmer.wav (1.5 s, 0.35 s, 0.2), seed 5.
     "seed_master": dict(ref="keeper_cv_eighties.wav", exaggeration=0.6, cfg_weight=0.3,
-                        world=["--pitch", "0.95", "--formant", "1.25", "--jitter", "0.03"],
-                        polish="highpass=f=110,equalizer=f=320:t=q:w=1:g=-3,"
-                               "equalizer=f=1400:t=q:w=1.3:g=5,"
-                               "aecho=0.8:0.5:60|130:0.15|0.08," + POLISH),
+                        polish="asetrate=24000*1.1,aresample=24000,atempo=0.909,highpass=f=110,"
+                               "equalizer=f=1400:t=q:w=1.3:g=4,apad=pad_dur=1.2,asplit=3[d][s][r];"
+                               f"amovie={REFS / 'seed_master_ir_wood.wav'}[iw];"
+                               f"amovie={REFS / 'seed_master_ir_shimmer.wav'}[is];"
+                               "[s]asetrate=24000*2,aresample=24000,atempo=0.5,highpass=f=1500,"
+                               "volume=0.5[s2];[s2][is]afir=dry=0:wet=10,volume=0.1[sh];"
+                               "[r][iw]afir=dry=10:wet=10,volume=0.12[w];"
+                               "[d][w][sh]amix=inputs=3:normalize=0,"
+                               "acompressor=threshold=0.15:ratio=2.5:attack=10:release=200,"
+                               "loudnorm=I=-16:TP=-1.5:LRA=11"),
 }
 
 # WORLD (pipeline/world_shift.py) needs pyworld, which lives in this other Python, with

@@ -20,12 +20,13 @@ ap.add_argument("--pitch", type=float, default=1.0)
 ap.add_argument("--formant", type=float, default=1.0)
 ap.add_argument("--rasp", type=float, default=0.0)
 ap.add_argument("--jitter", type=float, default=0.0, help="random f0 wobble, fraction")
+ap.add_argument("--frame", type=float, default=5.0, help="analysis frame, ms; finer is cleaner")
 a = ap.parse_args()
 
 x, sr = sf.read(a.src)
 if x.ndim > 1: x = x.mean(axis=1)
 x = x.astype(np.float64)
-f0, t = pw.harvest(x, sr, f0_floor=50, f0_ceil=500)
+f0, t = pw.harvest(x, sr, f0_floor=50, f0_ceil=500, frame_period=a.frame)
 sp = pw.cheaptrick(x, f0, t, sr)
 apd = pw.d4c(x, f0, t, sr)
 
@@ -40,6 +41,6 @@ if a.jitter:
     wob = np.convolve(rng.normal(0, 1, len(f02)), np.ones(9) / 9, mode="same")
     f02 = f02 * (1 + a.jitter * wob)
 apd2 = np.clip(apd + a.rasp * (1 - apd), 0, 1)
-y = pw.synthesize(f02, sp2, apd2, sr)
+y = pw.synthesize(f02, sp2, apd2, sr, frame_period=a.frame)
 y = y / (np.abs(y).max() + 1e-9) * 0.9
 sf.write(a.dst, y, sr)

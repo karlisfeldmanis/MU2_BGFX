@@ -155,22 +155,25 @@ the socket it fits.
 
 ## His voice
 
-Picked 2026-10-16 from six auditions of the hand-in, then three quieter takes of the user's
-favourite ('E is pretty good but can we make not sot noisy?', then 'E1 is the best'). Kept as
-`content/voice/ref/seed_master_audition_e1.wav`.
+Picked 2026-10-16. First E1 of nine auditions ('E1 is the best'): the Keeper's old man made a
+goblin by WORLD (`pipeline/world_shift.py`, formant 1.25). Heard on his whole pages it was
+'little bit destroyed not clean', so the vocoder went; then 'add some reverb which you add to elf
+also for goblin' and 'we need to add some nice effects so goblin sound more mythical?', and of
+four mythical finishes, at a third of the first round's reverb ('to much reverb'), the second:
+'second one'. The E1 take is kept as `content/voice/ref/seed_master_audition_e1.wav`.
 
 - **Read:** Chatterbox cloning the Keeper's reference, `keeper_cv_eighties.wav` (a man in his
   eighties, Common Voice, CC0), exaggeration 0.6, cfg_weight 0.3, temperature 0.8, seed 7.
-- **The goblin:** `pipeline/world_shift.py --pitch 0.95 --formant 1.25 --jitter 0.03`: the
-  spectral envelope raised a quarter (a small throat) with the pitch a touch lower, and a slow
-  wobble in it. No `--rasp`: at 0.2 it was the noise the user heard.
-- **The finish** (ffmpeg): voice.py's SQUEEZE, then `highpass=f=110`, `equalizer=f=320:t=q:w=1:g=-3`,
-  `equalizer=f=1400:t=q:w=1.3:g=5` (the nose), `aecho=0.8:0.5:60|130:0.15|0.08` (a faint cave),
-  and voice.py's POLISH (compressor, 0.4 s pad, loudnorm -16).
+- **The goblin:** a plain 10% speed-up with the tempo put back (a semitone and a half up, the
+  throat a little smaller), `highpass=f=110`, a nose `equalizer=f=1400:t=q:w=1.3:g=4`.
+- **The myth, "shimmer":** his voice an octave up, high-passed at 1.5 kHz, heard only inside a
+  bright 1.5 s tail at 0.1, and a short dark wood reverb (1.1 s) at 0.12. The tails are generated
+  impulses, `content/voice/ref/seed_master_ir_wood.wav` and `seed_master_ir_shimmer.wav`; the
+  chain is VOICES `seed_master` in `pipeline/voice.py`.
 
 **Voiced 2026-10-16** (the user: 'lets finish goblin voice for quest text and make also noria
-questu givei audio'): `pipeline/voice.py` VOICES `seed_master`, whose `world` key runs the WORLD step
-between the take and the ffmpeg chain. The rows are not in quests.cpp yet, so voice.py reads
+questu givei audio'): `pipeline/voice.py` VOICES `seed_master` (its `world` key, the WORLD step, is still
+there for a voice that wants it). The rows are not in quests.cpp yet, so voice.py reads
 their pages from `content/voice/ref/pending_pages.json` (in ref/, kept out of the game). When
 the rows are written, use these voices: `peia_3` (the hook's offer and underway, Peia's voice),
 `seed_master` as the hook's `receiverVoice` (its hand-in), `seed_master_1` (the Clearing's four
