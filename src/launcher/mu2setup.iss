@@ -63,9 +63,12 @@ Name: "{autodesktop}\MU Classic"; Filename: "{app}\MU2Launcher.exe"; WorkingDir:
 Filename: "{app}\MU2Launcher.exe"; Description: "{cm:LaunchProgram,MU Classic}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
-; The game the launcher downloaded, wherever the player put it (engine.h uninstall); the sign-in,
-; logs and screenshots stay, as the launcher's own Uninstall leaves them.
+; The game the launcher downloaded, wherever the player put it (engine.h uninstall); the sign-in
+; and the launcher's own log in the user folder (AppData\Roaming\MU2) stay.
 Filename: "{app}\MU2Launcher.exe"; Parameters: "--uninstall"; RunOnceId: "RemoveGame"; Flags: runhidden waituntilterminated
 
 [UninstallDelete]
+; The game's logs/ beside it, kept by the launcher's own Uninstall for a reinstall; removed from
+; Apps & features, nothing of MU Classic stays in the folder.
+Type: filesandordirs; Name: "{app}\logs"
 Type: dirifempty; Name: "{app}"
