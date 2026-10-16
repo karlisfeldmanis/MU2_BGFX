@@ -54,8 +54,8 @@ constexpr float kGrip = 26.0f, kTabRow = 44.0f, kInput = 44.0f, kFoot = 30.0f;
 // The log's text 16 and its row 21, from 18 and 24, its tags 13 from 14 (the user, 2026-10-10:
 // "scale down chat text little bit").
 constexpr float kRow = 21.0f, kText = 16.0f, kTag = 13.0f, kWord = 18.0f, kHint = 14.0f;
-// The cloud's peak, and closed, what is left of it under the fading lines.
-constexpr float kCloud = 0.97f, kCloudClosed = 0.55f;
+// The cloud's peak, under the open chat.
+constexpr float kCloud = 0.97f;
 // Closed: how long each line stays, and the fewest it shows; as many more as the height he gave
 // it holds (the user, 2026-10-09: "if i chancge chant heoght i exptect that also closed chat will
 // be woth more messages"), Chat::closedRows.
@@ -1333,7 +1333,6 @@ void Chat::buildClosed(float u) {
 
     const float size = kText * u;
     const float wide = panel_.w - 24.0f * u;
-    float strongest = 0.0f;
     std::vector<float> alphas;
     for (size_t k = 0; k < last.size(); ++k) {
         const float age = log_[last[k]].age;
@@ -1342,13 +1341,10 @@ void Chat::buildClosed(float u) {
         const float place = float(last.size() - 1 - k);  // 0 for the newest
         const float alpha = (1.0f - 0.7f * place / std::max(1.0f, float(rows - 1))) * life;
         alphas.push_back(alpha);
-        strongest = std::max(strongest, alpha);
     }
-    if (waiting > 0) strongest = std::max(strongest, 0.6f);
     const float foot = panel_.bottom() - 34.0f * u;
-    // One row a line here, cut to the width: closed, it is a glance, not a read.
-    const float tall = float(last.size()) * kRow * u + 40.0f * u;
-    cloud(back_, foot - tall * 0.5f, std::max(tall, 180.0f * u), kCloudClosed * strongest, u);
+    // One row a line here, cut to the width: closed, it is a glance, not a read. No cloud under
+    // them (the user, 2026-10-16): the dark is for the open chat only; the letters' drop holds them.
     float y = foot - float(last.size()) * kRow * u;
     for (size_t k = 0; k < last.size(); ++k) {
         const Line& line = log_[last[k]];

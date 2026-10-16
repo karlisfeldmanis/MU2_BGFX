@@ -13,8 +13,7 @@
 //   * **Its height** the player's: an up-and-down grip on its top edge; and the lines scroll
 //     inside, on a slider of their own at the right.
 //   * **Closed**, the last lines stay over the world a while and fade -- as many as his height
-//     for it holds -- the cloud under them half as dark, with "Enter to chat" and the whispers
-//     waiting.
+//     for it holds -- with no cloud under them, "Enter to chat" and the whispers waiting.
 //   * **A party invite** stands in the middle over the HUD, above where a fight's Zen is said
 //     (game/ui/tally.h), with Accept and Decline, open or shut ("party invites has to be middle
 //     of center similiar position where zen is gained"). The log keeps its line.
