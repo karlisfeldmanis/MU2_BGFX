@@ -168,20 +168,19 @@ constexpr uint32_t kGuildGreen = gfx::rgba(0.576f, 0.839f, 0.494f);
 
 // **Lines not for everyone** (the user, 2026-10-11: "use some color styling for party/raid
 // bubles, guild bubles, because they are not public"): the glass tinted toward the chat's own
-// channel colour, the words a pale shade of it, its tag before them, and its colour for the outer
-// shadow, a faint glow. A raid talks on its party's line. The map's line is the plain glass.
+// channel colour, the words a pale shade of it, and its colour for the outer shadow, a faint glow.
+// No "Party "/"Guild " tag before the words (the user, 2026-10-16): the colour already says it. A raid talks on its party's line. The map's line is the plain glass.
 struct Tint {
     uint32_t glass, words, glow;
-    const char* tag;
     float body;
 };
 Tint tintOf(int circle) {
     switch (circle) {
         case Play::kSaidParty:
-            return {gfx::rgba(0.039f, 0.090f, 0.188f), gfx::rgba(0.855f, 0.910f, 0.973f), kPartyBlue, "Party ", 0.88f};
+            return {gfx::rgba(0.039f, 0.090f, 0.188f), gfx::rgba(0.855f, 0.910f, 0.973f), kPartyBlue, 0.88f};
         case Play::kSaidGuild:
-            return {gfx::rgba(0.047f, 0.133f, 0.051f), gfx::rgba(0.875f, 0.945f, 0.839f), kGuildGreen, "Guild ", 0.88f};
-        default: return {kGlass, kBone, 0u, "", kGlassBody};
+            return {gfx::rgba(0.047f, 0.133f, 0.051f), gfx::rgba(0.875f, 0.945f, 0.839f), kGuildGreen, 0.88f};
+        default: return {kGlass, kBone, 0u, kGlassBody};
     }
 }
 
@@ -190,7 +189,7 @@ uint32_t alphaOf(uint32_t abgr, float a) {
     return (abgr & 0x00FFFFFFu) | (gfx::rgbaByte(std::clamp(was * a, 0.0f, 1.0f)) << 24);
 }
 
-// The line as it reads -- links "[Name]", a Party tag before it -- and each byte's ink.
+// The line as it reads -- links "[Name]" -- and each byte's ink.
 struct Inked {
     std::string text;
     std::vector<uint32_t> ink;
@@ -202,7 +201,6 @@ Inked inked(const Play::Said& said, const content::Tables* tables) {
         out.ink.insert(out.ink.end(), part.size(), ink);
     };
     const Tint tint = tintOf(said.circle);
-    if (*tint.tag) add(tint.tag, tint.glow);
     size_t at = 0;
     for (const sim::ItemLink& link : sim::findLinks(said.line)) {
         add(said.line.substr(at, link.from - at), tint.words);
