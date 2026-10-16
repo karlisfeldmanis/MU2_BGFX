@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "game/ui/controls.h"
@@ -158,10 +159,26 @@ std::vector<std::string> wrap(const std::string& text, float wide, float size) {
 
 float rowTall(const Slide& slide, bool topics) { return topics ? kTopicTall : slide.tight ? kRowTight : kRowTall; }
 
+// How tall a slide's body is, prose to note, in units.
+float bodyTall(const Slide& slide) {
+    const bool topics = &slide == &deck()[0];
+    const float lead = float(wrap(slide.lead, kColWide, kLeadSize).size()) * kLeadStep + 12.0f;
+    const float well = rowTall(slide, topics) * float(slide.rows.size()) + kWellPad * 2.0f;
+    const float note = slide.note[0] != '\0' ? 14.0f + 21.0f * float(wrap(slide.note, kColWide, 15.0f).size()) : 0.0f;
+    return lead + well + note;
+}
+
+// Where a slide's prose starts: a short slide sits a little lower, so the room it leaves above the
+// foot is shared rather than all under it.
+float bodyTop(const Slide& slide) {
+    const float room = kProgressTop - 24.0f - kBodyTop;
+    return kBodyTop + std::max(0.0f, (room - bodyTall(slide)) * 0.3f);
+}
+
 // Where a slide's panel starts, under its prose, in units.
 float wellTop(const Slide& slide) {
     const size_t lines = wrap(slide.lead, kColWide, kLeadSize).size();
-    return kBodyTop + float(lines) * kLeadStep + 12.0f;
+    return bodyTop(slide) + float(lines) * kLeadStep + 12.0f;
 }
 
 Box tabBox(int i) {
@@ -348,8 +365,8 @@ void WhatsNew::rebuild() {
         // Into the body's own grade, top to foot, so the picture ends with no seam.
         const uint32_t clearTop = kSheetTop & 0x00FFFFFFu, clearFoot = kSheetFoot & 0x00FFFFFFu;
         const uint32_t halfTop = clearTop | 0xD8000000u, halfFoot = clearFoot | 0xD8000000u;
-        const float fade = pic.w * 0.42f;
-        const float mid = fade * 0.8f;
+        const float fade = pic.w * 0.3f;
+        const float mid = fade * 0.75f;
         canvas_.shade({pic.right() - fade, pic.y, mid, pic.h}, clearTop, halfTop, halfFoot, clearFoot);
         canvas_.shade({pic.right() - fade + mid, pic.y, fade - mid, pic.h}, halfTop, kSheetTop, kSheetFoot, halfFoot);
         const uint32_t none = gfx::rgba(0.035f, 0.031f, 0.027f, 0.0f);
@@ -434,7 +451,7 @@ void WhatsNew::rebuild() {
     // The prose, then the facts on a lit panel, then a note under it.
     const std::vector<std::string> lead = wrap(slide.lead, kColWide, kLeadSize);
     for (size_t i = 0; i < lead.size(); ++i) {
-        const float base = y + (kBodyTop + kLeadStep * float(i)) * u + kLeadSize * u * 0.95f;
+        const float base = y + (bodyTop(slide) + kLeadStep * float(i)) * u + kLeadSize * u * 0.95f;
         controls::label(canvas_, col, base, kLeadSize * u, kLead, lead[i]);
     }
     const bool topics = slide_ == 0;
@@ -458,9 +475,12 @@ void WhatsNew::rebuild() {
         if (row.dot != 0) {
             const float side = std::round(9.0f * u);
             const Box dot{nameX, std::round(box.y + (box.h - side) * 0.5f), side, side};
-            const uint32_t glow = (row.dot & 0x00FFFFFFu) | 0x40000000u;
-            roundBox(canvas_, {dot.x - 3.0f * u, dot.y - 3.0f * u, dot.w + 6.0f * u, dot.h + 6.0f * u}, (side + 6.0f * u) * 0.5f,
-                  glow, glow);
+            // A soft glow in its own colour, two rings fading out, so it reads as light, not a rim.
+            for (const auto& [grow, alpha] : {std::pair<float, uint32_t>{5.0f, 0x14000000u}, {2.5f, 0x2C000000u}}) {
+                const float g = grow * u;
+                const uint32_t glow = (row.dot & 0x00FFFFFFu) | alpha;
+                roundBox(canvas_, {dot.x - g, dot.y - g, dot.w + g * 2.0f, dot.h + g * 2.0f}, side * 0.5f + g, glow, glow);
+            }
             roundBox(canvas_, dot, side * 0.5f, row.dot, row.dot);
             nameX += side + 10.0f * u;
         }
@@ -496,11 +516,11 @@ void WhatsNew::rebuild() {
             canvas_.shade(fill, faint, kGold, kGold, faint);
         }
         const Box next = placed(x, y, nextBox(), u);
-        const float size = 15.0f * u;
+        const float size = 16.0f * u;
         const std::string counted =
             slide_ == 0 ? std::string("5 new things and more") : std::to_string(slide_) + " of " + std::to_string(count - 1);
-        controls::caps(canvas_, col, controls::middle(next.y, next.h, size), size, gfx::rgba(0.561f, 0.529f, 0.482f),
-                       counted, 0.0f);
+        controls::caps(canvas_, col, controls::middle(next.y, next.h, size), size, gfx::rgba(0.659f, 0.624f, 0.569f),
+                       counted, 0.02f);
         if (slide_ > 0) {
             const Box back = placed(x, y, backBox(), u);
             const float t = lift(kBack);
@@ -510,8 +530,7 @@ void WhatsNew::rebuild() {
             word(canvas_, back, 17.0f * u, gfx::rgba(0.867f, 0.835f, 0.784f), "Back");
         }
         const float t = lift(kNext);
-        tip::shadowUnder(canvas_, next, u, 3.0f * u, 0.6f);
-        canvas_.rect({next.x + 6.0f * u, next.bottom(), next.w - 12.0f * u, 6.0f * u}, gfx::rgba(0.471f, 0.063f, 0.063f, 0.22f));
+        tip::shadowUnder(canvas_, next, u, 3.0f * u, 0.8f);
         roundBox(canvas_, next, 3.0f * u, mix(gfx::rgba(0.702f, 0.157f, 0.165f), gfx::rgba(0.788f, 0.192f, 0.192f), t),
               mix(gfx::rgba(0.455f, 0.078f, 0.082f), gfx::rgba(0.525f, 0.098f, 0.098f), t));
         canvas_.rect({next.x + 3.0f * u, next.y, next.w - 6.0f * u, edge}, gfx::rgba(1.0f, 0.824f, 0.745f, 0.28f));
