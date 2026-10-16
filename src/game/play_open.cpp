@@ -282,6 +282,13 @@ bool Play::open(const std::string& assetDir, const std::string& world,
                    hero.stats.minimumDamage, hero.stats.maximumDamage, hero.maxHealth);
     }
 
+    if (arena_.spendEven && arena_.breed.empty() && realm_.hero().pointsInHand > 0) {
+        const int third = realm_.hero().pointsInHand / 3;
+        const bool wizard = realm_.hero().kin == sim::Kin::DarkWizard;
+        local_.spend(wizard ? 0 : third, third, realm_.hero().pointsInHand - 2 * third,
+                     wizard ? third : 0);
+        core::logf("arena: the hero's %d points split three ways", 3 * third);
+    }
     // Without --arena too: a plain run taught one skill to try by hand, on the right button.
     if (arena_.learn != 0 && local_.learn(arena_.learn)) {
         core::logf("arena: the hero is taught skill %d", arena_.learn);

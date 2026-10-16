@@ -496,10 +496,11 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     }
     const bool keysHeld = typing || menuHeld || chatTyping;
 
-    if (!keysHeld && window.pressed(gfx::Window::Key::Inventory)) {
+    if (!keysHeld && (window.pressed(gfx::Window::Key::Inventory) || scriptBag_)) {
         inventoryOpen_ = !inventoryOpen_;
         click();
     }
+    scriptBag_ = false;
     if (!keysHeld && window.pressed(gfx::Window::Key::Character)) {
         characterOpen_ = !characterOpen_;
         click();

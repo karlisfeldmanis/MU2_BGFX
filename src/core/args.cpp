@@ -215,6 +215,8 @@ void printUsage() {
         "  --arena-count N           how many of them (default 1)\n"
         "  --quest-progress Q:N,N   quest Q under way with these step counts (Ready if all met)\n"
         "  --arena-learn N           the hero is taught skill N and the arena fights with it\n"
+        "  --spend-even              a played hero's points split over strength, agility and\n"
+        "                            vitality (energy for a wizard's third), so he wears his gear\n"
         "  --teach N,N,...           the hero is taught these skills, bound to the bar as learned\n"
         "  --arena-undying           a blow that would fell the hero fills his health, arena or not\n"
         "  --wing-demo               every kill in Icarus leaves his class's first wings (a demo)\n"
@@ -406,6 +408,8 @@ Args parseArgs(int argc, char** argv) {
             }
         } else if (!std::strcmp(s, "--arena-learn")) {
             if (const char* v = next(s)) a.arenaLearn = std::atoi(v);
+        } else if (!std::strcmp(s, "--spend-even")) {
+            a.spendEven = true;
         } else if (!std::strcmp(s, "--teach")) {
             if (const char* v = next(s)) {
                 for (const char* p = v; *p != '\0';) {

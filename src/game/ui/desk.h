@@ -84,6 +84,7 @@ public:
         else if (text == "map") scriptMap_ = true;  // Tab held, the whole map: latched
         else if (text == "journal") scriptJournal_ = true;  // L, the quest journal
         else if (text == "guild") scriptGuild_ = true;      // G, the guild window
+        else if (text == "bag") scriptBag_ = true;          // I, the bag
         else scriptTyped_ += text;
     }
     // Whether a box has the keyboard, which the window is told so Escape cancels the box
@@ -278,6 +279,7 @@ private:
     Herald herald_;
     int journal_ = -1;  // the quest the journal (L) is reading, away from its giver, or -1
     bool scriptJournal_ = false;
+    bool scriptBag_ = false;
     bool scriptGuild_ = false;  // a script's G for the next update (--ui-type FRAME:guild)  // a script's L for the next update (--ui-type FRAME:journal)
     // The HUD's quest button, pressed last frame: the journal opens or shuts on this one.
     bool questButton_ = false;

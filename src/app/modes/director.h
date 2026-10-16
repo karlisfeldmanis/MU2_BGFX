@@ -17,6 +17,7 @@
 //   2.2  click | rclick                     the left or right button, pressed and let go
 //   2.2  hold 1.5 | rhold 1.5               ...or held down for that long
 //   3.0  skill q | key 1 | type enter       a skill key (q w e r t), a potion key, typing
+//                                           (type bag, journal, guild: those windows' keys)
 //   3.0  hold-skill q 1.2                   a skill key held down for that long
 //   0.2  run 1 -1                           run on along tile direction (1,-1): the pointer kept
 //                                           five tiles ahead of him, clicking as a player does

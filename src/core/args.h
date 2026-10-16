@@ -239,6 +239,7 @@ struct Args {
     int arenaCount = 1;
     int arenaGap = 0;  // `--arena-gap N`: the breed N tiles east, rooted (Play::Arena::gap)
     int arenaLearn = 0;  // `--arena-learn N`: the arena's hero is taught skill N
+    bool spendEven = false;  // `--spend-even`: a played hero's points split three ways
     std::vector<int> teach;  // `--teach N,N,...`: taught at the start, the bar filled from them
     bool arenaUndying = false;  // `--arena-undying`: the arena's hero is never felled
     bool wingDemo = false;      // `--wing-demo`: every kill in Icarus leaves the first wings

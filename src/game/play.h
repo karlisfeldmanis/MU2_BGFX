@@ -108,6 +108,9 @@ public:
         // `--teach`: more skills taught at the start, for a recording; unlike `learn` the hand
         // is left alone, and the bar binds them as it binds any skill learned.
         std::vector<int32_t> teach;
+        // `--spend-even`: outside an arena too, his points split over strength, agility and
+        // vitality, a wizard's strength share into energy -- so a recording can wear what it is paid.
+        bool spendEven = false;
         // `--arena-undying`: the hero is never felled, so a long fight can be watched.
         bool undying = false;
         // `--unseen`: no monster notices him (sim::Realm::unseen).
