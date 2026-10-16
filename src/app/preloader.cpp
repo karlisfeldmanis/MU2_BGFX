@@ -1,6 +1,9 @@
 #include "app/preloader.h"
+#include "app/loading_logo.h"
 
 #include <bgfx/bgfx.h>
+#include <bimg/decode.h>
+#include <bx/allocator.h>
 #include <bx/math.h>
 #include <bx/timer.h>
 
@@ -225,6 +228,24 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
         dot = bgfx::createTexture2D(kSide, kSide, false, 1, bgfx::TextureFormat::RGBA8,
                                     BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP, pixels);
     }
+    // The MU Classic logo over the letter, flat: the site's SVG as a white mask built into the
+    // game (tools/loading_logo.py), tinted here (the user, 2026-10-16: 'add muclassic logo svg
+    // flat version above the love letter text on loading screen').
+    bgfx::TextureHandle logo = BGFX_INVALID_HANDLE;
+    float logoAspect = 1.0f;
+    if (!look.stages) {
+        static bx::DefaultAllocator allocator;
+        if (bimg::ImageContainer* image = bimg::imageParse(&allocator, kLoadingLogo,
+                                                           uint32_t(sizeof kLoadingLogo),
+                                                           bimg::TextureFormat::RGBA8)) {
+            logo = bgfx::createTexture2D(uint16_t(image->m_width), uint16_t(image->m_height),
+                                         false, 1, bgfx::TextureFormat::RGBA8,
+                                         BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP,
+                                         bgfx::copy(image->m_data, image->m_size));
+            logoAspect = float(image->m_height) / float(std::max(1u, image->m_width));
+            bimg::imageFree(image);
+        }
+    }
     // A comet arc chasing round: its head is the brightest and largest dot, at a continuous
     // angle, so it moves by fractions of a dot a frame rather than stepping between them.
     // MU's marker gold.
@@ -255,6 +276,16 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
         const float unit = float(h) / 1080.0f;
         const float cx = float(w) * 0.5f, cy = float(h) * 0.5f;
         const float radius = 30.0f * unit;
+        // The letter: small, centred, in a faint parchment grey, laid up from the foot.
+        // Wrapped again only when the window's width changes. Not the studio's.
+        const float letterScale = 1.65f * unit;
+        if (ctx.curtain.ready() && w != letterWidth) {
+            letterWidth = w;
+            letterLines = wrap(ctx.curtain, letterScale,
+                               std::min(float(w) - 64.0f * unit, 780.0f * unit), kLetter);
+        }
+        const float leading = gfx::Overlay::lineHeight(letterScale) * 1.55f;
+        const float letterTop = float(h) - 40.0f * unit - leading * float(letterLines.size());
         if (alpha > 0.0f && bgfx::isValid(dot)) {
             // Screen space through the effects pass: an orthographic projection in pixels
             // with y running down, and a view that is the identity, which leaves its
@@ -314,6 +345,25 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
                 0.16f, true);
             put(cx + std::cos(head) * radius, cy + std::sin(head) * radius, 22.0f * unit,
                 0.05f, true);
+            // The logo, its foot a little over the letter's first line, in the logo's own cream.
+            if (bgfx::isValid(logo)) {
+                const float half = 100.0f * unit;
+                gfx::Sprite s;
+                s.position[0] = cx;
+                s.position[1] = letterTop - 28.0f * unit - half * logoAspect;
+                s.halfWidth = half;
+                s.halfHeight = half * logoAspect;
+                s.sheet = logo;
+                // The screen's y runs down and the sheet's v up: drawn as it is, it stood on its head.
+                s.v0 = 1.0f;
+                s.v1 = 0.0f;
+                s.blend = gfx::Blend::Alpha;
+                s.colour[0] = 0xF3 / 255.0f;
+                s.colour[1] = 0xE8 / 255.0f;
+                s.colour[2] = 0xD4 / 255.0f;
+                s.colour[3] = 0.8f * alpha;
+                ctx.renderer.effects().add(s);
+            }
             const float at[3] = {0.0f, 0.0f, 1.0f};
             ctx.renderer.effects().draw(gfx::ViewHud, eye, screen, at);
         }
@@ -348,16 +398,7 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
                 ctx.curtain.text(cx - stageWide * 0.5f, cy + radius + 28.0f * unit, stageScale,
                                  parchment, what);
             }
-            // The letter: small, centred, in a faint parchment grey, laid up from the foot.
-            // Wrapped again only when the window's width changes. Not the studio's.
-            const float letterScale = 1.65f * unit;
-            if (w != letterWidth) {
-                letterWidth = w;
-                letterLines = wrap(ctx.curtain, letterScale,
-                                   std::min(float(w) - 64.0f * unit, 780.0f * unit), kLetter);
-            }
-            const float leading = gfx::Overlay::lineHeight(letterScale) * 1.55f;
-            float y = float(h) - 40.0f * unit - leading * float(letterLines.size());
+            float y = letterTop;
             for (const std::string& line : (look.stages ? std::vector<std::string>() : letterLines)) {
                 const float wide = ctx.curtain.measure(letterScale, line);
                 ctx.curtain.text(cx - wide * 0.5f, y, letterScale, parchment, line);
@@ -477,6 +518,7 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
     if (!keepAmbient) ambient().stop();
     ctx.window.holdVsync(false);
     if (bgfx::isValid(dot)) bgfx::destroy(dot);
+    if (bgfx::isValid(logo)) bgfx::destroy(logo);
     core::logf("preloader: the world loaded behind the spinner in %.2f s; %d spinner frames "
                "at %d Hz, mean %.1f ms, worst gap %.1f ms, frame %.1f ms mean %.1f worst",
                since(spun), spins, ctx.window.refreshHz(),
