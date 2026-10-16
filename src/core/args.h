@@ -58,6 +58,10 @@ struct Args {
     // The What's New edition this player has seen (game/ui/whats_new.h, kWhatsNewEdition): kept in
     // options.txt, and the slides come up on entering the world while it is older.
     int whatsNew = 0;
+    // A Graphics row was changed by hand on the Options page, kept in options.txt as `hand 1`:
+    // from then on the game neither fits the world to a big screen at the start (fitGraphics) nor
+    // eases it when the GPU falls behind (easeGraphics), so it never fights what the player chose.
+    bool graphicsByHand = false;
     int volume = 100;  // percent: the Options page's Volume row
     // How much of the backbuffer the WORLD is drawn at, 1 for all of it. The present pass
     // magnifies it; the hover ring and the HUD are drawn at the screen's own size whatever
@@ -493,5 +497,20 @@ std::string userFolder();
 // writes back. `key value` a line; a key it does not know is passed by.
 std::string optionsPath();
 void saveOptions(const Args& args);
+
+// The world on a big screen, at the start of a run whose Graphics rows nobody set by hand: drawn
+// at a scale that holds it to about 1440p's pixels, and MSAA no more than 2x. A GTX 1070 and an
+// RX 480, 2026-10-16, opened fullscreen at native 4K on High -- 4x MSAA, 4096 shadows -- and took
+// 26-65 ms a frame on the GPU; the launcher's preset sees the card and never the screen. 4K draws
+// at 67%, 3200x1800 at 85%, 3440x1440 at 90%, 1440p and under as it was. True when something
+// changed.
+bool fitGraphics(Args& args, int backbufferWidth, int backbufferHeight);
+
+// One step lighter, onto the run's own rows, for a GPU that stays behind the frame
+// (app/application.cpp): the lightest preset every row is within, and then each row the lighter
+// of what it has and what the preset below has -- so a 4K screen fitted to 67% keeps its scale
+// and loses shadows and reflections first. Textures are left: they wait on a restart. The preset's
+// name, or null at Lowest.
+const char* easeGraphics(Args& args);
 
 }  // namespace mu::core

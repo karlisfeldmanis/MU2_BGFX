@@ -122,6 +122,11 @@ bool Application::boot() {
     desc.offscreen = args_.offscreen;
     args_.rendererLoaded = args_.renderer;
     if (!window_.open(desc)) return false;
+    // A player's first look at a big screen is not a 4K frame his card cannot draw.
+    if (args_.remember && args_.frames == 0 && !args_.graphicsByHand &&
+        core::fitGraphics(args_, window_.width(), window_.height())) {
+        core::saveOptions(args_);
+    }
     if (!args_.rawFrames.empty() && !gfx::offscreenRaw(args_.rawFrames.c_str())) return false;
     // The build names the SPIR-V; a run that came up on Direct3D 11 reads the DXBC beside it.
     paths_.shaders = gfx::shadersFor(paths_.shaders);
@@ -391,6 +396,14 @@ int Application::run(int argc, char** argv) {
     const double toMs = 1000.0 / double(bx::getHPFrequency());
     double sinceLine = 0.0;
     double sinceSheetCheck = 0.0;
+    // The GPU's watch, for a player's run whose Graphics rows nobody set by hand: eight seconds
+    // in a row below 40 frames a second with the GPU over 25 ms of each frame, and the rows go one
+    // preset lighter (core::easeGraphics), as a lost device does for the next start
+    // (gfx/callback.cpp). Garisons' GTX 1070 drew High at 4K at 15 fps, 2026-10-16. A slow frame
+    // the GPU is not behind -- a load, a dragged window -- is not the settings' to answer.
+    double gpuSum = 0.0, wallSum = 0.0;
+    int gpuFrames = 0, behind = 0;
+    bool lightest = false;
 
     bool quitEarly = mode->quitEarly();
     bool handoffFailed = false;
@@ -503,6 +516,12 @@ int Application::run(int argc, char** argv) {
         if (!shotThisFrame) stats.sample(cpuMs);
         sweep.after(cpuMs);
 
+        if (const bgfx::Stats* s = bgfx::getStats(); s->gpuTimerFreq > 0) {
+            gpuSum += double(s->gpuTimeEnd - s->gpuTimeBegin) * 1000.0 / double(s->gpuTimerFreq);
+            wallSum += frameMs;
+            ++gpuFrames;
+        }
+
         // Wall time, so the line stays a line a second when the run is paced.
         sinceLine += frameMs;
         sinceSheetCheck += frameMs;
@@ -527,6 +546,27 @@ int Application::run(int argc, char** argv) {
             }
             mode->report(ctx);
             sinceLine = 0.0;
+
+            if (args_.remember && args_.frames == 0 && !args_.graphicsByHand && !lightest &&
+                gpuFrames > 0) {
+                constexpr double kBehindMs = 25.0;
+                constexpr int kSeconds = 8;
+                const bool slow = gpuSum / gpuFrames > kBehindMs && wallSum / gpuFrames > kBehindMs;
+                behind = slow ? behind + 1 : 0;
+                if (behind >= kSeconds) {
+                    behind = 0;
+                    if (const char* to = core::easeGraphics(args_)) {
+                        core::logf("graphics: the GPU took over %.0f ms a frame for %d s; eased to %s",
+                                   kBehindMs, kSeconds, to);
+                        core::saveOptions(args_);
+                        mode->graphicsEased(ctx, to);
+                    } else {
+                        lightest = true;
+                    }
+                }
+            }
+            gpuSum = wallSum = 0.0;
+            gpuFrames = 0;
         }
 
         // A mode that is done hands the run on: the screen to the world, the world back to the

@@ -52,6 +52,7 @@ public:
     game::World& world() { return world_; }
     void report(Context& ctx) override;
     void held() override { world_.played().keepLine(); }
+    void graphicsEased(Context& ctx, const char* to) override;
     game::Sound* heard() override { return &world_.played().sound(); }
     void shutdown(Context& ctx) override;
 

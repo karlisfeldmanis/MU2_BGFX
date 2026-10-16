@@ -249,6 +249,8 @@ public:
     // What Options edits: filled by PlayMode from the window and the run, and applied back when
     // `settingsChanged` says so.
     Menu::Settings& settings() { return menu_.settings(); }
+    // A line of the game's own in the chat (Chat::notice): the Graphics eased, say.
+    void notice(const std::string& text) { chat_.notice(text); }
     bool settingsChanged() {
         const bool changed = settingsChanged_;
         settingsChanged_ = false;

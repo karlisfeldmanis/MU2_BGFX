@@ -42,6 +42,7 @@ public:
     void frame(Context& ctx, const Frame& at) override;
     const gfx::Camera& camera() const override { return camera_; }
     void report(Context& ctx) override;
+    void graphicsEased(Context& ctx, const char* to) override;
     void shutdown(Context& ctx) override;
 
 private:

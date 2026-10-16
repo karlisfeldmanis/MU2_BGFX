@@ -591,6 +591,10 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
     }
 }
 
+void LobbyMode::graphicsEased(Context& ctx, const char* to) {
+    fillSettings(ctx.window, ctx.args, &menu_.settings());
+}
+
 void LobbyMode::report(Context& ctx) {
     core::logf("  lobby: %zu character(s), picked %d, %s%s; %llu screen rebuilds",
                roster_.size(), pedestals_.picked(), lobby_.creating() ? "creating" : "choosing",

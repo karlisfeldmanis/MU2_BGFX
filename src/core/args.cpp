@@ -52,6 +52,7 @@ void readOptions(Args& a) {
         else if (!std::strcmp(key, "textures") && value >= 0 && value <= 1) a.textures = value;
         else if (!std::strcmp(key, "renderer") && value >= 0 && value <= 2) a.renderer = value;
         else if (!std::strcmp(key, "whatsnew") && value >= 0) a.whatsNew = value;
+        else if (!std::strcmp(key, "hand")) a.graphicsByHand = value != 0;
     }
     std::fclose(file);
     logf("options: %s from %s, %dx%d", a.fullscreen ? "fullscreen" : "windowed",
@@ -85,8 +86,53 @@ void saveOptions(const Args& a) {
                        "grass %d\ncap %d\nlights %d\ntextures %d\nrenderer %d\n",
                  int(a.scale * 100.0f + 0.5f), a.msaa, a.shadows, a.ssao ? 1 : 0, a.bloom ? 1 : 0,
                  a.reflections ? 1 : 0, a.grass, a.cap, a.lights ? 1 : 0, a.textures, a.renderer);
-    std::fprintf(file, "whatsnew %d\n", a.whatsNew);
+    std::fprintf(file, "whatsnew %d\nhand %d\n", a.whatsNew, a.graphicsByHand ? 1 : 0);
     std::fclose(file);
+}
+
+bool fitGraphics(Args& a, int width, int height) {
+    // 1440p and a little over, so 2560x1600 and a 1440p window's own rounding are left alone.
+    constexpr double kMost = 2560.0 * 1440.0 * 1.15;
+    const double pixels = double(width) * double(height);
+    const int scale = int(a.scale * 100.0f + 0.5f);
+    if (pixels <= 0.0 || pixels * scale * scale / 1e4 <= kMost) return false;
+    // The Scale row's own steps (game/ui/menu.cpp stepsOf), so the page shows one it has.
+    static constexpr int kSteps[] = {100, 90, 85, 75, 67, 50};
+    int fit = 50;
+    for (int step : kSteps)
+        if (step <= scale && pixels * step * step / 1e4 <= kMost) {
+            fit = step;
+            break;
+        }
+    a.scale = float(fit) / 100.0f;
+    a.msaa = std::min(a.msaa, 2);
+    logf("graphics: a %dx%d screen, so the world is drawn at %d%% (%.0fx%.0f) and %dx MSAA", width,
+         height, fit, width * fit / 100.0, height * fit / 100.0, a.msaa);
+    return true;
+}
+
+const char* easeGraphics(Args& a) {
+    const int scale = int(a.scale * 100.0f + 0.5f);
+    int at = 0;
+    while (at < kGraphicsPresetCount - 1) {
+        const GraphicsPreset& p = kGraphicsPresets[at];
+        if (scale <= p.scale && a.msaa <= p.msaa && a.shadows <= p.shadows && a.ssao <= p.ssao &&
+            a.bloom <= p.bloom && a.reflections <= p.reflections && a.grass <= p.grass &&
+            a.lights <= p.lights)
+            break;
+        ++at;
+    }
+    if (at == 0) return nullptr;
+    const GraphicsPreset& to = kGraphicsPresets[at - 1];
+    a.scale = float(std::min(scale, to.scale)) / 100.0f;
+    a.msaa = std::min(a.msaa, to.msaa);
+    a.shadows = std::min(a.shadows, to.shadows);
+    a.ssao = a.ssao && to.ssao;
+    a.bloom = a.bloom && to.bloom;
+    a.reflections = a.reflections && to.reflections;
+    a.grass = std::min(a.grass, to.grass);
+    a.lights = a.lights && to.lights;
+    return to.name;
 }
 
 void printUsage() {

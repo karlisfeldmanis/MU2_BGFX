@@ -68,6 +68,11 @@ public:
     // The once-a-second lines, under the Application's own frame-rate line. Nothing by default.
     virtual void report(Context& ctx) {}
 
+    // The Application eased the Graphics rows in the run's arguments (core::easeGraphics) to the
+    // preset `to`: the Options page is filled again from them, and the player told where there
+    // is somewhere to tell him.
+    virtual void graphicsEased(Context& ctx, const char* to) {}
+
     // The mix this mode plays into, for --tape to pull. Null for a mode with none of its own.
     virtual game::Sound* heard() { return nullptr; }
 

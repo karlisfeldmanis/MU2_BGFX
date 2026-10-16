@@ -1945,6 +1945,12 @@ void PlayMode::writeProbes(Context& ctx, const Frame& at) {
     }
 }
 
+void PlayMode::graphicsEased(Context& ctx, const char* to) {
+    fillSettings(ctx.window, ctx.args, &desk_.settings());
+    desk_.notice(std::string("Graphics lowered to ") + to +
+                 " to keep the game smooth. Options > Graphics changes it back.");
+}
+
 void PlayMode::report(Context& ctx) {
     // Foundation 7: the drawn and the culled go in the log, for the camera and for
     // the sun separately, or a culling change cannot be seen to have happened. The

@@ -74,6 +74,13 @@ inline void applySettings(gfx::Window& window, const game::Menu::Settings& set,
         if (ww != want.first || wh != want.second) window.setWindowSize(want.first, want.second);
     }
     if (window.vsync() != set.vsync) window.setVsync(set.vsync);
+    // A Graphics row the player moved is his from now on (core::Args::graphicsByHand).
+    if (set.scale != int(args.scale * 100.0f + 0.5f) || set.msaa != args.msaa ||
+        set.shadows != args.shadows || set.ssao != args.ssao || set.bloom != args.bloom ||
+        set.reflections != args.reflections || set.grass != args.grass ||
+        set.lights != args.lights || set.textures != args.textures) {
+        args.graphicsByHand = true;
+    }
     args.fullscreen = set.fullscreen;
     args.vsync = set.vsync;
     args.fps = set.fps;
