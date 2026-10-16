@@ -405,8 +405,9 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
                 y += leading;
             }
             // The build, small in the bottom left corner (the user, 2026-10-09: "show build
-            // version on loading screen on small font bottom left side").
-            const float versionScale = 1.2f * unit;
+            // version on loading screen on small font bottom left side", a step larger on
+            // 2026-10-16: "client version text size has to be little bit bigger").
+            const float versionScale = 1.45f * unit;
             ctx.curtain.text(16.0f * unit, float(h) - 16.0f * unit -
                                                gfx::Overlay::lineHeight(versionScale),
                              versionScale, parchment, MU2_BUILD_VERSION);
