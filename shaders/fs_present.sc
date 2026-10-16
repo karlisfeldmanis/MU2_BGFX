@@ -176,7 +176,23 @@ void main()
 	// tone: the shade multiplied towards one tint and the light towards another, by how bright
 	// the pixel is. Cool shade and warm light is the look Diablo IV is built on; invention.
 	float luma = dot(c, vec3(0.2126, 0.7152, 0.0722));
-	c = max(vec3_splat(luma) + (c - luma) * u_grade.y, vec3_splat(0.0));
+	// The green pull (u_tintHigh.w): olive and yellow-green -- red near green, blue under
+	// both -- turned a little towards green, red down and blue up, luminance kept. Orange,
+	// gold and skin have red well over green and are left alone. Noria's turf is olive and
+	// a gold sun on it read as one mustard hue (the user, 2026-10-16: "very green").
+	float olive = c.g > c.b ? saturate(1.0 - abs(c.r / max(c.g, 1e-4) - 0.95) / 0.35) : 0.0;
+	float pull = u_tintHigh.w * olive;
+	c = vec3(c.r - pull * 0.25 * (c.r - c.b), c.g, c.b + pull * 0.1 * (c.g - c.b));
+	c *= luma / max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 1e-4);
+	// And quieted: the olive is the loudest colour in the frame, bare turf at full strength,
+	// so it gives up a third of its colour at a full pull and the accents read over it.
+	c = mix(c, vec3_splat(luma), pull * 0.35);
+	// Vibrance (u_tintLow.w): the saturation raised by how little colour a pixel has, so the
+	// dull ground and the shade gain and an already strong colour barely moves.
+	float hiC = max(c.r, max(c.g, c.b));
+	float chroma = (hiC - min(c.r, min(c.g, c.b))) / max(hiC, 1e-4);
+	float amount = u_grade.y * (1.0 + u_tintLow.w * (1.0 - chroma));
+	c = max(vec3_splat(luma) + (c - luma) * amount, vec3_splat(0.0));
 	vec3 tint = mix(u_tintLow.rgb, u_tintHigh.rgb, smoothstep(0.02, 0.5, luma));
 	c = saturate(c * mix(vec3_splat(1.0), tint, u_grade.z));
 	// Taken down to black for a cut the eye should not see: a revive's jump to the gate.

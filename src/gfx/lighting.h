@@ -166,6 +166,11 @@ struct Lighting {
     float split = 0.0f;
     float tintLow[3] = {0.92f, 0.98f, 1.08f};
     float tintHigh[3] = {1.08f, 1.0f, 0.9f};
+    // `vibrance` raises the saturation of dull colours more than strong ones (0 is off);
+    // `green_pull` 0..1 turns olive and yellow-green towards green. Both after the tone curve,
+    // in fs_present; invention, for Noria's olive turf (2026-10-16).
+    float vibrance = 0.0f;
+    float greenPull = 0.0f;
 
     float ssaoRadius = 0.5f;
     float ssaoStrength = 1.0f;
