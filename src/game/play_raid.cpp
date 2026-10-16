@@ -442,7 +442,11 @@ int Play::horseAction(const Drawn& rider, int mount) const {
     // Breath's above all (GOBoid.cpp:559-565). Uniria's horse has no 6 and keeps its 3.
     const FigureBody* look = rider.figure.body();
     const int clip = rider.figure.clip();
-    const bool galloping = look && clip >= 0 && (clip == look->rideRunClip || clip == look->rideRunArmedClip);
+    // Over Tarkan and Icarus he sits still on the flying dragon (Play::follow), so its flying on is
+    // his going, not his clip.
+    const sim::Body* body = realm_.find(rider.id);
+    const bool galloping = (look && clip >= 0 && (clip == look->rideRunClip || clip == look->rideRunArmedClip)) ||
+                           (flying_ && mount == 3 && body && body->walking);
     const sim::SkillRow* swung = rider.swingSkill != 0 ? sim::skillNumbered(rider.swingSkill) : nullptr;
     const bool riderSkill = mount == 3 && rider.swinging > 0.0f && swung != nullptr && !swung->wizardry &&
                             !swung->onSelf() && swung->arrows == 0;

@@ -141,8 +141,9 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
     }
     // The dragon's attack is its 4, Uniria's 3 (GOBoid.cpp:566-578); 0 and 2 are both's.
     if (mounted_ == 3 && action == 3) action = 4;
-    // Uniria's swing runs on its own clock; everything else is held to his (below).
-    const bool ownClock = action == 3;
+    // Uniria's swing runs on its own clock, and the dragon's flight: he sits still on it then, and
+    // its wingbeat is its own (MU runs the two on two clocks). Everything else is held to his.
+    const bool ownClock = action == 3 || (mounted_ == 3 && flying_);
     // He sits 30 over the ground on the dragon (Play's kDinorantLift) and it stands on it.
     float ground[3] = {hero.position()[0], hero.position()[1], hero.position()[2]};
     if (mounted_ == 3) {

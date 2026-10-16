@@ -1686,8 +1686,16 @@ void Play::follow(float seconds) {
                                                                   : (female ? 240 : 239);
             posed = look->library->find(action);
         }
+        // On the Dinorant over Tarkan or Icarus the dragon flies (game/pets.h) and he sits it as he
+        // sits it standing: MuMain sets no run there at all, PLAYER_FLY_RIDE commented out "because
+        // the animation jumps" (ZzzCharacter.cpp:583-593), so his stop ride stays on while it flies
+        // on. The run ride's bounce in the saddle over a beating wing was the user's "dyno was
+        // flying but character was bouncing" (2026-10-16).
+        const sim::Satchel* worn =
+            body->id == realm_.hero().id ? &realm_.satchel() : realm_.satchelOf(body->id);
+        const bool aloft = riding && flying_ && worn && petNumber((*worn)[sim::kMount]) == 3;
         if (walking) {
-            clip = walkHere;
+            clip = aloft ? rideIdle : walkHere;
         } else if (riding) {
             clip = rideIdle;
         } else if (posed >= 0) {
