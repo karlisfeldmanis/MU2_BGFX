@@ -35,6 +35,13 @@ inline constexpr GraphicsPreset kGraphicsPresets[] = {
 };
 inline constexpr int kGraphicsPresetCount = 4;
 inline constexpr int kPresetLowest = 0, kPresetLow = 1, kPresetMedium = 2, kPresetHigh = 3;
+// What a low-end PC's first run opens on, where the launcher would have picked Lowest or Low: the
+// user's own Custom row, 2026-10-16, "use this settings for low-end first time launches for
+// players & direct3d" -- the world at its whole size, no MSAA, the small shadow map, the effects
+// off, the grass and the lamps kept, held to kLowEndCap frames a second on Direct3D 11. Not on the
+// Graphics page: there it reads as Custom.
+inline constexpr GraphicsPreset kLowEndFirstRun = {"Low-end", 100, 1, 0, false, false, false, 2, true, 1};
+inline constexpr int kLowEndCap = 60;
 
 struct Args {
     int width = 1920;

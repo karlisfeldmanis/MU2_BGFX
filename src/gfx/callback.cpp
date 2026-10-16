@@ -26,8 +26,11 @@ namespace {
 // 55-63 ms a frame in Lorencia's rain, then one frame ran 3 s and Windows reset the driver
 // (TDR). options.txt is rewritten one preset lighter than the one its scale sits in -- the
 // Graphics page's keys only, every other line kept -- so a card is not asked for that frame
-// again, and a second loss steps once more. Returns the preset's name, or null where there is
-// no options.txt (a run that does not --remember).
+// again, and a second loss steps once more. Each key keeps the lighter of what it had and what
+// the preset has (every key is heavier the higher it is), so the launcher's low-end set, whole
+// scale but its effects off (core::kLowEndFirstRun), steps to 85% and not to Medium's MSAA,
+// SSAO and bloom. Returns the preset's name, or null where there is no options.txt (a run that
+// does not --remember).
 const char* lightenOptions() {
     const std::string path = core::optionsPath();
     FILE* file = std::fopen(path.c_str(), "r");
@@ -56,7 +59,7 @@ const char* lightenOptions() {
     for (const auto& [name, set] : graphics) {
         bool found = false;
         for (auto& [k, v] : lines)
-            if (k == name) v = set, found = true;
+            if (k == name) v = std::min(v, set), found = true;
         if (!found) lines.emplace_back(name, set);
     }
 

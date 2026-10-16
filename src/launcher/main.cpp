@@ -88,7 +88,7 @@ int check(Place place, fs::path dir, const std::string& only, bool start) {
     step("gpu", true, gpu.known ? seen : "no probe on this system");
     const bool have = fs::exists(userFolder() / "options.txt");
     const std::string graphics =
-        tuned ? "first run set to " + std::string(mu::core::kGraphicsPresets[gpu.preset].name)
+        tuned ? "first run set to " + std::string(firstRunSet(gpu).name)
               : gpu.preset < 0 ? std::string("nothing to set")
               : have ? std::string("kept, options.txt is there")
                      : std::string("options.txt could not be written");

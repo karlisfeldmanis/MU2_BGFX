@@ -76,6 +76,12 @@ inline int rendererFor(const Gpu& gpu) {
     return !gpu.vulkan || gpu.preset <= core::kPresetLow ? 2 : 0;
 }
 
+// The set the first run writes: the low-end one for a machine presetFor calls Lowest or Low
+// (core::kLowEndFirstRun), the preset itself for the rest.
+inline const core::GraphicsPreset& firstRunSet(const Gpu& gpu) {
+    return gpu.preset <= core::kPresetLow ? core::kLowEndFirstRun : core::kGraphicsPresets[gpu.preset];
+}
+
 // Where this card's driver is downloaded, or "" when the vendor is not one that can be named.
 inline std::string driverUrl(const Gpu& gpu) {
     if (gpu.vendorId == 0x8086) return "https://www.intel.com/content/www/us/en/download-center/home.html";

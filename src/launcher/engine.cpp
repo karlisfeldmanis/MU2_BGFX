@@ -350,8 +350,9 @@ void saveSettings(const Settings& settings) {
 }
 
 // The first run's graphics, in the keys the game's readOptions knows (core/args.cpp): the preset
-// this machine can draw -- Lowest, Low, Medium or High -- and nothing else, so the run's own switches for
-// the display, the frame cap and the volume stay as they are. The file is the player's from the
+// this machine can draw -- Medium or High, or the low-end set with its 60 fps cap where it would be
+// Lowest or Low (firstRunSet) -- and nothing else, so the run's own switches for the display and
+// the volume stay as they are. The file is the player's from the
 // moment it exists: the game writes it back whole whenever he changes a row in Options, and a
 // launcher that overwrote it on every start would lose his choices.
 bool firstRunGraphics(const Gpu& gpu) {
@@ -359,13 +360,15 @@ bool firstRunGraphics(const Gpu& gpu) {
     const fs::path options = userFolder() / "options.txt";
     std::error_code error;
     if (fs::exists(options, error)) return false;
-    const core::GraphicsPreset& set = core::kGraphicsPresets[gpu.preset];
-    const std::string keys = "scale " + std::to_string(set.scale) + "\nmsaa " + std::to_string(set.msaa) +
+    const core::GraphicsPreset& set = firstRunSet(gpu);
+    const bool lowEnd = &set == &core::kLowEndFirstRun;
+    const std::string keys ="scale " + std::to_string(set.scale) + "\nmsaa " + std::to_string(set.msaa) +
                              "\nshadows " + std::to_string(set.shadows) + "\nssao " + (set.ssao ? "1" : "0") +
                              "\nbloom " + (set.bloom ? "1" : "0") + "\nreflections " +
                              (set.reflections ? "1" : "0") + "\ngrass " + std::to_string(set.grass) +
                              "\nlights " + (set.lights ? "1" : "0") + "\ntextures " +
-                             std::to_string(set.textures) + "\nrenderer " + std::to_string(gpu.renderer) + "\n";
+                             std::to_string(set.textures) + "\nrenderer " + std::to_string(gpu.renderer) + "\n" +
+                             (lowEnd ? "cap " + std::to_string(core::kLowEndCap) + "\n" : "");
     if (!writeFile(options, keys)) return false;
     core::logf("launcher: graphics: first run at %s on %s for %s", set.name,
                gpu.renderer == 2 ? "Direct3D 11" : "Vulkan", gpu.name.c_str());

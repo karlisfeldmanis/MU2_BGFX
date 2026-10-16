@@ -823,7 +823,7 @@ void Launcher::drawHome() {
             words(textX + 16.0f, rowY + 33.0f, "Up to date", hex(kQuiet), 15.0f);
             if (tuned_) {
                 words(textX + 16.0f, rowY + 53.0f,
-                      std::string("Graphics set to ") + core::kGraphicsPresets[gpu_.preset].name + " for this PC",
+                      std::string("Graphics set to ") + firstRunSet(gpu_).name + " for this PC",
                       hex(kQuiet), 13.0f);
             }
             if (!starting_) offerUninstall();
