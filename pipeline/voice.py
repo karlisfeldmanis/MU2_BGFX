@@ -137,11 +137,33 @@ VOICES = {
     # His own age is the finish: no pitch, no tremble, a faint stone hall.
     "keeper": dict(ref="keeper_cv_eighties.wav", exaggeration=0.45, cfg_weight=0.3,
                    polish="highpass=f=70,aecho=0.8:0.5:90|180:0.12|0.06," + POLISH),
+    # The Seed Master, Aida's goblin (docs/game/aida-quest.md, "His voice"): E1 of nine auditions
+    # (the user, 2026-10-16: 'E1 is the best'). The Keeper's old man read a little more dramatic,
+    # then made a goblin by WORLD (`world`, pipeline/world_shift.py): a quarter smaller throat, the
+    # pitch a touch lower, a slow wobble. No rasp: it was the noise the user heard in E. A nose
+    # (1.4 kHz up, 320 Hz down) and a faint cave.
+    "seed_master": dict(ref="keeper_cv_eighties.wav", exaggeration=0.6, cfg_weight=0.3,
+                        world=["--pitch", "0.95", "--formant", "1.25", "--jitter", "0.03"],
+                        polish="highpass=f=110,equalizer=f=320:t=q:w=1:g=-3,"
+                               "equalizer=f=1400:t=q:w=1.3:g=5,"
+                               "aecho=0.8:0.5:60|130:0.15|0.08," + POLISH),
 }
+
+# WORLD (pipeline/world_shift.py) needs pyworld, which lives in this other Python, with
+# "setuptools<81": uv pip install -p ~/.cache/mu2-voice-alt/bin/python pyworld "setuptools<81"
+WORLD_PYTHON = pathlib.Path.home() / ".cache" / "mu2-voice-alt" / "bin" / "python"
+
+# A quest's pages read before its row is in quests.cpp: {voice: {page: [paragraph, ...]}}. In
+# ref/ so pipeline/sync.sh leaves it out of the game. A row in quests.cpp wins over it.
+PENDING = REFS / "pending_pages.json"
 
 # Takes read again on another seed, heard wrong by whisper on the voice's own: Sevina's trial's
 # thanks said "with few warriors reorg", the sword's "the god".
-RETAKES = {("sevina_1", "handin"): 23, ("sevina_2", "handin"): 23}
+# The Seed Master's Clearing: seed 7 read "Sit, sit" as "Seh, seh" and dropped the hand-in's
+# opening word. His voice loses a "cl" on any seed or spelling, so "Clear the rows" became "Cut
+# down the rows", and a lone "Quiet." is dropped, so it is "Quiet, quiet." (2026-10-16).
+RETAKES = {("sevina_1", "handin"): 23, ("sevina_2", "handin"): 23,
+           ("seed_master_1", "offer"): 23, ("seed_master_1", "handin"): 23}
 
 # Words the model says wrong, spelled as they are said: the window keeps the written form. MU is
 # one syllable, "moo" (the user, 2026-09-29: "Moo is correct").
@@ -186,6 +208,9 @@ def pages(voice):
                 found.update(read(helped))
         found.update(read(body))
         return found
+    if PENDING.exists():
+        import json
+        return json.loads(PENDING.read_text()).get(voice, {})
     return {}
 
 
@@ -329,6 +354,12 @@ def main():
                                      temperature=0.8)
                 raw = pathlib.Path(scratch) / f"{page}{i}.raw.wav"
                 torchaudio.save(str(raw), wav, model.sr)
+                if "world" in how:
+                    shifted = pathlib.Path(scratch) / f"{page}{i}.world.wav"
+                    subprocess.run([str(WORLD_PYTHON), "-W", "ignore",
+                                    str(ROOT / "pipeline" / "world_shift.py"), str(raw),
+                                    str(shifted), *how["world"]], check=True)
+                    raw = shifted
                 part = pathlib.Path(scratch) / f"{page}{i}.wav"
                 polish = how["polish"]
                 if "sentence_gap" in how:

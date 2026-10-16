@@ -106,7 +106,7 @@ Offer:
 > same paths, and they do not know what they guard. The golems were stone circles. The Witch
 > Queens were the ones who tended them."
 >
-> "Clear the rows from my hall outward. The trees, then the orcs, the riders, the golems. Then
+> "Cut down the rows from my hall outward. The trees, then the orcs, the riders, the golems. Then
 > the queens in the middle of the maze. Then him, in his fire."
 >
 > "Cut it all down and it all grows back by morning. That is what seeds do. But for a night, the
@@ -115,7 +115,7 @@ Offer:
 Underway: "Still growing out there. I can hear the roots."
 
 Hand-in:
-> "Quiet. Do you hear that? That is a wood with nothing wrong in it, for one night."
+> "Quiet, quiet. Do you hear that? That is a wood with nothing wrong in it, for one night."
 >
 > "Take these. I grew them myself. Come back when it all grows back, and it will."
 
@@ -168,5 +168,13 @@ favourite ('E is pretty good but can we make not sot noisy?', then 'E1 is the be
   `equalizer=f=1400:t=q:w=1.3:g=5` (the nose), `aecho=0.8:0.5:60|130:0.15|0.08` (a faint cave),
   and voice.py's POLISH (compressor, 0.4 s pad, loudnorm -16).
 
-Not yet in `pipeline/voice.py`'s VOICES: its finish is one ffmpeg chain, and this one needs the WORLD
-step between the take and the chain. Add a `world` key there when his pages exist in quests.cpp.
+**Voiced 2026-10-16** (the user: 'lets finish goblin voice for quest text and make also noria
+questu givei audio'): `pipeline/voice.py` VOICES `seed_master`, whose `world` key runs the WORLD step
+between the take and the ffmpeg chain. The rows are not in quests.cpp yet, so voice.py reads
+their pages from `content/voice/ref/pending_pages.json` (in ref/, kept out of the game). When
+the rows are written, use these voices: `peia_3` (the hook's offer and underway, Peia's voice),
+`seed_master` as the hook's `receiverVoice` (its hand-in), `seed_master_1` (the Clearing's four
+pages); and the rows' text must match the file's, which then can go. Two lines were reworded
+for his voice, which loses a 'cl' and a lone first word on every seed: 'Clear the rows' is
+'Cut down the rows', and 'Quiet.' is 'Quiet, quiet.'. The Clearing's offer and hand-in are
+seed 23 (RETAKES).

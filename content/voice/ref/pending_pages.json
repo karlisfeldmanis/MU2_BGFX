@@ -1,0 +1,37 @@
+{
+  "about": "Pages of quests not yet in src/sim/quests.cpp, read by pipeline/voice.py (PENDING). From docs/game/aida-quest.md; when the rows are written there, their text must match this and this file's entries can go.",
+  "peia_3": {
+    "offer": [
+      "North-east of here the trees end in a gate no elf walks through. Beyond it is Aida, a wood older than Noria, cut off from the rest of the world for as long as our songs remember.",
+      "Something lives in there that is not a monster. Every spring, seeds come through the gate on the wind, and they are planted. In rows. Monsters do not plant.",
+      "Whoever is doing it has been alone in that wood a very long time. Go through the gate and find them, before the wood finishes what it started."
+    ],
+    "underway": [
+      "The gate is north-east of town, past the last of the trees. Whoever plants the seeds will be where the wood is quietest."
+    ]
+  },
+  "seed_master": {
+    "handin": [
+      "A visitor. A real one, with boots. Hm. The elf sent you? Then my seeds reached her. Good. Fifty years of throwing them over the wall, and somebody finally counted the rows."
+    ]
+  },
+  "seed_master_1": {
+    "offer": [
+      "Sit, sit. Let me tell you what you walked into.",
+      "This wood was a garden once. Mine is the last bed of it. Then a demon came to the old elf roads and made a bargain with Kundun: the wood's seeds for his power. Hell Maine, he calls himself. Every seed he touched grew wrong.",
+      "The trees you passed on your way in were trees. Now they walk and they bite. The orcs came for the sap and stayed for the meat. The riders were the wood's own wardens; they still ride the same paths, and they do not know what they guard. The golems were stone circles. The Witch Queens were the ones who tended them.",
+      "Cut down the rows from my hall outward. The trees, then the orcs, the riders, the golems. Then the queens in the middle of the maze. Then him, in his fire.",
+      "Cut it all down and it all grows back by morning. That is what seeds do. But for a night, the wood will be quiet, and I will plant something better."
+    ],
+    "underway": [
+      "Still growing out there. I can hear the roots."
+    ],
+    "handin": [
+      "Quiet, quiet. Do you hear that? That is a wood with nothing wrong in it, for one night.",
+      "Take these. I grew them myself. Come back when it all grows back, and it will."
+    ],
+    "resting": [
+      "Let the beds rest. By morning they will be full again."
+    ]
+  }
+}
