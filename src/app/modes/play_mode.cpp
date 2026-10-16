@@ -660,6 +660,15 @@ bool PlayMode::open(Context& ctx) {
         const bool held = args.frames == 0;
         desk_.holdEscape(held);
         ctx.window.holdEscape(held);
+        // What's New, the first time a player enters the world after an update: only a played
+        // run (mu play, the launcher) keeps options.txt, so no review or measurement raises it.
+        // Marked seen at once, so a map change in the same run does not raise it again; written
+        // to options.txt when it goes down.
+        if (args.remember && args.frames == 0 && args.whatsNew < game::kWhatsNewEdition) {
+            desk_.showWhatsNew();
+            args.whatsNew = game::kWhatsNewEdition;
+            core::logf("window: what's new up, edition %d", game::kWhatsNewEdition);
+        }
     }
 
     // And the played world, for the tile over the character's head: the numbers `--at` takes,
@@ -787,6 +796,7 @@ void PlayMode::runScript(Context& ctx) {
     } else if (args.windows.find("menu") != std::string::npos) {
         desk_.showMenu(game::Menu::Page::Main);
     }
+    if (args.windows.find("whatsnew") != std::string::npos) desk_.showWhatsNew();
 }
 
 void PlayMode::openProbes(Context& ctx) {
@@ -1257,6 +1267,10 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             // What the menu's Options changed: the display, the window's size, v-sync, the
             // volume and the counter in the corner. Kept in options.txt when mu play ran us
             // (--remember). The window's new size reaches the renderer on the next pump.
+            if (desk_.takeWhatsNewSeen()) {
+                args.whatsNew = game::kWhatsNewEdition;
+                core::saveOptions(args);
+            }
             if (desk_.settingsChanged()) {
                 const game::Menu::Settings& set = desk_.settings();
                 applySettings(ctx.window, set, args);

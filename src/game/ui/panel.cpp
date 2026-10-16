@@ -54,6 +54,8 @@ int Arts::warm() {
     int read = 0;
     for (const auto& [key, path] : paths_) {
         (void)path;
+        // What's New's screenshots are a slide each, seen once an update: read when shown.
+        if (key.rfind("whatsnew_", 0) == 0) continue;
         if (get(key).valid()) ++read;
     }
     core::logf("interface: %d pieces of art read ahead of the windows", read);

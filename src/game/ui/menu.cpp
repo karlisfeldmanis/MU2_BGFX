@@ -29,10 +29,10 @@ constexpr float kMainWide = 380.0f, kOptionsWide = 430.0f;
 constexpr float kMainInset = 26.0f, kOptionsInset = 22.0f;
 constexpr float kFootTall = 44.0f;
 
-// The menu: Options and Switch Character, a rule, Exit Game, and the foot.
+// The menu: What's New, Options and Switch Character, a rule, Exit Game, and the foot.
 constexpr float kMainFirst = style::kHead + 22.0f;
 constexpr float kMainStep = style::kButtonL + 12.0f;
-constexpr float kMainRule = kMainFirst + kMainStep * 2.0f + 2.0f;
+constexpr float kMainRule = kMainFirst + kMainStep * 3.0f + 2.0f;
 constexpr float kMainExit = kMainRule + 14.0f;
 constexpr float kMainFoot = kMainExit + style::kButtonL + 16.0f;
 constexpr float kMainTall = kMainFoot + kFootTall;
@@ -84,6 +84,7 @@ constexpr float kCentreShare = 0.46f;
 
 enum Target : int {
     kOptions = 0, kSwitch = 1, kExit = 2, kReconnect = 3, kBack = 4, kGraphics = 5, kApply = 6,
+    kWhatsNew = 7,
     kClose = 9,
     // The Options page's own: two chevrons a stepped row, two halves a switch, and the slider.
     kDisplayDown = 10, kDisplayUp, kSizeDown, kSizeUp, kVsyncOff, kVsyncOn, kCounterOff,
@@ -280,8 +281,9 @@ Box boxOf(Menu::Page page, int target) {
     }
     if (page == Menu::Page::Main) {
         const float inner = wide - kMainInset * 2.0f;
-        if (target == kOptions) return {kMainInset, kMainFirst, inner, style::kButtonL};
-        if (target == kSwitch) return {kMainInset, kMainFirst + kMainStep, inner, style::kButtonL};
+        if (target == kWhatsNew) return {kMainInset, kMainFirst, inner, style::kButtonL};
+        if (target == kOptions) return {kMainInset, kMainFirst + kMainStep, inner, style::kButtonL};
+        if (target == kSwitch) return {kMainInset, kMainFirst + kMainStep * 2.0f, inner, style::kButtonL};
         if (target == kExit) return {kMainInset, kMainExit, inner, style::kButtonL};
         return {};
     }
@@ -418,6 +420,10 @@ void Menu::update(float seconds, float width, float height, const Pointer& point
         } else if (fired >= 0) {
             switch (fired) {
                 case kOptions: turn(Page::Options); break;
+                case kWhatsNew:
+                    up_ = false;
+                    result.whatsNew = result.clicked = true;
+                    break;
                 case kSwitch:
                     up_ = false;
                     result.switched = result.clicked = true;
@@ -584,6 +590,7 @@ void Menu::rebuild() {
             controls::button(canvas_, at(x_, y_, boxOf(page_, target)), word, kind,
                              state(target, off), u);
         };
+        big(kWhatsNew, "What's New", Kind::Secondary);
         big(kOptions, "Options", Kind::Secondary);
         big(kSwitch, "Switch Character", Kind::Secondary, !switchable_);
         controls::rule(canvas_, sheet.x + kMainInset * u, y_ + kMainRule * u,

@@ -102,6 +102,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     mixer_.open(interface_, &arts_);
     amount_.open(interface_, &arts_);
     report_.open(interface_);
+    whatsNew_.open(interface_, &arts_);
     questDialog_.open(interface_);
     tracker_.open(interface_);
     travel_.open(interface_, assetDir, &arts_);
@@ -167,7 +168,7 @@ void Desk::expect(uint32_t ticket, Then then, int key) {
 }
 
 bool Desk::overWindows(float x, float y) const {
-    return amount_.up() || report_.up() || menu_.up() || hud_.covers(x, y) || guild_.covers(x, y) ||
+    return amount_.up() || report_.up() || whatsNew_.up() || menu_.up() || hud_.covers(x, y) || guild_.covers(x, y) ||
            guildMake_.covers(x, y) || chat_.covers(x, y) || partyBar_.covers(x, y) ||
            playerMenu_.covers(x, y) || targetFrame_.covers(x, y) || minimap_.covers(x, y) ||
            questDialog_.covers(x, y) || travel_.covers(x, y) || goBack_.covers(x, y) ||
@@ -269,7 +270,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // windows under it do not hear a click on its OK and a 1 typed into it is not the first
     // potion drunk. `typing` is taken before the box answers, so the frame Return closes it on
     // does not hand the same keys on either. The cursor is still drawn where the pointer is.
-    const bool typing = amount_.up() || report_.up() || broker_.typing() || guild_.typing() || guildMake_.typing();
+    const bool typing = amount_.up() || report_.up() || whatsNew_.up() || broker_.typing() || guild_.typing() || guildMake_.typing();
     // The chat's keyboard, taken before the box spends the script's: it types only while it is
     // open and no box is up, and its Enter and Escape are then its own.
     const bool chatTyping = chat_.typing() && !typing;
@@ -328,6 +329,18 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             }
             reportReady_ = true;
             core::logf("window: bug report sent (%zu characters)", reportAsk_.text.size());
+        }
+    }
+    // What's New, modal as the report is: Escape, Skip or its last Next put it down, and then its
+    // edition is seen (PlayMode keeps it in options.txt).
+    {
+        WhatsNew::Result result;
+        whatsNew_.update(seconds, float(window.width()), float(window.height()), pointer,
+                         whatsNew_.up() && escapeNow, &result);
+        if (result.clicked) click();
+        if (result.closed) {
+            whatsNewSeen_ = true;
+            core::logf("window: what's new down");
         }
     }
     // The quest giver's window: the realm opened it when he was reached, and closes it on any other
@@ -529,6 +542,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             quitAsked_ = true;
             core::logf("window: exit asked from the menu");
         }
+        if (asked.whatsNew) {
+            whatsNew_.show();
+            core::logf("window: what's new up from the menu");
+        }
         if (asked.switched) {
             switchAsked_ = true;
             core::logf("window: switch character asked from the menu");
@@ -631,7 +648,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // Go Back!: clicked, it clicks, and the mode takes him back (app/modes/play_mode.cpp), where
     // the warp's own sMagic plays as he lands. Not while a box or the menu has the screen.
     {
-        const bool held = amount_.up() || report_.up() || menu_.up();
+        const bool held = amount_.up() || report_.up() || whatsNew_.up() || menu_.up();
         if (goBack_.update(seconds, goBackShown_ && play.isOpen(), goBackLeft_, goBackClosed_,
                            goBackWhere_, held ? Pointer{} : pointer, window.width(),
                            window.height(), hud_.plateTop())) {
@@ -665,7 +682,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 left = realm.squareSecondsLeft();
             }
         }
-        const bool held = amount_.up() || report_.up() || menu_.up();
+        const bool held = amount_.up() || report_.up() || whatsNew_.up() || menu_.up();
         const bool wasUp = squareResult_.up();
         if (squareResult_.update(seconds, shown, square, squareRows_, left, held ? Pointer{} : pointer,
                                  float(window.width()), float(window.height()))) {
@@ -677,7 +694,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
     }
     // The herald: the event coming for his level, at its three moments. Its cross clicks.
-    if (herald_.update(seconds, play, amount_.up() || report_.up() || menu_.up() ? Pointer{} : pointer,
+    if (herald_.update(seconds, play, amount_.up() || report_.up() || whatsNew_.up() || menu_.up() ? Pointer{} : pointer,
                        window.width(), window.height())) {
         click();
     }
@@ -2343,6 +2360,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (squareResult_.up() && !watching_) interface_.add(squareResult_.canvas());
     if (amount_.up()) interface_.add(amount_.canvas());
     if (report_.up()) interface_.add(report_.canvas());
+    if (whatsNew_.up()) interface_.add(whatsNew_.canvas());
     // A player's right-click menu over the windows it may open beside.
     if (playerMenu_.up()) interface_.add(playerMenu_.canvas());
     // The menu over everything but the pointer: it dims the whole screen, windows and HUD too.

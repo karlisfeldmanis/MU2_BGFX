@@ -703,6 +703,7 @@ add_library(mu_game STATIC
   src/game/ui/mixer.cpp
   src/game/ui/amount.cpp
   src/game/ui/report.cpp
+  src/game/ui/whats_new.cpp
   src/game/ui/square_result.cpp
   src/game/ui/menu.cpp
   src/game/ui/slab.cpp

@@ -136,6 +136,17 @@ EFFECTS = {
     # button is down -- the blow (ZzzInterface.cpp:4092-4105). See game/ui/cursor.cpp.
     "cursor_repair": "interface/cursor_repair.png",
 
+    # What's New's slides (game/ui/whats_new.cpp): a screenshot each, taken offscreen at 4K and
+    # cut to the picture's shape, 840x768. Read when its slide is shown, never warmed
+    # (panel::Arts::warm skips the whatsnew_ keys): they are seen once an update.
+    "whatsnew_welcome": "interface/whatsnew/whatsnew_welcome.jpg",
+    "whatsnew_runes": "interface/whatsnew/whatsnew_runes.jpg",
+    "whatsnew_raids": "interface/whatsnew/whatsnew_raids.jpg",
+    "whatsnew_quests": "interface/whatsnew/whatsnew_quests.jpg",
+    "whatsnew_market": "interface/whatsnew/whatsnew_market.jpg",
+    "whatsnew_scaling": "interface/whatsnew/whatsnew_scaling.jpg",
+    "whatsnew_more": "interface/whatsnew/whatsnew_more.jpg",
+
     # The three right-hand windows - inventory, character, shop - as MuDream skins them.
     #
     # The layout stays CNewUIMyInventory's, CNewUICharacterInfoWindow's and CNewUINPCShop's,

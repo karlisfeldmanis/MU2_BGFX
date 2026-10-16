@@ -46,6 +46,7 @@ public:
         bool settings = false;  // something on the Options page changed
         bool switched = false;  // Switch Character: back to the character screen
         bool reconnect = false; // the Lost page's Reconnect: the character screen, which joins afresh
+        bool whatsNew = false;  // What's New: its slides up again (game/ui/whats_new.h)
     };
 
     // What Options edits. The caller fills it from the window and the run, and applies it back

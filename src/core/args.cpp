@@ -51,6 +51,7 @@ void readOptions(Args& a) {
         else if (!std::strcmp(key, "lights")) a.lights = value != 0;
         else if (!std::strcmp(key, "textures") && value >= 0 && value <= 1) a.textures = value;
         else if (!std::strcmp(key, "renderer") && value >= 0 && value <= 2) a.renderer = value;
+        else if (!std::strcmp(key, "whatsnew") && value >= 0) a.whatsNew = value;
     }
     std::fclose(file);
     logf("options: %s from %s, %dx%d", a.fullscreen ? "fullscreen" : "windowed",
@@ -84,6 +85,7 @@ void saveOptions(const Args& a) {
                        "grass %d\ncap %d\nlights %d\ntextures %d\nrenderer %d\n",
                  int(a.scale * 100.0f + 0.5f), a.msaa, a.shadows, a.ssao ? 1 : 0, a.bloom ? 1 : 0,
                  a.reflections ? 1 : 0, a.grass, a.cap, a.lights ? 1 : 0, a.textures, a.renderer);
+    std::fprintf(file, "whatsnew %d\n", a.whatsNew);
     std::fclose(file);
 }
 
@@ -157,7 +159,8 @@ void printUsage() {
         "  --category WORD           world|monsters|people|armour|weapons|wings|parts\n"
         "  --plus N                  the viewer's items at +N, 0 to 15: the refinement shine\n"
         "  --windows LIST            open these from the first frame: inventory,character; menu,\n"
-        "                            options or graphics raise the game menu on that page; off: no HUD\n"
+        "                            options or graphics raise the game menu on that page; whatsnew\n"
+        "                            its slides; off: no HUD\n"
         "  --ui-click F:X:Y[:X2:Y2]  press the windows at screen fraction X,Y on frame F\n"
         "  --ui-type F:TEXT          type TEXT into the open box on frame F (enter, escape)\n"
         "  --give LIST               put NAME[:COUNT],... in the bag at the start\n"

@@ -55,6 +55,9 @@ struct Args {
     // what the player chose and a switch after it still wins; written back whenever Options
     // changes something. Only mu play asks for it, so no measurement run reads a player's file.
     bool remember = false;
+    // The What's New edition this player has seen (game/ui/whats_new.h, kWhatsNewEdition): kept in
+    // options.txt, and the slides come up on entering the world while it is older.
+    int whatsNew = 0;
     int volume = 100;  // percent: the Options page's Volume row
     // How much of the backbuffer the WORLD is drawn at, 1 for all of it. The present pass
     // magnifies it; the hover ring and the HUD are drawn at the screen's own size whatever

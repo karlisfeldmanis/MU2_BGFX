@@ -36,6 +36,7 @@
 #include "game/ui/report.h"
 #include "game/ui/square_result.h"
 #include "game/ui/tracker.h"
+#include "game/ui/whats_new.h"
 #include "game/ui/travel.h"
 #include "game/ui/shelf.h"
 #include "game/ui/specimen.h"
@@ -92,7 +93,8 @@ public:
     // Whether a box has the keyboard, which the window is told so Escape cancels the box
     // rather than quitting the game.
     bool typing() const {
-        return amount_.up() || report_.up() || chat_.typing() || broker_.typing() || guild_.typing() || guildMake_.typing();
+        return amount_.up() || report_.up() || whatsNew_.up() || chat_.typing() || broker_.typing() || guild_.typing() ||
+               guildMake_.typing();
     }
     // A scripted potion key for the next update, 0 to 3.
     void scriptKey(int key) { scriptedKey_ = key; }
@@ -160,6 +162,14 @@ public:
     void setSpecimenOpen(bool open) { specimenOpen_ = open; }
     // The game menu up on a page, for a review: --windows menu, options or graphics.
     void showMenu(Menu::Page page) { menu_.show(page); }
+    // What's New up on its welcome: the first entry after an update (PlayMode), --windows whatsnew.
+    void showWhatsNew() { whatsNew_.show(); }
+    // What's New went down since the last ask: the edition is seen, for options.txt.
+    bool takeWhatsNewSeen() {
+        const bool seen = whatsNewSeen_;
+        whatsNewSeen_ = false;
+        return seen;
+    }
     bool specimenOpen() const { return specimenOpen_; }
     // The quest the tracker is pinned to, -1 for none: what the save keeps (Tracker::pinned).
     int followedQuest() const { return tracker_.pinned(); }
@@ -285,6 +295,8 @@ private:
     Report report_;
     BugAsk reportAsk_;
     bool reportReady_ = false;
+    WhatsNew whatsNew_;
+    bool whatsNewSeen_ = false;
     // A quest giver's window and the quest on screen (game/ui/quest_dialog.h, tracker.h).
     QuestDialog questDialog_;
     // The travel list, Tab's (game/ui/travel.h).
