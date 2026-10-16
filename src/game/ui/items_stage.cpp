@@ -51,6 +51,16 @@ void ItemStage::stand(const std::vector<Standing>& items, float unitsW, float un
     unitsW_ = unitsW;
     unitsH_ = unitsH;
     dirty_ = true;
+    // A new size is a new target now, not at the next render: the window that stood this asks
+    // for picture() straight after, and builds its canvas with that handle until something it
+    // watches changes. Resized in render() instead, the tooltip of a socketed item -- wider by
+    // its rune -- kept the handle render() then destroyed, and drew it frame after frame. Metal
+    // and Direct3D 11 drew nothing; NVIDIA's Vulkan driver crashed on the destroyed image's
+    // layout barrier (BLDD's Quadro P2200 at the vault, twice on 2026-10-16: nvoglv64.dll under
+    // bgfx's TextureVK::setState).
+    if (pixelsPerUnit_ > 0.0f && unitsW_ > 0.0f && unitsH_ > 0.0f) {
+        resize(int(std::lround(unitsW_ * pixelsPerUnit_)), int(std::lround(unitsH_ * pixelsPerUnit_)));
+    }
     // Whether anything here shines: drawn at +3 or more, a jewel's fixed +8 included. Its
     // pulse and its chrome move with the clock, so such a stage is taken every frame.
     shining_ = false;
@@ -89,6 +99,7 @@ void ItemStage::resize(int width, int height) {
 
 void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seconds) {
     clock_ += seconds;
+    pixelsPerUnit_ = pixelsPerUnit;
     if (unitsW_ <= 0.0f || unitsH_ <= 0.0f) return;
     resize(int(std::lround(unitsW_ * pixelsPerUnit)), int(std::lround(unitsH_ * pixelsPerUnit)));
     bool spinning = false;
