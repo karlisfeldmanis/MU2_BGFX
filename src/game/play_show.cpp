@@ -1052,6 +1052,10 @@ void Play::riseOn(uint32_t who) {
     const float feet[3] = {one->crown[0], ground_->heightAt(one->crown[0], one->crown[2]),
                            one->crown[2]};
     aura_.rise(feet, one->yaw, ground_->metresPerTile());
+    // And his sound, placed at him: the user, 2026-10-16, "i dont hear lvl up sound when other
+    // player is getting level". MU plays SOUND_LEVEL_UP for the hero alone; ours. Placed, so
+    // it is heard only on the screen and does not duck the world as the hero's own does.
+    if (heard_.levelUp >= 0) emit(heard_.levelUp, feet[0], feet[2], who);
     core::logf("level: #%u rises", who);
 }
 

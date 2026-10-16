@@ -1833,6 +1833,7 @@ private:
         int grate = -1, trapFlame = -1;                 // the traps' aGrate and sFlame
         int click = -1, refused = -1, opened = -1;      // the windows
         int invited = -1;  // window_invite: a party, guild or trade invite to him
+        int levelUp = -1;                               // another player's level, heard at him
         int repair = -1;                                // SOUND_REPAIR: a counter mended
         int mix = -1, mixBreak = -1;                    // eMix and eBreak: the Chaos Machine
         int meteorite = -1, explosion = -1, golemBurst = -1;  // the Lich's throw and landing; a Blue Golem's fist

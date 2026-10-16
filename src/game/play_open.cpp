@@ -454,6 +454,7 @@ void Play::shutdown() {
 void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
     if (!showing_.isOpen() || !sound_.open(assetDir, showing_.table(), muted, offline)) return;
     sound_.load("player_level_up", false);
+    heard_.levelUp = sound_.load("player_level_up", true);
     heard_.swing = sound_.load("player_swing", true);
     heard_.swingLong = sound_.load("player_swing_long", true);
     heard_.bow = sound_.load("player_bow", true);
