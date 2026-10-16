@@ -2,7 +2,7 @@
 // with no window (`--check`).
 //
 //   mu2_launcher [--site URL] [--platform P]                     the window
-//   mu2_launcher --shot FILE --screen signin|error|install|downloading|ready   one screen, saved
+//   mu2_launcher --shot FILE --screen signin|error|install|downloading|ready|regions   one screen, saved
 //   mu2_launcher --renderer vulkan|d3d11                         Windows: the window drawn with that
 //   mu2_launcher --check [--site URL] [--platform windows] [--dir DIR] [--only TEXT] [--play]
 //
@@ -151,7 +151,7 @@ int check(Place place, fs::path dir, const std::string& only, bool start) {
         GameTicket ticket;
         const bool ticketed = gameTicket(place, back, ticket, error) == Answer::Ok;
         if (!step("the game's ticket", ticketed, ticketed ? "ticket " + ticket.ticket.substr(0, 6) : error)) return 1;
-        if (!step("play", play(dir, manifest, ticket, error), error)) return 1;
+        if (!step("play", play(dir, manifest, ticket, regionNamed(loadSettings().region).server, error), error)) return 1;
     }
     return 0;
 }

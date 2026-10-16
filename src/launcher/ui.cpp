@@ -147,6 +147,8 @@ private:
     float measure(const std::string& s, float size, bool bold = false) const;
     void field(const Box& b, Field& f, int index, const char* placeholder);
     void alert(const Box& b, const std::string& message);
+    float drawRegion(float right, float y);
+    void drawRegionList();
     Box px(const Box& b) const { return {b.x * s_, b.y * s_, b.w * s_, b.h * s_}; }
     bool over(const Box& b) const { return b.has(mx_, my_); }
 
@@ -194,6 +196,11 @@ private:
     bool starting_ = false;  // Play's ticket is being asked for (start)
     bool bgfxUp_ = false;    // bgfx started (open): close() shuts down only what started
     bool stay_ = true;
+    // The region's list is open (drawRegion), and the left edge of the top strip's words: a press
+    // left of it on the strip moves the window.
+    bool regionsOpen_ = false;
+    Box regionAt_{};
+    float dragRight_ = kW - 260.0f;
 
     Field fields_[2];  // email, password
     int focus_ = 0;
@@ -430,7 +437,9 @@ void Launcher::start() {
             }
             std::string error;
             unsigned long pid = 0;
-            if (a != Answer::Ok || !play(settings_.install, manifest_, ticket, error, &pid)) {
+            const Region& region = regionNamed(settings_.region);
+            core::logf("launcher: playing in %s (%s)", region.name.c_str(), region.server.c_str());
+            if (a != Answer::Ok || !play(settings_.install, manifest_, ticket, region.server, error, &pid)) {
                 message_ = a != Answer::Ok ? message : error;
                 home_ = Home::Failed;
                 return;
@@ -737,7 +746,9 @@ void Launcher::drawHome() {
         logOut();
         return;
     }
-    if (flat(right - logOutWide - 4.0f, top, "Edit account")) openUrl(place_.web + "/account");
+    float editWide = 0;
+    if (flat(right - logOutWide - 4.0f, top, "Edit account", &editWide)) openUrl(place_.web + "/account");
+    dragRight_ = drawRegion(right - logOutWide - editWide - 8.0f, top);
 
     const float x = 40.0f;
     const float logoW = 160.0f, logoH = logoW * logo_.height / std::max(1.0f, logo_.width);
@@ -870,6 +881,77 @@ void Launcher::drawHome() {
         const std::string version = "Client " + manifest_.version;
         words(kW - 40.0f - measure(version, 13.0f), kH - 40.0f, version, hex(kQuiet), 13.0f);
     }
+    // Last, over whatever lies under it.
+    if (regionsOpen_) drawRegionList();
+}
+
+// **The region** (engine.h Region): a flat word on the top strip, its right edge at `right`, that
+// opens the list under it. Returns its left edge.
+float Launcher::drawRegion(float right, float y) {
+    const Region& region = regionNamed(settings_.region);
+    const std::string word = region.name;
+    const float wide = measure(word, 15.0f) + 20.0f + 14.0f;
+    const Box b{right - wide, y, wide, 32.0f};
+    regionAt_ = b;
+    const int index = widgetIndex_++;
+    const bool hot = !starting_ && over(px(b));
+    if (hot && clicked_) pressedAt_ = index;
+    if (hot) wantCursor_ = hand_;
+    if (hot || regionsOpen_) panel(px(b), 3.0f * s_, hex(0x0D0B0A, 0.55f), hex(0x0D0B0A, 0.55f));
+    const uint32_t ink = hex(hot || regionsOpen_ ? kBoneHi : 0xB5AB9B);
+    words(b.x + 10.0f, b.y + 21.0f, word, ink, 15.0f);
+    // The caret: a small V of squares, as the window's own close draws its X.
+    const float cx = b.right() - 17.0f, cy = b.y + 14.0f;
+    for (int i = 0; i < 4; ++i) {
+        canvas_.rect(px({cx + float(i), cy + float(i), 1.2f, 1.2f}), ink);
+        canvas_.rect(px({cx + 6.0f - float(i), cy + float(i), 1.2f, 1.2f}), ink);
+    }
+    if (hot && released_ && pressedAt_ == index) regionsOpen_ = !regionsOpen_;
+    return b.x;
+}
+
+// The regions under the flat word: each one's name and its server's city, a tick on the one kept,
+// and what a region means for who he meets. A press anywhere else closes it.
+void Launcher::drawRegionList() {
+    constexpr float kRow = 48.0f, kWide = 280.0f, kFoot = 52.0f;
+    const auto& all = regions();
+    const Box list{std::min(regionAt_.x, kW - 20.0f - kWide), regionAt_.bottom() + 6.0f, kWide,
+                   kRow * float(all.size()) + kFoot};
+    panel(px(list.grown(1.0f)), 4.0f * s_, hex(0x6B5645), hex(0x2B2219));
+    panel(px(list), 3.0f * s_, hex(0x16110E, 0.98f), hex(0x0D0B0A, 0.98f));
+    for (size_t i = 0; i < all.size(); ++i) {
+        const Region& one = all[i];
+        const Box row{list.x, list.y + kRow * float(i), list.w, kRow};
+        const int index = widgetIndex_++;
+        const bool hot = over(px(row.grown(-2.0f)));
+        if (hot && clicked_) pressedAt_ = index;
+        if (hot) {
+            wantCursor_ = hand_;
+            panel(px(row.grown(-3.0f)), 3.0f * s_, hex(0xFFFFFF, 0.06f), hex(0xFFFFFF, 0.06f));
+        }
+        const bool kept = one.id == settings_.region;
+        words(row.x + 16.0f, row.y + 22.0f, one.name, hex(hot ? 0xFFFFFF : kBoneHi), 15.0f, true);
+        words(row.x + 16.0f, row.y + 39.0f, "Server in " + one.city, hex(kQuiet), 13.0f);
+        if (kept) {
+            const float tx = row.right() - 30.0f, ty = row.y + 20.0f;
+            for (int k = 0; k < 4; ++k) canvas_.rect(px({tx + float(k), ty + float(k), 1.6f, 1.6f}), hex(0xD4493B));
+            for (int k = 0; k < 7; ++k) canvas_.rect(px({tx + 3.0f + float(k), ty + 3.0f - float(k), 1.6f, 1.6f}), hex(0xD4493B));
+        }
+        if (hot && released_ && pressedAt_ == index) {
+            if (!kept) {
+                settings_.region = one.id;
+                saveSettings(settings_);
+                core::logf("launcher: region %s (%s)", one.name.c_str(), one.server.c_str());
+            }
+            regionsOpen_ = false;
+        }
+    }
+    const float footY = list.y + kRow * float(all.size());
+    canvas_.rect(px({list.x + 12.0f, footY, list.w - 24.0f, 1.0f}), hex(0x3A2E25));
+    words(list.x + 16.0f, footY + 22.0f, "Each region is its own world.", hex(kQuiet), 13.0f);
+    words(list.x + 16.0f, footY + 39.0f, "You meet players of the same region.", hex(kQuiet), 13.0f);
+    // A press off the list and off the word closes it.
+    if (clicked_ && !over(px(list)) && !over(px(regionAt_))) regionsOpen_ = false;
 }
 
 void Launcher::draw() {
@@ -877,8 +959,12 @@ void Launcher::draw() {
     wantCursor_ = nullptr;
     canvas_.clear();
     canvas_.image(wallpaper_, px({0, 0, kW, kH}));
-    if (screen_ == Screen::SignIn) drawSignIn();
-    else drawHome();
+    if (screen_ == Screen::SignIn) {
+        dragRight_ = kW - 260.0f;
+        drawSignIn();
+    } else {
+        drawHome();
+    }
     drawChrome();
     glfwSetCursor(window_, wantCursor_);
 }
@@ -1047,7 +1133,7 @@ void Launcher::frame() {
     clicked_ = now && !down_;
     released_ = !now && down_;
     down_ = now;
-    if (clicked_ && my_ < 40.0f * s_ && mx_ < (kW - 260.0f) * s_ && mx_ > 76.0f * s_) {
+    if (clicked_ && my_ < 40.0f * s_ && mx_ < dragRight_ * s_ && mx_ > 76.0f * s_ && !regionsOpen_) {
         dragging_ = true;
         dragX_ = cx;
         dragY_ = cy;
@@ -1163,6 +1249,7 @@ int Launcher::run() {
                                              : Home::Ready;
             progress_.total = todoBytes_;
             progress_.done = todoBytes_ * 38 / 100;
+            regionsOpen_ = which == "regions";  // Ready, the region's list open
         }
         // The probe is Windows'; a shot taken where there is none shows the line and the first
         // run's message as a Windows machine with this card would see them.

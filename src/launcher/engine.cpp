@@ -335,18 +335,35 @@ void forget() {
     fs::remove(userFolder() / "session", ec);
 }
 
+const std::vector<Region>& regions() {
+    // The Hetzner box (net::kDefaultHost), the game's own default.
+    static const std::vector<Region> all = {
+        {"eu-north", "North Europe", "Helsinki", "mu-classic.com"},
+    };
+    return all;
+}
+
+const Region& regionNamed(const std::string& id) {
+    for (const Region& one : regions()) {
+        if (one.id == id) return one;
+    }
+    return regions().front();
+}
+
 Settings loadSettings() {
     Settings settings;
     const core::Json said = parse(readFile(userFolder() / "launcher.json"), "launcher.json");
     const std::string install = said["install"].stringOr("");
     settings.install = install.empty() ? defaultInstall() : pathOf(install);
     settings.email = said["email"].stringOr("");
+    settings.region = regionNamed(said["region"].stringOr("")).id;
     return settings;
 }
 
 void saveSettings(const Settings& settings) {
-    writeFile(userFolder() / "launcher.json",
-              "{\"install\": " + quoted(utf8Of(settings.install)) + ", \"email\": " + quoted(settings.email) + "}\n");
+    writeFile(userFolder() / "launcher.json", "{\"install\": " + quoted(utf8Of(settings.install)) +
+                                                  ", \"email\": " + quoted(settings.email) +
+                                                  ", \"region\": " + quoted(settings.region) + "}\n");
 }
 
 // The first run's graphics, in the keys the game's readOptions knows (core/args.cpp): the preset
@@ -654,14 +671,15 @@ std::vector<fs::path> crashFolders(const fs::path& install) {
     return {install / "logs", userFolder() / "logs"};
 }
 
-bool play(const fs::path& install, const Manifest& manifest, const GameTicket& ticket, std::string& error,
-          unsigned long* pid) {
+bool play(const fs::path& install, const Manifest& manifest, const GameTicket& ticket, const std::string& server,
+          std::string& error, unsigned long* pid) {
     const fs::path exe = install / pathOf(manifest.exe);
     const std::string handed = ticket.ticket + ":" + ticket.secret;
 #ifdef _WIN32
     // Inherited from ours, set only around the start so it never lingers here.
     SetEnvironmentVariableW(L"MU2_TICKET", std::wstring(handed.begin(), handed.end()).c_str());
     std::wstring line = L"\"" + exe.wstring() + L"\"";
+    if (!server.empty()) line += L" --server " + std::wstring(server.begin(), server.end());
     STARTUPINFOW start{};
     start.cb = sizeof start;
     PROCESS_INFORMATION running{};
@@ -697,9 +715,15 @@ bool play(const fs::path& install, const Manifest& manifest, const GameTicket& t
     std::error_code ec;
     fs::permissions(exe, fs::perms::owner_all | fs::perms::group_read | fs::perms::others_read, ec);
     std::string path = exe.string();
-    char* argv[] = {path.data(), nullptr};
+    std::string flag = "--server", where = server;
+    std::vector<char*> argv = {path.data()};
+    if (!server.empty()) {
+        argv.push_back(flag.data());
+        argv.push_back(where.data());
+    }
+    argv.push_back(nullptr);
     pid_t child = 0;
-    if (posix_spawn(&child, path.c_str(), nullptr, nullptr, argv, envp.data()) != 0) {
+    if (posix_spawn(&child, path.c_str(), nullptr, nullptr, argv.data(), envp.data()) != 0) {
         error = "Could not start the game.";
         return false;
     }

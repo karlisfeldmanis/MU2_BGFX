@@ -75,9 +75,24 @@ fs::path userFolder();
 // which needs no administrator; ~/Applications on the Mac, where a MU2.app belongs (L5).
 fs::path defaultInstall();
 
+// **A region is a realm of its own** (the user, 2026-10-16, a player in Argentina at 200 ms from
+// Helsinki): each one a server with its own world -- players in two regions never meet -- and the
+// accounts shared, the website's. The game is started at the region's server (play). North
+// Europe alone for now; a region added here is in every launcher's list.
+struct Region {
+    std::string id;      // kept in launcher.json; never shown
+    std::string name;    // what the player picks
+    std::string city;    // where its server is
+    std::string server;  // the game's --server: HOST[:PORT]
+};
+const std::vector<Region>& regions();
+// The region kept under `id`, or the first one when none is (a launcher.json from before regions).
+const Region& regionNamed(const std::string& id);
+
 struct Settings {
     fs::path install;
     std::string email;  // the last one signed in with, filled in for him next time
+    std::string region;  // a Region's id
 };
 Settings loadSettings();
 void saveSettings(const Settings& settings);
@@ -140,9 +155,10 @@ std::string installedVersion(const fs::path& install);
 
 // MU2.exe started in the install, signed in: the ticket and its secret in its environment as
 // MU2_TICKET, never on its command line (game::accountKey). The token stays with the launcher.
-// `pid`, when given, is the game's process, for handFront.
-bool play(const fs::path& install, const Manifest& manifest, const GameTicket& ticket, std::string& error,
-          unsigned long* pid = nullptr);
+// `server` is the region's (Region::server), handed on as --server. `pid`, when given, is the
+// game's process, for handFront.
+bool play(const fs::path& install, const Manifest& manifest, const GameTicket& ticket, const std::string& server,
+          std::string& error, unsigned long* pid = nullptr);
 
 // **The game's window in front, handed by the launcher** (the user, 2026-10-15, on a Windows PC:
 // the game still opened minimised behind everything). Windows lets a window come forward only
