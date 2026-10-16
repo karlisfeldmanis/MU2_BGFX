@@ -38,7 +38,11 @@
 </div>
 <div class="wrap">
 <div class="hero">
-<span class="live"><i></i>Open beta is live</span>
+<!-- Each region's game server, up or not (/api/status, web/server.py REGIONS); filled in below. -->
+<div class="servers" id="servers">
+<span class="live" data-region="North Europe"><i></i>North Europe</span>
+<span class="live" data-region="South America"><i></i>South America</span>
+</div>
 <h1>Classic MU Online, Remastered</h1>
 <p>The MU you grew up with, rebuilt from the ground up on a modern engine. Every world, monster and item you remember, with reworked skills, auras and animations, rebalanced mechanics and scaling, and new lighting and detail. Free to play.</p>
 <div class="get">
@@ -235,6 +239,21 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
 (() => {
   const { $, el, api, account, fieldError, hintError, alertOn, busy, bar, OFFLINE, EMAIL } = MU;
   let me = null;
+
+  // ---- the servers: each region up or not, every 30 s
+  const servers = () => fetch('/api/status').then((r) => r.json()).then((said) => {
+    const row = $('servers');
+    row.replaceChildren();
+    for (const r of said.regions) {
+      const pill = el('span', 'live' + (r.up ? '' : ' down'));
+      pill.title = 'Server in ' + r.city;
+      pill.appendChild(el('i'));
+      pill.appendChild(document.createTextNode(r.name + ' · ' + (r.up ? 'Online' : 'Offline')));
+      row.appendChild(pill);
+    }
+  }).catch(() => {});
+  servers();
+  setInterval(servers, 30000);
 
   // ---- downloads
   const size = (n) => (n < 1048576 ? (n / 1024).toFixed(0) + ' KB' : (n / 1048576).toFixed(1) + ' MB');

@@ -49,6 +49,8 @@ The routes:
          every report, newest first, each with its state and its account's email and name (the /bugs page).
     POST /api/bugs/state Bearer T of an admin {id, state}  -> 200 {ok} | 400 | 404
          a report marked one of BUG_STATES; kept as a line of its own in bugs.jsonl.
+    GET  /api/status                                -> 200 {regions: [{name, city, up}]}
+         the front page's server status: each region (REGIONS) up while its mu2_server tells.
     GET  /api/online     Bearer T of an admin       -> 200 {at, fresh, players: [...]} | 404 for anyone else
          who is on the game server now, as mu2_server last told it (the admins' /online page), and
          `recent`: the last RECENT_SHOWN plays of the last RECENT_DAYS days, bots left out; and
@@ -120,6 +122,9 @@ ONLINE_STALE_SECONDS = 20
 # this long is a server taken away, and its list is left off the page.
 DEFAULT_REGION = "North Europe"
 REGION_GONE_SECONDS = 600
+# The regions the front page shows, up or not (/api/status): the launcher's list, by name, with the
+# city of each one's server.
+REGIONS = (("North Europe", "Helsinki"), ("South America", "São Paulo"))
 # A play: one character on the server from when he came on until he was last on a list, kept this
 # long (the `games` table). Off a list no longer than RECENT_GAP -- the website restarting -- he is
 # still on the same play.
@@ -601,6 +606,19 @@ class Store:
         now = time.time()
         with self.online_lock:
             return {region: told for region, told in self.online.items() if now - told["at"] < REGION_GONE_SECONDS}
+
+    def status(self) -> dict:
+        """The front page's line for each region: up while its server tells (ONLINE_STALE_SECONDS).
+        Nothing about who, nor how many (the user, 2026-10-17: "just status")."""
+        now = time.time()
+        with self.online_lock:
+            told = dict(self.online)
+        out = []
+        for name, city in REGIONS:
+            r = told.get(name)
+            up = r is not None and now - r["at"] < ONLINE_STALE_SECONDS
+            out.append({"name": name, "city": city, "up": up})
+        return {"regions": out}
 
     def all_characters(self) -> list:
         with self.online_lock:
@@ -1256,6 +1274,8 @@ class Handler(BaseHTTPRequestHandler):
         if url.path == "/api/account":
             row = self.signed()
             return self.reply(200, self.store.account(row[0], self.bearer())) if row else None
+        if url.path == "/api/status":
+            return self.reply(200, self.store.status())
         if url.path == "/api/online":
             # Anyone not an admin is told there is nothing here, as for a page that does not exist.
             row = self.who()
