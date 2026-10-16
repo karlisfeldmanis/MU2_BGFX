@@ -12390,6 +12390,31 @@ void testParty(const content::Tables& tables) {
                "and the knight a kill of his own, alone");
     checkEqual(int(gap.quest(quest).counts[0]), 0, "nor does it count on the low one's quest");
     check(toldLow == 1 && toldHigh == 0, "and he alone is told so (What::Gapped), once");
+
+    // **Two fresh heroes** (the user, 2026-10-16: "there is no exp gain on party on two fresh
+    // chars"): each share is capped at the next level's total, not this one's -- level 1's is 0.
+    sim::Realm fresh;
+    check(fresh.raise(&tables, 11, 131, 128, sim::Kin::DarkWizard, 1), "a fresh realm raises");
+    const sim::Body* prey3 = fresh.find(prey);
+    check(prey3 != nullptr && prey3->alive(), "the same Spider stands there again");
+    if (prey3 == nullptr) return;
+    fresh.setHeroDown(col, row, 1, 0);
+    const uint32_t newA = fresh.hero().id;
+    const uint32_t newB = fresh.join(sim::Kin::DarkKnight, 1, col, row);
+    for (uint32_t one : {newA, newB}) fresh.command({.kind = sim::Command::Kind::PartySet, .a = 7, .target = one});
+    fresh.command({.kind = sim::Command::Kind::Order, .player = newB, .a = int(sim::Request::Kind::Attack), .target = prey});
+    std::map<uint32_t, int64_t> earned;
+    for (int tick = 0; tick < 2000; ++tick) {
+        fresh.step();
+        for (const sim::Happening& one : fresh.happenings()) {
+            if (one.what == sim::What::Gained && one.audience == one.who) earned[one.who] += one.a;
+        }
+        const sim::Body* left = fresh.find(prey);
+        if (left == nullptr || !left->alive()) break;
+    }
+    const sim::Body* killed = fresh.find(prey);
+    check(killed != nullptr && !killed->alive(), "the fresh knight kills it");
+    check(earned[newA] > 0 && earned[newB] > 0, "and both fresh heroes of the party gain by it");
 }
 
 // **A trade between two players** (sim/realm_deal.cpp): asked and answered, both offers put up,

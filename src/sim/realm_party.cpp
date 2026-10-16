@@ -82,8 +82,10 @@ void Realm::payKill(const Body& dead, Body& earner) {
     const double total = partyExperience(dead.level, totalLevel, int(view.size()), wizard && knight && elf);
     for (Body* one : view) {
         double share = total * double(one->level) / double(totalLevel);
-        // No more than his own level's worth (`if( exp > mymaxexp ) exp = mymaxexp`).
-        share = std::min(share, double(neededExperience(one->level)));
+        // No more than his own level's worth (`if( exp > mymaxexp ) exp = mymaxexp`, where
+        // mymaxexp is gLevelExperience[Level], the total the next level takes -- not this one's
+        // start, which is 0 at level 1 and paid a fresh party nothing).
+        share = std::min(share, double(neededExperience(one->level + 1)));
         For his(*this, *one);
         gain(*one, rated(*one, share));
     }
