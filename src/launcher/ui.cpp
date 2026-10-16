@@ -148,7 +148,7 @@ private:
     float measure(const std::string& s, float size, bool bold = false) const;
     void field(const Box& b, Field& f, int index, const char* placeholder);
     void alert(const Box& b, const std::string& message);
-    float drawRegion(float right, float y);
+    void drawRegion(float x, float baseline);
     void drawRegionList();
     Box px(const Box& b) const { return {b.x * s_, b.y * s_, b.w * s_, b.h * s_}; }
     bool over(const Box& b) const { return b.has(mx_, my_); }
@@ -754,7 +754,7 @@ void Launcher::drawHome() {
     }
     float editWide = 0;
     if (flat(right - logOutWide - 4.0f, top, "Edit account", &editWide)) openUrl(place_.web + "/account");
-    dragRight_ = drawRegion(right - logOutWide - editWide - 8.0f, top);
+    dragRight_ = right - logOutWide - editWide - 4.0f;
 
     const float x = 40.0f;
     const float logoW = 160.0f, logoH = logoW * logo_.height / std::max(1.0f, logo_.width);
@@ -835,20 +835,9 @@ void Launcher::drawHome() {
             if (button(main, starting_ ? "Starting..." : "Play", true, starting_, 20.0f)) playNow();
             panel(px({textX, rowY + 11.0f, 8.0f, 8.0f}), 4.0f * s_, hex(0x7FD66A), hex(0x7FD66A));
             words(textX + 16.0f, rowY + 20.0f, "Up to date", hex(kQuiet), 15.0f);
-            // Where Play goes (the user, 2026-10-17: "so users see the region"): the region, its
-            // ping, and the way to another.
-            {
-                const auto& all = regions();
-                const Region& region = regionNamed(settings_.region);
-                size_t at = 0;
-                while (at < all.size() && all[at].id != region.id) ++at;
-                std::string line = "Region: " + region.name;
-                if (at < pings_.size() && pings_[at] >= 0.0) line += " (" + std::to_string(int(pings_[at] + 0.5)) + " ms)";
-                words(textX + 16.0f, rowY + 41.0f, line, hex(kBone), 15.0f);
-                if (!starting_ && link(textX + 16.0f + measure(line, 15.0f) + 10.0f, rowY + 41.0f, "Change", kLabel)) {
-                    regionsOpen_ = true;
-                }
-            }
+            // Where Play goes, and the way to another, beside Play (the user, 2026-10-17: "so
+            // users see the region", "has to be ... near button not on top").
+            drawRegion(textX + 16.0f, rowY + 41.0f);
             if (tuned_) {
                 words(textX + 16.0f, rowY + 59.0f,
                       std::string("Graphics set to ") + firstRunSet(gpu_).name + " for this PC",
@@ -902,6 +891,8 @@ void Launcher::drawHome() {
         words(kW - 40.0f - measure(version, 13.0f), kH - 40.0f, version, hex(kQuiet), 13.0f);
     }
     // Last, over whatever lies under it.
+    // Only on Ready, where its line beside Play is (drawRegion); closed by any other screen.
+    if (home_ != Home::Ready) regionsOpen_ = false;
     if (regionsOpen_) drawRegionList();
 }
 
@@ -932,38 +923,42 @@ void Launcher::measureRegions() {
     });
 }
 
-// **The region** (engine.h Region): a flat word on the top strip, its right edge at `right`, that
-// opens the list under it. Returns its left edge.
-float Launcher::drawRegion(float right, float y) {
+// **The region** (engine.h Region) beside Play: "Region: North Europe (34 ms)" and a caret, its
+// words' baseline at `baseline`, that opens the list above it.
+void Launcher::drawRegion(float x, float baseline) {
+    const auto& all = regions();
     const Region& region = regionNamed(settings_.region);
-    const std::string word = "Region: " + region.name;
+    size_t at = 0;
+    while (at < all.size() && all[at].id != region.id) ++at;
+    std::string word = "Region: " + region.name;
+    if (at < pings_.size() && pings_[at] >= 0.0) word += " (" + std::to_string(int(pings_[at] + 0.5)) + " ms)";
     const float wide = measure(word, 15.0f) + 20.0f + 14.0f;
-    const Box b{right - wide, y, wide, 32.0f};
+    const Box b{x - 10.0f, baseline - 19.0f, wide, 26.0f};
     regionAt_ = b;
     const int index = widgetIndex_++;
     const bool hot = !starting_ && over(px(b));
     if (hot && clicked_) pressedAt_ = index;
     if (hot) wantCursor_ = hand_;
     if (hot || regionsOpen_) panel(px(b), 3.0f * s_, hex(0x0D0B0A, 0.55f), hex(0x0D0B0A, 0.55f));
-    const uint32_t ink = hex(hot || regionsOpen_ ? kBoneHi : 0xB5AB9B);
-    words(b.x + 10.0f, b.y + 21.0f, word, ink, 15.0f);
+    const uint32_t ink = hex(hot || regionsOpen_ ? kBoneHi : kBone);
+    words(x, baseline, word, ink, 15.0f);
     // The caret: a small V of squares, as the window's own close draws its X.
-    const float cx = b.right() - 17.0f, cy = b.y + 14.0f;
+    const float cx = b.right() - 17.0f, cy = baseline - 7.0f;
     for (int i = 0; i < 4; ++i) {
         canvas_.rect(px({cx + float(i), cy + float(i), 1.2f, 1.2f}), ink);
         canvas_.rect(px({cx + 6.0f - float(i), cy + float(i), 1.2f, 1.2f}), ink);
     }
     if (hot && released_ && pressedAt_ == index) regionsOpen_ = !regionsOpen_;
-    return b.x;
 }
 
-// The regions under the flat word: each one's name and its server's city, a tick on the one kept,
+// The regions above the line beside Play: each one's name and its server's city, a tick on the one kept,
 // and what a region means for who he meets. A press anywhere else closes it.
 void Launcher::drawRegionList() {
     constexpr float kRow = 48.0f, kWide = 280.0f, kFoot = 70.0f;
     const auto& all = regions();
-    const Box list{std::min(regionAt_.x, kW - 20.0f - kWide), regionAt_.bottom() + 6.0f, kWide,
-                   kRow * float(all.size()) + kFoot};
+    const float tall = kRow * float(all.size()) + kFoot;
+    // Its foot clear of "Up to date", the line above the region's.
+    const Box list{std::min(regionAt_.x, kW - 20.0f - kWide), regionAt_.y - 30.0f - tall, kWide, tall};
     panel(px(list.grown(1.0f)), 4.0f * s_, hex(0x6B5645), hex(0x2B2219));
     panel(px(list), 3.0f * s_, hex(0x16110E, 0.98f), hex(0x0D0B0A, 0.98f));
     for (size_t i = 0; i < all.size(); ++i) {
