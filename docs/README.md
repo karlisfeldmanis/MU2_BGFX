@@ -54,7 +54,7 @@ actual docs which we need". The finished docs were deleted then (git keeps them,
 - **Events:** `golden-dragon-raid.md`; Blood Castle and Devil Square are under Worlds.
 - **Quests:** `quest-rewards.md` (the reward ladder), `golden-archer.md` (the Dungeon),
   `devin-quest.md` (Devias), `class-change-quest.md` (Sevina), `lost-tower-quest.md`,
-  `lirien-quest.md` (Atlans), `tarkan-quest.md`, `icarus-quest.md`.
+  `lirien-quest.md` (Atlans), `tarkan-quest.md`, `icarus-quest.md`, `aida-quest.md` (lore only).
 - **The rules against WebZen:** `webzen-audit.md`.
 
 ## Worlds
