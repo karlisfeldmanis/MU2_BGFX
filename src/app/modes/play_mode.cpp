@@ -1222,6 +1222,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             // A pointer parked where the run asked, pressing nothing: what photographing a
             // tooltip needs, since a click on an item in the bag picks it up instead of
             // describing it. A scripted click this frame replaces it, script() keeping the last.
+            for (const core::Args::HoverAt& one : args.hoversAt) {
+                if (at.index == one.frame) args.hoverX = one.x, args.hoverY = one.y;
+            }
             if (args.hoverX >= 0.0f) desk_.script(args.hoverX * w, args.hoverY * h, false, false);
             // --lay: the bench's drops, on their frame, one after another as a kill's pile lands.
             if (at.index == args.layFrame && world_.played().isOpen()) {

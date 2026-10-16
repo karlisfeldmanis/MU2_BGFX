@@ -214,6 +214,7 @@ void printUsage() {
         "  --ui-key F:K              press potion key K (1-4) on frame F\n"
         "  --ui-skill F:K            press skill key K (1-5: Q W E R T) on frame F\n"
         "  --ui-hover X:Y            park the pointer at screen fraction X,Y, pressing nothing\n"
+        "  --ui-hover-at F:X:Y       and move it there from frame F on; again for each\n"
         "  --rise F                  throw the level-up on the hero on frame F; drawing only\n"
         "  --learn F                 throw a learned skill's smoke and its sound on frame F; drawing only\n"
         "  --guard F                 throw the guard's cage on frame F; drawing only\n"
@@ -798,6 +799,15 @@ Args parseArgs(int argc, char** argv) {
                 a.hoverY = hy;
             } else {
                 logError("--ui-hover is X:Y, each a fraction of the screen");
+                a.valid = false;
+            }
+        } else if (!std::strcmp(s, "--ui-hover-at")) {
+            Args::HoverAt at;
+            const char* v = next(s);
+            if (v && std::sscanf(v, "%d:%f:%f", &at.frame, &at.x, &at.y) == 3) {
+                a.hoversAt.push_back(at);
+            } else {
+                logError("--ui-hover-at is FRAME:X:Y, X and Y fractions of the screen");
                 a.valid = false;
             }
         } else if (!std::strcmp(s, "--ui-key")) {

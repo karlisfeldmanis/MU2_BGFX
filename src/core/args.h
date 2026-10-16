@@ -393,6 +393,13 @@ struct Args {
     // nothing: what a review run needs to photograph a tooltip, since a click on an item in
     // the bag picks it up instead of describing it. Negative is "nobody is pointing".
     float hoverX = -1.0f, hoverY = -1.0f;
+    // --ui-hover-at FRAME:X:Y, again for each: the parked pointer moved there from that frame on,
+    // so one run can hover one item and then another (a tooltip that changes size).
+    struct HoverAt {
+        int frame = 0;
+        float x = 0.0f, y = 0.0f;
+    };
+    std::vector<HoverAt> hoversAt;
     // Scripted potion keys: FRAME:KEY, KEY 1 to 4, pressed on FRAME. Repeatable.
     std::vector<std::pair<int, int>> uiKeys;
     // Frame and skill key, 1 to 4 for Q W E R: what --ui-key is for a potion. The cast path's
