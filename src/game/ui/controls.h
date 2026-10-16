@@ -80,18 +80,11 @@ void button(gfx::Canvas& canvas, const gfx::Box& box, const std::string& word, K
 void tab(gfx::Canvas& canvas, const gfx::Box& box, const std::string& word, bool chosen,
          const State& state, float u, bool floor = true);
 
-enum class Glyph : uint8_t { Close, Plus, Left, Right, CoinIn, CoinOut, Hammer, Hammers, Undo, Bottle,
-                             // The inspect window's foot (game/ui/inspect.h): a speech bubble, two
-                             // arrows passing, and a figure with a plus.
-                             Whisper, Trade, Invite };
+enum class Glyph : uint8_t { Close, Plus, Left, Right, CoinIn, CoinOut, Hammer, Hammers, Undo, Bottle };
 // A small square button (close, spend) or an icon square (the coins, the hammers). `red` is the
 // spend's look; `on` is a toggle held down, the repair mode.
 void square(gfx::Canvas& canvas, const gfx::Box& box, Glyph glyph, const State& state, float u,
             bool red = false, bool on = false);
-// The same with its icon before the word, the two centred together as one (the user, 2026-10-16,
-// on the inspect window's foot: "icon with text").
-void button(gfx::Canvas& canvas, const gfx::Box& box, const std::string& word, Glyph icon, Kind kind,
-            const State& state, float u, float wordSize = 0.0f);
 // A bare chevron for a setting's value, iron at rest and lit under the pointer.
 void chevron(gfx::Canvas& canvas, const gfx::Box& box, bool right, float lift, float u);
 

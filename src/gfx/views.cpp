@@ -29,6 +29,8 @@ const char* const* probeViewNames() {
                 names[i] = "stage_portrait";
             } else if (v == ViewStageInspect) {
                 names[i] = "stage_inspect";
+            } else if (v == ViewStageFigure) {
+                names[i] = "stage_figure";
             } else if (v == ViewGui) {
                 names[i] = "gui";
             } else {
@@ -109,7 +111,7 @@ Account viewAccount(View v) {
         default:
             if (v == ViewStageBag || v == ViewStageShelf || v == ViewStageQuick ||
                 v == ViewStageTip || v == ViewStageBust || v == ViewStagePortrait ||
-                v == ViewStageInspect) {
+                v == ViewStageInspect || v == ViewStageFigure) {
                 return AccountPresent;
             }
             if (v >= ViewProbeFace && v < ViewCount) return AccountProbe;

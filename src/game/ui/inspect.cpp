@@ -18,19 +18,32 @@ using gfx::Box;
 // The layout, in MU's 190 x 429 panel units: the canvas's B3 (2x pixels there) halved and fitted
 // under the panel's own 36-unit head. Armour down the left column, wings, jewellery, pet and mount
 // down the right, a hand under each column, the figure between them.
-constexpr float kLeft = 11.0f, kRight = 148.0f, kColumn = 31.0f, kSmall = 21.0f;
+// **One gap everywhere** (the user, 2026-10-16: "work on gapings, paddings, positions"): four units
+// between any two slots down a column, the jewellery's three spread over the armour's and the
+// gloves' height so the right column's rows meet the left's at the pet, the mount and the hand.
+constexpr float kLeft = 11.0f, kRight = 148.0f, kColumn = 31.0f, kSmall = 22.0f;
+constexpr float kGap = 4.0f;
 constexpr float kTop = 44.0f;
+constexpr float kArmourTall = 44.0f, kHandTall = 46.0f;
+constexpr float kRow[6] = {kTop,                                            // helm, wings
+                           kTop + kColumn + kGap,                           // armour, the jewellery
+                           kTop + kColumn + kArmourTall + 2.0f * kGap,      // gloves
+                           kTop + 2.0f * kColumn + kArmourTall + 3.0f * kGap,  // pants, pet
+                           kTop + 3.0f * kColumn + kArmourTall + 4.0f * kGap,  // boots, mount
+                           kTop + 4.0f * kColumn + kArmourTall + 5.0f * kGap}; // the hands
 // The whole width between the window's edges, behind both columns: his wings spread there and the
 // slots stand over their tips. Portrait's figure is 432 by 640, the same shape.
-constexpr Box kFigure{kLeft, 38.0f, 168.0f, 249.0f};
-constexpr float kScoreWords = 290.0f, kScoreFigure = 312.0f;
-constexpr Box kNumbers{kLeft, 324.0f, panel::kWellRight - kLeft, 52.0f};
-constexpr float kFootButtons = 390.0f, kButtonTall = 22.0f, kButtonGap = 4.0f;
-
-Box footButton(int i) {
-    const float wide = (panel::kWellRight - kLeft - 2.0f * kButtonGap) / 3.0f;
-    return {kLeft + float(i) * (wide + kButtonGap), kFootButtons, wide, kButtonTall};
-}
+constexpr Box kFigure{kLeft, 37.0f, 168.0f, 249.0f};
+// Under the hands: the score's words, its figure large ("gear score has to be bigger"), the
+// numbers' well down to the foot's rule with the same air over it as the hands have under them.
+// The words sit close over the figure (the user: "gear score label has to be closer to score").
+constexpr float kScoreWords = kRow[5] + kHandTall + 19.0f;
+constexpr float kScoreFigure = kScoreWords + 18.0f;
+constexpr float kNumbersTop = kScoreFigure + 9.0f;
+// Down to the window's foot, with the side margin under it: no buttons there since the user's
+// "remove footer buttons but show more stats" -- four rows of three.
+constexpr int kNumberRows = 4;
+constexpr Box kNumbers{kLeft, kNumbersTop, panel::kWellRight - kLeft, panel::kHeight - kLeft - kNumbersTop};
 
 // The ghost in an empty slot: the bag's own silhouette, faint, at its own aspect.
 constexpr uint32_t kGhostInk = gfx::rgba(0.90f, 0.86f, 0.76f, 0.17f);
@@ -69,22 +82,25 @@ bool inspectable(const sim::Realm& realm, uint32_t id) {
 
 Box Inspect::slotBox(int slot) {
     const float small = kRight + (kColumn - kSmall) * 0.5f;
+    // The jewellery's three over the armour's and the gloves' rows, the room left shared as two gaps.
+    const float span = kArmourTall + kGap + kColumn;
+    const float step = kSmall + (span - 3.0f * kSmall) * 0.5f;
     switch (slot) {
-        case sim::kHelm: return {kLeft, kTop, kColumn, kColumn};
-        case sim::kArmour: return {kLeft, kTop + 35.0f, kColumn, 44.0f};
-        case sim::kGloves: return {kLeft, kTop + 83.0f, kColumn, kColumn};
-        case sim::kPants: return {kLeft, kTop + 118.0f, kColumn, kColumn};
-        case sim::kBoots: return {kLeft, kTop + 153.0f, kColumn, kColumn};
-        case sim::kWings: return {kRight, kTop, kColumn, kColumn};
-        case sim::kAmulet: return {small, kTop + 37.0f, kSmall, kSmall};
-        case sim::kRingRight: return {small, kTop + 62.0f, kSmall, kSmall};
-        case sim::kRingLeft: return {small, kTop + 87.0f, kSmall, kSmall};
-        case sim::kPet: return {kRight, kTop + 118.0f, kColumn, kColumn};
-        case sim::kMount: return {kRight, kTop + 153.0f, kColumn, kColumn};
+        case sim::kHelm: return {kLeft, kRow[0], kColumn, kColumn};
+        case sim::kArmour: return {kLeft, kRow[1], kColumn, kArmourTall};
+        case sim::kGloves: return {kLeft, kRow[2], kColumn, kColumn};
+        case sim::kPants: return {kLeft, kRow[3], kColumn, kColumn};
+        case sim::kBoots: return {kLeft, kRow[4], kColumn, kColumn};
+        case sim::kWings: return {kRight, kRow[0], kColumn, kColumn};
+        case sim::kAmulet: return {small, kRow[1], kSmall, kSmall};
+        case sim::kRingRight: return {small, kRow[1] + step, kSmall, kSmall};
+        case sim::kRingLeft: return {small, kRow[1] + 2.0f * step, kSmall, kSmall};
+        case sim::kPet: return {kRight, kRow[3], kColumn, kColumn};
+        case sim::kMount: return {kRight, kRow[4], kColumn, kColumn};
         // His right hand under the armour's column, his left under the jewellery's, as the bag puts
         // them: MU names the slots for the side of the screen.
-        case sim::kWeaponRight: return {kLeft, kTop + 190.0f, kColumn, 50.0f};
-        case sim::kWeaponLeft: return {kRight, kTop + 190.0f, kColumn, 50.0f};
+        case sim::kWeaponRight: return {kLeft, kRow[5], kColumn, kHandTall};
+        case sim::kWeaponLeft: return {kRight, kRow[5], kColumn, kHandTall};
         default: return {};
     }
 }
@@ -99,7 +115,7 @@ void Inspect::hide() {
     up_ = false;
     turning_ = false;
     drawnOnce_ = false;
-    hovered_ = over_ = pressing_ = -1;
+    hovered_ = -1;
     closing_ = overClose_ = false;
     canvas_.clear();
     tip_.clear();
@@ -118,21 +134,16 @@ void Inspect::update(float width, float height, int column, const sim::Realm& re
     const float k = panel::scale();
     const float ux = (pointer.x - x_) / k, uy = (pointer.y - y_) / k;
 
-    // The pointer against this frame's layout: a worn piece, one of the foot's three, the close.
+    // The pointer against this frame's layout: a worn piece, the figure, the close.
     hovered_ = -1;
     for (const int slot : kShown) {
         if (!bag[slot].empty() && slotBox(slot).has(ux, uy)) hovered_ = slot;
     }
-    over_ = -1;
-    for (int i = 0; i < 3; ++i) {
-        if (footButton(i).has(ux, uy)) over_ = i;
-    }
     overClose_ = panel::scaled(x_, y_, panel::frameClose()).has(pointer.x, pointer.y);
     if (pointer.pressed) {
-        pressing_ = over_;
         closing_ = overClose_;
         // A press on him, between the columns and off every slot, takes hold of him to turn.
-        turning_ = hovered_ < 0 && over_ < 0 && !overClose_ && kFigure.has(ux, uy) &&
+        turning_ = hovered_ < 0 && !overClose_ && kFigure.has(ux, uy) &&
                    ux > kLeft + kColumn && ux < kRight;
         turnFrom_ = pointer.x;
     }
@@ -145,16 +156,7 @@ void Inspect::update(float width, float height, int column, const sim::Realm& re
     if (pointer.released || !pointer.held) turning_ = false;
     if (pointer.released) {
         // Only if the pointer is still on it, which is how a press is taken back.
-        if (out) {
-            if (closing_ && overClose_) out->close = out->clicked = true;
-            if (pressing_ >= 0 && pressing_ == over_) {
-                out->whisper = pressing_ == 0;
-                out->trade = pressing_ == 1;
-                out->invite = pressing_ == 2;
-                out->clicked = true;
-            }
-        }
-        pressing_ = -1;
+        if (out && closing_ && overClose_) out->close = true;
         closing_ = false;
     }
 
@@ -173,7 +175,7 @@ void Inspect::update(float width, float height, int column, const sim::Realm& re
     now_.version = bag.version();
     now_.x = x_, now_.y = y_, now_.scale = k, now_.unit = tip::unit();
     now_.screenW = width, now_.screenH = height;
-    now_.hovered = hovered_, now_.over = over_, now_.pressing = pressing_;
+    now_.hovered = hovered_;
     now_.overClose = overClose_, now_.closing = closing_;
     now_.figure = figure && figure->valid() ? figure->handle.idx : 0xFFFF;
     now_.items = stage && stage->picture().valid() ? stage->picture().handle.idx : 0xFFFF;
@@ -181,15 +183,30 @@ void Inspect::update(float width, float height, int column, const sim::Realm& re
     now_.kin = int(who.kin);
     now_.second = who.second;
     if (realm.tables()) now_.score = sim::gearScore(*realm.tables(), bag);
-    const sim::HeroPoints total = who.totalPoints();
-    now_.numbers[0] = total.strength, now_.numbers[1] = total.agility;
-    now_.numbers[2] = total.vitality, now_.numbers[3] = total.energy;
-    now_.numbers[4] = who.stats.defense;
-    const bool wizard = who.kin == sim::Kin::DarkWizard;
-    now_.damage[0] = wizard ? (long long)who.stats.wizardMinimum
-                            : who.stats.minimumDamage + who.stats.offhandMinimumDamage;
-    now_.damage[1] = wizard ? (long long)who.stats.wizardMaximum
-                            : who.stats.maximumDamage + who.stats.offhandMaximumDamage;
+    // **Twelve of his numbers**, as the character window words them: his four attributes with the
+    // stat runes in; his damage (a wizard's wizardry) and defence; the tops of his three pools; his
+    // two rates and his critical chance.
+    {
+        const sim::HeroPoints total = who.totalPoints();
+        const sim::Fighter& f = who.stats;
+        const bool wizard = who.kin == sim::Kin::DarkWizard;
+        const long long lo = wizard ? (long long)f.wizardMinimum : f.minimumDamage + f.offhandMinimumDamage;
+        const long long hi = wizard ? (long long)f.wizardMaximum : f.maximumDamage + f.offhandMaximumDamage;
+        const auto percent = [](double share) { return std::to_string(int(std::lround(share * 100.0))) + "%"; };
+        const std::pair<const char*, std::string> rows[12] = {
+            {"STRENGTH", commas(total.strength)},     {"AGILITY", commas(total.agility)},
+            {"VITALITY", commas(total.vitality)},     {"ENERGY", commas(total.energy)},
+            {wizard ? "WIZARDRY" : "DAMAGE", commas(lo) + " ~ " + commas(hi)},
+            {"DEFENSE", commas(f.defense)},           {"LIFE", commas(who.maxHealth)},
+            {"MANA", commas(who.maxMana)},            {"SHIELD", commas(who.maxSd)},
+            {"ATTACK RATE", commas((long long)f.attackRate)},
+            {"DEFENSE RATE", commas((long long)f.defenseRate)},
+            {"CRITICAL", percent(f.criticalChance)}};
+        for (int i = 0; i < 12; ++i) {
+            now_.labels[i] = rows[i].first;
+            now_.values[i] = rows[i].second;
+        }
+    }
     now_.name = name;
     now_.guild = guild;
     if (drawnOnce_ && now_ == drawn_) return;
@@ -221,6 +238,10 @@ void Inspect::rebuild(const sim::Realm& realm, const sim::Body& who, const sim::
         bits.push_back({sim::className(now_.kin, now_.second), false, 0.0f});
         bits.push_back({"LEVEL", true, wide});
         bits.push_back({std::to_string(now_.level), false, gap});
+        // And his resets after it (the user, 2026-10-16), as the character window prints his own:
+        // the realm keeps none yet, so 0 until it does (Card says the same).
+        bits.push_back({"RESETS", true, wide});
+        bits.push_back({std::to_string(now_.resets), false, gap});
         if (!now_.guild.empty()) bits.push_back({"[" + now_.guild + "]", true, wide});
         float total = 0.0f;
         for (const Bit& bit : bits)
@@ -256,7 +277,7 @@ void Inspect::rebuild(const sim::Realm& realm, const sim::Body& who, const sim::
             canvas_.polygon(xy, ink, kSides + 2);
         };
         pool(fig.midX(), fig.y + fig.h * 0.5f, fig.w * 0.42f, fig.h * 0.46f, gfx::rgba(0.38f, 0.24f, 0.14f, 0.22f));
-        pool(fig.midX(), fig.y + fig.h * 0.9f, fig.w * 0.26f, 6.0f * k, gfx::rgba(0.0f, 0.0f, 0.0f, 0.5f));
+        pool(fig.midX(), fig.y + fig.h * 0.94f, fig.w * 0.26f, 6.0f * k, gfx::rgba(0.0f, 0.0f, 0.0f, 0.5f));
         if (figure && figure->valid()) canvas_.image(*figure, fig);
     }
 
@@ -297,7 +318,7 @@ void Inspect::rebuild(const sim::Realm& realm, const sim::Body& who, const sim::
         controls::caps(canvas_, std::round(x + (panel::kWidth * k - words) * 0.5f),
                        std::round(y + kScoreWords * k), small, style::kAshInk, "GEAR SCORE");
         const std::string figureText = commas(now_.score);
-        const float size = 20.0f * u;
+        const float size = 32.0f * u;
         const gfx::Face* face = panel::titleFace();
         if (face && bgfx::isValid(panel::titleTexture())) {
             const float wide = face->measure(size, figureText);
@@ -310,45 +331,27 @@ void Inspect::rebuild(const sim::Realm& realm, const sim::Body& who, const sim::
         }
     }
 
-    // **Six of his numbers** under it, three across and two down, a label over its figure: his four
-    // attributes with the stat runes in, his damage (a wizard's wizardry), his defence.
+    // **His numbers** under it (update's twelve), three across, a label over its figure.
     {
         const Box well = panel::scaled(x, y, kNumbers);
         controls::well(canvas_, well, u);
-        const bool wizard = now_.kin == int(sim::Kin::DarkWizard);
-        const std::string labels[6] = {"STRENGTH", "AGILITY", "VITALITY", "ENERGY", wizard ? "WIZARDRY" : "DAMAGE",
-                                       "DEFENSE"};
-        const std::string values[6] = {commas(now_.numbers[0]), commas(now_.numbers[1]), commas(now_.numbers[2]),
-                                       commas(now_.numbers[3]),
-                                       commas(now_.damage[0]) + " ~ " + commas(now_.damage[1]),
-                                       commas(now_.numbers[4])};
-        const float cellW = kNumbers.w / 3.0f, cellH = kNumbers.h / 2.0f;
-        for (int i = 0; i < 6; ++i) {
+        const std::string* labels = now_.labels;
+        const std::string* values = now_.values;
+        const float cellW = kNumbers.w / 3.0f, cellH = kNumbers.h / float(kNumberRows);
+        for (int i = 0; i < 3 * kNumberRows; ++i) {
             const float cx = kNumbers.x + cellW * float(i % 3), cy = kNumbers.y + cellH * float(i / 3);
-            if (i % 3 != 0) canvas_.rect(panel::scaled(x, y, {cx, cy + 3.0f, 0.5f, cellH - 6.0f}), style::kIronLo);
+            if (i % 3 != 0) canvas_.rect(panel::scaled(x, y, {cx, cy + 5.0f, 0.5f, cellH - 10.0f}), style::kIronLo);
             if (i >= 3 && i % 3 == 0)
-                canvas_.rect(panel::scaled(x, y, {kNumbers.x + 3.0f, cy, kNumbers.w - 6.0f, 0.5f}), style::kIronLo);
-            controls::caps(canvas_, std::round(x + (cx + 6.0f) * k), std::round(y + (cy + 9.5f) * k), 8.0f * u,
+                canvas_.rect(panel::scaled(x, y, {kNumbers.x + 5.0f, cy, kNumbers.w - 10.0f, 0.5f}), style::kIronLo);
+            // Seven units in from the cell's edge, the label on its upper third and the figure under it,
+            // the pair centred down the cell.
+            const float pad = 7.0f;
+            controls::caps(canvas_, std::round(x + (cx + pad) * k), std::round(y + (cy + cellH * 0.5f - 1.5f) * k), 8.0f * u,
                            style::kAshInk, labels[i], 0.06f);
-            float size = 11.5f * u;
-            while (size > 7.5f * u && controls::labelWidth(size, values[i]) > (cellW - 10.0f) * k) size -= 0.5f * u;
-            controls::label(canvas_, std::round(x + (cx + 6.0f) * k), std::round(y + (cy + 21.0f) * k), size,
+            float size = 12.5f * u;
+            while (size > 7.5f * u && controls::labelWidth(size, values[i]) > (cellW - 2.0f * pad) * k) size -= 0.5f * u;
+            controls::label(canvas_, std::round(x + (cx + pad) * k), std::round(y + (cy + cellH * 0.5f + 8.5f) * k), size,
                             style::kBoneHi, values[i]);
-        }
-    }
-
-    // **The foot**: the shared rule, and Whisper, Trade and Invite, each its icon and its word.
-    canvas_.rect(panel::scaled(x, y, {kLeft, panel::kFootRule, panel::kWellRight - kLeft, 0.5f}), style::kIronLo);
-    {
-        static const char* const kWords[3] = {"Whisper", "Trade", "Invite"};
-        static const controls::Glyph kIcons[3] = {controls::Glyph::Whisper, controls::Glyph::Trade,
-                                                  controls::Glyph::Invite};
-        for (int i = 0; i < 3; ++i) {
-            controls::State state;
-            state.lift = now_.over == i ? 1.0f : 0.0f;
-            state.held = now_.pressing == i && now_.over == i;
-            controls::button(canvas_, panel::scaled(x, y, footButton(i)), kWords[i], kIcons[i],
-                             controls::Kind::Secondary, state, u);
         }
     }
 

@@ -623,6 +623,10 @@ public:
     void wantDoll(uint32_t id);
     // Whether what he wears has changed since the doll was last posed, or it never was.
     bool dollStale() const;
+    // Whether the doll moves and is photographed every frame: on his wings he hovers, MU's fly
+    // stance with the wings beating (the user, 2026-10-16: "if char has wings show him in fly
+    // motion"). Without them he stands still and is taken once.
+    bool dollMoving() const { return dollWing_.worn() != nullptr; }
     // Poses him into this frame's palette turned `turn` radians from facing the lens, and hands
     // back his drawables and his wings', his head joint and his size against a man's: the
     // portrait's to photograph (Portrait's figure). After Play::gather, before the scene's draw.
@@ -2040,6 +2044,7 @@ private:
     uint64_t dollGear_ = 0;
     bool dollDressed_ = false;
     std::vector<float> dollRows_;
+    double dollClock_ = -1.0;  // the steady clock at its last pose, for its own seconds
     uint64_t dollGearOf(const sim::Body& body) const;
     float targetHead_[3] = {};
     float targetYaw_ = 0.0f, targetScale_ = 1.0f;

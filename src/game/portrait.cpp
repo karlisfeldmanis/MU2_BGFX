@@ -25,7 +25,7 @@ constexpr float kFovDegrees = 18.0f;
 // root reaches the sides. Metres again for a man of 1.8 m; the picture's shape is the window's
 // figure box (game/ui/inspect.cpp, kFigure).
 constexpr int kFigureWide = 432, kFigureTall = 640;
-constexpr float kFigureDrop = 0.52f;   // the lens's aim, under his head joint: over his middle,
+constexpr float kFigureDrop = 0.40f;   // the lens's aim, under his head joint: over his middle,
                                        // so he stands low with his wings' tips inside the top
 constexpr float kFigureLift = 0.30f;   // the eye over that aim
 constexpr float kFigureAway = 5.8f;
@@ -80,7 +80,8 @@ void Portrait::render(gfx::Renderer& renderer, const std::vector<gfx::Drawable>&
                 bgfx::getCaps()->homogeneousDepth, bx::Handedness::Right);
     plain_.assign(drawables.begin(), drawables.end());
     for (gfx::Drawable& d : plain_) d.refine = 0;
-    renderer.drawStage(gfx::ViewStagePortrait, target_, uint16_t(wide), uint16_t(tall), view, proj, plain_);
+    renderer.drawStage(figure_ ? gfx::ViewStageFigure : gfx::ViewStagePortrait, target_, uint16_t(wide),
+                       uint16_t(tall), view, proj, plain_);
     worn_.clear();
     for (const gfx::Drawable& d : drawables) worn_.push_back(d.mesh);
     taken_ = true;

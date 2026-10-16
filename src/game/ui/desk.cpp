@@ -836,11 +836,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                             inspectName_, guild ? guild->name : std::string(),
                             inspectFigure_.taken() ? &inspectFigure_.picture() : nullptr, pointer,
                             &inspectStagePicture_, &asked);
-            if (asked.whisper) chat_.whisperTo(inspectName_);
-            if (asked.trade) play.dealAsk(id);
-            if (asked.invite) play.askParty({net::PartyWhat::Invite, inspectName_});
-            if (asked.clicked) click();
-            if (asked.close) closeInspect();
+            if (asked.close) {
+                click();
+                closeInspect();
+            }
         }
     }
 
@@ -2208,19 +2207,18 @@ void Desk::photograph(gfx::Renderer& renderer, double seconds) {
 
 void Desk::portrait(gfx::Renderer& renderer, Play& play) {
     if (play.targetChanged()) portrait_.forget();
-    // The inspected player whole, first: his window is the one being read.
+    // The inspected player whole, on a view of his own (ViewStageFigure), so the faces below go on.
     // His doll (Play::poseDoll), not his body in the world: weapons on his back, as in a safe zone.
-    // Taken again only when he is turned or what he wears changes.
+    // Taken every frame while he hovers on wings, else only when he is turned or his gear changes.
     if (inspecting()) {
         const float turn = inspect_.turn();
-        if (play.dollStale() || turn != inspectTurned_ || !inspectFigure_.taken()) {
+        if (play.dollStale() || play.dollMoving() || turn != inspectTurned_ || !inspectFigure_.taken()) {
             if (!renderer.openStages(shaderDir_)) return;
             float head[3] = {}, scale = 1.0f;
             if (play.poseDoll(renderer, turn, inspectBody_, head, &scale)) {
                 // A fixed lens (yaw 0): he turns in front of it.
                 inspectFigure_.render(renderer, inspectBody_, head, 0.0f, scale);
                 inspectTurned_ = turn;
-                return;
             }
         }
     }

@@ -2,6 +2,9 @@
 // safe zone, photographed whole by the desk's figure portrait and turned by a drag in the window.
 #include <bx/math.h>
 
+#include <algorithm>
+#include <chrono>
+
 #include "game/play.h"
 #include "game/roster.h"
 #include "game/wings.h"
@@ -58,10 +61,21 @@ bool Play::poseDoll(gfx::Renderer& renderer, float turn, std::vector<gfx::Drawab
                                           ? &tables_.items[size_t(wing.item)]
                                           : nullptr;
         dollWing_.wear(row ? wingBody(*figures_, row->group, row->number) : nullptr, doll_);
-        dollWing_.update(0.0f, false, true);
+        // On wings he hovers: PLAYER_STOP_FLY, or its crossbow's, with his weapons still on his back.
+        if (dollWing_.worn()) {
+            const int hover = look->stance == "crossbow" && look->flyIdleCrossbowClip >= 0 ? look->flyIdleCrossbowClip
+                                                                                          : look->flyIdleClip;
+            if (hover >= 0) doll_.play(hover, true, 0.0f);
+        }
+        dollClock_ = -1.0;
     }
+    // Its own seconds, off the steady clock: the desk poses it once a frame while it moves.
+    const double now = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    const float seconds = dollClock_ < 0.0 ? 0.0f : float(std::clamp(now - dollClock_, 0.0, 0.1));
+    dollClock_ = now;
     doll_.place(kAt, turn, true);
-    doll_.update(0.0f);
+    doll_.update(seconds);
+    if (dollWing_.worn()) dollWing_.update(seconds, true);
     if (dollRows_.size() < size_t(gfx::Renderer::kMaxBones) * 12) dollRows_.resize(size_t(gfx::Renderer::kMaxBones) * 12);
     const int bones = doll_.pose(dollRows_.data());
     const int palette = bones > 0 ? renderer.addPalette(dollRows_.data(), bones) : -1;
