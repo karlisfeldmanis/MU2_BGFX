@@ -978,6 +978,8 @@ public:
     // The townsfolk's RenderLight sprites, in `sheet` (the showing's `light`, MU's BITMAP_LIGHT):
     // `(1, 0.6, 0.4) * (sin(WorldTime * 0.002) * 0.3 + 0.7)`, one per glowing person.
     void setFolkLight(bgfx::TextureHandle sheet) { folkLight_ = sheet; }
+    // And the showing's `flare`, MU's BITMAP_FLARE, for the Seed Master's (Standing::glowFlare).
+    void setFolkFlare(bgfx::TextureHandle sheet) { folkFlare_ = sheet; }
     // The showing's `shiny_02`, MU's BITMAP_SHINY + 1: the Gorgon Staff's star.
     void setStarSheet(bgfx::TextureHandle sheet) { starSheet_ = sheet; }
     // Charon's orb and its wisps: the showing's `lightning_2` and `joint_energy`.
@@ -1929,6 +1931,9 @@ private:
         // 1.5 (ZzzCharacter.cpp:11243). See gatherFolkLights.
         int glowBone = -1;
         float glowScale = 1.0f;
+        // The Seed Master's instead: MU's BITMAP_FLARE, white, (sin(WorldTime / 1000) + 1) * 0.3 +
+        // 0.4 a channel times 0.5 (ZzzCharacter.cpp:11346-11354), in the showing's `flare`.
+        bool glowFlare = false;
         // Charon's light in his hand, MU's MODEL_NPC_DEVILSQUARE case (ZzzCharacter.cpp:11249):
         // the bone it sits on, or -1, and what of half a second's wisp is owed. See orbs().
         int orbBone = -1;
@@ -1961,6 +1966,7 @@ private:
     static int fidget(Standing& one);
     std::vector<Standing> folk_;
     bgfx::TextureHandle folkLight_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle folkFlare_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle starSheet_ = BGFX_INVALID_HANDLE;
     float folkClock_ = 0.0f;  // seconds, WorldTime's own, for the lights' breathing
     // MoveCharacterVisual's own Luminosity, `(rand() % 8 + 2) * 0.1` a frame, rolled at 25 Hz

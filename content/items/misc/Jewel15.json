@@ -15,7 +15,7 @@
     "group": 12,
     "number": 15,
     "drop_level": 12,
-    "maximum_drop_level": 66,
+    "maximum_drop_level": 0,
     "drops_from_monsters": false,
     "jewel": true,
     "drop_level_note": "Twelve up to sixty-six. The floor is what lets Lorencia's top four breeds leave one; the ceiling is what takes it back out again once monsters are past 66, leaving the Bless and the Soul as the whole pool from there on. Both halves are CanDropAtMonsterLevel, and neither the gap nor anything else applies - the jewel branch skips the twelve-level window every other drop is bounded by. See Loot.Jewels and Loot.Reaches.\n\nSixty-six is not a round number and is not derived from anything else in the table; it is the value on the definition and it is transcribed.",
@@ -31,7 +31,8 @@
       "energy": 0,
       "vitality": 0
     },
-    "classes_note": "None named, so everybody may hold it."
+    "classes_note": "None named, so everybody may hold it.",
+    "maximum_drop_level_note": "Ours since 2026-10-16: 0, no ceiling. MU stops the Chaos at monster level 66 (OpenMU Version075 MaximumDropLevel = 66; WebZen MonsterItemMng.cpp:430), which in 0.75 cut nothing, its strongest breed being about 66; with Atlans, Tarkan, Icarus and Aida past it, the user lifted it (\"Lift it everywhere\"), so every monster from 12 up may leave one."
   },
   "refinement_note": "No plus. Group 12 is above Prize.TakesRefinement's ceiling of eleven - the same test that answers for the Orb of Summoning, which shares this group and is the one row where the rule is recorded as an exception. See Gem05.",
   "stacking_note": "Stacked in MU by counting in durability. Not built here; the Chaos Machine is what will need it, and only one Chaos is spent per mix.",

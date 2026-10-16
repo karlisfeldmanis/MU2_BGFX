@@ -53,6 +53,11 @@ constexpr TravelRow kRows[kTravels] = {
     // 62), and refused without wings or a Dinorant worn, as the door refuses (Wings). It opens
     // when Tersia's The Sky Door is taken (docs/game/icarus-quest.md), or as he stands in Icarus.
     {"Icarus", 10, 160, 10000, 15, 13, 0, 0, "icarus"},
+    // Aida, after it for the same reason (docs/game/aida-quest.md; the user, 2026-10-16: "Yes, opened
+    // by the quest"). Season Six's "Aida1" is 8,500 Zen at 150 on spawn gate 119 (Gates.cs:70);
+    // ours at 300 as the Noria door asks, landing on that gate's middle, 84,11, facing nowhere. It
+    // opens when he speaks to the Seed Master there, or with The Sealed Wood handed in.
+    {"Aida", 33, 300, 8500, 84, 11, 0, 0, "aida"},
 };
 
 // A chained map's floors, every floor a link and its row open once the link is taken: the
@@ -157,6 +162,8 @@ void Realm::settleFound(uint32_t saved) {
     if (me().quests[kDrownedSong].completions > 0) me().found |= travelRowsOf(int32_t(kAtlansMap));
     // And Tarkan once he has met the Keeper, the same way (The Road of Kantur).
     if (me().quests[kRoadOfKantur].completions > 0) me().found |= travelRowsOf(int32_t(kTarkanMap));
+    // And Aida once he has met the Seed Master (The Sealed Wood).
+    if (me().quests[kSealedWood].completions > 0) me().found |= travelRowsOf(33);
     // And Icarus once The Sky Door is taken (Realm::acceptQuest opens it then).
     if (me().quests[kSkyDoor].state != QuestState::Untaken || me().quests[kSkyDoor].completions > 0)
         me().found |= travelRowsOf(int32_t(kIcarusMap));

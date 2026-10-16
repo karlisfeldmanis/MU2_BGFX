@@ -10823,7 +10823,9 @@ void testDrops(const content::Tables& tables) {
         }
         std::printf("  level %d, %d deaths: bless %d, soul %d, chaos %d, rune %d, group %d, items %d\n",
                     level, kDeaths, b, s, c, r, others, items);
-        const bool hasBless = level >= 25, hasSoul = level >= 30, hasChaos = level >= 12 && level <= 66;
+        // The Chaos from 12 with no ceiling since 2026-10-16 (MU's stopped at 66; the user: "Lift it
+        // everywhere").
+        const bool hasBless = level >= 25, hasSoul = level >= 30, hasChaos = level >= 12;
         const int reached = int(hasBless) + int(hasSoul) + int(hasChaos);
         const double each = reached ? kDeaths * sim::kJewelChance / reached : 0.0;
         const auto said = [level](const char* what) {
@@ -11375,7 +11377,16 @@ void testSealedWood() {
     sim::Realm hall;
     check(hall.raise(&aida, 11, m.x - 2, m.y, sim::Kin::FairyElf, 300), "the elf in Aida's hall");
     hall.restore(grove.record());
+    int aidaRow = -1;
+    for (int i = 0; i < sim::kTravels; ++i) {
+        if (sim::travelAt(i).map == 33) aidaRow = i;
+    }
+    check(aidaRow >= 0, "Aida has a travel row");
+    checkEqual(int(hall.travelRefusal(aidaRow)), int(sim::TravelRefusal::Unknown),
+               "with a giver there, standing in Aida does not open it");
     check(talkTo(hall, master), "found, the Seed Master's window opens");
+    check(hall.travelRefusal(aidaRow) != sim::TravelRefusal::Unknown,
+          "and meeting him opens Aida on the travel list");
     checkEqual(hall.questHere(sim::kSeedMasterNumber), sim::kSealedWood, "the wood his to take back");
     const int64_t zen = hall.money();
     check(hall.completeQuest(sim::kSealedWood, -1), "handed in to the Seed Master");
@@ -11398,6 +11409,10 @@ void testSealedWood() {
     }
     checkEqual(breeds, 6, "the 2005 wood's six, Hell Maine among them");
     checkEqual(kills, 146, "146 kills, on Marlon's ladder with Hell Maine last");
+    // The Jewel of Chaos past MU's 66 (the user, 2026-10-16: "Lift it everywhere").
+    const int32_t chaos = aida.itemNamed("Jewel15");
+    check(chaos >= 0 && aida.items[size_t(chaos)].maximumDropLevel == 0,
+          "the Jewel of Chaos has no ceiling, so Aida's breeds may leave one");
     for (int i = 0; i < clearing.paidCount; ++i) {
         check(aida.itemNamed(clearing.paid[i].item) >= 0, "everything it pays is an item here");
     }

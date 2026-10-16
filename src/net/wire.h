@@ -118,7 +118,9 @@ namespace mu::net {
 //     the realm's rules since 32 (bound things in the vault, the unstruck dragon gone in two
 //     minutes), so a client older than them is refused instead of drifting from the server.
 // 34: a Kept carries 27 quests, Aida's two the 26th and 27th (layout 8, 2026-10-16).
-constexpr uint32_t kVersion = 34;
+// 35: the rules again, the bytes not: the Jewel of Chaos from every monster of 12 and over, and
+//     an Aida row on the travel list (2026-10-16), so a client on 34's tables is refused.
+constexpr uint32_t kVersion = 35;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";

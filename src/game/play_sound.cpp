@@ -195,22 +195,25 @@ void Play::gatherFolkLights(gfx::Effects& effects) const {
             }
         }
     }
-    if (!bgfx::isValid(folkLight_)) return;
     const float luminosity = std::sin(folkClock_ * 1000.0f * 0.002f) * 0.3f + 0.7f;
+    // The Seed Master's: WorldTime is milliseconds, so sin(WorldTime * 0.001) is sin of seconds.
+    const float white = 0.5f * ((std::sin(folkClock_) + 1.0f) * 0.3f + 0.4f);
     for (const Standing& one : folk_) {
         if (one.glowBone < 0) continue;
+        if (!bgfx::isValid(one.glowFlare ? folkFlare_ : folkLight_)) continue;
         gfx::Sprite sprite;
         const float origin[3] = {0.0f, 0.0f, 0.0f};
         if (!one.figure.pointOn(one.glowBone, origin, sprite.position)) continue;
         // CreateSprite's Scale over a 64-texel sheet, in metres.
         sprite.halfWidth = sprite.halfHeight = 0.5f * 0.64f * one.glowScale;
-        sprite.colour[0] = luminosity;
-        sprite.colour[1] = 0.6f * luminosity;
-        sprite.colour[2] = 0.4f * luminosity;
-        sprite.sheet = folkLight_;
+        sprite.colour[0] = one.glowFlare ? white : luminosity;
+        sprite.colour[1] = one.glowFlare ? white : 0.6f * luminosity;
+        sprite.colour[2] = one.glowFlare ? white : 0.4f * luminosity;
+        sprite.sheet = one.glowFlare ? folkFlare_ : folkLight_;
         sprite.blend = gfx::Blend::Additive;
         effects.add(sprite);
     }
+    if (!bgfx::isValid(folkLight_)) return;
     // And the monsters' own: the Chain Scorpion's (1, 0.4, 0.2) at Scale 1, drawn while its
     // body is -- through the fall, as RenderCharacter draws it.
     for (const Drawn& one : drawn_) {

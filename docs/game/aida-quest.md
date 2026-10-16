@@ -157,13 +157,12 @@ the socket it fits.
    they have to drops 2nd class gear', and feathers): 110-130 for the 2005 six, Hell Maine
    above the Dark Phoenix, 134-140 for the Bloody breeds (docs/worlds/aida-port.md, "Raised
    past Icarus"). Both quests ask the door's level.
-2. **His name.** MU's is "Seed Master" (시드마스터). Keep it, or give him a name ("the Seed
-   Master" in the quests either way).
-3. **The rewards** above, as built: proposals the user has not picked.
-4. **His light.** MU's bone-39 flare pulses white at scale 2. Keep MU's, or smaller (the user's
-   rule for glows: small first).
-5. **An Aida travel row** (aida-port decision 3): none yet, so the hook opens none, as the Road
-   of Kantur opens Tarkan's.
+2. **Settled 2026-10-16** (the user picked from four): his name stays "Seed Master"; his glow is
+   MU's white BITMAP_FLARE on bone 39, at his brow, at half MU's Scale 2 (Standing::glowFlare,
+   play_open.cpp, play_sound.cpp); the rewards stay as built; and **Aida is on the travel list**,
+   level 300 and Season Six's 8,500 Zen, landing at 84,11, opened by meeting the Seed Master or
+   with The Sealed Wood handed in (realm_travel.cpp). The same day the Jewel of Chaos lost MU's
+   66 ceiling (content/items/misc/Jewel15.json), so Aida's breeds leave it too. Protocol 35.
 
 ## Tested
 

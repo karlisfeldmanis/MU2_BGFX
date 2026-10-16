@@ -445,6 +445,10 @@ bool PlayMode::open(Context& ctx) {
                         core::join(assets, light->path), content::TextureRole::Albedo));
                 }
                 const content::Showing& shown = world_.played().showing().table();
+                if (const content::EffectSheet* flare = shown.effect("flare")) {
+                    world_.played().setFolkFlare(ctx.textures.load(
+                        core::join(assets, flare->path), content::TextureRole::Albedo));
+                }
                 if (const content::EffectSheet* star = shown.effect("shiny_02")) {
                     world_.played().setStarSheet(ctx.textures.load(
                         core::join(assets, star->path), content::TextureRole::Albedo));

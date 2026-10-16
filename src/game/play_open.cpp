@@ -501,6 +501,12 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
             one.every = 64.0f / 60.0f;
             one.glowBone = 32;
             one.glowScale = 1.5f;
+        } else if (one.who == "goblinmaster") {
+            // The Seed Master's flare on bone 39 (Bone03, at his brow, where MU sets it), MU's Scale 2 at half:
+            // a glow starts small (the user, 2026-10-16: 'Keep name, small glow').
+            one.glowBone = 39;
+            one.glowScale = 1.0f;
+            one.glowFlare = true;
         } else if (one.who == "DevilNpc01") {
             // Charon's light: bone 20, Bone01, the thing held out in front of him.
             one.orbBone = kCharonOrbBone;
