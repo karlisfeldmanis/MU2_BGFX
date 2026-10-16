@@ -101,7 +101,7 @@ void PlayMode::readSave(Context& ctx) {
     // by name.
     const bool unsaved =
         args.frames != 0 || !args.arena.empty() || args.questReady || !args.questsDone.empty() ||
-        args.raid > 0;
+        !args.questProgress.empty() || args.raid > 0;
     savePath_ = !args.savePath.empty() ? args.savePath
                 : !unsaved             ? game::defaultSavePath()
                                        : std::string();
@@ -737,6 +737,26 @@ void PlayMode::runScript(Context& ctx) {
                 if (*at == ',') ++at;
             }
             world_.played().restore(done);
+        }
+        // --quest-progress: one quest part-way, for a recording's montage.
+        if (const size_t colon = args.questProgress.find(':'); colon != std::string::npos) {
+            const int q = std::atoi(args.questProgress.c_str());
+            if (q >= 0 && q < sim::kQuests) {
+                sim::HeroRecord part = world_.played().record();
+                sim::QuestProgress& one = part.quests[q];
+                one = sim::QuestProgress{};
+                bool met = true;
+                int step = 0;
+                for (const char* at = args.questProgress.c_str() + colon + 1;
+                     *at && step < sim::kQuestSteps; ++step) {
+                    one.counts[step] = uint16_t(std::atoi(at));
+                    met = met && one.counts[step] >= world_.played().realm().questGoal(q, step);
+                    while (*at && *at != ',') ++at;
+                    if (*at == ',') ++at;
+                }
+                one.state = met ? sim::QuestState::Ready : sim::QuestState::Active;
+                world_.played().restore(part);
+            }
         }
         if (!args.talk.empty()) world_.played().talkTo(args.talk);
         if (args.perch >= 0) world_.played().perch(args.perch);

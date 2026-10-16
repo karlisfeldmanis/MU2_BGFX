@@ -213,6 +213,7 @@ void printUsage() {
         "                            for a breed (Skeleton Warrior). Implies --play, and\n"
         "                            --world lorencia when no world is named\n"
         "  --arena-count N           how many of them (default 1)\n"
+        "  --quest-progress Q:N,N   quest Q under way with these step counts (Ready if all met)\n"
         "  --arena-learn N           the hero is taught skill N and the arena fights with it\n"
         "  --teach N,N,...           the hero is taught these skills, bound to the bar as learned\n"
         "  --arena-undying           a blow that would fell the hero fills his health, arena or not\n"
@@ -705,6 +706,8 @@ Args parseArgs(int argc, char** argv) {
             a.questReady = true;
         } else if (!std::strcmp(s, "--quest-demo")) {
             a.questDemo = true;
+        } else if (!std::strcmp(s, "--quest-progress")) {
+            if (const char* v = next(s)) a.questProgress = v;
         } else if (!std::strcmp(s, "--quests-done")) {
             if (const char* v = next(s)) a.questsDone = v;
         } else if (!std::strcmp(s, "--walk-to")) {
