@@ -111,6 +111,12 @@ bool heard(Session& one, std::vector<std::unique_ptr<World>>& worlds,
             if (command.kind == sim::Command::Kind::None || ++one.asked > kMostCommands) continue;
             // Whatever the client wrote there, it is his own hero who asks.
             command.player = one.player;
+            // And his ticket is a client's, never one of the server's (kJoinTickets and the
+            // Broker's above it). A ticket is all brokerHeard matched an answer by, and the next
+            // one is read off the ticks: a bad Move under it, in the tick with his Collect,
+            // answered last and was taken for the Broker's -- the thing given and handed back to
+            // his Collect too, a Buy paid that the realm refused. Kept, with no answer to wait on.
+            if (command.ticket >= kJoinTickets) command.ticket = 0;
             // One trip a tick: the landing is read from the Travel its answer's ticket names
             // (landingOf), and a refused trip's ticket on a second, granted one landed him where
             // the first asked -- Lost Tower 7 at Noria's price, no level, quest or wings asked.

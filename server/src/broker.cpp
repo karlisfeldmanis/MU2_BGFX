@@ -554,11 +554,19 @@ void brokerAsk(Session& one, const net::BrokerAsk& asked, std::vector<std::uniqu
 void brokerHeard(const World& world, const std::vector<sim::Command>& commands,
                  const std::vector<sim::Happening>& said, std::vector<std::unique_ptr<Session>>& sessions) {
     if (g_pending.empty()) return;
+    // Its own command's answer alone: a ticket, and one of the Broker's four kinds.
+    const auto ours = [](int32_t kind) {
+        using K = sim::Command::Kind;
+        return kind == int32_t(K::BrokerTake) || kind == int32_t(K::BrokerBuy) ||
+               kind == int32_t(K::BrokerGive) || kind == int32_t(K::BrokerZen);
+    };
     std::vector<Pending> answered;
     for (size_t i = 0; i < g_pending.size();) {
         const Pending& p = g_pending[i];
         const bool inTick = p.world == &world &&
-                            std::any_of(commands.begin(), commands.end(), [&](const sim::Command& c) { return c.ticket == p.ticket; });
+                            std::any_of(commands.begin(), commands.end(), [&](const sim::Command& c) {
+                                return c.ticket == p.ticket && ours(int32_t(c.kind));
+                            });
         if (!inTick) {
             ++i;
             continue;
@@ -569,7 +577,7 @@ void brokerHeard(const World& world, const std::vector<sim::Command>& commands,
     for (const Pending& p : answered) {
         int answer = -1;  // a command the realm dropped -- he left -- is a no
         for (const sim::Happening& h : said) {
-            if (h.what == sim::What::Answered && uint32_t(h.c) == p.ticket) answer = h.b;
+            if (h.what == sim::What::Answered && uint32_t(h.c) == p.ticket && ours(h.a)) answer = h.b;
         }
         complete(p, answer, sessions);
     }
