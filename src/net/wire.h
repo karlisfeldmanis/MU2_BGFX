@@ -114,7 +114,10 @@ namespace mu::net {
 //     sign-in token, and a Roster refused SignIn when the website does not keep it.
 // 32: the game's pass (net/pass.h, docs/plans/security.md) where the token went, in an Account's
 //     key and a Hello's account: the token itself no longer crosses the line.
-constexpr uint32_t kVersion = 32;
+// 33: the dragon called by whoever runs the server (`mu dragon`), Tick's rain byte bit 4; and
+//     the realm's rules since 32 (bound things in the vault, the unstruck dragon gone in two
+//     minutes), so a client older than them is refused instead of drifting from the server.
+constexpr uint32_t kVersion = 33;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";
