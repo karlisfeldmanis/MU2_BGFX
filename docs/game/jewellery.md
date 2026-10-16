@@ -84,8 +84,9 @@ copy of ring.png (content/textures/ring_*.png, necklace_fury.png):
   the nothing below them. The Leech adds life on every wound he lands on a monster, per body.
   Fury raises a critical's top of the band, swing and spell alike; it draws no dice.
 - **Colour is the count.** A drop rolls how many powers (sim::kAffixCountShare): one 55%
-  (green), two 28% (blue), three 13% (purple, from monster level 40), four 4% (legendary, from
-  60); a count a kill cannot reach is out and its share goes to the rest. The extra powers are
+  (white), two 28% (blue), three 13% (purple, from monster level 40), four 4% (legendary, from
+  60). Legendary is the runes' orange, name, label and drop column (the user, 2026-10-16: it was
+  the excellent pieces' green and read as no rarer); a count a kill cannot reach is out and its share goes to the rest. The extra powers are
   drawn from the four its signature leaves, none twice, and kept in `Held::affixes`. Excellent
   lifts the name to purple at least and a socket to blue.
 - **Where they drop.** As an ordinary item in the 15-level band; past it a deep kill still draws
@@ -109,6 +110,17 @@ copy of ring.png (content/textures/ring_*.png, necklace_fury.png):
   A8 Lightning, A9 Fire. See "Resistances" below for what each element stops.
 - **Not yet:** the shop price is MU's group-13 formula and ignores the powers. `--give` takes
   `A<n>` for each further power (1 Wisdom ... 5 Fury): `--give RingWisdom::+9LA2A3A4W`.
+
+## The Pendant of Haste (2026-10-16)
+
+The user picked it as a second powered pendant, so the amulet slot is not Fury alone. 13/29,
+NecklaceHaste: Necklace01's mesh with the stone pixels Fury re-hued, here aqua
+(content/textures/necklace_haste.png), drop level 44, every class. Its signature is **attack and
+casting speed**, +2 at +0 to +10 at +9 on the same square curve (sim::Affix::Haste): on the swing
+beside the excellent option's 14 and the Ale's 20 (`Excellence::speed`), and on a spell's clip
+beside Frenzy's (`Excellence::haste`, Realm::clipTicksOf). It rolls one to three further powers
+as the other five do, but Haste itself is never a further power on another piece.
+`--give NecklaceHaste::+9A1A2A3` is a legendary +9.
 
 ## Resistances: who casts what (2026-10-04)
 

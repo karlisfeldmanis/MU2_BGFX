@@ -144,8 +144,9 @@ bool ring(const content::ItemRow& row) {
 }
 
 bool pendant(const content::ItemRow& row) {
-    // MU's two, and the Pendant of Fury.
-    return row.group == kGroupPets && (row.number == 12 || row.number == 13 || row.number == 25);
+    // MU's two, the Pendant of Fury and the Pendant of Haste.
+    return row.group == kGroupPets &&
+           (row.number == 12 || row.number == 13 || row.number == 25 || row.number == 29);
 }
 
 Affix signatureOf(const content::ItemRow& row) {
@@ -156,6 +157,7 @@ Affix signatureOf(const content::ItemRow& row) {
         case 23: return Affix::Fortune;
         case 24: return Affix::Leech;
         case 25: return Affix::Fury;
+        case 29: return Affix::Haste;
         default: return Affix::None;
     }
 }
@@ -192,9 +194,10 @@ int gearRung(int score) {
 
 int affixValue(Affix affix, int refinement) {
     // +0 and +9, the user's of 2026-10-03 ("+9 still to OP", then "its better").
-    // The resistances 1 to 4 points, MU's own ring at +4 (2026-10-04).
-    static const int kLow[kAffixes + 1] = {0, 1, 2, 1, 1, 2, 1, 1, 1, 1};
-    static const int kHigh[kAffixes + 1] = {0, 8, 12, 10, 5, 12, 4, 4, 4, 4};
+    // The resistances 1 to 4 points, MU's own ring at +4 (2026-10-04). Haste 2 to 10 speed, the
+    // excellent option's 14 and one Frenzy stack's 8 above it (2026-10-16).
+    static const int kLow[kAffixes + 1] = {0, 1, 2, 1, 1, 2, 1, 1, 1, 1, 2};
+    static const int kHigh[kAffixes + 1] = {0, 8, 12, 10, 5, 12, 4, 4, 4, 4, 10};
     const int at = int(affix);
     if (at <= 0 || at > kAffixes) return 0;
     const double t = double(std::clamp(refinement, 0, kRefineCap)) / double(kRefineCap);
@@ -212,6 +215,7 @@ const char* affixName(Affix affix) {
         case Affix::PoisonResistance: return "Poison resistance";
         case Affix::LightningResistance: return "Lightning resistance";
         case Affix::FireResistance: return "Fire resistance";
+        case Affix::Haste: return "Attack and casting speed";
         default: return "";
     }
 }

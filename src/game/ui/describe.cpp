@@ -298,11 +298,13 @@ tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
         const sim::PowerRow* power = sim::powerOf(powerAt(what, 0));
         return power ? rarityTone(power->rarity) : Tone::RuneLegendary;
     }
-    // A powered ring or pendant is its count of powers (sim::affixCount): one green, two blue,
-    // three purple, four legendary -- the user's ladder of 2026-10-03. Being excellent lifts it to
-    // purple at least. A socket lifts nothing (below).
+    // A powered ring or pendant is its count of powers (sim::affixCount): one white, two blue,
+    // three purple, four legendary -- the user's ladder of 2026-10-03. Legendary is the runes'
+    // orange (the user, 2026-10-16, so it reads apart from an excellent piece's green). Being
+    // excellent lifts it to purple at least. A socket lifts nothing (below).
     if (sim::powered(row)) {
-        static const Tone kByCount[4] = {Tone::Uncommon, Tone::Rare, Tone::Epic, Tone::Legendary};
+        static const Tone kByCount[4] = {Tone::Uncommon, Tone::Rare, Tone::Epic,
+                                         Tone::RuneLegendary};
         Tone tone = kByCount[std::clamp(sim::affixCount(row, what), 1, 4) - 1];
         if (what.excellent != 0 && tone < Tone::Epic) tone = Tone::Epic;
         return tone;
@@ -538,8 +540,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             const int value = sim::affixValue(affix, what.refinement);
             Row line;
             line.free = sim::affixName(affix);
-            // Life a blow and resistance points are counts, the rest percent.
-            const bool count = affix == sim::Affix::Leech ||
+            // Life a blow, speed and resistance points are counts, the rest percent.
+            const bool count = affix == sim::Affix::Leech || affix == sim::Affix::Haste ||
                                sim::affixElement(affix) != sim::Element::None;
             line.tail = "+" + std::to_string(value) + (count ? "" : "%");
             line.freeTone = ink;

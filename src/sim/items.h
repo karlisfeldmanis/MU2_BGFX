@@ -279,6 +279,9 @@ constexpr int64_t kJewelleryRegenTicks = 7 * 20;  // m_LifeFillCount > 6, once a
 // (ObjBaseAttack.cpp:558); Fire, which turns nothing aside in MU, takes kResistanceCut a point
 // off a monster's fire blow, to kResistanceCutMost (ours). Which monster casts what:
 // docs/game/jewellery.md "Resistances".
+// Haste is the Pendant of Haste's (13/29) and a signature only, never drawn as a further power
+// (the user, 2026-10-16, picking it for a second powered pendant): attack and casting speed,
+// beside the excellent option's and Frenzy's.
 enum class Affix : uint8_t {
     None = 0,
     Wisdom,
@@ -289,9 +292,10 @@ enum class Affix : uint8_t {
     IceResistance,
     PoisonResistance,
     LightningResistance,
-    FireResistance
+    FireResistance,
+    Haste
 };
-constexpr int kAffixes = 9;
+constexpr int kAffixes = 10;
 // The element a resistance power is in, None for the other five.
 Element affixElement(Affix affix);
 constexpr double kResistanceCut = 0.05;

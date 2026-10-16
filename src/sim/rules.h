@@ -143,6 +143,9 @@ struct Excellence {
     int itemFind = 0;
     int lifeOnHit = 0;
     int criticalDamage = 0;
+    // The Pendant of Haste's (sim::Affix::Haste): in `speed` for the swing, and here for the
+    // casting clip, which reads Frenzy's alone beside the stat.
+    int haste = 0;
     // The rings' stings (sim::ringStingChance), each element's: the largest worn one's plus,
     // plus one, so +0 still counts. 0 for none worn.
     int iceRing = 0;

@@ -122,9 +122,8 @@ constexpr float kJewelReach = 1.4f, kJewelLevel = 0.14f;
 // A quest item's: wider and several times brighter, a violet the beam shares.
 constexpr float kQuestReach = 3.0f, kQuestLevel = 0.7f;
 constexpr float kQuestViolet[3] = {0.72f, 0.38f, 1.0f};  // the user's purple
-constexpr float kLegendaryGreen[3] = {0.12f, 1.0f, 0.08f};  // legendary's green since 2026-10-04
-// A legendary rune's, redder than its name's #ff8000: under the night's grade a half green
-// read olive in the column.
+// A legendary's, a rune's or a ring's (the user, 2026-10-16), redder than its name's #ff8000:
+// under the night's grade a half green read olive in the column.
 constexpr float kRuneOrange[3] = {1.0f, 0.3f, 0.0f};
 constexpr float kExcellentGreen[3] = {0.15f, 1.0f, 0.25f};  // MU's excellent green, less blue: 0.5 read teal
 // Its beam: metres tall and wide, and the core's share of the width.
@@ -180,12 +179,10 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
         drop.glow = 3;
         for (int k = 0; k < 3; ++k) drop.glowColour[k] = kQuestViolet[k];
     } else if (legendary(row, one.what)) {
-        // A legendary drop stands in the same column, in its own green (the user, 2026-10-04:
-        // 'we need also that light for legendary drops'): the colour its name is drawn in, a
-        // legendary rune's orange.
+        // A legendary drop stands in the same column (the user, 2026-10-04: 'we need also that
+        // light for legendary drops'), in the orange its name is drawn in.
         drop.glow = 3;
-        const float* ink = sim::creation(row) ? kRuneOrange : kLegendaryGreen;  // a rune orange
-        for (int k = 0; k < 3; ++k) drop.glowColour[k] = ink[k];
+        for (int k = 0; k < 3; ++k) drop.glowColour[k] = kRuneOrange[k];
     } else if (one.what.excellent != 0) {
         // And an excellent one, in MU's excellent green its name is drawn in (the user,
         // 2026-10-04: 'excelnt drops needs also light', then 'excelent has to be green').

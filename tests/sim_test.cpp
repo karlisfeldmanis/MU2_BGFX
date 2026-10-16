@@ -850,7 +850,7 @@ void testItems(const content::Tables& tables) {
     // Hurricane; Knight Blade, Dark Reign Blade, Staff of Kundun, Arrow Viper Bow). A count
     // rather than a list, because what it is guarding is the cook -- a
     // recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 302, "302 item rows cooked");
+    checkEqual(long(tables.items.size()), 303, "303 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
     // And Lumen's, whose Guardian Angel and Imp are ours (the user, 2026-09-30: "put imp and
@@ -10145,6 +10145,31 @@ void testPoweredJewellery(const content::Tables& tables) {
                 most[0], powered[1], most[1]);
     check(powered[0] > 0 && most[0] <= 2, "a level-35 kill leaves green and blue only");
     checkEqual(most[1], 4, "a level-75 kill can leave a legendary");
+
+    // The Pendant of Haste (13/29, 2026-10-16): attack and casting speed, a signature only.
+    const int haste = tables.itemAt(13, 29);
+    check(haste >= 0 && sim::pendant(row(haste)), "the Pendant of Haste is a pendant");
+    if (haste >= 0) {
+        checkEqual(sim::affixValue(sim::Affix::Haste, 0), 2, "Haste +2 at +0");
+        checkEqual(sim::affixValue(sim::Affix::Haste, 9), 10, "+10 at +9");
+        sim::Realm quick;
+        quick.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
+        const int before = quick.attackSpeed();
+        check(quick.give(haste, sim::kAmulet, 9) >= 0, "a Pendant of Haste +9 worn");
+        checkEqual(quick.hero().excel.haste, 10, "its 10 on the casting clip");
+        checkEqual(quick.attackSpeed() - before, 10, "and on his attack speed");
+        bool drawn = false;
+        sim::Realm drops;
+        drops.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
+        for (int i = 0; i < 60000 && !drawn; ++i) {
+            drops.dropFor(75);
+            for (const sim::Lying& one : drops.lying()) {
+                if (one.what.empty() || !sim::powered(row(one.what.item))) continue;
+                for (uint8_t a : one.what.affixes) drawn = drawn || a == uint8_t(sim::Affix::Haste);
+            }
+        }
+        check(!drawn, "Haste is never drawn as a further power");
+    }
 
     // Bless and Soul take a ring, and a jewel's refusal still holds past the boots.
     if (bless >= 0) {

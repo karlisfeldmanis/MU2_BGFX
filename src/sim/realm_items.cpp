@@ -511,6 +511,10 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
                 case Affix::Fortune: e.itemFind += value; break;
                 case Affix::Leech: e.lifeOnHit += value; break;
                 case Affix::Fury: e.criticalDamage += value; break;
+                case Affix::Haste:
+                    e.haste += value;
+                    e.speed += value;
+                    break;
                 default: resistancePowers[int(affixElement(affix))] += value; break;
             }
         };
@@ -1397,7 +1401,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
         uint8_t left[kAffixes - 1];
         int n = 0;
         for (int a = 1; a <= kAffixes; ++a) {
-            if (Affix(a) != own) left[n++] = uint8_t(a);
+            if (Affix(a) != own && Affix(a) != Affix::Haste) left[n++] = uint8_t(a);
         }
         for (int i = 0; i < count - 1; ++i) {
             const int at = runeDice_.nextInt(0, n);
