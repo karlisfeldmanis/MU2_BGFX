@@ -151,10 +151,10 @@ the socket it fits.
 
 ## Decisions open
 
-1. **The level.** The door asks 300, but Aida's breeds are still MU's 72-120 (OM S6 numbers). A
-   300 hero kills them in a blow and earns little from them. Either the breeds are raised for
-   the 300 band (life, damage, defence, experience), or the quest asks a lower level than the
-   door, which a quest cannot (the gate is the way in).
+1. **The level, settled** (the user, 2026-10-16: 'well aida is most strongest monsters after
+   icarus, so i raised gate'). The door's 300 places Aida after Icarus in the walk, its breeds
+   staying MU's 72-120 (OM S6), the Bloody four the strongest of them. Both quests ask the
+   door's level.
 2. **His name.** MU's is "Seed Master" (시드마스터). Keep it, or give him a name ("the Seed
    Master" in the quests either way).
 3. **The rewards** above, as built: proposals the user has not picked.
