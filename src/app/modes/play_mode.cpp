@@ -1259,8 +1259,14 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         const bool mouseLeft = directed ? hand.pressed : ctx.window.clicked(0);
         const bool mouseRight = directed ? hand.rightPressed : ctx.window.clicked(1);
         const bool mouseRightHeld = directed ? hand.rightHeld : ctx.window.held(1);
+        const bool mouseLeftHeld = directed ? hand.held : ctx.window.held(0);
         if ((mouseLeft && !windowed) || clickNow || (uiPress && !uiRight && !windowed)) {
             world_.played().leftClick();
+        } else if (mouseLeft || !mouseLeftHeld) {
+            // A press on a window, or the button up: nothing held walks on.
+            world_.played().leftLetGo();
+        } else if (!windowed) {
+            world_.played().leftHeld();
         }
         if ((mouseRight || (uiPress && uiRight)) && !windowed) {
             world_.played().rightClick();
