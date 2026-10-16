@@ -204,6 +204,79 @@ Door door(Session& one, std::string& key) {
     return Door::Wait;
 }
 
+namespace {
+
+// One POST on this machine, its answer not read past the status: the website's /internal/online.
+void post(const std::string& host, int port, const std::string& path, const std::string& body) {
+    const int fd = ::socket(AF_INET, SOCK_STREAM, 0);
+    if (fd < 0) return;
+    timeval wait{3, 0};
+    ::setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &wait, sizeof wait);
+    ::setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &wait, sizeof wait);
+    sockaddr_in at{};
+    at.sin_family = AF_INET;
+    at.sin_port = htons(uint16_t(port));
+    if (::inet_pton(AF_INET, host.c_str(), &at.sin_addr) == 1 &&
+        ::connect(fd, reinterpret_cast<sockaddr*>(&at), sizeof at) == 0) {
+        const std::string asked = "POST " + path + " HTTP/1.0\r\nHost: " + host +
+                                  "\r\nContent-Type: application/json\r\nContent-Length: " +
+                                  std::to_string(body.size()) + "\r\n\r\n" + body;
+        if (::send(fd, asked.data(), asked.size(), 0) == ssize_t(asked.size())) {
+            char buffer[256];
+            ::recv(fd, buffer, sizeof buffer, 0);
+        }
+    }
+    ::close(fd);
+}
+
+// A name as a JSON string: the server's names are letters and digits, but nothing is trusted.
+std::string quoted(const std::string& text) {
+    std::string out = "\"";
+    for (const char c : text) {
+        if (c == '"' || c == '\\') out += '\\';
+        if (uint8_t(c) >= 0x20) out += c;
+    }
+    return out + "\"";
+}
+
+std::future<void> g_telling;
+Clock::time_point g_toldAt{};
+constexpr auto kTellEvery = std::chrono::seconds(5);
+
+}  // namespace
+
+void tellOnline(const std::vector<std::unique_ptr<Session>>& sessions) {
+    if (!takesTokens()) return;
+    const auto now = Clock::now();
+    if (now - g_toldAt < kTellEvery) return;
+    // The last one still on its way (the website slow or gone): this one waits for the next turn.
+    if (g_telling.valid() && g_telling.wait_for(std::chrono::seconds(0)) != std::future_status::ready) return;
+    g_toldAt = now;
+    std::string body = "{\"players\":[";
+    bool first = true;
+    for (const auto& one : sessions) {
+        if (!one->welcomed || !one->socket.open() || one->world == nullptr) continue;
+        const sim::Body* him = one->world->realm->find(one->player);
+        if (him == nullptr) continue;
+        // account000000042 -> 42; a character of no account (a bot, a local run) 0.
+        const long long id = one->account.rfind("account", 0) == 0 ? std::atoll(one->account.c_str() + 7) : 0;
+        char line[512];
+        std::snprintf(line, sizeof line,
+                      "%s{\"account\":%lld,\"name\":%s,\"class\":%s,\"level\":%d,\"world\":%s,\"copy\":%d,"
+                      "\"x\":%d,\"y\":%d,\"bot\":%s}",
+                      first ? "" : ",", id, quoted(one->name).c_str(),
+                      quoted(sim::className(int(him->kin), him->second)).c_str(), int(him->level),
+                      quoted(one->world->name).c_str(), one->world->copy, int(him->x), int(him->y),
+                      one->bot ? "true" : "false");
+        body += line;
+        first = false;
+    }
+    body += "]}";
+    const std::string host = g_host;
+    const int port = g_port;
+    g_telling = std::async(std::launch::async, [host, port, body] { post(host, port, "/internal/online", body); });
+}
+
 bool signed_(Session& one, std::string& account) {
     if (!one.signing.valid()) return false;
     if (one.signing.wait_for(std::chrono::seconds(0)) != std::future_status::ready) return false;

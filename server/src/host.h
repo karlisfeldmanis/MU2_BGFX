@@ -445,6 +445,9 @@ Door door(Session& one, std::string& key);
 // The website's answer, once it has come: true, with his account's key, or "" for a ticket it does
 // not keep or a pass that does not prove itself, or "!" when it could not be asked.
 bool signed_(Session& one, std::string& account);
+// Who is on the server, told to the website's /internal/online every 5 s for its admins' Online page
+// (web/README.md): the post on a job of its own, never the loop's.
+void tellOnline(const std::vector<std::unique_ptr<Session>>& sessions);
 
 // main.cpp
 bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Online — MU Classic</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Alegreya+Sans+SC:wght@700&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+<style>
+/* The admins' page: who is on the game server now (server.py /api/online). */
+.online-page .wrap { max-width: 960px; }
+.count { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 24px; color: var(--label); }
+.count b { color: var(--bone-hi); font-size: 22px; margin-right: 6px; }
+.stale { color: var(--danger); text-align: center; }
+.who { width: 100%; border-collapse: collapse; font-size: 16px; }
+.who th { text-align: left; font: 700 15px/1.2 'Alegreya Sans SC', sans-serif; color: var(--quiet); padding: 8px 10px; box-shadow: inset 0 -1px 0 var(--edge); }
+.who td { padding: 10px; box-shadow: inset 0 -1px 0 var(--line); vertical-align: top; }
+.who td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.who .sub { display: block; font-size: 14px; color: var(--quiet); }
+.who tr.bot td { color: var(--quiet); }
+/* At phone width the table becomes one card a player. */
+@media (max-width: 680px) {
+  .who thead { display: none; }
+  .who, .who tbody, .who tr, .who td { display: block; }
+  .who tr { padding: 10px 0; box-shadow: inset 0 -1px 0 var(--line); }
+  .who td { padding: 2px 0; box-shadow: none; }
+  .who td.num { text-align: left; }
+  .who td[data-k]::before { content: attr(data-k) ' '; color: var(--quiet); }
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+<a href="/"><img src="/logo.svg" alt="MU Classic home" width="435" height="261"></a>
+<a href="/account" style="font-weight: 500">Account</a>
+</div>
+
+<main class="account-page online-page">
+<div class="wrap">
+<h1 class="page-title">Who is online</h1>
+
+<p id="v-none" class="center muted" hidden>This page is for admins. <a href="/account" style="text-decoration: underline">Sign in</a> with an admin account.</p>
+
+<div id="v-list" class="form" style="gap: 20px" hidden>
+<div class="count" id="count"></div>
+<p id="stale" class="stale" hidden></p>
+<table class="who">
+<thead><tr><th>Character</th><th>Account</th><th>Level</th><th>Map</th><th>Online for</th></tr></thead>
+<tbody id="rows"></tbody>
+</table>
+<p class="center muted" style="font-size: 14px" id="told"></p>
+</div>
+
+</div>
+</main>
+
+<footer>
+<div class="wrap">
+<img src="/logo.svg" alt="MU Classic" width="435" height="261">
+</div>
+</footer>
+
+<script src="/site.js"></script>
+<script>
+(() => {
+  const { $, el, api, when } = MU;
+
+  const map = (w) => String(w || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  function since(seconds) {
+    const m = Math.max(0, Math.floor((Date.now() / 1000 - seconds) / 60));
+    return m < 1 ? 'just now' : m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min';
+  }
+  function cell(text, sub, key, cls) {
+    const td = el('td', cls || '', text);
+    if (key) td.dataset.k = key;
+    if (sub) td.appendChild(el('span', 'sub', sub));
+    return td;
+  }
+
+  function render(o) {
+    const people = o.players.filter((p) => !p.bot), bots = o.players.length - people.length;
+    const maps = new Set(o.players.map((p) => p.world)).size;
+    const count = $('count');
+    count.replaceChildren();
+    for (const [n, word] of [[people.length, people.length === 1 ? 'player' : 'players'], [bots, bots === 1 ? 'bot' : 'bots'], [maps, maps === 1 ? 'map' : 'maps']]) {
+      const s = el('span');
+      s.appendChild(el('b', '', String(n)));
+      s.appendChild(document.createTextNode(word));
+      count.appendChild(s);
+    }
+    $('stale').hidden = o.fresh;
+    $('stale').textContent = o.at ? 'The game server has not reported since ' + when(o.at) + '. It may be down or restarting.'
+                                  : 'The game server has not reported since the website started.';
+    const rows = $('rows');
+    rows.replaceChildren();
+    if (!o.players.length) {
+      const tr = el('tr');
+      const td = cell('Nobody is playing right now.', '', '', 'muted');
+      td.colSpan = 5;
+      tr.appendChild(td);
+      rows.appendChild(tr);
+    }
+    for (const p of o.players) {
+      const tr = el('tr', p.bot ? 'bot' : '');
+      tr.appendChild(cell(p.name || '—', p.class + (p.bot ? ' · bot' : '')));
+      tr.appendChild(cell(p.account_name || p.email || (p.account ? '#' + p.account : 'none'),
+                          p.account_name && p.email ? p.email : '', 'Account'));
+      tr.appendChild(cell(String(p.level), '', 'Level', 'num'));
+      tr.appendChild(cell(map(p.world) + (p.copy > 1 ? ' ' + p.copy : ''), p.x + ', ' + p.y, 'Map'));
+      tr.appendChild(cell(since(p.since), '', 'Online for'));
+      rows.appendChild(tr);
+    }
+    $('told').textContent = o.at ? 'Updated ' + when(o.at) + ' · refreshes every 10 s' : '';
+    $('v-list').hidden = false;
+    $('v-none').hidden = true;
+  }
+
+  async function load() {
+    try {
+      const { status, said } = await api('/api/online');
+      if (status === 200) return render(said);
+      $('v-list').hidden = true;
+      $('v-none').hidden = false;
+    } catch (e) { /* the next turn tries again */ }
+  }
+  load();
+  setInterval(() => { if (!document.hidden) load(); }, 10000);
+})();
+</script>
+</body>
+</html>

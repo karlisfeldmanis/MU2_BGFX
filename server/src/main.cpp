@@ -482,6 +482,8 @@ int main(int argc, char** argv) {
         }
         // Each hour, where the Zen came from and went, in its own file (economy.h).
         economyReport(sessions);
+        // Who is on, for the website's Online page.
+        tellOnline(sessions);
         // Each minute, how the loop kept time.
         if (Clock::now() - g_stats.since >= kStatsEvery) {
             const double seconds = std::chrono::duration<double>(Clock::now() - g_stats.since).count();

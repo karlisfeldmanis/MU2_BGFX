@@ -19,7 +19,7 @@ Design: the "MU2 Launcher" canvas, Website page.
 
 ## The accounts
 
-    accounts(id, email UNIQUE NOCASE, password 'scrypt$n$r$p$salt$key', created, name UNIQUE NOCASE)
+    accounts(id, email UNIQUE NOCASE, password 'scrypt$n$r$p$salt$key', created, name UNIQUE NOCASE, role)
     sessions(token_hash, account_id, created, expires, last_used, ip, agent)   -- 90 days
     plays(account_id, at, ip, fp)              -- each Play (a ticket asked), 30 days, and its machine
     devices(account_id, fp, report, ip, seen)  -- a machine report sent with the account's token
@@ -49,6 +49,17 @@ answers 404 for `/internal/` from outside.
 On the box: `sqlite3 /var/lib/mu2-web/accounts.db 'select id, email, created from accounts'`.
 To delete one by hand, start with `PRAGMA foreign_keys=ON;` or its sessions stay behind: the
 sqlite3 shell does not cascade unless told.
+
+## Roles and the Online page
+
+An account's `role` is `player` (every new one) or `admin`. An admin's account page links to
+`/online`: who is on the game server now -- character, class, level, account, map and tile, how
+long they have been on -- refreshed every 10 s. mu2_server posts its list to `/internal/online`
+every 5 s (server/src/signin.cpp `tellOnline`, only when it runs with `--accounts`); the website
+keeps it in memory only, and says so on the page when the last list is over 20 s old. Anyone else
+asking `/api/online` is answered 404. A role is set on the box, never from outside:
+
+    curl -s -d '{"email":"X","role":"admin"}' http://127.0.0.1:8080/internal/role   # or "player"
 
 ## Game releases (the launcher's)
 

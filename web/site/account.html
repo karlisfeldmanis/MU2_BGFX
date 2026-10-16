@@ -36,6 +36,7 @@
 <div id="v-account" class="form" style="gap: 20px" hidden>
 <h1 class="page-title">Your account</h1>
 <span id="a-who" class="center"></span>
+<a id="a-online" class="center" href="/online" style="text-decoration: underline" hidden>Who is online</a>
 
 
 <div>
@@ -124,6 +125,7 @@
   }
   function render(a) {
     $('a-who').textContent = (a.name ? a.name + ' · ' : '') + a.email;
+    $('a-online').hidden = a.role !== 'admin';
     const sessions = $('a-sessions');
     sessions.replaceChildren();
     // Only the launchers: a browser's sign-in is this page itself, not where the game is played.

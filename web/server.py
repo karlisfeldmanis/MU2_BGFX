@@ -40,6 +40,13 @@ The routes:
     POST /api/comments   Bearer T {post, text}      -> 201 {ok} | 400 {error} | 401 | 429
          on the posts of site/posts.json, under the account's name.
     GET  /api/downloads                             -> 200 {windows: {file, bytes} | null, macos: ...}
+    GET  /api/online     Bearer T of an admin       -> 200 {at, fresh, players: [...]} | 404 for anyone else
+         who is on the game server now, as mu2_server last told it (the admins' /online page).
+    POST /internal/online   (127.0.0.1 only) {players: [{account, name, class, level, world, copy, x, y, bot}]}
+         mu2_server's list of who is on, every 5 s (server/src/signin.cpp tellOnline); kept in memory.
+    POST /internal/role     (127.0.0.1 only) {email, role}  -> 200 {ok} | 404
+         an account made "admin" or back to "player": on the box,
+         curl -s -d '{"email":"X","role":"admin"}' http://127.0.0.1:8080/internal/role
     GET  /internal/ticket?ticket=X  (127.0.0.1 only, never proxied) -> 200 {account, secret} | 404
          for mu2_server to learn whose a game's ticket is and the secret its proofs are made with.
          Each ticket is told once, and forgotten here as it is told.
@@ -84,6 +91,12 @@ TICKET_SECONDS = 120
 # And a ticket's account is known this long, for the crash reports the game sends as it starts.
 TICKET_KEPT_SECONDS = 86400
 MOST_BODY = 4096
+# An account's role: "player", or "admin", who may open the /online page (/internal/role sets it).
+ROLES = ("player", "admin")
+# mu2_server's list of who is on: a few hundred players at most, each line under 200 bytes.
+MOST_ONLINE_BODY = 512 * 1024
+# The list is told every 5 s; one older than this is a server that stopped telling (down, or restarting).
+ONLINE_STALE_SECONDS = 20
 EMAIL = re.compile(r"^[^@\s]{1,64}@[^@\s]+\.[^@\s]+$")
 SCRYPT = dict(n=2**14, r=8, p=1, maxmem=64 * 1024 * 1024, dklen=32)
 
@@ -237,6 +250,9 @@ class Store:
         self.crashes_path = path.parent / "crashes.jsonl"
         self.crash_lock = threading.Lock()
         self.crash_seen = set()
+        # Who is on the game server, as mu2_server last told it (told_online); never on disk.
+        self.online_lock = threading.Lock()
+        self.online = {"at": 0, "players": []}
         self.crash_days = {}
         for row in self.crash_rows():
             self.crash_seen.add(row.get("sha"))
@@ -252,6 +268,8 @@ class Store:
             db.execute("CREATE UNIQUE INDEX IF NOT EXISTS accounts_name ON accounts(name COLLATE NOCASE)")
             if "fp" not in {row[1] for row in db.execute("PRAGMA table_info(plays)")}:
                 db.execute("ALTER TABLE plays ADD COLUMN fp TEXT NOT NULL DEFAULT ''")
+            if "role" not in have:
+                db.execute("ALTER TABLE accounts ADD COLUMN role TEXT NOT NULL DEFAULT 'player'")
             have = {row[1] for row in db.execute("PRAGMA table_info(sessions)")}
             for column in ("ip", "agent"):
                 if column not in have:
@@ -351,8 +369,8 @@ class Store:
 
     def account(self, account: int, token: str) -> dict:
         db = self.db()
-        email, name, created = db.execute("SELECT email, name, created FROM accounts WHERE id = ?",
-                                          (account,)).fetchone()
+        email, name, created, role = db.execute("SELECT email, name, created, role FROM accounts WHERE id = ?",
+                                                (account,)).fetchone()
         mine = token_hash(token)
         sessions = [{"id": row[0][:16], "current": row[0] == mine, "created": row[1], "last": row[2],
                      "ip": short_ip(row[3]), "agent": agent_name(row[4])}
@@ -373,7 +391,7 @@ class Store:
             row = json.loads(report) if report else {}
             plays.append({"at": at, "ip": short_ip(ip)} |
                          {key: row.get(key) for key in ("gpu", "os", "graphics") if row.get(key)})
-        return {"email": email, "name": name or "", "created": created, "sessions": sessions,
+        return {"email": email, "name": name or "", "created": created, "role": role, "sessions": sessions,
                 "devices": devices, "plays": plays}
 
     def comments(self, post: str) -> list:
@@ -386,14 +404,14 @@ class Store:
                           (post, account, text, int(time.time())))
 
     def session(self, token: str, ip: str = "", agent: str = ""):
-        """The account a live token belongs to, as (id, email, name), or None. The sign-in learns
+        """The account a live token belongs to, as (id, email, name, role), or None. The sign-in learns
         where and with what it was last used: those made before 2026-10-15 kept neither, and a
         launcher says itself on every start (/api/me, /api/ticket)."""
         if not re.fullmatch(r"[0-9a-f]{64}", token or ""):
             return None
         now = int(time.time())
         row = self.db().execute(
-            "SELECT a.id, a.email, a.name FROM sessions s JOIN accounts a ON a.id = s.account_id "
+            "SELECT a.id, a.email, a.name, a.role FROM sessions s JOIN accounts a ON a.id = s.account_id "
             "WHERE s.token_hash = ? AND s.expires >= ?", (token_hash(token), now)).fetchone()
         if row is not None:
             if agent:
@@ -438,6 +456,34 @@ class Store:
         if row is None or not hmac.compare_digest(row[1], token_hash(found.group(2))):
             return None
         return row[0]
+
+    def set_role(self, email: str, role: str) -> bool:
+        return self.db().execute("UPDATE accounts SET role = ? WHERE email = ?", (role, email)).rowcount > 0
+
+    def told_online(self, players: list):
+        """mu2_server's list, each player's since carried over from the last list he was on."""
+        now = int(time.time())
+        with self.online_lock:
+            before = {(p.get("account"), p.get("name")): p.get("since", now) for p in self.online["players"]}
+            for p in players:
+                p["since"] = before.get((p.get("account"), p.get("name")), now)
+            self.online = {"at": now, "players": players}
+
+    def online_report(self) -> dict:
+        with self.online_lock:
+            told = self.online
+        ids = sorted({p["account"] for p in told["players"] if p.get("account")})
+        accounts = {}
+        if ids:
+            marks = ",".join("?" * len(ids))
+            accounts = {row[0]: (row[1], row[2] or "") for row in self.db().execute(
+                f"SELECT id, email, name FROM accounts WHERE id IN ({marks})", ids)}
+        players = []
+        for p in told["players"]:
+            email, name = accounts.get(p.get("account"), ("", ""))
+            players.append(p | {"email": email, "account_name": name})
+        players.sort(key=lambda p: (p.get("bot", False), str(p.get("world")), -int(p.get("level") or 0)))
+        return {"at": told["at"], "fresh": time.time() - told["at"] < ONLINE_STALE_SECONDS, "players": players}
 
     def logout(self, token: str):
         self.db().execute("DELETE FROM sessions WHERE token_hash = ?", (token_hash(token or ""),))
@@ -637,6 +683,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.delete()
         if path == "/api/comments":
             return self.comment()
+        if path == "/internal/online":
+            return self.told_online()
+        if path == "/internal/role":
+            return self.role()
         self.reply(404, {"error": "not found"})
 
     def register(self):
@@ -764,6 +814,28 @@ class Handler(BaseHTTPRequestHandler):
               f"{row.get('gpu') or row.get('renderer', '')} | {row['what']} {row['where']}", flush=True)
         self.reply(200, {"ok": True})
 
+    def told_online(self):
+        if not self.direct():
+            return self.reply(404, {"error": "not found"})
+        said = self.body(MOST_ONLINE_BODY)
+        players = said.get("players") if said else None
+        if not isinstance(players, list):
+            return self.reply(400, {"error": "bad request"})
+        self.store.told_online([p for p in players if isinstance(p, dict)])
+        self.reply(200, {"ok": True})
+
+    def role(self):
+        if not self.direct():
+            return self.reply(404, {"error": "not found"})
+        said = self.body() or {}
+        email, role = str(said.get("email", "")).strip().lower(), str(said.get("role", ""))
+        if role not in ROLES:
+            return self.reply(400, {"error": f"role is one of {', '.join(ROLES)}"})
+        if not self.store.set_role(email, role):
+            return self.reply(404, {"error": "no such account"})
+        print(f"account {email} is now {role}", flush=True)
+        self.reply(200, {"ok": True})
+
     def ticket(self):
         if self.old_launcher():
             return self.reply(426, {"error": OLD_LAUNCHER})
@@ -870,12 +942,18 @@ class Handler(BaseHTTPRequestHandler):
             if self.old_launcher():
                 return self.reply(401, {"error": OLD_LAUNCHER})
             row = self.who()
-            return self.reply(200, {"email": row[1]}) if row else self.reply(401, {"error": "signed out"})
+            return self.reply(200, {"email": row[1], "role": row[3]}) if row else self.reply(401, {"error": "signed out"})
         if url.path == "/api/downloads":
             return self.reply(200, self.listing())
         if url.path == "/api/account":
             row = self.signed()
             return self.reply(200, self.store.account(row[0], self.bearer())) if row else None
+        if url.path == "/api/online":
+            # Anyone not an admin is told there is nothing here, as for a page that does not exist.
+            row = self.who()
+            if row is None or row[3] != "admin":
+                return self.reply(404, {"error": "not found"})
+            return self.reply(200, self.store.online_report())
         if url.path == "/api/comments":
             post = parse_qs(url.query).get("post", [""])[0]
             if post not in self.posts():
@@ -911,6 +989,8 @@ class Handler(BaseHTTPRequestHandler):
             path = "/index.html"
         elif path in ("/account", "/account/"):
             path = "/account.html"
+        elif path in ("/online", "/online/"):
+            path = "/online.html"
         root = self.downloads if path.startswith("/downloads/") else self.site
         rel = path[len("/downloads/"):] if root is self.downloads else path.lstrip("/")
         target = (root / rel).resolve()
