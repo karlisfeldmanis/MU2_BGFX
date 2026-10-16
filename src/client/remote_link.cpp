@@ -117,6 +117,9 @@ constexpr int64_t kOwnForgotten = 40;
 // The longest lead: a 400 ms round trip. Past it the hero would run far ahead of a world that
 // is drawn where it was, and the line is too poor to hide anyway.
 constexpr int kMostLead = 8;
+// The most ticks owed with the hero still led (RemoteLink::predict): Play steps a backlog past
+// its kSnapOwed (20) at once, and laying the realm ahead for each of those ticks buys nothing.
+constexpr size_t kMostLedOwed = 20;
 // An order whose tick the mirror steps later than this after the click is logged (RemoteLink::step).
 constexpr float kSlowAnswerMs = 200.0f;
 constexpr float kTickMs = 50.0f;  // the realm's 20 Hz (server/src/main.cpp kTickSeconds)
@@ -574,7 +577,13 @@ void RemoteLink::step() {
 void RemoteLink::predict() {
     aheadStale_ = false;
     aheadOk_ = false;
-    if (lead_ <= 0 || aheadNever_ || you_ == 0 || ticks_.size() > 2) return;
+    // Led through a backlog too. Dropped at more than two ticks owed, he was drawn where the
+    // mirror had him -- a whole round trip back -- for as long as the backlog was repaid, then
+    // jumped on again by the lead: a hitch of the line or of the frame was a rubber band (a
+    // player in Noria, 2026-10-16). Led, he stands with the world while the line is held up and
+    // hurries with it as it is repaid. Only past kMostLedOwed, a stall stepped at once
+    // (Play's kSnapOwed), is the laying a tick not worth it.
+    if (lead_ <= 0 || aheadNever_ || you_ == 0 || ticks_.size() > kMostLedOwed) return;
     if (!ahead_) {
         const content::Tables* tables = mirror_.tables();
         const sim::MapRow* map = tables ? sim::mapNumbered(int(tables->map)) : nullptr;
