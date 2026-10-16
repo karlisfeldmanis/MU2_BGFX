@@ -255,7 +255,7 @@ constexpr uint32_t kAgainBlue = gfx::rgba(0.56f, 0.80f, 1.00f);
 constexpr uint32_t kHeroGreen = gfx::rgba(0.42f, 0.86f, 0.36f);
 // Her summon, his green paled toward bone, so it reads as his and not as him.
 constexpr uint32_t kSummonGreen = gfx::rgba(0.66f, 0.90f, 0.60f);
-// Another player -- for now the bots -- in orange (the user, 2026-10-08).
+// Another player in orange (the user, 2026-10-08).
 constexpr uint32_t kPlayerOrange = gfx::rgba(1.00f, 0.58f, 0.12f);
 // The Golden Dragon where it has landed (the user, 2026-10-08: "show on minimap special dragon
 // dot when he lands"): its own gold, paler than a hand-in's, rimmed in ink.
@@ -717,7 +717,7 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
         put(Glyph::Summon, column, row, true, -1, summon->kind);
     }
 
-    // Every other player in the world, held to the edge so one far off is found: for now the bots.
+    // Every other player in the world, held to the edge so one far off is found.
     // Named by his body's index (`kind`), read back below.
     for (int p = 0; p < realm.playerCount(); ++p) {
         const sim::Body& other = realm.playerAt(p);
@@ -1071,7 +1071,10 @@ void Minimap::rebuild(const Play& play) {
         } else if (mark.glyph == Glyph::Player && mark.kind >= 0 &&
                    size_t(mark.kind) < play.realm().bodies().size()) {
             const sim::Body& other = play.realm().bodies()[size_t(mark.kind)];
-            words = "Bot, level " + std::to_string(other.level) + " " +
+            // Every other player by his name, as the server gave it; "Player" off a server.
+            std::string name;
+            if (!play.playerName(other.id, &name, nullptr) || name.empty()) name = "Player";
+            words = name + ", level " + std::to_string(other.level) + " " +
                     sim::className(int(other.kin), other.second);
         } else if (mark.glyph == Glyph::Gate) {
             const sim::EnterGate* gate = sim::enterGateNumbered(mark.kind);

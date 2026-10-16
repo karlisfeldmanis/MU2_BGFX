@@ -8,9 +8,9 @@
 //   * him: a bone arrow at the middle, turned the way he faces;
 //   * her summon: a paler green dot with his hairline of ink, held to the edge when it is out of
 //     reach, so a summon left behind is found (the user, 2026-10-02: 'show summon on minimap');
-//   * every other player: an orange dot, rimmed, held to the edge -- for now they are the bots
-//     (tools/netbot), and the user wants to find them (2026-10-08: 'this feature will be only for
-//     now, but i need to see on map bots with some ornage color circle');
+//   * every other player: an orange dot, rimmed, held to the edge (2026-10-08: 'i need to see on
+//     map bots with some ornage color circle'); hovered, his name, level and class -- not "Bot"
+//     (2026-10-16: 'we need to show player not bot on orange circle on minimap');
 //   * the quest's monsters: a red dot on each live one of a breed a quest still counts -- the
 //     one colour on it, Sanctuary's accent;
 //   * the quest giver while he has something for him: a "!" or a "?";
