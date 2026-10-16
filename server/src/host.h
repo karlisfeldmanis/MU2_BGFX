@@ -128,6 +128,10 @@ inline bool g_invasion = false;
 // so Charon's door can be played on a server without a day of levelling first. 0 for none.
 inline int g_kitLevel = 0;
 inline std::vector<std::pair<std::string, int>> g_kitItems;  // stem, plus
+// And `--kit-done 1,25`: those quests (sim/quests.cpp's table order) handed in once, as the
+// client's --quests-done does locally, so a chain's later link is offered on a server at once
+// (2026-10-16, Aida's: Peia's Sealed Wood waits on Noria's Song).
+inline std::vector<int> g_kitDone;
 // The most players in one copy of a map before the next is opened (`--map-cap N`): where the
 // client's own cost tells -- every client steps the whole map -- about 100 by the measurement of
 // 2026-10-08 (docs/sprints/24-the-quiet-line.md).

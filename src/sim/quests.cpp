@@ -1669,6 +1669,136 @@ QuestRow towerErrand() {
     return row;
 }
 
+// The Sealed Wood, the hook to Aida: Peia's third, once Noria's Song has been handed in, given to
+// the Seed Master in Aida's safe hall (docs/game/aida-quest.md; the user, 2026-10-16: 'do we have
+// quest lore for Noria quest giver to go to meet Aida quest giver?', 'goblinmaster.bmd will
+// work', then 'lets implement'). As The Drowned Song: no hunt, the errand is the meeting. Ours,
+// on MU's facts: Aida is a forest long cut off and ruled by monsters, reached by a gate in Noria
+// (Gamemeca, 2005-07-28), and the Seed Master is MU's Season 4 goblin. The level is the door's,
+// Noria's gate 120 (content/world/noria/world.json, 300 since 46b5dd27).
+QuestRow sealedWood() {
+    QuestRow row;
+    row.giver = 257;  // Peia
+    row.giverName = "Peia";
+    row.place = "Noria";
+    row.receiver = kSeedMasterNumber;
+    row.receiverName = "the Seed Master";
+    row.receiverPlace = "Aida";
+    row.title = "The Sealed Wood";
+    row.offer[0] =
+        "\"North-east of here the trees end in a gate no elf walks through. Beyond it is Aida, a "
+        "wood older than Noria, cut off from the rest of the world for as long as our songs "
+        "remember.\"";
+    row.offer[1] =
+        "\"Something lives in there that is not a monster. Every spring, seeds come through the "
+        "gate on the wind, and they are planted. In rows. Monsters do not plant.\"";
+    row.offer[2] =
+        "\"Whoever is doing it has been alone in that wood a very long time. Go through the gate "
+        "and find them, before the wood finishes what it started.\"";
+    row.underway =
+        "\"The gate is north-east of town, past the last of the trees. Whoever plants the seeds "
+        "will be where the wood is quietest.\"";
+    // The Seed Master's, in Aida's hall; what the wood became is his own quest's offer, which
+    // opens as this closes (seedMastersClearing).
+    row.handIn[0] =
+        "\"A visitor. A real one, with boots. Hm. The elf sent you? Then my seeds reached her. "
+        "Good. Fifty years of throwing them over the wall, and somebody finally counted the "
+        "rows.\"";
+    row.resting = "\"Mind the beds. Everything here grows, even what should not.\"";
+    // Peia's voice on her offer (pipeline/voice.py, VOICES["peia"] by the stem), the Seed
+    // Master's own on the hand-in (VOICES["seed_master"], the goblin).
+    row.voice = "peia_3";
+    row.receiverVoice = "seed_master";
+    row.steps[0] = {QuestStepKind::Return, 0, 1, "Find the Seed Master in Aida"};
+    row.stepCount = 1;
+    row.repeatSeconds = 0;  // once
+    row.minLevel = 300;     // the Noria door to Aida's
+    row.gateLevel = true;
+    row.afterAny = 1u << 1;  // Noria's Song handed in
+    row.natives = 0x7;
+    row.strangers = true;
+    row.experience = 300000;
+    row.zen = 150000;
+    return row;
+}
+
+// Aida's own clear, the Seed Master's: the 2005 wood, every breed weakest first on Marlon's ladder
+// (40, 35, 30, 30), the Witch Queens by their six nests, Hell Maine last -- 146 kills. The Bloody
+// four's west strip is a later quest of his (docs/game/aida-quest.md, "The Red Wood"). Ours.
+//
+// The pay is the doc's proposal (the ladder stops at Sevina's 200; Aida at 300 is a new act):
+// every clear the jewels and a Box of Kundun +3, and the first clear a Legendary Rune of Creation,
+// Greater Wellspring, the Seed Master's own trade.
+QuestRow seedMastersClearing() {
+    QuestRow row;
+    row.giver = kSeedMasterNumber;
+    row.giverName = "the Seed Master";
+    row.place = "Aida";
+    row.title = "The Seed Master's Clearing";
+    row.offer[0] = "\"Sit, sit. Let me tell you what you walked into.\"";
+    row.offer[1] =
+        "\"This wood was a garden once. Mine is the last bed of it. Then a demon came to the old "
+        "elf roads and made a bargain with Kundun: the wood's seeds for his power. Hell Maine, he "
+        "calls himself. Every seed he touched grew wrong.\"";
+    row.offer[2] =
+        "\"The trees you passed on your way in were trees. Now they walk and they bite. The orcs "
+        "came for the sap and stayed for the meat. The riders were the wood's own wardens; they "
+        "still ride the same paths, and they do not know what they guard. The golems were stone "
+        "circles. The Witch Queens were the ones who tended them.\"";
+    // "Cut down", not MU's "Clear": his voice drops a "cl" on every take (pipeline/voice.py).
+    row.offer[3] =
+        "\"Cut down the rows from my hall outward. The trees, then the orcs, the riders, the "
+        "golems. Then the queens in the middle of the maze. Then him, in his fire.\"";
+    row.offer[4] =
+        "\"Cut it all down and it all grows back by morning. That is what seeds do. But for a "
+        "night, the wood will be quiet, and I will plant something better.\"";
+    row.underway = "\"Still growing out there. I can hear the roots.\"";
+    row.handIn[0] =
+        "\"Quiet, quiet. Do you hear that? That is a wood with nothing wrong in it, for one "
+        "night.\"";
+    row.handIn[1] =
+        "\"Take these. I grew them myself. Come back when it all grows back, and it will.\"";
+    row.resting = "\"Let the beds rest. By morning they will be full again.\"";
+    row.voice = "seed_master_1";
+    row.steps[0] = {QuestStepKind::Clear, 308, 40, "Death Trees"};    // level 72, 29 nests
+    row.steps[1] = {QuestStepKind::Clear, 307, 35, "Forest Orcs"};    // 74, 36
+    row.steps[2] = {QuestStepKind::Clear, 306, 30, "Death Riders"};   // 78, 39
+    row.steps[3] = {QuestStepKind::Clear, 305, 30, "Blue Golems"};    // 84, 38
+    row.steps[4] = {QuestStepKind::Clear, 304, 10, "Witch Queens"};   // 94, 6, the central maze
+    row.steps[5] = {QuestStepKind::Clear, 309, 1, "Hell Maine"};      // 98, 3, 150 s respawn
+    row.steps[6] = {QuestStepKind::Return, 0, 1, "Return to the Seed Master"};
+    row.stepCount = 7;
+    row.repeatSeconds = 12 * 60 * 60;
+    row.minLevel = 300;
+    row.gateLevel = true;
+    row.afterAny = 1u << kSealedWood;
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    // Every class's, as the Keeper's: no class is born in Aida.
+    row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
+    row.strangers = true;
+    row.experience = 300000;
+    row.firstExperience = 1200000;
+    row.zen = 500000;
+    int n = 0;
+    row.paid[n++] = {.item = "Jewel03"};                // a Jewel of Life
+    row.paid[n++] = {.item = "Jewel15"};                // a Jewel of Chaos
+    row.paid[n++] = {.item = "Jewel01", .count = 2};    // Jewels of Bless
+    row.paid[n++] = {.item = "Jewel02", .count = 2};    // Jewels of Soul
+    row.paid[n++] = {.item = "MagicBox08", .plus = 3};  // a Box of Kundun +3
+    // The first clear: a Legendary Rune of Creation, the Seed Master's own trade. Greater
+    // Wellspring, +30% max mana in a ring or a pendant, every class's, and paid by no quest
+    // before (Wrath, the first try, is the Balrog's already: testQuestLadder pays no weapon rune
+    // twice). A choice of the class's own was the doc's proposal, but QuestRow::choices are
+    // offered by the item's classes alone, a Rune of Creation fits every class, and they ignore
+    // firstOnly (Realm::questChoiceFits).
+    row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::GreaterWellspring),
+                     .firstOnly = true};
+    row.paidCount = n;
+    return row;
+}
+
 // Each row with the key a save knows it by (QuestRow::key).
 QuestRow keyed(QuestRow row, const char* key) {
     row.key = key;
@@ -1700,6 +1830,8 @@ const QuestRow kRawTable[kQuests] = {
     keyed(tersiaSkyDoor(), "tersia_sky_door"),
     keyed(tersiaPhoenix(), "tersia_phoenix"),
     keyed(towerErrand(), "tower_errand"),
+    keyed(sealedWood(), "sealed_wood"),
+    keyed(seedMastersClearing(), "seed_masters_clearing"),
 };
 
 // **Every quest pays three Firecrackers** besides its own reward, every completion, to every
@@ -1756,6 +1888,7 @@ int32_t questFolkMap(int32_t number) {
         case 566: return int32_t(kLostTowerMap);  // Tersia, the Lost Tower's hall
         case kLirienNumber: return int32_t(kAtlansMap);
         case kKeeperNumber: return int32_t(kTarkanMap);
+        case kSeedMasterNumber: return 33;  // Aida
         default: return -1;
     }
 }

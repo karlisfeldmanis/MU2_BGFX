@@ -302,6 +302,11 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
                     }
                 }
                 kept = scratch.keptOf(scratch.hero().id);
+                for (int q : g_kitDone) {  // --kit-done: handed in once, resting
+                    kept.hero.quests[size_t(q)] = sim::QuestProgress{};
+                    kept.hero.quests[size_t(q)].state = sim::QuestState::Resting;
+                    kept.hero.quests[size_t(q)].completions = 1;
+                }
                 kept.hero.column = said.column;
                 kept.hero.row = said.row;
                 carried = true;

@@ -21,6 +21,16 @@
       ],
       "facing": 2,
       "ours": "on Jerridon's tile, facing south-west (Aida.cs:46); NoMove on every grid"
+    },
+    {
+      "model": "goblinmaster",
+      "who": "Seed Master",
+      "tile": [
+        90,
+        10
+      ],
+      "facing": 3,
+      "ours": "Aida's quest giver (docs/game/aida-quest.md), at the hall's east end; MU stands him at 1.1 (ZzzCharacter.cpp:14751)"
     }
   ]
 }

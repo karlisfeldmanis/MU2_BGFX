@@ -117,14 +117,16 @@ namespace mu::net {
 // 33: the dragon called by whoever runs the server (`mu dragon`), Tick's rain byte bit 4; and
 //     the realm's rules since 32 (bound things in the vault, the unstruck dragon gone in two
 //     minutes), so a client older than them is refused instead of drifting from the server.
-constexpr uint32_t kVersion = 33;
+// 34: a Kept carries 27 quests, Aida's two the 26th and 27th (layout 8, 2026-10-16).
+constexpr uint32_t kVersion = 34;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";
 // The shape of a character's bytes (putKept), apart from the protocol's: what the server's store
 // keeps beside each row. 3 is protocol 3's; 4 adds the way back; 5 a 25th quest (Devin's errand to
-// Tersia, 2026-10-09), where 3 and 4 carry 24; 6 the perch he logged out on (2026-10-09); 7 his auto-drink lines (2026-10-11).
-constexpr int kKeptLayout = 7;
+// Tersia, 2026-10-09), where 3 and 4 carry 24; 6 the perch he logged out on (2026-10-09); 7 his auto-drink lines (2026-10-11); 8 27 quests, Aida's
+// two (2026-10-16), where 5-7 carry 25.
+constexpr int kKeptLayout = 8;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame a client accepts: a Welcome with its snapshot, about half a MB for a town of

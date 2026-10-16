@@ -230,6 +230,17 @@
       ],
       "look": 2,
       "note": "Ours, the user's pick, 2026-10-12, on OpenMU Season Six's second NPC tile, Jerridon's 86,14 facing south-west (Aida.cs:46), NoMove on every grid."
+    },
+    {
+      "npc": 702,
+      "name": "Seed Master",
+      "figure": "goblinmaster",
+      "at": [
+        90,
+        10
+      ],
+      "look": 3,
+      "note": "Ours: Aida's quest giver (docs/game/aida-quest.md; the user, 2026-10-16: 'goblinmaster.bmd will work'), MuMain's Seed Master (content/npc/goblinmaster.json, MU's NPC 452, Elbeland's in Season 4). At the hall's quiet east end, away from the Noria landing (76-78, 9-16), facing the camera as the Keeper does. 702 is ours, no MU NPC's."
     }
   ]
 }

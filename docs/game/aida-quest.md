@@ -2,7 +2,10 @@
 
 Written 2026-10-16. The user: 'do we have quest lore for Noria quest giver to go to meet Aida
 quest giver? and who is Aida quest giver?', then, shown MuMain's four goblin NPC models,
-'goblinmaster.bmd will work'. **Lore and plan only, nothing built.** The shape is Atlans's and
+'goblinmaster.bmd will work'. **Built the same day** ('lets implement, and test it on demo client &
+server'): quests 25 and 26 in `src/sim/quests.cpp` (`sealedWood`, `seedMastersClearing`), the Seed
+Master as NPC 702 (`sim::kSeedMasterNumber`) at 90,10, `testSealedWood` in sim_test, protocol 34
+(Kept layout 8, snapshot shape 13), and the server's `--kit-done` test switch. The shape is Atlans's and
 Tarkan's (docs/game/lirien-quest.md, docs/game/tarkan-quest.md): a hook with no kills, handed in
 to the next world's giver, then that giver's map clear.
 
@@ -38,12 +41,14 @@ ours does with runes.
 **The figure:** `goblinmaster.bmd`, 1 256 triangles on one sheet (`goblinmaster.OZJ`), 1.54 m in
 its bind pose, drawn at 1.1 (`ZzzCharacter.cpp:14751`, outline 1.2). Four actions: idle 0 two
 times in three, else one of 1-3 at random (`:3594-3600`). One slow white pulse on bone 39, a
-`BITMAP_FLARE` at scale 2, light (sin(t/1000)+1)·0.3+0.4 (`:11346-11354`). Not yet a recipe in
-`content/npc/`: `./mu new` it from MuMain's file, then index and cook its world.
+`BITMAP_FLARE` at scale 2, light (sin(t/1000)+1)·0.3+0.4 (`:11346-11354`), not drawn yet. The
+recipe is `content/npc/goblinmaster.json` (with its beard card `gbarbard`, a hair cutout), cooked
+into Aida's figures by `./mu make goblinmaster` and `./mu make placements aida`.
 
 **Where:** Aida's safe hall (x 74-93, y 5-17, 165 tiles), clear of Amy (78,13), Baz (86,14) and
-the spawn box (82,8-87,14). The tile is picked on the grid when built. NPC number ours, the next
-after the Keeper's 701: **702**. Voice: an old goblin's, made in `pipeline/voice.py` as the
+the spawn box (82,8-87,14): **90,10**, the hall's quiet east end, away from the Noria landing
+(76-78, 9-16), facing the camera (look 3) as the Keeper does; `content/world/aida/world.json`
+npcs and `placements.json` spawns. NPC number ours, the next after the Keeper's 701: **702**. Voice: an old goblin's, made in `pipeline/voice.py` as the
 Keeper's was.
 
 ## 1. The Sealed Wood (Peia, the hook)
@@ -129,7 +134,7 @@ Bloody Witch Queen 552 (120, 19). The same giver, a second 12-hour clear offered
 Clearing is handed in: "the beds he lost first, to the west, grew red". Written when the Golem
 is built.
 
-## Rewards: proposed, the user's to pick
+## Rewards, as built
 
 The ladder's acts stop at Sevina's 200 (docs/game/quest-rewards.md). Aida at 300 is a new act
 (IX), so its pay is new. The ladder's rules still hold: a rune no rarer than its map, a rune with
@@ -137,8 +142,12 @@ the socket it fits.
 
 - **Every clear:** 300,000 experience, 500,000 Zen, a Jewel of Life, a Jewel of Chaos, 2 Jewels of
   Bless, 2 of Soul, a Box of Kundun +3, the 3 Firecrackers.
-- **The first clear:** a **Rune of Creation** of the class's choice is the Seed Master's own
-  pay, the thing he grows. What it carries (Legendary, or a new power of his) is open.
+- **The first clear:** 1,200,000 experience in place of 300,000, and a **Rune of Creation**,
+  the Seed Master's own pay: **Greater Wellspring** (+30% max mana, a ring or a pendant, every
+  class), which no quest paid before. Wrath was tried first, but the Balrog pays it already
+  and the ladder pays no weapon rune twice (testQuestLadder). The doc's first idea, a rune of
+  the class's choice, needs `QuestRow::choices` to learn the class and first-clear-only: today
+  they offer by the item's classes alone, and a Rune of Creation fits every class.
 
 ## Decisions open
 
@@ -148,10 +157,27 @@ the socket it fits.
    door, which a quest cannot (the gate is the way in).
 2. **His name.** MU's is "Seed Master" (시드마스터). Keep it, or give him a name ("the Seed
    Master" in the quests either way).
-3. **The rewards** above.
-4. **His spot** in the hall, picked on the grid when he is built.
-5. **His light.** MU's bone-39 flare pulses white at scale 2. Keep MU's, or smaller (the user's
+3. **The rewards** above, as built: proposals the user has not picked.
+4. **His light.** MU's bone-39 flare pulses white at scale 2. Keep MU's, or smaller (the user's
    rule for glows: small first).
+5. **An Aida travel row** (aida-port decision 3): none yet, so the hook opens none, as the Road
+   of Kantur opens Tarkan's.
+
+## Tested
+
+sim_test (`testSealedWood`): Peia's lock on Noria's Song, 299 below the door, the offer at 300,
+taken; the Seed Master in Aida's tables, the hand-in and its Zen, his clearing offered, its six
+breeds all nesting in Aida, 146 kills, every payment an item, the Wellspring on the first clear
+and not the second. 7526 checks, 0 failed.
+
+Live on a private server (`mu2_server --kit 300 --kit-done 1`, port 44561) with an offscreen
+elf client, every link 'none disagreed': Peia's list shows The Sealed Wood beside Noria's Song
+and The Drowned Song; its offer taken (`accept quest 25`); the walk through Noria's gate to
+Aida's hall; the Seed Master drawn at 90,10 under a gold ?; the hand-in paid 150,000 Zen, kept
+by the server; his clearing offered under a !, taken (`accept quest 26`), and the tracker's six
+steps at 0. Shots in `shots/aida-quest/`. Not tried live: the kills. Seen there, not ours: the
+tracker says a once-only quest is 'Offered again in under a minute' after its hand-in (any
+Resting row, tracker.cpp).
 
 ## His voice
 

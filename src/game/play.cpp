@@ -2897,6 +2897,14 @@ void Play::speak(const sim::Happening& happening) {
             "The sand remembers Kantur. So do I, though little else does.",
             "Mind the wheels beyond the hall. They do not stop for anyone.",
         };
+        // The Seed Master, in Aida's hall, with nothing to offer: before Peia's Sealed Wood is
+        // handed in or below its level, and while his clearing rests (docs/game/aida-quest.md;
+        // ours, 2026-10-16).
+        static const char* const kSeedMaster[] = {
+            "Mind the beds. Everything here grows, even what should not.",
+            "Hm. Boots. Not many boots come through that gate.",
+            "Fifty years I have thrown seeds over that wall. Somebody must be counting the rows.",
+        };
         static const char* const kTersiaNotYet[] = {
             "Guild business. I have no contract for you. Not while the storms still hold Devias.",
             "Who sent you? Nobody? Then go back down the road while you still can.",
@@ -2909,6 +2917,7 @@ void Play::speak(const sim::Happening& happening) {
                                    : number == sim::kCharon    ? kCharon
                                    : number == sim::kLirienNumber ? kLirien
                                    : number == sim::kKeeperNumber ? kKeeper
+                                   : number == sim::kSeedMasterNumber ? kSeedMaster
                                    : sim::questOf(number) >= 0 ? kDevinNotYet
                                                                : kGuildMaster;
         one.line = lines[realm_.tick() % 3];

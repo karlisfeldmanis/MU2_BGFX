@@ -26,7 +26,7 @@
 namespace mu::sim {
 
 // How many quests the table holds. A save carries one progress a quest by this index.
-inline constexpr int kQuests = 25;
+inline constexpr int kQuests = 27;
 inline constexpr int kQuestSteps = 9;
 inline constexpr int kQuestChoices = 7;
 inline constexpr int kQuestPaid = 24;
@@ -235,6 +235,14 @@ inline constexpr int kPhoenixContract = 23;
 // Devin's second, 'The Tower's Last Keeper', handed in to Tersia in the Lost Tower's hall: her
 // chain waits on it (2026-10-09).
 inline constexpr int kTowerErrand = 24;
+// Peia's third, 'The Sealed Wood', the hook to Aida, handed in to the Seed Master in its hall
+// (docs/game/aida-quest.md, 2026-10-16).
+inline constexpr int kSealedWood = 25;
+// The Seed Master, in Aida's safe hall: our own NPC number, as the Keeper's (content/world/aida/
+// world.json npcs, content/npc/goblinmaster.json, MU's Season 4 Seed Master).
+inline constexpr int32_t kSeedMasterNumber = 702;
+// The Seed Master's own: Aida's 2005 wood cleared, Hell Maine last.
+inline constexpr int kSeedMastersClearing = 26;
 // Who gives quest `index`: its row's giver, or Peia for kDemoQuests when the realm's config has
 // the demo on (RealmConfig::questDemo, --quest-demo). The table itself never changes.
 int32_t questGiver(int index, bool demo);

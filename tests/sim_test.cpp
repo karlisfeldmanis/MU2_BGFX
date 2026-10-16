@@ -11312,6 +11312,131 @@ void testDrownedSong() {
 // Tarkan from level 100 once her halls are cleared, handed in to the Keeper, which opens Tarkan's
 // travel row and his clear of the map; its first clear pays each class its second's gear and
 // Legendary runes, every clear the jewels and a Loch's Feather.
+// Aida's two (docs/game/aida-quest.md, 2026-10-16): Peia's Sealed Wood, handed in to the Seed
+// Master in Aida's hall at the door's 300, then his clearing of the 2005 wood.
+void testSealedWood() {
+    std::printf("the sealed wood\n");
+    const auto load = [](const char* world, content::Tables& out) {
+        std::string error;
+        return content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/" + world + "/" + world +
+                                       ".mur",
+                                   out, error);
+    };
+    content::Tables noria, aida;
+    check(load("noria", noria) && load("aida", aida), "Noria's and Aida's tables load");
+    const auto folkOf = [](const content::Tables& tables, int32_t number) {
+        for (size_t i = 0; i < tables.folk.size(); ++i) {
+            if (tables.folk[i].number == number) return int(i);
+        }
+        return -1;
+    };
+    const int peia = folkOf(noria, 257), master = folkOf(aida, sim::kSeedMasterNumber);
+    check(peia >= 0 && master >= 0, "Peia stands in Noria and the Seed Master in Aida");
+    if (peia < 0 || master < 0) return;
+    const sim::QuestRow& wood = sim::questAt(sim::kSealedWood);
+    check(wood.giver == 257 && sim::questReceiver(wood) == sim::kSeedMasterNumber,
+          "Peia gives the wood and the Seed Master takes it back");
+    check(sim::questOf(sim::kSeedMasterNumber) == sim::kSeedMastersClearing,
+          "the Seed Master gives his own");
+    checkEqual(sim::questFolkMap(sim::kSeedMasterNumber), 33, "and he stands in Aida");
+    const auto talkTo = [](sim::Realm& realm, int folk) {
+        sim::Request talk;
+        talk.kind = sim::Request::Kind::Talk;
+        talk.target = uint32_t(folk);
+        realm.ask(talk);
+        bool offered = false;
+        for (int tick = 0; tick < 400 && !offered; ++tick) {
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) offered |= one.what == sim::What::Offered;
+        }
+        return offered;
+    };
+    const content::Townsperson& p = noria.folk[size_t(peia)];
+    const auto sung = [](sim::HeroRecord record) {
+        record.quests[1].completions = 1;  // Noria's Song
+        record.quests[1].state = sim::QuestState::Resting;
+        return record;
+    };
+    sim::Realm fresh;
+    check(fresh.raise(&noria, 11, p.x - 2, p.y, sim::Kin::FairyElf, 300), "an elf of 300 by Peia");
+    check(fresh.questLocked(sim::kSealedWood), "the wood waits on Noria's Song");
+    sim::Realm low;
+    check(low.raise(&noria, 11, p.x - 2, p.y, sim::Kin::FairyElf, 299), "and one of 299");
+    low.restore(sung(low.record()));
+    check(low.questUnderLevel(sim::kSealedWood), "below 300 it waits on the door's level");
+    sim::Realm grove;
+    check(grove.raise(&noria, 11, p.x - 2, p.y, sim::Kin::FairyElf, 300), "at 300");
+    grove.restore(sung(grove.record()));
+    check(grove.questOffered(sim::kSealedWood), "the song sung, Peia offers the wood");
+    check(talkTo(grove, peia), "her window opens");
+    check(grove.acceptQuest(sim::kSealedWood), "and it is taken");
+
+    const content::Townsperson& m = aida.folk[size_t(master)];
+    sim::Realm hall;
+    check(hall.raise(&aida, 11, m.x - 2, m.y, sim::Kin::FairyElf, 300), "the elf in Aida's hall");
+    hall.restore(grove.record());
+    check(talkTo(hall, master), "found, the Seed Master's window opens");
+    checkEqual(hall.questHere(sim::kSeedMasterNumber), sim::kSealedWood, "the wood his to take back");
+    const int64_t zen = hall.money();
+    check(hall.completeQuest(sim::kSealedWood, -1), "handed in to the Seed Master");
+    check(hall.money() == zen + wood.zen, "and paid");
+    hall.closeQuest();
+    check(hall.questOffered(sim::kSeedMastersClearing), "then he offers his clearing");
+
+    const sim::QuestRow& clearing = sim::questAt(sim::kSeedMastersClearing);
+    int breeds = 0, kills = 0;
+    for (int s = 0; s < clearing.stepCount; ++s) {
+        if (clearing.steps[s].kind != sim::QuestStepKind::Clear) continue;
+        ++breeds;
+        kills += hall.questGoal(sim::kSeedMastersClearing, s);
+        bool here = false;
+        for (const content::MonsterNest& nest : aida.nests) {
+            here = here || (nest.kind < aida.kinds.size() &&
+                            aida.kinds[nest.kind].number == clearing.steps[s].target);
+        }
+        check(here, "every breed it asks spawns in Aida");
+    }
+    checkEqual(breeds, 6, "the 2005 wood's six, Hell Maine among them");
+    checkEqual(kills, 146, "146 kills, on Marlon's ladder with Hell Maine last");
+    for (int i = 0; i < clearing.paidCount; ++i) {
+        check(aida.itemNamed(clearing.paid[i].item) >= 0, "everything it pays is an item here");
+    }
+
+    check(talkTo(hall, master), "his window opens on it");
+    check(hall.acceptQuest(sim::kSeedMastersClearing), "taken");
+    const auto finish = [&](sim::Realm& realm) {
+        sim::HeroRecord done = realm.record();
+        for (int s = 0; s < clearing.stepCount; ++s) {
+            done.quests[sim::kSeedMastersClearing].counts[s] = uint16_t(clearing.steps[s].count);
+        }
+        done.quests[sim::kSeedMastersClearing].state = sim::QuestState::Ready;
+        realm.restore(done);
+    };
+    const auto wellsprings = [&](sim::Realm& realm) {
+        const int32_t rune = aida.itemNamed("Jewel22");
+        int count = 0;
+        for (int slot = 0; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = realm.satchel()[slot];
+            count += !one.empty() && one.item == rune && one.powers[0] == uint8_t(sim::Power::GreaterWellspring);
+        }
+        return count;
+    };
+    finish(hall);
+    const int64_t before = hall.money();
+    check(hall.completeQuest(sim::kSeedMastersClearing, -1), "cleared and handed in");
+    check(hall.money() == before + clearing.zen, "paid its Zen");
+    checkEqual(wellsprings(hall), 1, "the first clear: a Greater Wellspring rune");
+    hall.closeQuest();
+    sim::HeroRecord again = hall.record();
+    again.quests[sim::kSeedMastersClearing].state = sim::QuestState::Untaken;
+    again.quests[sim::kSeedMastersClearing].availableAt = 0;
+    hall.restore(again);
+    check(talkTo(hall, master) && hall.acceptQuest(sim::kSeedMastersClearing), "taken again");
+    finish(hall);
+    check(hall.completeQuest(sim::kSeedMastersClearing, -1), "and handed in again");
+    checkEqual(wellsprings(hall), 1, "a second clear pays no second rune");
+}
+
 void testRoadOfKantur() {
     std::printf("the road of kantur\n");
     const auto load = [](const char* world, content::Tables& out) {
@@ -13101,6 +13226,7 @@ int main() {
     testQuestFirecrackers(tables);
     testDrownedSong();
     testRoadOfKantur();
+    testSealedWood();
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;
