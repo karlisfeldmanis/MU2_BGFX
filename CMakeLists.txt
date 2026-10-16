@@ -779,6 +779,7 @@ add_executable(mu2
   src/app/preloader.cpp
   src/app/sweep.cpp
   src/app/modes/play_mode.cpp
+  src/app/modes/director.cpp
   src/app/modes/lobby_mode.cpp
 )
 # The bench and the studio are a developer's, and not in the player's build.

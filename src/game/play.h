@@ -974,7 +974,8 @@ public:
     // Opens the sound and loads what this realm can say: the level-up, and every breed's
     // attack, death and wandering cries, found once per body as its clips are. Opened by the
     // caller after the showing, whose table the events are read from. Not fatal.
-    void openSound(const std::string& assetDir, bool muted);
+    // `offline` opens no device: the mix is pulled by Sound::render, for --tape.
+    void openSound(const std::string& assetDir, bool muted, bool offline = false);
     // Where the ears are this frame: on the ground under the character as he is drawn,
     // turned by the camera's heading. MU's Update3DPositions, with the voices that follow a
     // body moved to where it is drawn now.

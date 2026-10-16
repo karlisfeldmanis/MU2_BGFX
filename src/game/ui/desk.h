@@ -71,6 +71,11 @@ public:
     // just a place. The run's --ui-click goes through here and then through exactly the
     // windows' own code.
     void script(float x, float y, bool press, bool release, bool right = false);
+    // The director's hand, whole and every frame, so not logged (app/modes/director.h).
+    void scriptHand(const Pointer& hand) {
+        scripted_ = true;
+        script_ = hand;
+    }
     // Typing for the next update, as a script gives it: digits, or "enter" or "escape".
     void scriptType(const std::string& text) {
         if (text == "enter") scriptEnter_ = true;

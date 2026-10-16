@@ -15,6 +15,10 @@
 
 #include "app/context.h"
 
+namespace mu::game {
+class Sound;
+}
+
 namespace mu::app {
 
 // Where the loop stands. `deltaSeconds` is the PREVIOUS frame's own length, which is what this
@@ -63,6 +67,9 @@ public:
 
     // The once-a-second lines, under the Application's own frame-rate line. Nothing by default.
     virtual void report(Context& ctx) {}
+
+    // The mix this mode plays into, for --tape to pull. Null for a mode with none of its own.
+    virtual game::Sound* heard() { return nullptr; }
 
     // No frame is running because the OS holds the main thread -- Windows' loop for a dragged
     // title bar (gfx::Window::whileHeld). Called about ten times a second until frames come back:

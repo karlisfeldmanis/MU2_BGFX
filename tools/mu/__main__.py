@@ -14,6 +14,7 @@
     ./mu check                               the quick gates: code and content
     ./mu where <name> [--docs]               every file that names it
     ./mu shot <world> <col,row> [--time T]   a muted shot at a tile, the save untouched
+    ./mu record <scene> [--fps 30]          a scripted scene with its sound, a 1080p MP4 (record.py)
     ./mu compare <a.png> <b.png>             side by side, labelled, with how much moved
     ./mu cores [N]                           how many cores mu's tools may use, kept per machine
     ./mu recipe <name>                       a recipe's file(s), parsed, and the material library
@@ -52,6 +53,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import check  # noqa: E402
 import dist  # noqa: E402
+import record  # noqa: E402
 import release  # noqa: E402
 import jobs  # noqa: E402
 import look  # noqa: E402
@@ -163,6 +165,12 @@ def main():
     s.add_argument("--time", default="noon", choices=("noon", "dusk", "night"))
     s.add_argument("--frames", type=int, default=240)
     s.add_argument("--out", help="the folder; shots/mu/<world>_<at>_<time> by default")
+
+    r = sub.add_parser("record", parents=[common])
+    r.add_argument("scene", nargs="?", help="tools/record/<scene>.cue, or a .cue path; none lists them")
+    r.add_argument("--fps", type=int, default=60)
+    r.add_argument("--seconds", type=float, help="only the first N seconds, to try a scene")
+    r.add_argument("--keep", action="store_true", help="keep the PNG frames")
 
     c = sub.add_parser("compare", parents=[common])
     c.add_argument("a")
@@ -299,6 +307,8 @@ def dispatch(args, say):
         return look.where(args.name, say, args.docs)
     if args.command == "shot":
         return look.shot(args.world, args.at, args.time, args.frames, args.out, say)
+    if args.command == "record":
+        return record.record(args.scene, args.fps, args.seconds, args.keep, say)
     if args.command == "compare":
         return look.compare(args.a, args.b, args.out, say)
     raise NotFound(f"no command {args.command}")

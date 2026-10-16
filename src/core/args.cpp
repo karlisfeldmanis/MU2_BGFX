@@ -169,6 +169,8 @@ void printUsage() {
         "  --learn F                 throw a learned skill's smoke and its sound on frame F; drawing only\n"
         "  --guard F                 throw the guard's cage on frame F; drawing only\n"
         "  --mute                    every sound plays and is logged, at no volume\n"
+        "  --script FILE             the pointer and the keys played from a cue file (director.h)\n"
+        "  --tape PATH.wav           the world's mix written there in game time, not played\n"
         "  --zen N                   start with N Zen\n"
         "  --loot                    --click-every picks up drops before it fights\n"
         "  --entrance                the game's fade-up and the character's dissolve, in a --frames run\n"
@@ -698,6 +700,13 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.perch = std::atoi(v);
         } else if (!std::strcmp(s, "--mute")) {
             a.mute = true;
+        } else if (!std::strcmp(s, "--script")) {
+            if (const char* v = next(s)) a.script = v;
+        } else if (!std::strcmp(s, "--tape")) {
+            if (const char* v = next(s)) {
+                a.tape = v;
+                wantsAbsolute("--tape", a.tape, &a.valid);
+            }
         } else if (!std::strcmp(s, "--rise")) {
             if (const char* v = next(s)) a.rises.push_back(std::atoi(v));
         } else if (!std::strcmp(s, "--learn")) {

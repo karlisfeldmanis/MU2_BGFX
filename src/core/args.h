@@ -399,6 +399,13 @@ struct Args {
     std::vector<int> guards;
     // Everything sounds and is logged, at no volume: a review run should not play into the room.
     bool mute = false;
+    // The mix written to this WAV (absolute) instead of played: the sound is opened with no
+    // device and pulled a frame's length at a time, so it keeps step with --fixed-dt and the
+    // --shot frames however slowly they are drawn. A recording's sound; tools/mu/record.py.
+    std::string tape;
+    // A cue file that plays the pointer and the keys (app/modes/director.h); the mouse is not
+    // read while it runs.
+    std::string script;
     // Things put in the bag at the start: NAME or NAME:COUNT, comma separated.
     std::string give;
     // --auto-drink H:M: his auto-drink lines in percent, 0 for never (sim::AutoDrink), until the

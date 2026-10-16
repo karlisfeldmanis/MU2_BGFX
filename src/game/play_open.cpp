@@ -437,8 +437,8 @@ void Play::shutdown() {
     accumulator_ = 0.0;
 }
 
-void Play::openSound(const std::string& assetDir, bool muted) {
-    if (!showing_.isOpen() || !sound_.open(assetDir, showing_.table(), muted)) return;
+void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
+    if (!showing_.isOpen() || !sound_.open(assetDir, showing_.table(), muted, offline)) return;
     sound_.load("player_level_up", false);
     heard_.swing = sound_.load("player_swing", true);
     heard_.swingLong = sound_.load("player_swing_long", true);

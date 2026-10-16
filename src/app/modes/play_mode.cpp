@@ -272,6 +272,7 @@ bool PlayMode::open(Context& ctx) {
     const std::string& assets = ctx.paths.assets;
 
     readSave(ctx);
+    if (!args.script.empty() && !director_.open(args.script)) return false;
 
     // The world's own light over the base sheet -- Noria's tropical day over Lorencia's night --
     // or the base alone when the world has no sheet (game/world/maps.h).
@@ -550,7 +551,9 @@ bool PlayMode::open(Context& ctx) {
             // Hanzo's coals, into the lamps' static set before it goes to the renderer below.
             if (args.lampsOn) world_.played().lightForges(world_.lamps());
             core::Loading::stage("sounds", 0.53f, 0.58f);
-            world_.played().openSound(assets, args.mute);
+            // A tape is heard whole whatever --mute says: it plays into no room.
+            world_.played().openSound(assets, args.mute && args.tape.empty(),
+                                      !args.tape.empty());
             world_.played().sound().setVolume(float(args.volume) / 100.0f);
             core::Loading::stage("the weather", 0.58f, 0.60f);
             // And only now the air: the birds' calls come off the sound above and the leaves'
@@ -1036,6 +1039,64 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // --no-hand leaves the arena's hero to the player, for a hand-played try in a crowd.
         if (!args.arena.empty() && !args.noHand) arenaHand();
         const bool clickNow = scriptedPointer(ctx, at, view, proj, &pointerX, &pointerY);
+        // --script: the director's hand, and the mouse's not at all, buttons included.
+        Director::Hand hand;
+        const bool directed = director_.on();
+        if (directed) {
+            const content::Ground& land = world_.ground();
+            float viewProjNow[16];
+            bx::mtxMul(viewProjNow, view, proj);
+            const float w = float(ctx.window.width()), h = float(ctx.window.height());
+            Director::Eyes eyes;
+            eyes.toScreen = [&](float column, float row, float* x, float* y) {
+                const float metres = land.metresPerTile();
+                const float wx = column * metres, wz = -row * metres;
+                const float world4[4] = {wx, land.heightAt(wx, wz), wz, 1.0f};
+                float clip[4];
+                bx::vec4MulMtx(clip, world4, viewProjNow);
+                if (clip[3] <= 0.0f) return false;
+                *x = (clip[0] / clip[3] * 0.5f + 0.5f) * w;
+                *y = (0.5f - clip[1] / clip[3] * 0.5f) * h;
+                return true;
+            };
+            const sim::Realm& realm = world_.played().realm();
+            eyes.hero = realm.hero().id;
+            eyes.nearestMonster = [&]() {
+                const sim::Body& me = realm.hero();
+                uint32_t id = 0;
+                float best = 1e9f;
+                for (const sim::Body& body : realm.bodies()) {
+                    if (!body.monster() || !body.alive()) continue;
+                    const float dx = body.x - me.x, dy = body.y - me.y;
+                    if (dx * dx + dy * dy < best) {
+                        best = dx * dx + dy * dy;
+                        id = body.id;
+                    }
+                }
+                return id;
+            };
+            eyes.shownAt = [&](uint32_t id, float* column, float* row) {
+                return world_.played().shownAt(id, column, row);
+            };
+            eyes.nearestLoot = [&](float* column, float* row) {
+                const sim::Body& me = realm.hero();
+                float best = 12.0f * 12.0f;
+                bool found = false;
+                for (const sim::Lying& one : realm.lying()) {
+                    const float dx = float(one.column) - me.x, dy = float(one.row) - me.y;
+                    if (dx * dx + dy * dy < best) {
+                        best = dx * dx + dy * dy;
+                        *column = float(one.column);
+                        *row = float(one.row);
+                        found = true;
+                    }
+                }
+                return found;
+            };
+            hand = director_.step(at.elapsed, w, h, eyes);
+            pointerX = hand.x;
+            pointerY = hand.y;
+        }
         // A --ui-click no window takes is the world's, as a hand's is: aimed where it presses.
         bool uiPress = false, uiRight = false;
         // The windows first: a click that lands on one is the interface's, and the
@@ -1049,6 +1110,20 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             desk_.setGround(&world_.ground());
             for (const auto& [f, k] : args.uiKeys) {
                 if (at.index == f) desk_.scriptKey(k - 1);
+            }
+            if (directed) {
+                game::Pointer p;
+                p.x = hand.x;
+                p.y = hand.y;
+                p.pressed = hand.pressed;
+                p.released = hand.released;
+                p.held = hand.held;
+                p.rightPressed = hand.rightPressed;
+                desk_.scriptHand(p);
+                if (hand.potion >= 0) desk_.scriptKey(hand.potion);
+                if (hand.skill >= 0) desk_.scriptSkill(hand.skill);
+                if (hand.holdSkill >= 0) desk_.scriptHold(hand.holdSkill);
+                if (!hand.typed.empty()) desk_.scriptType(hand.typed);
             }
             for (const auto& [f, k] : args.uiSkills) {
                 if (at.index == f) desk_.scriptSkill(k - 1);
@@ -1121,12 +1196,15 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         if (desk_.ready() && !windowed) {
             world_.played().pointAtLabel(desk_.labelUnder(pointerX, pointerY));
         }
-        if ((ctx.window.clicked(0) && !windowed) || clickNow || (uiPress && !uiRight && !windowed)) {
+        const bool mouseLeft = directed ? hand.pressed : ctx.window.clicked(0);
+        const bool mouseRight = directed ? hand.rightPressed : ctx.window.clicked(1);
+        const bool mouseRightHeld = directed ? hand.rightHeld : ctx.window.held(1);
+        if ((mouseLeft && !windowed) || clickNow || (uiPress && !uiRight && !windowed)) {
             world_.played().leftClick();
         }
-        if ((ctx.window.clicked(1) || (uiPress && uiRight)) && !windowed) {
+        if ((mouseRight || (uiPress && uiRight)) && !windowed) {
             world_.played().rightClick();
-        } else if (ctx.window.held(1) && !windowed) {
+        } else if (mouseRightHeld && !windowed) {
             world_.played().rightHeld();
         }
         world_.played().update(deltaSeconds);

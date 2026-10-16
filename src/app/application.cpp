@@ -6,6 +6,7 @@
 
 #include <filesystem>
 
+#include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
@@ -19,6 +20,7 @@
 #include "app/modes/lobby_mode.h"
 #include "app/modes/play_mode.h"
 #include "app/sweep.h"
+#include "game/sound.h"
 #include "content/showing.h"
 #include "core/log.h"
 #include "core/pack.h"
@@ -36,6 +38,76 @@
 #include "gfx/window.h"
 
 namespace mu::app {
+
+namespace {
+
+// --tape: the mix as a WAV of 32-bit float stereo at 48 kHz, its two lengths written when it
+// closes. The engine is opened with no device (Sound::open's offline), so its clock -- every
+// fade, duck and ease reads it -- moves only as fast as this pulls it, which is game time.
+class Tape {
+public:
+    static constexpr uint32_t kRate = 48000;
+
+    explicit Tape(const std::string& path) {
+        if (path.empty()) return;
+        file_ = std::fopen(path.c_str(), "wb");
+        if (!file_) {
+            core::logError("tape: cannot write %s", path.c_str());
+            return;
+        }
+        header(0);
+        core::logf("tape: the mix to %s", path.c_str());
+    }
+    ~Tape() {
+        if (!file_) return;
+        std::fseek(file_, 0, SEEK_SET);
+        header(uint32_t(written_ * 8));
+        std::fclose(file_);
+    }
+    Tape(const Tape&) = delete;
+    Tape& operator=(const Tape&) = delete;
+
+    // Up to `elapsed` seconds of game time, from whatever is heard, or silence where nothing is
+    // (a mode with no sound, or the gap while one hands the run to the next) so the tape stays
+    // in step with the frames.
+    void pull(game::Sound* from, double elapsed) {
+        if (!file_) return;
+        const uint64_t until = uint64_t(elapsed * kRate + 0.5);
+        while (written_ < until) {
+            const uint64_t want = std::min<uint64_t>(until - written_, kChunk);
+            uint64_t got = from ? from->render(buffer_, want) : 0;
+            for (uint64_t i = got * 2; i < want * 2; ++i) buffer_[i] = 0.0f;
+            std::fwrite(buffer_, sizeof(float) * 2, size_t(want), file_);
+            written_ += want;
+        }
+    }
+
+private:
+    static constexpr uint64_t kChunk = 4096;
+
+    void put32(uint32_t v) { std::fwrite(&v, 4, 1, file_); }
+    void put16(uint16_t v) { std::fwrite(&v, 2, 1, file_); }
+    void header(uint32_t bytes) {
+        std::fwrite("RIFF", 1, 4, file_);
+        put32(36 + bytes);
+        std::fwrite("WAVEfmt ", 1, 8, file_);
+        put32(16);
+        put16(3);  // IEEE float
+        put16(2);
+        put32(kRate);
+        put32(kRate * 8);
+        put16(8);
+        put16(32);
+        std::fwrite("data", 1, 4, file_);
+        put32(bytes);
+    }
+
+    std::FILE* file_ = nullptr;
+    uint64_t written_ = 0;
+    float buffer_[kChunk * 2];
+};
+
+}  // namespace
 
 bool Application::boot() {
     gfx::WindowDesc desc;
@@ -254,6 +326,8 @@ int Application::run(int argc, char** argv) {
         return 1;
     }
 
+    Tape tape(args_.tape);
+
     Context ctx{args_,     paths_,    window_,   renderer_, textures_,
                 lighting_, time_,     overlay_,  readout_,  curtain_, goBack_};
 
@@ -413,6 +487,8 @@ int Application::run(int argc, char** argv) {
         if (shotThisFrame || at.deltaSeconds > kLongestStep) at.deltaSeconds = kLongestStep;
         if (args_.fixedDtMs > 0.0f) at.deltaSeconds = args_.fixedDtMs * 0.001;
         at.elapsed += at.deltaSeconds;
+        // The frame just drawn sounds for the length the next one advances by.
+        tape.pull(mode->heard(), at.elapsed);
         // A frame that writes a screenshot is not a frame of the game, and it does not go in
         // the statistics. The readback stalls this one frame to about 253 ms, and a mean over
         // 570 frames carries that as about 1.6 ms of pure measurement apparatus -- which is

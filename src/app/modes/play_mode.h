@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "app/mode.h"
+#include "app/modes/director.h"
 #include "app/preloader.h"
 #include "game/fx/litter.h"
 #include "game/item_models.h"
@@ -49,6 +50,7 @@ public:
     game::World& world() { return world_; }
     void report(Context& ctx) override;
     void held() override { world_.played().keepLine(); }
+    game::Sound* heard() override { return &world_.played().sound(); }
     void shutdown(Context& ctx) override;
 
 private:
@@ -152,6 +154,8 @@ private:
     // remembers what it asked for, exactly as a person at the mouse remembers what they
     // clicked, and asks again only when that body is down.
     uint32_t arenaTarget_ = 0;
+    // --script: the pointer and the keys, played from a cue file.
+    Director director_;
     // The quick slot's skill the arena's order was last given with: the desk binds the wizard's
     // Energy Ball a frame or two after the first order is raised, and the order is raised again
     // when it does, or the whole first fight is his staff.
