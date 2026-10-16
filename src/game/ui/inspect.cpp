@@ -64,7 +64,7 @@ uint32_t scoreInk(int score) {
 // A worn piece's rim, faint in its name's colour: what a glance at the column reads first.
 uint32_t rimOf(const content::Tables& tables, const sim::Held& held) {
     const uint32_t ink = tip::colourOf(qualityOf(tables.items[size_t(held.item)], held));
-    return (ink & 0x00FFFFFFu) | (uint32_t(0x70) << 24);
+    return (ink & 0x00FFFFFFu) | (uint32_t(0x90) << 24);
 }
 
 constexpr int kShown[] = {sim::kHelm,  sim::kArmour,      sim::kGloves,  sim::kPants,     sim::kBoots,
@@ -290,12 +290,27 @@ void Inspect::rebuild(const sim::Realm& realm, const sim::Body& who, const sim::
     for (const int slot : kShown) {
         const Box box = slotBox(slot);
         const sim::Held& held = bag[slot];
-        panel::cell(canvas_, x, y, box, slot == now_.hovered ? sheet::Cell::Over : sheet::Cell::Rest);
+        // **A well with a small radius** (the user, 2026-10-16: "use some minimal border radius"): the
+        // controls' three, its hairline the piece's rim in its name's colour, or the cell's own line
+        // when empty, and lit under the pointer as the bag's cell is.
+        {
+            const Box b = panel::scaled(x, y, box);
+            const Box r{std::round(b.x), std::round(b.y), std::round(b.w), std::round(b.h)};
+            const float line = std::max(1.0f, std::round(u)), radius = style::kRadiusControl * u;
+            const bool over = slot == now_.hovered;
+            const uint32_t edge = over ? gfx::rgba(0.788f, 0.749f, 0.682f, 0.75f)
+                                  : held.empty() ? style::kCellLine
+                                                 : rimOf(tables, held);
+            tip::panel(canvas_, r, radius, edge, edge);
+            tip::panel(canvas_, r.grown(-line), std::max(0.0f, radius - line), style::kCellFloor, style::kCellFloor);
+            if (over) {
+                tip::panel(canvas_, r.grown(-line), std::max(0.0f, radius - line), gfx::rgba(1.0f, 0.922f, 0.824f, 0.08f),
+                           gfx::rgba(1.0f, 0.922f, 0.824f, 0.08f));
+            }
+        }
         if (held.empty()) {
             const gfx::Art& ghost = arts.get(ghostArt(slot, who.kin == sim::Kin::FairyElf));
             if (ghost.valid()) canvas_.image(ghost, panel::scaled(x, y, ghostIn(box, ghost)), kGhostInk);
-        } else {
-            canvas_.outline(panel::scaled(x, y, box), std::max(1.0f, u), rimOf(tables, held));
         }
     }
     const gfx::Art picture = stage ? stage->picture() : gfx::Art{};
@@ -355,9 +370,10 @@ void Inspect::rebuild(const sim::Realm& realm, const sim::Body& who, const sim::
         const float cellW = (kNumbers.w - 2.0f * inset) / float(kNumberColumns);
         const float cellH = (kNumbers.h - 2.0f * inset) / float(kNumberRows);
         for (int r = 1; r < kNumberRows; r += 2) {
-            canvas_.rect(panel::scaled(x, y, {kNumbers.x + inset, kNumbers.y + inset + cellH * float(r),
-                                              kNumbers.w - 2.0f * inset, cellH}),
-                         gfx::rgba(1.0f, 0.94f, 0.86f, 0.025f));
+            const uint32_t band = gfx::rgba(1.0f, 0.94f, 0.86f, 0.025f);
+            tip::panel(canvas_, panel::scaled(x, y, {kNumbers.x + inset, kNumbers.y + inset + cellH * float(r),
+                                                     kNumbers.w - 2.0f * inset, cellH}),
+                       style::kRadiusSmall * u, band, band);
         }
         canvas_.rect(panel::scaled(x, y, {kNumbers.x + inset + cellW - 0.25f, kNumbers.y + inset, 0.5f,
                                           kNumbers.h - 2.0f * inset}),
