@@ -248,7 +248,19 @@ bool Realm::throughGate(Body& hero) {
         const Request& order = at >= 0 ? heroes_[size_t(at)].order : me().order;
         const bool asked = order.kind == Request::Kind::WalkTo &&
                            enterGateAt(tables_->map, order.column, order.row) == gate;
-        if (!asked && enterGateAt(tables_->map, end.column, end.row) != gate) return false;
+        // And a walk that ends just past it, every step left within a tile of its box (2026-10-16,
+        // the user: "i was not able to use dungeon -> lorencia gates after i used fast travel"):
+        // the Dungeon's way out, gate 3, is the top two of a stair whose last row, 249, is open
+        // under it, and a click into the dark doorway asked that row -- or the wall below, which
+        // the router moves to it -- so he crossed the gate and stood in the pocket. A walk over
+        // a gate to somewhere else leaves its side and walks on, as above.
+        bool past = true;
+        for (size_t k = hero.onStep; k < route(hero).size() && past; ++k) {
+            const Step& next = route(hero)[k];
+            past = next.column >= gate->box.x1 - 1 && next.column <= gate->box.x2 + 1 &&
+                   next.row >= gate->box.y1 - 1 && next.row <= gate->box.y2 + 1;
+        }
+        if (!asked && !past && enterGateAt(tables_->map, end.column, end.row) != gate) return false;
     }
     // A sealed gate refuses everyone: Barred with level 0 is the drawing's "sealed".
     if (gate->target < 0) {

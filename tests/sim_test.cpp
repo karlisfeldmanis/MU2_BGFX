@@ -7176,6 +7176,12 @@ void testDungeonGates(const content::Tables& lorencia) {
     s = walk(dungeon, 108, 246, 108, 248, 1);
     checkEqual(s.gated, 3, "the way out, gate 3, asks nothing");
     check(s.column >= 121 && s.column <= 123 && s.row == 231, "out in front of Lorencia's arch");
+    // A click into the dark doorway below it (2026-10-16): the stair's open last row, or the wall
+    // under it, is a walk that ends just past the gate, and takes it.
+    s = walk(dungeon, 109, 246, 108, 249, 1);
+    checkEqual(s.gated, 3, "a walk to the stair's last row, past gate 3, takes it");
+    s = walk(dungeon, 109, 246, 108, 253, 1);
+    checkEqual(s.gated, 3, "and one into the wall under the doorway");
     s = walk(dungeon, 242, 152, 239, 150, 40);
     checkEqual(s.climbed, 5, "gate 5 is a stair down, taken in place");
     checkEqual(s.gated, 0, "and not a map change");
