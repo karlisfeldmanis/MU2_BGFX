@@ -10073,7 +10073,7 @@ void testPoweredJewellery(const content::Tables& tables) {
     checkEqual(sim::affixValue(sim::Affix::Wisdom, 0), 1, "Wisdom +1% at +0");
     checkEqual(sim::affixValue(sim::Affix::Wisdom, 4), 2, "+2% at +4");
     checkEqual(sim::affixValue(sim::Affix::Wisdom, 9), 8, "+8% at +9");
-    checkEqual(sim::affixValue(sim::Affix::Leech, 9), 20, "the Leech 20 life a hit at +9");
+    checkEqual(sim::affixValue(sim::Affix::Leech, 9), 5, "the Leech 5 life a hit at +9");
     checkEqual(sim::affixValue(sim::Affix::Fury, 9), 50, "Fury +50% critical damage at +9");
     checkEqual(sim::furyChance(0), 2, "and +2% critical chance at +0");
     checkEqual(sim::furyChance(9), 10, "+10% at +9");
@@ -10094,7 +10094,7 @@ void testPoweredJewellery(const content::Tables& tables) {
     checkEqual(e.moreExperience, 16, "experience: the ring's 8 and the pendant's 8");
     checkEqual(e.moreZen, 14, "Zen: the +9's 12 and the +0's 2");
     check(std::abs(e.zenRate - 1.14) < 1e-9, "on the Zen rate");
-    checkEqual(e.lifeOnHit, 20, "life a hit: the pendant's");
+    checkEqual(e.lifeOnHit, 5, "life a hit: the pendant's");
     checkEqual(realm.hero().stats.criticalDamage, 50, "critical damage reaches the blow");
     check(std::abs(realm.hero().stats.criticalChance - 0.10) < 1e-9, "and Fury's 10% chance");
 

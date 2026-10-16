@@ -73,7 +73,7 @@ copy of ring.png (content/textures/ring_*.png, necklace_fury.png):
 | Ring of Wisdom | 21 | RingWisdom (Ring01, sapphire) | 24 | experience from kills | 1% | 2% | 4% | 8% |
 | Ring of Wealth | 22 | RingWealth (Ring01, amber) | 18 | Zen from kills | 2% | 4% | 6% | 12% |
 | Ring of Fortune | 23 | RingFortune (Ring01, amethyst) | 40 | item find | 1% | 3% | 5% | 10% |
-| Ring of the Leech | 24 | RingLeech (Ring01, crimson) | 32 | life per landed blow | 3 | 6 | 11 | 20 |
+| Ring of the Leech | 24 | RingLeech (Ring01, crimson) | 32 | life per landed blow | 1 | 2 | 3 | 5 |
 | Pendant of Fury | 25 | NecklaceFury (Necklace01, fire-orange) | 48 | critical damage, and critical chance | 10%, 2% | 18%, 4% | 28%, 6% | 50%, 10% |
 
 - **A value** is `lo + (hi - lo) x (plus / 9)^2`, rounded (sim::affixValue): weak at +0, most of
@@ -113,10 +113,11 @@ copy of ring.png (content/textures/ring_*.png, necklace_fury.png):
 
 - **Balanced 2026-10-16** (the user: "check if rings and pendats are balenced"). Measured on a
   geared knight in the Dungeon (levels 35 and 60, Scale +4 or Plate +6, 16 hunts of 5 minutes
-  each, one piece worn against none). The Leech was 1 to 5 life and Fury 2 to 12% critical
-  damage alone: neither moved a hunt, a critical riding only on luck's 5%. Now the Leech 3 to 20
-  and Fury 10 to 50% with 2 to 10% critical chance (sim::furyChance): Fury +9 hunts 9 to 10%
-  faster, beside Haste's 8 to 11%.
+  each, one piece worn against none), and on harder hunts where he is hurt (the Dungeon at 40 in
+  Scale +2, Atlans at 70 in Plate +7). Fury was 2 to 12% critical damage alone, a critical
+  riding only on luck's 5%: now 10 to 50% with 2 to 10% critical chance (sim::furyChance), +9
+  hunting 9 to 10% faster beside Haste's 8 to 11%. The Leech stays 1 to 5: he drinks 26 to 30%
+  fewer potions at +4 and 60% fewer at +9 (3 to 20 had him drink none at +9).
 
 ## The Pendant of Haste (2026-10-16)
 
@@ -168,8 +169,9 @@ its element too. Each element's largest worn ring counts; the element runes' for
 
 **The Fire and Poison stings take the blow, not the monster's life** (2026-10-16). They took
 Immolate's and Spirit Plague's share of its maximum life, and a +4 ring hunted the Dungeon 30 to
-60% faster. Now each pulse is `kRingPulseShare` (0.35) of the blow that lit it: a geared knight
-hunts Fire 8 to 13% and Poison 5 to 7% faster, Lightning and Wind 8 to 16%, Ice 3 to 8%. The
+60% faster; a geared knight on Atlans' tough monsters 75% (+4) and 113% (+9) with Fire, 23 to
+31% with Poison. Now each pulse is `kRingPulseShare` (0.35) of the blow that lit it: Fire 8 to
+19% faster, Poison 5 to 14%, beside Lightning's and Wind's 4 to 16% and Ice's 3 to 8%. The
 runes keep their share of its life. (An unarmoured test hero who died every 18 s had made the
 Ring of Ice look like a loss; geared, it is not.)
 
