@@ -181,7 +181,9 @@ def take(cue_text, switches, frames, fps, work, say):
             "--stride-log", strides, "--no-fps",
             "--save", os.path.join(work, "save.mus"), "--log", log] + switches
     done = subprocess.run(game, cwd=ROOT)
-    if done.returncode != 0:
+    # 1 is a run that finished with errors in its log (a sound not yet cooked, say): the frames
+    # are all there and the errors are printed with the take. Anything else is a failed run.
+    if done.returncode not in (0, 1):
         encoder.kill()
         raise NotFound(f"the take in {work} left with {done.returncode}: {errors_in(log)[:3]}")
     if encoder.wait() != 0:

@@ -141,11 +141,18 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
     }
     // The dragon's attack is its 4, Uniria's 3 (GOBoid.cpp:566-578); 0 and 2 are both's.
     if (mounted_ == 3 && action == 3) action = 4;
+    // Uniria's swing runs on its own clock; everything else is held to his (below).
+    const bool ownClock = action == 3;
     // He sits 30 over the ground on the dragon (Play's kDinorantLift) and it stands on it.
     float ground[3] = {hero.position()[0], hero.position()[1], hero.position()[2]};
     if (mounted_ == 3) {
         ground[1] -= flying_ ? kDinorantFlyUnder : kDinorantLift;
-        if (action == 2) ground[1] -= dinorantBob(hero.through());
+        if (action == 2 && !flying_) ground[1] -= dinorantBob(hero.through());
+        // And over Tarkan and Icarus each of its actions is the one after: 1 hovering, 3 flying
+        // on, 5 its attack, 7 its rider's skill (GOBoid.cpp:530-535, 559-591). Its run, 2, was
+        // played in the air there, the legs running on nothing (the user, 2026-10-16: "dyno legs
+        // was not on tarkan ground").
+        if (flying_) action += 1;
     }
     horseIn_ = std::clamp(horseIn_ + (riding ? seconds : -seconds) / kHorseFade, 0.0f, 1.0f);
     if (!horseUp_) {
@@ -166,7 +173,7 @@ void Pets::ride(float seconds, const Figure& hero, int worn, bool riding, int ac
     // on a crossfade, a hitch or a resumed walk phase, and the rider bounces off the saddle's
     // beat. So the leap and the stand take his clip's own place, as a fraction: one bound of
     // the horse is one bounce of the rider, whatever the frame did. **ours**.
-    if (action != 3) horse_.setClock(hero.through() * horse_.length());
+    if (!ownClock) horse_.setClock(hero.through() * horse_.length());
 }
 
 void Pets::update(float seconds, const Figure& hero, int pet, bool alive) {
