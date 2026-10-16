@@ -42,7 +42,7 @@ constexpr float kScoreFigure = kScoreWords + 18.0f;
 constexpr float kNumbersTop = kScoreFigure + 9.0f;
 // Down to the window's foot, with the side margin under it: no buttons there since the user's
 // "remove footer buttons but show more stats" -- four rows of three.
-constexpr int kNumberRows = 4;
+constexpr int kNumberRows = 6, kNumberColumns = 2;
 constexpr Box kNumbers{kLeft, kNumbersTop, panel::kWellRight - kLeft, panel::kHeight - kLeft - kNumbersTop};
 
 // The ghost in an empty slot: the bag's own silhouette, faint, at its own aspect.
@@ -193,15 +193,19 @@ void Inspect::update(float width, float height, int column, const sim::Realm& re
         const long long lo = wizard ? (long long)f.wizardMinimum : f.minimumDamage + f.offhandMinimumDamage;
         const long long hi = wizard ? (long long)f.wizardMaximum : f.maximumDamage + f.offhandMaximumDamage;
         const auto percent = [](double share) { return std::to_string(int(std::lround(share * 100.0))) + "%"; };
+        // Down the left his attributes and his pools, down the right his fight, row by row: what
+        // he is beside what it buys. Read row-major, two across (rebuild).
         const std::pair<const char*, std::string> rows[12] = {
-            {"STRENGTH", commas(total.strength)},     {"AGILITY", commas(total.agility)},
-            {"VITALITY", commas(total.vitality)},     {"ENERGY", commas(total.energy)},
-            {wizard ? "WIZARDRY" : "DAMAGE", commas(lo) + " ~ " + commas(hi)},
-            {"DEFENSE", commas(f.defense)},           {"LIFE", commas(who.maxHealth)},
-            {"MANA", commas(who.maxMana)},            {"SHIELD", commas(who.maxSd)},
-            {"ATTACK RATE", commas((long long)f.attackRate)},
-            {"DEFENSE RATE", commas((long long)f.defenseRate)},
-            {"CRITICAL", percent(f.criticalChance)}};
+            {"STRENGTH", commas(total.strength)},     {wizard ? "WIZARDRY" : "DAMAGE", commas(lo) + " ~ " + commas(hi)},
+            {"AGILITY", commas(total.agility)},       {"DEFENSE", commas(f.defense)},
+            {"VITALITY", commas(total.vitality)},     {"ATTACK RATE", commas((long long)f.attackRate)},
+            {"ENERGY", commas(total.energy)},         {"DEFENSE RATE", commas((long long)f.defenseRate)},
+            {"LIFE", commas(who.maxHealth)},          {"CRITICAL", percent(f.criticalChance)},
+            {"MANA", commas(who.maxMana)},            {"SHIELD", commas(who.maxSd)}};
+        // An attribute the stat runes raise reads in the option blue, as the character window has it.
+        const bool raised[4] = {total.strength != who.points.strength, total.agility != who.points.agility,
+                                total.vitality != who.points.vitality, total.energy != who.points.energy};
+        for (int a = 0; a < 4; ++a) now_.raised[a * 2] = raised[a];
         for (int i = 0; i < 12; ++i) {
             now_.labels[i] = rows[i].first;
             now_.values[i] = rows[i].second;
@@ -315,8 +319,16 @@ void Inspect::rebuild(const sim::Realm& realm, const sim::Body& who, const sim::
     {
         const float small = 9.0f * u;
         const float words = controls::capsWidth(small, "GEAR SCORE");
-        controls::caps(canvas_, std::round(x + (panel::kWidth * k - words) * 0.5f),
-                       std::round(y + kScoreWords * k), small, style::kAshInk, "GEAR SCORE");
+        const float from = std::round(x + (panel::kWidth * k - words) * 0.5f);
+        controls::caps(canvas_, from, std::round(y + kScoreWords * k), small, style::kAshInk, "GEAR SCORE");
+        // A rule either side of the words, fading out toward the window's edges: the score's own
+        // heading, set apart from the figure above it.
+        const float ruleY = std::round(y + (kScoreWords - 3.0f) * k), air = 8.0f * u;
+        const float reach = 46.0f * k;
+        canvas_.shade({from - air - reach, ruleY, reach, std::max(1.0f, u)}, style::kIron & 0x00FFFFFFu, style::kIron,
+                      style::kIron, style::kIron & 0x00FFFFFFu);
+        canvas_.shade({from + words + air, ruleY, reach, std::max(1.0f, u)}, style::kIron, style::kIron & 0x00FFFFFFu,
+                      style::kIron & 0x00FFFFFFu, style::kIron);
         const std::string figureText = commas(now_.score);
         const float size = 32.0f * u;
         const gfx::Face* face = panel::titleFace();
@@ -331,27 +343,37 @@ void Inspect::rebuild(const sim::Realm& realm, const sim::Body& who, const sim::
         }
     }
 
-    // **His numbers** under it (update's twelve), three across, a label over its figure.
+    // **His numbers** under it (update's twelve): a table of two columns and six rows in one well,
+    // each row a label in ash capitals at the left and its figure ranged right, the rows told apart
+    // by a faint band on every other one rather than ruled -- no line stops short of another (the
+    // user: "stats container has to be better designed without weird gaps") -- and one rule down
+    // the middle, the well's whole height.
     {
         const Box well = panel::scaled(x, y, kNumbers);
         controls::well(canvas_, well, u);
-        const std::string* labels = now_.labels;
-        const std::string* values = now_.values;
-        const float cellW = kNumbers.w / 3.0f, cellH = kNumbers.h / float(kNumberRows);
-        for (int i = 0; i < 3 * kNumberRows; ++i) {
-            const float cx = kNumbers.x + cellW * float(i % 3), cy = kNumbers.y + cellH * float(i / 3);
-            if (i % 3 != 0) canvas_.rect(panel::scaled(x, y, {cx, cy + 5.0f, 0.5f, cellH - 10.0f}), style::kIronLo);
-            if (i >= 3 && i % 3 == 0)
-                canvas_.rect(panel::scaled(x, y, {kNumbers.x + 5.0f, cy, kNumbers.w - 10.0f, 0.5f}), style::kIronLo);
-            // Seven units in from the cell's edge, the label on its upper third and the figure under it,
-            // the pair centred down the cell.
-            const float pad = 7.0f;
-            controls::caps(canvas_, std::round(x + (cx + pad) * k), std::round(y + (cy + cellH * 0.5f - 1.5f) * k), 8.0f * u,
-                           style::kAshInk, labels[i], 0.06f);
-            float size = 12.5f * u;
-            while (size > 7.5f * u && controls::labelWidth(size, values[i]) > (cellW - 2.0f * pad) * k) size -= 0.5f * u;
-            controls::label(canvas_, std::round(x + (cx + pad) * k), std::round(y + (cy + cellH * 0.5f + 8.5f) * k), size,
-                            style::kBoneHi, values[i]);
+        const float inset = 2.0f;  // the bands' and the rule's air inside the well's edge
+        const float cellW = (kNumbers.w - 2.0f * inset) / float(kNumberColumns);
+        const float cellH = (kNumbers.h - 2.0f * inset) / float(kNumberRows);
+        for (int r = 1; r < kNumberRows; r += 2) {
+            canvas_.rect(panel::scaled(x, y, {kNumbers.x + inset, kNumbers.y + inset + cellH * float(r),
+                                              kNumbers.w - 2.0f * inset, cellH}),
+                         gfx::rgba(1.0f, 0.94f, 0.86f, 0.025f));
+        }
+        canvas_.rect(panel::scaled(x, y, {kNumbers.x + inset + cellW - 0.25f, kNumbers.y + inset, 0.5f,
+                                          kNumbers.h - 2.0f * inset}),
+                     style::kIronLo);
+        const float pad = 7.0f;
+        for (int i = 0; i < kNumberColumns * kNumberRows; ++i) {
+            const float cx = kNumbers.x + inset + cellW * float(i % kNumberColumns);
+            const float cy = kNumbers.y + inset + cellH * float(i / kNumberColumns);
+            const float baseline = std::round(y + (cy + cellH * 0.5f + 3.5f) * k);
+            controls::caps(canvas_, std::round(x + (cx + pad) * k), baseline, 8.0f * u, style::kAshInk, now_.labels[i],
+                           0.06f);
+            float size = 12.0f * u;
+            const float room = cellW - 2.0f * pad - controls::capsWidth(8.0f * u, now_.labels[i], 0.06f) / k - 4.0f;
+            while (size > 7.5f * u && controls::labelWidth(size, now_.values[i]) > room * k) size -= 0.5f * u;
+            controls::ranged(canvas_, std::round(x + (cx + cellW - pad) * k), baseline, size,
+                             now_.raised[i] ? panel::kOptioned : style::kBoneHi, now_.values[i]);
         }
     }
 

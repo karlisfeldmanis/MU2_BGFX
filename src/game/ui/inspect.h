@@ -70,6 +70,7 @@ private:
         int level = 0, resets = 0, kin = 0, score = 0;
         bool second = false;
         std::string labels[12], values[12];
+        bool raised[12] = {};  // a figure the stat runes raise: the option blue
         std::string name, guild;
         bool operator==(const Look&) const = default;
     };
