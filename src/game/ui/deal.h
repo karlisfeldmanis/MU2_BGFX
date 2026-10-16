@@ -60,7 +60,9 @@ public:
     // his own box is lit by the realm's room. Set before update.
     void carrying(const sim::Held* what) { incoming_ = what ? *what : sim::Held{}; }
     // His own box cell under a point on screen, or -1: where a bag thing let go lands.
-    int cellUnder(float x, float y) const;
+    // A thing `width` by `height`: its top-left, half its footprint back of the pointer
+    // (panel::landing).
+    int cellUnder(float x, float y, int width = 1, int height = 1) const;
     const gfx::Canvas& canvas() const { return canvas_; }
     const gfx::Canvas& tipCanvas() const { return tip_; }
 

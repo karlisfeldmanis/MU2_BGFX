@@ -68,15 +68,20 @@ public:
 
     bool covers(float x, float y) const;
     bool dragging() const { return dragging_ >= 0; }
+    // A frame the window is not updated on -- shut, by a key, Escape or a warp -- ends any drag
+    // and press: one left standing rode the pointer when it opened again, and the next release
+    // anywhere threw the thing on the ground.
+    void cancel() { dragging_ = -1; closing_ = pressingHammer_ = pressingBottle_ = false; pressingDock_ = -1; }
     // The slot being dragged, or -1.
     int dragged() const { return dragging_; }
     // A thing dragged out of the vault and over this window, or null: the bag lights the cells
     // it would land on as it lights its own drag, by Realm::withdraw's gate. Set before update.
     void carrying(const sim::Held* what) { incoming_ = what ? *what : sim::Held{}; }
-    // The slot under a point on screen, or -1: where a thing dragged out of the vault lands.
-    int slotUnder(float x, float y) const {
+    // Where a thing `width` by `height` carried in from another window lands, let go at a point
+    // on screen, or -1: a worn slot under the pointer, or its top-left in the satchel (landAt).
+    int slotUnder(float x, float y, int width = 1, int height = 1) const {
         if (!covers(x, y)) return -1;
-        return cellAt((x - x_) / panel::scale(), (y - y_) / panel::scale());
+        return landAt((x - x_) / panel::scale(), (y - y_) / panel::scale(), width, height);
     }
     // The slot whose thing is under the pointer, or -1: what a quick key binds.
     int hovered() const { return up_ ? hovered_ : -1; }
@@ -125,6 +130,10 @@ private:
         const int slot = slotAt(ux, uy);
         return bare_ && slot == sim::kHelm ? -1 : slot;
     }
+    // Where a thing `width` by `height` let go at a point in the window's units lands: the worn
+    // slot under the pointer, or in the satchel its top-left with the pointer at its middle
+    // (panel::landing); -1 over neither, or over the dock.
+    int landAt(float ux, float uy, int width, int height) const;
     gfx::Box itemBox(const content::Tables& tables, int slot, const sim::Held& what) const;
     // The auto-drink dock, over the bag's foot: shown, and what in it is under a point in the
     // bag's own units (dockAt's codes: 0 to 9 the health line's Off and nine steps, 10 to 19 the

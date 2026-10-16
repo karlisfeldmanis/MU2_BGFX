@@ -180,10 +180,10 @@ bool Mixer::covers(float x, float y) const {
                       .has(x, y);
 }
 
-int Mixer::cellUnder(float x, float y) const {
+int Mixer::cellUnder(float x, float y, int width, int height) const {
     if (!covers(x, y)) return -1;
     const float k = panel::scale();
-    return cellAt((x - x_) / k, (y - y_) / k);
+    return panel::landing((x - x_) / k, (y - y_) / k, kOriginX, kOriginY, sim::kMachineColumns, sim::kMachineRows, width, height);
 }
 
 float Mixer::turnAlpha() const {
@@ -312,9 +312,21 @@ void Mixer::update(float seconds, float width, float height, int column, const s
                     out->outside = dragging_;
                     out->outsideX = pointer.x;
                     out->outsideY = pointer.y;
-                } else if (cell >= 0 && cell != dragging_) {
-                    out->moveFrom = dragging_;
-                    out->moveTo = cell;
+                } else if (cell >= 0 && !box[dragging_].empty()) {
+                    // A stack goes on the stack under the pointer; anything else stands with the
+                    // pointer at its middle (panel::landing).
+                    const content::ItemRow& row = tables.items[size_t(box[dragging_].item)];
+                    const int under = box.holder(tables, cell);
+                    const bool onto = under >= 0 && under != dragging_ &&
+                                      sim::tops(tables, box[under], box[dragging_]);
+                    const int to = onto ? cell
+                                        : panel::landing(ux, uy, kOriginX, kOriginY,
+                                                         sim::kMachineColumns, sim::kMachineRows,
+                                                         row.width, row.height);
+                    if (to != dragging_) {
+                        out->moveFrom = dragging_;
+                        out->moveTo = to;
+                    }
                 }
             }
         }
@@ -428,14 +440,21 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
         panel::cell(canvas_, x, y, itemBox(tables, dragging_, box[dragging_]), sheet::Cell::Held);
     }
     if (dragging_ >= 0 && covers(now_.dragX, now_.dragY)) {
-        const int cell = cellAt((now_.dragX - x) / k, (now_.dragY - y) / k);
+        const float ux = (now_.dragX - x) / k, uy = (now_.dragY - y) / k;
+        const int pointed = cellAt(ux, uy);
         const sim::Held& moving = box[dragging_];
-        if (cell >= 0 && cell != dragging_ && !moving.empty()) {
-            const content::ItemRow& row = tables.items[size_t(moving.item)];
-            const int under = box.holder(tables, cell);
-            const bool fits = box.room(tables, cell, row.width, row.height, dragging_) ||
-                              (under >= 0 && under != dragging_ &&
-                               sim::tops(tables, box[under], moving));
+        const content::ItemRow* shape = moving.empty() ? nullptr : &tables.items[size_t(moving.item)];
+        const int under = pointed >= 0 ? box.holder(tables, pointed) : -1;
+        const bool onto = shape && under >= 0 && under != dragging_ && sim::tops(tables, box[under], moving);
+        // The cell the release asks for: the stack under the pointer, or the footprint with the
+        // pointer at its middle.
+        const int cell = !shape || pointed < 0 ? -1
+                         : onto ? pointed
+                                : panel::landing(ux, uy, kOriginX, kOriginY, sim::kMachineColumns,
+                                                 sim::kMachineRows, shape->width, shape->height);
+        if (cell >= 0 && cell != dragging_) {
+            const content::ItemRow& row = *shape;
+            const bool fits = onto || box.room(tables, cell, row.width, row.height, dragging_);
             const int column = cell % sim::kMachineColumns, rowAt = cell / sim::kMachineColumns;
             const int w = std::min<int>(row.width, sim::kMachineColumns - column);
             const int h = std::min<int>(row.height, sim::kMachineRows - rowAt);
@@ -444,10 +463,13 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
         }
     }
     if (dragging_ < 0 && !incoming_.empty() && covers(now_.dragX, now_.dragY)) {
-        const int cell = cellAt((now_.dragX - x) / k, (now_.dragY - y) / k);
-        if (cell >= 0) {
+        const float ux = (now_.dragX - x) / k, uy = (now_.dragY - y) / k;
+        const int pointed = cellAt(ux, uy);
+        if (pointed >= 0) {
             const content::ItemRow& row = tables.items[size_t(incoming_.item)];
-            const int under = box.holder(tables, cell);
+            const int cell = panel::landing(ux, uy, kOriginX, kOriginY, sim::kMachineColumns,
+                                            sim::kMachineRows, row.width, row.height);
+            const int under = box.holder(tables, pointed);
             const bool topping =
                 incomingTakes_ && under >= 0 && sim::tops(tables, box[under], incoming_);
             const int at = topping ? under : cell;

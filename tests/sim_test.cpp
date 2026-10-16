@@ -802,6 +802,41 @@ void testInvariants(const content::Tables& tables) {
 
 // Sprint 7: the items. The requirement formula against the worked numbers MU2's Rows.cs gives
 // for it, the footprint walk, and equipping as a move through the same gate a window colours by.
+// A swap never stacks two things on one cell: a one-cell thing let go on the near corner of a
+// two-by-two beside it would send the two-by-two back over the cell it lands on.
+void testSwapOverlap(const content::Tables& tables) {
+    std::printf("swap overlap\n");
+    int small = -1, square = -1;
+    for (size_t i = 0; i < tables.items.size(); ++i) {
+        const content::ItemRow& row = tables.items[i];
+        if (small < 0 && row.width == 1 && row.height == 1) small = int(i);
+        if (square < 0 && row.width == 2 && row.height == 2) square = int(i);
+    }
+    check(small >= 0 && square >= 0, "a one-cell row and a two-by-two row cooked");
+    if (small < 0 || square < 0) return;
+    sim::Satchel bag;
+    sim::Held one;
+    one.item = small;
+    one.durability = 1;
+    sim::Held two;
+    two.item = square;
+    two.durability = 1;
+    const int at = sim::kWorn, beside = sim::kWorn + 1;
+    bag.put(at, one);
+    bag.put(beside, two);
+    const sim::Wearer who;
+    check(!sim::movable(tables, who, bag, at, beside), "a swap that would lay two things on one cell is refused");
+    check(!sim::move(tables, who, bag, at, beside) && bag[at].item == small && bag[beside].item == square,
+          "and the refused swap leaves both where they were");
+    // A cell further off, it still swaps: the square comes back clear of where the thing lands.
+    sim::Satchel apart;
+    apart.put(sim::kWorn, one);
+    apart.put(sim::kWorn + 2, two);
+    check(sim::move(tables, who, apart, sim::kWorn, sim::kWorn + 2) &&
+              apart[sim::kWorn].item == square && apart[sim::kWorn + 2].item == small,
+          "a swap with room for both still goes through");
+}
+
 void testItems(const content::Tables& tables) {
     std::printf("items\n");
     // 157: the catalogue's 118, the nine knight orbs added on 2026-09-23, the wizard's Scroll
@@ -13159,6 +13194,7 @@ int main() {
     testInvasion(tables);
     testRaid(tables);
     testItems(tables);
+    testSwapOverlap(tables);
     testLoot(tables);
     testDrops(tables);
     testLichPush();

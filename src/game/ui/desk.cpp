@@ -13,6 +13,16 @@
 
 namespace mu::game {
 
+// A carried thing's footprint in cells, one by one for nothing: what a window it is let go over
+// needs to put its top-left half of it back of the pointer (panel::landing).
+static void footprint(const Play& play, const sim::Held& what, int* width, int* height) {
+    *width = *height = 1;
+    const content::Tables* tables = play.realm().tables();
+    if (!tables || what.empty() || size_t(what.item) >= tables->items.size()) return;
+    *width = tables->items[size_t(what.item)].width;
+    *height = tables->items[size_t(what.item)].height;
+}
+
 // Whether a row may be bound to a key at all: CanRegisterItemHotKey's list, of which this
 // catalogue has the apple, the six potions, the Ale and the Town Portal Scroll. Held.Usable.
 static bool usable(const content::Tables& tables, int32_t item) {
@@ -845,11 +855,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
         // Let go outside: into the bag cell under the pointer; over the world, thrown on the
         // ground at his feet as the bag throws (the user, 2026-10-09: "allow to drop items to
-        // ground from warehouse" -- MU refuses it). Over the bag's frame or the bar, the no.
+        // ground from warehouse" -- MU refuses it). Over any window -- the bag's frame, the bar, the chat -- the no.
         if (asked.outside >= 0) {
-            const int slot = inventoryOpen_ ? bag_.slotUnder(asked.outsideX, asked.outsideY) : -1;
-            const bool overWindow = (inventoryOpen_ && bag_.covers(asked.outsideX, asked.outsideY)) ||
-                                    hud_.covers(asked.outsideX, asked.outsideY);
+            int w, h;
+            footprint(play, play.realm().vault()[asked.outside], &w, &h);
+            const int slot = inventoryOpen_ ? bag_.slotUnder(asked.outsideX, asked.outsideY, w, h) : -1;
+            const bool overWindow = overWindows(asked.outsideX, asked.outsideY);
             if (slot >= 0) expect(play.withdraw(asked.outside, slot), Then::TookOrRefused);
             else if (!overWindow) expect(play.discardFromVault(asked.outside), Then::Refused);
             else refused();
@@ -864,6 +875,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             play.closeVault();
             click();
         }
+    } else {
+        chest_.cancel();
     }
 
     // The Broker's market (game/ui/broker.h), as the vault is: the bag beside it, the character
@@ -915,7 +928,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
         // Let go outside: into the bag cell under the pointer, and nowhere else, as the vault.
         if (asked.outside >= 0) {
-            const int slot = inventoryOpen_ ? bag_.slotUnder(asked.outsideX, asked.outsideY) : -1;
+            int w, h;
+            footprint(play, play.realm().machine()[asked.outside], &w, &h);
+            const int slot = inventoryOpen_ ? bag_.slotUnder(asked.outsideX, asked.outsideY, w, h) : -1;
             if (slot >= 0) expect(play.takeOut(asked.outside, slot), Then::TookOrRefused);
             else refused();
         }
@@ -946,6 +961,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             play.closeMachine();
             click();
         }
+    } else {
+        mixer_.cancel();
     }
 
     // A trade with another player, as the vault is: it opens the bag beside it and closes the
@@ -979,7 +996,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         if (asked.take >= 0) expect(play.dealTake(asked.take, -1), Then::TookOrRefused);
         // Let go outside: into the bag cell under the pointer, and nowhere else.
         if (asked.outside >= 0) {
-            const int slot = inventoryOpen_ ? bag_.slotUnder(asked.outsideX, asked.outsideY) : -1;
+            int w, h;
+            footprint(play, play.realm().dealOffer(false)[asked.outside], &w, &h);
+            const int slot = inventoryOpen_ ? bag_.slotUnder(asked.outsideX, asked.outsideY, w, h) : -1;
             if (slot >= 0) expect(play.dealTake(asked.outside, slot), Then::TookOrRefused);
             else refused();
         }
@@ -1060,24 +1079,26 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         // MU2's Bag.Caught, asked first -- and what nothing catches is thrown on the ground
         // at his feet (SendRequestDropItem). Over the shelf it is a sale instead
         // (SendSellItemToNpcRequest), and the realm refuses a worn slot again.
+        int carriedW = 1, carriedH = 1;
+        if (asked.outside >= 0) footprint(play, play.realm().satchel()[asked.outside], &carriedW, &carriedH);
         if (asked.outside >= 0 && trading_ && shelf_.covers(asked.outsideX, asked.outsideY)) {
             expect(play.sell(asked.outside), Then::Refused);
         } else if (asked.outside >= 0 && banking_ &&
                    chest_.covers(asked.outsideX, asked.outsideY)) {
             // Into the vault cell under the pointer; over the foot or the head, the first cell
             // it fits in.
-            expect(play.deposit(asked.outside, chest_.cellUnder(asked.outsideX, asked.outsideY)),
+            expect(play.deposit(asked.outside, chest_.cellUnder(asked.outsideX, asked.outsideY, carriedW, carriedH)),
                    Then::TookOrRefused);
         } else if (asked.outside >= 0 && brokering_ && broker_.covers(asked.outsideX, asked.outsideY)) {
             broker_.offer(asked.outside);  // dropped on the market: chosen to sell
             click();
         } else if (asked.outside >= 0 && dealing_ && deal_.covers(asked.outsideX, asked.outsideY)) {
             // Into his own box, at the cell under the pointer or the first it fits.
-            expect(play.dealPut(asked.outside, deal_.cellUnder(asked.outsideX, asked.outsideY)),
+            expect(play.dealPut(asked.outside, deal_.cellUnder(asked.outsideX, asked.outsideY, carriedW, carriedH)),
                    carriesBound(asked.outside) ? Then::Bound : Then::TookOrRefused);
         } else if (asked.outside >= 0 && mixing_ &&
                    mixer_.covers(asked.outsideX, asked.outsideY)) {
-            expect(play.putIn(asked.outside, mixer_.cellUnder(asked.outsideX, asked.outsideY)),
+            expect(play.putIn(asked.outside, mixer_.cellUnder(asked.outsideX, asked.outsideY, carriedW, carriedH)),
                    Then::TookOrRefused);
         } else if (asked.outside >= 0 && hud_.quickAt(asked.outsideX, asked.outsideY) >= 0) {
             // Let go over a potion box: bound, and the thing stays in the bag. MU2's Caught.
@@ -1092,6 +1113,11 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             } else {
                 refused();
             }
+        } else if (asked.outside >= 0 && overWindows(asked.outsideX, asked.outsideY)) {
+            // Over any other window -- the character's, the chat, the minimap, the bar off its
+            // potion boxes -- the no, as the vault's drop answers there: let go on a window, a
+            // thing went on the ground behind it.
+            refused();
         } else if (asked.outside >= 0) {
             // The one gesture in the interface that gives something away, which is why it
             // takes a deliberate drag out of the window and not a click. A refusal -- a dead
@@ -1105,6 +1131,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             inventoryOpen_ = false;
             click();
         }
+    } else {
+        bag_.cancel();
     }
 
     // The worn-gear warning, in its row over the potion belt (Hud::wornCell).

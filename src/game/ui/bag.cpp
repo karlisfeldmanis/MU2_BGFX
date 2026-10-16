@@ -274,6 +274,14 @@ int Bag::slotAt(float ux, float uy) {
     return sim::kWorn + int(cy) * sim::kBagColumns + int(cx);
 }
 
+int Bag::landAt(float ux, float uy, int width, int height) const {
+    if (underDock(ux, uy)) return -1;
+    const int slot = cellAt(ux, uy);
+    if (slot < 0 || sim::wearable(slot)) return slot;
+    return sim::kWorn + panel::landing(ux, uy, kOriginX, kOriginY, sim::kBagColumns,
+                                       sim::kBagRows, width, height);
+}
+
 Box Bag::itemBox(const content::Tables& tables, int slot, const sim::Held& what) const {
     // A worn slot is its own size whatever the item: a breastplate does not make its slot
     // taller. A bag item covers its footprint.
@@ -375,10 +383,16 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
                 out->outside = from;
                 out->outsideX = pointer.x;
                 out->outsideY = pointer.y;
-            } else if (cell >= 0 && cell != from) {
+            } else if (cell >= 0 && !bag[from].empty()) {
                 // ApplyJewels first, as HandlePickedItemPlacement asks it: over a thing the
                 // jewel goes on, the drop is that and never a swap.
                 const int under = bag.holder(tables, cell);
+                const content::ItemRow& row = tables.items[size_t(bag[from].item)];
+                // A stack goes on the stack of its kind under the pointer; anything else stands
+                // with the pointer at its middle (landAt).
+                const bool onto = under >= 0 && under != from && sim::baggable(cell) &&
+                                  sim::tops(tables, bag[under], bag[from]);
+                const int to = onto ? cell : landAt(ux, uy, row.width, row.height);
                 // A Rune of Creation set in a socket rides the same request: the realm's refine
                 // takes either, and refuses whole what it cannot do.
                 if (under >= 0 && under != from &&
@@ -387,9 +401,9 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
                                    realm.wearer().second))) {
                     out->refineJewel = from;
                     out->refineTarget = under;
-                } else {
+                } else if (to >= 0 && to != from) {
                     out->moveFrom = from;
-                    out->moveTo = cell;
+                    out->moveTo = to;
                 }
             }
         }
@@ -608,14 +622,19 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     if (dragging_ >= 0 && covers(now_.dragX, now_.dragY) && !underDock(ux, uy)) {
         const int cell = cellAt(ux, uy);
         const sim::Held& moving = bag[dragging_];
-        if (cell >= 0 && cell != dragging_ && !moving.empty()) {
-            const bool fits = sim::movable(tables, realm.wearer(), bag, dragging_, cell);
+        if (cell >= 0 && !moving.empty()) {
             const content::ItemRow& row = tables.items[size_t(moving.item)];
-            int cells[sim::kSlots];
-            const int count = bag.covered(cell, row.width, row.height, cells);
+            // The jewel's target is what is under the pointer; a move's, the footprint the thing
+            // would stand on, its top-left half of it back (landAt).
             // A jewel over a thing it goes on lights the thing, all of its cells, and not the
             // jewel's own footprint: MuMain's CanUpgradeItem colour, MU2's Bag.Target.
             const int under = bag.holder(tables, cell);
+            const bool onto = under >= 0 && under != dragging_ && sim::baggable(cell) &&
+                              sim::tops(tables, bag[under], moving);
+            const int to = onto ? cell : landAt(ux, uy, row.width, row.height);
+            const bool fits = sim::movable(tables, realm.wearer(), bag, dragging_, to);
+            int cells[sim::kSlots];
+            const int count = to >= 0 ? bag.covered(to, row.width, row.height, cells) : 0;
             // A Rune of Creation lights the piece it is over, all of it: blue where it would be
             // set, red over a socket it cannot go in -- taken already, the other kind of piece, or
             // another class's power. The drop there would only be a swap, and a swap is not what
@@ -630,8 +649,10 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                 const content::ItemRow& target = tables.items[size_t(bag[under].item)];
                 const int covering = bag.covered(under, target.width, target.height, cells);
                 light(cells, covering, !refused);
+            } else if (to < 0 || to == dragging_) {
+                // Over its own place: nothing to light.
             } else if (count == 0) {
-                light(&cell, 1, false);
+                light(&to, 1, false);
             } else {
                 light(cells, count, fits);
             }
@@ -661,8 +682,9 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                 const int covering = bag.covered(under, target.width, target.height, cells);
                 light(cells, covering, true);
             } else {
-                const bool fits = sim::baggable(cell) && bag.room(tables, cell, row.width, row.height);
-                const int count = sim::baggable(cell) ? bag.covered(cell, row.width, row.height, cells) : 0;
+                const int to = landAt(ux, uy, row.width, row.height);
+                const bool fits = sim::baggable(to) && bag.room(tables, to, row.width, row.height);
+                const int count = sim::baggable(to) ? bag.covered(to, row.width, row.height, cells) : 0;
                 if (count == 0) light(&cell, 1, false);
                 else light(cells, count, fits);
             }

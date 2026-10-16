@@ -9,6 +9,8 @@
 //     flush columns (`Panel.ColumnX`) -- which is what MU does with them.
 #pragma once
 
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <string>
 #include <unordered_map>
@@ -186,6 +188,24 @@ void field(gfx::Canvas& canvas, Arts& arts, float x, float y, const gfx::Box& un
 void cell(gfx::Canvas& canvas, float x, float y, const gfx::Box& units, sheet::Cell state);
 // A grid of resting cells as one ruled block, `columns` by `rows` at kPitch from (ux, uy).
 void grid(gfx::Canvas& canvas, float x, float y, float ux, float uy, int columns, int rows);
+// **Where a carried thing lands**: the cell its top-left goes in, counted across a grid at (gx,
+// gy) of `columns` by `rows` at kPitch, with the pointer at (ux, uy) in the window's units; -1
+// with the pointer off the grid. The thing rides the pointer at its middle, so its top-left is
+// half its footprint back -- MuMain's HandlePickedItemPlacement, `MouseX - (Width - 1) *
+// INVENTORY_SQUARE_WIDTH / 2` -- and is kept on the grid, where MU refused a thing held near
+// its edge. The pointer's own cell was the top-left once, and a sword dropped a cell down and
+// right of where it was drawn.
+inline int landing(float ux, float uy, float gx, float gy, int columns, int rows, int width,
+                   int height) {
+    const float cx = (ux - gx) / kPitch, cy = (uy - gy) / kPitch;
+    if (cx < 0.0f || cy < 0.0f || cx >= float(columns) || cy >= float(rows)) return -1;
+    const int across = std::max(1, width), down = std::max(1, height);
+    const int column = std::clamp(int(std::floor(cx - float(across - 1) * 0.5f)), 0,
+                                  std::max(0, columns - across));
+    const int row = std::clamp(int(std::floor(cy - float(down - 1) * 0.5f)), 0,
+                               std::max(0, rows - down));
+    return row * columns + column;
+}
 // The bag's foot: the band coming up out of the bottom edge, the rule at kFootRule, MU's coins,
 // the ZEN kicker, and the figure ranged against kValueRight in the colour the hero's purse
 // earns. The shelf drew it too for an hour on 2026-09-23 and the user asked why; only the bag

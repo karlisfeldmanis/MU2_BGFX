@@ -46,6 +46,8 @@ public:
 
     bool covers(float x, float y) const;
     bool dragging() const { return dragging_ >= 0; }
+    // A frame the window is not updated on ends any drag and press (Bag::cancel).
+    void cancel() { dragging_ = pressing_ = -1; closing_ = false; }
     // The vault cell being dragged, or -1.
     int dragged() const { return dragging_; }
     // A thing dragged out of the bag and over this window, or null, and whether the vault takes
@@ -56,7 +58,9 @@ public:
         incomingTakes_ = takes;
     }
     // The vault cell under a point on screen, or -1: where a thing dragged out of the bag lands.
-    int cellUnder(float x, float y) const;
+    // A thing `width` by `height`: its top-left, half its footprint back of the pointer
+    // (panel::landing).
+    int cellUnder(float x, float y, int width = 1, int height = 1) const;
     const gfx::Canvas& canvas() const { return canvas_; }
     const gfx::Canvas& tipCanvas() const { return tip_; }
     uint64_t rebuilds() const { return rebuilds_; }

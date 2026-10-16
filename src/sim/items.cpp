@@ -1087,9 +1087,14 @@ bool movable(const content::Tables& tables, const Wearer& who, const Satchel& ba
     int cells[kSlots];
     const int count = bag.covered(from, other->width, other->height, cells);
     if (count == 0) return false;
+    // Nor onto the cells the moving thing is about to stand on: an apple let go on the near corner
+    // of the shield beside it would land under the shield, the two on one cell.
+    int landing[kSlots];
+    const int lands = bag.covered(to, row->width, row->height, landing);
     for (int i = 0; i < count; ++i) {
         const int held = bag.holder(tables, cells[i]);
         if (held >= 0 && held != from && held != block) return false;
+        if (std::find(landing, landing + lands, cells[i]) != landing + lands) return false;
     }
     return true;
 }

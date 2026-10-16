@@ -80,10 +80,10 @@ bool Chest::covers(float x, float y) const {
                       .has(x, y);
 }
 
-int Chest::cellUnder(float x, float y) const {
+int Chest::cellUnder(float x, float y, int width, int height) const {
     if (!covers(x, y)) return -1;
     const float k = panel::scale();
-    return cellAt((x - x_) / k, (y - y_) / k);
+    return panel::landing((x - x_) / k, (y - y_) / k, kOriginX, kOriginY, sim::kVaultColumns, sim::kVaultRows, width, height);
 }
 
 int Chest::buttonAt(float ux, float uy) const {
@@ -138,9 +138,21 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
                     out->outside = dragging_;
                     out->outsideX = pointer.x;
                     out->outsideY = pointer.y;
-                } else if (cell >= 0 && cell != dragging_) {
-                    out->moveFrom = dragging_;
-                    out->moveTo = cell;
+                } else if (cell >= 0 && !vault[dragging_].empty()) {
+                    const content::ItemRow& row = tables.items[size_t(vault[dragging_].item)];
+                    const int to = panel::landing(ux, uy, kOriginX, kOriginY, sim::kVaultColumns,
+                                                  sim::kVaultRows, row.width, row.height);
+                    // A jewel or a stack goes on what is under the pointer; anything else
+                    // stands with the pointer at its middle.
+                    const int under = vault.holder(tables, cell);
+                    const bool onto = under >= 0 && under != dragging_ &&
+                                      (realm.worksOn(vault[dragging_], vault[under]) ||
+                                       sim::tops(tables, vault[under], vault[dragging_]));
+                    const int at = onto ? cell : to;
+                    if (at != dragging_) {
+                        out->moveFrom = dragging_;
+                        out->moveTo = at;
+                    }
                 }
             }
         }
@@ -215,36 +227,45 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
 
     // The drop target inside the window, asked of the realm's own gate.
     if (dragging_ >= 0 && covers(now_.dragX, now_.dragY)) {
-        const int cell = cellAt((now_.dragX - x) / k, (now_.dragY - y) / k);
+        const float ux = (now_.dragX - x) / k, uy = (now_.dragY - y) / k;
+        const int pointed = cellAt(ux, uy);
         const sim::Held& moving = vault[dragging_];
-        if (cell >= 0 && cell != dragging_ && !moving.empty()) {
+        if (pointed >= 0 && !moving.empty()) {
             const content::ItemRow& row = tables.items[size_t(moving.item)];
-            // Or a stack of its kind with room, which Realm::rearrange pours into.
-            // Or a thing a jewel works, lit whole, which Realm::rearrange applies it to.
-            const int under = vault.holder(tables, cell);
-            const bool working = under >= 0 && under != dragging_ &&
-                                 realm.worksOn(moving, vault[under]);
-            const bool fits = working ||
-                              vault.room(tables, cell, row.width, row.height, dragging_) ||
-                              (under >= 0 && under != dragging_ &&
-                               sim::tops(tables, vault[under], moving));
-            const int at = working ? under : cell;
-            const content::ItemRow& shape = working ? tables.items[size_t(vault[under].item)] : row;
-            const int column = at % sim::kVaultColumns, line = at / sim::kVaultColumns;
-            const int w = std::min<int>(shape.width, sim::kVaultColumns - column);
-            const int h = std::min<int>(shape.height, sim::kVaultRows - line);
-            panel::cell(canvas_, x, y, cellBox(at, w, h),
-                        fits ? sheet::Cell::Fits : sheet::Cell::Blocked);
+            // The cell the release asks for: what is under the pointer for a jewel or a stack,
+            // else the footprint with the pointer at its middle.
+            const int under = vault.holder(tables, pointed);
+            const bool onto = under >= 0 && under != dragging_ &&
+                              (realm.worksOn(moving, vault[under]) || sim::tops(tables, vault[under], moving));
+            const int cell = onto ? pointed
+                                  : panel::landing(ux, uy, kOriginX, kOriginY, sim::kVaultColumns,
+                                                   sim::kVaultRows, row.width, row.height);
+            if (cell != dragging_) {
+                // Or a stack of its kind with room, which Realm::rearrange pours into.
+                // Or a thing a jewel works, lit whole, which Realm::rearrange applies it to.
+                const bool working = onto && realm.worksOn(moving, vault[under]);
+                const bool fits = onto || vault.room(tables, cell, row.width, row.height, dragging_);
+                const int at = working ? under : cell;
+                const content::ItemRow& shape = working ? tables.items[size_t(vault[under].item)] : row;
+                const int column = at % sim::kVaultColumns, line = at / sim::kVaultColumns;
+                const int w = std::min<int>(shape.width, sim::kVaultColumns - column);
+                const int h = std::min<int>(shape.height, sim::kVaultRows - line);
+                panel::cell(canvas_, x, y, cellBox(at, w, h),
+                            fits ? sheet::Cell::Fits : sheet::Cell::Blocked);
+            }
         }
     }
     // And a bag piece carried over the vault, by Realm::deposit's gate: onto a stack of its
     // kind with room, onto a thing it works if it is a jewel (Realm::refineAcross), or where its
     // footprint is free; a worn piece nowhere.
     if (dragging_ < 0 && !incoming_.empty() && covers(now_.dragX, now_.dragY)) {
-        const int cell = cellAt((now_.dragX - x) / k, (now_.dragY - y) / k);
-        if (cell >= 0) {
+        const float ux = (now_.dragX - x) / k, uy = (now_.dragY - y) / k;
+        const int pointed = cellAt(ux, uy);
+        if (pointed >= 0) {
             const content::ItemRow& row = tables.items[size_t(incoming_.item)];
-            const int under = vault.holder(tables, cell);
+            const int cell = panel::landing(ux, uy, kOriginX, kOriginY, sim::kVaultColumns,
+                                            sim::kVaultRows, row.width, row.height);
+            const int under = vault.holder(tables, pointed);
             const bool topping = incomingTakes_ && under >= 0 &&
                                  (sim::tops(tables, vault[under], incoming_) ||
                                   realm.worksOn(incoming_, vault[under]));

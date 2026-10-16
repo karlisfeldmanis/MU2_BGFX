@@ -77,10 +77,11 @@ bool Deal::covers(float x, float y) const {
     return up_ && Box{x_, y_, panel::kWidth * panel::scale(), panel::kHeight * panel::scale()}.has(x, y);
 }
 
-int Deal::cellUnder(float x, float y) const {
+int Deal::cellUnder(float x, float y, int width, int height) const {
     if (!covers(x, y)) return -1;
     const float k = panel::scale();
-    return cellAt(kMyGrid, (x - x_) / k, (y - y_) / k);
+    return panel::landing((x - x_) / k, (y - y_) / k, kGridX, kMyGrid, sim::kMachineColumns,
+                          sim::kMachineRows, width, height);
 }
 
 Deal::Marks Deal::marks(const sim::Realm& realm) const {
@@ -359,9 +360,9 @@ void Deal::rebuild(const sim::Realm& realm, Stage* stage) {
     }
     // A bag thing carried over his box: the cell it would land on, by the realm's own room.
     if (!incoming_.empty() && covers(pointerX_, pointerY_)) {
-        const int cell = cellAt(kMyGrid, (pointerX_ - x) / k, (pointerY_ - y) / k);
+        const content::ItemRow& row = tables.items[size_t(incoming_.item)];
+        const int cell = cellUnder(pointerX_, pointerY_, row.width, row.height);
         if (cell >= 0) {
-            const content::ItemRow& row = tables.items[size_t(incoming_.item)];
             const int column = cell % sim::kMachineColumns, lineAt = cell / sim::kMachineColumns;
             const int w = std::min<int>(row.width, sim::kMachineColumns - column);
             const int h = std::min<int>(row.height, sim::kMachineRows - lineAt);
