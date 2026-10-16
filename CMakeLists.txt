@@ -537,7 +537,8 @@ if(WIN32 OR APPLE OR MU2_LINUX_CLIENT)
     ${CMAKE_BINARY_DIR}/generated/launcher_embedded.cpp
   )
   add_dependencies(mu2_launcher mu2_shaders)
-  target_link_libraries(mu2_launcher PRIVATE mu_gfx mu_core mu_report)
+  # mu_net: the regions' pings (engine.cpp pingMs), net::Socket's connect.
+  target_link_libraries(mu2_launcher PRIVATE mu_gfx mu_core mu_report mu_net)
   target_compile_options(mu2_launcher PRIVATE ${MU_WARNINGS})
   if(WIN32)
     target_sources(mu2_launcher PRIVATE src/launcher/gpu_win.cpp src/launcher/launcher.rc)

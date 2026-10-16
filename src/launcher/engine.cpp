@@ -17,6 +17,8 @@
 #include "launcher/https.h"
 #include "launcher/self_update.h"
 #include "launcher/sha256.h"
+#include "net/socket.h"
+#include "net/wire.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -339,6 +341,8 @@ const std::vector<Region>& regions() {
     // The Hetzner box (net::kDefaultHost), the game's own default.
     static const std::vector<Region> all = {
         {"eu-north", "North Europe", "Helsinki", "mu-classic.com"},
+        // Vultr São Paulo (server/README.md, the South America box).
+        {"sa-east", "South America", "Sao Paulo", "216.238.127.33"},  // no ã in the launcher's face
     };
     return all;
 }
@@ -350,6 +354,34 @@ const Region& regionNamed(const std::string& id) {
     return regions().front();
 }
 
+double pingMs(const Region& region, double seconds) {
+    const size_t colon = region.server.rfind(':');
+    const std::string host = colon == std::string::npos ? region.server : region.server.substr(0, colon);
+    const int port = colon == std::string::npos ? net::kDefaultPort : std::atoi(region.server.c_str() + colon + 1);
+    double best = -1.0;
+    for (int attempt = 0; attempt < 2; ++attempt) {
+        net::Socket socket;
+        std::string error;
+        const auto from = std::chrono::steady_clock::now();
+        if (!socket.connect(host, port, seconds, error)) continue;
+        const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - from).count();
+        if (best < 0.0 || ms < best) best = ms;
+    }
+    return best;
+}
+
+std::string quickest(const std::vector<double>& pings) {
+    std::string id;
+    double best = -1.0;
+    for (size_t i = 0; i < pings.size() && i < regions().size(); ++i) {
+        if (pings[i] >= 0.0 && (best < 0.0 || pings[i] < best)) {
+            best = pings[i];
+            id = regions()[i].id;
+        }
+    }
+    return id;
+}
+
 Settings loadSettings() {
     Settings settings;
     const core::Json said = parse(readFile(userFolder() / "launcher.json"), "launcher.json");
@@ -357,13 +389,16 @@ Settings loadSettings() {
     settings.install = install.empty() ? defaultInstall() : pathOf(install);
     settings.email = said["email"].stringOr("");
     settings.region = regionNamed(said["region"].stringOr("")).id;
+    // A pick of a region since taken away is no pick.
+    settings.regionPicked = said["regionPicked"].boolOr(false) && settings.region == said["region"].stringOr("");
     return settings;
 }
 
 void saveSettings(const Settings& settings) {
     writeFile(userFolder() / "launcher.json", "{\"install\": " + quoted(utf8Of(settings.install)) +
                                                   ", \"email\": " + quoted(settings.email) +
-                                                  ", \"region\": " + quoted(settings.region) + "}\n");
+                                                  ", \"region\": " + quoted(settings.region) +
+                                                  ", \"regionPicked\": " + (settings.regionPicked ? "true" : "false") + "}\n");
 }
 
 // The first run's graphics, in the keys the game's readOptions knows (core/args.cpp): the preset

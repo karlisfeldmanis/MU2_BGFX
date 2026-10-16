@@ -50,6 +50,7 @@ extern char** environ;
 #include "launcher/embedded.h"
 #include "launcher/gpu.h"
 #include "launcher/self_update.h"
+#include "net/socket.h"
 
 namespace mu::launcher {
 
@@ -163,6 +164,7 @@ private:
     void logOut();
     void openUrl(const std::string& url);
     void pickFolder();
+    void measureRegions();
 
     // the worker
     void work(std::function<void()> job);
@@ -201,6 +203,10 @@ private:
     bool regionsOpen_ = false;
     Box regionAt_{};
     float dragRight_ = kW - 260.0f;
+    // Each region's round trip in ms (engine.h pingMs), in regions()' order; empty until measured,
+    // -1 for one that did not answer. Measured on pinger_ once a run.
+    std::vector<double> pings_;
+    std::thread pinger_;
 
     Field fields_[2];  // email, password
     int focus_ = 0;
@@ -885,6 +891,33 @@ void Launcher::drawHome() {
     if (regionsOpen_) drawRegionList();
 }
 
+// Every region's round trip, on a thread of its own; then, unless he picked one himself, the
+// quickest is where Play goes (engine.h Region). Kept in launcher.json, so a run that starts Play
+// before its pings are in plays where the last one found quickest.
+void Launcher::measureRegions() {
+    pinger_ = std::thread([this] {
+        std::vector<double> pings;
+        for (const Region& one : regions()) pings.push_back(pingMs(one));
+        post([this, pings] {
+            pings_ = pings;
+            std::string said;
+            for (size_t i = 0; i < pings.size(); ++i) {
+                char one[64];
+                std::snprintf(one, sizeof one, "%s%s %.0f ms", i ? ", " : "", regions()[i].name.c_str(), pings[i]);
+                said += one;
+            }
+            core::logf("launcher: regions %s", said.c_str());
+            const std::string best = quickest(pings);
+            if (!settings_.regionPicked && !best.empty() && best != settings_.region) {
+                settings_.region = best;
+                saveSettings(settings_);
+                core::logf("launcher: region %s, the quickest from here", regionNamed(best).name.c_str());
+            }
+        });
+        glfwPostEmptyEvent();
+    });
+}
+
 // **The region** (engine.h Region): a flat word on the top strip, its right edge at `right`, that
 // opens the list under it. Returns its left edge.
 float Launcher::drawRegion(float right, float y) {
@@ -913,7 +946,7 @@ float Launcher::drawRegion(float right, float y) {
 // The regions under the flat word: each one's name and its server's city, a tick on the one kept,
 // and what a region means for who he meets. A press anywhere else closes it.
 void Launcher::drawRegionList() {
-    constexpr float kRow = 48.0f, kWide = 280.0f, kFoot = 52.0f;
+    constexpr float kRow = 48.0f, kWide = 280.0f, kFoot = 70.0f;
     const auto& all = regions();
     const Box list{std::min(regionAt_.x, kW - 20.0f - kWide), regionAt_.bottom() + 6.0f, kWide,
                    kRow * float(all.size()) + kFoot};
@@ -932,16 +965,26 @@ void Launcher::drawRegionList() {
         const bool kept = one.id == settings_.region;
         words(row.x + 16.0f, row.y + 22.0f, one.name, hex(hot ? 0xFFFFFF : kBoneHi), 15.0f, true);
         words(row.x + 16.0f, row.y + 39.0f, "Server in " + one.city, hex(kQuiet), 13.0f);
+        // Its round trip from here, left of the tick: "..." until measured.
+        {
+            char ms[32];
+            if (i >= pings_.size()) std::snprintf(ms, sizeof ms, "...");
+            else if (pings_[i] < 0.0) std::snprintf(ms, sizeof ms, "no answer");
+            else std::snprintf(ms, sizeof ms, "%.0f ms", pings_[i]);
+            words(row.right() - 44.0f - measure(ms, 13.0f), row.y + 30.0f, ms, hex(kQuiet), 13.0f);
+        }
         if (kept) {
             const float tx = row.right() - 30.0f, ty = row.y + 20.0f;
             for (int k = 0; k < 4; ++k) canvas_.rect(px({tx + float(k), ty + float(k), 1.6f, 1.6f}), hex(0xD4493B));
             for (int k = 0; k < 7; ++k) canvas_.rect(px({tx + 3.0f + float(k), ty + 3.0f - float(k), 1.6f, 1.6f}), hex(0xD4493B));
         }
         if (hot && released_ && pressedAt_ == index) {
-            if (!kept) {
+            // His pick, even of the one the pings chose: from here on the pings only inform.
+            if (!kept || !settings_.regionPicked) {
                 settings_.region = one.id;
+                settings_.regionPicked = true;
                 saveSettings(settings_);
-                core::logf("launcher: region %s (%s)", one.name.c_str(), one.server.c_str());
+                core::logf("launcher: region %s (%s), picked", one.name.c_str(), one.server.c_str());
             }
             regionsOpen_ = false;
         }
@@ -950,6 +993,8 @@ void Launcher::drawRegionList() {
     canvas_.rect(px({list.x + 12.0f, footY, list.w - 24.0f, 1.0f}), hex(0x3A2E25));
     words(list.x + 16.0f, footY + 22.0f, "Each region is its own world.", hex(kQuiet), 13.0f);
     words(list.x + 16.0f, footY + 39.0f, "You meet players of the same region.", hex(kQuiet), 13.0f);
+    words(list.x + 16.0f, footY + 57.0f,
+          settings_.regionPicked ? "Your choice." : "Chosen for you: the quickest from here.", hex(kQuiet), 13.0f);
     // A press off the list and off the word closes it.
     if (clicked_ && !over(px(list)) && !over(px(regionAt_))) regionsOpen_ = false;
 }
@@ -1083,6 +1128,8 @@ bool Launcher::open() {
 void Launcher::close() {
     stop_ = true;
     if (worker_.joinable()) worker_.join();
+    net::abandonWaits();  // a ping still waiting on a server gives up at once
+    if (pinger_.joinable()) pinger_.join();
     // With no Vulkan, bgfx never started: shutting it down then crashed the launcher before its
     // box could say why (Wine with vulkan-1.dll off, 2026-10-15).
     if (bgfxUp_) {
@@ -1197,6 +1244,7 @@ int Launcher::run() {
     // the way, and the first run's graphics (engine.cpp firstRunGraphics).
     gpu_ = probeGpu();
     tuned_ = firstRunGraphics(gpu_);
+    if (options_.shot.empty()) measureRegions();
     if (!open()) {
         core::logError("launcher: the window did not open");
         close();
@@ -1250,6 +1298,7 @@ int Launcher::run() {
             progress_.total = todoBytes_;
             progress_.done = todoBytes_ * 38 / 100;
             regionsOpen_ = which == "regions";  // Ready, the region's list open
+            pings_ = {34.0, 212.0};
         }
         // The probe is Windows'; a shot taken where there is none shows the line and the first
         // run's message as a Windows machine with this card would see them.
