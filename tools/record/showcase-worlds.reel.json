@@ -25,7 +25,7 @@
     {"world": "noria",     "at": [184, 176], "wears": ["bronze"],                     "weather": "dry"},
     {"world": "devias",    "at": [195, 83],  "wears": ["scale"],                      "weather": "rain"},
     {"world": "dungeon",   "at": [12, 234],  "wears": ["brass"]},
-    {"world": "losttower", "at": [185, 166], "wears": ["plate"]},
+    {"world": "losttower", "at": [12, 121], "wears": ["plate"]},
     {"world": "atlans",    "at": [20, 32],   "wears": ["dragon", "uniria"]},
     {"world": "tarkan",    "at": [79, 163],  "wears": ["blackdragon", "dinorant"],    "weather": "rain"},
     {"world": "icarus",    "at": [40, 40],   "wears": ["blackdragon11", "satan"]},

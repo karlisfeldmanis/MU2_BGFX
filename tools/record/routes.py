@@ -2,7 +2,10 @@
 along one direction, outside any safe zone, with open ground either side so the route never
 bends -- the one thing that keeps his stride and the camera the same in every world's take.
 
-    python3 tools/record/routes.py DX DY LENGTH [--top=N] WORLD [WORLD ...]
+    python3 tools/record/routes.py DX DY LENGTH [--top=N] [--box=C0,R0,C1,R1] WORLD [WORLD ...]
+
+--box keeps the whole run inside a region: the Lost Tower's seventh floor is 0,70,69,255
+(content/world/losttower/world.json `places`).
 
 Prints a JSON object: each world's best start tile, scored by how many monsters' nests lie
 a few tiles off the line but not on it (content/world/<w>/nests.json), so he runs past life. The walk
@@ -26,8 +29,9 @@ from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 NEAR = 8  # tiles either side of the line a nest counts within...
-SPREAD = 30  # tiles between two candidates' starts
+SPREAD = 20  # tiles between two candidates' starts
 TOP = 1      # how many candidates a world (--top=N)
+BOX = None   # (c0, r0, c1, r1) the run must stay inside (--box=...)
 CLOSE = 2  # ...and no nearer: he runs past them, not through a pack standing on his road
 CAMERA = (1.0 / math.sqrt(2.0), -1.0 / math.sqrt(2.0))  # toward the camera, in tiles
 CLIMB = math.tan(math.radians(48.5))  # the line of sight's rise, metres a tile
@@ -139,6 +143,9 @@ def best(world, dx, dy, length):
             ex, ey = x + dx * (length - 1), y + dy * (length - 1)
             if not (0 <= ex < columns and 0 <= ey < rows):
                 continue
+            if BOX and not (BOX[0] <= min(x, ex) and max(x, ex) <= BOX[2] and
+                            BOX[1] <= min(y, ey) and max(y, ey) <= BOX[3]):
+                continue
             if not all(clear[y + dy * t, x + dx * t] for t in range(length)):
                 continue
             score = float(sum(per_tile[y + dy * t, x + dx * t] for t in range(length)))
@@ -159,10 +166,14 @@ def best(world, dx, dy, length):
 
 
 def main():
-    global TOP
+    global TOP, BOX
     dx, dy, length = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])
-    if len(sys.argv) > 4 and sys.argv[4].startswith("--top="):
-        TOP = int(sys.argv.pop(4)[6:])
+    while len(sys.argv) > 4 and sys.argv[4].startswith("--"):
+        flag = sys.argv.pop(4)
+        if flag.startswith("--top="):
+            TOP = int(flag[6:])
+        elif flag.startswith("--box="):
+            BOX = tuple(int(v) for v in flag[6:].split(","))
     print(json.dumps({w: best(w, dx, dy, length) for w in sys.argv[4:]}, indent=1))
 
 
