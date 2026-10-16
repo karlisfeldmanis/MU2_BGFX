@@ -164,7 +164,7 @@ constexpr DropRate kDropRates[] = {
     {306, 30, 3, 10},  // Death Rider
     {307, 30, 3, 10},  // Forest Orc
     {308, 30, 3, 10},  // Death Tree
-    {309, 30, 3, 150},  // Hell Maine
+    {309, 30, 4, 150},  // Hell Maine
     {549, 30, 3, 8},  // Bloody Orc
     {550, 30, 3, 10},  // Bloody Death Rider
     {552, 30, 3, 10},  // Bloody Witch Queen

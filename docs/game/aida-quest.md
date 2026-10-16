@@ -153,8 +153,10 @@ the socket it fits.
 
 1. **The level, settled** (the user, 2026-10-16: 'well aida is most strongest monsters after
    icarus, so i raised gate'). The door's 300 places Aida after Icarus in the walk, its breeds
-   staying MU's 72-120 (OM S6), the Bloody four the strongest of them. Both quests ask the
-   door's level.
+   then raised past Icarus's (the user, the same day: 'they have to be stronger than icarus,
+   they have to drops 2nd class gear', and feathers): 110-130 for the 2005 six, Hell Maine
+   above the Dark Phoenix, 134-140 for the Bloody breeds (docs/worlds/aida-port.md, "Raised
+   past Icarus"). Both quests ask the door's level.
 2. **His name.** MU's is "Seed Master" (시드마스터). Keep it, or give him a name ("the Seed
    Master" in the quests either way).
 3. **The rewards** above, as built: proposals the user has not picked.

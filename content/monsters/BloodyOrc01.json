@@ -19,17 +19,17 @@
     "ex01mono3eye": "skin"
   },
   "combat": {
-    "level": 114,
-    "health": 117000,
-    "minimum_damage": 675,
-    "maximum_damage": 710,
-    "defense": 420,
+    "level": 134,
+    "health": 190000,
+    "minimum_damage": 1100,
+    "maximum_damage": 1170,
+    "defense": 700,
     "move_range": 4,
     "attack_range": 2,
     "view_range": 9,
     "move_delay": 700,
     "attack_delay": 1500,
-    "attack_rate": 900,
+    "attack_rate": 1300,
     "defense_rate": 820,
     "attack_skill": null,
     "note": "OpenMU VersionSeasonSix (openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:501)."

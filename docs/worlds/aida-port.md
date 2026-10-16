@@ -422,6 +422,36 @@ sheets. Ground luminance (sheet × light) is 29, against Noria's 49, Lorencia's 
 - **Where it sits.** The 2005 band, 72-98, repeats Tarkan's 72-93, entered from Noria instead of from
   Atlans. MU's own warp order is Tarkan 140, Aida 150, Kanturu 160, Icarus 170.
 
+## Raised past Icarus (2026-10-16)
+
+The user, after the door went to 300 ('aida is most strongest monsters after icarus'), then: 'the
+need to drop also feathers, they have to be stronger than icarus, they have to drops 2nd class
+gear'. Ours, all of it, in place of OM S6's numbers above (set with `mu edit`, cooked by `mu make
+realm` and `mu make tables`). Icarus runs 75-108: Great Drakan 100 (50 000 HP, 650-700, 495),
+the Dark Phoenix 108 (95 000, 950-1000, 600). The weakest Aida breed now stands just over Great
+Drakan and Hell Maine over the Dark Phoenix.
+
+| breed | level | HP | damage | defense | attack / defense rate |
+|---|---:|---:|---|---:|---|
+| Death Tree | 110 | 55 000 | 700-750 | 520 | 920 / 330 |
+| Forest Orc | 112 | 60 000 | 730-780 | 540 | 950 / 340 |
+| Death Rider | 115 | 66 000 | 770-820 | 560 | 990 / 355 |
+| Blue Golem | 118 | 80 000 | 800-860 | 600 | 1040 / 375 |
+| Witch Queen | 124 | 100 000 | 900-960 | 640 | 1120 / 400 |
+| Hell Maine | 130 | 160 000 | 1050-1120 | 720 | 1250 / 450, drops to +4 as the Dark Phoenix |
+| Bloody Orc | 134 | 190 000 | 1100-1170 | 700 | 1300 / 820 |
+| Bloody Death Rider | 136 | 165 000 | 1200-1270 | 740 | 1350 / 480 |
+| Bloody Witch Queen | 140 | 175 000 | 1250-1320 | 760 | 1400 / 480 |
+
+The Bloody Golem, not built, belongs at about 138. Respawns, resistances and debuffs unchanged.
+
+Drops: `rules.second_class` and `rules.drops ["feather"]` in world.json, as Tarkan and Icarus. With
+the levels, each breed's window [L-15, L] is the top of the item list: 15 items for the Death Tree
+(11 second-class), 6 for Hell Maine and the Bloody Witch Queen (Dark Soul, Great Dragon, Hurricane,
+Dark Phoenix and Red Spirit pieces, the Archangel weapons, Dark Breaker; at 140 the Arrow Viper
+Bow, Knight Blade, Dark Reign Blade and Staff of Kundun). Loch's Feather one kill in 500. Still
+none: the Jewel of Chaos (its drop stops at 66).
+
 ## Where the passes disagree, settled
 
 | point | the passes | settled |

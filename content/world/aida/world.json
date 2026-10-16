@@ -12,7 +12,11 @@
     "event": false,
     "floors": false,
     "move_order": 7,
-    "note": "Aida, MU's map 33, entered from Noria's north-east door: its spawn gate 119, 82,8 to 87,14, the small safe hall in the north-west (OpenMU VersionSeasonSix Gates.cs:265; docs/worlds/aida-port.md), where a death and the Town Portal land too. Not 0.75's: MU added it in 2005 (Season 1). MU draws it on its black clear with no leaves, birds or weather (GMAida.cpp, SceneManager.cpp:371-402), so for now it takes the underground's air."
+    "note": "Aida, MU's map 33, entered from Noria's north-east door: its spawn gate 119, 82,8 to 87,14, the small safe hall in the north-west (OpenMU VersionSeasonSix Gates.cs:265; docs/worlds/aida-port.md), where a death and the Town Portal land too. Not 0.75's: MU added it in 2005 (Season 1). MU draws it on its black clear with no leaves, birds or weather (GMAida.cpp, SceneManager.cpp:371-402), so for now it takes the underground's air.",
+    "drops": [
+      "feather"
+    ],
+    "second_class": true
   },
   "show": {
     "air": {

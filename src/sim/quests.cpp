@@ -1760,12 +1760,12 @@ QuestRow seedMastersClearing() {
         "\"Take these. I grew them myself. Come back when it all grows back, and it will.\"";
     row.resting = "\"Let the beds rest. By morning they will be full again.\"";
     row.voice = "seed_master_1";
-    row.steps[0] = {QuestStepKind::Clear, 308, 40, "Death Trees"};    // level 72, 29 nests
-    row.steps[1] = {QuestStepKind::Clear, 307, 35, "Forest Orcs"};    // 74, 36
-    row.steps[2] = {QuestStepKind::Clear, 306, 30, "Death Riders"};   // 78, 39
-    row.steps[3] = {QuestStepKind::Clear, 305, 30, "Blue Golems"};    // 84, 38
-    row.steps[4] = {QuestStepKind::Clear, 304, 10, "Witch Queens"};   // 94, 6, the central maze
-    row.steps[5] = {QuestStepKind::Clear, 309, 1, "Hell Maine"};      // 98, 3, 150 s respawn
+    row.steps[0] = {QuestStepKind::Clear, 308, 40, "Death Trees"};    // level 110, 29 nests
+    row.steps[1] = {QuestStepKind::Clear, 307, 35, "Forest Orcs"};    // 112, 36
+    row.steps[2] = {QuestStepKind::Clear, 306, 30, "Death Riders"};   // 115, 39
+    row.steps[3] = {QuestStepKind::Clear, 305, 30, "Blue Golems"};    // 118, 38
+    row.steps[4] = {QuestStepKind::Clear, 304, 10, "Witch Queens"};   // 124, 6, the central maze
+    row.steps[5] = {QuestStepKind::Clear, 309, 1, "Hell Maine"};      // 130, 3, 150 s respawn
     row.steps[6] = {QuestStepKind::Return, 0, 1, "Return to the Seed Master"};
     row.stepCount = 7;
     row.repeatSeconds = 12 * 60 * 60;

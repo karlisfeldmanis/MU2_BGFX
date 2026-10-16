@@ -21,18 +21,18 @@
     "epibosswing": "leather"
   },
   "combat": {
-    "level": 98,
-    "health": 50000,
-    "minimum_damage": 550,
-    "maximum_damage": 600,
-    "defense": 520,
+    "level": 130,
+    "health": 160000,
+    "minimum_damage": 1050,
+    "maximum_damage": 1120,
+    "defense": 720,
     "move_range": 6,
     "attack_range": 5,
     "view_range": 10,
     "move_delay": 600,
     "attack_delay": 2000,
-    "attack_rate": 850,
-    "defense_rate": 300,
+    "attack_rate": 1250,
+    "defense_rate": 450,
     "attack_skill": null,
     "note": "OpenMU VersionSeasonSix (openmu/src/Persistence/Initialization/VersionSeasonSix/Maps/Aida.cs:470)."
   },
@@ -228,7 +228,7 @@
   "rules": {
     "drops": {
       "money_rate": 30,
-      "max_plus": 3,
+      "max_plus": 4,
       "regen": 150
     },
     "resist": {
