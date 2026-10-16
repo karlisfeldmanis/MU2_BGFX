@@ -26,7 +26,7 @@
       "room": "open",
       "note": "desert.wav over the whole map, open desert under the sky."
     },
-    "mounts_fly": true,
+    "mounts_fly": false,
     "music": {
       "track": "/music/tarkan.mp3",
       "where": "safe",
