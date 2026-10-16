@@ -12,7 +12,11 @@
 <link rel="stylesheet" href="/site.css">
 <style>
 /* The admins' page: who is on the game server now (server.py /api/online). */
-.online-page .wrap { max-width: 960px; }
+.online-page .wrap { max-width: 1120px; }
+.tally { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 32px; }
+.tally h3 { margin: 0 0 4px; font: 700 15px/1.2 'Alegreya Sans SC', sans-serif; color: var(--quiet); }
+.tally div div { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; box-shadow: inset 0 -1px 0 var(--line); font-size: 15px; }
+.tally b { font-weight: 500; color: var(--bone-hi); font-variant-numeric: tabular-nums; }
 .count { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 24px; color: var(--label); }
 .count b { color: var(--bone-hi); font-size: 22px; margin-right: 6px; }
 .stale { color: var(--danger); text-align: center; }
@@ -50,17 +54,21 @@
 <div class="count" id="count"></div>
 <p id="stale" class="stale" hidden></p>
 <table class="who">
-<thead><tr><th>Character</th><th>Account</th><th>Level</th><th>Map</th><th>Online for</th></tr></thead>
+<thead><tr><th>Character</th><th>Account</th><th>Level</th><th>Map</th><th>Machine</th><th>Online for</th></tr></thead>
 <tbody id="rows"></tbody>
 </table>
 <p class="center muted" style="font-size: 14px" id="told"></p>
 
 <h2 class="h2" style="margin-top: 24px">Recent plays</h2>
 <table class="who">
-<thead><tr><th>Character</th><th>Account</th><th>Level</th><th>Last map</th><th>Started</th><th>Played</th></tr></thead>
+<thead><tr><th>Character</th><th>Account</th><th>Level</th><th>Last map</th><th>Machine</th><th>Started</th><th>Played</th></tr></thead>
 <tbody id="recent"></tbody>
 </table>
 <p class="center muted" style="font-size: 14px">The last 100 of 30 days, bots left out.</p>
+
+<h2 class="h2" style="margin-top: 24px">Players' machines</h2>
+<div class="tally" id="tally"></div>
+<p class="center muted" style="font-size: 14px">Each account above counted once, by the machine its launcher last reported.</p>
 </div>
 
 </div>
@@ -90,6 +98,45 @@
     return td;
   }
 
+  // The system as the launcher reports it (as the account page reads it): Windows "10.0.<build>",
+  // 22000 and later Windows 11; the Mac its bare version.
+  function osName(os) {
+    if (!os) return '';
+    if (/^10\.0\./.test(os)) return parseInt(String(os).split('.')[2] || '0', 10) >= 22000 ? 'Windows 11' : 'Windows 10';
+    if (/^\d+(\.\d+)*$/.test(os)) return 'macOS ' + String(os).split('.')[0];
+    return String(os);
+  }
+  const ram = (m) => m && m.ram ? Math.round(m.ram / 1024) + ' GB' : '';
+  function machine(o, account, key) {
+    const m = o.machines[String(account)];
+    if (!m) return cell('not reported', '', key, 'muted');
+    return cell(m.gpu || 'unknown card', [osName(m.os), ram(m), m.graphics ? 'graphics ' + m.graphics : ''].filter(Boolean).join(' · '), key);
+  }
+  function tally(o) {
+    const accounts = [...new Set(o.players.concat(o.recent).filter((p) => !p.bot && p.account).map((p) => String(p.account)))];
+    const box = $('tally');
+    box.replaceChildren();
+    const groups = [['System', (m) => osName(m.os)], ['Graphics card', (m) => m.gpu], ['Memory', (m) => ram(m)], ['Graphics setting', (m) => m.graphics]];
+    for (const [title, of] of groups) {
+      const counts = new Map();
+      for (const a of accounts) {
+        const m = o.machines[a];
+        const k = (m && of(m)) || 'not reported';
+        counts.set(k, (counts.get(k) || 0) + 1);
+      }
+      const col = el('div');
+      col.appendChild(el('h3', '', title));
+      for (const [k, n] of [...counts].sort((x, y) => y[1] - x[1]).slice(0, 8)) {
+        const line = el('div');
+        line.appendChild(el('span', '', k));
+        line.appendChild(el('b', '', String(n)));
+        col.appendChild(line);
+      }
+      if (!accounts.length) col.appendChild(el('div', 'muted', 'No players yet'));
+      box.appendChild(col);
+    }
+  }
+
   function render(o) {
     const people = o.players.filter((p) => !p.bot), bots = o.players.length - people.length;
     const maps = new Set(o.players.map((p) => p.world)).size;
@@ -109,7 +156,7 @@
     if (!o.players.length) {
       const tr = el('tr');
       const td = cell('Nobody is playing right now.', '', '', 'muted');
-      td.colSpan = 5;
+      td.colSpan = 6;
       tr.appendChild(td);
       rows.appendChild(tr);
     }
@@ -120,6 +167,7 @@
                           p.account_name && p.email ? p.email : '', 'Account'));
       tr.appendChild(cell(String(p.level), '', 'Level', 'num'));
       tr.appendChild(cell(map(p.world) + (p.copy > 1 ? ' ' + p.copy : ''), p.x + ', ' + p.y, 'Map'));
+      tr.appendChild(p.bot ? cell('bot', '', 'Machine', 'muted') : machine(o, p.account, 'Machine'));
       tr.appendChild(cell(since(p.since), '', 'Online for'));
       rows.appendChild(tr);
     }
@@ -128,7 +176,7 @@
     if (!o.recent.length) {
       const tr = el('tr');
       const td = cell('Nobody has played yet since this list began.', '', '', 'muted');
-      td.colSpan = 6;
+      td.colSpan = 7;
       tr.appendChild(td);
       recent.appendChild(tr);
     }
@@ -138,12 +186,14 @@
       tr.appendChild(cell(g.account_name || g.email, g.account_name ? g.email : '', 'Account'));
       tr.appendChild(cell(String(g.level), '', 'Level', 'num'));
       tr.appendChild(cell(map(g.world), '', 'Last map'));
+      tr.appendChild(machine(o, g.account, 'Machine'));
       tr.appendChild(cell(when(g.since), '', 'Started'));
       const played = cell(g.online ? 'online now' : span(g.until - g.since), g.online ? 'for ' + span(g.until - g.since) : '', 'Played');
       if (g.online) played.style.color = 'var(--live)';
       tr.appendChild(played);
       recent.appendChild(tr);
     }
+    tally(o);
     $('told').textContent = o.at ? 'Updated ' + when(o.at) + ' · refreshes every 10 s' : '';
     $('v-list').hidden = false;
     $('v-none').hidden = true;

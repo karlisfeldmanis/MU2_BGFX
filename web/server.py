@@ -42,7 +42,8 @@ The routes:
     GET  /api/downloads                             -> 200 {windows: {file, bytes} | null, macos: ...}
     GET  /api/online     Bearer T of an admin       -> 200 {at, fresh, players: [...]} | 404 for anyone else
          who is on the game server now, as mu2_server last told it (the admins' /online page), and
-         `recent`: the last RECENT_SHOWN plays of the last RECENT_DAYS days, bots left out.
+         `recent`: the last RECENT_SHOWN plays of the last RECENT_DAYS days, bots left out; and
+         `machines`: by account id, the machine its launcher last reported (devices).
     POST /internal/online   (127.0.0.1 only) {players: [{account, name, class, level, world, copy, x, y, bot}]}
          mu2_server's list of who is on, every 5 s (server/src/signin.cpp tellOnline); kept in memory.
     POST /internal/role     (127.0.0.1 only) {email, role}  -> 200 {ok} | 404
@@ -535,8 +536,18 @@ class Store:
                       "SELECT g.account_id, a.email, a.name, g.name, g.class, g.level, g.world, g.since, g.until "
                       "FROM games g JOIN accounts a ON a.id = g.account_id WHERE g.until >= ? "
                       "ORDER BY g.until DESC LIMIT ?", (int(time.time()) - RECENT_DAYS * 86400, RECENT_SHOWN))]
+        # Each account's machine: the one its launcher reported last (the account page's own rows).
+        machines = {}
+        ids = sorted({p["account"] for p in players + recent if isinstance(p.get("account"), int) and p["account"] > 0})
+        if ids:
+            marks = ",".join("?" * len(ids))
+            for account, report in self.db().execute(
+                    f"SELECT account_id, report FROM devices WHERE account_id IN ({marks}) ORDER BY seen", ids):
+                row = json.loads(report)
+                machines[str(account)] = {key: row.get(key) for key in
+                                          ("gpu", "vendor", "driver", "date", "cpu", "ram", "os", "graphics", "renderer")}
         return {"at": told["at"], "fresh": time.time() - told["at"] < ONLINE_STALE_SECONDS, "players": players,
-                "recent": recent}
+                "recent": recent, "machines": machines}
 
     def logout(self, token: str):
         self.db().execute("DELETE FROM sessions WHERE token_hash = ?", (token_hash(token or ""),))
