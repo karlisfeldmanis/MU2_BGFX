@@ -1358,6 +1358,24 @@ OBJECT_LIGHT_DEPTH_BY_WORLD = world_manifest.by_world("object_light_depth")
 
 GROUNDED_TYPES = world_manifest.by_world("grounded_types", world_manifest.as_types)
 
+# OURS: in a world whose pipeline says `grounded_follow_slope`, a grounded placement is fitted to
+# the slope under it rather than stood level on the height under its origin. Lorencia's ivy mats
+# (Grass01/02) are 4-5 m across and 0.3 m deep, and laid level on a bank their downhill edge
+# stood up to 1.7 m in the air, with a shadow cut loose under it; the user, 2026-10-16: 'some
+# of grass objects is little bit floating above ground making vierd shadows'. Measured on the
+# 999 grounded grass placements: an edge over 0.2 m up on 335 of them, over 0.8 m on 32.
+# A flat model (under GROUNDED_FLAT tiles deep) is tilted to the plane its points best lie on,
+# within GROUNDED_TILT; anything taller stays upright, as a tuft grows, and is only sunk. Both
+# are then lowered until GROUNDED_REACH of their footing is GROUNDED_SINK into the ground, a
+# tuft by no more than GROUNDED_BURY of its height and never raised. After: 47 and 3, the rest
+# on river banks and ridges no plane fits.
+GROUNDED_FOLLOW = world_manifest.worlds_with("grounded_follow_slope")
+GROUNDED_FLAT = 0.4
+GROUNDED_TILT = math.radians(30.0)
+GROUNDED_REACH = 95
+GROUNDED_SINK = 0.02
+GROUNDED_BURY = 0.3
+
 # OURS, not MU's: three rocks by the river west of Lorencia stand in the air in MU's own
 # data. The heightmap is MuMain's TerrainHeight.OZB byte for byte, heights are bytes x 1.5 in
 # both, and MuMain places an object at its stored z with no terrain snap (OpenObjectsEnc) --
@@ -1429,6 +1447,64 @@ WALL_BAND = (-0.05, 0.35)
 WALL_SKIPPED = ("Grass",)
 
 
+# content/placement.cpp's transform, for a row vector: pitch, then roll, then yaw.
+def turned(pitch, yaw, roll):
+    import numpy as np
+    s, c = math.sin(pitch), math.cos(pitch)
+    about_x = np.array([[1, 0, 0], [0, c, s], [0, -s, c]])
+    s, c = math.sin(roll), math.cos(roll)
+    about_z = np.array([[c, s, 0], [-s, c, 0], [0, 0, 1]])
+    s, c = math.sin(yaw), math.cos(yaw)
+    about_y = np.array([[c, 0, -s], [0, 1, 0], [s, 0, c]])
+    return about_x @ about_z @ about_y
+
+
+_MESHES = {}
+
+
+def mesh(path):
+    """A cooked .mum's points and triangles, in tiles, as the game reads them."""
+    import numpy as np
+    if path not in _MESHES:
+        with open(os.path.join(ASSETS, path), "rb") as handle:
+            raw = handle.read()
+        _magic, version, vertices, indices, _parts, _materials = struct.unpack_from(
+            "<4s5I", raw, 0)
+        stride, start = (48, 48) if version == 3 else (56, 52)
+        rows = np.frombuffer(raw, np.uint8, vertices * stride, start).reshape(vertices, stride)
+        points = rows[:, :12].copy().view(np.float32).reshape(vertices, 3)
+        triangles = np.frombuffer(raw, np.uint32, indices, start + vertices * stride)
+        _MESHES[path] = (points.astype(np.float64), triangles.reshape(-1, 3))
+    return _MESHES[path]
+
+
+def fit_to_slope(points, ground, column, row, yaw, scale):
+    """(pitch, roll, height) standing `points` on the land round (column, row); see GROUNDED_FOLLOW.
+    `ground(columns, rows)` is the land's height, bilinear, for arrays."""
+    import numpy as np
+    bottom, top = points[:, 1].min(), points[:, 1].max()
+    flat = top - bottom < GROUNDED_FLAT
+    footing = points if flat else points[points[:, 1] < bottom + 0.15]
+    under = float(ground(np.array([column]), np.array([row]))[0])
+    tilts = np.linspace(-GROUNDED_TILT, GROUNDED_TILT, 25) if flat else np.zeros(1)
+    best = None
+    for pitch in tilts:
+        for roll in tilts:
+            placed = footing @ turned(pitch, yaw, roll) * scale
+            # Each point's height over the land under it, before the placement's own height.
+            over = placed[:, 1] - ground(column + placed[:, 0], row - placed[:, 2])
+            spread = np.percentile(over, GROUNDED_REACH) - np.percentile(over, 100 - GROUNDED_REACH)
+            # The least spread, and of two alike the less tilted.
+            key = (round(float(spread), 4), abs(pitch) + abs(roll))
+            if best is None or key < best[0]:
+                best = (key, pitch, roll, over)
+    _key, pitch, roll, over = best
+    height = -float(np.percentile(over, GROUNDED_REACH)) - GROUNDED_SINK
+    if not flat:
+        height = max(height, under - (top - bottom) * scale * GROUNDED_BURY)
+    return float(pitch), float(roll), min(height, under)
+
+
 def cook_walls(out_dir, world, models, buckets, heights, channels, grid_w, grid_h, lift):
     import numpy as np
 
@@ -1449,31 +1525,6 @@ def cook_walls(out_dir, world, models, buckets, heights, channels, grid_w, grid_
         top = grid[r0, c0] * (1 - fc) + grid[r0, c0 + 1] * fc
         bottom = grid[r0 + 1, c0] * (1 - fc) + grid[r0 + 1, c0 + 1] * fc
         return top * (1 - fr) + bottom * fr
-
-    # content/placement.cpp's transform, for a row vector: pitch, then roll, then yaw.
-    def turned(pitch, yaw, roll):
-        s, c = math.sin(pitch), math.cos(pitch)
-        about_x = np.array([[1, 0, 0], [0, c, s], [0, -s, c]])
-        s, c = math.sin(roll), math.cos(roll)
-        about_z = np.array([[c, s, 0], [-s, c, 0], [0, 0, 1]])
-        s, c = math.sin(yaw), math.cos(yaw)
-        about_y = np.array([[c, 0, -s], [0, 1, 0], [s, 0, c]])
-        return about_x @ about_z @ about_y
-
-    meshes = {}
-
-    def mesh(path):
-        if path not in meshes:
-            with open(os.path.join(ASSETS, path), "rb") as handle:
-                raw = handle.read()
-            _magic, version, vertices, indices, _parts, _materials = struct.unpack_from(
-                "<4s5I", raw, 0)
-            stride, start = (48, 48) if version == 3 else (56, 52)
-            rows = np.frombuffer(raw, np.uint8, vertices * stride, start).reshape(vertices, stride)
-            points = rows[:, :12].copy().view(np.float32).reshape(vertices, 3)
-            triangles = np.frombuffer(raw, np.uint32, indices, start + vertices * stride)
-            meshes[path] = (points.astype(np.float64), triangles.reshape(-1, 3))
-        return meshes[path]
 
     low, high = WALL_BAND
     walled = np.zeros((size, size, cells * cells), bool)
@@ -1588,6 +1639,20 @@ def cook_placements(world, out_dir, chunk_tiles):
     if grid_w != size or light_w != size:
         raise ValueError(f"{world}: a grid is {grid_w} wide and the world says {size}")
 
+    # terrain() for arrays, for fit_to_slope: the same four corners, the same weights.
+    import numpy as np
+    grid = np.frombuffer(bytes(heights), np.uint8)[::_channels].astype(np.float64)
+    grid = grid.reshape(grid_h, grid_w) * height_factor / per_tile
+
+    def land(columns, rows):
+        c = np.clip(columns, 0.0, grid_w - 1.001)
+        r = np.clip(rows, 0.0, grid_h - 1.001)
+        c0, r0 = c.astype(np.int64), r.astype(np.int64)
+        fc, fr = c - c0, r - r0
+        top = grid[r0, c0] * (1 - fc) + grid[r0, c0 + 1] * fc
+        bottom = grid[r0 + 1, c0] * (1 - fc) + grid[r0 + 1, c0 + 1] * fc
+        return top * (1 - fr) + bottom * fr
+
     # Bilinear over the tile's four corners, and it has to be, because that is what the
     # ground the tuft stands on IS: `Ground::heightAt` interpolates the same four, and the
     # terrain mesh is drawn from them. Read at the nearest corner -- which is what this did
@@ -1667,7 +1732,7 @@ def cook_placements(world, out_dir, chunk_tiles):
 
     chunks_across = (size + chunk_tiles - 1) // chunk_tiles
     buckets = {}
-    dropped_hidden = dropped_model = grounded = outside = roofed = lowered_count = buried = 0
+    dropped_hidden = dropped_model = grounded = outside = roofed = lowered_count = buried = sloped = 0
 
     anchors = []
     anchor_scales = {}  # an anchor's index -> its box's Scale, for SPRAY_KINDS
@@ -1731,6 +1796,10 @@ def cook_placements(world, out_dir, chunk_tiles):
             y = terrain(column, row)
             pitch = 0.0
             roll = 0.0
+            if world in GROUNDED_FOLLOW:
+                pitch, roll, y = fit_to_slope(mesh(models[model][1])[0], land, column, row, yaw,
+                                              float(one.get("scale", 1.0)))
+                sloped += 1
             flags |= 1
             grounded += 1
         lowered = LOWERED.get((one["model"], round(stored_x, 3), round(stored_y, 3)))
@@ -1865,7 +1934,7 @@ def cook_placements(world, out_dir, chunk_tiles):
                height_factor / per_tile)
 
     print(f"cook: {written} placements in {len(chunk_records)} chunks of {chunk_tiles} tiles, "
-          f"{len(models)} models, {grounded} laid on the terrain, {lowered_count} of {len(LOWERED)} "
+          f"{len(models)} models, {grounded} laid on the terrain ({sloped} fitted to its slope), {lowered_count} of {len(LOWERED)} "
           f"floating placements lowered, {roofed} roofs, {buried} buried and held still, "
           f"{dropped_hidden} hidden and {dropped_model} without a mesh dropped, "
           f"{outside} standing off the grid, "

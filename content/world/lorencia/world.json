@@ -377,6 +377,7 @@
         20,
         28
       ]
-    }
+    },
+    "grounded_follow_slope": true
   }
 }

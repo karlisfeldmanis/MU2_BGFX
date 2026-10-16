@@ -153,7 +153,7 @@ int main() {
             {"Grass05", 13.08736f, -5.31686f, 0.6765f, 0.0f},
             {"Grass02", 27.39272f, -132.34586f, 4.7990f, 20.0f},
             {"Grass05", 65.50000f, -31.50000f, 0.2250f, -380.0f},
-            {"Grass01", 113.64469f, -135.36134f, 3.1000f, -65.0f},
+            {"Grass01", 113.03000f, -135.36000f, 2.6100f, -90.0f},  // flat on the wall, placements.json
             {"Grass01", 122.50000f, -147.50000f, 1.6500f, -75.0f},
             {"Grass01", 123.00000f, -108.50000f, 1.6500f, 0.0f},
             {"Grass01", 124.00000f, -108.00000f, 1.6500f, 0.0f},
@@ -192,18 +192,35 @@ int main() {
         }
         check(find("Grass01", 142.82416f, -127.46561f) == nullptr,
               "the Grass01 MuMain hangs 1.6 m in the air off the fountain's east edge stays dropped");
-        check(find("Grass02", 156.88980f, -122.01350f) == nullptr &&
-                  find("Grass02", 157.38680f, -124.05859f) == nullptr &&
-                  find("Grass02", 158.36264f, -123.63898f) == nullptr,
-              "the three Grass02 under the east bridge, out of the camera's sight, stay dropped");
+        // The ivy at the foot of the town wall by the east bridge, dropped 2026-09-24 as out of
+        // sight and missed by the user on the way to the spiders (2026-10-16): back, as stored.
+        const Planted bridge[] = {
+            {"Grass02", 156.88980f, -122.01350f, 0.38203f, -50.0f},
+            {"Grass02", 157.17973f, -125.06020f, 0.31077f, -50.0f},
+            {"Grass02", 158.51583f, -122.56052f, 0.2250f, -50.0f},
+            {"Grass02", 157.84646f, -116.02972f, 0.2250f, -50.0f},
+            {"Grass02", 157.38680f, -124.05859f, 0.2250f, 5.0f},
+            {"Grass02", 158.36264f, -123.63898f, 0.2250f, 5.0f},
+        };
+        for (const Planted& one : bridge) {
+            const mu::content::TownInstance* grass = find(one.name, one.x, one.z);
+            const std::string what = std::string("the wall's ivy by the east bridge at (") +
+                                     std::to_string(one.x) + ", " + std::to_string(-one.z) + ")";
+            check(grass != nullptr && std::fabs(grass->position[1] - one.height) < 0.001f &&
+                      std::fabs(grass->pitch - one.pitch * degrees) < 0.001f && (grass->flags & 1) == 0,
+                  what + " is placed as MU stores it");
+        }
 
-        // And a tuft the data floats 4.3 m over a slope west of the town is still laid on it.
+        // And a tuft the data floats 4.3 m over a slope west of the town is still laid on it,
+        // fitted to the slope (cook.py's GROUNDED_FOLLOW): sunk to its footing, tilted no more
+        // than 30 degrees.
         const mu::content::TownInstance* floating = find("Grass01", 6.30871f, -38.57134f);
         check(floating != nullptr, "the floating Grass01 at (6.3, 38.6) is placed");
         if (floating) {
-            check((floating->flags & 1) != 0 && floating->pitch == 0.0f &&
-                      std::fabs(floating->position[1] - 1.9327f) < 0.01f,
-                  "the floating Grass01 is laid on the terrain and stood up (cooked at " +
+            check((floating->flags & 1) != 0 && std::fabs(floating->pitch) <= 30.0f * degrees + 1e-4f &&
+                      std::fabs(floating->roll) <= 30.0f * degrees + 1e-4f &&
+                      std::fabs(floating->position[1] - 1.5707f) < 0.01f,
+                  "the floating Grass01 is laid on the terrain, fitted to its slope (cooked at " +
                       std::to_string(floating->position[1]) + " m)");
         }
     }

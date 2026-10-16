@@ -1172,6 +1172,12 @@ def fixed(declared: dict, corrections: Path) -> dict:
             closest["at"][2] = float(fix["height"]) * 100.0
             applied += 1
 
+        # And one turned, in MU's own degrees (pitch, roll, yaw): ivy MuMain leans 30 degrees
+        # off the wall it is meant to climb.
+        if "angle" in fix:
+            closest["angle"] = [float(a) for a in fix["angle"]]
+            applied += 1
+
     if applied:
         print(f"  fix        {applied} placement(s) corrected against the map's own list")
 
