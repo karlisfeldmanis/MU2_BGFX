@@ -237,8 +237,17 @@ build_asset() {
   # exactly what the Budge Dragon's missing skin did: the rig learned its group names, the
   # build was rerun, and the .glb came back with no JOINTS_0 and no complaint, because the
   # only stage that reads the rig's groups was the one stage that thought it was current.
+  # And the asset, where it rebinds: clean_lowpoly is the stage that reads `rebind` and
+  # `rebind_regions`, so a recipe that changes either and nothing else left the .blend bound
+  # the old way under a fresh bake (the Dark Wizard's vest, 2026-10-16). Only then, because
+  # every other recipe edit -- a material, a roughness -- is downstream of the .blend.
+  local rebinds=""
+  if [[ -f $asset && $asset -nt $blend ]] && grep -q '"rebind' "$asset"; then
+    rebinds=1
+  fi
+
   if [[ -n $forced || ! -f $blend || $obj -nt $blend \
-        || $newest_tool -nt $blend \
+        || $newest_tool -nt $blend || -n $rebinds \
         || ( -f $rig_file && $rig_file -nt $blend ) ]]; then
     echo "cleaning $item..."
     # The asset goes with the mesh, so a part can say what MU got wrong about its own

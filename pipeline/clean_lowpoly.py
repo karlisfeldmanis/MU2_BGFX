@@ -105,9 +105,12 @@ def load(path: Path, rig: Path, asset: Path | None = None):
 
     # What the asset says about MU's binding, if it says anything. See rebind.
     asked = {}
+    regions = []
 
     if asset is not None and asset.exists():
-        asked = json.loads(asset.read_text()).get("rebind") or {}
+        document = json.loads(asset.read_text())
+        asked = document.get("rebind") or {}
+        regions = document.get("rebind_regions") or []
 
     for piece in pieces:
         # Blender names a split group after the group, sometimes with the file stem in
@@ -142,6 +145,11 @@ def load(path: Path, rig: Path, asset: Path | None = None):
             for source, target, count in rebind(bones, names, asked):
                 print(f"  rebound    {count} vertices of '{group}' from {source} to "
                       f"{target}, as the asset asks")
+
+            for source, target, count in rebind_region(bones, names, regions,
+                                                       piece.data.vertices):
+                print(f"  rebound    {count} vertices of '{group}' from {source} to "
+                      f"{target}, in the region the asset names")
 
             if len(bones) != len(piece.data.vertices):
                 raise SystemExit(
@@ -302,6 +310,46 @@ def rebind(bones: list[int], names: list[str], asked: dict) -> list[tuple[str, s
 
         if count:
             bones[:] = [now if b == was else b for b in bones]
+            moved.append((source, target, count))
+
+    return moved
+
+
+def rebind_region(bones: list[int], names: list[str], regions: list[dict],
+                  vertices) -> list[tuple[str, str, int]]:
+    """`rebind` for part of a bone: the vertices of `from` below a height, on one side.
+
+    For a hem that MU bound to the spine and that a thigh swinging up now runs through: the
+    Dark Wizard's S17 vest hangs to 90 cm with every vertex on Bip01 Spine, and nothing under
+    the waist moves to let the leg by (the user, 2026-10-16: "on runing i can see that leg is
+    going throught cloth"). Each half of the hem goes onto the thigh under it, so a leg carries
+    its own side of the hem as far as it pushes it and no further. MU's cloth chains were tried
+    first and are wrong for a vest: MU's idles swing them, and the hem flapped standing still.
+
+    Each region is `{"from", "to", "below", "side"}` in the OBJ's own units, which the import
+    keeps: centimetres, Y up, +Z the way the body faces and +X his left, so `side` "front" is
+    z > 0 and "left" x > 0. A vertex on the line itself stays where it was.
+    """
+    index_of = {name: i for i, name in enumerate(names)}
+    moved = []
+
+    for region in regions:
+        source, target = region["from"], region["to"]
+        if source not in index_of or target not in index_of:
+            raise SystemExit(
+                f"error: rebind_regions names a bone this rig does not have: {source} -> {target}")
+
+        was, now = index_of[source], index_of[target]
+        axis, sign = {"front": (2, 1.0), "back": (2, -1.0),
+                      "left": (0, 1.0), "right": (0, -1.0)}[region["side"]]
+        count = 0
+
+        for i, vertex in enumerate(vertices):
+            if bones[i] == was and vertex.co[1] < region["below"] and vertex.co[axis] * sign > 0:
+                bones[i] = now
+                count += 1
+
+        if count:
             moved.append((source, target, count))
 
     return moved

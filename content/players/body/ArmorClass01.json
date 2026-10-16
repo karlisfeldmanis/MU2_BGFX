@@ -50,5 +50,20 @@
     }
   ],
   "uv_overrides_why": "One shell carries the vest and the bare arms, as MuMain's did. Sampled under every face's UV centre: the rectangle takes all 118 faces that read as skin and 2 at its edge; nothing outside it reads as skin.",
-  "material_note": "cloth for the navy vest and its silver wing embroidery; skin for the bare arms, lifted out by uv_overrides."
+  "material_note": "cloth for the navy vest and its silver wing embroidery; skin for the bare arms, lifted out by uv_overrides.",
+  "rebind_regions": [
+    {
+      "from": "Bip01 Spine",
+      "to": "Bip01 L Thigh",
+      "below": 108,
+      "side": "left"
+    },
+    {
+      "from": "Bip01 Spine",
+      "to": "Bip01 R Thigh",
+      "below": 108,
+      "side": "right"
+    }
+  ],
+  "rebind_regions_from": "S17's vest hangs to 90 cm with its hem on Bip01 Spine, and in the run a thigh swings up 55 degrees through the front of it (the user, 2026-10-16: \"on runing i can see that leg is going throught cloth\", then \"fix DW\"). Below 108 cm -- the hip joint is at 107 -- each half of the hem goes onto the thigh under it, 7 vertices on the left and 6 on the right as clean_lowpoly counts them (the obj's 13 seams split some); the one on the centre line stays on the spine. MU's cloth chains (Bone02, Bone06) were tried first: the hem stood out like a skirt in the run and flapped standing, because MU's idles swing those bones (\"DW still seems vierd\", \"standinf flaping\")."
 }

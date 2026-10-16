@@ -76,6 +76,7 @@ sides because that is the space the Mixamo clip arrives in.
 """
 
 import json
+import math
 import struct
 import sys
 from pathlib import Path
@@ -111,6 +112,21 @@ DRIVERS = {
     "Bip01 R Toe0": "mixamorig:RightToeBase",
 }
 
+#: MU's two cloth chains under the waist, which Mixamo has no joints for: the front flap
+#: hangs from Bone02 and the back from Bone06 (Bone03-04 and Bone07-08 below them follow).
+#: Held at rest, they stood still while a thigh swung 55 degrees up through them -- unseen on
+#: MuMain's bare bodies, plain on Season 17's tabards and robes (the user, 2026-10-16: "on
+#: runing i can see that leg is going throught cloth"). So each is turned about the hips' own
+#: axis by the swing of the thigh that would meet it: the front one forward by the leading
+#: thigh's, the back one back by the trailing thigh's. MU's walk swings them 16-21 degrees.
+CLOTH = {"Bone02": +1, "Bone06": -1}
+#: How much of the thigh's swing a flap takes: all of it keeps the flap ahead of a thigh
+#: pivoting 15 cm below the flap's own pivot, which is where Bone02 and Bone06 hang from.
+CLOTH_GAIN = 1.0
+#: The most a flap is turned, in degrees, so a high kick does not throw it horizontal.
+CLOTH_MOST = 70.0
+#: The way the body faces, Z-up: its toes point down -Y.
+FORWARD = [0.0, -1.0, 0.0]
 #: Which child gives a bone its rest direction, where the first child is not the one meant.
 #: Every other driven bone takes its first child, which is right for all of them: the spine
 #: runs up before the cape chain, the clavicles come after the head, and a hand points down
@@ -726,6 +742,36 @@ def main(argv=None) -> None:
 
     poses = [frame_pose(frame) for frame in clip["frames"]]
 
+    # The cloth chains (CLOTH): each flap's turn on each frame, as a rotation within its
+    # parent. A thigh's swing is read in the spine's own frame, so a lean of the whole body
+    # does not count as a step, and as the forward angle of its direction in the body's
+    # sagittal plane, against the same angle at rest.
+    def pitch(direction: list[float]) -> float:
+        return math.atan2(sum(a * b for a, b in zip(direction, FORWARD)), -direction[2])
+
+    spine_rest = world[named["Bip01 Spine"]][1]
+    thighs = ("Bip01 L Thigh", "Bip01 R Thigh")
+    thigh_rest = {t: pitch(turn(world[named[t]][1], AXIS)) for t in thighs}
+    hips_axis = unit(cross([0.0, 0.0, -1.0], FORWARD))   # turns down toward forward
+    cloth = {}
+    for bone, side in CLOTH.items():
+        if bone not in named:
+            continue
+        above = parent[named[bone]]
+        axis = turn(inverse(world[above][1]), [side * c for c in hips_axis])
+        rest_local = to_zup(nodes[named[bone]].get("rotation", [0.0, 0.0, 0.0, 1.0]))
+        values = []
+        for pose in poses:
+            lean = multiply(spine_rest, inverse(pose.get("Bip01 Spine", spine_rest)))
+            swings = [pitch(turn(lean, turn(pose[t], AXIS))) - thigh_rest[t] for t in thighs]
+            angle = max(0.0, max(swings) if side > 0 else -min(swings)) * CLOTH_GAIN
+            angle = min(angle, math.radians(CLOTH_MOST))
+            half = angle / 2.0
+            spin = [axis[0] * math.sin(half), axis[1] * math.sin(half),
+                    axis[2] * math.sin(half), math.cos(half)]
+            values.append(to_gltf(multiply(spin, rest_local)))
+        cloth[bone] = values
+
     hip_rest = clip["rest"]["mixamorig:Hips"]["head"][2]
     rise_scale = world[named["Bip01 Pelvis"]][0][2] / hip_rest
     root_rest = nodes[named[ROOT]].get("translation", [0.0, 0.0, 0.0])
@@ -767,6 +813,10 @@ def main(argv=None) -> None:
                 values.append(to_gltf(multiply(inverse(up), pose[bone])))
             sampler["output"] = add_accessor(document, extra, "VEC4", values)
             driven += 1
+            continue
+
+        if path == "rotation" and bone in cloth:
+            sampler["output"] = add_accessor(document, extra, "VEC4", cloth[bone])
             continue
 
         kind = "VEC4" if path == "rotation" else "VEC3"
