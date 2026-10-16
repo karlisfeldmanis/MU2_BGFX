@@ -75,6 +75,9 @@ public:
     // gone in town; `action` is its own clip as GOBoid picks it off his -- 2 riding on, 3 a
     // swing, 0.
     void ride(float seconds, const Figure& hero, int mount, bool riding, int action);
+    // The mount's gallop, for a recording's cut (Play::Stride).
+    float gallop() const { return horse_.clock(); }
+    void setGallop(float clock) { horse_.setClock(clock); }
     // After the hero is posed this frame: the Imp takes his clavicle as it is now.
     void gather(gfx::Renderer& renderer, const Figure& hero, std::vector<float>& scratch,
                 std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters);

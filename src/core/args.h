@@ -407,6 +407,10 @@ struct Args {
     bool offscreen = false;
     // With --offscreen: the --shot frames as raw BGRA into this file or pipe, not as PNGs.
     std::string rawFrames;
+    // `--unseen`: no monster notices the hero (sim::Realm::unseen) -- a recording's run past nests.
+    bool unseen = false;
+    // `--stride-log FILE`: a line a frame of the clocks a cut carries (game::Play::Stride).
+    std::string strideLog;
     // A cue file that plays the pointer and the keys (app/modes/director.h); the mouse is not
     // read while it runs.
     std::string script;

@@ -37,6 +37,13 @@ public:
     // The wing's own body (Wing01..03 out of a figures table), or null for none.
     void wear(const FigureBody* wing, const Figure& bearer);
     const FigureBody* worn() const { return wing_; }
+    // Its beat and its shell's pulse, for a recording's cut (Play::Stride).
+    float beat() const { return figure_.clock(); }
+    float pulse() const { return clock_; }
+    void setBeat(float beat, float pulse) {
+        figure_.setClock(beat);
+        clock_ = pulse;
+    }
     // `safe`: its bearer stands in a safe zone, where the Wings of Darkness take their second
     // action instead of the flap (ZzzCharacter.cpp:6973-6976).
     void update(float seconds, bool flying, bool safe = false);

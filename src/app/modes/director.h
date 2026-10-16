@@ -18,6 +18,13 @@
 //   2.2  hold 1.5 | rhold 1.5               ...or held down for that long
 //   3.0  skill q | key 1 | type enter       a skill key (q w e r t), a potion key, typing
 //   3.0  hold-skill q 1.2                   a skill key held down for that long
+//   0.2  run 1 -1                           run on along tile direction (1,-1): the pointer kept
+//                                           five tiles ahead of him, clicking as a player does
+//   9.0  stop                               ...until this
+//   2.5  wear ArmorMale10:1:+7W Sword10:1:+7W  put on at once, as --give's W does; local only
+//   2.5  unwear 12                          a worn slot back into the bag (12 the mount)
+//   2.5  flare                              the level-up's flares and sound on him
+//   2.0  pin CLIP HERO BEAT PULSE GALLOP    a cut's clocks (record.py; Play::Stride), -1 for none
 #pragma once
 
 #include <cstdint>
@@ -52,6 +59,15 @@ public:
         int skill = -1;      // 0 is Q
         int holdSkill = -1;  // held this frame
         std::string typed;
+        std::vector<std::string> wear;  // NAME:COUNT:EXTRAS, as --give takes them
+        int unwear = -1;
+        bool flare = false;
+        // `run`'s click: a walk to this tile, never an attack on what wandered under the pointer.
+        bool walk = false;
+        int walkColumn = 0, walkRow = 0;
+        bool pin = false;
+        int pinClip = -1;
+        float pinHero = -1.0f, pinBeat = -1.0f, pinPulse = -1.0f, pinGallop = -1.0f;
     };
 
     // False on a file that cannot be read or a line that cannot be understood; the error is
@@ -63,7 +79,8 @@ public:
 
 private:
     enum class Verb : uint8_t { Move, AimMonster, AimLoot, AimHero, AimTile, Click, RightClick,
-                                Hold, RightHold, Skill, Potion, HoldSkill, Type };
+                                Hold, RightHold, Skill, Potion, HoldSkill, Type, Run, Stop, Wear,
+                                Unwear, Flare, Pin };
     struct Cue {
         double at = 0.0;
         Verb verb = Verb::Move;
@@ -71,9 +88,11 @@ private:
         float seconds = 0.0f;      // a glide's length or a hold's
         int key = -1;
         std::string text;
+        std::vector<std::string> words;
+        float pins[5] = {-1, -1, -1, -1, -1};
         int line = 0;
     };
-    enum class Aim : uint8_t { Screen, Body, Tile };
+    enum class Aim : uint8_t { Screen, Body, Tile, Ahead };
 
     bool target(const Eyes& eyes, float width, float height, float* x, float* y) const;
 
@@ -91,6 +110,9 @@ private:
     double leftUntil_ = -1.0, rightUntil_ = -1.0, skillUntil_ = -1.0;
     bool leftDown_ = false, rightDown_ = false;
     int heldSkill_ = -1;
+    // `run`: the direction in tiles, and when the next click is due.
+    bool running_ = false;
+    double clickAt_ = 0.0;
 };
 
 }  // namespace mu::app

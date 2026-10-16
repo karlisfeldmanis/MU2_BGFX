@@ -531,6 +531,7 @@ void Realm::think(Body& beast) {
             float closest = 1e30f;
             for (uint32_t who : players_) {
                 const Body& one = bodies_[who];
+                if (unseen_ && one.id == hero().id) continue;
                 if (!worth(beast, one, kind.viewRange) || apart(beast, one) >= kind.viewRange) {
                     continue;
                 }

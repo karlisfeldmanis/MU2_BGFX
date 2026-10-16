@@ -310,6 +310,19 @@ static void readExtras(const std::string& extras, int* plus, bool* luck, int* op
     }
 }
 
+bool Play::takeOff(int slot) {
+    if (!here("--script's unwear")) return false;
+    const sim::Held& on = realm_.satchel()[slot];
+    if (on.empty()) return false;
+    const content::ItemRow& row = tables_.items[size_t(on.item)];
+    const int spare = realm_.satchel().free(tables_, row.width, row.height);
+    if (spare < 0) return false;
+    local_.moveItem(slot, spare);
+    redress();
+    core::logf("taken off %s from slot %d", row.label.c_str(), slot);
+    return true;
+}
+
 bool Play::give(const std::string& name, int count, const std::string& extras) {
     if (!here("--give")) return false;
     const int32_t item = tables_.itemNamed(name);

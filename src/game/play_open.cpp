@@ -291,6 +291,10 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         local_.undying(true);
         core::logf("arena: the hero is undying");
     }
+    if (arena_.unseen) {
+        local_.unseen(true);
+        core::logf("arena: no monster notices the hero");
+    }
     if (arena_.wingDemo) {
         local_.wingDemo(true);
         core::logf("arena: every kill in Icarus leaves the first wings");

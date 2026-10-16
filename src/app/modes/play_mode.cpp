@@ -279,6 +279,9 @@ bool PlayMode::open(Context& ctx) {
 
     readSave(ctx);
     if (!args.script.empty() && !director_.open(args.script)) return false;
+    if (!args.strideLog.empty() && !(strideLog_ = std::fopen(args.strideLog.c_str(), "w"))) {
+        core::logError("cannot write --stride-log %s", args.strideLog.c_str());
+    }
 
     // The world's own light over the base sheet -- Noria's tropical day over Lorencia's night --
     // or the base alone when the world has no sheet (game/world/maps.h).
@@ -332,12 +335,13 @@ bool PlayMode::open(Context& ctx) {
             // realm is about to be handed. See Play::Arena.
             // --arena-learn alone teaches in a plain play run too, for a hand-played try.
             if (!args.arena.empty() || args.peaceful || args.arenaLearn != 0 || args.arenaUndying ||
-                args.wingDemo) {
+                args.wingDemo || args.unseen) {
                 game::Play::Arena arena;
                 arena.breed = args.arena;
                 arena.count = args.arenaCount;
                 arena.learn = args.arenaLearn;
                 arena.undying = args.arenaUndying;
+                arena.unseen = args.unseen;
                 arena.wingDemo = args.wingDemo;
                 arena.peaceful = args.peaceful;
                 arena.gap = args.arenaGap;
@@ -1102,6 +1106,30 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             hand = director_.step(at.elapsed, w, h, eyes);
             pointerX = hand.x;
             pointerY = hand.y;
+            game::Play& played = world_.played();
+            for (const std::string& one : hand.wear) {
+                // NAME:COUNT:EXTRAS, as --give takes it.
+                const size_t first = one.find(':');
+                const size_t second = first == std::string::npos ? first : one.find(':', first + 1);
+                const std::string name = one.substr(0, first);
+                const int count = first == std::string::npos ? 1 : std::atoi(one.c_str() + first + 1);
+                const std::string extras = second == std::string::npos ? "W" : one.substr(second + 1);
+                played.give(name, std::max(1, count), extras);
+            }
+            // After the wear: in Icarus the Dinorant comes off only once the wings are on, since
+            // the realm will not take away the last thing holding him up (Realm::moveItem).
+            if (hand.unwear >= 0) played.takeOff(hand.unwear);
+            if (hand.flare) played.rise();
+            if (hand.walk) played.walkTo(hand.walkColumn, hand.walkRow);
+            if (hand.pin) {
+                game::Play::Stride pin;
+                pin.clip = hand.pinClip;
+                pin.hero = hand.pinHero;
+                pin.beat = hand.pinBeat;
+                pin.pulse = hand.pinPulse;
+                pin.gallop = hand.pinGallop;
+                played.pinStride(pin);
+            }
         }
         // A --ui-click no window takes is the world's, as a hand's is: aimed where it presses.
         bool uiPress = false, uiRight = false;
@@ -1214,6 +1242,12 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             world_.played().rightHeld();
         }
         world_.played().update(deltaSeconds);
+        // --stride-log: the clocks a recording's cut carries, as this frame is drawn.
+        if (strideLog_) {
+            const game::Play::Stride now = world_.played().stride();
+            std::fprintf(strideLog_, "%d %d %.6f %.6f %.6f %.6f\n", at.index, now.clip, now.hero,
+                         now.beat, now.pulse, now.gallop);
+        }
         // The colour goes out of the world while he is down. Half a second out and a second
         // back: a fall should land and a recovery should feel like one. The renderer drains the
         // scene's own pass, so the HUD and the message over it stay in colour -- which is the
@@ -1987,6 +2021,8 @@ void PlayMode::goBack(Context& ctx, double seconds) {
 }
 
 void PlayMode::shutdown(Context& ctx) {
+    if (strideLog_) std::fclose(strideLog_);
+    strideLog_ = nullptr;
     // Out of the game or back to the character screen: the way back goes into the save, which
     // gives it back when he is played again, and out of the session. On to another world it
     // comes along.

@@ -171,6 +171,8 @@ void printUsage() {
         "  --mute                    every sound plays and is logged, at no volume\n"
         "  --offscreen               no window on the screen; frames of exactly --width x --height\n"
         "  --raw-frames PATH         with --offscreen, the shots as raw BGRA into PATH (a pipe)\n"
+        "  --unseen                  no monster notices the hero: a run past their nests\n"
+        "  --stride-log FILE         a line a frame: the hero's clip and the clocks a cut carries\n"
         "  --script FILE             the pointer and the keys played from a cue file (director.h)\n"
         "  --tape PATH.wav           the world's mix written there in game time, not played\n"
         "  --zen N                   start with N Zen\n"
@@ -704,6 +706,10 @@ Args parseArgs(int argc, char** argv) {
             a.mute = true;
         } else if (!std::strcmp(s, "--offscreen")) {
             a.offscreen = true;
+        } else if (!std::strcmp(s, "--unseen")) {
+            a.unseen = true;
+        } else if (!std::strcmp(s, "--stride-log")) {
+            if (const char* v = next(s)) a.strideLog = v;
         } else if (!std::strcmp(s, "--raw-frames")) {
             if (const char* v = next(s)) a.rawFrames = v;
         } else if (!std::strcmp(s, "--script")) {

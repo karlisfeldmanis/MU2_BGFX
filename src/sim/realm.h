@@ -836,6 +836,9 @@ public:
     // The bench's (`--arena-undying`): a blow that would fell the hero fills his health instead,
     // so a fight runs as long as it is watched. Never set in play.
     void undying(bool on) { me().undying = on; }
+    // A recording's (`--unseen`): no monster ever notices the hero, so he runs past their nests
+    // and is never in a fight. One that is struck still turns on whoever struck it.
+    void unseen(bool on) { unseen_ = on; }
     // The demo's (`--wing-demo`): every kill in Icarus leaves the first wings. Never set in play.
     void wingDemo(bool on) { wingDemo_ = on; }
     // The crowd bench's fight (`--bench-fight`): a blow that would fell a monster or a player
@@ -1928,6 +1931,7 @@ private:
     // a tick, measured at 0.33 ms on Noria against Lorencia's 0.03, which is the whole budget
     // for a map with nothing happening on it.
     std::vector<uint32_t> players_;
+    bool unseen_ = false;  // unseen(): the hero is never noticed
     static constexpr uint32_t kNoBody = 0xFFFFFFFFu;
     std::vector<uint32_t> indexOfId_;
     std::vector<Happening> happenings_;

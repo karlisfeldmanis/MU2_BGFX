@@ -1951,6 +1951,10 @@ void Play::update(double seconds) {
         // own. `follow` decided which of the three this is; the crossfade runs in real seconds
         // either way, which is why the rate goes in as a rate rather than as a scaled delta.
         one.figure.update(float(seconds), one.clipRate);
+        if (pinning_ && pinned_.hero >= 0.0f && one.id == realm_.hero().id &&
+            one.figure.clip() == pinned_.clip) {
+            one.figure.setClock(pinned_.hero);
+        }
         if (one.swinging > 0.0f) one.swinging -= float(seconds);
         if (one.handEmpty > 0.0f) one.handEmpty = std::max(0.0f, one.handEmpty - float(seconds));
         one.figure.emptyHand(one.handEmpty > 0.0f);
@@ -2714,11 +2718,18 @@ void Play::update(double seconds) {
             // And on a safe tile the Wings of Darkness take their second action (game/wings.h).
             wing_.update(float(seconds), beating,
                          tables_.grid.safe(realm_.hero().column(), realm_.hero().row()));
+            if (pinning_ && pinned_.beat >= 0.0f && wing_.worn()) {
+                wing_.setBeat(pinned_.beat, pinned_.pulse);
+            }
             const int mount = petNumber(realm_.satchel()[sim::kMount]);
             const int action = horseAction(*hero, mount);
             const bool galloping = action == 2;
             pets_.ride(float(seconds), hero->figure, mount,
                        realm_.hero().riding && realm_.hero().alive(), action);
+            if (pinning_ && pinned_.gallop >= 0.0f && realm_.hero().riding) {
+                pets_.setGallop(pinned_.gallop);
+            }
+            pinning_ = false;
             // And its dust while it runs, rand_fps_check(2) at the horse +-32 on the ground
             // (GOBoid.cpp:542-556): white in Devias, MU's BITMAP_SMOKE, and smoke02's brown
             // everywhere else (fx/dust.h).
@@ -3133,3 +3144,22 @@ void Play::throwInferno(const float feet[3], float yaw, bool bombs, bool mesh) {
 
 }  // namespace mu::game
 
+
+namespace mu::game {
+
+Play::Stride Play::stride() const {
+    Stride now;
+    const size_t at = drawnAt(realm_.hero().id);
+    if (at < drawn_.size()) {
+        now.clip = drawn_[at].figure.clip();
+        now.hero = drawn_[at].figure.clock();
+    }
+    if (wing_.worn()) {
+        now.beat = wing_.beat();
+        now.pulse = wing_.pulse();
+    }
+    if (realm_.hero().riding) now.gallop = pets_.gallop();
+    return now;
+}
+
+}  // namespace mu::game

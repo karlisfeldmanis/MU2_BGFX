@@ -1,0 +1,34 @@
+{
+  "about": "A Dark Knight runs through nine worlds, one step of gear a world, the step taken at the cut: then Uniria, the Dinorant, and wings. The game's own camera and HUD, the cursor clicking him on. Each world is its own take on a straight run along +column (routes.py); the cuts are hard and land on the same stride, the clocks carried across (Play::Stride). ./mu record showcase-worlds",
+  "fps": 60,
+  "preroll": 2.0,
+  "window": 5.0,
+  "direction": [1, 0],
+  "args": "--class 2 --level 350 --unseen",
+  "stages": {
+    "leather": "ArmorMale06:1:W,HelmMale06:1:W,PantMale06:1:W,GloveMale06:1:W,BootMale06:1:W,Sword02:1:W,Shield01:1:W",
+    "bronze": "ArmorMale01:1:+3W,HelmMale01:1:+3W,PantMale01:1:+3W,GloveMale01:1:+3W,BootMale01:1:+3W,Sword06:1:+3W,Shield13:1:+3W",
+    "scale": "ArmorMale07:1:+5W,HelmMale07:1:+5W,PantMale07:1:+5W,GloveMale07:1:+5W,BootMale07:1:+5W,Sword08:1:+5W,Shield03:1:+5W",
+    "brass": "ArmorMale09:1:+6W,HelmMale09:1:+6W,PantMale09:1:+6W,GloveMale09:1:+6W,BootMale09:1:+6W,Sword09:1:+6W,Shield12:1:+6W",
+    "plate": "ArmorMale10:1:+7W,HelmMale10:1:+7W,PantMale10:1:+7W,GloveMale10:1:+7W,BootMale10:1:+7W,Sword10:1:+7W,Shield10:1:+7W",
+    "dragon": "ArmorMale02:1:+9LW,HelmMale02:1:+9LW,PantMale02:1:+9LW,GloveMale02:1:+9LW,BootMale02:1:+9LW,Sword11:1:+9LW,Shield14:1:+9LW",
+    "blackdragon": "ArmorMale17:1:+9LW,HelmMale17:1:+9LW,PantMale17:1:+9LW,GloveMale17:1:+9LW,BootMale17:1:+9LW,Sword16:1:+9LW",
+    "blackdragon11": "ArmorMale17:1:+11LW,HelmMale17:1:+11LW,PantMale17:1:+11LW,GloveMale17:1:+11LW,BootMale17:1:+11LW,Sword16:1:+11LW",
+    "greatdragon": "ArmorMale22:1:+11LW,HelmMale22:1:+11LW,PantMale22:1:+11LW,GloveMale22:1:+11LW,BootMale22:1:+11LW,Sword19:1:+11LW",
+    "uniria": "Helper03:1:W",
+    "dinorant": "Helper04:1:W",
+    "satan": "Wing03:1:W",
+    "dragonwings": "Wing06:1:W"
+  },
+  "takes": [
+    {"world": "lorencia",  "at": [133, 86],  "wears": ["leather"],                    "weather": "storm"},
+    {"world": "noria",     "at": [184, 176], "wears": ["bronze"],                     "weather": "dry"},
+    {"world": "devias",    "at": [195, 83],  "wears": ["scale"],                      "weather": "rain"},
+    {"world": "dungeon",   "at": [12, 234],  "wears": ["brass"]},
+    {"world": "losttower", "at": [185, 166], "wears": ["plate"]},
+    {"world": "atlans",    "at": [20, 32],   "wears": ["dragon", "uniria"]},
+    {"world": "tarkan",    "at": [79, 163],  "wears": ["blackdragon", "dinorant"],    "weather": "rain"},
+    {"world": "icarus",    "at": [40, 40],   "wears": ["blackdragon11", "satan"]},
+    {"world": "aida",      "at": [21, 120],  "wears": ["greatdragon", "dragonwings"], "weather": "dry"}
+  ]
+}

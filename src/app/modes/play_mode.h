@@ -156,6 +156,7 @@ private:
     uint32_t arenaTarget_ = 0;
     // --script: the pointer and the keys, played from a cue file.
     Director director_;
+    std::FILE* strideLog_ = nullptr;  // --stride-log
     // The quick slot's skill the arena's order was last given with: the desk binds the wizard's
     // Energy Ball a frame or two after the first order is raised, and the order is raised again
     // when it does, or the whole first fight is his staff.

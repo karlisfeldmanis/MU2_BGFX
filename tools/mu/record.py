@@ -5,6 +5,7 @@
     ./mu record <scene> --seconds 5     only the first 5 s, to try a cue file
     ./mu record <scene> --window        drawn in a window on the screen, through PNGs (slow)
     ./mu record                         the scenes there are
+    ./mu record <reel>                  tools/record/<reel>.reel.json: takes cut on the same stride
 
 A scene is a cue file (src/app/modes/director.h has the verbs): its `args` lines are the game's
 switches, `end N` is its length, and every other line plays the pointer and the keys at a second
@@ -18,6 +19,7 @@ no device and pulled a frame's length at a time into a WAV (--tape), so picture 
 frame-exact however fast or slowly it draws. The WAV is muxed in at the end.
 """
 
+import json
 import os
 import shlex
 import shutil
@@ -38,7 +40,8 @@ AUDIO = ["-af", "alimiter=limit=0.9:level=disabled", "-c:a", "aac", "-b:a", "256
 def scenes():
     if not os.path.isdir(SCENES):
         return []
-    return sorted(f[:-4] for f in os.listdir(SCENES) if f.endswith(".cue"))
+    return sorted([f[:-4] for f in os.listdir(SCENES) if f.endswith(".cue")] +
+                  [f[:-10] for f in os.listdir(SCENES) if f.endswith(".reel.json")])
 
 
 def read(path):
@@ -66,6 +69,9 @@ def record(scene, fps, seconds, keep, say, window=False):
         for name in scenes():
             say(name)
         return True, {"scenes": scenes()}
+    reel_file = os.path.join(SCENES, scene + ".reel.json")
+    if scene.endswith(".reel.json") or os.path.isfile(reel_file):
+        return reel(scene if scene.endswith(".reel.json") else reel_file, seconds, keep, say)
     cue = scene if scene.endswith(".cue") else os.path.join(SCENES, scene + ".cue")
     if not os.path.isfile(cue):
         raise NotFound(f"no scene {scene}; there are: {', '.join(scenes()) or 'none'}")
@@ -149,3 +155,120 @@ def record(scene, fps, seconds, keep, say, window=False):
     say(f"recorded {mp4}  ({os.path.getsize(mp4) / 1e6:.1f} MB, {time.time() - started:.0f} s;"
         f" the log and sound in {work})")
     return True, {"mp4": mp4, "work": work, "frames": frames, "errors": errors}
+
+
+def take(cue_text, switches, frames, fps, work, say):
+    """One offscreen run of a cue, its frames encoded losslessly: (video, wav, log, stride log)."""
+    os.makedirs(work, exist_ok=True)
+    cue = os.path.join(work, "take.cue")
+    with open(cue, "w") as handle:
+        handle.write(cue_text)
+    wav, log = os.path.join(work, "sound.wav"), os.path.join(work, "run.log")
+    strides, video = os.path.join(work, "strides.txt"), os.path.join(work, "video.mkv")
+    fifo = os.path.join(work, "frames.fifo")
+    if os.path.exists(fifo):
+        os.remove(fifo)
+    os.mkfifo(fifo)
+    encoder = subprocess.Popen(
+        ["nice", "ffmpeg", "-y", "-loglevel", "error",
+         "-f", "rawvideo", "-pix_fmt", "bgra", "-s", f"{WIDTH}x{HEIGHT}", "-r", str(fps),
+         "-i", fifo, "-c:v", "libx264", "-preset", "ultrafast", "-qp", "0",
+         "-pix_fmt", "yuv444p", video])
+    game = ["nice", os.path.join(BUILD, "mu2"),
+            "--width", str(WIDTH), "--height", str(HEIGHT), "--windowed",
+            "--fixed-dt", f"{1000.0 / fps:.6f}", "--frames", str(frames), "--shot", "1",
+            "--offscreen", "--raw-frames", fifo, "--tape", wav, "--script", cue,
+            "--stride-log", strides, "--no-fps",
+            "--save", os.path.join(work, "save.mus"), "--log", log] + switches
+    done = subprocess.run(game, cwd=ROOT)
+    if done.returncode != 0:
+        encoder.kill()
+        raise NotFound(f"the take in {work} left with {done.returncode}: {errors_in(log)[:3]}")
+    if encoder.wait() != 0:
+        raise NotFound(f"ffmpeg failed on the take in {work}")
+    os.remove(fifo)
+    return video, wav, log, strides
+
+
+def stride_at(strides, frame):
+    with open(strides) as handle:
+        for line in handle:
+            words = line.split()
+            if int(words[0]) == frame:
+                return words[1:]
+    raise NotFound(f"no stride logged for frame {frame} in {strides}")
+
+
+def reel(path, seconds, keep, say):
+    """Takes, one a world, cut hard on the same stride: each take's own stretch of
+    [preroll, preroll + window) seconds, the next one's stride clocks pinned on its first frame to
+    those the last one had on the frame after its own (Play::Stride)."""
+    spec = json.load(open(path))
+    name = os.path.basename(path)[:-len(".reel.json")]
+    fps, preroll, window = spec["fps"], spec["preroll"], spec["window"]
+    change, (dx, dy) = spec.get("change", 0.0), spec["direction"]
+    stages = spec["stages"]
+    takes = spec["takes"][:int(seconds // window) + 1] if seconds else spec["takes"]
+    first, length = int(round(preroll * fps)), int(round(window * fps))
+    os.makedirs(OUT, exist_ok=True)
+    work = tempfile.mkdtemp(prefix=f"{name}-", dir=OUT)
+    started = time.time()
+    pin = None
+    parts = []
+    for i, one in enumerate(takes):
+        gear = ",".join(stages[s] for s in one["wears"])
+        switches = ["--world", one["world"], "--play", "--at", f"{one['at'][0]},{one['at'][1]}",
+                    "--give", gear] + shlex.split(spec.get("args", ""))
+        if one.get("weather"):
+            switches += ["--weather", one["weather"]]
+        at_change = preroll + change
+        lines = ["0.0 move 0.55 0.6", f"0.1 run {dx} {dy}"]
+        if pin is not None:
+            lines.append(f"{first / fps:.6f} pin " + " ".join(pin))
+        for slot in one.get("unwear", []):
+            lines.append(f"{at_change:.3f} unwear {slot}")
+        if one.get("becomes"):
+            pieces = ",".join(stages[s] for s in one["becomes"]).split(",")
+            lines.append(f"{at_change:.3f} wear " + " ".join(pieces))
+            if one.get("flare"):
+                lines.append(f"{at_change:.3f} flare")
+        frames = first + length + 2
+        say(f"take {i + 1}/{len(takes)}: {one['world']} at {one['at']}, {frames} frames")
+        video, wav, log, strides = take("\n".join(lines) + "\n", switches, frames, fps,
+                                        os.path.join(work, f"{i:02d}-{one['world']}"), say)
+        pin = stride_at(strides, first + length)
+        say(f"  carries clip {pin[0]}, stride {float(pin[1]):.3f} s"
+            + (f", beat {float(pin[2]):.3f}" if float(pin[2]) >= 0 else "")
+            + (f", gallop {float(pin[4]):.3f}" if float(pin[4]) >= 0 else ""))
+        errors = errors_in(log)
+        for line in errors[:3]:
+            say(f"  {line}")
+        parts.append((video, wav))
+
+    # Each take's own stretch, frame-exact and sample-exact, joined; 5 ms fades keep the sound's
+    # seams from clicking.
+    inputs, chains = [], []
+    for i, (video, wav) in enumerate(parts):
+        inputs += ["-i", video, "-i", wav]
+        start, end = first / fps, (first + length) / fps
+        chains.append(f"[{2 * i}:v]trim=start_frame={first}:end_frame={first + length},"
+                      f"setpts=PTS-STARTPTS[v{i}]")
+        chains.append(f"[{2 * i + 1}:a]atrim=start={start:.6f}:end={end:.6f},asetpts=PTS-STARTPTS,"
+                      f"afade=t=in:d=0.005,afade=t=out:st={window - 0.005:.3f}:d=0.005[a{i}]")
+    joined = "".join(f"[v{i}][a{i}]" for i in range(len(parts)))
+    chains.append(f"{joined}concat=n={len(parts)}:v=1:a=1[v][a0]")
+    chains.append("[a0]alimiter=limit=0.9:level=disabled[a]")
+    mp4 = os.path.join(OUT, f"{name}.mp4")
+    encode = ["nice", "ffmpeg", "-y", "-loglevel", "error"] + inputs + \
+             ["-filter_complex", ";".join(chains), "-map", "[v]", "-map", "[a]"] + X264 + \
+             ["-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart", "-r", str(fps), mp4]
+    say("cutting the reel")
+    if subprocess.run(encode).returncode != 0:
+        say(f"FAILED: ffmpeg's cut; the takes are kept in {work}")
+        return False, {"work": work}
+    if not keep:
+        for video, _ in parts:
+            os.remove(video)
+    say(f"recorded {mp4}  ({os.path.getsize(mp4) / 1e6:.1f} MB, {len(parts)} takes,"
+        f" {time.time() - started:.0f} s; the takes' logs and sound in {work})")
+    return True, {"mp4": mp4, "work": work, "takes": len(parts)}

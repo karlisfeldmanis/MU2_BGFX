@@ -1,6 +1,7 @@
 #include "app/modes/director.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -21,6 +22,10 @@ int skillKey(const std::string& word) {
     }
     return -1;
 }
+
+// `run`: how far ahead of him the pointer rides, in tiles, and how often it clicks there.
+constexpr float kAhead = 5.0f;
+constexpr double kRunClicks = 0.45;
 
 // A hand's ease: slow off, slow in, as a person moves a mouse.
 float ease(float u) {
@@ -88,6 +93,23 @@ bool Director::open(const std::string& path) {
             cue.verb = Verb::Potion;
             fine = bool(words >> cue.key) && cue.key >= 1 && cue.key <= 4;
             cue.key -= 1;
+        } else if (verb == "run") {
+            cue.verb = Verb::Run;
+            fine = bool(words >> cue.a >> cue.b);
+        } else if (verb == "stop") {
+            cue.verb = Verb::Stop;
+        } else if (verb == "wear") {
+            cue.verb = Verb::Wear;
+            for (std::string one; words >> one;) cue.words.push_back(one);
+            fine = !cue.words.empty();
+        } else if (verb == "unwear") {
+            cue.verb = Verb::Unwear;
+            fine = bool(words >> cue.key);
+        } else if (verb == "flare") {
+            cue.verb = Verb::Flare;
+        } else if (verb == "pin") {
+            cue.verb = Verb::Pin;
+            for (float& one : cue.pins) fine = fine && bool(words >> one);
         } else if (verb == "type") {
             cue.verb = Verb::Type;
             std::getline(words >> std::ws, cue.text);
@@ -116,6 +138,13 @@ bool Director::target(const Eyes& eyes, float width, float height, float* x, flo
     }
     float column = aimA_, row = aimB_;
     if (aim_ == Aim::Body && !eyes.shownAt(aimBody_, &column, &row)) return false;
+    if (aim_ == Aim::Ahead) {
+        if (!eyes.shownAt(eyes.hero, &column, &row)) return false;
+        const float length = std::sqrt(aimA_ * aimA_ + aimB_ * aimB_);
+        if (length <= 0.0f) return false;
+        column += aimA_ / length * kAhead;
+        row += aimB_ / length * kAhead;
+    }
     // The middle of the tile, and for a body a little up it, on its chest rather than its feet.
     if (!eyes.toScreen(column + 0.5f, row + 0.5f, x, y)) return false;
     if (aim_ == Aim::Body) *y -= height * 0.04f;
@@ -129,7 +158,9 @@ Director::Hand Director::step(double seconds, float width, float height, const E
         y_ = height * 0.5f;
     }
     bool leftNow = false, rightNow = false;
-    while (next_ < cues_.size() && cues_[next_].at <= seconds) {
+    // A cue at a frame's own second fires on that frame, though the clock summed frame by frame
+    // may have fallen a hair short of it.
+    while (next_ < cues_.size() && cues_[next_].at <= seconds + 1e-4) {
         const Cue& cue = cues_[next_++];
         const auto glide = [&](Aim aim, float a, float b, uint32_t body) {
             fromX_ = x_;
@@ -169,7 +200,37 @@ Director::Hand Director::step(double seconds, float width, float height, const E
                 break;
             case Verb::Potion: hand.potion = cue.key; break;
             case Verb::Type: hand.typed = cue.text; break;
+            case Verb::Run:
+                glide(Aim::Ahead, cue.a, cue.b, 0);
+                glideFor_ = 0.4f;
+                running_ = true;
+                clickAt_ = seconds;
+                break;
+            case Verb::Stop: running_ = false; break;
+            case Verb::Wear: hand.wear = cue.words; break;
+            case Verb::Unwear: hand.unwear = cue.key; break;
+            case Verb::Flare: hand.flare = true; break;
+            case Verb::Pin:
+                hand.pin = true;
+                hand.pinClip = int(cue.pins[0]);
+                hand.pinHero = cue.pins[1];
+                hand.pinBeat = cue.pins[2];
+                hand.pinPulse = cue.pins[3];
+                hand.pinGallop = cue.pins[4];
+                break;
         }
+    }
+
+    // Running: a click every so often on the tile ahead, as a player keeps him going.
+    // It walks him to the tile under the pointer and no further: a monster that has wandered under
+    // it is not struck, which would stop him and break the run.
+    float column = 0.0f, row = 0.0f;
+    if (running_ && seconds + 1e-4 >= clickAt_ && eyes.shownAt(eyes.hero, &column, &row)) {
+        const float length = std::sqrt(aimA_ * aimA_ + aimB_ * aimB_);
+        hand.walk = length > 0.0f;
+        hand.walkColumn = int(std::lround(column + aimA_ / std::max(length, 1e-6f) * kAhead));
+        hand.walkRow = int(std::lround(row + aimB_ / std::max(length, 1e-6f) * kAhead));
+        clickAt_ = seconds + kRunClicks;
     }
 
     // The pointer: along the glide toward wherever the aim is now, then kept on it.

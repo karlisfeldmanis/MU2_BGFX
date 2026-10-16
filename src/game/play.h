@@ -107,6 +107,8 @@ public:
         int32_t learn = 0;
         // `--arena-undying`: the hero is never felled, so a long fight can be watched.
         bool undying = false;
+        // `--unseen`: no monster notices him (sim::Realm::unseen).
+        bool unseen = false;
         // `--wing-demo`: every kill in Icarus leaves the first wings (sim::kIcarusWingOdds at 1).
         bool wingDemo = false;
         // `--peaceful`: no nests at all, breed or none -- a map to walk and run in with nothing
@@ -355,6 +357,21 @@ public:
     // `extras` is `+N` for a plus, `L` for luck and `O` then a digit for the option: +3LO2.
     // `B` makes it bound to him, as a quest's pay is: ArmorMale01::+7B.
     bool give(const std::string& name, int count, const std::string& extras = "");
+    // What he wears in `slot` (sim::kMount, ...) into the bag; local only, as give().
+    bool takeOff(int slot);
+
+    // A recording's cut (tools/mu/record.py): the clocks one world's take hands the next so
+    // his stride, his wings' beat and his mount's gallop carry on across it -- as drawn this
+    // frame; and the same, set after the next frame's update so that frame is drawn at them.
+    struct Stride {
+        int clip = -1;
+        float hero = -1.0f, beat = -1.0f, pulse = -1.0f, gallop = -1.0f;
+    };
+    Stride stride() const;
+    void pinStride(const Stride& at) {
+        pinned_ = at;
+        pinning_ = true;
+    }
     // --lay's: a thing laid on the ground beside him, heard landing. See Realm::lay.
     bool lay(const std::string& name);
     // ---- the windows' commands (sim/command.h; server/README.md phase 1) -------------------
@@ -1527,6 +1544,8 @@ private:
     int portalFrom_[2] = {-1, -1};  // takePortalFrom's tile, -1 for none
     float portalFacing_ = 0.0f;
     Sound sound_;
+    Stride pinned_;
+    bool pinning_ = false;
     Breath breath_;
     Bones bones_;
     Meteor meteor_;
