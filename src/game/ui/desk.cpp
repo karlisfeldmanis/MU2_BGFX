@@ -732,8 +732,11 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         std::string name;
         if (!hero || !play.playerName(hero->id, &name, nullptr)) name = heroName_;
         card_.setGuild(play.guild().name);
+        const int page = card_.tab();
         card_.update(float(window.width()), float(window.height()), hero, &play.realm(), name,
                      pointer, &spend, &close);
+        // A tab changing its page clicks, as every button does (the user, 2026-10-16).
+        if (card_.tab() != page) click();
         // The stat button clicks whether or not the point lands: CNewUICharacterInfoWindow
         // sends the request and plays SOUND_CLICK01 on the next line without waiting.
         if (spend >= 0) {

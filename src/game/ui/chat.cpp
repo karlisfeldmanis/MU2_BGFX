@@ -908,6 +908,8 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
                 continue;
             }
             answer(play, long(choice.line), {}, choice.accept);
+            // Accept or Decline on a party, guild or trade card clicks (the user, 2026-10-16).
+            play.ui(Play::Ui::Click);
             chosen = true;
             break;
         }

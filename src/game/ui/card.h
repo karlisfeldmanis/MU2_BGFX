@@ -31,6 +31,7 @@ public:
     void update(float width, float height, const sim::Body* hero, const sim::Realm* realm,
                 const std::string& name, const Pointer& pointer, int* spend, bool* close);
 
+    int tab() const { return tab_; }  // the open page: 0 Attributes, 1 Combat, 2 Bonuses
     bool covers(float x, float y) const;
     // His guild's name, in brackets after his own (docs/game/guild.md); empty for none.
     void setGuild(const std::string& guild) { guild_ = guild; }
