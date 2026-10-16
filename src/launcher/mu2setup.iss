@@ -44,7 +44,12 @@ CloseApplications=yes
 SetupIconFile=..\app\mu2.ico
 UninstallDisplayIcon={app}\MU2Launcher.exe
 UninstallDisplayName=MU Classic
-WizardStyle=modern
+; The launcher's look (tools/make_setup_art.py): dark, its near-black ground, the Dark Knight and
+; the logo beside Welcome and Finish, the logo at the top of the other pages.
+WizardStyle=modern dark hidebevels
+WizardBackColor=#0D0B0A
+WizardImageFile=art\setup\wizard-100.png,art\setup\wizard-125.png,art\setup\wizard-150.png,art\setup\wizard-175.png,art\setup\wizard-200.png,art\setup\wizard-225.png,art\setup\wizard-250.png
+WizardSmallImageFile=art\setup\small-100.png,art\setup\small-125.png,art\setup\small-150.png,art\setup\small-175.png,art\setup\small-200.png,art\setup\small-225.png,art\setup\small-250.png
 Compression=lzma2/max
 SolidCompression=yes
 OutputBaseFilename=MU2Setup
