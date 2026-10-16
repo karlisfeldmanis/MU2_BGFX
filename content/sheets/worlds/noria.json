@@ -21,7 +21,7 @@
   "tint_high": [1.06, 1.03, 0.95],
   "grass_tip_colour": [0.72, 1.12, 0.42],
   "grass_root_colour": [0.22, 0.48, 0.24],
-  "grass_dry": 0.05,
+  "grass_dry": 0.3,
   "grass_colour": 0.45,
   "grass_height": 0.5,
   "water_flow": 0.0,
