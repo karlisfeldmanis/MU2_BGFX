@@ -19,8 +19,11 @@
 //
 // It climbs from the launcher's preset and steps down from it, one preset at a time, never
 // jumping: a weak card asked for a frame far past it loses its device (Salvi's Iris Plus,
-// 2026-10-15), so a frame over kSpikeMs ends a climb at once. Textures and the renderer are
-// left alone (a change of either is a restart).
+// 2026-10-15), so a frame over kSpikeMs ends a climb at once. The renderer is left alone. The
+// launcher's guess can be wrong both ways (under Wine it took an M1 Pro for Low): the climb and
+// the step down answer the rows, and its other two guesses are answered at the end -- the cap is
+// the display's refresh, and Half textures on a card that holds Medium or more go Full, which
+// starts the game again once.
 //
 // Once per card: options.txt keeps `tuned 1` and `tunedgpu` (vendor and device), and a run on
 // another card tunes again. Never once a Graphics row was set by hand (`hand 1`).

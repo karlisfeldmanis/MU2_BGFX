@@ -148,16 +148,27 @@ void Tuner::finish(core::Args& args, gfx::Window& window, int preset) {
     wear(args, preset);
     chosen_ = core::kGraphicsPresets[preset].name;
     // At least 60, and no more than the display shows: uncapped, a laptop drew 150 frames a
-    // second for nobody and lost its device to the heat (Gordichan, 2026-10-17).
-    const int refresh = std::clamp(window.refreshHz(), 60, 240);
-    args.cap = cap_ > 0 && cap_ <= refresh ? cap_ : refresh;
+    // second for nobody and lost its device to the heat (Gordichan, 2026-10-17). The display's
+    // and not the cap there was: nobody set the Graphics by hand (wanted), so a cap there is the
+    // launcher's guess -- its low-end set's 60, on a card the guess got wrong -- or the start's.
+    args.cap = std::clamp(window.refreshHz(), 60, 240);
     window.holdVsync(false);
+    // And the launcher's other guess the measure can answer (the user, 2026-10-17: "i think
+    // launcher could be false positive", "good enough textures"): a card it took for Lowest has
+    // Half textures, which no preset step lifts. A card that holds Medium or more draws Full; it
+    // takes a new start, so the game starts again here, on the character screen, measured.
+    const bool textures = preset >= core::kPresetMedium && args.textures == 0;
+    if (textures) {
+        args.textures = 1;
+        if (args.remember) args.restart = true;
+    }
     args.tuned = true;
     args.tunedGpu = gpu_;
-    core::logf("graphics: tuned to %s, capped at %d fps (%s; the 90th percentile %s, %.1f ms or "
-               "under holds)",
-               chosen_, args.cap, said_.c_str(), byFrame_ ? "frame" : "GPU frame",
-               byFrame_ ? kFrameBudgetMs : kBudgetMs);
+    core::logf("graphics: tuned to %s from the launcher's %s, capped at %d fps%s (%s; the 90th "
+               "percentile %s, %.1f ms or under holds)",
+               chosen_, core::kGraphicsPresets[first_].name, args.cap,
+               textures ? ", textures Full from a new start" : "", said_.c_str(),
+               byFrame_ ? "frame" : "GPU frame", byFrame_ ? kFrameBudgetMs : kBudgetMs);
 }
 
 void Tuner::abort(core::Args& args, gfx::Window& window) {
