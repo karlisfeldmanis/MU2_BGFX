@@ -104,6 +104,7 @@ private:
     bool quitEarly_ = false;
     bool quitting_ = false;
     bool entering_ = false;
+    std::string rejoin_;  // MU2_REJOIN: the character to enter on the first frame, back from a lost device
 };
 
 }  // namespace mu::app

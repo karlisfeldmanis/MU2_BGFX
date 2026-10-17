@@ -53,6 +53,11 @@ std::string sealedKey(const std::string& key);
 // on in MU2_PASS_COUNT, and the new one counts on from there: the server refuses a pass whose
 // count it has already seen, so a restart counting from 1 again would be turned away.
 uint64_t passCount();
+// The character this run went into from the character screen, or "" on the screen itself. A game
+// that starts itself again after a lost device hands it on in MU2_REJOIN, and the new one's
+// character screen enters him by itself (app/modes/lobby_mode.cpp).
+void notePlaying(const std::string& name);
+const std::string& playing();
 
 // The characters this machine played on `server` (host:port) before accounts: each save in
 // saves/characters with a token for it beside it (Name.server), to be claimed onto the account.

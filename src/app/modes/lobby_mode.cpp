@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 
 #include "app/options.h"
 #include "app/preloader.h"
@@ -330,6 +331,16 @@ bool LobbyMode::open(Context& ctx) {
     // --frames review keeps it as the quit it always was.
     ctx.window.holdEscape(args.frames == 0);
 
+    // Back from a lost device (main.cpp startAgainAfterLoss): the character the last run played,
+    // entered on the first frame. Taken once, so Switch Character stays on this screen.
+    game::notePlaying({});
+    static bool rejoinTaken = false;
+    if (const char* rejoin = std::getenv("MU2_REJOIN"); rejoin && *rejoin && !rejoinTaken) {
+        rejoin_ = rejoin;
+        core::logf("lobby: back from a lost device; entering %s again", rejoin);
+    }
+    rejoinTaken = true;
+
     // The stills' own states.
     if (args.lobbyPick >= 0) pedestals_.pick(args.lobbyPick);
     if (args.lobbyCreate >= 0) lobby_.openCreate(args.lobbyCreate);
@@ -383,6 +394,7 @@ void LobbyMode::enter(Context& ctx, int slot) {
     args.weapon.clear();
     args.shield.clear();
     entering_ = true;
+    game::notePlaying(who->name);
     link_.close();
     // iButtonMove, the user's pick for Enter World (sounds.json's world_enter): on the
     // preloader's engine, since this screen's own sound goes with it on the handoff.
@@ -517,6 +529,15 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
         }
     }
     if (asked.enter >= 0) enter(ctx, asked.enter);
+    if (!rejoin_.empty() && !entering_) {
+        for (const game::Seat& one : roster_) {
+            if (one.name == rejoin_) {
+                pedestals_.pick(one.slot);
+                enter(ctx, one.slot);
+            }
+        }
+        rejoin_.clear();
+    }
     if (args.lobbyEnter >= 0 && at.index == args.lobbyEnter && pedestals_.picked() >= 0) {
         enter(ctx, pedestals_.picked());
     }

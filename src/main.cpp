@@ -10,11 +10,13 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <chrono>
 #include <cstring>
 #include <string>
 #include <vector>
 
 #include "game/roster.h"  // game::passCount, handed to a restart
+#include "gfx/callback.h"  // gfx::setStartAgain, after a lost device
 
 #ifdef _WIN32
 #include <windows.h>
@@ -66,43 +68,96 @@ std::vector<char*> playersOnly(int argc, char** argv) {
 }
 #endif
 
+// One variable of the environment a started-again game inherits; an empty value takes it away.
+void handOn(const char* name, const std::string& value) {
+#ifdef _WIN32
+    SetEnvironmentVariableA(name, value.empty() ? nullptr : value.c_str());
+#else
+    if (value.empty()) unsetenv(name);
+    else setenv(name, value.c_str(), 1);
+#endif
+}
+
 // Graphics' Apply changed what only a new start takes -- Textures or Renderer (core::Args::restart)
 // -- and the run has ended as Exit Game ends it: the same program again, with the switches it was
 // started with, so a player's build opens on the character screen with the options it just wrote.
 // The sign-in's count goes with it (game::passCount): a pass counted from 1 again would be refused.
-void startAgain(char** started) {
-    const std::string count = std::to_string(mu::game::passCount());
+// `rejoin` is a character for the character screen to enter by itself (MU2_REJOIN), or "".
+bool startAgain(char** started, const std::string& rejoin = {}) {
+    handOn("MU2_PASS_COUNT", std::to_string(mu::game::passCount()));
+    handOn("MU2_REJOIN", rejoin);
 #ifdef _WIN32
-    SetEnvironmentVariableA("MU2_PASS_COUNT", count.c_str());
     wchar_t exe[MAX_PATH] = {};
-    if (!GetModuleFileNameW(nullptr, exe, MAX_PATH)) return;
+    if (!GetModuleFileNameW(nullptr, exe, MAX_PATH)) return false;
     std::wstring line = GetCommandLineW();
     STARTUPINFOW startup{};
     startup.cb = sizeof startup;
     PROCESS_INFORMATION process{};
-    if (CreateProcessW(exe, line.data(), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startup,
-                       &process)) {
-        CloseHandle(process.hThread);
-        CloseHandle(process.hProcess);
+    if (!CreateProcessW(exe, line.data(), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startup,
+                        &process)) {
+        return false;
     }
+    CloseHandle(process.hThread);
+    CloseHandle(process.hProcess);
+    return true;
 #else
-    setenv("MU2_PASS_COUNT", count.c_str(), 1);
     char exe[PATH_MAX] = {};
 #ifdef __linux__
-    if (readlink("/proc/self/exe", exe, sizeof exe - 1) <= 0) return;
+    if (readlink("/proc/self/exe", exe, sizeof exe - 1) <= 0) return false;
 #else
     uint32_t size = sizeof exe;
-    if (_NSGetExecutablePath(exe, &size) != 0) return;
+    if (_NSGetExecutablePath(exe, &size) != 0) return false;
+#endif
+    // Only the standard streams go to the new game. An inherited socket kept the old run's line
+    // open: the server still had him playing and turned his rejoin away.
+    posix_spawn_file_actions_t files;
+    posix_spawn_file_actions_init(&files);
+    posix_spawnattr_t attributes;
+    posix_spawnattr_init(&attributes);
+#ifdef __APPLE__
+    posix_spawnattr_setflags(&attributes, POSIX_SPAWN_CLOEXEC_DEFAULT);
+    for (int fd = 0; fd < 3; ++fd) posix_spawn_file_actions_addinherit_np(&files, fd);
+#elif defined(__GLIBC__) && (__GLIBC__ > 2 || __GLIBC_MINOR__ >= 34)
+    posix_spawn_file_actions_addclosefrom_np(&files, 3);
 #endif
     pid_t child = 0;
-    posix_spawn(&child, exe, nullptr, nullptr, started, environ);
+    const bool spawned = posix_spawn(&child, exe, &files, &attributes, started, environ) == 0;
+    posix_spawnattr_destroy(&attributes);
+    posix_spawn_file_actions_destroy(&files);
+    return spawned;
 #endif
 }
+
+#ifdef MU2_SHIP
+// A lost device (gfx::Callback::fatal): the game starts again on the lighter options the
+// callback has just written and walks back into the character it was playing, in place of an
+// error box and a game that is gone. Gordichan's GTX 1650 laptop on Direct3D 11, 2026-10-17:
+// 1.5 hours at 7 ms a frame, then the driver stopped answering in a present (DEVICE_HUNG) and
+// Windows reset it -- a new process opens on the reset driver as any start does. Twice in a
+// row, each within ten minutes of its start, and the third loss is the box: a card that keeps
+// failing is told about, not restarted forever.
+char** g_started = nullptr;
+const auto g_began = std::chrono::steady_clock::now();
+constexpr int kLostRestarts = 2;
+
+bool startAgainAfterLoss() {
+    const char* before = std::getenv("MU2_LOST_RESTARTS");
+    int restarts = before ? std::atoi(before) : 0;
+    if (std::chrono::steady_clock::now() - g_began > std::chrono::minutes(10)) restarts = 0;
+    if (restarts >= kLostRestarts || !g_started) return false;
+    handOn("MU2_LOST_RESTARTS", std::to_string(restarts + 1));
+    return startAgain(g_started, mu::game::playing());
+}
+#endif
 
 }  // namespace
 
 int main(int argc, char** argv) {
     char** const started = argv;  // as the system gave them, for a restart to give again
+#ifdef MU2_SHIP
+    g_started = started;
+    mu::gfx::setStartAgain(startAgainAfterLoss);
+#endif
     // Opened from Finder or the Dock: started by its path inside build/MU2.app, with no
     // switches (or only the process serial number an older macOS adds). It plays as mu play's
     // lobby does. A run through the build/mu2 link is argv[0] "build/mu2" and keeps its own.

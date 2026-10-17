@@ -4,6 +4,7 @@
 #include <bx/file.h>
 
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <string>
 #include <utility>
@@ -21,6 +22,8 @@
 
 namespace mu::gfx {
 namespace {
+
+bool (*g_startAgain)() = nullptr;
 
 // After a lost device the next start draws less. Salvi's Iris Plus G7, 2026-10-15: Low took
 // 55-63 ms a frame in Lorencia's rain, then one frame ran 3 s and Windows reset the driver
@@ -72,6 +75,8 @@ const char* lightenOptions() {
 
 }  // namespace
 
+void setStartAgain(bool (*again)()) { g_startAgain = again; }
+
 void Callback::fatal(const char* filePath, uint16_t line, bgfx::Fatal::Enum code, const char* str) {
     core::logError("bgfx fatal %d at %s:%u: %s", int(code), filePath, unsigned(line), str);
     const char* lighter = code == bgfx::Fatal::DeviceLost ? lightenOptions() : nullptr;
@@ -86,6 +91,18 @@ void Callback::fatal(const char* filePath, uint16_t line, bgfx::Fatal::Enum code
     char what[600];
     std::snprintf(what, sizeof(what), "bgfx fatal %s at %s:%u: %s", name, filePath, unsigned(line), str);
     core::watchReport(what);
+    // The report is filed for the next start to send; the game itself comes back on its own
+    // (main.cpp startAgainAfterLoss), so the player sees a load and not an error box.
+    if (code == bgfx::Fatal::DeviceLost && g_startAgain && g_startAgain()) {
+        core::logf("graphics: the device was lost; MU2 starts again");
+        core::watchStop();
+        core::logClose();
+#if defined(_WIN32) && defined(MU2_SHIP)
+        // Not ExitProcess: its DLL detach would call into the driver that has just stopped.
+        TerminateProcess(GetCurrentProcess(), 3);
+#endif
+        std::_Exit(3);
+    }
 #if defined(_WIN32) && defined(MU2_SHIP)
     // The player is told, rather than left looking at a game that vanished (the GPU audit,
     // 2026-10-15): a lost device is a driver reset (TDR), a driver update or a card that

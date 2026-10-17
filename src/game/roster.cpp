@@ -116,6 +116,13 @@ std::string accountKey() {
 
 uint64_t passCount() { return g_count; }
 
+namespace {
+std::string g_playing;
+}
+
+void notePlaying(const std::string& name) { g_playing = name; }
+const std::string& playing() { return g_playing; }
+
 std::string sealedKey(const std::string& key) {
     if (g_ticket.empty() || key != g_ticket) return key;
     return net::sealPass(g_ticket, g_secret, ++g_count);

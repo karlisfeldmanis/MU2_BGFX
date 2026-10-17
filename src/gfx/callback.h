@@ -7,6 +7,10 @@
 
 namespace mu::gfx {
 
+// What a lost device does in place of stopping: main() sets it in a player's build, and it
+// starts the game again and says whether it did (main.cpp startAgainAfterLoss).
+void setStartAgain(bool (*again)());
+
 class Callback : public bgfx::CallbackI {
 public:
     ~Callback() override = default;
