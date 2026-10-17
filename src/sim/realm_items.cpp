@@ -58,7 +58,7 @@ Arms Realm::armsOf(const Body& one) const {
             arms.dual = true;
             const bool matched = one.weapon >= 0 && size_t(one.weapon) < tables_->arms.size() &&
                                  tables_->arms[size_t(one.weapon)].group == off.group;
-            arms.dualRate = matched ? 1.0 : kMixedPair;
+            arms.dualRate = matched ? kMatchedPair : kMixedPair;
             arms.offhandMinimumDamage = off.minimumDamage + one.offhandBonus;
             arms.offhandMaximumDamage = off.maximumDamage + one.offhandBonus;
             arms.offhandMinimumDamage -= int(float(arms.offhandMinimumDamage) * one.offhandCut);

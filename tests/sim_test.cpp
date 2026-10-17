@@ -915,11 +915,13 @@ void testItems(const content::Tables& tables) {
         const int32_t axeArm = tables.armNamed("Axe01"), swordArm = tables.armNamed("Sword01");
         check(duo.equip(axeArm, -1, true), "one axe");
         const int single = duo.hero().stats.minimumDamage;
+        const int matched = int(double(single) * sim::kMatchedPair);
         check(duo.equip(axeArm, axeArm, true), "two axes, the second in the shield's place");
         check(duo.hero().dual, "and he holds two");
         checkEqual(duo.satchel()[sim::kWeaponLeft].item, axe, "the second in the left hand");
-        checkEqual(duo.hero().stats.offhandMinimumDamage, single,
-                   "a matched pair: the left band is the right's again");
+        checkEqual(duo.hero().stats.minimumDamage, matched, "a matched pair: each hand at 70%");
+        checkEqual(duo.hero().stats.offhandMinimumDamage, matched,
+                   "and the left band is the right's again");
         check(duo.moveItem(sim::kWeaponLeft, sim::kWorn + 30), "the second comes off");
         check(!duo.hero().dual && duo.hero().stats.offhandMaximumDamage == 0,
               "and the left band is gone");

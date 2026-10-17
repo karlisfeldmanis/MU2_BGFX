@@ -245,7 +245,8 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     // A knight's second weapon is a second band of the same shape: gObjCalCharacter gives the
     // left hand strength's band as well as the right (ObjCalCharacter.cpp:386-389) and adds the
     // left weapon to it, so two blades nearly double what one does -- WebZen's, where OpenMU
-    // 0.75 sums the two weapons over one strength band.
+    // 0.75 sums the two weapons over one strength band. Both bands are then taken at the pair's
+    // rate (Arms::dualRate), kMatchedPair or kMixedPair, ours.
     out->offhandMinimumDamage = 0;
     out->offhandMaximumDamage = 0;
     if (arms.dual) {

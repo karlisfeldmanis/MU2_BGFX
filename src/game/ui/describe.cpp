@@ -419,7 +419,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     }
     // A knight's second weapon (sim::offHanded), and what it pairs to: the weapon in his other
     // hand -- the left's partner is the right, anything else's is the right. Two of one kind hit
-    // whole, two kinds at sim::kMixedPair each.
+    // at sim::kMatchedPair each, two kinds at sim::kMixedPair.
     if (weapon && sim::offHanded(row, who.kin)) {
         static const char* const kKinds[4] = {"sword", "axe", "mace", "spear"};
         static const char* const kPairs[4] = {"swords", "axes", "maces", "spears"};
@@ -429,7 +429,10 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             partner.empty() || size_t(partner.item) >= tables.items.size()
                 ? nullptr
                 : &tables.items[size_t(partner.item)];
-        const std::string share = std::to_string(int(std::lround(sim::kMixedPair * 100.0))) + "%";
+        const auto percent = [](double rate) {
+            return std::to_string(int(std::lround(rate * 100.0))) + "%";
+        };
+        const std::string share = percent(sim::kMixedPair), whole = percent(sim::kMatchedPair);
         // In the affix grammar: "Dual Wield" named first, the value last and heavier. Green for
         // the pair that hits whole, red for the one cut, white for the rule when he holds none.
         const auto say = [&](const std::string& words, const std::string& value, Tone tone) {
@@ -445,11 +448,11 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         // One line (the tooltip audit, 2026-10-05): what he holds now, or the rule in short.
         const std::string mine = kKinds[row.group];
         if (other && sim::offHanded(*other, who.kin) && other->group == row.group) {
-            say(std::string("two ") + kPairs[row.group] + ",", "100% each", Tone::Green);
+            say(std::string("two ") + kPairs[row.group] + ",", whole + " each", Tone::Green);
         } else if (other && sim::offHanded(*other, who.kin)) {
             say(mine + " and " + kKinds[other->group] + ",", share + " each", Tone::Red);
         } else {
-            say(std::string("100% with two ") + kPairs[row.group] + ",", share + " mixed",
+            say(whole + " with two " + kPairs[row.group] + ",", share + " mixed",
                 Tone::White);
         }
     }

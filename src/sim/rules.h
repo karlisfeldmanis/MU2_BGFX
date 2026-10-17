@@ -338,7 +338,7 @@ struct Arms {
     int weaponMaximumDamage = 0;
     // A Dark Knight's second weapon (sim::offHanded), with its plus and wear in.
     bool dual = false;
-    // What both bands are taken at: 1 for a matched pair, kMixedPair for two kinds of weapon.
+    // What both bands are taken at: kMatchedPair for two of one kind, kMixedPair for two kinds.
     double dualRate = 1.0;
     int offhandMinimumDamage = 0;
     int offhandMaximumDamage = 0;
@@ -371,9 +371,13 @@ struct Arms {
 
 // A knight's two weapons of different kinds -- a sword and an axe, a mace and a spear -- each
 // hit for 55%: OpenMU's double wield (Season 6, AttackableExtensions.cs:131 and
-// FixDamageCalcsPlugInBase's -0.45), kept for a mixed pair only. A matched pair hits for
-// WebZen's whole two bands. The split is the user's, 2026-10-01. INVENTION.
+// FixDamageCalcsPlugInBase's -0.45), kept for a mixed pair only. The split is the user's,
+// 2026-10-01. INVENTION.
 constexpr double kMixedPair = 0.55;
+// Two of one kind -- two swords, two axes -- each hit for 70%, about 1.4 of one blade: WebZen's
+// whole two bands came to nearly double (the user, 2026-10-17: "dual viel 100% boost is
+// overkill"). INVENTION.
+constexpr double kMatchedPair = 0.70;
 
 void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Fighter* out,
             int* maxHealth);
