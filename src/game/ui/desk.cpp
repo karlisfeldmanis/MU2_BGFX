@@ -1283,13 +1283,13 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             }
         } else if (asked.outside >= 0 && overWindows(asked.outsideX, asked.outsideY)) {
             // Over any other window -- the character's, the chat, the minimap, the bar off its
-            // potion boxes -- the no, as the vault's drop answers there: let go on a window, a
-            // thing went on the ground behind it.
-            refused();
+            // potion boxes -- it stays on the pointer, as MU's picked item does: let go on a
+            // window, a thing went on the ground behind it.
+            bag_.hold(asked.outside);
         } else if (asked.outside >= 0) {
-            // The one gesture in the interface that gives something away, which is why it
-            // takes a deliberate drag out of the window and not a click. A refusal -- a dead
-            // man's drag -- is the interface's no, and the window puts the item back by
+            // The one gesture in the interface that gives something away: a click on the
+            // ground with the thing picked, MU's IsPress off every window. A refusal -- a dead
+            // man's drop -- is the interface's no, and the window puts the item back by
             // redrawing from a satchel that never changed.
             expect(play.discard(asked.outside), Then::Refused);
         }

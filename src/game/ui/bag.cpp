@@ -336,7 +336,8 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
         docked_ = false;
         if (out) out->toggleDock = true;
     }
-    if (pointer.pressed && inside) {
+    // While a thing rides the pointer a press is the start of placing it, and nothing else.
+    if (pointer.pressed && inside && dragging_ < 0) {
         if (cross.has(ux, uy)) {
             closing_ = true;
         } else if (overHammer_) {
@@ -350,8 +351,9 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
             // (CNewUIMyInventory's REPAIR_MODE_ON branch, SendRepairItemRequest).
             if (out) out->repair = hovered_;
         } else if (hovered_ >= 0) {
-            // The item covering the cell: a click on the blade picks up the sword.
-            dragging_ = hovered_;
+            // The item covering the cell: a click on the blade picks up the sword, when the
+            // button comes up on it.
+            lifting_ = hovered_;
         }
     }
     if (pointer.rightPressed && inside && dragging_ < 0 && hovered_ >= 0 && out) {
@@ -377,13 +379,19 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
             out->autoMana = pressingDock_ >= 10 ? value : lines.mana;
         }
         pressingDock_ = -1;
+        // A thing riding the pointer is placed by this release, and stays picked where it cannot
+        // go: over the frame or the foot, or on a cell the gate refuses (red), as MU leaves it on
+        // the pointer. Over its own place it is put back.
+        bool placed = true;
         if (dragging_ >= 0 && out) {
             const int from = dragging_;
             if (!inside) {
                 out->outside = from;
                 out->outsideX = pointer.x;
                 out->outsideY = pointer.y;
-            } else if (cell >= 0 && !bag[from].empty()) {
+            } else if (cell < 0 || bag[from].empty()) {
+                placed = bag[from].empty();
+            } else {
                 // ApplyJewels first, as HandlePickedItemPlacement asks it: over a thing the
                 // jewel goes on, the drop is that and never a swap.
                 const int under = bag.holder(tables, cell);
@@ -401,13 +409,21 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
                                    realm.wearer().second))) {
                     out->refineJewel = from;
                     out->refineTarget = under;
-                } else if (to >= 0 && to != from) {
+                } else if (to == from) {
+                    // Back where it was lifted from.
+                } else if (to >= 0 && sim::movable(tables, realm.wearer(), bag, from, to)) {
                     out->moveFrom = from;
                     out->moveTo = to;
+                } else {
+                    placed = false;
                 }
             }
+            if (placed) dragging_ = -1;
+        } else if (lifting_ >= 0 && lifting_ == hovered_ && !mending_) {
+            // The release that ends the picking click: on the thing it went down on, it is up.
+            dragging_ = lifting_;
         }
-        dragging_ = -1;
+        lifting_ = -1;
     }
     // A drag that the item has vanished from under -- sold, drunk -- is over.
     if (dragging_ >= 0 && bag[dragging_].empty()) dragging_ = -1;

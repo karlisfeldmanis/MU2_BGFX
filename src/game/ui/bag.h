@@ -5,6 +5,11 @@
 // did, so no two gold rims cross), the grid from `Create(x + 15, y + 200, 8, 8)` at MU's
 // twenty-unit cell, and the Zen strip at the foot.
 //
+// **Click to pick, click to place**, as MU's is (CNewUIInventoryCtrl::UpdateMouseEvent picks on
+// the button coming up over a thing, CNewUIPickedItem rides the pointer at its middle with no
+// button held, and the next release over a slot places it): a place the gate refuses -- a red
+// cell -- leaves it on the pointer, and a click on the ground drops it there.
+//
 // Nothing here moves an item. A drag ends in a request, and the window goes on drawing what it
 // drew until the satchel it mirrors changes -- the realm's own `version`. The drop-target
 // colour is asked of the same gate the realm refuses by (`sim::movable`), so a red cell and a
@@ -71,9 +76,16 @@ public:
     // A frame the window is not updated on -- shut, by a key, Escape or a warp -- ends any drag
     // and press: one left standing rode the pointer when it opened again, and the next release
     // anywhere threw the thing on the ground.
-    void cancel() { dragging_ = -1; closing_ = pressingHammer_ = pressingBottle_ = false; pressingDock_ = -1; }
-    // The slot being dragged, or -1.
+    void cancel() {
+        dragging_ = lifting_ = -1;
+        closing_ = pressingHammer_ = pressingBottle_ = false;
+        pressingDock_ = -1;
+    }
+    // The slot riding the pointer, or -1.
     int dragged() const { return dragging_; }
+    // Back on the pointer: a click outside that nothing took -- another window -- leaves the
+    // thing picked, as MU's does, rather than putting it back.
+    void hold(int slot) { dragging_ = slot; }
     // A thing dragged out of the vault and over this window, or null: the bag lights the cells
     // it would land on as it lights its own drag, by Realm::withdraw's gate. Set before update.
     void carrying(const sim::Held* what) { incoming_ = what ? *what : sim::Held{}; }
@@ -152,6 +164,8 @@ private:
     float screenW_ = 0.0f, screenH_ = 0.0f;
     bool up_ = false;
     int dragging_ = -1;
+    // The thing the button went down on, picked when it comes up over the same thing.
+    int lifting_ = -1;
     sim::Held incoming_;
     int hovered_ = -1;
     float pointerX_ = 0.0f, pointerY_ = 0.0f;
