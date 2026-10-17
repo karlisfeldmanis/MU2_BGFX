@@ -605,7 +605,8 @@ public:
     struct Gain {
         // Gapped: a party kill he shared nothing of, past the level gap (sim::kPartyGap).
         // BagFull: a pickup refused for want of room (Play::tossedDrops).
-        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped, BagFull };
+        // NotYours: a click on another player's drop (sim::Lying::owner, Play::leftClick).
+        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped, BagFull, NotYours };
         Kind kind = Kind::Experience;
         int64_t value = 0;
     };
@@ -2070,6 +2071,10 @@ private:
     // A guard's `Shouted` put into words and up over his head. See Play::said.
     void speak(const sim::Happening& happening);
     uint32_t pointedLying_ = 0;
+    // Another player's drop under the pointer, which pointedLying_ passes over: a click there
+    // walks, and says it is not his (notYours_, said at the top of the next update).
+    uint32_t pointedForeign_ = 0;
+    bool notYours_ = false;
     int pointedPerch_ = -1;
     int64_t pickAskedTick_ = 0;  // when Space last asked a pickup (pickNearest)
     std::vector<float> scratch_;

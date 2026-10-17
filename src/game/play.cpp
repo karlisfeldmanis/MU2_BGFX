@@ -304,6 +304,8 @@ void Play::update(double seconds) {
     if (drankHealth_ > 0) gains_.push_back({Gain::Kind::Health, drankHealth_});
     if (drankMana_ > 0) gains_.push_back({Gain::Kind::Mana, drankMana_});
     drankHealth_ = drankMana_ = 0;
+    if (notYours_) gains_.push_back({Gain::Kind::NotYours, 0});
+    notYours_ = false;
     int stepped = 0;
     // On a server the ticks are the server's: what it sent is read here, and a tick is stepped
     // only once it has arrived, never dropped (server phase 3). Ticks the line held up arrive

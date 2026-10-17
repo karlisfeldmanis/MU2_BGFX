@@ -64,7 +64,7 @@ private:
     // carry a figure: it is said in the same three square inches because that is where the eye
     // already is when it happens.
     struct Row {
-        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped, Bound, BagFull };
+        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped, Bound, BagFull, NotYours };
         Kind kind = Kind::Experience;
         int64_t value = 0;
         float age = 0.0f;

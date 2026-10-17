@@ -28,6 +28,7 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     pointedPlayer_ = 0;
     pointedFolk_ = -1;
     pointedLying_ = 0;
+    pointedForeign_ = 0;
     pointedPerch_ = -1;
     // The shot this frame is drawn with, kept for what may be heard: see emit().
     bx::mtxMul(shot_, view, proj);
@@ -164,18 +165,26 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     // What lies on the ground, only where nothing living is closer: a click on a drop next
     // to a monster is a click on the monster, as MU's own picking orders it.
     if (pointedAt_ == 0 && pointedPlayer_ == 0 && pointedFolk_ < 0) {
-        float nearest = 0.8f;
+        float nearest = 0.8f, nearestForeign = 0.8f;
         for (const sim::Lying& one : realm_.lying()) {
             if (std::find(heldIds_.begin(), heldIds_.end(), one.id) != heldIds_.end()) continue;
-            // Another player's drop is not his to pick: a click there walks (sim::Lying::owner).
-            if (!realm_.mayTake(one)) continue;
             const float away =
                 std::max(std::fabs(float(one.column) - column), std::fabs(float(one.row) - row));
+            // Another player's drop is not his to pick: a click there walks, and is told it is
+            // not his (sim::Lying::owner). One of his own beside it is the pick.
+            if (!realm_.mayTake(one)) {
+                if (away < nearestForeign) {
+                    nearestForeign = away;
+                    pointedForeign_ = one.id;
+                }
+                continue;
+            }
             if (away < nearest) {
                 nearest = away;
                 pointedLying_ = one.id;
             }
         }
+        if (pointedLying_ != 0) pointedForeign_ = 0;
     }
     // And the townsfolk, by the same reckoning, a body winning a tie: a monster in the town
     // is the more urgent thing under the pointer.
@@ -244,6 +253,7 @@ void Play::pointAtLabel(uint32_t lying) {
     // Still held behind a falling monster: not yet a thing to be picked up.
     if (std::find(heldIds_.begin(), heldIds_.end(), lying) != heldIds_.end()) return;
     pointedLying_ = lying;
+    pointedForeign_ = 0;
     pointedAt_ = 0;
     pointedPlayer_ = 0;
     pointedFolk_ = -1;
@@ -279,6 +289,14 @@ void Play::leftClick() {
         request.kind = sim::Request::Kind::Talk;
         request.target = uint32_t(pointedFolk_);
     } else if (pointedAt_ == 0 && pointedLying_ != 0) {
+        // Its grey label clicked (pointAtLabel takes any): not his, said, and nothing asked --
+        // the realm would only drop the order.
+        const auto lies = std::find_if(realm_.lying().begin(), realm_.lying().end(),
+                                       [&](const sim::Lying& one) { return one.id == pointedLying_; });
+        if (lies != realm_.lying().end() && !realm_.mayTake(*lies)) {
+            notYours_ = true;
+            return;
+        }
         request.kind = sim::Request::Kind::Pick;
         request.target = pointedLying_;
     } else if (pointedAt_ != 0 && realm_.find(pointedAt_) && realm_.find(pointedAt_)->alive()) {
@@ -288,6 +306,8 @@ void Play::leftClick() {
         request.kind = sim::Request::Kind::Perch;
         request.target = uint32_t(pointedPerch_);
     } else if (pointedColumn_ >= 0) {
+        // Over another player's drop: the walk, and the word that it is not his.
+        if (pointedAt_ == 0 && pointedForeign_ != 0) notYours_ = true;
         request.kind = sim::Request::Kind::WalkTo;
         request.column = pointedColumn_;
         request.row = pointedRow_;
