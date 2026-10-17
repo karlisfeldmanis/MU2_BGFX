@@ -128,6 +128,10 @@ struct Context {
     // The quest Auto-play is playing (game/quest_auto.h), -1 for none: carried across the map
     // changes it travels by, as each one raises a new mode.
     int autoQuest = -1;
+    // The first run's graphics being measured (app/tuner.h): the screen stays black with its
+    // words and progress over it, and takes no input.
+    bool tuning = false;
+    float tuningProgress = 0.0f;
 };
 
 // What the day gives an unlit puff of smoke: the ambient and the sun on a flat surface, over

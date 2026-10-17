@@ -53,6 +53,8 @@ void readOptions(Args& a) {
         else if (!std::strcmp(key, "renderer") && value >= 0 && value <= 2) a.renderer = value;
         else if (!std::strcmp(key, "whatsnew") && value >= 0) a.whatsNew = value;
         else if (!std::strcmp(key, "hand")) a.graphicsByHand = value != 0;
+        else if (!std::strcmp(key, "tuned")) a.tuned = value != 0;
+        else if (!std::strcmp(key, "tunedgpu")) a.tunedGpu = value;
     }
     std::fclose(file);
     logf("options: %s from %s, %dx%d", a.fullscreen ? "fullscreen" : "windowed",
@@ -86,7 +88,8 @@ void saveOptions(const Args& a) {
                        "grass %d\ncap %d\nlights %d\ntextures %d\nrenderer %d\n",
                  int(a.scale * 100.0f + 0.5f), a.msaa, a.shadows, a.ssao ? 1 : 0, a.bloom ? 1 : 0,
                  a.reflections ? 1 : 0, a.grass, a.cap, a.lights ? 1 : 0, a.textures, a.renderer);
-    std::fprintf(file, "whatsnew %d\nhand %d\n", a.whatsNew, a.graphicsByHand ? 1 : 0);
+    std::fprintf(file, "whatsnew %d\nhand %d\ntuned %d\ntunedgpu %d\n", a.whatsNew,
+                 a.graphicsByHand ? 1 : 0, a.tuned ? 1 : 0, a.tunedGpu);
     std::fclose(file);
 }
 

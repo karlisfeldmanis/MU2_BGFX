@@ -73,6 +73,12 @@ public:
     // is somewhere to tell him.
     virtual void graphicsEased(Context& ctx, const char* to) {}
 
+    // A screen the first run's graphics can be measured on (app/tuner.h), while it stands under
+    // its own black: the character screen of a player's run. It holds the player's hands meanwhile.
+    virtual bool tunable() const { return false; }
+    // The tuning kept preset `to` in the run's arguments: the Options page filled again.
+    virtual void graphicsTuned(Context& ctx, const char* to) {}
+
     // The mix this mode plays into, for --tape to pull. Null for a mode with none of its own.
     virtual game::Sound* heard() { return nullptr; }
 

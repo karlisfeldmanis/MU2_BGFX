@@ -20,6 +20,7 @@
 #include "app/modes/lobby_mode.h"
 #include "app/modes/play_mode.h"
 #include "app/sweep.h"
+#include "app/tuner.h"
 #include "game/sound.h"
 #include "content/showing.h"
 #include "core/log.h"
@@ -123,7 +124,7 @@ bool Application::boot() {
     args_.rendererLoaded = args_.renderer;
     if (!window_.open(desc)) return false;
     // A player's first look at a big screen is not a 4K frame his card cannot draw.
-    if (args_.remember && args_.frames == 0 && !args_.graphicsByHand &&
+    if (args_.remember && args_.frames == 0 && !args_.graphicsByHand && !args_.tuned &&
         core::fitGraphics(args_, window_.width(), window_.height())) {
         core::saveOptions(args_);
     }
@@ -404,6 +405,9 @@ int Application::run(int argc, char** argv) {
     double gpuSum = 0.0, wallSum = 0.0;
     int gpuFrames = 0, behind = 0;
     bool lightest = false;
+    // The first run's graphics, measured on the character screen under its black (app/tuner.h).
+    Tuner tuner;
+    bool tuneAsked = false;
 
     bool quitEarly = mode->quitEarly();
     bool handoffFailed = false;
@@ -525,10 +529,29 @@ int Application::run(int argc, char** argv) {
         if (!shotThisFrame) stats.sample(cpuMs);
         sweep.after(cpuMs);
 
+        double gpuMs = -1.0;
         if (const bgfx::Stats* s = bgfx::getStats(); s->gpuTimerFreq > 0) {
-            gpuSum += double(s->gpuTimeEnd - s->gpuTimeBegin) * 1000.0 / double(s->gpuTimerFreq);
+            gpuMs = double(s->gpuTimeEnd - s->gpuTimeBegin) * 1000.0 / double(s->gpuTimerFreq);
+            gpuSum += gpuMs;
             wallSum += frameMs;
             ++gpuFrames;
+        }
+        if (!tuneAsked && mode->tunable()) {
+            tuneAsked = true;
+            const bgfx::Caps* caps = bgfx::getCaps();
+            const uint32_t gpu = (uint32_t(caps->vendorId) << 16) | caps->deviceId;
+            if (Tuner::wanted(args_, gpu)) {
+                tuner.start(args_, window_, gpu);
+                ctx.tuning = true;
+            }
+        } else if (tuner.active()) {
+            const bool counts = window_.focused() && !window_.minimised();
+            if (!tuner.frame(args_, window_, gpuMs, frameMs, counts)) {
+                ctx.tuning = false;
+                core::saveOptions(args_);
+                mode->graphicsTuned(ctx, tuner.chosen());
+            }
+            ctx.tuningProgress = tuner.progress();
         }
 
         // Wall time, so the line stays a line a second when the run is paced.
@@ -557,7 +580,7 @@ int Application::run(int argc, char** argv) {
             sinceLine = 0.0;
 
             if (args_.remember && args_.frames == 0 && !args_.graphicsByHand && !lightest &&
-                gpuFrames > 0) {
+                !tuner.active() && gpuFrames > 0) {
                 constexpr double kBehindMs = 25.0;
                 constexpr int kSeconds = 8;
                 const bool slow = gpuSum / gpuFrames > kBehindMs && wallSum / gpuFrames > kBehindMs;
@@ -585,6 +608,10 @@ int Application::run(int argc, char** argv) {
         // the next world sets its own and may not set all of them.
         if (const Mode::Next next = mode->next(); next != Mode::Next::None) {
             sweep.abort("the world handed the run on (a gate, or the lobby)");
+            if (tuner.active()) {
+                tuner.abort(args_, window_);
+                ctx.tuning = false;
+            }
             core::watchPause();
             framing = nullptr;
             mode->shutdown(ctx);

@@ -73,10 +73,22 @@ const char* lightenOptions() {
     for (auto& [k, v] : lines)
         if (k == "cap") v = v > 0 ? std::min(v, core::kLowEndCap) : core::kLowEndCap, capped = true;
     if (!capped) lines.emplace_back("cap", core::kLowEndCap);
+    // And counted as measured on this card (app/tuner.h): the first run's tuning climbs, and
+    // must not climb again into the preset this card has just lost its device under.
+    const bgfx::Caps* caps = bgfx::getCaps();
+    if (caps) {
+        const int gpu = int((uint32_t(caps->vendorId) << 16) | caps->deviceId);
+        bool tuned = false, card = false;
+        for (auto& [k, v] : lines) {
+            if (k == "tuned") v = 1, tuned = true;
+            if (k == "tunedgpu") v = gpu, card = true;
+        }
+        if (!tuned) lines.emplace_back("tuned", 1);
+        if (!card) lines.emplace_back("tunedgpu", gpu);
+    }
     // And NVIDIA off Direct3D 11, to Auto, which is Vulkan: every NVIDIA device lost in the
     // players' reports to 2026-10-17 was on Direct3D 11, and none on Vulkan since the acquire
     // patch (launcher/gpu.h rendererFor). Auto still falls back if Vulkan does not start.
-    const bgfx::Caps* caps = bgfx::getCaps();
     if (caps && caps->rendererType == bgfx::RendererType::Direct3D11 && caps->vendorId == BGFX_PCI_ID_NVIDIA) {
         for (auto& [k, v] : lines)
             if (k == "renderer") v = 0;

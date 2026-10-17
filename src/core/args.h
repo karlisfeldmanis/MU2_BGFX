@@ -62,6 +62,10 @@ struct Args {
     // from then on the game neither fits the world to a big screen at the start (fitGraphics) nor
     // eases it when the GPU falls behind (easeGraphics), so it never fights what the player chose.
     bool graphicsByHand = false;
+    // The first run's graphics were measured on this card (app/tuner.h): `tuned 1` and the card,
+    // vendor << 16 | device, in `tunedgpu`. Another card measures again.
+    bool tuned = false;
+    int tunedGpu = 0;
     int volume = 100;  // percent: the Options page's Volume row
     // How much of the backbuffer the WORLD is drawn at, 1 for all of it. The present pass
     // magnifies it; the hover ring and the HUD are drawn at the screen's own size whatever

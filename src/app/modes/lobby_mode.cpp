@@ -446,7 +446,9 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
 
     // The menu over everything, and modal while it is up.
     const bool menuWasUp = menu_.up();
-    if (menuWasUp) {
+    // Under the tuning's black (app/tuner.h) nothing is clicked or typed: the screen is not seen.
+    const bool hands = !ctx.tuning;
+    if (menuWasUp && hands) {
         game::Menu::Result asked;
         menu_.update(seconds, w, h, pointer, ctx.window.escaped(), "Character Select", &asked);
         if (asked.clicked) play(click_);
@@ -473,7 +475,7 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
             pedestals_.crown(slot, viewProj, w, h, &look.plate[slot][0], &look.plate[slot][1]);
     }
     game::Lobby::Result asked;
-    if (!menuWasUp) {
+    if (!menuWasUp && hands) {
         lobby_.update(seconds, w, h, pointer, ctx.window.typed(), ctx.window.backspaces(),
                       ctx.window.entered(), ctx.window.escaped(), look, &asked);
     } else {
@@ -616,20 +618,39 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
         interface_.submit(gfx::ViewHud);
     }
     if (args.fps) ctx.readout.draw(ctx.overlay, ctx.window.width(), ctx.window.height());
-    // Up from black, as the game's own entrance comes up.
+    // Up from black, as the game's own entrance comes up -- once the first run's graphics have
+    // been measured under it (app/tuner.h), with its words and progress in the loading screen's
+    // parchment and gold.
     if (fading_ && ctx.curtain.ready()) {
-        if (at.index >= 2) fadeSeconds_ += seconds;
+        if (at.index >= 2 && !ctx.tuning) fadeSeconds_ += seconds;
         const float t = std::min(1.0f, fadeSeconds_ / 0.35f);
         const float black = 1.0f - t * t * (3.0f - 2.0f * t);
         if (black > 0.0f) {
             ctx.curtain.begin(ctx.window.width(), ctx.window.height());
             ctx.curtain.panel(0.0f, 0.0f, w, h, uint32_t(black * 255.0f) << 24);
+            if (ctx.tuning) {
+                const float unit = h / 1080.0f;
+                const float wordScale = 2.0f * unit, percentScale = 1.6f * unit;
+                const char* words = "Setting up graphics for your PC";
+                const std::string percent =
+                    std::to_string(int(ctx.tuningProgress * 100.0f + 0.5f)) + "%";
+                const float cy = h * 0.5f;
+                ctx.curtain.text(w * 0.5f - ctx.curtain.measure(wordScale, words) * 0.5f,
+                                 cy - gfx::Overlay::lineHeight(wordScale), wordScale,
+                                 0xccb8c8d4u, words);
+                ctx.curtain.text(w * 0.5f - ctx.curtain.measure(percentScale, percent) * 0.5f,
+                                 cy + 10.0f * unit, percentScale, 0xcc61bdffu, percent);
+            }
             ctx.curtain.submit(gfx::ViewHud);
         }
     }
 }
 
 void LobbyMode::graphicsEased(Context& ctx, const char* to) {
+    fillSettings(ctx.window, ctx.args, &menu_.settings());
+}
+
+void LobbyMode::graphicsTuned(Context& ctx, const char* to) {
     fillSettings(ctx.window, ctx.args, &menu_.settings());
 }
 

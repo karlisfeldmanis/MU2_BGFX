@@ -43,6 +43,9 @@ public:
     const gfx::Camera& camera() const override { return camera_; }
     void report(Context& ctx) override;
     void graphicsEased(Context& ctx, const char* to) override;
+    // A player's run: the screen comes up from black (fading_), the black the tuning stands under.
+    bool tunable() const override { return fading_; }
+    void graphicsTuned(Context& ctx, const char* to) override;
     void shutdown(Context& ctx) override;
 
 private:
