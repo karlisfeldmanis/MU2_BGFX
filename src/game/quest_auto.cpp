@@ -16,6 +16,7 @@
 #include "sim/maps.h"
 #include "sim/quests.h"
 #include "sim/realm.h"
+#include "sim/skills.h"
 #include "sim/travel.h"
 
 namespace mu::game {
@@ -142,8 +143,10 @@ void QuestAuto::reset() {
     hunting_ = -1;
 }
 
-std::string QuestAuto::update(Play& play, int* quest, double seconds) {
+std::string QuestAuto::update(Play& play, int* quest, double seconds, const int32_t* bar, int barCount) {
     clock_ += seconds;
+    barCount_ = bar ? std::min(barCount, 8) : 0;
+    for (int i = 0; i < barCount_; ++i) bar_[i] = bar[i];
     if (*quest < 0) {
         if (quest_ >= 0) reset();
         return {};
@@ -298,6 +301,36 @@ void QuestAuto::visit(Play& play, int folk, bool hand) {
     play.orderHero(request);
 }
 
+// **His defensive auras** (the user, 2026-10-17: "if char is shield aura user and cooldown ends
+// he should recast shield auras also", then "use right click and def auras"): a guard on his bar
+// -- the knight's Defense, the wizard's Soul Barrier, the elf's Greater Defense -- cast on himself
+// once its boon has lapsed, it is ready, paid for and his hand may throw it -- so a guard behind a
+// shield is never asked with two hands on one weapon or a blade in each (SkillRow::suits off the
+// left hand; the user, the same day: "if char cant use def aura (dual wield, two-hands) weapon
+// than we dont use it"). The bot's guard()
+// (tools/bot/brain.h), for the boons only and only those he put on his bar. A cast the realm
+// refuses starts no cooldown, so one is not asked again for a few seconds.
+bool QuestAuto::guard(Play& play) {
+    const sim::Realm& realm = play.realm();
+    const sim::Body& hero = realm.hero();
+    if (realm.casting() || hero.boonUntil > realm.tick()) return false;
+    // Nothing is thrown on a safe tile (Realm::invoke): in town it waits for the field.
+    if (realm.tables()->grid.safe(hero.column(), hero.row())) return false;
+    const uint32_t offHand = realm.wearer().offHand;
+    for (int i = 0; i < barCount_; ++i) {
+        const int32_t skill = bar_[i];
+        const sim::SkillRow* row = skill > 0 ? sim::skillNumbered(skill) : nullptr;
+        if (row == nullptr || row->boonTicks <= 0 || !realm.knows(skill) || realm.cooling(skill) > 0) continue;
+        if (hero.mana < row->mana || !row->suits(offHand)) continue;
+        if (const auto tried = guardTried_.find(skill); tried != guardTried_.end() && tried->second > clock_) continue;
+        guardTried_[skill] = clock_ + 4.0;
+        core::logf("auto-play: %s raised", row->name);
+        play.castHero(skill, hero.id);
+        return true;
+    }
+    return false;
+}
+
 // The nearest of the breed in sight -- whatever is fighting him first -- and with nobody in
 // sight, its nests walked one after another.
 void QuestAuto::hunt(Play& play, int32_t breed) {
@@ -326,6 +359,8 @@ void QuestAuto::hunt(Play& play, int32_t breed) {
         }
     }
     const sim::Body* fightNow = attacker ? attacker : (held && held->alive() && ofBreed(*held)) ? held : nearest;
+    // His guard first, when it has lapsed and something is to be fought.
+    if (fightNow && guard(play)) return;
     if (fightNow) {
         const sim::Request& order = realm.order();
         const bool onIt = order.kind == sim::Request::Kind::Attack && order.target == fightNow->id;

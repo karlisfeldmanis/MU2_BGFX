@@ -1333,7 +1333,10 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             world_.played().rightHeld();
         }
         if (ctx.autoQuest >= 0) game::quest_world::open(ctx.paths.assets);  // once, where it lives
-        if (const std::string said = questAuto_.update(world_.played(), &ctx.autoQuest, deltaSeconds);
+        int32_t bar[game::Hud::kSkillBoxes] = {};
+        for (int k = 0; k < game::Hud::kSkillBoxes; ++k) bar[k] = desk_.bound(k);
+        if (const std::string said = questAuto_.update(world_.played(), &ctx.autoQuest, deltaSeconds, bar,
+                                                       game::Hud::kSkillBoxes);
             !said.empty()) {
             desk_.notice(said);
         }

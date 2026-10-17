@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <map>
 #include <string>
 
 namespace mu::sim {
@@ -54,8 +55,11 @@ bool autoPlayableEver(const sim::Realm& realm, int quest);
 class QuestAuto {
 public:
     // One frame. `quest` is the one playing, -1 for none; set to -1 here when it is done or can
-    // go no further. Returns a line for the player when it stops, else empty.
-    std::string update(Play& play, int* quest, double seconds);
+    // go no further. Returns a line for the player when it stops, else empty. `bar` is his skill
+    // bar (the four keys and the right button's slot, MU's skill numbers, 0 for empty): the
+    // defensive auras on it are kept up while he fights.
+    std::string update(Play& play, int* quest, double seconds, const int32_t* bar = nullptr,
+                       int barCount = 0);
     // Forget what this map's hand was doing: a new quest, or Stop.
     void reset();
 
@@ -63,6 +67,7 @@ private:
     std::string goTo(Play& play, int map, const std::function<std::string(const std::string&)>& stop);
     void visit(Play& play, int folk, bool hand);
     void hunt(Play& play, int32_t breed);
+    bool guard(Play& play);
 
     double since_ = 0.0;
     int quest_ = -1;
@@ -77,6 +82,9 @@ private:
     int walkedColumn_ = -1, walkedRow_ = -1;
     int still_ = 0;             // walks asked that never got him walking
     int32_t hunting_ = -1;      // the breed last hunted, for the log
+    int32_t bar_[8] = {};
+    int barCount_ = 0;
+    std::map<int32_t, double> guardTried_;  // a guard asked, by skill: not again before this
 };
 
 }  // namespace mu::game
