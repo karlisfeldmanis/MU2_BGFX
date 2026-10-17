@@ -244,7 +244,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 break;
             case Then::Strike: if (one.ok()) hud_.strikeQuick(struck); break;
             // The dialog shuts on a yes; Play has heard a no.
-            case Then::CloseQuest: if (one.ok()) play.closeQuest(); break;
+            case Then::CloseQuest:
+                if (one.ok()) play.closeQuest();
+                else questShutting_ = false;
+                break;
             case Then::Click: one.ok() ? click() : refused(); break;
             case Then::CloseAngel:
                 if (one.ok()) {
@@ -413,6 +416,11 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 voiced = std::string("voice/") + who + "/" + who + "_" + kPage[page] + ".wav";
             }
         }
+        // The answer turns the page (offer to under way, hand-in to resting) a moment before
+        // the close lands: he goes on with what he was saying and starts nothing new (the
+        // user, 2026-10-17: 'quest audio cuted for minisecond').
+        if (quest < 0) questShutting_ = false;
+        if (questShutting_ && !voiced.empty()) voiced = voiced_;
         if (voiced != voiced_) {
             voiced_ = voiced;
             if (!voiced.empty()) play.sound().voice(voiced);
@@ -461,8 +469,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                    Then::Click);
         } else if (result.accept) {
             expect(play.acceptQuest(quest), Then::CloseQuest);
+            questShutting_ = true;
         } else if (result.complete) {
             expect(play.completeQuest(quest, result.choice, result.path), Then::CloseQuest);
+            questShutting_ = true;
         }
     }
     // A Town Portal Scroll read shuts the bag and the character window, silently: ReceiveTeleport's

@@ -325,6 +325,9 @@ private:
     // from it, -1 while the list itself is up.
     int listFolk_ = -1, picked_ = -1;
     std::string voiced_;  // the voice clip last started, or empty
+    // Accept or Complete asked and the window not yet shut: the page the answer turns to is
+    // not voiced, or its line starts and is cut a moment later when the close lands.
+    bool questShutting_ = false;
     Tracker tracker_;
     // The chat, bottom left over the HUD's wing (game/ui/chat.h).
     Chat chat_;
