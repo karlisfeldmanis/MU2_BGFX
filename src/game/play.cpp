@@ -388,6 +388,10 @@ void Play::update(double seconds) {
                 const float metresPerTile = ground_->metresPerTile();
                 const float x = (float(happening.a) + 0.5f) * metresPerTile;
                 const float z = -(float(happening.b) + 0.5f) * metresPerTile;
+                if (happening.what == sim::What::Walked) {
+                    walkedColumn_ = int(happening.a);
+                    walkedRow_ = int(happening.b);
+                }
                 if (happening.what == sim::What::Walked && mark_) {
                     marker_.show(x, z);
                     mark_ = false;

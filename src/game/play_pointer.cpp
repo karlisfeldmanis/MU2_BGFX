@@ -337,7 +337,25 @@ void Play::leftHeld() {
     leftRow_ = pointedRow_;
     leftAskedTick_ = realm_.tick();
     orderHero(request);
-    // The marker goes where the new walk ends; no early tick, he is already walking.
+    // No marker while steering: put down at every new tile it read as the click being spammed
+    // (the user, 2026-10-16: "i dont like that click to move is spaming"). No early tick either;
+    // he is already walking.
+    leftSteered_ = true;
+    mark_ = false;
+    marker_.dismiss();
+}
+
+void Play::leftLetGo() {
+    leftWalking_ = false;
+    if (!leftSteered_) return;
+    leftSteered_ = false;
+    // Once, where the last walk ends: the realm's `Walked` puts it there, or already has, in
+    // which case it is the last goal it said (Play::update keeps it).
+    if (walkedColumn_ >= 0 && ground_) {
+        const float metresPerTile = ground_->metresPerTile();
+        marker_.show((float(walkedColumn_) + 0.5f) * metresPerTile,
+                     -(float(walkedRow_) + 0.5f) * metresPerTile);
+    }
     mark_ = true;
 }
 

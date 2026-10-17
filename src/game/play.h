@@ -207,7 +207,7 @@ public:
     // again when the tile under it changes (the user, 2026-10-16: "allow click to move work on
     // hold"; MU walks while it is held). leftLetGo when it comes up.
     void leftHeld();
-    void leftLetGo() { leftWalking_ = false; }
+    void leftLetGo();
     // What the right button's quick slot holds, by MU's skill number, 0 for nothing. The desk's
     // and handed down each frame, as the bar is the interface's and the order is the realm's.
     void setQuickSkill(int32_t skill) { quickSkill_ = skill; }
@@ -1744,7 +1744,11 @@ private:
     // Whether the left button's press was a walk, so holding it goes on walking (leftHeld),
     // the tile it last asked, and the realm tick it asked it on.
     bool leftWalking_ = false;
+    // And whether the hold has re-aimed it: the marker is kept off while it does, and put down
+    // once where the walk ends when the button comes up.
+    bool leftSteered_ = false;
     int leftColumn_ = -1, leftRow_ = -1;
+    int walkedColumn_ = -1, walkedRow_ = -1;  // the goal of his last `Walked`
     int64_t leftAskedTick_ = 0;
     bool arenaLeft_ = false;
     // The drawing's coin for a spell's two hands, `PLAYER_SKILL_HAND1 + rand() % 2`: its own,
