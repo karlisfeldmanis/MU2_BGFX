@@ -89,6 +89,11 @@ public:
     bool nearestOpen(int column, int row, uint16_t wall, int rings, int* outColumn,
                      int* outRow) const;
 
+    // Whether a walk from one tile could reach another under `wall`, the goal resolved as plan
+    // resolves it -- the region test plan answers before its search, with no search and nothing
+    // counted. For a hand choosing where to go (game/quest_auto: a Dungeon nest behind a stair).
+    bool joins(int fromColumn, int fromRow, int toColumn, int toRow, uint16_t wall) const;
+
     // What the router has done since it opened. In the log because a route's cost is a claim
     // and an unmeasured claim is a guess.
     uint64_t searches() const { return searches_; }
@@ -108,10 +113,10 @@ private:
     // Whether a search from one tile could reach another under `wall`, by region. The start
     // may itself be closed (a body stands where the grid now refuses): then it is any region
     // its first step could enter.
-    bool reaches(int fromColumn, int fromRow, int toColumn, int toRow, uint16_t wall);
+    bool reaches(int fromColumn, int fromRow, int toColumn, int toRow, uint16_t wall) const;
     // The tiles' regions under `wall`, labelled the first time a wall is asked and again
     // whenever the grid has changed since (a castle's door). 0 for a closed tile.
-    const std::vector<uint32_t>& regions(uint16_t wall);
+    const std::vector<uint32_t>& regions(uint16_t wall) const;
 
     const content::Grid* grid_ = nullptr;
     const std::vector<uint8_t>* roads_ = nullptr;
@@ -135,9 +140,10 @@ private:
         bool made = false;
         std::vector<uint32_t> label;
     };
-    std::array<Regions, 4> regions_;
-    size_t regionsNext_ = 0;
-    std::vector<int32_t> flood_;  // the labelling's queue
+    // Mutable: a cache of the grid, labelled the first time a const query asks.
+    mutable std::array<Regions, 4> regions_;
+    mutable size_t regionsNext_ = 0;
+    mutable std::vector<int32_t> flood_;  // the labelling's queue
 
     uint64_t searches_ = 0;
     uint64_t failures_ = 0;

@@ -52,7 +52,7 @@ void Router::open(const content::Grid* grid) {
     worstExpansions_ = 0;
 }
 
-const std::vector<uint32_t>& Router::regions(uint16_t wall) {
+const std::vector<uint32_t>& Router::regions(uint16_t wall) const {
     Regions* found = nullptr;
     for (Regions& one : regions_) {
         if (one.made && one.wall == wall) found = &one;
@@ -92,7 +92,16 @@ const std::vector<uint32_t>& Router::regions(uint16_t wall) {
     return label;
 }
 
-bool Router::reaches(int fromColumn, int fromRow, int toColumn, int toRow, uint16_t wall) {
+bool Router::joins(int fromColumn, int fromRow, int toColumn, int toRow, uint16_t wall) const {
+    if (!grid_ || grid_->empty()) return false;
+    if (!grid_->inside(fromColumn, fromRow) || !grid_->inside(toColumn, toRow)) return false;
+    if (!grid_->open(toColumn, toRow, wall) && !nearestOpen(toColumn, toRow, wall, 4, &toColumn, &toRow)) {
+        return false;
+    }
+    return reaches(fromColumn, fromRow, toColumn, toRow, wall);
+}
+
+bool Router::reaches(int fromColumn, int fromRow, int toColumn, int toRow, uint16_t wall) const {
     const std::vector<uint32_t>& label = regions(wall);
     const uint32_t goal = label[size_t(index(toColumn, toRow))];
     if (goal == 0) return false;

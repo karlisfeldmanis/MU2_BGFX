@@ -1583,6 +1583,11 @@ public:
     // The router reads the grid live, so the next plan sees it.
     bool changeGrid(int x1, int y1, int x2, int y2, uint16_t bits, bool set);
     const Router& router() const { return router_; }
+    // Whether `who` could walk from one tile to another on this map as it stands, by the router's
+    // regions (Router::joins): a hand's question before it asks a walk, never part of a step.
+    bool reaches(const Body& who, int fromColumn, int fromRow, int column, int row) const {
+        return router_.joins(fromColumn, fromRow, column, row, wallOf(who));
+    }
     uint64_t draws() const { return dice_.draws(); }
     RealmCounts counts() const;
 

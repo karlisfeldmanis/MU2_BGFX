@@ -23,6 +23,11 @@ const EnterGate* enterGateNumbered(int32_t number) {
     return nullptr;
 }
 
+const EnterGate* enterGates(int* count) {
+    *count = int(sizeof(kEnters) / sizeof(kEnters[0]));
+    return kEnters;
+}
+
 const ExitGate* exitGate(int32_t number) {
     for (const ExitGate& gate : kExits) {
         if (gate.number == number) return &gate;

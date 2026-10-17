@@ -66,7 +66,8 @@ public:
 private:
     std::string goTo(Play& play, int map, const std::function<std::string(const std::string&)>& stop);
     void visit(Play& play, int folk, bool hand);
-    void hunt(Play& play, int32_t breed);
+    // False when none of the breed on this map can be got to from where he stands.
+    bool hunt(Play& play, int32_t breed);
     bool guard(Play& play);
 
     double since_ = 0.0;

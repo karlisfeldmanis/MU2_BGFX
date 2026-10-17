@@ -50,6 +50,9 @@ const EnterGate* enterGateAt(uint32_t map, int column, int row);
 
 // The enter gate with that number, or nullptr.
 const EnterGate* enterGateNumbered(int32_t number);
+// Every enter gate, `*count` of them: for a walk planned across a map's own stairs
+// (game/quest_auto).
+const EnterGate* enterGates(int* count);
 
 // The exit gate with that number, or nullptr.
 const ExitGate* exitGate(int32_t number);
