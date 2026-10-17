@@ -21,11 +21,11 @@
 //     lays a whole field out in parallel;
 //   * Zen as a heap of Gold01, coin by coin, spread by how much it is worth.
 //
-// And MU's sparkle, CreateShiny (ZzzObject.cpp:6271-6286, from MoveItems): every 48th frame a
-// thing lies there, two BITMAP_SHINY stars at one spot 16-47 units off it along its turn and
-// 16-47 up, white, one still and one at three quarters turning 12 degrees a frame, each
-// 18 frames at sin(LifeTime * 10 degrees) of the sheet's 16 pixels (ZzzEffectParticle.cpp,
-// BITMAP_SHINY sub-types 0 and 1).
+// And the shine of a thing lying down, ours: tiny motes rising slowly off the model and fading
+// (the user, 2026-10-17: "tiny sparkler coming from item meshes slowly rising up and fading out
+// elegentaly minimally"), in place of MU's CreateShiny -- two BITMAP_SHINY stars every 48th
+// frame, 16-47 units off it (ZzzObject.cpp:6271-6286) -- which read cheap at Shiny01's 16
+// pixels, and then as a glint, "not liek that".
 #pragma once
 
 #include <cstdint>
@@ -52,9 +52,7 @@ public:
         shiny_ = shiny;
         if (!bgfx::isValid(glint_)) glint_ = makeGlint();
     }
-    // The stars CreateShiny throws off everything lying down. MU's timing and place, and a
-    // glint of ours in place of Shiny01, whose 16 pixels read blocky at the star's size (the
-    // user, 2026-10-17: "that sparkle effect on droped item is littl ebit cheap").
+    // The motes rising off everything lying down (see the head of this file).
     void gatherSparkle(gfx::Effects& effects) const;
     // The drops a full bag's hop put back on the grass in the last update: they make their
     // landing noise again (Play::hopLanded). MU's hop is silent.
@@ -128,17 +126,18 @@ private:
         float beamLift = 1.0f;
         float at[3] = {};          // on the ground under it, world metres
         float yaw = 0.0f;          // its turn, which the sparkle's offset follows
-        float sparkleIn = 0.0f;    // reference frames to its next sparkle: the first at once
+        float moteIn = 0.0f;       // seconds to its next mote: the first as it lands
         bool down = false;         // touched the grass once: labelled through a hop after it
         float length = 0.0f;       // metres from its middle to its ends, along its turn
         float tall = 0.0f;         // metres from the grass to its top, lying
         std::vector<Piece> pieces;
     };
-    struct Twinkle {
-        float at[3] = {};
-        float left = 0.0f;   // reference frames
-        float spin = 0.0f;   // radians, the turning star's
-        float turn = 0.0f;   // radians, the still star's own lean
+    struct Mote {
+        float at[3] = {};          // where it is now, world metres
+        float drift[2] = {};       // metres a second across the ground
+        float age = 0.0f, life = 1.0f;  // seconds
+        float size = 0.0f;         // metres across
+        float phase = 0.0f;        // its shimmer's, radians
         float colour[3] = {1.0f, 1.0f, 1.0f};
     };
     static bgfx::TextureHandle makeGlint();
@@ -151,7 +150,7 @@ private:
     bgfx::TextureHandle shiny_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle glint_ = BGFX_INVALID_HANDLE;
     std::vector<uint32_t> hopsLanded_;
-    std::vector<Twinkle> twinkles_;
+    std::vector<Mote> motes_;
     uint32_t dice_ = 0x9e3779b9u;
     std::vector<uint32_t> settled_;
     float clock_ = 0.0f;  // seconds, wrapped: the glow's breath

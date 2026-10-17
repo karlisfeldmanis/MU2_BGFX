@@ -590,6 +590,14 @@ bool Mesh::finish(const void* vertices, uint32_t count, size_t stride,
         extent += half * half;
     }
     bounds_.radius = std::sqrt(extent);
+    constexpr uint32_t kSamples = 48;
+    samples_.clear();
+    for (uint32_t k = 0; k < std::min(count, kSamples); ++k) {
+        float position[3];
+        std::memcpy(position, bytes + size_t(uint64_t(k) * count / std::min(count, kSamples)) * stride,
+                    sizeof(position));
+        samples_.insert(samples_.end(), position, position + 3);
+    }
     float reach[3] = {0, 0, 0};
     for (uint32_t v = 0; v < count; ++v) {
         float p[3];

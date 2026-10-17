@@ -45,19 +45,17 @@ constexpr float kHopTurn = 10.0f * bx::kPi / 180.0f;  // radians per unit a fram
 // the same turning to its speed and dead stop as the hop.
 constexpr float kItemDropFrom = 180.0f / kUnits;
 constexpr float kItemToss = 20.0f / kUnits * kFps;
-// CreateShiny's 48 frames between sparkles; BITMAP_SHINY's 18-frame life and Shiny01's 16
-// pixels, which are its width in units.
-constexpr float kSparkleEvery = 48.0f;
-constexpr float kSparkleLife = 18.0f;
-constexpr float kSparkleSize = 16.0f / kUnits;
-// Ours, the glint's: its rays reach the sheet's edge where Shiny01's cross filled it, so it is
-// drawn larger for the same core; the second star at MU's three quarters; how much of a drop's
-// own colour (an excellent's green, a legendary's orange, a quest's violet) tints it.
-constexpr float kGlintSize = 20.0f / kUnits;
-constexpr float kGlintTint = 0.45f;
-// Over 1, as a lamp's flame is drawn, so the bloom catches its core: at 1 a white star added
-// to a lit street read as nothing.
-constexpr float kGlintGain = 4.0f;
+// The motes: one every so often off each thing lying down, rising slowly, drifting a little
+// and fading. Ours, all of it.
+constexpr float kMoteEvery = 0.55f;        // seconds between one drop's motes, on average
+constexpr float kMoteLifeLeast = 1.6f, kMoteLifeMost = 2.6f;  // seconds
+constexpr float kMoteRise = 0.14f;         // metres a second, slowing as it goes
+constexpr float kMoteDrift = 0.03f;        // metres a second across, at most
+constexpr float kMoteSizeLeast = 4.5f / kUnits, kMoteSizeMost = 7.5f / kUnits;
+constexpr float kMoteIn = 0.15f;           // of its life spent fading in
+constexpr float kMoteTint = 0.45f;         // how much of an excellent, legendary or quest drop's colour
+// Over 1, as a lamp's flame is drawn, so the bloom gives each a little halo.
+constexpr float kMoteGain = 3.0f;
 constexpr int kGlintTexels = 128;
 
 // Drops.Turn: the yaw is hashed from the drop's own id, so it needs no state and is the same
@@ -358,45 +356,52 @@ void Litter::update(const sim::Realm& realm, double seconds,
     const float dt = float(seconds);
     clock_ = std::fmod(clock_ + dt, 3600.0f);  // an hour, past any float drift that shows
 
-    // CreateShiny: `SubType++ % 48 == 0`, a step every reference frame (rand_fps_check(1)).
-    const float frames = dt * kFps;
-    for (Twinkle& one : twinkles_) {
-        one.left -= frames;
-        one.spin -= 12.0f * frames * bx::kPi / 180.0f;
+    for (Mote& one : motes_) {
+        one.age += dt;
+        // Rising slower as it ages, as a spark off a fire cools.
+        const float rise = kMoteRise * (1.0f - 0.6f * std::min(one.age / one.life, 1.0f));
+        one.at[1] += rise * dt;
+        one.at[0] += one.drift[0] * dt;
+        one.at[2] += one.drift[1] * dt;
     }
-    twinkles_.erase(std::remove_if(twinkles_.begin(), twinkles_.end(),
-                                   [](const Twinkle& t) { return t.left <= 0.0f; }),
-                    twinkles_.end());
-    const auto next = [this](int n) {
+    motes_.erase(std::remove_if(motes_.begin(), motes_.end(),
+                                [](const Mote& m) { return m.age >= m.life; }),
+                 motes_.end());
+    const auto unit = [this]() {
         dice_ ^= dice_ << 13;
         dice_ ^= dice_ >> 17;
         dice_ ^= dice_ << 5;
-        return float(dice_ % uint32_t(n));
+        return float(dice_ % 100000u) / 99999.0f;
     };
     for (Drop& drop : drops_) {
-        // Only on a thing lying down, not one still in the air (the user, 2026-10-17: "shine
+        // Only off a thing lying down, not one still in the air (the user, 2026-10-17: "shine
         // sparkles has to happened on droped item not during the drop"): the first as it lands.
-        if (!drop.down) continue;
-        drop.sparkleIn -= frames;
-        if (drop.sparkleIn > 0.0f) continue;
-        drop.sparkleIn += kSparkleEvery;
-        // MU throws it 16-47 units along the item's turn and as many up, off the thing as often
-        // as on it. Ours is ON it: somewhere along its length, just over its top -- a light
-        // caught by the steel. A heap of coins has no length and keeps MU's.
-        const bool onIt = drop.length > 0.0f;
-        const float along = onIt ? (next(1000) / 999.0f * 1.6f - 0.8f) * drop.length
-                                 : (next(32) + 16.0f) / kUnits;
-        const float up = onIt ? drop.tall + 2.0f / kUnits : (next(32) + 16.0f) / kUnits;
-        Twinkle one;
-        one.at[0] = drop.at[0] + std::cos(drop.yaw) * along;
-        one.at[1] = drop.at[1] + up;
-        one.at[2] = drop.at[2] - std::sin(drop.yaw) * along;
-        one.left = kSparkleLife;
-        one.turn = (next(30) - 15.0f) * bx::kPi / 180.0f;
+        if (!drop.down || drop.pieces.empty() || !drop.pieces[0].mesh) continue;
+        drop.moteIn -= dt;
+        if (drop.moteIn > 0.0f) continue;
+        drop.moteIn += kMoteEvery * (0.5f + unit());
+        // From a point on the model: one of its sampled vertices, where it lies. A heap of coins
+        // takes a coin's.
+        const Piece& piece = drop.pieces[size_t(unit() * 0.999f * float(drop.pieces.size()))];
+        const std::vector<float>& samples = piece.mesh->samples();
+        if (samples.empty()) continue;
+        const size_t k = size_t(unit() * 0.999f * float(samples.size() / 3)) * 3;
+        const float local[4] = {samples[k], samples[k + 1], samples[k + 2], 1.0f};
+        float world[4];
+        bx::vec4MulMtx(world, local, piece.rest);
+        Mote one;
+        for (int c = 0; c < 3; ++c) one.at[c] = world[c];
+        one.at[1] += piece.above + 1.0f / kUnits;
+        const float heading = unit() * 2.0f * bx::kPi, drift = kMoteDrift * unit();
+        one.drift[0] = std::cos(heading) * drift;
+        one.drift[1] = std::sin(heading) * drift;
+        one.life = kMoteLifeLeast + (kMoteLifeMost - kMoteLifeLeast) * unit();
+        one.size = kMoteSizeLeast + (kMoteSizeMost - kMoteSizeLeast) * unit();
+        one.phase = unit() * 2.0f * bx::kPi;
         if (drop.glow == 3) {
-            for (int k = 0; k < 3; ++k) one.colour[k] = 1.0f + (drop.glowColour[k] - 1.0f) * kGlintTint;
+            for (int c = 0; c < 3; ++c) one.colour[c] = 1.0f + (drop.glowColour[c] - 1.0f) * kMoteTint;
         }
-        twinkles_.push_back(one);
+        motes_.push_back(one);
     }
     settled_.clear();
     for (Drop& drop : drops_) {
@@ -564,30 +569,26 @@ bgfx::TextureHandle Litter::makeGlint() {
 }
 
 void Litter::gatherSparkle(gfx::Effects& effects) const {
-    const bool ours = bgfx::isValid(glint_);
-    if (!ours && !bgfx::isValid(shiny_)) return;
-    for (const Twinkle& one : twinkles_) {
-        // Scale = sin(LifeTime * 10 degrees): nothing, full at its middle, nothing.
-        const float scale = std::sin(one.left * 10.0f * bx::kPi / 180.0f);
-        if (scale <= 0.0f) continue;
-        for (int star = 0; star < 2; ++star) {
-            gfx::Sprite sprite;
-            for (int k = 0; k < 3; ++k) sprite.position[k] = one.at[k];
-            // Sub-type 1: Scale *= 0.75 and turning.
-            const float size = (ours ? kGlintSize : kSparkleSize) * scale * (star == 1 ? 0.75f : 1.0f);
-            sprite.halfWidth = sprite.halfHeight = size * 0.5f;
-            sprite.spin = star == 1 ? one.spin : one.turn;
-            sprite.sheet = ours ? glint_ : shiny_;
-            sprite.blend = gfx::Blend::Additive;
-            if (ours) {
-                // The turning star a little dimmer, so the still one's cross leads; both fade
-                // as they shrink, where Shiny01 only shrank.
-                const float bright = scale * (star == 1 ? 0.6f : 1.0f);
-                for (int k = 0; k < 3; ++k) sprite.colour[k] = one.colour[k] * kGlintGain;
-                sprite.colour[3] = bright;
-            }
-            effects.add(sprite);
-        }
+    if (!bgfx::isValid(glint_)) return;
+    for (const Mote& one : motes_) {
+        const float t = one.age / one.life;
+        // In quickly, out slowly and smoothly; a faint shimmer on the way, not a blink.
+        const float in = std::min(t / kMoteIn, 1.0f);
+        const float outT = std::clamp((t - kMoteIn) / (1.0f - kMoteIn), 0.0f, 1.0f);
+        const float out = 1.0f - outT * outT * (3.0f - 2.0f * outT);
+        const float shimmer = 0.8f + 0.2f * std::sin(one.phase + one.age * 9.0f);
+        const float bright = in * out * shimmer;
+        if (bright <= 0.0f) continue;
+        gfx::Sprite sprite;
+        for (int k = 0; k < 3; ++k) sprite.position[k] = one.at[k];
+        const float size = one.size * (1.0f - 0.35f * t);
+        sprite.halfWidth = sprite.halfHeight = size * 0.5f;
+        sprite.spin = one.phase;
+        sprite.sheet = glint_;
+        sprite.blend = gfx::Blend::Additive;
+        for (int k = 0; k < 3; ++k) sprite.colour[k] = one.colour[k] * kMoteGain;
+        sprite.colour[3] = bright;
+        effects.add(sprite);
     }
 }
 

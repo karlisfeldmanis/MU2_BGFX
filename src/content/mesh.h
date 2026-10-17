@@ -207,6 +207,9 @@ public:
     bgfx::VertexBufferHandle vertexBuffer() const { return vbh_; }
     bgfx::IndexBufferHandle indexBuffer() const { return ibh_; }
     const Bounds& bounds() const { return bounds_; }
+    // A few of its vertices' positions, x y z after one another, spread through the vertex list:
+    // points ON the model for whatever wants to start there -- a lying drop's motes (fx/litter).
+    const std::vector<float>& samples() const { return samples_; }
     uint32_t triangleCount() const { return indexCount_ / 3; }
     uint32_t vertexCount() const { return vertexCount_; }
     const std::string& name() const { return name_; }
@@ -242,6 +245,7 @@ private:
     uint32_t indexCount_ = 0;
     uint32_t vertexCount_ = 0;
     Bounds bounds_;
+    std::vector<float> samples_;
 };
 
 }  // namespace mu::content
