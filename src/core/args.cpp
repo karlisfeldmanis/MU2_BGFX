@@ -235,6 +235,8 @@ void printUsage() {
         "  --quests-done 2,6         those quests (table order) handed in once, so what waits on\n"
         "                            them is offered; never saved\n"
         "  --walk-to COLUMN,ROW      one walk to that tile at the start, as a click there\n"
+        "  --auto-play N             Auto-play quest N (table order) from the first frame;\n"
+        "                            with --quests-done N, as one cleared before\n"
         "  --perch N                 walk to perch N (sit, lean) and take its pose\n"
         "  --pick NAME               and on the first entry whose name holds NAME\n"
         "  --effects N               N sprites through the transparent pass, to price it\n"
@@ -766,6 +768,8 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.questsDone = v;
         } else if (!std::strcmp(s, "--walk-to")) {
             if (const char* v = next(s)) std::sscanf(v, "%d,%d", &a.walkColumn, &a.walkRow);
+        } else if (!std::strcmp(s, "--auto-play")) {
+            if (const char* v = next(s)) a.autoPlay = std::atoi(v);
         } else if (!std::strcmp(s, "--perch")) {
             if (const char* v = next(s)) a.perch = std::atoi(v);
         } else if (!std::strcmp(s, "--mute")) {

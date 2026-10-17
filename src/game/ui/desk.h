@@ -41,6 +41,7 @@
 #include "game/ui/shelf.h"
 #include "game/ui/specimen.h"
 #include "game/ui/tally.h"
+#include "game/ui/quest_log.h"
 #include "game/ui/speech.h"
 #include "game/ui/boss_bar.h"
 #include "game/ui/vitals.h"
@@ -171,6 +172,17 @@ public:
         return seen;
     }
     bool specimenOpen() const { return specimenOpen_; }
+    // The quest log (L), for a review: --windows quests.
+    void showQuestLog() { questLogAsked_ = true; }
+    // Auto-play's quest, -1 for none: the mode's (app::Context::autoQuest), told each frame so
+    // the log's rows say Stop on it.
+    void setAutoPlaying(int quest) { autoPlaying_ = quest; }
+    // What the log asked since the last call: a quest to auto-play, -1 for Stop, -2 for nothing.
+    int takeAutoPlay() {
+        const int asked = autoAsk_;
+        autoAsk_ = -2;
+        return asked;
+    }
     // The quest the tracker is pinned to, -1 for none: what the save keeps (Tracker::pinned).
     int followedQuest() const { return tracker_.pinned(); }
     void followQuest(int quest) { tracker_.pin(quest); }
@@ -301,6 +313,9 @@ private:
     bool whatsNewSeen_ = false;
     // A quest giver's window and the quest on screen (game/ui/quest_dialog.h, tracker.h).
     QuestDialog questDialog_;
+    QuestLog questLog_;
+    bool questLogAsked_ = false;
+    int autoPlaying_ = -1, autoAsk_ = -2;
     // The travel list, Tab's (game/ui/travel.h).
     Travel travel_;
     // Go Back!, over the HUD's middle while the way back to the field is open.

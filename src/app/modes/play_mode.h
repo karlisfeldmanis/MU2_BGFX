@@ -19,6 +19,7 @@
 #include "app/mode.h"
 #include "app/modes/director.h"
 #include "app/preloader.h"
+#include "game/quest_auto.h"
 #include "game/fx/litter.h"
 #include "game/item_models.h"
 #include "game/save.h"
@@ -118,6 +119,8 @@ private:
     game::World world_;
     // The windows, over a played world and nowhere else: a bench has nobody to show them for.
     game::Desk desk_;
+    // Auto-play's hand on this map (app::Context::autoQuest says which quest).
+    game::QuestAuto questAuto_;
     // A bug report on its way to the website (launcher/bug_report.h): the thread sending it
     // fills this, and the frame hands the answer to the report window. Shared, so a run that
     // ends while one is out leaves the thread something to write to.

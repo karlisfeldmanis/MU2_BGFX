@@ -39,6 +39,7 @@
 #include "sim/items.h"
 #include "sim/market.h"
 #include "sim/raid_party.h"
+#include "sim/quests.h"
 #include "sim/travel.h"
 
 namespace mu::app {
@@ -759,6 +760,11 @@ void PlayMode::runScript(Context& ctx) {
             }
             world_.played().restore(done);
         }
+        // --auto-play: the quest log's button pressed for him, once.
+        if (args.autoPlay >= 0 && args.autoPlay < sim::kQuests) {
+            ctx.autoQuest = args.autoPlay;
+            args.autoPlay = -1;
+        }
         // --quest-progress: one quest part-way, for a recording's montage.
         if (const size_t colon = args.questProgress.find(':'); colon != std::string::npos) {
             const int q = std::atoi(args.questProgress.c_str());
@@ -797,6 +803,7 @@ void PlayMode::runScript(Context& ctx) {
         desk_.showMenu(game::Menu::Page::Main);
     }
     if (args.windows.find("whatsnew") != std::string::npos) desk_.showWhatsNew();
+    if (args.windows.find("quests") != std::string::npos) desk_.showQuestLog();
 }
 
 void PlayMode::openProbes(Context& ctx) {
@@ -1294,6 +1301,21 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         const bool mouseRight = directed ? hand.rightPressed : ctx.window.clicked(1);
         const bool mouseRightHeld = directed ? hand.rightHeld : ctx.window.held(1);
         const bool mouseLeftHeld = directed ? hand.held : ctx.window.held(0);
+        // **Auto-play** (game/quest_auto.h): asked or stopped on the quest log, and stopped by a
+        // click of his own on the world -- the hero is his again.
+        if (const int asked = desk_.takeAutoPlay(); asked != -2) {
+            if (asked >= 0) {
+                ctx.autoQuest = asked;
+                desk_.notice(std::string("Auto-play: ") + sim::questAt(asked).title + ".");
+            } else if (ctx.autoQuest >= 0) {
+                ctx.autoQuest = -1;
+                desk_.notice("Auto-play stopped.");
+            }
+        }
+        if (ctx.autoQuest >= 0 && !windowed && (mouseLeft || mouseRight)) {
+            ctx.autoQuest = -1;
+            desk_.notice("Auto-play stopped.");
+        }
         if ((mouseLeft && !windowed) || clickNow || (uiPress && !uiRight && !windowed)) {
             world_.played().leftClick();
         } else if (mouseLeft || !mouseLeftHeld) {
@@ -1310,6 +1332,12 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         } else if (mouseRightHeld && !windowed) {
             world_.played().rightHeld();
         }
+        if (ctx.autoQuest >= 0) game::quest_world::open(ctx.paths.assets);  // once, where it lives
+        if (const std::string said = questAuto_.update(world_.played(), &ctx.autoQuest, deltaSeconds);
+            !said.empty()) {
+            desk_.notice(said);
+        }
+        desk_.setAutoPlaying(ctx.autoQuest);
         world_.played().update(deltaSeconds);
         // --stride-log: the clocks a recording's cut carries, as this frame is drawn.
         if (strideLog_) {

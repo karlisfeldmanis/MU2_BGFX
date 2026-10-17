@@ -88,6 +88,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     deal_.useTipStage(&tipStagePicture_);
     mixer_.useTipStage(&tipStagePicture_);
     questDialog_.useTipStage(&tipStagePicture_);
+    questLog_.useTipStage(&tipStagePicture_);
     chat_.useTipStage(&tipStagePicture_);
     inspect_.useTipStage(&tipStagePicture_);
     inspect_.open(interface_, &arts_);
@@ -104,6 +105,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     report_.open(interface_);
     whatsNew_.open(interface_, &arts_);
     questDialog_.open(interface_);
+    questLog_.open(interface_, assetDir);
     tracker_.open(interface_);
     travel_.open(interface_, assetDir, &arts_);
     goBack_.open(interface_);
@@ -139,6 +141,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
 
 void Desk::shutdown() {
     questDialog_.close();
+    questLog_.close();
     tracker_.close();
     travel_.close();
     goBack_.close();
@@ -171,7 +174,7 @@ bool Desk::overWindows(float x, float y) const {
     return amount_.up() || report_.up() || whatsNew_.up() || menu_.up() || hud_.covers(x, y) || guild_.covers(x, y) ||
            guildMake_.covers(x, y) || chat_.covers(x, y) || partyBar_.covers(x, y) ||
            playerMenu_.covers(x, y) || targetFrame_.covers(x, y) || minimap_.covers(x, y) ||
-           questDialog_.covers(x, y) || travel_.covers(x, y) || goBack_.covers(x, y) ||
+           questDialog_.covers(x, y) || questLog_.covers(x, y) || travel_.covers(x, y) || goBack_.covers(x, y) ||
            herald_.covers(x, y) || squareResult_.covers(x, y) ||
            (specimenOpen_ && specimen_.covers(x, y)) ||
            (characterOpen_ && card_.covers(x, y)) || inspect_.covers(x, y) ||
@@ -380,6 +383,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             quest = QuestDialog::kArchangel;
             journal_ = -1;
         }
+        // Auto-play answers the giver itself (game/quest_auto.h): his window stays down, and
+        // the quest log up.
+        if (autoPlaying_ >= 0 && realm.questing() >= 0 && !gating && !angeling) quest = -1;
         const bool reading = quest < 0 && journal_ >= 0;
         if (reading) quest = journal_;
         // The live quests, for the journal's arrows: where this page is among them.
@@ -491,7 +497,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // else; only with nothing open does it raise the menu. And up, the menu has it: back a page,
     // or down.
     const bool windowsOpen = inventoryOpen_ || characterOpen_ || trading_ || banking_ || brokering_ || mixing_ ||
-                             dealing_ || travel_.up() || guild_.up() || guildMake_.up() || inspecting();
+                             dealing_ || travel_.up() || guild_.up() || guildMake_.up() || inspecting() ||
+                             questLog_.up();
     {
         std::string place = hero ? placeName(worldName_, hero->column(), hero->row()) : worldName_;
         if (hero) {
@@ -523,6 +530,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             } else if (windowsOpen) {
                 inventoryOpen_ = characterOpen_ = false;
                 closeInspect();
+                questLog_.hide();
                 if (trading_) play.closeTrade();
                 if (banking_) play.closeVault();
                 if (brokering_) play.closeBroker();
@@ -598,26 +606,46 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     const bool journalPressed = questButton_;
     questButton_ = false;
     if (!keysHeld && play.isOpen() && play.realm().questing() < 0 &&
-        (journalPressed ||
+        (journalPressed || questLogAsked_ ||
          (!inventoryOpen_ && (window.pressed(gfx::Window::Key::Repair) || journalAsked)))) {
-        if (journal_ >= 0) {
-            journal_ = -1;
+        // The quest log (game/ui/quest_log.h), on the quest Auto-play has, else the one the
+        // tracker follows -- the quest he is fighting for on this map.
+        if (questLog_.up() && !questLogAsked_) {
+            questLog_.hide();
         } else {
-            const sim::Realm& realm = play.realm();
-            // The one the tracker follows first: the quest he is fighting for on this map.
-            journal_ = tracker_.following();
-            for (int q = 0; q < sim::kQuests && journal_ < 0; ++q) {
-                const sim::QuestState state = realm.quest(q).state;
-                if (state == sim::QuestState::Active || state == sim::QuestState::Ready) journal_ = q;
-            }
-            for (int q = 0; q < sim::kQuests && journal_ < 0; ++q) {
-                if (realm.quest(q).state == sim::QuestState::Resting && !realm.questOffered(q)) {
-                    journal_ = q;
-                }
-            }
-            if (journal_ < 0 && sim::kQuests > 0) journal_ = 0;
+            questLog_.show(autoPlaying_ >= 0 ? autoPlaying_ : tracker_.following());
+            core::logf("window: quest log up");
         }
+        questLogAsked_ = false;
         click();
+    }
+    // The log, while it is up and no giver's window has the left: a row chosen, Auto-play or Stop
+    // pressed, the close.
+    if (questLog_.up() && play.isOpen()) {
+        const sim::Realm& realm = play.realm();
+        if ((realm.questing() >= 0 && autoPlaying_ < 0) || realm.gating() >= 0 || realm.angeling() >= 0) {
+            questLog_.hide();
+        } else {
+            QuestLog::Result result;
+            const bool shelfBusy = trading_ || banking_ || brokering_ || mixing_ || dealing_;
+            questLog_.update(seconds, play, autoPlaying_, float(window.width()), float(window.height()),
+                             typing ? Pointer{} : pointer, typing ? 0.0f : window.scroll(),
+                             shelfBusy ? nullptr : shelfStage_, &result);
+            if (result.clicked) click();
+            if (result.close) {
+                questLog_.hide();
+                click();
+            }
+            if (result.autoPlay >= 0) {
+                autoAsk_ = result.autoPlay;
+                tracker_.pin(result.autoPlay);
+                click();
+            }
+            if (result.stop) {
+                autoAsk_ = -1;
+                click();
+            }
+        }
     }
 
     // M, the travel list (game/ui/travel.h): M again or Escape shuts it, and a map pressed
@@ -714,7 +742,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     hud_.setChatOpen(chat_.typing());
     hud_.setGuildOpen(guild_.up());
     hud_.update(seconds, float(window.width()), float(window.height()), pointer, inventoryOpen_,
-                characterOpen_, &toggleInventory, &toggleCharacter, &toggleMenu, journal_ >= 0,
+                characterOpen_, &toggleInventory, &toggleCharacter, &toggleMenu, questLog_.up(),
                 &toggleQuest, &toggleChat, &toggleGuild);
     // The HUD's guild button asks what G does, before the guild window's own frame below.
     if (toggleGuild && play.isOpen()) {
@@ -2226,6 +2254,10 @@ void Desk::photograph(gfx::Renderer& renderer, double seconds) {
     else if (questDialog_.up()) {
         shelfStagePicture_.render(renderer, questDialog_.pixelsPerUnit(), seconds);
     }
+    // And the quest log's, which stands where the giver's window does and never with it.
+    else if (questLog_.up()) {
+        shelfStagePicture_.render(renderer, questLog_.pixelsPerUnit(), seconds);
+    }
     // The potion boxes are always on screen, and at rest their stage costs nothing.
     quickStagePicture_.render(renderer, hud_.pixelsPerUnit(), seconds);
     // The tooltip's picture, at the tip's own scale -- the interface pixel, not the windows'.
@@ -2329,6 +2361,11 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (chat_.inviting()) interface_.add(chat_.invite());
     if (characterOpen_) interface_.add(card_.canvas());
     if (inspecting()) interface_.add(inspect_.canvas());
+    if (questLog_.up()) {
+        interface_.add(questLog_.canvas());
+        interface_.add(questLog_.body());
+        interface_.add(questLog_.card());
+    }
     if (trading_) interface_.add(shelf_.canvas());
     // The window something is dragged out of goes over the other, so what rides the pointer is
     // never under a window it is carried across -- a vault piece over the bag hid behind it.
@@ -2358,6 +2395,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (mixing_) interface_.add(mixer_.tipCanvas());
     if (inventoryOpen_) interface_.add(bag_.tipCanvas());
     if (inspecting()) interface_.add(inspect_.tipCanvas());
+    if (questLog_.up()) interface_.add(questLog_.tipCanvas());
     if (endurance_.showing()) interface_.add(endurance_.tipCanvas());
     if (chat_.tipping()) interface_.add(chat_.tipCanvas());
     // Last of all, over every window too: MU2's own CanvasLayer{Layer=128} -- a pointer is over

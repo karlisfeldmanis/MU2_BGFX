@@ -125,6 +125,9 @@ struct Context {
     // "Event complete" banner and the quest's stinger as he lands there; 0 when none is owed.
     int castleDone = 0;
     int64_t castleDoneExperience = 0, castleDoneZen = 0;
+    // The quest Auto-play is playing (game/quest_auto.h), -1 for none: carried across the map
+    // changes it travels by, as each one raises a new mode.
+    int autoQuest = -1;
 };
 
 // What the day gives an unlit puff of smoke: the ambient and the sun on a flat surface, over
