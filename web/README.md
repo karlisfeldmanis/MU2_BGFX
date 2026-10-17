@@ -7,7 +7,7 @@ Design: the "MU2 Launcher" canvas, Website page.
 | File | What |
 | --- | --- |
 | `server.py` | the page, `/api/register`, `/api/login`, `/api/logout`, `/api/me`, `/api/ticket`, `/api/downloads`, the account page's `/api/account`, `/api/name`, `/api/password`, `/api/sessions/end`, `/api/delete`, the updates' `/api/comments`, the game's `/api/bug` and the admins' `/api/bugs` and `/api/bugs/state`, and `/internal/ticket` for mu2_server |
-| `site/` | `index.html` (the front page: download, screenshots, sign up, updates), `account.html` (served at `/account`: sign in, the account), `online.html` and `bugs.html` (the admins' `/online` and `/bugs`), `privacy.html` and `contact.html` (`/privacy`, `/contact`), `site.css` and `site.js` (what both share), `posts.json` (the updates, newest first), `hero.jpg`, `shots/`, `logo.svg` and `logo.png` |
+| `site/` | `index.html` (the front page: download, screenshots, sign up, updates), `account.html` (served at `/account`: sign in, the account), `online.html` and `bugs.html` (the admins' `/online` and `/bugs`), `privacy.html` and `contact.html` (`/privacy`, `/contact`), `site.css` and `site.js` (what both share), `posts.json` (the updates, newest first), `hero.jpg`, `shots/` (taken as `.jpg`; `python3 web/shots.py` makes the `.webp` the page loads and `previews.js`, after any new shot), `logo.svg` and `logo.png` |
 | `Caddyfile` | HTTPS on mu-classic.com (and still on 37.27.158.226 for launchers already out), installers from disk, the rest to server.py |
 | `mu2-web.service` | the systemd unit; accounts in `/var/lib/mu2-web/accounts.db` |
 | `deploy.sh` | HEAD's `web/` to `/opt/mu2-web`, Caddy installed if missing, both restarted |
