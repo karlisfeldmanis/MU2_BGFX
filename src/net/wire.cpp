@@ -306,6 +306,7 @@ void put(std::vector<uint8_t>& out, const Hello& one) {
         o.u64(one.token);
         o.str(one.account);
         o.str(one.name);
+        o.u64(one.items);
     });
 }
 
@@ -457,6 +458,7 @@ void put(std::vector<uint8_t>& out, const Account& one) {
             o.str(c.name);
             o.i32(c.slot);
         }
+        o.u64(one.items);
     });
 }
 
@@ -598,6 +600,7 @@ bool parse(const std::vector<uint8_t>& body, Hello& out) {
     out.token = in.u64();
     out.account = in.str();
     out.name = in.str();
+    out.items = in.u64();
     return in.done();
 }
 
@@ -768,6 +771,7 @@ bool parse(const std::vector<uint8_t>& body, Account& out) {
         c.slot = in.i32();
         out.claims.push_back(std::move(c));
     }
+    out.items = in.u64();
     return in.done();
 }
 

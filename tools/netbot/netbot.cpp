@@ -156,6 +156,8 @@ public:
             hello.token = token_;
             // What everyone else's hover plate calls him (net::Who).
             hello.name = name_;
+            // The server's item list, or it turns him away (net::Hello::items).
+            if (const content::Tables* tables = tablesOf(world)) hello.items = tables->itemsPrint();
             net::Welcome welcome;
             net::Elsewhere elsewhere;
             if (!link->join(host_, port_, hello, welcome, &elsewhere)) {

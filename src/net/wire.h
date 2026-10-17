@@ -120,7 +120,9 @@ namespace mu::net {
 // 34: a Kept carries 27 quests, Aida's two the 26th and 27th (layout 8, 2026-10-16).
 // 35: the rules again, the bytes not: the Jewel of Chaos from every monster of 12 and over, and
 //     an Aida row on the travel list (2026-10-16), so a client on 34's tables is refused.
-constexpr uint32_t kVersion = 35;
+// 36: the Account and the Hello carry the game's item list (Tables::itemsPrint), and a game whose
+//     list is not the server's is told to update (Refused::Outdated) (2026-10-17).
+constexpr uint32_t kVersion = 36;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";
@@ -161,6 +163,8 @@ struct Hello {
     // What a character of no account is called over his head (net::Who): a bot's name. An
     // account's character is called what the account made him, and this is not read.
     std::string name;
+    // His game's item list (content::Tables::itemsPrint), which must be the server's.
+    uint64_t items = 0;
 };
 
 // The players in a world, by body id (net::Who).
@@ -325,6 +329,9 @@ struct Account {
     uint32_t version = kVersion;
     std::string key;  // the account's secret: kMostKey letters, made once on the machine
     std::vector<Claim> claims;
+    // The game's item list (content::Tables::itemsPrint): another than the server's is answered
+    // Refused::Outdated.
+    uint64_t items = 0;
 };
 
 struct Create {
@@ -338,7 +345,7 @@ struct Delete {
 
 // How the last ask went, in the screen's own words (game/ui/lobby.h).
 enum class Refused : uint8_t { None = 0, Taken = 1, NoRoom = 2, BadName = 3, NotYours = 4, Playing = 5,
-                               SignIn = 6 };
+                               SignIn = 6, Outdated = 7 };
 
 // One character as the screen stands him: on his pedestal, in what he wears.
 struct Seat {

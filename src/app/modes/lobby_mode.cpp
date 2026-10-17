@@ -176,9 +176,11 @@ void LobbyMode::answered(const net::Roster& roster) {
             lobby_.notice("The character could not be deleted.");
             break;
         case net::Refused::SignIn:
+        case net::Refused::Outdated:
             // No create window after it: there is no account on this line to make one on.
             signedOut_ = true;
-            lobby_.notice("Your sign-in has expired. Sign in again in the launcher.");
+            outdated_ = roster.refused == net::Refused::Outdated;
+            lobby_.notice(closedLine());
             break;
     }
     if (refused_ >= 0) sound_.play(refused_);
@@ -243,9 +245,11 @@ bool LobbyMode::open(Context& ctx) {
         net::Account account;
         account.key = game::sealedKey(key_);
         account.claims = game::claimsFor(server_);
+        account.items = tables_.itemsPrint();
         net::Roster answer;
         offline_ = !link_.open(host_, port_, account, answer);
-        signedOut_ = !offline_ && answer.refused == net::Refused::SignIn;
+        outdated_ = !offline_ && answer.refused == net::Refused::Outdated;
+        signedOut_ = outdated_ || (!offline_ && answer.refused == net::Refused::SignIn);
         roster_ = offline_ ? std::vector<game::Seat>{} : game::seatsOf(answer, tables_);
         pedestals_.raise(roster_);
 
@@ -332,7 +336,7 @@ bool LobbyMode::open(Context& ctx) {
     } else if (signedOut_) {
         // A refused sign-in is not an empty account: the server keeps no account for this line,
         // and a character made here would be turned away as a frame out of turn.
-        lobby_.notice("Your sign-in has expired. Sign in again in the launcher.");
+        lobby_.notice(closedLine());
     } else if (roster_.empty() && !lobby_.creating()) {
         lobby_.openCreate(1);
     }
@@ -341,6 +345,7 @@ bool LobbyMode::open(Context& ctx) {
     fadeSeconds_ = 0.0f;
     core::logf("lobby: %zu character(s) on world 74 from %s; %s", roster_.size(), server_.c_str(),
                offline_ ? "the server did not answer"
+               : outdated_ ? "the server's item list is not this game's; told to update"
                : signedOut_ ? "the sign-in was turned away"
                : roster_.empty() ? "the create window is up" : "pick one and enter");
     return true;
@@ -472,7 +477,7 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
                     lobby_.notice("Cannot reach the server.", true);
                     play(refused_);
                 } else if (signedOut_) {
-                    lobby_.notice("Your sign-in has expired. Sign in again in the launcher.");
+                    lobby_.notice(closedLine());
                     play(refused_);
                 } else if (making_.empty() && !deleting_) {
                     making_ = asked.name;

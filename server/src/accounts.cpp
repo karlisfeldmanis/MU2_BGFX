@@ -79,6 +79,15 @@ bool account(Session& one, const net::Account& said) {
         core::logError("%s: version %u, this server speaks %u", one.who.c_str(), said.version, net::kVersion);
         return false;
     }
+    // A game on another item list would read every thing by the wrong row (Tables::itemsPrint):
+    // told to update, with no characters, and nothing taken from it after.
+    if (said.items != g_items.itemsPrint()) {
+        core::logError("%s: item list %016llx, this server's %016llx; told to update", one.who.c_str(),
+                       (unsigned long long)said.items, (unsigned long long)g_items.itemsPrint());
+        std::vector<uint8_t> out;
+        net::put(out, net::Roster{net::Refused::Outdated, {}});
+        return one.socket.send(out);
+    }
     if (!keyShape(said.key)) {
         core::logError("%s: an account key of no shape", one.who.c_str());
         return false;

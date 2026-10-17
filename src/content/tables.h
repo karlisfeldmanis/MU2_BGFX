@@ -201,6 +201,20 @@ struct Tables {
         }
         return -1;
     }
+    // The rows' names in their order, folded into one number (FNV-1a, each name and a newline).
+    // A thing travels as its row's index, so a game and a server whose lists differ read each
+    // other's things as their neighbours -- muclassic's pants, feather and Broken Swords after
+    // the Pendant of Haste (2026-10-16). The Account and the Hello carry it; the server refuses
+    // one that is not its own.
+    uint64_t itemsPrint() const {
+        uint64_t print = 14695981039346656037ull;
+        const auto fold = [&](unsigned char c) { print = (print ^ c) * 1099511628211ull; };
+        for (const ItemRow& row : items) {
+            for (char c : row.name) fold(static_cast<unsigned char>(c));
+            fold('\n');
+        }
+        return print;
+    }
 
     const PlayerAction* action(int32_t number) const {
         for (const PlayerAction& one : actions) {

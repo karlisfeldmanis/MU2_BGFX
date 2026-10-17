@@ -145,6 +145,11 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
                        net::kVersion);
         return false;
     }
+    if (asked.items != g_items.itemsPrint()) {
+        core::logError("%s: item list %016llx, this server's %016llx", one.who.c_str(),
+                       (unsigned long long)asked.items, (unsigned long long)g_items.itemsPrint());
+        return false;
+    }
     if (!worldName(asked.world)) {
         core::logError("%s: no world called '%s'", one.who.c_str(), asked.world.c_str());
         return false;

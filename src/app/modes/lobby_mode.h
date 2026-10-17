@@ -65,6 +65,12 @@ private:
     // The server turned the launcher's ticket away (net::Refused::SignIn): nothing can be made or
     // entered on this line, so the screen says so and opens no create window.
     bool signedOut_ = false;
+    // And why, when it is this game's item list and not the sign-in (net::Refused::Outdated).
+    bool outdated_ = false;
+    const char* closedLine() const {
+        return outdated_ ? "Your game is out of date. Close it and start the launcher to update."
+                         : "Your sign-in has expired. Sign in again in the launcher.";
+    }
     // What was last asked, for what the next Roster says of it: a name being made, or a deletion.
     std::string making_;
     bool deleting_ = false;
