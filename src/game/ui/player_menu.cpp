@@ -20,7 +20,7 @@ constexpr uint32_t kLit = gfx::rgba(1.0f, 0.94f, 0.86f, 0.07f);
 }  // namespace
 
 void PlayerMenu::show(Play& play, const std::string& name, float x, float y, float width, float height) {
-    if (!play.remote() || name.empty()) return;
+    if (name.empty()) return;
     std::string me;
     play.playerName(play.realm().hero().id, &me, nullptr);
     if (name == me) return;
@@ -32,6 +32,14 @@ void PlayerMenu::show(Play& play, const std::string& name, float x, float y, flo
 
     name_ = name;
     rows_.clear();
+    // Off a server -- a bench hero in local play -- only what the local realm answers: Inspect
+    // and Trade. Whispers, the party and the guild are the server's.
+    if (!play.remote()) {
+        rows_.push_back({"Inspect", inspectable(play.realm(), play.playerNamed(name))});
+        rows_.push_back({"Trade", play.playerNamed(name) != 0});
+        place(play, x, y, width, height);
+        return;
+    }
     rows_.push_back({"Whisper"});
     if (member && leading) {
         rows_.push_back({"Make leader"});

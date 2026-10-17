@@ -191,10 +191,10 @@ void TargetFrame::update(float seconds, Play& play, const Pointer& pointer, pane
     const float cellsTop = capTop - (kCellsOver + kCell) * u;
     const float r = kFace * 0.5f * u;
     const float cx = left + r, cy = capTop + tall * 0.5f;
-    // The button for his menu at the capsule's right end, on a server only: off one there is
-    // no one to whisper or invite (the user, 2026-10-11: "lets not use right click but add some
-    // simple button which triggers that right click menu").
-    const bool menuable = play.remote();
+    // The button for his menu at the capsule's right end (the user, 2026-10-11: "lets not use
+    // right click but add some simple button which triggers that right click menu"). Off a
+    // server, for a player here: a bench hero's menu trades and inspects (PlayerMenu::show).
+    const bool menuable = play.remote() || play.playerNamed(name) != 0;
     const gfx::Box more{capX + (kWide + kMoreGap) * u, capTop, kMore * u, tall};
     const float boxRight = menuable ? more.right() : left + total;
     box_ = {left - kRing * u, std::min(cellsTop, cy - r - kRing * u), boxRight - left + kRing * u,

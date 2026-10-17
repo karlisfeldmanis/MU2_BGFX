@@ -251,9 +251,8 @@ void PartyBar::update(float seconds, Play& play, const Pointer& pointer,
 
     // The capsules' column, right of the faces; raid lines stand in it too.
     const float x = kLeft * u + (kFace - kTuck) * u;
-    const bool menuable = play.remote();
+    // Off a server too: a bench hero's menu trades and inspects (PlayerMenu::show).
     const auto button = [&](float top, float tall) -> gfx::Box {
-        if (!menuable) return {};
         const gfx::Box more{x + (kWide + kMoreGap) * u, top, kMore * u, tall};
         capsule::more(canvas_, more, u, onMore_ == int(hits_.size()));
         return more;
@@ -264,7 +263,8 @@ void PartyBar::update(float seconds, Play& play, const Pointer& pointer,
     // first under it, says it with the crown on his face ("dublicated party leader icons").
     if (inParty && !others.empty()) {
         const float base = y - 8.0f * u;
-        if (menuable) {
+        // Leave and the raid's switch are the server's: on one only.
+        if (play.remote()) {
             const float size = 13.0f * u, w = controls::labelWidth(size, "Leave");
             const float right = x + kWide * u;
             leave_ = {right - w - 4.0f * u, base - 14.0f * u, w + 8.0f * u, 19.0f * u};
