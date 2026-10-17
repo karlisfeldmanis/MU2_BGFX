@@ -565,6 +565,8 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
     if (full_) {
         bugR_ = 0.0f;
         bugPressing_ = false;
+        autoR_ = 0.0f;
+        autoPressing_ = false;
     } else {
         const float rim = radius_ - kFade * u * kRimIn;
         bugX_ = std::round(map_.midX() - rim * kBugAt);
@@ -578,7 +580,19 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
             if (bugPressing_ && over) reportAsked_ = true;
             bugPressing_ = false;
         }
+        // And Auto-play's, across from it at half past four, while it plays.
+        autoX_ = std::round(map_.midX() + rim * kBugAt);
+        autoY_ = bugY_;
+        autoR_ = autoQuest_ >= 0 ? bugR_ : 0.0f;
+        const bool onAuto = overAuto(pointer.x, pointer.y);
+        autoLift_ = onAuto ? std::min(1.0f, autoLift_ + step) : std::max(0.0f, autoLift_ - step);
+        if (pointer.pressed) autoPressing_ = onAuto;
+        if (pointer.released) {
+            if (autoPressing_ && onAuto) autoStopAsked_ = true;
+            autoPressing_ = false;
+        }
     }
+    autoClock_ = autoQuest_ >= 0 ? std::fmod(autoClock_ + seconds, style::kLiveSeconds) : 0.0f;
 
     // His facing, eased round the short way.
     const sim::Body& hero = realm.hero();
@@ -786,6 +800,13 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
     now_.bugLift = int(std::lround(bugLift_ * 8.0f));
     now_.bugPressed = bugPressing_ && overBug(pointer.x, pointer.y);
     now_.reporting = reporting_;
+    now_.autoQuest = full_ ? -1 : autoQuest_;
+    now_.autoLift = int(std::lround(autoLift_ * 8.0f));
+    now_.autoPressed = autoPressing_ && overAuto(pointer.x, pointer.y);
+    // One breath of kLiveSeconds, in sixteenths: the canvas is rebuilt on a step of it only.
+    now_.autoBreath = now_.autoQuest >= 0
+                          ? int(std::lround((0.5f - 0.5f * std::cos(6.2831853f * autoClock_ / style::kLiveSeconds)) * 16.0f))
+                          : 0;
     showing_ = true;
     if (built_ && now_ == drawn_) return;
     rebuild(play);
@@ -1101,7 +1122,59 @@ void Minimap::rebuild(const Play& play) {
             controls::hint(canvas_, x, bottom, words, u);
         }
     }
-    if (!full_) drawBug();
+    if (!full_) {
+        drawBug();
+        drawAuto();
+    }
+}
+
+// The bug button's dark disc and ring, the ring breathing between the quiet green and the lit
+// one (style's kFits, kLive: the herald's "on"), and a play mark in bone -- a triangle pointing
+// right, nudged right of the middle so it reads centred -- that goes green under the pointer.
+void Minimap::drawAuto() {
+    if (now_.autoQuest < 0 || autoR_ <= 0.0f) return;
+    const float u = tip::unit();
+    const float lift = float(now_.autoLift) / 8.0f;
+    const float breath = float(now_.autoBreath) / 16.0f;
+    const float cx = autoX_, cy = autoY_ + (now_.autoPressed ? 1.0f * u : 0.0f);
+    const auto mix = [](uint32_t a, uint32_t b, float t) {
+        uint32_t out = 0;
+        for (int shift = 0; shift < 32; shift += 8) {
+            const float x = float((a >> shift) & 0xFF), y = float((b >> shift) & 0xFF);
+            out |= uint32_t(std::lround(x + (y - x) * t)) << shift;
+        }
+        return out;
+    };
+    const auto disc = [&](float rx, uint32_t tone) {
+        constexpr int kSides = 24;
+        float xy[kSides * 2];
+        uint32_t tones[kSides];
+        for (int i = 0; i < kSides; ++i) {
+            const float t = 6.2831853f * float(i) / float(kSides);
+            xy[i * 2] = cx + std::cos(t) * rx;
+            xy[i * 2 + 1] = cy + std::sin(t) * rx;
+            tones[i] = tone;
+        }
+        canvas_.polygon(xy, tones, kSides);
+    };
+    const float r = autoR_;
+    disc(r + std::max(1.0f, u), style::kSeam);
+    disc(r, mix(mix(style::kFits, style::kLive, breath), style::kLiveHi, lift));
+    disc(r - std::max(1.0f, 1.5f * u), mix(style::kAsh1, style::kAsh3, lift));
+
+    const uint32_t ink = mix(style::kBone2, style::kLiveHi, lift);
+    const float s = r * 0.48f;
+    const float xy[6] = {cx - s * 0.62f, cy - s, cx + s * 0.98f, cy, cx - s * 0.62f, cy + s};
+    const uint32_t tones[3] = {ink, ink, ink};
+    canvas_.polygon(xy, tones, 3);
+
+    // Named under the pointer, under the button, kept inside the screen on the right.
+    if (now_.autoLift >= 8) {
+        const std::string words = std::string("Auto-play: ") + sim::questAt(now_.autoQuest).title + "  \xC2\xB7  click to stop";
+        const float wide = controls::labelWidth(13.0f * u, words) + 16.0f * u;
+        const float x = std::min(float(now_.width) - wide * 0.5f - 4.0f * u, cx);
+        controls::hint(canvas_, x, cy + r + 30.0f * u, words, u);
+    }
 }
 
 // A dark disc on the rim, an iron ring round it that lights under the pointer and goes blood

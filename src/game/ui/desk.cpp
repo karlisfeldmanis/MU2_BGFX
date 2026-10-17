@@ -1292,8 +1292,11 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // The minimap, always up: it answers the pointer only for its names and the wheel's zoom,
     // and neither while a box or the menu has the screen.
     minimap_.setReporting(report_.up());
+    minimap_.setAutoPlaying(autoPlaying_);
     minimap_.update(seconds, play, typing || menuHeld ? Pointer{} : pointer,
                     typing || menuHeld ? 0.0f : window.scroll(), window.width(), window.height());
+    // Its Auto-play button stops it, as Stop on the log does.
+    if (minimap_.takeAutoStop() && autoPlaying_ >= 0) autoAsk_ = -1;
     // Its bug button raises the report, with what goes with it said: where and who.
     if (minimap_.takeReport() && !report_.up() && !amount_.up() && play.isOpen()) {
         const sim::Body& hero = play.realm().hero();

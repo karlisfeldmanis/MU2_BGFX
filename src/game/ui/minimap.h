@@ -83,7 +83,7 @@ public:
     bool covers(float x, float y) const {
         if (full_) return false;
         const float dx = x - map_.midX(), dy = y - map_.midY();
-        return showing_ && (dx * dx + dy * dy < radius_ * radius_ || overBug(x, y));
+        return showing_ && (dx * dx + dy * dy < radius_ * radius_ || overBug(x, y) || overAuto(x, y));
     }
     // **The bug button** on the rim, low on the left (game/ui/report.h): WoW's place for the
     // small buttons that are always there, out of the fight's way and beside the place a report
@@ -95,6 +95,17 @@ public:
         return asked;
     }
     void setReporting(bool on) { reporting_ = on; }
+    // **The Auto-play button**, the bug button's twin across the rim, low on the right: up only
+    // while Auto-play plays a quest (game/quest_auto.h), a play mark on a ring breathing the
+    // "on" green, so a hero walking himself is seen to be (the user, 2026-10-17: "when autoplay
+    // is active we need some icon on minimap similar like bug report button"). The pointer on it
+    // names the quest; pressed, it stops, which takeAutoStop() hands on once.
+    void setAutoPlaying(int quest) { autoQuest_ = quest; }
+    bool takeAutoStop() {
+        const bool asked = autoStopAsked_;
+        autoStopAsked_ = false;
+        return asked;
+    }
     // The land the chart reads its water from, by the floor MU paints it with. Null charts
     // everything unwalkable alike.
     void setGround(const content::Ground* ground) { ground_ = ground; }
@@ -140,6 +151,16 @@ private:
     float bugX_ = 0.0f, bugY_ = 0.0f, bugR_ = 0.0f;  // its middle and radius, in pixels
     float bugLift_ = 0.0f;
     bool bugPressing_ = false, reportAsked_ = false, reporting_ = false;
+    bool overAuto(float x, float y) const {
+        const float dx = x - autoX_, dy = y - autoY_;
+        return showing_ && !full_ && autoQuest_ >= 0 && autoR_ > 0.0f && dx * dx + dy * dy < autoR_ * autoR_;
+    }
+    // The Auto-play button, drawn over the rim while it plays.
+    void drawAuto();
+    float autoX_ = 0.0f, autoY_ = 0.0f, autoR_ = 0.0f;
+    float autoLift_ = 0.0f, autoClock_ = 0.0f;
+    int autoQuest_ = -1;
+    bool autoPressing_ = false, autoStopAsked_ = false;
 
     gfx::Canvas canvas_;
     bool showing_ = false;
@@ -199,8 +220,15 @@ private:
         // The bug button: its hover in eighths, pressed, and lit for the window being up.
         int bugLift = 0;
         bool bugPressed = false, reporting = false;
+        // The Auto-play button: the quest playing (-1, no button), its hover in eighths,
+        // pressed, and its breath in sixteenths.
+        int autoQuest = -1, autoLift = 0, autoBreath = 0;
+        bool autoPressed = false;
         bool operator==(const Face& o) const {
             if (bugLift != o.bugLift || bugPressed != o.bugPressed || reporting != o.reporting) return false;
+            if (autoQuest != o.autoQuest || autoLift != o.autoLift || autoBreath != o.autoBreath ||
+                autoPressed != o.autoPressed)
+                return false;
             return width == o.width && height == o.height && column == o.column &&
                    row == o.row && heroX == o.heroX && heroY == o.heroY && turn == o.turn &&
                    zoom == o.zoom && full == o.full && hovered == o.hovered && marks == o.marks &&
