@@ -50,6 +50,15 @@ constexpr float kItemToss = 20.0f / kUnits * kFps;
 constexpr float kSparkleEvery = 48.0f;
 constexpr float kSparkleLife = 18.0f;
 constexpr float kSparkleSize = 16.0f / kUnits;
+// Ours, the glint's: its rays reach the sheet's edge where Shiny01's cross filled it, so it is
+// drawn larger for the same core; the second star at MU's three quarters; how much of a drop's
+// own colour (an excellent's green, a legendary's orange, a quest's violet) tints it.
+constexpr float kGlintSize = 20.0f / kUnits;
+constexpr float kGlintTint = 0.45f;
+// Over 1, as a lamp's flame is drawn, so the bloom catches its core: at 1 a white star added
+// to a lit street read as nothing.
+constexpr float kGlintGain = 4.0f;
+constexpr int kGlintTexels = 128;
 
 // Drops.Turn: the yaw is hashed from the drop's own id, so it needs no state and is the same
 // answer every frame for as long as the thing lies there.
@@ -238,6 +247,13 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
     drop.at[0] = x;
     drop.at[1] = y - standing * 0.5f - kClearance;
     drop.at[2] = z;
+    {
+        // Lying, its longest extent is along its turn (sleeping); standing, its widest.
+        const float size[3] = {b.max[0] - b.min[0], b.max[1] - b.min[1], b.max[2] - b.min[2]};
+        drop.length = (sleeps(row) ? std::max(size[0], std::max(size[1], size[2]))
+                                   : std::max(size[0], size[2])) * 0.5f;
+        drop.tall = standing;
+    }
     Piece piece;
     piece.mesh = mesh;
     bx::mtxMul(a, toCentre, basis);
@@ -307,6 +323,7 @@ void Litter::build(const sim::Lying& one, Drop& drop) {
 
 void Litter::update(const sim::Realm& realm, double seconds,
                     const std::vector<uint32_t>& held, const std::vector<uint32_t>& tossed) {
+    hopsLanded_.clear();
     if (!models_ || !ground_) return;
     for (Drop& drop : drops_) drop.present = false;
     for (const sim::Lying& one : realm.lying()) {
@@ -334,6 +351,7 @@ void Litter::update(const sim::Realm& realm, double seconds,
             piece.speed = kHop;
             piece.bounced = 0;
             piece.tumbling = piece.flips;
+            piece.hopped = piece.flips;
         }
     }
 
@@ -356,17 +374,28 @@ void Litter::update(const sim::Realm& realm, double seconds,
         return float(dice_ % uint32_t(n));
     };
     for (Drop& drop : drops_) {
+        // Only on a thing lying down, not one still in the air (the user, 2026-10-17: "shine
+        // sparkles has to happened on droped item not during the drop"): the first as it lands.
+        if (!drop.down) continue;
         drop.sparkleIn -= frames;
         if (drop.sparkleIn > 0.0f) continue;
         drop.sparkleIn += kSparkleEvery;
-        // Vector(rand % 32 + 16, 0, rand % 32 + 16) turned by the item's angle: along its turn
-        // and up.
-        const float along = (next(32) + 16.0f) / kUnits, up = (next(32) + 16.0f) / kUnits;
+        // MU throws it 16-47 units along the item's turn and as many up, off the thing as often
+        // as on it. Ours is ON it: somewhere along its length, just over its top -- a light
+        // caught by the steel. A heap of coins has no length and keeps MU's.
+        const bool onIt = drop.length > 0.0f;
+        const float along = onIt ? (next(1000) / 999.0f * 1.6f - 0.8f) * drop.length
+                                 : (next(32) + 16.0f) / kUnits;
+        const float up = onIt ? drop.tall + 2.0f / kUnits : (next(32) + 16.0f) / kUnits;
         Twinkle one;
         one.at[0] = drop.at[0] + std::cos(drop.yaw) * along;
         one.at[1] = drop.at[1] + up;
         one.at[2] = drop.at[2] - std::sin(drop.yaw) * along;
         one.left = kSparkleLife;
+        one.turn = (next(30) - 15.0f) * bx::kPi / 180.0f;
+        if (drop.glow == 3) {
+            for (int k = 0; k < 3; ++k) one.colour[k] = 1.0f + (drop.glowColour[k] - 1.0f) * kGlintTint;
+        }
         twinkles_.push_back(one);
     }
     settled_.clear();
@@ -381,6 +410,10 @@ void Litter::update(const sim::Realm& realm, double seconds,
             if (piece.tumbling) {
                 piece.tumbling = false;
                 piece.speed = 0.0f;
+                if (piece.hopped) {
+                    piece.hopped = false;
+                    hopsLanded_.push_back(drop.id);
+                }
                 continue;
             }
             if (piece.bounced < kBounces && -piece.speed > kBounceThreshold) {
@@ -498,8 +531,41 @@ uint32_t Litter::lights(gfx::PointLight* out, uint32_t max, const float near[3])
 }
 
 
+bgfx::TextureHandle Litter::makeGlint() {
+    // A soft core, four long rays thinning to their tips and four short faint ones between:
+    // what a highlight on steel looks like through a lens. White, added, with the alpha as its
+    // brightness for the effect pass's premultiplied add.
+    std::vector<uint8_t> texels(size_t(kGlintTexels) * kGlintTexels * 4);
+    const float half = float(kGlintTexels) * 0.5f;
+    const auto ray = [](float along, float across, float width, float reach) {
+        const float left = 1.0f - std::fabs(along) / reach;
+        if (left <= 0.0f) return 0.0f;
+        const float w = width * (0.25f + 0.75f * left);
+        return std::exp(-(across * across) / (w * w)) * left * left;
+    };
+    for (int y = 0; y < kGlintTexels; ++y) {
+        for (int x = 0; x < kGlintTexels; ++x) {
+            const float u = (float(x) + 0.5f - half) / half, v = (float(y) + 0.5f - half) / half;
+            const float r2 = u * u + v * v;
+            const float a = (u + v) * 0.70710678f, b = (u - v) * 0.70710678f;
+            float light = std::exp(-r2 / (0.06f * 0.06f)) + 0.3f * std::exp(-r2 / (0.2f * 0.2f)) +
+                          ray(u, v, 0.03f, 1.0f) + ray(v, u, 0.03f, 1.0f) +
+                          0.35f * (ray(a, b, 0.02f, 0.55f) + ray(b, a, 0.02f, 0.55f));
+            light *= std::clamp((1.0f - std::sqrt(r2)) * 8.0f, 0.0f, 1.0f);
+            const uint8_t level = uint8_t(std::clamp(light, 0.0f, 1.0f) * 255.0f + 0.5f);
+            uint8_t* t = &texels[(size_t(y) * kGlintTexels + size_t(x)) * 4];
+            t[0] = t[1] = t[2] = 255;
+            t[3] = level;
+        }
+    }
+    return bgfx::createTexture2D(uint16_t(kGlintTexels), uint16_t(kGlintTexels), false, 1,
+                                 bgfx::TextureFormat::RGBA8, 0,
+                                 bgfx::copy(texels.data(), uint32_t(texels.size())));
+}
+
 void Litter::gatherSparkle(gfx::Effects& effects) const {
-    if (!bgfx::isValid(shiny_)) return;
+    const bool ours = bgfx::isValid(glint_);
+    if (!ours && !bgfx::isValid(shiny_)) return;
     for (const Twinkle& one : twinkles_) {
         // Scale = sin(LifeTime * 10 degrees): nothing, full at its middle, nothing.
         const float scale = std::sin(one.left * 10.0f * bx::kPi / 180.0f);
@@ -508,11 +574,18 @@ void Litter::gatherSparkle(gfx::Effects& effects) const {
             gfx::Sprite sprite;
             for (int k = 0; k < 3; ++k) sprite.position[k] = one.at[k];
             // Sub-type 1: Scale *= 0.75 and turning.
-            const float size = kSparkleSize * scale * (star == 1 ? 0.75f : 1.0f);
+            const float size = (ours ? kGlintSize : kSparkleSize) * scale * (star == 1 ? 0.75f : 1.0f);
             sprite.halfWidth = sprite.halfHeight = size * 0.5f;
-            sprite.spin = star == 1 ? one.spin : 0.0f;
-            sprite.sheet = shiny_;
+            sprite.spin = star == 1 ? one.spin : one.turn;
+            sprite.sheet = ours ? glint_ : shiny_;
             sprite.blend = gfx::Blend::Additive;
+            if (ours) {
+                // The turning star a little dimmer, so the still one's cross leads; both fade
+                // as they shrink, where Shiny01 only shrank.
+                const float bright = scale * (star == 1 ? 0.6f : 1.0f);
+                for (int k = 0; k < 3; ++k) sprite.colour[k] = one.colour[k] * kGlintGain;
+                sprite.colour[3] = bright;
+            }
             effects.add(sprite);
         }
     }

@@ -1837,6 +1837,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         litter_.update(world_.played().realm(), deltaSeconds, world_.played().heldDrops(),
                        world_.played().tossedDrops());
         world_.played().setSettledDrops(litter_.settled());
+        for (uint32_t id : litter_.hopsLanded()) world_.played().hopLanded(id);
         litter_.gather(townDrawables_, casters ? &townCasters_ : nullptr);
         litter_.gatherBeams(ctx.renderer.effects(), eye.position);
         litter_.gatherSparkle(ctx.renderer.effects());

@@ -50,9 +50,15 @@ public:
         ground_ = ground;
         beam_ = beam;
         shiny_ = shiny;
+        if (!bgfx::isValid(glint_)) glint_ = makeGlint();
     }
-    // The stars CreateShiny throws off everything lying down.
+    // The stars CreateShiny throws off everything lying down. MU's timing and place, and a
+    // glint of ours in place of Shiny01, whose 16 pixels read blocky at the star's size (the
+    // user, 2026-10-17: "that sparkle effect on droped item is littl ebit cheap").
     void gatherSparkle(gfx::Effects& effects) const;
+    // The drops a full bag's hop put back on the grass in the last update: they make their
+    // landing noise again (Play::hopLanded). MU's hop is silent.
+    const std::vector<uint32_t>& hopsLanded() const { return hopsLanded_; }
     // **A quest item lying down is seen from across the screen** (the user, 2026-10-04: 'quest
     // items needs to be well vissible'). Ours: MU drops a quest item as any other. Sevina's
     // treasures (sim::classTreasure) stand under a violet column of light -- MU's chasellight, the
@@ -107,6 +113,7 @@ private:
         bool flips = false;
         bool roll = false;     // a shield turns about its length, as a coin; the rest end over end
         bool tumbling = false;  // falling as MU's items fall, turned to its speed, until it lands
+        bool hopped = false;    // and that fall is a full bag's hop, which rings on landing
     };
     // A piece's model -> world this frame: its rest, tumbled while it hops, lifted by its fall.
     static void placed(const Piece& piece, float* out);
@@ -123,13 +130,18 @@ private:
         float yaw = 0.0f;          // its turn, which the sparkle's offset follows
         float sparkleIn = 0.0f;    // reference frames to its next sparkle: the first at once
         bool down = false;         // touched the grass once: labelled through a hop after it
+        float length = 0.0f;       // metres from its middle to its ends, along its turn
+        float tall = 0.0f;         // metres from the grass to its top, lying
         std::vector<Piece> pieces;
     };
     struct Twinkle {
         float at[3] = {};
         float left = 0.0f;   // reference frames
         float spin = 0.0f;   // radians, the turning star's
+        float turn = 0.0f;   // radians, the still star's own lean
+        float colour[3] = {1.0f, 1.0f, 1.0f};
     };
+    static bgfx::TextureHandle makeGlint();
 
     void build(const sim::Lying& one, Drop& drop);
     void buildItem(const sim::Lying& one, Drop& drop);
@@ -137,6 +149,8 @@ private:
 
     bgfx::TextureHandle beam_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle shiny_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle glint_ = BGFX_INVALID_HANDLE;
+    std::vector<uint32_t> hopsLanded_;
     std::vector<Twinkle> twinkles_;
     uint32_t dice_ = 0x9e3779b9u;
     std::vector<uint32_t> settled_;

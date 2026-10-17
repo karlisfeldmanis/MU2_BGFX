@@ -825,6 +825,8 @@ public:
     // MuMain's MOVEMENT_GET with no empty slot, `Position[2] = height + 3; Gravity = 50` beside
     // "Inventory is full" (ZzzInterface.cpp:1517-1526). Litter tosses them; the lane says why.
     const std::vector<uint32_t>& tossedDrops() const { return tossedIds_; }
+    // And one of them back on the grass: its landing noise again, as a drop's (Play::landed).
+    void hopLanded(uint32_t drop) { landed(drop); }
     // Whether a killed body's Zen is still held for its fall: the fight's sum waits on it.
     bool zenOwed() const { return zenOwed_; }
 
