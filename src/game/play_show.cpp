@@ -1358,9 +1358,13 @@ void Play::follow(float seconds) {
         // Whether the DRAWN body is covering ground at this instant. This, and not the sim's
         // `walking`, is what the walk clip answers to: the sim stops a body on a tick and the
         // drawing gets there up to a tick later.
-        const bool moving = !jumped && covered > 1e-4f && through_ < arrived;
-        float tileX = one.wasX + (one.nowX - one.wasX) * through;
-        float tileY = one.wasY + (one.nowY - one.wasY) * through;
+        // Coasting while the line is late (Play::coast), it walks on, and the walk clip with it.
+        const bool moving = one.coasting || (!jumped && covered > 1e-4f && through_ < arrived);
+        float tileX = one.coasting ? one.coastX : one.wasX + (one.nowX - one.wasX) * through;
+        float tileY = one.coasting ? one.coastY : one.wasY + (one.nowY - one.wasY) * through;
+        // And what the late ticks put elsewhere, easing out (Drawn::offX).
+        tileX += one.offX;
+        tileY += one.offY;
         // A Crust glides: MU moves its drawn body 0.07 of the way to its tile a reference frame
         // (WSclient.cpp:2026-2034, ZzzCharacter.cpp:3145-3190), so each step eases in and out
         // of the last. Ours: a cap on the lag for MU's snap at the fifteenth frame; a jump is
@@ -1856,17 +1860,13 @@ Play::Drawn* Play::drawnOf(uint32_t id) {
 
 void Play::focus(float* column, float* row) const {
     if (!heroDrawn()) return;
-    const Drawn& hero = drawn_[heroAt()];
-    *column = hero.wasX + (hero.nowX - hero.wasX) * through_;
-    *row = hero.wasY + (hero.nowY - hero.wasY) * through_;
+    drawnTile(drawn_[heroAt()], column, row);
 }
 
 bool Play::shownAt(uint32_t id, float* column, float* row) const {
     const size_t at = drawnAt(id);
     if (at >= drawn_.size()) return false;
-    const Drawn& one = drawn_[at];
-    *column = one.wasX + (one.nowX - one.wasX) * through_;
-    *row = one.wasY + (one.nowY - one.wasY) * through_;
+    drawnTile(drawn_[at], column, row);
     return true;
 }
 

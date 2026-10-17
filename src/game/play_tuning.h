@@ -57,7 +57,21 @@ constexpr double kSettleMost = 6.0;
 // shorter is not seen) counts; kStallsToCushion of them inside kStallWindow seconds hold one tick
 // more, up to kMostCushion; kCalmToLower seconds with none hold one fewer. While short of it the
 // clock runs at kCushionFill. All invention.
-constexpr double kStallFelt = 0.008;
+// 25 ms since 2026-10-17: at 8 a home line's ordinary jitter took a tick in hand every few minutes,
+// and every tick taken or let go moved the hero's lead a step.
+constexpr double kStallFelt = 0.025;
+// **Coasting** (Play::coast): while the line is late, each walking body is drawn on along its
+// route at its own pace for up to kCoastTicks, and when the ticks come, those ticks are stepped
+// at once and what the guess got wrong is eased out over kCatchSeconds. A 400 ms Wi-Fi stall once a
+// minute froze the world and then hurried it (the user, 2026-10-17: "time to time there happens
+// little Delay,Hold-up,Hiccup"). All invention.
+// The ease is held under kCatchPace of the body's own pace (or of kCatchFloor tiles a second,
+// for a body standing): at 0.15 s unheld, the hero caught half a tile out walked 2.8 times his pace
+// for a few frames after every stall of the test's (`--stall 400 5`).
+constexpr double kCoastTicks = 8.0;
+constexpr float kCatchSeconds = 0.15f;
+constexpr float kCatchPace = 0.6f;
+constexpr float kCatchFloor = 2.0f;
 // The clock's pace while the server is ahead of it by part of a tick (Play::update): another
 // player's early tick, ~25 ms, is caught up in about half a second. Invention.
 constexpr double kAheadPace = 1.06;

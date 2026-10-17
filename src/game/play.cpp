@@ -56,6 +56,123 @@ void Play::remember() {
     }
 }
 
+namespace {
+
+// Where `body` will be `ticks` on, if nothing changes its mind: along the tiles its route has
+// left, at the pace Realm::move gives it, stopping where the route ends. False when it is not
+// walking. Presentation only, never read back into the sim.
+bool coastAlong(const sim::Realm& realm, const sim::Body& body, double ticks, float* x, float* y) {
+    if (!body.walking || !body.alive()) return false;
+    const std::vector<sim::Step>& route = realm.routeOf(body);
+    if (body.onStep >= route.size()) return false;
+    float left = float(ticks) * body.speed * (body.chilledUntil > realm.tick() ? sim::kChillFactor : 1.0f) *
+                 sim::strideFactor(body);
+    float cx = body.x, cy = body.y;
+    for (size_t at = body.onStep; at < route.size() && left > 0.0f; ++at) {
+        const float dx = float(route[at].column) - cx;
+        const float dy = float(route[at].row) - cy;
+        const float distance = std::sqrt(dx * dx + dy * dy);
+        if (distance <= left) {
+            cx = float(route[at].column);
+            cy = float(route[at].row);
+            left -= distance;
+        } else {
+            cx += dx / distance * left;
+            cy += dy / distance * left;
+            left = 0.0f;
+        }
+    }
+    *x = cx;
+    *y = cy;
+    return true;
+}
+
+}  // namespace
+
+void Play::coast() {
+    const sim::Realm* aheadRealm = link_ ? link_->aheadRealm() : nullptr;
+    const sim::Body* led = link_ ? link_->ahead() : nullptr;
+    for (Drawn& one : drawn_) {
+        one.coasting = false;
+        if (coastTicks_ <= 0.0) continue;
+        // The hero from the realm ahead, where he is drawn (Play::remember); everyone else from
+        // the mirror, which stands at the last tick.
+        const bool hero = led != nullptr && aheadRealm != nullptr && one.id == led->id;
+        const sim::Realm& realm = hero ? *aheadRealm : realm_;
+        const sim::Body* body = hero ? led : realm_.find(one.id);
+        if (body == nullptr) continue;
+        one.coasting = coastAlong(realm, *body, coastTicks_, &one.coastX, &one.coastY);
+    }
+}
+
+// The stall test's measure (`--stall`): every frame, each walking body's drawn step against the
+// last. A frame it stood still while the sim has it walking, a step back against the last one,
+// and a step faster than 2.5 times its pace are counted, and a second's counts logged.
+void Play::traceWalk(double seconds) {
+    if (traced_.size() < drawn_.size()) traced_.resize(drawn_.size());
+    const sim::Body& hero = realm_.hero();
+    ++traceFrames_;
+    for (size_t i = 0; i < drawn_.size(); ++i) {
+        const Drawn& one = drawn_[i];
+        Traced& was = traced_[i];
+        const sim::Body* body = realm_.find(one.id);
+        float x = 0.0f, y = 0.0f;
+        drawnTile(one, &x, &y);
+        const bool near = body != nullptr && body->alive() &&
+                          std::max(std::fabs(body->x - hero.x), std::fabs(body->y - hero.y)) <= kDrawRange;
+        if (!near || was.id != one.id || !was.seen) {
+            was = {one.id, x, y, 0.0f, 0.0f, near};
+            continue;
+        }
+        const float dx = x - was.x, dy = y - was.y;
+        const float step = std::sqrt(dx * dx + dy * dy);
+        if (body->walking) {
+            ++traceWalkers_;
+            const float pace = body->speed * sim::strideFactor(*body) / float(kTickSeconds);  // tiles a second
+            if (step < 1e-5f) ++traceStill_;
+            if (step > 0.02f && dx * was.dx + dy * was.dy < 0.0f) ++traceBack_;
+            if (pace > 0.0f && seconds > 0.0) {
+                const float ratio = step / float(seconds) / pace;
+                traceFastest_ = std::max(traceFastest_, ratio);
+                if (ratio > 2.5f && step < 2.0f) {
+                    ++traceLunge_;
+                    core::logf("walk trace: #%u%s lunged %.1fx (%.3f tiles), offset %.2f,%.2f, %s, through %.2f",
+                               one.id, one.id == hero.id ? " (hero)" : "", double(ratio), double(step),
+                               double(one.offX), double(one.offY), one.coasting ? "coasting" : "ticking",
+                               double(through_));
+                }
+            }
+        }
+        was.x = x;
+        was.y = y;
+        if (step > 1e-5f) {
+            was.dx = dx;
+            was.dy = dy;
+        }
+    }
+    traceClock_ += seconds;
+    if (traceClock_ >= 1.0) {
+        core::logf("walk trace: %d frames, %d walking body-frames, %d stood still, %d stepped back, %d lunged, "
+                   "fastest %.1fx pace%s", traceFrames_, traceWalkers_, traceStill_, traceBack_, traceLunge_,
+                   double(traceFastest_), coastOn_ ? "" : " (no coast)");
+        traceClock_ = 0.0;
+        traceFrames_ = traceWalkers_ = traceStill_ = traceBack_ = traceLunge_ = 0;
+        traceFastest_ = 0.0f;
+    }
+}
+
+void Play::drawnTile(const Drawn& one, float* column, float* row) const {
+    if (one.coasting) {
+        *column = one.coastX;
+        *row = one.coastY;
+    } else {
+        *column = one.wasX + (one.nowX - one.wasX) * through_;
+        *row = one.wasY + (one.nowY - one.wasY) * through_;
+    }
+    *column += one.offX;
+    *row += one.offY;
+}
+
 // A body the realm has just handed back, made to stand where it rose. Everything the drawing
 // kept from its death goes: it is at the new tile from the first frame, even a monster raised a
 // tile from its own corpse (under the two tiles `remember` snaps at), and its clip is CUT to the
@@ -288,8 +405,32 @@ void Play::update(double seconds) {
     // frame's pump. Costs one non-blocking recv and halves the worst-case time a tick sits in
     // the kernel buffer -- about 8 ms average at 60 fps.
     if (remoteClock) link_->pump();
-    while ((settling_ || stepped < kMostTicks) && link_->due() &&
-           (settling_ || accumulator_ >= kTickSeconds || (remoteClock && link_->owed() > kSnapOwed))) {
+    // The late ticks are in after a coast: the drawing has already walked everybody on by
+    // `coastTicks_` ticks' ground, so as many are stepped now, in this frame, rather than hurried
+    // through after it -- the hurry would draw every coasting body walked back to the first of
+    // them. Each body is caught where it is drawn, and what the ticks put it elsewhere is its
+    // offset, eased out below.
+    int coastOwed = 0;
+    if (remoteClock && !settling_ && coastTicks_ > 0.0 && link_->due()) {
+        coastOwed = std::min(int(coastTicks_ + 0.5), link_->owed());
+        for (Drawn& one : drawn_) {
+            float column = 0.0f, row = 0.0f;
+            drawnTile(one, &column, &row);
+            one.caughtX = column;
+            one.caughtY = row;
+            one.caughtFacing = one.nowFacing;
+            one.coasting = false;
+        }
+        if (coastOwed > 0) {
+            core::logf("play: the line came back after %.0f ms; %d tick(s) the drawing coasted stepped at once, "
+                       "%d owed", (stalled_ + kTickSeconds) * 1000.0, coastOwed, link_->owed());
+        }
+        coastTicks_ = 0.0;
+    }
+    const int coastStepped = coastOwed;
+    while ((settling_ || stepped < kMostTicks || coastOwed > 0) && link_->due() &&
+           (settling_ || accumulator_ >= kTickSeconds || coastOwed > 0 ||
+            (remoteClock && link_->owed() > kSnapOwed))) {
         // Each body's health going into the tick, so a blow's cue can say what it took rather
         // than what it rolled. Bodies and figures share one order (Play::open).
         for (size_t i = 0; i < drawn_.size() && i < realm_.bodies().size(); ++i) {
@@ -1906,6 +2047,7 @@ void Play::update(double seconds) {
         }
         accumulator_ = std::max(0.0, accumulator_ - kTickSeconds);
         ++stepped;
+        if (coastOwed > 0) --coastOwed;
     }
     // Waiting on the server, the frame clock does not run ahead of it -- and the wait is the
     // stall a cushion is for (sprint 24): each body stands where the last tick put it until the
@@ -1916,6 +2058,7 @@ void Play::update(double seconds) {
         const bool starved = !link_->due() && accumulator_ > kTickSeconds;
         if (starved) {
             stalled_ += accumulator_ - kTickSeconds;
+            if (coastOn_) coastTicks_ = std::min(kCoastTicks, stalled_ / kTickSeconds);
         } else if (stalled_ > 0.0) {
             if (stalled_ > kStallFelt) stalls_.push_back(cushionClock_);
             stalled_ = 0.0;
@@ -1949,6 +2092,51 @@ void Play::update(double seconds) {
         if (accumulator_ >= kTickSeconds * kMostTicks) accumulator_ = 0.0;
     }
     through_ = float(std::min(1.0, accumulator_ / kTickSeconds));
+    {
+        const float keep = std::exp(-float(seconds) / kCatchSeconds);
+        for (Drawn& one : drawn_) {
+            if (one.offX == 0.0f && one.offY == 0.0f) continue;
+            float cutX = one.offX * (1.0f - keep), cutY = one.offY * (1.0f - keep);
+            const sim::Body* body = realm_.find(one.id);
+            const float pace = body ? body->speed * sim::strideFactor(*body) / float(kTickSeconds) : 0.0f;
+            const float most = kCatchPace * std::max(pace, kCatchFloor) * float(seconds);
+            const float cut = std::sqrt(cutX * cutX + cutY * cutY);
+            if (cut > most && cut > 0.0f) {
+                cutX *= most / cut;
+                cutY *= most / cut;
+            }
+            // And never back along a walk: a body the ticks put behind where it was drawn waits
+            // for them -- it slows, it does not step back -- and walks the rest off. A step back
+            // after a stall was the one thing the test still found (`--stall`, Play::traceWalk).
+            const float wx = one.nowX - one.wasX, wy = one.nowY - one.wasY;
+            const float walked = std::sqrt(wx * wx + wy * wy);
+            if (walked > 1e-4f) {
+                const float ux = wx / walked, uy = wy / walked;
+                const float frame = walked * float(seconds / kTickSeconds);  // this frame's step along it
+                const float back = -(cutX * ux + cutY * uy);  // how far the cut pulls against the walk
+                if (back > frame) {
+                    cutX += (back - frame) * ux;
+                    cutY += (back - frame) * uy;
+                }
+            }
+            one.offX -= cutX;
+            one.offY -= cutY;
+            if (std::fabs(one.offX) < 1e-3f && std::fabs(one.offY) < 1e-3f) one.offX = one.offY = 0.0f;
+        }
+    }
+    if (coastStepped > 0) {
+        for (Drawn& one : drawn_) {
+            const float column = one.wasX + (one.nowX - one.wasX) * through_;
+            const float row = one.wasY + (one.nowY - one.wasY) * through_;
+            const float offX = one.caughtX - column, offY = one.caughtY - row;
+            // Not across a warp or a respawn: those are drawn where they landed (remember).
+            const bool near = std::max(std::fabs(offX), std::fabs(offY)) <= 2.0f;
+            one.offX = near ? offX : 0.0f;
+            one.offY = near ? offY : 0.0f;
+        }
+    }
+    coast();
+    if (stallMs_ > 0.0 && remoteClock && !settling_) traceWalk(seconds);
     follow(float(seconds));
     for (Drawn& one : drawn_) {
         // A swing runs at its own pace, a walk at the ground's, everything else at the clip's

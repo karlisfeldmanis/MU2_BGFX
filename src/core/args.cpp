@@ -648,6 +648,11 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.jitter = std::atof(v);
         } else if (!std::strcmp(s, "--loss")) {
             if (const char* v = next(s)) a.loss = std::atof(v);
+        } else if (!std::strcmp(s, "--stall")) {
+            if (const char* v = next(s)) a.stallMs = std::atof(v);
+            if (const char* v = next(s)) a.stallEvery = std::atof(v);
+        } else if (!std::strcmp(s, "--no-coast")) {
+            a.coast = false;
         } else if (!std::strcmp(s, "--no-udp")) {
             a.udp = false;
         } else if (!std::strcmp(s, "--world")) {

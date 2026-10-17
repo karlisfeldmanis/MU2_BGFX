@@ -119,6 +119,8 @@ public:
     // that much further behind the server, so the hero ahead is led that much further.
     virtual void setCushion(int ticks) {}
     // Which copy of the map the server put him in, from 1 (net::Welcome::copy).
+    // The realm ahead itself (whose route the hero coasts along, Play::coast), nullptr as ahead.
+    virtual const sim::Realm* aheadRealm() { return nullptr; }
     virtual int mapCopy() const { return 1; }
 
 private:

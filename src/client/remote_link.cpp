@@ -246,6 +246,15 @@ void RemoteLink::offer(net::Tick&& tick, bool byUdp) {
     const auto now = Clock::now();
     if (pumpSteady_ && takenAt_ != Clock::time_point{} && now - takenAt_ > kLateTick) {
         core::logf("server: tick %u came %.0f ms after the one before, by %s; ping %.0f ms, %u by datagram "
+void RemoteLink::setStall(double ms, double everySeconds) {
+    stallMs_ = std::max(0.0, ms);
+    stallEvery_ = std::max(0.0, everySeconds);
+    stallFrom_ = Clock::now();
+    if (stallMs_ > 0.0 && stallEvery_ > 0.0) {
+        core::logf("server: a test's line stops for %.0f ms every %.0f s", stallMs_, stallEvery_);
+    }
+}
+
                    "and %u by the stream so far", tick.tick,
                    double(std::chrono::duration<float, std::milli>(now - takenAt_).count()),
                    byUdp ? "datagram" : "the stream", double(rttMs_), byUdp_, byStream_);
@@ -314,6 +323,13 @@ void RemoteLink::pump() {
     pumpedAt_ = now;
     bool askAgain = false;
     while (!outHeld_.empty() && outHeld_.front().due <= now && socket_.open()) {
+    if (stallMs_ > 0.0 && stallEvery_ > 0.0) {
+        const double into = std::fmod(std::chrono::duration<double>(now - stallFrom_).count(), stallEvery_);
+        if (into >= stallEvery_ - stallMs_ / 1000.0) {  // the last `ms` of each period
+            pumpedAt_ = now;  // this client is pumping; it is the line that is not
+            return;
+        }
+    }
         if (!socket_.send(outHeld_.front().bytes)) {
             core::logError("server: the connection is gone");
             close("The connection to the server was lost.");
@@ -675,6 +691,11 @@ void RemoteLink::catchUp() {
         core::logError("server: the mirror has no player #%u after the world's past", you_);
     }
     if (past > 0) {
+const sim::Realm* RemoteLink::aheadRealm() {
+    if (aheadStale_) predict();
+    return aheadOk_ ? ahead_.get() : nullptr;
+}
+
         core::logf("server: the world's past, %zu ticks, replayed in %.2f s; %d players here", past,
                    std::chrono::duration<double>(std::chrono::steady_clock::now() - from).count(),
                    mirror_.playersHere());

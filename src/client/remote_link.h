@@ -61,6 +61,7 @@ public:
     void askBroker(const net::BrokerAsk& asked) override;
     bool takeBrokerView(net::BrokerView& out) override;
     const sim::Body* ahead() override;
+    const sim::Realm* aheadRealm() override;
     int mapCopy() const override { return copy_; }
     void setCushion(int ticks) override;
     // How many ticks ahead of the mirror the hero is drawn: the round trip in ticks, held still
@@ -73,6 +74,9 @@ public:
     // And `--loss P`: each packet lost with chance P, as a line loses them -- a stream's held up,
     // with everything behind it, until it is sent again; a datagram simply gone.
     void setLoss(double chance);
+    // And `--stall MS EVERY`: nothing read off the line, stream or datagram, for `ms` every
+    // `everySeconds` -- the kernel holds it, as a Wi-Fi that stops for a moment holds it.
+    void setStall(double ms, double everySeconds);
     // The tick datagrams (sprint 24), on unless a test turns them off (`--no-udp`).
     void setUdp(bool on) { udpWanted_ = on; }
     // How many ticks came first by datagram, and by the stream.
@@ -145,6 +149,8 @@ private:
     double halfLagMs_ = 0.0, jitterMs_ = 0.0;
     struct Held {
         Clock::time_point due;
+    double stallMs_ = 0.0, stallEvery_ = 0.0;
+    Clock::time_point stallFrom_{};
         std::vector<uint8_t> bytes;
     };
     std::deque<Held> inHeld_, outHeld_;

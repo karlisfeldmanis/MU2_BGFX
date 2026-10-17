@@ -59,6 +59,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         auto remote = std::make_unique<client::RemoteLink>(realmHeld_);
         remote->setLag(lagMs_, jitterMs_);
         remote->setLoss(lossChance_);
+        remote->setStall(stallMs_, stallEvery_);
         remote->setUdp(udp_);
         net::Hello hello;
         hello.world = world;

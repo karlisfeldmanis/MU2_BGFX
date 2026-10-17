@@ -177,6 +177,11 @@ struct Args {
     // stream alone, as before sprint 24 -- to compare.
     double loss = 0.0;
     bool udp = true;
+    // `--stall MS EVERY`: nothing read off the line for MS every EVERY seconds, as a Wi-Fi that
+    // stops for a moment does (RemoteLink::setStall); `--no-coast`: the drawing stands still
+    // through it, as before 2026-10-17 (Play::coast) -- to compare.
+    double stallMs = 0.0, stallEvery = 0.0;
+    bool coast = true;
     // The server's word for this character, from its last Welcome: carried across a map change so
     // the next world brings him back whole (sprint 20). 0 for a new one.
     uint64_t serverToken = 0;

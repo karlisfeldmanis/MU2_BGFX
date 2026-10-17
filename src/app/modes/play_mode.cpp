@@ -396,6 +396,7 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().useServer(host, port, args.serverToken, args.account);
                 world_.played().lagLine(args.lag, args.jitter, args.loss, args.udp);
             }
+                world_.played().stallLine(args.stallMs, args.stallEvery, args.coast);
             world_.play(assets, args.world, args.seed, args.kin, args.level, args.weapon,
                         args.shield);
             // His character is in another world (net::Elsewhere): that one, opened as a map
