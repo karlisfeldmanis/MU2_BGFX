@@ -115,11 +115,23 @@ int main(int argc, char** argv) {
 #else
     const bool bundled = std::strstr(argv[0], ".app/Contents/MacOS/") != nullptr;
 #endif
-    const bool bare = argc == 1 || (argc == 2 && !std::strncmp(argv[1], "-psn_", 5));
+    // The launcher's start is bare too: it names the region's server (--server host) and
+    // nothing else, and without the rest the Options page was neither read nor kept.
+    const char* server = nullptr;
+    bool bare = true;
+    for (int i = 1; i < argc && bare; ++i) {
+        if (!std::strcmp(argv[i], "--server") && i + 1 < argc) server = argv[++i];
+        else if (std::strncmp(argv[i], "-psn_", 5) != 0) bare = false;
+    }
     if (bundled && bare) {
         static const char* play[] = {argv[0], "--lobby", "--fullscreen", "--vsync", "--cap",
-                                     "180", "--scale", "0.99", "--remember", nullptr};
-        argc = sizeof(play) / sizeof(play[0]) - 1;
+                                     "180", "--scale", "0.99", "--remember", nullptr, nullptr,
+                                     nullptr};
+        argc = 9;
+        if (server) {
+            play[argc++] = "--server";
+            play[argc++] = server;
+        }
         argv = const_cast<char**>(play);
     }
 #ifdef _WIN32
