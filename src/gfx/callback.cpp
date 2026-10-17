@@ -65,6 +65,14 @@ const char* lightenOptions() {
             if (k == name) v = std::min(v, set), found = true;
         if (!found) lines.emplace_back(name, set);
     }
+    // And held to kLowEndCap frames a second: a step down the presets barely moves a card that
+    // drew 4 ms frames free at 150 fps. Gordichan's GTX 1650 laptop, 2026-10-17, lost its device
+    // every 2-4 minutes on Medium as on High; what it was asked for was the rate, not the frame.
+    // 0 is free here, so it is the cap's own rule, not the min the keys above take.
+    bool capped = false;
+    for (auto& [k, v] : lines)
+        if (k == "cap") v = v > 0 ? std::min(v, core::kLowEndCap) : core::kLowEndCap, capped = true;
+    if (!capped) lines.emplace_back("cap", core::kLowEndCap);
 
     file = std::fopen(path.c_str(), "w");
     if (!file) return nullptr;
@@ -95,7 +103,11 @@ void Callback::fatal(const char* filePath, uint16_t line, bgfx::Fatal::Enum code
     // (main.cpp startAgainAfterLoss), so the player sees a load and not an error box.
     if (code == bgfx::Fatal::DeviceLost && g_startAgain && g_startAgain()) {
         core::logf("graphics: the device was lost; MU2 starts again");
-        core::watchStop();
+        // Paused, not stopped: watchStop joins the freeze watch, which may be inside its own
+        // dump of this process, the driver's threads suspended under it mid-reset -- the old
+        // game then never ends, still on the server, and turns the new one's rejoin away as
+        // "already playing". The process's end takes the watch with it.
+        core::watchPause();
         core::logClose();
 #if defined(_WIN32) && defined(MU2_SHIP)
         // Not ExitProcess: its DLL detach would call into the driver that has just stopped.
@@ -106,9 +118,10 @@ void Callback::fatal(const char* filePath, uint16_t line, bgfx::Fatal::Enum code
 #if defined(_WIN32) && defined(MU2_SHIP)
     // The player is told, rather than left looking at a game that vanished (the GPU audit,
     // 2026-10-15): a lost device is a driver reset (TDR), a driver update or a card that
-    // stopped. The freeze watch stops first, since the box holds the frame; then the process
-    // ends without abort(), whose fast fail would put Windows' own error box after ours.
-    core::watchStop();
+    // stopped. The freeze watch is paused first, since the box holds the frame -- paused, not
+    // joined, for the reason above; then the process ends without abort(), whose fast fail
+    // would put Windows' own error box after ours.
+    core::watchPause();
     core::logClose();
     const wchar_t* text =
         code != bgfx::Fatal::DeviceLost

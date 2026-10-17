@@ -128,9 +128,17 @@ const char* exceptionName(DWORD code) {
 // Every thread's stack and the faulting one's registers, into `path`. `info` is the crash's
 // own record, or null for a look at a live process.
 void dumpInto(const char* path, EXCEPTION_POINTERS* info) {
+    // One at a time, and a second skipped rather than waited for: DbgHelp is not thread-safe,
+    // and a lost device's report (watchReport, the main thread) can come while the freeze
+    // watch is still dumping the same Present's stall, which already holds every stack.
+    static std::atomic_flag dumping = ATOMIC_FLAG_INIT;
+    if (dumping.test_and_set()) return;
     HANDLE file = CreateFileA(path, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
                               FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (file == INVALID_HANDLE_VALUE) return;
+    if (file == INVALID_HANDLE_VALUE) {
+        dumping.clear();
+        return;
+    }
     MINIDUMP_EXCEPTION_INFORMATION about{};
     about.ThreadId = GetCurrentThreadId();
     about.ExceptionPointers = info;
@@ -141,6 +149,7 @@ void dumpInto(const char* path, EXCEPTION_POINTERS* info) {
                       MINIDUMP_TYPE(MiniDumpWithThreadInfo | MiniDumpWithUnloadedModules),
                       info ? &about : nullptr, nullptr, nullptr);
     CloseHandle(file);
+    dumping.clear();
 }
 
 LONG WINAPI onCrash(EXCEPTION_POINTERS* info) {

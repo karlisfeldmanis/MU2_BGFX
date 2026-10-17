@@ -473,8 +473,17 @@ int Application::run(int argc, char** argv) {
         //
         // Waited out here rather than asked of bgfx, which has vsync on or off and nothing
         // in between. 0 leaves it free, and every measurement is taken at 0.
-        if (args_.cap > 0) {
-            const double periodMs = 1000.0 / double(args_.cap);
+        //
+        // Minimised, at most kMinimisedCap: a present to an icon returns at once on Direct3D 11
+        // (DXGI_STATUS_OCCLUDED), so a free run drew whole frames flat out for nobody, the card
+        // as hot as in play -- Gordichan's GTX 1650 laptop lost its device every few minutes,
+        // 2026-10-17, uncapped at 150 fps. The line and the world still step each frame.
+        constexpr int kMinimisedCap = 30;
+        const int cap = window_.minimised() && (args_.cap == 0 || args_.cap > kMinimisedCap)
+                            ? kMinimisedCap
+                            : args_.cap;
+        if (cap > 0) {
+            const double periodMs = 1000.0 / double(cap);
             for (;;) {
                 const double aheadMs = periodMs - double(bx::getHPCounter() - last) * toMs;
                 if (aheadMs <= 0.0) break;

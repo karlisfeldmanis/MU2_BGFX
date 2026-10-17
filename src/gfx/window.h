@@ -199,6 +199,8 @@ public:
     // play, AllowSetForegroundWindow). focused() is whether it has the keys. Every loss of the
     // focus is logged with who took it (focusOwner), which is what says why on the next report.
     bool focused() const;
+    // On the taskbar: nothing is seen, and the frame is paced down to kMinimisedCap (application.cpp).
+    bool minimised() const;
     void toFront();
     // Off the screen and the taskbar, still pumped: a window closed during a load is gone for the
     // player at once, while the load behind it comes back (app/preloader.cpp).

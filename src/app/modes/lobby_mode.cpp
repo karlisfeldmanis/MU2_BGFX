@@ -193,6 +193,9 @@ bool LobbyMode::open(Context& ctx) {
     core::Args& args = ctx.args;
     const std::string& assets = ctx.paths.assets;
     entering_ = quitting_ = false;
+    // Auto-play is the character's, not the session's: back here -- Switch character, a refused
+    // rejoin -- the next one picked does not walk off on the last one's quest.
+    ctx.autoQuest = -1;
     // The server, the Hetzner box unless `--server` names another (net::kDefaultHost).
     {
         const std::string named = args.server.empty() ? std::string(net::kDefaultHost) : args.server;

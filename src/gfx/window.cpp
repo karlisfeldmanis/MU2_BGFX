@@ -265,11 +265,17 @@ bool Window::open(const WindowDesc& desc) {
     if (!desc.renderThread) bgfx::renderFrame();
     bool up = bgfx::init(init);
 #ifdef _WIN32
-    // Auto: a machine with no Vulkan, or a driver whose Vulkan does not start, draws through
-    // Direct3D 11 instead. bgfx undoes a failed init whole, so it can be asked again.
-    if (!up && desc.renderer == 0) {
-        core::logError("graphics: Vulkan did not start; trying Direct3D 11");
-        init.type = bgfx::RendererType::Direct3D11;
+    // A renderer that does not start gives way to the other: a machine with no Vulkan, or a
+    // driver whose Vulkan does not start, draws through Direct3D 11, and one where Direct3D 11
+    // fails through Vulkan. Asked for by name too -- Vulkan picked on the Options page, or the
+    // launcher's low-end first run writing Direct3D 11 (launcher/gpu.h rendererFor) -- since
+    // options.txt is kept and a refusal there was every start's, until the file was deleted.
+    // bgfx undoes a failed init whole, so it can be asked again.
+    if (!up) {
+        const bool wasD3d = init.type == bgfx::RendererType::Direct3D11;
+        core::logError("graphics: %s did not start; trying %s", wasD3d ? "Direct3D 11" : "Vulkan",
+                       wasD3d ? "Vulkan" : "Direct3D 11");
+        init.type = wasD3d ? bgfx::RendererType::Vulkan : bgfx::RendererType::Direct3D11;
         if (!desc.renderThread) bgfx::renderFrame();
         up = bgfx::init(init);
     }
@@ -493,6 +499,10 @@ void Window::hide() {
 bool Window::fullscreen() const { return handle_ && fullscreen_; }
 
 bool Window::focused() const { return handle_ && glfwGetWindowAttrib(handle_, GLFW_FOCUSED); }
+
+bool Window::minimised() const {
+    return handle_ && !offscreen_ && glfwGetWindowAttrib(handle_, GLFW_ICONIFIED);
+}
 
 void Window::toFront() {
     if (!handle_ || focused()) return;
