@@ -1349,7 +1349,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", mimetypes.guess_type(target.name)[0] or "application/octet-stream")
         self.send_header("Content-Length", str(len(data)))
-        if path.startswith("/shots/"):  # kept a day: a shot taken again keeps its name
+        if path.startswith("/shots/") and path.endswith(".webp"):  # kept a day: a shot taken again keeps its name
             self.send_header("Cache-Control", "public, max-age=86400")
         self.end_headers()
         self.wfile.write(data)

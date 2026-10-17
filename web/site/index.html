@@ -349,7 +349,7 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
       sound.addEventListener('click', e => { e.stopPropagation(); toggleSound(); });
       f.append(frame, sound);
     } else {
-      // The shot 32 pixels wide and blurred at once, the real one fading in over it when it comes.
+      // The shot 240 pixels wide at once, the real one fading in over it when it comes.
       const ph = el('div', 'ph');
       const tiny = (window.SHOT_PREVIEWS || {})[name];
       if (tiny) ph.style.setProperty('--ph', 'url("' + tiny + '")');

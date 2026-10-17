@@ -96,15 +96,9 @@ header.top { position: relative; overflow: hidden; }
 .slide img { position: relative; width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 6px;
   opacity: 0; transition: opacity .45s ease; }
 .slide.ready img { opacity: 1; }
-/* Under the picture until it comes: the tiny preview blurred, a light passing over it. */
-.slide .ph { position: absolute; inset: 0; border-radius: 6px; overflow: hidden; background: #1A1411;
+/* Under the picture until it comes: the shot at 240 pixels, sent inside the page. */
+.slide .ph { position: absolute; inset: 0; border-radius: 6px; background: #1A1411 var(--ph) center / cover;
   box-shadow: 0 0 0 1px rgba(201,162,126,.2), 0 28px 60px rgba(0,0,0,.65), 0 8px 18px rgba(0,0,0,.45); }
-.slide .ph::before { content: ""; position: absolute; inset: -24px; background: var(--ph) center / cover; filter: blur(18px); }
-.slide .ph::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
-  background: linear-gradient(100deg, rgba(255,236,210,0) 30%, rgba(255,236,210,.07) 50%, rgba(255,236,210,0) 70%);
-  animation: ph-light 1.6s ease-in-out infinite; }
-.slide.ready .ph::after { animation: none; opacity: 0; }
-@keyframes ph-light { to { transform: translateX(100%); } }
 .slide.video { border-radius: 6px; overflow: hidden; background: #000;
   box-shadow: 0 0 0 1px rgba(201,162,126,.2), 0 28px 60px rgba(0,0,0,.65), 0 8px 18px rgba(0,0,0,.45); }
 .slide.video iframe { width: 100%; height: 100%; display: block; border: 0; pointer-events: none; }
@@ -117,7 +111,7 @@ header.top { position: relative; overflow: hidden; }
   background: rgba(13,11,10,.55); color: var(--bone-hi); display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .nav:hover { background: rgba(13,11,10,.85); }
 .nav.prev { left: 16px; } .nav.next { right: 16px; }
-@media (prefers-reduced-motion: reduce) { .slide, .slide img { transition: none; } .slide .ph::after { animation: none; } html { scroll-behavior: auto; } }
+@media (prefers-reduced-motion: reduce) { .slide, .slide img { transition: none; } html { scroll-behavior: auto; } }
 
 /* Why it is different: three tiles, then the features in two groups */
 #why { padding: 48px 0 72px; }
