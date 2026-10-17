@@ -14,10 +14,9 @@ namespace {
 constexpr float kUnits = 100.0f;
 // MU's animation clock, which every rate below is per frame of. Drops.ReferenceFps.
 constexpr float kFps = 25.0f;
-// Drops.DropHeight, Toss and Gravity: 90 units up, thrown up at 8 a frame against 6 a frame.
-// Written here as metres and metres a second, which is what the update integrates in.
+// Drops.DropHeight and Gravity: a heap's coins from up to 90 units, against 6 a frame. Written
+// here as metres and metres a second, which is what the update integrates in.
 constexpr float kDropHeight = 90.0f / kUnits;
-constexpr float kToss = 8.0f / kUnits * kFps;
 constexpr float kGravity = 6.0f / kUnits * kFps * kFps;
 // Drops.Bounces, Damping and BounceThreshold: one rebound at a third of the arrival speed,
 // and none at all below a speed there is no bounce left in.
@@ -42,6 +41,10 @@ constexpr float kHop = 50.0f / kUnits * kFps;
 // it is put back to its rest and stops dead (HandleItemOnGround). S17's server says only 0xFF
 // (Player::ItemGet); the hop is the client's, and the S17 client is MuMain's line.
 constexpr float kHopTurn = 10.0f * bx::kPi / 180.0f;  // radians per unit a frame of speed
+// An item's own drop, CreateItemDrop's fresh one: 180 units over the ground, Gravity = 20, and
+// the same turning to its speed and dead stop as the hop.
+constexpr float kItemDropFrom = 180.0f / kUnits;
+constexpr float kItemToss = 20.0f / kUnits * kFps;
 // CreateShiny's 48 frames between sparkles; BITMAP_SHINY's 18-frame life and Shiny01's 16
 // pixels, which are its width in units.
 constexpr float kSparkleEvery = 48.0f;
@@ -245,8 +248,9 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
     bx::mtxMul(piece.turn, yaw, place);
     piece.flips = true;
     piece.roll = row.shield();
-    piece.above = kDropHeight;
-    piece.speed = kToss;
+    piece.above = kItemDropFrom;
+    piece.speed = kItemToss;
+    piece.tumbling = true;
     drop.pieces.push_back(piece);
 }
 
@@ -329,7 +333,7 @@ void Litter::update(const sim::Realm& realm, double seconds,
             piece.above = std::max(piece.above, kHopFrom);
             piece.speed = kHop;
             piece.bounced = 0;
-            piece.hopping = piece.flips;
+            piece.tumbling = piece.flips;
         }
     }
 
@@ -374,8 +378,8 @@ void Litter::update(const sim::Realm& realm, double seconds,
             piece.above += piece.speed * dt;
             if (piece.above > 0.0f) continue;
             piece.above = 0.0f;
-            if (piece.hopping) {
-                piece.hopping = false;
+            if (piece.tumbling) {
+                piece.tumbling = false;
                 piece.speed = 0.0f;
                 continue;
             }
@@ -398,7 +402,7 @@ void Litter::update(const sim::Realm& realm, double seconds,
 }
 
 void Litter::placed(const Piece& piece, float* out) {
-    if (piece.hopping) {
+    if (piece.tumbling) {
         // MU's Gravity is its speed in units a frame.
         const float flip = -kHopTurn * piece.speed * kUnits / kFps;
         float tumble[16], a[16];

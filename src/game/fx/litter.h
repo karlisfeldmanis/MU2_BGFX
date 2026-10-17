@@ -5,11 +5,14 @@
 // it, and it holds no rule -- an id that appears in the realm's list falls, an id that leaves
 // it is gone, and nothing here can pick anything up.
 //
+// The toss of an item is MU's own (the user, 2026-10-17: "we need also origninal drop
+// animation"): CreateItemDrop's 180 units up, thrown upward at 20 a frame against MoveItems'
+// 6, turned to its speed on the way (HandleItemFalling's -Gravity * 10 degrees), and put to
+// its rest and stopped dead on the grass. A heap of Zen keeps MU2's toss below.
+//
 // What is kept of MU2's:
-//   * the toss: 90 units up (MU's 180 halved, so a drop stays over the corpse), thrown
-//     upward at 8 a reference frame against a gravity of 6, and one bounce at a third of the
-//     arrival speed, because MU stops an item dead and that reads as placing rather than
-//     dropping;
+//   * a heap's toss: its coins from up to 90 units, each thrown up at a speed of its own
+//     against a gravity of 6, and one bounce at a third of the arrival speed;
 //   * the rest pose by measurement, not by ItemAngle's table: the longest extent along the
 //     ground, the shortest up, so a blade lies on its flat and a haft along its length. The
 //     families that sleep are the weapons, shields, armour, trousers and gloves; a helm sits
@@ -103,7 +106,7 @@ private:
         float turn[16];
         bool flips = false;
         bool roll = false;     // a shield turns about its length, as a coin; the rest end over end
-        bool hopping = false;  // in a refused pickup's hop, until it first touches the grass
+        bool tumbling = false;  // falling as MU's items fall, turned to its speed, until it lands
     };
     // A piece's model -> world this frame: its rest, tumbled while it hops, lifted by its fall.
     static void placed(const Piece& piece, float* out);
