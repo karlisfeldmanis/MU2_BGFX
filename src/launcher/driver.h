@@ -6,12 +6,9 @@
 //
 // The launcher installs nothing: a launcher that asks to be administrator and swaps drivers is
 // what antivirus heuristics flag, and no big launcher does it. It says so in a word beside the
-// card at the top left (ui.cpp drawHome), "Driver is old" or "No graphics driver", and its Update
-// opens the vendor's page, or Windows Update's optional updates where the card has no vendor's
-// driver.
+// card at the top left (ui.cpp drawHome), "Graphics driver is old" or "No graphics driver", and
+// nothing more.
 #pragma once
-
-#include <string>
 
 #include "launcher/gpu.h"
 
@@ -23,12 +20,5 @@ inline bool driverMissing(const Gpu& gpu) { return gpu.known && (gpu.software ||
 
 // The machine is better off with another driver: none at all, or one kDriverYears old.
 inline bool needsDriver(const Gpu& gpu) { return driverMissing(gpu) || (gpu.known && gpu.driverOld); }
-
-// Where Update driver goes: the vendor's page, or Windows Update's optional updates -- where
-// Windows lists the drivers it has for this PC -- for a card it does not know the maker of.
-inline std::string driverPage(const Gpu& gpu) {
-    const std::string url = driverMissing(gpu) ? std::string() : driverUrl(gpu);
-    return url.empty() ? "ms-settings:windowsupdate-optionalupdates" : url;
-}
 
 }  // namespace mu::launcher

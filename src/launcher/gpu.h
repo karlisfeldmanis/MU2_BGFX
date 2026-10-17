@@ -83,12 +83,4 @@ inline const core::GraphicsPreset& firstRunSet(const Gpu& gpu) {
     return gpu.preset <= core::kPresetLow ? core::kLowEndFirstRun : core::kGraphicsPresets[gpu.preset];
 }
 
-// Where this card's driver is downloaded, or "" when the vendor is not one that can be named.
-inline std::string driverUrl(const Gpu& gpu) {
-    if (gpu.vendorId == 0x8086) return "https://www.intel.com/content/www/us/en/download-center/home.html";
-    if (gpu.vendorId == 0x10de) return "https://www.nvidia.com/Download/index.aspx";
-    if (gpu.vendorId == 0x1002) return "https://www.amd.com/en/support";
-    return "";
-}
-
 }  // namespace mu::launcher

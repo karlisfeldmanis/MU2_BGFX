@@ -882,20 +882,15 @@ void Launcher::drawHome() {
 #endif
     if (gpu_.known) words(machineX, 26.0f, gpu_.line(), hex(kQuiet), 13.0f);
     // No Vulkan is no longer in the way: the game draws through Direct3D 11 then (gfx/window.cpp).
-    // No driver, or an old one (driver.h): said beside the card, quietly, with the way to the
-    // driver; nothing installed (the user, 2026-10-17: "simple elegant message at top left
-    // corner near graphics card").
+    // No driver, or an old one (driver.h): said beside the card, quietly, and nothing more (the
+    // user, 2026-10-17: "simple elegant message at top left corner near graphics card", "without
+    // link, just message").
     if (needsDriver(gpu_)) {
         float at = machineX + measure(gpu_.line(), 13.0f) + 18.0f;
         panel(px({at, 18.0f, 6.0f, 6.0f}), 3.0f * s_, hex(kAmber), hex(kAmber));
         at += 13.0f;
-        const std::string say = driverMissing(gpu_) ? "No graphics driver" : "Driver is old";
+        const std::string say = driverMissing(gpu_) ? "No graphics driver" : "Graphics driver is old";
         words(at, 26.0f, say, hex(kAmber), 13.0f);
-        at += measure(say, 13.0f) + 10.0f;
-        const std::string what = "Update";
-        // A press on the link is no drag of the window (frame), though it lies on the strip.
-        if (clicked_ && over(px({at, 13.0f, measure(what, 13.0f), 18.0f}))) dragging_ = false;
-        if (link(at, 26.0f, what, kBoneHi, 13.0f)) openUrl(driverPage(gpu_));
     }
     if (!manifest_.version.empty()) {
         const std::string version = "Client " + manifest_.version;

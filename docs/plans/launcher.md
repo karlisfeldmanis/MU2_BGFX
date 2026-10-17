@@ -209,7 +209,8 @@ information about that pc back to server"). engine.cpp reportMachine, web/server
 
 **L8. The graphics driver, said beside the card** (the user, 2026-10-17: "identify missing
 drivers", then "lets better show warning not install something ... because Antivirus could do
-the work", "simple elegant message at top left corner near graphics card"). src/launcher/driver.h.
+the work", "simple elegant message at top left corner near graphics card", "without link, just
+message"). src/launcher/driver.h.
 - **Why:** of 31 Windows machines in machines.jsonl on 2026-10-17, one ran on Windows' Basic
   Render Driver (no driver of the card's own) and three on drivers from 2022-2023; about a third
   of the crash and freeze reports came from those -- the Basic Render PC's DeviceLost and hang,
@@ -218,10 +219,9 @@ the work", "simple elegant message at top left corner near graphics card"). src/
 - **What is warned about** (needsDriver): DXGI's software adapter or vendor 0x1414 (Basic Render
   or Basic Display, which DXGI does not always flag), or a driver kDriverYears old. Vendor 0x1414
   now opens on Lowest too (gpu.h presetFor).
-- **How:** after the card's line at the top left, an amber dot, "Driver is old" or "No graphics
-  driver", and Update -- the vendor's page (gpu.h driverUrl), or Windows Update's optional updates
-  (`ms-settings:windowsupdate-optionalupdates`) for a card with no driver of its maker's. It
-  replaces L6's red line over Play. `--check` prints `driver ... warned: <where Update goes>`.
+- **How:** after the card's line at the top left, an amber dot and "Graphics driver is old" or
+  "No graphics driver" -- a message only, no link. It replaces L6's red line over Play and its
+  Update driver link (gpu.h driverUrl, taken out). `--check` prints `driver ... warned`.
 - **Installing it was built and taken out the same evening** (77191bfd, then the commit after):
   the launcher run as administrator to install Windows Update's display driver. No big launcher
   does it, and a launcher that elevates and swaps drivers is what antivirus heuristics flag --

@@ -87,12 +87,12 @@ int check(Place place, fs::path dir, const std::string& only, bool start) {
     if (gpu.preset >= 0) seen += ", " + std::string(mu::core::kGraphicsPresets[gpu.preset].name) + " graphics";
     if (gpu.driverOld) seen += ", driver old";
     step("gpu", true, gpu.known ? seen : "no probe on this system");
-    // What the home screen warns about beside the card (driver.h), and where its Update goes.
+    // What the home screen warns about beside the card (driver.h).
     step("driver", true,
-         !gpu.known           ? std::string("no probe on this system")
-         : driverMissing(gpu) ? "MISSING, warned: " + driverPage(gpu)
-         : needsDriver(gpu)   ? "old, warned: " + driverPage(gpu)
-                              : std::string("nothing to warn about"));
+         !gpu.known ? "no probe on this system"
+         : driverMissing(gpu) ? "MISSING, warned"
+         : needsDriver(gpu)   ? "old, warned"
+                              : "nothing to warn about");
     const bool have = fs::exists(userFolder() / "options.txt");
     const std::string graphics =
         tuned ? "first run set to " + std::string(firstRunSet(gpu).name)
