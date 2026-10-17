@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "app/mode.h"
+#include "app/preloader.h"
 #include "content/showing.h"
 #include "content/tables.h"
 #include "game/bust.h"
@@ -104,6 +105,8 @@ private:
 
     float fadeSeconds_ = 0.0f;
     bool fading_ = false;
+    // The loading screen over the scene while the first run's graphics are set up (app/tuner.h).
+    LoadingScreen loading_;
     bool quitEarly_ = false;
     bool quitting_ = false;
     bool entering_ = false;

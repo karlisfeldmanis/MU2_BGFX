@@ -609,7 +609,7 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
                       grassDrawn ? &grassField : nullptr);
 
     // ---- the screen over it ----------------------------------------------------------------
-    if (interfaceUp_) {
+    if (interfaceUp_ && !ctx.tuning) {
         cursor_.update(seconds, px, py, false, false, false);
         interface_.begin(ctx.window.width(), ctx.window.height());
         interface_.add(lobby_.canvas());
@@ -617,30 +617,25 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
         interface_.add(cursor_.canvas());
         interface_.submit(gfx::ViewHud);
     }
-    if (args.fps) ctx.readout.draw(ctx.overlay, ctx.window.width(), ctx.window.height());
-    // Up from black, as the game's own entrance comes up -- once the first run's graphics have
-    // been measured under it (app/tuner.h), with its words and progress in the loading screen's
-    // parchment and gold.
-    if (fading_ && ctx.curtain.ready()) {
+    if (args.fps && !ctx.tuning) ctx.readout.draw(ctx.overlay, ctx.window.width(), ctx.window.height());
+    // The first run's graphics being set up under the loading screen (app/tuner.h): the scene is
+    // drawn and measured, and the loading screen laid over it whole, with its line under the ring.
+    if (ctx.tuning) {
+        if (!loading_.isOpen()) loading_.open(ctx, true);
+        loading_.draw(ctx, PreloaderLook(), 1.0f, at.elapsed, ctx.tuningProgress,
+                      "Setting up graphics for your PC");
+    } else if (loading_.isOpen()) {
+        loading_.close();
+    }
+    // Up from black, as the game's own entrance comes up -- held at black under the loading
+    // screen while the first run's graphics are set up (app/tuner.h), and up from it after.
+    if (fading_ && ctx.curtain.ready() && !ctx.tuning) {
         if (at.index >= 2 && !ctx.tuning) fadeSeconds_ += seconds;
         const float t = std::min(1.0f, fadeSeconds_ / 0.35f);
         const float black = 1.0f - t * t * (3.0f - 2.0f * t);
         if (black > 0.0f) {
             ctx.curtain.begin(ctx.window.width(), ctx.window.height());
             ctx.curtain.panel(0.0f, 0.0f, w, h, uint32_t(black * 255.0f) << 24);
-            if (ctx.tuning) {
-                const float unit = h / 1080.0f;
-                const float wordScale = 2.0f * unit, percentScale = 1.6f * unit;
-                const char* words = "Setting up graphics for your PC";
-                const std::string percent =
-                    std::to_string(int(ctx.tuningProgress * 100.0f + 0.5f)) + "%";
-                const float cy = h * 0.5f;
-                ctx.curtain.text(w * 0.5f - ctx.curtain.measure(wordScale, words) * 0.5f,
-                                 cy - gfx::Overlay::lineHeight(wordScale), wordScale,
-                                 0xccb8c8d4u, words);
-                ctx.curtain.text(w * 0.5f - ctx.curtain.measure(percentScale, percent) * 0.5f,
-                                 cy + 10.0f * unit, percentScale, 0xcc61bdffu, percent);
-            }
             ctx.curtain.submit(gfx::ViewHud);
         }
     }
@@ -661,6 +656,7 @@ void LobbyMode::report(Context& ctx) {
 }
 
 void LobbyMode::shutdown(Context& ctx) {
+    loading_.close();
     link_.close();
     ctx.time.setScene("");
     bust_.shutdown();

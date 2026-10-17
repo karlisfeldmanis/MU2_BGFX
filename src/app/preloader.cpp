@@ -188,27 +188,16 @@ void Preloader::cue(const std::string& path) {
     }
 }
 
-bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitEarly,
-                    bool keepAmbient, const std::function<bool(double seconds)>& settle,
-                    const Look& look) {
-    std::atomic<int> loaded{0};  // 0 loading, 1 ready, -1 what was asked for did not open
-    core::Loading::reset();
-    if (look.music) {
-        ambient().start(core::join(ctx.paths.assets, "music/loading.mp3"),
-                        ctx.args.mute ? 0.0f : float(ctx.args.volume) / 100.0f);
-    }
-    std::thread loader([&]() { loaded.store(load() ? 1 : -1); });
-    // In front when the load began, in front when it ends (gfx::Window::toFront): something took
-    // the focus while the world came up on a Windows PC, and the player had to Alt+Tab back
-    // (the user, 2026-10-15). One he moved away from himself is left where he put it.
-    const bool inFront = ctx.window.focused();
+// ---- the loading screen's picture ------------------------------------------------------------
 
+void LoadingScreen::open(Context& ctx, bool withLogo) {
+    if (open_) return;
+    open_ = true;
     ctx.curtain.init(ctx.paths.shaders);
     // The spinner's dot: a soft disc, made here in a few lines rather than loaded, because
     // nothing of the cook is in hand yet. Drawn through the effects pass, in screen space,
     // so a dot is a round antialiased sprite -- the overlay can only lay axis-aligned
     // rectangles, and a ring built out of those reads as a staircase of squares.
-    bgfx::TextureHandle dot = BGFX_INVALID_HANDLE;
     {
         constexpr int kSide = 64;
         const bgfx::Memory* pixels = bgfx::alloc(kSide * kSide * 4);
@@ -225,27 +214,37 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
                 at[3] = uint8_t(a * a * 255.0f);
             }
         }
-        dot = bgfx::createTexture2D(kSide, kSide, false, 1, bgfx::TextureFormat::RGBA8,
+        dot_ = bgfx::createTexture2D(kSide, kSide, false, 1, bgfx::TextureFormat::RGBA8,
                                     BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP, pixels);
     }
     // The MU Classic logo over the letter, flat: the site's SVG as a white mask built into the
     // game (tools/loading_logo.py), tinted here (the user, 2026-10-16: 'add muclassic logo svg
     // flat version above the love letter text on loading screen').
-    bgfx::TextureHandle logo = BGFX_INVALID_HANDLE;
-    float logoAspect = 1.0f;
-    if (!look.stages) {
+    if (withLogo) {
         static bx::DefaultAllocator allocator;
         if (bimg::ImageContainer* image = bimg::imageParse(&allocator, kLoadingLogo,
                                                            uint32_t(sizeof kLoadingLogo),
                                                            bimg::TextureFormat::RGBA8)) {
-            logo = bgfx::createTexture2D(uint16_t(image->m_width), uint16_t(image->m_height),
+            logo_ = bgfx::createTexture2D(uint16_t(image->m_width), uint16_t(image->m_height),
                                          false, 1, bgfx::TextureFormat::RGBA8,
                                          BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP,
                                          bgfx::copy(image->m_data, image->m_size));
-            logoAspect = float(image->m_height) / float(std::max(1u, image->m_width));
+            logoAspect_ = float(image->m_height) / float(std::max(1u, image->m_width));
             bimg::imageFree(image);
         }
     }
+}
+
+void LoadingScreen::close() {
+    if (!open_) return;
+    open_ = false;
+    if (bgfx::isValid(dot_)) bgfx::destroy(dot_);
+    if (bgfx::isValid(logo_)) bgfx::destroy(logo_);
+    dot_ = logo_ = BGFX_INVALID_HANDLE;
+    // The HUD view goes back to drawing over the frame rather than clearing it.
+    bgfx::setViewClear(gfx::ViewHud, BGFX_CLEAR_NONE);
+}
+
     // A comet arc chasing round: its head is the brightest and largest dot, at a continuous
     // angle, so it moves by fractions of a dot a frame rather than stepping between them.
     // MU's marker gold.
@@ -254,165 +253,198 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
     // eased rather than printed raw: it catches up quickly with a stage that counts itself,
     // creeps a little way into one that cannot, so a long stage does not read as a hang, and
     // never goes back.
-    float shown = 0.0f;
-    double shownAt = 0.0;
-    int letterWidth = -1;
-    std::vector<std::string> letterLines;
+void LoadingScreen::draw(Context& ctx, const PreloaderLook& look, float alpha, double seconds,
+                         float done, const char* under) {
+    const bgfx::TextureHandle dot = dot_, logo = logo_;
+    const float logoAspect = logoAspect_;
+    float& shown = shown_;
+    double& shownAt = shownAt_;
+    int& letterWidth = letterWidth_;
+    std::vector<std::string>& letterLines = letterLines_;
+    {
+        const float dt = float(std::max(0.0, seconds - shownAt));
+        shownAt = seconds;
+        const float real = done >= 0.0f ? done : core::Loading::at();
+        const float ceiling =
+            done >= 0.0f ? done : real + (core::Loading::stageEnd() - real) * 0.85f;
+        if (shown < real) shown += (real - shown) * std::min(1.0f, dt * 10.0f);
+        else if (shown < ceiling) shown += (ceiling - shown) * std::min(1.0f, dt * 0.25f);
+    }
+    const int w = ctx.window.width(), h = ctx.window.height();
+    bgfx::setViewFrameBuffer(gfx::ViewHud, gfx::screenTarget());
+    bgfx::setViewRect(gfx::ViewHud, 0, 0, uint16_t(w), uint16_t(h));
+    bgfx::setViewClear(gfx::ViewHud, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff,
+                       1.0f, 0);
+    bgfx::touch(gfx::ViewHud);
+    const float unit = float(h) / 1080.0f;
+    const float cx = float(w) * 0.5f, cy = float(h) * 0.5f;
+    const float radius = 30.0f * unit;
+    // The letter: small, centred, in a faint parchment grey, laid up from the foot.
+    // Wrapped again only when the window's width changes. Not the studio's.
+    const float letterScale = 1.65f * unit;
+    if (ctx.curtain.ready() && w != letterWidth) {
+        letterWidth = w;
+        letterLines = wrap(ctx.curtain, letterScale,
+                           std::min(float(w) - 64.0f * unit, 780.0f * unit), kLetter);
+    }
+    const float leading = gfx::Overlay::lineHeight(letterScale) * 1.55f;
+    const float letterTop = float(h) - 40.0f * unit - leading * float(letterLines.size());
+    if (alpha > 0.0f && bgfx::isValid(dot)) {
+        // Screen space through the effects pass: an orthographic projection in pixels
+        // with y running down, and a view that is the identity, which leaves its
+        // billboard axes as x right and y down -- so a sprite's position is a pixel and
+        // its half-extents are pixels too.
+        float screen[16];
+        bx::mtxOrtho(screen, 0.0f, float(w), float(h), 0.0f, -1.0f, 1.0f, 0.0f,
+                     bgfx::getCaps()->homogeneousDepth, bx::Handedness::Right);
+        float eye[16];
+        bx::mtxIdentity(eye);
+        ctx.renderer.effects().begin();
+        const auto put = [&](float x, float y, float half, float a, bool add) {
+            gfx::Sprite s;
+            s.position[0] = x;
+            s.position[1] = y;
+            s.position[2] = 0.0f;
+            s.halfWidth = s.halfHeight = half;
+            s.sheet = dot;
+            s.blend = add ? gfx::Blend::Additive : gfx::Blend::Alpha;
+            // MU's marker gold, warmer at the head than at the tail.
+            s.colour[0] = 1.0f;
+            s.colour[1] = 0.74f;
+            s.colour[2] = 0.38f;
+            s.colour[3] = a * alpha;
+            ctx.renderer.effects().add(s);
+        };
+        // The track the ribbon runs on: a faint closed ring, so the arc is read as
+        // something travelling round a circle rather than as a shape adrift.
+        // Enough of them, and wide enough, that they overlap into a line: at 72 dots
+        // of 3 px the ring read as a dotted circle, which is the opposite of smooth.
+        for (int i = 0; i < 160; ++i) {
+            const float angle = float(i) / 160.0f * 6.2831853f;
+            put(cx + std::cos(angle) * radius, cy + std::sin(angle) * radius,
+                2.2f * unit, 0.055f, false);
+        }
+        // The ribbon: enough overlapping dots that it is a continuous stroke and not a
+        // string of beads, thickening and brightening towards the head. Additive, so
+        // where the dots overlap it glows rather than banding.
+        const float head = float(seconds) * 4.6f;  // radians a second
+        constexpr int kAlong = 120;
+        constexpr float kSweep = 3.5f;  // radians of arc behind the head
+        for (int i = 0; i < kAlong; ++i) {
+            const float along = float(i) / float(kAlong - 1);  // 0 tail .. 1 head
+            const float angle = head - (1.0f - along) * kSweep;
+            // Eased at both ends: the tail dies away instead of stopping, and the head
+            // is a rounded cap rather than a cut.
+            const float taper = along * along * (3.0f - 2.0f * along);
+            const float cap = 1.0f - std::pow(std::max(0.0f, along - 0.94f) / 0.06f, 2.0f);
+            put(cx + std::cos(angle) * radius, cy + std::sin(angle) * radius,
+                (1.1f + 2.2f * taper) * unit, 0.10f * taper * std::max(0.0f, cap), true);
+        }
+        // And the flare at the head: two soft haloes over the brightest dot, which is
+        // what makes it read as a light being carried round rather than a painted arc.
+        put(cx + std::cos(head) * radius, cy + std::sin(head) * radius, 5.0f * unit,
+            0.55f, true);
+        put(cx + std::cos(head) * radius, cy + std::sin(head) * radius, 11.0f * unit,
+            0.16f, true);
+        put(cx + std::cos(head) * radius, cy + std::sin(head) * radius, 22.0f * unit,
+            0.05f, true);
+        // The logo, its foot a little over the letter's first line, in the logo's own cream.
+        if (bgfx::isValid(logo)) {
+            const float half = 65.0f * unit;
+            gfx::Sprite s;
+            s.position[0] = cx;
+            s.position[1] = letterTop - 22.0f * unit - half * logoAspect;
+            s.halfWidth = half;
+            s.halfHeight = half * logoAspect;
+            s.sheet = logo;
+            // The screen's y runs down and the sheet's v up: drawn as it is, it stood on its head.
+            s.v0 = 1.0f;
+            s.v1 = 0.0f;
+            s.blend = gfx::Blend::Alpha;
+            s.colour[0] = 0xF3 / 255.0f;
+            s.colour[1] = 0xE8 / 255.0f;
+            s.colour[2] = 0xD4 / 255.0f;
+            s.colour[3] = 0.8f * alpha;
+            ctx.renderer.effects().add(s);
+        }
+        const float at[3] = {0.0f, 0.0f, 1.0f};
+        ctx.renderer.effects().draw(gfx::ViewHud, eye, screen, at);
+    }
+    if (ctx.curtain.ready() && alpha > 0.0f) {
+        ctx.curtain.begin(w, h);
+        // No word for the stage under it any more (the user, 2026-10-06: 'dont show anymore
+        // what is loading, just preloader'): the ring, its number and the letter.
+        // The share done, in the ring. Held under 100 until the worker has actually
+        // finished, which is when the spinner goes.
+        char percent[8];
+        std::snprintf(percent, sizeof percent, "%d%%",
+                      std::min(99, int(shown * 100.0f)));
+        const float small = 1.8f * unit;
+        const float wide = ctx.curtain.measure(small, percent);
+        const uint32_t gold = (uint32_t(alpha * 0.8f * 255.0f) << 24) | 0x0061bdffu;
+        ctx.curtain.text(cx - wide * 0.5f, cy - gfx::Overlay::lineHeight(small) * 0.5f,
+                         small, gold, percent);
+        const uint32_t parchment = (uint32_t(alpha * 0.5f * 255.0f) << 24) | 0x00b8c8d4u;
+        if (look.title) {
+            // The tool's name over the ring, in the ring's gold.
+            const float big = 3.0f * unit;
+            const float titleWide = ctx.curtain.measure(big, look.title);
+            ctx.curtain.text(cx - titleWide * 0.5f,
+                             cy - radius - 28.0f * unit - gfx::Overlay::lineHeight(big), big,
+                             gold, look.title);
+        }
+        if (under) {
+            // What is happening in place of the stage, under the ring: the first run's graphics
+            // being set up (app/tuner.h).
+            const float underScale = 1.65f * unit;
+            const float underWide = ctx.curtain.measure(underScale, under);
+            ctx.curtain.text(cx - underWide * 0.5f, cy + radius + 28.0f * unit, underScale,
+                             parchment, under);
+        }
+        if (look.stages) {
+            // What the worker is on, under the ring: the land, the town, the wardrobe.
+            const std::string what = core::Loading::what();
+            const float stageScale = 1.65f * unit;
+            const float stageWide = ctx.curtain.measure(stageScale, what);
+            ctx.curtain.text(cx - stageWide * 0.5f, cy + radius + 28.0f * unit, stageScale,
+                             parchment, what);
+        }
+        float y = letterTop;
+        for (const std::string& line : (look.stages ? std::vector<std::string>() : letterLines)) {
+            const float wide = ctx.curtain.measure(letterScale, line);
+            ctx.curtain.text(cx - wide * 0.5f, y, letterScale, parchment, line);
+            y += leading;
+        }
+        // The build, small in the bottom left corner (the user, 2026-10-09: "show build
+        // version on loading screen on small font bottom left side", a step larger on
+        // 2026-10-16: "client version text size has to be little bit bigger").
+        const float versionScale = 1.45f * unit;
+        ctx.curtain.text(16.0f * unit, float(h) - 16.0f * unit -
+                                           gfx::Overlay::lineHeight(versionScale),
+                         versionScale, parchment, MU2_BUILD_VERSION);
+        ctx.curtain.submit(gfx::ViewHud);
+    }
+}
+
+bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitEarly,
+                    bool keepAmbient, const std::function<bool(double seconds)>& settle,
+                    const Look& look) {
+    std::atomic<int> loaded{0};  // 0 loading, 1 ready, -1 what was asked for did not open
+    core::Loading::reset();
+    if (look.music) {
+        ambient().start(core::join(ctx.paths.assets, "music/loading.mp3"),
+                        ctx.args.mute ? 0.0f : float(ctx.args.volume) / 100.0f);
+    }
+    std::thread loader([&]() { loaded.store(load() ? 1 : -1); });
+    // In front when the load began, in front when it ends (gfx::Window::toFront): something took
+    // the focus while the world came up on a Windows PC, and the player had to Alt+Tab back
+    // (the user, 2026-10-15). One he moved away from himself is left where he put it.
+    const bool inFront = ctx.window.focused();
+
+    LoadingScreen screen;
+    screen.open(ctx, !look.stages);
     const auto spinner = [&](float alpha, double seconds) {
-        {
-            const float dt = float(std::max(0.0, seconds - shownAt));
-            shownAt = seconds;
-            const float real = core::Loading::at();
-            const float ceiling = real + (core::Loading::stageEnd() - real) * 0.85f;
-            if (shown < real) shown += (real - shown) * std::min(1.0f, dt * 10.0f);
-            else if (shown < ceiling) shown += (ceiling - shown) * std::min(1.0f, dt * 0.25f);
-        }
-        const int w = ctx.window.width(), h = ctx.window.height();
-        bgfx::setViewFrameBuffer(gfx::ViewHud, gfx::screenTarget());
-        bgfx::setViewRect(gfx::ViewHud, 0, 0, uint16_t(w), uint16_t(h));
-        bgfx::setViewClear(gfx::ViewHud, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff,
-                           1.0f, 0);
-        bgfx::touch(gfx::ViewHud);
-        const float unit = float(h) / 1080.0f;
-        const float cx = float(w) * 0.5f, cy = float(h) * 0.5f;
-        const float radius = 30.0f * unit;
-        // The letter: small, centred, in a faint parchment grey, laid up from the foot.
-        // Wrapped again only when the window's width changes. Not the studio's.
-        const float letterScale = 1.65f * unit;
-        if (ctx.curtain.ready() && w != letterWidth) {
-            letterWidth = w;
-            letterLines = wrap(ctx.curtain, letterScale,
-                               std::min(float(w) - 64.0f * unit, 780.0f * unit), kLetter);
-        }
-        const float leading = gfx::Overlay::lineHeight(letterScale) * 1.55f;
-        const float letterTop = float(h) - 40.0f * unit - leading * float(letterLines.size());
-        if (alpha > 0.0f && bgfx::isValid(dot)) {
-            // Screen space through the effects pass: an orthographic projection in pixels
-            // with y running down, and a view that is the identity, which leaves its
-            // billboard axes as x right and y down -- so a sprite's position is a pixel and
-            // its half-extents are pixels too.
-            float screen[16];
-            bx::mtxOrtho(screen, 0.0f, float(w), float(h), 0.0f, -1.0f, 1.0f, 0.0f,
-                         bgfx::getCaps()->homogeneousDepth, bx::Handedness::Right);
-            float eye[16];
-            bx::mtxIdentity(eye);
-            ctx.renderer.effects().begin();
-            const auto put = [&](float x, float y, float half, float a, bool add) {
-                gfx::Sprite s;
-                s.position[0] = x;
-                s.position[1] = y;
-                s.position[2] = 0.0f;
-                s.halfWidth = s.halfHeight = half;
-                s.sheet = dot;
-                s.blend = add ? gfx::Blend::Additive : gfx::Blend::Alpha;
-                // MU's marker gold, warmer at the head than at the tail.
-                s.colour[0] = 1.0f;
-                s.colour[1] = 0.74f;
-                s.colour[2] = 0.38f;
-                s.colour[3] = a * alpha;
-                ctx.renderer.effects().add(s);
-            };
-            // The track the ribbon runs on: a faint closed ring, so the arc is read as
-            // something travelling round a circle rather than as a shape adrift.
-            // Enough of them, and wide enough, that they overlap into a line: at 72 dots
-            // of 3 px the ring read as a dotted circle, which is the opposite of smooth.
-            for (int i = 0; i < 160; ++i) {
-                const float angle = float(i) / 160.0f * 6.2831853f;
-                put(cx + std::cos(angle) * radius, cy + std::sin(angle) * radius,
-                    2.2f * unit, 0.055f, false);
-            }
-            // The ribbon: enough overlapping dots that it is a continuous stroke and not a
-            // string of beads, thickening and brightening towards the head. Additive, so
-            // where the dots overlap it glows rather than banding.
-            const float head = float(seconds) * 4.6f;  // radians a second
-            constexpr int kAlong = 120;
-            constexpr float kSweep = 3.5f;  // radians of arc behind the head
-            for (int i = 0; i < kAlong; ++i) {
-                const float along = float(i) / float(kAlong - 1);  // 0 tail .. 1 head
-                const float angle = head - (1.0f - along) * kSweep;
-                // Eased at both ends: the tail dies away instead of stopping, and the head
-                // is a rounded cap rather than a cut.
-                const float taper = along * along * (3.0f - 2.0f * along);
-                const float cap = 1.0f - std::pow(std::max(0.0f, along - 0.94f) / 0.06f, 2.0f);
-                put(cx + std::cos(angle) * radius, cy + std::sin(angle) * radius,
-                    (1.1f + 2.2f * taper) * unit, 0.10f * taper * std::max(0.0f, cap), true);
-            }
-            // And the flare at the head: two soft haloes over the brightest dot, which is
-            // what makes it read as a light being carried round rather than a painted arc.
-            put(cx + std::cos(head) * radius, cy + std::sin(head) * radius, 5.0f * unit,
-                0.55f, true);
-            put(cx + std::cos(head) * radius, cy + std::sin(head) * radius, 11.0f * unit,
-                0.16f, true);
-            put(cx + std::cos(head) * radius, cy + std::sin(head) * radius, 22.0f * unit,
-                0.05f, true);
-            // The logo, its foot a little over the letter's first line, in the logo's own cream.
-            if (bgfx::isValid(logo)) {
-                const float half = 65.0f * unit;
-                gfx::Sprite s;
-                s.position[0] = cx;
-                s.position[1] = letterTop - 22.0f * unit - half * logoAspect;
-                s.halfWidth = half;
-                s.halfHeight = half * logoAspect;
-                s.sheet = logo;
-                // The screen's y runs down and the sheet's v up: drawn as it is, it stood on its head.
-                s.v0 = 1.0f;
-                s.v1 = 0.0f;
-                s.blend = gfx::Blend::Alpha;
-                s.colour[0] = 0xF3 / 255.0f;
-                s.colour[1] = 0xE8 / 255.0f;
-                s.colour[2] = 0xD4 / 255.0f;
-                s.colour[3] = 0.8f * alpha;
-                ctx.renderer.effects().add(s);
-            }
-            const float at[3] = {0.0f, 0.0f, 1.0f};
-            ctx.renderer.effects().draw(gfx::ViewHud, eye, screen, at);
-        }
-        if (ctx.curtain.ready() && alpha > 0.0f) {
-            ctx.curtain.begin(w, h);
-            // No word for the stage under it any more (the user, 2026-10-06: 'dont show anymore
-            // what is loading, just preloader'): the ring, its number and the letter.
-            // The share done, in the ring. Held under 100 until the worker has actually
-            // finished, which is when the spinner goes.
-            char percent[8];
-            std::snprintf(percent, sizeof percent, "%d%%",
-                          std::min(99, int(shown * 100.0f)));
-            const float small = 1.8f * unit;
-            const float wide = ctx.curtain.measure(small, percent);
-            const uint32_t gold = (uint32_t(alpha * 0.8f * 255.0f) << 24) | 0x0061bdffu;
-            ctx.curtain.text(cx - wide * 0.5f, cy - gfx::Overlay::lineHeight(small) * 0.5f,
-                             small, gold, percent);
-            const uint32_t parchment = (uint32_t(alpha * 0.5f * 255.0f) << 24) | 0x00b8c8d4u;
-            if (look.title) {
-                // The tool's name over the ring, in the ring's gold.
-                const float big = 3.0f * unit;
-                const float titleWide = ctx.curtain.measure(big, look.title);
-                ctx.curtain.text(cx - titleWide * 0.5f,
-                                 cy - radius - 28.0f * unit - gfx::Overlay::lineHeight(big), big,
-                                 gold, look.title);
-            }
-            if (look.stages) {
-                // What the worker is on, under the ring: the land, the town, the wardrobe.
-                const std::string what = core::Loading::what();
-                const float stageScale = 1.65f * unit;
-                const float stageWide = ctx.curtain.measure(stageScale, what);
-                ctx.curtain.text(cx - stageWide * 0.5f, cy + radius + 28.0f * unit, stageScale,
-                                 parchment, what);
-            }
-            float y = letterTop;
-            for (const std::string& line : (look.stages ? std::vector<std::string>() : letterLines)) {
-                const float wide = ctx.curtain.measure(letterScale, line);
-                ctx.curtain.text(cx - wide * 0.5f, y, letterScale, parchment, line);
-                y += leading;
-            }
-            // The build, small in the bottom left corner (the user, 2026-10-09: "show build
-            // version on loading screen on small font bottom left side", a step larger on
-            // 2026-10-16: "client version text size has to be little bit bigger").
-            const float versionScale = 1.45f * unit;
-            ctx.curtain.text(16.0f * unit, float(h) - 16.0f * unit -
-                                               gfx::Overlay::lineHeight(versionScale),
-                             versionScale, parchment, MU2_BUILD_VERSION);
-            ctx.curtain.submit(gfx::ViewHud);
-        }
+        screen.draw(ctx, look, alpha, seconds, -1.0f, nullptr);
         // MU_PRELOADER_SHOT=<file.png>: the spinner a second in, for looking at the loading
         // screen itself, which --shot (the loop's frames) never sees.
         static const char* shot = std::getenv("MU_PRELOADER_SHOT");
@@ -518,8 +550,7 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
     if (inFront && !ctx.window.focused()) ctx.window.toFront();
     if (!keepAmbient) ambient().stop();
     ctx.window.holdVsync(false);
-    if (bgfx::isValid(dot)) bgfx::destroy(dot);
-    if (bgfx::isValid(logo)) bgfx::destroy(logo);
+    screen.close();
     core::logf("preloader: the world loaded behind the spinner in %.2f s; %d spinner frames "
                "at %d Hz, mean %.1f ms, worst gap %.1f ms, frame %.1f ms mean %.1f worst",
                since(spun), spins, ctx.window.refreshHz(),
