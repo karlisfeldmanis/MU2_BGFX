@@ -458,8 +458,9 @@ void Launcher::start() {
             std::string error;
             unsigned long pid = 0;
             const Region& region = regionNamed(settings_.region);
-            core::logf("launcher: playing in %s (%s)", region.name.c_str(), region.server.c_str());
-            if (a != Answer::Ok || !play(settings_.install, manifest_, ticket, region.server, error, &pid)) {
+            const std::string server = options_.server.empty() ? region.server : options_.server;
+            core::logf("launcher: playing in %s (%s)", region.name.c_str(), server.c_str());
+            if (a != Answer::Ok || !play(settings_.install, manifest_, ticket, server, error, &pid)) {
                 message_ = a != Answer::Ok ? message : error;
                 home_ = Home::Failed;
                 return;

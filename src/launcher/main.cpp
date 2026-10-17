@@ -188,11 +188,12 @@ int main(int argc, char** argv) {
             ui.renderer = r == "d3d11" ? 2 : r == "vulkan" ? 1 : -1;
         }
         else if (a == "--no-self-update") ui.selfUpdate = false;
+        else if (a == "--server" && i + 1 < argc) ui.server = argv[++i];
     }
-    // Handed on to a newer launcher: where it was pointed, and nothing else.
+    // Handed on to a newer launcher: where it was pointed and what it draws with, and nothing else.
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
-        if ((a == "--site" || a == "--platform") && i + 1 < argc) {
+        if ((a == "--site" || a == "--platform" || a == "--server" || a == "--renderer") && i + 1 < argc) {
             ui.args.push_back(a);
             ui.args.push_back(argv[i + 1]);
         }

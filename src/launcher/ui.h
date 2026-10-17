@@ -19,6 +19,9 @@ struct UiOptions {
     int renderer = -1;
     // --no-self-update: this launcher stays as it is (launcher/self_update.h).
     bool selfUpdate = true;
+    // --server HOST[:PORT]: the game Play starts goes there, over the region's -- a test's own
+    // server beside its own --site, so a Wine run never reaches a live one.
+    std::string server;
     // What it was started with, handed on to a newer launcher that takes its place.
     std::vector<std::string> args;
 };
