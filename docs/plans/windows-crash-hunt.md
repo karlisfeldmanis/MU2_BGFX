@@ -184,3 +184,30 @@ MB_SETFOREGROUND` closes itself after ~5 s under Wine.
 8. **Non-ASCII paths** outside the UTF-8 code page (Windows before 1903): narrow strings into
    `std::filesystem::path` in pack, files and roster; `path.string() + ".new"` in the launcher.
    The Jānis prefix check is still not done.
+
+## The second pass (2026-10-17)
+
+The new code since the first pass and every report on the box, read by five agents (network,
+GPU and restart, files and launcher, NVIDIA, AMD). The evidence: every NVIDIA device lost was on
+Direct3D 11 (a GTX 950 put there by the low-end first run, Gordichan's GTX 1650 laptop at 150 fps
+uncapped), none on Vulkan since the acquire patch; no AMD crash at all.
+
+| What | Commit | Shown |
+|---|---|---|
+| A renderer that does not start tries the other, named or Auto | cac656c5 | Wine, d3d11 forced: old refused, new on Vulkan to the character screen |
+| A lost device also caps the next start at 60; minimised draws at 30 | cac656c5 | minimised: 200-250 fps old, 27 new; the loss's cap not run |
+| The loss's restart and box pause the freeze watch, not join it; one minidump at a time | cac656c5 | read only |
+| Auto-play ends at the character screen | cac656c5 | read only |
+| The launcher follows a game that restarts itself (job; process group) | 71731e9d | stand-in under Wine and on the Mac; not with the real pair |
+| Launcher close: hidden at once, 3 s for its threads, then _Exit | 97d2aaf0 | Wine, a site that never answers: 14 s old, 3 s new |
+| A check asked while the worker is busy is asked again | 97d2aaf0 | read only |
+| Low-end first run: Direct3D 11 not for NVIDIA; 2-3.5 GB cards Medium | 97d2aaf0 | a table of eleven cards |
+| Vulkan out of memory is a lost device, not silence (bgfx-vulkan-memory.patch) | b14fabe0 | compiled, not run |
+| NVIDIA on Direct3D 11 that loses its device starts again on Auto | b14fabe0 | not run |
+
+**Still open:** the first pass's 1-3 and 6-8 (the hang dump itself, the pipeline cache, the
+slow-load drop, options.txt in place, a second copy, non-ASCII paths); overlay DLLs (RTSS,
+ShadowPlay, OBS) named in the log and the report; the D3D11 swap chain's frame latency
+(`maxFrameLatency` 0 is ignored, the default 3 stays); DNS on the main thread in a reconnect's join.
+Under Wine the launcher cannot name the card (no DXGI factory), calls it Low and draws itself with
+Direct3D 11, which plain Wine lacks: run it with `--renderer vulkan`.
