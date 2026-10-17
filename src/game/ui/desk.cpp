@@ -43,6 +43,25 @@ static bool usable(const content::Tables& tables, int32_t item) {
            sim::antidote(row);
 }
 
+// The worn slot a right-click puts a carried thing in, or -1 for a thing that is not worn: where
+// placeOf puts it, or the second ring's slot or a knight's left hand when that is the one empty.
+// Whatever stands in the slot comes down in its place (sim::move).
+static int wornSlotFor(const Play& play, const sim::Held& what) {
+    const content::Tables* tables = play.realm().tables();
+    if (!tables || what.empty() || size_t(what.item) >= tables->items.size()) return -1;
+    const content::ItemRow& row = tables->items[size_t(what.item)];
+    const int place = sim::placeOf(row);
+    if (place < 0) return -1;
+    const sim::Satchel& bag = play.realm().satchel();
+    const sim::Kin kin = play.realm().hero().kin;
+    for (const int other : {int(sim::kRingLeft), int(sim::kWeaponLeft)}) {
+        if (other != place && !bag[place].empty() && bag[other].empty() && sim::placesIn(row, kin, other)) {
+            return other;
+        }
+    }
+    return place;
+}
+
 // Whether a carried row may stand in for a bound one: the same group, and either exactly the
 // Ale or the Town Portal, or the same family at no higher a rank -- the healing family falls
 // to the apple and the mana family to the small mana potion. Quick.Substitutes.
@@ -1198,6 +1217,16 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         } else if (asked.use >= 0 && dealing_ && sim::baggable(asked.use)) {
             // In a trade a right-click puts it up, as at the machine.
             expect(play.dealPut(asked.use, -1), carriesBound(asked.use) ? Then::Bound : Then::TookOrRefused);
+        } else if (asked.use >= 0 && trading_ && sim::baggable(asked.use)) {
+            // At a merchant a right-click sells it, as a drop on the shelf does (the user,
+            // 2026-10-17: "allow to sell item with right click if vendor is opened").
+            expect(play.sell(asked.use), Then::Refused);
+        } else if (const int worn = asked.use >= 0 && sim::baggable(asked.use)
+                                        ? wornSlotFor(play, play.realm().satchel()[asked.use])
+                                        : -1;
+                   worn >= 0) {
+            // Anywhere else a right-click on gear wears it, as a drag onto its slot does.
+            expect(play.moveItem(asked.use, worn), Then::TookOrRefused);
         } else if (asked.use >= 0) {
             expect(play.useItem(asked.use), Then::Refused);
         }
