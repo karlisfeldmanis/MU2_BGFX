@@ -122,6 +122,13 @@ constexpr int kMostLead = 8;
 constexpr size_t kMostLedOwed = 20;
 // An order whose tick the mirror steps later than this after the click is logged (RemoteLink::step).
 constexpr float kSlowAnswerMs = 200.0f;
+// A tick taken this long after the one before, on a client pumping steadily (kSteadyPump), is
+// logged with the way it came (RemoteLink::offer): the world stood still for it. By datagram, the
+// whole line was late; by the stream, a datagram was lost and the stream's resend was waited for.
+// The user, 2026-10-17: "time to time there happens little Delay,Hold-up,Hiccup related with
+// server conection". **ours**.
+constexpr auto kLateTick = std::chrono::milliseconds(200);
+constexpr auto kSteadyPump = std::chrono::milliseconds(100);
 constexpr float kTickMs = 50.0f;  // the realm's 20 Hz (server/src/main.cpp kTickSeconds)
 // A Ping's answer read this long after the pump before it is not a round trip: it may have sat
 // unread for all of that. See RemoteLink::pump.
@@ -236,6 +243,14 @@ void RemoteLink::offer(net::Tick&& tick, bool byUdp) {
         return;
     }
     if (lastTick_ < 0 && byUdp) return;  // the stream says where the ticks begin
+    const auto now = Clock::now();
+    if (pumpSteady_ && takenAt_ != Clock::time_point{} && now - takenAt_ > kLateTick) {
+        core::logf("server: tick %u came %.0f ms after the one before, by %s; ping %.0f ms, %u by datagram "
+                   "and %u by the stream so far", tick.tick,
+                   double(std::chrono::duration<float, std::milli>(now - takenAt_).count()),
+                   byUdp ? "datagram" : "the stream", double(rttMs_), byUdp_, byStream_);
+    }
+    takenAt_ = now;
     lastTick_ = tick.tick;
     ++(byUdp ? byUdp_ : byStream_);
     ticks_.push_back(std::move(tick));
@@ -295,6 +310,7 @@ void RemoteLink::pump() {
     // on a later pump that by itself looked prompt ("the hero led 8 ticks (1888 ms round trip)").
     if (pumpedAt_ != Clock::time_point{} && now - pumpedAt_ > kUnreadMost && pingOut_) pingUnread_ = true;
     const bool unread = pingUnread_;
+    pumpSteady_ = pumpedAt_ != Clock::time_point{} && now - pumpedAt_ < kSteadyPump;
     pumpedAt_ = now;
     bool askAgain = false;
     while (!outHeld_.empty() && outHeld_.front().due <= now && socket_.open()) {

@@ -167,6 +167,8 @@ private:
     float rttMs_ = -1.0f;
     Clock::time_point heardAt_{};   // the last byte from the server, by stream or datagram
     Clock::time_point pumpedAt_{};  // the last pump: a Ping's answer read later than kUnreadMost is not counted
+    bool pumpSteady_ = false;       // this pump came soon after the last: a late tick is the line's
+    Clock::time_point takenAt_{};   // when the newest tick was taken (RemoteLink::offer)
     int serverRain_ = -1;  // the latest tick's rain: -1 unknown, 0 dry, 1 wet
     net::Who who_;         // the players' names, the latest the server sent
     // Chat lines heard and not yet taken; the oldest dropped past kHeardMost, if nobody takes them.
