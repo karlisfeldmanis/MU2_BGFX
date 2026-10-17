@@ -147,6 +147,10 @@ constexpr int kSpikesToTake = 3;
 // show disconnect window for players"). A server that restarts closes the line and is caught
 // at once; this is for one that went quiet -- the box down, or the way to it.
 constexpr auto kSilentMost = std::chrono::seconds(5);
+// When a cut line may be joined again (RemoteLink::rejoinIn): the server's own kSilentFor and a
+// second over, from the last byte heard, for a silent one; two seconds after a close.
+constexpr auto kRejoinSilent = std::chrono::seconds(11);
+constexpr auto kRejoinClosed = std::chrono::seconds(2);
 // Chat lines held for a taker (Link::takeHeard); a client that never takes them keeps the last few.
 constexpr size_t kHeardMost = 256;
 
@@ -166,7 +170,19 @@ const char* whyOf(net::Why why) {
 
 void RemoteLink::close(const char* why) {
     if (why_.empty()) why_ = why;
+    if (cutAt_ == Clock::time_point{}) cutAt_ = Clock::now();
     socket_.close();
+}
+
+double RemoteLink::rejoinIn() const {
+    if (socket_.open() || cutForGood_) return -1.0;
+    const auto now = Clock::now();
+    // A line closed is closed at both ends (the server's "gone"): a breath, and in again. One
+    // that went silent may still be open on the server, which holds his character on it until
+    // it has heard nothing for its kSilentFor (server/src/host.h, 10 s) and refuses him till
+    // then ("his character is already playing"): so from the last byte heard, and a second over.
+    const auto from = cutSilent_ ? heardAt_ + kRejoinSilent : cutAt_ + kRejoinClosed;
+    return std::max(0.0, std::chrono::duration<double>(from - now).count());
 }
 
 bool RemoteLink::earlyDue() const {
@@ -230,6 +246,15 @@ bool RemoteLink::lost() {
     return double(lagDice_ & 0xFFFFu) / 65536.0 < lossChance_;
 }
 
+void RemoteLink::setStall(double ms, double everySeconds) {
+    stallMs_ = std::max(0.0, ms);
+    stallEvery_ = std::max(0.0, everySeconds);
+    stallFrom_ = Clock::now();
+    if (stallMs_ > 0.0 && stallEvery_ > 0.0) {
+        core::logf("server: a test's line stops for %.0f ms every %.0f s", stallMs_, stallEvery_);
+    }
+}
+
 void RemoteLink::setLoss(double chance) {
     lossChance_ = std::clamp(chance, 0.0, 1.0);
     if (lossChance_ > 0.0) core::logf("server: a test's line loses %.1f%% of its packets", lossChance_ * 100.0);
@@ -246,15 +271,6 @@ void RemoteLink::offer(net::Tick&& tick, bool byUdp) {
     const auto now = Clock::now();
     if (pumpSteady_ && takenAt_ != Clock::time_point{} && now - takenAt_ > kLateTick) {
         core::logf("server: tick %u came %.0f ms after the one before, by %s; ping %.0f ms, %u by datagram "
-void RemoteLink::setStall(double ms, double everySeconds) {
-    stallMs_ = std::max(0.0, ms);
-    stallEvery_ = std::max(0.0, everySeconds);
-    stallFrom_ = Clock::now();
-    if (stallMs_ > 0.0 && stallEvery_ > 0.0) {
-        core::logf("server: a test's line stops for %.0f ms every %.0f s", stallMs_, stallEvery_);
-    }
-}
-
                    "and %u by the stream so far", tick.tick,
                    double(std::chrono::duration<float, std::milli>(now - takenAt_).count()),
                    byUdp ? "datagram" : "the stream", double(rttMs_), byUdp_, byStream_);
@@ -307,6 +323,13 @@ void RemoteLink::ping() {
 void RemoteLink::pump() {
     if (!socket_.open()) return;
     const auto now = Clock::now();
+    if (stallMs_ > 0.0 && stallEvery_ > 0.0) {
+        const double into = std::fmod(std::chrono::duration<double>(now - stallFrom_).count(), stallEvery_);
+        if (into >= stallEvery_ - stallMs_ / 1000.0) {  // the last `ms` of each period
+            pumpedAt_ = now;  // this client is pumping; it is the line that is not
+            return;
+        }
+    }
     // How long what is read now may have waited unread: since the last pump. Joining a world
     // with anyone in it, the first Ping goes out in `join`, while the world's past is fetched,
     // and its answer is not read until the world has loaded behind the spinner -- one to five
@@ -323,13 +346,6 @@ void RemoteLink::pump() {
     pumpedAt_ = now;
     bool askAgain = false;
     while (!outHeld_.empty() && outHeld_.front().due <= now && socket_.open()) {
-    if (stallMs_ > 0.0 && stallEvery_ > 0.0) {
-        const double into = std::fmod(std::chrono::duration<double>(now - stallFrom_).count(), stallEvery_);
-        if (into >= stallEvery_ - stallMs_ / 1000.0) {  // the last `ms` of each period
-            pumpedAt_ = now;  // this client is pumping; it is the line that is not
-            return;
-        }
-    }
         if (!socket_.send(outHeld_.front().bytes)) {
             core::logError("server: the connection is gone");
             close("The connection to the server was lost.");
@@ -458,6 +474,9 @@ void RemoteLink::pump() {
             if (ok) {
                 core::logError("server: it closed the line (why %d)", int(bye.why));
                 why_.clear();
+                // Played from another line (a second client: joined again, this one would throw
+                // that one off), or unreadable: a new line meets the same. The rest are rejoined.
+                cutForGood_ = bye.why == net::Why::Elsewhere || bye.why == net::Why::Protocol;
                 close(whyOf(bye.why));
                 break;
             }
@@ -472,6 +491,7 @@ void RemoteLink::pump() {
         }
         if (!ok) {
             core::logError("server: a frame this client cannot read; closing");
+            cutForGood_ = true;
             close("The server sent what this client cannot read.");
             break;
         }
@@ -484,6 +504,7 @@ void RemoteLink::pump() {
     if (socket_.open() && heardAt_ != Clock::time_point{} && now - heardAt_ > kSilentMost) {
         core::logError("server: nothing heard in %.0f s; the line is taken for gone (%zu ticks unstepped)",
                        double(std::chrono::duration<float>(now - heardAt_).count()), ticks_.size());
+        cutSilent_ = true;
         close("The server stopped answering.");
     }
 }
@@ -670,6 +691,11 @@ const sim::Body* RemoteLink::ahead() {
     return aheadOk_ ? ahead_->find(you_) : nullptr;
 }
 
+const sim::Realm* RemoteLink::aheadRealm() {
+    if (aheadStale_) predict();
+    return aheadOk_ ? ahead_.get() : nullptr;
+}
+
 void RemoteLink::catchUp() {
     const size_t past = ticks_.size();
     const auto from = std::chrono::steady_clock::now();
@@ -691,11 +717,6 @@ void RemoteLink::catchUp() {
         core::logError("server: the mirror has no player #%u after the world's past", you_);
     }
     if (past > 0) {
-const sim::Realm* RemoteLink::aheadRealm() {
-    if (aheadStale_) predict();
-    return aheadOk_ ? ahead_.get() : nullptr;
-}
-
         core::logf("server: the world's past, %zu ticks, replayed in %.2f s; %d players here", past,
                    std::chrono::duration<double>(std::chrono::steady_clock::now() - from).count(),
                    mirror_.playersHere());

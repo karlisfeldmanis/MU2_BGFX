@@ -10,6 +10,7 @@
 // the window, the renderer and the textures, which outlive it. See app/context.h.
 #pragma once
 
+#include <atomic>
 #include <cstdio>
 #include <memory>
 #include <mutex>
@@ -130,6 +131,20 @@ private:
         std::string why;
     };
     std::shared_ptr<BugSending> bugSending_;
+    // **Reconnect** (the user, 2026-10-17: "client automatically tries to reconnect without
+    // going to char selection screen"): the line cut, and Link::rejoinIn says the server would
+    // take him back, a thread knocks on the server every kKnockEvery; once it answers, this same
+    // world is opened again where he stands, as a map change opens the next -- a fresh line, a
+    // Hello with his token, and the server brings him back whole. Shared, as BugSending is: a
+    // knock still out when the run ends has its answer written nowhere that matters.
+    void rejoin(Context& ctx, double seconds);
+    struct Knock {
+        std::atomic<int> said{0};  // 0 out, 1 the server answered, 2 it did not
+    };
+    std::shared_ptr<Knock> knock_;
+    double knockWait_ = 0.0;
+    int knocks_ = 0;
+    static constexpr double kKnockEvery = 3.0;
     void sendBug(const Context& ctx, const game::Desk::BugAsk& ask);
     // One store of item models for both the windows' pictures and what lies on the grass.
     game::ItemModels itemModels_;

@@ -1,5 +1,6 @@
 #include "app/modes/play_mode.h"
 
+#include "net/socket.h"
 #include "net/wire.h"
 
 #include <bgfx/bgfx.h>
@@ -395,8 +396,8 @@ bool PlayMode::open(Context& ctx) {
                 }
                 world_.played().useServer(host, port, args.serverToken, args.account);
                 world_.played().lagLine(args.lag, args.jitter, args.loss, args.udp);
-            }
                 world_.played().stallLine(args.stallMs, args.stallEvery, args.coast);
+            }
             world_.play(assets, args.world, args.seed, args.kin, args.level, args.weapon,
                         args.shield);
             // His character is in another world (net::Elsewhere): that one, opened as a map
@@ -984,6 +985,14 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     core::Args& args = ctx.args;
     const double deltaSeconds = at.deltaSeconds;
     if (args.lobby && args.lobbyBack >= 0 && at.index >= args.lobbyBack) backNow_ = true;
+    // A world opened on a server whose join was refused -- a reconnect the server would not
+    // have yet, a map change into a restarted one -- has no realm to play: the character screen,
+    // which says what the server says, rather than a still world with nothing in it.
+    if (args.lobby && !args.server.empty() && !world_.played().isOpen() && travelTo_.empty() && !backNow_) {
+        core::logError("play: the server would not have him in %s; back to the character screen",
+                       args.world.c_str());
+        backNow_ = true;
+    }
 
     // --invite: whoever named is not in his party yet is asked again, every three seconds.
     if (!args.invite.empty() && world_.played().isOpen() && world_.played().remote() &&
@@ -996,6 +1005,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             if (!in) world_.played().askParty({net::PartyWhat::Invite, name});
         }
     }
+
+    rejoin(ctx, deltaSeconds);
 
     // Through a gate on the last tick: on to the map it leads to, at the tile the realm chose
     // there, facing the way the exit gate says (sim/gates.h).
@@ -2084,6 +2095,58 @@ void PlayMode::travel(Context& ctx, const std::string& world, int column, int ro
         args.savePath = savePath_;
         args.fresh = false;
     }
+}
+
+void PlayMode::rejoin(Context& ctx, double seconds) {
+    game::Play& play = world_.played();
+    if (!play.isOpen() || !play.cut() || !travelTo_.empty() || !desk_.ready()) return;
+    const core::Args& args = ctx.args;
+    const double in = play.rejoinIn();
+    if (in < 0.0) {
+        desk_.rejoining(false, {});
+        return;
+    }
+    // Reconnect pressed: knocks at once, though not before the server would have him.
+    if (desk_.takeRejoin()) knockWait_ = 0.0;
+    if (knock_) {
+        const int said = knock_->said.load();
+        if (said == 0) {
+            desk_.rejoining(true, "Reconnecting...");
+            return;
+        }
+        knock_.reset();
+        if (said == 1) {
+            const sim::HeroRecord hero = play.record();
+            core::logf("reconnect: the server answers after %d knock(s); %s again at %d,%d", knocks_ + 1,
+                       args.world.c_str(), hero.column, hero.row);
+            travel(ctx, args.world, hero.column, hero.row, hero.facing);
+            return;
+        }
+        ++knocks_;
+        knockWait_ = kKnockEvery;
+    }
+    knockWait_ = std::max(0.0, knockWait_ - seconds);
+    const double wait = std::max(in, knockWait_);
+    if (wait > 0.0) {
+        char note[64];
+        std::snprintf(note, sizeof note, "Reconnecting in %d s...", int(std::ceil(wait)));
+        desk_.rejoining(true, note);
+        return;
+    }
+    const size_t colon = args.server.rfind(':');
+    const bool hasPort = colon != std::string::npos;
+    const std::string host = hasPort ? args.server.substr(0, colon) : args.server;
+    const int port = hasPort ? std::atoi(args.server.c_str() + colon + 1) : net::kDefaultPort;
+    if (knocks_ == 0) core::logf("reconnect: knocking on %s:%d", host.c_str(), port);
+    knock_ = std::make_shared<Knock>();
+    desk_.rejoining(true, "Reconnecting...");
+    std::thread([knock = knock_, host, port] {
+        net::Socket socket;
+        std::string error;
+        const bool up = socket.connect(host, port, kKnockEvery, error);
+        if (!up) core::logf("reconnect: no answer yet (%s)", error.c_str());
+        knock->said = up ? 1 : 2;
+    }).detach();
 }
 
 void PlayMode::goBack(Context& ctx, double seconds) {

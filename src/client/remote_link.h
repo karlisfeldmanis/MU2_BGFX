@@ -86,6 +86,7 @@ public:
     bool connected() const { return socket_.open(); }
     bool cut() const override { return !socket_.open(); }
     std::string cutWhy() const override { return socket_.open() ? std::string() : why_; }
+    double rejoinIn() const override;
     // Ticks whose hash the server sent and the mirror matched, and the first one it did not.
     uint32_t agreed() const { return agreed_; }
     uint32_t divergedAt() const { return divergedAt_; }
@@ -138,6 +139,9 @@ private:
     uint64_t udpKey_ = 0;
     bool udpWanted_ = true;
     std::string why_;  // cutWhy's
+    Clock::time_point cutAt_{};  // when close() was first called (rejoinIn)
+    bool cutSilent_ = false;     // closed for kSilentMost of nothing: the server may not know yet
+    bool cutForGood_ = false;    // closed on a Bye or a frame that a new line would meet again
     std::string host_;
     int port_ = 0;
     Clock::time_point bindAt_{};
@@ -145,12 +149,12 @@ private:
     std::map<uint32_t, net::Tick> strays_;  // datagrams' ticks past a gap the stream has yet to fill
     uint32_t byUdp_ = 0, byStream_ = 0;
     double lossChance_ = 0.0;
+    double stallMs_ = 0.0, stallEvery_ = 0.0;
+    Clock::time_point stallFrom_{};
     // setLag's: the line's delay each way, its jitter, and the bytes held in each direction.
     double halfLagMs_ = 0.0, jitterMs_ = 0.0;
     struct Held {
         Clock::time_point due;
-    double stallMs_ = 0.0, stallEvery_ = 0.0;
-    Clock::time_point stallFrom_{};
         std::vector<uint8_t> bytes;
     };
     std::deque<Held> inHeld_, outHeld_;

@@ -101,6 +101,8 @@ public:
         lostWhy_ = std::move(why);
         show(Page::Lost);
     }
+    // Its second line, under `why`: how the reconnect goes. Empty says he is kept on the server.
+    void setLostNote(std::string note) { lostNote_ = std::move(note); }
     // Whether Switch Character answers. Only a run that came through the character screen
     // (--lobby) has one to go back to; everywhere else the button stands there inactive.
     void allowSwitch(bool on) { switchable_ = on; }
@@ -137,7 +139,7 @@ private:
     bool editing_ = false;
     const Settings& graphicsShown() const { return editing_ ? pending_ : settings_; }
     std::string place_;
-    std::string lostWhy_;
+    std::string lostWhy_, lostNote_;
     float width_ = 0.0f, height_ = 0.0f;
     float x_ = 0.0f, y_ = 0.0f;  // the sheet's corner, in pixels
     int over_ = -1, pressing_ = -1;

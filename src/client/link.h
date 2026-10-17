@@ -52,6 +52,10 @@ public:
     // Why it went, in a line for the Disconnected window: the server's word when it closed the
     // line itself (net::Bye), else what the client saw. Empty while it is not cut.
     virtual std::string cutWhy() const { return {}; }
+    // Once cut: the seconds until the server would take him back on a new line (PlayMode's
+    // reconnect), 0 for now, -1 for never -- the server's word was that he is played elsewhere,
+    // or the two cannot read each other, and joining again would be refused the same way.
+    virtual double rejoinIn() const { return -1.0; }
     // The round-trip time to the server in milliseconds, smoothed; -1 when there is no server
     // or no measurement yet. The line's alone: a Ping the server echoes the moment it reads it,
     // with no wait for a tick in it.
@@ -115,12 +119,12 @@ public:
     // round trip later. nullptr when there is nothing to lead (a realm of this process, a short
     // line, an event map): then he is drawn where the realm has him, as everyone else is.
     virtual const sim::Body* ahead() { return nullptr; }
+    // The realm ahead itself (whose route the hero coasts along, Play::coast), nullptr as ahead.
+    virtual const sim::Realm* aheadRealm() { return nullptr; }
     // The ticks the drawing holds in hand against a line's jitter (Play::cushion_): the mirror is
     // that much further behind the server, so the hero ahead is led that much further.
     virtual void setCushion(int ticks) {}
     // Which copy of the map the server put him in, from 1 (net::Welcome::copy).
-    // The realm ahead itself (whose route the hero coasts along, Play::coast), nullptr as ahead.
-    virtual const sim::Realm* aheadRealm() { return nullptr; }
     virtual int mapCopy() const { return 1; }
 
 private:

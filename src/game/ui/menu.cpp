@@ -550,7 +550,8 @@ void Menu::rebuild() {
         };
         line(kLostWords, lostWhy_.empty() ? "The connection to the server was lost." : lostWhy_.c_str(),
              style::kBoneHi);
-        line(kLostWords + 24.0f, "Your character is kept on the server.", style::kAshInk);
+        line(kLostWords + 24.0f, lostNote_.empty() ? "Your character is kept on the server." : lostNote_.c_str(),
+             style::kAshInk);
         controls::button(canvas_, at(x_, y_, boxOf(page_, kReconnect)), "Reconnect",
                          Kind::Secondary, state(kReconnect), u);
         controls::rule(canvas_, sheet.x + kMainInset * u, y_ + kLostRule * u,

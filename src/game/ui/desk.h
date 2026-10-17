@@ -252,6 +252,18 @@ public:
     // Switch Character was pressed: the run goes back to the character screen after this frame.
     bool switchAsked() const { return switchAsked_; }
     void allowSwitch(bool on) { menu_.allowSwitch(on); }
+    // The line gone and coming back by itself (PlayMode's reconnect): the Disconnected page's
+    // second line says how it goes, and its Reconnect tries at once rather than going back to
+    // the character screen. `here` false: Reconnect is the character screen, as it was.
+    void rejoining(bool here, std::string note) {
+        rejoinHere_ = here;
+        menu_.setLostNote(std::move(note));
+    }
+    bool takeRejoin() {
+        const bool asked = rejoinAsked_;
+        rejoinAsked_ = false;
+        return asked;
+    }
     // Whether Escape is the game's: in a played world it opens the menu rather than quitting.
     void holdEscape(bool held) { holdEscape_ = held; }
     // Watched, not played (--raid-watch): none of the hero's own interface is drawn -- the plate,
@@ -383,6 +395,7 @@ private:
     std::string heroName_;
     bool quitAsked_ = false;
     bool switchAsked_ = false;
+    bool rejoinHere_ = false, rejoinAsked_ = false;
     bool holdEscape_ = false;
     bool settingsChanged_ = false;
     std::string scriptTyped_;

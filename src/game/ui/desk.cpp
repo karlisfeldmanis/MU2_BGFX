@@ -568,7 +568,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             switchAsked_ = true;
             core::logf("window: switch character asked from the menu");
         }
-        if (asked.reconnect) {
+        if (asked.reconnect && rejoinHere_) {
+            rejoinAsked_ = true;
+            core::logf("window: reconnect asked: at once, where he stands");
+        } else if (asked.reconnect) {
             switchAsked_ = true;
             core::logf("window: reconnect asked: back to the character screen");
         }

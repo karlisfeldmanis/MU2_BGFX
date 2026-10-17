@@ -277,6 +277,7 @@ public:
     // The server's line is gone (Link::cut): the game holds, and the desk says so.
     bool cut() const { return link_ && link_->cut(); }
     std::string cutWhy() const { return link_ ? link_->cutWhy() : std::string(); }
+    double rejoinIn() const { return link_ ? link_->rejoinIn() : -1.0; }  // Link::rejoinIn
     int serverRain() const { return link_ ? link_->serverRain() : -1; }
     float rttMs() const { return link_->rttMs(); }
     // The line under the map's name, "Level 2-40": its whole spawn table, taken before the
@@ -1097,7 +1098,6 @@ private:
         float wasFacing = 0.0f, nowFacing = 0.0f;
         // Where it was drawn when a click cut a tick short; see Play::update.
         float caughtX = 0.0f, caughtY = 0.0f, caughtFacing = 0.0f;
-        float yaw = 0.0f;
         // Where it is drawn while the line is late (Play::coast): walked on along the route the
         // last tick left it, at its own pace, up to kCoastTicks. And what the drawing owes the
         // ticks once they come -- where it was drawn less where they put it -- eased out over
@@ -1105,6 +1105,7 @@ private:
         float coastX = 0.0f, coastY = 0.0f;
         bool coasting = false;
         float offX = 0.0f, offY = 0.0f;
+        float yaw = 0.0f;
         // The top of the body where follow() last stood it, in world metres, and whether it
         // has been stood anywhere yet. What the health bar is hung from; a corpse keeps the
         // last one, since follow() stops placing it.
@@ -1509,11 +1510,11 @@ private:
     // The breed's own name for those lines, or "the hero".
     std::string nameOf(uint32_t id) const;
     void remember();  // the tick's positions become "was", the sim's become "now"
-    // Clips, yaw and where each figure stands, at the smoothed position. `seconds` is the
     // While the line is late: every walking body's coastX/Y, `coastTicks_` on along its route.
     void coast();
     // Where `one` is drawn, in tiles: between its two ticks, or coasting, and its offset.
     void drawnTile(const Drawn& one, float* column, float* row) const;
+    // Clips, yaw and where each figure stands, at the smoothed position. `seconds` is the
     // frame's own, which the coast and the stop are measured in.
     void follow(float seconds);
     // Starts a body's death clip, its hold and its fade.
@@ -1564,7 +1565,6 @@ private:
     std::unique_ptr<sim::Kept> keptFirst_;  // the Welcome's, for the raise (Play::open)
     int serverPort_ = 0;
     double lagMs_ = 0.0, jitterMs_ = 0.0, lossChance_ = 0.0;
-    bool udp_ = true;
     double stallMs_ = 0.0, stallEvery_ = 0.0;
     bool coastOn_ = true;
     // The stall test's measure of the drawn walk (Play::traceWalk): each body's last drawn tile
@@ -1579,6 +1579,7 @@ private:
     float traceFastest_ = 0.0f;
     double traceClock_ = 0.0;
     void traceWalk(double seconds);
+    bool udp_ = true;
     sim::Findings findings_;
     const content::Ground* ground_ = nullptr;
     Figures* figures_ = nullptr;
@@ -2066,10 +2067,10 @@ private:
     int cushion_ = 0;
     double stalled_ = 0.0;
     std::deque<double> stalls_;
-    double cushionClock_ = 0.0, calmSince_ = 0.0;
     // How many ticks' ground the walking are drawn on past the last tick while the line is late
     // (Play::coast), 0 when it is not.
     double coastTicks_ = 0.0;
+    double cushionClock_ = 0.0, calmSince_ = 0.0;
     // Play::settle's: stepping every tick owed this frame, how long it has run, and how long
     // the line has been steady.
     bool settling_ = false;
