@@ -481,6 +481,9 @@ uint32_t Play::mix(sim::Service service, int socket) {
 }
 
 namespace {
+// How often a walk after a moving trader is aimed again: twice a second, not every tick -- a
+// route is not free (failed routes cost the Lorencia server 4 ms each).
+constexpr int64_t kApproachTurnTicks = 10;
 int apart(const sim::Body& a, const sim::Body& b) {
     return std::max(std::abs(a.column() - b.column()), std::abs(a.row() - b.row()));
 }
@@ -489,9 +492,12 @@ int apart(const sim::Body& a, const sim::Body& b) {
 uint32_t Play::dealAsk(uint32_t body) {
     const sim::Body* him = realm_.find(body);
     if (him != nullptr && apart(*him, realm_.hero()) > sim::kDealReach) {
-        dealApproach_ = body;
-        dealApproachUntil_ = realm_.tick() + 10 * 20;
         orderHero({.kind = sim::Request::Kind::WalkTo, .column = him->column(), .row = him->row()});
+        dealApproach_ = body;  // after the order, which ends any approach before it
+        dealApproachUntil_ = realm_.tick() + 10 * 20;
+        dealApproachColumn_ = him->column();
+        dealApproachRow_ = him->row();
+        dealApproachTurn_ = realm_.tick() + kApproachTurnTicks;
         return 0;
     }
     dealApproach_ = 0;
@@ -501,11 +507,27 @@ uint32_t Play::dealAsk(uint32_t body) {
 void Play::approachDeal() {
     if (dealApproach_ == 0) return;
     const sim::Body* him = realm_.find(dealApproach_);
-    if (him == nullptr || him->gone || realm_.tick() > dealApproachUntil_ || realm_.dealing() != 0) {
+    if (him == nullptr || him->gone || realm_.dealing() != 0) {
         dealApproach_ = 0;
         return;
     }
-    if (apart(*him, realm_.hero()) > sim::kDealReach) return;
+    const bool near = apart(*him, realm_.hero()) <= sim::kDealReach;
+    if (!near && realm_.tick() <= dealApproachUntil_) {
+        // After him: a walk to where he stood ended short of a man who had moved on, and the
+        // ask never went (the bench heroes, walking every four seconds).
+        if ((him->column() != dealApproachColumn_ || him->row() != dealApproachRow_) &&
+            realm_.tick() >= dealApproachTurn_) {
+            dealApproachColumn_ = him->column();
+            dealApproachRow_ = him->row();
+            dealApproachTurn_ = realm_.tick() + kApproachTurnTicks;
+            const uint32_t whom = dealApproach_;
+            orderHero({.kind = sim::Request::Kind::WalkTo, .column = him->column(), .row = him->row()});
+            dealApproach_ = whom;  // the approach's own order goes on with it
+        }
+        return;
+    }
+    // Near, or out of time: asked either way, and a man still out of reach is the realm's
+    // "Trade refused: too far away." in the chat.
     const uint32_t whom = dealApproach_;
     dealApproach_ = 0;
     orderHero({.kind = sim::Request::Kind::Stop});
@@ -567,6 +589,9 @@ bool Play::here(const char* what) {
 }
 
 void Play::orderHero(const sim::Request& request) {
+    // An order of his own -- a click elsewhere, a pickup -- ends a walk after a trader, which
+    // would otherwise turn him back toward the trader for ten seconds.
+    dealApproach_ = 0;
     // A pickup is watched until it ends, for a bag with no room for it (Play::bagFull).
     pickAsked_ = request.kind == sim::Request::Kind::Pick ? request.target : 0;
     pickSeen_ = false;
@@ -575,10 +600,12 @@ void Play::orderHero(const sim::Request& request) {
 }
 
 void Play::castHero(int32_t skill, uint32_t at) {
+    dealApproach_ = 0;
     link_->send({.kind = sim::Command::Kind::Cast, .player = realm_.hero().id, .a = skill, .target = at});
 }
 
 void Play::castHeroAt(int32_t skill, int column, int row) {
+    dealApproach_ = 0;
     link_->send({.kind = sim::Command::Kind::CastAt, .player = realm_.hero().id, .a = skill, .b = column,
                 .c = row});
 }

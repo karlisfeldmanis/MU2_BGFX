@@ -453,10 +453,14 @@ public:
     // Out of reach (sim::kDealReach), he walks to him first and asks on arrival, as a Talk walks
     // to a townsperson; 0 then, for a ticket not sent yet.
     uint32_t dealAsk(uint32_t body);
-    // A frame of that walk: asked once near, given up after ten seconds or once a trade opens.
+    // A frame of that walk: after him as he moves, asked once near, and asked anyway after ten
+    // seconds, which the realm refuses as too far -- said in the chat, not given up in silence.
     void approachDeal();
     uint32_t dealApproach_ = 0;
     int64_t dealApproachUntil_ = 0;
+    // The tile the walk is aimed at, and the tick it may be aimed again.
+    int dealApproachColumn_ = -1, dealApproachRow_ = -1;
+    int64_t dealApproachTurn_ = 0;
     uint32_t dealAnswer(uint32_t asker, bool yes);
     uint32_t dealPut(int bagSlot, int cell);
     uint32_t dealTake(int cell, int bagSlot);
