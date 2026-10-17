@@ -352,7 +352,7 @@ void Deal::rebuild(const sim::Realm& realm, Stage* stage) {
             if (hold > 0) hint = "An offer changed. Accept again in " + std::to_string((hold + 19) / 20) + " s.";
             else if (theyAccepted && !accepted) hint = (name_.empty() ? std::string("They") : name_) + " accepted. Check the offer, then Accept.";
             else if (accepted && !theyAccepted) hint = "You accepted. Waiting for " + (name_.empty() ? std::string("them") : name_) + ".";
-            else hint = "Drag things from your bag here to offer them.";
+            else hint = "Click things from your bag here to offer them.";
             controls::label(canvas_, left, base, 13.0f * u, style::kAshInk, hint);
         }
     }

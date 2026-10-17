@@ -446,7 +446,7 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
     }
     // The box, the same for every service.
     kicker(kBoxKicker, "BOX");
-    right(kBoxKicker - 2.0f, style::kAshInk2, "drag or right-click", 6.6f * k * 1.1f);
+    right(kBoxKicker - 2.0f, style::kAshInk2, "click or right-click", 6.6f * k * 1.1f);
     panel::grid(canvas_, x, y, kOriginX, kOriginY, sim::kMachineColumns, sim::kMachineRows);
     if (hovered_ >= 0 && dragging_ < 0 && !box[hovered_].empty()) {
         panel::cell(canvas_, x, y, itemBox(tables, hovered_, box[hovered_]), sheet::Cell::Over);
