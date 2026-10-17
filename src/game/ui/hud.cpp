@@ -1113,6 +1113,15 @@ void Hud::rebuild() {
     // stage's, and until the stage lands the name stands in for it.
     const float quickSize = std::round(11.0f * kUnit * s.scale);
     const gfx::Art picture = stage_ ? stage_->picture() : gfx::Art{};
+    // A bound box's painted pouch dimmed inside its frame, so the thing reads over it: the Ale's
+    // thin grey-brown bottle was the pouch's own value and showed only its label (the user,
+    // 2026-10-17: "there is missing alcohol icon from quickslot"). Dimmed and not covered, and
+    // the frame left: "now i dont see bakcground art for slot".
+    for (int i = 0; i < kQuickKeys; ++i) {
+        if (quick_[i].item < 0 || i == liftedQuick_) continue;
+        canvas_.rect(plate(s, boxPx(kFirstQuick + i).grown(-4.0f)),
+                     gfx::rgba(0.0f, 0.0f, 0.0f, 0.55f));
+    }
     if (picture.valid() && !standing_.empty()) {
         canvas_.image(picture, plate(s, {0.0f, 0.0f, kPlateW, kPlateH}));
     }
