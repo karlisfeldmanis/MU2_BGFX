@@ -959,7 +959,9 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             // **Named for its power** (the tooltip audit, 2026-10-05): every rune was titled
             // "Rune of Creation" and the power was a line under it, so two in the bag read alike.
             // The name is the power in its rarity, "Rune of Stormcall" since 2026-10-18
-            // (sim::itemLabel), the type line its rarity and whose it is.
+            // (sim::itemLabel). **What it does first** (the user, 2026-10-18: 'now that we have
+            // rune names we can update tooltip that info show instantly'): no type line, the
+            // effect straight under the name, its rarity and whose it is rows after it.
             const bool everyone = power->classes == sim::kEveryClass;
             std::string classes = everyone ? "every class" : "";
             // A second class's rune names the second: 'Blade Knight' (sim::PowerRow::second).
@@ -969,7 +971,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                            std::string(power->second ? kSeconds[i] : kNames[i]);
             }
             sheet.name = sim::itemLabel(row, what);
-            sheet.base = std::string(sim::rarityName(power->rarity)) + " rune \xC2\xB7 " + classes;
+            sheet.base.clear();
             Section carries;
             // A rune that is a number ("+10% all stats") has it as the card's headline, as a
             // weapon has its damage; one that does something is a line with its stone.
@@ -987,6 +989,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 line.freeTone = Tone::White;
                 carries.rows.push_back(line);
             }
+            carries.rows.push_back(stat("Rarity", sim::rarityName(power->rarity), rarityTone(power->rarity)));
+            carries.rows.push_back(stat("Class", everyone ? "Every class" : classes, Tone::White));
             // **Which equipment it goes in** (the user, 2026-10-05: 'we need to show on rune
             // tooltips for which equipment slot is usable'), as few words as say it.
             constexpr uint8_t kAll =
