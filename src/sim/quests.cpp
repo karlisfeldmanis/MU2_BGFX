@@ -483,8 +483,10 @@ QuestRow halls() {
     row.zen = 80000;
     // The set's pants and boots (the ladder, 2026-10-09; Bloodwell for the pants, the user's of
     // 2026-09-30), the boots with two sockets (2026-10-02: "give 2 sockets for boots. same for all
-    // classes") and Frenzy, the Pit's until this day, with a Rare on vitality beside it -- the
-    // Halls' Poison Bulls reach 46, so its Epics are the ladder's second.
+    // classes") and Frenzy, the Pit's until this day -- the Halls' Poison Bulls reach 46, so its
+    // Epics are the ladder's second. The boots' second socket is left for a drop: Lesser Vigor
+    // beside Frenzy made four runes for the knight (the user, 2026-10-17: "why the is so much
+    // rune rewards?", "feels like to many").
     int n = 0;
     row.paid[n++] = {.item = "PantMale10", .kin = knight, .sockets = 1, .firstOnly = true};  // Plate
     row.paid[n++] = {.item = "BootMale10", .kin = knight, .sockets = 2, .firstOnly = true};
@@ -494,7 +496,6 @@ QuestRow halls() {
     row.paid[n++] = {.item = "BootElf04", .kin = elf, .sockets = 2, .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::Bloodwell), .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::Frenzy), .firstOnly = true};
-    row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::LesserVigor), .firstOnly = true};
     // **The knight's first shield**, with a socket and Steadfast for it: his Double Blade is
     // one-handed. The wizard's staff and the elf's bow take both hands, so theirs wait for the
     // tower (tersiaFifth) and the ring below is everyone's.

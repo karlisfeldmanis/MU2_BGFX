@@ -33,7 +33,7 @@ the rules below. Where this disagrees with an older quest doc's reward section, 
 |---|---|---|---|---|---|---|
 | I | Marlon / Peia | 1-30 | DK Falchion, DW Serpent Staff, Elf Battle Bow (1 socket) | -- | Common: DK Gust, DW Faint Echo, Elf Chill | Ring of Wealth (green); Lunge / Ice / Greater Damage; 3 Bless, 20 potions, Box of Luck every clear |
 | II | Devin | 30-50 | DK Double Blade, DW Legendary Staff + Legendary Shield, Elf Tiger Bow (2 sockets) | -- | Lesser Ascendance (Elf: Barrage) + class Rare stat (Might / Insight / Grace); Renewal | Pendant of Fire (1 socket); **Guardian Angel**; Flame / Summon +3; 3 Bless, 1 Soul, Box of Luck |
-| III | Golden Archer: Catacombs, Halls, Pit | 40-75 | -- | **Set A**: DK Plate, DW Sphinx, Elf Spirit. Catacombs helm+gloves, Halls pants+boots (2 sockets), Pit armour | Keen Eye, Ironskin; Bloodwell, Frenzy, Lesser Vigor; Undying | Halls: DK **Serpent Shield** + Steadfast, Ring of the Leech (blue), first **Jewel of Chaos**. Pit: Pendant of Fury (purple), **Imp**, Box of Kundun +1. Skills: Twisting Slash, Cyclone / Twister, Evil Spirit, Hellfire / Summon +4 |
+| III | Golden Archer: Catacombs, Halls, Pit | 40-75 | -- | **Set A**: DK Plate, DW Sphinx, Elf Spirit. Catacombs helm+gloves, Halls pants+boots (2 sockets), Pit armour | Keen Eye, Ironskin; Bloodwell, Frenzy; Undying | Halls: DK **Serpent Shield** + Steadfast, Ring of the Leech (blue), first **Jewel of Chaos**. Pit: Pendant of Fury (purple), **Imp**, Box of Kundun +1. Skills: Twisting Slash, Cyclone / Twister, Evil Spirit, Hellfire / Summon +4 |
 | IV | Lirien (Atlans) | 70-100 | DK Lighting Sword, DW Staff of Resurrection (1H), Elf Aquagold Crossbow (2 sockets) | -- | **First Legendary**: DK Twister, DW Arcane Echo, Elf Frost Arrow; Epic: Eddy / Scorch / Plague Arrows | first **Jewel of Life**, 2 Soul, Box of Kundun +2; Aqua Beam |
 | V | Tersia, floors 1-5 | 80-120 | -- | **Set B**: DK Dragon, DW Legendary, Elf Guardian. A piece a floor: helm, gloves, boots (2), pants, armour | Greater Vigor; class Greater stat + Kinship; Frenzy + Second Wind; Bloodwell; Undying + Renewal | LT1 **Horn of Uniria**; LT2 Ring of Poison (socket); LT4 Ring of Wealth (purple), Slash; LT5 **Dragon Shield / Legendary Shield +5 (2 sockets)** (Elf: Ring of Ice) |
 | V | Tersia, floors 6-7 | 120-160 | Balrog: DK Sword of Destruction, DW Staff of Resurrection +4, Elf Chaos Nature Bow (3 sockets) | -- | LT6: Meteor / Spirit Plague / Scatter Volley; Balrog: **Wrath** + Stormcall | LT6 Death Stab, Cometfall, Penetration; Balrog: Ring of Wisdom (legendary), **Horn of Dinorant** (Icarus asks 160 and wings ask 180), Rageful Blow, Inferno, Summon +5, Box of Kundun |
@@ -59,7 +59,7 @@ Wisp). At Icarus he is paid his own Storm Crow set (`QuestItem::kin` = Magic Gla
 | Elf Frost Arrow | Chill (Peia) | -- | Frost Arrow (Atlans) |
 | Elf Multi-Shot | -- | Barrage (Devin), Plague Arrows (Atlans) | Greater Barrage (Tarkan) |
 | Elf Penetration | -- | Scatter Volley (LT6) | Piercing Volley (Tear of Elf, 2nd) |
-| Stats | Rare: class stat (Devin), Lesser Vigor (Halls) | Lesser Ascendance (Devin), Greater stat (LT1-2) | Greater Ascendance (Sky Door, 2nd) |
+| Stats | Rare: class stat (Devin) | Lesser Ascendance (Devin), Greater stat (LT1-2) | Greater Ascendance (Sky Door, 2nd) |
 | Damage | -- | Stormcall (Balrog) | Wrath (Balrog) |
 
 ## What moved, and why
