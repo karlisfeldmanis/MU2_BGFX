@@ -36,6 +36,13 @@ constexpr float kCoinTossLeast = 2.0f / kUnits * kFps, kCoinTossMost = 14.0f / k
 // metres up and down in two thirds of a second.
 constexpr float kHopFrom = 3.0f / kUnits;
 constexpr float kHop = 50.0f / kUnits * kFps;
+// And its tumble. MU turns a falling thing by its speed, Angle[0] = -Gravity * 10 degrees (a
+// shield Angle[1], about its length: HandleItemFalling, ZzzObject.cpp:6290-6296), and snaps it
+// to its rest on landing -- from 50 a frame about 2.8 turns, ending wherever. Ours keeps the
+// turning with the speed, but times it to whole turns, so it lands as it lies with no snap, and
+// gives it one slow turn about the upright as it goes.
+constexpr float kHopFlips = 2.0f;
+constexpr float kHopSpins = 1.0f;
 // CreateShiny's 48 frames between sparkles; BITMAP_SHINY's 18-frame life and Shiny01's 16
 // pixels, which are its width in units.
 constexpr float kSparkleEvery = 48.0f;
@@ -235,6 +242,10 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
     float turned[16];
     bx::mtxMul(turned, a, yaw);
     bx::mtxMul(piece.rest, turned, place);
+    std::memcpy(piece.lie, a, sizeof(piece.lie));
+    bx::mtxMul(piece.turn, yaw, place);
+    piece.flips = true;
+    piece.roll = row.shield();
     piece.above = kDropHeight;
     piece.speed = kToss;
     drop.pieces.push_back(piece);
@@ -319,6 +330,7 @@ void Litter::update(const sim::Realm& realm, double seconds,
             piece.above = std::max(piece.above, kHopFrom);
             piece.speed = kHop;
             piece.bounced = 0;
+            piece.hopping = piece.flips;
         }
     }
 
@@ -363,6 +375,7 @@ void Litter::update(const sim::Realm& realm, double seconds,
             piece.above += piece.speed * dt;
             if (piece.above > 0.0f) continue;
             piece.above = 0.0f;
+            piece.hopping = false;
             if (piece.bounced < kBounces && -piece.speed > kBounceThreshold) {
                 piece.speed = -piece.speed * kDamping;
                 ++piece.bounced;
@@ -381,6 +394,26 @@ void Litter::update(const sim::Realm& realm, double seconds,
     }
 }
 
+void Litter::placed(const Piece& piece, float* out) {
+    if (piece.hopping) {
+        // How far through the hop by its speed, which falls evenly: 0 thrown, 1 back down.
+        const float through = std::clamp((kHop - piece.speed) / (2.0f * kHop), 0.0f, 1.0f);
+        const float flip = -kHopFlips * 2.0f * bx::kPi * through;
+        float tumble[16], spin[16], turned[16], a[16];
+        if (piece.roll) bx::mtxRotateX(tumble, flip);
+        else bx::mtxRotateZ(tumble, flip);
+        bx::mtxRotateY(spin, kHopSpins * 2.0f * bx::kPi * through);
+        bx::mtxMul(a, piece.lie, tumble);
+        bx::mtxMul(turned, a, spin);
+        bx::mtxMul(out, turned, piece.turn);
+    } else {
+        std::memcpy(out, piece.rest, sizeof(piece.rest));
+    }
+    // Row-vector matrices: the translation is the last row, so the fall is added to it rather
+    // than composed as another matrix.
+    out[13] += piece.above;
+}
+
 void Litter::gather(std::vector<gfx::Drawable>& out,
                     std::vector<gfx::Drawable>* casters) const {
     for (const Drop& drop : drops_) {
@@ -388,10 +421,7 @@ void Litter::gather(std::vector<gfx::Drawable>& out,
             if (!piece.mesh) continue;
             gfx::Drawable drawable;
             drawable.mesh = piece.mesh;
-            std::memcpy(drawable.transform, piece.rest, sizeof(drawable.transform));
-            // Row-vector matrices: the translation is the last row, so the fall is added to it
-            // rather than composed as another matrix.
-            drawable.transform[13] += piece.above;
+            placed(piece, drawable.transform);
             wear(drop.shine, drawable);
             // A thing that is not the town is not in the probe: a cube taken at the player's
             // chest holds the street, and a sword at his feet would be reflected out of it
@@ -411,8 +441,7 @@ void Litter::gatherOne(uint32_t id, std::vector<gfx::Drawable>& out) const {
             if (!piece.mesh) continue;
             gfx::Drawable drawable;
             drawable.mesh = piece.mesh;
-            std::memcpy(drawable.transform, piece.rest, sizeof(drawable.transform));
-            drawable.transform[13] += piece.above;
+            placed(piece, drawable.transform);
             wear(drop.shine, drawable);
             drawable.inProbe = false;
             out.push_back(drawable);

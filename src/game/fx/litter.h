@@ -97,7 +97,16 @@ private:
         float above = 0.0f;    // metres above that rest, while it is still falling
         float speed = 0.0f;    // metres a second, upward
         int bounced = 0;
+        // A whole item's rest in two halves, its lie about its middle and then its yaw and
+        // place, so a hop can tumble it between them. A coin has none (`flips` false).
+        float lie[16];
+        float turn[16];
+        bool flips = false;
+        bool roll = false;     // a shield turns about its length, as a coin; the rest end over end
+        bool hopping = false;  // in a refused pickup's hop, until it first touches the grass
     };
+    // A piece's model -> world this frame: its rest, tumbled while it hops, lifted by its fall.
+    static void placed(const Piece& piece, float* out);
     struct Drop {
         uint32_t id = 0;
         bool present = false;
