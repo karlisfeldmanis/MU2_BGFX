@@ -296,6 +296,7 @@ void Play::update(double seconds) {
     // This frame's gains, and only this frame's: whoever draws the lane runs after this and
     // reads them once. See Play::gains.
     gains_.clear();
+    tossedIds_.clear();
     answers_.clear();
     heroCast_ = 0;
     // A potion drunk since the last frame: asked between frames, and said here so the clear
@@ -437,6 +438,18 @@ void Play::update(double seconds) {
             drawn_[i].health = realm_.bodies()[i].health;
         }
         link_->step();
+        // His pickup, watched from the ask to its end: the realm takes on arrival and says
+        // nothing when the bag has no room (Realm::take), and a click that did nothing read as
+        // a game that did not hear it. The ask may be applied and ended in one tick, standing
+        // beside the thing, so the end is read off where he stands, not off a Pick seen first.
+        if (pickAsked_ != 0) {
+            if (realm_.order().kind == sim::Request::Kind::Pick && realm_.order().target == pickAsked_) {
+                pickSeen_ = true;
+            } else if (bagFull(pickAsked_) || pickSeen_) {
+                pickAsked_ = 0;
+                pickSeen_ = false;
+            }
+        }
         // A body that joined in the tick -- another player come into a shared world, and his
         // summon's slot -- is given its figure: at the end, or in the place of a player gone
         // (Realm::join takes a place empty kPlaceRest), where the id there is no longer the one

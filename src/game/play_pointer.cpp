@@ -916,6 +916,28 @@ void Play::dropsOnScreen(const float* viewProj, int width, int height,
 constexpr float kPickAround = 5.0f;
 constexpr int64_t kPickAskEvery = 8;
 
+// A pickup that ended this tick with the thing still lying beside him, and no room for it in
+// his bag: MuMain's MOVEMENT_GET with FindEmptySlot at -1, which says "Inventory is full" and
+// throws the item up where it lies (ZzzInterface.cpp:1517-1526). The realm's own refusal is
+// silent, and the same on the server, so the drawing works it out as MuMain's client did.
+bool Play::bagFull(uint32_t lying) {
+    if (realm_.dealing() != 0) return true;
+    const sim::Body& hero = realm_.hero();
+    if (!hero.alive() || !realm_.tables()) return true;
+    if (hero.walking) return false;
+    for (const sim::Lying& one : realm_.lying()) {
+        if (one.id != lying) continue;
+        if (one.what.empty() || !realm_.mayTake(one)) return true;
+        if (std::fabs(hero.x - float(one.column)) > 1.0f || std::fabs(hero.y - float(one.row)) > 1.0f) return false;
+        sim::Satchel bag = realm_.satchel();
+        if (sim::pour(*realm_.tables(), bag, sim::kWorn, sim::kSlots, one.what) >= 0) return false;
+        tossedIds_.push_back(lying);
+        gains_.push_back({Gain::Kind::BagFull, 0});
+        return true;
+    }
+    return true;  // taken, or gone
+}
+
 void Play::pickNearest(bool fresh) {
     if (!isOpen() || realm_.held()) return;
     const sim::Body& hero = realm_.hero();

@@ -567,6 +567,9 @@ bool Play::here(const char* what) {
 }
 
 void Play::orderHero(const sim::Request& request) {
+    // A pickup is watched until it ends, for a bag with no room for it (Play::bagFull).
+    pickAsked_ = request.kind == sim::Request::Kind::Pick ? request.target : 0;
+    pickSeen_ = false;
     link_->send({.kind = sim::Command::Kind::Order, .player = realm_.hero().id, .a = int(request.kind),
                 .b = request.column, .c = request.row, .d = request.skill, .target = request.target});
 }

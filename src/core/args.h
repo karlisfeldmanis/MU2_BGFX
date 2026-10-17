@@ -452,6 +452,8 @@ struct Args {
     // nothing in Lorencia leaves (the Bless and the Soul). FRAME:LIST.
     int layFrame = -1;
     std::string lay;
+    // And on these frames, Space: the nearest drop walked to and picked up (Play::pickNearest).
+    std::vector<int> uiPicks;
     long long zen = 0;     // Zen in hand at the start
     bool loot = false;     // --click-every aims at what lies on the ground before a monster
     bool entrance = false; // --entrance: the fade-up and the character's dissolve in a --frames run

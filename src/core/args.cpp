@@ -258,6 +258,7 @@ void printUsage() {
         "  --bolt-skill N            which spell the bench throws: 17 Energy Ball, 4 Fire Ball, 11 Power Wave,\n"
         "                            3 Lightning, 2 Meteorite, 0 the hero's arrow\n"
         "  --lay F:LIST              on frame F lay NAME,... on the ground beside him (bench)\n"
+        "  --ui-pick F               on frame F press Space: pick up the nearest drop\n"
         "  --arena BREED             one breed alone on a clear patch, fighting the hero from\n"
         "                            the first tick; no other spawn stands on the map. The name\n"
         "                            is the cook's own -- the figure (SkeletonWarrior, and\n"
@@ -866,6 +867,8 @@ Args parseArgs(int argc, char** argv) {
                     a.valid = false;
                 }
             }
+        } else if (!std::strcmp(s, "--ui-pick")) {
+            if (const char* v = next(s)) a.uiPicks.push_back(std::atoi(v));
         } else if (!std::strcmp(s, "--windows")) {
             if (const char* v = next(s)) a.windows = v;
         } else if (!std::strcmp(s, "--category")) {

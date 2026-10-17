@@ -71,7 +71,9 @@ public:
     // Follows the realm's list and moves what is still in the air. Called once a frame, with
     // the realm already stepped.
     // `held` are drops the realm has and the drawing is not showing yet: see Play::heldDrops.
-    void update(const sim::Realm& realm, double seconds, const std::vector<uint32_t>& held);
+    // `tossed` hop where they lie, a pickup refused for a full bag: see Play::tossedDrops.
+    void update(const sim::Realm& realm, double seconds, const std::vector<uint32_t>& held,
+                const std::vector<uint32_t>& tossed);
     // Adds every piece lying or falling, and the same to the sun's list: a dropped axe casts
     // a shadow, which is most of what says it is on the ground rather than over it.
     void gather(std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters) const;
@@ -108,6 +110,7 @@ private:
         float at[3] = {};          // on the ground under it, world metres
         float yaw = 0.0f;          // its turn, which the sparkle's offset follows
         float sparkleIn = 0.0f;    // reference frames to its next sparkle: the first at once
+        bool down = false;         // touched the grass once: labelled through a hop after it
         std::vector<Piece> pieces;
     };
     struct Twinkle {

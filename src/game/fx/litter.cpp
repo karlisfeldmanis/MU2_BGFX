@@ -31,6 +31,11 @@ constexpr int kFewestCoins = 3, kMostCoins = 80;
 constexpr float kCoinSpread = 20.0f;
 constexpr float kCoinLowest = 0.35f;
 constexpr float kCoinTossLeast = 2.0f / kUnits * kFps, kCoinTossMost = 14.0f / kUnits * kFps;
+// The hop of a thing his full bag refused: MOVEMENT_GET's `Position[2] = height + 3.f;
+// Gravity = 50.f` (ZzzInterface.cpp:1524-1525), under MoveItems' same 6 a frame -- about two
+// metres up and down in two thirds of a second.
+constexpr float kHopFrom = 3.0f / kUnits;
+constexpr float kHop = 50.0f / kUnits * kFps;
 // CreateShiny's 48 frames between sparkles; BITMAP_SHINY's 18-frame life and Shiny01's 16
 // pixels, which are its width in units.
 constexpr float kSparkleEvery = 48.0f;
@@ -287,7 +292,7 @@ void Litter::build(const sim::Lying& one, Drop& drop) {
 }
 
 void Litter::update(const sim::Realm& realm, double seconds,
-                    const std::vector<uint32_t>& held) {
+                    const std::vector<uint32_t>& held, const std::vector<uint32_t>& tossed) {
     if (!models_ || !ground_) return;
     for (Drop& drop : drops_) drop.present = false;
     for (const sim::Lying& one : realm.lying()) {
@@ -308,6 +313,14 @@ void Litter::update(const sim::Realm& realm, double seconds,
     drops_.erase(std::remove_if(drops_.begin(), drops_.end(),
                                 [](const Drop& d) { return !d.present; }),
                  drops_.end());
+    for (Drop& drop : drops_) {
+        if (std::find(tossed.begin(), tossed.end(), drop.id) == tossed.end()) continue;
+        for (Piece& piece : drop.pieces) {
+            piece.above = std::max(piece.above, kHopFrom);
+            piece.speed = kHop;
+            piece.bounced = 0;
+        }
+    }
 
     const float dt = float(seconds);
     clock_ = std::fmod(clock_ + dt, 3600.0f);  // an hour, past any float drift that shows
@@ -363,7 +376,8 @@ void Litter::update(const sim::Realm& realm, double seconds,
             const bool touched = piece.bounced > 0 || (piece.above <= 0.0f && piece.speed == 0.0f);
             if (!touched) still = false;
         }
-        if (still) settled_.push_back(drop.id);
+        if (still) drop.down = true;
+        if (drop.down) settled_.push_back(drop.id);
     }
 }
 

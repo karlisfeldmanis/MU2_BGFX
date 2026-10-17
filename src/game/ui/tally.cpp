@@ -425,6 +425,15 @@ void Tally::collect(const Play& play, float seconds) {
                 lane_.push_back({Row::Kind::Gapped, gain.value, 0.0f});
                 scroll_ += 1.0f;
                 break;
+            case Play::Gain::Kind::BagFull:
+                // MuMain's "Inventory is full", once however often he tries: held up again.
+                if (!lane_.empty() && lane_.back().kind == Row::Kind::BagFull) {
+                    lane_.back().age = std::min(lane_.back().age, kRowLife * kRowIn);
+                    break;
+                }
+                lane_.push_back({Row::Kind::BagFull, 0, 0.0f});
+                scroll_ += 1.0f;
+                break;
             case Play::Gain::Kind::Died:
                 // Alone: whatever he was earning a second ago is not what the lane is for now.
                 lane_.clear();
@@ -652,14 +661,16 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
             case Row::Kind::Mana: ink = kManaInk; word = "mana"; break;
             case Row::Kind::Gapped:  // a warning, drawn below
             case Row::Kind::Bound:
+            case Row::Kind::BagFull:
             // Drawn above and passed over by the `continue`: it is not a gain.
             case Row::Kind::Experience:
             case Row::Kind::Died: break;
         }
-        if (row.kind == Row::Kind::Gapped || row.kind == Row::Kind::Bound) {
+        if (row.kind == Row::Kind::Gapped || row.kind == Row::Kind::Bound || row.kind == Row::Kind::BagFull) {
             // A warning: white words on a flat red box, the lane's left edge its own.
-            const std::string said = row.kind == Row::Kind::Gapped ? "No experience or quest kills: level gap"
-                                                                   : "Bound items stay with their character";
+            const std::string said = row.kind == Row::Kind::Gapped  ? "No experience or quest kills: level gap"
+                                     : row.kind == Row::Kind::Bound ? "Bound items stay with their character"
+                                                                    : "Inventory is full";
             const gfx::Face& face = bgfx::isValid(plainTexture_) ? plain_ : quiet_;
             const bgfx::TextureHandle texture = bgfx::isValid(plainTexture_) ? plainTexture_ : quietTexture_;
             const float left = kLaneLeft * unit, at = std::round(baseline);

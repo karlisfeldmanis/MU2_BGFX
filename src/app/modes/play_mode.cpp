@@ -1256,6 +1256,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                     from = comma + 1;
                 }
             }
+            for (int frame : args.uiPicks) {
+                if (at.index == frame && world_.played().isOpen()) world_.played().pickNearest(true);
+            }
             for (const core::Args::UiClick& c : args.uiClicks) {
                 const bool drag = c.x2 != c.x || c.y2 != c.y;
                 const int last = c.frame + (drag ? 3 : 1);
@@ -1831,7 +1834,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and
         // laid down where they land.
         openItems(ctx);
-        litter_.update(world_.played().realm(), deltaSeconds, world_.played().heldDrops());
+        litter_.update(world_.played().realm(), deltaSeconds, world_.played().heldDrops(),
+                       world_.played().tossedDrops());
         world_.played().setSettledDrops(litter_.settled());
         litter_.gather(townDrawables_, casters ? &townCasters_ : nullptr);
         litter_.gatherBeams(ctx.renderer.effects(), eye.position);

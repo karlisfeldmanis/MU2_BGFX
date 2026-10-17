@@ -195,6 +195,9 @@ public:
     // drop he may take within a few tiles of him, walked to and picked up. `fresh` for the
     // press; held, it takes the next once he has stopped.
     void pickNearest(bool fresh);
+    // Says a pickup refused for want of room, after the tick that refused it (play_pointer.cpp).
+    // True when the pickup is over -- refused, taken or gone -- and no longer watched.
+    bool bagFull(uint32_t lying);
     // The right button: a monster under it is attacked with the quick slot's skill, thrown
     // whenever it can be and the weapon swung when it cannot; anywhere else it stops him.
     void rightClick();
@@ -597,7 +600,8 @@ public:
     // would be two things to keep in step for no gain.
     struct Gain {
         // Gapped: a party kill he shared nothing of, past the level gap (sim::kPartyGap).
-        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped };
+        // BagFull: a pickup refused for want of room (Play::tossedDrops).
+        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped, BagFull };
         Kind kind = Kind::Experience;
         int64_t value = 0;
     };
@@ -817,6 +821,10 @@ public:
     // the monster that dropped them has not finished falling. Litter skips them, and so does
     // the pointer.
     const std::vector<uint32_t>& heldDrops() const { return heldIds_; }
+    // The drops his pickup was refused on this frame for want of room, which hop where they lie:
+    // MuMain's MOVEMENT_GET with no empty slot, `Position[2] = height + 3; Gravity = 50` beside
+    // "Inventory is full" (ZzzInterface.cpp:1517-1526). Litter tosses them; the lane says why.
+    const std::vector<uint32_t>& tossedDrops() const { return tossedIds_; }
     // Whether a killed body's Zen is still held for its fall: the fight's sum waits on it.
     bool zenOwed() const { return zenOwed_; }
 
@@ -1954,6 +1962,9 @@ private:
     std::vector<Cue> due_;
     // And what he gained on this frame's ticks -- see gains(). A member for the same reason.
     std::vector<Gain> gains_;
+    std::vector<uint32_t> tossedIds_;  // see tossedDrops()
+    uint32_t pickAsked_ = 0;  // the drop his last order went to pick up, until that ends
+    bool pickSeen_ = false;   // and whether the realm has carried that order yet
     // A potion's worth, drunk between frames and handed to the next frame's gains.
     int32_t drankHealth_ = 0, drankMana_ = 0;
     // What a Firecracker opened into, given when its firework is done: Zen paid -- coins and
