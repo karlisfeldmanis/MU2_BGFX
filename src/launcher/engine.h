@@ -183,6 +183,11 @@ bool play(const fs::path& install, const Manifest& manifest, const GameTicket& t
 // exits first. Blocks: call it on a thread of its own.
 void handFront(unsigned long pid);
 
+// The game started by play() still runs (the user, 2026-10-17: "when user is in game, we need
+// that launcher dont show play but in game disabled"). On the Mac and Linux it reaps the game
+// once it has exited, so ask it from one thread only (the launcher's screen).
+bool gameRunning(unsigned long pid);
+
 // **The launcher is put in place by MU2Setup.exe** (src/launcher/mu2setup.iss): the setup
 // installs it into %LOCALAPPDATA%\Programs\MU2, makes the shortcuts the player ticks and the
 // entry in Apps & features. Until 2026-10-16 the launcher moved itself out of Downloads and made

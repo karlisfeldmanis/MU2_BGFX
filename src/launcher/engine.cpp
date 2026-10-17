@@ -28,6 +28,7 @@
 #else
 #include <spawn.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #ifdef __linux__
 #include <sys/sysinfo.h>
 #else
@@ -800,6 +801,20 @@ void handFront(unsigned long pid) {
     core::logf("play: the game's window %s", ok ? "handed the front" : "refused the front");
 #else
     (void)pid;
+#endif
+}
+
+bool gameRunning(unsigned long pid) {
+    if (pid == 0) return false;
+#ifdef _WIN32
+    HANDLE process = OpenProcess(SYNCHRONIZE, FALSE, static_cast<DWORD>(pid));
+    if (!process) return false;
+    const bool alive = WaitForSingleObject(process, 0) == WAIT_TIMEOUT;
+    CloseHandle(process);
+    return alive;
+#else
+    int status = 0;
+    return waitpid(static_cast<pid_t>(pid), &status, WNOHANG) == 0;
 #endif
 }
 

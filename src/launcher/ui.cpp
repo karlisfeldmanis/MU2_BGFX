@@ -196,6 +196,7 @@ private:
     std::string message_;  // the sign-in's refusal, or why the home screen failed
     bool busy_ = false;    // the sign-in's worker is out
     bool starting_ = false;  // Play's ticket is being asked for (start)
+    unsigned long game_ = 0;  // the game play() started, while it runs (gameRunning); 0 when none
     bool bgfxUp_ = false;    // bgfx started (open): close() shuts down only what started
     bool stay_ = true;
     // The region's list is open (drawRegion), and the left edge of the top strip's words: a press
@@ -412,6 +413,7 @@ void Launcher::install() {
 // Play: the release asked about first unless that was a moment ago, so a launcher left open
 // since yesterday does not start yesterday's game. Updated if need be, then started.
 void Launcher::playNow() {
+    if (game_) return;
     if (Clock::now() - checkedAt_ > std::chrono::seconds(30)) {
         playAfter_ = true;
         check();
@@ -423,7 +425,7 @@ void Launcher::playNow() {
 // The game's ticket asked for on a thread of its own (the worker may still be finishing the check
 // that called this), then the game started with it (engine.h GameTicket).
 void Launcher::start() {
-    if (starting_) return;
+    if (starting_ || game_) return;
     starting_ = true;
     message_.clear();
     const Place place = place_;
@@ -450,6 +452,7 @@ void Launcher::start() {
                 home_ = Home::Failed;
                 return;
             }
+            game_ = pid;
             sendCrashesAfter(20);
             // The logs as the game starts and the player goes in: a window that opened behind,
             // a freeze in the load (writeLogDigest). The whole session follows at the next start.
@@ -832,7 +835,7 @@ void Launcher::drawHome() {
             break;
         }
         case Home::Ready: {
-            if (button(main, starting_ ? "Starting..." : "Play", true, starting_, 20.0f)) playNow();
+            if (button(main, game_ ? "In game" : starting_ ? "Starting..." : "Play", true, starting_ || game_, 20.0f)) playNow();
             panel(px({textX, rowY + 11.0f, 8.0f, 8.0f}), 4.0f * s_, hex(0x7FD66A), hex(0x7FD66A));
             words(textX + 16.0f, rowY + 20.0f, "Up to date", hex(kQuiet), 15.0f);
             // Where Play goes, and the way to another, beside Play (the user, 2026-10-17: "so
@@ -843,7 +846,7 @@ void Launcher::drawHome() {
                       std::string("Graphics set to ") + firstRunSet(gpu_).name + " for this PC",
                       hex(kQuiet), 13.0f);
             }
-            if (!starting_) offerUninstall();
+            if (!starting_ && !game_) offerUninstall();
             break;
         }
         case Home::Uninstall: {
@@ -1162,8 +1165,14 @@ void Launcher::frame() {
         then.swap(then_);
     }
     for (auto& f : then) f();
+    // The game still running keeps Play off; no update is fetched over it meanwhile, the one found
+    // waits (autoInstall_) until it has closed.
+    if (game_ && !gameRunning(game_)) {
+        core::logf("launcher: the game closed");
+        game_ = 0;
+    }
     // What the worker's answers asked for, once the worker is free to take it.
-    if (!working_.load()) {
+    if (!working_.load() && !game_) {
         constexpr auto kRecheck = std::chrono::minutes(10);
         if (checkPending_) {
             checkPending_ = false;
