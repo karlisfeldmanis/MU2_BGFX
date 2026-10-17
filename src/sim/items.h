@@ -924,7 +924,17 @@ bool creation(const content::ItemRow& row);
 // name" not jewel of creation'). No plus: each caller adds its own.
 inline std::string itemLabel(const content::ItemRow& row, const Held& held) {
     if (creation(row)) {
-        if (const PowerRow* power = powerOf(held.powers[0])) return std::string("Rune of ") + power->name;
+        if (const PowerRow* power = powerOf(held.powers[0])) {
+            // Where the power's own name reads badly after "Rune of" (the user, 2026-10-18).
+            switch (power->power) {
+                case Power::FireRing: return "Rune of the Fire Ring";
+                case Power::Undying: return "Rune of the Undying";
+                case Power::Frost: return "Rune of Frost Arrows";
+                case Power::Pyroblast: return "Rune of Pyroblast";
+                case Power::Spirits: return "Rune of Evil Spirits";
+                default: return std::string("Rune of ") + power->name;
+            }
+        }
     }
     return row.label.empty() ? row.name : row.label;
 }
