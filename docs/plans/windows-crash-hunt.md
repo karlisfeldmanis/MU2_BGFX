@@ -211,3 +211,20 @@ ShadowPlay, OBS) named in the log and the report; the D3D11 swap chain's frame l
 (`maxFrameLatency` 0 is ignored, the default 3 stays); DNS on the main thread in a reconnect's join.
 Under Wine the launcher cannot name the card (no DXGI factory), calls it Low and draws itself with
 Direct3D 11, which plain Wine lacks: run it with `--renderer vulkan`.
+
+**The full cycle before release (2026-10-17, b4f8cb21, `mu dist windows`):** under Wine against a
+private web/server.py behind a small front serving /game/ as the box does, and a private
+mu2_server from the same snapshot (the launcher's `--server`, b4f8cb21's own, keeps the game off
+the live ones). All passed: sign-in, a 1.54 GB install, Play into Lorencia and 100 s with no HANG
+or ERROR; minimised 90 -> 30 fps; Graphics Apply (Textures) restarted the game (pid 18431 ->
+23643) with the launcher on In game throughout; the game closed, Play back; the launcher closed at
+25% of a whole-install hash, gone in 4 s, "closed with its work still going" (the old one waited
+out the hash); **self-update**: launcher A, offered B, fetched it, took its place and started it
+with --site/--server/--renderer handed on, "updated to B". A stand-in vulkan-1.dll beside MU2.exe
+(WINEDLLOVERRIDES="vulkan-1=n,b"; a flag file `fakevk-lose` makes submit and present return
+DEVICE_LOST, `fakevk-oom` fails the next allocation of 1 MB and up with its retries): a lost
+device in the world restarted the game into the world in 3 s, options.txt from scale 85, 2x MSAA,
+cap 180 to scale 67, 1x, cap 60; then a failed 2.1 MB allocation in an anti-aliasing change was
+"Out of video memory: vkAllocateMemory of 2129920 bytes failed", Lowest, back in the world in
+5.6 s; the launcher followed all three processes. Not shown here: NVIDIA's or AMD's own drivers,
+and Direct3D 11.
