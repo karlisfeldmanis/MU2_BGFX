@@ -1,6 +1,7 @@
 #include "launcher/engine.h"
 
 #include <algorithm>
+#include <cerrno>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
@@ -26,6 +27,7 @@
 #include <shlobj.h>
 #include <shobjidl.h>
 #else
+#include <signal.h>
 #include <spawn.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -709,6 +711,17 @@ std::vector<fs::path> crashFolders(const fs::path& install) {
     return {install / "logs", userFolder() / "logs"};
 }
 
+#ifdef _WIN32
+namespace {
+// The game play() started and every copy it starts of itself, kept in one job: a restart -- a
+// lost device's (main.cpp startAgainAfterLoss), Graphics' Apply of Textures or the Renderer -- is
+// a new process with a new pid, and asked by the first one's pid the launcher read the game as
+// closed while it played on: Play back, a second copy startable, and the ten-minute recheck's
+// update fetched under the running game. No limits on the job: closing the launcher ends nothing.
+HANDLE g_gameJob = nullptr;
+}  // namespace
+#endif
+
 bool play(const fs::path& install, const Manifest& manifest, const GameTicket& ticket, const std::string& server,
           std::string& error, unsigned long* pid) {
     const fs::path exe = install / pathOf(manifest.exe);
@@ -721,13 +734,23 @@ bool play(const fs::path& install, const Manifest& manifest, const GameTicket& t
     STARTUPINFOW start{};
     start.cb = sizeof start;
     PROCESS_INFORMATION running{};
-    const BOOL ok = CreateProcessW(exe.wstring().c_str(), line.data(), nullptr, nullptr, FALSE, 0, nullptr,
-                                   install.wstring().c_str(), &start, &running);
+    // Suspended until it is in the job, so nothing it starts can come before.
+    const BOOL ok = CreateProcessW(exe.wstring().c_str(), line.data(), nullptr, nullptr, FALSE, CREATE_SUSPENDED,
+                                   nullptr, install.wstring().c_str(), &start, &running);
     SetEnvironmentVariableW(L"MU2_TICKET", nullptr);
     if (!ok) {
         error = "Could not start the game (" + std::to_string(GetLastError()) + ").";
         return false;
     }
+    if (g_gameJob) CloseHandle(g_gameJob);
+    g_gameJob = CreateJobObjectW(nullptr, nullptr);
+    if (g_gameJob && !AssignProcessToJobObject(g_gameJob, running.hProcess)) {
+        // A launcher inside a job that allows no other (before Windows 8): asked by pid, as before.
+        core::logf("launcher: the game is not kept in a job (%lu); a restart reads as closed", GetLastError());
+        CloseHandle(g_gameJob);
+        g_gameJob = nullptr;
+    }
+    ResumeThread(running.hThread);
     // The game may take the front from us (gfx::Window::toFront): Windows lets a window come
     // forward only from the program the player last used, and the launcher minimises itself
     // next, before the game's window is up -- it opened behind (the user, 2026-10-15).
@@ -760,8 +783,16 @@ bool play(const fs::path& install, const Manifest& manifest, const GameTicket& t
         argv.push_back(where.data());
     }
     argv.push_back(nullptr);
+    // A process group of its own, which the copies it starts of itself inherit: the launcher
+    // asks the group, not the first pid (gameRunning; the job on Windows says why).
+    posix_spawnattr_t attributes;
+    posix_spawnattr_init(&attributes);
+    posix_spawnattr_setflags(&attributes, POSIX_SPAWN_SETPGROUP);
+    posix_spawnattr_setpgroup(&attributes, 0);
     pid_t child = 0;
-    if (posix_spawn(&child, path.c_str(), nullptr, nullptr, argv.data(), envp.data()) != 0) {
+    const int spawned = posix_spawn(&child, path.c_str(), nullptr, &attributes, argv.data(), envp.data());
+    posix_spawnattr_destroy(&attributes);
+    if (spawned != 0) {
         error = "Could not start the game.";
         return false;
     }
@@ -809,14 +840,22 @@ void handFront(unsigned long pid) {
 bool gameRunning(unsigned long pid) {
     if (pid == 0) return false;
 #ifdef _WIN32
+    JOBOBJECT_BASIC_ACCOUNTING_INFORMATION job{};
+    if (g_gameJob && QueryInformationJobObject(g_gameJob, JobObjectBasicAccountingInformation, &job,
+                                               sizeof job, nullptr)) {
+        return job.ActiveProcesses > 0;
+    }
     HANDLE process = OpenProcess(SYNCHRONIZE, FALSE, static_cast<DWORD>(pid));
     if (!process) return false;
     const bool alive = WaitForSingleObject(process, 0) == WAIT_TIMEOUT;
     CloseHandle(process);
     return alive;
 #else
+    // The first game reaped once it has ended, so it does not stand in its group as a zombie;
+    // then anyone left in the group -- itself, or the copy it started of itself.
     int status = 0;
-    return waitpid(static_cast<pid_t>(pid), &status, WNOHANG) == 0;
+    waitpid(static_cast<pid_t>(pid), &status, WNOHANG);
+    return kill(-static_cast<pid_t>(pid), 0) == 0 || errno == EPERM;
 #endif
 }
 
