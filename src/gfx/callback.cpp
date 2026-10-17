@@ -73,6 +73,15 @@ const char* lightenOptions() {
     for (auto& [k, v] : lines)
         if (k == "cap") v = v > 0 ? std::min(v, core::kLowEndCap) : core::kLowEndCap, capped = true;
     if (!capped) lines.emplace_back("cap", core::kLowEndCap);
+    // And NVIDIA off Direct3D 11, to Auto, which is Vulkan: every NVIDIA device lost in the
+    // players' reports to 2026-10-17 was on Direct3D 11, and none on Vulkan since the acquire
+    // patch (launcher/gpu.h rendererFor). Auto still falls back if Vulkan does not start.
+    const bgfx::Caps* caps = bgfx::getCaps();
+    if (caps && caps->rendererType == bgfx::RendererType::Direct3D11 && caps->vendorId == BGFX_PCI_ID_NVIDIA) {
+        for (auto& [k, v] : lines)
+            if (k == "renderer") v = 0;
+        core::logf("graphics: NVIDIA on Direct3D 11 lost its device; the next start is on Auto (Vulkan)");
+    }
 
     file = std::fopen(path.c_str(), "w");
     if (!file) return nullptr;

@@ -1,0 +1,24 @@
+diff --git a/src/renderer_vk.cpp b/src/renderer_vk.cpp
+--- a/src/renderer_vk.cpp
++++ b/src/renderer_vk.cpp
+@@ -5066,6 +5066,20 @@
+ 			}
+ 			while (result != VK_SUCCESS
+ 			   &&  searchIndex >= 0);
++
++			// MU2_BGFX: a card out of memory says so. The release build's VK_CHECK is the bare
++			// call, and every caller went on with the image or buffer bound to nothing, so a full
++			// card -- two gigabytes at 4K on High, AMD's 4096-allocation limit -- was a GPU fault
++			// or a lost device later, named nowhere (the AMD audit, 2026-10-17). As a lost device
++			// it takes the game's own way out: options one preset lighter, and a start again.
++			BGFX_FATAL(VK_ERROR_OUT_OF_DEVICE_MEMORY != result
++				&& VK_ERROR_OUT_OF_HOST_MEMORY != result
++				&& VK_ERROR_TOO_MANY_OBJECTS != result
++				, Fatal::DeviceLost
++				, "Out of video memory: vkAllocateMemory of %u bytes failed (%d)."
++				, uint32_t(requirements->size)
++				, result
++				);
+ 
+ 			return result;
+ 		}
