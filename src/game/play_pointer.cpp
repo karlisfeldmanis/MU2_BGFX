@@ -892,4 +892,34 @@ void Play::dropsOnScreen(const float* viewProj, int width, int height,
     }
 }
 
+// How far around him Space looks for a drop, in tiles, and how often holding it asks again, in
+// realm ticks. Ours, as the key is.
+constexpr float kPickAround = 5.0f;
+constexpr int64_t kPickAskEvery = 8;
+
+void Play::pickNearest(bool fresh) {
+    if (!isOpen() || realm_.held()) return;
+    const sim::Body& hero = realm_.hero();
+    // Held, the next only once he has stopped: the last pickup walked him to it and took it.
+    if (!fresh && (hero.walking || realm_.tick() - pickAskedTick_ < kPickAskEvery)) return;
+    uint32_t nearest = 0;
+    float best = kPickAround + 0.5f;
+    for (const sim::Lying& one : realm_.lying()) {
+        if (std::find(heldIds_.begin(), heldIds_.end(), one.id) != heldIds_.end()) continue;
+        if (!realm_.mayTake(one)) continue;
+        const float away =
+            std::max(std::fabs(float(one.column) - hero.x), std::fabs(float(one.row) - hero.y));
+        if (away < best) {
+            best = away;
+            nearest = one.id;
+        }
+    }
+    if (nearest == 0) return;
+    sim::Request request;
+    request.kind = sim::Request::Kind::Pick;
+    request.target = nearest;
+    pickAskedTick_ = realm_.tick();
+    orderHero(request);
+}
+
 }  // namespace mu::game

@@ -153,6 +153,7 @@ public:
         Guild,   // G: the guild window, shown and shut (game/ui/guild.h, docs/game/guild.md)
         HideHud, // F11 or H: the HUD and its readout hidden and shown, for a clean picture
         Shot,    // F12: the frame as drawn, a PNG in the player's screenshots folder
+        Pick,    // Space: the nearest drop picked up (game/play_pointer.cpp, Play::pickNearest)
         Count
     };
     // Neither while a box has the keyboard (setTyping): an I typed into the chat is a letter,

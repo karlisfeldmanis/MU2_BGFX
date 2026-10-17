@@ -404,7 +404,8 @@ bool Window::pump() {
                                              {GLFW_KEY_R, -1},         {GLFW_KEY_T, -1},
                                              {GLFW_KEY_L, -1},         {GLFW_KEY_M, -1},
                                              {GLFW_KEY_TAB, -1},       {GLFW_KEY_G, -1},
-                                             {GLFW_KEY_F11, GLFW_KEY_H}, {GLFW_KEY_F12, -1}};
+                                             {GLFW_KEY_F11, GLFW_KEY_H}, {GLFW_KEY_F12, -1},
+                                             {GLFW_KEY_SPACE, -1}};
     shift_ = glfwGetKey(handle_, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
              glfwGetKey(handle_, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
     for (size_t i = 0; i < size_t(Key::Count); ++i) {

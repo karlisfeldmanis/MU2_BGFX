@@ -191,6 +191,10 @@ public:
     void point(const gfx::Camera& camera, const float* view, const float* proj, float pixelX,
                float pixelY, int width, int height);
     void leftClick();   // walk to the tile under the pointer, or fight what is standing on it
+    // Space (the player's report, 2026-10-16: "spacebar does not join objects"): the nearest
+    // drop he may take within a few tiles of him, walked to and picked up. `fresh` for the
+    // press; held, it takes the next once he has stopped.
+    void pickNearest(bool fresh);
     // The right button: a monster under it is attacked with the quick slot's skill, thrown
     // whenever it can be and the weapon swung when it cannot; anywhere else it stops him.
     void rightClick();
@@ -2009,6 +2013,7 @@ private:
     void speak(const sim::Happening& happening);
     uint32_t pointedLying_ = 0;
     int pointedPerch_ = -1;
+    int64_t pickAskedTick_ = 0;  // when Space last asked a pickup (pickNearest)
     std::vector<float> scratch_;
     // Play::gather's figures posed side by side (core::parallelFor): which of drawn_, each one's
     // rows in a slot of its own, and how many bones each wrote.

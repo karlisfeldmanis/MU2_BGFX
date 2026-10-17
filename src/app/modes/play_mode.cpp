@@ -1302,6 +1302,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         } else if (!windowed) {
             world_.played().leftHeld();
         }
+        if (ctx.window.down(gfx::Window::Key::Pick)) {
+            world_.played().pickNearest(ctx.window.pressed(gfx::Window::Key::Pick));
+        }
         if ((mouseRight || (uiPress && uiRight)) && !windowed) {
             world_.played().rightClick();
         } else if (mouseRightHeld && !windowed) {
