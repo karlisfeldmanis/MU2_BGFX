@@ -124,7 +124,7 @@ DEFAULT_REGION = "North Europe"
 REGION_GONE_SECONDS = 600
 # The regions the front page shows, up or not (/api/status): the launcher's list, by name, with the
 # city of each one's server.
-REGIONS = (("North Europe", "Helsinki"), ("South America", "São Paulo"))
+REGIONS = (("North Europe", "Helsinki"), ("South America", "São Paulo"), ("Southeast Asia", "Singapore"))
 # A play: one character on the server from when he came on until he was last on a list, kept this
 # long (the `games` table). Off a list no longer than RECENT_GAP -- the website restarting -- he is
 # still on the same play.

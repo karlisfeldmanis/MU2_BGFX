@@ -46,6 +46,22 @@ accounts stay the website's, on the Hetzner box.
 | deploy | `MU2_HOST=root@216.238.127.33 server/deploy.sh` |
 | accounts | the game asks the website about a ticket at `127.0.0.1:8080/internal/ticket`, which only the Hetzner box answers. An SSH tunnel brings it here: the key `/root/.ssh/mu2_accounts`, which Helsinki's `authorized_keys` lets forward to `127.0.0.1:8080` and nothing else (no shell). |
 
+## The Southeast Asia box
+
+The third region, rented 2026-10-17 for a player in Da Nang, Vietnam, far from both. Set up as
+the South America box is: its own world and `characters.db`, the accounts through the same kind
+of tunnel (its own key `/root/.ssh/mu2_accounts`, "mu2-singapore accounts tunnel" in Helsinki's
+`authorized_keys`, limited the same way).
+
+| | |
+|---|---|
+| name | Hetzner Singapore |
+| address | 5.223.83.101 |
+| login | `ssh singapore` (root, `~/.ssh/id_ed25519`) |
+| system | Ubuntu 26.04.1, x86_64, 1 vCPU, 927 MB, 2 GB swap (`/swapfile`); g++ 15.2, CMake 4.2 |
+| deploy | `MU2_HOST=singapore server/deploy.sh` |
+| settings | `/etc/default/mu2-server`: MU2_REGION=Southeast Asia |
+
 ## Playing on it
 
     ./mu play                                  the character screen, asking the box for your characters
