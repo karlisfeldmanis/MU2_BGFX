@@ -828,20 +828,17 @@ QuestRow tersiaFifth() {
     constexpr int8_t knight = int8_t(Kin::DarkKnight);
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);
-    // The set's armour, which makes it whole, and the Undying for it (2026-10-09). And a shield
-    // of its set's own -- the knight's Dragon Shield, the wizard's Legendary, for his one-handed
-    // Staff of Resurrection from Atlans -- and Renewal for it; the elf's bow takes both hands, so
-    // hers is a Ring of Ice.
+    // The set's armour, which makes it whole (2026-10-09). And a shield of its set's own -- the
+    // knight's Dragon Shield, the wizard's Legendary, for his one-handed Staff of Resurrection
+    // from Atlans -- and Renewal for it; the elf's bow takes both hands, so hers is a Ring of
+    // Ice. Its Undying and Wellspring went (the user, 2026-10-17, of too many runes): the Pit
+    // pays the pair already, and a hero wears three jewels at most.
     row.paid[row.paidCount++] = {.item = "ArmorMale02", .kin = knight, .sockets = 1,
                                  .firstOnly = true};  // Dragon
     row.paid[row.paidCount++] = {.item = "ArmorMale04", .kin = wizard, .sockets = 1,
                                  .firstOnly = true};  // Legendary
     row.paid[row.paidCount++] = {.item = "ArmorElf05", .kin = elf, .sockets = 1,
                                  .firstOnly = true};  // Guardian
-    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Undying),
-                                 .firstOnly = true};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Wellspring),
-                                 .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Shield14", .kin = knight, .sockets = 1,
                                  .firstOnly = true};  // Dragon Shield
     // The wizard's Legendary Shield again, raised to +5 with two sockets over Devias's, as the
@@ -1183,11 +1180,10 @@ QuestRow sevinaTrial() {
     // chaos and firecrackers and some all class runes for this quest also'; the Firecrackers are
     // withFirecrackers'): since 2026-10-09 the three worn Epics for the second class's set the
     // Phoenix and the treasure finish -- Undying, Renewal and Second Wind; they were Ironskin,
-    // Steadfast and Greater Vigor, which the Catacombs, the Halls and the tower pay now.
+    // Steadfast and Greater Vigor, which the Catacombs, the Halls and the tower pay now. Since
+    // 2026-10-17 Second Wind alone: its Undying, Wellspring and Renewal were each a third copy
+    // (the user: "chekc also other quest where is to much runes").
     row.paid[row.paidCount++] = {.item = "Jewel15", .count = 3};  // Jewels of Chaos
-    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Undying)};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Wellspring)};
-    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Renewal)};
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::SecondWind)};
     return row;
 }
