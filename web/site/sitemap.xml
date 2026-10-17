@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The public pages, for Google Search Console (mu-classic.com, verified by DNS 2026-10-17).
+     Account, online and bugs are noindex and left out. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://mu-classic.com/</loc></url>
+  <url><loc>https://mu-classic.com/privacy</loc></url>
+  <url><loc>https://mu-classic.com/contact</loc></url>
+</urlset>
