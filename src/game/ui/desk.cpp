@@ -191,7 +191,7 @@ void Desk::expect(uint32_t ticket, Then then, int key) {
 
 bool Desk::overWindows(float x, float y) const {
     return amount_.up() || report_.up() || whatsNew_.up() || menu_.up() || hud_.covers(x, y) || guild_.covers(x, y) ||
-           guildMake_.covers(x, y) || chat_.covers(x, y) || partyBar_.covers(x, y) ||
+           guildMake_.covers(x, y) || chat_.covers(x, y) || (!minimap_.full() && partyBar_.covers(x, y)) ||
            playerMenu_.covers(x, y) || targetFrame_.covers(x, y) || minimap_.covers(x, y) ||
            questDialog_.covers(x, y) || questLog_.covers(x, y) || travel_.covers(x, y) || goBack_.covers(x, y) ||
            herald_.covers(x, y) || squareResult_.covers(x, y) ||
@@ -794,7 +794,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             }
             play.wantFaces(faceIds_);
         }
-        partyBar_.update(seconds, play, under, partyFaces_, partyFacesTaken_);
+        partyBar_.update(seconds, play, minimap_.full() ? Pointer{} : under, partyFaces_, partyFacesTaken_);
         targetFrame_.update(seconds, play, under, arts_, float(window.width()), hud_.plateTop() - 26.0f * u,
                             portrait_.picture(), portrait_.taken());
         // A right click on a capsule or on the target frame: his menu. Never from the world.
@@ -2386,7 +2386,8 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
         interface_.submit(view);
         return;
     }
-    if (partyBar_.showing() && !watching_) interface_.add(partyBar_.canvas());
+    // The party steps aside while M lays the whole map over the screen.
+    if (partyBar_.showing() && !watching_ && !minimap_.full()) interface_.add(partyBar_.canvas());
     if (targetFrame_.showing()) interface_.add(targetFrame_.canvas());
     // The chat under the plate, whose left wing its cloud runs behind.
     if (chat_.showing()) {
