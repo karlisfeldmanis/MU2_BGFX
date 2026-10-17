@@ -53,7 +53,8 @@ inline bool olderIntel(const Gpu& gpu) {
 inline int presetFor(const Gpu& gpu) {
     using namespace core;
     if (!gpu.known) return -1;
-    if (!gpu.vulkan || gpu.software) return kPresetLowest;
+    // Windows' Basic Render or Display adapter (vendor 0x1414): no driver of the card's own.
+    if (!gpu.vulkan || gpu.software || gpu.vendorId == 0x1414) return kPresetLowest;
     int preset = kPresetHigh;
     if (gpu.dedicated < (uint64_t(2) << 30)) {
         // Integrated. Intel's UHD and HD Graphics, the most common laptop chip, did not hold 60

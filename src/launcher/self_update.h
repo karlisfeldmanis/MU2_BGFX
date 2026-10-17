@@ -41,4 +41,10 @@ bool developers(const fs::path& program);
 // What a swap left behind: the old program, the staged download. Called at every start.
 void cleanAfterSelfUpdate();
 
+#if defined(_WIN32) || defined(__linux__)
+// `exe` started with `args`, not waited for: the swapped-in launcher, or this one opened again
+// after a driver install (driver.h).
+bool startLauncher(const fs::path& exe, const std::vector<std::string>& args);
+#endif
+
 }  // namespace mu::launcher
