@@ -186,10 +186,6 @@ bool run(const std::vector<std::string>& argv) {
 
 }  // namespace
 
-#if defined(_WIN32) || defined(__linux__)
-bool startLauncher(const fs::path& exe, const std::vector<std::string>& args) { return startProgram(exe, args); }
-#endif
-
 SelfUpdate launcherCurrent(const Place& place, std::string& note) {
     Newest newest;
     if (!askNewest(place, newest, note)) return SelfUpdate::Skipped;

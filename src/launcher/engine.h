@@ -107,9 +107,6 @@ struct Settings {
     // He picked `region` from the list himself; until then it follows the pings. Launchers before
     // 2026-10-17 wrote "region" always and this never, so their players are chosen for too.
     bool regionPicked = false;
-    // The Windows Update driver he was asked about at Play (driver.h), by its UpdateID: Install or
-    // Play anyway, he is not asked again about that one.
-    std::string driverAsked;
 };
 Settings loadSettings();
 void saveSettings(const Settings& settings);

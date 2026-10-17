@@ -541,10 +541,10 @@ if(WIN32 OR APPLE OR MU2_LINUX_CLIENT)
   target_link_libraries(mu2_launcher PRIVATE mu_gfx mu_core mu_report mu_net)
   target_compile_options(mu2_launcher PRIVATE ${MU_WARNINGS})
   if(WIN32)
-    target_sources(mu2_launcher PRIVATE src/launcher/gpu_win.cpp src/launcher/driver_win.cpp src/launcher/launcher.rc)
+    target_sources(mu2_launcher PRIVATE src/launcher/gpu_win.cpp src/launcher/launcher.rc)
     set_source_files_properties(src/launcher/launcher.rc PROPERTIES
       OBJECT_DEPENDS "${CMAKE_SOURCE_DIR}/src/launcher/launcher.manifest;${CMAKE_SOURCE_DIR}/src/app/mu2.ico")
-    target_link_libraries(mu2_launcher PRIVATE crypt32 shell32 ole32 oleaut32 uuid dxgi setupapi advapi32)
+    target_link_libraries(mu2_launcher PRIVATE crypt32 shell32 ole32 uuid dxgi setupapi advapi32)
     set_target_properties(mu2_launcher PROPERTIES OUTPUT_NAME MU2Launcher WIN32_EXECUTABLE TRUE)
   elseif(MU2_LINUX_CLIENT)
     # Its probe asks Vulkan itself, opened by hand as bgfx opens it, with the headers bgfx carries

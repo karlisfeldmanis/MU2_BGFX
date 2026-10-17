@@ -37,7 +37,6 @@ extern char** environ;
 #include <chrono>
 #include <cmath>
 #include <functional>
-#include <memory>
 #include <mutex>
 #include <thread>
 
@@ -115,12 +114,12 @@ constexpr Look kOff{{0.180f, 0.145f, 0.118f}, {0.102f, 0.078f, 0.067f}, {0.094f,
 constexpr float kBlood[3] = {0.761f, 0.212f, 0.169f};
 
 constexpr uint32_t kBoneHi = 0xF3E8D4, kBone = 0xD9CFBD, kLabel = 0xC9BFAE, kQuiet = 0x8F8575;
+constexpr uint32_t kAmber = 0xE0A458;  // a word of caution, not an error: the driver beside the card
 
 // ---- the window's state -------------------------------------------------------------------------
 
 enum class Screen { SignIn, Home };
-// Driver: the first Play asks about the graphics driver Windows Update has for this PC (driver.h).
-enum class Home { Checking, Install, Update, Downloading, Paused, Ready, Offline, Failed, Uninstall, Removing, Driver };
+enum class Home { Checking, Install, Update, Downloading, Paused, Ready, Offline, Failed, Uninstall, Removing };
 
 struct Field {
     std::string text;
@@ -129,8 +128,7 @@ struct Field {
 
 class Launcher {
 public:
-    explicit Launcher(const UiOptions& options)
-        : options_(options), place_(options.place), driverDone_(options.driverDone) {}
+    explicit Launcher(const UiOptions& options) : options_(options), place_(options.place) {}
     int run();
 
 private:
@@ -169,12 +167,6 @@ private:
     void openUrl(const std::string& url);
     void pickFolder();
     void measureRegions();
-    void lookForDriver();
-    void installDriverThenReopen();
-    void restartPc();
-    const DriverOffer* driverOffer() const {
-        return driverLook_ && driverLook_->done.load() && driverLook_->found ? &driverLook_->offer : nullptr;
-    }
 
     // the worker
     void work(std::function<void()> job);
@@ -218,18 +210,6 @@ private:
     // -1 for one that did not answer. Measured on pinger_ once a run.
     std::vector<double> pings_;
     std::thread pinger_;
-    // The driver Windows Update has for this PC (driver.h), asked for on a thread of its own at
-    // the start where the probe says one is wanted; read here once `done` is set. Shared, so a
-    // search still out when the window closes writes into nothing of the window's.
-    struct DriverLook {
-        std::atomic<bool> done{false};
-        bool found = false;
-        DriverOffer offer;
-        std::string note;
-    };
-    std::shared_ptr<DriverLook> driverLook_;
-    bool driverInstall_ = false;  // Install driver pressed: run() closes the window, then installs
-    std::string driverDone_;      // how the install before this run ended (--driver-done), or ""
 
     Field fields_[2];  // email, password
     int focus_ = 0;
@@ -436,12 +416,6 @@ void Launcher::install() {
 // since yesterday does not start yesterday's game. Updated if need be, then started.
 void Launcher::playNow() {
     if (game_) return;
-    // The driver first, once for each one Windows Update offers (driver.h): Install driver, or
-    // Play anyway.
-    if (const DriverOffer* offer = driverOffer(); offer && settings_.driverAsked != offer->id) {
-        home_ = Home::Driver;
-        return;
-    }
     if (Clock::now() - checkedAt_ > std::chrono::seconds(30)) {
         playAfter_ = true;
         check();
@@ -869,44 +843,12 @@ void Launcher::drawHome() {
             // Where Play goes, and the way to another, beside Play (the user, 2026-10-17: "so
             // users see the region", "has to be ... near button not on top").
             drawRegion(textX + 16.0f, rowY + 41.0f);
-            if (driverDone_ == "installed") {
-                words(textX + 16.0f, rowY + 59.0f, "Graphics driver installed", hex(kQuiet), 13.0f);
-            } else if (tuned_) {
+            if (tuned_) {
                 words(textX + 16.0f, rowY + 59.0f,
                       std::string("Graphics set to ") + firstRunSet(gpu_).name + " for this PC",
                       hex(kQuiet), 13.0f);
             }
             if (!starting_ && !game_) offerUninstall();
-            break;
-        }
-        case Home::Driver: {
-            const DriverOffer* offer = driverOffer();
-            if (!offer) {
-                home_ = Home::Ready;
-                break;
-            }
-            const std::string id = offer->id, title = offer->title;
-            const auto answered = [this, id] {
-                settings_.driverAsked = id;
-                saveSettings(settings_);
-            };
-            if (button(main, "Install driver", true)) {
-                answered();
-                driverInstall_ = true;
-                glfwSetWindowShouldClose(window_, GLFW_TRUE);
-            }
-            const Box later{main.right() + 12.0f, rowY, 150.0f, 56.0f};
-            if (button(later, "Play anyway", false)) {
-                answered();
-                home_ = Home::Ready;
-                playNow();
-            }
-            const float askX = later.right() + 20.0f;
-            words(askX, rowY + 24.0f,
-                  driverMissing(gpu_) ? "This PC has no graphics driver. Install it first?"
-                                      : "A newer graphics driver is ready. Install it first?",
-                  hex(kBone), 15.0f);
-            words(askX, rowY + 46.0f, "Windows Update: " + title, hex(kQuiet), 15.0f);
             break;
         }
         case Home::Uninstall: {
@@ -940,27 +882,20 @@ void Launcher::drawHome() {
 #endif
     if (gpu_.known) words(machineX, 26.0f, gpu_.line(), hex(kQuiet), 13.0f);
     // No Vulkan is no longer in the way: the game draws through Direct3D 11 then (gfx/window.cpp).
-    // No driver, or an old one (driver.h): Windows Update's installed from here where it has one
-    // and the game is ready, the vendor's page otherwise; and after an install, what is left to do.
-    const bool restartWanted = driverDone_ == "restart", installFailed = driverDone_ == "failed";
-    if (gpu_.known && (needsDriver(gpu_) || restartWanted || installFailed) && home_ != Home::Driver) {
-        const Box warn{textX, rowY - 64.0f, 520.0f, 44.0f};
-        const bool offered = driverOffer() && home_ == Home::Ready && !game_ && !starting_;
-        alert(warn, restartWanted  ? "Restart your PC to finish the graphics driver."
-                    : installFailed ? "The graphics driver did not install."
-                    : driverMissing(gpu_) ? "This PC has no graphics driver."
-                                          : "Your graphics driver is old. Update it to play at full quality.");
-        const std::string what = restartWanted ? "Restart now" : offered && !installFailed ? "Install driver" : "Update driver";
-        if (link(warn.right() - measure(what, 15.0f) - 14.0f, warn.y + 27.0f, what, kBoneHi)) {
-            if (restartWanted) {
-                restartPc();
-            } else if (offered && !installFailed) {
-                home_ = Home::Driver;
-            } else {
-                const std::string url = driverUrl(gpu_);
-                openUrl(url.empty() ? "ms-settings:windowsupdate" : url);
-            }
-        }
+    // No driver, or an old one (driver.h): said beside the card, quietly, with the way to the
+    // driver; nothing installed (the user, 2026-10-17: "simple elegant message at top left
+    // corner near graphics card").
+    if (needsDriver(gpu_)) {
+        float at = machineX + measure(gpu_.line(), 13.0f) + 18.0f;
+        panel(px({at, 18.0f, 6.0f, 6.0f}), 3.0f * s_, hex(kAmber), hex(kAmber));
+        at += 13.0f;
+        const std::string say = driverMissing(gpu_) ? "No graphics driver" : "Driver is old";
+        words(at, 26.0f, say, hex(kAmber), 13.0f);
+        at += measure(say, 13.0f) + 10.0f;
+        const std::string what = "Update";
+        // A press on the link is no drag of the window (frame), though it lies on the strip.
+        if (clicked_ && over(px({at, 13.0f, measure(what, 13.0f), 18.0f}))) dragging_ = false;
+        if (link(at, 26.0f, what, kBoneHi, 13.0f)) openUrl(driverPage(gpu_));
     }
     if (!manifest_.version.empty()) {
         const std::string version = "Client " + manifest_.version;
@@ -1001,40 +936,6 @@ void Launcher::measureRegions() {
 
 // **The region** (engine.h Region) beside Play: "Region: North Europe (34 ms)" and a caret, its
 // words' baseline at `baseline`, that opens the list above it.
-// Windows Update asked for a display driver (driver.h), on a thread of its own: a search takes
-// from seconds to a minute or two, and the sign-in and the update go on meanwhile.
-void Launcher::lookForDriver() {
-    auto look = std::make_shared<DriverLook>();
-    driverLook_ = look;
-    const Gpu gpu = gpu_;
-    std::thread([look, gpu] {
-        look->found = findDriver(gpu, look->offer, look->note);
-        core::logf("launcher: driver: %s%s", look->found ? "offered, " : "", look->note.c_str());
-        look->done = true;
-        glfwPostEmptyEvent();
-    }).detach();
-}
-
-// After the window has closed (run): the driver installed by the launcher run as administrator,
-// then this launcher opened again, told how it went. Its new run probes the new driver and draws
-// with it; this one's devices were the old driver's.
-void Launcher::installDriverThenReopen() {
-#ifdef _WIN32
-    const DriverOffer* offer = driverOffer();
-    const DriverDone done = offer ? installDriver(offer->id) : DriverDone::NotFound;
-    std::vector<std::string> args = options_.args;
-    args.push_back("--driver-done");
-    args.push_back(doneName(done));
-    if (!startLauncher(ownProgram(), args)) core::logError("launcher: could not open again after the driver");
-#endif
-}
-
-void Launcher::restartPc() {
-#ifdef _WIN32
-    ShellExecuteW(nullptr, L"open", L"shutdown.exe", L"/r /t 0", nullptr, SW_HIDE);
-#endif
-}
-
 void Launcher::drawRegion(float x, float baseline) {
     const auto& all = regions();
     const Region& region = regionNamed(settings_.region);
@@ -1370,10 +1271,6 @@ int Launcher::run() {
     gpu_ = probeGpu();
     tuned_ = firstRunGraphics(gpu_);
     if (options_.shot.empty()) measureRegions();
-#ifdef _WIN32
-    // A restart still owed: the driver just installed waits for it, and the search would find it.
-    if (options_.shot.empty() && needsDriver(gpu_) && driverDone_ != "restart") lookForDriver();
-#endif
     if (!open()) {
         core::logError("launcher: the window did not open");
         close();
@@ -1440,8 +1337,8 @@ int Launcher::run() {
             gpu_.preset = presetFor(gpu_);
             tuned_ = true;
         }
-        // The driver's screens as an Intel Iris Plus on a 2022 driver sees them.
-        if (which == "driver" || which == "driver-restart") {
+        // The driver's word beside the card, as an Intel Iris Plus on a 2022 driver sees it.
+        if (which == "driver") {
             gpu_ = Gpu{};
             gpu_.known = true;
             gpu_.name = "Intel(R) Iris(R) Plus Graphics";
@@ -1451,14 +1348,7 @@ int Launcher::run() {
             gpu_.vulkan = true;
             gpu_.preset = presetFor(gpu_);
             tuned_ = false;
-            auto look = std::make_shared<DriverLook>();
-            look->found = true;
-            look->offer = {"00000000-0000-0000-0000-000000000000", "Intel Corporation - Display - 31.0.101.2135",
-                           gpu_.name};
-            look->done = true;
-            driverLook_ = look;
-            home_ = which == "driver" ? Home::Driver : Home::Ready;
-            if (which == "driver-restart") driverDone_ = "restart";
+            home_ = Home::Ready;
         }
         for (int i = 0; i < 6; ++i) frame();
         bgfx::requestScreenShot(BGFX_INVALID_HANDLE, options_.shot.c_str());
@@ -1505,7 +1395,6 @@ int Launcher::run() {
         frame();
     }
     close();
-    if (driverInstall_) installDriverThenReopen();
     return 0;
 }
 

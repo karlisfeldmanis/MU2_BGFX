@@ -394,7 +394,6 @@ Settings loadSettings() {
     settings.region = regionNamed(said["region"].stringOr("")).id;
     // A pick of a region since taken away is no pick.
     settings.regionPicked = said["regionPicked"].boolOr(false) && settings.region == said["region"].stringOr("");
-    settings.driverAsked = said["driverAsked"].stringOr("");
     return settings;
 }
 
@@ -402,8 +401,7 @@ void saveSettings(const Settings& settings) {
     writeFile(userFolder() / "launcher.json", "{\"install\": " + quoted(utf8Of(settings.install)) +
                                                   ", \"email\": " + quoted(settings.email) +
                                                   ", \"region\": " + quoted(settings.region) +
-                                                  ", \"regionPicked\": " + (settings.regionPicked ? "true" : "false") +
-                                                  ", \"driverAsked\": " + quoted(settings.driverAsked) + "}\n");
+                                                  ", \"regionPicked\": " + (settings.regionPicked ? "true" : "false") + "}\n");
 }
 
 // The first run's graphics, in the keys the game's readOptions knows (core/args.cpp): the preset

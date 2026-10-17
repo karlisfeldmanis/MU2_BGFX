@@ -5,7 +5,6 @@
 //   mu2_launcher --shot FILE --screen signin|error|install|downloading|ready|regions   one screen, saved
 //   mu2_launcher --renderer vulkan|d3d11                         Windows: the window drawn with that
 //   mu2_launcher --check [--site URL] [--platform windows] [--dir DIR] [--only TEXT] [--play]
-//   mu2_launcher --install-driver UPDATEID                       Windows, as administrator: driver.h
 //
 // The email and password come from MU2_EMAIL and MU2_PASSWORD, never the command line. --only
 // keeps the files whose path holds TEXT, so a check need not fetch 1.5 GB.
@@ -88,15 +87,12 @@ int check(Place place, fs::path dir, const std::string& only, bool start) {
     if (gpu.preset >= 0) seen += ", " + std::string(mu::core::kGraphicsPresets[gpu.preset].name) + " graphics";
     if (gpu.driverOld) seen += ", driver old";
     step("gpu", true, gpu.known ? seen : "no probe on this system");
-    // The driver Windows Update would install (driver.h), asked for only where one is wanted.
-    if (needsDriver(gpu)) {
-        DriverOffer offer;
-        std::string note;
-        const bool found = findDriver(gpu, offer, note);
-        step("driver", true, (found ? "Windows Update offers " + offer.title + " (" + offer.id + ")" : note));
-    } else {
-        step("driver", true, gpu.known ? "nothing wanted" : "no probe on this system");
-    }
+    // What the home screen warns about beside the card (driver.h), and where its Update goes.
+    step("driver", true,
+         !gpu.known           ? std::string("no probe on this system")
+         : driverMissing(gpu) ? "MISSING, warned: " + driverPage(gpu)
+         : needsDriver(gpu)   ? "old, warned: " + driverPage(gpu)
+                              : std::string("nothing to warn about"));
     const bool have = fs::exists(userFolder() / "options.txt");
     const std::string graphics =
         tuned ? "first run set to " + std::string(firstRunSet(gpu).name)
@@ -172,7 +168,7 @@ int check(Place place, fs::path dir, const std::string& only, bool start) {
 int main(int argc, char** argv) {
     Place place;
     fs::path dir;
-    std::string only, driverId;
+    std::string only;
     bool checking = false, start = false, removing = false, digesting = false;
     UiOptions ui;
     for (int i = 1; i < argc; ++i) {
@@ -192,8 +188,6 @@ int main(int argc, char** argv) {
             ui.renderer = r == "d3d11" ? 2 : r == "vulkan" ? 1 : -1;
         }
         else if (a == "--no-self-update") ui.selfUpdate = false;
-        else if (a == "--install-driver" && i + 1 < argc) driverId = argv[++i];
-        else if (a == "--driver-done" && i + 1 < argc) ui.driverDone = argv[++i];
     }
     // Handed on to a newer launcher: where it was pointed, and nothing else.
     for (int i = 1; i < argc; ++i) {
@@ -204,17 +198,6 @@ int main(int argc, char** argv) {
         }
     }
     if (checking) return check(place, dir, only, start);
-    // The administrator's run of a driver install (driver.h), started by the launcher's own
-    // Install driver: its log beside the launcher's, its outcome the exit code.
-    if (!driverId.empty()) {
-        const fs::path logs = userFolder() / "logs";
-        std::error_code ec;
-        fs::create_directories(logs, ec);
-        mu::core::logOpen(utf8Of(logs / "driver.log").c_str());
-        const int code = installDriverHere(driverId);
-        mu::core::logClose();
-        return code;
-    }
     // The install's own step, with no site: --uninstall removes what installed.json lists in --dir
     // (engine.h), or in the install the settings name; MU2Setup.exe's uninstaller runs it
     // (src/launcher/mu2setup.iss), and a Wine run checks it by.

@@ -13,15 +13,12 @@ struct UiOptions {
     Place place;
     // --shot FILE: a hidden window, the screen named by `shotScreen` drawn and saved, then out.
     std::string shot;
-    std::string shotScreen;  // signin, error, install, downloading, ready, regions, driver, driver-restart
+    std::string shotScreen;  // signin, error, install, downloading, ready, regions, driver
     // --renderer vulkan|d3d11 (Windows): what its window draws with, over the probe's pick
     // (gpu.h rendererFor). -1 is the probe's.
     int renderer = -1;
     // --no-self-update: this launcher stays as it is (launcher/self_update.h).
     bool selfUpdate = true;
-    // --driver-done WORD: this launcher was opened again after a driver install, which ended so
-    // (driver.h doneName).
-    std::string driverDone;
     // What it was started with, handed on to a newer launcher that takes its place.
     std::vector<std::string> args;
 };

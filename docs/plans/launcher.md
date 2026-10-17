@@ -207,37 +207,27 @@ information about that pc back to server"). engine.cpp reportMachine, web/server
   no launcher, so a machine holding an older MU2Launcher.exe only gets this one by downloading it
   again from the site.
 
-**L8. The graphics driver installed before the first Play** (the user, 2026-10-17: "identify
-missing drivers, install them before first play"). src/launcher/driver.h, driver_win.cpp.
+**L8. The graphics driver, said beside the card** (the user, 2026-10-17: "identify missing
+drivers", then "lets better show warning not install something ... because Antivirus could do
+the work", "simple elegant message at top left corner near graphics card"). src/launcher/driver.h.
 - **Why:** of 31 Windows machines in machines.jsonl on 2026-10-17, one ran on Windows' Basic
   Render Driver (no driver of the card's own) and three on drivers from 2022-2023; about a third
   of the crash and freeze reports came from those -- the Basic Render PC's DeviceLost and hang,
   the Iris Plus G7s' DeviceLost on 2020-2022 drivers. The rest (GTX 950/1650 on current drivers,
-  the RTX 3080's hangs) are not the driver's age and this does not touch them.
-- **What is wanted** (needsDriver): DXGI's software adapter or vendor 0x1414 (Basic Render or
-  Basic Display, which DXGI does not always flag), or a driver kDriverYears old. Vendor 0x1414
+  the RTX 3080's hangs) are not the driver's age.
+- **What is warned about** (needsDriver): DXGI's software adapter or vendor 0x1414 (Basic Render
+  or Basic Display, which DXGI does not always flag), or a driver kDriverYears old. Vendor 0x1414
   now opens on Lowest too (gpu.h presetFor).
-- **Found** on a thread of its own at the start (ui.cpp lookForDriver): the Windows Update Agent
-  searched for `IsInstalled=0 and Type='Driver' and IsHidden=0`, kept where DriverClass is
-  Display, the one whose DriverModel is the game's card first. No administrator is needed to
-  search. The agent is driven by name through IDispatch, as Microsoft's scripts drive it, since
-  mingw's wuapi.h is Wine's and has no IWindowsDriverUpdate.
-- **Asked at the first Play** (Home::Driver): "Install driver" or "Play anyway", once a driver
-  (launcher.json driverAsked holds its UpdateID). The red line above Play offers it too.
-- **Installed** by the launcher run again as administrator, `MU2Launcher.exe --install-driver
-  UPDATEID` through Windows' consent box, with a small window of its own (finding, downloading,
-  installing) and its log in logs/driver.log; the outcome is its exit code. A driver swap removes
-  every device of the card, so the launcher closes its window first and, once the install ends,
-  starts again with `--driver-done installed|restart|failed|none|refused`: "Graphics driver
-  installed" under Up to date, or "Restart your PC to finish the graphics driver" with Restart now
-  (shutdown /r /t 0). Where Windows Update has nothing, the vendor's page as before
-  (ms-settings:windowsupdate for a card with no vendor known).
-- **Shown 2026-10-17:** `--shot --screen driver` and `driver-restart` on the Mac (an Iris Plus
-  on a 2022 driver faked); under Wine, `--check` says `driver ok nothing wanted`, and
-  `--install-driver <guid>` opens its window, finds Wine's agent without a searcher (80004001) and
-  ends with exit 2, `--install-driver not-a-guid` with exit 1. **Not yet run on Windows:** the
-  search, download and install themselves, the consent box and the reopen -- they want a real PC
-  that needs a driver (`MU2Launcher.exe --check` there prints the `driver` line).
+- **How:** after the card's line at the top left, an amber dot, "Driver is old" or "No graphics
+  driver", and Update -- the vendor's page (gpu.h driverUrl), or Windows Update's optional updates
+  (`ms-settings:windowsupdate-optionalupdates`) for a card with no driver of its maker's. It
+  replaces L6's red line over Play. `--check` prints `driver ... warned: <where Update goes>`.
+- **Installing it was built and taken out the same evening** (77191bfd, then the commit after):
+  the launcher run as administrator to install Windows Update's display driver. No big launcher
+  does it, and a launcher that elevates and swaps drivers is what antivirus heuristics flag --
+  the site was listed by Malwarebytes once already. Should it come back, 77191bfd has it: the
+  Windows Update Agent driven by name through IDispatch, the window closed for the swap and the
+  launcher started again after.
 
 **Later:** signing (Authenticode) before strangers download it (windows-client.md W7); the server
 refusing machine keys once every player has the launcher; Edit account (change password) on the
