@@ -35,6 +35,8 @@ extern char** environ;
 
 #include <algorithm>
 #include <chrono>
+#include <cstdio>
+#include <cstdlib>
 #include <cmath>
 #include <functional>
 #include <mutex>
@@ -210,6 +212,7 @@ private:
     // -1 for one that did not answer. Measured on pinger_ once a run.
     std::vector<double> pings_;
     std::thread pinger_;
+    std::atomic<bool> pinged_{false};  // pinger_'s work is done, so it can be joined at close
 
     Field fields_[2];  // email, password
     int focus_ = 0;
@@ -305,6 +308,13 @@ void Launcher::signIn() {
 }
 
 void Launcher::check() {
+    // Asked while the worker is still busy -- from an answer it has just posted, before it has
+    // cleared working_ -- work() would drop the job and leave Home on Checking with no Play:
+    // asked again by frame() once the worker is free.
+    if (working_.load()) {
+        checkPending_ = true;
+        return;
+    }
     home_ = Home::Checking;
     message_.clear();
     const fs::path install = settings_.install;
@@ -926,6 +936,7 @@ void Launcher::measureRegions() {
             }
         });
         glfwPostEmptyEvent();
+        pinged_ = true;
     });
 }
 
@@ -1142,9 +1153,28 @@ bool Launcher::open() {
 
 void Launcher::close() {
     stop_ = true;
-    if (worker_.joinable()) worker_.join();
     net::abandonWaits();  // a ping still waiting on a server gives up at once
-    if (pinger_.joinable()) pinger_.join();
+    // Gone from the screen at once, and the threads given a few seconds, not for ever: a check
+    // hashing gigabytes, a self-update's fetch or the machine report's requests (15 s to resolve,
+    // connect and send, 60 s a read) do not look at stop_, nor can a ping's name lookup be cut,
+    // and a join there held a closed launcher "Not Responding" for minutes on a bad line. One
+    // still going is let go; runUi ends the process without destructors, which takes it along --
+    // the download honours stop_ between files and is checked again at the next start.
+    if (window_) glfwHideWindow(window_);
+    const auto deadline = Clock::now() + std::chrono::seconds(3);
+    while (Clock::now() < deadline && (working_.load() || (pinger_.joinable() && !pinged_.load()))) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    for (std::thread* t : {&worker_, &pinger_}) {
+        if (!t->joinable()) continue;
+        const bool done = t == &worker_ ? !working_.load() : pinged_.load();
+        if (done) {
+            t->join();
+        } else {
+            core::logf("launcher: closed with its %s still going", t == &worker_ ? "work" : "ping");
+            t->detach();
+        }
+    }
     // With no Vulkan, bgfx never started: shutting it down then crashed the launcher before its
     // box could say why (Wine with vulkan-1.dll off, 2026-10-15).
     if (bgfxUp_) {
@@ -1397,7 +1427,16 @@ int Launcher::run() {
 
 int runUi(const UiOptions& options) {
     Launcher launcher(options);
-    return launcher.run();
+    const int code = launcher.run();
+    // Out here, with the launcher still alive and without the static destructors, as the game
+    // leaves (src/main.cpp, 66e4e9c5): detached threads -- the crash reports going home, the
+    // game's ticket, the hand of the front, a worker close() let go -- can be inside WinHTTP or
+    // the log, or post() to this launcher, when it closes; a self-update closes it the moment it
+    // starts. exit() would destroy the log's mutex and buffer under them, and leaving this scope
+    // the launcher they post to: a fault after a clean close, filed as a crash on the next start.
+    core::logClose();
+    std::fflush(nullptr);
+    std::_Exit(code);
 }
 
 }  // namespace mu::launcher

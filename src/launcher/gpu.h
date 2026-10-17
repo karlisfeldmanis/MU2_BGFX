@@ -45,9 +45,9 @@ inline bool olderIntel(const Gpu& gpu) {
            gpu.name.find("Xe") == std::string::npos && gpu.name.find("Arc") == std::string::npos;
 }
 
-// What this machine's first run opens on. No Vulkan or no hardware adapter is Lowest; two
-// gigabytes of the adapter's own memory or more is High, less (an integrated card sharing the
-// machine's) Low, and Lowest for Intel's older integrated cards; a driver kDriverYears old or
+// What this machine's first run opens on. No Vulkan or no hardware adapter is Lowest; four
+// gigabytes of the adapter's own memory is High, two or three Medium, less (an integrated card
+// sharing the machine's) Low, and Lowest for Intel's older integrated cards; a driver kDriverYears old or
 // more costs one step, because a card on an old driver runs below what it is. -1 where nothing
 // was probed.
 inline int presetFor(const Gpu& gpu) {
@@ -62,6 +62,13 @@ inline int presetFor(const Gpu& gpu) {
         // ms a frame in Lorencia's rain, then a driver reset): every Intel card before Xe opens
         // on Lowest. Iris Xe, Intel's Arc and AMD's APUs are about twice it.
         preset = olderIntel(gpu) ? kPresetLowest : kPresetLow;
+    } else if (gpu.dedicated < (uint64_t(3584) << 20)) {
+        // Two or three gigabytes of its own (a GTX 950 or 1050, an RX 460 or 560): Medium, not
+        // High's 4x MSAA and 4096 shadow map, whose targets alone are near a gigabyte at 4K -- and
+        // bgfx's Vulkan does not check an allocation that fails (the AMD audit, 2026-10-17), so a
+        // full card is a lost device later, not a refusal. Four-gigabyte cards report about 3935
+        // MB, hence 3.5 and not 4.
+        preset = kPresetMedium;
     }
     return gpu.driverOld && preset > kPresetLowest ? preset - 1 : preset;
 }
@@ -72,9 +79,16 @@ inline int presetFor(const Gpu& gpu) {
 // the software adapter. Their drivers' Direct3D 11 is the path most tested; Intel's integrated
 // Vulkan is the weak part of a driver it no longer develops. Everyone else is Vulkan, and
 // Direct3D 11 still if Vulkan does not start (gfx/window.cpp).
+//
+// But not NVIDIA's: every NVIDIA device lost in the players' reports, 2026-10-15 to 17, was on
+// Direct3D 11 -- a GTX 950 the low-end first run put there (four, one on Lowest) and a GTX 1650
+// laptop (three) -- and none on Vulkan since the acquire patch, a GTX 960 to a 3080 Ti. Intel's
+// stays, Iris laptops among them (the user, 2026-10-17: "Direct3D 11 had pretty good performance
+// on iris laptop"); AMD's has lost nothing on either.
 inline int rendererFor(const Gpu& gpu) {
     if (!gpu.known || gpu.preset < 0) return 0;
-    return !gpu.vulkan || gpu.preset <= core::kPresetLow ? 2 : 0;
+    if (!gpu.vulkan) return 2;
+    return gpu.preset <= core::kPresetLow && gpu.vendorId != 0x10de ? 2 : 0;
 }
 
 // The set the first run writes: the low-end one for a machine presetFor calls Lowest or Low
