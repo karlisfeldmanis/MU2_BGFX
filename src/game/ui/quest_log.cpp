@@ -520,7 +520,9 @@ void QuestLog::rebuild(const Play& play, int playing, Stage* stage) {
         const Box box = placed(x, y, one.box, u);
         const Box icon{box.x, box.y, box.h, box.h};
         controls::cell(card, icon, over_ == 300 + int(i) ? controls::Cell::Over : controls::Cell::Rest, u);
-        std::string name = tables.items[size_t(one.item)].label;
+        sim::Held carried;
+        carried.powers[0] = one.power;
+        std::string name = sim::itemLabel(tables.items[size_t(one.item)], carried);
         if (one.plus > 0) name += " +" + std::to_string(one.plus);
         // At most two lines beside the picture, centred on it.
         std::vector<std::string> lines;

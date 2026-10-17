@@ -919,6 +919,15 @@ const PowerRow* powerOf(uint8_t power);
 uint8_t gladiatorRune(uint8_t power);
 // The Rune of Creation's row: 14, 22.
 bool creation(const content::ItemRow& row);
+// The name a thing is shown by: its row's, but a Rune of Creation that carries a power is the
+// rune of that power, "Rune of Stormcall" (the user, 2026-10-18: 'we need to show Rune of "rune
+// name" not jewel of creation'). No plus: each caller adds its own.
+inline std::string itemLabel(const content::ItemRow& row, const Held& held) {
+    if (creation(row)) {
+        if (const PowerRow* power = powerOf(held.powers[0])) return std::string("Rune of ") + power->name;
+    }
+    return row.label.empty() ? row.name : row.label;
+}
 // Who may carry sockets: the option-bearing set, weapons, armour and shields, and the rings and
 // pendants, which roll them as a drop as the rest do and take only an armour's rune (settable).
 inline bool takesSockets(const content::ItemRow& row) {

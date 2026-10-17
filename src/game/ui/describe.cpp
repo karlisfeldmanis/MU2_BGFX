@@ -958,7 +958,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             sheet.rune = runeRow(tables);
             // **Named for its power** (the tooltip audit, 2026-10-05): every rune was titled
             // "Rune of Creation" and the power was a line under it, so two in the bag read alike.
-            // The name is the power in its rarity, the type line its rarity and whose it is.
+            // The name is the power in its rarity, "Rune of Stormcall" since 2026-10-18
+            // (sim::itemLabel), the type line its rarity and whose it is.
             const bool everyone = power->classes == sim::kEveryClass;
             std::string classes = everyone ? "every class" : "";
             // A second class's rune names the second: 'Blade Knight' (sim::PowerRow::second).
@@ -967,7 +968,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 classes += (classes.empty() ? "" : " / ") +
                            std::string(power->second ? kSeconds[i] : kNames[i]);
             }
-            sheet.name = power->name;
+            sheet.name = sim::itemLabel(row, what);
             sheet.base = std::string(sim::rarityName(power->rarity)) + " rune \xC2\xB7 " + classes;
             Section carries;
             // A rune that is a number ("+10% all stats") has it as the card's headline, as a

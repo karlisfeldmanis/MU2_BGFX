@@ -614,9 +614,12 @@ void Play::update(double seconds) {
                     int sound = heard_.take;
                     if (happening.b >= 0 && happening.b < sim::kSlots) {
                         const int32_t item = realm_.satchel()[happening.b].item;
+                        // A Rune of Creation rings as a jewel too, as it does landing (the
+                        // user, 2026-10-18: 'play jewel sound when pick up rune').
                         if (item >= 0 && size_t(item) < tables_.items.size() &&
-                            tables_.items[size_t(item)].jewel() &&
-                            tables_.items[size_t(item)].group != sim::kGroupPets &&
+                            ((tables_.items[size_t(item)].jewel() &&
+                              tables_.items[size_t(item)].group != sim::kGroupPets) ||
+                             sim::creation(tables_.items[size_t(item)])) &&
                             heard_.jewel >= 0) {
                             sound = -1;
                             const Drawn* hero = drawnOf(heroId);

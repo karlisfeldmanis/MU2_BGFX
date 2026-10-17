@@ -50,7 +50,7 @@ int cellAt(float gridY, float ux, float uy) {
 }
 
 std::string named(const content::Tables& tables, const sim::Held& what) {
-    std::string out = tables.items[size_t(what.item)].label;
+    std::string out = sim::itemLabel(tables.items[size_t(what.item)], what);
     if (what.refinement > 0) out += " +" + std::to_string(what.refinement);
     return out;
 }

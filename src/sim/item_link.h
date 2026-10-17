@@ -36,7 +36,7 @@ struct ItemLink {
 
 // The name a link carries: the row's, and its plus.
 inline std::string linkLabel(const content::ItemRow& row, const Held& held) {
-    std::string label = row.label.empty() ? row.name : row.label;
+    std::string label = itemLabel(row, held);
     if (held.refinement > 0) label += " +" + std::to_string(held.refinement);
     return label;
 }

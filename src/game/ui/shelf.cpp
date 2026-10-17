@@ -294,7 +294,7 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
         if (overUndo_) {
             const sim::Realm::Sale* sale = realm.lastSale();
             controls::hint(tip_, at.midX(), at.y - 6.0f * u,
-                           sale ? "Buy back " + tables.items[size_t(sale->what.item)].label +
+                           sale ? "Buy back " + sim::itemLabel(tables.items[size_t(sale->what.item)], sale->what) +
                                       " for " + panel::commas(sale->paid) + " Zen (" +
                                       std::to_string(now_.undoSeconds) + "s)"
                                 : std::string("Buy back (nothing sold)"),

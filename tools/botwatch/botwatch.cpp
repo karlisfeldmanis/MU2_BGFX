@@ -190,7 +190,7 @@ ImVec4 itemColour(const std::string& name, const sim::Held& h) {
         legendary(0.12f, 1.0f, 0.0f, 1), excellent(0.1f, 1.0f, 0.5f, 1), gold(1.0f, 0.82f, 0.0f, 1),
         orange(1.0f, 0.5f, 0.0f, 1);
     const auto starts = [&](const char* p) { return name.rfind(p, 0) == 0; };
-    if (starts("Rune of Creation")) {
+    if (starts("Rune of ")) {
         const sim::PowerRow* power = sim::powerOf(h.powers[0]);
         if (!power || power->rarity == sim::Rarity::Legendary) return orange;
         return power->rarity == sim::Rarity::Epic ? purple : power->rarity == sim::Rarity::Common ? white : blue;

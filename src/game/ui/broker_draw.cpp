@@ -50,7 +50,7 @@ std::string ago(int64_t seconds) {
 
 std::string nameOf(const content::Tables& tables, const sim::Held& what) {
     if (what.empty() || size_t(what.item) >= tables.items.size()) return "";
-    const std::string& label = tables.items[size_t(what.item)].label;
+    const std::string label = sim::itemLabel(tables.items[size_t(what.item)], what);
     return what.refinement > 0 ? label + " +" + std::to_string(what.refinement) : label;
 }
 

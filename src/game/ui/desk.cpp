@@ -2102,7 +2102,7 @@ void Desk::labelGround(const Play& play, int width, int height) {
             const content::ItemRow row = sim::asRead(raw, one->what.refinement);
             name = one->what.refinement > 0 && !sim::summoningOrb(raw)
                        ? row.label + " +" + std::to_string(one->what.refinement)
-                       : row.label;
+                       : sim::itemLabel(row, one->what);
             // Ours: excellent said on the label, first after the plus, since its purple alone did
             // not say why (the user, 2026-09-29). MU puts "Excellent " before the name instead.
             if (one->what.excellent != 0) name += " +Excellent";
