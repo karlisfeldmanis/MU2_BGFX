@@ -1448,9 +1448,15 @@ void Play::follow(float seconds) {
         lift += raidLift(*body);
         // A Budge Dragon's hop, while the drawn body covers ground; stood still, it is on the
         // ground at once, as MoveMonsterClient puts it (Drawn::hops).
+        one.hopLift = 0.0f;
         if (one.hops && moving) {
             one.hopClock = std::fmod(one.hopClock + 0.15f * 25.0f * seconds, 3.14159265f);
-            lift += (1.0f - std::fabs(std::sin(one.hopClock))) * 0.7f * metresPerTile;
+            one.hopLift = (1.0f - std::fabs(std::sin(one.hopClock))) * 0.7f * metresPerTile;
+            lift += one.hopLift;
+        }
+        if (one.hops) {
+            const float want = moving ? 0.7f * metresPerTile : 0.0f;
+            one.barHop += (want - one.barHop) * (1.0f - std::exp(-seconds / 0.35f));
         }
         float flyX = x, flyZ = z;
         // And flung back from him while it falls (Nova::flung).

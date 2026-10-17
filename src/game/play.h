@@ -1230,6 +1230,10 @@ private:
         // when it stops (ZzzCharacter.cpp:6392-6395, :6454-6457). The "hops" tag.
         bool hops = false;
         float hopClock = 0.0f;
+        // The hop's lift this frame, in metres, and what its health bar keeps over it: eased to
+        // the hop's top while it hops and back to nought when it stands, so the bar holds still
+        // over the bobbing body (the user, 2026-10-17: "hp bar looks buggy/shuttering").
+        float hopLift = 0.0f, barHop = 0.0f;
         int headBone = -1;
         float fireOwed = 0.0f, dustOwed = 0.0f;
         // A Bull Fighter, either variant: smok_bone, which it snorts out of, and what of half

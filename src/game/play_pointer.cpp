@@ -797,7 +797,8 @@ bool Play::crownOf(uint32_t id, const float* viewProj, int width, int height, fl
     float world[4] = {one.crown[0], 0.0f, one.crown[2], 1.0f};
     if (one.placed) {
         // MU2's CrownClearance: a third of a tile between the top of the body and the bar.
-        world[1] = one.crown[1] + 0.33f * ground_->metresPerTile();
+        // A Budge Dragon's bar keeps off its hop (Drawn::barHop).
+        world[1] = one.crown[1] - one.hopLift + one.barHop + 0.33f * ground_->metresPerTile();
     } else {
         // **Her summon, on a map whose figure table does not carry its breed**: fighting, but
         // undrawn (Play::update, What::Spawned). Its bar still stands where it is -- the user's,
