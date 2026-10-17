@@ -10,7 +10,9 @@
 #include "core/files.h"
 #include "core/loading.h"
 #include "core/log.h"
+#include "game/shine.h"
 #include "game/ui/controls.h"
+#include "game/wings.h"
 
 namespace mu::app {
 
@@ -268,9 +270,16 @@ bool LobbyMode::open(Context& ctx) {
         }
         // The clicks: SOUND_CLICK01 on every button and on Enter and Escape, as MU plays it.
         core::Loading::stage("sounds", 0.95f, 1.0f);
-        if (content::loadShowing(core::join(assets, "cooked/showing/showing.mus"), showing_,
-                                 error) &&
-            sound_.open(assets, showing_, args.mute)) {
+        const bool shown =
+            content::loadShowing(core::join(assets, "cooked/showing/showing.mus"), showing_, error);
+        if (shown) {
+            // The refinement shine's sheets, Chrome01 for +7 and Shiny01 for +9, and the Wings of
+            // Darkness's sparks: the game lends them as a world opens, and the pedestals wear
+            // the same refined gear (the user, 2026-10-17: no +7/+9 on the selection screen).
+            game::lendShine(showing_, assets, ctx.textures, ctx.renderer);
+            game::WingLook::lendSparks(showing_, assets, ctx.textures);
+        }
+        if (shown && sound_.open(assets, showing_, args.mute)) {
             sound_.setVolume(float(args.volume) / 100.0f);
             click_ = sound_.load("window_click", false);
             refused_ = sound_.load("window_refused", false);
