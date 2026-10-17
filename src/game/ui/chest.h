@@ -47,9 +47,11 @@ public:
     bool covers(float x, float y) const;
     bool dragging() const { return dragging_ >= 0; }
     // A frame the window is not updated on ends any drag and press (Bag::cancel).
-    void cancel() { dragging_ = pressing_ = -1; closing_ = false; }
+    void cancel() { dragging_ = pressing_ = lifting_ = -1; closing_ = false; }
     // The vault cell being dragged, or -1.
     int dragged() const { return dragging_; }
+    // Back on the pointer: a click outside that nothing took (the bag's hold).
+    void hold(int cell) { dragging_ = cell; }
     // A thing dragged out of the bag and over this window, or null, and whether the vault takes
     // it at all (a worn piece too, since 2026-10-05): the cells it would land on are lit by
     // Realm::deposit's gate. Set before update.
@@ -99,6 +101,7 @@ private:
     int hovered_ = -1;
     int button_ = -1;    // the coin button under the pointer, 0 in and 1 out
     int pressing_ = -1;  // the one pressed and not yet let go
+    int lifting_ = -1;   // the thing pressed on, picked when the button comes up on it
     bool closing_ = false;
     bool overClose_ = false;
     std::vector<Standing> standing_;

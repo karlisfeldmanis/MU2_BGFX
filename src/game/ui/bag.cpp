@@ -173,11 +173,10 @@ constexpr float kJewelAspect = 0.8f;
 constexpr float kRuneFills = 0.81f;
 constexpr float kSocketGap = 2.0f;
 // **The Rune of Creation in its socket, as its own picture** (the user, 2026-09-29: "we need to
-// show that jewel creation is attached in rune slot"). One rune stands on the bag's stage in a
-// strip below the window, which the window never shows, and each set socket is given that
-// picture inside its ring. The stage is taller than the window by the strip.
-constexpr float kRuneStrip = 24.0f;
-constexpr float kStageTall = panel::kHeight + kRuneStrip;
+// show that jewel creation is attached in rune slot"). One rune stands on the bag's stage at the
+// left of the carry strip below the window (panel::kCarryStrip), which the window never shows,
+// and each set socket is given that picture inside its ring.
+constexpr float kStageTall = panel::kStageTall;
 constexpr gfx::Box kRuneStands{4.0f, panel::kHeight + 2.0f, 20.0f, 20.0f};
 
 // Where a piece's sockets sit, in whatever space `box` is in: centres down its middle, one
@@ -434,7 +433,9 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
     for (int slot = 0; slot < sim::kSlots; ++slot) {
         const sim::Held& what = bag[slot];
         if (what.empty()) continue;
-        Box box = itemBox(tables, slot, what);
+        // The one picked up stands on the carry strip, and its slot is empty.
+        Box box = slot == dragging_ ? panel::carryBox(itemBox(tables, slot, what))
+                                    : itemBox(tables, slot, what);
         // **The picture stands inside its cell's hairline**: two units in for a bag cell, whose
         // twenty-one are mostly picture, three for a worn slot, which has room to spare. Every
         // picture then has the same margin as its neighbours and none touches a rule (the stage
@@ -540,10 +541,9 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     for (int slot = 0; slot < sim::kWorn; ++slot) {
         if (bare_ && slot == sim::kHelm) continue;
         const Box box = wellOf(wornBox(slot), true);
+        // A slot whose piece is picked up is empty, as MU's is, not marked.
         panel::cell(canvas_, x, y, box,
-                    slot == hovered_ && dragging_ < 0 ? sheet::Cell::Over
-                    : slot == dragging_              ? sheet::Cell::Held
-                                                     : sheet::Cell::Rest);
+                    slot == hovered_ && dragging_ < 0 ? sheet::Cell::Over : sheet::Cell::Rest);
         const gfx::Art& ghost = arts.get(ghostFor(slot, archer_));
         if (ghost.valid()) {
             // **The shape alone, faint.** `bag_slot_*` was a plate -- leather, a gold rim, and
@@ -555,7 +555,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
             // over it: what shows through the armour is that strength times what the picture
             // lets through, and what shows round the armour is the rest of the cell.
             canvas_.image(ghost, panel::scaled(x, y, ghostBox(box, ghost)),
-                          bag[slot].empty() ? kGhostInk : kGhostUnder);
+                          bag[slot].empty() || slot == dragging_ ? kGhostInk : kGhostUnder);
         }
     }
     // The satchel: one ruled block, eight by eight, no air between the cells.
@@ -566,7 +566,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // four (ITEM_COLOR_DURABILITY_*). Both here are the cell's wash, under the picture.
     for (int slot = 0; slot < sim::kSlots; ++slot) {
         const sim::Held& held = bag[slot];
-        if (held.empty()) continue;
+        if (held.empty() || slot == dragging_) continue;
         const content::ItemRow& row = tables.items[size_t(held.item)];
         if (!sim::wears(row)) continue;
         const sim::Worn band =
@@ -788,20 +788,11 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // The dock over all of that, under only what rides the pointer and the cards.
     if (dockShown()) drawDock(realm, x, y);
 
-    // What rides the pointer while it is dragged: its own picture, cut out of the stage at its
-    // own footprint, so lifting a sword out of the bag does not resize it.
+    // What rides the pointer: its own picture, cut from the carry strip at its own footprint,
+    // so lifting a sword out of the bag does not resize it.
     if (dragging_ >= 0 && !bag[dragging_].empty()) {
-        const Box units = itemBox(tables, dragging_, bag[dragging_]);
-        const Box to{now_.dragX - units.w * k * 0.5f, now_.dragY - units.h * k * 0.5f, units.w * k,
-                     units.h * k};
-        if (picture.valid()) {
-            const float sx = picture.width / panel::kWidth, sy = picture.height / kStageTall;
-            // The picture alone, whole: the dark box once under it read as a background the
-            // thing was carried on (the user, 2026-10-02).
-            canvas_.region(picture, to, {units.x * sx, units.y * sy, units.w * sx, units.h * sy});
-        } else {
-            canvas_.rect(to, gfx::rgba(0.68f, 0.60f, 0.40f, 0.5f));
-        }
+        panel::carried(canvas_, picture, itemBox(tables, dragging_, bag[dragging_]), now_.dragX,
+                       now_.dragY);
     }
 
     // The hammer's card, kept short (the user, 2026-09-24: the first one said too much). Locked:

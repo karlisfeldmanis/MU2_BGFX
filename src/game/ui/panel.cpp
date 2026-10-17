@@ -197,6 +197,26 @@ void field(gfx::Canvas& canvas, Arts& arts, float x, float y, const gfx::Box& un
     controls::well(canvas, scaled(x, y, units), tip::unit());
 }
 
+void standing(gfx::Canvas& canvas, const gfx::Art& picture, float x, float y) {
+    const float sx = picture.width / kWidth, sy = picture.height / kStageTall;
+    canvas.region(picture, scaled(x, y, {0.0f, 0.0f, kWidth, kHeight}),
+                  {0.0f, 0.0f, kWidth * sx, kHeight * sy});
+}
+
+void carried(gfx::Canvas& canvas, const gfx::Art& picture, const gfx::Box& units, float px, float py) {
+    const float k = scale();
+    const gfx::Box to{px - units.w * k * 0.5f, py - units.h * k * 0.5f, units.w * k, units.h * k};
+    if (!picture.valid()) {
+        canvas.rect(to, gfx::rgba(0.68f, 0.60f, 0.40f, 0.5f));
+        return;
+    }
+    // The picture alone, whole: the dark box once under it read as a background the thing was
+    // carried on (the user, 2026-10-02).
+    const float sx = picture.width / kWidth, sy = picture.height / kStageTall;
+    const gfx::Box from = carryBox(units);
+    canvas.region(picture, to, {from.x * sx, from.y * sy, from.w * sx, from.h * sy});
+}
+
 void cell(gfx::Canvas& canvas, float x, float y, const gfx::Box& units, sheet::Cell state) {
     controls::Cell to = controls::Cell::Rest;
     switch (state) {

@@ -68,8 +68,10 @@ public:
     bool covers(float x, float y) const;
     bool dragging() const { return dragging_ >= 0; }
     // A frame the window is not updated on ends any drag and press (Bag::cancel).
-    void cancel() { dragging_ = -1; pressing_ = kNone; closing_ = false; }
+    void cancel() { dragging_ = lifting_ = -1; pressing_ = kNone; closing_ = false; }
     int dragged() const { return dragging_; }
+    // Back on the pointer: a click outside that nothing took (the bag's hold).
+    void hold(int cell) { dragging_ = cell; }
     // A thing dragged out of the bag and over this window, and whether the box takes it.
     void carrying(const sim::Held* what, bool takes) {
         incoming_ = what ? *what : sim::Held{};
@@ -128,6 +130,7 @@ private:
     float x_ = 0.0f, y_ = 0.0f, screenW_ = 0.0f, screenH_ = 0.0f;
     bool up_ = false;
     int dragging_ = -1;
+    int lifting_ = -1;  // the thing pressed on, picked when the button comes up on it
     sim::Held incoming_;
     bool incomingTakes_ = false;
     int hovered_ = -1;

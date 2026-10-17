@@ -222,7 +222,7 @@ void Mixer::update(float seconds, float width, float height, int column, const s
                    MixerRequests* out) {
     up_ = realm.mixing() >= 0 && realm.tables();
     if (!up_) {
-        dragging_ = -1;
+        dragging_ = lifting_ = -1;
         pressing_ = kNone;
         confirming_ = false;
         sparks_ = 0.0f;
@@ -266,13 +266,15 @@ void Mixer::update(float seconds, float width, float height, int column, const s
 
     const Box cross = panel::frameClose();
     overClose_ = inside && cross.has(ux, uy);
-    if (pointer.pressed && inside) {
+    // Click to pick and click to place, the bag's (bag.h): while a thing rides the pointer a
+    // press is the start of placing it and nothing else.
+    if (pointer.pressed && inside && dragging_ < 0) {
         if (overClose_) {
             closing_ = true;
         } else if (over_ != kNone) {
             pressing_ = over_;
         } else if (hovered_ >= 0 && sparks_ <= 0.0f) {
-            dragging_ = hovered_;
+            lifting_ = hovered_;
         }
     }
     // A right-click on a thing sends it back to the bag: ProcessMixItemAutoMoveToInventory.
@@ -307,12 +309,17 @@ void Mixer::update(float seconds, float width, float height, int column, const s
                     if (ready && turn_ >= 1.0f) confirming_ = true;
                 }
             }
+            // Placed by this release, or left on the pointer where it cannot go -- the frame, a
+            // button, a red cell -- and back where it was over its own place.
+            bool placed = true;
             if (dragging_ >= 0) {
                 if (!inside) {
                     out->outside = dragging_;
                     out->outsideX = pointer.x;
                     out->outsideY = pointer.y;
-                } else if (cell >= 0 && !box[dragging_].empty()) {
+                } else if (cell < 0 || box[dragging_].empty()) {
+                    placed = box[dragging_].empty();
+                } else {
                     // A stack goes on the stack under the pointer; anything else stands with the
                     // pointer at its middle (panel::landing).
                     const content::ItemRow& row = tables.items[size_t(box[dragging_].item)];
@@ -323,16 +330,23 @@ void Mixer::update(float seconds, float width, float height, int column, const s
                                         : panel::landing(ux, uy, kOriginX, kOriginY,
                                                          sim::kMachineColumns, sim::kMachineRows,
                                                          row.width, row.height);
-                    if (to != dragging_) {
+                    if (to == dragging_) {
+                        // Back where it was lifted from.
+                    } else if (onto || (to >= 0 && box.room(tables, to, row.width, row.height, dragging_))) {
                         out->moveFrom = dragging_;
                         out->moveTo = to;
+                    } else {
+                        placed = false;
                     }
                 }
+                if (placed) dragging_ = -1;
+            } else if (lifting_ >= 0 && lifting_ == hovered_) {
+                dragging_ = lifting_;
             }
         }
         closing_ = false;
         pressing_ = kNone;
-        dragging_ = -1;
+        lifting_ = -1;
     }
     if (dragging_ >= 0 && box[dragging_].empty()) dragging_ = -1;
 
@@ -345,10 +359,11 @@ void Mixer::update(float seconds, float width, float height, int column, const s
     for (int at = 0; at < sim::kMachineCells; ++at) {
         const sim::Held& what = box[at];
         if (what.empty()) continue;
-        standing_.push_back({what.item, itemBox(tables, at, what).grown(-2.0f), what.refinement,
+        const Box place = itemBox(tables, at, what);
+        standing_.push_back({what.item, (at == dragging_ ? panel::carryBox(place) : place).grown(-2.0f), what.refinement,
                              at == hovered_ && dragging_ < 0, what.excellent != 0});
     }
-    if (stage) stage->stand(standing_, panel::kWidth, panel::kHeight);
+    if (stage) stage->stand(standing_, panel::kWidth, panel::kStageTall);
 
     now_ = Contents{};
     now_.version = box.version();
@@ -435,9 +450,6 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
     panel::grid(canvas_, x, y, kOriginX, kOriginY, sim::kMachineColumns, sim::kMachineRows);
     if (hovered_ >= 0 && dragging_ < 0 && !box[hovered_].empty()) {
         panel::cell(canvas_, x, y, itemBox(tables, hovered_, box[hovered_]), sheet::Cell::Over);
-    }
-    if (dragging_ >= 0) {
-        panel::cell(canvas_, x, y, itemBox(tables, dragging_, box[dragging_]), sheet::Cell::Held);
     }
     if (dragging_ >= 0 && covers(now_.dragX, now_.dragY)) {
         const float ux = (now_.dragX - x) / k, uy = (now_.dragY - y) / k;
@@ -629,7 +641,7 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
 
     const gfx::Art picture = stage ? stage->picture() : gfx::Art{};
     if (picture.valid()) {
-        canvas_.image(picture, P({0.0f, 0.0f, panel::kWidth, panel::kHeight}));
+        panel::standing(canvas_, picture, x, y);
     } else {
         for (const Standing& one : standing_) {
             const Box to = P(one.box);
@@ -680,15 +692,7 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
     }
 
     if (dragging_ >= 0 && !box[dragging_].empty()) {
-        const Box units = itemBox(tables, dragging_, box[dragging_]);
-        const Box to{now_.dragX - units.w * k * 0.5f, now_.dragY - units.h * k * 0.5f,
-                     units.w * k, units.h * k};
-        if (picture.valid()) {
-            const float sx = picture.width / panel::kWidth, sy = picture.height / panel::kHeight;
-            canvas_.region(picture, to, {units.x * sx, units.y * sy, units.w * sx, units.h * sy});
-        } else {
-            canvas_.rect(to, gfx::rgba(0.68f, 0.60f, 0.40f, 0.5f));
-        }
+        panel::carried(canvas_, picture, itemBox(tables, dragging_, box[dragging_]), now_.dragX, now_.dragY);
     }
 
     if (dragging_ < 0 && hovered_ >= 0 && !box[hovered_].empty()) {

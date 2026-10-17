@@ -1013,7 +1013,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
         // Let go outside: into the bag cell under the pointer; over the world, thrown on the
         // ground at his feet as the bag throws (the user, 2026-10-09: "allow to drop items to
-        // ground from warehouse" -- MU refuses it). Over any window -- the bag's frame, the bar, the chat -- the no.
+        // ground from warehouse" -- MU refuses it). Over any window -- the bag's frame, the bar, the
+        // chat -- it stays on the pointer, as the bag's does.
         if (asked.outside >= 0) {
             int w, h;
             footprint(play, play.realm().vault()[asked.outside], &w, &h);
@@ -1021,7 +1022,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             const bool overWindow = overWindows(asked.outsideX, asked.outsideY);
             if (slot >= 0) expect(play.withdraw(asked.outside, slot), Then::TookOrRefused);
             else if (!overWindow) expect(play.discardFromVault(asked.outside), Then::Refused);
-            else refused();
+            else chest_.hold(asked.outside);
         }
         // MU's own answer to either coin: the box to type the sum in (CZenReceiptMsgBoxLayout,
         // CZenPaymentMsgBoxLayout), which does the moving on its OK.
@@ -1084,13 +1085,14 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         if (asked.moveFrom >= 0) {
             expect(play.shuffle(asked.moveFrom, asked.moveTo), Then::TookOrRefused);
         }
-        // Let go outside: into the bag cell under the pointer, and nowhere else, as the vault.
+        // Let go outside: into the bag cell under the pointer, and nowhere else; anywhere else
+        // it stays on the pointer.
         if (asked.outside >= 0) {
             int w, h;
             footprint(play, play.realm().machine()[asked.outside], &w, &h);
             const int slot = inventoryOpen_ ? bag_.slotUnder(asked.outsideX, asked.outsideY, w, h) : -1;
             if (slot >= 0) expect(play.takeOut(asked.outside, slot), Then::TookOrRefused);
-            else refused();
+            else mixer_.hold(asked.outside);
         }
         if (asked.back >= 0) {
             expect(play.takeOut(asked.back, -1), Then::TookOrRefused);
@@ -1152,13 +1154,14 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         deal_.update(seconds, float(window.width()), float(window.height()), 2, play.realm(), name, pointer,
                      shelfStage_, &asked);
         if (asked.take >= 0) expect(play.dealTake(asked.take, -1), Then::TookOrRefused);
-        // Let go outside: into the bag cell under the pointer, and nowhere else.
+        // Let go outside: into the bag cell under the pointer, and nowhere else; anywhere else
+        // it stays on the pointer.
         if (asked.outside >= 0) {
             int w, h;
             footprint(play, play.realm().dealOffer(false)[asked.outside], &w, &h);
             const int slot = inventoryOpen_ ? bag_.slotUnder(asked.outsideX, asked.outsideY, w, h) : -1;
             if (slot >= 0) expect(play.dealTake(asked.outside, slot), Then::TookOrRefused);
-            else refused();
+            else deal_.hold(asked.outside);
         }
         if (asked.zen) {
             amount_.show(Amount::Purpose::Offer, play.realm().dealZenOf(false));

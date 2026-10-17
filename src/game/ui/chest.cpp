@@ -97,7 +97,7 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
                    const Pointer& pointer, Stage* stage, ChestRequests* out) {
     up_ = realm.banking() >= 0 && realm.tables();
     if (!up_) {
-        dragging_ = -1;
+        dragging_ = lifting_ = -1;
         pressing_ = -1;
         return;
     }
@@ -117,13 +117,15 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
 
     const Box cross = panel::frameClose();
     overClose_ = inside && cross.has(ux, uy);
-    if (pointer.pressed && inside) {
+    // Click to pick and click to place, the bag's (bag.h): while a thing rides the pointer a
+    // press is the start of placing it and nothing else.
+    if (pointer.pressed && inside && dragging_ < 0) {
         if (overClose_) {
             closing_ = true;
         } else if (button_ >= 0) {
             pressing_ = button_;
         } else if (hovered_ >= 0) {
-            dragging_ = hovered_;
+            lifting_ = hovered_;
         }
     }
     if (pointer.released) {
@@ -133,12 +135,17 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
             if (pressing_ >= 0 && pressing_ == button_) {
                 (pressing_ == 0 ? out->depositZen : out->withdrawZen) = true;
             }
+            // Placed by this release, or left on the pointer where it cannot go -- the frame, a
+            // red cell -- and back where it was over its own place.
+            bool placed = true;
             if (dragging_ >= 0) {
                 if (!inside) {
                     out->outside = dragging_;
                     out->outsideX = pointer.x;
                     out->outsideY = pointer.y;
-                } else if (cell >= 0 && !vault[dragging_].empty()) {
+                } else if (cell < 0 || vault[dragging_].empty()) {
+                    placed = vault[dragging_].empty();
+                } else {
                     const content::ItemRow& row = tables.items[size_t(vault[dragging_].item)];
                     const int to = panel::landing(ux, uy, kOriginX, kOriginY, sim::kVaultColumns,
                                                   sim::kVaultRows, row.width, row.height);
@@ -149,16 +156,23 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
                                       (realm.worksOn(vault[dragging_], vault[under]) ||
                                        sim::tops(tables, vault[under], vault[dragging_]));
                     const int at = onto ? cell : to;
-                    if (at != dragging_) {
+                    if (at == dragging_) {
+                        // Back where it was lifted from.
+                    } else if (onto || (to >= 0 && vault.room(tables, to, row.width, row.height, dragging_))) {
                         out->moveFrom = dragging_;
                         out->moveTo = at;
+                    } else {
+                        placed = false;
                     }
                 }
+                if (placed) dragging_ = -1;
+            } else if (lifting_ >= 0 && lifting_ == hovered_) {
+                dragging_ = lifting_;
             }
         }
         closing_ = false;
         pressing_ = -1;
-        dragging_ = -1;
+        lifting_ = -1;
     }
     if (dragging_ >= 0 && vault[dragging_].empty()) dragging_ = -1;
 
@@ -166,10 +180,11 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
     for (int at = 0; at < sim::kVaultCells; ++at) {
         const sim::Held& what = vault[at];
         if (what.empty()) continue;
-        standing_.push_back({what.item, itemBox(tables, at, what).grown(-2.0f), what.refinement,
+        const Box box = itemBox(tables, at, what);
+        standing_.push_back({what.item, (at == dragging_ ? panel::carryBox(box) : box).grown(-2.0f), what.refinement,
                              at == hovered_ && dragging_ < 0, what.excellent != 0});
     }
-    if (stage) stage->stand(standing_, panel::kWidth, panel::kHeight);
+    if (stage) stage->stand(standing_, panel::kWidth, panel::kStageTall);
 
     const sim::Body& hero = realm.hero();
     now_ = Contents{};
@@ -219,10 +234,6 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
     panel::grid(canvas_, x, y, kOriginX, kOriginY, sim::kVaultColumns, sim::kVaultRows);
     if (hovered_ >= 0 && dragging_ < 0 && !vault[hovered_].empty()) {
         panel::cell(canvas_, x, y, itemBox(tables, hovered_, vault[hovered_]), sheet::Cell::Over);
-    }
-    if (dragging_ >= 0) {
-        panel::cell(canvas_, x, y, itemBox(tables, dragging_, vault[dragging_]),
-                    sheet::Cell::Held);
     }
 
     // The drop target inside the window, asked of the realm's own gate.
@@ -307,7 +318,7 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
 
     const gfx::Art picture = stage ? stage->picture() : gfx::Art{};
     if (picture.valid()) {
-        canvas_.image(picture, panel::scaled(x, y, {0.0f, 0.0f, panel::kWidth, panel::kHeight}));
+        panel::standing(canvas_, picture, x, y);
     } else {
         for (const Standing& one : standing_) {
             const Box box = panel::scaled(x, y, one.box);
@@ -330,15 +341,7 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
 
     // What rides the pointer, cut out of the stage at its own footprint -- the bag's drag.
     if (dragging_ >= 0 && !vault[dragging_].empty()) {
-        const Box units = itemBox(tables, dragging_, vault[dragging_]);
-        const Box to{now_.dragX - units.w * k * 0.5f, now_.dragY - units.h * k * 0.5f,
-                     units.w * k, units.h * k};
-        if (picture.valid()) {
-            const float sx = picture.width / panel::kWidth, sy = picture.height / panel::kHeight;
-            canvas_.region(picture, to, {units.x * sx, units.y * sy, units.w * sx, units.h * sy});
-        } else {
-            canvas_.rect(to, gfx::rgba(0.68f, 0.60f, 0.40f, 0.5f));
-        }
+        panel::carried(canvas_, picture, itemBox(tables, dragging_, vault[dragging_]), now_.dragX, now_.dragY);
     }
 
     if (dragging_ < 0 && hovered_ >= 0 && !vault[hovered_].empty()) {

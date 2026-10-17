@@ -56,6 +56,8 @@ public:
 
     bool covers(float x, float y) const;
     bool dragging() const { return dragging_ >= 0; }
+    // Back on the pointer: a click outside that nothing took (the bag's hold).
+    void hold(int cell) { dragging_ = cell; }
     // A thing dragged out of the bag and over this window, or null: the cell it would land on in
     // his own box is lit by the realm's room. Set before update.
     void carrying(const sim::Held* what) { incoming_ = what ? *what : sim::Held{}; }
@@ -89,6 +91,7 @@ private:
     // Which box a cell under the pointer is in: 0 his own, 1 the other's.
     int hoveredBox_ = -1, hovered_ = -1;
     int dragging_ = -1;
+    int lifting_ = -1;  // the thing pressed on, picked when the button comes up on it
     sim::Held incoming_;
     float pointerX_ = 0.0f, pointerY_ = 0.0f;
     int button_ = -1, pressing_ = -1;  // 0 the coin, 1 Accept, 2 Cancel, 3 the close

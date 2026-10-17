@@ -186,6 +186,21 @@ void field(gfx::Canvas& canvas, Arts& arts, float x, float y, const gfx::Box& un
            const char* key = "bag_field");
 // One well at any size: the deep-cut cell every grid and every worn slot is drawn as.
 void cell(gfx::Canvas& canvas, float x, float y, const gfx::Box& units, sheet::Cell state);
+// **The carry strip.** A thing picked up leaves its slot empty, as MU's does (CNewUIPickedItem
+// takes it out of the grid), and rides the pointer. Its picture is still the window's stage's:
+// it stands in a strip under the window, which the window never shows, at its own footprint,
+// and is cut from there to the pointer. Four cells tall, the tallest thing's height; the bag's
+// rune stands at the strip's left, so the carried thing starts clear of it.
+constexpr float kCarryStrip = kPitch * 4.0f + 4.0f;
+constexpr float kStageTall = kHeight + kCarryStrip;
+constexpr float kCarryX = 30.0f;
+// Where a thing whose footprint is `units` stands while it is carried.
+inline gfx::Box carryBox(const gfx::Box& units) { return {kCarryX, kHeight + 2.0f, units.w, units.h}; }
+// The stage's picture over the window at (x, y), less the strip.
+void standing(gfx::Canvas& canvas, const gfx::Art& picture, float x, float y);
+// What rides the pointer: the thing of footprint `units`, cut from the strip, its middle at
+// (px, py); a plain box where there is no picture yet.
+void carried(gfx::Canvas& canvas, const gfx::Art& picture, const gfx::Box& units, float px, float py);
 // A grid of resting cells as one ruled block, `columns` by `rows` at kPitch from (ux, uy).
 void grid(gfx::Canvas& canvas, float x, float y, float ux, float uy, int columns, int rows);
 // **Where a carried thing lands**: the cell its top-left goes in, counted across a grid at (gx,

@@ -133,7 +133,7 @@ void Deal::update(float seconds, float width, float height, int column, const si
     (void)seconds;
     up_ = realm.dealing() != 0 && realm.tables();
     if (!up_) {
-        dragging_ = pressing_ = -1;
+        dragging_ = pressing_ = lifting_ = -1;
         seen_.clear();
         seenAny_ = false;
         acceptedBefore_ = false;
@@ -194,9 +194,11 @@ void Deal::update(float seconds, float width, float height, int column, const si
     }
     const bool holding = realm.dealHold() > 0;
     const bool misfit = realm.dealMisfit(true) >= 0 || realm.dealMisfit(false) >= 0;
-    if (pointer.pressed && inside) {
+    // Click to pick and click to place, the bag's (bag.h): while a thing rides the pointer a
+    // press is the start of placing it and nothing else.
+    if (pointer.pressed && inside && dragging_ < 0) {
         if (button_ >= 0) pressing_ = button_;
-        else if (hoveredBox_ == 0) dragging_ = hovered_;
+        else if (hoveredBox_ == 0) lifting_ = hovered_;
     }
     if (pointer.released) {
         if (out) {
@@ -208,18 +210,23 @@ void Deal::update(float seconds, float width, float height, int column, const si
                 }
                 if (pressing_ == 2 || pressing_ == 3) out->close = true;
             }
+            // Over its own place it goes back; elsewhere in the window it is taken back to
+            // the bag, as before; outside, the desk decides.
             if (dragging_ >= 0) {
-                if (inside) {
+                if (inside && !(hoveredBox_ == 0 && hovered_ == dragging_)) {
                     out->take = dragging_;
-                } else {
+                } else if (!inside) {
                     out->outside = dragging_;
                     out->outsideX = pointer.x;
                     out->outsideY = pointer.y;
                 }
+                dragging_ = -1;
+            } else if (lifting_ >= 0 && hoveredBox_ == 0 && lifting_ == hovered_) {
+                dragging_ = lifting_;
             }
         }
         pressing_ = -1;
-        dragging_ = -1;
+        lifting_ = -1;
     }
     if (dragging_ >= 0 && mine[dragging_].empty()) dragging_ = -1;
 
@@ -230,11 +237,13 @@ void Deal::update(float seconds, float width, float height, int column, const si
         for (int at = 0; at < sim::kMachineCells; ++at) {
             const sim::Held& what = grid[at];
             if (what.empty()) continue;
-            standing_.push_back({what.item, itemBox(tables, gridY, at, what).grown(-2.0f), what.refinement,
+            const Box place = itemBox(tables, gridY, at, what);
+            const bool lifted = box == 0 && at == dragging_;
+            standing_.push_back({what.item, (lifted ? panel::carryBox(place) : place).grown(-2.0f), what.refinement,
                                  hoveredBox_ == box && at == hovered_ && dragging_ < 0, what.excellent != 0});
         }
     }
-    if (stage) stage->stand(standing_, panel::kWidth, panel::kHeight);
+    if (stage) stage->stand(standing_, panel::kWidth, panel::kStageTall);
 
     // Redrawn on a change: the trade's own count, the bags, the hold's second, the pointer where
     // it lights something, and the stage's picture.
@@ -355,9 +364,6 @@ void Deal::rebuild(const sim::Realm& realm, Stage* stage) {
     if (hoveredBox_ == 0 && hovered_ >= 0 && dragging_ < 0 && !mine[hovered_].empty()) {
         panel::cell(canvas_, x, y, itemBox(tables, kMyGrid, hovered_, mine[hovered_]), sheet::Cell::Over);
     }
-    if (dragging_ >= 0) {
-        panel::cell(canvas_, x, y, itemBox(tables, kMyGrid, dragging_, mine[dragging_]), sheet::Cell::Held);
-    }
     // A bag thing carried over his box: the cell it would land on, by the realm's own room.
     if (!incoming_.empty() && covers(pointerX_, pointerY_)) {
         const content::ItemRow& row = tables.items[size_t(incoming_.item)];
@@ -429,7 +435,7 @@ void Deal::rebuild(const sim::Realm& realm, Stage* stage) {
     // The things, off the stage's picture.
     const gfx::Art picture = stage ? stage->picture() : gfx::Art{};
     if (picture.valid()) {
-        canvas_.image(picture, panel::scaled(x, y, {0.0f, 0.0f, panel::kWidth, panel::kHeight}));
+        panel::standing(canvas_, picture, x, y);
     } else {
         for (const Standing& one : standing_) {
             canvas_.outline(panel::scaled(x, y, one.box), 1.0f, gfx::rgba(0.68f, 0.60f, 0.40f, 0.9f));
@@ -474,14 +480,7 @@ void Deal::rebuild(const sim::Realm& realm, Stage* stage) {
 
     // What rides the pointer, cut out of the stage at its own footprint.
     if (dragging_ >= 0 && !mine[dragging_].empty()) {
-        const Box units = itemBox(tables, kMyGrid, dragging_, mine[dragging_]);
-        const Box to{pointerX_ - units.w * k * 0.5f, pointerY_ - units.h * k * 0.5f, units.w * k, units.h * k};
-        if (picture.valid()) {
-            const float sx = picture.width / panel::kWidth, sy = picture.height / panel::kHeight;
-            canvas_.region(picture, to, {units.x * sx, units.y * sy, units.w * sx, units.h * sy});
-        } else {
-            canvas_.rect(to, gfx::rgba(0.68f, 0.60f, 0.40f, 0.5f));
-        }
+        panel::carried(canvas_, picture, itemBox(tables, kMyGrid, dragging_, mine[dragging_]), pointerX_, pointerY_);
     }
 
     // The card of what is under the pointer, either side's.
