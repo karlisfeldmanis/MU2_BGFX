@@ -36,13 +36,12 @@ constexpr float kCoinTossLeast = 2.0f / kUnits * kFps, kCoinTossMost = 14.0f / k
 // metres up and down in two thirds of a second.
 constexpr float kHopFrom = 3.0f / kUnits;
 constexpr float kHop = 50.0f / kUnits * kFps;
-// And its tumble. MU turns a falling thing by its speed, Angle[0] = -Gravity * 10 degrees (a
-// shield Angle[1], about its length: HandleItemFalling, ZzzObject.cpp:6290-6296), and snaps it
-// to its rest on landing -- from 50 a frame about 2.8 turns, ending wherever. Ours keeps the
-// turning with the speed, but times it to whole turns, so it lands as it lies with no snap, and
-// gives it one slow turn about the upright as it goes.
-constexpr float kHopFlips = 2.0f;
-constexpr float kHopSpins = 1.0f;
+// And its tumble, MU's own: a falling thing is turned to its speed, Angle[0] = -Gravity * 10
+// degrees, a shield's Angle[1] (HandleItemFalling, ZzzObject.cpp:6290-6296) -- from about -500
+// degrees thrown, level at the top, to as many the other way coming down -- and on the ground
+// it is put back to its rest and stops dead (HandleItemOnGround). S17's server says only 0xFF
+// (Player::ItemGet); the hop is the client's, and the S17 client is MuMain's line.
+constexpr float kHopTurn = 10.0f * bx::kPi / 180.0f;  // radians per unit a frame of speed
 // CreateShiny's 48 frames between sparkles; BITMAP_SHINY's 18-frame life and Shiny01's 16
 // pixels, which are its width in units.
 constexpr float kSparkleEvery = 48.0f;
@@ -375,7 +374,11 @@ void Litter::update(const sim::Realm& realm, double seconds,
             piece.above += piece.speed * dt;
             if (piece.above > 0.0f) continue;
             piece.above = 0.0f;
-            piece.hopping = false;
+            if (piece.hopping) {
+                piece.hopping = false;
+                piece.speed = 0.0f;
+                continue;
+            }
             if (piece.bounced < kBounces && -piece.speed > kBounceThreshold) {
                 piece.speed = -piece.speed * kDamping;
                 ++piece.bounced;
@@ -396,16 +399,13 @@ void Litter::update(const sim::Realm& realm, double seconds,
 
 void Litter::placed(const Piece& piece, float* out) {
     if (piece.hopping) {
-        // How far through the hop by its speed, which falls evenly: 0 thrown, 1 back down.
-        const float through = std::clamp((kHop - piece.speed) / (2.0f * kHop), 0.0f, 1.0f);
-        const float flip = -kHopFlips * 2.0f * bx::kPi * through;
-        float tumble[16], spin[16], turned[16], a[16];
+        // MU's Gravity is its speed in units a frame.
+        const float flip = -kHopTurn * piece.speed * kUnits / kFps;
+        float tumble[16], a[16];
         if (piece.roll) bx::mtxRotateX(tumble, flip);
         else bx::mtxRotateZ(tumble, flip);
-        bx::mtxRotateY(spin, kHopSpins * 2.0f * bx::kPi * through);
         bx::mtxMul(a, piece.lie, tumble);
-        bx::mtxMul(turned, a, spin);
-        bx::mtxMul(out, turned, piece.turn);
+        bx::mtxMul(out, a, piece.turn);
     } else {
         std::memcpy(out, piece.rest, sizeof(piece.rest));
     }
