@@ -76,6 +76,84 @@
         990.0
       ],
       "why": "OURS: the ivy on the town wall north of Hanzo, flat on the wall. MuMain stores it pitched -65 and turned 960, thirty degrees off the StoneMuWall03 it climbs (990): its hinge crossed the wall, one end sank into the stone and the other stood 2.2 m out over the street, its foot on the paving. The user, 2026-10-16: 'grass objects which should be attaached on wall near blacksmith'. Stood upright, square to the wall at its own 990, its back 2 cm off the face at column 113.0, its top at the wall top (4.55) and its foot under the paving; leaves to the street."
+    },
+    {
+      "model": "Grass02",
+      "near": [
+        157.85,
+        116.03
+      ],
+      "at": [
+        156.63,
+        117.53
+      ],
+      "height": -0.25,
+      "angle": [
+        -90.0,
+        0.0,
+        990.0
+      ],
+      "why": "OURS: the southern of the two ivies at the foot of the town wall by the east bridge, flat on the wall. MuMain stores it at the riverbed's 0.23 m pitched -50 and turned 1020, which leans the mat across the wall rather than against it: its leaves stood 1.4 to 3 m out over the river, a quarter of them over 0.5 m from the water or the stone, and the user, 2026-10-18, from the bridge at (159,126): 'keep fixing lorencia grass object attachment to objects, still some of them is floating'. Stood upright on the wall's east face (column 156.60, StoneMuWall03 and 04) square to it at 990 like the smithy's ivy, its back 2 cm off the face, moved 1.5 rows north so its 5 m width stays between the pillars at 114.5 and 124.5, its top at 2.45 m (MuMain's own 2.3-2.5) and its foot in the riverbed; leaves to the river."
+    },
+    {
+      "model": "Grass02",
+      "near": [
+        156.89,
+        122.01
+      ],
+      "at": [
+        156.66,
+        121.52
+      ],
+      "height": -0.3,
+      "angle": [
+        -90.0,
+        0.0,
+        990.0
+      ],
+      "why": "OURS: the northern of the pair, the same way: MuMain's -50 lean over the river put its upper leaves 0.6-1.1 m clear of anything. Upright on the same face, 3 cm further out than its neighbour so the metre where they overlap does not fight, between rows 119 and 124, its top at 2.40 m."
+    },
+    {
+      "model": "Grass01",
+      "near": [
+        226.22,
+        236.75
+      ],
+      "height": 0.7,
+      "angle": [
+        -20.0,
+        15.0,
+        -90.0
+      ],
+      "why": "OURS: the first of the two ivies kept on 2026-09-24 as hanging down the cliff by the south-east bridge (BridgeStone01 at 229,239). MuMain stores it 2.23 m up, pitched -30, over a gully whose bank falls from 1.7 to 0.23 m: measured in 3D against the land, 93% of its leaves stood over 0.5 m clear of anything and the median 1.5 m, a mat in the air over the ravine. the user, 2026-10-18: 'keep fixing lorencia grass object attachment to objects, still some of them is floating'. Laid down the bank instead, its turn kept: pitch -20 and lean 15 (MU's y), 0.70 m, found by searching for the pose whose leaves lie nearest the land (median 0.20 m, the mat's own depth; 7% over 0.5 m)."
+    },
+    {
+      "model": "Grass01",
+      "near": [
+        227.27,
+        237.25
+      ],
+      "height": 0.65,
+      "angle": [
+        -10.0,
+        25.0,
+        -90.0
+      ],
+      "why": "OURS: the other of the pair, the same way: stored at 2.24 m pitched -30, 84% of its leaves over 0.5 m clear, median 1.3 m. Laid down the bank at pitch -10 and lean 25, 0.65 m: median 0.25 m over the land, 11% over 0.5 m."
+    },
+    {
+      "model": "Grass01",
+      "near": [
+        210.0,
+        212.07
+      ],
+      "height": 0.95,
+      "angle": [
+        -30.0,
+        0.0,
+        1440.0
+      ],
+      "why": "OURS: the ivy kept on 2026-09-24 as lying over the stream under the far bridge (BridgeStone01 at 208,213). MuMain stores it 1.48 m up and pitched +30, so it rose off the bank into the air over the water, 39% of its leaves over 0.5 m clear and the top edge 2.4 m over the stream. Turned the other way down the bank instead, pitch -30 at 0.95 m: median 0.24 m over the land, 13% over 0.5 m."
     }
   ],
   "drops": [
@@ -87,7 +165,8 @@
       ],
       "not_kept": [
         "Grass01 at (176.79, 172.97) and (181.58, 172.06), the ivy either side of the north-east bridge. Kept as stored on 2026-09-24, and on 2026-09-28 the user saw both floating over the river from the bridge at (180,175): MuMain stores them at 1.07 m and 2.35 m over a bed at 0.23 m that fs_ground paints as water, so their leaves hang over open water. Off the keep list, so the rule drops them: one stands on a rock tile, the other on a water tile.",
-        "Grass02 at (27.39, 132.35), the ivy kept on 2026-09-24 as lying over the boulder by the mill. It does not: MuMain stores it 4.8 m up, its 5.8 by 4 m mat over rows 130.2-134.2 at 3.9-5.7 m, and the boulder (Stone03 at 27.09, 134.32) covers only rows 132.8-135.4 with its top at 4.7 m, so most of it hung 2 to 4 m over the river bank, a median leaf 3.4 m over the ground or stone under it. The user saw it from (28,127) on 2026-10-18: \"some floating in air grass objects\". Off the keep list, so the rule drops it; its twin at (25.24, 130.14) stays on the bank."
+        "Grass02 at (27.39, 132.35), the ivy kept on 2026-09-24 as lying over the boulder by the mill. It does not: MuMain stores it 4.8 m up, its 5.8 by 4 m mat over rows 130.2-134.2 at 3.9-5.7 m, and the boulder (Stone03 at 27.09, 134.32) covers only rows 132.8-135.4 with its top at 4.7 m, so most of it hung 2 to 4 m over the river bank, a median leaf 3.4 m over the ground or stone under it. The user saw it from (28,127) on 2026-10-18: \"some floating in air grass objects\". Off the keep list, so the rule drops it; its twin at (25.24, 130.14) stays on the bank.",
+        "Grass02 at (158.52, 122.56) and (157.18, 125.06), two of the six ivies by the east bridge kept on 2026-10-16. Pitched -50 out over the river 1.9 and 0.6 m off the wall, their upper leaves stood up to 2 m over the water with nothing under them; the user, 2026-10-18, from the bridge at (159,126): 'keep fixing lorencia grass object attachment to objects, still some of them is floating'. Their two neighbours now stand flat on the wall (fixes), which covers the wall's 9 m between the pillars, and a third and fourth would only stack on them. Off the keep list, so the rule drops them."
       ],
       "keep": [
         {
@@ -200,22 +279,6 @@
           "near": [
             156.89,
             122.01
-          ],
-          "why": "By the east bridge to the spiders, MuMain's six Grass02 hang at the waterline down the foot of the town wall (stored at the ground's own 0.23-0.38 m, four pitched -50, two lying at 5). The only-on-grass-tiles rule dropped them for standing on water and paving, and the wall's foot stood bare; the user, 2026-10-16: 'on bridge while walking to spiders i remember that there was some grass near lorencia wall which is not there at all now'. Kept by name, stood as stored."
-        },
-        {
-          "model": "Grass02",
-          "near": [
-            157.18,
-            125.06
-          ],
-          "why": "By the east bridge to the spiders, MuMain's six Grass02 hang at the waterline down the foot of the town wall (stored at the ground's own 0.23-0.38 m, four pitched -50, two lying at 5). The only-on-grass-tiles rule dropped them for standing on water and paving, and the wall's foot stood bare; the user, 2026-10-16: 'on bridge while walking to spiders i remember that there was some grass near lorencia wall which is not there at all now'. Kept by name, stood as stored."
-        },
-        {
-          "model": "Grass02",
-          "near": [
-            158.52,
-            122.56
           ],
           "why": "By the east bridge to the spiders, MuMain's six Grass02 hang at the waterline down the foot of the town wall (stored at the ground's own 0.23-0.38 m, four pitched -50, two lying at 5). The only-on-grass-tiles rule dropped them for standing on water and paving, and the wall's foot stood bare; the user, 2026-10-16: 'on bridge while walking to spiders i remember that there was some grass near lorencia wall which is not there at all now'. Kept by name, stood as stored."
         },

@@ -164,10 +164,10 @@ int main() {
             {"Grass02", 169.74027f, -123.35218f, 0.2250f, 5.0f},
             {"Grass02", 170.27775f, -122.54788f, 0.2250f, 5.0f},
             {"Grass05", 170.78521f, -122.71168f, 0.2250f, 5.0f},
-            {"Grass01", 209.99852f, -212.06555f, 1.4750f, 30.0f},
+            {"Grass01", 209.99852f, -212.06555f, 0.9500f, -30.0f},  // down the bank, placements.json
             {"Grass01", 210.00000f, -217.50000f, 0.2250f, 0.0f},
-            {"Grass01", 226.21969f, -236.74945f, 2.2283f, -30.0f},
-            {"Grass01", 227.26646f, -237.25318f, 2.2400f, -30.0f},
+            {"Grass01", 226.21969f, -236.74945f, 0.7000f, -20.0f},  // down the ravine's bank
+            {"Grass01", 227.26646f, -237.25318f, 0.6500f, -10.0f},
         };
         // The ivy either side of the north-east bridge was kept until 2026-09-28, when the user saw
         // both hanging over the river (placements.json's not_kept): gone, and staying gone.
@@ -196,12 +196,12 @@ int main() {
         check(find("Grass01", 142.82416f, -127.46561f) == nullptr,
               "the Grass01 MuMain hangs 1.6 m in the air off the fountain's east edge stays dropped");
         // The ivy at the foot of the town wall by the east bridge, dropped 2026-09-24 as out of
-        // sight and missed by the user on the way to the spiders (2026-10-16): back, as stored.
+        // sight and missed by the user on the way to the spiders (2026-10-16): back. Two stand
+        // flat on the wall (placements.json, 2026-10-18), MuMain's -50 lean having held them out
+        // over the river; two of their twins went, and the two lying at the waterline are as stored.
         const Planted bridge[] = {
-            {"Grass02", 156.88980f, -122.01350f, 0.38203f, -50.0f},
-            {"Grass02", 157.17973f, -125.06020f, 0.31077f, -50.0f},
-            {"Grass02", 158.51583f, -122.56052f, 0.2250f, -50.0f},
-            {"Grass02", 157.84646f, -116.02972f, 0.2250f, -50.0f},
+            {"Grass02", 156.66000f, -121.52000f, -0.3000f, -90.0f},
+            {"Grass02", 156.63000f, -117.53000f, -0.2500f, -90.0f},
             {"Grass02", 157.38680f, -124.05859f, 0.2250f, 5.0f},
             {"Grass02", 158.36264f, -123.63898f, 0.2250f, 5.0f},
         };
@@ -211,8 +211,11 @@ int main() {
                                      std::to_string(one.x) + ", " + std::to_string(-one.z) + ")";
             check(grass != nullptr && std::fabs(grass->position[1] - one.height) < 0.001f &&
                       std::fabs(grass->pitch - one.pitch * degrees) < 0.001f && (grass->flags & 1) == 0,
-                  what + " is placed as MU stores it");
+                  what + " is placed");
         }
+        check(find("Grass02", 158.51583f, -122.56052f) == nullptr &&
+                  find("Grass02", 157.17973f, -125.06020f) == nullptr,
+              "the two Grass02 leaning out over the river by the east bridge are not placed");
 
         // And a tuft the data floats 4.3 m over a slope west of the town is still laid on it,
         // fitted to the slope (cook.py's GROUNDED_FOLLOW): sunk to its footing, tilted no more
