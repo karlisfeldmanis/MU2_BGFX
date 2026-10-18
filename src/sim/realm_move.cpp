@@ -671,13 +671,7 @@ CastleRefusal Realm::castleRefusal(int castle) const {
     // Ours, first: a castle not built yet says so whatever he holds.
     if (castle > kCastlesBuilt) return CastleRefusal::NotBuilt;
     if (cloakSlot(castle) < 0) return CastleRefusal::NoCloak;
-    int day = -1;
-    if (wall_ > 0) {
-        const time_t at = time_t(wall_);
-        struct tm local {};
-        localtime_r(&at, &local);
-        day = local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec;
-    }
+    const int day = daySecond(wall_);
     if (!castleOpen_ && (day < 0 || config_.castle.entryLeft(day) == 0)) return CastleRefusal::NotYet;
     const Body& hero = mine();
     // The band's floor only, ours (the user, 2026-10-04: 'allow to go to lower level BC for all

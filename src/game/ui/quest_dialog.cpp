@@ -685,10 +685,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         if (charon_ ? realm.squareDoorLeft() < 0 : realm.castleDoorHeld()) {
             doorSeconds_ = 0;
         } else if (const int64_t wall = realm.wallClock(); wall > 0) {
-            const time_t at = time_t(wall);
-            struct tm local {};
-            localtime_r(&at, &local);
-            const int day = local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec;
+            const int day = sim::daySecond(wall);
             const sim::GateClock& castle = charon_ ? realm.config().square : realm.config().castle;
             testClock_ = castle.period != (charon_ ? 7200 : 3600);
             if (const int left = castle.entryLeft(day); left > 0) {

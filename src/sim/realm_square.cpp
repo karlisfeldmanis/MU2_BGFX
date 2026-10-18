@@ -48,10 +48,7 @@ int Realm::invitationSlot(int square) const {
 int Realm::squareDoorLeft() const {
     if (squareOpen_) return -1;
     if (wall_ <= 0) return 0;
-    const time_t at = time_t(wall_);
-    struct tm local {};
-    localtime_r(&at, &local);
-    return config_.square.entryLeft(local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec);
+    return config_.square.entryLeft(daySecond(wall_));
 }
 
 SquareRefusal Realm::squareRefusal(int square) const {

@@ -204,14 +204,9 @@ void hairline(gfx::Canvas& canvas, const Box& band, float y, float thick, float 
     }
 }
 
-// The local day's second, off the wall clock the desk hands the realm; -1 when there is none.
-int dayOf(int64_t wall) {
-    if (wall <= 0) return -1;
-    const time_t at = time_t(wall);
-    struct tm local {};
-    localtime_r(&at, &local);
-    return local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec;
-}
+// The day's second, off the wall clock the desk hands the realm, on the gates' UTC; -1 when
+// there is none.
+int dayOf(int64_t wall) { return sim::daySecond(wall); }
 
 }  // namespace
 

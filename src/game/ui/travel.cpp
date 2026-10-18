@@ -275,10 +275,7 @@ int Travel::update(const Play& play, const Pointer& pointer, int width, int heig
     now.floor = realm.travelFloor();
     // The events, off the wall clock the desk hands the realm; a run that never sets it has none.
     if (const int64_t wall = realm.wallClock(); wall > 0) {
-        const time_t at = time_t(wall);
-        struct tm local {};
-        localtime_r(&at, &local);
-        const int day = local.tm_hour * 3600 + local.tm_min * 60 + local.tm_sec;
+        const int day = sim::daySecond(wall);
         for (size_t p = 0; p < places_.size() && p < size_t(kPlaces); ++p) {
             for (const Event& row : kEvents) {
                 if (row.map != places_[p].map) continue;

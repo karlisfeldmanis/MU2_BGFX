@@ -6,9 +6,21 @@
 // map's realm in one process and a mutable global would be shared by all of them (sprint 16,
 // step 2). The default is the real game; app/ fills it from the command line's test switches.
 
+#include <cstdint>
+
 namespace mu::sim {
 
-// A gate that opens on the local wall clock, in seconds of the day.
+// The second of the day a wall clock (Unix seconds) stands at, on UTC; -1 for no clock. UTC on
+// every machine, never its own zone: the server and each player's mirror must agree on a gate,
+// and a mirror reading the gates on Latvia's UTC+3 against a server on UTC saw Charon's gate open
+// the hour the server had it shut -- the invitation spent, the loading screen, and back in Noria
+// (bug report #10, 2026-10-18).
+constexpr int daySecond(int64_t wall) {
+    if (wall <= 0) return -1;
+    return int(wall % 86400);
+}
+
+// A gate that opens on the wall clock (daySecond, UTC), in seconds of the day.
 struct GateClock {
     int period;   // between openings
     int opensAt;  // the first opening, after midnight

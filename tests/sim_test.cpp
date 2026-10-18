@@ -6395,14 +6395,9 @@ void testDeviasFolk() {
     const int32_t cloak = devias.itemAt(13, 18);
     check(cloak >= 0, "the Invisibility Cloak is in Devias's tables");
     if (cloak < 0) return;
+    // Today at that time on UTC, the gates' clock (sim::daySecond).
     const auto at = [](int hour, int minute) {
-        const time_t now = std::time(nullptr);
-        struct tm local {};
-        localtime_r(&now, &local);
-        local.tm_hour = hour;
-        local.tm_min = minute;
-        local.tm_sec = 0;
-        return int64_t(std::mktime(&local));
+        return int64_t(std::time(nullptr)) / 86400 * 86400 + hour * 3600 + minute * 60;
     };
     // Spoken to with the bag as `plus` (-1 none), at that time, at that level: the refusal's
     // reason, or -1 when he went through, with the gate and landing checked.
@@ -7385,14 +7380,9 @@ void testCharon() {
     const int32_t invitation = noria.itemAt(14, 19);
     check(invitation >= 0, "the Devil's Invitation is in Noria's tables");
     if (invitation < 0) return;
+    // Today at that time on UTC, the gates' clock (sim::daySecond).
     const auto at = [](int hour, int minute) {
-        const time_t now = std::time(nullptr);
-        struct tm local {};
-        localtime_r(&now, &local);
-        local.tm_hour = hour;
-        local.tm_min = minute;
-        local.tm_sec = 0;
-        return int64_t(std::mktime(&local));
+        return int64_t(std::time(nullptr)) / 86400 * 86400 + hour * 3600 + minute * 60;
     };
     const auto ask = [&](int plus, int64_t wall, int level, int which = 1,
                          sim::Kin kin = sim::Kin::DarkKnight) {
