@@ -145,6 +145,8 @@ private:
         int64_t minutesLeft = 0;
         bool pointing = false;
         int pointX = 0, pointY = 0, pointMetres = 0;
+        // Whose name the pointer carries: its own quest, since the card's is -1 once it fades.
+        int pointQuest = -1;
         // Blood Castle's run, when he is in one (sim/event.h): its phase, the seconds left of
         // its wait or its time, and the two quotas. Shown in the quest's place.
         int eventPhase = 0, eventSeconds = 0, eventKills = 0, eventSorcerers = 0, eventShown = 0;

@@ -287,7 +287,7 @@ int byLevel(const sim::QuestRow& row, const content::Tables* tables, int* order)
 bool Tracker::Drawn::operator==(const Drawn& o) const {
     if (quest != o.quest || shown != o.shown || width != o.width || height != o.height ||
         minutesLeft != o.minutesLeft || pointing != o.pointing || pointX != o.pointX ||
-        pointY != o.pointY || pointMetres != o.pointMetres ||
+        pointY != o.pointY || pointMetres != o.pointMetres || pointQuest != o.pointQuest ||
         focus != o.focus || progress.state != o.progress.state ||
         eventPhase != o.eventPhase || eventCastle != o.eventCastle || eventSeconds != o.eventSeconds ||
         eventKills != o.eventKills || eventSorcerers != o.eventSorcerers ||
@@ -643,6 +643,7 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
         now.pointX = int(pointX_);
         now.pointY = int(pointY_);
         now.pointMetres = pointMetres_;
+        now.pointQuest = quest_;
     }
     if (now.quest >= 0) {
         now.progress = realm.quest(quest_);
@@ -690,7 +691,7 @@ void Tracker::rebuild(const Play& play, int width, int height) {
         canvas_.polygon(shade, cs, 3);
         // His name and the distance, on the side of the pointer away from the edge.
         const bool left = pointX_ > float(width) * 0.5f;
-        const std::string name = sim::questReceiverName(sim::questAt(std::max(0, drawn_.quest)));
+        const std::string name = sim::questReceiverName(sim::questAt(std::max(0, drawn_.pointQuest)));
         const std::string metres = std::to_string(drawn_.pointMetres) + " m";
         const float nameSize = 14.0f * pu, metreSize = 13.0f * pu;
         const float gap = 16.0f * pu;
