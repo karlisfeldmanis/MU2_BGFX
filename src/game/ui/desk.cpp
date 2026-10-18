@@ -812,8 +812,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         // A guild's call: its card in the middle (Chat::guildCalled).
         net::GuildCall call;
         while (play.takeGuildCall(call)) {
-            chat_.guildCalled(call);
-            play.ui(Play::Ui::Invited);
+            if (chat_.guildCalled(call)) play.ui(Play::Ui::Invited);
         }
     }
     // The guild's windows (game/ui/guild.h): G's, and the Guild Master's when he is spoken to on a

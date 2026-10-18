@@ -36,7 +36,9 @@ kills any bots running from it.
 
 | order | does |
 |---|---|
-| `say TEXT` | to his map |
+| `say TEXT` | to those near him (Local, 20 tiles) |
+| `map TEXT` | to his map |
+| `global TEXT` | to the whole server (level 20, one line a 15 s) |
 | `party TEXT` | to his party |
 | `whisper NAME TEXT` | to one player |
 | `invite NAME`, `accept [NAME]`, `decline [NAME]`, `kick NAME`, `leave` | the party; no name takes the latest invite |

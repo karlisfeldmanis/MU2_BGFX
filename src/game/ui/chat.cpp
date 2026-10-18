@@ -2,9 +2,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 #include <functional>
 
 #include "core/log.h"
+#include "core/paths.h"
 #include "game/play.h"
 #include "game/roster.h"
 #include "game/ui/controls.h"
@@ -33,6 +35,8 @@ uint32_t faded(uint32_t abgr, float alpha) {
 // The channels' inks (the mockup's): told apart by lightness as well as hue.
 constexpr uint32_t kMapInk = hex(0xd9cfbd), kPartyInk = hex(0x7fb6f2), kGuildInk = hex(0x93d67e);
 constexpr uint32_t kWhisperInk = hex(0xe7a0e4), kSystemInk = hex(0xd6ad5c);
+// Local the whitest, WoW's Say; Global a warm orange, apart from the Party blue and the notices' gold.
+constexpr uint32_t kLocalInk = hex(0xf3eee6), kGlobalInk = hex(0xeb9c62);
 // A speaker's name, on every channel: a brighter bone than what he said, one tone apart and no
 // hue (the user, 2026-10-09: "dont use green for usenames in chat, only on special exections like
 // labels or party invites"). The channel is in the small word before it.
@@ -74,6 +78,20 @@ constexpr float kGuildCardMore = 30.0f, kGuildMarkSide = 30.0f, kGuildBarWide = 
 // The suggestions for a "[" being typed: how many, and a row's height.
 constexpr size_t kSuggestMost = 8;
 constexpr float kSuggestRow = 26.0f;
+
+// The channels as a tab's bits (Chat::filter): General shows every one but Global to begin
+// with, Global only Global and the server's notices.
+constexpr uint32_t bit(net::Channel channel) { return 1u << uint32_t(channel); }
+constexpr uint32_t kEvery = (1u << net::kChannels) - 1u;
+constexpr uint32_t kGeneralFirst = kEvery & ~bit(net::Channel::Global);
+constexpr uint32_t kGlobalFirst = bit(net::Channel::Global) | bit(net::Channel::Server);
+// The list's rows, in its order, and what each reaches.
+constexpr net::Channel kListed[] = {net::Channel::Local, net::Channel::Map,     net::Channel::Global,
+                                    net::Channel::Party, net::Channel::Guild,   net::Channel::Whisper,
+                                    net::Channel::Server};
+constexpr const char* kListedWho[] = {"near you", "your map", "everyone online", "your party",
+                                      "your guild", "to you", "the server's"};
+constexpr float kFilterRow = 26.0f, kFilterWide = 290.0f, kFilterButton = 30.0f;
 
 // A line in a face over its drop, the drop faded with the ink; its advance.
 float set(gfx::Canvas& canvas, const gfx::Face* face, bgfx::TextureHandle texture, float x,
@@ -142,7 +160,8 @@ void Chat::open(const gfx::Interface& interface) {
 }
 
 bool Chat::covers(float x, float y) const {
-    return (open_ && (panel_.has(x, y) || grip_.has(x, y) || (!suggestions_.empty() && suggestBox_.has(x, y)))) ||
+    return (open_ && (panel_.has(x, y) || grip_.has(x, y) || (!suggestions_.empty() && suggestBox_.has(x, y)) ||
+                      (filtering_ && filterBox_.has(x, y)))) ||
            (inviting_ && inviteCard_.has(x, y));
 }
 
@@ -153,8 +172,61 @@ uint32_t Chat::channelInk(net::Channel channel) const {
         case net::Channel::Guild: return kGuildInk;
         case net::Channel::Whisper: return kWhisperInk;
         case net::Channel::Server: return kSystemInk;
+        case net::Channel::Local: return kLocalInk;
+        case net::Channel::Global: return kGlobalInk;
     }
     return kMapInk;
+}
+
+const char* Chat::tagOf(net::Channel channel) {
+    switch (channel) {
+        case net::Channel::Local: return "Local";
+        case net::Channel::Map: return "Map";
+        case net::Channel::Global: return "Global";
+        case net::Channel::Party: return "Party";
+        case net::Channel::Guild: return "Guild";
+        case net::Channel::Whisper: return "From";
+        case net::Channel::Server: return "";
+    }
+    return "";
+}
+
+uint32_t& Chat::filter(const std::string& tab) { return tab == "global" ? globalShows_ : generalShows_; }
+
+bool Chat::ignored(const std::string& name) const {
+    return !name.empty() && std::find(ignored_.begin(), ignored_.end(), lower(name)) != ignored_.end();
+}
+
+void Chat::load() {
+    loaded_ = true;
+    generalShows_ = kGeneralFirst;
+    globalShows_ = kGlobalFirst;
+    const std::string user = core::folders().user;
+    if (user.empty()) return;
+    std::ifstream in(user + "/chat.txt");
+    std::string key;
+    while (in >> key) {
+        if (key == "general" || key == "global") {
+            uint32_t shows = 0;
+            if (in >> shows) filter(key) = shows & kEvery;
+        } else if (key == "left-global") {
+            leftGlobal_ = true;
+        } else if (key == "ignore") {
+            std::string name;
+            if (in >> name) ignored_.push_back(lower(name));
+        } else {
+            std::getline(in, key);
+        }
+    }
+}
+
+void Chat::save() const {
+    const std::string user = core::folders().user;
+    if (user.empty()) return;
+    std::ofstream out(user + "/chat.txt");
+    out << "general " << generalShows_ << "\nglobal " << globalShows_ << "\n";
+    if (leftGlobal_) out << "left-global\n";
+    for (const std::string& name : ignored_) out << "ignore " << name << "\n";
 }
 
 std::string Chat::channelWord() const {
@@ -163,9 +235,11 @@ std::string Chat::channelWord() const {
         case net::Channel::Party: return "Party";
         case net::Channel::Guild: return "Guild";
         case net::Channel::Whisper: return "To " + target_;
-        case net::Channel::Server: return "Map";
+        case net::Channel::Local: return "Local";
+        case net::Channel::Global: return "Global";
+        case net::Channel::Server: return "Local";
     }
-    return "Map";
+    return "Local";
 }
 
 void Chat::system(net::Channel channel, const std::string& text) {
@@ -175,7 +249,8 @@ void Chat::system(net::Channel channel, const std::string& text) {
     hear(line);
 }
 
-void Chat::askedToTrade(const std::string& name, uint32_t who) {
+bool Chat::askedToTrade(const std::string& name, uint32_t who) {
+    if (ignored(name)) return false;
     Line line;
     line.channel = net::Channel::Server;
     line.inviter = name.empty() ? std::string("Someone") : name;
@@ -184,6 +259,7 @@ void Chat::askedToTrade(const std::string& name, uint32_t who) {
     line.trader = who;
     log_.push_back(line);
     if (log_.size() > kKept) log_.erase(log_.begin(), log_.begin() + long(log_.size() - kKept));
+    return true;
 }
 
 std::string Chat::guildSaid(float within) const {
@@ -195,7 +271,8 @@ std::string Chat::guildSaid(float within) const {
     return {};
 }
 
-void Chat::guildCalled(const net::GuildCall& call) {
+bool Chat::guildCalled(const net::GuildCall& call) {
+    if (ignored(call.from)) return false;
     Line line;
     line.channel = net::Channel::Guild;
     line.inviter = call.from.empty() ? std::string("Someone") : call.from;
@@ -220,9 +297,14 @@ void Chat::guildCalled(const net::GuildCall& call) {
     }
     log_.push_back(line);
     if (log_.size() > kKept) log_.erase(log_.begin(), log_.begin() + long(log_.size() - kKept));
+    return true;
 }
 
-void Chat::hear(const net::Heard& heard) {
+bool Chat::hear(const net::Heard& heard) {
+    if (!loaded_) load();
+    const bool mine = !me_.empty() && heard.name == me_;
+    if (heard.channel == net::Channel::Global && leftGlobal_) return false;
+    if (!mine && ignored(heard.name)) return false;
     Line line;
     line.channel = heard.channel;
     line.name = heard.name;
@@ -239,26 +321,26 @@ void Chat::hear(const net::Heard& heard) {
     if (line.channel == net::Channel::Party && line.name.empty() && at != std::string::npos && at > 0) {
         line.inviter = line.text.substr(0, at);
         line.text = line.inviter + (partyAt != std::string::npos ? kInvites : kRaidInvites);
+        if (ignored(line.inviter)) return false;
     }
     read(line);
     log_.push_back(line);
     if (log_.size() > kKept) log_.erase(log_.begin(), log_.begin() + long(log_.size() - kKept));
-    if (line.name.empty()) return;
-    const bool mine = !me_.empty() && line.name == me_;
-    std::string key;
+    if (line.name.empty()) return true;
     if (line.channel == net::Channel::Whisper) {
         const std::string partner = mine && !line.to.empty() ? line.to : line.name;
         if (std::find(whispers_.begin(), whispers_.end(), partner) == whispers_.end()) {
             whispers_.push_back(partner);
         }
         if (!mine) lastFrom_ = partner;
-        key = "w:" + partner;
-    } else if (line.channel == net::Channel::Party) {
-        key = "party";
-    } else if (line.channel == net::Channel::Guild) {
-        key = "guild";
+        if (!mine && tab_ != "w:" + partner) ++unread_["w:" + partner];
+        return true;
     }
-    if (!key.empty() && !mine && tab_ != key) ++unread_[key];
+    if (mine) return true;
+    for (const char* key : {"general", "global"}) {
+        if (tab_ != key && shows(line, key)) ++unread_[key];
+    }
+    return true;
 }
 
 void Chat::read(Line& line) {
@@ -431,17 +513,14 @@ std::string Chat::named(const std::string& text, const sim::Realm& realm) const 
 }
 
 bool Chat::shows(const Line& line, const std::string& tab) const {
-    if (tab == "all" || line.channel == net::Channel::Server) return true;
     if (tab.rfind("w:", 0) == 0) {
+        if (line.channel == net::Channel::Server) return true;
         if (line.channel != net::Channel::Whisper) return false;
         if (line.name.empty()) return true;  // "Brakka is not here."
         const std::string partner = line.name == me_ && !line.to.empty() ? line.to : line.name;
         return partner == tab.substr(2);
     }
-    if (tab == "map") return line.channel == net::Channel::Map;
-    if (tab == "party") return line.channel == net::Channel::Party;
-    if (tab == "guild") return line.channel == net::Channel::Guild;
-    return false;
+    return ((tab == "global" ? globalShows_ : generalShows_) & bit(line.channel)) != 0;
 }
 
 void Chat::select(const std::string& key) {
@@ -449,13 +528,14 @@ void Chat::select(const std::string& key) {
     unread_[key] = 0;
     logScroll_ = 0.0f;
     chipSet_ = false;
+    filtering_ = false;
 }
 
 void Chat::closeTab(const std::string& key) {
     const std::string name = key.substr(2);
     whispers_.erase(std::remove(whispers_.begin(), whispers_.end(), name), whispers_.end());
     unread_.erase(key);
-    if (tab_ == key) select("all");
+    if (tab_ == key) select("general");
 }
 
 void Chat::whisperTo(const std::string& name) {
@@ -484,7 +564,10 @@ void Chat::send(Play& play) {
     if (text[0] == '@') {
         text = net::saidText(text.substr(1));
         if (text.empty()) {
-            select("guild");
+            select("general");
+            chipSet_ = true;
+            chipChannel_ = net::Channel::Guild;
+            open_ = true;
             return;
         }
         channel = net::Channel::Guild;
@@ -492,15 +575,64 @@ void Chat::send(Play& play) {
         const size_t space = text.find(' ');
         const std::string command = lower(text.substr(1, space == std::string::npos ? std::string::npos : space - 1));
         std::string rest = space == std::string::npos ? std::string() : net::saidText(text.substr(space + 1));
-        // A channel for this line alone; with nothing to say, its tab instead.
+        // A channel for this line alone; with nothing to say, the chip set to it instead (Global's
+        // own tab for Global).
         if (command == "p" || command == "party" || command == "g" || command == "guild" || command == "m" ||
-            command == "map" || command == "s" || command == "say") {
-            const char kind = command[0];
+            command == "map" || command == "y" || command == "yell" || command == "s" || command == "say" ||
+            command == "1" || command == "global") {
+            const net::Channel said = command == "p" || command == "party"    ? net::Channel::Party
+                                      : command == "g" || command == "guild"  ? net::Channel::Guild
+                                      : command == "1" || command == "global" ? net::Channel::Global
+                                      : command == "s" || command == "say"    ? net::Channel::Local
+                                                                              : net::Channel::Map;
             if (rest.empty()) {
-                select(kind == 'p' ? "party" : kind == 'g' ? "guild" : "map");
+                if (said == net::Channel::Global) {
+                    select("global");
+                } else {
+                    select("general");
+                    chipSet_ = true;
+                    chipChannel_ = said;
+                }
+                open_ = true;
                 return;
             }
-            channel = kind == 'p' ? net::Channel::Party : kind == 'g' ? net::Channel::Guild : net::Channel::Map;
+            channel = said;
+        } else if ((command == "leave" || command == "join") && (lower(rest) == "global" || rest == "1")) {
+            // WoW's /leave and /join of a channel: Global's lines stop coming, or come again.
+            leftGlobal_ = command == "leave";
+            save();
+            system(net::Channel::Server, leftGlobal_ ? "You left Global. /join global to hear it again."
+                                                     : "You joined Global.");
+            return;
+        } else if (command == "ignore" || command == "unignore") {
+            // His lines, whispers and invites dropped as they come (hear, askedToTrade, guildCalled).
+            const std::string name = rest.substr(0, rest.find(' '));
+            if (name.empty()) {
+                if (command == "unignore") {
+                    system(net::Channel::Server, "/unignore whom? Add a name.");
+                } else if (ignored_.empty()) {
+                    system(net::Channel::Server, "You ignore no one. /ignore and a name.");
+                } else {
+                    std::string list;
+                    for (const std::string& one : ignored_) list += (list.empty() ? "" : ", ") + one;
+                    system(net::Channel::Server, "You ignore " + list + ".");
+                }
+                return;
+            }
+            const auto it = std::find(ignored_.begin(), ignored_.end(), lower(name));
+            if (command == "ignore") {
+                if (lower(name) == lower(me_)) {
+                    system(net::Channel::Server, "You cannot ignore yourself.");
+                    return;
+                }
+                if (it == ignored_.end()) ignored_.push_back(lower(name));
+                system(net::Channel::Server, name + " is ignored: their lines, whispers and invites no longer reach you.");
+            } else {
+                if (it != ignored_.end()) ignored_.erase(it);
+                system(net::Channel::Server, name + " is no longer ignored.");
+            }
+            save();
+            return;
         } else if (command == "w" || command == "whisper" || command == "t" || command == "tell") {
             const size_t gap = rest.find(' ');
             const std::string name = rest.substr(0, gap);
@@ -605,6 +737,10 @@ void Chat::send(Play& play) {
         system(net::Channel::Server, "Whisper whom? /w and a name.");
         return;
     }
+    if (channel == net::Channel::Global && leftGlobal_) {
+        system(net::Channel::Server, "You left Global. /join global to speak there.");
+        return;
+    }
     if (!play.remote()) {
         system(net::Channel::Server, "No one hears you here: this world is not on a server.");
         return;
@@ -664,6 +800,7 @@ uint64_t Chat::signature(float u, const Pointer& pointer) const {
     for (const auto& [key, count] : unread_) mixs(key), mix(uint64_t(count));
     mixs(tab_), mixs(me_), mixs(target_), mix(uint8_t(channel_));
     mix(inParty_), mix(inGuild_);
+    mix(generalShows_), mix(globalShows_), mix(filtering_), mix(leftGlobal_), mix(ignored_.size());
     for (const std::string& name : whispers_) mixs(name);
     if (open_) {
         mixs(draft_);
@@ -674,9 +811,12 @@ uint64_t Chat::signature(float u, const Pointer& pointer) const {
     } else {
         // Closed, the fading lines: each one's step down its fade.
         size_t n = 0;
-        for (size_t i = log_.size(); i-- > 0 && n < size_t(closedRows(u)); ++n) {
+        for (size_t i = log_.size(); i-- > 0 && n < size_t(closedRows(u));) {
             const float age = log_[i].age;
-            mix(age < kStays ? 0 : age < kStays + kFades ? uint64_t((age - kStays) * 16.0f) + 1 : 1000);
+            if (age >= kStays + kFades) break;
+            if (!shows(log_[i], "general") && log_[i].channel != net::Channel::Whisper) continue;
+            mix(age < kStays ? 0 : uint64_t((age - kStays) * 16.0f) + 1);
+            ++n;
         }
     }
     return h;
@@ -691,10 +831,8 @@ void Chat::layTabs(float u) {
         tab.closable = closable;
         tabs_.push_back(tab);
     };
-    add("all", "All", false);
-    add("map", "Map", false);
-    if (inParty_) add("party", "Party", false);
-    if (inGuild_) add("guild", "Guild", false);
+    add("general", "General", false);
+    add("global", "Global", false);
     for (const std::string& name : whispers_) add("w:" + name, name, true);
     float x = 4.0f * u;
     for (Tab& tab : tabs_) {
@@ -720,10 +858,7 @@ void Chat::layRows(float u, float wide, const std::string& tab, size_t from) {
         if (!line.name.empty()) {
             const bool out = line.channel == net::Channel::Whisper && line.name == me_ && !line.to.empty();
             const std::string who = out ? line.to : line.name;
-            std::string tag = line.channel == net::Channel::Whisper ? (out ? "To" : "From")
-                              : line.channel == net::Channel::Map  ? "Map"
-                              : line.channel == net::Channel::Party ? "Party"
-                                                                    : "Guild";
+            const std::string tag = out ? "To" : tagOf(line.channel);
             prefix = wordWidth(kTag * u, tag) + 6.0f * u + bodyWidth(size, who) + bodyWidth(size, ": ");
         }
         // Greedy, by words; a word wider than a whole row is broken by letters.
@@ -787,6 +922,7 @@ void Chat::cloud(gfx::Canvas& canvas, float middle, float tall, float strength, 
 void Chat::update(float seconds, float width, float height, float bottom, float right,
                   const Pointer& pointer, float wheel, const std::string& typed, int backspaces,
                   bool enter, bool escape, bool toggle, Play& play, bool tab, int arrows) {
+    if (!loaded_) load();
     clock_ += seconds;
     for (Line& line : log_) line.age += seconds;
     const float u = tip::unit();
@@ -799,16 +935,16 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
         for (const net::Heard& line : heard) {
             core::logf("chat: %s%s%s: %s", line.name.empty() ? "(server) " : "", line.name.c_str(),
                        line.to.empty() ? "" : (" to " + line.to).c_str(), line.text.c_str());
-            hear(line);
+            if (!hear(line)) continue;
             // A party's or raid's invite to him: its card's sound (window_invite).
             if (!log_.empty() && log_.back().channel == net::Channel::Party && !log_.back().inviter.empty()) {
                 play.ui(Play::Ui::Invited);
             }
-            // A Map, Party or Guild line said by someone in view: over his head too, links and all;
-            // the bubble cuts it to its own three lines and tints the private ones
-            // (game/ui/speech.cpp).
-            if ((line.channel == net::Channel::Map || line.channel == net::Channel::Party ||
-                 line.channel == net::Channel::Guild) &&
+            // A Local, Map, Party or Guild line said by someone in view: over his head too, links and
+            // all; the bubble cuts it to its own three lines and tints the private ones
+            // (game/ui/speech.cpp). Global's never: it is the server's, not the street's.
+            if ((line.channel == net::Channel::Local || line.channel == net::Channel::Map ||
+                 line.channel == net::Channel::Party || line.channel == net::Channel::Guild) &&
                 line.from != 0) {
                 play.bubble(line.from, line.text,
                             line.channel == net::Channel::Party   ? Play::kSaidParty
@@ -851,24 +987,24 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
         if (tab) take(size_t(pick_));
     }
 
-    // A party or guild he is no longer in takes its tab with it.
+    // A party or guild he is no longer in takes the chip off it.
     inParty_ = play.party().members.size() > 1;
     inGuild_ = play.guild().id != 0;
-    if ((tab_ == "party" && !inParty_) || (tab_ == "guild" && !inGuild_)) select("all");
+    if (chipSet_ && ((chipChannel_ == net::Channel::Party && !inParty_) ||
+                     (chipChannel_ == net::Channel::Guild && !inGuild_))) {
+        chipSet_ = false;
+    }
+    if (!open_) filtering_ = false;
 
-    // Where the next line goes: the tab's channel; on All his party's when he has one, else his
-    // map's, or the word he pressed in their place.
+    // Where the next line goes: a whisper tab's player; Global's tab, Global; on General his
+    // party's when he has one, else those near him, or the word he pressed in their place.
     if (tab_.rfind("w:", 0) == 0) {
         channel_ = net::Channel::Whisper;
         target_ = tab_.substr(2);
-    } else if (tab_ == "map") {
-        channel_ = net::Channel::Map;
-    } else if (tab_ == "party") {
-        channel_ = net::Channel::Party;
-    } else if (tab_ == "guild") {
-        channel_ = net::Channel::Guild;
+    } else if (tab_ == "global") {
+        channel_ = net::Channel::Global;
     } else {
-        channel_ = chipSet_ ? chipChannel_ : inParty_ ? net::Channel::Party : net::Channel::Map;
+        channel_ = chipSet_ ? chipChannel_ : inParty_ ? net::Channel::Party : net::Channel::Local;
     }
 
     // Where it stands: its foot over the HUD's plate, as wide as there is room for.
@@ -878,7 +1014,11 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
     const float tall = std::clamp((tall_ > 0.0f ? tall_ : kTallDefault) * u, kTallLeast * u, most);
     panel_ = {left, bottom - tall, wide, tall};
     grip_ = {left, panel_.y - kGrip * u, wide, kGrip * u};
-    tabRow_ = {left, panel_.y, wide, kTabRow * u};
+    // The tabs' row, short of the lines icon at its right, and the list it opens over the log.
+    tabRow_ = {left, panel_.y, wide - (kFilterButton + 8.0f) * u, kTabRow * u};
+    filterButton_ = {tabRow_.right() + 2.0f * u, panel_.y + 7.0f * u, kFilterButton * u, kTabRow * u - 14.0f * u};
+    filterBox_ = {left + wide - kFilterWide * u - 6.0f * u, tabRow_.bottom() + 4.0f * u, kFilterWide * u,
+                  (34.0f + kFilterRow * float(std::size(kListed)) + 8.0f) * u};
     input_ = {left + 8.0f * u, panel_.bottom() - kFoot * u - kInput * u - 2.0f * u, wide - 16.0f * u,
               kInput * u};
     logBox_ = {left + 12.0f * u, tabRow_.bottom() + 8.0f * u, wide - 20.0f * u,
@@ -901,6 +1041,26 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
     }
     pointerX_ = pointer.x;
     pointerY_ = pointer.y;
+    // The list: a row ticks its channel on or off for this tab; a press anywhere else shuts it.
+    if (open_ && pointer.pressed && !chosen && filtering_) {
+        if (filterBox_.has(pointer.x, pointer.y)) {
+            for (const auto& [box, channel] : filterRows_) {
+                if (!box.has(pointer.x, pointer.y)) continue;
+                filter(tab_) ^= bit(channel);
+                save();
+                play.ui(Play::Ui::Click);
+                break;
+            }
+            chosen = true;
+        } else if (!filterButton_.has(pointer.x, pointer.y)) {
+            filtering_ = false;
+        }
+    }
+    if (open_ && pointer.pressed && !chosen && filterButton_.has(pointer.x, pointer.y) && tab_.rfind("w:", 0) != 0) {
+        filtering_ = !filtering_;
+        play.ui(Play::Ui::Click);
+        chosen = true;
+    }
     if (pointer.pressed && !chosen) {
         for (const Choice& choice : choices_) {
             if (!choice.box.has(pointer.x, pointer.y) || choice.line >= log_.size() ||
@@ -936,18 +1096,16 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
                 break;
             }
         } else if (chip_.has(pointer.x, pointer.y)) {
-            // On All, the next of Map, Party and Guild in its place; elsewhere, the next tab. Only
-            // those he is in: a party's or a guild's when he has one.
-            std::vector<net::Channel> open{net::Channel::Map};
+            // On General, the next of Local, Map, Global, Party and Guild in its place: a party's or
+            // a guild's only when he has one. Global's tab and a whisper's keep their own.
+            std::vector<net::Channel> open{net::Channel::Local, net::Channel::Map, net::Channel::Global};
             if (inParty_) open.push_back(net::Channel::Party);
             if (inGuild_) open.push_back(net::Channel::Guild);
             const auto here = std::find(open.begin(), open.end(), channel_);
             const net::Channel next = here == open.end() || here + 1 == open.end() ? open.front() : *(here + 1);
-            if (tab_ == "all") {
+            if (tab_ == "general") {
                 chipSet_ = true;
                 chipChannel_ = next;
-            } else {
-                select(next == net::Channel::Map ? "map" : next == net::Channel::Party ? "party" : "guild");
             }
         } else if (logTall_ > logBox_.h && pointer.x >= logBox_.right() - 10.0f * u &&
                    logBox_.has(pointer.x, pointer.y)) {
@@ -1022,6 +1180,12 @@ void Chat::buildTip(float u, float width, float height, const Pointer& pointer, 
     tip_.clear();
     suggestBoxes_.clear();
     tipping_ = false;
+    filterRows_.clear();
+    if (open_ && filtering_) {
+        buildFilters(u, pointer);
+        tipping_ = true;
+        return;
+    }
     if (!open_ || !tables_) return;
     const auto card = [&](const sim::Held& held, const Box& over) {
         if (held.item < 0 || size_t(held.item) >= tables_->items.size()) return;
@@ -1065,6 +1229,34 @@ void Chat::buildTip(float u, float width, float height, const Pointer& pointer, 
         card(log_[one.line].links[one.link].held, one.box);
         tipping_ = true;
         return;
+    }
+}
+
+void Chat::buildFilters(float u, const Pointer& pointer) {
+    // WoW's tab Settings, plainly: the tab's name, then a row a channel with its tick, its word in
+    // its ink and what it reaches.
+    tip::glass(tip_, filterBox_, u);
+    const std::string title = (tab_ == "global" ? std::string("Global") : std::string("General")) + " shows";
+    word(tip_, filterBox_.x + 14.0f * u, filterBox_.y + 24.0f * u, kTag * u + 2.0f * u, kTabLit, title, u);
+    const uint32_t shows = filter(tab_);
+    for (size_t k = 0; k < std::size(kListed); ++k) {
+        const net::Channel channel = kListed[k];
+        const Box row{filterBox_.x + 6.0f * u, filterBox_.y + 34.0f * u + kFilterRow * u * float(k),
+                      filterBox_.w - 12.0f * u, kFilterRow * u};
+        filterRows_.push_back({row, channel});
+        if (row.has(pointer.x, pointer.y)) tip_.rect(row, faded(kGoldGlow, 0.16f));
+        const Box tick{row.x + 8.0f * u, row.midY() - 7.0f * u, 14.0f * u, 14.0f * u};
+        tip_.rect(tick, kIron);
+        tip_.rect({tick.x + 1.5f * u, tick.y + 1.5f * u, tick.w - 3.0f * u, tick.h - 3.0f * u}, kVoid);
+        if (shows & bit(channel)) {
+            tip_.rect({tick.x + 4.0f * u, tick.y + 4.0f * u, tick.w - 8.0f * u, tick.h - 8.0f * u}, kGoldBar);
+        }
+        const float base = controls::middle(row.y, row.h, kTag * u);
+        const char* tag = channel == net::Channel::Whisper  ? "Whisper"
+                          : channel == net::Channel::Server ? "Notices"
+                                                            : tagOf(channel);
+        word(tip_, tick.right() + 10.0f * u, base, kTag * u, channelInk(channel), tag, u);
+        body(tip_, row.x + 112.0f * u, controls::middle(row.y, row.h, 15.0f * u), 15.0f * u, kQuiet, kListedWho[k], u);
     }
 }
 
@@ -1115,7 +1307,7 @@ void Chat::build(float u, const Pointer& pointer) {
             const std::string count = std::to_string(std::min(it->second, 99));
             const float pill = std::max(16.0f * u, wordWidth(12.0f * u, count) + 8.0f * u);
             const Box badge{cx + 5.0f * u, tabRow_.midY() - 8.0f * u, pill, 16.0f * u};
-            tabsDrawn_.rect(badge, whisper ? kWhisperInk : tab.key == "party" ? kPartyInk : kGuildInk);
+            tabsDrawn_.rect(badge, whisper ? kWhisperInk : tab.key == "global" ? kGlobalInk : kSystemInk);
             tabsDrawn_.lettered(*controls::wordFace(), controls::wordTexture(),
                                 badge.midX() - wordWidth(12.0f * u, count) * 0.5f,
                                 controls::middle(badge.y, badge.h, 12.0f * u), 12.0f * u, 0.0f, hex(0x0d0a08), count);
@@ -1137,7 +1329,20 @@ void Chat::build(float u, const Pointer& pointer) {
                          (tabRow_.has(pointer.x, pointer.y) && pointer.y >= tabRow_.bottom() - 6.0f * u);
         tabsDrawn_.rect({at, tabRow_.bottom() - 3.0f * u, thumb, 3.0f * u}, lit ? kIronLit : kIron);
     }
-    rule(back_, tabRow_.x + 8.0f * u, tabRow_.bottom(), tabRow_.w - 16.0f * u, u);
+    rule(back_, tabRow_.x + 8.0f * u, tabRow_.bottom(), panel_.w - 16.0f * u, u);
+    // The lines icon: which channels the tab shows. A whisper tab has none of its own.
+    if (tab_.rfind("w:", 0) != 0) {
+        const bool lit = filtering_ || filterButton_.has(pointer.x, pointer.y);
+        const uint32_t ink = lit ? kTabLit : kGripInk;
+        const float x0 = filterButton_.x + 7.0f * u, x1 = filterButton_.right() - 7.0f * u;
+        const float knobs[3] = {0.3f, 0.7f, 0.45f};
+        for (int k = 0; k < 3; ++k) {
+            const float y = filterButton_.midY() + float(k - 1) * 5.0f * u;
+            back_.rect({x0, y - 0.75f * u, x1 - x0, 1.5f * u}, ink);
+            const float kx = x0 + (x1 - x0) * knobs[k];
+            back_.rect({kx - 2.5f * u, y - 2.5f * u, 5.0f * u, 5.0f * u}, ink);
+        }
+    }
 
     // The log, clipped to its well, the newest at the foot.
     lines_.clip(logBox_);
@@ -1164,10 +1369,7 @@ void Chat::build(float u, const Pointer& pointer) {
         const uint32_t ink = channelInk(line.channel);
         if (row.first) {
             const bool out = line.channel == net::Channel::Whisper && line.name == me_ && !line.to.empty();
-            const std::string tag = line.channel == net::Channel::Whisper ? (out ? "To" : "From")
-                                    : line.channel == net::Channel::Map  ? "Map"
-                                    : line.channel == net::Channel::Party ? "Party"
-                                                                          : "Guild";
+            const std::string tag = out ? "To" : tagOf(line.channel);
             x += word(lines_, x, base, kTag * u, faded(ink, 0.75f), tag, u) + 6.0f * u;
             x += body(lines_, x, base, size, kNameInk, out ? line.to : line.name, u);
             x += body(lines_, x, base, size, kQuiet, ": ", u);
@@ -1196,8 +1398,11 @@ void Chat::build(float u, const Pointer& pointer) {
     const float textX = chip_.right() + 4.0f * u;
     const float room = input_.right() - textX - 6.0f * u;
     if (draft_.empty()) {
-        const std::string hint = channel_ == net::Channel::Whisper ? "Whisper to " + target_
-                                                                   : "Say to " + lower(channelWord());
+        const std::string hint = channel_ == net::Channel::Whisper  ? "Whisper to " + target_
+                                 : channel_ == net::Channel::Local  ? std::string("Say to those near you")
+                                 : channel_ == net::Channel::Global ? std::string("Say to everyone online")
+                                 : channel_ == net::Channel::Map    ? std::string("Say to your map")
+                                                                    : "Say to your " + lower(channelWord());
         body(back_, textX, inputBase, size, kPlaceholder, hint, u);
     }
     // The tail of a draft wider than the field: its end, where he is typing.
@@ -1218,7 +1423,7 @@ void Chat::build(float u, const Pointer& pointer) {
     }
     rule(back_, input_.x, input_.bottom() + 2.0f * u, input_.w, u);
     body(back_, panel_.x + 12.0f * u, panel_.bottom() - 9.0f * u, kHint * u, kHintInk,
-         "/p party  \xC2\xB7  /g or @ guild  \xC2\xB7  /w name  \xC2\xB7  /r reply  \xC2\xB7  /invite name  \xC2\xB7  /ginvite name  \xC2\xB7  /leave", u);
+         "/s local  \xC2\xB7  /y map  \xC2\xB7  /1 global  \xC2\xB7  /p party  \xC2\xB7  /g guild  \xC2\xB7  /w name  \xC2\xB7  /r reply  \xC2\xB7  /ignore name", u);
 }
 
 long Chat::pendingInvite() const {
@@ -1315,13 +1520,14 @@ int Chat::closedRows(float u) const {
 }
 
 void Chat::buildClosed(float u) {
-    // The last lines on All, each as long as it has been up allows, the newest at full.
+    // The last lines General shows, and whispers, each as long as it has been up allows, the
+    // newest at full: Global's stream does not run over the world unless General is ticked for it.
     lines_.clip({0.0f, 0.0f, 0.0f, 0.0f});
     const int rows = closedRows(u);
     std::vector<size_t> last;
     for (size_t i = log_.size(); i-- > 0 && last.size() < size_t(rows);) {
-        if (log_[i].age < kStays + kFades) last.push_back(i);
-        else break;
+        if (log_[i].age >= kStays + kFades) break;
+        if (shows(log_[i], "general") || log_[i].channel == net::Channel::Whisper) last.push_back(i);
     }
     std::reverse(last.begin(), last.end());
     int waiting = 0;
@@ -1364,11 +1570,7 @@ void Chat::buildClosed(float u) {
         }
         const uint32_t ink = channelInk(line.channel);
         const bool out = line.channel == net::Channel::Whisper && line.name == me_ && !line.to.empty();
-        const std::string tag = line.channel == net::Channel::Whisper ? (out ? "To" : "From")
-                                : line.channel == net::Channel::Map  ? "Map"
-                                : line.channel == net::Channel::Party ? "Party"
-                                : line.channel == net::Channel::Guild ? "Guild"
-                                                                      : "";
+        const std::string tag = out ? "To" : tagOf(line.channel);
         if (!tag.empty()) x += word(lines_, x, base, kTag * u, faded(ink, a), tag, u) + 6.0f * u;
         x += body(lines_, x, base, size, faded(kNameInk, a), out ? line.to : line.name, u);
         x += body(lines_, x, base, size, faded(kQuiet, a), ": ", u);

@@ -9,7 +9,9 @@
 //   heard.log   every chat line he hears or says, appended, with the realm's clock
 //   orders.txt  appended by the model, one order a line, read from where it was last read:
 //
-//     say TEXT              to his map
+//     say TEXT              to those near him (Local)
+//     map TEXT              to his map
+//     global TEXT           to the whole server
 //     party TEXT            to his party
 //     whisper NAME TEXT     to one player
 //     invite NAME | accept [NAME] | decline [NAME] | leave | kick NAME

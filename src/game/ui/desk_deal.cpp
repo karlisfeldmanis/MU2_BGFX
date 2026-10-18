@@ -30,8 +30,7 @@ void Desk::dealNews(Play& play) {
             case sim::DealEvent::Asked:
                 // Said to both: the one asked holds the ask.
                 if (play.realm().dealAskedBy() == said.whom) {
-                    chat_.askedToTrade(name, said.whom);
-                    play.ui(Play::Ui::Invited);
+                    if (chat_.askedToTrade(name, said.whom)) play.ui(Play::Ui::Invited);
                 } else {
                     chat_.notice("You asked " + name + " to trade.");
                 }

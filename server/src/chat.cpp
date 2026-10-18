@@ -1,4 +1,6 @@
-// Chat: a line heard, said to a channel, a whisper, the rate a player may talk at. Split out of main.cpp (host.h).
+// Chat: a line heard, said to a channel (Local by distance, Global to the server), a whisper, the rate a player may talk at. Split out of main.cpp (host.h).
+
+#include <cmath>
 
 #include "host.h"
 
@@ -81,6 +83,50 @@ void say(Session& one, const net::Say& said, std::vector<std::unique_ptr<Session
         hearLine(hearer, line);
     };
     switch (said.channel) {
+        case net::Channel::Local: {
+            // Those on his map within net::kLocalReach tiles of him, himself among them.
+            const sim::Body* him = one.world->realm->find(one.player);
+            if (him == nullptr) return;
+            int heard = 0;
+            for (auto& other : sessions) {
+                if (other->world != one.world || other->player == 0) continue;
+                const sim::Body* them = one.world->realm->find(other->player);
+                if (them == nullptr) continue;
+                const float dx = them->x - him->x, dy = them->y - him->y;
+                if (dx * dx + dy * dy > net::kLocalReach * net::kLocalReach) continue;
+                tell(*other);
+                ++heard;
+            }
+            core::logf("chat local %s/%d %s (%d heard): %s", one.world->name.c_str(), one.world->copy,
+                       one.name.c_str(), heard, text.c_str());
+            break;
+        }
+        case net::Channel::Global: {
+            // Everyone on the server, any map: from level net::kGlobalLevel, a line each
+            // net::kGlobalEvery seconds.
+            const sim::Body* him = one.world->realm->find(one.player);
+            if (him == nullptr || him->level < net::kGlobalLevel) {
+                chatSystem(one, net::Channel::Server,
+                           "Global opens at level " + std::to_string(net::kGlobalLevel) + ".");
+                return;
+            }
+            const Clock::time_point now = Clock::now();
+            const float since = std::chrono::duration<float>(now - one.globalAt).count();
+            if (one.globalAt != Clock::time_point{} && since < net::kGlobalEvery) {
+                const int wait = int(std::ceil(net::kGlobalEvery - since));
+                chatSystem(one, net::Channel::Server, "Wait " + std::to_string(wait) + " s to speak on Global.");
+                return;
+            }
+            one.globalAt = now;
+            int heard = 0;
+            for (auto& other : sessions) {
+                if (!other->welcomed || other->world == nullptr) continue;
+                tell(*other);
+                ++heard;
+            }
+            core::logf("chat global %s (%d heard): %s", one.name.c_str(), heard, text.c_str());
+            break;
+        }
         case net::Channel::Map:
             for (auto& other : sessions) {
                 if (other->world == one.world) tell(*other);

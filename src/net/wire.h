@@ -122,7 +122,9 @@ namespace mu::net {
 //     an Aida row on the travel list (2026-10-16), so a client on 34's tables is refused.
 // 36: the Account and the Hello carry the game's item list (Tables::itemsPrint), and a game whose
 //     list is not the server's is told to update (Refused::Outdated) (2026-10-17).
-constexpr uint32_t kVersion = 36;
+// 37: the chat's Local and Global channels (Channel 5 and 6), WoW's Say and a channel for the
+//     whole server (bug report #8, 2026-10-18).
+constexpr uint32_t kVersion = 37;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";
@@ -180,10 +182,17 @@ struct Who {
 };
 
 // **The chat** (Kind::Chat). Where a line goes: everyone on his map (the world and its copy), his
-// party, his guild, or one player by name. A line with no speaker is the server's on that
-// channel; Server is its own notices, which belong to no channel.
-enum class Channel : uint8_t { Map = 0, Party = 1, Guild = 2, Whisper = 3, Server = 4 };
-constexpr uint8_t kChannels = 5;
+// party, his guild, or one player by name; those near him on his map (Local, WoW's Say); or
+// everyone on the server (Global). A line with no speaker is the server's on that channel;
+// Server is its own notices, which belong to no channel. Local and Global come last, so the
+// first five keep their numbers.
+enum class Channel : uint8_t { Map = 0, Party = 1, Guild = 2, Whisper = 3, Server = 4, Local = 5, Global = 6 };
+constexpr uint8_t kChannels = 7;
+// How far a Local line carries, in tiles: about what the camera shows round him.
+constexpr float kLocalReach = 20.0f;
+// Global: the level a player speaks on it from, and the seconds between his lines there.
+constexpr int kGlobalLevel = 20;
+constexpr float kGlobalEvery = 15.0f;
 // The longest line said, in bytes: about two lines of the chat window. The server cuts a longer
 // one (saidText), so the wire's 255-byte strings always carry it whole.
 constexpr size_t kMostSaid = 200;

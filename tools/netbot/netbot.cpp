@@ -639,7 +639,11 @@ private:
             const std::string after = space2 == std::string::npos ? "" : rest.substr(space2 + 1);
             std::string answer;
             if (verb == "say" && !rest.empty()) {
+                link_->say({net::Channel::Local, {}, rest});
+            } else if (verb == "map" && !rest.empty()) {
                 link_->say({net::Channel::Map, {}, rest});
+            } else if (verb == "global" && !rest.empty()) {
+                link_->say({net::Channel::Global, {}, rest});
             } else if (verb == "party" && !rest.empty()) {
                 link_->say({net::Channel::Party, {}, rest});
             } else if (verb == "whisper" && !after.empty()) {

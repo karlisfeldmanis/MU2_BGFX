@@ -82,14 +82,14 @@ public:
             whispered(line, now);
             return;
         }
-        if (line.channel != net::Channel::Map || !opens(line.text) || !chance(0.5)) return;
+        if ((line.channel != net::Channel::Map && line.channel != net::Channel::Local) || !opens(line.text) || !chance(0.5)) return;
         if (now - answeredAt_ < (chatty_ ? 5 : 30) * kSecond) return;
         answeredAt_ = now;
         const std::string answer = answerTo(line.text);
-        if (!answer.empty()) say(net::Channel::Map, answer, now, (2 + roll(5)) * kSecond);
+        if (!answer.empty()) say(net::Channel::Local, answer, now, (2 + roll(5)) * kSecond);
     }
 
-    // And, now and then, a line of his own to his map: one in about twenty minutes.
+    // And, now and then, a line of his own to those near him: one in about twenty minutes.
     void idle(int64_t now) {
         const int64_t minute = chatty_ ? kSecond : 60 * kSecond;  // chatty: seconds for minutes
         if (nextIdle_ == 0) nextIdle_ = now + (10 + roll(20)) * minute;
@@ -118,11 +118,11 @@ private:
         net::Say said;
     };
 
-    // His own line to his map, at most one in two minutes.
+    // His own line to those near him (Local), at most one in two minutes. Bots stay off Global.
     void mine(int64_t now, std::string text) {
         if (now - saidAt_ < (chatty_ ? 10 : 120) * kSecond && saidAt_ != 0) return;
         saidAt_ = now;
-        say(net::Channel::Map, std::move(text), now, (1 + roll(3)) * kSecond);
+        say(net::Channel::Local, std::move(text), now, (1 + roll(3)) * kSecond);
     }
 
     void whispered(const net::Heard& line, int64_t now) {

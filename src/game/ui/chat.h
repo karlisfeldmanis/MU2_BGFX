@@ -4,9 +4,12 @@
 //
 // MU 0.75's chat was one box with its lines over the heads. Ours, as the user tuned the page:
 //
-//   * **Tabs.** All, Map, Party and Guild stay; each player who whispers him, or whom he
-//     whispers, opens a tab of his own with a close. The row scrolls sideways on a thin slider
-//     when it is too long ("slider has to be for whole head").
+//   * **Tabs.** General and Global, WoW's (the user picked A on
+//     claude.ai/artifact/VQZvp1SfnaQMegCmGgA5rD, 2026-10-18): each shows the channels ticked on
+//     its list, behind the lines icon at the row's right -- General every one but Global, Global
+//     Global alone, to begin with. Each player who whispers him, or whom he whispers, opens a tab
+//     of his own with a close. The row scrolls sideways on a thin slider when it is too long
+//     ("slider has to be for whole head").
 //   * **No box.** The quest tracker's soft dark cloud behind it, centred on the screen's left
 //     edge, and two iron rules fading out over their last third ("similiar like we do for
 //     quests", "gradient has to be darker"). The chosen tab lit gold and rising from its bar.
@@ -23,11 +26,15 @@
 //
 // **Where a line goes** (the user, 2026-10-09: "default chat channel has to be /all and only when
 // char is inside part it should go to party not provates messages", "whispering is something
-// whuch need addiitonal click"): on All, to his party when he has one and to his map when not; on
-// Map, Party or Guild, there; a whisper only on its player's tab. A whisper heard never moves it.
-// A slash is a command for one line, the default left as it was: /p /g /m TEXT, /w NAME TEXT, /r
-// TEXT; one with nothing after it goes to that tab instead.
-// A Map line said by someone in view goes up over his head too, as MU's did (Play::bubble).
+// whuch need addiitonal click"): on General, to his party when he has one and to those near him
+// (Local) when not, or the channel he pressed the chip to; on Global, Global; a whisper only on
+// its player's tab. A whisper heard never moves it. A slash is a command for one line, the
+// default left as it was: /s Local, /y or /m Map, /1 Global, /p, /g, /w NAME TEXT, /r TEXT; one
+// with nothing after it sets the chip instead. /leave global and /join global; /ignore NAME and
+// /unignore NAME, whose lines, whispers and invites he no longer hears. The ticks, Global left and
+// the ignored are kept in chat.txt in the player's folder.
+// A Local or Map line said by someone in view goes up over his head too, as MU's did
+// (Play::bubble); a Global line never does.
 //
 // **Items named** (the user, 2026-10-11: "allow bots to write on chat [item name] with working
 // tooltips", then "autocompletion ... when they write [item name]"): a line may carry item links
@@ -89,16 +96,18 @@ public:
 
     // A line from outside: Play's own, as a party's or the server's would be. `name` empty is a
     // line of the channel itself.
-    void hear(const net::Heard& line);
+    // False when it is dropped: Global left, or its speaker ignored.
+    bool hear(const net::Heard& line);
     // The server's own line, as Play says it: a trade's news ("Elora declined to trade.").
     void notice(const std::string& text) { system(net::Channel::Server, text); }
     // A trade asked of him by `name` (body `who`): a line, and the invite's card in the middle
     // with Accept and Decline, which answer the realm (Play::dealAnswer) and not the server.
-    void askedToTrade(const std::string& name, uint32_t who);
+    // False when the asker is ignored: nothing shown.
+    bool askedToTrade(const std::string& name, uint32_t who);
     // A guild's call (net::GuildCall, docs/game/guild.md): an invite to him, or a player asking to join
     // his guild. The party's card in the middle, kicked "Guild", with the mark and a line of what
     // joining means; Accept and Decline answer the server's guild (net::GuildAsk).
-    void guildCalled(const net::GuildCall& call);
+    bool guildCalled(const net::GuildCall& call);  // false likewise
     // The guild's latest line from the server ("You invited Wren."), heard within `within`
     // seconds, or empty: the guild windows' foot says it under what was pressed.
     std::string guildSaid(float within) const;
@@ -133,7 +142,7 @@ private:
         size_t start = 0;  // ... from this byte of it
     };
     struct Tab {
-        std::string key;    // "all", "map", "party", "guild", or "w:" and the name
+        std::string key;    // "general", "global", or "w:" and the name
         std::string word;
         bool closable = false;
         float x = 0.0f, w = 0.0f;  // laid on the row, before its scroll
@@ -162,6 +171,13 @@ private:
     void system(net::Channel channel, const std::string& text);
     bool shows(const Line& line, const std::string& tab) const;
     void layTabs(float u);
+    // The channels a tab shows, as bits of 1 << Channel; a whisper tab's are not its own.
+    uint32_t& filter(const std::string& tab);
+    bool ignored(const std::string& name) const;
+    // chat.txt in the player's folder: the tabs' ticks, Global left, the ignored.
+    void load();
+    void save() const;
+    void buildFilters(float u, const Pointer& pointer);
     void layRows(float u, float wide, const std::string& tab, size_t from);
     void build(float u, const Pointer& pointer);
     void buildClosed(float u);
@@ -170,6 +186,7 @@ private:
     long pendingInvite() const;  // the newest open invite's line, or -1
     void cloud(gfx::Canvas& canvas, float middle, float tall, float strength, float u);
     std::string channelWord() const;
+    static const char* tagOf(net::Channel channel);
     uint32_t channelInk(net::Channel channel) const;
 
     gfx::Canvas back_, tabsDrawn_, lines_, inviteDrawn_, tip_;
@@ -202,12 +219,21 @@ private:
     std::vector<Tab> tabs_;
     std::vector<std::string> whispers_;  // the open whisper tabs, by name, in the order opened
     std::map<std::string, int> unread_;  // by tab key
-    std::string tab_ = "all";
+    std::string tab_ = "general";
+    uint32_t generalShows_ = 0, globalShows_ = 0;  // filter()'s, set by load()
+    bool loaded_ = false;
+    bool leftGlobal_ = false;
+    std::vector<std::string> ignored_;  // lower case
+    // The list of what the chosen tab shows, open over the log, and its rows as drawn.
+    bool filtering_ = false;
+    gfx::Box filterButton_, filterBox_;
+    std::vector<std::pair<gfx::Box, net::Channel>> filterRows_;
     net::Channel channel_ = net::Channel::Map;  // where the next line goes, as the tab says (update)
-    // The channel's word pressed on All: Map, Party or Guild in its place until the tab changes.
+    // The channel's word pressed on General: Local, Map, Global, Party or Guild in its place until
+    // the tab changes.
     bool chipSet_ = false;
-    // Party and Guild show as tabs only while he is in one (the user, 2026-10-09: "dont show
-    // guild, party tabs if there is no guild or party"). His guild is the server's (docs/game/guild.md).
+    // Whether he is in a party or a guild: the chip offers them only then. His guild is the
+    // server's (docs/game/guild.md).
     bool inParty_ = false, inGuild_ = false;
     net::Channel chipChannel_ = net::Channel::Map;
     std::string target_;    // a whisper's

@@ -272,6 +272,8 @@ struct Session {
     // The chat's allowance (sayAllowed): lines he may say at once, refilled with time.
     float sayAllowance = 0.0f;
     Clock::time_point saidAt{};
+    // His last line on Global, which takes one each net::kGlobalEvery.
+    Clock::time_point globalAt{};
     // When anything last came in on his line. Every client pings at least every 5 s
     // (RemoteLink::pump), so one silent for kSilentFor is a dead line his next Hello may take.
     Clock::time_point heardAt = Clock::now();
