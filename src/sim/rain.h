@@ -5,14 +5,15 @@
 // without a server, keeps the same rhythm itself (game/world/weather.cpp). The numbers were
 // written twice, once in each, with a comment owning up to it; here once (docs/plans/order-plan.md
 // sprint C). Lengthened 2026-09-29 by the user: "rain is happening longer and daytime also is
-// longer", then "we need bigger intervals between daytime and rain".
+// longer", then "we need bigger intervals between daytime and rain"; the dry spell doubled again
+// 2026-10-18 ("we need bigger intervals between rain/storm and not rain/storm"), 20-36 min.
 
 #include <algorithm>
 #include <cstdint>
 
 namespace mu::sim {
 
-constexpr float kDryLow = 600.0f, kDryHigh = 1080.0f;  // seconds of a dry spell
+constexpr float kDryLow = 1200.0f, kDryHigh = 2160.0f;  // seconds of a dry spell
 constexpr float kWetLow = 180.0f, kWetHigh = 300.0f;   // and of a wet one
 
 // The server's clock, one a world: starts dry, turns at the end of each spell.

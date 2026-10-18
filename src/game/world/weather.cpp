@@ -26,7 +26,8 @@ constexpr float kSquarePeak = 0.08f;
 // Invention, judged: long enough that a spell is a mood and not a flicker, short enough that a
 // session of hunting sees both. Lengthened 2026-09-29 (the user: "rain is happening longer and
 // daytime also is longer"), from 2-4 min dry and 1-2 min wet; the dry spell doubled again the
-// same day (the user: "we need bigger intervals between daytime and rain"), from 5-9 min.
+// same day (the user: "we need bigger intervals between daytime and rain"), from 5-9 min, and
+// again 2026-10-18 to 20-36 min (sim/rain.h).
 // The spells' lengths are the server's too, and kept with its clock in sim/rain.h.
 using sim::kDryHigh;
 using sim::kDryLow;
