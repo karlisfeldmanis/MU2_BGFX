@@ -3551,8 +3551,10 @@ void testSummons(const content::Tables& tables) {
             }
         }
     }
+    // At 60: since 2026-10-18 her points no longer armour it, and a level-40 elf's Golem falls
+    // to the pack her shot pulls before it kills one; a level-60 one's takes five.
     sim::Realm realm;
-    check(realm.raise(&tables, 5, standColumn, standRow, sim::Kin::FairyElf, 40),
+    check(realm.raise(&tables, 5, standColumn, standRow, sim::Kin::FairyElf, 60),
           "an elf raises by the Skeleton Warriors");
     check(realm.equip(tables.armNamed("Bow01"), -1, true), "with the Short Bow");
     check(realm.spend(0, 0, 0, 150), "and puts 150 points into energy");
@@ -3621,6 +3623,7 @@ void testSummons(const content::Tables& tables) {
         realm.step();
         for (const sim::Happening& h : realm.happenings()) {
             if (h.who == golemId && h.what == sim::What::Hit) ++blows;
+            if (h.what == sim::What::Died && h.whom == golemId) ++kills;
         }
         for (const sim::Body& one : realm.bodies()) {
             if (one.monster() && one.alive() && one.quarry == golemId && one.health > one.maxHealth / 2) {
@@ -3651,7 +3654,7 @@ void testSummons(const content::Tables& tables) {
         check(struck, "she shoots it");
         check(!turned, "and it stays on the golem: the summon holds aggro");
     }
-    // And its kills are hers.
+    // And its kills are hers, counted from its raising.
     sim::Request stop;
     stop.kind = sim::Request::Kind::Stop;
     realm.ask(stop);

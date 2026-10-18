@@ -626,9 +626,11 @@ float wardShare(const HeroPoints& points);
 //     gap between them widens as she levels. A fifth for the Goblin and half for every breed
 //     were each tried first and were too heavy (the user, on a level-102 elf's Goblin rolling
 //     565: "scaling is to heavy");
-//   * then her points: health times `1 + energy / 100 + vitality / 200`, and damage, defence and
-//     both rates times `1 + energy / 200 + agility / 800` -- energy her summoner's stat, a tank
+//   * then her points: health times `1 + energy / 100 + vitality / 200`, and damage and attack
+//     rate times `1 + energy / 200 + agility / 800` -- energy her summoner's stat, a tank
 //     first and a weapon second; vitality lends half of energy's, agility (her bow's) a quarter.
+//     Its defence and defence rate take none of them, and its defence climbs the ladder at the
+//     square root (the user, 2026-10-18: the Ice Queen could not hurt a level-77 elf's Yeti).
 // A new elf's Goblin is the breed's own. A level-102 elf of 351 agility and 110 energy has a
 // level-13 Goblin of 645 health and a 50-71 bite, or a level-38 Golem of 3 000 and 142-155;
 // at 300 energy the Golem has 5 500 and 181-198 (kSummonDamageShare's, 0.6 of what they were). One knob each, here.

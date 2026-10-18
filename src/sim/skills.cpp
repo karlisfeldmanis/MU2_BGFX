@@ -1116,8 +1116,13 @@ SummonFit summonFit(const content::MonsterKind& kind, int heroLevel, const HeroP
     // so a level-200 elf's Bali stood at 170 000. Ours, as kSummonHealthPer* are.
     fit.health = std::max(1, int(float(kind.health) * std::sqrt(climb(Ladder::Health)) * lasts));
     fit.attackRate = float(kind.attackRate) * climb(Ladder::AttackRate) * bites;
-    fit.defenseRate = float(kind.defenseRate) * climb(Ladder::DefenseRate) * bites;
-    fit.defense = int(float(kind.defense) * climb(Ladder::Defense) * bites);
+    // Its armour takes none of her points, and its defence climbs at the square root as its
+    // health does (the user, 2026-10-18: "ice queen tried to hit Elite Yeti and ice queen was
+    // not able to do any normal damage to summon"): defence comes off every blow whole, so a
+    // level-77 elf's Yeti stood at 277 against the Ice Queen's 155-165 and took MU's level floor
+    // of 5, and its defence rate of 199 turned three blows in four. Now 82 and 97.
+    fit.defenseRate = float(kind.defenseRate) * climb(Ladder::DefenseRate);
+    fit.defense = int(float(kind.defense) * std::sqrt(climb(Ladder::Defense)));
     const float damage = climb(Ladder::Damage) * bites * kSummonDamageShare;
     fit.minimumDamage = int(float(kind.minimumDamage) * damage);
     fit.maximumDamage = int(float(kind.maximumDamage) * damage);
