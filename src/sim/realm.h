@@ -559,6 +559,13 @@ struct Body {
     int frenzySpeed(int64_t tick) const {
         return frenzyUntil > tick ? frenzyStacks * kFrenzyStackSpeed : 0;
     }
+    // What a skill's clip is quickened by beside the stat: Frenzy's, the Pendant of Haste's, and
+    // the Ale's (the user, 2026-10-18: "multi-shot also should react to alcohol and
+    // penetraition" -- MuMain plays an attack skill at the whole AttackSpeed, the Ale in it).
+    // The realm's `clipTicksOf` and the drawing's pace both read it, so the two cannot differ.
+    int castSpeed(int64_t tick) const {
+        return frenzySpeed(tick) + excel.haste + (aleUntil > tick ? kAleSpeed : 0);
+    }
     // Greater Damage on her: the bonus reckoned at the cast, and the tick it lapses.
     int32_t might = 0;
     int64_t mightUntil = 0;

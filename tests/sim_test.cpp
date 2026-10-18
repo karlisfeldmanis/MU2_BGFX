@@ -10034,6 +10034,28 @@ void testDungeonRunes(const content::Tables& tables) {
         std::printf("  energy ball: %d ticks, %d with a Frenzy\n", plain, quick);
         check(plain > 0 && quick < plain, "and a wizard's Energy Ball casts quicker under it");
     }
+    // And the Ale: an elf's Multi-Shot and Penetration play quicker drunk, as her plain draw
+    // does (the user, 2026-10-18: "multi-shot also should react to alcohol and penetraition").
+    if (const content::Arm* bow = &tables.arms[size_t(tables.armNamed("Bow01"))]) {
+        sim::Body elf;
+        elf.kin = sim::Kin::FairyElf;
+        const int agility = sim::startingPoints(sim::Kin::FairyElf).agility;
+        for (const int32_t number : {sim::skill::kSkillshot, sim::skill::kPenetration}) {
+            const sim::SkillRow* row = sim::skillNumbered(number);
+            if (!row) {
+                check(false, "the elf's bow skills are in the table");
+                continue;
+            }
+            elf.aleUntil = 0;
+            const int32_t sober =
+                sim::castTicks(tables, elf.kin, agility, bow, nullptr, *row, elf.castSpeed(100));
+            elf.aleUntil = 200;
+            const int32_t drunk =
+                sim::castTicks(tables, elf.kin, agility, bow, nullptr, *row, elf.castSpeed(100));
+            std::printf("  %s: %d ticks, %d with an Ale\n", row->name, sober, drunk);
+            check(sober > 0 && drunk < sober, "and an elf's bow skill plays quicker with an Ale");
+        }
+    }
 
     // Renewal: with no monster on the map and off a safe tile, 3% of his health every three
     // seconds; nothing without it.
