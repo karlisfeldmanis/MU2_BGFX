@@ -1469,10 +1469,13 @@ void testCastLock(const content::Tables& tables) {
     realm.ask(walk);
     realm.step();
     check(realm.casting() && !realm.hero().walking && realm.hero().column() == stoodColumn,
-          "and a click inside an aura is dropped: he stands until the clip ends");
+          "and a click inside an aura does not break it: he stands until the clip ends");
     for (int tick = 0; tick < 200 && realm.casting(); ++tick) realm.step();
-    check(!realm.casting() && !realm.hero().walking,
-          "and does not set off on the dropped click when it does");
+    // Kept, not dropped (the user, 2026-10-18: "when elf cast auras, or heals she cant use
+    // click to move"): the walk sets off when the clip is over.
+    for (int tick = 0; tick < 3 && !realm.hero().walking; ++tick) realm.step();
+    check(!realm.casting() && realm.hero().walking,
+          "and sets off on the kept click when it does");
     check(realm.hero().boonUntil > realm.tick(), "with the guard he raised on him");
 
     // ---- and the blow the click drops ---------------------------------------------------------

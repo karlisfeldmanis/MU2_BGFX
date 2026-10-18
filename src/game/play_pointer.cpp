@@ -317,8 +317,9 @@ void Play::leftClick() {
     // Not while Teleport holds him: the realm refuses these there (Realm::accept -- every
     // other cast is broken by the click), and a marker planted on ground he is never going to
     // walk to, plus the early tick under it, would be the drawing promising what the rules have
-    // already said no to. An Attack is let through, as it is there.
-    if (realm_.held() && request.kind != sim::Request::Kind::Attack) return;
+    // already said no to. An Attack is let through, as it is there, and so is any click inside
+    // a self-cast: the realm keeps it for the clip's end (Realm::waits).
+    if (realm_.held() && !realm_.waits() && request.kind != sim::Request::Kind::Attack) return;
     leftWalking_ = request.kind == sim::Request::Kind::WalkTo;
     leftColumn_ = request.column;
     leftRow_ = request.row;
@@ -348,7 +349,7 @@ void Play::leftHeld() {
     // The tile under the pointer, whatever stands on it: held, the button only walks. To fight
     // or pick up is a fresh press.
     if (pointedColumn_ == leftColumn_ && pointedRow_ == leftRow_) return;
-    if (realm_.tick() - leftAskedTick_ < kLeftAskEvery || realm_.held()) return;
+    if (realm_.tick() - leftAskedTick_ < kLeftAskEvery || (realm_.held() && !realm_.waits())) return;
     sim::Request request;
     request.kind = sim::Request::Kind::WalkTo;
     request.column = pointedColumn_;

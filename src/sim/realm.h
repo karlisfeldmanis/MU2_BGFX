@@ -540,6 +540,10 @@ struct Body {
     // Whether a click to move may end that hold: every skill's but Teleport's, whose fade and
     // settle are the move (the user, 2026-10-02: "any spell ahs to be cancelable").
     bool castBreaks = false;
+    // And whether a click inside a hold it cannot end is kept for the hold's end rather than
+    // dropped: a self-cast's -- an aura, Heal, a buff -- whose clip plays out and then he walks
+    // (the user, 2026-10-18: "when elf cast auras, or heals she cant use click to move").
+    bool castWaits = false;
     int64_t boonUntil = 0;
     float boonDamageTaken = 1.0f;
     int32_t boonSkill = 0;
@@ -1575,6 +1579,9 @@ public:
     // A hold a click to move cannot end -- Teleport's. Every other cast is broken by the click
     // (Realm::accept), so the pointer lets the walk through.
     bool held() const { return casting() && !mine().castBreaks; }
+    // A hold whose click is kept for its end (Body::castWaits): the pointer asks the walk as
+    // usual and the realm takes it up when the clip is over.
+    bool waits() const { return held() && mine().castWaits; }
     // What he was last told and is still doing: the drawing's flinch halts a walk and not a
     // chase, and reads which it is here.
     const Request& order() const { return me().order; }

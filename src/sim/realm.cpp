@@ -709,13 +709,18 @@ void Realm::accept() {
     // walks (play_show.cpp), so no cast is ever drawn over a moving body.
     //
     // Teleport's hold is its fade and settle, and a self-cast's -- a buff, Heal, a summon -- is
-    // its whole clip (the user, the same day: "dont allow to cancel any aura casts"): a click
-    // there is dropped where it stands as every one was before, so he does not set off the
-    // moment it ends.
+    // its whole clip (the user, the same day: "dont allow to cancel any aura casts"). Teleport's
+    // click is dropped where it stands, so he does not set off the moment it ends; a self-cast's
+    // is kept and walked the moment it ends (the user, 2026-10-18: "when elf cast auras, or
+    // heals she cant use click to move").
     if (casting() &&
         (me().pending.kind == Request::Kind::WalkTo || me().pending.kind == Request::Kind::Pick ||
          me().pending.kind == Request::Kind::Talk || me().pending.kind == Request::Kind::Perch)) {
-        if (!hero.castBreaks) {
+        if (!hero.castBreaks && hero.castWaits) {
+            // A self-cast's: the click waits in `pending` for the clip's end, a later one
+            // taking its place, and is accepted then.
+            return;
+        } else if (!hero.castBreaks) {
             me().pending = Request{};
         } else {
             hero.castUntil = tick_;

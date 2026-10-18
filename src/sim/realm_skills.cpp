@@ -193,6 +193,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         hero.blinkRow = where;
         hero.swingsAt = hero.castUntil = hero.blinkAt + kBlinkSettleTicks;
         hero.castBreaks = false;
+        hero.castWaits = false;
         hero.aim = fm::atan2(float(where) - hero.y, float(column) - hero.x);
         hero.walking = false;
         route(hero).clear();
@@ -222,6 +223,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         hero.mana -= price;
         me().charge = Charge{row.number, row.chargeStages, tick_, true};
         hero.castBreaks = false;
+        hero.castWaits = false;
         burstCharge(hero);
         return true;
     }
@@ -503,6 +505,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // inside it is dropped, as Teleport's is (the user, 2026-10-02: "dont allow to cancel any
     // aura casts, click to move not possibel").
     hero.castBreaks = !row.onSelf();
+    hero.castWaits = row.onSelf();
     if (row.channelled()) {
         hero.channelSkill = row.number;
         hero.channelFrom = tick_;
