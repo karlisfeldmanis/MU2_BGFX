@@ -1438,6 +1438,17 @@ private:
         bool unlit = false;
     };
     std::vector<Nocking> nocking_;
+    // A fan's blows held for its drawn arrows: struck on the realm's tick, shown on the frame
+    // one of her fan arrows reaches the body's middle (Arrows::toward), or after kArrowOwed.
+    // The realm's arrow leaves at key 3.2 from her feet and ours at key 4 from the string, and
+    // at 20 ticks a second a blow shown as struck popped up before the arrow got there. ours.
+    struct FanOwed {
+        uint32_t shooter = 0, target = 0;
+        float left = 0.0f;  // seconds of its kArrowOwed fuse
+    };
+    std::vector<FanOwed> fanOwed_;
+    // Whether `shooter` has a fan arrow still on her string or flying at `target`'s middle.
+    bool fanComing(uint32_t shooter, const float middle[3]) const;
     // Where a shot leaves a bow or crossbow that carries no nocked missile and no muzzle bone: a
     // bow's middle, a crossbow's front end toward `toward` less half a bolt; false with none in
     // hand or none posed.

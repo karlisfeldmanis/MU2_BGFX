@@ -2166,4 +2166,15 @@ int32_t Play::shownHealth(uint32_t id) const {
     return std::min(body->maxHealth, std::max(0, body->health) + showing_.owed(id));
 }
 
+bool Play::fanComing(uint32_t shooter, const float middle[3]) const {
+    // Still on her string: the realm let it go at key 3.2, ours goes with the string at 4.
+    for (const Nocking& shot : nocking_) {
+        if (shot.shooter == shooter && shot.whom == 0) return true;
+    }
+    // In the air on a line that passes the body: the realm's lane is half a tile either side of
+    // where it has the body, and the body is drawn a little behind that.
+    const float lane = 0.75f * (ground_ ? ground_->metresPerTile() : 1.0f);
+    return arrows_.toward(shooter, middle, lane) == Arrows::Toward::Ahead;
+}
+
 }  // namespace mu::game

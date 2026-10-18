@@ -199,6 +199,12 @@ public:
             if (cue.attacker == attacker) cue.fuse = 0.0f;
         }
     }
+    // The same for her blows on one body: a fan arrow reaching it (Play::fanOwed_).
+    void rush(uint32_t attacker, uint32_t target) {
+        for (Cue& cue : cues_) {
+            if (cue.attacker == attacker && cue.target == target) cue.fuse = 0.0f;
+        }
+    }
 
     // How far into the swing the hit sound and the number go, as a fraction of the clip.
     // MU2's own half, and the nearest thing the client commits to is its melee SKILL effects

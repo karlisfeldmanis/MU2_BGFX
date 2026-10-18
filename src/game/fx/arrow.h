@@ -132,6 +132,14 @@ public:
     uint32_t flying() const;
     // Whether `shooter`'s arrow at `whom` is still in the air: her blow waits for it to land.
     bool flyingAt(uint32_t shooter, uint32_t whom) const;
+    // Where `owner`'s fan arrows -- loosed at no body, Multi-Shot's and Penetration's -- are
+    // against `point`, a body's middle, on the ground: Ahead while one whose line passes within
+    // `lane` metres of it has still to get there, Reached once one has, None when none flies its
+    // way. A fan's blow is shown when its arrow arrives (Play::fanOwed_), where it was shown on
+    // the tick the realm's arrow passed (the user, 2026-10-18: "make that elf multi-shot look
+    // more like 60 fps"). ours.
+    enum class Toward : uint8_t { None, Ahead, Reached };
+    Toward toward(uint32_t owner, const float point[3], float lane) const;
     // Whose arrows are in the air, an id each, appended to `out` (Play::holdNocks).
     void owners(std::vector<uint32_t>& out) const;
 
@@ -367,6 +375,17 @@ private:
     // reads far brighter than red: at the tint alone the green embers were glowing balls.
     static constexpr float kGreyFireShare = 0.45f;
     static constexpr float kToneLight = 0.6f;   // a toned bolt's light, of its streak
+
+    // ---- Ours: a fan arrow's motion streak -------------------------------------------------------
+    // At 17.5 tiles a second an arrow is a third of a metre on each frame at 60, and the eye reads
+    // it as a row of jumps (the user, 2026-10-18: "not so clumsi/lagish"). A faint added smear off
+    // its tail, three frames of flight long, flare01 from its middle out to its rim, so it is
+    // brightest against the arrow and gone at its back end; two crossed quads, seen from any side.
+    // Fan arrows only, Penetration's left to its bands, and the laser that glows already bare.
+    static constexpr float kStreakMetres = 0.8f;
+    static constexpr float kStreakHalfWidth = 0.03f;
+    static constexpr float kStreakWood[3] = {0.80f, 0.50f, 0.20f};  // kEmberLight
+    static constexpr float kStreakLight = 0.35f;
 
     static constexpr int kShots = 16;
     static constexpr int kGlints = 384;

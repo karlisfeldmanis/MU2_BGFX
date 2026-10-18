@@ -2039,6 +2039,19 @@ void Play::update(double seconds) {
                                 }
                             }
                         }
+                        // A fan's, flown at no body: held for the arrow on its way to this one.
+                        bool fan = false;
+                        if (arrow && !flying) {
+                            if (const Drawn* at = drawnOf(happening.whom); at && at->placed) {
+                                const FigureBody* look = at->figure.body();
+                                const float middle[3] = {
+                                    at->crown[0],
+                                    at->crown[1] - (look ? look->height * look->scale : 1.0f) * 0.5f,
+                                    at->crown[2]};
+                                flying = fan = fanComing(happening.who, middle);
+                            }
+                        }
+                        if (fan) fanOwed_.push_back({happening.who, happening.whom, kArrowOwed});
                         cue.poison = happening.poisoned;
                         cue.burn = happening.burned;
                         cue.bleed = happening.bled;
@@ -2396,6 +2409,19 @@ void Play::update(double seconds) {
                         thunderCasts_.end());
     arrows_.update(float(seconds), middle);
     for (uint32_t shooter : arrows_.landed()) showing_.rush(shooter);
+    // A fan's blow, shown on the frame its arrow reaches the body (fanOwed_); one whose fuse has
+    // run out has been shown already.
+    for (FanOwed& owed : fanOwed_) {
+        owed.left -= float(seconds);
+        if (owed.left <= 0.0f) continue;
+        float at[3];
+        if (middle(owed.target, at) && fanComing(owed.shooter, at)) continue;
+        showing_.rush(owed.shooter, owed.target);
+        owed.left = 0.0f;
+    }
+    fanOwed_.erase(std::remove_if(fanOwed_.begin(), fanOwed_.end(),
+                                  [](const FanOwed& f) { return f.left <= 0.0f; }),
+                   fanOwed_.end());
     // The arrow on each string out while one of its own is in the air (Figure::holdNock).
     for (uint32_t id : nockHeld_) {
         if (Drawn* one = drawnOf(id)) one->figure.holdNock(false);

@@ -633,6 +633,46 @@ void Arrows::gather(gfx::Effects& effects) const {
             submitEffectAlong(effects, part.triangles, part.sheet, part.blend, shot.at,
                               partAcross, lift, partAhead, shot.scale, colour, fade);
         }
+        // A fan arrow's streak off its tail, never further back than the string (see the header).
+        if (shot.unlit && shot.whom == 0 && !shot.pierce && shot.model != Laser) {
+            const float back = kHalfLength * shot.scale / kScale;
+            const float length = std::min(kStreakMetres, shot.travelled - back);
+            if (length > 0.05f) {
+                const float* tone = shot.tinted ? shot.tint
+                                    : shot.model == Wood ? kStreakWood : kGlintLight;
+                float head[3], tail[3];
+                for (int k = 0; k < 3; ++k) {
+                    head[k] = shot.at[k] - shot.along[k] * back;
+                    tail[k] = head[k] - shot.along[k] * length;
+                }
+                for (const float* width : {static_cast<const float*>(across),
+                                           static_cast<const float*>(lift)}) {
+                    gfx::Sprite sprite;
+                    sprite.placed = true;
+                    for (int k = 0; k < 3; ++k) {
+                        sprite.corner[0][k] = head[k] - width[k] * kStreakHalfWidth;
+                        sprite.corner[1][k] = head[k] + width[k] * kStreakHalfWidth;
+                        sprite.corner[2][k] = tail[k] + width[k] * kStreakHalfWidth;
+                        sprite.corner[3][k] = tail[k] - width[k] * kStreakHalfWidth;
+                        sprite.position[k] = 0.5f * (head[k] + tail[k]);
+                        sprite.colour[k] = tone[k] * kStreakLight * swap;
+                    }
+                    // flare01's middle at the head, its rim at the back end.
+                    sprite.cornerUv[0][0] = 0.5f;
+                    sprite.cornerUv[0][1] = 0.0f;
+                    sprite.cornerUv[1][0] = 0.5f;
+                    sprite.cornerUv[1][1] = 1.0f;
+                    sprite.cornerUv[2][0] = 1.0f;
+                    sprite.cornerUv[2][1] = 1.0f;
+                    sprite.cornerUv[3][0] = 1.0f;
+                    sprite.cornerUv[3][1] = 0.0f;
+                    sprite.colour[3] = 1.0f;
+                    sprite.sheet = glintSheet_;
+                    sprite.blend = gfx::Blend::Additive;
+                    effects.add(sprite);
+                }
+            }
+        }
     }
     for (const Ember& e : embers_) {
         if (!e.alive) continue;
@@ -793,6 +833,22 @@ bool Arrows::flyingAt(uint32_t shooter, uint32_t whom) const {
         }
     }
     return false;
+}
+
+Arrows::Toward Arrows::toward(uint32_t owner, const float point[3], float lane) const {
+    Toward found = Toward::None;
+    for (const Shot& one : shots_) {
+        if (!one.alive || one.fading > 0.0f || one.whom != 0 || one.owner != owner) continue;
+        const float flat = std::sqrt(one.along[0] * one.along[0] + one.along[2] * one.along[2]);
+        if (flat < 1e-4f) continue;
+        const float dx = one.along[0] / flat, dz = one.along[2] / flat;
+        const float rx = point[0] - one.at[0], rz = point[2] - one.at[2];
+        const float ahead = rx * dx + rz * dz;
+        if (std::fabs(rx * dz - rz * dx) > lane) continue;
+        if (ahead <= kIntoBody) return Toward::Reached;
+        found = Toward::Ahead;
+    }
+    return found;
 }
 
 void Arrows::owners(std::vector<uint32_t>& out) const {
