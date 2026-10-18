@@ -555,6 +555,11 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         if (resists > 0) {
             inlineLine(kElement[int(element)], "+" + std::to_string(resists), Tone::White);
             explain(resistsSay(element, resists));
+        } else {
+            // At +0 what a refinement brings, where a quest's +0 pendant said nothing at all (the
+            // user, 2026-10-18: "there is 0 information on pendant of fire").
+            inlineLine(kElement[int(element)], "+1 a refinement", Tone::Gray);
+            explain("at +1 " + resistsSay(element, 1));
         }
         // And a ring's sting, at every plus (sim::ringStingChance), said as what it does.
         if (sim::ring(row)) {
@@ -714,6 +719,14 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     if (!sim::ammunition(row) && what.durability > 1 && !worn && !weapon &&
         row.group != sim::kGroupPets && !sim::anyWing(row)) {
         does.rows.push_back(stat("Quantity", std::to_string(what.durability), Tone::Blue));
+    }
+    // A quiver with a plus raises her archery band: MU's `Increase 3%% of Damage` and
+    // `Additional Dmg +1` (GT 577, 88; ZI:4790-4804), in its blue.
+    if (sim::ammunition(row) && what.refinement > 0) {
+        does.rows.push_back(stat("Increase Damage",
+                                 "+" + std::to_string(sim::quiverRisePercent(what.refinement)) + "%",
+                                 Tone::Blue));
+        does.rows.push_back(stat("Additional Damage", "+1", Tone::Blue));
     }
     if (!does.rows.empty()) sheet.sections.push_back(does);
 

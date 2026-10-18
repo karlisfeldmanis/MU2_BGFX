@@ -273,9 +273,8 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
         // A quiver with a plus: 3%, 5% or 7% of both ends and one more, the 0.97d rule WebZen
         // dates 2003-02-28 (1.00.93 ObjCalCharacter.cpp:1457-1497; the +3 its 2008 flag).
         // Truncated each, as its (WORD) cast takes them.
-        static const float kQuiverRise[4] = {0.0f, 0.03f, 0.05f, 0.07f};
         if (arms.quiverPlus > 0) {
-            const float rise = kQuiverRise[std::clamp(arms.quiverPlus, 0, 3)];
+            const float rise = float(quiverRisePercent(arms.quiverPlus)) / 100.0f;
             out->minimumDamage += int(float(out->minimumDamage) * rise + 1.0f);
             out->maximumDamage += int(float(out->maximumDamage) * rise + 1.0f);
         }
@@ -364,6 +363,11 @@ uint64_t neededExperience(int level) {
         needed += 1000ull * (at - 247) * (at - 256) * (at - 256);
     }
     return needed;
+}
+
+int quiverRisePercent(int plus) {
+    static const int kRise[4] = {0, 3, 5, 7};
+    return kRise[std::clamp(plus, 0, 3)];
 }
 
 int partyPercent(int inView, bool set) {

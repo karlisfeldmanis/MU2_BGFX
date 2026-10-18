@@ -448,6 +448,10 @@ constexpr double kHealThreat = 0.5;
 // How far off an elf's Heal, Greater Defense and Greater Damage reach a party member (docs/game/party.md;
 // MU casts them on a player): ours, about a screen's middle.
 constexpr float kPartyAidReach = 8.0f;
+// A quiver's rise on the archery band at its plus, in percent: 3, 5 or 7 for +1 to +3, 0 at +0,
+// each end also taking one more (sim::reckon; 1.00.93 ObjCalCharacter.cpp:1457-1497).
+int quiverRisePercent(int plus);
+
 // What a kill pays a party with `inView` members in view whose levels sum to `totalLevel`,
 // before it is shared by level and before the rate (Realm::payKill): one kill reckoned at the
 // mean level, times WebZen's party percent -- the MODIFY_GETTING_EXP_RATE_20060214 branch of
