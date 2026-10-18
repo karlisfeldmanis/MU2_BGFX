@@ -151,6 +151,37 @@ std::string lower(std::string s) {
 
 }  // namespace
 
+struct Chat::Carried {
+    std::vector<Line> log;
+    std::vector<std::string> whispers;
+    std::map<std::string, int> unread;
+    std::string tab, lastFrom, draft;
+    bool chipSet = false;
+    net::Channel chipChannel = net::Channel::Map;
+    float tall = 0.0f;
+};
+
+std::unique_ptr<Chat::Carried> Chat::carried_;
+
+void Chat::carry() {
+    auto kept = std::make_unique<Carried>();
+    for (Line& line : log_) {
+        // A trade's ask was to a body of this world: its card does not come along.
+        if (line.trader != 0 && line.answer == 0) line.age = std::max(line.age, kTradeLife);
+        line.resolved = nullptr;  // read again against the next world's tables
+    }
+    kept->log = std::move(log_);
+    kept->whispers = std::move(whispers_);
+    kept->unread = std::move(unread_);
+    kept->tab = tab_;
+    kept->lastFrom = lastFrom_;
+    kept->draft = draft_;
+    kept->chipSet = chipSet_;
+    kept->chipChannel = chipChannel_;
+    kept->tall = tall_;
+    carried_ = std::move(kept);
+}
+
 void Chat::open(const gfx::Interface& interface) {
     interface.adopt(back_);
     interface.adopt(inviteDrawn_);
@@ -201,6 +232,18 @@ void Chat::load() {
     loaded_ = true;
     generalShows_ = kGeneralFirst;
     globalShows_ = kGlobalFirst;
+    if (carried_) {
+        log_ = std::move(carried_->log);
+        whispers_ = std::move(carried_->whispers);
+        unread_ = std::move(carried_->unread);
+        tab_ = carried_->tab;
+        lastFrom_ = carried_->lastFrom;
+        draft_ = carried_->draft;
+        chipSet_ = carried_->chipSet;
+        chipChannel_ = carried_->chipChannel;
+        tall_ = carried_->tall;
+        carried_.reset();
+    }
     const std::string user = core::folders().user;
     if (user.empty()) return;
     std::ifstream in(user + "/chat.txt");

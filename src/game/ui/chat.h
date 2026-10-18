@@ -46,6 +46,7 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -112,6 +113,12 @@ public:
     // seconds, or empty: the guild windows' foot says it under what was pressed.
     std::string guildSaid(float within) const;
 
+    // On to another world (a gate, a warp, the travel window): the log, the whisper tabs, the
+    // chosen tab and its height go with him, since the world's screen -- this chat with it -- is
+    // made anew for each map (application.cpp). The next world's chat takes them on its first
+    // frame. The character screen leaves them behind.
+    void carry();
+
 private:
     struct Line {
         net::Channel channel = net::Channel::Map;
@@ -141,6 +148,8 @@ private:
         std::string text;  // this row's part of the line's shown text
         size_t start = 0;  // ... from this byte of it
     };
+    struct Carried;
+    static std::unique_ptr<Carried> carried_;  // carry()'s, until the next world's load()
     struct Tab {
         std::string key;    // "general", "global", or "w:" and the name
         std::string word;

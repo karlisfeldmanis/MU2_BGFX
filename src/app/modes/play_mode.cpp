@@ -2216,6 +2216,7 @@ void PlayMode::shutdown(Context& ctx) {
     // renderer before the models they photographed are let go.
     ctx.renderer.closeStages();
     itemModels_.shutdown();
+    if (!travelTo_.empty()) desk_.carryChat();
     desk_.shutdown();
     world_.shutdown();
 }

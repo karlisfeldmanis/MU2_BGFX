@@ -275,6 +275,8 @@ public:
     Menu::Settings& settings() { return menu_.settings(); }
     // A line of the game's own in the chat (Chat::notice): the Graphics eased, say.
     void notice(const std::string& text) { chat_.notice(text); }
+    // On to another world: the chat's log comes along (Chat::carry).
+    void carryChat() { chat_.carry(); }
     bool settingsChanged() {
         const bool changed = settingsChanged_;
         settingsChanged_ = false;
