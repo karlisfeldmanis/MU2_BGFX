@@ -289,23 +289,37 @@ void Endurance::rebuild(const sim::Realm& realm) {
         const std::string figure = shotsFigure(now_.shots);
         const float size = std::round(box.w * 0.22f);
         const float foot = box.bottom();
-        const float iconRoom = box.h - size * 0.95f;
-        // A soft shadow behind the two (the user, 2026-10-10: "add some shadow behind that
-        // feature"): discs stepping in and darkening, as near a blur as the canvas has.
-        for (int step = 0; step < 6; ++step) {
-            disc(canvas_, box.midX(), box.midY(), box.w * (0.56f - 0.06f * float(step)),
-                 gfx::rgba(0.0f, 0.0f, 0.0f, 0.17f));
+        const float iconRoom = box.h - size * 1.45f;
+        // On the tooltip's own glass (the user, 2026-10-18: "design better container for arrows
+        // for elf, that dark shadow is not looking best"): where six stacked black discs made a
+        // smudge, a rounded card in the "100% full" card's ash and iron, and along its foot a
+        // hairline of what is left of one stack, in the count's own colour.
+        const float u = tip::unit();
+        tip::glass(canvas_, box, u, tip::ink::kRadius * 1.5f);
+        {
+            const float inset = std::round(box.w * 0.16f);
+            const float thick = std::max(1.0f, std::round(2.0f * u));
+            const Box track = {box.x + inset, box.bottom() - std::round(box.h * 0.07f) - thick,
+                               box.w - inset * 2.0f, thick};
+            const float share = now_.stack > 0
+                                    ? std::clamp(float(now_.shots) / float(now_.stack), 0.0f, 1.0f)
+                                    : 0.0f;
+            canvas_.rect(track, gfx::rgba(1.0f, 1.0f, 1.0f, 0.10f));
+            if (share > 0.0f) {
+                canvas_.rect({track.x, track.y, std::round(track.w * share), track.h},
+                             fine ? gfx::rgba(0.97f, 0.94f, 0.86f, 0.70f) : colourOf(band));
+            }
         }
         const gfx::Art& art = arts_->get(now_.archer == 1 ? "hud_ammo_arrows" : "hud_ammo_bolts");
         if (art.valid() && art.width > 0.0f && art.height > 0.0f) {
             // Under the room it has (the user, 2026-10-10: "icon to large").
-            const float k = 0.58f * std::min(box.w / art.width, iconRoom / art.height);
+            const float k = 0.74f * std::min(box.w / art.width, iconRoom / art.height);
             const float w = art.width * k, h = art.height * k;
             canvas_.image(art, {box.midX() - w * 0.5f, box.y + (iconRoom - h) * 0.5f, w, h},
                           empty ? gfx::rgba(0.55f, 0.50f, 0.50f, 0.85f) : 0xFFFFFFFFu);
         }
         controls::label(canvas_, box.midX() - controls::labelWidth(size, figure) * 0.5f,
-                        foot - size * 0.12f, size, fine ? kCountInk : colourOf(band), figure);
+                        foot - size * 0.62f, size, fine ? kCountInk : colourOf(band), figure);
     }
 
     if (now_.overAmmo) {
