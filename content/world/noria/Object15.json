@@ -7,15 +7,18 @@
   "placements": 193,
   "profile": "world",
   "sheets": {
-    "flower": "nr_flower.png"
+    "flower": "nr_flower.png",
+    "flower_stem": "flower_stem.png"
   },
   "sheet_from": "Data/Object4/*.OZJ and .OZT, from MuMain, decoded under an nr_ prefix. The prefix is load-bearing for the reason the ground's is: assets/textures is one flat pool for every world, and yellow_jewel.png was already taken by an item.",
   "sheet_materials": {
-    "flower": "foliage"
+    "flower": "foliage",
+    "flower_stem": "foliage"
   },
   "material_note": "flower: a sheet of flower heads - marigold, daisy, pink - cut out on cards.",
   "cutout": [
-    "flower"
+    "flower",
+    "flower_stem"
   ],
   "cutout_from": "Each carries a real alpha channel, as decode_texture reports it. Declared rather than detected - three separate attempts to read a cut-out off the art have been wrong, and the client decides it in code.",
   "islands": [
@@ -35,10 +38,10 @@
         0.687
       ],
       "bake_uv": [
-        0.005,
-        0.005,
-        0.265,
-        0.26
+        0.809,
+        0.009,
+        0.872,
+        0.071
       ]
     },
     {
@@ -57,10 +60,10 @@
         0.326
       ],
       "bake_uv": [
-        0.545,
-        0.005,
-        0.765,
-        0.248
+        0.809,
+        0.484,
+        0.863,
+        0.543
       ]
     },
     {
@@ -79,10 +82,10 @@
         0.687
       ],
       "bake_uv": [
-        0.005,
-        0.27,
-        0.265,
-        0.525
+        0.809,
+        0.088,
+        0.872,
+        0.151
       ]
     },
     {
@@ -101,10 +104,10 @@
         0.326
       ],
       "bake_uv": [
-        0.545,
-        0.257,
-        0.765,
-        0.5
+        0.809,
+        0.56,
+        0.863,
+        0.62
       ]
     },
     {
@@ -123,10 +126,10 @@
         0.687
       ],
       "bake_uv": [
-        0.275,
-        0.005,
-        0.535,
-        0.26
+        0.809,
+        0.168,
+        0.872,
+        0.231
       ]
     },
     {
@@ -145,10 +148,10 @@
         0.326
       ],
       "bake_uv": [
-        0.275,
-        0.535,
-        0.495,
-        0.778
+        0.809,
+        0.407,
+        0.863,
+        0.466
       ]
     },
     {
@@ -167,10 +170,10 @@
         0.687
       ],
       "bake_uv": [
-        0.275,
-        0.27,
-        0.535,
-        0.525
+        0.809,
+        0.248,
+        0.872,
+        0.31
       ]
     },
     {
@@ -189,10 +192,10 @@
         0.326
       ],
       "bake_uv": [
-        0.545,
-        0.51,
-        0.765,
-        0.752
+        0.809,
+        0.637,
+        0.863,
+        0.696
       ]
     },
     {
@@ -211,10 +214,10 @@
         0.687
       ],
       "bake_uv": [
-        0.005,
-        0.535,
-        0.265,
-        0.79
+        0.809,
+        0.327,
+        0.872,
+        0.39
       ]
     },
     {
@@ -233,11 +236,459 @@
         0.326
       ],
       "bake_uv": [
-        0.775,
-        0.005,
-        0.995,
-        0.248
+        0.809,
+        0.713,
+        0.863,
+        0.773
+      ]
+    },
+    {
+      "island": 10,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 527.0,
+      "along": [
+        -21.5,
+        -14.2
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.191,
+        0.191
+      ]
+    },
+    {
+      "island": 11,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 527.1,
+      "along": [
+        -22.6,
+        -13.1
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.009,
+        0.209,
+        0.191,
+        0.391
+      ]
+    },
+    {
+      "island": 12,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 517.4,
+      "along": [
+        5.4,
+        14.0
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.209,
+        0.009,
+        0.391,
+        0.191
+      ]
+    },
+    {
+      "island": 13,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 517.2,
+      "along": [
+        8.8,
+        10.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.209,
+        0.209,
+        0.391,
+        0.391
+      ]
+    },
+    {
+      "island": 14,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 453.3,
+      "along": [
+        -43.4,
+        -39.1
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.009,
+        0.409,
+        0.191,
+        0.591
+      ]
+    },
+    {
+      "island": 15,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 453.4,
+      "along": [
+        -44.8,
+        -37.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.209,
+        0.409,
+        0.391,
+        0.591
+      ]
+    },
+    {
+      "island": 16,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 590.6,
+      "along": [
+        -17.4,
+        -12.4
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.409,
+        0.009,
+        0.591,
+        0.191
+      ]
+    },
+    {
+      "island": 17,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 590.6,
+      "along": [
+        -18.2,
+        -11.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.409,
+        0.209,
+        0.591,
+        0.391
+      ]
+    },
+    {
+      "island": 18,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 526.8,
+      "along": [
+        -23.8,
+        -16.0
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.409,
+        0.409,
+        0.591,
+        0.591
+      ]
+    },
+    {
+      "island": 19,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 527.1,
+      "along": [
+        -24.1,
+        -15.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.009,
+        0.609,
+        0.191,
+        0.791
+      ]
+    },
+    {
+      "island": 20,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 453.5,
+      "along": [
+        3.9,
+        12.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.209,
+        0.609,
+        0.391,
+        0.791
+      ]
+    },
+    {
+      "island": 21,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 453.4,
+      "along": [
+        7.5,
+        9.0
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.409,
+        0.609,
+        0.591,
+        0.791
+      ]
+    },
+    {
+      "island": 22,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 453.3,
+      "along": [
+        -11.0,
+        -4.2
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.609,
+        0.009,
+        0.791,
+        0.191
+      ]
+    },
+    {
+      "island": 23,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 453.3,
+      "along": [
+        -10.0,
+        -5.2
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.609,
+        0.209,
+        0.791,
+        0.391
+      ]
+    },
+    {
+      "island": 24,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 526.8,
+      "along": [
+        14.8,
+        22.8
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.609,
+        0.409,
+        0.791,
+        0.591
+      ]
+    },
+    {
+      "island": 25,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 526.8,
+      "along": [
+        18.3,
+        19.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.609,
+        0.609,
+        0.791,
+        0.791
+      ]
+    },
+    {
+      "island": 26,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 590.6,
+      "along": [
+        -0.7,
+        0.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.009,
+        0.809,
+        0.191,
+        0.991
+      ]
+    },
+    {
+      "island": 27,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 590.6,
+      "along": [
+        -4.2,
+        4.1
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.209,
+        0.809,
+        0.391,
+        0.991
+      ]
+    },
+    {
+      "island": 28,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 453.6,
+      "along": [
+        24.0,
+        27.8
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.409,
+        0.809,
+        0.591,
+        0.991
+      ]
+    },
+    {
+      "island": 29,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 453.5,
+      "along": [
+        21.3,
+        30.5
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.609,
+        0.809,
+        0.791,
+        0.991
       ]
     }
-  ]
+  ],
+  "stems": {
+    "head": "flower",
+    "sheet": "flower_stem",
+    "width": 8,
+    "foot": -4,
+    "lean": 3,
+    "note": "Ours, not MU: a crossed pair of stem cards under each head, which MU drew floating (the user, 2026-10-18: they float in air without any support). See clean_lowpoly.grow_stems; the sheet is pipeline/stem_sheet.py."
+  }
 }

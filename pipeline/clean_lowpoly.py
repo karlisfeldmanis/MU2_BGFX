@@ -63,6 +63,98 @@ def clear() -> None:
     bpy.ops.wm.read_factory_settings(use_empty=True)
 
 
+def grow_stems(path: Path, rig: Path, asked: dict) -> tuple[Path, list[int]]:
+    """MU's OBJ with a stem under each flower head, as a group of its own; and its bones.
+
+    Ours, not MU's (the user, 2026-10-18: Noria's flowers "float in air without any
+    support"). Noria's small flowers, Object12 to Object17, are heads only: each a shallow
+    five-vertex cup a third to three quarters of a metre up, with nothing under it. MU's
+    tall painted grass hid that; our sward is thinner and does not.
+
+    So each head (a connected run of the `head` group's faces) is given a crossed pair of
+    cards from the bottom of its cup to `foot` below the ground, `width` across, the foot
+    leaning up to `lean` to one side so a field of them is not a field of plumb lines. The
+    cards wear `sheet`, painted by pipeline/stem_sheet.py. Each card rides its head's bone:
+    MU's flowers sway by sliding the whole cluster, so the stem slides with the head, its
+    foot hidden in the grass. The augmented file goes to a temporary folder and is imported
+    in the original's place, so content/ keeps MU's model as MU made it.
+    """
+    import math
+    import random
+    import tempfile
+
+    head, sheet = asked.get("head", "flower"), asked.get("sheet", "flower_stem")
+    width = float(asked.get("width", 6.0))
+    foot = float(asked.get("foot", -4.0))
+    lean = float(asked.get("lean", 3.0))
+
+    lines = path.read_text().splitlines()
+    positions, group, in_head, faces = [], None, [], []
+    for line in lines:
+        if line.startswith("g "):
+            group = line[2:].strip()
+        elif line.startswith("v "):
+            positions.append(tuple(float(x) for x in line.split()[1:4]))
+            if group == head:
+                in_head.append(len(positions) - 1)
+        elif line.startswith("f ") and group == head:
+            faces.append([int(c.split("/")[0]) - 1 for c in line.split()[1:]])
+    if not faces:
+        raise SystemExit(f"error: stems asks for heads in group '{head}', which {path.name} lacks.")
+
+    # The heads, as the connected pieces of the group's faces.
+    parent = {v: v for f in faces for v in f}
+
+    def find(v):
+        while parent[v] != v:
+            parent[v] = parent[parent[v]]
+            v = parent[v]
+        return v
+
+    for f in faces:
+        for v in f[1:]:
+            parent[find(v)] = find(f[0])
+    heads: dict[int, list[int]] = {}
+    for v in parent:
+        heads.setdefault(find(v), []).append(v)
+
+    bones_of = groups_from(rig).get(head)
+    first = in_head[0] if in_head else 0
+    rng = random.Random(path.stem)
+
+    out_v, out_vt, out_f, bones = [], [], [], []
+    base = len(positions)
+    for members in sorted(heads.values(), key=min):
+        # The top is the cup's lowest point, a little inside it so the cut-out's end hides.
+        low = min(members, key=lambda v: positions[v][1])
+        tx, ty, tz = positions[low]
+        ty += 0.5
+        a = rng.uniform(0, math.pi)
+        la, ld = rng.uniform(0, 2 * math.pi), rng.uniform(0, lean)
+        fx, fz = tx + math.cos(la) * ld, tz + math.sin(la) * ld
+        bone = bones_of[low - first] if bones_of else 0
+        for turn in (0.0, math.pi / 2):
+            dx, dz = math.cos(a + turn) * width / 2, math.sin(a + turn) * width / 2
+            n = base + len(out_v)
+            out_v += [(fx - dx, foot, fz - dz), (fx + dx, foot, fz + dz),
+                      (tx + dx, ty, tz + dz), (tx - dx, ty, tz - dz)]
+            out_vt += [(0, 0), (1, 0), (1, 1), (0, 1)]
+            out_f += [(n, n + 1, n + 2), (n, n + 2, n + 3)]
+            bones += [bone] * 4
+
+    text = lines + [f"g {sheet}"]
+    text += [f"v {x:.4f} {y:.4f} {z:.4f}" for x, y, z in out_v]
+    vt_base = sum(1 for line in lines if line.startswith("vt "))
+    text += [f"vt {u} {v}" for u, v in out_vt]
+    text += ["f " + " ".join(f"{i + 1}/{i - base + vt_base + 1}" for i in f) for f in out_f]
+
+    folder = Path(tempfile.mkdtemp(prefix="stems_"))
+    grown = folder / path.name
+    grown.write_text("\n".join(text) + "\n")
+    print(f"  stems       {len(heads)} under '{head}', on '{sheet}' (ours)")
+    return grown, bones
+
+
 def load(path: Path, rig: Path, asset: Path | None = None):
     """Imports the OBJ as one object, with each of MU's meshes kept as a material slot.
 
@@ -81,8 +173,17 @@ def load(path: Path, rig: Path, asset: Path | None = None):
     single mesh — which is what everything downstream wants — that still knows which face
     belongs to which of MU's sheets.
     """
+    # Stems under heads that have none, where the asset asks for them. See grow_stems.
+    stems = None
+    if asset is not None and asset.exists():
+        stems = json.loads(asset.read_text()).get("stems")
+    stem_bones = None
+    imported = path
+    if stems:
+        imported, stem_bones = grow_stems(path, rig, stems)
+
     bpy.ops.wm.obj_import(
-        filepath=str(path), forward_axis="NEGATIVE_Z", up_axis="Y", use_split_groups=True)
+        filepath=str(imported), forward_axis="NEGATIVE_Z", up_axis="Y", use_split_groups=True)
 
     pieces = [o for o in bpy.context.scene.objects if o.type == "MESH"]
     if not pieces:
@@ -102,6 +203,8 @@ def load(path: Path, rig: Path, asset: Path | None = None):
     # survive a join, so once each piece carries its own the order stops mattering.
     binding = groups_from(rig)
     names = bone_names(rig)
+    if stem_bones is not None and binding:
+        binding[stems.get("sheet", "flower_stem")] = stem_bones
 
     # What the asset says about MU's binding, if it says anything. See rebind.
     asked = {}
