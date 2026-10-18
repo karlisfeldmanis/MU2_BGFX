@@ -19,7 +19,7 @@ using gfx::Box;
 constexpr float kIconShare = 0.56f;  // of the disc's width: inside the rim, with air round it
 constexpr float kRimShare = 0.16f;   // of the radius, the durability ring
 constexpr int kRound = 40;
-constexpr float kAmmoGrowth = 1.9f;
+constexpr float kAmmoGrowth = 1.65f;
 // Her count when she has plenty: the window's warm white, full, so it reads on bright ground.
 constexpr uint32_t kCountInk = gfx::rgba(0.97f, 0.94f, 0.86f, 1.0f);  // the ammunition cell, of a worn piece's           // segments a full circle
 
