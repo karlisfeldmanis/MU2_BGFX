@@ -3694,6 +3694,42 @@ void testSummons(const content::Tables& tables) {
                 golem->stats.minimumDamage, golem->stats.maximumDamage, blows, kills);
 }
 
+// The user's elf, 2026-10-18: E pressed again while the cast waited on her swing, and the second
+// press dismissed the Golem the first had just raised, leaving the key cooling a minute with
+// nothing standing. A summon stands kSummonKeepTicks before its key can dismiss it.
+void testSummonKeptFromAMash(const content::Tables& tables) {
+    std::printf("a summon is kept from a mash\n");
+    sim::Realm realm;
+    check(realm.raise(&tables, 5, 212, 198, sim::Kin::FairyElf, 60), "an elf raises off safe ground");
+    check(realm.equip(tables.armNamed("Bow01"), -1, true), "with the Short Bow");
+    realm.learn(sim::skill::kSummonGolem);
+    sim::HeroRecord record = realm.record();
+    record.points.energy = 500;
+    record.mana = 1 << 20;
+    realm.restore(record);
+    uint32_t golemId = 0;
+    const auto standing = [&]() {
+        for (const sim::Body& one : realm.bodies()) {
+            if (one.summoner != 0 && one.alive()) return one.id;
+        }
+        return 0u;
+    };
+    realm.invoke(sim::skill::kSummonGolem, realm.hero().id);
+    for (int tick = 0; tick < 60 && golemId == 0; ++tick) {
+        realm.step();
+        golemId = standing();
+    }
+    check(golemId != 0, "she raises a Golem");
+    realm.invoke(sim::skill::kSummonGolem, realm.hero().id);
+    // A press is held 30 ticks for her swing (kWishTicks), so the whole of it.
+    for (int tick = 0; tick < 32; ++tick) realm.step();
+    check(standing() == golemId, "a press straight after does not dismiss it");
+    for (int tick = 0; tick < 10; ++tick) realm.step();
+    realm.invoke(sim::skill::kSummonGolem, realm.hero().id);
+    for (int tick = 0; tick < 60 && standing() != 0; ++tick) realm.step();
+    check(standing() == 0, "and one two seconds on still does");
+}
+
 // The user, 2026-10-02: "when char is using mount wich is fast summon cant keep up", and "summon
 // teleport him self closer to char if he wall behind to much". An elf on Uniria rides forty
 // tiles east off the town with her Golem raised: it walks back at her pace (kSummonCatchUp) and
@@ -13444,6 +13480,7 @@ int main() {
     testElfSkills(tables);
     testPenetration(tables);
     testSummons(tables);
+    testSummonKeptFromAMash(tables);
     testSummonAggro(tables);
     testSummonKeepsUp(tables);
     testSummonShelters(tables);

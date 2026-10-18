@@ -139,8 +139,13 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // The cooldown, which is ours and has no counterpart in 0.75. A wait rather than a refusal,
     // exactly as the swing timer is: the key does nothing and says nothing. A summon key still
     // dismisses the one standing while it cools: that costs nothing and raises nothing.
+    // **But not in its first two seconds** (the user's elf, 2026-10-18: E pressed four times
+    // while the cast waited on her swing; the fourth press dismissed the Golem the third had
+    // just raised, and the key cooled a minute with nothing standing). Read off the key's own
+    // clock, so a summon raised without a cast (Realm::shelterSummon, a save's) is not held.
     const bool dismisses = row.summons > 0 && me().summonSlot >= 0 &&
-                           bodies_[size_t(me().summonSlot)].alive();
+                           bodies_[size_t(me().summonSlot)].alive() &&
+                           hero.cools[size_t(index)] - tick_ <= coolsFor(row.number) - kSummonKeepTicks;
     if (tick_ < hero.cools[size_t(index)] && !dismisses) return false;
 
     // **The hand, and now it is the RIGHT hand rather than any hand.** The user's rule of

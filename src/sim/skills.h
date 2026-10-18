@@ -634,6 +634,9 @@ float wardShare(const HeroPoints& points);
 // at 300 energy the Golem has 5 500 and 181-198 (kSummonDamageShare's, 0.6 of what they were). One knob each, here.
 // The minute every summon key cools for after one is raised (skills.cpp, the summons' rows).
 constexpr int32_t kSummonCool = 1200;
+// How long a summon stands before its key can dismiss it: two seconds, so presses made while
+// the cast waited on her swing do not dismiss what it raised (Realm::throwSkill), ours.
+constexpr int32_t kSummonKeepTicks = 40;
 // Halved, and the ladder's health climb taken at its square root (Realm::fitSummon), the
 // user's of 2026-10-08: "elf summon hp is scaling way to much". A level-200 elf of 250 energy
 // has a Golem of some 3 300 and a Bali of 34 000, where they were 17 000 and 174 000.
