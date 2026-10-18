@@ -151,7 +151,6 @@ int main() {
         // a roof and down a cliff, ferns rooted in the water. placements.json says what each is.
         const Planted checked[] = {
             {"Grass05", 13.08736f, -5.31686f, 0.6765f, 0.0f},
-            {"Grass02", 27.39272f, -132.34586f, 4.7990f, 20.0f},
             {"Grass05", 65.50000f, -31.50000f, 0.2250f, -380.0f},
             {"Grass01", 113.03000f, -135.36000f, 2.6100f, -90.0f},  // flat on the wall, placements.json
             {"Grass01", 122.50000f, -147.50000f, 1.6500f, -75.0f},
@@ -175,6 +174,10 @@ int main() {
         check(find("Grass01", 176.79318f, -172.96551f) == nullptr &&
                   find("Grass01", 181.58227f, -172.05645f) == nullptr,
               "the two Grass01 over the river by the north-east bridge are not placed");
+        // And the ivy MuMain stores 4.8 m up by the mill's boulder, most of it over the bank
+        // beside the stone rather than on it: the user saw it floating from (28,127), 2026-10-18.
+        check(find("Grass02", 27.39272f, -132.34586f) == nullptr,
+              "the Grass02 hanging off the boulder by the mill is not placed");
         std::vector<Planted> kept(std::begin(fountain), std::end(fountain));
         kept.insert(kept.end(), std::begin(checked), std::end(checked));
         for (const Planted& one : kept) {

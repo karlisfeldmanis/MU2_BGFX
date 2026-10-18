@@ -86,7 +86,8 @@
         "TileGrass02"
       ],
       "not_kept": [
-        "Grass01 at (176.79, 172.97) and (181.58, 172.06), the ivy either side of the north-east bridge. Kept as stored on 2026-09-24, and on 2026-09-28 the user saw both floating over the river from the bridge at (180,175): MuMain stores them at 1.07 m and 2.35 m over a bed at 0.23 m that fs_ground paints as water, so their leaves hang over open water. Off the keep list, so the rule drops them: one stands on a rock tile, the other on a water tile."
+        "Grass01 at (176.79, 172.97) and (181.58, 172.06), the ivy either side of the north-east bridge. Kept as stored on 2026-09-24, and on 2026-09-28 the user saw both floating over the river from the bridge at (180,175): MuMain stores them at 1.07 m and 2.35 m over a bed at 0.23 m that fs_ground paints as water, so their leaves hang over open water. Off the keep list, so the rule drops them: one stands on a rock tile, the other on a water tile.",
+        "Grass02 at (27.39, 132.35), the ivy kept on 2026-09-24 as lying over the boulder by the mill. It does not: MuMain stores it 4.8 m up, its 5.8 by 4 m mat over rows 130.2-134.2 at 3.9-5.7 m, and the boulder (Stone03 at 27.09, 134.32) covers only rows 132.8-135.4 with its top at 4.7 m, so most of it hung 2 to 4 m over the river bank, a median leaf 3.4 m over the ground or stone under it. The user saw it from (28,127) on 2026-10-18: \"some floating in air grass objects\". Off the keep list, so the rule drops it; its twin at (25.24, 130.14) stays on the bank."
       ],
       "keep": [
         {
@@ -153,11 +154,6 @@
           "model": "Grass05",
           "near": [13.09, 5.32],
           "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: a small fern at the foot of the rock in the map's south-west corner, rooted (lowest leaf 0.02 m over the bank)."
-        },
-        {
-          "model": "Grass02",
-          "near": [27.39, 132.35],
-          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy stored 4.8 m up, over the boulder by the mill, beside an identical Grass02 the rule never touched."
         },
         {
           "model": "Grass05",
