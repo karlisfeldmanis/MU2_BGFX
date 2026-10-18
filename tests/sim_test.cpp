@@ -257,6 +257,18 @@ void testSwings(const content::Tables& tables) {
     // A shield alone is the client's final else, the fist, which is the empty hand's swing here.
     sim::attackActions(nullptr, shield, actions);
     checkEqual(actions[0], 39, "a shield in the off hand swings as an empty hand does");
+    // A bow and a crossbow in the weapon slot, where ours holds both (bug report #6: a bow on
+    // the right fell to the sword's pair, and an elf drew a sword's cuts).
+    if (const content::Arm* bow = arm("Bow01"), *crossbow = arm("CrossBow01"); bow && crossbow) {
+        checkEqual(sim::attackActions(bow, nullptr, actions), 1, "a bow in the weapon slot");
+        checkEqual(actions[0], 50, "draws the bow");
+        checkEqual(sim::attackActions(nullptr, bow, actions), 1, "and in the left, as MU holds it");
+        checkEqual(actions[0], 50, "draws it too");
+        checkEqual(sim::attackActions(crossbow, nullptr, actions), 1, "a crossbow in the weapon slot");
+        checkEqual(actions[0], 51, "draws the crossbow");
+    } else {
+        check(false, "the Short Bow and the Crossbow are in the arms");
+    }
 
     // The stat, and then the interval. A Dark Knight buys attack speed at 1/15 an agility.
     checkNear(sim::attackSpeedStat(sim::Kin::DarkKnight, 30, nullptr, nullptr), 2.0, 1e-5,

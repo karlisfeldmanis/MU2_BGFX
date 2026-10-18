@@ -105,13 +105,16 @@ int attackActions(const content::Arm* right, const content::Arm* left, int32_t* 
         return 3;
     }
 
-    // 50 Attack bow, 51 Attack crossbow. The bow is a left-hand item and the crossbow a
-    // right-hand one, which is why the two are tested on different hands.
-    if (left && left->bow()) {
+    // 50 Attack bow, 51 Attack crossbow, in either hand. MU's bow is a left-hand item and its
+    // crossbow a right-hand one; ours both go in the weapon slot (sim/items.cpp, 2026-10-02),
+    // and a bow tested on the left alone fell to the sword's pair below -- an elf drew 39 and
+    // 40, cut with her bow and was timed on the cuts (bug report #6, 2026-10-18: "bow attack
+    // animation is wrong, launches arrows and also hits like meele").
+    if ((right && right->bow()) || (left && left->bow())) {
         out[0] = 50;
         return 1;
     }
-    if (right && right->crossbow()) {
+    if ((right && right->crossbow()) || (left && left->crossbow())) {
         out[0] = 51;
         return 1;
     }
