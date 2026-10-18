@@ -1,7 +1,7 @@
 diff --git a/src/renderer_vk.cpp b/src/renderer_vk.cpp
 --- a/src/renderer_vk.cpp
 +++ b/src/renderer_vk.cpp
-@@ -5066,6 +5066,20 @@
+@@ -5066,6 +5066,30 @@
  			}
  			while (result != VK_SUCCESS
  			   &&  searchIndex >= 0);
@@ -11,9 +11,19 @@ diff --git a/src/renderer_vk.cpp b/src/renderer_vk.cpp
 +			// card -- two gigabytes at 4K on High, AMD's 4096-allocation limit -- was a GPU fault
 +			// or a lost device later, named nowhere (the AMD audit, 2026-10-17). As a lost device
 +			// it takes the game's own way out: options one preset lighter, and a start again.
-+			BGFX_FATAL(VK_ERROR_OUT_OF_DEVICE_MEMORY != result
++			// Not for a request its caller asks again more lightly: host-visible device-local
++			// memory (the staging and scratch buffers drop DEVICE_LOCAL) and host-cached memory
++			// (createHostBuffer drops HOST_CACHED). An RTX 3080 without Resizable BAR has 256 MB
++			// of the first, shared with other programs; full, it failed the game at bgfx::init
++			// though plain host memory was there (zilvis90, 2026-10-18).
++			const bool askedAgain = 0 != (propertyFlags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT)
++				|| (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
++					== (propertyFlags & (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) )
++				;
++			BGFX_FATAL(askedAgain
++				|| (VK_ERROR_OUT_OF_DEVICE_MEMORY != result
 +				&& VK_ERROR_OUT_OF_HOST_MEMORY != result
-+				&& VK_ERROR_TOO_MANY_OBJECTS != result
++				&& VK_ERROR_TOO_MANY_OBJECTS != result)
 +				, Fatal::DeviceLost
 +				, "Out of video memory: vkAllocateMemory of %u bytes failed (%d)."
 +				, uint32_t(requirements->size)
