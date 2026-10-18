@@ -94,7 +94,9 @@
         0.364,
         0.793,
         0.626
-      ]
+      ],
+      "nocked": true,
+      "nocked_from": "The missile sitting on the weapon: the same ten triangles, area and sheet as Bow02's and CrossBow02's flagged one. Flagged so the exporter gives it a primitive of its own, which lets the viewer take it away between the release and the next draw, and lets the shot leave from where it was drawn (Figure::nocked) -- unflagged, this weapon's arrow stayed on the string and the flying one left from the muzzle bone (2026-10-18)."
     },
     {
       "island": 1,

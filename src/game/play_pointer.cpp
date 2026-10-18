@@ -551,7 +551,12 @@ void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom, fl
     // destination angles', 'keep MU'). The rest-pose muzzle put it a whole arrow past the bow.
     float rail[3];
     float tail[3], tip[3];
-    const bool fromString = shooter.figure.nocked(to, tail, tip);
+    std::vector<float> drawn;
+    Arrows::String string;
+    const bool fromString = shooter.figure.nocked(to, tail, tip, &drawn, &string.sheet);
+    string.tail = tail;
+    string.tip = tip;
+    string.drawn = &drawn;
     bool fromMiddle = false;
     bool fromWeapon = fromString;
     if (fromString) {
@@ -599,7 +604,7 @@ void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom, fl
     if (plague) tint = kPlagueArrowTint;
     // A shot at a body says when it lands, and her blow is shown then (Play's arrow cue).
     arrows_.loose(muzzle, to, whom, model, whom != 0 ? shooter.id : 0, tint, seconds, pierce,
-                  shooter.id, unlit);
+                  shooter.id, unlit, fromString ? &string : nullptr);
 }
 
 bool Play::shoots(uint32_t id, Arrows::Model* model) {
@@ -648,19 +653,36 @@ bool Play::weaponFront(const Drawn& shooter, const float toward[3], float out[3]
     if (held == nullptr) return false;
     for (const HeldItem& item : held->held) {
         if (!item.mesh || (item.stance != "crossbow" && item.stance != "bow")) continue;
-        // Its box's long axis, end to end through the middle: a crossbow's rail, a bow's stave.
+        // Its rail, end to end through the middle of its box: of the box's three axes the one
+        // lying most along the way to what it is shot at, which she faces. The longest one was
+        // the Great Reign Crossbow's limbs, two metres tip to tip, and its bolt left a limb's
+        // end three quarters of a metre to her side.
         const content::Bounds& box = item.mesh->bounds();
-        int axis = 0;
-        for (int k = 1; k < 3; ++k) {
-            if (box.max[k] - box.min[k] > box.max[axis] - box.min[axis]) axis = k;
-        }
-        float ends[2][3], middle[3];
-        for (int e = 0; e < 2; ++e) {
-            float local[3] = {box.centre[0], box.centre[1], box.centre[2]};
-            local[axis] = e == 0 ? box.min[axis] : box.max[axis];
-            if (!shooter.figure.heldPoint(item.mesh->name(), local, ends[e])) return false;
-        }
+        float middle[3];
         if (!shooter.figure.heldPoint(item.mesh->name(), box.centre, middle)) return false;
+        float way[3] = {toward[0] - middle[0], toward[1] - middle[1], toward[2] - middle[2]};
+        float ends[2][3];
+        float best = -1.0f;
+        for (int axis = 0; axis < 3; ++axis) {
+            float at[2][3];
+            for (int e = 0; e < 2; ++e) {
+                float local[3] = {box.centre[0], box.centre[1], box.centre[2]};
+                local[axis] = e == 0 ? box.min[axis] : box.max[axis];
+                if (!shooter.figure.heldPoint(item.mesh->name(), local, at[e])) return false;
+            }
+            float dot = 0.0f, a = 0.0f, b = 0.0f;
+            for (int k = 0; k < 3; ++k) {
+                const float d = at[1][k] - at[0][k];
+                dot += d * way[k];
+                a += d * d;
+                b += way[k] * way[k];
+            }
+            const float along = a > 1e-8f && b > 1e-8f ? std::fabs(dot) / std::sqrt(a * b) : 0.0f;
+            if (along > best) {
+                best = along;
+                std::memcpy(ends, at, sizeof(at));
+            }
+        }
         // A bow's middle is its grip, where the arrow rests. A crossbow's bolt leaves its front:
         // the end leaning toward what it is shot at, the bolt's point there and its middle half
         // a bolt back, no further back than the middle (the user, 2026-10-08: "it came from
@@ -709,7 +731,13 @@ void Play::volleyShot(uint32_t shooter, uint32_t target) {
     // weapon but somewhere from legs'); her Bluewing Crossbow has no muzzle bone.
     const char* origin = "chest";
     float tail[3], tip[3], rail[3];
-    if (from->figure.nocked(at, tail, tip)) {
+    std::vector<float> drawn;
+    Arrows::String string;
+    const bool fromString = from->figure.nocked(at, tail, tip, &drawn, &string.sheet);
+    string.tail = tail;
+    string.tip = tip;
+    string.drawn = &drawn;
+    if (fromString) {
         for (int k = 0; k < 3; ++k) muzzle[k] = 0.5f * (tail[k] + tip[k]);
         origin = "string";
     } else if (from->figure.muzzle(muzzle, rail)) {
@@ -722,14 +750,16 @@ void Play::volleyShot(uint32_t shooter, uint32_t target) {
     // Ours; MU's Silver Valkyrie shoots the Valkyrie's plain arrow.
     const FigureBody* shooterLook = from->figure.body();
     const bool pierce = shooterLook != nullptr && shooterLook->has("pierces");
-    arrows_.loose(muzzle, at, target, model, shooter, nullptr, 0.0f, pierce);
+    arrows_.loose(muzzle, at, target, model, shooter, nullptr, 0.0f, pierce, 0, false,
+                  fromString ? &string : nullptr);
     if (shooterLook != nullptr && shooterLook->has("spreads")) {
         const float dx = at[0] - muzzle[0], dz = at[2] - muzzle[2];
         for (const float side : {1.0f, -1.0f}) {
             const float turn = side * kSpreadDegrees * 3.14159265f / 180.0f;
             const float c = std::cos(turn), s = std::sin(turn);
             const float wide[3] = {muzzle[0] + dx * c - dz * s, at[1], muzzle[2] + dx * s + dz * c};
-            arrows_.loose(muzzle, wide, 0, model, shooter, nullptr, 0.0f, false);
+            arrows_.loose(muzzle, wide, 0, model, shooter, nullptr, 0.0f, false, 0, false,
+                          fromString ? &string : nullptr);
         }
     }
     // Read afterwards, as the meteor's line is: an arrow at two tiles is in the air for a tenth

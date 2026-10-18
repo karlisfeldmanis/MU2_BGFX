@@ -63,6 +63,25 @@ bool Arrows::open(const std::string& assetDir, content::Textures& textures,
         shapes_[r.model].reversed = r.model == Steel;
         ++loaded;
     }
+    // The reach along the flight, of the solid parts (the laser's, all added, of all of them):
+    // the model's Z lands on the flight, turned by `reversed` and a part's `flipped` (gather).
+    for (Shape& shape : shapes_) {
+        bool solid = false;
+        for (const Part& part : shape.parts) solid = solid || part.blend != gfx::Blend::Additive;
+        float lo = 1e30f, hi = -1e30f;
+        for (const Part& part : shape.parts) {
+            if (solid && part.blend == gfx::Blend::Additive) continue;
+            const float sign = (shape.reversed ? -1.0f : 1.0f) * (part.flipped ? -1.0f : 1.0f);
+            for (const EffectCorner& c : part.triangles) {
+                lo = std::min(lo, c.z * sign);
+                hi = std::max(hi, c.z * sign);
+            }
+        }
+        if (hi > lo) {
+            shape.head = hi;
+            shape.back = lo;
+        }
+    }
     const content::EffectSheet* fire = table.effect("fire");
     if (fire != nullptr) {
         emberSheet_ = textures.load(assetDir + "/" + fire->path, content::TextureRole::Albedo);
@@ -132,7 +151,9 @@ float Arrows::roll() {
 
 void Arrows::loose(const float from[3], const float to[3], uint32_t whom, Model model,
                    uint32_t shooter, const float* tint, float seconds, bool pierce,
-                   uint32_t owner, bool unlit) {
+                   uint32_t owner, bool unlit, const String* string) {
+    const float* tail = string ? string->tail : nullptr;
+    const float* tip = string ? string->tip : nullptr;
     Shot* shot = nullptr;
     for (Shot& one : shots_) {
         if (!one.alive) {
@@ -153,6 +174,70 @@ void Arrows::loose(const float from[3], const float to[3], uint32_t whom, Model 
         shot->along[k] = to[k] - from[k];
     }
     normalise(shot->along);
+    shot->scale = kScale;
+    shot->bend = 0.0f;
+    shot->trailFrom = 0.0f;
+    shot->unseen = false;
+    const Shape& shape = shapes_[model];
+    float line[3] = {0.0f, 0.0f, 0.0f}, length = 0.0f;
+    if (tail != nullptr && tip != nullptr) {
+        for (int k = 0; k < 3; ++k) {
+            line[k] = tip[k] - tail[k];
+            length += line[k] * line[k];
+        }
+        length = std::sqrt(length);
+    }
+    if (length > 0.05f && shape.head > shape.back) {
+        // In the place of the one on her string: its line, its length, its middle where that
+        // one's was. Then it bends onto `to` (update).
+        for (int k = 0; k < 3; ++k) shot->along[k] = line[k] / length;
+        shot->scale = std::clamp(length / (shape.head - shape.back), 0.6f * kScale, 1.4f * kScale);
+        const float middle = 0.5f * (shape.head + shape.back) * shot->scale;
+        float way = 0.0f;
+        for (int k = 0; k < 3; ++k) {
+            shot->at[k] = 0.5f * (tail[k] + tip[k]) - shot->along[k] * middle;
+            way += (to[k] - shot->at[k]) * (to[k] - shot->at[k]);
+        }
+        way = std::sqrt(way);
+        shot->bend = std::min(model == Wood ? kBendMetres : kBoltBendMetres, kBendShare * way);
+        float off = 0.0f;
+        for (int k = 0; k < 3; ++k) off += shot->along[k] * (to[k] - shot->at[k]);
+        const float steep = std::acos(std::clamp(off / std::max(way, 1e-4f), -1.0f, 1.0f)) * 57.2958f;
+        if (way < kCloseMetres || steep > kCloseDegrees) {
+            if (pierce) {
+                // Seen, straight at its body from the string's middle.
+                for (int k = 0; k < 3; ++k) shot->along[k] = to[k] - shot->at[k];
+                normalise(shot->along);
+                shot->bend = 0.0f;
+            } else {
+                shot->unseen = true;
+            }
+        }
+        if (model != Wood) {
+            shot->trailFrom = length;
+            if (string->drawn != nullptr && bgfx::isValid(string->sheet) && !shot->unseen) {
+                // Into the shot's own frame, as gather lays the model.
+                const float up[3] = {0.0f, 1.0f, 0.0f};
+                const float* a = shot->along;
+                float across[3] = {up[1] * a[2] - up[2] * a[1], up[2] * a[0] - up[0] * a[2],
+                                   up[0] * a[1] - up[1] * a[0]};
+                normalise(across);
+                float lift[3] = {a[1] * across[2] - a[2] * across[1], a[2] * across[0] - a[0] * across[2],
+                                 a[0] * across[1] - a[1] * across[0]};
+                normalise(lift);
+                const std::vector<float>& drawn = *string->drawn;
+                for (size_t c = 0; c + 4 < drawn.size(); c += 5) {
+                    float d[3];
+                    for (int k = 0; k < 3; ++k) d[k] = drawn[c + size_t(k)] - shot->at[k];
+                    shot->baked.push_back({d[0] * across[0] + d[1] * across[1] + d[2] * across[2],
+                                           d[0] * lift[0] + d[1] * lift[1] + d[2] * lift[2],
+                                           d[0] * a[0] + d[1] * a[1] + d[2] * a[2], drawn[c + 3],
+                                           drawn[c + 4]});
+                }
+                shot->bakedSheet = string->sheet;
+            }
+        }
+    }
     shot->left = kFrames;
     shot->flown = 0.0f;
     shot->licked = kLickSpacing;  // one at the muzzle
@@ -251,11 +336,22 @@ void Arrows::update(float seconds, const std::function<bool(uint32_t, float*)>& 
             for (int k = 0; k < 3; ++k) shot.to[k] = seen[k];
         }
         const float step = shot.speed * seconds;
+        // Off the string: turning from its line onto the body at an even rate, square on it
+        // by `bend` metres, then straight.
+        if (shot.travelled < shot.bend) {
+            float aim[3] = {shot.to[0] - shot.at[0], shot.to[1] - shot.at[1], shot.to[2] - shot.at[2]};
+            normalise(aim);
+            const float share = std::min(1.0f, step / (shot.bend - shot.travelled));
+            for (int k = 0; k < 3; ++k) shot.along[k] += (aim[k] - shot.along[k]) * share;
+            normalise(shot.along);
+        }
         for (int k = 0; k < 3; ++k) shot.at[k] += shot.along[k] * step;
         shot.travelled += step;
         const bool clear = shot.travelled - kWispBehind >= kWispFromMuzzle;
         shot.glow = 0.7f + 0.1f * float(int(roll() * 4.0f));
-        if (shot.pierce) {
+        if (shot.unseen) {
+            // Nothing laid behind what is not drawn.
+        } else if (shot.pierce) {
             // No fire: the bands and the thin smoke are its whole wake.
             if (clear) shot.smoked += step;
             while (shot.smoked >= kWispSpacing) {
@@ -278,6 +374,8 @@ void Arrows::update(float seconds, const std::function<bool(uint32_t, float*)>& 
                 shot.smoked -= kWispSpacing;
                 smoke(shot);
             }
+        } else if ((shot.model == Steel || shot.model == Saw) && shot.travelled < shot.trailFrom) {
+            // Still on the rail's length: no streak over the crossbow.
         } else if (shot.model == Steel || shot.model == Saw) {
             shot.glinted += step;
             // Each laid where the head was when it was due, back along this frame's way, or a
@@ -488,7 +586,7 @@ void Arrows::shed(const Shot& shot) {
 void Arrows::gather(gfx::Effects& effects) const {
     const float up[3] = {0.0f, 1.0f, 0.0f};
     for (const Shot& shot : shots_) {
-        if (!shot.alive) continue;
+        if (!shot.alive || shot.unseen) continue;
         // The model's head is its loaded +Z (the fire sprite trails at -Z), so Z is laid along
         // the flight, X across it and Y the rest of the way round.
         float across[3] = {up[1] * shot.along[2] - up[2] * shot.along[1],
@@ -499,6 +597,17 @@ void Arrows::gather(gfx::Effects& effects) const {
                          shot.along[2] * across[0] - shot.along[0] * across[2],
                          shot.along[0] * across[1] - shot.along[1] * across[0]};
         normalise(lift);
+        // The crossbow's own bolt at the start, the model coming in over it.
+        const float swap = shot.baked.empty()
+                               ? 1.0f
+                               : std::clamp((shot.travelled - kSwapFrom) / (kSwapTo - kSwapFrom), 0.0f, 1.0f);
+        if (swap < 1.0f) {
+            const float colour[3] = {kBakedLight, kBakedLight, kBakedLight};
+            const float along[3] = {shot.along[0], shot.along[1], shot.along[2]};
+            submitEffectAlong(effects, shot.baked, shot.bakedSheet, gfx::Blend::Alpha, shot.at, across,
+                              lift, along, 1.0f, colour, 1.0f - swap);
+        }
+        if (swap <= 0.0f) continue;
         const Shape& shape = shapes_[shot.model];
         float ahead[3] = {shot.along[0], shot.along[1], shot.along[2]};
         if (shape.reversed) {
@@ -520,9 +629,9 @@ void Arrows::gather(gfx::Effects& effects) const {
                 partAcross[k] = part.flipped ? -across[k] : across[k];
                 partAhead[k] = part.flipped ? -ahead[k] : ahead[k];
             }
-            const float fade = shot.fading > 0.0f ? shot.fading / kPierceFade : 1.0f;
+            const float fade = (shot.fading > 0.0f ? shot.fading / kPierceFade : 1.0f) * swap;
             submitEffectAlong(effects, part.triangles, part.sheet, part.blend, shot.at,
-                              partAcross, lift, partAhead, kScale, colour, fade);
+                              partAcross, lift, partAhead, shot.scale, colour, fade);
         }
     }
     for (const Ember& e : embers_) {
@@ -663,7 +772,7 @@ uint32_t Arrows::lights(gfx::PointLight* out, uint32_t max) const {
         if (!shot.alive || count >= max) continue;
         // Penetration's casts no light (the user, 2026-10-09: "remove light emiter effect from
         // penetration skill"), whatever the bow.
-        if (shot.pierce || shot.unlit) continue;
+        if (shot.pierce || shot.unlit || shot.unseen) continue;
         if (shot.model != Steel && shot.model != Saw) continue;
         gfx::PointLight& light = out[count++];
         for (int k = 0; k < 3; ++k) light.position[k] = shot.at[k];

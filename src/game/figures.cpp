@@ -217,6 +217,9 @@ void Figures::bind(FigureBody& body) {
         }
     }
 
+    // A bow or a crossbow is shot, rigged or not: the still crossbows -- a single bone, drawn
+    // unskinned -- loose on the key the others do (Figure::released), not as her shot begins.
+    for (HeldItem& item : body.held) item.onShot = item.stance == "bow" || item.stance == "crossbow";
     // A held weapon with a rig of its own takes its own clip: a bow's or a crossbow's string,
     // played on the shot (Figure::poseHeld). A staff on the player's rig is a part, not this.
     for (HeldItem& item : body.held) {

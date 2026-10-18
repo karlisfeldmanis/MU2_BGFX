@@ -604,7 +604,8 @@ bool Figure::muzzle(float at[3], float along[3]) const {
     return false;
 }
 
-bool Figure::nocked(const float toward[3], float tail[3], float tip[3]) const {
+bool Figure::nocked(const float toward[3], float tail[3], float tip[3], std::vector<float>* drawn,
+                    bgfx::TextureHandle* sheet) const {
     if (!body_ || world_.empty() || safe_) return false;
     for (size_t index = 0; index < body_->held.size(); ++index) {
         const HeldItem& item = body_->held[index];
@@ -637,6 +638,24 @@ bool Figure::nocked(const float toward[3], float tail[3], float tip[3]) const {
         const int point = lean >= 0.0f ? 0 : 1;
         std::memcpy(tip, ends[point], sizeof(ends[0]));
         std::memcpy(tail, ends[1 - point], sizeof(ends[0]));
+        if (drawn != nullptr) {
+            drawn->clear();
+            const std::vector<float>& corners = item.mesh->nock().corners;
+            for (size_t c = 0; c + 4 < corners.size(); c += 5) {
+                const float* p = &corners[c];
+                for (int k = 0; k < 3; ++k) {
+                    drawn->push_back(p[0] * whole[k] + p[1] * whole[4 + k] + p[2] * whole[8 + k] + whole[12 + k]);
+                }
+                drawn->push_back(p[3]);
+                drawn->push_back(p[4]);
+            }
+        }
+        if (sheet != nullptr) {
+            const int m = item.mesh->nock().material;
+            const auto& materials = item.mesh->materials();
+            *sheet = m >= 0 && size_t(m) < materials.size() ? materials[size_t(m)].albedo
+                                                            : bgfx::TextureHandle(BGFX_INVALID_HANDLE);
+        }
         return true;
     }
     return false;
@@ -654,15 +673,39 @@ const char* Figure::noMuzzle() const {
     return "nothing marked";
 }
 
+namespace {
+
+// The key a shot's string goes, as a share of `period` keys. A bow or crossbow that plays a clip
+// of its own says it (`release`, its own keys, the body's round its cycle); one held still -- the
+// Bluewing, Aquagold, Saint and Great Reign crossbows and the Archangel's, a single bone and a
+// single key, no string drawn and no bolt on the rail -- goes on the key every other does, key 4
+// of her own clip (the others' 4 of their seven), where it had none and went the moment her shot
+// began.
+constexpr float kStillReleaseKey = 4.0f;
+
+bool releaseOf(const HeldItem& item, const content::CookedClip& body, float* release, float* period) {
+    if (!item.onShot) return false;
+    if (item.clip && item.release > 0.0f && item.clip->clips.front().frames >= 2) {
+        *release = item.release;
+        *period = float(item.clip->clips.front().frames - 1);
+        return true;
+    }
+    *period = float(body.frames - 1);
+    *release = *period > 0.0f ? std::min(1.0f, kStillReleaseKey / *period) : 0.0f;
+    return true;
+}
+
+}  // namespace
+
 float Figure::toRelease() const {
     if (released() || !body_ || !body_->library || clip_ < 0) return 0.0f;
     const content::CookedClip& one = body_->library->clips.clips[size_t(clip_)];
     const float perKey = one.duration / float(one.frames - 1);
     const float key = time_ / perKey;
     for (const HeldItem& item : body_->held) {
-        if (!item.clip || !item.onShot || item.release <= 0.0f) continue;
-        const float period = float(item.clip->clips.front().frames - 1);
-        return std::max(0.0f, item.release * period - std::fmod(key, period)) * perKey;
+        float release = 0.0f, period = 1.0f;
+        if (!releaseOf(item, one, &release, &period)) continue;
+        return std::max(0.0f, release * period - std::fmod(key, period)) * perKey;
     }
     return 0.0f;
 }
@@ -676,15 +719,13 @@ bool Figure::released() const {
     if (one.slot < 50 || one.slot > 53 || one.duration <= 0.0f || one.frames < 2) return true;
     const float key = time_ / one.duration * float(one.frames - 1);
     for (const HeldItem& item : body_->held) {
-        if (!item.clip || !item.onShot || item.release <= 0.0f) continue;
-        const content::CookedClip& own = item.clip->clips.front();
-        if (own.frames < 2) continue;
+        float release = 0.0f, period = 1.0f;
+        if (!releaseOf(item, one, &release, &period) || period <= 0.0f) continue;
         // Wrapped as poseHeld wraps it: the weapon's key is the body's, round its cycle.
-        const float period = float(own.frames - 1);
         if (key >= period) return true;
         // `release` is of the cycle, key 4 of seven (0.571): a looping clip's last key is its
         // first again, so the cycle is frames - 1 long.
-        return std::fmod(key, period) >= item.release * period - 0.02f;
+        return std::fmod(key, period) >= release * period - 0.02f;
     }
     return true;
 }

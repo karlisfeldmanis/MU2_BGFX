@@ -539,6 +539,14 @@ bool Mesh::buildSkinned(const std::string& name, std::vector<SkinnedVertex> vert
             continue;
         }
         float widest = -1.0f;
+        nock_.material = int(part.material);
+        for (uint32_t i = part.firstIndex; i < part.firstIndex + part.indexCount; ++i) {
+            if (i >= indices.size() || indices[i] >= vertices.size()) continue;
+            const SkinnedVertex& v = vertices[indices[i]];
+            nock_.corners.insert(nock_.corners.end(),
+                                 {v.position[0], v.position[1], v.position[2], v.uv[0], v.uv[1]});
+        }
+        if (nock_.corners.size() % 15 != 0) nock_.corners.clear();
         for (uint32_t i = part.firstIndex; i < part.firstIndex + part.indexCount; ++i) {
             if (i >= indices.size() || indices[i] >= vertices.size()) continue;
             const SkinnedVertex& a = vertices[indices[i]];

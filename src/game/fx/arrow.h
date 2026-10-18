@@ -101,9 +101,26 @@ public:
     // `pierce` winds MODEL_PIERCING's bands round it: Penetration's arrow (see the top).
     // `owner` is whose weapon it left, landing reported or not: while any of hers is in the air
     // the one on her string stays gone (owners, Figure::holdNock).
+    // The one on her string as it was last drawn (Figure::nocked): its two ends, and its
+    // triangles in the world with their picture when the weapon has them.
+    struct String {
+        const float* tail = nullptr;
+        const float* tip = nullptr;
+        const std::vector<float>* drawn = nullptr;  // x y z u v a corner
+        bgfx::TextureHandle sheet = BGFX_INVALID_HANDLE;
+    };
+    // `string`, when given: this one takes its place -- its middle, its line and its length --
+    // and bends from that line onto `to` over the start of its flight (kBendMetres), where it was
+    // aimed at `to` from the first frame and swung off the string's line as it appeared. A bolt
+    // starts as the crossbow's own and turns into its model over kSwapFrom..kSwapTo; its streak
+    // waits until it has cleared the rail. A shot whose body is too near the string or too far
+    // off its line to bend onto (kCloseMetres, kCloseDegrees) is not seen at all: it lands when
+    // it would, and nothing turns ninety degrees in front of her. Penetration's flies on seen,
+    // straight at its body.
     void loose(const float from[3], const float to[3], uint32_t whom, Model model,
                uint32_t shooter = 0, const float* tint = nullptr, float seconds = 0.0f,
-               bool pierce = false, uint32_t owner = 0, bool unlit = false);
+               bool pierce = false, uint32_t owner = 0, bool unlit = false,
+               const String* string = nullptr);
     const std::vector<uint32_t>& landed() const { return landed_; }
 
     // `middle` answers where a body's middle is drawn now, false once it is not drawn.
@@ -134,6 +151,10 @@ private:
         std::vector<Part> parts;
         // Built head at -Z: turned half round about its up, so it flies head first.
         bool reversed = false;
+        // How far its solid parts reach ahead of its origin and behind it along the flight,
+        // model metres before the scale: what a shot off the string lines up with the one there.
+        float head = 0.0f;
+        float back = 0.0f;
     };
     struct Shot {
         bool alive = false;
@@ -153,6 +174,14 @@ private:
         float chipped;   // metres since the last spark
         float travelled; // metres from the muzzle
         float speed;     // metres a second
+        float scale;     // kScale, or what makes it as long as the one on her string was
+        float bend;      // metres it turns over, from the string's line onto `to`; 0 straight
+        float trailFrom; // metres flown before its streak starts: clear of the rail
+        bool unseen;     // too near or too steep to show: flies, lands, draws nothing
+        // The crossbow's own bolt as it sat on the rail, in the shot's frame (x across, y lift,
+        // z along, metres), and its picture: drawn at the start, fading into the model.
+        std::vector<EffectCorner> baked;
+        bgfx::TextureHandle bakedSheet = BGFX_INVALID_HANDLE;
         bool tinted;
         float tint[3];
         // Penetration's: wound in the bands and bare of fire -- no embers, licks or fire tail,
@@ -257,6 +286,21 @@ private:
     static constexpr float kTilesASecond = 17.5f;     // the realm's kArrowTilesPerSecond
     static constexpr float kStopsShort = 1.0f;        // tiles: CheckCharacterRange(o, 100)
     static constexpr float kIntoBody = 0.25f;         // metres from its middle: ours
+    // Ours: a shot off the string leaves on the string's line and turns onto its body over
+    // this much of its flight, or 40% of the way when that is shorter. The string is level and
+    // a spider's middle two metres off is 30 degrees below it.
+    static constexpr float kBendMetres = 1.5f;
+    static constexpr float kBendShare = 0.4f;
+    // A bolt's: the streak traced a longer turn as a hook (the user, 2026-10-18).
+    static constexpr float kBoltBendMetres = 0.6f;
+    // Nearer than this, or further off the string's line than this, and it is not shown.
+    static constexpr float kCloseMetres = 1.5f;
+    static constexpr float kCloseDegrees = 35.0f;
+    // The crossbow's own bolt, whole until kSwapFrom metres out, the model whole by kSwapTo;
+    // drawn unlit, so at this share of its picture to sit with the shaded weapon.
+    static constexpr float kSwapFrom = 0.3f;
+    static constexpr float kSwapTo = 1.2f;
+    static constexpr float kBakedLight = 0.3f;
     // The embers: MU's BITMAP_FIRE sub-type 0, the numbers `fx/meteor.h` already carries.
     static constexpr float kEmberSpacingUnits = 70.0f;  // one a reference frame at 70 a frame
     static constexpr float kEmberFrames = 24.0f;

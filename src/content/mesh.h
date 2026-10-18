@@ -223,6 +223,10 @@ public:
     struct Nock {
         int bone = -1;
         float ends[2][3] = {{0, 0, 0}, {0, 0, 0}};
+        // Its triangles, bind pose: x y z u v a corner, three corners a triangle, so the one
+        // that flies can start as this one (Arrows::loose). `material` is its "nocked" one.
+        std::vector<float> corners;
+        int material = -1;
     };
     const Nock& nock() const { return nock_; }
 

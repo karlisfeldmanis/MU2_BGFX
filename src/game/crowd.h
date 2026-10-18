@@ -139,7 +139,10 @@ public:
     // the point being the end nearer `toward`. The one that flies takes over from it here, so
     // the shot leaves the string it was drawn on (Play::shootArrow). False when nothing in her
     // hands carries a nocked part, or it is slung.
-    bool nocked(const float toward[3], float tail[3], float tip[3]) const;
+    // `drawn`, when asked, takes its triangles as they were drawn there -- x y z u v a corner,
+    // in the world -- and `sheet` its picture, so the one that flies can start as it.
+    bool nocked(const float toward[3], float tail[3], float tip[3],
+                std::vector<float>* drawn = nullptr, bgfx::TextureHandle* sheet = nullptr) const;
     // Why neither nocked() nor muzzle() could answer, for the log.
     const char* noMuzzle() const;
     // The arrow or bolt drawn on the weapon: gone from the loose, back on the next draw (MU2's
