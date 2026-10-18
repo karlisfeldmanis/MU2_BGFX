@@ -19,7 +19,7 @@ using gfx::Box;
 constexpr float kIconShare = 0.56f;  // of the disc's width: inside the rim, with air round it
 constexpr float kRimShare = 0.16f;   // of the radius, the durability ring
 constexpr int kRound = 40;
-constexpr float kAmmoGrowth = 2.4f;
+constexpr float kAmmoGrowth = 1.9f;
 // Her count when she has plenty: the window's warm white, full, so it reads on bright ground.
 constexpr uint32_t kCountInk = gfx::rgba(0.97f, 0.94f, 0.86f, 1.0f);  // the ammunition cell, of a worn piece's           // segments a full circle
 
@@ -287,20 +287,21 @@ void Endurance::rebuild(const sim::Realm& realm) {
         const bool fine = band == sim::Worn::Fine;
         const bool empty = band == sim::Worn::Broken;
         const std::string figure = shotsFigure(now_.shots);
-        const float size = std::round(box.w * 0.22f);
-        const float foot = box.bottom();
-        const float iconRoom = box.h - size * 1.45f;
+        const float size = std::round(box.w * 0.27f);
+        // Tight, top to foot (the user, 2026-10-18: "to much padding, little bit to large,
+        // number has to be closer to icon"): a small pad, the quiver, the count right under it,
+        // and the stack's hairline at the foot.
+        const float pad = std::round(box.w * 0.08f);
         // On the tooltip's own glass (the user, 2026-10-18: "design better container for arrows
         // for elf, that dark shadow is not looking best"): where six stacked black discs made a
         // smudge, a rounded card in the "100% full" card's ash and iron, and along its foot a
         // hairline of what is left of one stack, in the count's own colour.
         const float u = tip::unit();
         tip::glass(canvas_, box, u, tip::ink::kRadius * 1.5f);
+        const float thick = std::max(1.0f, std::round(2.0f * u));
+        const Box track = {box.x + pad * 1.5f, box.bottom() - pad - thick, box.w - pad * 3.0f,
+                           thick};
         {
-            const float inset = std::round(box.w * 0.16f);
-            const float thick = std::max(1.0f, std::round(2.0f * u));
-            const Box track = {box.x + inset, box.bottom() - std::round(box.h * 0.07f) - thick,
-                               box.w - inset * 2.0f, thick};
             const float share = now_.stack > 0
                                     ? std::clamp(float(now_.shots) / float(now_.stack), 0.0f, 1.0f)
                                     : 0.0f;
@@ -310,16 +311,20 @@ void Endurance::rebuild(const sim::Realm& realm) {
                              fine ? gfx::rgba(0.97f, 0.94f, 0.86f, 0.70f) : colourOf(band));
             }
         }
+        const float baseline = track.y - std::round(size * 0.22f);
+        const float capTop = baseline - size * 0.74f;
         const gfx::Art& art = arts_->get(now_.archer == 1 ? "hud_ammo_arrows" : "hud_ammo_bolts");
         if (art.valid() && art.width > 0.0f && art.height > 0.0f) {
-            // Under the room it has (the user, 2026-10-10: "icon to large").
-            const float k = 0.74f * std::min(box.w / art.width, iconRoom / art.height);
+            // Standing on the count with a hair of air: the art carries its own halo.
+            const float bottom = capTop + std::round(size * 0.05f);
+            const float room = bottom - (box.y + pad * 0.5f);
+            const float k = std::min(box.w * 0.82f / art.width, room / art.height);
             const float w = art.width * k, h = art.height * k;
-            canvas_.image(art, {box.midX() - w * 0.5f, box.y + (iconRoom - h) * 0.5f, w, h},
+            canvas_.image(art, {box.midX() - w * 0.5f, bottom - h, w, h},
                           empty ? gfx::rgba(0.55f, 0.50f, 0.50f, 0.85f) : 0xFFFFFFFFu);
         }
-        controls::label(canvas_, box.midX() - controls::labelWidth(size, figure) * 0.5f,
-                        foot - size * 0.62f, size, fine ? kCountInk : colourOf(band), figure);
+        controls::label(canvas_, box.midX() - controls::labelWidth(size, figure) * 0.5f, baseline,
+                        size, fine ? kCountInk : colourOf(band), figure);
     }
 
     if (now_.overAmmo) {
