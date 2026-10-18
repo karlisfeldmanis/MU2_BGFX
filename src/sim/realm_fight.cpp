@@ -708,9 +708,12 @@ void Realm::ringStings(Body& hero, Body& struck, int wound) {
         runeStrike(hero, struck, kRingBoltForce * elementForce(hero, Element::Lightning));
         if (struck.alive() && !fixed(struck)) push(struck, hero);
     }
-    // Wind: a gust, said as Twister let go at it, that knocks it back a tile.
+    // Wind: a gust, said as Twister let go at it, that knocks it back a tile. The storm walks the
+    // heading from him to it, in thousandths of a radian, as the Twister rune's does -- without
+    // it the drawing walked it due east whichever way he struck.
     if (e.windRing > 0 && rolls(e.windRing)) {
-        say(What::Loosed, hero, skill::kTwister, 0, 0, struck.id);
+        const float way = fm::atan2(struck.y - hero.y, struck.x - hero.x);
+        say(What::Loosed, hero, skill::kTwister, 0, int32_t(std::lround(way * 1000.0f)), struck.id);
         core::logf("ring of wind: tick %lld, on #%u", (long long)tick_, struck.id);
         runeStrike(hero, struck, kRingGustForce * elementForce(hero, Element::Wind));
         if (struck.alive() && !fixed(struck)) push(struck, hero);
