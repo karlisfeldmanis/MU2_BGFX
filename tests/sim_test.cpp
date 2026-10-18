@@ -8362,6 +8362,80 @@ void testQuests(const content::Tables& tables) {
 // Sockets and the Rune of Creation (sim/items.h): which rune goes in what, setting fills the first
 // free socket, and Stormcall and Meteor call their lightning or rock on ANOTHER monster -- and
 // never without a power worn.
+// A fan's arrows strike what they reach, not what stood in the lane when they left (the user,
+// 2026-10-18: "elf multi-shot arrows/bolts has to perfectly reach monster body to trigger
+// damage not like now which acts like zone"): a body stepped out of the way is not struck.
+void testFanArrowsFly(const content::Tables& tables) {
+    std::printf("fan arrows fly\n");
+    for (const bool dodge : {false, true}) {
+        sim::Realm realm;
+        realm.raise(&tables, 11, 212, 198, sim::Kin::FairyElf, 30);
+        realm.undying(true);
+        realm.learn(sim::skill::kSkillshot);
+        realm.give(tables.itemAt(4, 0), sim::kWeaponRight, 0);
+        realm.give(tables.itemAt(4, 15), sim::kWeaponLeft, 0, 255);
+        uint32_t aimed = 0;
+        int64_t loosedAt = -1, struckAt = -1;
+        float holdX = 0.0f, holdY = 0.0f;
+        for (int tick = 0; tick < 4000; ++tick) {
+            if (loosedAt < 0 && tick % 10 == 0) {
+                // The nearest monster between three and eight tiles off, so the arrow is in the
+                // air a few ticks.
+                uint32_t pick = 0;
+                float best = 1e30f;
+                for (const sim::Body& one : realm.bodies()) {
+                    if (!one.monster() || !one.alive()) continue;
+                    const float d = std::hypot(one.x - realm.hero().x, one.y - realm.hero().y);
+                    if (d < 3.0f || d > 8.0f || d >= best) continue;
+                    best = d;
+                    pick = one.id;
+                }
+                if (pick != 0) {
+                    sim::Request request;
+                    request.kind = sim::Request::Kind::Attack;
+                    request.target = pick;
+                    request.skill = sim::skill::kSkillshot;
+                    realm.ask(request);
+                }
+            }
+            // Held where it stood when the arrows left, or four tiles aside of it, square to her
+            // aim and out of every lane, for the whole flight: the test is the arrow, not its walk.
+            if (loosedAt >= 0) {
+                auto* body = const_cast<sim::Body*>(realm.find(aimed));
+                body->x = holdX, body->y = holdY;
+            }
+            realm.step();
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who != realm.hero().id) continue;
+                if (loosedAt < 0 && h.what == sim::What::Loosed && h.a == sim::skill::kSkillshot) {
+                    loosedAt = tick;
+                    aimed = h.whom;
+                    const sim::Body* body = realm.find(aimed);
+                    const float dx = body->x - realm.hero().x, dy = body->y - realm.hero().y;
+                    const float d = std::hypot(dx, dy);
+                    holdX = body->x + (dodge ? -dy / d * 4.0f : 0.0f);
+                    holdY = body->y + (dodge ? dx / d * 4.0f : 0.0f);
+                } else if (loosedAt >= 0 && struckAt < 0 && h.whom == aimed &&
+                           (h.what == sim::What::Hit || h.what == sim::What::Missed)) {
+                    struckAt = tick;
+                }
+            }
+            if (loosedAt >= 0 && struckAt < 0 && loosedAt == tick && dodge) {
+                auto* body = const_cast<sim::Body*>(realm.find(aimed));
+                body->x = holdX, body->y = holdY;
+            }
+            // Nine tiles at 17.5 a second is eleven ticks in the air.
+            if (loosedAt >= 0 && tick >= loosedAt + 12) break;
+        }
+        check(loosedAt >= 0, "the elf looses a Multi-Shot at a monster three to eight tiles off");
+        if (dodge) {
+            check(struckAt < 0, "a monster stepped out of the lane is not struck");
+        } else {
+            check(struckAt > loosedAt, "one left standing is struck, ticks after the let-go");
+        }
+    }
+}
+
 void testRunes(const content::Tables& tables) {
     std::printf("sockets\n");
     const int rune = tables.itemAt(14, 22), serpent = tables.itemAt(0, 8);
@@ -13367,6 +13441,7 @@ int main() {
     testGroupRunes(tables);
     testRuneRarity(tables);
     testEvilSpirit(tables);
+    testFanArrowsFly(tables);
     testRunes(tables);
     testJewellery(tables);
     testGearScore(tables);

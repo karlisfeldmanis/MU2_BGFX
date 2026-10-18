@@ -133,6 +133,7 @@ void Realm::serialize(Archive& a) {
     a.vec(commands_);
     a.vec(carried_);
     a.pod(flights_);
+    a.pod(volleys_);
     a.pod(spiritBlows_);
     a.pod(fires_);
     a.pod(loosingPlague_);

@@ -1655,9 +1655,12 @@ private:
     bool arrowless(const Body& hero, const Request& order) const;
     // The plus of the quiver in the hand her bow leaves free, 0 when it holds none of hers.
     int quiverPlusOf(const Body& hero) const;
-    // Skillshot let go: `arrows` lanes fanned round the body it was aimed at, an arrow into
-    // every body in each lane, each paid for as it is loosed.
+    // Skillshot let go: `arrows` lanes fanned round the body it was aimed at, an arrow a lane
+    // paid for as it is loosed and put in the air (`volleys_`).
     void looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
+    // And its arrows on their way, a tick's flight each: whatever body an arrow passes through
+    // on this tick is struck now (Realm::Volley).
+    void flyVolleys();
     // And the arrow let go at the bottom of the swing, into `flights_` like a spell.
     void looseArrow(Body& hero, uint32_t at, float force);
     // Meteorite: a rock let go at every body within its splash of the one it was called on.
@@ -1981,6 +1984,27 @@ private:
     // Room for a line's worth of bodies and the bolts around it.
     static constexpr int kFlights = 48;  // 32 until a Meteorite rained on 24 (2026-10-03)
     Flight flights_[kFlights] = {};
+    // **A fan's arrows in the air** (the user, 2026-10-18: "elf multi-shot arrows/bolts has to
+    // perfectly reach monster body to trigger damage not like now which acts like zone"): each
+    // lane an arrow that flies from where she stood, `speed` tiles a tick, out to `length`, and
+    // strikes a body only on the tick it passes within `kArrowBodyTiles` of the body's middle
+    // wherever the body is then. One that walked out of the way is missed; one that walked
+    // in is struck. Each body once a cast, as before. Ours.
+    struct Volley {
+        uint32_t owner = 0;  // 0 for an empty place
+        int32_t skill = 0;
+        uint32_t aimed = 0;  // the body it was aimed at, whose strike pays back
+        float x = 0.0f, y = 0.0f;
+        float length = 0.0f, flown = 0.0f, speed = 0.0f;
+        float force = 1.0f, side = 1.0f;  // a side arrow of Penetration's fan at `side`
+        int8_t lanes = 0;
+        uint8_t plagued = 0;
+        float dir[kVolleyLanes][2] = {};
+        int8_t struckCount = 0;
+        uint32_t struck[kVictims] = {};
+    };
+    static constexpr int kVolleys = 16;
+    Volley volleys_[kVolleys] = {};
     // An Arcane Echo waiting to be let go: the spell again, at `at`. One at a time; a cast that
     // echoes while one waits does not.
     struct Echo {

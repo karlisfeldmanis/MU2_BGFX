@@ -160,6 +160,9 @@ bool Realm::depart(uint32_t id) {
     for (Flight& one : flights_) {
         if (one.owner == id) one = Flight{};
     }
+    for (Volley& one : volleys_) {
+        if (one.owner == id) one = Volley{};
+    }
     for (SpiritBlow& one : spiritBlows_) {
         if (one.owner == id) one = SpiritBlow{};
     }
@@ -1279,6 +1282,7 @@ void Realm::heroAfter() {
         }
         // And whatever he let go earlier and has now arrived, and the fires on the ground.
         arrive();
+        flyVolleys();
         burn();
         channel(hero);
         if (hero.blinkAt != 0 && tick_ >= hero.blinkAt) blink(hero);

@@ -1168,75 +1168,127 @@ void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float fo
         happenings_.back().plagueLanes = plagued;
     }
     constexpr float kRadians = 3.14159265358979f / 180.0f;
-    // **Each body once a cast** (the user, 2026-10-02: "multi-shot feels very overpowered"): the
-    // lanes are 1.5 tiles wide and 15 degrees apart, so all three cross anything within 2.9 tiles
-    // of her, and a body that close took every arrow -- three plain shots for one, at the plain
-    // shot's pace. The fan pays off on a crowd, not on one body. ours, as the pierce is.
-    uint32_t struck[kVictims];
-    int struckCount = 0;
-    const auto struckAlready = [&](uint32_t id) {
-        for (int i = 0; i < struckCount; ++i) {
-            if (struck[i] == id) return true;
-        }
-        return false;
-    };
     // Penetration's one lane, or three with a Piercing Volley in her bow (sim::lanesOf).
     //
     // **An arrow a lane, spent as the fan leaves the string** (the user, 2026-10-08: "elf
     // multishot has to use 3 arrows"), where it was an arrow a body struck -- so a fan at a lone
     // body cost one. The quiver running dry looses the lanes it had arrows for. Ours.
     int lanes = 0;
-    for (const int most = lanesOf(row, hero.player ? hero.excel.volleys : 0); lanes < most;
-         ++lanes) {
+    for (const int most = std::min(kVolleyLanes, laneCount); lanes < most; ++lanes) {
         if (!nock(hero)) break;
     }
     if (lanes == 0) {
         say(What::Arrowless, hero, hero.archer);
         return;
     }
+    // The arrows go into the air together and strike as they fly (Realm::flyVolleys).
+    Volley* volley = nullptr;
+    for (Volley& one : volleys_) {
+        if (one.owner == 0) {
+            volley = &one;
+            break;
+        }
+    }
+    if (volley == nullptr) return;  // sixteen fans in the air: this one is spent on nothing
+    *volley = Volley{};
+    volley->owner = hero.id;
+    volley->skill = row.number;
+    volley->aimed = aimedAt;
+    volley->x = hero.x, volley->y = hero.y;
+    volley->length = length;
+    volley->speed = std::max(1.0f, row.flies) / kTicksPerSecond;
+    volley->force = force;
+    // A side arrow of a Scatter Volley's or a Split Arrow's fan strikes at its share.
+    volley->side = row.number == skill::kPenetration && hero.player ? hero.excel.volleySide : 1.0f;
+    volley->lanes = int8_t(lanes);
+    volley->plagued = plagued;
     for (int a = 0; a < lanes; ++a) {
         // Straight, then one either side, then the next pair out.
         const int step = (a + 1) / 2;
         const float turn = float(a % 2 == 1 ? step : -step) * kFanDegrees * kRadians;
-        const float cx = fm::cos(centre + turn), cy = fm::sin(centre + turn);
-        // Every body in the lane, nearest first and then by id, which is fixed for the log.
-        struct Struck {
-            float along;
-            uint32_t id;
-        };
-        Struck lane[kVictims];
-        int found = 0;
-        for (const Body& one : bodies_) {
-            if (!one.alive() || !one.monster() || struckAlready(one.id)) continue;
-            if (tables_->grid.safe(one.column(), one.row())) continue;
-            const float dx = one.x - hero.x, dy = one.y - hero.y;
-            const float along = dx * cx + dy * cy;
-            const float across = std::fabs(dx * cy - dy * cx);
-            // From her own feet out: a body pressed against her is in front of the bow, not
-            // under it (the user, 2026-10-02: "when monster is very close ... dont take damage
-            // from multi shot" -- a Yeti's middle sat inside the old 0.6-tile dead zone).
-            if (along < 0.0f || along > length || across > kLineHalfWidth) continue;
-            // An arrow does not fly through a wall to the body behind it (Realm::seen).
-            if (!seen(hero, one)) continue;
-            if (found == kVictims) break;
-            int at = found++;
-            while (at > 0 && (lane[at - 1].along > along ||
-                              (lane[at - 1].along == along && lane[at - 1].id > one.id))) {
-                lane[at] = lane[at - 1];
-                --at;
+        volley->dir[a][0] = fm::cos(centre + turn);
+        volley->dir[a][1] = fm::sin(centre + turn);
+    }
+}
+
+// How near a fan's arrow must pass a body's middle to be in it, in tiles: the body fills its
+// tile, and an arrow wider of it than half a tile flies past. MU's own Triple Shot asks a
+// hundred units round the arrow's head every other frame (ZzzEffect.cpp:7740, CheckClientArrow's
+// AttackCharacterRange), a tile; ours is the body itself (the user, 2026-10-18: "has to
+// perfectly reach monster body").
+constexpr float kArrowBodyTiles = 0.5f;
+
+void Realm::flyVolleys() {
+    Body& hero = mine();
+    for (Volley& volley : volleys_) {
+        if (volley.owner == 0 || !lands(volley.owner)) continue;
+        const SkillRow* row = skillNumbered(volley.skill);
+        if (row == nullptr) {
+            volley = Volley{};
+            continue;
+        }
+        // This tick's stretch of every lane, from where the arrows were to where they are now.
+        const float from = volley.flown;
+        const float to = std::min(volley.length, from + volley.speed);
+        volley.flown = to;
+        // **Each body once a cast** (the user, 2026-10-02: "multi-shot feels very overpowered"):
+        // the lanes cross near her, and a body there took every arrow -- three plain shots for
+        // one. The fan pays off on a crowd, not on one body. Ours, as the pierce is.
+        const auto struckAlready = [&](uint32_t id) {
+            for (int i = 0; i < volley.struckCount; ++i) {
+                if (volley.struck[i] == id) return true;
             }
-            lane[at] = Struck{along, one.id};
+            return false;
+        };
+        for (int a = 0; a < volley.lanes; ++a) {
+            const float cx = volley.dir[a][0], cy = volley.dir[a][1];
+            // Every body this stretch passes through, nearest first and then by id, which is
+            // fixed for the log.
+            struct Struck {
+                float along;
+                uint32_t id;
+            };
+            Struck lane[kVictims];
+            int found = 0;
+            for (const Body& one : bodies_) {
+                if (!one.alive() || !one.monster() || struckAlready(one.id)) continue;
+                if (tables_->grid.safe(one.column(), one.row())) continue;
+                const float dx = one.x - volley.x, dy = one.y - volley.y;
+                const float along = dx * cx + dy * cy;
+                // The nearest point of the stretch to the body's middle, and how far off it is.
+                const float closest = std::clamp(along, from, to);
+                const float ox = dx - cx * closest, oy = dy - cy * closest;
+                if (ox * ox + oy * oy > kArrowBodyTiles * kArrowBodyTiles) continue;
+                // From her own feet out: a body pressed against her is in front of the bow, not
+                // under it (the user, 2026-10-02: "when monster is very close ... dont take damage
+                // from multi shot").
+                if (along < 0.0f) continue;
+                // An arrow does not fly through a wall to the body behind it (Realm::seen).
+                if (!seen(volley.x, volley.y, one)) continue;
+                if (found == kVictims) break;
+                int at = found++;
+                while (at > 0 && (lane[at - 1].along > along ||
+                                  (lane[at - 1].along == along && lane[at - 1].id > one.id))) {
+                    lane[at] = lane[at - 1];
+                    --at;
+                }
+                lane[at] = Struck{along, one.id};
+            }
+            for (int i = 0; i < found; ++i) {
+                if (volley.struckCount < kVictims) volley.struck[volley.struckCount++] = lane[i].id;
+                Body* target = body(lane[i].id);
+                if (target == nullptr || !target->alive() || !hero.alive()) continue;
+                const float force = volley.force * (a > 0 ? volley.side : 1.0f);
+                const size_t said = happenings_.size();
+                strikeAt(hero, *target, force, row, true, lane[i].id == volley.aimed);
+                // A Plague Arrows lane's arrow poisons what it flies through.
+                if (a < 8 && (volley.plagued & (1u << a)) != 0 && said < happenings_.size() &&
+                    happenings_[said].what == What::Hit) {
+                    envenom(hero, *target, happenings_[said].a);
+                }
+            }
         }
-        for (int i = 0; i < found; ++i) {
-            if (struckCount < kVictims) struck[struckCount++] = lane[i].id;
-            loosingPlague_ = a < 8 && (plagued & (1u << a)) != 0;
-            // A side arrow of a Scatter Volley's or a Split Arrow's fan strikes at its share.
-            const float side = a > 0 && row.number == skill::kPenetration && hero.player
-                                   ? hero.excel.volleySide
-                                   : 1.0f;
-            loose(hero, row, lane[i].id, force * side, false, lane[i].id == aimedAt);
-            loosingPlague_ = false;
-        }
+        if (volley.flown >= volley.length) volley = Volley{};
     }
 }
 
@@ -1820,6 +1872,9 @@ void Realm::kill(Body& dead, Body& killer) {
         // And his spells in the air, for the same reason.
         for (Flight& one : flights_) {
             if (lands(one.owner)) one = Flight{};
+        }
+        for (Volley& one : volleys_) {
+            if (lands(one.owner)) one = Volley{};
         }
         me().echo = Echo{};
         for (SpiritBlow& one : spiritBlows_) {
