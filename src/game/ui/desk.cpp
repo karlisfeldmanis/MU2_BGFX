@@ -240,6 +240,19 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     const auto took = [&]() {
         if (play.isOpen()) play.ui(Play::Ui::Took);
     };
+    // C, or the bar's button. A counter -- the shop, the vault, the machine, a trade, the market --
+    // stands beside the bag in the first column, and the character window would push the bag into
+    // the second, over the counter, where a click meant for the bag picked from the vault (bug
+    // report #13). A counter shuts the character window as it opens; while it is up, C is the
+    // interface's no.
+    const auto toggleCard = [&]() {
+        if (!characterOpen_ && (trading_ || banking_ || brokering_ || mixing_ || dealing_)) {
+            refused();
+            return;
+        }
+        characterOpen_ = !characterOpen_;
+        click();
+    };
     // Whether the bag slot holds a bound thing, so a trade's no can say why.
     const auto carriesBound = [&](int slot) { return play.isOpen() && slot >= 0 && play.realm().satchel()[slot].bound; };
     // The answers to what this window asked, heard now (Play::answers).
@@ -609,10 +622,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         click();
     }
     scriptBag_ = false;
-    if (!keysHeld && window.pressed(gfx::Window::Key::Character)) {
-        characterOpen_ = !characterOpen_;
-        click();
-    }
+    if (!keysHeld && window.pressed(gfx::Window::Key::Character)) toggleCard();
     // G, the guild window (docs/game/guild.md): on a server; off one there is no guild to show.
     if (!keysHeld && (window.pressed(gfx::Window::Key::Guild) || scriptGuild_) && play.isOpen()) {
         guild_.toggle();
@@ -849,10 +859,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         inventoryOpen_ = !inventoryOpen_;
         click();
     }
-    if (toggleCharacter) {
-        characterOpen_ = !characterOpen_;
-        click();
-    }
+    if (toggleCharacter) toggleCard();
 
     // The character window, while it is up. What it asks for is answered here, by the realm,
     // and the window sees the answer on its next frame.
