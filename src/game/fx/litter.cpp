@@ -345,7 +345,10 @@ void Litter::update(const sim::Realm& realm, double seconds,
     for (Drop& drop : drops_) {
         if (std::find(tossed.begin(), tossed.end(), drop.id) == tossed.end()) continue;
         for (Piece& piece : drop.pieces) {
-            piece.above = std::max(piece.above, kHopFrom);
+            // Still up from the last hop: it comes down first. Thrown again from where it was, a
+            // Space pressed over and over climbed it off the top of the screen (bug report #12).
+            if (piece.above > 0.0f || piece.speed != 0.0f) continue;
+            piece.above = kHopFrom;
             piece.speed = kHop;
             piece.bounced = 0;
             piece.tumbling = piece.flips;
