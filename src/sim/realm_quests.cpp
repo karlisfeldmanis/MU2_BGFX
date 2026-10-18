@@ -89,7 +89,7 @@ int32_t Realm::questLevel(int index) const {
     // **And a chain's link at least its floor's trip** (the user, 2026-10-09: "if LT4 has lvl
     // requirment, that means that also Tersia quest has to be synced with specific LT floor lvl
     // requirment"): the link opens its floor's row (openChained), so one offered below that row's
-    // level showed a trip it then refused -- the Pit from 40 under Dungeon 3's 100, the Red Floor
+    // level showed a trip it then refused -- the Pit from 40 under Dungeon 3's then 100, the Red Floor
     // under the fourth floor's 120. Ours.
     for (int i = 0; i < kTravels; ++i) {
         if (travelQuest(i) == index) level = std::max(level, int32_t(moveLevel(travelAt(i).level, mine().kin)));

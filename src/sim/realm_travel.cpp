@@ -24,8 +24,11 @@ constexpr TravelRow kRows[kTravels] = {
     // The first floor at the stair's 40, not 60 (the user, 2026-10-09): the Catacombs are offered
     // from 40 (2026-10-08), and a link asks at least its floor's trip (Realm::questLevel).
     {"Dungeon", 1, 40, 3000, 108, 247, -1, -1, "dungeon"},
-    {"Dungeon 2", 1, 80, 3500, 232, 126, -1, -1, "dungeon_2"},
-    {"Dungeon 3", 1, 100, 4000, 3, 84, 1, -1, "dungeon_3"},
+    // The lower floors at 60 and 70, not MU's doubled 80 and 100 (the user, 2026-10-18: "i can go to
+    // atlans with lvl 77 elf buy i cant go to dungeon 3?"): Atlans's row is MU's own 70, undoubled,
+    // and its monsters outrank the third floor's, so that floor asks no more.
+    {"Dungeon 2", 1, 60, 3500, 232, 126, -1, -1, "dungeon_2"},
+    {"Dungeon 3", 1, 70, 4000, 3, 84, 1, -1, "dungeon_3"},
     // `Gates.cs:51-57` (docs/worlds/lost-tower-port.md §2.3): LostTower lands in the safe hall, on spawn
     // gate 42, facing nowhere; LostTower2-7 on each floor's arrival gate, 31-41, as those face.
     // The hall at the Devias door's 80, not 100 (the user, 2026-10-09): Devin's errand sends the

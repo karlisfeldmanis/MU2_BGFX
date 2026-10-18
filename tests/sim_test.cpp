@@ -5661,7 +5661,7 @@ void testWishDropsOnWalk(const content::Tables& tables) {
 }
 
 // A chain's link asks at least its floor's trip (the user, 2026-10-09: "if LT4 has lvl requirment,
-// that means that also Tersia quest has to be synced"): the Pit at Dungeon 3's 100, the Red Floor at
+// that means that also Tersia quest has to be synced"): the Pit at Dungeon 3's 70, the Red Floor at
 // the fourth floor's 120, the Catacombs at the stair's 40. The Orb of Penetration off the Pit, on
 // Rolling Fire. And Lirien marked for Peia's errand before she is spoken to.
 void testChainLevels() {
@@ -5671,9 +5671,9 @@ void testChainLevels() {
     check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur",
                               lorencia, error), "Lorencia's tables load");
     sim::Realm realm;
-    check(realm.raise(&lorencia, 7, 140, 125, sim::Kin::DarkKnight, 90), "a knight at 90");
+    check(realm.raise(&lorencia, 7, 140, 125, sim::Kin::DarkKnight, 60), "a knight at 60");
     checkEqual(realm.questLevel(3), 40, "the Catacombs from 40");
-    checkEqual(realm.questLevel(5), 100, "the Pit from 100, Dungeon 3's");
+    checkEqual(realm.questLevel(5), 70, "the Pit from 70, Dungeon 3's");
     checkEqual(realm.questLevel(sim::questIndexOf("tersia_4")), 120, "the Red Floor from 120");
     checkEqual(realm.questLevel(sim::questIndexOf("tersia_door")), 80, "Tersia's first at the door's 80");
     checkEqual(realm.questLevel(sim::kTowerErrand), 80, "as Devin's errand to her");
@@ -5683,7 +5683,7 @@ void testChainLevels() {
         record.quests[q].completions = 1;
     }
     realm.restore(record);
-    check(realm.questLocked(5), "the Pit waits at 90");
+    check(realm.questLocked(5), "the Pit waits at 60");
     sim::Realm strong;
     check(strong.raise(&lorencia, 7, 140, 125, sim::Kin::DarkKnight, 100), "and a knight at 100");
     sim::HeroRecord hundred = strong.record();
