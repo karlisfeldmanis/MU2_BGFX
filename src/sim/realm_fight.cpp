@@ -110,6 +110,18 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         happenings_.back().fireLay = fireLay;
         elements(0);
         chillHero(attacker, target);
+        // A miss still tells it who swung (the user, 2026-10-18: "sometime when i hit monster, it
+        // take some time till monster starts to hit back"): a hero who missed twice stood beside
+        // a beast still wandering, or one out of its sight was never answered. It wakes, holds
+        // the grudge, and turns to him only when it has nobody -- a miss builds no threat, so it
+        // takes no beast off a party's tank. Ours.
+        if (target.monster() && (attacker.player || attacker.summoner != 0)) {
+            target.provoked = true;
+            target.provokedUntil = tick_ + kGrudgeTicks;
+            target.wakesAt = 0;
+            if (target.quarry == 0) target.quarry = attacker.id;
+            if (target.temper == Temper::Asleep) target.temper = Temper::Wandering;
+        }
         // His shield's Evil Spirit, each worn rolling off the sockets' stream -- drawn only
         // when one is worn and none is going, so a run without it is not moved.
         if (target.player && target.alive() && !attacker.player && !spiritsGoing(target.id)) {
@@ -313,6 +325,9 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         // it ever running a thought.
         target.provoked = true;
         target.provokedUntil = tick_ + kGrudgeTicks;
+        // And a blow ends a risen beast's five idle seconds: it answers at once rather than
+        // standing out the rest of its rise while he hits it. Ours.
+        target.wakesAt = 0;
         // **Her summon holds what it has struck** (the user's, 2026-09-28: "can hold aggro"):
         // her own shot does not turn a monster off her living summon onto her. Anybody else's
         // blow -- the summon's own included -- turns it as it always did.

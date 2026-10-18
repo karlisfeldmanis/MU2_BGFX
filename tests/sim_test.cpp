@@ -12203,6 +12203,44 @@ void testSpawn(const content::Tables& tables) {
     check(realm.find(id + 1000) == nullptr, "an id nobody holds finds nobody");
 }
 
+// A risen beast answers the blow that finds it (the user, 2026-10-18: "sometime when i hit
+// monster, it take some time till monster starts to hit back"): its five idle seconds after a
+// rise end at the first blow, rather than standing out while he hits it.
+void testRisenAnswers(const content::Tables& tables) {
+    sim::Realm realm;
+    check(realm.raise(&tables, 4242, 138, 124, sim::Kin::DarkKnight, 60), "a realm for the rise");
+    const sim::Body* model = nullptr;
+    float best = 1e30f;
+    for (const sim::Body& one : realm.bodies()) {
+        if (!one.monster() || !one.alive()) continue;
+        const float d = (one.x - 138) * (one.x - 138) + (one.y - 124) * (one.y - 124);
+        if (d < best) {
+            best = d;
+            model = &one;
+        }
+    }
+    check(model != nullptr, "a monster to copy");
+    if (!model) return;
+    sim::Body risen = *model;
+    realm.setHeroDown(risen.column(), risen.row() + 1, 0, -1);
+    risen.maxHealth = risen.health = 1000000;
+    risen.wakesAt = realm.tick() + 400;   // still in its rise far past the answer wanted
+    const uint32_t id = realm.spawn(std::move(risen));
+    realm.command({.kind = sim::Command::Kind::Order, .player = realm.hero().id,
+                   .a = int(sim::Request::Kind::Attack), .b = 0, .c = 0, .d = 0, .target = id});
+    int64_t struck = -1, answered = -1;
+    for (int i = 0; i < 200 && answered < 0; ++i) {
+        realm.step();
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.who == realm.hero().id && h.whom == id && struck < 0) struck = realm.tick();
+            if (h.who == id && h.whom == realm.hero().id) answered = realm.tick();
+        }
+    }
+    std::printf("  struck at %lld, answered at %lld\n", (long long)struck, (long long)answered);
+    check(struck >= 0, "the knight swings at the risen beast");
+    check(answered >= 0 && answered - struck <= 60, "and it answers within three seconds, not its rise");
+}
+
 // Two heroes in one world (docs/sprints/19-many-heroes.md): each steps, each is asked, answered
 // and paid his own, and the same two-hero script run twice comes out the same.
 uint64_t twoHeroHunt(const content::Tables& tables, uint32_t* ids, int* gainedRight,
@@ -12898,6 +12936,21 @@ void testChatWire() {
     body.back() = 0;
     body.insert(body.begin(), 9);  // a channel past the last, the rest shifted on
     check(!net::parse(body, back), "a frame of no channel is refused");
+    // Local and Global (protocol 37) come after the first five, which keep their numbers.
+    check(uint8_t(net::Channel::Map) == 0 && uint8_t(net::Channel::Server) == 4 &&
+              uint8_t(net::Channel::Local) == 5 && uint8_t(net::Channel::Global) == 6,
+          "the channels keep their numbers, Local and Global after them");
+    for (const net::Channel channel : {net::Channel::Local, net::Channel::Global}) {
+        std::vector<uint8_t> more;
+        net::Say up;
+        up.channel = channel;
+        up.text = "anyone near the shrine?";
+        net::put(more, up);
+        net::Say got;
+        check(net::take(more, kind, body) == 1 && net::parse(body, got) && got.channel == channel &&
+                  got.text == up.text,
+              "a Local or Global Say parses back");
+    }
 
     check(net::saidText("  hi\tthere\n ") == "hi there", "control bytes become spaces, ends trimmed");
     check(net::saidText(" \n ").empty(), "nothing said is empty");
@@ -13235,6 +13288,7 @@ int main() {
     testSpamClicks(tables);
     testDeterminism(tables);
     testSpawn(tables);
+    testRisenAnswers(tables);
     testTwoHeroes(tables);
     testSquareResult();
     testDropsAreTheirs(tables);
