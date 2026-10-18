@@ -5760,7 +5760,9 @@ void testTravelQuestLock() {
     realm.setHeroDown(150, 150, 1, 0);
     checkEqual(int(realm.travelRefusal(first)), int(sim::TravelRefusal::None),
                "the floor he is on is not refused");
+    const int64_t purse = realm.money();
     check(realm.travel(first), "and is travelled to");
+    checkEqual(int(purse - realm.money()), 0, "for nothing: a trip on the map he is on is free");
     const int dc = realm.hero().column() - sim::travelAt(first).column;
     const int dr = realm.hero().row() - sim::travelAt(first).row;
     check(dc * dc + dr * dr <= 64, "set down at its landing");

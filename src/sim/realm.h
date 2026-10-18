@@ -1390,6 +1390,8 @@ public:
     uint32_t found() const { return me().found; }
     // Why a trip on that row would be refused now, or None.
     TravelRefusal travelRefusal(int index) const;
+    // What a trip on that row costs him now: its price, or nothing on the map he is on.
+    int64_t travelZen(int index) const;
     // The quest a row waits on (TravelRefusal::Quest): a Dungeon floor's link of the Golden
     // Archer's chain, taken; a Lost Tower floor's (2-7) of Tersia's, handed in; the n-th
     // floor the n-th link; -1 for a row that waits on none.

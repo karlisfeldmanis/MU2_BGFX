@@ -514,8 +514,9 @@ void Travel::rebuild(const Drawn& now) {
             const uint8_t why = priced >= 0 ? now.refusals[priced] : uint8_t(sim::TravelRefusal::Unknown);
             if (why == uint8_t(sim::TravelRefusal::None) || why == uint8_t(sim::TravelRefusal::Zen)) {
                 const bool short_ = why == uint8_t(sim::TravelRefusal::Zen);
-                const long long zen = sim::travelAt(priced).zen;
-                const std::string figure = panel::commas(zen);
+                // Nothing on the map he is on (Realm::travelZen): "Free", and no coin.
+                const long long zen = sim::travelAt(priced).map == now.here ? 0 : sim::travelAt(priced).zen;
+                const std::string figure = zen > 0 ? panel::commas(zen) : std::string("Free");
                 const float size = kPriceSize * u;
                 const float right = b.right() - kPadX * u;
                 const float top = b.y + kLine2 * u;
@@ -523,7 +524,7 @@ void Travel::rebuild(const Drawn& now) {
                                  short_ ? style::kBloodHi : moneyColour(zen), figure);
                 priceLeft = right - controls::labelWidth(size, figure);
                 const gfx::Art* coin = arts_ != nullptr ? &arts_->get("bag_zen") : nullptr;
-                if (coin != nullptr && coin->valid()) {
+                if (zen > 0 && coin != nullptr && coin->valid()) {
                     const float side = std::round(kCoinTall * u);
                     const float cw = std::round(side * coin->width / std::max(1.0f, coin->height));
                     priceLeft -= 4.0f * u + cw;

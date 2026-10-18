@@ -294,15 +294,25 @@ TravelRefusal Realm::travelRefusal(int index) const {
     const Body& hero = mine();
     if (!hero.alive()) return TravelRefusal::Dead;
     if (hero.level < moveLevel(to.level, hero.kin)) return TravelRefusal::Level;
-    if (me().money < to.zen) return TravelRefusal::Zen;
+    if (me().money < travelZen(index)) return TravelRefusal::Zen;
     if (rulesOf(uint32_t(to.map)).flight && !canFly(*tables_, me().bag)) return TravelRefusal::Wings;
     return TravelRefusal::None;
+}
+
+int64_t Realm::travelZen(int index) const {
+    if (index < 0 || index >= kTravels || !tables_) return 0;
+    // Free on the map he is on (the user, 2026-10-18: "fast travel for in same map has to be
+    // free"): another of the Dungeon's or the Lost Tower's floors, or a town's landing from its
+    // field. Ours.
+    const TravelRow& to = kRows[index];
+    return to.map == int32_t(tables_->map) ? 0 : to.zen;
 }
 
 bool Realm::travel(int index) {
     if (travelRefusal(index) != TravelRefusal::None) return false;
     const TravelRow& to = kRows[index];
-    me().money -= to.zen;
+    const int64_t zen = travelZen(index);
+    me().money -= zen;
     // Whatever he had open or was doing stays behind with the map.
     me().trading = me().banking = me().questing = -1;
     closeMachine();
@@ -322,7 +332,7 @@ bool Realm::travel(int index) {
             vanish(summon);
         }
     }
-    core::logf("travel: to %s for %lld zen", to.name, static_cast<long long>(to.zen));
+    core::logf("travel: to %s for %lld zen", to.name, static_cast<long long>(zen));
     // Another floor of the map he is on (the Dungeon's): set down there in place, as a same-map
     // gate does, with no map change.
     if (to.map == int32_t(tables_->map)) {
