@@ -32,6 +32,11 @@
 
 namespace mu::sim {
 
+// Ticks a summon stands still after each blow, so its swing is drawn whole before it walks
+// (Realm::tend): the Stone Golem's plays 0.87 s at its 0.7 pace, and 18 ticks is 0.9 s. Ours,
+// as kStandOverTicks is, and never past its next blow.
+constexpr int kSummonStandTicks = 18;
+
 bool Realm::conjure(Body& hero, const SkillRow& row) {
     if (me().summonSlot < 0 || row.summons <= 0) return false;
     // None in Icarus: WebZen refuses the cast there (user.cpp:29567-29571), MuMain's client too
@@ -213,6 +218,17 @@ void Realm::tend(Body& summon) {
     // is put down behind her rather than trailing across the map (kSummonBlink, ours).
     if (reach(summon, *owner) > float(kSummonBlink) && blinkSummon(summon, *owner)) return;
 
+    // **Standing over its blow** (the user, 2026-10-18: "golem elf summon is killing monster
+    // without animation"), as a monster stands over its kill (kStandOverTicks): the drawing
+    // cancels a swing the moment its body walks, and drops the blow's cue with it, so a summon
+    // that turned to its next quarry or back to her on the tick after it killed was drawn
+    // walking off while its victim fell to a blow never shown. Held still while the swing
+    // plays (kSummonStandTicks).
+    if (tick_ < summon.standsUntil) {
+        summon.temper = Temper::Fighting;
+        return;
+    }
+
     // Tethered: past its leash from her it walks back beside her and does nothing else.
     const int tether = summon.quarry != 0 ? kSummonTetherFighting : kSummonTether;
     const float gap = reach(summon, *owner);
@@ -264,6 +280,7 @@ void Realm::tend(Body& summon) {
         if (tick_ >= summon.swingsAt) {
             summon.swingsAt = tick_ + summon.swingTicks;
             strikeAt(summon, quarry);
+            summon.standsUntil = tick_ + std::min<int64_t>(kSummonStandTicks, summon.swingTicks);
         }
         return;
     }
