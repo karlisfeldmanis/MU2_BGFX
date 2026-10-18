@@ -30,6 +30,7 @@ namespace mu::game {
 struct ChestRequests {
     int moveFrom = -1, moveTo = -1;  // a drag let go over another cell of the vault
     int outside = -1;                // a drag let go outside the window, from this cell
+    int back = -1;                   // a right-click on this cell: back to the bag
     float outsideX = 0.0f, outsideY = 0.0f;
     bool depositZen = false, withdrawZen = false;
     bool close = false;

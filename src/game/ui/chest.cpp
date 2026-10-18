@@ -128,6 +128,11 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
             lifting_ = hovered_;
         }
     }
+    // A right-click on a thing takes it out into the bag, as the machine's does (bug report #7,
+    // 2026-10-18: "for storage (vault) add right click do deposit/withdraw items").
+    if (pointer.rightPressed && inside && dragging_ < 0 && hovered_ >= 0 && out) {
+        out->back = hovered_;
+    }
     if (pointer.released) {
         if (out) {
             if (closing_ && overClose_) out->close = true;

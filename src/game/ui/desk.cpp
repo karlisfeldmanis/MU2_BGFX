@@ -1011,6 +1011,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         if (asked.moveFrom >= 0) {
             expect(play.rearrange(asked.moveFrom, asked.moveTo), Then::TookOrRefused);
         }
+        // A right-click: into the first room in the bag (Realm::withdraw pours it).
+        if (asked.back >= 0) expect(play.withdraw(asked.back, -1), Then::TookOrRefused);
         // Let go outside: into the bag cell under the pointer; over the world, thrown on the
         // ground at his feet as the bag throws (the user, 2026-10-09: "allow to drop items to
         // ground from warehouse" -- MU refuses it). Over any window -- the bag's frame, the bar, the
@@ -1220,6 +1222,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         } else if (asked.use >= 0 && dealing_ && sim::baggable(asked.use)) {
             // In a trade a right-click puts it up, as at the machine.
             expect(play.dealPut(asked.use, -1), carriesBound(asked.use) ? Then::Bound : Then::TookOrRefused);
+        } else if (asked.use >= 0 && banking_ && sim::baggable(asked.use)) {
+            // At the vault a right-click puts it away, in the first room it fits.
+            expect(play.deposit(asked.use, -1), Then::TookOrRefused);
         } else if (asked.use >= 0 && trading_ && sim::baggable(asked.use)) {
             // At a merchant a right-click sells it, as a drop on the shelf does (the user,
             // 2026-10-17: "allow to sell item with right click if vendor is opened").
@@ -1230,6 +1235,17 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                    worn >= 0) {
             // Anywhere else a right-click on gear wears it, as a drag onto its slot does.
             expect(play.moveItem(asked.use, worn), Then::TookOrRefused);
+        } else if (asked.use >= 0 && sim::wearable(asked.use)) {
+            // A right-click on a worn piece takes it off, into the first room in the bag; a full
+            // bag is the interface's no (bug report #7, 2026-10-18: "fast equip/unequip").
+            const sim::Held& what = play.realm().satchel()[asked.use];
+            const content::Tables* tables = play.realm().tables();
+            const int room = tables && !what.empty() && size_t(what.item) < tables->items.size()
+                                 ? play.realm().satchel().free(*tables, tables->items[size_t(what.item)].width,
+                                                               tables->items[size_t(what.item)].height)
+                                 : -1;
+            if (room >= 0) expect(play.moveItem(asked.use, room), Then::TookOrRefused);
+            else refused();
         } else if (asked.use >= 0) {
             expect(play.useItem(asked.use), Then::Refused);
         }
