@@ -154,10 +154,12 @@ void Tuner::finish(core::Args& args, gfx::Window& window, int preset) {
     args.cap = std::clamp(window.refreshHz(), 60, 240);
     window.holdVsync(false);
     // And the launcher's other guess the measure can answer (the user, 2026-10-17: "i think
-    // launcher could be false positive", "good enough textures"): a card it took for Lowest has
-    // Half textures, which no preset step lifts. A card that holds Medium or more draws Full; it
-    // takes a new start, so the game starts again here, on the character screen, measured.
-    const bool textures = preset >= core::kPresetMedium && args.textures == 0;
+    // launcher could be false positive", "good enough textures"): Half textures, which no preset
+    // step lifts. Every card draws Full: a texture's size is its memory, not its frame (the user,
+    // 2026-10-18: Half on a low-end PC "but i was able to play with 60fps on low-end with 100%
+    // texture quality"), and a card short of memory steps down by lightenOptions' lost device.
+    // It takes a new start, so the game starts again here, on the character screen, measured.
+    const bool textures = args.textures == 0;
     if (textures) {
         args.textures = 1;
         if (args.remember) args.restart = true;

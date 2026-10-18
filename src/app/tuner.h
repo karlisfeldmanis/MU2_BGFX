@@ -22,8 +22,8 @@
 // 2026-10-15), so a frame over kSpikeMs ends a climb at once. The renderer is left alone. The
 // launcher's guess can be wrong both ways (under Wine it took an M1 Pro for Low): the climb and
 // the step down answer the rows, and its other two guesses are answered at the end -- the cap is
-// the display's refresh, and Half textures on a card that holds Medium or more go Full, which
-// starts the game again once.
+// the display's refresh, and Half textures go Full on every card (their cost is memory, not the
+// frame measured), which starts the game again once.
 //
 // Once per card: options.txt keeps `tuned 1` and `tunedgpu` (vendor and device), and a run on
 // another card tunes again. Never once a Graphics row was set by hand (`hand 1`).
