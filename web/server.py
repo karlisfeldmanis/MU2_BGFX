@@ -138,7 +138,7 @@ SCRYPT = dict(n=2**14, r=8, p=1, maxmem=64 * 1024 * 1024, dklen=32)
 # updates the game itself (docs/plans/launcher.md, L4); on the Mac the app in a DMG (L5 -- the
 # double-click installer file is served too for macOS before 27, which let quarantined scripts
 # run; 27 refuses them outright). A file not there leaves its button saying so.
-# The Windows button gives MU2Setup.exe (src/launcher/mu2setup.iss), and its SHA-256 under it.
+# The Windows button gives MU2Setup.exe (src/launcher/mu2setup.iss).
 DOWNLOADS = {"windows": "MU2Setup.exe", "macos": "MU2.dmg"}
 # Each download's SHA-256 by (path, size, mtime): read once a release, not once an ask.
 DOWNLOAD_SUMS = {}
