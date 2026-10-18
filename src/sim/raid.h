@@ -186,6 +186,12 @@ constexpr float kShadowOut = 4.0f;
 // later -- the invasion over and the weather clearing (the user, 2026-10-06). Ours.
 constexpr int64_t kHardEnrage = 8 * 60 * 20;
 constexpr int64_t kDepartTicks = 100;
+// **Its first stage not broken, it leaves sooner**: still above kFlightAt this long after it
+// lands, it goes as it does at kHardEnrage -- one blow from a lone low character had kept it
+// standing the whole eight minutes (the user, 2026-10-18: "decrease how long dragon will stay
+// on land if first stage of his HP is not damaged ... nooob can start fight, and he will
+// wonder there 4ever"). Ours.
+constexpr int64_t kGroundStageTicks = 4 * 60 * 20;
 // What an Inferno without its shadows would be; none is thrown since the dragon leaves instead.
 constexpr float kWipeShare = 10.0f;
 constexpr float kWipeReach = 64.0f;

@@ -458,8 +458,12 @@ void Realm::raidTick() {
     // And not struck in its first two minutes, it leaves the same way: nobody came
     // (sim::kInvasionUnstruckTicks; the user, 2026-10-11).
     const bool unstruck = !invasion_.struck && tick_ - raid_.landedAt >= kInvasionUnstruckTicks;
-    if (tick_ - raid_.landedAt >= kHardEnrage || unstruck) {
+    // Nor, its first stage not broken in four (kGroundStageTicks): a lone blow is not a fight.
+    const bool unbroken =
+        raid_.stage == RaidStage::Ground && tick_ - raid_.landedAt >= kGroundStageTicks;
+    if (tick_ - raid_.landedAt >= kHardEnrage || unstruck || unbroken) {
         if (unstruck) core::logf("raid: nobody struck the dragon in two minutes; it leaves");
+        else if (unbroken) core::logf("raid: its first stage unbroken in four minutes; it leaves");
         raid_.departing = true;
         raid_.departsAt = tick_ + kDepartTicks;
         raid_.aloft = true;
