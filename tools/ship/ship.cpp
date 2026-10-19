@@ -235,6 +235,8 @@ public:
         lines_ = std::make_unique<Job>(root_, "./mu ship updates --json" + webFlag());
     }
     bool statusIn() const { return !plan_.isNull(); }
+    // --draft-from SHA: as if typed into "from" and Draft pressed, once the site's lines are in.
+    void draftFrom(const std::string& sha) { autoDraft_ = sha; }
     void openTab(const std::string& t) { wantTab_ = t; }
 
     // Each frame: whatever finished is taken in; the next of a run of steps is started.
@@ -269,14 +271,21 @@ public:
                 site_.clear();
                 const Json& entries = said["data"]["entries"];
                 for (size_t i = 0; i < entries.size(); ++i) site_.push_back(lineOf(entries.at(i)));
+                // "from" follows the site only while nobody has typed another commit into it.
+                const std::string was = notedThrough_;
                 notedThrough_ = said["data"]["noted_through"].stringOr("");
-                std::snprintf(since_, sizeof since_, "%s", notedThrough_.c_str());
+                if (!since_[0] || was == since_) std::snprintf(since_, sizeof since_, "%s", notedThrough_.c_str());
                 siteError_.clear();
             } else {
                 siteError_ = lastLines(lines_->output(), 6);
             }
         }
         if (lines_ && !lines_->done()) linesTaken_ = false;
+        if (!autoDraft_.empty() && lines_ && lines_->done() && linesTaken_) {
+            std::snprintf(since_, sizeof since_, "%s", autoDraft_.c_str());
+            autoDraft_.clear();
+            draft();
+        }
 
         if (drafting_ && drafting_->done() && !draftTaken_) {
             draftTaken_ = true;
@@ -1038,6 +1047,7 @@ private:
     std::vector<std::string> outbox_;
     char draftDay_[16] = {};
     char since_[48] = {};
+    std::string autoDraft_;
     bool plain_ = false;
     int filter_ = 0;
 };
@@ -1069,12 +1079,13 @@ void style() {
 }  // namespace
 
 int main(int argc, char** argv) {
-    std::string root = MU2_SOURCE_DIR, web, shot, tab;
+    std::string root = MU2_SOURCE_DIR, web, shot, tab, draftFrom;
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
         if (a == "--web" && i + 1 < argc) web = argv[++i];
         else if (a == "--shot" && i + 1 < argc) shot = argv[++i];
         else if (a == "--tab" && i + 1 < argc) tab = argv[++i];
+        else if (a == "--draft-from" && i + 1 < argc) draftFrom = argv[++i];
         else {
             std::fprintf(stderr, "usage: mu_ship [--web URL] [--tab release|updates] [--shot PNG]\n");
             return 2;
@@ -1098,6 +1109,7 @@ int main(int argc, char** argv) {
         App app(root, web);
         app.refresh();
         if (!tab.empty()) app.openTab(tab);
+        if (!draftFrom.empty()) app.draftFrom(draftFrom);
         auto last = Clock::now();
         Clock::time_point shotAt{};
         int shotFrames = -1;
