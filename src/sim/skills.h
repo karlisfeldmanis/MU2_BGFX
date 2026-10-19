@@ -577,8 +577,13 @@ float magicSpeedStat(Kin kin, int agility);
 int32_t cooldownTicks(const SkillRow& row, int agility, int32_t floorTicks);
 
 // What the floor is for this row: the clip's length for an attack, the boon's duration and two
-// seconds for a buff.
+// seconds for a buff -- but the clip's for the elf's two (elfBuff).
 int32_t floorTicksFor(const SkillRow& row, int32_t clipTicks);
+// Greater Defense and Greater Damage, the elf's buffs: cast on her party as well as herself, and
+// cooled at her hands rather than their length (floorTicksFor).
+inline bool elfBuff(const SkillRow& row) {
+    return row.number == skill::kGreaterDefense || row.number == skill::kGreaterDamage;
+}
 
 // How much of every blow Defense takes away, 0 to kGuardCap, off the shield he holds, his
 // strength and his agility. INVENTION: the user's call of 2026-09-25 put all four stats in it,

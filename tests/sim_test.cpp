@@ -4168,6 +4168,16 @@ void testSkills(const content::Tables& tables) {
     // floor, and the floor is the wall: docs/game/skills-dk.md §3.2's "a floor and not a zero".
     const sim::SkillRow& cyclone = *sim::skillNumbered(sim::skill::kCyclone);
     const sim::SkillRow& guard = *sim::skillNumbered(sim::skill::kDefense);
+    // The elf's two buffs cool at her hands, not their five minutes (the user, 2026-10-19:
+    // "reduce cooldown for elf buff auras"), so she can raise them on each of her party in turn;
+    // the knight's Defense keeps its floor.
+    for (const int32_t buff : {sim::skill::kGreaterDefense, sim::skill::kGreaterDamage}) {
+        const sim::SkillRow& row = *sim::skillNumbered(buff);
+        check(sim::cooldownTicks(row, 0, sim::floorTicksFor(row, 20)) <= 60,
+              "an elf's buff is ready again in three seconds");
+    }
+    check(sim::cooldownTicks(guard, 0, sim::floorTicksFor(guard, 20)) > guard.boonTicks,
+          "and the knight's Defense not before it lapses");
     int32_t last = sim::cooldownTicks(cyclone, 0, 20);
     bool falls = true, floored = true;
     for (int agility = 0; agility <= 3000; agility += 10) {

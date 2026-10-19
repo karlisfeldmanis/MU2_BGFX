@@ -134,7 +134,8 @@ namespace mu::net {
 //     room in the bag only when the plus could take it off him, as the bag's own does, and the
 //     elf's summons bite at the ladder's square root with a fifth less health, and the Chaos
 //     Machine refuses a bound thing, and a jewel from the vault or the box that takes a worn
-//     thing off him no longer leaves a copy where the jewel was (2026-10-19).
+//     thing off him no longer leaves a copy where the jewel was, and the elf's Greater Defense
+//     and Greater Damage cool for three seconds, not five minutes (2026-10-19).
 constexpr uint32_t kVersion = 39;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.

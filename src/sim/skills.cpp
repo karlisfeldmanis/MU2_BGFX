@@ -482,22 +482,22 @@ constexpr SkillRow kRows[kSkills] = {
      .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
      .needLevel = 0, .kin = Kin::FairyElf, .anyHand = true, .mends = true},
     // Greater Defense 27: **her guard, Defense's own row in the elf's hand** -- thirty mana,
-    // five minutes, twelve seconds of cooldown floored at its length and two, learned at six --
+    // five minutes, three seconds of cooldown at her hands (2026-10-19, elfBuff), learned at six --
     // the user's of 2026-09-28, "available early, the same as the Orb of Defense and the Scroll
     // of Soul Barrier, with the same stats". What it takes off a blow is `wardShare`. No shield:
     // the bow leaves her no hand for one. The mana is 0.75's Greater Defense's own.
-    {.number = skill::kGreaterDefense, .name = "Greater Defense", .mana = 30, .coolTicks = 240,
+    {.number = skill::kGreaterDefense, .name = "Greater Defense", .mana = 30, .coolTicks = 60,
      .boonTicks = 6000, .damageTaken = 0.50f,
      .tells = "A ward raised for five minutes. The quicker and keener the elf, the more of every "
               "blow it takes.",
      .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
      .needLevel = 6, .kin = Kin::FairyElf, .anyHand = true},
-    // Greater Damage 28: 0.75's row -- forty mana, `3 + energy / 7` on every blow. Ours: twelve
-    // seconds of cooldown floored at its length and two, as the guards are, and **five minutes
+    // Greater Damage 28: 0.75's row -- forty mana, `3 + energy / 7` on every blow. Ours: three
+    // seconds of cooldown as Heal's (2026-10-19, elfBuff), and **five minutes
     // where 0.75 gives sixty seconds** (GreaterDamageEffectInitializer) -- the user, 2026-10-02:
     // "it has to be same durations as defense", Greater Defense's 6000 ticks. Its orb asks 92
     // energy and no level (Gem04.json).
-    {.number = skill::kGreaterDamage, .name = "Greater Damage", .mana = 40, .coolTicks = 240,
+    {.number = skill::kGreaterDamage, .name = "Greater Damage", .mana = 40, .coolTicks = 60,
      .tells = "Every blow harder by a share of her energy, for five minutes.",
      .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
      .needLevel = 0, .kin = Kin::FairyElf, .anyHand = true, .mightTicks = 6000},
@@ -1014,6 +1014,11 @@ float magicSpeedStat(Kin kin, int agility) {
 }
 
 int32_t floorTicksFor(const SkillRow& row, int32_t clipTicks) {
+    // **The elf's two buffs are floored at her hands alone** (the user, 2026-10-19: "reduce
+    // cooldown for elf buff auras"): held at their five minutes she could raise one on a single
+    // player of her party in five minutes. Five minutes cast every five is already always up,
+    // and 0.75 cools neither, so the guard's floor guards nothing here.
+    if (elfBuff(row)) return std::max<int32_t>(1, clipTicks);
     if (row.boonTicks > 0) return row.boonTicks + kBoonGapTicks;
     if (row.mightTicks > 0) return row.mightTicks + kBoonGapTicks;
     // A channel's own length, and two seconds: it is never ready again before it has ended.

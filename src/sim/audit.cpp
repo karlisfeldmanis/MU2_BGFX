@@ -147,7 +147,8 @@ void audit(const Realm& realm, Findings& findings) {
                 // A guard that comes back before it has lapsed is permanent half damage, which
                 // is the one thing the floor in `floorTicksFor` exists to make impossible.
                 const SkillRow* row = skillNumbered(happening.a);
-                if (row && row->boonTicks > 0 && happening.b <= row->boonTicks) {
+                // Not the elf's: hers last five minutes and cool at her hands (elfBuff).
+                if (row && row->boonTicks > 0 && !elfBuff(*row) && happening.b <= row->boonTicks) {
                     ++findings.castForever;
                     note(findings, "tick %lld: skill %d guards for %d ticks and cools for %d",
                          (long long)realm.tick(), happening.a, row->boonTicks, happening.b);
