@@ -501,8 +501,8 @@ void rounded(gfx::Canvas& canvas, const gfx::Box& box, const float radius[4], ui
 }
 
 void glass(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius, uint32_t top,
-           uint32_t foot) {
-    shadowUnder(canvas, box, u, radius * u);
+           uint32_t foot, bool shadow) {
+    if (shadow) shadowUnder(canvas, box, u, radius * u);
     // The ring first and a hair wider, then the body over it: two fans, and the ring is left
     // showing as the edge. Drawn rounded, and see-through enough that the world moves behind it.
     const float r = radius * u;

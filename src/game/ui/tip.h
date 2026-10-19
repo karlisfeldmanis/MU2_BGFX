@@ -158,9 +158,10 @@ void rounded(gfx::Canvas& canvas, const gfx::Box& box, const float radius[4], ui
 //
 // `top` and `foot` are the body's two ends, and 0 takes the card's own. A window asks for its
 // own pair: the card's are set for a thing read for a second, and a sheet you stand in front of
-// wants a heavier glass at its foot (see game/ui/sheet.h).
+// wants a heavier glass at its foot (see game/ui/sheet.h). `shadow` false leaves the shadow
+// off, for glass that sits on the HUD rather than floats over the world.
 void glass(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius = ink::kRadius,
-           uint32_t top = 0u, uint32_t foot = 0u);
+           uint32_t top = 0u, uint32_t foot = 0u, bool shadow = true);
 
 // A line of type with its own drop shadow, and the same with CSS's letter-spacing -- `track` ems
 // after every letter, drawn a glyph at a time because the canvas advances by the face alone.

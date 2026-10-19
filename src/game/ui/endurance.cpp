@@ -296,8 +296,10 @@ void Endurance::rebuild(const sim::Realm& realm) {
         // for elf, that dark shadow is not looking best"): where six stacked black discs made a
         // smudge, a rounded card in the "100% full" card's ash and iron, and along its foot a
         // hairline of what is left of one stack, in the count's own colour.
+        // No drop shadow under it (the user, 2026-10-19: "remove drop shadow from arrow count
+        // container, not needed anymore").
         const float u = tip::unit();
-        tip::glass(canvas_, box, u, tip::ink::kRadius * 1.5f);
+        tip::glass(canvas_, box, u, tip::ink::kRadius * 1.5f, 0u, 0u, false);
         const float thick = std::max(1.0f, std::round(2.0f * u));
         const Box track = {box.x + pad * 1.5f, box.bottom() - pad - thick, box.w - pad * 3.0f,
                            thick};
