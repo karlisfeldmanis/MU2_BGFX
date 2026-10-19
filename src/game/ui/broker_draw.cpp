@@ -165,6 +165,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
         struct Said {
             std::string left, value;
             uint32_t leftInk = 0, valueInk = 0;
+            std::vector<const gfx::Art*> faces;  // the class line's faces, before its words
         };
         const float ix = well.right() + 12.0f, iw = block.right() - 8.0f - ix;
         std::vector<Said> said;
@@ -185,7 +186,20 @@ void Broker::rebuild(Play& play, Stage* stage) {
         };
         // Whose class it is, first: under a scroll's long words it ran off the card's foot (the
         // user, 2026-10-19: "missing info on market opened item which class item is that").
-        if (sheet.classed && !sheet.who.empty()) add(sheet.who[0].text, tip::colourOf(sheet.who[0].tone), "", 0);
+        if (sheet.classed && !sheet.who.empty()) {
+            add(sheet.who[0].text, tip::colourOf(sheet.who[0].tone), "", 0);
+            // And each class's face before it (the user, 2026-10-19: "show class picture on
+            // market"): the second's where the thing asks it, the gladiator's own either way.
+            if (!said.empty() && size_t(what.item) < tables.items.size()) {
+                const content::ItemRow& row = tables.items[size_t(what.item)];
+                for (int i = 0; i < sim::kKinCount; ++i) {
+                    if (!((row.classes >> i) & 1)) continue;
+                    const bool second = ((row.classes >> (8 + i)) & 1) && sim::Kin(i) != sim::Kin::MagicGladiator;
+                    const gfx::Art* face = classFaces_[i * 2 + (second ? 1 : 0)];
+                    if (face && face->valid()) said.back().faces.push_back(face);
+                }
+            }
+        }
         if (!sheet.hero.empty()) add(sheet.hero.word, style::kBone2, sheet.hero.value, tip::colourOf(sheet.hero.tone));
         for (const tip::Section& section : sheet.sections) {
             for (const tip::Row& r : section.rows) {
@@ -219,7 +233,16 @@ void Broker::rebuild(Play& play, Stage* stage) {
             const bool under = i >= beside;
             if (under && i == beside) ly = block.bottom() + 16.0f;
             if (under && ly > stop) break;
-            const float lx = under ? ax : ix, rx = under ? block.right() : ix + iw;
+            float lx = under ? ax : ix;
+            const float rx = under ? block.right() : ix + iw;
+            for (const gfx::Art* face : said[size_t(i)].faces) {
+                constexpr float kFace = 14.0f;
+                const Box disc{lx, ly - kFace + 3.0f, kFace, kFace};
+                canvas_.rect(P(disc), style::kVoid);
+                canvas_.image(*face, P(disc));
+                canvas_.outline(P(disc), std::max(1.0f, u), style::kIronDk);
+                lx += kFace + 3.0f;
+            }
             text(lx, ly, kText, said[size_t(i)].leftInk, said[size_t(i)].left);
             if (!said[size_t(i)].value.empty()) right(rx, ly, kText, said[size_t(i)].valueInk, said[size_t(i)].value);
             ly += kStep;

@@ -107,4 +107,39 @@ bool Play::poseDoll(gfx::Renderer& renderer, float turn, std::vector<gfx::Drawab
     return !out.empty();
 }
 
+// A class's face for the market's card (the user, 2026-10-19: "show class picture on market"): its
+// bare body -- the class's own armour, as a new character of it stands -- posed alone at the
+// origin as the doll is, unarmed and still, for a Portrait to photograph once.
+bool Play::poseClass(gfx::Renderer& renderer, sim::Kin kin, bool second, std::vector<gfx::Drawable>& out,
+                     float head[3], float* scale) {
+    out.clear();
+    if (!figures_) return false;
+    const FigureBody* look = figures_->body(bareBody(kin, second, figures_));
+    if (!look) return false;
+    static const float kAt[3] = {0.0f, 0.0f, 0.0f};
+    classDoll_.stand(look, kAt, 0.0f, look->scale, true);
+    classDoll_.place(kAt, 0.0f, true);
+    classDoll_.update(0.0f);
+    if (dollRows_.size() < size_t(gfx::Renderer::kMaxBones) * 12) dollRows_.resize(size_t(gfx::Renderer::kMaxBones) * 12);
+    const int bones = classDoll_.pose(dollRows_.data());
+    const int palette = bones > 0 ? renderer.addPalette(dollRows_.data(), bones) : -1;
+    classDoll_.gather(palette, out);
+    head[0] = kAt[0];
+    head[1] = kAt[1] + look->height * classDoll_.scale() * 0.9f;
+    head[2] = kAt[2];
+    if (look->skeletonMesh) {
+        const std::vector<content::Bone>& bonesOf = look->skeletonMesh->bones();
+        for (size_t b = 0; b < bonesOf.size(); ++b) {
+            if (bonesOf[b].name != "Bip01 Head") continue;
+            float bind[16];
+            bx::mtxInverse(bind, bonesOf[b].inverseBind);
+            const float joint[3] = {bind[12], bind[13], bind[14]};
+            classDoll_.pointOnBind(int(b), joint, head);
+            break;
+        }
+    }
+    *scale = look->height * classDoll_.scale() / 1.8f;
+    return !out.empty();
+}
+
 }  // namespace mu::game

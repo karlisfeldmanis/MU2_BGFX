@@ -33,6 +33,11 @@ public:
 
     void open(const gfx::Interface& interface);
     void useTipStage(Stage* stage) { tipStage_ = stage; }
+    // The classes' faces for the card's class line: kin * 2 + second, null until taken (the desk's
+    // classFaces_). Set before update.
+    void classFaces(const gfx::Art* const faces[8]) {
+        for (int i = 0; i < 8; ++i) classFaces_[i] = faces[i];
+    }
 
     void update(float seconds, float width, float height, Play& play, const Pointer& pointer,
                 const Keys& keys, Stage* stage);
@@ -71,6 +76,7 @@ public:
     };
 
 private:
+    const gfx::Art* classFaces_[8] = {};
     void ask(Play& play, net::BrokerAsk asked);
     void heard(Play& play, const net::BrokerView& view);
     void browse(Play& play);

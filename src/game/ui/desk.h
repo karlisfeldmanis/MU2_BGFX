@@ -374,6 +374,10 @@ private:
     // many have been taken, which the bar redraws on.
     std::unordered_map<std::string, Portrait> partyFaces_;
     uint64_t partyFacesTaken_ = 0;
+    // Each class's face, and its second's, for the market's card: kin * 2 + second, taken one a
+    // frame while the Broker is open (Play::poseClass).
+    Portrait classFaces_[sim::kKinCount * 2];
+    std::vector<gfx::Drawable> classBody_;
     std::vector<uint32_t> faceIds_;  // whose faces Play gathers (Play::wantFaces)
     PlayerMenu playerMenu_;
     bool menuTook_ = false;  // the player menu took this frame's press

@@ -673,6 +673,10 @@ public:
     // False with nobody to draw.
     bool poseDoll(gfx::Renderer& renderer, float turn, std::vector<gfx::Drawable>& out, float head[3],
                   float* scale);
+    // A class's bare body posed alone, for its face on the market's card (Desk::portrait): as
+    // poseDoll, facing the lens. False while its body is not loaded.
+    bool poseClass(gfx::Renderer& renderer, sim::Kin kin, bool second, std::vector<gfx::Drawable>& out,
+                   float head[3], float* scale);
     const float* targetHead() const { return targetHead_; }
     float targetYaw() const { return targetYaw_; }
     float targetScale() const { return targetScale_; }
@@ -2153,6 +2157,7 @@ private:
     // The inspect window's doll (wantDoll): his figure and wings, whose they are, and the gear it
     // was dressed in (gearOf, and the wing's row).
     Figure doll_;
+    Figure classDoll_;  // a class's bare body, for its face on the market (poseClass)
     WingLook dollWing_;
     uint32_t dollId_ = 0;
     uint64_t dollGear_ = 0;

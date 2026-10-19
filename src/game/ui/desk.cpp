@@ -176,6 +176,7 @@ void Desk::shutdown() {
     tipStagePicture_.shutdown();
     inspectStagePicture_.shutdown();
     inspectFigure_.shutdown();
+    for (Portrait& face : classFaces_) face.shutdown();
     arrival_.shutdown();
     tally_.shutdown();
     beacon_.close();
@@ -1071,6 +1072,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         Broker::Keys keys;
         if (broker_.typing()) keys = {typedNow, window.backspaces(), enterNow, escapeNow};
         // Its own box typing, it keeps the pointer: a price typed and then List pressed.
+        const gfx::Art* faces[8] = {};
+        for (int i = 0; i < 8; ++i) faces[i] = classFaces_[i].taken() ? &classFaces_[i].picture() : nullptr;
+        faces[int(sim::Kin::MagicGladiator) * 2 + 1] = faces[int(sim::Kin::MagicGladiator) * 2];
+        broker_.classFaces(faces);
         broker_.update(seconds, float(window.width()), float(window.height()), play,
                        broker_.typing() && !amount_.up() ? real : pointer, keys, shelfStage_);
         std::string whom;
@@ -2391,6 +2396,20 @@ void Desk::portrait(gfx::Renderer& renderer, Play& play) {
         picture.render(renderer, face.drawables, face.head, face.yaw, face.scale);
         ++partyFacesTaken_;
         return;
+    }
+    // The classes' faces for the market's card (the user, 2026-10-19: "show class picture on
+    // market"), each once, while the Broker is open. The gladiator has no second.
+    if (brokering_) {
+        for (int i = 0; i < sim::kKinCount * 2; ++i) {
+            const sim::Kin kin = sim::Kin(i / 2);
+            const bool second = (i % 2) != 0;
+            if (classFaces_[i].taken() || (second && kin == sim::Kin::MagicGladiator)) continue;
+            if (!renderer.openStages(shaderDir_)) return;
+            float head[3] = {}, scale = 1.0f;
+            if (!play.poseClass(renderer, kin, second, classBody_, head, &scale)) continue;
+            classFaces_[i].render(renderer, classBody_, head, 0.0f, scale);
+            return;
+        }
     }
 }
 
