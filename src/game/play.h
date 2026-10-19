@@ -617,6 +617,12 @@ public:
         enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped, BagFull, NotYours, TooFar };
         Kind kind = Kind::Experience;
         int64_t value = 0;
+        // Where a kill's experience or Zen rises from, in world metres: over the body it came
+        // off, as a blow's figure does (bug #17, 2026-10-18: "Make the exp gained text like dmg
+        // text after the mob is killed ... You can also do this with the zen earned"). Unset,
+        // it is said in the lane: a quest's reward, or a kill whose body is not drawn.
+        bool anchored = false;
+        float at[3] = {0.0f, 0.0f, 0.0f};
     };
     const std::vector<Gain>& gains() const { return gains_; }
     // The skill the hero threw on this frame's ticks, by its number, or 0: the realm's yes to a
@@ -1570,12 +1576,17 @@ private:
     void releaseDrops();
     // The kill's Zen, shown taken: the figure to the lane, which sums a fight's, and the coins'
     // wait begun again -- they ring once the fight's piles stop (zenQuiet_).
-    void takeZen(int64_t zen);
+    void takeZen(int64_t zen, uint32_t dropper = 0);
+    // A kill's experience, said over `dropper` when it is drawn, else in the lane.
+    void takeExperience(int64_t experience, uint32_t dropper);
+    // A gain hung over `dropper`'s body, if it is drawn and placed (Gain::at).
+    void anchor(Gain& gain, uint32_t dropper);
     float zenQuiet_ = 0.0f;  // seconds to the coins, 0 for none owed
     struct HeldDrop {
         uint32_t drop = 0;
         uint32_t dropper = 0;
         int64_t zen = 0;  // nonzero: no drop, the kill's Zen, heard and shown as he takes it
+        int64_t experience = 0;  // nonzero: no drop, the kill's experience, shown as it falls
     };
     std::vector<HeldDrop> held_;
     std::vector<uint32_t> heldIds_;

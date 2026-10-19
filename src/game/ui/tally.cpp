@@ -107,6 +107,19 @@ constexpr float kZenSize = 10.0f;
 constexpr float kZenUnitSize = 7.0f;
 constexpr float kZenLife = 2.6f;
 constexpr float kZenIn = 0.08f;  // seconds
+// A kill's gain over its body (Tally::Float): the blows' own Bold at a miss's size (the user,
+// 2026-10-19: "show it same size as miss text"), and
+// longer-lived and slower than a blow so it is read after the last blow has gone. It starts a
+// little over the body's crown, clear of that blow's figure, and Zen stands a row over the
+// experience it comes with.
+constexpr float kFloatSize = kMissSize;
+constexpr float kFloatUnitSize = 6.0f;
+constexpr float kFloatLife = 2.2f;
+constexpr float kFloatRise = 34.0f;   // interface units over the whole life
+constexpr float kFloatAbove = 14.0f;  // units over the crown it starts from
+constexpr float kFloatStep = 10.0f;   // units a row
+constexpr float kFloatNear = 0.6f;    // metres: two gains this close share a body
+constexpr float kFloatWindow = 0.4f;  // seconds a gain still counts as just put up
 // **It scrolls, and its top fades** (the user, 2026-10-03: "can we make it scrolling with fade
 // out top?"): a row arriving pushes the stack down one row, eased over about a seventh of a
 // second (the scroll falls by e^-rate a second), never more than kLaneScrollMost rows behind
@@ -389,6 +402,7 @@ void Tally::shutdown() {
 
 void Tally::dismiss() {
     lane_.clear();
+    floats_.clear();
     heldZen_ = 0;
     zenAge_ = 0.0f;
     zenShowing_ = false;
@@ -398,6 +412,28 @@ void Tally::dismiss() {
 
 void Tally::collect(const Play& play, float seconds) {
     for (const Play::Gain& gain : play.gains()) {
+        if (gain.anchored && gain.value > 0 &&
+            (gain.kind == Play::Gain::Kind::Experience || gain.kind == Play::Gain::Kind::Zen)) {
+            Float one;
+            for (int i = 0; i < 3; ++i) one.world[i] = gain.at[i];
+            one.kind = gain.kind == Play::Gain::Kind::Zen ? Row::Kind::Zen : Row::Kind::Experience;
+            one.value = gain.value;
+            // Two splits of one kill's experience (a level crossed) are one figure.
+            bool merged = false;
+            for (Float& other : floats_) {
+                if (other.age > kFloatWindow || other.kind != one.kind) continue;
+                const float dx = other.world[0] - one.world[0], dz = other.world[2] - one.world[2];
+                if (dx * dx + dz * dz > kFloatNear * kFloatNear) continue;
+                other.value += one.value;
+                merged = true;
+                break;
+            }
+            if (merged) continue;
+            // Zen a row over the experience, whichever arrived first.
+            one.slot = one.kind == Row::Kind::Zen ? 1 : 0;
+            floats_.push_back(one);
+            continue;
+        }
         switch (gain.kind) {
             case Play::Gain::Kind::Zen:
                 // Held, and the wait begun again: see kZenRollUp.
@@ -476,6 +512,15 @@ void Tally::collect(const Play& play, float seconds) {
         zenRow_.age += seconds;
         if (zenRow_.age >= kZenLife) zenShowing_ = false;
     }
+    for (size_t i = 0; i < floats_.size();) {
+        floats_[i].age += seconds;
+        if (floats_[i].age >= kFloatLife) {
+            floats_[i] = floats_.back();
+            floats_.pop_back();
+            continue;
+        }
+        ++i;
+    }
     scroll_ = std::min(scroll_, kLaneScrollMost) * std::exp(-kLaneScrollRate * seconds);
     if (scroll_ < 0.001f) scroll_ = 0.0f;
     // The newest kLaneMost, the death's row kept whatever comes after it.
@@ -513,7 +558,8 @@ void Tally::update(float seconds, const Play& play, const float* viewProj, int w
         return;
     }
     collect(play, seconds);
-    const bool anything = !play.showing().figures().empty() || !lane_.empty() || zenShowing_;
+    const bool anything = !play.showing().figures().empty() || !lane_.empty() || zenShowing_ ||
+                          !floats_.empty();
     if (!anything) {
         // Cleared once, then left alone: a town with nothing happening in it rebuilds nothing.
         if (drawn_) {
@@ -611,6 +657,39 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         const float tracking = tag ? 0.0f : word ? 0.14f : kTracking;
         write(std::round(x), std::round(y), size, withAlpha(inkOf(figure), alpha), text, tracking,
               !word);
+    }
+
+    // ---- a kill's gains, over the body ---------------------------------------------------
+    // "+1,234" in the blows' Bold under their full halo -- the lane's Medium read thin over
+    // grass -- and the unit after it in the Medium, centred over the body, rising as a blow's
+    // figure does.
+    for (const Float& one : floats_) {
+        const float u = std::clamp(one.age / kFloatLife, 0.0f, 1.0f);
+        const float alpha = faded(u);
+        if (alpha <= 0.0f) continue;
+        const float world[4] = {one.world[0], one.world[1], one.world[2], 1.0f};
+        float clip[4];
+        bx::vec4MulMtx(clip, world, viewProj);
+        if (clip[3] <= 0.0f) continue;
+        const float nx = clip[0] / clip[3], ny = clip[1] / clip[3];
+        if (nx < -1.4f || nx > 1.4f || ny < -1.4f || ny > 1.4f) continue;
+        const float x = (nx * 0.5f + 0.5f) * float(width);
+        const float y = (0.5f - ny * 0.5f) * float(height) -
+                        (kFloatAbove + kFloatRise * ridden(u) + float(one.slot) * kFloatStep) * unit;
+        const bool zen = one.kind == Row::Kind::Zen;
+        const uint32_t ink = zen ? kZenInk : kExperienceInk;
+        const float size = kFloatSize * unit * popped(u), small = kFloatUnitSize * unit * popped(u);
+        const std::string figure = "+" + panel::commas((long long)one.value);
+        const std::string shouted = zen ? "ZEN" : "EXP";
+        const float figureWide = face_.measure(size, figure);
+        const float wordWide = quiet_.measure(small, shouted) +
+                               kLaneUnitTracking * small * float(shouted.size() - 1);
+        const float left = x - (figureWide + kLaneWordGap * unit + wordWide) * 0.5f;
+        const float at = std::round(y);
+        write(std::round(left + figureWide * 0.5f), at, size, withAlpha(ink, alpha), figure,
+              kTracking, true);
+        writeQuiet(std::round(left + figureWide + kLaneWordGap * unit + wordWide * 0.5f), at,
+                   small, withAlpha(ink, alpha * 0.85f), shouted, kLaneUnitTracking);
     }
 
     // ---- the lane ----------------------------------------------------------------------

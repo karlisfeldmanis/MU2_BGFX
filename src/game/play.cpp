@@ -511,6 +511,9 @@ void Play::update(double seconds) {
         levelsBefore_ = levelsOwed_;
         // Who each other player killed this tick: his level, said after the death, waits on it.
         std::vector<OwedRise> killedBy;
+        // The monster that fell last on this tick: Realm::kill says the death before the
+        // experience it pays, so a gain that follows one is that body's and rises over it.
+        uint32_t fell = 0;
         for (const sim::Happening& happening : realm_.happenings()) {
             // The arena's own line first, so that what the log says happened on a tick is in
             // the log before anything the drawing decides to do about it. Nothing in an
@@ -580,7 +583,9 @@ void Play::update(double seconds) {
             // from the cues and never put over a monster's head.
             if (happening.who == heroId) {
                 if (happening.what == sim::What::Gained) {
-                    gains_.push_back({Gain::Kind::Experience, happening.a});
+                    // Over the body, with its fall, as its Zen is (releaseDrops).
+                    if (fell != 0 && drawnOf(fell)) held_.push_back({0, fell, 0, happening.a});
+                    else takeExperience(happening.a, 0);
                 }
                 if (happening.what == sim::What::Gapped) gains_.push_back({Gain::Kind::Gapped, happening.a});
                 // His Zen is not here either: it is in the purse from the kill's tick, but
@@ -639,6 +644,9 @@ void Play::update(double seconds) {
                 if (drawnOf(happening.who)) held_.push_back({uint32_t(happening.a), happening.who});
             }
             if (happening.what == sim::What::Died) {
+                if (const sim::Body* body = realm_.find(happening.who); body && body->monster()) {
+                    fell = happening.who;
+                }
                 if (Drawn* dead = drawnOf(happening.who)) {
                     dead->fallOwed = true;
                     // A death in sight whose killer is not drawn: poison or a rune ticking after

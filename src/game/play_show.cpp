@@ -1171,8 +1171,11 @@ void Play::releaseDrops() {
                                    else if (dropper->deadFor < 0.0f) let = true;  // rose again
                                    // Zen skips the drop's beat: it is the fight's sum, owed
                                    // the moment the body starts to fall.
-                                   else let = one.zen > 0 || dropper->deadFor >= kDropDelay;
-                                   if (let && one.zen > 0) takeZen(one.zen);
+                                   else let = one.zen > 0 || one.experience > 0 ||
+                                              dropper->deadFor >= kDropDelay;
+                                   if (let && one.zen > 0) takeZen(one.zen, one.dropper);
+                                   else if (let && one.experience > 0)
+                                       takeExperience(one.experience, one.dropper);
                                    else if (let) landed(one.drop);
                                    return let;
                                }),
@@ -1181,16 +1184,33 @@ void Play::releaseDrops() {
     zenOwed_ = false;
     for (const HeldDrop& one : held_) {
         if (one.zen > 0) zenOwed_ = true;
-        if (one.zen == 0) heldIds_.push_back(one.drop);
+        if (one.zen == 0 && one.experience == 0) heldIds_.push_back(one.drop);
     }
     for (const CrackerOwed& owed : crackerOwed_) {
         if (owed.drop != 0) heldIds_.push_back(owed.drop);
     }
 }
 
-void Play::takeZen(int64_t zen) {
-    gains_.push_back({Gain::Kind::Zen, zen});
+void Play::takeZen(int64_t zen, uint32_t dropper) {
+    Gain gain{Gain::Kind::Zen, zen};
+    anchor(gain, dropper);
+    gains_.push_back(gain);
     zenQuiet_ = kZenQuietSeconds;
+}
+
+void Play::takeExperience(int64_t experience, uint32_t dropper) {
+    Gain gain{Gain::Kind::Experience, experience};
+    anchor(gain, dropper);
+    gains_.push_back(gain);
+}
+
+void Play::anchor(Gain& gain, uint32_t dropper) {
+    const Drawn* body = dropper != 0 ? drawnOf(dropper) : nullptr;
+    if (body == nullptr || !body->placed || ground_ == nullptr) return;
+    gain.anchored = true;
+    gain.at[0] = body->crown[0];
+    gain.at[1] = body->crown[1];
+    gain.at[2] = body->crown[2];
 }
 
 void Play::fall(Drawn& dead) {

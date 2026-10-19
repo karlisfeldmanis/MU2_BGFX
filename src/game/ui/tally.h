@@ -70,6 +70,16 @@ private:
         float age = 0.0f;
     };
 
+    // A kill's experience or Zen, risen from over the body it came off and not said in the
+    // lane (bug #17, 2026-10-18: "Its hard to see"). Hung in the world as a blow's figure is.
+    struct Float {
+        float world[3] = {0.0f, 0.0f, 0.0f};
+        Row::Kind kind = Row::Kind::Experience;
+        int64_t value = 0;
+        float age = 0.0f;
+        uint8_t slot = 0;  // rows over any just put up on the same body
+    };
+
     void collect(const Play& play, float seconds);
     // The hairline and diamond under the death, drawn as the arrival draws its own: two rules
     // fading outward from a turned square, each over its Gaussian box-shadow.
@@ -105,6 +115,7 @@ private:
     bgfx::TextureHandle plainTexture_ = BGFX_INVALID_HANDLE;
 
     std::vector<Row> lane_;
+    std::vector<Float> floats_;
     // How far, in rows, the lane is still drawn below where it stands: a new row adds one and it
     // eases back to nought, so the stack scrolls up rather than jumping (kLaneScrollRate).
     float scroll_ = 0.0f;
