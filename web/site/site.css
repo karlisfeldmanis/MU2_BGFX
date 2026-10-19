@@ -167,14 +167,28 @@ header.top { position: relative; overflow: hidden; }
   background: linear-gradient(180deg, #1C1410, #110C0A) padding-box, linear-gradient(180deg, #5A4636, #33271F 40%, #1E1712) border-box;
   box-shadow: inset 0 1px 0 rgba(255,236,210,.05), 0 18px 44px rgba(0,0,0,.45); }
 .fixes h3 { margin: 0; padding-bottom: 14px; font: 700 19px/1.25 Cinzel, serif; letter-spacing: .03em; color: var(--bone-hi); box-shadow: inset 0 -1px 0 #2A211A; }
-.fix-group { padding: 18px 0 4px; }
-.fix-group + .fix-group { margin-top: 10px; box-shadow: inset 0 1px 0 #2A211A; }
-.fixes h4 { margin: 0 0 10px; font: 700 13px/1.6 'Alegreya Sans SC', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: #A88A6E; }
+/* One release a row: the date opens it, the newest stands open. */
+.fix-day { box-shadow: inset 0 -1px 0 #2A211A; }
+.fix-day summary { display: flex; align-items: baseline; gap: 12px; padding: 15px 2px; cursor: pointer; list-style: none; user-select: none; }
+.fix-day summary::-webkit-details-marker { display: none; }
+.fix-day summary::before { content: ""; flex: none; width: 7px; height: 7px; margin-right: 2px; align-self: center;
+  border: solid #A88A6E; border-width: 0 2px 2px 0; transform: rotate(-45deg); transition: transform .18s ease; }
+.fix-day[open] summary::before { transform: rotate(45deg) translate(-2px, -2px); }
+.fix-date { font: 700 16px/1.4 Cinzel, serif; letter-spacing: .03em; color: var(--bone-hi); }
+.fix-count { margin-left: auto; font: 700 12px/1.6 'Alegreya Sans SC', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--quiet); white-space: nowrap; }
+.fix-day summary:hover .fix-date, .fix-day summary:focus-visible .fix-date { color: #fff; }
+.fix-day summary:hover::before { border-color: var(--bone-hi); }
+.fix-day summary:focus-visible { outline: 1px solid var(--field-focus); outline-offset: 2px; border-radius: 4px; }
+.fix-group { padding: 0 0 16px 21px; }
+.fix-group + .fix-group { padding-top: 2px; }
+.fixes h4 { margin: 0 0 8px; font: 700 13px/1.6 'Alegreya Sans SC', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: #A88A6E; }
 .fixes ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 15.5px; line-height: 1.5; color: var(--bone); }
 .fixes li::marker { color: #C9A27E; }
 .fixes p { margin: 14px 0 0; font-size: 15px; color: var(--quiet); }
 @media (max-width: 600px) {
   .fixes { padding: 20px 18px; }
+  .fix-group { padding-left: 0; }
+  .fix-date { font-size: 15px; }
 }
 @media (max-width: 900px) {
   .reqs { grid-template-columns: 1fr; }
