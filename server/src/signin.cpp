@@ -356,11 +356,12 @@ void tellOnline(const std::vector<std::unique_ptr<Session>>& sessions) {
         char line[512];
         std::snprintf(line, sizeof line,
                       "%s{\"account\":%lld,\"name\":%s,\"class\":%s,\"level\":%d,\"world\":%s,\"copy\":%d,"
-                      "\"x\":%d,\"y\":%d,\"bot\":%s,\"ms\":%d}",
+                      "\"castle\":%d,\"square\":%d,\"x\":%d,\"y\":%d,\"bot\":%s,\"ms\":%d}",
                       first ? "" : ",", id, jsonText(one->name).c_str(),
                       jsonText(sim::className(int(him->kin), him->second)).c_str(), int(him->level),
-                      jsonText(one->world->name).c_str(), one->world->copy, int(him->x), int(him->y),
-                      one->bot ? "true" : "false", one->socket.rttMs());
+                      jsonText(one->world->name).c_str(), one->world->copy, one->world->castle,
+                      one->world->square, int(him->x), int(him->y), one->bot ? "true" : "false",
+                      one->socket.rttMs());
         body += line;
         first = false;
     }

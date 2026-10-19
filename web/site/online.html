@@ -269,7 +269,9 @@
       tr.appendChild(nameCell(p.account, p.name, p.account_name || p.email || ''));
       tr.appendChild(cell(p.class || '—', '', 'Class'));
       tr.appendChild(cell(String(p.level), '', 'Level', 'num'));
-      tr.appendChild(cell(map(p.world) + (p.copy > 1 ? ' ' + p.copy : ''), '', 'Map'));
+      // Blood Castle and Devil Square by their number (mu2_server's World::castle and ::square).
+      const which = p.castle > 0 ? 'Blood Castle ' + p.castle : p.square > 0 ? 'Devil Square ' + p.square : '';
+      tr.appendChild(cell(which || map(p.world) + (p.copy > 1 ? ' ' + p.copy : ''), '', 'Map'));
       tr.appendChild(cell(p.region || 'North Europe', '', 'Region'));
       // The machine its launcher last reported (web/server.py online_report `machines`): the system
       // with the renderer under it, and the graphics preset the launcher picked for the card.
