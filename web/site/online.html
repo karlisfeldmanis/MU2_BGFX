@@ -29,8 +29,6 @@
 .who td { padding: 10px; box-shadow: inset 0 -1px 0 var(--line); vertical-align: top; }
 .who td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .who .sub { display: block; font-size: 14px; color: var(--quiet); }
-.who tr.bot td { color: var(--quiet); }
-.who .char + .char { margin-top: 6px; }
 .who .open { background: none; border: 0; padding: 0; font: inherit; color: var(--bone-hi); text-decoration: underline;
   text-decoration-color: rgba(201,162,126,.45); text-underline-offset: 3px; cursor: pointer; text-align: left; }
 .who .open:hover { color: #fff; text-decoration-color: currentColor; }
@@ -86,29 +84,22 @@
 <div class="count" id="count"></div>
 <p id="stale" class="stale" hidden></p>
 <table class="who">
-<thead><tr><th>Character</th><th>Account</th><th>Level</th><th>Map</th><th>Region</th><th>Ping</th><th>Machine</th><th>Online for</th></tr></thead>
+<thead><tr><th>Character</th><th>Level</th><th>Map</th><th>Region</th><th>Ping</th><th>Online for</th></tr></thead>
 <tbody id="rows"></tbody>
 </table>
 <p class="center muted" style="font-size: 14px" id="told"></p>
 
-<h2 class="h2" style="margin-top: 24px">Recent plays</h2>
-<table class="who">
-<thead><tr><th>Character</th><th>Account</th><th>Level</th><th>Last map</th><th>Machine</th><th>Started</th><th>Played</th></tr></thead>
-<tbody id="recent"></tbody>
-</table>
-<p class="center muted" style="font-size: 14px">The last 100 of 30 days, bots left out.</p>
-
 <h2 class="h2" style="margin-top: 24px">All players</h2>
 <div class="count" id="all-count"></div>
 <table class="who">
-<thead><tr><th>Account</th><th>Characters</th><th>Machine</th><th>Last played</th><th>Plays</th></tr></thead>
+<thead><tr><th>Account</th><th>Characters</th><th>Last played</th></tr></thead>
 <tbody id="all"></tbody>
 </table>
-<p class="center muted" style="font-size: 14px">Every account with a character. Plays are launcher starts in the last 30 days.</p>
 
-<h2 class="h2" style="margin-top: 24px">Players' machines</h2>
-<div class="tally" id="tally"></div>
-<p class="center muted" style="font-size: 14px">Each account above counted once, by the machine its launcher last reported.</p>
+<details style="margin-top: 24px">
+<summary class="h2" style="cursor: pointer">Players' machines</summary>
+<div class="tally" id="tally" style="margin-top: 12px"></div>
+</details>
 </div>
 
 </div>
@@ -159,11 +150,6 @@
     return String(os);
   }
   const ram = (m) => m && m.ram ? Math.round(m.ram / 1024) + ' GB' : '';
-  function machine(o, account, key) {
-    const m = o.machines[String(account)];
-    if (!m) return cell('not reported', '', key, 'muted');
-    return cell(m.gpu || 'unknown card', [osName(m.os), ram(m), m.graphics ? 'graphics ' + m.graphics : ''].filter(Boolean).join(' · '), key);
-  }
   function tally(o) {
     const accounts = [...new Set(o.players.concat(o.recent, o.everyone).filter((p) => !p.bot && p.account).map((p) => String(p.account)))];
     const box = $('tally');
@@ -268,50 +254,26 @@
     });
     $('stale').textContent = quiet.length ? 'Not reporting: ' + quiet.join(', ') + '. It may be down or restarting.'
                                           : 'No game server has reported since the website started.';
+    // Players only: the bots are the count above.
     const rows = $('rows');
     rows.replaceChildren();
-    if (!o.players.length) {
+    if (!people.length) {
       const tr = el('tr');
       const td = cell('Nobody is playing right now.', '', '', 'muted');
-      td.colSpan = 8;
+      td.colSpan = 6;
       tr.appendChild(td);
       rows.appendChild(tr);
     }
-    for (const p of o.players) {
-      const tr = el('tr', p.bot ? 'bot' : '');
-      tr.appendChild(p.bot ? cell(p.name || '—', p.class + ' · bot') : nameCell(p.account, p.name, p.class));
-      tr.appendChild(cell(p.account_name || p.email || (p.account ? '#' + p.account : 'none'),
-                          p.account_name && p.email ? p.email : '', 'Account'));
+    for (const p of people) {
+      const tr = el('tr');
+      tr.appendChild(nameCell(p.account, p.name, p.account_name || p.email || ''));
       tr.appendChild(cell(String(p.level), '', 'Level', 'num'));
-      tr.appendChild(cell(map(p.world) + (p.copy > 1 ? ' ' + p.copy : ''), p.x + ', ' + p.y, 'Map'));
+      tr.appendChild(cell(map(p.world) + (p.copy > 1 ? ' ' + p.copy : ''), '', 'Map'));
       tr.appendChild(cell(p.region || 'North Europe', '', 'Region'));
       // The line's round trip as the server's kernel smooths it (net::Socket::rttMs).
       tr.appendChild(cell(p.ms >= 0 ? p.ms + ' ms' : '—', '', 'Ping', p.ms >= 0 ? 'num' : 'num muted'));
-      tr.appendChild(p.bot ? cell('bot', '', 'Machine', 'muted') : machine(o, p.account, 'Machine'));
       tr.appendChild(cell(since(p.since), '', 'Online for'));
       rows.appendChild(tr);
-    }
-    const recent = $('recent');
-    recent.replaceChildren();
-    if (!o.recent.length) {
-      const tr = el('tr');
-      const td = cell('Nobody has played yet since this list began.', '', '', 'muted');
-      td.colSpan = 7;
-      tr.appendChild(td);
-      recent.appendChild(tr);
-    }
-    for (const g of o.recent) {
-      const tr = el('tr');
-      tr.appendChild(nameCell(g.account, g.name, g.class));
-      tr.appendChild(cell(g.account_name || g.email, g.account_name ? g.email : '', 'Account'));
-      tr.appendChild(cell(String(g.level), '', 'Level', 'num'));
-      tr.appendChild(cell(map(g.world), '', 'Last map'));
-      tr.appendChild(machine(o, g.account, 'Machine'));
-      tr.appendChild(cell(when(g.since), '', 'Started'));
-      const played = cell(g.online ? 'online now' : span(g.until - g.since), g.online ? 'for ' + span(g.until - g.since) : '', 'Played');
-      if (g.online) played.style.color = 'var(--live)';
-      tr.appendChild(played);
-      recent.appendChild(tr);
     }
     const all = $('all');
     all.replaceChildren();
@@ -327,28 +289,29 @@
     if (!o.everyone.length) {
       const tr = el('tr');
       const td = cell('The game server has not listed its characters yet; it does once a minute.', '', '', 'muted');
-      td.colSpan = 5;
+      td.colSpan = 3;
       tr.appendChild(td);
       all.appendChild(tr);
     }
+    // One line an account: its characters by name and level, never-played ones left out.
     for (const a of o.everyone) {
       const tr = el('tr');
-      tr.appendChild(cell(a.account_name || a.email, (a.account_name ? a.email + ' · ' : '') + 'joined ' + when(a.created)));
+      tr.appendChild(cell(a.account_name || a.email));
       const td = el('td');
       td.dataset.k = 'Characters';
-      for (const c of a.characters) {
-        const line = el('div', 'char');
+      const played = a.characters.filter((c) => !c.fresh);
+      played.forEach((c, i) => {
+        if (i) td.appendChild(document.createTextNode(' · '));
         const b = el('button', 'open', c.name);
         b.type = 'button';
+        b.title = c.class + ' · ' + map(c.world);
         b.addEventListener('click', () => openCard(a.account, c.name));
-        line.appendChild(b);
-        line.appendChild(el('span', 'sub', c.class + ' ' + c.level + ' · ' + map(c.world) + (c.fresh ? ' · never played' : '')));
-        td.appendChild(line);
-      }
+        td.appendChild(b);
+        td.appendChild(el('span', 'muted', ' ' + c.level));
+      });
+      if (!played.length) td.appendChild(el('span', 'muted', 'never played'));
       tr.appendChild(td);
-      tr.appendChild(machine(o, a.account, 'Machine'));
       tr.appendChild(cell(a.last ? when(a.last) : 'never', '', 'Last played'));
-      tr.appendChild(cell(String(a.plays), '', 'Plays', 'num'));
       all.appendChild(tr);
     }
     tally(o);
