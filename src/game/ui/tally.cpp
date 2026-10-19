@@ -478,14 +478,19 @@ void Tally::collect(const Play& play, float seconds) {
                 scroll_ += 1.0f;
                 break;
             case Play::Gain::Kind::TooFar:
-                // An elf's aid on a player out of reach: once however often, held up again.
-                if (!lane_.empty() && lane_.back().kind == Row::Kind::TooFar) {
+            case Play::Gain::Kind::Outguarded: {
+                // An elf's aid on a player out of reach, or her ward on a stronger guard: once
+                // however often, held up again.
+                const Row::Kind kind = gain.kind == Play::Gain::Kind::TooFar ? Row::Kind::TooFar
+                                                                             : Row::Kind::Outguarded;
+                if (!lane_.empty() && lane_.back().kind == kind) {
                     lane_.back().age = std::min(lane_.back().age, kRowLife * kRowIn);
                     break;
                 }
-                lane_.push_back({Row::Kind::TooFar, 0, 0.0f});
+                lane_.push_back({kind, 0, 0.0f});
                 scroll_ += 1.0f;
                 break;
+            }
             case Play::Gain::Kind::Died:
                 // Alone: whatever he was earning a second ago is not what the lane is for now.
                 lane_.clear();
@@ -658,9 +663,8 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
     }
 
     // ---- a kill's gains, over the body ---------------------------------------------------
-    // "+1,234" in the blows' Bold under their full halo -- the lane's Medium read thin over
-    // grass -- and the unit after it in the Medium, centred over the body, rising as a blow's
-    // figure does.
+    // "+1,234 EXP" in the blows' Bold under their full halo -- the lane's Medium read thin
+    // over grass -- centred over the body, rising as a blow's figure does.
     // Full to the end, never faded out (the user, 2026-10-19: "dont fade out exp text").
     for (const Float& one : floats_) {
         const float u = std::clamp(one.age / kFloatLife, 0.0f, 1.0f);
@@ -679,14 +683,16 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         const std::string figure = "+" + panel::commas((long long)one.value);
         const std::string shouted = "EXP";
         const float figureWide = face_.measure(size, figure);
-        const float wordWide = quiet_.measure(small, shouted) +
+        const float wordWide = face_.measure(small, shouted) +
                                kLaneUnitTracking * small * float(shouted.size() - 1);
         const float left = x - (figureWide + kLaneWordGap * unit + wordWide) * 0.5f;
         const float at = std::round(y);
         write(std::round(left + figureWide * 0.5f), at, size, withAlpha(ink, alpha), figure,
               kTracking, true);
-        writeQuiet(std::round(left + figureWide + kLaneWordGap * unit + wordWide * 0.5f), at,
-                   small, withAlpha(ink, alpha * 0.85f), shouted, kLaneUnitTracking);
+        // The word as strong as the figure (the user, 2026-10-19: "+269 EXP has to be same
+        // opacity"): the same Bold, ink and halo, only smaller.
+        write(std::round(left + figureWide + kLaneWordGap * unit + wordWide * 0.5f), at, small,
+              withAlpha(ink, alpha), shouted, kLaneUnitTracking, true);
     }
 
     // ---- the lane ----------------------------------------------------------------------
@@ -758,17 +764,21 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
             case Row::Kind::BagFull:
             case Row::Kind::NotYours:
             case Row::Kind::TooFar:
+            case Row::Kind::Outguarded:
             // Drawn above and passed over by the `continue`: it is not a gain.
             case Row::Kind::Experience:
             case Row::Kind::Died: break;
         }
         if (row.kind == Row::Kind::Gapped || row.kind == Row::Kind::Bound || row.kind == Row::Kind::BagFull ||
-            row.kind == Row::Kind::NotYours || row.kind == Row::Kind::TooFar) {
+            row.kind == Row::Kind::NotYours || row.kind == Row::Kind::TooFar ||
+            row.kind == Row::Kind::Outguarded) {
             // A warning: white words on a flat red box, the lane's left edge its own.
             const std::string said = row.kind == Row::Kind::Gapped     ? "No experience or quest kills: level gap"
                                      : row.kind == Row::Kind::Bound    ? "Bound items stay with their character"
                                      : row.kind == Row::Kind::NotYours ? "This item does not belong to you"
                                      : row.kind == Row::Kind::TooFar   ? "Too far away"
+                                     : row.kind == Row::Kind::Outguarded
+                                         ? "This character already has a stronger shield aura"
                                                                        : "Inventory is full";
             const gfx::Face& face = bgfx::isValid(plainTexture_) ? plain_ : quiet_;
             const bgfx::TextureHandle texture = bgfx::isValid(plainTexture_) ? plainTexture_ : quietTexture_;
