@@ -124,7 +124,12 @@ namespace mu::net {
 //     list is not the server's is told to update (Refused::Outdated) (2026-10-17).
 // 37: the chat's Local and Global channels (Channel 5 and 6), WoW's Say and a channel for the
 //     whole server (bug report #8, 2026-10-18).
-constexpr uint32_t kVersion = 37;
+// 38: the rules again, the bytes not: Multi-Shot strikes only what its arrows reach, summons
+//     stand for their swings and take none of the elf's armour, her ward and heal on other
+//     players, travel on the same map free, the unstruck dragon gone in four minutes, Dungeon 2
+//     and 3 at 60 and 70, Lala without the yeti's orb, longer dry spells (2026-10-19), so a
+//     client on 37's rules is refused instead of drifting from the server.
+constexpr uint32_t kVersion = 38;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";
