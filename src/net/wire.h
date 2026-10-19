@@ -133,7 +133,7 @@ namespace mu::net {
 //     sort a server on 38 would not read), and a jewel from the vault onto what he wears asks
 //     room in the bag only when the plus could take it off him, as the bag's own does, and the
 //     elf's summons bite at the ladder's square root with a fifth less health, and the Chaos
-//     Machine takes a bound thing only to remove a rune or add a socket, and a jewel from the vault or the box that takes a worn
+//     Machine takes a bound thing only to remove a rune, add a socket or fuse runes, and a jewel from the vault or the box that takes a worn
 //     thing off him no longer leaves a copy where the jewel was, and the elf's Greater Defense
 //     and Greater Damage cool for three seconds, not five minutes, and Cometfall is the Soul
 //     Master's alone (2026-10-19).

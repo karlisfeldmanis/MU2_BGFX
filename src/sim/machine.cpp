@@ -636,16 +636,18 @@ Judged judge(const content::Tables& tables, const Machine& box, Service service,
         case Service::Cloak:
         case Service::Invitation: combine(tables, box, s, kin, j, service); break;
     }
-    // **A bound thing is only ever socketed or unsocketed** (the user, 2026-10-19: "dont allow to
-    // use bound items on chaos machine", then "allow to remove runes from bound item in chaos
-    // machine", "also allow add socket to bound item"): with one in the box, every service but
-    // Remove Rune and Add Socket is refused, so no mix makes a quest's reward into something
-    // else; the thing stays bound, and the rune it frees too (Realm::mix).
-    if (service != Service::RemoveRune && service != Service::AddSocket) {
+    // **A bound thing only has its sockets worked** (the user, 2026-10-19: "dont allow to use
+    // bound items on chaos machine", then "allow to remove runes from bound item in chaos
+    // machine", "also allow add socket to bound item", "also allow to fuse bound runes"): with one
+    // in the box, every service but Remove Rune, Add Socket and Fuse Runes is refused, so no mix
+    // makes a quest's reward into something else; what comes out stays bound -- the thing, the
+    // rune it frees, the rune fused from bound ones (Realm::mix).
+    if (service != Service::RemoveRune && service != Service::AddSocket &&
+        service != Service::FuseRunes) {
         for (int cell = 0; cell < kMachineCells; ++cell) {
             if (!box[cell].empty() && box[cell].bound) {
                 j.ready = false;
-                j.title = "Bound items: Remove Rune or Add Socket only";
+                j.title = "Bound items: runes and sockets only";
                 break;
             }
         }

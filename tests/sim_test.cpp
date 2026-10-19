@@ -7649,8 +7649,9 @@ void testChaosMachine() {
         const sim::Judged plus = realm.judged(sim::Service::Upgrade);
         check(!plus.ready && plus.title.find("Bound") != std::string::npos,
               "where every mix but two is refused, and says so");
-        check(realm.judged(sim::Service::AddSocket).title.find("Bound") == std::string::npos,
-              "Add Socket is not");
+        check(realm.judged(sim::Service::AddSocket).title.find("Bound") == std::string::npos &&
+                  realm.judged(sim::Service::FuseRunes).title.find("Bound") == std::string::npos,
+              "Add Socket and Fuse Runes are not");
         const sim::Judged out = realm.judged(sim::Service::RemoveRune);
         check(out.ready && realm.mix(sim::Service::RemoveRune), "and Remove Rune is, and runs");
         bool runeBound = false, swordBound = false;
