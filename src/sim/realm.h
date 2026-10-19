@@ -153,6 +153,8 @@ enum class What : uint8_t {
     Gapped,    // a party kill near him that he shared nothing of, more than kPartyGap levels
                // below the highest member near it (realm_party.cpp): `whom` the kill, a: that
                // level. For him alone.
+    Outguarded,  // his Greater Defense aimed at a player whose guard already stands stronger
+                 // (Realm::throwSkill): refused, nothing paid. `whom` that player. For him alone.
 };
 
 // What a trade between two players did (What::Deal). MU's trade packets 0x36-0x3D in one.

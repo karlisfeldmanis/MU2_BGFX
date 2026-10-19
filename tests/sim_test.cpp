@@ -12865,8 +12865,15 @@ void testElfAid(const content::Tables& tables) {
     realm.lookAs(young);
     const int32_t youngMana = realm.hero().mana;
     realm.invoke(sim::skill::kGreaterDefense, near);
-    for (int tick = 0; tick < 40; ++tick) realm.step();
+    int told = 0;
+    for (int tick = 0; tick < 40; ++tick) {
+        realm.step();
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.what == sim::What::Outguarded && h.who == young && h.whom == near && h.audience == young) ++told;
+        }
+    }
     checkNear(realm.find(near)->boonDamageTaken, strong, 1e-6, "the young elf's weaker ward does not replace it");
+    checkEqual(told, 1, "she is told so, once");
     check(realm.find(young)->mana >= youngMana, "and she paid nothing");
 }
 

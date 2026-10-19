@@ -271,6 +271,10 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             // weaker, hers replaces it.
             if (row.number == skill::kGreaterDefense && one->boonUntil > tick_ &&
                 one->boonDamageTaken < 1.0f - boonShare(row, hero.totalPoints(), hero.shieldDefense)) {
+                // Said to her once, and the wish dropped: held, it was refused every tick.
+                say(What::Outguarded, hero, row.number, 0, 0, one->id);
+                happenings_.back().audience = hero.id;
+                me().wants = skill::kNone;
                 return false;
             }
             aid = one;

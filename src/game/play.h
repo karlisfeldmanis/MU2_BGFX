@@ -614,7 +614,9 @@ public:
         // BagFull: a pickup refused for want of room (Play::tossedDrops).
         // NotYours: a click on another player's drop (sim::Lying::owner, Play::leftClick).
         // TooFar: an elf's aid pointed at a player out of sim::kAidReach (Play::aidTarget).
-        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped, BagFull, NotYours, TooFar };
+        // Outguarded: her Greater Defense refused, his guard stronger (sim::What::Outguarded).
+        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped, BagFull, NotYours, TooFar,
+                                    Outguarded };
         Kind kind = Kind::Experience;
         int64_t value = 0;
         // Where a kill's experience or Zen rises from, in world metres: over the body it came

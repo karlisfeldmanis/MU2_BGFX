@@ -239,6 +239,10 @@ const uint32_t kMissOnHeroInk = byteColour(236, 228, 214);
 const uint32_t kDiedInk = byteColour(240, 236, 228);
 const uint32_t kScrimInk = byteColour(86, 8, 6);
 const uint32_t kExperienceInk = byteColour(222, 213, 196);
+// A kill's experience over the body: World of Warcraft's own experience-gain colour,
+// COMBAT_XP_GAIN's (0.435, 0.435, 1.0) -- the user, 2026-10-19: "it has to be some other
+// color, what color WoW uses?". Apart from every blow's ink, so it is never read as damage.
+const uint32_t kFloatInk = byteColour(111, 111, 255);
 const uint32_t kZenInk = byteColour(231, 201, 130);
 const uint32_t kHealthInk = byteColour(134, 201, 143);
 // A party kill he shared nothing of, past the level gap (the user, 2026-10-11: "show in red where
@@ -478,14 +482,19 @@ void Tally::collect(const Play& play, float seconds) {
                 scroll_ += 1.0f;
                 break;
             case Play::Gain::Kind::TooFar:
-                // An elf's aid on a player out of reach: once however often, held up again.
-                if (!lane_.empty() && lane_.back().kind == Row::Kind::TooFar) {
+            case Play::Gain::Kind::Outguarded: {
+                // An elf's aid on a player out of reach, or her ward on a stronger guard: once
+                // however often, held up again.
+                const Row::Kind kind = gain.kind == Play::Gain::Kind::TooFar ? Row::Kind::TooFar
+                                                                             : Row::Kind::Outguarded;
+                if (!lane_.empty() && lane_.back().kind == kind) {
                     lane_.back().age = std::min(lane_.back().age, kRowLife * kRowIn);
                     break;
                 }
-                lane_.push_back({Row::Kind::TooFar, 0, 0.0f});
+                lane_.push_back({kind, 0, 0.0f});
                 scroll_ += 1.0f;
                 break;
+            }
             case Play::Gain::Kind::Died:
                 // Alone: whatever he was earning a second ago is not what the lane is for now.
                 lane_.clear();
@@ -673,7 +682,7 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         const float x = (nx * 0.5f + 0.5f) * float(width);
         const float y = (0.5f - ny * 0.5f) * float(height) -
                         (kFloatAbove + kFloatRise * ridden(u)) * unit;
-        const uint32_t ink = kExperienceInk;
+        const uint32_t ink = kFloatInk;
         const float size = kFloatSize * unit * popped(u), small = kFloatUnitSize * unit * popped(u);
         const std::string figure = "+" + panel::commas((long long)one.value);
         const std::string shouted = "EXP";
@@ -759,17 +768,21 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
             case Row::Kind::BagFull:
             case Row::Kind::NotYours:
             case Row::Kind::TooFar:
+            case Row::Kind::Outguarded:
             // Drawn above and passed over by the `continue`: it is not a gain.
             case Row::Kind::Experience:
             case Row::Kind::Died: break;
         }
         if (row.kind == Row::Kind::Gapped || row.kind == Row::Kind::Bound || row.kind == Row::Kind::BagFull ||
-            row.kind == Row::Kind::NotYours || row.kind == Row::Kind::TooFar) {
+            row.kind == Row::Kind::NotYours || row.kind == Row::Kind::TooFar ||
+            row.kind == Row::Kind::Outguarded) {
             // A warning: white words on a flat red box, the lane's left edge its own.
             const std::string said = row.kind == Row::Kind::Gapped     ? "No experience or quest kills: level gap"
                                      : row.kind == Row::Kind::Bound    ? "Bound items stay with their character"
                                      : row.kind == Row::Kind::NotYours ? "This item does not belong to you"
                                      : row.kind == Row::Kind::TooFar   ? "Too far away"
+                                     : row.kind == Row::Kind::Outguarded
+                                         ? "This character already has a stronger shield aura"
                                                                        : "Inventory is full";
             const gfx::Face& face = bgfx::isValid(plainTexture_) ? plain_ : quiet_;
             const bgfx::TextureHandle texture = bgfx::isValid(plainTexture_) ? plainTexture_ : quietTexture_;
