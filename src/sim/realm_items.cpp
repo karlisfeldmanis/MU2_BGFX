@@ -2043,12 +2043,19 @@ bool Realm::refineAcross(Store jewelIn, int jewelAt, Store thingIn, int thingAt)
     const Satchel after = me().bag;
     me().bag = real;
     if (!done) return false;
-    // Back where each came from: the jewel's remainder, then the thing.
-    keep(jewelIn, jewelAt, after[j]);
+    // Back where each came from: the jewel's remainder, then the thing. **What is left at `j` is
+    // the jewel's only while it is still the jewel**: the last of a stack spent frees its cell, and
+    // a thing outgrown lands in the stage's first free cell -- that one, when the jewel came from
+    // the vault or the box and was put first. Kept as the jewel's, the thing went into the vault
+    // cell the jewel left while still worn (the user, 2026-10-19: "notabot was updting crosbow
+    // with jewels from warehouse dublicated items with runes was created inside warehouse").
+    // A jewel never works on a jewel, so the item tells them apart.
+    const bool jewelLeft = !after[j].empty() && after[j].item == jewel.item;
+    keep(jewelIn, jewelAt, jewelLeft ? after[j] : Held{});
     if (wornThing && after[t].empty()) {
         // Outgrown: off him and into the bag (refine's own rule), wherever it landed on the stage.
         for (int s = kWorn; s < kSlots; ++s) {
-            if (s == j || after[s].empty()) continue;
+            if ((s == j && jewelLeft) || after[s].empty()) continue;
             const int into = me().bag.free(*tables_, thingRow.width, thingRow.height);
             me().bag.lift(t);
             me().bag.put(into, after[s]);

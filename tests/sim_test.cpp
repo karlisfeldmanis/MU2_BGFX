@@ -6636,6 +6636,49 @@ void testVault(const content::Tables& tables) {
             for (const int at : fillers) realm.sell(at);
             if (!realm.vault()[90].empty()) realm.withdraw(90);
         }
+        // And a Bless from the vault that raises a worn weapon past what he can wear: it comes off
+        // into the bag, ONE of it, and the vault cell the jewel left stays empty (the user,
+        // 2026-10-19: a crossbow raised from the vault's jewels came out twice, the copy in the
+        // vault). Any weapon at the plus where the next one outgrows him.
+        int32_t edge = -1, edgePlus = -1;
+        const sim::Wearer who = realm.wearer();
+        for (size_t i = 0; i < tables.items.size() && edge < 0; ++i) {
+            if (!tables.items[i].weapon()) continue;
+            for (int plus = 0; plus < 6 && edge < 0; ++plus) {  // a Bless works to +6
+                sim::Held at{int32_t(i), 0, 255};
+                at.refinement = int16_t(plus);
+                sim::Held next = at;
+                next.refinement = int16_t(plus + 1);
+                if (sim::fits(tables, who, at) && !sim::fits(tables, who, next)) {
+                    edge = int32_t(i);
+                    edgePlus = plus;
+                }
+            }
+        }
+        check(edge >= 0, "a weapon he wears that one plus more would take off him");
+        if (edge >= 0) {
+            for (const int hand : {sim::kWeaponRight, sim::kWeaponLeft}) {
+                if (!realm.satchel()[hand].empty()) realm.moveItem(hand, realm.satchel().free(tables, 1, 1));
+                if (!realm.satchel()[hand].empty()) realm.deposit(hand, -1);
+            }
+            check(realm.give(edge, sim::kWeaponRight, edgePlus) == sim::kWeaponRight, "he wears it");
+            const sim::Held worn2 = realm.satchel()[sim::kWeaponRight];
+            const int cell = realm.deposit(realm.give(bless), 100);
+            check(cell == 100 && realm.withdraw(100, sim::kWeaponRight) >= 0, "a vault's Bless raises it");
+            int copies = 0, raised = -1;
+            for (int s = 0; s < sim::kSlots; ++s) {
+                if (realm.satchel()[s].item == edge) {
+                    ++copies;
+                    raised = s;
+                }
+            }
+            for (int c = 0; c < sim::kVaultCells; ++c) copies += realm.vault()[c].item == edge;
+            checkEqual(copies, 1, "and there is one of it, not two");
+            check(raised >= sim::kWorn && realm.satchel()[raised].refinement == worn2.refinement + 1 &&
+                      realm.satchel()[sim::kWeaponRight].empty() && realm.vault()[100].empty(),
+                  "off him into the bag at the plus, the vault's cell empty");
+            if (raised >= 0) realm.sell(raised);
+        }
     }
 
     // Thrown on the ground straight from the vault (the user, 2026-10-09), and a jewel is not.
