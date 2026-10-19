@@ -70,6 +70,8 @@ private:
     bool hunt(Play& play, int32_t breed);
     bool guard(Play& play);
     bool loot(Play& play);
+    bool resupply(Play& play, const std::function<std::string(const std::string&)>& stop,
+                  std::string* said);
     int32_t striker(Play& play) const;
 
     double since_ = 0.0;
@@ -88,6 +90,8 @@ private:
     int32_t bar_[8] = {};
     int barCount_ = 0;
     std::map<int32_t, double> guardTried_;  // a guard asked, by skill: not again before this
+    double boughtAt_ = -1e9;    // the last quiver asked for at a counter
+    bool stocking_ = false;     // an archer out of shots, on her way to a counter and buying
     std::map<uint32_t, double> lootTried_;  // a pickup asked, by lying id: given up after this
 };
 

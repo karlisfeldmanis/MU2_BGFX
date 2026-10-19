@@ -13,6 +13,7 @@
 #include "game/ui/tracker.h"
 #include "game/world/world_show.h"
 #include "sim/gates.h"
+#include "sim/market.h"
 #include "sim/items.h"
 #include "sim/maps.h"
 #include "sim/quests.h"
@@ -193,6 +194,7 @@ void QuestAuto::reset() {
     still_ = 0;
     hunting_ = -1;
     lootTried_.clear();
+    stocking_ = false;
 }
 
 std::string QuestAuto::update(Play& play, int* quest, double seconds, const int32_t* bar, int barCount) {
@@ -232,6 +234,9 @@ std::string QuestAuto::update(Play& play, int* quest, double seconds, const int3
         target_ = 0;
         nest_ = -1;
     }
+
+    // An archer out of shots buys more before anything else.
+    if (std::string said; resupply(play, stop, &said)) return said;
 
     switch (progress.state) {
         case sim::QuestState::Resting:
@@ -441,6 +446,108 @@ bool QuestAuto::loot(Play& play) {
     play.orderHero(request);
     target_ = 0;
     return true;
+}
+
+// **Her arrows** (the user, 2026-10-19: "on auto-play elf has to buy more arrows/bolts if its
+// out of ammo"): an archer with fewer than kAmmoLow shots in her free hand and her bag walks to
+// a merchant who has the quiver her weapon shoots -- one of this map's, else Amy in Lorencia,
+// Eo in Noria or Zienna in Devias -- buys until she has kAmmoStacks quivers' worth or her Zen or
+// her bag runs out, puts one in her free hand, and goes back to the quest. With no Zen for one
+// quiver auto-play stops and says so.
+constexpr int kAmmoLow = 20;
+constexpr int kAmmoStacks = 3;
+constexpr double kBuyWait = 0.5;  // seconds between purchases, for the last one's answer
+
+bool QuestAuto::resupply(Play& play, const std::function<std::string(const std::string&)>& stop,
+                         std::string* said) {
+    const sim::Realm& realm = play.realm();
+    const content::Tables& tables = *realm.tables();
+    const sim::Body& hero = realm.hero();
+    if (hero.archer == 0) {
+        stocking_ = false;
+        return false;
+    }
+    const int wanted = hero.archer == 1 ? 15 : 7;  // Arrows, the Bolt, as the HUD counts them
+    const sim::Satchel& bag = realm.satchel();
+    int shots = 0, stack = 0, carried = -1;
+    for (int slot = sim::kWeaponLeft; slot < sim::kSlots; ++slot) {
+        if (slot != sim::kWeaponLeft && slot < sim::kWorn) continue;
+        const sim::Held& h = bag[slot];
+        if (h.empty() || h.durability <= 0 || size_t(h.item) >= tables.items.size()) continue;
+        const content::ItemRow& row = tables.items[size_t(h.item)];
+        if (row.group != sim::kGroupBows || row.number != wanted) continue;
+        shots += h.durability;
+        stack = std::max(stack, int(row.durability));
+        if (slot != sim::kWeaponLeft && carried < 0) carried = slot;
+    }
+    // A quiver in the bag and her hand empty: into the hand, wherever she is.
+    if (carried >= 0 && bag[sim::kWeaponLeft].empty()) {
+        play.moveItem(carried, sim::kWeaponLeft);
+        return true;
+    }
+    if (!stocking_ && shots >= kAmmoLow) return false;
+    stocking_ = true;
+    // The shelf line that is her quiver, for a merchant by NPC number; -1 when he has none.
+    const auto line = [&](int npc) -> const sim::Offer* {
+        int count = 0;
+        const sim::Offer* shelf = sim::stockOf(npc, &count);
+        for (int i = 0; i < count; ++i) {
+            if (shelf[i].refinement != 0 || shelf[i].group != sim::kGroupBows || shelf[i].number != wanted) continue;
+            if (tables.itemAt(shelf[i].group, shelf[i].number) >= 0) return &shelf[i];
+        }
+        return nullptr;
+    };
+    // At the counter: one quiver a half second while there is Zen, room and a reason.
+    if (const int at = realm.trading(); at >= 0 && size_t(at) < tables.folk.size()) {
+        if (const sim::Offer* offer = line(tables.folk[size_t(at)].number)) {
+            const content::ItemRow& row = tables.items[size_t(tables.itemAt(offer->group, offer->number))];
+            if (stack == 0) stack = int(row.durability);
+            // As Realm::buy charges it: a full quiver.
+            const int64_t price = sim::buyingPrice(row, 0, offer->pieces > 0 ? offer->pieces : 1, offer->skill,
+                                                   row.durability, row.durability);
+            const bool room = realm.satchel().free(tables, row.width, row.height) >= 0;
+            if (shots < stack * kAmmoStacks && realm.money() >= price && room) {
+                if (clock_ - boughtAt_ >= kBuyWait) {
+                    boughtAt_ = clock_;
+                    play.buy(offer->slot);
+                }
+                return true;
+            }
+            play.closeTrade();
+            stocking_ = false;
+            if (shots == 0) {
+                *said = stop(realm.money() < price ? "Auto-play: no Zen for more arrows."
+                                                   : "Auto-play: no room in your bag for arrows.");
+            } else {
+                core::logf("auto-play: stocked up, %d shots", shots);
+            }
+            return true;
+        }
+    }
+    // A merchant of this map who has it.
+    for (size_t f = 0; f < tables.folk.size(); ++f) {
+        if (line(tables.folk[f].number) == nullptr) continue;
+        if (realm.questing() >= 0) play.closeQuest();
+        const sim::Request& order = realm.order();
+        const bool asked = order.kind == sim::Request::Kind::Talk && order.target == uint32_t(f);
+        if (asked && (hero.walking || clock_ - askedAt_ < kReask)) return true;
+        askedAt_ = clock_;
+        core::logf("auto-play: out of shots, to %s", tables.folk[f].name.c_str());
+        sim::Request request;
+        request.kind = sim::Request::Kind::Talk;
+        request.target = uint32_t(f);
+        play.orderHero(request);
+        return true;
+    }
+    // Else the nearest town that sells it: Lorencia's Amy, Noria's Eo, Devias's Zienna.
+    constexpr struct { int map, npc; } kTowns[] = {{0, 253}, {3, 243}, {2, 246}};
+    for (const auto& town : kTowns) {
+        if (line(town.npc) == nullptr) continue;
+        *said = goTo(play, town.map, stop);
+        return true;
+    }
+    stocking_ = false;
+    return false;
 }
 
 // **What he fights with.** The right button's skill when the slot holds one; with it empty, the
