@@ -242,7 +242,8 @@ const uint32_t kExperienceInk = byteColour(222, 213, 196);
 // A kill's experience over the body: World of Warcraft's own experience-gain colour,
 // COMBAT_XP_GAIN's (0.435, 0.435, 1.0) -- the user, 2026-10-19: "it has to be some other
 // color, what color WoW uses?". Apart from every blow's ink, so it is never read as damage.
-const uint32_t kFloatInk = byteColour(111, 111, 255);
+// Then a quarter of the way to white ("can we make little bit lighter?").
+const uint32_t kFloatInk = byteColour(150, 150, 255);
 const uint32_t kZenInk = byteColour(231, 201, 130);
 const uint32_t kHealthInk = byteColour(134, 201, 143);
 // A party kill he shared nothing of, past the level gap (the user, 2026-10-11: "show in red where
