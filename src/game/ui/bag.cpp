@@ -159,6 +159,13 @@ uint32_t scoreInk(int score) {
     return tip::colourOf(kRungs[sim::gearRung(score)]);
 }
 constexpr uint32_t kWornInk = gfx::rgba(1.0f, 1.0f, 1.0f, 0.88f);
+// The wash under a sound piece in the satchel: MU's ITEM_COLOR_NORMAL hue, glColor4f(0.3, 0.5,
+// 0.5, 0.6) (NewUIInventoryCtrl.cpp:981), at a quarter of its strength: at MU's 0.6 the teal
+// shouted over the dark skin and two pieces side by side ran into one slab. Each piece's block
+// stands a unit inside its rules (kTakenInset) so neighbours stay apart.
+constexpr uint32_t kTakenWash = gfx::rgba(0.3f, 0.5f, 0.5f, 0.16f);
+constexpr uint32_t kTakenEdge = gfx::rgba(0.45f, 0.68f, 0.68f, 0.30f);
+constexpr float kTakenInset = 1.0f;
 
 // A piece's sockets over its middle, in units: the item card's socket ring (tip::Mark::Ring), a
 // bronze rim round the orange stone of a Rune of Creation or round a dark hole, stacked down the
@@ -564,14 +571,26 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // over a worn slot at a quarter strength -- yellow at half, orange at three tenths,
     // red-orange at a fifth, red broken -- and CNewUIInventoryCtrl colours a bag item by the same
     // four (ITEM_COLOR_DURABILITY_*). Both here are the cell's wash, under the picture.
+    // **And a sound piece in the satchel is washed too**, in MU's ITEM_COLOR_NORMAL teal
+    // (NewUIInventoryCtrl.cpp:979-981), so its cells read as taken and the empty ones round it
+    // as empty -- bug #19, 2026-10-18: "its a little bit hard manage the empty slots if the item
+    // not have a background". A worn slot has its well and its ghost and takes no teal, as MU's.
     for (int slot = 0; slot < sim::kSlots; ++slot) {
         const sim::Held& held = bag[slot];
         if (held.empty() || slot == dragging_) continue;
         const content::ItemRow& row = tables.items[size_t(held.item)];
-        if (!sim::wears(row)) continue;
         const sim::Worn band =
-            sim::wornBand(held.durability, sim::maximumDurability(row, held));
-        if (band == sim::Worn::Fine) continue;
+            sim::wears(row) ? sim::wornBand(held.durability, sim::maximumDurability(row, held))
+                            : sim::Worn::Fine;
+        if (band == sim::Worn::Fine) {
+            if (!sim::wearable(slot)) {
+                const Box taken =
+                    panel::scaled(x, y, itemBox(tables, slot, held).grown(-kTakenInset));
+                canvas_.rect(taken, kTakenWash);
+                canvas_.outline(taken, std::max(1.0f, std::round(tip::unit())), kTakenEdge);
+            }
+            continue;
+        }
         // Two tables, as MuMain has two: the worn slot's at a quarter (0.15 and 0.5 for the
         // middle bands), the bag cell's at 0.4 (0.33 and 0.66) -- NewUIInventoryCtrl.cpp:983-998.
         const bool worn = sim::wearable(slot);
