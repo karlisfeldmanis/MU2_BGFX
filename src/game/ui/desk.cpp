@@ -1095,9 +1095,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     if (mixing_) {
         MixerRequests asked;
         const bool fromBag = inventoryOpen_ && bag_.dragging();
-        // A bound thing is refused (Realm::putIn), and the box shows it so.
         mixer_.carrying(fromBag ? &play.realm().satchel()[bag_.dragged()] : nullptr,
-                        fromBag && !play.realm().mixed() && !play.realm().satchel()[bag_.dragged()].bound);
+                        fromBag && !play.realm().mixed());
         mixer_.update(seconds, float(window.width()), float(window.height()), 2, play.realm(),
                       play.mixAnswer(), play.mixWords(), pointer, shelfStage_, &asked);
         if (asked.moveFrom >= 0) {

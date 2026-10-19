@@ -58,13 +58,6 @@ int Realm::putIn(int bagSlot, int cell) {
     if (!atMachine() || me().mixed || bagSlot < 0 || bagSlot >= kSlots || me().bag[bagSlot].empty()) {
         return -1;
     }
-    // A bound thing -- a quest's reward, or what one of its runes was set in -- never goes in
-    // (the user, 2026-10-19: "dont allow to use bound items on chaos machine"), so no mix turns
-    // it into something else.
-    if (me().bag[bagSlot].bound) {
-        refusal_ = "a bound item cannot go in the Chaos Machine";
-        return -1;
-    }
     const content::ItemRow& row = tables_->items[size_t(me().bag[bagSlot].item)];
     const bool worn = wearable(bagSlot);
     if (cell < 0) {

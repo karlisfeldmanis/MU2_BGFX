@@ -7636,14 +7636,37 @@ void testChaosMachine() {
     check(realm.mixing() == goblin, "talking to the Goblin opens his machine");
     check(realm.judged().empty && realm.judged().recipe == sim::Recipe::None, "an empty box is nothing");
     realm.earn(50000000);
-    // A bound thing stays out (the user, 2026-10-19: "dont allow to use bound items on chaos machine").
+    // A bound thing is only ever socketed or unsocketed (the user, 2026-10-19: "dont allow to use
+    // bound items on chaos machine", "allow to remove runes from bound item in chaos machine",
+    // "also allow add socket to bound item").
     {
-        const int held = realm.give(sword, -1, 0, -1, false, 0, 0, 0, nullptr, nullptr, true);
-        check(held >= sim::kWorn && realm.satchel()[held].bound, "a bound sword in the bag");
-        check(realm.putIn(held) < 0 && realm.putIn(held, 0) < 0 && realm.machine().empty() &&
-                  realm.satchel()[held].bound,
-              "is refused by the box, dropped anywhere in it, and stays in the bag");
-        realm.sell(held);
+        const uint8_t set[3] = {uint8_t(sim::Power::LesserMight), 0, 0};
+        const int held = realm.give(sword, -1, 0, -1, false, 0, 0, 1, set, nullptr, true);
+        check(held >= sim::kWorn && realm.satchel()[held].bound, "a bound sword with a rune in the bag");
+        const int in = realm.putIn(held);
+        check(in >= 0, "goes in the box");
+        realm.putIn(realm.give(chaos));
+        const sim::Judged plus = realm.judged(sim::Service::Upgrade);
+        check(!plus.ready && plus.title.find("Bound") != std::string::npos,
+              "where every mix but two is refused, and says so");
+        check(realm.judged(sim::Service::AddSocket).title.find("Bound") == std::string::npos,
+              "Add Socket is not");
+        const sim::Judged out = realm.judged(sim::Service::RemoveRune);
+        check(out.ready && realm.mix(sim::Service::RemoveRune), "and Remove Rune is, and runs");
+        bool runeBound = false, swordBound = false;
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            const sim::Held& one = realm.machine()[cell];
+            if (one.empty()) continue;
+            if (one.item == sword) swordBound = one.bound && one.powers[0] == 0;
+            else if (one.powers[0] == set[0]) runeBound = one.bound;
+        }
+        check(swordBound && runeBound, "the sword comes back empty and bound, its rune bound too");
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            if (realm.machine()[cell].empty()) continue;
+            const int back = realm.takeOut(cell);
+            if (back >= 0) realm.sell(back);
+        }
+        check(realm.machine().empty(), "and the box is emptied");
     }
 
     // Loads a +10 or +11 box: the thing at `plus` and `jewels` of the Bless and the Soul.
