@@ -54,6 +54,9 @@ public:
     // quest dialog itself): the tracker fades out of its way. `viewProj` places the edge pointer.
     void update(float seconds, const Play& play, bool hidden, const float* viewProj, int width,
                 int height);
+    // The foot of the minimap's lines over it (Minimap::under()), in pixels: the tracker starts
+    // under them when they reach past its own top, as the Golden Dragon's two lines do.
+    void setUnder(float y) { under_ = y; }
     const gfx::Canvas& canvas() const { return canvas_; }
     const gfx::Canvas& banner() const { return banner_; }
     bool showing() const { return !canvas_.empty(); }
@@ -142,6 +145,7 @@ private:
         int focus = -1;
         int shown = 0;
         int width = 0, height = 0;
+        int top = 0;  // top(), in pixels
         int64_t minutesLeft = 0;
         bool pointing = false;
         int pointX = 0, pointY = 0, pointMetres = 0;
@@ -162,6 +166,9 @@ private:
         bool operator==(const Drawn& o) const;
     };
     Drawn drawn_;
+    float under_ = 0.0f;
+    // Its top this frame, in pixels: kTop, or under the minimap's lines.
+    float top() const;
     bool built_ = false;
     int bannerDrawn_ = -1;  // the banner's last alpha step, 0..64, or -1 for none
 };

@@ -285,7 +285,7 @@ int byLevel(const sim::QuestRow& row, const content::Tables* tables, int* order)
 }  // namespace quest_marks
 
 bool Tracker::Drawn::operator==(const Drawn& o) const {
-    if (quest != o.quest || shown != o.shown || width != o.width || height != o.height ||
+    if (quest != o.quest || shown != o.shown || width != o.width || height != o.height || top != o.top ||
         minutesLeft != o.minutesLeft || pointing != o.pointing || pointX != o.pointX ||
         pointY != o.pointY || pointMetres != o.pointMetres || pointQuest != o.pointQuest ||
         focus != o.focus || progress.state != o.progress.state ||
@@ -305,6 +305,10 @@ bool Tracker::Drawn::operator==(const Drawn& o) const {
         }
     }
     return true;
+}
+
+float Tracker::top() const {
+    return std::max(kTop * tip::unit(), under_ > 0.0f ? under_ + 14.0f * tip::unit() : 0.0f);
 }
 
 bool Tracker::here(const sim::Realm& realm, int quest) {
@@ -638,6 +642,7 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
     now.shown = int(std::lround(shown_ * wake_ * 64.0f));
     now.width = width;
     now.height = height;
+    now.top = int(std::lround(top()));
     now.pointing = pointing_;
     if (pointing_) {
         now.pointX = int(pointX_);
@@ -716,7 +721,7 @@ void Tracker::rebuild(const Play& play, int width, int height) {
     const sim::QuestProgress& now = drawn_.progress;
     const float right = float(width) - kRight * pu;
     const float left = right - kWide * u;
-    float y = kTop * pu;
+    float y = float(drawn_.top);
 
     // The scrim: the banners' own soft cloud (a Gaussian each way, as the map name's), its
     // middle at the screen's right edge and the tracker's middle, so it has no edge anywhere. A
@@ -854,7 +859,7 @@ void Tracker::rebuildEvent(int width) {
     const float alpha = float(drawn_.eventShown) / 64.0f;
     const float right = float(width) - kRight * pu;
     const float left = right - kWide * u;
-    float y = kTop * pu;
+    float y = float(drawn_.top);
     const auto phase = sim::CastlePhase(drawn_.eventPhase);
     const bool waiting = phase == sim::CastlePhase::Waiting;
     const bool ended = phase == sim::CastlePhase::Ended;

@@ -1052,6 +1052,7 @@ void Minimap::rebuild(const Play& play) {
         const float wide = controls::labelWidth(figure, where);
         controls::label(canvas_, std::round(cx - wide * 0.5f), std::round(line + figure * 1.2f),
                         figure, style::kBone2, where);
+        under_ = line + figure * 1.5f;
         // The Golden Dragon landed on another map, under it for every player wherever he is (the
         // user, 2026-10-15: "all players has to see dragon on minimap if its landed"): its mark
         // and name in its gold, then the map and the tile in bone, two lines to stay in the disc's
@@ -1075,6 +1076,7 @@ void Minimap::rebuild(const Play& play) {
             const float atWide = controls::labelWidth(figure, at);
             controls::label(canvas_, std::round(cx - atWide * 0.5f), std::round(top + figure * 1.2f),
                             figure, style::kBone2, at);
+            under_ = top + figure * 1.5f;
         }
     }
 

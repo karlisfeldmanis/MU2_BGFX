@@ -2308,6 +2308,7 @@ void Desk::overhead(float seconds, const Play& play, const float* viewProj, int 
     beacon_.update(seconds, play, vitals_.namedFolk(), vitals_.folkShown(vitals_.namedFolk()),
                    viewProj, width, height);
     // The quest on screen, out of the way of a window on the right and of the giver's own.
+    tracker_.setUnder(minimap_.under());
     tracker_.update(seconds, play,
                     inventoryOpen_ || characterOpen_ || trading_ || banking_ || mixing_ ||
                         questDialog_.up(),

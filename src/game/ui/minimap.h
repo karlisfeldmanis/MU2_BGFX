@@ -74,6 +74,10 @@ public:
     }
 
     bool showing() const { return showing_; }
+    // Where the lines under the disc end, in pixels from the screen's top: the map's name, where
+    // he stands and, while the Golden Dragon stands elsewhere, its two lines. 0 when the disc is
+    // not up (shut, or the whole map in its place). The quest tracker starts under it.
+    float under() const { return showing_ && !full_ ? under_ : 0.0f; }
     // The whole map over the middle of the screen, in place of the corner's disc.
     void setFull(bool on) { full_ = on; }
     bool full() const { return full_; }
@@ -199,6 +203,7 @@ private:
     gfx::Box outer_;  // the square with its hairline, what the pointer is refused by
     gfx::Box map_;    // the circle's box
     float radius_ = 0.0f;
+    float under_ = 0.0f;  // the foot of the lines under the disc (under())
     float scale_ = 1.0f;  // pixels a tile at this zoom
     float heroX_ = 0.0f, heroY_ = 0.0f;  // his tile
     float focusX_ = 0.0f, focusY_ = 0.0f;  // the tile at the middle: his, or the whole map's
