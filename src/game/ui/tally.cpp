@@ -113,7 +113,11 @@ constexpr float kZenIn = 0.08f;  // seconds
 // of that blow's figure.
 constexpr float kFloatSize = kMissSize;
 constexpr float kFloatUnitSize = 6.0f;
-constexpr float kFloatLife = 2.2f;
+// Shorter than it was, and eased out at the end rather than cut (the user, 2026-10-19: "exp text
+// is not elegently fadeout, also it stay vissible to long"): full for the first half, then out
+// along a smoothstep, so it thins and is gone with no last-frame snap.
+constexpr float kFloatLife = 1.5f;
+constexpr float kFloatHold = 0.5f;  // of the life, at full strength
 constexpr float kFloatRise = 34.0f;   // interface units over the whole life
 constexpr float kFloatAbove = 14.0f;  // units over the crown it starts from
 constexpr float kFloatUnitTracking = 0.06f;  // the EXP word's, tighter than the lane's (the
@@ -672,10 +676,12 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
     // ---- a kill's gains, over the body ---------------------------------------------------
     // "+1,234 EXP" in the blows' Bold under their full halo -- the lane's Medium read thin
     // over grass -- centred over the body, rising as a blow's figure does.
-    // Full to the end, never faded out (the user, 2026-10-19: "dont fade out exp text").
+    // Full through its hold, then eased out (kFloatHold).
     for (const Float& one : floats_) {
         const float u = std::clamp(one.age / kFloatLife, 0.0f, 1.0f);
-        const float alpha = 1.0f;
+        const float t = std::clamp((u - kFloatHold) / (1.0f - kFloatHold), 0.0f, 1.0f);
+        const float alpha = 1.0f - t * t * (3.0f - 2.0f * t);
+        if (alpha <= 0.0f) continue;
         const float world[4] = {one.world[0], one.world[1], one.world[2], 1.0f};
         float clip[4];
         bx::vec4MulMtx(clip, world, viewProj);
