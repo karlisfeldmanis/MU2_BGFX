@@ -54,6 +54,15 @@ constexpr double kTravelWait = 6.0;
 constexpr int kTries = 3;
 // Stairs walked in a row toward a nest he cannot walk to, at the most.
 constexpr int kStairs = 4;
+// How near, in tiles, a monster he is going for must be before he is set on it. An attack order
+// is a fight to the realm (Realm::advance, "his attack"), and a fight walks him with his weapon
+// drawn, so one set on from across the field walked him the whole way there -- one that has
+// only seen him too, which the realm does not yet count (kCombatReach). The user,
+// 2026-10-19: "when auto-play is going, char is constanyl walking and not runing to monster when
+// not in combat". Farther than this he is walked to it, which runs.
+constexpr float kSetOn = 6.0f;
+// And how far it may move from the tile he was walked to before the walk is asked again.
+constexpr int kSetOnDrift = 2;
 
 // The first of this map's own stairs (an enter gate letting out on the same map) to walk into on
 // the way from (column, row) to a tile he cannot walk to from there: the Dungeon's floors join
@@ -615,6 +624,23 @@ bool QuestAuto::hunt(Play& play, int32_t breed) {
     if (fightNow) {
         const sim::Request& order = realm.order();
         const bool onIt = order.kind == sim::Request::Kind::Attack && order.target == fightNow->id;
+        const float away = std::hypot(fightNow->x - hero.x, fightNow->y - hero.y);
+        if (!onIt && away > kSetOn) {
+            // Run to it first (kSetOn): out of a fight a walk is a run.
+            target_ = fightNow->id;
+            const int column = fightNow->column(), row = fightNow->row();
+            const bool drifted = std::abs(column - walkedColumn_) >= kSetOnDrift ||
+                                 std::abs(row - walkedRow_) >= kSetOnDrift;
+            if (drifted || (!hero.walking && clock_ - askedAt_ > kReask)) {
+                walkedColumn_ = column;
+                walkedRow_ = row;
+                askedAt_ = clock_;
+                play.walkTo(column, row);
+            }
+            nest_ = -1;
+            still_ = 0;
+            return true;
+        }
         if (!onIt || fightNow->id != target_) {
             target_ = fightNow->id;
             play.fight(target_, striker(play));
