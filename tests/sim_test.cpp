@@ -7670,6 +7670,32 @@ void testChaosMachine() {
         }
         check(realm.machine().empty(), "and the box is emptied");
     }
+    // But a bound Jewel of Chaos goes into any mix, and what it makes is bound (the user,
+    // 2026-10-19: "allow to use bound chaos jewel in chaos machine").
+    {
+        bool tried = false, boundMade = false;
+        for (int attempt = 0; attempt < 40 && !boundMade; ++attempt) {
+            realm.putIn(realm.give(sword, -1, 9));
+            const int jewel = realm.give(chaos, -1, 0, -1, false, 0, 0, 1, nullptr, nullptr, true);
+            check(jewel >= 0 && realm.satchel()[jewel].bound, "a bound Chaos in the bag");
+            realm.putIn(jewel);
+            realm.putIn(realm.give(bless));
+            realm.putIn(realm.give(soul));
+            const sim::Judged j = realm.judged();
+            check(j.ready && j.recipe == sim::Recipe::PlusTen, "a bound Chaos makes a +10 box");
+            check(realm.mix(), "and the Goblin runs it");
+            tried = true;
+            for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+                const sim::Held& one = realm.machine()[cell];
+                if (one.empty()) continue;
+                boundMade = one.item == sword && one.refinement == 10 && one.bound;
+                const int back = realm.takeOut(cell);
+                if (back >= 0) realm.sell(back);
+            }
+        }
+        check(tried && boundMade, "the +10 it makes is bound");
+        check(realm.machine().empty(), "and the box is emptied");
+    }
 
     // Loads a +10 or +11 box: the thing at `plus` and `jewels` of the Bless and the Soul.
     const auto load = [&](int plus, int jewels, bool luck) {

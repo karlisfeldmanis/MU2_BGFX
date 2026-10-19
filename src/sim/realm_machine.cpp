@@ -204,6 +204,13 @@ bool Realm::mix(Service service, int socket) {
     }
     me().money -= j.zen;
 
+    // A quest's Jewel of Chaos in the box (machine.cpp judge lets a bound one into any mix):
+    // what the mix makes is bound as the jewel was.
+    bool boundChaos = false;
+    for (int cell = 0; cell < kMachineCells; ++cell) {
+        const Held& one = me().machine[cell];
+        boundChaos = boundChaos || (!one.empty() && one.bound && jewelOfChaos(tables_->items[size_t(one.item)]));
+    }
     // Rand.NextRandomBool(successRate). A sure thing draws nothing.
     const bool made = j.rate >= 100 || mixDice_.nextInt(0, 100) < j.rate;
     // Takes everything but the thing at `keep` out of the box: the jewels and the runes spent.
@@ -387,6 +394,15 @@ bool Realm::mix(Service service, int socket) {
             me().machine.clear();
             me().machine.put(0, fused);
             break;
+        }
+    }
+    if (boundChaos && made && service != Service::RemoveRune && service != Service::AddSocket &&
+        service != Service::FuseRunes) {
+        for (int cell = 0; cell < kMachineCells; ++cell) {
+            if (me().machine[cell].empty()) continue;
+            Held thing = me().machine[cell];
+            thing.bound = true;
+            me().machine.put(cell, thing);
         }
     }
     me().mixed = !me().machine.empty();

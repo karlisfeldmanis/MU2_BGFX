@@ -642,10 +642,15 @@ Judged judge(const content::Tables& tables, const Machine& box, Service service,
     // in the box, every service but Remove Rune, Add Socket and Fuse Runes is refused, so no mix
     // makes a quest's reward into something else; what comes out stays bound -- the thing, the
     // rune it frees, the rune fused from bound ones (Realm::mix).
+    //
+    // But a bound Jewel of Chaos goes into any mix (the user, 2026-10-19: "allow to use bound
+    // chaos jewel in chaos machine"): it is spent either way, and what a mix with one makes is
+    // bound (Realm::mix), so a quest's jewel still never leaves him as something to sell.
     if (service != Service::RemoveRune && service != Service::AddSocket &&
         service != Service::FuseRunes) {
         for (int cell = 0; cell < kMachineCells; ++cell) {
-            if (!box[cell].empty() && box[cell].bound) {
+            if (!box[cell].empty() && box[cell].bound &&
+                !jewelOfChaos(tables.items[size_t(box[cell].item)])) {
                 j.ready = false;
                 j.title = "Bound items: runes and sockets only";
                 break;
