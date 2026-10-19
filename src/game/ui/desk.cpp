@@ -253,6 +253,20 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         characterOpen_ = !characterOpen_;
         click();
     };
+    // V, the bar's button or the bag's X. A counter stands beside the bag and goes with it, as
+    // Escape shuts both: left up alone, the shop took clicks the player meant for the world (bug
+    // report #15: "Suggestion to be closed together with the inventory to avoid misclicks").
+    const auto toggleBag = [&]() {
+        inventoryOpen_ = !inventoryOpen_;
+        if (!inventoryOpen_) {
+            if (trading_) play.closeTrade();
+            if (banking_) play.closeVault();
+            if (brokering_) play.closeBroker();
+            if (mixing_) play.closeMachine();
+            if (dealing_) play.closeDeal();
+        }
+        click();
+    };
     // Whether the bag slot holds a bound thing, so a trade's no can say why.
     const auto carriesBound = [&](int slot) { return play.isOpen() && slot >= 0 && play.realm().satchel()[slot].bound; };
     // The answers to what this window asked, heard now (Play::answers).
@@ -617,10 +631,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     }
     const bool keysHeld = typing || menuHeld || chatTyping;
 
-    if (!keysHeld && (window.pressed(gfx::Window::Key::Inventory) || scriptBag_)) {
-        inventoryOpen_ = !inventoryOpen_;
-        click();
-    }
+    if (!keysHeld && (window.pressed(gfx::Window::Key::Inventory) || scriptBag_)) toggleBag();
     scriptBag_ = false;
     if (!keysHeld && window.pressed(gfx::Window::Key::Character)) toggleCard();
     // G, the guild window (docs/game/guild.md): on a server; off one there is no guild to show.
@@ -856,10 +867,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         core::logf("window: menu up");
         click();
     }
-    if (toggleInventory) {
-        inventoryOpen_ = !inventoryOpen_;
-        click();
-    }
+    if (toggleInventory) toggleBag();
     if (toggleCharacter) toggleCard();
 
     // The character window, while it is up. What it asks for is answered here, by the realm,
@@ -1321,10 +1329,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
         // Clicks as the I and V keys do. INVENTION, the user's (2026-09-30): CNewUIMyInventory's
         // exit button is silent in MU.
-        if (asked.close) {
-            inventoryOpen_ = false;
-            click();
-        }
+        if (asked.close) toggleBag();
     } else {
         bag_.cancel();
     }
