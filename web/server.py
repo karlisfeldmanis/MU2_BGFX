@@ -80,10 +80,11 @@ The routes:
          The published lines are drawn into index.html between <!--updates--> and <!--/updates-->
          as it is served; with none published, the page's own lines show.
     GET  /internal/updates          (127.0.0.1 only) -> 200 {entries, noted_through}
-    POST /internal/updates          (127.0.0.1 only) {entries: [{day, kind, text, commits, state?}],
-                                     noted_through?}  -> 200 {ok, added}
-         `mu ship notes` (tools/mu/ship.py): drafts for the commits a release shipped, and the last
-         commit it has looked at, so the next run starts after it.
+    POST /internal/updates          (127.0.0.1 only) {entries: [{id?, day, kind, text, commits, state?}],
+                                     delete?: [id], noted_through?}  -> 200 {ok, added}
+         `mu ship notes` (tools/mu/ship.py) and the Ship app (tools/ship/ship.cpp): drafts for the
+         commits a release shipped, the last commit looked at, so the next run starts after it; and
+         a line changed (one with an id) or deleted.
 
 A token is 64 hex digits, and goes only over HTTPS. Only its SHA-256 is stored, so a copy of the
 database signs nobody in. A ticket's secret is kept until the server is told it, then only its
@@ -1327,11 +1328,19 @@ class Handler(BaseHTTPRequestHandler):
             fields = update_fields(one if isinstance(one, dict) else {}, default_state="draft")
             if isinstance(fields, str):
                 return self.reply(400, {"error": fields})
-            checked.append(fields)
+            line = one.get("id")
+            if line is not None and (not isinstance(line, int) or isinstance(line, bool)):
+                return self.reply(400, {"error": "bad id"})
+            checked.append(fields | {"id": line})
+        gone = said.get("delete", [])
+        if not isinstance(gone, list) or not all(isinstance(g, int) and not isinstance(g, bool) for g in gone):
+            return self.reply(400, {"error": "delete: a list of ids"})
         noted = said.get("noted_through")
         noted = noted if isinstance(noted, str) and re.match(r"^[0-9a-f]{7,40}$", noted) else ""
         added = self.store.add_updates(checked, noted)
-        print(f"mu ship: {added} update lines, noted through {noted or '(unchanged)'}", flush=True)
+        for line in gone:
+            self.store.delete_update(line)
+        print(f"mu ship: {added} update lines, {len(gone)} deleted, noted through {noted or '(unchanged)'}", flush=True)
         self.reply(200, {"ok": True, "added": added})
 
     def told_online(self):

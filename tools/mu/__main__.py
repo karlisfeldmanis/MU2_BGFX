@@ -40,6 +40,7 @@
     ./mu release linux [--dry]               the Linux client the same way, under /game/linux/
     ./mu ship [--go]                         what is live, what HEAD adds, what it needs, the steps (ship.py)
     ./mu ship notes [--dry]                  drafts on the site's /updates for what is now live
+    ./mu ship app                            the Ship window (tools/ship/ship.cpp), built first
 
 Every command takes --json and then prints one JSON object as its last line, for a script or
 an agent to read instead of the prose. Every step runs niced and held to `mu cores` (60% of
@@ -157,7 +158,9 @@ def main():
                     help="send the files, leave manifest.json on the release before (a protocol switch)")
 
     sh = sub.add_parser("ship", parents=[common])
-    sh.add_argument("action", nargs="?", choices=["notes"], help="notes: drafts on the site's /updates")
+    sh.add_argument("action", nargs="?", choices=["notes", "updates", "send", "app"],
+                    help="notes: drafts on the site's /updates; updates: its lines; send FILE: lines to it; app: the window")
+    sh.add_argument("file", nargs="?", help="send: the JSON file of lines")
     sh.add_argument("--go", action="store_true", help="run the steps, asked before each")
     sh.add_argument("--dry", action="store_true", help="notes: say the drafts, send nothing")
     sh.add_argument("--day", help="notes: the day they are listed under (today)")
@@ -320,6 +323,14 @@ def dispatch(args, say):
         return release.release(args.target, say, dry=args.dry, stage_only=args.stage)
     if args.command == "ship":
         import ship
+        if args.action == "updates":
+            return ship.updates(say, web=args.web)
+        if args.action == "send":
+            if not args.file:
+                raise NotFound("mu ship send <file.json>")
+            return ship.send(say, args.file, web=args.web)
+        if args.action == "app":
+            return ship.app(say)
         if args.action == "notes":
             if args.import_site:
                 return ship.import_site(say, web=args.web, since=args.since, dry=args.dry)

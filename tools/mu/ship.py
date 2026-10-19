@@ -102,11 +102,16 @@ def known(ref):
 
 
 def ssh(host, command, timeout=20):
-    done = subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", f"ConnectTimeout={min(timeout, 10)}", host, command],
+    done = subprocess.run(["ssh", *SSH_SHARED, "-o", f"ConnectTimeout={min(timeout, 10)}", host, command],
                           capture_output=True, text=True, timeout=timeout + 5)
     if done.returncode != 0:
         raise RuntimeError(f"ssh {host}: {done.stderr.strip() or 'exit ' + str(done.returncode)}")
     return done.stdout
+
+
+# One connection a box, kept a minute: the app asks the same boxes again and again.
+SSH_SHARED = ["-o", "BatchMode=yes", "-o", "ControlMaster=auto", "-o", "ControlPath=/tmp/mu-ship-%C",
+              "-o", "ControlPersist=60"]
 
 
 def fetch(url):
@@ -220,7 +225,12 @@ def report(say):
     state = live(say)
     for e in state["errors"]:
         say(f"! could not read {e}")
-    plan = {"head": head, "protocol": head_protocol, "parts": {}, "steps": []}
+    plan = {"head": head, "protocol": head_protocol, "parts": {}, "steps": [], "rows": [], "unshipped": [],
+            "errors": state["errors"], "subject": git("log", "-1", "--format=%s", "HEAD")}
+
+    def row(kind, name, live_commit, todo, **more):
+        plan["rows"].append({"kind": kind, "name": name, "live": live_commit,
+                             "behind": None if todo is None else len(todo), **more})
 
     say(f"HEAD {head}, protocol {head_protocol}\n")
 
@@ -233,6 +243,7 @@ def report(say):
         todo = pending(c["commit"], "client")
         mark = "?" if todo is None else (f"{len(todo)} behind" if todo else "current")
         say(f"client   {p:8} {c['commit']}  protocol {c['protocol']}  {c['built']}  {mark}")
+        row("client", p, c["commit"], todo, protocol=c["protocol"], built=c["built"])
         if todo:
             client_todo.append(p)
         plan["parts"][f"client-{p}"] = {"live": c["commit"], "behind": [x["sha"] for x in todo or []]}
@@ -244,6 +255,7 @@ def report(say):
         todo = pending(c["commit"], "launcher")
         say(f"launcher {p:8} {c['commit']}  {c['built']}  "
             f"{'?' if todo is None else (str(len(todo)) + ' behind' if todo else 'current')}")
+        row("launcher", p, c["commit"], todo, built=c["built"])
         if todo:
             launcher_todo.append(p)
         plan["parts"][f"launcher-{p}"] = {"live": c["commit"], "behind": [x["sha"] for x in todo or []]}
@@ -257,6 +269,7 @@ def report(say):
         how = ("STAGED, not switched" if box["staged"] else "running") if box["active"] else "STOPPED"
         say(f"server   {box['region']:15} {box['deployed']}  protocol {box['protocol']}  {how}  "
             f"{'?' if todo is None else (str(len(todo)) + ' behind' if todo else 'current')}")
+        row("server", box["region"], box["deployed"], todo, protocol=box["protocol"], how=how)
         if todo or box["staged"] or not box["active"]:
             server_todo.append(box)
         plan["parts"][f"server-{box['host']}"] = {"live": box["deployed"], "staged": box["staged"],
@@ -264,6 +277,7 @@ def report(say):
     # The site.
     web_todo = pending(state["web"], "web") if state["web"] else None
     if state["web"]:
+        row("site", "mu-classic.com", state["web"], web_todo)
         say(f"site     {'':8} {state['web']}  {'?' if web_todo is None else (str(len(web_todo)) + ' behind' if web_todo else 'current')}")
 
     # Every commit not yet everywhere, with what it needs.
@@ -289,11 +303,14 @@ def report(say):
                 where.append("site")
             if not where:
                 continue
+            plan["unshipped"].append({"sha": c["sha"], "day": c["day"], "text": draft_text(c["subject"]),
+                                      "subject": c["subject"], "where": where, "protocol": c["protocol"]})
             tag = "PROTOCOL " if c["protocol"] else ""
             say(f"  {c['sha']} {tag}[{', '.join(where)}] {draft_text(c['subject'])[:100]}")
 
     # Uncommitted work never ships: dist and both deploy scripts take the commit.
     dirty = git("status", "--porcelain", "--", "src", "shaders", "content", "server", "web", "CMakeLists.txt")
+    plan["dirty"] = [line.split(maxsplit=1)[-1] for line in (dirty or "").splitlines()]
     if dirty:
         say(f"\nnote: {len(dirty.splitlines())} uncommitted files in shipped paths (another session's?); "
             f"only {head} ships, not them")
@@ -351,6 +368,7 @@ def report(say):
             say(f"  {n:2}. {cmd:46}  # {what}")
     plan["verdict"] = verdict
     plan["steps"] = [s[0] for s in steps]
+    plan["step_notes"] = [s[1] for s in steps]
     plan["bump"] = bump
     return plan, steps
 
@@ -610,3 +628,34 @@ def import_site(say, web=None, since=None, dry=False):
     site.post({"entries": lines, "noted_through": since})
     say(f"kept by the site now: {web or SITE}/updates")
     return True, {"lines": len(lines), "noted_through": since}
+
+
+# ---- for the Ship app (tools/ship/ship.cpp) ------------------------------------------------------
+
+def updates(say, web=None):
+    """The site's lines and where `notes` got to, as the app lists them."""
+    told = Site(web).get()
+    say(f"{len(told.get('entries', []))} lines; told through {told.get('noted_through') or '(nothing yet)'}")
+    return True, told
+
+
+def send(say, path, web=None):
+    """A file of {entries: [...], delete?: [id], noted_through?} to the site: drafts the app worded,
+    lines it changed (with their id), lines it deleted."""
+    with open(path) as f:
+        body = json.load(f)
+    done = Site(web).post(body)
+    say(f"{done.get('added', 0)} lines saved, {len(body.get('delete', []))} deleted")
+    return True, done
+
+
+def app(say):
+    """The Ship window: built into out/build (only it, and what it links), then opened."""
+    build = os.path.join(ROOT, "out", "build")
+    say("building mu_ship ...")
+    done = subprocess.run(["nice", "cmake", "--build", build, "--target", "mu_ship"], cwd=ROOT,
+                          capture_output=True, text=True)
+    if done.returncode != 0:
+        say(done.stdout[-3000:] + done.stderr[-2000:])
+        return False, {"error": "mu_ship did not build"}
+    os.execv(os.path.join(build, "mu_ship"), [os.path.join(build, "mu_ship")])

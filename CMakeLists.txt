@@ -1028,6 +1028,19 @@ target_compile_definitions(botwatch PRIVATE MU2_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
 target_compile_options(botwatch PRIVATE -Wall -Wextra -Wno-unused-parameter)
 endif()
 
+# Ship: a window over a release -- what is live, what HEAD adds, the steps with a Run button each,
+# and the front page's Latest updates (tools/ship/ship.cpp; `./mu ship app`). It asks `./mu ship
+# --json` for all it knows. ImGui on bgfx, as botwatch; the Mac's alone.
+if(NOT MU2_SERVER_ONLY)
+add_executable(mu_ship EXCLUDE_FROM_ALL
+  tools/ship/ship.cpp
+)
+target_link_libraries(mu_ship PRIVATE mu_studio)
+target_include_directories(mu_ship PRIVATE src)
+target_compile_definitions(mu_ship PRIVATE MU2_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_compile_options(mu_ship PRIVATE -Wall -Wextra -Wno-unused-parameter)
+endif()
+
 # The raid, headless: the Golden Dragon against content/raid/party.json, played to a kill or a
 # wipe as many times as asked (tools/raid/raid.cpp, docs/game/golden-dragon-raid.md §2a).
 add_executable(raid EXCLUDE_FROM_ALL
