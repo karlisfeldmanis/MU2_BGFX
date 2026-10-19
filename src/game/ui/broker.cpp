@@ -320,8 +320,16 @@ void Broker::press(Play& play, const Spot& s) {
         case Hit::Head: {
             const sim::BrokerQuery::Sort by[4] = {sim::BrokerQuery::Sort::Name, sim::BrokerQuery::Sort::Seller,
                                                   sim::BrokerQuery::Sort::Left, sim::BrokerQuery::Sort::Price};
-            query_.descending = query_.sort == by[s.index] ? !query_.descending : false;
-            query_.sort = by[s.index];
+            // A head sorts up, then down, then lets go back to the newest first.
+            if (query_.sort != by[s.index]) {
+                query_.sort = by[s.index];
+                query_.descending = false;
+            } else if (!query_.descending) {
+                query_.descending = true;
+            } else {
+                query_.sort = sim::BrokerQuery::Sort::Newest;
+                query_.descending = false;
+            }
             browseOwed_ = true;
             click();
             break;

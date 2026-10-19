@@ -575,6 +575,10 @@ std::vector<const Listing*> brokerMatches(const Book& book, const content::Table
             case BrokerQuery::Sort::Name: less = label(a) < label(b); break;
             case BrokerQuery::Sort::Seller: less = a->name < b->name; break;
             case BrokerQuery::Sort::Left: less = a->secondsLeft < b->secondsLeft; break;
+            case BrokerQuery::Sort::Newest:
+                // Ids rise as things are listed, so they break a tie within one second.
+                less = a->listedAt != b->listedAt ? a->listedAt > b->listedAt : a->id > b->id;
+                break;
         }
         if (query.descending) {
             bool more = false;
@@ -583,6 +587,9 @@ std::vector<const Listing*> brokerMatches(const Book& book, const content::Table
                 case BrokerQuery::Sort::Name: more = label(a) > label(b); break;
                 case BrokerQuery::Sort::Seller: more = a->name > b->name; break;
                 case BrokerQuery::Sort::Left: more = a->secondsLeft > b->secondsLeft; break;
+                case BrokerQuery::Sort::Newest:
+                    more = a->listedAt != b->listedAt ? a->listedAt < b->listedAt : a->id < b->id;
+                    break;
             }
             return more;
         }

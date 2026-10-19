@@ -197,7 +197,7 @@ bool parse(const std::vector<uint8_t>& body, BrokerAsk& out) {
     q.watchedOnly = (flags & 8) != 0;
     q.sellerName = in.str();
     const uint8_t sort = in.u8();
-    if (sort > uint8_t(sim::BrokerQuery::Sort::Left)) return false;
+    if (sort > uint8_t(sim::BrokerQuery::Sort::Newest)) return false;
     q.sort = sim::BrokerQuery::Sort(sort);
     q.page = in.u16();
     out.item = in.i32();

@@ -166,7 +166,9 @@ struct BrokerQuery {
     std::string sellerName; // one seller's by the name on his listings, empty for all
     bool watchedOnly = false;  // what `watcher` watches (the server's own: a token is never sent)
     uint64_t watcher = 0;
-    enum class Sort : uint8_t { Price, Name, Seller, Left } sort = Sort::Price;
+    // Newest, the latest listed first, is where the Buy tab opens (the user, 2026-10-19: "market
+    // place has to show latest added items first"); descending turns it to the oldest first.
+    enum class Sort : uint8_t { Price, Name, Seller, Left, Newest } sort = Sort::Newest;
     bool descending = false;
     int page = 0;
 };

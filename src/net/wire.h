@@ -129,7 +129,9 @@ namespace mu::net {
 //     players, travel on the same map free, the unstruck dragon gone in four minutes, Dungeon 2
 //     and 3 at 60 and 70, Lala without the yeti's orb, longer dry spells (2026-10-19), so a
 //     client on 37's rules is refused instead of drifting from the server.
-constexpr uint32_t kVersion = 38;
+// 39: the Broker's Buy tab opens on the latest listed first (BrokerQuery::Sort::Newest, a fifth
+//     sort a server on 38 would not read) (2026-10-19).
+constexpr uint32_t kVersion = 39;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";

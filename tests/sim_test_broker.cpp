@@ -149,12 +149,25 @@ void testBrokerRules(const content::Tables& tables) {
     shop.list(listingOf("b", 2, armour, 1500), 24, 2);
     shop.list(listingOf("c", 3, bless, 2000), 24, 3);
     sim::BrokerQuery query;
-    query.kind = int(sim::BrokerKind::Jewels);
     std::vector<const sim::Listing*> found = sim::brokerMatches(shop, tables, query);
+    check(found.size() == 3 && found[0]->price == 2000 && found[1]->price == 1500 && found[2]->price == 3000,
+          "the latest listed first, unless asked otherwise");
+    shop.list(listingOf("d", 4, armour, 900), 24, 3);
+    found = sim::brokerMatches(shop, tables, query);
+    check(found.size() == 4 && found[0]->price == 900, "and of two in one second, the later");
+    check(shop.cancel(found[0]->id, 4, 4) == sim::BrokerNo::Yes, "and taken back by its seller");
+    query.descending = true;
+    found = sim::brokerMatches(shop, tables, query);
+    check(found.size() == 3 && found[0]->price == 3000, "descending, the oldest first");
+    query = sim::BrokerQuery{};
+    query.kind = int(sim::BrokerKind::Jewels);
+    query.sort = sim::BrokerQuery::Sort::Price;
+    found = sim::brokerMatches(shop, tables, query);
     check(found.size() == 2 && found[0]->price == 2000 && found[1]->price == 3000,
           "jewels only, the cheapest first");
     query = sim::BrokerQuery{};
     query.text = "bless";
+    query.sort = sim::BrokerQuery::Sort::Price;
     query.descending = true;
     found = sim::brokerMatches(shop, tables, query);
     check(found.size() == 2 && found[0]->price == 3000, "found by name, any case, dearest first");
