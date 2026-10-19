@@ -1772,7 +1772,7 @@ void Play::follow(float seconds) {
                 // And the arrival's own cry: the bottom of SetPlayerStop, which a monster runs
                 // once when its walk ends (ZzzCharacter.cpp:429-443, from MovePath at :6444),
                 // one in sixteen, once -- not scaled by the frame, as it is one call.
-                if (isWalk(was) && !body->player && one.cryMove >= 0) {
+                if (isWalk(was) && !body->player && body->summoner == 0 && one.cryMove >= 0) {
                     wanderDice_ ^= wanderDice_ << 13;
                     wanderDice_ ^= wanderDice_ >> 17;
                     wanderDice_ ^= wanderDice_ << 5;
@@ -1801,8 +1801,11 @@ void Play::follow(float seconds) {
         // SetPlayerWalk, which the client runs every frame a thing moves: rand_fps_check(16),
         // one in sixteen per 25 fps reference frame, scaled to the frame actually drawn. Gated
         // on the walk clip, the witness the clip chooser uses, so a monster whose step was
-        // refused stands silent. MU2's Crowd.Wander.
-        if (!body->player && one.cryMove >= 0 && isWalk(one.figure.clip())) {
+        // refused stands silent. MU2's Crowd.Wander. Never an elf's summon, which is heard
+        // fighting and nothing else (the user, 2026-10-19: "elf summons is making to much noice
+        // when is not on combat") -- on every map she takes it to, not only the one she raised
+        // it on, where Play::open gave it back its breed's _move.
+        if (!body->player && body->summoner == 0 && one.cryMove >= 0 && isWalk(one.figure.clip())) {
             wanderDice_ ^= wanderDice_ << 13;
             wanderDice_ ^= wanderDice_ >> 17;
             wanderDice_ ^= wanderDice_ << 5;
