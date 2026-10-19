@@ -46,6 +46,8 @@ uniform vec4 u_outlineScale;
 // searches never ran and no ring was drawn.
 static const int STEPS = 16;
 static const int RINGS = 6;
+// How far, in mask texels, the shut-in test below walks at most.
+static const int SHUT = 10;
 
 // One tap, held inside the corner of the texture this frame actually drew into.
 //
@@ -104,23 +106,26 @@ void main()
 	// -- Tersia's chain (setb, 30% cut away) -- leaves a hole in the mask at every link, and
 	// each hole got a ring of its own: her body read as a gold lattice (the user, 2026-10-19:
 	// "something vierd on hovering NPC its not making nice outline"). Eight ways out, each
-	// walked to three ring widths: if every one meets the shape, the pixel is shut in and
-	// draws nothing. A gap open on any side -- between the legs, under an arm -- still rings.
+	// walked a texel at a time to three ring widths (a strand of chain is a texel or two
+	// across, and a stride of a ring width stepped over it): if every one meets the shape,
+	// the pixel is shut in and draws nothing. A gap open on any side -- between the legs,
+	// under an arm -- still rings.
 	if (here <= 0.99)
 	{
 		float shut = 1.0;
+		float walk = min(3.0 * width, float(SHUT));
 		for (int i = 0; i < 8; i++)
 		{
 			float turn = float(i) * (6.2831853 / 8.0);
 			vec2 along = vec2(cos(turn), sin(turn)) * u_outlinePixel.xy;
 			float met = 0.0;
-			for (int k = 1; k <= 4; k++)
+			for (int k = 1; k <= SHUT; k++)
 			{
-				met = max(met, maskAt(at + along * (width * 0.75 * float(k)), lo, hi, dx, dy));
+				if (float(k) <= walk) met = max(met, maskAt(at + along * float(k), lo, hi, dx, dy));
 			}
 			shut = min(shut, met);
 		}
-		if (shut > 0.5) discard;
+		if (shut > 0.25) discard;
 	}
 
 	float strength = 0.0;
