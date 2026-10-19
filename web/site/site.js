@@ -13,22 +13,12 @@ window.MU = (() => {
     return out;
   };
   const home = LANG === 'en' ? '/' : '/' + LANG + '/';
-  const LANGS = ['pt', 'es', 'ru', 'vi', 'pl'];
-  const LANG_KEY = 'mu-lang';
-  const store = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
-  const stored = (k) => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
-  // A page in a language is the visitor's choice of it, and so is a language picked in the footer.
-  if (LANG !== 'en') store(LANG_KEY, LANG);
+  // The server sends an English page to the browser's language (web/i18n.py pick); a language
+  // picked in the footer is kept a year in the mu-lang cookie, and outranks the browser's.
   document.addEventListener('click', (e) => {
     const a = e.target.closest && e.target.closest('.langs a[data-lang]');
-    if (a) store(LANG_KEY, a.dataset.lang);
+    if (a) document.cookie = 'mu-lang=' + a.dataset.lang + '; Path=/; Max-Age=31536000; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
   });
-  // The English front page, for a first visit from a browser set to one of the languages, sends it
-  // there; once a language is chosen (English too), never again.
-  if (LANG === 'en' && location.pathname === '/' && !stored(LANG_KEY)) {
-    const want = (navigator.languages || [navigator.language || '']).map((l) => String(l).slice(0, 2).toLowerCase())[0];
-    if (LANGS.includes(want)) location.replace('/' + want + '/' + location.hash);
-  }
 
   const el = (tag, cls, text) => {
     const e = document.createElement(tag);

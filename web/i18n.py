@@ -322,6 +322,34 @@ def localise(page: str, file: str, lang: str, texts: dict, script_strings: list)
     return page
 
 
+# The cookie a language picked in the footer is kept in (site.js); "en" for English.
+CHOICE = "mu-lang"
+
+
+def pick(accept_language: str, cookie: str) -> str:
+    """The language to serve an English page in: the one picked in the footer, else the first of
+    the browser's languages (by its q) that the site has, English counted; "en" when none is."""
+    for part in (cookie or "").split(";"):
+        name, _, value = part.strip().partition("=")
+        if name == CHOICE and (value in LANGS or value == "en"):
+            return value
+    wants = []
+    for n, part in enumerate((accept_language or "").split(",")):
+        tag, _, rest = part.strip().partition(";")
+        q = 1.0
+        if rest.strip().startswith("q="):
+            try:
+                q = float(rest.strip()[2:])
+            except ValueError:
+                q = 0.0
+        if tag and q > 0:
+            wants.append((-q, n, tag.split("-")[0].lower()))
+    for _, _, code in sorted(wants):
+        if code == "en" or code in LANGS:
+            return code
+    return "en"
+
+
 def lang_of(path: str):
     """("pt", "/privacy") for "/pt/privacy"; (None, path) for a path in no language."""
     found = re.match(r"^/([a-z]{2})(/.*|)$", path)

@@ -1666,6 +1666,7 @@ class Handler(BaseHTTPRequestHandler):
         # The page and its pictures. Caddy serves /downloads/ itself; this answers for local runs.
         # A page under /<lang>/ is the English one in that language (web/i18n.py).
         lang, path = i18n.lang_of(path)
+        asked = path
         if path in ("", "/"):
             path = "/index.html"
         elif path in ("/account", "/account/"):
@@ -1685,6 +1686,20 @@ class Handler(BaseHTTPRequestHandler):
         if lang and path.lstrip("/") not in i18n.PAGES:
             self.send_error(HTTPStatus.NOT_FOUND)
             return
+        # An English page, asked by a browser in one of the site's languages (or by someone who
+        # picked one in the footer), is that page in it: sent there before anything is drawn.
+        if lang is None and path.lstrip("/") in i18n.PAGES:
+            want = i18n.pick(self.headers.get("Accept-Language", ""), self.headers.get("Cookie", ""))
+            if want != "en":
+                query = urlparse(self.path).query
+                self.send_response(302)
+                self.send_header("Location", f"/{want}{asked if asked.startswith('/') else '/' + asked}"
+                                 + (f"?{query}" if query else ""))
+                self.send_header("Vary", "Accept-Language, Cookie")
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
         root = self.downloads if path.startswith("/downloads/") else self.site
         rel = path[len("/downloads/"):] if root is self.downloads else path.lstrip("/")
         target = (root / rel).resolve()
@@ -1697,6 +1712,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", mimetypes.guess_type(target.name)[0] or "application/octet-stream")
         self.send_header("Content-Length", str(len(data)))
+        if path.lstrip("/") in i18n.PAGES:
+            self.send_header("Vary", "Accept-Language, Cookie")
         if path.startswith("/shots/") and path.endswith(".webp"):  # kept a day: a shot taken again keeps its name
             self.send_header("Cache-Control", "public, max-age=86400")
         self.end_headers()

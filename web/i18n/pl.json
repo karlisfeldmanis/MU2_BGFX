@@ -291,5 +291,6 @@
  "Intel graphics: no more black screen and minimised window at start or on entering the world": "Grafika Intel: koniec czarnego ekranu i zminimalizowanego okna przy starcie lub wejściu do świata",
  "Windows: no more freeze when the game is behind other windows": "Windows: koniec zawieszeń, gdy gra jest za innymi oknami",
  "After a graphics driver reset, the game opens on a lighter setting; older Intel cards open on Lowest": "Po resecie sterownika grafiki gra uruchamia się na lżejszym ustawieniu; starsze karty Intel uruchamiają się na Lowest",
- "A damaged game file no longer crashes the game": "Uszkodzony plik gry nie crashuje już gry"
+ "A damaged game file no longer crashes the game": "Uszkodzony plik gry nie crashuje już gry",
+ "The site shows each page in your browser's language when it has it. A language you pick at the foot of a page is kept in a cookie for a year, and nothing else is.": "Strona pokazuje każdą podstronę w języku twojej przeglądarki, jeśli go ma. Język wybrany na dole strony zapisujemy w ciasteczku na rok — i nic poza tym."
 }
