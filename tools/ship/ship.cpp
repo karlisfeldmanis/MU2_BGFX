@@ -238,6 +238,7 @@ public:
 
     // Each frame: whatever finished is taken in; the next of a run of steps is started.
     void poll() {
+        if (!runAll_ && running_ < 0) shipAll_ = false;
         if (status_ && status_->done() && !statusTaken_) {
             statusTaken_ = true;
             const Json said = status_->result();
@@ -411,7 +412,7 @@ private:
 
     // A LIVE step is asked about first; any other runs at once.
     void ask(int i) {
-        if (steps_[size_t(i)].live) {
+        if (steps_[size_t(i)].live && !shipAll_) {
             confirm_ = i;  // the popup opens itself on the next frame (confirmPopup)
         } else {
             start(i);
@@ -515,6 +516,19 @@ private:
         const ImVec4 tone = bump ? kRed : nothing ? kGreen : kGold;
         ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(tone.x * 0.18f, tone.y * 0.18f, tone.z * 0.18f, 1.0f));
         ImGui::BeginChild("verdict", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding);
+        // **Ship updates** (the user, 2026-10-19: "we need button ship updates"): every step, asked once.
+        if (!steps_.empty()) {
+            const bool idle = running_ < 0 && !runAll_;
+            ImGui::BeginDisabled(!idle || nextWaiting(0) < 0);
+            ImGui::PushStyleColor(ImGuiCol_Button, bump ? ImVec4(0.62f, 0.22f, 0.18f, 1) : ImVec4(0.62f, 0.46f, 0.15f, 1));
+            ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * 1.2f);
+            if (ImGui::Button(shipAll_ ? "Shipping..." : "Ship updates", ImVec2(170, 40))) askShip_ = true;
+            ImGui::PopFont();
+            ImGui::PopStyleColor();
+            ImGui::EndDisabled();
+            ImGui::SameLine();
+        }
+        ImGui::BeginGroup();
         ImGui::PushTextWrapPos(0.0f);
         ImGui::TextColored(tone, "%s", v.c_str());
         ImGui::PopTextWrapPos();
@@ -530,6 +544,12 @@ private:
                 ImGui::EndTooltip();
             }
         }
+        if (shipAll_) {
+            int done = 0;
+            for (const Step& st : steps_) done += st.state == Step::State::Done || st.state == Step::State::Skipped;
+            ImGui::TextColored(kGold, "step %d of %zu", std::min(done + 1, int(steps_.size())), steps_.size());
+        }
+        ImGui::EndGroup();
         ImGui::EndChild();
         ImGui::PopStyleColor();
     }
@@ -709,6 +729,37 @@ private:
     }
 
     void confirmPopup() {
+        if (askShip_) {
+            askShip_ = false;
+            ImGui::OpenPopup("Ship updates?");
+        }
+        if (ImGui::BeginPopupModal("Ship updates?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::TextColored(plan_["bump"].boolOr(false) ? kRed : kGold, "%s", plan_["verdict"].stringOr("").c_str());
+            ImGui::TextDisabled("Every step below runs in turn from %s, with no more questions; the first that fails stops the rest.",
+                                plan_["head"].stringOr("").c_str());
+            ImGui::Spacing();
+            for (size_t i = 0; i < steps_.size(); ++i) {
+                const Step& st = steps_[i];
+                if (st.state == Step::State::Done || st.state == Step::State::Skipped) continue;
+                ImGui::TextDisabled("%2zu.", i + 1);
+                ImGui::SameLine();
+                ImGui::TextColored(st.live ? kRed : ImGui::GetStyle().Colors[ImGuiCol_Text], "%-48s", st.command.c_str());
+                ImGui::SameLine();
+                ImGui::TextColored(st.live ? kRed : kDim, "%s", st.note.c_str());
+            }
+            ImGui::Spacing();
+            if (ImGui::Button("Ship", ImVec2(120, 0))) {
+                ImGui::CloseCurrentPopup();
+                const int first = nextWaiting(0);
+                if (first >= 0) {
+                    shipAll_ = runAll_ = true;
+                    start(first);
+                }
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Not now", ImVec2(120, 0))) ImGui::CloseCurrentPopup();
+            ImGui::EndPopup();
+        }
         if (confirm_ >= 0 && !ImGui::IsPopupOpen("Run a live step?")) ImGui::OpenPopup("Run a live step?");
         if (ImGui::BeginPopupModal("Run a live step?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
             if (confirm_ >= 0) {
@@ -779,6 +830,28 @@ private:
             ImGui::TextColored(kDim, "reading...");
         }
         if (!siteError_.empty()) ImGui::TextColored(kRed, "%s", siteError_.c_str());
+        // The first time: the lines written into index.html by hand become the site's own, once.
+        if (site_.empty() && notedThrough_.empty() && lines_ && lines_->done() && siteError_.empty()) {
+            ImGui::TextColored(kGold, "The site keeps no lines yet.");
+            ImGui::SameLine();
+            const bool importing = importing_ && !importing_->done();
+            ImGui::BeginDisabled(importing);
+            if (ImGui::Button("Move the page's lines in")) {
+                importing_ = std::make_unique<Job>(root_, "./mu ship notes --import-site --json" + webFlag());
+                console_ = importing_.get();
+            }
+            ImGui::EndDisabled();
+            if (importing) {
+                ImGui::SameLine();
+                ImGui::TextColored(kDim, "moving...");
+            }
+        }
+        if (importing_ && importing_->done()) {
+            if (!importing_->ok()) siteError_ = lastLines(importing_->output(), 6);
+            if (console_ == importing_.get()) console_ = nullptr;
+            importing_.reset();
+            loadLines();
+        }
         ImGui::BeginChild("site", ImVec2(0, 0));
         siteList();
         ImGui::EndChild();
@@ -903,7 +976,7 @@ private:
 
     std::string root_, web_;
     std::string wantTab_;
-    std::unique_ptr<Job> status_, lines_, drafting_, sending_, step_;
+    std::unique_ptr<Job> status_, lines_, drafting_, sending_, step_, importing_;
     bool statusTaken_ = false, linesTaken_ = false, draftTaken_ = false;
     Json plan_;
     std::string statusError_, siteError_, draftError_;
@@ -911,6 +984,8 @@ private:
     std::vector<Step> steps_;
     int running_ = -1, confirm_ = -1;
     bool runAll_ = false, needsRefresh_ = false;
+    bool shipAll_ = false;   // Ship updates: asked once for every step, so no LIVE one asks again
+    bool askShip_ = false;   // its popup is to open
     Job* console_ = nullptr;
     std::vector<Line> site_, drafts_;
     std::string notedThrough_, draftsThrough_;
