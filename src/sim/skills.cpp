@@ -1114,7 +1114,13 @@ SummonFit summonFit(const content::MonsterKind& kind, int heroLevel, const HeroP
     // The health ladder's square root (the user, 2026-10-08: "elf summon hp is scaling way to
     // much"): 0.75's health climbs some two hundredfold from level 2 to 64 and runs on past it,
     // so a level-200 elf's Bali stood at 170 000. Ours, as kSummonHealthPer* are.
-    fit.health = std::max(1, int(float(kind.health) * std::sqrt(climb(Ladder::Health)) * lasts));
+    // And no climb past the ladder's top (the user, 2026-10-19: "we need to nerf elf summon hp
+    // scale, now Dark Knight summon has 17k HP"): past the Death Gorgon's 64 the ladder ran on at
+    // its last slope, 250 health a level, so a level-200 elf's Dark Knight stood at level 148 and
+    // 19 000; held at 64 it is some 9 000, and her Bali 14 000 where it was 32 000.
+    constexpr int kTop = int(kLadder[sizeof(kLadder) / sizeof(kLadder[0]) - 1].level);
+    const float lifts = summonClimb(Ladder::Health, std::min(kind.level, kTop), std::min(fit.level, kTop));
+    fit.health = std::max(1, int(float(kind.health) * std::sqrt(lifts) * lasts));
     fit.attackRate = float(kind.attackRate) * climb(Ladder::AttackRate) * bites;
     // Its armour takes none of her points, and its defence climbs at the square root as its
     // health does (the user, 2026-10-18: "ice queen tried to hit Elite Yeti and ice queen was

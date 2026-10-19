@@ -646,7 +646,9 @@ constexpr int32_t kSummonCool = 1200;
 constexpr int32_t kSummonKeepTicks = 40;
 // Halved, and the ladder's health climb taken at its square root (Realm::fitSummon), the
 // user's of 2026-10-08: "elf summon hp is scaling way to much". A level-200 elf of 250 energy
-// has a Golem of some 3 300 and a Bali of 34 000, where they were 17 000 and 174 000.
+// has a Golem of some 3 300 and a Bali of 34 000, where they were 17 000 and 174 000 -- and
+// since 2026-10-19 the health climb stops at the ladder's top (summonFit), so that Bali is
+// some 14 000 and her Dark Knight 9 000.
 constexpr float kSummonHealthPerEnergy = 1.0f / 200.0f;
 constexpr float kSummonHealthPerVitality = 1.0f / 400.0f;
 constexpr float kSummonForcePerEnergy = 1.0f / 200.0f;
