@@ -748,17 +748,15 @@ QuestRow tersiaThird() {
     constexpr int8_t knight = int8_t(Kin::DarkKnight);
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);
-    // The set's boots, two sockets as the Halls' (2026-10-09), and the tower's own pair for
-    // them: Frenzy again, one a thing, and Second Wind. Its weapons went to Devias, a map lower;
-    // the tower's weapon is the Balrog's.
+    // The set's boots, two sockets as the Halls' (2026-10-09), and Second Wind for them. No
+    // second Frenzy: one a thing, and two worn are one (the user, 2026-10-19). Its weapons went
+    // to Devias, a map lower; the tower's weapon is the Balrog's.
     row.paid[row.paidCount++] = {.item = "BootMale02", .kin = knight, .sockets = 2,
                                  .firstOnly = true};  // Dragon
     row.paid[row.paidCount++] = {.item = "BootMale04", .kin = wizard, .sockets = 2,
                                  .firstOnly = true};  // Legendary
     row.paid[row.paidCount++] = {.item = "BootElf05", .kin = elf, .sockets = 2,
                                  .firstOnly = true};  // Guardian
-    row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Frenzy),
-                                 .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::SecondWind),
                                  .firstOnly = true};
     row.voice = "tersia_3";  // pipeline/voice.py, VOICES["tersia"]
