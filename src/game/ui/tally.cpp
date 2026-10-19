@@ -32,6 +32,9 @@ constexpr float kCriticalSize = 21.0f;
 constexpr float kMissSize = 8.0f;
 // And ABSORBED quieter than a miss, the user's of 2026-10-01: a long word beside the red.
 constexpr float kAbsorbedSize = 6.0f;
+// Life back off his own blow, under a blow's figure: it comes with every hit, and at a swing's
+// size it outshouted them (the user, 2026-10-19: "+life fontsie is to large").
+constexpr float kLifeSize = 9.0f;
 // None on a figure. Roman capitals want air between LETTERS, and Cinzel's own drawing already
 // carries it; a number is one object and tracking it made 27 read as 2 7 (the user, on sight,
 // 2026-09-23). The word MISS keeps its own, below, because a word is not a number.
@@ -276,8 +279,8 @@ float sizeOf(Mark mark) {
         case Mark::Immune: return kMissSize;
         case Mark::Absorbed: return kAbsorbedSize;
         case Mark::Burn:
+        case Mark::Life: return kLifeSize;
         case Mark::Bleed:
-        case Mark::Life:
         case Mark::Swing:
         case Mark::Poison:
         case Mark::Summon:
