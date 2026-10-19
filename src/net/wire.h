@@ -534,6 +534,11 @@ void put(std::vector<uint8_t>& out, const Invasion& one);
 // removed), 0 for not all of one there yet, -1 for a buffer that is not our protocol.
 int take(std::vector<uint8_t>& buffer, Kind& kind, std::vector<uint8_t>& body,
          uint32_t most = kMostFrame);
+// The same from `at` on, which moves past the frame taken and leaves `buffer` as it was: the
+// server's, which erases what it has read once a pass. Erased frame by frame, a line of 100,000
+// pings moved the rest of the buffer 100,000 times on the loop's one thread.
+int take(const std::vector<uint8_t>& buffer, size_t& at, Kind& kind, std::vector<uint8_t>& body,
+         uint32_t most = kMostFrame);
 
 // A body, parsed. False on a body of the wrong length or shape.
 bool parse(const std::vector<uint8_t>& body, Hello& out);

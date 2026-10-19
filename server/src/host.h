@@ -97,6 +97,16 @@ constexpr auto kSilentFor = std::chrono::seconds(10);
 // orders many times over. More, and the rest of that tick's are dropped -- every one is sent to
 // everyone in his world, and one client could otherwise flood the rest off their lines.
 constexpr int kMostCommands = 64;
+// The door's limits (docs/plans/security.md): Pings answered a second (a client has one out at a
+// time); what one line may have sent and not yet been read; how long a line may stay without an
+// account or a world; how many such lines one address may hold at once, and how many lines the
+// server holds in all. Past them a line of idle sockets or a stream of Pings held the loop's one
+// thread, or took every file the box would open.
+constexpr int kMostPings = 10;
+constexpr size_t kMostUnread = 1u << 20;
+constexpr auto kSignInWithin = std::chrono::seconds(30);
+constexpr int kMostWaitingFromOne = 8;
+constexpr size_t kMostLines = 4000;
 // How long after Devil Square's fight starts one who passed Charon's gate before it shut is still
 // let into it (hello): the trip's load and a slow line.
 constexpr int kSquareLate = 20;
@@ -279,6 +289,13 @@ struct Session {
     Clock::time_point heardAt = Clock::now();
     // Commands taken from him for the coming tick (kMostCommands), counted afresh each tick.
     int asked = 0;
+    // Pings answered in the second from pingsFrom (kMostPings).
+    int pings = 0;
+    Clock::time_point pingsFrom{};
+    // When the line came: one with no account or world by kSignInWithin is let go.
+    Clock::time_point cameAt = Clock::now();
+    // Its other end's address, for kMostWaitingFromOne; empty for this machine's own.
+    std::string from;
     // The website asked whose his pass's ticket is (signin.cpp), and what he said with it, held until
     // the answer comes: an Account or a Hello. Nothing more of his is read meanwhile.
     std::future<Redeemed> signing;
@@ -455,10 +472,16 @@ bool takesTokens();
 bool reservedKey(const std::string& key);
 // Whether a connection's other end is this machine (127.0.0.0/8 or ::1).
 bool fromHere(int fd);
+// A connection's other end as text, for the door's count by address (kMostWaitingFromOne).
+std::string addressOf(int fd);
 Door door(Session& one, std::string& key);
 // The website's answer, once it has come: true, with his account's key, or "" for a ticket it does
 // not keep or a pass that does not prove itself, or "!" when it could not be asked.
 bool signed_(Session& one, std::string& account);
+// A line gone while the website is still asked: its answer kept till it comes (letGoOf), and those
+// that have come dropped, each pass (sweepLetGo).
+void letGoOf(Session& one);
+void sweepLetGo();
 // Who is on the server, told to the website's /internal/online every 5 s for its admins' Online page
 // (web/README.md): the post on a job of its own, never the loop's.
 void tellOnline(const std::vector<std::unique_ptr<Session>>& sessions);

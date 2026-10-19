@@ -573,18 +573,26 @@ void put(std::vector<uint8_t>& out, const Hash& one) {
     });
 }
 
-int take(std::vector<uint8_t>& buffer, Kind& kind, std::vector<uint8_t>& body, uint32_t most) {
-    if (buffer.size() < 5) return 0;
+int take(const std::vector<uint8_t>& buffer, size_t& at, Kind& kind, std::vector<uint8_t>& body,
+         uint32_t most) {
+    if (at > buffer.size() || buffer.size() - at < 5) return 0;
     uint32_t length = 0;
-    for (int i = 0; i < 4; ++i) length |= uint32_t(buffer[size_t(i)]) << (8 * i);
+    for (int i = 0; i < 4; ++i) length |= uint32_t(buffer[at + size_t(i)]) << (8 * i);
     if (length < 1 || length > most) return -1;
-    if (buffer.size() < 4 + size_t(length)) return 0;
-    const uint8_t k = buffer[4];
+    if (buffer.size() - at < 4 + size_t(length)) return 0;
+    const uint8_t k = buffer[at + 4];
     if (k < uint8_t(Kind::Hello) || k > uint8_t(kLastKind)) return -1;
     kind = Kind(k);
-    body.assign(buffer.begin() + 5, buffer.begin() + 4 + long(length));
-    buffer.erase(buffer.begin(), buffer.begin() + 4 + long(length));
+    body.assign(buffer.begin() + long(at) + 5, buffer.begin() + long(at) + 4 + long(length));
+    at += 4 + size_t(length);
     return 1;
+}
+
+int take(std::vector<uint8_t>& buffer, Kind& kind, std::vector<uint8_t>& body, uint32_t most) {
+    size_t at = 0;
+    const int took = take(buffer, at, kind, body, most);
+    if (took == 1) buffer.erase(buffer.begin(), buffer.begin() + long(at));
+    return took;
 }
 
 bool parse(const std::vector<uint8_t>& body, Hello& out) {

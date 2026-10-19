@@ -19,6 +19,9 @@ StateDirectory=mu2
 ProtectSystem=strict
 ProtectHome=yes
 NoNewPrivileges=yes
+# Room for kMostLines (host.h) and the store's files: at systemd's 1024, a thousand idle sockets
+# took every file it may open, and accept() failing left the listener readable and the loop spinning.
+LimitNOFILE=16384
 
 [Install]
 WantedBy=multi-user.target

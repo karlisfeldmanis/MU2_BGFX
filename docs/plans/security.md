@@ -74,9 +74,32 @@ the launcher; closing it and opening it again updates it.
 `/var/lib/mu2-symbols/<commit>/` on the box (root's, served by nothing). Crash reports are read
 against them (web/README.md, Crash reports). The launcher exe was stripped already.
 
-## 3. Next, to propose before building
+## 3. The door's limits (built 2026-10-19, server only)
 
-- A per-address connection rate on the game's port: scanners already reach it ("not our
-  protocol" in `journalctl -u mu2-server`).
+From an audit of what a hand-made client could do. The four that mattered, each fixed in the
+server alone (no protocol change, no client release), and the constants in `server/src/host.h`:
+
+- **A trade's partner gone in the tick of the other's Accept duplicated the offer.** His
+  character was kept with the offer back in his bag, then her Accept, queued ahead of his
+  Leave, swapped it. `part()` now puts his Leave first, so the trade is called off before.
+  `server_test` "deal leave" fails without it.
+- **A stream of Pings held the loop's one thread.** Each frame erased from the front of the
+  buffer moved the rest; `net::take` now reads from an offset and the buffer is trimmed
+  once a pass. At most `kMostPings` (10) are answered a second, and a line with more than
+  `kMostUnread` (1 MB) unread is let go.
+- **Idle sockets took every file the box would open**, and `accept()` failing left the poll
+  spinning. A line with no account or world is let go after `kSignInWithin` (30 s), one address
+  holds at most `kMostWaitingFromOne` (8) such lines, the server `kMostLines` (4000) in all,
+  and the service has `LimitNOFILE=16384`. This machine's own lines (the bots) are not counted.
+- **Made-up passes stalled the loop three seconds each**: a gone line's `std::async` waited on
+  its destruction. Its answer is now kept till it comes (`letGoOf`), and past 64 asked at once
+  a new pass is refused.
+
+Still open from the audit: the game's line is plain TCP (a session can be taken over by
+someone on the player's network), the launcher's updates are not signed, the website's
+`/internal/*` trusts any process on the box, and chat item links can be forged.
+
+## 4. Next, to propose before building
+
 - Server-side bot signs: inhuman command timing, sessions around the clock.
 - Fewer secrets in environment variables where it is practical (the ticket's included).

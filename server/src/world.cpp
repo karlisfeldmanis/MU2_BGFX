@@ -754,7 +754,11 @@ void part(Session& one) {
                        row.world.c_str(), row.kept.hero.column, row.kept.hero.row,
                        row.kept.hero.level, (long long)row.kept.hero.money);
         }
-        one.world->queued.push_back({.kind = sim::Command::Kind::Leave, .player = one.player});
+        // His Leave ahead of everyone's this tick: kept with his trade's offer back in his bag, his
+        // trade is called off (Realm::depart) before a partner's accept queued ahead of it could swap
+        // it -- the offer in the partner's bag and in his kept one, an item and its Zen twice.
+        one.world->queued.insert(one.world->queued.begin(),
+                                 sim::Command{.kind = sim::Command::Kind::Leave, .player = one.player});
     } else if (one.joining != 0) {
         one.world->orphans.push_back(one.joining);
     }

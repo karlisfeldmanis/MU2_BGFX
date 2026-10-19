@@ -470,6 +470,64 @@ void testInvasion() {
 
 }  // namespace
 
+// **A trade's partner gone in the tick of the other's Accept** (world.cpp part): he is kept with his
+// offer back in his bag, so his Leave must call the trade off before her Accept queued ahead of it
+// swaps it -- or the armour is in her bag and in his kept one, the duplication the audit found.
+void testDealLeave() {
+    std::printf("deal leave\n");
+    using Kind = sim::Command::Kind;
+    const std::string assets = MU2_ASSET_DIR;
+    std::vector<std::unique_ptr<World>> worlds;
+    sim::RealmConfig config;
+    net::Hello hello;
+    hello.world = "lorencia";
+    hello.kin = uint8_t(sim::Kin::DarkKnight);
+    hello.level = 50;
+    hello.column = 142;
+    hello.row = 126;
+    World* world = raiseWorld(worlds, hello, assets, config, 20261019, "test", nullptr, 0);
+    check(world != nullptr, "the server raises Lorencia for a trade");
+    if (!world) return;
+    sim::Realm& realm = *world->realm;
+    const uint32_t a = realm.hero().id;
+    const uint32_t b = realm.join(sim::Kin::FairyElf, 50, 143, 126);
+    check(b != 0, "a second player joins beside him");
+    const int32_t armour = world->tables.itemNamed("ArmorMale01");
+    realm.lookAs(a);
+    const int armourAt = realm.give(armour, -1, 7);
+    check(armourAt >= 0, "he carries an armour +7");
+    const auto run = [&](sim::Command c) {
+        realm.command(c);
+        realm.step();
+    };
+    run({.kind = Kind::DealAsk, .player = a, .target = b});
+    run({.kind = Kind::DealAnswer, .player = b, .a = 1, .target = a});
+    run({.kind = Kind::DealPut, .player = a, .a = armourAt, .b = -1});
+    for (int i = 0; i < int(sim::kDealHoldTicks); ++i) realm.step();
+    run({.kind = Kind::DealAccept, .player = a, .a = 1});
+    realm.lookAs(a);
+    check(realm.dealAccepted(false), "he has accepted");
+
+    // Her Accept arrives, then his line goes before the tick.
+    world->queued.push_back({.kind = Kind::DealAccept, .player = b, .a = 1});
+    std::unique_ptr<Session> his = player(world, 777, "Trader");
+    his->player = a;
+    const sim::Kept kept = realm.keptOf(a);
+    bool keptHas = false;
+    for (const auto& h : kept.hero.slots) keptHas = keptHas || h.item == armour;
+    check(keptHas, "he is kept with the armour back in his bag");
+    part(*his);
+    std::vector<sim::Command> commands;
+    commands.swap(world->queued);
+    for (const sim::Command& c : commands) realm.command(c);
+    realm.step();
+    realm.lookAs(b);
+    bool herHas = false;
+    for (int slot = 0; slot < sim::kSlots; ++slot) herHas = herHas || realm.satchel()[slot].item == armour;
+    check(!herHas, "and she does not have it too");
+    check(realm.dealing() == 0u, "the trade is called off");
+}
+
 int main() {
     core::logSilence(true);
     testStore();
@@ -478,6 +536,7 @@ int main() {
     testChat();
     testRaise();
     testGuild();
+    testDealLeave();
     testRaid();
     testInvasion();
     std::printf("%d checks, %d failed\n", g_checks, g_failures);

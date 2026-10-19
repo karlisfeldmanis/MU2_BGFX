@@ -17,6 +17,7 @@
 #include "host.h"
 
 #include <arpa/inet.h>
+#include <atomic>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -40,6 +41,13 @@ constexpr size_t kMostRemembered = 20000;
 // By ticket: the disk's rows (Store::PassRow) as they were last read or written. `count` is the
 // highest proven, and a pass must come with a higher one.
 std::unordered_map<std::string, Store::PassRow> g_known;
+// The website's answers still coming (Session::signing), and those whose line went before they
+// came: kept here till they come, since a std::async future waits on its destruction, and a stream
+// of made-up passes, each line closed at once, held the loop's one thread three seconds each. Past
+// kMostAsking at once a new pass is turned away.
+std::atomic<int> g_asking{0};
+std::vector<std::future<Redeemed>> g_letGo;
+constexpr int kMostAsking = 64;
 
 int64_t now() { return int64_t(std::time(nullptr)); }
 
@@ -172,6 +180,19 @@ bool fromHere(int fd) {
     return false;
 }
 
+std::string addressOf(int fd) {
+    sockaddr_storage peer{};
+    socklen_t size = sizeof peer;
+    if (getpeername(fd, reinterpret_cast<sockaddr*>(&peer), &size) != 0) return "?";
+    char text[INET6_ADDRSTRLEN] = {};
+    if (peer.ss_family == AF_INET) {
+        ::inet_ntop(AF_INET, &reinterpret_cast<sockaddr_in*>(&peer)->sin_addr, text, sizeof text);
+    } else if (peer.ss_family == AF_INET6) {
+        ::inet_ntop(AF_INET6, &reinterpret_cast<sockaddr_in6*>(&peer)->sin6_addr, text, sizeof text);
+    }
+    return text[0] != '\0' ? text : "?";
+}
+
 Door door(Session& one, std::string& key) {
     net::Pass pass;
     const bool passed = takesTokens() && net::parsePass(key, pass);
@@ -197,9 +218,18 @@ Door door(Session& one, std::string& key) {
         key = known->account;
         return Door::Pass;
     }
+    if (g_asking.load() >= kMostAsking) {
+        core::logError("%s: %d passes already asked of the website, turned away", one.who.c_str(), kMostAsking);
+        return Door::Refuse;
+    }
     const std::string host = g_host, ticket = pass.ticket;
     const int port = g_port;
-    one.signing = std::async(std::launch::async, [host, port, ticket] { return ask(host, port, ticket); });
+    ++g_asking;
+    one.signing = std::async(std::launch::async, [host, port, ticket] {
+        Redeemed his = ask(host, port, ticket);
+        --g_asking;
+        return his;
+    });
     one.signingPass = pass;
     return Door::Wait;
 }
@@ -381,6 +411,18 @@ bool signed_(Session& one, std::string& account) {
     }
     one.signingPass = {};
     return true;
+}
+
+void letGoOf(Session& one) {
+    if (one.signing.valid()) g_letGo.push_back(std::move(one.signing));
+}
+
+void sweepLetGo() {
+    g_letGo.erase(std::remove_if(g_letGo.begin(), g_letGo.end(),
+                                 [](const std::future<Redeemed>& f) {
+                                     return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+                                 }),
+                  g_letGo.end());
 }
 
 }  // namespace mu::server

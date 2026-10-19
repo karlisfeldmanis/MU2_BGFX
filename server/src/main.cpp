@@ -30,6 +30,8 @@
 #include "broker.h"
 #include "economy.h"
 
+#include <unordered_map>
+
 namespace mu::server {
 
 
@@ -39,10 +41,17 @@ bool heard(Session& one, std::vector<std::unique_ptr<World>>& worlds,
            const sim::RealmConfig& config, std::mt19937_64& seeds) {
     net::Kind kind{};
     std::vector<uint8_t> body;
+    // What has been read goes in one erase, however this returns (net::take).
+    size_t at = 0;
+    struct Trim {
+        std::vector<uint8_t>& in;
+        const size_t& at;
+        ~Trim() { in.erase(in.begin(), in.begin() + long(std::min(at, in.size()))); }
+    } trim{one.in, at};
     while (true) {
         // Waiting on the website for whose his ticket is: the rest keeps till it answers (settle).
         if (one.signing.valid()) return true;
-        const int took = net::take(one.in, kind, body, net::kMostAsked);
+        const int took = net::take(one.in, at, kind, body, net::kMostAsked);
         if (took == 0) return true;
         if (took < 0) {
             core::logError("%s: not our protocol", one.who.c_str());
@@ -151,6 +160,14 @@ bool heard(Session& one, std::vector<std::unique_ptr<World>>& worlds,
             // Back the moment it is read, ahead of any tick: the line's round trip alone.
             net::Ping ping;
             if (!net::parse(body, ping)) return false;
+            // A client has one Ping out at a time; past kMostPings a second they go unanswered,
+            // each answer a send() on the loop's one thread.
+            const Clock::time_point now = Clock::now();
+            if (now - one.pingsFrom >= std::chrono::seconds(1)) {
+                one.pingsFrom = now;
+                one.pings = 0;
+            }
+            if (++one.pings > kMostPings) continue;
             std::vector<uint8_t> out;
             net::put(out, ping);
             if (!one.socket.send(out)) return false;
@@ -174,6 +191,10 @@ bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,
     const size_t had = one.in.size();
     if (!one.socket.receive(one.in)) return false;
     if (one.in.size() != had) one.heardAt = Clock::now();
+    if (one.in.size() > kMostUnread) {
+        core::logError("%s: %zu KB sent and not yet read: let go", one.who.c_str(), one.in.size() / 1024);
+        return false;
+    }
     return heard(one, worlds, sessions, assets, config, seeds);
 }
 
@@ -325,15 +346,34 @@ int main(int argc, char** argv) {
         // Where this pass's time goes (g_stats): the poll's wait is not counted.
         const Clock::time_point passAt = Clock::now();
         const double passCpuAt = cpuMs();
-        // Who arrived, and what each that spoke said.
+        // Who arrived, and what each that spoke said. A line from an address already holding
+        // kMostWaitingFromOne with no account or world yet, or past kMostLines in all, is closed
+        // as it is taken: left in the backlog, the listener stayed readable and the poll spun.
+        std::unordered_map<std::string, int> waitingFrom;
+        for (const auto& one : sessions) {
+            if (!one->local && one->world == nullptr && one->account.empty()) ++waitingFrom[one->from];
+        }
+        int turnedAway = 0;
         for (net::Socket s = listener.accept(); s.open(); s = listener.accept()) {
+            const bool local = fromHere(s.fd());
+            const std::string address = local ? std::string() : addressOf(s.fd());
+            if (sessions.size() >= kMostLines || (!local && waitingFrom[address] >= kMostWaitingFromOne)) {
+                ++turnedAway;
+                continue;  // s closes
+            }
+            if (!local) ++waitingFrom[address];
             auto one = std::make_unique<Session>();
             one->socket = std::move(s);
             one->who = "player " + std::to_string(++arrivals);
-            one->local = fromHere(one->socket.fd());
+            one->local = local;
+            one->from = address;
             do one->udpKey = seeds(); while (one->udpKey == 0);
             core::logf("%s: connected", one->who.c_str());
             sessions.push_back(std::move(one));
+        }
+        if (turnedAway > 0) {
+            core::logError("%d lines turned away at the door (%zu held, at most %d waiting an address)",
+                           turnedAway, sessions.size(), kMostWaitingFromOne);
         }
         // Each UDP socket that says its key is where that player's datagrams go: said again a
         // second later, and from a new address when his router moves him.
@@ -471,14 +511,23 @@ int main(int argc, char** argv) {
         const double sendMs = msSince(sendAt);
         const Clock::time_point goneAt = Clock::now();
         for (size_t i = 0; i < sessions.size();) {
+            Session& waiting = *sessions[i];
+            if (waiting.socket.open() && !waiting.local && waiting.world == nullptr && waiting.account.empty() &&
+                Clock::now() - waiting.cameAt > kSignInWithin) {
+                core::logError("%s: no account or world in %lld s: let go", waiting.who.c_str(),
+                               (long long)std::chrono::duration_cast<std::chrono::seconds>(kSignInWithin).count());
+                waiting.socket.close();
+            }
             if (!sessions[i]->socket.open()) {
                 core::logf("%s: gone", sessions[i]->who.c_str());
                 part(*sessions[i]);
+                letGoOf(*sessions[i]);
                 sessions.erase(sessions.begin() + long(i));
             } else {
                 ++i;
             }
         }
+        sweepLetGo();
         // Worlds are never let go: the server is always online, and a world once raised keeps
         // its monsters, its weather and its state for as long as the server runs -- but for an
         // event's (a Blood Castle's, a Devil Square's run), which is one run's and nobody joins
