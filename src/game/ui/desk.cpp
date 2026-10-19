@@ -1721,6 +1721,16 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
             boon.share = float(pet.durability) / float(most);
         }
     }
+    // Her summon while it stands (Realm::summoned): hidden in a safe zone it is not standing.
+    if (const sim::Body* summon = realm.summoned();
+        summon && summon->alive() && !summon->gone && summon->maxHealth > 0 && standing < Hud::kBoons) {
+        Hud::Boon& boon = boons[standing++];
+        boon.summon = true;
+        boon.skill = summon->summonedBy;
+        boon.life = summon->health;
+        boon.lifeMost = summon->maxHealth;
+        boon.share = float(summon->health) / float(summon->maxHealth);
+    }
     if (hero.boonSkill != 0 && hero.boonUntil > realm.tick()) {
         const sim::SkillRow* row = sim::skillNumbered(hero.boonSkill);
         const float left = float(hero.boonUntil - realm.tick());

@@ -134,6 +134,18 @@ const char* buffArt(int32_t skill) {
     }
 }
 
+// A summon's cell: its key's own picture (content/interface/skills).
+const char* summonArt(int32_t skill) {
+    switch (skill) {
+        case 30: return "skill_30";
+        case 31: return "skill_31";
+        case 32: return "skill_32";
+        case 33: return "skill_33";
+        case 34: return "skill_34";
+        default: return "skill_35";
+    }
+}
+
 // The pets' cells, ours: each rendered from the pet's own model by pipeline/model_icons.py.
 const char* petArt(int pet) {
     return pet == 0 ? "buff_angel" : pet == 1 ? "buff_imp" : pet == 2 ? "buff_uniria" : "buff_dinorant";
@@ -342,6 +354,7 @@ void diamond(gfx::Canvas& canvas, const gfx::Art* sheet, const Box& hole, const 
 
 const char* Hud::artOf(const Boon& one) {
     return one.pet >= 0          ? petArt(one.pet)
+           : one.summon           ? summonArt(one.skill)
            : one.poison           ? "buff_poison"
            : one.dragonfire       ? "buff_dragonfire"
            : one.bleed            ? "buff_bleed"
@@ -681,7 +694,7 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
     sheet.wide = kCardWide;
     // artOf's, but a skill with no art of its own shows none.
     const char* art = one.skill != 0 && !one.debuff() && !one.ale && !one.frenzy &&
-                              one.pet < 0 && one.potion < 0 ? buffArt(one.skill) : artOf(one);
+                              one.pet < 0 && one.potion < 0 && !one.summon ? buffArt(one.skill) : artOf(one);
     if (art != nullptr) {
         const gfx::Art& icon = arts.get(art);
         if (icon.valid()) {
@@ -752,6 +765,20 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
         what.rows.push_back(prose("loses Life as you take damage, and is gone at none"));
         sheet.sections.push_back(what);
         sheet.wear = "Life " + std::to_string(one.life) + " / " + std::to_string(one.lifeMost);
+        return sheet;
+    }
+    if (one.summon) {
+        // Her summon, which stands until it falls or she leaves the map: what raised it and
+        // its health in the foot, as a pet's Life is.
+        const sim::SkillRow* row = sim::skillNumbered(one.skill);
+        sheet.name = row ? row->name : "Summon";
+        sheet.nameTone = tip::Tone::Blue;
+        sheet.base = "SUMMON \xc2\xb7 FAIRY ELF";
+        tip::Section what;
+        what.rows.push_back(prose("fights beside you until it falls; a gate, a portal or your "
+                                  "death sends it away"));
+        sheet.sections.push_back(what);
+        sheet.wear = "Health " + std::to_string(one.life) + " / " + std::to_string(one.lifeMost);
         return sheet;
     }
     if (one.chill) {
@@ -1253,7 +1280,7 @@ void Hud::rebuild() {
         // over a wash (the user: "just use big number at center with some opacity background for
         // debuffs time").
         const float left = std::clamp(one.share, 0.0f, 1.0f);
-        if (one.pet >= 0) {
+        if (one.pet >= 0 || one.summon) {
             const float line = std::max(1.0f, 2.0f * kUnit * s.scale);
             canvas_.rect({box.x, box.bottom() - line, box.w * left, line}, kBuffLeft);
             continue;

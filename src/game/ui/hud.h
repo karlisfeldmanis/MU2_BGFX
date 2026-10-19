@@ -158,6 +158,10 @@ public:
         // bar is its Life, `life` of `lifeMost`. Ours, as the strip is: MuMain shows a worn pet
         // in no status cell, only in its own life bar (NewUIItemEnduranceInfo).
         int pet = -1;
+        // Or her summon standing (the user, 2026-10-19: "we need to show summon aura icon on hud
+        // if its active"): `skill` the summon's own (30-35), and like a pet no clock, its bar
+        // its health, `life` of `lifeMost`.
+        bool summon = false;
         int life = 0, lifeMost = 0;
         bool kinship = false; // a Kinship rune worn lifts the pet's price (sim::Power::Kinship)
         // A mount worn on a map it is not ridden on (sim::rideMap): its cell drawn cold, as a
@@ -168,7 +172,7 @@ public:
         float share = 0.0f;   // and that as a fraction of its whole, for the bar under it
         bool empty() const {
             return skill == 0 && !ale && !poison && !chill && !frenzy && !dragonfire && !bleed && !burn &&
-                   !frozen && pet < 0 && potion < 0;
+                   !frozen && pet < 0 && potion < 0 && !summon;
         }
         // Something done TO him: its cell wears a red edge, as a debuff does in WoW's strip.
         bool debuff() const { return poison || chill || dragonfire || bleed || burn || frozen; }
@@ -177,7 +181,8 @@ public:
             // of four seconds would be eighty redraws for a number that changes forty times.
             return skill == o.skill && ale == o.ale && poison == o.poison &&
                    chill == o.chill && frenzy == o.frenzy && dragonfire == o.dragonfire && bleed == o.bleed &&
-                   burn == o.burn && frozen == o.frozen && stacks == o.stacks && pet == o.pet && kinship == o.kinship &&
+                   burn == o.burn && frozen == o.frozen && stacks == o.stacks && pet == o.pet && summon == o.summon &&
+                   kinship == o.kinship && lifeMost == o.lifeMost &&
                    potion == o.potion && amount == o.amount &&
                    idle == o.idle && life == o.life && int(seconds * 10.0f) == int(o.seconds * 10.0f);
         }
