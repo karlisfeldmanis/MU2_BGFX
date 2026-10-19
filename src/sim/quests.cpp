@@ -887,8 +887,8 @@ QuestRow tersiaSixth() {
                                  .power = uint8_t(Power::ScatterVolley), .firstOnly = true};
     // The knight's Death Stab, the Pit's until 2026-10-09: its orb asks 120.
     row.paid[row.paidCount++] = {.item = "OrbDeathStab", .kin = knight, .firstOnly = true};
-    // And the wizard Cometfall (2026-10-07), the fire Rolling Fire is named for.
-    row.paid[row.paidCount++] = {.item = "Book13", .kin = wizard, .firstOnly = true};
+    // The wizard's Cometfall went to the Sky Door with the Soul Master's gear (2026-10-19): its
+    // scroll asks the second class, which a wizard on this floor does not have yet.
     // And the elf Penetration, off the Pit since 2026-10-09 ("its too soon, find other quest
     // where to give that"): its orb asks level 130, and this floor 140.
     row.paid[row.paidCount++] = {.item = "OrbPenetration", .kin = elf, .firstOnly = true};
@@ -1022,6 +1022,9 @@ QuestRow tersiaSkyDoor() {
                                  .firstOnly = true};  // Grand Soul
     row.paid[row.paidCount++] = {.item = "BootMale19", .kin = wizard, .sockets = 2,
                                  .firstOnly = true};
+    // And the Soul Master's Cometfall, Tersia's sixth floor's until 2026-10-19 (the user: "i think
+    // cometfall was on for soul master not DW/MG"): its scroll asks the second class now.
+    row.paid[row.paidCount++] = {.item = "Book13", .kin = wizard, .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "GloveMale20", .kin = elf, .sockets = 1,
                                  .firstOnly = true};  // Divine
     row.paid[row.paidCount++] = {.item = "BootMale20", .kin = elf, .sockets = 2,

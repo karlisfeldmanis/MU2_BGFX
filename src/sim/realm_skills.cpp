@@ -135,6 +135,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // And his class's. Learning already asks it -- an orb or a scroll refuses the wrong class --
     // so this is the same answer asked again where the skill is spent.
     if (!skillFor(row, hero.kin)) return false;
+    if (secondSkill(row) && !hero.second) return false;
 
     // The cooldown, which is ours and has no counterpart in 0.75. A wait rather than a refusal,
     // exactly as the swing timer is: the key does nothing and says nothing. A summon key still
@@ -710,7 +711,7 @@ bool Realm::armed(const Body& hero, const SkillRow& row) const {
                     : (hero.learned & (uint64_t(1) << index)) == 0) {
         return false;
     }
-    if (!skillFor(row, hero.kin) || hero.mana < row.mana) return false;
+    if (!skillFor(row, hero.kin) || hero.mana < row.mana || (secondSkill(row) && !hero.second)) return false;
     // A fan with nothing to loose falls back to the bow, which then says there are no arrows.
     if (row.arrows > 0 && !quivered(hero)) return false;
     const auto armAt = [&](int32_t at) -> const content::Arm* {

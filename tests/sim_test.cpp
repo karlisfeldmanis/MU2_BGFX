@@ -2753,6 +2753,24 @@ void testCastLock(const content::Tables& tables) {
         check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 160), "a wizard raises");
         check(wiz.learn(sim::skill::kCometfall), "who knows Cometfall");
         const int column = wiz.hero().column() + 4, row = wiz.hero().row();
+        // The Soul Master's alone (the user, 2026-10-19: "i think cometfall was on for soul master
+        // not DW/MG"): a Dark Wizard who knows it calls nothing down, and a Gladiator is refused it.
+        {
+            bool cast = false;
+            for (int tick = 0; tick < 60; ++tick) {
+                if (!wiz.casting()) wiz.invokeAt(sim::skill::kCometfall, column, row);
+                wiz.step();
+                for (const sim::Happening& h : wiz.happenings()) {
+                    cast |= h.what == sim::What::Cast && h.a == sim::skill::kCometfall;
+                }
+            }
+            check(!cast && wiz.cooling(sim::skill::kCometfall) == 0, "a Dark Wizard who knows it cannot cast it");
+            check(!sim::skillFor(comet, sim::Kin::MagicGladiator), "nor a Magic Gladiator");
+            check(cometScroll < 0 || ((tables.items[size_t(cometScroll)].classes >> (8 + int(sim::Kin::DarkWizard))) & 1),
+                  "and its scroll asks the Soul Master");
+            promote(wiz);
+            check(wiz.hero().second, "a Soul Master casts it");
+        }
         int casts = 0, comets = 0, outside = 0;
         for (int tick = 0; tick < 400; ++tick) {
             if (wiz.cooling(sim::skill::kCometfall) == 0 && !wiz.casting()) {

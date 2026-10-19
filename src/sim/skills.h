@@ -528,6 +528,11 @@ int skillIndexOf(int32_t number);
 // OpenMU Version095d SkillsInitializer.cs:41-80 -- with Soul Barrier his (the user, 2026-10-07:
 // 'MG can use shield skill, and also can use Soul barrier').
 bool skillFor(const SkillRow& row, Kin kin);
+// A skill only his class's second casts: Cometfall, the Soul Master's (the user, 2026-10-05:
+// "Cometfall, which is soul master spell"; 2026-10-19: "i think cometfall was on for soul master
+// not DW/MG"). Its scroll asks the second class too (Book13's class_level); this holds one a
+// wizard learned before it did.
+inline bool secondSkill(const SkillRow& row) { return row.number == skill::kCometfall; }
 
 // ---- the two formulas (docs/game/skills-dk.md §3.2) --------------------------------------------
 

@@ -16,11 +16,10 @@
     "height": 2,
     "durability": 1,
     "classes": [
-      "wizard",
-      "gladiator"
+      "wizard"
     ],
-    "classes_gladiator": "The Magic Gladiator's too: MuMain's Data/Local/item.bmd marks it in RequireClass[3], his column (docs/worlds/mg-port.md).",
-    "classes_from": "QualifiedCharacters.Add(DarkWizard) in CreateScroll (Version095d adds the Magic Gladiator, who is not in this game). Prize.ReadBy refuses the other two. The user calls it the Soul Master's; MU lets any wizard read it, and so does this."
+    "classes_from": "QualifiedCharacters.Add(DarkWizard) in CreateScroll. Ours: the Soul Master's alone (class_level 2), not the Dark Wizard's and not the Magic Gladiator's -- the user, 2026-10-05: 'Cometfall, which is soul master spell', and 2026-10-19: 'i think cometfall was on for soul master not DW/MG'. MU lets any wizard read it; MuMain's item.bmd marks the gladiator too.",
+    "class_level": 2
   },
   "skill": {
     "note": "What the scroll teaches, and nothing here reads it. See Book01, which carries the argument for recording it and the two rules attached to these numbers - the requirement is not scaled, and the value is the price outright.",

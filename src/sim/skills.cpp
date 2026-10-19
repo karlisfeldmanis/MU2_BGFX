@@ -1001,7 +1001,8 @@ bool skillFor(const SkillRow& row, Kin kin) {
         case skill::kTeleport:
         case skill::kNova:
         case skill::kRagefulBlow:
-        case skill::kDeathStab: return false;
+        case skill::kDeathStab:
+        case skill::kCometfall: return false;  // the Soul Master's alone (secondSkill)
         default: return true;
     }
 }
