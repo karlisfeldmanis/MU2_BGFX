@@ -233,6 +233,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // The Dungeon's runes on a wound he dealt, swing, arrow or spell (sim/items.h): Bloodwell's
     // share back as life, and a Frenzy's stack (sim::kFrenzyStackSpeed). Neither draws.
     if (attacker.player && target.monster() && wound > 0 && attacker.alive()) {
+        const int lifeBefore = attacker.health;
         if (attacker.excel.lifeSteal > 0.0 && attacker.health < attacker.maxHealth) {
             attacker.stealCarry += float(double(wound) * attacker.excel.lifeSteal);
             const int back = int(attacker.stealCarry);
@@ -247,6 +248,9 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         if (attacker.excel.lifeOnHit > 0) {
             attacker.health = std::min(attacker.maxHealth, attacker.health + attacker.excel.lifeOnHit);
         }
+        // What came back, said so the client shows it over him (the user, 2026-10-19: "if char
+        // es getting life steal show it on char +life and number").
+        if (attacker.health > lifeBefore) say(What::Leeched, attacker, attacker.health - lifeBefore);
         if (attacker.excel.frenzies > 0) {
             if (attacker.frenzyUntil <= tick_) attacker.frenzyStacks = 0;
             const bool more = attacker.frenzyStacks < kFrenzyMostStacks;

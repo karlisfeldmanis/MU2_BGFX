@@ -722,6 +722,14 @@ void Play::update(double seconds) {
                     }
                 }
                 speak(happening);
+            } else if (happening.what == sim::What::Leeched && happening.who == heroId && ground_) {
+                // Life back off his blow, "+N" in green over him (Mark::Life), where his numbers
+                // stand: over his crown, from the ground.
+                if (const Drawn* hero = drawnOf(heroId); hero && hero->placed) {
+                    const float feet[3] = {hero->crown[0], ground_->heightAt(hero->crown[0], hero->crown[2]),
+                                           hero->crown[2]};
+                    showing_.gain(Mark::Life, happening.a, feet);
+                }
             } else if (happening.what == sim::What::Levelled && happening.who == heroId) {
                 // Off a kill, one rise however many levels it carried: the realm has added them
                 // all, and only a quest's are shown one by one (the user, 2026-10-01). A rise

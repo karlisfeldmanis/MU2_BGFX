@@ -155,6 +155,8 @@ enum class What : uint8_t {
                // level. For him alone.
     Outguarded,  // his Greater Defense aimed at a player whose guard already stands stronger
                  // (Realm::throwSkill): refused, nothing paid. `whom` that player. For him alone.
+    Leeched,   // life back off a blow he landed: Bloodwell's share and the Leech's life per hit
+               // together (realm_fight.cpp). a: what came back. Shown "+N" over him.
 };
 
 // What a trade between two players did (What::Deal). MU's trade packets 0x36-0x3D in one.

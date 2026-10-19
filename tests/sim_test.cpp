@@ -10369,6 +10369,38 @@ void testPoweredJewellery(const content::Tables& tables) {
     checkEqual(e.lifeOnHit, 5, "life a hit: the pendant's");
     checkEqual(realm.hero().stats.criticalDamage, 50, "critical damage reaches the blow");
     check(std::abs(realm.hero().stats.criticalChance - 0.10) < 1e-9, "and Fury's 10% chance");
+    // And what it gives back is said, for the "+N" over him (the user, 2026-10-19: "if char es
+    // getting life steal show it on char +life and number"): hurt, he hunts, and a landed blow
+    // says Leeched with no more than the Leech's 5.
+    {
+        int leeched = 0, most = 0;
+        for (int tick = 0; tick < 4000 && leeched == 0 && realm.hero().alive(); ++tick) {
+            if (tick % 40 == 0) {
+                uint32_t nearest = 0;
+                float best = 1e9f;
+                for (const sim::Body& one : realm.bodies()) {
+                    if (!one.monster() || !one.alive()) continue;
+                    const float d = std::hypot(one.x - realm.hero().x, one.y - realm.hero().y);
+                    if (d < best) {
+                        best = d;
+                        nearest = one.id;
+                    }
+                }
+                sim::Request hit;
+                hit.kind = sim::Request::Kind::Attack;
+                hit.target = nearest;
+                if (nearest != 0) realm.ask(hit);
+            }
+            realm.step();
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.what == sim::What::Leeched && h.who == realm.hero().id) {
+                    ++leeched;
+                    most = std::max(most, int(h.a));
+                }
+            }
+        }
+        check(leeched > 0 && most > 0 && most <= 5, "a landed blow that gives life back says how much");
+    }
 
     // The resistance powers (2026-10-04): every worn piece's on top of MU's largest.
     checkEqual(sim::affixValue(sim::Affix::FireResistance, 0), 1, "a resistance 1 at +0");

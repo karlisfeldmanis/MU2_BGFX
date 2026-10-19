@@ -39,6 +39,7 @@ enum class Mark : uint8_t {
     Burn,      // an Immolate or Scorch burn's pulse, orange, at a swing's size
     Immune,    // the word, over a boss that shrugged off a hold (sim::RaidEvent::Immune)
     Bleed,     // a bleed rune's pulse on a monster, reddish orange, at a swing's size
+    Life,      // life back on him off his own blow (sim What::Leeched), "+N" green, a swing's size
 };
 
 // A blow that has landed on the tick and has not yet been shown.
@@ -139,6 +140,8 @@ public:
               bool onHero, bool told = true);
     // A word put up over `feet` with no blow under it: "Immune" over the raid's dragon.
     void word(Mark mark, const float feet[3]) { raise(mark, 0, feet, false); }
+    // A figure over him with no blow under it: the life a blow of his gave back (Mark::Life).
+    void gain(Mark mark, int32_t value, const float feet[3]) { raise(mark, value, feet, true); }
     // **A bleed's drip** (sim kBleeders, ours): one drop of the blow's own blood born at `at`, a
     // point on the bleeding body, falling to `floor` (the ground's height under it) and gone
     // there. `scale` its size for the body's (its height over a man's).

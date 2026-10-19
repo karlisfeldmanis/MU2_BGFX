@@ -233,6 +233,9 @@ const uint32_t kRuneCriticalInk = byteColour(180, 224, 255);
 // Her summon's blow (the user, 2026-10-02: "we need to show summon made damage"): a lilac nothing
 // else in the fight wears, so its numbers read as its own beside her bone and amber.
 const uint32_t kSummonInk = byteColour(196, 170, 255);
+// Life back off his own blow: a heal's green, bluer than the poison's yellow-green so the two
+// never read as one (the user, 2026-10-19: "show it on char +life and number").
+const uint32_t kLifeInk = byteColour(80, 230, 120);
 const uint32_t kMissInk = byteColour(207, 199, 184);
 const uint32_t kMissOnHeroInk = byteColour(236, 228, 214);
 // The lane's own inks, and they are deliberately not the fight's: experience is the ramp's
@@ -274,6 +277,7 @@ float sizeOf(Mark mark) {
         case Mark::Absorbed: return kAbsorbedSize;
         case Mark::Burn:
         case Mark::Bleed:
+        case Mark::Life:
         case Mark::Swing:
         case Mark::Poison:
         case Mark::Summon:
@@ -293,6 +297,7 @@ uint32_t inkOf(const Showing::Figure& figure) {
         case Mark::Poison: return kPoisonInk;
         case Mark::Burn: return kBurnInk;
         case Mark::Bleed: return kBleedInk;
+        case Mark::Life: return kLifeInk;
         case Mark::Rune: return kRuneInk;
         case Mark::RuneCritical: return kRuneCriticalInk;
         case Mark::Summon: return kSummonInk;
@@ -664,6 +669,7 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         const std::string text = figure.mark == Mark::Miss       ? std::string("MISS")
                                  : figure.mark == Mark::Immune   ? std::string("IMMUNE")
                                  : figure.mark == Mark::Absorbed ? std::string("ABSORBED")
+                                 : figure.mark == Mark::Life     ? "+" + std::to_string(figure.value)
                                  : std::to_string(figure.value < 0 ? 0 : figure.value);
         // A miss is a word, so it takes the lane's own tracking rather than the ramp's: set
         // solid at this size it reads as one long glyph. ABSORBED is set solid all the same,

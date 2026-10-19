@@ -1634,6 +1634,10 @@ std::string describe(const Happening& happening, const Realm& realm) {
             std::snprintf(line, sizeof(line), "%6u %s answered: command %d gave %d, ticket %u",
                           happening.tick, who, happening.a, happening.b, uint32_t(happening.c));
             break;
+        case What::Leeched:
+            std::snprintf(line, sizeof(line), "%6u %s leeched %d life", happening.tick, who,
+                          happening.a);
+            break;
         case What::Cracked:
             if (happening.a < 0) {
                 std::snprintf(line, sizeof(line), "%6u %s cracked a firecracker: %d Zen",
