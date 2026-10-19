@@ -306,6 +306,8 @@ void Play::update(double seconds) {
     drankHealth_ = drankMana_ = 0;
     if (notYours_) gains_.push_back({Gain::Kind::NotYours, 0});
     notYours_ = false;
+    if (tooFar_) gains_.push_back({Gain::Kind::TooFar, 0});
+    tooFar_ = false;
     int stepped = 0;
     // On a server the ticks are the server's: what it sent is read here, and a tick is stepped
     // only once it has arrived, never dropped (server phase 3). Ticks the line held up arrive
@@ -844,18 +846,23 @@ void Play::update(double seconds) {
                     // user's, 2026-09-25. A guard's alone -- Defense, Soul Barrier and the elf's
                     // Greater Defense -- and not her Heal or Greater Damage, which raise none.
                     // Any player's, not the hero's alone (the user, 2026-10-16).
+                    // On whom it fell: an elf's aid on another player rises on him (sim::SkillRow::aids).
+                    const uint32_t onWhom = row && row->aids() && happening.whom != 0 ? happening.whom
+                                                                                       : happening.who;
+                    Drawn* aided = onWhom != happening.who ? drawnOf(onWhom) : caster;
+                    if (aided == nullptr) aided = caster;
                     if (row && row->boonTicks > 0 && (happening.who == heroId || caster->visible)) {
-                        guardRise(happening.who, kGuardShowSeconds);
+                        guardRise(aided->id, kGuardShowSeconds);
                     }
-                    // Her Heal and Greater Damage: a burst where she stands, once (fx/aura.h,
+                    // Her Heal and Greater Damage: a burst on whom it fell, once (fx/aura.h,
                     // kMending and kMight -- ours, MU draws neither).
                     if (row && (row->mends || row->mightTicks > 0) &&
-                        (happening.who == heroId || caster->visible) && caster->placed && ground_) {
+                        (happening.who == heroId || caster->visible) && aided->placed && ground_) {
                         const float feet[3] = {
-                            caster->crown[0],
-                            ground_->heightAt(caster->crown[0], caster->crown[2]),
-                            caster->crown[2]};
-                        aura_.cast(row->mends ? kMending : kMight, feet, caster->yaw,
+                            aided->crown[0],
+                            ground_->heightAt(aided->crown[0], aided->crown[2]),
+                            aided->crown[2]};
+                        aura_.cast(row->mends ? kMending : kMight, feet, aided->yaw,
                                    ground_->metresPerTile());
                     }
                     // A channel: its clip, looping for as long as it runs. No blow follows the

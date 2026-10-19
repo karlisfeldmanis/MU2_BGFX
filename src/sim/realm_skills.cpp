@@ -233,6 +233,9 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         return true;
     }
 
+    // Who a self-cast fell on: herself, or the one an elf's aid reached. Said with the cast, so
+    // its burst and ribbons rise on him (Play::update).
+    uint32_t aided = hero.id;
     if (row.onSelf()) {
         // **And the guard needs a shield on the arm** -- the wizard's Soul Barrier as much as
         // the knight's Defense, the user's of 2026-09-28. The user's rule, 2026-09-22, and it is
@@ -249,18 +252,21 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // A Bulwark answers for the shield (sim::armFamily).
         if (!row.suits(armFamily(hero, shield))) return false;
         // A self-cast has no target to be far from and reads its victim off the caster -- but for
-        // **an elf's Heal, Greater Defense and Greater Damage on one of her party** (docs/game/party.md,
-        // the user's of 2026-10-09: "elfs can heal"), aimed at him and within kPartyAidReach;
-        // reckoned off her own energy and agility, as on herself.
+        // **an elf's Heal, Greater Defense and Greater Damage on another player** (SkillRow::aids:
+        // the user's of 2026-10-09, "elfs can heal", for her party; of 2026-10-19 for anyone she
+        // points at), within kAidReach and reckoned off her own energy and agility, as on herself.
+        // Aimed at one too far, or gone, it is refused -- nothing paid -- rather than turned on
+        // her: the wish stands its half second and lands if he comes into reach (Realm::press).
         Body* aid = nullptr;
-        if (at != 0 && at != hero.id && hero.party != 0 && row.kin == Kin::FairyElf &&
-            (row.mends || row.mightTicks > 0 || row.number == skill::kGreaterDefense)) {
+        if (row.aids() && at != 0 && at != hero.id) {
             Body* one = body(at);
-            if (one != nullptr && one->player && !one->gone && one->alive() && one->party == hero.party &&
-                within(hero, *one, kPartyAidReach)) {
-                aid = one;
+            if (one == nullptr || !one->player || one->gone || !one->alive() ||
+                !within(hero, *one, kAidReach)) {
+                return false;
             }
+            aid = one;
         }
+        aided = aid != nullptr ? aid->id : hero.id;
         if (hero.mana < row.mana) return false;
         hero.mana -= row.mana;
         if (row.summons > 0) {
@@ -541,7 +547,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // this reason and marked the departure; the sparks could not otherwise know a cast happened.
     // On his feet first: nothing is thrown sitting down, a self-cast included.
     rise(hero);
-    say(What::Cast, hero, row.number, cool, 0, row.onSelf() ? hero.id : at);
+    say(What::Cast, hero, row.number, cool, 0, row.onSelf() ? aided : at);
 
     if (!row.onSelf() && !row.channelled()) {
         // Begun rather than landed: the blow settles halfway through the clip, as a swing's does

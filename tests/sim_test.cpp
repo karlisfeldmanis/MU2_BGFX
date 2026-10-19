@@ -937,7 +937,19 @@ void testItems(const content::Tables& tables) {
         check(duo.moveItem(sim::kWeaponLeft, sim::kWorn + 30), "the second comes off");
         check(!duo.hero().dual && duo.hero().stats.offhandMaximumDamage == 0,
               "and the left band is gone");
+        // Straight from one hand to the other (bug #14): the axe alone goes to the left, and back.
+        check(duo.moveItem(sim::kWeaponRight, sim::kWeaponLeft), "the axe goes hand to hand");
+        check(duo.satchel()[sim::kWeaponRight].empty() &&
+                  duo.satchel()[sim::kWeaponLeft].item == axe,
+              "and is in the left alone");
+        check(duo.moveItem(sim::kWeaponLeft, sim::kWeaponRight), "and back to the right");
         check(duo.equip(axeArm, swordArm, true), "an axe and a sword");
+        const int32_t swordItem = duo.satchel()[sim::kWeaponLeft].item;
+        check(duo.moveItem(sim::kWeaponRight, sim::kWeaponLeft), "the two swap hands");
+        check(duo.satchel()[sim::kWeaponLeft].item == axe &&
+                  duo.satchel()[sim::kWeaponRight].item == swordItem,
+              "the axe left, the sword right");
+        check(duo.moveItem(sim::kWeaponRight, sim::kWeaponLeft), "and swap back");
         checkEqual(duo.hero().stats.minimumDamage, int(double(single) * sim::kMixedPair),
                    "a mixed pair: each hand at 55%");
         check(!sim::offHanded(tables.items[size_t(axe)], sim::Kin::DarkWizard),
@@ -12788,6 +12800,37 @@ void testThreat(const content::Tables& tables) {
     checkEqual(realm.find(prey)->quarry, knight, "and back to the knight as he outdoes it");
 }
 
+// An elf's aid on another player (SkillRow::aids): on any player she names within kAidReach,
+// party or none; one out of reach is refused, nothing paid, and never turned on her.
+void testElfAid(const content::Tables& tables) {
+    std::printf("elf aid\n");
+    sim::Realm realm;
+    // Out of the town, where no aura is raised.
+    check(realm.raise(&tables, 7, 190, 110, sim::Kin::FairyElf, 150), "an elf's realm raises");
+    const uint32_t elf = realm.hero().id;
+    check(realm.learn(sim::skill::kGreaterDamage), "Greater Damage learned");
+    check(realm.learn(sim::skill::kGreaterDefense), "Greater Defense learned");
+    const uint32_t near = realm.join(sim::Kin::DarkKnight, 50, 193, 110);
+    const uint32_t far = realm.join(sim::Kin::DarkWizard, 50, 190 + int(sim::kAidReach) + 4, 110);
+    check(near != 0 && far != 0, "a knight beside her and a wizard well off, of no party");
+    realm.lookAs(elf);
+    realm.invoke(sim::skill::kGreaterDamage, near);
+    for (int tick = 0; tick < 40; ++tick) realm.step();
+    check(realm.find(near)->mightUntil > realm.tick(), "Greater Damage on the knight beside her");
+    check(realm.find(elf)->mightUntil <= realm.tick(), "and not on her");
+
+    const int32_t mana = realm.find(elf)->mana;
+    realm.invoke(sim::skill::kGreaterDefense, far);
+    for (int tick = 0; tick < 40; ++tick) realm.step();
+    check(realm.find(far)->boonUntil <= realm.tick(), "the wizard out of reach takes no ward");
+    check(realm.find(elf)->boonUntil <= realm.tick(), "nor is it turned on her");
+    check(realm.find(elf)->mana >= mana, "and nothing paid");
+
+    realm.invoke(sim::skill::kGreaterDefense, elf);
+    for (int tick = 0; tick < 40; ++tick) realm.step();
+    check(realm.find(elf)->boonUntil > realm.tick(), "named herself, the ward is hers");
+}
+
 // A drop is its owner's: a stranger can neither walk to it nor take it, and what a player
 // throws away himself is anyone's (sim::Lying::owner).
 void testDropsAreTheirs(const content::Tables& tables) {
@@ -13527,6 +13570,7 @@ int main() {
     testDeal(tables);
     testBroker(tables, check, checkEqual);  // tests/sim_test_broker.cpp
     testThreat(tables);
+    testElfAid(tables);
     testQuestLadder(tables);
     testQuestFirecrackers(tables);
     testDrownedSong();

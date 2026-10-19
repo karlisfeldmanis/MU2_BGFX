@@ -317,6 +317,12 @@ public:
     // silently, so this returns nothing: the box's own sweep is what tells the player it is
     // cooling, and the plate reads that from the realm like everything else.
     void castSkill(int32_t skill, uint32_t at = 0);
+    // **Who an elf's Heal, Greater Defense or Greater Damage goes on** (sim::SkillRow::aids): the
+    // player under the pointer, else the player she has picked when he is within sim::kAidReach,
+    // else herself (0). False, with "Too far away" said, when the one under the pointer is out
+    // of reach: nothing is cast. The user, 2026-10-19: "elf can buff, heal other players by
+    // pressing on char", "we need also some minimal distance".
+    bool aidTarget(uint32_t* at);
     // A held charge's key let go (Realm::letGo): Nova bursts on the next tick.
     void letGo() { send({.kind = sim::Command::Kind::LetGo}); }
     // Re-dresses the hero over the realm's own idea of what his hands and his back hold, so
@@ -607,7 +613,8 @@ public:
         // Gapped: a party kill he shared nothing of, past the level gap (sim::kPartyGap).
         // BagFull: a pickup refused for want of room (Play::tossedDrops).
         // NotYours: a click on another player's drop (sim::Lying::owner, Play::leftClick).
-        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped, BagFull, NotYours };
+        // TooFar: an elf's aid pointed at a player out of sim::kAidReach (Play::aidTarget).
+        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped, BagFull, NotYours, TooFar };
         Kind kind = Kind::Experience;
         int64_t value = 0;
     };
@@ -2087,6 +2094,8 @@ private:
     // walks, and says it is not his (notYours_, said at the top of the next update).
     uint32_t pointedForeign_ = 0;
     bool notYours_ = false;
+    // An elf's aid pointed at a player out of reach (Play::aidTarget), said as notYours_ is.
+    bool tooFar_ = false;
     int pointedPerch_ = -1;
     int64_t pickAskedTick_ = 0;  // when Space last asked a pickup (pickNearest)
     std::vector<float> scratch_;

@@ -51,6 +51,11 @@ mockup, claude.ai/artifact/AMHkjGrUWpJVkPmAbuDvGX); the party rides on its chann
   fighting the healed one. A monster changes target only to one holding 10% more than the
   current. Off a party, nothing changes: a monster with one attacker attacks him.
 - **The +10%** for five.
+- **An elf's aid** (2026-10-19, `SkillRow::aids`): Heal, Greater Defense and Greater Damage go on
+  any player, party or none, within `kAidReach` (8 tiles, the larger axis), off her own stats. A
+  skill key or the right button over a player casts on him; with the pointer elsewhere, on the
+  player she picked if he is within reach, else on herself. Out of reach under the pointer:
+  "Too far away" and nothing cast; the realm refuses one too far rather than turning it on her.
 
 ## The user's further asks (2026-10-09)
 

@@ -896,10 +896,13 @@ void Realm::press() {
         } else if (tick_ >= hero.swingsAt) {
             if (const SkillRow* row = skillNumbered(me().wants)) {
                 // A self-cast reads its target off the caster; an attack takes the id the key
-                // named, or the one he is already fighting when the key named nobody.
-                const uint32_t at = row->onSelf()  ? hero.id
-                                    : me().wantsAt != 0 ? me().wantsAt
-                                                    : me().order.target;
+                // named, or the one he is already fighting when the key named nobody. An elf's
+                // aid takes the player the key named (SkillRow::aids): read off the caster here,
+                // every party heal the bots asked fell on the elf herself.
+                const uint32_t at = row->aids() && me().wantsAt != 0 ? me().wantsAt
+                                    : row->onSelf()                  ? hero.id
+                                    : me().wantsAt != 0              ? me().wantsAt
+                                                                     : me().order.target;
                 if (throwSkill(hero, *row, at)) me().wants = skill::kNone;
             }
         }

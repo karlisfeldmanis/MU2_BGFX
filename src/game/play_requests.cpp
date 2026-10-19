@@ -48,6 +48,10 @@ void Play::castSkill(int32_t skill, uint32_t at) {
         castHeroAt(skill, pointedColumn_, pointedRow_);
         core::logf("window: %s aimed toward tile %d,%d from %d,%d", row->name, pointedColumn_,
                    pointedRow_, realm_.hero().column(), realm_.hero().row());
+    } else if (row != nullptr && row->aids()) {
+        uint32_t on = 0;
+        if (!aidTarget(&on)) return;
+        castHero(skill, on);
     } else {
         castHero(skill, at);
     }
@@ -602,6 +606,33 @@ void Play::orderHero(const sim::Request& request) {
 void Play::castHero(int32_t skill, uint32_t at) {
     dealApproach_ = 0;
     link_->send({.kind = sim::Command::Kind::Cast, .player = realm_.hero().id, .a = skill, .target = at});
+}
+
+bool Play::aidTarget(uint32_t* at) {
+    *at = 0;
+    const sim::Body& hero = realm_.hero();
+    // The realm's own measure (sim::within, the larger of the two axes), which it refuses past.
+    const auto near = [&](const sim::Body& one) {
+        return std::max(std::fabs(one.x - hero.x), std::fabs(one.y - hero.y)) <= sim::kAidReach;
+    };
+    const auto other = [&](uint32_t id) -> const sim::Body* {
+        const sim::Body* one = id != 0 && id != hero.id ? realm_.find(id) : nullptr;
+        return one != nullptr && one->player && one->alive() ? one : nullptr;
+    };
+    if (const sim::Body* one = other(pointedPlayer_)) {
+        if (!near(*one)) {
+            tooFar_ = true;
+            return false;
+        }
+        *at = one->id;
+        return true;
+    }
+    // The one she picked, only while near: walked away from him, a press is hers again, so a
+    // pick left standing never costs her her own heal in a fight.
+    if (const sim::Body* one = other(targetId_); one && near(*one)) {
+        *at = one->id;
+    }
+    return true;
 }
 
 void Play::castHeroAt(int32_t skill, int column, int row) {

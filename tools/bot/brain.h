@@ -5447,7 +5447,7 @@ private:
         if (hero.party == 0) return false;
         const int64_t now = realm_->tick();
         const sim::Wearer w = realm_->wearer();
-        const float reach = sim::kPartyAidReach - 0.5f;
+        const float reach = sim::kAidReach - 0.5f;
         const sim::Body* low = nullptr;
         double lowest = kHealUnder;
         for (const sim::Body& b : realm_->bodies()) {

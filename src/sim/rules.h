@@ -445,9 +445,10 @@ constexpr double kThreatMarginNear = 1.1;
 constexpr double kThreatMarginFar = 1.3;
 constexpr float kThreatNear = 2.5f;
 constexpr double kHealThreat = 0.5;
-// How far off an elf's Heal, Greater Defense and Greater Damage reach a party member (docs/game/party.md;
-// MU casts them on a player): ours, about a screen's middle.
-constexpr float kPartyAidReach = 8.0f;
+// How far off an elf's Heal, Greater Defense and Greater Damage reach another player (SkillRow::aids;
+// MU casts them on a player): ours, about a screen's middle. Past it the cast is refused, not
+// turned on herself (the user, 2026-10-19: "we need also some minimal distance").
+constexpr float kAidReach = 8.0f;
 // A quiver's rise on the archery band at its plus, in percent: 3, 5 or 7 for +1 to +3, 0 at +0,
 // each end also taking one more (sim::reckon; 1.00.93 ObjCalCharacter.cpp:1457-1497).
 int quiverRisePercent(int plus);

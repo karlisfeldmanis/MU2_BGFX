@@ -473,8 +473,8 @@ constexpr SkillRow kRows[kSkills] = {
      .clip = 50, .sound = "player_bow", .built = true, .families = arms::kMissiles,
      .needLevel = 0, .kin = Kin::FairyElf, .flies = 17.5f, .arrows = 3},
     // Heal 26: twenty mana, `5 + energy / 5` health at once (HealEffectInitializer). MU casts it
-    // on a player; there is no party here, so it is hers -- and her summon's, when step 5 builds
-    // one. `PLAYER_SKILL_ELF1` (151) and `SOUND_SKILL_DEFENSE`, as MuMain's ReceiveMagic opens
+    // on a player, and so does she: on whoever she points at within kAidReach, else herself
+    // (SkillRow::aids). `PLAYER_SKILL_ELF1` (151) and `SOUND_SKILL_DEFENSE`, as MuMain's ReceiveMagic opens
     // every elf buff (WSclient.cpp:4153-4184). Ours: a three-second cooldown, because 0.75's
     // twenty mana is a heal every clip. Its orb asks 52 energy and no level (Gem02.json).
     {.number = skill::kHeal, .name = "Heal", .mana = 20, .coolTicks = 60,

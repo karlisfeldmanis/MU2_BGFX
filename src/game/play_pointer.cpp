@@ -438,6 +438,14 @@ void Play::rightClick() {
         return;
     }
     rightTarget_ = 0;
+    if (quick != nullptr && quick->aids() && pointedPlayer_ != 0) {
+        // **An elf's aid in the slot, on a player**: on him (Play::aidTarget).
+        uint32_t on = 0;
+        if (aidTarget(&on)) castHero(quickSkill_, on);
+        mark_ = false;
+        marker_.dismiss();
+        return;
+    }
     if (quick != nullptr && quick->aimsAtPointer() && pointedColumn_ >= 0) {
         // **A skill with a direction on the right button goes the way the mouse is** over bare
         // ground too (SkillRow::aimsAtPointer; the user, 2026-10-02): a press, as a key's is,
