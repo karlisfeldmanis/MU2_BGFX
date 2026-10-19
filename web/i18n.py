@@ -308,7 +308,6 @@ def localise(page: str, file: str, lang: str, texts: dict, script_strings: list)
         page = page.replace('<html lang="en">', f'<html lang="{tag}">', 1)
         page = re.sub(r'(<link rel="canonical" href="|<meta property="og:url" content=")' + re.escape(SITE) + r"/",
                       r"\g<1>" + SITE + f"/{lang}/", page)
-        page = page.replace('<meta property="og:type"', f'<meta property="og:locale" content="{locale}">\n<meta property="og:type"', 1)
         # Links to the pages served in every language stay in this one.
         paths = "|".join(re.escape(p.lstrip("/")) for p, _ in PAGES.values() if p != "/")
         page = re.sub(r'href="/(' + paths + r'|#[\w-]*|)"', lambda m: f'href="/{lang}/{m.group(1)}"', page)
@@ -317,9 +316,38 @@ def localise(page: str, file: str, lang: str, texts: dict, script_strings: list)
         blob = json.dumps(said, ensure_ascii=False).replace("</", "<\\/")
         page = page.replace('<script src="/site.js"></script>',
                             f'<script>window.MU_T = {blob};</script>\n<script src="/site.js"></script>', 1)
+    page = page.replace('<meta property="og:type"', locales(lang) + '\n<meta property="og:type"', 1)
+    if file == "index.html":
+        page = page.replace("</head>", structured(page, lang) + "\n</head>", 1)
     page = page.replace("<!--alternates-->", alternates(page_path), 1)
     page = page.replace("<!--langs-->", switcher(page_path, lang), 1)
     return page
+
+
+def locales(lang: str) -> str:
+    """og:locale of a page in `lang` and og:locale:alternate of every other, so a shared link
+    previews in the reader's language."""
+    every = [("en", "en_US")] + [(code, v[2]) for code, v in LANGS.items()]
+    return "\n".join(f'<meta property="og:locale{"" if code == lang else ":alternate"}" content="{locale}">'
+                     for code, locale in sorted(every, key=lambda c: c[0] != lang))
+
+
+def structured(page: str, lang: str) -> str:
+    """The front page's JSON-LD, in its language: the site (Google's name for it in results) and the
+    game, described in the page's own (translated) description."""
+    url = SITE + ("/" if lang == "en" else f"/{lang}/")
+    tag = "en" if lang == "en" else LANGS[lang][1]
+    found = re.search(r'<meta name="description" content="([^"]*)"', page)
+    about = html.unescape(found.group(1)) if found else ""
+    data = [
+        {"@context": "https://schema.org", "@type": "WebSite", "name": "MU Classic", "url": url, "inLanguage": tag},
+        {"@context": "https://schema.org", "@type": "VideoGame", "name": "MU Classic", "url": url,
+         "description": about, "inLanguage": tag, "image": SITE + "/og.jpg", "genre": "MMORPG",
+         "gamePlatform": ["Windows", "macOS", "Linux"], "playMode": "MultiPlayer",
+         "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}},
+    ]
+    blob = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
+    return f'<script type="application/ld+json">{blob}</script>'
 
 
 # The cookie a language picked in the footer is kept in (site.js); "en" for English.
