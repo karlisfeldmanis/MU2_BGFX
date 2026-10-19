@@ -160,10 +160,12 @@ uint32_t scoreInk(int score) {
 }
 constexpr uint32_t kWornInk = gfx::rgba(1.0f, 1.0f, 1.0f, 0.88f);
 // The wash under a sound piece in the satchel: MU's ITEM_COLOR_NORMAL hue, glColor4f(0.3, 0.5,
-// 0.5, 0.6) (NewUIInventoryCtrl.cpp:981), at a quarter of its strength, since at MU's 0.6 the
-// teal shouted over the dark skin. It fills the piece's cells to their rules with no edge of its
-// own -- the user, 2026-10-19: "dont use double outline just fill the row with that teal".
-constexpr uint32_t kTakenWash = gfx::rgba(0.3f, 0.5f, 0.5f, 0.16f);
+// 0.5, 0.6) (NewUIInventoryCtrl.cpp:981), at an eighth of its strength, since at MU's 0.6 the
+// teal shouted over the dark skin, and at a quarter it still did -- the user, 2026-10-19: "teal
+// highlith on inventory for items is to strong". It fills the piece's cells to their rules with
+// no edge of its own -- the user, 2026-10-19: "dont use double outline just fill the row with
+// that teal".
+constexpr uint32_t kTakenWash = gfx::rgba(0.3f, 0.5f, 0.5f, 0.08f);
 
 // A piece's sockets over its middle, in units: the item card's socket ring (tip::Mark::Ring), a
 // bronze rim round the orange stone of a Rune of Creation or round a dark hole, stacked down the
