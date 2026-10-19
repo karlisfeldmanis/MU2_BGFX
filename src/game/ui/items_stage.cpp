@@ -39,6 +39,8 @@ void translation(float* m, float x, float y, float z) { bx::mtxTranslate(m, x, y
 void ItemStage::shutdown() {
     if (bgfx::isValid(target_)) bgfx::destroy(target_);
     target_ = BGFX_INVALID_HANDLE;
+    for (const Kept& one : kept_) bgfx::destroy(one.target);
+    kept_.clear();
     picture_ = gfx::Art{};
 }
 
@@ -76,9 +78,32 @@ void ItemStage::stand(const std::vector<Standing>& items, float unitsW, float un
 
 void ItemStage::resize(int width, int height) {
     if (width == width_ && height == height_ && bgfx::isValid(target_)) return;
-    if (bgfx::isValid(target_)) bgfx::destroy(target_);
+    // The target given up is kept, not destroyed: a window may still hold its picture. The
+    // tooltip's stage is one for every window -- the bag's, the vault's, the chat's links -- and
+    // the shelf's is shared by the vault and the quest log, so one window's stand() resizes the
+    // picture another built its canvas with and keeps drawing until something it watches
+    // changes. Destroyed, that was 0bbcfb71's crash by another road: Zilvinas's RTX 3080 twice on
+    // 2026-10-18 at the vault, builds cc3bcfaf and 21e7f333, nvoglv64.dll under bgfx's
+    // TextureVK::setState. Kept, a stale holder draws its last photograph until it rebuilds.
+    // A tooltip's stage takes two or three sizes, so a few kept cover it; the oldest goes.
+    if (bgfx::isValid(target_)) {
+        kept_.push_back({target_, picture_, width_, height_});
+        target_ = BGFX_INVALID_HANDLE;
+    }
     width_ = width;
     height_ = height;
+    for (size_t i = 0; i < kept_.size(); ++i) {
+        if (kept_[i].width != width || kept_[i].height != height) continue;
+        target_ = kept_[i].target;
+        picture_ = kept_[i].picture;
+        kept_.erase(kept_.begin() + std::ptrdiff_t(i));
+        dirty_ = true;
+        return;
+    }
+    if (kept_.size() > kKept) {
+        bgfx::destroy(kept_.front().target);
+        kept_.erase(kept_.begin());
+    }
     // Four samples, resolved by bgfx when the interface samples the picture: a model's edge in
     // a 20-unit cell is most of what the eye reads, and a stair-stepped hilt reads as broken.
     const bgfx::TextureHandle colour =

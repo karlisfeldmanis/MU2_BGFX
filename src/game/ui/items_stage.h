@@ -58,6 +58,14 @@ private:
     bgfx::FrameBufferHandle target_ = BGFX_INVALID_HANDLE;
     int width_ = 0, height_ = 0;
     float pixelsPerUnit_ = 0.0f;  // the last render's, so stand() can size the target at once
+    // Targets of earlier sizes, oldest first, alive because a window may still draw one; see resize().
+    struct Kept {
+        bgfx::FrameBufferHandle target;
+        gfx::Art picture;
+        int width, height;
+    };
+    static constexpr size_t kKept = 3;
+    std::vector<Kept> kept_;
     gfx::Art picture_;
     double clock_ = 0.0;
     uint64_t renders_ = 0;
