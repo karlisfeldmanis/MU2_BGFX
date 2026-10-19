@@ -70,14 +70,13 @@ private:
         float age = 0.0f;
     };
 
-    // A kill's experience or Zen, risen from over the body it came off and not said in the
-    // lane (bug #17, 2026-10-18: "Its hard to see"). Hung in the world as a blow's figure is.
+    // A kill's experience, risen from over the body it came off and not said in the lane
+    // (bug #17, 2026-10-18: "Its hard to see"). Hung in the world as a blow's figure is.
     struct Float {
         float world[3] = {0.0f, 0.0f, 0.0f};
         Row::Kind kind = Row::Kind::Experience;
         int64_t value = 0;
         float age = 0.0f;
-        uint8_t slot = 0;  // rows over any just put up on the same body
     };
 
     void collect(const Play& play, float seconds);

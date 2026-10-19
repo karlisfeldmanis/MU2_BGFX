@@ -107,17 +107,15 @@ constexpr float kZenSize = 10.0f;
 constexpr float kZenUnitSize = 7.0f;
 constexpr float kZenLife = 2.6f;
 constexpr float kZenIn = 0.08f;  // seconds
-// A kill's gain over its body (Tally::Float): the blows' own Bold at a miss's size (the user,
-// 2026-10-19: "show it same size as miss text"), and
-// longer-lived and slower than a blow so it is read after the last blow has gone. It starts a
-// little over the body's crown, clear of that blow's figure, and Zen stands a row over the
-// experience it comes with.
+// A kill's experience over its body (Tally::Float): the blows' own Bold at a miss's size (the
+// user, 2026-10-19: "show it same size as miss text"), and longer-lived and slower than a blow
+// so it is read after the last blow has gone. It starts a little over the body's crown, clear
+// of that blow's figure.
 constexpr float kFloatSize = kMissSize;
 constexpr float kFloatUnitSize = 6.0f;
 constexpr float kFloatLife = 2.2f;
 constexpr float kFloatRise = 34.0f;   // interface units over the whole life
 constexpr float kFloatAbove = 14.0f;  // units over the crown it starts from
-constexpr float kFloatStep = 10.0f;   // units a row
 constexpr float kFloatNear = 0.6f;    // metres: two gains this close share a body
 constexpr float kFloatWindow = 0.4f;  // seconds a gain still counts as just put up
 // **It scrolls, and its top fades** (the user, 2026-10-03: "can we make it scrolling with fade
@@ -412,11 +410,13 @@ void Tally::dismiss() {
 
 void Tally::collect(const Play& play, float seconds) {
     for (const Play::Gain& gain : play.gains()) {
-        if (gain.anchored && gain.value > 0 &&
-            (gain.kind == Play::Gain::Kind::Experience || gain.kind == Play::Gain::Kind::Zen)) {
+        // A kill's Zen is not said at all: the coins ring, and the purse says the rest (the
+        // user, 2026-10-19: "dont show zen").
+        if (gain.anchored && gain.kind == Play::Gain::Kind::Zen) continue;
+        if (gain.anchored && gain.value > 0 && gain.kind == Play::Gain::Kind::Experience) {
             Float one;
             for (int i = 0; i < 3; ++i) one.world[i] = gain.at[i];
-            one.kind = gain.kind == Play::Gain::Kind::Zen ? Row::Kind::Zen : Row::Kind::Experience;
+            one.kind = Row::Kind::Experience;
             one.value = gain.value;
             // Two splits of one kill's experience (a level crossed) are one figure.
             bool merged = false;
@@ -429,8 +429,6 @@ void Tally::collect(const Play& play, float seconds) {
                 break;
             }
             if (merged) continue;
-            // Zen a row over the experience, whichever arrived first.
-            one.slot = one.kind == Row::Kind::Zen ? 1 : 0;
             floats_.push_back(one);
             continue;
         }
@@ -663,10 +661,10 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
     // "+1,234" in the blows' Bold under their full halo -- the lane's Medium read thin over
     // grass -- and the unit after it in the Medium, centred over the body, rising as a blow's
     // figure does.
+    // Full to the end, never faded out (the user, 2026-10-19: "dont fade out exp text").
     for (const Float& one : floats_) {
         const float u = std::clamp(one.age / kFloatLife, 0.0f, 1.0f);
-        const float alpha = faded(u);
-        if (alpha <= 0.0f) continue;
+        const float alpha = 1.0f;
         const float world[4] = {one.world[0], one.world[1], one.world[2], 1.0f};
         float clip[4];
         bx::vec4MulMtx(clip, world, viewProj);
@@ -675,12 +673,11 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         if (nx < -1.4f || nx > 1.4f || ny < -1.4f || ny > 1.4f) continue;
         const float x = (nx * 0.5f + 0.5f) * float(width);
         const float y = (0.5f - ny * 0.5f) * float(height) -
-                        (kFloatAbove + kFloatRise * ridden(u) + float(one.slot) * kFloatStep) * unit;
-        const bool zen = one.kind == Row::Kind::Zen;
-        const uint32_t ink = zen ? kZenInk : kExperienceInk;
+                        (kFloatAbove + kFloatRise * ridden(u)) * unit;
+        const uint32_t ink = kExperienceInk;
         const float size = kFloatSize * unit * popped(u), small = kFloatUnitSize * unit * popped(u);
         const std::string figure = "+" + panel::commas((long long)one.value);
-        const std::string shouted = zen ? "ZEN" : "EXP";
+        const std::string shouted = "EXP";
         const float figureWide = face_.measure(size, figure);
         const float wordWide = quiet_.measure(small, shouted) +
                                kLaneUnitTracking * small * float(shouted.size() - 1);
