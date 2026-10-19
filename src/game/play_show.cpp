@@ -1325,9 +1325,20 @@ void Play::follow(float seconds) {
                 continue;
             }
             // Still standing on screen until its killing blow lands: drawn where it last was,
-            // in whatever it was playing.
+            // in whatever it was playing -- but not a walk. The realm halted it on the tick it
+            // died, so a walk here is striding on the spot until the blow shows, and a quick
+            // kill on a chasing monster left it "still on walking motion" (the user,
+            // 2026-10-19). It stands for the wait; a swing or a flinch plays on.
             if (one.fallOwed) {
                 one.visible = true;
+                const FigureBody* look = one.figure.body();
+                const int now = one.figure.clip();
+                if (now >= 0 && look->idleClip >= 0 &&
+                    (now == look->walkClip || now == look->walkSafeClip ||
+                     now == look->combatWalkClip || now == look->runClip)) {
+                    one.figure.play(look->idleClip);
+                    one.clipRate = 1.0f;
+                }
                 continue;
             }
             one.visible = one.deadFor >= 0.0f && (body->player || one.deadFor < kDeathTotal);
