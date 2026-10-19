@@ -182,7 +182,8 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float man,
         if (cue.miss) return Mark::Miss;
         // A poison's pulse is green on him as on a monster: MU's DT_POISON is one colour.
         if (cue.poison) return Mark::Poison;
-        if (onHero) return Mark::Taken;
+        // And what lands on her summon, in the same red: it is hers to watch as his is his.
+        if (onHero || cue.onSummon) return Mark::Taken;
         if (cue.burn) return Mark::Burn;
         if (cue.bleed) return Mark::Bleed;
         if (cue.reflected) return Mark::Reflected;
