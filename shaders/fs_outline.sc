@@ -156,18 +156,20 @@ void main()
 		// so the ring traces the figure's shape and fades out softly. Weighted by each ring's
 		// radius, so the taps stand for equal areas. Against a straight edge the disc is a
 		// fifth covered a ring width out, where this has faded to a little over half.
+		// Its loop, and the halo's below, each name their counter: HLSL keeps a for's counter in
+		// the block round it, so a second `ring` here failed Direct3D 11's compile (X3078).
 		float cover = 0.0;
 		float weight = 0.0;
-		for (int ring = 1; ring <= RINGS; ring++)
+		for (int disc = 1; disc <= RINGS; disc++)
 		{
-			float span = 2.0 * width * float(ring) / float(RINGS);
+			float span = 2.0 * width * float(disc) / float(RINGS);
 			for (int i = 0; i < STEPS; i++)
 			{
-				float turn = (float(i) + 0.5 * float(ring)) * (6.2831853 / float(STEPS));
+				float turn = (float(i) + 0.5 * float(disc)) * (6.2831853 / float(STEPS));
 				vec2 along = vec2(cos(turn), sin(turn));
-				cover += float(ring) * maskAt(at + along * u_outlinePixel.xy * span, lo, hi, dx, dy);
+				cover += float(disc) * maskAt(at + along * u_outlinePixel.xy * span, lo, hi, dx, dy);
 			}
-			weight += float(ring) * float(STEPS);
+			weight += float(disc) * float(STEPS);
 		}
 		strength = smoothstep(0.1, 0.26, cover / weight);
 
@@ -176,13 +178,13 @@ void main()
 		if (reach > 0.0 && far > width)
 		{
 			float near = width + reach + 1.0;
-			for (int ring = 1; ring <= RINGS; ring++)
+			for (int halo = 1; halo <= RINGS; halo++)
 			{
-				float span = width + reach * float(ring) / float(RINGS);
+				float span = width + reach * float(halo) / float(RINGS);
 				float found = 0.0;
 				for (int i = 0; i < STEPS; i++)
 				{
-					float turn = (float(i) + 0.5 * float(ring)) * (6.2831853 / float(STEPS));
+					float turn = (float(i) + 0.5 * float(halo)) * (6.2831853 / float(STEPS));
 					vec2 along = vec2(cos(turn), sin(turn));
 					found = max(found, maskAt(at + along * u_outlinePixel.xy * span, lo, hi, dx, dy));
 				}
