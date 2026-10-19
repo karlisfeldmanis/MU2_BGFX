@@ -183,6 +183,9 @@ void Broker::rebuild(Play& play, Stage* stage) {
             }
             if (!row.empty()) said.push_back({row, "", leftInk, 0});
         };
+        // Whose class it is, first: under a scroll's long words it ran off the card's foot (the
+        // user, 2026-10-19: "missing info on market opened item which class item is that").
+        if (sheet.classed && !sheet.who.empty()) add(sheet.who[0].text, tip::colourOf(sheet.who[0].tone), "", 0);
         if (!sheet.hero.empty()) add(sheet.hero.word, style::kBone2, sheet.hero.value, tip::colourOf(sheet.hero.tone));
         for (const tip::Section& section : sheet.sections) {
             for (const tip::Row& r : section.rows) {
@@ -199,6 +202,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
         // Who wears it, and only a need he does not meet.
         for (size_t i = 0; i < sheet.who.size(); ++i) {
             const tip::FootLine& w = sheet.who[i];
+            if (i == 0 && sheet.classed) continue;  // put first, above
             if (!w.text.empty() && (i == 0 || w.tone == tip::Tone::Red)) add(w.text, w.quiet ? style::kAshInk : tip::colourOf(w.tone), "", 0);
         }
         if (stop <= ay) said.clear();

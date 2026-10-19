@@ -1164,6 +1164,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             mine = mine && (!sim::secondClassFor(row, who.kin) || who.second);
         }
         sheet.who.push_back({classes, mine ? Tone::Green : Tone::Red, false});
+        sheet.classed = true;
     }
     const auto require = [&](const char* name, int wants, int lacking) {
         if (wants <= 0) return;

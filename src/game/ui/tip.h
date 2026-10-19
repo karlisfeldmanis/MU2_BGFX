@@ -244,6 +244,9 @@ struct Sheet {
     float artScale = 1.0f;
     Hero hero;
     std::vector<FootLine> who;
+    // Whether `who`'s first line is the class line ("DW / MG", "SM") rather than a need: the
+    // market's card puts it first, under the kind (Broker's detail).
+    bool classed = false;
     std::vector<FootLine> keep;
 
     bool empty() const { return name.empty(); }
