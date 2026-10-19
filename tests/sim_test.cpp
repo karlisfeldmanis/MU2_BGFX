@@ -7565,6 +7565,15 @@ void testChaosMachine() {
     check(realm.mixing() == goblin, "talking to the Goblin opens his machine");
     check(realm.judged().empty && realm.judged().recipe == sim::Recipe::None, "an empty box is nothing");
     realm.earn(50000000);
+    // A bound thing stays out (the user, 2026-10-19: "dont allow to use bound items on chaos machine").
+    {
+        const int held = realm.give(sword, -1, 0, -1, false, 0, 0, 0, nullptr, nullptr, true);
+        check(held >= sim::kWorn && realm.satchel()[held].bound, "a bound sword in the bag");
+        check(realm.putIn(held) < 0 && realm.putIn(held, 0) < 0 && realm.machine().empty() &&
+                  realm.satchel()[held].bound,
+              "is refused by the box, dropped anywhere in it, and stays in the bag");
+        realm.sell(held);
+    }
 
     // Loads a +10 or +11 box: the thing at `plus` and `jewels` of the Bless and the Soul.
     const auto load = [&](int plus, int jewels, bool luck) {
