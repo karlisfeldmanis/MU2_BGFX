@@ -358,7 +358,8 @@ void QuestAuto::visit(Play& play, int folk, bool hand) {
 
 // **His defensive auras** (the user, 2026-10-17: "if char is shield aura user and cooldown ends
 // he should recast shield auras also", then "use right click and def auras"): a guard on his bar
-// -- the knight's Defense, the wizard's Soul Barrier, the elf's Greater Defense -- cast on himself
+// -- the knight's Defense, the wizard's Soul Barrier, the elf's Greater Defense and her Greater
+// Damage -- cast on himself
 // once its boon has lapsed, it is ready, paid for and his hand may throw it -- so a guard behind a
 // shield is never asked with two hands on one weapon or a blade in each (SkillRow::suits off the
 // left hand; the user, the same day: "if char cant use def aura (dual wield, two-hands) weapon
@@ -368,14 +369,24 @@ void QuestAuto::visit(Play& play, int folk, bool hand) {
 bool QuestAuto::guard(Play& play) {
     const sim::Realm& realm = play.realm();
     const sim::Body& hero = realm.hero();
-    if (realm.casting() || hero.boonUntil > realm.tick()) return false;
+    if (realm.casting()) return false;
     // Nothing is thrown on a safe tile (Realm::invoke): in town it waits for the field.
     if (realm.tables()->grid.safe(hero.column(), hero.row())) return false;
     const uint32_t offHand = realm.wearer().offHand;
     for (int i = 0; i < barCount_; ++i) {
         const int32_t skill = bar_[i];
         const sim::SkillRow* row = skill > 0 ? sim::skillNumbered(skill) : nullptr;
-        if (row == nullptr || row->boonTicks <= 0 || !realm.knows(skill) || realm.cooling(skill) > 0) continue;
+        if (row == nullptr || !realm.knows(skill) || realm.cooling(skill) > 0) continue;
+        // A guard while his boon has lapsed, and the elf's Greater Damage while her might has,
+        // each on its own clock (the user, 2026-10-19: "elf on auto-play have to use also
+        // greater damage buff its inside QWERT").
+        if (row->boonTicks > 0) {
+            if (hero.boonUntil > realm.tick()) continue;
+        } else if (row->mightTicks > 0) {
+            if (hero.mightUntil > realm.tick()) continue;
+        } else {
+            continue;
+        }
         if (hero.mana < row->mana || !row->suits(offHand)) continue;
         if (const auto tried = guardTried_.find(skill); tried != guardTried_.end() && tried->second > clock_) continue;
         guardTried_[skill] = clock_ + 4.0;
