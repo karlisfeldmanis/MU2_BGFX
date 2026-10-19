@@ -100,6 +100,29 @@ void main()
 
 	// Inside the shape draws nothing: the ring sits outside the silhouette so the model is
 	// never covered by its own highlight.
+	// **A hole the figure closes round is not outside it.** A cut-out sheet worn over nothing
+	// -- Tersia's chain (setb, 30% cut away) -- leaves a hole in the mask at every link, and
+	// each hole got a ring of its own: her body read as a gold lattice (the user, 2026-10-19:
+	// "something vierd on hovering NPC its not making nice outline"). Eight ways out, each
+	// walked to three ring widths: if every one meets the shape, the pixel is shut in and
+	// draws nothing. A gap open on any side -- between the legs, under an arm -- still rings.
+	if (here <= 0.99)
+	{
+		float shut = 1.0;
+		for (int i = 0; i < 8; i++)
+		{
+			float turn = float(i) * (6.2831853 / 8.0);
+			vec2 along = vec2(cos(turn), sin(turn)) * u_outlinePixel.xy;
+			float met = 0.0;
+			for (int k = 1; k <= 4; k++)
+			{
+				met = max(met, maskAt(at + along * (width * 0.75 * float(k)), lo, hi, dx, dy));
+			}
+			shut = min(shut, met);
+		}
+		if (shut > 0.5) discard;
+	}
+
 	float strength = 0.0;
 	float glow = 0.0;
 	if (here <= 0.99)
