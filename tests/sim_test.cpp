@@ -12829,6 +12829,45 @@ void testElfAid(const content::Tables& tables) {
     realm.invoke(sim::skill::kGreaterDefense, elf);
     for (int tick = 0; tick < 40; ++tick) realm.step();
     check(realm.find(elf)->boonUntil > realm.tick(), "named herself, the ward is hers");
+
+    // A guard as strong or weaker is replaced: the knight's Defense by a seasoned elf's ward.
+    check(realm.lookAs(near) && realm.equip(tables.armNamed("Sword03"), tables.armNamed("Shield01"), true),
+          "the knight takes sword and board");
+    check(realm.learn(sim::skill::kDefense), "and his guard");
+    realm.invoke(sim::skill::kDefense, near);
+    for (int tick = 0; tick < 40; ++tick) realm.step();
+    check(realm.find(near)->boonSkill == sim::skill::kDefense, "his guard up");
+    const sim::SkillRow* ward = sim::skillNumbered(sim::skill::kGreaterDefense);
+    const auto wardOf = [&](uint32_t one) {
+        realm.lookAs(one);
+        return 1.0f - sim::boonShare(*ward, realm.hero().totalPoints(), realm.hero().shieldDefense);
+    };
+    // Two more elves, their wards not cooling (one cools as long as it stands).
+    const uint32_t seasoned = realm.join(sim::Kin::FairyElf, 150, 190, 112);
+    const uint32_t young = realm.join(sim::Kin::FairyElf, 1, 190, 108);
+    for (uint32_t one : {seasoned, young}) {
+        check(one != 0 && realm.lookAs(one) && realm.learn(sim::skill::kGreaterDefense), "an elf joins");
+    }
+    // The seasoned one's points in agility, which her ward is reckoned off (sim::wardShare).
+    realm.lookAs(seasoned);
+    for (int i = 0; i < 400; ++i) realm.command({.kind = sim::Command::Kind::Spend, .player = seasoned, .a = 1});
+    realm.step();
+    const float strong = wardOf(seasoned), weak = wardOf(young);
+    check(strong < weak, "the seasoned elf's ward the stronger");
+    check(strong <= realm.find(near)->boonDamageTaken, "and no weaker than his Defense");
+    realm.lookAs(seasoned);
+    realm.invoke(sim::skill::kGreaterDefense, near);
+    for (int tick = 0; tick < 40; ++tick) realm.step();
+    checkEqual(realm.find(near)->boonSkill, sim::skill::kGreaterDefense, "her ward replaces his Defense");
+    checkNear(realm.find(near)->boonDamageTaken, strong, 1e-6, "at her share");
+
+    // A weaker ward over it is refused: the stronger stays.
+    realm.lookAs(young);
+    const int32_t youngMana = realm.hero().mana;
+    realm.invoke(sim::skill::kGreaterDefense, near);
+    for (int tick = 0; tick < 40; ++tick) realm.step();
+    checkNear(realm.find(near)->boonDamageTaken, strong, 1e-6, "the young elf's weaker ward does not replace it");
+    check(realm.find(young)->mana >= youngMana, "and she paid nothing");
 }
 
 // A drop is its owner's: a stranger can neither walk to it nor take it, and what a player

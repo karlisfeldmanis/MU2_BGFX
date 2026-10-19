@@ -56,6 +56,8 @@ mockup, claude.ai/artifact/AMHkjGrUWpJVkPmAbuDvGX); the party rides on its chann
   skill key or the right button over a player casts on him; with the pointer elsewhere, on the
   player she picked if he is within reach, else on herself. Out of reach under the pointer:
   "Too far away" and nothing cast; the realm refuses one too far rather than turning it on her.
+  Greater Defense never replaces a stronger guard already up on him (a knight's Defense, a Soul
+  Barrier, a better elf's ward): refused, nothing paid. As strong or weaker, hers replaces it.
 
 ## The user's further asks (2026-10-09)
 

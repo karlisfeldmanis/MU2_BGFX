@@ -264,6 +264,15 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
                 !within(hero, *one, kAidReach)) {
                 return false;
             }
+            // **Never a weaker guard over a stronger** (the user, 2026-10-19: "just dont make
+            // defense weaker if char already has stronger shield aura"): her ward on one whose
+            // standing guard -- a knight's Defense, a wizard's Soul Barrier, another elf's ward --
+            // already takes more of a blow is refused, nothing paid, and his stays. As strong or
+            // weaker, hers replaces it.
+            if (row.number == skill::kGreaterDefense && one->boonUntil > tick_ &&
+                one->boonDamageTaken < 1.0f - boonShare(row, hero.totalPoints(), hero.shieldDefense)) {
+                return false;
+            }
             aid = one;
         }
         aided = aid != nullptr ? aid->id : hero.id;
