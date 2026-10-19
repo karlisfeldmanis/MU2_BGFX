@@ -74,8 +74,12 @@ constexpr int kWanderReach = 30;
 // bench numbers, ours, as WebZen has none. A beast walking home notices nobody until it is
 // within kHomeAgain of its nest, so it cannot turn on the hero at the leash's edge and turn
 // back again; a blow still turns it.
+//
+// And a hit beast's leash half as long again (the user, 2026-10-19: "if char does damage to
+// monster leash has to be longer so char can stack monsters"): 30, the reach it wanders in,
+// so a pack struck one by one can be led together to where he fights them.
 constexpr int kLeash = 10;
-constexpr int kGrudge = 20;
+constexpr int kGrudge = 30;
 constexpr int kHomeAgain = 3;
 // How often a chase re-plans, in ticks. Realm.cs:1918.
 // How long a beast stands over what it has just killed before it turns away. **invention**, and
