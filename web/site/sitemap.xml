@@ -1,8 +1,150 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- The public pages, for Google Search Console (mu-classic.com, verified by DNS 2026-10-17).
-     Account, online and bugs are noindex and left out. -->
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://mu-classic.com/</loc></url>
-  <url><loc>https://mu-classic.com/privacy</loc></url>
-  <url><loc>https://mu-classic.com/contact</loc></url>
+     Account, online and bugs are noindex and left out. Each page in English and in the
+     languages of web/i18n.py LANGS, each naming the others. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url><loc>https://mu-classic.com/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/"/>
+  </url>
+  <url><loc>https://mu-classic.com/pt/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/"/>
+  </url>
+  <url><loc>https://mu-classic.com/es/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/"/>
+  </url>
+  <url><loc>https://mu-classic.com/ru/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/"/>
+  </url>
+  <url><loc>https://mu-classic.com/vi/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/"/>
+  </url>
+  <url><loc>https://mu-classic.com/pl/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/"/>
+  </url>
+  <url><loc>https://mu-classic.com/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/privacy"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/privacy"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/privacy"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/privacy"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/privacy"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/privacy"/>
+  </url>
+  <url><loc>https://mu-classic.com/pt/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/privacy"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/privacy"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/privacy"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/privacy"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/privacy"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/privacy"/>
+  </url>
+  <url><loc>https://mu-classic.com/es/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/privacy"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/privacy"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/privacy"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/privacy"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/privacy"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/privacy"/>
+  </url>
+  <url><loc>https://mu-classic.com/ru/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/privacy"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/privacy"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/privacy"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/privacy"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/privacy"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/privacy"/>
+  </url>
+  <url><loc>https://mu-classic.com/vi/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/privacy"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/privacy"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/privacy"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/privacy"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/privacy"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/privacy"/>
+  </url>
+  <url><loc>https://mu-classic.com/pl/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/privacy"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/privacy"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/privacy"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/privacy"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/privacy"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/privacy"/>
+  </url>
+  <url><loc>https://mu-classic.com/contact</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/contact"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/contact"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/contact"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/contact"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/contact"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/contact"/>
+  </url>
+  <url><loc>https://mu-classic.com/pt/contact</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/contact"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/contact"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/contact"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/contact"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/contact"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/contact"/>
+  </url>
+  <url><loc>https://mu-classic.com/es/contact</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/contact"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/contact"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/contact"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/contact"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/contact"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/contact"/>
+  </url>
+  <url><loc>https://mu-classic.com/ru/contact</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/contact"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/contact"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/contact"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/contact"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/contact"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/contact"/>
+  </url>
+  <url><loc>https://mu-classic.com/vi/contact</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/contact"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/contact"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/contact"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/contact"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/contact"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/contact"/>
+  </url>
+  <url><loc>https://mu-classic.com/pl/contact</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://mu-classic.com/contact"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://mu-classic.com/pt/contact"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://mu-classic.com/es/contact"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://mu-classic.com/ru/contact"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://mu-classic.com/vi/contact"/>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://mu-classic.com/pl/contact"/>
+  </url>
 </urlset>

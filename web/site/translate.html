@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Translations — MU Classic</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#0D0B0A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Alegreya+Sans+SC:wght@700&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+<style>
+/* The admins' page: the site in its other languages (server.py /api/texts, web/i18n.py). Every
+   English unit of the pages, the Latest updates and the scripts, beside its translation. */
+.texts-page .wrap { max-width: 1080px; }
+.tabs, .filters { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.tabs button, .filters button { background: none; border: 0; border-radius: 3px; padding: 6px 12px; font: 500 15px/1.2 'Alegreya Sans', sans-serif;
+  color: var(--label); cursor: pointer; }
+.tabs button { font-size: 17px; }
+.tabs button b, .filters button b { font-weight: 500; color: var(--quiet); margin-left: 6px; font-variant-numeric: tabular-nums; }
+.tabs button b.missing { color: #E7837A; }
+.tabs button:hover, .filters button:hover { color: var(--bone-hi); }
+.tabs button[aria-pressed="true"], .filters button[aria-pressed="true"] { color: var(--bone-hi); background: rgba(243,232,212,.07); }
+.group { padding: 22px 0 6px; }
+.group > header { display: flex; align-items: baseline; gap: 12px; padding-bottom: 10px; box-shadow: inset 0 -1px 0 var(--line); }
+.group h2 { margin: 0; font: 700 18px/1.3 Cinzel, serif; letter-spacing: .03em; color: var(--bone-hi); }
+.group .count { font: 700 12px/1.6 'Alegreya Sans SC', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--quiet); }
+.group header a { margin-left: auto; font-size: 14px; color: var(--label); text-decoration: underline; }
+.tline { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; padding: 12px 0; box-shadow: inset 0 -1px 0 var(--line); }
+.tline .en { font-size: 15px; line-height: 1.45; color: var(--bone); white-space: pre-wrap; overflow-wrap: anywhere; }
+.tline .en code { font-size: 12px; color: var(--quiet); }
+.tline textarea { width: 100%; min-height: 40px; resize: vertical; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--field-edge);
+  border-radius: 3px; background: var(--field); color: var(--bone-hi); font: 15px/1.45 'Alegreya Sans', sans-serif; }
+.tline.missing textarea { border-style: dashed; }
+.tline .meta { grid-column: 2; display: flex; gap: 10px; font-size: 13px; color: var(--quiet); min-height: 0; }
+.tline .meta:empty { display: none; }
+.tline .meta .bad { color: #E7837A; }
+textarea:focus-visible, .tabs button:focus-visible, .filters button:focus-visible { outline: 2px solid var(--field-focus); outline-offset: 2px; }
+@media (max-width: 640px) {
+  .tline { grid-template-columns: 1fr; gap: 6px; }
+  .tline .meta { grid-column: 1; }
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+<a href="/"><img src="/logo.svg" alt="MU Classic home" width="435" height="261"></a>
+<span style="display: flex; gap: 20px">
+<a href="/updates" style="font-weight: 500">Updates</a>
+<a href="/bugs" style="font-weight: 500">Bugs</a>
+<a href="/online" style="font-weight: 500">Online</a>
+<a href="/account" style="font-weight: 500">Account</a>
+</span>
+</div>
+
+<main class="account-page texts-page">
+<div class="wrap">
+<h1 class="page-title">Translations</h1>
+
+<p id="v-none" class="center muted" hidden>This page is for admins. <a href="/account" style="text-decoration: underline">Sign in</a> with an admin account.</p>
+
+<div id="v-list" class="form" style="gap: 12px" hidden>
+<p class="center muted" style="font-size: 14px; margin: 0">Each language's page shows English wherever a line has no translation. A line with tags keeps the same tags; empty a box to take its translation away. Saved as you leave the box.</p>
+<div class="tabs" id="tabs" role="group" aria-label="Language"></div>
+<div class="filters" id="filters" role="group" aria-label="Show"></div>
+<p id="err" class="err center" hidden></p>
+<div id="rows"></div>
+</div>
+
+</div>
+</main>
+
+<footer>
+<div class="wrap">
+<img src="/logo.svg" alt="MU Classic" width="435" height="261">
+</div>
+</footer>
+
+<script src="/site.js"></script>
+<script>
+(() => {
+  const { $, el, api } = MU;
+  let report = null, lang = 'pt', showing = 'missing';
+  try { lang = localStorage.getItem('mu-texts-lang') || 'pt'; showing = localStorage.getItem('mu-texts-filter') ?? 'missing'; } catch (e) {}
+  const keep = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+
+  // A line without tags is shown and edited as plain text (the page escapes it); one with tags as it stands.
+  const plain = (s) => { const t = document.createElement('textarea'); t.innerHTML = s; return t.value; };
+  const mine = () => report.texts[lang] || (report.texts[lang] = {});
+  const missing = (code) => report.groups.reduce((n, g) => n + g.units.filter((u) => !(report.texts[code] || {})[u.source]).length, 0);
+
+  function tabs() {
+    const box = $('tabs');
+    box.replaceChildren();
+    for (const [code, name] of Object.entries(report.langs)) {
+      const b = el('button', '', name);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(code === lang));
+      const left = missing(code);
+      b.appendChild(el('b', left ? 'missing' : '', left ? left + ' missing' : 'done'));
+      b.addEventListener('click', () => { lang = code; keep('mu-texts-lang', code); render(); });
+      box.appendChild(b);
+    }
+    const f = $('filters');
+    f.replaceChildren();
+    for (const [key, label] of [['missing', 'Missing'], ['', 'All']]) {
+      const b = el('button', '', label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(showing === key));
+      b.addEventListener('click', () => { showing = key; keep('mu-texts-filter', key); render(); });
+      f.appendChild(b);
+    }
+  }
+
+  function row(unit) {
+    const had = mine()[unit.source] || '';
+    const item = el('article', 'tline' + (had ? '' : ' missing'));
+    const en = el('div', 'en', unit.tags ? unit.source : plain(unit.source));
+    item.appendChild(en);
+    const box = el('textarea');
+    box.value = unit.tags ? had : plain(had);
+    box.rows = Math.max(1, Math.ceil(unit.source.length / 60));
+    box.setAttribute('aria-label', 'Translation');
+    box.lang = lang;
+    item.appendChild(box);
+    const meta = el('div', 'meta');
+    item.appendChild(meta);
+    box.addEventListener('change', async () => {
+      const text = box.value.trim();
+      meta.replaceChildren();
+      let r = null;
+      try { r = await api('/api/texts', { lang, source: unit.source, text }); } catch (e) {}
+      if (!r || r.status !== 200) {
+        meta.appendChild(el('span', 'bad', (r && r.said && r.said.error) || 'Could not save. Try again.'));
+        return;
+      }
+      if (text) mine()[unit.source] = text; else delete mine()[unit.source];
+      item.classList.toggle('missing', !text);
+      meta.appendChild(el('span', '', 'Saved'));
+      setTimeout(() => meta.replaceChildren(), 1500);
+      tabs();
+    });
+    return item;
+  }
+
+  function render() {
+    tabs();
+    const rows = $('rows');
+    rows.replaceChildren();
+    let shown = 0;
+    for (const g of report.groups) {
+      const units = showing === 'missing' ? g.units.filter((u) => !mine()[u.source]) : g.units;
+      if (!units.length) continue;
+      shown += units.length;
+      const box = el('section', 'group');
+      const head = el('header');
+      head.appendChild(el('h2', '', g.name));
+      const done = g.units.filter((u) => mine()[u.source]).length;
+      head.appendChild(el('span', 'count', done + ' of ' + g.units.length + ' translated'));
+      const see = el('a', '', 'See the page');
+      see.href = '/' + lang + (g.units[0].path || '/');
+      see.target = '_blank';
+      head.appendChild(see);
+      box.appendChild(head);
+      for (const u of units) box.appendChild(row(u));
+      rows.appendChild(box);
+    }
+    if (!shown) rows.appendChild(el('p', 'center muted', 'Every line is translated.'));
+    $('v-list').hidden = false;
+    $('v-none').hidden = true;
+  }
+
+  async function load() {
+    try {
+      const { status, said } = await api('/api/texts');
+      if (status !== 200) { $('v-list').hidden = true; $('v-none').hidden = false; return; }
+      report = said;
+      if (!report.langs[lang]) lang = Object.keys(report.langs)[0];
+      render();
+    } catch (e) { $('err').textContent = 'Could not load the translations.'; $('err').hidden = false; }
+  }
+  load();
+})();
+</script>
+</body>
+</html>

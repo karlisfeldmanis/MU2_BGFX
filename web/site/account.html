@@ -40,8 +40,9 @@
 <div id="v-account" class="form" style="gap: 20px" hidden>
 <h1 class="page-title">Your account</h1>
 <span id="a-who" class="center"></span>
-<a id="a-online" class="center" href="/online" style="text-decoration: underline" hidden>Who is online</a>
-<a id="a-bugs" class="center" href="/bugs" style="text-decoration: underline" hidden>Bug reports</a>
+<a id="a-online" class="center" href="/online" style="text-decoration: underline" translate="no" hidden>Who is online</a>
+<a id="a-bugs" class="center" href="/bugs" style="text-decoration: underline" translate="no" hidden>Bug reports</a>
+<a id="a-texts" class="center" href="/translate" style="text-decoration: underline" translate="no" hidden>Translations</a>
 
 
 <div>
@@ -67,7 +68,7 @@
 <div id="d-box" class="form" hidden>
 <span class="danger">Deletes your account and every character on it, at once. It can't be undone.</span>
 <div class="field"><label for="d-pass">Password</label><input id="d-pass" type="password" autocomplete="current-password" maxlength="128" aria-describedby="d-err"><span id="d-err" class="err"></span></div>
-<div class="field"><label for="d-confirm">Type DELETE to confirm</label><input id="d-confirm" type="text" autocomplete="off"></div>
+<div class="field"><label for="d-confirm">Type <b translate="no">DELETE</b> to confirm</label><input id="d-confirm" type="text" autocomplete="off"></div>
 <button id="d-go" class="btn btn-red" type="button" disabled>Delete account</button>
 </div>
 
@@ -79,15 +80,16 @@
 
 <footer>
 <div class="wrap">
-<img src="/logo.svg" alt="MU Classic" width="435" height="261">
+<img src="/logo.svg" alt="MU Classic" width="435" height="261" translate="no">
 <nav class="foot-links"><a href="/privacy">Privacy</a><a href="/contact">Contact</a></nav>
+<!--langs-->
 </div>
 </footer>
 
 <script src="/site.js"></script>
 <script>
 (() => {
-  const { $, el, token, api, account, when, fieldError, alertOn, busy, OFFLINE } = MU;
+  const { $, el, t, token, api, account, when, fieldError, alertOn, busy, OFFLINE } = MU;
 
   function view(name) {
     $('v-signin').hidden = name !== 'signin';
@@ -100,12 +102,12 @@
     const email = $('in-email').value.trim(), password = $('in-pass').value;
     alertOn($('in-alert'), '');
     $('in-alert').style.background = '';
-    if (!email || !password) return alertOn($('in-alert'), 'Enter your email and password.');
-    busy($('in-go'), 'Signing in…');
+    if (!email || !password) return alertOn($('in-alert'), t('Enter your email and password.'));
+    busy($('in-go'), t('Signing in…'));
     try {
       const { status, said } = await api('/api/login', { email, password });
       if (status === 200) { token.set(said.token); $('in-pass').value = ''; await load(); }
-      else alertOn($('in-alert'), said.error || 'Something went wrong. Try again in a minute.');
+      else alertOn($('in-alert'), said.error ? t(said.error) : t('Something went wrong. Try again in a minute.'));
     } catch (e) { alertOn($('in-alert'), OFFLINE); }
     busy($('in-go'));
   }
@@ -133,36 +135,37 @@
     $('a-who').textContent = (a.name ? a.name + ' · ' : '') + a.email;
     $('a-online').hidden = a.role !== 'admin';
     $('a-bugs').hidden = a.role !== 'admin';
+    $('a-texts').hidden = a.role !== 'admin';
     const sessions = $('a-sessions');
     sessions.replaceChildren();
     // Only the launchers: a browser's sign-in is this page itself, not where the game is played.
     const launchers = a.sessions.filter((s) => s.agent === 'MU Classic launcher');
-    if (!launchers.length) sessions.appendChild(line('No launcher yet', 'Sign in to the launcher and it shows here.'));
+    if (!launchers.length) sessions.appendChild(line(t('No launcher yet'), t('Sign in to the launcher and it shows here.')));
     for (const s of launchers) {
       let action;
-      if (s.current) action = el('span', 'sub', 'This device');
+      if (s.current) action = el('span', 'sub', t('This device'));
       else {
-        action = el('button', 'link', 'Sign out');
+        action = el('button', 'link', t('Sign out'));
         action.type = 'button';
         action.style.fontSize = '15px';
         action.addEventListener('click', async () => { await api('/api/sessions/end', { id: s.id }); load(); });
       }
-      sessions.appendChild(line('MU Classic launcher', (s.ip ? s.ip + ' · ' : '') + 'last used ' + when(s.last), action));
+      sessions.appendChild(line('MU Classic launcher', (s.ip ? s.ip + ' · ' : '') + t('last used {when}', { when: when(s.last) }), action));
     }
     const devices = $('a-devices');
     devices.replaceChildren();
     for (const d of a.devices) {
-      const card = [d.gpu, d.date ? 'driver ' + d.date : d.driver ? 'driver ' + d.driver : '', d.graphics ? 'graphics ' + d.graphics : ''].filter(Boolean).join(' · ');
+      const card = [d.gpu, d.date ? t('driver {v}', { v: d.date }) : d.driver ? t('driver {v}', { v: d.driver }) : '', d.graphics ? t('graphics {v}', { v: d.graphics }) : ''].filter(Boolean).join(' · ');
       const rest = [d.cpu, d.ram ? Math.round(d.ram / 1024) + ' GB RAM' : ''].filter(Boolean).join(' · ');
-      devices.appendChild(line(osName(d.os) || 'Machine', [card, rest, (d.ip ? d.ip + ' · ' : '') + when(d.seen)]));
+      devices.appendChild(line(osName(d.os) || t('Machine'), [card, rest, (d.ip ? d.ip + ' · ' : '') + when(d.seen)]));
     }
     $('a-devices-box').hidden = !a.devices.length;
     const plays = $('a-plays');
     plays.replaceChildren();
-    if (!a.plays.length) plays.appendChild(line('Nothing yet', 'Press Play in the launcher and it shows here.'));
+    if (!a.plays.length) plays.appendChild(line(t('Nothing yet'), t('Press Play in the launcher and it shows here.')));
     for (const p of a.plays.slice(0, 8)) {
-      const machine = [osName(p.os), p.gpu, p.graphics ? 'graphics ' + p.graphics : ''].filter(Boolean).join(' · ');
-      plays.appendChild(line(when(p.at), [machine || 'Machine not reported', p.ip]));
+      const machine = [osName(p.os), p.gpu, p.graphics ? t('graphics {v}', { v: p.graphics }) : ''].filter(Boolean).join(' · ');
+      plays.appendChild(line(when(p.at), [machine || t('Machine not reported'), p.ip]));
     }
     view('account');
   }
@@ -174,35 +177,35 @@
   $('a-out').addEventListener('click', async () => {
     try { await api('/api/logout', {}); } catch (e) {}
     token.set('');
-    location.href = '/';
+    location.href = MU.home;
   });
   $('a-password').addEventListener('click', () => { $('p-box').hidden = !$('p-box').hidden; $('d-box').hidden = true; });
   $('a-delete').addEventListener('click', () => { $('d-box').hidden = !$('d-box').hidden; $('p-box').hidden = true; });
   $('p-go').addEventListener('click', async () => {
     fieldError($('p-old'), $('p-old-err'), '');
     fieldError($('p-new'), $('p-new-err'), '');
-    if ($('p-new').value.length < 8) return fieldError($('p-new'), $('p-new-err'), 'Use at least 8 characters.');
-    busy($('p-go'), 'Saving…');
+    if ($('p-new').value.length < 8) return fieldError($('p-new'), $('p-new-err'), t('Use at least 8 characters.'));
+    busy($('p-go'), t('Saving…'));
     try {
       const { status, said } = await api('/api/password', { old: $('p-old').value, new: $('p-new').value });
       if (status === 200) { $('p-old').value = $('p-new').value = ''; $('p-done').hidden = false; load(); }
-      else if (said.field === 'old') fieldError($('p-old'), $('p-old-err'), said.error);
-      else fieldError($('p-new'), $('p-new-err'), said.error || 'Something went wrong.');
+      else if (said.field === 'old') fieldError($('p-old'), $('p-old-err'), t(said.error));
+      else fieldError($('p-new'), $('p-new-err'), said.error ? t(said.error) : t('Something went wrong.'));
     } catch (e) { fieldError($('p-new'), $('p-new-err'), OFFLINE); }
     busy($('p-go'));
   });
   $('d-confirm').addEventListener('input', () => { $('d-go').disabled = $('d-confirm').value.trim() !== 'DELETE'; });
   $('d-go').addEventListener('click', async () => {
     fieldError($('d-pass'), $('d-err'), '');
-    busy($('d-go'), 'Deleting…');
+    busy($('d-go'), t('Deleting…'));
     try {
       const { status, said } = await api('/api/delete', { password: $('d-pass').value });
       if (status === 200) {
         token.set('');
         view('signin');
-        alertOn($('in-alert'), 'Your account was deleted.');
+        alertOn($('in-alert'), t('Your account was deleted.'));
         $('in-alert').style.background = '#2B221B';
-      } else fieldError($('d-pass'), $('d-err'), said.error || 'Something went wrong.');
+      } else fieldError($('d-pass'), $('d-err'), said.error ? t(said.error) : t('Something went wrong.'));
     } catch (e) { fieldError($('d-pass'), $('d-err'), OFFLINE); }
     busy($('d-go'));
     $('d-go').disabled = $('d-confirm').value.trim() !== 'DELETE';

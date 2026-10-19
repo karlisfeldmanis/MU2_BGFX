@@ -233,6 +233,14 @@ footer img { height: 56px; width: auto; opacity: .3; }
 footer p { margin: 0 auto; max-width: 760px; text-align: center; font-size: 13px; line-height: 1.6; color: rgba(212,200,184,.55); }
 .foot-links { display: flex; gap: 24px; font-size: 14px; }
 .foot-links a { color: var(--quiet); text-decoration: underline; }
+/* The site's languages (web/i18n.py), the one shown in full colour. */
+.langs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; font-size: 14px; }
+.langs a { color: var(--quiet); }
+.langs a:hover { color: var(--bone); }
+.langs a[aria-current] { color: var(--bone-hi); }
+/* Cinzel has no Cyrillic and no Vietnamese: those pages set its headings in Alegreya SC. */
+html:is([lang="ru"], [lang="vi"]) :is(.h2, .hero h1, .tile h3, .tile-beta .big, .req h3, .fixes h3, .fix-date,
+  .intro strong, .post h3, .page-title) { font-family: 'Alegreya SC', serif; }
 
 @media (max-width: 700px) {
   .intro strong { font-size: 27px; }

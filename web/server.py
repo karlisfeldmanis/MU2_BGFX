@@ -85,6 +85,13 @@ The routes:
          `mu ship notes` (tools/mu/ship.py) and the Ship app (tools/ship/ship.cpp): drafts for the
          commits a release shipped, the last commit looked at, so the next run starts after it; and
          a line changed (one with an id) or deleted.
+    GET  /api/texts      Bearer T of an admin       -> 200 {langs, groups, texts} | 404 for anyone else
+    POST /api/texts      Bearer T of an admin {lang, source, text}  -> 200 {ok} | 400 {error} | 404
+         the site in other languages (the admins' /translate page, web/i18n.py): every English unit
+         of the pages, the Latest updates and the scripts, and each language's translation of it.
+         An empty text takes a translation away. The pages are served in each language under
+         /<lang>/ (i18n.LANGS), a unit with no translation in English; web/i18n/<lang>.json are the
+         first words of each, put in at start where a unit has none.
 
 A token is 64 hex digits, and goes only over HTTPS. Only its SHA-256 is stored, so a copy of the
 database signs nobody in. A ticket's secret is kept until the server is told it, then only its
@@ -108,6 +115,12 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
+
+# The site's other languages (web/i18n.py), beside this file; the service runs with -I, which
+# leaves this folder off the path.
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import i18n  # noqa: E402
 
 SESSION_DAYS = 90
 # The plays an account page lists, and how long each is kept.
@@ -282,6 +295,14 @@ CREATE TABLE IF NOT EXISTS updates (
     changed  INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS updates_day ON updates(day);
+CREATE TABLE IF NOT EXISTS texts (
+    lang     TEXT NOT NULL,         -- i18n.LANGS
+    source   TEXT NOT NULL,         -- the English unit, i18n.key()
+    text     TEXT NOT NULL,
+    changed  INTEGER NOT NULL,
+    by       INTEGER,               -- the admin's account; NULL from web/i18n/<lang>.json
+    PRIMARY KEY (lang, source)
+);
 CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -394,6 +415,8 @@ class Store:
             self.crash_seen.add(row.get("sha"))
             day = str(row.get("day", ""))
             self.crash_days[day] = self.crash_days.get(day, 0) + 1
+        # Counted up at each translation saved: the pages served in other languages are kept until it moves.
+        self.texts_version = 0
         with self.db() as db:
             db.executescript(SCHEMA)
             # Columns added after the first accounts: an account's public name (comments), and
@@ -630,6 +653,39 @@ class Store:
                           (line["day"], line["kind"], line["text"], line["state"], now)
                           + ((line["position"],) if line.get("position") is not None else ()) + (line["id"],))
         return line["id"] if done.rowcount else None
+
+    # -- the site's other languages
+
+    def texts(self, lang: str = None) -> dict:
+        """{lang: {source: text}}, or one language's {source: text}."""
+        rows = self.db().execute("SELECT lang, source, text FROM texts" + (" WHERE lang = ?" if lang else ""),
+                                 (lang,) if lang else ()).fetchall()
+        if lang:
+            return {row[1]: row[2] for row in rows}
+        out = {code: {} for code in i18n.LANGS}
+        for code, source, text in rows:
+            out.setdefault(code, {})[source] = text
+        return out
+
+    def save_text(self, lang: str, source: str, text: str, account: int):
+        db = self.db()
+        if text:
+            db.execute("INSERT INTO texts (lang, source, text, changed, by) VALUES (?, ?, ?, ?, ?) "
+                       "ON CONFLICT(lang, source) DO UPDATE SET text = excluded.text, changed = excluded.changed, "
+                       "by = excluded.by", (lang, source, text, int(time.time()), account))
+        else:
+            db.execute("DELETE FROM texts WHERE lang = ? AND source = ?", (lang, source))
+        self.texts_version += 1
+
+    def seed_texts(self, seeds: dict) -> int:
+        """web/i18n/<lang>.json put in wherever a unit has no translation yet; an admin's word stands."""
+        db, now, added = self.db(), int(time.time()), 0
+        for lang, table in seeds.items():
+            for source, text in table.items():
+                added += db.execute("INSERT OR IGNORE INTO texts (lang, source, text, changed) VALUES (?, ?, ?, ?)",
+                                    (lang, source, text, now)).rowcount
+        self.texts_version += 1
+        return added
 
     def delete_update(self, line: int) -> bool:
         return self.db().execute("DELETE FROM updates WHERE id = ?", (line,)).rowcount > 0
@@ -977,12 +1033,11 @@ def update_fields(said: dict, default_state: str = None):
     return {"day": day, "kind": kind, "text": text, "state": state, "commits": commits, "position": position}
 
 
-def updates_html(lines: list) -> str:
+def updates_html(lines: list, lang: str = "en") -> str:
     """The front page's Latest updates: a <details> for each of the newest UPDATE_DAYS_SHOWN days,
-    the newest open, its New and its Fixed lines (site.css .fix-day)."""
+    the newest open, its New and its Fixed lines (site.css .fix-day). The date and the count in
+    `lang`; the lines and headings are units of the page, put in its language with the rest."""
     from html import escape
-    months = ("January", "February", "March", "April", "May", "June", "July", "August", "September",
-              "October", "November", "December")
     days = {}
     for line in lines:
         days.setdefault(line["day"], {"new": [], "fixed": []})[line["kind"]].append(line["text"])
@@ -990,14 +1045,9 @@ def updates_html(lines: list) -> str:
     for n, day in enumerate(sorted(days, reverse=True)[:UPDATE_DAYS_SHOWN]):
         year, month, date = (int(x) for x in day.split("-"))
         new, fixed = days[day]["new"], days[day]["fixed"]
-        counts = []
-        if new:
-            counts.append(f"{len(new)} new")
-        if fixed:
-            counts.append(f"{len(fixed)} fix{'es' if len(fixed) != 1 else ''}")
         out.append(f'<details class="fix-day"{" open" if n == 0 else ""}>\n'
-                   f'<summary><span class="fix-date">{date} {months[month - 1]} {year}</span>'
-                   f'<span class="fix-count">{" · ".join(counts)}</span></summary>')
+                   f'<summary><span class="fix-date" translate="no">{i18n.day_label(lang, year, month, date)}</span>'
+                   f'<span class="fix-count" translate="no">{i18n.count_label(lang, len(new), len(fixed))}</span></summary>')
         for heading, texts in (("New", new), ("Fixed", fixed)):
             if texts:
                 out.append(f'<div class="fix-group">\n<h4>{heading}</h4>\n<ul>\n'
@@ -1006,7 +1056,7 @@ def updates_html(lines: list) -> str:
     return "\n".join(out)
 
 
-def with_updates(page: bytes, lines: list) -> bytes:
+def with_updates(page: bytes, lines: list, lang: str = "en") -> bytes:
     """index.html with its lines between the markers drawn from the published ones; as it is when none is."""
     if not lines:
         return page
@@ -1014,7 +1064,7 @@ def with_updates(page: bytes, lines: list) -> bytes:
     start, end = text.find("<!--updates-->"), text.find("<!--/updates-->")
     if start < 0 or end < start:
         return page
-    return (text[:start + len("<!--updates-->")] + "\n" + updates_html(lines) + "\n" + text[end:]).encode()
+    return (text[:start + len("<!--updates-->")] + "\n" + updates_html(lines, lang) + "\n" + text[end:]).encode()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -1109,6 +1159,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.update_line()
         if path == "/internal/updates":
             return self.told_updates()
+        if path == "/api/texts":
+            return self.save_text()
         self.reply(404, {"error": "not found"})
 
     def register(self):
@@ -1316,6 +1368,59 @@ class Handler(BaseHTTPRequestHandler):
         print(f"{self.client()} account {row[0]} saved update {saved} ({checked['state']})", flush=True)
         self.reply(200, {"ok": True, "id": saved})
 
+    def save_text(self):
+        row = self.admin()
+        if row is None:
+            return
+        said = self.body(MOST_UPDATES_BODY) or {}
+        lang, source, text = said.get("lang"), said.get("source"), said.get("text")
+        if lang not in i18n.LANGS or not isinstance(source, str) or not isinstance(text, str):
+            return self.reply(400, {"error": "lang, source and text"})
+        source, text = i18n.key(source), text.strip()
+        if len(text) > 8000:
+            return self.reply(400, {"error": "too long"})
+        known = {u["source"] for g in self.texts_report()["groups"] for u in g["units"]}
+        if source not in known and text:
+            return self.reply(400, {"error": "no such text on the site"})
+        why = i18n.check(source, text) if text else None
+        if why:
+            return self.reply(400, {"error": why})
+        self.store.save_text(lang, source, text, row[0])
+        print(f"{self.client()} account {row[0]} translated to {lang}: {source[:60]!r}", flush=True)
+        self.reply(200, {"ok": True})
+
+    def site_page(self, file: str, lang: str = "en") -> str:
+        """A page as it is served in English (with the published Latest updates), before any translation."""
+        data = (self.site / file).read_bytes()
+        if file == "index.html":
+            data = with_updates(data, self.store.updates(published_only=True), lang)
+        return data.decode()
+
+    def texts_report(self) -> dict:
+        """Every unit of the site, grouped as the /translate page shows them, each once (where it
+        first stands), and each language's translations."""
+        groups, seen = {}, set()
+        names = {"index.html": "Front page", "updates": "Latest updates", "js": "Messages"}
+        for file, (path, name) in i18n.PAGES.items():
+            names.setdefault(file, name)
+            page = self.site_page(file)
+            for start, end, kind, source in i18n.units(page):
+                group = "js" if kind == "js" else "updates" if file == "index.html" and i18n.in_updates(page, start) else file
+                k = i18n.key(source)
+                if k in seen:
+                    continue
+                seen.add(k)
+                groups.setdefault(group, []).append({"source": k, "tags": i18n.has_tags(k), "path": path})
+        for source in i18n.script_units((self.site / "site.js").read_text()):
+            k = i18n.key(source)
+            if k not in seen:
+                seen.add(k)
+                groups.setdefault("js", []).append({"source": k, "tags": i18n.has_tags(k), "path": "/"})
+        order = ["index.html", "updates", "account.html", "privacy.html", "contact.html", "js"]
+        return {"langs": {code: v[0] for code, v in i18n.LANGS.items()},
+                "groups": [{"id": g, "name": names[g], "units": groups[g]} for g in order if g in groups],
+                "texts": self.store.texts()}
+
     def told_updates(self):
         if not self.direct():
             return self.reply(404, {"error": "not found"})
@@ -1494,6 +1599,8 @@ class Handler(BaseHTTPRequestHandler):
         if url.path == "/api/updates":
             return (self.reply(200, {"entries": self.store.updates(), "noted_through": self.store.noted_through()})
                     if self.admin() else None)
+        if url.path == "/api/texts":
+            return self.reply(200, self.texts_report()) if self.admin() else None
         if url.path == "/internal/updates":
             if not self.direct():
                 return self.reply(404, {"error": "not found"})
@@ -1531,6 +1638,22 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(404, {"error": "not found"})
         self.file(url.path)
 
+    # A page in a language, kept until its file, the published updates or a translation changes.
+    pages_made = {}
+
+    def page_in(self, file: str, lang: str) -> bytes:
+        lines = self.store.updates(published_only=True) if file == "index.html" else []
+        mark = ((self.site / file).stat().st_mtime_ns, (self.site / "site.js").stat().st_mtime_ns,
+                json.dumps(lines, sort_keys=True), self.store.texts_version)
+        made = self.pages_made.get((file, lang))
+        if made and made[0] == mark:
+            return made[1]
+        page = self.site_page(file, lang)
+        texts = self.store.texts(lang) if lang != "en" else {}
+        data = i18n.localise(page, file, lang, texts, i18n.script_units((self.site / "site.js").read_text())).encode()
+        self.pages_made[(file, lang)] = (mark, data)
+        return data
+
     def listing(self) -> dict:
         out = {}
         for system, name in DOWNLOADS.items():
@@ -1541,6 +1664,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def file(self, path: str):
         # The page and its pictures. Caddy serves /downloads/ itself; this answers for local runs.
+        # A page under /<lang>/ is the English one in that language (web/i18n.py).
+        lang, path = i18n.lang_of(path)
         if path in ("", "/"):
             path = "/index.html"
         elif path in ("/account", "/account/"):
@@ -1555,6 +1680,11 @@ class Handler(BaseHTTPRequestHandler):
             path = "/privacy.html"
         elif path in ("/contact", "/contact/"):
             path = "/contact.html"
+        elif path in ("/translate", "/translate/"):
+            path = "/translate.html"
+        if lang and path.lstrip("/") not in i18n.PAGES:
+            self.send_error(HTTPStatus.NOT_FOUND)
+            return
         root = self.downloads if path.startswith("/downloads/") else self.site
         rel = path[len("/downloads/"):] if root is self.downloads else path.lstrip("/")
         target = (root / rel).resolve()
@@ -1562,8 +1692,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(HTTPStatus.NOT_FOUND)
             return
         data = target.read_bytes()
-        if path == "/index.html":
-            data = with_updates(data, self.store.updates(published_only=True))
+        if path.lstrip("/") in i18n.PAGES:
+            data = self.page_in(path.lstrip("/"), lang or "en")
         self.send_response(200)
         self.send_header("Content-Type", mimetypes.guess_type(target.name)[0] or "application/octet-stream")
         self.send_header("Content-Length", str(len(data)))
@@ -1583,6 +1713,9 @@ def main():
     ap.add_argument("--downloads", default=str(here / "downloads"))
     args = ap.parse_args()
     Handler.store = Store(Path(args.db))
+    seeded = Handler.store.seed_texts(i18n.seeds(here / "i18n"))
+    if seeded:
+        print(f"{seeded} translations put in from web/i18n/", flush=True)
     Handler.site = Path(args.site)
     Handler.downloads = Path(args.downloads)
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
