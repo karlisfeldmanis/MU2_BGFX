@@ -18,6 +18,7 @@
 #include <chrono>
 #include <csignal>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <ctime>
 #include <fcntl.h>
@@ -254,6 +255,7 @@ public:
                     steps_.push_back(s);
                 }
                 statusError_.clear();
+                if (running_ < 0 && !runAll_) failure_.clear();
             } else {
                 statusError_ = lastLines(status_->output(), 6);
             }
@@ -313,6 +315,7 @@ public:
             Step& s = steps_[size_t(running_)];
             s.seconds = step_->seconds();
             s.state = step_->ok() ? Step::State::Done : Step::State::Failed;
+            keepLog(running_, *step_);
             const bool wasLive = s.live;
             const int was = running_;
             running_ = -1;
@@ -438,6 +441,24 @@ private:
         running_ = i;
     }
 
+    // Every step's output kept in out/logs/ship/, so a failure can be read after the window shut;
+    // a failed one's last lines stand by the verdict too.
+    void keepLog(int i, const Job& job) {
+        const std::time_t now = std::time(nullptr);
+        char stamp[32];
+        std::strftime(stamp, sizeof stamp, "%Y%m%d-%H%M%S", std::localtime(&now));
+        const std::string folder = root_ + "/out/logs/ship";
+        std::system(("mkdir -p " + quoted(folder)).c_str());
+        lastLog_ = folder + "/" + stamp + "-step" + std::to_string(i + 1) + ".log";
+        if (FILE* f = std::fopen(lastLog_.c_str(), "w")) {
+            const std::string text = "$ " + job.command() + "\n" + job.output() + "\nexit " + std::to_string(job.exitCode()) + "\n";
+            std::fwrite(text.data(), 1, text.size(), f);
+            std::fclose(f);
+        }
+        failure_ = job.ok() ? "" : "Step " + std::to_string(i + 1) + " failed (" + job.command() + "):\n" +
+                                       lastLines(job.output(), 4) + "\nWhole output: " + lastLog_;
+    }
+
     void draft() {
         if (drafting_ && !drafting_->done()) return;
         std::string cmd = "./mu ship notes --dry --json --day " + quoted(draftDay_) + webFlag();
@@ -543,6 +564,11 @@ private:
                 for (size_t i = 0; i < dirty.size(); ++i) ImGui::TextUnformatted(dirty.at(i).stringOr("").c_str());
                 ImGui::EndTooltip();
             }
+        }
+        if (!failure_.empty()) {
+            ImGui::PushTextWrapPos(0.0f);
+            ImGui::TextColored(kRed, "%s", failure_.c_str());
+            ImGui::PopTextWrapPos();
         }
         if (shipAll_) {
             int done = 0;
@@ -704,6 +730,10 @@ private:
             if (console_->done()) ImGui::TextColored(console_->ok() ? kGreen : kRed, "exit %d", console_->exitCode());
             ImGui::SameLine();
             if (ImGui::SmallButton("Copy")) ImGui::SetClipboardText(console_->output().c_str());
+            if (console_->done() && !lastLog_.empty()) {
+                ImGui::SameLine();
+                ImGui::TextDisabled("kept in %s", lastLog_.c_str());
+            }
         } else {
             ImGui::TextDisabled("A step's output shows here.");
         }
@@ -980,6 +1010,7 @@ private:
     bool statusTaken_ = false, linesTaken_ = false, draftTaken_ = false;
     Json plan_;
     std::string statusError_, siteError_, draftError_;
+    std::string lastLog_, failure_;
     Clock::time_point checkedAt_ = Clock::now();
     std::vector<Step> steps_;
     int running_ = -1, confirm_ = -1;
