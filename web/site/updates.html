@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Latest updates — MU Classic</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#0D0B0A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Alegreya+Sans+SC:wght@700&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+<style>
+/* The admins' page: the front page's Latest updates (server.py /api/updates). `mu ship notes` puts
+   a draft here for each change a release shipped; an admin words it and publishes it. */
+.updates-page .wrap { max-width: 920px; }
+.filters { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.filters button { background: none; border: 0; border-radius: 3px; padding: 6px 12px; font: 500 15px/1.2 'Alegreya Sans', sans-serif;
+  color: var(--label); cursor: pointer; }
+.filters button b { font-weight: 500; color: var(--quiet); margin-left: 6px; font-variant-numeric: tabular-nums; }
+.filters button:hover { color: var(--bone-hi); }
+.filters button[aria-pressed="true"] { color: var(--bone-hi); background: rgba(243,232,212,.07); }
+.filters button[aria-pressed="true"] b { color: var(--bone); }
+.day { padding: 22px 0 6px; }
+.day > header { display: flex; align-items: baseline; gap: 12px; padding-bottom: 10px; box-shadow: inset 0 -1px 0 var(--line); }
+.day h2 { margin: 0; font: 700 18px/1.3 Cinzel, serif; letter-spacing: .03em; color: var(--bone-hi); }
+.day .count { font: 700 12px/1.6 'Alegreya Sans SC', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--quiet); }
+.day header .act { margin-left: auto; }
+.uline { display: grid; grid-template-columns: 96px 1fr auto; gap: 10px; align-items: start; padding: 12px 0;
+  box-shadow: inset 0 -1px 0 var(--line); }
+.uline textarea { width: 100%; min-height: 44px; resize: vertical; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--field-edge);
+  border-radius: 3px; background: var(--field); color: var(--bone-hi); font: 16px/1.45 'Alegreya Sans', sans-serif; }
+.uline.draft textarea { border-style: dashed; color: var(--bone); }
+.uline .meta { grid-column: 2 / 4; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 13px; color: var(--quiet); }
+.uline .meta code { font-size: 12px; }
+.uline .meta input[type="date"] { height: 28px; padding: 0 6px; border: 1px solid var(--field-edge); border-radius: 3px; background: var(--field);
+  color: var(--bone); font: 13px 'Alegreya Sans', sans-serif; color-scheme: dark; }
+.uline .saved { margin-left: auto; }
+.btns { display: flex; gap: 6px; }
+select, .act, .mini { height: 32px; padding: 0 10px; border: 1px solid var(--field-edge); border-radius: 3px; background: var(--field);
+  color: var(--bone); font: 15px 'Alegreya Sans', sans-serif; cursor: pointer; }
+.mini { width: 32px; padding: 0; }
+.act.publish { color: var(--bone-hi); border-color: #5A4433; }
+.act.published { color: var(--live); }
+.act.danger:hover { color: #E7837A; }
+select:focus-visible, .act:focus-visible, .mini:focus-visible, textarea:focus-visible, input:focus-visible, .filters button:focus-visible {
+  outline: 2px solid var(--field-focus); outline-offset: 2px; }
+.add { display: grid; grid-template-columns: 140px 96px 1fr auto; gap: 10px; align-items: start; padding: 16px 0;
+  box-shadow: inset 0 -1px 0 var(--line); }
+.add textarea { width: 100%; min-height: 32px; resize: vertical; box-sizing: border-box; padding: 5px 10px; border: 1px solid var(--field-edge);
+  border-radius: 3px; background: var(--field); color: var(--bone-hi); font: 15px/1.4 'Alegreya Sans', sans-serif; }
+.add input[type="date"] { height: 32px; padding: 0 6px; border: 1px solid var(--field-edge); border-radius: 3px; background: var(--field);
+  color: var(--bone); font: 15px 'Alegreya Sans', sans-serif; color-scheme: dark; }
+@media (max-width: 640px) {
+  .uline { grid-template-columns: 1fr; }
+  .uline .meta { grid-column: 1; }
+  .add { grid-template-columns: 1fr 1fr; }
+  .add textarea { grid-column: 1 / 3; }
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+<a href="/"><img src="/logo.svg" alt="MU Classic home" width="435" height="261"></a>
+<span style="display: flex; gap: 20px">
+<a href="/bugs" style="font-weight: 500">Bugs</a>
+<a href="/online" style="font-weight: 500">Online</a>
+<a href="/account" style="font-weight: 500">Account</a>
+</span>
+</div>
+
+<main class="account-page updates-page">
+<div class="wrap">
+<h1 class="page-title">Latest updates</h1>
+
+<p id="v-none" class="center muted" hidden>This page is for admins. <a href="/account" style="text-decoration: underline">Sign in</a> with an admin account.</p>
+
+<div id="v-list" class="form" style="gap: 12px" hidden>
+<p class="center muted" style="font-size: 14px; margin: 0">Drafts come from <code>./mu ship notes</code> after a release. Only published lines show on the <a href="/" style="text-decoration: underline">front page</a>.</p>
+<div class="filters" id="filters" role="group" aria-label="Show"></div>
+<p id="err" class="err center" hidden></p>
+<form class="add" id="add">
+<input type="date" id="add-day" aria-label="Day" required>
+<select id="add-kind" aria-label="Kind"><option value="new">New</option><option value="fixed">Fixed</option></select>
+<textarea id="add-text" rows="1" placeholder="A new line, as players will read it" aria-label="Text" required></textarea>
+<button class="act" type="submit">Add draft</button>
+</form>
+<div id="rows"></div>
+</div>
+
+</div>
+</main>
+
+<footer>
+<div class="wrap">
+<img src="/logo.svg" alt="MU Classic" width="435" height="261">
+</div>
+</footer>
+
+<script src="/site.js"></script>
+<script>
+(() => {
+  const { $, el, api } = MU;
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const KINDS = [['new', 'New'], ['fixed', 'Fixed']];
+  let lines = [], showing = 'draft';
+  try { showing = localStorage.getItem('mu-updates-filter') ?? 'draft'; } catch (e) {}
+
+  const today = () => new Date().toISOString().slice(0, 10);
+  const long = (day) => { const [y, m, d] = day.split('-').map(Number); return d + ' ' + MONTHS[m - 1] + ' ' + y; };
+
+  function fail(words) { $('err').textContent = words; $('err').hidden = false; }
+
+  async function save(line, change) {
+    const want = Object.assign({}, line, change);
+    let ok = false;
+    try {
+      ok = (await api('/api/updates', { id: want.id, day: want.day, kind: want.kind, text: want.text,
+                                        state: want.state, position: want.position })).status === 200;
+    } catch (e) {}
+    if (!ok) { fail('Could not save that line. Try again.'); return false; }
+    $('err').hidden = true;
+    Object.assign(line, change);
+    return true;
+  }
+
+  function filters() {
+    const box = $('filters');
+    box.replaceChildren();
+    for (const [key, label] of [['draft', 'Drafts'], ['published', 'Published'], ['', 'All']]) {
+      const b = el('button', '', label);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(showing === key));
+      b.appendChild(el('b', '', String(key ? lines.filter((x) => x.state === key).length : lines.length)));
+      b.addEventListener('click', () => {
+        showing = key;
+        try { localStorage.setItem('mu-updates-filter', key); } catch (e) {}
+        render();
+      });
+      box.appendChild(b);
+    }
+  }
+
+  // Up or down among its day's lines of its kind: the two swap places.
+  async function move(line, by) {
+    const peers = lines.filter((x) => x.day === line.day && x.kind === line.kind)
+                       .sort((a, b) => a.position - b.position || a.id - b.id);
+    const at = peers.indexOf(line), other = peers[at + by];
+    if (!other) return;
+    peers.forEach((x, i) => { x.position = i + 1; });
+    const mine = other.position, theirs = line.position;
+    if (await save(line, { position: mine }) && await save(other, { position: theirs })) render();
+  }
+
+  function row(line) {
+    const item = el('article', 'uline ' + line.state);
+    const kind = el('select');
+    kind.setAttribute('aria-label', 'Kind');
+    for (const [key, label] of KINDS) {
+      const o = el('option', '', label);
+      o.value = key;
+      o.selected = line.kind === key;
+      kind.appendChild(o);
+    }
+    kind.addEventListener('change', async () => { if (await save(line, { kind: kind.value })) render(); else kind.value = line.kind; });
+    item.appendChild(kind);
+
+    const text = el('textarea');
+    text.value = line.text;
+    text.rows = Math.max(1, Math.ceil(line.text.length / 80));
+    text.setAttribute('aria-label', 'Text');
+    const saved = el('span', 'saved', '');
+    text.addEventListener('change', async () => {
+      const words = text.value.trim();
+      if (!words) { text.value = line.text; return; }
+      if (await save(line, { text: words })) { saved.textContent = 'Saved'; setTimeout(() => { saved.textContent = ''; }, 1500); }
+    });
+    item.appendChild(text);
+
+    const btns = el('div', 'btns');
+    const pub = el('button', 'act ' + (line.state === 'published' ? 'published' : 'publish'),
+                   line.state === 'published' ? 'Published' : 'Publish');
+    pub.type = 'button';
+    pub.title = line.state === 'published' ? 'Take it off the front page' : 'Show it on the front page';
+    pub.addEventListener('click', async () => {
+      if (await save(line, { text: text.value.trim() || line.text, state: line.state === 'published' ? 'draft' : 'published' })) render();
+    });
+    btns.appendChild(pub);
+    for (const [label, by, name] of [['↑', -1, 'Up'], ['↓', 1, 'Down']]) {
+      const b = el('button', 'mini', label);
+      b.type = 'button';
+      b.setAttribute('aria-label', name);
+      b.addEventListener('click', () => move(line, by));
+      btns.appendChild(b);
+    }
+    const del = el('button', 'mini danger', '✕');
+    del.type = 'button';
+    del.setAttribute('aria-label', 'Delete');
+    del.addEventListener('click', async () => {
+      if (del.dataset.armed !== '1') { del.dataset.armed = '1'; del.textContent = '?'; del.title = 'Click again to delete';
+        setTimeout(() => { del.dataset.armed = ''; del.textContent = '✕'; }, 2500); return; }
+      let ok = false;
+      try { ok = (await api('/api/updates', { id: line.id, delete: true })).status === 200; } catch (e) {}
+      if (!ok) return fail('Could not delete that line.');
+      lines = lines.filter((x) => x !== line);
+      render();
+    });
+    btns.appendChild(del);
+    item.appendChild(btns);
+
+    const meta = el('div', 'meta');
+    const day = el('input');
+    day.type = 'date';
+    day.value = line.day;
+    day.setAttribute('aria-label', 'Day');
+    day.addEventListener('change', async () => { if (day.value && await save(line, { day: day.value, position: null })) render(); else day.value = line.day; });
+    meta.appendChild(day);
+    if (line.commits.length) {
+      const c = el('span');
+      c.append('from ');
+      line.commits.forEach((sha, i) => { if (i) c.append(' '); c.appendChild(el('code', '', sha)); });
+      meta.appendChild(c);
+    }
+    meta.appendChild(saved);
+    item.appendChild(meta);
+    return item;
+  }
+
+  function render() {
+    filters();
+    const rows = $('rows');
+    rows.replaceChildren();
+    const shown = showing ? lines.filter((x) => x.state === showing) : lines;
+    if (!shown.length) rows.appendChild(el('p', 'center muted', showing === 'draft' ? 'No drafts. `./mu ship notes` makes them after a release.' : 'None here.'));
+    const days = [...new Set(shown.map((x) => x.day))].sort().reverse();
+    for (const d of days) {
+      const mine = shown.filter((x) => x.day === d)
+                        .sort((a, b) => (a.kind === 'fixed') - (b.kind === 'fixed') || a.position - b.position || a.id - b.id);
+      const box = el('section', 'day');
+      const head = el('header');
+      head.appendChild(el('h2', '', long(d)));
+      const n = mine.filter((x) => x.kind === 'new').length, f = mine.length - n;
+      head.appendChild(el('span', 'count', [n ? n + ' new' : '', f ? f + (f === 1 ? ' fix' : ' fixes') : ''].filter(Boolean).join(' · ')));
+      const drafts = mine.filter((x) => x.state === 'draft');
+      if (drafts.length) {
+        const all = el('button', 'act publish', 'Publish all ' + drafts.length);
+        all.type = 'button';
+        all.addEventListener('click', async () => {
+          all.disabled = true;
+          for (const x of drafts) if (!await save(x, { state: 'published' })) break;
+          render();
+        });
+        head.appendChild(all);
+      }
+      box.appendChild(head);
+      for (const x of mine) box.appendChild(row(x));
+      rows.appendChild(box);
+    }
+    $('v-list').hidden = false;
+    $('v-none').hidden = true;
+  }
+
+  $('add-day').value = today();
+  $('add').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const words = $('add-text').value.trim();
+    if (!words) return;
+    let r = null;
+    try { r = await api('/api/updates', { day: $('add-day').value, kind: $('add-kind').value, text: words, state: 'draft' }); } catch (e) {}
+    if (!r || r.status !== 200) return fail((r && r.said && r.said.error) || 'Could not add that line.');
+    $('add-text').value = '';
+    showing = 'draft';
+    await load();
+  });
+
+  async function load() {
+    try {
+      const { status, said } = await api('/api/updates');
+      if (status !== 200) { $('v-list').hidden = true; $('v-none').hidden = false; return; }
+      lines = said.entries || [];
+      render();
+    } catch (e) { fail('Could not load the lines.'); }
+  }
+  load();
+})();
+</script>
+</body>
+</html>

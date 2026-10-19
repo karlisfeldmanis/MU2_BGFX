@@ -72,6 +72,18 @@ The routes:
          Each ticket is told once, and forgotten here as it is told.
     GET  /internal/crashes          (127.0.0.1 only) -> 200 {reports, where, last}
          the crash reports counted by the module they died in, and the latest thirty.
+    GET  /api/updates    Bearer T of an admin       -> 200 {entries, noted_through} | 404 for anyone else
+    POST /api/updates    Bearer T of an admin {id?, day, kind, text, state} | {id, delete: true}
+                                                    -> 200 {ok, id} | 400 {error} | 404
+         the front page's Latest updates, kept here (the admins' /updates page): one line each, a day
+         (the release that first carried it), New or Fixed, and draft until an admin publishes it.
+         The published lines are drawn into index.html between <!--updates--> and <!--/updates-->
+         as it is served; with none published, the page's own lines show.
+    GET  /internal/updates          (127.0.0.1 only) -> 200 {entries, noted_through}
+    POST /internal/updates          (127.0.0.1 only) {entries: [{day, kind, text, commits, state?}],
+                                     noted_through?}  -> 200 {ok, added}
+         `mu ship notes` (tools/mu/ship.py): drafts for the commits a release shipped, and the last
+         commit it has looked at, so the next run starts after it.
 
 A token is 64 hex digits, and goes only over HTTPS. Only its SHA-256 is stored, so a copy of the
 database signs nobody in. A ticket's secret is kept until the server is told it, then only its
@@ -183,6 +195,15 @@ BUG_PLATFORMS = ("windows", "macos", "linux")
 # What an admin marks a report: every one comes in "new".
 BUG_STATES = ("new", "seen", "fixed", "wontfix")
 
+# The Latest updates (the /updates page): a line is New or Fixed, and shows once published.
+UPDATE_KINDS = ("new", "fixed")
+UPDATE_STATES = ("draft", "published")
+MOST_UPDATE_TEXT = 400
+# The days the front page lists, newest first and only the newest open.
+UPDATE_DAYS_SHOWN = 10
+UPDATE_DAY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+MOST_UPDATES_BODY = 256 * 1024
+
 # The launchers that must be replaced: they cannot update themselves, so the site tells them so.
 # A launcher says "MU2Launcher/<build>" (src/launcher/https.h kAgent); those before crash reports
 # said "MU2Launcher" alone. Their sign-in is refused with words their screen shows as they are
@@ -247,6 +268,22 @@ CREATE TABLE IF NOT EXISTS tickets (
     secret      TEXT NOT NULL,      -- '' once the server has been told it
     secret_hash TEXT NOT NULL,
     created     INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS updates (
+    id       INTEGER PRIMARY KEY,
+    day      TEXT NOT NULL,         -- YYYY-MM-DD: the release that first carried it
+    kind     TEXT NOT NULL,         -- UPDATE_KINDS
+    text     TEXT NOT NULL,
+    state    TEXT NOT NULL,         -- UPDATE_STATES
+    commits  TEXT NOT NULL DEFAULT '',  -- the short hashes it tells of, space between
+    position INTEGER NOT NULL DEFAULT 0, -- its place among its day's lines of its kind
+    created  INTEGER NOT NULL,
+    changed  INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS updates_day ON updates(day);
+CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
 );
 """
 
@@ -558,6 +595,59 @@ class Store:
     def set_role(self, email: str, role: str) -> bool:
         return self.db().execute("UPDATE accounts SET role = ? WHERE email = ?", (role, email)).rowcount > 0
 
+    # -- the Latest updates
+
+    def updates(self, published_only: bool = False) -> list:
+        """Every line, newest day first, then New before Fixed, then their order."""
+        rows = self.db().execute(
+            "SELECT id, day, kind, text, state, commits, position, created, changed FROM updates"
+            + (" WHERE state = 'published'" if published_only else "")
+            + " ORDER BY day DESC, kind = 'fixed', position, id").fetchall()
+        keys = ("id", "day", "kind", "text", "state", "commits", "position", "created", "changed")
+        return [dict(zip(keys, row)) | {"commits": row[5].split()} for row in rows]
+
+    def noted_through(self) -> str:
+        row = self.db().execute("SELECT value FROM settings WHERE key = 'noted_through'").fetchone()
+        return row[0] if row else ""
+
+    def save_update(self, line: dict):
+        """A line put in, or changed when it carries an id; its id, or None when there is no such id."""
+        db, now = self.db(), int(time.time())
+        if line.get("id") is None:
+            position = line.get("position")
+            if position is None:
+                last = db.execute("SELECT MAX(position) FROM updates WHERE day = ? AND kind = ?",
+                                  (line["day"], line["kind"])).fetchone()[0]
+                position = (last or 0) + 1
+            return db.execute(
+                "INSERT INTO updates (day, kind, text, state, commits, position, created, changed) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (line["day"], line["kind"], line["text"], line["state"], " ".join(line.get("commits", [])),
+                 position, now, now)).lastrowid
+        done = db.execute("UPDATE updates SET day = ?, kind = ?, text = ?, state = ?, changed = ?"
+                          + (", position = ?" if line.get("position") is not None else "") + " WHERE id = ?",
+                          (line["day"], line["kind"], line["text"], line["state"], now)
+                          + ((line["position"],) if line.get("position") is not None else ()) + (line["id"],))
+        return line["id"] if done.rowcount else None
+
+    def delete_update(self, line: int) -> bool:
+        return self.db().execute("DELETE FROM updates WHERE id = ?", (line,)).rowcount > 0
+
+    def add_updates(self, lines: list, noted_through: str) -> int:
+        """`mu ship notes`' lines, all at once with where it got to."""
+        db = self.db()
+        db.execute("BEGIN IMMEDIATE")
+        try:
+            ids = [self.save_update(line) for line in lines]
+            if noted_through:
+                db.execute("INSERT INTO settings (key, value) VALUES ('noted_through', ?) "
+                           "ON CONFLICT(key) DO UPDATE SET value = excluded.value", (noted_through,))
+            db.execute("COMMIT")
+        except Exception:
+            db.execute("ROLLBACK")
+            raise
+        return len(ids)
+
     def told_online(self, players: list, region: str = DEFAULT_REGION):
         """A region's mu2_server's list, each player's since carried over from the last list he was
         on (in any region), and each one with an account written down as his play (`games`)."""
@@ -864,6 +954,68 @@ COMMENT_LIMIT = Limit(10, 600)
 
 # ---- the handler ---------------------------------------------------------------------------------
 
+def update_fields(said: dict, default_state: str = None):
+    """An update line's fields from what was sent, checked; or the words saying what is wrong."""
+    day, kind = str(said.get("day", "")), said.get("kind")
+    text = " ".join(str(said.get("text", "")).split())
+    state = said.get("state", default_state)
+    if not UPDATE_DAY.match(day):
+        return "day: YYYY-MM-DD"
+    if kind not in UPDATE_KINDS:
+        return f"kind is one of {', '.join(UPDATE_KINDS)}"
+    if state not in UPDATE_STATES:
+        return f"state is one of {', '.join(UPDATE_STATES)}"
+    if not text or len(text) > MOST_UPDATE_TEXT:
+        return f"text: 1 to {MOST_UPDATE_TEXT} characters"
+    commits = said.get("commits", [])
+    if not isinstance(commits, list) or not all(isinstance(c, str) and re.match(r"^[0-9a-f]{7,40}$", c) for c in commits):
+        return "commits: a list of hashes"
+    position = said.get("position")
+    if position is not None and (not isinstance(position, int) or isinstance(position, bool)):
+        return "position: a number"
+    return {"day": day, "kind": kind, "text": text, "state": state, "commits": commits, "position": position}
+
+
+def updates_html(lines: list) -> str:
+    """The front page's Latest updates: a <details> for each of the newest UPDATE_DAYS_SHOWN days,
+    the newest open, its New and its Fixed lines (site.css .fix-day)."""
+    from html import escape
+    months = ("January", "February", "March", "April", "May", "June", "July", "August", "September",
+              "October", "November", "December")
+    days = {}
+    for line in lines:
+        days.setdefault(line["day"], {"new": [], "fixed": []})[line["kind"]].append(line["text"])
+    out = []
+    for n, day in enumerate(sorted(days, reverse=True)[:UPDATE_DAYS_SHOWN]):
+        year, month, date = (int(x) for x in day.split("-"))
+        new, fixed = days[day]["new"], days[day]["fixed"]
+        counts = []
+        if new:
+            counts.append(f"{len(new)} new")
+        if fixed:
+            counts.append(f"{len(fixed)} fix{'es' if len(fixed) != 1 else ''}")
+        out.append(f'<details class="fix-day"{" open" if n == 0 else ""}>\n'
+                   f'<summary><span class="fix-date">{date} {months[month - 1]} {year}</span>'
+                   f'<span class="fix-count">{" · ".join(counts)}</span></summary>')
+        for heading, texts in (("New", new), ("Fixed", fixed)):
+            if texts:
+                out.append(f'<div class="fix-group">\n<h4>{heading}</h4>\n<ul>\n'
+                           + "".join(f"<li>{escape(t)}</li>\n" for t in texts) + "</ul>\n</div>")
+        out.append("</details>")
+    return "\n".join(out)
+
+
+def with_updates(page: bytes, lines: list) -> bytes:
+    """index.html with its lines between the markers drawn from the published ones; as it is when none is."""
+    if not lines:
+        return page
+    text = page.decode()
+    start, end = text.find("<!--updates-->"), text.find("<!--/updates-->")
+    if start < 0 or end < start:
+        return page
+    return (text[:start + len("<!--updates-->")] + "\n" + updates_html(lines) + "\n" + text[end:]).encode()
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "mu2-web"
     sys_version = ""
@@ -952,6 +1104,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.told_online()
         if path == "/internal/role":
             return self.role()
+        if path == "/api/updates":
+            return self.update_line()
+        if path == "/internal/updates":
+            return self.told_updates()
         self.reply(404, {"error": "not found"})
 
     def register(self):
@@ -1136,6 +1292,48 @@ class Handler(BaseHTTPRequestHandler):
         print(f"{self.client()} account {row[0]} marked bug {bug} {state}", flush=True)
         self.reply(200, {"ok": True})
 
+    def update_line(self):
+        row = self.admin()
+        if row is None:
+            return
+        said = self.body() or {}
+        line = said.get("id")
+        if line is not None and (not isinstance(line, int) or isinstance(line, bool)):
+            return self.reply(400, {"error": "bad id"})
+        if said.get("delete") is True:
+            if line is None or not self.store.delete_update(line):
+                return self.reply(404, {"error": "no such line"})
+            print(f"{self.client()} account {row[0]} deleted update {line}", flush=True)
+            return self.reply(200, {"ok": True, "id": line})
+        checked = update_fields(said)
+        if isinstance(checked, str):
+            return self.reply(400, {"error": checked})
+        checked["id"] = line
+        saved = self.store.save_update(checked)
+        if saved is None:
+            return self.reply(404, {"error": "no such line"})
+        print(f"{self.client()} account {row[0]} saved update {saved} ({checked['state']})", flush=True)
+        self.reply(200, {"ok": True, "id": saved})
+
+    def told_updates(self):
+        if not self.direct():
+            return self.reply(404, {"error": "not found"})
+        said = self.body(MOST_UPDATES_BODY)
+        lines = said.get("entries") if said else None
+        if not isinstance(lines, list):
+            return self.reply(400, {"error": "entries: a list"})
+        checked = []
+        for one in lines:
+            fields = update_fields(one if isinstance(one, dict) else {}, default_state="draft")
+            if isinstance(fields, str):
+                return self.reply(400, {"error": fields})
+            checked.append(fields)
+        noted = said.get("noted_through")
+        noted = noted if isinstance(noted, str) and re.match(r"^[0-9a-f]{7,40}$", noted) else ""
+        added = self.store.add_updates(checked, noted)
+        print(f"mu ship: {added} update lines, noted through {noted or '(unchanged)'}", flush=True)
+        self.reply(200, {"ok": True, "added": added})
+
     def told_online(self):
         if not self.direct():
             return self.reply(404, {"error": "not found"})
@@ -1284,6 +1482,13 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(200, self.store.online_report())
         if url.path == "/api/bugs":
             return self.reply(200, {"bugs": self.store.bugs_report()}) if self.admin() else None
+        if url.path == "/api/updates":
+            return (self.reply(200, {"entries": self.store.updates(), "noted_through": self.store.noted_through()})
+                    if self.admin() else None)
+        if url.path == "/internal/updates":
+            if not self.direct():
+                return self.reply(404, {"error": "not found"})
+            return self.reply(200, {"entries": self.store.updates(), "noted_through": self.store.noted_through()})
         if url.path == "/api/character":
             row = self.who()
             if row is None or row[3] != "admin":
@@ -1335,6 +1540,8 @@ class Handler(BaseHTTPRequestHandler):
             path = "/online.html"
         elif path in ("/bugs", "/bugs/"):
             path = "/bugs.html"
+        elif path in ("/updates", "/updates/"):
+            path = "/updates.html"
         elif path in ("/privacy", "/privacy/"):
             path = "/privacy.html"
         elif path in ("/contact", "/contact/"):
@@ -1346,6 +1553,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(HTTPStatus.NOT_FOUND)
             return
         data = target.read_bytes()
+        if path == "/index.html":
+            data = with_updates(data, self.store.updates(published_only=True))
         self.send_response(200)
         self.send_header("Content-Type", mimetypes.guess_type(target.name)[0] or "application/octet-stream")
         self.send_header("Content-Length", str(len(data)))

@@ -38,6 +38,8 @@
     ./mu dist linux [--commit REF]           the Linux client, dist/linux/MU2/ and its tar.gz
     ./mu release windows [--dry|--stage]     that client on the box for the launcher, by hash
     ./mu release linux [--dry]               the Linux client the same way, under /game/linux/
+    ./mu ship [--go]                         what is live, what HEAD adds, what it needs, the steps (ship.py)
+    ./mu ship notes [--dry]                  drafts on the site's /updates for what is now live
 
 Every command takes --json and then prints one JSON object as its last line, for a script or
 an agent to read instead of the prose. Every step runs niced and held to `mu cores` (60% of
@@ -153,6 +155,16 @@ def main():
     rl.add_argument("--dry", action="store_true", help="hash and compare with the box, send nothing")
     rl.add_argument("--stage", action="store_true",
                     help="send the files, leave manifest.json on the release before (a protocol switch)")
+
+    sh = sub.add_parser("ship", parents=[common])
+    sh.add_argument("action", nargs="?", choices=["notes"], help="notes: drafts on the site's /updates")
+    sh.add_argument("--go", action="store_true", help="run the steps, asked before each")
+    sh.add_argument("--dry", action="store_true", help="notes: say the drafts, send nothing")
+    sh.add_argument("--day", help="notes: the day they are listed under (today)")
+    sh.add_argument("--since", help="notes: the last commit already told (the site's noted_through)")
+    sh.add_argument("--import-site", action="store_true", help="notes: index.html's lines into the site, once")
+    sh.add_argument("--web", help="notes: a local web/server.py (http://127.0.0.1:8090) instead of the box")
+    sh.add_argument("--plain", action="store_true", help="notes: one draft a commit, its subject; no claude -p")
 
     k = sub.add_parser("cores", parents=[common])
     k.add_argument("count", nargs="?", type=int)
@@ -306,6 +318,13 @@ def dispatch(args, say):
         if args.target == "launcher":
             return release.release_launcher(say, dry=args.dry)
         return release.release(args.target, say, dry=args.dry, stage_only=args.stage)
+    if args.command == "ship":
+        import ship
+        if args.action == "notes":
+            if args.import_site:
+                return ship.import_site(say, web=args.web, since=args.since, dry=args.dry)
+            return ship.notes(say, dry=args.dry, day=args.day, web=args.web, since=args.since, plain=args.plain)
+        return ship.ship(say, run=args.go)
     if args.command == "where":
         return look.where(args.name, say, args.docs)
     if args.command == "shot":
