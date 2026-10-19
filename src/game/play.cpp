@@ -1754,6 +1754,7 @@ void Play::update(double seconds) {
                             // what lands the blow when the pool was full and there was no
                             // meteor to rush it.
                             cue.fuse = Meteor::fallSeconds();
+                            cue.flies = true;
                         } else if (Arrows::Model shot; shoots(happening.who, &shot)) {
                             // The bolt leaves at MU's release key and the blow lands with it;
                             // the fuse is only the fallback if the bolt never arrives.
@@ -1761,6 +1762,7 @@ void Play::update(double seconds) {
                             volleys_.push_back({happening.who, happening.whom, release});
                             cue.fuse = release + 0.6f;
                             cue.arrow = true;
+                            cue.flies = true;
                         } else {
                             cue.fuse = swinger->swinging * landingOf(swinger->figure, Showing::kLandingPoint);
                         }
@@ -1788,6 +1790,7 @@ void Play::update(double seconds) {
                                 const float dx = target->crown[0] - swinger->crown[0];
                                 const float dz = target->crown[2] - swinger->crown[2];
                                 cue.fuse = 15.0f / 25.0f + std::sqrt(dx * dx + dz * dz) / 15.0f;
+                                cue.flies = true;
                             }
                         }
                         // A Thunder Lich (attackSkill == 3) calls Lightning at that frame, and
@@ -1853,6 +1856,7 @@ void Play::update(double seconds) {
                                 cue.fuse = release + std::sqrt(dx * dx + dz * dz) /
                                                          (Bolt::kTilesPerSecond *
                                                           ground_->metresPerTile());
+                                cue.flies = true;
                             }
                         }
                         if (const Drawn* star = drawnOf(happening.who);
@@ -2786,8 +2790,13 @@ void Play::update(double seconds) {
         // The gate. A cue belongs to one swing, and if the body has moved on -- a step
         // cancels a swing here -- the cue drops itself. A dropped cue costs a splash and a
         // number and never a fact: the damage was taken on the tick either way.
+        // Except a spell already in the air: the caster's swing often ends, or the next one
+        // begins, before a far meteor or wave lands, and that dropped the MISS, the Absorbed and
+        // the red of it -- the user, 2026-10-19: "monster doing spells on character but i dont
+        // see any absorbed, or missed ... sometimes it shows".
         if (swinger == nullptr ||
-            (!cue.thrown && (swinger->swingToken != cue.token || swinger->swinging <= 0.0f))) {
+            (!cue.thrown && !cue.flies &&
+             (swinger->swingToken != cue.token || swinger->swinging <= 0.0f))) {
             showing_.drop();
             continue;
         }

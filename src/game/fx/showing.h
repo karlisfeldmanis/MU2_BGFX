@@ -84,6 +84,9 @@ struct Cue {
     bool rune = false;    // a rune power's blow (Happening::rune)
     bool summon = false;  // her summon's blow on a monster (Play::land fills it)
     bool onSummon = false;  // a blow on her summon: its pain in his red (Play::land fills it)
+    // A monster's spell that travels -- a meteor, a bolt, a wave, a ball -- and lands after the
+    // swing that threw it may have ended: the swing's gate does not drop it (Play::update).
+    bool flies = false;
     // Seconds left on the drawing's own clock. NOT the wall clock: MU2 found that at haste
     // every timed thing fell behind the simulation, because the animation was scaled and the
     // fuses were not. See Showing::advance.
