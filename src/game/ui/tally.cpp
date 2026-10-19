@@ -116,6 +116,8 @@ constexpr float kFloatUnitSize = 6.0f;
 constexpr float kFloatLife = 2.2f;
 constexpr float kFloatRise = 34.0f;   // interface units over the whole life
 constexpr float kFloatAbove = 14.0f;  // units over the crown it starts from
+constexpr float kFloatUnitTracking = 0.06f;  // the EXP word's, tighter than the lane's (the
+                                              // user, 2026-10-19: "reduce letter spacing")
 constexpr float kFloatNear = 0.6f;    // metres: two gains this close share a body
 constexpr float kFloatWindow = 0.4f;  // seconds a gain still counts as just put up
 // **It scrolls, and its top fades** (the user, 2026-10-03: "can we make it scrolling with fade
@@ -415,9 +417,9 @@ void Tally::dismiss() {
 
 void Tally::collect(const Play& play, float seconds) {
     for (const Play::Gain& gain : play.gains()) {
-        // A kill's Zen is not said at all: the coins ring, and the purse says the rest (the
-        // user, 2026-10-19: "dont show zen").
-        if (gain.anchored && gain.kind == Play::Gain::Kind::Zen) continue;
+        // A kill's Zen is not said over the body (the user, 2026-10-19: "dont show zen") but
+        // over the HUD, summed with the fight's, as a firecracker's is (the user, 2026-10-19:
+        // "zen gain from upper HUD position is missing"): it falls through to the switch.
         if (gain.anchored && gain.value > 0 && gain.kind == Play::Gain::Kind::Experience) {
             Float one;
             for (int i = 0; i < 3; ++i) one.world[i] = gain.at[i];
@@ -689,7 +691,7 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         const std::string shouted = "EXP";
         const float figureWide = face_.measure(size, figure);
         const float wordWide = face_.measure(small, shouted) +
-                               kLaneUnitTracking * small * float(shouted.size() - 1);
+                               kFloatUnitTracking * small * float(shouted.size() - 1);
         const float left = x - (figureWide + kLaneWordGap * unit + wordWide) * 0.5f;
         const float at = std::round(y);
         write(std::round(left + figureWide * 0.5f), at, size, withAlpha(ink, alpha), figure,
@@ -697,7 +699,7 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
         // The word as strong as the figure (the user, 2026-10-19: "+269 EXP has to be same
         // opacity"): the same Bold, ink and halo, only smaller.
         write(std::round(left + figureWide + kLaneWordGap * unit + wordWide * 0.5f), at, small,
-              withAlpha(ink, alpha), shouted, kLaneUnitTracking, true);
+              withAlpha(ink, alpha), shouted, kFloatUnitTracking, true);
     }
 
     // ---- the lane ----------------------------------------------------------------------
