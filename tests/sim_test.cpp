@@ -6607,6 +6607,25 @@ void testVault(const content::Tables& tables) {
         check(stored2 == 70 && realm.withdraw(70, out) == out &&
                   realm.satchel()[out].refinement == 2 && realm.vault()[70].empty(),
               "and a Bless from the vault let go on it in the bag raises it again");
+        // And onto what he wears, straight from the vault (the user, 2026-10-19: "allow to use
+        // jewel of bless,soul from warehoise to equiped item") -- with his bag full too, as the
+        // bag's own jewel never asks room of a plus he can still wear.
+        const sim::Held worn = realm.satchel()[sim::kWeaponRight];
+        if (!worn.empty()) {
+            const int cell = realm.deposit(realm.give(bless), 90);
+            check(cell == 90 && realm.withdraw(90, sim::kWeaponRight) == sim::kWeaponRight &&
+                      realm.satchel()[sim::kWeaponRight].refinement == worn.refinement + 1 &&
+                      realm.vault()[90].empty(),
+                  "a Bless from the vault let go on his weapon raises it where he wears it");
+            realm.deposit(realm.give(bless), 90);
+            std::vector<int> fillers;
+            for (int at; (at = realm.give(sword)) >= 0;) fillers.push_back(at);
+            check(realm.withdraw(90, sim::kWeaponRight) == sim::kWeaponRight &&
+                      realm.satchel()[sim::kWeaponRight].refinement == worn.refinement + 2,
+                  "and again with his bag full");
+            for (const int at : fillers) realm.sell(at);
+            if (!realm.vault()[90].empty()) realm.withdraw(90);
+        }
     }
 
     // Thrown on the ground straight from the vault (the user, 2026-10-09), and a jewel is not.
@@ -8719,6 +8738,13 @@ void testRunes(const content::Tables& tables) {
         checkEqual(realm.hero().points.strength, spent.strength,
                    "while the spent points an item asks against stay as they were");
         check(realm.hero().maxHealth > health, "and the vitality raises his life");
+        // Taken off, the runes go with it (the user, 2026-10-19: "i deequiped weapon bot on stats
+        // window stoll shows that i have boost").
+        const int off = realm.satchel().free(tables, tables.items[size_t(serpent)].width,
+                                             tables.items[size_t(serpent)].height);
+        check(off >= sim::kWorn && realm.moveItem(sim::kWeaponRight, off), "the sword comes off");
+        checkEqual(realm.hero().totalPoints().strength, spent.strength, "and his strength is his own again");
+        checkEqual(realm.hero().totalPoints().vitality, spent.vitality, "and his vitality");
     }
     // The four of 2026-10-04: Ironskin and Steadfast in anyone's armour or shield, Second Wind in
     // anything worn, Whirlwind in a knight's weapon alone; what each does to the numbers; and a

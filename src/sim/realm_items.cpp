@@ -2009,8 +2009,13 @@ bool Realm::refineAcross(Store jewelIn, int jewelAt, Store thingIn, int thingAt)
     const content::ItemRow& thingRow = tables_->items[size_t(thing.item)];
     const content::ItemRow& jewelRow = tables_->items[size_t(jewel.item)];
     const bool wornThing = thingIn == Store::Bag && wearable(thingAt);
-    // A worn thing a plus could outgrow comes off into the bag: room for it there, asked first.
-    if (wornThing && me().bag.free(*tables_, thingRow.width, thingRow.height) < 0) {
+    // A worn thing a plus could outgrow comes off into the bag: room for it there, asked first --
+    // and only then, as `refine` asks it, so a full bag still takes a vault's jewel onto what he
+    // wears (the user, 2026-10-19). A Life works the option, never the plus.
+    Held raised = thing;
+    raised.refinement = int16_t(thing.refinement + 1);
+    const bool outgrows = wornThing && jewelOf(jewelRow) != Jewel::Life && !fits(*tables_, wearer(), raised);
+    if (outgrows && me().bag.free(*tables_, thingRow.width, thingRow.height) < 0) {
         refusal_ = "no room in the bag for what he could no longer wear";
         return false;
     }

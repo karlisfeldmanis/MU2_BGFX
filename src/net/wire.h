@@ -130,7 +130,8 @@ namespace mu::net {
 //     and 3 at 60 and 70, Lala without the yeti's orb, longer dry spells (2026-10-19), so a
 //     client on 37's rules is refused instead of drifting from the server.
 // 39: the Broker's Buy tab opens on the latest listed first (BrokerQuery::Sort::Newest, a fifth
-//     sort a server on 38 would not read) (2026-10-19).
+//     sort a server on 38 would not read), and a jewel from the vault onto what he wears asks
+//     room in the bag only when the plus could take it off him, as the bag's own does (2026-10-19).
 constexpr uint32_t kVersion = 39;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
