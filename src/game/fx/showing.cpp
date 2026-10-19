@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "core/log.h"
+#include "sim/recovery.h"
 
 namespace mu::game {
 namespace {
@@ -200,8 +201,14 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float man,
     // Absorbed text not damage number" -- and the red beside it is then only what reached his
     // health, none at all when the pool took the whole blow. Only ever his: nothing else in
     // 0.75 carries a shield pool.
+    //
+    // And none for the tenth a holding shield always lets through (sim::kShieldShare): a point
+    // or two in red read as him being hurt while the pool soaked it -- the user, 2026-10-19,
+    // "if character is not taking actual damage and its being absorbed we dont need to show red
+    // damage". The red comes back only for what a running-dry pool lets past.
     if (!cue.miss && cue.absorbed > 0) {
-        if (cue.taken > 0) raise(markOf(), cue.taken);
+        const int32_t seeps = cue.damage - int32_t(float(cue.damage) * sim::kShieldShare);
+        if (cue.taken > seeps) raise(markOf(), cue.taken);
         raise(Mark::Absorbed, 0);
     } else {
         raise(markOf(), cue.damage);
