@@ -160,12 +160,10 @@ uint32_t scoreInk(int score) {
 }
 constexpr uint32_t kWornInk = gfx::rgba(1.0f, 1.0f, 1.0f, 0.88f);
 // The wash under a sound piece in the satchel: MU's ITEM_COLOR_NORMAL hue, glColor4f(0.3, 0.5,
-// 0.5, 0.6) (NewUIInventoryCtrl.cpp:981), at a quarter of its strength: at MU's 0.6 the teal
-// shouted over the dark skin and two pieces side by side ran into one slab. Each piece's block
-// stands a unit inside its rules (kTakenInset) so neighbours stay apart.
+// 0.5, 0.6) (NewUIInventoryCtrl.cpp:981), at a quarter of its strength, since at MU's 0.6 the
+// teal shouted over the dark skin. It fills the piece's cells to their rules with no edge of its
+// own -- the user, 2026-10-19: "dont use double outline just fill the row with that teal".
 constexpr uint32_t kTakenWash = gfx::rgba(0.3f, 0.5f, 0.5f, 0.16f);
-constexpr uint32_t kTakenEdge = gfx::rgba(0.45f, 0.68f, 0.68f, 0.30f);
-constexpr float kTakenInset = 1.0f;
 
 // A piece's sockets over its middle, in units: the item card's socket ring (tip::Mark::Ring), a
 // bronze rim round the orange stone of a Rune of Creation or round a dark hole, stacked down the
@@ -584,10 +582,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                             : sim::Worn::Fine;
         if (band == sim::Worn::Fine) {
             if (!sim::wearable(slot)) {
-                const Box taken =
-                    panel::scaled(x, y, itemBox(tables, slot, held).grown(-kTakenInset));
-                canvas_.rect(taken, kTakenWash);
-                canvas_.outline(taken, std::max(1.0f, std::round(tip::unit())), kTakenEdge);
+                canvas_.rect(panel::scaled(x, y, itemBox(tables, slot, held)), kTakenWash);
             }
             continue;
         }
