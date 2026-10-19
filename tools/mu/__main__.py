@@ -36,7 +36,7 @@
     ./mu dist macos [--commit REF]           the player's app, dist/macos/MU2.app, from a commit
     ./mu dist windows [--commit REF]         the Windows client, dist/windows/MU2/ and its zip
     ./mu dist linux [--commit REF]           the Linux client, dist/linux/MU2/ and its tar.gz
-    ./mu release windows [--dry]             that client on the box for the launcher, by hash
+    ./mu release windows [--dry|--stage]     that client on the box for the launcher, by hash
     ./mu release linux [--dry]               the Linux client the same way, under /game/linux/
 
 Every command takes --json and then prints one JSON object as its last line, for a script or
@@ -151,6 +151,8 @@ def main():
     rl.add_argument("target", choices=["windows", "macos", "linux", "launcher"],
                     help="the platform's game, or the launcher for both (self_update.h)")
     rl.add_argument("--dry", action="store_true", help="hash and compare with the box, send nothing")
+    rl.add_argument("--stage", action="store_true",
+                    help="send the files, leave manifest.json on the release before (a protocol switch)")
 
     k = sub.add_parser("cores", parents=[common])
     k.add_argument("count", nargs="?", type=int)
@@ -303,7 +305,7 @@ def dispatch(args, say):
     if args.command == "release":
         if args.target == "launcher":
             return release.release_launcher(say, dry=args.dry)
-        return release.release(args.target, say, dry=args.dry)
+        return release.release(args.target, say, dry=args.dry, stage_only=args.stage)
     if args.command == "where":
         return look.where(args.name, say, args.docs)
     if args.command == "shot":

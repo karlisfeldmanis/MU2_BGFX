@@ -137,7 +137,7 @@ def ftp_put(local, folder, name, say, have_part=False):
     return False
 
 
-def release(target, say, dry=False):
+def release(target, say, dry=False, stage_only=False):
     if target not in ("windows", "macos", "linux"):
         raise RuntimeError("release: windows, macos or linux (docs/plans/launcher.md, L2 and L5)")
     started = time.time()
@@ -220,7 +220,7 @@ def release(target, say, dry=False):
     os.makedirs(os.path.join(stage, "files"))
     if elsewhere:
         return release_elsewhere(target, say, commit, protocol, files, missing, sending, manifest,
-                                 stage, root, folder, total, started)
+                                 stage, root, folder, total, started, stage_only)
     for f in missing:
         staged = os.path.join(stage, "files", f["sha256"])
         try:
@@ -233,6 +233,8 @@ def release(target, say, dry=False):
         say(f"sending {len(missing)} files (rsync, resumable)")
         subprocess.run(["rsync", "-a", "--partial", "--progress",
                         os.path.join(stage, "files") + "/", f"{HOST}:{root}/files/"], check=True)
+    if stage_only:
+        return staged_only(target, say, commit, protocol, files, missing, started)
 
     named = os.path.join(stage, f"{commit}.json")
     with open(named, "w") as out:
@@ -290,8 +292,18 @@ def release(target, say, dry=False):
                   "sent_bytes": sending, "manifest": f"{SITE}/game/{target}/manifest.json"}
 
 
+def staged_only(target, say, commit, protocol, files, missing, started):
+    """--stage: the files are where the launcher will fetch them and the manifest still names the
+    release before, so players see nothing yet; the release without --stage then sends nothing and
+    only writes the manifest -- the switch to a new protocol in seconds, not an upload's minutes."""
+    say(f"staged {commit} (protocol {protocol}) for {target}: {len(missing)} files sent, manifest.json "
+        f"untouched; `./mu release {target}` switches it, in {time.time() - started:.0f} s")
+    return True, {"commit": commit, "protocol": protocol, "files": len(files), "sent": len(missing),
+                  "staged": True}
+
+
 def release_elsewhere(target, say, commit, protocol, files, missing, sending, manifest, stage, root,
-                      folder, total, started):
+                      folder, total, started, stage_only=False):
     """The files to FILES_HOST over FTPS, three at a time, each whole before it has its name; every
     one checked there by size, the exe read over HTTPS; then the manifest on the box, last, in one
     rename; then what no kept release names is pruned there. The box's own copies are left alone:
@@ -321,6 +333,8 @@ def release_elsewhere(target, say, commit, protocol, files, missing, sending, ma
     length = re.search(r"(?im)^content-length:\s*(\d+)", head.stdout)
     if not length or int(length.group(1)) != exe["size"]:
         raise RuntimeError(f"{manifest['files_url']}{exe['sha256']} is not {manifest['exe']}'s {exe['size']} bytes")
+    if stage_only:
+        return staged_only(target, say, commit, protocol, files, missing, started)
 
     named = os.path.join(stage, f"{commit}.json")
     with open(named, "w") as out:

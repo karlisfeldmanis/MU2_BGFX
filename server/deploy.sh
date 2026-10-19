@@ -3,6 +3,9 @@
 #
 #   server/deploy.sh            copy, build, test, and (re)start the service
 #   server/deploy.sh --copy     copy only
+#   server/deploy.sh --stage    copy, build and test; the running server keeps playing on the old binary
+#   server/deploy.sh --switch   only (re)start the service on what --stage built -- a protocol bump's
+#                               seconds, run on every box back to back with `mu release`
 #
 # What goes over is what MU2_SERVER_ONLY builds (CMakeLists.txt): src/core, src/content, src/sim,
 # the save, the tests and tools that link only those, and every map's cooked tables (*.mur, ~2 MB
@@ -36,6 +39,7 @@ if ! git diff --quiet HEAD -- src server tests tools/bot tools/raid content/raid
   echo "note: the working tree differs from HEAD in what deploys; HEAD $commit goes, not those edits"
 fi
 
+if [ "$1" != "--switch" ]; then
 ssh $host "mkdir -p $dest"
 rsync -az --delete --prune-empty-dirs \
   --include='/CMakeLists.txt' \
@@ -64,6 +68,13 @@ ssh $host "cd $dest && \
   cmake --build build -j 1 --target mu2_server sim_test save_test placement_test && \
   ./build/sim_test > sim_test.log 2>&1; tail -1 sim_test.log; \
   ./build/save_test | tail -1; ./build/placement_test | tail -1"
+if [ "$1" = "--stage" ]; then
+  # A staged build waits for --switch only if its checks passed.
+  ssh $host "tail -1 $dest/sim_test.log | grep -q ' 0 failed'" || { echo "sim_test failed on $host: not staged"; exit 1; }
+  echo "staged $commit on $host; server/deploy.sh --switch starts it"
+  exit 0
+fi
+fi
 
 # The service: installed, the game's port open (the stream, and the tick datagrams since sprint 24),
 # restarted on the new binary.
