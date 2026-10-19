@@ -795,7 +795,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         // The player menu first: a press it takes (a row, or shutting it) is no one else's.
         menuTook_ = playerMenu_.update(play, pointer);
         Pointer under = pointer;
-        if (menuTook_ || playerMenu_.covers(pointer.x, pointer.y)) under.pressed = under.rightPressed = false;
+        if (menuTook_ || playerMenu_.covers(pointer.x, pointer.y) || (travel_.up() && travel_.covers(pointer.x, pointer.y)))
+            under.pressed = under.rightPressed = false;
         // The party's faces the next gather takes: whoever of them is on this map, him too.
         {
             faceIds_.clear();
@@ -2400,9 +2401,9 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (herald_.showing()) interface_.add(herald_.canvas());
     // Chrome like the plate, under every window that might open over its corner.
     if (minimap_.showing()) interface_.add(minimap_.canvas());
-    if (travel_.up()) interface_.add(travel_.canvas());
     // Watched: the scene's readings above and the menu and pointer below, and nothing of his.
     if (watching_) {
+        if (travel_.up()) interface_.add(travel_.canvas());
         if (menu_.up()) interface_.add(menu_.canvas());
         interface_.add(cursor_.canvas());
         interface_.submit(view);
@@ -2411,6 +2412,9 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     // The party steps aside while M lays the whole map over the screen.
     if (partyBar_.showing() && !watching_ && !minimap_.full()) interface_.add(partyBar_.canvas());
     if (targetFrame_.showing()) interface_.add(targetFrame_.canvas());
+    // The Warp list (M) over the party's capsules, which it opens across (bug #20: "party window
+    // is being drawn over Warp Window").
+    if (travel_.up()) interface_.add(travel_.canvas());
     // The chat under the plate, whose left wing its cloud runs behind.
     if (chat_.showing()) {
         interface_.add(chat_.back());
