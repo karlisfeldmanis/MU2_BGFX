@@ -1035,10 +1035,34 @@ bool together(const content::ItemRow& a, const content::ItemRow& b) {
 // the callers run it on a copy.
 bool wearOn(const content::Tables& tables, const Wearer& who, Satchel& bag, int from, int to) {
     const content::ItemRow* row = rowOf(tables, bag[from]);
-    if (!row || !baggable(from) || !placesIn(*row, who.kin, to) || !fits(tables, who, bag[from])) {
+    // From one hand straight to the other, as a knight moves his sword to the left hand to take a
+    // second (bug #14, 2026-10-18: "Cannot equip weapon directly from main weapon to secondary
+    // weapon slot for dual wielding").
+    const bool across = (from == kWeaponRight && to == kWeaponLeft) ||
+                        (from == kWeaponLeft && to == kWeaponRight);
+    // Already worn, it is not asked its requirements again for changing hands.
+    if (!row || !(baggable(from) || across) || !placesIn(*row, who.kin, to) ||
+        (!across && !fits(tables, who, bag[from]))) {
         return false;
     }
     const Held what = bag.lift(from);
+    if (across) {
+        // What held the other hand takes the one this left when it may be held there, a swap;
+        // otherwise, a shield that cannot go in the right hand, it goes into the bag.
+        const Held there = bag.lift(to);
+        bag.put(to, what);
+        if (there.empty()) return true;
+        const content::ItemRow* r = rowOf(tables, there);
+        if (!r) return false;
+        if (placesIn(*r, who.kin, from) && together(*row, *r)) {
+            bag.put(from, there);
+            return true;
+        }
+        const int at = bag.free(tables, r->width, r->height);
+        if (at < 0) return false;
+        bag.put(at, there);
+        return true;
+    }
     Held down[2];
     int count = 0;
     if (!bag[to].empty()) down[count++] = bag.lift(to);
