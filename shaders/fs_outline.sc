@@ -95,7 +95,7 @@ void main()
 	// them is covered. The mask is R16F so one texel's share of a 32x32 block survives the
 	// average; past level 6 the test is skipped rather than trusted.
 	if (here >= 1.0) discard;
-	float outer = max(width, width + reach);
+	float outer = max(2.0 * width, width + reach);
 	if (shade > 0.0) outer = max(outer, length(u_outlineDrift.xy) + u_outlineDrift.z);
 	float level = ceil(log2(2.0 * (outer + 1.0)));
 	if (level <= 6.0 && texture2DLod(s_mask, at, level).r <= 0.0) discard;
@@ -149,8 +149,27 @@ void main()
 				break;
 			}
 		}
-		// Solid to within a feather of the full width, then out.
-		strength = 1.0 - smoothstep(width - feather, width, far);
+		// **Not solid to a feather of the width, but how much of the shape a disc round this
+		// pixel covers** (the user, 2026-10-19: "can we make it little bit blurry so its not so
+		// pixelated?"). The distance above follows the mask's staircase pixel for pixel, and
+		// the mask has no antialiasing; a disc two ring widths across averages the steps away,
+		// so the ring traces the figure's shape and fades out softly. Weighted by each ring's
+		// radius, so the taps stand for equal areas. Against a straight edge the disc is a
+		// fifth covered a ring width out, where this has faded to a little over half.
+		float cover = 0.0;
+		float weight = 0.0;
+		for (int ring = 1; ring <= RINGS; ring++)
+		{
+			float span = 2.0 * width * float(ring) / float(RINGS);
+			for (int i = 0; i < STEPS; i++)
+			{
+				float turn = (float(i) + 0.5 * float(ring)) * (6.2831853 / float(STEPS));
+				vec2 along = vec2(cos(turn), sin(turn));
+				cover += float(ring) * maskAt(at + along * u_outlinePixel.xy * span, lo, hi, dx, dy);
+			}
+			weight += float(ring) * float(STEPS);
+		}
+		strength = smoothstep(0.1, 0.26, cover / weight);
 
 		// Past the ring, a halo: searched again over its own reach, only where the ring did
 		// not find the shape, and falling off as a square so it has no edge of its own.
