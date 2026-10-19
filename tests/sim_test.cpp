@@ -11203,7 +11203,9 @@ void testDrops(const content::Tables& tables) {
         };
         check(hasBless ? near(b, each, 0.15) : b == 0, said("the Bless at its share"));
         check(hasSoul ? near(s, each, 0.15) : s == 0, said("the Soul at its share"));
-        check(hasChaos ? near(c, each, 0.15) : c == 0, said("the Chaos at its share"));
+        // And the Chaos's own roll beside it since 2026-10-19 (sim::kChaosChance).
+        check(hasChaos ? near(c, each + kDeaths * sim::kChaosChance, 0.15) : c == 0,
+              said("the Chaos at its share"));
         // From the first monster since the Common runes, a Common alone below kCreationLevel.
         check(near(r, kDeaths * sim::kCreationChance, 0.25),
               said("the Rune of Creation at its chance"));
