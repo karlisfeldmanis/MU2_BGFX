@@ -28,10 +28,11 @@ namespace {
 // MU's map numbers run below this (sim/gates.cpp keeps the same bound).
 constexpr int kMapNumbers = 128;
 
-// Each built map's breeds and how many of each its nests hold.
+// Each built map's breeds, how many of each its nests hold and where those nests are.
 struct Living {
     int map = -1;
     std::map<int32_t, int> population;
+    std::map<int32_t, std::vector<std::pair<int, int>>> places;
 };
 std::vector<Living>& worlds() {
     static std::vector<Living> all;
@@ -131,6 +132,7 @@ void open(const std::string& assetDir) {
         for (const content::MonsterNest& nest : tables.nests) {
             if (nest.kind >= tables.kinds.size()) continue;
             living.population[tables.kinds[nest.kind].number] += int(nest.count);
+            living.places[tables.kinds[nest.kind].number].push_back({(nest.x1 + nest.x2) / 2, (nest.y1 + nest.y2) / 2});
         }
         worlds().push_back(std::move(living));
     }
@@ -300,7 +302,7 @@ std::string QuestAuto::update(Play& play, int* quest, double seconds, const int3
             }
             const int map = quest_world::huntMap(breed, here);
             if (map < 0) return stop("Auto-play: nowhere to hunt for this quest.");
-            if (map != here) return goTo(play, map, stop);
+            if (map != here) return goTo(play, map, stop, breed);
             if (!hunt(play, breed)) {
                 return stop(std::string("Auto-play: the ") + row.steps[step].line +
                             " left cannot be reached from here.");
@@ -311,18 +313,40 @@ std::string QuestAuto::update(Play& play, int* quest, double seconds, const int3
     return {};
 }
 
-// The realm's own trip: a Move row to the map, paid, when one is open to him; else on foot to
-// the gate toward it.
-std::string QuestAuto::goTo(Play& play, int map, const std::function<std::string(const std::string&)>& stop) {
+// The realm's own trip: a Move row to the map, paid, when one is open to him -- for a hunt, the
+// one landing nearest the breed's nests (the Dungeon's third floor by "Dungeon 3", not the first
+// floor and every stair down; the user, 2026-10-20: "auto-play is not going to dungeon 3 for
+// clear quest but goes long way") -- else on foot to the gate toward it.
+std::string QuestAuto::goTo(Play& play, int map, const std::function<std::string(const std::string&)>& stop,
+                            int32_t breed) {
     const sim::Realm& realm = play.realm();
     const int here = int(realm.tables()->map);
     if (realm.questing() >= 0) play.closeQuest();
     if (clock_ - travelAt_ < kTravelWait) return {};
+    const std::vector<std::pair<int, int>>* places = nullptr;
+    if (const Living* there = livingOn(map); there && breed >= 0) {
+        const auto found = there->places.find(breed);
+        if (found != there->places.end()) places = &found->second;
+    }
+    int bestRow = -1;
+    float bestAway = 1e9f;
     for (int i = 0; i < sim::kTravels; ++i) {
-        if (sim::travelAt(i).map != map || realm.travelRefusal(i) != sim::TravelRefusal::None) continue;
+        const sim::TravelRow& trip = sim::travelAt(i);
+        if (trip.map != map || realm.travelRefusal(i) != sim::TravelRefusal::None) continue;
+        float away = 0.0f;
+        if (places) {
+            away = 1e9f;
+            for (const auto& [c, r] : *places) away = std::min(away, std::hypot(float(trip.column - c), float(trip.row - r)));
+        }
+        if (bestRow < 0 || away < bestAway) {
+            bestRow = i;
+            bestAway = away;
+        }
+    }
+    if (bestRow >= 0) {
         travelAt_ = clock_;
-        core::logf("auto-play: by the Move list to %s", sim::travelAt(i).name);
-        play.travel(i);
+        core::logf("auto-play: by the Move list to %s", sim::travelAt(bestRow).name);
+        play.travel(bestRow);
         return {};
     }
     const sim::Body& hero = realm.hero();
@@ -677,12 +701,11 @@ bool QuestAuto::hunt(Play& play, int32_t breed) {
         if (behind == nullptr) return false;
         int toColumn = 0, toRow = 0;
         middle(*behind, &toColumn, &toRow);
-        if (const sim::EnterGate* stair = stairToward(realm, hero, hero.column(), hero.row(), toColumn, toRow)) {
-            column = (stair->box.x1 + stair->box.x2) / 2;
-            row = (stair->box.y1 + stair->box.y2) / 2;
-        } else {
-            if (clock_ - travelAt_ < kTravelWait) return true;
-            int bestRow = -1;
+        // A Move row of this map landing where he can walk to it first -- free on the map he is
+        // on (Realm::travelZen) -- and only then the stairs, floor by floor.
+        if (clock_ - travelAt_ < kTravelWait) return true;
+        int bestRow = -1;
+        {
             float bestAway = 1e9f;
             for (int i = 0; i < sim::kTravels; ++i) {
                 const sim::TravelRow& trip = sim::travelAt(i);
@@ -694,13 +717,18 @@ bool QuestAuto::hunt(Play& play, int32_t breed) {
                     bestRow = i;
                 }
             }
-            if (bestRow < 0) return false;
+        }
+        if (bestRow >= 0) {
             travelAt_ = clock_;
             core::logf("auto-play: by the Move list to %s, toward a nest at %d,%d", sim::travelAt(bestRow).name,
                        toColumn, toRow);
             play.travel(bestRow);
             return true;
         }
+        const sim::EnterGate* stair = stairToward(realm, hero, hero.column(), hero.row(), toColumn, toRow);
+        if (stair == nullptr) return false;
+        column = (stair->box.x1 + stair->box.x2) / 2;
+        row = (stair->box.y1 + stair->box.y2) / 2;
     } else {
         // The nearest first and then round them.
         if (nest_ < 0 || nest_ >= int(nests.size())) {

@@ -64,7 +64,9 @@ public:
     void reset();
 
 private:
-    std::string goTo(Play& play, int map, const std::function<std::string(const std::string&)>& stop);
+    // For a hunt, `breed` picks the Move row landing nearest its nests.
+    std::string goTo(Play& play, int map, const std::function<std::string(const std::string&)>& stop,
+                     int32_t breed = -1);
     void visit(Play& play, int folk, bool hand);
     // False when none of the breed on this map can be got to from where he stands.
     bool hunt(Play& play, int32_t breed);
