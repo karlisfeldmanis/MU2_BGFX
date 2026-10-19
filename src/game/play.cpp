@@ -724,8 +724,12 @@ void Play::update(double seconds) {
                 speak(happening);
             } else if (happening.what == sim::What::Leeched && happening.who == heroId && ground_) {
                 // Life back off his blow, "+N" in green over him (Mark::Life), where his numbers
-                // stand: over his crown, from the ground.
-                if (const Drawn* hero = drawnOf(heroId); hero && hero->placed) {
+                // stand: over his crown, from the ground. Not a blow that leaves him full: one
+                // that only gives back a bite just taken read as "+N" on a full bar, every hit
+                // (the user, 2026-10-19: "dont show +life to char if hp is full").
+                const sim::Body* him = realm_.find(heroId);
+                const bool full = him != nullptr && him->health >= him->maxHealth;
+                if (const Drawn* hero = drawnOf(heroId); hero && hero->placed && !full) {
                     const float feet[3] = {hero->crown[0], ground_->heightAt(hero->crown[0], hero->crown[2]),
                                            hero->crown[2]};
                     showing_.gain(Mark::Life, happening.a, feet);
