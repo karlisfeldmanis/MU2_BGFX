@@ -270,6 +270,7 @@ public:
                 const Json& entries = said["data"]["entries"];
                 for (size_t i = 0; i < entries.size(); ++i) site_.push_back(lineOf(entries.at(i)));
                 notedThrough_ = said["data"]["noted_through"].stringOr("");
+                std::snprintf(since_, sizeof since_, "%s", notedThrough_.c_str());
                 siteError_.clear();
             } else {
                 siteError_ = lastLines(lines_->output(), 6);
@@ -468,6 +469,7 @@ private:
         if (drafting_ && !drafting_->done()) return;
         std::string cmd = "./mu ship notes --dry --json --day " + quoted(draftDay_) + webFlag();
         if (plain_) cmd += " --plain";
+        if (since_[0] && notedThrough_ != since_) cmd += " --since " + quoted(since_);
         drafting_ = std::make_unique<Job>(root_, cmd);
         draftTaken_ = false;
     }
@@ -828,6 +830,14 @@ private:
         ImGui::SetNextItemWidth(110);
         ImGui::InputText("day", draftDay_, sizeof draftDay_);
         ImGui::SameLine();
+        // From which commit on: where the site got to, or an earlier one to tell a release again.
+        ImGui::SetNextItemWidth(90);
+        ImGui::InputText("from", since_, sizeof since_);
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Commits after this one are drafted. It starts as where the site got to (%s);\n"
+                              "set it to an earlier commit to draft a release that was not told.",
+                              notedThrough_.empty() ? "nothing yet" : notedThrough_.c_str());
+        ImGui::SameLine();
         ImGui::Checkbox("one a commit, no claude -p", &plain_);
         ImGui::SameLine();
         const bool drafting = drafting_ && !drafting_->done();
@@ -1027,6 +1037,7 @@ private:
     std::string notedThrough_, draftsThrough_;
     std::vector<std::string> outbox_;
     char draftDay_[16] = {};
+    char since_[48] = {};
     bool plain_ = false;
     int filter_ = 0;
 };
