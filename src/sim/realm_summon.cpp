@@ -216,7 +216,8 @@ void Realm::tend(Body& summon) {
 
     // Left far behind -- she rode off, or went through a door it is on the wrong side of -- it
     // is put down behind her rather than trailing across the map (kSummonBlink, ours).
-    if (reach(summon, *owner) > float(kSummonBlink) && blinkSummon(summon, *owner)) return;
+    const int blink = summon.quarry != 0 ? kSummonBlinkFighting : kSummonBlink;
+    if (reach(summon, *owner) > float(blink) && blinkSummon(summon, *owner)) return;
 
     // **Standing over its blow** (the user, 2026-10-18: "golem elf summon is killing monster
     // without animation"), as a monster stands over its kill (kStandOverTicks): the drawing

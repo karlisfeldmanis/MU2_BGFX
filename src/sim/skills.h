@@ -690,9 +690,12 @@ SummonFit summonFit(const content::MonsterKind& kind, int heroLevel, const HeroP
 const content::MonsterKind* summonKind(const content::Tables& tables, const SkillRow& row);
 // How far from her it hunts, and how far it strays before it walks back: OpenMU's
 // SummonedMonsterIntelligence -- eight tiles round the owner, two tiles idle, five fighting.
-constexpr int kSummonHunt = 8;
+// Wider fighting, ours (the user, 2026-10-19: "allow to summon fight litle bit more tiles becose
+// elf range is large"): she shoots from six tiles and more, and at five it turned back from what
+// she was shooting. Eight from her fighting, and it takes on what is within ten of her.
+constexpr int kSummonHunt = 10;
 constexpr int kSummonTether = 2;
-constexpr int kSummonTetherFighting = 5;
+constexpr int kSummonTetherFighting = 8;
 // Ours, the user's of 2026-10-02 ("when char is using mount wich is fast summon cant keep up",
 // "summon teleport him self closer to char if he wall behind to much"). Walking back to her it
 // keeps her pace, ridden or running, and a little over it so the gap closes rather than holds;
@@ -703,6 +706,9 @@ constexpr int kSummonTetherFighting = 5;
 // in kSummonStuckTicks -- caught on a corner, a fence or a crowd -- steps through too.
 constexpr float kSummonCatchUp = 1.15f;
 constexpr int kSummonBlink = 6;
+// And while it fights, past its fighting tether and a little more: a blink at six would pull it
+// out of every fight the wider tether allows.
+constexpr int kSummonBlinkFighting = kSummonTetherFighting + 3;
 constexpr float kSummonStuckGain = 0.5f;  // tiles
 constexpr int kSummonStuckTicks = 30;     // a second and a half
 

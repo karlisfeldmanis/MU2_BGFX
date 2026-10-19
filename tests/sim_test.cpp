@@ -3773,7 +3773,8 @@ void testSummonKeptFromAMash(const content::Tables& tables) {
 
 // The user, 2026-10-02: "he has to teleport to char when char is out of reach". An elf on foot
 // walks a long loop through Lorencia's fields among the monsters, the Golem fighting what comes
-// at her: it is never more than a tile past kSummonBlink from her, for a single tick.
+// at her: it is never more than a tile past kSummonBlinkFighting from her, for a single tick (a
+// summon fighting may stand eight tiles off her, since 2026-10-19, and blinks past eleven).
 void testSummonOnAHunt(const content::Tables& tables) {
     std::printf("the summon stays with her on a hunt\n");
     sim::Realm realm;
@@ -3810,7 +3811,7 @@ void testSummonOnAHunt(const content::Tables& tables) {
             if (!g || !g->alive()) break;
             const float d = std::max(std::fabs(g->x - realm.hero().x), std::fabs(g->y - realm.hero().y));
             worst = std::max(worst, d);
-            if (d > float(sim::kSummonBlink) + 1.0f) {
+            if (d > float(sim::kSummonBlinkFighting) + 1.0f) {
                 ++over; ++run; longest = std::max(longest, run);
             } else run = 0;
             if (!realm.hero().walking && tick > 40) break;
@@ -3866,7 +3867,7 @@ void testSummonKeepsUp(const content::Tables& tables) {
                 realm.hero().x - 200.0f, worst, blinks, last);
     check(rode, "she rides");
     check(g != nullptr && g->alive(), "and the Golem goes with her");
-    check(worst <= float(sim::kSummonBlink) + 1.5f, "never left past the blink");
+    check(worst <= float(sim::kSummonBlinkFighting) + 1.5f, "never left past the blink");
     check(last <= float(sim::kSummonTetherFighting) + 1.0f, "and at her side when she stops");
 }
 
