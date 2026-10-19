@@ -13,6 +13,7 @@
 #include "game/ui/tracker.h"
 #include "game/world/world_show.h"
 #include "sim/gates.h"
+#include "sim/items.h"
 #include "sim/maps.h"
 #include "sim/quests.h"
 #include "sim/realm.h"
@@ -191,6 +192,7 @@ void QuestAuto::reset() {
     walkedColumn_ = walkedRow_ = -1;
     still_ = 0;
     hunting_ = -1;
+    lootTried_.clear();
 }
 
 std::string QuestAuto::update(Play& play, int* quest, double seconds, const int32_t* bar, int barCount) {
@@ -397,6 +399,50 @@ bool QuestAuto::guard(Play& play) {
     return false;
 }
 
+// **What he picks up** (the user, 2026-10-19: "on auto-play character has to auto-pickup jewel
+// drops and rune drops and exc drops, if inventiry is full it does not pickup anything"): a
+// jewel, a Rune of Creation or an excellent piece he may take, lying within kLootReach tiles he
+// can walk, and only when it fits his bag as it stands -- with no room it is left where it
+// lies, not walked to and refused. The nearest first, by the same Pick a Space press asks. One
+// he has been walking to for kLootGiveUp seconds without it going is left for good.
+constexpr float kLootReach = 8.0f;
+constexpr double kLootGiveUp = 6.0;
+
+bool QuestAuto::loot(Play& play) {
+    const sim::Realm& realm = play.realm();
+    const content::Tables& tables = *realm.tables();
+    const sim::Body& hero = realm.hero();
+    const sim::Lying* nearest = nullptr;
+    float best = kLootReach + 0.5f;
+    for (const sim::Lying& one : realm.lying()) {
+        if (one.what.empty() || one.what.item < 0 || size_t(one.what.item) >= tables.items.size()) continue;
+        const content::ItemRow& row = tables.items[size_t(one.what.item)];
+        if (!row.jewel() && !sim::creation(row) && !sim::refiningJewel(row) && one.what.excellent == 0) continue;
+        if (!realm.mayTake(one)) continue;
+        if (const auto tried = lootTried_.find(one.id); tried != lootTried_.end() && tried->second < clock_) continue;
+        const float away = std::max(std::fabs(float(one.column) - hero.x), std::fabs(float(one.row) - hero.y));
+        if (away >= best || !realm.reaches(hero, hero.column(), hero.row(), one.column, one.row)) continue;
+        sim::Satchel bag = realm.satchel();
+        if (sim::pour(tables, bag, sim::kWorn, sim::kSlots, one.what) < 0) continue;
+        best = away;
+        nearest = &one;
+    }
+    if (nearest == nullptr) return false;
+    if (lootTried_.find(nearest->id) == lootTried_.end()) {
+        lootTried_[nearest->id] = clock_ + kLootGiveUp;
+        core::logf("auto-play: picking up %s at %d,%d", tables.items[size_t(nearest->what.item)].label.c_str(),
+                   nearest->column, nearest->row);
+    }
+    const sim::Request& order = realm.order();
+    if (order.kind == sim::Request::Kind::Pick && order.target == nearest->id) return true;
+    sim::Request request;
+    request.kind = sim::Request::Kind::Pick;
+    request.target = nearest->id;
+    play.orderHero(request);
+    target_ = 0;
+    return true;
+}
+
 // **What he fights with.** The right button's skill when the slot holds one; with it empty, the
 // first attack on his bar he knows and his hand may throw -- a wizard with Energy Ball on a key
 // and nothing on the right button swung his staff (bug #26, 2026-10-19: "it does physical with
@@ -455,6 +501,8 @@ bool QuestAuto::hunt(Play& play, int32_t breed) {
         }
     }
     const sim::Body* fightNow = attacker ? attacker : (held && held->alive() && ofBreed(*held)) ? held : nearest;
+    // A jewel, rune or excellent piece first, while nothing is on him.
+    if (attacker == nullptr && loot(play)) return true;
     // His guard first, when it has lapsed and something is to be fought.
     if (fightNow && guard(play)) return true;
     if (fightNow) {

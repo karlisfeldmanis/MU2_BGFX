@@ -69,6 +69,7 @@ private:
     // False when none of the breed on this map can be got to from where he stands.
     bool hunt(Play& play, int32_t breed);
     bool guard(Play& play);
+    bool loot(Play& play);
     int32_t striker(Play& play) const;
 
     double since_ = 0.0;
@@ -87,6 +88,7 @@ private:
     int32_t bar_[8] = {};
     int barCount_ = 0;
     std::map<int32_t, double> guardTried_;  // a guard asked, by skill: not again before this
+    std::map<uint32_t, double> lootTried_;  // a pickup asked, by lying id: given up after this
 };
 
 }  // namespace mu::game
