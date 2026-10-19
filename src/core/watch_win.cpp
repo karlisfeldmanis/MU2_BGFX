@@ -293,7 +293,11 @@ void watchNote(const char* line) {
 void watchBeat() {
     const int64_t now = nowMs();
     const int64_t before = g_beatMs.exchange(now);
+    // The first beat starts the watch but does not arm it: frame 0 compiles the shaders and
+    // uploads the first textures, 7.1 s on an Intel UHD 770 under Direct3D 11 on 2026-10-18,
+    // which filed a hang for a game that then played on. From the second beat it watches.
     if (before == 0) {
+        g_beatMs = -1;
         g_watcher = std::thread(watch);
         return;
     }

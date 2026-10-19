@@ -18,7 +18,7 @@
 
 namespace mu::core {
 
-// Starts watching, from the main thread: the signal handlers now, the hang watch at the first watchBeat.
+// Starts watching, from the main thread: the signal handlers now, the hang watch at the second watchBeat (frame 0 compiles shaders).
 // `name` goes in front of each report's file name ("launcher-").
 void watchStart(const char* dir, const char* name = "");
 // A line every report from here on starts with ("MU2 0.9.4 3965dc81", "Vulkan, NVIDIA 10de:2882").
