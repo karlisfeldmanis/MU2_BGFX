@@ -288,6 +288,10 @@ public:
                 draftError_.clear();
             } else {
                 draftError_ = lastLines(drafting_->output(), 6);
+                // The site keeps no lines yet: say what to press, and read it again so the button shows.
+                if (draftError_.find("noted_through") != std::string::npos)
+                    draftError_ = "The site keeps no lines yet: press \"Move the page's lines in\" below once, then Draft.";
+                loadLines();
             }
         }
 
@@ -316,6 +320,7 @@ public:
             s.seconds = step_->seconds();
             s.state = step_->ok() ? Step::State::Done : Step::State::Failed;
             keepLog(running_, *step_);
+            if (s.command.rfind("web/deploy.sh", 0) == 0) loadLines();  // a new site: its lines read again
             const bool wasLive = s.live;
             const int was = running_;
             running_ = -1;
@@ -861,7 +866,7 @@ private:
         }
         if (!siteError_.empty()) ImGui::TextColored(kRed, "%s", siteError_.c_str());
         // The first time: the lines written into index.html by hand become the site's own, once.
-        if (site_.empty() && notedThrough_.empty() && lines_ && lines_->done() && siteError_.empty()) {
+        if (site_.empty() && notedThrough_.empty() && lines_ && lines_->done() && lines_->ok()) {
             ImGui::TextColored(kGold, "The site keeps no lines yet.");
             ImGui::SameLine();
             const bool importing = importing_ && !importing_->done();
