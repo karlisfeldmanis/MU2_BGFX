@@ -1435,21 +1435,13 @@ void Realm::leave(const Body& dead, const Body& killer) {
     };
     // Below kCreationLevel too since the Common runes (2026-10-06): such a rune is a Common.
     const double creationChance = level >= kRuneRarityLevel[int(Rarity::Common)] ? kCreationChance : 0.0;
-    // The Jewel of Chaos's own roll ahead of the three's (sim::kChaosChance), where one can fall.
-    bool chaosReaches = false;
-    for (const content::ItemRow& r : tables_->items) chaosReaches = chaosReaches || (jewelOfChaos(r) && reaches(r));
-    const double chaosChance = chaosReaches ? kChaosChance : 0.0;
     if (roll < creationChance) {
         const int32_t item = draw([](const content::ItemRow& r) { return creation(r); });
         if (item < 0) return;
         // A power the killer's class may set (drawRunePower).
         one.what = Held{item, 0, 1};
         one.what.powers[0] = drawRunePower(dice_, killer.kin, killer.second, level);
-    } else if ((roll -= creationChance) < chaosChance) {
-        const int32_t item = draw([&](const content::ItemRow& r) { return jewelOfChaos(r) && reaches(r); });
-        if (item < 0) return;
-        one.what = Held{item, 0, 1};
-    } else if ((roll -= chaosChance) < kJewelChance) {
+    } else if ((roll -= creationChance) < kJewelChance) {
         const int32_t item =
             draw([&](const content::ItemRow& r) { return refiningJewel(r) && jewelOf(r) != Jewel::Life && reaches(r); });
         if (item < 0) return;

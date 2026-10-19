@@ -966,11 +966,6 @@ constexpr double kMoreSocketChance = 0.30;
 // 2000, carrying a power the killer's class may set.
 constexpr double kJewelChance = 0.005;
 constexpr double kJewelGroupChance = 0.001;
-// And the Jewel of Chaos once more on a roll of its own (the user, 2026-10-19: "i am farming at
-// LT and jewel fo fchaos is not dropping at all", "very rerely"): the three's roll gave it a third
-// of kJewelChance, a kill in 600; with this beside it a kill in 300. The machine asks a Chaos for
-// every mix, so it falls twice as often as the Bless and the Soul. invention.
-constexpr double kChaosChance = 0.005 / 3.0;
 constexpr double kCreationChance = 0.0005;
 constexpr int kCreationLevel = 15;
 // The monster level each rune rarity starts at (the user, 2026-10-02: an Epic out of Dungeon 1
