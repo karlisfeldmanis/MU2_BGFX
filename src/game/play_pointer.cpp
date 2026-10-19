@@ -388,7 +388,7 @@ void Play::leftLetGo() {
 // presentation trick for the hand at the mouse, and a run whose whole point is that the same
 // seed and the same --fixed-dt draw the same frames must not have its tick boundaries moved by
 // where a monster happened to wander.
-void Play::fight(uint32_t id) {
+void Play::fight(uint32_t id, int32_t skill) {
     if (!isOpen()) return;
     const sim::Body* target = realm_.find(id);
     if (!target || !target->alive() || !target->monster()) return;
@@ -398,7 +398,7 @@ void Play::fight(uint32_t id) {
     // With the right button's skill, so an arena shows what a class fights with: a wizard
     // throws his Energy Ball and a knight with an empty slot swings, as a right-click would.
     // Or with what `--arena-learn` taught him, which is what that option is for.
-    request.skill = arenaLeft_ ? 0 : (arena_.learn != 0 ? arena_.learn : quickSkill_);
+    request.skill = skill >= 0 ? skill : arenaLeft_ ? 0 : (arena_.learn != 0 ? arena_.learn : quickSkill_);
     orderHero(request);
     mark_ = false;
     marker_.dismiss();

@@ -386,6 +386,29 @@ bool QuestAuto::guard(Play& play) {
     return false;
 }
 
+// **What he fights with.** The right button's skill when the slot holds one; with it empty, the
+// first attack on his bar he knows and his hand may throw -- a wizard with Energy Ball on a key
+// and nothing on the right button swung his staff (bug #26, 2026-10-19: "it does physical with
+// staff if you do not have equipped any Main Skill. Could it use any or first registered in
+// QWERT?"). A primary first, as it is cast over and over; else any blow, and the realm swings
+// while its cooldown runs (Realm::press). No aura, summon, charge, channel or Teleport. -1 keeps
+// the quick slot's own.
+int32_t QuestAuto::striker(Play& play) const {
+    if (play.quickSkill() != 0) return -1;
+    const sim::Realm& realm = play.realm();
+    const uint32_t offHand = realm.wearer().offHand;
+    int32_t any = -1;
+    for (int i = 0; i < barCount_; ++i) {
+        const int32_t skill = bar_[i];
+        const sim::SkillRow* row = skill > 0 ? sim::skillNumbered(skill) : nullptr;
+        if (row == nullptr || !realm.knows(skill) || !row->suits(offHand)) continue;
+        if (row->onSelf() || row->chargeTicks > 0 || row->channelled() || row->blinks) continue;
+        if (row->primary()) return skill;
+        if (any < 0) any = skill;
+    }
+    return any;
+}
+
 // The nearest of the breed in sight that he can walk to -- whatever is fighting him first -- and
 // with nobody in sight, its nests he can walk to one after another. A nest behind a wall of this
 // map (the Dungeon's lower floors, 2026-10-17: muclassic stood at 97,145 asking for an archer's
@@ -428,7 +451,7 @@ bool QuestAuto::hunt(Play& play, int32_t breed) {
         const bool onIt = order.kind == sim::Request::Kind::Attack && order.target == fightNow->id;
         if (!onIt || fightNow->id != target_) {
             target_ = fightNow->id;
-            play.fight(target_);
+            play.fight(target_, striker(play));
         }
         nest_ = -1;
         still_ = 0;

@@ -69,6 +69,7 @@ private:
     // False when none of the breed on this map can be got to from where he stands.
     bool hunt(Play& play, int32_t breed);
     bool guard(Play& play);
+    int32_t striker(Play& play) const;
 
     double since_ = 0.0;
     int quest_ = -1;

@@ -219,8 +219,9 @@ public:
     int32_t quickSkill() const { return quickSkill_; }
     // The same Attack request a click on a body raises, by id and with no pointer: the arena's
     // hand. It goes through `Realm::ask` like every other order and decides nothing itself.
-    // Refused, silently, for a body that is not there or is already dead.
-    void fight(uint32_t id);
+    // Refused, silently, for a body that is not there or is already dead. `skill`, when given,
+    // is thrown in place of the quick slot's (quest auto-play's pick with the slot empty).
+    void fight(uint32_t id, int32_t skill = -1);
 
     // `hover` collects the SAME drawables -- same transform, same palette row -- for whichever
     // body is `pointedAt()` or whichever townsperson is `pointedFolk()`, so the outline ring
