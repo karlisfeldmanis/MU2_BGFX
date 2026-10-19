@@ -61,8 +61,6 @@ private:
         unsigned long long experience = 0;
         std::string name, guild;
         int stats[4] = {};
-        // Which of the four the stat runes raise, a bit each (Body::runeShare).
-        int raised = 0;
         Line keys[3];
         std::vector<Line> lines[4];  // what each attribute buys, under its well
         std::vector<Group> groups;   // the page open, when it is not Attributes

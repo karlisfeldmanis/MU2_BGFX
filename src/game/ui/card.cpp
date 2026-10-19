@@ -193,6 +193,17 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
             const auto row = [](const char* label, int v, bool percentSign) {
                 return Line{label, v <= 0 ? (percentSign ? "0%" : "0") : (percentSign ? plusPercent(v) : plus(v)), v <= 0};
             };
+            // The stat runes worn (Body::runeShare): the share, and what it adds to his points.
+            const auto rune = [](const char* label, int share, int added) {
+                if (share <= 0) return Line{label, "0%", true};
+                return Line{label, plusPercent(share) + " (" + plus(added) + ")", false};
+            };
+            const sim::HeroPoints& share = hero->runeShare;
+            now_.groups.push_back({"Stat runes",
+                                   {rune("Strength", share.strength, total.strength - hero->points.strength),
+                                    rune("Agility", share.agility, total.agility - hero->points.agility),
+                                    rune("Vitality", share.vitality, total.vitality - hero->points.vitality),
+                                    rune("Energy", share.energy, total.energy - hero->points.energy)}});
             now_.groups.push_back({"Resistances",
                                    {row("Ice", ex.iceResistance, false),
                                     row("Poison", ex.poisonResistance, false),
@@ -221,15 +232,14 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         now_.resets = 0;
         now_.guild = guild_;
         now_.experience = hero->experience;
-        now_.stats[0] = total.strength;
-        now_.stats[1] = total.agility;
-        now_.stats[2] = total.vitality;
-        now_.stats[3] = total.energy;
-        // With the stat runes in, as everything below them reads them; a raised one in blue.
-        now_.raised = (total.strength != hero->points.strength ? 1 : 0) |
-                      (total.agility != hero->points.agility ? 2 : 0) |
-                      (total.vitality != hero->points.vitality ? 4 : 0) |
-                      (total.energy != hero->points.energy ? 8 : 0);
+        // The points he spent, without the stat runes (the user, 2026-10-19: "dont show extra
+        // agility on characters stats because of runes, its missleading. show that info on
+        // bonuses"): what an item asks is met by these, and the runes' share is on Bonuses. What
+        // each buys below is still reckoned with the runes in, as the realm reckons it.
+        now_.stats[0] = hero->points.strength;
+        now_.stats[1] = hero->points.agility;
+        now_.stats[2] = hero->points.vitality;
+        now_.stats[3] = hero->points.energy;
 
         // The pointer, against this frame's layout.
         const Box cross = panel::scaled(x_, y_, panel::frameClose());
@@ -417,7 +427,7 @@ void Card::rebuild() {
             controls::label(canvas_, x + kLeft * k, base, kNameSize * k, kPlain, names[i]);
             const float figureRight = now_.points > 0 ? kFigureRight : kRight;
             controls::ranged(canvas_, x + figureRight * k, base, figure,
-                             (now_.raised >> i) & 1 ? panel::kOptioned : kHeading,
+                             kHeading,
                              std::to_string(now_.stats[i]));
             for (size_t l = 0; l < now_.lines[i].size(); ++l) {
                 const Line& line = now_.lines[i][l];
