@@ -210,6 +210,9 @@ public:
     // again when the tile under it changes (the user, 2026-10-16: "allow click to move work on
     // hold"; MU walks while it is held). leftLetGo when it comes up.
     void leftHeld();
+    // The tile a click on (column, row) walks to: itself, unless the route there is a detour,
+    // and then as far toward it as a straight line goes -- his own tile, when that is nowhere.
+    void clickGoal(int* column, int* row);
     void leftLetGo();
     // What the right button's quick slot holds, by MU's skill number, 0 for nothing. The desk's
     // and handed down each frame, as the bar is the interface's and the order is the realm's.
@@ -1834,6 +1837,12 @@ private:
     int leftColumn_ = -1, leftRow_ = -1;
     int walkedColumn_ = -1, walkedRow_ = -1;  // the goal of his last `Walked`
     int64_t leftAskedTick_ = 0;
+    // The hand's own router, for a click's detour (Play::clickGoal): never the realm's, whose
+    // scratch and counts are the sim's. Opened on the realm's grid, again when that changes.
+    sim::Router clickRouter_;
+    const content::Grid* clickGrid_ = nullptr;
+    int clickGridSize_ = 0;
+    std::vector<sim::Step> clickRoute_;
     bool arenaLeft_ = false;
     // The drawing's coin for a spell's two hands, `PLAYER_SKILL_HAND1 + rand() % 2`: its own,
     // so watching a wizard cast never moves the sim's seeded stream.

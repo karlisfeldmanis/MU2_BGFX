@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 
 #include "core/files.h"
@@ -311,6 +312,7 @@ void Play::leftClick() {
         request.kind = sim::Request::Kind::WalkTo;
         request.column = pointedColumn_;
         request.row = pointedRow_;
+        clickGoal(&request.column, &request.row);
     } else {
         return;
     }
@@ -321,8 +323,10 @@ void Play::leftClick() {
     // a self-cast: the realm keeps it for the clip's end (Realm::waits).
     if (realm_.held() && !realm_.waits() && request.kind != sim::Request::Kind::Attack) return;
     leftWalking_ = request.kind == sim::Request::Kind::WalkTo;
-    leftColumn_ = request.column;
-    leftRow_ = request.row;
+    // The tile pointed at, which a detour may have moved the walk off: the held button asks
+    // again when the pointer leaves it (leftHeld).
+    leftColumn_ = leftWalking_ ? pointedColumn_ : request.column;
+    leftRow_ = leftWalking_ ? pointedRow_ : request.row;
     leftAskedTick_ = realm_.tick();
     // A flinch does NOT hold the click, and that is ours: MU refuses it in PLAYER_SHOCK
     // (ZzzInterface.cpp:3127), and the user turned that down on 2026-09-29 -- a click to move
@@ -357,6 +361,7 @@ void Play::leftHeld() {
     leftColumn_ = pointedColumn_;
     leftRow_ = pointedRow_;
     leftAskedTick_ = realm_.tick();
+    clickGoal(&request.column, &request.row);
     orderHero(request);
     // No marker while steering: put down at every new tile it read as the click being spammed
     // (the user, 2026-10-16: "i dont like that click to move is spaming"). No early tick either;
@@ -846,6 +851,55 @@ void Play::walkTo(int column, int row) {
     request.column = column;
     request.row = row;
     orderHero(request);
+}
+
+// **A click is a way to head, and a long way round is not it** (a player's report, 2026-10-18,
+// at Lorencia 121,84: "clicking around north east near the player makes the character run
+// around the track not towards where you click it"). There he stands in the fenced ring by the
+// north gate, against the fence down column 120 (Fence03), with the row 86-87 fence below him
+// and the moat's bank behind that, open only past its east end. A click up the screen onto the
+// bank four tiles off -- or into the moat, which the router moves onto the bank -- walked twenty
+// tiles east, round the fence and back, and a click over the column 120 fence went round the
+// ring's top. MU plans the same (PATH::FindPath, 500 tiles) and walks 15 steps of it. Ours: a
+// route more than twice the straight way and kDetourSlack tiles more is not taken; he walks
+// straight at the click as far as the line is clear, to the fence, and a click at a fence he
+// is already against stops him where he is. A way round a house, a few tiles over the line, is
+// still walked. Only a click's: auto-play and --walk-to ask through walkTo, and a
+// route the router cannot find is left for the realm to refuse.
+constexpr int kDetourSlack = 4;
+
+void Play::clickGoal(int* column, int* row) {
+    const sim::Body& hero = realm_.hero();
+    const content::Grid* grid = &realm_.tables()->grid;
+    if (grid->empty()) return;
+    if (clickGrid_ != grid || clickGridSize_ != grid->size()) {
+        clickRouter_.open(grid);
+        clickGrid_ = grid;
+        clickGridSize_ = grid->size();
+    }
+    const uint16_t wall = content::kWallCharacter;
+    if (!clickRouter_.plan(hero.column(), hero.row(), *column, *row, wall, clickRoute_)) return;
+    // Against the tile the walk would end on, which for a click in a wall is the router's.
+    const sim::Step& end = clickRoute_.back();
+    const int straight = std::max(std::abs(end.column - hero.column()), std::abs(end.row - hero.row()));
+    if (int(clickRoute_.size()) <= 2 * straight + kDetourSlack) return;
+
+    // Along the line from where he stands to the tile clicked, a quarter tile at a time, the
+    // last tile he sees straight. The first he does not see ends it: past a fence, the line
+    // coming clear again is the far side.
+    const float toX = float(*column) - hero.x, toY = float(*row) - hero.y;
+    const float length = std::sqrt(toX * toX + toY * toY);
+    int bestColumn = hero.column(), bestRow = hero.row();
+    for (float along = 0.25f; along <= length; along += 0.25f) {
+        const int atColumn = int(std::lround(hero.x + toX * along / length));
+        const int atRow = int(std::lround(hero.y + toY * along / length));
+        if (atColumn == bestColumn && atRow == bestRow) continue;
+        if (!clickRouter_.sees(hero.x, hero.y, float(atColumn), float(atRow), wall)) break;
+        bestColumn = atColumn;
+        bestRow = atRow;
+    }
+    *column = bestColumn;
+    *row = bestRow;
 }
 
 bool Play::crownOf(uint32_t id, const float* viewProj, int width, int height, float* x,
