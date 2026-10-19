@@ -68,7 +68,11 @@ void audit(const Realm& realm, Findings& findings) {
         // (Realm::raidTick), so one walking after it is briefly past any fixed leash.
         const bool swarm = one.kind >= 0 && size_t(one.kind) < tables->kinds.size() &&
                            tables->kinds[size_t(one.kind)].number == kGoldenBudgeDragonNumber;
-        if (!one.player && one.raider < 0 && one.alive() && !rounds && !swarm) {
+        // Nor an elf's summon: its home is the tile it was called on, and it follows her from there
+        // (Realm::summon), so it is past any leash of that tile as soon as she walks -- the hero's
+        // own id plus one in nine players' logs of 2026-10-18/19, twenty findings a second.
+        const bool summoned = one.summoner != 0;
+        if (!one.player && one.raider < 0 && one.alive() && !rounds && !swarm && !summoned) {
             const int away = std::max(std::abs(one.column() - one.homeColumn),
                                       std::abs(one.row() - one.homeRow));
             if (away > kFurthest) {
