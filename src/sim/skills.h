@@ -649,8 +649,12 @@ constexpr int32_t kSummonKeepTicks = 40;
 // has a Golem of some 3 300 and a Bali of 34 000, where they were 17 000 and 174 000 -- and
 // since 2026-10-19 the health climb stops at the ladder's top (summonFit), so that Bali is
 // some 14 000 and her Dark Knight 9 000.
-constexpr float kSummonHealthPerEnergy = 1.0f / 200.0f;
-constexpr float kSummonHealthPerVitality = 1.0f / 400.0f;
+// A fifth off each of energy's and vitality's share of its health (the user, 2026-10-19: "elff
+// summon damage and hp need nerf more"): a level-150 elf of 250 energy and 80 vitality has a
+// Dark Knight of some 9 000 where it was 10 200, and a Bali of 13 600 where it was 15 400. A
+// third off was tried first: a level-60 elf's Golem then died before it killed anything.
+constexpr float kSummonHealthPerEnergy = 1.0f / 250.0f;
+constexpr float kSummonHealthPerVitality = 1.0f / 500.0f;
 constexpr float kSummonForcePerEnergy = 1.0f / 200.0f;
 constexpr float kSummonForcePerAgility = 1.0f / 800.0f;
 constexpr float kSummonLevelShare = 0.1f;      // the Goblin's share of her level

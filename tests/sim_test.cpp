@@ -3570,6 +3570,9 @@ void testSummons(const content::Tables& tables) {
           "an elf raises by the Skeleton Warriors");
     check(realm.equip(tables.armNamed("Bow01"), -1, true), "with the Short Bow");
     check(realm.spend(0, 0, 0, 150), "and puts 150 points into energy");
+    // And some into vitality, as a level-60 elf would: an elf of none fell beside the Skeleton
+    // Warriors once her Golem did (2026-10-19, the summons' health cut a fifth).
+    check(realm.spend(0, 0, 100, 0), "and 100 into vitality");
     check(realm.learn(sim::skill::kSummonGolem), "she knows Summon Stone Golem");
     const auto summonOf = [&]() -> const sim::Body* {
         for (const sim::Body& one : realm.bodies()) {
@@ -4066,6 +4069,7 @@ void testSummonAggro(const content::Tables& tables) {
           "an elf raises by the Skeleton Warriors");
     realm.equip(tables.armNamed("Bow01"), -1, true);
     realm.spend(0, 0, 0, 150);
+    realm.spend(0, 0, 40, 0);  // the rest into vitality, as testSummons's elf (2026-10-19)
     realm.learn(sim::skill::kSummonGolem);
     for (int wait = 0; wait < 6000 && realm.hero().mana < 70; ++wait) realm.step();
     realm.invoke(sim::skill::kSummonGolem, realm.hero().id);
@@ -4121,7 +4125,13 @@ void testSummonAggro(const content::Tables& tables) {
     // there how it was before"): recorded standing, restored into a fresh realm, raised on its
     // first tick at the health it was saved with.
     const sim::Body* still = realm.summoned();
+    // A Golem that fell in the fight above -- and her with it, back in town where nothing is
+    // summoned -- is raised afresh beside the Skeletons: what is checked is the record.
     if (still == nullptr || !still->alive()) {
+        realm.raise(&tables, 5, standColumn, standRow, sim::Kin::FairyElf, 40);
+        realm.equip(tables.armNamed("Bow01"), -1, true);
+        realm.spend(0, 0, 0, 150);
+        realm.learn(sim::skill::kSummonGolem);
         for (int wait = 0; wait < 6000 && realm.hero().mana < 70; ++wait) realm.step();
         realm.invoke(sim::skill::kSummonGolem, realm.hero().id);
         for (int tick = 0; tick < 60; ++tick) realm.step();

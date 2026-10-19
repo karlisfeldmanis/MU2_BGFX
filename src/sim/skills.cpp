@@ -1129,7 +1129,10 @@ SummonFit summonFit(const content::MonsterKind& kind, int heroLevel, const HeroP
     // of 5, and its defence rate of 199 turned three blows in four. Now 82 and 97.
     fit.defenseRate = float(kind.defenseRate) * climb(Ladder::DefenseRate);
     fit.defense = int(float(kind.defense) * std::sqrt(climb(Ladder::Defense)));
-    const float damage = climb(Ladder::Damage) * bites * kSummonDamageShare;
+    // Its bite climbs at the square root too (the user, 2026-10-19: "elff summon damage and hp
+    // need nerf more"): whole, a level-150 elf's Dark Knight bit for 816-843 and her Bali for
+    // 1 003-1 034; now 449-464 and 522-538, each summon still above the one before.
+    const float damage = std::sqrt(climb(Ladder::Damage)) * bites * kSummonDamageShare;
     fit.minimumDamage = int(float(kind.minimumDamage) * damage);
     fit.maximumDamage = int(float(kind.maximumDamage) * damage);
     return fit;
