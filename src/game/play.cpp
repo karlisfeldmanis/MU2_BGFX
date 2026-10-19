@@ -2235,6 +2235,7 @@ void Play::update(double seconds) {
     meteorImpacts_.clear();
     {
         QuakeFor here{realm_.hero().id};
+        if (ground_) here.safe = (ground_->attributesAt(realm_.hero().column(), realm_.hero().row()) & 0x01) != 0;
         if (const Drawn* me = drawnOf(here.hero); me != nullptr && me->placed) {
             here.x = me->crown[0];
             here.z = me->crown[2];
