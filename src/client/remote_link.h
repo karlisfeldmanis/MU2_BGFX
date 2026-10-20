@@ -79,6 +79,10 @@ public:
     void setStall(double ms, double everySeconds);
     // The tick datagrams (sprint 24), on unless a test turns them off (`--no-udp`).
     void setUdp(bool on) { udpWanted_ = on; }
+    // Whether a hash the mirror does not match closes the line, for PlayMode's reconnect to join
+    // again on the server's snapshot (RemoteLink::check). The game's; netbot keeps playing on and
+    // reports it.
+    void setResync(bool on) { resync_ = on; }
     // How many ticks came first by datagram, and by the stream.
     uint32_t ticksByUdp() const { return byUdp_; }
     uint32_t ticksByStream() const { return byStream_; }
@@ -167,6 +171,7 @@ private:
     std::deque<net::Hash> theirs_;                       // the server's, not yet compared
     std::deque<std::pair<uint32_t, uint64_t>> ours_;     // the mirror's, by tick, the last few
     uint32_t agreed_ = 0, divergedAt_ = 0;
+    bool resync_ = false;  // setResync's
     uint32_t you_ = 0;
     std::vector<uint8_t> snapshot_;  // the Welcome's, laid on the mirror by catchUp
     // The readout's round trip: the Ping out and when it went, and the smoothed result in ms.

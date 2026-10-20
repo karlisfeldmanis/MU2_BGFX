@@ -61,6 +61,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         remote->setLoss(lossChance_);
         remote->setStall(stallMs_, stallEvery_);
         remote->setUdp(udp_);
+        remote->setResync(true);
         net::Hello hello;
         hello.world = world;
         hello.kin = uint8_t(kin);

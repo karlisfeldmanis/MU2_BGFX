@@ -153,6 +153,15 @@ constexpr auto kRejoinSilent = std::chrono::seconds(11);
 constexpr auto kRejoinClosed = std::chrono::seconds(2);
 // Chat lines held for a taker (Link::takeHeard); a client that never takes them keeps the last few.
 constexpr size_t kHeardMost = 256;
+// **A mirror out of step is joined again** (RemoteLink::check): the line is closed and PlayMode's
+// reconnect joins the same world on the server's own snapshot. Diverged and played on, the mirror
+// showed a bag the server did not have -- a box's +9s picked up, gloves still in their cell --
+// and the next map change, which lays the server's character, took them all away (the user,
+// 2026-10-20, of MAGICTOMA in the Lost Tower: "got some +9 items from boxes - and then travel to
+// devias, its dessapeared"). At most this many a run, so a mirror that diverges on every join
+// plays on, logged, rather than reconnecting for ever. **ours**.
+constexpr int kMostResyncs = 3;
+int resyncs = 0;
 
 // The Disconnected window's line for each of the server's reasons (net::Why).
 const char* whyOf(net::Why why) {
@@ -750,6 +759,12 @@ void RemoteLink::check() {
             divergedAt_ = one.tick;
             core::logError("server: the mirror DIVERGED from the server at tick %u "
                            "(%u hashes agreed before it)", one.tick, agreed_);
+            if (resync_ && resyncs < kMostResyncs) {
+                ++resyncs;
+                core::logf("server: joining again on the server's snapshot (%d of %d)", resyncs, kMostResyncs);
+                close("Out of step with the server. Joining again...");
+                return;
+            }
         }
         theirs_.pop_front();
     }
