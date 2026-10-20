@@ -506,13 +506,17 @@ void Broker::rebuild(Play& play, Stage* stage) {
                 // The seller.
                 hair(card.x + in, card.bottom() - 96.0f, card.w - 2.0f * in, style::kIronDk);
                 const bool online = (row->flags & net::BrokerRow::Online) != 0;
+                // One market for every realm (docs/game/shared-market.md): a seller elsewhere is
+                // named so, and has no Whisper.
+                const bool elsewhere = (row->flags & net::BrokerRow::Elsewhere) != 0;
                 dot(card.x + in, card.bottom() - 82.0f, online);
                 const float w = text(card.x + in + 8.0f, card.bottom() - 78.0f, kCaption, style::kAshInk, "Sold by ");
                 text(card.x + in + 8.0f + w / k, card.bottom() - 78.0f, kText,
                      state(Hit::Seller, 0).lift > 0.0f ? style::kBoneHi : kGold, own ? row->seller + " (you)" : row->seller);
                 text(card.x + in + 8.0f, card.bottom() - 65.0f, kCaption, row->secondsLeft < 7200 ? style::kDanger : style::kAshInk,
-                     std::string(online ? "Online" : "Offline") + " · " + hoursLeft(row->secondsLeft) + " left");
-                button(Hit::Whisper, 0, "Whisper", controls::Kind::Secondary);
+                     std::string(elsewhere ? "Another realm" : online ? "Online" : "Offline") + " · " +
+                         hoursLeft(row->secondsLeft) + " left");
+                if (!elsewhere) button(Hit::Whisper, 0, "Whisper", controls::Kind::Secondary);
             }
             // What it will cost him, and where the thing goes.
             int64_t cost = row->price;

@@ -238,7 +238,9 @@ void Broker::layout(Play& play) {
                 spot({mx, qy, kCard.right() - in - mx, kButtonH}, Hit::MostQty);
             } else {
                 spot({kCard.x + in, kCard.bottom() - 88.0f, 110.0f, 14.0f}, Hit::Seller);
-                if (!own) spot({kCard.right() - in - 56.0f, kCard.bottom() - 88.0f, 56.0f, kButtonH}, Hit::Whisper);
+                // A seller on another realm is no one to whisper (docs/game/shared-market.md).
+                const bool elsewhere = (row->flags & net::BrokerRow::Elsewhere) != 0;
+                if (!own && !elsewhere) spot({kCard.right() - in - 56.0f, kCard.bottom() - 88.0f, 56.0f, kButtonH}, Hit::Whisper);
             }
             if (!own) spot({kCard.x + in, kCard.bottom() - in - kPrimaryH, kCard.w - 2.0f * in, kPrimaryH}, Hit::Buy);
         }

@@ -136,6 +136,14 @@ public:
     // that writes the characters it moved things for. False when the disk said no, or none yet.
     bool keepBook(const std::vector<uint8_t>& bytes);
     bool findBook(std::vector<uint8_t>& bytes);
+    // And the shared market's rows beside it (docs/game/shared-market.md), by id: 1 the book, 2 the
+    // keeper's ledger (its holds, sellers' realms, the asks applied), 3 the hands' outbox. Several
+    // written in one transaction, so a book and the holds taken out of it never disagree on the
+    // disk. The renumbering of one written with another item list, or null.
+    enum : int { kBookRow = 1, kLedgerRow = 2, kOutboxRow = 3 };
+    bool keepBroker(const std::vector<std::pair<int, std::vector<uint8_t>>>& rows);
+    bool findBroker(int id, std::vector<uint8_t>& bytes);
+    const std::vector<int32_t>* brokerRenumber(int id);
 
     // **The guilds** (docs/game/guild.md, server/src/guild_store.cpp): a row a guild and a row a
     // member, by his character's token; written whole whenever the guild changes, as WebZen's

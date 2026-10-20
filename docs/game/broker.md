@@ -5,6 +5,10 @@ open one market. Players and bots list things from the bag or the vault at a buy
 buy what others list. Designed on the canvas https://claude.ai/artifact/1f7nUNsQRELX6BMbnf84Bk
 (2026-10-11); the user's rulings are below and are not to be re-argued.
 
+Since 2026-10-21 every realm can share one market: one server keeps the book and the others are
+its hands over a line (docs/game/shared-market.md). Without the market flags a server keeps its
+own, as before.
+
 ## The rules (the user, 2026-10-11)
 
 | | ruling |

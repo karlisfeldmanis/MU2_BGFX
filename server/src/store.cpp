@@ -640,6 +640,47 @@ bool Store::findBook(std::vector<uint8_t>& bytes) {
     return true;
 }
 
+bool Store::keepBroker(const std::vector<std::pair<int, std::vector<uint8_t>>>& rows) {
+    if (db_ == nullptr || !exec(db_, "BEGIN")) return false;
+    bool ok = true;
+    {
+        Statement q(db_, "INSERT OR REPLACE INTO broker (id, book, saved, items) VALUES (?, ?, ?, ?)");
+        ok = bool(q);
+        for (const auto& [id, bytes] : rows) {
+            if (!ok) break;
+            sqlite3_bind_int(q.s, 1, id);
+            sqlite3_bind_blob(q.s, 2, bytes.data(), int(bytes.size()), SQLITE_TRANSIENT);
+            sqlite3_bind_int64(q.s, 3, sqlite3_int64(std::time(nullptr)));
+            sqlite3_bind_int(q.s, 4, items_);
+            ok = sqlite3_step(q.s) == SQLITE_DONE;
+            if (!ok) core::logError("characters.db: the market's row %d: %s", id, sqlite3_errmsg(db_));
+            sqlite3_reset(q.s);
+        }
+    }
+    return exec(db_, ok ? "COMMIT" : "ROLLBACK") && ok;
+}
+
+bool Store::findBroker(int id, std::vector<uint8_t>& bytes) {
+    if (db_ == nullptr) return false;
+    Statement q(db_, "SELECT book FROM broker WHERE id = ?");
+    if (!q) return false;
+    sqlite3_bind_int(q.s, 1, id);
+    if (sqlite3_step(q.s) != SQLITE_ROW) return false;
+    const auto* at = static_cast<const uint8_t*>(sqlite3_column_blob(q.s, 0));
+    bytes.assign(at, at + sqlite3_column_bytes(q.s, 0));
+    return true;
+}
+
+const std::vector<int32_t>* Store::brokerRenumber(int id) {
+    if (db_ == nullptr) return nullptr;
+    Statement q(db_, "SELECT items FROM broker WHERE id = ?");
+    if (!q) return nullptr;
+    sqlite3_bind_int(q.s, 1, id);
+    if (sqlite3_step(q.s) != SQLITE_ROW) return nullptr;
+    const auto found = renumbers_.find(sqlite3_column_int(q.s, 0));
+    return found == renumbers_.end() ? nullptr : &found->second;
+}
+
 bool Store::findPass(const std::string& ticket, PassRow& out) {
     if (db_ == nullptr) return false;
     Statement q(db_, "SELECT account, secret, count, until FROM passes WHERE ticket = ? AND until >= ?");

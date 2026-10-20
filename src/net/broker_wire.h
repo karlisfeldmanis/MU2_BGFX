@@ -42,7 +42,8 @@ struct BrokerAsk {
 
 // One row of the Buy tab or of his listings.
 struct BrokerRow {
-    enum Flag : uint8_t { Online = 1, Own = 2, Alike = 4, Bot = 8, Watched = 16 };
+    // Elsewhere: the seller plays on another realm (docs/game/shared-market.md), no one to whisper.
+    enum Flag : uint8_t { Online = 1, Own = 2, Alike = 4, Bot = 8, Watched = 16, Elsewhere = 32 };
     uint32_t id = 0;        // the listing; for alike things, the cheapest
     sim::Held what;
     int64_t price = 0;      // its, or the cheapest of the alike

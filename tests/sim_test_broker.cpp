@@ -379,6 +379,41 @@ void testBrokerWire() {
           "and a BrokerView");
 }
 
+// A server's own book taken into the keeper's (docs/game/shared-market.md): new numbers, its
+// Collects and its sales joined, a watch following its listing.
+void testBrokerMerge(const content::Tables& tables) {
+    const int32_t bless = labelled(tables, "Jewel of Bless");
+    if (bless < 0) return;
+    sim::Book keeper, theirs;
+    const uint32_t first = keeper.list(listingOf("acct-a", 1, bless, 5000), 24, 100);
+    const uint32_t mine = theirs.list(listingOf("acct-b", 2, bless, 6000), 24, 200);
+    theirs.list(listingOf("acct-b", 2, bless, 7000), 12, 300);
+    theirs.deliver(3, sim::Parcel{sim::Held{}, 900, 50, sim::Parcel::Why::Sold});
+    sim::Listing sold = listingOf("acct-c", 3, bless, 8000);
+    theirs.sold(sold, 400);
+    keeper.sold(listingOf("acct-a", 1, bless, 4000), 100);
+    theirs.watch(7, mine, true);
+    theirs.watch(7, sim::Book::watchItem(bless), true);
+    std::vector<uint64_t> tokens;
+    keeper.merge(theirs, &tokens);
+    checkEqual((long long)keeper.listings().size(), 3, "merged: both books' listings");
+    check(keeper.find(first) != nullptr && keeper.find(first)->seller == 1, "the keeper's own keeps its number");
+    const sim::Listing* moved = nullptr;
+    for (const sim::Listing& l : keeper.listings()) {
+        if (l.seller == 2 && l.price == 6000) moved = &l;
+    }
+    check(moved != nullptr && moved->id != first, "theirs numbered anew");
+    check(moved != nullptr && keeper.watching(7, *moved, false), "and a watch on it follows it");
+    check(keeper.watching(7, *keeper.find(first), true), "a watch on alike things kept");
+    checkEqual((long long)keeper.collectOf(3).size(), 2, "a Collect joined: the 900 and the sale's");
+    checkEqual((long long)keeper.salesOf(bless).size(), 2, "both books' sales");
+    check(keeper.salesOf(bless).front().price == 8000, "the newest first");
+    check(tokens == std::vector<uint64_t>{2, 3}, "and every token in it named");
+    std::vector<uint8_t> bytes = keeper.write();
+    sim::Book back;
+    check(back.read(bytes) && back.listings().size() == 3, "the merged book written and read");
+}
+
 }  // namespace
 
 void testBroker(const content::Tables& tables, void (*checkOf)(bool, const char*),
@@ -389,4 +424,5 @@ void testBroker(const content::Tables& tables, void (*checkOf)(bool, const char*
     testBrokerRules(tables);
     testBrokerRealm(tables);
     testBrokerWire();
+    testBrokerMerge(tables);
 }

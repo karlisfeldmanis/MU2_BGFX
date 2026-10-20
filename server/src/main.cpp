@@ -240,6 +240,8 @@ int main(int argc, char** argv) {
     std::string assets = MU2_ASSET_DIR;
     std::string store = "characters.db";
     int marketSample = 0;  // --market-sample N (broker.h)
+    int marketServePort = 0;
+    std::string marketAtAddress, marketKeyHex;
     sim::RealmConfig config;
     if (const char* region = std::getenv("MU2_REGION"); region != nullptr && *region) g_region = region;
     for (int i = 1; i < argc; ++i) {
@@ -261,6 +263,11 @@ int main(int argc, char** argv) {
         }
         else if (a == "--storm") g_storm = true;
         else if (a == "--market-sample" && i + 1 < argc) marketSample = std::max(0, std::atoi(argv[++i]));
+        // One market for every realm (docs/game/shared-market.md): this server keeps the book and
+        // takes the others' lines on a port, or is hands to the keeper at host:port.
+        else if (a == "--market-serve" && i + 1 < argc) marketServePort = std::atoi(argv[++i]);
+        else if (a == "--market-at" && i + 1 < argc) marketAtAddress = argv[++i];
+        else if (a == "--market-key" && i + 1 < argc) marketKeyHex = argv[++i];
         else if (a == "--invasion") g_invasion = true;
         else if (a == "--map-cap" && i + 1 < argc) g_mapCap = std::max(1, std::atoi(argv[++i]));
         else if (a == "--castle-period" && i + 1 < argc) {
@@ -297,7 +304,7 @@ int main(int argc, char** argv) {
             const int s = std::max(2, std::atoi(argv[++i]));
             config.square = {s, s / 2, s / 2};
         } else {
-            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--accounts HOST:PORT] [--launcher-only] [--region NAME] [--castle-period S] [--square-period S] [--kit LEVEL:STEM+N,...] [--kit-done Q,...] [--storm] [--invasion] [--map-cap N] [--speed N]\n");
+            std::fprintf(stderr, "usage: mu2_server [--port N] [--assets DIR] [--store FILE] [--accounts HOST:PORT] [--launcher-only] [--region NAME] [--castle-period S] [--square-period S] [--kit LEVEL:STEM+N,...] [--kit-done Q,...] [--storm] [--invasion] [--map-cap N] [--speed N] [--market-serve PORT | --market-at HOST:PORT] [--market-key HEX]\n");
             return 2;
         }
     }
@@ -328,6 +335,27 @@ int main(int argc, char** argv) {
         return 1;
     }
     economyOpen(store);
+    if (marketServePort > 0 || !marketAtAddress.empty()) {
+        if (marketKeyHex.empty() && std::getenv("MU2_MARKET_KEY") != nullptr) marketKeyHex = std::getenv("MU2_MARKET_KEY");
+        if (marketServePort > 0 && !marketAtAddress.empty()) {
+            core::logError("--market-serve and --market-at: a server keeps the book or is hands, not both");
+            return 2;
+        }
+        if (!marketKey(marketKeyHex)) {
+            core::logError("the shared market needs its key, 64 hex digits (--market-key or MU2_MARKET_KEY)");
+            return 2;
+        }
+        if (marketServePort > 0 && !marketServe(marketServePort, error)) {
+            core::logError("the market's port: %s", error.c_str());
+            return 1;
+        }
+        if (!marketAtAddress.empty() && !marketAt(marketAtAddress)) {
+            core::logError("--market-at %s: not HOST:PORT", marketAtAddress.c_str());
+            return 2;
+        }
+        core::logf("market: %s", marketServePort > 0 ? ("the keeper, lines on " + std::to_string(marketServePort)).c_str()
+                                                     : ("hands to the keeper at " + marketAtAddress).c_str());
+    }
     brokerOpen();
     loadGuilds();
     if (marketSample > 0) brokerSample(marketSample);
@@ -411,6 +439,8 @@ int main(int argc, char** argv) {
             if (i < ready.size() && !ready[i]) continue;
             if (one.socket.open() && !hear(one, worlds, sessions, assets, config, seeds)) bye(one, net::Why::Protocol);
         }
+        // The market's line: the keeper's asks heard and answered, or the keeper's answers here.
+        marketPass(sessions);
         const double heardMs = msSince(passAt);
         // Step every world on its deadline, owing ticks rather than dropping them, and flush.
         const auto now = Clock::now();
@@ -606,6 +636,7 @@ int main(int argc, char** argv) {
             watch.push_back({one->socket.fd(), wants, 0});
         }
         if (g_udp.open()) watch.push_back({g_udp.fd(), POLLIN, 0});
+        marketWatch(watch);
         const auto left = std::max<Clock::duration>(Clock::duration::zero(), wake - Clock::now());
 #ifdef __linux__
         const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(left).count();

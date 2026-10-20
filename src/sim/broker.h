@@ -136,6 +136,10 @@ public:
     bool watching(uint64_t who, const Listing& listing, bool alike) const;
 
     const std::vector<Listing>& listings() const { return listings_; }
+    // Nothing listed, in a Collect, sold or watched: a hands server's book after it handed it over.
+    bool empty() const {
+        return listings_.empty() && collect_.empty() && sales_.empty() && soldBy_.empty() && watches_.empty();
+    }
     int countOf(const std::string& account) const;
     // Moved by every change: a window redraws on it, the server saves on it.
     uint32_t version() const { return version_; }
@@ -146,6 +150,11 @@ public:
     // an item no longer made): server::Store::bookRenumber's, for a book from another item list.
     // A listing or a parcel of a gone item is dropped, and a watch on one forgotten.
     void renumber(const std::vector<int32_t>& map);
+    // Another book taken into this one (docs/game/shared-market.md): a server's own from before the
+    // realms shared one market. Its listings get this book's next numbers (a watch on one follows
+    // it), its Collects and sales join these, the newest sales kept. Every token in it is
+    // `tokens`'s, for the keeper to call that realm's.
+    void merge(const Book& other, std::vector<uint64_t>* tokens = nullptr);
 
 private:
     std::vector<Listing> listings_;

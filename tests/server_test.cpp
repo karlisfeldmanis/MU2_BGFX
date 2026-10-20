@@ -11,12 +11,18 @@
 #include <filesystem>
 #include <random>
 #include <string>
+#include <thread>
 
 #include <sqlite3.h>
 #include <sys/socket.h>
 
 #include "core/files.h"
 #include "host.h"
+#include "keeper.h"
+#include "broker.h"
+#include "sim/wear.h"
+#include "market_link.h"
+#include "net/pass.h"
 
 namespace {
 
@@ -653,6 +659,288 @@ void testDealLeave() {
     check(realm.dealing() == 0u, "the trade is called off");
 }
 
+
+// ---- one market for every realm (docs/game/shared-market.md) ---------------------------------
+//
+// The keeper as another realm's line would ask it: a listing applied once however often it is
+// said, a buy's hold settled or put back, a Collect's returned, a book merged, and the ledger
+// that holds all that read back after a restart. Then the line's frames, read back.
+void testSharedMarket() {
+    std::printf("shared market\n");
+    std::string error;
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur", g_items, error),
+          "tables: " + error);
+    // testGuild's store, open already: a second open would start a second checkpointer.
+    check(g_store.useItems(g_items, error), "the store numbers by these items: " + error);
+    std::vector<std::unique_ptr<Session>> sessions;
+    keeperOpen();
+    keeperSample(6);
+    const MarketSource central{"Central Europe", "Central Europe#01"};
+    const Trader cara{0xCE01, "acct-cara", "Cara", false, "Central Europe"};
+    const Trader nils{0x4E01, "acct-nils", "Nils", false, g_region};
+
+    MarketAsk browse{.op = MarketOp::View, .serial = 1, .who = cara};
+    browse.ask.what = net::BrokerWhat::Browse;
+    MarketAnswer page = keeperServe(browse, central, sessions);
+    check(page.view.total > 0 && !page.view.rows.empty(), "another realm browses the keeper's book");
+    check(!page.view.rows.empty() && (page.view.rows[0].flags & net::BrokerRow::Elsewhere) != 0,
+          "and the keeper's own sellers are elsewhere to it");
+
+    int32_t bless = -1;
+    for (size_t i = 0; i < g_items.items.size(); ++i) {
+        if (g_items.items[i].label == "Jewel of Bless") bless = int32_t(i);
+    }
+    check(bless >= 0, "a Bless to list");
+    sim::Held jewel;
+    jewel.item = std::max(0, bless);
+    jewel.durability = 1;
+    const int64_t floor = std::max<int64_t>(1, sim::npcValue(g_items, jewel));
+    MarketAsk may{.op = MarketOp::MayList, .serial = 2, .who = cara, .floor = floor};
+    may.ask.price = floor * 2;
+    may.ask.hours = 24;
+    check(keeperServe(may, central, sessions).no == uint8_t(sim::BrokerNo::Yes), "she may list");
+    may.ask.price = floor - 1;
+    check(floor <= 1 || keeperServe(may, central, sessions).no == uint8_t(sim::BrokerNo::Low), "not under a merchant's");
+
+    MarketAsk up{.op = MarketOp::List, .serial = 3, .who = cara};
+    up.ask.hours = 24;
+    up.listing = sim::Listing{0, cara.token, cara.account, cara.name, jewel, floor * 2, floor, 0, 0};
+    const MarketAnswer listed = keeperServe(up, central, sessions);
+    check(listed.no == uint8_t(sim::BrokerNo::Yes) && listed.view.mine.size() == 1, "her listing up, in her window");
+    keeperServe(up, central, sessions);
+    MarketAsk look{.op = MarketOp::View, .serial = 4, .who = cara};
+    look.ask.what = net::BrokerWhat::Look;
+    check(keeperServe(look, central, sessions).view.mine.size() == 1, "said twice, listed once (rule 3)");
+    const uint32_t hers = listed.view.mine.empty() ? 0 : listed.view.mine[0].id;
+    check(!listed.view.mine.empty() && (listed.view.mine[0].flags & net::BrokerRow::Elsewhere) == 0,
+          "her own listing is not elsewhere to her");
+    check(brokerHolds(cara.token) && keeperHolders("Central Europe") == std::vector<uint64_t>{cara.token},
+          "she holds something: her realm is told");
+
+    // Nils, on the keeper's realm, buys hers: held, then settled sold.
+    MarketAsk buy{.op = MarketOp::Take, .serial = 7, .who = nils};
+    buy.ask.listing = hers;
+    buy.ask.count = 1;
+    const MarketSource local{g_region, ""};
+    const MarketAnswer held = keeperServe(buy, local, sessions);
+    check(held.no == uint8_t(sim::BrokerNo::Yes) && held.listings.size() == 1, "her listing held for his buy");
+    MarketAsk again = buy;
+    again.serial = 8;
+    check(keeperServe(again, local, sessions).no == uint8_t(sim::BrokerNo::Gone), "and not to be bought twice");
+    MarketAsk paid{.op = MarketOp::Settle, .serial = 9, .who = nils, .hold = 7};
+    paid.answers = {1};
+    keeperServe(paid, local, sessions);
+    look.serial = 10;
+    const MarketAnswer after = keeperServe(look, central, sessions);
+    check(after.view.mine.empty() && after.view.box.size() == 1 && after.view.box[0].zen == floor * 2,
+          "sold: her Zen waits in her Collect on her realm");
+
+    // Cara takes her box: one parcel would not fit and is returned.
+    MarketAsk box{.op = MarketOp::TakeBox, .serial = 11, .who = cara};
+    const MarketAnswer boxed = keeperServe(box, central, sessions);
+    check(boxed.parcels.size() == 1, "her box held for a Collect");
+    MarketAsk back{.op = MarketOp::Return, .serial = 12, .who = cara, .hold = 11};
+    back.parcels = boxed.parcels;
+    look.serial = 13;
+    check(keeperServe(look, central, sessions).view.box.empty(), "out of the box while held");
+    keeperServe(back, central, sessions);
+    look.serial = 14;
+    check(keeperServe(look, central, sessions).view.box.size() == 1, "what did not reach her back in it");
+
+    // Cara buys a sample: the line goes before she settles, and her server says it works on no hold.
+    MarketAsk sample{.op = MarketOp::View, .serial = 15, .who = cara};
+    sample.ask.what = net::BrokerWhat::Browse;
+    const MarketAnswer samples = keeperServe(sample, central, sessions);
+    const uint32_t some = samples.view.rows.empty() ? 0 : samples.view.rows[0].id;
+    MarketAsk take{.op = MarketOp::Take, .serial = 16, .who = cara};
+    take.ask.listing = some;
+    const size_t before = samples.view.total;
+    check(keeperServe(take, central, sessions).listings.size() == 1, "a sample held for her");
+    keeperLive(central.stream, {16});
+    sample.serial = 17;
+    check(keeperServe(sample, central, sessions).view.total == before - 1, "a hold still worked on stays out");
+    keeperLive(central.stream, {});
+    sample.serial = 18;
+    check(keeperServe(sample, central, sessions).view.total == before, "one nobody works on goes back (rule 4)");
+
+    // A hold of the keeper's own hands, and the keeper starts again: put back.
+    take.serial = 19;
+    check(keeperServe(take, local, sessions).listings.size() == 1, "held by this server's own hands");
+    keeperKeep();
+    keeperOpen();
+    sample.serial = 20;
+    check(keeperServe(sample, central, sessions).view.total == before, "and back in the book after a restart");
+    look.serial = 21;
+    check(keeperServe(look, central, sessions).view.box.size() == 1, "her Collect read back from the disk");
+
+    // A realm's own book from before, merged once.
+    sim::Book theirs;
+    sim::Held armour;
+    armour.item = std::max(0, g_items.itemNamed("ArmorMale01"));
+    armour.durability = int16_t(std::max(1, sim::maximumDurability(g_items.items[size_t(armour.item)], armour)));
+    theirs.list(sim::Listing{0, 0xCE02, "acct-dov", "Dov", armour, 999999, 1, 0, 0}, 12, wallNow());
+    MarketAsk merge{.op = MarketOp::Merge, .serial = 22};
+    merge.who.region = "Central Europe";
+    merge.book = theirs.write();
+    keeperServe(merge, central, sessions);
+    keeperServe(merge, central, sessions);
+    sample.serial = 23;
+    sample.who = nils;
+    sample.ask.query.sellerName = "Dov";
+    const MarketAnswer merged = keeperServe(sample, local, sessions);
+    check(merged.view.total == 1, "a realm's old book merged once");
+    check(merged.view.rows.size() == 1 && (merged.view.rows[0].flags & net::BrokerRow::Elsewhere) != 0,
+          "and its sellers are of that realm");
+
+    // The line's frames.
+    MarketAsk round = up;
+    round.answers = {1, -1, 3};
+    round.parcels = boxed.parcels;
+    round.book = merge.book;
+    MarketAsk read;
+    check(parse(bodyOf(round), read) && read.serial == 3 && read.who.name == "Cara" &&
+              read.listing.price == floor * 2 && read.answers == round.answers && read.parcels.size() == 1 &&
+              read.book == round.book && read.ask.hours == 24,
+          "an ask over the line and back");
+    MarketAnswer readAnswer;
+    check(parse(bodyOf(held), readAnswer) && readAnswer.listings.size() == 1 &&
+              readAnswer.listings[0].id == held.listings[0].id,
+          "an answer over the line and back");
+    std::vector<uint8_t> stream;
+    putLink(stream, LinkKind::Answer, bodyOf(held));
+    putLink(stream, LinkKind::Live, bodyOf(std::vector<std::pair<uint64_t, bool>>{{16, false}}));
+    std::vector<uint8_t> half(stream.begin(), stream.begin() + 9);
+    size_t at = 0;
+    LinkKind kind{};
+    std::vector<uint8_t> body;
+    check(takeLink(half, at, kind, body) == 0 && at == 0, "half a frame waits");
+    check(takeLink(stream, at, kind, body) == 1 && kind == LinkKind::Answer, "a whole one is read");
+    std::vector<std::pair<uint64_t, bool>> live;
+    check(takeLink(stream, at, kind, body) == 1 && kind == LinkKind::Live && parse(body, live) && live.size() == 1 &&
+              live[0].first == 16,
+          "and the next after it");
+    uint64_t streamId = 0, next = 0;
+    std::vector<MarketAsk> asks;
+    check(readOutbox(writeOutbox(77, 30, {round, up}), streamId, next, asks) && streamId == 77 && next == 30 &&
+              asks.size() == 2,
+          "an outbox written and read");
+}
+
+// The keeper's line over a real socket, a third realm played by the test: let in by its key and
+// item list and refused without them, its answers held until the keeper has saved (rule 2), a
+// durable ask said twice listed once, and news of its seller's sale sent down its line.
+void testMarketLine() {
+    std::printf("market line\n");
+    std::vector<std::unique_ptr<Session>> sessions;
+    const std::string key(64, 'a');
+    std::string error;
+    check(marketKey(key) && marketServe(45691, error), "the keeper takes lines: " + error);
+    const auto pump = [&](net::Socket& probe, std::vector<uint8_t>& in, LinkKind want, std::vector<uint8_t>& body) {
+        for (int i = 0; i < 100; ++i) {
+            marketPass(sessions);
+            probe.receive(in);
+            size_t at = 0;
+            LinkKind kind{};
+            while (takeLink(in, at, kind, body) == 1) {
+                if (kind == want) {
+                    in.erase(in.begin(), in.begin() + long(at));
+                    return true;
+                }
+            }
+            in.erase(in.begin(), in.begin() + long(at));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        return false;
+    };
+    const auto send = [](net::Socket& probe, LinkKind kind, const std::vector<uint8_t>& body) {
+        std::vector<uint8_t> out;
+        putLink(out, kind, body);
+        probe.send(out);
+        probe.flush();
+    };
+
+    // A line with the wrong key is refused.
+    net::Socket stranger;
+    std::vector<uint8_t> in, body;
+    check(stranger.connect("127.0.0.1", 45691, 2.0, error), "a stranger reaches the port: " + error);
+    std::string nonce;
+    check(pump(stranger, in, LinkKind::Challenge, body) && parse(body, nonce), "and is challenged");
+    send(stranger, LinkKind::Hello,
+         bodyOf(LinkHello{"South America", 1, itemsFingerprint(g_items), net::passProof(std::string(64, 'b'), nonce, 1)}));
+    check(pump(stranger, in, LinkKind::Refused, body), "without the key, refused");
+
+    net::Socket line;
+    in.clear();
+    check(line.connect("127.0.0.1", 45691, 2.0, error), "a realm reaches the keeper: " + error);
+    check(pump(line, in, LinkKind::Challenge, body) && parse(body, nonce), "challenged");
+    send(line, LinkKind::Hello,
+         bodyOf(LinkHello{"South America", 0xABC, itemsFingerprint(g_items), net::passProof(key, nonce, 1)}));
+    check(pump(line, in, LinkKind::Welcome, body), "with the key and our items, let in");
+    send(line, LinkKind::Live, bodyOf(std::vector<std::pair<uint64_t, bool>>{}));
+
+    int32_t bless = -1;
+    for (size_t i = 0; i < g_items.items.size(); ++i) {
+        if (g_items.items[i].label == "Jewel of Bless") bless = int32_t(i);
+    }
+    sim::Held jewel;
+    jewel.item = std::max(0, bless);
+    jewel.durability = 1;
+    const Trader rosa{0x5A01, "acct-rosa", "Rosa", false, "South America"};
+    MarketAsk up{.op = MarketOp::List, .serial = 1, .who = rosa};
+    up.ask.hours = 12;
+    up.ask.ask = 77;
+    up.listing = sim::Listing{0, rosa.token, rosa.account, rosa.name, jewel, 123456, 1, 0, 0};
+    send(line, LinkKind::Ask, bodyOf(up));
+    for (int i = 0; i < 20; ++i) {
+        marketPass(sessions);
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+    line.receive(in);
+    size_t at = 0;
+    LinkKind kind{};
+    check(takeLink(in, at, kind, body) == 0, "its answer waits for the keeper's save (rule 2)");
+    brokerKeep();
+    MarketAnswer answer;
+    check(pump(line, in, LinkKind::Answer, body) && parse(body, answer) && answer.serial == 1 &&
+              answer.no == uint8_t(sim::BrokerNo::Yes) && answer.view.mine.size() == 1 && answer.view.answered == 77,
+          "saved: listed, answered with her window");
+    send(line, LinkKind::Ask, bodyOf(up));
+    marketPass(sessions);
+    brokerKeep();
+    check(pump(line, in, LinkKind::Answer, body) && parse(body, answer) && answer.view.mine.size() == 1,
+          "said again after a lost answer: still one listing");
+    const uint32_t hers = answer.view.mine.empty() ? 0 : answer.view.mine[0].id;
+
+    // Who is on there: her dot lights on the keeper's own browse.
+    send(line, LinkKind::Present, bodyOf(std::vector<std::pair<uint64_t, bool>>{{rosa.token, false}}));
+    for (int i = 0; i < 10; ++i) marketPass(sessions), std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    const Trader nils{0x4E01, "acct-nils", "Nils", false, g_region};
+    MarketAsk look{.op = MarketOp::View, .serial = 900, .who = nils};
+    look.ask.what = net::BrokerWhat::Browse;
+    look.ask.query.sellerName = "Rosa";
+    const MarketAnswer seen = keeperServe(look, MarketSource{g_region, ""}, sessions);
+    check(seen.view.rows.size() == 1 && (seen.view.rows[0].flags & net::BrokerRow::Online) &&
+              (seen.view.rows[0].flags & net::BrokerRow::Elsewhere),
+          "her listing on the keeper's realm: online, elsewhere");
+
+    // Nils buys it here: the news goes down her realm's line.
+    MarketAsk take{.op = MarketOp::Take, .serial = 901, .who = nils};
+    take.ask.listing = hers;
+    check(keeperServe(take, MarketSource{g_region, ""}, sessions).listings.size() == 1, "Nils takes hers");
+    MarketAsk paid{.op = MarketOp::Settle, .serial = 902, .who = nils, .hold = 901};
+    paid.answers = {1};
+    keeperServe(paid, MarketSource{g_region, ""}, sessions);
+    brokerKeep();
+    MarketNews news;
+    check(pump(line, in, LinkKind::News, body) && parse(body, news) && news.token == rosa.token &&
+              news.chat.find("sold for 123,456 Zen") != std::string::npos && news.view.box.size() == 1,
+          "her realm told: sold, the Zen in her Collect");
+    std::vector<std::pair<uint64_t, bool>> holders;
+    check(pump(line, in, LinkKind::Holders, body) && parse(body, holders) && holders.size() == 1 &&
+              holders[0].first == rosa.token,
+          "and that she holds a Collect");
+}
+
 int main() {
     core::logSilence(true);
     testStore();
@@ -666,6 +954,8 @@ int main() {
     testDealLeave();
     testRaid();
     testInvasion();
+    testSharedMarket();
+    testMarketLine();
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures == 0 ? 0 : 1;
 }

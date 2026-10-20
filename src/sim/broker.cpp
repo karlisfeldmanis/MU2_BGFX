@@ -293,6 +293,51 @@ bool Book::watch(uint64_t who, uint64_t key, bool on) {
     return true;
 }
 
+void Book::merge(const Book& other, std::vector<uint64_t>* tokens) {
+    std::map<uint64_t, uint64_t> renamed;  // its listing's id -> this book's
+    for (Listing one : other.listings_) {
+        const uint32_t id = nextId_++;
+        renamed[one.id] = id;
+        one.id = id;
+        if (tokens != nullptr) tokens->push_back(one.seller);
+        listings_.push_back(std::move(one));
+    }
+    for (const auto& [owner, parcels] : other.collect_) {
+        std::vector<Parcel>& box = collect_[owner];
+        box.insert(box.end(), parcels.begin(), parcels.end());
+        if (tokens != nullptr) tokens->push_back(owner);
+    }
+    const auto join = [](auto& into, const auto& from, size_t kept) {
+        for (const auto& [key, list] : from) {
+            auto& mine = into[key];
+            mine.insert(mine.end(), list.begin(), list.end());
+            std::stable_sort(mine.begin(), mine.end(), [](const Sale& a, const Sale& b) { return a.at > b.at; });
+            if (mine.size() > kept) mine.resize(kept);
+        }
+    };
+    join(sales_, other.sales_, kBrokerSalesKept);
+    join(soldBy_, other.soldBy_, kBrokerSoldKept);
+    for (const auto& [who, keys] : other.watches_) {
+        std::vector<uint64_t>& list = watches_[who];
+        for (uint64_t key : keys) {
+            if (key < watchItem(0)) {
+                const auto at = renamed.find(key);
+                if (at == renamed.end()) continue;
+                key = at->second;
+            }
+            if (list.size() < kBrokerWatched && std::find(list.begin(), list.end(), key) == list.end()) {
+                list.push_back(key);
+            }
+        }
+        if (list.empty()) watches_.erase(who);
+    }
+    if (tokens != nullptr) {
+        std::sort(tokens->begin(), tokens->end());
+        tokens->erase(std::unique(tokens->begin(), tokens->end()), tokens->end());
+    }
+    ++version_;
+}
+
 bool Book::watching(uint64_t who, const Listing& listing, bool alike) const {
     const auto it = watches_.find(who);
     if (it == watches_.end()) return false;
