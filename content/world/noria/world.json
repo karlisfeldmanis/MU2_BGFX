@@ -141,8 +141,8 @@
       "name": "Liane the Broker",
       "figure": "mirazu",
       "at": [
-        175,
-        96
+        169,
+        102
       ],
       "look": 4,
       "note": "Ours: the Broker (docs/game/broker.md), beside Baz, in MuMain's Mirage (Npc/mirazu.bmd), the Broker's one figure in all three towns."

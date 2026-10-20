@@ -122,7 +122,7 @@
     {
       "model": "mirazu",
       "who": "Liane the Broker",
-      "tile": [175, 96],
+      "tile": [169, 102],
       "facing": 4,
       "ours": "the Broker (docs/game/broker.md, sim::kBroker), the market's keeper three tiles east of Baz: MuMain's Mirage (Npc/mirazu.bmd, scale 0.95), the user's pick of 2026-10-11, one figure in all three towns"
     },
