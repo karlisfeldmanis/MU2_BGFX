@@ -52,8 +52,9 @@ void grain(gfx::Canvas& canvas, const gfx::Box& box);
 // too wide for the room between the two ends is shrunk by up to a quarter and then trimmed.
 void frame(gfx::Canvas& canvas, const gfx::Box& window, float u, const std::string& title,
            gfx::Box* closeBox = nullptr, float head = 0.0f);
-// The foot: the body darkening toward its bottom edge from `top`, under a rule.
-void foot(gfx::Canvas& canvas, const gfx::Box& window, float top, float u);
+// The foot: the body darkening toward its bottom edge from `top`, under a rule (`ruled`, the
+// character window's has none: the user, 2026-10-20, "we doont need that divider").
+void foot(gfx::Canvas& canvas, const gfx::Box& window, float top, float u, bool ruled = true);
 // A framed well: a pit cut into the sheet.
 void well(gfx::Canvas& canvas, const gfx::Box& box, float u);
 // One cell, in the five states a drop target and the pointer give it.
@@ -156,6 +157,8 @@ void caps(gfx::Canvas& canvas, float x, float baseline, float size, uint32_t ink
           const std::string& text, float track = 0.14f);
 // Its width, for ranging one against a right edge.
 float capsWidth(float size, const std::string& text, float track = 0.14f);
+// The baseline that sets `caps` of this size centred on a box's height, as a button's word is.
+float capsMiddle(float top, float tall, float size);
 // Where a line of `size` sits to be centred in a box `tall` high from `top`, on its capitals.
 float middle(float top, float tall, float size);
 

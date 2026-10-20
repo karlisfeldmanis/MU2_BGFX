@@ -552,6 +552,11 @@ float capsWidth(float size, const std::string& text, float track) {
     return wordReady() ? s_word.measure(size, text) + size * track * float(text.size()) : 0.0f;
 }
 
+float capsMiddle(float top, float tall, float size) {
+    const float ascent = wordReady() ? s_word.ascent(size) : size * 0.8f;
+    return std::round(top + (tall + ascent * 0.66f) * 0.5f);
+}
+
 float middle(float top, float tall, float size) {
     const float ascent = labelReady() ? s_label.ascent(size) : size * 0.8f;
     return std::round(top + (tall + ascent * 0.62f) * 0.5f);
@@ -647,13 +652,13 @@ void frame(gfx::Canvas& canvas, const Box& window, float u, const std::string& t
     }
 }
 
-void foot(gfx::Canvas& canvas, const Box& window, float top, float u) {
+void foot(gfx::Canvas& canvas, const Box& window, float top, float u, bool ruled) {
     const float r = style::kRadiusSheet * u;
     const Box band{std::round(window.x), std::round(top), std::round(window.w),
                    std::round(window.bottom() - top)};
     const float corners[4] = {0.0f, 0.0f, r, r};
     tip::rounded(canvas, band, corners, gfx::rgba(0, 0, 0, 0.0f), gfx::rgba(0, 0, 0, 0.38f));
-    rule(canvas, window.x + 14.0f * u, top, window.w - 28.0f * u, u);
+    if (ruled) rule(canvas, window.x + 14.0f * u, top, window.w - 28.0f * u, u);
 }
 
 float keycap(gfx::Canvas& canvas, float x, float midY, const std::string& key, float u) {

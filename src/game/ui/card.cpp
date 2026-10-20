@@ -522,13 +522,16 @@ void Card::rebuild() {
         // A red tag, the one thing in the head that asks for something, gone at none.
         const std::string tag = std::to_string(now_.points) + " points";
         const float size = kLineSize * k;
-        const float w = controls::capsWidth(size, tag, 0.04f);
+        // Its words centred on it both ways (the user, 2026-10-20: "not perfectly align on red
+        // background"): the tracking after the last letter is not part of the word.
+        const float w = controls::capsWidth(size, tag, 0.04f) - size * 0.04f;
         const float pad = 3.0f * k;
-        const float tagRight = x + kRight * k;
-        canvas_.rect({tagRight - w - pad, y + (kIdTop - 1.0f) * k, w + pad * 2.0f, 11.0f * k},
-                     kSpendWash);
-        controls::caps(canvas_, tagRight - w + pad * 0.0f, at(kIdTop + 1.5f, kLineSize), size,
-                       kSpendable, tag, 0.04f);
+        const float tagRight = std::round(x + kRight * k);
+        const Box box{std::round(tagRight - w - pad * 2.0f), std::round(y + (kIdTop - 1.0f) * k),
+                      std::round(w + pad * 2.0f), std::round(11.0f * k)};
+        canvas_.rect(box, kSpendWash);
+        controls::caps(canvas_, box.x + std::round((box.w - w) * 0.5f), controls::capsMiddle(box.y, box.h, size),
+                       size, kSpendable, tag, 0.04f);
     }
 
     // ---- the three his class lives by -----------------------------------------------------------
@@ -715,7 +718,7 @@ void Card::rebuild() {
 
     // ---- the foot: how far through the level ----------------------------------------------------
     controls::foot(canvas_, panel::scaled(x, y, {0.0f, 0.0f, panel::kWidth, panel::kHeight}),
-                   y + kFootRule * k, u);
+                   y + kFootRule * k, u, false);
     const uint64_t from = sim::neededExperience(now_.level);
     const uint64_t to = sim::neededExperience(now_.level + 1);
     const float share =
