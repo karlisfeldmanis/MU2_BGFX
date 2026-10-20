@@ -388,7 +388,7 @@ void LobbyMode::enter(Context& ctx, int slot) {
     args.server = server_;
     args.serverToken = who->token;
     args.account = key_;
-    args.savePath = game::layoutBase(who->name);
+    args.savePath = game::layoutBase(who->name, server_);
     args.world = who->world.empty() ? std::string("lorencia") : who->world;
     args.play = true;
     args.fresh = false;

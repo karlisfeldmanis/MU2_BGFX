@@ -152,8 +152,14 @@ std::vector<net::Claim> claimsFor(const std::string& server) {
     return claims;
 }
 
-std::string layoutBase(const std::string& name) {
-    const fs::path folder = fs::path(core::userFolder()) / "layouts";
+std::string layoutBase(const std::string& name, const std::string& server) {
+    // A folder a realm: names are the realm's own, so Helsinki's Magic and Nuremberg's Magic
+    // are two characters, and one file between them put the one's skills on the other's bar.
+    std::string realm = server;
+    for (char& c : realm) {
+        if (!std::isalnum(static_cast<unsigned char>(c)) && c != '.' && c != '-') c = '_';
+    }
+    const fs::path folder = fs::path(core::userFolder()) / "layouts" / (realm.empty() ? "local" : realm);
     std::error_code error;
     fs::create_directories(folder, error);
     return (folder / (name + ".json")).string();

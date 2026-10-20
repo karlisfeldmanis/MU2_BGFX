@@ -65,8 +65,9 @@ const std::string& playing();
 std::vector<net::Claim> claimsFor(const std::string& server);
 
 // Where a character's windows' layout is kept between runs (game::writeLayout beside it): the
-// client's own preference, saves/layouts/Name.ui. No save is ever written at the path itself.
-std::string layoutBase(const std::string& name);
+// client's own preference, saves/layouts/<server>/Name.ui -- by realm, since a name is only the
+// realm's. No save is ever written at the path itself.
+std::string layoutBase(const std::string& name, const std::string& server);
 
 // Why a name cannot be asked for, or None: the screen's own refusals, before the server's.
 enum class Refusal { None, TooShort, Symbols, Taken, NoRoom };
