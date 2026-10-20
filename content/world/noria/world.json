@@ -207,6 +207,17 @@
         131
       ],
       "look": 6
+    },
+    {
+      "npc": 492,
+      "name": "Moss the Gambler",
+      "figure": "gambler_moss",
+      "at": [
+        197,
+        114
+      ],
+      "look": 1,
+      "note": "Ours: the Jeweler (rings and pendants: Recut, Salvage, Combine), the user's pick 2026-10-20, on the east market beside Potion Girl Amy, facing the plaza. MuMain's MONSTER_MOSS_THE_MERCHANT (492), Elbeland's gambler in later seasons; not Version075's. His window is not built yet."
     }
   ],
   "gates": {
