@@ -85,6 +85,10 @@ The routes:
          `mu ship notes` (tools/mu/ship.py) and the Ship app (tools/ship/ship.cpp): drafts for the
          commits a release shipped, the last commit looked at, so the next run starts after it; and
          a line changed (one with an id) or deleted.
+         Every day whose lines change is told in the Discord's #updates DISCORD_QUIET seconds after
+         (class Discord), by the webhook URL in discord_webhook beside the database.
+    POST /internal/discord          (127.0.0.1 only) {day}  -> 200 {ok} | 400 | 409 with no webhook
+         that day's #updates message sent, edited or taken away now.
     GET  /api/texts      Bearer T of an admin       -> 200 {langs, groups, texts} | 404 for anyone else
     POST /api/texts      Bearer T of an admin {lang, source, text}  -> 200 {ok} | 400 {error} | 404
          the site in other languages (the admins' /translate page, web/i18n.py): every English unit
@@ -217,6 +221,18 @@ MOST_UPDATE_TEXT = 400
 UPDATE_DAYS_SHOWN = 10
 UPDATE_DAY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 MOST_UPDATES_BODY = 256 * 1024
+
+# The Latest updates told in the Discord's #updates (class Discord): one message a release day,
+# sent once its lines have been left alone DISCORD_QUIET seconds (an admin publishes them one by
+# one), and edited, or taken away, as they change after. The channel's webhook URL is the file
+# discord_webhook beside the database, read at each message: set or changed without a restart, and
+# with none, nothing is told.
+DISCORD_QUIET = 300
+DISCORD_WEBHOOK = re.compile(r"^https://(?:discord|discordapp)\.com/api/webhooks/\d+/[\w-]+$"
+                             r"|^http://127\.0\.0\.1:\d+/[\w/-]+$")
+DISCORD_COLOUR = 0xC9A45C
+DISCORD_MOST_TEXT = 4000
+SITE_URL = "https://mu-classic.com/"
 
 # The launchers that must be replaced: they cannot update themselves, so the site tells them so.
 # A launcher says "MU2Launcher/<build>" (src/launcher/https.h kAgent); those before crash reports
@@ -690,6 +706,24 @@ class Store:
     def delete_update(self, line: int) -> bool:
         return self.db().execute("DELETE FROM updates WHERE id = ?", (line,)).rowcount > 0
 
+    def update_day(self, line) -> str:
+        """The day a line is under now, '' when there is no such line."""
+        if line is None:
+            return ""
+        row = self.db().execute("SELECT day FROM updates WHERE id = ?", (line,)).fetchone()
+        return row[0] if row else ""
+
+    def setting(self, key: str) -> str:
+        row = self.db().execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
+        return row[0] if row else ""
+
+    def set_setting(self, key: str, value: str):
+        if value:
+            self.db().execute("INSERT INTO settings (key, value) VALUES (?, ?) "
+                              "ON CONFLICT(key) DO UPDATE SET value = excluded.value", (key, value))
+        else:
+            self.db().execute("DELETE FROM settings WHERE key = ?", (key,))
+
     def add_updates(self, lines: list, noted_through: str) -> int:
         """`mu ship notes`' lines, all at once with where it got to."""
         db = self.db()
@@ -1009,6 +1043,120 @@ TICKET_LIMIT = Limit(60, 3600)
 COMMENT_LIMIT = Limit(10, 600)
 
 
+# ---- the Latest updates in Discord ---------------------------------------------------------------
+
+class Discord:
+    """Each release day's published lines as one message in #updates, by the channel's webhook.
+    A day changed (touch) is told DISCORD_QUIET seconds after its last change; the message's id and
+    a hash of what it said are kept in settings as `discord:<day>`, so a day is posted once, edited
+    when its lines change, and deleted when none is published any more."""
+
+    def __init__(self, store: Store, webhook: Path, quiet: int = DISCORD_QUIET):
+        self.store, self.webhook_path, self.quiet = store, webhook, quiet
+        self.lock = threading.Lock()
+        self.dirty = {}  # day -> when it last changed
+        threading.Thread(target=self.run, daemon=True).start()
+
+    def touch(self, *days: str, at: float = None):
+        with self.lock:
+            for day in days:
+                if day:
+                    self.dirty[day] = time.time() if at is None else at
+
+    def webhook(self) -> str:
+        try:
+            url = self.webhook_path.read_text().strip()
+        except OSError:
+            return ""
+        return url if DISCORD_WEBHOOK.match(url) else ""
+
+    def run(self):
+        while True:
+            time.sleep(5)
+            now = time.time()
+            with self.lock:
+                ready = {day: at for day, at in self.dirty.items() if now - at >= self.quiet}
+            for day, at in sorted(ready.items()):
+                try:
+                    self.tell(day)
+                    told = True
+                except Exception as e:  # the network, or Discord: tried again a quiet spell later
+                    print(f"discord: {day} not told: {e}", flush=True)
+                    told = False
+                with self.lock:
+                    if self.dirty.get(day) == at:
+                        if told:
+                            del self.dirty[day]
+                        else:
+                            self.dirty[day] = time.time()
+
+    @staticmethod
+    def message(day: str, lines: list) -> dict:
+        def plain(text):  # Discord's markdown taken as it is written
+            return re.sub(r"([\\*_~`|])", r"\\\1", text)
+        year, month, date = (int(x) for x in day.split("-"))
+        new = [line["text"] for line in lines if line["kind"] == "new"]
+        fixed = [line["text"] for line in lines if line["kind"] == "fixed"]
+        rows = []
+        for heading, texts in (("New", new), ("Fixed", fixed)):
+            if texts:
+                rows += [f"**{heading}**"] + [f"• {plain(text)}" for text in texts] + [""]
+        # Past Discord's 4096 an embed, the rest is on the site.
+        shown, size = [], 0
+        for n, row in enumerate(rows):
+            if size + len(row) + 80 > DISCORD_MOST_TEXT:
+                shown.append(f"…and {sum(r.startswith('•') for r in rows[n:])} more at {SITE_URL}")
+                break
+            shown.append(row)
+            size += len(row) + 1
+        return {"embeds": [{"title": f"{i18n.day_label('en', year, month, date)} · "
+                                     f"{i18n.count_label('en', len(new), len(fixed))}",
+                            "url": SITE_URL, "description": "\n".join(shown).strip(),
+                            "color": DISCORD_COLOUR}],
+                "allowed_mentions": {"parse": []}}
+
+    def call(self, method: str, url: str, body: dict = None) -> dict:
+        import urllib.request
+        import urllib.error
+        request = urllib.request.Request(
+            url, data=json.dumps(body).encode() if body is not None else None, method=method,
+            # Discord's Cloudflare turns away Python's own agent.
+            headers={"Content-Type": "application/json", "User-Agent": f"MU2-web ({SITE_URL}, 1)"})
+        try:
+            with urllib.request.urlopen(request, timeout=15) as reply:
+                data = reply.read()
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return None
+            raise RuntimeError(f"{method} {e.code} {e.read()[:200]!r}")
+        return json.loads(data) if data else {}
+
+    def tell(self, day: str):
+        url = self.webhook()
+        if not url:
+            return
+        lines = [line for line in self.store.updates(published_only=True) if line["day"] == day]
+        key = f"discord:{day}"
+        kept = self.store.setting(key).split()
+        sent, said = (kept + ["", ""])[:2]
+        if not lines:
+            if sent:
+                self.call("DELETE", f"{url}/messages/{sent}")
+                self.store.set_setting(key, "")
+                print(f"discord: {day} taken away", flush=True)
+            return
+        body = self.message(day, lines)
+        digest = hashlib.sha256(json.dumps(body, sort_keys=True).encode()).hexdigest()[:16]
+        if sent and digest == said:
+            return
+        if sent and self.call("PATCH", f"{url}/messages/{sent}", body) is not None:
+            print(f"discord: {day} edited, {len(lines)} lines", flush=True)
+        else:
+            sent = self.call("POST", f"{url}?wait=true", body)["id"]
+            print(f"discord: {day} posted, {len(lines)} lines", flush=True)
+        self.store.set_setting(key, f"{sent} {digest}")
+
+
 # ---- the handler ---------------------------------------------------------------------------------
 
 def update_fields(said: dict, default_state: str = None):
@@ -1159,6 +1307,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.update_line()
         if path == "/internal/updates":
             return self.told_updates()
+        if path == "/internal/discord":
+            return self.tell_discord()
         if path == "/api/texts":
             return self.save_text()
         self.reply(404, {"error": "not found"})
@@ -1353,9 +1503,11 @@ class Handler(BaseHTTPRequestHandler):
         line = said.get("id")
         if line is not None and (not isinstance(line, int) or isinstance(line, bool)):
             return self.reply(400, {"error": "bad id"})
+        was = self.store.update_day(line)
         if said.get("delete") is True:
             if line is None or not self.store.delete_update(line):
                 return self.reply(404, {"error": "no such line"})
+            self.discord.touch(was)
             print(f"{self.client()} account {row[0]} deleted update {line}", flush=True)
             return self.reply(200, {"ok": True, "id": line})
         checked = update_fields(said)
@@ -1365,6 +1517,7 @@ class Handler(BaseHTTPRequestHandler):
         saved = self.store.save_update(checked)
         if saved is None:
             return self.reply(404, {"error": "no such line"})
+        self.discord.touch(was, checked["day"])
         print(f"{self.client()} account {row[0]} saved update {saved} ({checked['state']})", flush=True)
         self.reply(200, {"ok": True, "id": saved})
 
@@ -1421,6 +1574,19 @@ class Handler(BaseHTTPRequestHandler):
                 "groups": [{"id": g, "name": names[g], "units": groups[g]} for g in order if g in groups],
                 "texts": self.store.texts()}
 
+    def tell_discord(self):
+        """A day's message sent (or put right) now, not after a quiet spell: on the box,
+        curl -s -d '{"day":"2026-10-19"}' http://127.0.0.1:8080/internal/discord"""
+        if not self.direct():
+            return self.reply(404, {"error": "not found"})
+        day = str((self.body() or {}).get("day", ""))
+        if not UPDATE_DAY.match(day):
+            return self.reply(400, {"error": "day: YYYY-MM-DD"})
+        if not self.discord.webhook():
+            return self.reply(409, {"error": "no webhook in discord_webhook beside the database"})
+        self.discord.touch(day, at=0)
+        self.reply(200, {"ok": True})
+
     def told_updates(self):
         if not self.direct():
             return self.reply(404, {"error": "not found"})
@@ -1442,9 +1608,11 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(400, {"error": "delete: a list of ids"})
         noted = said.get("noted_through")
         noted = noted if isinstance(noted, str) and re.match(r"^[0-9a-f]{7,40}$", noted) else ""
+        days = {self.store.update_day(line) for line in gone} | {self.store.update_day(line["id"]) for line in checked}
         added = self.store.add_updates(checked, noted)
         for line in gone:
             self.store.delete_update(line)
+        self.discord.touch(*days, *(line["day"] for line in checked))
         print(f"mu ship: {added} update lines, {len(gone)} deleted, noted through {noted or '(unchanged)'}", flush=True)
         self.reply(200, {"ok": True, "added": added})
 
@@ -1728,8 +1896,11 @@ def main():
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--site", default=str(here / "site"))
     ap.add_argument("--downloads", default=str(here / "downloads"))
+    ap.add_argument("--discord-quiet", type=int, default=DISCORD_QUIET,
+                    help="seconds a day's lines are left alone before #updates is told")
     args = ap.parse_args()
     Handler.store = Store(Path(args.db))
+    Handler.discord = Discord(Handler.store, Path(args.db).parent / "discord_webhook", args.discord_quiet)
     seeded = Handler.store.seed_texts(i18n.seeds(here / "i18n"))
     if seeded:
         print(f"{seeded} translations put in from web/i18n/", flush=True)

@@ -123,3 +123,17 @@ seen, fixed or won't fix (`POST /api/bugs/state {id, state}`); a mark is a line 
 asking `/api/bugs` is answered 404. On the box:
 
     tail -5 /var/lib/mu2-web/bugs.jsonl
+
+## Latest updates in Discord
+
+Each release day's published lines (the admins' `/updates`) are one message in the Discord's
+#updates, sent by that channel's webhook five minutes after the day's lines were last changed
+(an admin publishes them one by one), edited as they change after, and taken away when none is
+published any more (`class Discord` in `server.py`). The webhook URL is a secret: it lives only
+on the box, in `/var/lib/mu2-web/discord_webhook` beside the database, read at each message, so
+it is set or changed without a restart; with no file, nothing is told.
+
+    ssh hetzner 'cd /var/lib/private/mu2-web && umask 077 && cat > discord_webhook && chown --reference=accounts.db discord_webhook'   # paste, Return, ctrl-D
+    ssh hetzner "curl -s -d '{\"day\":\"2026-10-19\"}' http://127.0.0.1:8080/internal/discord"  # a day now
+
+`journalctl -u mu2-web | grep discord` shows each message posted, edited, taken away or not told.
