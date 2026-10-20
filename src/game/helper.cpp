@@ -338,7 +338,13 @@ bool Helper::loot(Play& play, const HelperSettings& settings) {
     const sim::Realm& realm = play.realm();
     const content::Tables& tables = *realm.tables();
     const sim::Body& hero = realm.hero();
-    const float reach = float(settings.tiles()) + 2.0f;
+    // Her summon hunts round her and not round the spot (kSummonHunt, realm_summon.cpp): what it
+    // kills while she stands at the edge of her range lies that far beyond it, and was left there
+    // (the user, 2026-10-20: "When the elf summon kills an enemy and it drop jewels, she is not
+    // picking the items").
+    const sim::Body* summon = realm.summoned();
+    const bool hunting = summon != nullptr && summon->alive() && !summon->gone;
+    const float reach = float(settings.tiles()) + (hunting ? float(sim::kSummonHunt) : 2.0f);
     const sim::Lying* nearest = nullptr;
     float best = 1e9f;
     for (const sim::Lying& one : realm.lying()) {
