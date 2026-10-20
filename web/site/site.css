@@ -253,6 +253,8 @@ footer img { height: 56px; width: auto; opacity: .3; }
 footer p { margin: 0 auto; max-width: 760px; text-align: center; font-size: 13px; line-height: 1.6; color: rgba(212,200,184,.55); }
 .foot-links { display: flex; gap: 24px; font-size: 14px; }
 .foot-links a { color: var(--quiet); text-decoration: underline; }
+/* The Nostalgic.gg vote banner: its own colours, not the faded logo's. */
+footer .vote img { display: block; width: 200px; max-width: 100%; height: auto; opacity: 1; border: 0; }
 /* The site's languages (web/i18n.py), the one shown in full colour. */
 .langs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; font-size: 14px; }
 .langs a { color: var(--quiet); }
