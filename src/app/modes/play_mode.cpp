@@ -1517,12 +1517,19 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // (Play::raidFighting), and the map's own rule again after. The one fight with music.
     // A little louder than the town's tracks (the user, 2026-10-08: "music has to be little bit
     // louder on boss fight"): 0.8, about 2.5 dB over their 0.6.
-    // And Devil Square's match, from the moment its fight starts to its end, not in the wait
-    // before (the user, 2026-10-20: "lets use dragon raid music for devil suare also", "musix
-    // starts then DS starts").
+    // And Devil Square's match (the user, 2026-10-20: "lets use dragon raid music for devil suare
+    // also"), begun in the wait so that the track's drop, 39.05 s in -- where the bass comes in
+    // full after a two-second riser -- lands on the tick the fight starts ("time this music with
+    // exact moment when song skips the intro and active part starts"). Who comes in later than
+    // that hears it from the top, its drop late.
+    constexpr int64_t kFightDropTicks = int64_t(39.05 * sim::kSquareTicksPerSecond);
     const std::string fightTrack = ctx.paths.assets + "/music/dragon_fight.mp3";
-    const bool squareFighting = world_.played().isOpen() &&
-                                world_.played().realm().squareRun().phase == sim::SquarePhase::Running;
+    const sim::SquareRun& square = world_.played().realm().squareRun();
+    const bool squareFighting =
+        world_.played().isOpen() &&
+        (square.phase == sim::SquarePhase::Running ||
+         (square.phase == sim::SquarePhase::Waiting &&
+          square.startsAt - world_.played().realm().tick() <= kFightDropTicks));
     if (world_.played().isOpen() && (world_.played().raidFighting() || squareFighting) &&
         core::fileExists(fightTrack)) {
         game::Sound& sound = world_.played().sound();
