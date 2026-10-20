@@ -1038,8 +1038,12 @@ class Store:
                 machines[str(account)] = {key: row.get(key) for key in
                                           ("gpu", "vendor", "driver", "date", "cpu", "ram", "os", "graphics", "renderer")}
         return {"at": told["at"], "fresh": bool(regions) and not stale, "stale": stale, "players": players,
-                "regions": [{"name": region, "at": r["at"], "players": len(r["players"])}
-                            for region, r in sorted(regions.items())],
+                # Every region of REGIONS, told or not, with its people and bots apart (the page's realm row).
+                "regions": [{"name": region, "city": city, "at": regions.get(region, {}).get("at", 0),
+                             "up": region in regions and region not in stale,
+                             "players": sum(1 for p in regions.get(region, {}).get("players", []) if not p.get("bot")),
+                             "bots": sum(1 for p in regions.get(region, {}).get("players", []) if p.get("bot"))}
+                            for region, city in REGIONS],
                 "recent": recent, "machines": machines, "everyone": everyone}
 
     def logout(self, token: str):

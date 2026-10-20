@@ -24,6 +24,15 @@
 .count { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 24px; color: var(--label); }
 .count b { color: var(--bone-hi); font-size: 22px; margin-right: 6px; }
 .stale { color: var(--danger); text-align: center; }
+/* One tile a realm: its people now, its bots under them, dimmed while its server is silent. */
+.realms { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.realms div { padding: 12px 14px; border-radius: 6px; background: rgba(5,3,3,.5); box-shadow: inset 0 0 0 1px var(--line); }
+.realms h3 { margin: 0; font: 700 15px/1.2 'Alegreya Sans SC', sans-serif; color: var(--bone-hi); }
+.realms .city { font-size: 14px; color: var(--quiet); }
+.realms b { display: block; margin-top: 6px; font-size: 26px; font-weight: 500; color: var(--bone-hi); font-variant-numeric: tabular-nums; }
+.realms .sub { font-size: 14px; color: var(--quiet); }
+.realms .down { opacity: .55; }
+.realms .down .sub { color: var(--danger); }
 .who { width: 100%; border-collapse: collapse; font-size: 16px; }
 .who th { text-align: left; font: 700 15px/1.2 'Alegreya Sans SC', sans-serif; color: var(--quiet); padding: 8px 10px; box-shadow: inset 0 -1px 0 var(--edge); }
 .who td { padding: 10px; box-shadow: inset 0 -1px 0 var(--line); vertical-align: top; }
@@ -82,6 +91,7 @@
 
 <div id="v-list" class="form" style="gap: 20px" hidden>
 <div class="count" id="count"></div>
+<div class="realms" id="realms"></div>
 <p id="stale" class="stale" hidden></p>
 <table class="who">
 <thead><tr><th>Character</th><th>Class</th><th>Level</th><th>Map</th><th>Region</th><th>Platform</th><th>Graphics</th><th>Ping</th><th>Online for</th></tr></thead>
@@ -246,6 +256,16 @@
       s.appendChild(document.createTextNode(word));
       count.appendChild(s);
     }
+    // Each realm's people now (web/server.py online_report `regions`, every one of REGIONS).
+    $('realms').replaceChildren(...(o.regions || []).map((r) => {
+      const d = el('div', r.up ? '' : 'down');
+      d.appendChild(el('h3', '', r.name));
+      d.appendChild(el('span', 'city', r.city));
+      d.appendChild(el('b', '', String(r.players)));
+      d.appendChild(el('span', 'sub', r.up ? (r.players === 1 ? 'player' : 'players') + (r.bots ? ' · ' + r.bots + (r.bots === 1 ? ' bot' : ' bots') : '')
+                                          : r.at ? 'not reporting since ' + when(r.at) : 'not reporting'));
+      return d;
+    }));
     $('stale').hidden = o.fresh;
     // Each region's server tells its own list (web/server.py online_report): the one gone quiet named.
     const quiet = (o.stale || []).map((name) => {
