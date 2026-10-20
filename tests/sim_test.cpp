@@ -7921,6 +7921,47 @@ void testChaosMachine() {
         check(tried && boundMade, "the +10 it makes is bound");
         check(realm.machine().empty(), "and the box is emptied");
     }
+    // And so do a quest's bound Bless and Soul (the user, 2026-10-20, Bruno: "I have all items but
+    // cant create Chaos Weapon"); bound gear stays out.
+    {
+        const auto boundOne = [&](int32_t item, int plus) {
+            const int slot = realm.give(item, -1, plus, -1, false, 0, 0, 1, nullptr, nullptr, true);
+            check(slot >= 0 && realm.satchel()[slot].bound, "a bound one in the bag");
+            return slot;
+        };
+        bool tried = false, boundMade = false;
+        for (int attempt = 0; attempt < 40 && !boundMade; ++attempt) {
+            realm.putIn(realm.give(sword, -1, 9));
+            realm.putIn(realm.give(chaos));
+            realm.putIn(boundOne(bless, 0));
+            realm.putIn(boundOne(soul, 0));
+            const sim::Judged j = realm.judged();
+            check(j.ready && j.recipe == sim::Recipe::PlusTen && !j.blocked,
+                  "a bound Bless and Soul make a +10 box");
+            check(realm.mix(), "and the Goblin runs it");
+            tried = true;
+            for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+                const sim::Held& one = realm.machine()[cell];
+                if (one.empty()) continue;
+                boundMade = one.item == sword && one.refinement == 10 && one.bound;
+                const int back = realm.takeOut(cell);
+                if (back >= 0) realm.sell(back);
+            }
+        }
+        check(tried && boundMade, "the +10 made with them is bound");
+        realm.putIn(boundOne(sword, 9));
+        realm.putIn(realm.give(chaos));
+        realm.putIn(realm.give(bless));
+        realm.putIn(realm.give(soul));
+        const sim::Judged j = realm.judged();
+        check(!j.ready && j.blocked, "a bound sword is still refused");
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            if (realm.machine()[cell].empty()) continue;
+            const int back = realm.takeOut(cell);
+            if (back >= 0) realm.sell(back);
+        }
+        check(realm.machine().empty(), "and the box is emptied");
+    }
     // **Jewels stack**, twenty a cell as the potions (the user, 2026-10-20: "we need stacking
     // jewels", bug report #41), and a window's move carries how many of a stack in c: split off
     // first, poured back when the move is refused.

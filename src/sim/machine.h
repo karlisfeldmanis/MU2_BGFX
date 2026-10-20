@@ -303,4 +303,8 @@ bool jewelOfBless(const content::ItemRow& row);
 bool jewelOfSoul(const content::ItemRow& row);
 bool jewelOfLife(const content::ItemRow& row);
 
+// What goes into any mix bound, being spent either way: a quest's Jewel of Chaos, Bless or Soul
+// and Sevina's Loch's Feather. What the mix makes with one is bound (Realm::mix).
+bool spentBound(const content::ItemRow& row);
+
 }  // namespace mu::sim
