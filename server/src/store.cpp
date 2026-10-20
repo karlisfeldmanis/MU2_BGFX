@@ -11,6 +11,7 @@
 
 #include "core/log.h"
 #include "net/wire.h"
+#include "sim/items.h"
 
 namespace mu::server {
 
@@ -292,13 +293,27 @@ bool Store::useItems(const content::Tables& tables, std::string& error) {
 
 void Store::renumber(sim::Kept& kept, int items) const {
     const auto found = renumbers_.find(items);
-    if (found == renumbers_.end()) return;
-    const std::vector<int32_t>& map = found->second;
-    for (sim::Held& h : kept.hero.slots) h = renumbered(h, map);
-    for (int cell = 0; cell < sim::kVaultCells; ++cell) kept.vault.put(cell, renumbered(kept.vault[cell], map));
-    for (int cell = 0; cell < sim::kMachineCells; ++cell) {
-        kept.machine.put(cell, renumbered(kept.machine[cell], map));
+    if (found != renumbers_.end()) {
+        const std::vector<int32_t>& map = found->second;
+        for (sim::Held& h : kept.hero.slots) h = renumbered(h, map);
+        for (int cell = 0; cell < sim::kVaultCells; ++cell) kept.vault.put(cell, renumbered(kept.vault[cell], map));
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            kept.machine.put(cell, renumbered(kept.machine[cell], map));
+        }
     }
+    // A thing that stacks now and was kept single with MU's own durability -- the castle's
+    // Scroll of Archangel and Blood Bone at 128 -- is one, not a stack of 128 (save.cpp's
+    // durabilityOf, for the server's rows).
+    if (tables_ == nullptr) return;
+    const auto one = [this](sim::Held h) {
+        if (h.empty() || h.item < 0 || size_t(h.item) >= tables_->items.size()) return h;
+        const content::ItemRow& row = tables_->items[size_t(h.item)];
+        if (sim::stacks(row) && h.durability > sim::stackMost(row)) h.durability = 1;
+        return h;
+    };
+    for (sim::Held& h : kept.hero.slots) h = one(h);
+    for (int cell = 0; cell < sim::kVaultCells; ++cell) kept.vault.put(cell, one(kept.vault[cell]));
+    for (int cell = 0; cell < sim::kMachineCells; ++cell) kept.machine.put(cell, one(kept.machine[cell]));
 }
 
 bool Store::who(uint64_t token, Who& out) {
