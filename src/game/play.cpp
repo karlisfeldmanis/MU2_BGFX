@@ -3395,15 +3395,19 @@ void Play::shock(Drawn& one, int clip) {
 // a monster, which the halt would cancel: a stop that costs him his fight is not a flinch.
 void Play::flinch(Drawn& struck, bool isHero) {
     if (!struck.placed || struck.swinging > 0.0f || struck.shocked > 0.0f) return;
+    // Never a rider: MU's SetPlayerShock returns at once on Uniria, the Dinorant and the Dark
+    // Horse (ZzzCharacter.cpp:1368-1369), so he rides on through the blow, silent.
+    if (const sim::Body* body = realm_.find(struck.id); body != nullptr && body->player && body->riding) return;
     const FigureBody* look = struck.figure.body();
     int clip = struck.shockClip;
     if (isHero) {
         if (struck.casting > 0.0f || realm_.casting()) return;
-        // Not while he walks, either: the flinch's stop cancelled the walk, so under a Lich's
-        // fire at Lorencia's dungeon arch every click was undone within a second and he could
-        // not reach the stair (the user, 2026-09-30: "monster keep hitting char and you are not
-        // going inside"). A walking hero takes the blow and walks on.
-        if (realm_.hero().walking) return;
+        // A walking hero is stopped by it and flinches where he stands (the user, 2026-10-20:
+        // "when char walks and get struct he has to stop and play struct aniamtion"), as MU's
+        // PLAYER_SHOCK sets `c->Movement = false`. From 2026-09-30 he walked on through blows, a
+        // Lich's fire at Lorencia's dungeon arch undoing every click ("monster keep hitting char
+        // and you are not going inside"); the coin is still one blow in two, and a click walks him
+        // on out of the clip (play_show.cpp, the flinch hold).
         clip = look && look->library ? look->library->find(kPlayerShockSlot) : -1;
     }
     if (clip < 0 || struck.figure.clip() == clip) return;
@@ -3411,6 +3415,7 @@ void Play::flinch(Drawn& struck, bool isHero) {
     flinchDice_ ^= flinchDice_ >> 17;
     flinchDice_ ^= flinchDice_ << 5;
     if ((flinchDice_ & 1u) == 0) return;
+    if (isHero && realm_.hero().walking) orderHero({.kind = sim::Request::Kind::Stop});
     shock(struck, clip);
     const bool silent = look && look->has("silent_flinch");
     const int cry = !isHero ? (silent ? -1 : struck.cryAttack)
