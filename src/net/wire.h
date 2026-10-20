@@ -146,7 +146,11 @@ namespace mu::net {
 //     boxes stack (sim::stackMost), and a quest's jewels, potions and boxes are never bound
 //     (sim::bindable), so a client on 41's bags is refused instead of drifting from the server;
 //     and the elf's seventh summon, the Alquamos, one more skill row (kSkills 40, coolsLeft).
-constexpr uint32_t kVersion = 42;
+// 43: a Spend carries how many points in its b (the character window's 1 | 10 | All), and
+//     ResetPoints takes every placed point back, the gear he could no longer wear into the bag
+//     or refused whole (2026-10-20), so a client on 42 is refused instead of asking a server
+//     that cannot answer.
+constexpr uint32_t kVersion = 43;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";

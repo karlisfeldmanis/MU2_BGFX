@@ -881,6 +881,18 @@ public:
     // make choices. Refused, whole, when it asks for more points than are in hand.
     bool spend(int strength, int agility, int vitality, int energy);
 
+    // **Reset points** (the user, 2026-10-20: "we need option to reset all skill points with
+    // special button"): every point he placed taken back into his hand, his four stats his class's
+    // start again (sim::startingPoints). What he wears and could no longer wear on those stats is
+    // taken off first, each into the first room in the bag; a bag without room for all of it
+    // refuses the whole reset and nothing moves ("we need to show error that can reset points
+    // because there is no room in inventory"). Free. Ours: MU 0.75 has no reset.
+    enum class Reset : int8_t { Done = 1, NothingPlaced = -1, NoRoom = -2 };
+    Reset resetPoints();
+    // The same asked without doing it, for the window's question: how many worn pieces it would
+    // take off, or -1 when the bag has no room for them, or -2 when there is nothing to take back.
+    int resetStrips() const;
+
     // The hero as a save keeps him, and the same laid back on a hero just raised at that
     // record's tile and class. restore() empties the satchel first, puts back what was carried
     // and worn, re-reckons him off it, and only then sets health and mana, clamped to what he

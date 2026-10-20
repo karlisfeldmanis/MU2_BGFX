@@ -308,6 +308,14 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         switch (then) {
             case Then::TookOrRefused: one.ok() ? took() : refused(); break;
             case Then::Bound: if (one.ok()) took(); else { refused(); tally_.bound(); } break;
+            case Then::Reset:
+                if (one.ok()) {
+                    took();
+                } else {
+                    refused();
+                    if (one.value == int32_t(sim::Realm::Reset::NoRoom)) tally_.noRoomToReset();
+                }
+                break;
             case Then::Refused: if (!one.ok()) refused(); break;
             case Then::Spark: one.ok() ? mixer_.spark() : refused(); break;
             case Then::ZenBox:
@@ -953,22 +961,26 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // The character window, while it is up. What it asks for is answered here, by the realm,
     // and the window sees the answer on its next frame.
     if (characterOpen_) {
-        int spend = -1;
-        bool close = false;
+        int spend = -1, count = 1;
+        bool reset = false, close = false;
         std::string name;
         if (!hero || !play.playerName(hero->id, &name, nullptr)) name = heroName_;
         card_.setGuild(play.guild().name);
         const int page = card_.tab();
         card_.update(float(window.width()), float(window.height()), hero, &play.realm(), name,
-                     pointer, &spend, &close);
+                     pointer, &spend, &count, &reset, &close);
         // A tab changing its page clicks, as every button does (the user, 2026-10-16).
         if (card_.tab() != page) click();
         // The stat button clicks whether or not the point lands: CNewUICharacterInfoWindow
         // sends the request and plays SOUND_CLICK01 on the next line without waiting.
         if (spend >= 0) {
-            play.spendPoint(spend);
+            play.spendPoint(spend, count);
             click();
         }
+        // The reset, confirmed: a bag that cannot take what he could no longer wear is said in
+        // the lane (the user, 2026-10-20: "we need to show error that can reset points because
+        // there is no room in inventory").
+        if (reset) expect(play.resetPoints(), Then::Reset);
         // The exit button clicks as the C key does. INVENTION, the user's (2026-09-30):
         // CNewUICharacterInfoWindow's m_BtnExit has no PlayBuffer, and a silent X read as broken.
         if (close) {

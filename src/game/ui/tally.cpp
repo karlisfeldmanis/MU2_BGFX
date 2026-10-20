@@ -563,6 +563,15 @@ void Tally::collect(const Play& play, float seconds) {
     }
 }
 
+void Tally::noRoomToReset() {
+    if (!lane_.empty() && lane_.back().kind == Row::Kind::NoRoomToReset) {
+        lane_.back().age = std::min(lane_.back().age, kRowLife * kRowIn);
+        return;
+    }
+    lane_.push_back({Row::Kind::NoRoomToReset, 0, 0.0f});
+    scroll_ += 1.0f;
+}
+
 void Tally::bound() {
     // One row however often it is tried: the newest, if it is one, held up again.
     if (!lane_.empty() && lane_.back().kind == Row::Kind::Bound) {
@@ -787,18 +796,21 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
             case Row::Kind::NotYours:
             case Row::Kind::TooFar:
             case Row::Kind::Outguarded:
+            case Row::Kind::NoRoomToReset:
             // Drawn above and passed over by the `continue`: it is not a gain.
             case Row::Kind::Experience:
             case Row::Kind::Died: break;
         }
         if (row.kind == Row::Kind::Gapped || row.kind == Row::Kind::Bound || row.kind == Row::Kind::BagFull ||
             row.kind == Row::Kind::NotYours || row.kind == Row::Kind::TooFar ||
-            row.kind == Row::Kind::Outguarded) {
+            row.kind == Row::Kind::Outguarded || row.kind == Row::Kind::NoRoomToReset) {
             // A warning: white words on a flat red box, the lane's left edge its own.
             const std::string said = row.kind == Row::Kind::Gapped     ? "No experience or quest kills: level gap"
                                      : row.kind == Row::Kind::Bound    ? "Bound items stay with their character"
                                      : row.kind == Row::Kind::NotYours ? "This item does not belong to you"
                                      : row.kind == Row::Kind::TooFar   ? "Too far away"
+                                     : row.kind == Row::Kind::NoRoomToReset
+                                         ? "Points not reset: no room in your inventory for your gear"
                                      : row.kind == Row::Kind::Outguarded
                                          ? "This character already has a stronger shield aura"
                                                                        : "Inventory is full";

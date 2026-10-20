@@ -24,10 +24,12 @@
 
 namespace mu::game {
 
-uint32_t Play::spendPoint(int stat) {
-    if (stat < 0 || stat > 3) return 0;
-    return send({.kind = sim::Command::Kind::Spend, .a = stat});
+uint32_t Play::spendPoint(int stat, int count) {
+    if (stat < 0 || stat > 3 || count < 1) return 0;
+    return send({.kind = sim::Command::Kind::Spend, .a = stat, .b = count});
 }
+
+uint32_t Play::resetPoints() { return send({.kind = sim::Command::Kind::ResetPoints}); }
 
 void Play::castSkill(int32_t skill, uint32_t at) {
     // Aimed at what the window named, else at what he is already fighting -- which the realm
@@ -760,9 +762,15 @@ void Play::answered(const sim::Happening& said) {
             }
             break;
         case Kind::Spend:
-            core::logf("window: a point into %s %s",
+            core::logf("window: %d point%s into %s %s", std::max(1, asked.b), asked.b > 1 ? "s" : "",
                        asked.a == 0 ? "strength" : asked.a == 1 ? "agility" : asked.a == 2 ? "vitality" : "energy",
-                       ok ? "spent" : "refused, none in hand");
+                       ok ? "spent" : "refused, too few in hand");
+            break;
+        case Kind::ResetPoints:
+            core::logf("window: reset points %s", said.b == 1    ? "done"
+                                                  : said.b == -2 ? "refused, no room in the bag for his gear"
+                                                                 : "refused, nothing placed");
+            if (said.b == 1) redress();
             break;
         case Kind::Move:
             core::logf("window: move %d -> %d %s", asked.a, asked.b, ok ? "taken" : "refused");

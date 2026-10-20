@@ -5212,6 +5212,84 @@ void testRefine(const content::Tables& tables) {
 }
 
 // Luck and the additional option: what they give worn, what they sell for, and the Soul.
+// **Many points a press, and the reset** (the user, 2026-10-20): a Spend with a count, and
+// ResetPoints, which takes off what he could no longer wear into the bag or refuses whole when the
+// bag has no room for it.
+void testResetPoints(const content::Tables& tables) {
+    std::printf("spend many and reset points\n");
+    using Kind = sim::Command::Kind;
+    sim::Realm realm;
+    check(realm.raise(&tables, 31, 138, 124, sim::Kin::DarkKnight, 80), "a level-80 knight raises");
+    const uint32_t me = realm.hero().id;
+    const auto run = [&](sim::Command c) -> int {
+        c.player = me;
+        c.ticket = 91;
+        realm.command(c);
+        realm.step();
+        for (const sim::Happening& one : realm.happenings()) {
+            if (one.what == sim::What::Answered && one.c == 91) return one.b;
+        }
+        return -99;
+    };
+    const sim::HeroPoints start = sim::startingPoints(sim::Kin::DarkKnight);
+    checkEqual(run({.kind = Kind::ResetPoints}), -1, "nothing placed, nothing to reset");
+    const int inHand = realm.hero().pointsInHand;
+    check(inHand > 20, "he has points to spend");
+    checkEqual(run({.kind = Kind::Spend, .a = 0, .b = 10}), 1, "ten into strength at one press");
+    checkEqual(realm.hero().points.strength, start.strength + 10, "strength is ten up");
+    checkEqual(run({.kind = Kind::Spend, .a = 1}), 1, "a Spend without a count is one point");
+    checkEqual(realm.hero().points.agility, start.agility + 1, "agility one up");
+    checkEqual(run({.kind = Kind::Spend, .a = 0, .b = inHand}), -1, "more than in hand is refused whole");
+    checkEqual(run({.kind = Kind::Spend, .a = 0, .b = realm.hero().pointsInHand}), 1, "and all of it spends");
+    checkEqual(realm.hero().pointsInHand, 0, "none left in hand");
+
+    // An armour his strength now meets and his class's start does not.
+    sim::Wearer now = realm.wearer(), bare = now;
+    bare.points = start;
+    int armour = -1;
+    for (size_t i = 0; i < tables.items.size() && armour < 0; ++i) {
+        const content::ItemRow& row = tables.items[i];
+        if (row.group != sim::kGroupArmours) continue;
+        sim::Held held;
+        held.item = int32_t(i);
+        held.durability = 1;
+        if (sim::fits(tables, now, held) && !sim::fits(tables, bare, held)) armour = int(i);
+    }
+    check(armour >= 0, "an armour he wears only on his placed points");
+    if (armour < 0) return;
+    checkEqual(realm.give(armour, sim::kArmour), sim::kArmour, "worn");
+    checkEqual(realm.resetStrips(), 1, "a reset would take it off");
+
+    // A full bag: refused, and nothing moves. Its own knight, placed and dressed as this one.
+    sim::Realm full;
+    check(full.raise(&tables, 31, 138, 124, sim::Kin::DarkKnight, 80), "a second knight raises");
+    check(full.spend(realm.hero().points.strength - start.strength, realm.hero().points.agility - start.agility,
+                     0, 0),
+          "his points placed the same");
+    checkEqual(full.give(armour, sim::kArmour), sim::kArmour, "the same armour worn");
+    while (full.give(tables.itemAt(0, 0)) >= 0) {
+    }
+    const content::ItemRow& armourRow = tables.items[size_t(armour)];
+    check(full.satchel().free(tables, armourRow.width, armourRow.height) < 0, "a bag with no room for it");
+    checkEqual(full.resetStrips(), -1, "the window is told there is no room");
+    check(full.resetPoints() == sim::Realm::Reset::NoRoom, "the reset is refused for the room");
+    checkEqual(full.hero().points.strength, realm.hero().points.strength, "his strength stands");
+    checkEqual(full.satchel()[sim::kArmour].item, armour, "and his armour is still on him");
+
+    // Room: every placed point back in hand, his stats his class's start, the armour in the bag.
+    const sim::HeroPoints& placed = realm.hero().points;
+    const int back = (placed.strength - start.strength) + (placed.agility - start.agility) +
+                     (placed.vitality - start.vitality) + (placed.energy - start.energy);
+    checkEqual(run({.kind = Kind::ResetPoints}), 1, "the reset is done");
+    checkEqual(realm.hero().pointsInHand, back, "every placed point back in hand");
+    checkEqual(realm.hero().points.strength, start.strength, "strength at the knight's start");
+    check(realm.satchel()[sim::kArmour].empty(), "the armour is off him");
+    bool carried = false;
+    for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) carried |= realm.satchel()[slot].item == armour;
+    check(carried, "and in his bag");
+    check(realm.hero().health <= realm.hero().maxHealth, "his life under its new top");
+}
+
 void testOptions(const content::Tables& tables) {
     std::printf("options\n");
     const int soul = tables.itemAt(14, 14), kris = tables.itemAt(0, 0);
@@ -14191,6 +14269,7 @@ int main() {
     testRefine(tables);
     testJewelOfLife(tables);
     testOptions(tables);
+    testResetPoints(tables);
     testExcellent(tables);
     testSets(tables);
     testWear(tables);

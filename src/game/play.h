@@ -293,9 +293,13 @@ public:
     const std::string& zoneLevels() const { return zoneLevels_; }
     // The windows' requests, which the realm decides. A window never changes what it shows by
     // itself: it asks here and redraws from the realm afterwards (sprint 7, "a mirror").
-    // One point into strength (0), agility (1), vitality (2) or energy (3), refused where
-    // none is in hand -- OpenMU's IncreaseStatsAction, one point a press.
-    uint32_t spendPoint(int stat);
+    // Points into strength (0), agility (1), vitality (2) or energy (3), refused where fewer
+    // are in hand -- OpenMU's IncreaseStatsAction is one a press; the window's 10 and All are
+    // ours (the user, 2026-10-20).
+    uint32_t spendPoint(int stat, int count = 1);
+    // Every placed point back in hand (sim::Realm::resetPoints): answered 1, -1 nothing placed,
+    // -2 no room in the bag for the gear he could no longer wear.
+    uint32_t resetPoints();
     // A drag from one slot to another, and a right-click on a carried thing. Both the realm's
     // to refuse; see sim/items.h for the gates.
     // `pieces`: of a stack, how many go (Shift-click's part); 0 the whole of it. The same on

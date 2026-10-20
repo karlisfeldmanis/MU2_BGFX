@@ -54,6 +54,9 @@ public:
     // A bound thing refused by a trade (Held::bound), said in the lane in the level
     // gap's red: "Bound items stay with their character" (the user, 2026-10-11).
     void bound();
+    // A reset of his points refused because the bag has no room for the gear it would take off
+    // (sim::Realm::Reset::NoRoom; the user, 2026-10-20).
+    void noRoomToReset();
 
     bool showing() const { return !canvas_.empty(); }
     const gfx::Canvas& canvas() const { return canvas_; }
@@ -64,7 +67,7 @@ private:
     // carry a figure: it is said in the same three square inches because that is where the eye
     // already is when it happens.
     struct Row {
-        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped, Bound, BagFull, NotYours, TooFar, Outguarded };
+        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped, Bound, BagFull, NotYours, TooFar, Outguarded, NoRoomToReset };
         Kind kind = Kind::Experience;
         int64_t value = 0;
         float age = 0.0f;

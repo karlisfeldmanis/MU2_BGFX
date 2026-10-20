@@ -95,6 +95,10 @@ void row(gfx::Canvas& canvas, const gfx::Box& box, const std::string& label, flo
 // Two answers side by side, the chosen one filled red: "Off | On".
 void toggle(gfx::Canvas& canvas, const gfx::Box& box, const char* left, const char* right,
             bool rightOn, float u);
+// The same with `count` answers, `on` the chosen one filled red and `over` (or -1) lit under the
+// pointer: the character window's "1 | 10 | All". `wordSize` in pixels, 0 the toggle's.
+void choice(gfx::Canvas& canvas, const gfx::Box& box, const char* const* words, int count, int on,
+            int over, float u, float wordSize = 0.0f);
 // A value from 0 to 1 on a track, with an upright handle and the figure beside it.
 void slider(gfx::Canvas& canvas, const gfx::Box& box, float value, const std::string& figure,
             float u);

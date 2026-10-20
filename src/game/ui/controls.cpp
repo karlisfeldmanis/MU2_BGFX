@@ -845,6 +845,37 @@ void toggle(gfx::Canvas& canvas, const Box& box, const char* left, const char* r
     word(canvas, halves[1], size, on == 1 ? Tone{1, 1, 1, 1} : Tone{0.561f, 0.522f, 0.459f, 1}, right);
 }
 
+void choice(gfx::Canvas& canvas, const Box& box, const char* const* words, int count, int on,
+            int over, float u, float wordSize) {
+    if (count <= 0) return;
+    const Box b{std::round(box.x), std::round(box.y), std::round(box.w), std::round(box.h)};
+    const float line = px(u), r = style::kRadiusControl * u;
+    tip::panel(canvas, b, r, style::kIronLo, style::kIronLo);
+    const Box in = b.grown(-line);
+    tip::panel(canvas, in, r - line, style::kVoid, style::kVoid);
+    stone(canvas, in, kWell);
+    const float size = wordSize > 0.0f ? wordSize : style::kButtonWordS * u;
+    const Tone quiet{0.561f, 0.522f, 0.459f, 1}, lit{0.953f, 0.910f, 0.831f, 1};
+    float from = in.x;
+    for (int i = 0; i < count; ++i) {
+        const float to = i + 1 == count ? in.right() : std::round(in.x + in.w * float(i + 1) / float(count));
+        const Box part{from, in.y, to - from, in.h};
+        if (i == on) {
+            // toggle's chosen half: the blood slab, a breath of red light along its top.
+            const float corners[4] = {i == 0 ? r - line : 0.0f, i + 1 == count ? r - line : 0.0f,
+                                      i + 1 == count ? r - line : 0.0f, i == 0 ? r - line : 0.0f};
+            tip::rounded(canvas, part, corners, style::kBloodMd, style::kBloodDk);
+            canvas.rect({part.x, part.y, part.w, line}, gfx::rgba(1.0f, 0.706f, 0.627f, 0.2f));
+        } else if (i == over) {
+            canvas.shade(part, kWarmLight.alpha(0.0f).packed(), kWarmLight.alpha(0.0f).packed(),
+                         kWarmLight.alpha(0.06f).packed(), kWarmLight.alpha(0.06f).packed());
+        }
+        if (i > 0) canvas.rect({part.x, part.y, line, part.h}, style::kIronDk);
+        word(canvas, part, size, i == on ? Tone{1, 1, 1, 1} : i == over ? lit : quiet, words[i]);
+        from = to;
+    }
+}
+
 void slider(gfx::Canvas& canvas, const Box& box, float value, const std::string& figure, float u) {
     const float line = px(u);
     const float size = 14.0f * u;

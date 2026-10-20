@@ -46,7 +46,7 @@ struct Command {
                     // answered as Crack
         Crack,      // only ever an answer: a Discard that opened. The answer's x and y are the
                     // tile it burst over; the Cracked said before it has the rest
-        Spend,      // a: 0 strength, 1 agility, 2 vitality, 3 energy
+        Spend,      // a: 0 strength, 1 agility, 2 vitality, 3 energy; b: how many, 1 if not said
         // The quest giver's dialog and the road (Realm::acceptQuest, completeQuest, travel,
         // setHeroDown).
         AcceptQuest,    // a: the quest
@@ -105,10 +105,13 @@ struct Command {
                      // because the vault was full, 2 neither
         BrokerGive,  // the Held out of his Collect into his bag: 1, or -1 when it does not fit
         BrokerZen,   // zen out of his Collect: answered with what he could carry
+        // Every placed point back in hand (Realm::resetPoints): answered 1, -1 nothing placed,
+        // -2 no room in the bag for what he could no longer wear.
+        ResetPoints,
     };
     // The last kind there is: what a wire reads past it is None (net::takeCommand). Moved with
     // every kind added at the end.
-    static constexpr Kind kLastKind = Kind::BrokerZen;
+    static constexpr Kind kLastKind = Kind::ResetPoints;
     // Close's a.
     // Trade is the merchant's counter, as the realm has always called it; Deal is a trade between
     // two players, which closing cancels for both.

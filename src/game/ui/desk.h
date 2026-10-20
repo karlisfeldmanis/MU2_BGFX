@@ -324,7 +324,7 @@ private:
     // Bound is TookOrRefused for a bound thing, whose no the tally's lane explains (Tally::bound).
     enum class Then : uint8_t {
         TookOrRefused, Refused, Spark, ZenBox, Strike, CloseQuest, Travel, Click, CloseAngel, Quiet,
-        Bound
+        Bound, Reset
     };
     struct Waiting {
         uint32_t ticket = 0;

@@ -693,6 +693,67 @@ bool Realm::spend(int strength, int agility, int vitality, int energy) {
     return true;
 }
 
+namespace {
+
+// What a reset would leave him: the bag with every piece he could no longer wear moved into it,
+// and how many moved. False when one of them finds no room, or in Icarus when one is what flies
+// him. `start` is the stats he would stand on.
+bool stripped(const content::Tables& tables, Wearer who, const HeroPoints& start, bool flight,
+              Satchel* bag, int* moved) {
+    who.points = start;
+    *moved = 0;
+    for (int slot = 0; slot < kWorn; ++slot) {
+        const Held& worn = (*bag)[slot];
+        if (worn.empty() || fits(tables, who, worn)) continue;
+        const content::ItemRow& row = tables.items[size_t(worn.item)];
+        const int room = bag->free(tables, row.width, row.height);
+        if (room < 0) return false;
+        bag->put(room, bag->lift(slot));
+        ++*moved;
+    }
+    return !flight || canFly(tables, *bag);
+}
+
+}  // namespace
+
+int Realm::resetStrips() const {
+    if (!tables_) return -2;
+    const Body& hero = mine();
+    const HeroPoints start = startingPoints(hero.kin);
+    const HeroPoints& now = hero.points;
+    if (now.strength == start.strength && now.agility == start.agility && now.vitality == start.vitality &&
+        now.energy == start.energy) {
+        return -2;
+    }
+    Satchel trial = me().bag;
+    int moved = 0;
+    if (!stripped(*tables_, wearer(), start, rulesOf(tables_->map).flight, &trial, &moved)) return -1;
+    return moved;
+}
+
+Realm::Reset Realm::resetPoints() {
+    if (!tables_ || !mine().alive()) return Reset::NothingPlaced;
+    Body& hero = mine();
+    const HeroPoints start = startingPoints(hero.kin);
+    const int back = (hero.points.strength - start.strength) + (hero.points.agility - start.agility) +
+                     (hero.points.vitality - start.vitality) + (hero.points.energy - start.energy);
+    if (back <= 0) return Reset::NothingPlaced;
+    // Tried on a copy, so a refusal changes nothing.
+    Satchel trial = me().bag;
+    int moved = 0;
+    if (!stripped(*tables_, wearer(), start, rulesOf(tables_->map).flight, &trial, &moved)) {
+        return Reset::NoRoom;
+    }
+    me().bag = trial;
+    hero.points = start;
+    hero.pointsInHand += back;
+    // What he holds and the stats he stands on, reckoned again (Realm::rearm reckons, keeps his
+    // boon, his mana and his swing); the life he has stays, under its new top.
+    rearm(hero);
+    hero.health = std::min(hero.health, hero.maxHealth);
+    return Reset::Done;
+}
+
 // ---- walking ---------------------------------------------------------------------------
 
 void Realm::accept() {

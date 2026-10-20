@@ -25,11 +25,14 @@ public:
     void open(const gfx::Interface& interface, panel::Arts* arts);
 
     // A frame. `spend` comes back as the stat a plus was released on (0 strength to 3 energy),
-    // or -1; `close` as whether the X was. Both are requests; the caller answers them. `realm`
-    // is asked for what only it reckons (his attack speed); the window keeps nothing of it.
-    // `name` is his, as the server said it, and heads the window; empty off a server.
+    // or -1, and `count` as how many points it asks (the 1 | 10 | All under the attributes);
+    // `reset` as whether the reset was confirmed; `close` as whether the X was. All are
+    // requests; the caller answers them. `realm` is asked for what only it reckons (his attack
+    // speed, what a reset would take off); the window keeps nothing of it. `name` is his, as the
+    // server said it, and heads the window; empty off a server.
     void update(float width, float height, const sim::Body* hero, const sim::Realm* realm,
-                const std::string& name, const Pointer& pointer, int* spend, bool* close);
+                const std::string& name, const Pointer& pointer, int* spend, int* count, bool* reset,
+                bool* close);
 
     int tab() const { return tab_; }  // the open page: 0 Attributes, 1 Combat, 2 Bonuses
     bool covers(float x, float y) const;
@@ -65,8 +68,14 @@ private:
         std::vector<Line> lines[4];  // what each attribute buys, under its well
         std::vector<Group> groups;   // the page open, when it is not Attributes
         int tab = 0, overTab = -1, pressTab = -1;
+        // pushed and over: 0-3 a stat's plus, kStepIds + i a part of the switch, then the reset,
+        // its No and its Yes (card.cpp's ids).
         int pushed = -1, over = -1;
         bool closing = false, overClose = false;
+        int step = 1;          // 1, 10 or 0 for all, as a press now spends (10 is All under ten)
+        int returnable = 0;    // the points a reset would take back
+        int strips = 0;        // the worn pieces it would take off, -1 no room for them
+        bool asking = false;   // the reset's question is up
         bool operator==(const Sheet&) const = default;
     };
     void rebuild();
@@ -78,7 +87,11 @@ private:
     int tab_ = 0;         // 0 Attributes, 1 Combat, 2 Bonuses
     int pressTab_ = -1;   // the tab a press went down on
     int pushed_ = -1;
-    int over_ = -1;       // the plus under the pointer
+    int over_ = -1;       // the control under the pointer, as Sheet::over
+    // What a press spends, as he left it: 1, 10 or 0 for all (the user, 2026-10-20). Kept while
+    // the game runs.
+    int step_ = 1;
+    bool asking_ = false;  // the reset's question is up
     bool closing_ = false;
     bool overClose_ = false;
     uint64_t rebuilds_ = 0;
