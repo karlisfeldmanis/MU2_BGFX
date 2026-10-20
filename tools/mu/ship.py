@@ -40,6 +40,7 @@ WEB_HOST = release.HOST          # the site and its database are on the Helsinki
 # Each region's game server: its name, its ssh host, and how server/deploy.sh is pointed at it.
 BOXES = [
     ("North Europe", "hetzner", ""),
+    ("Central Europe", "germany", "MU2_HOST=germany "),
     ("South America", "root@216.238.127.33", "MU2_HOST=root@216.238.127.33 "),
     ("Southeast Asia", "singapore", "MU2_HOST=singapore "),
 ]

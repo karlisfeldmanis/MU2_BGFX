@@ -62,6 +62,22 @@ of tunnel (its own key `/root/.ssh/mu2_accounts`, "mu2-singapore accounts tunnel
 | deploy | `MU2_HOST=singapore server/deploy.sh` |
 | settings | `/etc/default/mu2-server`: MU2_REGION=Southeast Asia |
 
+## The Central Europe box
+
+The fourth region, rented 2026-10-20 for the Balkans and the south (Greece ~55-70 ms from
+Helsinki; neither Hetzner nor Vultr has anything nearer them than Germany). Set up as Singapore's:
+its own world and `characters.db`, the accounts through its own tunnel key ("mu2-germany accounts
+tunnel" in Helsinki's `authorized_keys`, limited the same way).
+
+| | |
+|---|---|
+| name | `mu-classic-germany`, Hetzner Nuremberg, CPX02, €7.25/month, no backups |
+| address | 178.104.232.133 (IPv6 2a01:4f8:1c1c:d81d::/64) |
+| login | `ssh germany` (root, `~/.ssh/id_ed25519`); passwords off (`/etc/ssh/sshd_config.d/00-keys-only.conf`) |
+| system | Ubuntu 26.04.1, x86_64, 1 vCPU, 927 MB, 2 GB swap (`/swapfile`); g++ 15.2, CMake 4.2 |
+| deploy | `MU2_HOST=germany server/deploy.sh` |
+| settings | `/etc/default/mu2-server`: MU2_REGION=Central Europe |
+
 ## Playing on it
 
     ./mu play                                  the character screen, asking the box for your characters

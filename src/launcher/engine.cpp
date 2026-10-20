@@ -344,6 +344,8 @@ const std::vector<Region>& regions() {
     // The Hetzner box (net::kDefaultHost), the game's own default.
     static const std::vector<Region> all = {
         {"eu-north", "North Europe", "Helsinki", "mu-classic.com"},
+        // Hetzner Nuremberg (server/README.md, the Central Europe box), for the Balkans and the south.
+        {"eu-central", "Central Europe", "Nuremberg", "178.104.232.133"},
         // Vultr São Paulo (server/README.md, the South America box).
         {"sa-east", "South America", "Sao Paulo", "216.238.127.33"},  // no ã in the launcher's face
         // Hetzner Singapore (server/README.md, the Southeast Asia box).
