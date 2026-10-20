@@ -111,7 +111,7 @@ bool bytesOf(const std::string& hex, std::vector<uint8_t>& out) {
 }
 
 // A name as a JSON string (the names are letters and digits; nothing is trusted).
-std::string quoted(const std::string& text) {
+std::string jsonQuoted(const std::string& text) {
     std::string out = "\"";
     for (const char c : text) {
         if (c == '"' || c == '\\') out += '\\';
@@ -121,7 +121,7 @@ std::string quoted(const std::string& text) {
 }
 
 std::string step(long long move, const char* state, const char* why = "", const std::string& kept = "") {
-    return "{\"region\":" + quoted(g_region) + ",\"id\":" + std::to_string(move) + ",\"state\":\"" + state +
+    return "{\"region\":" + jsonQuoted(g_region) + ",\"id\":" + std::to_string(move) + ",\"state\":\"" + state +
            "\",\"why\":\"" + why + "\",\"kept\":\"" + kept + "\"}";
 }
 

@@ -63,9 +63,10 @@ ssh $host "dpkg -s libsqlite3-dev sqlite3 >/dev/null 2>&1 || DEBIAN_FRONTEND=non
 ssh $host "dpkg -s zlib1g-dev >/dev/null 2>&1 || DEBIAN_FRONTEND=noninteractive apt-get install -y -q zlib1g-dev >/dev/null"
 
 # One job: the box has one core and 1 GB (2 GB swap). sim_test.cpp is the slow one, a few minutes.
+# A build that fails stops here (set -e): before 2026-10-20 it went on and restarted the old binary.
 ssh $host "cd $dest && \
   { [ -f build/build.ninja ] || cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DMU2_SERVER_ONLY=ON; } && \
-  cmake --build build -j 1 --target mu2_server sim_test save_test placement_test && \
+  cmake --build build -j 1 --target mu2_server sim_test save_test placement_test || { echo 'build failed: nothing restarted'; exit 1; }; \
   ./build/sim_test > sim_test.log 2>&1; tail -1 sim_test.log; \
   ./build/save_test | tail -1; ./build/placement_test | tail -1"
 if [ "$1" = "--stage" ]; then
