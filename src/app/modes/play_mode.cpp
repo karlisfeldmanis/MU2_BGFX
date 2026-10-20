@@ -600,6 +600,12 @@ bool PlayMode::open(Context& ctx) {
                 desk_.restoreBar(saved_.bar, 6);
                 desk_.followQuest(saved_.followed);
             }
+            // The Helper's settings, kept beside the save as Name.helper (game/helper.h).
+            {
+                game::HelperSettings helper;
+                game::loadHelper(savePath_, helper);
+                desk_.setHelperSettings(helper);
+            }
             // And the pictures the windows will ask for, last of all: after restore(), so the
             // bag being warmed is the one he is carrying and not an empty one.
             core::Loading::stage("items", 0.675f, 1.0f);
@@ -806,6 +812,7 @@ void PlayMode::runScript(Context& ctx) {
     }
     if (args.windows.find("whatsnew") != std::string::npos) desk_.showWhatsNew();
     if (args.windows.find("quests") != std::string::npos) desk_.showQuestLog();
+    if (args.windows.find("helper") != std::string::npos) desk_.showHelper();
 }
 
 void PlayMode::openProbes(Context& ctx) {
@@ -1331,6 +1338,35 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             ctx.autoQuest = -1;
             desk_.notice("Auto-play stopped.");
         }
+        // **The Helper** (game/helper.h): started and stopped by H, the minimap's H and its
+        // window, stopped by a click of his own on the world, as Auto-play is; the two never run
+        // together.
+        int helperAsked = desk_.takeHelperAsk();
+        helperClock_ += deltaSeconds;
+        if (ctx.args.helperAfter >= 0.0f && helperClock_ >= ctx.args.helperAfter) {
+            ctx.args.helperAfter = -1.0f;
+            helperAsked = 1;
+        }
+        if (const int asked = helperAsked; asked != -2 && world_.played().isOpen()) {
+            const game::Play& played = world_.played();
+            const sim::Body& hero = played.realm().hero();
+            if (asked == 0) {
+                if (helper_.on()) desk_.notice("Helper stopped.");
+                helper_.stop();
+            } else if (played.realm().tables()->grid.safe(hero.column(), hero.row())) {
+                desk_.notice("The Helper works outside safe zones.");
+                core::logf("helper: not started on a safe tile, %d,%d", hero.column(), hero.row());
+            } else if (hero.alive()) {
+                if (ctx.autoQuest >= 0) ctx.autoQuest = -1;
+                helper_.start(played);
+                desk_.notice("Helper started.");
+            }
+        }
+        if (helper_.on() && (ctx.autoQuest >= 0 || (!windowed && (mouseLeft || mouseRight)))) {
+            helper_.stop();
+            desk_.notice("Helper stopped.");
+        }
+        if (desk_.takeHelperChanged()) game::writeHelper(savePath_, desk_.helperSettings());
         if ((mouseLeft && !windowed) || clickNow || (uiPress && !uiRight && !windowed)) {
             world_.played().leftClick();
         } else if (mouseLeft || !mouseLeftHeld) {
@@ -1356,6 +1392,12 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             desk_.notice(said);
         }
         desk_.setAutoPlaying(ctx.autoQuest);
+        if (const std::string said = helper_.update(world_.played(), desk_.helperSettings(), deltaSeconds, bar,
+                                                    game::Hud::kSkillBoxes);
+            !said.empty()) {
+            desk_.notice(said);
+        }
+        desk_.setHelping(helper_.on(), helper_.stats());
         world_.played().update(deltaSeconds);
         // --stride-log: the clocks a recording's cut carries, as this frame is drawn.
         if (strideLog_) {
@@ -1908,7 +1950,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // on the pointer being clear of a window, only the click a monster answers to is.
     if (ctx.window.pressed(gfx::Window::Key::HideHud)) {
         hudHidden_ = !hudHidden_;
-        core::logf("HUD %s", hudHidden_ ? "hidden (F11 or H shows it)" : "shown");
+        core::logf("HUD %s", hudHidden_ ? "hidden (F11 shows it)" : "shown");
     }
     if (!hoverDrawables_.empty() && !hudHidden_) {
         float outlineView[16], outlineProj[16];

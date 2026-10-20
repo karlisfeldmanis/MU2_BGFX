@@ -125,6 +125,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     whatsNew_.open(interface_, &arts_);
     questDialog_.open(interface_);
     questLog_.open(interface_, assetDir);
+    helperWindow_.open(interface_, &arts_);
     tracker_.open(interface_);
     travel_.open(interface_, assetDir, &arts_);
     goBack_.open(interface_);
@@ -161,6 +162,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
 void Desk::shutdown() {
     questDialog_.close();
     questLog_.close();
+    helperWindow_.close();
     tracker_.close();
     travel_.close();
     goBack_.close();
@@ -186,6 +188,26 @@ void Desk::shutdown() {
     interface_.shutdown();
 }
 
+// The first press opens the window, so the Helper is seen before it is used; after that a press
+// starts it or stops it, and the window is the minimap button's right click (or Shift+H).
+void Desk::helperPressed() {
+    if (!helperSettings_.seen) {
+        openHelper();
+        return;
+    }
+    helperAsk_ = helping_ ? 0 : 1;
+}
+
+void Desk::openHelper() {
+    if (!helperSettings_.seen) {
+        helperSettings_.seen = true;
+        helperChanged_ = true;
+    }
+    questLog_.hide();
+    helperWindow_.show();
+    core::logf("window: helper up");
+}
+
 void Desk::expect(uint32_t ticket, Then then, int key) {
     if (ticket != 0) waiting_.push_back({ticket, then, key});
 }
@@ -194,7 +216,7 @@ bool Desk::overWindows(float x, float y) const {
     return amount_.up() || report_.up() || whatsNew_.up() || menu_.up() || hud_.covers(x, y) || guild_.covers(x, y) ||
            guildMake_.covers(x, y) || chat_.covers(x, y) || (!minimap_.full() && partyBar_.covers(x, y)) ||
            playerMenu_.covers(x, y) || targetFrame_.covers(x, y) || minimap_.covers(x, y) ||
-           questDialog_.covers(x, y) || questLog_.covers(x, y) || travel_.covers(x, y) || goBack_.covers(x, y) ||
+           questDialog_.covers(x, y) || questLog_.covers(x, y) || helperWindow_.covers(x, y) || travel_.covers(x, y) || goBack_.covers(x, y) ||
            herald_.covers(x, y) || squareResult_.covers(x, y) ||
            (specimenOpen_ && specimen_.covers(x, y)) ||
            (characterOpen_ && card_.covers(x, y)) || inspect_.covers(x, y) ||
@@ -545,7 +567,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // or down.
     const bool windowsOpen = inventoryOpen_ || characterOpen_ || trading_ || banking_ || brokering_ || mixing_ ||
                              dealing_ || travel_.up() || guild_.up() || guildMake_.up() || inspecting() ||
-                             questLog_.up();
+                             questLog_.up() || helperWindow_.up();
     {
         std::string place = hero ? placeName(worldName_, hero->column(), hero->row()) : worldName_;
         if (hero) {
@@ -578,6 +600,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 inventoryOpen_ = characterOpen_ = false;
                 closeInspect();
                 questLog_.hide();
+                helperWindow_.hide();
                 if (trading_) play.closeTrade();
                 if (banking_) play.closeVault();
                 if (brokering_) play.closeBroker();
@@ -657,6 +680,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         if (questLog_.up() && !questLogAsked_) {
             questLog_.hide();
         } else {
+            helperWindow_.hide();
             questLog_.show(autoPlaying_ >= 0 ? autoPlaying_ : tracker_.following());
             core::logf("window: quest log up");
         }
@@ -689,6 +713,35 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 autoAsk_ = -1;
                 click();
             }
+        }
+    }
+
+    // H, the Helper (game/helper.h): its window the first time and with Shift, else started or
+    // stopped. The window, while it is up: its settings, the auto-drink lines, Start and Stop.
+    if (!keysHeld && play.isOpen() && (window.pressed(gfx::Window::Key::Helper) || helperAsked_)) {
+        if (helperAsked_ || window.shift()) {
+            if (helperWindow_.up() && !helperAsked_) helperWindow_.hide();
+            else openHelper();
+        } else {
+            helperPressed();
+        }
+        helperAsked_ = false;
+        click();
+    }
+    if (helperWindow_.up() && play.isOpen()) {
+        HelperWindow::Result result;
+        int32_t bar[Hud::kSkillBoxes];
+        for (int k = 0; k < Hud::kSkillBoxes; ++k) bar[k] = bound_[k];
+        helperWindow_.update(seconds, play, helperSettings_, bar, helping_, helperStats_, float(window.width()),
+                             float(window.height()), typing ? Pointer{} : pointer, &result);
+        if (result.clicked) click();
+        if (result.changed) helperChanged_ = true;
+        if (result.close) helperWindow_.hide();
+        if (result.start) helperAsk_ = 1;
+        if (result.stop) helperAsk_ = 0;
+        if (result.health >= 0 || result.mana >= 0) {
+            play.setAutoDrink(result.health, result.mana);
+            core::logf("window: auto-drink %d%% health, %d%% mana", result.health, result.mana);
         }
     }
 
@@ -1361,8 +1414,18 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // and neither while a box or the menu has the screen.
     minimap_.setReporting(report_.up());
     minimap_.setAutoPlaying(autoPlaying_);
+    minimap_.setHelping(helping_);
     minimap_.update(seconds, play, typing || menuHeld ? Pointer{} : pointer,
                     typing || menuHeld ? 0.0f : window.scroll(), window.width(), window.height());
+    // Its H, as H is; and its right click, the window.
+    if (minimap_.takeHelperToggle() && play.isOpen()) {
+        helperPressed();
+        click();
+    }
+    if (minimap_.takeHelperWindow() && play.isOpen()) {
+        openHelper();
+        click();
+    }
     // Its Auto-play button stops it, as Stop on the log does.
     if (minimap_.takeAutoStop() && autoPlaying_ >= 0) autoAsk_ = -1;
     // Its bug button raises the report, with what goes with it said: where and who.
@@ -2466,6 +2529,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
         interface_.add(questLog_.body());
         interface_.add(questLog_.card());
     }
+    if (helperWindow_.up()) interface_.add(helperWindow_.canvas());
     if (trading_) interface_.add(shelf_.canvas());
     // The window something is dragged out of goes over the other, so what rides the pointer is
     // never under a window it is carried across -- a vault piece over the bag hid behind it.

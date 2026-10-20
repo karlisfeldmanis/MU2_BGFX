@@ -10,6 +10,7 @@
 #include "core/log.h"
 #include "game/play.h"
 #include "game/ui/controls.h"
+#include "game/ui/panel.h"
 #include "game/ui/style.h"
 #include "game/ui/tip.h"
 #include "game/world/maps.h"
@@ -56,6 +57,8 @@ constexpr float kRimShadow = 0.5f;  // the dark hairline outside it
 // The bug button (game/ui/report.h): on the rim, cos 45 of the way out down and to the left.
 constexpr float kBugAt = 0.7071068f;
 constexpr float kBugRadius = 15.0f;
+// The Helper's button on the rim: cos and sin of 35 degrees over the right, half past two.
+constexpr float kHelperAcross = 0.8191520f, kHelperUp = 0.5735764f;
 // Tiles across the square, near to far; the wheel steps between them.
 constexpr float kSpans[] = {40.0f, 64.0f, 100.0f};
 constexpr int kZooms = int(sizeof kSpans / sizeof kSpans[0]);
@@ -567,6 +570,8 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
         bugPressing_ = false;
         autoR_ = 0.0f;
         autoPressing_ = false;
+        helperR_ = 0.0f;
+        helperPressing_ = false;
     } else {
         const float rim = radius_ - kFade * u * kRimIn;
         bugX_ = std::round(map_.midX() - rim * kBugAt);
@@ -591,7 +596,20 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
             if (autoPressing_ && onAuto) autoStopAsked_ = true;
             autoPressing_ = false;
         }
+        // And the Helper's, always, over Auto-play's at half past two.
+        helperX_ = std::round(map_.midX() + rim * kHelperAcross);
+        helperY_ = std::round(map_.midY() - rim * kHelperUp);
+        helperR_ = bugR_;
+        const bool onHelper = overHelper(pointer.x, pointer.y);
+        helperLift_ = onHelper ? std::min(1.0f, helperLift_ + step) : std::max(0.0f, helperLift_ - step);
+        if (pointer.pressed) helperPressing_ = onHelper;
+        if (pointer.released) {
+            if (helperPressing_ && onHelper) helperToggleAsked_ = true;
+            helperPressing_ = false;
+        }
+        if (pointer.rightPressed && onHelper) helperWindowAsked_ = true;
     }
+    helperClock_ = helping_ ? std::fmod(helperClock_ + seconds, style::kLiveSeconds) : 0.0f;
     autoClock_ = autoQuest_ >= 0 ? std::fmod(autoClock_ + seconds, style::kLiveSeconds) : 0.0f;
 
     // His facing, eased round the short way.
@@ -807,6 +825,12 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
     now_.autoBreath = now_.autoQuest >= 0
                           ? int(std::lround((0.5f - 0.5f * std::cos(6.2831853f * autoClock_ / style::kLiveSeconds)) * 16.0f))
                           : 0;
+    now_.helping = helping_;
+    now_.helperLift = full_ ? 0 : int(std::lround(helperLift_ * 8.0f));
+    now_.helperPressed = helperPressing_ && overHelper(pointer.x, pointer.y);
+    now_.helperBreath = helping_ && !full_
+                            ? int(std::lround((0.5f - 0.5f * std::cos(6.2831853f * helperClock_ / style::kLiveSeconds)) * 16.0f))
+                            : 0;
     showing_ = true;
     if (built_ && now_ == drawn_) return;
     rebuild(play);
@@ -1127,6 +1151,65 @@ void Minimap::rebuild(const Play& play) {
     if (!full_) {
         drawBug();
         drawAuto();
+        drawHelper();
+    }
+}
+
+// The Helper's: the bug button's dark disc, its iron ring lighting under the pointer, an H in
+// Cinzel in bone over a hard drop; helping, the ring breathes Auto-play's green and the H takes
+// its tint.
+void Minimap::drawHelper() {
+    if (helperR_ <= 0.0f) return;
+    const float u = tip::unit();
+    const float lift = float(now_.helperLift) / 8.0f;
+    const float breath = float(now_.helperBreath) / 16.0f;
+    const float cx = helperX_, cy = helperY_ + (now_.helperPressed ? 1.0f * u : 0.0f);
+    const auto mix = [](uint32_t a, uint32_t b, float t) {
+        uint32_t out = 0;
+        for (int shift = 0; shift < 32; shift += 8) {
+            const float x = float((a >> shift) & 0xFF), y = float((b >> shift) & 0xFF);
+            out |= uint32_t(std::lround(x + (y - x) * t)) << shift;
+        }
+        return out;
+    };
+    const auto disc = [&](float rx, uint32_t tone) {
+        constexpr int kSides = 24;
+        float xy[kSides * 2];
+        uint32_t tones[kSides];
+        for (int i = 0; i < kSides; ++i) {
+            const float t = 6.2831853f * float(i) / float(kSides);
+            xy[i * 2] = cx + std::cos(t) * rx;
+            xy[i * 2 + 1] = cy + std::sin(t) * rx;
+            tones[i] = tone;
+        }
+        canvas_.polygon(xy, tones, kSides);
+    };
+    const float r = helperR_;
+    const bool on = now_.helping;
+    disc(r + std::max(1.0f, u), style::kSeam);
+    disc(r, on ? mix(mix(style::kFits, style::kLive, breath), style::kLiveHi, lift)
+               : mix(style::kIron, style::kIronHi, lift));
+    disc(r - std::max(1.0f, 1.5f * u), mix(style::kAsh1, style::kAsh3, lift));
+
+    const uint32_t ink = on ? mix(gfx::rgba(0.804f, 0.933f, 0.753f), gfx::rgba(0.902f, 0.980f, 0.863f), lift)
+                            : mix(style::kBone2, style::kBoneHi, lift);
+    const float size = std::round(r * 1.15f);
+    if (const gfx::Face* face = panel::titleFace()) {
+        const float wide = face->measure(size, "H");
+        const float x = std::round(cx - wide * 0.5f), base = std::round(cy + size * 0.36f);
+        canvas_.lettered(*face, panel::titleTexture(), x, base + std::max(1.0f, u), size, 0.0f, style::kDrop, "H");
+        canvas_.lettered(*face, panel::titleTexture(), x, base, size, 0.0f, ink, "H");
+    } else {
+        controls::label(canvas_, cx - size * 0.3f, cy + size * 0.36f, size, ink, "H");
+    }
+
+    // Named under the pointer, under the button, kept inside the screen on the right.
+    if (now_.helperLift >= 8) {
+        const std::string words = on ? "Helping  \xC2\xB7  click or H to stop"
+                                     : "Helper  \xC2\xB7  click or H  \xC2\xB7  right click: settings";
+        const float wide = controls::labelWidth(13.0f * u, words) + 16.0f * u;
+        const float x = std::min(float(now_.width) - wide * 0.5f - 4.0f * u, cx);
+        controls::hint(canvas_, x, cy + r + 30.0f * u, words, u);
     }
 }
 

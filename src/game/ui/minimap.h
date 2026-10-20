@@ -87,7 +87,8 @@ public:
     bool covers(float x, float y) const {
         if (full_) return false;
         const float dx = x - map_.midX(), dy = y - map_.midY();
-        return showing_ && (dx * dx + dy * dy < radius_ * radius_ || overBug(x, y) || overAuto(x, y));
+        return showing_ && (dx * dx + dy * dy < radius_ * radius_ || overBug(x, y) || overAuto(x, y) ||
+                            overHelper(x, y));
     }
     // **The bug button** on the rim, low on the left (game/ui/report.h): WoW's place for the
     // small buttons that are always there, out of the fight's way and beside the place a report
@@ -108,6 +109,22 @@ public:
     bool takeAutoStop() {
         const bool asked = autoStopAsked_;
         autoStopAsked_ = false;
+        return asked;
+    }
+    // **The Helper's button** (game/helper.h), on the rim at half past two over Auto-play's: an H
+    // in bone on the bug button's disc, its ring breathing the "on" green while it helps (the
+    // user, 2026-10-20: "we need also icon for this button on minimap, but it also works when
+    // user press H", "put on right side", "lets use H"). Pressed, it starts or stops it
+    // (takeHelperToggle); pressed with the right button, it asks for the window (takeHelperWindow).
+    void setHelping(bool on) { helping_ = on; }
+    bool takeHelperToggle() {
+        const bool asked = helperToggleAsked_;
+        helperToggleAsked_ = false;
+        return asked;
+    }
+    bool takeHelperWindow() {
+        const bool asked = helperWindowAsked_;
+        helperWindowAsked_ = false;
         return asked;
     }
     // The land the chart reads its water from, by the floor MU paints it with. Null charts
@@ -165,6 +182,15 @@ private:
     float autoLift_ = 0.0f, autoClock_ = 0.0f;
     int autoQuest_ = -1;
     bool autoPressing_ = false, autoStopAsked_ = false;
+
+    bool overHelper(float x, float y) const {
+        const float dx = x - helperX_, dy = y - helperY_;
+        return showing_ && !full_ && helperR_ > 0.0f && dx * dx + dy * dy < helperR_ * helperR_;
+    }
+    void drawHelper();
+    float helperX_ = 0.0f, helperY_ = 0.0f, helperR_ = 0.0f;
+    float helperLift_ = 0.0f, helperClock_ = 0.0f;
+    bool helping_ = false, helperPressing_ = false, helperToggleAsked_ = false, helperWindowAsked_ = false;
 
     gfx::Canvas canvas_;
     bool showing_ = false;
@@ -229,7 +255,13 @@ private:
         // pressed, and its breath in sixteenths.
         int autoQuest = -1, autoLift = 0, autoBreath = 0;
         bool autoPressed = false;
+        // The Helper's button: its hover in eighths, pressed, helping, and its breath in sixteenths.
+        int helperLift = 0, helperBreath = 0;
+        bool helperPressed = false, helping = false;
         bool operator==(const Face& o) const {
+            if (helperLift != o.helperLift || helperBreath != o.helperBreath || helperPressed != o.helperPressed ||
+                helping != o.helping)
+                return false;
             if (bugLift != o.bugLift || bugPressed != o.bugPressed || reporting != o.reporting) return false;
             if (autoQuest != o.autoQuest || autoLift != o.autoLift || autoBreath != o.autoBreath ||
                 autoPressed != o.autoPressed)

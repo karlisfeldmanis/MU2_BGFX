@@ -472,6 +472,7 @@ struct Args {
     bool questDemo = false;  // --quest-demo: Peia gives the two demo quests too (sim::kDemoQuests)
     int walkColumn = -1, walkRow = -1;  // --walk-to: one walk to this tile at the start
     int autoPlay = -1;    // Auto-play this quest (table order) from the first frame (game/quest_auto.h)
+    float helperAfter = -1.0f;  // the Helper started this many seconds in (game/helper.h); -1 never
     int perch = -1;       // walk to this perch (an index into the tables' perches) and take it
     // And which entry in it: the first whose name holds this, ignoring case. "budge" lands on
     // the Budge Dragon wherever it sits in the list.

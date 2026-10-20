@@ -629,6 +629,7 @@ add_library(mu_game STATIC
   src/game/play_breeds.cpp
   src/game/play_ribbons.cpp
   src/game/play_pointer.cpp
+  src/game/helper.cpp
   src/game/quest_auto.cpp
   src/game/play_requests.cpp
   src/game/fx/showing.cpp
@@ -640,6 +641,7 @@ add_library(mu_game STATIC
   src/game/ui/capsule.cpp
   src/game/ui/player_menu.cpp
   src/game/ui/inspect.cpp
+  src/game/ui/helper_window.cpp
   src/game/ui/quest_log.cpp
   src/game/ui/target_frame.cpp
   src/game/portrait.cpp

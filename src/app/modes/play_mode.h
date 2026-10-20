@@ -20,6 +20,7 @@
 #include "app/mode.h"
 #include "app/modes/director.h"
 #include "app/preloader.h"
+#include "game/helper.h"
 #include "game/quest_auto.h"
 #include "game/fx/litter.h"
 #include "game/item_models.h"
@@ -122,6 +123,9 @@ private:
     game::Desk desk_;
     // Auto-play's hand on this map (app::Context::autoQuest says which quest).
     game::QuestAuto questAuto_;
+    // The Helper's hand on this map (game/helper.h): a map change stops it, as a new mode starts.
+    game::Helper helper_;
+    double helperClock_ = 0.0;  // seconds played, for --helper
     // A bug report on its way to the website (launcher/bug_report.h): the thread sending it
     // fills this, and the frame hands the answer to the report window. Shared, so a run that
     // ends while one is out leaves the thread something to write to.
@@ -173,7 +177,7 @@ private:
     bool entrance_ = false;
     float entranceSeconds_ = 0.0f;
 
-    // F11 or H: the HUD, its readout and the rings over the pointed-at hidden, so a picture
+    // F11: the HUD, its readout and the rings over the pointed-at hidden, so a picture
     // is the world alone; F12 then saves the frame as drawn (the user, 2026-10-15: "cool
     // screenshots with max graphics"). Nothing the world draws changes.
     bool hudHidden_ = false;

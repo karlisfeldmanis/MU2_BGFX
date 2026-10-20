@@ -41,6 +41,7 @@
 #include "game/ui/shelf.h"
 #include "game/ui/specimen.h"
 #include "game/ui/tally.h"
+#include "game/ui/helper_window.h"
 #include "game/ui/quest_log.h"
 #include "game/ui/speech.h"
 #include "game/ui/boss_bar.h"
@@ -183,6 +184,27 @@ public:
         autoAsk_ = -2;
         return asked;
     }
+    // **The Helper** (game/helper.h): the mode's hand, told each frame whether it helps and what it
+    // has done; what H, the minimap's H and the window asked since the last call -- 1 start, 0 stop,
+    // -2 nothing; its settings, which the window changes and the mode keeps beside the save.
+    void setHelping(bool on, const Helper::Stats& stats) {
+        helping_ = on;
+        helperStats_ = stats;
+    }
+    int takeHelperAsk() {
+        const int asked = helperAsk_;
+        helperAsk_ = -2;
+        return asked;
+    }
+    const HelperSettings& helperSettings() const { return helperSettings_; }
+    void setHelperSettings(const HelperSettings& settings) { helperSettings_ = settings; }
+    bool takeHelperChanged() {
+        const bool changed = helperChanged_;
+        helperChanged_ = false;
+        return changed;
+    }
+    // Its window up, for a review: --windows helper.
+    void showHelper() { helperAsked_ = true; }
     // The quest the tracker is pinned to, -1 for none: what the save keeps (Tracker::pinned).
     int followedQuest() const { return tracker_.pinned(); }
     void followQuest(int quest) { tracker_.pin(quest); }
@@ -329,6 +351,14 @@ private:
     QuestDialog questDialog_;
     QuestLog questLog_;
     bool questLogAsked_ = false;
+    HelperWindow helperWindow_;
+    HelperSettings helperSettings_;
+    Helper::Stats helperStats_;
+    bool helping_ = false, helperChanged_ = false, helperAsked_ = false;
+    int helperAsk_ = -2;
+    // H or the minimap's H: the window the first time, else start or stop.
+    void helperPressed();
+    void openHelper();
     int autoPlaying_ = -1, autoAsk_ = -2;
     // The travel list, Tab's (game/ui/travel.h).
     Travel travel_;

@@ -204,7 +204,7 @@ void printUsage() {
         "  --no-fps                  no frame rate in the corner (already off with --still, "
         "--budget or --stats)\n"
         "  --fps                     the frame rate anyway, in a run that would have it off\n"
-        "  --no-hud                  the world with the HUD hidden, as F11 hides it (F11 or H shows it)\n"
+        "  --no-hud                  the world with the HUD hidden, as F11 hides it (F11 shows it)\n"
         "  --category WORD           world|monsters|people|armour|weapons|wings|parts\n"
         "  --plus N                  the viewer's items at +N, 0 to 15: the refinement shine\n"
         "  --windows LIST            open these from the first frame: inventory,character; menu,\n"
@@ -238,6 +238,7 @@ void printUsage() {
         "  --quests-done 2,6         those quests (table order) handed in once, so what waits on\n"
         "                            them is offered; never saved\n"
         "  --walk-to COLUMN,ROW      one walk to that tile at the start, as a click there\n"
+        "  --helper S                the Helper started S seconds in, where he stands then\n"
         "  --auto-play N             Auto-play quest N (table order) from the first frame;\n"
         "                            with --quests-done N, as one cleared before\n"
         "  --perch N                 walk to perch N (sit, lean) and take its pose\n"
@@ -779,6 +780,8 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) std::sscanf(v, "%d,%d", &a.walkColumn, &a.walkRow);
         } else if (!std::strcmp(s, "--auto-play")) {
             if (const char* v = next(s)) a.autoPlay = std::atoi(v);
+        } else if (!std::strcmp(s, "--helper")) {
+            if (const char* v = next(s)) a.helperAfter = float(std::atof(v));
         } else if (!std::strcmp(s, "--perch")) {
             if (const char* v = next(s)) a.perch = std::atoi(v);
         } else if (!std::strcmp(s, "--mute")) {

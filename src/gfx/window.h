@@ -151,9 +151,11 @@ public:
         Travel,  // M: the travel list, shown and shut (game/ui/travel.h)
         Map,     // Tab, held: the whole map over the middle of the screen (game/ui/minimap.h)
         Guild,   // G: the guild window, shown and shut (game/ui/guild.h, docs/game/guild.md)
-        HideHud, // F11 or H: the HUD and its readout hidden and shown, for a clean picture
+        HideHud, // F11: the HUD and its readout hidden and shown, for a clean picture (H was its
+                 // second key until the Helper took H, 2026-10-20)
         Shot,    // F12: the frame as drawn, a PNG in the player's screenshots folder
         Pick,    // Space: the nearest drop picked up (game/play_pointer.cpp, Play::pickNearest)
+        Helper,  // H: the Helper started and stopped, its window the first time (game/helper.h)
         Count
     };
     // Neither while a box has the keyboard (setTyping): an I typed into the chat is a letter,
