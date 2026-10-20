@@ -951,6 +951,13 @@ void Play::smithy(float seconds) {
     forge_.update(seconds);
     const float frames = seconds * 25.0f;
     for (Standing& one : folk_) {
+        if (one.pipeBone >= 0) {
+            const float origin[3] = {0.0f, 0.0f, 0.0f};
+            float bowl[3];
+            if (one.figure.pointOn(one.pipeBone, origin, bowl)) {
+                forge_.whiff(bowl, seconds, one.pipeOwed);
+            }
+        }
         if (!one.smith) continue;
         float hearth[3];
         one.figure.pointInModel(kHearth, hearth);
@@ -2181,6 +2188,7 @@ void Play::settle(Standing& one) {
     const size_t count = look->library->clips.clips.size();
     one.cycles = look->library->name != "player" && count > 1;
     if (!one.cycles) return;
+    if (look->name == kMossFigure) one.alternate = 1;
     // Seeded from where it stands, so a town comes up the same way every time and two
     // figures of a kind do not share a roll.
     const float* at = one.figure.position();
@@ -2202,6 +2210,10 @@ int Play::fidget(Standing& one) {
         one.dice ^= one.dice << 5;
         return one.dice % below;
     };
+    if (one.alternate >= 0 && size_t(one.alternate) < count) {
+        if (one.figure.clip() == one.alternate || roll(5) < 4) return 0;
+        return one.alternate;
+    }
     if (count < 2 || roll(16) < 12) return 0;
     return 1 + int(roll(uint32_t(count - 1)));
 }

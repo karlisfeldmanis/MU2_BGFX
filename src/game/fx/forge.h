@@ -82,6 +82,10 @@ public:
     // The hearth at `at` working for `seconds`: its smoke and its embers, owed and paid whole.
     // `owed` is the caller's, a pair a forge, so two smiths never share a debt.
     void smoulder(const float at[3], float seconds, float owed[2]);
+    // A pipe at `at` drawn on for `seconds`: smoke alone, thinner and quicker than a hearth's.
+    // Moss's, MU's BITMAP_SMOKELINE and BITMAP_CLUD64 off his bone 41 every frame
+    // (ZzzObject.cpp:2301-2303), as the hearth's puffs at a pipe's size. `owed` is the caller's.
+    void whiff(const float at[3], float seconds, float& owed);
 
     void update(float seconds);
     // What is within reach of `near`, into the transparent pass. `eye` turns each streak's
@@ -106,7 +110,7 @@ private:
         float life = 24.0f;
     };
     // The hearth's smoke and embers, in metres and seconds as the lamps' particles are.
-    static constexpr uint8_t kSmoke = 0, kEmber = 1;
+    static constexpr uint8_t kSmoke = 0, kEmber = 1, kPipe = 2;
     struct Puff {
         float position[3] = {0, 0, 0};
         float velocity[3] = {0, 0, 0};

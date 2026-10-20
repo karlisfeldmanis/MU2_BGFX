@@ -67,6 +67,8 @@ constexpr float kSparkShape = 2.0f / 20.0f;
 constexpr float kSmokePerSecond = 1.4f;
 constexpr float kEmbersPerSecond = 0.9f;
 constexpr float kSmokeAlpha = 0.55f;
+// A pipe's: MU lays a puff every frame; ours is a thin steady wisp at a few a second.
+constexpr float kPipePerSecond = 4.0f;
 
 float mix(float a, float b, float t) { return a + (b - a) * t; }
 float smooth(float a, float b, float x) {
@@ -206,6 +208,17 @@ void Forge::puff(const float at[3], uint8_t kind) {
         one.velocity[0] = (unit() - 0.5f) * 0.12f;
         one.velocity[1] = mix(0.35f, 0.55f, unit());
         one.velocity[2] = (unit() - 0.5f) * 0.12f;
+    } else if (kind == kPipe) {
+        // Off the bowl itself, not spread round a hearth.
+        one.position[0] = at[0] + (unit() - 0.5f) * 0.02f;
+        one.position[2] = at[2] + (unit() - 0.5f) * 0.02f;
+        one.life = mix(1.6f, 2.4f, unit());
+        one.size = mix(0.07f, 0.12f, unit());
+        one.spin = 6.2831853f * unit();
+        one.spinRate = (unit() - 0.5f) * 0.8f;
+        one.velocity[0] = (unit() - 0.5f) * 0.06f;
+        one.velocity[1] = mix(0.22f, 0.36f, unit());
+        one.velocity[2] = (unit() - 0.5f) * 0.06f;
     } else {
         one.life = mix(0.9f, 1.8f, unit());
         one.size = mix(0.05f, 0.09f, unit());
@@ -229,6 +242,15 @@ void Forge::smoulder(const float at[3], float seconds, float owed[2]) {
         owed[1] -= 1.0f;
         // Not on the clock: embers come in no rhythm.
         if (bgfx::isValid(ember_) && unit() < 0.7f) puff(at, kEmber);
+    }
+}
+
+void Forge::whiff(const float at[3], float seconds, float& owed) {
+    if (!open_ || !bgfx::isValid(smoke_)) return;
+    owed += std::min(seconds, 0.1f) * kPipePerSecond;
+    while (owed >= 1.0f) {
+        owed -= 1.0f;
+        puff(at, kPipe);
     }
 }
 
@@ -379,7 +401,8 @@ void Forge::gather(gfx::Effects& effects, const float eye[3], const float near[3
             sprite.halfWidth = sprite.halfHeight = 0.5f * size;
             // The lamps' smoke: grey by the day's light, and warm from the coals under it
             // while it is young and low.
-            const float warm = 1.0f - t;
+            // A pipe's has no coals under it: grey alone, as MU's Light 0.8 is.
+            const float warm = one.kind == kPipe ? 0.0f : 1.0f - t;
             const float fire = warm * warm * 0.35f;
             sprite.colour[0] = 0.30f * daylight + fire;
             sprite.colour[1] = 0.29f * daylight + fire * 0.45f;

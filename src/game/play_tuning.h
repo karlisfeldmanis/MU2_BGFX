@@ -324,6 +324,9 @@ inline constexpr const char* kHeroDressName = "Hero";
 // Scenery.Noise; MixNpc01 and ElfWizard01 are the other two and are Noria's.
 inline constexpr const char* kSmithFigure = "Smith01";
 
+// Moss the Gambler, Noria's Jeweler: his pipe, his light and his own second idle (Standing).
+inline constexpr const char* kMossFigure = "gambler_moss";
+
 // The one breed in Lorencia that breathes fire and raises dust. MU2's BudgeDragon01.json
 // `effects` block, which the cook does not carry; stated here once.
 // show tag "budge_breath": BudgeDragon01 (its recipe's show.tags).

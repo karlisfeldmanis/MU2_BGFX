@@ -7,9 +7,9 @@
   "why_this_one": "The Jeweler: the user's pick on 2026-10-20 from four unused MU NPCs (\"Moss the Gambler is nice\"), for the ring and pendant window (Recut, Salvage, Combine). An old man in a tricorn with a pipe, among crates, a barrel and treasure chests of weapons: 12 sheets, 57 bones, 7 actions. His spot is proposed as Noria's east market, about 197,114; the placement is the user's to confirm.",
   "scale": 0.8,
   "scale_from": "CreateCharacter stands him at `c->Object.Scale = 0.8f` (ZzzCharacter.cpp:14852), MU's own; carried as the figure's scale, as Liane's 0.95 is.",
-  "actions_from": "Seven actions exported (export-rig --actions=all). MoveCharacter's MODEL_GAMBLE_NPC_MOSS case (ZzzCharacter.cpp:3640-3648) plays action 0, and action 1 one time in five, never twice running.",
+  "actions_from": "Seven actions exported (export-rig --actions=all). MoveCharacter's MODEL_GAMBLE_NPC_MOSS case (ZzzCharacter.cpp:3640-3648) plays action 0, and action 1 one time in five, never twice running; carried as Standing::alternate in Play::fidget, so none of his other five is played.",
   "play_speed_from": "CreateCharacter sets PlaySpeed 0.33 on his first six actions (ZzzCharacter.cpp:14855-14858). Not carried: a townsperson's clips are exported at export_gltf's flat 0.25, as Tersia's note says.",
-  "effects_from": "RenderObjectMesh's MODEL_GAMBLE_NPC_MOSS case (ZzzObject.cpp:2293-2308): every frame a BITMAP_SMOKELINE1-3 and a BITMAP_CLUD64 particle at bone 41 (his pipe), light 0.8, scale 0.6; and a BITMAP_LIGHT sprite at bone 55, size 2.0, light 0.5. Not drawn yet.",
+  "effects_from": "RenderObjectMesh's MODEL_GAMBLE_NPC_MOSS case (ZzzObject.cpp:2293-2308): every frame a BITMAP_SMOKELINE1-3 and a BITMAP_CLUD64 particle at bone 41 (his pipe), light 0.8, scale 0.6; and a BITMAP_LIGHT sprite at bone 55, size 2.0, light 0.5. Drawn since 2026-10-20: the pipe as Forge::whiff's thin grey puffs off bone 41 (four a second, ours), the light as a townsperson's glow at bone 55, Scale 2, a steady 0.5 grey (Play::Standing).",
   "profile": "npc",
   "sheets": {
     "gambman": "npc_gambman.png",

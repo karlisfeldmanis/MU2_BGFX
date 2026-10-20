@@ -2076,6 +2076,15 @@ private:
         // The Seed Master's instead: MU's BITMAP_FLARE, white, (sin(WorldTime / 1000) + 1) * 0.3 +
         // 0.4 a channel times 0.5 (ZzzCharacter.cpp:11346-11354), in the showing's `flare`.
         bool glowFlare = false;
+        // A steady grey instead of the rolled Luminosity, or below 0 for none: Moss's
+        // CreateSprite(BITMAP_LIGHT, ..., 2.0f, (0.5, 0.5, 0.5)) at bone 55 (ZzzObject.cpp:2305-2307).
+        float glowGrey = -1.0f;
+        // His pipe: the bone the smoke leaves, or -1, and what of it is owed (see smithy()).
+        int pipeBone = -1;
+        float pipeOwed = 0.0f;
+        // MU's own second idle, or -1 for fidget's general rule: Moss plays action 1 one time in
+        // five and never twice running (ZzzCharacter.cpp:3640-3648), and none of his other five.
+        int alternate = -1;
         // Charon's light in his hand, MU's MODEL_NPC_DEVILSQUARE case (ZzzCharacter.cpp:11249):
         // the bone it sits on, or -1, and what of half a second's wisp is owed. See orbs().
         int orbBone = -1;

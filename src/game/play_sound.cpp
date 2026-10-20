@@ -209,6 +209,9 @@ void Play::gatherFolkLights(gfx::Effects& effects) const {
         sprite.colour[0] = one.glowFlare ? white : luminosity;
         sprite.colour[1] = one.glowFlare ? white : 0.6f * luminosity;
         sprite.colour[2] = one.glowFlare ? white : 0.4f * luminosity;
+        if (one.glowGrey >= 0.0f) {
+            sprite.colour[0] = sprite.colour[1] = sprite.colour[2] = one.glowGrey;
+        }
         sprite.sheet = one.glowFlare ? folkFlare_ : folkLight_;
         sprite.blend = gfx::Blend::Additive;
         effects.add(sprite);

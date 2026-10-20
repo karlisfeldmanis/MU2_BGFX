@@ -512,6 +512,13 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
             one.glowBone = 39;
             one.glowScale = 1.0f;
             one.glowFlare = true;
+        } else if (one.who == kMossFigure) {
+            // Moss: his pipe's smoke off bone 41, and MU's Scale-2 light at bone 55, a steady
+            // half grey (ZzzObject.cpp:2293-2307).
+            one.pipeBone = 41;
+            one.glowBone = 55;
+            one.glowScale = 2.0f;
+            one.glowGrey = 0.5f;
         } else if (one.who == "DevilNpc01") {
             // Charon's light: bone 20, Bone01, the thing held out in front of him.
             one.orbBone = kCharonOrbBone;
