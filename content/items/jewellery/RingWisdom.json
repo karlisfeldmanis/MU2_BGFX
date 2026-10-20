@@ -26,7 +26,8 @@
     "classes": [
       "wizard",
       "knight",
-      "elf"
+      "elf",
+      "gladiator"
     ],
     "classes_note": "Every class (CreateJewelery :176-179).",
     "power": "Experience from kills, +1% at +0 to +8% at +9."

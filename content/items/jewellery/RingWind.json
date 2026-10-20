@@ -26,7 +26,8 @@
     "classes": [
       "wizard",
       "knight",
-      "elf"
+      "elf",
+      "gladiator"
     ],
     "classes_note": "Every class (CreateJewelery :176-179).",
     "resistance": "wind",
