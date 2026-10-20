@@ -2160,6 +2160,8 @@ void PlayMode::rejoin(Context& ctx, double seconds) {
     game::Play& play = world_.played();
     if (!play.isOpen() || !play.cut() || !travelTo_.empty() || !desk_.ready()) return;
     const core::Args& args = ctx.args;
+    // Told this game is another build than the server's: the page says update, and nothing knocks.
+    if (outdated_) return;
     const double in = play.rejoinIn();
     if (in < 0.0) {
         desk_.rejoining(false, {});
@@ -2174,6 +2176,12 @@ void PlayMode::rejoin(Context& ctx, double seconds) {
             return;
         }
         knock_.reset();
+        if (said == 3) {
+            core::logError("reconnect: the server is another build than this game's; update through the launcher");
+            outdated_ = true;
+            desk_.outdated();
+            return;
+        }
         if (said == 1) {
             const sim::HeroRecord hero = play.record();
             core::logf("reconnect: the server answers after %d knock(s); %s again at %d,%d", knocks_ + 1,
@@ -2199,12 +2207,43 @@ void PlayMode::rejoin(Context& ctx, double seconds) {
     if (knocks_ == 0) core::logf("reconnect: knocking on %s:%d", host.c_str(), port);
     knock_ = std::make_shared<Knock>();
     desk_.rejoining(true, "Reconnecting...");
-    std::thread([knock = knock_, host, port] {
+    // The knock asks, as the character screen does, whether this game is the server's build (an
+    // Account keyed net::kKnockKey, its items and rules: server/src/accounts.cpp outdated). A server
+    // restarted on other rules under the running game answers Refused::Outdated, and the page
+    // says update; going in would be a Hello refused and a world that never opens. Anything
+    // else -- the line shut on the knock, or no word in a few seconds -- is the way in.
+    net::Account probe;
+    probe.key = net::kKnockKey;
+    probe.items = play.realm().tables()->itemsPrint();
+    probe.rules = net::rulesPrint(*play.realm().tables());
+    std::thread([knock = knock_, host, port, probe] {
         net::Socket socket;
         std::string error;
         const bool up = socket.connect(host, port, kKnockEvery, error);
-        if (!up) core::logf("reconnect: no answer yet (%s)", error.c_str());
-        knock->said = up ? 1 : 2;
+        if (!up) {
+            core::logf("reconnect: no answer yet (%s)", error.c_str());
+            knock->said = 2;
+            return;
+        }
+        std::vector<uint8_t> out, in, body;
+        net::put(out, probe);
+        bool stale = false;
+        if (socket.send(out) && socket.flush()) {
+            const auto until = std::chrono::steady_clock::now() + std::chrono::seconds(3);
+            while (std::chrono::steady_clock::now() < until) {
+                const bool open = socket.receive(in);
+                net::Kind kind{};
+                const int took = net::take(in, kind, body);
+                net::Roster roster;
+                if (took == 1 && kind == net::Kind::Roster && net::parse(body, roster)) {
+                    stale = roster.refused == net::Refused::Outdated;
+                    break;
+                }
+                if (took != 0 || !open) break;
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            }
+        }
+        knock->said = stale ? 3 : 1;
     }).detach();
 }
 

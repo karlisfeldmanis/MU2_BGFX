@@ -459,6 +459,7 @@ net::Roster rosterOf(const std::string& account, net::Refused refused);
 bool answer(Session& one, net::Refused refused);
 int freeSlot(const std::string& account);
 bool account(Session& one, const net::Account& said);
+bool outdated(Session& one, const net::Account& said);
 bool create(Session& one, const net::Create& asked, std::mt19937_64& seeds,
     const std::vector<std::unique_ptr<Session>>& sessions);
 bool drop(Session& one, const net::Delete& asked,

@@ -143,8 +143,11 @@ private:
     // knock still out when the run ends has its answer written nowhere that matters.
     void rejoin(Context& ctx, double seconds);
     struct Knock {
-        std::atomic<int> said{0};  // 0 out, 1 the server answered, 2 it did not
+        // 0 out, 1 the server answered, 2 it did not, 3 it answered that this game is another
+        // build than its own (net::Refused::Outdated): a deploy under the running game.
+        std::atomic<int> said{0};
     };
+    bool outdated_ = false;  // the knock was told to update: the Disconnected page says so, no more knocks
     std::shared_ptr<Knock> knock_;
     double knockWait_ = 0.0;
     int knocks_ = 0;

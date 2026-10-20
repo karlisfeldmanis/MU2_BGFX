@@ -290,6 +290,9 @@ public:
         rejoinHere_ = here;
         menu_.setLostNote(std::move(note));
     }
+    // The server is another build than this game's (PlayMode's knock): the Disconnected page
+    // says update, with Close Game alone.
+    void outdated() { menu_.outdated(); }
     bool takeRejoin() {
         const bool asked = rejoinAsked_;
         rejoinAsked_ = false;

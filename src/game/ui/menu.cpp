@@ -350,9 +350,17 @@ void Menu::show(Page page) {
     std::fill(std::begin(lift_), std::end(lift_), 0.0f);
 }
 
+// The Lost page's boxes once the server is another build (Menu::outdated): Exit Game, as Close
+// Game, where Reconnect stood, and no Reconnect.
+static Box lostBoxOf(int target, bool outdated) {
+    if (!outdated) return boxOf(Menu::Page::Lost, target);
+    if (target == kExit) return boxOf(Menu::Page::Lost, kReconnect);
+    return {};
+}
+
 int Menu::hitAt(float x, float y) const {
     for (int target = 0; target < kTargets; ++target) {
-        const Box design = boxOf(page_, target);
+        const Box design = page_ == Page::Lost ? lostBoxOf(target, outdatedLost_) : boxOf(page_, target);
         if (design.w <= 0.0f || (target == kSwitch && !switchable_)) continue;
         // Apply answers only when a row has changed.
         if (target == kApply && sameGraphics(graphicsShown(), settings_)) continue;
@@ -563,12 +571,17 @@ void Menu::rebuild() {
              style::kBoneHi);
         line(kLostWords + 24.0f, lostNote_.empty() ? "Your character is kept on the server." : lostNote_.c_str(),
              style::kAshInk);
-        controls::button(canvas_, at(x_, y_, boxOf(page_, kReconnect)), "Reconnect",
-                         Kind::Secondary, state(kReconnect), u);
-        controls::rule(canvas_, sheet.x + kMainInset * u, y_ + kLostRule * u,
-                       (kMainWide - kMainInset * 2.0f) * u, u);
-        controls::button(canvas_, at(x_, y_, boxOf(page_, kExit)), "Exit Game", Kind::Danger,
-                         state(kExit), u);
+        if (outdatedLost_) {
+            controls::button(canvas_, at(x_, y_, lostBoxOf(kExit, true)), "Close Game", Kind::Primary,
+                             state(kExit), u);
+        } else {
+            controls::button(canvas_, at(x_, y_, boxOf(page_, kReconnect)), "Reconnect",
+                             Kind::Secondary, state(kReconnect), u);
+            controls::rule(canvas_, sheet.x + kMainInset * u, y_ + kLostRule * u,
+                           (kMainWide - kMainInset * 2.0f) * u, u);
+            controls::button(canvas_, at(x_, y_, boxOf(page_, kExit)), "Exit Game", Kind::Danger,
+                             state(kExit), u);
+        }
         controls::foot(canvas_, sheet, y_ + kLostFoot * u, u);
         return;
     }

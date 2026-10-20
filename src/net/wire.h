@@ -388,6 +388,8 @@ struct Delete {
 };
 
 // How the last ask went, in the screen's own words (game/ui/lobby.h).
+// A Roster is what a game of any build reads back from an Account (Refused::Outdated): its refused
+// byte stays first, and its layout as it is, across protocols.
 enum class Refused : uint8_t { None = 0, Taken = 1, NoRoom = 2, BadName = 3, NotYours = 4, Playing = 5,
                                SignIn = 6, Outdated = 7 };
 
@@ -414,6 +416,9 @@ struct Roster {
 
 // The longest key an Account carries.
 constexpr size_t kMostKey = 64;
+// The key of an Account that only asks whether its build is the server's (PlayMode's knock): told
+// Refused::Outdated when it is not, and the line closed without a word when it is.
+constexpr const char* kKnockKey = "knock";
 
 struct Elsewhere {
     std::string world;
@@ -515,6 +520,7 @@ enum class Why : uint8_t {
     Elsewhere = 2,   // his character was logged in from another connection
     Protocol = 3,    // a frame the server could not read, or out of turn
     Behind = 4,      // he took nothing for too long and fell too far behind
+    Outdated = 5,    // a Hello of another build: its items or rules are not the server's
 };
 struct Bye {
     Why why = Why::Unknown;

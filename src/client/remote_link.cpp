@@ -49,6 +49,14 @@ bool RemoteLink::join(const std::string& host, int port, const net::Hello& hello
             socket_.close();
             return false;
         }
+        // Turned away as another build than the server's (net::Why::Outdated): its items or rules.
+        net::Bye bye;
+        if (took == 1 && kind == net::Kind::Bye && net::parse(body, bye) && bye.why == net::Why::Outdated) {
+            core::logError("server: %s:%d is another build than this game's; update through the launcher",
+                           host.c_str(), port);
+            socket_.close();
+            return false;
+        }
         if (took < 0 || (took == 1 && (kind != net::Kind::Welcome || !net::parse(body, welcome)))) {
             core::logError("server: %s:%d does not speak protocol %u", host.c_str(), port,
                            net::kVersion);
@@ -170,6 +178,7 @@ const char* whyOf(net::Why why) {
         case net::Why::Elsewhere: return "Your character was logged in elsewhere.";
         case net::Why::Protocol: return "The server could not read this client.";
         case net::Why::Behind: return "The connection fell too far behind.";
+        case net::Why::Outdated: return "MU Classic was updated.";
         case net::Why::Unknown: break;
     }
     return "The server closed the connection.";

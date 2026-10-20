@@ -60,6 +60,11 @@ bool heard(Session& one, std::vector<std::unique_ptr<World>>& worlds,
         if (kind == net::Kind::Account && one.world == nullptr && one.account.empty()) {
             net::Account said;
             if (!net::parse(body, said)) return false;
+            if (outdated(one, said)) return false;
+            if (said.key == net::kKnockKey) {
+                core::logf("%s: a knock, of this server's build", one.who.c_str());
+                return false;
+            }
             const Door through = door(one, said.key);
             if (through == Door::Refuse) {
                 core::logError("%s: an account key only the website's sign-in gives", one.who.c_str());

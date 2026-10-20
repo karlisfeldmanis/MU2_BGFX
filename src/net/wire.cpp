@@ -776,6 +776,9 @@ bool parse(const std::vector<uint8_t>& body, PartyState& out) {
 bool parse(const std::vector<uint8_t>& body, Account& out) {
     In in{body};
     out.version = in.u32();
+    // Another protocol's Account is read no further: its version is all the server needs to tell
+    // it to update (server/src/accounts.cpp outdated), whatever the rest of it has become.
+    if (out.version != kVersion) return in.ok;
     out.key = in.str();
     const uint32_t n = in.u32();
     // A machine has five characters at most; a list longer than a screen's is not one.

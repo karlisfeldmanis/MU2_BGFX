@@ -26,6 +26,15 @@ uint64_t rulesOf(const std::string& assets, const std::string& world) {
     known[world] = print;
     return print;
 }
+
+// A Hello of another build, told why before the line closes (net::Why::Outdated): RemoteLink::join
+// says so, where a plain close reads as "wrong version, or no such world".
+bool refuseOutdated(Session& one) {
+    std::vector<uint8_t> out;
+    net::put(out, net::Bye{net::Why::Outdated});
+    if (one.socket.send(out)) one.socket.flush();
+    return false;
+}
 }  // namespace
 
 
@@ -166,7 +175,7 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
     if (asked.items != g_items.itemsPrint()) {
         core::logError("%s: item list %016llx, this server's %016llx", one.who.c_str(),
                        (unsigned long long)asked.items, (unsigned long long)g_items.itemsPrint());
-        return false;
+        return refuseOutdated(one);
     }
     if (!worldName(asked.world)) {
         core::logError("%s: no world called '%s'", one.who.c_str(), asked.world.c_str());
@@ -177,7 +186,7 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
     if (const uint64_t rules = rulesOf(assets, asked.world); asked.rules != rules) {
         core::logError("%s: rules %016llx for %s, this server's %016llx", one.who.c_str(),
                        (unsigned long long)asked.rules, asked.world.c_str(), (unsigned long long)rules);
-        return false;
+        return refuseOutdated(one);
     }
     // A character is in one place at a time. A connection of his that went this same poll is
     // let go first, so he comes back as it left him; one still open keeps him, and this one is

@@ -106,6 +106,13 @@ public:
     }
     // Its second line, under `why`: how the reconnect goes. Empty says he is kept on the server.
     void setLostNote(std::string note) { lostNote_ = std::move(note); }
+    // The server came back as another build than this game's: Reconnect would meet a world that
+    // will not open, so the page says update and Close Game is all it has.
+    void outdated() {
+        outdatedLost_ = true;
+        lostWhy_ = "MU Classic was updated.";
+        lostNote_ = "Close the game and press Play in the launcher to get it.";
+    }
     // Whether Switch Character answers. Only a run that came through the character screen
     // (--lobby) has one to go back to; everywhere else the button stands there inactive.
     void allowSwitch(bool on) { switchable_ = on; }
@@ -143,6 +150,7 @@ private:
     const Settings& graphicsShown() const { return editing_ ? pending_ : settings_; }
     std::string place_;
     std::string lostWhy_, lostNote_;
+    bool outdatedLost_ = false;  // outdated(): no Reconnect; Close Game in its place
     float width_ = 0.0f, height_ = 0.0f;
     float x_ = 0.0f, y_ = 0.0f;  // the sheet's corner, in pixels
     int over_ = -1, pressing_ = -1;

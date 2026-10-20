@@ -1193,9 +1193,13 @@ void Launcher::frame() {
     for (auto& f : then) f();
     // The game still running keeps Play off; no update is fetched over it meanwhile, the one found
     // waits (autoInstall_) until it has closed.
+    // And once it has, the box is asked again at once: a game closed because the server was
+    // updated under it (its Disconnected page: "MU Classic was updated") finds the update on
+    // Play, not after the ten-minute recheck.
     if (game_ && !gameRunning(game_)) {
         core::logf("launcher: the game closed");
         game_ = 0;
+        checkPending_ = true;
     }
     // What the worker's answers asked for, once the worker is free to take it.
     if (!working_.load() && !game_) {

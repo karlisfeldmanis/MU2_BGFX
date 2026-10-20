@@ -73,29 +73,34 @@ int freeSlot(const std::string& account) {
     return -1;
 }
 
-// An Account: the key taken, the machine's old characters claimed onto it, the Roster said.
-bool account(Session& one, const net::Account& said) {
+// A game of another build, told so before anything of its sign-in is read: another protocol
+// (net::parse reads no further than the version of one), another item list, which would read
+// every thing by the wrong row (Tables::itemsPrint), or other rules, whose mirror would part from
+// this realm (net::rulesPrint). Answered Refused::Outdated with no characters, and nothing taken
+// from it after. Also what a game cut off mid-session asks before it comes back (PlayMode's
+// knock), so a deploy under it is "update", not a world that will not open.
+bool outdated(Session& one, const net::Account& said) {
     if (said.version != net::kVersion) {
-        core::logError("%s: version %u, this server speaks %u", one.who.c_str(), said.version, net::kVersion);
-        return false;
-    }
-    // A game on another item list would read every thing by the wrong row (Tables::itemsPrint):
-    // told to update, with no characters, and nothing taken from it after.
-    if (said.items != g_items.itemsPrint()) {
+        core::logError("%s: version %u, this server speaks %u; told to update", one.who.c_str(), said.version,
+                       net::kVersion);
+    } else if (said.items != g_items.itemsPrint()) {
         core::logError("%s: item list %016llx, this server's %016llx; told to update", one.who.c_str(),
                        (unsigned long long)said.items, (unsigned long long)g_items.itemsPrint());
-        std::vector<uint8_t> out;
-        net::put(out, net::Roster{net::Refused::Outdated, {}});
-        return one.socket.send(out);
-    }
-    // Nor one built from other rules (net::rulesPrint): its mirror would part from this realm.
-    if (said.rules != net::rulesPrint(g_items)) {
+    } else if (said.rules != net::rulesPrint(g_items)) {
         core::logError("%s: rules %016llx, this server's %016llx; told to update", one.who.c_str(),
                        (unsigned long long)said.rules, (unsigned long long)net::rulesPrint(g_items));
-        std::vector<uint8_t> out;
-        net::put(out, net::Roster{net::Refused::Outdated, {}});
-        return one.socket.send(out);
+    } else {
+        return false;
     }
+    std::vector<uint8_t> out;
+    net::put(out, net::Roster{net::Refused::Outdated, {}});
+    if (one.socket.send(out)) one.socket.flush();
+    return true;
+}
+
+// An Account: the key taken, the machine's old characters claimed onto it, the Roster said.
+// Its build was checked as it came (outdated).
+bool account(Session& one, const net::Account& said) {
     if (!keyShape(said.key)) {
         core::logError("%s: an account key of no shape", one.who.c_str());
         return false;
