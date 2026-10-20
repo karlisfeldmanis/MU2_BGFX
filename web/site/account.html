@@ -19,14 +19,14 @@
 
 <div class="bar">
 <a href="/"><img src="/logo.svg" alt="MU Classic home" width="435" height="261"></a>
-<a href="/" style="font-weight: 500">Home</a>
+<span class="bar-links"><a href="/" style="font-weight: 500">Home</a><button type="button" class="link bar-out" id="a-out" hidden>Sign out</button></span>
 </div>
 
-<main class="account-page">
-<div class="wrap">
+<main class="account-page acct">
 
 <!-- Signed out: sign in -->
-<div id="v-signin" class="form" hidden>
+<div id="v-signin" class="wrap" hidden>
+<div class="form">
 <h1 class="page-title">Sign in</h1>
 <div id="in-alert" class="alert" role="alert" hidden></div>
 <div class="field"><label for="in-email">Email</label><input id="in-email" type="email" autocomplete="email" maxlength="254"></div>
@@ -35,60 +35,82 @@
 <span class="center muted">New here? <a href="/#account" style="color: var(--label); text-decoration: underline">Create account</a> · <button type="button" class="link" id="forgot-open">Forgot password</button></span>
 <p id="forgot" class="center muted" hidden>Password resets by email aren't ready yet. Ask for one in the <a href="https://forum.ragezone.com/threads/dev-mu-classic-%E2%80%94-modern-c-remaster-public-beta-demo-live-windows-macos.1275230/" style="color: var(--bone); text-decoration: underline" rel="noopener" target="_blank">beta thread</a>.</p>
 </div>
-
-<!-- Signed in -->
-<div id="v-account" class="form" style="gap: 20px" hidden>
-<h1 class="page-title">Your account</h1>
-<span id="a-who" class="center"></span>
-<a id="a-online" class="center" href="/online" style="text-decoration: underline" translate="no" hidden>Who is online</a>
-<a id="a-bugs" class="center" href="/bugs" style="text-decoration: underline" translate="no" hidden>Bug reports</a>
-<a id="a-texts" class="center" href="/translate" style="text-decoration: underline" translate="no" hidden>Translations</a>
-
-
-<div>
-<div class="muted" style="font-size: 15px">Characters</div>
-<div id="a-chars"></div>
-</div>
-<!-- Moving one to another region's server (docs/game/transfer.md) -->
-<div id="m-box" class="form" hidden>
-<span id="m-what"></span>
-<span class="muted" style="font-size: 15px">He takes his level, gear, bag and Zen. Your vault stays where it is. He leaves his guild. Once a week, free.</span>
-<div class="field"><label for="m-to">To</label><select id="m-to" style="height: 44px; padding: 0 8px; border: 1px solid var(--field-edge); border-radius: 3px; background: #050403; color: var(--bone); font: inherit; font-size: 16px"></select></div>
-<div class="field"><label for="m-name">Name there</label><input id="m-name" type="text" autocomplete="off" maxlength="10" aria-describedby="m-err"><span id="m-err" class="err"></span></div>
-<button id="m-go" class="btn btn-red" type="button">Move</button>
 </div>
 
-<div>
-<div class="muted" style="font-size: 15px">Launchers signed in</div>
+<!-- Signed in: the account's name, three counts, and a tab each for characters, devices, play and security -->
+<div id="v-account" hidden>
+<header class="acct-head">
+<span class="acct-cap">Your account</span>
+<h1 id="a-name" class="page-title" translate="no"></h1>
+<span class="muted"><span id="a-email" translate="no"></span><span id="a-since"></span></span>
+<div class="acct-stats">
+<div class="acct-stat"><b id="s-chars" translate="no">0</b><span>Characters</span></div>
+<div class="acct-stat"><b id="s-level" translate="no">–</b><span>Highest level</span></div>
+<div class="acct-stat"><b id="s-regions" translate="no">0</b><span>Regions</span></div>
+</div>
+<div id="a-admin" class="acct-admin" translate="no" hidden><span class="acct-cap">Admin</span><a class="acct-chip" href="/online">Who is online</a><a class="acct-chip" href="/bugs">Bug reports</a><a class="acct-chip" href="/translate">Translations</a></div>
+</header>
+
+<nav class="acct-tabs" role="tablist">
+<button type="button" class="acct-tab" role="tab" data-tab="characters">Characters</button>
+<button type="button" class="acct-tab" role="tab" data-tab="devices">Devices</button>
+<button type="button" class="acct-tab" role="tab" data-tab="play">Play history</button>
+<button type="button" class="acct-tab" role="tab" data-tab="security">Security</button>
+</nav>
+
+<div class="acct-body">
+<section id="p-characters" class="acct-pane" role="tabpanel">
+<div id="a-transit" class="acct-pane"></div>
+<div id="a-groups" class="acct-pane"></div>
+<p id="a-empty" class="acct-note" hidden></p>
+<div id="a-moves-box" class="acct-panel" hidden>
+<div class="acct-row acct-row-head"><span class="acct-cap">Recent moves</span></div>
+<div id="a-moves"></div>
+</div>
+</section>
+
+<section id="p-devices" class="acct-pane" role="tabpanel" hidden>
+<div class="acct-panel">
+<div class="acct-row acct-row-head"><span class="acct-cap">Launchers signed in</span></div>
 <div id="a-sessions"></div>
 </div>
-<div id="a-devices-box" hidden>
-<div class="muted" style="font-size: 15px">Machines</div>
+<div id="a-devices-box" class="acct-panel" hidden>
+<div class="acct-row acct-row-head"><span class="acct-cap">Machines</span></div>
 <div id="a-devices"></div>
 </div>
-<div>
-<div class="muted" style="font-size: 15px">Recent play</div>
+</section>
+
+<section id="p-play" class="acct-pane" role="tabpanel" hidden>
+<div class="acct-panel">
+<div class="acct-row acct-row-head"><span class="acct-cap acct-grow">When</span><span class="acct-cap">Machine</span></div>
 <div id="a-plays"></div>
 </div>
+</section>
 
-<div id="p-box" class="form" hidden>
-<div id="p-done" role="status" class="muted" hidden>Password changed. Every other device was signed out.</div>
+<section id="p-security" class="acct-pane" role="tabpanel" hidden>
+<div class="acct-panel acct-box">
+<h2>Change password</h2>
+<span class="muted">Every other device is signed out.</span>
+<div id="p-done" role="status" class="acct-ok" hidden>Password changed. Every other device was signed out.</div>
+<div class="acct-fields">
 <div class="field"><label for="p-old">Current password</label><input id="p-old" type="password" autocomplete="current-password" maxlength="128" aria-describedby="p-old-err"><span id="p-old-err" class="err"></span></div>
 <div class="field"><label for="p-new">New password</label><input id="p-new" type="password" autocomplete="new-password" maxlength="128" aria-describedby="p-new-err"><span id="p-new-err" class="err"></span></div>
-<button id="p-go" class="btn btn-red" type="button">Save password</button>
 </div>
-
-<div id="d-box" class="form" hidden>
-<span class="danger">Deletes your account and every character on it, at once. It can't be undone.</span>
+<div><button id="p-go" class="btn btn-red" type="button">Save password</button></div>
+</div>
+<div class="acct-panel acct-box">
+<h2 class="danger">Delete account</h2>
+<span class="muted">Deletes your account and every character on it, at once. It can't be undone.</span>
+<div class="acct-fields">
 <div class="field"><label for="d-pass">Password</label><input id="d-pass" type="password" autocomplete="current-password" maxlength="128" aria-describedby="d-err"><span id="d-err" class="err"></span></div>
 <div class="field"><label for="d-confirm">Type <b translate="no">DELETE</b> to confirm</label><input id="d-confirm" type="text" autocomplete="off"></div>
-<button id="d-go" class="btn btn-red" type="button" disabled>Delete account</button>
+</div>
+<div><button id="d-go" class="btn btn-dark acct-delete" type="button" aria-disabled="true">Delete account</button></div>
+</div>
+</section>
+</div>
 </div>
 
-<span class="center"><button type="button" class="link" id="a-password">Change password</button> <span class="muted">·</span> <button type="button" class="link" id="a-delete">Delete account</button> <span class="muted">·</span> <button type="button" class="link" id="a-out">Sign out</button></span>
-</div>
-
-</div>
 </main>
 
 <footer>
@@ -104,10 +126,12 @@
 <script>
 (() => {
   const { $, el, t, token, api, account, when, fieldError, alertOn, busy, OFFLINE } = MU;
+  const LANG = document.documentElement.lang || 'en';
 
   function view(name) {
     $('v-signin').hidden = name !== 'signin';
     $('v-account').hidden = name !== 'account';
+    $('a-out').hidden = name !== 'account';
   }
   $('forgot-open').addEventListener('click', () => { $('forgot').hidden = false; });
 
@@ -128,14 +152,33 @@
   $('in-go').addEventListener('click', signIn);
   $('in-pass').addEventListener('keydown', (e) => { if (e.key === 'Enter') signIn(); });
 
-  // Signed in
+  // The tabs, the open one kept in the address (#devices) so a reload or a link lands on it.
+  const TABS = ['characters', 'devices', 'play', 'security'];
+  function tab(name) {
+    if (!TABS.includes(name)) name = 'characters';
+    for (const b of document.querySelectorAll('.acct-tab')) b.setAttribute('aria-selected', String(b.dataset.tab === name));
+    for (const n of TABS) $('p-' + n).hidden = n !== name;
+  }
+  for (const b of document.querySelectorAll('.acct-tab')) b.addEventListener('click', () => {
+    history.replaceState(null, '', b.dataset.tab === 'characters' ? location.pathname : '#' + b.dataset.tab);
+    tab(b.dataset.tab);
+  });
+  const count = (name, n) => { const b = document.querySelector('.acct-tab[data-tab="' + name + '"]'); if (n) b.dataset.n = n; else delete b.dataset.n; };
+
+  // A row: its title and the lines under it, and what can be done on the right.
   function line(title, sub, action) {
-    const row = el('div', 'line'), text = el('div');
+    const row = el('div', 'acct-row'), text = el('div', 'acct-grow');
     text.appendChild(el('span', '', title));
     for (const s of [].concat(sub)) if (s) text.appendChild(el('span', 'sub', s));
     row.appendChild(text);
     if (action) row.appendChild(action);
     return row;
+  }
+  function link(words, then) {
+    const b = el('button', 'link', words);
+    b.type = 'button';
+    b.addEventListener('click', then);
+    return b;
   }
   // The system as the launcher reports it: Windows "10.0.<build>" (22000 and later is Windows 11),
   // the Mac its bare version ("27.0.1").
@@ -145,126 +188,237 @@
     if (/^\d+(\.\d+)*$/.test(os)) return 'macOS ' + os;
     return String(os);
   }
+  const day = (seconds) => new Date(seconds * 1000).toLocaleDateString(LANG, { day: 'numeric', month: 'long', year: 'numeric' });
+  // A world as the server names it ("lost_tower") as a player reads it.
+  const worldName = (w) => String(w || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  // The class's letters in the round badge.
+  const BADGES = { 'Dark Knight': 'DK', 'Dark Wizard': 'DW', 'Elf': 'E', 'Fairy Elf': 'E', 'Magic Gladiator': 'MG', 'Dark Lord': 'DL' };
+  const badge = (cls) => BADGES[cls] || String(cls || '?').split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+
   function render(a) {
-    $('a-who').textContent = (a.name ? a.name + ' · ' : '') + a.email;
-    $('a-online').hidden = a.role !== 'admin';
-    $('a-bugs').hidden = a.role !== 'admin';
-    $('a-texts').hidden = a.role !== 'admin';
+    $('a-name').textContent = a.name || a.email.split('@')[0];
+    $('a-email').textContent = a.email;
+    $('a-since').textContent = a.created ? ' · ' + t('member since {when}', { when: day(a.created) }) : '';
+    $('a-admin').hidden = a.role !== 'admin';
+    const chars = a.characters;
+    $('s-chars').textContent = chars.length;
+    $('s-level').textContent = chars.length ? Math.max(...chars.map((c) => c.level || 0)) : '–';
+    $('s-regions').textContent = new Set(chars.map((c) => c.region)).size;
+    count('characters', chars.length);
     renderCharacters(a);
+
+    // Only the launchers: a browser's sign-in is this page itself, not where the game is played.
     const sessions = $('a-sessions');
     sessions.replaceChildren();
-    // Only the launchers: a browser's sign-in is this page itself, not where the game is played.
     const launchers = a.sessions.filter((s) => s.agent === 'MU Classic launcher');
+    count('devices', launchers.length);
     if (!launchers.length) sessions.appendChild(line(t('No launcher yet'), t('Sign in to the launcher and it shows here.')));
     for (const s of launchers) {
-      let action;
-      if (s.current) action = el('span', 'sub', t('This device'));
-      else {
-        action = el('button', 'link', t('Sign out'));
-        action.type = 'button';
-        action.style.fontSize = '15px';
-        action.addEventListener('click', async () => { await api('/api/sessions/end', { id: s.id }); load(); });
-      }
+      const action = s.current ? el('span', 'sub', t('This device'))
+        : link(t('Sign out'), async () => { await api('/api/sessions/end', { id: s.id }); load(); });
       sessions.appendChild(line('MU Classic launcher', (s.ip ? s.ip + ' · ' : '') + t('last used {when}', { when: when(s.last) }), action));
     }
     const devices = $('a-devices');
     devices.replaceChildren();
     for (const d of a.devices) {
       const card = [d.gpu, d.date ? t('driver {v}', { v: d.date }) : d.driver ? t('driver {v}', { v: d.driver }) : '', d.graphics ? t('graphics {v}', { v: d.graphics }) : ''].filter(Boolean).join(' · ');
-      const rest = [d.cpu, d.ram ? Math.round(d.ram / 1024) + ' GB RAM' : ''].filter(Boolean).join(' · ');
-      devices.appendChild(line(osName(d.os) || t('Machine'), [card, rest, (d.ip ? d.ip + ' · ' : '') + when(d.seen)]));
+      const rest = [d.cpu, d.ram ? Math.round(d.ram / 1024) + ' GB RAM' : '', (d.ip ? d.ip + ' · ' : '') + when(d.seen)].filter(Boolean).join(' · ');
+      devices.appendChild(line(osName(d.os) || t('Machine'), [card, rest]));
     }
     $('a-devices-box').hidden = !a.devices.length;
+
     const plays = $('a-plays');
     plays.replaceChildren();
     if (!a.plays.length) plays.appendChild(line(t('Nothing yet'), t('Press Play in the launcher and it shows here.')));
-    for (const p of a.plays.slice(0, 8)) {
+    for (const p of a.plays.slice(0, 12)) {
       const machine = [osName(p.os), p.gpu, p.graphics ? t('graphics {v}', { v: p.graphics }) : ''].filter(Boolean).join(' · ');
-      plays.appendChild(line(when(p.at), [machine || t('Machine not reported'), p.ip]));
+      const row = el('div', 'acct-row');
+      row.appendChild(el('span', 'acct-grow', when(p.at)));
+      row.appendChild(el('span', 'sub', [machine || t('Machine not reported'), p.ip].filter(Boolean).join(' · ')));
+      plays.appendChild(row);
     }
     view('account');
   }
-  // The account's characters on every region, and each move with where it stands.
-  let moving = null;
+
+  // The account's characters, a panel a region, and the moves between regions (docs/game/transfer.md).
+  const ACTIVE = ['asked', 'out', 'gone', 'held'];
+  let moving = null;   // the character whose Move form is open: "region/name"
+  let movingTo = null;
   function why(m) {
     const said = { online: t('Log out of the game to let him go.'), broker: t('He has Broker listings or Broker money to collect. Clear them and ask again.'),
       master: t('He leads a guild. Pass it on or disband it first.'), missing: t('He was not found on {from}.', { from: m.from }),
       cancelled: t('Called off.') };
     return said[m.why] || '';
   }
-  function moveLine(m) {
-    const title = m.name === m.new_name ? m.name : m.name + ' → ' + m.new_name;
-    let sub, action;
-    if (m.state === 'asked') {
-      sub = why(m) || t('Waiting for {from} to hand him over…', { from: m.from });
-      action = el('button', 'link', t('Call off'));
-      action.addEventListener('click', async () => { await api('/api/transfer', { id: m.id, cancel: true }); load(); });
-    } else if (m.state === 'out' || m.state === 'gone') sub = t('On his way to {to}…', { to: m.to });
-    else if (m.state === 'held') {
-      const box = el('div');
-      box.style.cssText = 'display: flex; gap: 8px; align-items: center';
-      const go = el('button', 'link', m.why === 'name' ? t('Use this name') : t('Try again'));
+  // A move under way: where it stands on Asked, Handed over, Arrived, and what can be done.
+  function transit(m) {
+    const box = el('div', 'acct-panel acct-transit');
+    const top = el('div', 'acct-transit-top');
+    top.appendChild(el('b', '', t('{name} is moving to {to}', { name: m.name, to: m.to }) + (m.new_name !== m.name ? ' (' + m.new_name + ')' : '')));
+    if (m.state === 'asked') top.appendChild(link(t('Call off'), async () => { await api('/api/transfer', { id: m.id, cancel: true }); load(); }));
+    box.appendChild(top);
+    const reached = m.state === 'asked' ? 1 : 2;
+    const steps = el('div', 'acct-steps');
+    [t('Asked'), t('Handed over'), t('Arrived')].forEach((words, i) => {
+      const s = el('div', i < reached ? 'on' : i === reached ? 'next' : '');
+      s.appendChild(el('i'));
+      s.appendChild(el('span', '', words));
+      steps.appendChild(s);
+    });
+    box.appendChild(steps);
+    let sub;
+    if (m.state === 'asked') sub = why(m) || t('Waiting for {from} to hand him over…', { from: m.from });
+    else if (m.state === 'held') sub = m.why === 'name' ? t('His name is taken on {to}. Pick another.', { to: m.to })
+                                                       : t('Your character slots on {to} are full. Delete one there, then try again.', { to: m.to });
+    else sub = t('On his way to {to}…', { to: m.to });
+    box.appendChild(el('span', 'sub', sub));
+    if (m.state === 'held') {
+      const row = el('div', 'acct-held');
       let input = null;
-      if (m.why === 'name') { input = el('input'); input.maxLength = 10; input.style.cssText = 'height: 32px; width: 120px'; box.appendChild(input); }
-      box.appendChild(go);
+      if (m.why === 'name') { input = el('input'); input.maxLength = 10; input.setAttribute('aria-label', t('Name there')); row.appendChild(input); }
+      const go = el('button', 'btn btn-dark acct-small', m.why === 'name' ? t('Use this name') : t('Try again'));
+      go.type = 'button';
+      const err = el('span', 'err');
       go.addEventListener('click', async () => {
         const { status, said } = await api('/api/transfer', { id: m.id, new_name: input ? input.value.trim() : '' });
-        if (status === 200) load(); else go.textContent = said.error ? t(said.error) : t('Something went wrong.');
+        if (status === 200) load(); else err.textContent = said.error ? t(said.error) : t('Something went wrong.');
       });
-      action = box;
-      sub = m.why === 'name' ? t('His name is taken on {to}. Pick another.', { to: m.to })
-                             : t('Your character slots on {to} are full. Delete one there, then try again.', { to: m.to });
-    } else if (m.state === 'done') sub = t('Moved to {to}, {when}', { to: m.to, when: when(m.changed) });
-    else sub = why(m) || t('Not moved.');
-    if (action && action.tagName === 'BUTTON') { action.type = 'button'; action.style.fontSize = '15px'; }
-    return line(title, [m.from + ' → ' + m.to, sub], action);
+      row.appendChild(go);
+      row.appendChild(err);
+      box.appendChild(row);
+    }
+    return box;
+  }
+  // The Move form, open under its character: the regions as buttons, the name there, what goes and what stays.
+  function moveForm(a, c) {
+    const box = el('div', 'acct-move');
+    box.appendChild(el('span', 'acct-cap', t('Move {name} to', { name: c.name })));
+    const targets = a.regions.filter((r) => r !== c.region);
+    if (!targets.includes(movingTo)) movingTo = targets[0];
+    const pick = el('div', 'acct-regions');
+    for (const r of targets) {
+      const b = el('button', 'acct-region');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(r === movingTo));
+      b.appendChild(el('b', '', r));
+      if (a.cities && a.cities[r]) b.appendChild(el('span', 'sub', a.cities[r]));
+      b.addEventListener('click', () => {
+        movingTo = r;
+        for (const o of pick.children) o.setAttribute('aria-pressed', String(o === b));
+        go.textContent = t('Move to {to}', { to: r });
+      });
+      pick.appendChild(b);
+    }
+    box.appendChild(pick);
+    const mid = el('div', 'acct-move-mid');
+    const field = el('div', 'field');
+    const label = el('label', '', t('Name there'));
+    label.htmlFor = 'm-name';
+    const input = el('input');
+    input.id = 'm-name'; input.type = 'text'; input.maxLength = 10; input.autocomplete = 'off'; input.value = c.name;
+    const err = el('span', 'err');
+    err.id = 'm-err';
+    input.setAttribute('aria-describedby', 'm-err');
+    field.append(label, input, err);
+    const terms = el('ul', 'acct-terms');
+    terms.appendChild(el('li', 'yes', t('Level, gear, bag and Zen')));
+    terms.appendChild(el('li', 'yes', t('Free, once a week')));
+    terms.appendChild(el('li', 'no', t('Your vault stays here')));
+    terms.appendChild(el('li', 'no', t('He leaves his guild')));
+    mid.append(field, terms);
+    box.appendChild(mid);
+    const foot = el('div', 'acct-move-foot');
+    const go = el('button', 'btn btn-red', t('Move to {to}', { to: movingTo }));
+    go.type = 'button';
+    go.addEventListener('click', async () => {
+      fieldError(input, err, '');
+      busy(go, t('Asking…'));
+      try {
+        const { status, said } = await api('/api/transfer', { name: c.name, to: movingTo, new_name: input.value.trim() });
+        if (status === 200) { moving = null; load(); return; }
+        fieldError(input, err, said.error ? t(said.error) : t('Something went wrong.'));
+      } catch (e) { fieldError(input, err, OFFLINE); }
+      busy(go);
+    });
+    foot.append(go, link(t('Cancel'), () => { moving = null; renderCharacters(a); }));
+    box.appendChild(foot);
+    return box;
   }
   function renderCharacters(a) {
-    const box = $('a-chars');
-    box.replaceChildren();
-    const busyMove = a.transfers.some((m) => ['asked', 'out', 'gone', 'held'].includes(m.state));
-    if (!a.characters.length) box.appendChild(line(t('No characters yet'), t('Make one in the game and it shows here within a minute.')));
-    const chars = a.characters.slice().sort((x, y) => (x.region + x.name).localeCompare(y.region + y.name));
-    for (const c of chars) {
-      let action = null;
-      // Once a week (TRANSFER_DAYS): the day he may move again, in place of the button.
-      const moved = a.transfers.find((m) => m.state === 'done' && m.new_name === c.name && m.to === c.region &&
-                                             m.changed > Date.now() / 1000 - 7 * 86400);
-      if (moved) action = el('span', 'sub', t('Can move again {when}', { when: new Date((moved.changed + 7 * 86400) * 1000).toLocaleDateString() }));
-      else if (!busyMove && !c.fresh && a.regions.length > 1) {
-        action = el('button', 'link', t('Move'));
-        action.type = 'button';
-        action.style.fontSize = '15px';
-        action.addEventListener('click', () => openMove(a, c));
+    const active = a.transfers.filter((m) => ACTIVE.includes(m.state));
+    $('a-transit').replaceChildren(...active.map(transit));
+    const groups = $('a-groups');
+    groups.replaceChildren();
+    const week = Date.now() / 1000 - 7 * 86400;
+    for (const region of a.regions) {
+      const chars = a.characters.filter((c) => c.region === region).sort((x, y) => (y.level || 0) - (x.level || 0));
+      if (!chars.length) continue;
+      const panel = el('div', 'acct-panel');
+      const head = el('div', 'acct-region-head');
+      head.appendChild(el('i'));
+      const name = el('b', '', region);
+      name.translate = false;
+      head.appendChild(name);
+      if (a.cities && a.cities[region]) head.appendChild(el('span', 'sub', a.cities[region]));
+      head.appendChild(el('span', 'sub acct-end', chars.length === 1 ? t('1 character') : t('{n} characters', { n: chars.length })));
+      panel.appendChild(head);
+      for (const c of chars) {
+        const key = c.region + '/' + c.name;
+        const wrap = el('div', 'acct-char');
+        const row = el('div', 'acct-row');
+        const b = el('div', 'acct-badge', badge(c.class));
+        b.setAttribute('aria-hidden', 'true');
+        const who = el('div', 'acct-grow');
+        const top = el('span', 'acct-who');
+        const n = el('b', '', c.name);
+        n.translate = false;
+        top.appendChild(n);
+        if (c.online) top.appendChild(el('span', 'acct-live', t('Playing now')));
+        who.appendChild(top);
+        who.appendChild(el('span', 'sub', [c.class, worldName(c.world)].filter(Boolean).join(' · ')));
+        const lvl = el('div', 'acct-level');
+        lvl.appendChild(el('b', '', String(c.level || 0)));
+        lvl.appendChild(el('span', '', t('Level')));
+        // Once a week (TRANSFER_DAYS), one move at a time, never while he plays or before he was saved.
+        const moved = a.transfers.find((m) => m.state === 'done' && m.new_name === c.name && m.to === c.region && m.changed > week);
+        const mine = active.find((m) => m.name === c.name && m.from === c.region);
+        const act = el('div', 'acct-act');
+        if (mine) act.appendChild(el('span', 'sub', t('Moving…')));
+        else if (moved) act.appendChild(el('span', 'sub', t('Can move again {when}', { when: new Date((moved.changed + 7 * 86400) * 1000).toLocaleDateString(LANG) })));
+        else if (a.regions.length < 2) {}
+        else if (active.length) act.appendChild(el('span', 'sub', t('One move at a time')));
+        else if (c.online) act.appendChild(el('span', 'sub', t('Log out to move him')));
+        else if (c.fresh) act.appendChild(el('span', 'sub', t('Play him once to move him')));
+        else {
+          const go = el('button', 'btn btn-dark acct-small', moving === key ? t('Close') : t('Move region'));
+          go.type = 'button';
+          go.setAttribute('aria-expanded', String(moving === key));
+          go.addEventListener('click', () => { moving = moving === key ? null : key; renderCharacters(a); });
+          act.appendChild(go);
+        }
+        row.append(b, who, lvl, act);
+        wrap.appendChild(row);
+        if (moving === key) wrap.appendChild(moveForm(a, c));
+        panel.appendChild(wrap);
       }
-      box.appendChild(line(c.name, [c.class + ' · ' + t('level {n}', { n: c.level }) + ' · ' + c.region + (c.online ? ' · ' + t('playing now') : '')], action));
+      groups.appendChild(panel);
     }
-    for (const m of a.transfers.slice(0, 5)) box.appendChild(moveLine(m));
+    // The regions he has no one on, under the panels; or the first line of a new account.
+    const empty = a.regions.filter((r) => !a.characters.some((c) => c.region === r));
+    const note = $('a-empty');
+    if (!a.characters.length) note.textContent = t('No characters yet. Make one in the game and it shows here within a minute.');
+    else note.textContent = empty.length ? t('No characters on {regions}. Pick that region in the launcher to start one there.', { regions: empty.join(', ') }) : '';
+    note.hidden = !note.textContent;
+    // The moves of the last week that are over: arrived, called off or refused.
+    const done = a.transfers.filter((m) => !ACTIVE.includes(m.state) && m.changed > week).slice(0, 5);
+    $('a-moves').replaceChildren(...done.map((m) => line(m.name === m.new_name ? m.name : m.name + ' → ' + m.new_name,
+      [m.from + ' → ' + m.to, m.state === 'done' ? t('Moved to {to}, {when}', { to: m.to, when: when(m.changed) }) : why(m) || t('Not moved.')])));
+    $('a-moves-box').hidden = !done.length;
   }
-  function openMove(a, c) {
-    moving = c;
-    $('m-what').textContent = t('Move {name} from {from}', { name: c.name, from: c.region });
-    $('m-to').replaceChildren(...a.regions.filter((r) => r !== c.region).map((r) => { const o = el('option', '', r); o.value = r; return o; }));
-    $('m-name').value = c.name;
-    fieldError($('m-name'), $('m-err'), '');
-    $('m-box').hidden = false;
-    $('p-box').hidden = $('d-box').hidden = true;
-  }
-  $('m-go').addEventListener('click', async () => {
-    if (!moving) return;
-    fieldError($('m-name'), $('m-err'), '');
-    busy($('m-go'), t('Asking…'));
-    try {
-      const { status, said } = await api('/api/transfer', { name: moving.name, to: $('m-to').value, new_name: $('m-name').value.trim() });
-      if (status === 200) { $('m-box').hidden = true; moving = null; load(); }
-      else fieldError($('m-name'), $('m-err'), said.error ? t(said.error) : t('Something went wrong.'));
-    } catch (e) { fieldError($('m-name'), $('m-err'), OFFLINE); }
-    busy($('m-go'));
-  });
 
   async function load() {
     const a = await account();
-    if (a) render(a); else view('signin');
+    if (a) { render(a); tab(location.hash.slice(1)); } else view('signin');
   }
 
   $('a-out').addEventListener('click', async () => {
@@ -272,11 +426,10 @@
     token.set('');
     location.href = MU.home;
   });
-  $('a-password').addEventListener('click', () => { $('p-box').hidden = !$('p-box').hidden; $('d-box').hidden = true; });
-  $('a-delete').addEventListener('click', () => { $('d-box').hidden = !$('d-box').hidden; $('p-box').hidden = true; });
   $('p-go').addEventListener('click', async () => {
     fieldError($('p-old'), $('p-old-err'), '');
     fieldError($('p-new'), $('p-new-err'), '');
+    $('p-done').hidden = true;
     if ($('p-new').value.length < 8) return fieldError($('p-new'), $('p-new-err'), t('Use at least 8 characters.'));
     busy($('p-go'), t('Saving…'));
     try {
@@ -287,8 +440,10 @@
     } catch (e) { fieldError($('p-new'), $('p-new-err'), OFFLINE); }
     busy($('p-go'));
   });
-  $('d-confirm').addEventListener('input', () => { $('d-go').disabled = $('d-confirm').value.trim() !== 'DELETE'; });
+  const deleteReady = () => $('d-go').setAttribute('aria-disabled', String($('d-confirm').value.trim() !== 'DELETE'));
+  $('d-confirm').addEventListener('input', deleteReady);
   $('d-go').addEventListener('click', async () => {
+    if ($('d-go').getAttribute('aria-disabled') === 'true') return;
     fieldError($('d-pass'), $('d-err'), '');
     busy($('d-go'), t('Deleting…'));
     try {
@@ -301,7 +456,7 @@
       } else fieldError($('d-pass'), $('d-err'), said.error ? t(said.error) : t('Something went wrong.'));
     } catch (e) { fieldError($('d-pass'), $('d-err'), OFFLINE); }
     busy($('d-go'));
-    $('d-go').disabled = $('d-confirm').value.trim() !== 'DELETE';
+    deleteReady();
   });
 
   load();

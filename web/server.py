@@ -68,7 +68,8 @@ The routes:
                                                     -> 200 {ok} | 409 {field?, error}
          a character moved to another region's server (TRANSFER_STATES, docs/game/transfer.md): asked,
          a held one sent on with a new name or once a slot is free, or one still only asked called off.
-         GET /api/account carries the account's `characters` on every region, its `transfers` and the `regions`.
+         GET /api/account carries the account's `characters` on every region, its `transfers`, the `regions`
+         and their `cities`.
     GET  /internal/transfers?region=R  (127.0.0.1 only) -> 200 text/plain, a line a move (transfers_for)
     POST /internal/transfers           (127.0.0.1 only) {region, id, state, why?, kept?}  -> 200 {ok} | 409
          a region's mu2_server's step of a move (server/src/transfer.cpp), every 15 s.
@@ -606,7 +607,8 @@ class Store:
                          {key: row.get(key) for key in ("gpu", "os", "graphics") if row.get(key)})
         return {"email": email, "name": name or "", "created": created, "role": role, "sessions": sessions,
                 "devices": devices, "plays": plays, "characters": self.mine(account),
-                "transfers": self.transfers(account), "regions": [r for r, _ in REGIONS]}
+                "transfers": self.transfers(account), "regions": [r for r, _ in REGIONS],
+                "cities": dict(REGIONS)}
 
     def comments(self, post: str) -> list:
         return [{"name": name, "text": text, "at": at} for name, text, at in self.db().execute(
@@ -895,7 +897,7 @@ class Store:
             listed = [c for told in self.characters.values() for c in told if c.get("account") == account]
             playing = {(p.get("region"), p.get("name")) for told in self.online.values() for p in told["players"]
                        if p.get("account") == account}
-        return [{key: c.get(key) for key in ("name", "class", "level", "region", "fresh")} |
+        return [{key: c.get(key) for key in ("name", "class", "level", "world", "region", "fresh")} |
                 {"online": (c.get("region"), c.get("name")) in playing} for c in listed]
 
     def taken_in(self, region: str, name: str) -> bool:
