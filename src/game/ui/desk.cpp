@@ -803,17 +803,17 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             click();
         }
     }
-    // The line's chip, top right beside the minimap's disc (in the corner while M lays the map
-    // over the screen): under a box or the menu it shows and hears nothing new.
+    // The line's chip in the screen's top right corner, as the old counter was, the minimap under
+    // it and its list over the minimap while open. Under a box or the menu it shows and hears
+    // nothing new.
     if (!watching_) {
         const bool held = amount_.up() || report_.up() || whatsNew_.up() || menu_.up();
         const float u = tip::unit();
-        const gfx::Box& disc = minimap_.disc();
-        const bool beside = minimap_.showing() && !minimap_.full() && disc.w > 0.0f;
-        const float right = beside ? disc.x - 14.0f * u : float(window.width()) - 16.0f * u;
-        lineChip_.update(seconds, line_, held ? Pointer{} : pointer, window.width(), window.height(), right,
-                         14.0f * u);
+        lineChip_.update(seconds, line_, held ? Pointer{} : pointer, window.width(), window.height(),
+                         float(window.width()) - 10.0f * u, 4.0f * u);
         if (lineChip_.takeClicked()) click();
+        // The minimap steps down under it, and the tracker under the minimap with it.
+        minimap_.setTop(lineChip_.showing() ? lineChip_.chip().bottom() + 6.0f * u : 0.0f);
     }
     // Devil Square's result, from the end of its time until he is paid: the realm's ranks, the
     // names as the server (or the bench) says them, his own his save's. Claim is asked of the
@@ -1465,7 +1465,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     minimap_.setReporting(report_.up());
     minimap_.setAutoPlaying(autoPlaying_);
     minimap_.setHelping(helping_);
-    minimap_.update(seconds, play, typing || menuHeld ? Pointer{} : pointer,
+    minimap_.update(seconds, play, typing || menuHeld || lineChip_.covers(pointer.x, pointer.y) ? Pointer{} : pointer,
                     typing || menuHeld ? 0.0f : window.scroll(), window.width(), window.height());
     // Its H, as H is; and its right click, the window.
     if (minimap_.takeHelperToggle() && play.isOpen()) {
@@ -2571,7 +2571,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
         interface_.add(chat_.lines());
     }
     interface_.add(hud_.canvas());
-    // The line's chip beside the minimap, its list over whatever lies under it.
+    // The line's chip in the corner over the minimap, its list over whatever lies under it.
     if (lineChip_.showing()) interface_.add(lineChip_.canvas());
     // A party invite, centred over the plate where a fight's Zen is said.
     if (chat_.inviting()) interface_.add(chat_.invite());

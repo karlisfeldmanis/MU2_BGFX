@@ -24,7 +24,7 @@ constexpr float kChipText = 16.5f;
 constexpr float kChipGap = 12.0f;
 constexpr float kBarWide = 4.5f, kBarGap = 3.0f;
 constexpr float kBarTall[3] = {6.0f, 10.5f, 16.5f};
-constexpr float kNoteGap = 9.0f;   // between the chip and the note (or the list) under it
+constexpr float kNoteGap = 9.0f;   // between the chip and the note beside it, or the list under it
 constexpr float kNoteTall = 27.0f;
 constexpr float kNotePad = 10.5f;
 constexpr float kNoteText = 15.0f;
@@ -41,7 +41,7 @@ constexpr float kTagText = 15.0f;
 constexpr float kMsWide = 78.0f;   // the ms column, ranged right
 constexpr float kFootText = 15.5f;
 constexpr float kFootLine = 22.0f;
-constexpr float kRadius = 6.0f;
+constexpr float kRadius = 3.0f;  // every corner, the chip's too (the user, 2026-10-20: "decrease border radius")
 
 // See-through at rest, a little less so on a slow line, whole under the pointer or open (the
 // user, 2026-10-20: "with some opacity").
@@ -59,7 +59,7 @@ constexpr uint32_t kNoteName = gfx::rgba(0.961f, 0.827f, 0.659f);
 constexpr uint32_t kNoteCross = gfx::rgba(0.788f, 0.604f, 0.400f);
 constexpr uint32_t kNoteCrossHi = gfx::rgba(0.961f, 0.827f, 0.659f);
 constexpr uint32_t kAmber = gfx::rgba(0.910f, 0.627f, 0.290f);
-constexpr uint32_t kListBack = gfx::rgba(0.055f, 0.051f, 0.043f, 0.92f);
+constexpr uint32_t kListBack = gfx::rgba(0.055f, 0.051f, 0.043f, 0.98f);  // over the minimap: solid
 constexpr uint32_t kGold = gfx::rgba(0.890f, 0.761f, 0.478f);
 constexpr uint32_t kHereBack = gfx::rgba(0.165f, 0.145f, 0.114f, 0.9f);
 constexpr uint32_t kNearBack = gfx::rgba(0.106f, 0.149f, 0.098f, 0.9f);
@@ -163,7 +163,7 @@ void LineChip::update(float seconds, const Line& line, const Pointer& pointer, i
     const float chipWide = std::round(inside + 2.0f * kChipPad * u);
     chip_ = {std::round(right) - chipWide, std::round(top), chipWide, chipTall};
 
-    // The note under it, ranged to its right, while there is a nearer region and the list is up.
+    // The note on its row, to its left, while there is a nearer region and the list is down.
     noteUp_ = line.nearer >= 0 && size_t(line.nearer) < net::regions().size() && !listUp_;
     if (noteUp_) {
         const std::string& name = net::regions()[size_t(line.nearer)].name;
@@ -172,14 +172,15 @@ void LineChip::update(float seconds, const Line& line, const Pointer& pointer, i
                                                                     msText(int(line.pings[size_t(line.nearer)] + 0.5)));
         const float wide = std::round(kNotePad * u * 2.0f + kNoteIcon * u + 7.0f * u + text + kCross * u);
         const float tall = std::round(kNoteTall * u);
-        note_ = {chip_.right() - wide, chip_.bottom() + std::round(kNoteGap * u), wide, tall};
+        note_ = {chip_.x - std::round(kNoteGap * u) - wide, std::round(chip_.midY() - tall * 0.5f), wide, tall};
         cross_ = {note_.right() - std::round(kCross * u) - std::round(3.0f * u),
                   note_.y + std::round((tall - kCross * u) * 0.5f), std::round(kCross * u), std::round(kCross * u)};
     } else {
         note_ = cross_ = {};
     }
 
-    // The list under the chip, ranged to its right, a row a region.
+    // The list straight under the chip, their right edges one, over the minimap while it is open
+    // (the user, 2026-10-20: "when click wrong position for overlay window", hung beside the disc).
     {
         const float wide = std::round(kListWide * u);
         if (footFor_ != wide) {
@@ -247,7 +248,7 @@ void LineChip::rebuild(const Drawn& now) {
     // The chip.
     {
         const Box& b = chip_;
-        tip::panel(canvas_, b, b.h * 0.5f, faded(kChipBack, a), faded(kChipBack, a));
+        tip::panel(canvas_, b, kRadius * u, faded(kChipBack, a), faded(kChipBack, a));
         const float base = controls::middle(b.y, b.h, kChipText * u);
         float x = b.x + kChipPad * u;
         if (now.ping >= 0) {
@@ -269,7 +270,7 @@ void LineChip::rebuild(const Drawn& now) {
     // The note: "<region> is nearer · 34 ms", and its cross.
     if (now.noteUp && now.nearer >= 0 && !now.pings.empty()) {
         const Box& b = note_;
-        tip::panel(canvas_, b, kRadius * 0.7f * u, kNoteBack, kNoteBack);
+        tip::panel(canvas_, b, kRadius * u, kNoteBack, kNoteBack);
         float x = b.x + kNotePad * u;
         bars(canvas_, x, std::round(b.midY() + kNoteIcon * 0.5f * u), 3, kAmber, u * kNoteIcon / kBarTall[2], 1.0f);
         x += barsWide(u * kNoteIcon / kBarTall[2]) + 7.0f * u;
@@ -297,7 +298,7 @@ void LineChip::rebuild(const Drawn& now) {
         for (size_t i = 0; i < all.size(); ++i) {
             const bool here = int(i) == now.here, nearest = int(i) == near;
             const Box row{b.x + 8.0f * u, std::round(y), b.w - 16.0f * u, std::round(kRowTall * u)};
-            if (here || nearest) tip::panel(canvas_, row, 5.0f * u, here ? kHereBack : kNearBack, here ? kHereBack : kNearBack);
+            if (here || nearest) tip::panel(canvas_, row, kRadius * u, here ? kHereBack : kNearBack, here ? kHereBack : kNearBack);
             const float base = controls::middle(row.y, row.h, kRowText * u);
             controls::label(canvas_, left, base, kRowText * u, here || nearest ? style::kBoneHi : style::kBone, all[i].name);
             // His own by the game's ping, live; the others by their connect, once.

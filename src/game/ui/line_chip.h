@@ -1,5 +1,5 @@
-// The line's chip, top right beside the minimap: the ping and the frame rate in one small pill, and
-// under it, when
+// The line's chip, in the screen's top right corner over the minimap: the ping and the frame rate
+// in one small pill, and beside it, when
 // the line is slow and another region would answer him much sooner, a small orange note saying
 // which (the user, 2026-10-20: "we need somekind of notification in game where we inform that you
 // are getting much ping, maybe you should check other realms closer to your location").
@@ -8,8 +8,9 @@
 // the chip moved from under the minimap to the bottom left "with some opacity", see-through at
 // rest and whole under the pointer; the note "orangish ... above the block", "smaller", and with a
 // cross that hides it for good ("alow user to close notification and dont show it anymore").
-// Then, in the game, "overlay is to large" (all of it at three quarters) and "move container to top
-// right": beside the minimap, where the old counter stood, its note and list hanging under it.
+// Then, in the game, "overlay is to large" (all of it at three quarters) and "it has to be on screen
+// top right corner": where the old counter stood, the minimap stepped down under it, its note on its
+// row to its left and its list hanging straight under it.
 // A click on the chip opens the regions under it, each with its round trip from here, his own
 // marked and a much nearer one too. It takes the old counter's place in a played world.
 //
@@ -42,13 +43,15 @@ public:
         built_ = false;
     }
     // One frame. The chip's right edge stands at `right` and its top at `top`, in pixels; its note
-    // and its list hang under it.
+    // stands to its left, and its list hangs under it.
     void update(float seconds, const Line& line, const Pointer& pointer, int width, int height,
                 float right, float top);
     bool covers(float x, float y) const {
         return showing() && (chip_.has(x, y) || (noteUp_ && note_.has(x, y)) || (listUp_ && list_.has(x, y)));
     }
     bool showing() const { return built_ && chip_.w > 0.0f; }
+    // The chip's box, empty while it is not shown: the minimap stands under it.
+    const gfx::Box& chip() const { return chip_; }
     const gfx::Canvas& canvas() const { return canvas_; }
     // The list opened since this was last asked: the mode times the regions to fill it.
     bool takeOpened() {

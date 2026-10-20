@@ -550,7 +550,7 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
         scale_ = side / (chartTiles_ * kFullFit);
         focusX_ = focusY_ = chartTiles_ * 0.5f - 0.5f;
     } else {
-        const float side = std::round(kSide * u), at = std::round(kInset * u);
+        const float side = std::round(kSide * u), at = top_ > 0.0f ? std::round(top_) : std::round(kInset * u);
         // The fade stands past the disc that reads, so it is the disc inside it that lines up.
         const float right = float(width) - kRight * u + kFade * u;
         map_ = {std::round(right - side), at, side, side};

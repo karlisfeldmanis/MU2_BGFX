@@ -387,7 +387,7 @@ private:
     Travel travel_;
     // Go Back!, over the HUD's middle while the way back to the field is open.
     GoBackPlate goBack_;
-    // The ping and the frame rate, top right, and the nearer region's note under them.
+    // The ping and the frame rate, top right, and the nearer region's note beside them.
     LineChip lineChip_;
     LineChip::Line line_;
     // Devil Square's result at its end, and the rows it is told each frame.

@@ -81,8 +81,9 @@ public:
     // The whole map over the middle of the screen, in place of the corner's disc.
     void setFull(bool on) { full_ = on; }
     bool full() const { return full_; }
-    // The disc's box as it stands, small or full: what the line's chip stands beside.
-    const gfx::Box& disc() const { return map_; }
+    // Where the small disc's box stands from the screen's top, in pixels: under the line's chip in
+    // the corner (game/ui/line_chip.h); 0 for its own inset.
+    void setTop(float y) { top_ = y; }
     // Whether a point is over it, so a click there does not walk him. The whole map takes no
     // click at all: he walks under it, as with it shut (the user, 2026-10-01: 'allow to use
     // click to move when map (M) is opened').
@@ -230,6 +231,7 @@ private:
     // This frame's layout, in pixels.
     gfx::Box outer_;  // the square with its hairline, what the pointer is refused by
     gfx::Box map_;    // the circle's box
+    float top_ = 0.0f;  // setTop's
     float radius_ = 0.0f;
     float under_ = 0.0f;  // the foot of the lines under the disc (under())
     float scale_ = 1.0f;  // pixels a tile at this zoom
