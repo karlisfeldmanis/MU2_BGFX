@@ -16,6 +16,23 @@ const content::ItemRow* rowAt(const content::Tables& tables, const Held& what) {
     return &tables.items[size_t(what.item)];
 }
 
+// The first bag slot holding `item`, or -1.
+int slotHolding(const Satchel& bag, int32_t item) {
+    for (int s = kWorn; s < kSlots; ++s) {
+        if (!bag[s].empty() && bag[s].item == item) return s;
+    }
+    return -1;
+}
+
+// One of the stack at `slot` used up; the last frees its cell.
+void spendOne(Satchel& bag, int slot) {
+    Held spent = bag.lift(slot);
+    if (spent.durability > 1) {
+        --spent.durability;
+        bag.put(slot, spent);
+    }
+}
+
 }  // namespace
 
 int Realm::recut(int slot, int line) {
@@ -39,14 +56,10 @@ int Realm::recut(int slot, int line) {
         refusal_ = "not the Zen for it";
         return -1;
     }
-    const ItemKey key = recutJewel(powers);
-    const int32_t jewel = tables_->itemAt(key.group, key.number);
-    int jewelSlot = -1;
-    for (int s = kWorn; s < kSlots && jewelSlot < 0; ++s) {
-        if (!me().bag[s].empty() && me().bag[s].item == jewel) jewelSlot = s;
-    }
-    if (jewel < 0 || jewelSlot < 0) {
-        refusal_ = powers >= 4 ? "no Jewel of Life" : powers == 3 ? "no Jewel of Soul" : "no Jewel of Chaos";
+    const int32_t jewel = tables_->itemAt(kJewelerJewel.group, kJewelerJewel.number);
+    const int jewelSlot = jewel < 0 ? -1 : slotHolding(me().bag, jewel);
+    if (jewelSlot < 0) {
+        refusal_ = "no Jewel of Chaos";
         return -1;
     }
     const Affix made = recutRoll(*row, piece, line, mixDice_);
@@ -55,11 +68,7 @@ int Realm::recut(int slot, int line) {
         return -1;
     }
     me().money -= zen;
-    Held spent = me().bag.lift(jewelSlot);
-    if (spent.durability > 1) {
-        --spent.durability;
-        me().bag.put(jewelSlot, spent);
-    }
+    spendOne(me().bag, jewelSlot);
     piece.affixes[line] = uint8_t(made);
     me().bag.lift(slot);
     me().bag.put(slot, piece);
@@ -137,6 +146,11 @@ int Realm::combine(int first, int second, int third) {
         refusal_ = "not the Zen for it";
         return -1;
     }
+    const int32_t jewel = tables_->itemAt(kJewelerJewel.group, kJewelerJewel.number);
+    if (jewel < 0 || slotHolding(me().bag, jewel) < 0) {
+        refusal_ = "no Jewel of Chaos";
+        return -1;
+    }
     // A powered row at random, each as likely as the next.
     int32_t rows[16];
     int n = 0;
@@ -159,6 +173,8 @@ int Realm::combine(int first, int second, int third) {
         return -1;
     }
     me().money -= zen;
+    // Looked for again: the made piece may have taken a cell, never the jewel's.
+    spendOne(me().bag, slotHolding(me().bag, jewel));
     return at + 1;
 }
 

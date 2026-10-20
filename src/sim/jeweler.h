@@ -6,13 +6,15 @@
 //
 //   * **Recut** one further power: that line rolls again, from the powers the piece does not
 //     already carry. The signature and the count (the colour) never change. Zen by the plus, and
-//     one jewel by the colour ("for recut we need also some jewels").
+//     a Jewel of Chaos ("lets ask jewel of chaos on combine and jewel of chaos of recut"; it was a
+//     jewel by colour, Chaos to Life, until the same evening).
 //   * **Salvage**: the piece is broken for one prize, a lottery ("you can get 1 jewel and there is
 //     chance to get some shit and something good"), never a rune ("dont give runes on salvage").
 //     The rarer the piece, the better the odds; +7 or luck rolls twice and keeps the better.
 //   * **Combine** three of one colour into a random powered piece of the next, at the lowest plus
-//     of the three: white to blue, blue to purple. Zen only ("combine does not ask jewels but
-//     just zen"); legendary is only ever found.
+//     of the three: white to blue, blue to purple. Zen and a Jewel of Chaos (Zen alone at first:
+//     "combine does not ask jewels but just zen", then the Chaos the same evening); legendary is
+//     only ever found.
 //
 // Bound pieces take all three (the user: "never mind they can"): a recut one stays bound, a
 // salvage's prize is free (jewels never bind, sim::bindable), and a combine with a bound piece in
@@ -35,12 +37,12 @@ inline bool jewelerTakes(const content::ItemRow& row) { return powered(row); }
 // ---- Recut -----------------------------------------------------------------------------------
 // 50,000 at +0 to 500,000 at +9 on the powers' own square curve, to the thousand.
 int64_t recutZen(int refinement);
-// The jewel one asks, by how many powers the piece carries: white and blue a Chaos, purple a
-// Soul, legendary a Life. As the item's (group, number).
+// An item by its (group, number).
 struct ItemKey {
     int32_t group = -1, number = -1;
 };
-ItemKey recutJewel(int powers);
+// The jewel a Recut and a Combine each take one of: a Jewel of Chaos.
+constexpr ItemKey kJewelerJewel{12, 15};
 // A further power for line `line` (0 to 2) of `what`: any the row's signature, Haste and the
 // piece's other lines leave, off `dice`. None when nothing is left.
 Affix recutRoll(const content::ItemRow& row, const Held& what, int line, Random& dice);

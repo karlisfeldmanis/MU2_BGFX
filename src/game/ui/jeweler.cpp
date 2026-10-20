@@ -402,6 +402,10 @@ void Jeweler::rebuild(const sim::Realm& realm, Stage* stage) {
     // ---- the pages ---------------------------------------------------------------------------
     int64_t zen = 0;
     std::string need;
+    // The one jewel Recut and Combine each take, and how many he carries.
+    const int32_t chaosItem = tables.itemAt(sim::kJewelerJewel.group, sim::kJewelerJewel.number);
+    const int chaos = chaosItem >= 0 ? jewelsCarried(realm, chaosItem) : 0;
+    const std::string chaosLine = "and 1 Jewel of Chaos  (" + std::to_string(chaos) + " in bag)";
     bool ready = false;
     std::string verb = kTabs[int(page_)];
     if (page_ == Page::Recut) {
@@ -431,12 +435,8 @@ void Jeweler::rebuild(const sim::Realm& realm, Stage* stage) {
             }
             at(kLeft, rowBox(3).y + 2.0f, style::kAshInk, "The signature and the colour never change.");
             zen = sim::recutZen(piece.refinement);
-            const sim::ItemKey jewel = sim::recutJewel(powers);
-            const int32_t item = tables.itemAt(jewel.group, jewel.number);
-            const int have = item >= 0 ? jewelsCarried(realm, item) : 0;
-            const std::string name = item >= 0 ? tables.items[size_t(item)].label : "a jewel";
-            need = "and 1 " + name + "  (" + std::to_string(have) + " in bag)";
-            ready = line_ >= 0 && have > 0 && realm.money() >= zen;
+            need = chaosLine;
+            ready = line_ >= 0 && chaos > 0 && realm.money() >= zen;
         }
     } else if (page_ == Page::Salvage) {
         kicker(kPrizeTop - 16.0f, "IT COULD GIVE YOU");
@@ -483,11 +483,12 @@ void Jeweler::rebuild(const sim::Realm& realm, Stage* stage) {
             at(kLeft, t + 11.0f, style::kBone, "+" + std::to_string(plus) + ", the lowest of the three.");
             if (bound) at(kLeft, t + 25.0f, kGold, "One is bound, so the new piece is bound.");
         }
-        at(kLeft, t + 44.0f, style::kAshInk, "White to blue: 500,000 Zen.");
-        at(kLeft, t + 55.0f, style::kAshInk, "Blue to purple: 2,000,000 Zen.");
+        at(kLeft, t + 44.0f, style::kAshInk, "White to blue: 500,000 Zen and a Chaos.");
+        at(kLeft, t + 55.0f, style::kAshInk, "Blue to purple: 2,000,000 Zen and a Chaos.");
         at(kLeft, t + 66.0f, style::kAshInk, "Legendary is only found.");
         if (same && count > 0 && colour >= 1 && colour <= 2) zen = sim::combineZen(colour);
-        ready = count == 3 && same && zen > 0 && realm.money() >= zen;
+        if (zen > 0) need = chaosLine;
+        ready = count == 3 && same && zen > 0 && chaos > 0 && realm.money() >= zen;
     }
 
     // ---- what was said, the foot -------------------------------------------------------------

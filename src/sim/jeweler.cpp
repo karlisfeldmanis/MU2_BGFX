@@ -13,12 +13,6 @@ int64_t recutZen(int refinement) {
     return int64_t(std::lround(zen / 1000.0)) * 1000;
 }
 
-ItemKey recutJewel(int powers) {
-    if (powers >= 4) return {kGroupPotions, 16};  // Life
-    if (powers == 3) return {kGroupPotions, 14};  // Soul
-    return {12, 15};                              // Chaos
-}
-
 Affix recutRoll(const content::ItemRow& row, const Held& what, int line, Random& dice) {
     const Affix own = signatureOf(row);
     uint8_t left[kAffixes];

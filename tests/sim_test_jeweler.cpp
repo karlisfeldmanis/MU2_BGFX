@@ -74,9 +74,10 @@ void testJeweler(void (*checkOf)(bool, const char*),
     for (int tick = 0; tick < 400 && realm.jeweling() < 0; ++tick) realm.step();
     checkEqual(realm.jeweling(), moss, "talking to Moss opens his window");
 
-    // Recut: needs the colour's jewel (purple, a Soul).
-    checkEqual(realm.recut(ring, 1), -1, "a recut without a Soul is refused");
+    // Recut: needs a Jewel of Chaos, whatever the colour.
     realm.give(soul, -1, 0, 2);
+    checkEqual(realm.recut(ring, 1), -1, "a recut without a Chaos is refused, a Soul or none");
+    realm.give(chaos, -1, 0, 3);
     checkEqual(realm.recut(ring, 2), -1, "an empty line is not recut");
     const int64_t before = realm.money();
     sim::Command recut;
@@ -94,7 +95,8 @@ void testJeweler(void (*checkOf)(bool, const char*),
     checkEqual(after.affixes[0], uint8_t(sim::Affix::Wisdom), "the other line stays");
     check(after.bound && after.luck && after.refinement == 7, "the piece stays itself, bound");
     checkEqual(before - realm.money(), sim::recutZen(7), "the recut's Zen is paid");
-    checkEqual(countOf(realm, soul), 1, "and one Soul spent");
+    checkEqual(countOf(realm, chaos), 2, "and one Chaos spent");
+    checkEqual(countOf(realm, soul), 2, "and no Soul");
 
     // Salvage: the piece goes, one prize comes, free of the binding.
     const int prize = realm.salvage(ring);
@@ -115,6 +117,7 @@ void testJeweler(void (*checkOf)(bool, const char*),
     const int blue = realm.give(wisdom, -1, 0, -1, false, 0, 0, 0, nullptr, blueOnes);
     checkEqual(realm.combine(a, b, blue), -1, "three of mixed colours are refused");
     checkEqual(realm.combine(a, a, b), -1, "one piece twice is refused");
+    const int chaosBefore = countOf(realm, chaos);
     const int64_t had = realm.money();
     const int made = realm.combine(a, b, c);
     check(made > 0, "three whites combine");
@@ -127,6 +130,7 @@ void testJeweler(void (*checkOf)(bool, const char*),
         check(sim::jewelerTakes(row), "a powered ring or pendant");
     }
     checkEqual(had - realm.money(), 500000, "for 500,000 Zen");
+    checkEqual(chaosBefore - countOf(realm, chaos), 1, "and a Jewel of Chaos");
     check(realm.satchel()[b].empty() || realm.satchel()[b].item != wisdom ||
               realm.satchel()[b].refinement != 5,
           "and the three are gone");
