@@ -1200,7 +1200,8 @@ void Realm::leave(const Body& dead, const Body& killer) {
             const int32_t item = tables_->itemAt(kGroupPets, scroll ? 16 : 17);
             if (item >= 0) {
                 Lying material;
-                material.what = Held{item, int16_t(castleMaterialLevel(level)), 128};
+                // One: a stack's count is its durability (sim::stackMost), where MU's 128 was.
+                material.what = Held{item, int16_t(castleMaterialLevel(level)), 1};
                 std::tie(material.column, material.row) = clearing(dead.column(), dead.row());
                 material.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
                 material.owner = mine().id;

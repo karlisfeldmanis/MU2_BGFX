@@ -142,7 +142,10 @@ namespace mu::net {
 //     and its quote is a piece's price, and a bound Loch's Feather goes into the 2nd wings
 //     (2026-10-20), so a client on 39's bags is refused instead of drifting from the server.
 // 41: a Ping carries the client's own round trip (Ping::ms), the website's Ping column.
-constexpr uint32_t kVersion = 41;
+// 42: the Ale, the Town Portal, Loch's Feather, the square's and the castle's materials and the
+//     boxes stack (sim::stackMost), and a quest's jewels, potions and boxes are never bound
+//     (sim::bindable), so a client on 41's bags is refused instead of drifting from the server.
+constexpr uint32_t kVersion = 42;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";

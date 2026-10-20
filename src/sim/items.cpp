@@ -903,6 +903,15 @@ int stackMost(const content::ItemRow& row) {
     // 2026-10-20: "we need stacking jewels", bug report #41). MU counts its own stacked jewels in
     // the durability as well. A Rune of Creation carries a power of its own and never stacks.
     if (refiningJewel(row)) return kStackMost;
+    // And what else he carries several of and spends one at a time (the user, 2026-10-20: "which
+    // else items make sense we stack?", and the table's both halves): the Ale and the Town
+    // Portal (Realm::use spends one), Loch's Feather and the castle's and the square's materials
+    // (the machine takes of a stack what the mix wants, sim::piecesWanted), and the boxes
+    // (Realm::crack opens one). A material or a box stacks only with its own level (sim::tops).
+    if (ale(row) || portal(row) || lochsFeather(row) || devilsEye(row) || devilsKey(row) ||
+        scrollOfArchangel(row) || bloodBone(row) || boxOfLuck(row) || boxOfKundun(row)) {
+        return kStackMost;
+    }
     return 0;
 }
 

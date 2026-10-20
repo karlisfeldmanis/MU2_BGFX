@@ -85,20 +85,22 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
             s.life += n;
             s.things += n;
         } else {
-            ++s.things;
+            // A stack counts its pieces, as the jewels above (piecesOf): three Devil's Eyes in one
+            // cell are three, and an invitation's box with them is not ready.
+            s.things += n;
             if (creation(*row) && what.powers[0] != 0) {
                 if (s.runes < kMostSockets + 1) s.runeCells[s.runes] = cell;
                 ++s.runes;
                 continue;
             }
-            ++s.others;
+            s.others += n;
             if (devilsEye(*row) || devilsKey(*row)) {
-                ++(devilsEye(*row) ? s.eyes : s.keys);
+                (devilsEye(*row) ? s.eyes : s.keys) += n;
                 (devilsEye(*row) ? s.eyeLevel : s.keyLevel) = what.refinement;
                 continue;
             }
             if (scrollOfArchangel(*row) || bloodBone(*row)) {
-                ++(scrollOfArchangel(*row) ? s.scrolls : s.bones);
+                (scrollOfArchangel(*row) ? s.scrolls : s.bones) += n;
                 (scrollOfArchangel(*row) ? s.scrollLevel : s.boneLevel) = what.refinement;
                 continue;
             }
@@ -111,7 +113,7 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
                 ++s.firstWings;
                 s.firstWingCell = cell;
             } else if (lochsFeather(*row)) {
-                ++s.feathers;
+                s.feathers += n;
             } else if (secondWing(*row)) {
                 ++s.secondWings;
             } else if (what.excellent != 0 && what.refinement >= 4) {

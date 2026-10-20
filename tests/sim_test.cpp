@@ -7990,6 +7990,43 @@ void testChaosMachine() {
             if (!realm.satchel()[slot].empty()) realm.sell(slot);
         }
     }
+    // **And the rest of what is carried several and spent one at a time** (the user, 2026-10-20:
+    // "which else items make sense we stack?"): the Ale, the Town Portal, Loch's Feather, the
+    // square's and the castle's materials and the boxes, twenty a cell, each spent one at a time.
+    {
+        const int32_t ale = noria.itemNamed("Ale01"), scroll = noria.itemNamed("Scroll01");
+        const int32_t feather = noria.itemNamed("Quest04"), luck = noria.itemNamed("MagicBox01");
+        const int32_t eye = noria.itemAt(14, 17), key = noria.itemAt(14, 18);
+        check(ale >= 0 && scroll >= 0 && feather >= 0 && luck >= 0 && eye >= 0 && key >= 0,
+              "the Ale, the scroll, the feather, the box, the eye and the key are in the tables");
+        const int ales = realm.give(ale, -1, 0, 3);
+        check(ales >= 0 && realm.satchel()[ales].durability == 3, "three Ales in one cell");
+        check(realm.useItem(ales) && realm.satchel()[ales].durability == 2, "an Ale drunk is one off the stack");
+        const int scrolls = realm.give(scroll, -1, 0, 4);
+        check(scrolls >= 0 && realm.satchel()[scrolls].durability == 4, "four Town Portals in one cell");
+        const int feathers = realm.give(feather, -1, 0, 3);
+        check(feathers >= 0 && realm.satchel()[feathers].durability == 3, "three feathers in one cell");
+        const int boxes = realm.give(luck, -1, 0, 2);
+        check(boxes >= 0 && realm.satchel()[boxes].durability == 2, "two Boxes of Luck in one cell");
+        check(realm.crack(boxes).opened && realm.satchel()[boxes].durability == 1, "one opened, one left");
+        const int eyes = realm.give(eye, -1, 1, 3);
+        check(eyes >= 0 && realm.satchel()[eyes].durability == 3 && realm.give(eye, -1, 2, 1) != eyes,
+              "three +1 Devil's Eyes in a cell, a +2 apart");
+        // Three eyes in one cell are three: the invitation's box is not ready with them.
+        sim::Machine box;
+        box.put(0, sim::Held{eye, 1, 3});
+        box.put(1, sim::Held{key, 1, 1});
+        box.put(2, sim::Held{chaos, 0, 1});
+        check(sim::judge(noria, box).recipe != sim::Recipe::Invitation, "three eyes in one cell are not an invitation");
+        sim::Machine wants;
+        wants.put(1, sim::Held{key, 1, 1});
+        wants.put(2, sim::Held{chaos, 0, 1});
+        checkEqual(sim::piecesWanted(noria, wants, sim::Held{eye, 1, 3}, sim::Service::Combine, -1, realm.hero().kin), 1,
+                   "and of a stack of three the box takes one");
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            if (!realm.satchel()[slot].empty()) realm.sell(slot);
+        }
+    }
 
     // Loads a +10 or +11 box: the thing at `plus` and `jewels` of the Bless and the Soul.
     const auto load = [&](int plus, int jewels, bool luck) {
@@ -8081,18 +8118,18 @@ void testChaosMachine() {
         check(scroll >= 0 && bone >= 0 && cloak >= 0, "the scroll, the bone and the cloak are in the tables");
         if (scroll >= 0 && bone >= 0 && cloak >= 0) {
             sim::Machine box;
-            box.put(0, sim::Held{scroll, 1, 128});
-            box.put(1, sim::Held{bone, 1, 128});
+            box.put(0, sim::Held{scroll, 1, 1});
+            box.put(1, sim::Held{bone, 1, 1});
             box.put(2, sim::Held{chaos, 0, 1});
             sim::Judged c = sim::judge(noria, box);
             check(c.recipe == sim::Recipe::Cloak, "a scroll, a bone and a Chaos are a cloak");
             checkEqual(c.rate, 80, "at 80%");
             checkEqual(int(c.zen), 50000, "for 50,000 at +1");
-            box.put(1, sim::Held{bone, 3, 128});
+            box.put(1, sim::Held{bone, 3, 1});
             c = sim::judge(noria, box);
             check(c.recipe == sim::Recipe::None && c.nearest == sim::Recipe::Cloak,
                   "a +3 bone with a +1 scroll is not ready, and still looks like a cloak");
-            box.put(0, sim::Held{scroll, 3, 128});
+            box.put(0, sim::Held{scroll, 3, 1});
             checkEqual(int(sim::judge(noria, box).zen), 150000, "+3 for 150,000");
             box.put(4, sim::Held{bless, 0, 1});
             check(sim::judge(noria, box).recipe == sim::Recipe::None, "a Bless spoils it");

@@ -58,6 +58,9 @@ int16_t durabilityOf(const content::Tables& tables, int32_t row, const Saved::It
         held.excellent = uint8_t(item.excellent);
         return int16_t(sim::maximumDurability(r, held));
     }
+    // A thing that stacks now and was saved single with MU's own durability -- the castle's
+    // Scroll of Archangel and Blood Bone at 128 -- is one, not a stack of 128.
+    if (sim::stacks(r) && item.durability > sim::stackMost(r)) return 1;
     return int16_t(item.durability);
 }
 

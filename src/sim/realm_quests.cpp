@@ -341,7 +341,15 @@ bool Realm::completeQuest(int index, int choice, QuestPath path) {
     const Satchel before = me().bag;
     // The treasures go to the giver first, so their cells are free for the pay.
     for (int step = 0; step < row.stepCount; ++step) {
-        if (handed[step] >= 0) me().bag.lift(handed[step]);
+        if (handed[step] < 0) continue;
+        // One of a stack, the rest kept (sim::stackMost).
+        Held left = me().bag[handed[step]];
+        if (left.durability > 1 && stacks(tables_->items[size_t(left.item)])) {
+            left.durability = int16_t(left.durability - 1);
+            me().bag.put(handed[step], left);
+        } else {
+            me().bag.lift(handed[step]);
+        }
     }
     const auto pay = [&](const QuestItem& what, int* slotOut) {
         const int32_t item = what.item ? tables_->itemNamed(what.item) : -1;
