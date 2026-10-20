@@ -26,6 +26,7 @@
 #include <random>
 #include <set>
 #include <sstream>
+#include <utility>
 
 namespace mu::server {
 
@@ -35,7 +36,8 @@ constexpr auto kAskEvery = std::chrono::seconds(15);
 
 std::string g_at;  // the website's accounts: host
 int g_atPort = 0;
-std::future<std::string> g_asking;    // the work, as /internal/transfers said it
+// The work, as /internal/transfers said it; false when the website did not answer.
+std::future<std::pair<bool, std::string>> g_asking;
 std::future<void> g_telling;          // the steps said back
 Clock::time_point g_askedAt{};
 std::set<uint64_t> g_leaving;         // handed over and not yet marked gone
@@ -136,14 +138,17 @@ bool his(const std::string& account, const std::string& name, Store::Listed& out
     return false;
 }
 
-// `give ID STATE ACCOUNT NAME`: one leaving this server.
-void give(std::istringstream& line, std::vector<std::string>& said, std::vector<std::unique_ptr<Session>>& sessions) {
+// `give ID STATE ACCOUNT NAME`: one leaving this server. `listed` gathers each one the website
+// still has leaving, by token.
+void give(std::istringstream& line, std::vector<std::string>& said, std::vector<std::unique_ptr<Session>>& sessions,
+          std::set<uint64_t>& listed) {
     long long move = 0, id = 0;
     std::string state, name;
     if (!(line >> move >> state >> id >> name) || id <= 0) return;
     const std::string account = accountKeyOf(id);
     Store::Listed him;
     const bool here = his(account, name, him);
+    if (here) listed.insert(him.token);
     if (state == "out") {
         // The website has his bytes: he is marked gone here, his guild left first.
         if (!here) {
@@ -274,15 +279,30 @@ void transferTick(std::vector<std::unique_ptr<Session>>& sessions) {
     }
     if (g_asking.valid()) {
         if (g_asking.wait_for(std::chrono::seconds(0)) != std::future_status::ready) return;
-        const std::string work = g_asking.get();
+        const auto [answered, work] = g_asking.get();
         std::vector<std::string> said;
+        std::set<uint64_t> listed;
         std::istringstream lines(work);
         for (std::string text; std::getline(lines, text);) {
             std::istringstream line(text);
             std::string kind;
             line >> kind;
-            if (kind == "give") give(line, said, sessions);
+            if (kind == "give") give(line, said, sessions, listed);
             else if (kind == "take") take(line, said, sessions);
+        }
+        // One refused here whose move the website no longer has: his "out" was turned away,
+        // a move called off while it was being handed over, so he is still this server's and
+        // was shut out of him until a restart. Only on an answer: a silent website says nothing
+        // of the moves, and one whose bytes are already out must stay refused.
+        if (answered) {
+            for (auto it = g_leaving.begin(); it != g_leaving.end();) {
+                if (listed.count(*it) != 0) {
+                    ++it;
+                    continue;
+                }
+                core::logf("transfer: %016llx no longer moving; let in again", (unsigned long long)*it);
+                it = g_leaving.erase(it);
+            }
         }
         if (!said.empty()) {
             const std::string host = g_at;
@@ -305,7 +325,8 @@ void transferTick(std::vector<std::unique_ptr<Session>>& sessions) {
     const int port = g_atPort;
     g_asking = std::async(std::launch::async, [host, port, path] {
         std::string said;
-        return request(host, port, path, "", said) == 200 ? said : std::string();
+        if (request(host, port, path, "", said) != 200) return std::make_pair(false, std::string());
+        return std::make_pair(true, said);
     });
 }
 
