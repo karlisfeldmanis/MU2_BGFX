@@ -14,6 +14,8 @@
 #include <cstring>
 #include <ctime>
 #include <map>
+#include <set>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -7605,6 +7607,213 @@ void testCharon() {
 
 // The Chaos Machine (sim/machine.h): the Goblin opens it, the judge names the box, +10 and +11
 // raise past the jewels' cap or take the thing, and closing hands the box back to the bag.
+// Every service on the Chaos Machine's list, end to end in a realm at the Goblin (the user,
+// 2026-10-20: "test if all crafts work and there is no bugs"): its things given to the bag, the
+// list's Ready read, Fill from bag (sim::plan through Realm::planned) put in as the window puts
+// it in, the box judged ready, run and paid for, until it makes its thing at least once.
+void testCraftsFromTheBag() {
+    std::printf("chaos machine crafts from the bag\n");
+    content::Tables noria;
+    std::string error;
+    const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/noria/noria.mur";
+    check(content::loadTables(path, noria, error), "Noria's tables load");
+    int goblin = -1;
+    for (size_t i = 0; i < noria.folk.size(); ++i) {
+        if (noria.folk[i].number == sim::kChaosGoblin) goblin = int(i);
+    }
+    if (goblin < 0) return;
+    const auto rowWhere = [&](bool (*is)(const content::ItemRow&)) {
+        for (size_t i = 0; i < noria.items.size(); ++i) {
+            if (is(noria.items[i])) return int32_t(i);
+        }
+        return int32_t(-1);
+    };
+    const int32_t chaos = noria.itemAt(12, 15), bless = noria.itemAt(14, 13),
+                  soul = noria.itemAt(14, 14), life = noria.itemAt(14, 16);
+    const int32_t axe = noria.itemAt(2, 6), uniria = noria.itemAt(13, 2);
+    const int32_t scroll = noria.itemAt(13, 16), bone = noria.itemAt(13, 17);
+    const int32_t eye = rowWhere(sim::devilsEye), key = rowWhere(sim::devilsKey);
+    const int32_t feather = rowWhere(sim::lochsFeather), rune = rowWhere(sim::creation);
+    const int32_t wing = noria.itemAt(12, sim::firstWingOf(sim::Kin::DarkKnight));
+    int32_t sword = -1;
+    for (size_t i = 0; i < noria.items.size() && sword < 0; ++i) {
+        if (noria.items[i].group == 0 && noria.items[i].width == 1 && sim::socketsFit(noria.items[i])) {
+            sword = int32_t(i);
+        }
+    }
+    uint8_t rare = 0, legendary = 0;
+    for (int p = 1; p < 256 && (rare == 0 || legendary == 0); ++p) {
+        const sim::PowerRow* row = sim::powerOf(uint8_t(p));
+        if (!row) continue;
+        if (row->rarity == sim::Rarity::Rare && rare == 0) rare = uint8_t(p);
+        if (row->rarity == sim::Rarity::Legendary && legendary == 0) legendary = uint8_t(p);
+    }
+    check(chaos >= 0 && bless >= 0 && soul >= 0 && life >= 0 && axe >= 0 && uniria >= 0 &&
+              scroll >= 0 && bone >= 0 && eye >= 0 && key >= 0 && feather >= 0 && rune >= 0 &&
+              wing >= 0 && sword >= 0 && rare != 0 && legendary != 0,
+          "every craft's things are in Noria's tables");
+    if (sword < 0 || eye < 0 || key < 0 || feather < 0 || rune < 0 || wing < 0 || rare == 0) return;
+    const int16_t whole = int16_t(sim::maximumDurability(noria.items[size_t(uniria)], sim::Held{uniria, 0, 0}));
+
+    struct Craft {
+        sim::Service service;
+        void (*fill)(sim::Realm&, const int32_t*, const uint8_t*, int16_t);
+        int count;  // what Fill from bag puts in
+    };
+    // The rows, in an array the craft's filler reads: 0 chaos, 1 bless, 2 soul, 3 life, 4 sword,
+    // 5 axe, 6 uniria, 7 scroll, 8 bone, 9 eye, 10 key, 11 feather, 12 rune, 13 wing.
+    const int32_t rows[14] = {chaos, bless, soul, life, sword, axe, uniria, scroll, bone, eye, key,
+                              feather, rune, wing};
+    const uint8_t powers[2] = {rare, legendary};
+    const Craft crafts[] = {
+        {sim::Service::Upgrade,
+         [](sim::Realm& r, const int32_t* k, const uint8_t*, int16_t) {
+             r.give(k[4], -1, 9);
+             r.give(k[0]); r.give(k[1]); r.give(k[1]); r.give(k[2]);
+         }, 4},
+        {sim::Service::ChaosWeapon,
+         [](sim::Realm& r, const int32_t* k, const uint8_t*, int16_t) {
+             r.give(k[4], -1, 6, -1, false, 2);
+             r.give(k[0]); r.give(k[1]);
+         }, 2},
+        {sim::Service::FirstWings,
+         [](sim::Realm& r, const int32_t* k, const uint8_t*, int16_t) {
+             r.give(k[5], -1, 6, -1, false, 2);
+             r.give(k[0]);
+         }, 2},
+        {sim::Service::SecondWings,
+         [](sim::Realm& r, const int32_t* k, const uint8_t*, int16_t) {
+             r.give(k[13], -1, 9);
+             r.give(k[11]); r.give(k[0]);
+         }, 3},
+        {sim::Service::Dinorant,
+         [](sim::Realm& r, const int32_t* k, const uint8_t*, int16_t whole) {
+             for (int i = 0; i < sim::kDinorantHorns + 2; ++i) r.give(k[6], -1, 0, whole);
+             r.give(k[0]);
+         }, sim::kDinorantHorns + 1},
+        {sim::Service::Cloak,
+         [](sim::Realm& r, const int32_t* k, const uint8_t*, int16_t) {
+             r.give(k[7], -1, 2); r.give(k[8], -1, 3); r.give(k[8], -1, 2);
+             r.give(k[0]);
+         }, 3},
+        {sim::Service::Invitation,
+         [](sim::Realm& r, const int32_t* k, const uint8_t*, int16_t) {
+             r.give(k[9], -1, 2); r.give(k[10], -1, 1); r.give(k[10], -1, 2);
+             r.give(k[0]);
+         }, 3},
+        {sim::Service::RemoveRune,
+         [](sim::Realm& r, const int32_t* k, const uint8_t* p, int16_t) {
+             const uint8_t set[3] = {p[0], 0, 0};
+             r.give(k[4], -1, 7, -1, false, 0, 0, 2, set);
+             r.give(k[0]);
+         }, 2},
+        {sim::Service::AddSocket,
+         [](sim::Realm& r, const int32_t* k, const uint8_t*, int16_t) {
+             r.give(k[4], -1, 5);
+             r.give(k[3]); r.give(k[0]); r.give(k[2]); r.give(k[2]); r.give(k[1]); r.give(k[1]);
+         }, 7},
+        {sim::Service::FuseRunes,
+         [](sim::Realm& r, const int32_t* k, const uint8_t* p, int16_t) {
+             const uint8_t rareSet[3] = {p[0], 0, 0}, legendarySet[3] = {p[1], 0, 0};
+             r.give(k[12], -1, 0, -1, false, 0, 0, 0, legendarySet);
+             for (int i = 0; i < 3; ++i) r.give(k[12], -1, 0, -1, false, 0, 0, 0, rareSet);
+             r.give(k[0]); r.give(k[3]);
+         }, 5},
+    };
+    check(int(sizeof(crafts) / sizeof(crafts[0])) == sim::kRowCount, "a craft for every service on the list");
+
+    // What a held thing is, for telling a made thing from what went in.
+    const auto sign = [](const sim::Held& h) {
+        return std::to_string(h.item) + "/" + std::to_string(h.refinement) + "/" +
+               std::to_string(h.sockets) + "/" + std::to_string(h.powers[0]) + "/" +
+               std::to_string(h.powers[1]);
+    };
+    for (const Craft& craft : crafts) {
+        const std::string name = sim::serviceName(craft.service);
+        bool made = false, failed = false, everyReady = true, everyPaid = true, everyFill = true;
+        int attempts = 0, rate = 0;
+        for (; attempts < 60 && !made; ++attempts) {
+            auto realm = std::make_unique<sim::Realm>();
+            if (!realm->raise(&noria, 7 + attempts, 182, 105, sim::Kin::DarkKnight, 50)) break;
+            sim::Request talk;
+            talk.kind = sim::Request::Kind::Talk;
+            talk.target = uint32_t(goblin);
+            realm->ask(talk);
+            for (int tick = 0; tick < 400 && realm->mixing() < 0; ++tick) realm->step();
+            if (realm->mixing() != goblin) break;
+            realm->earn(50000000);
+            craft.fill(*realm, rows, powers, whole);
+            const sim::Planned listed = realm->planned(craft.service, -1, true);
+            const sim::Planned fill = realm->planned(craft.service, -1, false);
+            everyReady &= listed.ready() && listed.missing == 0;
+            everyFill &= fill.ready() && fill.count == craft.count && fill.choosing == 0;
+            if (attempts == 0 && (fill.count != craft.count || !fill.ready())) {
+                std::printf("  %s: Fill puts %d in (wants %d), ready %d, missing %d, %s\n",
+                            name.c_str(), fill.count, craft.count, int(fill.ready()), fill.missing,
+                            fill.judged.title.c_str());
+            }
+            for (int i = 0; i < fill.count; ++i) everyFill &= realm->putIn(fill.slots[i]) >= 0;
+            const sim::Judged j = realm->judged(craft.service);
+            rate = j.rate;
+            if (!j.ready) {
+                everyFill = false;
+                break;
+            }
+            std::set<std::string> before;
+            for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+                if (!realm->machine()[cell].empty()) before.insert(sign(realm->machine()[cell]));
+            }
+            const long long money = realm->money();
+            if (!realm->mix(craft.service)) {
+                everyPaid = false;
+                break;
+            }
+            // The answer stands in the box -- unless the failure took it all, and there is
+            // nothing to take out (Realm::mix: mixed while the box holds something).
+            everyPaid &= realm->money() == money - j.zen && realm->mixed() == !realm->machine().empty();
+            bool fresh = false;
+            for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+                const sim::Held& one = realm->machine()[cell];
+                if (!one.empty() && !before.count(sign(one))) fresh = true;
+            }
+            (fresh ? made : failed) = true;
+            // And the box empties back into the bag.
+            for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+                if (!realm->machine()[cell].empty()) realm->takeOut(cell);
+            }
+            everyPaid &= realm->machine().empty();
+        }
+        std::printf("  %-18s rate %3d%%, made in %d attempt(s)%s\n", name.c_str(), rate, attempts,
+                    failed ? ", failed on the way" : "");
+        check(everyReady, (name + ": the list reads Ready with its things in the bag").c_str());
+        check(everyFill, (name + ": Fill from bag puts in just what it needs and the box is ready").c_str());
+        check(everyPaid, (name + ": it runs, is paid for, and takes out again").c_str());
+        check(made, (name + ": it makes its thing").c_str());
+    }
+    // Below the cloak's level the list and the page say so, and the box is not ready to him,
+    // though the machine's own judge reads it whole (the window lit Create on a cloak at level 1).
+    {
+        auto realm = std::make_unique<sim::Realm>();
+        if (realm->raise(&noria, 7, 182, 105, sim::Kin::DarkKnight, 1)) {
+            sim::Request talk;
+            talk.kind = sim::Request::Kind::Talk;
+            talk.target = uint32_t(goblin);
+            realm->ask(talk);
+            for (int tick = 0; tick < 400 && realm->mixing() < 0; ++tick) realm->step();
+            realm->earn(5000000);
+            crafts[5].fill(*realm, rows, powers, whole);
+            const sim::Planned p = realm->planned(sim::Service::Cloak, -1, false);
+            check(!p.ready() && p.judged.needsLevel == sim::kCloakFromLevel && p.count == 3,
+                  "at level 1 the cloak fills but reads Level 15, not Ready");
+            for (int i = 0; i < p.count; ++i) realm->putIn(p.slots[i]);
+            check(!realm->judged(sim::Service::Cloak).ready &&
+                      sim::judge(noria, realm->machine(), sim::Service::Cloak).ready &&
+                      !realm->mix(sim::Service::Cloak),
+                  "and the realm refuses it as the page said");
+        }
+    }
+}
+
 void testChaosMachine() {
     std::printf("chaos machine\n");
     content::Tables noria;
@@ -8045,6 +8254,37 @@ void testChaosMachine() {
                       (std::string("empty, the ") + sim::serviceName(one.page) +
                        " page names its mix and lists its needs")
                           .c_str());
+            }
+
+            // Fill from bag (the user, 2026-10-20): sim::plan takes the bag's things through
+            // judge(), one of each the box wants and no more, and leaves the thing worked on to
+            // him when the bag holds two.
+            {
+                const int32_t soul = noria.itemAt(14, 14);
+                sim::Satchel bag;
+                const sim::Held nine{sword, 9, 20};
+                bag.put(sim::kWorn + 0, nine);
+                bag.put(sim::kWorn + 2, sim::Held{chaos, 0, 1});
+                bag.put(sim::kWorn + 3, sim::Held{bless, 0, 1});
+                bag.put(sim::kWorn + 4, sim::Held{bless, 0, 1});
+                bag.put(sim::kWorn + 5, sim::Held{soul, 0, 1});
+                const sim::Planned up = sim::plan(noria, sim::Machine{}, bag, sim::Service::Upgrade,
+                                                  -1, sim::Kin::DarkKnight, false);
+                check(up.ready() && up.count == 4 && up.missing == 0,
+                      "Fill puts the +9, a Chaos, a Bless and a Soul in, and the box is ready");
+                checkEqual(up.choosing, 0, "one +9 in the bag is no choice to make");
+                bag.put(sim::kWorn + 32, nine);
+                const sim::Planned two = sim::plan(noria, sim::Machine{}, bag, sim::Service::Upgrade,
+                                                   -1, sim::Kin::DarkKnight, false);
+                check(!two.ready() && two.count == 3 && two.choosing == 2 && two.missing == 1,
+                      "with two +9s it puts the jewels in and leaves him the pick");
+                check(sim::plan(noria, sim::Machine{}, bag, sim::Service::Upgrade, -1,
+                                sim::Kin::DarkKnight, true).ready(),
+                      "and the list still reads Ready");
+                const sim::Planned dino = sim::plan(noria, sim::Machine{}, bag, sim::Service::Dinorant,
+                                                    -1, sim::Kin::DarkKnight, true);
+                check(!dino.ready() && dino.missing == 1 && dino.count == 1,
+                      "a Dinorant without horns: the Chaos goes in, one need short");
             }
 
             // Wings take sockets at Add Socket, and then an armour's rune (the user, 2026-10-05).
@@ -13756,6 +13996,7 @@ int main() {
     testCastleGrid(tables);
     testCharon();
     testChaosMachine();
+    testCraftsFromTheBag();
     testRefine(tables);
     testJewelOfLife(tables);
     testOptions(tables);

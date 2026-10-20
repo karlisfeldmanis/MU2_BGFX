@@ -256,7 +256,7 @@ void disc(gfx::Canvas& canvas, float cx, float cy, float r, uint32_t colour) {
 }  // namespace
 
 void sockets(gfx::Canvas& canvas, const gfx::Art& picture, const gfx::Box& box,
-             const sim::Held& held, float k) {
+             const sim::Held& held, float k, float stageW, float stageH, const gfx::Box& rune) {
     const int count = std::min(socketsOf(held), kMostSockets);
     if (count == 0) return;
     float centres[kMostSockets];
@@ -270,11 +270,10 @@ void sockets(gfx::Canvas& canvas, const gfx::Art& picture, const gfx::Box& box,
         // The rune itself, cut from the strip and set in the hole at the hole's own size, so
         // the bronze shows all the way round it; the ember where there is no picture.
         if (picture.valid()) {
-            const float sx = picture.width / kWidth, sy = picture.height / kStageTall;
+            const float sx = picture.width / stageW, sy = picture.height / stageH;
             const float side = r * 0.7f * 2.0f / kRuneFills;
             canvas.region(picture, {cx - side * 0.5f, cy - side * 0.5f, side, side},
-                          {kRuneStands.x * sx, kRuneStands.y * sy, kRuneStands.w * sx,
-                           kRuneStands.h * sy});
+                          {rune.x * sx, rune.y * sy, rune.w * sx, rune.h * sy});
         } else {
             disc(canvas, cx, cy + r * 0.03f, r * 0.54f, kSocketEmber);
             disc(canvas, cx - r * 0.18f, cy - r * 0.14f, r * 0.17f, kSocketGlint);

@@ -1234,6 +1234,9 @@ public:
     bool shuffle(int from, int to);
     // What the box is to a service as it stands: sim::judge, for his class.
     Judged judged(Service service = Service::Combine, int socket = -1) const;
+    // What his bag makes of a service: sim::plan, for his class. The window's list and its Fill
+    // from bag; asks nothing of the realm.
+    Planned planned(Service service, int socket, bool anyTarget) const;
     // Runs a service on the box: refused, whole, when it is not ready or he has not the Zen.
     // Pays, rolls off the machine's own dice, and says What::Mixed. The answer is left in the box.
     bool mix(Service service = Service::Combine, int socket = -1);

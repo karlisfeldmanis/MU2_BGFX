@@ -1155,7 +1155,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         const bool fromBag = inventoryOpen_ && bag_.dragging();
         mixer_.carrying(fromBag ? &play.realm().satchel()[bag_.dragged()] : nullptr,
                         fromBag && !play.realm().mixed());
-        mixer_.update(seconds, float(window.width()), float(window.height()), 2, play.realm(),
+        // Three columns wide at the vault's place, as the Broker is: its right edge where the
+        // bag's column begins.
+        mixer_.update(seconds, float(window.width()), float(window.height()), 4, play.realm(),
                       play.mixAnswer(), play.mixWords(), pointer, shelfStage_, &asked);
         if (asked.moveFrom >= 0) {
             expect(play.shuffle(asked.moveFrom, asked.moveTo), Then::TookOrRefused);
@@ -1183,6 +1185,18 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 if (play.realm().machine()[cell].empty()) continue;
                 if (last != 0) expect(last, Then::Quiet);
                 last = play.takeOut(cell, -1);
+            }
+            if (last != 0) expect(last, Then::TookOrRefused);
+            else refused();
+        }
+        // Fill from bag: what the realm's plan picks, put in as many drags would, each to the
+        // first cell it fits.
+        if (asked.fill) {
+            const sim::Planned planned = play.realm().planned(mixer_.service(), mixer_.socket(), false);
+            uint32_t last = 0;
+            for (int i = 0; i < planned.count; ++i) {
+                if (last != 0) expect(last, Then::Quiet);
+                last = play.putIn(planned.slots[i], -1);
             }
             if (last != 0) expect(last, Then::TookOrRefused);
             else refused();

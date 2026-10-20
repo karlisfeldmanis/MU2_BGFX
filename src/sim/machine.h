@@ -208,12 +208,38 @@ struct Judged {
     Need needs[kMostNeeds];
     int needCount = 0;
     std::string success, failure;   // what happens, in words; failure empty when it cannot fail
+    // Counted right but wrong together, so no more of anything makes it ready: a scroll and a
+    // bone of two levels, runes of two rarities, a Legendary to fuse, a bound thing in a mix.
+    bool blocked = false;
+    // The level he must be to run it, when he is not (Realm::judged and planned, which know him;
+    // judge() alone never sets it): the cloak's 15 and the invitation's 10.
+    int needsLevel = 0;
 };
 
 // `socket` is Remove Rune's pick, -1 for the first with a rune; `kin` is whose class a fused rune
 // is drawn for.
 Judged judge(const content::Tables& tables, const Machine& box,
              Service service = Service::Combine, int socket = -1, Kin kin = Kin::DarkKnight);
+
+// **What the bag makes of a service** (the user, 2026-10-20: every recipe on the window at once,
+// each saying whether he has it, and a Fill from bag): the bag's things, one at a time, that
+// bring the box nearer the service's needs, judged by judge() itself so no recipe is written
+// twice. A thing that meets nothing, goes past a need or blocks the box is left in the bag.
+// Ours.
+//
+// The thing a service works on -- the +9 to raise, the item to socket, the 1st wing -- is the
+// player's to pick when the bag holds two or more: `choosing` counts them and the plan leaves
+// them out, unless `anyTarget` (the list's Ready, which asks only whether he could).
+struct Planned {
+    Judged judged;                 // the box as it would stand with them in
+    int slots[kMachineCells] = {};  // the bag slots to put in, in order
+    int count = 0;
+    int missing = 0;   // needs still short with them in
+    int choosing = 0;  // things in the bag that could be the one worked on, left to him
+    bool ready() const { return judged.ready; }
+};
+Planned plan(const content::Tables& tables, const Machine& box, const Satchel& bag,
+             Service service, int socket, Kin kin, bool anyTarget);
 
 // The Dinorant (WebZen 1.00.93 MixSystem.cpp:2141-2290, PegasiaChaosMix under NEW_FORSKYLAND2,
 // as docs/game/mount.md takes it): ten Horns of Uniria at their full 255 life and one Chaos, 70%,

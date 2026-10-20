@@ -216,8 +216,12 @@ constexpr gfx::Box kRuneStands{4.0f, kHeight + 2.0f, 20.0f, 20.0f};
 // and a dark hole where none is. `picture` is the stage the rune stands on (kRuneStands); without
 // it the stone is an ember. The bag's and the vault's (bug #40, 2026-10-20: "When the items are
 // on the bault they don't show the runes or the slots").
+// `stageW` by `stageH` is the stage the picture was taken of and `rune` where the rune stands on
+// it: a window's own, kWidth by kStageTall with the rune at kRuneStands, unless its stage is
+// another size (the Chaos Machine's box, Mixer).
 void sockets(gfx::Canvas& canvas, const gfx::Art& picture, const gfx::Box& box,
-             const sim::Held& held, float k);
+             const sim::Held& held, float k, float stageW = kWidth, float stageH = kStageTall,
+             const gfx::Box& rune = kRuneStands);
 // The wash under a sound piece in the satchel and the vault: MU's ITEM_COLOR_NORMAL hue, glColor4f(0.3, 0.5,
 // 0.5, 0.6) (NewUIInventoryCtrl.cpp:981), at a fifth of its strength, since at MU's 0.6 the
 // teal shouted over the dark skin, at a quarter it still did -- the user, 2026-10-19: "teal

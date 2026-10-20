@@ -402,8 +402,10 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             j.zen = level >= 1 && level <= kCloakMostLevel ? kCloakZen[level] : 0;
             if (s.scrolls == 1 && s.bones == 1 && s.scrollLevel != s.boneLevel) {
                 j.success = "The scroll and the bone must be of one level";
-            } else if (level > kCloakMostLevel) {
+                j.blocked = true;
+            } else if (level > kCloakMostLevel || (s.scrolls + s.bones > 0 && level < 1)) {
                 j.success = "A +" + std::to_string(level) + " cannot be combined";
+                j.blocked = true;
             } else {
                 j.success = "Invisibility Cloak +" + std::to_string(std::max(1, level));
             }
@@ -422,8 +424,10 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             j.zen = fits ? kInvitationZen[level] : 0;
             if (s.eyes == 1 && s.keys == 1 && s.eyeLevel != s.keyLevel) {
                 j.success = "The eye and the key must be of one level";
+                j.blocked = true;
             } else if (!fits) {
                 j.success = "A +" + std::to_string(level) + " cannot be combined";
+                j.blocked = true;
             } else {
                 j.success = "Devil's Invitation +" + std::to_string(level);
             }
@@ -513,10 +517,12 @@ void fuseRunes(const content::Tables& tables, const Machine& box, const Sorted& 
     }
     if (!same) {
         j.title = "The runes must share a rarity";
+        j.blocked = true;
         return;
     }
     if (rarity == int(Rarity::Legendary)) {
         j.title = "Legendary runes fuse no higher";
+        j.blocked = true;
         return;
     }
     const char* next = rarityName(nextRarity(Rarity(rarity)));
@@ -652,12 +658,101 @@ Judged judge(const content::Tables& tables, const Machine& box, Service service,
             if (!box[cell].empty() && box[cell].bound &&
                 !jewelOfChaos(tables.items[size_t(box[cell].item)])) {
                 j.ready = false;
+                j.blocked = true;
                 j.title = "Bound items: runes and sockets only";
                 break;
             }
         }
     }
     return j;
+}
+
+namespace {
+
+// How near a judged box is to its service: a point for each thing a need still wanted, a penalty
+// for each past it, and a ready box above everything. A need of any number (the Chaos Weapon's
+// Bless and Soul) raises the rate and is his to give: it counts nothing.
+int nearness(const Judged& j) {
+    int points = j.ready ? 1000 : 0;
+    for (int i = 0; i < j.needCount; ++i) {
+        const Need& n = j.needs[i];
+        if (n.need <= 0) continue;
+        points += 4 * std::min(n.have, n.need) - 8 * std::max(0, n.have - n.need);
+    }
+    return points;
+}
+
+// Whether `after` has more of the thing worked on than `before`: its first need, the same line or
+// a new one (a +10 turns the Upgrade's page from +10 to +11).
+bool targets(const Judged& before, const Judged& after) {
+    if (after.needCount == 0 || after.needs[0].need != 1 || after.needs[0].have == 0) return false;
+    if (before.needCount == 0) return true;
+    return before.needs[0].name != after.needs[0].name || before.needs[0].have < after.needs[0].have;
+}
+
+}  // namespace
+
+Planned plan(const content::Tables& tables, const Machine& box, const Satchel& bag,
+             Service service, int socket, Kin kin, bool anyTarget) {
+    Planned p;
+    Machine trial = box;
+    Judged now = judge(tables, trial, service, socket, kin);
+    int best = nearness(now);
+    const bool runes = service == Service::RemoveRune || service == Service::AddSocket ||
+                       service == Service::FuseRunes;
+    bool taken[kSlots] = {};
+    // What a slot would make of the box, or false when it cannot go in or makes it no nearer.
+    const auto tried = [&](int slot, Judged* out, int* cell) {
+        const Held& what = bag[slot];
+        const content::ItemRow* row = rowOf(tables, what);
+        if (!row || taken[slot]) return false;
+        if (what.bound && !runes && !jewelOfChaos(*row)) return false;
+        *cell = trial.free(tables, row->width, row->height);
+        if (*cell < 0) return false;
+        Machine t = trial;
+        t.put(*cell, what);
+        *out = judge(tables, t, service, socket, kin);
+        return !out->blocked && nearness(*out) > best;
+    };
+    // The thing worked on, when the bag holds more than one: his to pick.
+    bool leaveTargets = false;
+    if (!anyTarget) {
+        for (int slot = kWorn; slot < kSlots; ++slot) {
+            Judged j;
+            int cell = -1;
+            if (tried(slot, &j, &cell) && targets(now, j)) ++p.choosing;
+        }
+        leaveTargets = p.choosing >= 2;
+        if (!leaveTargets) p.choosing = 0;
+    }
+    while (p.count < kMachineCells && !now.ready) {
+        int pick = -1, pickCell = -1, pickPoints = best;
+        Judged pickJudged;
+        for (int slot = kWorn; slot < kSlots; ++slot) {
+            Judged j;
+            int cell = -1;
+            if (!tried(slot, &j, &cell)) continue;
+            if (leaveTargets && targets(now, j)) continue;
+            const int points = nearness(j);
+            if (points > pickPoints) {
+                pick = slot;
+                pickCell = cell;
+                pickPoints = points;
+                pickJudged = j;
+            }
+        }
+        if (pick < 0) break;
+        trial.put(pickCell, bag[pick]);
+        taken[pick] = true;
+        p.slots[p.count++] = pick;
+        best = pickPoints;
+        now = pickJudged;
+    }
+    p.judged = now;
+    for (int i = 0; i < now.needCount; ++i) {
+        if (now.needs[i].need > 0 && now.needs[i].have < now.needs[i].need) ++p.missing;
+    }
+    return p;
 }
 
 int firstWingOf(Kin kin) {

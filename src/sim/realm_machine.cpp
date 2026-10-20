@@ -127,9 +127,33 @@ bool Realm::shuffle(int from, int to) {
     return true;
 }
 
+namespace {
+// A mix his level does not allow is not ready to him, and says so before he presses (the user,
+// 2026-10-20, "test if all crafts work": the window lit Create on a cloak at level 1 and the press
+// did nothing). Realm::mix refuses it again whatever the window says.
+void levelGate(Judged& j, int level) {
+    const int from = j.recipe == Recipe::Cloak        ? kCloakFromLevel
+                     : j.recipe == Recipe::Invitation ? kInvitationFromLevel
+                                                      : 0;
+    if (from == 0 || level >= from) return;
+    j.ready = false;
+    j.needsLevel = from;
+    j.title = "Level " + std::to_string(from) + " or higher to combine it";
+}
+}  // namespace
+
 Judged Realm::judged(Service service, int socket) const {
     if (!tables_) return Judged{};
-    return judge(*tables_, me().machine, service, socket, mine().kin);
+    Judged j = judge(*tables_, me().machine, service, socket, mine().kin);
+    levelGate(j, mine().level);
+    return j;
+}
+
+Planned Realm::planned(Service service, int socket, bool anyTarget) const {
+    if (!tables_) return Planned{};
+    Planned p = plan(*tables_, me().machine, me().bag, service, socket, mine().kin, anyTarget);
+    levelGate(p.judged, mine().level);
+    return p;
 }
 
 bool Realm::mix(Service service, int socket) {

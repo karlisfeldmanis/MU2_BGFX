@@ -81,6 +81,37 @@ The services (`sim::Service`, `sim::judge(tables, box, service, socket, kin)`):
 
 All three rune services are invention, and their numbers are the proposal's first guesses.
 
+## Phase three: every service on the window (2026-10-20)
+
+The user asked for every craft option on screen as buttons ("craft options all visible with
+buttons and user press it"), then picked canvas B (claude.ai/artifact/5vvfQYnoxuLNTUuzQZJrmP),
+matched to Sanctuary. Phase two's service row and its page turn are gone.
+
+- The window is the Broker's width, 618 units, three columns at the vault's place
+  (`Mixer::kWide`, `panel::columnX(width, 4)`), the bag beside it.
+- **The list**, on the left: the services under MIXES (Upgrade, Chaos Weapon, 1st Wings,
+  2nd Wings, Dinorant), TICKETS (Invisibility Cloak, Devil's Invitation) and RUNES (Remove Rune,
+  Add Socket, Fuse Runes). Each one is a bordered iron row, and the picked one is in the travel
+  list's gold. At its right is **Ready** in green when the bag and the box hold everything it
+  needs, else **N missing**. A press picks the service and plays `quest_page_turn`.
+- **The page**, on the right: the service's name in Cinzel and what the box is to it, then the
+  box (eight by four at 26 units a cell, larger than the bag's 21) beside **Needs**. Each need
+  shows in-box over wanted and how many more the bag holds: green when met, bright when the bag
+  has the rest, red when it has none. Remove Rune adds **Socket** rows in their runes'
+  rarities, each with its price. **Chance**, Success and Failure come under the box, and the
+  answer takes their place after a run.
+- **The foot**: the cost (red when short) and his Zen, then **Take out**, **Fill from bag** and
+  the service's button. The confirm is on the same foot.
+
+**Fill from bag** is `sim::plan` (machine.h). It tries the bag's things in a copy of the box,
+one at a time, through `judge()` itself, and keeps a thing only when it brings a need nearer
+without going past it or blocking the box (`Judged::blocked`: two levels, two rarities, a
+Legendary, a bound thing in a mix). So no recipe is written twice. When the bag holds two or
+more of the thing worked on (the +9, the item to socket, the 1st wing), that choice is the
+player's: Fill puts in the rest and the need reads "N in bag, pick one". The desk sends one
+`PutIn` a slot to the first free cell, as many drags would, so it needs no protocol change.
+The list's Ready is the same plan, allowed to pick that thing (`anyTarget`).
+
 ## Trying it
 
     ./mu play --new --windowed --world noria --at 182,106 --level 50 --zen 20000000 \

@@ -86,6 +86,11 @@ public:
     // The same, solid, with a colour a vertex: a rounded panel that grades down its own shape,
     // corners included.
     void polygon(const float* xy, const uint32_t* abgr, int count);
+    // The solid one laid on as light: its colours premultiplied, in a run blended ONE, so a
+    // colour's alpha is how much of what is under it is hidden and an alpha of 0 adds and hides
+    // nothing. A fan from the first vertex: a centre and its rim makes a glow (the Chaos
+    // Machine's sparks, game/ui/mixer.cpp).
+    void light(const float* xy, const uint32_t* abgr, int count);
     // And a picture with a colour a vertex: a chart that fades out toward its rim.
     void polygon(const Art& art, const float* xy, const float* uv, const uint32_t* abgr, int count);
 
