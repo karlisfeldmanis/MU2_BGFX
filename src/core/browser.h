@@ -10,7 +10,8 @@ namespace mu::core {
 // browser came up is not known, and a failure to start one is only logged.
 void openInBrowser(const std::string& url);
 
-// The game's Discord, an invite that does not run out: the Escape menu's and the launcher's.
-inline constexpr const char* kDiscordInvite = "https://discord.gg/frqaT5k3EF";
+// The game's Discord: the Escape menu's and the launcher's. The site's short name for the invite
+// (web/Caddyfile), so a new invite is a change on the site, not a release of the game.
+inline constexpr const char* kDiscordInvite = "https://mu-classic.com/discord";
 
 }  // namespace mu::core

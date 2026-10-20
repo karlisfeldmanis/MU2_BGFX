@@ -27,6 +27,12 @@
 		file_server
 	}
 
+	# mu-classic.com/discord, the short name for the Discord's invite (also under a language's
+	# /pt/ and the rest). 302, so the invite can change without browsers keeping the old one;
+	# the game's and the launcher's button go here too (src/core/browser.h kDiscordInvite).
+	@discord path /discord /discord/ /*/discord /*/discord/
+	redir @discord https://discord.gg/frqaT5k3EF 302
+
 	# For mu2_server on this machine only, never from outside.
 	handle /internal/* {
 		respond 404
