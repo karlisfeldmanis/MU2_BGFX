@@ -164,5 +164,53 @@
     "six are all PassiveNpc in OpenMU's own initialisation, and the idle on a Lorencia",
     "guard is a fact about a player model in or out of a safe zone, which none of these",
     "is."
+  ],
+  "blocked": [
+    {
+      "model": "gambler_moss",
+      "near": [
+        187.5,
+        101.5
+      ],
+      "tiles": [
+        [
+          187,
+          102
+        ],
+        [
+          188,
+          102
+        ],
+        [
+          187,
+          101
+        ],
+        [
+          188,
+          101
+        ],
+        [
+          189,
+          101
+        ],
+        [
+          186,
+          100
+        ],
+        [
+          187,
+          100
+        ],
+        [
+          188,
+          100
+        ],
+        [
+          187,
+          99
+        ]
+      ],
+      "why": "Moss the Gambler, the Jeweler, stands among his crates, a barrel and two treasure chests, all one model (npc/gambler_moss), facing 8. MU never placed him here, so the grid under his set is open and a character walked through the crates (the user, 2026-10-20). Measured off his mesh below 1.3 m, scaled 0.8 and turned to his facing: chests about 0.4 left and 1.3 down of him, crates 1 right, the barrel just below; each tile here holds part of the set. Checked against a --play shot, where the chests stand down-left and the crates right."
+    }
   ]
 }
