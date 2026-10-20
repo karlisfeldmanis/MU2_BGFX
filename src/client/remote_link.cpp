@@ -316,7 +316,8 @@ void RemoteLink::ping() {
     pingOut_ = true;
     pingUnread_ = false;
     std::vector<uint8_t> out;
-    net::put(out, net::Ping{++pingNonce_});
+    const float ms = rttMs_ < 0.0f ? 0.0f : std::clamp(rttMs_ + 0.5f, 1.0f, 60000.0f);
+    net::put(out, net::Ping{++pingNonce_, uint32_t(ms)});
     put(out);
 }
 

@@ -160,6 +160,7 @@ bool heard(Session& one, std::vector<std::unique_ptr<World>>& worlds,
             // Back the moment it is read, ahead of any tick: the line's round trip alone.
             net::Ping ping;
             if (!net::parse(body, ping)) return false;
+            if (ping.ms > 0) one.pingMs = ping.ms;
             // A client has one Ping out at a time; past kMostPings a second they go unanswered,
             // each answer a send() on the loop's one thread.
             const Clock::time_point now = Clock::now();

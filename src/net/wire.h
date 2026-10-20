@@ -141,7 +141,8 @@ namespace mu::net {
 //     of it in the command's c (split off first), a stack of jewels lists on the Broker whole
 //     and its quote is a piece's price, and a bound Loch's Feather goes into the 2nd wings
 //     (2026-10-20), so a client on 39's bags is refused instead of drifting from the server.
-constexpr uint32_t kVersion = 40;
+// 41: a Ping carries the client's own round trip (Ping::ms), the website's Ping column.
+constexpr uint32_t kVersion = 41;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";
@@ -480,6 +481,11 @@ struct Tick {
 // with no wait for a tick in it -- what the readout shows.
 struct Ping {
     uint32_t nonce = 0;
+    // The client's round trip as it last measured it, 0 before the first. The server keeps it
+    // for the website (Session::pingMs): its kernel's TCP round trip of the line runs 50-100 ms
+    // over, the ticks going by datagram and the client's ACKs held for its next send (the user,
+    // 2026-10-20: "why those players has such a ping?", Lithuania at 88 ms to Helsinki).
+    uint32_t ms = 0;
 };
 
 // Down, the last frame on a line the server closes itself: why, for the client's Disconnected

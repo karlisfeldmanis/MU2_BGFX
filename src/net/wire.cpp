@@ -550,7 +550,10 @@ void put(std::vector<uint8_t>& out, const Tick& one) {
 }
 
 void put(std::vector<uint8_t>& out, const Ping& one) {
-    frame(out, Kind::Ping, [&](Out& o) { o.u32(one.nonce); });
+    frame(out, Kind::Ping, [&](Out& o) {
+        o.u32(one.nonce);
+        o.u32(one.ms);
+    });
 }
 
 void put(std::vector<uint8_t>& out, const Bye& one) {
@@ -904,6 +907,7 @@ bool parse(const std::vector<uint8_t>& body, Tick& out) {
 bool parse(const std::vector<uint8_t>& body, Ping& out) {
     In in{body};
     out.nonce = in.u32();
+    out.ms = in.u32();
     return in.done();
 }
 

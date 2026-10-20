@@ -13684,6 +13684,18 @@ void testByeWire() {
           "a Bye carries why the server closed the line");
 }
 
+void testPingWire() {
+    std::printf("ping wire\n");
+    std::vector<uint8_t> bytes;
+    net::put(bytes, net::Ping{7, 31});
+    net::Kind kind{};
+    std::vector<uint8_t> body;
+    net::Ping read;
+    check(net::take(bytes, kind, body) == 1 && kind == net::Kind::Ping && net::parse(body, read) &&
+              read.nonce == 7 && read.ms == 31,
+          "a Ping carries the client's round trip for the website");
+}
+
 void testChatWire() {
     std::printf("chat wire\n");
     std::vector<uint8_t> bytes;
@@ -14073,6 +14085,7 @@ int main() {
     testChatWire();
     testPartyWire();
     testByeWire();
+    testPingWire();
     testSquareWire();
     testKept(tables);
     testSnapshot(tables);

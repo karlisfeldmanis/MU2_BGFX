@@ -361,7 +361,7 @@ void tellOnline(const std::vector<std::unique_ptr<Session>>& sessions) {
                       jsonText(sim::className(int(him->kin), him->second)).c_str(), int(him->level),
                       jsonText(one->world->name).c_str(), one->world->copy, one->world->castle,
                       one->world->square, int(him->x), int(him->y), one->bot ? "true" : "false",
-                      one->socket.rttMs());
+                      one->pingMs > 0 ? one->pingMs : one->socket.rttMs());
         body += line;
         first = false;
     }

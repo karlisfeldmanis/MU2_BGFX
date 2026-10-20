@@ -292,6 +292,8 @@ struct Session {
     // Pings answered in the second from pingsFrom (kMostPings).
     int pings = 0;
     Clock::time_point pingsFrom{};
+    // His round trip as his client last said it (net::Ping::ms), 0 before it has; the website's.
+    int pingMs = 0;
     // When the line came: one with no account or world by kSignInWithin is let go.
     Clock::time_point cameAt = Clock::now();
     // Its other end's address, for kMostWaitingFromOne; empty for this machine's own.
