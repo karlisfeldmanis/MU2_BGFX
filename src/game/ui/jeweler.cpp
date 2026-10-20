@@ -26,7 +26,7 @@ Box tabBox(int i) { return {kLeft + float(i) * kInner / 3.0f, kTabTop, kInner / 
 
 // The pictures stand on a stage from the slots' row down past the prizes'.
 constexpr float kStageX = kLeft, kStageY = 66.0f;
-constexpr float kStageW = kInner, kStageH = 96.0f;
+constexpr float kStageW = kInner, kStageH = 296.0f;  // down past the needed jewel's cell
 constexpr float kSlot = 30.0f;
 Box slotBox(int i) { return {kStageX + float(i) * (kSlot + 6.0f), kStageY, kSlot, kSlot}; }
 // Salvage's five prizes, a row of pictures under the kicker.
@@ -42,8 +42,12 @@ constexpr float kRowTop = 118.0f, kRowH = 19.0f, kRowGap = 3.0f;
 Box rowBox(int i) { return {kLeft, kRowTop + float(i + 1) * (kRowH + kRowGap), kInner, kRowH}; }
 
 // What was said, over the foot; the foot's cost and buttons.
-constexpr float kSaidTop = 316.0f;
-constexpr float kNeedTop = 350.0f, kCostTop = 364.0f;
+constexpr float kSaidTop = 304.0f;
+constexpr float kCostTop = 364.0f;
+// What Recut and Combine take, shown and not only said (the user, 2026-10-20: "we need to see
+// visualy which jewel is needed"): the jewel's picture in a cell, its name and how many he has.
+constexpr float kNeedTop = 326.0f, kNeed = 30.0f;
+constexpr Box kNeedCell{kLeft, kNeedTop, kNeed, kNeed};
 constexpr float kButtonTop = panel::kFootTop + 2.0f, kButtonH = 22.0f;
 constexpr Box kRunBox{kRight - 78.0f, kButtonTop, 78.0f, kButtonH};
 constexpr Box kYesBox = kRunBox;
@@ -299,6 +303,9 @@ void Jeweler::update(float width, float height, int column, const sim::Realm& re
             const int32_t item = tables.itemAt(key.group, key.number);
             if (item >= 0) standing_.push_back({item, onStage(prizeBox(p)).grown(-kPrizePad), 0, false, false});
         }
+    } else {
+        const int32_t chaos = tables.itemAt(sim::kJewelerJewel.group, sim::kJewelerJewel.number);
+        if (chaos >= 0) standing_.push_back({chaos, onStage(kNeedCell).grown(-kPrizePad), 0, false, false});
     }
     if (stage) stage->stand(standing_, kStageW, kStageH);
 
@@ -401,11 +408,9 @@ void Jeweler::rebuild(const sim::Realm& realm, Stage* stage) {
 
     // ---- the pages ---------------------------------------------------------------------------
     int64_t zen = 0;
-    std::string need;
     // The one jewel Recut and Combine each take, and how many he carries.
     const int32_t chaosItem = tables.itemAt(sim::kJewelerJewel.group, sim::kJewelerJewel.number);
     const int chaos = chaosItem >= 0 ? jewelsCarried(realm, chaosItem) : 0;
-    const std::string chaosLine = "and 1 Jewel of Chaos  (" + std::to_string(chaos) + " in bag)";
     bool ready = false;
     std::string verb = kTabs[int(page_)];
     if (page_ == Page::Recut) {
@@ -435,7 +440,6 @@ void Jeweler::rebuild(const sim::Realm& realm, Stage* stage) {
             }
             at(kLeft, rowBox(3).y + 2.0f, style::kAshInk, "The signature and the colour never change.");
             zen = sim::recutZen(piece.refinement);
-            need = chaosLine;
             ready = line_ >= 0 && chaos > 0 && realm.money() >= zen;
         }
     } else if (page_ == Page::Salvage) {
@@ -487,14 +491,19 @@ void Jeweler::rebuild(const sim::Realm& realm, Stage* stage) {
         at(kLeft, t + 55.0f, style::kAshInk, "Blue to purple: 2,000,000 Zen and a Chaos.");
         at(kLeft, t + 66.0f, style::kAshInk, "Legendary is only found.");
         if (same && count > 0 && colour >= 1 && colour <= 2) zen = sim::combineZen(colour);
-        if (zen > 0) need = chaosLine;
         ready = count == 3 && same && zen > 0 && chaos > 0 && realm.money() >= zen;
     }
 
     // ---- what was said, the foot -------------------------------------------------------------
     if (!said_.empty()) at(kLeft, kSaidTop, saidOk_ ? kGoldHi : style::kDanger, said_);
     if (waiting_) at(kLeft, kSaidTop, style::kAshInk, "...");
-    if (!need.empty()) at(kLeft, kNeedTop, style::kBone2, need);
+    if (page_ != Page::Salvage) {
+        controls::cell(canvas_, P(kNeedCell), chaos > 0 ? controls::Cell::Rest : controls::Cell::Blocked, u);
+        const float nx = kNeedCell.right() + 7.0f;
+        at(nx, kNeedTop + 3.0f, style::kBoneHi, "1 Jewel of Chaos");
+        at(nx, kNeedTop + 15.0f, chaos > 0 ? style::kAshInk : style::kDanger,
+           chaos > 0 ? std::to_string(chaos) + " in your bag" : "None in your bag");
+    }
     if (zen > 0) {
         at(kLeft, kCostTop, style::kAshInk, "Cost");
         right(kRight, kCostTop, realm.money() >= zen ? moneyColour(zen) : style::kDanger,

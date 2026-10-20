@@ -50,7 +50,6 @@ int Realm::recut(int slot, int line) {
         refusal_ = "nothing to recut";
         return -1;
     }
-    const int powers = affixCount(*row, piece);
     const int64_t zen = recutZen(piece.refinement);
     if (me().money < zen) {
         refusal_ = "not the Zen for it";
