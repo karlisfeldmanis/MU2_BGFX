@@ -46,7 +46,7 @@ constexpr float kSaidTop = 304.0f;
 constexpr float kCostTop = 364.0f;
 // What Recut and Combine take, shown and not only said (the user, 2026-10-20: "we need to see
 // visualy which jewel is needed"): the jewel's picture in a cell, its name and how many he has.
-constexpr float kNeedTop = 326.0f, kNeed = 30.0f;
+constexpr float kNeedTop = 334.0f, kNeed = 20.0f, kNeedPad = 2.5f;  // an ingredient's size, not a slot's
 constexpr Box kNeedCell{kLeft, kNeedTop, kNeed, kNeed};
 constexpr float kButtonTop = panel::kFootTop + 2.0f, kButtonH = 22.0f;
 constexpr Box kRunBox{kRight - 78.0f, kButtonTop, 78.0f, kButtonH};
@@ -305,7 +305,7 @@ void Jeweler::update(float width, float height, int column, const sim::Realm& re
         }
     } else {
         const int32_t chaos = tables.itemAt(sim::kJewelerJewel.group, sim::kJewelerJewel.number);
-        if (chaos >= 0) standing_.push_back({chaos, onStage(kNeedCell).grown(-kPrizePad), 0, false, false});
+        if (chaos >= 0) standing_.push_back({chaos, onStage(kNeedCell).grown(-kNeedPad), 0, false, false});
     }
     if (stage) stage->stand(standing_, kStageW, kStageH);
 
@@ -499,9 +499,9 @@ void Jeweler::rebuild(const sim::Realm& realm, Stage* stage) {
     if (waiting_) at(kLeft, kSaidTop, style::kAshInk, "...");
     if (page_ != Page::Salvage) {
         controls::cell(canvas_, P(kNeedCell), chaos > 0 ? controls::Cell::Rest : controls::Cell::Blocked, u);
-        const float nx = kNeedCell.right() + 7.0f;
-        at(nx, kNeedTop + 3.0f, style::kBoneHi, "1 Jewel of Chaos");
-        at(nx, kNeedTop + 15.0f, chaos > 0 ? style::kAshInk : style::kDanger,
+        const float nx = kNeedCell.right() + 6.0f;
+        at(nx, kNeedTop - 1.5f, style::kBoneHi, "1 Jewel of Chaos");
+        at(nx, kNeedTop + 9.5f, chaos > 0 ? style::kAshInk : style::kDanger,
            chaos > 0 ? std::to_string(chaos) + " in your bag" : "None in your bag");
     }
     if (zen > 0) {
