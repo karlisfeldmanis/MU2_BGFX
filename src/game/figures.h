@@ -280,6 +280,10 @@ struct FigureBody {
     // the body is the light (fx/gleam.h). -1 on a rig without them.
     int pelvisBone = -1;
     int neckBone = -1;
+    // `Bip01 Head` and its joint in the model as bound: what a monster's bar is held down to
+    // (Play::follow's crown, kBarOverHead). -1 on a rig without one.
+    int headBone = -1;
+    float headJoint[3] = {};
     // A complete set's six lights (game/fx/set_shine.h): each hand's grip and the two bones up
     // that arm, MU's Weapon[i].LinkBone and LinkBone - 6 and - 7 (ZzzCharacter.cpp:10988) --
     // `knife_gdf`, R Forearm, R UpperArm, `hand_bofdgne01`, L Forearm, L UpperArm. -1 where a

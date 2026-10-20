@@ -3,6 +3,7 @@
 #include <chrono>
 
 
+#include <bx/math.h>
 #include <bx/timer.h>
 
 #include <algorithm>
@@ -276,6 +277,13 @@ void Figures::bind(FigureBody& body) {
     body.backBone = boneNamed(*body.skeletonMesh, kBackBone);
     body.pelvisBone = boneNamed(*body.skeletonMesh, "Bip01 Pelvis");
     body.neckBone = boneNamed(*body.skeletonMesh, "Bip01 Neck");
+    body.headBone = boneNamed(*body.skeletonMesh, "Bip01 Head");
+    if (body.headBone >= 0) {
+        // The joint's place in the model is its inverse bind's inverse.
+        float bind[16];
+        bx::mtxInverse(bind, body.skeletonMesh->bones()[size_t(body.headBone)].inverseBind);
+        for (int k = 0; k < 3; ++k) body.headJoint[k] = bind[12 + k];
+    }
     {
         static const char* const kArms[6] = {"knife_gdf",      "Bip01 R Forearm", "Bip01 R UpperArm",
                                              "hand_bofdgne01", "Bip01 L Forearm", "Bip01 L UpperArm"};

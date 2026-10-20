@@ -1569,6 +1569,18 @@ void Play::follow(float seconds) {
             // above its feet (the Bahamut's 0.23 m) keeps its height as before.
             const float tall = std::min(look->height, look->max[1]);
             one.crown[1] = position[1] + tall * look->scale * (seated ? kSeated : 1.0f);
+            // **And no more than a head over the head as posed**, as the townsfolk's names are
+            // held (folkCrownOf): a big monster's bind box holds its weapon, crest or wings
+            // raised, and times its scale hung its bar metres over it, off the top of the screen
+            // -- a Death Beam Knight's 2.5 m, a Beam Knight's 1.9, a Dark Phoenix's 1.8 (the
+            // user, 2026-10-20: "hp bar has very high offset on big monsters"). 0.40 of the
+            // figure's own metres, a head: a man's box (1.89 to a head joint at 1.61) is under it
+            // and keeps its bar. A rig without a head joint keeps the box.
+            constexpr float kBarOverHead = 0.40f;
+            float head[3];
+            if (look->headBone >= 0 && one.figure.pointOnBind(look->headBone, look->headJoint, head)) {
+                one.crown[1] = std::min(one.crown[1], head[1] + kBarOverHead * look->scale);
+            }
             one.crown[2] = position[2];
             one.placed = true;
         }
