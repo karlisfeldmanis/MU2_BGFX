@@ -205,6 +205,8 @@ void standing(gfx::Canvas& canvas, const gfx::Art& picture, float x, float y);
 // What rides the pointer: the thing of footprint `units`, cut from the strip, its middle at
 // (px, py); a plain box where there is no picture yet.
 void carried(gfx::Canvas& canvas, const gfx::Art& picture, const gfx::Box& units, float px, float py);
+// A part of a stack riding (Shift-click): its count at the lower left of what `carried` drew.
+void carriedCount(gfx::Canvas& canvas, const gfx::Box& units, float px, float py, int count);
 // **The Rune of Creation in its socket, as its own picture** (the user, 2026-09-29: "we need to
 // show that jewel creation is attached in rune slot"). One rune stands on a window's stage at the
 // left of the carry strip, which the window never shows, and each set socket is given that

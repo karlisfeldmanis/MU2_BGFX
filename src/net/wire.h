@@ -137,7 +137,11 @@ namespace mu::net {
 //     thing off him no longer leaves a copy where the jewel was, and the elf's Greater Defense
 //     and Greater Damage cool for three seconds, not five minutes, and Cometfall is the Soul
 //     Master's alone (2026-10-19).
-constexpr uint32_t kVersion = 39;
+// 40: the four refining jewels stack twenty a cell, a window's move of a stack carries how many
+//     of it in the command's c (split off first), a stack of jewels lists on the Broker whole
+//     and its quote is a piece's price, and a bound Loch's Feather goes into the 2nd wings
+//     (2026-10-20), so a client on 39's bags is refused instead of drifting from the server.
+constexpr uint32_t kVersion = 40;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";

@@ -32,6 +32,7 @@ struct ChestRequests {
     int outside = -1;                // a drag let go outside the window, from this cell
     int back = -1;                   // a right-click on this cell: back to the bag
     float outsideX = 0.0f, outsideY = 0.0f;
+    int pieces = 0;                  // the move's or the drop's part of a stack (split), 0 all
     bool depositZen = false, withdrawZen = false;
     bool close = false;
 };
@@ -48,11 +49,23 @@ public:
     bool covers(float x, float y) const;
     bool dragging() const { return dragging_ >= 0; }
     // A frame the window is not updated on ends any drag and press (Bag::cancel).
-    void cancel() { dragging_ = pressing_ = lifting_ = -1; closing_ = false; }
+    void cancel() {
+        dragging_ = pressing_ = lifting_ = -1;
+        part_ = 0;
+        closing_ = false;
+    }
     // The vault cell being dragged, or -1.
     int dragged() const { return dragging_; }
     // Back on the pointer: a click outside that nothing took (the bag's hold).
     void hold(int cell) { dragging_ = cell; }
+    // Part of a stack on the pointer (Bag::split).
+    void split(int cell, int pieces) {
+        dragging_ = cell;
+        part_ = pieces;
+    }
+    int part() const { return dragging_ >= 0 ? part_ : 0; }
+    // The cell whose thing is under the pointer, or -1.
+    int hovered() const { return up_ ? hovered_ : -1; }
     // A thing dragged out of the bag and over this window, or null, and whether the vault takes
     // it at all (a worn piece too, since 2026-10-05): the cells it would land on are lit by
     // Realm::deposit's gate. Set before update.
@@ -73,6 +86,7 @@ private:
         uint32_t version = 0, bagVersion = 0;
         long long money = -1;
         int dragging = -1;
+        int part = 0;
         int32_t incoming = -1;
         int16_t incomingCount = 0;
         bool incomingTakes = false;
@@ -97,6 +111,7 @@ private:
     float x_ = 0.0f, y_ = 0.0f, screenW_ = 0.0f, screenH_ = 0.0f;
     bool up_ = false;
     int dragging_ = -1;
+    int part_ = 0;  // split(): of the stack riding, how many; 0 all of it
     sim::Held incoming_;
     bool incomingTakes_ = false;
     int hovered_ = -1;

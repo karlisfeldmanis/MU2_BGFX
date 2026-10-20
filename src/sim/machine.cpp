@@ -695,6 +695,27 @@ bool targets(const Judged& before, const Judged& after) {
 
 }  // namespace
 
+int piecesWanted(const content::Tables& tables, const Machine& box, const Held& what,
+                 Service service, int socket, Kin kin) {
+    const content::ItemRow* row = rowOf(tables, what);
+    if (!row || !stacks(*row) || what.durability <= 1) return std::max<int>(1, what.durability);
+    const int cell = box.free(tables, row->width, row->height);
+    if (cell < 0) return what.durability;
+    int pick = 1, pickPoints = 0;
+    for (int n = 1; n <= what.durability; ++n) {
+        Machine t = box;
+        Held part = what;
+        part.durability = int16_t(n);
+        t.put(cell, part);
+        const int points = nearness(judge(tables, t, service, socket, kin));
+        if (n == 1 || points > pickPoints) {
+            pick = n;
+            pickPoints = points;
+        }
+    }
+    return pick;
+}
+
 Planned plan(const content::Tables& tables, const Machine& box, const Satchel& bag,
              Service service, int socket, Kin kin, bool anyTarget) {
     Planned p;
@@ -705,13 +726,16 @@ Planned plan(const content::Tables& tables, const Machine& box, const Satchel& b
                        service == Service::FuseRunes;
     bool taken[kSlots] = {};
     // What a slot would make of the box, or false when it cannot go in or makes it no nearer.
-    const auto tried = [&](int slot, Judged* out, int* cell) {
-        const Held& what = bag[slot];
+    // A stack gives as many as the box wants of it (piecesWanted), into `pieces`.
+    const auto tried = [&](int slot, Judged* out, int* cell, int* pieces) {
+        Held what = bag[slot];
         const content::ItemRow* row = rowOf(tables, what);
         if (!row || taken[slot]) return false;
         if (what.bound && !runes && !jewelOfChaos(*row) && !lochsFeather(*row)) return false;
         *cell = trial.free(tables, row->width, row->height);
         if (*cell < 0) return false;
+        *pieces = stacks(*row) ? piecesWanted(tables, trial, what, service, socket, kin) : 0;
+        if (*pieces > 0) what.durability = int16_t(*pieces);
         Machine t = trial;
         t.put(*cell, what);
         *out = judge(tables, t, service, socket, kin);
@@ -722,19 +746,19 @@ Planned plan(const content::Tables& tables, const Machine& box, const Satchel& b
     if (!anyTarget) {
         for (int slot = kWorn; slot < kSlots; ++slot) {
             Judged j;
-            int cell = -1;
-            if (tried(slot, &j, &cell) && targets(now, j)) ++p.choosing;
+            int cell = -1, pieces = 0;
+            if (tried(slot, &j, &cell, &pieces) && targets(now, j)) ++p.choosing;
         }
         leaveTargets = p.choosing >= 2;
         if (!leaveTargets) p.choosing = 0;
     }
     while (p.count < kMachineCells && !now.ready) {
-        int pick = -1, pickCell = -1, pickPoints = best;
+        int pick = -1, pickCell = -1, pickPoints = best, pickPieces = 0;
         Judged pickJudged;
         for (int slot = kWorn; slot < kSlots; ++slot) {
             Judged j;
-            int cell = -1;
-            if (!tried(slot, &j, &cell)) continue;
+            int cell = -1, pieces = 0;
+            if (!tried(slot, &j, &cell, &pieces)) continue;
             if (leaveTargets && targets(now, j)) continue;
             const int points = nearness(j);
             if (points > pickPoints) {
@@ -742,11 +766,15 @@ Planned plan(const content::Tables& tables, const Machine& box, const Satchel& b
                 pickCell = cell;
                 pickPoints = points;
                 pickJudged = j;
+                pickPieces = pieces;
             }
         }
         if (pick < 0) break;
-        trial.put(pickCell, bag[pick]);
+        Held went = bag[pick];
+        if (pickPieces > 0) went.durability = int16_t(pickPieces);
+        trial.put(pickCell, went);
         taken[pick] = true;
+        p.pieces[p.count] = pickPieces >= bag[pick].durability ? 0 : pickPieces;
         p.slots[p.count++] = pick;
         best = pickPoints;
         now = pickJudged;

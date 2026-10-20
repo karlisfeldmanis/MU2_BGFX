@@ -7746,13 +7746,29 @@ void testCraftsFromTheBag() {
             const sim::Planned listed = realm->planned(craft.service, -1, true);
             const sim::Planned fill = realm->planned(craft.service, -1, false);
             everyReady &= listed.ready() && listed.missing == 0;
-            everyFill &= fill.ready() && fill.count == craft.count && fill.choosing == 0;
-            if (attempts == 0 && (fill.count != craft.count || !fill.ready())) {
+            // Counted in pieces, since jewels stack (2026-10-20): two Souls are one cell, and a
+            // stack gives what the box wants of it (Planned::pieces).
+            int pieces = 0;
+            for (int i = 0; i < fill.count; ++i) {
+                const sim::Held& one = realm->satchel()[fill.slots[i]];
+                const bool stack = sim::stacks(noria.items[size_t(one.item)]);
+                pieces += fill.pieces[i] > 0 ? fill.pieces[i] : stack ? std::max<int>(1, one.durability) : 1;
+            }
+            everyFill &= fill.ready() && pieces == craft.count && fill.choosing == 0;
+            if (attempts == 0 && (pieces != craft.count || !fill.ready())) {
                 std::printf("  %s: Fill puts %d in (wants %d), ready %d, missing %d, %s\n",
-                            name.c_str(), fill.count, craft.count, int(fill.ready()), fill.missing,
+                            name.c_str(), pieces, craft.count, int(fill.ready()), fill.missing,
                             fill.judged.title.c_str());
             }
-            for (int i = 0; i < fill.count; ++i) everyFill &= realm->putIn(fill.slots[i]) >= 0;
+            // As the window's Fill asks it, a PutIn a slot with the pieces.
+            for (int i = 0; i < fill.count; ++i) {
+                realm->command({.kind = sim::Command::Kind::PutIn, .ticket = uint32_t(100 + i), .a = fill.slots[i],
+                                .b = -1, .c = fill.pieces[i]});
+            }
+            realm->step();
+            for (const sim::Happening& said : realm->happenings()) {
+                if (said.what == sim::What::Answered && said.b < 0 && said.c >= 100) everyFill = false;
+            }
             const sim::Judged j = realm->judged(craft.service);
             rate = j.rate;
             if (!j.ready) {
@@ -7905,6 +7921,76 @@ void testChaosMachine() {
         check(tried && boundMade, "the +10 it makes is bound");
         check(realm.machine().empty(), "and the box is emptied");
     }
+    // **Jewels stack**, twenty a cell as the potions (the user, 2026-10-20: "we need stacking
+    // jewels", bug report #41), and a window's move carries how many of a stack in c: split off
+    // first, poured back when the move is refused.
+    {
+        const auto settle = [&](sim::Command asked) {
+            realm.command(asked);
+            realm.step();
+        };
+        const int first = realm.give(bless);
+        check(first >= sim::kWorn && realm.give(bless, -1, 0, 4) == first, "a Bless given pours onto the Bless");
+        checkEqual(int(realm.satchel()[first].durability), 5, "five Blesses in one cell");
+        check(realm.give(bless, -1, 0, 20) >= 0, "twenty more go in");
+        int blessCells = 0, blessCount = 0;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            if (realm.satchel()[slot].item != bless) continue;
+            ++blessCells;
+            blessCount += realm.satchel()[slot].durability;
+        }
+        check(blessCells == 2 && blessCount == 25, "twenty a cell: twenty-five are two");
+        const int bound = realm.give(bless, -1, 0, 1, false, 0, 0, 0, nullptr, nullptr, true);
+        check(bound >= 0 && bound != first && realm.satchel()[bound].bound, "a bound one keeps its own cell");
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            if (realm.satchel()[slot].item == bless) realm.sell(slot);
+        }
+        check(realm.give(bless, -1, 0, 5) == first, "five again, in the first cell");
+        // Three of five onto a free cell, then two of them back.
+        const int spare = realm.satchel().free(noria, 1, 1);
+        settle({.kind = sim::Command::Kind::Move, .a = first, .b = spare, .c = 3});
+        check(realm.satchel()[first].durability == 2 && realm.satchel()[spare].item == bless &&
+                  realm.satchel()[spare].durability == 3,
+              "a move of three takes three off the five");
+        settle({.kind = sim::Command::Kind::Move, .a = spare, .b = first, .c = 2});
+        check(realm.satchel()[first].durability == 4 && realm.satchel()[spare].durability == 1,
+              "and two poured back onto the stack");
+        settle({.kind = sim::Command::Kind::Move, .a = spare, .b = first});
+        check(realm.satchel()[first].durability == 5 && realm.satchel()[spare].empty(), "a move with no count is all of it");
+        // Refused -- no vault open -- the part is poured back where it came from.
+        settle({.kind = sim::Command::Kind::Deposit, .a = first, .b = -1, .c = 2});
+        check(realm.satchel()[first].durability == 5 && realm.satchel()[spare].empty(),
+              "a refused deposit of two leaves the five whole");
+        // The box takes what its service wants of a stack (sim::piecesWanted): one Chaos of five.
+        const int axe9 = realm.give(sword, -1, 9);
+        const int chaosStack = realm.give(chaos, -1, 0, 5);
+        realm.putIn(axe9);
+        realm.putIn(realm.give(soul));
+        checkEqual(sim::piecesWanted(noria, realm.machine(), realm.satchel()[first], sim::Service::Upgrade), 1,
+                   "the +10 box wants one Bless of five");
+        const sim::Planned planned = realm.planned(sim::Service::Upgrade, -1, true);
+        bool onePiece = planned.count == 2;
+        for (int i = 0; i < planned.count; ++i) onePiece = onePiece && planned.pieces[i] == 1;
+        check(onePiece, "Fill from bag puts one of each stack in");
+        settle({.kind = sim::Command::Kind::PutIn, .a = first, .b = -1, .c = 1});
+        settle({.kind = sim::Command::Kind::PutIn, .a = chaosStack, .b = -1, .c = 1});
+        check(realm.judged().recipe == sim::Recipe::PlusTen && realm.judged().ready, "and the box is the +10's");
+        check(realm.satchel()[first].durability == 4 && realm.satchel()[chaosStack].durability == 4,
+              "four of each left in the bag");
+        for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+            if (!realm.machine()[cell].empty()) realm.takeOut(cell);
+        }
+        check(realm.satchel()[first].durability == 5 && realm.satchel()[chaosStack].durability == 5,
+              "taken out, they pour back onto their stacks");
+        // At the Broker a stack is one listing bought whole: only a single one is alike.
+        const content::ItemRow& blessRow = noria.items[size_t(bless)];
+        check(!sim::brokerAlike(blessRow, realm.satchel()[first]) &&
+                  sim::brokerAlike(blessRow, sim::Held{bless, 0, 1}),
+              "a stack of Blesses lists whole, a single one with the alike");
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            if (!realm.satchel()[slot].empty()) realm.sell(slot);
+        }
+    }
 
     // Loads a +10 or +11 box: the thing at `plus` and `jewels` of the Bless and the Soul.
     const auto load = [&](int plus, int jewels, bool luck) {
@@ -7925,9 +8011,12 @@ void testChaosMachine() {
     check(!realm.mix(), "so the Goblin will not run it");
     for (int cell = 0; cell < sim::kMachineCells; ++cell) {
         if (!realm.machine()[cell].empty() && realm.machine()[cell].item == chaos) {
+            // The two are one stack in the box since jewels stack (2026-10-20): out together,
+            // thrown away, and one put back.
             const int back = realm.takeOut(cell);
             check(back >= 0, "the Chaos comes back out");
-            realm.discard(back);  // so the next Chaos given is a stack of one
+            realm.sell(back);  // so the next Chaos given is a stack of one
+            check(realm.putIn(realm.give(chaos)) >= 0, "and one goes back in");
             break;
         }
     }
@@ -7946,7 +8035,9 @@ void testChaosMachine() {
         if (made) {
             checkEqual(left, 1, "a +10 leaves the thing alone in the box");
             checkEqual(int(realm.machine()[at].refinement), 10, "at +10, past the jewels' nine");
-            check(realm.putIn(realm.give(chaos)) < 0, "and the box is locked while it stands");
+            const int spare = realm.give(chaos);
+            check(realm.putIn(spare) < 0, "and the box is locked while it stands");
+            realm.sell(spare);  // or the next Chaos given pours onto it (jewels stack)
             check(realm.takeOut(at) >= 0 && !realm.mixed(), "taken out, the box is his again");
         } else {
             checkEqual(left, 0, "a failed +10 takes the thing and the jewels");
@@ -8013,7 +8104,9 @@ void testChaosMachine() {
         checkEqual(sim::castleMaterialLevel(84), 6, "84 +6 too: no castle takes a +7 (the user, 2026-10-13)");
         // Run by the Goblin until one is made: the box goes either way.
         for (int cell = 0; cell < sim::kMachineCells; ++cell) {
-            if (!realm.machine()[cell].empty()) realm.takeOut(cell);
+            if (realm.machine()[cell].empty()) continue;
+            // Sold, not carried: a jewel left in the bag takes the next one given onto its stack.
+            if (const int back = realm.takeOut(cell); back >= 0) realm.sell(back);
         }
         bool cloaked = false;
         for (int attempt = 0; attempt < 20 && !cloaked && scroll >= 0; ++attempt) {
@@ -8069,7 +8162,9 @@ void testChaosMachine() {
             check(sim::judge(noria, box).recipe == sim::Recipe::None, "a Bless spoils it");
         }
         for (int cell = 0; cell < sim::kMachineCells; ++cell) {
-            if (!realm.machine()[cell].empty()) realm.takeOut(cell);
+            if (realm.machine()[cell].empty()) continue;
+            // Sold, not carried: a jewel left in the bag takes the next one given onto its stack.
+            if (const int back = realm.takeOut(cell); back >= 0) realm.sell(back);
         }
         bool made = false;
         for (int attempt = 0; attempt < 20 && !made && eye >= 0; ++attempt) {
@@ -8099,7 +8194,9 @@ void testChaosMachine() {
     // The Chaos Weapon runs now its three answers are cooked: one roll, either outcome checked.
     {
         for (int cell = 0; cell < sim::kMachineCells; ++cell) {
-            if (!realm.machine()[cell].empty()) realm.takeOut(cell);
+            if (realm.machine()[cell].empty()) continue;
+            // Sold, not carried: a jewel left in the bag takes the next one given onto its stack.
+            if (const int back = realm.takeOut(cell); back >= 0) realm.sell(back);
         }
         check(realm.machine().empty(), "the box is emptied first");
         check(realm.putIn(realm.give(sword, -1, 4, -1, false, 2)) >= 0 &&
@@ -8125,7 +8222,9 @@ void testChaosMachine() {
         checkEqual(jewels, 0, "the jewels are spent either way");
         checkEqual(weapons, madeOne ? 1 : 0, "a success leaves one Chaos weapon, a failure none");
         for (int cell = 0; cell < sim::kMachineCells; ++cell) {
-            if (!realm.machine()[cell].empty()) realm.takeOut(cell);
+            if (realm.machine()[cell].empty()) continue;
+            // Sold, not carried: a jewel left in the bag takes the next one given onto its stack.
+            if (const int back = realm.takeOut(cell); back >= 0) realm.sell(back);
         }
     }
 
@@ -8559,7 +8658,9 @@ void testChaosMachine() {
     check(realm.judged(sim::Service::Combine).recipe == sim::Recipe::None,
           "and no combination takes a Life");
     for (int cell = 0; cell < sim::kMachineCells; ++cell) {
-        if (!realm.machine()[cell].empty()) realm.takeOut(cell);
+        if (realm.machine()[cell].empty()) continue;
+            // Sold, not carried: a jewel left in the bag takes the next one given onto its stack.
+            if (const int back = realm.takeOut(cell); back >= 0) realm.sell(back);
     }
     check(realm.machine().empty(), "all of it comes out");
     bool socketed = false;

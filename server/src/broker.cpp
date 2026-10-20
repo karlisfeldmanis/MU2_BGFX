@@ -524,12 +524,20 @@ void brokerAsk(Session& one, const net::BrokerAsk& asked, std::vector<std::uniqu
         case net::BrokerWhat::Quote: {
             view.parts |= net::BrokerView::Quoted;
             view.item = asked.item;
+            // A piece's price, so a stack of jewels and a single one quote alike (the user,
+            // 2026-10-20: jewels stack): the window and the bots ask that many times it.
+            const auto each = [](const sim::Held& what, int64_t price) {
+                const content::ItemRow* row = rowOf(what);
+                return row != nullptr && sim::stacks(*row) ? price / std::max<int64_t>(1, what.durability) : price;
+            };
             for (const sim::Listing& l : g_book.listings()) {
                 if (l.what.item != asked.item) continue;
                 ++view.onSale;
-                if (view.cheapest == 0 || l.price < view.cheapest) view.cheapest = l.price;
+                const int64_t one = each(l.what, l.price);
+                if (view.cheapest == 0 || one < view.cheapest) view.cheapest = one;
             }
             view.sales = g_book.salesOf(asked.item);
+            for (sim::Sale& sale : view.sales) sale.price = each(sale.what, sale.price);
             break;
         }
         case net::BrokerWhat::List: list(one, asked); return;

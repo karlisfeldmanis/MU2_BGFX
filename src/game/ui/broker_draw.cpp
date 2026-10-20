@@ -393,7 +393,13 @@ void Broker::rebuild(Play& play, Stage* stage) {
             const bool alike = (row.flags & net::BrokerRow::Alike) != 0;
             const float nameBase = mid(b.y, kRowH, kName), textBase = mid(b.y, kRowH, kText);
             const float named = text(b.x + kRowPad, nameBase, kName, inkOf(tables, row.what), nameOf(tables, row.what)) / k;
-            const std::string sub = alike ? std::to_string(row.count) + " on sale" : traits(row.what);
+            // A stack of jewels, bought whole: how many, and a piece's price.
+            const bool stack = !alike && row.what.durability > 1 && size_t(row.what.item) < tables.items.size() &&
+                               sim::stacks(tables.items[size_t(row.what.item)]);
+            const std::string sub = alike   ? std::to_string(row.count) + " on sale"
+                                    : stack ? "\xC3\x97" + std::to_string(row.what.durability) + " \xC2\xB7 " +
+                                                  panel::commas(row.price / row.what.durability) + " each"
+                                            : traits(row.what);
             const float subX = b.x + kRowPad + named + 6.0f;
             if (!sub.empty() && subX + controls::labelWidth(S(kCaption), sub) / k < sellerX - 6.0f) {
                 text(subX, nameBase, kCaption, alike ? style::kAshInk : tip::colourOf(tip::Tone::Blue), sub);

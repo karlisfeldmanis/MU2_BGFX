@@ -1,6 +1,7 @@
 #include "game/ui/panel.h"
 
 #include <algorithm>
+#include <string>
 #include <cmath>
 #include <cstdio>
 
@@ -293,6 +294,14 @@ void carried(gfx::Canvas& canvas, const gfx::Art& picture, const gfx::Box& units
     const float sx = picture.width / kWidth, sy = picture.height / kStageTall;
     const gfx::Box from = carryBox(units);
     canvas.region(picture, to, {from.x * sx, from.y * sy, from.w * sx, from.h * sy});
+}
+
+void carriedCount(gfx::Canvas& canvas, const gfx::Box& units, float px, float py, int count) {
+    const float k = scale();
+    const gfx::Box to{px - units.w * k * 0.5f, py - units.h * k * 0.5f, units.w * k, units.h * k};
+    // At its lower left, where the pointer's own glyph does not sit over it.
+    canvas.shadowed(to.x + 1.0f * k, to.bottom() - 2.0f * k, 8.0f * k, kLettering, gfx::rgba(0.0f, 0.0f, 0.0f, 0.8f),
+                    std::max(1.0f, 0.5f * k), std::to_string(count), gfx::Align::Left, to.w - 2.0f * k);
 }
 
 void cell(gfx::Canvas& canvas, float x, float y, const gfx::Box& units, sheet::Cell state) {

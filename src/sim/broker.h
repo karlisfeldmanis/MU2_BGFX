@@ -8,8 +8,9 @@
 // the characters and moves the things themselves with the realm's four Broker commands
 // (Realm::brokerTake and its fellows), so every mirror sees a bag change. sim_test proves it.
 //
-// A listing is one thing out of one slot, at one buyout price: jewels do not stack in 0.75, so
-// four Blesses are four listings, which the window shows as one row filled cheapest first.
+// A listing is one thing out of one slot, at one buyout price: four single Blesses are four
+// listings, which the window shows as one row filled cheapest first. A stack of them (jewels
+// stack since 2026-10-20) is one listing at the stack's price, bought whole.
 
 #include <cstdint>
 #include <map>

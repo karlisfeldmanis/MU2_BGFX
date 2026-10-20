@@ -52,6 +52,7 @@ struct BagRequests {
     bool toggleDock = false;         // the foot's bottle: the dock opened or closed
     int outside = -1;                // a drag let go outside the window: the desk decides where
     float outsideX = 0.0f, outsideY = 0.0f;
+    int pieces = 0;                  // the move's or the drop's part of a stack (split), 0 all
     bool close = false;
 };
 
@@ -78,6 +79,7 @@ public:
     // anywhere threw the thing on the ground.
     void cancel() {
         dragging_ = lifting_ = -1;
+        part_ = 0;
         closing_ = pressingHammer_ = pressingBottle_ = false;
         pressingDock_ = -1;
     }
@@ -86,6 +88,14 @@ public:
     // Back on the pointer: a click outside that nothing took -- another window -- leaves the
     // thing picked, as MU's does, rather than putting it back.
     void hold(int slot) { dragging_ = slot; }
+    // **Part of a stack on the pointer** (Shift-click, the desk's Amount box; the user,
+    // 2026-10-20): `pieces` of the stack at `slot` ride, the rest stay drawn in its cell, and
+    // the desk asks the realm for that many. part() is 0 while the whole thing rides.
+    void split(int slot, int pieces) {
+        dragging_ = slot;
+        part_ = pieces;
+    }
+    int part() const { return dragging_ >= 0 ? part_ : 0; }
     // A thing dragged out of the vault and over this window, or null: the bag lights the cells
     // it would land on as it lights its own drag, by Realm::withdraw's gate. Set before update.
     void carrying(const sim::Held* what) { incoming_ = what ? *what : sim::Held{}; }
@@ -115,6 +125,7 @@ private:
         uint32_t version = 0;
         long long money = -1;
         int dragging = -1;
+        int part = 0;
         int32_t incoming = -1;
         int16_t incomingCount = 0;
         float dragX = 0, dragY = 0;
@@ -164,6 +175,7 @@ private:
     float screenW_ = 0.0f, screenH_ = 0.0f;
     bool up_ = false;
     int dragging_ = -1;
+    int part_ = 0;  // split(): of the stack riding, how many; 0 all of it
     // The thing the button went down on, picked when it comes up over the same thing.
     int lifting_ = -1;
     sim::Held incoming_;

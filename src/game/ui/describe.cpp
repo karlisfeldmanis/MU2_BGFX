@@ -1277,4 +1277,12 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     return sheet;
 }
 
+void splitHint(const content::Tables& tables, const sim::Held& what, tip::Sheet& sheet) {
+    if (what.empty() || what.durability <= 1 || size_t(what.item) >= tables.items.size()) return;
+    const content::ItemRow& row = tables.items[size_t(what.item)];
+    if (!sim::stacks(row) || sim::ammunition(row) || !sheet.note.empty()) return;
+    sheet.note = "Shift-click to split";
+    sheet.noteTone = tip::Tone::Gray;
+}
+
 }  // namespace mu::game

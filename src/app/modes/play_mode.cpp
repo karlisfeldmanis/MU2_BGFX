@@ -1273,7 +1273,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                 // Pressed at the first point, carried to the second, let go there.
                 const bool here = at.index == c.frame;
                 desk_.script((here ? c.x : c.x2) * w, (here ? c.y : c.y2) * h, here,
-                             at.index == last, c.right);
+                             at.index == last, c.right, c.shift);
                 if (here) {
                     pointerX = c.x * w;
                     pointerY = c.y * h;

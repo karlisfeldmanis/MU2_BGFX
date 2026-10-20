@@ -402,8 +402,8 @@ constexpr int kStackMost = 20;
 // Firecrackers stack too, five a cell (the user, 2026-10-04: 'allow them to stack them, max 5').
 // Ours, as the potions' twenty.
 constexpr int kFirecrackerStackMost = 5;
-// How many of a row's pieces one cell holds: kStackMost for the drinkable potions,
-// kFirecrackerStackMost for a Firecracker, 0 for a row that does not stack.
+// How many of a row's pieces one cell holds: kStackMost for the drinkable potions and the four
+// refining jewels, kFirecrackerStackMost for a Firecracker, 0 for a row that does not stack.
 int stackMost(const content::ItemRow& row);
 // Whether a row's pieces stack.
 bool stacks(const content::ItemRow& row);

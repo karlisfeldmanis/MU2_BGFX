@@ -31,7 +31,9 @@ class Amount {
 public:
     // Offer: his Zen in a trade (game/ui/deal.h), which replaces the last; it opens on the sum
     // already offered, and an OK on nothing takes it back.
-    enum class Purpose : uint8_t { Deposit, Withdraw, Offer };
+    // Split: how many of a stack to take onto the pointer (the user, 2026-10-20: stacking
+    // jewels, Shift-click), 1 to `most`; it opens on 1.
+    enum class Purpose : uint8_t { Deposit, Withdraw, Offer, Split };
     struct Result {
         bool cancel = false;
         int64_t amount = 0;  // a sum confirmed, or 0 for nothing this frame
@@ -41,6 +43,12 @@ public:
     void open(const gfx::Interface& interface, panel::Arts* arts);
 
     void show(Purpose purpose, int64_t start = 0);
+    void showSplit(int most) {
+        show(Purpose::Split, 1);
+        most_ = most;
+        fresh_ = true;
+    }
+    int most() const { return most_; }
     void hide() { up_ = false; }
     bool up() const { return up_; }
     Purpose purpose() const { return purpose_; }
@@ -62,6 +70,8 @@ private:
     Purpose purpose_ = Purpose::Deposit;
     std::string digits_;
     bool short_ = false;
+    int most_ = 0;  // Split's: the stack's count
+    bool fresh_ = false;  // Split's 1, which the first digit typed replaces
     float clock_ = 0.0f;
     float x_ = 0.0f, y_ = 0.0f;
     int over_ = -1, pressing_ = -1;       // 0 OK, 1 Cancel, 2 the head's close
@@ -71,11 +81,12 @@ private:
         Purpose purpose = Purpose::Deposit;
         std::string digits;
         bool shortOf = false, caret = false;
+        int most = 0;
         float x = 0, y = 0, scale = 0;
         int over = -1, pressing = -1;
         float lift[3] = {0.0f, 0.0f, 0.0f};
         bool operator==(const Drawn& o) const {
-            return up == o.up && purpose == o.purpose && digits == o.digits &&
+            return up == o.up && purpose == o.purpose && digits == o.digits && most == o.most &&
                    shortOf == o.shortOf && caret == o.caret && x == o.x && y == o.y &&
                    scale == o.scale && over == o.over && pressing == o.pressing &&
                    lift[0] == o.lift[0] && lift[1] == o.lift[1] && lift[2] == o.lift[2];

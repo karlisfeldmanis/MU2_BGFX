@@ -112,6 +112,28 @@ player's: Fill puts in the rest and the need reads "N in bag, pick one". The des
 `PutIn` a slot to the first free cell, as many drags would, so it needs no protocol change.
 The list's Ready is the same plan, allowed to pick that thing (`anyTarget`).
 
+## Stacked jewels (2026-10-20)
+
+The Bless, Soul, Life and Chaos stack twenty a cell, as the potions do (bug report #41: "It's
+getting hard to manage single jewels"; the user: "we need stacking jewels"). The Rune of
+Creation does not: each carries its own power. Canvas claude.ai/artifact/DDBMWGBD7VHc3QEHGDGnf1.
+
+- A stack in the box counts as its pieces (`piecesOf`). Dropped in, right-clicked in or put by
+  Fill, a stack gives only what the open service wants of it (`sim::piecesWanted`, the count
+  `judge()` likes best, the fewest on a tie): one Chaos of twenty for the +10. A need of any
+  number (the Chaos Weapon's Bless) takes one; more go in by Shift-click. `Planned::pieces`
+  carries Fill's counts.
+- **Shift-click** on a stack in the bag, the vault or the box opens the number box ("Split
+  stack", `Amount::Purpose::Split`); its OK puts that many on the pointer, the rest stays in the
+  cell, and the drop asks the realm for that many: Move, Deposit, Withdraw, Rearrange, PutIn,
+  TakeOut, Shuffle, DealPut, Sell and Discard carry the count in the command's `c`, and
+  `Realm::applyCommands` splits it off into a free cell of the same grid before the method runs,
+  pouring it back when the method refuses. The stack's card says "Shift-click to split".
+- A stack sells at the counter for every jewel in it (`buyingPrice`). At the Broker a stack is
+  one listing at the stack's price, bought whole; only a single jewel joins the cheapest-first
+  row (`brokerAlike`), and the Quote is a piece's price, which the Sell tab and the bots multiply
+  by the stack's count. Protocol 40.
+
 ## Trying it
 
     ./mu play --new --windowed --world noria --at 182,106 --level 50 --zen 20000000 \

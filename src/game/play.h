@@ -298,7 +298,9 @@ public:
     uint32_t spendPoint(int stat);
     // A drag from one slot to another, and a right-click on a carried thing. Both the realm's
     // to refuse; see sim/items.h for the gates.
-    uint32_t moveItem(int from, int to);
+    // `pieces`: of a stack, how many go (Shift-click's part); 0 the whole of it. The same on
+    // every move below that takes one (the realm splits it off first, realm_commands.cpp).
+    uint32_t moveItem(int from, int to, int pieces = 0);
     uint32_t useItem(int slot);
     // His auto-drink lines in percent, 0 for never (sim::AutoDrink): the realm drinks for him
     // under them. What the settings window will send; `--auto-drink` until then.
@@ -311,9 +313,9 @@ public:
     // A drag let go over the world: the thing is thrown on the ground at his feet, where the
     // same Pick order that takes a kill's drop takes it back. The realm's to refuse, and the
     // figure is re-dressed when what was thrown came off him.
-    uint32_t discard(int slot);
+    uint32_t discard(int slot, int pieces = 0);
     // The same from a vault cell, with the vault open.
-    uint32_t discardFromVault(int cell);
+    uint32_t discardFromVault(int cell, int pieces = 0);
     // A skill key pressed: throw this skill at whatever the fight is on, or at `at` when the
     // window knows a target. Not an order and it does not cancel one -- the realm spends the next
     // swing on it and the knight goes on fighting (docs/game/skills-dk.md §3.1a). The realm refuses
@@ -428,7 +430,7 @@ public:
     // The open counter's requests: a purchase by shelf slot, a sale by bag slot, and walking
     // away. Each the realm's to refuse.
     uint32_t buy(int shelfSlot);
-    uint32_t sell(int bagSlot);
+    uint32_t sell(int bagSlot, int pieces = 0);
     // The shelf's undo: the newest sale taken back at what it fetched (Realm::buyBack).
     uint32_t buyBack();
     // A mending counter's two: one thing by its slot, worn or in the bag, and everything.
@@ -438,9 +440,9 @@ public:
     void closeTrade() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Trade)}); }
     // The vault, as the realm keeps it: each a request answered yes or no, logged and heard
     // as the bag's own moves are.
-    uint32_t deposit(int bagSlot, int cell);
-    uint32_t withdraw(int cell, int bagSlot);
-    uint32_t rearrange(int from, int to);
+    uint32_t deposit(int bagSlot, int cell, int pieces = 0);
+    uint32_t withdraw(int cell, int bagSlot, int pieces = 0);
+    uint32_t rearrange(int from, int to, int pieces = 0);
     uint32_t depositZen(int64_t zen);
     uint32_t withdrawZen(int64_t zen);
     void closeVault() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Vault)}); }
@@ -452,9 +454,9 @@ public:
     // The Chaos Machine (sim/machine.h), as the realm keeps it: the vault's three moves, and the
     // mix, heard as MU hears its answer -- eMix with eGem for a success, with eBreak for a
     // failure (ReceiveMixExtended, ReceiveTradeInventoryExtended).
-    uint32_t putIn(int bagSlot, int cell);
-    uint32_t takeOut(int cell, int bagSlot);
-    uint32_t shuffle(int from, int to);
+    uint32_t putIn(int bagSlot, int cell, int pieces = 0);
+    uint32_t takeOut(int cell, int bagSlot, int pieces = 0);
+    uint32_t shuffle(int from, int to, int pieces = 0);
     uint32_t mix(sim::Service service, int socket);
     void closeMachine() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Machine)}); }
     void restoreMachine(const sim::Machine& saved) { if (here("the machine")) local_.restoreMachine(saved); }
@@ -472,7 +474,7 @@ public:
     int dealApproachColumn_ = -1, dealApproachRow_ = -1;
     int64_t dealApproachTurn_ = 0;
     uint32_t dealAnswer(uint32_t asker, bool yes);
-    uint32_t dealPut(int bagSlot, int cell);
+    uint32_t dealPut(int bagSlot, int cell, int pieces = 0);
     uint32_t dealTake(int cell, int bagSlot);
     uint32_t dealZen(int64_t zen);
     uint32_t dealAccept(bool yes);

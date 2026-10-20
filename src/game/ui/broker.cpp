@@ -104,10 +104,19 @@ void Broker::heard(Play& play, const net::BrokerView& view) {
     if (view.parts & net::BrokerView::Box) mine_.box = view.box;
     if (view.parts & net::BrokerView::Quoted) {
         quote_ = view;
+        // The server quotes a piece's price; a stack of jewels on the Sell tab is priced whole,
+        // so its figures are that many times it.
+        const content::Tables* tables = play.realm().tables();
+        if (tables && sellSeen_.item == view.item && !sellSeen_.empty() &&
+            size_t(sellSeen_.item) < tables->items.size() && sim::stacks(tables->items[size_t(sellSeen_.item)])) {
+            const int64_t pieces = std::max<int64_t>(1, sellSeen_.durability);
+            quote_.cheapest *= pieces;
+            for (sim::Sale& sale : quote_.sales) sale.price *= pieces;
+        }
         // A price to start from: the cheapest on sale, or what has sold, or four times the NPC's.
         if (priceText_.empty() && sellSeen_.item == view.item && !sellSeen_.empty()) {
-            int64_t start = view.cheapest;
-            if (start <= 0 && !view.sales.empty()) start = view.sales.front().price;
+            int64_t start = quote_.cheapest;
+            if (start <= 0 && !quote_.sales.empty()) start = quote_.sales.front().price;
             if (start <= 0 && play.realm().tables()) {
                 start = 4 * std::max<int64_t>(1, sim::npcValue(*play.realm().tables(), sellSeen_));
             }

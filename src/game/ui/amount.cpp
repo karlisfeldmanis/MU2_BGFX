@@ -45,7 +45,8 @@ Box placed(float x, float y, const Box& b, float u) {
     return {std::round(x + b.x * u), std::round(y + b.y * u), std::round(b.w * u), std::round(b.h * u)};
 }
 
-const char* askingFor(Amount::Purpose purpose) {
+std::string askingFor(Amount::Purpose purpose, int most) {
+    if (purpose == Amount::Purpose::Split) return "How many to take, of " + std::to_string(most) + "?";
     if (purpose == Amount::Purpose::Offer) return "Enter the Zen you offer. Nothing takes it back.";
     return purpose == Amount::Purpose::Deposit ? "Enter the amount of Zen you would like to deposit."
                                                : "Enter the amount of Zen you would like to withdraw.";
@@ -64,6 +65,7 @@ void Amount::show(Purpose purpose, int64_t start) {
     digits_.clear();
     if (start > 0) digits_ = std::to_string(start);
     short_ = false;
+    fresh_ = false;
     clock_ = 0.0f;
     over_ = pressing_ = -1;
     lift_[0] = lift_[1] = lift_[2] = 0.0f;
@@ -88,6 +90,10 @@ void Amount::update(float seconds, float width, float height, const Pointer& poi
 
         // Digits only, eight at most, and no leading nought: UIOPTION_NUMBERONLY.
         const size_t before = digits_.size();
+        if (fresh_ && (backspaces > 0 || typed.find_first_of("0123456789") != std::string::npos)) {
+            digits_.clear();
+            fresh_ = false;
+        }
         for (char c : typed) {
             if (c < '0' || c > '9' || int(digits_.size()) >= kLimit) continue;
             if (c == '0' && digits_.empty()) continue;
@@ -132,6 +138,7 @@ void Amount::update(float seconds, float width, float height, const Pointer& poi
         now_.purpose = purpose_;
         now_.digits = digits_;
         now_.shortOf = short_;
+        now_.most = most_;
         now_.caret = std::fmod(clock_, kBlink * 2.0f) < kBlink;
         now_.x = x_;
         now_.y = y_;
@@ -155,7 +162,10 @@ void Amount::rebuild() {
     // Dims what is behind it a little, as a box that has to be answered does.
     canvas_.rect({0.0f, 0.0f, 1e5f, 1e5f}, gfx::rgba(0.0f, 0.0f, 0.0f, 0.25f));
     controls::frame(canvas_, placed(x, y, {0.0f, 0.0f, kWide, kTall}, u), u,
-                    purpose_ == Purpose::Deposit ? "Deposit" : purpose_ == Purpose::Offer ? "Offer Zen" : "Withdraw");
+                    purpose_ == Purpose::Deposit ? "Deposit"
+                    : purpose_ == Purpose::Offer ? "Offer Zen"
+                    : purpose_ == Purpose::Split ? "Split stack"
+                                                 : "Withdraw");
 
     // Each control's hover, smoothstepped, so the lift eases in and settles.
     const auto state = [&](int which, bool off) {
@@ -167,18 +177,20 @@ void Amount::rebuild() {
 
     const Box line = placed(x, y, {0.0f, kLineTop, kWide, kLineTall}, u);
     controls::label(canvas_, line.x + inset, controls::middle(line.y, line.h, style::kBodySize * u),
-                    style::kBodySize * u, style::kBone2, askingFor(purpose_));
+                    style::kBodySize * u, style::kBone2, askingFor(purpose_, most_));
 
     // The field, the sum grouped as the vault prints Zen, and rimmed red while it asks for more
     // than there is.
     const std::string shown =
-        digits_.empty() ? std::string() : panel::commas(std::atoll(digits_.c_str()));
+        digits_.empty() ? std::string() : purpose_ == Purpose::Split ? digits_ : panel::commas(std::atoll(digits_.c_str()));
     controls::field(canvas_, placed(x, y, {kInset, kFieldTop, kWide - kInset * 2.0f, style::kRow}, u),
                     shown, "", true, short_, now_.caret, false, u);
     if (short_) {
         const Box notice = placed(x, y, {0.0f, kNoticeTop, kWide, kNoticeTall}, u);
         controls::message(canvas_, notice.x + inset, controls::middle(notice.y, notice.h, 14.0f * u),
-                          "You are short of Zen.", u);
+                          purpose_ == Purpose::Split ? "Only " + std::to_string(most_) + " in this stack."
+                                                     : std::string("You are short of Zen."),
+                          u);
     }
 
     // OK is the primary, Return's answer, and stands inactive until there is a sum to give it:

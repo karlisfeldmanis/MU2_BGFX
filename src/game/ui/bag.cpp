@@ -175,7 +175,7 @@ bool creationJewel(const content::Tables& tables, const sim::Held& held) {
 const char* ghostArt(int slot, bool archer) { return ghostFor(slot, archer); }
 
 bool Bag::Contents::operator==(const Contents& o) const {
-    return version == o.version && money == o.money && dragging == o.dragging &&
+    return version == o.version && money == o.money && dragging == o.dragging && part == o.part &&
            incoming == o.incoming && incomingCount == o.incomingCount &&
            ((dragging < 0 && incoming < 0) || (dragX == o.dragX && dragY == o.dragY)) &&
            hovered == o.hovered &&
@@ -331,6 +331,7 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
         bool placed = true;
         if (dragging_ >= 0 && out) {
             const int from = dragging_;
+            out->pieces = part_;
             if (!inside) {
                 out->outside = from;
                 out->outsideX = pointer.x;
@@ -368,11 +369,14 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
         } else if (lifting_ >= 0 && lifting_ == hovered_ && !mending_) {
             // The release that ends the picking click: on the thing it went down on, it is up.
             dragging_ = lifting_;
+            part_ = 0;
         }
         lifting_ = -1;
     }
-    // A drag that the item has vanished from under -- sold, drunk -- is over.
+    // A drag that the item has vanished from under -- sold, drunk -- is over; and a part that
+    // is all the stack now is the whole.
     if (dragging_ >= 0 && bag[dragging_].empty()) dragging_ = -1;
+    if (dragging_ < 0 || part_ >= bag[dragging_].durability) part_ = 0;
 
     // What stands on the stage: every carried thing at its picture's box, the hovered one
     // turning. MU's RenderObjectScreen spins the one under the pointer and nothing else.
@@ -390,6 +394,11 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
         box = wellOf(box, sim::wearable(slot)).grown(sim::wearable(slot) ? -3.0f : -2.0f);
         standing_.push_back({what.item, box, what.refinement,
                              slot == hovered_ && dragging_ < 0, what.excellent != 0});
+        // A part riding: the rest of the stack stays standing in its cell.
+        if (slot == dragging_ && part_ > 0) {
+            standing_.push_back({what.item, wellOf(itemBox(tables, slot, what), false).grown(-2.0f),
+                                 what.refinement, false, what.excellent != 0});
+        }
     }
     // The one rune the set sockets are drawn with, in the strip under the window.
     bool anySet = false;
@@ -408,6 +417,7 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
     now_.version = bag.version();
     now_.money = realm.money();
     now_.dragging = dragging_;
+    now_.part = part_;
     now_.incoming = incoming_.item;
     now_.incomingCount = incoming_.durability;
     now_.dragX = pointer.x;
@@ -712,12 +722,15 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // says nothing. Not on the one riding the pointer.
     for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
         const sim::Held& held = bag[slot];
-        if (held.empty() || held.durability <= 1 || slot == dragging_) continue;
+        if (held.empty() || held.durability <= 1 || (slot == dragging_ && part_ == 0)) continue;
         if (sim::poursMost(tables.items[size_t(held.item)]) <= 0) continue;
+        // A part riding: the cell counts what stays.
+        const int count = slot == dragging_ ? held.durability - part_ : held.durability;
+        if (count <= 1) continue;
         const Box box = panel::scaled(x, y, itemBox(tables, slot, held));
         canvas_.shadowed(box.x, box.bottom() - 2.0f * k, 8.0f * k, panel::kLettering,
                          gfx::rgba(0.0f, 0.0f, 0.0f, 0.8f), std::max(1.0f, 0.5f * k),
-                         std::to_string(held.durability), gfx::Align::Right, box.w - 2.0f * k);
+                         std::to_string(count), gfx::Align::Right, box.w - 2.0f * k);
     }
 
     // The dock over all of that, under only what rides the pointer and the cards.
@@ -728,6 +741,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     if (dragging_ >= 0 && !bag[dragging_].empty()) {
         panel::carried(canvas_, picture, itemBox(tables, dragging_, bag[dragging_]), now_.dragX,
                        now_.dragY);
+        if (part_ > 1) panel::carriedCount(canvas_, itemBox(tables, dragging_, bag[dragging_]), now_.dragX, now_.dragY, part_);
     }
 
     // The hammer's card, kept short (the user, 2026-09-24: the first one said too much). Locked:
@@ -784,6 +798,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // out of the window's stage at its own footprint -- the same region the drag lifts.
     if (dragging_ < 0 && hovered_ >= 0 && !bag[hovered_].empty()) {
         tip::Sheet sheet = describe(tables, bag[hovered_], realm.wearer(), bag);
+        if (!mending_) splitHint(tables, bag[hovered_], sheet);
         // In repair mode the foot says what mending it costs: RenderRepairInfo's `Repairing
         // cost: %s` (GT 238), in the colour that says whether he can pay.
         if (mending_) {

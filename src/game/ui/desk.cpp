@@ -374,6 +374,15 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         } else if (result.offered) {
             // His Zen in a trade, which replaces the last; the realm refuses more than he carries.
             expect(play.dealZen(result.amount), Then::ZenBox);
+        } else if (result.amount > 0 && amount_.purpose() == Amount::Purpose::Split) {
+            if (result.amount > amount_.most()) {
+                amount_.refuse();
+                refused();
+            } else {
+                if (play.isOpen()) takePart(play, int(result.amount));
+                amount_.hide();
+                click();
+            }
         } else if (result.amount > 0) {
             // CZenReceiptMsgBoxLayout::ProcessOk: sent, clicked and shut -- or, short, said so.
             const bool deposit = amount_.purpose() == Amount::Purpose::Deposit;
@@ -1053,6 +1062,15 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     }
     bag_.setMending(mending_);
 
+    // Shift and a press on a stack in the bag, the vault or the box: how many, asked in the number
+    // box, and the press heard by nothing else. Not while the chat types, where Shift-click links.
+    const bool shiftNow = window.shift() || scriptShift_;
+    scriptShift_ = false;
+    if (pointer.pressed && shiftNow && !chat_.typing() && splitAsked(play)) {
+        pointer.pressed = false;
+        click();
+    }
+
     // The vault, as a counter is: it opens the bag beside it and closes the character window,
     // and walking away closes it in the realm with the windows following.
     const bool banking = play.isOpen() && play.realm().banking() >= 0;
@@ -1063,7 +1081,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         bagForVault_ = !inventoryOpen_;
         inventoryOpen_ = true;
     }
-    if (!banking && amount_.purpose() != Amount::Purpose::Offer) amount_.hide();
+    if (!banking && amount_.purpose() != Amount::Purpose::Offer && amount_.purpose() != Amount::Purpose::Split) amount_.hide();
     if (!banking && banking_ && bagForVault_) {
         inventoryOpen_ = false;
         bagForVault_ = false;
@@ -1078,7 +1096,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         chest_.update(float(window.width()), float(window.height()), 2, play.realm(), pointer,
                       shelfStage_, &asked);
         if (asked.moveFrom >= 0) {
-            expect(play.rearrange(asked.moveFrom, asked.moveTo), Then::TookOrRefused);
+            expect(play.rearrange(asked.moveFrom, asked.moveTo, asked.pieces), Then::TookOrRefused);
         }
         // A right-click: into the first room in the bag (Realm::withdraw pours it).
         if (asked.back >= 0) expect(play.withdraw(asked.back, -1), Then::TookOrRefused);
@@ -1091,9 +1109,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             footprint(play, play.realm().vault()[asked.outside], &w, &h);
             const int slot = inventoryOpen_ ? bag_.slotUnder(asked.outsideX, asked.outsideY, w, h) : -1;
             const bool overWindow = overWindows(asked.outsideX, asked.outsideY);
-            if (slot >= 0) expect(play.withdraw(asked.outside, slot), Then::TookOrRefused);
-            else if (!overWindow) expect(play.discardFromVault(asked.outside), Then::Refused);
-            else chest_.hold(asked.outside);
+            if (slot >= 0) expect(play.withdraw(asked.outside, slot, asked.pieces), Then::TookOrRefused);
+            else if (!overWindow) expect(play.discardFromVault(asked.outside, asked.pieces), Then::Refused);
+            else chest_.split(asked.outside, asked.pieces);
         }
         // MU's own answer to either coin: the box to type the sum in (CZenReceiptMsgBoxLayout,
         // CZenPaymentMsgBoxLayout), which does the moving on its OK.
@@ -1160,7 +1178,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         mixer_.update(seconds, float(window.width()), float(window.height()), 4, play.realm(),
                       play.mixAnswer(), play.mixWords(), pointer, shelfStage_, &asked);
         if (asked.moveFrom >= 0) {
-            expect(play.shuffle(asked.moveFrom, asked.moveTo), Then::TookOrRefused);
+            expect(play.shuffle(asked.moveFrom, asked.moveTo, asked.pieces), Then::TookOrRefused);
         }
         // Let go outside: into the bag cell under the pointer, and nowhere else; anywhere else
         // it stays on the pointer.
@@ -1168,8 +1186,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             int w, h;
             footprint(play, play.realm().machine()[asked.outside], &w, &h);
             const int slot = inventoryOpen_ ? bag_.slotUnder(asked.outsideX, asked.outsideY, w, h) : -1;
-            if (slot >= 0) expect(play.takeOut(asked.outside, slot), Then::TookOrRefused);
-            else mixer_.hold(asked.outside);
+            if (slot >= 0) expect(play.takeOut(asked.outside, slot, asked.pieces), Then::TookOrRefused);
+            else mixer_.split(asked.outside, asked.pieces);
         }
         if (asked.back >= 0) {
             expect(play.takeOut(asked.back, -1), Then::TookOrRefused);
@@ -1196,7 +1214,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             uint32_t last = 0;
             for (int i = 0; i < planned.count; ++i) {
                 if (last != 0) expect(last, Then::Quiet);
-                last = play.putIn(planned.slots[i], -1);
+                last = play.putIn(planned.slots[i], -1, planned.pieces[i]);
             }
             if (last != 0) expect(last, Then::TookOrRefused);
             else refused();
@@ -1295,14 +1313,14 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         // MU's equip sound is the pickup's -- and a use refused is iButtonError. A use that goes
         // through is heard as the potion going down, off the realm's Drank.
         if (asked.moveFrom >= 0) {
-            expect(play.moveItem(asked.moveFrom, asked.moveTo), Then::TookOrRefused);
+            expect(play.moveItem(asked.moveFrom, asked.moveTo, asked.pieces), Then::TookOrRefused);
         }
         // A jewel on a thing: Play rings both of its sounds, so a yes needs nothing here.
         if (asked.refineJewel >= 0) expect(play.refine(asked.refineJewel, asked.refineTarget), Then::Refused);
         // At the machine a right-click puts the thing in the box instead
         // (ProcessMyInvenItemAutoMove); a worn one, which the box refuses, is still used.
         if (asked.use >= 0 && mixing_ && sim::baggable(asked.use)) {
-            expect(play.putIn(asked.use, -1), Then::TookOrRefused);
+            expect(play.putIn(asked.use, -1, piecesForBox(play, asked.use, 0)), Then::TookOrRefused);
         } else if (asked.use >= 0 && brokering_ && sim::baggable(asked.use)) {
             broker_.offer(asked.use);  // at the Broker a right-click puts it on the Sell tab
             click();
@@ -1356,23 +1374,26 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         int carriedW = 1, carriedH = 1;
         if (asked.outside >= 0) footprint(play, play.realm().satchel()[asked.outside], &carriedW, &carriedH);
         if (asked.outside >= 0 && trading_ && shelf_.covers(asked.outsideX, asked.outsideY)) {
-            expect(play.sell(asked.outside), Then::Refused);
+            expect(play.sell(asked.outside, asked.pieces), Then::Refused);
         } else if (asked.outside >= 0 && banking_ &&
                    chest_.covers(asked.outsideX, asked.outsideY)) {
             // Into the vault cell under the pointer; over the foot or the head, the first cell
             // it fits in.
-            expect(play.deposit(asked.outside, chest_.cellUnder(asked.outsideX, asked.outsideY, carriedW, carriedH)),
+            expect(play.deposit(asked.outside, chest_.cellUnder(asked.outsideX, asked.outsideY, carriedW, carriedH),
+                                asked.pieces),
                    Then::TookOrRefused);
         } else if (asked.outside >= 0 && brokering_ && broker_.covers(asked.outsideX, asked.outsideY)) {
             broker_.offer(asked.outside);  // dropped on the market: chosen to sell
             click();
         } else if (asked.outside >= 0 && dealing_ && deal_.covers(asked.outsideX, asked.outsideY)) {
             // Into his own box, at the cell under the pointer or the first it fits.
-            expect(play.dealPut(asked.outside, deal_.cellUnder(asked.outsideX, asked.outsideY, carriedW, carriedH)),
+            expect(play.dealPut(asked.outside, deal_.cellUnder(asked.outsideX, asked.outsideY, carriedW, carriedH),
+                                asked.pieces),
                    carriesBound(asked.outside) ? Then::Bound : Then::TookOrRefused);
         } else if (asked.outside >= 0 && mixing_ &&
                    mixer_.covers(asked.outsideX, asked.outsideY)) {
-            expect(play.putIn(asked.outside, mixer_.cellUnder(asked.outsideX, asked.outsideY, carriedW, carriedH)),
+            expect(play.putIn(asked.outside, mixer_.cellUnder(asked.outsideX, asked.outsideY, carriedW, carriedH),
+                              piecesForBox(play, asked.outside, asked.pieces)),
                    Then::TookOrRefused);
         } else if (asked.outside >= 0 && hud_.quickAt(asked.outsideX, asked.outsideY) >= 0) {
             // Let go over a potion box: bound, and the thing stays in the bag. MU2's Caught.
@@ -1391,13 +1412,13 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             // Over any other window -- the character's, the chat, the minimap, the bar off its
             // potion boxes -- it stays on the pointer, as MU's picked item does: let go on a
             // window, a thing went on the ground behind it.
-            bag_.hold(asked.outside);
+            bag_.split(asked.outside, asked.pieces);
         } else if (asked.outside >= 0) {
             // The one gesture in the interface that gives something away: a click on the
             // ground with the thing picked, MU's IsPress off every window. A refusal -- a dead
             // man's drop -- is the interface's no, and the window puts the item back by
             // redrawing from a satchel that never changed.
-            expect(play.discard(asked.outside), Then::Refused);
+            expect(play.discard(asked.outside, asked.pieces), Then::Refused);
         }
         // Clicks as the I and V keys do. INVENTION, the user's (2026-09-30): CNewUIMyInventory's
         // exit button is silent in MU.
@@ -1489,8 +1510,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                    real.held || real.pressed);
 }
 
-void Desk::script(float x, float y, bool press, bool release, bool right) {
+void Desk::script(float x, float y, bool press, bool release, bool right, bool shift) {
     scripted_ = true;
+    scriptShift_ = press && shift;
     script_ = Pointer{};
     script_.x = x;
     script_.y = y;

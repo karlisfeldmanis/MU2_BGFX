@@ -894,6 +894,10 @@ bool portal(const content::ItemRow& row) {
 int stackMost(const content::ItemRow& row) {
     if (heals(row) || restores(row) || antidote(row)) return kStackMost;
     if (firecracker(row)) return kFirecrackerStackMost;
+    // The Bless, the Soul, the Life and the Chaos too, twenty a cell as the potions (the user,
+    // 2026-10-20: "we need stacking jewels", bug report #41). MU counts its own stacked jewels in
+    // the durability as well. A Rune of Creation carries a power of its own and never stacks.
+    if (refiningJewel(row)) return kStackMost;
     return 0;
 }
 

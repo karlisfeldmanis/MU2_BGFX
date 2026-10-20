@@ -31,6 +31,10 @@ namespace mu::game {
 
 tip::Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::Wearer& who,
                     const sim::Satchel& bag);
+// **How to take some off a stack**, in the card's foot (the user, 2026-10-20: "we need also
+// simple tooltip info for shift-usage"): "Shift-click to split" in grey on a stack of more than
+// one, where it can be split -- the bag, the vault and the machine's box call it, nothing else.
+void splitHint(const content::Tables& tables, const sim::Held& what, tip::Sheet& sheet);
 
 // The colour a Zen figure is drawn in: getGoldColor, a pale blue that steps through green and
 // blue as the amount grows. Bag.MoneyColour.

@@ -221,6 +221,13 @@ struct Judged {
 Judged judge(const content::Tables& tables, const Machine& box,
              Service service = Service::Combine, int socket = -1, Kin kin = Kin::DarkKnight);
 
+// **How many of a stack the box wants** (the user, 2026-10-20: stacking jewels): the count, 1 to
+// all of it, that brings the box nearest the service -- one Chaos of twenty for the +10 -- and the
+// fewest where more come no nearer, so a need of any number (the Chaos Weapon's Bless) takes one
+// and the player gives more by Shift-click. A thing that does not stack is itself, 1. Ours.
+int piecesWanted(const content::Tables& tables, const Machine& box, const Held& what,
+                 Service service = Service::Combine, int socket = -1, Kin kin = Kin::DarkKnight);
+
 // **What the bag makes of a service** (the user, 2026-10-20: every recipe on the window at once,
 // each saying whether he has it, and a Fill from bag): the bag's things, one at a time, that
 // bring the box nearer the service's needs, judged by judge() itself so no recipe is written
@@ -233,6 +240,7 @@ Judged judge(const content::Tables& tables, const Machine& box,
 struct Planned {
     Judged judged;                 // the box as it would stand with them in
     int slots[kMachineCells] = {};  // the bag slots to put in, in order
+    int pieces[kMachineCells] = {}; // of a stack, how many of it; 0 for all of it
     int count = 0;
     int missing = 0;   // needs still short with them in
     int choosing = 0;  // things in the bag that could be the one worked on, left to him

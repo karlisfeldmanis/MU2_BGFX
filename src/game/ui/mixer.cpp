@@ -287,7 +287,7 @@ std::string standing(const sim::Planned& p) {
 bool Mixer::Contents::operator==(const Contents& o) const {
     return version == o.version && bagVersion == o.bagVersion && money == o.money &&
            answer == o.answer && service == o.service && socket == o.socket &&
-           dragging == o.dragging && incoming == o.incoming && incomingTakes == o.incomingTakes &&
+           dragging == o.dragging && part == o.part && incoming == o.incoming && incomingTakes == o.incomingTakes &&
            ((dragging < 0 && incoming < 0) || (dragX == o.dragX && dragY == o.dragY)) &&
            hovered == o.hovered &&
            (hovered < 0 || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
@@ -452,6 +452,7 @@ void Mixer::update(float seconds, float width, float height, int column, const s
             // button, a red cell -- and back where it was over its own place.
             bool placed = true;
             if (dragging_ >= 0) {
+                out->pieces = part_;
                 if (!inside) {
                     out->outside = dragging_;
                     out->outsideX = pointer.x;
@@ -478,6 +479,7 @@ void Mixer::update(float seconds, float width, float height, int column, const s
                 if (placed) dragging_ = -1;
             } else if (lifting_ >= 0 && lifting_ == hovered_) {
                 dragging_ = lifting_;
+                part_ = 0;
             }
         }
         closing_ = false;
@@ -485,6 +487,7 @@ void Mixer::update(float seconds, float width, float height, int column, const s
         lifting_ = -1;
     }
     if (dragging_ >= 0 && box[dragging_].empty()) dragging_ = -1;
+    if (dragging_ < 0 || part_ >= box[dragging_].durability) part_ = 0;
 
     if (sparks_ > 0.0f) {
         sparks_ = std::max(0.0f, sparks_ - seconds);
@@ -500,6 +503,8 @@ void Mixer::update(float seconds, float width, float height, int column, const s
         const Box stood = at == dragging_ ? Box{4.0f, kCarryTop, place.w, place.h} : place;
         standing_.push_back({what.item, stood.grown(-2.0f), what.refinement,
                              at == hovered_ && dragging_ < 0, what.excellent != 0});
+        // A part riding: the rest of the stack stays standing in its cell.
+        if (at == dragging_ && part_ > 0) standing_.push_back({what.item, place.grown(-2.0f), what.refinement, false, what.excellent != 0});
     }
     // The one rune the set sockets are drawn with -- the bag's and the vault's.
     bool anySet = false;
@@ -521,6 +526,7 @@ void Mixer::update(float seconds, float width, float height, int column, const s
     now_.service = service_;
     now_.socket = socket_;
     now_.dragging = dragging_;
+    now_.part = part_;
     now_.incoming = incoming_.item;
     now_.incomingTakes = incomingTakes_;
     now_.dragX = pointer.x;
@@ -903,12 +909,14 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
     }
     for (int cell = 0; cell < sim::kMachineCells; ++cell) {
         const sim::Held& held = box[cell];
-        if (held.empty() || held.durability <= 1 || cell == dragging_) continue;
+        if (held.empty() || held.durability <= 1 || (cell == dragging_ && part_ == 0)) continue;
         if (sim::poursMost(tables.items[size_t(held.item)]) <= 0) continue;
+        const int count = cell == dragging_ ? held.durability - part_ : held.durability;
+        if (count <= 1) continue;
         const Box to = P(itemBox(tables, cell, held));
         canvas_.shadowed(to.x, to.bottom() - 2.0f * k, 8.0f * k, panel::kLettering,
                          gfx::rgba(0.0f, 0.0f, 0.0f, 0.8f), std::max(1.0f, 0.5f * k),
-                         std::to_string(held.durability), gfx::Align::Right, to.w - 2.0f * k);
+                         std::to_string(count), gfx::Align::Right, to.w - 2.0f * k);
     }
 
     // **The answer's sparks** (the user, 2026-10-20: "how good looking is our sparkle effect?",
@@ -1027,10 +1035,12 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
         } else {
             canvas_.rect(to, gfx::rgba(0.68f, 0.60f, 0.40f, 0.5f));
         }
+        if (part_ > 1) panel::carriedCount(canvas_, place, now_.dragX, now_.dragY, part_);
     }
 
     if (dragging_ < 0 && hovered_ >= 0 && !box[hovered_].empty()) {
         tip::Sheet sheet = describe(tables, box[hovered_], realm.wearer(), realm.satchel());
+        splitHint(tables, box[hovered_], sheet);
         if (tipStage_) tip::stand(*tipStage_, box[hovered_].item, box[hovered_].refinement, sheet);
         const Box cell = P(itemBox(tables, hovered_, box[hovered_]));
         tip::draw(tip_, sheet, cell, screenW_, screenH_);

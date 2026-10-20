@@ -58,7 +58,7 @@ Box itemBox(const content::Tables& tables, int cell, const sim::Held& what) {
 
 bool Chest::Contents::operator==(const Contents& o) const {
     return version == o.version && bagVersion == o.bagVersion && money == o.money &&
-           dragging == o.dragging && incoming == o.incoming &&
+           dragging == o.dragging && part == o.part && incoming == o.incoming &&
            incomingCount == o.incomingCount && incomingTakes == o.incomingTakes &&
            ((dragging < 0 && incoming < 0) || (dragX == o.dragX && dragY == o.dragY)) &&
            hovered == o.hovered &&
@@ -144,6 +144,7 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
             // red cell -- and back where it was over its own place.
             bool placed = true;
             if (dragging_ >= 0) {
+                out->pieces = part_;
                 if (!inside) {
                     out->outside = dragging_;
                     out->outsideX = pointer.x;
@@ -173,6 +174,7 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
                 if (placed) dragging_ = -1;
             } else if (lifting_ >= 0 && lifting_ == hovered_) {
                 dragging_ = lifting_;
+                part_ = 0;
             }
         }
         closing_ = false;
@@ -180,6 +182,7 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
         lifting_ = -1;
     }
     if (dragging_ >= 0 && vault[dragging_].empty()) dragging_ = -1;
+    if (dragging_ < 0 || part_ >= vault[dragging_].durability) part_ = 0;
 
     standing_.clear();
     for (int at = 0; at < sim::kVaultCells; ++at) {
@@ -188,6 +191,8 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
         const Box box = itemBox(tables, at, what);
         standing_.push_back({what.item, (at == dragging_ ? panel::carryBox(box) : box).grown(-2.0f), what.refinement,
                              at == hovered_ && dragging_ < 0, what.excellent != 0});
+        // A part riding: the rest of the stack stays standing in its cell.
+        if (at == dragging_ && part_ > 0) standing_.push_back({what.item, box.grown(-2.0f), what.refinement, false, what.excellent != 0});
     }
     // The one rune the set sockets are drawn with, in the strip under the window -- the bag's.
     bool anySet = false;
@@ -208,6 +213,7 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
     now_.bagVersion = realm.satchel().version();
     now_.money = vault.zen();
     now_.dragging = dragging_;
+    now_.part = part_;
     now_.incoming = incoming_.item;
     now_.incomingCount = incoming_.durability;
     now_.incomingTakes = incomingTakes_;
@@ -360,21 +366,25 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
     // A stack's count at its cell's foot -- the bag's.
     for (int at = 0; at < sim::kVaultCells; ++at) {
         const sim::Held& held = vault[at];
-        if (held.empty() || held.durability <= 1 || at == dragging_) continue;
+        if (held.empty() || held.durability <= 1 || (at == dragging_ && part_ == 0)) continue;
         if (sim::poursMost(tables.items[size_t(held.item)]) <= 0) continue;
+        const int count = at == dragging_ ? held.durability - part_ : held.durability;
+        if (count <= 1) continue;
         const Box box = panel::scaled(x, y, itemBox(tables, at, held));
         canvas_.shadowed(box.x, box.bottom() - 2.0f * k, 8.0f * k, panel::kLettering,
                          gfx::rgba(0.0f, 0.0f, 0.0f, 0.8f), std::max(1.0f, 0.5f * k),
-                         std::to_string(held.durability), gfx::Align::Right, box.w - 2.0f * k);
+                         std::to_string(count), gfx::Align::Right, box.w - 2.0f * k);
     }
 
     // What rides the pointer, cut out of the stage at its own footprint -- the bag's drag.
     if (dragging_ >= 0 && !vault[dragging_].empty()) {
         panel::carried(canvas_, picture, itemBox(tables, dragging_, vault[dragging_]), now_.dragX, now_.dragY);
+        if (part_ > 1) panel::carriedCount(canvas_, itemBox(tables, dragging_, vault[dragging_]), now_.dragX, now_.dragY, part_);
     }
 
     if (dragging_ < 0 && hovered_ >= 0 && !vault[hovered_].empty()) {
         tip::Sheet sheet = describe(tables, vault[hovered_], realm.wearer(), realm.satchel());
+        splitHint(tables, vault[hovered_], sheet);
         if (tipStage_) tip::stand(*tipStage_, vault[hovered_].item, vault[hovered_].refinement, sheet);
         const Box cell = panel::scaled(x, y, itemBox(tables, hovered_, vault[hovered_]));
         tip::draw(tip_, sheet, cell, screenW_, screenH_);

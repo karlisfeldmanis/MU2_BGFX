@@ -308,10 +308,16 @@ private:
                 // under the last, Blood Castle's halves went from 160 to the counter's 40 in a game
                 // hour while buyers outnumbered them. A thing that sold lately at the cheapest or
                 // over goes up at the cheapest.
-                const bool selling = view.cheapest > 0 && !view.sales.empty() && view.sales.front().price >= view.cheapest;
-                int64_t price = view.cheapest > 0
-                                    ? (selling ? view.cheapest : view.cheapest * (100 - int64_t(nameHash(bot.name()) % 6)) / 100)
-                                : !view.sales.empty() ? view.sales.front().price
+                // A quote is a piece's price (server Quote, since jewels stack, 2026-10-20): a stack
+                // goes up at that many times it.
+                const int64_t pieces = sim::stacks(tables.items[size_t(e.quoted.item)])
+                                           ? std::max<int64_t>(1, e.quoted.durability) : 1;
+                const int64_t cheapest = view.cheapest * pieces;
+                const int64_t lastSale = view.sales.empty() ? 0 : view.sales.front().price * pieces;
+                const bool selling = cheapest > 0 && !view.sales.empty() && lastSale >= cheapest;
+                int64_t price = cheapest > 0
+                                    ? (selling ? cheapest : cheapest * (100 - int64_t(nameHash(bot.name()) % 6)) / 100)
+                                : !view.sales.empty() ? lastSale
                                                       : asked;
                 // Never under half what its options and runes ask: the cheapest of its name may be
                 // a plain one, and a merchant pays nothing for them.

@@ -75,7 +75,8 @@ public:
     // A scripted pointer for the next update, replacing the mouse's: a press, a release, or
     // just a place. The run's --ui-click goes through here and then through exactly the
     // windows' own code.
-    void script(float x, float y, bool press, bool release, bool right = false);
+    // `shift`: Shift held on the press (--ui-click F:X:Y:S), for a stack's split.
+    void script(float x, float y, bool press, bool release, bool right = false, bool shift = false);
     // The director's hand, whole and every frame, so not logged (app/modes/director.h).
     void scriptHand(const Pointer& hand) {
         scripted_ = true;
@@ -342,6 +343,20 @@ private:
     bool bagForMachine_ = false;
     // The number box the vault's coin buttons open. Modal: see Desk::update.
     Amount amount_;
+    // **The stack a Shift-click opened the number box on** (the user, 2026-10-20: stacking
+    // jewels): 0 the bag, 1 the vault, 2 the machine's box, its slot and item; its OK puts that
+    // many on the pointer (Bag::split and the others), and the drop asks the realm for them.
+    struct Splitting {
+        int from = -1, slot = -1;
+        int32_t item = -1;
+    } splitting_;
+    bool scriptShift_ = false;  // a scripted press with Shift (script)
+    // Opens it on the stack under the pointer, if a press with Shift is on one; true when it did.
+    bool splitAsked(const Play& play);
+    void takePart(const Play& play, int pieces);
+    // How many of the bag's stack at `slot` a drop into the machine's box asks for: `part` when
+    // a part rides, else as many as the open service wants (sim::piecesWanted); 0 all of it.
+    int piecesForBox(const Play& play, int slot, int part) const;
     Report report_;
     BugAsk reportAsk_;
     bool reportReady_ = false;

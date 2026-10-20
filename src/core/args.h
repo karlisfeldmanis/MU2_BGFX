@@ -387,12 +387,14 @@ struct Args {
     // Scripted presses on the windows, for a run with nobody at the mouse: FRAME:X:Y, X and Y
     // as fractions of the screen, pressed on FRAME and released on the next -- or
     // FRAME:X:Y:X2:Y2, a drag, pressed at the first point, carried to the second over two
-    // frames and released there on the third. A right-click is FRAME:X:Y:R. Repeatable.
+    // frames and released there on the third. A right-click is FRAME:X:Y:R, a Shift-click
+    // FRAME:X:Y:S (a stack's split, 2026-10-20). Repeatable.
     struct UiClick {
         int frame = 0;
         float x = 0.0f, y = 0.0f;
         float x2 = -1.0f, y2 = -1.0f;
         bool right = false;
+        bool shift = false;
     };
     std::vector<UiClick> uiClicks;
     // Scripted typing: FRAME:TEXT, the text typed into whatever box is open on FRAME -- digits,

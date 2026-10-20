@@ -749,6 +749,7 @@ Args parseArgs(int argc, char** argv) {
                 Args::UiClick c;
                 const int got = std::sscanf(v, "%d:%f:%f:%f:%f", &c.frame, &c.x, &c.y, &c.x2, &c.y2);
                 if (got == 3 && std::strchr(v, 'R')) c.right = true;
+                if (got == 3 && std::strchr(v, 'S')) c.shift = true;
                 if (got == 3 || got == 5) {
                     if (got == 3) {
                         c.x2 = c.x;

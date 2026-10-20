@@ -706,6 +706,7 @@ add_library(mu_game STATIC
   src/game/ui/chest.cpp
   src/game/ui/deal.cpp
   src/game/ui/desk_deal.cpp
+  src/game/ui/desk_split.cpp
   src/game/ui/broker.cpp
   src/game/ui/broker_draw.cpp
   src/game/ui/mixer.cpp

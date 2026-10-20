@@ -11,6 +11,44 @@
 
 namespace mu::sim {
 
+namespace {
+
+// **Part of a stack** (the user, 2026-10-20: "we need stacking jewels", with Shift-click taking
+// some off): a window's move, deposit, put-in and the rest carry how many in `c`, and the realm
+// splits those off into a free cell of the same grid first, so the method runs on a whole thing
+// as it always has. `c` of -1, 0 or the whole stack is the whole stack, as before. Ours.
+//
+// The cell the part went to; -1 when nothing was split (not a stack, or all of it); -2 when the
+// grid has no free cell to split it into.
+template <class Grid>
+int splitOff(const content::Tables& tables, Grid& grid, int at, int pieces) {
+    const Held whole = grid[at];
+    if (whole.empty() || size_t(whole.item) >= tables.items.size()) return -1;
+    const content::ItemRow& row = tables.items[size_t(whole.item)];
+    if (poursMost(row) <= 0 || ammunition(row) || pieces <= 0 || pieces >= whole.durability) return -1;
+    const int cell = grid.free(tables, row.width, row.height);
+    if (cell < 0) return -2;
+    Held part = whole, left = whole;
+    part.durability = int16_t(pieces);
+    left.durability = int16_t(whole.durability - pieces);
+    grid.put(at, left);
+    grid.put(cell, part);
+    return cell;
+}
+
+// A refused part poured back onto the stack it came off.
+template <class Grid>
+void joinBack(const content::Tables& tables, Grid& grid, int at, int cell) {
+    if (grid[cell].empty()) return;
+    const int went = topUp(tables, grid, at, grid[cell]);
+    Held left = grid[cell];
+    left.durability = int16_t(left.durability - went);
+    if (left.durability <= 0) grid.lift(cell);
+    else grid.put(cell, left);
+}
+
+}  // namespace
+
 void Realm::restoreKept(const Kept& kept) {
     restore(kept.hero);
     me().vault = kept.vault;
@@ -56,10 +94,51 @@ void Realm::applyCommands() {
         using Kind = Command::Kind;
         Kind said = one.kind;
         float burstX = 0.0f, burstY = 0.0f;
-        switch (one.kind) {
+        // A part of a stack, split off first (splitOff): `from` is the grid it comes out of, 0 the
+        // bag, 1 the vault, 2 the machine's box; `same` a move inside that grid.
+        Command run = one;
+        int from = -1, partOf = -1, part = -1;
+        bool same = false;
+        if (tables_ && one.c > 0) {
+            switch (one.kind) {
+                case Kind::Move: from = 0, same = true; break;
+                case Kind::Rearrange: from = 1, same = true; break;
+                case Kind::Shuffle: from = 2, same = true; break;
+                case Kind::Sell:
+                case Kind::Deposit:
+                case Kind::PutIn:
+                case Kind::DealPut: from = 0; break;
+                case Kind::Discard: from = one.b == 1 ? 1 : 0; break;
+                case Kind::Withdraw: from = 1; break;
+                case Kind::TakeOut: from = 2; break;
+                default: break;
+            }
+            const bool inBag = from != 0 || baggable(one.a);
+            const int limit = from == 0 ? kSlots : from == 1 ? kVaultCells : kMachineCells;
+            if (from >= 0 && inBag && one.a >= 0 && one.a < limit) {
+                part = from == 0   ? splitOff(*tables_, me().bag, one.a, one.c)
+                       : from == 1 ? splitOff(*tables_, me().vault, one.a, one.c)
+                                   : splitOff(*tables_, me().machine, one.a, one.c);
+                if (part == -2) {
+                    refusal_ = "no free cell to split the stack into";
+                    if (one.ticket != 0) say(What::Answered, mine(), int32_t(said), -1, int32_t(one.ticket));
+                    continue;
+                }
+                if (part >= 0) {
+                    partOf = one.a;
+                    run.a = part;
+                }
+            }
+        }
+        // Let go on the very cell the part was split into: it is there already.
+        if (same && part >= 0 && part == one.b) {
+            if (one.ticket != 0) say(What::Answered, mine(), int32_t(said), 1, int32_t(one.ticket));
+            continue;
+        }
+        switch (run.kind) {
             case Kind::None: continue;
             case Kind::Buy: answer = buy(one.a); break;
-            case Kind::Sell: answer = sellItem(one.a); break;
+            case Kind::Sell: answer = sellItem(run.a); break;
             case Kind::BuyBack: answer = buyBack(); break;
             case Kind::Repair: answer = repair(one.a) ? 1 : -1; break;
             case Kind::RepairAll: {
@@ -67,31 +146,31 @@ void Realm::applyCommands() {
                 answer = mended > 0 ? mended : -1;
                 break;
             }
-            case Kind::Deposit: answer = deposit(one.a, one.b); break;
-            case Kind::Withdraw: answer = withdraw(one.a, one.b); break;
-            case Kind::Rearrange: answer = rearrange(one.a, one.b) ? 1 : -1; break;
+            case Kind::Deposit: answer = deposit(run.a, one.b); break;
+            case Kind::Withdraw: answer = withdraw(run.a, one.b); break;
+            case Kind::Rearrange: answer = rearrange(run.a, one.b) ? 1 : -1; break;
             case Kind::DepositZen: answer = depositZen(one.zen) ? 1 : -1; break;
             case Kind::WithdrawZen: answer = withdrawZen(one.zen) ? 1 : -1; break;
-            case Kind::PutIn: answer = putIn(one.a, one.b); break;
-            case Kind::TakeOut: answer = takeOut(one.a, one.b); break;
-            case Kind::Shuffle: answer = shuffle(one.a, one.b) ? 1 : -1; break;
+            case Kind::PutIn: answer = putIn(run.a, one.b); break;
+            case Kind::TakeOut: answer = takeOut(run.a, one.b); break;
+            case Kind::Shuffle: answer = shuffle(run.a, one.b) ? 1 : -1; break;
             case Kind::Mix: answer = mix(one.service, one.a) ? 1 : -1; break;
-            case Kind::Move: answer = moveItem(one.a, one.b) ? 1 : -1; break;
+            case Kind::Move: answer = moveItem(run.a, one.b) ? 1 : -1; break;
             case Kind::Use: answer = useItem(one.a) ? 1 : -1; break;
             case Kind::Refine: answer = refine(one.a, one.b) ? 1 : -1; break;
             case Kind::Discard:
             case Kind::Crack:
                 if (one.b == 1) {
-                    const uint32_t thrown = discardFromVault(one.a);
+                    const uint32_t thrown = discardFromVault(run.a);
                     answer = thrown != 0 ? int64_t(thrown) : -1;
-                } else if (cracks(one.a)) {
-                    const Cracked cracked = crack(one.a);
+                } else if (cracks(run.a)) {
+                    const Cracked cracked = crack(run.a);
                     said = Kind::Crack;
                     answer = cracked.opened ? 1 : -1;
                     burstX = float(cracked.column);
                     burstY = float(cracked.row);
                 } else {
-                    const uint32_t thrown = discard(one.a);
+                    const uint32_t thrown = discard(run.a);
                     answer = thrown != 0 ? int64_t(thrown) : -1;
                 }
                 break;
@@ -157,7 +236,7 @@ void Realm::applyCommands() {
             case Kind::PartySet: answer = setParty(one.target, uint32_t(std::max(0, one.a))) ? 1 : -1; break;
             case Kind::DealAsk: answer = dealAsk(one.target) ? 1 : -1; break;
             case Kind::DealAnswer: answer = dealAnswer(one.target, one.a == 1) ? 1 : -1; break;
-            case Kind::DealPut: answer = dealPut(one.a, one.b); break;
+            case Kind::DealPut: answer = dealPut(run.a, one.b); break;
             case Kind::DealTake: answer = dealTake(one.a, one.b); break;
             case Kind::DealZen: answer = dealZen(one.zen) ? 1 : -1; break;
             case Kind::DealAccept: answer = dealAccept(one.a == 1) ? 1 : -1; break;
@@ -169,6 +248,12 @@ void Realm::applyCommands() {
                 break;
             case Kind::BrokerGive: answer = brokerGive(unpackHeld(one)); break;
             case Kind::BrokerZen: answer = brokerZen(one.zen); break;
+        }
+        // Refused, the part goes back onto its stack.
+        if (part >= 0 && answer < 0) {
+            if (from == 0) joinBack(*tables_, me().bag, partOf, part);
+            else if (from == 1) joinBack(*tables_, me().vault, partOf, part);
+            else joinBack(*tables_, me().machine, partOf, part);
         }
         if (one.ticket == 0) continue;
         say(What::Answered, *find(answerer), int32_t(said),

@@ -300,7 +300,8 @@ int64_t buyingPrice(const content::ItemRow& row, int refinement, int pieces, boo
     if (row.group == kBows && quiver(row.number, refinement) > 0) {
         return round(full <= 0 ? 0 : int64_t(quiver(row.number, refinement)) * shots / full);
     }
-    if (jewel(row.group, row.number) > 0) return jewel(row.group, row.number);
+    // A stack of jewels (they stack since 2026-10-20) is that many jewels' price.
+    if (jewel(row.group, row.number) > 0) return jewel(row.group, row.number) * std::max(1, pieces);
     if (row.group == kScrolls && spell(row.number) > 0) return round(spell(row.number));
     if (row.group == kOrbs && orb(row.number) > 0) return round(orb(row.number));
     // The pets: `dropLevel^3 + 100`, the branch OpenMU gives group 13 with the capes and the

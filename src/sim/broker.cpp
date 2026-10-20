@@ -71,7 +71,10 @@ BrokerNo brokerable(const content::Tables& tables, const Held& what) {
 
 bool brokerAlike(const content::ItemRow& row, const Held& what) {
     const BrokerKind kind = brokerKind(row);
+    // A stack of jewels is a listing of its own, bought whole (the user, 2026-10-20): only a
+    // single one fills a row of alike things.
     return (kind == BrokerKind::Jewels || kind == BrokerKind::Tickets) && what.refinement == 0 &&
+           (!stacks(row) || what.durability <= 1) &&
            !what.skill && !what.luck && what.option == 0 && what.excellent == 0;
 }
 

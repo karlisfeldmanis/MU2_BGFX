@@ -60,8 +60,8 @@ void Play::castSkill(int32_t skill, uint32_t at) {
                row ? row->mana : 0, realm_.hero().mana);
 }
 
-uint32_t Play::moveItem(int from, int to) {
-    return send({.kind = sim::Command::Kind::Move, .a = from, .b = to});
+uint32_t Play::moveItem(int from, int to, int pieces) {
+    return send({.kind = sim::Command::Kind::Move, .a = from, .b = to, .c = pieces});
 }
 
 // A right-click on a carried thing. What the answer needs is taken now: the thing, where he
@@ -95,7 +95,7 @@ uint32_t Play::refine(int jewelSlot, int targetSlot) {
 // A drag let go over the world. The realm decides between throwing it down and opening it (a
 // Firecracker or a box, Realm::cracks); the answer says which, and the noise belongs to the thing
 // LANDING (Play::landed) or to the firework over its tile.
-uint32_t Play::discard(int slot) {
+uint32_t Play::discard(int slot, int pieces) {
     Asked asked;
     asked.worn = slot >= 0 && sim::wearable(slot);
     asked.item = slot >= 0 && slot < sim::kSlots ? realm_.satchel()[slot].item : -1;
@@ -103,13 +103,13 @@ uint32_t Play::discard(int slot) {
                                       ? &tables_.items[size_t(asked.item)]
                                       : nullptr;
     asked.box = row && (sim::boxOfLuck(*row) || sim::boxOfKundun(*row));
-    return send({.kind = sim::Command::Kind::Discard, .a = slot}, asked);
+    return send({.kind = sim::Command::Kind::Discard, .a = slot, .c = pieces}, asked);
 }
 
-uint32_t Play::discardFromVault(int cell) {
+uint32_t Play::discardFromVault(int cell, int pieces) {
     Asked asked;
     asked.item = cell >= 0 && cell < sim::kVaultCells ? realm_.vault()[cell].item : -1;
-    return send({.kind = sim::Command::Kind::Discard, .a = cell, .b = 1}, asked);
+    return send({.kind = sim::Command::Kind::Discard, .a = cell, .b = 1, .c = pieces}, asked);
 }
 
 // The satchel is the truth (sprint 7) and Realm::rearm already reads
@@ -434,7 +434,9 @@ uint32_t Play::completeQuest(int quest, int choice, sim::QuestPath path) {
 
 uint32_t Play::buyBack() { return send({.kind = sim::Command::Kind::BuyBack}); }
 
-uint32_t Play::sell(int bagSlot) { return send({.kind = sim::Command::Kind::Sell, .a = bagSlot}); }
+uint32_t Play::sell(int bagSlot, int pieces) {
+    return send({.kind = sim::Command::Kind::Sell, .a = bagSlot, .c = pieces});
+}
 
 // The mending counter's two. ReceiveRepair plays SOUND_REPAIR on the reply that carries the new
 // Zen, and only then, so a repair refused is the desk's no and not this sound.
@@ -454,28 +456,28 @@ void Play::jewelRung() {
     redress();
 }
 
-uint32_t Play::deposit(int bagSlot, int cell) {
-    return send({.kind = sim::Command::Kind::Deposit, .a = bagSlot, .b = cell});
+uint32_t Play::deposit(int bagSlot, int cell, int pieces) {
+    return send({.kind = sim::Command::Kind::Deposit, .a = bagSlot, .b = cell, .c = pieces});
 }
 
-uint32_t Play::withdraw(int cell, int bagSlot) {
-    return send({.kind = sim::Command::Kind::Withdraw, .a = cell, .b = bagSlot});
+uint32_t Play::withdraw(int cell, int bagSlot, int pieces) {
+    return send({.kind = sim::Command::Kind::Withdraw, .a = cell, .b = bagSlot, .c = pieces});
 }
 
-uint32_t Play::rearrange(int from, int to) {
-    return send({.kind = sim::Command::Kind::Rearrange, .a = from, .b = to});
+uint32_t Play::rearrange(int from, int to, int pieces) {
+    return send({.kind = sim::Command::Kind::Rearrange, .a = from, .b = to, .c = pieces});
 }
 
-uint32_t Play::putIn(int bagSlot, int cell) {
-    return send({.kind = sim::Command::Kind::PutIn, .a = bagSlot, .b = cell});
+uint32_t Play::putIn(int bagSlot, int cell, int pieces) {
+    return send({.kind = sim::Command::Kind::PutIn, .a = bagSlot, .b = cell, .c = pieces});
 }
 
-uint32_t Play::takeOut(int cell, int bagSlot) {
-    return send({.kind = sim::Command::Kind::TakeOut, .a = cell, .b = bagSlot});
+uint32_t Play::takeOut(int cell, int bagSlot, int pieces) {
+    return send({.kind = sim::Command::Kind::TakeOut, .a = cell, .b = bagSlot, .c = pieces});
 }
 
-uint32_t Play::shuffle(int from, int to) {
-    return send({.kind = sim::Command::Kind::Shuffle, .a = from, .b = to});
+uint32_t Play::shuffle(int from, int to, int pieces) {
+    return send({.kind = sim::Command::Kind::Shuffle, .a = from, .b = to, .c = pieces});
 }
 
 // The words are judged as it is asked, off the box as the player sees it when he presses OK.
@@ -542,8 +544,8 @@ uint32_t Play::dealAnswer(uint32_t asker, bool yes) {
     return send({.kind = sim::Command::Kind::DealAnswer, .a = yes ? 1 : 0, .target = asker});
 }
 
-uint32_t Play::dealPut(int bagSlot, int cell) {
-    return send({.kind = sim::Command::Kind::DealPut, .a = bagSlot, .b = cell});
+uint32_t Play::dealPut(int bagSlot, int cell, int pieces) {
+    return send({.kind = sim::Command::Kind::DealPut, .a = bagSlot, .b = cell, .c = pieces});
 }
 
 uint32_t Play::dealTake(int cell, int bagSlot) {
