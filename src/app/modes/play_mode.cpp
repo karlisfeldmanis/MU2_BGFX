@@ -1362,7 +1362,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                 desk_.notice("Helper started.");
             }
         }
-        if (helper_.on() && (ctx.autoQuest >= 0 || (!windowed && (mouseLeft || mouseRight)))) {
+        // A scripted press on the world (--ui-click) counts as his own click.
+        if (helper_.on() && (ctx.autoQuest >= 0 || (!windowed && (mouseLeft || mouseRight || uiPress)))) {
             helper_.stop();
             desk_.notice("Helper stopped.");
         }
