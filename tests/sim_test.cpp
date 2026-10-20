@@ -2227,8 +2227,8 @@ void testCastLock(const content::Tables& tables) {
                   aqua.spread == sim::Spread::Beam && aqua.reach == 6.0f && aqua.clip == 152 &&
                   aqua.kin == sim::Kin::DarkWizard,
               "Aqua Beam is a no-cooldown beam of eighty damage and a hundred and forty mana");
-        check(sim::skillIndexOf(sim::skill::kAquaBeam) == sim::kSkills - 6 && sim::kSkills == 39,
-              "and its row is the last but Penetration's, Fire Breath's, Cometfall's, Impale's and Nova's");
+        check(sim::skillIndexOf(sim::skill::kAquaBeam) == 33,
+              "and its row is the 34th, where it was learned, so no save's learned bit moves");
         const int32_t aquaScroll = tables.itemAt(15, 11);
         check(aquaScroll >= 0 &&
                   tables.items[size_t(aquaScroll)].teaches == sim::skill::kAquaBeam &&
@@ -2742,8 +2742,8 @@ void testCastLock(const content::Tables& tables) {
               "and a comet strikes over half again as hard as a rock");
         check(sim::skillElement(sim::skill::kCometfall) == sim::Element::Lightning,
               "and it is lightning");
-        check(sim::skillIndexOf(sim::skill::kCometfall) == sim::skillCount() - 3,
-              "and its row is the last but Impale's and Nova's, so no save's learned bit moves");
+        check(sim::skillIndexOf(sim::skill::kCometfall) == 36,
+              "and its row is the 37th, so no save's learned bit moves");
         const int32_t cometScroll = tables.itemAt(15, 12);
         check(cometScroll >= 0 &&
                   tables.items[size_t(cometScroll)].teaches == sim::skill::kCometfall &&
@@ -2802,8 +2802,40 @@ void testCastLock(const content::Tables& tables) {
                   impale.families == sim::arms::kSpear && impale.reach == 1.0f &&
                   impale.spread == sim::Spread::One && impale.needLevel == 56,
               "Impale is the knight's, eight mana, a spear's alone, at his own reach");
-        check(sim::skillIndexOf(sim::skill::kImpale) == sim::skillCount() - 2,
-              "and its row is the last but Nova's, so no save's learned bit moves");
+        check(sim::skillIndexOf(sim::skill::kImpale) == 37,
+              "and its row is the 38th, so no save's learned bit moves");
+        // **The Alquamos, the elf's flying seventh** (the user, 2026-10-20): the last row, raised
+        // over Icarus where the walking six are not, standing as Bali, the Orb of Summoning +6's.
+        {
+            const sim::SkillRow& alq = sim::skillAt(sim::skillIndexOf(sim::skill::kSummonAlquamos));
+            const sim::SkillRow& bali = sim::skillAt(sim::skillIndexOf(sim::skill::kSummonBali));
+            check(sim::skillIndexOf(sim::skill::kSummonAlquamos) == sim::kSkills - 1 && sim::kSkills == 40,
+                  "Summon Alquamos is the last row");
+            check(alq.summons == 69 && alq.summonsAs == 150 && alq.airborne && alq.kin == sim::Kin::FairyElf,
+                  "it raises the Alquamos, standing as Bali, flying, the elf's");
+            check(sim::summonsHere(alq, sim::kIcarusMap) && !sim::summonsHere(bali, sim::kIcarusMap) &&
+                      sim::summonsHere(alq, 0),
+                  "over Icarus it is raised and Bali is not; anywhere else both");
+            const content::ItemRow* orb = nullptr;
+            for (const content::ItemRow& r : tables.items) {
+                if (sim::summoningOrb(r)) orb = &r;
+            }
+            check(orb && sim::asRead(*orb, 6).teaches == sim::skill::kSummonAlquamos &&
+                      sim::asRead(*orb, 5).teaches == sim::skill::kSummonBali &&
+                      sim::asRead(*orb, 6).label == "Orb of Alquamos",
+                  "the Orb of Summoning +6 is the Orb of Alquamos, +5 still Bali");
+            const content::MonsterKind* stands = sim::summonStats(tables, alq);
+            const content::MonsterKind* baliKind = sim::summonStats(tables, bali);
+            check(stands && baliKind && stands->number == 150, "its numbers are Bali's breed");
+            if (stands && baliKind) {
+                const sim::HeroPoints pts{100, 200, 150, 120};
+                const sim::SummonFit a = sim::summonFit(*stands, 150, pts, alq.number);
+                const sim::SummonFit b = sim::summonFit(*baliKind, 150, pts, bali.number);
+                check(a.health == b.health && a.minimumDamage == b.minimumDamage &&
+                          a.maximumDamage == b.maximumDamage && a.defense == b.defense && a.level == b.level,
+                      "and at one elf it stands exactly as her Bali");
+            }
+        }
         const int32_t orb = tables.itemAt(12, 18);
         check(orb >= 0 && tables.items[size_t(orb)].teaches == sim::skill::kImpale &&
                   tables.items[size_t(orb)].teachesLevel == 56 &&

@@ -111,6 +111,11 @@ constexpr int32_t kSummonAssassin = 32;
 constexpr int32_t kSummonYeti = 33;
 constexpr int32_t kSummonKnight = 34;
 constexpr int32_t kSummonBali = 35;
+// **And a seventh, ours: the Alquamos, flying** (the user, 2026-10-20: "we will have flying summons
+// later", "lets implement that and give orb reward after first icarus clear"). MU's elf has no
+// flying summon and no summon at all over Icarus; 37 is the empty cell after Summon Soldier's 36
+// on MU's skill sheet, so 36 stays free for MU's own.
+constexpr int32_t kSummonAlquamos = 37;
 // `AT_SKILL_PENETRATION`, off the Orb of Penetration (group 12 number 17): 0.95d's and not
 // 0.75's (Version095d is where OpenMU first has it; VersionSeasonSix/SkillsInitializer.cs:171
 // carries the row). An arrow that flies on through everything in its line.
@@ -411,6 +416,13 @@ struct SkillRow {
     // `chargeStages`; let go -- or full -- it bursts (Realm::burstCharge). 0 for every other.
     int32_t chargeTicks = 0;
     int32_t chargeStages = 0;
+    // ---- the Alquamos's, appended after Nova's ----------------------------------------------
+    // **Whose numbers a summon fights with**, when not its own breed's: the Alquamos wears its
+    // Icarus body and stands as Bali (150) would (the user, 2026-10-20: "lets implement that",
+    // Bali's numbers). 0 for its own.
+    int32_t summonsAs = 0;
+    // **A summon that flies**: raised over a map whose rules forbid summons (Icarus's).
+    bool airborne = false;
     // **Whether a press aims it at the ground under the pointer** rather than at a body: the
     // shapes that have a direction -- Aqua Beam's beam, Power Wave's line, the knight's arcs and
     // Twister's walking storm. Thrown from the keys or the right button, he turns to where the
@@ -475,7 +487,7 @@ struct SkillRow {
 // again, which the static_assert below says. Also the width of a body's cooldown array -- and
 // the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 39;
+constexpr int kSkills = 40;
 
 // What each of Nova's stages adds to its blow: OpenMU's NovaDamageTable (NovaSkillStartPlugin.cs:30),
 // stage 0 to 12, with the strength's half beside it (SkillsInitializer.cs:610-611).
@@ -688,6 +700,11 @@ SummonFit summonFit(const content::MonsterKind& kind, int heroLevel, const HeroP
                     int32_t skill);
 // The breed a summon skill raises in these tables, or nullptr.
 const content::MonsterKind* summonKind(const content::Tables& tables, const SkillRow& row);
+// And the breed whose numbers it fights with (SkillRow::summonsAs, else its own), or nullptr.
+const content::MonsterKind* summonStats(const content::Tables& tables, const SkillRow& row);
+// Whether a summon skill may be raised on map `map`: anywhere its rules allow summons, and a
+// flying one anywhere (SkillRow::airborne).
+bool summonsHere(const SkillRow& row, uint32_t map);
 // How far from her it hunts, and how far it strays before it walks back: OpenMU's
 // SummonedMonsterIntelligence -- eight tiles round the owner, two tiles idle, five fighting.
 // Wider fighting, ours (the user, 2026-10-19: "allow to summon fight litle bit more tiles becose

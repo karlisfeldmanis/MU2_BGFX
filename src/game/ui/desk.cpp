@@ -1730,7 +1730,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         // Blood Castle's court is the one safe ground an aura is raised on (Realm::throwSkill).
         const bool court = row.aura() && tables.map == sim::kBloodCastleMap;
         // Nor a summon where none is raised: Icarus (Realm::conjure, sim::MapRow::summons).
-        const bool raised = row.summons <= 0 || sim::rulesOf(uint32_t(tables.map)).summons;
+        const bool raised = row.summons <= 0 || sim::summonsHere(row, uint32_t(tables.map));
         return hero.alive() && (!inTown || court) && armedFor(row) && hero.mana >= row.mana &&
                (!row.mounted || hero.riding) && raised;
     };
@@ -2134,7 +2134,7 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     // 2026-10-20: "dont allow walking pets for elf in icarus, basically we need to show that its
     // not usable on tooltip. we will have flying summons later"): a red row where it is refused,
     // the key cold beside it (`ready`).
-    if (row.summons > 0 && tables && !sim::rulesOf(uint32_t(tables->map)).summons) {
+    if (row.summons > 0 && tables && !sim::summonsHere(row, uint32_t(tables->map))) {
         facts.rows.push_back(line("Here", "Not usable in " + quest_world::mapName(tables->map),
                                   tip::Tone::Red));
     }

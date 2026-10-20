@@ -1038,6 +1038,10 @@ QuestRow tersiaSkyDoor() {
     // Plague, the Epic it had, is the wizard's at Tarkan now.
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::GreaterAscendance),
                                  .firstOnly = true};
+    // **The elf's flying summon** (the user, 2026-10-20: "give orb reward after first icarus
+    // clear"): the Orb of Summoning +6, the Alquamos, the first time she clears the sky's first
+    // four (skill::kSummonAlquamos). Hers alone, as Tersia's seventh link gave her Bali at +5.
+    row.paid[row.paidCount++] = {.item = "Gem05", .plus = 6, .kin = elf, .firstOnly = true};
     row.voice = "tersia_8";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }

@@ -259,7 +259,7 @@ void selfLines(const sim::SkillRow& row, const content::Tables* tables, const si
         note(sum);
     } else if (row.summons > 0) {
         // A summon as it would stand beside her now (sim::summonFit), and what it scales with.
-        const content::MonsterKind* kind = tables ? sim::summonKind(*tables, row) : nullptr;
+        const content::MonsterKind* kind = tables ? sim::summonStats(*tables, row) : nullptr;
         if (kind != nullptr) {
             const sim::SummonFit fit = sim::summonFit(*kind, who.level, has, row.number);
             out.push_back(stat("Level", std::to_string(fit.level), tone(Tone::White)));

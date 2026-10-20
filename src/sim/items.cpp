@@ -873,11 +873,13 @@ bool summoningOrb(const content::ItemRow& row) { return row.group == 12 && row.n
 content::ItemRow asRead(const content::ItemRow& row, int refinement) {
     content::ItemRow read = row;
     if (!summoningOrb(row)) return read;
-    static const char* const kNames[6] = {"Goblin", "Golem", "Assassin",
-                                          "Elite Yeti", "Dark Knight", "Bali"};
-    static const int kEnergy[6] = {30, 60, 90, 130, 170, 210};
-    const int at = std::clamp(refinement, 0, 5);
-    read.teaches = skill::kSummonGoblin + at;
+    // And +6 the Alquamos, ours (skill::kSummonAlquamos, 37 and not 36), Tersia's first Icarus
+    // clear: 250 energy, one step past Bali's 210.
+    static const char* const kNames[7] = {"Goblin", "Golem", "Assassin",
+                                          "Elite Yeti", "Dark Knight", "Bali", "Alquamos"};
+    static const int kEnergy[7] = {30, 60, 90, 130, 170, 210, 250};
+    const int at = std::clamp(refinement, 0, 6);
+    read.teaches = at == 6 ? skill::kSummonAlquamos : skill::kSummonGoblin + at;
     read.teachesEnergy = kEnergy[at];
     read.label = std::string("Orb of ") + kNames[at];
     if (const SkillRow* taught = skillNumbered(read.teaches)) {

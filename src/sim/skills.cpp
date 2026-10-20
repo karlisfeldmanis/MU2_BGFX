@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdio>
 
+#include "sim/maps.h"
 #include "sim/swings.h"
 
 namespace mu::sim {
@@ -836,6 +837,19 @@ constexpr SkillRow kRows[kSkills] = {
      .clip = 73, .sound = "nova_burst", .built = true, .families = arms::kNone,
      .needLevel = 100, .kin = Kin::DarkWizard, .wizardry = true, .damage = 0,
      .chargeTicks = 10, .chargeStages = 12},
+
+    // ---- Summon Alquamos 37, the elf's seventh, past Nova -----------------------------------------
+    //
+    // Ours (kSummonAlquamos): Icarus's Alquamos, flying, raised over Icarus where the walking six
+    // are refused, and standing as Bali does -- her numbers (summonsAs 150), her tier of her level
+    // (summonLevel clamps past Bali), her mana. Its own breed's body, pace and reach: it strikes
+    // from five tiles. Taught by the Orb of Summoning +6, Tersia's first Icarus clear (quests.cpp).
+    {.number = skill::kSummonAlquamos, .name = "Summon Alquamos", .mana = 250,
+     .coolTicks = kSummonCool,
+     .tells = "An Alquamos at her side, flying where no walking summon may follow, over Icarus "
+              "too. It strikes from range.",
+     .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
+     .kin = Kin::FairyElf, .anyHand = true, .summons = 69, .summonsAs = 150, .airborne = true},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy
@@ -1151,6 +1165,17 @@ const content::MonsterKind* summonKind(const content::Tables& tables, const Skil
     }
     return nullptr;
 }
+
+const content::MonsterKind* summonStats(const content::Tables& tables, const SkillRow& row) {
+    if (row.summons <= 0) return nullptr;
+    const int32_t as = row.summonsAs > 0 ? row.summonsAs : row.summons;
+    for (const content::MonsterKind& kind : tables.kinds) {
+        if (kind.number == as) return &kind;
+    }
+    return nullptr;
+}
+
+bool summonsHere(const SkillRow& row, uint32_t map) { return row.airborne || rulesOf(map).summons; }
 
 int healOf(const HeroPoints& points) { return 5 + std::max(0, points.energy) / 5; }
 
