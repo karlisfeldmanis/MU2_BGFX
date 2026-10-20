@@ -645,8 +645,8 @@ QuestRow tersiaDoor() {
     row.resting =
         "\"Let me sleep an hour. Just one. Then we talk about the next floor.\"";
     row.next = "Tersia has another contract: the second floor";
-    row.steps[0] = {QuestStepKind::Clear, 36, 20, "Shadows"};
-    row.steps[1] = {QuestStepKind::Clear, 39, 8, "Poison Shadows"};
+    row.steps[0] = {QuestStepKind::Clear, 36, 40, "Shadows"};
+    row.steps[1] = {QuestStepKind::Clear, 39, 25, "Poison Shadows"};
     row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
     row.stepCount = 3;
     // Devin's errand handed in to her (towerErrand), which his own hand-in sends the hero back
@@ -692,8 +692,8 @@ QuestRow tersiaSecond() {
         "need them.\"";
     row.resting = "\"I am writing names. Leave me a while.\"";
     row.next = "Tersia has another contract: the third floor";
-    row.steps[0] = {QuestStepKind::Clear, 39, 18, "Poison Shadows"};
-    row.steps[1] = {QuestStepKind::Clear, 34, 6, "Cursed Wizards"};
+    row.steps[0] = {QuestStepKind::Clear, 39, 40, "Poison Shadows"};
+    row.steps[1] = {QuestStepKind::Clear, 34, 25, "Cursed Wizards"};
     row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
     row.stepCount = 3;
     row.afterAny = 1u << 6;
@@ -740,8 +740,8 @@ QuestRow tersiaThird() {
         "\"Pay, as promised. Past that floor the stone turns red. I never went that far.\"";
     row.resting = "\"My hands keep shaking. It passes. Come back later.\"";
     row.next = "Tersia has another contract: the fourth floor";
-    row.steps[0] = {QuestStepKind::Clear, 34, 8, "Cursed Wizards"};
-    row.steps[1] = {QuestStepKind::Clear, 41, 10, "Death Cows"};
+    row.steps[0] = {QuestStepKind::Clear, 34, 30, "Cursed Wizards"};
+    row.steps[1] = {QuestStepKind::Clear, 41, 35, "Death Cows"};
     row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
     row.stepCount = 3;
     row.afterAny = 1u << 7;
@@ -779,8 +779,8 @@ QuestRow tersiaFourth() {
         "\"Your pay. And my thanks, which is worth less, but you have it anyway.\"";
     row.resting = "\"I dream about the red floor. Give me until morning.\"";
     row.next = "Tersia has another contract: the fifth floor";
-    row.steps[0] = {QuestStepKind::Clear, 41, 6, "Death Cows"};
-    row.steps[1] = {QuestStepKind::Clear, 37, 5, "Devils"};
+    row.steps[0] = {QuestStepKind::Clear, 41, 30, "Death Cows"};
+    row.steps[1] = {QuestStepKind::Clear, 37, 25, "Devils"};
     row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
     row.stepCount = 3;
     row.afterAny = 1u << 8;
@@ -818,8 +818,8 @@ QuestRow tersiaFifth() {
     row.handIn[1] = "\"Here. Your pay. Two floors left.\"";
     row.resting = "\"Not now. I need to be alone for a while.\"";
     row.next = "Tersia has another contract: the sixth floor";
-    row.steps[0] = {QuestStepKind::Clear, 37, 6, "Devils"};
-    row.steps[1] = {QuestStepKind::Clear, 40, 6, "Death Knights"};
+    row.steps[0] = {QuestStepKind::Clear, 37, 30, "Devils"};
+    row.steps[1] = {QuestStepKind::Clear, 40, 25, "Death Knights"};
     row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
     row.stepCount = 3;
     row.afterAny = 1u << 9;
@@ -864,9 +864,9 @@ QuestRow tersiaSixth() {
     row.handIn[1] = "\"Your pay. Sleep before the last one. One of us should.\"";
     row.resting = "\"The last floor waits. So do I.\"";
     row.next = "Tersia has the last contract: the Balrog";
-    row.steps[0] = {QuestStepKind::Clear, 37, 4, "Devils"};
-    row.steps[1] = {QuestStepKind::Clear, 40, 4, "Death Knights"};
-    row.steps[2] = {QuestStepKind::Clear, 35, 4, "Death Gorgons"};
+    row.steps[0] = {QuestStepKind::Clear, 37, 20, "Devils"};
+    row.steps[1] = {QuestStepKind::Clear, 40, 20, "Death Knights"};
+    row.steps[2] = {QuestStepKind::Clear, 35, 20, "Death Gorgons"};
     row.steps[3] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
     row.stepCount = 4;
     row.afterAny = 1u << 10;
@@ -917,8 +917,8 @@ QuestRow tersiaBalrog() {
         "\"Full pay, and the guild's bonus. Tonight I am going to sleep. All night.\"";
     row.resting =
         "\"Another Balrog will crawl up there. When it does, the contract opens again.\"";
-    row.steps[0] = {QuestStepKind::Clear, 35, 12, "Death Gorgons"};
-    row.steps[1] = {QuestStepKind::Clear, 40, 10, "Death Knights"};
+    row.steps[0] = {QuestStepKind::Clear, 35, 40, "Death Gorgons"};
+    row.steps[1] = {QuestStepKind::Clear, 40, 30, "Death Knights"};
     row.steps[2] = {QuestStepKind::Clear, 38, 1, "The Balrog"};
     row.steps[3] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
     row.stepCount = 4;
