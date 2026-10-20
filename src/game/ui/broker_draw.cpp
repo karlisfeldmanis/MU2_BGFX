@@ -168,6 +168,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
             std::vector<const gfx::Art*> faces;  // the class line's faces, before its words
         };
         const float ix = well.right() + 12.0f, iw = block.right() - 8.0f - ix;
+        constexpr float kFace = 14.0f;  // a class's face before the class line
         std::vector<Said> said;
         const auto add = [&](const std::string& left, uint32_t leftInk, const std::string& value, uint32_t valueInk) {
             if (!value.empty()) return said.push_back({left, value, leftInk, valueInk});
@@ -187,17 +188,30 @@ void Broker::rebuild(Play& play, Stage* stage) {
         // Whose class it is, first: under a scroll's long words it ran off the card's foot (the
         // user, 2026-10-19: "missing info on market opened item which class item is that").
         if (sheet.classed && !sheet.who.empty()) {
-            add(sheet.who[0].text, tip::colourOf(sheet.who[0].tone), "", 0);
             // And each class's face before it (the user, 2026-10-19: "show class picture on
             // market"): the second's where the thing asks it, the gladiator's own either way.
-            if (!said.empty() && size_t(what.item) < tables.items.size()) {
+            std::vector<const gfx::Art*> faces;
+            if (size_t(what.item) < tables.items.size()) {
                 const content::ItemRow& row = tables.items[size_t(what.item)];
                 for (int i = 0; i < sim::kKinCount; ++i) {
                     if (!((row.classes >> i) & 1)) continue;
                     const bool second = ((row.classes >> (8 + i)) & 1) && sim::Kin(i) != sim::Kin::MagicGladiator;
                     const gfx::Art* face = classFaces_[i * 2 + (second ? 1 : 0)];
-                    if (face && face->valid()) said.back().faces.push_back(face);
+                    if (face && face->valid()) faces.push_back(face);
                 }
+            }
+            // The faces and the names on one line when both fit the column, the names on the
+            // line under the faces when not: "DW / FE / DK" after three faces ran past the card's
+            // edge (the user, 2026-10-21: "overlap issue").
+            const std::string& names = sheet.who[0].text;
+            const uint32_t namesInk = tip::colourOf(sheet.who[0].tone);
+            const float facesWide = float(faces.size()) * (kFace + 3.0f);
+            if (!faces.empty() && facesWide + controls::labelWidth(S(kText), names) / k > iw) {
+                said.push_back({"", "", namesInk, 0, faces});
+                add(names, namesInk, "", 0);
+            } else {
+                add(names, namesInk, "", 0);
+                if (!said.empty()) said.back().faces = faces;
             }
         }
         if (!sheet.hero.empty()) add(sheet.hero.word, style::kBone2, sheet.hero.value, tip::colourOf(sheet.hero.tone));
@@ -236,7 +250,6 @@ void Broker::rebuild(Play& play, Stage* stage) {
             float lx = under ? ax : ix;
             const float rx = under ? block.right() : ix + iw;
             for (const gfx::Art* face : said[size_t(i)].faces) {
-                constexpr float kFace = 14.0f;
                 const Box disc{lx, ly - kFace + 3.0f, kFace, kFace};
                 canvas_.rect(P(disc), style::kVoid);
                 canvas_.image(*face, P(disc));
