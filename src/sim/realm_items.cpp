@@ -700,7 +700,7 @@ int Realm::give(int32_t item, int slot, int refinement, int durability, bool luc
     // A stack asked for anywhere pours into what he carries, twenty a cell.
     if (slot < 0 && stacks(row)) {
         Held stack{item, int16_t(refinement), int16_t(std::max(1, durability))};
-        stack.bound = bound;
+        stack.bound = bound && bindable(row);
         return pour(*tables_, me().bag, kWorn, kSlots, stack);
     }
     if (slot < 0) slot = me().bag.free(*tables_, row.width, row.height);
@@ -710,7 +710,7 @@ int Realm::give(int32_t item, int slot, int refinement, int durability, bool luc
     }
     if (durability < 0) durability = fullDurability(row, refinement);
     Held put{item, int16_t(refinement), int16_t(durability)};
-    put.bound = bound;
+    put.bound = bound && bindable(row);
     if (takesOptions(row) || jewellery(row)) {
         // Luck on a ring or a pendant too, since they refine: ours (2026-10-03); MU's
         // CItem::Convert reads none there.
@@ -938,9 +938,9 @@ bool Realm::refine(int jewelSlot, int targetSlot) {
     if (settable(*tables_, jewel, thing, hero.kin, hero.second)) {
         const int socket = freeSocket(thing);
         thing.powers[socket] = jewel.powers[0];
-        // A quest's rune binds what it is set in (the user, 2026-10-12: "dont allow to sell any
-        // item on market which is queest reward"): set in a dropped sword, it went to market.
-        if (jewel.bound) thing.bound = true;
+        // A quest's rune no longer binds what it is set in: it bound a dropped sword for good
+        // (2026-10-12's rule, given up by the user 2026-10-20, sim::bindable). The rune stays
+        // bound while it is a rune.
         me().bag.lift(jewelSlot);
         me().bag.put(targetSlot, thing);
         if (wearable(targetSlot)) rearm(hero);

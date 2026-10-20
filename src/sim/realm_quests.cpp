@@ -348,7 +348,7 @@ bool Realm::completeQuest(int index, int choice, QuestPath path) {
         if (item < 0) return true;  // a row naming nothing cooked pays nothing, and says so below
         const content::ItemRow& itemRow = tables_->items[size_t(item)];
         if (stacks(itemRow)) {
-            // Bound to him, as everything a quest pays (Held::bound).
+            // Bound to him, as everything a quest pays (Held::bound) but its jewels (bindable).
             const int slot = give(item, -1, 0, std::max(1, what.count), false, 0, 0, 0, nullptr, nullptr, true);
             if (slotOut) *slotOut = slot;
             return slot >= 0;

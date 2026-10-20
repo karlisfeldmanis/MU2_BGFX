@@ -321,7 +321,8 @@ void resolveSave(const content::Tables& tables, Saved& saved) {
         for (int i = 0; i < 3; ++i) held.powers[i] = uint8_t(item.powers[i]);
         for (int i = 0; i < 3; ++i) held.affixes[i] = uint8_t(item.affixes[i]);
         held.wing = uint8_t(item.wing);
-        held.bound = item.bound;
+        // A jewel a quest paid before jewels were never bound comes back free (sim::bindable).
+        held.bound = item.bound && sim::bindable(tables.items[size_t(row)]);
         capSockets(tables.items[size_t(row)], held);
     }
     // Bows and crossbows went to the weapon slot and every quiver to the left hand (2026-10-02,
@@ -357,7 +358,7 @@ void resolveSave(const content::Tables& tables, Saved& saved) {
         for (int i = 0; i < 3; ++i) held.powers[i] = uint8_t(item.powers[i]);
         for (int i = 0; i < 3; ++i) held.affixes[i] = uint8_t(item.affixes[i]);
         held.wing = uint8_t(item.wing);
-        held.bound = item.bound;
+        held.bound = item.bound && sim::bindable(*r);
         capSockets(*r, held);
         saved.machine.put(item.slot, held);
     }
@@ -621,7 +622,7 @@ sim::Vault resolveVault(const content::Tables& tables, const Saved& saved) {
         for (int i = 0; i < 3; ++i) held.powers[i] = uint8_t(item.powers[i]);
         for (int i = 0; i < 3; ++i) held.affixes[i] = uint8_t(item.affixes[i]);
         held.wing = uint8_t(item.wing);
-        held.bound = item.bound;
+        held.bound = item.bound && sim::bindable(*r);
         capSockets(*r, held);
         vault.put(item.slot, held);
     }

@@ -7895,60 +7895,17 @@ void testChaosMachine() {
         }
         check(realm.machine().empty(), "and the box is emptied");
     }
-    // But a bound Jewel of Chaos goes into any mix, and what it makes is bound (the user,
-    // 2026-10-19: "allow to use bound chaos jewel in chaos machine").
-    {
-        bool tried = false, boundMade = false;
-        for (int attempt = 0; attempt < 40 && !boundMade; ++attempt) {
-            realm.putIn(realm.give(sword, -1, 9));
-            const int jewel = realm.give(chaos, -1, 0, -1, false, 0, 0, 1, nullptr, nullptr, true);
-            check(jewel >= 0 && realm.satchel()[jewel].bound, "a bound Chaos in the bag");
-            realm.putIn(jewel);
-            realm.putIn(realm.give(bless));
-            realm.putIn(realm.give(soul));
-            const sim::Judged j = realm.judged();
-            check(j.ready && j.recipe == sim::Recipe::PlusTen, "a bound Chaos makes a +10 box");
-            check(realm.mix(), "and the Goblin runs it");
-            tried = true;
-            for (int cell = 0; cell < sim::kMachineCells; ++cell) {
-                const sim::Held& one = realm.machine()[cell];
-                if (one.empty()) continue;
-                boundMade = one.item == sword && one.refinement == 10 && one.bound;
-                const int back = realm.takeOut(cell);
-                if (back >= 0) realm.sell(back);
-            }
-        }
-        check(tried && boundMade, "the +10 it makes is bound");
-        check(realm.machine().empty(), "and the box is emptied");
-    }
-    // And so do a quest's bound Bless and Soul (the user, 2026-10-20, Bruno: "I have all items but
-    // cant create Chaos Weapon"); bound gear stays out.
+    // A quest's jewels are never bound (sim::bindable; the user, 2026-10-20: "lets remove bound
+    // from jewels completly"): asked bound, they come free, and bound gear stays out of a mix.
     {
         const auto boundOne = [&](int32_t item, int plus) {
-            const int slot = realm.give(item, -1, plus, -1, false, 0, 0, 1, nullptr, nullptr, true);
-            check(slot >= 0 && realm.satchel()[slot].bound, "a bound one in the bag");
-            return slot;
+            return realm.give(item, -1, plus, -1, false, 0, 0, 1, nullptr, nullptr, true);
         };
-        bool tried = false, boundMade = false;
-        for (int attempt = 0; attempt < 40 && !boundMade; ++attempt) {
-            realm.putIn(realm.give(sword, -1, 9));
-            realm.putIn(realm.give(chaos));
-            realm.putIn(boundOne(bless, 0));
-            realm.putIn(boundOne(soul, 0));
-            const sim::Judged j = realm.judged();
-            check(j.ready && j.recipe == sim::Recipe::PlusTen && !j.blocked,
-                  "a bound Bless and Soul make a +10 box");
-            check(realm.mix(), "and the Goblin runs it");
-            tried = true;
-            for (int cell = 0; cell < sim::kMachineCells; ++cell) {
-                const sim::Held& one = realm.machine()[cell];
-                if (one.empty()) continue;
-                boundMade = one.item == sword && one.refinement == 10 && one.bound;
-                const int back = realm.takeOut(cell);
-                if (back >= 0) realm.sell(back);
-            }
+        for (const int32_t jewel : {chaos, bless, soul}) {
+            const int slot = boundOne(jewel, 0);
+            check(slot >= 0 && !realm.satchel()[slot].bound, "a quest's jewel comes free");
+            realm.sell(slot);
         }
-        check(tried && boundMade, "the +10 made with them is bound");
         realm.putIn(boundOne(sword, 9));
         realm.putIn(realm.give(chaos));
         realm.putIn(realm.give(bless));
@@ -7981,8 +7938,9 @@ void testChaosMachine() {
             blessCount += realm.satchel()[slot].durability;
         }
         check(blessCells == 2 && blessCount == 25, "twenty a cell: twenty-five are two");
-        const int bound = realm.give(bless, -1, 0, 1, false, 0, 0, 0, nullptr, nullptr, true);
-        check(bound >= 0 && bound != first && realm.satchel()[bound].bound, "a bound one keeps its own cell");
+        const int quest = realm.give(bless, -1, 0, 1, false, 0, 0, 0, nullptr, nullptr, true);
+        check(quest >= 0 && quest != first && realm.satchel()[quest].durability == 6 && !realm.satchel()[quest].bound,
+              "a quest's Bless pours onto the drops' five (never bound)");
         for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
             if (realm.satchel()[slot].item == bless) realm.sell(slot);
         }
@@ -9526,8 +9484,8 @@ void testRunes(const content::Tables& tables) {
         check(realm.discard(sword) != 0, "and the socketed sword goes on the ground");
     }
 
-    // A quest's rune binds what it is set in (the user, 2026-10-12: "dont allow to sell any item
-    // on market which is queest reward"), so it cannot leave by way of a dropped sword.
+    // A quest's rune is bound, but no longer binds what it is set in (the user, 2026-10-20, over
+    // 2026-10-12's rule): set in a dropped sword, the sword stays free.
     {
         sim::Realm realm;
         check(realm.raise(&tables, 11, 138, 124), "a realm raises for a bound rune");
@@ -9538,8 +9496,9 @@ void testRunes(const content::Tables& tables) {
         check(sword >= 0 && found >= 0 && paid >= 0, "a sword, a found rune and a quest's");
         check(realm.refine(found, sword) && !realm.satchel()[sword].bound, "a found rune leaves the sword free");
         check(sim::brokerable(tables, realm.satchel()[sword]) == sim::BrokerNo::Yes, "and on the market");
-        check(realm.refine(paid, sword) && realm.satchel()[sword].bound, "a quest's rune binds it");
-        check(sim::brokerable(tables, realm.satchel()[sword]) == sim::BrokerNo::Bound, "and off the market");
+        check(realm.satchel()[paid].bound, "the quest's rune is bound");
+        check(realm.refine(paid, sword) && !realm.satchel()[sword].bound, "and leaves the sword free too");
+        check(sim::brokerable(tables, realm.satchel()[sword]) == sim::BrokerNo::Yes, "still on the market");
     }
 
     // A scroll a quest pays is the market's, one a merchant sells is not (the user, 2026-10-13:
@@ -13320,11 +13279,10 @@ void testDeal(const content::Tables& tables) {
     check(saw(b, sim::DealEvent::Refused), "an ask from beyond reach is refused");
 
     // **Bound** (Held::bound): what a quest pays never changes hands.
-    const int32_t cracker = tables.itemNamed("Jewel01");
-    const int freeAt = realm.give(cracker, -1, 0, 1);
-    const int boundAt = realm.give(cracker, -1, 0, 1, false, 0, 0, 0, nullptr, nullptr, true);
-    check(boundAt >= 0 && boundAt != freeAt && realm.satchel()[boundAt].bound,
-          "a bound jewel does not pour into a free one");
+    const int32_t cracker = tables.itemNamed("Sword01");
+    const int freeAt = realm.give(cracker, -1, 0, -1);
+    const int boundAt = realm.give(cracker, -1, 0, -1, false, 0, 0, 0, nullptr, nullptr, true);
+    check(boundAt >= 0 && boundAt != freeAt && realm.satchel()[boundAt].bound, "a bound sword and a free one");
     realm.lookAs(a);
     realm.setHeroDown(131, 128, 1, 0);
     realm.lookAs(b);
@@ -13336,12 +13294,14 @@ void testDeal(const content::Tables& tables) {
     check(realm.dealPut(freeAt, -1) >= 0, "and a free one of the same kind is taken");
     realm.closeDeal();
     // Not thrown down at all (the user, 2026-10-12: bound is "not tradable, droped"): it stays in
-    // her bag. A potion: a jewel is too dear to drop anyway.
-    const int potionAt = realm.give(tables.itemNamed("Potion01"), -1, 0, 1, false, 0, 0, 0, nullptr, nullptr, true);
-    checkEqual(int(realm.discard(potionAt)), 0, "a bound thing is not thrown down");
-    check(!realm.satchel()[potionAt].empty() && realm.satchel()[potionAt].bound, "it stays in her bag");
-    const int freeAt2 = realm.give(tables.itemNamed("Potion01"), -1, 0, 1);
+    // her bag. A quest's potion is never bound (sim::bindable), so a sword.
+    check(!realm.satchel()[boundAt].empty() && realm.satchel()[boundAt].bound, "the bound sword is back in her bag");
+    checkEqual(int(realm.discard(boundAt)), 0, "a bound thing is not thrown down");
+    check(!realm.satchel()[boundAt].empty() && realm.satchel()[boundAt].bound, "it stays in her bag");
+    const int freeAt2 = realm.give(cracker, -1, 0, -1);
     check(realm.discard(freeAt2) != 0, "and a free one of the same kind is");
+    const int potionAt = realm.give(tables.itemNamed("Potion01"), -1, 0, 1, false, 0, 0, 0, nullptr, nullptr, true);
+    check(potionAt >= 0 && !realm.satchel()[potionAt].bound, "a quest's potion comes free");
 }
 
 // **Threat** (docs/game/party.md): a knight with his guard up holds a monster against a wizard of his

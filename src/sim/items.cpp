@@ -784,6 +784,11 @@ bool refiningJewel(const content::ItemRow& row) {
            (row.group == 12 && row.number == 15);
 }
 
+bool bindable(const content::ItemRow& row) {
+    return !stacks(row) && !refiningJewel(row) && !lochsFeather(row) && !boxOfLuck(row) &&
+           !boxOfKundun(row) && !firecracker(row);
+}
+
 bool settable(const content::Tables& tables, const Held& jewel, const Held& target, Kin kin,
               bool second) {
     const auto known = [&](const Held& h) {

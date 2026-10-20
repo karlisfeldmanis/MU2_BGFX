@@ -986,6 +986,13 @@ uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool common
 // The Bless (14, 13), the Soul (14, 14), the Life (14, 16) and the Chaos (12, 15): the
 // kJewelChance draws. The Life falls from 72 (OpenMU Version095d Jewels.cs:43), past Devias.
 bool refiningJewel(const content::ItemRow& row);
+// Whether a quest's pay is bound to its earner (Held::bound): its gear, rings, pets, orbs, scrolls
+// and runes, which it pays once. Never what it pays every twelve hours and is spent -- the jewels,
+// the potions and anything else that stacks, Loch's Feather, the boxes and the Firecracker, whose
+// drops are then free too (the user, 2026-10-20: "i cant stack bound jewels", "we need to decide
+// which items make sense to bound and which is not, because now there is ton of problems with
+// that"). A save's bound one of these comes back free (game/save.cpp).
+bool bindable(const content::ItemRow& row);
 // The first socket with nothing set in it, or -1.
 int freeSocket(const Held& thing);
 // Whether this rune may be set into that thing by this class: a Creation with a power, a thing
