@@ -5,6 +5,7 @@
 
 #include <bgfx/bgfx.h>
 
+#include <atomic>
 #include <string>
 #include <thread>
 #include <vector>
@@ -74,6 +75,17 @@ void onKey(GLFWwindow*, int key, int, int action, int) {
 Callback g_callback;
 
 void onGlfwError(int code, const char* what) { core::logError("glfw %d: %s", code, what); }
+
+// A texture bound after it was destroyed (bgfx-dead-texture.patch). Logged with who bound it, as the
+// crash report names frames, the first few times and then every thousandth: a window's canvas
+// still holding a picture it no longer owns does it every frame.
+void onDeadTexture(uint16_t idx, uint8_t stage) {
+    static std::atomic<uint32_t> s_dead{0};
+    const uint32_t seen = ++s_dead;
+    if (seen > 8 && seen % 1000 != 0) return;
+    core::logError("graphics: texture %u bound on stage %u after it was destroyed (%u so far); drawn clear. From %s",
+                   idx, stage, seen, core::watchCallers(1, 12).c_str());
+}
 
 }  // namespace
 
@@ -284,6 +296,14 @@ bool Window::open(const WindowDesc& desc) {
         core::logError("bgfx did not start");
         return false;
     }
+    // A draw handed a texture an earlier frame destroyed gets one clear texel instead, and the log
+    // says who bound it: on Vulkan the destroyed one is an access violation in the driver, under
+    // getDescriptorSet -> TextureVK::setState (crash reports of 2026-10-17, -18 and -20).
+    {
+        const uint8_t clear[4] = {0, 0, 0, 0};
+        deadFallback_ = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::RGBA8, 0, bgfx::copy(clear, 4));
+        bgfx::setDeadTextureGuard(deadFallback_, onDeadTexture);
+    }
 #ifdef __linux__
     if (copying) copyPresentOpen(handle_, width_, height_);
 #else
@@ -357,6 +377,9 @@ void Window::close() {
 #else
     offscreenClose();
 #endif
+    bgfx::setDeadTextureGuard(BGFX_INVALID_HANDLE, nullptr);
+    if (bgfx::isValid(deadFallback_)) bgfx::destroy(deadFallback_);
+    deadFallback_ = BGFX_INVALID_HANDLE;
     bgfx::shutdown();
     if (handle_) glfwDestroyWindow(handle_);
     if (blank_) glfwDestroyCursor(blank_);

@@ -363,4 +363,26 @@ void watchStop() {
     g_beatMs = 0;
 }
 
+std::string watchCallers(int skip, int count) {
+    void* frames[64];
+    const int n = backtrace(frames, 64);
+    std::string out;
+    for (int i = skip + 1; i < n && i <= skip + count; ++i) {
+        // The binary and how far into it, as atos reads a frame; and the symbol where there is one.
+        Dl_info info{};
+        char one[320];
+        if (dladdr(frames[i], &info) && info.dli_fbase) {
+            const char* slash = info.dli_fname ? std::strrchr(info.dli_fname, '/') : nullptr;
+            std::snprintf(one, sizeof(one), "%s+0x%llx%s%s", slash ? slash + 1 : "?",
+                          (unsigned long long)(static_cast<char*>(frames[i]) - static_cast<char*>(info.dli_fbase)),
+                          info.dli_sname ? " " : "", info.dli_sname ? info.dli_sname : "");
+        } else {
+            std::snprintf(one, sizeof(one), "%p", frames[i]);
+        }
+        if (!out.empty()) out += " < ";
+        out += one;
+    }
+    return out;
+}
+
 }  // namespace mu::core

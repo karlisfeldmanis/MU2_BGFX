@@ -243,6 +243,8 @@ private:
     // A fully transparent cursor the window wears in place of the system's. See open().
     GLFWcursor* blank_ = nullptr;
     double cursorDue_ = 0.0;  // when pump() next re-asserts blank_ (glfwGetTime seconds)
+    // What a destroyed texture is drawn as instead: one clear texel. See open().
+    bgfx::TextureHandle deadFallback_ = BGFX_INVALID_HANDLE;
     int width_ = 0;
     int height_ = 0;
     bool clicked_[2] = {false, false};  // 0 left, 1 right

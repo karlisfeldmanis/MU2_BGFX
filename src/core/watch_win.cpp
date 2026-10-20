@@ -320,4 +320,17 @@ void watchStop() {
     g_beatMs = 0;
 }
 
+std::string watchCallers(int skip, int count) {
+    void* frames[64] = {};
+    const int n = int(CaptureStackBackTrace(DWORD(skip + 1), DWORD(std::min(count, 64)), frames, nullptr));
+    std::string out;
+    for (int i = 0; i < n; ++i) {
+        char one[320];
+        where(frames[i], one, sizeof(one));
+        if (!out.empty()) out += " < ";
+        out += one;
+    }
+    return out;
+}
+
 }  // namespace mu::core

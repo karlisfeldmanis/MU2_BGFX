@@ -1,0 +1,66 @@
+diff --git a/include/bgfx/bgfx.h b/include/bgfx/bgfx.h
+index 6c56eafa9..994d5021f 100644
+--- a/include/bgfx/bgfx.h
++++ b/include/bgfx/bgfx.h
+@@ -5344,6 +5344,13 @@ namespace bgfx
+ 		, const BufferRegion& _src
+ 		);
+ 
++	/// MU2 (third_party/patches/bgfx-dead-texture.patch): a texture handle bound after it was
++	/// destroyed -- freed at the end of an earlier frame -- is replaced by `_fallback`, and
++	/// `_hook` is told its index and stage. Without it a release build hands the driver the
++	/// destroyed texture, which on Vulkan is an access violation inside the driver.
++	typedef void (*DeadTextureFn)(uint16_t _idx, uint8_t _stage);
++	void setDeadTextureGuard(TextureHandle _fallback, DeadTextureFn _hook);
++
+ } // namespace bgfx
+ 
+ #endif // BGFX_H_HEADER_GUARD
+diff --git a/src/bgfx.cpp b/src/bgfx.cpp
+index f0ca52f46..c5a29c18f 100644
+--- a/src/bgfx.cpp
++++ b/src/bgfx.cpp
+@@ -4580,8 +4580,35 @@ namespace bgfx
+ 		BGFX_ENCODER(setInstanceCount(_numInstances) );
+ 	}
+ 
++	// MU2: bgfx.h, setDeadTextureGuard.
++	static TextureHandle s_deadFallback = BGFX_INVALID_HANDLE;
++	static DeadTextureFn s_deadHook = NULL;
++
++	void setDeadTextureGuard(TextureHandle _fallback, DeadTextureFn _hook)
++	{
++		s_deadFallback = _fallback;
++		s_deadHook = _hook;
++	}
++
++	static TextureHandle liveTexture(TextureHandle _handle, uint8_t _stage)
++	{
++		if (!isValid(_handle) || s_ctx->m_textureHandle.isValid(_handle.idx) )
++		{
++			return _handle;
++		}
++		if (NULL != s_deadHook)
++		{
++			s_deadHook(_handle.idx, _stage);
++		}
++		return isValid(s_deadFallback) && s_ctx->m_textureHandle.isValid(s_deadFallback.idx)
++			? s_deadFallback
++			: TextureHandle(BGFX_INVALID_HANDLE)
++			;
++	}
++
+ 	void Encoder::setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint32_t _flags)
+ 	{
++		_handle = liveTexture(_handle, _stage);
+ 		BGFX_CHECK_HANDLE("setTexture/UniformHandle", s_ctx->m_uniformHandle, _sampler);
+ 		BGFX_CHECK_HANDLE_INVALID_OK("setTexture/TextureHandle", s_ctx->m_textureHandle, _handle);
+ 		BX_ASSERT(_stage < g_caps.limits.maxTextureSamplers, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxTextureSamplers);
+@@ -4600,6 +4627,7 @@ namespace bgfx
+ 
+ 	void Encoder::setTexture(uint8_t _stage, UniformHandle _sampler, TextureHandle _handle, uint16_t _firstLayer, uint16_t _numLayers, uint8_t _firstMip, uint8_t _numMips, uint32_t _flags)
+ 	{
++		_handle = liveTexture(_handle, _stage);
+ 		BGFX_CHECK_HANDLE("setTexture/UniformHandle", s_ctx->m_uniformHandle, _sampler);
+ 		BGFX_CHECK_HANDLE_INVALID_OK("setTexture/TextureHandle", s_ctx->m_textureHandle, _handle);
+ 		BX_ASSERT(_stage < g_caps.limits.maxTextureSamplers, "Invalid stage %d (max %d).", _stage, g_caps.limits.maxTextureSamplers);

@@ -16,6 +16,8 @@
 // game send them to the website on their next start (launcher/crash_upload.h).
 #pragma once
 
+#include <string>
+
 namespace mu::core {
 
 // Starts watching, from the main thread: the signal handlers now, the hang watch at the second watchBeat (frame 0 compiles shaders).
@@ -33,5 +35,8 @@ void watchStop();
 // A stop the program chose, before it aborts -- bgfx's fatal (a device lost), an uncaught throw:
 // the crash report written now, with `what` first, since on Windows abort() passes no handler.
 void watchReport(const char* what);
+// Who called: `count` frames of this thread's stack after the first `skip`, on one line, each as
+// the crash report names a frame ("MU2.exe+0x441f33"), for a log line that has to say where.
+std::string watchCallers(int skip, int count);
 
 }  // namespace mu::core
