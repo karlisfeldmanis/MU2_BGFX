@@ -15,6 +15,7 @@
 #include <sqlite3.h>
 #include <sys/socket.h>
 
+#include "core/files.h"
 #include "host.h"
 
 namespace {
@@ -292,6 +293,22 @@ void testRaise() {
     std::string error;
     check(content::loadTables(assets + "/cooked/lorencia/lorencia.mur", tables, error),
           "the mirror reads the same tables: " + error);
+    // The rules' print (net::rulesPrint): the same tables the same, a byte moved another.
+    {
+        content::Tables again;
+        check(content::loadTables(assets + "/cooked/lorencia/lorencia.mur", again, error) &&
+                  net::rulesPrint(again) == net::rulesPrint(tables) && net::rulesPrint(tables) != 0,
+              "the same tables are the same rules");
+        std::vector<uint8_t> bytes = core::readFile(assets + "/cooked/lorencia/lorencia.mur");
+        bytes.back() ^= 1;
+        content::Tables moved;
+        content::parseTables(bytes, moved, error);  // read or not, its bytes are printed first
+        check(net::rulesPrint(moved) != net::rulesPrint(tables), "a byte of the tables moved is other rules");
+        content::Tables devias;
+        check(content::loadTables(assets + "/cooked/devias/devias.mur", devias, error) &&
+                  net::rulesPrint(devias) != net::rulesPrint(tables),
+              "another world's tables are another print");
+    }
     sim::Realm mirror;
     check(sim::raiseFrom(mirror, &tables, net::raiseOrder(world->start)),
           "a mirror raises from the Welcome");

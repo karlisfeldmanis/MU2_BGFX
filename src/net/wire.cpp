@@ -5,6 +5,7 @@
 
 #include <zlib.h>
 
+#include "net/rules_print.h"
 #include "sim/realm.h"
 
 namespace mu::net {
@@ -309,6 +310,7 @@ void put(std::vector<uint8_t>& out, const Hello& one) {
         o.str(one.account);
         o.str(one.name);
         o.u64(one.items);
+        o.u64(one.rules);
     });
 }
 
@@ -461,6 +463,7 @@ void put(std::vector<uint8_t>& out, const Account& one) {
             o.i32(c.slot);
         }
         o.u64(one.items);
+        o.u64(one.rules);
     });
 }
 
@@ -614,6 +617,7 @@ bool parse(const std::vector<uint8_t>& body, Hello& out) {
     out.account = in.str();
     out.name = in.str();
     out.items = in.u64();
+    out.rules = in.u64();
     return in.done();
 }
 
@@ -785,6 +789,7 @@ bool parse(const std::vector<uint8_t>& body, Account& out) {
         out.claims.push_back(std::move(c));
     }
     out.items = in.u64();
+    out.rules = in.u64();
     return in.done();
 }
 
@@ -979,6 +984,14 @@ uint64_t stateHash(const sim::Realm& realm) {
             mix(&hero.y, sizeof hero.y);
             mix(&hero.health, sizeof hero.health);
         }
+    }
+    return h;
+}
+
+uint64_t rulesPrint(const content::Tables& tables) {
+    uint64_t h = 1469598103934665603ull;
+    for (uint64_t word : {kRulesSource, tables.bytesPrint}) {
+        for (int i = 0; i < 8; ++i) h = (h ^ ((word >> (8 * i)) & 0xff)) * 1099511628211ull;
     }
     return h;
 }

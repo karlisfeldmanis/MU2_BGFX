@@ -73,6 +73,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         hello.token = serverToken_;
         hello.account = game::sealedKey(serverAccount_);
         hello.items = tables_.itemsPrint();
+        hello.rules = net::rulesPrint(tables_);
         net::Welcome welcome;
         elsewhere_ = {};
         if (!remote->join(serverHost_, serverPort_, hello, welcome, &elsewhere_)) return false;

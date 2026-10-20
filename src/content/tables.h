@@ -177,6 +177,9 @@ inline bool usable(const Grid& grid, const Perch& one) {
 struct Tables {
     uint32_t hz = 0;   // the tick rate the delays were converted at; checked, never assumed
     uint32_t map = 0;  // MU's own map number
+    // The .mur's bytes folded into one number (FNV-1a), as parseTables read them: with the rules'
+    // source, what a game and the server must share (net::rulesPrint).
+    uint64_t bytesPrint = 0;
     // The map's own spawn box, where a dead character stands up. Zeroes when the map has none.
     int32_t safeGate[4] = {0, 0, 0, 0};  // x1, y1, x2, y2 in tiles
     std::vector<MonsterKind> kinds;

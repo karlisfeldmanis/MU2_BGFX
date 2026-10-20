@@ -7,8 +7,26 @@
 
 #include <cctype>
 #include <cstdio>
+#include <map>
 
 namespace mu::server {
+
+namespace {
+// A world's rules (net::rulesPrint) on its cooked tables as this server reads them, once a world:
+// what a Hello's must be.
+uint64_t rulesOf(const std::string& assets, const std::string& world) {
+    static std::map<std::string, uint64_t> known;
+    const auto at = known.find(world);
+    if (at != known.end()) return at->second;
+    content::Tables tables;
+    std::string error;
+    const std::string path = assets + "/cooked/" + world + "/" + world + ".mur";
+    const uint64_t print = content::loadTables(path, tables, error) ? net::rulesPrint(tables) : 0;
+    if (print == 0) core::logError("rules: %s", error.c_str());
+    known[world] = print;
+    return print;
+}
+}  // namespace
 
 
 // Why his line is closing, to a player in a world, before it closes (net::Bye): the client's
@@ -152,6 +170,13 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
     }
     if (!worldName(asked.world)) {
         core::logError("%s: no world called '%s'", one.who.c_str(), asked.world.c_str());
+        return false;
+    }
+    // A mirror on other rules parts from the realm unseen (net::rulesPrint): a deploy that
+    // changed them under a running game, its protocol the same, is the case.
+    if (const uint64_t rules = rulesOf(assets, asked.world); asked.rules != rules) {
+        core::logError("%s: rules %016llx for %s, this server's %016llx", one.who.c_str(),
+                       (unsigned long long)asked.rules, asked.world.c_str(), (unsigned long long)rules);
         return false;
     }
     // A character is in one place at a time. A connection of his that went this same poll is

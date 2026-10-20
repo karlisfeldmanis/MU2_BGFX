@@ -88,6 +88,14 @@ bool account(Session& one, const net::Account& said) {
         net::put(out, net::Roster{net::Refused::Outdated, {}});
         return one.socket.send(out);
     }
+    // Nor one built from other rules (net::rulesPrint): its mirror would part from this realm.
+    if (said.rules != net::rulesPrint(g_items)) {
+        core::logError("%s: rules %016llx, this server's %016llx; told to update", one.who.c_str(),
+                       (unsigned long long)said.rules, (unsigned long long)net::rulesPrint(g_items));
+        std::vector<uint8_t> out;
+        net::put(out, net::Roster{net::Refused::Outdated, {}});
+        return one.socket.send(out);
+    }
     if (!keyShape(said.key)) {
         core::logError("%s: an account key of no shape", one.who.c_str());
         return false;

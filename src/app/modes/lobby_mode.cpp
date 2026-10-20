@@ -252,6 +252,7 @@ bool LobbyMode::open(Context& ctx) {
         account.key = game::sealedKey(key_);
         account.claims = game::claimsFor(server_);
         account.items = tables_.itemsPrint();
+        account.rules = net::rulesPrint(tables_);
         net::Roster answer;
         offline_ = !link_.open(host_, port_, account, answer);
         outdated_ = !offline_ && answer.refused == net::Refused::Outdated;

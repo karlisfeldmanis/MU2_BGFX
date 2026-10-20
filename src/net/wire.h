@@ -149,7 +149,11 @@ namespace mu::net {
 // 43: a Spend carries how many points in its b (the character window's 1 | 10 | All), and
 //     ResetPoints takes every placed point back, the gear he could no longer wear into the bag
 //     or refused whole (2026-10-20), so a client on 42 is refused instead of asking a server
-//     that cannot answer.
+//     that cannot answer. And the Account and the Hello carry the rules' print (rulesPrint):
+//     a game built from other rules than the server's is refused even where a deploy forgot to
+//     raise this number -- 2026-10-20 14:21 UTC, 2b067f5e's binding went to the box on 41 while
+//     a 41 client bound what the server did not, and 4321gogogo's +9s from the Lost Tower's
+//     boxes were gone at the next map change.
 constexpr uint32_t kVersion = 43;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
@@ -194,6 +198,8 @@ struct Hello {
     std::string name;
     // His game's item list (content::Tables::itemsPrint), which must be the server's.
     uint64_t items = 0;
+    // His game's rules (rulesPrint) for this world, which must be the server's.
+    uint64_t rules = 0;
 };
 
 // The players in a world, by body id (net::Who).
@@ -368,6 +374,8 @@ struct Account {
     // The game's item list (content::Tables::itemsPrint): another than the server's is answered
     // Refused::Outdated.
     uint64_t items = 0;
+    // The game's rules (rulesPrint) on the lobby's tables: likewise.
+    uint64_t rules = 0;
 };
 
 struct Create {
@@ -601,6 +609,12 @@ bool keptFrom(const std::vector<uint8_t>& bytes, sim::Kept& out, int layout = kK
 // Realm::say zeroes padding and all), the dice drawn so far, and where each player stands. Two
 // realms that agree on it for every tick are walking the same walk.
 uint64_t stateHash(const sim::Realm& realm);
+// The rules a realm steps by, as one number: the source of src/sim and the tables' reader as it
+// was built (kRulesSource, src/net/rules_print.cmake) folded with a world's tables' bytes
+// (content::Tables::bytesPrint). The mirror and the server must step by the same rules or they
+// part, and a bag differs without the lockstep hash seeing it until the next map change lays the
+// server's character; so a game whose print is not the server's is refused, as an item list is.
+uint64_t rulesPrint(const content::Tables& tables);
 
 // **The tick datagrams** (sprint 24). A client says its Welcome's `udpKey` from its UDP socket
 // once a second (a Bind): the server learns where to send, and the home router keeps the way

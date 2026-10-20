@@ -157,7 +157,11 @@ public:
             // What everyone else's hover plate calls him (net::Who).
             hello.name = name_;
             // The server's item list, or it turns him away (net::Hello::items).
-            if (const content::Tables* tables = tablesOf(world)) hello.items = tables->itemsPrint();
+            // And its rules (net::Hello::rules), or likewise.
+            if (const content::Tables* tables = tablesOf(world)) {
+                hello.items = tables->itemsPrint();
+                hello.rules = net::rulesPrint(*tables);
+            }
             net::Welcome welcome;
             net::Elsewhere elsewhere;
             if (!link->join(host_, port_, hello, welcome, &elsewhere)) {

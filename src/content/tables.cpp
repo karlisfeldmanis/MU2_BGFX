@@ -26,6 +26,8 @@ constexpr uint32_t kVersion = 10;
 
 bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& error) {
     Reader reader(bytes.data(), bytes.size());
+    out.bytesPrint = 14695981039346656037ull;
+    for (uint8_t b : bytes) out.bytesPrint = (out.bytesPrint ^ b) * 1099511628211ull;
 
     char magic[4] = {};
     uint32_t version = 0, kinds = 0, nests = 0, arms = 0, actions = 0, items = 0, folk = 0,

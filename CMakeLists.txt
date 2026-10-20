@@ -373,6 +373,18 @@ target_link_libraries(mu_net PUBLIC mu_sim ZLIB::ZLIB)
 if(WIN32)
   target_link_libraries(mu_net PUBLIC ws2_32)
 endif()
+# The rules' source folded into one number (net::rulesPrint, src/net/rules_print.cmake): a game
+# built from other rules than the server's is refused, whatever its protocol says.
+file(GLOB MU_RULES_SOURCES CONFIGURE_DEPENDS src/sim/*.h src/sim/*.cpp src/sim/*.inc
+     src/content/tables.h src/content/tables.cpp)
+set(MU_RULES_PRINT ${CMAKE_BINARY_DIR}/generated/net/rules_print.h)
+add_custom_command(OUTPUT ${MU_RULES_PRINT}
+  COMMAND ${CMAKE_COMMAND} -DSRC=${CMAKE_SOURCE_DIR} -DOUT=${MU_RULES_PRINT}
+          -P ${CMAKE_SOURCE_DIR}/src/net/rules_print.cmake
+  DEPENDS ${MU_RULES_SOURCES} ${CMAKE_SOURCE_DIR}/src/net/rules_print.cmake
+  VERBATIM)
+target_sources(mu_net PRIVATE ${MU_RULES_PRINT})
+target_include_directories(mu_net PRIVATE ${CMAKE_BINARY_DIR}/generated)
 target_compile_options(mu_net PRIVATE ${MU_WARNINGS})
 
 # The server (server/src, server/README.md): every map's realm for whoever connects, no window.
