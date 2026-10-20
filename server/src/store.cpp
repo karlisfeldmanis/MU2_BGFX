@@ -187,7 +187,11 @@ bool Store::open(const std::string& path, std::string& error) {
         !exec(db_, "CREATE TABLE IF NOT EXISTS broker (id INTEGER PRIMARY KEY, book BLOB NOT NULL,"
                    " saved INTEGER NOT NULL)") ||
         !exec(db_, "CREATE TABLE IF NOT EXISTS passes (ticket TEXT PRIMARY KEY, account TEXT NOT NULL,"
-                   " secret TEXT NOT NULL, count INTEGER NOT NULL, until INTEGER NOT NULL)")) {
+                   " secret TEXT NOT NULL, count INTEGER NOT NULL, until INTEGER NOT NULL)") ||
+        // The account's vault, in a Kept's own bytes with nothing else in them, so it reads by
+        // the characters' layouts and is renumbered as theirs are (vaultOf).
+        !exec(db_, "CREATE TABLE IF NOT EXISTS vaults (account TEXT PRIMARY KEY, layout INTEGER NOT NULL,"
+                   " kept BLOB NOT NULL, items INTEGER NOT NULL, saved INTEGER NOT NULL)")) {
         error = path + ": " + sqlite3_errmsg(db_);
         return false;
     }
@@ -251,6 +255,7 @@ bool Store::useItems(const content::Tables& tables, std::string& error) {
         }
         lists[1] = before;
     }
+    tables_ = &tables;
     const std::string mine = namesOf(tables);
     items_ = 0;
     for (const auto& [id, names] : lists) {
@@ -442,6 +447,95 @@ bool Store::find(uint64_t token, sim::Kept& out, std::string& world) {
     return true;
 }
 
+bool Store::vaultOf(const std::string& account, sim::Vault& out) {
+    if (db_ == nullptr || account.empty()) return false;
+    {
+        Statement q(db_, "SELECT layout, kept, items FROM vaults WHERE account = ?");
+        if (!q) return false;
+        sqlite3_bind_text(q.s, 1, account.c_str(), -1, SQLITE_TRANSIENT);
+        if (sqlite3_step(q.s) == SQLITE_ROW) {
+            const int layout = sqlite3_column_int(q.s, 0);
+            const auto* bytes = static_cast<const uint8_t*>(sqlite3_column_blob(q.s, 1));
+            const std::vector<uint8_t> kept(bytes, bytes + sqlite3_column_bytes(q.s, 1));
+            sim::Kept read;
+            if (layout < kOldestLayout || layout > kLayout || !net::keptFrom(kept, read, layout)) {
+                core::logError("characters.db: %s's vault was written at protocol %d and this is %d; not read",
+                               account.c_str(), layout, kLayout);
+                return false;
+            }
+            renumber(read, sqlite3_column_int(q.s, 2));
+            out = read.vault;
+            return true;
+        }
+    }
+    // None yet: the vaults his characters kept each, before it was the account's, put together.
+    // The fullest stays as it was; the others' things go where they fit, top-left first, and
+    // their Zen is added. A thing with no room is logged, and is still in its character's own
+    // row until he is next written.
+    std::vector<Listed> mine = list(account);
+    const auto things = [](const sim::Vault& v) {
+        int n = 0;
+        for (int cell = 0; cell < sim::kVaultCells; ++cell) n += !v[cell].empty();
+        return n;
+    };
+    std::stable_sort(mine.begin(), mine.end(), [&](const Listed& a, const Listed& b) {
+        return things(a.kept.vault) > things(b.kept.vault);
+    });
+    sim::Vault merged;
+    bool first = true;
+    for (const Listed& one : mine) {
+        if (one.fresh) continue;
+        if (first) {
+            merged = one.kept.vault;
+            first = false;
+            continue;
+        }
+        merged.setZen(merged.zen() + one.kept.vault.zen());
+        for (int cell = 0; cell < sim::kVaultCells; ++cell) {
+            const sim::Held& held = one.kept.vault[cell];
+            if (held.empty()) continue;
+            const content::ItemRow* row = tables_ != nullptr && size_t(held.item) < tables_->items.size()
+                                              ? &tables_->items[size_t(held.item)]
+                                              : nullptr;
+            const int at = row != nullptr ? merged.free(*tables_, row->width, row->height) : -1;
+            if (at < 0) {
+                core::logError("characters.db: %s's vault: %s's %s +%d (%d) has no room; left in his row",
+                               account.c_str(), one.name.c_str(), row ? row->name.c_str() : "?",
+                               int(held.refinement), int(held.item));
+                continue;
+            }
+            merged.put(at, held);
+        }
+    }
+    if (!first) {
+        core::logf("characters.db: %s's vault made from %zu character(s), %d things and %lld Zen",
+                   account.c_str(), mine.size(), things(merged), (long long)merged.zen());
+    }
+    keepVault(account, merged);
+    out = merged;
+    return true;
+}
+
+bool Store::keepVault(const std::string& account, const sim::Vault& vault) {
+    if (db_ == nullptr || account.empty()) return false;
+    Statement q(db_, "INSERT OR REPLACE INTO vaults (account, layout, kept, items, saved) VALUES (?, ?, ?, ?, ?)");
+    if (!q) return false;
+    sim::Kept kept;
+    kept.vault = vault;
+    std::vector<uint8_t> bytes;
+    net::putKept(bytes, kept);
+    sqlite3_bind_text(q.s, 1, account.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(q.s, 2, kLayout);
+    sqlite3_bind_blob(q.s, 3, bytes.data(), int(bytes.size()), SQLITE_TRANSIENT);
+    sqlite3_bind_int(q.s, 4, items_);
+    sqlite3_bind_int64(q.s, 5, int64_t(std::time(nullptr)));
+    if (sqlite3_step(q.s) != SQLITE_DONE) {
+        core::logError("characters.db: %s's vault: %s", account.c_str(), sqlite3_errmsg(db_));
+        return false;
+    }
+    return true;
+}
+
 bool Store::has(uint64_t token) {
     if (db_ == nullptr) return false;
     Statement q(db_, "SELECT 1 FROM characters WHERE token = ?");
@@ -460,7 +554,13 @@ bool Store::keep(const std::vector<Row>& characters) {
                 " ON CONFLICT(token) DO UPDATE SET layout = excluded.layout, kept = excluded.kept,"
                 " kin = excluded.kin, level = excluded.level, money = excluded.money,"
                 " saved = excluded.saved, world = excluded.world, items = excluded.items");
-    bool ok = bool(q);
+    // And his vault to his account's row, when he is an account's (vaultOf).
+    Statement v(db_,
+                "INSERT INTO vaults (account, layout, kept, items, saved)"
+                " SELECT account, ?, ?, ?, ? FROM characters WHERE token = ? AND account != '' AND deleted = 0"
+                " ON CONFLICT(account) DO UPDATE SET layout = excluded.layout, kept = excluded.kept,"
+                " items = excluded.items, saved = excluded.saved");
+    bool ok = bool(q) && bool(v);
     const int64_t now = int64_t(std::time(nullptr));
     std::vector<uint8_t> bytes;
     for (const auto& [token, world, kept] : characters) {
@@ -479,6 +579,19 @@ bool Store::keep(const std::vector<Row>& characters) {
         ok = sqlite3_step(q.s) == SQLITE_DONE;
         if (!ok) core::logError("characters.db: %s", sqlite3_errmsg(db_));
         sqlite3_reset(q.s);
+        if (!ok) break;
+        sim::Kept vault;
+        vault.vault = kept.vault;
+        bytes.clear();
+        net::putKept(bytes, vault);
+        sqlite3_bind_int(v.s, 1, kLayout);
+        sqlite3_bind_blob(v.s, 2, bytes.data(), int(bytes.size()), SQLITE_TRANSIENT);
+        sqlite3_bind_int(v.s, 3, items_);
+        sqlite3_bind_int64(v.s, 4, now);
+        sqlite3_bind_int64(v.s, 5, sqlite3_int64(token));
+        ok = sqlite3_step(v.s) == SQLITE_DONE;
+        if (!ok) core::logError("characters.db: a vault: %s", sqlite3_errmsg(db_));
+        sqlite3_reset(v.s);
     }
     return exec(db_, ok ? "COMMIT" : "ROLLBACK") && ok;
 }

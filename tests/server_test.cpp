@@ -12,6 +12,7 @@
 #include <random>
 #include <string>
 
+#include <sqlite3.h>
 #include <sys/socket.h>
 
 #include "host.h"
@@ -121,6 +122,113 @@ void testItemRows() {
     check(twice.hero.slots[sim::kWorn].item == ring && twice.hero.slots[sim::kWorn + 1].item == apple,
           "renumbered once, never twice");
     check(reopened.bookRenumber() == nullptr, "and no book to renumber");
+}
+
+// ---- the account's vault -------------------------------------------------------------------
+//
+// Bug #34, 2026-10-20: a second character of the account opened Baz and found nothing, his
+// things in his first's. The vault is the account's: one from before is put together from its
+// characters' own, and after that whichever of them is written writes it.
+void testAccountVault() {
+    std::printf("account vault\n");
+    const std::string assets = MU2_ASSET_DIR;
+    content::Tables tables;
+    std::string error;
+    check(content::loadTables(assets + "/cooked/lorencia/lorencia.mur", tables, error), "tables: " + error);
+    const int32_t ring = tables.itemNamed("Ring01");
+    const int32_t apple = tables.itemNamed("Potion01");
+    const int32_t sword = tables.itemNamed("Axe01");
+    check(ring >= 0 && apple >= 0 && sword >= 0, "the ring, the apple and the axe");
+    Store store;
+    check(store.open(scratchFile("vaults.db"), error) && store.useItems(tables, error), "the store opens: " + error);
+    const std::string account = "0123456789abcdef";
+    check(store.create(11, account, "Gordichan", sim::Kin::DarkKnight, 0, "lorencia") &&
+              store.create(12, account, "Merlin", sim::Kin::DarkWizard, 1, "lorencia"),
+          "two characters on one account");
+    // Kept as before the vault was the account's: written straight to their own rows.
+    Store::Row first{11, "lorencia", {}};
+    first.kept.vault.put(0, sim::Held{ring, 2, 1});
+    first.kept.vault.put(1, sim::Held{sword, 3, 20});
+    first.kept.vault.setZen(100);
+    Store::Row second{12, "lorencia", {}};
+    second.kept.vault.put(0, sim::Held{apple, 0, 1});
+    second.kept.vault.setZen(50);
+    check(store.keep({first, second}), "both kept");
+
+    // Each keep writes the account's row: the last written is the vault.
+    sim::Vault one;
+    check(store.vaultOf(account, one), "the account has a vault");
+    check(one[0].item == apple && one[1].empty() && one.zen() == 50, "the last written's");
+
+    // Merlin puts the ring in alone; Gordichan, in next, finds it.
+    Store::Row merlin{12, "lorencia", {}};
+    merlin.kept.vault.put(5, sim::Held{ring, 4, 1});
+    merlin.kept.vault.setZen(777);
+    check(store.keep(merlin), "Merlin kept");
+    sim::Vault two;
+    check(store.vaultOf(account, two), "read again");
+    check(two[5].item == ring && two[5].refinement == 4 && two.zen() == 777, "Gordichan sees what Merlin left");
+    check(two[0].empty(), "and nothing Merlin took out");
+
+    // A character of no account keeps his own, and makes no account's row.
+    Store::Row bot{13, "lorencia", {}};
+    bot.kept.vault.put(0, sim::Held{sword, 0, 20});
+    check(store.keep(bot), "a bot kept");
+    sim::Vault none;
+    check(!store.vaultOf("", none), "no account, no account's vault");
+    sim::Kept back;
+    std::string world;
+    check(store.find(13, back, world) && back.vault[0].item == sword, "the bot's own vault stays his");
+}
+
+// ---- an account from before: its characters' vaults put together -------------------------------
+void testVaultMerge() {
+    std::printf("vault merge\n");
+    const std::string assets = MU2_ASSET_DIR;
+    content::Tables tables;
+    std::string error;
+    check(content::loadTables(assets + "/cooked/lorencia/lorencia.mur", tables, error), "tables: " + error);
+    const int32_t ring = tables.itemNamed("Ring01");
+    const int32_t apple = tables.itemNamed("Potion01");
+    const std::string file = scratchFile("merge.db");
+    const std::string account = "fedcba9876543210";
+    {
+        Store old;
+        check(old.open(file, error) && old.useItems(tables, error), "the old store opens: " + error);
+        check(old.create(21, account, "Gordichan", sim::Kin::DarkKnight, 0, "lorencia") &&
+                  old.create(22, account, "Merlin", sim::Kin::DarkWizard, 1, "lorencia"),
+              "two characters");
+        Store::Row first{21, "lorencia", {}};
+        first.kept.vault.put(0, sim::Held{ring, 2, 1});
+        first.kept.vault.put(1, sim::Held{apple, 0, 1});
+        first.kept.vault.setZen(100);
+        Store::Row second{22, "lorencia", {}};
+        second.kept.vault.put(0, sim::Held{apple, 0, 1});
+        second.kept.vault.setZen(50);
+        check(old.keep({first, second}), "both kept");
+    }
+    // The server before had no vaults table: what keep wrote there is dropped.
+    {
+        sqlite3* db = nullptr;
+        check(sqlite3_open(file.c_str(), &db) == SQLITE_OK &&
+                  sqlite3_exec(db, "DELETE FROM vaults", nullptr, nullptr, nullptr) == SQLITE_OK,
+              "the vaults dropped, as before them");
+        sqlite3_close(db);
+    }
+    Store store;
+    check(store.open(file, error) && store.useItems(tables, error), "reopened: " + error);
+    sim::Vault merged;
+    check(store.vaultOf(account, merged), "the account's vault made");
+    int rings = 0, apples = 0;
+    for (int cell = 0; cell < sim::kVaultCells; ++cell) {
+        rings += merged[cell].item == ring;
+        apples += merged[cell].item == apple;
+    }
+    check(rings == 1 && apples == 2, "every thing of both, nothing twice");
+    check(merged[0].item == ring && merged[0].refinement == 2, "the fullest's things where they were");
+    check(merged.zen() == 150, "and both their Zen");
+    sim::Vault again;
+    check(store.vaultOf(account, again) && again.zen() == 150, "made once, then read");
 }
 
 // ---- the account's and the world's names --------------------------------------------------------
@@ -532,6 +640,8 @@ int main() {
     core::logSilence(true);
     testStore();
     testItemRows();
+    testAccountVault();
+    testVaultMerge();
     testNames();
     testChat();
     testRaise();

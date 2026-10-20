@@ -13,6 +13,8 @@
 // layout 0 and no bytes, his class in `kin` -- and his first Hello makes him as a new character
 // is made. A deleted one is kept, stamped with when, and never read again. A row of no account
 // is the bench's: the bots' and `--new`'s, played by its token alone.
+//
+// **And the account's vault** (vaults, 2026-10-20): one row an account, as MU's warehouse is.
 
 #include <array>
 #include <condition_variable>
@@ -114,6 +116,14 @@ public:
     bool find(uint64_t token, sim::Kept& out, std::string& world);
     bool has(uint64_t token);
 
+    // **The account's vault** (bug #34, 2026-10-20: a second character of the account opened Baz
+    // and found nothing): MU's warehouse is the account's (OpenMU's Account.Vault, sim/vault.h),
+    // so it is one row an account, apart from his characters, and is put in whichever of them
+    // comes in. Each keep() of a character of an account writes his vault back to it. An account
+    // from before has its characters' vaults put together the first time: the fullest as it was,
+    // the others' things wherever they fit and their Zen added. False for no account.
+    bool vaultOf(const std::string& account, sim::Vault& out);
+
     // Each written, or overwritten, under its token, in one transaction. False when the disk
     // said no; the reason is in the log, and what was there before stands.
     bool keep(const std::vector<Row>& characters);
@@ -173,10 +183,13 @@ private:
     void checkpoints(std::string path);
     // A read character's things to this server's rows, from the list his row was written with.
     void renumber(sim::Kept& kept, int items) const;
+    // The account's vault written, alone; vaultOf's first.
+    bool keepVault(const std::string& account, const sim::Vault& vault);
 
     sqlite3* db_ = nullptr;
     // useItems': this server's list in item_tables, and every other list's old-to-new rows.
     int items_ = 0;
+    const content::Tables* tables_ = nullptr;
     std::map<int, std::vector<int32_t>> renumbers_;
     const std::vector<int32_t>* bookRenumber_ = nullptr;
     std::thread checkpointer_;

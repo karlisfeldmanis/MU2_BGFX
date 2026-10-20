@@ -189,6 +189,25 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
         core::logError("%s: no such character on his account", one.who.c_str());
         return false;
     }
+    // **One character of an account at a time**, as MU lets an account in once: the vault is the
+    // account's (Store::vaultOf), and two of its characters in at once would each carry it, a
+    // thing put in by one still there for the other. Another of his account's is let go, written
+    // first (part), so this one's Hello reads the vault as it left it -- a character switch whose
+    // old line has not closed yet takes over from it, and a second client's ends the first's.
+    if (!asked.account.empty()) {
+        for (auto& other : sessions) {
+            if (other.get() == &one || other->world == nullptr || other->playedFor != asked.account ||
+                other->token == asked.token) {
+                continue;
+            }
+            if (other->socket.open()) {
+                core::logf("%s: takes over his account from %s", one.who.c_str(), other->who.c_str());
+                bye(*other, net::Why::Elsewhere);
+            }
+            part(*other);
+            other->world = nullptr;
+        }
+    }
     if (known && !whose.name.empty()) one.who += " (" + whose.name + ")";
     // His name over his head: the account's for its characters, the Hello's for one of none.
     one.bot = asked.account.empty();
@@ -219,8 +238,12 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
     net::Hello said = asked;
     if (fresh) said.kin = uint8_t(whose.kin);
     int castle = 0, square = 0, squareWait = 0;
+    // His account's vault, whichever of its characters he is (bug #34, 2026-10-20).
+    sim::Vault vault;
+    const bool banked = !asked.account.empty() && g_store.vaultOf(asked.account, vault);
     if (carried) {
         one.token = said.token;
+        if (banked) kept.vault = vault;
         core::logf("%s: his character comes back, level %d with %lld Zen", one.who.c_str(),
                    kept.hero.level, (long long)kept.hero.money);
     }
@@ -318,6 +341,21 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
                 core::logf("%s: a new character from the kit, level %d", one.who.c_str(), g_kitLevel);
             }
         }
+        // A new character of an account with something in its vault: made as the kit makes one,
+        // at level 1 with his class's weapon, and let in as carried with the vault in his hands.
+        bool something = banked && vault.zen() != 0;
+        for (int cell = 0; banked && !something && cell < sim::kVaultCells; ++cell) something = !vault[cell].empty();
+        if (something && !carried) {
+            sim::Realm scratch;
+            if (scratch.raise(&g_items, seeds(), said.column, said.row, kin, said.level)) {
+                sim::outfit(scratch, said.weapon, said.shield);
+                kept = scratch.keptOf(scratch.hero().id);
+                kept.hero.column = said.column;
+                kept.hero.row = said.row;
+                carried = true;
+            }
+        }
+        if (banked) kept.vault = vault;
     }
     // The fullest copy of the map with room, so players are together while they fit; a new copy
     // when none has. A Blood Castle is its own world and is never copied.
