@@ -919,7 +919,7 @@ QuestRow tersiaBalrog() {
         "\"Another Balrog will crawl up there. When it does, the contract opens again.\"";
     row.steps[0] = {QuestStepKind::Clear, 35, 40, "Death Gorgons"};
     row.steps[1] = {QuestStepKind::Clear, 40, 30, "Death Knights"};
-    row.steps[2] = {QuestStepKind::Clear, 38, 1, "The Balrog"};
+    row.steps[2] = {QuestStepKind::Clear, 38, 5, "Balrogs"};
     row.steps[3] = {QuestStepKind::Return, 0, 1, "Return to Tersia"};
     row.stepCount = 4;
     row.afterAny = 1u << 11;
