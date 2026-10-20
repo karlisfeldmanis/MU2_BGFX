@@ -108,14 +108,18 @@ struct Command {
         // Every placed point back in hand (Realm::resetPoints): answered 1, -1 nothing placed,
         // -2 no room in the bag for what he could no longer wear.
         ResetPoints,
+        // **The Jeweler's** (sim/jeweler.h; Realm::recut, salvage, combine), on bag slots.
+        JewelRecut,    // a: the piece's slot, b: its further power's line (0 to 2)
+        JewelSalvage,  // a: the piece's slot
+        JewelCombine,  // a, b, c: the three pieces' slots
     };
     // The last kind there is: what a wire reads past it is None (net::takeCommand). Moved with
     // every kind added at the end.
-    static constexpr Kind kLastKind = Kind::ResetPoints;
+    static constexpr Kind kLastKind = Kind::JewelCombine;
     // Close's a.
     // Trade is the merchant's counter, as the realm has always called it; Deal is a trade between
     // two players, which closing cancels for both.
-    enum class Window : uint8_t { Trade, Vault, Machine, Quest, Gate, Angel, Deal, Broker };
+    enum class Window : uint8_t { Trade, Vault, Machine, Quest, Gate, Angel, Deal, Broker, Jeweler };
     Kind kind = Kind::None;
     // Who asks: a player's body id. 0 is the one hero this realm has until phase 2.
     uint32_t player = 0;

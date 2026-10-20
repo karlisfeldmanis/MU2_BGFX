@@ -154,7 +154,11 @@ namespace mu::net {
 //     raise this number -- 2026-10-20 14:21 UTC, 2b067f5e's binding went to the box on 41 while
 //     a 41 client bound what the server did not, and 4321gogogo's +9s from the Lost Tower's
 //     boxes were gone at the next map change.
-constexpr uint32_t kVersion = 43;
+// 44: the Jeweler, Moss the Gambler in Noria (sim/jeweler.h): Recut, Salvage and Combine on
+//     powered rings and pendants (Command JewelRecut, JewelSalvage, JewelCombine, Window
+//     Jeweler) and Player::jeweling (2026-10-20), so a client on 43 is refused instead of
+//     sending kinds its server reads as None.
+constexpr uint32_t kVersion = 44;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";

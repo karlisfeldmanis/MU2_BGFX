@@ -14205,6 +14205,8 @@ void testSquareResult() {
 
 void testBroker(const content::Tables& tables, void (*check)(bool, const char*),
                 void (*checkEqual)(long long, long long, const char*));  // tests/sim_test_broker.cpp
+void testJeweler(void (*check)(bool, const char*),
+                 void (*checkEqual)(long long, long long, const char*));  // tests/sim_test_jeweler.cpp
 
 int main() {
     const std::string path =
@@ -14325,6 +14327,7 @@ int main() {
     testParty(tables);
     testDeal(tables);
     testBroker(tables, check, checkEqual);  // tests/sim_test_broker.cpp
+    testJeweler(check, checkEqual);         // tests/sim_test_jeweler.cpp
     testThreat(tables);
     testElfAid(tables);
     testQuestLadder(tables);

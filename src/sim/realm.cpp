@@ -848,6 +848,7 @@ void Realm::accept() {
         me().trading = -1;
         me().banking = -1;
         me().brokering = -1;
+        me().jeweling = -1;
         me().questing = -1;
         closeMachine();
         me().gating = -1;

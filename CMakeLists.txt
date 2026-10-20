@@ -321,6 +321,7 @@ add_library(mu_sim STATIC
   src/sim/market.cpp
   src/sim/wear.cpp
   src/sim/vault.cpp
+  src/sim/jeweler.cpp
   src/sim/machine.cpp
   src/sim/gates.cpp
   src/sim/maps.cpp
@@ -328,6 +329,7 @@ add_library(mu_sim STATIC
   src/sim/traps.cpp
   src/sim/realm.cpp
   src/sim/realm_items.cpp
+  src/sim/realm_jeweler.cpp
   src/sim/realm_machine.cpp
   src/sim/realm_deal.cpp
   src/sim/broker.cpp
@@ -656,6 +658,7 @@ add_library(mu_game STATIC
   src/game/play_pointer.cpp
   src/game/helper.cpp
   src/game/quest_auto.cpp
+  src/game/play_jeweler.cpp
   src/game/play_requests.cpp
   src/game/fx/showing.cpp
   src/game/fx/marker.cpp
@@ -732,6 +735,7 @@ add_library(mu_game STATIC
   src/game/ui/desk_split.cpp
   src/game/ui/broker.cpp
   src/game/ui/broker_draw.cpp
+  src/game/ui/jeweler.cpp
   src/game/ui/mixer.cpp
   src/game/ui/amount.cpp
   src/game/ui/report.cpp
@@ -1001,6 +1005,7 @@ target_compile_options(placement_test PRIVATE -Wall -Wextra -Wno-unused-paramete
 add_executable(sim_test EXCLUDE_FROM_ALL
   tests/sim_test.cpp
   tests/sim_test_broker.cpp
+  tests/sim_test_jeweler.cpp
 )
 target_link_libraries(sim_test PRIVATE mu_net mu_sim)
 target_include_directories(sim_test PRIVATE src)

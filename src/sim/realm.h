@@ -1159,6 +1159,17 @@ public:
     // -1 when all of it fits: `theirs` asks whether what he gets fits his own bag.
     int dealMisfit(bool theirs) const;
 
+    // ---- the Jeweler (sim/jeweler.h; sim/realm_jeweler.cpp) -----------------------------------
+    // Moss's window, opened by a Talk and shut by any order, as the Broker's is. Each service
+    // works bag slots in place, so nothing is held in the window. Answers: Recut the new power,
+    // Salvage the prize plus one, Combine the made piece's bag slot plus one; -1 refused, with
+    // refusal() saying why.
+    int jeweling() const { return me().jeweling; }
+    void closeJeweler() { me().jeweling = -1; }
+    int recut(int slot, int line);
+    int salvage(int slot);
+    int combine(int first, int second, int third);
+
     // ---- the Chaos Machine (sim/machine.h) -------------------------------------------------
     // The Chaos Goblin's box, opened by a Talk order arriving within `kCounter` of him and
     // closed by any other order, as the vault is. The townsperson's index, or -1.
@@ -2370,6 +2381,7 @@ private:
         Sales sold;
         int banking = -1;
         int brokering = -1;  // see brokering()
+        int jeweling = -1;   // see jeweling()
         Vault vault;
         bool jeweled = false;
         int mixing = -1;

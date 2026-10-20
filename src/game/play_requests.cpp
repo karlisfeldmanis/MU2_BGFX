@@ -761,6 +761,9 @@ void Play::answered(const sim::Happening& said) {
                 sound_.play(heard_.mixBreak);
             }
             break;
+        case Kind::JewelRecut:
+        case Kind::JewelSalvage:
+        case Kind::JewelCombine: jewelHeard(kind, ok, said.b); break;
         case Kind::Spend:
             core::logf("window: %d point%s into %s %s", std::max(1, asked.b), asked.b > 1 ? "s" : "",
                        asked.a == 0 ? "strength" : asked.a == 1 ? "agility" : asked.a == 2 ? "vitality" : "energy",

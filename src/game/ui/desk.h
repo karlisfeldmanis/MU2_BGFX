@@ -21,6 +21,7 @@
 #include "game/ui/broker.h"
 #include "game/ui/chest.h"
 #include "game/ui/deal.h"
+#include "game/ui/jeweler.h"
 #include "game/ui/mixer.h"
 #include "game/ui/endurance.h"
 #include "game/ui/go_back.h"
@@ -333,7 +334,7 @@ private:
     // Bound is TookOrRefused for a bound thing, whose no the tally's lane explains (Tally::bound).
     enum class Then : uint8_t {
         TookOrRefused, Refused, Spark, ZenBox, Strike, CloseQuest, Travel, Click, CloseAngel, Quiet,
-        Bound, Reset
+        Bound, Reset, Jewel
     };
     struct Waiting {
         uint32_t ticket = 0;
@@ -358,6 +359,10 @@ private:
     Mixer mixer_;
     bool mixing_ = false;
     bool bagForMachine_ = false;
+    // Moss the Gambler's window (game/ui/jeweler.h), opened as the machine is.
+    Jeweler jeweler_;
+    bool jeweling_ = false;
+    bool bagForJeweler_ = false;
     // The number box the vault's coin buttons open. Modal: see Desk::update.
     Amount amount_;
     // **The stack a Shift-click opened the number box on** (the user, 2026-10-20: stacking

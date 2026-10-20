@@ -19,6 +19,7 @@
 #include "core/log.h"
 #include "sim/broker.h"
 #include "sim/event.h"
+#include "sim/jeweler.h"
 #include "sim/realm_tuning.h"
 
 namespace mu::sim {
@@ -266,7 +267,7 @@ void Realm::stroll(Body& walker) {
         for (const Player& one : heroes_) {
             busy = busy || (partner >= 0 &&
                             (one.trading == partner || one.banking == partner ||
-                             one.mixing == partner || one.gating == partner ||
+                             one.mixing == partner || one.jeweling == partner || one.gating == partner ||
                              one.questing == partner ||
                              (one.order.kind == Request::Kind::Talk && int(one.order.target) == partner)));
         }
@@ -313,6 +314,9 @@ void Realm::talk(Body& hero) {
     } else if (one.number == kChaosGoblin) {
         me().mixing = int(me().order.target);
         say(What::Served, hero, me().mixing, one.number);
+    } else if (one.number == kJeweler) {
+        me().jeweling = int(me().order.target);
+        say(What::Served, hero, me().jeweling, one.number);
     } else if (const int quest = questHere(one.number);
                quest >= 0 && (!questLocked(quest) || questListed(one.number))) {
         // A quest giver: his dialog opens, whatever it has to say -- the offer, the quest under

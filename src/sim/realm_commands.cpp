@@ -184,6 +184,9 @@ void Realm::applyCommands() {
                 break;
             }
             case Kind::ResetPoints: answer = int64_t(resetPoints()); break;
+            case Kind::JewelRecut: answer = recut(one.a, one.b); break;
+            case Kind::JewelSalvage: answer = salvage(one.a); break;
+            case Kind::JewelCombine: answer = combine(one.a, one.b, one.c); break;
             case Kind::AcceptQuest: answer = acceptQuest(one.a) ? 1 : -1; break;
             case Kind::CompleteQuest:
                 answer = completeQuest(one.a, one.b, QuestPath(std::max(0, one.c))) ? 1 : -1;
@@ -214,6 +217,7 @@ void Realm::applyCommands() {
                     case Command::Window::Angel: closeAngel(); break;
                     case Command::Window::Deal: closeDeal(); break;
                     case Command::Window::Broker: closeBroker(); break;
+                    case Command::Window::Jeweler: closeJeweler(); break;
                 }
                 answer = 1;
                 break;

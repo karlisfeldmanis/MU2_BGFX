@@ -122,6 +122,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     guildMake_.open(interface_, &arts_);
     deal_.open(interface_, &arts_);
     mixer_.open(interface_, &arts_);
+    jeweler_.open(interface_, &arts_);
     amount_.open(interface_, &arts_);
     report_.open(interface_);
     whatsNew_.open(interface_, &arts_);
@@ -230,6 +231,7 @@ bool Desk::overWindows(float x, float y) const {
            (banking_ && (chest_.covers(x, y) || chest_.dragging())) ||
            (brokering_ && broker_.covers(x, y)) ||
            (mixing_ && (mixer_.covers(x, y) || mixer_.dragging())) ||
+           (jeweling_ && jeweler_.covers(x, y)) ||
            (dealing_ && (deal_.covers(x, y) || deal_.dragging()));
 }
 
@@ -274,7 +276,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // report #13). A counter shuts the character window as it opens; while it is up, C is the
     // interface's no.
     const auto toggleCard = [&]() {
-        if (!characterOpen_ && (trading_ || banking_ || brokering_ || mixing_ || dealing_)) {
+        if (!characterOpen_ && (trading_ || banking_ || brokering_ || mixing_ || jeweling_ || dealing_)) {
             refused();
             return;
         }
@@ -291,6 +293,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             if (banking_) play.closeVault();
             if (brokering_) play.closeBroker();
             if (mixing_) play.closeMachine();
+            if (jeweling_) play.closeJeweler();
             if (dealing_) play.closeDeal();
         }
         click();
@@ -318,6 +321,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 break;
             case Then::Refused: if (!one.ok()) refused(); break;
             case Then::Spark: one.ok() ? mixer_.spark() : refused(); break;
+            case Then::Jewel:
+                jeweler_.answered(one.ok(), one.value, play.realm().refusal());
+                if (!one.ok()) refused();
+                break;
             case Then::ZenBox:
                 if (one.ok()) {
                     amount_.hide();
@@ -587,7 +594,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // open it shuts them all, as CNewUIManager's Escape closes the open windows before anything
     // else; only with nothing open does it raise the menu. And up, the menu has it: back a page,
     // or down.
-    const bool windowsOpen = inventoryOpen_ || characterOpen_ || trading_ || banking_ || brokering_ || mixing_ ||
+    const bool windowsOpen = inventoryOpen_ || characterOpen_ || trading_ || banking_ || brokering_ || mixing_ || jeweling_ ||
                              dealing_ || travel_.up() || guild_.up() || guildMake_.up() || inspecting() ||
                              questLog_.up() || helperWindow_.up();
     {
@@ -627,6 +634,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 if (banking_) play.closeVault();
                 if (brokering_) play.closeBroker();
                 if (mixing_) play.closeMachine();
+                if (jeweling_) play.closeJeweler();
                 if (dealing_) play.closeDeal();
                 travel_.hide();
                 guild_.hide();
@@ -717,7 +725,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             questLog_.hide();
         } else {
             QuestLog::Result result;
-            const bool shelfBusy = trading_ || banking_ || brokering_ || mixing_ || dealing_;
+            const bool shelfBusy = trading_ || banking_ || brokering_ || mixing_ || jeweling_ || dealing_;
             questLog_.update(seconds, play, autoPlaying_, float(window.width()), float(window.height()),
                              typing ? Pointer{} : pointer, typing ? 0.0f : window.scroll(),
                              shelfBusy ? nullptr : shelfStage_, &result);
@@ -1261,6 +1269,40 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         mixer_.cancel();
     }
 
+    // Moss the Gambler, the Jeweler (game/ui/jeweler.h), as the machine is: the bag opens beside
+    // him, and walking away shuts him in the realm. Nothing is held in his window.
+    const bool jeweling = play.isOpen() && play.realm().jeweling() >= 0;
+    if (jeweling && !jeweling_) {
+        click();
+        if (play.isOpen()) play.ui(Play::Ui::Opened);
+        characterOpen_ = false;
+        bagForJeweler_ = !inventoryOpen_;
+        inventoryOpen_ = true;
+    }
+    if (!jeweling && jeweling_ && bagForJeweler_) {
+        inventoryOpen_ = false;
+        bagForJeweler_ = false;
+    }
+    jeweling_ = jeweling;
+    if (jeweling_) {
+        JewelerRequests asked;
+        jeweler_.update(float(window.width()), float(window.height()), 2, play.realm(), pointer,
+                        shelfStage_, &asked);
+        if (asked.click) click();
+        if (asked.turned) play.sound().play(play.sound().load("quest_page_turn", false));
+        if (asked.recutSlot >= 0) expect(play.jewelRecut(asked.recutSlot, asked.recutLine), Then::Jewel);
+        if (asked.salvageSlot >= 0) expect(play.jewelSalvage(asked.salvageSlot), Then::Jewel);
+        if (asked.combine[0] >= 0) {
+            expect(play.jewelCombine(asked.combine[0], asked.combine[1], asked.combine[2]), Then::Jewel);
+        }
+        if (asked.close) {
+            play.closeJeweler();
+            click();
+        }
+    } else {
+        jeweler_.cancel();
+    }
+
     // A trade with another player, as the vault is: it opens the bag beside it and closes the
     // character window; the realm shuts it when either walks off, and the windows follow.
     if (play.isOpen()) {
@@ -1348,7 +1390,11 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         if (asked.refineJewel >= 0) expect(play.refine(asked.refineJewel, asked.refineTarget), Then::Refused);
         // At the machine a right-click puts the thing in the box instead
         // (ProcessMyInvenItemAutoMove); a worn one, which the box refuses, is still used.
-        if (asked.use >= 0 && mixing_ && sim::baggable(asked.use)) {
+        if (asked.use >= 0 && jeweling_ && sim::baggable(asked.use)) {
+            // At the Jeweler a right-click puts a ring or pendant on his page, and nothing else.
+            if (jeweler_.offer(asked.use, play.realm())) click();
+            else refused();
+        } else if (asked.use >= 0 && mixing_ && sim::baggable(asked.use)) {
             expect(play.putIn(asked.use, -1, piecesForBox(play, asked.use, 0)), Then::TookOrRefused);
         } else if (asked.use >= 0 && brokering_ && sim::baggable(asked.use)) {
             broker_.offer(asked.use);  // at the Broker a right-click puts it on the Sell tab
@@ -2467,7 +2513,7 @@ void Desk::photograph(gfx::Renderer& renderer, double seconds) {
     const float pixelsPerUnit = panel::scale();
     if (inventoryOpen_) bagStagePicture_.render(renderer, pixelsPerUnit, seconds);
     if (inspecting()) inspectStagePicture_.render(renderer, pixelsPerUnit, seconds);
-    if (trading_ || banking_ || brokering_ || mixing_ || dealing_) {
+    if (trading_ || banking_ || brokering_ || mixing_ || jeweling_ || dealing_) {
         shelfStagePicture_.render(renderer, pixelsPerUnit, seconds);
     }
     // The quest giver's rewards on the same stage, which is free whenever he is (no counter).
@@ -2615,6 +2661,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (brokering_) interface_.add(broker_.canvas());
     const bool machineOnTop = mixing_ && mixer_.dragging();
     if (mixing_ && !machineOnTop) interface_.add(mixer_.canvas());
+    if (jeweling_) interface_.add(jeweler_.canvas());
     const bool dealOnTop = dealing_ && deal_.dragging();
     if (dealing_ && !dealOnTop) interface_.add(deal_.canvas());
     if (inventoryOpen_) interface_.add(bag_.canvas());

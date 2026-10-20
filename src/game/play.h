@@ -463,6 +463,14 @@ public:
     uint32_t shuffle(int from, int to, int pieces = 0);
     uint32_t mix(sim::Service service, int socket);
     void closeMachine() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Machine)}); }
+    // The Jeweler (sim/jeweler.h): Moss's three services on bag slots, heard in jewelHeard.
+    uint32_t jewelRecut(int slot, int line) { return send({.kind = sim::Command::Kind::JewelRecut, .a = slot, .b = line}); }
+    uint32_t jewelSalvage(int slot) { return send({.kind = sim::Command::Kind::JewelSalvage, .a = slot}); }
+    uint32_t jewelCombine(int a, int b, int c) {
+        return send({.kind = sim::Command::Kind::JewelCombine, .a = a, .b = b, .c = c});
+    }
+    void closeJeweler() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Jeweler)}); }
+    void jewelHeard(sim::Command::Kind kind, bool ok, int32_t value);
     void restoreMachine(const sim::Machine& saved) { if (here("the machine")) local_.restoreMachine(saved); }
     // A trade with another player (sim/realm_deal.cpp), as the realm keeps it: ask him by his
     // body, answer an ask, put a bag thing up or take it back, name the Zen, accept, and shut it.
