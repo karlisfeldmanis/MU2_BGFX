@@ -1517,8 +1517,14 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // (Play::raidFighting), and the map's own rule again after. The one fight with music.
     // A little louder than the town's tracks (the user, 2026-10-08: "music has to be little bit
     // louder on boss fight"): 0.8, about 2.5 dB over their 0.6.
+    // And Devil Square's match, from the moment its fight starts to its end, not in the wait
+    // before (the user, 2026-10-20: "lets use dragon raid music for devil suare also", "musix
+    // starts then DS starts").
     const std::string fightTrack = ctx.paths.assets + "/music/dragon_fight.mp3";
-    if (world_.played().isOpen() && world_.played().raidFighting() && core::fileExists(fightTrack)) {
+    const bool squareFighting = world_.played().isOpen() &&
+                                world_.played().realm().squareRun().phase == sim::SquarePhase::Running;
+    if (world_.played().isOpen() && (world_.played().raidFighting() || squareFighting) &&
+        core::fileExists(fightTrack)) {
         game::Sound& sound = world_.played().sound();
         if (!sound.musicPlaying(fightTrack)) sound.music(fightTrack, 0.8f, true);
     } else if (world_.played().isOpen()) {
