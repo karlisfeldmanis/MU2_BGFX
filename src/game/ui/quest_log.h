@@ -70,6 +70,11 @@ private:
         uint32_t ink = 0;
         gfx::Box box;  // in window units, card-scrolled
     };
+    // The Magic Gladiator's paths over their own cells, where a first clear pays both.
+    struct Path {
+        const char* word = "";
+        float y = 0.0f;  // the heading's baseline, in window units, card-scrolled
+    };
     void layout(const Play& play, int playing);
     void rebuild(const Play& play, int playing, Stage* stage);
     void drawTip(const Play& play, int cell, float width, float height);
@@ -82,6 +87,7 @@ private:
     std::string assetDir_;
     std::vector<Entry> entries_;
     std::vector<Cell> cells_;
+    std::vector<Path> paths_;
     std::vector<Standing> standing_;
     // over_/pressing_: 0 the close, 100 + a row, 200 + a row's button, 300 + a reward.
     int over_ = -1, pressing_ = -1;

@@ -191,36 +191,84 @@ void QuestLog::layout(const Play& play, int playing) {
         cy += kKick;
         const int kin = int(realm.hero().kin);
         const bool first = sim::questFirst(row, kin, progress.completions);
-        const int paidKin = sim::questPaidKin(row, kin, first, sim::QuestPath::Melee);
-        std::vector<const sim::QuestItem*> items;
-        for (int p = 0; p < row.paidCount; ++p) {
-            if (sim::questPaysHero(row.paid[p], kin, paidKin, first) && realm.questItemFits(row.paid[p])) {
-                items.push_back(&row.paid[p]);
+        // The Magic Gladiator, where the giver pays the knight and the wizard their own things:
+        // both paths, each under its name, then what he is paid on either (the user, 2026-10-20:
+        // "rewards is dual he can choose between melee and magic but it doont shows on quest log").
+        const bool paths = kin == int(sim::Kin::MagicGladiator) && !row.promotes &&
+                           sim::questOffersPaths(row, first);
+        struct Group {
+            const char* word;
+            std::vector<const sim::QuestItem*> items;
+        };
+        std::vector<Group> groups;
+        if (paths) {
+            const int kWhose[2] = {int(sim::Kin::DarkKnight), int(sim::Kin::DarkWizard)};
+            const char* const kWords[2] = {"Melee", "Magic"};
+            for (int g = 0; g < 2; ++g) {
+                Group one{kWords[g], {}};
+                for (int p = 0; p < row.paidCount; ++p) {
+                    if (row.paid[p].kin == kWhose[g] && sim::questPays(row.paid[p], kWhose[g], first) &&
+                        realm.questItemFits(row.paid[p])) {
+                        one.items.push_back(&row.paid[p]);
+                    }
+                }
+                groups.push_back(std::move(one));
             }
+            Group either{"Either path", {}};
+            for (int p = 0; p < row.paidCount; ++p) {
+                const sim::QuestItem& what = row.paid[p];
+                if ((what.kin < 0 || what.kin == kin) && sim::questPays(what, what.kin < 0 ? kin : what.kin, first) &&
+                    realm.questItemFits(what)) {
+                    either.items.push_back(&what);
+                }
+            }
+            for (int c = 0; c < row.choiceCount; ++c) {
+                if (realm.questChoiceFits(selected_, c)) either.items.push_back(&row.choices[c]);
+            }
+            if (!either.items.empty()) groups.push_back(std::move(either));
+        } else {
+            const int paidKin = sim::questPaidKin(row, kin, first, sim::QuestPath::Melee);
+            Group all{nullptr, {}};
+            for (int p = 0; p < row.paidCount; ++p) {
+                if (sim::questPaysHero(row.paid[p], kin, paidKin, first) && realm.questItemFits(row.paid[p])) {
+                    all.items.push_back(&row.paid[p]);
+                }
+            }
+            for (int c = 0; c < row.choiceCount; ++c) {
+                if (realm.questChoiceFits(selected_, c)) all.items.push_back(&row.choices[c]);
+            }
+            groups.push_back(std::move(all));
         }
-        for (int c = 0; c < row.choiceCount; ++c) {
-            if (realm.questChoiceFits(selected_, c)) items.push_back(&row.choices[c]);
-        }
+        paths_.clear();
         const float cellWide = (inner - kCellGap) * 0.5f;
-        for (size_t i = 0; i < items.size(); ++i) {
-            const sim::QuestItem& what = *items[i];
-            Cell cell;
-            cell.item = tables.itemNamed(what.item);
-            if (cell.item < 0) continue;
-            cell.count = what.count;
-            cell.plus = what.plus;
-            cell.sockets = what.sockets;
-            cell.power = kin == int(sim::Kin::MagicGladiator) ? sim::gladiatorRune(what.power) : what.power;
-            for (int a = 0; a < 3; ++a) cell.affixes[a] = what.affixes[a];
-            const sim::Held held =
-                rewardHeld(tables, cell.item, cell.plus, cell.count, cell.sockets, cell.power, cell.affixes);
-            cell.ink = tip::colourOf(describe(tables, held, realm.wearer(), realm.satchel()).nameTone);
-            const int at = int(cells_.size());
-            cell.box = {kSide + float(at % 2) * (cellWide + kCellGap),
-                        cardTop_ + cy + float(at / 2) * kCellPitch - cardScroll_, cellWide, kIcon};
-            cells_.push_back(cell);
+        for (const Group& group : groups) {
+            if (group.word) {
+                cy += kKick;
+                paths_.push_back({group.word, cardTop_ + cy - 7.0f - cardScroll_});
+            }
+            int at = 0;
+            for (const sim::QuestItem* each : group.items) {
+                const sim::QuestItem& what = *each;
+                Cell cell;
+                cell.item = tables.itemNamed(what.item);
+                if (cell.item < 0) continue;
+                cell.count = what.count;
+                cell.plus = what.plus;
+                cell.sockets = what.sockets;
+                cell.power = kin == int(sim::Kin::MagicGladiator) ? sim::gladiatorRune(what.power) : what.power;
+                for (int a = 0; a < 3; ++a) cell.affixes[a] = what.affixes[a];
+                const sim::Held held =
+                    rewardHeld(tables, cell.item, cell.plus, cell.count, cell.sockets, cell.power, cell.affixes);
+                cell.ink = tip::colourOf(describe(tables, held, realm.wearer(), realm.satchel()).nameTone);
+                cell.box = {kSide + float(at % 2) * (cellWide + kCellGap),
+                            cardTop_ + cy + float(at / 2) * kCellPitch - cardScroll_, cellWide, kIcon};
+                cells_.push_back(cell);
+                ++at;
+            }
+            cy += float((at + 1) / 2) * kCellPitch;
         }
-        cy += float((int(cells_.size()) + 1) / 2) * kCellPitch;
+    } else {
+        paths_.clear();
     }
     cardContent_ = cy;
     const float cardMost = std::max(0.0f, cardContent_ - cardTall_);
@@ -228,6 +276,7 @@ void QuestLog::layout(const Play& play, int playing) {
         const float back = cardScroll_ - cardMost;
         cardScroll_ = cardMost;
         for (Cell& one : cells_) one.box.y += back;
+        for (Path& one : paths_) one.y += back;
     }
 
     // The pictures, only those inside the card's pane.
@@ -513,6 +562,10 @@ void QuestLog::rebuild(const Play& play, int playing, Stage* stage) {
             controls::ranged(words, sx(kSide + inner - zenWide - 10.0f), sy(cy + 12.0f), kLine * u, style::kBone,
                              panel::commas(sim::questExperience(row, first)) + " experience  \xC2\xB7");
         }
+    }
+    // The Magic Gladiator's paths, each over its own rewards.
+    for (const Path& one : paths_) {
+        controls::caps(words, sx(kSide + 2.0f), sy(one.y), style::kKickerSize * u, kGold, one.word);
     }
     // Each reward: its cell, its picture (the stage's, below), its name beside it in its own tone.
     for (size_t i = 0; i < cells_.size(); ++i) {
