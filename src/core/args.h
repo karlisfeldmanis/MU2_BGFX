@@ -58,6 +58,9 @@ struct Args {
     // The What's New edition this player has seen (game/ui/whats_new.h, kWhatsNewEdition): kept in
     // options.txt, and the slides come up on entering the world while it is older.
     int whatsNew = 0;
+    // The nearer region's note was closed with its cross (game/ui/line_chip.h): kept in
+    // options.txt as `pingnote 1`, and it is never shown again on this machine.
+    bool pingNoteClosed = false;
     // A Graphics row was changed by hand on the Options page, kept in options.txt as `hand 1`:
     // from then on the game neither fits the world to a big screen at the start (fitGraphics) nor
     // eases it when the GPU falls behind (easeGraphics), so it never fights what the player chose.
@@ -171,6 +174,10 @@ struct Args {
     // `--server host:port` (or host, for the default port): play on that server instead of a
     // realm in this process (sprint 18). Empty for single player.
     std::string server;
+    // `--region ID`: the region (net::regions) a test's server stands for, where the server's own
+    // name is none of theirs -- the line's chip times the regions and names a nearer one as it
+    // would for a player there (game/ui/line_chip.h). Empty: the region --server is.
+    std::string region;
     // `--lag MS` and `--jitter MS`: a test's line to that server, its round trip and its jitter
     // each way held on this Mac (sprint 24). 0 for the line as it is.
     double lag = 0.0, jitter = 0.0;

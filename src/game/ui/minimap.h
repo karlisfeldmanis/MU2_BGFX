@@ -81,6 +81,8 @@ public:
     // The whole map over the middle of the screen, in place of the corner's disc.
     void setFull(bool on) { full_ = on; }
     bool full() const { return full_; }
+    // The disc's box as it stands, small or full: what the line's chip stands beside.
+    const gfx::Box& disc() const { return map_; }
     // Whether a point is over it, so a click there does not walk him. The whole map takes no
     // click at all: he walks under it, as with it shut (the user, 2026-10-01: 'allow to use
     // click to move when map (M) is opened').

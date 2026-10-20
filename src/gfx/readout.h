@@ -28,6 +28,10 @@ public:
     // which is capped to one 20 Hz tick for the animation's sake and overridden whole by
     // --fixed-dt, neither of which is the frame rate anybody wants to read.
     void draw(Overlay& overlay, int width, int height, float pingMs = -1.0f);
+    // The same frame rate, taken without drawing it: a played world shows it on its own chip,
+    // top right with the ping (game/ui/line_chip.h). Once a frame, in draw's place. 0 until
+    // the first two frames.
+    int sample();
 
 private:
     // Half a second at 60 fps. The MEDIAN of these is what is shown, not the mean: a frame
@@ -46,6 +50,8 @@ private:
     // second -- and it is what MU2's Hud.Stale settles at for the same reason.
     static constexpr double kRefreshMs = 250.0;
     double sinceText_ = kRefreshMs;  // so the first frame with a sample prints one
+    int fps_ = 0;  // the median's, as of the last refresh
+    bool refreshed_ = false;  // the last sample rebuilt it
     std::string text_;
     std::string pingText_;  // "42 ms", empty when off a server
 };

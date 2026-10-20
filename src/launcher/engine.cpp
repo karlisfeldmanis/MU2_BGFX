@@ -340,55 +340,6 @@ void forget() {
     fs::remove(userFolder() / "session", ec);
 }
 
-const std::vector<Region>& regions() {
-    // The Hetzner box (net::kDefaultHost), the game's own default.
-    static const std::vector<Region> all = {
-        {"eu-north", "North Europe", "Helsinki", "mu-classic.com"},
-        // Hetzner Nuremberg (server/README.md, the Central Europe box), for the Balkans and the south.
-        {"eu-central", "Central Europe", "Nuremberg", "178.104.232.133"},
-        // Vultr São Paulo (server/README.md, the South America box).
-        {"sa-east", "South America", "Sao Paulo", "216.238.127.33"},  // no ã in the launcher's face
-        // Hetzner Singapore (server/README.md, the Southeast Asia box).
-        {"ap-southeast", "Southeast Asia", "Singapore", "5.223.83.101"},
-    };
-    return all;
-}
-
-const Region& regionNamed(const std::string& id) {
-    for (const Region& one : regions()) {
-        if (one.id == id) return one;
-    }
-    return regions().front();
-}
-
-double pingMs(const Region& region, double seconds) {
-    const size_t colon = region.server.rfind(':');
-    const std::string host = colon == std::string::npos ? region.server : region.server.substr(0, colon);
-    const int port = colon == std::string::npos ? net::kDefaultPort : std::atoi(region.server.c_str() + colon + 1);
-    double best = -1.0;
-    for (int attempt = 0; attempt < 2; ++attempt) {
-        net::Socket socket;
-        std::string error;
-        const auto from = std::chrono::steady_clock::now();
-        if (!socket.connect(host, port, seconds, error)) continue;
-        const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - from).count();
-        if (best < 0.0 || ms < best) best = ms;
-    }
-    return best;
-}
-
-std::string quickest(const std::vector<double>& pings) {
-    std::string id;
-    double best = -1.0;
-    for (size_t i = 0; i < pings.size() && i < regions().size(); ++i) {
-        if (pings[i] >= 0.0 && (best < 0.0 || pings[i] < best)) {
-            best = pings[i];
-            id = regions()[i].id;
-        }
-    }
-    return id;
-}
-
 Settings loadSettings() {
     Settings settings;
     const core::Json said = parse(readFile(userFolder() / "launcher.json"), "launcher.json");

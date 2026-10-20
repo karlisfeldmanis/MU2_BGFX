@@ -150,6 +150,13 @@ private:
     int knocks_ = 0;
     static constexpr double kKnockEvery = 3.0;
     void sendBug(const Context& ctx, const game::Desk::BugAsk& ask);
+    // The line's chip, top right (game/ui/line_chip.h): the frame rate, the ping and, on a line
+    // slow for kSlowFor, the nearer region's note. `slowFor_` is how long it has been slow: it
+    // grows over kSlowMs, holds between, and starts again under kSteadyMs.
+    void feedLine(Context& ctx, float seconds);
+    float slowFor_ = 0.0f;
+    game::LineChip::Line line_;  // kept, so its pings are copied into the same vector each frame
+    static constexpr float kSlowMs = 150.0f, kSteadyMs = 120.0f, kSlowFor = 20.0f;
     // One store of item models for both the windows' pictures and what lies on the grass.
     game::ItemModels itemModels_;
     game::Litter litter_;

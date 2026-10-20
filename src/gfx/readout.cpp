@@ -10,9 +10,8 @@
 
 namespace mu::gfx {
 
-void Readout::draw(Overlay& overlay, int width, int height, float pingMs) {
-    if (!overlay.ready() || width <= 0 || height <= 0) return;
-
+int Readout::sample() {
+    refreshed_ = false;
     const int64_t now = bx::getHPCounter();
     if (last_ != 0) {
         const double toMs = 1000.0 / double(bx::getHPFrequency());
@@ -23,23 +22,31 @@ void Readout::draw(Overlay& overlay, int width, int height, float pingMs) {
         sinceText_ += ms;
     }
     last_ = now;
-    if (filled_ == 0) return;
+    if (filled_ == 0 || sinceText_ < kRefreshMs) return fps_;
+    sinceText_ = 0.0;
+    refreshed_ = true;
+    // Copied out and partially sorted, because nth_element rearranges what it is given
+    // and the ring's order is what tells the oldest sample from the newest. 31 doubles on
+    // the stack, four times a second.
+    double sorted[kWindow];
+    std::copy(samples_, samples_ + filled_, sorted);
+    const int mid = filled_ / 2;
+    std::nth_element(sorted, sorted + mid, sorted + filled_);
+    const double median = sorted[mid];
+    // Whole frames a second: a tenth of a frame is below what the median of half a second
+    // can honestly claim, and a digit that flickers is the thing this is trying to avoid.
+    const int fps = median > 0.0 ? int(1000.0 / median + 0.5) : 0;
+    fps_ = fps > 9999 ? 9999 : fps;
+    return fps_;
+}
 
-    if (sinceText_ >= kRefreshMs) {
-        sinceText_ = 0.0;
-        // Copied out and partially sorted, because nth_element rearranges what it is given
-        // and the ring's order is what tells the oldest sample from the newest. 31 doubles on
-        // the stack, four times a second.
-        double sorted[kWindow];
-        std::copy(samples_, samples_ + filled_, sorted);
-        const int mid = filled_ / 2;
-        std::nth_element(sorted, sorted + mid, sorted + filled_);
-        const double median = sorted[mid];
+void Readout::draw(Overlay& overlay, int width, int height, float pingMs) {
+    if (!overlay.ready() || width <= 0 || height <= 0) return;
+
+    sample();
+    if (refreshed_) {
         char buf[16];
-        // Whole frames a second: a tenth of a frame is below what the median of half a second
-        // can honestly claim, and a digit that flickers is the thing this is trying to avoid.
-        const int fps = median > 0.0 ? int(1000.0 / median + 0.5) : 0;
-        std::snprintf(buf, sizeof buf, "%d FPS", fps > 9999 ? 9999 : fps);
+        std::snprintf(buf, sizeof buf, "%d FPS", fps_);
         // assign into the member rather than building a string: after the first call the
         // capacity is already there, so no frame allocates.
         text_.assign(buf);

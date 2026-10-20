@@ -355,6 +355,7 @@ add_library(mu_net STATIC
   src/net/wire.cpp
   src/net/broker_wire.cpp
   src/net/pass.cpp
+  src/net/regions.cpp
   src/launcher/sha256.cpp
 )
 # zlib packs the Welcome's snapshot (net::pack): the system's on the Mac, zlib1g-dev on the box.
@@ -540,7 +541,7 @@ if(WIN32 OR APPLE OR MU2_LINUX_CLIENT)
     ${CMAKE_BINARY_DIR}/generated/launcher_embedded.cpp
   )
   add_dependencies(mu2_launcher mu2_shaders)
-  # mu_net: the regions' pings (engine.cpp pingMs), net::Socket's connect.
+  # mu_net: the regions and their pings (net/regions.cpp), net::Socket's connect.
   target_link_libraries(mu2_launcher PRIVATE mu_gfx mu_core mu_report mu_net)
   target_compile_options(mu2_launcher PRIVATE ${MU_WARNINGS})
   if(WIN32)
@@ -729,6 +730,7 @@ add_library(mu_game STATIC
   src/game/ui/tracker.cpp
   src/game/ui/travel.cpp
   src/game/ui/go_back.cpp
+  src/game/ui/line_chip.cpp
   src/game/ui/guild.cpp
   src/game/ui/herald.cpp
   src/game/ui/minimap.cpp

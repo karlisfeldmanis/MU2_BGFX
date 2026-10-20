@@ -129,6 +129,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     tracker_.open(interface_);
     travel_.open(interface_, assetDir, &arts_);
     goBack_.open(interface_);
+    lineChip_.open(interface_);
     squareResult_.open(interface_);
     herald_.open(interface_);
     minimap_.open(interface_);
@@ -166,6 +167,7 @@ void Desk::shutdown() {
     tracker_.close();
     travel_.close();
     goBack_.close();
+    lineChip_.close();
     squareResult_.close();
     herald_.close();
     minimap_.close();
@@ -217,6 +219,7 @@ bool Desk::overWindows(float x, float y) const {
            guildMake_.covers(x, y) || chat_.covers(x, y) || (!minimap_.full() && partyBar_.covers(x, y)) ||
            playerMenu_.covers(x, y) || targetFrame_.covers(x, y) || minimap_.covers(x, y) ||
            questDialog_.covers(x, y) || questLog_.covers(x, y) || helperWindow_.covers(x, y) || travel_.covers(x, y) || goBack_.covers(x, y) ||
+           (!watching_ && lineChip_.covers(x, y)) ||
            herald_.covers(x, y) || squareResult_.covers(x, y) ||
            (specimenOpen_ && specimen_.covers(x, y)) ||
            (characterOpen_ && card_.covers(x, y)) || inspect_.covers(x, y) ||
@@ -799,6 +802,18 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             goBackAsked_ = true;
             click();
         }
+    }
+    // The line's chip, top right beside the minimap's disc (in the corner while M lays the map
+    // over the screen): under a box or the menu it shows and hears nothing new.
+    if (!watching_) {
+        const bool held = amount_.up() || report_.up() || whatsNew_.up() || menu_.up();
+        const float u = tip::unit();
+        const gfx::Box& disc = minimap_.disc();
+        const bool beside = minimap_.showing() && !minimap_.full() && disc.w > 0.0f;
+        const float right = beside ? disc.x - 14.0f * u : float(window.width()) - 16.0f * u;
+        lineChip_.update(seconds, line_, held ? Pointer{} : pointer, window.width(), window.height(), right,
+                         14.0f * u);
+        if (lineChip_.takeClicked()) click();
     }
     // Devil Square's result, from the end of its time until he is paid: the realm's ranks, the
     // names as the server (or the bench) says them, his own his save's. Claim is asked of the
@@ -2556,6 +2571,8 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
         interface_.add(chat_.lines());
     }
     interface_.add(hud_.canvas());
+    // The line's chip beside the minimap, its list over whatever lies under it.
+    if (lineChip_.showing()) interface_.add(lineChip_.canvas());
     // A party invite, centred over the plate where a fight's Zen is said.
     if (chat_.inviting()) interface_.add(chat_.invite());
     if (characterOpen_) interface_.add(card_.canvas());

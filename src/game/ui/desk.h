@@ -28,6 +28,7 @@
 #include "game/ui/herald.h"
 #include "game/ui/cursor.h"
 #include "game/ui/hud.h"
+#include "game/ui/line_chip.h"
 #include "game/item_models.h"
 #include "game/ui/items_stage.h"
 #include "game/ui/menu.h"
@@ -254,6 +255,13 @@ public:
         return was;
     }
 
+    // The line's chip, top right (game/ui/line_chip.h): what it shows, from the mode each frame;
+    // whether its list opened (the mode times the regions) and whether the note's cross was
+    // pressed (never again), each once.
+    void setLine(const LineChip::Line& line) { line_ = line; }
+    bool takeLineOpened() { return lineChip_.takeOpened(); }
+    bool takeLineDismissed() { return lineChip_.takeDismissed(); }
+
     // The game menu (game/ui/menu.h) is up. The world goes on behind it.
     bool menuUp() const { return menu_.up(); }
     // Exit Game was pressed: the run ends after this frame, and shutdown saves.
@@ -379,6 +387,9 @@ private:
     Travel travel_;
     // Go Back!, over the HUD's middle while the way back to the field is open.
     GoBackPlate goBack_;
+    // The ping and the frame rate, top right, and the nearer region's note under them.
+    LineChip lineChip_;
+    LineChip::Line line_;
     // Devil Square's result at its end, and the rows it is told each frame.
     SquareResult squareResult_;
     std::vector<sim::Realm::SquareResult> squareResults_;

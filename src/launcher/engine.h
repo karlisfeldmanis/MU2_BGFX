@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+#include "net/regions.h"
+
 namespace mu::launcher {
 
 namespace fs = std::filesystem;
@@ -75,30 +77,12 @@ fs::path userFolder();
 // which needs no administrator; ~/Applications on the Mac, where a MU2.app belongs (L5).
 fs::path defaultInstall();
 
-// **A region is a realm of its own** (the user, 2026-10-16, a player in Argentina at 200 ms from
-// Helsinki): each one a server with its own world -- players in two regions never meet -- and the
-// accounts shared, the website's. The game is started at the region's server (play). A region
-// added here is in every launcher's list.
-//
-// **Chosen by ping until the player chooses** (the user, 2026-10-17: "if user is from that region
-// it automatically selects that region"): each run times a connect to every region's server
-// (pingMs) and plays where it is quickest, unless he has picked one from the list himself.
-struct Region {
-    std::string id;      // kept in launcher.json; never shown
-    std::string name;    // what the player picks
-    std::string city;    // where its server is
-    std::string server;  // the game's --server: HOST[:PORT]
-};
-const std::vector<Region>& regions();
-// The region kept under `id`, or the first one when none is (a launcher.json from before regions).
-const Region& regionNamed(const std::string& id);
-// The round trip to a region's game server, in ms: a TCP connect to it timed, the quicker of two
-// (the first may have paid for the name's lookup). -1 when it does not answer within `seconds`.
-// Blocks: call it off the screen's thread.
-double pingMs(const Region& region, double seconds = 2.0);
-// The region with the quickest of `pings` (one a region, in regions()' order), or "" when none
-// answered.
-std::string quickest(const std::vector<double>& pings);
+// The regions (net/regions.h): the game reads the same list, to tell a slow line of a nearer one.
+using net::pingMs;
+using net::quickest;
+using net::Region;
+using net::regionNamed;
+using net::regions;
 
 struct Settings {
     fs::path install;

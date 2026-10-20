@@ -36,6 +36,7 @@
 #include "game/world/world_show.h"
 #include "gfx/views.h"
 #include "gfx/window.h"
+#include "net/regions.h"
 #include "sim/gates.h"
 #include "sim/items.h"
 #include "sim/market.h"
@@ -1284,7 +1285,16 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             for (const auto& [frame, text] : args.uiTyped) {
                 if (at.index == frame) desk_.scriptType(text);
             }
+            feedLine(ctx, float(deltaSeconds));
             desk_.update(float(deltaSeconds), ctx.window, world_.played(), pointerX, pointerY);
+            // The chip's list opened: the regions timed to fill it, once a run. Its note closed:
+            // never again on this machine.
+            if (desk_.takeLineOpened()) net::pingAllOnce();
+            if (desk_.takeLineDismissed()) {
+                args.pingNoteClosed = true;
+                core::saveOptions(args);
+                core::logf("window: the nearer region's note closed for good");
+            }
             // A bug report written: sent on a thread, and its answer back to the window.
             if (game::Desk::BugAsk ask; desk_.takeReport(&ask)) sendBug(ctx, ask);
             if (bugSending_) {
@@ -1981,7 +1991,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
     }
     if (desk_.ready() && !hudHidden_) desk_.submit(gfx::ViewHud, ctx.window.width(), ctx.window.height());
-    if (args.fps && !hudHidden_) ctx.readout.draw(ctx.overlay, ctx.window.width(), ctx.window.height(),
+    // Over a played world the counter is the line's chip, top right (feedLine).
+    if (args.fps && !hudHidden_ && !desk_.ready()) ctx.readout.draw(ctx.overlay, ctx.window.width(), ctx.window.height(),
                                                   world_.played().rttMs());
     // Asked now, taken by bgfx when this frame is presented: the picture is what is on screen.
     if (ctx.window.pressed(gfx::Window::Key::Shot)) takeShot();
@@ -2267,6 +2278,35 @@ void PlayMode::shutdown(Context& ctx) {
 }  // namespace mu::app
 
 namespace mu::app {
+
+// **The line's chip** (the user, 2026-10-20, docs in game/ui/line_chip.h): the frame rate when
+// Options' counter is on, the ping when there is a server, and his region among net::regions().
+// A line slow for kSlowFor has every region timed once, in the background, and when one answers
+// much sooner than his own (net::nearer) the chip's note names it, until he closes it for good.
+void PlayMode::feedLine(Context& ctx, float seconds) {
+    const core::Args& args = ctx.args;
+    game::LineChip::Line& line = line_;
+    line.here = line.nearer = -1;
+    const int fps = ctx.readout.sample();
+    line.fps = args.fps ? fps : -1;
+    line.ping = world_.played().rttMs();
+    if (line.ping >= 0.0f) {
+        line.here = net::regionOfServer(args.server);
+        if (!args.region.empty()) {
+            for (size_t i = 0; i < net::regions().size(); ++i) {
+                if (net::regions()[i].id == args.region) line.here = int(i);
+            }
+        }
+        if (line.ping >= kSlowMs) slowFor_ += seconds;
+        else if (line.ping < kSteadyMs) slowFor_ = 0.0f;
+    }
+    const bool slow = slowFor_ >= kSlowFor;
+    if (slow && line.here >= 0 && !args.pingNoteClosed) net::pingAllOnce();
+    if (net::pingAllTaken(&line.pings) && slow && !args.pingNoteClosed) {
+        line.nearer = net::nearer(line.pings, line.here);
+    }
+    desk_.setLine(line);
+}
 
 // The player's bug report to the website, on a thread of its own: the game goes on while it is
 // out, and the window says "Sending..." until the answer comes (game/ui/report.h). The site is

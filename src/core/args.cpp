@@ -52,6 +52,7 @@ void readOptions(Args& a) {
         else if (!std::strcmp(key, "textures") && value >= 0 && value <= 1) a.textures = value;
         else if (!std::strcmp(key, "renderer") && value >= 0 && value <= 2) a.renderer = value;
         else if (!std::strcmp(key, "whatsnew") && value >= 0) a.whatsNew = value;
+        else if (!std::strcmp(key, "pingnote")) a.pingNoteClosed = value != 0;
         else if (!std::strcmp(key, "hand")) a.graphicsByHand = value != 0;
         else if (!std::strcmp(key, "tuned")) a.tuned = value != 0;
         else if (!std::strcmp(key, "tunedgpu")) a.tunedGpu = value;
@@ -88,8 +89,8 @@ void saveOptions(const Args& a) {
                        "grass %d\ncap %d\nlights %d\ntextures %d\nrenderer %d\n",
                  int(a.scale * 100.0f + 0.5f), a.msaa, a.shadows, a.ssao ? 1 : 0, a.bloom ? 1 : 0,
                  a.reflections ? 1 : 0, a.grass, a.cap, a.lights ? 1 : 0, a.textures, a.renderer);
-    std::fprintf(file, "whatsnew %d\nhand %d\ntuned %d\ntunedgpu %d\n", a.whatsNew,
-                 a.graphicsByHand ? 1 : 0, a.tuned ? 1 : 0, a.tunedGpu);
+    std::fprintf(file, "whatsnew %d\nhand %d\ntuned %d\ntunedgpu %d\npingnote %d\n", a.whatsNew,
+                 a.graphicsByHand ? 1 : 0, a.tuned ? 1 : 0, a.tunedGpu, a.pingNoteClosed ? 1 : 0);
     std::fclose(file);
 }
 
@@ -279,6 +280,8 @@ void printUsage() {
         "  --wing-demo               every kill in Icarus leaves his class's first wings (a demo)\n"
         "  --peaceful                no monsters on the map at all: a place to walk and run\n"
         "  --server HOST[:PORT]      play on that server (mu2_server) instead of in this process\n"
+        "  --region ID               the region (eu-north, sa-east...) a test's server stands for,\n"
+        "                            for the line's chip and its nearer-region note\n"
         "  --invite A,B              on a server, ask them into his party until they are in\n"
         "  --castle-open             the Messenger lets a cloak into Blood Castle at any hour\n"
         "  --castle-period S         Blood Castle opens every S seconds, for S/2, not hourly (a test)\n"
@@ -638,6 +641,8 @@ Args parseArgs(int argc, char** argv) {
             }
         } else if (!std::strcmp(s, "--server")) {
             if (const char* v = next(s)) a.server = v;
+        } else if (!std::strcmp(s, "--region")) {
+            if (const char* v = next(s)) a.region = v;
         } else if (!std::strcmp(s, "--invite")) {
             if (const char* v = next(s)) {
                 std::string list = v;
