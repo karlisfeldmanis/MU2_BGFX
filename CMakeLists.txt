@@ -261,13 +261,14 @@ add_library(mu_core STATIC
   src/core/files.cpp
   src/core/json.cpp
   src/core/paths.cpp
+  src/core/browser.cpp
 )
 target_include_directories(mu_core PUBLIC src)
 # Windows' own black box: SEH and minidumps in place of signals and backtrace().
 if(WIN32)
   set_source_files_properties(src/core/watch.cpp PROPERTIES HEADER_FILE_ONLY ON)
   target_sources(mu_core PRIVATE src/core/watch_win.cpp)
-  target_link_libraries(mu_core PUBLIC dbghelp)
+  target_link_libraries(mu_core PUBLIC dbghelp shell32 ole32)
 endif()
 target_compile_definitions(mu_core PRIVATE ${MU_DIRS})
 target_compile_options(mu_core PRIVATE ${MU_WARNINGS})

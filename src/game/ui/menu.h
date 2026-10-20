@@ -1,12 +1,14 @@
-// The game menu, on Escape: Options, Switch Character, Exit Game.
+// The game menu, on Escape: What's New, Options, Switch Character, Discord, Exit Game.
 //
 // MU's CNewUISystemMenu is a column of worded buttons over the world -- Exit Game, Server
 // Select, Character Select, Option, Close -- and this is that column in the windows' skin,
 // chosen by the user on 2026-09-27 from a page drawn over Lorencia: *"same style as other ui,
 // clean, fat but with diablo 4 vibe"*, then *"cleaner with rounder radius"*, then *"a little
-// bit simpler, without icons"*. A centred sheet, three fat rounded slabs with an engraved
+// bit simpler, without icons"*. A centred sheet, fat rounded slabs with an engraved
 // inner line, a warm light rising under the one the pointer is on, and Exit set apart below a
-// rule and lit red.
+// rule and lit red. Discord opens the game's server in the player's browser (core/browser.h;
+// the user, 2026-10-20: *"we need to add info about our discord on website and also inside game
+// itself"*).
 //
 // Three pages in one sheet: the menu; Options, which offers only what can change while the
 // game runs -- the display (a window or the whole screen), the window's size, v-sync, the
@@ -47,6 +49,7 @@ public:
         bool switched = false;  // Switch Character: back to the character screen
         bool reconnect = false; // the Lost page's Reconnect: the character screen, which joins afresh
         bool whatsNew = false;  // What's New: its slides up again (game/ui/whats_new.h)
+        bool discord = false;   // Discord: the invite went to the browser, the menu down
     };
 
     // What Options edits. The caller fills it from the window and the run, and applies it back

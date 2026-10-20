@@ -6,6 +6,8 @@
 #include <vector>
 
 #include "core/args.h"
+#include "core/browser.h"
+#include "core/log.h"
 #include "game/ui/controls.h"
 #include "game/ui/panel.h"
 #include "game/ui/style.h"
@@ -29,10 +31,10 @@ constexpr float kMainWide = 380.0f, kOptionsWide = 430.0f;
 constexpr float kMainInset = 26.0f, kOptionsInset = 22.0f;
 constexpr float kFootTall = 44.0f;
 
-// The menu: What's New, Options and Switch Character, a rule, Exit Game, and the foot.
+// The menu: What's New, Options, Switch Character and Discord, a rule, Exit Game, and the foot.
 constexpr float kMainFirst = style::kHead + 22.0f;
 constexpr float kMainStep = style::kButtonL + 12.0f;
-constexpr float kMainRule = kMainFirst + kMainStep * 3.0f + 2.0f;
+constexpr float kMainRule = kMainFirst + kMainStep * 4.0f + 2.0f;
 constexpr float kMainExit = kMainRule + 14.0f;
 constexpr float kMainFoot = kMainExit + style::kButtonL + 16.0f;
 constexpr float kMainTall = kMainFoot + kFootTall;
@@ -84,7 +86,7 @@ constexpr float kCentreShare = 0.46f;
 
 enum Target : int {
     kOptions = 0, kSwitch = 1, kExit = 2, kReconnect = 3, kBack = 4, kGraphics = 5, kApply = 6,
-    kWhatsNew = 7,
+    kWhatsNew = 7, kDiscord = 8,
     kClose = 9,
     // The Options page's own: two chevrons a stepped row, two halves a switch, and the slider.
     kDisplayDown = 10, kDisplayUp, kSizeDown, kSizeUp, kVsyncOff, kVsyncOn, kCounterOff,
@@ -284,6 +286,7 @@ Box boxOf(Menu::Page page, int target) {
         if (target == kWhatsNew) return {kMainInset, kMainFirst, inner, style::kButtonL};
         if (target == kOptions) return {kMainInset, kMainFirst + kMainStep, inner, style::kButtonL};
         if (target == kSwitch) return {kMainInset, kMainFirst + kMainStep * 2.0f, inner, style::kButtonL};
+        if (target == kDiscord) return {kMainInset, kMainFirst + kMainStep * 3.0f, inner, style::kButtonL};
         if (target == kExit) return {kMainInset, kMainExit, inner, style::kButtonL};
         return {};
     }
@@ -427,6 +430,14 @@ void Menu::update(float seconds, float width, float height, const Pointer& point
                 case kSwitch:
                     up_ = false;
                     result.switched = result.clicked = true;
+                    break;
+                case kDiscord:
+                    // Opened here, as the click lands: the browser comes up over the game, which
+                    // goes on behind it with the menu down.
+                    up_ = false;
+                    core::openInBrowser(core::kDiscordInvite);
+                    core::logf("window: discord opened from the menu");
+                    result.discord = result.clicked = true;
                     break;
                 case kBack: turn(page_ == Page::Graphics ? Page::Options : Page::Main); break;
                 case kGraphics: turn(Page::Graphics); break;
@@ -594,6 +605,7 @@ void Menu::rebuild() {
         big(kWhatsNew, "What's New", Kind::Secondary);
         big(kOptions, "Options", Kind::Secondary);
         big(kSwitch, "Switch Character", Kind::Secondary, !switchable_);
+        big(kDiscord, "Discord", Kind::Secondary);
         controls::rule(canvas_, sheet.x + kMainInset * u, y_ + kMainRule * u,
                        (kMainWide - kMainInset * 2.0f) * u, u);
         big(kExit, "Exit Game", Kind::Danger);

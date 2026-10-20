@@ -42,6 +42,7 @@ extern char** environ;
 #include <mutex>
 #include <thread>
 
+#include "core/browser.h"
 #include "core/files.h"
 #include "core/log.h"
 #include "gfx/callback.h"
@@ -506,20 +507,7 @@ void Launcher::logOut() {
     work([this, who] { signOut(place_, who); });
 }
 
-void Launcher::openUrl(const std::string& url) {
-#ifdef _WIN32
-    ShellExecuteW(nullptr, L"open", std::wstring(url.begin(), url.end()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
-#else
-#ifdef __linux__
-    std::string open = "xdg-open", target = url;  // the desktop's own browser
-#else
-    std::string open = "/usr/bin/open", target = url;
-#endif
-    char* argv[] = {open.data(), target.data(), nullptr};
-    pid_t pid = 0;
-    posix_spawnp(&pid, open.c_str(), nullptr, nullptr, argv, environ);
-#endif
-}
+void Launcher::openUrl(const std::string& url) { core::openInBrowser(url); }
 
 void Launcher::pickFolder() {
 #ifdef _WIN32
@@ -751,6 +739,8 @@ void Launcher::drawSignIn() {
     if (!message_.empty()) alert({x, y, w, 44.0f}, message_);
     words(x, kH - 40.0f, "New to MU?", hex(kQuiet), 15.0f);
     if (link(x + measure("New to MU?", 15.0f) + 5.0f, kH - 40.0f, "Create account", kLabel)) openUrl(place_.web + "/");
+    // The game's Discord, on the same line at the form's right edge.
+    if (link(x + w - measure("Discord", 15.0f), kH - 40.0f, "Discord", kQuiet)) openUrl(core::kDiscordInvite);
 }
 
 void Launcher::drawHome() {
@@ -770,7 +760,9 @@ void Launcher::drawHome() {
     }
     float editWide = 0;
     if (flat(right - logOutWide - 4.0f, top, "Edit account", &editWide)) openUrl(place_.web + "/account");
-    dragRight_ = right - logOutWide - editWide - 4.0f;
+    float discordWide = 0;
+    if (flat(right - logOutWide - editWide - 8.0f, top, "Discord", &discordWide)) openUrl(core::kDiscordInvite);
+    dragRight_ = right - logOutWide - editWide - discordWide - 8.0f;
 
     const float x = 40.0f;
     const float logoW = 160.0f, logoH = logoW * logo_.height / std::max(1.0f, logo_.width);
