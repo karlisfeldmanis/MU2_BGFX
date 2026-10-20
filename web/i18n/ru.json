@@ -392,5 +392,9 @@
  "The market&#x27;s item card always shows which class an item is for instead of running off the bottom": "Карточка предмета на рынке всегда показывает, для какого класса предмет, и не уходит за нижний край",
  "Windows": "Windows",
  "macOS": "macOS",
- "Linux": "Linux"
+ "Linux": "Linux",
+ "Jeweler": "Ювелир",
+ "Moss the Gambler in Noria recuts the powers on your rings and pendants, salvages them for a shot at jewels, or combines three into a rarer one.": "Moss the Gambler в Noria перегранит силы ваших колец и пендантов, разберёт их с шансом на джевелы или объединит три в более редкий.",
+ "Helper": "Helper",
+ "Free auto-hunt on H: choose how each skill is used, when to drink and what to pick up.": "Бесплатная автоохота на H: выберите, как использовать каждый скилл, когда пить зелья и что подбирать."
 }

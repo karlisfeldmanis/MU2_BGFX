@@ -392,5 +392,9 @@
  "The market&#x27;s item card always shows which class an item is for instead of running off the bottom": "Karta przedmiotu na markecie zawsze pokazuje, dla jakiej klasy jest przedmiot, zamiast wychodzić poza dół",
  "Windows": "Windows",
  "macOS": "macOS",
- "Linux": "Linux"
+ "Linux": "Linux",
+ "Jeweler": "Jubiler",
+ "Moss the Gambler in Noria recuts the powers on your rings and pendants, salvages them for a shot at jewels, or combines three into a rarer one.": "Moss the Gambler w Noria przeszlifuje moce twoich pierścieni i pendantów, rozbierze je z szansą na jewele albo połączy trzy w rzadszy.",
+ "Helper": "Helper",
+ "Free auto-hunt on H: choose how each skill is used, when to drink and what to pick up.": "Darmowy auto-hunt pod H: wybierz, jak używać każdego skilla, kiedy pić potki i co zbierać."
 }

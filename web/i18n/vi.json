@@ -392,5 +392,9 @@
  "The market&#x27;s item card always shows which class an item is for instead of running off the bottom": "Thẻ item ở chợ luôn hiện item dành cho class nào thay vì tràn xuống dưới",
  "Windows": "Windows",
  "macOS": "macOS",
- "Linux": "Linux"
+ "Linux": "Linux",
+ "Jeweler": "Thợ kim hoàn",
+ "Moss the Gambler in Noria recuts the powers on your rings and pendants, salvages them for a shot at jewels, or combines three into a rarer one.": "Moss the Gambler ở Noria mài lại dòng sức mạnh trên nhẫn và dây chuyền, phân rã chúng để có cơ hội nhận ngọc, hoặc ghép ba món thành một món hiếm hơn.",
+ "Helper": "Helper",
+ "Free auto-hunt on H: choose how each skill is used, when to drink and what to pick up.": "Auto-hunt miễn phí bằng phím H: chọn cách dùng từng skill, khi nào uống potion và nhặt những gì."
 }
