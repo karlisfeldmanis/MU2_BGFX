@@ -218,7 +218,9 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     r.mana = in.i32();
     r.money = in.i64();
     r.learned = in.u64();
-    for (int64_t& left : r.coolsLeft) left = in.i64();
+    // Layouts 3 to 8 carry 39 skills' cools; 9 the Alquamos's too (kSkills 40). The rest stand cold.
+    const int cools = layout >= 9 ? sim::kSkills : std::min(39, sim::kSkills);
+    for (int i = 0; i < cools; ++i) r.coolsLeft[i] = in.i64();
     r.boonSkill = in.i32();
     r.boonDamageTaken = floatOf(in.u32());
     r.boonTicksLeft = in.i64();
@@ -945,7 +947,13 @@ void putKept(std::vector<uint8_t>& out, const sim::Kept& one) {
 bool keptFrom(const std::vector<uint8_t>& bytes, sim::Kept& out, int layout) {
     In in{bytes};
     out = takeKept(in, layout);
-    return in.done();
+    if (in.done()) return true;
+    // 0f23a18a wrote 40 cools under layout 8 from its deploy (2026-10-20 16:18 UTC) until 9 came:
+    // a layout 8 that does not read with 39 reads as 9.
+    if (layout != 8) return false;
+    In again{bytes};
+    out = takeKept(again, 9);
+    return again.done();
 }
 
 uint64_t stateHash(const sim::Realm& realm) {
