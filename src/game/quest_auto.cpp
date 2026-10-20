@@ -33,6 +33,9 @@ struct Living {
     int map = -1;
     std::map<int32_t, int> population;
     std::map<int32_t, std::vector<std::pair<int, int>>> places;
+    // On a map of floors (the Dungeon's, the Lost Tower's), how many of each breed stand on each
+    // floor, by the Move row landing on it; -1 for a nest on none.
+    std::map<int32_t, std::map<int, int>> floors;
 };
 std::vector<Living>& worlds() {
     static std::vector<Living> all;
@@ -45,6 +48,72 @@ const Living* livingOn(int map) {
         if (one.map == map) return &one;
     }
     return nullptr;
+}
+
+// How many of a breed stand on the floor a Move row lands on.
+int onFloor(const Living* living, int32_t breed, int floor) {
+    if (living == nullptr) return 0;
+    const auto found = living->floors.find(breed);
+    if (found == living->floors.end()) return 0;
+    const auto many = found->second.find(floor);
+    return many == found->second.end() ? 0 : many->second;
+}
+
+// Each tile's floor on a map of several Move rows, as Realm::settleFound fills them: every open
+// tile walkable from a row's landing is that row's. Empty for a map of one row or none.
+std::vector<int8_t> floorsOf(const content::Tables& tables, int map) {
+    const uint32_t rows = sim::travelRowsOf(int32_t(map));
+    const content::Grid& grid = tables.grid;
+    if ((rows & (rows - 1)) == 0 || grid.empty()) return {};
+    const int size = grid.size();
+    std::vector<int8_t> floors(size_t(size) * size_t(size), int8_t(-1));
+    std::vector<int> queue;
+    for (int i = 0; i < sim::kTravels; ++i) {
+        if (((rows >> i) & 1u) == 0) continue;
+        int column = -1, row = -1;
+        const sim::TravelRow& trip = sim::travelAt(i);
+        for (int ring = 0; ring <= 4 && column < 0; ++ring) {
+            for (int dr = -ring; dr <= ring && column < 0; ++dr) {
+                for (int dc = -ring; dc <= ring && column < 0; ++dc) {
+                    if (grid.open(trip.column + dc, trip.row + dr)) column = trip.column + dc, row = trip.row + dr;
+                }
+            }
+        }
+        if (column < 0 || floors[size_t(row * size + column)] >= 0) continue;
+        queue.assign(1, row * size + column);
+        floors[size_t(queue[0])] = int8_t(i);
+        for (size_t at = 0; at < queue.size(); ++at) {
+            const int c = queue[at] % size, r = queue[at] / size;
+            for (int dr = -1; dr <= 1; ++dr) {
+                for (int dc = -1; dc <= 1; ++dc) {
+                    const int nc = c + dc, nr = r + dr;
+                    if (!grid.open(nc, nr)) continue;
+                    const size_t k = size_t(nr) * size_t(size) + size_t(nc);
+                    if (floors[k] >= 0) continue;
+                    floors[k] = int8_t(i);
+                    queue.push_back(int(k));
+                }
+            }
+        }
+    }
+    return floors;
+}
+
+// The floor of a tile, or of the nearest open tile a few steps round it (a nest's middle can be
+// a wall); -1 for none.
+int floorOf(const std::vector<int8_t>& floors, const content::Grid& grid, int column, int row) {
+    if (floors.empty()) return -1;
+    for (int ring = 0; ring <= 4; ++ring) {
+        for (int dr = -ring; dr <= ring; ++dr) {
+            for (int dc = -ring; dc <= ring; ++dc) {
+                const int c = column + dc, r = row + dr;
+                if (!grid.inside(c, r)) continue;
+                const int8_t floor = floors[size_t(r) * size_t(grid.size()) + size_t(c)];
+                if (floor >= 0) return floor;
+            }
+        }
+    }
+    return -1;
 }
 
 // How often the hand looks again, and how long an order is left to work before it is asked again.
@@ -64,6 +133,8 @@ constexpr int kStairs = 4;
 constexpr float kSetOn = 6.0f;
 // And how far it may move from the tile he was walked to before the walk is asked again.
 constexpr int kSetOnDrift = 2;
+// How near, in tiles, a monster that has him as its quarry must be to be answered first.
+constexpr float kAttackerReach = 15.0f;
 
 // The first of this map's own stairs (an enter gate letting out on the same map) to walk into on
 // the way from (column, row) to a tile he cannot walk to from there: the Dungeon's floors join
@@ -129,10 +200,14 @@ void open(const std::string& assetDir) {
         if (!content::loadTables(path, tables, error)) continue;
         Living living;
         living.map = number;
+        const std::vector<int8_t> floors = floorsOf(tables, number);
         for (const content::MonsterNest& nest : tables.nests) {
             if (nest.kind >= tables.kinds.size()) continue;
-            living.population[tables.kinds[nest.kind].number] += int(nest.count);
-            living.places[tables.kinds[nest.kind].number].push_back({(nest.x1 + nest.x2) / 2, (nest.y1 + nest.y2) / 2});
+            const int32_t breed = tables.kinds[nest.kind].number;
+            const int column = (nest.x1 + nest.x2) / 2, row = (nest.y1 + nest.y2) / 2;
+            living.population[breed] += int(nest.count);
+            living.places[breed].push_back({column, row});
+            if (!floors.empty()) living.floors[breed][floorOf(floors, tables.grid, column, row)] += int(nest.count);
         }
         worlds().push_back(std::move(living));
     }
@@ -314,9 +389,11 @@ std::string QuestAuto::update(Play& play, int* quest, double seconds, const int3
 }
 
 // The realm's own trip: a Move row to the map, paid, when one is open to him -- for a hunt, the
-// one landing nearest the breed's nests (the Dungeon's third floor by "Dungeon 3", not the first
-// floor and every stair down; the user, 2026-10-20: "auto-play is not going to dungeon 3 for
-// clear quest but goes long way") -- else on foot to the gate toward it.
+// one landing on the floor most of the breed stand on, then nearest its nests (the Dungeon's
+// third floor by "Dungeon 3", not the first floor and every stair down; the user, 2026-10-20:
+// "auto-play is not going to dungeon 3 for clear quest but goes long way"; and the Lost Tower's
+// Death Gorgons by its seventh floor, 50 there, not the sixth's 11: "we need smarter auto-play
+// also in LT, char is no using fast-travel smartly") -- else on foot to the gate toward it.
 std::string QuestAuto::goTo(Play& play, int map, const std::function<std::string(const std::string&)>& stop,
                             int32_t breed) {
     const sim::Realm& realm = play.realm();
@@ -324,22 +401,25 @@ std::string QuestAuto::goTo(Play& play, int map, const std::function<std::string
     if (realm.questing() >= 0) play.closeQuest();
     if (clock_ - travelAt_ < kTravelWait) return {};
     const std::vector<std::pair<int, int>>* places = nullptr;
-    if (const Living* there = livingOn(map); there && breed >= 0) {
+    const Living* there = livingOn(map);
+    if (there && breed >= 0) {
         const auto found = there->places.find(breed);
         if (found != there->places.end()) places = &found->second;
     }
-    int bestRow = -1;
+    int bestRow = -1, bestMany = 0;
     float bestAway = 1e9f;
     for (int i = 0; i < sim::kTravels; ++i) {
         const sim::TravelRow& trip = sim::travelAt(i);
         if (trip.map != map || realm.travelRefusal(i) != sim::TravelRefusal::None) continue;
+        const int many = breed >= 0 ? onFloor(there, breed, i) : 0;
         float away = 0.0f;
         if (places) {
             away = 1e9f;
             for (const auto& [c, r] : *places) away = std::min(away, std::hypot(float(trip.column - c), float(trip.row - r)));
         }
-        if (bestRow < 0 || away < bestAway) {
+        if (bestRow < 0 || many > bestMany || (many == bestMany && away < bestAway)) {
             bestRow = i;
+            bestMany = many;
             bestAway = away;
         }
     }
@@ -386,9 +466,34 @@ void QuestAuto::visit(Play& play, int folk, bool hand) {
         return;
     }
     if (realm.questing() >= 0) play.closeQuest();
+    // On another floor of this map (Tersia in the Lost Tower's hall, the quest hunted on its
+    // seventh): the free Move row landing where he can walk to her.
+    const sim::Body& hero = realm.hero();
+    const content::Townsperson& one = realm.tables()->folk[size_t(folk)];
+    if (!realm.reaches(hero, hero.column(), hero.row(), one.x, one.y)) {
+        if (clock_ - travelAt_ < kTravelWait) return;
+        int bestRow = -1;
+        float bestAway = 1e9f;
+        for (int i = 0; i < sim::kTravels; ++i) {
+            const sim::TravelRow& trip = sim::travelAt(i);
+            if (trip.map != int32_t(realm.tables()->map) || realm.travelRefusal(i) != sim::TravelRefusal::None) continue;
+            if (!realm.reaches(hero, trip.column, trip.row, one.x, one.y)) continue;
+            const float away = std::hypot(float(trip.column - one.x), float(trip.row - one.y));
+            if (away < bestAway) {
+                bestAway = away;
+                bestRow = i;
+            }
+        }
+        if (bestRow >= 0) {
+            travelAt_ = clock_;
+            core::logf("auto-play: by the Move list to %s, to %s", sim::travelAt(bestRow).name, one.name.c_str());
+            play.travel(bestRow);
+            return;
+        }
+    }
     const sim::Request& order = realm.order();
     const bool asked = order.kind == sim::Request::Kind::Talk && order.target == uint32_t(folk);
-    if (asked && (realm.hero().walking || clock_ - askedAt_ < kReask)) return;
+    if (asked && (hero.walking || clock_ - askedAt_ < kReask)) return;
     askedAt_ = clock_;
     sim::Request request;
     request.kind = sim::Request::Kind::Talk;
@@ -631,7 +736,11 @@ bool QuestAuto::hunt(Play& play, int32_t breed) {
     for (const sim::Body& body : realm.bodies()) {
         if (!body.monster() || !body.alive() || body.gone) continue;
         const float dx = body.x - hero.x, dy = body.y - hero.y, away = dx * dx + dy * dy;
-        if (body.quarry == hero.id && away < attackerAway) {
+        // One on him: near and on his floor. A monster keeps him as its quarry past a death or a
+        // trip -- a Death Knight of the Lost Tower's seventh floor held him in its hall, walking
+        // to it for good.
+        if (body.quarry == hero.id && away < attackerAway && away < kAttackerReach * kAttackerReach &&
+            walkable(body.column(), body.row())) {
             attackerAway = away;
             attacker = &body;
         }
@@ -640,7 +749,9 @@ bool QuestAuto::hunt(Play& play, int32_t breed) {
             nearest = &body;
         }
     }
-    const sim::Body* fightNow = attacker ? attacker : (held && held->alive() && ofBreed(*held)) ? held : nearest;
+    // The one he was on, while he can still walk to it: not one left on another floor.
+    const bool holding = held && held->alive() && ofBreed(*held) && walkable(held->column(), held->row());
+    const sim::Body* fightNow = attacker ? attacker : holding ? held : nearest;
     // A jewel, rune or excellent piece first, while nothing is on him.
     if (attacker == nullptr && loot(play)) return true;
     // His guard first, when it has lapsed and something is to be fought.
@@ -674,6 +785,31 @@ bool QuestAuto::hunt(Play& play, int32_t breed) {
         return true;
     }
     target_ = 0;
+    // Nobody about, on a map of floors: another floor open to him with at least twice the breed
+    // his own has is a free trip away (Realm::travelZen), where its nests are walked to one by one
+    // -- the Lost Tower's second floor keeps one stray Shadow and its first 71, and Shadows were
+    // hunted at the stray's nest.
+    if (clock_ - travelAt_ >= kTravelWait) {
+        const Living* living = livingOn(int(tables.map));
+        const int floor = realm.floorAt(hero.column(), hero.row());
+        int bestRow = -1, bestMany = std::max(1, 2 * onFloor(living, breed, floor));
+        for (int i = 0; i < sim::kTravels; ++i) {
+            if (i == floor || sim::travelAt(i).map != int32_t(tables.map)) continue;
+            if (realm.travelRefusal(i) != sim::TravelRefusal::None) continue;
+            const int many = onFloor(living, breed, i);
+            if (many >= bestMany) {
+                bestMany = many;
+                bestRow = i;
+            }
+        }
+        if (bestRow >= 0) {
+            travelAt_ = clock_;
+            core::logf("auto-play: by the Move list to %s, %d of monster %d there", sim::travelAt(bestRow).name,
+                       bestMany, int(breed));
+            play.travel(bestRow);
+            return true;
+        }
+    }
     const auto middle = [](const content::MonsterNest& nest, int* column, int* row) {
         *column = (nest.x1 + nest.x2) / 2;
         *row = (nest.y1 + nest.y2) / 2;
@@ -759,6 +895,8 @@ bool QuestAuto::hunt(Play& play, int32_t breed) {
             for (int i = 0; i < sim::kTravels; ++i) {
                 const sim::TravelRow& trip = sim::travelAt(i);
                 if (trip.map != int32_t(tables.map) || realm.travelRefusal(i) != sim::TravelRefusal::None) continue;
+                // On this floor: another's landing is near as the crow flies only.
+                if (!realm.reaches(hero, trip.column, trip.row, column, row)) continue;
                 const float there = std::hypot(float(trip.column - column), float(trip.row - row));
                 if (there < bestAway) {
                     bestAway = there;
