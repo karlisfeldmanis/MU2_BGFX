@@ -9,8 +9,10 @@
 #include "game/ui/controls.h"
 #include "game/ui/describe.h"
 #include "game/ui/tip.h"
+#include "game/quest_auto.h"
 #include "game/world/maps.h"
 #include "game/world/world_show.h"
+#include "sim/maps.h"
 #include "sim/quests.h"
 
 namespace mu::game {
@@ -1727,8 +1729,10 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     const auto ready = [&](const sim::SkillRow& row) {
         // Blood Castle's court is the one safe ground an aura is raised on (Realm::throwSkill).
         const bool court = row.aura() && tables.map == sim::kBloodCastleMap;
+        // Nor a summon where none is raised: Icarus (Realm::conjure, sim::MapRow::summons).
+        const bool raised = row.summons <= 0 || sim::rulesOf(uint32_t(tables.map)).summons;
         return hero.alive() && (!inTown || court) && armedFor(row) && hero.mana >= row.mana &&
-               (!row.mounted || hero.riding);
+               (!row.mounted || hero.riding) && raised;
     };
 
     fan_.clear();
@@ -2125,6 +2129,14 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     if (row.mounted) {
         facts.rows.push_back(line("Mount", "Horn of Dinorant",
                                   hero.riding ? tip::Tone::White : tip::Tone::Red));
+    }
+    // **Her walking summons, not over Icarus** (Realm::conjure refuses them there; the user,
+    // 2026-10-20: "dont allow walking pets for elf in icarus, basically we need to show that its
+    // not usable on tooltip. we will have flying summons later"): a red row where it is refused,
+    // the key cold beside it (`ready`).
+    if (row.summons > 0 && tables && !sim::rulesOf(uint32_t(tables->map)).summons) {
+        facts.rows.push_back(line("Here", "Not usable in " + quest_world::mapName(tables->map),
+                                  tip::Tone::Red));
     }
     if (row.wizardry) {
         // The band in his hands and whom it strikes, in the words its scroll's card uses
