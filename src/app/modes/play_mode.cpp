@@ -1518,22 +1518,53 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // A little louder than the town's tracks (the user, 2026-10-08: "music has to be little bit
     // louder on boss fight"): 0.8, about 2.5 dB over their 0.6.
     // And Devil Square's match (the user, 2026-10-20: "lets use dragon raid music for devil suare
-    // also"), begun in the wait so that the track's drop, 39.05 s in -- where the bass comes in
-    // full after a two-second riser -- lands on the tick the fight starts ("time this music with
-    // exact moment when song skips the intro and active part starts"). Who comes in later than
-    // that hears it from the top, its drop late.
+    // also"), the song begun from its top 39.05 s before the fight, each wave and the bosses
+    // (0, 5, 12 and 15 minutes in, sim/square.h), so its drop -- the bass in full after its
+    // build-up and two-second riser -- lands as they rise ("time this music with exact moment
+    // when song skips the intro and active part starts", "song has to start from begining so
+    // there is same effect when monsters appear"). Between, it plays on: the square's cut of the
+    // track is 21:12 ("2 minute is quite short DS ir pretty long event"), its 0-104.25 s, then
+    // the 32 bars from 40.25 s to 104.25 s eighteen times over, then its outro, each seam a 30 ms
+    // crossfade on a bar line where the music matches itself (120 bpm, 16-bar phrases of 32.00 s).
+    // Who comes in between hears it from the top too, in step again at the next wave. Never for
+    // the dead, nor once he is sent out of the square ("if char dies music has to stop").
     constexpr int64_t kFightDropTicks = int64_t(39.05 * sim::kSquareTicksPerSecond);
-    const std::string fightTrack = ctx.paths.assets + "/music/dragon_fight.mp3";
     const sim::SquareRun& square = world_.played().realm().squareRun();
+    // The fight's clock as the waves keep it (SquareInstance::tick): from its end back, which
+    // --square-at moves; startsAt only in the wait.
+    const int64_t fightStart = square.phase == sim::SquarePhase::Running
+                                   ? square.endsAt - int64_t(sim::kSquarePlay) * sim::kSquareTicksPerSecond
+                                   : square.startsAt;
+    const int64_t fightTick = world_.played().realm().tick() - fightStart;
     const bool squareFighting =
-        world_.played().isOpen() &&
+        world_.played().isOpen() && world_.played().realm().event() == sim::EventKind::Square &&
+        world_.played().realm().hero().alive() &&
         (square.phase == sim::SquarePhase::Running ||
-         (square.phase == sim::SquarePhase::Waiting &&
-          square.startsAt - world_.played().realm().tick() <= kFightDropTicks));
+         (square.phase == sim::SquarePhase::Waiting && fightTick >= -kFightDropTicks));
+    // The latest of the drops whose build-up has begun: the cue the song was last begun on.
+    int squareCue = -1;
+    if (squareFighting) {
+        const int drops[] = {sim::kSquareWaveMinutes[0][0] * 60, sim::kSquareWaveMinutes[1][0] * 60,
+                             sim::kSquareWaveMinutes[2][0] * 60, sim::kSquareBossMinute * 60};
+        for (int k = 0; k < 4; ++k) {
+            if (fightTick >= int64_t(drops[k]) * sim::kSquareTicksPerSecond - kFightDropTicks) squareCue = k;
+        }
+    }
+    static int64_t cuedRun = -1;  // the run (its fight's first tick) and cue the song was last begun on
+    static int cued = -1;
+    const std::string fightTrack =
+        ctx.paths.assets + (squareFighting ? "/music/devil_square.mp3" : "/music/dragon_fight.mp3");
     if (world_.played().isOpen() && (world_.played().raidFighting() || squareFighting) &&
         core::fileExists(fightTrack)) {
         game::Sound& sound = world_.played().sound();
-        if (!sound.musicPlaying(fightTrack)) sound.music(fightTrack, 0.8f, true);
+        if (squareFighting && squareCue >= 0 && (cuedRun != fightStart || cued != squareCue)) {
+            // A wave's build-up: from the top again, the last bars fading under it.
+            const bool first = cuedRun != fightStart || !sound.musicPlaying(fightTrack);
+            cuedRun = fightStart;
+            cued = squareCue;
+            if (!first) sound.stopMusic();
+        }
+        if (!sound.musicPlaying(fightTrack)) sound.music(fightTrack, 0.8f, !squareFighting);
     } else if (world_.played().isOpen()) {
         // The world's track and where it plays are its manifest's `music`
         // (game/world/world_show.h): in the safe zone, under a roof, both, or everywhere.

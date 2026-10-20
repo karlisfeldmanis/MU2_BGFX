@@ -85,6 +85,7 @@ private:
     gfx::Lighting dry_, wet_;  // the light as set() built it, and that with the wet sheet over it
     float share_ = 0.0f;
     float flash_ = 0.0f;
+    bool flashed_ = false;  // a sheetless world's last frame was lit by a flash (rain)
     bool announce_ = false;
 };
 

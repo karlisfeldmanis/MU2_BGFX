@@ -77,7 +77,17 @@ void TimeOfDay::setWet(const std::string& path) {
 void TimeOfDay::rain(float share, float flash) {
     share_ = std::clamp(share, 0.0f, 1.0f);
     flash_ = std::clamp(flash, 0.0f, 1.0f);
-    if (lighting_ == nullptr || wetPath_.empty()) return;
+    if (lighting_ == nullptr) return;
+    // A world with no wet sheet still flashes -- Devil Square's rain has none (the user,
+    // 2026-10-20: "i dont see lighting flashing effect which has in lorencia") -- its dry light
+    // laid back the frame the flash is gone, and otherwise left alone.
+    if (wetPath_.empty()) {
+        if (flash_ <= 0.0f && !flashed_) return;
+        *lighting_ = dry_;
+        if (flash_ > 0.0f) lightning();
+        flashed_ = flash_ > 0.0f;
+        return;
+    }
     // Only what a wet sheet is for: the light, the air and the grade. Everything else -- the
     // shadow's fit, the grass, the metal -- stands as the dry light has it.
     *lighting_ = dry_;

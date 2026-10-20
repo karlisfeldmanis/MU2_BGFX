@@ -114,6 +114,7 @@ private:
     float sheltered_ = 0.0f;  // how far under a roof the ear is: the howl's muffle, the light's dry
     bool jungle_ = false;   // this world has the jungle's daytime bed
     bool sky_ = false;      // Icarus: a steady faint rain, silent
+    bool square_ = false;   // Devil Square: its claps on their own closer clock (strikeLater)
     bool forced_ = false;   // --weather held the spell
     bool cycle_ = false;    // --weather cycle: short spells, to watch the turn
     bool storm_ = false;    // --weather storm: claps close together, to watch the lightning

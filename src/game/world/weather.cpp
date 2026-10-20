@@ -61,6 +61,7 @@ constexpr float kRainLevel = 0.33f;
 // user, 2026-09-29: "lightning has to be not too often", against 20 to 50 s at first.
 // Invention, judged. --weather storm closes it to 8 to 16.
 constexpr float kThunderLow = 60.0f, kThunderHigh = 180.0f;
+constexpr float kSquareThunderLow = 15.0f, kSquareThunderHigh = 30.0f;  // Weather::strikeLater
 // The share the rain must be in at before the sky cracks: the storm is inside the rain.
 constexpr float kThunderShare = 0.8f;
 
@@ -164,8 +165,12 @@ void Weather::sync(int serverRain) {
 }
 
 void Weather::strikeLater() {
+    // Devil Square's sky cracks far oftener than a town's spell: MU flickers it about every 4 s
+    // (ZzzObject.cpp:3674-3688); ours a clap every 15 to 30 s, its storm (the user, 2026-10-20:
+    // "i saw lightinig but not yet later" on Noria's 60 to 180 s).
     thunderIn_ = storm_ || summoned_ ? 8.0f + random01() * 8.0f
-                        : kThunderLow + random01() * (kThunderHigh - kThunderLow);
+                 : square_           ? kSquareThunderLow + random01() * (kSquareThunderHigh - kSquareThunderLow)
+                                     : kThunderLow + random01() * (kThunderHigh - kThunderLow);
 }
 
 void Weather::open(const std::string& world, Sound* sound, const std::string& force) {
@@ -185,6 +190,7 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
     snows_ = show.weather == "snow" || show.weather == "sand";
     sky_ = show.weather == "sky";
     const bool square = show.weather == "square";
+    square_ = square;
     rains_ = show.weather == "rain" || snows_ || sky_ || square;
     peak_ = show.weatherPeak >= 0.0f ? show.weatherPeak : square ? kSquarePeak : snows_ ? 0.0f : 1.0f;
     jungle_ = show.jungle;
