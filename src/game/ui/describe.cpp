@@ -975,11 +975,16 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             // (sim::itemLabel). **What it does first** (the user, 2026-10-18: 'now that we have
             // rune names we can update tooltip that info show instantly'): no type line, the
             // effect straight under the name, its rarity and whose it is rows after it.
-            const bool everyone = power->classes == sim::kEveryClass;
+            // A second class's rune is never every class's, though its row lets each: it said
+            // "Every class" on Greater Ascendance, and a Dark Wizard could not set it in a staff
+            // (Bruno, 2026-10-20). It names the seconds, and not the Magic Gladiator, who is never
+            // promoted (sim::promoted) and is paid its Lesser (sim::gladiatorRune).
+            const bool everyone = power->classes == sim::kEveryClass && !power->second;
             std::string classes = everyone ? "every class" : "";
             // A second class's rune names the second: 'Blade Knight' (sim::PowerRow::second).
             for (size_t i = 0; !everyone && i < size_t(sim::kKinCount); ++i) {
                 if (!power->takenBy(sim::Kin(i), true)) continue;
+                if (power->second && sim::Kin(i) == sim::Kin::MagicGladiator) continue;
                 classes += (classes.empty() ? "" : " / ") +
                            std::string(power->second ? kSeconds[i] : kNames[i]);
             }
