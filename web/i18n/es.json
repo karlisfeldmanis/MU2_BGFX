@@ -292,5 +292,9 @@
  "Windows: no more freeze when the game is behind other windows": "Windows: ya no se congela cuando el juego está detrás de otras ventanas",
  "After a graphics driver reset, the game opens on a lighter setting; older Intel cards open on Lowest": "Tras un reinicio del driver gráfico, el juego abre con un ajuste más ligero; las tarjetas Intel antiguas abren en Lowest",
  "A damaged game file no longer crashes the game": "Un archivo dañado del juego ya no tira el juego",
- "The site shows each page in your browser's language when it has it. A language you pick at the foot of a page is kept in a cookie for a year, and nothing else is.": "El sitio muestra cada página en el idioma de tu navegador cuando lo tiene. El idioma que elijas al pie de una página se guarda en una cookie durante un año, y nada más."
+ "The site shows each page in your browser's language when it has it. A language you pick at the foot of a page is kept in a cookie for a year, and nothing else is.": "El sitio muestra cada página en el idioma de tu navegador cuando lo tiene. El idioma que elijas al pie de una página se guarda en una cookie durante un año, y nada más.",
+ "Join the community": "Únete a la comunidad",
+ "Find a party, ask for help, share your screenshots and see every update as it lands, in English or your own language.": "Encuentra un grupo, pide ayuda, comparte tus capturas y mira cada actualización en cuanto sale, en inglés o en tu idioma.",
+ "Join our Discord": "Únete a nuestro Discord",
+ "Our <a href=\"https://discord.gg/frqaT5k3EF\" rel=\"noopener\" target=\"_blank\" style=\"text-decoration: underline\">Discord</a>: chat with players and with us, find a party, and see each update as it lands.": "Nuestro <a href=\"https://discord.gg/frqaT5k3EF\" rel=\"noopener\" target=\"_blank\" style=\"text-decoration: underline\">Discord</a>: habla con jugadores y con nosotros, encuentra un grupo y mira cada actualización en cuanto sale."
 }

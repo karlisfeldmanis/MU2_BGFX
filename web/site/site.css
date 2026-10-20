@@ -69,6 +69,26 @@ header.top { position: relative; overflow: hidden; }
 .bar { position: relative; display: flex; justify-content: space-between; align-items: center; height: 84px;
   padding: 0 clamp(16px, 3vw, 40px); font-size: 18px; }
 .bar img { height: 50px; width: auto; display: block; }
+/* Beside Sign in: the Discord, a quiet pill so the account link stays the bar's word. */
+.bar-links { display: flex; align-items: center; gap: clamp(14px, 2.4vw, 26px); }
+.bar-discord { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px 0 12px; border-radius: 19px;
+  font-size: 16px; font-weight: 500; background: rgba(13,11,10,.55); box-shadow: inset 0 0 0 1px rgba(201,162,126,.28); transition: box-shadow .15s, color .15s; }
+.bar-discord svg { color: #C9A27E; transition: color .15s; }
+.bar-discord:hover { box-shadow: inset 0 0 0 1px rgba(236,207,173,.55); }
+.bar-discord:hover svg { color: #ECCFAD; }
+@media (max-width: 420px) { .bar-discord { padding: 0 10px; } .bar-discord span { display: none; } }
+/* Under the updates: the Discord, a card with its button. */
+#community { padding: 0 0 64px; }
+#community .wrap { max-width: 1160px; }
+.community { display: flex; align-items: center; gap: 28px; padding: 28px 32px; border-radius: 8px; border: 1px solid transparent;
+  background: linear-gradient(180deg, #1C1410, #110C0A) padding-box, linear-gradient(180deg, #5A4636, #33271F 40%, #1E1712) border-box;
+  box-shadow: inset 0 1px 0 rgba(255,236,210,.05), 0 18px 44px rgba(0,0,0,.45); }
+.community > svg { flex: none; color: #C9A27E; }
+.community .say { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.community h2 { margin: 0; font: 700 22px/1.25 Cinzel, serif; letter-spacing: .03em; color: var(--bone-hi); }
+.community p { margin: 0; font-size: 16px; color: var(--label); }
+.community .btn { flex: none; }
+@media (max-width: 720px) { .community { flex-direction: column; text-align: center; gap: 18px; padding: 26px 22px; } }
 .hero { max-width: 900px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 88px 0 40px; }
 .live { display: inline-flex; align-items: center; gap: 9px; padding: 6px 14px 6px 12px; border-radius: 999px; color: #A8E89A; font-weight: 700; line-height: 1;
   font-size: 16px; background: linear-gradient(rgba(36,64,28,.5), rgba(18,32,14,.45)); box-shadow: inset 0 0 0 1px rgba(127,214,106,.26); }

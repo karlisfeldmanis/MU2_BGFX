@@ -118,6 +118,11 @@ class _Units(HTMLParser):
             return
         self.stack.append([tag, start + len(text), [], False, [], skip])
 
+    def handle_startendtag(self, tag, attrs):
+        # <path .../> opens and shuts nothing: HTMLParser's own would also call handle_endtag,
+        # which closed the <svg> and the button around it and lost the words after an icon.
+        self.handle_starttag(tag, attrs)
+
     def attributes(self, start, text, tag, attrs):
         names = ATTRS + (("content",) if tag == "meta" and (attrs.get("name") in META or attrs.get("property") in META)
                          else ())
@@ -344,7 +349,8 @@ def structured(page: str, lang: str) -> str:
         {"@context": "https://schema.org", "@type": "VideoGame", "name": "MU Classic", "url": url,
          "description": about, "inLanguage": tag, "image": SITE + "/og.jpg", "genre": "MMORPG",
          "gamePlatform": ["Windows", "macOS", "Linux"], "playMode": "MultiPlayer",
-         "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}},
+         "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"},
+         "sameAs": ["https://discord.gg/frqaT5k3EF"]},
     ]
     blob = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
     return f'<script type="application/ld+json">{blob}</script>'

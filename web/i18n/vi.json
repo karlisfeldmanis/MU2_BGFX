@@ -292,5 +292,9 @@
  "Windows: no more freeze when the game is behind other windows": "Windows: không còn đứng hình khi game nằm sau các cửa sổ khác",
  "After a graphics driver reset, the game opens on a lighter setting; older Intel cards open on Lowest": "Sau khi driver đồ họa bị reset, game mở ở mức nhẹ hơn; card Intel cũ mở ở mức Lowest",
  "A damaged game file no longer crashes the game": "File game bị hỏng không còn làm game crash",
- "The site shows each page in your browser's language when it has it. A language you pick at the foot of a page is kept in a cookie for a year, and nothing else is.": "Trang web hiển thị mỗi trang bằng ngôn ngữ của trình duyệt nếu có. Ngôn ngữ bạn chọn ở cuối trang được lưu trong cookie một năm, ngoài ra không lưu gì khác."
+ "The site shows each page in your browser's language when it has it. A language you pick at the foot of a page is kept in a cookie for a year, and nothing else is.": "Trang web hiển thị mỗi trang bằng ngôn ngữ của trình duyệt nếu có. Ngôn ngữ bạn chọn ở cuối trang được lưu trong cookie một năm, ngoài ra không lưu gì khác.",
+ "Join the community": "Tham gia cộng đồng",
+ "Find a party, ask for help, share your screenshots and see every update as it lands, in English or your own language.": "Tìm tổ đội, hỏi đáp, chia sẻ ảnh chụp màn hình và xem mọi bản cập nhật ngay khi ra mắt, bằng tiếng Anh hoặc tiếng của bạn.",
+ "Join our Discord": "Vào Discord của chúng tôi",
+ "Our <a href=\"https://discord.gg/frqaT5k3EF\" rel=\"noopener\" target=\"_blank\" style=\"text-decoration: underline\">Discord</a>: chat with players and with us, find a party, and see each update as it lands.": "<a href=\"https://discord.gg/frqaT5k3EF\" rel=\"noopener\" target=\"_blank\" style=\"text-decoration: underline\">Discord</a> của chúng tôi: trò chuyện với người chơi và với chúng tôi, tìm tổ đội và xem mọi bản cập nhật ngay khi ra mắt."
 }
