@@ -716,6 +716,33 @@ bool stripped(const content::Tables& tables, Wearer who, const HeroPoints& start
 
 }  // namespace
 
+Realm::SpendPreview Realm::previewSpend(int stat, int count) const {
+    SpendPreview p;
+    if (!tables_) return p;
+    const Body& hero = mine();
+    HeroPoints spent = hero.points;
+    if (stat == 0) spent.strength += count;
+    if (stat == 1) spent.agility += count;
+    if (stat == 2) spent.vitality += count;
+    if (stat == 3) spent.energy += count;
+    // Body::totalPoints on the points with the press in: the stat runes' shares on top.
+    const HeroPoints& share = hero.runeShare;
+    const HeroPoints after{spent.strength + spent.strength * share.strength / 100,
+                           spent.agility + spent.agility * share.agility / 100,
+                           spent.vitality + spent.vitality * share.vitality / 100,
+                           spent.energy + spent.energy * share.energy / 100};
+    const Arms arms = armsOf(hero);
+    p.totalsBefore = hero.totalPoints();
+    p.totalsAfter = after;
+    reckon(hero.kin, hero.level, p.totalsBefore, arms, &p.before, &p.lifeBefore);
+    reckon(hero.kin, hero.level, p.totalsAfter, arms, &p.after, &p.lifeAfter);
+    p.manaBefore = maximumMana(hero.kin, hero.level, p.totalsBefore);
+    p.manaAfter = maximumMana(hero.kin, hero.level, p.totalsAfter);
+    p.sdBefore = maximumShield(hero.level, p.totalsBefore, p.before.defense);
+    p.sdAfter = maximumShield(hero.level, p.totalsAfter, p.after.defense);
+    return p;
+}
+
 int Realm::resetStrips() const {
     if (!tables_) return -2;
     const Body& hero = mine();

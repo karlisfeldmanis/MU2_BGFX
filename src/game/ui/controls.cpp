@@ -754,6 +754,22 @@ void button(gfx::Canvas& canvas, const Box& box, const std::string& text, Kind k
     word(canvas, body, size, look.ink, text);
 }
 
+void button(gfx::Canvas& canvas, const Box& box, const std::string& text, Glyph icon, Kind kind,
+            const State& state, float u, float wordSize) {
+    const Box b{std::round(box.x), std::round(box.y), std::round(box.w), std::round(box.h)};
+    const float size = wordSize > 0.0f ? wordSize : style::kButtonWordS * u;
+    const Look look = lookOf(kind, state);
+    const Box body = kind == Kind::Quiet ? b : slabOf(canvas, b, look, state.held && !state.off, state.off, u);
+    const float wide = wordReady() ? s_word.measure(size, text) : canvas.face().measure(size, text);
+    // The glyph's ring is a third of its box: a box half again the button's height draws it
+    // about the height of the word's capitals.
+    const float side = std::round(body.h * 1.5f), iconW = std::round(body.h * 0.55f), gap = std::round(3.0f * u);
+    const float from = std::round(body.midX() - (iconW + gap + wide) * 0.5f);
+    glyph(canvas, {from + iconW * 0.5f - side * 0.5f, body.midY() - side * 0.5f, side, side}, icon,
+          look.ink.packed(), u);
+    word(canvas, {from + iconW + gap, body.y, wide, body.h}, size, look.ink, text);
+}
+
 void tab(gfx::Canvas& canvas, const Box& box, const std::string& text, bool chosen,
           const State& state, float u, bool floor) {
     const Box b{std::round(box.x), std::round(box.y), std::round(box.w), std::round(box.h)};

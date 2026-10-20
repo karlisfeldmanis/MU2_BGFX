@@ -80,8 +80,10 @@ Box tabBox(int i) {
 
 // **The Attributes page's foot** (the user's canvas C, 2026-10-20: "lets implement C · Amount
 // toggle"): "Each press adds" and its 1 | 10 | All over Reset points, both at the page's floor.
-// The question a reset asks takes the switch's row and splits the button into No and Yes.
-constexpr float kCtlTall = 14.0f, kCtlGap = 4.0f;
+// The canvas's measures at half its pixels: two controls 16 tall, 5 apart. The question a reset
+// asks is one well over both rows -- its words, then No and Reset at its right -- with a line
+// under it on what a reset does.
+constexpr float kCtlTall = 16.0f, kCtlGap = 5.0f;
 constexpr float kResetTop = kBodyBottom - kCtlTall;
 constexpr float kStepTop = kResetTop - kCtlGap - kCtlTall;
 // Where the attributes must end, with air over the switch.
@@ -89,8 +91,11 @@ constexpr float kAttrBottom = kStepTop - 6.0f;
 constexpr float kStepLabelW = 64.0f;
 constexpr Box kStepBox{kWellX + kStepLabelW, kStepTop, kWellW - kStepLabelW, kCtlTall};
 constexpr Box kResetBox{kWellX, kResetTop, kWellW, kCtlTall};
-constexpr Box kNoBox{kWellX, kResetTop, (kWellW - kCtlGap) * 0.5f, kCtlTall};
-constexpr Box kYesBox{kWellX + (kWellW + kCtlGap) * 0.5f, kResetTop, (kWellW - kCtlGap) * 0.5f, kCtlTall};
+constexpr Box kAskBox{kWellX, kStepTop, kWellW, 24.0f};
+constexpr float kAskButtonTall = 15.0f, kAskPad = 4.5f;
+constexpr Box kYesBox{kWellX + kWellW - kAskPad - 36.0f, kStepTop + (24.0f - kAskButtonTall) * 0.5f, 36.0f,
+                      kAskButtonTall};
+constexpr Box kNoBox{kYesBox.x - 3.0f - 28.0f, kYesBox.y, 28.0f, kAskButtonTall};
 // The plus a little wider when it says "+10" or "All".
 constexpr float kWidePlus = 22.0f;
 // Sheet::over and pushed past the four pluses.
@@ -362,6 +367,75 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         if (tab_ != 0) asking_ = false;
         now_.step = stepNow(step_, points);
         now_.asking = asking_;
+
+        // Under a plus: what the press would make of each line under that stat, the gain before
+        // it and the value in gold (the canvas's hover). The realm reckons both sides the same
+        // way, so the difference lands on what the line prints whatever gear adds on top.
+        if (spending && realm && over_ >= 0 && over_ < 4) {
+            const sim::Realm::SpendPreview p = realm->previewSpend(over_, gainOf(now_.step, points));
+            const sim::Fighter& a = p.before;
+            const sim::Fighter& b = p.after;
+            const auto one = [](long long d) { return (d >= 0 ? "+" : "") + number(d); };
+            const auto lightBand = [&](Line& line, long long lo, long long hi, long long dLo, long long dHi) {
+                if (dLo == 0 && dHi == 0) return;
+                line.gain = one(dLo) + " ~ " + one(dHi);
+                line.value = band(lo + dLo, hi + dHi);
+                line.lit = true;
+            };
+            const auto lightOne = [&](Line& line, long long now, long long d, const char* unit) {
+                if (d == 0) return;
+                line.gain = one(d) + unit;
+                line.value = number(now + d) + unit;
+                line.lit = true;
+            };
+            const auto lightPool = [&](Line& line, long long now, long long most, long long d) {
+                if (d == 0) return;
+                line.gain = one(d);
+                line.value = pair(now + d, most + d);
+                line.lit = true;
+            };
+            for (Line& line : now_.lines[over_]) {
+                const std::string& l = line.label;
+                if (l == "Damage") {
+                    lightBand(line, f.minimumDamage + f.offhandMinimumDamage, f.maximumDamage + f.offhandMaximumDamage,
+                              (b.minimumDamage + b.offhandMinimumDamage) - (a.minimumDamage + a.offhandMinimumDamage),
+                              (b.maximumDamage + b.offhandMaximumDamage) - (a.maximumDamage + a.offhandMaximumDamage));
+                } else if (l == "Wizardry") {
+                    lightBand(line, (long long)f.wizardMinimum, (long long)f.wizardMaximum,
+                              (long long)b.wizardMinimum - (long long)a.wizardMinimum,
+                              (long long)b.wizardMaximum - (long long)a.wizardMaximum);
+                } else if (l == "Attack rate") {
+                    lightOne(line, (long long)f.attackRate, (long long)b.attackRate - (long long)a.attackRate, "");
+                } else if (l == "Defense") {
+                    lightOne(line, f.defense, b.defense - a.defense, "");
+                } else if (l == "Defense rate") {
+                    lightOne(line, (long long)f.defenseRate, (long long)b.defenseRate - (long long)a.defenseRate, "");
+                } else if (l == "Life") {
+                    lightPool(line, hero->health, hero->maxHealth, p.lifeAfter - p.lifeBefore);
+                } else if (l == "Mana") {
+                    lightPool(line, hero->mana, hero->maxMana, p.manaAfter - p.manaBefore);
+                } else if (l == "Shield") {
+                    lightPool(line, hero->sd, hero->maxSd, p.sdAfter - p.sdBefore);
+                } else if (l == "Skill damage") {
+                    lightOne(line, sim::skillPercent(p.totalsBefore),
+                             sim::skillPercent(p.totalsAfter) - sim::skillPercent(p.totalsBefore), "%");
+                } else if (l == "Greater Damage") {
+                    lightOne(line, sim::mightOf(p.totalsBefore),
+                             sim::mightOf(p.totalsAfter) - sim::mightOf(p.totalsBefore), "");
+                    if (line.lit) line.value = "+" + line.value;
+                } else if (l == "Heal") {
+                    lightOne(line, sim::healOf(p.totalsBefore),
+                             sim::healOf(p.totalsAfter) - sim::healOf(p.totalsBefore), "");
+                    if (line.lit) line.value = "+" + line.value;
+                } else if (l == "Greater Defense") {
+                    const std::string after = sim::absorbed(sim::wardShare(p.totalsAfter));
+                    if (after != line.value) {
+                        line.value = after;
+                        line.lit = true;
+                    }
+                }
+            }
+        }
         now_.tab = tab_;
         now_.overTab = overTab;
         now_.pressTab = pressTab_;
@@ -515,16 +589,16 @@ void Card::rebuild() {
         };
         for (int i = 0; i < 4; ++i) {
             const Box well{kWellX, tops[i], kWellW, kAttrTall};
-            panel::cell(canvas_, x, y, well, sheet::Cell::Rest);
+            // Under the pointer the plus says what it would make of the stat: its well's rim lit,
+            // the figure in gold with the gain before it, and the same on each line under it.
+            const bool hot = now_.points > 0 && now_.over == i;
+            panel::cell(canvas_, x, y, well, hot ? sheet::Cell::Over : sheet::Cell::Rest);
             const float figure = kFigureSize * k;
             const float base = panel::centredBaseline(face, panel::scaled(x, y, well), figure);
             controls::label(canvas_, x + kLeft * k, base, kNameSize * k, kPlain, names[i]);
             const Box plusUnits = plusFor(tops[i], now_.step);
             const float figureRight = now_.points > 0 ? plusUnits.x - 4.0f : kRight;
-            // Under the pointer the plus says what it would make of the stat: the figure in gold
-            // with the gain before it.
-            const bool hot = now_.points > 0 && now_.over == i;
-            const std::string value = std::to_string(now_.stats[i] + (hot ? gain : 0));
+            const std::string value = panel::commas(now_.stats[i] + (hot ? gain : 0));
             controls::ranged(canvas_, x + figureRight * k, base, figure, hot ? kChosen : kHeading, value);
             if (hot) {
                 const float valueW = controls::labelWidth(figure, value);
@@ -535,7 +609,11 @@ void Card::rebuild() {
                 const Line& line = now_.lines[i][l];
                 const float uy = tops[i] + kAttrTall + kLineTop + lineStep * float(l);
                 left(kLeft, uy, kLineSize, kQuiet, line.label);
-                right(kRight, uy, kLineSize, kPlain, line.value);
+                right(kRight, uy, kLineSize, line.lit ? kChosen : kPlain, line.value);
+                if (!line.gain.empty()) {
+                    const float valueW = controls::labelWidth(kLineSize * k, line.value) / k;
+                    right(kRight - valueW - 6.0f, uy, kLineSize, kChosenBar, line.gain);
+                }
             }
             // The plus only where there is something to spend: MU hides it rather than greying
             // it. A red square, the one thing on the card that asks to be pressed; at 10 and All
@@ -556,22 +634,39 @@ void Card::rebuild() {
 
         // ---- the foot: what a press adds, and the reset ------------------------------------------
         if (now_.asking) {
-            // The question in the switch's row; No and Yes in the button's.
-            std::string ask = "Take back " + panel::commas(now_.returnable) + " points?";
-            uint32_t ink = kPlain;
-            if (now_.strips < 0) {
-                ask = "No room in your bag for your gear";
-                ink = kSpendable;
-            } else if (now_.strips > 0) {
-                ask += " " + std::to_string(now_.strips) + (now_.strips == 1 ? " item comes off" : " items come off");
-            }
-            const Box row = panel::scaled(x, y, {kWellX, kStepTop, kWellW, kCtlTall});
-            controls::label(canvas_, x + (kWellX + 2.0f) * k,
-                            panel::centredBaseline(face, row, kLineSize * k), kLineSize * k, ink, ask);
+            // The canvas's question: one void well with a blood edge at its left, "Take back N
+            // points?" with the count in the spend's red, No and Reset at its right; under it,
+            // quietly, what a reset does -- or, in red, why it cannot.
+            const Box ask = panel::scaled(x, y, kAskBox);
+            panel::cell(canvas_, x, y, kAskBox, sheet::Cell::Rest);
+            canvas_.rect({ask.x, ask.y + std::round(2.0f * k), std::max(1.0f, std::round(k)),
+                          ask.h - std::round(4.0f * k)},
+                         style::kBlood);
+            const float size = kNameSize * k;
+            const float base = panel::centredBaseline(face, ask, size);
+            // A space's width, which a word's own trailing space does not carry.
+            const float space = controls::labelWidth(size, "a a") - controls::labelWidth(size, "aa");
+            float at = x + (kWellX + 7.0f) * k;
+            at += controls::label(canvas_, at, base, size, kPlain, "Take back") + space;
+            at += controls::label(canvas_, at, base, size, kSpendable, panel::commas(now_.returnable)) + space;
+            controls::label(canvas_, at, base, size, kPlain, "points?");
             controls::button(canvas_, panel::scaled(x, y, kNoBox), "No", controls::Kind::Secondary,
                              stateOf(kNoId, false), u, kTabSize * k);
             controls::button(canvas_, panel::scaled(x, y, kYesBox), "Reset", controls::Kind::Primary,
                              stateOf(kYesId, now_.strips < 0), u, kTabSize * k);
+            std::string note = "Every stat returns to the class's start";
+            uint32_t ink = kQuiet;
+            if (now_.strips < 0) {
+                note = "No room in your bag for the gear it takes off";
+                ink = kSpendable;
+            } else if (now_.strips > 0) {
+                note = std::to_string(now_.strips) +
+                       (now_.strips == 1 ? " worn item goes to your bag" : " worn items go to your bag");
+            }
+            const Box noteRow = panel::scaled(x, y, {kWellX, kAskBox.bottom(), kWellW, kBodyBottom - kAskBox.bottom()});
+            const float noteSize = kLineSize * k;
+            controls::label(canvas_, std::round(noteRow.midX() - controls::labelWidth(noteSize, note) * 0.5f),
+                            panel::centredBaseline(face, noteRow, noteSize), noteSize, ink, note);
         } else {
             if (now_.points > 0) {
                 const Box label{kWellX, kStepTop, kStepLabelW, kCtlTall};
@@ -588,8 +683,8 @@ void Card::rebuild() {
                 const int over = now_.over >= kStepIds && now_.over < kStepIds + parts ? now_.over - kStepIds : -1;
                 controls::choice(canvas_, panel::scaled(x, y, kStepBox), words, parts, on, over, u, kTabSize * k);
             }
-            controls::button(canvas_, panel::scaled(x, y, kResetBox), "Reset points", controls::Kind::Danger,
-                             stateOf(kResetId, now_.returnable <= 0), u, kTabSize * k);
+            controls::button(canvas_, panel::scaled(x, y, kResetBox), "Reset points", controls::Glyph::Undo,
+                             controls::Kind::Danger, stateOf(kResetId, now_.returnable <= 0), u, kTabSize * k);
         }
     } else {
         // A page heavy with gear's chances closes its rows up before it would cross the foot.

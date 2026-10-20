@@ -46,6 +46,9 @@ private:
     struct Line {
         std::string label, value;
         bool dim = false;
+        // Under a plus the pointer is on: what the press would add, and the value lit in gold.
+        std::string gain;
+        bool lit = false;
         bool operator==(const Line&) const = default;
     };
     // A headed block of lines on the Combat and Bonuses pages.

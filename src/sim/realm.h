@@ -887,6 +887,16 @@ public:
     // taken off first, each into the first room in the bag; a bag without room for all of it
     // refuses the whole reset and nothing moves ("we need to show error that can reset points
     // because there is no room in inventory"). Free. Ours: MU 0.75 has no reset.
+    // What `count` more points in `stat` (0 strength to 3 energy) would make of him, for the
+    // character window's preview under the pointer: his fighter and pools reckoned on his points
+    // as they are and on them with the press in, side by side, so the window shows the
+    // difference on what it prints. Nothing in the realm changes.
+    struct SpendPreview {
+        Fighter before, after;
+        int lifeBefore = 0, lifeAfter = 0, manaBefore = 0, manaAfter = 0, sdBefore = 0, sdAfter = 0;
+        HeroPoints totalsBefore, totalsAfter;
+    };
+    SpendPreview previewSpend(int stat, int count) const;
     enum class Reset : int8_t { Done = 1, NothingPlaced = -1, NoRoom = -2 };
     Reset resetPoints();
     // The same asked without doing it, for the window's question: how many worn pieces it would
