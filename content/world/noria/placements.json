@@ -130,10 +130,10 @@
       "model": "gambler_moss",
       "who": "Moss the Gambler",
       "tile": [
-        197,
-        114
+        187,
+        101
       ],
-      "facing": 1,
+      "facing": 3,
       "ours": "the Jeweler (rings and pendants), on the east market beside Potion Girl Amy, facing the plaza: MuMain's Moss the Merchant (Npc/gambler_moss.bmd, scale 0.8), the user's pick of 2026-10-20"
     }
   ],
