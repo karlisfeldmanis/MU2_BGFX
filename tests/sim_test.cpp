@@ -8428,6 +8428,13 @@ void testChaosMachine() {
                 second.put(23, sim::Held{bless, 0, 1});
                 check(sim::judge(noria, second).recipe == sim::Recipe::None, "a Bless spoils it");
                 second.lift(23);
+                // Sevina's bound feather makes them too (bug report #42, 2026-10-20).
+                sim::Held boundFeather{feather, 0, 1};
+                boundFeather.bound = true;
+                second.put(5, boundFeather);
+                const sim::Judged bound = sim::judge(noria, second);
+                check(bound.recipe == sim::Recipe::SecondWings && !bound.blocked,
+                      "a bound Loch's Feather is the 2nd wings' box too");
                 second.lift(5);
                 check(sim::judge(noria, second).recipe == sim::Recipe::None, "no feather, no wings");
 

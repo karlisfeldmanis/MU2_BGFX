@@ -652,11 +652,14 @@ Judged judge(const content::Tables& tables, const Machine& box, Service service,
     // But a bound Jewel of Chaos goes into any mix (the user, 2026-10-19: "allow to use bound
     // chaos jewel in chaos machine"): it is spent either way, and what a mix with one makes is
     // bound (Realm::mix), so a quest's jewel still never leaves him as something to sell.
+    // So does Sevina's bound Loch's Feather, which she pays for the 2nd wings (bug report #42,
+    // 2026-10-20: "loch's feather is a bound item sometimes and it can't be used for wings").
     if (service != Service::RemoveRune && service != Service::AddSocket &&
         service != Service::FuseRunes) {
         for (int cell = 0; cell < kMachineCells; ++cell) {
             if (!box[cell].empty() && box[cell].bound &&
-                !jewelOfChaos(tables.items[size_t(box[cell].item)])) {
+                !jewelOfChaos(tables.items[size_t(box[cell].item)]) &&
+                !lochsFeather(tables.items[size_t(box[cell].item)])) {
                 j.ready = false;
                 j.blocked = true;
                 j.title = "Bound items: runes and sockets only";
@@ -706,7 +709,7 @@ Planned plan(const content::Tables& tables, const Machine& box, const Satchel& b
         const Held& what = bag[slot];
         const content::ItemRow* row = rowOf(tables, what);
         if (!row || taken[slot]) return false;
-        if (what.bound && !runes && !jewelOfChaos(*row)) return false;
+        if (what.bound && !runes && !jewelOfChaos(*row) && !lochsFeather(*row)) return false;
         *cell = trial.free(tables, row->width, row->height);
         if (*cell < 0) return false;
         Machine t = trial;
