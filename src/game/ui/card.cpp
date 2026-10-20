@@ -45,15 +45,13 @@ constexpr float kRight = panel::kValueRight;
 
 // An attribute: its well, the lines under it, and the air before the next one.
 constexpr float kAttrTall = 19.0f, kLineStep = 10.5f, kLineTop = 3.0f, kAttrGap = 8.0f;
-// The plus, inside the well's right end. Where a figure ends while it stands there.
+// The plus, inside the well's right end.
 constexpr float kPlusSide = 13.0f;
-constexpr float kFigureRight = panel::kWellRight - kPlusSide - 7.0f;
 // A Combat or Bonuses group: its heading, its rows, the air after it.
 constexpr float kGroupHead = 10.0f, kRowTall = 13.0f, kGroupGap = 6.0f;
 
 // The foot: the level's progress, at the panel's shared rule.
 constexpr float kFootRule = panel::kFootRule;
-constexpr float kFootTop = panel::kFootTop;
 // **Reset points is the foot** (the user, 2026-10-20: "reset poont has to be in footer actualy",
 // then "reset points has to be full width button and complet footer, exp is going under"): the
 // button across the wells at the foot's top, the level's progress under it.
@@ -79,23 +77,33 @@ constexpr uint32_t kChosen = gfx::rgba(0.941f, 0.843f, 0.604f);
 constexpr uint32_t kChosenBar = gfx::rgba(0.788f, 0.639f, 0.353f);
 constexpr uint32_t kDivider = style::kAsh3;
 
-Box tabBox(int i) {
+// **"Each press adds" under the general info** (the user, 2026-10-20: "each press adds
+// container has to be above stats under the general info"): its row stands under the three his
+// class lives by while there are points in hand, on every page, and the tabs and the page come
+// down by it. The canvas's measures at half its pixels: a control 16 tall.
+constexpr float kCtlTall = 16.0f;
+constexpr float kSwitchTop = kKeysTop + kKeysTall + 6.0f;
+constexpr float kSwitchRow = kCtlTall + 6.0f;
+// How far the tabs and the page come down: the switch's row while there are points to spend.
+float dropFor(int points) { return points > 0 ? kSwitchRow : 0.0f; }
+
+Box tabBox(int i, float drop) {
     const float w = kWellW / float(kTabCount);
-    return {kWellX + w * float(i), kTabsTop, w, kTabsTall};
+    return {kWellX + w * float(i), kTabsTop + drop, w, kTabsTall};
 }
 
-// **The Attributes page's foot** (the user's canvas C, 2026-10-20: "lets implement C · Amount
-// toggle"): "Each press adds" and its 1 | 10 | All over Reset points, both at the page's floor.
-// The canvas's measures at half its pixels: two controls 16 tall, 5 apart. The question a reset
-// asks is one well over both rows -- its words, then No and Reset at its right -- with a line
-// under it on what a reset does.
-constexpr float kCtlTall = 16.0f, kCtlGap = 5.0f;
-constexpr float kResetTop = kBodyBottom - kCtlTall;
-constexpr float kStepTop = kResetTop - kCtlGap - kCtlTall;
-// Where the attributes must end, with air over the switch.
-constexpr float kAttrBottom = kStepTop - 6.0f;
 constexpr float kStepLabelW = 64.0f;
-constexpr float kAskButtonTall = 15.0f, kAskPad = 4.5f;
+constexpr Box kStepBox{kWellX + kStepLabelW, kSwitchTop, kWellW - kStepLabelW, kCtlTall};
+// Where the attributes must end: the page's floor, nothing of the reset's on the page.
+constexpr float kAttrBottom = kBodyBottom - 2.0f;
+// **The reset's question is the foot while it is up**: one void well where the button stands --
+// its words, then No and Reset at its right -- and under it, where the level's progress stands,
+// what a reset does or, in red, why it cannot.
+constexpr Box kAskBox{kWellX, kFootRule - 3.0f, kWellW, 22.0f};
+constexpr float kAskButtonTall = 15.0f, kAskPad = 3.5f;
+constexpr Box kYesBox{kWellX + kWellW - kAskPad - 36.0f, kAskBox.y + (kAskBox.h - kAskButtonTall) * 0.5f, 36.0f,
+                      kAskButtonTall};
+constexpr Box kNoBox{kYesBox.x - 3.0f - 28.0f, kYesBox.y, 28.0f, kAskButtonTall};
 // The plus a little wider when it says "+10" or "All".
 constexpr float kWidePlus = 22.0f;
 // Sheet::over and pushed past the four pluses.
@@ -115,18 +123,20 @@ int stepNow(int step, int points) { return step == 10 && points < 10 ? 0 : step;
 int gainOf(int step, int points) { return step == 0 ? points : std::min(step, points); }
 
 // Where each attribute's well stands: one after another, each pushed down by the lines the one
-// before it carries. Returns the step between lines, which closes up (and the gaps with it) for
-// a class whose lines would run into the foot -- the elf's four under Energy.
-float attrTops(const size_t counts[4], float tops[4]) {
+// before it carries, from the page's top (`drop` under the switch's row). Returns the step
+// between lines, which closes up (and the gaps with it) for a class whose lines would run into
+// the floor.
+float attrTops(const size_t counts[4], float tops[4], float drop) {
     size_t lines = 0;
     for (int i = 0; i < 4; ++i) lines += counts[i];
+    const float top = kBodyTop + drop;
     float step = kLineStep, gap = kAttrGap;
     const float fixed = 4.0f * (kAttrTall + kLineTop);
-    if (lines > 0 && kBodyTop + fixed + 3.0f * gap + step * float(lines) > kAttrBottom) {
+    if (lines > 0 && top + fixed + 3.0f * gap + step * float(lines) > kAttrBottom) {
         gap = 5.0f;
-        step = std::min(kLineStep, (kAttrBottom - kBodyTop - fixed - 3.0f * gap) / float(lines));
+        step = std::min(kLineStep, (kAttrBottom - top - fixed - 3.0f * gap) / float(lines));
     }
-    float y = kBodyTop;
+    float y = top;
     for (int i = 0; i < 4; ++i) {
         tops[i] = y;
         y += kAttrTall + kLineTop + step * float(counts[i]) + gap;
@@ -136,28 +146,6 @@ float attrTops(const size_t counts[4], float tops[4]) {
 Box plusFor(float top, int step) {
     const float w = step == 1 ? kPlusSide : kWidePlus;
     return {panel::kWellRight - w - 3.0f, top + (kAttrTall - kPlusSide) * 0.5f, w, kPlusSide};
-}
-// **The foot's boxes**, from where the attributes end (the user, 2026-10-20: "each press add
-// container has to be closer to stats points container"): the switch 7 under the last line under
-// Energy, never lower than the page's floor allows.
-struct Foot {
-    Box step, reset, ask, yes, no;
-};
-Foot footFor(const size_t counts[4]) {
-    float tops[4];
-    const float lineStep = attrTops(counts, tops);
-    // The last line's capitals end about its size below its top.
-    const float lastLine = tops[3] + kAttrTall + kLineTop + lineStep * float(std::max<size_t>(1, counts[3]) - 1) + kLineSize;
-    const float top = std::min(kStepTop, std::round(lastLine + 7.0f));
-    Foot f;
-    f.step = {kWellX + kStepLabelW, top, kWellW - kStepLabelW, kCtlTall};
-    // The reset at the page's floor (the user, 2026-10-20: "reset point has to be closer to
-    // bottom"), and its question there too, its line under it on the floor.
-    f.reset = {kWellX, kResetTop, kWellW, kCtlTall};
-    f.ask = {kWellX, kBodyBottom - 12.0f - 24.0f, kWellW, 24.0f};
-    f.yes = {kWellX + kWellW - kAskPad - 36.0f, f.ask.y + (24.0f - kAskButtonTall) * 0.5f, 36.0f, kAskButtonTall};
-    f.no = {f.yes.x - 3.0f - 28.0f, f.yes.y, 28.0f, kAskButtonTall};
-    return f;
 }
 
 std::string number(long long v) { return panel::commas(v); }
@@ -315,10 +303,10 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         overClose_ = cross.has(pointer.x, pointer.y);
         const size_t counts[4] = {now_.lines[0].size(), now_.lines[1].size(), now_.lines[2].size(),
                                   now_.lines[3].size()};
-        float tops[4];
-        attrTops(counts, tops);
-        const Foot foot = footFor(counts);
         const int points = hero->pointsInHand;
+        const float drop = dropFor(points);
+        float tops[4];
+        attrTops(counts, tops, drop);
         const bool spending = tab_ == 0 && points > 0;
         const int step = stepNow(step_, points);
         // What a reset would take back, and whether the bag has room for what it takes off.
@@ -326,33 +314,34 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         now_.returnable = (hero->points.strength - start.strength) + (hero->points.agility - start.agility) +
                           (hero->points.vitality - start.vitality) + (hero->points.energy - start.energy);
         now_.strips = realm && now_.returnable > 0 ? realm->resetStrips() : 0;
-        if (tab_ != 0 || now_.returnable <= 0) asking_ = false;
+        if (now_.returnable <= 0) asking_ = false;
         int steps[3];
         const int parts = stepParts(points, steps);
         const auto under = [&](const Box& units) { return panel::scaled(x_, y_, units).has(pointer.x, pointer.y); };
         const auto controlUnder = [&]() {
-            if (now_.returnable > 0 && under(kResetSquare)) return kResetId;
-            if (tab_ != 0) return -1;
+            // The foot: the reset, or its question's two while it is up.
+            if (asking_) {
+                if (under(kNoBox)) return kNoId;
+                if (under(kYesBox)) return kYesId;
+            } else if (now_.returnable > 0 && under(kResetSquare)) {
+                return kResetId;
+            }
+            // The switch, on every page while there are points.
+            if (points > 0 && under(kStepBox)) {
+                for (int i = 0; i < parts; ++i) {
+                    const float w = kStepBox.w / float(parts);
+                    if (under({kStepBox.x + w * float(i), kStepBox.y, w, kStepBox.h})) return kStepIds + i;
+                }
+            }
             if (spending) {
                 for (int i = 0; i < 4; ++i)
                     if (under(plusFor(tops[i], step))) return i;
-            }
-            if (asking_) {
-                if (under(foot.no)) return kNoId;
-                if (under(foot.yes)) return kYesId;
-                return -1;
-            }
-            if (spending && under(foot.step)) {
-                for (int i = 0; i < parts; ++i) {
-                    const float w = foot.step.w / float(parts);
-                    if (under({foot.step.x + w * float(i), foot.step.y, w, foot.step.h})) return kStepIds + i;
-                }
             }
             return -1;
         };
         const auto tabUnder = [&]() {
             for (int i = 0; i < kTabCount; ++i)
-                if (panel::scaled(x_, y_, tabBox(i)).has(pointer.x, pointer.y)) return i;
+                if (panel::scaled(x_, y_, tabBox(i, drop)).has(pointer.x, pointer.y)) return i;
             return -1;
         };
         over_ = controlUnder();
@@ -372,8 +361,6 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                 } else if (pushed_ >= kStepIds && pushed_ < kStepIds + parts) {
                     step_ = steps[pushed_ - kStepIds];
                 } else if (pushed_ == kResetId) {
-                    // Asked on the Attributes page, whichever page it was pressed from.
-                    tab_ = 0;
                     asking_ = true;
                 } else if (pushed_ == kNoId) {
                     asking_ = false;
@@ -389,7 +376,6 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
             pushed_ = -1;
             pressTab_ = -1;
         }
-        if (tab_ != 0) asking_ = false;
         now_.step = stepNow(step_, points);
         now_.asking = asking_;
 
@@ -581,13 +567,39 @@ void Card::rebuild() {
         left(cx, kKeysTop + 15.0f, size, kHeading, now_.keys[i].value);
     }
 
+    const float drop = dropFor(now_.points);
+    const auto stateOf = [&](int id, bool off) {
+        controls::State state;
+        state.lift = now_.over == id ? 1.0f : 0.0f;
+        state.held = now_.pushed == id;
+        state.off = off;
+        return state;
+    };
+
+    // ---- what a press adds, under the three, while there are points ------------------------------
+    if (now_.points > 0) {
+        const Box label{kWellX, kStepBox.y, kStepLabelW, kCtlTall};
+        smallCaps(kWellX + 2.0f, panel::centredBaseline(face, panel::scaled(x, y, label), kSmallCaps * k), kQuiet,
+                  "Each press adds");
+        int steps[3];
+        const int parts = stepParts(now_.points, steps);
+        const char* words[3] = {};
+        int on = -1;
+        for (int i = 0; i < parts; ++i) {
+            words[i] = steps[i] == 1 ? "1" : steps[i] == 10 ? "10" : "All";
+            if (steps[i] == now_.step) on = i;
+        }
+        const int over = now_.over >= kStepIds && now_.over < kStepIds + parts ? now_.over - kStepIds : -1;
+        controls::choice(canvas_, panel::scaled(x, y, kStepBox), words, parts, on, over, u, kTabSize * k);
+    }
+
     // ---- the tabs -------------------------------------------------------------------------------
     // Underline tabs: the words on the sheet over one dark floor, the open one golden with a
     // golden bar on the floor (the user's pick of three, 2026-10-10).
-    canvas_.rect(panel::scaled(x, y, {kWellX, kTabsTop + kTabsTall - 0.5f, kWellW, 0.5f}),
+    canvas_.rect(panel::scaled(x, y, {kWellX, kTabsTop + drop + kTabsTall - 0.5f, kWellW, 0.5f}),
                  style::kIronDk);
     for (int i = 0; i < kTabCount; ++i) {
-        const Box box = tabBox(i);
+        const Box box = tabBox(i, drop);
         const bool chosen = i == now_.tab;
         const uint32_t ink = chosen ? kChosen : (i == now_.overTab ? style::kBone : kQuiet);
         const float base = panel::centredBaseline(face, panel::scaled(x, y, box), kTabSize * k);
@@ -606,16 +618,8 @@ void Card::rebuild() {
         const size_t counts[4] = {now_.lines[0].size(), now_.lines[1].size(), now_.lines[2].size(),
                                   now_.lines[3].size()};
         float tops[4];
-        const float lineStep = attrTops(counts, tops);
-        const Foot foot = footFor(counts);
+        const float lineStep = attrTops(counts, tops, drop);
         const int gain = gainOf(now_.step, now_.points);
-        const auto stateOf = [&](int id, bool off) {
-            controls::State state;
-            state.lift = now_.over == id ? 1.0f : 0.0f;
-            state.held = now_.pushed == id;
-            state.off = off;
-            return state;
-        };
         for (int i = 0; i < 4; ++i) {
             const Box well{kWellX, tops[i], kWellW, kAttrTall};
             // Under the pointer the plus says what it would make of the stat: its well's rim lit,
@@ -660,67 +664,14 @@ void Card::rebuild() {
                                  controls::Kind::Primary, stateOf(i, false), u, kTabSize * k);
             }
         }
-
-        // ---- the foot: what a press adds, and the reset ------------------------------------------
-        if (now_.asking) {
-            // The canvas's question: one void well with a blood edge at its left, "Take back N
-            // points?" with the count in the spend's red, No and Reset at its right; under it,
-            // quietly, what a reset does -- or, in red, why it cannot.
-            const Box ask = panel::scaled(x, y, foot.ask);
-            panel::cell(canvas_, x, y, foot.ask, sheet::Cell::Rest);
-            canvas_.rect({ask.x, ask.y + std::round(2.0f * k), std::max(1.0f, std::round(k)),
-                          ask.h - std::round(4.0f * k)},
-                         style::kBlood);
-            const float size = kNameSize * k;
-            const float base = panel::centredBaseline(face, ask, size);
-            // A space's width, which a word's own trailing space does not carry.
-            const float space = controls::labelWidth(size, "a a") - controls::labelWidth(size, "aa");
-            float at = x + (kWellX + 7.0f) * k;
-            at += controls::label(canvas_, at, base, size, kPlain, "Take back") + space;
-            at += controls::label(canvas_, at, base, size, kSpendable, panel::commas(now_.returnable)) + space;
-            controls::label(canvas_, at, base, size, kPlain, "points?");
-            controls::button(canvas_, panel::scaled(x, y, foot.no), "No", controls::Kind::Secondary,
-                             stateOf(kNoId, false), u, kTabSize * k);
-            controls::button(canvas_, panel::scaled(x, y, foot.yes), "Reset", controls::Kind::Primary,
-                             stateOf(kYesId, now_.strips < 0), u, kTabSize * k);
-            std::string note = "Every stat returns to the class's start";
-            uint32_t ink = kQuiet;
-            if (now_.strips < 0) {
-                note = "No room in your bag for the gear it takes off";
-                ink = kSpendable;
-            } else if (now_.strips > 0) {
-                note = std::to_string(now_.strips) +
-                       (now_.strips == 1 ? " worn item goes to your bag" : " worn items go to your bag");
-            }
-            const Box noteRow = panel::scaled(x, y, {kWellX, foot.ask.bottom(), kWellW, kBodyBottom - foot.ask.bottom()});
-            const float noteSize = kLineSize * k;
-            controls::label(canvas_, std::round(noteRow.midX() - controls::labelWidth(noteSize, note) * 0.5f),
-                            panel::centredBaseline(face, noteRow, noteSize), noteSize, ink, note);
-        } else {
-            if (now_.points > 0) {
-                const Box label{kWellX, foot.step.y, kStepLabelW, kCtlTall};
-                smallCaps(kWellX + 2.0f, panel::centredBaseline(face, panel::scaled(x, y, label), kSmallCaps * k),
-                          kQuiet, "Each press adds");
-                int steps[3];
-                const int parts = stepParts(now_.points, steps);
-                const char* words[3] = {};
-                int on = -1;
-                for (int i = 0; i < parts; ++i) {
-                    words[i] = steps[i] == 1 ? "1" : steps[i] == 10 ? "10" : "All";
-                    if (steps[i] == now_.step) on = i;
-                }
-                const int over = now_.over >= kStepIds && now_.over < kStepIds + parts ? now_.over - kStepIds : -1;
-                controls::choice(canvas_, panel::scaled(x, y, foot.step), words, parts, on, over, u, kTabSize * k);
-            }
-        }
     } else {
         // A page heavy with gear's chances closes its rows up before it would cross the foot.
         size_t rows = 0;
         for (const Group& group : now_.groups) rows += group.lines.size();
         const float heads = (kGroupHead + kGroupGap) * float(now_.groups.size());
         const float rowTall =
-            rows ? std::min(kRowTall, (kBodyBottom - kBodyTop - heads) / float(rows)) : kRowTall;
-        float uy = kBodyTop;
+            rows ? std::min(kRowTall, (kBodyBottom - kBodyTop - drop - heads) / float(rows)) : kRowTall;
+        float uy = kBodyTop + drop;
         for (const Group& group : now_.groups) {
             smallCaps(kWellX + 2.0f, at(uy + 1.0f, kSmallCaps), kDim, group.name);
             uy += kGroupHead;
@@ -749,20 +700,50 @@ void Card::rebuild() {
         to > from ? float(double(now_.experience > from ? now_.experience - from : 0) /
                           double(to - from))
                   : 1.0f;
-    const float kicker = kLineSize * k;
-    controls::caps(canvas_, x + kLeft * k, y + kExpTop * k + face.ascent(kicker), kicker, kQuiet,
-                   "Experience", 0.04f);
-    controls::ranged(canvas_, x + kFootRight * k, y + kExpTop * k + face.ascent(kicker), kicker, kPlain,
-                     number((long long)now_.experience) + " / " + number((long long)to) + " · " +
-                         std::to_string(int(share * 100.0f)) + "%");
-    controls::meter(canvas_, panel::scaled(x, y, kBar), std::clamp(share, 0.0f, 1.0f),
-                    gfx::rgba(0.910f, 0.863f, 0.773f), style::kIron, u);
-    {
-        // The reset, held down while its question is up, off with nothing placed.
-        controls::State state;
-        state.lift = now_.over == kResetId ? 1.0f : 0.0f;
-        state.held = now_.pushed == kResetId || now_.asking;
-        state.off = now_.returnable <= 0;
+    if (now_.asking) {
+        // The question is the foot while it is up: one void well with a blood edge at its left,
+        // "Take back N points?" with the count in the spend's red, No and Reset at its right; under
+        // it, where the level's progress stands, what a reset does -- or, in red, why it cannot.
+        const Box ask = panel::scaled(x, y, kAskBox);
+        panel::cell(canvas_, x, y, kAskBox, sheet::Cell::Rest);
+        canvas_.rect({ask.x, ask.y + std::round(2.0f * k), std::max(1.0f, std::round(k)), ask.h - std::round(4.0f * k)},
+                     style::kBlood);
+        const float size = kNameSize * k;
+        const float base = panel::centredBaseline(face, ask, size);
+        // A space's width, which a word's own trailing space does not carry.
+        const float space = controls::labelWidth(size, "a a") - controls::labelWidth(size, "aa");
+        float at = x + (kWellX + 7.0f) * k;
+        at += controls::label(canvas_, at, base, size, kPlain, "Take back") + space;
+        at += controls::label(canvas_, at, base, size, kSpendable, panel::commas(now_.returnable)) + space;
+        controls::label(canvas_, at, base, size, kPlain, "points?");
+        controls::button(canvas_, panel::scaled(x, y, kNoBox), "No", controls::Kind::Secondary, stateOf(kNoId, false),
+                         u, kTabSize * k);
+        controls::button(canvas_, panel::scaled(x, y, kYesBox), "Reset", controls::Kind::Primary,
+                         stateOf(kYesId, now_.strips < 0), u, kTabSize * k);
+        std::string note = "Every stat returns to the class's start";
+        uint32_t ink = kQuiet;
+        if (now_.strips < 0) {
+            note = "No room in your bag for the gear it takes off";
+            ink = kSpendable;
+        } else if (now_.strips > 0) {
+            note = std::to_string(now_.strips) +
+                   (now_.strips == 1 ? " worn item goes to your bag" : " worn items go to your bag");
+        }
+        const Box noteRow = panel::scaled(x, y, {kWellX, kAskBox.bottom(), kWellW, kBar.bottom() - kAskBox.bottom()});
+        const float noteSize = kLineSize * k;
+        controls::label(canvas_, std::round(noteRow.midX() - controls::labelWidth(noteSize, note) * 0.5f),
+                        panel::centredBaseline(face, noteRow, noteSize), noteSize, ink, note);
+    } else {
+        const float kicker = kLineSize * k;
+        controls::caps(canvas_, x + kLeft * k, y + kExpTop * k + face.ascent(kicker), kicker, kQuiet,
+                       "Experience", 0.04f);
+        controls::ranged(canvas_, x + kFootRight * k, y + kExpTop * k + face.ascent(kicker), kicker, kPlain,
+                         number((long long)now_.experience) + " / " + number((long long)to) + " · " +
+                             std::to_string(int(share * 100.0f)) + "%");
+        controls::meter(canvas_, panel::scaled(x, y, kBar), std::clamp(share, 0.0f, 1.0f),
+                        gfx::rgba(0.910f, 0.863f, 0.773f), style::kIron, u);
+        // The reset, off with nothing placed.
+        controls::State state = stateOf(kResetId, now_.returnable <= 0);
         controls::button(canvas_, panel::scaled(x, y, kResetSquare), "Reset points", controls::Glyph::Undo,
                          controls::Kind::Danger, state, u, kTabSize * k);
     }
