@@ -189,6 +189,16 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
         standing_.push_back({what.item, (at == dragging_ ? panel::carryBox(box) : box).grown(-2.0f), what.refinement,
                              at == hovered_ && dragging_ < 0, what.excellent != 0});
     }
+    // The one rune the set sockets are drawn with, in the strip under the window -- the bag's.
+    bool anySet = false;
+    for (int at = 0; at < sim::kVaultCells && !anySet; ++at) {
+        for (int socket = 0; socket < std::min(socketsOf(vault[at]), kMostSockets); ++socket) {
+            anySet |= !vault[at].empty() && powerAt(vault[at], socket) != 0;
+        }
+    }
+    if (const int32_t rune = anySet ? runeRow(tables) : -1; rune >= 0) {
+        standing_.push_back({rune, panel::kRuneStands, 0, false, false});
+    }
     if (stage) stage->stand(standing_, panel::kWidth, panel::kStageTall);
 
     const sim::Body& hero = realm.hero();
@@ -237,6 +247,13 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
 
     panel::frame(canvas_, arts, x, y, "Vault");
     panel::grid(canvas_, x, y, kOriginX, kOriginY, sim::kVaultColumns, sim::kVaultRows);
+    // Each piece's cells washed teal, the bag's satchel wash, so the empty cells read as empty
+    // (bug #35, 2026-10-20: "the items on the vault don't show the background like the
+    // inventory").
+    for (int at = 0; at < sim::kVaultCells; ++at) {
+        if (vault[at].empty() || at == dragging_) continue;
+        canvas_.rect(panel::scaled(x, y, itemBox(tables, at, vault[at])), panel::kTakenWash);
+    }
     if (hovered_ >= 0 && dragging_ < 0 && !vault[hovered_].empty()) {
         panel::cell(canvas_, x, y, itemBox(tables, hovered_, vault[hovered_]), sheet::Cell::Over);
     }
@@ -332,6 +349,13 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
             canvas_.text(box.x + 2.0f, box.y + face.ascent(7.0f * k) + 2.0f, 7.0f * k,
                          panel::kLettering, name.substr(0, std::min<size_t>(name.size(), 6)));
         }
+    }
+    // The sockets over each piece's middle, empty or set -- the bag's. Not on the one riding
+    // the pointer.
+    for (int at = 0; at < sim::kVaultCells; ++at) {
+        const sim::Held& held = vault[at];
+        if (held.empty() || socketsOf(held) == 0 || at == dragging_) continue;
+        panel::sockets(canvas_, picture, panel::scaled(x, y, itemBox(tables, at, held)), held, k);
     }
     // A stack's count at its cell's foot -- the bag's.
     for (int at = 0; at < sim::kVaultCells; ++at) {

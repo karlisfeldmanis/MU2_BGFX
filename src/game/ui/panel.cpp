@@ -203,6 +203,85 @@ void standing(gfx::Canvas& canvas, const gfx::Art& picture, float x, float y) {
                   {0.0f, 0.0f, kWidth * sx, kHeight * sy});
 }
 
+namespace {
+
+// A piece's sockets over its middle, in units: the item card's socket ring (tip::Mark::Ring), a
+// bronze rim round the orange stone of a Rune of Creation or round a dark hole, stacked down the
+// piece when it has two or three, as Diablo II sets its holes over the picture. As large as
+// `kSocketStone` where the piece has the room, and smaller on a narrow one.
+constexpr float kSocketStone = 7.5f;
+// A socket is the jewel's own shape (the user, 2026-09-29: "border has to be same shape as
+// jewel"): the Rune of Creation photographs as an upright lozenge this much narrower than it is
+// tall, and the setting, the hole and the stone all follow it. `kRuneFills` is how much of its
+// square the stage's picture of the rune is jewel, so the stone can be sized to its hole.
+constexpr float kJewelAspect = 0.8f;
+constexpr float kRuneFills = 0.81f;
+constexpr float kSocketGap = 2.0f;
+
+// Where a piece's sockets sit, in whatever space `box` is in: centres down its middle, one
+// radius for all. The rings and their runes are laid by this one rule.
+float socketsIn(const gfx::Box& box, int sockets, float unit, float* cy) {
+    const float gap = kSocketGap * unit;
+    const float r = std::min({kSocketStone * unit, box.w * 0.46f / kJewelAspect,
+                              (box.h - gap * float(sockets + 1)) / float(sockets) * 0.5f});
+    const float pitch = r * 2.0f + gap;
+    const float top = box.midY() - pitch * float(sockets - 1) * 0.5f;
+    for (int at = 0; at < sockets; ++at) cy[at] = top + pitch * float(at);
+    return r;
+}
+constexpr uint32_t kSocketEmber = gfx::rgba(0.9f, 0.42f, 0.04f, 1.0f);
+constexpr uint32_t kSocketGlint = gfx::rgba(1.0f, 0.78f, 0.45f, 0.85f);
+constexpr uint32_t kSocketShade = gfx::rgba(0.0f, 0.0f, 0.0f, 0.7f);
+constexpr uint32_t kSocketRim = gfx::rgba(0.62f, 0.45f, 0.24f, 1.0f);
+constexpr uint32_t kSocketHole = gfx::rgba(0.05f, 0.035f, 0.03f, 0.82f);
+
+// A lozenge the jewel's shape, `h` from its middle to its point.
+void lozenge(gfx::Canvas& canvas, float cx, float cy, float h, uint32_t colour) {
+    const float w = h * kJewelAspect;
+    const float xy[8] = {cx, cy - h, cx + w, cy, cx, cy + h, cx - w, cy};
+    canvas.polygon(nullptr, xy, nullptr, 4, colour);
+}
+
+// A filled circle, as a fan of sixteen: the canvas has rectangles and polygons, no round.
+void disc(gfx::Canvas& canvas, float cx, float cy, float r, uint32_t colour) {
+    float xy[32];
+    for (int i = 0; i < 16; ++i) {
+        const float a = float(i) * 6.2831853f / 16.0f;
+        xy[i * 2] = cx + std::cos(a) * r;
+        xy[i * 2 + 1] = cy + std::sin(a) * r;
+    }
+    canvas.polygon(nullptr, xy, nullptr, 16, colour);
+}
+
+}  // namespace
+
+void sockets(gfx::Canvas& canvas, const gfx::Art& picture, const gfx::Box& box,
+             const sim::Held& held, float k) {
+    const int count = std::min(socketsOf(held), kMostSockets);
+    if (count == 0) return;
+    float centres[kMostSockets];
+    const float r = socketsIn(box, count, k, centres);
+    for (int at = 0; at < count; ++at) {
+        const float cx = box.midX(), cy = centres[at];
+        lozenge(canvas, cx, cy, r + std::max(1.0f, 0.8f * k), kSocketShade);
+        lozenge(canvas, cx, cy, r, kSocketRim);
+        lozenge(canvas, cx, cy, r * 0.7f, kSocketHole);
+        if (powerAt(held, at) == 0) continue;
+        // The rune itself, cut from the strip and set in the hole at the hole's own size, so
+        // the bronze shows all the way round it; the ember where there is no picture.
+        if (picture.valid()) {
+            const float sx = picture.width / kWidth, sy = picture.height / kStageTall;
+            const float side = r * 0.7f * 2.0f / kRuneFills;
+            canvas.region(picture, {cx - side * 0.5f, cy - side * 0.5f, side, side},
+                          {kRuneStands.x * sx, kRuneStands.y * sy, kRuneStands.w * sx,
+                           kRuneStands.h * sy});
+        } else {
+            disc(canvas, cx, cy + r * 0.03f, r * 0.54f, kSocketEmber);
+            disc(canvas, cx - r * 0.18f, cy - r * 0.14f, r * 0.17f, kSocketGlint);
+        }
+    }
+}
+
 void carried(gfx::Canvas& canvas, const gfx::Art& picture, const gfx::Box& units, float px, float py) {
     const float k = scale();
     const gfx::Box to{px - units.w * k * 0.5f, py - units.h * k * 0.5f, units.w * k, units.h * k};

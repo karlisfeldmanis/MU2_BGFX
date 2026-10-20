@@ -159,70 +159,10 @@ uint32_t scoreInk(int score) {
     return tip::colourOf(kRungs[sim::gearRung(score)]);
 }
 constexpr uint32_t kWornInk = gfx::rgba(1.0f, 1.0f, 1.0f, 0.88f);
-// The wash under a sound piece in the satchel: MU's ITEM_COLOR_NORMAL hue, glColor4f(0.3, 0.5,
-// 0.5, 0.6) (NewUIInventoryCtrl.cpp:981), at a fifth of its strength, since at MU's 0.6 the
-// teal shouted over the dark skin, at a quarter it still did -- the user, 2026-10-19: "teal
-// highlith on inventory for items is to strong" -- and at an eighth it was "little bit to weak". It fills the piece's cells to their rules with
-// no edge of its own -- the user, 2026-10-19: "dont use double outline just fill the row with
-// that teal".
-constexpr uint32_t kTakenWash = gfx::rgba(0.3f, 0.5f, 0.5f, 0.12f);
-
-// A piece's sockets over its middle, in units: the item card's socket ring (tip::Mark::Ring), a
-// bronze rim round the orange stone of a Rune of Creation or round a dark hole, stacked down the
-// piece when it has two or three, as Diablo II sets its holes over the picture. As large as
-// `kSocketStone` where the piece has the room, and smaller on a narrow one.
-constexpr float kSocketStone = 7.5f;
-// A socket is the jewel's own shape (the user, 2026-09-29: "border has to be same shape as
-// jewel"): the Rune of Creation photographs as an upright lozenge this much narrower than it is
-// tall, and the setting, the hole and the stone all follow it. `kRuneFills` is how much of its
-// square the stage's picture of the rune is jewel, so the stone can be sized to its hole.
-constexpr float kJewelAspect = 0.8f;
-constexpr float kRuneFills = 0.81f;
-constexpr float kSocketGap = 2.0f;
-// **The Rune of Creation in its socket, as its own picture** (the user, 2026-09-29: "we need to
-// show that jewel creation is attached in rune slot"). One rune stands on the bag's stage at the
-// left of the carry strip below the window (panel::kCarryStrip), which the window never shows,
-// and each set socket is given that picture inside its ring.
 constexpr float kStageTall = panel::kStageTall;
-constexpr gfx::Box kRuneStands{4.0f, panel::kHeight + 2.0f, 20.0f, 20.0f};
-
-// Where a piece's sockets sit, in whatever space `box` is in: centres down its middle, one
-// radius for all. The bag's rings and its runes are laid by this one rule.
-float socketsIn(const gfx::Box& box, int sockets, float unit, float* cy) {
-    const float gap = kSocketGap * unit;
-    const float r = std::min({kSocketStone * unit, box.w * 0.46f / kJewelAspect,
-                              (box.h - gap * float(sockets + 1)) / float(sockets) * 0.5f});
-    const float pitch = r * 2.0f + gap;
-    const float top = box.midY() - pitch * float(sockets - 1) * 0.5f;
-    for (int at = 0; at < sockets; ++at) cy[at] = top + pitch * float(at);
-    return r;
-}
-constexpr uint32_t kSocketEmber = gfx::rgba(0.9f, 0.42f, 0.04f, 1.0f);
-constexpr uint32_t kSocketGlint = gfx::rgba(1.0f, 0.78f, 0.45f, 0.85f);
-constexpr uint32_t kSocketShade = gfx::rgba(0.0f, 0.0f, 0.0f, 0.7f);
-constexpr uint32_t kSocketRim = gfx::rgba(0.62f, 0.45f, 0.24f, 1.0f);
-constexpr uint32_t kSocketHole = gfx::rgba(0.05f, 0.035f, 0.03f, 0.82f);
 
 bool creationJewel(const content::Tables& tables, const sim::Held& held) {
     return !held.empty() && sim::creation(tables.items[size_t(held.item)]);
-}
-
-// A lozenge the jewel's shape, `h` from its middle to its point.
-void lozenge(gfx::Canvas& canvas, float cx, float cy, float h, uint32_t colour) {
-    const float w = h * kJewelAspect;
-    const float xy[8] = {cx, cy - h, cx + w, cy, cx, cy + h, cx - w, cy};
-    canvas.polygon(nullptr, xy, nullptr, 4, colour);
-}
-
-// A filled circle, as a fan of sixteen: the canvas has rectangles and polygons, no round.
-void disc(gfx::Canvas& canvas, float cx, float cy, float r, uint32_t colour) {
-    float xy[32];
-    for (int i = 0; i < 16; ++i) {
-        const float a = float(i) * 6.2831853f / 16.0f;
-        xy[i * 2] = cx + std::cos(a) * r;
-        xy[i * 2 + 1] = cy + std::sin(a) * r;
-    }
-    canvas.polygon(nullptr, xy, nullptr, 16, colour);
 }
 
 // The Zen strip is drawn by `panel::zenFoot`, on the panel's shared foot rule.
@@ -459,7 +399,7 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
         }
     }
     if (const int32_t rune = anySet ? runeRow(tables) : -1; rune >= 0) {
-        standing_.push_back({rune, kRuneStands, 0, false, false});
+        standing_.push_back({rune, panel::kRuneStands, 0, false, false});
     }
     if (stage) stage->stand(standing_, panel::kWidth, kStageTall);
 
@@ -584,7 +524,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                             : sim::Worn::Fine;
         if (band == sim::Worn::Fine) {
             if (!sim::wearable(slot)) {
-                canvas_.rect(panel::scaled(x, y, itemBox(tables, slot, held)), kTakenWash);
+                canvas_.rect(panel::scaled(x, y, itemBox(tables, slot, held)), panel::kTakenWash);
             }
             continue;
         }
@@ -763,31 +703,10 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // riding the pointer, which is drawn whole above.
     for (int slot = 0; slot < sim::kSlots; ++slot) {
         const sim::Held& held = bag[slot];
-        const int sockets = held.empty() ? 0 : std::min(socketsOf(held), kMostSockets);
-        if (sockets == 0 || slot == dragging_) continue;
+        if (held.empty() || socketsOf(held) == 0 || slot == dragging_) continue;
         const Box box =
             panel::scaled(x, y, wellOf(itemBox(tables, slot, held), sim::wearable(slot)));
-        float centres[kMostSockets];
-        const float r = socketsIn(box, sockets, k, centres);
-        for (int at = 0; at < sockets; ++at) {
-            const float cx = box.midX(), cy = centres[at];
-            lozenge(canvas_, cx, cy, r + std::max(1.0f, 0.8f * k), kSocketShade);
-            lozenge(canvas_, cx, cy, r, kSocketRim);
-            lozenge(canvas_, cx, cy, r * 0.7f, kSocketHole);
-            if (powerAt(held, at) == 0) continue;
-            // The rune itself, cut from the strip and set in the hole at the hole's own size, so
-            // the bronze shows all the way round it; the ember where there is no picture.
-            if (picture.valid()) {
-                const float sx = picture.width / panel::kWidth, sy = picture.height / kStageTall;
-                const float side = r * 0.7f * 2.0f / kRuneFills;
-                canvas_.region(picture, {cx - side * 0.5f, cy - side * 0.5f, side, side},
-                               {kRuneStands.x * sx, kRuneStands.y * sy, kRuneStands.w * sx,
-                                kRuneStands.h * sy});
-            } else {
-                disc(canvas_, cx, cy + r * 0.03f, r * 0.54f, kSocketEmber);
-                disc(canvas_, cx - r * 0.18f, cy - r * 0.14f, r * 0.17f, kSocketGlint);
-            }
-        }
+        panel::sockets(canvas_, picture, box, held, k);
     }
     // A stack's count at its cell's foot, right-aligned, as WoW prints it; a single piece
     // says nothing. Not on the one riding the pointer.

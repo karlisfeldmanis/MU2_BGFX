@@ -20,6 +20,10 @@
 #include "game/ui/sheet.h"
 #include "gfx/interface.h"
 
+namespace mu::sim {
+struct Held;
+}
+
 namespace mu::game::panel {
 
 // ---- the art -------------------------------------------------------------------------------
@@ -201,6 +205,26 @@ void standing(gfx::Canvas& canvas, const gfx::Art& picture, float x, float y);
 // What rides the pointer: the thing of footprint `units`, cut from the strip, its middle at
 // (px, py); a plain box where there is no picture yet.
 void carried(gfx::Canvas& canvas, const gfx::Art& picture, const gfx::Box& units, float px, float py);
+// **The Rune of Creation in its socket, as its own picture** (the user, 2026-09-29: "we need to
+// show that jewel creation is attached in rune slot"). One rune stands on a window's stage at the
+// left of the carry strip, which the window never shows, and each set socket is given that
+// picture inside its ring. The bag's and the vault's.
+constexpr gfx::Box kRuneStands{4.0f, kHeight + 2.0f, 20.0f, 20.0f};
+// **A piece's sockets, over its middle** (the user, 2026-09-28: "make socket placeholders bigger
+// and put in on item center"): every one, empty or set, on `box` in pixels -- one in the middle,
+// two or three stacked down it, each an orange stone in its ring where a Rune of Creation is set
+// and a dark hole where none is. `picture` is the stage the rune stands on (kRuneStands); without
+// it the stone is an ember. The bag's and the vault's (bug #40, 2026-10-20: "When the items are
+// on the bault they don't show the runes or the slots").
+void sockets(gfx::Canvas& canvas, const gfx::Art& picture, const gfx::Box& box,
+             const sim::Held& held, float k);
+// The wash under a sound piece in the satchel and the vault: MU's ITEM_COLOR_NORMAL hue, glColor4f(0.3, 0.5,
+// 0.5, 0.6) (NewUIInventoryCtrl.cpp:981), at a fifth of its strength, since at MU's 0.6 the
+// teal shouted over the dark skin, at a quarter it still did -- the user, 2026-10-19: "teal
+// highlith on inventory for items is to strong" -- and at an eighth it was "little bit to weak". It fills the piece's cells to their rules with
+// no edge of its own -- the user, 2026-10-19: "dont use double outline just fill the row with
+// that teal".
+constexpr uint32_t kTakenWash = gfx::rgba(0.3f, 0.5f, 0.5f, 0.12f);
 // A grid of resting cells as one ruled block, `columns` by `rows` at kPitch from (ux, uy).
 void grid(gfx::Canvas& canvas, float x, float y, float ux, float uy, int columns, int rows);
 // **Where a carried thing lands**: the cell its top-left goes in, counted across a grid at (gx,
