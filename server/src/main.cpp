@@ -242,7 +242,10 @@ int main(int argc, char** argv) {
         else if (a == "--assets" && i + 1 < argc) assets = argv[++i];
         else if (a == "--store" && i + 1 < argc) store = argv[++i];
         // The website's account service on this machine (web/server.py): takes launchers' tokens.
-        else if (a == "--accounts" && i + 1 < argc) takeTokensFrom(argv[++i]);
+        else if (a == "--accounts" && i + 1 < argc) {
+            takeTokensFrom(argv[i + 1]);
+            transferFrom(argv[++i]);
+        }
         // Players only through the launcher (host.h g_launcherOnly).
         else if (a == "--launcher-only") g_launcherOnly = true;
         else if (a == "--region" && i + 1 < argc) g_region = argv[++i];
@@ -562,6 +565,8 @@ int main(int argc, char** argv) {
         economyReport(sessions);
         // Who is on, for the website's Online page.
         tellOnline(sessions);
+        // A character moving to or from another region (transfer.cpp).
+        transferTick(sessions);
         // Each minute, how the loop kept time.
         if (Clock::now() - g_stats.since >= kStatsEvery) {
             const double seconds = std::chrono::duration<double>(Clock::now() - g_stats.since).count();

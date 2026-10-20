@@ -447,6 +447,8 @@ void sendMarks(Session& to, const std::vector<uint32_t>& guilds);
 void guildAsk(Session& one, const net::GuildAsk& ask, std::vector<std::unique_ptr<Session>>& sessions);
 void guildArrived(Session& one, std::vector<std::unique_ptr<Session>>& sessions);
 void guildTick(std::vector<std::unique_ptr<Session>>& sessions);
+// Out of his guild, as a member leaves (a character moved to another region).
+void guildLeave(uint64_t token, std::vector<std::unique_ptr<Session>>& sessions);
 
 // accounts.cpp
 bool keyShape(const std::string& key);
@@ -485,6 +487,13 @@ void sweepLetGo();
 // Who is on the server, told to the website's /internal/online every 5 s for its admins' Online page
 // (web/README.md): the post on a job of its own, never the loop's.
 void tellOnline(const std::vector<std::unique_ptr<Session>>& sessions);
+
+// transfer.cpp: a character moved to another region's server (docs/game/transfer.md), each 15 s
+// asked of the website's /internal/transfers on the accounts' line; a character handed over is
+// refused here until he is marked gone (leavingRealm).
+void transferFrom(const std::string& address);
+void transferTick(std::vector<std::unique_ptr<Session>>& sessions);
+bool leavingRealm(uint64_t token);
 
 // main.cpp
 bool hear(Session& one, std::vector<std::unique_ptr<World>>& worlds,

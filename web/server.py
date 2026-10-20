@@ -64,6 +64,14 @@ The routes:
                              characters?: [{account, name, class, level, world, saved, fresh}]}
          a region's mu2_server's list of who is on, every 5 s (server/src/signin.cpp tellOnline); kept in
          memory, one list a region (DEFAULT_REGION when it names none). `ms`: his line's round trip.
+    POST /api/transfer   Bearer T {name, to, new_name?} | {id, new_name?} | {id, cancel: true}
+                                                    -> 200 {ok} | 409 {field?, error}
+         a character moved to another region's server (TRANSFER_STATES, docs/game/transfer.md): asked,
+         a held one sent on with a new name or once a slot is free, or one still only asked called off.
+         GET /api/account carries the account's `characters` on every region, its `transfers` and the `regions`.
+    GET  /internal/transfers?region=R  (127.0.0.1 only) -> 200 text/plain, a line a move (transfers_for)
+    POST /internal/transfers           (127.0.0.1 only) {region, id, state, why?, kept?}  -> 200 {ok} | 409
+         a region's mu2_server's step of a move (server/src/transfer.cpp), every 15 s.
     POST /internal/role     (127.0.0.1 only) {email, role}  -> 200 {ok} | 404
          an account made "admin" or back to "player": on the box,
          curl -s -d '{"email":"X","role":"admin"}' http://127.0.0.1:8080/internal/role
@@ -154,7 +162,21 @@ DEFAULT_REGION = "North Europe"
 REGION_GONE_SECONDS = 600
 # The regions the front page shows, up or not (/api/status): the launcher's list, by name, with the
 # city of each one's server.
-REGIONS = (("North Europe", "Helsinki"), ("South America", "São Paulo"), ("Southeast Asia", "Singapore"))
+REGIONS = (("North Europe", "Helsinki"), ("Central Europe", "Nuremberg"), ("South America", "São Paulo"), ("Southeast Asia", "Singapore"))
+# A character's move to another region (transfers, docs/game/transfer.md), one way through:
+#   asked  the website took it; the server he leaves checks him and hands over his bytes -> out, or failed
+#   out    the website holds his bytes; that server marks him gone from its disk -> gone
+#   gone   the server he goes to takes him in -> done, or held (his name taken there, or no slot free)
+#   held   waits for the player: a new name, or a slot freed -> gone again
+# Once a character in TRANSFER_DAYS, one move an account at a time, free.
+TRANSFER_STATES = ("asked", "out", "gone", "held", "done", "failed")
+TRANSFER_MOVING = ("asked", "out", "gone", "held")
+TRANSFER_DAYS = 7
+ROSTER_SLOTS = 5           # sim::kRosterSlots
+CHARACTER_NAME = re.compile(r"^[A-Za-z0-9]{4,10}$")  # sim::goodName
+# A character's bytes as his server hands them over: the layout, the item list's print, his world and
+# his bytes, the last two in hex (server/src/transfer.cpp give).
+KEPT = re.compile(r"^\d{1,4} [0-9a-f]{16} (?:-|(?:[0-9a-f]{2}){1,64}) (?:[0-9a-f]{2}){1,65536}$")
 # A play: one character on the server from when he came on until he was last on a list, kept this
 # long (the `games` table). Off a list no longer than RECENT_GAP -- the website restarting -- he is
 # still on the same play.
@@ -319,6 +341,22 @@ CREATE TABLE IF NOT EXISTS texts (
     by       INTEGER,               -- the admin's account; NULL from web/i18n/<lang>.json
     PRIMARY KEY (lang, source)
 );
+-- A character moved from one region's game server to another's (docs/game/transfer.md): asked
+-- here, his bytes handed over by the server he leaves, taken in by the one he goes to.
+CREATE TABLE IF NOT EXISTS transfers (
+    id          INTEGER PRIMARY KEY,
+    account_id  INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    name        TEXT NOT NULL,      -- as he is on the server he leaves
+    new_name    TEXT NOT NULL,      -- as he will be on the one he goes to
+    from_region TEXT NOT NULL,
+    to_region   TEXT NOT NULL,
+    state       TEXT NOT NULL,      -- TRANSFER_STATES
+    why         TEXT NOT NULL DEFAULT '',  -- what holds or ended it, said to the player
+    kept        TEXT NOT NULL DEFAULT '',  -- "layout items hex" while he is between servers
+    asked       INTEGER NOT NULL,
+    changed     INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS transfers_account ON transfers(account_id, changed);
 CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -567,7 +605,8 @@ class Store:
             plays.append({"at": at, "ip": short_ip(ip)} |
                          {key: row.get(key) for key in ("gpu", "os", "graphics") if row.get(key)})
         return {"email": email, "name": name or "", "created": created, "role": role, "sessions": sessions,
-                "devices": devices, "plays": plays}
+                "devices": devices, "plays": plays, "characters": self.mine(account),
+                "transfers": self.transfers(account), "regions": [r for r, _ in REGIONS]}
 
     def comments(self, post: str) -> list:
         return [{"name": name, "text": text, "at": at} for name, text, at in self.db().execute(
@@ -841,6 +880,115 @@ class Store:
             if c.get("account") == account and str(c.get("name", "")).lower() == name.lower():
                 return c
         return None
+
+    # -- moving a character to another region (transfers)
+
+    def transfers(self, account: int) -> list:
+        return [dict(zip(("id", "name", "new_name", "from", "to", "state", "why", "asked", "changed"), row))
+                for row in self.db().execute(
+                    "SELECT id, name, new_name, from_region, to_region, state, why, asked, changed FROM transfers "
+                    "WHERE account_id = ? ORDER BY id DESC LIMIT 10", (account,))]
+
+    def mine(self, account: int) -> list:
+        """The account's characters on each region's server, as each last listed them."""
+        with self.online_lock:
+            listed = [c for told in self.characters.values() for c in told if c.get("account") == account]
+            playing = {(p.get("region"), p.get("name")) for told in self.online.values() for p in told["players"]
+                       if p.get("account") == account}
+        return [{key: c.get(key) for key in ("name", "class", "level", "region", "fresh")} |
+                {"online": (c.get("region"), c.get("name")) in playing} for c in listed]
+
+    def taken_in(self, region: str, name: str) -> bool:
+        with self.online_lock:
+            return any(str(c.get("name", "")).lower() == name.lower() for c in self.characters.get(region, []))
+
+    def ask_transfer(self, account: int, name: str, to: str, new_name: str):
+        """A move asked: None, or (field, error) when it cannot be."""
+        now = int(time.time())
+        his = next((c for c in self.mine(account) if c["name"] == name), None)
+        if his is None:
+            return "name", "No such character."
+        if his["fresh"]:
+            return "name", "Play him once before he moves."
+        if his["online"]:
+            return "name", "Log out of the game first."
+        if to not in [r for r, _ in REGIONS] or to == his["region"]:
+            return "to", "Pick another region."
+        if to not in self.regions_told():
+            return "to", "That region's server is down. Try again later."
+        db = self.db()
+        if db.execute("SELECT 1 FROM transfers WHERE account_id = ? AND state IN (?, ?, ?, ?)",
+                      (account, *TRANSFER_MOVING)).fetchone():
+            return "name", "Another character of yours is moving. Wait for it to finish."
+        if db.execute("SELECT 1 FROM transfers WHERE account_id = ? AND state = 'done' AND changed > ? "
+                      "AND lower(new_name) = lower(?)", (account, now - TRANSFER_DAYS * 86400, name)).fetchone():
+            return "name", f"He moved in the last {TRANSFER_DAYS} days."
+        if sum(1 for c in self.mine(account) if c["region"] == to) >= ROSTER_SLOTS:
+            return "to", "Your character slots there are full."
+        if not CHARACTER_NAME.match(new_name):
+            return "new_name", "4 to 10 letters or digits."
+        if self.taken_in(to, new_name):
+            return "new_name", "That name is taken there. Pick another."
+        db.execute("INSERT INTO transfers (account_id, name, new_name, from_region, to_region, state, asked, changed) "
+                   "VALUES (?, ?, ?, ?, ?, 'asked', ?, ?)", (account, name, new_name, his["region"], to, now, now))
+        return None
+
+    def rename_transfer(self, account: int, move: int, new_name: str):
+        """A held move given a new name, or sent on again once a slot is free: None or an error."""
+        row = self.db().execute("SELECT to_region, why FROM transfers WHERE id = ? AND account_id = ? AND state = 'held'",
+                                (move, account)).fetchone()
+        if row is None:
+            return "No such move waiting."
+        if row[1] == "name":
+            if not CHARACTER_NAME.match(new_name):
+                return "4 to 10 letters or digits."
+            if self.taken_in(row[0], new_name):
+                return "That name is taken there. Pick another."
+        else:
+            new_name = None
+        self.db().execute("UPDATE transfers SET state = 'gone', why = '', new_name = coalesce(?, new_name), changed = ? "
+                          "WHERE id = ?", (new_name, int(time.time()), move))
+        return None
+
+    def cancel_transfer(self, account: int, move: int) -> bool:
+        """Called off while it is still only asked."""
+        return self.db().execute("UPDATE transfers SET state = 'failed', why = 'cancelled', changed = ? "
+                                 "WHERE id = ? AND account_id = ? AND state = 'asked'",
+                                 (int(time.time()), move, account)).rowcount == 1
+
+    def transfers_for(self, region: str) -> str:
+        """A region's mu2_server's work, one line each: `give ID STATE ACCOUNT NAME` for a character
+        leaving it, `take ID ACCOUNT NAME KEPT` for one coming."""
+        lines = []
+        db = self.db()
+        for move, state, account, name in db.execute(
+                "SELECT id, state, account_id, name FROM transfers WHERE from_region = ? AND state IN ('asked', 'out')",
+                (region,)):
+            lines.append(f"give {move} {state} {account} {name}")
+        for move, account, name, kept in db.execute(
+                "SELECT id, account_id, new_name, kept FROM transfers WHERE to_region = ? AND state = 'gone'", (region,)):
+            lines.append(f"take {move} {account} {name} {kept}")
+        return "".join(line + "\n" for line in lines)
+
+    def told_transfer(self, region: str, move: int, state: str, why: str, kept: str) -> bool:
+        """A server's step of a move: only the one its state allows, and only by the server it is at."""
+        steps = {("asked", "out"): "from_region", ("asked", "failed"): "from_region", ("asked", "asked"): "from_region",
+                 ("out", "gone"): "from_region", ("gone", "done"): "to_region", ("gone", "held"): "to_region"}
+        db = self.db()
+        row = db.execute("SELECT state, from_region, to_region FROM transfers WHERE id = ?", (move,)).fetchone()
+        if row is None or (row[0], state) not in steps:
+            return False
+        if region != (row[1] if steps[(row[0], state)] == "from_region" else row[2]):
+            return False
+        if state == "out" and not KEPT.match(kept):
+            return False
+        # His bytes are kept only while he is between servers.
+        keep = kept if state == "out" else ("" if state in ("done", "failed") else None)
+        db.execute("UPDATE transfers SET state = ?, why = ?, kept = coalesce(?, kept), changed = ? WHERE id = ?",
+                   (state, why[:64], keep, int(time.time()), move))
+        if row[0] != state:
+            print(f"transfer {move}: {row[0]} -> {state}{' (' + why + ')' if why else ''} by {region}", flush=True)
+        return True
 
     def online_report(self) -> dict:
         # Every region's list as one: newest told, fresh only while every region still tells.
@@ -1311,6 +1459,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.tell_discord()
         if path == "/api/texts":
             return self.save_text()
+        if path == "/api/transfer":
+            return self.transfer()
+        if path == "/internal/transfers":
+            return self.told_transfer()
         self.reply(404, {"error": "not found"})
 
     def register(self):
@@ -1717,6 +1869,35 @@ class Handler(BaseHTTPRequestHandler):
         print(f"{self.client()} account {row[0]} deleted itself", flush=True)
         self.reply(200, {"ok": True})
 
+    def transfer(self):
+        """{name, to, new_name?} a move asked; {id, new_name?} a held one sent on; {id, cancel} one called off."""
+        row = self.signed()
+        if row is None:
+            return
+        said = self.body() or {}
+        if isinstance(said.get("id"), int):
+            if said.get("cancel"):
+                ok = self.store.cancel_transfer(row[0], said["id"])
+                return self.reply(200, {"ok": True}) if ok else self.reply(409, {"error": "It can't be called off now."})
+            error = self.store.rename_transfer(row[0], said["id"], str(said.get("new_name", "")).strip())
+            return self.reply(409, {"field": "new_name", "error": error}) if error else self.reply(200, {"ok": True})
+        name = str(said.get("name", ""))
+        refused = self.store.ask_transfer(row[0], name, str(said.get("to", "")),
+                                          str(said.get("new_name") or name).strip())
+        if refused:
+            return self.reply(409, {"field": refused[0], "error": refused[1]})
+        print(f"{self.client()} account {row[0]} asked {name} moved to {said.get('to')}", flush=True)
+        self.reply(200, {"ok": True})
+
+    def told_transfer(self):
+        if not self.direct():
+            return self.reply(404, {"error": "not found"})
+        said = self.body(MOST_ONLINE_BODY) or {}
+        ok = isinstance(said.get("id"), int) and self.store.told_transfer(
+            str(said.get("region", ""))[:32], said["id"], str(said.get("state", "")), str(said.get("why", "")),
+            str(said.get("kept", "")))
+        self.reply(200 if ok else 409, {"ok": ok})
+
     def posts(self) -> set:
         try:
             return {str(post.get("id")) for post in json.loads((self.site / "posts.json").read_text())}
@@ -1797,6 +1978,15 @@ class Handler(BaseHTTPRequestHandler):
             if not self.direct():
                 return self.reply(404, {"error": "not found"})
             return self.reply(200, self.store.machines_report())
+        if url.path == "/internal/transfers":
+            if not self.direct():
+                return self.reply(404, {"error": "not found"})
+            data = self.store.transfers_for(parse_qs(url.query).get("region", [""])[0]).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            return self.wfile.write(data)
         if url.path == "/internal/ticket":
             if not self.direct():
                 return self.reply(404, {"error": "not found"})

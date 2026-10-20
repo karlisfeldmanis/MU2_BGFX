@@ -46,6 +46,19 @@
 
 
 <div>
+<div class="muted" style="font-size: 15px">Characters</div>
+<div id="a-chars"></div>
+</div>
+<!-- Moving one to another region's server (docs/game/transfer.md) -->
+<div id="m-box" class="form" hidden>
+<span id="m-what"></span>
+<span class="muted" style="font-size: 15px">He takes his level, gear, bag and Zen. Your vault stays where it is. He leaves his guild. Once a week, free.</span>
+<div class="field"><label for="m-to">To</label><select id="m-to" style="height: 44px; padding: 0 8px; border: 1px solid var(--field-edge); border-radius: 3px; background: #050403; color: var(--bone); font: inherit; font-size: 16px"></select></div>
+<div class="field"><label for="m-name">Name there</label><input id="m-name" type="text" autocomplete="off" maxlength="10" aria-describedby="m-err"><span id="m-err" class="err"></span></div>
+<button id="m-go" class="btn btn-red" type="button">Move</button>
+</div>
+
+<div>
 <div class="muted" style="font-size: 15px">Launchers signed in</div>
 <div id="a-sessions"></div>
 </div>
@@ -137,6 +150,7 @@
     $('a-online').hidden = a.role !== 'admin';
     $('a-bugs').hidden = a.role !== 'admin';
     $('a-texts').hidden = a.role !== 'admin';
+    renderCharacters(a);
     const sessions = $('a-sessions');
     sessions.replaceChildren();
     // Only the launchers: a browser's sign-in is this page itself, not where the game is played.
@@ -170,6 +184,84 @@
     }
     view('account');
   }
+  // The account's characters on every region, and each move with where it stands.
+  let moving = null;
+  function why(m) {
+    const said = { online: t('Log out of the game to let him go.'), broker: t('He has Broker listings or Broker money to collect. Clear them and ask again.'),
+      master: t('He leads a guild. Pass it on or disband it first.'), missing: t('He was not found on {from}.', { from: m.from }),
+      cancelled: t('Called off.') };
+    return said[m.why] || '';
+  }
+  function moveLine(m) {
+    const title = m.name === m.new_name ? m.name : m.name + ' → ' + m.new_name;
+    let sub, action;
+    if (m.state === 'asked') {
+      sub = why(m) || t('Waiting for {from} to hand him over…', { from: m.from });
+      action = el('button', 'link', t('Call off'));
+      action.addEventListener('click', async () => { await api('/api/transfer', { id: m.id, cancel: true }); load(); });
+    } else if (m.state === 'out' || m.state === 'gone') sub = t('On his way to {to}…', { to: m.to });
+    else if (m.state === 'held') {
+      const box = el('div');
+      box.style.cssText = 'display: flex; gap: 8px; align-items: center';
+      const go = el('button', 'link', m.why === 'name' ? t('Use this name') : t('Try again'));
+      let input = null;
+      if (m.why === 'name') { input = el('input'); input.maxLength = 10; input.style.cssText = 'height: 32px; width: 120px'; box.appendChild(input); }
+      box.appendChild(go);
+      go.addEventListener('click', async () => {
+        const { status, said } = await api('/api/transfer', { id: m.id, new_name: input ? input.value.trim() : '' });
+        if (status === 200) load(); else go.textContent = said.error ? t(said.error) : t('Something went wrong.');
+      });
+      action = box;
+      sub = m.why === 'name' ? t('His name is taken on {to}. Pick another.', { to: m.to })
+                             : t('Your character slots on {to} are full. Delete one there, then try again.', { to: m.to });
+    } else if (m.state === 'done') sub = t('Moved to {to}, {when}', { to: m.to, when: when(m.changed) });
+    else sub = why(m) || t('Not moved.');
+    if (action && action.tagName === 'BUTTON') { action.type = 'button'; action.style.fontSize = '15px'; }
+    return line(title, [m.from + ' → ' + m.to, sub], action);
+  }
+  function renderCharacters(a) {
+    const box = $('a-chars');
+    box.replaceChildren();
+    const busyMove = a.transfers.some((m) => ['asked', 'out', 'gone', 'held'].includes(m.state));
+    if (!a.characters.length) box.appendChild(line(t('No characters yet'), t('Make one in the game and it shows here within a minute.')));
+    const chars = a.characters.slice().sort((x, y) => (x.region + x.name).localeCompare(y.region + y.name));
+    for (const c of chars) {
+      let action = null;
+      // Once a week (TRANSFER_DAYS): the day he may move again, in place of the button.
+      const moved = a.transfers.find((m) => m.state === 'done' && m.new_name === c.name && m.to === c.region &&
+                                             m.changed > Date.now() / 1000 - 7 * 86400);
+      if (moved) action = el('span', 'sub', t('Can move again {when}', { when: new Date((moved.changed + 7 * 86400) * 1000).toLocaleDateString() }));
+      else if (!busyMove && !c.fresh && a.regions.length > 1) {
+        action = el('button', 'link', t('Move'));
+        action.type = 'button';
+        action.style.fontSize = '15px';
+        action.addEventListener('click', () => openMove(a, c));
+      }
+      box.appendChild(line(c.name, [c.class + ' · ' + t('level {n}', { n: c.level }) + ' · ' + c.region + (c.online ? ' · ' + t('playing now') : '')], action));
+    }
+    for (const m of a.transfers.slice(0, 5)) box.appendChild(moveLine(m));
+  }
+  function openMove(a, c) {
+    moving = c;
+    $('m-what').textContent = t('Move {name} from {from}', { name: c.name, from: c.region });
+    $('m-to').replaceChildren(...a.regions.filter((r) => r !== c.region).map((r) => { const o = el('option', '', r); o.value = r; return o; }));
+    $('m-name').value = c.name;
+    fieldError($('m-name'), $('m-err'), '');
+    $('m-box').hidden = false;
+    $('p-box').hidden = $('d-box').hidden = true;
+  }
+  $('m-go').addEventListener('click', async () => {
+    if (!moving) return;
+    fieldError($('m-name'), $('m-err'), '');
+    busy($('m-go'), t('Asking…'));
+    try {
+      const { status, said } = await api('/api/transfer', { name: moving.name, to: $('m-to').value, new_name: $('m-name').value.trim() });
+      if (status === 200) { $('m-box').hidden = true; moving = null; load(); }
+      else fieldError($('m-name'), $('m-err'), said.error ? t(said.error) : t('Something went wrong.'));
+    } catch (e) { fieldError($('m-name'), $('m-err'), OFFLINE); }
+    busy($('m-go'));
+  });
+
   async function load() {
     const a = await account();
     if (a) render(a); else view('signin');

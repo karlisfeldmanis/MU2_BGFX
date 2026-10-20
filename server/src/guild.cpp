@@ -517,4 +517,9 @@ void guildTick(std::vector<std::unique_ptr<Session>>& sessions) {
     }
 }
 
+void guildLeave(uint64_t token, std::vector<std::unique_ptr<Session>>& sessions) {
+    const auto at = g_guilds.find(guildOf(token));
+    if (at != g_guilds.end()) out(at->second, token, false, sessions);
+}
+
 }  // namespace mu::server

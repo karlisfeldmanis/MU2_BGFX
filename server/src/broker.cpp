@@ -637,6 +637,13 @@ void brokerSample(int count) {
     core::logf("broker: %d sample listings (--market-sample)", count);
 }
 
+bool brokerHolds(uint64_t token) {
+    for (const sim::Listing& l : g_book.listings()) {
+        if (l.seller == token) return true;
+    }
+    return !g_book.collectOf(token).empty();
+}
+
 void brokerKeep() {
     if (g_book.version() == g_bookKept) return;
     if (g_store.keepBook(g_book.write())) g_bookKept = g_book.version();

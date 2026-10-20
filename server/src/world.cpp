@@ -185,6 +185,10 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
         core::logError("%s: %016llx is not his to play", one.who.c_str(), (unsigned long long)asked.token);
         return false;
     }
+    if (known && leavingRealm(asked.token)) {
+        core::logf("%s: %016llx is moving to another region", one.who.c_str(), (unsigned long long)asked.token);
+        return false;
+    }
     if (!known && !asked.account.empty()) {
         core::logError("%s: no such character on his account", one.who.c_str());
         return false;
