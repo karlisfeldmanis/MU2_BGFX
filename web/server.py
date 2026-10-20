@@ -1196,8 +1196,9 @@ COMMENT_LIMIT = Limit(10, 600)
 class Discord:
     """Each release day's published lines as one message in #updates, by the channel's webhook.
     A day changed (touch) is told DISCORD_QUIET seconds after its last change; the message's id and
-    a hash of what it said are kept in settings as `discord:<day>`, so a day is posted once, edited
-    when its lines change, and deleted when none is published any more."""
+    a hash of what it said and its count of lines are kept in settings as `discord:<day>`, so a day
+    is posted once, posted again at the channel's foot when it gains lines (the old message taken
+    away), edited when they are only reworded, and deleted when none is published any more."""
 
     def __init__(self, store: Store, webhook: Path, quiet: int = DISCORD_QUIET):
         self.store, self.webhook_path, self.quiet = store, webhook, quiet
@@ -1297,12 +1298,20 @@ class Discord:
         digest = hashlib.sha256(json.dumps(body, sort_keys=True).encode()).hexdigest()[:16]
         if sent and digest == said:
             return
-        if sent and self.call("PATCH", f"{url}/messages/{sent}", body) is not None:
+        # A day that gained lines is posted again at the channel's foot, the old message taken away:
+        # an edit is silent and stays where it was, so a later release of the same day went unseen
+        # (the user, 2026-10-20: "i published updates but was not pushed on discord"). A day whose
+        # lines were only reworded or taken away is edited in place.
+        before = (kept + ["", "", "0"])[2]
+        grew = not sent or len(lines) > (int(before) if before.isdigit() else 0)
+        if sent and not grew and self.call("PATCH", f"{url}/messages/{sent}", body) is not None:
             print(f"discord: {day} edited, {len(lines)} lines", flush=True)
         else:
+            if sent:
+                self.call("DELETE", f"{url}/messages/{sent}")
             sent = self.call("POST", f"{url}?wait=true", body)["id"]
             print(f"discord: {day} posted, {len(lines)} lines", flush=True)
-        self.store.set_setting(key, f"{sent} {digest}")
+        self.store.set_setting(key, f"{sent} {digest} {len(lines)}")
 
 
 # ---- the handler ---------------------------------------------------------------------------------
