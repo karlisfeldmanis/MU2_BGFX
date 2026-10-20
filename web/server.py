@@ -571,6 +571,13 @@ class Store:
                 self.recent_machines = {k: v for k, v in self.recent_machines.items()
                                         if now - v[0] < RECENT_MACHINE_SECONDS}
 
+    def machine_at(self, account: int, ip: str):
+        """The account's machine last seen from this address, when it is the only one there: a Play
+        after a restart of this service, or more than RECENT_MACHINE_SECONDS after the launcher opened."""
+        rows = self.db().execute("SELECT report FROM devices WHERE account_id = ? AND ip = ? LIMIT 2",
+                                 (account, ip)).fetchall()
+        return json.loads(rows[0][0]) if len(rows) == 1 else None
+
     def recent(self, ip: str):
         """The machine last reported from this address, if within RECENT_MACHINE_SECONDS."""
         with self.machine_lock:
@@ -602,7 +609,7 @@ class Store:
                 "SELECT p.at, p.ip, d.report FROM plays p LEFT JOIN devices d "
                 "ON d.account_id = p.account_id AND d.fp = p.fp AND p.fp != '' "
                 "WHERE p.account_id = ? ORDER BY p.at DESC LIMIT 20", (account,)):
-            row = json.loads(report) if report else {}
+            row = json.loads(report) if report else self.machine_at(account, ip) or {}
             plays.append({"at": at, "ip": short_ip(ip)} |
                          {key: row.get(key) for key in ("gpu", "os", "graphics") if row.get(key)})
         return {"email": email, "name": name or "", "created": created, "role": role, "sessions": sessions,
@@ -1815,7 +1822,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(401, {"error": "signed out"})
         ticket, secret = self.store.ticket(row[0])
         # The Play's machine: the one this address reported as its launcher opened.
-        machine = self.store.recent(self.client())
+        machine = self.store.recent(self.client()) or self.store.machine_at(row[0], self.client())
         if machine:
             self.store.device(row[0], machine, self.client())
         self.store.played(row[0], self.client(), machine["fp"] if machine else "")
