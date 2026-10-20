@@ -1,4 +1,12 @@
 cmake_minimum_required(VERSION 3.22)
+# The oldest macOS the Mac's binaries open on, the game's Info.plist's LSMinimumSystemVersion.
+# Unset, clang stamps the SDK's own -- the build Mac's macOS -- into every binary, and Finder
+# refuses the app on any older one as "incompatible with this version of macOS" (-10825): a
+# tester on 26.6 met that with a launcher built on 27, 2026-10-20. Before project(), which reads
+# it; a plain variable, so a build folder configured with it empty takes it too.
+if(NOT CMAKE_OSX_DEPLOYMENT_TARGET)
+  set(CMAKE_OSX_DEPLOYMENT_TARGET 14.0)
+endif()
 project(mu2 LANGUAGES C CXX)
 # What mu bootstrap fetches: bgfx, the headers, zstd and the faces (docs/plans/layout.md, third_party/).
 set(MU_EXTERN ${CMAKE_SOURCE_DIR}/third_party/extern)
@@ -29,7 +37,8 @@ if(MU2_SHIP)
   add_compile_definitions(MU2_SHIP)
 endif()
 if(APPLE AND NOT MU2_SERVER_ONLY)
-  enable_language(OBJCXX)
+  # OBJC for glfw's .m files: with only OBJCXX, CMake compiles them as Objective-C++, which refuses them.
+  enable_language(OBJC OBJCXX)
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -126,9 +135,10 @@ if(APPLE AND TARGET shaderc)
     ${MU_EXTERN}/bgfx.cmake/bgfx/3rdparty/directx-headers/include/wsl/stubs)
 endif()
 
-if(WIN32 OR MU2_LINUX_CLIENT)
+if(WIN32 OR APPLE OR MU2_LINUX_CLIENT)
   # GLFW 3.4 from source (mu bootstrap), static, for Windows' window and input -- and Linux's,
-  # X11 and Wayland both, picked when the game starts.
+  # X11 and Wayland both, picked when the game starts. The Mac's too: Homebrew's dylib is built
+  # for the macOS Homebrew bottled it on (26 in 2026-10), whatever CMAKE_OSX_DEPLOYMENT_TARGET says.
   set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
   set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
   set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)

@@ -9,8 +9,9 @@ Each step is said as it runs:
      and mu2 and mupack built. The game and nothing else (no studio, bench or developer switch).
   2. The manifest (manifest.py): every file the game reads, grouped into packs. Nothing it does
      not reach goes in: no recipes, no glb sources, no cook intermediates, no stale textures.
-  3. The bundle: the player's MU2.app copied into dist/macos/, glfw copied into its Frameworks
-     and the binary pointed at that copy, so a Mac without Homebrew opens it.
+  3. The bundle: the player's MU2.app copied into dist/macos/, anything it links outside the
+     system copied into its Frameworks and pointed at (glfw is linked in since 2026-10-20), and
+     every binary checked to open on MACOS_OLDEST, the CMakeLists' CMAKE_OSX_DEPLOYMENT_TARGET.
   4. The packs: a list a pack, and mupack writes each into Contents/Resources/data/.
   5. The proof: `mupack --check` mounts the packs as the game does and reads every file back
      through the game's own reader, byte for byte against its source.
@@ -47,7 +48,25 @@ LINUX_LIBS = ("linux-vdso.so", "libz.so.1", "libm.so.6", "libc.so.6", "ld-linux-
 SNAPSHOT = os.path.join(OUT, "build-ship-src")
 SYMBOLS = os.path.join(OUT, "symbols")
 DIST = os.path.join(ROOT, "dist")
-GLFW = "libglfw.3.dylib"
+# The oldest macOS a Mac binary we hand out may ask for: CMakeLists' CMAKE_OSX_DEPLOYMENT_TARGET.
+# A binary stamped newer is refused by Finder on an older Mac as "incompatible with this version
+# of macOS" (-10825), though it runs from the Terminal: the launcher built on 27, 2026-10-20.
+MACOS_OLDEST = (14, 0)
+
+
+def opens_on_oldest(app, say):
+    """Every Mach-O in `app` asks for no newer macOS than MACOS_OLDEST, or the dist stops."""
+    for folder, _, names in os.walk(app):
+        for name in names:
+            path = os.path.join(folder, name)
+            if os.path.islink(path) or not open(path, "rb").read(4) in (b"\xcf\xfa\xed\xfe", b"\xca\xfe\xba\xbe"):
+                continue
+            shown = run(["vtool", "-show-build", path], say).split()
+            for i, word in enumerate(shown[:-1]):
+                if word == "minos" and tuple(int(n) for n in shown[i + 1].split(".")[:2]) > MACOS_OLDEST:
+                    raise RuntimeError(f"{path} asks for macOS {shown[i + 1]}, newer than "
+                                       f"{'.'.join(map(str, MACOS_OLDEST))}: Finder refuses it on an "
+                                       "older Mac (configure the build again)")
 
 
 def source_of(logical, shaders, sheets=SHEETS):
@@ -142,6 +161,7 @@ def bundle(app, say):
         lib = lib.split()[0]
         if not lib.startswith(("/System/", "/usr/lib/", "@executable_path/")):
             raise RuntimeError(f"the app still links {lib}, which a player's Mac may not have")
+    opens_on_oldest(app, say)
 
 
 def strip_keeping(binary, made_from, platform, say, strip_to=None):
@@ -475,17 +495,14 @@ def dist_launcher(say):
     shutil.rmtree(app, ignore_errors=True)
     mac = os.path.join(app, "Contents", "MacOS")
     os.makedirs(mac)
-    os.makedirs(os.path.join(app, "Contents", "Frameworks"))
     shutil.copy2(os.path.join(build_dir, "MU2Launcher"), mac)
-    # glfw, as the game's bundle carries it (bundle() above): inside, and pointed at.
-    homebrew = run(["brew", "--prefix", "glfw"], say).strip()
-    glfw = os.path.join(homebrew, "lib", GLFW)
-    shutil.copy2(glfw, os.path.join(app, "Contents", "Frameworks", GLFW))
-    # Homebrew's dylib is read-only, and a drag out of the DMG keeps the mode -- a 444 file then
-    # refuses the quarantine strip that a player's first right-click needs.
-    os.chmod(os.path.join(app, "Contents", "Frameworks", GLFW), 0o644)
-    run(["install_name_tool", "-change", glfw, f"@executable_path/../Frameworks/{GLFW}",
-         os.path.join(mac, "MU2Launcher")], say)
+    # glfw is linked in (CMakeLists): the system's libraries and nothing else.
+    for lib in run(["otool", "-L", os.path.join(mac, "MU2Launcher")], say).splitlines()[1:]:
+        lib = lib.split()[0]
+        if not lib.startswith(("/System/", "/usr/lib/")):
+            raise RuntimeError(f"the launcher links {lib}, which a player's Mac may not have "
+                               "(build/ configured before glfw was linked in? configure it again)")
+    opens_on_oldest(app, say)
     # The game's icon (tools/make_icons.py), named by the plist's CFBundleIconFile.
     os.makedirs(os.path.join(app, "Contents", "Resources"))
     shutil.copy2(os.path.join(ROOT, "src", "app", "mu2.icns"), os.path.join(app, "Contents", "Resources"))
