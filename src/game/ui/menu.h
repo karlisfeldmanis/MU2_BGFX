@@ -151,6 +151,7 @@ private:
     std::string place_;
     std::string lostWhy_, lostNote_;
     bool outdatedLost_ = false;  // outdated(): no Reconnect; Close Game in its place
+    float lostTrimmed() const;   // what outdated() takes off the Lost page's height, in units
     float width_ = 0.0f, height_ = 0.0f;
     float x_ = 0.0f, y_ = 0.0f;  // the sheet's corner, in pixels
     int over_ = -1, pressing_ = -1;

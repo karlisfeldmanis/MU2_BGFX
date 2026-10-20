@@ -46,6 +46,9 @@ constexpr float kLostRule = kLostFirst + style::kButtonL + 14.0f;
 constexpr float kLostExit = kLostRule + 14.0f;
 constexpr float kLostFoot = kLostExit + style::kButtonL + 16.0f;
 constexpr float kLostTall = kLostFoot + kFootTall;
+// Told the server is another build (Menu::outdated), the page has Close Game alone, where
+// Reconnect stood: the rule and the second button's slot come out of it.
+constexpr float kLostTrim = kLostExit - kLostFirst;
 
 // Options: the Display group's four rows, the Sound group's one, a rule, Graphics, Back, and
 // the foot.
@@ -358,6 +361,8 @@ static Box lostBoxOf(int target, bool outdated) {
     return {};
 }
 
+float Menu::lostTrimmed() const { return page_ == Page::Lost && outdatedLost_ ? kLostTrim : 0.0f; }
+
 int Menu::hitAt(float x, float y) const {
     for (int target = 0; target < kTargets; ++target) {
         const Box design = page_ == Page::Lost ? lostBoxOf(target, outdatedLost_) : boxOf(page_, target);
@@ -380,7 +385,7 @@ void Menu::update(float seconds, float width, float height, const Pointer& point
         height_ = height;
         place_ = place;
         x_ = std::round((width - wideOf(page_) * u) * 0.5f);
-        y_ = std::round(height * kCentreShare - tallOf(page_) * u * 0.5f);
+        y_ = std::round(height * kCentreShare - (tallOf(page_) - lostTrimmed()) * u * 0.5f);
 
         over_ = hitAt(pointer.x, pointer.y);
         const float step = seconds / style::kHoverSeconds;
@@ -514,7 +519,7 @@ void Menu::update(float seconds, float width, float height, const Pointer& point
         }
         // A page turned this frame is laid out from its own size on the next.
         x_ = std::round((width - wideOf(page_) * u) * 0.5f);
-        y_ = std::round(height * kCentreShare - tallOf(page_) * u * 0.5f);
+        y_ = std::round(height * kCentreShare - (tallOf(page_) - lostTrimmed()) * u * 0.5f);
     }
     if (out) *out = result;
 
@@ -559,7 +564,7 @@ void Menu::rebuild() {
     canvas_.shade({w * 0.74f, 0.0f, w * 0.26f, h}, none, edge, edge, none);
 
     if (page_ == Page::Lost) {
-        const Box sheet = at(x_, y_, {0.0f, 0.0f, kMainWide, kLostTall});
+        const Box sheet = at(x_, y_, {0.0f, 0.0f, kMainWide, kLostTall - lostTrimmed()});
         controls::frame(canvas_, sheet, u, "Disconnected");
         const float px = style::kBodySize * u;
         const auto line = [&](float top, const char* words, uint32_t ink) {
@@ -582,7 +587,7 @@ void Menu::rebuild() {
             controls::button(canvas_, at(x_, y_, boxOf(page_, kExit)), "Exit Game", Kind::Danger,
                              state(kExit), u);
         }
-        controls::foot(canvas_, sheet, y_ + kLostFoot * u, u);
+        controls::foot(canvas_, sheet, y_ + (kLostFoot - lostTrimmed()) * u, u);
         return;
     }
     const bool main = page_ == Page::Main;

@@ -804,7 +804,11 @@ void PlayMode::runScript(Context& ctx) {
     if (args.windows.find("character") != std::string::npos) desk_.setCharacterOpen(true);
     if (args.windows.find("inspect") != std::string::npos) desk_.setInspectFirst(true);
     if (args.windows.find("sanctuary") != std::string::npos) desk_.setSpecimenOpen(true);
-    if (args.windows.find("graphics") != std::string::npos) {
+    if (args.windows.find("outdated") != std::string::npos) {
+        desk_.showLost(true);
+    } else if (args.windows.find("lost") != std::string::npos) {
+        desk_.showLost(false);
+    } else if (args.windows.find("graphics") != std::string::npos) {
         desk_.showMenu(game::Menu::Page::Graphics);
     } else if (args.windows.find("options") != std::string::npos) {
         desk_.showMenu(game::Menu::Page::Options);

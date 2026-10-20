@@ -166,6 +166,12 @@ public:
     void setSpecimenOpen(bool open) { specimenOpen_ = open; }
     // The game menu up on a page, for a review: --windows menu, options or graphics.
     void showMenu(Menu::Page page) { menu_.show(page); }
+    // The Disconnected page as a review asks for it (--windows lost, outdated): the line's, or a
+    // deploy's under the game (Menu::outdated).
+    void showLost(bool outdated) {
+        menu_.lose({});
+        if (outdated) menu_.outdated();
+    }
     // What's New up on its welcome: the first entry after an update (PlayMode), --windows whatsnew.
     void showWhatsNew() { whatsNew_.show(); }
     // What's New went down since the last ask: the edition is seen, for options.txt.
