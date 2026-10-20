@@ -54,12 +54,13 @@ constexpr float kGroupHead = 10.0f, kRowTall = 13.0f, kGroupGap = 6.0f;
 // The foot: the level's progress, at the panel's shared rule.
 constexpr float kFootRule = panel::kFootRule;
 constexpr float kFootTop = panel::kFootTop;
-// **Reset points in the foot** (the user, 2026-10-20: "reset poont has to be in footer actualy"):
-// a square at the foot's right, the bag's hammer's size and place, the turning arrow on it; the
-// level's progress beside it, its bar and its figures ending short of it.
-constexpr Box kResetSquare{panel::kWellRight - 24.0f, kFootTop + 1.0f, 24.0f, 24.0f};
-constexpr float kFootRight = kResetSquare.x - 6.0f;
-constexpr Box kBar{panel::kGridX, kFootTop + 12.0f, kFootRight - panel::kGridX, 4.0f};
+// **Reset points is the foot** (the user, 2026-10-20: "reset poont has to be in footer actualy",
+// then "reset points has to be full width button and complet footer, exp is going under"): the
+// button across the wells at the foot's top, the level's progress under it.
+constexpr Box kResetSquare{panel::kGridX, kFootRule, panel::kWellRight - panel::kGridX, 16.0f};
+constexpr float kFootRight = kRight;
+constexpr float kExpTop = kResetSquare.y + kResetSquare.h + 5.0f;
+constexpr Box kBar{panel::kGridX, kExpTop + 12.0f, kFootRight - panel::kGridX, 4.0f};
 
 // Type, in units. A figure is a size above its label, so the eye runs down the numbers.
 constexpr float kClassSize = 9.0f, kNameSize = 8.5f, kFigureSize = 10.0f, kLineSize = 7.5f,
@@ -749,35 +750,21 @@ void Card::rebuild() {
                           double(to - from))
                   : 1.0f;
     const float kicker = kLineSize * k;
-    controls::caps(canvas_, x + kLeft * k, y + kFootTop * k + face.ascent(kicker), kicker, kQuiet,
+    controls::caps(canvas_, x + kLeft * k, y + kExpTop * k + face.ascent(kicker), kicker, kQuiet,
                    "Experience", 0.04f);
-    controls::ranged(canvas_, x + kFootRight * k, y + kFootTop * k + face.ascent(kicker), kicker, kPlain,
+    controls::ranged(canvas_, x + kFootRight * k, y + kExpTop * k + face.ascent(kicker), kicker, kPlain,
                      number((long long)now_.experience) + " / " + number((long long)to) + " · " +
                          std::to_string(int(share * 100.0f)) + "%");
     controls::meter(canvas_, panel::scaled(x, y, kBar), std::clamp(share, 0.0f, 1.0f),
                     gfx::rgba(0.910f, 0.863f, 0.773f), style::kIron, u);
     {
-        // The reset's square, lit under the pointer (the question is up: held down); off with
-        // nothing placed. Its name over it while the pointer is on it, as a flat tag.
+        // The reset, held down while its question is up, off with nothing placed.
         controls::State state;
         state.lift = now_.over == kResetId ? 1.0f : 0.0f;
-        state.held = now_.pushed == kResetId;
+        state.held = now_.pushed == kResetId || now_.asking;
         state.off = now_.returnable <= 0;
-        controls::square(canvas_, panel::scaled(x, y, kResetSquare), controls::Glyph::Undo, state, u, false,
-                         now_.asking);
-        if (now_.over == kResetId) {
-            const std::string name = "Reset points";
-            const float size = kLineSize * k, padX = 4.0f * k;
-            const float w = controls::labelWidth(size, name);
-            const Box tag{std::round(x + kResetSquare.right() * k - w - padX * 2.0f),
-                          std::round(y + (kResetSquare.y - 15.0f) * k), std::round(w + padX * 2.0f),
-                          std::round(12.0f * k)};
-            canvas_.rect(tag, style::kVoid);
-            canvas_.rect({tag.x, tag.bottom() - std::max(1.0f, std::round(k * 0.5f)), tag.w,
-                          std::max(1.0f, std::round(k * 0.5f))},
-                         style::kIron);
-            controls::label(canvas_, tag.x + padX, panel::centredBaseline(face, tag, size), size, kHeading, name);
-        }
+        controls::button(canvas_, panel::scaled(x, y, kResetSquare), "Reset points", controls::Glyph::Undo,
+                         controls::Kind::Danger, state, u, kTabSize * k);
     }
 
     panel::close(canvas_, x, y, now_.overClose, now_.closing);
