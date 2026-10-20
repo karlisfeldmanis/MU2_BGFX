@@ -666,6 +666,7 @@ bool PlayMode::open(Context& ctx) {
         desk_.setHeroName(saved_.name);
         // Switch Character goes back to the screen this run came through, and only then.
         desk_.allowSwitch(args.lobby);
+        desk_.setRealm(args.server);
         fillSettings(ctx.window, args, &desk_.settings());
         const bool held = args.frames == 0;
         desk_.holdEscape(held);

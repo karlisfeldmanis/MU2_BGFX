@@ -254,9 +254,14 @@ void Chat::load() {
             if (in >> shows) filter(key) = shows & kEvery;
         } else if (key == "left-global") {
             leftGlobal_ = true;
-        } else if (key == "ignore") {
-            std::string name;
-            if (in >> name) ignored_.push_back(lower(name));
+        } else if (key == "ignores") {
+            // A line from before the realms ("ignore name") reads as no one's: it names a
+            // character on some realm, and which is not written.
+            std::string realm, name;
+            if (in >> realm >> name) {
+                if (realm == realm_) ignored_.push_back(lower(name));
+                else elsewhere_.push_back(realm + " " + lower(name));
+            }
         } else {
             std::getline(in, key);
         }
@@ -269,7 +274,8 @@ void Chat::save() const {
     std::ofstream out(user + "/chat.txt");
     out << "general " << generalShows_ << "\nglobal " << globalShows_ << "\n";
     if (leftGlobal_) out << "left-global\n";
-    for (const std::string& name : ignored_) out << "ignore " << name << "\n";
+    for (const std::string& name : ignored_) out << "ignores " << realm_ << " " << name << "\n";
+    for (const std::string& line : elsewhere_) out << "ignores " << line << "\n";
 }
 
 std::string Chat::channelWord() const {

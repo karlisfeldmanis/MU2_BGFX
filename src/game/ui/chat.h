@@ -63,6 +63,9 @@ class Stage;
 class Chat {
 public:
     void open(const gfx::Interface& interface);
+    // The server this run plays on ("host:port"), whose ignored the chat reads: before the
+    // first frame, as chat.txt is read on it. Empty is the local realm.
+    void setRealm(const std::string& server) { realm_ = server.empty() ? "local" : server; }
 
     // A frame. `bottom` is where its foot stands (over the HUD's plate) and `right` the most it
     // may reach (short of the buffs); `typed`, `enter` and `escape` are the keyboard's when no
@@ -183,7 +186,7 @@ private:
     // The channels a tab shows, as bits of 1 << Channel; a whisper tab's are not its own.
     uint32_t& filter(const std::string& tab);
     bool ignored(const std::string& name) const;
-    // chat.txt in the player's folder: the tabs' ticks, Global left, the ignored.
+    // chat.txt in the player's folder: the tabs' ticks, Global left, each realm's ignored.
     void load();
     void save() const;
     void buildFilters(float u, const Pointer& pointer);
@@ -232,7 +235,12 @@ private:
     uint32_t generalShows_ = 0, globalShows_ = 0;  // filter()'s, set by load()
     bool loaded_ = false;
     bool leftGlobal_ = false;
-    std::vector<std::string> ignored_;  // lower case
+    std::vector<std::string> ignored_;  // lower case, this realm's
+    // A name is only its realm's, so the ignored are kept a realm each (the user, 2026-10-20,
+    // after a realm change): this one's by its server (setRealm), the others' carried through
+    // chat.txt untouched, "realm name" each.
+    std::string realm_ = "local";
+    std::vector<std::string> elsewhere_;
     // The list of what the chosen tab shows, open over the log, and its rows as drawn.
     bool filtering_ = false;
     gfx::Box filterButton_, filterBox_;

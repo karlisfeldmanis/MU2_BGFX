@@ -290,6 +290,8 @@ public:
     // Switch Character was pressed: the run goes back to the character screen after this frame.
     bool switchAsked() const { return switchAsked_; }
     void allowSwitch(bool on) { menu_.allowSwitch(on); }
+    // The realm's server, for what the windows keep a realm each (Chat::setRealm).
+    void setRealm(const std::string& server) { chat_.setRealm(server); }
     // The line gone and coming back by itself (PlayMode's reconnect): the Disconnected page's
     // second line says how it goes, and its Reconnect tries at once rather than going back to
     // the character screen. `here` false: Reconnect is the character screen, as it was.
