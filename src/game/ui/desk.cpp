@@ -980,6 +980,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                        window.width(), window.height())) {
         click();
     }
+    if (const int peek = herald_.takePeek(); peek >= 0 && play.isOpen()) {
+        play.gatePeek(peek, Herald::peekSeconds());
+    }
 
     bool toggleInventory = false, toggleCharacter = false, toggleMenu = false;
     bool toggleQuest = false, toggleChat = false, toggleGuild = false, toggleTalents = false;

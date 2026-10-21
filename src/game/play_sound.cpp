@@ -417,6 +417,13 @@ void Play::ui(Ui which) {
     }
 }
 
+// Each from where it is loudest straight away: the castle's bed from its top, Devil Square's
+// track 39 s in, past its quiet opening (-22 to -28 dB through its first eight seconds).
+void Play::gatePeek(int gate, float seconds) {
+    if (gate == 0) sound_.stinger("sounds/ibloodcastle.wav", 0.6f, 0.0f, seconds);
+    else sound_.stinger("music/devil_square.mp3", 0.6f, 39.0f, seconds);
+}
+
 void Play::hear(const gfx::Camera& camera, bool indoors) {
     if (!sound_.isOpen()) return;
     // The air: on while he is not under a roof, which is the client's own switch -- it stops

@@ -760,7 +760,7 @@ void Sound::stopVoice() {
     impl_->voiceReady = false;
 }
 
-void Sound::stinger(const std::string& relative, float gain) {
+void Sound::stinger(const std::string& relative, float gain, float from, float seconds) {
     if (!impl_ || !impl_->open) return;
     Impl& im = *impl_;
     if (im.stingerReady) {
@@ -782,6 +782,18 @@ void Sound::stinger(const std::string& relative, float gain) {
     }
     im.stingerReady = true;
     ma_sound_set_volume(&im.stingerLine, std::clamp(gain, 0.0f, 1.0f));
+    if (from > 0.0f) {
+        ma_uint32 rate = 0;
+        ma_sound_get_data_format(&im.stingerLine, nullptr, nullptr, &rate, nullptr, 0);
+        ma_sound_seek_to_pcm_frame(&im.stingerLine, ma_uint64(double(from) * rate));
+    }
+    // A peek: stopped after `seconds`, faded out under its end.
+    if (seconds > 0.0f) {
+        const ma_uint64 ms = ma_uint64(double(seconds) * 1000.0);
+        ma_sound_set_stop_time_with_fade_in_milliseconds(
+            &im.stingerLine, ma_engine_get_time_in_milliseconds(&im.engine) + ms,
+            std::min<ma_uint64>(ms, kPeekFadeMs));
+    }
     ma_sound_start(&im.stingerLine);
     // **The track steps aside for it and comes back after** (the user, 2026-10-05: 'if there
     // is safemode music playing, and character finish the quest which also play little music,

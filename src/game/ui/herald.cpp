@@ -51,7 +51,8 @@ constexpr float kPulseSeconds = style::kLiveSeconds;
 // 'show last 6 seconds of BC,DS gates open then show green indicator and then close
 // notification'). The minute's call it had before is gone.
 constexpr int kAnnounce = 1800, kCountdown = 6;
-constexpr float kOpenHold = 4.0f;  // the green dot's seconds before the line goes
+// Three, with the gate's music under them (Herald::takePeek); four before (2026-10-21).
+constexpr float kOpenHold = 3.0f;  // the green dot's seconds before the line goes
 
 // The gates it counts to, each on its own timetable and level bands, 0 for no ceiling.
 struct Gate {
@@ -238,6 +239,8 @@ void Herald::raise(int source, float hold, bool pin) {
     }
 }
 
+float Herald::peekSeconds() { return kOpenHold + kLeaveSeconds; }
+
 void Herald::close() {
     canvas_.clear();
     for (Source& one : sources_) one = Source{};
@@ -245,6 +248,7 @@ void Herald::close() {
     pinned_ = -1;
     leaving_ = -1.0f;
     alpha_ = 0.0f;
+    peek_ = -1;
     close_ = {};
 }
 
@@ -304,6 +308,9 @@ bool Herald::update(float seconds, const Play& play, const Pointer& pointer, int
                 // came in during it): it shows the open gate alone.
                 else if (was != 2 || queued_ == 0 || leaving_ >= 0.0f) raise(g, kLeast, true);
                 else life_ = std::max(life_, kOpenHold);
+                // The gate opening under the countdown he watched: its music, briefly. Not
+                // for one he walked into while it stood open.
+                if (moment == 3 && was == 2) peek_ = g;
             }
         }
     }

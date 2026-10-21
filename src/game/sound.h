@@ -177,7 +177,11 @@ public:
     // its own slot: a quest handed in. Streamed at the file's own quality, where an event is
     // cooked to mono 22 kHz; it neither cuts a voice nor replaces the track: the track fades
     // out under it and back in once it ends. A new one cuts the last. Ours, like the voice.
-    void stinger(const std::string& relative, float gain = 0.7f);
+    // `from` starts it that many seconds into the file; `seconds` above 0 plays only that long,
+    // its last kPeekFadeMs faded out: an event's gate opening, a peek of its music.
+    void stinger(const std::string& relative, float gain = 0.7f, float from = 0.0f,
+                 float seconds = 0.0f);
+    static constexpr int kPeekFadeMs = 1000;
 
     // The whole mix's level, 0 to 1: the game menu's volume. A muted run stays silent.
     void setVolume(float level);

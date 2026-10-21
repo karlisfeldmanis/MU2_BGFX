@@ -10,7 +10,7 @@
 //
 // It is not always up. It speaks when an event first comes within half an hour, briefly; then for
 // the last six seconds before its gate, counting down, and on into the gate's opening under the
-// green dot, held four seconds, then goes. Several at once take four seconds each. It drops in from the top and leaves
+// green dot, held three seconds under a peek of its music, then goes. Several at once take four seconds each. It drops in from the top and leaves
 // upward; a second event slides in from the right. While a gate is open a green dot breathes
 // before the name; nothing marks an event that is only coming. The cross puts it away at once;
 // the next moment still raises it.
@@ -45,6 +45,17 @@ public:
     bool update(float seconds, const Play& play, const Pointer& pointer, int width, int height);
     bool covers(float x, float y) const { return alpha_ > 0.0f && close_.has(x, y); }
     bool showing() const { return !canvas_.empty(); }
+    // A gate the countdown just saw open (0 Blood Castle, 1 Devil Square), handed on once, or
+    // -1: its music is peeked for as long as the open line stays and fades as it goes (the
+    // user, 2026-10-21: "when BC and DS gates are opened, we need to play little sneak peak music
+    // for 3 second and fade it out together when we show notification"). Play::gatePeek.
+    int takePeek() {
+        const int gate = peek_;
+        peek_ = -1;
+        return gate;
+    }
+    // How long the peek plays: the open line's hold and the band's going.
+    static float peekSeconds();
     const gfx::Canvas& canvas() const { return canvas_; }
 
     // One event as the line says it.
@@ -85,6 +96,7 @@ private:
     float pulse_ = 0.0f;
     float alpha_ = 0.0f;
     bool hover_ = false;
+    int peek_ = -1;
     gfx::Box close_;
 };
 
