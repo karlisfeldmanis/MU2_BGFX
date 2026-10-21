@@ -2106,11 +2106,13 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
                     for (int k = 0; k < 3; ++k) out[i].light[k] *= place[k];
                 }
             }
-            // The Elite's chrome (kEliteChrome): the +7 pass in steel over every part it wears.
+            // The Elite's gold (kEliteChrome): the +9 pass with the excellent shimmer over every
+            // part it wears, and its body lit warm under it (kEliteLight).
             if (elite) {
                 for (size_t i = tintFrom; i < out.size(); ++i) {
+                    for (int k = 0; k < 3; ++k) out[i].light[k] *= kEliteLight[k];
                     if (shineLevelOf(out[i].refine) >= kElitePlus) continue;
-                    out[i].refine = shineFlagsOf(out[i].refine) + kElitePlus;
+                    out[i].refine = (shineFlagsOf(out[i].refine) | kShineExcellent) + kElitePlus;
                     std::copy(kEliteChrome, kEliteChrome + 3, out[i].refineColour);
                 }
             }

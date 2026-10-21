@@ -52,17 +52,18 @@ constexpr int64_t kEliteRiseMostTicks = 40 * 60 * 20;
 constexpr int kEliteGateClear = 15;
 
 // Its spoils (Realm::eliteSpoils), the drop's whole -- the ordinary leave() is not rolled.
-// 2 to 4 pieces of gear at up to kEliteLevelsUp over its level, luck kEliteLuckIn100, the option
-// rolled twice and the better kept; one of them excellent kEliteExcellentIn100 of the time.
-constexpr int kEliteLeastPieces = 2;
-constexpr int kEliteMostPieces = 4;
+// 4 to 7 pieces of gear (2 to 4 until the user's "we need more items droped", 2026-10-21) at up
+// to kEliteLevelsUp over its level, luck kEliteLuckIn100, the option rolled twice and the better
+// kept; one of them excellent kEliteExcellentIn100 of the time.
+constexpr int kEliteLeastPieces = 4;
+constexpr int kEliteMostPieces = 7;
 constexpr int kEliteLevelsUp = 2;
 constexpr int kEliteLuckIn100 = 10;
 constexpr int kEliteExcellentIn100 = 25;
-// A jewel kEliteJewelIn100 of the time, a second on top kEliteSecondJewelIn100: the Bless, the
-// Soul or the Chaos, whatever the map's own drops reach (the Life never).
-constexpr int kEliteJewelIn100 = 60;
-constexpr int kEliteSecondJewelIn100 = 35;
+// A jewel kEliteJewelIn100 of the time (always, since the same day), a second on top
+// kEliteSecondJewelIn100: the Bless, the Soul or the Chaos (the Life never).
+constexpr int kEliteJewelIn100 = 100;
+constexpr int kEliteSecondJewelIn100 = 50;
 // And its Zen, straight to the purse as every kill's: kEliteZen times an ordinary kill's.
 constexpr int kEliteZen = 6;
 // Its things lie longer than a kill's, for the walk back to them after a long fight.

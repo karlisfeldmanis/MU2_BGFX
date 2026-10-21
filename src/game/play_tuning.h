@@ -226,9 +226,12 @@ constexpr int kIcedPlus = 7;
 constexpr float kIcedChrome[3] = {0.35f, 0.6f, 1.0f};
 // **Ours.** An Elite (sim/elite.h) wears the same +7 chrome pass all the time, in gold (the
 // user, 2026-10-21: "chrome has to be golden", over the steel first proposed), the gold of its
-// mark on the minimap, and stands a quarter bigger than its breed.
-constexpr int kElitePlus = 7;
-constexpr float kEliteChrome[3] = {1.0f, 0.76f, 0.22f};
+// mark on the minimap, and stands a quarter bigger than its breed. Stronger the same day ("gold
+// effect has to be stronger"): the +9 pass (Shiny01 over the bands) with the excellent shimmer,
+// and its body lit a warm gold (kEliteLight) under it.
+constexpr int kElitePlus = 9;
+constexpr float kEliteChrome[3] = {1.0f, 0.78f, 0.25f};
+constexpr float kEliteLight[3] = {1.35f, 1.12f, 0.70f};
 constexpr float kEliteScale = 1.25f;
 // A poisoned body's, `eDeBuff_Poison`, and one both poisoned and iced (ZzzObject.cpp:1118-1123).
 constexpr float kPoisonedLight[3] = {0.3f, 1.0f, 0.5f};

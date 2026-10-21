@@ -94,7 +94,8 @@ void testElites(void (*checkOf)(bool, const char*),
     }
     check(died, "and kills it");
     std::printf("  it left %d things, %d jewels\n", drops, jewels);
-    check(drops >= sim::kEliteLeastPieces && drops <= sim::kEliteMostPieces + 2, "its spoils: 2 to 4 pieces and its jewels");
+    check(drops >= sim::kEliteLeastPieces && drops <= sim::kEliteMostPieces + 2, "its spoils: 4 to 7 pieces and its jewels");
+    check(jewels >= 1, "and a jewel, always");
     checkEqual(runes, 0, "and never a rune");
     check(realm.hero().experience > before, "worth his while");
 
