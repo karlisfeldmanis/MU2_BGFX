@@ -4,6 +4,9 @@
 #   web/deploy.sh            copy, install, restart, check
 #   web/deploy.sh --copy     copy only
 #
+# MU2_COMMIT pins the commit (HEAD by default), as server/deploy.sh: `mu ship switch` sends the one
+# `mu ship prepare` staged.
+#
 # What goes is the commit, never the working tree (as server/deploy.sh): web/ at HEAD, exported
 # with `git archive`. The accounts live in /var/lib/mu2-web/accounts.db and are never touched
 # here. Installers go in /srv/mu2-web/downloads/ (web/README.md).
@@ -12,16 +15,16 @@ cd "$(dirname "$0")/.."
 host=hetzner          # ~/.ssh/config: root@37.27.158.226
 dest=/opt/mu2-web
 
-commit=$(git rev-parse --short HEAD)
+commit=$(git rev-parse --short "${MU2_COMMIT:-HEAD}")
 here=$(git rev-parse --show-prefix)
 stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
-git -C "$(git rev-parse --show-toplevel)" archive "HEAD:${here}web" | tar -x -C "$stage"
+git -C "$(git rev-parse --show-toplevel)" archive "$commit:${here}web" | tar -x -C "$stage"
 echo "$commit" > "$stage/DEPLOYED"
 # mktemp makes the folder 0700 and rsync -a carries that over; the service's own user must read it.
 chmod -R a+rX "$stage"
-if ! git diff --quiet HEAD -- web; then
-  echo "note: web/ differs from HEAD; HEAD $commit goes, not those edits"
+if ! git diff --quiet "$commit" -- web; then
+  echo "note: web/ differs from $commit; $commit goes, not those edits"
 fi
 
 ssh $host "mkdir -p $dest /srv/mu2-web/downloads"

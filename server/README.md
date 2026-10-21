@@ -99,6 +99,13 @@ them, and a character comes back **in the world he left**.
 `sqlite3 /var/lib/private/mu2/characters.db .tables` shows the store. `server/deploy.sh` puts a
 new build there and restarts the service.
 
+**A restart is said first** (2026-10-21): `kill -USR2` on mu2_server (as `deploy.sh --switch`
+does when the running server logged "SIGUSR2 restarts") tells everyone in a world at 60, 30, 10
+and 5 s, then stops as SIGTERM would; systemd starts the new build and the clients knock their way
+back in by themselves. `MU2_NOW=1` restarts at once. A release is two phases, `mu ship prepare`
+(every box staged side by side, the clients built and sent; players see nothing) and `mu ship
+switch` (every box and manifest at one moment), or `./ship` in the project root for the window.
+
 What is in `server/src/` (split out of one 1900-line `main.cpp` in `docs/plans/order-plan.md` sprint C):
 
 | file | what |

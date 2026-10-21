@@ -52,6 +52,15 @@ inline void onSignal(int) { g_stop = 1; }
 // loop's next pass (callDragon, world.cpp).
 inline volatile std::sig_atomic_t g_dragonCalled = 0;
 inline void onDragonCall(int) { g_dragonCalled = 1; }
+// **A restart said before it comes** (the user, 2026-10-21: "deploy app, which has to be designed
+// for minimal downtime"): SIGUSR2, from server/deploy.sh --switch, starts kRestartWarn of lines on
+// Server to everyone in a world, then the stop SIGTERM makes (everyone kept, a Stopping bye); the
+// service's Restart=always starts what is built. The client knocks by itself and is back in seconds.
+inline volatile std::sig_atomic_t g_restartCalled = 0;
+inline void onRestartCall(int) { g_restartCalled = 1; }
+constexpr int kRestartWarn = 60;
+// The seconds left at which the line is said.
+constexpr int kRestartSaidAt[] = {60, 30, 10, 5};
 
 using Clock = std::chrono::steady_clock;
 constexpr double kTickSeconds = 0.05;  // 20 Hz, the realm's own (sim/realm.h)

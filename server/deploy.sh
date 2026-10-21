@@ -7,6 +7,14 @@
 #   server/deploy.sh --switch   only (re)start the service on what --stage built -- a protocol bump's
 #                               seconds, run on every box back to back with `mu release`
 #
+# A restart is said first: a running server that knows SIGUSR2 (server/src/host.h kRestartWarn)
+# is sent it and tells everyone in a world for 60 s, then stops as SIGTERM would and systemd starts
+# the new build; the clients knock by themselves and are back in seconds. MU2_NOW=1 restarts at once.
+# `mu ship switch` runs --switch on every box at the same moment.
+#
+# MU2_COMMIT pins the commit (HEAD by default): `mu ship prepare` stages one commit everywhere,
+# though other sessions commit while the boxes build.
+#
 # What goes over is what MU2_SERVER_ONLY builds (CMakeLists.txt): src/core, src/content, src/sim,
 # the save, the tests and tools that link only those, and every map's cooked tables (*.mur, ~2 MB
 # of the 3.9 GB in assets/cooked). No textures, meshes, shaders or sound. server/README.md has
@@ -26,17 +34,17 @@ cd "$(dirname "$0")/.."
 host=${MU2_HOST:-hetzner}   # ~/.ssh/config: root@37.27.158.226
 dest=/opt/mu2
 
-commit=$(git rev-parse --short HEAD)
+commit=$(git rev-parse --short "${MU2_COMMIT:-HEAD}")
 here=$(git rev-parse --show-prefix)
 stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
-git -C "$(git rev-parse --show-toplevel)" archive "HEAD:${here%/}" | tar -x -C "$stage"
+git -C "$(git rev-parse --show-toplevel)" archive "$commit:${here%/}" | tar -x -C "$stage"
 rsync -a --prune-empty-dirs --include='/out/' --include='/out/assets/' --include='/out/assets/cooked/' --include='/out/assets/cooked/*/' \
   --include='/out/assets/cooked/*/*.mur' --exclude='*' ./ "$stage/"
 echo "$commit" > "$stage/server/DEPLOYED"
 # Said, not refused: what the working tree holds beyond the commit stays here.
-if ! git diff --quiet HEAD -- src server tests tools/bot tools/raid content/raid CMakeLists.txt; then
-  echo "note: the working tree differs from HEAD in what deploys; HEAD $commit goes, not those edits"
+if ! git diff --quiet "$commit" -- src server tests tools/bot tools/raid content/raid CMakeLists.txt; then
+  echo "note: the working tree differs from $commit in what deploys; $commit goes, not those edits"
 fi
 
 if [ "$1" != "--switch" ]; then
@@ -78,8 +86,36 @@ fi
 fi
 
 # The service: installed, the game's port open (the stream, and the tick datagrams since sprint 24),
-# restarted on the new binary.
+# and the new binary started: said to the players first when the running server knows SIGUSR2
+# (its start logged so), else restarted at once. A server that has not come back on a new
+# process two minutes on is restarted.
 ssh $host "install -m 644 $dest/server/mu2-server.service /etc/systemd/system/mu2-server.service && \
-  systemctl daemon-reload && systemctl enable --now mu2-server >/dev/null 2>&1; \
-  systemctl restart mu2-server && ufw allow 44406/tcp >/dev/null && ufw allow 44406/udp >/dev/null && sleep 1 && \
-  systemctl is-active mu2-server && journalctl -u mu2-server -n 2 --no-pager -o cat"
+  systemctl daemon-reload && systemctl enable mu2-server >/dev/null 2>&1; \
+  ufw allow 44406/tcp >/dev/null && ufw allow 44406/udp >/dev/null"
+ssh $host "bash -s -- ${MU2_NOW:-0}" <<'BOX'
+now=$1
+pid=$(systemctl show mu2-server -p MainPID --value)
+since=$(date -d "$(systemctl show mu2-server -p ExecMainStartTimestamp --value)" +%s 2>/dev/null || echo 0)
+if [ "$now" = 0 ] && [ "$pid" != 0 ] && systemctl is-active -q mu2-server && \
+   journalctl -u mu2-server -o cat --no-pager --since "@$since" | grep -q 'SIGUSR2 restarts'; then
+  kill -USR2 "$pid"
+  echo "players told; the server restarts in 60 s"
+  for i in $(seq 1 120); do
+    sleep 1
+    p=$(systemctl show mu2-server -p MainPID --value)
+    if [ "$p" != "$pid" ] && [ "$p" != 0 ] && systemctl is-active -q mu2-server; then
+      echo "restarted after ${i} s"; break
+    fi
+    [ "$i" = 120 ] && { echo "not back in 120 s: restarting"; systemctl restart mu2-server; }
+  done
+else
+  systemctl restart mu2-server
+fi
+# Up when the new process says it listens: the store, the tables and the worlds opened.
+since=$(date -d "$(systemctl show mu2-server -p ExecMainStartTimestamp --value)" +%s 2>/dev/null || echo 0)
+for i in $(seq 1 30); do
+  journalctl -u mu2-server -o cat --no-pager --since "@$since" | grep -q 'listening on' && break
+  sleep 1
+done
+systemctl is-active mu2-server && journalctl -u mu2-server -n 3 --no-pager -o cat
+BOX

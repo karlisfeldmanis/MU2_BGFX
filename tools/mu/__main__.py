@@ -158,10 +158,13 @@ def main():
                     help="send the files, leave manifest.json on the release before (a protocol switch)")
 
     sh = sub.add_parser("ship", parents=[common])
-    sh.add_argument("action", nargs="?", choices=["notes", "updates", "send", "app"],
-                    help="notes: drafts on the site's /updates; updates: its lines; send FILE: lines to it; app: the window")
+    sh.add_argument("action", nargs="?", choices=["notes", "updates", "send", "app", "prepare", "switch"],
+                    help="notes: drafts on the site's /updates; updates: its lines; send FILE: lines to it; app: the window; "
+                         "prepare: build and stage everywhere; switch: make what prepare staged live")
     sh.add_argument("file", nargs="?", help="send: the JSON file of lines")
     sh.add_argument("--go", action="store_true", help="run the steps, asked before each")
+    sh.add_argument("--commit", help="prepare/switch: the commit (HEAD; switch: the one prepared)")
+    sh.add_argument("--now", action="store_true", help="switch: restart without telling the players first")
     sh.add_argument("--dry", action="store_true", help="notes: say the drafts, send nothing")
     sh.add_argument("--day", help="notes: the day they are listed under (today)")
     sh.add_argument("--since", help="notes: the last commit already told (the site's noted_through)")
@@ -331,6 +334,10 @@ def dispatch(args, say):
             return ship.send(say, args.file, web=args.web)
         if args.action == "app":
             return ship.app(say)
+        if args.action == "prepare":
+            return ship.prepare(say, commit=args.commit)
+        if args.action == "switch":
+            return ship.switch(say, commit=args.commit, now=args.now)
         if args.action == "notes":
             if args.import_site:
                 return ship.import_site(say, web=args.web, since=args.since, dry=args.dry)

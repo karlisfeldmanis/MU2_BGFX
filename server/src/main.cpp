@@ -30,6 +30,8 @@
 #include "broker.h"
 #include "economy.h"
 
+#include <cmath>
+#include <iterator>
 #include <unordered_map>
 
 namespace mu::server {
@@ -320,6 +322,7 @@ int main(int argc, char** argv) {
     std::signal(SIGTERM, onSignal);
     std::signal(SIGPIPE, SIG_IGN);
     std::signal(SIGUSR1, onDragonCall);
+    std::signal(SIGUSR2, onRestartCall);
 
     std::string error;
     // A server that cannot keep its characters does not open: whatever was played on it would
@@ -373,6 +376,8 @@ int main(int argc, char** argv) {
     core::logf("mu2_server: protocol %u, listening on %d%s, tables from %s, %d characters in %s",
                net::kVersion, port, g_udp.open() ? " (and udp)" : "", assets.c_str(), g_store.count(),
                store.c_str());
+    // server/deploy.sh --switch reads this line to know the running server warns before it goes.
+    core::logf("mu2_server: SIGUSR2 restarts in %d s, said to everyone first", kRestartWarn);
 
     // A token is all a character's login is until accounts: not one the clock would guess.
     std::random_device entropy;
@@ -384,6 +389,8 @@ int main(int argc, char** argv) {
     std::vector<bool> ready;
     std::vector<pollfd> watch;
     uint64_t arrivals = 0;
+    Clock::time_point restartAt{};  // SIGUSR2's stop, once called
+    size_t restartSaid = 0;         // how many of kRestartSaidAt are said
     while (!g_stop) {
         // Where this pass's time goes (g_stats): the poll's wait is not counted.
         const Clock::time_point passAt = Clock::now();
@@ -481,6 +488,26 @@ int main(int argc, char** argv) {
             g_dragonCalled = 0;
             const size_t slash = store.find_last_of('/');
             callDragon(worlds, (slash == std::string::npos ? std::string() : store.substr(0, slash + 1)) + "dragon.call");
+        }
+        // SIGUSR2: the restart said at each of kRestartSaidAt, then the stop. A second call while
+        // one counts changes nothing.
+        if (g_restartCalled && restartAt == Clock::time_point{}) {
+            restartAt = now + std::chrono::seconds(kRestartWarn);
+            core::logf("mu2_server: restart called, in %d s", kRestartWarn);
+        }
+        if (restartAt != Clock::time_point{}) {
+            const int left = int(std::ceil(std::chrono::duration<double>(restartAt - now).count()));
+            if (restartSaid < std::size(kRestartSaidAt) && left <= kRestartSaidAt[restartSaid]) {
+                while (restartSaid < std::size(kRestartSaidAt) && left <= kRestartSaidAt[restartSaid]) ++restartSaid;
+                const int said = std::max(1, left);
+                const std::string text = "The server restarts for an update in " + std::to_string(said) +
+                                         (said == 1 ? " second." : " seconds.") + " You will be back in a moment.";
+                for (auto& one : sessions) chatSystem(*one, net::Channel::Server, text);
+            }
+            if (left <= 0) {
+                core::logf("mu2_server: restarting, as called");
+                g_stop = 1;
+            }
         }
         for (auto& world : worlds) {
             takePacked(*world);

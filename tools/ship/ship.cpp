@@ -13,6 +13,11 @@
 // the boxes and git: the rules are there once, and the terminal and this window say the same. Each
 // step is the command the report names, run under zsh in MU2_BGFX with its output here; a LIVE one
 // (a server restart, a release players get) is asked about first. ImGui on bgfx, as botwatch.
+//
+// The steps are two phases (the user, 2026-10-21: "designed for minimal downtime"): `mu ship
+// prepare` builds and stages everything while players play, the boxes side by side; `mu ship
+// switch` makes it live at one moment, each box's players told 60 s first. Their lanes' lines come
+// marked [North Europe], [windows] ... in the one console. `./ship` in the project root opens this.
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -521,7 +526,7 @@ private:
     void releaseTab() {
         if (!statusError_.empty()) ImGui::TextColored(kRed, "mu ship failed:\n%s", statusError_.c_str());
         if (!statusIn()) {
-            ImGui::TextDisabled("Reading the manifests, the three servers and the site...");
+            ImGui::TextDisabled("Reading the manifests, the servers and the site...");
             return;
         }
         verdict();
@@ -569,6 +574,11 @@ private:
         ImGui::PushTextWrapPos(0.0f);
         ImGui::TextColored(tone, "%s", v.c_str());
         ImGui::PopTextWrapPos();
+        // A prepare done (mu ship prepare): everything staged, only the switch left.
+        const Json& prepared = plan_["prepared"];
+        if (!prepared.isNull())
+            ImGui::TextColored(kGreen, "Prepared %s at %s: only the switch is left",
+                               prepared["commit"].stringOr("").c_str(), prepared["at"].stringOr("").c_str());
         const Json& errors = plan_["errors"];
         for (size_t i = 0; i < errors.size(); ++i) ImGui::TextColored(kRed, "could not read %s", errors.at(i).stringOr("").c_str());
         const Json& dirty = plan_["dirty"];

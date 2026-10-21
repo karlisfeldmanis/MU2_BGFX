@@ -4,6 +4,12 @@ the front page's Latest updates for what they were given.
     ./mu ship                  what is live where, each commit not yet shipped and what it needs,
                                and the commands to ship it, in their order
     ./mu ship --go             the same, then each command run in turn, asked before each one
+    ./mu ship prepare          everything built and staged where it will run, at once where it can:
+                               every box's server, each client's files, the launcher; players see
+                               nothing (out/ship/prepared.json says what)
+    ./mu ship switch [--now]   what prepare staged made live together: every server told to its
+                               players and restarted 60 s on, the clients' manifests at that moment,
+                               the launcher and the site; then each read back
     ./mu ship notes [--dry]    a draft on the site's /updates page for each change that is now live
                                and not yet told; an admin words them there and publishes them
     ./mu ship notes --import-site   the lines written into web/site/index.html by hand, put in as
@@ -21,13 +27,22 @@ server/deploy.sh builds into mu2_server; the client is everything `mu dist` buil
 src/launcher/; the site is web/. docs/, tools/, tests/ and pipeline/ ship nothing by themselves. A
 commit that moves net::kVersion is a protocol bump: the servers and every client go together,
 staged first and switched back to back (release-checks-the-server-protocol).
+
+**Downtime** (the user, 2026-10-21: "our deploy app, which has to be designed for minimal downtime"):
+the slow half -- four one-core boxes building, three clients built and sent -- is `prepare`, which
+runs while everyone plays, the boxes at the same time; the live half is `switch`, one command and
+not a list of them, so a protocol bump's refused logins last the restart and a manifest's rename,
+not minutes of steps. A server that knows SIGUSR2 tells its players for 60 s first; the clients
+knock again by themselves and are back in seconds.
 """
 import json
 import os
 import re
 import subprocess
 import sys
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from html.parser import HTMLParser
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -170,7 +185,8 @@ def live(say):
             said = ssh(host, "cat /opt/mu2/server/DEPLOYED; stat -c %Y /opt/mu2/build/mu2_server; "
                              "s=$(date -d \"$(systemctl show mu2-server -p ExecMainStartTimestamp --value)\" +%s); echo $s; "
                              "systemctl is-active mu2-server; "
-                             "journalctl -u mu2-server -o cat --no-pager --since @$s | grep -m1 -o 'mu2_server: protocol [0-9]*'")
+                             "journalctl -u mu2-server -o cat --no-pager --since @$s | grep -m1 -o 'mu2_server: protocol [0-9]*'; "
+                             "journalctl -u mu2-server -o cat --no-pager --since @$s | grep -q 'SIGUSR2 restarts' && echo WARNS; true")
             lines = said.splitlines() + [""] * 5
             box["deployed"] = lines[0].strip()
             built, started = int(lines[1] or 0), int(lines[2] or 0)
@@ -178,6 +194,8 @@ def live(say):
             box["active"] = lines[3].strip() == "active"
             found = re.search(r"protocol (\d+)", lines[4])
             box["protocol"] = int(found.group(1)) if found else None
+            # Whether the running server tells its players before a restart (server/deploy.sh --switch).
+            box["warns"] = "WARNS" in said
         except (RuntimeError, ValueError, subprocess.TimeoutExpired) as e:
             box["error"] = str(e)[:200]
         return box
@@ -213,21 +231,22 @@ def oldest(shas):
 
 # ---- the report ----------------------------------------------------------------------------------
 
-def pending(since, part):
-    """The commits after `since` that ship `part`; None when `since` is not in HEAD's history."""
+def pending(since, part, until="HEAD"):
+    """The commits after `since` up to `until` that ship `part`; None when `since` is not in HEAD's
+    history."""
     if not known(since) or not ancestor(since, "HEAD"):
         return None
-    return [c for c in commits(since) if part in c["parts"]]
+    return [c for c in commits(since, until) if part in c["parts"]]
 
 
-def report(say):
-    head = short("HEAD")
+def report(say, until="HEAD"):
+    head = short(until)
     head_protocol = release.protocol_of(head)
     state = live(say)
     for e in state["errors"]:
         say(f"! could not read {e}")
     plan = {"head": head, "protocol": head_protocol, "parts": {}, "steps": [], "rows": [], "unshipped": [],
-            "errors": state["errors"], "subject": git("log", "-1", "--format=%s", "HEAD")}
+            "errors": state["errors"], "subject": git("log", "-1", "--format=%s", until)}
 
     def row(kind, name, live_commit, todo, **more):
         plan["rows"].append({"kind": kind, "name": name, "live": live_commit,
@@ -241,7 +260,7 @@ def report(say):
         if not c:
             say(f"client {p:8} unreadable")
             continue
-        todo = pending(c["commit"], "client")
+        todo = pending(c["commit"], "client", until)
         mark = "?" if todo is None else (f"{len(todo)} behind" if todo else "current")
         say(f"client   {p:8} {c['commit']}  protocol {c['protocol']}  {c['built']}  {mark}")
         row("client", p, c["commit"], todo, protocol=c["protocol"], built=c["built"])
@@ -253,7 +272,7 @@ def report(say):
     for p, c in state["launchers"].items():
         if not c:
             continue
-        todo = pending(c["commit"], "launcher")
+        todo = pending(c["commit"], "launcher", until)
         say(f"launcher {p:8} {c['commit']}  {c['built']}  "
             f"{'?' if todo is None else (str(len(todo)) + ' behind' if todo else 'current')}")
         row("launcher", p, c["commit"], todo, built=c["built"])
@@ -266,7 +285,7 @@ def report(say):
         if "error" in box:
             say(f"server   {box['region']:15} unreadable")
             continue
-        todo = pending(box["deployed"], "server")
+        todo = pending(box["deployed"], "server", until)
         how = ("STAGED, not switched" if box["staged"] else "running") if box["active"] else "STOPPED"
         say(f"server   {box['region']:15} {box['deployed']}  protocol {box['protocol']}  {how}  "
             f"{'?' if todo is None else (str(len(todo)) + ' behind' if todo else 'current')}")
@@ -276,7 +295,7 @@ def report(say):
         plan["parts"][f"server-{box['host']}"] = {"live": box["deployed"], "staged": box["staged"],
                                                   "behind": [x["sha"] for x in todo or []]}
     # The site.
-    web_todo = pending(state["web"], "web") if state["web"] else None
+    web_todo = pending(state["web"], "web", until) if state["web"] else None
     if state["web"]:
         row("site", "mu-classic.com", state["web"], web_todo)
         say(f"site     {'':8} {state['web']}  {'?' if web_todo is None else (str(len(web_todo)) + ' behind' if web_todo else 'current')}")
@@ -286,7 +305,7 @@ def report(say):
                    + [b["deployed"] for b in state["boxes"] if b.get("deployed")]
                    + ([state["web"]] if state["web"] else [])
                    + [c["commit"] for c in state["launchers"].values() if c])
-    unshipped = commits(floor) if floor and ancestor(floor, "HEAD") else []
+    unshipped = commits(floor, until) if floor and ancestor(floor, "HEAD") else []
     if unshipped:
         say(f"\nnot yet everywhere ({len(unshipped)} since {floor}):")
         for c in unshipped:
@@ -319,47 +338,38 @@ def report(say):
     # The verdict and the steps.
     bump = any(c and c["protocol"] != head_protocol for c in state["clients"].values()) or \
         any(b.get("protocol") not in (None, head_protocol) for b in state["boxes"])
-    steps = []
+    # What is to ship, for prepare and switch.
+    plan["todo"] = {"boxes": [b["host"] for b in server_todo], "clients": client_todo,
+                    "launcher": bool(launcher_todo), "web": bool(web_todo)}
+    verdicts = []
     if bump:
-        verdict = (f"PROTOCOL {min([c['protocol'] for c in state['clients'].values() if c] or [0])} -> {head_protocol}: "
-                   f"every server and every client together; logins are refused between the switch of one and the other")
-        for p in CLIENTS:
-            steps.append((f"./mu dist {p} --commit {head}", "build"))
-        for p in CLIENTS:
-            steps.append((f"./mu release {p} --dry", "check"))
-        for b in state["boxes"]:
-            steps.append((f"{b['env']}server/deploy.sh --stage", "stage"))
-        for p in CLIENTS:
-            steps.append((f"./mu release {p} --stage", "stage"))
-        for b in state["boxes"]:
-            steps.append((f"{b['env']}server/deploy.sh --switch", "LIVE: restarts the server"))
-        for p in CLIENTS:
-            steps.append((f"./mu release {p}", "LIVE: players update"))
-    else:
-        verdicts = []
-        if server_todo:
-            verdicts.append(f"server deploy on {', '.join(b['region'] for b in server_todo)} "
-                            f"(a restart: players on it are dropped for a few seconds)")
-            for b in server_todo:
-                if b["staged"] and not pending(b["deployed"], "server"):
-                    steps.append((f"{b['env']}server/deploy.sh --switch", "LIVE: restarts the server"))
-                else:
-                    steps.append((f"{b['env']}server/deploy.sh", "LIVE: builds, tests, restarts the server"))
-        if client_todo:
-            verdicts.append(f"client patch for {', '.join(client_todo)} (the launcher fetches it; no restart)")
-            for p in client_todo:
-                steps.append((f"./mu dist {p} --commit {head}", "build"))
-                steps.append((f"./mu release {p} --dry", "check"))
-                steps.append((f"./mu release {p}", "LIVE: players update"))
-        if launcher_todo:
-            verdicts.append("launcher update (every launcher replaces itself)")
-            steps.append((f"./mu dist launcher --commit {head}", "build"))
-            steps.append(("./mu release launcher --dry", "check"))
-            steps.append(("./mu release launcher", "LIVE: every launcher updates"))
-        if web_todo:
-            verdicts.append("site deploy")
-            steps.append(("web/deploy.sh", "LIVE: the site restarts"))
-        verdict = "; ".join(verdicts) if verdicts else "nothing to ship: every part is current"
+        verdicts.append(f"PROTOCOL {min([c['protocol'] for c in state['clients'].values() if c] or [0])} -> {head_protocol}: "
+                        f"every server and every client switch together; logins are refused from the servers' "
+                        f"restart until the manifests turn, seconds")
+    elif server_todo:
+        verdicts.append(f"server deploy on {', '.join(b['region'] for b in server_todo)} "
+                        f"(told 60 s first where the server knows how; the clients rejoin by themselves)")
+    if client_todo and not bump:
+        verdicts.append(f"client patch for {', '.join(client_todo)} (the launcher fetches it; no restart)")
+    if launcher_todo:
+        verdicts.append("launcher update (every launcher replaces itself)")
+    if web_todo:
+        verdicts.append("site deploy")
+    verdict = "; ".join(verdicts) if verdicts else "nothing to ship: every part is current"
+    # A prepare of this commit with nothing failed: only the switch is left.
+    try:
+        with open(PREPARED) as f:
+            ready = json.load(f)
+        plan["prepared"] = ready if ready.get("commit") == head and not ready.get("failed") else None
+    except (OSError, ValueError):
+        plan["prepared"] = None
+    steps = []
+    if verdicts and plan["prepared"]:
+        say(f"\nprepared {plan['prepared']['at']}: only the switch is left")
+    elif verdicts:
+        steps.append((f"./mu ship prepare --commit {head}", "build and stage everywhere; players see nothing"))
+    if verdicts:
+        steps.append((f"./mu ship switch --commit {head}", "LIVE: servers told and restarted, clients released, together"))
     if steps:
         steps.append(("./mu ship notes", "drafts on /updates"))
     say(f"\n=> {verdict}")
@@ -398,6 +408,201 @@ def ship(say, run=False):
     if run and steps:
         plan["ran"] = go(steps, say)
     return True, plan
+
+
+# ---- prepare and switch -------------------------------------------------------------------------
+
+PREPARED = os.path.join(ROOT, "out", "ship", "prepared.json")
+# What a server that knows SIGUSR2 waits before it restarts (server/src/host.h kRestartWarn), and
+# the breath after: systemd's RestartSec and the new process opening its worlds. A protocol bump's
+# manifests turn then, not before, so nobody is told to update while his server still speaks the old.
+RESTART_WARN = 60
+RESTART_UP = 5
+
+
+class Lanes:
+    """Commands run side by side, each line of their output said with its lane's name as it comes."""
+
+    def __init__(self, say):
+        self.say = say
+        self.lock = threading.Lock()
+        self.results = {}
+
+    def tell(self, label, text):
+        with self.lock:
+            self.say(f"[{label}] {text}")
+
+    def run(self, label, commands):
+        """Each command under zsh in turn; the first that fails ends the lane. Its result kept."""
+        started = time.time()
+        for cmd in commands:
+            self.tell(label, f"$ {cmd}")
+            proc = subprocess.Popen(["zsh", "-c", cmd], cwd=ROOT, stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT, text=True, bufsize=1)
+            for line in proc.stdout:
+                self.tell(label, line.rstrip())
+            if proc.wait() != 0:
+                self.tell(label, f"FAILED (exit {proc.returncode}): {cmd}")
+                self.results[label] = False
+                return False
+        self.tell(label, f"done in {time.time() - started:.0f} s")
+        self.results[label] = True
+        return True
+
+
+def prepare(say, commit=None):
+    """Everything to ship built and put where it will run, while everyone plays: each box's server
+    staged at once (they are far apart and build on their own core), the clients built here one at a
+    time (one heavy job on this Mac) and each sent as soon as it is built. What is ready is written
+    to out/ship/prepared.json for switch."""
+    wanted = commit or "HEAD"
+    commit = short(wanted)
+    if not commit:
+        say(f"no commit {wanted}")
+        return False, {"error": "no such commit"}
+    plan, _ = report(lambda _: None, until=commit)
+    todo, protocol = plan["todo"], plan["protocol"]
+    boxes = {b[1]: b for b in BOXES}
+    say(f"preparing {commit} (protocol {protocol}): {plan['verdict']}")
+    if not (todo["boxes"] or todo["clients"] or todo["launcher"] or todo["web"]):
+        return True, {"commit": commit, "nothing": True}
+    lanes = Lanes(say)
+    staged_already = {h for h, part in ((k[len("server-"):], v) for k, v in plan["parts"].items() if k.startswith("server-"))
+                      if part["staged"] and part["live"] == commit}
+
+    def here():
+        """The clients and the launcher: built in turn, each sent while the next builds."""
+        with ThreadPoolExecutor(max_workers=4) as sends:
+            sent = []
+            for p in todo["clients"]:
+                if lanes.run(p, [f"./mu dist {p} --commit {commit}", f"./mu release {p} --dry"]):
+                    sent.append(sends.submit(lanes.run, p, [f"./mu release {p} --stage"]))
+            if todo["launcher"]:
+                lanes.run("launcher", [f"./mu dist launcher --commit {commit}", "./mu release launcher --dry"])
+            for f in sent:
+                f.result()
+
+    with ThreadPoolExecutor(max_workers=len(BOXES) + 1) as pool:
+        jobs = [pool.submit(here)]
+        for host in todo["boxes"]:
+            region, _, env = boxes[host]
+            if host in staged_already:
+                lanes.tell(region, f"already staged at {commit}")
+                lanes.results[region] = True
+                continue
+            jobs.append(pool.submit(lanes.run, region, [f"MU2_COMMIT={commit} {env}server/deploy.sh --stage"]))
+        for j in jobs:
+            j.result()
+
+    failed = [k for k, ok in lanes.results.items() if not ok]
+    ready = {"commit": commit, "protocol": protocol, "bump": plan["bump"], "at": time.strftime("%Y-%m-%d %H:%M:%S"),
+             "boxes": [h for h in todo["boxes"] if lanes.results.get(boxes[h][0])],
+             "clients": [p for p in todo["clients"] if lanes.results.get(p)],
+             "launcher": bool(lanes.results.get("launcher")), "web": todo["web"], "failed": failed}
+    os.makedirs(os.path.dirname(PREPARED), exist_ok=True)
+    with open(PREPARED, "w") as out:
+        json.dump(ready, out, indent=1)
+    say("")
+    for label, ok in lanes.results.items():
+        say(f"  {'ready ' if ok else 'FAILED'}  {label}")
+    if failed:
+        say(f"\nnot ready: {', '.join(failed)}; switch waits until a prepare has them all")
+        return False, ready
+    say(f"\nready: `./mu ship switch --commit {commit}` makes it live")
+    return True, ready
+
+
+def switch(say, commit=None, now=False):
+    """What prepare staged, made live at one moment: every box's --switch at once (its players told
+    for RESTART_WARN first, where its server knows how), the clients' manifests turned as the servers
+    come back, the launcher and the site; then each read back from where it lives."""
+    try:
+        with open(PREPARED) as f:
+            ready = json.load(f)
+    except (OSError, ValueError):
+        say("nothing prepared: `./mu ship prepare` first")
+        return False, {"error": "nothing prepared"}
+    commit = short(commit) if commit else ready["commit"]
+    if ready["commit"] != commit:
+        say(f"prepared is {ready['commit']}, not {commit}: prepare {commit} first")
+        return False, {"error": "another commit prepared"}
+    if ready.get("failed"):
+        say(f"prepare left {', '.join(ready['failed'])} not ready: prepare again first")
+        return False, {"error": "not all prepared"}
+
+    # The boxes as they are now: each still holding what prepare built and not started on it.
+    state = live(say)
+    boxes = {b["host"]: b for b in state["boxes"]}
+    switching = []
+    for host in ready["boxes"]:
+        b = boxes.get(host, {})
+        if "error" in b:
+            say(f"{b.get('region', host)}: unreadable ({b['error']}); nothing switched")
+            return False, {"error": f"{host} unreadable"}
+        if b["deployed"] != commit:
+            say(f"{b['region']}: holds {b['deployed']} now, not {commit} (another deploy?); prepare again")
+            return False, {"error": f"{host} holds {b['deployed']}"}
+        if not b["staged"] and b["active"]:
+            say(f"{b['region']}: already running {commit}")
+            continue
+        switching.append(b)
+    warns = [b for b in switching if b.get("warns")] if not now else []
+    # A bump's manifests turn when the told servers come back; anything else needs no waiting.
+    wait = RESTART_WARN + RESTART_UP if ready["bump"] and warns else 0
+    say(f"switching {commit}: {len(switching)} servers"
+        + (f" ({', '.join(b['region'] for b in warns)} told {RESTART_WARN} s first)" if warns else "")
+        + f", clients {', '.join(ready['clients']) or 'none'}"
+        + (f" in {wait} s, as the servers come back" if wait and ready["clients"] else "")
+        + (", the launcher" if ready["launcher"] else "") + (", the site" if ready["web"] else ""))
+
+    lanes = Lanes(say)
+    started = time.time()
+
+    def client(p):
+        left = wait - (time.time() - started)
+        if left > 0:
+            lanes.tell(p, f"the manifest turns in {left:.0f} s")
+            time.sleep(left)
+        return lanes.run(p, [f"./mu release {p}"])
+
+    with ThreadPoolExecutor(max_workers=len(switching) + len(ready["clients"]) + 2) as pool:
+        jobs = [pool.submit(lanes.run, b["region"],
+                            [f"MU2_COMMIT={commit} {'MU2_NOW=1 ' if now else ''}{b['env']}server/deploy.sh --switch"])
+                for b in switching]
+        jobs += [pool.submit(client, p) for p in ready["clients"]]
+        if ready["launcher"]:
+            jobs.append(pool.submit(lanes.run, "launcher", ["./mu release launcher"]))
+        if ready["web"]:
+            jobs.append(pool.submit(lanes.run, "site", [f"MU2_COMMIT={commit} web/deploy.sh"]))
+        for j in jobs:
+            j.result()
+
+    # Read back where it lives.
+    say("")
+    after = live(lambda _: None)
+    good = all(lanes.results.values())
+    for b in after["boxes"]:
+        if b["host"] not in ready["boxes"]:
+            continue
+        ok = "error" not in b and b["deployed"] == commit and b["active"] and not b["staged"] and \
+            b["protocol"] == ready["protocol"]
+        good &= ok
+        say(f"  {'live  ' if ok else 'WRONG '}  server {b['region']:15} "
+            + (b.get("error", "") or f"{b['deployed']} protocol {b['protocol']} {'running' if b['active'] else 'STOPPED'}"
+                                     + (' STAGED' if b['staged'] else '')))
+    for p in ready["clients"]:
+        c = after["clients"].get(p)
+        ok = bool(c) and c["commit"] == commit
+        good &= ok
+        say(f"  {'live  ' if ok else 'WRONG '}  client {p:15} {c['commit'] if c else 'unreadable'}")
+    if ready["web"]:
+        ok = after["web"] == commit
+        good &= ok
+        say(f"  {'live  ' if ok else 'WRONG '}  site   {after['web']}")
+    say(f"\n{'live' if good else 'NOT all live'}: {commit} in {time.time() - started:.0f} s")
+    if good:
+        os.remove(PREPARED)
+    return good, {"commit": commit, "results": lanes.results, "live": good}
 
 
 # ---- the Latest updates --------------------------------------------------------------------------
