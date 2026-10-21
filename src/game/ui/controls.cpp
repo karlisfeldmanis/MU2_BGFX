@@ -732,10 +732,13 @@ void grid(gfx::Canvas& canvas, const Box& box, int columns, int rows, float u) {
 }
 
 void rule(gfx::Canvas& canvas, float x, float y, float wide, float u) {
-    const float half = wide * 0.5f, line = px(u);
+    // Each half's ends on whole pixels: a half's width left fractional opened a dark seam in the
+    // middle, under every window's title (the user, 2026-10-21: "some black gap on divider").
+    const float line = px(u);
+    const float left = std::round(x), middle = std::round(x + wide * 0.5f), right = std::round(x + wide);
     const uint32_t mid = style::kIron, clear = style::kIronLo & 0x00FFFFFFu;
-    canvas.shade({std::round(x), std::round(y), half, line}, clear, mid, mid, clear);
-    canvas.shade({std::round(x + half), std::round(y), half, line}, mid, clear, clear, mid);
+    canvas.shade({left, std::round(y), middle - left, line}, clear, mid, mid, clear);
+    canvas.shade({middle, std::round(y), right - middle, line}, mid, clear, clear, mid);
 }
 
 // ---- buttons -----------------------------------------------------------------------------------

@@ -64,12 +64,14 @@ private:
     // A row worded at its left with a switch at its right: the walk back, Follow my quest, the
     // party's aids, the trades.
     struct Toggle {
-        gfx::Box row, knob;
+        gfx::Box row, knob;  // the setting's row, and its Off | On at the right
     };
     // The two pages (the user, 2026-10-21, four more settings than the window had room for):
     // Hunt, and Loot & Party.
     int page_ = 0;
     gfx::Box tabs_[2], ranges_[3], segs_[2][9], picks_[7], invites_[3], go_;
+    // The rows Range and Party invites stand in, and their choices' whole boxes.
+    gfx::Box rangeRow_, rangeBox_, inviteRow_, inviteBox_;
     Toggle back_, quest_, aid_, trades_;
     float huntTop_ = 0.0f, skillsTop_ = 0.0f, drinkTop_ = 0.0f, pickTop_ = 0.0f, partyTop_ = 0.0f;
     // over_/pressing_: 0 the close, 10 + a range, 20 the walk back, 21 Follow my quest, 22 the

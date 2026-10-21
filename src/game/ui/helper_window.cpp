@@ -20,9 +20,6 @@ using gfx::Box;
 constexpr float kSide = style::kPad;
 constexpr float kKick = 20.0f;      // a group's heading, down to its first row
 constexpr float kGroupGap = 13.0f;
-constexpr float kSegW = 53.0f, kSegH = 27.0f;  // a range
-constexpr float kRangeRow = 28.0f, kBackRow = 26.0f;
-constexpr float kSwitchW = 38.0f, kSwitchH = 19.0f;
 constexpr float kSkillRow = 39.0f, kSkillGap = 3.0f;
 constexpr float kIconW = 24.0f, kIconH = 34.0f;
 constexpr float kChipW = 96.0f, kChipH = 27.0f;
@@ -30,7 +27,8 @@ constexpr float kMeterRow = 24.0f, kMeterLabel = 56.0f, kMeterValue = 36.0f, kSe
 constexpr float kPickH = 27.0f, kPickGap = 3.0f;
 constexpr float kGoH = 40.0f;
 constexpr float kTabsTop = style::kHead + 6.0f, kTabsH = 30.0f;
-constexpr float kInviteW = 62.0f;
+// A setting's row, as the settings window's (controls::row) but lower, and its choice's box.
+constexpr float kSetRow = 34.0f, kSetGap = 4.0f, kSwitchBoxW = 84.0f, kRangeBoxW = 156.0f, kInviteBoxW = 168.0f;
 constexpr float kWord = 14.5f, kSmall = 11.5f, kChipWord = 13.0f;
 
 // The quest log's gold for what is chosen (the user, 2026-09-30: 'selected row in golden tones').
@@ -46,7 +44,9 @@ constexpr uint32_t kExcellentInk = gfx::rgba(0.239f, 0.863f, 0.290f);
 constexpr const char* kKeyNames[6] = {"Q", "W", "E", "R", "T", "RMB"};
 constexpr const char* kRangeNames[3] = {"Near", "Mid", "Far"};
 constexpr const char* kInviteNames[3] = {"Ask", "Join", "Decline"};
-constexpr const char* kPageNames[2] = {"Hunt", "Loot & Party"};
+constexpr const char* kOffOn[2] = {"Off", "On"};
+// The caps' ampersand reads as a scrawl at the tab's size (the user, 2026-10-21).
+constexpr const char* kPageNames[2] = {"Hunt", "Loot \xC2\xB7 Party"};
 struct Pick {
     const char* name;
     uint8_t bit;
@@ -136,14 +136,22 @@ void HelperWindow::layout(const Play& play, const HelperSettings& settings, cons
         for (Box& b : meter) b = {};
     }
     back_ = quest_ = aid_ = trades_ = {};
+    rangeRow_ = rangeBox_ = inviteRow_ = inviteBox_ = {};
     rows_.clear();
     for (int t = 0; t < 2; ++t) tabs_[t] = {kSide + float(t) * inner * 0.5f, kTabsTop, inner * 0.5f, kTabsH};
     go_ = {kSide, tall_ - kSide - kGoH, inner, kGoH};
     float y = kTabsTop + kTabsH + 14.0f;
-    const auto toggle = [&](Toggle& t) {
-        t.row = {kSide, y, inner, kBackRow};
-        t.knob = {kSide + inner - kSwitchW, y + (kBackRow - kSwitchH) * 0.5f, kSwitchW, kSwitchH};
-        y += kBackRow;
+    const auto setRow = [&](float choiceW, Box& row, Box& choice) {
+        row = {kSide, y, inner, kSetRow};
+        choice = {kSide + inner - 5.0f - choiceW, y + 5.0f, choiceW, kSetRow - 10.0f};
+        y += kSetRow + kSetGap;
+    };
+    const auto toggle = [&](Toggle& t) { setRow(kSwitchBoxW, t.row, t.knob); };
+    // A choice's parts as controls::choice lays them: equal shares of its box.
+    const auto parts = [](const Box& choice, Box* out, int count) {
+        for (int i = 0; i < count; ++i) {
+            out[i] = {choice.x + choice.w * float(i) / float(count), choice.y, choice.w / float(count), choice.h};
+        }
     };
 
     if (page_ == 1) {
@@ -158,11 +166,8 @@ void HelperWindow::layout(const Play& play, const HelperSettings& settings, cons
 
         partyTop_ = y;
         y += kKick;
-        for (int i = 0; i < 3; ++i) {
-            invites_[i] = {kSide + inner - float(3 - i) * kInviteW - float(2 - i) * 3.0f, y + (kRangeRow - kSegH) * 0.5f,
-                           kInviteW, kSegH};
-        }
-        y += kRangeRow + 4.0f;
+        setRow(kInviteBoxW, inviteRow_, inviteBox_);
+        parts(inviteBox_, invites_, 3);
         toggle(aid_);
         toggle(trades_);
         return;
@@ -170,14 +175,11 @@ void HelperWindow::layout(const Play& play, const HelperSettings& settings, cons
 
     huntTop_ = y;
     y += kKick;
-    for (int i = 0; i < 3; ++i) {
-        ranges_[i] = {kSide + inner - float(3 - i) * kSegW - float(2 - i) * 3.0f, y + (kRangeRow - kSegH) * 0.5f, kSegW,
-                      kSegH};
-    }
-    y += kRangeRow + 4.0f;
+    setRow(kRangeBoxW, rangeRow_, rangeBox_);
+    parts(rangeBox_, ranges_, 3);
     toggle(quest_);
     toggle(back_);
-    y += kGroupGap;
+    y += kGroupGap - kSetGap;
 
     skillsTop_ = y;
     y += kKick;
@@ -358,16 +360,18 @@ void HelperWindow::rebuild(const Play& play, const HelperSettings& settings, boo
     // ---- the pages' tabs -------------------------------------------------------------------------
     for (int t = 0; t < 2; ++t) controls::tab(canvas_, at(tabs_[t]), kPageNames[t], page_ == t, state(95 + t, false), u);
 
-    // A row worded at its left and its switch at its right; `dim` when it does not hold now.
+    // A setting as the settings window sets one (game/ui/menu.cpp): its row, the mark down its
+    // left red under the pointer, and its choice at the right, the chosen part in blood; the other
+    // part lit under the pointer. `dim` veils it when it does not hold now.
+    const auto setting = [&](const Box& row, const Box& box, const char* word, const char* const* words,
+                             int count, int on, int over, bool dim) {
+        controls::row(canvas_, at(row), word, over >= 0 ? 1.0f : 0.0f, u);
+        const int lit = over < 0 ? -1 : count == 2 ? 1 - on : over;
+        controls::choice(canvas_, at(box), words, count, on, lit, u);
+        if (dim) canvas_.rect(at(row), faded(style::kVoid, 0.5f));
+    };
     const auto toggle = [&](const Toggle& t, int which, bool on, const char* word, bool dim) {
-        controls::label(canvas_, sx(kSide), sy(controls::middle(t.row.y, kBackRow, kWord)), kWord * u,
-                        dim ? style::kAshInk : over_ == which ? style::kBoneHi : style::kBone, word);
-        const Box track = at(t.knob);
-        canvas_.rect(track, on ? kGoldDk : style::kIronLo);
-        canvas_.rect(track.grown(-line), on ? faded(kGold, 0.30f) : style::kAsh1);
-        const float knob = track.h - 4.0f * line;
-        const float kx = on ? track.right() - 2.0f * line - knob : track.x + 2.0f * line;
-        canvas_.rect({std::round(kx), track.y + 2.0f * line, knob, knob}, on ? kGoldHi : style::kAshInk2);
+        setting(t.row, t.knob, word, kOffOn, 2, on ? 1 : 0, over_ == which ? 0 : -1, dim);
     };
 
     if (page_ == 1) {
@@ -388,28 +392,18 @@ void HelperWindow::rebuild(const Play& play, const HelperSettings& settings, boo
 
         // ---- while helping: the party and the trades ---------------------------------------------
         kicker(partyTop_, "While helping");
-        controls::label(canvas_, sx(kSide), sy(controls::middle(invites_[0].y, kSegH, kWord)), kWord * u, style::kBoneHi,
-                        "Party invites");
-        for (int i = 0; i < 3; ++i) {
-            const bool on = settings.invites == i;
-            chip(canvas_, at(invites_[i]), on, over_ == 24 + i, u);
-            centred(canvas_, at(invites_[i]), kChipWord * u, on ? kGoldHi : style::kBone2, kInviteNames[i]);
-        }
+        setting(inviteRow_, inviteBox_, "Party invites", kInviteNames, 3, settings.invites,
+                over_ >= 24 && over_ < 27 ? over_ - 24 : -1, false);
         toggle(aid_, 22, settings.aidParty, "Buff and heal my party", false);
         toggle(trades_, 23, settings.noTrades, "Decline trades", false);
     } else {
         // ---- hunt --------------------------------------------------------------------------------
         kicker(huntTop_, "Hunt");
-        controls::label(canvas_, sx(kSide), sy(controls::middle(ranges_[0].y, kSegH, kWord)), kWord * u, style::kBoneHi,
-                        "Range");
-        for (int i = 0; i < 3; ++i) {
-            const bool on = settings.range == i;
-            chip(canvas_, at(ranges_[i]), on, over_ == 10 + i, u);
-            centred(canvas_, at(ranges_[i]), kChipWord * u, on ? kGoldHi : style::kBone2, kRangeNames[i]);
-        }
+        setting(rangeRow_, rangeBox_, "Range", kRangeNames, 3, settings.range,
+                over_ >= 10 && over_ < 13 ? over_ - 10 : -1, false);
         toggle(quest_, 21, settings.quest, "Follow my quest", false);
         // Following a quest it has no spot to walk back to.
-        toggle(back_, 20, settings.back, "Walk back to where I started", settings.quest);
+        toggle(back_, 20, settings.back, "Walk back to my spot", settings.quest);
     }
 
     if (page_ == 0) {
