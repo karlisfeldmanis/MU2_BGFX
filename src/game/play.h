@@ -1852,7 +1852,10 @@ private:
     Wave wave_;
     Arrows arrows_;
     Thunder thunder_;
-    int64_t lastThunderTick_ = -1;  // the tick a channel's pulse last sounded on
+    // The tick each skill's volley -- a channel's pulse, a splash's bodies -- last sounded on, by
+    // sim::skillIndexOf. A skill's own: one shared tick let Ice's splash silence a ring's
+    // Lightning on the same tick (the user, 2026-10-21).
+    int64_t lastVolleyTick_[sim::kSkills] = {};
     // The tick Evil Spirit's sEvil last began on: it plays out before another begins.
     int64_t lastEvilTick_ = -1000;
     Blink blink_;

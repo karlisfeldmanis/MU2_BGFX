@@ -1469,10 +1469,10 @@ void Play::update(double seconds) {
                     // And Meteorite's rain is a rock on every body on one tick: one wave for it.
                     const bool volley =
                         loosed != nullptr && (loosed->channelled() || loosed->splash > 0.0f);
-                    const bool again = volley && lastThunderTick_ == int64_t(happening.tick);
-                    if (volley) {
-                        lastThunderTick_ = int64_t(happening.tick);
-                    }
+                    // Asked of this skill's own last tick (+1, so the array's nought is never).
+                    const int64_t stamp = int64_t(happening.tick) + 1;
+                    const bool again = volley && index >= 0 && lastVolleyTick_[index] == stamp;
+                    if (volley && index >= 0) lastVolleyTick_[index] = stamp;
                     // Only a spell's: its wave is held off the wind-up for this. Anything else
                     // -- Skillshot's fan -- rang its sound on the `Swung` already, and a second
                     // here was the double shot the user heard (2026-09-29).
