@@ -743,7 +743,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
 
     if (!keysHeld && (window.pressed(gfx::Window::Key::Inventory) || scriptBag_)) toggleBag();
     scriptBag_ = false;
-    if (!keysHeld && window.pressed(gfx::Window::Key::Character)) toggleCard();
+    if (!keysHeld && (window.pressed(gfx::Window::Key::Character) || scriptCharacter_)) toggleCard();
+    scriptCharacter_ = false;
     // G, the guild window (docs/game/guild.md): on a server; off one there is no guild to show.
     if (!keysHeld && (window.pressed(gfx::Window::Key::Guild) || scriptGuild_) && play.isOpen()) {
         guild_.toggle();

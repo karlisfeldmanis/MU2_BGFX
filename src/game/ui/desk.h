@@ -95,6 +95,7 @@ public:
         else if (text == "guild") scriptGuild_ = true;      // G, the guild window
         else if (text == "bag") scriptBag_ = true;          // I, the bag
         else if (text == "talents") scriptTalents_ = true;  // A, Talents
+        else if (text == "character") scriptCharacter_ = true;  // C, the character window
         else scriptTyped_ += text;
     }
     // Whether a box has the keyboard, which the window is told so Escape cancels the box
@@ -442,6 +443,7 @@ private:
     int journal_ = -1;  // the quest the journal (L) is reading, away from its giver, or -1
     bool scriptJournal_ = false;
     bool scriptBag_ = false;
+    bool scriptCharacter_ = false;
     bool scriptGuild_ = false;  // a script's G for the next update (--ui-type FRAME:guild)  // a script's L for the next update (--ui-type FRAME:journal)
     // The HUD's quest button, pressed last frame: the journal opens or shuts on this one.
     bool questButton_ = false;
