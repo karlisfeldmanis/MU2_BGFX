@@ -134,10 +134,10 @@ goes by rank (`QuestItem::rank`, checked in `Realm::questItemFits`):
 | Dark Wizard | Staff of Resurrection +7 (`Staff07`) |
 | Fairy Elf | Saint Crossbow (`CrossBow17`) |
 | Blade Knight | Knight Blade +7 (`Sword21`), one-handed |
-| Soul Master | Staff of Kundun +7 (`Staff12`), one-handed |
+| Soul Master | Staff of Kundun (`Staff12`), one-handed |
 | Muse Elf | Great Reign Crossbow (`CrossBow20`) |
 | Magic Gladiator, Melee | Dark Reign Blade +7 (`Sword22`), his own |
-| Magic Gladiator, Magic | Staff of Kundun +7 (`Staff12`) |
+| Magic Gladiator, Magic | Staff of Kundun (`Staff12`) |
 
 The Magic Gladiator has no second class and counts as promoted.
 

@@ -1591,7 +1591,8 @@ QuestRow kantursLegion() {
     // **A promoted hero's own** (the user, 2026-10-21: "this quest has to give better weapon for SM
     // and same for BK and ME and MG"): one who comes to the Keeper after Sevina is paid his second
     // class's, past Icarus's -- the Blade Knight's one-handed Knight Blade, the Soul Master's
-    // one-handed Staff of Kundun, both at +7 as the first class's, and the Muse Elf's Great Reign
+    // one-handed Staff of Kundun, the sword at +7 as the first class's and the staff at +0 (the
+    // user, the same day: "dont give +7 staff of kundun that to much"), and the Muse Elf's Great Reign
     // Crossbow, the Saint's own line. The Magic Gladiator is paid by his path: on the knight's his
     // own Dark Reign Blade, the sword that casts, on the wizard's the Staff of Kundun, which is his
     // too (Realm::questItemFits keeps the Knight Blade from him by its class bits, and the Dark
@@ -1608,8 +1609,8 @@ QuestRow kantursLegion() {
                      .firstOnly = true, .rank = Rank::Second};  // Knight Blade +7, the BK's
     row.paid[n++] = {.item = "Sword22", .plus = 7, .kin = knight, .sockets = 3,
                      .firstOnly = true, .rank = Rank::Second};  // Dark Reign Blade +7, the MG's
-    row.paid[n++] = {.item = "Staff12", .plus = 7, .kin = wizard, .sockets = 3,
-                     .firstOnly = true, .rank = Rank::Second};  // Staff of Kundun +7
+    row.paid[n++] = {.item = "Staff12", .kin = wizard, .sockets = 3, .firstOnly = true,
+                     .rank = Rank::Second};  // Staff of Kundun, +0 (+7 too much, the user)
     row.paid[n++] = {.item = "CrossBow20", .kin = elf, .sockets = 3,
                      .firstOnly = true, .rank = Rank::Second};  // Great Reign Crossbow
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Burn),
