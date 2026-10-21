@@ -1702,8 +1702,8 @@ int Realm::buy(int shelfSlot) {
 }
 
 // The counter's price, which the Broker's floor is too (sim::npcValue, sim/broker.cpp). A quest
-// item is not a merchant's: the class treasure. The Archangel's weapons are sold as any since
-// they drop (2026-10-10).
+// item is not a merchant's: the class treasure and the Archangel's quest copy. A refined or
+// excellent Archangel weapon is sold as any since they drop (2026-10-10).
 int64_t Realm::sellValue(int slot) const {
     if (!baggable(slot) || me().bag[slot].empty()) return -1;
     return npcValue(*tables_, me().bag[slot]);
@@ -1711,9 +1711,9 @@ int64_t Realm::sellValue(int slot) const {
 
 int64_t Realm::sellItem(int slot) {
     if (me().trading < 0 || !serving(me().trading) || !baggable(slot) || me().bag[slot].empty()) return -1;
-    // A quest item is not sold: the class treasure.
+    // A quest item is not sold: the class treasure, and the Archangel's quest copy.
     const content::ItemRow& selling = tables_->items[size_t(me().bag[slot].item)];
-    if (classTreasure(selling)) return -1;
+    if (classTreasure(selling) || archangelQuestItem(selling, me().bag[slot])) return -1;
     const Held thing = me().bag[slot];
     const int64_t paid = std::max<int64_t>(0, sellValue(slot));
     me().bag.lift(slot);
