@@ -1894,10 +1894,10 @@ void testCastLock(const content::Tables& tables) {
     // ---- Poison: a cooldown burst that goes on hurting ---------------------------------------
     {
         const sim::SkillRow& poison = *sim::skillNumbered(sim::skill::kPoison);
-        check(poison.wizardry && poison.primary() && poison.force == 1.44f && poison.damage == 12 &&
+        check(poison.wizardry && poison.primary() && poison.force == 1.30f && poison.damage == 12 &&
                   poison.mana == 42 && poison.poisonTicks == 400 && poison.splash == 6.0f &&
                   poison.reach == 9.0f,
-              "Poison is a standard spell of twelve damage at 1.44 the band and forty-two mana, "
+              "Poison is a standard spell of twelve damage at 1.30 the band and forty-two mana, "
               "poisoning twenty seconds within six tiles");
         const int32_t scroll = tables.itemAt(15, 0);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kPoison &&
@@ -1979,7 +1979,7 @@ void testCastLock(const content::Tables& tables) {
     {
         const sim::SkillRow& flame = *sim::skillNumbered(sim::skill::kFlame);
         check(flame.wizardry && flame.primary() && flame.damage == 25 && flame.mana == 50 &&
-                  flame.burns == 2 && flame.burnTiles == 1.5f && flame.force == 1.275f,
+                  flame.burns == 2 && flame.burnTiles == 1.5f && flame.force == 1.15f,
               "Flame is a no-cooldown spell of twenty-five damage and fifty mana, "
               "striking twice within a tile and a half");
         // Each of the wizard's late rows by the next one's, so a row added on the end moves none.
@@ -2445,9 +2445,9 @@ void testCastLock(const content::Tables& tables) {
     // ---- Ice: a cooldown spell that bursts round its target and halves the walk -------------
     {
         const sim::SkillRow& ice = *sim::skillNumbered(sim::skill::kIce);
-        check(ice.wizardry && ice.primary() && ice.force == 1.8f && ice.damage == 10 &&
+        check(ice.wizardry && ice.primary() && ice.force == 1.62f && ice.damage == 10 &&
                   ice.mana == 38 && ice.chillTicks == 200 && ice.splash == 6.0f && ice.reach == 9.0f,
-              "Ice is a standard spell of ten damage at 1.8 the band and thirty-eight mana, chilling "
+              "Ice is a standard spell of ten damage at 1.62 the band and thirty-eight mana, chilling "
               "ten seconds within six tiles");
         const int32_t scroll = tables.itemAt(15, 6);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kIce &&
@@ -2773,8 +2773,8 @@ void testCastLock(const content::Tables& tables) {
               "Cometfall is Meteorite's shower: seventy damage, a hundred and fifty mana");
         // A 689-energy wizard's band is about 124 on average (energy/9 to energy/4).
         check(comet.force * (124.0f + float(comet.damage)) >
-                  1.4f * rock.force * (124.0f + float(rock.damage)),
-              "and a comet strikes over half again as hard as a rock");
+                  1.3f * rock.force * (124.0f + float(rock.damage)),
+              "and a comet strikes a third again as hard as a rock");  // half again until the class balance's -10%
         check(sim::skillElement(sim::skill::kCometfall) == sim::Element::Lightning,
               "and it is lightning");
         check(sim::skillIndexOf(sim::skill::kCometfall) == 36,
@@ -4324,10 +4324,13 @@ void testSkills(const content::Tables& tables) {
     check(sim::force(cyclone, sim::HeroPoints{2000, 0, 0, 0}, sim::Kin::DarkKnight) >
               sim::force(cyclone, sim::HeroPoints{28, 0, 0, 0}, sim::Kin::DarkKnight),
           "strength is force");
-    // A knight's own skill is kKnightSkillBoost of another's hands on it (2026-10-21).
+    // A knight's own skill is kKnightSkillBoost in a knight's or a Gladiator's hands (2026-10-21),
+    // and only that: an elf's Cyclone, were she given it, is not lifted.
     check(std::fabs(sim::force(cyclone, sim::HeroPoints{500, 0, 0, 0}, sim::Kin::DarkKnight) -
-                    sim::force(cyclone, sim::HeroPoints{500, 0, 0, 0}, sim::Kin::MagicGladiator) * sim::kKnightSkillBoost) < 1e-4f,
-          "and a knight's own skills are 15% stronger in his hands than a Gladiator's");
+                    sim::force(cyclone, sim::HeroPoints{500, 0, 0, 0}, sim::Kin::FairyElf) * sim::kKnightSkillBoost) < 1e-4f &&
+              sim::force(cyclone, sim::HeroPoints{500, 0, 0, 0}, sim::Kin::MagicGladiator) ==
+                  sim::force(cyclone, sim::HeroPoints{500, 0, 0, 0}, sim::Kin::DarkKnight),
+          "and a knight's skills are 15% stronger in a knight's or a Gladiator's hands");
 
     sim::Realm realm;
     // Level 120, the top of the orb ladder since Rageful Blow's orb moved there (2026-10-02).

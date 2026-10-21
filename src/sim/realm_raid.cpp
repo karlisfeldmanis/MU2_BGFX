@@ -1116,7 +1116,7 @@ bool Realm::dodge(Body& one, int index) {
 void Realm::raiderStrike(Body& one, Body& target, const SkillRow* row) {
     const bool ranged = one.archer > 0 || (row != nullptr && row->wizardry) ||
                         one.kin == Kin::DarkWizard;
-    const float hit = row != nullptr ? force(*row, one.totalPoints(), one.kin) : 1.0f;
+    const float hit = row != nullptr ? heroForce(one, *row) : 1.0f;
     one.aim = fm::atan2(target.y - one.y, target.x - one.x);
     // What the drawing shows of it, said as the hero's are: an arrow or a fan let go (`Loosed`,
     // Realm::looseArrow and looseFan), a spell's rock or ring (`Loosed`), Evil Spirit's spirits

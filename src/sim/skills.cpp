@@ -75,9 +75,10 @@ constexpr SkillRow kRows[kSkills] = {
     // **Two tiles and not one** (the user, 2026-10-21: "Make Cyclone and Twisting Slash" wider,
     // tests/skill_sweep.cpp having the knight ~40% under the wizard and the elf where monsters fall
     // in a blow or two, a pack's width being what their spells have and his spin had not).
-    {skill::kCyclone, "Cyclone", 9, 2.0f, 2.0f, 1.0f / 1400.0f, 40, false, Spread::Ring, 0, 1.0f,
-     "A spin that catches everything within two tiles, harder than Twisting Slash and back in "
-     "two seconds.",
+    // Three, the class balance's (2026-10-21): two moved the sweep within its noise.
+    {skill::kCyclone, "Cyclone", 9, 3.0f, 2.0f, 1.0f / 1400.0f, 40, false, Spread::Ring, 0, 1.0f,
+     "A spin that catches everything within three tiles, harder than Twisting Slash and back "
+     "in two seconds.",
      63, "player_skill_sword4", true, arms::kSword1 | arms::kSpear, 36},
     // Every row is built now. `built` used to mean "and the bar has a key for it", which is why
     // Slash sat here false with its arc written and tested; the list of 2026-09-23 holds every
@@ -125,9 +126,9 @@ constexpr SkillRow kRows[kSkills] = {
     // the same day ("we need to boost twisting slash little bit"), with mana back on every body
     // it wounds (`kTwistManaShare`, recovery.h).
     // Two tiles, as Cyclone (the user, 2026-10-21).
-    {skill::kTwistingSlash, "Twisting Slash", 22, 2.0f, 1.7f, 1.0f / 1500.0f, 0, false,
+    {skill::kTwistingSlash, "Twisting Slash", 22, 3.0f, 1.7f, 1.0f / 1500.0f, 0, false,
      Spread::Ring, 0, 1.0f,
-     "A whirl of whatever he is holding, into everything within two tiles. Every weapon can "
+     "A whirl of whatever he is holding, into everything within three tiles. Every weapon can "
      "throw it; none throws it hard.",
      65, "player_skill_sword4", true, arms::kEvery, 60},
     // Rageful Blow: **any weapon**, on the user's word of 2026-09-23. It was written for the
@@ -423,7 +424,8 @@ constexpr SkillRow kRows[kSkills] = {
     // MU's "Skill recovery" (183), the arm up, thirteen keys where Energy Ball's two hands
     // (147/148) are six, played at kIceQuicken: about 0.65 s a cast at 100 agility where it was
     // 0.43, and quicker than Meteorite's 0.93 ("quicker but not so quick like it was"). Ours.
-    {skill::kIce, "Ice", 38, 9.0f, 1.8f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+    // Force 1.8 -> 1.62, -10% (the user's class balance, 2026-10-21: "we need balances classes", toward 13M an hour on Icarus and 8M on Aida, tests/skill_sweep.cpp).
+    {skill::kIce, "Ice", 38, 9.0f, 1.62f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "Ice bursts on a body up to nine tiles off and on everything within six tiles of it; what "
      "it strikes walks at half speed for ten seconds.",
      183, "spell_ice", true, arms::kNone, 0, Kin::DarkWizard, true, 10, 0, 1000.0f, false, 0, 0,
@@ -455,7 +457,8 @@ constexpr SkillRow kRows[kSkills] = {
     // at eight hours): Meteorite 2.6 -> 2.3, the other three 2.0 -> 1.8; the reach stays.
     // Force 1.8 -> 1.44 (the user, 2026-10-21: "a lot of spells are pretty brokenly strong";
     // tests/skill_sweep.cpp had it the wizard's strongest without talents): -20%.
-    {skill::kPoison, "Poison", 42, 9.0f, 1.44f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+    // And 1.44 -> 1.30, -10% more (the user's class balance, 2026-10-21: "we need balances classes", toward 13M an hour on Icarus and 8M on Aida, tests/skill_sweep.cpp).
+    {skill::kPoison, "Poison", 42, 9.0f, 1.30f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "A cloud of poison bursts on a body up to nine tiles off and on everything within six tiles "
      "of it, and goes on hurting them for twenty seconds.",
      147, "spell_heart", true, arms::kNone, 0, Kin::DarkWizard, true, 12, 148, 1000.0f, false, 0,
@@ -584,7 +587,8 @@ constexpr SkillRow kRows[kSkills] = {
     // -- fifty mana for less than the cheapest spell, and no bot threw it. At 1.5 a burn is ~236,
     // ~470 over the fire's two on everything in it.
     // Force 1.5 -> 1.275, -15% (the user's nerf of 2026-10-21, off tests/skill_sweep.cpp).
-    {.number = skill::kFlame, .name = "Flame", .mana = 50, .reach = 9.0f, .force = 1.275f,
+    // And 1.275 -> 1.15, -10% more (the user's class balance, 2026-10-21: "we need balances classes", toward 13M an hour on Icarus and 8M on Aida, tests/skill_sweep.cpp).
+    {.number = skill::kFlame, .name = "Flame", .mana = 50, .reach = 9.0f, .force = 1.15f,
      .spread = Spread::One,
      .tells = "Sets the ground under a body up to nine tiles off alight, and the fire strikes "
               "everything standing in it twice.",
@@ -760,7 +764,7 @@ constexpr SkillRow kRows[kSkills] = {
     // 2774-2779). Wind (realm_fight.cpp `skillElement`), so Tempest raises it.
     // Force 1.5 -> 1.275, -15% (the user's nerf of 2026-10-21: the strongest skill on Aida).
     {.number = skill::kPenetration, .name = "Penetration", .mana = 7, .reach = 8.0f,
-     .force = 1.275f, .spread = Spread::Fan,
+     .force = 1.15f, .spread = Spread::Fan,  // and 1.275 -> 1.15, -10% more (the class balance)
      .tells = "An arrow loosed at a body up to eight tiles off, flying on through everything in "
               "its line. One arrow is spent for every body struck.",
      .clip = 50, .sound = "player_piercing", .built = true, .families = arms::kMissiles,
@@ -807,7 +811,8 @@ constexpr SkillRow kRows[kSkills] = {
     // (Hellfire's row, above). MU's two comets, its 150 units and its cast in two hands are not
     // followed; its mana and energy are. No sound at the let-go, as MU has none: each comet's
     // landing is SOUND_EXPLOTION01, BITMAP_EXPLOTION's own. All the shower ours.
-    {.number = skill::kCometfall, .name = "Cometfall", .mana = 150, .reach = 9.0f, .force = 1.8f,
+    // Force 1.8 -> 1.62, -10% (the user's class balance, 2026-10-21: "we need balances classes", toward 13M an hour on Icarus and 8M on Aida, tests/skill_sweep.cpp).
+    {.number = skill::kCometfall, .name = "Cometfall", .mana = 150, .reach = 9.0f, .force = 1.62f,
      .spread = Spread::One,
      .tells = "With his arm raised to the sky he calls blue comets down on the ground up to nine "
               "tiles off, falling at random within four tiles of it.",
@@ -987,7 +992,10 @@ float force(const SkillRow& row, const HeroPoints& points, Kin who) {
     if (row.wizardry) return row.force;
     const float sum = row.force + float(points.strength) * row.forcePerStrength +
                       float(points.energy) * kForcePerEnergy;
-    return who == Kin::DarkKnight && row.kin == Kin::DarkKnight ? sum * kKnightSkillBoost : sum;
+    // The Gladiator's too since the class balance (2026-10-21): his blades were the knight's
+    // unboosted, and Aida's 6.7M against the knight's 8.1M.
+    const bool blade = (who == Kin::DarkKnight || who == Kin::MagicGladiator) && row.kin == Kin::DarkKnight;
+    return blade ? sum * kKnightSkillBoost : sum;
 }
 
 int skillPercent(const HeroPoints& points) {

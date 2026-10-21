@@ -567,8 +567,8 @@ constexpr float kAgilityPerDoubling = 300.0f;
 
 // The multiplier on a skill's blow. 0.75's `2 + energy/1000` with strength added at the row's
 // own rate, which is the whole of the user's rule: strength is force, as energy is for a wizard.
-// A Dark Knight's own skills are kKnightSkillBoost of that, by `who` (a Gladiator's Twisting Slash
-// is not): the user, 2026-10-21, "well DW is very strong now... maybe we need to boost DKs?", +15%
+// A Dark Knight's own skills are kKnightSkillBoost of that, by `who`, and a Gladiator's knight's
+// skills too since the class balance (2026-10-21): the user, 2026-10-21, "well DW is very strong now... maybe we need to boost DKs?", +15%
 // on every one, off tests/skill_sweep.cpp (the best knight ~2/3 of a wizard on Icarus).
 constexpr float kKnightSkillBoost = 1.15f;
 float force(const SkillRow& row, const HeroPoints& points, Kin who);

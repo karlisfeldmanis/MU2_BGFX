@@ -7,8 +7,8 @@
 //     out/build/libmu_sim.a out/build/libmu_content_data.a out/build/libmu_core.a
 //     out/build/libmu_zstd.a -lz -o out/build/skill_sweep
 //   skill_sweep KIT MAP SEEDS MINUTES [KITS.json]
-// The kits are content/raid/party.json's, or another file's of its shape: tests/kits/gladiator.json
-// holds the Magic Gladiator, whom no raider is.
+// The kits are content/raid/party.json's, or another file's of its shape: tests/kits/sweep.json
+// holds the Magic Gladiator and a knight with two swords, whom no raider is.
 #include <algorithm>
 #include <cmath>
 #include <cstdio>

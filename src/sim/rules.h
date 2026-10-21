@@ -390,6 +390,8 @@ constexpr double kMixedPair = 0.55;
 // overkill"). INVENTION.
 constexpr double kMatchedPair = 0.70;
 
+// The Magic Gladiator's defence over what his points and gear reckon (the class balance, 2026-10-21).
+constexpr double kGladiatorDefense = 1.15;
 void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Fighter* out,
             int* maxHealth);
 
