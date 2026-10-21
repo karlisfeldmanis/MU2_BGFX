@@ -101,6 +101,8 @@ bool Realm::questUnderLevel(int index) const {
     if (index < 0 || index >= kQuests) return false;
     const QuestRow& row = questAt(index);
     if (!questOpen(row, int(mine().kin)) || mine().level >= questLevel(index)) return false;
+    // A second class's quest is not shown to the first, even as one his level waits on.
+    if (row.second && !promoted() && mine().kin != Kin::MagicGladiator) return false;
     const QuestProgress& one = me().quests[index];
     if (one.state != QuestState::Untaken || one.completions > 0) return false;
     if (row.afterAny == 0) return true;
@@ -141,6 +143,7 @@ bool Realm::questLocked(int index) const {
     const QuestRow& row = questAt(index);
     const QuestProgress& one = me().quests[index];
     if (one.state != QuestState::Untaken || one.completions > 0) return false;
+    if (row.second && !promoted() && mine().kin != Kin::MagicGladiator) return true;
     // Below its level: Sevina's, until 200 (the user, 2026-10-04).
     if (mine().level < questLevel(index)) return true;
     if (row.afterAny == 0) return false;

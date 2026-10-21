@@ -3,15 +3,17 @@
 **In two since 2026-10-21** (the user: "we need tarkan on 2 parts, because now there is confusion"):
 the Keeper's clear below is now two quests, each every 12 hours on its own clock.
 
-| part | quest (key) | steps | every clear | first clear |
-|---|---|---|---|---|
-| 1 | Kantur's Legion (`kanturs_legion`, 21) | Mutants 40, Bloody Wolves 35, Iron Wheels 30, Tantalos 30, Beam Knights 25: 160 kills | 100,000 exp, 150,000 Zen, 2 Bless, 2 Soul, a Chaos, a Box of Kundun +3 | 400,000 exp; the class's two runes, the Pendant of Fury |
-| 2 | Kantur's Captain (`kanturs_captain`, 27) | the Zaikan, the Death Beam Knight | 50,000 exp, 100,000 Zen, a Jewel of Life, a Loch's Feather | 200,000 exp; the weapon by rank (table below) |
+**First quest, first class; second quest, second class** (the user, the same night: "first quest
+gives first class rewards, 2nd quest gives second class rewards").
 
-Part 2 is offered once part 1 has been handed in. Together they pay what the one clear paid
-(150,000 / 600,000 exp, 250,000 Zen), plus the 3 Firecrackers each. Kantur's Captain is the
-table's 28th quest: protocol 46, kept layout 12 (src/net/wire.h). Its voice `keeper_2`, and
-`keeper_1`'s offer and hand-in, need reading again (pipeline/voice.py keeper_1 / keeper_2).
+| part | quest (key) | steps | who | every clear | first clear |
+|---|---|---|---|---|---|
+| 1 | Kantur's Legion (`kanturs_legion`, 21) | Mutants 40, Bloody Wolves 35, Iron Wheels 30, Tantalos 30, Beam Knights 25: 160 kills | everyone | 150,000 exp, 250,000 Zen, a Life, 2 Bless, 2 Soul, a Chaos, a Loch's Feather, a Box of Kundun +3 | 600,000 exp; the class's two runes, the Pendant of Fury +4; the first class's weapon: Sword of Destruction +7, Staff of Resurrection +7, Saint Crossbow |
+| 2 | Kantur's Captain (`kanturs_captain`, 27) | the Zaikan, the Death Beam Knight | past the class change, and the Magic Gladiator (`QuestRow::second`); not shown to a first class | 150,000 exp, 250,000 Zen, a Life, a Loch's Feather | 600,000 exp; Knight Blade +7, Staff of Kundun, Great Reign Crossbow, or the Gladiator's Dark Reign Blade +7 / Staff of Kundun by his path |
+
+Part 2 is offered once part 1 has been handed in. The 3 Firecrackers come with each. Kantur's
+Captain is the table's 28th quest: protocol 46, kept layout 12 (src/net/wire.h). Voices: `keeper_1`
+(the legion) and `keeper_2` (the captain), read 2026-10-22.
 The rest of this page is the one-quest design as it was, kept for its lore and history.
 
 Written 2026-10-06 (the user: 'we need a lore for atlans quest give and min lvl requirment to go

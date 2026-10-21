@@ -140,6 +140,11 @@ struct QuestRow {
     // (Realm::promoted). Sevina's treasures; `boon` is what the dialog's rewards say of it.
     bool promotes = false;
     const char* boon = "";
+    // Offered only to one past his class change, and to the Magic Gladiator, who has none
+    // (Realm::questLocked): Kantur's Captain, the second class's half of Tarkan (the user,
+    // 2026-10-21: "first quest gives first class rewards, 2nd quest gives second class rewards").
+    // Before it he is not shown it at all. Ours.
+    bool second = false;
     // Who was born in the giver's town (1 << sim::Kin, each class its starting map). One born
     // elsewhere may take the quest only if `strangers`, and is then never paid the first clear's
     // things or experience -- the user's rule of 2026-09-29: an elf may clear Lorencia for its

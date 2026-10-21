@@ -1577,12 +1577,13 @@ QuestRow kantursLegion() {
     // Every class's, as Lirien's: no class is born in Tarkan.
     row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
     row.strangers = true;
-    // The two parts share the clear's old pay (the user, 2026-10-21): 150,000 experience a clear
-    // (600,000 the first) and 250,000 Zen, the legion two thirds and the captain one, the runes,
-    // the pendant and the refining jewels here, the weapon, the Life and the Feather his.
-    row.experience = 100000;
-    row.firstExperience = 400000;
-    row.zen = 150000;
+    // **The first class's half** (the user, 2026-10-21: "first quest gives first class rewards, 2nd
+    // quest gives second class rewards"): the whole clear's pay as it was, the first class's weapon
+    // among it; a promoted hero or the Magic Gladiator is paid the rest and his weapon at Kantur's
+    // Captain, the second class's half (below).
+    row.experience = 150000;
+    row.firstExperience = 600000;
+    row.zen = 250000;
     //
     // **Changed 2026-10-09** (the ladder: "not given too soon or too late"): the second class's
     // gear and Legendaries above wait a hundred levels for Sevina, so they went to Icarus and the
@@ -1602,8 +1603,15 @@ QuestRow kantursLegion() {
     // Crossbow, the Saint's own line. The Magic Gladiator is paid by his path: on the knight's his
     // own Dark Reign Blade, the sword that casts, on the wizard's the Staff of Kundun, which is his
     // too (Realm::questItemFits keeps the Knight Blade from him by its class bits, and the Dark
-    // Reign Blade from the knight).
+    // Reign Blade from the knight). Kantur's Captain pays those since 2026-10-21.
+    using Rank = QuestItem::Rank;
     int n = 0;
+    row.paid[n++] = {.item = "Sword17", .plus = 7, .kin = knight, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::First};  // Sword of Destruction +7
+    row.paid[n++] = {.item = "Staff07", .plus = 7, .kin = wizard, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::First};  // Staff of Resurrection +7
+    row.paid[n++] = {.item = "CrossBow17", .kin = elf, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::First};  // Saint Crossbow
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Burn),
                      .firstOnly = true};  // Immolate
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Ice),
@@ -1619,9 +1627,11 @@ QuestRow kantursLegion() {
     row.paid[n++] = {.item = "NecklaceFury", .plus = 4, .firstOnly = true,
                      .affixes = {uint8_t(Affix::Leech), uint8_t(Affix::Wisdom),
                                  uint8_t(Affix::Wealth)}};  // Pendant of Fury, legendary
+    row.paid[n++] = {.item = "Jewel03"};              // a Jewel of Life
     row.paid[n++] = {.item = "Jewel01", .count = 2};  // Jewels of Bless
     row.paid[n++] = {.item = "Jewel02", .count = 2};  // Jewels of Soul
     row.paid[n++] = {.item = "Jewel15"};              // a Jewel of Chaos
+    row.paid[n++] = {.item = "Quest04"};              // Loch's Feather
     row.paid[n++] = {.item = "MagicBox08", .plus = 3};  // a Box of Kundun +3, off the legion
     row.paidCount = n;
     return row;
@@ -1630,7 +1640,9 @@ QuestRow kantursLegion() {
 // Kantur's Captain, the Keeper's second (the user, 2026-10-21: "we need tarkan on 2 parts,
 // because now there is confusion"): the Zaikan and the Death Beam Knight, the two Kantur's Legion
 // asked last until that day, offered once the legion has been handed in and every 12 hours after,
-// on its own clock. The first clear pays the weapon, the legion's until then.
+// on its own clock. **The second class's half** (the user, the same day: "first quest gives first
+// class rewards, 2nd quest gives second class rewards"): offered only past the class change and to
+// the Magic Gladiator (QuestRow::second), its first clear his second class's weapon.
 QuestRow kantursCaptain() {
     QuestRow row;
     row.giver = kKeeperNumber;
@@ -1661,23 +1673,18 @@ QuestRow kantursCaptain() {
     row.minLevel = 100;
     row.gateLevel = true;
     row.afterAny = 1u << kKantursLegion;
+    row.second = true;
     constexpr int8_t knight = int8_t(Kin::DarkKnight);
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);
     row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
     row.strangers = true;
-    row.experience = 50000;
-    row.firstExperience = 200000;
-    row.zen = 100000;
+    row.experience = 150000;
+    row.firstExperience = 600000;
+    row.zen = 250000;
     // The weapon, by rank, as Kantur's Legion's comment above tells.
     using Rank = QuestItem::Rank;
     int n = 0;
-    row.paid[n++] = {.item = "Sword17", .plus = 7, .kin = knight, .sockets = 3,
-                     .firstOnly = true, .rank = Rank::First};  // Sword of Destruction +7
-    row.paid[n++] = {.item = "Staff07", .plus = 7, .kin = wizard, .sockets = 3,
-                     .firstOnly = true, .rank = Rank::First};  // Staff of Resurrection +7
-    row.paid[n++] = {.item = "CrossBow17", .kin = elf, .sockets = 3,
-                     .firstOnly = true, .rank = Rank::First};  // Saint Crossbow
     row.paid[n++] = {.item = "Sword21", .plus = 7, .kin = knight, .sockets = 3,
                      .firstOnly = true, .rank = Rank::Second};  // Knight Blade +7, the BK's
     row.paid[n++] = {.item = "Sword22", .plus = 7, .kin = knight, .sockets = 3,
