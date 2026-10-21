@@ -5,7 +5,7 @@
 # ./mu record elite --fps 30
 args --play --world lorencia --seed 7 --at 196,84 --class 0 --level 60
 args --give Sword05:1:+5W,HelmMale02:1:W,ArmorMale02:1:W,PantMale02:1:W,GloveMale02:1:W,BootMale02:1:W
-end 34
+end 40
 
 0.0  move 0.5 0.5
 0.5  run 0 -1
@@ -24,3 +24,8 @@ end 34
 29.1 click
 31.0 aim loot 0.6
 31.8 click
+33.6 aim loot 0.6
+34.4 click
+36.2 aim loot 0.6
+37.0 click
+38.2 move 0.62 0.45 1.0
