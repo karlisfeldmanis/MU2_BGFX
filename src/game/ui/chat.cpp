@@ -260,7 +260,7 @@ bool answerish(const std::string& text) {
 
 struct Chat::Carried {
     std::vector<Line> log;
-    std::vector<std::string> whispers;
+    std::vector<std::string> whispers, whisperTabs;
     std::map<std::string, int> unread;
     std::string tab, lastFrom, draft;
     Sticky sticky, generalSticky;
@@ -279,6 +279,7 @@ void Chat::carry() {
     }
     kept->log = std::move(log_);
     kept->whispers = std::move(whispers_);
+    kept->whisperTabs = std::move(whisperTabs_);
     kept->unread = std::move(unread_);
     kept->tab = tab_;
     kept->lastFrom = lastFrom_;
@@ -341,7 +342,7 @@ float Chat::rowTall() const { return kRowTalls[std::clamp(size_, 0, 2)]; }
 
 uint32_t& Chat::filter(const std::string& tab) {
     if (tab == "global") return globalShows_;
-    if (tab == "whispers") return whispersShows_;
+    if (tab.rfind("w:", 0) == 0) return whispersShows_;
     return generalShows_;
 }
 
@@ -357,6 +358,7 @@ void Chat::load() {
     if (carried_) {
         log_ = std::move(carried_->log);
         whispers_ = std::move(carried_->whispers);
+        whisperTabs_ = std::move(carried_->whisperTabs);
         unread_ = std::move(carried_->unread);
         tab_ = carried_->tab;
         lastFrom_ = carried_->lastFrom;
@@ -550,10 +552,15 @@ bool Chat::hear(const net::Heard& heard) {
         whispers_.erase(std::remove(whispers_.begin(), whispers_.end(), partner), whispers_.end());
         whispers_.push_back(partner);
         if (!mine) lastFrom_ = partner;
+        // His own tab, opened by the first whisper either way.
+        if (whisperTab_ && std::find(whisperTabs_.begin(), whisperTabs_.end(), partner) == whisperTabs_.end()) {
+            whisperTabs_.push_back(partner);
+        }
+        if (!mine && whisperTab_ && tab_ != "w:" + partner) ++unread_["w:" + partner];
     }
     if (mine) return true;
-    for (const char* key : {"general", "global", "whispers"}) {
-        if (tab_ == key || (std::string(key) == "whispers" && !whisperTab_)) continue;
+    for (const char* key : {"general", "global"}) {
+        if (tab_ == key) continue;
         if (shows(log_.back(), key)) ++unread_[key];
     }
     return true;
@@ -803,7 +810,12 @@ bool Chat::shows(const Line& line, const std::string& tab) const {
     const uint32_t kind = line.kind == Kind::Loot     ? kLootBit
                           : line.kind == Kind::Answer ? kAnswerBit
                                                       : bit(line.channel);
-    if (tab == "whispers") return line.channel == net::Channel::Whisper;
+    if (tab.rfind("w:", 0) == 0) {
+        if (line.channel != net::Channel::Whisper) return false;
+        if (line.name.empty()) return true;  // "Brakka is not here."
+        const std::string partner = line.name == me_ && !line.to.empty() ? line.to : line.name;
+        return partner == tab.substr(2);
+    }
     return ((tab == "global" ? globalShows_ : generalShows_) & kind) != 0;
 }
 
@@ -820,9 +832,8 @@ void Chat::select(const std::string& key) {
     // slash still changes it.
     if (key == "global" && !leftGlobal_) {
         stick(net::Channel::Global);
-    } else if (key == "whispers") {
-        const std::string to = !lastFrom_.empty() ? lastFrom_ : whispers_.empty() ? std::string() : whispers_.back();
-        if (!to.empty()) stick(net::Channel::Whisper, to);
+    } else if (key.rfind("w:", 0) == 0) {
+        stick(net::Channel::Whisper, key.substr(2));
     } else if (key == "general") {
         Sticky back = generalSticky_;
         if ((back.channel == net::Channel::Party && !inParty_) || (back.channel == net::Channel::Guild && !inGuild_)) {
@@ -834,6 +845,11 @@ void Chat::select(const std::string& key) {
 
 void Chat::whisperTo(const std::string& name) {
     if (name.empty()) return;
+    // His tab, opened and chosen; the box on him.
+    if (whisperTab_) {
+        if (std::find(whisperTabs_.begin(), whisperTabs_.end(), name) == whisperTabs_.end()) whisperTabs_.push_back(name);
+        select("w:" + name);
+    }
     stick(net::Channel::Whisper, name);
     open_ = true;
 }
@@ -1169,11 +1185,11 @@ void Chat::layTabs(float u) {
     const auto add = [&](const std::string& key, const std::string& name) { tabs_.push_back({key, name, {}}); };
     add("general", "General");
     if (!leftGlobal_) add("global", "Global");
-    if (whisperTab_) add("whispers", "Whispers");
-    if (tab_ == "whispers" && !whisperTab_) tab_ = "general";
-    if (tab_ == "global" && leftGlobal_) tab_ = "general";
-    float x = row_.x;
-    for (Tab& tab : tabs_) {
+    if (whisperTab_) {
+        for (const std::string& name : whisperTabs_) add("w:" + name, name);
+    }
+    if (std::none_of(tabs_.begin(), tabs_.end(), [&](const Tab& one) { return one.key == tab_; })) tab_ = "general";
+    const auto widthOf = [&](const Tab& tab) {
         const bool chosen = tab.key == tab_;
         const float pad = (chosen ? 14.0f : 12.0f) * u;
         float wide = pad * 2.0f + wordWidth(kWord * u, tab.word);
@@ -1181,7 +1197,29 @@ void Chat::layTabs(float u) {
         if (it != unread_.end() && it->second > 0 && !chosen) {
             wide += kPillGap * u + pillWidth(u, std::to_string(std::min(it->second, 99)));
         }
-        tab.box = {x, row_.y, std::round(wide), row_.h};
+        if (tab.key.rfind("w:", 0) == 0) wide += 14.0f * u;  // its cross
+        return std::round(wide);
+    };
+    // More than the row holds: the oldest whisper tabs not chosen step out until it fits; they
+    // come back as others close.
+    const float room = gear_.x - row_.x - 4.0f * u;
+    float total = 0.0f;
+    for (const Tab& tab : tabs_) total += widthOf(tab);
+    for (size_t i = 0; i < tabs_.size() && total > room;) {
+        if (tabs_[i].key.rfind("w:", 0) != 0 || tabs_[i].key == tab_) {
+            ++i;
+            continue;
+        }
+        total -= widthOf(tabs_[i]);
+        tabs_.erase(tabs_.begin() + long(i));
+    }
+    float x = row_.x;
+    for (Tab& tab : tabs_) {
+        tab.box = {x, row_.y, widthOf(tab), row_.h};
+        if (tab.key.rfind("w:", 0) == 0) {
+            tab.close = {tab.box.right() - (tab.key == tab_ ? 14.0f : 12.0f) * u - 10.0f * u, row_.midY() - 6.0f * u,
+                         12.0f * u, 12.0f * u};
+        }
         x += tab.box.w;
     }
 }
@@ -1391,6 +1429,7 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
             said(net::Channel::Party, "", "", "Brann accepted your party invite.");
             said(net::Channel::Party, "Brann", "", "gate in 1 min, bring pots");
             said(net::Channel::Whisper, "Ilse", me_, "ok, ping me when you have them");
+            said(net::Channel::Whisper, "Kaelz", me_, "selling a +7 Kris if you want it");
             lastFrom_ = "Ilse";
         }
     }
@@ -1569,6 +1608,15 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
         } else if (row_.has(pointer.x, pointer.y)) {
             for (const Tab& one : tabs_) {
                 if (!one.box.has(pointer.x, pointer.y)) continue;
+                if (one.key.rfind("w:", 0) == 0 && one.close.grown(3.0f * u).has(pointer.x, pointer.y)) {
+                    // His tab closed: the lines stay in General; a new whisper opens it again.
+                    const std::string name = one.key.substr(2);
+                    whisperTabs_.erase(std::remove(whisperTabs_.begin(), whisperTabs_.end(), name), whisperTabs_.end());
+                    unread_.erase(one.key);
+                    if (tab_ == one.key) select("general");
+                    click();
+                    break;
+                }
                 pressedTab_ = one.key;
                 moved_ = false;
                 if (!locked_) {
@@ -1601,7 +1649,14 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
     if (showing_ && pointer.rightPressed && frame_.has(pointer.x, pointer.y) && menu_ == Menu::None) {
         bool done = false;
         for (const Tab& one : tabs_) {
-            if (!one.box.has(pointer.x, pointer.y) || one.key == "whispers") continue;
+            if (!one.box.has(pointer.x, pointer.y)) continue;
+            if (one.key.rfind("w:", 0) == 0) {
+                // A person's tab: his menu, as his name's.
+                menuAsk_ = one.key.substr(2);
+                menuAskX_ = pointer.x, menuAskY_ = pointer.y;
+                done = true;
+                continue;
+            }
             menu_ = Menu::Shows;
             menuTab_ = one.key;
             menuBox_ = {one.box.x, 0.0f, 230.0f * u, 0.0f};  // laid in buildTip
@@ -1744,14 +1799,24 @@ void Chat::build(float u, const Pointer& pointer) {
     for (const Tab& one : tabs_) {
         const bool isChosen = &one == chosen;
         const bool hovered = one.box.has(pointer.x, pointer.y);
-        const uint32_t ink = isChosen ? kBoneHi : hovered ? mix(kTabQuiet, kBoneHi, 0.6f) : kTabQuiet;
+        const bool whispers = one.key.rfind("w:", 0) == 0, global = one.key == "global";
+        // A person's tab a breath of the whisper's pink at rest, so it reads as a conversation.
+        const uint32_t rest = whispers ? mix(kTabQuiet, kWhisperInk, 0.45f) : kTabQuiet;
+        const uint32_t ink = isChosen ? kBoneHi : hovered ? mix(rest, kBoneHi, 0.6f) : rest;
         float x = one.box.x + (isChosen ? 14.0f : 12.0f) * u;
         x += word(tabsDrawn_, x, tabBase, kWord * u, faded(ink, words), one.word);
+        // Its cross, while it is chosen or under the pointer.
+        if (whispers && (isChosen || hovered)) {
+            const bool on = one.close.grown(3.0f * u).has(pointer.x, pointer.y);
+            const uint32_t cross = faded(on ? kBoneHi : kAshInk, words);
+            const float m = 3.5f * u, cx = one.close.midX(), cy = one.close.midY();
+            stroke(tabsDrawn_, cx - m, cy - m, cx + m, cy + m, 1.4f * u, cross);
+            stroke(tabsDrawn_, cx + m, cy - m, cx - m, cy + m, 1.4f * u, cross);
+        }
         const auto it = unread_.find(one.key);
         if (it == unread_.end() || it->second <= 0 || isChosen) continue;
         const std::string count = std::to_string(std::min(it->second, 99));
         // The whispers' purple, Global's from its orange, General's iron.
-        const bool whispers = one.key == "whispers", global = one.key == "global";
         pill(tabsDrawn_, x + kPillGap * u, row_.midY(), u, count,
              whispers ? kPillTop : global ? kGlobalPillTop : kIronPillTop,
              whispers ? kPillFoot : global ? kGlobalPillFoot : kIronPillFoot, words);
@@ -1959,7 +2024,7 @@ void Chat::buildSettings(float u, const Pointer& pointer) {
     y += kSettingsRow * u;
     label("Whispers");
     whispersBox_ = at(150.0f);
-    controls::toggle(c, whispersBox_, "Own tab", "General", !whisperTab_, u);
+    controls::toggle(c, whispersBox_, "Own tabs", "General", !whisperTab_, u);
     y += kSettingsRow * u;
     label("Lock");
     lockBox_ = at(88.0f);

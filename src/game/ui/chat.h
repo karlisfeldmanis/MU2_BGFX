@@ -2,12 +2,12 @@
 // typed and said (net::Say). WoW's way, as the user tuned it on claude.ai/artifact/S5h6Pt8CarQMb8bUWCyPd8
 // (2026-10-21: "we need to refactor how the chat works, its seems clumsy. i like how WoW is designed"):
 //
-//   * **The tabs filter what the log shows**: General (everything but Global), Global, Whispers
-//     (every whisper, when the setting keeps them a tab). The line goes where the edit box says --
+//   * **The tabs filter what the log shows**: General (everything but Global), Global, and a tab
+//     for each person he whispers with (when the setting keeps whispers in tabs), with a cross. The line goes where the edit box says --
 //     its channel's word at its left ("Say", "Party", "Global", "To Ilse") -- and the box keeps the
 //     last channel used. Choosing a tab sets it (the user, 2026-10-21: "if i press global chat,
 //     user needs to write on global chat, if i press on whisper i reply on that whisper"): Global
-//     on Global, Whispers to the last who whispered, General back on its own channel. Joining a
+//     on Global, a person's tab to him, General back on its own channel. Joining a
 //     party sets it to Party once (the 2026-10-09 rule, softened); leaving one puts Say back.
 //     /s /y /m /p /g /1 and a space switch it as he types, the slash eaten; /w NAME and a space
 //     whisper him; /r and a space answer the last whisper. Tab steps through the people he has
@@ -184,9 +184,10 @@ private:
     struct Carried;
     static std::unique_ptr<Carried> carried_;  // carry()'s, until the next world's load()
     struct Tab {
-        std::string key;  // "general", "global", "whispers"
+        std::string key;  // "general", "global", or "w:" and the one he whispers with
         std::string word;
         gfx::Box box;     // laid this frame
+        gfx::Box close;   // a whisper tab's cross, laid this frame
     };
     // The edit box's channel: where the next line goes.
     struct Sticky {
@@ -280,6 +281,9 @@ private:
     std::vector<Line> log_;
     std::vector<Tab> tabs_;
     std::vector<std::string> whispers_;  // who he whispered with, the latest last: Tab's round
+    // A tab each for the people he whispers with, in the order they were opened (the user,
+    // 2026-10-21: "each whisper has to be on his own tab"); closed with its cross.
+    std::vector<std::string> whisperTabs_;
     std::map<std::string, int> unread_;  // by tab key
     std::string tab_ = "general";
     uint32_t generalShows_ = 0, globalShows_ = 0, whispersShows_ = 0;  // filter()'s, set by load()
