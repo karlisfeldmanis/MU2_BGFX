@@ -64,7 +64,8 @@ constexpr float kWakeSeconds = 0.2f;    // grey to colour, and the frame's pop
 constexpr float kWakePop = 0.12f;       // 1.0 -> 1.12 -> 1.0
 constexpr float kPointSeconds = 0.25f;  // a plain point's flash
 constexpr float kPointPop = 0.05f;
-// The ignition's lengths: a talent opened, a major taken, a plain point.
+// The ignition's lengths: a talent opened, a major taken, a plain point. No rings and no sparks
+// (the user, 2026-10-21: "remove those unlock rings and sparkles").
 constexpr float kOpenSeconds = 0.95f, kMajorSeconds = 1.4f, kGlintSeconds = 0.45f;
 // A reset runs up the tree a tier at a time, bottom first: three tiers in about 0.3 s.
 constexpr float kRippleStep = 0.1f, kFadeSeconds = 0.12f;
@@ -245,22 +246,11 @@ const char* titleOf(sim::Kin kin, bool second) { return sim::className(int(kin),
 struct Hue {
     float r, g, b;
 };
-constexpr Hue kWhiteGold{1.0f, 0.93f, 0.76f}, kGold{1.0f, 0.74f, 0.34f}, kFire{1.0f, 0.46f, 0.16f},
-              kBloodLight{0.86f, 0.16f, 0.09f};
+constexpr Hue kWhiteGold{1.0f, 0.93f, 0.76f}, kGold{1.0f, 0.74f, 0.34f}, kFire{1.0f, 0.46f, 0.16f};
 
 uint32_t lit(const Hue& h, float s) {
     s = std::clamp(s, 0.0f, 1.0f);
     return gfx::rgba(h.r * s, h.g * s, h.b * s, 0.0f);
-}
-// White-gold through gold and fire to blood as `t` runs 0 to 1: a spark cooling.
-Hue cooling(float t) {
-    const auto mix = [](const Hue& a, const Hue& b, float k) {
-        return Hue{a.r + (b.r - a.r) * k, a.g + (b.g - a.g) * k, a.b + (b.b - a.b) * k};
-    };
-    t = std::clamp(t, 0.0f, 1.0f);
-    if (t < 0.33f) return mix(kWhiteGold, kGold, t / 0.33f);
-    if (t < 0.66f) return mix(kGold, kFire, (t - 0.33f) / 0.33f);
-    return mix(kFire, kBloodLight, (t - 0.66f) / 0.34f);
 }
 // A number in [0, 1), the same every frame for the same spark.
 float noise01(uint32_t key, uint32_t channel) {
@@ -299,24 +289,6 @@ void ray(gfx::Canvas& canvas, float cx, float cy, float a, float inner, float ou
                          bx - nx * wide * 0.5f, by - ny * wide * 0.5f};
     const uint32_t ink[4] = {lit(h, s), lit(h, s * 0.25f), lit(h, 0.0f), lit(h, s * 0.25f)};
     canvas.light(xy, ink, 4);
-}
-// A ring of light: brightest on `radius`, fading to nothing `thick` either side of it.
-void glowRing(gfx::Canvas& canvas, float cx, float cy, float radius, float thick, const Hue& h, float s) {
-    if (s <= 0.003f || radius <= 0.5f) return;
-    constexpr int kSegments = 48;
-    const float in = std::max(0.0f, radius - thick), out = radius + thick;
-    for (int i = 0; i < kSegments; ++i) {
-        const float a0 = 6.2831853f * float(i) / float(kSegments), a1 = 6.2831853f * float(i + 1) / float(kSegments);
-        const float c0 = std::cos(a0), s0 = std::sin(a0), c1 = std::cos(a1), s1 = std::sin(a1);
-        const float inner[8] = {cx + c0 * radius, cy + s0 * radius, cx + c0 * in, cy + s0 * in,
-                                cx + c1 * in, cy + s1 * in, cx + c1 * radius, cy + s1 * radius};
-        const float outer[8] = {cx + c0 * radius, cy + s0 * radius, cx + c1 * radius, cy + s1 * radius,
-                                cx + c1 * out, cy + s1 * out, cx + c0 * out, cy + s0 * out};
-        const uint32_t ink[4] = {lit(h, s), lit(h, 0.0f), lit(h, 0.0f), lit(h, s)};
-        const uint32_t inkOut[4] = {lit(h, s), lit(h, s), lit(h, 0.0f), lit(h, 0.0f)};
-        canvas.light(inner, ink, 4);
-        canvas.light(outer, inkOut, 4);
-    }
 }
 // Light round a frame's edge: `s` on the edge, nothing `spread` out from it.
 void glowFrame(gfx::Canvas& canvas, const Box& b, float spread, const Hue& h, float s) {
@@ -730,16 +702,6 @@ void TalentWindow::effects() {
                 beam(tx, ty, hx, hy, 3.0f * u, kWhiteGold, 0.0f, 0.9f);
                 glowDisc(fx, hx, hy, 14.0f * u, kGold, 0.75f);
                 glowDisc(fx, hx, hy, 5.0f * u, kWhiteGold, 1.0f);
-                // A few sparks shed behind the head.
-                for (int n = 0; n < 4; ++n) {
-                    const uint32_t key = uint32_t(c * 97 + e * 13 + n);
-                    const float lag = 0.06f + 0.22f * noise01(key, 1);
-                    const float at = std::max(0.0f, head - lag);
-                    const float side = (noise01(key, 2) - 0.5f) * 10.0f * u * (lag * 4.0f);
-                    const float dx = x2 - x1, dy = y2 - y1, len = std::max(1.0f, std::sqrt(dx * dx + dy * dy));
-                    const float px = x1 + dx * at - dy / len * side, py = y1 + dy * at + dx / len * side;
-                    glowDisc(fx, px, py, 3.5f * u, cooling(lag * 3.0f), 0.8f * (1.0f - lag * 2.5f));
-                }
             } else {
                 // Arrived: the whole line glows and settles.
                 const float after = 1.0f - (k - 1.0f) / 0.6f;
@@ -765,20 +727,10 @@ void TalentWindow::effects() {
             const uint32_t seed = uint32_t(c * 31 + i * 7) ^ uint32_t(int64_t(b.at * 1000.0));
 
             if (b.kind == Burst::Point) {
-                // A plain point: a glint over the count and a few sparks.
+                // A plain point: a soft glow over its count.
                 const float fade = (1.0f - p) * (1.0f - p);
                 const float gy = g.band.h > 0.0f ? y_ + g.band.midY() * u : cy;
                 glowDisc(fx, cx, gy, size * 0.35f, kGold, 0.55f * fade);
-                for (int k = 0; k < 4; ++k) {
-                    ray(fx, cx, gy, 1.5707963f * float(k) + 0.785398f, 0.0f, size * 0.32f * easeOut(p * 3.0f), 3.0f * u,
-                        kWhiteGold, 0.8f * fade);
-                }
-                for (int n = 0; n < 5; ++n) {
-                    const float a = 6.2831853f * noise01(seed, uint32_t(n * 3));
-                    const float d = size * (0.15f + 0.35f * noise01(seed, uint32_t(n * 3 + 1))) * easeOut(p);
-                    glowDisc(fx, cx + std::cos(a) * d, gy + std::sin(a) * d - size * 0.15f * p, 3.0f * u, cooling(p),
-                             0.9f * (1.0f - p));
-                }
                 continue;
             }
 
@@ -807,23 +759,6 @@ void TalentWindow::effects() {
                 ray(fx, cx, cy, a, size * 0.18f, outer, size * (0.07f + 0.05f * n), kGold,
                     0.55f * (0.55f + 0.45f * n) * std::pow(1.0f - p, 1.8f));
             }
-            // Sparks thrown out, slowing, drifting up as they cool.
-            const int sparks = major ? 30 : 18;
-            for (int k = 0; k < sparks; ++k) {
-                const float delay = 0.1f * noise01(seed, uint32_t(200 + k));
-                const float life = (0.45f + 0.5f * noise01(seed, uint32_t(300 + k))) * length;
-                const float q = (age - delay) / life;
-                if (q <= 0.0f || q >= 1.0f) continue;
-                const float a = 6.2831853f * noise01(seed, uint32_t(400 + k));
-                const float speed = size * (0.55f + 1.1f * noise01(seed, uint32_t(500 + k))) * big;
-                const float travel = speed * (1.0f - (1.0f - q) * (1.0f - q));
-                const float px = cx + std::cos(a) * (size * 0.22f + travel);
-                const float py = cy + std::sin(a) * (size * 0.22f + travel) * 0.85f - size * 0.55f * q * q;
-                const float r = u * (1.4f + 1.4f * noise01(seed, uint32_t(600 + k))) * (1.0f - 0.45f * q);
-                const Hue h = cooling(q);
-                glowDisc(fx, px, py, r * 4.0f, h, 0.32f * (1.0f - q));
-                glowDisc(fx, px, py, r * 1.3f, h, 1.0f - q * q);
-            }
             // The frame's edge burning, then settling.
             glowFrame(fx, frame, size * 0.2f * big, kGold, 0.75f * std::pow(1.0f - p, 1.3f));
             glowFrame(fx, frame, size * 0.06f, kWhiteGold, 0.6f * std::pow(1.0f - p, 2.5f));
@@ -834,17 +769,6 @@ void TalentWindow::effects() {
                 const float mx = icon.x - icon.w * 0.35f + (icon.w * 1.7f) * k;
                 const float my = icon.y - icon.h * 0.35f + (icon.h * 1.7f) * k;
                 shine(fx, icon, mx, my, icon.w * 0.24f, kWhiteGold, 0.75f * std::sin(3.14159265f * sweep));
-            }
-            // A major's shockwave: two soft rings of light running out, blood then gold.
-            if (major) {
-                const float w1 = easeOut(p * 1.2f);
-                glowRing(fx, cx, cy, size * (0.4f + 1.9f * w1), size * (0.05f + 0.22f * (1.0f - w1)), kFire,
-                         0.7f * std::pow(std::max(0.0f, 1.0f - p * 1.2f), 1.4f));
-                const float q2 = (age - 0.12f) / (length * 0.7f);
-                if (q2 > 0.0f && q2 < 1.0f) {
-                    glowRing(fx, cx, cy, size * (0.35f + 1.4f * easeOut(q2)), size * (0.03f + 0.08f * (1.0f - q2)), kGold,
-                             0.55f * (1.0f - q2) * (1.0f - q2));
-                }
             }
         }
     }
