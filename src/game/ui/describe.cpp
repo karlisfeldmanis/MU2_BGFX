@@ -675,6 +675,15 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             line.mark = tip::Mark::Diamond;
             does.rows.push_back(line);
         }
+        // The Angel's and the Imp's day (sim::timedPet), said on the card and not only in its
+        // foot: a buyer at Lumen's shelf reads it before he pays.
+        if (sim::timedPet(row)) {
+            Row line;
+            line.free = "Lasts 24 hours from the first time it is worn";
+            line.freeTone = Tone::Orange;
+            line.mark = tip::Mark::Diamond;
+            does.rows.push_back(line);
+        }
     }
     // A wing's powers in MuMain's words and order (GT 577, 578, 579; ZzzInventory.cpp:4270-4278),
     // `12 + Level * 2` off sim::wingPower, so the card and the blow cannot disagree; and its price
