@@ -9,6 +9,7 @@
 #include "content/tables.h"
 #include "sim/command.h"
 #include "sim/elite.h"
+#include "sim/maps.h"
 #include "sim/realm.h"
 
 using namespace mu;
@@ -123,5 +124,41 @@ void testElites(void (*checkOf)(bool, const char*),
                     risen->column(), risen->row());
         checkEqual(risen->maxHealth, lorencia.kinds[size_t(risen->kind)].health * sim::kEliteLife,
                    "its numbers its new breed's");
+    }
+
+    // Every field map: its count of Elites standing, each one of its three strongest breeds, never a
+    // boss, out of town (the user, 2026-10-21: "lets make elites on all maps").
+    for (const char* world : {"lorencia", "noria", "devias", "dungeon", "losttower", "atlans", "tarkan", "icarus", "aida"}) {
+        const sim::MapRow* row = sim::mapOf(world);
+        content::Tables tables;
+        std::string why;
+        if (!row || !content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/" + world + "/" + world + ".mur", tables, why)) {
+            check(false, "a field map's tables load");
+            continue;
+        }
+        sim::Realm map;
+        map.raise(&tables, 7, row->arrive[0], row->arrive[1], sim::Kin::DarkKnight, 1);
+        int standing = 0;
+        bool fair = true;
+        std::string names;
+        for (const sim::Body& one : map.bodies()) {
+            if (!one.elite) continue;
+            standing += one.alive() ? 1 : 0;
+            const content::MonsterKind& kind = tables.kinds[size_t(one.kind)];
+            names += " " + kind.label + " (" + std::to_string(one.column()) + "," + std::to_string(one.row()) + ")";
+            std::vector<int32_t> above;
+            for (const content::MonsterNest& nest : tables.nests) {
+                const content::MonsterKind& other = tables.kinds[nest.kind];
+                if (sim::mayBeElite(other.number) && other.level > kind.level &&
+                    std::find(above.begin(), above.end(), other.number) == above.end()) {
+                    above.push_back(other.number);
+                }
+            }
+            fair = fair && sim::mayBeElite(kind.number) && above.size() < size_t(sim::kEliteStrongest) &&
+                   !tables.grid.safe(one.column(), one.row());
+        }
+        std::printf("  %s:%s\n", world, names.c_str());
+        checkEqual(standing, sim::elitesOn(uint32_t(row->number)), "each field map stands its Elites");
+        check(fair, "each one of its three strongest, no boss, out of town");
     }
 }

@@ -20,7 +20,8 @@
 namespace mu::sim {
 
 // How many stand on each map, by MU's map number. Lorencia's first (the user, 2026-10-21: "lets
-// build first elite in lorencia"); the rest are added here as each is judged.
+// build first elite in lorencia"), Devias's the same day, then every other field map ("lets make
+// elites on all maps"). Never the events' maps (Blood Castle, Devil Square): raiseElites skips them.
 struct EliteMap {
     uint32_t map;
     int count;
@@ -28,6 +29,13 @@ struct EliteMap {
 constexpr EliteMap kEliteMaps[] = {
     {0, 1},  // Lorencia
     {2, 2},  // Devias (the user, 2026-10-21: "show some devias kill")
+    {3, 1},  // Noria
+    {1, 2},  // Dungeon
+    {4, 2},  // Lost Tower
+    {7, 2},  // Atlans
+    {8, 2},  // Tarkan
+    {10, 1}, // Icarus
+    {33, 2}, // Aida
 };
 // The bosses, which are never made Elites: an Elite is an ordinary breed made strong. MU's
 // numbers: the Gorgon, the Ice Queen, the Balrog, the Hydra, Zaikan, the Death Beam Knight, the

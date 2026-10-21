@@ -224,15 +224,15 @@ constexpr float kIcedLight[3] = {0.3f, 0.5f, 1.0f};
 // refined to +7 or more wears is left as it is.
 constexpr int kIcedPlus = 7;
 constexpr float kIcedChrome[3] = {0.35f, 0.6f, 1.0f};
-// **Ours.** An Elite (sim/elite.h) wears the same +7 chrome pass all the time, in gold (the
-// user, 2026-10-21: "chrome has to be golden", over the steel first proposed), the gold of its
-// mark on the minimap, and stands a quarter bigger than its breed. Stronger the same day ("gold
-// effect has to be stronger"): the +9 pass (Shiny01 over the bands) with the excellent shimmer,
-// and its body lit a warm gold (kEliteLight) under it.
+// **Ours.** An Elite (sim/elite.h) wears the +9 refinement pass (Chrome01's bands and Shiny01) in
+// gold all the time (the user, 2026-10-21: "chrome has to be golden", "gold effect has to be
+// stronger"), its body lit a strong warm gold under it (kEliteLight). Not the excellent shimmer:
+// tried for strength, it turned the gold purple on every breed but the red ones. And it stands
+// 1.4 times its breed ("elites has to be little bit bigger"; 1.25 before).
 constexpr int kElitePlus = 9;
 constexpr float kEliteChrome[3] = {1.0f, 0.78f, 0.25f};
-constexpr float kEliteLight[3] = {1.35f, 1.12f, 0.70f};
-constexpr float kEliteScale = 1.25f;
+constexpr float kEliteLight[3] = {1.9f, 1.5f, 0.75f};
+constexpr float kEliteScale = 1.4f;
 // A poisoned body's, `eDeBuff_Poison`, and one both poisoned and iced (ZzzObject.cpp:1118-1123).
 constexpr float kPoisonedLight[3] = {0.3f, 1.0f, 0.5f};
 // **Ours.** A character's, a third of MU's green: his green smoke (Poison::sicken) carries the read
