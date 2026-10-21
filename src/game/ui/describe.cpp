@@ -1251,6 +1251,21 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                                           : "Bound \xC2\xB7 cannot be traded or dropped";
     }
 
+    // The Archangel's quest copy carries no fight in its card: no damage, no requirements, only
+    // where it goes (the user, 2026-10-21: "for quest item lets dont show the stats to not
+    // confuse players in BC"). A refined or excellent one is a weapon and keeps them.
+    if (sim::archangelQuestItem(row, what)) {
+        sheet.hero = {};
+        sheet.who.clear();
+        sheet.classed = false;
+        Row line;
+        line.free = "Carry it back to the Archangel.";
+        line.freeTone = Tone::Gray;
+        Section errand;
+        errand.rows.push_back(line);
+        sheet.sections.assign(1, errand);
+    }
+
     // ---- the foot -----------------------------------------------------------------------------
     // Ammunition's durability is its shots, and MU draws it the same way.
     if (sim::ammunition(row) && row.durability > 0) {
