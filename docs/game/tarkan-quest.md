@@ -123,6 +123,24 @@ The three pieces are drop level 100, which no Tarkan or Blood Castle 6 breed rea
 their only home outside Atlans's 1-in-400 gear roll. The runes are the second class's Legendaries
 no quest paid before. Eleven things paid and the Firecrackers make twelve, `kQuestPaid`.
 
+**Since 2026-10-09** the table above is Icarus's and the class change's, and the first clear pays the
+first class's best weapon, three sockets (`kantursLegion` has the whole list). **Since 2026-10-21**
+(the user: "this quest has to give better weapon for SM and same for BK and ME and MG") the weapon
+goes by rank (`QuestItem::rank`, checked in `Realm::questItemFits`):
+
+| hero | weapon, three sockets |
+|---|---|
+| Dark Knight | Sword of Destruction +7 (`Sword17`) |
+| Dark Wizard | Staff of Resurrection +7 (`Staff07`) |
+| Fairy Elf | Saint Crossbow (`CrossBow17`) |
+| Blade Knight | Knight Blade +7 (`Sword21`), one-handed |
+| Soul Master | Staff of Kundun +7 (`Staff12`), one-handed |
+| Muse Elf | Great Reign Crossbow (`CrossBow20`) |
+| Magic Gladiator, Melee | Dark Reign Blade +7 (`Sword22`), his own |
+| Magic Gladiator, Magic | Staff of Kundun +7 (`Staff12`) |
+
+The Magic Gladiator has no second class and counts as promoted.
+
 ## Decisions open
 
 1. **The gate level** (Atlans gate 53, the Tab row and both quests' `minLevel`; all one number):

@@ -66,6 +66,12 @@ struct QuestItem {
     bool firstOnly = false;   // paid on the first completion and never again
     // A powered ring's or pendant's further powers (sim::Affix), past its signature.
     uint8_t affixes[3] = {};
+    // Whose rank it is paid to (Realm::questItemFits): every hero, or only one who has not
+    // changed class, or only a Blade Knight, Soul Master, Muse Elf or Magic Gladiator -- so a
+    // giver a promoted hero comes to late pays his second class's weapon, not his first's (the
+    // user, 2026-10-21: "this quest has to give better weapon for SM and same for BK and ME and
+    // MG"). The Magic Gladiator has no second class and counts as one. Ours.
+    enum class Rank : uint8_t { Any, First, Second } rank = Rank::Any;
 };
 
 // Every weapon, piece of armour and shield a quest pays comes with luck and the additional

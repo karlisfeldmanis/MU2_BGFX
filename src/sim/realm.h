@@ -1487,7 +1487,7 @@ public:
     bool questChoiceFits(int index, int choice) const;
     // Whether a thing paid is his to use by the same bits: the Magic Gladiator on the knight's
     // path is not paid a knight's helm or the Orb of Death Stab, which he could never wear or
-    // read. A thing naming nothing cooked does not fit.
+    // read. A thing naming nothing cooked does not fit, nor one of another rank (QuestItem::rank).
     bool questItemFits(const QuestItem& what) const;
     // Accept, at the giver: offered, and his dialog open. Refused whole and silent otherwise.
     bool acceptQuest(int index);

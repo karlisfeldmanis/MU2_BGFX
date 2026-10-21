@@ -13453,6 +13453,20 @@ void testRoadOfKantur() {
     check(held("Jewel22", uint8_t(sim::Power::Plague)) == 0, "not the wizard's rune");
     check(held("Jewel03", 0) == 1 && held("Quest04", 0) == 1,
           "a Jewel of Life and a Loch's Feather every clear");
+    check(held("Sword21", 0) == 0, "and not the Blade Knight's Knight Blade");
+    // A Blade Knight's first clear pays his second class's sword, not the first's (2026-10-21).
+    sand.closeQuest();
+    sim::HeroRecord blade = sand.record();
+    blade.quests[sim::kKantursLegion].completions = 0;
+    blade.quests[sim::kKantursLegion].state = sim::QuestState::Ready;
+    blade.quests[sim::kTreasureQuests[int(sim::Kin::DarkKnight)]].completions = 1;
+    sand.restore(blade);
+    check(sand.hero().second, "promoted to Blade Knight");
+    check(talkTo(sand, keeper), "his window opens again");
+    check(sand.completeQuest(sim::kKantursLegion, -1), "the Blade Knight hands it in");
+    check(held("Sword21", 0) == 1, "and is paid the Knight Blade");
+    check(held("Sword17", 0) == 1, "not a second Sword of Destruction");
+    check(held("Sword22", 0) == 0, "nor the gladiator's Dark Reign Blade");
 }
 
 // **The reward ladder** (sim/quests.cpp, 2026-10-09): a first clear's rune never rarer than its
@@ -13488,7 +13502,8 @@ void testQuestLadder(const content::Tables& tables) {
             if (rune && rune->second) check(late, "a second class's rune waits for Icarus");
             const int item = tables.itemNamed(row.paid[i].item);
             if (item >= 0 && sim::secondClassOnly(tables.items[size_t(item)])) {
-                check(late, "and so does its gear");
+                check(late || row.paid[i].rank == sim::QuestItem::Rank::Second,
+                      "and so does its gear, but to one already promoted");
             }
         }
     }
@@ -13522,6 +13537,8 @@ void testQuestLadder(const content::Tables& tables) {
                 const int item = tables.itemNamed(row.paid[i].item);
                 if (item < 0 || !sim::questPays(row.paid[i], kin, true)) continue;
                 const content::ItemRow& one = tables.items[size_t(item)];
+                // Not the Magic Gladiator's own on the knight's row (his Dark Reign Blade).
+                if ((one.classes & (1 << kin)) == 0) continue;
                 if (!one.weapon() || !one.twoHanded()) continue;
                 const bool allowed = one.name == "Sword18";
                 check(allowed, "a knight's or a wizard's quest weapon is one-handed");

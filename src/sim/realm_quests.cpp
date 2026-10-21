@@ -164,6 +164,10 @@ bool Realm::questItemFits(const QuestItem& what) const {
     const int32_t item = tables_ && what.item ? tables_->itemNamed(what.item) : -1;
     if (item < 0) return false;
     const content::ItemRow& one = tables_->items[size_t(item)];
+    if (what.rank != QuestItem::Rank::Any) {
+        const bool second = promoted() || mine().kin == Kin::MagicGladiator;
+        if (second != (what.rank == QuestItem::Rank::Second)) return false;
+    }
     return one.classes == 0 || (one.classes & (1 << int(mine().kin))) != 0;
 }
 

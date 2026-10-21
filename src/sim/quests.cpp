@@ -1587,13 +1587,31 @@ QuestRow kantursLegion() {
     // Crossbow -- with two runes each for it: the knight's Immolate and Ice, the wizard's Inferno
     // and Thunder (his Spirit Plague went to Tersia's sixth floor), the elf's Greater Barrage and
     // Glacier. And the legendary pendant, four powers, beside the Balrog's legendary ring.
+    //
+    // **A promoted hero's own** (the user, 2026-10-21: "this quest has to give better weapon for SM
+    // and same for BK and ME and MG"): one who comes to the Keeper after Sevina is paid his second
+    // class's, past Icarus's -- the Blade Knight's one-handed Knight Blade, the Soul Master's
+    // one-handed Staff of Kundun, both at +7 as the first class's, and the Muse Elf's Great Reign
+    // Crossbow, the Saint's own line. The Magic Gladiator is paid by his path: on the knight's his
+    // own Dark Reign Blade, the sword that casts, on the wizard's the Staff of Kundun, which is his
+    // too (Realm::questItemFits keeps the Knight Blade from him by its class bits, and the Dark
+    // Reign Blade from the knight).
+    using Rank = QuestItem::Rank;
     int n = 0;
     row.paid[n++] = {.item = "Sword17", .plus = 7, .kin = knight, .sockets = 3,
-                     .firstOnly = true};  // Sword of Destruction +7
+                     .firstOnly = true, .rank = Rank::First};  // Sword of Destruction +7
     row.paid[n++] = {.item = "Staff07", .plus = 7, .kin = wizard, .sockets = 3,
-                     .firstOnly = true};  // Staff of Resurrection +7
+                     .firstOnly = true, .rank = Rank::First};  // Staff of Resurrection +7
     row.paid[n++] = {.item = "CrossBow17", .kin = elf, .sockets = 3,
-                     .firstOnly = true};  // Saint Crossbow
+                     .firstOnly = true, .rank = Rank::First};  // Saint Crossbow
+    row.paid[n++] = {.item = "Sword21", .plus = 7, .kin = knight, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::Second};  // Knight Blade +7, the BK's
+    row.paid[n++] = {.item = "Sword22", .plus = 7, .kin = knight, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::Second};  // Dark Reign Blade +7, the MG's
+    row.paid[n++] = {.item = "Staff12", .plus = 7, .kin = wizard, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::Second};  // Staff of Kundun +7
+    row.paid[n++] = {.item = "CrossBow20", .kin = elf, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::Second};  // Great Reign Crossbow
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Burn),
                      .firstOnly = true};  // Immolate
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Ice),
