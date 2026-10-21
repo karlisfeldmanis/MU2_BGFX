@@ -14,6 +14,7 @@
 #include "sim/items.h"
 #include "sim/quests.h"
 #include "sim/realm.h"
+#include "sim/realm_tuning.h"
 #include "sim/rules.h"
 #include "sim/skills.h"
 #include "sim/wear.h"
@@ -382,7 +383,7 @@ bool Helper::support(Play& play, const HelperSettings& settings) {
             const sim::Body* summon = realm.summoned();
             wanted = summon == nullptr || !summon->alive() || summon->gone;
         }
-        if (!wanted || hero.mana < row->mana || !row->suits(offHand)) continue;
+        if (!wanted || hero.mana < sim::manaCostOf(hero, *row) || !row->suits(offHand)) continue;
         if (const auto tried = tried_.find(skill); tried != tried_.end() && tried->second > clock_) continue;
         tried_[skill] = clock_ + kAuraRetry;
         core::logf("helper: %s", row->name);
@@ -421,7 +422,7 @@ bool Helper::aid(Play& play, const HelperSettings& settings) {
     const auto ready = [&](int32_t skill, const sim::SkillRow*& row, HelperUse wantedUse) {
         row = skill > 0 ? sim::skillNumbered(skill) : nullptr;
         if (row == nullptr || !row->aids() || !realm.knows(skill) || realm.cooling(skill) > 0) return false;
-        if (hero.mana < row->mana || !row->suits(offHand)) return false;
+        if (hero.mana < sim::manaCostOf(hero, *row) || !row->suits(offHand)) return false;
         return settings.use(skill, helperKind(*row, false)) == wantedUse;
     };
     const auto tried = [&](int32_t skill, const sim::Body& on) {
@@ -620,7 +621,8 @@ void Helper::keys(Play& play, const HelperSettings& settings, uint32_t target) {
         const bool now = use == HelperUse::Ready || (use == HelperUse::Near2 && crowd >= 2) ||
                          (use == HelperUse::Near3 && crowd >= 3);
         // A charge pays every stage at once (Realm::invoke).
-        const int32_t price = row->chargeTicks > 0 ? row->mana * row->chargeStages : row->mana;
+        const int32_t cost = sim::manaCostOf(hero, *row);  // as the realm charges it, talents and all
+        const int32_t price = row->chargeTicks > 0 ? cost * row->chargeStages : cost;
         if (!now || hero.mana < price || !row->suits(hand)) continue;
         if (const auto tried = tried_.find(skill); tried != tried_.end() && tried->second > clock_) continue;
         tried_[skill] = clock_ + kSkillRetry;

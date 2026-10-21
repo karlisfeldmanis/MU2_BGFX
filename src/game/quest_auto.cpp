@@ -18,6 +18,7 @@
 #include "sim/maps.h"
 #include "sim/quests.h"
 #include "sim/realm.h"
+#include "sim/realm_tuning.h"
 #include "sim/rules.h"
 #include "sim/skills.h"
 #include "sim/travel.h"
@@ -532,7 +533,7 @@ bool QuestAuto::guard(Play& play) {
         } else {
             continue;
         }
-        if (hero.mana < row->mana || !row->suits(offHand)) continue;
+        if (hero.mana < sim::manaCostOf(hero, *row) || !row->suits(offHand)) continue;
         if (const auto tried = guardTried_.find(skill); tried != guardTried_.end() && tried->second > clock_) continue;
         guardTried_[skill] = clock_ + 4.0;
         core::logf("auto-play: %s raised", row->name);

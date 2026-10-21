@@ -1901,7 +1901,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         const bool court = row.aura() && tables.map == sim::kBloodCastleMap;
         // Nor a summon where none is raised: Icarus (Realm::conjure, sim::MapRow::summons).
         const bool raised = row.summons <= 0 || sim::summonsHere(row, uint32_t(tables.map));
-        return hero.alive() && (!inTown || court) && armedFor(row) && hero.mana >= row.mana &&
+        return hero.alive() && (!inTown || court) && armedFor(row) && hero.mana >= sim::manaCostOf(hero, row) &&
                (!row.mounted || hero.riding) && raised;
     };
 
@@ -1912,7 +1912,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         Hud::FanCell cell;
         cell.number = row.number;
         cell.name = row.name;
-        cell.mana = row.mana;
+        cell.mana = sim::manaCostOf(hero, row);  // his talents' share off it, as the realm charges
         for (int key = 0; key < Hud::kSkillBoxes; ++key) {
             if (bound_[key] == row.number) cell.key = key;
         }
@@ -2347,8 +2347,9 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     } else {
         facts.rows.push_back(line("Cooldown", wait(seconds), tip::Tone::White));
     }
-    const bool paid = hero.mana >= row.mana;
-    facts.rows.push_back(line("Mana", std::to_string(row.mana), paid ? tip::Tone::Blue
+    const int32_t cost = sim::manaCostOf(hero, row);  // as the realm charges it, talents and all
+    const bool paid = hero.mana >= cost;
+    facts.rows.push_back(line("Mana", std::to_string(cost), paid ? tip::Tone::Blue
                                                                      : tip::Tone::Red));
     // And the level it was met at, when there is one. On a card this is history rather than a
     // requirement -- a skill he can read about is one he has already learned -- but it is the
