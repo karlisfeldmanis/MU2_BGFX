@@ -1655,8 +1655,10 @@ void Chat::build(float u, const Pointer& pointer) {
         if (one.key == tab_) chosen = &one;
     }
 
-    // The drop under the panel, the fill, and the warm light from the top.
-    tip::shadowUnder(back_, panel_, u, r, 0.55f * chrome);
+    // The drop under the panel only while it is active, fading in with the pointer or the box (the
+    // user: "dont use drop shadow when chat is not active for container"); then the fill and the warm
+    // light from the top.
+    if (lit_ > 0.0f) tip::shadowUnder(back_, panel_, u, r, 0.55f * lit_);
     const float panelR[4] = {0.0f, 0.0f, r, r};
     tip::rounded(back_, panel_, panelR, fill, fill);
     back_.shade({panel_.x, panel_.y, panel_.w, std::min(panel_.h, kPanelLight * u)}, faded(kWarm, kSeamLight * chrome),
