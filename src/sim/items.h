@@ -1350,11 +1350,13 @@ bool elementServes(Element element, Kin kin);
 // MU's Box of Luck at level 2 (14, 11), its own row here (content/items/misc/MagicBox03.json).
 // Thrown on the ground it is spent and opens: WebZen's FireCrackerOpenEven (Event.cpp:1201, the
 // MODIFY_DROP_ITEM_OF_FIRE_CRACKER_EVENT_20050316 body 1.00.93 builds). Two in ten an item off
-// eventitembag5 at the thrower's feet with a firework over it, else Zen (kFirecrackerZenLeast).
+// eventitembag5 at the thrower's feet with a firework over it (four in ten here,
+// kFirecrackerItemIn10), else Zen (kFirecrackerZenLeast).
 // Realm::crack.
 bool firecracker(const content::ItemRow& row);
 // `rand()%10 < g_ItemDropRateForgFireCracker`, 2 in WebZen's own 0.99.60T commonserver.cfg.
-constexpr int kFirecrackerItemIn10 = 2;
+// **Ours 4** (a player, 2026-10-21: "Last 20 boxes I get only zen").
+constexpr int kFirecrackerItemIn10 = 4;
 // Every eventitembag5 row is level 5, and outside Korea `GetLevel + rand()%5` (gLanguage != 0):
 // +5 to +9.
 constexpr int kFirecrackerPlus = 5;
@@ -1476,8 +1478,9 @@ constexpr int kKundunTiers = 3;
 // excellent in 12, 17.5 and 24 boxes in a hundred ('we need better excelent drop rate from box
 // of kundum'). WebZen's shipped rates (0.99.60T
 // commonserver.cfg) were 30/25/20 and 5/4/3 -- 1.5, 1 and 0.6 in a hundred, rarer as the box
-// got better.
-constexpr int kKundunItemIn100[kKundunTiers] = {30, 35, 40};
+// got better. An item in 50, 55 and 60 boxes in a hundred, from 30, 35 and 40 (a player,
+// 2026-10-21: "Last 20 boxes I get only zen"): an excellent in 20, 27.5 and 36 now.
+constexpr int kKundunItemIn100[kKundunTiers] = {50, 55, 60};
 constexpr int kKundunExcellentIn100[kKundunTiers] = {40, 50, 60};
 constexpr int64_t kKundunZen[kKundunTiers] = {50000, 100000, 150000};
 // A plain row's level is the bag file's plus `rand()%addlevel` (2 for +1 to +3): +5/+6 from

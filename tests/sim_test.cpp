@@ -13011,7 +13011,7 @@ void testFirecracker(const content::Tables& tables) {
     std::printf("  %d thrown: %d items, %d Zen; +5..+9 %d %d %d %d %d\n", tries, items, zens,
                 plusSeen[5], plusSeen[6], plusSeen[7], plusSeen[8], plusSeen[9]);
     checkEqual(kept, 0, "every one thrown is spent");
-    check(std::abs(double(items) / tries - 0.2) < 0.015, "two in ten give an item");
+    check(std::abs(double(items) / tries - sim::kFirecrackerItemIn10 / 10.0) < 0.015, "four in ten give an item");
     checkEqual(badZen, 0, "the rest give 30,000 to 100,000 Zen into the purse");
     checkEqual(badPlus, 0, "an item comes +5 to +9");
     for (int plus = 5; plus <= 9; ++plus) check(plusSeen[plus] > 0, "each of +5 to +9 comes");
