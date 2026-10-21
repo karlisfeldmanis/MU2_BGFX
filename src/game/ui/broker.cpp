@@ -230,9 +230,6 @@ void Broker::layout(Play& play) {
         if (const net::BrokerRow* row = chosenRow()) {
             const bool own = (row->flags & net::BrokerRow::Own) != 0;
             const float in = 10.0f;
-            // The thing's framed block, for the bag's whole item card on hover: the card beside
-            // the list has room for what a buyer weighs, not for every line.
-            spot({kCard.x + in, kCard.y + in, kCard.w - 2.0f * in, 84.0f}, Hit::Detail);
             if (row->flags & net::BrokerRow::Alike) {
                 const float qy = kCard.bottom() - 76.0f;
                 spot({kCard.x + in, qy, kButtonH, kButtonH}, Hit::Qty, -1);
@@ -243,7 +240,9 @@ void Broker::layout(Play& play) {
                 spot({kCard.x + in, kCard.bottom() - 88.0f, 110.0f, 14.0f}, Hit::Seller);
                 // A seller on another realm is no one to whisper (docs/game/shared-market.md).
                 const bool elsewhere = (row->flags & net::BrokerRow::Elsewhere) != 0;
-                if (!own && !elsewhere) spot({kCard.right() - in - 56.0f, kCard.bottom() - 88.0f, 56.0f, kButtonH}, Hit::Whisper);
+                // Small and quiet on the seller's line (the user, 2026-10-22: "why whisper button so
+                // big?"): it is beside his name, not an action of the card's.
+                if (!own && !elsewhere) spot({kCard.right() - in - 44.0f, kCard.bottom() - 88.0f, 44.0f, 14.0f}, Hit::Whisper);
             }
             if (!own) spot({kCard.x + in, kCard.bottom() - in - kPrimaryH, kCard.w - 2.0f * in, kPrimaryH}, Hit::Buy);
         }

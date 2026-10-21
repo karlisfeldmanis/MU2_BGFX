@@ -578,7 +578,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
                 text(card.x + in + 8.0f, card.bottom() - 65.0f, kCaption, row->secondsLeft < 7200 ? style::kDanger : style::kAshInk,
                      std::string(elsewhere ? "Another realm" : online ? "Online" : "Offline") + " · " +
                          hoursLeft(row->secondsLeft) + " left");
-                if (!elsewhere) button(Hit::Whisper, 0, "Whisper", controls::Kind::Secondary);
+                if (!elsewhere) button(Hit::Whisper, 0, "Whisper", controls::Kind::Quiet);
             }
             // What it will cost him, and where the thing goes.
             int64_t cost = row->price;
@@ -855,13 +855,11 @@ void Broker::rebuild(Play& play, Stage* stage) {
     if (stage) stage->stand(standing, kTurnSquare, kTurnSquare);
 
     // The item card over his own listing under the pointer, the bag's own card: My listings has
-    // no card beside it, so this is where its details show (the user, 2026-10-11). And over the
-    // chosen listing's picture on Buy, every line of it (the user, 2026-10-22).
+    // no card beside it, so this is where its details show (the user, 2026-10-11).
     if (hovered_ >= 0 && size_t(hovered_) < spots_.size() && pressed_ < 0) {
         const Spot& s = spots_[size_t(hovered_)];
-        const net::BrokerRow* chosen = s.hit == Hit::Detail ? chosenRow() : nullptr;
-        if ((s.hit == Hit::Listing && size_t(s.index) < mine_.mine.size()) || chosen) {
-            const sim::Held& what = chosen ? chosen->what : mine_.mine[size_t(s.index)].what;
+        if (s.hit == Hit::Listing && size_t(s.index) < mine_.mine.size()) {
+            const sim::Held& what = mine_.mine[size_t(s.index)].what;
             tip::Sheet sheet = describe(tables, what, realm.wearer(), realm.satchel());
             if (tipStage_) tip::stand(*tipStage_, what.item, what.refinement, sheet);
             tip::draw(tip_, sheet, P(s.box), screenW_, screenH_);
