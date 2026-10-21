@@ -1350,8 +1350,15 @@ bool classTreasure(const content::ItemRow& row);
 // (Held::bound) and none of the quest items MuMain will not trade (IsTradeBan) -- Sevina's
 // treasures and the Archangel's weapons. Asked by the realm's refusal, the trade window's drop
 // colour and the card alike.
+// The one an Archangel weapon is a quest item as: plain, +0 and not excellent, the copy the
+// Archangel takes back (Realm's hand-in asks the same). One refined or excellent is a weapon
+// like any since they drop from Icarus (the user, 2026-10-21: a +2 sword 'shows as quest item
+// not weapon').
+inline bool archangelQuestItem(const content::ItemRow& row, const Held& what) {
+    return archangelWeapon(row) && what.refinement == 0 && what.excellent == 0;
+}
 inline bool tradeable(const content::ItemRow& row, const Held& what) {
-    return !what.bound && !archangelWeapon(row) && !classTreasure(row);
+    return !what.bound && !archangelQuestItem(row, what) && !classTreasure(row);
 }
 constexpr int kTreasureIn10000 = 200;
 // The weakest breed of the trial's ground, LT7's Death Knight: a Blood Castle or Devil Square

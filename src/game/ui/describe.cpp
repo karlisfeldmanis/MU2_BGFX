@@ -47,11 +47,11 @@ std::string decimal(float v) {
 // The line under the name: what the thing is, and whom it is for. MU has no such line -- it
 // says the same in its "Can be equipped by" list and in the damage line's own wording -- and
 // it is here because the head of a card wants a second, quieter line.
-std::string kindOf(const content::ItemRow& row) {
+std::string kindOf(const content::ItemRow& row, const sim::Held& what) {
     if (sim::ammunition(row)) return "Ammunition";
     // Blood Castle's: the quest item the statue gives up, the ticket and what makes it -- in
     // MU's helper group, which would read them as pets.
-    if (sim::archangelWeapon(row) || sim::classTreasure(row)) return "Quest item";
+    if (sim::archangelQuestItem(row, what) || sim::classTreasure(row)) return "Quest item";
     if (sim::invisibilityCloak(row)) return "Blood Castle ticket";
     if (sim::scrollOfArchangel(row) || sim::bloodBone(row)) return "Ticket material";
     if (sim::devilsInvitation(row)) return "Devil Square ticket";
@@ -321,7 +321,7 @@ tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
     // A quest item is purple, the user's of 2026-10-04: Sevina's treasures and the Archangel's
     // weapons, both carried back to whoever asked; and Loch's Feather, which Sevina pays and the
     // 2nd wings are made of ('loch feather has to use pruple label color').
-    if (sim::archangelWeapon(row) || sim::classTreasure(row) || sim::lochsFeather(row)) {
+    if (sim::archangelQuestItem(row, what) || sim::classTreasure(row) || sim::lochsFeather(row)) {
         return Tone::Quest;
     }
     // MU draws Devil Square's three yellow too (ZzzInventory.cpp:2186-2189).
@@ -370,7 +370,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // The type line, in the name's tone. GetItemName puts `Excellent ` before the name
     // (ZZ:2645-2671); the card moves it here, where Diablo's "Legendary Bow" stands, so the name
     // keeps to one line -- the user's choice of 2026-09-27. Whom it is for is in the foot.
-    std::string base = kindOf(row);
+    std::string base = kindOf(row, what);
     if (what.excellent != 0) {
         base[0] = char(std::tolower(static_cast<unsigned char>(base[0])));
         base = "Excellent " + base;
