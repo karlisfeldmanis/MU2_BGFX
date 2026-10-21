@@ -59,6 +59,12 @@ constexpr uint32_t kWarm = hex(0xffecd2);
 constexpr float kTabLight = 0.09f, kSeamLight = 0.04f, kPanelLight = 48.0f;
 // The whisper's count on a purple pill ("whisper number has to be on purple circle").
 constexpr uint32_t kPillTop = hex(0x9d579a), kPillFoot = hex(0x7a3d77);
+// And the other tabs' counts on pills of their own ("work on 2 whisper and 2 global"): Global's
+// from its orange, darkened so the white figure reads; General's plain iron.
+constexpr uint32_t kGlobalPillTop = hex(0xa8653a), kGlobalPillFoot = hex(0x7c4523);
+constexpr uint32_t kIronPillTop = hex(0x5a4838), kIronPillFoot = hex(0x3d3128);
+constexpr uint32_t kPillRing = hex(0xffffff, 0.14f);
+constexpr float kPill = 18.0f, kPillFigure = 13.0f, kPillGap = 6.0f;
 // A menu's sheet: PlayerMenu's, so the chat's menus are the party bar's.
 constexpr uint32_t kSheet = gfx::rgba(0.051f, 0.039f, 0.031f, 0.97f);
 constexpr uint32_t kRowLit = gfx::rgba(1.0f, 0.94f, 0.86f, 0.07f);
@@ -131,6 +137,68 @@ float bodyWidth(float size, const std::string& text) { return controls::labelWid
 float wordWidth(float size, const std::string& text) {
     const gfx::Face* face = controls::wordFace();
     return face ? face->measure(size, text) : controls::labelWidth(size, text);
+}
+
+// Where a line's ink stands about its pen and baseline (the glyphs' own boxes, as Canvas::lettered
+// lays them): a figure is centred on what is drawn, not on the line. Alegreya's figures are
+// old-style and sit low, so a pill centred on the line looked dropped.
+struct Ink {
+    float left = 0.0f, right = 0.0f, top = 0.0f, bottom = 0.0f;
+};
+Ink inkOf(const gfx::Face& face, float size, const std::string& text) {
+    Ink ink;
+    bool first = true;
+    float pen = 0.0f;
+    const float k = face.emScale(size);
+    for (const char c : text) {
+        const gfx::FaceGlyph* g = face.glyph(c);
+        if (g == nullptr) continue;
+        if (g->x1 > g->x0 && g->y1 > g->y0) {
+            const Ink one{pen + g->x0 * k, pen + g->x1 * k, g->y0 * k, g->y1 * k};
+            if (first) ink = one;
+            ink.left = std::min(ink.left, one.left), ink.right = std::max(ink.right, one.right);
+            ink.top = std::min(ink.top, one.top), ink.bottom = std::max(ink.bottom, one.bottom);
+            first = false;
+        }
+        pen += g->advance * k;
+    }
+    return ink;
+}
+
+// An unread count's pill: at least round, wider for two figures.
+float pillWidth(float u, const std::string& count) {
+    const gfx::Face* face = controls::wordFace();
+    const float figures = face ? inkOf(*face, kPillFigure * u, count).right - inkOf(*face, kPillFigure * u, count).left
+                               : controls::labelWidth(kPillFigure * u, count);
+    return std::max(kPill * u, std::round(figures + 11.0f * u));
+}
+
+// The pill itself, centred on `midY` from `x`: its drop, a faint light ring, the body graded down,
+// and the figure in white, centred on its ink. Returns its width.
+float pill(gfx::Canvas& canvas, float x, float midY, float u, const std::string& count, uint32_t top,
+           uint32_t foot, float alpha) {
+    const float line = std::max(1.0f, std::round(u));
+    const Box box{std::round(x), std::round(midY - kPill * u * 0.5f), pillWidth(u, count), std::round(kPill * u)};
+    const float r = box.h * 0.5f;
+    const float round[4] = {r, r, r, r};
+    tip::rounded(canvas, {box.x, box.y + line, box.w, box.h}, round, faded(kDrop, 0.55f * alpha),
+                 faded(kDrop, 0.55f * alpha));
+    tip::rounded(canvas, box, round, faded(kPillRing, alpha), faded(kPillRing, alpha * 0.5f));
+    const Box in = box.grown(-line);
+    const float inner[4] = {r - line, r - line, r - line, r - line};
+    tip::rounded(canvas, in, inner, faded(top, alpha), faded(foot, alpha));
+    const float size = kPillFigure * u;
+    const gfx::Face* face = controls::wordFace();
+    if (face == nullptr) {
+        controls::label(canvas, box.x + 5.0f * u, box.midY() + size * 0.33f, size, faded(0xFFFFFFFFu, alpha), count);
+        return box.w;
+    }
+    const Ink ink = inkOf(*face, size, count);
+    const float penX = box.midX() - (ink.left + ink.right) * 0.5f;
+    const float baseline = box.midY() - (ink.top + ink.bottom) * 0.5f;
+    canvas.lettered(*face, controls::wordTexture(), std::round(penX * 2.0f) * 0.5f, std::round(baseline * 2.0f) * 0.5f,
+                    size, 0.0f, faded(0xFFFFFFFFu, alpha), count);
+    return box.w;
 }
 
 // A stroke from one point to another, `wide` across: a cross, a corner's turn.
@@ -1070,7 +1138,7 @@ void Chat::layTabs(float u) {
         float wide = pad * 2.0f + wordWidth(kWord * u, tab.word);
         const auto it = unread_.find(tab.key);
         if (it != unread_.end() && it->second > 0 && !chosen) {
-            wide += 6.0f * u + std::max(18.0f * u, bodyWidth(11.0f * u, std::to_string(std::min(it->second, 99))) + 10.0f * u);
+            wide += kPillGap * u + pillWidth(u, std::to_string(std::min(it->second, 99)));
         }
         tab.box = {x, row_.y, std::round(wide), row_.h};
         x += tab.box.w;
@@ -1624,8 +1692,7 @@ void Chat::build(float u, const Pointer& pointer) {
     stroke(back_, panel_.right() - r, panel_.bottom() - line * 0.5f, panel_.right() - line * 0.5f, panel_.bottom() - r,
            line, foot);
 
-    // The tabs' words, plain; the chosen one lit. An unread count after the word: the whispers' on a
-    // purple pill, the others' in the accent.
+    // The tabs' words, plain; the chosen one lit. An unread count after the word, on a pill.
     const float tabBase = controls::middle(row_.y, row_.h, kWord * u);
     for (const Tab& one : tabs_) {
         const bool isChosen = &one == chosen;
@@ -1636,23 +1703,11 @@ void Chat::build(float u, const Pointer& pointer) {
         const auto it = unread_.find(one.key);
         if (it == unread_.end() || it->second <= 0 || isChosen) continue;
         const std::string count = std::to_string(std::min(it->second, 99));
-        const float digits = 11.0f * u;
-        if (one.key == "whispers") {
-            const float wide = std::max(18.0f * u, bodyWidth(digits, count) + 10.0f * u);
-            const Box pill{std::round(x + 6.0f * u), std::round(row_.midY() - 9.0f * u), std::round(wide), std::round(18.0f * u)};
-            const float pillR[4] = {pill.h * 0.5f, pill.h * 0.5f, pill.h * 0.5f, pill.h * 0.5f};
-            tip::rounded(tabsDrawn_, {pill.x, pill.y + line, pill.w, pill.h}, pillR, faded(kDrop, 0.5f * chrome),
-                         faded(kDrop, 0.5f * chrome));
-            tip::rounded(tabsDrawn_, pill, pillR, faded(kPillTop, chrome), faded(kPillFoot, chrome));
-            // Centred on the digits' own box, not on the line: Alegreya's figures are old-style and
-            // sit low, so the baseline stands a third of the size under the middle, not the cap's half.
-            const float wideDigits = bodyWidth(digits, count);
-            const float base = pill.midY() + digits * 0.33f;
-            body(tabsDrawn_, std::round(pill.midX() - wideDigits * 0.5f), std::round(base), digits,
-                 faded(hex(0xffffff), chrome), count);
-        } else {
-            body(tabsDrawn_, x + 6.0f * u, tabBase, 13.0f * u, faded(kBloodHi, chrome), count);
-        }
+        // The whispers' purple, Global's from its orange, General's iron.
+        const bool whispers = one.key == "whispers", global = one.key == "global";
+        pill(tabsDrawn_, x + kPillGap * u, row_.midY(), u, count,
+             whispers ? kPillTop : global ? kGlobalPillTop : kIronPillTop,
+             whispers ? kPillFoot : global ? kGlobalPillFoot : kIronPillFoot, chrome);
     }
     // The settings' sliders at the row's end, lit while they are open or under the pointer.
     {
