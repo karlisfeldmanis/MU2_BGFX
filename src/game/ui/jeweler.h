@@ -19,6 +19,7 @@
 // is lit and the line it replaced is named under it.
 #pragma once
 
+#include <bitset>
 #include <cstdint>
 #include <string>
 
@@ -52,6 +53,10 @@ public:
     void answered(bool ok, int32_t value, const std::string& refusal);
     void cancel();
     bool covers(float x, float y) const;
+    // The bag slots on his page now -- the pieces in the slots and Combine's made piece -- which
+    // the bag shows empty until Take out or the window shuts (Bag::away). Salvage's jewel is not
+    // among them: it may have gone onto a stack.
+    std::bitset<sim::kSlots> away() const;
     const gfx::Canvas& canvas() const { return canvas_; }
 
 private:

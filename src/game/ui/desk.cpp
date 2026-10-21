@@ -1372,6 +1372,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 bagPointer.pressed = false;
             }
         }
+        // What lies on the Jeweler's page is shown there, not in the bag, until taken out.
+        bag_.away(jeweling_ ? jeweler_.away() : std::bitset<sim::kSlots>{});
         bag_.update(float(window.width()), float(window.height()), characterOpen_ || inspecting() ? 2 : 1,
                     play.realm(), bagPointer, bagStage_, &asked);
         if (asked.toggleDock) click();

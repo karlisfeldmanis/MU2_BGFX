@@ -187,7 +187,8 @@ bool Bag::Contents::operator==(const Contents& o) const {
            bare == o.bare && archer == o.archer && docked == o.docked && overDock == o.overDock &&
            pressingDock == o.pressingDock && overBottle == o.overBottle &&
            pressingBottle == o.pressingBottle && autoHealth == o.autoHealth &&
-           autoMana == o.autoMana && nextHealth == o.nextHealth && nextMana == o.nextMana;
+           autoMana == o.autoMana && nextHealth == o.nextHealth && nextMana == o.nextMana &&
+           away == o.away;
 }
 
 bool Bag::underDock(float ux, float uy) const { return dockShown() && kDock.has(ux, uy); }
@@ -271,6 +272,8 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
     hovered_ = cell >= 0 ? bag.holder(tables, cell) : -1;
     // A vault piece riding over the bag hovers nothing: no lit cell, no card under it.
     if (!incoming_.empty()) hovered_ = -1;
+    // Nor does a piece away in another window: its cell is empty here.
+    if (hovered_ >= 0 && away_[size_t(hovered_)]) hovered_ = -1;
 
     const Box cross = panel::frameClose();
     overClose_ = inside && cross.has(ux, uy);
@@ -343,6 +346,7 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
                 // jewel goes on, the drop is that and never a swap.
                 const int under = bag.holder(tables, cell);
                 const content::ItemRow& row = tables.items[size_t(bag[from].item)];
+                if (under >= 0 && away_[size_t(under)]) placed = false;
                 // A stack goes on the stack of its kind under the pointer; anything else stands
                 // with the pointer at its middle (landAt).
                 const bool onto = under >= 0 && under != from && sim::baggable(cell) &&
@@ -350,7 +354,9 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
                 const int to = onto ? cell : landAt(ux, uy, row.width, row.height);
                 // A Rune of Creation set in a socket rides the same request: the realm's refine
                 // takes either, and refuses whole what it cannot do.
-                if (under >= 0 && under != from &&
+                if (!placed) {
+                    // Onto a piece away in another window: nothing.
+                } else if (under >= 0 && under != from &&
                     (sim::refinable(tables, bag[from], bag[under]) ||
                      sim::settable(tables, bag[from], bag[under], realm.wearer().kin,
                                    realm.wearer().second))) {
@@ -383,7 +389,7 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
     standing_.clear();
     for (int slot = 0; slot < sim::kSlots; ++slot) {
         const sim::Held& what = bag[slot];
-        if (what.empty()) continue;
+        if (what.empty() || away_[size_t(slot)]) continue;
         // The one picked up stands on the carry strip, and its slot is empty.
         Box box = slot == dragging_ ? panel::carryBox(itemBox(tables, slot, what))
                                     : itemBox(tables, slot, what);
@@ -448,6 +454,7 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
     now_.bare = bare_;
     now_.archer = archer_;
     now_.docked = dockShown();
+    now_.away = away_;
     now_.overDock = overDock_;
     now_.pressingDock = pressingDock_;
     now_.overBottle = overBottle_;
@@ -527,7 +534,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // not have a background". A worn slot has its well and its ghost and takes no teal, as MU's.
     for (int slot = 0; slot < sim::kSlots; ++slot) {
         const sim::Held& held = bag[slot];
-        if (held.empty() || slot == dragging_) continue;
+        if (held.empty() || slot == dragging_ || away_[size_t(slot)]) continue;
         const content::ItemRow& row = tables.items[size_t(held.item)];
         const sim::Worn band =
             sim::wears(row) ? sim::wornBand(held.durability, sim::maximumDurability(row, held))
@@ -614,7 +621,8 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
             const bool onto = under >= 0 && under != dragging_ && sim::baggable(cell) &&
                               sim::tops(tables, bag[under], moving);
             const int to = onto ? cell : landAt(ux, uy, row.width, row.height);
-            const bool fits = sim::movable(tables, realm.wearer(), bag, dragging_, to);
+            const bool fits = sim::movable(tables, realm.wearer(), bag, dragging_, to) &&
+                              !(under >= 0 && away_[size_t(under)]);
             int cells[sim::kSlots];
             const int count = to >= 0 ? bag.covered(to, row.width, row.height, cells) : 0;
             // A Rune of Creation lights the piece it is over, all of it: blue where it would be
@@ -626,7 +634,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                                                realm.wearer().second);
             const bool refused = under >= 0 && under != dragging_ && !setting &&
                                  creationJewel(tables, moving) && socketsOf(bag[under]) > 0;
-            if (under >= 0 && under != dragging_ &&
+            if (under >= 0 && under != dragging_ && !away_[size_t(under)] &&
                 (setting || refused || sim::refinable(tables, moving, bag[under]))) {
                 const content::ItemRow& target = tables.items[size_t(bag[under].item)];
                 const int covering = bag.covered(under, target.width, target.height, cells);
@@ -713,7 +721,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // riding the pointer, which is drawn whole above.
     for (int slot = 0; slot < sim::kSlots; ++slot) {
         const sim::Held& held = bag[slot];
-        if (held.empty() || socketsOf(held) == 0 || slot == dragging_) continue;
+        if (held.empty() || socketsOf(held) == 0 || slot == dragging_ || away_[size_t(slot)]) continue;
         const Box box =
             panel::scaled(x, y, wellOf(itemBox(tables, slot, held), sim::wearable(slot)));
         panel::sockets(canvas_, picture, box, held, k);
@@ -722,7 +730,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // says nothing. Not on the one riding the pointer.
     for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
         const sim::Held& held = bag[slot];
-        if (held.empty() || held.durability <= 1 || (slot == dragging_ && part_ == 0)) continue;
+        if (held.empty() || held.durability <= 1 || (slot == dragging_ && part_ == 0) || away_[size_t(slot)]) continue;
         if (sim::poursMost(tables.items[size_t(held.item)]) <= 0) continue;
         // A part riding: the cell counts what stays.
         const int count = slot == dragging_ ? held.durability - part_ : held.durability;

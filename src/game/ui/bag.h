@@ -20,6 +20,7 @@
 // before the move.
 #pragma once
 
+#include <bitset>
 #include <cstdint>
 #include <vector>
 
@@ -99,6 +100,11 @@ public:
     // A thing dragged out of the vault and over this window, or null: the bag lights the cells
     // it would land on as it lights its own drag, by Realm::withdraw's gate. Set before update.
     void carrying(const sim::Held* what) { incoming_ = what ? *what : sim::Held{}; }
+    // **Away**: the slots another window holds now -- the Jeweler's pieces and what it made (the
+    // user, 2026-10-21: "item has to stay in jeweler before user press takeout"). Still the bag's
+    // in the realm, they draw as empty cells and take no hover, click or drop until let go. Set
+    // before update.
+    void away(const std::bitset<sim::kSlots>& slots) { away_ = slots; }
     // Where a thing `width` by `height` carried in from another window lands, let go at a point
     // on screen, or -1: a worn slot under the pointer, or its top-left in the satchel (landAt).
     int slotUnder(float x, float y, int width = 1, int height = 1) const {
@@ -145,6 +151,7 @@ private:
         bool overBottle = false, pressingBottle = false;
         int autoHealth = 0, autoMana = 0;
         int32_t nextHealth = -1, nextMana = -1;
+        std::bitset<sim::kSlots> away;
         bool operator==(const Contents& o) const;
     };
     void rebuild(const sim::Realm& realm, Stage* stage);
@@ -171,6 +178,7 @@ private:
     Stage* tipStage_ = nullptr;
     panel::Arts* arts_ = nullptr;
     Contents drawn_, now_;
+    std::bitset<sim::kSlots> away_;
     float x_ = 0.0f, y_ = 0.0f;
     float screenW_ = 0.0f, screenH_ = 0.0f;
     bool up_ = false;

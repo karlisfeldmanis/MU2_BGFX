@@ -125,6 +125,16 @@ void Jeweler::cancel() {
     pressing_ = over_ = kNone;
 }
 
+std::bitset<sim::kSlots> Jeweler::away() const {
+    std::bitset<sim::kSlots> slots;
+    if (!up_) return slots;
+    for (const Slot& s : slots_) {
+        if (s.bag >= 0 && s.bag < sim::kSlots) slots.set(size_t(s.bag));
+    }
+    if (made_.bag >= 0 && made_.bag < sim::kSlots) slots.set(size_t(made_.bag));
+    return slots;
+}
+
 bool Jeweler::offer(int slot, const sim::Realm& realm) {
     if (!realm.tables() || slot < sim::kWorn || slot >= sim::kSlots) return false;
     const sim::Held& what = realm.satchel()[slot];
@@ -173,7 +183,7 @@ void Jeweler::answered(bool ok, int32_t value, const std::string& refusal) {
             break;
         }
         case Page::Combine:
-            said_ = "Made a new piece. It is in your bag.";
+            said_ = "Made a new piece. Take it out to your bag.";
             for (Slot& s : slots_) s = Slot{};
             made_ = {Page::Combine, -1, 1, int(value) - 1, -2};  // taken on the next keep()
             break;
@@ -559,7 +569,7 @@ void Jeweler::rebuild(const sim::Realm& realm, Stage* stage) {
                 const int n = sim::affixCount(*r, what);
                 at(mx, kMadeTop + 2.0f, tip::colourOf(qualityOf(*r, what)), pieceName(*r, what));
                 at(mx, kMadeTop + 13.5f, style::kAshInk,
-                   std::string(colourWord(n)) + (what.bound ? ", bound" : "") + ", in your bag");
+                   std::string(colourWord(n)) + (what.bound ? ", bound" : ""));
                 float ty = kMadeTop + 25.0f;
                 at(mx, ty, style::kBone, powerLine(sim::signatureOf(*r), what.refinement));
                 for (uint8_t a : what.affixes) {
