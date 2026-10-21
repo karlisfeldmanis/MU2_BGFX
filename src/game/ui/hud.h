@@ -272,6 +272,10 @@ public:
     void setGuildOpen(bool open) { guildOpen_ = open; }
     // The left edge of the buffs' strip over the plate: as far right as the chat may reach.
     float buffsLeft() const;
+    // What the frame covers, in backbuffer pixels: the plate, the level's track and each side
+    // button -- what the chat keeps out of (the user, 2026-10-21: "dont allow to scale width like
+    // that which is overlaping the main hud"). Empty before a hero.
+    std::vector<gfx::Box> blocks() const;
     // The worn-gear warning's `i`th cell (game/ui/endurance.h), in backbuffer pixels: the buff
     // strip's mirror over the plate's other half, a square for a round container a little under
     // a buff cell's width, packed right to left from the end of the potion belt.

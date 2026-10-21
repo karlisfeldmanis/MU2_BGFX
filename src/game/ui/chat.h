@@ -73,6 +73,10 @@ public:
                 const Pointer& pointer, float wheel, const std::string& typed, int backspaces,
                 bool enter, bool escape, bool toggle, Play& play, bool tab = false, int arrows = 0);
 
+    // What the HUD covers this frame (Hud::blocks): the chat's frame stays out of it, its width
+    // stopping short of the plate and its foot standing over it.
+    void avoid(std::vector<gfx::Box> blocks) { blocks_ = std::move(blocks); }
+
     // Whether it has the keyboard: typing, so no other key is the game's.
     bool typing() const { return open_; }
     // Whether the pointer is on it: the tabs, the panel, the settings, a menu of its own.
@@ -295,6 +299,7 @@ private:
     // Its frame, in units: the left edge, the foot's height over the screen's bottom, the width
     // and the height (the tab row's in it).
     float left_ = 0.0f, foot_ = 0.0f, wide_ = 0.0f, tall_ = 0.0f;
+    std::vector<gfx::Box> blocks_;  // avoid()'s
 
     // The edit box's channel, and how he stood with a party and a guild last frame.
     Sticky sticky_;

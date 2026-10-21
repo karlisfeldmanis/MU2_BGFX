@@ -1109,6 +1109,24 @@ void Chat::place(float u, float width, float height) {
     tall_ = std::clamp(tall_, kTallLeast, std::max(kTallLeast, std::min(kTallMost, screenH - 32.0f)));
     left_ = std::clamp(left_, 0.0f, std::max(0.0f, screenW - wide_));
     foot_ = std::clamp(foot_, 0.0f, std::max(0.0f, screenH - tall_));
+    // Never over the HUD (the user, 2026-10-21: "dont allow to scale width like that which is
+    // overlaping the main hud"): beside a piece of it, the width stops short of it; over one, or
+    // too narrow to stand beside it, the foot rises above it.
+    const float clear = 10.0f;
+    for (int pass = 0; pass < 2; ++pass) {
+        for (const Box& block : blocks_) {
+            const float top = (height - (foot_ + tall_) * u), bottom = height - foot_ * u;
+            const float x0 = left_ * u, x1 = (left_ + wide_) * u;
+            if (bottom <= block.y || top >= block.bottom() || x1 <= block.x || x0 >= block.right()) continue;
+            const float room = (block.x - x0) / u - clear;
+            if (room >= kWideLeast) {
+                wide_ = room;
+            } else {
+                foot_ = std::max(foot_, (height - block.y) / u + clear);
+            }
+        }
+    }
+    foot_ = std::min(foot_, std::max(0.0f, screenH - tall_));
     frame_ = {std::round(left_ * u), std::round(height - (foot_ + tall_) * u), std::round(wide_ * u),
               std::round(tall_ * u)};
     row_ = {frame_.x, frame_.y, frame_.w, std::round(kTabRow * u)};

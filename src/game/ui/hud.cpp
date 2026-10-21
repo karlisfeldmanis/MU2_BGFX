@@ -544,6 +544,15 @@ bool Hud::tipAt(float x, float y) const {
            plate(screen_, kLevelTrack).has(x, y);
 }
 
+std::vector<gfx::Box> Hud::blocks() const {
+    std::vector<gfx::Box> out;
+    if (!hero_) return out;
+    out.push_back(plate(screen_, {0.0f, 0.0f, kPlateW, kPlateH}));
+    out.push_back(plate(screen_, kLevelTrack));
+    for (int i = 0; i < kButtonCount; ++i) out.push_back(plate(screen_, buttonPx(i)));
+    return out;
+}
+
 bool Hud::covers(float x, float y) const {
     if (!hero_) return false;
     if (plate(screen_, {0.0f, 0.0f, kPlateW, kPlateH}).has(x, y)) return true;

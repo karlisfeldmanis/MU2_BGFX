@@ -892,6 +892,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     if (!watching_ && play.isOpen()) {
         const float u = tip::unit();
         const bool free = !typing && !menuHeld && !questing;
+        chat_.avoid(hud_.blocks());
         chat_.update(seconds, float(window.width()), float(window.height()), hud_.plateTop() - 18.0f * u,
                      hud_.buffsLeft() - 16.0f * u, pointer,
                      chat_.covers(pointer.x, pointer.y) ? window.scroll() : 0.0f,
