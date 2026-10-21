@@ -184,6 +184,9 @@ private:
     Clock::time_point pumpedAt_{};  // the last pump: a Ping's answer read later than kUnreadMost is not counted
     bool pumpSteady_ = false;       // this pump came soon after the last: a late tick is the line's
     Clock::time_point takenAt_{};   // when the newest tick was taken (RemoteLink::offer)
+    uint32_t pastGap_ = 0;          // stream ticks come past a gap and dropped, since the last taken
+    uint32_t pastGapFirst_ = 0;     // the first of them
+    bool stillSaid_ = false;        // the still world logged (kTicklessMost), once a line
     int serverRain_ = -1;  // the latest tick's rain: -1 unknown, 0 dry, 1 wet
     net::Who who_;         // the players' names, the latest the server sent
     // Chat lines heard and not yet taken; the oldest dropped past kHeardMost, if nobody takes them.
