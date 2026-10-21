@@ -6,7 +6,7 @@
 // leading to one major. A small takes up to kTalentSmallMost points, each a plain stat; a major takes
 // one. A major opens when either small above it holds kTalentMajorOpensAt; the next tier opens when
 // that major is taken; a point comes back only if nothing below it closes. A talent point is earned
-// for every kStatPointsPerTalent stat points, so 199 by level 400 (279 for the Magic Gladiator).
+// for every kStatPointsPerTalent stat points, one every 5 levels: 79 by level 400 (111 for the Magic Gladiator).
 // No keystones, no drawbacks, no movement speed and no cooldown reduction: the user's standing rules.
 // An invention, all of it -- MU's own master tree (Season 4+) is not followed.
 #pragma once
@@ -25,7 +25,7 @@ constexpr int kTalentNodes = kTalentTiers * 3;  // small, small, major, three ti
 constexpr int kTalentColumnsMost = 7;           // the Magic Gladiator's
 constexpr int kTalentSmallMost = 10;
 constexpr int kTalentMajorOpensAt = 10;  // 5 until the audit of 2026-10-20: every major by level 217
-constexpr int kStatPointsPerTalent = 10;
+constexpr int kStatPointsPerTalent = 25;  // 10 until 2026-10-21: a level-100 wizard took all of Evil Spirit
 
 // What a talent adds to. A small's `amount` is per point, a major's is whole. Percent unless the
 // stat is a count (AttackSpeed, CastSpeed, IcePoisonResistance, AidReach).
@@ -116,7 +116,7 @@ TalentTree talentTree(Kin kin);
 // What he has spent, a rank a node; columns past the class's count stay nought.
 using TalentRanks = std::array<std::array<uint8_t, kTalentNodes>, kTalentColumnsMost>;
 
-// The points earned: a tenth of the stat points his levels paid, and each reset's 400 levels again.
+// The points earned: a 25th of the stat points his levels paid, and each reset's 400 levels again.
 // `resets` waits on the reset design (memory: resets are planned, not built).
 int talentPoints(Kin kin, int level, int resets);
 int talentsSpent(const TalentRanks& ranks);

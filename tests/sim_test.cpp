@@ -5308,10 +5308,11 @@ void testTalents() {
     };
     checkEqual(sim::talentTree(Kin::DarkKnight).count, 6, "a knight has six columns");
     checkEqual(sim::talentTree(Kin::MagicGladiator).count, 7, "a gladiator seven");
-    checkEqual(sim::talentPoints(Kin::DarkKnight, 400, 0), 199, "199 points at level 400");
-    checkEqual(sim::talentPoints(Kin::MagicGladiator, 400, 0), 279, "the gladiator's 279");
-    checkEqual(sim::talentPoints(Kin::DarkKnight, 400, 1), 399, "a reset pays 200 more");
+    checkEqual(sim::talentPoints(Kin::DarkKnight, 400, 0), 79, "79 points at level 400");
+    checkEqual(sim::talentPoints(Kin::MagicGladiator, 400, 0), 111, "the gladiator's 111");
+    checkEqual(sim::talentPoints(Kin::DarkKnight, 400, 1), 159, "a reset pays 80 more");
     checkEqual(sim::talentPoints(Kin::DarkKnight, 1, 0), 0, "none at level 1");
+    checkEqual(sim::talentPoints(Kin::DarkWizard, 100, 0), 19, "one every 5 levels: 19 at level 100");
     // The canvas's knight preset: a two-handed tank.
     const sim::TalentRanks dk = ranksOf({{10, 10, 1, 10, 6, 1, 4, 0, 0}, {}, {10, 5, 1, 6, 0, 0, 0, 0, 0}, {},
                                          {5, 0, 0, 0, 0, 0, 0, 0, 0}, {6, 0, 0, 0, 0, 0, 0, 0, 0}});
@@ -5365,7 +5366,7 @@ void testTalentCommands(const content::Tables& tables) {
     std::printf("talents: take, give back, reset and keep\n");
     using Kind = sim::Command::Kind;
     sim::Realm realm;
-    check(realm.raise(&tables, 31, 138, 124, sim::Kin::DarkKnight, 80), "a level-80 knight raises");
+    check(realm.raise(&tables, 31, 138, 124, sim::Kin::DarkKnight, 196), "a level-196 knight raises");
     const uint32_t me = realm.hero().id;
     const auto run = [&](sim::Command c) -> int {
         c.player = me;
@@ -5377,7 +5378,7 @@ void testTalentCommands(const content::Tables& tables) {
         }
         return -99;
     };
-    checkEqual(realm.talentsInHand(), 39, "79 levels of five stat points are 39 talents");
+    checkEqual(realm.talentsInHand(), 39, "195 levels of five stat points are 39 talents");
     // A refusal is answered -1, whatever its reason; the realm's own call says which.
     using Refused = sim::Realm::TalentRefused;
     checkEqual(run({.kind = Kind::TalentTake, .a = 0, .b = 2}), -1, "a major is closed at first");
@@ -5443,7 +5444,7 @@ void testTalentCommands(const content::Tables& tables) {
 void testTalentStats(const content::Tables& tables) {
     std::printf("talents: the flat stats\n");
     sim::Realm realm;
-    check(realm.raise(&tables, 31, 138, 124, sim::Kin::DarkKnight, 200), "a level-200 knight raises");
+    check(realm.raise(&tables, 31, 138, 124, sim::Kin::DarkKnight, 400), "a level-400 knight raises (79 points)");
     // A two-handed sword and a one-handed one the knight may hold, off the cooked arms.
     std::string two, one;
     for (const content::Arm& arm : tables.arms) {
@@ -5583,7 +5584,9 @@ void testTalentSpecials(const content::Tables& tables) {
     checkNear(realm.talentSpared(hero), 0.5, 1e-5, "Iron Will adds into the same sum");
     hero.ironWillUntil = 0;
     hero.health = full;
-    // Battle Fury: 10% a swing, off its own dice, once a release.
+    // Battle Fury: 10% a swing, off its own dice, once a release. 79 points hold no more than three
+    // majors, so the tree is reset first.
+    check(realm.talentReset(), "reset for Battle Fury");
     check(learn(realm, "Battle Fury"), "Battle Fury learned");
     int procs = 0;
     for (int i = 0; i < 4000; ++i) {
@@ -5595,8 +5598,8 @@ void testTalentSpecials(const content::Tables& tables) {
     hero.procUntil = realm.tick() + 100;
     hero.procAmount = 20.0f;
     hero.procWizardry = false;
-    // Heft 10, Strength of Arms 10 (on the way to Battle Fury) and the proc's 20.
-    checkNear(realm.talentBlow(hero, whole, nullptr), 1.40, 1e-5, "while it stands, +20% in the sum");
+    // Strength of Arms 10 (on the way to Battle Fury) and the proc's 20.
+    checkNear(realm.talentBlow(hero, whole, nullptr), 1.30, 1e-5, "while it stands, +20% in the sum");
     hero.procUntil = 0;
     // Bloodlust and Eye of the Storm count the monsters near him: none here.
     checkEqual(realm.monstersNear(hero, 0.5f), 0, "nobody inside half a tile");

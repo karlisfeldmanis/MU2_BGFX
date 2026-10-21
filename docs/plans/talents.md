@@ -1,5 +1,10 @@
 # Talents: the build plan
 
+**Points nerfed, 2026-10-21:** a level-100 wizard took every Evil Spirit major (49 points). The user:
+"lets give point every 5 levels whihc is 25 skill points". `kStatPointsPerTalent` 10 → 25: 19 points at
+level 100, 79 at 400 (the gladiator 111). A save spent past its points loses its talents whole on
+restore and keeps the points, so live characters fall back to an empty tree.
+
 **Status, 2026-10-21: building.** The user: "lets starst to implement". Resets are still open, so the
 small caps stay at 10 for now.
 - Done in the sim: phase 1 (2fa16e44), phase 2 (93d8c7e0, protocol 45, layout 10), phase 3 (5cddd7d2),
