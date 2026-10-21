@@ -67,11 +67,11 @@ The market is closed on the other servers ("The market is closed for a moment.",
 
 1. Make a key: `openssl rand -hex 32`, put it as `MU2_MARKET_KEY=` in every box's
    `/etc/default/mu2-server`.
-2. North Europe: `--market-serve 44410`. It listens on every address, as the game's port does,
+2. North Europe: `MU2_MARKET_SERVE=44410` in `/etc/default/mu2-server` (or `--market-serve 44410`). It listens on every address, as the game's port does,
    and lets in only a line that proves the key; but the line is not encrypted, so keep 44410
    closed in the firewall and let the other boxes reach it through their accounts tunnel with one
    more forward (`-L 44410:127.0.0.1:44410`, and `permitopen` for it on Helsinki's key).
-3. The others: `--market-at 127.0.0.1:44410`. Each merges its book on its first connect.
+3. The others: `MU2_MARKET_AT=127.0.0.1:44410` (or `--market-at`). Each merges its book on its first connect.
 4. Website and client need nothing.
 
 ## Tests

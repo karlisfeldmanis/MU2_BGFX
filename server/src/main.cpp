@@ -244,6 +244,11 @@ int main(int argc, char** argv) {
     std::string marketAtAddress, marketKeyHex;
     sim::RealmConfig config;
     if (const char* region = std::getenv("MU2_REGION"); region != nullptr && *region) g_region = region;
+    // The shared market's role, as the box's /etc/default/mu2-server says it beside its region
+    // (docs/game/shared-market.md): MU2_MARKET_SERVE=PORT on the keeper's box, MU2_MARKET_AT=HOST:PORT
+    // on the others. The flags below win.
+    if (const char* serve = std::getenv("MU2_MARKET_SERVE"); serve != nullptr && *serve) marketServePort = std::atoi(serve);
+    if (const char* at = std::getenv("MU2_MARKET_AT"); at != nullptr && *at) marketAtAddress = at;
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
         if (a == "--port" && i + 1 < argc) port = std::atoi(argv[++i]);
