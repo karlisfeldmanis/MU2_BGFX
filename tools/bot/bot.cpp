@@ -45,6 +45,9 @@ int main(int argc, char** argv) {
         else if (a == "--no-quests") options.quests = false;
         else if (a == "--fights") options.fights = true;
         else if (a == "--no-shop-skills") options.noShopSkills = true;
+        else if (a == "--kit") options.kit = next();
+        else if (a == "--no-talents") options.talents = false;
+        else if (a == "--map") options.map = std::atoi(next());
         else if (a == "--drink-at") options.drinkAt = std::atof(next());
         else if (a == "--pet") {
             const std::string k = next();
@@ -65,7 +68,8 @@ int main(int argc, char** argv) {
         }
         else {
             std::printf("usage: bot [--kin dk|dw|elf|mg] [--path melee|magic|energy] [--seed N] [--runs N] [--hours H] "
-                        "[--until-jewel] [--no-quests] [--fights] [--build s,a,v,e] [--no-shop-skills] [--quiet] [--learn N,N]\n");
+                        "[--until-jewel] [--no-quests] [--fights] [--build s,a,v,e] [--no-shop-skills] [--quiet] [--learn N,N] "
+                        "[--kit NAME] [--no-talents] [--map N]\n");
             return 2;
         }
     }

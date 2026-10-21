@@ -392,6 +392,43 @@ What it shows:
   (+15/30/50% each) and the user called it "very powerful". Evil Spirit is the cheap pack opener
   with Spirit Plague runes. Leave both.
 
+## Measured, 2026-10-21
+
+`tests/talents_fight.cpp`: a raid kit's level-400 hero (content/raid/party.json: +9 to +11 sets,
+runes, 2nd wings, a pet), potions in the bag, attacks the nearest monster with one skill. 12 seeds of
+5 minutes each, with the bot's build (all 199 points) and without. Icarus is the easy ground, Aida
+(map 33) the one that hurts. Per hour:
+
+| Build, kit, skill | Ground | Damage | Kills | Potions | Deaths |
+|---|---|---|---|---|---|
+| Knight whirlwind, Bran, Twisting Slash | Icarus | 6.97M → 12.8M (×1.84) | 539 → 796 (+48%) | 4 → 0 | 0 → 0 |
+| | Aida | 4.17M → 9.0M (×2.16) | 67 → 148 (+121%) | 881 → 413 | 0 → 0 |
+| Knight tank, Aldric, Death Stab | Icarus | 1.82M → 2.5M (×1.37) | 146 → 199 (+36%) | 0 → 0 | 0 → 0 |
+| | Aida | 0.47M → 0.72M (×1.53) | 0 → 5 | 389 → 86 | 0 → 0 |
+| Wizard fire, Morwen, Inferno | Icarus | 8.74M → 14.7M (×1.68) | 683 → 997 (+46%) | 0 → 0 | 0 → 0 |
+| | Aida | 5.11M → 10.7M (×2.09) | 85 → 183 (+115%) | 1234 → 626 | 3 → 1 |
+| Elf multi-shot, Faela, Multi-Shot | Icarus | 8.67M → 11.8M (×1.36) | 715 → 952 (+33%) | 0 → 0 | 0 → 0 |
+| | Aida | 4.28M → 6.64M (×1.55) | 71 → 115 (+62%) | 95 → 0 | 0 → 0 |
+| Elf penetration, Faela, Penetration | Icarus | 13.0M → 19.9M (×1.53) | 1054 → 1381 (+31%) | 24 → 13 | 0 → 0 |
+| | Aida | 7.04M → 13.7M (×1.95) | 119 → 240 (+102%) | 68 → 57 | 0 → 0 |
+
+Against the plan's pass:
+- **Damage lands on the bench's figures.** On Aida, where the conditions and procs all count, it is
+  about the bench: whirlwind ×2.16 (bench +123%), fire ×2.09 (+97%), penetration ×1.95 (+102%), the
+  tank ×1.53 (+83%) and multi-shot ×1.55 (+47%, low on purpose). On Icarus, where monsters fall in one
+  or two blows, it is less, as it should be.
+- **Kills follow damage only where monsters take several blows.** On Icarus +31% to +48%, since a
+  one-blow kill gains nothing; on Aida +62% to +121%.
+- **No build dies more.** The wizard's Aida deaths fall from 3 to 1 an hour. Potions roughly halve on
+  Aida, because monsters fall sooner.
+- **Zen a kill rises 18-24%,** about the 10-20% of the builds' Fortune plus a richer mix of kills.
+  Zen an hour rises far more than the 14% the economy note expected, because kills rise; that note
+  counted Fortune alone.
+- Not measured: the Magic Gladiator (the raid party has none) and heroes at level 150.
+
+The offline bot can be raised in a kit (`bot --kit NAME --map N --no-talents`), but its brain wanders
+between maps and barely fights in a kit, so these numbers are from the bench.
+
 ## Economy, from the live log (2026-10-20)
 
 Source: the server's `economy.log`, 2026-10-11 to 2026-10-20, 153 player-hours. It counts Zen

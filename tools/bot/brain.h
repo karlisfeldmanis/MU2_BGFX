@@ -25,6 +25,7 @@
 #include "sim/broker.h"
 #include "sim/gates.h"
 #include "sim/item_link.h"
+#include "sim/raid_party.h"
 #include "sim/items.h"
 #include "sim/market.h"
 #include "sim/quests.h"
@@ -94,6 +95,14 @@ struct Options {
     bool fights = false;  // --fights: a line every half hour on how he fights
     int build[4] = {};    // --build s,a,v,e: the weights his points are spent by, else his class's
     bool noShopSkills = false;  // --no-shop-skills: buys no orb or scroll, reads only what drops
+    // --kit NAME: raised as the Golden Dragon raid's character of that name (content/raid/
+    // party.json): his class, level, points, skills and gear -- a geared hero for a balance A/B.
+    std::string kit;
+    // --no-talents: he spends no talent point, the other arm of a talents A/B.
+    bool talents = true;
+    // --map N: raised at that world's arrival rather than his class's town (kWorldMaps), a
+    // hunting ground for a geared hero's A/B.
+    int map = -1;
     // --learn N,N: skills he knows from the start, as if read -- Tarkan's and the Broker's, which
     // an offline run never finds (the user, 2026-10-13: "... suppost to learn them and use them").
     std::vector<int32_t> learn;
@@ -333,6 +342,21 @@ public:
         own_ = std::make_unique<sim::Realm>();
         realm_ = own_.get();
         hand_.realm = realm_;
+        if (!options_.kit.empty()) {
+            std::vector<sim::RaiderKit> party;
+            const sim::RaiderKit* kit = nullptr;
+            if (sim::readParty(std::string(MU2_ASSET_DIR) + "/../../content/raid/party.json", &party)) {
+                for (const sim::RaiderKit& one : party) {
+                    if (one.name == options_.kit) kit = &one;
+                }
+            }
+            if (!kit || kit->kin != options_.kin) return false;
+            if (!realm_->raise(tables_, seed_, home.arrive[0], home.arrive[1], kit->kin, kit->level)) return false;
+            realm_->benchDressHero(*kit);
+            for (const int32_t skill : options_.learn) realm_->learn(skill);
+            settle();
+            return true;
+        }
         if (!realm_->raise(tables_, seed_, home.arrive[0], home.arrive[1], options_.kin, 1)) return false;
         const int32_t weapon = tables_->armNamed(cradleWeapon(options_.kin));
         if (!realm_->equip(weapon, -1)) realm_->equip(weapon, -1, true);
@@ -1689,7 +1713,7 @@ private:
     }
     // Taken in the build's order: a column's earlier nodes first, so each opens the next.
     void spendTalents() {
-        if (realm_->talentsInHand() <= 0) return;
+        if (!options_.talents || realm_->talentsInHand() <= 0) return;
         const sim::Body& hero = realm_->hero();
         if (!talentBuilt_) {
             talentBuilt_ = true;
@@ -5016,7 +5040,10 @@ private:
 
     // Where his class is born, as the realm has it (realm_travel.cpp homeMap): an elf in Noria,
     // the others in Lorencia.
-    int homeMap() const { return options_.kin == sim::Kin::FairyElf ? 3 : 0; }
+    int homeMap() const {
+        if (options_.map >= 0) return options_.map;
+        return options_.kin == sim::Kin::FairyElf ? 3 : 0;
+    }
     // A town's own quest: the first in the table whose giver stands there and waits on nothing --
     // Marlon's in Lorencia, Peia's in Noria (the Golden Archer stands in Lorencia too, later).
     int townQuest(int map) {
