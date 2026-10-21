@@ -235,6 +235,12 @@ public:
         }
         return ok;
     }
+    // Talent points into a node (sim/talents.h): how many went in, recorded as the one command.
+    int talent(int column, int node, int count) {
+        const int took = realm->talentTake(column, node, count);
+        if (took > 0) note(sim::Command::Kind::TalentTake, column, node, took);
+        return took;
+    }
     bool useItem(int slot) { return was(realm->useItem(slot), sim::Command::Kind::Use, slot); }
     // His auto-drink lines (sim::AutoDrink): the realm drinks for him under them, as for a player.
     void autoDrink(int health, int mana) {
@@ -1588,6 +1594,7 @@ private:
         }
         partyScale_ = partyScale();
         spend();
+        spendTalents();
         drink();
         mend();
         learnCaution();
@@ -1655,6 +1662,53 @@ private:
     }
 
     bool gladiatorMage() const { return options_.kin == sim::Kin::MagicGladiator && options_.magic; }
+
+    // **His talents** (docs/plans/talents.md "Bot builds"): the bench's build for his class and
+    // what he holds, its columns' ranks taken in order, a column at a time and a node at a time
+    // as each opens. F a whole column, S its spine (the left small and the major, each tier).
+    static sim::TalentRanks talentBuild(sim::Kin kin, bool twoHanded, bool dual) {
+        using Col = std::array<uint8_t, sim::kTalentNodes>;
+        const Col F{10, 10, 1, 10, 10, 1, 10, 10, 1}, S{10, 0, 1, 10, 0, 1, 10, 0, 1}, Z{};
+        const Col fortune10{10, 0, 0, 0, 0, 0, 0, 0, 0}, fortuneMore{10, 10, 1, 10, 9, 0, 0, 0, 0};
+        sim::TalentRanks r{};
+        const auto put = [&](std::initializer_list<Col> cols) {
+            size_t c = 0;
+            for (const Col& col : cols) r[c++] = col;
+        };
+        switch (kin) {
+            case sim::Kin::DarkKnight:
+                if (dual) put({Z, F, Z, S, F, fortuneMore});            // dual wield
+                else if (twoHanded) put({F, Z, Z, F, F, fortune10});    // two-handed whirlwind
+                else put({F, Z, F, Z, F, fortune10});                   // the tank
+                break;
+            case sim::Kin::DarkWizard: put({F, Z, S, F, Z, fortuneMore}); break;  // fire
+            case sim::Kin::FairyElf: put({F, S, Z, Z, F, fortuneMore}); break;    // multi-shot
+            case sim::Kin::MagicGladiator: put({F, F, Z, Z, F, F, Col{10, 10, 1, 6, 0, 0, 0, 0, 0}}); break;
+        }
+        return r;
+    }
+    // Taken in the build's order: a column's earlier nodes first, so each opens the next.
+    void spendTalents() {
+        if (realm_->talentsInHand() <= 0) return;
+        const sim::Body& hero = realm_->hero();
+        if (!talentBuilt_) {
+            talentBuilt_ = true;
+            const content::Arm* arm = hero.weapon >= 0 && size_t(hero.weapon) < tables_->arms.size()
+                                          ? &tables_->arms[size_t(hero.weapon)]
+                                          : nullptr;
+            talentBuild_ = talentBuild(options_.kin, arm && arm->twoHanded() && !arm->missile(), hero.dual);
+        }
+        for (int c = 0; c < sim::kTalentColumnsMost && realm_->talentsInHand() > 0; ++c) {
+            for (int i = 0; i < sim::kTalentNodes && realm_->talentsInHand() > 0; ++i) {
+                const int want = talentBuild_[size_t(c)][size_t(i)] - realm_->hero().talents[size_t(c)][size_t(i)];
+                if (want <= 0) continue;
+                if (!sim::talentOpen(realm_->hero().talents[size_t(c)], i)) break;  // the column waits
+                hand_.talent(c, i, want);
+            }
+        }
+    }
+    sim::TalentRanks talentBuild_{};
+    bool talentBuilt_ = false;
 
     void spend() {
         int points = realm_->hero().pointsInHand;
