@@ -279,6 +279,12 @@ public:
     void setChatOpen(bool open) { chatOpen_ = open; }
     // And the guild window (game/ui/guild.h), for the guild's button.
     void setGuildOpen(bool open) { guildOpen_ = open; }
+    // And Talents (game/ui/talent_window.h): its button lit while it is up, and his talent points
+    // in hand, which colour its icon and breathe an ember round it (no count is shown).
+    void setTalents(int points, bool open) {
+        talentPoints_ = points;
+        talentsOpen_ = open;
+    }
     // The left edge of the buffs' strip over the plate: as far right as the chat may reach.
     float buffsLeft() const;
     // What the frame covers, in backbuffer pixels: the plate, the level's track and each side
@@ -296,7 +302,7 @@ public:
                 bool inventoryOpen, bool characterOpen, bool* toggleInventory,
                 bool* toggleCharacter, bool* toggleMenu = nullptr, bool questOpen = false,
                 bool* toggleQuest = nullptr, bool* toggleChat = nullptr,
-                bool* toggleGuild = nullptr);
+                bool* toggleGuild = nullptr, bool* toggleTalents = nullptr);
 
     // Whether a point is over the frame -- plate, rail or a side button -- so a click there
     // is the frame's and not the ground's. The plate's transparent corners count: a click in
@@ -308,6 +314,8 @@ public:
     // drawn at the pointer and runs past its own window's edge, and in the window's canvas the
     // one beside it covered it -- the shelf's tip went under the bag. MU2's tooltip layer.
     const gfx::Canvas& tipCanvas() const { return tip_; }
+    // The ember round the Talents button, rebuilt every frame by `update` (the plate is not).
+    const gfx::Canvas& glowCanvas() const { return glow_; }
     // How many times the canvas was rebuilt, for the log's "redraws on change" line.
     uint64_t rebuilds() const { return rebuilds_; }
 
@@ -320,6 +328,7 @@ private:
         int gem = 0;
         float slid = 0;
         bool inventory = false, character = false, quest = false, chat = false, guild = false;
+        bool talents = false, talentPoints = false;
         int hovered = -1;  // which button or slot is lit
         bool tip = false;  // a tip is up, so the pointer's place is part of the picture
         float pointerX = 0, pointerY = 0;
@@ -347,11 +356,14 @@ private:
     int segment() const;     // which tenth
     int hoveredAt(float x, float y) const;
     bool tipAt(float x, float y) const;
+    void talentsDisc(const gfx::Box& box, bool hovered, bool open, bool waiting);
+    void glow(float width, float height);
     // Which buff cell a point is over, only one with something standing in it, or -1.
     int boonAt(float x, float y) const;
 
     gfx::Canvas canvas_;
     gfx::Canvas tip_;
+    gfx::Canvas glow_;
     panel::Arts* arts_ = nullptr;
     const sim::Body* hero_ = nullptr;
     panel::Screen screen_;
@@ -385,6 +397,8 @@ private:
     std::vector<Standing> standing_;
     bool chatOpen_ = false;
     bool guildOpen_ = false;
+    int talentPoints_ = 0;
+    bool talentsOpen_ = false;
 };
 
 }  // namespace mu::game

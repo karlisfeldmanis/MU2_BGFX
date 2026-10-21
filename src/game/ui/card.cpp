@@ -60,26 +60,6 @@ constexpr float kFootRight = kRight;
 constexpr float kExpTop = kResetSquare.y + kResetSquare.h + 5.0f;
 constexpr Box kBar{panel::kGridX, kExpTop + 12.0f, kFootRight - panel::kGridX, 4.0f};
 
-// **His points are two plates side by side: the stat points and the talent points** (board G of
-// the Talents canvas; the user, 2026-10-21: "use talent button near skillpoints", "dont use icon
-// on small talents button near skill points, it has to be very close to design as regular skill
-// points", "both had to be very similar, with some minimal gap between each other"). The stat tag
-// as it was -- the red wash, the red capitals -- and beside it, a small gap apart and as wide,
-// the talent plate: "N talents" in the same face and size, in gold. The talent plate is the
-// Talents button: lit under the pointer, darker while held, a gold ember breathing round it while
-// points wait. At no stat points it stands alone; at no talent points it is quiet ash. It stood
-// on the window's top edge (board C2) and then as a tab on its right side until this. The layout
-// is Card::layIdRow's.
-constexpr float kPlateTop = kIdTop - 1.0f, kPlateTall = 11.0f;
-constexpr float kPlatePad = 3.0f, kPlateGap = 2.0f;
-// The talent plate is the stat tag in gold (the user, 2026-10-21: "talents mini button has to be
-// more gold color, skill points red"): its wash, its word, lifted under the pointer, pressed
-// while held, and the gold of its ember. The open tab's gold (kChosen) for the word lit.
-constexpr uint32_t kTalentWash = gfx::rgba(0.141f, 0.102f, 0.039f);
-constexpr uint32_t kTalentInk = gfx::rgba(0.886f, 0.706f, 0.396f);
-constexpr uint32_t kTalentLit = gfx::rgba(0.220f, 0.161f, 0.063f);
-constexpr uint32_t kTalentHeld = gfx::rgba(0.090f, 0.063f, 0.024f);
-
 // Type, in units. A figure is a size above its label, so the eye runs down the numbers.
 constexpr float kClassSize = 9.0f, kNameSize = 8.5f, kFigureSize = 10.0f, kLineSize = 7.5f,
                 kSmallCaps = 6.5f, kKeySize = 9.5f, kTabSize = 7.5f,
@@ -179,56 +159,7 @@ std::string plusPercent(int v) { return "+" + std::to_string(v) + "%"; }
 
 void Card::open(const gfx::Interface& interface, panel::Arts* arts) {
     interface.adopt(canvas_);
-    interface.adopt(glow_);
     arts_ = arts;
-}
-
-// The class row, right to left: the talent plate at the well's value edge, the stat plate as
-// wide a gap before it while there are stat points, and the class in what is left. A long class
-// with points in hand ("Magic Gladiator", 995 points) steps its name down to fit.
-void Card::layIdRow(int talents, int points, const std::string& kind) {
-    const float k = panel::scale();
-    const float size = kLineSize * k;
-    const auto said = [&](const std::string& words) {
-        return std::round(controls::capsWidth(size, words, 0.04f) - size * 0.04f + kPlatePad * 2.0f * k);
-    };
-    const float right = std::round(x_ + kRight * k);
-    const float top = std::round(y_ + kPlateTop * k), tall = std::round(kPlateTall * k);
-    const float talentW = said(std::to_string(talents) + " talents");
-    const float statW = points > 0 ? said(std::to_string(points) + " points") : 0.0f;
-    const float w = std::max(talentW, statW);  // the two alike: as wide as the wider
-    seal_ = {right - w, top, w, tall};
-    const float gap = points > 0 ? std::round(kPlateGap * k) : 0.0f;
-    stat_ = {seal_.x - gap - (points > 0 ? w : 0.0f), top, points > 0 ? w : 0.0f, tall};
-    const float room = stat_.x - 4.0f * k - (x_ + kLeft * k);
-    const auto wide = [&](float units) { return controls::capsWidth(units * k, kind, 0.04f) - units * k * 0.04f; };
-    classSize_ = kClassSize;
-    while (classSize_ > kSmallCaps && wide(classSize_) > room) classSize_ -= 0.5f;
-}
-
-void Card::tick(float seconds) {
-    clock_ += double(std::max(0.0f, seconds));
-    glow_.clear();
-    if (now_.who == nullptr || now_.talents <= 0) return;
-    // A slow gold ember round the talent plate while talent points wait to be spent: one breath in
-    // two seconds, half lit at most at the ring nearest. Drawn over the window, the button being
-    // inside it. Sanctuary's quiet, no sparkle.
-    constexpr double kBreath = 2.0;
-    constexpr float kMost = 0.5f;
-    const float breath = 0.5f - 0.5f * float(std::cos(6.283185307 * std::fmod(clock_, kBreath) / kBreath));
-    const float k = panel::scale();
-    const Box seal = seal_;
-    const float ring = std::max(1.0f, std::round(0.5f * k));
-    for (int i = 1; i <= 3; ++i) {
-        const float a = kMost * (0.3f + 0.7f * breath) / float(i);
-        const uint32_t ink = gfx::rgba(0.886f, 0.706f, 0.396f, a);  // kTalentInk, faded
-        const float g = ring * float(i - 1);
-        const Box o{seal.x - g - ring, seal.y - g - ring, seal.w + (g + ring) * 2.0f, seal.h + (g + ring) * 2.0f};
-        glow_.rect({o.x, o.y, o.w, ring}, ink);                       // top
-        glow_.rect({o.x, o.bottom() - ring, o.w, ring}, ink);         // foot
-        glow_.rect({o.x, o.y + ring, ring, o.h - ring * 2.0f}, ink);  // left
-        glow_.rect({o.right() - ring, o.y + ring, ring, o.h - ring * 2.0f}, ink);  // right
-    }
 }
 
 bool Card::covers(float x, float y) const {
@@ -238,7 +169,7 @@ bool Card::covers(float x, float y) const {
 
 void Card::update(float width, float height, const sim::Body* hero, const sim::Realm* realm,
                   const std::string& name, const Pointer& pointer, int* spend, int* count, bool* reset,
-                  bool* close, bool* talents) {
+                  bool* close) {
     // The right-hand column, always.
     x_ = panel::columnX(width, 1);
     y_ = panel::panelY(height);
@@ -370,9 +301,6 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         // The pointer, against this frame's layout.
         const Box cross = panel::scaled(x_, y_, panel::frameClose());
         overClose_ = cross.has(pointer.x, pointer.y);
-        // His points plate, laid out for his counts now (it widens with them).
-        layIdRow(realm ? realm->talentsInHand() : 0, hero->pointsInHand, sim::className(int(kin), hero->second));
-        const bool overSeal = seal_.has(pointer.x, pointer.y);
         const size_t counts[4] = {now_.lines[0].size(), now_.lines[1].size(), now_.lines[2].size(),
                                   now_.lines[3].size()};
         const int points = hero->pointsInHand;
@@ -420,15 +348,12 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         const int overTab = tabUnder();
         if (pointer.pressed) {
             if (overClose_) closing_ = true;
-            sealing_ = overSeal;
             pushed_ = over_;
             pressTab_ = overTab;
         }
         if (pointer.released) {
             // Only if the pointer is still on it, which is how a press is taken back.
             if (closing_ && overClose_ && close) *close = true;
-            if (sealing_ && overSeal && talents) *talents = true;
-            sealing_ = false;
             if (pushed_ >= 0 && pushed_ == over_) {
                 if (pushed_ < 4) {
                     if (spend) *spend = pushed_;
@@ -529,9 +454,6 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         now_.over = over_;
         now_.closing = closing_;
         now_.overClose = overClose_;
-        now_.talents = realm ? realm->talentsInHand() : 0;
-        now_.overSeal = overSeal;
-        now_.pressSeal = sealing_ && overSeal;
     }
     // A tab changed this frame draws its page on the next, which has built it.
     if (now_ == drawn_ && rebuilds_ > 0) return;
@@ -605,35 +527,22 @@ void Card::rebuild() {
 
     // ---- who he is: the class, his unspent points beside it, the guild under -------------------
     // A step down from the name over it: the class is what he is, the name who.
-    // On kIdTop's line at its own size, or smaller in a tight row (layIdRow).
-    controls::caps(canvas_, x + kLeft * k, at(kIdTop, kClassSize), classSize_ * k, kPlain,
+    controls::caps(canvas_, x + kLeft * k, at(kIdTop, kClassSize), kClassSize * k, kPlain,
                    sim::className(int(now_.who->kin), now_.second), 0.04f);
-    // ---- his points: the stat plate and the talent plate (layIdRow) ----------------------------
-    {
+    if (now_.points > 0) {
+        // A red tag, the one thing in the head that asks for something, gone at none.
+        const std::string tag = std::to_string(now_.points) + " points";
         const float size = kLineSize * k;
-        const auto words = [&](const Box& half, uint32_t ink, const std::string& text) {
-            // Centred on its plate both ways (the user, 2026-10-20: "not perfectly align on red
-            // background"): the tracking after the last letter is not part of the word.
-            const float w = controls::capsWidth(size, text, 0.04f) - size * 0.04f;
-            controls::caps(canvas_, half.x + std::round((half.w - w) * 0.5f), controls::capsMiddle(half.y, half.h, size),
-                           size, ink, text, 0.04f);
-        };
-        // The stat plate: the red tag, the one thing in the head that asks for something, gone at
-        // none.
-        if (now_.points > 0) {
-            canvas_.rect(stat_, kSpendWash);
-            words(stat_, kSpendable, std::to_string(now_.points) + " points");
-        }
-        // The talent plate, the Talents button: the same tag in gold while talent points wait,
-        // quiet ash at none.
-        const bool waiting = now_.talents > 0;
-        const uint32_t wash = now_.pressSeal ? kTalentHeld
-                              : now_.overSeal ? kTalentLit
-                              : waiting       ? kTalentWash
-                                              : style::kAsh3;
-        canvas_.rect(seal_, wash);
-        words(seal_, now_.overSeal ? kChosen : waiting ? kTalentInk : kQuiet,
-              std::to_string(now_.talents) + " talents");
+        // Its words centred on it both ways (the user, 2026-10-20: "not perfectly align on red
+        // background"): the tracking after the last letter is not part of the word.
+        const float w = controls::capsWidth(size, tag, 0.04f) - size * 0.04f;
+        const float pad = 3.0f * k;
+        const float tagRight = std::round(x + kRight * k);
+        const Box box{std::round(tagRight - w - pad * 2.0f), std::round(y + (kIdTop - 1.0f) * k),
+                      std::round(w + pad * 2.0f), std::round(11.0f * k)};
+        canvas_.rect(box, kSpendWash);
+        controls::caps(canvas_, box.x + std::round((box.w - w) * 0.5f), controls::capsMiddle(box.y, box.h, size),
+                       size, kSpendable, tag, 0.04f);
     }
 
     // ---- the three his class lives by -----------------------------------------------------------

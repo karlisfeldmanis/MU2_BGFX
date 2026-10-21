@@ -1,5 +1,5 @@
 # Talents, as a player meets them (docs/plans/talents.md): a level-200 Dark Knight with 99 points
-# opens the character window, presses its Talents button, puts ten into Heft (the first point and
+# presses the HUD's Talents button, puts ten into Heft (the first point and
 # the tenth unlock: the sword cut, the line filling), takes Frost Edge (the ring, the embers, the
 # next tier waking), starts Pierce, reads Executioner's card, spends in Fury, gives a point back,
 # resets twice and closes. Needs a level-200 knight with no talents: give the run his save,
@@ -9,8 +9,7 @@ args --play --world lorencia
 end 25
 
 0.0   move 0.50 0.55
-0.6   type character
-1.4   move 0.9372 0.1704 0.9
+1.4   move 0.7745 0.9556 0.9
 3.0   click
 4.0   move 0.2141 0.2250 0.7
 5.0   click

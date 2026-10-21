@@ -982,12 +982,15 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     }
 
     bool toggleInventory = false, toggleCharacter = false, toggleMenu = false;
-    bool toggleQuest = false, toggleChat = false, toggleGuild = false;
+    bool toggleQuest = false, toggleChat = false, toggleGuild = false, toggleTalents = false;
     hud_.setChatOpen(chat_.typing());
     hud_.setGuildOpen(guild_.up());
+    hud_.setTalents(play.isOpen() ? play.realm().talentsInHand() : 0, talents_.up());
     hud_.update(seconds, float(window.width()), float(window.height()), pointer, inventoryOpen_,
                 characterOpen_, &toggleInventory, &toggleCharacter, &toggleMenu, questLog_.up(),
-                &toggleQuest, &toggleChat, &toggleGuild);
+                &toggleQuest, &toggleChat, &toggleGuild, &toggleTalents);
+    // The HUD's Talents button asks what A does, read by A's own answer on the next frame.
+    if (toggleTalents) talentsAsked_ = true;
     // The HUD's guild button asks what G does, before the guild window's own frame below.
     if (toggleGuild && play.isOpen()) {
         guild_.toggle();
@@ -1086,19 +1089,13 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // and the window sees the answer on its next frame.
     if (characterOpen_) {
         int spend = -1, count = 1;
-        bool reset = false, close = false, talents = false;
+        bool reset = false, close = false;
         std::string name;
         if (!hero || !play.playerName(hero->id, &name, nullptr)) name = heroName_;
         card_.setGuild(play.guild().name);
         const int page = card_.tab();
         card_.update(float(window.width()), float(window.height()), hero, &play.realm(), name,
-                     pointer, &spend, &count, &reset, &close, &talents);
-        card_.tick(seconds);
-        // The Talents button beside his points: Talents, which hides this window till it shuts.
-        if (talents && play.isOpen()) {
-            openTalents(play);
-            click();
-        }
+                     pointer, &spend, &count, &reset, &close);
         // A tab changing its page clicks, as every button does (the user, 2026-10-16).
         if (card_.tab() != page) click();
         // The stat button clicks whether or not the point lands: CNewUICharacterInfoWindow
@@ -2807,13 +2804,13 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
         if (chat_.setting()) interface_.add(chat_.settings());
     }
     interface_.add(hud_.canvas());
+    interface_.add(hud_.glowCanvas());  // the ember round its Talents button
     // The line's chip in the corner over the minimap, its list over whatever lies under it.
     if (lineChip_.showing()) interface_.add(lineChip_.canvas());
     // A party invite, centred over the plate where a fight's Zen is said.
     if (chat_.inviting()) interface_.add(chat_.invite());
     if (characterOpen_) {
         interface_.add(card_.canvas());
-        interface_.add(card_.glow());  // round the Talents button, which is inside the window
     }
     if (inspecting()) interface_.add(inspect_.canvas());
     if (questLog_.up()) {

@@ -63,6 +63,7 @@ struct ButtonRow {
     const char* art;
     bool left;
     bool live;
+    int place;  // its place in its row, left to right
 };
 // Menu and chat left of the life gem, inventory, character and quests right of the mana gem. The
 // menu is live since 2026-09-27 and raises the game menu (game/ui/menu.h), as Escape does; the
@@ -70,18 +71,32 @@ struct ButtonRow {
 // the journal, as L does (the user, 2026-10-05: "we need to find icon for quests button which to
 // put on right side of hud where is inventiry and character buttons"). The guild's, last of
 // the left three and so nearest the life gem, opens the guild window as G does (the user,
-// 2026-10-16: "lets add guild button in hud near chat and menu").
-constexpr int kButtonCount = 6;
+// 2026-10-16: "lets add guild button in hud near chat and menu"). The Talents', between the
+// character's and the quests', opens Talents as A does (the user, 2026-10-21: "lets remove
+// minibutton from skill points window, and just add hud button with icon", and before it "dont
+// show number on HUD icon"): MU's own master-tree icon cut round into the disc's well, MU's grey
+// twin of it while no talent point waits, and no count; a slow ember breathes round the disc
+// while one does (Hud::glow).
+constexpr int kButtonCount = 7;
 constexpr int kQuestButton = 4;
 constexpr int kGuildButton = 5;
+constexpr int kTalentsButton = 6;
 constexpr ButtonRow kButtons[kButtonCount] = {
-    {"hud_button_menu", true, true},
-    {"hud_button_chat", true, true},
-    {"hud_button_inventory", false, true},
-    {"hud_button_character", false, true},
-    {"hud_button_quest", false, true},
-    {"hud_button_guild", true, true},
+    {"hud_button_menu", true, true, 0},
+    {"hud_button_chat", true, true, 1},
+    {"hud_button_inventory", false, true, 0},
+    {"hud_button_character", false, true, 1},
+    {"hud_button_quest", false, true, 3},
+    {"hud_button_guild", true, true, 2},
+    {"talent_icons", false, true, 2},
 };
+// The Talents icon: MU's "Strength of Arms" (skill 335, the Talents canvas's), cell 335 - 300 of
+// the 20 by 28 sheet, cut to a circle this share of the disc wide. Its ember: kBloodHi's warmth,
+// one breath in two seconds, at most this strong.
+constexpr int kTalentsIcon = 335;
+constexpr float kTalentsWell = 0.6f;
+constexpr double kTalentsBreath = 2.0;
+constexpr float kTalentsEmber = 0.45f;
 
 // The gem sheets: six frames a row, ten rows, 152 square, turning at 24 a second.
 constexpr int kGemsAcross = 6, kGemsDown = 10;
@@ -302,7 +317,7 @@ Box buttonPx(int which) {
     int rank = 0, pair = 0;
     for (int i = 0; i < kButtonCount; ++i) {
         if (kButtons[i].left == left) {
-            if (i < which) ++rank;
+            if (kButtons[i].place < kButtons[which].place) ++rank;
             ++pair;
         }
     }
@@ -418,7 +433,78 @@ int Hud::quickAt(float x, float y) const {
 void Hud::open(const gfx::Interface& interface, panel::Arts* arts) {
     interface.adopt(canvas_);
     interface.adopt(tip_);
+    interface.adopt(glow_);
     arts_ = arts;
+}
+
+// The Talents button (kTalentsButton): the disc every side button stands on, and MU's master
+// icon on it cut round to its well as a fan, the icon's middle filling the circle. Under the
+// pointer or with Talents up the icon is whole and a gold hairline rings it, as the other icons'
+// own lit states turn gold; at rest it is a shade down. MU's grey twin while no point waits.
+void Hud::talentsDisc(const Box& box, bool hovered, bool open, bool waiting) {
+    panel::Arts& arts = *arts_;
+    canvas_.image(arts.get("hud_disc"), box);
+    const gfx::Art& sheet = arts.get(waiting ? "talent_icons" : "talent_icons_grey");
+    constexpr int kRim = 32;
+    const float cx = box.x + box.w * 0.47f, cy = box.midY();  // the disc's well, left of its ear
+    const float r = box.w * kTalentsWell * 0.5f;
+    if (sheet.valid()) {
+        const int n = kTalentsIcon - 300;
+        // The cell's middle, a circle as wide as the cell (20 of its 28 rows), in the sheet's uvs.
+        const float u0 = (float(n % 25) * 20.0f + 10.0f) / sheet.width;
+        const float v0 = (float(n / 25) * 28.0f + 14.0f) / sheet.height;
+        const float ru = 9.5f / sheet.width, rv = 9.5f / sheet.height;
+        float xy[(kRim + 1) * 2], uv[(kRim + 1) * 2];
+        for (int i = 0; i <= kRim; ++i) {
+            const float a = 6.283185307f * float(i % kRim) / float(kRim);
+            xy[i * 2] = cx + std::cos(a) * r;
+            xy[i * 2 + 1] = cy + std::sin(a) * r;
+            uv[i * 2] = u0 + std::cos(a) * ru;
+            uv[i * 2 + 1] = v0 + std::sin(a) * rv;
+        }
+        const uint32_t tint = hovered || open ? 0xFFFFFFFFu : gfx::rgba(0.82f, 0.82f, 0.82f);
+        canvas_.polygon(&sheet, xy, uv, kRim, tint);
+    }
+    // Its rim: a dark seam at rest, gold lit.
+    const uint32_t ink = hovered || open ? gfx::rgba(0.886f, 0.706f, 0.396f) : gfx::rgba(0.0f, 0.0f, 0.0f, 0.7f);
+    const float t = std::max(1.0f, std::round(box.w / 40.0f));
+    for (int i = 0; i < kRim; ++i) {
+        const float a0 = 6.283185307f * float(i) / float(kRim), a1 = 6.283185307f * float(i + 1) / float(kRim);
+        const float q[8] = {cx + std::cos(a0) * r, cy + std::sin(a0) * r,
+                            cx + std::cos(a1) * r, cy + std::sin(a1) * r,
+                            cx + std::cos(a1) * (r + t), cy + std::sin(a1) * (r + t),
+                            cx + std::cos(a0) * (r + t), cy + std::sin(a0) * (r + t)};
+        canvas_.polygon(nullptr, q, q, 4, ink);
+    }
+}
+
+// The ember round the Talents disc while a talent point waits: a soft ring of light breathing
+// once in two seconds, on a canvas of its own so the plate is not redrawn for it every frame.
+void Hud::glow(float width, float height) {
+    glow_.clear();
+    if (!hero_ || talentPoints_ <= 0) return;
+    const panel::Screen s = panel::screenOf(width, height);
+    const Box box = plate(s, buttonPx(kTalentsButton));
+    const float breath =
+        0.5f - 0.5f * float(std::cos(6.283185307 * std::fmod(clock_, kTalentsBreath) / kTalentsBreath));
+    const float strength = kTalentsEmber * (0.35f + 0.65f * breath);
+    constexpr int kRim = 40;
+    const float cx = box.midX() - box.w * 0.03f, cy = box.midY();
+    const float inner = box.w * 0.44f, mid = box.w * 0.52f, outer = box.w * 0.68f;
+    const auto ember = [&](float a) { return gfx::rgba(0.941f * a, 0.420f * a, 0.235f * a, a); };
+    const uint32_t none = gfx::rgba(0.0f, 0.0f, 0.0f, 0.0f), lit = ember(strength);
+    for (int i = 0; i < kRim; ++i) {
+        const float a0 = 6.283185307f * float(i) / float(kRim), a1 = 6.283185307f * float(i + 1) / float(kRim);
+        const float c0 = std::cos(a0), s0 = std::sin(a0), c1 = std::cos(a1), s1 = std::sin(a1);
+        const float in[8] = {cx + c0 * inner, cy + s0 * inner, cx + c1 * inner, cy + s1 * inner,
+                             cx + c1 * mid,   cy + s1 * mid,   cx + c0 * mid,   cy + s0 * mid};
+        const uint32_t inInk[4] = {none, none, lit, lit};
+        glow_.light(in, inInk, 4);
+        const float out[8] = {cx + c0 * mid,   cy + s0 * mid,   cx + c1 * mid,   cy + s1 * mid,
+                              cx + c1 * outer, cy + s1 * outer, cx + c0 * outer, cy + s0 * outer};
+        const uint32_t outInk[4] = {lit, lit, none, none};
+        glow_.light(out, outInk, 4);
+    }
 }
 
 void Hud::follow(const sim::Body* hero) {
@@ -573,7 +659,7 @@ bool Hud::covers(float x, float y) const {
 void Hud::update(float seconds, float width, float height, const Pointer& pointer,
                  bool inventoryOpen, bool characterOpen, bool* toggleInventory,
                  bool* toggleCharacter, bool* toggleMenu, bool questOpen, bool* toggleQuest,
-                 bool* toggleChat, bool* toggleGuild) {
+                 bool* toggleChat, bool* toggleGuild, bool* toggleTalents) {
     clock_ += double(seconds);
     screen_ = panel::screenOf(width, height);
     slide(seconds);
@@ -587,7 +673,9 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         if (over == 103 && toggleCharacter) *toggleCharacter = true;
         if (over == 100 + kQuestButton && toggleQuest) *toggleQuest = true;
         if (over == 100 + kGuildButton && toggleGuild) *toggleGuild = true;
+        if (over == 100 + kTalentsButton && toggleTalents) *toggleTalents = true;
     }
+    glow(width, height);
 
     now_ = Face{};
     if (hero_) {
@@ -609,6 +697,8 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         now_.quest = questOpen;
         now_.chat = chatOpen_;
         now_.guild = guildOpen_;
+        now_.talents = talentsOpen_;
+        now_.talentPoints = talentPoints_ > 0;
         now_.hovered = hoveredAt(pointer.x, pointer.y);
         now_.tip = tipAt(pointer.x, pointer.y);
         now_.pointerX = pointer.x;
@@ -1455,6 +1545,10 @@ void Hud::rebuild() {
         const ButtonRow& row = kButtons[i];
         const Box box = plate(s, buttonPx(i));
         const bool hovered = now_.hovered == 100 + i;
+        if (i == kTalentsButton) {
+            talentsDisc(box, hovered, now_.talents, now_.talentPoints);
+            continue;
+        }
         const bool open = (i == 1 && now_.chat) || (i == 2 && now_.inventory) ||
                           (i == 3 && now_.character) || (i == kQuestButton && now_.quest) ||
                           (i == kGuildButton && now_.guild);

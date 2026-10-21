@@ -30,21 +30,15 @@ public:
     // requests; the caller answers them. `realm` is asked for what only it reckons (his attack
     // speed, what a reset would take off); the window keeps nothing of it. `name` is his, as the
     // server said it, and heads the window; empty off a server.
-    // `talents` as whether the Talents button was: the gold talent plate at the class row's right
-    // end, beside his stat points' red one (board G of the Talents canvas).
     void update(float width, float height, const sim::Body* hero, const sim::Realm* realm,
                 const std::string& name, const Pointer& pointer, int* spend, int* count, bool* reset,
-                bool* close, bool* talents = nullptr);
+                bool* close);
 
     int tab() const { return tab_; }  // the open page: 0 Attributes, 1 Combat, 2 Bonuses
     bool covers(float x, float y) const;
     // His guild's name, in brackets after his own (docs/game/guild.md); empty for none.
     void setGuild(const std::string& guild) { guild_ = guild; }
     const gfx::Canvas& canvas() const { return canvas_; }
-    // The ember breathing round the Talents button while he has talent points to spend, over the
-    // window's own canvas: rebuilt every frame by `tick`, which the window's own is not.
-    void tick(float seconds);
-    const gfx::Canvas& glow() const { return glow_; }
     uint64_t rebuilds() const { return rebuilds_; }
 
 private:
@@ -85,22 +79,14 @@ private:
         int returnable = 0;    // the points a reset would take back
         int strips = 0;        // the worn pieces it would take off, -1 no room for them
         bool asking = false;   // the reset's question is up
-        int talents = 0;       // his talent points in hand, on the talent plate
-        bool overSeal = false, pressSeal = false;
         bool operator==(const Sheet&) const = default;
     };
     void rebuild();
-    // Lays out the class row for his points: seal_, stat_ and classSize_ (card.cpp).
-    void layIdRow(int talents, int points, const std::string& kind);
 
-    gfx::Canvas canvas_, glow_;
-    double clock_ = 0.0;
+    gfx::Canvas canvas_;
     panel::Arts* arts_ = nullptr;
     Sheet drawn_, now_;
     float x_ = 0.0f, y_ = 0.0f;
-    gfx::Box seal_{};          // the talent plate, the Talents button
-    gfx::Box stat_{};          // and the stat plate beside it, nothing wide at no stat points
-    float classSize_ = 9.0f;   // the class's size in units, smaller in a tight row
     int tab_ = 0;         // 0 Attributes, 1 Combat, 2 Bonuses
     int pressTab_ = -1;   // the tab a press went down on
     int pushed_ = -1;
@@ -111,7 +97,6 @@ private:
     bool asking_ = false;  // the reset's question is up
     bool closing_ = false;
     bool overClose_ = false;
-    bool sealing_ = false;  // a press went down on the Talents button
     uint64_t rebuilds_ = 0;
     std::string guild_;
 };
