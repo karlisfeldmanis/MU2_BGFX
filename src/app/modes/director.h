@@ -14,6 +14,7 @@
 //   0.5  move 0.62 0.40 0.8                 ...or glided there over 0.8 s (default 0.5)
 //   1.5  aim monster 0.6                    glided onto the nearest monster, then kept on it
 //   1.5  aim loot | aim hero | aim tile C R the nearest drop, the hero, a tile, the same way
+//   1.5  aim elite                         the nearest Elite (sim/elite.h), the same way
 //   2.2  click | rclick                     the left or right button, pressed and let go
 //   2.2  hold 1.5 | rhold 1.5               ...or held down for that long
 //   3.0  skill q | key 1 | type enter       a skill key (q w e r t), a potion key, typing
@@ -43,6 +44,8 @@ public:
         std::function<bool(float column, float row, float* x, float* y)> toScreen;
         // The nearest living monster's id, or 0.
         std::function<uint32_t()> nearestMonster;
+        // The nearest living Elite's id (sim/elite.h), or 0.
+        std::function<uint32_t()> nearestElite;
         // Where a body is drawn now; false when it is gone.
         std::function<bool(uint32_t id, float* column, float* row)> shownAt;
         // The nearest drop's tile; false when nothing lies near.
@@ -79,7 +82,7 @@ public:
     Hand step(double seconds, float width, float height, const Eyes& eyes);
 
 private:
-    enum class Verb : uint8_t { Move, AimMonster, AimLoot, AimHero, AimTile, Click, RightClick,
+    enum class Verb : uint8_t { Move, AimMonster, AimElite, AimLoot, AimHero, AimTile, Click, RightClick,
                                 Hold, RightHold, Skill, Potion, HoldSkill, Type, Run, Stop, Wear,
                                 Unwear, Flare, Pin };
     struct Cue {

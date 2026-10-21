@@ -70,6 +70,7 @@ bool Director::open(const std::string& path) {
             std::string what;
             words >> what;
             if (what == "monster") cue.verb = Verb::AimMonster;
+            else if (what == "elite") cue.verb = Verb::AimElite;
             else if (what == "loot") cue.verb = Verb::AimLoot;
             else if (what == "hero") cue.verb = Verb::AimHero;
             else if (what == "tile") {
@@ -178,6 +179,12 @@ Director::Hand Director::step(double seconds, float width, float height, const E
                 const uint32_t id = eyes.nearestMonster();
                 if (id) glide(Aim::Body, 0, 0, id);
                 else core::logf("director: line %d: no monster to aim at", cue.line);
+                break;
+            }
+            case Verb::AimElite: {
+                const uint32_t id = eyes.nearestElite ? eyes.nearestElite() : 0;
+                if (id) glide(Aim::Body, 0, 0, id);
+                else core::logf("director: line %d: no Elite to aim at", cue.line);
                 break;
             }
             case Verb::AimHero: glide(Aim::Body, 0, 0, eyes.hero); break;

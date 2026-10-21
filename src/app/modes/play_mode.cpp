@@ -1165,6 +1165,20 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                 }
                 return id;
             };
+            eyes.nearestElite = [&]() {
+                const sim::Body& me = realm.hero();
+                uint32_t id = 0;
+                float best = 1e9f;
+                for (const sim::Body& body : realm.bodies()) {
+                    if (!body.elite || !body.alive()) continue;
+                    const float dx = body.x - me.x, dy = body.y - me.y;
+                    if (dx * dx + dy * dy < best) {
+                        best = dx * dx + dy * dy;
+                        id = body.id;
+                    }
+                }
+                return id;
+            };
             eyes.shownAt = [&](uint32_t id, float* column, float* row) {
                 return world_.played().shownAt(id, column, row);
             };
