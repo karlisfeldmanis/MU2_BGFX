@@ -1894,10 +1894,10 @@ void testCastLock(const content::Tables& tables) {
     // ---- Poison: a cooldown burst that goes on hurting ---------------------------------------
     {
         const sim::SkillRow& poison = *sim::skillNumbered(sim::skill::kPoison);
-        check(poison.wizardry && poison.primary() && poison.force == 1.8f && poison.damage == 12 &&
+        check(poison.wizardry && poison.primary() && poison.force == 1.44f && poison.damage == 12 &&
                   poison.mana == 42 && poison.poisonTicks == 400 && poison.splash == 6.0f &&
                   poison.reach == 9.0f,
-              "Poison is a standard spell of twelve damage at 1.8 the band and forty-two mana, "
+              "Poison is a standard spell of twelve damage at 1.44 the band and forty-two mana, "
               "poisoning twenty seconds within six tiles");
         const int32_t scroll = tables.itemAt(15, 0);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kPoison &&
@@ -1979,7 +1979,7 @@ void testCastLock(const content::Tables& tables) {
     {
         const sim::SkillRow& flame = *sim::skillNumbered(sim::skill::kFlame);
         check(flame.wizardry && flame.primary() && flame.damage == 25 && flame.mana == 50 &&
-                  flame.burns == 2 && flame.burnTiles == 1.5f && flame.force == 1.5f,
+                  flame.burns == 2 && flame.burnTiles == 1.5f && flame.force == 1.275f,
               "Flame is a no-cooldown spell of twenty-five damage and fifty mana, "
               "striking twice within a tile and a half");
         // Each of the wizard's late rows by the next one's, so a row added on the end moves none.

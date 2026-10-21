@@ -449,7 +449,9 @@ constexpr SkillRow kRows[kSkills] = {
     // forces and reach (sim/items.h), so this is his. **A tenth down again** the same day (the
     // user: "lets nerf wizard little bit", after the bots had him 186-214 to the others' 175-190
     // at eight hours): Meteorite 2.6 -> 2.3, the other three 2.0 -> 1.8; the reach stays.
-    {skill::kPoison, "Poison", 42, 9.0f, 1.8f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+    // Force 1.8 -> 1.44 (the user, 2026-10-21: "a lot of spells are pretty brokenly strong";
+    // tests/skill_sweep.cpp had it the wizard's strongest without talents): -20%.
+    {skill::kPoison, "Poison", 42, 9.0f, 1.44f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "A cloud of poison bursts on a body up to nine tiles off and on everything within six tiles "
      "of it, and goes on hurting them for twenty seconds.",
      147, "spell_heart", true, arms::kNone, 0, Kin::DarkWizard, true, 12, 148, 1000.0f, false, 0,
@@ -577,7 +579,8 @@ constexpr SkillRow kRows[kSkills] = {
     // struck ~157 a burn at 700 energy, two burns, where a Fire Ball of three mana struck ~245
     // -- fifty mana for less than the cheapest spell, and no bot threw it. At 1.5 a burn is ~236,
     // ~470 over the fire's two on everything in it.
-    {.number = skill::kFlame, .name = "Flame", .mana = 50, .reach = 9.0f, .force = 1.5f,
+    // Force 1.5 -> 1.275, -15% (the user's nerf of 2026-10-21, off tests/skill_sweep.cpp).
+    {.number = skill::kFlame, .name = "Flame", .mana = 50, .reach = 9.0f, .force = 1.275f,
      .spread = Spread::One,
      .tells = "Sets the ground under a body up to nine tiles off alight, and the fire strikes "
               "everything standing in it twice.",
@@ -608,8 +611,9 @@ constexpr SkillRow kRows[kSkills] = {
     // **Thirty mana**: Twister's sixty, not 0.75's ninety (the user, 2026-10-12: "reduce the mana
     // cost for evil spirits for DW"), then half of that (2026-10-13: "lets reduce mana cost for
     // evil spirits") -- the pack spell the casters are taught to open with.
+    // Force 1.8 -> 1.53, -15% (the user's nerf of 2026-10-21, "also evil spirit").
     {.number = skill::kEvilSpirit, .name = "Evil Spirit", .mana = 30, .reach = 9.0f,
-     .force = 1.8f, .spread = Spread::One,
+     .force = 1.53f, .spread = Spread::One,
      .tells = "Lets evil spirits loose around him, which strike most of the monsters within "
               "ten tiles.",
      .clip = 147, .sound = "spell_evil", .built = true, .families = arms::kNone,
@@ -700,7 +704,8 @@ constexpr SkillRow kRows[kSkills] = {
     // ground). Let go at half the clip, the let-go MU makes the ring of blasts and MODEL_SKILL_
     // INFERNO in (ZzzCharacter.cpp:4574-4583). No cooldown, as Hellfire. Its ring and its
     // eExplosion are game/fx/inferno.h. 1.6 the band, above Hellfire (its ladder, above).
-    {.number = skill::kInferno, .name = "Inferno", .mana = 200, .reach = 4.0f, .force = 1.6f,
+    // Force 1.6 -> 1.28, -20% (the user's nerf of 2026-10-21: the wizard's top on Aida with talents).
+    {.number = skill::kInferno, .name = "Inferno", .mana = 200, .reach = 4.0f, .force = 1.28f,
      .spread = Spread::Ring,
      .tells = "A ring of fire bursts round him, striking every monster within four tiles.",
      .clip = 153, .sound = "explosion", .built = true, .families = arms::kNone,
@@ -749,8 +754,9 @@ constexpr SkillRow kRows[kSkills] = {
     // and a Piercing Volley in her bow looses three lanes (`lanesOf`, sim/items.h). Its clip is her
     // bow's 50 or 51, as Skillshot's is; SOUND_PIERCING is MU's, at the draw (ZzzCharacter.cpp:
     // 2774-2779). Wind (realm_fight.cpp `skillElement`), so Tempest raises it.
+    // Force 1.5 -> 1.275, -15% (the user's nerf of 2026-10-21: the strongest skill on Aida).
     {.number = skill::kPenetration, .name = "Penetration", .mana = 7, .reach = 8.0f,
-     .force = 1.5f, .spread = Spread::Fan,
+     .force = 1.275f, .spread = Spread::Fan,
      .tells = "An arrow loosed at a body up to eight tiles off, flying on through everything in "
               "its line. One arrow is spent for every body struck.",
      .clip = 50, .sound = "player_piercing", .built = true, .families = arms::kMissiles,
