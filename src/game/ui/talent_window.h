@@ -123,7 +123,18 @@ private:
     // A double: a session's hours of seconds would blur a float's twentieths.
     double clock_ = 0.0, busyUntil_ = -1.0;
     Glow glow_[sim::kTalentColumnsMost][sim::kTalentNodes];
-    double ringAt_[sim::kTalentColumnsMost][sim::kTalentNodes];
+    // **The ignition** of a talent (the user, 2026-10-21: "work on that unlock effect, nows its
+    // very vierd and basic"): light, sparks and rays drawn every frame over the window, on the
+    // glow canvas, from when it started. Open: a talent's first point or one a line opened;
+    // Major: a major taken, bigger and with a shockwave; Point: a plain point's glint.
+    enum class Burst : uint8_t { None, Point, Open, Major };
+    struct Spark {
+        double at = -1.0e9;
+        Burst kind = Burst::None;
+    };
+    Spark burst_[sim::kTalentColumnsMost][sim::kTalentNodes];
+    // Draws the ignitions, and the energy running down each filling line, onto breath_.
+    void effects();
     Fill fill_[sim::kTalentColumnsMost][kEdges];
 };
 

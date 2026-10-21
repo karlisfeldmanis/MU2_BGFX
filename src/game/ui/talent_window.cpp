@@ -1,8 +1,10 @@
 #include "game/ui/talent_window.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdio>
+#include <vector>
 
 #include "core/log.h"
 #include "game/play.h"
@@ -57,13 +59,13 @@ constexpr float kSelName = 19.0f, kSelSmall = 14.0f, kSelText = 15.0f;
 
 // ---- the motion, in seconds: the plan's "The unlock" -------------------------------------------
 
-constexpr float kFillSeconds = 0.25f;   // blood runs down a line
+constexpr float kFillSeconds = 0.34f;   // blood runs down a line, an energy at its head
 constexpr float kWakeSeconds = 0.2f;    // grey to colour, and the frame's pop
 constexpr float kWakePop = 0.12f;       // 1.0 -> 1.12 -> 1.0
 constexpr float kPointSeconds = 0.25f;  // a plain point's flash
 constexpr float kPointPop = 0.05f;
-constexpr float kRingSeconds = 0.45f;   // a major's ring
-constexpr float kEmberSeconds = 0.6f;
+// The ignition's lengths: a talent opened, a major taken, a plain point.
+constexpr float kOpenSeconds = 0.95f, kMajorSeconds = 1.4f, kGlintSeconds = 0.45f;
 // A reset runs up the tree a tier at a time, bottom first: three tiers in about 0.3 s.
 constexpr float kRippleStep = 0.1f, kFadeSeconds = 0.12f;
 // A line out of a major waits for the lines into it, then fills one after the other.
@@ -236,6 +238,144 @@ int fedSkills(const sim::TalentColumn& column, int32_t* out, int most) {
 
 const char* titleOf(sim::Kin kin, bool second) { return sim::className(int(kin), second); }
 
+// ---- light: the ignition's (the user, 2026-10-21: "nows its very vierd and basic") -------------
+// Everything below is laid on as light (gfx::Canvas::light): a colour adds to what is under it
+// and hides nothing, so the burst glows over the window like fire, not like paint.
+
+struct Hue {
+    float r, g, b;
+};
+constexpr Hue kWhiteGold{1.0f, 0.93f, 0.76f}, kGold{1.0f, 0.74f, 0.34f}, kFire{1.0f, 0.46f, 0.16f},
+              kBloodLight{0.86f, 0.16f, 0.09f};
+
+uint32_t lit(const Hue& h, float s) {
+    s = std::clamp(s, 0.0f, 1.0f);
+    return gfx::rgba(h.r * s, h.g * s, h.b * s, 0.0f);
+}
+// White-gold through gold and fire to blood as `t` runs 0 to 1: a spark cooling.
+Hue cooling(float t) {
+    const auto mix = [](const Hue& a, const Hue& b, float k) {
+        return Hue{a.r + (b.r - a.r) * k, a.g + (b.g - a.g) * k, a.b + (b.b - a.b) * k};
+    };
+    t = std::clamp(t, 0.0f, 1.0f);
+    if (t < 0.33f) return mix(kWhiteGold, kGold, t / 0.33f);
+    if (t < 0.66f) return mix(kGold, kFire, (t - 0.33f) / 0.33f);
+    return mix(kFire, kBloodLight, (t - 0.66f) / 0.34f);
+}
+// A number in [0, 1), the same every frame for the same spark.
+float noise01(uint32_t key, uint32_t channel) {
+    uint32_t h = key * 0x9E3779B1u ^ (channel + 0x7F4A7C15u) * 0x85EBCA77u;
+    h ^= h >> 15;
+    h *= 0x2C1B3C6Du;
+    h ^= h >> 12;
+    h *= 0x297A2D39u;
+    h ^= h >> 15;
+    return float(h & 0xFFFFFFu) / float(0x1000000);
+}
+// A soft round glow: `s` at its middle, nothing at its rim.
+void glowDisc(gfx::Canvas& canvas, float cx, float cy, float r, const Hue& h, float s) {
+    if (s <= 0.003f || r <= 0.5f) return;
+    constexpr int kSides = 20;
+    float xy[(kSides + 2) * 2];
+    uint32_t ink[kSides + 2];
+    xy[0] = cx;
+    xy[1] = cy;
+    ink[0] = lit(h, s);
+    for (int i = 0; i <= kSides; ++i) {
+        const float a = float(i) * 6.2831853f / float(kSides);
+        xy[(i + 1) * 2] = cx + std::cos(a) * r;
+        xy[(i + 1) * 2 + 1] = cy + std::sin(a) * r;
+        ink[i + 1] = lit(h, 0.0f);
+    }
+    canvas.light(xy, ink, kSides + 2);
+}
+// A ray out of (cx, cy) at angle `a`: from `inner` to `outer`, `wide` at its foot, to a point.
+void ray(gfx::Canvas& canvas, float cx, float cy, float a, float inner, float outer, float wide, const Hue& h,
+         float s) {
+    if (s <= 0.003f || outer <= inner) return;
+    const float dx = std::cos(a), dy = std::sin(a), nx = -dy, ny = dx;
+    const float bx = cx + dx * inner, by = cy + dy * inner;
+    const float xy[8] = {bx, by, bx + nx * wide * 0.5f, by + ny * wide * 0.5f, cx + dx * outer, cy + dy * outer,
+                         bx - nx * wide * 0.5f, by - ny * wide * 0.5f};
+    const uint32_t ink[4] = {lit(h, s), lit(h, s * 0.25f), lit(h, 0.0f), lit(h, s * 0.25f)};
+    canvas.light(xy, ink, 4);
+}
+// A ring of light: brightest on `radius`, fading to nothing `thick` either side of it.
+void glowRing(gfx::Canvas& canvas, float cx, float cy, float radius, float thick, const Hue& h, float s) {
+    if (s <= 0.003f || radius <= 0.5f) return;
+    constexpr int kSegments = 48;
+    const float in = std::max(0.0f, radius - thick), out = radius + thick;
+    for (int i = 0; i < kSegments; ++i) {
+        const float a0 = 6.2831853f * float(i) / float(kSegments), a1 = 6.2831853f * float(i + 1) / float(kSegments);
+        const float c0 = std::cos(a0), s0 = std::sin(a0), c1 = std::cos(a1), s1 = std::sin(a1);
+        const float inner[8] = {cx + c0 * radius, cy + s0 * radius, cx + c0 * in, cy + s0 * in,
+                                cx + c1 * in, cy + s1 * in, cx + c1 * radius, cy + s1 * radius};
+        const float outer[8] = {cx + c0 * radius, cy + s0 * radius, cx + c1 * radius, cy + s1 * radius,
+                                cx + c1 * out, cy + s1 * out, cx + c0 * out, cy + s0 * out};
+        const uint32_t ink[4] = {lit(h, s), lit(h, 0.0f), lit(h, 0.0f), lit(h, s)};
+        const uint32_t inkOut[4] = {lit(h, s), lit(h, s), lit(h, 0.0f), lit(h, 0.0f)};
+        canvas.light(inner, ink, 4);
+        canvas.light(outer, inkOut, 4);
+    }
+}
+// Light round a frame's edge: `s` on the edge, nothing `spread` out from it.
+void glowFrame(gfx::Canvas& canvas, const Box& b, float spread, const Hue& h, float s) {
+    if (s <= 0.003f) return;
+    const float x0 = b.x, y0 = b.y, x1 = b.right(), y1 = b.bottom();
+    const float X0 = x0 - spread, Y0 = y0 - spread, X1 = x1 + spread, Y1 = y1 + spread;
+    const float sides[4][8] = {{x0, y0, x1, y0, X1, Y0, X0, Y0},
+                               {x1, y0, x1, y1, X1, Y1, X1, Y0},
+                               {x1, y1, x0, y1, X0, Y1, X1, Y1},
+                               {x0, y1, x0, y0, X0, Y0, X0, Y1}};
+    const uint32_t ink[4] = {lit(h, s), lit(h, s), lit(h, 0.0f), lit(h, 0.0f)};
+    for (const auto& side : sides) canvas.light(side, ink, 4);
+}
+// A soft band of light across a box, clipped to it: the shine passing over an icon. Its middle
+// runs through (mx, my) at 45 degrees; `half` the band's half width.
+void shine(gfx::Canvas& canvas, const Box& box, float mx, float my, float half, const Hue& h, float s) {
+    if (s <= 0.003f) return;
+    // Each half of the band, from its middle line out to its edge, clipped to the box.
+    const float ax = 0.70710678f, ay = -0.70710678f;   // along the band
+    const float nx = 0.70710678f, ny = 0.70710678f;    // across it
+    const float far = box.w + box.h;
+    for (int side = -1; side <= 1; side += 2) {
+        std::vector<std::array<float, 3>> poly = {
+            {mx - ax * far, my - ay * far, 1.0f}, {mx + ax * far, my + ay * far, 1.0f},
+            {mx + ax * far + nx * half * float(side), my + ay * far + ny * half * float(side), 0.0f},
+            {mx - ax * far + nx * half * float(side), my - ay * far + ny * half * float(side), 0.0f}};
+        // Sutherland-Hodgman against the box's four sides; the third value is the light, linear
+        // across the band, so it is carried through the cut.
+        const auto cut = [&](auto inside, auto cross) {
+            std::vector<std::array<float, 3>> out;
+            for (size_t i = 0; i < poly.size(); ++i) {
+                const auto& p = poly[i];
+                const auto& q = poly[(i + 1) % poly.size()];
+                const bool pin = inside(p), qin = inside(q);
+                if (pin) out.push_back(p);
+                if (pin != qin) out.push_back(cross(p, q));
+            }
+            poly = out;
+        };
+        const auto lerp = [](const std::array<float, 3>& p, const std::array<float, 3>& q, float k) {
+            return std::array<float, 3>{p[0] + (q[0] - p[0]) * k, p[1] + (q[1] - p[1]) * k, p[2] + (q[2] - p[2]) * k};
+        };
+        const float l = box.x, r = box.right(), t = box.y, bt = box.bottom();
+        cut([&](const auto& p) { return p[0] >= l; }, [&](const auto& p, const auto& q) { return lerp(p, q, (l - p[0]) / (q[0] - p[0])); });
+        cut([&](const auto& p) { return p[0] <= r; }, [&](const auto& p, const auto& q) { return lerp(p, q, (r - p[0]) / (q[0] - p[0])); });
+        cut([&](const auto& p) { return p[1] >= t; }, [&](const auto& p, const auto& q) { return lerp(p, q, (t - p[1]) / (q[1] - p[1])); });
+        cut([&](const auto& p) { return p[1] <= bt; }, [&](const auto& p, const auto& q) { return lerp(p, q, (bt - p[1]) / (q[1] - p[1])); });
+        if (poly.size() < 3 || poly.size() > 12) continue;
+        float xy[24];
+        uint32_t ink[12];
+        for (size_t i = 0; i < poly.size(); ++i) {
+            xy[i * 2] = poly[i][0];
+            xy[i * 2 + 1] = poly[i][1];
+            ink[i] = lit(h, s * poly[i][2]);
+        }
+        canvas.light(xy, ink, int(poly.size()));
+    }
+}
+
 }  // namespace
 
 void TalentWindow::open(const gfx::Interface& interface, panel::Arts* arts) {
@@ -243,8 +383,8 @@ void TalentWindow::open(const gfx::Interface& interface, panel::Arts* arts) {
     interface.adopt(card_);
     interface.adopt(breath_);
     arts_ = arts;
-    for (auto& column : ringAt_) {
-        for (double& at : column) at = -1.0e9;
+    for (auto& column : burst_) {
+        for (Spark& one : column) one = Spark{};
     }
 }
 
@@ -350,13 +490,11 @@ void TalentWindow::animate(const sim::TalentRanks& before, const sim::TalentRank
         if (was[size_t(raised)] == 0) {
             glow_[c][raised] = {now, kWakeSeconds, float(levelOf(was, raised)), 2.0f, Motion::Wake};
             busy(now + kWakeSeconds);
-            if (sim::isMajor(raised)) {
-                ringAt_[c][raised] = now;
-                busy(now + kEmberSeconds + 0.1);
-            }
+            burst_[c][raised] = {now, sim::isMajor(raised) ? Burst::Major : Burst::Open};
         } else {
             glow_[c][raised] = {now, kPointSeconds, 2.0f, 2.0f, Motion::Point};
             busy(now + kPointSeconds);
+            burst_[c][raised] = {now, Burst::Point};
         }
         // The lines it lights: those into it first, then those out of it, one after another,
         // each waking the talent it opens as the blood reaches it.
@@ -382,6 +520,8 @@ void TalentWindow::animate(const sim::TalentRanks& before, const sim::TalentRank
                 const double wake = at + double(kFillSeconds) * 0.7;
                 glow_[c][b] = {wake, kWakeSeconds, float(lb), float(la), Motion::Wake};
                 busy(wake + kWakeSeconds);
+                // And ignites as the energy reaches it.
+                burst_[c][b] = {at + double(kFillSeconds) * 0.85, Burst::Open};
             }
         }
     }
@@ -544,6 +684,170 @@ void TalentWindow::update(const Play& play, float width, float height, float flo
             }
         }
     }
+    // Over the breath, the light of whatever is igniting (effects).
+    effects();
+}
+
+void TalentWindow::effects() {
+    const double t = clock_;
+    const float u = u_;
+    const float colW = (wide_ - kPadX * 2.0f - kColumnGap * float(columns_ - 1)) / float(columns_);
+    const float treeTop = kColumnTop + kColumnHead + 2.0f + (kColumnTall - kColumnHead - 2.0f - kTreeTall) * 0.5f;
+    const auto easeOut = [](float k) { k = std::clamp(k, 0.0f, 1.0f); return 1.0f - (1.0f - k) * (1.0f - k) * (1.0f - k); };
+    gfx::Canvas& fx = breath_;
+
+    // A beam of light along a line: `wide` across, brightest down its middle, from s0 to s1.
+    const auto beam = [&](float ax, float ay, float bx, float by, float wide, const Hue& h, float s0, float s1) {
+        const float dx = bx - ax, dy = by - ay, len = std::sqrt(dx * dx + dy * dy);
+        if (len < 0.5f) return;
+        const float nx = -dy / len * wide * 0.5f, ny = dx / len * wide * 0.5f;
+        for (int side = -1; side <= 1; side += 2) {
+            const float xy[8] = {ax, ay, bx, by, bx + nx * float(side), by + ny * float(side), ax + nx * float(side),
+                                 ay + ny * float(side)};
+            const uint32_t ink[4] = {lit(h, s0), lit(h, s1), lit(h, 0.0f), lit(h, 0.0f)};
+            fx.light(xy, ink, 4);
+        }
+    };
+
+    for (int c = 0; c < columns_; ++c) {
+        const float left = kPadX + float(c) * (colW + kColumnGap);
+
+        // **Energy down a line**: a comet of light from the upper talent to the one it opens,
+        // a bright head and a tail that cools behind it, and the line glowing once it is there.
+        for (int e = 0; e < kEdges; ++e) {
+            const Fill& f = fill_[c][e];
+            if (f.at < -1.0e8 || f.to <= f.from) continue;
+            const float k = float((t - f.at) / double(kFillSeconds));
+            if (k < 0.0f || k > 1.6f) continue;
+            const Geo ga = geoOf(left, colW, treeTop, kEdge[e][0]), gb = geoOf(left, colW, treeTop, kEdge[e][1]);
+            const float x1 = x_ + ga.frame.midX() * u, y1 = y_ + ga.frame.bottom() * u;
+            const float x2 = x_ + gb.frame.midX() * u, y2 = y_ + gb.frame.y * u;
+            if (k <= 1.0f) {
+                const float head = smooth(k), tail = std::max(0.0f, head - 0.45f);
+                const float hx = x1 + (x2 - x1) * head, hy = y1 + (y2 - y1) * head;
+                const float tx = x1 + (x2 - x1) * tail, ty = y1 + (y2 - y1) * tail;
+                beam(tx, ty, hx, hy, 9.0f * u, kFire, 0.0f, 0.75f);
+                beam(tx, ty, hx, hy, 3.0f * u, kWhiteGold, 0.0f, 0.9f);
+                glowDisc(fx, hx, hy, 14.0f * u, kGold, 0.75f);
+                glowDisc(fx, hx, hy, 5.0f * u, kWhiteGold, 1.0f);
+                // A few sparks shed behind the head.
+                for (int n = 0; n < 4; ++n) {
+                    const uint32_t key = uint32_t(c * 97 + e * 13 + n);
+                    const float lag = 0.06f + 0.22f * noise01(key, 1);
+                    const float at = std::max(0.0f, head - lag);
+                    const float side = (noise01(key, 2) - 0.5f) * 10.0f * u * (lag * 4.0f);
+                    const float dx = x2 - x1, dy = y2 - y1, len = std::max(1.0f, std::sqrt(dx * dx + dy * dy));
+                    const float px = x1 + dx * at - dy / len * side, py = y1 + dy * at + dx / len * side;
+                    glowDisc(fx, px, py, 3.5f * u, cooling(lag * 3.0f), 0.8f * (1.0f - lag * 2.5f));
+                }
+            } else {
+                // Arrived: the whole line glows and settles.
+                const float after = 1.0f - (k - 1.0f) / 0.6f;
+                beam(x1, y1, x2, y2, 8.0f * u, kFire, 0.45f * after * after, 0.45f * after * after);
+            }
+        }
+
+        // **The ignitions.**
+        for (int i = 0; i < sim::kTalentNodes; ++i) {
+            Spark& b = burst_[c][i];
+            if (b.kind == Burst::None) continue;
+            const float age = float(t - b.at);
+            const float length = b.kind == Burst::Major ? kMajorSeconds : b.kind == Burst::Open ? kOpenSeconds : kGlintSeconds;
+            if (age < 0.0f) continue;
+            if (age > length) {
+                b = Spark{};
+                continue;
+            }
+            const float p = age / length;
+            const Geo g = geoOf(left, colW, treeTop, i);
+            const Box frame = placed(x_, y_, g.frame, u), icon = placed(x_, y_, g.icon, u);
+            const float cx = icon.midX(), cy = icon.midY(), size = frame.h;
+            const uint32_t seed = uint32_t(c * 31 + i * 7) ^ uint32_t(int64_t(b.at * 1000.0));
+
+            if (b.kind == Burst::Point) {
+                // A plain point: a glint over the count and a few sparks.
+                const float fade = (1.0f - p) * (1.0f - p);
+                const float gy = g.band.h > 0.0f ? y_ + g.band.midY() * u : cy;
+                glowDisc(fx, cx, gy, size * 0.35f, kGold, 0.55f * fade);
+                for (int k = 0; k < 4; ++k) {
+                    ray(fx, cx, gy, 1.5707963f * float(k) + 0.785398f, 0.0f, size * 0.32f * easeOut(p * 3.0f), 3.0f * u,
+                        kWhiteGold, 0.8f * fade);
+                }
+                for (int n = 0; n < 5; ++n) {
+                    const float a = 6.2831853f * noise01(seed, uint32_t(n * 3));
+                    const float d = size * (0.15f + 0.35f * noise01(seed, uint32_t(n * 3 + 1))) * easeOut(p);
+                    glowDisc(fx, cx + std::cos(a) * d, gy + std::sin(a) * d - size * 0.15f * p, 3.0f * u, cooling(p),
+                             0.9f * (1.0f - p));
+                }
+                continue;
+            }
+
+            const bool major = b.kind == Burst::Major;
+            const float big = major ? 1.45f : 1.0f;
+            // The flash: the icon itself lit white-gold for an instant.
+            const float flash = std::max(0.0f, 1.0f - age / 0.16f);
+            if (flash > 0.0f) {
+                const float xy[8] = {icon.x, icon.y, icon.right(), icon.y, icon.right(), icon.bottom(), icon.x, icon.bottom()};
+                const uint32_t ink = lit(kWhiteGold, 0.42f * flash * flash);
+                const uint32_t inks[4] = {ink, ink, ink, ink};
+                fx.light(xy, inks, 4);
+            }
+            // The bloom behind it, warm, growing as it fades.
+            // Rising to its peak over the first tenth, so the icon is never washed out.
+            const float rise = std::min(1.0f, age / 0.09f);
+            glowDisc(fx, cx, cy, size * (0.65f + 0.85f * easeOut(p)) * big, kFire, 0.42f * rise * std::pow(1.0f - p, 1.6f));
+            glowDisc(fx, cx, cy, size * (0.4f + 0.3f * easeOut(p)) * big, kGold, 0.38f * rise * std::pow(1.0f - p, 2.2f));
+            // Rays, turning slowly as they burst out and die.
+            const int rays = major ? 14 : 10;
+            const float reach = easeOut(age / 0.28f);
+            for (int k = 0; k < rays; ++k) {
+                const float n = noise01(seed, uint32_t(100 + k));
+                const float a = 6.2831853f * float(k) / float(rays) + (n - 0.5f) * 0.5f + age * 0.5f;
+                const float outer = size * (0.55f + 0.85f * n) * big * reach;
+                ray(fx, cx, cy, a, size * 0.18f, outer, size * (0.07f + 0.05f * n), kGold,
+                    0.55f * (0.55f + 0.45f * n) * std::pow(1.0f - p, 1.8f));
+            }
+            // Sparks thrown out, slowing, drifting up as they cool.
+            const int sparks = major ? 30 : 18;
+            for (int k = 0; k < sparks; ++k) {
+                const float delay = 0.1f * noise01(seed, uint32_t(200 + k));
+                const float life = (0.45f + 0.5f * noise01(seed, uint32_t(300 + k))) * length;
+                const float q = (age - delay) / life;
+                if (q <= 0.0f || q >= 1.0f) continue;
+                const float a = 6.2831853f * noise01(seed, uint32_t(400 + k));
+                const float speed = size * (0.55f + 1.1f * noise01(seed, uint32_t(500 + k))) * big;
+                const float travel = speed * (1.0f - (1.0f - q) * (1.0f - q));
+                const float px = cx + std::cos(a) * (size * 0.22f + travel);
+                const float py = cy + std::sin(a) * (size * 0.22f + travel) * 0.85f - size * 0.55f * q * q;
+                const float r = u * (1.4f + 1.4f * noise01(seed, uint32_t(600 + k))) * (1.0f - 0.45f * q);
+                const Hue h = cooling(q);
+                glowDisc(fx, px, py, r * 4.0f, h, 0.32f * (1.0f - q));
+                glowDisc(fx, px, py, r * 1.3f, h, 1.0f - q * q);
+            }
+            // The frame's edge burning, then settling.
+            glowFrame(fx, frame, size * 0.2f * big, kGold, 0.75f * std::pow(1.0f - p, 1.3f));
+            glowFrame(fx, frame, size * 0.06f, kWhiteGold, 0.6f * std::pow(1.0f - p, 2.5f));
+            // The shine across the icon, corner to corner.
+            const float sweep = (age - 0.06f) / 0.42f;
+            if (sweep > 0.0f && sweep < 1.0f) {
+                const float k = smooth(sweep);
+                const float mx = icon.x - icon.w * 0.35f + (icon.w * 1.7f) * k;
+                const float my = icon.y - icon.h * 0.35f + (icon.h * 1.7f) * k;
+                shine(fx, icon, mx, my, icon.w * 0.24f, kWhiteGold, 0.75f * std::sin(3.14159265f * sweep));
+            }
+            // A major's shockwave: two soft rings of light running out, blood then gold.
+            if (major) {
+                const float w1 = easeOut(p * 1.2f);
+                glowRing(fx, cx, cy, size * (0.4f + 1.9f * w1), size * (0.05f + 0.22f * (1.0f - w1)), kFire,
+                         0.7f * std::pow(std::max(0.0f, 1.0f - p * 1.2f), 1.4f));
+                const float q2 = (age - 0.12f) / (length * 0.7f);
+                if (q2 > 0.0f && q2 < 1.0f) {
+                    glowRing(fx, cx, cy, size * (0.35f + 1.4f * easeOut(q2)), size * (0.03f + 0.08f * (1.0f - q2)), kGold,
+                             0.55f * (1.0f - q2) * (1.0f - q2));
+                }
+            }
+        }
+    }
 }
 
 void TalentWindow::rebuild(const Play& play) {
@@ -687,10 +991,7 @@ void TalentWindow::rebuild(const Play& play) {
             const float k = smooth(p);
             const float hx = x1 + (x2 - x1) * k, hy = y1 + (y2 - y1) * k;
             stroke(canvas_, x1, y1, hx, hy, thick, is, is);
-            // The head: a short bright run behind the front, fading into the fill.
-            const float back = std::max(0.0f, k - 0.18f);
-            const float bx = x1 + (x2 - x1) * back, by = y1 + (y2 - y1) * back;
-            stroke(canvas_, bx, by, hx, hy, thick * 1.6f, alphaOf(style::kBloodHi, 0.0f), kFlash);
+            // Its head is light, drawn every frame over the window (effects).
         }
 
         // The nodes.
@@ -782,43 +1083,6 @@ void TalentWindow::rebuild(const Play& play) {
             canvas_.rect({std::round(plus.midX() - arm * 0.5f), std::round(plus.midY() - bar * 0.5f), arm, bar}, plusInk);
             canvas_.rect({std::round(plus.midX() - bar * 0.5f), std::round(plus.midY() - arm * 0.5f), bar, arm}, plusInk);
 
-            // **A major's ring**: a blood ring grows from it and fades, with a few embers rising.
-            const double ringAt = ringAt_[c][i];
-            if (sim::isMajor(i) && ringAt > -1.0e8 && t >= ringAt) {
-                const float age = float(t - ringAt);
-                const float mx = frame.midX(), my = frame.midY();
-                if (age < kRingSeconds) {
-                    const float p = age / kRingSeconds;
-                    const float from = frame.w * 0.55f, to = frame.w * 1.6f;
-                    const float radius = from + (to - from) * (1.0f - (1.0f - p) * (1.0f - p));
-                    const float width = std::max(1.0f, (3.0f * (1.0f - p) + 1.0f) * u);
-                    const uint32_t ink = alphaOf(style::kBloodHi, 0.85f * (1.0f - p) * (1.0f - p));
-                    constexpr int kSegments = 40;
-                    for (int s = 0; s < kSegments; ++s) {
-                        const float a0 = 6.2831853f * float(s) / float(kSegments);
-                        const float a1 = 6.2831853f * float(s + 1) / float(kSegments);
-                        const float ri = radius - width * 0.5f, ro = radius + width * 0.5f;
-                        const float xy[8] = {mx + std::cos(a0) * ri, my + std::sin(a0) * ri,
-                                             mx + std::cos(a0) * ro, my + std::sin(a0) * ro,
-                                             mx + std::cos(a1) * ro, my + std::sin(a1) * ro,
-                                             mx + std::cos(a1) * ri, my + std::sin(a1) * ri};
-                        const uint32_t inks[4] = {ink, ink, ink, ink};
-                        canvas_.polygon(xy, inks, 4);
-                    }
-                }
-                // Six embers, each its own drift and start, so the rise does not read as a row.
-                constexpr float kEmbers[6][3] = {{-0.7f, 0.00f, 46.0f}, {-0.3f, 0.06f, 62.0f}, {0.1f, 0.02f, 54.0f},
-                                                 {0.45f, 0.09f, 40.0f}, {0.8f, 0.04f, 58.0f}, {-0.05f, 0.12f, 70.0f}};
-                for (const auto& ember : kEmbers) {
-                    const float p = (age - ember[1]) / (kEmberSeconds - ember[1]);
-                    if (p <= 0.0f || p >= 1.0f) continue;
-                    const float ex = mx + ember[0] * frame.w * 0.5f + std::sin(p * 5.0f + ember[0] * 7.0f) * 3.0f * u;
-                    const float ey = frame.y + frame.h * 0.35f - ember[2] * u * smooth(p);
-                    const float s = std::max(1.0f, std::round(2.5f * u * (1.0f - p * 0.5f)));
-                    canvas_.rect({std::round(ex - s * 0.5f), std::round(ey - s * 0.5f), s, s},
-                                 alphaOf(mixed(kEmber, style::kBloodHi, p), 1.0f - p));
-                }
-            }
         }
     }
 
