@@ -666,6 +666,15 @@
       "from": "SOUND_CLICK01, which ZzzOpenData loads from Data\\Sound\\iButtonClick.wav. MuMain plays it on the I and V keys and the main frame's bag button, open and close alike; on C and the character button; on the stat plus, without waiting for the reply; on Escape closing the bag, the character window or a shop; and with SOUND_INTERFACE01 when a shop opens (ReceiveTalk). NOT on the bag's or the character window's exit button: CNewUIMyInventory and CNewUICharacterInfoWindow hide the window there with no PlayBuffer. MU2's note said the exit button clicked; MuMain's own code says otherwise.",
       "note": "Unplaced in the client, as every interface sound is; played on the character here, where the listener stands, which is the same thing."
     },
+    "window_click_soft": {
+      "files": [
+        "ibuttonclick.wav"
+      ],
+      "from": "SOUND_CLICK01 again, MU's own iButtonClick.wav, a step quieter.",
+      "gain_db": -8.0,
+      "gain_note": "Eight down: heard as the same button, the lighter hand. A third of the click's loudness, which is the step from a + to a - and no more.",
+      "note": "**An invention, marked.** The user (2026-10-21): a talent point given back plays a softer click than one taken (game/ui/desk.cpp, Then::Talent). No new file: the click itself, quieter. Unplaced, as every interface sound is."
+    },
     "machine_mix": {
       "files": [
         "emix.wav"

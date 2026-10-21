@@ -544,6 +544,7 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
     heard_.opened = sound_.load("window_open", false);
     heard_.invited = sound_.load("window_invite", false);
     heard_.talent = sound_.load("window_talent", false);
+    heard_.soft = sound_.load("window_click_soft", false);
     heard_.repair = sound_.load("window_repair", false);
     heard_.mix = sound_.load("machine_mix", false);
     heard_.mixBreak = sound_.load("machine_break", false);
