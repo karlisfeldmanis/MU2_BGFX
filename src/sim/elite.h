@@ -27,7 +27,20 @@ struct EliteMap {
 };
 constexpr EliteMap kEliteMaps[] = {
     {0, 1},  // Lorencia
+    {2, 2},  // Devias (the user, 2026-10-21: "show some devias kill")
 };
+// The bosses, which are never made Elites: an Elite is an ordinary breed made strong. MU's
+// numbers: the Gorgon, the Ice Queen, the Balrog, the Hydra, Zaikan, the Death Beam Knight, the
+// Dark Phoenix, the Witch Queen and Hell Maine.
+constexpr int32_t kNeverElite[] = {18, 25, 38, 49, 59, 63, 77, 304, 309};
+inline bool mayBeElite(int32_t number) {
+    for (int32_t one : kNeverElite) {
+        if (one == number) return false;
+    }
+    return true;
+}
+// Only the map's strongest ordinary breeds are made Elites: its top kEliteStrongest by level.
+constexpr int kEliteStrongest = 3;
 inline int elitesOn(uint32_t map) {
     for (const EliteMap& row : kEliteMaps) {
         if (row.map == map) return row.count;

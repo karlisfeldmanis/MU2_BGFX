@@ -44,9 +44,29 @@ void Realm::raiseElites() {
 }
 
 void Realm::riseElite(Body& elite) {
-    // A breed of the map's nests, each nest alike, and a tile inside that nest's box away from the
-    // town, the guards and the gates.
+    // A breed of the map's nests -- one of its kEliteStrongest strongest ordinary breeds, by level,
+    // the bosses left out (the user, 2026-10-21: "dont make elite monster weakest monsters on
+    // map, only last 3 strongest") -- each of their nests alike, and a tile inside that nest's
+    // box away from the town, the guards and the gates.
     const std::vector<content::MonsterNest>& nests = tables_->nests;
+    std::vector<uint32_t> breeds;
+    for (const content::MonsterNest& nest : nests) {
+        if (nest.kind >= tables_->kinds.size() || !mayBeElite(tables_->kinds[nest.kind].number)) continue;
+        if (std::find(breeds.begin(), breeds.end(), nest.kind) == breeds.end()) breeds.push_back(nest.kind);
+    }
+    std::sort(breeds.begin(), breeds.end(), [&](uint32_t a, uint32_t b) {
+        const content::MonsterKind &ka = tables_->kinds[a], &kb = tables_->kinds[b];
+        return ka.level != kb.level ? ka.level > kb.level : ka.number < kb.number;
+    });
+    if (breeds.size() > size_t(kEliteStrongest)) breeds.resize(size_t(kEliteStrongest));
+    std::vector<size_t> fit;
+    for (size_t i = 0; i < nests.size(); ++i) {
+        if (std::find(breeds.begin(), breeds.end(), nests[i].kind) != breeds.end()) fit.push_back(i);
+    }
+    if (fit.empty()) {
+        core::logError("elite: no breed for an Elite on map %u", tables_->map);
+        return;
+    }
     const auto byGate = [&](int column, int row) {
         for (int dr = -kEliteGateClear; dr <= kEliteGateClear; dr += 3) {
             for (int dc = -kEliteGateClear; dc <= kEliteGateClear; dc += 3) {
@@ -58,9 +78,8 @@ void Realm::riseElite(Body& elite) {
     int column = -1, row = -1;
     size_t nestAt = 0;
     for (int attempt = 0; attempt < 60 && column < 0; ++attempt) {
-        nestAt = size_t(eliteDice_.nextInt(0, int(nests.size())));
+        nestAt = fit[size_t(eliteDice_.nextInt(0, int(fit.size())))];
         const content::MonsterNest& nest = nests[nestAt];
-        if (nest.kind >= tables_->kinds.size()) continue;
         const int c = eliteDice_.nextInt(nest.x1, nest.x2 + 1);
         const int r = eliteDice_.nextInt(nest.y1, nest.y2 + 1);
         if (!tables_->grid.open(c, r, content::kWallCharacter) || tables_->grid.safe(c, r) ||

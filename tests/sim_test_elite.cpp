@@ -1,7 +1,9 @@
 // The Elites (sim/elite.h): Lorencia's one, raised with the realm on its own tables, its numbers
 // against its breed's, killed, its spoils, and its time down before it rises again elsewhere.
 
+#include <algorithm>
 #include <cstdio>
+#include <vector>
 #include <string>
 
 #include "content/tables.h"
@@ -52,6 +54,16 @@ void testElites(void (*checkOf)(bool, const char*),
     bool ofTheMap = false;
     for (const content::MonsterNest& nest : lorencia.nests) ofTheMap |= int32_t(nest.kind) == elite->kind;
     check(ofTheMap, "a breed of the map's own nests");
+    // One of its three strongest breeds, bosses aside: no more than two others stand above it.
+    std::vector<int32_t> above;
+    for (const content::MonsterNest& nest : lorencia.nests) {
+        const content::MonsterKind& other = lorencia.kinds[nest.kind];
+        if (sim::mayBeElite(other.number) && other.level > kind.level &&
+            std::find(above.begin(), above.end(), other.number) == above.end()) {
+            above.push_back(other.number);
+        }
+    }
+    check(above.size() < size_t(sim::kEliteStrongest), "one of the map's three strongest breeds");
 
     // The same seed, the same Elite: a mirror raised beside it agrees.
     sim::Realm again;
