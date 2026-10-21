@@ -816,7 +816,10 @@ bool Chat::shows(const Line& line, const std::string& tab) const {
         const std::string partner = line.name == me_ && !line.to.empty() ? line.to : line.name;
         return partner == tab.substr(2);
     }
-    return ((tab == "global" ? globalShows_ : generalShows_) & kind) != 0;
+    // Global's tab is Global's lines alone (the user, 2026-10-21: "in global chat dont show other
+    // chat messages"), not a filter he ticks.
+    if (tab == "global") return kind == bit(net::Channel::Global);
+    return (generalShows_ & kind) != 0;
 }
 
 void Chat::select(const std::string& key) {
@@ -1657,6 +1660,7 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
                 done = true;
                 continue;
             }
+            if (one.key == "global") continue;  // Global's lines alone: nothing to tick
             menu_ = Menu::Shows;
             menuTab_ = one.key;
             menuBox_ = {one.box.x, 0.0f, 230.0f * u, 0.0f};  // laid in buildTip
@@ -2057,7 +2061,7 @@ void Chat::buildTip(float u, float width, float height, const Pointer& pointer, 
             if (inGuild_) add(net::Channel::Guild, "Guild");
             if (!leftGlobal_) add(net::Channel::Global, "Global");
         } else {
-            head = (menuTab_ == "global" ? std::string("GLOBAL") : std::string("GENERAL")) + " SHOWS";
+            head = "GENERAL SHOWS";
             const uint32_t shows = filter(menuTab_);
             for (const Listed& one : kListed) items.push_back({int(one.bits), one.word, one.who, one.ink, (shows & one.bits) != 0});
         }

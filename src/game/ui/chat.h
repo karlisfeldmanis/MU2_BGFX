@@ -2,7 +2,7 @@
 // typed and said (net::Say). WoW's way, as the user tuned it on claude.ai/artifact/S5h6Pt8CarQMb8bUWCyPd8
 // (2026-10-21: "we need to refactor how the chat works, its seems clumsy. i like how WoW is designed"):
 //
-//   * **The tabs filter what the log shows**: General (everything but Global), Global, and a tab
+//   * **The tabs filter what the log shows**: General (everything but Global), Global (its lines alone), and a tab
 //     for each person he whispers with (when the setting keeps whispers in tabs), with a cross. The line goes where the edit box says --
 //     its channel's word at its left ("Say", "Party", "Global", "To Ilse") -- and the box keeps the
 //     last channel used. Choosing a tab sets it (the user, 2026-10-21: "if i press global chat,
@@ -32,7 +32,7 @@
 //   * **Settings** dock on the chat's right, behind the sliders button at the tab row's end
 //     ("settong has to be right side of chat container not overlaping the chat"): text size,
 //     the fill's strength, how bright it stays idle, time stamps, lines over heads, whispers in
-//     their own tab or in General, the lock, and a reset. A tab's right click lists what it
+//     their own tab or in General, the lock, and a reset. General's right click lists what it
 //     shows. Everything kept in chat.txt in the player's folder.
 //   * **Its size and place** the player's: the corner grip at the panel's top right sets width and
 //     height (it grows up and right from its foot), a double click on it puts the first size back;
