@@ -2437,8 +2437,13 @@ static bool boldOf(const content::Tables& tables, const sim::Lying& one) {
 // A ground label's colour: the item card's quality (describe's qualityOf, WoW's ladder since
 // 2026-09-29), so the two cannot disagree. BuildGroundItemLabelDescriptor's own ladder coloured
 // by the plus -- +3 and +4 orange -- which read as legendary. Zen stays MU's gold.
-static uint32_t tintOf(const content::Tables& tables, const sim::Lying& one) {
+// In a Blood Castle the Archangel's weapon the statue lets fall is Epic purple (the user,
+// 2026-10-21: "arch quest item has to be epic color on BC when destroy the statue").
+static uint32_t tintOf(const content::Tables& tables, const sim::Lying& one, bool castle) {
     if (one.what.empty()) return gfx::rgba(1.0f, 0.8f, 0.1f);
+    if (castle && sim::archangelQuestItem(tables.items[size_t(one.what.item)], one.what)) {
+        return tip::colourOf(tip::Tone::Epic);
+    }
     return tip::colourOf(qualityOf(tables.items[size_t(one.what.item)], one.what));
 }
 
@@ -2517,7 +2522,7 @@ void Desk::labelGround(const Play& play, int width, int height) {
         const float w = face.measure(set, name) + track * float(name.size()) + padX * 2.0f;
         const float h = face.height(set) + padY * 2.0f;
         // Another player's drop in grey: his alone to pick up (sim::Lying::owner). Ours.
-        const uint32_t tint = play.realm().mayTake(*one) ? tintOf(tables, *one)
+        const uint32_t tint = play.realm().mayTake(*one) ? tintOf(tables, *one, play.realm().event() == sim::EventKind::Castle)
                                                          : gfx::rgba(0.5f, 0.5f, 0.5f);
         labels.push_back({at.id, std::move(name), set, tint,
                           {at.x - w * 0.5f, at.y - h, w, h}});

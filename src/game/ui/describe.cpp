@@ -1267,7 +1267,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // it is a good weapon like any ("in world its just good item"), and a refined or excellent
     // one is a weapon everywhere.
     if (who.inCastle && sim::archangelQuestItem(row, what)) {
-        sheet.nameTone = Tone::Quest;
+        sheet.nameTone = Tone::Epic;  // its ground label's (Desk tintOf)
         sheet.base = "Quest item";
         sheet.hero = {};
         sheet.who.clear();
