@@ -288,6 +288,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
 
     panel::setScreen(float(window.height()));
     panel::setFloor(hud_.plateTop());
+    panel::setRightRoom(characterOpen_ ? Card::kTabRoom : 0.0f);
     // Asked before any window answers the press, while what the player clicked on is still up.
     const bool pressedOnWindow = pointer.pressed && overWindows(pointer.x, pointer.y);
     arrival_.update(seconds, float(window.width()), float(window.height()));

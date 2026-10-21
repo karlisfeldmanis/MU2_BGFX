@@ -22,6 +22,9 @@ namespace mu::game {
 
 class Card {
 public:
+    // The room the Talents tab takes at the window's right, in units (card.cpp kSeal), kept
+    // free by the columns while the window is open (panel::setRightRoom).
+    static constexpr float kTabRoom = 40.0f;
     void open(const gfx::Interface& interface, panel::Arts* arts);
 
     // A frame. `spend` comes back as the stat a plus was released on (0 strength to 3 energy),

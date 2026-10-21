@@ -60,14 +60,15 @@ constexpr float kFootRight = kRight;
 constexpr float kExpTop = kResetSquare.y + kResetSquare.h + 5.0f;
 constexpr Box kBar{panel::kGridX, kExpTop + 12.0f, kFootRight - panel::kGridX, 4.0f};
 
-// **The Talents button** (board C2 of the Talents canvas, picked 2026-10-20): MU's master icon in
-// an iron frame standing on the window's top edge at its left end, its foot joined to the frame,
-// his unspent talent points in red on its corner and "Talents" beside it. At its left end and not
-// down the window's left side, because the bag opens there, twenty-four units off (kColumnGap).
-// The canvas's pixels at half, as the window's 2x mockup has them: a frame 24 by 32 round a 20
-// by 28 cell, MU's own size, so the icon is one texel a unit.
-constexpr Box kSeal{4.5f, -32.0f, 24.0f, 32.0f};
-constexpr Box kSealHit{kSeal.x, kSeal.y, 60.0f, kSeal.h};  // the frame and its word
+// **The Talents button**, a tab on the window's right side, half way down (the user, 2026-10-21:
+// "attach it to right side of window in middle and move window little bit on left side so there
+// is room"; it stood on the top edge at the left end, board C2, until then). MU's master icon in
+// an iron frame joined to the window's edge by its left side, "Talents" under the icon, his
+// unspent talent points in red on its top corner. The columns step left by kTabRoom for it while
+// the window is open (panel::setRightRoom). A 20 by 28 cell, MU's own size: one texel a unit.
+constexpr Box kSeal{panel::kWidth - 1.0f, panel::kHeight * 0.5f - 26.0f, 36.0f, 52.0f};
+constexpr float kSealCell = 1.25f;  // MU's 20 by 28 cell at a quarter more
+constexpr Box kSealHit = kSeal;
 constexpr int kSealIcon = 335;  // "Strength of Arms": the canvas's, MU's damage master icon
 
 // Type, in units. A figure is a size above its label, so the eye runs down the numbers.
@@ -190,9 +191,9 @@ void Card::tick(float seconds) {
         const float a = kMost * (0.3f + 0.7f * breath) / float(i);
         const uint32_t ink = gfx::rgba(0.941f, 0.380f, 0.314f, a);  // style::kBloodHi, faded
         const float g = ring * float(i);
-        glow_.rect({seal.x - g - ring, seal.y - g - ring, seal.w + (g + ring) * 2.0f, ring}, ink);   // top
-        glow_.rect({seal.x - g - ring, seal.y - g, ring, seal.h + g}, ink);                          // left
-        glow_.rect({seal.right() + g, seal.y - g, ring, seal.h + g}, ink);                           // right
+        glow_.rect({seal.x, seal.y - g - ring, seal.w + g + ring, ring}, ink);          // top
+        glow_.rect({seal.x, seal.bottom() + g, seal.w + g + ring, ring}, ink);          // bottom
+        glow_.rect({seal.right() + g, seal.y - g, ring, seal.h + g * 2.0f}, ink);       // right
     }
 }
 
@@ -518,21 +519,26 @@ void Card::rebuild() {
         const float line = std::max(1.0f, std::round(0.5f * k));
         const Box seal = panel::scaled(x, y, kSeal);
         const bool lit = now_.overSeal;
-        // A black seam round its top and sides, the iron rim (lit under the pointer), the void
-        // inside, MU's cell on it; no rim at its foot, which is the window's own edge.
-        canvas_.rect({seal.x - line, seal.y - line, seal.w + line * 2.0f, seal.h + line}, style::kSeam);
+        // A black seam round its top, right and foot, the iron rim (lit under the pointer), the
+        // void inside, MU's cell on it; no rim at its left, which is the window's own edge.
+        canvas_.rect({seal.x, seal.y - line, seal.w + line, seal.h + line * 2.0f}, style::kSeam);
         canvas_.rect(seal, lit ? style::kIronHi : style::kIron);
-        canvas_.rect({seal.x + line, seal.y + line, seal.w - line * 2.0f, seal.h - line}, style::kVoid);
+        canvas_.rect({seal.x, seal.y + line, seal.w - line, seal.h - line * 2.0f}, style::kVoid);
         const gfx::Art& sheet = arts.get("talent_icons");
-        const Box cell = panel::scaled(x, y, {kSeal.x + 2.0f, kSeal.y + 2.0f, 20.0f, 28.0f});
+        const Box cell = panel::scaled(
+            x, y, {kSeal.x + (kSeal.w - 20.0f * kSealCell) * 0.5f, kSeal.y + 3.5f, 20.0f * kSealCell, 28.0f * kSealCell});
         if (sheet.valid()) {
             const int n = kSealIcon - 300;
             canvas_.region(sheet, cell, {float(n % 25) * 20.0f + 0.5f, float(n / 25) * 28.0f + 0.5f, 19.0f, 27.0f},
                            now_.pressSeal ? gfx::rgba(0.8f, 0.8f, 0.8f) : 0xFFFFFFFFu);
         }
-        // The word beside it, on the world over the window, so with its drop.
-        controls::caps(canvas_, std::round(x + (kSeal.x + 29.0f) * k), std::round(y + (kSeal.y + 25.0f) * k), 6.0f * k,
-                       lit ? style::kBoneHi : style::kBone2, "Talents", 0.08f);
+        // The word under the icon, inside the tab, centred.
+        {
+            const float size = 5.2f * k;
+            const float w = controls::capsWidth(size, "Talents", 0.04f);
+            controls::caps(canvas_, std::round(seal.midX() - w * 0.5f), std::round(y + (kSeal.y + 47.5f) * k), size,
+                           lit ? style::kBoneHi : style::kBone2, "Talents", 0.04f);
+        }
         // His talent points in hand, red on the frame's corner, nought too (the canvas's tag is
         // never hidden).
         {
@@ -540,7 +546,7 @@ void Card::rebuild() {
             const float size = 5.5f * k;
             const gfx::Face* tf = panel::titleFace();
             const float w = tf ? tf->measure(size, count) : controls::labelWidth(size, count);
-            const Box tag{std::round(x + (kSeal.x + 18.0f) * k), std::round(y + (kSeal.y - 3.5f) * k),
+            const Box tag{std::round(x + (kSeal.right() - 7.0f) * k), std::round(y + (kSeal.y - 4.5f) * k),
                           std::round(std::max(11.0f * k, w + 4.0f * k)), std::round(9.0f * k)};
             canvas_.rect(tag, style::kBloodHi);
             canvas_.rect(tag.grown(-line), style::kBloodMd);
