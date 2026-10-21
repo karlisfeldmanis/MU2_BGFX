@@ -824,7 +824,11 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
         }
         // What it fetches over a counter, anywhere and not only at one: the realm's own sum, so
         // the card and the sale cannot disagree. Nothing on what is worn, which cannot be sold.
-        if (const int64_t fetches = realm.sellValue(hovered_); fetches > 0) {
+        // None on the Archangel's quest copy in the castle, where it is carried back, not sold.
+        const bool errand = realm.wearer().inCastle &&
+                            sim::archangelQuestItem(tables.items[size_t(bag[hovered_].item)],
+                                                    bag[hovered_]);
+        if (const int64_t fetches = realm.sellValue(hovered_); fetches > 0 && !errand) {
             sheet.sell = panel::commas(fetches);
             sheet.coin = arts.get("bag_zen");
         }

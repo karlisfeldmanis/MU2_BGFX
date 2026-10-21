@@ -47,11 +47,11 @@ std::string decimal(float v) {
 // The line under the name: what the thing is, and whom it is for. MU has no such line -- it
 // says the same in its "Can be equipped by" list and in the damage line's own wording -- and
 // it is here because the head of a card wants a second, quieter line.
-std::string kindOf(const content::ItemRow& row, const sim::Held& what) {
+std::string kindOf(const content::ItemRow& row) {
     if (sim::ammunition(row)) return "Ammunition";
-    // Blood Castle's: the quest item the statue gives up, the ticket and what makes it -- in
-    // MU's helper group, which would read them as pets.
-    if (sim::archangelQuestItem(row, what) || sim::classTreasure(row)) return "Quest item";
+    // Sevina's treasures; Blood Castle's ticket and what makes it -- in MU's helper group, which
+    // would read them as pets. The Archangel's weapon is one only in the castle (describe).
+    if (sim::classTreasure(row)) return "Quest item";
     if (sim::invisibilityCloak(row)) return "Blood Castle ticket";
     if (sim::scrollOfArchangel(row) || sim::bloodBone(row)) return "Ticket material";
     if (sim::devilsInvitation(row)) return "Devil Square ticket";
@@ -321,7 +321,7 @@ tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
     // A quest item is purple, the user's of 2026-10-04: Sevina's treasures and the Archangel's
     // weapons, both carried back to whoever asked; and Loch's Feather, which Sevina pays and the
     // 2nd wings are made of ('loch feather has to use pruple label color').
-    if (sim::archangelQuestItem(row, what) || sim::classTreasure(row) || sim::lochsFeather(row)) {
+    if (sim::classTreasure(row) || sim::lochsFeather(row)) {
         return Tone::Quest;
     }
     // MU draws Devil Square's three yellow too (ZzzInventory.cpp:2186-2189).
@@ -370,7 +370,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // The type line, in the name's tone. GetItemName puts `Excellent ` before the name
     // (ZZ:2645-2671); the card moves it here, where Diablo's "Legendary Bow" stands, so the name
     // keeps to one line -- the user's choice of 2026-09-27. Whom it is for is in the foot.
-    std::string base = kindOf(row, what);
+    std::string base = kindOf(row);
     if (what.excellent != 0) {
         base[0] = char(std::tolower(static_cast<unsigned char>(base[0])));
         base = "Excellent " + base;
@@ -1253,8 +1253,12 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
 
     // The Archangel's quest copy carries no fight in its card: no damage, no requirements, only
     // where it goes (the user, 2026-10-21: "for quest item lets dont show the stats to not
-    // confuse players in BC"). A refined or excellent one is a weapon and keeps them.
-    if (sim::archangelQuestItem(row, what)) {
+    // confuse players in BC"). Only in a Blood Castle, where the statue lets it fall: in the world
+    // it is a good weapon like any ("in world its just good item"), and a refined or excellent
+    // one is a weapon everywhere.
+    if (who.inCastle && sim::archangelQuestItem(row, what)) {
+        sheet.nameTone = Tone::Quest;
+        sheet.base = "Quest item";
         sheet.hero = {};
         sheet.who.clear();
         sheet.classed = false;

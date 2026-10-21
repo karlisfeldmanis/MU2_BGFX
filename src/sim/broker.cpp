@@ -14,9 +14,9 @@ namespace mu::sim {
 int64_t npcValue(const content::Tables& tables, const Held& what) {
     if (what.empty() || size_t(what.item) >= tables.items.size()) return -1;
     const content::ItemRow& row = tables.items[size_t(what.item)];
-    // A quest item is not a merchant's: the class treasure, and the Archangel's quest copy (+0,
-    // not excellent; the user, 2026-10-21: "its not sellable").
-    if (classTreasure(row) || archangelQuestItem(row, what)) return -1;
+    // A quest item is not a merchant's: the class treasure. The Archangel's weapons are sold as
+    // any, in the world where the counters are (archangelQuestItem).
+    if (classTreasure(row)) return -1;
     const bool stacks = row.group == kGroupPotions;
     int64_t paid = sellingPrice(row, what.refinement, stacks ? std::max<int>(1, what.durability) : 1,
                                 what.skill, what.durability, row.durability, what.luck,

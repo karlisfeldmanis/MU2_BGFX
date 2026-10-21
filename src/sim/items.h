@@ -477,6 +477,9 @@ struct Wearer {
     HeroPoints totals;
     // His two pools at their tops, so a potion's card can say what one pours (`potionPours`).
     int maxHealth = 0, maxMana = 0;
+    // Whether he stands in a Blood Castle: where a plain Archangel weapon is the statue's quest
+    // item and carded as one (archangelQuestItem).
+    bool inCastle = false;
 };
 // Whether this character may wear it at all: his class, and every requirement met.
 bool fits(const content::Tables& tables, const Wearer& who, const Held& what);
@@ -1373,15 +1376,16 @@ bool classTreasure(const content::ItemRow& row);
 // (Held::bound) and none of the quest items MuMain will not trade (IsTradeBan) -- Sevina's
 // treasures and the Archangel's weapons. Asked by the realm's refusal, the trade window's drop
 // colour and the card alike.
-// The one an Archangel weapon is a quest item as: plain, +0 and not excellent, the copy the
-// Archangel takes back (Realm's hand-in asks the same). One refined or excellent is a weapon
-// like any since they drop from Icarus (the user, 2026-10-21: a +2 sword 'shows as quest item
-// not weapon').
+// The copy the Archangel takes back: plain, +0 and not excellent (Realm::staffSlot asks the
+// same). It is a quest item only in a Blood Castle, where the statue lets it fall; in the world
+// every Archangel weapon is a good weapon like any, traded and sold, since they drop from Icarus
+// (the user, 2026-10-21: "we show that quest item only in BC when statues is doped, never in
+// world, in world its just good item"). Its card asks Wearer::inCastle.
 inline bool archangelQuestItem(const content::ItemRow& row, const Held& what) {
     return archangelWeapon(row) && what.refinement == 0 && what.excellent == 0;
 }
 inline bool tradeable(const content::ItemRow& row, const Held& what) {
-    return !what.bound && !archangelQuestItem(row, what) && !classTreasure(row);
+    return !what.bound && !classTreasure(row);
 }
 constexpr int kTreasureIn10000 = 200;
 // The weakest breed of the trial's ground, LT7's Death Knight: a Blood Castle or Devil Square
