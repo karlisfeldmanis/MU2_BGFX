@@ -7,6 +7,7 @@
 #include <ctime>
 #include <string>
 
+#include "sim/config.h"
 #include "sim/quests.h"
 #include "sim/rules.h"
 #include "sim/skills.h"
@@ -685,6 +686,42 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             line.mark = tip::Mark::Diamond;
             does.rows.push_back(line);
         }
+    }
+    // When the gate it is for opens next, on Blood Castle's and Devil Square's tickets and what
+    // makes them (the user, 2026-10-21: "when user hover on BC,DS ingreadient or ticket we shoot
+    // tooltip when there is next BC,DS"). Read off the real game's clocks (sim::RealmConfig's),
+    // on UTC as the gates are, and the hour said in his own zone.
+    const bool forCastle =
+        sim::invisibilityCloak(row) || sim::scrollOfArchangel(row) || sim::bloodBone(row);
+    const bool forSquare =
+        sim::devilsInvitation(row) || sim::devilsEye(row) || sim::devilsKey(row);
+    if (forCastle || forSquare) {
+        const sim::RealmConfig real;
+        const sim::GateClock& gate = forCastle ? real.castle : real.square;
+        const char* place = forCastle ? "Blood Castle" : "Devil Square";
+        const int64_t now = int64_t(std::time(nullptr));
+        const int day = sim::daySecond(now);
+        Row line;
+        line.mark = tip::Mark::Diamond;
+        if (const int left = gate.entryLeft(day); left > 0) {
+            line.free = std::string(place) + " is open: " + std::to_string((left + 59) / 60) +
+                        " min left to enter";
+            line.freeTone = Tone::Green;
+        } else {
+            const int wait = gate.period - gate.phase(day);
+            const std::time_t at = std::time_t(now + wait);
+            char clock[8] = "";
+            if (const std::tm* local = std::localtime(&at)) {
+                std::strftime(clock, sizeof clock, "%H:%M", local);
+            }
+            const int minutes = (wait + 59) / 60;
+            const std::string in = minutes >= 60 ? std::to_string(minutes / 60) + "h " +
+                                                       std::to_string(minutes % 60) + "m"
+                                                 : std::to_string(minutes) + " min";
+            line.free = "Next " + std::string(place) + " at " + clock + ", in " + in;
+            line.freeTone = Tone::Orange;
+        }
+        does.rows.push_back(line);
     }
     // A wing's powers in MuMain's words and order (GT 577, 578, 579; ZzzInventory.cpp:4270-4278),
     // `12 + Level * 2` off sim::wingPower, so the card and the blow cannot disagree; and its price
