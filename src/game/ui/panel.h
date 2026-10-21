@@ -46,6 +46,9 @@ private:
     std::string assetDir_;
     content::Textures* textures_ = nullptr;
     std::unordered_map<std::string, std::string> paths_;
+    // The rest of the effects table (the world's sheets), loaded only when a window asks for one
+    // by name -- the Talents unlock's smoke -- and never warmed.
+    std::unordered_map<std::string, std::string> effects_;
     std::unordered_map<std::string, gfx::Art> loaded_;
 };
 

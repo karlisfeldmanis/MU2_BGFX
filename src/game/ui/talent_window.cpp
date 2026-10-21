@@ -74,6 +74,13 @@ constexpr float kPointPop = 0.05f;
 // The ignition's lengths: a talent opened, a major taken, a plain point. No rings and no sparks
 // (the user, 2026-10-21: "remove those unlock rings and sparkles").
 constexpr float kOpenSeconds = 0.95f, kMajorSeconds = 1.4f, kGlintSeconds = 0.45f;
+// **The smoke** (the user, 2026-10-21: "can we use better some smoke effect on unlocking talent
+// block?"): when a talent lights, soft puffs billow out from its frame, rise, curl, grow and fade.
+// MU's own smoke -- smoke01, BITMAP_SMOKE, a grey wisp on black, laid on as light so it glows
+// warm grey and lit from below by the ember -- over smoke02, the fire's brown puff, faint, for
+// body. A major's is bigger and denser. How long a puff lives, at most:
+constexpr float kOpenSmoke = 1.25f, kMajorSmoke = 1.55f;
+constexpr int kOpenPuffs = 7, kMajorPuffs = 12;
 // A reset runs up the tree a tier at a time, bottom first: three tiers in about 0.3 s.
 constexpr float kRippleStep = 0.1f, kFadeSeconds = 0.12f;
 // The head's figure, as the points in hand change: a white-gold flash settling, and a small pop.
@@ -295,6 +302,47 @@ void ray(gfx::Canvas& canvas, float cx, float cy, float a, float inner, float ou
     const uint32_t ink[4] = {lit(h, s), lit(h, s * 0.25f), lit(h, 0.0f), lit(h, s * 0.25f)};
     canvas.light(xy, ink, 4);
 }
+// One puff of smoke: MU's wisp `r` from its middle each way, turned `turn`, laid on as light at
+// `s` in warm grey, its lower side lit `ember` by the fire under it; and the brown body under it
+// at `body` alpha, for density.
+void puff(gfx::Canvas& canvas, const gfx::Art& wisp, const gfx::Art& thick, float cx, float cy, float r, float turn,
+          float s, float ember, float body) {
+    if (r <= 0.5f) return;
+    const float c = std::cos(turn), n = std::sin(turn);
+    const float off[4][2] = {{-r, -r}, {r, -r}, {r, r}, {-r, r}};
+    float xy[8];
+    const float uv[8] = {0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f};
+    for (int k = 0; k < 4; ++k) {
+        xy[k * 2] = cx + off[k][0] * c - off[k][1] * n;
+        xy[k * 2 + 1] = cy + off[k][0] * n + off[k][1] * c;
+    }
+    if (body > 0.003f && thick.valid()) {
+        const uint32_t ink = gfx::rgba(0.86f, 0.80f, 0.74f, std::clamp(body, 0.0f, 1.0f));
+        const uint32_t inks[4] = {ink, ink, ink, ink};
+        canvas.polygon(thick, xy, uv, inks, 4);
+    }
+    if (s > 0.003f && wisp.valid()) {
+        // The wisp is dim (its brightest texel is 71 of 255), so it is laid three times, each a
+        // little turned and grown, which also gives the puff its folds.
+        for (int layer = 0; layer < 3; ++layer) {
+            const float t = turn + 1.9f * float(layer), g = r * (1.0f - 0.16f * float(layer));
+            const float lc = std::cos(t), ln = std::sin(t);
+            float lxy[8];
+            uint32_t inks[4];
+            for (int k = 0; k < 4; ++k) {
+                lxy[k * 2] = cx + (off[k][0] * lc - off[k][1] * ln) * g / r;
+                lxy[k * 2 + 1] = cy + (off[k][0] * ln + off[k][1] * lc) * g / r;
+                // 0 at the puff's top, 1 at its foot, as it stands on the screen.
+                const float down = std::clamp((lxy[k * 2 + 1] - cy) / (g * 1.42f) * 0.5f + 0.5f, 0.0f, 1.0f);
+                const float e = ember * down;
+                const float gr = s * (0.80f * (1.0f - e) + 1.00f * e), gg = s * (0.74f * (1.0f - e) + 0.52f * e),
+                            gb = s * (0.68f * (1.0f - e) + 0.24f * e);
+                inks[k] = gfx::rgba(std::min(1.0f, gr), std::min(1.0f, gg), std::min(1.0f, gb), 0.0f);
+            }
+            canvas.lightImage(wisp, lxy, uv, inks, 4);
+        }
+    }
+}
 // Light round a frame's edge: `s` on the edge, nothing `spread` out from it.
 void glowFrame(gfx::Canvas& canvas, const Box& b, float spread, const Hue& h, float s) {
     if (s <= 0.003f) return;
@@ -306,51 +354,6 @@ void glowFrame(gfx::Canvas& canvas, const Box& b, float spread, const Hue& h, fl
                                {x0, y1, x0, y0, X0, Y0, X0, Y1}};
     const uint32_t ink[4] = {lit(h, s), lit(h, s), lit(h, 0.0f), lit(h, 0.0f)};
     for (const auto& side : sides) canvas.light(side, ink, 4);
-}
-// A soft band of light across a box, clipped to it: the shine passing over an icon. Its middle
-// runs through (mx, my) at 45 degrees; `half` the band's half width.
-void shine(gfx::Canvas& canvas, const Box& box, float mx, float my, float half, const Hue& h, float s) {
-    if (s <= 0.003f) return;
-    // Each half of the band, from its middle line out to its edge, clipped to the box.
-    const float ax = 0.70710678f, ay = -0.70710678f;   // along the band
-    const float nx = 0.70710678f, ny = 0.70710678f;    // across it
-    const float far = box.w + box.h;
-    for (int side = -1; side <= 1; side += 2) {
-        std::vector<std::array<float, 3>> poly = {
-            {mx - ax * far, my - ay * far, 1.0f}, {mx + ax * far, my + ay * far, 1.0f},
-            {mx + ax * far + nx * half * float(side), my + ay * far + ny * half * float(side), 0.0f},
-            {mx - ax * far + nx * half * float(side), my - ay * far + ny * half * float(side), 0.0f}};
-        // Sutherland-Hodgman against the box's four sides; the third value is the light, linear
-        // across the band, so it is carried through the cut.
-        const auto cut = [&](auto inside, auto cross) {
-            std::vector<std::array<float, 3>> out;
-            for (size_t i = 0; i < poly.size(); ++i) {
-                const auto& p = poly[i];
-                const auto& q = poly[(i + 1) % poly.size()];
-                const bool pin = inside(p), qin = inside(q);
-                if (pin) out.push_back(p);
-                if (pin != qin) out.push_back(cross(p, q));
-            }
-            poly = out;
-        };
-        const auto lerp = [](const std::array<float, 3>& p, const std::array<float, 3>& q, float k) {
-            return std::array<float, 3>{p[0] + (q[0] - p[0]) * k, p[1] + (q[1] - p[1]) * k, p[2] + (q[2] - p[2]) * k};
-        };
-        const float l = box.x, r = box.right(), t = box.y, bt = box.bottom();
-        cut([&](const auto& p) { return p[0] >= l; }, [&](const auto& p, const auto& q) { return lerp(p, q, (l - p[0]) / (q[0] - p[0])); });
-        cut([&](const auto& p) { return p[0] <= r; }, [&](const auto& p, const auto& q) { return lerp(p, q, (r - p[0]) / (q[0] - p[0])); });
-        cut([&](const auto& p) { return p[1] >= t; }, [&](const auto& p, const auto& q) { return lerp(p, q, (t - p[1]) / (q[1] - p[1])); });
-        cut([&](const auto& p) { return p[1] <= bt; }, [&](const auto& p, const auto& q) { return lerp(p, q, (bt - p[1]) / (q[1] - p[1])); });
-        if (poly.size() < 3 || poly.size() > 12) continue;
-        float xy[24];
-        uint32_t ink[12];
-        for (size_t i = 0; i < poly.size(); ++i) {
-            xy[i * 2] = poly[i][0];
-            xy[i * 2 + 1] = poly[i][1];
-            ink[i] = lit(h, s * poly[i][2]);
-        }
-        canvas.light(xy, ink, int(poly.size()));
-    }
 }
 
 }  // namespace
@@ -734,16 +737,54 @@ void TalentWindow::effects() {
             if (b.kind == Burst::None) continue;
             const float age = float(t - b.at);
             const float length = b.kind == Burst::Major ? kMajorSeconds : b.kind == Burst::Open ? kOpenSeconds : kGlintSeconds;
+            const bool smoky = b.kind == Burst::Open || b.kind == Burst::Major;
+            const float smokeFor = b.kind == Burst::Major ? kMajorSmoke : kOpenSmoke;
             if (age < 0.0f) continue;
-            if (age > length) {
+            if (age > std::max(length, smoky ? smokeFor : 0.0f)) {
                 b = Spark{};
                 continue;
             }
-            const float p = age / length;
             const Geo g = geoOf(left, colW, treeTop, i);
             const Box frame = placed(x_, y_, g.frame, u), icon = placed(x_, y_, g.icon, u);
             const float cx = icon.midX(), cy = icon.midY(), size = frame.h;
             const uint32_t seed = uint32_t(c * 31 + i * 7) ^ uint32_t(int64_t(b.at * 1000.0));
+
+            // **The smoke**, under the light: each puff leaves the frame's edge a little after the
+            // last, billows out and up, curls, grows and fades; the ember under it dies first.
+            if (smoky && arts_ != nullptr) {
+                const gfx::Art& wisp = arts_->get("smoke01");
+                const gfx::Art& thick = arts_->get("smoke");
+                const bool major = b.kind == Burst::Major;
+                const int puffs = major ? kMajorPuffs : kOpenPuffs;
+                const float grow = major ? 1.35f : 1.0f;
+                for (int k = 0; k < puffs; ++k) {
+                    const auto n = [&](uint32_t ch) { return noise01(seed, uint32_t(300 + k * 8) + ch); };
+                    const float delay = 0.05f * float(k) * (major ? 0.6f : 1.0f) + 0.04f * n(0);
+                    const float life = smokeFor * (0.7f + 0.3f * n(1)) - delay;
+                    const float a = age - delay;
+                    if (a <= 0.0f || a >= life) continue;
+                    const float q = a / life;
+                    const float out = easeOut(q);
+                    // Where it leaves the frame: anywhere round it, more of them low and to the sides.
+                    const float at = 6.2831853f * (float(k) + n(2)) / float(puffs);
+                    const float ex = std::cos(at), ey = std::sin(at);
+                    const float sx = cx + ex * frame.w * 0.42f, sy = cy + ey * frame.h * 0.42f;
+                    // Out from the frame, up as it cools, and a curl across its path.
+                    const float push = size * (0.30f + 0.35f * n(3)) * grow * out;
+                    const float lift = size * (0.35f + 0.55f * n(4)) * grow * (0.4f * out + 0.6f * q);
+                    const float curl = std::sin(q * 4.2f + 6.2831853f * n(5)) * size * 0.10f * q;
+                    const float px = sx + ex * push - ey * curl, py = sy + ey * push * 0.7f - lift + ex * curl;
+                    const float r = size * (0.26f + 0.50f * out) * grow * (0.8f + 0.4f * n(6));
+                    const float turn = 6.2831853f * n(7) + (n(1) - 0.5f) * 2.4f * a;
+                    const float in = std::min(1.0f, a / 0.12f);
+                    const float fade = in * std::pow(1.0f - q, 1.4f);
+                    const float ember = std::pow(std::max(0.0f, 1.0f - a / 0.55f), 1.5f);
+                    puff(fx, wisp, thick, px, py, r, turn, (major ? 1.0f : 0.9f) * fade, ember,
+                         (major ? 0.32f : 0.26f) * fade);
+                }
+            }
+            if (age > length) continue;
+            const float p = age / length;
 
             if (b.kind == Burst::Point) {
                 // A plain point: a soft glow over its count.
@@ -764,10 +805,11 @@ void TalentWindow::effects() {
                 fx.light(xy, inks, 4);
             }
             // The bloom behind it, warm, growing as it fades.
-            // Rising to its peak over the first tenth, so the icon is never washed out.
+            // Rising to its peak over the first tenth, so the icon is never washed out; a fifth
+            // lower since the smoke, which it lights, carries the warmth outward.
             const float rise = std::min(1.0f, age / 0.09f);
-            glowDisc(fx, cx, cy, size * (0.65f + 0.85f * easeOut(p)) * big, kFire, 0.42f * rise * std::pow(1.0f - p, 1.6f));
-            glowDisc(fx, cx, cy, size * (0.4f + 0.3f * easeOut(p)) * big, kGold, 0.38f * rise * std::pow(1.0f - p, 2.2f));
+            glowDisc(fx, cx, cy, size * (0.65f + 0.85f * easeOut(p)) * big, kFire, 0.34f * rise * std::pow(1.0f - p, 1.6f));
+            glowDisc(fx, cx, cy, size * (0.4f + 0.3f * easeOut(p)) * big, kGold, 0.30f * rise * std::pow(1.0f - p, 2.2f));
             // Rays, turning slowly as they burst out and die.
             const int rays = major ? 14 : 10;
             const float reach = easeOut(age / 0.28f);
@@ -781,14 +823,7 @@ void TalentWindow::effects() {
             // The frame's edge burning, then settling.
             glowFrame(fx, frame, size * 0.2f * big, kGold, 0.75f * std::pow(1.0f - p, 1.3f));
             glowFrame(fx, frame, size * 0.06f, kWhiteGold, 0.6f * std::pow(1.0f - p, 2.5f));
-            // The shine across the icon, corner to corner.
-            const float sweep = (age - 0.06f) / 0.42f;
-            if (sweep > 0.0f && sweep < 1.0f) {
-                const float k = smooth(sweep);
-                const float mx = icon.x - icon.w * 0.35f + (icon.w * 1.7f) * k;
-                const float my = icon.y - icon.h * 0.35f + (icon.h * 1.7f) * k;
-                shine(fx, icon, mx, my, icon.w * 0.24f, kWhiteGold, 0.75f * std::sin(3.14159265f * sweep));
-            }
+            // No shine across the icon (the user, 2026-10-21: "remove that shine effect").
         }
     }
 }

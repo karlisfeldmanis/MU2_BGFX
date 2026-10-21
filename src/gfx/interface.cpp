@@ -204,6 +204,21 @@ void Canvas::polygon(const Art& art, const float* xy, const float* uv, const uin
     }
 }
 
+void Canvas::lightImage(const Art& art, const float* xy, const float* uv, const uint32_t* abgr,
+                        int count) {
+    if (count < 3 || !art.valid()) return;
+    begin(art.handle, true);
+    const uint32_t base = uint32_t(vertices_.size());
+    for (int i = 0; i < count; ++i) {
+        vertices_.push_back({xy[i * 2], xy[i * 2 + 1], uv[i * 2], uv[i * 2 + 1], abgr[i]});
+    }
+    for (int i = 1; i + 1 < count; ++i) {
+        const uint32_t tri[3] = {base, base + uint32_t(i), base + uint32_t(i + 1)};
+        indices_.insert(indices_.end(), tri, tri + 3);
+        runs_.back().count += 3;
+    }
+}
+
 float Canvas::text(float x, float baseline, float fontSize, uint32_t abgr, const std::string& s,
                    Align align, float width) {
     const Face& f = face();

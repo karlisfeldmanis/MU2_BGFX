@@ -93,6 +93,10 @@ public:
     void light(const float* xy, const uint32_t* abgr, int count);
     // And a picture with a colour a vertex: a chart that fades out toward its rim.
     void polygon(const Art& art, const float* xy, const float* uv, const uint32_t* abgr, int count);
+    // A picture laid on as light: the run premultiplied, as `light`'s, so a vertex alpha of 0
+    // adds the picture times its colour and hides nothing -- a grey wisp on black glows as smoke
+    // lit from within (the Talents unlock's, game/ui/talent_window.cpp).
+    void lightImage(const Art& art, const float* xy, const float* uv, const uint32_t* abgr, int count);
 
     // A line of text on a baseline, at a Godot font size. `width` is the box a centred or
     // right-aligned line is set in, from `x` -- Godot's DrawString(width:) exactly. Returns

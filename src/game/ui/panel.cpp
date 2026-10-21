@@ -26,6 +26,8 @@ bool Arts::open(const std::string& assetDir, content::Textures* textures) {
         // the showing's to load, as the showing wants them.
         if (path.type == core::Json::Type::String && path.string.rfind("interface/", 0) == 0) {
             paths_[key] = path.string;
+        } else if (path.type == core::Json::Type::String) {
+            effects_[key] = path.string;
         }
     }
     core::logf("interface: %zu pieces of art in the index", paths_.size());
@@ -36,11 +38,13 @@ const gfx::Art& Arts::get(const std::string& key) {
     auto found = loaded_.find(key);
     if (found != loaded_.end()) return found->second;
     gfx::Art art;
-    auto path = paths_.find(key);
-    if (path == paths_.end() || textures_ == nullptr) {
+    const std::string* path = nullptr;
+    if (auto in = paths_.find(key); in != paths_.end()) path = &in->second;
+    else if (auto fx = effects_.find(key); fx != effects_.end()) path = &fx->second;
+    if (path == nullptr || textures_ == nullptr) {
         core::logError("interface art '%s' is not in the build; drawing without it", key.c_str());
     } else {
-        art.handle = textures_->load(assetDir_ + "/" + path->second,
+        art.handle = textures_->load(assetDir_ + "/" + *path,
                                      content::TextureRole::Interface);
         uint32_t w = 0, h = 0;
         if (textures_->sizeOf(art.handle, &w, &h)) {
