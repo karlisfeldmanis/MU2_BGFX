@@ -30,6 +30,8 @@ constexpr uint32_t kGoldRim = gfx::rgba(0.851f, 0.706f, 0.373f, 0.55f);
 constexpr uint32_t kHover = gfx::rgba(1.0f, 0.94f, 0.82f, 0.04f);
 constexpr uint32_t kOnline = gfx::rgba(0.498f, 0.753f, 0.416f);
 constexpr uint32_t kOffline = gfx::rgba(0.29f, 0.27f, 0.235f);
+// A prize's row: the market's gold, fainter than a chosen row's wash.
+constexpr uint32_t kPrizeWash = gfx::rgba(0.851f, 0.706f, 0.373f, 0.09f);
 
 const char* const kKinds[] = {"Swords and axes", "Bows", "Staves", "Shields", "Armour", "Rings and pendants",
                               "Jewels", "Runes", "Wings", "Pets", "Event tickets", "Orbs and scrolls"};
@@ -57,6 +59,17 @@ std::string nameOf(const content::Tables& tables, const sim::Held& what) {
 uint32_t inkOf(const content::Tables& tables, const sim::Held& what) {
     if (what.empty() || size_t(what.item) >= tables.items.size()) return style::kBone;
     return tip::colourOf(qualityOf(tables.items[size_t(what.item)], what));
+}
+
+// A super rare thing, lit in the market's gold wherever it is listed (the user, 2026-10-22:
+// "we need to highlight super rare items like wings more"): wings of either level, and a rune or
+// a ring at the top of the ladder, Legendary or Ancient.
+bool prized(const content::Tables& tables, const sim::Held& what) {
+    if (what.empty() || size_t(what.item) >= tables.items.size()) return false;
+    const content::ItemRow& row = tables.items[size_t(what.item)];
+    if (sim::anyWing(row)) return true;
+    const tip::Tone tone = qualityOf(row, what);
+    return tone == tip::Tone::RuneLegendary || tone == tip::Tone::RuneAncient;
 }
 
 // One line of what a thing carries, short, empty for a plain one. No "Skill": a weapon's skill
@@ -142,12 +155,16 @@ void Broker::rebuild(Play& play, Stage* stage) {
         // colour of its name beside it; a hairline parts the two; the words are centred on it.
         const tip::Sheet sheet = describe(tables, what, realm.wearer(), realm.satchel());
         const uint32_t ink = inkOf(tables, what);
+        // A prize stands in a gold frame, its floor glowing twice as bright, in gold where its
+        // name is white (a plain wing).
+        const bool prize = prized(tables, what);
         const Box block{ax, ay, aw, pic + 8.0f};
         canvas_.rect(P(block), style::kAsh2);
-        canvas_.outline(P(block), std::max(1.0f, u), style::kIronDk);
+        canvas_.outline(P(block), std::max(1.0f, u), prize ? kGoldRim : style::kIronDk);
         const Box well{ax + 4.0f, ay + 4.0f, pic, pic};
         const uint32_t floor = style::kVoid;
-        const uint32_t glow = (ink & 0x00FFFFFFu) | (uint32_t(0.16f * 255.0f) << 24), none = ink & 0x00FFFFFFu;
+        const uint32_t lit = prize && ink == tip::colourOf(tip::Tone::White) ? kGold : ink;
+        const uint32_t glow = (lit & 0x00FFFFFFu) | (uint32_t((prize ? 0.34f : 0.16f) * 255.0f) << 24), none = lit & 0x00FFFFFFu;
         canvas_.shade(P(well), floor, floor, style::kAsh1, style::kAsh1);
         canvas_.shade(P({well.x, well.y + pic * 0.55f, pic, pic * 0.45f}), none, none, glow, glow);
         canvas_.rect({std::round(x + (well.right() + 4.0f) * k), std::round(y + (ay + 10.0f) * k), std::max(1.0f, std::round(u)),
@@ -169,9 +186,17 @@ void Broker::rebuild(Play& play, Stage* stage) {
         };
         const float ix = well.right() + 12.0f, iw = block.right() - 8.0f - ix;
         constexpr float kFace = 14.0f;  // a class's face before the class line
+        constexpr float kStep = 13.0f, kHead = 30.0f;  // the name and its kind, then a gap
+        // How many lines stand beside the picture; the rest run under the block at its width.
+        const int fit = std::max(0, int((pic - kHead - 4.0f) / kStep));
         std::vector<Said> said;
-        const auto add = [&](const std::string& left, uint32_t leftInk, const std::string& value, uint32_t valueInk) {
-            if (!value.empty()) return said.push_back({left, value, leftInk, valueInk});
+        int beside = 0;  // how many of `said` stand beside the picture
+        bool under = fit == 0;
+        // A line of words wrapped to where it will stand: the column beside the picture while it
+        // ends there, the block's full width under it once it would not (the narrow column's wrap
+        // split "Increase 32% of / Damage" across the block's foot, the user, 2026-10-22).
+        const auto wrapped = [&](const std::string& left, float wide) {
+            std::vector<std::string> lines;
             std::string row, word;
             for (size_t i = 0; i <= left.size(); ++i) {
                 if (i < left.size() && left[i] != ' ') {
@@ -179,11 +204,28 @@ void Broker::rebuild(Play& play, Stage* stage) {
                     continue;
                 }
                 const std::string tried = row.empty() ? word : row + " " + word;
-                if (!row.empty() && controls::labelWidth(S(kText), tried) / k > iw) said.push_back({row, "", leftInk, 0}), row = word;
+                if (!row.empty() && controls::labelWidth(S(kText), tried) / k > wide) lines.push_back(row), row = word;
                 else row = tried;
                 word.clear();
             }
-            if (!row.empty()) said.push_back({row, "", leftInk, 0});
+            if (!row.empty()) lines.push_back(row);
+            return lines;
+        };
+        const auto add = [&](const std::string& left, uint32_t leftInk, const std::string& value, uint32_t valueInk,
+                             std::vector<const gfx::Art*> faces = {}) {
+            const float lead = float(faces.size()) * (kFace + 3.0f);
+            std::vector<std::string> lines;
+            if (!value.empty() || left.empty()) lines.push_back(left);
+            if (!under) {
+                if (lines.empty()) lines = wrapped(left, iw - lead);
+                if (beside + int(lines.size()) > fit) under = true, lines.clear();
+            }
+            if (lines.empty()) lines = wrapped(left, aw - lead);
+            for (const std::string& line : lines) {
+                said.push_back({line, value, leftInk, valueInk, faces});
+                faces.clear();
+                if (!under) ++beside;
+            }
         };
         // Whose class it is, first: under a scroll's long words it ran off the card's foot (the
         // user, 2026-10-19: "missing info on market opened item which class item is that").
@@ -210,8 +252,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
                 said.push_back({"", "", namesInk, 0, faces});
                 add(names, namesInk, "", 0);
             } else {
-                add(names, namesInk, "", 0);
-                if (!said.empty()) said.back().faces = faces;
+                add(names, namesInk, "", 0, faces);
             }
         }
         if (!sheet.hero.empty()) add(sheet.hero.word, style::kBone2, sheet.hero.value, tip::colourOf(sheet.hero.tone));
@@ -227,28 +268,41 @@ void Broker::rebuild(Play& play, Stage* stage) {
                 }
             }
         }
-        // Who wears it, and only a need he does not meet.
+        // Who wears it, and every need, a met one quiet and a short one red (the user,
+        // 2026-10-22: "we need more info on market opened item"), then its wear and the card's
+        // verdict ("Already learned", "Broken").
         for (size_t i = 0; i < sheet.who.size(); ++i) {
             const tip::FootLine& w = sheet.who[i];
             if (i == 0 && sheet.classed) continue;  // put first, above
-            if (!w.text.empty() && (i == 0 || w.tone == tip::Tone::Red)) add(w.text, w.quiet ? style::kAshInk : tip::colourOf(w.tone), "", 0);
+            if (!w.text.empty()) add(w.text, w.quiet ? style::kAshInk : tip::colourOf(w.tone), "", 0);
         }
-        if (stop <= ay) said.clear();
-        constexpr float kStep = 13.0f, kHead = 30.0f;  // the name and its kind, then a gap
+        if (!sheet.wear.empty()) {
+            add(sheet.wear, sheet.wearTone == tip::Tone::White ? style::kAshInk : tip::colourOf(sheet.wearTone), "", 0);
+        }
+        if (!sheet.note.empty() && sheet.noteTone != tip::Tone::Gray) add(sheet.note, tip::colourOf(sheet.noteTone), "", 0);
+        if (stop <= ay) said.clear(), beside = 0;
         const std::string name = nameOf(tables, what);
         const float nameSize = controls::labelWidth(S(16.0f), name) / k > iw ? 13.5f : 16.0f;
-        const int beside = std::min<int>(int(said.size()), int((pic - kHead - 4.0f) / kStep));
         const float tall = kHead + float(beside) * kStep + (beside > 0 ? 4.0f : 0.0f);
         const float top = ay + 4.0f + std::max(0.0f, (pic - tall) * 0.5f);
         text(ix, top + 13.0f, nameSize, ink, name);
-        text(ix, top + 26.0f, kCaption, style::kAshInk, kind.empty() ? sheet.base : kind);
+        {
+            // A prize's kind line opens on a gold star and "Rare".
+            float kx = ix;
+            if (prize) {
+                tip::glyphAt(canvas_, tip::Mark::Star, x + (kx + 4.0f) * k, y + (top + 22.0f) * k, 8.0f * k, kGold);
+                kx += 10.0f;
+                kx += text(kx, top + 26.0f, kCaption, kGold, "Rare \xC2\xB7 ") / k;
+            }
+            text(kx, top + 26.0f, kCaption, style::kAshInk, kind.empty() ? sheet.base : kind);
+        }
         float ly = top + kHead + 12.0f;
         for (int i = 0; i < int(said.size()); ++i) {
-            const bool under = i >= beside;
-            if (under && i == beside) ly = block.bottom() + 16.0f;
-            if (under && ly > stop) break;
-            float lx = under ? ax : ix;
-            const float rx = under ? block.right() : ix + iw;
+            const bool low = i >= beside;
+            if (low && i == beside) ly = block.bottom() + 16.0f;
+            if (low && ly > stop) break;
+            float lx = low ? ax : ix;
+            const float rx = low ? block.right() : ix + iw;
             for (const gfx::Art* face : said[size_t(i)].faces) {
                 const Box disc{lx, ly - kFace + 3.0f, kFace, kFace};
                 canvas_.rect(P(disc), style::kVoid);
@@ -398,14 +452,22 @@ void Broker::rebuild(Play& play, Stage* stage) {
             if (!s) continue;
             const net::BrokerRow& row = page_.rows[size_t(r)];
             const Box b{s->box.x, s->box.y, s->box.w, kRowH};
+            const bool prize = prized(tables, row.what);
             if (row.id == chosen_) chosenWash({b.x + 1.0f, b.y, b.w - 2.0f, b.h - 1.0f});
             else if (state(Hit::Row, r).lift > 0.0f) canvas_.rect(P({b.x + 1.0f, b.y, b.w - 2.0f, b.h - 1.0f}), kHover);
+            else if (prize) canvas_.rect(P({b.x + 1.0f, b.y, b.w - 2.0f, b.h - 1.0f}), kPrizeWash);
             hair(b.x + 1.0f, b.bottom() - 1.0f, b.w - 2.0f, style::kAsh3);
+            // A prize: a gold bar down the row's left edge and a star after its name.
+            if (prize) canvas_.rect(P({b.x + 1.0f, b.y + 3.0f, 2.0f, b.h - 7.0f}), kGold);
             // Words only, no picture and no card on hover: the card beside shows the chosen one
             // (the user, 2026-10-11). What it carries follows the name on the same line.
             const bool alike = (row.flags & net::BrokerRow::Alike) != 0;
             const float nameBase = mid(b.y, kRowH, kName), textBase = mid(b.y, kRowH, kText);
-            const float named = text(b.x + kRowPad, nameBase, kName, inkOf(tables, row.what), nameOf(tables, row.what)) / k;
+            float named = text(b.x + kRowPad, nameBase, kName, inkOf(tables, row.what), nameOf(tables, row.what)) / k;
+            if (prize) {
+                tip::glyphAt(canvas_, tip::Mark::Star, x + (b.x + kRowPad + named + 7.0f) * k, y + (nameBase - 4.5f) * k, 9.0f * k, kGold);
+                named += 12.0f;
+            }
             // A stack of jewels, bought whole: how many, and a piece's price.
             const bool stack = !alike && row.what.durability > 1 && size_t(row.what.item) < tables.items.size() &&
                                sim::stacks(tables.items[size_t(row.what.item)]);
@@ -584,7 +646,10 @@ void Broker::rebuild(Play& play, Stage* stage) {
             hair(b.x, s.box.y + 21.0f, b.w, style::kAsh3);
             // No picture: the user wants the list words only, the picture large once a thing is chosen.
             const float base = mid(s.box.y, 22.0f, kName);
-            text(s.box.x + kRowPad, base, kName, ok ? inkOf(tables, t.what) : style::kAshInk2, nameOf(tables, t.what));
+            const float named = text(s.box.x + kRowPad, base, kName, ok ? inkOf(tables, t.what) : style::kAshInk2, nameOf(tables, t.what)) / k;
+            if (ok && prized(tables, t.what)) {
+                tip::glyphAt(canvas_, tip::Mark::Star, x + (s.box.x + kRowPad + named + 7.0f) * k, y + (base - 4.5f) * k, 9.0f * k, kGold);
+            }
             const std::string sub = ok ? traits(t.what) : whyNot(t.no);
             if (!sub.empty()) right(s.box.right() - kRowPad, base, kCaption, ok ? tip::colourOf(tip::Tone::Blue) : style::kAshInk, sub);
         }
@@ -790,11 +855,13 @@ void Broker::rebuild(Play& play, Stage* stage) {
     if (stage) stage->stand(standing, kTurnSquare, kTurnSquare);
 
     // The item card over his own listing under the pointer, the bag's own card: My listings has
-    // no card beside it, so this is where its details show (the user, 2026-10-11).
+    // no card beside it, so this is where its details show (the user, 2026-10-11). And over the
+    // chosen listing's picture on Buy, every line of it (the user, 2026-10-22).
     if (hovered_ >= 0 && size_t(hovered_) < spots_.size() && pressed_ < 0) {
         const Spot& s = spots_[size_t(hovered_)];
-        if (s.hit == Hit::Listing && size_t(s.index) < mine_.mine.size()) {
-            const sim::Held& what = mine_.mine[size_t(s.index)].what;
+        const net::BrokerRow* chosen = s.hit == Hit::Detail ? chosenRow() : nullptr;
+        if ((s.hit == Hit::Listing && size_t(s.index) < mine_.mine.size()) || chosen) {
+            const sim::Held& what = chosen ? chosen->what : mine_.mine[size_t(s.index)].what;
             tip::Sheet sheet = describe(tables, what, realm.wearer(), realm.satchel());
             if (tipStage_) tip::stand(*tipStage_, what.item, what.refinement, sheet);
             tip::draw(tip_, sheet, P(s.box), screenW_, screenH_);
