@@ -133,7 +133,7 @@ private:
     double clock_ = 0.0, busyUntil_ = -1.0;
     Glow glow_[sim::kTalentColumnsMost][sim::kTalentNodes];
     // **The ignition** of a talent (the user, 2026-10-21: "work on that unlock effect, nows its
-    // very vierd and basic"): light, rays and smoke drawn every frame over the window, on the
+    // very vierd and basic"): light and smoke drawn every frame over the window, on the
     // glow canvas, from when it started. Open: a talent's first point or one a line opened;
     // Major: a major taken, bigger and with more smoke; Point: a plain point's glow.
     enum class Burst : uint8_t { None, Point, Open, Major };

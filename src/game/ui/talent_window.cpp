@@ -292,17 +292,6 @@ void glowDisc(gfx::Canvas& canvas, float cx, float cy, float r, const Hue& h, fl
     }
     canvas.light(xy, ink, kSides + 2);
 }
-// A ray out of (cx, cy) at angle `a`: from `inner` to `outer`, `wide` at its foot, to a point.
-void ray(gfx::Canvas& canvas, float cx, float cy, float a, float inner, float outer, float wide, const Hue& h,
-         float s) {
-    if (s <= 0.003f || outer <= inner) return;
-    const float dx = std::cos(a), dy = std::sin(a), nx = -dy, ny = dx;
-    const float bx = cx + dx * inner, by = cy + dy * inner;
-    const float xy[8] = {bx, by, bx + nx * wide * 0.5f, by + ny * wide * 0.5f, cx + dx * outer, cy + dy * outer,
-                         bx - nx * wide * 0.5f, by - ny * wide * 0.5f};
-    const uint32_t ink[4] = {lit(h, s), lit(h, s * 0.25f), lit(h, 0.0f), lit(h, s * 0.25f)};
-    canvas.light(xy, ink, 4);
-}
 // One puff of smoke: MU's wisp `r` from its middle each way, turned `turn`, laid on as light at
 // `s` in warm grey, its lower side lit `ember` by the fire under it; and the brown body under it
 // at `body` alpha, for density.
@@ -801,7 +790,7 @@ void TalentWindow::effects() {
                     const float in = std::min(1.0f, a / 0.1f);
                     const float fade = in * std::pow(1.0f - q, 1.4f);
                     const float ember = std::pow(std::max(0.0f, 1.0f - a / 0.5f), 1.5f);
-                    puff(fx, wisp, thick, px, py, r, turn, (major ? 0.5f : 0.46f) * fade, ember,
+                    puff(fx, wisp, thick, px, py, r, turn, (major ? 0.62f : 0.58f) * fade, ember,
                          (major ? 0.06f : 0.05f) * fade);
                 }
             }
@@ -832,16 +821,7 @@ void TalentWindow::effects() {
             const float rise = std::min(1.0f, age / 0.09f);
             glowDisc(fx, cx, cy, size * (0.65f + 0.85f * easeOut(p)) * big, kFire, 0.34f * rise * std::pow(1.0f - p, 1.6f));
             glowDisc(fx, cx, cy, size * (0.4f + 0.3f * easeOut(p)) * big, kGold, 0.30f * rise * std::pow(1.0f - p, 2.2f));
-            // Rays, turning slowly as they burst out and die.
-            const int rays = major ? 14 : 10;
-            const float reach = easeOut(age / 0.28f);
-            for (int k = 0; k < rays; ++k) {
-                const float n = noise01(seed, uint32_t(100 + k));
-                const float a = 6.2831853f * float(k) / float(rays) + (n - 0.5f) * 0.5f + age * 0.5f;
-                const float outer = size * (0.55f + 0.85f * n) * big * reach;
-                ray(fx, cx, cy, a, size * 0.18f, outer, size * (0.07f + 0.05f * n), kGold,
-                    0.55f * (0.55f + 0.45f * n) * std::pow(1.0f - p, 1.8f));
-            }
+            // No rays (the user, 2026-10-21: "there is still that beam shine which I don't like").
             // The frame's edge burning, then settling.
             glowFrame(fx, frame, size * 0.2f * big, kGold, 0.75f * std::pow(1.0f - p, 1.3f));
             glowFrame(fx, frame, size * 0.06f, kWhiteGold, 0.6f * std::pow(1.0f - p, 2.5f));
