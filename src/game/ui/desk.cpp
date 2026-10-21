@@ -253,7 +253,7 @@ void Desk::expect(uint32_t ticket, Then then, int key) {
 
 bool Desk::overWindows(float x, float y) const {
     return amount_.up() || report_.up() || whatsNew_.up() || menu_.up() || hud_.covers(x, y) || guild_.covers(x, y) ||
-           guildMake_.covers(x, y) || chat_.covers(x, y) || (!minimap_.full() && partyBar_.covers(x, y)) ||
+           guildMake_.covers(x, y) || (!chatHidden() && chat_.covers(x, y)) || (!minimap_.full() && partyBar_.covers(x, y)) ||
            playerMenu_.covers(x, y) || targetFrame_.covers(x, y) || minimap_.covers(x, y) ||
            questDialog_.covers(x, y) || questLog_.covers(x, y) || helperWindow_.covers(x, y) || travel_.covers(x, y) || goBack_.covers(x, y) ||
            talents_.covers(x, y) ||
@@ -1004,9 +1004,11 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         const float u = tip::unit();
         const bool free = !typing && !menuHeld && !questing;
         chat_.avoid(hud_.blocks());
+        // Under the whole map it is not there to be clicked or scrolled (chatHidden).
+        const Pointer chatPointer = chatHidden() ? Pointer{} : pointer;
         chat_.update(seconds, float(window.width()), float(window.height()), hud_.plateTop() - 18.0f * u,
-                     hud_.buffsLeft() - 16.0f * u, pointer,
-                     chat_.over(pointer.x, pointer.y) ? window.scroll() : 0.0f,
+                     hud_.buffsLeft() - 16.0f * u, chatPointer,
+                     chat_.over(chatPointer.x, chatPointer.y) && !chatHidden() ? window.scroll() : 0.0f,
                      chatTyping ? typedNow : std::string(), chatTyping ? window.backspaces() : 0,
                      (chatTyping || free) && enterNow, chatTyping && escapeNow, toggleChat, play,
                      chatTyping && window.tabbed(), chatTyping ? window.arrows() : 0);
@@ -2813,8 +2815,10 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     // The Warp list (M) over the party's capsules, which it opens across (bug #20: "party window
     // is being drawn over Warp Window").
     if (travel_.up()) interface_.add(travel_.canvas());
-    // The chat, at the bottom left; the plate is drawn over it.
-    if (chat_.showing()) {
+    // The chat, at the bottom left; the plate is drawn over it. It steps aside while M lays the
+    // whole map over the screen, unless he is typing in it (the user, 2026-10-21: "when MAP (M)
+    // is opened hide chat").
+    if (chat_.showing() && !chatHidden()) {
         interface_.add(chat_.back());
         interface_.add(chat_.tabs());
         interface_.add(chat_.lines());
@@ -2873,7 +2877,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (questLog_.up()) interface_.add(questLog_.tipCanvas());
     if (talents_.up()) interface_.add(talents_.card());
     if (endurance_.showing()) interface_.add(endurance_.tipCanvas());
-    if (chat_.tipping()) interface_.add(chat_.tipCanvas());
+    if (chat_.tipping() && !chatHidden()) interface_.add(chat_.tipCanvas());
     // Last of all, over every window too: MU2's own CanvasLayer{Layer=128} -- a pointer is over
     // whatever it is pointing at, and the panel is something you point at as well.
     if (questDialog_.up()) {

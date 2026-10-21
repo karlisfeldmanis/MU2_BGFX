@@ -128,6 +128,8 @@ public:
     bool takesPointer() const { return takesPointer_; }
     // Whether a window, the HUD or a box covers this pixel, as the windows stand now.
     bool overWindows(float x, float y) const;
+    // The chat steps aside under the whole map (M), unless he is typing in it.
+    bool chatHidden() const { return minimap_.full() && !chat_.typing(); }
     // The drop whose name plate is under this pixel, or 0. The last drawn is on top and wins.
     uint32_t labelUnder(float x, float y) const;
 
