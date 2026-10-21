@@ -285,6 +285,16 @@ constexpr float kEliteReach = 0.9f;
 constexpr float kEliteHaloGrow = 0.8f;
 constexpr float kEliteHaloAlpha = 0.45f;
 constexpr float kEliteSwell = 0.2f;  // and the head itself this much larger
+// The bell on every fifth pulse only, ten seconds apart (the user, 2026-10-21: "elite monster
+// interval has to be bgger its getting anoyng"); the first still rings as one comes near.
+constexpr int kEliteBellEvery = 5;
+// Its rings (the user, 2026-10-21: "also need some pulsing rings"): two, kEliteRingGap apart,
+// each spreading from the dot to kEliteRingGrow heads across and fading out over kEliteRingLife.
+constexpr float kEliteRingLife = 1.3f;
+constexpr float kEliteRingGap = 0.35f;
+constexpr float kEliteRingGrow = 3.2f;
+constexpr float kEliteRingAlpha = 0.85f;
+constexpr float kEliteRingLine = 1.6f;  // its stroke, in units
 
 // The tone each is drawn in: bone for what matters, the quieter inks for the rest.
 uint32_t toneOf(Minimap::Glyph glyph) {
@@ -813,12 +823,14 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
         near = near && hero.alive();
         if (near && !eliteNear_) {
             eliteClock_ = 0.0f;
+            elitePulses_ = 0;
             bellOwed_ = !fighting;
         } else if (near) {
             eliteClock_ += seconds;
             if (eliteClock_ >= kElitePulseSeconds) {
                 eliteClock_ = std::fmod(eliteClock_, kElitePulseSeconds);
-                bellOwed_ = !fighting;
+                elitePulses_ = (elitePulses_ + 1) % kEliteBellEvery;
+                bellOwed_ = !fighting && elitePulses_ == 0;
             }
         }
         eliteNear_ = near;
@@ -830,7 +842,10 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
             if (std::hypot(column - heroX_, row - heroY_) > reach) continue;
             const size_t before = marks.size();
             put(Glyph::Elite, column, row, false, -1, body.kind);
-            if (marks.size() > before) marks.back().pulse = glow;
+            if (marks.size() > before) {
+                marks.back().pulse = glow;
+                marks.back().ring = int(std::lround(eliteClock_ * 60.0f));
+            }
         }
     }
 
@@ -1081,6 +1096,26 @@ void Minimap::rebuild(const Play& play) {
         if (mark.glyph == Glyph::Elite) {
             const float glow = float(mark.pulse) / 16.0f;
             const auto at = [&](uint32_t ink, float alpha) { return (ink & 0x00FFFFFFu) | (uint32_t(alpha * 255.0f + 0.5f) << 24); };
+            for (int k = 0; k < 2; ++k) {
+                const float age = float(mark.ring) / 60.0f - kEliteRingGap * float(k);
+                if (age <= 0.0f || age >= kEliteRingLife) continue;
+                const float p = age / kEliteRingLife;
+                const float spread = 1.0f - (1.0f - p) * (1.0f - p);  // fast out, slowing
+                const float to = cellPx * 0.5f * (1.0f + (kEliteRingGrow - 1.0f) * spread);
+                const float from = std::max(0.0f, to - std::max(1.0f, kEliteRingLine * u));
+                const uint32_t ink = at(kEliteGold, kEliteRingAlpha * (1.0f - p) * (1.0f - p) * shown);
+                constexpr int kRingSegments = 32;
+                for (int i = 0; i < kRingSegments; ++i) {
+                    const float t0 = 6.2831853f * float(i) / float(kRingSegments);
+                    const float t1 = 6.2831853f * float(i + 1) / float(kRingSegments);
+                    const float quad[8] = {x + std::cos(t0) * from, y + std::sin(t0) * from,
+                                           x + std::cos(t1) * from, y + std::sin(t1) * from,
+                                           x + std::cos(t1) * to,   y + std::sin(t1) * to,
+                                           x + std::cos(t0) * to,   y + std::sin(t0) * to};
+                    const uint32_t tones[4] = {ink, ink, ink, ink};
+                    canvas_.polygon(quad, tones, 4);
+                }
+            }
             if (glow > 0.0f) {
                 const float big = cellPx * (1.0f + kEliteHaloGrow * glow);
                 canvas_.region(glyphs_, {x - big * 0.5f, y - big * 0.5f, big, big}, {from, 0.0f, cellPx, cellPx},

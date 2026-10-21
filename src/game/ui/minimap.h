@@ -140,8 +140,8 @@ public:
     enum class Glyph : uint8_t { Hero, Quarry, Offer, HandIn, Vendor, Smith, Vault, Gate, Folk, Potion, Summon,
                                  Player, Dragon, Elite };
     // **An Elite near** (sim/elite.h): while one is within the disc's reach its mark, a gold
-    // dot, pulses once every kElitePulseSeconds, brightening with the strike of its bell
-    // and easing off with the ring; each pulse owes the bell, which takeBell() hands on once
+    // dot, pulses once every kElitePulseSeconds, brightening and sending out two gold rings;
+    // the first pulse and every kEliteBellEvery-th after it owe the bell, which takeBell() hands on once
     // (the desk plays it, Play::Ui::Bell), but not while he fights it. The only alert there is (the user, 2026-10-21:
     // "minimap with pulsing golden monster will do the trick", "it will be notification loop
     // when char is nearby when point is visible on minimap").
@@ -164,10 +164,11 @@ private:
         int fade = 16;       // how much of it the rim's fade leaves, in sixteenths
         bool again = false;  // a giver's quest cleared once before: the beacon's repeat blue
         int pulse = 0;       // an Elite's glow this frame, in sixteenths
+        int ring = 0;        // and where its pulse stands, in sixtieths of a second, for its rings
         bool operator==(const Mark& o) const {
             return glyph == o.glyph && x == o.x && y == o.y && angle == o.angle && fade == o.fade &&
                    pinned == o.pinned && name == o.name && kind == o.kind && again == o.again &&
-                   pulse == o.pulse;
+                   pulse == o.pulse && ring == o.ring;
         }
     };
 
@@ -209,6 +210,7 @@ private:
     bool helping_ = false, helperPressing_ = false, helperToggleAsked_ = false, helperWindowAsked_ = false;
     // The Elites' pulse: where in it the clock stands, whether one was near last frame, the bell owed.
     float eliteClock_ = 0.0f;
+    int elitePulses_ = 0;  // pulses since the bell last rang
     bool eliteNear_ = false, bellOwed_ = false;
 
     gfx::Canvas canvas_;
