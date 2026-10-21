@@ -1,0 +1,21 @@
+{
+  "item": "Suhwanzin4",
+  "mu_name": "The small ring of Pollution's casting circle that opens outward",
+  "mu_name_from": "ZzzOpenData.cpp: MODEL_SUMMONER_CASTING_EFFECT4, Data/Effect/Suhwanzin4.bmd on Data/Effect/monolines.jpg. MuMain (Season 6).",
+  "kind": "pollution",
+  "why_this_one": "MODEL_SUMMONER_CASTING_EFFECT4, lit (0.9, 0.1, 1.0): Pollution's casting circle, CSummonSystem::CreateCastingEffect (GameLogic/Skills/SummonSystem.cpp:191-230), round the caster at the default scale, 0.9 (CreateEffect's Scale 0 is 0.9; the create arm's `if (o->SubType = 0)` never sets 1.0). See Lagul01.json and game/fx/pollution.",
+  "mesh": "Suhwanzin4.obj",
+  "mesh_from": "muextract export-obj on Data/Effect/Suhwanzin4.bmd, from MuMain.",
+  "parts": [
+    {
+      "group": "monolines",
+      "sheet": "monolines.png",
+      "blend": "additive",
+      "note": "Added: the create arm's `o->BlendMesh = 0`, at BlendMeshLight climbing 0.05 a frame to 0.5 and falling 0.03 a frame over the last 20 (Move_MODEL_SUMMONER_CASTING_EFFECT1)."
+    }
+  ],
+  "scale": 1.0,
+  "scale_from": "`o->Scale = 1.0f`, then 0.6 more a frame (ZzzEffect.cpp:776-779, MoveHandlers.cpp:1159-1161).",
+  "frames": 25,
+  "frames_from": "`o->LifeTime = 25`."
+}

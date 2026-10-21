@@ -649,6 +649,9 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Weakness, "Weakness",
          "10% on a cast or a hit: a curse on the ground for 30 s weakens monsters within 4 tiles",
          kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
+        {Power::Pollution, "Pollution",
+         "10% on a cast or a hit: Lagle's ghosts strike up to 4 monsters within 3 tiles",
+         kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;

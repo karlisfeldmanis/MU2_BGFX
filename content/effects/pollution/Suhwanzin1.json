@@ -1,0 +1,21 @@
+{
+  "item": "Suhwanzin1",
+  "mu_name": "A ring of Pollution's casting circle round the caster",
+  "mu_name_from": "ZzzOpenData.cpp: MODEL_SUMMONER_CASTING_EFFECT1, Data/Effect/Suhwanzin1.bmd on Data/Effect/testmsop.jpg. MuMain (Season 6).",
+  "kind": "pollution",
+  "why_this_one": "MODEL_SUMMONER_CASTING_EFFECT1, lit (0.6, 0.3, 0.9): Pollution's casting circle, CSummonSystem::CreateCastingEffect (GameLogic/Skills/SummonSystem.cpp:191-230), round the caster at the default scale, 0.9 (CreateEffect's Scale 0 is 0.9; the create arm's `if (o->SubType = 0)` never sets 1.0). See Lagul01.json and game/fx/pollution.",
+  "mesh": "Suhwanzin1.obj",
+  "mesh_from": "muextract export-obj on Data/Effect/Suhwanzin1.bmd, from MuMain.",
+  "parts": [
+    {
+      "group": "testmsop",
+      "sheet": "testmsop.png",
+      "blend": "additive",
+      "note": "Added: the create arm's `o->BlendMesh = 0`, at BlendMeshLight climbing 0.05 a frame to 0.5 and falling 0.03 a frame over the last 20 (Move_MODEL_SUMMONER_CASTING_EFFECT1)."
+    }
+  ],
+  "scale": 0.9,
+  "scale_from": "CreateEffect's default, 0.9.",
+  "frames": 40,
+  "frames_from": "`o->LifeTime = 40`; it turns -3 degrees a frame about the vertical (MoveHandlers.cpp:1140-1158)."
+}

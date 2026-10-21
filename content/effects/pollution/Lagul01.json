@@ -1,0 +1,43 @@
+{
+  "item": "Lagul01",
+  "mu_name": "Lagle, the ghost the Summoner's Book of Lagle lets loose for Pollution",
+  "mu_name_from": "ZzzOpenData.cpp:4544-4545: `AccessModel(MODEL_SUMMONER_SUMMON_LAGUL, L\"Data\\\\Skill\\\\\", L\"summon_lagul\")` and `OpenTexture(MODEL_SUMMONER_SUMMON_LAGUL, L\"Skill\\\\\")`, so Data/Skill/summon_lagul.bmd on lagulbody, lagulpinna and watermarkhik01 out of Data/Skill. MuMain (Season 6).",
+  "kind": "pollution",
+  "why_this_one": "It is the Summoner's Pollution, AT_SKILL_SUMMON_POLLUTION (225), in CSummonSystem::CreateSummonObject (GameLogic/Skills/SummonSystem.cpp:165-185):\n\n    CreateEffect(MODEL_SUMMONER_SUMMON_LAGUL, vTargetPos, vAngle, vLight, 0, NULL, iSummonLevel);\n    int anRargle[3] = { 1, 2, 4 };\n    for (int i = 0; i < anRargle[iSummonLevel]; ++i) {\n        Vector(0.f, 0.f, i * 90.f, vAngle);\n        CreateJoint(BITMAP_JOINT_SPIRIT, vTargetPos, vTargetPos, vAngle, 24, NULL, 100.f);\n        CreateJoint(BITMAP_JOINT_SPIRIT, vTargetPos, vTargetPos, vAngle, 24, NULL, 20.f);\n    }\n    PlayBuffer(SOUND_SUMMOM_RARGLE);\n\nThe subtype-0 Lagul is an unseen spring of smoke and cloud at the target for 160 frames; each wide joint (Scale 100, so 100 / 70 = 1.43 and over the 0.9 the create arm asks) raises a seen Lagul, subtype 1, that rides it (ZzzEffectJoint.cpp:896-914). Four of each at the book's top tier, +11; two here, the +7 book's, as four Laguls are 5,020 triangles and ran the transparent pass past its 8,192 sprites in Aida (game/fx/pollution.h kJointsACast). Here the Ancient rune Pollution's (sim/items.h kPollution...), drawn by game/fx/pollution on what the realm struck.",
+  "mesh": "Lagul01_00.obj",
+  "mesh_from": "muextract export-obj --action=0 --key=N on Data/Skill/summon_lagul.bmd, from MuMain: 86 bones, one action of 13 keys whose last is its first, three meshes of 1255 triangles in all, about 130 by 130 by 140 units.",
+  "poses": [
+    "Lagul01_00.obj",
+    "Lagul01_01.obj",
+    "Lagul01_02.obj",
+    "Lagul01_03.obj",
+    "Lagul01_04.obj",
+    "Lagul01_05.obj"
+  ],
+  "poses_from": "Keys 0, 2, 4, 6, 8 and 10, blended between in order and back to 0: MU plays its one action at `o->Velocity = 0.5f` a key a frame (ZzzEffect.cpp:812), so the twelve keys of the loop take 24 frames and each pose stands for two. Ours: every other key, blended, where MU blends every key.",
+  "parts": [
+    {
+      "group": "lagulbody",
+      "sheet": "lagulbody.png",
+      "blend": "alpha",
+      "note": "Data/Skill/lagulbody.OZJ, 256 square, violet. Drawn whole and faded by the joint's own fade (Move_MODEL_SUMMONER_SUMMON_LAGUL: Alpha (160 - LifeTime) / 20 as it comes, LifeTime / 40 over the last 30)."
+    },
+    {
+      "group": "lagulpinna",
+      "sheet": "lagulpinna.png",
+      "blend": "alpha",
+      "note": "Data/Skill/lagulpinna.OZJ, 64 square: its fins."
+    },
+    {
+      "group": "watermarkhik01",
+      "sheet": "watermarkhik01.png",
+      "blend": "additive",
+      "note": "Data/Skill/watermarkhik01.OZJ, 256 square, a blue caustic. Ours: added, as a sheet painted on black reads; MU's RenderObject does not say."
+    }
+  ],
+  "scale": 1.43,
+  "scale_from": "The wide joint's `o->Scale / 70.f`, 100 / 70 (ZzzEffectJoint.cpp:906-913).",
+  "frames": 160,
+  "frames_from": "The joint's `o->LifeTime = 160` (ZzzEffectJoint.cpp:899); the Lagul follows it and goes with it.",
+  "flight_note": "*How it flies* (MoveJoint, BITMAP_JOINT_SPIRIT subtype 24, ZzzEffectJoint.cpp:4130-4163). Born 150 units either way about the target on the ground, heading i * 90 degrees, ten units a frame along its heading; MoveHumming turns it at most five degrees a frame toward a point 80 units over the target, and a wobble of (rand() % 32 - 16) * 0.2 on its pitch and * 0.8 on its heading, eased by 0.6 and 0.8 a frame, keeps it from settling -- a loop about a metre round the target's middle. Its light (0.7, 0.7, 0.9) rises over the first 16 frames and falls over the last 30; its 40-point tail is JointSpirit01, added, Scale wide. The Lagul copies the joint's place and angle every frame, so it faces where it flies, and lights six of its bones (zx01-zx06, 54-59) with a blue BITMAP_SHINY + 6 at 0.3 its scale, one frame in five a smoke off a bone (ZzzEffect.cpp:8922-8948)."
+}

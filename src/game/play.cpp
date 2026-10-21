@@ -1334,6 +1334,14 @@ void Play::update(double seconds) {
                         const float at[3] = {caster->crown[0], feet, caster->crown[2]};
                         weakness_.cast(at);
                         if (heard_.weakness >= 0) emit(heard_.weakness, at[0], at[2], caster->id);
+                    } else if (happening.a == sim::skill::kPollution) {
+                        // The Ancient rune Pollution: MU's casting circle round him and Lagle's
+                        // ghosts loose on the body the realm struck, with SOUND_SUMMOM_RARGLE
+                        // there (fx/pollution.h).
+                        const float self[3] = {caster->crown[0], feet, caster->crown[2]};
+                        const float there[3] = {to[0], ground_->heightAt(to[0], to[2]), to[2]};
+                        pollution_.cast(self, there);
+                        if (heard_.pollution >= 0) emit(heard_.pollution, to[0], to[2], caster->id);
                     } else if (happening.a == sim::skill::kIce) {
                         // The block where the body is drawn, turned to his yaw, as MU turns it.
                         const float floor = ground_->heightAt(to[0], to[2]);
@@ -2352,6 +2360,7 @@ void Play::update(double seconds) {
     blizzardLandings_.clear();
     blizzard_.update(float(seconds), blizzardLandings_);
     weakness_.update(float(seconds));
+    pollution_.update(float(seconds));
     for (const Blizzard::Landing& one : blizzardLandings_) {
         const float feet[3] = {one.x, one.y, one.z};
         if (one.shard) ice_.splinter(feet);

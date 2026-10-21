@@ -10780,6 +10780,80 @@ void testWeaknessRune(const content::Tables& tables, int rune, int staff, int sw
           "a cursed monster strikes about 40% lighter");
 }
 
+// Pollution, the Summoner's Book of Lagle on a Soul Master's staff (sim/items.h kPollution...):
+// about one cast in ten, what he struck and up to three more within three tiles of it, each
+// struck by his rune's blow.
+void testPollutionRune(const content::Tables& tables, int rune, int staff, int sword) {
+    std::printf("pollution rune\n");
+    using sim::Kin;
+    using sim::Power;
+    const sim::PowerRow* row = sim::powerOf(uint8_t(Power::Pollution));
+    check(row != nullptr && row->rarity == sim::Rarity::Ancient && row->second && row->once &&
+              row->weapon(),
+          "Pollution is an Ancient weapon rune, a second class's, one to a thing");
+    const auto held = [](int item, uint8_t sockets, Power first) {
+        sim::Held h{int32_t(item), 0, 1};
+        h.sockets = sockets;
+        h.powers[0] = uint8_t(first);
+        return h;
+    };
+    const auto sets = [&](int into, Kin kin, bool second) {
+        return sim::settable(tables, held(rune, 0, Power::Pollution), held(into, 1, Power::None),
+                             kin, second);
+    };
+    check(sets(staff, Kin::DarkWizard, true), "a Soul Master sets Pollution in his staff");
+    check(!sets(staff, Kin::DarkWizard, false) && !sets(sword, Kin::DarkKnight, true) &&
+              !sets(staff, Kin::FairyElf, true),
+          "nobody else does");
+    {
+        sim::Random dice(20261023);
+        int at = 0, below = 0;
+        for (int i = 0; i < 4000; ++i) {
+            at += sim::drawRunePower(dice, Kin::DarkWizard, true, 160) == uint8_t(Power::Pollution);
+            below += sim::drawRunePower(dice, Kin::DarkWizard, true, 140) == uint8_t(Power::Pollution);
+        }
+        std::printf("  Pollution in 4000 drops: %d at 140, %d at 160\n", below, at);
+        check(at > 0 && below == 0, "it falls past Aida and not before");
+    }
+    int casts = 0, ghosts = 0, most = 0, blows = 0, far = 0;
+    bool overCount = false;
+    ancientHunt(tables, staff, Power::Pollution, true, [&](const sim::Realm& realm) {
+        bool loosed = false;
+        float cx = 0.0f, cy = 0.0f;
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.who != realm.hero().id) continue;
+            if (h.what == sim::What::Cast && h.a == sim::skill::kLightning) ++casts;
+            if (h.what == sim::What::Loosed && h.a == sim::skill::kPollution) {
+                ++ghosts;
+                most = std::max(most, h.c);
+                overCount |= h.c < 1 || h.c > sim::kPollutionMost;
+                loosed = true;
+                cx = h.x;
+                cy = h.y;
+                continue;
+            }
+            // The ghosts' blows follow their Loosed in the same tick.
+            if (loosed && h.what == sim::What::Hit && h.thrown) {
+                ++blows;
+                if (const sim::Body* struck = realm.find(h.whom)) {
+                    const float dx = struck->x - cx, dy = struck->y - cy;
+                    far += dx * dx + dy * dy > (sim::kPollutionTiles + 0.5f) * (sim::kPollutionTiles + 0.5f);
+                }
+            }
+            if (h.what == sim::What::Loosed && h.a != sim::skill::kPollution) loosed = false;
+        }
+    });
+    std::printf("  Pollution: %d casts, %d loosed, at most %d struck, %d blows, %d far\n", casts,
+                ghosts, most, blows, far);
+    check(ghosts > 0 && blows >= ghosts, "Pollution strikes what he struck");
+    check(!overCount, "never more than four");
+    checkEqual(far, 0, "never past three tiles of it");
+    if (casts > 0) {
+        const double rate = double(ghosts) / casts;
+        check(rate > 0.05 && rate < 0.16, "about one cast in ten");
+    }
+}
+
 void testAncientRunes(const content::Tables& tables) {
     std::printf("ancient runes\n");
     using sim::Kin;
@@ -10901,6 +10975,7 @@ void testAncientRunes(const content::Tables& tables) {
         check(rate > 0.05 && rate < 0.16, "about one cast in ten");
     }
     testWeaknessRune(tables, rune, staff, sword);
+    testPollutionRune(tables, rune, staff, sword);
 }
 
 void testGroupRunes(const content::Tables& tables) {

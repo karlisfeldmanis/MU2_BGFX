@@ -775,6 +775,50 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
                    double(hero.curseX), double(hero.curseY), cursed);
         return;
     }
+    // His Pollution (sim/items.h kPollution...): Lagle's ghosts on what he struck -- on a cast
+    // that struck no monster, the nearest in his sight within kStormcallReach -- and on up to
+    // kPollutionMost bodies round it, as SkillAttackPollution counts them.
+    if (power.power == Power::Pollution) {
+        if (!runeDice_.nextBool(kPollutionChance)) return;
+        const Body* centre = struck.monster() && struck.alive() ? &struck : nullptr;
+        if (centre == nullptr) {
+            float best = kStormcallReach * kStormcallReach;
+            for (const Body& b : bodies_) {
+                if (!b.monster() || !b.alive()) continue;
+                const float dx = b.x - hero.x, dy = b.y - hero.y, d = dx * dx + dy * dy;
+                if (d <= best && router_.sees(hero.x, hero.y, b.x, b.y, content::kWallNoMove)) {
+                    best = d;
+                    centre = &b;
+                }
+            }
+        }
+        if (centre == nullptr) return;
+        const float cx = centre->x, cy = centre->y;
+        // What it struck first, then the rest round it in body order, so the log is fixed; all
+        // chosen before any blow, so a kill among them does not move what it took.
+        uint32_t victims[kPollutionMost];
+        int found = 0;
+        victims[found++] = centre->id;
+        for (const Body& b : bodies_) {
+            if (found >= kPollutionMost) break;
+            if (!b.monster() || !b.alive() || b.id == centre->id) continue;
+            const float dx = b.x - cx, dy = b.y - cy;
+            if (dx * dx + dy * dy <= kPollutionTiles * kPollutionTiles) victims[found++] = b.id;
+        }
+        say(What::Loosed, hero, skill::kPollution, 0, found, centre->id);
+        happenings_.back().rune = true;
+        happenings_.back().x = cx;
+        happenings_.back().y = cy;
+        core::logf("pollution rune: tick %lld, on #%u, %d struck", (long long)tick_, centre->id,
+                   found);
+        const float force = kPollutionForce * runeForce(hero, Element::Lightning);
+        for (int i = 0; i < found && hero.alive(); ++i) {
+            Body* victim = body(victims[i]);
+            if (victim == nullptr || !victim->alive()) continue;
+            runeStrike(hero, *victim, force);
+        }
+        return;
+    }
     // His Immolate rune: the monster he struck set burning, while it stands; a second restarts it.
     if (power.power == Power::Burn) {
         ignite(hero, struck, wound);

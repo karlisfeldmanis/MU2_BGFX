@@ -2763,6 +2763,13 @@
       ],
       "from": "SOUND_SKILL_WEAKNESS, which ZzzOpenData loads from Data\\\\Sound\\\\SE_Ch_summoner_weakness.wav with one voice (:4920). ZzzCharacter plays it at the Summoner's Weakness let-go, AT_SKILL_ALICE_WEAKNESS, under its red circles (:4739).",
       "note": "The Ancient rune Weakness (sim/items.h kWeakness...), played where its field is laid (game/fx/weakness)."
+    },
+    "spell_pollution": {
+      "files": [
+        "Rargle.wav"
+      ],
+      "from": "SOUND_SUMMOM_RARGLE (sic), which ZzzOpenData loads from Data\\\\Sound\\\\Rargle.wav with one voice (:4913). CSummonSystem::CreateSummonObject plays it as Pollution lets Lagle loose at the target (SummonSystem.cpp:184).",
+      "note": "The Ancient rune Pollution (sim/items.h kPollution...), played where its ghosts are let loose (game/fx/pollution)."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

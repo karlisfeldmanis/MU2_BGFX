@@ -44,6 +44,7 @@
 #include "game/fx/blink.h"
 #include "game/fx/blizzard.h"
 #include "game/fx/weakness.h"
+#include "game/fx/pollution.h"
 #include "game/fx/ice.h"
 #include "game/fx/stains.h"
 #include "game/world/trap_show.h"
@@ -1028,6 +1029,8 @@ public:
     Blizzard& blizzard() { return blizzard_; }
     // And the Ancient rune Weakness's red circles and its curse's mark. fx/weakness.h.
     Weakness& weakness() { return weakness_; }
+    // And the Ancient rune Pollution's circle and Lagle's ghosts. fx/pollution.h.
+    Pollution& pollution() { return pollution_; }
     // What a death leaves by the head: MU's CreateBlood. fx/stains.h.
     Stains& stains() { return stains_; }
     void gatherStains(gfx::Effects& effects) const {
@@ -1856,6 +1859,7 @@ private:
     Ice ice_;
     Blizzard blizzard_;
     Weakness weakness_;
+    Pollution pollution_;
     Stains stains_;
     TrapShow trapShow_;
     Poison poison_;
@@ -2021,6 +2025,7 @@ private:
         int iceCast = -1;                                 // spell_ice, on an Ice Monster's cast
         int iceStorm = -1, iceStormLand = -1;  // eSuddenIce_1 and _2, the Ancient rune Ice Storm's
         int weakness = -1;                     // SE_Ch_summoner_weakness, the Ancient rune Weakness's
+        int pollution = -1;                    // Rargle, the Ancient rune Pollution's
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
         int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};

@@ -788,7 +788,8 @@ enum class Power : uint8_t {
     IceStorm = 74,
     // The Summoner's spells on the Soul Master's weapon (the user, 2026-10-21: "we want to take
     // summoner spells and attach to ancient runes"; kWeakness...).
-    Weakness = 75
+    Weakness = 75,
+    Pollution = 76
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -1173,6 +1174,20 @@ constexpr int64_t kWeaknessCheckTicks = 10;   // 821's attack_speed, 500 ms
 inline int weaknessOdds(int energy) { return energy / 50 + 0 / 6 + 32; }
 inline int weaknessSeconds(int energy, int level) { return energy / 100 + 4 - level / 40; }
 inline int weaknessCut(int energy) { return energy / 58 + 4; }
+// **Pollution**, the third Ancient and the Summoner's Book of Lagle (the user, 2026-10-21: "we want to
+// take summoner spells and attach to ancient runes"): MU's AT_SKILL_SUMMON_POLLUTION (S17
+// skill_template 225: 80 damage, effect radius 3, lightning). As SkillHandler::SkillAttackPollution
+// strikes, up to kPollutionMost bodies within kPollutionTiles of the point it was thrown at. A
+// spell he casts, or a swing that lands, has kPollutionChance to let Lagle's ghosts loose on what
+// he struck -- on a cast with no monster struck, the nearest within kStormcallReach -- that one
+// first, then the others round it in body order, each struck with his rune's blow (runeStrike)
+// at kPollutionForce, lightning, so his lightning runes raise it -- MU's 80 damage is Ice Storm's
+// 80, so the same force. Once a cast, as Stormcall rolls (Realm::land). A Soul Master's weapon only.
+// invention, but the spell, its reach and its count.
+constexpr double kPollutionChance = 0.10;  // a cast in ten; the user may tune it
+constexpr float kPollutionForce = 1.2f;
+constexpr float kPollutionTiles = 3.0f;
+constexpr int kPollutionMost = 4;
 // **The Common runes** (Rarity::Common), each a Legendary at a fraction, every one first-class:
 // **Cinder** Ring of Fire's ring and **Gust** Twister's storm, a knight's; **Chill** Frost Arrow's
 // freeze for half as long with half its wound, the elf's; **Faint Echo** Arcane Echo's second

@@ -710,6 +710,7 @@ add_library(mu_game STATIC
   src/game/fx/ice.cpp
   src/game/fx/blizzard.cpp
   src/game/fx/weakness.cpp
+  src/game/fx/pollution.cpp
   src/game/fx/stains.cpp
   src/game/fx/poison.cpp
   src/game/fx/flame.cpp

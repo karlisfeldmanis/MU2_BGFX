@@ -143,6 +143,9 @@ constexpr int32_t kIceStorm = 39;
 // (sim/items.h kWeakness...), said as Loosed where its field is laid (fx/weakness.h). MU's number,
 // past kSkills and never a row.
 constexpr int32_t kWeakness = 221;
+// `AT_SKILL_SUMMON_POLLUTION`, the Summoner's Book of Lagle: the Ancient rune Pollution's
+// (sim/items.h kPollution...), said as Loosed on what it struck (fx/pollution.h). MU's number.
+constexpr int32_t kPollution = 225;
 }  // namespace skill
 
 // What an iced body's walking is multiplied by: OpenMU's `IcedMovementSpeedFactor`, 0.5, which
