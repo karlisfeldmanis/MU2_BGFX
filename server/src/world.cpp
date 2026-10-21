@@ -4,6 +4,7 @@
 #include "host.h"
 #include "broker.h"
 #include "economy.h"
+#include "sim/wear.h"
 
 #include <cctype>
 #include <cstdio>
@@ -782,11 +783,61 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
     invasionTick(sessions, worlds);
 }
 
+bool runCutShort(const World& world) {
+    if (world.castle > 0) {
+        const sim::CastlePhase phase = world.realm->castleRun().phase;
+        return phase == sim::CastlePhase::Waiting || phase == sim::CastlePhase::Running;
+    }
+    if (world.square > 0) {
+        const sim::SquarePhase phase = world.realm->squareRun().phase;
+        return phase == sim::SquarePhase::Waiting || phase == sim::SquarePhase::Running;
+    }
+    return false;
+}
+
+namespace {
+
+// The ticket that let him into a run a restart cut short (g_ticketsBack), back in his bag at its
+// level, as the Chaos Machine makes one -- or in his vault when the bag has no room. False when
+// neither has.
+bool ticketBack(sim::Kept& kept, int group, int number, int level) {
+    const int32_t item = g_items.itemAt(group, number);
+    if (item < 0) return false;
+    const content::ItemRow& row = g_items.items[size_t(item)];
+    const sim::Held ticket{item, int16_t(level), int16_t(sim::fullDurability(row, level))};
+    sim::Satchel bag;
+    for (int slot = 0; slot < sim::kSlots; ++slot) {
+        if (!kept.hero.slots[slot].empty()) bag.put(slot, kept.hero.slots[slot]);
+    }
+    if (const int slot = bag.free(g_items, row.width, row.height); slot >= 0) {
+        kept.hero.slots[slot] = ticket;
+        return true;
+    }
+    if (const int cell = kept.vault.free(g_items, row.width, row.height); cell >= 0) {
+        kept.vault.put(cell, ticket);
+        return true;
+    }
+    return false;
+}
+
+}  // namespace
+
 // Where he is, to be written: this world at the tile he stands on, or the world the realm has
 // sent him to at its tile. Never inside an event: a Blood Castle left mid-run comes back in its
 // town, at the spawn gate, as WebZen logs him in (user.cpp:3147-3150).
 server::Store::Row placeOf(const Session& one) {
     server::Store::Row row{one.token, one.world->name, one.world->realm->keptOf(one.player)};
+    // A run cut short by the restart, he still in it and not sent anywhere by it: his cloak or
+    // invitation back (sim/event.h kCastleGate's Invisibility Cloak 13/18, sim/square.h's Devil's
+    // Invitation 14/19). Every save writes from the realm as it stands, so it is given once.
+    if (g_ticketsBack && runCutShort(*one.world) && g_due.find(one.token) == g_due.end()) {
+        const bool castle = one.world->castle > 0;
+        const int level = castle ? one.world->castle : one.world->square;
+        if (!ticketBack(row.kept, castle ? 13 : 14, castle ? 18 : 19, level)) {
+            core::logError("%s: no room for his %s +%d, cut short by the restart", one.who.c_str(),
+                           castle ? "Invisibility Cloak" : "Devil's Invitation", level);
+        }
+    }
     if (const auto due = g_due.find(one.token); due != g_due.end()) {
         row.world = due->second.world;
         row.kept.hero.column = due->second.column;

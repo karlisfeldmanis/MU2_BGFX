@@ -493,6 +493,7 @@ int main(int argc, char** argv) {
         // one counts changes nothing.
         if (g_restartCalled && restartAt == Clock::time_point{}) {
             restartAt = now + std::chrono::seconds(kRestartWarn);
+            g_ticketsBack = true;
             core::logf("mu2_server: restart called, in %d s", kRestartWarn);
         }
         if (restartAt != Clock::time_point{}) {
@@ -502,7 +503,12 @@ int main(int argc, char** argv) {
                 const int said = std::max(1, left);
                 const std::string text = "The server restarts for an update in " + std::to_string(said) +
                                          (said == 1 ? " second." : " seconds.") + " You will be back in a moment.";
-                for (auto& one : sessions) chatSystem(*one, net::Channel::Server, text);
+                // And to whoever is in a run it cuts short: his ticket comes back (g_ticketsBack).
+                for (auto& one : sessions) {
+                    const bool cut = one->world != nullptr && runCutShort(*one->world);
+                    chatSystem(*one, net::Channel::Server,
+                               cut ? text + " This event ends with it, and its ticket comes back to your bag." : text);
+                }
             }
             if (left <= 0) {
                 core::logf("mu2_server: restarting, as called");
@@ -681,6 +687,8 @@ int main(int argc, char** argv) {
         ready.assign(sessions.size(), false);
         for (size_t i = 0; i < sessions.size(); ++i) ready[i] = watch[i + 1].revents != 0;
     }
+    // Stopped without the warning (SIGTERM, MU2_NOW) cuts the runs short all the same.
+    g_ticketsBack = true;
     keepEveryone(sessions);
     brokerKeep();
     economyReport(sessions, true);

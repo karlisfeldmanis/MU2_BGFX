@@ -137,6 +137,12 @@ struct Landing {
     int square = 0, squareWait = 0;  // into Devil Square: which, and the seconds of Charon's gate left
 };
 inline std::map<uint64_t, Landing> g_due;
+// **A restart gives back the event's ticket** (the players, 2026-10-21: "Bro i was on the devil
+// square", "Again when in events, lost a couple already"; the user: "so on next patches you
+// return to events"): set once a restart is called (SIGUSR2) or the server stops, and from then
+// on one written out of a Blood Castle or Devil Square run not yet over is written with its cloak
+// or invitation back, at its level (placeOf). A logout of his own never gives it back.
+inline bool g_ticketsBack = false;
 // Tests (2026-10-08): `--storm` raises every world in a wet spell, `--invasion` begins the Golden
 // Invasion as a world is raised on a map that has one -- so a client joining mid-storm and
 // mid-invasion can be tried at once rather than after a dry spell and the dice.
@@ -423,6 +429,9 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
     const std::vector<std::unique_ptr<World>>& worlds, bool early = false);
 // The world's last ticks in one datagram to each of its players, once a pass (tick queues them).
 void sendDatagrams(World& world, std::vector<std::unique_ptr<Session>>& sessions);
+// Whether this world's run is one a restart cuts short: a castle or square still waiting or
+// fighting, not ended, won or sent out.
+bool runCutShort(const World& world);
 server::Store::Row placeOf(const Session& one);
 void part(Session& one);
 void keepEveryone(std::vector<std::unique_ptr<Session>>& sessions);

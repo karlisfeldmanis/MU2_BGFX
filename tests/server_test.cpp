@@ -660,6 +660,59 @@ void testDealLeave() {
 }
 
 
+// **A restart gives back the event's ticket** (host.h g_ticketsBack; the players, 2026-10-21, a
+// Devil Square lost to a patch): written out of a castle or square still running once a restart
+// is called, he has its cloak or invitation back at its level -- never on a logout of his own, and
+// never from a run already over.
+void testTicketsBack() {
+    std::printf("tickets back\n");
+    const std::string assets = MU2_ASSET_DIR;
+    std::string error;
+    check(content::loadTables(assets + "/cooked/lorencia/lorencia.mur", g_items, error),
+          "the server's item rows: " + error);
+    const auto holds = [](const sim::Kept& kept, int32_t item, int level) {
+        int n = 0;
+        for (const auto& h : kept.hero.slots) n += h.item == item && h.refinement == level;
+        return n;
+    };
+    std::vector<std::unique_ptr<World>> worlds;
+    sim::RealmConfig config;
+    net::Hello hello;
+    hello.kin = uint8_t(sim::Kin::DarkWizard);
+    hello.level = 120;
+    hello.world = "bloodcastle";
+    hello.column = 14;
+    hello.row = 13;
+    World* castle = raiseWorld(worlds, hello, assets, config, 20261021, "test", nullptr, 3);
+    hello.world = "devilsquare";
+    hello.column = 133;
+    hello.row = 97;
+    World* square = raiseWorld(worlds, hello, assets, config, 20261022, "test", nullptr, 0, 2, 30);
+    check(castle != nullptr && square != nullptr, "the server raises a castle 3 and a square 2");
+    if (!castle || !square) return;
+    const int32_t cloak = g_items.itemAt(13, 18), invitation = g_items.itemAt(14, 19);
+    check(cloak >= 0 && invitation >= 0, "the cloak's and the invitation's rows");
+    std::unique_ptr<Session> knight = player(castle, 901, "Knight");
+    std::unique_ptr<Session> wizard = player(square, 902, "Wizard");
+    check(runCutShort(*castle) && runCutShort(*square), "both runs are waiting: a restart cuts them short");
+
+    g_ticketsBack = false;
+    check(holds(placeOf(*knight).kept, cloak, 3) == 0 && holds(placeOf(*wizard).kept, invitation, 2) == 0,
+          "a logout of his own gives nothing back");
+    g_ticketsBack = true;
+    const server::Store::Row knightRow = placeOf(*knight), wizardRow = placeOf(*wizard);
+    check(holds(knightRow.kept, cloak, 3) == 1, "the restart gives back an Invisibility Cloak +3");
+    check(holds(wizardRow.kept, invitation, 2) == 1, "and a Devil's Invitation +2");
+    check(knightRow.world == "devias" && wizardRow.world == "noria",
+          "each kept in his event's town: " + knightRow.world + ", " + wizardRow.world);
+    check(holds(placeOf(*knight).kept, cloak, 3) == 1, "written again, still the one cloak");
+
+    square->realm->freeSquare();
+    check(!runCutShort(*square) && holds(placeOf(*wizard).kept, invitation, 2) == 0,
+          "a run already over gives nothing back");
+    g_ticketsBack = false;
+}
+
 // ---- one market for every realm (docs/game/shared-market.md) ---------------------------------
 //
 // The keeper as another realm's line would ask it: a listing applied once however often it is
@@ -953,6 +1006,7 @@ int main() {
     testRaise();
     testGuild();
     testDealLeave();
+    testTicketsBack();
     testRaid();
     testInvasion();
     testSharedMarket();
