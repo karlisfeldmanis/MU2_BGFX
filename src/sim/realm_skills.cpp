@@ -117,8 +117,10 @@ int32_t Realm::clipTicksOf(const Body& hero, const SkillRow& row) const {
     const content::Arm* left = hero.shield >= 0 && size_t(hero.shield) < tables_->arms.size()
                                    ? &tables_->arms[size_t(hero.shield)]
                                    : nullptr;
+    // And his talents': attack speed on a skill's clip, casting speed on a spell's.
+    const float talented = row.wizardry ? hero.talentShare.castSpeed : hero.talentShare.attackSpeed;
     return castTicks(*tables_, hero.kin, hero.totalPoints().agility, right, left, row,
-                     hero.castSpeed(tick_));
+                     hero.castSpeed(tick_) + int(talented));
 }
 
 // The refusals, in the order `TargetedSkillDefaultPlugin` refuses them, with the two this
@@ -191,8 +193,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             !blinkTo(hero, row, me().wantsColumn, me().wantsRow, &column, &where)) {
             return false;
         }
-        if (hero.mana < row.mana) return false;
-        hero.mana -= row.mana;
+        if (hero.mana < manaCostOf(hero, row)) return false;
+        hero.mana -= manaCostOf(hero, row);
         const int32_t cool = cooldownTicks(row, hero.totalPoints().agility,
                                            floorTicksFor(row, clipTicksOf(hero, row)));
         hero.cools[size_t(index)] = tick_ + cool;
@@ -220,7 +222,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // tick (burstCharge): he leaps and it bursts as he lands. Realm::chargeTick is kept for a
     // charge that is held, which nothing begins now.
     if (row.chargeTicks > 0) {
-        const int32_t price = row.mana * row.chargeStages;
+        const int32_t price = manaCostOf(hero, row) * row.chargeStages;
         if (me().charge.skill != 0 || hero.mana < price) return false;
         hero.walking = false;
         route(hero).clear();
@@ -299,20 +301,20 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             aid = one;
         }
         aided = aid != nullptr ? aid->id : hero.id;
-        if (hero.mana < row.mana) return false;
-        hero.mana -= row.mana;
+        if (hero.mana < manaCostOf(hero, row)) return false;
+        hero.mana -= manaCostOf(hero, row);
         if (row.summons > 0) {
             // **A second cast dismisses the one standing**, and costs nothing: OpenMU's
             // TargetedSkillDefaultPlugin.cs:121-125, which removes the summon and returns before
             // the mana is taken. The mana was taken above, so it is handed back.
             Body& summon = bodies_[size_t(me().summonSlot)];
             if (summon.alive()) {
-                hero.mana += row.mana;
+                hero.mana += manaCostOf(hero, row);
                 dismiss(summon);
                 return true;
             }
             if (!conjure(hero, row)) {
-                hero.mana += row.mana;
+                hero.mana += manaCostOf(hero, row);
                 return false;
             }
         } else if (row.mends) {
@@ -453,8 +455,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         }
         // A fan is arrows: none in hand or in the bag and there is nothing to loose.
         if (row.arrows > 0 && !quivered(hero)) return false;
-        if (hero.mana < row.mana) return false;
-        hero.mana -= row.mana;
+        if (hero.mana < manaCostOf(hero, row)) return false;
+        hero.mana -= manaCostOf(hero, row);
         paid = true;
         // Held with the blow until his arm is up (Realm::land); `begin` leaves it alone.
         hero.blowGround = grounded;
@@ -723,7 +725,9 @@ void Realm::strikeAround(Body& hero, const SkillRow& row, float force) {
         // not at the drawing's half of the swing (`thrown`).
         if (Body* victim = body(victims[i])) {
             const int before = victim->health;
+            sweep_ = spell ? nullptr : &row;
             strikeAt(hero, *victim, force, spell ? &row : nullptr, spell);
+            sweep_ = nullptr;
             // Twisting Slash's whirl pays a little back for each body it wounds (kTwistManaShare).
             if (row.number == skill::kTwistingSlash && hero.player && victim->monster() &&
                 victim->health < before && hero.mana < hero.maxMana) {
@@ -741,7 +745,7 @@ bool Realm::armed(const Body& hero, const SkillRow& row) const {
                     : (hero.learned & (uint64_t(1) << index)) == 0) {
         return false;
     }
-    if (!skillFor(row, hero.kin) || hero.mana < row.mana || (secondSkill(row) && !hero.second)) return false;
+    if (!skillFor(row, hero.kin) || hero.mana < manaCostOf(hero, row) || (secondSkill(row) && !hero.second)) return false;
     // A fan with nothing to loose falls back to the bow, which then says there are no arrows.
     if (row.arrows > 0 && !quivered(hero)) return false;
     const auto armAt = [&](int32_t at) -> const content::Arm* {
@@ -1043,8 +1047,8 @@ void Realm::chargeTick(Body& hero) {
         return;
     }
     // A stage every chargeTicks while there is mana for it; short, it holds where it is.
-    if (tick_ >= me().charge.nextAt && me().charge.stage < row->chargeStages && hero.mana >= row->mana) {
-        hero.mana -= row->mana;
+    if (tick_ >= me().charge.nextAt && me().charge.stage < row->chargeStages && hero.mana >= manaCostOf(hero, *row)) {
+        hero.mana -= manaCostOf(hero, *row);
         ++me().charge.stage;
         me().charge.nextAt = tick_ + row->chargeTicks;
     }

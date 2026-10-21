@@ -367,7 +367,17 @@ struct Arms {
     int wingWizardry = 0;
     // The worn pet's, while its life lasts.
     PetPower pet;
+    // His talents' shares that reckon lays on (sim::TalentShares, Realm::armsOf), as fractions:
+    // 0.1 is a tenth more. All nought for a hero with none, and for every monster.
+    struct Talented {
+        double attackRate = 0, defenseRate = 0, defense = 0, critical = 0, excellent = 0,
+               ignoreDefense = 0, damageDecrease = 0, block = 0, maxLife = 0;
+    } talent;
 };
+
+// The most damage decrease takes off a blow, the excellent armour's and the talents' together
+// (the user, 2026-10-20, with the talents). Ours.
+constexpr double kDamageDecreaseMost = 0.5;
 
 // A knight's two weapons of different kinds -- a sword and an axe, a mace and a spear -- each
 // hit for 55%: OpenMU's double wield (Season 6, AttackableExtensions.cs:131 and

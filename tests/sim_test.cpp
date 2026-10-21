@@ -5438,6 +5438,80 @@ void testTalentCommands(const content::Tables& tables) {
     checkEqual(run({.kind = Kind::TalentReset}), -1, "nothing to reset");
 }
 
+// Talents that are numbers (phase 3): each lands where its gear's twin does, by the share the
+// table says, and only for what he holds. A hero without talents is untouched.
+void testTalentStats(const content::Tables& tables) {
+    std::printf("talents: the flat stats\n");
+    sim::Realm realm;
+    check(realm.raise(&tables, 31, 138, 124, sim::Kin::DarkKnight, 200), "a level-200 knight raises");
+    // A two-handed sword and a one-handed one the knight may hold, off the cooked arms.
+    std::string two, one;
+    for (const content::Arm& arm : tables.arms) {
+        if (arm.isShield() || arm.missile() || arm.group != 0 || (arm.classes & 4) == 0) continue;
+        if (arm.twoHanded() && two.empty()) two = arm.name;
+        if (!arm.twoHanded() && one.empty()) one = arm.name;
+    }
+    check(!two.empty() && !one.empty(), "a two-handed and a one-handed sword exist");
+    check(realm.equip(tables.armNamed(two), -1, true), "the two-handed sword in hand");
+    const sim::Body& hero = realm.hero();
+    const sim::Fighter bare = hero.stats;
+    const int lifeBare = hero.maxHealth, manaBare = hero.maxMana;
+    checkNear(sim::talentForce(hero, nullptr), 1.0, 1e-6, "no talents, no factor");
+    check(!hero.talentShare.any, "and no shares");
+
+    // Heft 10: +10% two-handed damage on a plain swing; Sure Grip 10: +20% attack rate.
+    checkEqual(realm.talentTake(0, 0, 10), 10, "Heft 10");
+    checkNear(sim::talentForce(hero, nullptr), 1.10, 1e-5, "+10% on his swing with two hands");
+    checkEqual(realm.talentTake(0, 2, 1), 1, "Frost Edge, to open the next tier");
+    checkEqual(realm.talentTake(0, 3, 10), 10, "Pierce 10: +20% on Death Stab");
+    const sim::SkillRow* stab = sim::skillNumbered(43);
+    check(stab != nullptr, "Death Stab's row");
+    if (stab) checkNear(sim::talentForce(hero, stab), 1.30, 1e-5, "Heft and Pierce in one sum on Death Stab");
+    checkEqual(realm.talentTake(0, 5, 1), 1, "Pierce's ten opens Executioner");
+    checkEqual(realm.talentTake(0, 4, 10), 10, "Sunder 10: +2% ignore defence");
+    checkNear(hero.stats.ignoreDefense, bare.ignoreDefense + 0.02, 1e-6, "ignore defence +2%");
+    // The one-handed sword: Heft no longer counts.
+    check(realm.equip(tables.armNamed(one), -1, true), "a one-handed sword instead");
+    checkNear(sim::talentForce(hero, nullptr), 1.0, 1e-6, "Heft asks two hands");
+
+    // Guardian: Plate 10, +20% defence.
+    const int defenseBefore = hero.stats.defense;
+    checkEqual(realm.talentTake(2, 0, 10), 10, "Plate 10");
+    checkEqual(hero.stats.defense, defenseBefore + int(double(defenseBefore) * 0.2), "defence +20%");
+    // Fury's Strength of Arms: +1% damage a point, whatever he holds.
+    checkEqual(realm.talentTake(4, 0, 10), 10, "Strength of Arms 10");
+    checkNear(sim::talentForce(hero, nullptr), 1.10, 1e-5, "+10% with any weapon");
+    // Fortune's Prospector: more Zen from kills, read off the share.
+    checkEqual(realm.talentTake(5, 0, 5), 5, "Prospector 5");
+    checkNear(hero.talentShare.moreZen, 5.0, 1e-5, "+5% Zen from kills");
+    // Whirlwind's Second Breath: Cyclone costs 2% less a point.
+    checkEqual(realm.talentTake(3, 1, 10), 10, "Second Breath 10");
+    const sim::SkillRow* cyclone = sim::skillNumbered(22);
+    if (cyclone && cyclone->mana > 0) {
+        checkEqual(sim::manaCostOf(hero, *cyclone), std::max(1, int(float(cyclone->mana) * 0.8f)),
+                   "Cyclone costs a fifth less");
+    }
+    // A reset gives back what he was.
+    check(realm.talentReset(), "reset");
+    check(realm.equip(tables.armNamed(two), -1, true), "the two-handed sword again");
+    checkEqual(hero.stats.defense, bare.defense, "his defence as it was");
+    checkNear(hero.stats.attackRate, bare.attackRate, 1e-4, "his attack rate");
+    checkEqual(hero.maxHealth, lifeBare, "his life");
+    checkEqual(hero.maxMana, manaBare, "his mana");
+
+    // The damage decrease cap: gear and talents together never past a half.
+    sim::Arms arms;
+    arms.excel.damageDecrease = 0.32;
+    arms.talent.damageDecrease = 0.25;
+    sim::Fighter capped;
+    int life = 0;
+    sim::reckon(sim::Kin::DarkKnight, 100, sim::startingPoints(sim::Kin::DarkKnight), arms, &capped, &life);
+    checkNear(capped.damageDecrease, 0.5, 1e-9, "damage decrease stops at 50%");
+    arms.talent.block = 0.3;
+    sim::reckon(sim::Kin::DarkKnight, 100, sim::startingPoints(sim::Kin::DarkKnight), arms, &capped, &life);
+    checkNear(capped.blockChance, sim::kSteadfastMost, 1e-9, "talent block counts under Steadfast's 25%");
+}
+
 void testResetPoints(const content::Tables& tables) {
     std::printf("spend many and reset points\n");
     using Kind = sim::Command::Kind;
@@ -14607,6 +14681,7 @@ int main() {
     testResetPoints(tables);
     testTalents();
     testTalentCommands(tables);
+    testTalentStats(tables);
     testExcellent(tables);
     testSets(tables);
     testWear(tables);

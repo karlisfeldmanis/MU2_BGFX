@@ -141,4 +141,29 @@ float talentSum(Kin kin, const TalentRanks& ranks, TalentStat stat, const Talent
 float talentSpecial(Kin kin, const TalentRanks& ranks, Special special, const TalentAsk& ask,
                     const TalentEffect** found = nullptr);
 
+// Every talent that asks nothing of the blow, summed once for what he holds (Realm::rearm), so a
+// blow or a tick reads a number rather than the tree. The skill-named ones (SkillDamage,
+// SkillManaCost...) are asked of talentSum where the skill is known. Percent unless said; all
+// nought, and `any` false, for a hero with no talents, so nothing he does changes.
+struct TalentShares {
+    bool any = false;
+    float damage = 0, wizardry = 0;      // DamageAndWizardry in both
+    float element[kElements] = {};       // ElementDamage, by sim::Element
+    float attackSpeed = 0, castSpeed = 0, lightningChannel = 0;  // counts, as attack speed is
+    float attackRate = 0, defenseRate = 0, defense = 0;
+    float critical = 0, excellent = 0, ignoreDefense = 0;        // chance, in percent
+    float damageDecrease = 0, reflect = 0, block = 0;
+    float guardEffect = 0, barrierEffect = 0;
+    float maxLife = 0, maxMana = 0, maxShield = 0, manaRegen = 0;
+    float lifeOnKill = 0, lifeSteal = 0;
+    float icePoisonResistance = 0;       // a count, as a ring's resistance is
+    float threat = 0;
+    float chillLonger = 0, poisonLonger = 0, chilledSlower = 0;
+    float healing = 0, aidManaCost = 0, buffEffect = 0, aidReach = 0;  // aidReach in tiles
+    float summonDamage = 0, summonLife = 0, summonDefense = 0, summonAttackRate = 0, summonManaCost = 0,
+          summonDamageTaken = 0;
+    float moreZen = 0, moreJewels = 0, moreItems = 0, moreExcellent = 0, potionHealing = 0;
+};
+TalentShares talentShares(Kin kin, const TalentRanks& ranks, const TalentAsk& holding);
+
 }  // namespace mu::sim

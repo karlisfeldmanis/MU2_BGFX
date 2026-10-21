@@ -156,6 +156,11 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     if (row != nullptr) force *= elementForce(attacker, skillElement(row->number));
     // His Wraths on every blow of his, whatever threw it (sim::kWrathDamage).
     force *= wrathForce(attacker);
+    // His talents (rule 1): on his swings, skills and spells, a sweep's by its skill
+    // (`sweep_`). Not on a rune's own blow -- thrown, unpaid and of no skill -- whose force
+    // already carries them (runeForce).
+    const bool runeBlow = row == nullptr && thrown && !pays;
+    if (attacker.player && !runeBlow) force *= talentForce(attacker, row ? row : sweep_);
     // A Twin Guard's, while his Defense is up (sim::kTwinGuardDamage).
     if (attacker.player && attacker.excel.twinGuard && attacker.boonSkill == skill::kDefense &&
         attacker.boonUntil > tick_) {
@@ -446,7 +451,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
                      : std::max(1, int(float(wound) * kFrostWound)) +
                            int(float(runeDice_.nextInt(int(energy * kRuneEnergyLow), high + 1)) *
                                wrath);
-        const int bite = std::max(1, int(float(bare) * elementForce(hero, Element::Ice) *
+        const int bite = std::max(1, int(float(bare) * runeForce(hero, Element::Ice) *
                                           (faint ? kChillWound : 1.0f)));
         struck.health = std::max(0, struck.health - bite);
         noteHurt(struck, hero, bite);
@@ -476,7 +481,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
             struck.poisonUntil = tick_ + spell->poisonTicks;
             struck.poisonNext = tick_ + kPoisonEvery;
             struck.poisonDamage =
-                std::max(1, int(float(wound / 4) * elementForce(hero, Element::Poison)));
+                std::max(1, int(float(wound / 4) * runeForce(hero, Element::Poison)));
             struck.poisonBy = hero.id;
         }
         say(What::Loosed, hero, ice ? skill::kIce : skill::kPoison, 0, 0, struck.id);
@@ -500,7 +505,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
                                                            high + 1)) *
                                    wrath);
             // Frost, so Glacier raises it as it raises Frost Arrow's.
-            const int bite = std::max(1, int(float(bare) * elementForce(hero, Element::Ice)));
+            const int bite = std::max(1, int(float(bare) * runeForce(hero, Element::Ice)));
             struck.health = std::max(0, struck.health - bite);
             noteHurt(struck, hero, bite);
             say(What::Hit, hero, bite, bite, struck.health, struck.id);
@@ -527,7 +532,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         core::logf("fireburst: tick %lld, a chain off #%u", (long long)tick_, struck.id);
         Flight from;
         from.force = (spark ? kSparkburstForce : ember ? kEmberForce : kFireburstForce) *
-                     elementForce(hero, Element::Fire);
+                     runeForce(hero, Element::Fire);
         from.chained[0] = struck.id;
         from.swung = true;
         // A shorter chain starts with hops already spent, so `hop` stops it at kPyroblastChain;
@@ -552,7 +557,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         happenings_.back().rune = true;
         core::logf("ring of fire: tick %lld, %d round him", (long long)tick_, found);
         const float force =
-            (faint ? kCinderForce : kFireRingForce) * elementForce(hero, Element::Fire);
+            (faint ? kCinderForce : kFireRingForce) * runeForce(hero, Element::Fire);
         for (int i = 0; i < found && hero.alive(); ++i) {
             if (Body* victim = body(victims[i]); victim && victim->alive()) {
                 runeStrike(hero, *victim, force);
@@ -579,7 +584,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         happenings_.back().rune = true;
         core::logf("hellfire rune: tick %lld, %d round him", (long long)tick_, found);
         const float force = (brim ? kBrimstoneForce : ash ? kAshfallForce : kHellfireRuneForce) *
-                            elementForce(hero, Element::Fire);
+                            runeForce(hero, Element::Fire);
         for (int i = 0; i < found && hero.alive(); ++i) {
             if (Body* victim = body(victims[i]); victim && victim->alive()) {
                 runeStrike(hero, *victim, force);
@@ -600,7 +605,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
             if (one.next != 0) continue;
             one = Fire{tick_ + kStormFirst, hero.x, hero.y, storm->number, storm->burns,
                        (faint ? kGustForce : kTwisterRuneForce) *
-                           elementForce(hero, Element::Wind),
+                           runeForce(hero, Element::Wind),
                        0,
                        fm::cos(way) * storm->walks, fm::sin(way) * storm->walks, true};
             one.owner = hero.id;
@@ -663,7 +668,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         say(What::Loosed, hero, skill::kMeteorite, fall, 0, struckBy->id);
         core::logf("meteor rune: tick %lld, a rock on #%u beside #%u", (long long)tick_,
                    struckBy->id, struck.id);
-        const float rockForce = kMeteorForce * elementForce(hero, Element::Fire);
+        const float rockForce = kMeteorForce * runeForce(hero, Element::Fire);
         for (Flight& one : flights_) {
             if (one.at != 0) continue;
             one = Flight{tick_ + fall, struckBy->id, 0, rockForce, false};
@@ -678,7 +683,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
     say(What::Loosed, hero, skill::kLightning, 0, 0, struckBy->id);
     core::logf("stormcall: tick %lld, lightning on #%u beside #%u", (long long)tick_,
                struckBy->id, struck.id);
-    runeStrike(hero, *struckBy, kStormcallForce * elementForce(hero, Element::Lightning));
+    runeStrike(hero, *struckBy, kStormcallForce * runeForce(hero, Element::Lightning));
     if (struckBy->alive()) push(*struckBy, hero);
 }
 
@@ -703,13 +708,13 @@ void Realm::ringStings(Body& hero, Body& struck, int wound) {
         if (ice != nullptr && !shrugs(struck)) struck.chilledUntil = tick_ + ice->chillTicks;
         say(What::Loosed, hero, skill::kIce, 0, 0, struck.id);
         core::logf("ring of ice: tick %lld, on #%u", (long long)tick_, struck.id);
-        runeStrike(hero, struck, kRingFrostForce * elementForce(hero, Element::Ice));
+        runeStrike(hero, struck, kRingFrostForce * runeForce(hero, Element::Ice));
     }
     // Lightning: a bolt on it, said as Lightning let go at it, which pushes as Lightning does.
     if (e.lightningRing > 0 && rolls(e.lightningRing)) {
         say(What::Loosed, hero, skill::kLightning, 0, 0, struck.id);
         core::logf("ring of lightning: tick %lld, on #%u", (long long)tick_, struck.id);
-        runeStrike(hero, struck, kRingBoltForce * elementForce(hero, Element::Lightning));
+        runeStrike(hero, struck, kRingBoltForce * runeForce(hero, Element::Lightning));
         if (struck.alive() && !fixed(struck)) push(struck, hero);
     }
     // Wind: a gust, said as Twister let go at it, that knocks it back a tile. The storm walks the
@@ -719,7 +724,7 @@ void Realm::ringStings(Body& hero, Body& struck, int wound) {
         const float way = fm::atan2(struck.y - hero.y, struck.x - hero.x);
         say(What::Loosed, hero, skill::kTwister, 0, int32_t(std::lround(way * 1000.0f)), struck.id);
         core::logf("ring of wind: tick %lld, on #%u", (long long)tick_, struck.id);
-        runeStrike(hero, struck, kRingGustForce * elementForce(hero, Element::Wind));
+        runeStrike(hero, struck, kRingGustForce * runeForce(hero, Element::Wind));
         if (struck.alive() && !fixed(struck)) push(struck, hero);
     }
 }
@@ -799,7 +804,7 @@ void Realm::envenom(Body& hero, Body& target, int blowDamage, bool ring) {
     const float base = ring ? float(blowDamage) * float(kRingPulseShare)
                             : std::max(float(target.maxHealth) * float(kPlagueShare),
                                        float(blowDamage) * float(kBurnRuneFloor));
-    const int share = int(base * elementForce(hero, Element::Poison));
+    const int share = int(base * runeForce(hero, Element::Poison));
     target.poisonUntil = tick_ + poison->poisonTicks;
     target.poisonNext = tick_ + kPoisonFirst;
     target.poisonDamage = std::max(1, std::min(share, blowDamage));
@@ -1516,7 +1521,7 @@ void Realm::poisonPulse(Body& beast) {
 bool Realm::ignite(Body& hero, Body& struck, int wound, double chance, bool ring) {
     if (chance < 1.0 && !runeDice_.nextBool(chance)) return false;
     if (!struck.alive() || !struck.monster()) return false;
-    const float fire = elementForce(hero, Element::Fire);
+    const float fire = runeForce(hero, Element::Fire);
     // Its life's share, or on a small monster whose share is a point or two, the floor:
     // kBurnRuneFloor of the blow that lit it. A ring's is the blow's share alone.
     const float base = ring ? float(std::max(1, wound)) * float(kRingPulseShare)

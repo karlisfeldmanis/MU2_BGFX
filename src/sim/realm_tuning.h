@@ -34,9 +34,12 @@ inline void restoreMana(Body& hero) {
                        hero.excel.manaRate);
     // And the Wellspring runes' on everything above.
     if (hero.excel.runeMana > 0.0) hero.maxMana = int(double(hero.maxMana) * (1.0 + hero.excel.runeMana));
+    // And his talents' (sim::TalentShares), last.
+    if (hero.talentShare.maxMana != 0) hero.maxMana = int(double(hero.maxMana) * (1.0 + hero.talentShare.maxMana / 100.0));
     hero.mana = std::min(hero.maxMana, hero.mana + std::max(0, hero.maxMana - was));
     const int wasSd = hero.maxSd;
     hero.maxSd = maximumShield(hero.level, hero.totalPoints(), hero.stats.defense);
+    if (hero.talentShare.maxShield != 0) hero.maxSd = int(double(hero.maxSd) * (1.0 + hero.talentShare.maxShield / 100.0));
     hero.sd = std::min(hero.maxSd, hero.sd + std::max(0, hero.maxSd - wasSd));
 }
 
@@ -525,6 +528,47 @@ inline uint32_t armFamily(const Body& hero, const content::Arm* onArm) {
 inline float elementForce(const Body& hero, Element element) {
     if (!hero.player || element == Element::None) return 1.0f;
     return float(1.0 + kElementRuneDamage * hero.excel.elementRunes[int(element)]);
+}
+
+// **His talents on a blow** (sim/talents.h, the plan's rule 1): his damage share -- wizardry on a
+// spell -- the skill's own and its element's, summed and multiplied once, beside the runes'
+// factors. 1 for a hero with none and for every monster, so nothing else moves.
+inline float talentForce(const Body& hero, const SkillRow* row) {
+    if (!hero.player || !hero.talentShare.any) return 1.0f;
+    const TalentShares& t = hero.talentShare;
+    float sum = row && row->wizardry ? t.wizardry : t.damage;
+    if (row) {
+        sum += t.element[int(skillElement(row->number))];
+        TalentAsk ask;
+        ask.skill = row->number;
+        sum += talentSum(hero.kin, hero.talents, TalentStat::SkillDamage, ask);
+    }
+    return sum == 0.0f ? 1.0f : float(1.0 + double(sum) / 100.0);
+}
+
+// What his element runes and his talents multiply a rune's own blow of `element` by -- a
+// Stormcall's, a Ring of Fire's, a burn's: the runes', and his damage (a wizard's wizardry) and
+// element talents summed on top. Skill-named talents never reach a rune's blow (the plan).
+inline float runeForce(const Body& hero, Element element) {
+    const float runes = elementForce(hero, element);
+    if (!hero.player || !hero.talentShare.any) return runes;
+    const TalentShares& t = hero.talentShare;
+    const float sum = (hero.kin == Kin::DarkWizard ? t.wizardry : t.damage) + t.element[int(element)];
+    return sum == 0.0f ? runes : runes * float(1.0 + double(sum) / 100.0);
+}
+
+// What a skill costs him in mana: its row's, less his talents' for that skill, a heal's or buff's,
+// or a summon's (sim/talents.h), never under one. The row's for a hero with none.
+inline int32_t manaCostOf(const Body& hero, const SkillRow& row) {
+    if (!hero.player || !hero.talentShare.any || row.mana <= 0) return row.mana;
+    const TalentShares& t = hero.talentShare;
+    TalentAsk ask;
+    ask.skill = row.number;
+    float less = talentSum(hero.kin, hero.talents, TalentStat::SkillManaCost, ask);
+    if (row.mends || row.aids()) less += t.aidManaCost;
+    if (row.summons > 0) less += t.summonManaCost;
+    if (less == 0.0f) return row.mana;
+    return std::max<int32_t>(1, int32_t(float(row.mana) * (1.0f + less / 100.0f)));
 }
 
 // What his Wraths multiply every blow of his by (sim::kWrathDamage): 1 for none, or a monster's.

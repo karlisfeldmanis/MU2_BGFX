@@ -508,6 +508,8 @@ struct Body {
     // His talents, a rank a node of his class's tree (sim/talents.h). The points to spend on them
     // are not kept: they are his level's (sim::talentPoints) less what these hold.
     TalentRanks talents{};
+    // What they come to for what he holds, summed at each rearm (sim::talentShares).
+    TalentShares talentShare;
 
     // ---- skills (docs/game/skills-dk.md) --------------------------------------------------------
     // What he has learned, as a bit per row of the skill table and NOT per skill number: the
@@ -919,6 +921,9 @@ public:
     // free. Each reckons him again (Realm::rearm).
     enum class TalentRefused : int8_t { NoPoints = -1, Closed = -2, Full = -3, Holds = -4, Nothing = -5 };
     int talentTake(int column, int node, int count);
+    // What he holds that a talent asks (sim::Hold), and his talents' shares for it.
+    TalentAsk holdingOf(const Body& one) const;
+    TalentShares talentSharesOf(const Body& one) const;
     int talentGive(int column, int node, int count);
     bool talentReset();
     // His talent points earned and not spent.
@@ -2138,6 +2143,9 @@ private:
     };
     static constexpr int kFires = 8;
     Fire fires_[kFires] = {};
+    // The physical sweep a blow in hand belongs to (strikeAround), so strikeAt lays its skill's
+    // talents on a blow that carries no row. Only ever set around that one call.
+    const SkillRow* sweep_ = nullptr;
     bool wingDemo_ = false;  // `wingDemo`
     bool benchUndying_ = false;
     bool benchMonstersDie_ = false;

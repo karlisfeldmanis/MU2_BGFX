@@ -224,6 +224,9 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     out->defense += int(double(out->defense) * arms.setDefense);
     // And Ironskin's share of it all (sim::kIronskinDefense), last.
     out->defense += int(double(out->defense) * arms.excel.runeDefense);
+    // And his talents' share on top of that (sim::TalentShares).
+    const Arms::Talented& talent = arms.talent;
+    if (talent.defense != 0) out->defense += int(double(out->defense) * talent.defense);
     // The arms, and then what is in them. A naked level-1 knight doing one point to a Bull
     // Fighter is not a bug -- it is what 0.75 says about hitting an armoured animal six levels
     // up with your fists, and the damage floor is what he has instead of nothing. A weapon adds
@@ -318,9 +321,20 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     out->defenseRate = float(double(out->defenseRate) * (1.0 + arms.setDefenseRate));
     out->defenseRate = float(double(out->defenseRate) * excel.defenseRateRate);
     out->excellentChance = excel.excellentChance;
-    out->damageDecrease = excel.damageDecrease;
+    out->damageDecrease = std::min(kDamageDecreaseMost, excel.damageDecrease);
     out->blockChance = std::min(excel.blockChance, kSteadfastMost);
     out->ignoreDefense = excel.ignoreDefense;
+    // His talents' (sim::TalentShares): the two rates, then the chances, each under the cap
+    // its gear has. Read only when he has one, so nothing moves for a hero without.
+    if (talent.attackRate != 0) out->attackRate = float(double(out->attackRate) * (1.0 + talent.attackRate));
+    if (talent.defenseRate != 0) out->defenseRate = float(double(out->defenseRate) * (1.0 + talent.defenseRate));
+    if (talent.critical != 0) out->criticalChance += talent.critical;
+    if (talent.excellent != 0) out->excellentChance += talent.excellent;
+    if (talent.ignoreDefense != 0) out->ignoreDefense += talent.ignoreDefense;
+    if (talent.damageDecrease != 0) {
+        out->damageDecrease = std::min(kDamageDecreaseMost, excel.damageDecrease + talent.damageDecrease);
+    }
+    if (talent.block != 0) out->blockChance = std::min(excel.blockChance + talent.block, kSteadfastMost);
     out->damageTaken = arms.pet.taken;
     out->damageDealt = arms.pet.dealt;
     out->greaterDamage = arms.greaterDamage;
@@ -339,6 +353,8 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     if (excel.healthRate != 1.0) *maxHealth = int(double(*maxHealth) * excel.healthRate);
     // And the Rune of the Undying's, on everything above.
     if (excel.undyingRate != 1.0) *maxHealth = int(double(*maxHealth) * excel.undyingRate);
+    // And his talents', last.
+    if (talent.maxLife != 0) *maxHealth = int(double(*maxHealth) * (1.0 + talent.maxLife));
 }
 
 int maximumMana(Kin kin, int level, const HeroPoints& points) {

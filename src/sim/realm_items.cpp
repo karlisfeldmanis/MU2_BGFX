@@ -73,8 +73,41 @@ Arms Realm::armsOf(const Body& one) const {
         arms.archery = one.archer != 0;
         arms.quiverPlus = one.quiverPlus;
         arms.greaterDamage = one.mightUntil > tick_ ? one.might : 0;
+        if (one.talentShare.any) {
+            const TalentShares& t = one.talentShare;
+            arms.talent = {t.attackRate / 100.0, t.defenseRate / 100.0, t.defense / 100.0, t.critical / 100.0,
+                           t.excellent / 100.0, t.ignoreDefense / 100.0, t.damageDecrease / 100.0,
+                           t.block / 100.0, t.maxLife / 100.0};
+        }
     }
     return arms;
+}
+
+TalentAsk Realm::holdingOf(const Body& one) const {
+    TalentAsk ask;
+    const content::Arm* weapon = tables_ && one.weapon >= 0 && size_t(one.weapon) < tables_->arms.size()
+                                     ? &tables_->arms[size_t(one.weapon)]
+                                     : nullptr;
+    int n = 0;
+    if (one.archer != 0) {
+        ask.holding[n++] = Hold::Bow;
+    } else if (weapon && weapon->twoHanded()) {
+        ask.holding[n++] = Hold::TwoHanded;
+    } else if (weapon) {
+        // One blade or two (the Magic Gladiator's Blade column).
+        ask.holding[n++] = Hold::OneHanded;
+    }
+    if (one.dual) {
+        ask.holding[n++] = Hold::DualWield;
+    } else if (one.shield >= 0) {
+        ask.holding[n++] = Hold::Shield;
+    }
+    return ask;
+}
+
+TalentShares Realm::talentSharesOf(const Body& one) const {
+    if (!one.player || talentsSpent(one.talents) == 0) return TalentShares{};
+    return talentShares(one.kin, one.talents, holdingOf(one));
 }
 
 // The swing clock, re-worked whenever what he holds or what he is changes. It is the length of
@@ -89,7 +122,7 @@ void Realm::reswing(Body& hero) {
                                    : nullptr;
     // An Ale's twenty ride with the excellent option's seven: both are AttackSpeedAny in OpenMU.
     const int extra = hero.excel.speed + (hero.aleUntil > tick_ ? kAleSpeed : 0) +
-                      hero.frenzySpeed(tick_);
+                      hero.frenzySpeed(tick_) + int(hero.talentShare.attackSpeed);
     const int milliseconds =
         swingMilliseconds(*tables_, hero.kin, hero.totalPoints().agility, right, left, extra);
     hero.swingMs = milliseconds;
@@ -101,7 +134,7 @@ void Realm::reswing(Body& hero) {
 int Realm::attackSpeed() const {
     const Body& hero = mine();
     const int extra = hero.excel.speed + (hero.aleUntil > tick_ ? kAleSpeed : 0) +
-                      hero.frenzySpeed(tick_);
+                      hero.frenzySpeed(tick_) + int(hero.talentShare.attackSpeed);
     const int agility = hero.totalPoints().agility;
     if (hero.kin == Kin::DarkWizard) return int(magicSpeedStat(hero.kin, agility)) + extra;
     const auto arm = [&](int32_t at) -> const content::Arm* {
@@ -647,6 +680,18 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
             hero.runeShare.energy += share.energy;
         }
     }
+    // His talents for what he now holds (sim::talentShares): a bow, two hands, a pair, a shield.
+    hero.talentShare = talentSharesOf(hero);
+    // Those that ride on what his gear already gives, folded in as Wealth is above: reflect, a
+    // share of the wound as life, life after a kill, ice and poison resistance.
+    if (hero.talentShare.any) {
+        const TalentShares& t = hero.talentShare;
+        hero.excel.reflect += double(t.reflect) / 100.0;
+        hero.excel.lifeSteal += double(t.lifeSteal) / 100.0;
+        hero.excel.killLife += double(t.lifeOnKill) / 100.0;
+        hero.excel.iceResistance += int(std::lround(t.icePoisonResistance));
+        hero.excel.poisonResistance += int(std::lround(t.icePoisonResistance));
+    }
     const int was = hero.maxHealth;
     reckon(hero.kin, hero.level, hero.totalPoints(), armsOf(hero), &hero.stats, &hero.maxHealth);
     // **A guard stands only behind the shield that raised it.** Taking the shield off ends
@@ -892,8 +937,9 @@ bool Realm::useItem(int slot) {
     if (tick_ < me().potionUntil) return false;
 
     // MU2's Realm.Consume, off OpenMU's RecoverConsumeHandlerPlugIn (sim::potionPours).
-    const int total = potionPours(row, potion.refinement, mana ? hero.maxMana : hero.maxHealth,
-                                  hero.level);
+    int total = potionPours(row, potion.refinement, mana ? hero.maxMana : hero.maxHealth, hero.level);
+    // And his Field Medic talents on it (sim/talents.h).
+    if (hero.talentShare.potionHealing != 0) total = int(float(total) * (1.0f + hero.talentShare.potionHealing / 100.0f));
     // The three instalments, at 200, 600 and 200 ms after one another: 4, 12 and 4 ticks.
     const int64_t steps[3] = {4, 12, 4};  // kPourTicks in all
     const int shares[3] = {20, 60, 20};
@@ -1036,7 +1082,8 @@ void Realm::recover(Body& hero) {
     // and only the shield carries the safe-zone test (Player.RegenerateAsync). Three seconds,
     // 1/27.5 of the pool, carried as a fraction so a small pool still fills.
     if (hero.alive() && tick_ % kRecoverEveryTicks == 0 && hero.mana < hero.maxMana) {
-        hero.manaCarry += float(hero.maxMana) * kManaRecoveryShare;
+        hero.manaCarry += float(hero.maxMana) * kManaRecoveryShare *
+                          (hero.talentShare.manaRegen != 0 ? 1.0f + hero.talentShare.manaRegen / 100.0f : 1.0f);
         const int whole = int(hero.manaCarry);
         hero.manaCarry -= float(whole);
         if (whole > 0) hero.mana = std::min(hero.maxMana, hero.mana + whole);
@@ -1174,12 +1221,19 @@ void Realm::leave(const Body& dead, const Body& killer) {
     // (:5920); its plus `(level - drop level) / 3`, and a row whose plus would pass the breed's
     // MaxItemLevel is not in the pool (MonsterItemMng.cpp:626). Zen is the breed's MoneyRate
     // (kDropRates) where MU2's Loot had a flat half.
-    constexpr double kJewel = kJewelGroupChance;
+    const double kJewel = kJewelGroupChance;  // and with his talents', below
     // The Ring of Fortune's and its kind's item find raise both item rolls (sim::Affix::Fortune),
     // taking from the Zen and the nothing below them.
     const double find = 1.0 + double(mine().excel.itemFind) / 100.0;
-    const double itemChance = 0.1 * find;
-    const double excellentItemChance = 0.1 * kExcellentShareOfItem * find;
+    // And his Fortune talents, each its own share more (sim/talents.h), read only when he has one.
+    const TalentShares& fortune = mine().talentShare;
+    const double items = fortune.moreItems != 0 ? 1.0 + double(fortune.moreItems) / 100.0 : 1.0;
+    const double excellents = fortune.moreExcellent != 0 ? 1.0 + double(fortune.moreExcellent) / 100.0 : 1.0;
+    const double jewels = fortune.moreJewels != 0 ? 1.0 + double(fortune.moreJewels) / 100.0 : 1.0;
+    const double itemChance = fortune.moreItems != 0 ? 0.1 * find * items : 0.1 * find;
+    const double excellentItemChance = fortune.moreExcellent != 0
+                                           ? 0.1 * kExcellentShareOfItem * find * excellents
+                                           : 0.1 * kExcellentShareOfItem * find;
     constexpr int kGap = 15;
     constexpr int kPotionGap = 8;
     constexpr int kBaseMoney = 7;      // Loot.BaseMoney
@@ -1443,17 +1497,17 @@ void Realm::leave(const Body& dead, const Body& killer) {
         // A power the killer's class may set (drawRunePower).
         one.what = Held{item, 0, 1};
         one.what.powers[0] = drawRunePower(dice_, killer.kin, killer.second, level);
-    } else if ((roll -= creationChance) < kJewelChance) {
+    } else if ((roll -= creationChance) < kJewelChance * jewels) {
         const int32_t item =
             draw([&](const content::ItemRow& r) { return refiningJewel(r) && jewelOf(r) != Jewel::Life && reaches(r); });
         if (item < 0) return;
         one.what = Held{item, 0, 1};
-    } else if ((roll -= kJewelChance) <= kJewel) {
+    } else if ((roll -= kJewelChance * jewels) <= kJewel * jewels) {
         const int32_t item = draw([&](const content::ItemRow& r) { return jewelGroup(r) && reaches(r); });
         if (item < 0) return;
         // The Angel and the Imp are in this group too, and come whole.
         one.what = Held{item, 0, int16_t(bareDurability(tables_->items[size_t(item)]))};
-    } else if ((roll -= kJewel) <= excellentItemChance) {
+    } else if ((roll -= kJewel * jewels) <= excellentItemChance) {
         // Nothing from a monster under 25, and otherwise what a monster 25 levels lower would
         // drop, at +0, luck at 1 in 100, the option as on any drop, and NewOptionRand's options.
         // Only a row that can carry them is drawn.
@@ -1521,7 +1575,9 @@ void Realm::leave(const Body& dead, const Body& killer) {
         // body's id), so the showing can ring the coins when that body falls. INVENTION and
         // not MU's, which drops a heap to click: the user's call, 2026-09-28.
         const int64_t zen = int64_t(killExperience(dead.level, killer.level)) + kBaseMoney;
-        me().money += int64_t(double(zen) * mine().excel.zenRate);
+        const double rate = fortune.moreZen != 0 ? mine().excel.zenRate * (1.0 + double(fortune.moreZen) / 100.0)
+                                                 : mine().excel.zenRate;
+        me().money += int64_t(double(zen) * rate);
         say(What::Picked, mine(), int32_t(dead.id), -1, int32_t(zen));
         return;
     } else {
