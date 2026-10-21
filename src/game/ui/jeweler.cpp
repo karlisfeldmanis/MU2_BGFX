@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iterator>
 
 #include "game/ui/controls.h"
 #include "game/ui/describe.h"
@@ -52,6 +53,11 @@ constexpr float kButtonTop = panel::kFootTop + 2.0f, kButtonH = 22.0f;
 constexpr Box kRunBox{kRight - 78.0f, kButtonTop, 78.0f, kButtonH};
 constexpr Box kYesBox = kRunBox;
 constexpr Box kNoBox{kRunBox.x - 5.0f - 52.0f, kButtonTop, 52.0f, kButtonH};
+constexpr Box kOutBox{kLeft, kButtonTop, 70.0f, kButtonH};
+// What Salvage and Combine made: a card of its own under the page, its picture lit, its name and
+// powers beside it.
+constexpr float kMadeTop = 250.0f, kMade = 30.0f;
+constexpr Box kMadeCell{kLeft, kMadeTop, kMade, kMade};
 
 constexpr uint32_t kGold = gfx::rgba(0.722f, 0.600f, 0.353f);
 constexpr uint32_t kGoldHi = gfx::rgba(0.886f, 0.776f, 0.541f);
@@ -112,6 +118,8 @@ bool Jeweler::covers(float x, float y) const {
 void Jeweler::cancel() {
     for (Slot& s : slots_) s = Slot{};
     line_ = lit_ = -1;
+    was_.clear();
+    made_ = Made{};
     confirming_ = waiting_ = false;
     said_.clear();
     pressing_ = over_ = kNone;
@@ -124,6 +132,7 @@ bool Jeweler::offer(int slot, const sim::Realm& realm) {
     if (row == nullptr || !sim::jewelerTakes(*row)) return false;
     said_.clear();
     lit_ = -1;
+    made_ = Made{};
     confirming_ = false;
     if (page_ != Page::Combine) {
         slots_[0] = {slot, what.item};
@@ -160,14 +169,13 @@ void Jeweler::answered(bool ok, int32_t value, const std::string& refusal) {
             said_ = prize == 0 ? "Only potions. Not this time."
                                : std::string("You got a Jewel of ") + kPrizeNames[prize] + "!";
             slots_[0] = Slot{};
+            made_ = {Page::Salvage, prize, sim::salvageCount(prize)};
             break;
         }
         case Page::Combine:
             said_ = "Made a new piece. It is in your bag.";
             for (Slot& s : slots_) s = Slot{};
-            // The made one into the first slot, so it is there to look at, or to recut.
-            slots_[0].bag = int(value) - 1;
-            slots_[0].item = -2;  // taken on the next keep()
+            made_ = {Page::Combine, -1, 1, int(value) - 1, -2};  // taken on the next keep()
             break;
     }
 }
@@ -180,9 +188,18 @@ void Jeweler::keep(const sim::Realm& realm) {
         if (s.item == -2 && !what.empty()) s.item = what.item;
         if (what.empty() || what.item != s.item) s = Slot{};
     }
+    if (made_.bag >= 0) {
+        const sim::Held& what = made_.bag < sim::kSlots ? realm.satchel()[made_.bag] : sim::Held{};
+        if (made_.item == -2 && !what.empty()) made_.item = what.item;
+        if (what.empty() || what.item != made_.item) made_ = Made{};
+    }
     if (page_ != Page::Combine) {
         slots_[1] = slots_[2] = Slot{};
     }
+}
+
+int Jeweler::slotsHeld() const {
+    return int(std::count_if(std::begin(slots_), std::end(slots_), [](const Slot& s) { return s.bag >= 0; }));
 }
 
 int Jeweler::hitAt(float ux, float uy) const {
@@ -191,6 +208,8 @@ int Jeweler::hitAt(float ux, float uy) const {
         if (kNoBox.has(ux, uy)) return kNo;
     } else if (kRunBox.has(ux, uy)) {
         return kRun;
+    } else if (kOutBox.has(ux, uy)) {
+        return kOut;
     }
     for (int i = 0; i < 3; ++i) {
         if (tabBox(i).has(ux, uy)) return kTab0 + i;
@@ -241,6 +260,7 @@ void Jeweler::update(float width, float height, int column, const sim::Realm& re
                     // A piece stays in the first slot from page to page; Combine's other two go.
                     page_ = to;
                     line_ = lit_ = -1;
+                    made_ = Made{};
                     confirming_ = false;
                     said_.clear();
                     out->turned = true;
@@ -258,6 +278,12 @@ void Jeweler::update(float width, float height, int column, const sim::Realm& re
                 line_ = lit_ = -1;
                 confirming_ = false;
                 out->click = true;
+            } else if (hit == kOut && !waiting_ && slotsHeld() > 0) {
+                for (Slot& s : slots_) s = Slot{};
+                line_ = lit_ = -1;
+                made_ = Made{};
+                said_.clear();
+                out->click = true;
             } else if (hit == kNo) {
                 confirming_ = false;
                 out->click = true;
@@ -268,6 +294,7 @@ void Jeweler::update(float width, float height, int column, const sim::Realm& re
                 out->salvageSlot = slots_[0].bag;
             } else if (hit == kRun && !waiting_) {
                 if (page_ == Page::Recut && slots_[0].bag >= 0 && line_ >= 0) {
+                    was_ = powerLine(sim::Affix(piece.affixes[line_]), piece.refinement);
                     asked_ = Page::Recut;
                     waiting_ = true;
                     out->recutSlot = slots_[0].bag;
@@ -307,6 +334,15 @@ void Jeweler::update(float width, float height, int column, const sim::Realm& re
         const int32_t chaos = tables.itemAt(sim::kJewelerJewel.group, sim::kJewelerJewel.number);
         if (chaos >= 0) standing_.push_back({chaos, onStage(kNeedCell).grown(-kNeedPad), 0, false, false});
     }
+    if (made_.page == page_ && made_.prize >= 0) {
+        const sim::ItemKey key = sim::salvagePrize(made_.prize);
+        const int32_t item = tables.itemAt(key.group, key.number);
+        if (item >= 0) standing_.push_back({item, onStage(kMadeCell).grown(-kPrizePad), 0, true, false});
+    } else if (made_.page == page_ && made_.bag >= 0 && made_.item >= 0) {
+        const sim::Held& what = realm.satchel()[made_.bag];
+        standing_.push_back({what.item, onStage(kMadeCell).grown(-2.0f), what.refinement, true,
+                             what.excellent != 0});
+    }
     if (stage) stage->stand(standing_, kStageW, kStageH);
 
     std::string now = key(realm);
@@ -332,6 +368,11 @@ std::string Jeweler::key(const sim::Realm& realm) const {
     }
     add(line_);
     add(lit_);
+    add(int(made_.page));
+    add(made_.prize);
+    add(made_.bag);
+    add(made_.item);
+    s += was_ + "|";
     add(confirming_);
     add(waiting_);
     add(over_);
@@ -438,7 +479,8 @@ void Jeweler::rebuild(const sim::Realm& realm, Stage* stage) {
             if (powers <= 1) {
                 at(kLeft, rowBox(0).y + 4.0f, style::kAshInk, "A white piece has no line to recut.");
             }
-            at(kLeft, rowBox(3).y + 2.0f, style::kAshInk, "The signature and the colour never change.");
+            if (lit_ >= 0 && !was_.empty()) at(kLeft, rowBox(3).y + 2.0f, style::kAshInk, "Was " + was_ + ".");
+            else at(kLeft, rowBox(3).y + 2.0f, style::kAshInk, "The signature and the colour never change.");
             zen = sim::recutZen(piece.refinement);
             ready = line_ >= 0 && chaos > 0 && realm.money() >= zen;
         }
@@ -494,6 +536,38 @@ void Jeweler::rebuild(const sim::Realm& realm, Stage* stage) {
         ready = count == 3 && same && zen > 0 && chaos > 0 && realm.money() >= zen;
     }
 
+    // ---- what it made ----------------------------------------------------------------------------
+    if (made_.page == page_ && (made_.prize >= 0 || made_.bag >= 0)) {
+        kicker(kMadeTop - 16.0f, made_.page == Page::Salvage ? "YOU GOT" : "MADE");
+        controls::cell(canvas_, P(kMadeCell), controls::Cell::Fits, u);
+        canvas_.outline(P(kMadeCell), std::max(1.0f, std::round(u)), kGold);
+        const float mx = kMadeCell.right() + 8.0f;
+        if (made_.prize >= 0) {
+            const sim::ItemKey key = sim::salvagePrize(made_.prize);
+            const int32_t item = tables.itemAt(key.group, key.number);
+            const std::string name = item >= 0 ? tables.items[size_t(item)].label : kPrizeNames[made_.prize];
+            at(mx, kMadeTop + 2.0f, made_.prize == sim::kSalvagePrizes - 1 ? kLegendary : kGoldHi,
+               (made_.count > 1 ? std::to_string(made_.count) + " " : "") + name);
+            at(mx, kMadeTop + 14.0f, style::kAshInk, "In your bag.");
+        } else if (made_.item >= 0) {
+            const sim::Held& what = realm.satchel()[made_.bag];
+            const content::ItemRow* r = rowOf(tables, what);
+            if (r) {
+                const int n = sim::affixCount(*r, what);
+                at(mx, kMadeTop + 2.0f, tip::colourOf(qualityOf(*r, what)), pieceName(*r, what));
+                at(mx, kMadeTop + 13.5f, style::kAshInk,
+                   std::string(colourWord(n)) + (what.bound ? ", bound" : "") + ", in your bag");
+                float ty = kMadeTop + 25.0f;
+                at(mx, ty, style::kBone, powerLine(sim::signatureOf(*r), what.refinement));
+                for (uint8_t a : what.affixes) {
+                    if (a == 0) continue;
+                    ty += 11.0f;
+                    at(mx, ty, style::kBone, powerLine(sim::Affix(a), what.refinement));
+                }
+            }
+        }
+    }
+
     // ---- what was said, the foot -------------------------------------------------------------
     if (!said_.empty()) at(kLeft, kSaidTop, saidOk_ ? kGoldHi : style::kDanger, said_);
     if (waiting_) at(kLeft, kSaidTop, style::kAshInk, "...");
@@ -518,6 +592,8 @@ void Jeweler::rebuild(const sim::Realm& realm, Stage* stage) {
         controls::button(canvas_, P(kNoBox), "No", controls::Kind::Secondary, stateOf(kNo, false), u);
         controls::button(canvas_, P(kYesBox), "Salvage", controls::Kind::Primary, stateOf(kYes, false), u);
     } else {
+        controls::button(canvas_, P(kOutBox), "Take out", controls::Kind::Secondary,
+                         stateOf(kOut, slotsHeld() == 0 || waiting_), u);
         controls::button(canvas_, P(kRunBox), verb,
                          page_ == Page::Salvage ? controls::Kind::Danger : controls::Kind::Primary,
                          stateOf(kRun, !ready || waiting_), u);

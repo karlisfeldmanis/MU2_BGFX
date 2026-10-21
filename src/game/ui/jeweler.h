@@ -3,7 +3,8 @@
 // (https://claude.ai/artifact/EQ6axt3WtpV2LjXQDghV9B).
 //
 //   * A piece comes in by a right-click on it in the bag (Desk), and goes out by a click on its
-//     slot. The slots name bag slots: the piece never leaves the bag, so there is nothing to keep
+//     slot or the foot's Take out, on every page (the user, 2026-10-21: "we dont have button take
+//     out for all services"). The slots name bag slots: the piece never leaves the bag, so there is nothing to keep
 //     or pour back when he walks away.
 //   * Recut: the piece, its signature (locked) and its further powers as rows; one picked, the
 //     foot's Recut sends it. The new power is lit gold in its row.
@@ -12,7 +13,10 @@
 //   * Combine: three slots; the foot's Combine sends them.
 //
 // Each answer comes back through Desk::expect as the realm's value (Realm::recut, salvage,
-// combine) and is said on the page until the next ask.
+// combine) and is said on the page until the next ask. What it made is shown, not only said (the
+// user, 2026-10-21: "i dont like idea that we dont show what created"): Salvage's prize and
+// Combine's new piece stand in a card of their own, with the name and its powers; Recut's new line
+// is lit and the line it replaced is named under it.
 #pragma once
 
 #include <cstdint>
@@ -52,12 +56,13 @@ public:
 
 private:
     enum class Page : int { Recut, Salvage, Combine };
-    enum Hit : int { kNone = -1, kTab0 = 0, kRow0 = 3, kSlot0 = 6, kRun = 9, kNo = 10, kYes = 11 };
+    enum Hit : int { kNone = -1, kTab0 = 0, kRow0 = 3, kSlot0 = 6, kRun = 9, kNo = 10, kYes = 11, kOut = 12 };
     struct Slot {
         int bag = -1;
         int32_t item = -1;
     };
     int hitAt(float ux, float uy) const;
+    int slotsHeld() const;
     void keep(const sim::Realm& realm);
     std::string key(const sim::Realm& realm) const;
     void rebuild(const sim::Realm& realm, Stage* stage);
@@ -68,8 +73,18 @@ private:
     bool up_ = false;
     Page page_ = Page::Recut;
     Slot slots_[3];        // Recut and Salvage use the first; Combine all three
+    // What the last ask made, shown in its card until the next ask, a slot or a tab change:
+    // Salvage's prize (which of the five, how many) or Combine's piece (its bag slot, read live).
+    struct Made {
+        Page page = Page::Recut;
+        int prize = -1, count = 0;
+        int bag = -1;
+        int32_t item = -1;
+    };
     int line_ = -1;        // Recut's picked further power, 0 to 2
     int lit_ = -1;         // the line the last recut changed, lit until the next ask
+    std::string was_;      // that line before the recut, in words
+    Made made_;
     bool confirming_ = false;
     Page asked_ = Page::Recut;
     bool waiting_ = false;
