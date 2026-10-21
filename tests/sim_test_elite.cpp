@@ -164,5 +164,12 @@ void testElites(void (*checkOf)(bool, const char*),
             if (one.elite) fair = fair && one.maxHealth == sim::eliteHealth(tables.kinds[size_t(one.kind)].health, uint32_t(row->number));
         }
         check(fair, "each one of its three strongest, no boss, out of town");
+        // Two on a map are two breeds (the user, 2026-10-21: "not just 1 type").
+        std::vector<int32_t> kinds;
+        for (const sim::Body& one : map.bodies()) {
+            if (one.elite && one.alive()) kinds.push_back(one.kind);
+        }
+        std::sort(kinds.begin(), kinds.end());
+        check(std::adjacent_find(kinds.begin(), kinds.end()) == kinds.end(), "a map's Elites are different breeds");
     }
 }

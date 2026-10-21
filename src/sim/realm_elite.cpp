@@ -46,8 +46,10 @@ void Realm::raiseElites() {
 void Realm::riseElite(Body& elite) {
     // A breed of the map's nests -- one of its kEliteStrongest strongest ordinary breeds, by level,
     // the bosses left out (the user, 2026-10-21: "dont make elite monster weakest monsters on
-    // map, only last 3 strongest") -- each of their nests alike, and a tile inside that nest's
-    // box away from the town, the guards and the gates.
+    // map, only last 3 strongest") -- the breed drawn first, each of the three alike, and none
+    // another standing Elite of the map already is ("elite monsters could be last 3 strongest on
+    // each map not just 1 type"); then one of its nests, and a tile inside that nest's box away
+    // from the town, the guards and the gates.
     const std::vector<content::MonsterNest>& nests = tables_->nests;
     std::vector<uint32_t> breeds;
     for (const content::MonsterNest& nest : nests) {
@@ -59,9 +61,18 @@ void Realm::riseElite(Body& elite) {
         return ka.level != kb.level ? ka.level > kb.level : ka.number < kb.number;
     });
     if (breeds.size() > size_t(kEliteStrongest)) breeds.resize(size_t(kEliteStrongest));
+    // Not a breed another of the map's Elites stands as now, while one is left to draw.
+    std::vector<uint32_t> free = breeds;
+    for (const int32_t slot : eliteSlots_) {
+        const Body& other = bodies_[size_t(slot)];
+        if (&other == &elite || !other.alive() || other.kind < 0) continue;
+        std::erase(free, uint32_t(other.kind));
+    }
+    if (free.empty()) free = breeds;
+    const uint32_t breed = free.empty() ? 0 : free[size_t(eliteDice_.nextInt(0, int(free.size())))];
     std::vector<size_t> fit;
     for (size_t i = 0; i < nests.size(); ++i) {
-        if (std::find(breeds.begin(), breeds.end(), nests[i].kind) != breeds.end()) fit.push_back(i);
+        if (nests[i].kind == breed) fit.push_back(i);
     }
     if (fit.empty()) {
         core::logError("elite: no breed for an Elite on map %u", tables_->map);
