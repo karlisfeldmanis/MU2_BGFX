@@ -1362,13 +1362,23 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             ctx.args.helperAfter = -1.0f;
             helperAsked = 1;
         }
+        // Following a quest, it goes on from the map it travelled from, where it left off.
+        if (ctx.helperFollows && helperAsked == -2 && !helper_.on() && world_.played().isOpen()) {
+            ctx.helperFollows = false;
+            game::Helper::Stats carried;
+            carried.seconds = ctx.helperSeconds;
+            carried.kills = ctx.helperKills;
+            carried.picked = ctx.helperPicked;
+            carried.quests = ctx.helperQuests;
+            if (ctx.autoQuest < 0 && desk_.helperSettings().quest) helper_.start(world_.played(), &carried);
+        }
         if (const int asked = helperAsked; asked != -2 && world_.played().isOpen()) {
             const game::Play& played = world_.played();
             const sim::Body& hero = played.realm().hero();
             if (asked == 0) {
                 if (helper_.on()) desk_.notice("Helper stopped.");
                 helper_.stop();
-            } else if (played.realm().tables()->grid.safe(hero.column(), hero.row())) {
+            } else if (!desk_.helperSettings().quest && played.realm().tables()->grid.safe(hero.column(), hero.row())) {
                 desk_.notice("The Helper works outside safe zones.");
                 core::logf("helper: not started on a safe tile, %d,%d", hero.column(), hero.row());
             } else if (hero.alive()) {
@@ -1399,7 +1409,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         } else if (mouseRightHeld && !windowed) {
             world_.played().rightHeld();
         }
-        if (ctx.autoQuest >= 0) game::quest_world::open(ctx.paths.assets);  // once, where it lives
+        if (ctx.autoQuest >= 0 || (helper_.on() && desk_.helperSettings().quest)) {
+            game::quest_world::open(ctx.paths.assets);  // once, where it lives
+        }
         int32_t bar[game::Hud::kSkillBoxes] = {};
         for (int k = 0; k < game::Hud::kSkillBoxes; ++k) bar[k] = desk_.bound(k);
         if (const std::string said = questAuto_.update(world_.played(), &ctx.autoQuest, deltaSeconds, bar,
@@ -1409,9 +1421,16 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
         desk_.setAutoPlaying(ctx.autoQuest);
         if (const std::string said = helper_.update(world_.played(), desk_.helperSettings(), deltaSeconds, bar,
-                                                    game::Hud::kSkillBoxes);
+                                                    game::Hud::kSkillBoxes, desk_.followedQuest());
             !said.empty()) {
             desk_.notice(said);
+        }
+        if (world_.played().isOpen()) {
+            ctx.helperFollows = helper_.on() && desk_.helperSettings().quest;
+            ctx.helperSeconds = helper_.stats().seconds;
+            ctx.helperKills = helper_.stats().kills;
+            ctx.helperPicked = helper_.stats().picked;
+            ctx.helperQuests = helper_.stats().quests;
         }
         desk_.setHelping(helper_.on(), helper_.stats());
         world_.played().update(deltaSeconds);

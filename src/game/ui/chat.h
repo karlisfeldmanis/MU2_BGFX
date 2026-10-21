@@ -112,6 +112,10 @@ public:
     // his guild. The party's card in the middle, kicked "Guild", with the mark and a line of what
     // joining means; Accept and Decline answer the server's guild (net::GuildAsk).
     bool guildCalled(const net::GuildCall& call);  // false likewise
+    // The open asks of one kind answered at once, as their buttons would answer them: `trades`
+    // the trades' asks, else the party's and raid's invites (never a guild's). The Helper's
+    // (HelperSettings::invites and noTrades). How many it answered.
+    int answerOpen(Play& play, bool trades, bool accept);
     // The guild's latest line from the server ("You invited Wren."), heard within `within`
     // seconds, or empty: the guild windows' foot says it under what was pressed.
     std::string guildSaid(float within) const;

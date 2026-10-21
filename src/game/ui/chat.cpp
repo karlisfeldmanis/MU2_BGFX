@@ -1475,6 +1475,20 @@ void Chat::build(float u, const Pointer& pointer) {
          "/s local  \xC2\xB7  /y map  \xC2\xB7  /1 global  \xC2\xB7  /p party  \xC2\xB7  /g guild  \xC2\xB7  /w name  \xC2\xB7  /r reply  \xC2\xB7  /ignore name", u);
 }
 
+int Chat::answerOpen(Play& play, bool trades, bool accept) {
+    int answered = 0;
+    for (size_t i = 0; i < log_.size(); ++i) {
+        const Line& line = log_[i];
+        if (line.inviter.empty() || line.answer != 0 || line.guild || (line.trader != 0) != trades) continue;
+        if (line.age >= (trades ? kTradeLife : kInviteLife)) continue;
+        core::logf("chat: %s %s's %s for the Helper", accept ? "accepted" : "declined", line.inviter.c_str(),
+                   trades ? "trade" : "invite");
+        answer(play, long(i), line.inviter, accept);
+        ++answered;
+    }
+    return answered;
+}
+
 long Chat::pendingInvite() const {
     for (size_t i = log_.size(); i-- > 0;) {
         const Line& line = log_[i];

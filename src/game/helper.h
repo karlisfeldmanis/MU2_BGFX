@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 
+#include "game/quest_auto.h"
+
 namespace mu::sim {
 struct SkillRow;
 }
@@ -68,6 +70,18 @@ struct HelperSettings {
     uint8_t picks = kPickJewels | kPickRunes | kPickLegendary | kPickExcellent;
     // The window has been up once: the first H opens it, every H after starts and stops.
     bool seen = false;
+    // **Follow my quest** (the user, 2026-10-21: "helper can follow active quest, similiar like
+    // auto-play"): instead of hunting round a spot, it plays the quest the tracker is pinned to,
+    // else the first one taken, as Auto-play does -- the hunt, the travel, the hand-in -- then
+    // the next taken one, and stops when none is left. Its other ticks still hold.
+    bool quest = false;
+    // While it helps (the user, the same day): a party's invite answered for him -- asked of
+    // him as ever, joined, or declined; the aids on his bar (Heal, Greater Defense, Greater
+    // Damage) kept on his party in reach as on himself; a trade's ask declined.
+    static constexpr uint8_t kInviteAsk = 0, kInviteJoin = 1, kInviteDecline = 2;
+    uint8_t invites = kInviteAsk;
+    bool aidParty = true;
+    bool noTrades = true;
 
     int tiles() const { return kRanges[range < 0 ? 0 : range > 2 ? 2 : range]; }
     HelperUse use(int32_t skill, HelperKind kind) const;
@@ -85,19 +99,27 @@ public:
         double seconds = 0.0;
         int kills = 0;
         int picked = 0;
+        int quests = 0;  // handed in while following
     };
-    // Begun where he stands now.
-    void start(const Play& play);
+    // Begun where he stands now; `carried`, the stats of the Helper on the map he came from (a
+    // followed quest's travel raises a new mode, app::Context::helperFollows).
+    void start(const Play& play, const Stats* carried = nullptr);
     void stop();
     bool on() const { return on_; }
     const Stats& stats() const { return stats_; }
     // One frame. `bar` is his skill bar (the five keys, then the right button's slot, MU's skill
     // numbers, 0 for empty). Returns a line for the player when it stops by itself, else empty.
     std::string update(Play& play, const HelperSettings& settings, double seconds, const int32_t* bar,
-                       int barCount);
+                       int barCount, int pinned = -1);
+    // The quest it follows, -1 for none.
+    int following() const { return on_ ? following_ : -1; }
 
 private:
     std::string halt(const std::string& why);
+    // Following a quest (HelperSettings::quest): `pinned`, the tracker's.
+    std::string follow(Play& play, const HelperSettings& settings, double seconds, int pinned);
+    // The aids on his bar on one of his party in reach, the most hurt healed first.
+    bool aid(Play& play, const HelperSettings& settings);
     bool support(Play& play, const HelperSettings& settings);
     bool loot(Play& play, const HelperSettings& settings);
     void keys(Play& play, const HelperSettings& settings, uint32_t target);
@@ -116,6 +138,9 @@ private:
     int barCount_ = 0;
     std::map<int32_t, double> tried_;       // a skill asked: not again before this
     std::map<uint32_t, double> lootTried_;  // a pickup asked: given up after this
+    std::map<uint64_t, double> aidTried_;   // an aid asked on one of his party: not again before this
+    QuestAuto quester_;                     // Auto-play's hand, while it follows a quest
+    int following_ = -1;                    // the quest it follows, -1 for none yet
 };
 
 }  // namespace mu::game

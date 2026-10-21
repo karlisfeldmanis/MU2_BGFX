@@ -11,7 +11,9 @@
 #include "game/play.h"
 #include "game/ui/describe.h"
 #include "sim/items.h"
+#include "sim/quests.h"
 #include "sim/realm.h"
+#include "sim/rules.h"
 #include "sim/skills.h"
 
 namespace mu::game {
@@ -36,6 +38,27 @@ constexpr float kHome = 1.5f;
 constexpr int kHurtDefault = 50;
 
 float tilesApart(float x0, float y0, float x1, float y1) { return std::max(std::fabs(x1 - x0), std::fabs(y1 - y0)); }
+
+// A quest it may follow: taken, and every step one Auto-play can hunt (a thing to find is not).
+bool followable(const sim::Realm& realm, int quest) {
+    if (quest < 0 || quest >= sim::kQuests) return false;
+    const sim::QuestState state = realm.quest(quest).state;
+    if (state != sim::QuestState::Active && state != sim::QuestState::Ready) return false;
+    const sim::QuestRow& row = sim::questAt(quest);
+    for (int s = 0; s < row.stepCount; ++s) {
+        if (row.steps[s].kind == sim::QuestStepKind::Find) return false;
+    }
+    return true;
+}
+
+// The tracker's pinned quest when it may be followed, else the first taken one, -1 for none.
+int questToFollow(const sim::Realm& realm, int pinned) {
+    if (followable(realm, pinned)) return pinned;
+    for (int q = 0; q < sim::kQuests; ++q) {
+        if (followable(realm, q)) return q;
+    }
+    return -1;
+}
 
 }  // namespace
 
@@ -129,6 +152,10 @@ bool loadHelper(const std::string& savePath, HelperSettings& out) {
         else if (!std::strcmp(key, "back") && std::fscanf(f, "%d", &a) == 1) read.back = a != 0;
         else if (!std::strcmp(key, "picks") && std::fscanf(f, "%d", &a) == 1) read.picks = uint8_t(a & 127);
         else if (!std::strcmp(key, "seen") && std::fscanf(f, "%d", &a) == 1) read.seen = a != 0;
+        else if (!std::strcmp(key, "quest") && std::fscanf(f, "%d", &a) == 1) read.quest = a != 0;
+        else if (!std::strcmp(key, "invites") && std::fscanf(f, "%d", &a) == 1) read.invites = uint8_t(std::clamp(a, 0, 2));
+        else if (!std::strcmp(key, "party") && std::fscanf(f, "%d", &a) == 1) read.aidParty = a != 0;
+        else if (!std::strcmp(key, "trades") && std::fscanf(f, "%d", &a) == 1) read.noTrades = a != 0;
         else if (!std::strcmp(key, "use") && std::fscanf(f, "%d %d", &a, &b) == 2) {
             if (b >= 0 && b <= int(HelperUse::Never)) read.uses[a] = HelperUse(b);
         } else {
@@ -154,6 +181,8 @@ bool writeHelper(const std::string& savePath, const HelperSettings& settings) {
     }
     std::fprintf(f, "range %d\nback %d\npicks %d\nseen %d\n", settings.range, settings.back ? 1 : 0,
                  int(settings.picks), settings.seen ? 1 : 0);
+    std::fprintf(f, "quest %d\ninvites %d\nparty %d\ntrades %d\n", settings.quest ? 1 : 0, int(settings.invites),
+                 settings.aidParty ? 1 : 0, settings.noTrades ? 1 : 0);
     for (const auto& [skill, use] : settings.uses) std::fprintf(f, "use %d %d\n", int(skill), int(use));
     std::fclose(f);
     return true;
@@ -161,10 +190,13 @@ bool writeHelper(const std::string& savePath, const HelperSettings& settings) {
 
 // ---- the hand ----------------------------------------------------------------------------------
 
-void Helper::start(const Play& play) {
+void Helper::start(const Play& play, const Stats* carried) {
     const sim::Body& hero = play.realm().hero();
     on_ = true;
-    stats_ = {};
+    stats_ = carried ? *carried : Stats{};
+    quester_.reset();
+    following_ = -1;
+    aidTried_.clear();
     anchorColumn_ = hero.column();
     anchorRow_ = hero.row();
     since_ = kThink;
@@ -190,12 +222,20 @@ std::string Helper::halt(const std::string& why) {
 }
 
 std::string Helper::update(Play& play, const HelperSettings& settings, double seconds, const int32_t* bar,
-                           int barCount) {
+                           int barCount, int pinned) {
     if (!on_) return {};
     clock_ += seconds;
     stats_.seconds += seconds;
     barCount_ = bar ? std::min(barCount, 8) : 0;
     for (int i = 0; i < barCount_; ++i) bar_[i] = bar[i];
+    if (settings.quest) return follow(play, settings, seconds, pinned);
+    if (following_ >= 0) {
+        // Follow my quest ticked off while it helps: it hunts round where he stands now.
+        quester_.reset();
+        following_ = -1;
+        anchorColumn_ = play.realm().hero().column();
+        anchorRow_ = play.realm().hero().row();
+    }
     since_ += seconds;
     if (since_ < kThink || !play.isOpen()) return {};
     since_ = 0.0;
@@ -329,7 +369,126 @@ bool Helper::support(Play& play, const HelperSettings& settings) {
         play.castHero(skill, hero.id);
         return true;
     }
+    return settings.aidParty && aid(play, settings);
+}
+
+// Her Heal on the most hurt of her party in reach, under the line her own Heal is set by, and
+// then her Greater Defense and Greater Damage on each one whose has run out: the aids her bar
+// holds (SkillRow::aids), set to their uses, cast at him as a click on him casts them
+// (Play::aidTarget), within sim::kAidReach -- she is not walked to him.
+bool Helper::aid(Play& play, const HelperSettings& settings) {
+    const sim::Realm& realm = play.realm();
+    const sim::Body& hero = realm.hero();
+    const net::PartyState& party = play.party();
+    if (party.members.empty()) return false;
+    const uint32_t offHand = realm.wearer().offHand;
+    const int hurtLine = realm.autoDrink().health > 0 ? realm.autoDrink().health : kHurtDefault;
+    std::vector<const sim::Body*> near;
+    for (const net::PartyState::Member& member : party.members) {
+        if (member.here == 0 || member.here == hero.id) continue;
+        const sim::Body* one = realm.find(member.here);
+        if (one == nullptr || !one->player || one->gone || !one->alive()) continue;
+        if (tilesApart(hero.x, hero.y, one->x, one->y) > sim::kAidReach) continue;
+        near.push_back(one);
+    }
+    if (near.empty()) return false;
+    const auto cast = [&](int32_t skill, const sim::SkillRow& row, const sim::Body& on) {
+        aidTried_[(uint64_t(on.id) << 32) | uint32_t(skill)] = clock_ + kAuraRetry;
+        core::logf("helper: %s on party member %u", row.name, unsigned(on.id));
+        play.castHero(skill, on.id);
+        return true;
+    };
+    const auto ready = [&](int32_t skill, const sim::SkillRow*& row, HelperUse wantedUse) {
+        row = skill > 0 ? sim::skillNumbered(skill) : nullptr;
+        if (row == nullptr || !row->aids() || !realm.knows(skill) || realm.cooling(skill) > 0) return false;
+        if (hero.mana < row->mana || !row->suits(offHand)) return false;
+        return settings.use(skill, helperKind(*row, false)) == wantedUse;
+    };
+    const auto tried = [&](int32_t skill, const sim::Body& on) {
+        const auto found = aidTried_.find((uint64_t(on.id) << 32) | uint32_t(skill));
+        return found != aidTried_.end() && found->second > clock_;
+    };
+    // The heal first, on the most hurt.
+    for (int i = 0; i < barCount_; ++i) {
+        const sim::SkillRow* row = nullptr;
+        if (i == 5 || !ready(bar_[i], row, HelperUse::WhenHurt) || !row->mends) continue;
+        const sim::Body* worst = nullptr;
+        for (const sim::Body* one : near) {
+            if (one->maxHealth <= 0 || one->health * 100 >= hurtLine * one->maxHealth || tried(bar_[i], *one)) continue;
+            if (worst == nullptr || one->health * worst->maxHealth < worst->health * one->maxHealth) worst = one;
+        }
+        if (worst) return cast(bar_[i], *row, *worst);
+    }
+    // Then the buffs, on whoever's has run out.
+    for (int i = 0; i < barCount_; ++i) {
+        const sim::SkillRow* row = nullptr;
+        if (i == 5 || !ready(bar_[i], row, HelperUse::KeepUp) || row->mends) continue;
+        for (const sim::Body* one : near) {
+            const bool down = row->mightTicks > 0 ? one->mightUntil <= realm.tick() : one->boonUntil <= realm.tick();
+            if (down && !tried(bar_[i], *one)) return cast(bar_[i], *row, *one);
+        }
+    }
     return false;
+}
+
+// **Follow my quest**: Auto-play's hand on the quest it follows (game/quest_auto.h), with the
+// Helper's own aids and pickups before it each beat. A quest handed in, the next taken one.
+std::string Helper::follow(Play& play, const HelperSettings& settings, double seconds, int pinned) {
+    if (!play.isOpen() || play.realm().tables() == nullptr) return {};
+    const sim::Realm& realm = play.realm();
+    const content::Tables& tables = *realm.tables();
+    const sim::Body& hero = realm.hero();
+    since_ += seconds;
+    if (since_ >= kThink) {
+        since_ = 0.0;
+        if (picking_ != 0 && std::none_of(realm.lying().begin(), realm.lying().end(),
+                                          [&](const sim::Lying& one) { return one.id == picking_; })) {
+            ++stats_.picked;
+            picking_ = 0;
+        }
+        if (realm.satchel().free(tables, 1, 1) < 0) return halt("Helper stopped: the bag is full.");
+        if (potions_ && realm.autoDrink().health > 0 && realm.autoDrinkSlot(false) < 0) {
+            return halt("Helper stopped: no healing potions left.");
+        }
+        if (following_ >= 0 && !followable(realm, following_)) {
+            if (realm.quest(following_).state == sim::QuestState::Resting) ++stats_.quests;
+            following_ = -1;
+        }
+        if (following_ < 0) {
+            following_ = questToFollow(realm, pinned);
+            if (following_ < 0) {
+                return halt(stats_.quests > 0 ? "Helper stopped: no taken quest is left to follow."
+                                              : "Helper stopped: no taken quest to follow.");
+            }
+            core::logf("helper: following %s", sim::questAt(following_).title);
+        }
+        if (hero.alive() && !realm.held()) {
+            if (support(play, settings)) return {};
+            bool chased = false;
+            for (const sim::Body& body : realm.bodies()) {
+                chased |= body.monster() && body.alive() && !body.gone && body.quarry == hero.id;
+            }
+            // What lies about him that its window ticks, while nothing is after him.
+            anchorColumn_ = hero.column();
+            anchorRow_ = hero.row();
+            if (!chased && loot(play, settings)) return {};
+            picking_ = 0;
+        }
+    }
+    if (picking_ != 0) return {};
+    int playing = following_;
+    const std::string said = quester_.update(play, &playing, seconds, bar_, barCount_);
+    if (playing >= 0 || said.empty()) return {};
+    // Auto-play's hand is done with it: handed in, or it can go no further.
+    if (realm.quest(following_).state == sim::QuestState::Resting) {
+        ++stats_.quests;
+        const std::string done = std::string("Helper: ") + sim::questAt(following_).title + " complete.";
+        following_ = -1;
+        return done;
+    }
+    constexpr const char* kPrefix = "Auto-play: ";
+    const bool prefixed = said.rfind(kPrefix, 0) == 0;
+    return halt("Helper stopped: " + (prefixed ? said.substr(std::strlen(kPrefix)) : said));
 }
 
 // The nearest thing lying within its range of the spot that its window ticks -- Zen always -- he

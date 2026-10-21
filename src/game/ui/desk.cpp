@@ -898,6 +898,14 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                      chatTyping ? typedNow : std::string(), chatTyping ? window.backspaces() : 0,
                      (chatTyping || free) && enterNow, chatTyping && escapeNow, toggleChat, play,
                      chatTyping && window.tabbed(), chatTyping ? window.arrows() : 0);
+        // While the Helper helps, what its window says of invites and trades is answered for him
+        // (HelperSettings::invites, noTrades): the card shows it answered.
+        if (helping_) {
+            if (helperSettings_.noTrades) chat_.answerOpen(play, true, false);
+            if (helperSettings_.invites != HelperSettings::kInviteAsk) {
+                chat_.answerOpen(play, false, helperSettings_.invites == HelperSettings::kInviteJoin);
+            }
+        }
         if (toggleChat) click();
         // The player menu first: a press it takes (a row, or shutting it) is no one else's.
         menuTook_ = playerMenu_.update(play, pointer);

@@ -61,10 +61,20 @@ private:
     panel::Arts* arts_ = nullptr;
     bool up_ = false;
     std::vector<Row> rows_;
-    gfx::Box ranges_[3], back_, switch_, segs_[2][9], picks_[7], go_;
-    float huntTop_ = 0.0f, skillsTop_ = 0.0f, drinkTop_ = 0.0f, pickTop_ = 0.0f;
-    // over_/pressing_: 0 the close, 10 + a range, 20 the walk back, 30 + a row, 50 + 10 x a meter +
-    // a segment, 80 + a pick, 90 Start or Stop.
+    // A row worded at its left with a switch at its right: the walk back, Follow my quest, the
+    // party's aids, the trades.
+    struct Toggle {
+        gfx::Box row, knob;
+    };
+    // The two pages (the user, 2026-10-21, four more settings than the window had room for):
+    // Hunt, and Loot & Party.
+    int page_ = 0;
+    gfx::Box tabs_[2], ranges_[3], segs_[2][9], picks_[7], invites_[3], go_;
+    Toggle back_, quest_, aid_, trades_;
+    float huntTop_ = 0.0f, skillsTop_ = 0.0f, drinkTop_ = 0.0f, pickTop_ = 0.0f, partyTop_ = 0.0f;
+    // over_/pressing_: 0 the close, 10 + a range, 20 the walk back, 21 Follow my quest, 22 the
+    // party's aids, 23 the trades, 24 + an invite's answer, 30 + a row, 50 + 10 x a meter + a
+    // segment, 80 + a pick, 90 Start or Stop, 95 + a tab.
     int over_ = -1, pressing_ = -1;
     float x_ = 0.0f, y_ = 0.0f, unit_ = 1.0f, wide_ = 325.0f, tall_ = 734.0f;
     std::vector<int64_t> drawn_;

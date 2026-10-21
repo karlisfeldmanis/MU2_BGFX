@@ -129,6 +129,11 @@ struct Context {
     // The quest Auto-play is playing (game/quest_auto.h), -1 for none: carried across the map
     // changes it travels by, as each one raises a new mode.
     int autoQuest = -1;
+    // The Helper following a quest (game/helper.h, HelperSettings::quest), on as he left the last
+    // map, and what it had done there: started again on the next, as Auto-play's quest is.
+    bool helperFollows = false;
+    double helperSeconds = 0.0;
+    int helperKills = 0, helperPicked = 0, helperQuests = 0;
     // The first run's graphics being measured (app/tuner.h): the screen stays black with its
     // words and progress over it, and takes no input.
     bool tuning = false;
