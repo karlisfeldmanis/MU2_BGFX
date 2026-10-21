@@ -1,0 +1,27 @@
+{
+  "from": "tests/skill_sweep.cpp's Magic Gladiator (2026-10-21): no raider is one, so the sweep reads him from here. Bran's gear at Bran's plus (content/raid/party.json), no helm as MU's Gladiator wears none, a sword in both his trades, and seven points a level split between strength and energy.",
+  "party": [
+    {
+      "name": "Gaius",
+      "role": "melee",
+      "class": "gladiator",
+      "second": false,
+      "level": 400,
+      "points": {"strength": 900, "agility": 450, "vitality": 350, "energy": 900},
+      "potions": 20,
+      "skills": [41, 5],
+      "wear": [
+        {"slot": "armour", "item": "ArmorMale18", "plus": 11, "luck": true, "option": 3, "sockets": [7]},
+        {"slot": "pants", "item": "PantMale18", "plus": 11, "luck": true, "option": 3},
+        {"slot": "gloves", "item": "GloveMale18", "plus": 11, "luck": true, "option": 3},
+        {"slot": "boots", "item": "BootMale18", "plus": 11, "luck": true, "option": 3},
+        {"slot": "right", "item": "Sword17", "plus": 11, "luck": true, "option": 3, "excellent": 5, "sockets": [19, 21, 23]},
+        {"slot": "wings", "item": "Wing06", "plus": 11, "luck": true},
+        {"slot": "pet", "item": "Helper02"},
+        {"slot": "amulet", "item": "NecklaceFury", "plus": 11},
+        {"slot": "ring_right", "item": "Ring01", "plus": 11},
+        {"slot": "ring_left", "item": "RingLeech", "plus": 11}
+      ]
+    }
+  ]
+}
