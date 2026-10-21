@@ -6789,6 +6789,35 @@ void testVault(const content::Tables& tables) {
         check(stored2 == 70 && realm.withdraw(70, out) == out &&
                   realm.satchel()[out].refinement == 2 && realm.vault()[70].empty(),
               "and a Bless from the vault let go on it in the bag raises it again");
+        // A part of a stack let go on it is that many jewels (GeraColorz, 2026-10-21: "took 3 and
+        // applied it to my item and only 1 was applied"), and what is left stays on its stack.
+        {
+            const int stack = realm.deposit(realm.give(bless, -1, 0, 5), 70);
+            const int plus = realm.satchel()[out].refinement;
+            realm.command({.kind = sim::Command::Kind::Withdraw, .a = stack, .b = out, .c = 3});
+            realm.step();
+            int cells = 0;
+            for (int c = 0; c < sim::kVaultCells; ++c) cells += realm.vault()[c].item == bless;
+            check(stack == 70 && realm.satchel()[out].refinement == plus + 3 &&
+                      realm.vault()[70].durability == 2 && cells == 1,
+                  "three of five from the vault let go on it raise it three, two left on the stack");
+            // And in the bag, a part held over it (Refine's c), up to the Bless's last plus: three
+            // of five on a +5 spend one to +6 and leave four.
+            const int at = realm.withdraw(70);
+            realm.give(bless, -1, 0, 3);
+            checkEqual(int(realm.satchel()[at].durability), 5, "five Blesses in the bag");
+            realm.command({.kind = sim::Command::Kind::Refine, .a = at, .b = out, .c = 3});
+            realm.step();
+            check(realm.satchel()[out].refinement == 6 && realm.satchel()[at].durability == 4,
+                  "three held over a +5 spend one to +6, the rest kept");
+            const int fresh = realm.give(sword);
+            realm.command({.kind = sim::Command::Kind::Refine, .a = at, .b = fresh, .c = 3});
+            realm.step();
+            check(realm.satchel()[fresh].refinement == 3 && realm.satchel()[at].durability == 1,
+                  "and three held over a +0 raise it three");
+            realm.sell(fresh);
+            realm.sell(at);
+        }
         // And onto what he wears, straight from the vault (the user, 2026-10-19: "allow to use
         // jewel of bless,soul from warehoise to equiped item") -- with his bag full too, as the
         // bag's own jewel never asks room of a plus he can still wear.

@@ -157,7 +157,18 @@ void Realm::applyCommands() {
             case Kind::Mix: answer = mix(one.service, one.a) ? 1 : -1; break;
             case Kind::Move: answer = moveItem(run.a, one.b) ? 1 : -1; break;
             case Kind::Use: answer = useItem(one.a) ? 1 : -1; break;
-            case Kind::Refine: answer = refine(one.a, one.b) ? 1 : -1; break;
+            case Kind::Refine: {
+                answer = refine(one.a, one.b) ? 1 : -1;
+                // c: how many of the stack were held over it (0 from an older client: one),
+                // each one more jewel on it while the jewel still works on it (GeraColorz,
+                // 2026-10-21: "took 3 and applied it to my item and only 1 was applied").
+                const bool inBag = one.a >= 0 && one.a < kSlots && one.b >= 0 && one.b < kSlots;
+                for (int more = one.c - 1; answer >= 0 && inBag && more > 0; --more) {
+                    const Held jewel = me().bag[one.a], thing = me().bag[one.b];
+                    if (jewel.empty() || thing.empty() || !worksOn(jewel, thing) || !refine(one.a, one.b)) break;
+                }
+                break;
+            }
             case Kind::Discard:
             case Kind::Crack:
                 if (one.b == 1) {
@@ -259,6 +270,48 @@ void Realm::applyCommands() {
                 break;
             case Kind::BrokerGive: answer = brokerGive(unpackHeld(one)); break;
             case Kind::BrokerZen: answer = brokerZen(one.zen); break;
+        }
+        // **A part let go on a thing its jewel works on is that many jewels on it** (GeraColorz,
+        // 2026-10-21: "I divided bless jewerly from the vault, took 3 and applied it to my item and
+        // only 1 was applied"): the method spends one, so it is asked again for each piece left,
+        // until the part is spent, the thing is no longer one the jewel works on (outgrown, at its
+        // last plus) or the method refuses. What is left goes back onto its stack, never into the
+        // free cell the part was split into.
+        const bool across = run.kind == Kind::Move || run.kind == Kind::Withdraw ||
+                            run.kind == Kind::Deposit || run.kind == Kind::Rearrange;
+        if (part >= 0 && answer >= 0 && across && (from == 0 || from == 1)) {
+            const Held jewel = from == 0 ? me().bag[part] : me().vault[part];
+            const auto partNow = [&]() -> Held { return from == 0 ? me().bag[part] : me().vault[part]; };
+            const auto onto = [&]() -> Held {
+                const bool inBag = run.kind == Kind::Move || run.kind == Kind::Withdraw;
+                if (inBag) {
+                    if (one.b < 0 || one.b >= kSlots) return {};
+                    const int at = baggable(one.b) ? me().bag.holder(*tables_, one.b) : one.b;
+                    return at >= 0 ? me().bag[at] : Held{};
+                }
+                if (one.b < 0 || one.b >= kVaultCells) return {};
+                const int at = me().vault.holder(*tables_, one.b);
+                return at >= 0 ? me().vault[at] : Held{};
+            };
+            // Spent one: the part's own jewel, one fewer than asked.
+            if (!jewel.empty() && jewel.durability == one.c - 1) {
+                for (Held left = jewel; !left.empty() && left.item == jewel.item;) {
+                    const Held thing = onto();
+                    if (thing.empty() || !worksOn(left, thing)) break;
+                    const bool again = run.kind == Kind::Move       ? moveItem(run.a, one.b)
+                                       : run.kind == Kind::Rearrange ? rearrange(run.a, one.b)
+                                       : run.kind == Kind::Withdraw  ? withdraw(run.a, one.b) >= 0
+                                                                     : deposit(run.a, one.b) >= 0;
+                    if (!again) break;
+                    const Held now = partNow();
+                    if (!now.empty() && (now.item != jewel.item || now.durability != left.durability - 1)) break;
+                    left = now;
+                }
+                if (const Held rest = partNow(); !rest.empty() && rest.item == jewel.item) {
+                    if (from == 0) joinBack(*tables_, me().bag, partOf, part);
+                    else joinBack(*tables_, me().vault, partOf, part);
+                }
+            }
         }
         // Refused, the part goes back onto its stack.
         if (part >= 0 && answer < 0) {

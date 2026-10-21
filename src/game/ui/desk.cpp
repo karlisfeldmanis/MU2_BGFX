@@ -1387,7 +1387,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             expect(play.moveItem(asked.moveFrom, asked.moveTo, asked.pieces), Then::TookOrRefused);
         }
         // A jewel on a thing: Play rings both of its sounds, so a yes needs nothing here.
-        if (asked.refineJewel >= 0) expect(play.refine(asked.refineJewel, asked.refineTarget), Then::Refused);
+        if (asked.refineJewel >= 0) expect(play.refine(asked.refineJewel, asked.refineTarget, asked.pieces), Then::Refused);
         // At the machine a right-click puts the thing in the box instead
         // (ProcessMyInvenItemAutoMove); a worn one, which the box refuses, is still used.
         if (asked.use >= 0 && jeweling_ && sim::baggable(asked.use)) {

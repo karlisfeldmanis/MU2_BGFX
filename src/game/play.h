@@ -311,7 +311,7 @@ public:
     uint32_t setAutoDrink(int health, int mana);
     // A jewel let go over a thing it goes on (sim::refinable). The realm rolls and spends it;
     // this is heard and re-dressed. See Realm::refine.
-    uint32_t refine(int jewelSlot, int targetSlot);
+    uint32_t refine(int jewelSlot, int targetSlot, int pieces = 0);
     // Rings a jewel the vault or the box applied: its answer follows the Refined it said.
     void jewelRung();
     // A drag let go over the world: the thing is thrown on the ground at his feet, where the

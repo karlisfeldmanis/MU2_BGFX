@@ -89,10 +89,10 @@ uint32_t Play::setAutoDrink(int health, int mana) {
 // Two sounds, as MuMain makes them, both on the answer: ApplyJewels' SOUND_GET_ITEM01 and
 // ReceiveModifyItemExtended's SOUND_JEWEL01 (WSclient.cpp:6322) -- whether the plus went up or
 // down, because the client has no failure sound.
-uint32_t Play::refine(int jewelSlot, int targetSlot) {
+uint32_t Play::refine(int jewelSlot, int targetSlot, int pieces) {
     Asked asked;
     asked.thing = targetSlot >= 0 && targetSlot < sim::kSlots ? realm_.satchel()[targetSlot] : sim::Held{};
-    return send({.kind = sim::Command::Kind::Refine, .a = jewelSlot, .b = targetSlot}, asked);
+    return send({.kind = sim::Command::Kind::Refine, .a = jewelSlot, .b = targetSlot, .c = pieces}, asked);
 }
 
 // A drag let go over the world. The realm decides between throwing it down and opening it (a
