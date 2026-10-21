@@ -29,6 +29,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include "gfx/interface.h"
@@ -67,10 +68,11 @@ private:
     // carry a figure: it is said in the same three square inches because that is where the eye
     // already is when it happens.
     struct Row {
-        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped, Bound, BagFull, NotYours, TooFar, Outguarded, NoRoomToReset };
+        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped, Bound, BagFull, NotYours, TooFar, Outguarded, NoRoomToReset, Notice };
         Kind kind = Kind::Experience;
         int64_t value = 0;
         float age = 0.0f;
+        std::string line;  // a Notice's words (Play::Gain::line)
     };
 
     // A kill's experience, risen from over the body it came off and not said in the lane

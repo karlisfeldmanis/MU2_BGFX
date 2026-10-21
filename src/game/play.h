@@ -393,6 +393,11 @@ public:
     // are shown one by one, a kill's as one rise (the user, 2026-10-01).
     int levelledSince_ = 0;
     int levelsBefore_ = 0;
+    // The worst wear band (sim::Worn) said so far of the pet and the mount, and of which item:
+    // each band is warned of once as it is reached (Play::wornPet).
+    int32_t petWarnedItem_[2] = {-1, -1};
+    int petWarnedBand_[2] = {0, 0};
+    void wornPet(const sim::Happening& happening);
     uint32_t nextTicket_ = 1;
     bool mixMade_ = false;
     sim::Judged mixJudged_;
@@ -634,8 +639,9 @@ public:
         // NotYours: a click on another player's drop (sim::Lying::owner, Play::leftClick).
         // TooFar: an elf's aid pointed at a player out of sim::kAidReach (Play::aidTarget).
         // Outguarded: her Greater Defense refused, his guard stronger (sim::What::Outguarded).
+        // Notice: a warning in its own words, `line` -- his pet or mount worn low, or gone.
         enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped, BagFull, NotYours, TooFar,
-                                    Outguarded };
+                                    Outguarded, Notice };
         Kind kind = Kind::Experience;
         int64_t value = 0;
         // Where a kill's experience or Zen rises from, in world metres: over the body it came
@@ -644,6 +650,7 @@ public:
         // it is said in the lane: a quest's reward, or a kill whose body is not drawn.
         bool anchored = false;
         float at[3] = {0.0f, 0.0f, 0.0f};
+        std::string line;
     };
     const std::vector<Gain>& gains() const { return gains_; }
     // The skill the hero threw on this frame's ticks, by its number, or 0: the realm's yes to a

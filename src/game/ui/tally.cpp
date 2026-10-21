@@ -90,6 +90,9 @@ constexpr float kLaneUnitTracking = 0.24f;  // the arrival's caption tracking, n
 constexpr float kLaneRowGap = 2.0f;  // 3 until 2026-10-03, "reduce gaps"
 constexpr float kLaneWordGap = 5.5f;  // 7 until 2026-10-03, the same
 constexpr float kRowLife = 2.1f;
+// A Notice (his pet or mount worn low, or gone) is news that costs him the item if missed, and
+// says it once: up three times as long as a gain.
+constexpr float kNoticeLife = 6.0f;
 // The lane holds this many rows at most, the newest: a spell that fells two dozen at once
 // stacked two dozen experience rows up the screen (the user, 2026-10-03: "too much experience
 // text on screen, show latest 10", then "show last 8", then "show last 15" once it moved to the
@@ -510,6 +513,17 @@ void Tally::collect(const Play& play, float seconds) {
                 scroll_ += 1.0f;
                 break;
             }
+            case Play::Gain::Kind::Notice: {
+                if (!lane_.empty() && lane_.back().kind == Row::Kind::Notice && lane_.back().line == gain.line) {
+                    lane_.back().age = std::min(lane_.back().age, kNoticeLife * kRowIn);
+                    break;
+                }
+                Row row{Row::Kind::Notice, 0, 0.0f};
+                row.line = gain.line;
+                lane_.push_back(row);
+                scroll_ += 1.0f;
+                break;
+            }
             case Play::Gain::Kind::Died:
                 // Alone: whatever he was earning a second ago is not what the lane is for now.
                 lane_.clear();
@@ -553,7 +567,9 @@ void Tally::collect(const Play& play, float seconds) {
     }
     for (size_t i = 0; i < lane_.size();) {
         lane_[i].age += seconds;
-        if (lane_[i].age >= (lane_[i].kind == Row::Kind::Died ? kDiedLife : kRowLife)) {
+        if (lane_[i].age >= (lane_[i].kind == Row::Kind::Died     ? kDiedLife
+                             : lane_[i].kind == Row::Kind::Notice ? kNoticeLife
+                                                                  : kRowLife)) {
             // In order, unlike the figures: the lane is a stack and swapping with the back
             // would have a row jump down the screen as an older one above it went.
             lane_.erase(lane_.begin() + long(i));
@@ -740,7 +756,7 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
     for (size_t i = lane_.size(); i-- > 0;) {
         const Row& row = lane_[i];
         const bool died = row.kind == Row::Kind::Died;
-        const float life = died ? kDiedLife : kRowLife;
+        const float life = died ? kDiedLife : row.kind == Row::Kind::Notice ? kNoticeLife : kRowLife;
         const float out = died ? kDiedOut : kRowOut;
         const float u = std::clamp(row.age / life, 0.0f, 1.0f);
         float alpha = 1.0f;
@@ -797,15 +813,18 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
             case Row::Kind::TooFar:
             case Row::Kind::Outguarded:
             case Row::Kind::NoRoomToReset:
+            case Row::Kind::Notice:
             // Drawn above and passed over by the `continue`: it is not a gain.
             case Row::Kind::Experience:
             case Row::Kind::Died: break;
         }
         if (row.kind == Row::Kind::Gapped || row.kind == Row::Kind::Bound || row.kind == Row::Kind::BagFull ||
             row.kind == Row::Kind::NotYours || row.kind == Row::Kind::TooFar ||
-            row.kind == Row::Kind::Outguarded || row.kind == Row::Kind::NoRoomToReset) {
+            row.kind == Row::Kind::Outguarded || row.kind == Row::Kind::NoRoomToReset ||
+            row.kind == Row::Kind::Notice) {
             // A warning: white words on a flat red box, the lane's left edge its own.
-            const std::string said = row.kind == Row::Kind::Gapped     ? "No experience or quest kills: level gap"
+            const std::string said = row.kind == Row::Kind::Notice     ? row.line
+                                     : row.kind == Row::Kind::Gapped     ? "No experience or quest kills: level gap"
                                      : row.kind == Row::Kind::Bound    ? "Bound items stay with their character"
                                      : row.kind == Row::Kind::NotYours ? "This item does not belong to you"
                                      : row.kind == Row::Kind::TooFar   ? "Too far away"

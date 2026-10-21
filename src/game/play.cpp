@@ -16,6 +16,7 @@
 #include "sim/gates.h"
 #include "sim/item_link.h"
 #include "sim/realm_tuning.h"
+#include "sim/wear.h"
 
 namespace mu::game {
 
@@ -262,6 +263,53 @@ void Play::bubble(uint32_t who, const std::string& line, int circle) {
     }
     one.life = std::min(8.0f, 3.0f + 0.35f * float(words));
     said_.push_back(one);
+}
+
+void Play::wornPet(const sim::Happening& happening) {
+    // A pet or a mount is destroyed at nought rather than left broken (Realm::wearOnTaken), and
+    // the worn-gear row's small ring was all that said so: a Dinorant ridden down to nothing went
+    // unnoticed (Gordichan, 2026-10-21: "the text and the interface are so small that I didn't
+    // even notice it was breaking"). So a line in the lane at a third left, at a fifth, and when
+    // it is gone.
+    // The beast, not its bag item: "Your Dinorant", not "Your Horn of Dinorant".
+    const auto nameOf = [&](int32_t item) {
+        std::string label = item >= 0 && size_t(item) < tables_.items.size()
+                                ? tables_.items[size_t(item)].label
+                                : std::string("pet");
+        if (label.rfind("Horn of ", 0) == 0) label.erase(0, 8);
+        return label;
+    };
+    if (happening.what == sim::What::PetLost) {
+        for (int i = 0; i < 2; ++i) {
+            if (petWarnedItem_[i] == happening.a) petWarnedItem_[i] = -1;
+        }
+        Gain gain{Gain::Kind::Notice, 0};
+        gain.line = "Your " + nameOf(happening.a) + " has died";
+        gains_.push_back(gain);
+        core::logf("pet: %s", gain.line.c_str());
+        return;
+    }
+    const int slot = happening.a;
+    if (slot != sim::kPet && slot != sim::kMount) return;
+    const int i = slot == sim::kPet ? 0 : 1;
+    const int32_t item = realm_.satchel()[slot].item;
+    if (item < 0) return;
+    const int band = int(sim::wornBand(happening.b, happening.c));
+    if (petWarnedItem_[i] != item) {
+        petWarnedItem_[i] = item;
+        petWarnedBand_[i] = int(sim::Worn::Half);
+    }
+    // Mended since (a repair says no Worn of its own): warned afresh as it wears down again.
+    if (band < petWarnedBand_[i]) petWarnedBand_[i] = std::max(band, int(sim::Worn::Half));
+    if (band <= petWarnedBand_[i]) return;
+    petWarnedBand_[i] = band;
+    if (band < int(sim::Worn::Third) || band >= int(sim::Worn::Broken)) return;
+    Gain gain{Gain::Kind::Notice, 0};
+    gain.line = "Your " + nameOf(item) + " is " +
+                (band == int(sim::Worn::Fifth) ? "about to die" : "badly worn") + ": " +
+                std::to_string(happening.b) + "/" + std::to_string(happening.c) + ". Repair it";
+    gains_.push_back(gain);
+    core::logf("pet: %s", gain.line.c_str());
 }
 
 bool Play::settle(double seconds) {
@@ -589,6 +637,7 @@ void Play::update(double seconds) {
                 }
                 if (happening.what == sim::What::Gapped) gains_.push_back({Gain::Kind::Gapped, happening.a});
                 if (happening.what == sim::What::Outguarded) gains_.push_back({Gain::Kind::Outguarded, 0});
+                if (happening.what == sim::What::Worn || happening.what == sim::What::PetLost) wornPet(happening);
                 // His Zen is not here either: it is in the purse from the kill's tick, but
                 // shown with the fall, in Play::releaseDrops (below, at What::Picked).
                 // A potion is not here: it is drunk between ticks, and the next step clears
