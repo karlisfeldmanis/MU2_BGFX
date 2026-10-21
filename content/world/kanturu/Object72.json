@@ -1,0 +1,88 @@
+{
+  "item": "Object72",
+  "mu_name": "Object72",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 71,
+  "placements": 91,
+  "profile": "world",
+  "sheets": {
+    "song_k3metal0202": "kr_song_k3metal0202.png",
+    "song_k202w1": "kr_song_k202w1.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k3metal0202": "wrought_iron",
+    "song_k202w1": "wrought_iron"
+  },
+  "material_note": "song_k3metal0202: rusted iron plate; song_k202w1: an iron wheel in a riveted frame: wrought_iron.",
+  "why_this_one": "Iron pipes and beams, 91 of them, many sunk into the void. Batch 2. docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wrought_iron",
+      "triangles": 28,
+      "area": 24720.9,
+      "along": [
+        -53.1,
+        53.1
+      ],
+      "mu_uv": [
+        -0.252,
+        -1.005,
+        0.348,
+        0.512
+      ],
+      "bake_uv": [
+        0.005,
+        0.693,
+        0.94,
+        0.948
+      ]
+    },
+    {
+      "island": 1,
+      "material": "wrought_iron",
+      "triangles": 28,
+      "area": 23738.2,
+      "along": [
+        -53.1,
+        53.1
+      ],
+      "mu_uv": [
+        -0.252,
+        -1.005,
+        0.348,
+        0.512
+      ],
+      "bake_uv": [
+        0.145,
+        0.005,
+        0.995,
+        0.941
+      ]
+    },
+    {
+      "island": 2,
+      "material": "wrought_iron",
+      "triangles": 44,
+      "area": 104351.5,
+      "along": [
+        -39.0,
+        39.0
+      ],
+      "mu_uv": [
+        -0.492,
+        -0.682,
+        1.587,
+        1.064
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.983,
+        0.756
+      ]
+    }
+  ]
+}
