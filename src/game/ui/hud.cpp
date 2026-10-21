@@ -3,6 +3,7 @@
 #include "sim/realm_tuning.h"
 
 #include <algorithm>
+#include <iterator>
 #include <cctype>
 #include <cmath>
 #include <cstdio>
@@ -353,6 +354,10 @@ void diamond(gfx::Canvas& canvas, const gfx::Art* sheet, const Box& hole, const 
 }  // namespace
 
 const char* Hud::artOf(const Boon& one) {
+    // The talents' cells (pipeline/buff_icons.py --talents), in Hud::Talent's order.
+    static constexpr const char* kTalentArt[] = {"buff_battle_fury", "buff_battle_mage", "buff_bloodrush",
+                                                 "buff_riposte", "buff_iron_will", "buff_mercy", "buff_last_stand"};
+    if (one.talent >= 0 && one.talent < int(std::size(kTalentArt))) return kTalentArt[one.talent];
     return one.pet >= 0          ? petArt(one.pet)
            : one.summon           ? summonArt(one.skill)
            : one.poison           ? "buff_poison"
@@ -859,6 +864,26 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
         what.rows.push_back(said("Attack speed", speed, tip::Tone::Green));
         what.rows.push_back(said("Casting speed", speed, tip::Tone::Green));
         sheet.sections.push_back(what);
+        return sheet;
+    }
+    if (one.talent >= 0) {
+        // A talent's state: its name, what it gives now, and its time where it has one (the table's
+        // words, sim/talents_table.inc, with the figure the realm set on him).
+        static constexpr const char* kNames[] = {"Battle Fury", "Battle Mage", "Bloodrush", "Riposte",
+                                                 "Iron Will",   "Mercy",       "Last Stand"};
+        const std::string n = std::to_string(one.amount);
+        const std::string lines[] = {"+" + n + "% damage", "+" + n + "% damage and wizardry",
+                                     "+" + n + " attack speed", "Your next hit deals " + n + "% more",
+                                     n + "% less damage taken", n + "% less damage taken",
+                                     n + "% less damage taken under 30% life"};
+        if (one.talent >= int(std::size(kNames))) return {};
+        sheet.name = kNames[one.talent];
+        sheet.nameTone = tip::Tone::Red;
+        sheet.base = "TALENT";
+        tip::Section what;
+        what.rows.push_back(prose(lines[one.talent]));
+        sheet.sections.push_back(what);
+        if (one.talent == kRiposte || one.talent == kLastStand) sheet.wear.clear();
         return sheet;
     }
     const sim::SkillRow* row = sim::skillNumbered(one.skill);

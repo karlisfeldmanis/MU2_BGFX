@@ -2055,6 +2055,44 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         boon.seconds = float(left) * 0.05f;
         boon.share = float(left) / float(sim::kFrenzyTicks);
     }
+    // **His talents' states** (docs/plans/talents.md; the cells of memory talent-buff-icons), after
+    // Frenzy's: each while it stands, its clock against the length his talent gives it (Mercy's,
+    // which another's heal may lay, against the table's 5 s when he has none of his own).
+    {
+        const int64_t now = realm.tick();
+        const auto lengthOf = [&](sim::Special special, int fallback) {
+            const sim::TalentEffect* found = nullptr;
+            sim::talentSpecial(hero.kin, hero.talents, special, sim::TalentAsk{}, &found);
+            return float((found && found->seconds > 0 ? found->seconds : fallback) * sim::kTalentTicksPerSecond);
+        };
+        const auto timed = [&](int64_t until, int talent, float amount, sim::Special special, int fallback) {
+            if (until <= now || standing >= Hud::kBoons) return;
+            Hud::Boon& boon = boons[standing++];
+            boon.talent = talent;
+            boon.amount = int(std::lround(amount));
+            const float left = float(until - now);
+            boon.seconds = left * 0.05f;
+            boon.share = std::min(1.0f, left / std::max(1.0f, lengthOf(special, fallback)));
+        };
+        timed(hero.procUntil, hero.procWizardry ? Hud::kBattleMage : Hud::kBattleFury, hero.procAmount,
+              sim::Special::DamageProc, 5);
+        timed(hero.killSpeedUntil, Hud::kBloodrush, float(hero.killSpeed), sim::Special::KillSpeed, 4);
+        timed(hero.ironWillUntil, Hud::kIronWill, hero.ironWill, sim::Special::IronWill, 4);
+        timed(hero.mercyUntil, Hud::kMercy, hero.mercy, sim::Special::Mercy, 5);
+        // The two with no clock: Riposte while armed, Last Stand while he is under 30% life.
+        const auto standingFor = [&](int talent, sim::Special special) {
+            if (standing >= Hud::kBoons) return;
+            Hud::Boon& boon = boons[standing++];
+            boon.talent = talent;
+            boon.amount = int(std::lround(sim::talentSpecial(hero.kin, hero.talents, special, sim::TalentAsk{})));
+            boon.share = 1.0f;
+        };
+        if (hero.riposte) standingFor(Hud::kRiposte, sim::Special::Riposte);
+        if (hero.alive() && hero.maxHealth > 0 && hero.health * 10 < hero.maxHealth * 3 &&
+            sim::talentSpecial(hero.kin, hero.talents, sim::Special::LastStand, sim::TalentAsk{}) > 0.0f) {
+            standingFor(Hud::kLastStand, sim::Special::LastStand);
+        }
+    }
     // A potion still pouring in, health then mana: a cell while its instalments are due.
     for (int mana = 0; mana < 2; ++mana) {
         const sim::Realm::Pouring pour = realm.pouring(mana == 1);

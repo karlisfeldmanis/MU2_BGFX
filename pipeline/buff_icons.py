@@ -133,11 +133,84 @@ def cell(state: int, size: tuple[int, int]) -> tuple[int, int, int, int]:
     return (x, y, x + size[0], y + size[1])
 
 
+#: **The talents' timed states** (docs/plans/talents.md; the cells the user left to us on 2026-10-20,
+#: "you choose that is the best", memory talent-buff-icons). Each talent that switches on and off
+#: wears a cell in the strip; a permanent one wears none. key -> (sheet, cell number, what).
+#: "status" N is an eBuffState on newui_statusicon / 2 / 3 (1-80, 81-160, 161 up, RenderBuffIcon's
+#: arithmetic from each sheet's first); "master" N is new_Master_Icon's (N - 300, 25 a row).
+#: Rejected that day: master 344 and 346 (one orange burst twice), status 82 (a hexagram).
+TALENT_STATES = {
+    "battle_fury": ("status", 5, "Battle Fury: the flaming fist"),
+    "bloodrush": ("status", 44, "Bloodrush: the blue chevrons"),
+    "battle_mage": ("master", 493, "Battle Mage (the Gladiator's): blade and red burst"),
+    "riposte": ("status", 162, "Riposte, armed: the sword"),
+    "last_stand": ("master", 372, "Last Stand, under 30% life: the green crest"),
+    "iron_will": ("status", 132, "Iron Will: the steel helm"),
+    "mercy": ("status", 133, "Mercy, on whoever was healed: the golden figure"),
+}
+
+#: MuMain's own sheets in the repository's reference tree. MuDream's 4x copies of status 2, 3 and
+#: the master sheet could not be read from this machine (2026-10-21, as on 2026-09-23), so these
+#: go the route skill_icons.py --mumain takes: each whole sheet enlarged THREE times by
+#: pipeline/upscale.py (the project's cap on MU's art) and then cut, 60 by 84 a cell, the size
+#: Frenzy's and Soul Barrier's already are.
+MUMAIN_INTERFACE = PROJECT.parent / "LEGACY/reference/MuMain/src/bin/Data/Interface"
+TALENT_SHEETS = {
+    "status1": ("newui_statusicon.OZJ", (200, 224), 10, 1),
+    "status2": ("newui_statusicon2.OZJ", (200, 224), 10, 81),
+    "status3": ("newui_statusicon3.OZJ", (200, 224), 10, 161),
+    "master": ("new_Master_Icon.OZJ", (512, 512), 25, 300),
+}
+FACTOR = 3
+
+
+def enlarged(name: str, expected: tuple[int, int]) -> "Image.Image":
+    """MuMain's sheet `name`, enlarged three times through upscale.py's drawn model."""
+    import subprocess
+    import tempfile
+
+    sheet = decode(MUMAIN_INTERFACE / name)
+    if sheet.size != expected:
+        sys.exit(f"{name} is {sheet.size}, expected {expected}; the cell would be wrong")
+    with tempfile.TemporaryDirectory() as folder:
+        small = Path(folder) / "sheet.png"
+        big = Path(folder) / "sheet_x3.png"
+        sheet.convert("RGB").save(small)
+        # skill_icons.py's settings: an icon is a painted object at arm's length.
+        subprocess.run([sys.executable, str(PROJECT / "pipeline/upscale.py"), str(small), str(big),
+                        "0.65", str(FACTOR), "edge", "drawn", "8"], check=True)
+        return Image.open(big).convert("RGB")
+
+
+def talents(out: Path) -> None:
+    """Cuts the seven talent states, each from its sheet at three times."""
+    wanted = {}
+    for key, (kind, number, _) in TALENT_STATES.items():
+        sheet = "master" if kind == "master" else "status1" if number < 81 else "status2" if number < 161 else "status3"
+        wanted.setdefault(sheet, []).append((key, number))
+    out.mkdir(parents=True, exist_ok=True)
+    w, h = 20 * FACTOR, 28 * FACTOR
+    for sheet, keys in wanted.items():
+        name, size, per_row, first = TALENT_SHEETS[sheet]
+        big = enlarged(name, size)
+        for key, number in keys:
+            index = number - first
+            x, y = (index % per_row) * w, (index // per_row) * h
+            target = out / f"buff_{key}.png"
+            big.crop((x, y, x + w, y + h)).save(target, optimize=True)
+            print(f"  {target.name:<24} {name:<24} {number:>3}  {TALENT_STATES[key][2]}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--out", type=Path, default=ASSETS)
+    parser.add_argument("--talents", action="store_true",
+                        help="cut only the talents' timed states, from MuMain's sheets at 3x")
     args = parser.parse_args()
+    if args.talents:
+        talents(args.out)
+        return
 
     name, expected, size = SHEETS["mudream"]
     path = args.source / name

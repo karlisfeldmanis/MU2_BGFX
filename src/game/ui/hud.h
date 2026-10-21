@@ -163,6 +163,10 @@ public:
         // its health, `life` of `lifeMost`.
         bool summon = false;
         int life = 0, lifeMost = 0;
+        // Or a talent's timed state on him (Hud::Talent, docs/plans/talents.md): its cell is
+        // buff_<key> (pipeline/buff_icons.py --talents), `amount` what it gives. Riposte and Last
+        // Stand have no clock: they stand while armed, or while he is under 30% life.
+        int talent = -1;
         bool kinship = false; // a Kinship rune worn lifts the pet's price (sim::Power::Kinship)
         // A mount worn on a map it is not ridden on (sim::rideMap): its cell drawn cold, as a
         // skill he cannot throw, and its card says why (the user, 2026-10-04: 'if mount is not
@@ -172,7 +176,7 @@ public:
         float share = 0.0f;   // and that as a fraction of its whole, for the bar under it
         bool empty() const {
             return skill == 0 && !ale && !poison && !chill && !frenzy && !dragonfire && !bleed && !burn &&
-                   !frozen && pet < 0 && potion < 0 && !summon;
+                   !frozen && pet < 0 && potion < 0 && !summon && talent < 0;
         }
         // Something done TO him: its cell wears a red edge, as a debuff does in WoW's strip.
         bool debuff() const { return poison || chill || dragonfire || bleed || burn || frozen; }
@@ -182,14 +186,19 @@ public:
             return skill == o.skill && ale == o.ale && poison == o.poison &&
                    chill == o.chill && frenzy == o.frenzy && dragonfire == o.dragonfire && bleed == o.bleed &&
                    burn == o.burn && frozen == o.frozen && stacks == o.stacks && pet == o.pet && summon == o.summon &&
-                   kinship == o.kinship && lifeMost == o.lifeMost &&
+                   kinship == o.kinship && lifeMost == o.lifeMost && talent == o.talent &&
                    potion == o.potion && amount == o.amount &&
                    idle == o.idle && life == o.life && int(seconds * 10.0f) == int(o.seconds * 10.0f);
         }
     };
     // The pet and the mount, a skill's boon, the elf's might, the Ale, a Frenzy, the two
-    // potions pouring and the two debuffs.
-    static constexpr int kBoons = 10;
+    // potions pouring, the debuffs, and since the talents (2026-10-21) their timed states: a
+    // knight in a fight overflowed ten. Thirteen, in the one row: the thirteenth cell ends just
+    // short of the mana orb's shoulder over the belt (seen offscreen at 1080, 2026-10-21), and a
+    // fourteenth would stand on the orb. A second row would sit where the target frame stands.
+    static constexpr int kBoons = 13;
+    // The talents' timed states a cell can show, `Boon::talent`.
+    enum Talent : int { kBattleFury, kBattleMage, kBloodrush, kRiposte, kIronWill, kMercy, kLastStand };
     // The art a cell wears (assets/interface/buffs), shared with the target frame's row.
     static const char* artOf(const Boon& one);
     // The cells for this frame, packed from the left; what is not handed is empty.
