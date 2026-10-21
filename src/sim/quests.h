@@ -26,7 +26,7 @@
 namespace mu::sim {
 
 // How many quests the table holds. A save carries one progress a quest by this index.
-inline constexpr int kQuests = 27;
+inline constexpr int kQuests = 28;
 inline constexpr int kQuestSteps = 9;
 inline constexpr int kQuestChoices = 7;
 inline constexpr int kQuestPaid = 24;
@@ -232,8 +232,12 @@ inline constexpr int kRoadOfKantur = 20;
 // The Keeper of Kantur, in Tarkan's safe hall: our own NPC number, as Lirien's (pipeline/cook.py's
 // Tarkan folk, content/npc/NpcSenatus.json, MU's Senior).
 inline constexpr int32_t kKeeperNumber = 701;
-// The Keeper's own: Tarkan cleared, the Zaikan and the Death Beam Knight last.
+// The Keeper's own, in two (the user, 2026-10-21: "we need tarkan on 2 parts, because now there
+// is confusion"): the legion's five breeds, then its captain, the Zaikan and the Death Beam
+// Knight, offered once the legion has been handed in. The second is the table's last, so no
+// saved quest moves.
 inline constexpr int kKantursLegion = 21;
+inline constexpr int kKantursCaptain = 27;
 // Tersia's Icarus links (docs/game/icarus-quest.md): the door held, then the Dark Phoenix. Taking the
 // first opens Icarus's travel row.
 inline constexpr int kSkyDoor = 22;

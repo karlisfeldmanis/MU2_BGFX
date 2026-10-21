@@ -161,7 +161,9 @@ namespace mu::net {
 // 45: talents (sim/talents.h): TalentTake, TalentGive and TalentReset, and the ranks in a
 //     character's bytes (kKeptLayout 10), so a client on 44 is refused instead of sending kinds
 //     its server reads as None.
-constexpr uint32_t kVersion = 45;
+// 46: a Kept carries 28 quests, Tarkan's in two -- Kantur's Legion, then Kantur's Captain the
+//     28th (layout 12, 2026-10-21), so a client on 45 is refused instead of reading one short.
+constexpr uint32_t kVersion = 46;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";
@@ -172,8 +174,9 @@ constexpr const char* kDefaultHost = "mu-classic.com";
 // 3-8 carry 39 (and a few 8s written by 0f23a18a's server carry 40: keptFrom tries both); 10 his
 // talents' ranks, seven columns of nine bytes (2026-10-21), where 3-9 carry none; 11 the same
 // bytes, but the Angel's, the Imp's and Uniria's durability is a stack's count, where 3-10 kept
-// their Life (2026-10-21, sim::timedPet; the store's renumber makes each old one one).
-constexpr int kKeptLayout = 11;
+// their Life (2026-10-21, sim::timedPet; the store's renumber makes each old one one); 12 28
+// quests, the Keeper's second, Kantur's Captain (2026-10-21), where 8-11 carry 27.
+constexpr int kKeptLayout = 12;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame a client accepts: a Welcome with its snapshot, about half a MB for a town of

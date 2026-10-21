@@ -1,4 +1,18 @@
-# Tarkan's quests: The Road of Kantur and Kantur's Legion
+# Tarkan's quests: The Road of Kantur, Kantur's Legion and Kantur's Captain
+
+**In two since 2026-10-21** (the user: "we need tarkan on 2 parts, because now there is confusion"):
+the Keeper's clear below is now two quests, each every 12 hours on its own clock.
+
+| part | quest (key) | steps | every clear | first clear |
+|---|---|---|---|---|
+| 1 | Kantur's Legion (`kanturs_legion`, 21) | Mutants 40, Bloody Wolves 35, Iron Wheels 30, Tantalos 30, Beam Knights 25: 160 kills | 100,000 exp, 150,000 Zen, 2 Bless, 2 Soul, a Chaos, a Box of Kundun +3 | 400,000 exp; the class's two runes, the Pendant of Fury |
+| 2 | Kantur's Captain (`kanturs_captain`, 27) | the Zaikan, the Death Beam Knight | 50,000 exp, 100,000 Zen, a Jewel of Life, a Loch's Feather | 200,000 exp; the weapon by rank (table below) |
+
+Part 2 is offered once part 1 has been handed in. Together they pay what the one clear paid
+(150,000 / 600,000 exp, 250,000 Zen), plus the 3 Firecrackers each. Kantur's Captain is the
+table's 28th quest: protocol 46, kept layout 12 (src/net/wire.h). Its voice `keeper_2`, and
+`keeper_1`'s offer and hand-in, need reading again (pipeline/voice.py keeper_1 / keeper_2).
+The rest of this page is the one-quest design as it was, kept for its lore and history.
 
 Written 2026-10-06 (the user: 'we need a lore for atlans quest give and min lvl requirment to go
 to tarkan and meet next quest giver'), **built the same day** ('lets implement it together with

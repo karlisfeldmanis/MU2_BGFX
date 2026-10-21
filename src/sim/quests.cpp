@@ -1548,29 +1548,25 @@ QuestRow kantursLegion() {
     row.offer[3] =
         "\"Then Kundun gave it a new master. The Mutants and the Bloody Wolves came with him out "
         "of the sand. The Beam Knights came on wings.\"";
-    row.offer[4] =
-        "\"The legion's own captain leads them now, the Zaikan, shining with what Kundun poured "
-        "into him. And past the dunes the Death Beam Knight burns, and never burns out. Break the "
-        "legion from the town outward. Then the captain. Then the burning knight.\"";
+    row.offer[4] = "\"Break the legion from the town outward, and come back to me.\"";
     row.underway = "\"The legion still marches. I can hear the wheels.\"";
     row.handIn[0] =
-        "\"The dunes are quiet. I had forgotten what wind sounds like with nothing in it.\"";
-    row.handIn[1] =
-        "\"Take these, with Kantur's thanks, what is left of it. The legion mends itself. When it "
-        "marches again, come back.\"";
+        "\"The wheels have stopped. But the legion's captain still stands, and the burning knight "
+        "past the dunes.\"";
+    row.handIn[1] = "\"Take these, with Kantur's thanks, what is left of it. Then hear me again.\"";
     row.resting = "\"Rest. By morning the wheels will turn again.\"";
-    // His own voice (VOICES["keeper"] by the stem), read off docs/game/tarkan-quest.md's six
-    // paragraphs; the window's fifth holds the last two.
+    // His own voice (VOICES["keeper"] by the stem), read off docs/game/tarkan-quest.md.
     row.voice = "keeper_1";
+    // **The legion alone** (the user, 2026-10-21: "we need tarkan on 2 parts, because now there is
+    // confusion"): its five breeds, 160 kills; the Zaikan and the Death Beam Knight are Kantur's
+    // Captain's, the Keeper's second (below).
     row.steps[0] = {QuestStepKind::Clear, 62, 40, "Mutants"};            // level 72
     row.steps[1] = {QuestStepKind::Clear, 60, 35, "Bloody Wolves"};      // 76
     row.steps[2] = {QuestStepKind::Clear, 57, 30, "Iron Wheels"};        // 80
     row.steps[3] = {QuestStepKind::Clear, 58, 30, "Tantalos"};           // 83
     row.steps[4] = {QuestStepKind::Clear, 61, 25, "Beam Knights"};       // 84
-    row.steps[5] = {QuestStepKind::Clear, 59, 1, "Zaikan"};              // 90, the captain
-    row.steps[6] = {QuestStepKind::Clear, 63, 1, "Death Beam Knight"};   // 93, the burning knight
-    row.steps[7] = {QuestStepKind::Return, 0, 1, "Return to the Keeper"};
-    row.stepCount = 8;
+    row.steps[5] = {QuestStepKind::Return, 0, 1, "Return to the Keeper"};
+    row.stepCount = 6;
     row.repeatSeconds = 12 * 60 * 60;
     row.minLevel = 100;
     row.gateLevel = true;
@@ -1581,9 +1577,12 @@ QuestRow kantursLegion() {
     // Every class's, as Lirien's: no class is born in Tarkan.
     row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
     row.strangers = true;
-    row.experience = 150000;
-    row.firstExperience = 600000;
-    row.zen = 250000;
+    // The two parts share the clear's old pay (the user, 2026-10-21): 150,000 experience a clear
+    // (600,000 the first) and 250,000 Zen, the legion two thirds and the captain one, the runes,
+    // the pendant and the refining jewels here, the weapon, the Life and the Feather his.
+    row.experience = 100000;
+    row.firstExperience = 400000;
+    row.zen = 150000;
     //
     // **Changed 2026-10-09** (the ladder: "not given too soon or too late"): the second class's
     // gear and Legendaries above wait a hundred levels for Sevina, so they went to Icarus and the
@@ -1604,6 +1603,73 @@ QuestRow kantursLegion() {
     // own Dark Reign Blade, the sword that casts, on the wizard's the Staff of Kundun, which is his
     // too (Realm::questItemFits keeps the Knight Blade from him by its class bits, and the Dark
     // Reign Blade from the knight).
+    int n = 0;
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Burn),
+                     .firstOnly = true};  // Immolate
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Ice),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Inferno),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Thunder),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::GreaterBarrage),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Glacier),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "NecklaceFury", .plus = 4, .firstOnly = true,
+                     .affixes = {uint8_t(Affix::Leech), uint8_t(Affix::Wisdom),
+                                 uint8_t(Affix::Wealth)}};  // Pendant of Fury, legendary
+    row.paid[n++] = {.item = "Jewel01", .count = 2};  // Jewels of Bless
+    row.paid[n++] = {.item = "Jewel02", .count = 2};  // Jewels of Soul
+    row.paid[n++] = {.item = "Jewel15"};              // a Jewel of Chaos
+    row.paid[n++] = {.item = "MagicBox08", .plus = 3};  // a Box of Kundun +3, off the legion
+    row.paidCount = n;
+    return row;
+}
+
+// Kantur's Captain, the Keeper's second (the user, 2026-10-21: "we need tarkan on 2 parts,
+// because now there is confusion"): the Zaikan and the Death Beam Knight, the two Kantur's Legion
+// asked last until that day, offered once the legion has been handed in and every 12 hours after,
+// on its own clock. The first clear pays the weapon, the legion's until then.
+QuestRow kantursCaptain() {
+    QuestRow row;
+    row.giver = kKeeperNumber;
+    row.giverName = "the Keeper";
+    row.place = "Tarkan";
+    row.title = "Kantur's Captain";
+    row.offer[0] =
+        "\"The legion's own captain leads them now, the Zaikan, shining with what Kundun poured "
+        "into him.\"";
+    row.offer[1] = "\"And past the dunes the Death Beam Knight burns, and never burns out.\"";
+    row.offer[2] =
+        "\"Break the captain. Then the burning knight. Then the legion has no one to march for.\"";
+    row.underway = "\"The captain still stands. The wheels wait on his word.\"";
+    row.handIn[0] =
+        "\"The dunes are quiet. I had forgotten what wind sounds like with nothing in it.\"";
+    row.handIn[1] =
+        "\"Take these, with Kantur's thanks, what is left of it. The legion mends itself. When it "
+        "marches again, come back.\"";
+    row.resting = "\"Rest. Kundun will raise another captain before long.\"";
+    // The Keeper's voice (VOICES["keeper"] by the stem); content/voice/keeper_2 until it is read
+    // stays silent.
+    row.voice = "keeper_2";
+    row.steps[0] = {QuestStepKind::Clear, 59, 1, "Zaikan"};             // 90, the captain
+    row.steps[1] = {QuestStepKind::Clear, 63, 1, "Death Beam Knight"};  // 93, the burning knight
+    row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to the Keeper"};
+    row.stepCount = 3;
+    row.repeatSeconds = 12 * 60 * 60;
+    row.minLevel = 100;
+    row.gateLevel = true;
+    row.afterAny = 1u << kKantursLegion;
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
+    row.strangers = true;
+    row.experience = 50000;
+    row.firstExperience = 200000;
+    row.zen = 100000;
+    // The weapon, by rank, as Kantur's Legion's comment above tells.
     using Rank = QuestItem::Rank;
     int n = 0;
     row.paid[n++] = {.item = "Sword17", .plus = 7, .kin = knight, .sockets = 3,
@@ -1620,27 +1686,8 @@ QuestRow kantursLegion() {
                      .rank = Rank::Second};  // Staff of Kundun, +0 (+7 too much, the user)
     row.paid[n++] = {.item = "CrossBow20", .kin = elf, .sockets = 3,
                      .firstOnly = true, .rank = Rank::Second};  // Great Reign Crossbow
-    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Burn),
-                     .firstOnly = true};  // Immolate
-    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Ice),
-                     .firstOnly = true};
-    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Inferno),
-                     .firstOnly = true};
-    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Thunder),
-                     .firstOnly = true};
-    row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::GreaterBarrage),
-                     .firstOnly = true};
-    row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Glacier),
-                     .firstOnly = true};
-    row.paid[n++] = {.item = "NecklaceFury", .plus = 4, .firstOnly = true,
-                     .affixes = {uint8_t(Affix::Leech), uint8_t(Affix::Wisdom),
-                                 uint8_t(Affix::Wealth)}};  // Pendant of Fury, legendary
-    row.paid[n++] = {.item = "Jewel03"};              // a Jewel of Life
-    row.paid[n++] = {.item = "Jewel01", .count = 2};  // Jewels of Bless
-    row.paid[n++] = {.item = "Jewel02", .count = 2};  // Jewels of Soul
-    row.paid[n++] = {.item = "Jewel15"};              // a Jewel of Chaos
-    row.paid[n++] = {.item = "Quest04"};              // Loch's Feather
-    row.paid[n++] = {.item = "MagicBox08", .plus = 3};  // a Box of Kundun +3, off the legion
+    row.paid[n++] = {.item = "Jewel03"};  // a Jewel of Life
+    row.paid[n++] = {.item = "Quest04"};  // Loch's Feather
     row.paidCount = n;
     return row;
 }
@@ -1859,6 +1906,7 @@ const QuestRow kRawTable[kQuests] = {
     keyed(towerErrand(), "tower_errand"),
     keyed(sealedWood(), "sealed_wood"),
     keyed(seedMastersClearing(), "seed_masters_clearing"),
+    keyed(kantursCaptain(), "kanturs_captain"),
 };
 
 // **Every quest pays three Firecrackers** besides its own reward, every completion, to every

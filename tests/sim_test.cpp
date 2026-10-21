@@ -5432,7 +5432,24 @@ void testTalentCommands(const content::Tables& tables) {
         sim::Kept back;
         check(net::keptFrom(bytes, back), "the kept bytes read");
         check(back.hero.talents == saved.talents, "with his talents");
-        std::vector<uint8_t> nine(bytes.begin(), bytes.end() - sim::kTalentColumnsMost * sim::kTalentNodes);
+        // A layout-11 row has no 28th quest, Kantur's Captain (2026-10-21): found by the first
+        // byte a mark on it moves, and cut out whole (state, the steps' counts, when, how often).
+        sim::Kept marked = kept;
+        marked.hero.quests[sim::kKantursCaptain].state = sim::QuestState::Active;
+        std::vector<uint8_t> markedBytes;
+        net::putKept(markedBytes, marked);
+        size_t at = 0;
+        while (at < bytes.size() && bytes[at] == markedBytes[at]) ++at;
+        constexpr size_t kQuestBytes = 1 + 4 * sim::kQuestSteps + 8 + 4;
+        std::vector<uint8_t> eleven = bytes;
+        eleven.erase(eleven.begin() + std::ptrdiff_t(at), eleven.begin() + std::ptrdiff_t(at + kQuestBytes));
+        sim::Kept older;
+        check(net::keptFrom(eleven, older, 11) &&
+                  older.hero.quests[sim::kKantursCaptain].state == sim::QuestState::Untaken &&
+                  older.hero.talents == saved.talents,
+              "a layout-11 row reads, the captain untaken");
+        check(!net::keptFrom(eleven, older, 12), "and is not a layout 12");
+        std::vector<uint8_t> nine(eleven.begin(), eleven.end() - sim::kTalentColumnsMost * sim::kTalentNodes);
         sim::Kept old;
         check(net::keptFrom(nine, old, 9), "a layout-9 row still reads");
         checkEqual(sim::talentsSpent(old.hero.talents), 0, "with no talents");
@@ -13421,8 +13438,8 @@ void testRoadOfKantur() {
         }
         check(here, "every breed it asks spawns in Tarkan");
     }
-    checkEqual(breeds, 7, "all seven of Tarkan's breeds, the two bosses among them");
-    checkEqual(kills, 162, "162 kills, on Marlon's ladder with a boss of each");
+    checkEqual(breeds, 5, "Tarkan's five breeds, the two bosses Kantur's Captain's (2026-10-21)");
+    checkEqual(kills, 160, "160 kills, on Marlon's ladder");
     for (int i = 0; i < legion.paidCount; ++i) {
         check(tarkan.itemNamed(legion.paid[i].item) >= 0, "everything it pays is an item here");
         if (legion.paid[i].power == 0) continue;
@@ -13451,25 +13468,64 @@ void testRoadOfKantur() {
         }
         return count;
     };
+    check(!sand.questOffered(sim::kKantursCaptain), "his captain waits on the legion");
     check(sand.completeQuest(sim::kKantursLegion, -1), "cleared and handed in");
-    check(held("Sword17", 0) == 1, "the knight's first clear: the Sword of Destruction");
-    check(held("Staff09", 0) == 0, "and not the wizard's staff");
     check(held("Jewel22", uint8_t(sim::Power::Burn)) == 1, "his Immolate");
     check(held("Jewel22", uint8_t(sim::Power::Ice)) == 1, "and Ice");
     check(held("Jewel22", uint8_t(sim::Power::Plague)) == 0, "not the wizard's rune");
+    check(held("Sword17", 0) == 0 && held("Jewel03", 0) == 0,
+          "the legion pays no weapon and no Jewel of Life: they are the captain's");
+    sand.closeQuest();
+
+    // **Kantur's Captain**, the Keeper's second (2026-10-21): the two bosses, the weapon.
+    const sim::QuestRow& captain = sim::questAt(sim::kKantursCaptain);
+    check(captain.giver == sim::kKeeperNumber && sim::questIndexOf("kanturs_captain") ==
+              sim::kKantursCaptain, "the captain is the Keeper's too, the table's last");
+    check(sand.questOffered(sim::kKantursCaptain), "the legion handed in, he offers the captain");
+    checkEqual(sand.questHere(sim::kKeeperNumber), sim::kKantursCaptain, "and his mark says so");
+    int bosses = 0;
+    for (int s = 0; s < captain.stepCount; ++s) {
+        if (captain.steps[s].kind != sim::QuestStepKind::Clear) continue;
+        bosses += sand.questGoal(sim::kKantursCaptain, s);
+        bool here = false;
+        for (const content::MonsterNest& nest : tarkan.nests) {
+            here = here || (nest.kind < tarkan.kinds.size() &&
+                            tarkan.kinds[nest.kind].number == captain.steps[s].target);
+        }
+        check(here, "both bosses it asks spawn in Tarkan");
+    }
+    checkEqual(bosses, 2, "the Zaikan and the Death Beam Knight, one each");
+    for (int i = 0; i < captain.paidCount; ++i) {
+        check(tarkan.itemNamed(captain.paid[i].item) >= 0, "everything it pays is an item here");
+    }
+    check(legion.experience + captain.experience == 150000 &&
+              legion.firstExperience + captain.firstExperience == 600000 &&
+              legion.zen + captain.zen == 250000,
+          "the two share the one clear's experience and Zen");
+    check(talkTo(sand, keeper), "his window opens on the captain");
+    check(sand.acceptQuest(sim::kKantursCaptain), "taken");
+    sim::HeroRecord slain = sand.record();
+    for (int s = 0; s < captain.stepCount; ++s) {
+        slain.quests[sim::kKantursCaptain].counts[s] = uint16_t(captain.steps[s].count);
+    }
+    slain.quests[sim::kKantursCaptain].state = sim::QuestState::Ready;
+    sand.restore(slain);
+    check(sand.completeQuest(sim::kKantursCaptain, -1), "both slain and handed in");
+    check(held("Sword17", 0) == 1, "the knight's first clear: the Sword of Destruction");
+    check(held("Staff09", 0) == 0, "and not the wizard's staff");
     check(held("Jewel03", 0) == 1 && held("Quest04", 0) == 1,
           "a Jewel of Life and a Loch's Feather every clear");
     check(held("Sword21", 0) == 0, "and not the Blade Knight's Knight Blade");
     // A Blade Knight's first clear pays his second class's sword, not the first's (2026-10-21).
     sand.closeQuest();
     sim::HeroRecord blade = sand.record();
-    blade.quests[sim::kKantursLegion].completions = 0;
-    blade.quests[sim::kKantursLegion].state = sim::QuestState::Ready;
+    blade.quests[sim::kKantursCaptain].completions = 0;
+    blade.quests[sim::kKantursCaptain].state = sim::QuestState::Ready;
     blade.quests[sim::kTreasureQuests[int(sim::Kin::DarkKnight)]].completions = 1;
     sand.restore(blade);
     check(sand.hero().second, "promoted to Blade Knight");
     check(talkTo(sand, keeper), "his window opens again");
-    check(sand.completeQuest(sim::kKantursLegion, -1), "the Blade Knight hands it in");
+    check(sand.completeQuest(sim::kKantursCaptain, -1), "the Blade Knight hands it in");
     check(held("Sword21", 0) == 1, "and is paid the Knight Blade");
     check(held("Sword17", 0) == 1, "not a second Sword of Destruction");
     check(held("Sword22", 0) == 0, "nor the gladiator's Dark Reign Blade");

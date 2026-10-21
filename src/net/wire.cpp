@@ -232,8 +232,9 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     r.might = in.i32();
     r.mightTicksLeft = in.i64();
     for (sim::Held& h : r.slots) h = takeHeld(in);
-    // Layouts 3 and 4 carry 24 quests, 5 to 7 carry 25; the rest stand untaken.
-    const int quests = layout >= 8 ? sim::kQuests : std::min(layout >= 5 ? 25 : 24, sim::kQuests);
+    // Layouts 3 and 4 carry 24 quests, 5 to 7 carry 25, 8 to 11 carry 27; the rest stand untaken.
+    const int quests = layout >= 12 ? sim::kQuests
+                                    : std::min(layout >= 8 ? 27 : layout >= 5 ? 25 : 24, sim::kQuests);
     for (int i = 0; i < quests; ++i) {
         sim::QuestProgress& q = r.quests[size_t(i)];
         q.state = sim::QuestState(in.u8());
