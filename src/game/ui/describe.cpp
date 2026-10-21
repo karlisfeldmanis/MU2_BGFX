@@ -821,7 +821,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             rolled("Skill", skill && skill->name[0] ? skill->name : "carried");
         }
         // One line (the tooltip audit, 2026-10-05), where MU prints two.
-        if (what.luck) rolled("Luck", "+5% critical, +25% Jewel of Soul success");
+        if (what.luck) rolled("Luck", "+5% critical, Jewel of Soul always succeeds");
         if (what.option > 0) {
             const std::string value = std::to_string(sim::optionValue(row, what.option));
             // A ring's and a pendant's is AT_LIFE_REGENERATION, MuMain's "Automatic HP recovery".

@@ -962,7 +962,7 @@ bool Realm::useItem(int slot) {
 }
 
 // OpenMU's UpgradeItemLevelJewelConsumeHandlerPlugIn.ModifyItem, with the two configurations
-// its Bless and Soul handlers give it: the Bless at 100 percent, the Soul at 50 and 25 more on
+// its Bless and Soul handlers give it: the Bless at 100 percent, the Soul at 50 and always on
 // a lucky thing, a Soul that misses taking one off and everything from +7. The jewel is spent
 // either way -- "true doesn't mean that it was successful, just that the consumption
 // happened". A success makes the thing whole at its new plus (GetMaximumDurabilityOfOnePiece);
@@ -1045,9 +1045,10 @@ bool Realm::refine(int jewelSlot, int targetSlot) {
             return false;
         }
     }
-    constexpr int kSoulLuck = 25;      // SuccessRateBonusWithLuckPercentage
-    const int chance = kSoulChance + (thing.luck ? kSoulLuck : 0);
-    const bool took = !soul || dice_.nextInt(0, 100) < chance;  // NextRandomBool(percent)
+    // A lucky thing always rises, and draws nothing, as the Life's does (the user, 2026-10-21:
+    // "if there is +luck there has to be 100% success chance"). OpenMU's
+    // SuccessRateBonusWithLuckPercentage gave 25 more, three in four.
+    const bool took = !soul || thing.luck || dice_.nextInt(0, 100) < kSoulChance;  // NextRandomBool(percent)
     if (took) {
         thing.refinement = int16_t(was + 1);
         thing.durability = int16_t(maximumDurability(row, thing));

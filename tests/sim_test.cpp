@@ -5769,7 +5769,7 @@ void testOptions(const content::Tables& tables) {
     checkEqual((long long)sim::sellingPrice(tables.items[size_t(tables.itemAt(14, 13))], 0, 1, false),
                33300ll, "and a Bless sells for 33k, not 3M");
 
-    // The Soul on a lucky thing: three in four.
+    // The Soul on a lucky thing: every time (the user, 2026-10-21).
     int rose = 0, tries = 0;
     for (int i = 0; i < 2000; ++i) {
         const int at = lucky.give(kris, -1, 2, -1, true);
@@ -5781,7 +5781,7 @@ void testOptions(const content::Tables& tables) {
         lucky.discard(at);
     }
     checkEqual(tries, 2000, "two thousand Souls on lucky things");
-    checkNear(double(rose) / tries, 0.75, 0.05, "and three in four of them rose");
+    checkEqual(rose, tries, "and every one of them rose");
 
     // Excellent: its lines, its price, and that it will not be thrown away.
     check(sim::excellentLine(tables.items[size_t(leather)], 0).find("Zen") != std::string::npos,
