@@ -4,7 +4,7 @@
 
 // ---- Dark Knight ----
 inline constexpr TalentColumn kDarkKnightTalents[] = {
-    {"Two-Handed", "two-handed swords, axes, maces, spears", {
+    {"Two-Handed", "two-handed swords, axes, maces, spears", {23, 19, 43, 47, 0, 0}, {
         {"Heft", "two-handed damage", 348, {TalentStat::Damage, 1.0f, Hold::TwoHanded, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Grip", "attack speed with two hands", 352, {TalentStat::AttackSpeed, 1.0f, Hold::TwoHanded, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Frost Edge", "10% chance a two-handed hit chills: half walk and slower swings for 3 s", 331, {TalentStat::Special, 0.0f, Hold::TwoHanded, 0, {0, 0, 0, 0, 0}, Special::ChillOnHit, 10, 3, false}},
@@ -15,7 +15,7 @@ inline constexpr TalentColumn kDarkKnightTalents[] = {
         {"Sure Grip", "attack success rate", 337, {TalentStat::AttackRate, 2.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Impaler", "+15% Slash, Falling Slash, Death Stab and Impale damage", 343, {TalentStat::SkillDamage, 15.0f, Hold::Any, 0, {23, 19, 43, 47, 0}, Special::None, 0, 0, false}},
     }},
-    {"Dual Wield", "a one-handed weapon in each hand", {
+    {"Dual Wield", "a one-handed weapon in each hand", {20, 21, 19, 22, 0, 0}, {
         {"Twin Blades", "dual-wield damage", 349, {TalentStat::Damage, 1.0f, Hold::DualWield, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Flurry", "attack speed while dual wielding", 353, {TalentStat::AttackSpeed, 1.0f, Hold::DualWield, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Off-Hand Mastery", "Your left-hand weapon deals 15% more", 568, {TalentStat::Special, 15.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::OffHand, 0, 0, false}},
@@ -26,7 +26,7 @@ inline constexpr TalentColumn kDarkKnightTalents[] = {
         {"Keen Pair", "attack success rate", 342, {TalentStat::AttackRate, 2.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Storm of Steel", "+10 attack speed while dual wielding", 571, {TalentStat::AttackSpeed, 10.0f, Hold::DualWield, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
     }},
-    {"Guardian", "shield, Defense and threat", {
+    {"Guardian", "shield, Defense and threat", {18, 0, 0, 0, 0, 0}, {
         {"Plate", "defence", 309, {TalentStat::Defense, 2.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Shield Wall", "defence with a shield", 532, {TalentStat::Defense, 2.0f, Hold::Shield, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Hold the Line", "Damage decrease +5%", 323, {TalentStat::DamageDecrease, 5.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
@@ -37,7 +37,7 @@ inline constexpr TalentColumn kDarkKnightTalents[] = {
         {"Aegis", "max SD", 302, {TalentStat::MaxShield, 5.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Last Stand", "Take 20% less damage under 30% life", 372, {TalentStat::Special, 20.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::LastStand, 0, 0, false}},
     }},
-    {"Whirlwind", "wind: Cyclone, Twisting Slash", {
+    {"Whirlwind", "wind: Cyclone, Twisting Slash", {22, 41, 0, 0, 0, 0}, {
         {"Gale", "wind damage", 326, {TalentStat::ElementDamage, 1.0f, Hold::Any, bit(Element::Wind), {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Second Breath", "Cyclone and Twisting Slash mana cost", 303, {TalentStat::SkillManaCost, -2.0f, Hold::Any, 0, {22, 41, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Eye of the Storm", "+2% damage for each monster in reach, to 10%", 332, {TalentStat::Special, 2.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::EyeOfTheStorm, 0, 0, false}},
@@ -48,7 +48,7 @@ inline constexpr TalentColumn kDarkKnightTalents[] = {
         {"Weathered", "ice and poison resistance", 322, {TalentStat::IcePoisonResistance, 0.4f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Hurricane", "+20% wind damage", 452, {TalentStat::ElementDamage, 20.0f, Hold::Any, bit(Element::Wind), {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
     }},
-    {"Fury", "rage, kills and frenzy", {
+    {"Fury", "rage, kills and frenzy", {42, 0, 0, 0, 0, 0}, {
         {"Strength of Arms", "damage", 335, {TalentStat::Damage, 1.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Sure Strike", "attack success rate", 325, {TalentStat::AttackRate, 2.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Battle Fury", "10% chance on a swing or skill: +20% damage for 5 s", 344, {TalentStat::Special, 20.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::DamageProc, 10, 5, false}},
@@ -59,7 +59,7 @@ inline constexpr TalentColumn kDarkKnightTalents[] = {
         {"Bloodletting", "of damage dealt back as life", 395, {TalentStat::LifeSteal, 0.2f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Bloodlust", "+10% damage while three or more monsters are near", 370, {TalentStat::Special, 10.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::Crowd, 0, 0, false}},
     }},
-    {"Fortune", "Zen, jewels and luck", {
+    {"Fortune", "Zen, jewels and luck", {0, 0, 0, 0, 0, 0}, {
         {"Prospector", "Zen from kills", 341, {TalentStat::MoreZen, 1.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Scavenger", "more jewels from kills", 534, {TalentStat::MoreJewels, 0.5f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Treasure Hunter", "+10% Zen from kills", 539, {TalentStat::MoreZen, 10.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
@@ -74,7 +74,7 @@ inline constexpr TalentColumn kDarkKnightTalents[] = {
 
 // ---- Dark Wizard ----
 inline constexpr TalentColumn kDarkWizardTalents[] = {
-    {"Inferno", "Inferno, Hellfire, Flame, Fire Ball, Meteorite", {
+    {"Inferno", "Inferno, Hellfire, Flame, Fire Ball, Meteorite", {14, 10, 5, 4, 2, 0}, {
         {"Hellfire Heat", "Hellfire damage", 388, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {10, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Inferno Core", "Inferno damage", 381, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {14, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Wider Rings", "Hellfire and Inferno reach one tile further", 508, {TalentStat::Special, 1.0f, Hold::Any, 0, {10, 14, 0, 0, 0}, Special::Reach, 0, 0, false}},
@@ -85,7 +85,7 @@ inline constexpr TalentColumn kDarkWizardTalents[] = {
         {"Fireheart", "casting speed", 492, {TalentStat::CastSpeed, 1.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Conflagration", "+20% fire damage", 394, {TalentStat::ElementDamage, 20.0f, Hold::Any, bit(Element::Fire), {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
     }},
-    {"Lightning", "Lightning, Cometfall, Twister", {
+    {"Lightning", "Lightning, Cometfall, Twister", {3, 13, 8, 0, 0, 0}, {
         {"Static", "Lightning damage", 379, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {3, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Conductor", "faster Lightning channel", 519, {TalentStat::LightningChannel, 2.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Chain Lightning", "Lightning leaps to 1 more monster", 455, {TalentStat::Special, 1.0f, Hold::Any, 0, {3, 0, 0, 0, 0}, Special::ChainMore, 0, 0, false}},
@@ -96,7 +96,7 @@ inline constexpr TalentColumn kDarkWizardTalents[] = {
         {"Breeze", "Twister damage", 449, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {8, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Thunderclap", "Lightning deals 15% more to chilled monsters", 452, {TalentStat::Special, 15.0f, Hold::Any, 0, {3, 0, 0, 0, 0}, Special::VsChilled, 0, 0, false}},
     }},
-    {"Ice & Poison", "Ice chills, Poison lingers", {
+    {"Ice & Poison", "Ice chills, Poison lingers", {7, 1, 0, 0, 0, 0}, {
         {"Rime", "Ice damage", 389, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {7, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Venom", "Poison damage", 384, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {1, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Frost Burst", "Ice splashes onto monsters 1 tile further", 491, {TalentStat::Special, 1.0f, Hold::Any, 0, {7, 0, 0, 0, 0}, Special::Reach, 0, 0, false}},
@@ -107,7 +107,7 @@ inline constexpr TalentColumn kDarkWizardTalents[] = {
         {"Blight", "Poison mana cost", 434, {TalentStat::SkillManaCost, -2.0f, Hold::Any, 0, {1, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Frostbite", "Chilled monsters take 15% more from all your spells", 393, {TalentStat::Special, 15.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::VsChilled, 0, 0, false}},
     }},
-    {"Evil Spirit", "Evil Spirit and the spells with no element", {
+    {"Evil Spirit", "Evil Spirit and the spells with no element", {9, 17, 11, 12, 40, 0}, {
         {"Spirit Bond", "Evil Spirit damage", 385, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {9, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Deep Well", "max mana", 338, {TalentStat::MaxMana, 1.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Legion", "Evil Spirit reaches monsters 1 tile further", 386, {TalentStat::Special, 1.0f, Hold::Any, 0, {9, 0, 0, 0, 0}, Special::Reach, 0, 0, false}},
@@ -118,7 +118,7 @@ inline constexpr TalentColumn kDarkWizardTalents[] = {
         {"Flow", "mana regeneration", 303, {TalentStat::ManaRegen, 5.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Archmage", "+10% wizardry", 407, {TalentStat::Wizardry, 10.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
     }},
-    {"Ward", "Magic Shield, Teleport, robes", {
+    {"Ward", "Magic Shield, Teleport, robes", {16, 6, 0, 0, 0, 0}, {
         {"Robe", "defence", 309, {TalentStat::Defense, 2.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Hale", "max life", 334, {TalentStat::MaxLife, 1.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Mana Ward", "+10% Magic Shield effect, past its cap", 403, {TalentStat::BarrierEffect, 10.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
@@ -129,7 +129,7 @@ inline constexpr TalentColumn kDarkWizardTalents[] = {
         {"Warded", "ice and poison resistance", 521, {TalentStat::IcePoisonResistance, 0.4f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Last Stand", "Take 20% less damage under 30% life", 372, {TalentStat::Special, 20.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::LastStand, 0, 0, false}},
     }},
-    {"Fortune", "Zen, jewels and luck", {
+    {"Fortune", "Zen, jewels and luck", {0, 0, 0, 0, 0, 0}, {
         {"Prospector", "Zen from kills", 341, {TalentStat::MoreZen, 1.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Scavenger", "more jewels from kills", 534, {TalentStat::MoreJewels, 0.5f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Treasure Hunter", "+10% Zen from kills", 539, {TalentStat::MoreZen, 10.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
@@ -144,7 +144,7 @@ inline constexpr TalentColumn kDarkWizardTalents[] = {
 
 // ---- Elf ----
 inline constexpr TalentColumn kFairyElfTalents[] = {
-    {"Marksman", "bows and crossbows", {
+    {"Marksman", "bows and crossbows", {24, 0, 0, 0, 0, 0}, {
         {"Draw", "bow and crossbow damage", 435, {TalentStat::Damage, 1.0f, Hold::Bow, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Quick Draw", "attack speed", 438, {TalentStat::AttackSpeed, 1.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Eagle Eye", "+10% excellent damage chance with a bow or crossbow", 369, {TalentStat::ExcellentChance, 10.0f, Hold::Bow, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
@@ -155,7 +155,7 @@ inline constexpr TalentColumn kFairyElfTalents[] = {
         {"Longbow", "excellent damage chance", 443, {TalentStat::ExcellentChance, 0.5f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Deadeye", "+10% damage to monsters 5 tiles or more away", 441, {TalentStat::Special, 10.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::FarShot, 0, 0, false}},
     }},
-    {"Wind Arrow", "wind: Penetration", {
+    {"Wind Arrow", "wind: Penetration", {52, 0, 0, 0, 0, 0}, {
         {"Tailwind", "wind damage", 416, {TalentStat::ElementDamage, 1.0f, Hold::Any, bit(Element::Wind), {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Fletching", "Penetration damage", 418, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {52, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Eye of the Storm", "+2% damage for each monster in reach, to 10%", 452, {TalentStat::Special, 2.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::EyeOfTheStorm, 0, 0, false}},
@@ -166,7 +166,7 @@ inline constexpr TalentColumn kFairyElfTalents[] = {
         {"Whistling", "excellent damage chance", 324, {TalentStat::ExcellentChance, 0.5f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Gale Archer", "+20% wind damage", 393, {TalentStat::ElementDamage, 20.0f, Hold::Any, bit(Element::Wind), {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
     }},
-    {"Support", "heals and blessings for the party", {
+    {"Support", "heals and blessings for the party", {26, 27, 28, 0, 0, 0}, {
         {"Mending", "healing done", 413, {TalentStat::HealingDone, 2.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Lasting Grace", "Heal and buff mana cost", 430, {TalentStat::AidManaCost, -3.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Shared Light", "Your heals on others heal you for 20%", 426, {TalentStat::Special, 20.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::SharedLight, 0, 0, false}},
@@ -177,7 +177,7 @@ inline constexpr TalentColumn kFairyElfTalents[] = {
         {"Far Reach", "tiles of reach for heals and buffs", 417, {TalentStat::AidReach, 0.3f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Mercy", "10% chance when you heal: the target takes 20% less damage for 5 s", 423, {TalentStat::Special, 20.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::Mercy, 10, 5, false}},
     }},
-    {"Summoner", "her summons fight", {
+    {"Summoner", "her summons fight", {30, 31, 32, 33, 34, 35}, {
         {"Bond", "summon damage", 415, {TalentStat::SummonDamage, 2.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Kindred", "summon life", 419, {TalentStat::SummonLife, 2.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Pack Leader", "Summons deal 15% more damage", 432, {TalentStat::SummonDamage, 15.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
@@ -188,7 +188,7 @@ inline constexpr TalentColumn kFairyElfTalents[] = {
         {"Lifeblood", "max life", 429, {TalentStat::MaxLife, 1.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Beastmaster", "+20% summon damage and life", 421, {TalentStat::SummonDamageAndLife, 20.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
     }},
-    {"Grace", "blocks, defence and life", {
+    {"Grace", "blocks, defence and life", {0, 0, 0, 0, 0, 0}, {
         {"Nimble", "defence rate", 313, {TalentStat::DefenseRate, 2.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Hale", "max life", 334, {TalentStat::MaxLife, 1.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Evasion", "+20% defence rate", 569, {TalentStat::DefenseRate, 20.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
@@ -199,7 +199,7 @@ inline constexpr TalentColumn kFairyElfTalents[] = {
         {"Vitality", "of max life back on a kill", 307, {TalentStat::LifeOnKill, 0.5f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Iron Will", "When one blow takes 10% of your life or more, take 30% less for 4 s", 375, {TalentStat::Special, 30.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::IronWill, 0, 4, false}},
     }},
-    {"Fortune", "Zen, jewels and luck", {
+    {"Fortune", "Zen, jewels and luck", {0, 0, 0, 0, 0, 0}, {
         {"Prospector", "Zen from kills", 341, {TalentStat::MoreZen, 1.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Scavenger", "more jewels from kills", 534, {TalentStat::MoreJewels, 0.5f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Treasure Hunter", "+10% Zen from kills", 539, {TalentStat::MoreZen, 10.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
@@ -214,7 +214,7 @@ inline constexpr TalentColumn kFairyElfTalents[] = {
 
 // ---- Magic Gladiator ----
 inline constexpr TalentColumn kMagicGladiatorTalents[] = {
-    {"Spellblade", "sword and spell as one", {
+    {"Spellblade", "sword and spell as one", {41, 22, 5, 0, 0, 0}, {
         {"Flame Edge", "Flame mana cost", 482, {TalentStat::SkillManaCost, -2.0f, Hold::Any, 0, {5, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Twin Path", "damage and wizardry", 485, {TalentStat::DamageAndWizardry, 1.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Gladiator's Edge", "Weapon hits add 10% of your wizardry", 490, {TalentStat::Special, 10.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::WizardryIntoSwings, 0, 0, false}},
@@ -225,7 +225,7 @@ inline constexpr TalentColumn kMagicGladiatorTalents[] = {
         {"Duelist", "attack success rate", 325, {TalentStat::AttackRate, 2.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Magic Gladiator", "+10% damage and +10% wizardry", 494, {TalentStat::DamageAndWizardry, 10.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
     }},
-    {"Blade", "one-handed skills, one blade or two", {
+    {"Blade", "one-handed skills, one blade or two", {22, 20, 21, 23, 19, 0}, {
         {"Swordplay", "one-handed weapon damage", 479, {TalentStat::Damage, 1.0f, Hold::OneHanded, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Flurry", "attack speed", 353, {TalentStat::AttackSpeed, 1.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Off-Hand Mastery", "Your left-hand weapon deals 15% more", 568, {TalentStat::Special, 15.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::OffHand, 0, 0, false}},
@@ -236,7 +236,7 @@ inline constexpr TalentColumn kMagicGladiatorTalents[] = {
         {"Keen Edge", "excellent damage chance", 369, {TalentStat::ExcellentChance, 0.5f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Storm of Steel", "+10 attack speed while dual wielding", 571, {TalentStat::AttackSpeed, 10.0f, Hold::DualWield, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
     }},
-    {"Inferno", "Inferno, Hellfire, Flame, Fire Ball, Meteorite", {
+    {"Inferno", "Inferno, Hellfire, Flame, Fire Ball, Meteorite", {14, 10, 5, 4, 2, 0}, {
         {"Inferno Core", "Inferno damage", 486, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {14, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Flame Strike", "Hellfire damage", 483, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {10, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Wider Rings", "Hellfire and Inferno reach one tile further", 492, {TalentStat::Special, 1.0f, Hold::Any, 0, {10, 14, 0, 0, 0}, Special::Reach, 0, 0, false}},
@@ -247,7 +247,7 @@ inline constexpr TalentColumn kMagicGladiatorTalents[] = {
         {"Fireheart", "casting speed", 508, {TalentStat::CastSpeed, 1.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Conflagration", "+20% fire damage", 394, {TalentStat::ElementDamage, 20.0f, Hold::Any, bit(Element::Fire), {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
     }},
-    {"Lightning & Ice", "Lightning, Twister, Ice, Poison", {
+    {"Lightning & Ice", "Lightning, Twister, Ice, Poison", {3, 8, 7, 1, 0, 0}, {
         {"Static", "Lightning damage", 480, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {3, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Rime", "Ice damage", 489, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {7, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Chain Lightning", "Lightning leaps to 1 more monster", 455, {TalentStat::Special, 1.0f, Hold::Any, 0, {3, 0, 0, 0, 0}, Special::ChainMore, 0, 0, false}},
@@ -258,7 +258,7 @@ inline constexpr TalentColumn kMagicGladiatorTalents[] = {
         {"Venom", "Poison damage", 384, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {1, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Thunderclap", "Lightning deals 15% more to chilled monsters", 452, {TalentStat::Special, 15.0f, Hold::Any, 0, {3, 0, 0, 0, 0}, Special::VsChilled, 0, 0, false}},
     }},
-    {"Evil Spirit", "Evil Spirit and the spells with no element", {
+    {"Evil Spirit", "Evil Spirit and the spells with no element", {9, 17, 11, 12, 0, 0}, {
         {"Spirit Bond", "Evil Spirit damage", 487, {TalentStat::SkillDamage, 2.0f, Hold::Any, 0, {9, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Deep Well", "max mana", 338, {TalentStat::MaxMana, 1.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Legion", "Evil Spirit reaches monsters 1 tile further", 386, {TalentStat::Special, 1.0f, Hold::Any, 0, {9, 0, 0, 0, 0}, Special::Reach, 0, 0, false}},
@@ -269,7 +269,7 @@ inline constexpr TalentColumn kMagicGladiatorTalents[] = {
         {"Flow", "mana regeneration", 303, {TalentStat::ManaRegen, 5.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Archmage", "+10% wizardry", 407, {TalentStat::Wizardry, 10.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
     }},
-    {"Guard", "shield, Defense, Magic Shield", {
+    {"Guard", "shield, Defense, Magic Shield", {18, 16, 0, 0, 0, 0}, {
         {"Plate", "defence", 309, {TalentStat::Defense, 2.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Shield Wall", "defence with a shield", 532, {TalentStat::Defense, 2.0f, Hold::Shield, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Hold the Line", "Damage decrease +5%", 323, {TalentStat::DamageDecrease, 5.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
@@ -280,7 +280,7 @@ inline constexpr TalentColumn kMagicGladiatorTalents[] = {
         {"Unseen", "defence rate", 313, {TalentStat::DefenseRate, 2.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Last Stand", "Take 20% less damage under 30% life", 372, {TalentStat::Special, 20.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::LastStand, 0, 0, false}},
     }},
-    {"Fortune", "Zen, jewels and luck", {
+    {"Fortune", "Zen, jewels and luck", {0, 0, 0, 0, 0, 0}, {
         {"Prospector", "Zen from kills", 341, {TalentStat::MoreZen, 1.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Scavenger", "more jewels from kills", 534, {TalentStat::MoreJewels, 0.5f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},
         {"Treasure Hunter", "+10% Zen from kills", 539, {TalentStat::MoreZen, 10.0f, Hold::Any, 0, {0, 0, 0, 0, 0}, Special::None, 0, 0, false}},

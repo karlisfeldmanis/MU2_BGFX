@@ -181,7 +181,8 @@ for (const [klass, cols] of Object.entries(data.CLASSES)) {
   out += `\n// ---- ${klass} ----\n`;
   out += `inline constexpr TalentColumn k${KIN[klass]}Talents[] = {\n`;
   for (const col of cols) {
-    out += `    {${cpp(col.name)}, ${cpp(col.sub)}, {\n`;
+    const feeds = [...col.skills, 0, 0, 0, 0, 0, 0].slice(0, 6).join(', ');
+    out += `    {${cpp(col.name)}, ${cpp(col.sub)}, {${feeds}}, {\n`;
     for (const nd of col.nodes) out += `        ${node(nd, klass)},\n`;
     out += '    }},\n';
   }

@@ -96,6 +96,8 @@ struct TalentNode {
 struct TalentColumn {
     const char* name;
     const char* sub;
+    // The skills the column feeds, by MU's number, as the canvas's head shows them; 0 ends.
+    int16_t feeds[6];
     TalentNode nodes[kTalentNodes];
 };
 
