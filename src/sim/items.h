@@ -648,8 +648,10 @@ int optionValue(const content::ItemRow& row, int level);
 // NewOptionRand's options (gObjMonster.cpp:3125-3142): one of six, the second bit (0x02) drawn
 // again half the time, and a quarter of the time a second bit or'ed on, which may be the same.
 // The share is ours: WebZen's 1/2000 of the item chance was one kill in 20,000, and the user
-// asked for ten times that (2026-10-06) -- 1/200, one kill in 2,000.
-constexpr double kExcellentShareOfItem = 1.0 / 200.0;
+// asked for ten times that (2026-10-06) -- 1/200, one kill in 2,000 -- and twice that again
+// (2026-10-21: 'we need to increase exc drop from standart monsters also') -- 1/100, one kill
+// in 1,000. Elites keep their own spoils (Realm::eliteSpoils).
+constexpr double kExcellentShareOfItem = 1.0 / 100.0;
 constexpr int kExcellentLevelDelta = 25;          // GetItem(lpObj->Level-25)
 constexpr int kExcellentOptions = 6;
 // Which six a row draws from: the defence family for armour and shields, the attack family
