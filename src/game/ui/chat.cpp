@@ -576,7 +576,7 @@ bool Chat::hear(const net::Heard& heard) {
         if (!mine && whisperTab_ && tab_ != "w:" + partner) ++unread_["w:" + partner];
     }
     if (mine) return true;
-    for (const char* key : {"general", "global"}) {
+    for (const char* key : {"general", "global", "party", "guild"}) {
         if (tab_ == key) continue;
         if (shows(log_.back(), key)) ++unread_[key];
     }
@@ -836,6 +836,8 @@ bool Chat::shows(const Line& line, const std::string& tab) const {
     // Global's tab is Global's lines alone (the user, 2026-10-21: "in global chat dont show other
     // chat messages"), not a filter he ticks.
     if (tab == "global") return kind == bit(net::Channel::Global);
+    if (tab == "party") return kind == bit(net::Channel::Party);
+    if (tab == "guild") return kind == bit(net::Channel::Guild);
     return (generalShows_ & kind) != 0;
 }
 
@@ -852,6 +854,10 @@ void Chat::select(const std::string& key) {
     // slash still changes it.
     if (key == "global" && !leftGlobal_) {
         stick(net::Channel::Global);
+    } else if (key == "party" && inParty_) {
+        stick(net::Channel::Party);
+    } else if (key == "guild" && inGuild_) {
+        stick(net::Channel::Guild);
     } else if (key.rfind("w:", 0) == 0) {
         stick(net::Channel::Whisper, key.substr(2));
     } else if (key == "general") {
@@ -1205,6 +1211,10 @@ void Chat::layTabs(float u) {
     const auto add = [&](const std::string& key, const std::string& name) { tabs_.push_back({key, name, {}}); };
     add("general", "General");
     if (!leftGlobal_) add("global", "Global");
+    // His party's and his guild's own tabs while he is in one (the user, 2026-10-21: "if user is
+    // in guild always show guild tab", "same with party").
+    if (inParty_) add("party", "Party");
+    if (inGuild_) add("guild", "Guild");
     if (whisperTab_) {
         for (const std::string& name : whisperTabs_) add("w:" + name, name);
     }
@@ -1408,6 +1418,7 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
         // A review run's lines, once the tables can make its links (--chat-sample).
         if (sampleWanted_ && tables_) {
             sampleWanted_ = false;
+            sampled_ = true;  // its party and guild lines want their tabs
             if (me_.empty()) me_ = "Arin";
             const auto token = [&](const char* label) {
                 for (const content::ItemRow& row : tables_->items) {
@@ -1456,8 +1467,8 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
     for (Line& line : log_) resolve(line);
 
     // A party joined sets the box to Party once; one left, or a guild, puts Say back.
-    inParty_ = play.party().members.size() > 1;
-    inGuild_ = play.guild().id != 0;
+    inParty_ = play.party().members.size() > 1 || sampled_;
+    inGuild_ = play.guild().id != 0 || sampled_;
     if (inParty_ && !wasInParty_) stick(net::Channel::Party);
     if (!inParty_ && sticky_.channel == net::Channel::Party) stick(net::Channel::Local);
     if (!inGuild_ && sticky_.channel == net::Channel::Guild) stick(net::Channel::Local);
@@ -1677,7 +1688,7 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
                 done = true;
                 continue;
             }
-            if (one.key == "global") continue;  // Global's lines alone: nothing to tick
+            if (one.key == "global" || one.key == "party" || one.key == "guild") continue;  // one channel's lines alone: nothing to tick
             menu_ = Menu::Shows;
             menuTab_ = one.key;
             menuBox_ = {one.box.x, 0.0f, 230.0f * u, 0.0f};  // laid in buildTip
@@ -1822,7 +1833,11 @@ void Chat::build(float u, const Pointer& pointer) {
         const bool hovered = one.box.has(pointer.x, pointer.y);
         const bool whispers = one.key.rfind("w:", 0) == 0, global = one.key == "global";
         // A person's tab a breath of the whisper's pink at rest, so it reads as a conversation.
-        const uint32_t rest = whispers ? mix(kTabQuiet, kWhisperInk, 0.45f) : kTabQuiet;
+        // Party's and Guild's a breath of their channel's ink the same way.
+        const uint32_t rest = whispers               ? mix(kTabQuiet, kWhisperInk, 0.45f)
+                              : one.key == "party" ? mix(kTabQuiet, kPartyInk, 0.45f)
+                              : one.key == "guild" ? mix(kTabQuiet, kGuildInk, 0.45f)
+                                                   : kTabQuiet;
         const uint32_t ink = isChosen ? kBoneHi : hovered ? mix(rest, kBoneHi, 0.6f) : rest;
         float x = one.box.x + (isChosen ? 14.0f : 12.0f) * u;
         x += word(tabsDrawn_, x, tabBase, kWord * u, faded(ink, words), one.word);

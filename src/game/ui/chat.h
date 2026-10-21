@@ -189,7 +189,7 @@ private:
     struct Carried;
     static std::unique_ptr<Carried> carried_;  // carry()'s, until the next world's load()
     struct Tab {
-        std::string key;  // "general", "global", or "w:" and the one he whispers with
+        std::string key;  // "general", "global", "party", "guild", or "w:" and the one he whispers with
         std::string word;
         gfx::Box box;     // laid this frame
         gfx::Box close;   // a whisper tab's cross, laid this frame
@@ -370,6 +370,7 @@ private:
     bool moved_ = false;
     float gripClicked_ = -10.0f;  // the clock at the grip's last press: a second inside one is a double
     bool sampleWanted_ = false;   // sample() asked: heard on the first frame with tables
+    bool sampled_ = false;        // and heard: a review run, in a party and a guild as its lines are
 };
 
 }  // namespace mu::game
