@@ -64,8 +64,8 @@ BrokerNo brokerable(const content::Tables& tables, const Held& what) {
     if (brokerKind(row) == BrokerKind::Skills && stocked(row.group, row.number)) {
         return BrokerNo::Kind;
     }
-    // "Must be repaired to list" (the user, 2026-10-11).
-    if (wears(row) && what.durability < maximumDurability(row, what)) return BrokerNo::Worn;
+    // "Must be repaired to list" (the user, 2026-10-11) -- what can be: a worn pet lists as it is.
+    if (mendable(row) && what.durability < maximumDurability(row, what)) return BrokerNo::Worn;
     return BrokerNo::Yes;
 }
 

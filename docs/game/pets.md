@@ -96,6 +96,11 @@ cross-checked against a Season 6 1.00.90 decompile and the 0.97k emulator:
   neither pays nor gets the x1.3 -- WebZen lays him at 0, ours stops short since 0 is dead here.
   Every hit taken wears the Angel by 3/100 of the damage before its cut and the Imp by 2/100
   (`Realm::wearOnTaken`), and at 0 it is destroyed (`What::PetLost`). sim_test `testPets`.
+- **No repair** (`sim::mendable`, 2026-10-21, LoveMu: "Imp and angel in orginal mu cant be
+  repaired just dissapear"): the Angel and the Imp (13/0-1) have no repair price at a counter or
+  by the hammer. MuMain's `IsRepairBan` (ZzzInventory.cpp:7866) and WebZen's protocol.cpp:5753
+  bar Uniria and Dinorant too; ours keep their repair (the user, 2026-10-21). A worn Angel or
+  Imp may still be listed on the Broker.
 - **Price and shelf** (`sim/market.cpp`): `dropLevel^3 + 100`, 12,200 and 22,000, a third back.
   Both on Lumen's shelf in the tavern, cells 2 and 3 -- ours, 0.75 sells them nowhere.
 - **Card** (`game/ui/describe.cpp`): type "Pet", MU's own lines ("Absorb 30% of Damage", "Max HP

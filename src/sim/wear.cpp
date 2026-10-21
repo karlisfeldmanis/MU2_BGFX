@@ -25,6 +25,10 @@ bool wears(const content::ItemRow& row) {
     return row.durability > 0 && placeOf(row) >= 0 && !ammunition(row);
 }
 
+bool mendable(const content::ItemRow& row) {
+    return wears(row) && !(row.group == kGroupPets && row.number >= 0 && row.number <= 1);
+}
+
 double weaponWear(const content::ItemRow& row, const Held& held, int defense) {
     constexpr int kStaves = 5;
     const int option = optionValue(row, held.option);
@@ -85,6 +89,7 @@ Worn wornBand(int durability, int maximum) {
 
 int64_t repairPrice(const content::ItemRow& row, int refinement, bool skill, int durability,
                     bool atMerchant) {
+    if (!mendable(row)) return 0;
     const int maximum = maximumDurability(row, refinement);
     if (maximum <= 0 || durability >= maximum) return 0;
     // CalculateRepairPrice: a third of the final buying price, rounded, never over 400 million.

@@ -11563,6 +11563,25 @@ void testPets(const content::Tables& tables) {
     check(uniria >= 0 && sim::bareDurability(tables.items[size_t(uniria)]) == 255, "and a boxed Uniria");
     check(chaos >= 0 && sim::bareDurability(tables.items[size_t(chaos)]) == 1, "a dropped Chaos one to its stack");
     check(ale >= 0 && sim::bareDurability(tables.items[size_t(ale)]) == 1, "and an Ale");
+    // No one mends the Angel or the Imp (IsRepairBan; LoveMu, 2026-10-21): no price, worn or
+    // broken, and a worn one lists on the Broker as it is. The mounts and a ring still mend.
+    for (int number = 0; number <= 1; ++number) {
+        const int pet = tables.itemAt(13, number);
+        if (pet < 0) continue;
+        const content::ItemRow& row = tables.items[size_t(pet)];
+        check(!sim::mendable(row) && sim::repairPrice(row, 0, false, 100, true) == 0 &&
+                  sim::repairPrice(row, 0, false, 0, false) == 0,
+              "the Angel and the Imp have no repair price");
+        sim::Held worn;
+        worn.item = pet;
+        worn.durability = 100;
+        check(sim::brokerable(tables, worn) == sim::BrokerNo::Yes, "and a worn one may be listed");
+    }
+    for (const int number : {2, 3, 8}) {
+        if (const int still = tables.itemAt(13, number); still >= 0) {
+            check(sim::mendable(tables.items[size_t(still)]), "Uniria, Dinorant and a ring still mend");
+        }
+    }
 
     // Life across the ticks the hero lands a blow and takes none, per blow, with and without
     // the Imp: the difference is its price. The regeneration is the same in both and cancels.

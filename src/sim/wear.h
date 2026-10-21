@@ -63,6 +63,12 @@ constexpr int kSelfRepairLevel = 50;
 // Whether a row wears at all: it is worn somewhere, it is not ammunition (whose durability is
 // its shots), and its row gives it some. Potions, jewels, scrolls and orbs do not.
 bool wears(const content::ItemRow& row);
+// Whether a merchant or the hammer may mend it: everything that wears but the Guardian Angel and
+// the Imp (13/0-1), which wear to nought and are gone. LoveMu, 2026-10-21: "Imp and angel in
+// orginal mu cant be repaired just dissapear". MuMain's IsRepairBan (ZzzInventory.cpp:7866) and
+// WebZen's protocol.cpp:5753 bar the Horns of Uniria and Dinorant too; ours, the user's
+// (2026-10-21): "remove repair only for imp and guardian angel".
+bool mendable(const content::ItemRow& row);
 
 // The most it can hold at a plus: the row's own and MU's per-level table on top, capped at 255.
 // `CalcMaxDurability` less its excellent (+15) and ancient (+20), which nothing here rolls yet.
@@ -103,7 +109,7 @@ Worn wornBand(int durability, int maximum);
 // What it costs to put back to full: `3 x base^0.75 x missing + 1`, where the base is a third of
 // the buying price, capped at 400 million; x1.4 when it is broken, x2.5 when the character does
 // it himself, then MU's rounding (to 10 over 100, to 100 over 1000). Nought when nothing is
-// missing or the row does not wear.
+// missing or the row does not wear or mend.
 int64_t repairPrice(const content::ItemRow& row, int refinement, bool skill, int durability,
                     bool atMerchant);
 

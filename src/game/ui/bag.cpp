@@ -814,7 +814,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
             if (cost > 0) {
                 sheet.price = "Repair " + panel::commas(cost) + " Zen";
                 sheet.priceTone = realm.money() >= cost ? tip::Tone::Yellow : tip::Tone::Red;
-            } else if (sim::wears(tables.items[size_t(bag[hovered_].item)])) {
+            } else if (sim::mendable(tables.items[size_t(bag[hovered_].item)])) {
                 sheet.price = "Whole";
                 sheet.priceTone = tip::Tone::Gray;
             } else {
