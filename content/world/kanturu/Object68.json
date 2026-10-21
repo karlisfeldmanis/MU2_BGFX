@@ -1,0 +1,90 @@
+{
+  "item": "Object68",
+  "mu_name": "Object68",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 67,
+  "placements": 198,
+  "profile": "world",
+  "sheets": {
+    "cho_grass_a": "kr_cho_grass_a.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "cho_grass_a": "foliage"
+  },
+  "material_note": "cho_grass_a: olive fern fronds and a seed stalk, cut out: foliage.",
+  "cutout": [
+    "cho_grass_a"
+  ],
+  "cutout_from": "decode_texture found a real alpha channel cutting the sheet.",
+  "why_this_one": "A fern, 198 of them. Batch 1. docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "foliage",
+      "triangles": 8,
+      "area": 5275.0,
+      "along": [
+        -14.6,
+        22.3
+      ],
+      "mu_uv": [
+        0.5,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.331,
+        0.658
+      ]
+    },
+    {
+      "island": 1,
+      "material": "foliage",
+      "triangles": 8,
+      "area": 7171.2,
+      "along": [
+        -22.4,
+        16.2
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        0.5,
+        1.0
+      ],
+      "bake_uv": [
+        0.336,
+        0.003,
+        0.664,
+        0.658
+      ]
+    },
+    {
+      "island": 2,
+      "material": "foliage",
+      "triangles": 8,
+      "area": 4091.6,
+      "along": [
+        -20.5,
+        26.4
+      ],
+      "mu_uv": [
+        0.5,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.669,
+        0.003,
+        0.997,
+        0.658
+      ]
+    }
+  ]
+}

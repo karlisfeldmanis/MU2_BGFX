@@ -1,0 +1,64 @@
+{
+  "note": "Kanturu Ruins' light, laid over lighting.json while a character stands in map 37. MU draws it on its default black clear and fog (SceneManager.cpp:401-402), 44.8% of the map NoGround and undrawn, the ground lit by a near-neutral, faintly green TerrainLight (walkable mean 127, 132, 122) speckled with baked gold, teal and pink lamp pools, over sheets as dark as Aida's (walkable sheet x light luminance 29) but browner (hue 43, saturation 0.49), with 63 flickering fire lights (GM_Kanturu_1st.cpp:70-83), 128 glowing crystals, pulsing wheels and 52 waterfalls into a black chasm. So: overgrown industrial ruins by day, the house 52-degree sun softer than Noria's so the fires and crystals read, a grey-teal fill, exposure up for the dark paint, a faint cool chasm mist (MU placed mist boxes over the chasm and never let them emit, :165-173), the grade warm in the light and a touch teal in the shade. Invention on MU's look; first cut 2026-10-21 from the Kanturu Part B, unshot.",
+  "elevation": 52.0,
+  "sun_colour": [
+    1.0,
+    0.9,
+    0.7
+  ],
+  "sun_strength": 3.4,
+  "sky_colour": [
+    0.28,
+    0.38,
+    0.38
+  ],
+  "horizon_paleness": 0.7,
+  "ground_colour": [
+    0.1,
+    0.09,
+    0.06
+  ],
+  "ambient_strength": 0.65,
+  "exposure": 1.45,
+  "dust_colour": [
+    0.55,
+    0.6,
+    0.6
+  ],
+  "dust_density": 0.003,
+  "lamp_strength": 3.14159,
+  "glow_strength": 1.5,
+  "bloom_threshold": 0.95,
+  "bloom_strength": 0.35,
+  "contrast": 0.6,
+  "saturation": 1.0,
+  "split": 0.45,
+  "tint_low": [
+    0.9,
+    1.0,
+    1.0
+  ],
+  "tint_high": [
+    1.1,
+    1.02,
+    0.86
+  ],
+  "grass_colour": 0.4,
+  "grass_root_colour": [
+    0.14,
+    0.22,
+    0.1
+  ],
+  "grass_tip_colour": [
+    0.5,
+    0.62,
+    0.3
+  ],
+  "grass_dry": 0.3,
+  "grass_vary": 1.2,
+  "grass_meadow": 0.0,
+  "grass_height": 0.45,
+  "grass_density": 0.7,
+  "water_flow": 0.0,
+  "water_sheen": 0.5
+}

@@ -1,0 +1,130 @@
+{
+  "item": "Object66",
+  "mu_name": "Object66",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 65,
+  "placements": 232,
+  "profile": "world",
+  "sheets": {
+    "Demorock": "kr_demorock.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "Demorock": "rock"
+  },
+  "material_note": "Demorock: dark brown layered stone: rock.",
+  "why_this_one": "A rock, 232 of them, the most-placed kind. Batch 1. docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 14,
+      "area": 36538.2,
+      "along": [
+        -62.3,
+        73.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.997
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.333,
+        0.333
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 13,
+      "area": 9315.6,
+      "along": [
+        5.5,
+        60.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.997
+      ],
+      "bake_uv": [
+        0.337,
+        0.338,
+        0.667,
+        0.667
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 12,
+      "area": 12446.0,
+      "along": [
+        -24.8,
+        48.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.997
+      ],
+      "bake_uv": [
+        0.541,
+        0.005,
+        0.87,
+        0.333
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 11,
+      "area": 4096.8,
+      "along": [
+        -31.7,
+        17.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.997
+      ],
+      "bake_uv": [
+        0.004,
+        0.633,
+        0.333,
+        0.962
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 11,
+      "area": 13788.8,
+      "along": [
+        -118.0,
+        -34.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.997
+      ],
+      "bake_uv": [
+        0.667,
+        0.519,
+        0.997,
+        0.848
+      ]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "item": "Object76",
+  "mu_name": "Object76",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 75,
+  "placements": 186,
+  "profile": "world",
+  "sheets": {
+    "han_kcliff2": "kr_han_kcliff2.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "han_kcliff2": "rock"
+  },
+  "material_note": "han_kcliff2: the same cliff rock as Object06: rock.",
+  "why_this_one": "The second cliff face, 186 of them, beside Object06. Batch 1. docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 241,
+      "area": 1339341.3,
+      "along": [
+        -414.4,
+        35.9
+      ],
+      "mu_uv": [
+        -2.1,
+        -0.699,
+        1.209,
+        1.003
+      ],
+      "bake_uv": [
+        -2.1,
+        -0.699,
+        1.209,
+        1.003
+      ]
+    }
+  ]
+}
