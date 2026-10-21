@@ -58,7 +58,7 @@ struct Command {
         // 0, as a click is: no answer is said, the walk and the swing are the answer.
         Order,      // a: the sim::Request::Kind, b: column, c: row, d: skill, target
         Cast,       // a: the skill, target: at whom, 0 for the standing fight's
-        CastAt,     // a: the skill, b: column, c: row
+        CastAt,     // a: the skill, b: column, c: row, target: the monster pointed at, 0 for none
         LetGo,      // a held charge let go (Nova)
         // A window walked away from (Realm::closeTrade, closeVault, closeMachine, closeQuest,
         // closeGate, closeAngel). a: the Window.

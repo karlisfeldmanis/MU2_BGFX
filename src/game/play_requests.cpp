@@ -46,8 +46,9 @@ void Play::castSkill(int32_t skill, uint32_t at) {
                    pointedRow_, realm_.hero().column(), realm_.hero().row());
     } else if (row != nullptr && row->aimsAtPointer() && pointedColumn_ >= 0) {
         // A skill with a direction goes the way the mouse is, body or no body
-        // (SkillRow::aimsAtPointer; the user, 2026-10-02).
-        castHeroAt(skill, pointedColumn_, pointedRow_);
+        // (SkillRow::aimsAtPointer; the user, 2026-10-02). With the monster the pointer is on,
+        // so it goes at him and not at the ground behind him (Realm::invokeAt).
+        castHeroAt(skill, pointedColumn_, pointedRow_, pointedMonster());
         core::logf("window: %s aimed toward tile %d,%d from %d,%d", row->name, pointedColumn_,
                    pointedRow_, realm_.hero().column(), realm_.hero().row());
     } else if (row != nullptr && row->aids()) {
@@ -639,10 +640,15 @@ bool Play::aidTarget(uint32_t* at) {
     return true;
 }
 
-void Play::castHeroAt(int32_t skill, int column, int row) {
+void Play::castHeroAt(int32_t skill, int column, int row, uint32_t on) {
     dealApproach_ = 0;
     link_->send({.kind = sim::Command::Kind::CastAt, .player = realm_.hero().id, .a = skill, .b = column,
-                .c = row});
+                .c = row, .target = on});
+}
+
+uint32_t Play::pointedMonster() const {
+    const sim::Body* at = pointedAt_ != 0 ? realm_.find(pointedAt_) : nullptr;
+    return at != nullptr && at->alive() && at->monster() ? pointedAt_ : 0;
 }
 
 uint32_t Play::send(sim::Command command, Asked asked) {

@@ -377,7 +377,9 @@ public:
     // The hero's orders and skills, sent with no ticket: the walk and the swing are the answer.
     void orderHero(const sim::Request& request);
     void castHero(int32_t skill, uint32_t at);
-    void castHeroAt(int32_t skill, int column, int row);
+    void castHeroAt(int32_t skill, int column, int row, uint32_t on = 0);
+    // The living monster under the pointer, 0 for none.
+    uint32_t pointedMonster() const;
     void answered(const sim::Happening& said);
     std::vector<Asked> sent_;
     // The happenings a command's answer follows in the same step, as the realm said them just

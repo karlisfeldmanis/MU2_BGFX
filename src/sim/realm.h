@@ -842,8 +842,9 @@ public:
     // Every refusal is silent, as `Swing`'s and `Move`'s are: the interface asks, and a no is a
     // message that does not come back.
     void invoke(int32_t skill, uint32_t at);
-    // The same wish aimed at the ground rather than a body: Teleport's, at a tile.
-    void invokeAt(int32_t skill, int column, int row);
+    // The same wish aimed at the ground rather than a body: Teleport's, at a tile. `on` is the
+    // monster under the pointer, if any: a skill with a direction goes at him, not at the tile.
+    void invokeAt(int32_t skill, int column, int row, uint32_t on = 0);
     // Learning, which in this design is permanent and saved: an orb consumed sets a bit. Nothing
     // in 0.75 does this -- the knight's skills were carried by the weapon in his hand -- so it
     // is `invention`, argued in the doc's §3.3.
@@ -2349,6 +2350,9 @@ private:
         int32_t wants = skill::kNone;
         uint32_t wantsAt = 0;
         int wantsColumn = -1, wantsRow = -1;  // a wish aimed at the ground; -1 for none
+        // And the monster the pointer was on as it was pressed, 0 for bare ground: aimed at
+        // where he stands rather than at the tile the ray met behind him (Realm::invokeAt).
+        uint32_t wantsBody = 0;
         int64_t wantsUntil = 0;
         Echo echo;
         Charge charge;

@@ -52,13 +52,15 @@ void Realm::invoke(int32_t skill, uint32_t at) {
     me().wants = skill;
     me().wantsAt = at;
     me().wantsColumn = me().wantsRow = -1;
+    me().wantsBody = 0;
     me().wantsUntil = tick_ + kWishTicks;
 }
 
-void Realm::invokeAt(int32_t skill, int column, int row) {
+void Realm::invokeAt(int32_t skill, int column, int row, uint32_t on) {
     invoke(skill, 0);
     me().wantsColumn = column;
     me().wantsRow = row;
+    me().wantsBody = on;
 }
 
 bool Realm::learn(int32_t skill) {
@@ -379,11 +381,20 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // **Or at the ground under the pointer**, which wins: a press of a skill with a direction
         // carries the tile the mouse is on (`invokeAt`), and he turns to it and casts that way
         // whatever stands there (SkillRow::aimsAtPointer).
+        // **On a monster, at the monster** (bug report #48, 2026-10-20: "even when the cursor is
+        // positioned over a mob, the attack ends up missing to the side"): the tile is where the
+        // pointer's ray meets the ground, which on a body is behind it and then rounded to a whole
+        // tile -- two tiles out, a beam went by him 20 degrees wide. Where he stands now is the aim.
+        const Body* pointedOn = me().wantsBody != 0 ? find(me().wantsBody) : nullptr;
+        if (pointedOn != nullptr && (!pointedOn->alive() || !pointedOn->monster())) pointedOn = nullptr;
+        const float wantX = pointedOn ? pointedOn->x : float(me().wantsColumn);
+        const float wantY = pointedOn ? pointedOn->y : float(me().wantsRow);
         const bool pointed = me().wantsColumn >= 0 && row.aimsAtPointer() &&
-                             (me().wantsColumn != hero.column() || me().wantsRow != hero.row());
+                             (pointedOn != nullptr || me().wantsColumn != hero.column() ||
+                              me().wantsRow != hero.row());
         if (pointed) {
             pointedAim = true;
-            hero.aim = fm::atan2(float(me().wantsRow) - hero.y, float(me().wantsColumn) - hero.x);
+            hero.aim = fm::atan2(wantY - hero.y, wantX - hero.x);
             if (row.wizardry) hero.facing = hero.aim;
         }
         // Cast at nothing, a storm walks the way he faces (SkillRow::castsBare).
@@ -394,7 +405,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         const bool grounded = row.showers() && me().wantsColumn >= 0;
         float spotX = 0.0f, spotY = 0.0f;
         if (grounded) {
-            float dx = float(me().wantsColumn) - hero.x, dy = float(me().wantsRow) - hero.y;
+            float dx = wantX - hero.x, dy = wantY - hero.y;
             const float far = std::max(std::fabs(dx), std::fabs(dy));
             if (far > row.reach) {
                 dx *= row.reach / far;
@@ -582,6 +593,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     }
     // The pointer's ground is spent with the press: a later throw off a click is aimed afresh.
     me().wantsColumn = me().wantsRow = -1;
+    me().wantsBody = 0;
     return true;
 }
 

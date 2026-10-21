@@ -1002,7 +1002,10 @@ void Realm::press() {
     // then fell on that old ground, or was refused at its wall every tick (the user,
     // 2026-10-05: "while i am holding right clikc with metero ... casting is not hapening",
     // "its while hovering monster").
-    if (me().wants == skill::kNone) me().wantsColumn = me().wantsRow = -1;
+    if (me().wants == skill::kNone) {
+        me().wantsColumn = me().wantsRow = -1;
+        me().wantsBody = 0;
+    }
 
     // And a boon lapsing, which is the other half of a buff: replace rather than stack, off on
     // the tick it expires, and `Fighter.damageTaken` back to 1 -- the field `sim/rules.h` has

@@ -205,7 +205,7 @@ void Realm::applyCommands() {
                 break;
             }
             case Kind::Cast: invoke(one.a, one.target); answer = 1; break;
-            case Kind::CastAt: invokeAt(one.a, one.b, one.c); answer = 1; break;
+            case Kind::CastAt: invokeAt(one.a, one.b, one.c, one.target); answer = 1; break;
             case Kind::LetGo: letGo(); answer = 1; break;
             case Kind::Close:
                 switch (Command::Window(one.a)) {
