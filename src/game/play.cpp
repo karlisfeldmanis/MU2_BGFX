@@ -599,7 +599,10 @@ void Play::update(double seconds) {
                 if (happening.what == sim::What::Drank) lastDrank_ = &happening;
                 if (happening.what == sim::What::Warped) lastWarped_ = &happening;
                 if (happening.what == sim::What::Cracked) lastCracked_ = &happening;
-                if (happening.what == sim::What::Refined) lastRefined_ = &happening;
+                // A rune set in a socket says Set, not Refined, and rings the same jewel from the
+                // vault or the box (the user, 2026-10-21: "there was not jewel sound when i draged
+                // rune from warehouse to item in inventory").
+                if (happening.what == sim::What::Refined || happening.what == sim::What::Set) lastRefined_ = &happening;
             }
             if (happening.what == sim::What::Answered) answered(happening);
             if (happening.what == sim::What::Deal && happening.who == heroId) dealNews_.push_back(happening);
