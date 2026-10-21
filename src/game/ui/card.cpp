@@ -60,16 +60,25 @@ constexpr float kFootRight = kRight;
 constexpr float kExpTop = kResetSquare.y + kResetSquare.h + 5.0f;
 constexpr Box kBar{panel::kGridX, kExpTop + 12.0f, kFootRight - panel::kGridX, 4.0f};
 
-// **The Talents button**, a tab on the window's right side, half way down (the user, 2026-10-21:
-// "attach it to right side of window in middle and move window little bit on left side so there
-// is room"; it stood on the top edge at the left end, board C2, until then). MU's master icon in
-// an iron frame joined to the window's edge by its left side, "Talents" under the icon, his
-// unspent talent points in red on its top corner. The columns step left by kTabRoom for it while
-// the window is open (panel::setRightRoom). A 20 by 28 cell, MU's own size: one texel a unit.
-constexpr Box kSeal{panel::kWidth - 1.0f, panel::kHeight * 0.5f - 26.0f, 36.0f, 52.0f};
-constexpr float kSealCell = 1.25f;  // MU's 20 by 28 cell at a quarter more
-constexpr Box kSealHit = kSeal;
-constexpr int kSealIcon = 335;  // "Strength of Arms": the canvas's, MU's damage master icon
+// **His points are two plates side by side: the stat points and the talent points** (board G of
+// the Talents canvas; the user, 2026-10-21: "use talent button near skillpoints", "dont use icon
+// on small talents button near skill points, it has to be very close to design as regular skill
+// points", "both had to be very similar, with some minimal gap between each other"). The stat tag
+// as it was -- the red wash, the red capitals -- and beside it, a small gap apart and as wide,
+// the talent plate: "N talents" in the same face and size, in gold. The talent plate is the
+// Talents button: lit under the pointer, darker while held, a gold ember breathing round it while
+// points wait. At no stat points it stands alone; at no talent points it is quiet ash. It stood
+// on the window's top edge (board C2) and then as a tab on its right side until this. The layout
+// is Card::layIdRow's.
+constexpr float kPlateTop = kIdTop - 1.0f, kPlateTall = 11.0f;
+constexpr float kPlatePad = 3.0f, kPlateGap = 2.0f;
+// The talent plate is the stat tag in gold (the user, 2026-10-21: "talents mini button has to be
+// more gold color, skill points red"): its wash, its word, lifted under the pointer, pressed
+// while held, and the gold of its ember. The open tab's gold (kChosen) for the word lit.
+constexpr uint32_t kTalentWash = gfx::rgba(0.141f, 0.102f, 0.039f);
+constexpr uint32_t kTalentInk = gfx::rgba(0.886f, 0.706f, 0.396f);
+constexpr uint32_t kTalentLit = gfx::rgba(0.220f, 0.161f, 0.063f);
+constexpr uint32_t kTalentHeld = gfx::rgba(0.090f, 0.063f, 0.024f);
 
 // Type, in units. A figure is a size above its label, so the eye runs down the numbers.
 constexpr float kClassSize = 9.0f, kNameSize = 8.5f, kFigureSize = 10.0f, kLineSize = 7.5f,
@@ -174,33 +183,57 @@ void Card::open(const gfx::Interface& interface, panel::Arts* arts) {
     arts_ = arts;
 }
 
+// The class row, right to left: the talent plate at the well's value edge, the stat plate as
+// wide a gap before it while there are stat points, and the class in what is left. A long class
+// with points in hand ("Magic Gladiator", 995 points) steps its name down to fit.
+void Card::layIdRow(int talents, int points, const std::string& kind) {
+    const float k = panel::scale();
+    const float size = kLineSize * k;
+    const auto said = [&](const std::string& words) {
+        return std::round(controls::capsWidth(size, words, 0.04f) - size * 0.04f + kPlatePad * 2.0f * k);
+    };
+    const float right = std::round(x_ + kRight * k);
+    const float top = std::round(y_ + kPlateTop * k), tall = std::round(kPlateTall * k);
+    const float talentW = said(std::to_string(talents) + " talents");
+    const float statW = points > 0 ? said(std::to_string(points) + " points") : 0.0f;
+    const float w = std::max(talentW, statW);  // the two alike: as wide as the wider
+    seal_ = {right - w, top, w, tall};
+    const float gap = points > 0 ? std::round(kPlateGap * k) : 0.0f;
+    stat_ = {seal_.x - gap - (points > 0 ? w : 0.0f), top, points > 0 ? w : 0.0f, tall};
+    const float room = stat_.x - 4.0f * k - (x_ + kLeft * k);
+    const auto wide = [&](float units) { return controls::capsWidth(units * k, kind, 0.04f) - units * k * 0.04f; };
+    classSize_ = kClassSize;
+    while (classSize_ > kSmallCaps && wide(classSize_) > room) classSize_ -= 0.5f;
+}
+
 void Card::tick(float seconds) {
     clock_ += double(std::max(0.0f, seconds));
     glow_.clear();
     if (now_.who == nullptr || now_.talents <= 0) return;
-    // A slow ember round the frame's top and sides while points wait to be spent: one breath in
-    // two seconds, half lit at most at the ring nearest -- over Lorencia's grass a fifth could not
-    // be seen at all (2026-10-21). Sanctuary's quiet, no sparkle.
+    // A slow gold ember round the talent plate while talent points wait to be spent: one breath in
+    // two seconds, half lit at most at the ring nearest. Drawn over the window, the button being
+    // inside it. Sanctuary's quiet, no sparkle.
     constexpr double kBreath = 2.0;
     constexpr float kMost = 0.5f;
     const float breath = 0.5f - 0.5f * float(std::cos(6.283185307 * std::fmod(clock_, kBreath) / kBreath));
     const float k = panel::scale();
-    const Box seal = panel::scaled(x_, y_, kSeal);
-    const float ring = std::max(1.0f, std::round(0.75f * k));
+    const Box seal = seal_;
+    const float ring = std::max(1.0f, std::round(0.5f * k));
     for (int i = 1; i <= 3; ++i) {
         const float a = kMost * (0.3f + 0.7f * breath) / float(i);
-        const uint32_t ink = gfx::rgba(0.941f, 0.380f, 0.314f, a);  // style::kBloodHi, faded
-        const float g = ring * float(i);
-        glow_.rect({seal.x, seal.y - g - ring, seal.w + g + ring, ring}, ink);          // top
-        glow_.rect({seal.x, seal.bottom() + g, seal.w + g + ring, ring}, ink);          // bottom
-        glow_.rect({seal.right() + g, seal.y - g, ring, seal.h + g * 2.0f}, ink);       // right
+        const uint32_t ink = gfx::rgba(0.886f, 0.706f, 0.396f, a);  // kTalentInk, faded
+        const float g = ring * float(i - 1);
+        const Box o{seal.x - g - ring, seal.y - g - ring, seal.w + (g + ring) * 2.0f, seal.h + (g + ring) * 2.0f};
+        glow_.rect({o.x, o.y, o.w, ring}, ink);                       // top
+        glow_.rect({o.x, o.bottom() - ring, o.w, ring}, ink);         // foot
+        glow_.rect({o.x, o.y + ring, ring, o.h - ring * 2.0f}, ink);  // left
+        glow_.rect({o.right() - ring, o.y + ring, ring, o.h - ring * 2.0f}, ink);  // right
     }
 }
 
 bool Card::covers(float x, float y) const {
     return now_.who != nullptr &&
-           (Box{x_, y_, panel::kWidth * panel::scale(), panel::kHeight * panel::scale()}.has(x, y) ||
-            panel::scaled(x_, y_, kSealHit).has(x, y));
+           Box{x_, y_, panel::kWidth * panel::scale(), panel::kHeight * panel::scale()}.has(x, y);
 }
 
 void Card::update(float width, float height, const sim::Body* hero, const sim::Realm* realm,
@@ -337,7 +370,9 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         // The pointer, against this frame's layout.
         const Box cross = panel::scaled(x_, y_, panel::frameClose());
         overClose_ = cross.has(pointer.x, pointer.y);
-        const bool overSeal = panel::scaled(x_, y_, kSealHit).has(pointer.x, pointer.y);
+        // His points plate, laid out for his counts now (it widens with them).
+        layIdRow(realm ? realm->talentsInHand() : 0, hero->pointsInHand, sim::className(int(kin), hero->second));
+        const bool overSeal = seal_.has(pointer.x, pointer.y);
         const size_t counts[4] = {now_.lines[0].size(), now_.lines[1].size(), now_.lines[2].size(),
                                   now_.lines[3].size()};
         const int points = hero->pointsInHand;
@@ -514,51 +549,6 @@ void Card::rebuild() {
     const float u = tip::unit();
 
     panel::frame(canvas_, arts, x, y, "Character");
-    // ---- the Talents button, standing on the top edge (kSeal) ------------------------------------
-    {
-        const float line = std::max(1.0f, std::round(0.5f * k));
-        const Box seal = panel::scaled(x, y, kSeal);
-        const bool lit = now_.overSeal;
-        // A black seam round its top, right and foot, the iron rim (lit under the pointer), the
-        // void inside, MU's cell on it; no rim at its left, which is the window's own edge.
-        canvas_.rect({seal.x, seal.y - line, seal.w + line, seal.h + line * 2.0f}, style::kSeam);
-        canvas_.rect(seal, lit ? style::kIronHi : style::kIron);
-        canvas_.rect({seal.x, seal.y + line, seal.w - line, seal.h - line * 2.0f}, style::kVoid);
-        const gfx::Art& sheet = arts.get("talent_icons");
-        const Box cell = panel::scaled(
-            x, y, {kSeal.x + (kSeal.w - 20.0f * kSealCell) * 0.5f, kSeal.y + 3.5f, 20.0f * kSealCell, 28.0f * kSealCell});
-        if (sheet.valid()) {
-            const int n = kSealIcon - 300;
-            canvas_.region(sheet, cell, {float(n % 25) * 20.0f + 0.5f, float(n / 25) * 28.0f + 0.5f, 19.0f, 27.0f},
-                           now_.pressSeal ? gfx::rgba(0.8f, 0.8f, 0.8f) : 0xFFFFFFFFu);
-        }
-        // The word under the icon, inside the tab, centred.
-        {
-            const float size = 5.2f * k;
-            const float w = controls::capsWidth(size, "Talents", 0.04f);
-            controls::caps(canvas_, std::round(seal.midX() - w * 0.5f), std::round(y + (kSeal.y + 47.5f) * k), size,
-                           lit ? style::kBoneHi : style::kBone2, "Talents", 0.04f);
-        }
-        // His talent points in hand, red on the frame's corner, nought too (the canvas's tag is
-        // never hidden).
-        {
-            const std::string count = std::to_string(now_.talents);
-            const float size = 5.5f * k;
-            const gfx::Face* tf = panel::titleFace();
-            const float w = tf ? tf->measure(size, count) : controls::labelWidth(size, count);
-            const Box tag{std::round(x + (kSeal.right() - 7.0f) * k), std::round(y + (kSeal.y - 4.5f) * k),
-                          std::round(std::max(11.0f * k, w + 4.0f * k)), std::round(9.0f * k)};
-            canvas_.rect(tag, style::kBloodHi);
-            canvas_.rect(tag.grown(-line), style::kBloodMd);
-            const float base = controls::middle(tag.y, tag.h, size);
-            if (tf) {
-                canvas_.lettered(*tf, panel::titleTexture(), std::round(tag.midX() - w * 0.5f), base, size, 0.0f,
-                                 style::kBoneHi, count);
-            } else {
-                controls::label(canvas_, tag.midX() - w * 0.5f, base, size, style::kBoneHi, count);
-            }
-        }
-    }
     // **His name, small under the title, his guild in brackets after it, then his level and
     // resets** -- the user, 2026-10-10: 'show chatacyer title how it was and small character name
     // [guild] under the title, same as Inventory and gear score', then 'move lvl,resets also where
@@ -615,22 +605,35 @@ void Card::rebuild() {
 
     // ---- who he is: the class, his unspent points beside it, the guild under -------------------
     // A step down from the name over it: the class is what he is, the name who.
-    controls::caps(canvas_, x + kLeft * k, at(kIdTop, kClassSize), kClassSize * k, kPlain,
+    // On kIdTop's line at its own size, or smaller in a tight row (layIdRow).
+    controls::caps(canvas_, x + kLeft * k, at(kIdTop, kClassSize), classSize_ * k, kPlain,
                    sim::className(int(now_.who->kin), now_.second), 0.04f);
-    if (now_.points > 0) {
-        // A red tag, the one thing in the head that asks for something, gone at none.
-        const std::string tag = std::to_string(now_.points) + " points";
+    // ---- his points: the stat plate and the talent plate (layIdRow) ----------------------------
+    {
         const float size = kLineSize * k;
-        // Its words centred on it both ways (the user, 2026-10-20: "not perfectly align on red
-        // background"): the tracking after the last letter is not part of the word.
-        const float w = controls::capsWidth(size, tag, 0.04f) - size * 0.04f;
-        const float pad = 3.0f * k;
-        const float tagRight = std::round(x + kRight * k);
-        const Box box{std::round(tagRight - w - pad * 2.0f), std::round(y + (kIdTop - 1.0f) * k),
-                      std::round(w + pad * 2.0f), std::round(11.0f * k)};
-        canvas_.rect(box, kSpendWash);
-        controls::caps(canvas_, box.x + std::round((box.w - w) * 0.5f), controls::capsMiddle(box.y, box.h, size),
-                       size, kSpendable, tag, 0.04f);
+        const auto words = [&](const Box& half, uint32_t ink, const std::string& text) {
+            // Centred on its plate both ways (the user, 2026-10-20: "not perfectly align on red
+            // background"): the tracking after the last letter is not part of the word.
+            const float w = controls::capsWidth(size, text, 0.04f) - size * 0.04f;
+            controls::caps(canvas_, half.x + std::round((half.w - w) * 0.5f), controls::capsMiddle(half.y, half.h, size),
+                           size, ink, text, 0.04f);
+        };
+        // The stat plate: the red tag, the one thing in the head that asks for something, gone at
+        // none.
+        if (now_.points > 0) {
+            canvas_.rect(stat_, kSpendWash);
+            words(stat_, kSpendable, std::to_string(now_.points) + " points");
+        }
+        // The talent plate, the Talents button: the same tag in gold while talent points wait,
+        // quiet ash at none.
+        const bool waiting = now_.talents > 0;
+        const uint32_t wash = now_.pressSeal ? kTalentHeld
+                              : now_.overSeal ? kTalentLit
+                              : waiting       ? kTalentWash
+                                              : style::kAsh3;
+        canvas_.rect(seal_, wash);
+        words(seal_, now_.overSeal ? kChosen : waiting ? kTalentInk : kQuiet,
+              std::to_string(now_.talents) + " talents");
     }
 
     // ---- the three his class lives by -----------------------------------------------------------

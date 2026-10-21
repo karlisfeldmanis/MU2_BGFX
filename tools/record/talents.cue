@@ -10,7 +10,7 @@ end 25
 
 0.0   move 0.50 0.55
 0.6   type character
-1.4   move 0.9505 0.4324 0.9
+1.4   move 0.9372 0.1704 0.9
 3.0   click
 4.0   move 0.2141 0.2250 0.7
 5.0   click

@@ -78,7 +78,6 @@ float s_scale = 2.0f;
 float s_unit = 2.0f;
 float s_floor = 0.0f;
 float s_lines = 1080.0f;
-float s_rightRoom = 0.0f;
 }
 
 void setScreen(float height) {
@@ -89,14 +88,13 @@ void setScreen(float height) {
     s_floor = 0.0f;
 }
 void setFloor(float y) { s_floor = y; }
-void setRightRoom(float units) { s_rightRoom = std::max(0.0f, units); }
 float sideMargin() { return std::round(kSideShare * s_lines); }
 float scale() { return s_scale; }
 float unit() { return s_unit; }
 
 float columnX(float screenWidth, int column) {
     const float k = scale();
-    return screenWidth - sideMargin() - s_rightRoom * k - kWidth * k * float(column) -
+    return screenWidth - sideMargin() - kWidth * k * float(column) -
            kColumnGap * k * float(column - 1);
 }
 

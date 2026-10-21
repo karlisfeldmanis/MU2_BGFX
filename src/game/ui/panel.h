@@ -103,10 +103,6 @@ constexpr float kColumnGap = 24.0f;
 // Where a panel in the n-th column from the right begins, and its top.
 // MU moves the INVENTORY left to column two when the character window opens, not the other way.
 float columnX(float screenWidth, int column);
-// Room kept at the right of the columns, in units: the Talents tab on the character window's
-// right side (card.cpp kSeal) while that window is open, so every column steps left for it and
-// the bag beside it keeps its gap. Set by the desk each frame.
-void setRightRoom(float units);
 // The top: centred in the room between the screen's top and the HUD plate's (setFloor), the same
 // air over a window as under it -- the user, 2026-09-29, "windows sit lower / centred". The
 // 2026-09-23 margin hung them from the top instead and left the lower band empty; centring down

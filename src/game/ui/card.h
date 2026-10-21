@@ -22,9 +22,6 @@ namespace mu::game {
 
 class Card {
 public:
-    // The room the Talents tab takes at the window's right, in units (card.cpp kSeal), kept
-    // free by the columns while the window is open (panel::setRightRoom).
-    static constexpr float kTabRoom = 40.0f;
     void open(const gfx::Interface& interface, panel::Arts* arts);
 
     // A frame. `spend` comes back as the stat a plus was released on (0 strength to 3 energy),
@@ -33,8 +30,8 @@ public:
     // requests; the caller answers them. `realm` is asked for what only it reckons (his attack
     // speed, what a reset would take off); the window keeps nothing of it. `name` is his, as the
     // server said it, and heads the window; empty off a server.
-    // `talents` as whether the Talents button on its top edge was (button C2 of the Talents
-    // canvas: MU's master icon standing on the frame, his unspent talent points on its corner).
+    // `talents` as whether the Talents button was: the gold talent plate at the class row's right
+    // end, beside his stat points' red one (board G of the Talents canvas).
     void update(float width, float height, const sim::Body* hero, const sim::Realm* realm,
                 const std::string& name, const Pointer& pointer, int* spend, int* count, bool* reset,
                 bool* close, bool* talents = nullptr);
@@ -44,7 +41,7 @@ public:
     // His guild's name, in brackets after his own (docs/game/guild.md); empty for none.
     void setGuild(const std::string& guild) { guild_ = guild; }
     const gfx::Canvas& canvas() const { return canvas_; }
-    // The ember breathing round the Talents button while he has talent points to spend, under the
+    // The ember breathing round the Talents button while he has talent points to spend, over the
     // window's own canvas: rebuilt every frame by `tick`, which the window's own is not.
     void tick(float seconds);
     const gfx::Canvas& glow() const { return glow_; }
@@ -88,17 +85,22 @@ private:
         int returnable = 0;    // the points a reset would take back
         int strips = 0;        // the worn pieces it would take off, -1 no room for them
         bool asking = false;   // the reset's question is up
-        int talents = 0;       // his talent points in hand, on the Talents button's corner
+        int talents = 0;       // his talent points in hand, on the talent plate
         bool overSeal = false, pressSeal = false;
         bool operator==(const Sheet&) const = default;
     };
     void rebuild();
+    // Lays out the class row for his points: seal_, stat_ and classSize_ (card.cpp).
+    void layIdRow(int talents, int points, const std::string& kind);
 
     gfx::Canvas canvas_, glow_;
     double clock_ = 0.0;
     panel::Arts* arts_ = nullptr;
     Sheet drawn_, now_;
     float x_ = 0.0f, y_ = 0.0f;
+    gfx::Box seal_{};          // the talent plate, the Talents button
+    gfx::Box stat_{};          // and the stat plate beside it, nothing wide at no stat points
+    float classSize_ = 9.0f;   // the class's size in units, smaller in a tight row
     int tab_ = 0;         // 0 Attributes, 1 Combat, 2 Bonuses
     int pressTab_ = -1;   // the tab a press went down on
     int pushed_ = -1;

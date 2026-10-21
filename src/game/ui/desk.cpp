@@ -288,7 +288,6 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
 
     panel::setScreen(float(window.height()));
     panel::setFloor(hud_.plateTop());
-    panel::setRightRoom(characterOpen_ ? Card::kTabRoom : 0.0f);
     // Asked before any window answers the press, while what the player clicked on is still up.
     const bool pressedOnWindow = pointer.pressed && overWindows(pointer.x, pointer.y);
     arrival_.update(seconds, float(window.width()), float(window.height()));
@@ -1095,7 +1094,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         card_.update(float(window.width()), float(window.height()), hero, &play.realm(), name,
                      pointer, &spend, &count, &reset, &close, &talents);
         card_.tick(seconds);
-        // The Talents button on its top edge: Talents, which hides this window till it shuts.
+        // The Talents button beside his points: Talents, which hides this window till it shuts.
         if (talents && play.isOpen()) {
             openTalents(play);
             click();
@@ -2811,8 +2810,8 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     // A party invite, centred over the plate where a fight's Zen is said.
     if (chat_.inviting()) interface_.add(chat_.invite());
     if (characterOpen_) {
-        interface_.add(card_.glow());
         interface_.add(card_.canvas());
+        interface_.add(card_.glow());  // round the Talents button, which is inside the window
     }
     if (inspecting()) interface_.add(inspect_.canvas());
     if (questLog_.up()) {
