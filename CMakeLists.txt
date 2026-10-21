@@ -322,6 +322,7 @@ add_library(mu_sim STATIC
   src/sim/wear.cpp
   src/sim/vault.cpp
   src/sim/jeweler.cpp
+  src/sim/talents.cpp
   src/sim/machine.cpp
   src/sim/gates.cpp
   src/sim/maps.cpp

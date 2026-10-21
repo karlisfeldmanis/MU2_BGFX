@@ -33,6 +33,7 @@
 #include "sim/rules.h"
 #include "sim/skills.h"
 #include "sim/swings.h"
+#include "sim/talents.h"
 #include "sim/traps.h"
 #include "sim/wear.h"
 
@@ -5293,6 +5294,71 @@ void testRefine(const content::Tables& tables) {
 // **Many points a press, and the reset** (the user, 2026-10-20): a Spend with a count, and
 // ResetPoints, which takes off what he could no longer wear into the bag or refuses whole when the
 // bag has no room for it.
+// Talents' rules alone (sim/talents.h): the points by class and level, the gate, the take-back, a
+// save's checks and the sums by hold, skill and element. Nothing in the realm reads them yet.
+void testTalents() {
+    std::printf("talents: points, gate, take-back and sums\n");
+    using sim::Kin;
+    using sim::TalentStat;
+    const auto ranksOf = [](std::initializer_list<std::array<uint8_t, sim::kTalentNodes>> columns) {
+        sim::TalentRanks ranks{};
+        size_t c = 0;
+        for (const auto& column : columns) ranks[c++] = column;
+        return ranks;
+    };
+    checkEqual(sim::talentTree(Kin::DarkKnight).count, 6, "a knight has six columns");
+    checkEqual(sim::talentTree(Kin::MagicGladiator).count, 7, "a gladiator seven");
+    checkEqual(sim::talentPoints(Kin::DarkKnight, 400, 0), 199, "199 points at level 400");
+    checkEqual(sim::talentPoints(Kin::MagicGladiator, 400, 0), 279, "the gladiator's 279");
+    checkEqual(sim::talentPoints(Kin::DarkKnight, 400, 1), 399, "a reset pays 200 more");
+    checkEqual(sim::talentPoints(Kin::DarkKnight, 1, 0), 0, "none at level 1");
+    // The canvas's knight preset: a two-handed tank.
+    const sim::TalentRanks dk = ranksOf({{10, 10, 1, 10, 6, 1, 4, 0, 0}, {}, {10, 5, 1, 6, 0, 0, 0, 0, 0}, {},
+                                         {5, 0, 0, 0, 0, 0, 0, 0, 0}, {6, 0, 0, 0, 0, 0, 0, 0, 0}});
+    check(sim::talentsValid(Kin::DarkKnight, dk, 199), "the tank preset is valid at 199");
+    check(!sim::talentsValid(Kin::DarkKnight, dk, 74), "and not with 74 points");
+    check(!sim::talentsValid(Kin::DarkKnight, ranksOf({{5, 5, 1, 0, 0, 0, 0, 0, 0}}), 199),
+          "a major needs 10 in one small above, 5 and 5 is not enough");
+    check(sim::talentTakeable(dk[0], 6) && sim::talentTakeable(dk[0], 0) && !sim::talentTakeable(dk[0], 2),
+          "a point comes back unless something below closes");
+    const std::array<uint8_t, sim::kTalentNodes> lone{10, 0, 1, 0, 0, 0, 0, 0, 0};
+    check(!sim::talentTakeable(lone, 0) && sim::talentTakeable(lone, 2), "Heft holds the major open alone");
+    sim::TalentRanks seventh{};
+    seventh[6][0] = 1;
+    check(!sim::talentsValid(Kin::DarkKnight, seventh, 199) && sim::talentsValid(Kin::MagicGladiator, seventh, 279),
+          "a seventh column only for the gladiator");
+    sim::TalentRanks eleven{};
+    eleven[0][0] = 11;
+    check(!sim::talentsValid(Kin::DarkKnight, eleven, 199), "no small past ten");
+    // Two-handed damage counts only with two hands; Impaler's skills only on those skills.
+    sim::TalentAsk two;
+    two.holding[0] = sim::Hold::TwoHanded;
+    two.skill = 43;
+    const sim::TalentAsk bare;
+    checkNear(sim::talentSum(Kin::DarkKnight, dk, TalentStat::Damage, two), 15.0, 1e-4, "Heft 10 and Strength of Arms 5");
+    checkNear(sim::talentSum(Kin::DarkKnight, dk, TalentStat::Damage, bare), 5.0, 1e-4, "barehanded only Strength of Arms");
+    checkNear(sim::talentSum(Kin::DarkKnight, dk, TalentStat::SkillDamage, two), 20.0, 1e-4, "Pierce 10 x 2 on Death Stab");
+    checkNear(sim::talentSpecial(Kin::DarkKnight, dk, sim::Special::Executioner, two), 20.0, 1e-4, "Executioner taken");
+    checkNear(sim::talentSpecial(Kin::DarkKnight, dk, sim::Special::Riposte, two), 0.0, 1e-4, "Riposte not");
+    // The wizard's fire small counts on fire, not on lightning; two attunements never both.
+    sim::TalentRanks dw{};
+    dw[0] = {10, 10, 1, 10, 0, 0, 0, 0, 0};
+    sim::TalentAsk fire, bolt;
+    fire.element = sim::Element::Fire;
+    bolt.element = sim::Element::Lightning;
+    checkNear(sim::talentSum(Kin::DarkWizard, dw, TalentStat::ElementDamage, fire), 10.0, 1e-4, "fire on fire");
+    checkNear(sim::talentSum(Kin::DarkWizard, dw, TalentStat::ElementDamage, bolt), 0.0, 1e-4, "not on lightning");
+    sim::TalentRanks att{};
+    att[0] = {10, 0, 1, 10, 0, 1, 0, 0, 0};
+    att[1] = {10, 0, 1, 10, 0, 1, 0, 0, 0};
+    checkNear(sim::talentSpecial(Kin::DarkWizard, att, sim::Special::Attunement, fire), 5.0, 1e-4, "fire's attunement on fire");
+    checkNear(sim::talentSpecial(Kin::DarkWizard, att, sim::Special::Attunement, bolt), 5.0, 1e-4, "the storm's on lightning");
+    for (const Kin kin : {Kin::DarkKnight, Kin::DarkWizard, Kin::FairyElf, Kin::MagicGladiator}) {
+        const sim::TalentTree tree = sim::talentTree(kin);
+        check(std::string(tree.columns[tree.count - 1].name) == "Fortune", "Fortune is the last column");
+    }
+}
+
 void testResetPoints(const content::Tables& tables) {
     std::printf("spend many and reset points\n");
     using Kind = sim::Command::Kind;
@@ -14460,6 +14526,7 @@ int main() {
     testJewelOfLife(tables);
     testOptions(tables);
     testResetPoints(tables);
+    testTalents();
     testExcellent(tables);
     testSets(tables);
     testWear(tables);
