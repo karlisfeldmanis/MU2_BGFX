@@ -21,8 +21,9 @@ namespace {
 //    Devias, Atlans, the Balrog, Tarkan, the Phoenix. **The knight's and the wizard's one-handed**
 //    (the user, 2026-10-09: "giving two hand weapon is pretty useless because without magic
 //    defense DW will be very weaks same as DK" -- Defense and Magic Shield ask a shield): past
-//    Atlans no better one-hander is built, so the Balrog pays the top one at +0 and Tarkan the
-//    same at +7 (the user's pick). One two-hander, the Blade Knight's Dark Breaker, paid with
+//    Atlans no better one-hander is built, so Tarkan pays the top one at +7 and the Balrog
+//    pays the knight and the wizard jewels instead (the user, 2026-10-21: the same weapon twice
+//    was one too many). One two-hander, the Blade Knight's Dark Breaker, paid with
 //    Bulwark, which keeps his guard without a shield (the user: "only point to give good
 //    two-handers when chars has rune for using defense auras without shields"). The Serpent
 //    Staff at home is held one-handed here (its stance), as the Legendary and Resurrection are.
@@ -827,7 +828,7 @@ QuestRow tersiaFifth() {
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);
     // The set's armour, which makes it whole (2026-10-09). And a shield of its set's own -- the
-    // knight's Dragon Shield, the wizard's Legendary, for his one-handed Staff of Resurrection
+    // knight's Dragon Shield, the wizard's Legendary, for his one-handed Legendary Staff
     // from Atlans -- and Renewal for it; the elf's bow takes both hands, so hers is a Ring of
     // Ice. Its Undying and Wellspring went (the user, 2026-10-17, of too many runes): the Pit
     // pays the pair already, and a hero wears three jewels at most.
@@ -928,16 +929,20 @@ QuestRow tersiaBalrog() {
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);
     // **The tower's weapon, three sockets** (the user, 2026-10-03: "lets give some weapons with
-    // +3 sockets"; the ladder, 2026-10-09): the top one-handers, as two hands leave Defense and
-    // Magic Shield behind -- the knight's Sword of Destruction, the wizard's Staff of Resurrection
-    // again, raised to +4 over Atlans's -- and the elf's Chaos Nature Bow. The Bill of Balrog and
-    // the Chaos Lightning Staff, two-handed, were these until the same day.
-    row.paid[row.paidCount++] = {.item = "Sword17", .kin = knight, .sockets = 3,
-                                 .firstOnly = true};  // Sword of Destruction
-    row.paid[row.paidCount++] = {.item = "Staff07", .plus = 4, .kin = wizard, .sockets = 3,
-                                 .firstOnly = true};  // Staff of Resurrection +4
+    // +3 sockets"; the ladder, 2026-10-09): the elf's Chaos Nature Bow. The knight's Sword of
+    // Destruction and the wizard's Staff of Resurrection +4 were here too until 2026-10-21 (the
+    // user: "we are giving staff of resorection 2 times"): Kantur's Legion pays each once, at
+    // +7, and the knight and the wizard take two Jewels of Bless and two of Soul here instead.
     row.paid[row.paidCount++] = {.item = "Bow07", .kin = elf, .sockets = 3,
                                  .firstOnly = true};  // Chaos Nature Bow
+    row.paid[row.paidCount++] = {.item = "Jewel01", .count = 2, .kin = knight,
+                                 .firstOnly = true};  // Jewels of Bless
+    row.paid[row.paidCount++] = {.item = "Jewel02", .count = 2, .kin = knight,
+                                 .firstOnly = true};  // Jewels of Soul
+    row.paid[row.paidCount++] = {.item = "Jewel01", .count = 2, .kin = wizard,
+                                 .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel02", .count = 2, .kin = wizard,
+                                 .firstOnly = true};
     // The rune, every class's Wrath since 2026-10-03 (the user: "LT7 has to be +20% damage rune
     // for all classes, create that rune its legendary"), and Stormcall beside it, Rolling Fire's
     // until 2026-10-09 (the user, 2026-10-03: "that rune which has chance to cast lightnings on
@@ -1434,8 +1439,10 @@ QuestRow lirienHalls() {
     int n = 0;
     row.paid[n++] = {.item = "Sword15", .kin = knight, .sockets = 2,
                      .firstOnly = true};  // Lighting Sword
-    row.paid[n++] = {.item = "Staff07", .kin = wizard, .sockets = 2,
-                     .firstOnly = true};  // Staff of Resurrection
+    // The wizard's was the Staff of Resurrection until 2026-10-21, which Kantur's Legion pays at
+    // +7 (the user: "we are giving staff of resorection 2 times"): the Legendary Staff, one hand.
+    row.paid[n++] = {.item = "Staff06", .kin = wizard, .sockets = 2,
+                     .firstOnly = true};  // Legendary Staff
     row.paid[n++] = {.item = "CrossBow07", .kin = elf, .sockets = 2,
                      .firstOnly = true};  // Aquagold Crossbow
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Twister),
@@ -1582,7 +1589,7 @@ QuestRow kantursLegion() {
     // gear and Legendaries above wait a hundred levels for Sevina, so they went to Icarus and the
     // class change, and Tarkan pays **the first class's best weapon, three sockets**, worn at once
     // -- the knight's Sword of Destruction and the wizard's Staff of Resurrection, both one-handed
-    // and at +7, over the Balrog's (the user, 2026-10-09: two hands leave Defense and Magic Shield
+    // and at +7, paid nowhere else (the user, 2026-10-09: two hands leave Defense and Magic Shield
     // behind, and no better one-hander is built; "same weapon, higher plus"), the elf's Saint
     // Crossbow -- with two runes each for it: the knight's Immolate and Ice, the wizard's Inferno
     // and Thunder (his Spirit Plague went to Tersia's sixth floor), the elf's Greater Barrage and
