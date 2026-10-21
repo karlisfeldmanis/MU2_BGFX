@@ -17,7 +17,7 @@
 // The steps are two phases (the user, 2026-10-21: "designed for minimal downtime"): `mu ship
 // prepare` builds and stages everything while players play, the boxes side by side; `mu ship
 // switch` makes it live at one moment, each box's players told 60 s first. Their lanes' lines come
-// marked [North Europe], [windows] ... in the one console. `./ship` in the project root opens this.
+// marked [North Europe], [windows] ... in the one console. `./deploy.sh` in the project root opens this.
 #include <algorithm>
 #include <atomic>
 #include <chrono>

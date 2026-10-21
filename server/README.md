@@ -104,7 +104,7 @@ does when the running server logged "SIGUSR2 restarts") tells everyone in a worl
 and 5 s, then stops as SIGTERM would; systemd starts the new build and the clients knock their way
 back in by themselves. `MU2_NOW=1` restarts at once. A release is two phases, `mu ship prepare`
 (every box staged side by side, the clients built and sent; players see nothing) and `mu ship
-switch` (every box and manifest at one moment), or `./ship` in the project root for the window.
+switch` (every box and manifest at one moment), or `./deploy.sh` in the project root for the window.
 
 What is in `server/src/` (split out of one 1900-line `main.cpp` in `docs/plans/order-plan.md` sprint C):
 
