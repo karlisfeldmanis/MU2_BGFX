@@ -48,12 +48,10 @@ constexpr float kReach = 9.0f;   // how near the pointer has to be to name a mar
 // 2026-09-30, "coordinates has to be little bit bigger and under the map").
 constexpr float kFigure = 15.0f;
 // A clean rim, the user's "some clean border around map with some transparency" (2026-09-30):
-// the chart stops on a ring half way into the old fade, a bone line over a dark hairline, and
-// only the scrim outside it keeps fading, as the ring's soft shadow on the world.
+// the chart stops on a ring half way into the old fade, a bone line, and nothing past it.
 constexpr float kRimIn = 0.5f;      // of kFade, where the ring sits inside the drawn radius
 constexpr float kRimLine = 2.0f;    // its width
 constexpr float kRimAlpha = 0.55f;
-constexpr float kRimShadow = 0.5f;  // the dark hairline outside it
 // The bug button (game/ui/report.h): on the rim, cos 45 of the way out down and to the left.
 constexpr float kBugAt = 0.7071068f;
 constexpr float kBugRadius = 15.0f;
@@ -948,18 +946,8 @@ void Minimap::rebuild(const Play& play) {
                 tones[i + 1] = ink(kScrimAlpha);
             }
             canvas_.polygon(xy, tones, kSegments + 2);
-            const float steps[3] = {kScrimAlpha, kScrimAlpha * 0.42f, 0.0f};
-            for (int ring = 0; ring < 2; ++ring) {
-                for (int i = 0; i < kSegments; ++i) {
-                    float quad[8];
-                    ringAt(ring, i, &quad[0]);
-                    ringAt(ring, i + 1, &quad[2]);
-                    ringAt(ring + 1, i + 1, &quad[4]);
-                    ringAt(ring + 1, i, &quad[6]);
-                    const uint32_t band[4] = {ink(steps[ring]), ink(steps[ring]), ink(steps[ring + 1]), ink(steps[ring + 1])};
-                    canvas_.polygon(quad, band, 4);
-                }
-            }
+            // It stops at the rim: no fade past it, no shadow on the world (the user, 2026-10-21:
+            // "also remove drop shadow from minimap circle").
         }
         // Most of the way see-through, so it lies over the world rather than on it: the user's
         // "more transparent so it's not too much active but we still can read it" (2026-09-29).
@@ -993,7 +981,7 @@ void Minimap::rebuild(const Play& play) {
                 canvas_.polygon(chart_, xy, uv, tones, 4);
             }
         }
-        // The rim: a dark hairline outside, then the bone line over the chart's edge.
+        // The rim: the bone line over the chart's edge, and no dark hairline outside it.
         const auto band = [&](float from, float to, uint32_t tone) {
             for (int i = 0; i < kSegments; ++i) {
                 const float t0 = 6.2831853f * float(i) / float(kSegments);
@@ -1007,8 +995,6 @@ void Minimap::rebuild(const Play& play) {
             }
         };
         const float line = std::max(1.0f, kRimLine * u);
-        const float hair = std::max(1.0f, u);
-        band(rim, rim + hair, (style::kVoid & 0x00FFFFFFu) | (uint32_t(kRimShadow * 255.0f) << 24));
         band(rim - line, rim, gfx::rgba(kLine[0], kLine[1], kLine[2], kRimAlpha));
     }
 
