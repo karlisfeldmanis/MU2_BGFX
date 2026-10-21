@@ -5359,6 +5359,85 @@ void testTalents() {
     }
 }
 
+// Talents on the hero (Realm::talentTake, talentGive, talentReset): the commands, their
+// refusals, and the ranks through a save, a tampered save and the kept bytes.
+void testTalentCommands(const content::Tables& tables) {
+    std::printf("talents: take, give back, reset and keep\n");
+    using Kind = sim::Command::Kind;
+    sim::Realm realm;
+    check(realm.raise(&tables, 31, 138, 124, sim::Kin::DarkKnight, 80), "a level-80 knight raises");
+    const uint32_t me = realm.hero().id;
+    const auto run = [&](sim::Command c) -> int {
+        c.player = me;
+        c.ticket = 92;
+        realm.command(c);
+        realm.step();
+        for (const sim::Happening& one : realm.happenings()) {
+            if (one.what == sim::What::Answered && one.c == 92) return one.b;
+        }
+        return -99;
+    };
+    checkEqual(realm.talentsInHand(), 39, "79 levels of five stat points are 39 talents");
+    // A refusal is answered -1, whatever its reason; the realm's own call says which.
+    using Refused = sim::Realm::TalentRefused;
+    checkEqual(run({.kind = Kind::TalentTake, .a = 0, .b = 2}), -1, "a major is closed at first");
+    checkEqual(realm.talentTake(0, 2, 1), int(Refused::Closed), "as closed");
+    checkEqual(realm.talentTake(0, 3, 1), int(Refused::Closed), "and the second tier");
+    checkEqual(realm.talentTake(6, 0, 1), int(Refused::Closed), "a knight has no seventh column");
+    checkEqual(run({.kind = Kind::TalentTake, .a = 0, .b = 0}), 1, "a point into Heft");
+    checkEqual(run({.kind = Kind::TalentTake, .a = 0, .b = 0, .c = 20}), 9, "twenty asked, nine fit");
+    checkEqual(realm.talentTake(0, 0, 1), int(Refused::Full), "Heft is full");
+    checkEqual(run({.kind = Kind::TalentTake, .a = 0, .b = 2}), 1, "ten in Heft opens Frost Edge");
+    checkEqual(run({.kind = Kind::TalentTake, .a = 0, .b = 3, .c = 5}), 5, "and the next tier");
+    checkEqual(realm.talentsInHand(), 39 - 16, "sixteen spent");
+    checkEqual(run({.kind = Kind::TalentGive, .a = 0, .b = 0}), -1, "Heft holds the major: no point back");
+    checkEqual(realm.talentGive(0, 0, 1), int(Refused::Holds), "as held");
+    checkEqual(realm.talentGive(0, 2, 1), int(Refused::Holds), "the major holds the tier below");
+    checkEqual(run({.kind = Kind::TalentGive, .a = 0, .b = 3, .c = 2}), 2, "two back from Pierce");
+    checkEqual(realm.talentGive(0, 4, 1), int(Refused::Nothing), "nothing in Sunder to give");
+    checkEqual(run({.kind = Kind::TalentTake, .a = 1, .b = 1, .c = 99}), 10, "ten into Flurry");
+    checkEqual(run({.kind = Kind::TalentTake, .a = 2, .b = 0, .c = 99}), 10, "ten into Plate");
+    checkEqual(run({.kind = Kind::TalentTake, .a = 3, .b = 0, .c = 99}), 5, "the last five into Gale");
+    checkEqual(realm.talentTake(3, 1, 1), int(Refused::NoPoints), "none left in hand");
+    checkEqual(realm.talentsInHand(), 0, "all spent");
+
+    // Through a save: the ranks come back; a tampered save loses them whole.
+    const sim::HeroRecord saved = realm.record();
+    checkEqual(saved.talents[0][0], 10, "the record holds Heft's ten");
+    {
+        sim::Realm again;
+        again.raise(&tables, 31, 138, 124, sim::Kin::DarkKnight, 80);
+        again.restore(saved);
+        checkEqual(sim::talentsSpent(again.hero().talents), 39, "restored whole");
+        sim::HeroRecord tampered = saved;
+        tampered.talents[4][0] = 10;  // more than level 80 earns
+        sim::Realm third;
+        third.raise(&tables, 31, 138, 124, sim::Kin::DarkKnight, 80);
+        third.restore(tampered);
+        checkEqual(sim::talentsSpent(third.hero().talents), 0, "a tampered tree is dropped");
+        checkEqual(third.talentsInHand(), 39, "and its points are his to spend");
+        checkEqual(third.hero().points.strength, saved.points.strength, "the rest of him stays");
+    }
+    // In the kept bytes, and a layout-9 character reads with none.
+    {
+        sim::Kept kept;
+        kept.hero = saved;
+        std::vector<uint8_t> bytes;
+        net::putKept(bytes, kept);
+        sim::Kept back;
+        check(net::keptFrom(bytes, back), "the kept bytes read");
+        check(back.hero.talents == saved.talents, "with his talents");
+        std::vector<uint8_t> nine(bytes.begin(), bytes.end() - sim::kTalentColumnsMost * sim::kTalentNodes);
+        sim::Kept old;
+        check(net::keptFrom(nine, old, 9), "a layout-9 row still reads");
+        checkEqual(sim::talentsSpent(old.hero.talents), 0, "with no talents");
+        check(!net::keptFrom(nine, old, 10), "and is not a layout 10");
+    }
+    checkEqual(run({.kind = Kind::TalentReset}), 1, "reset");
+    checkEqual(realm.talentsInHand(), 39, "every point back, free");
+    checkEqual(run({.kind = Kind::TalentReset}), -1, "nothing to reset");
+}
+
 void testResetPoints(const content::Tables& tables) {
     std::printf("spend many and reset points\n");
     using Kind = sim::Command::Kind;
@@ -14527,6 +14606,7 @@ int main() {
     testOptions(tables);
     testResetPoints(tables);
     testTalents();
+    testTalentCommands(tables);
     testExcellent(tables);
     testSets(tables);
     testWear(tables);

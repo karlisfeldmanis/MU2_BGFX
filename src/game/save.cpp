@@ -187,6 +187,18 @@ bool loadSave(const std::string& path, Saved& out) {
     } else {
         hero.learned = uint64_t(learned.numberOr(0.0));
     }
+    // His talents, a list of ranks a column (sim/talents.h); absent before 2026-10-21, none. The
+    // realm checks them on restore (sim::talentsValid).
+    const core::Json& talents = doc["talents"];
+    if (talents.type == core::Json::Type::Array) {
+        for (size_t c = 0; c < talents.size() && c < hero.talents.size(); ++c) {
+            const core::Json& column = talents.at(c);
+            if (column.type != core::Json::Type::Array) continue;
+            for (size_t i = 0; i < column.size() && i < hero.talents[c].size(); ++i) {
+                hero.talents[c][i] = uint8_t(std::clamp(int(column.at(i).numberOr(0.0)), 0, 255));
+            }
+        }
+    }
     // The travel rows he has opened (sim/travel.h), by their keys; a file from before 2026-10-07
     // holds a bit per row. Absent in a file written before the list, which reads as nought: the
     // realm opens his birth town over it (Realm::settleFound).
@@ -391,6 +403,15 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
                  hero.points.energy);
     std::fprintf(f, "  \"health\": %d,\n  \"mana\": %d,\n  \"zen\": %lld,\n", hero.health,
                  hero.mana, static_cast<long long>(hero.money));
+    if (sim::talentsSpent(hero.talents) > 0) {
+        std::fprintf(f, "  \"talents\": [");
+        for (size_t c = 0; c < hero.talents.size(); ++c) {
+            std::fprintf(f, "%s[", c ? ", " : "");
+            for (size_t i = 0; i < hero.talents[c].size(); ++i) std::fprintf(f, "%s%d", i ? ", " : "", hero.talents[c][i]);
+            std::fprintf(f, "]");
+        }
+        std::fprintf(f, "],\n");
+    }
     if (hero.learned != 0) {
         std::fprintf(f, "  \"learned\": [");
         bool any = false;

@@ -301,6 +301,10 @@ public:
     // Every placed point back in hand (sim::Realm::resetPoints): answered 1, -1 nothing placed,
     // -2 no room in the bag for the gear he could no longer wear.
     uint32_t resetPoints();
+    // Talent points into (take) or out of (give back) node `node` of column `column`, `count` at a
+    // press, and every one back (sim::Realm::talentTake, talentGive, talentReset).
+    uint32_t talent(bool take, int column, int node, int count = 1);
+    uint32_t resetTalents();
     // A drag from one slot to another, and a right-click on a carried thing. Both the realm's
     // to refuse; see sim/items.h for the gates.
     // `pieces`: of a stack, how many go (Shift-click's part); 0 the whole of it. The same on

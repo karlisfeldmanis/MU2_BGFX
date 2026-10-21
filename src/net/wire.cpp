@@ -199,6 +199,9 @@ void putKept(Out& o, const sim::Kept& k) {
     o.i32(r.perch);
     o.u8(uint8_t(r.autoDrink.health));
     o.u8(uint8_t(r.autoDrink.mana));
+    for (const auto& column : r.talents) {
+        for (const uint8_t rank : column) o.u8(rank);
+    }
 }
 
 sim::Kept takeKept(In& in, int layout = kKeptLayout) {
@@ -265,6 +268,11 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     if (layout >= 7) {
         r.autoDrink.health = int8_t(in.u8());
         r.autoDrink.mana = int8_t(in.u8());
+    }
+    if (layout >= 10) {
+        for (auto& column : r.talents) {
+            for (uint8_t& rank : column) rank = in.u8();
+        }
     }
     return k;
 }

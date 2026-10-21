@@ -546,6 +546,7 @@ HeroRecord Realm::record() const {
     out.experience = hero.experience;
     out.pointsInHand = hero.pointsInHand;
     out.points = hero.points;
+    out.talents = hero.talents;
     out.health = hero.health;
     out.mana = hero.mana;
     out.money = me().money;
@@ -587,6 +588,10 @@ void Realm::restore(const HeroRecord& saved) {
     hero.experience = saved.experience;
     hero.pointsInHand = std::max(0, saved.pointsInHand);
     hero.points = saved.points;
+    // His talents as saved, if they are a tree his class and level could have spent; an edited or
+    // stale save loses them whole and keeps its points (sim::talentsValid).
+    hero.talents = talentsValid(hero.kin, saved.talents, talentPoints(hero.kin, hero.level, 0)) ? saved.talents
+                                                                                                : TalentRanks{};
     // ORed rather than assigned, and only while `raise` still hands a knight his first skill: a
     // save written before the skills existed carries a nought mask, and assigning it would take
     // back the skill the grant above just gave him. The day the orb is the only way in, this
@@ -783,6 +788,57 @@ Realm::Reset Realm::resetPoints() {
     rearm(hero);
     hero.health = std::min(hero.health, hero.maxHealth);
     return Reset::Done;
+}
+
+// ---- talents (sim/talents.h) ----------------------------------------------------------
+
+int Realm::talentsInHand() const {
+    const Body& hero = mine();
+    return std::max(0, talentPoints(hero.kin, hero.level, 0) - talentsSpent(hero.talents));
+}
+
+int Realm::talentTake(int column, int node, int count) {
+    Body& hero = mine();
+    if (!tables_ || !hero.alive() || column < 0 || column >= talentTree(hero.kin).count || node < 0 ||
+        node >= kTalentNodes) {
+        return int(TalentRefused::Closed);
+    }
+    auto& ranks = hero.talents[size_t(column)];
+    if (!talentOpen(ranks, node)) return int(TalentRefused::Closed);
+    if (ranks[size_t(node)] >= mostOf(node)) return int(TalentRefused::Full);
+    const int took = std::min({std::max(1, count), talentsInHand(), mostOf(node) - int(ranks[size_t(node)])});
+    if (took <= 0) return int(TalentRefused::NoPoints);
+    ranks[size_t(node)] = uint8_t(ranks[size_t(node)] + took);
+    rearm(hero);
+    return took;
+}
+
+int Realm::talentGive(int column, int node, int count) {
+    Body& hero = mine();
+    if (!tables_ || !hero.alive() || column < 0 || column >= kTalentColumnsMost || node < 0 ||
+        node >= kTalentNodes) {
+        return int(TalentRefused::Nothing);
+    }
+    auto& ranks = hero.talents[size_t(column)];
+    if (ranks[size_t(node)] == 0) return int(TalentRefused::Nothing);
+    int gave = 0;
+    while (gave < std::max(1, count) && talentTakeable(ranks, node)) {
+        --ranks[size_t(node)];
+        ++gave;
+    }
+    if (gave == 0) return int(TalentRefused::Holds);
+    rearm(hero);
+    hero.health = std::min(hero.health, hero.maxHealth);
+    return gave;
+}
+
+bool Realm::talentReset() {
+    Body& hero = mine();
+    if (!tables_ || !hero.alive() || talentsSpent(hero.talents) == 0) return false;
+    hero.talents = TalentRanks{};
+    rearm(hero);
+    hero.health = std::min(hero.health, hero.maxHealth);
+    return true;
 }
 
 // ---- walking ---------------------------------------------------------------------------

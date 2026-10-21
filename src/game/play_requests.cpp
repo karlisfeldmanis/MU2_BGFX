@@ -31,6 +31,16 @@ uint32_t Play::spendPoint(int stat, int count) {
 
 uint32_t Play::resetPoints() { return send({.kind = sim::Command::Kind::ResetPoints}); }
 
+uint32_t Play::talent(bool take, int column, int node, int count) {
+    if (column < 0 || column >= sim::kTalentColumnsMost || node < 0 || node >= sim::kTalentNodes || count < 1) return 0;
+    return send({.kind = take ? sim::Command::Kind::TalentTake : sim::Command::Kind::TalentGive,
+                 .a = column,
+                 .b = node,
+                 .c = count});
+}
+
+uint32_t Play::resetTalents() { return send({.kind = sim::Command::Kind::TalentReset}); }
+
 void Play::castSkill(int32_t skill, uint32_t at) {
     // Aimed at what the window named, else at what he is already fighting -- which the realm
     // works out for itself, because the standing order is its own. A press on a skill he has not
@@ -781,6 +791,12 @@ void Play::answered(const sim::Happening& said) {
                                                                  : "refused, nothing placed");
             if (said.b == 1) redress();
             break;
+        case Kind::TalentTake:
+        case Kind::TalentGive:
+            core::logf("window: talent %d.%d %s %s", asked.a, asked.b, kind == Kind::TalentTake ? "take" : "give back",
+                       ok ? (std::to_string(said.b) + " point(s)").c_str() : "refused");
+            break;
+        case Kind::TalentReset: core::logf("window: talents %s", ok ? "reset" : "refused, none spent"); break;
         case Kind::Move:
             core::logf("window: move %d -> %d %s", asked.a, asked.b, ok ? "taken" : "refused");
             if (ok) redress();

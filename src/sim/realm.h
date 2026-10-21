@@ -37,6 +37,7 @@
 #include "sim/route.h"
 #include "sim/rules.h"
 #include "sim/skills.h"
+#include "sim/talents.h"
 #include "sim/travel.h"
 #include "sim/vault.h"
 #include "sim/machine.h"
@@ -504,6 +505,9 @@ struct Body {
 
     uint64_t experience = 0;
     int32_t pointsInHand = 0;  // won by levelling and not yet spent
+    // His talents, a rank a node of his class's tree (sim/talents.h). The points to spend on them
+    // are not kept: they are his level's (sim::talentPoints) less what these hold.
+    TalentRanks talents{};
 
     // ---- skills (docs/game/skills-dk.md) --------------------------------------------------------
     // What he has learned, as a bit per row of the skill table and NOT per skill number: the
@@ -738,6 +742,7 @@ struct HeroRecord {
     uint64_t experience = 0;
     int32_t pointsInHand = 0;
     HeroPoints points;
+    TalentRanks talents{};  // checked on restore by sim::talentsValid, dropped whole when wrong
     int32_t health = 0, mana = 0;
     int64_t money = 0;
     // What he has learned, by the skill table's own index. Saved because learning is permanent
@@ -906,6 +911,18 @@ public:
     // The same asked without doing it, for the window's question: how many worn pieces it would
     // take off, or -1 when the bag has no room for them, or -2 when there is nothing to take back.
     int resetStrips() const;
+
+    // **Talents** (sim/talents.h, docs/plans/talents.md). Up to `count` points into node `node` of
+    // column `column` of his class's tree, a point at a time while each is open, in hand and under
+    // the node's most: answered with how many went in, or a TalentRefused when none did. Given back
+    // the same way, a point at a time while nothing below it closes. Reset hands every one back,
+    // free. Each reckons him again (Realm::rearm).
+    enum class TalentRefused : int8_t { NoPoints = -1, Closed = -2, Full = -3, Holds = -4, Nothing = -5 };
+    int talentTake(int column, int node, int count);
+    int talentGive(int column, int node, int count);
+    bool talentReset();
+    // His talent points earned and not spent.
+    int talentsInHand() const;
 
     // The hero as a save keeps him, and the same laid back on a hero just raised at that
     // record's tile and class. restore() empties the satchel first, puts back what was carried

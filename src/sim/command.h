@@ -112,10 +112,16 @@ struct Command {
         JewelRecut,    // a: the piece's slot, b: its further power's line (0 to 2)
         JewelSalvage,  // a: the piece's slot
         JewelCombine,  // a, b, c: the three pieces' slots
+        // **Talents** (sim/talents.h; Realm::talentTake, talentGive, talentReset). a: the column,
+        // b: the node, c: how many, 1 if not said. Answered with how many moved, or a
+        // Realm::TalentRefused; a reset 1, or -1 when nothing was spent.
+        TalentTake,
+        TalentGive,
+        TalentReset,
     };
     // The last kind there is: what a wire reads past it is None (net::takeCommand). Moved with
     // every kind added at the end.
-    static constexpr Kind kLastKind = Kind::JewelCombine;
+    static constexpr Kind kLastKind = Kind::TalentReset;
     // Close's a.
     // Trade is the merchant's counter, as the realm has always called it; Deal is a trade between
     // two players, which closing cancels for both.

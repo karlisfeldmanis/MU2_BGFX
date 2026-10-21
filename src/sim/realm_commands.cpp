@@ -209,6 +209,9 @@ void Realm::applyCommands() {
                 break;
             }
             case Kind::ResetPoints: answer = int64_t(resetPoints()); break;
+            case Kind::TalentTake: answer = talentTake(one.a, one.b, one.c); break;
+            case Kind::TalentGive: answer = talentGive(one.a, one.b, one.c); break;
+            case Kind::TalentReset: answer = talentReset() ? 1 : -1; break;
             case Kind::JewelRecut: answer = recut(one.a, one.b); break;
             case Kind::JewelSalvage: answer = salvage(one.a); break;
             case Kind::JewelCombine: answer = combine(one.a, one.b, one.c); break;
