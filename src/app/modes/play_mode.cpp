@@ -1434,6 +1434,21 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         } else if (mouseRightHeld && !windowed) {
             world_.played().rightHeld();
         }
+        // Not in Blood Castle or Devil Square (a player, 2026-10-21: "deactivating the auto quest
+        // function while you are in devil square or blood castle since it can take you out of it"):
+        // Auto-play and the Helper's Follow my quest travel by the Move list, and would walk him out
+        // of his run. The Helper's own hunt stays.
+        if (world_.played().isOpen() && world_.played().realm().event() != sim::EventKind::None) {
+            if (ctx.autoQuest >= 0) {
+                ctx.autoQuest = -1;
+                questAuto_.reset();
+                world_.played().notice("Auto-play is off in Blood Castle and Devil Square.", true);
+            }
+            if (helper_.on() && desk_.helperSettings().quest) {
+                helper_.stop();
+                world_.played().notice("The Helper follows no quest in Blood Castle and Devil Square.", true);
+            }
+        }
         if (ctx.autoQuest >= 0 || (helper_.on() && desk_.helperSettings().quest)) {
             game::quest_world::open(ctx.paths.assets);  // once, where it lives
         }
