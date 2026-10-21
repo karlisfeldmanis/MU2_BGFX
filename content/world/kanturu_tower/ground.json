@@ -1,0 +1,33 @@
+{
+  "tileset": "kanturu_tower",
+  "mu_name": "Refinery Tower ground",
+  "profile": "tiles",
+  "sheets": {
+    "TileGrass01": "kt_tilegrass01.png",
+    "TileGrass02": "kt_tilegrass02.png",
+    "TileGround01": "kt_tileground01.png",
+    "TileGround02": "kt_tileground02.png",
+    "TileWater01": "kt_tilewater01.png",
+    "TileWood01": "kt_tilewood01.png",
+    "TileRock05": "kt_tilerock05.png"
+  },
+  "sheet_from": "Data/World40/Tile*.OZJ, from MuMain, decoded under a kt_ prefix. World40 ships three sheets only, all near-black: TileGrass01, TileGrass02 and TileGround01. The rest are ours, marked: slot 3 is AlphaTileGround02.OZT in MU, fully transparent and drawn alpha-tested (MapManager.cpp:1381-1384), so kt_tileground02.png is a copy of TileGrass02's near-black; TileRock05 (1,486 drawn tiles, none walkable) the same; TileWood01 (370 drawn, none walkable) and TileWater01 (none drawn) copies of TileGround01. Copies and not the same file, because the ground's loader names each surface by its pair of images. docs/worlds/kanturu-port.md Part B 8.2.",
+  "slot_note": "No grass .OZT ships, so no grass grows. TileGrass01, a carved stone disc, is 90.3% of the drawn ground.",
+  "sheet_materials": {
+    "TileGrass01": "flagstone",
+    "TileGrass02": "rock",
+    "TileGround01": "rock",
+    "TileGround02": "rock",
+    "TileWater01": "rock",
+    "TileWood01": "rock",
+    "TileRock05": "rock",
+    "TileGrass01_over": "flagstone",
+    "TileGrass02_over": "rock",
+    "TileGround01_over": "rock",
+    "TileGround02_over": "rock",
+    "TileWater01_over": "rock",
+    "TileWood01_over": "rock",
+    "TileRock05_over": "rock"
+  },
+  "material_note": "Read off the art. TileGrass01 a carved stone disc: flagstone. TileGrass02 dark blue-grey stone and TileGround01 dark cracked stone: rock, and the copies of them with it."
+}

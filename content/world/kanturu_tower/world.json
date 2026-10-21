@@ -1,0 +1,21 @@
+{
+  "world": "kanturu_tower",
+  "name": "Refinery Tower",
+  "map": 39,
+  "note": "Kanturu's Refinery Tower, MU's map 39 (client Data/World40 + Object40, MuMain's WD_39KANTURU_3RD), Season 2 (2006): the Maya and Nightmare event, entered from the Relics' Gateway Machine (gates 133-135). Two lit islands of near-black floor in a grey-black void, Maya's octagon and Nightmare's hall. Imported from EncTerrain40, the grid before the win; MuMain swaps in EncTerrain401's .att once the Nightmare falls (MapManager.cpp:1278-1285), which no world does yet. Step 1, 2026-10-21: the bare land, no `rules`. docs/worlds/kanturu-port.md Part B 8.2.",
+  "pipeline": {
+    "hidden": {
+      "value": [1, 11, 32, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 74],
+      "note": "Every type that wears test12_H (HiddenMesh by TextureScript): cloud, thunder, smoke, true-blue particle and terrain-light boxes (GM_Kanturu_3rd.cpp:118-196, 254-392), and 74 the barrier's 12 thunder boxes (:299-307). Read off objinfo40.log. docs/worlds/kanturu-port.md Part B 8.2."
+    },
+    "void": {
+      "value": {"start": 0.5, "depth": 6.0, "blend": 1.5},
+      "note": "The Ruins' numbers for a first look: 36.2% NoGround, the Object34 spikes hang up to 22 m into it. Ours, to judge in the first shot."
+    },
+    "void_fill": {
+      "value": [[195, 70], [77, 115]],
+      "note": "Two seeds, as the two islands are joined by no walk (the NPC moves players between them): Maya's octagon (1,202 tiles, x 174-217, y 54-83) and Nightmare's hall (1,033, x 57-98, y 85-144). The 25-tile pocket at 188-192, 110-114 becomes void. Ours."
+    },
+    "flat_over_void": true
+  }
+}

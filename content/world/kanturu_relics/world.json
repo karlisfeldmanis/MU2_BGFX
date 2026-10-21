@@ -1,0 +1,28 @@
+{
+  "world": "kanturu_relics",
+  "name": "Kanturu Relics",
+  "map": 38,
+  "note": "Kanturu Relics, MU's map 38 (client Data/World39 + Object39, MuMain's WD_38KANTURU_2ND), Season 2 (2006), entered from the Ruins' Relics door (gate 129 to 130). An indoor-reading refinery maze in a flat 1.70 m floor: pale stone corridors lit bright down their middle, scaffolds and 29 m tank columns hung into the black round them. Step 1, 2026-10-21: the bare land, with no `rules` yet, so the realm does not know the map. docs/worlds/kanturu-port.md Part B 8.1.",
+  "gates": {
+    "spawn": {
+      "number": 137,
+      "box": [71, 102, 82, 109],
+      "note": "OpenMU's spawn gate 137 (VersionSeasonSix Gates.cs:283): the safe hall by the Ruins' door, where a death in the Relics or the boss map stands up. docs/worlds/kanturu-port.md Part A 2.1."
+    }
+  },
+  "pipeline": {
+    "hidden": {
+      "value": [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 65],
+      "note": "The Relics' emitter boxes (MoveKanturu2ndObject, GM_Kanturu_2nd.cpp:252-268): clouds, void glows, waterfall specks, water and thunder joints, every one an angeflo_R box drawn by no mesh. docs/worlds/kanturu-port.md Part B 8.1."
+    },
+    "void": {
+      "value": {"start": 0.5, "depth": 6.0, "blend": 1.5},
+      "note": "The Ruins' numbers for a first look: 42.0% of the map is NoGround round the maze, and the cho_scarp scaffolds hang 6-9.5 m into it. Ours, to judge in the first shot."
+    },
+    "void_fill": {
+      "value": [[78, 106]],
+      "note": "From the safe hall (spawn gate 137). The maze is one region of 4,454 tiles; the 75 stray open tiles on rows 250-251 become void. Ours."
+    },
+    "flat_over_void": true
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "tileset": "kanturu_relics",
+  "mu_name": "Kanturu Relics ground",
+  "profile": "tiles",
+  "sheets": {
+    "TileGrass01": "kl_tilegrass01.png",
+    "TileGrass02": "kl_tilegrass02.png",
+    "TileGround01": "kl_tileground01.png",
+    "TileGround02": "kl_tileground02.png",
+    "TileGround03": "kl_tileground03.png",
+    "TileWood01": "kl_tilewood01.png",
+    "TileRock01": "kl_tilerock01.png",
+    "TileRock02": "kl_tilerock02.png",
+    "TileRock03": "kl_tilerock03.png",
+    "TileRock04": "kl_tilerock04.png"
+  },
+  "sheet_from": "Data/World39/Tile*.OZJ, from MuMain, decoded under a kl_ prefix (the Ruins are kr_, the Tower kt_): assets/textures is one flat pool. The ten slots the grid draws; TileWater01 ships but no tile wears it. docs/worlds/kanturu-port.md Part B 8.1.",
+  "slot_note": "No grass .OZT ships, so no grass grows. TileGrass01, the grey-brown octagon paving, is 87.5% of the drawn ground; TileRock04 10.5%.",
+  "sheet_materials": {
+    "TileGrass01": "flagstone",
+    "TileGrass02": "flagstone",
+    "TileGround01": "sand",
+    "TileGround02": "rock",
+    "TileGround03": "flagstone",
+    "TileWood01": "sand",
+    "TileRock01": "flagstone",
+    "TileRock02": "rock",
+    "TileRock03": "flagstone",
+    "TileRock04": "flagstone",
+    "TileGrass01_over": "flagstone",
+    "TileGrass02_over": "flagstone",
+    "TileGround01_over": "sand",
+    "TileGround02_over": "rock",
+    "TileGround03_over": "flagstone",
+    "TileWood01_over": "sand",
+    "TileRock01_over": "flagstone",
+    "TileRock02_over": "rock",
+    "TileRock03_over": "flagstone",
+    "TileRock04_over": "flagstone"
+  },
+  "material_note": "Read off the art; the names lie. TileGrass01 and TileRock04 octagon paving, TileGrass02 the paving with its carved emblem, TileRock03 a carved stone disc: flagstone. TileGround03 and TileRock01, one 128 riveted iron plate in two stripes: flagstone, as there is no metal material. TileGround02 rough grey ground and TileRock02 red-veined cracked stone: rock. TileGround01 olive moss and TileWood01 brown earth: sand."
+}

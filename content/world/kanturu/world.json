@@ -1,0 +1,37 @@
+{
+  "world": "kanturu",
+  "name": "Kanturu",
+  "map": 37,
+  "note": "Kanturu Ruins, MU's map 37 (client Data/World38 + Object38, MuMain's WD_37KANTURU_1ST), Season 2 (2006), entered from Tarkan's west edge through the arch Tarkan already stands (Object86-88, gates 125/127). A broken ring of mossy industrial ruins round a black chasm, with a warp-only plateau in its middle (the 2010 Warriors' island). Step 1, 2026-10-21: the bare land, with no `rules` yet, so the realm does not know the map and no one stands in it but the studio. Its breeds will be raised past Aida's (the user, 2026-10-21: 'we will rise katuru monster levels so they are stronger than aida'), so the Ancient runes (141+) fall here. docs/worlds/kanturu-port.md.",
+  "gates": {
+    "spawn": {
+      "number": 138,
+      "box": [19, 217, 21, 219],
+      "note": "OpenMU's spawn gate 138 (VersionSeasonSix Gates.cs:276-280): the camp by the Tarkan door, the box a dead character stands up in. Without it a death in Kanturu rises in Lorencia. docs/worlds/kanturu-port.md Part C, C4."
+    }
+  },
+  "pipeline": {
+    "hidden": {
+      "value": [37, 59, 60, 61, 62, 81, 82, 83, 97, 107, 108],
+      "note": "Kanturu Ruins' eleven (MoveKanturu1stObject, GM_Kanturu_1st.cpp:52-60, 70-83, 107-108; 37 in RenderVisual :146): 37 the butterflies (58), 59 smoke vents (16), 60 and 61 red and amber fire lights (5, 58), 62, 107 and 108 the mist boxes (60, 77, 11), which never emit in MU (:165-173, 273-292), 81, 82 and 83 the waterfall spray (26, 35, 52), 97 the bubble box (1). 399 placements, all angeflo_R boxes, drawn by no mesh. docs/worlds/kanturu-port.md Part B 3."
+    },
+    "grass": {
+      "value": ["TileGrass01"],
+      "note": "MU grows dark olive tufts on slot 0 (5,340 drawn tiles) and pale blue-white wisps on slot 1 (1,353), ZzzLodTerrain.cpp:2076-2120. Slot 0 only for the first look; the wisps wait for a shot (decision 11). docs/worlds/kanturu-port.md."
+    },
+    "void": {
+      "value": {"start": 0.5, "depth": 6.0, "blend": 1.5},
+      "note": "Aida's way, deeper: 44.8% of the map is NoGround, a chasm round the plateau, and Object06/76's 394 cliff faces hang 5-14 m into it (Aida's walls 4.7 m, depth 4.5). `blend` darkens the bare ring lips where no cliff stands, as Aida. docs/worlds/kanturu-port.md Part B 5."
+    },
+    "void_fill": {
+      "value": [[20, 218], [70, 187]],
+      "note": "From the camp (spawn gate 138) and from the plateau (warp gate 334, Ruins3), which no walk reaches: seeded from the camp alone the walker would void the whole plateau, 5,514 tiles. With both, only the 8 stray open tiles on rows 251-255 become void (checked). Ours. docs/worlds/kanturu-port.md Part B 3."
+    },
+    "blend_keep_near": {"walls": [5, 75], "reach": 2.5},
+    "flat_over_void": true,
+    "airs_from": {
+      "value": "lorencia",
+      "note": "MuMain loads MODEL_BUTTERFLY01 from Data/Object1, Lorencia's objects (MapManager.cpp:377-378), as for Noria and Aida."
+    }
+  }
+}
