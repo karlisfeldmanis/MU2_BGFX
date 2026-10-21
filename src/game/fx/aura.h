@@ -116,16 +116,19 @@ inline constexpr Recipe kRising{};
 // It was a cage of five standing ribbons of MU2's `Shape.Barrier`, shown two seconds at the cast.
 // The knight's and the elf's in green, pushed past MU2's (0.4, 0.8, 0.2), which over Flare's own
 // gold came out olive -- the sheet is the colour, and what is passed here is what is left of it.
-inline constexpr Recipe kGuarding{3,    50.0f, 12.0f, 100.0f, 1.85f, 1.85f, 19.0f, 0.0f,
-                                  true, true,  true,  {0.18f, 1.0f, 0.35f},
+// Lower and fainter than the +11's own (the user, 2026-10-21: "going little bit to height over
+// the char heads", "also make it more subtle"): 1.6 a tick, 160 units, stops at his crown rather
+// than a head over it, and both guards' light is a little over half of what it was.
+inline constexpr Recipe kGuarding{3,    50.0f, 12.0f, 100.0f, 1.6f, 1.6f, 19.0f, 0.0f,
+                                  true, true,  true,  {0.1f, 0.55f, 0.19f},
                                   {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, false, true};
 // The wizard's Magic Shield (MU's Soul Barrier): the same ribbons in MU's own look for it --
 // `CreateJoint(MODEL_SPEARSKILL, ..., 0, to, 20.0f)` (ZzzCharacter.cpp:4984), subtype 0 being
 // BITMAP_FLARE_BLUE in white light (ZzzEffectJoint.cpp:1542-1546), where the guard's subtype 4
 // tints the same sheet green. The blue circles a tester missed (2026-10-21, "when i put magic
 // shield i dont see the blue circles effect"), shown the user in MuMain.
-inline constexpr Recipe kBarrier{3,    50.0f, 12.0f, 100.0f, 1.85f, 1.85f, 19.0f, 0.0f,
-                                 true, true,  true,  {1.0f, 1.0f, 1.0f},
+inline constexpr Recipe kBarrier{3,    50.0f, 12.0f, 100.0f, 1.6f, 1.6f, 19.0f, 0.0f,
+                                 true, true,  true,  {0.55f, 0.55f, 0.55f},
                                  {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, true, true};
 // The elf's Heal and Greater Damage (sprint 15), ours: MuMain draws neither -- ReceiveMagic plays
 // the elf's cast and SOUND_SKILL_DEFENSE and registers the buff, and nothing renders
