@@ -8543,6 +8543,27 @@ void testChaosMachine() {
             check(sim::judge(noria, weapon).recipe == sim::Recipe::ChaosWeapon &&
                       sim::judge(noria, weapon, sim::Service::FirstWings).recipe == sim::Recipe::None,
                   "a Chaos Weapon box is Combine's, not the Wings page's");
+            // A Chaos weapon a quest's jewel made is bound, and climbs to the wings all the same
+            // (MAGICTOMA on Discord, 2026-10-21: "i still cannot create 1st Wings"); nothing else
+            // does with it, and other bound gear stays out.
+            {
+                sim::Machine climb;
+                sim::Held boundAxe = chaosAxe;
+                boundAxe.bound = true;
+                climb.put(0, boundAxe);
+                climb.put(8, sim::Held{chaos, 0, 1});
+                const sim::Judged up = sim::judge(noria, climb, sim::Service::FirstWings);
+                check(up.recipe == sim::Recipe::Wings && up.ready && !up.blocked,
+                      "a bound +4 Chaos weapon makes the 1st wings");
+                check(sim::judge(noria, climb).ready, "on Combine too");
+                check(sim::judge(noria, climb, sim::Service::Upgrade).blocked,
+                      "but nothing else: the Upgrade refuses it");
+                sim::Held boundOther = optioned;
+                boundOther.bound = true;
+                climb.put(1, boundOther);
+                check(sim::judge(noria, climb, sim::Service::FirstWings).blocked,
+                      "and a bound +4 that is not a Chaos weapon still spoils the box");
+            }
             // Every mix a page of its own, and no plain Combine on the row (the user, 2026-10-05).
             bool combineShown = false;
             for (sim::Service one : sim::kRowServices) combineShown |= one == sim::Service::Combine;
@@ -8690,6 +8711,24 @@ void testChaosMachine() {
                 checkEqual(int(smith.machine()[got].refinement), 0, "at +0");
                 checkEqual(int(smith.machine()[got].durability), 200, "whole, at 200");
             }
+            // A bound Chaos axe makes a bound wing.
+            if (got >= 0) {
+                check(!smith.machine()[got].bound, "made of nothing bound, the wing is free");
+                check(smith.takeOut(got) >= 0, "and comes out");
+                const int bound = smith.give(axe, -1, 4, -1, true, 3, 0, 1, nullptr, nullptr, true);
+                check(bound >= sim::kWorn && smith.satchel()[bound].bound, "a bound +4 Chaos axe");
+                check(smith.putIn(bound) >= 0 && smith.putIn(smith.give(chaos)) >= 0, "goes in, with a Chaos");
+                for (int i = 0; i < 16; ++i) smith.putIn(smith.give(bless));
+                check(smith.judged(sim::Service::FirstWings).ready, "and the box is wings");
+                check(smith.mix(sim::Service::FirstWings), "the Goblin runs it");
+                int wing = -1;
+                for (int cell = 0; cell < sim::kMachineCells; ++cell) {
+                    if (!smith.machine()[cell].empty()) wing = cell;
+                }
+                check(wing >= 0 && smith.machine()[wing].item == satan && smith.machine()[wing].bound,
+                      "and the wing it makes is bound");
+                if (wing >= 0) smith.takeOut(wing);
+            }
 
             // Worn on slot 7 from level 180, and off a safe tile he flies (docs/game/wings.md).
             const int young = smith.give(satan);
@@ -8769,6 +8808,14 @@ void testChaosMachine() {
                 const sim::Judged bound = sim::judge(noria, second);
                 check(bound.recipe == sim::Recipe::SecondWings && !bound.blocked,
                       "a bound Loch's Feather is the 2nd wings' box too");
+                // And a bound 1st wing, made of a quest's jewel, climbs to the 2nd.
+                sim::Held boundWing{satan, 0, 200};
+                boundWing.bound = true;
+                second.put(0, boundWing);
+                const sim::Judged climbed = sim::judge(noria, second, sim::Service::SecondWings);
+                check(climbed.recipe == sim::Recipe::SecondWings && climbed.ready && !climbed.blocked,
+                      "a bound 1st wing makes the 2nd wings");
+                second.put(0, sim::Held{satan, 0, 200});
                 second.lift(5);
                 check(sim::judge(noria, second).recipe == sim::Recipe::None, "no feather, no wings");
 

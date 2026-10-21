@@ -307,4 +307,10 @@ bool jewelOfLife(const content::ItemRow& row);
 // and Sevina's Loch's Feather. What the mix makes with one is bound (Realm::mix).
 bool spentBound(const content::ItemRow& row);
 
+// What goes into its own rung of the wing ladder bound: a Chaos weapon into the 1st wings, a 1st
+// wing into the 2nd. A mix with a quest's jewel makes them bound, and the next rung refused them
+// (MAGICTOMA on Discord, 2026-10-21: "i still cannot create 1st Wings"). The wing it makes is
+// bound as it was (Realm::mix). Recipe::None asks whether it climbs either.
+bool climbsBound(const content::ItemRow& row, Recipe recipe);
+
 }  // namespace mu::sim

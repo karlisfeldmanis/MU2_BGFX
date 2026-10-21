@@ -615,6 +615,11 @@ bool jewelOfLife(const content::ItemRow& row) {
 bool spentBound(const content::ItemRow& row) {
     return jewelOfChaos(row) || jewelOfBless(row) || jewelOfSoul(row) || lochsFeather(row);
 }
+bool climbsBound(const content::ItemRow& row, Recipe recipe) {
+    if (chaosWeapon(row)) return recipe == Recipe::Wings || recipe == Recipe::None;
+    if (firstWing(row)) return recipe == Recipe::SecondWings || recipe == Recipe::None;
+    return false;
+}
 
 int64_t mixValue(const content::Tables& tables, const Held& what) {
     const content::ItemRow* row = rowOf(tables, what);
@@ -661,11 +666,14 @@ Judged judge(const content::Tables& tables, const Machine& box, Service service,
     // 2026-10-20: "loch's feather is a bound item sometimes and it can't be used for wings").
     // And the quests' Bless and Soul (the user, 2026-10-20, Bruno on Discord: "I have all items
     // but cant create Chaos Weapon"): the quests pay most of a player's early ones, bound.
+    // And what such a mix made climbs its own ladder: a bound Chaos weapon makes the 1st wings, a
+    // bound 1st wing the 2nd (sim::climbsBound), the wing bound in its turn.
     if (service != Service::RemoveRune && service != Service::AddSocket &&
         service != Service::FuseRunes) {
         for (int cell = 0; cell < kMachineCells; ++cell) {
-            if (!box[cell].empty() && box[cell].bound &&
-                !spentBound(tables.items[size_t(box[cell].item)])) {
+            if (box[cell].empty() || !box[cell].bound) continue;
+            const content::ItemRow& row = tables.items[size_t(box[cell].item)];
+            if (!spentBound(row) && !(j.recipe != Recipe::None && climbsBound(row, j.recipe))) {
                 j.ready = false;
                 j.blocked = true;
                 j.title = "Bound items: runes and sockets only";
@@ -737,7 +745,7 @@ Planned plan(const content::Tables& tables, const Machine& box, const Satchel& b
         Held what = bag[slot];
         const content::ItemRow* row = rowOf(tables, what);
         if (!row || taken[slot]) return false;
-        if (what.bound && !runes && !spentBound(*row)) return false;
+        if (what.bound && !runes && !spentBound(*row) && !climbsBound(*row, Recipe::None)) return false;
         *cell = trial.free(tables, row->width, row->height);
         if (*cell < 0) return false;
         *pieces = stacks(*row) ? piecesWanted(tables, trial, what, service, socket, kin) : 0;
