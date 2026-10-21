@@ -8668,8 +8668,8 @@ void testChaosMachine() {
         const int32_t uniria = noria.itemAt(13, 2);
         check(uniria >= 0, "the Horn of Uniria is in Noria's tables");
         if (uniria >= 0) {
-            const content::ItemRow& row = noria.items[size_t(uniria)];
-            sim::Held whole{uniria, 0, int16_t(sim::maximumDurability(row, sim::Held{uniria, 0, 0}))};
+            // A horn never ridden (sim::petUntil 0), one a cell.
+            sim::Held whole{uniria, 0, 1};
             for (int i = 0; i < sim::kDinorantHorns; ++i) horns.put(i, whole);
             horns.put(16, sim::Held{chaos, 0, 1});
             sim::Judged d = sim::judge(noria, horns);
@@ -8677,11 +8677,16 @@ void testChaosMachine() {
             checkEqual(d.rate, 70, "at 70%");
             checkEqual(int(d.zen), 500000, "for half a million");
             sim::Held tired = whole;
-            tired.durability = int16_t(whole.durability - 1);
+            sim::setPetUntil(tired, 1800000000);
             horns.put(9, tired);
             d = sim::judge(noria, horns);
             check(d.recipe == sim::Recipe::None && d.nearest == sim::Recipe::Dinorant,
-                  "a horn short of its life spoils it, and the box still looks like one");
+                  "a horn already ridden spoils it, and the box still looks like one");
+            // And ten in one stack are ten (the user, 2026-10-21: the pets stack).
+            sim::Machine stacked;
+            stacked.put(0, sim::Held{uniria, 0, int16_t(sim::kDinorantHorns)});
+            stacked.put(16, sim::Held{chaos, 0, 1});
+            check(sim::judge(noria, stacked).recipe == sim::Recipe::Dinorant, "ten horns in one stack are a Dinorant too");
         }
     }
 
@@ -11917,12 +11922,12 @@ void testPets(const content::Tables& tables) {
     check(a.dealt == 0.8, "and costs 20% of his own damage (ours)");
     check(i.dealt == 1.3 && i.lifeCost == 3, "the Imp adds 30% for 3 life a blow");
     check(a.wear == 0.03 && i.wear == 0.02, "and they wear at gObjSpriteDamage's rates");
-    // A dropped or boxed one comes whole, not at 1 Life (Crylos, 2026-10-21), and a jewel or an
-    // Ale out of the same draw still one to its stack.
+    // A dropped or boxed one is one to its stack since they are timed and stack (2026-10-21), as
+    // a jewel or an Ale out of the same draw.
     const int uniria = tables.itemAt(13, 2), chaos = tables.itemAt(12, 15), ale = tables.itemAt(14, 9);
-    checkEqual(sim::bareDurability(tables.items[size_t(angel)]), 255, "a dropped Angel at full Life");
-    checkEqual(sim::bareDurability(tables.items[size_t(imp)]), 255, "and an Imp");
-    check(uniria >= 0 && sim::bareDurability(tables.items[size_t(uniria)]) == 255, "and a boxed Uniria");
+    checkEqual(sim::bareDurability(tables.items[size_t(angel)]), 1, "a dropped Angel one to its stack");
+    checkEqual(sim::bareDurability(tables.items[size_t(imp)]), 1, "and an Imp");
+    check(uniria >= 0 && sim::bareDurability(tables.items[size_t(uniria)]) == 1, "and a boxed Uniria");
     check(chaos >= 0 && sim::bareDurability(tables.items[size_t(chaos)]) == 1, "a dropped Chaos one to its stack");
     check(ale >= 0 && sim::bareDurability(tables.items[size_t(ale)]) == 1, "and an Ale");
     // No one mends the Angel or the Imp (IsRepairBan; LoveMu, 2026-10-21): no price, worn or
@@ -11939,9 +11944,10 @@ void testPets(const content::Tables& tables) {
         worn.durability = 100;
         check(sim::brokerable(tables, worn) == sim::BrokerNo::Yes, "and a worn one may be listed");
     }
-    for (const int number : {2, 3, 8}) {
+    // Uniria is timed now (sim::timedPet) and mends no more; the Dinorant and a ring still do.
+    for (const int number : {3, 8}) {
         if (const int still = tables.itemAt(13, number); still >= 0) {
-            check(sim::mendable(tables.items[size_t(still)]), "Uniria, Dinorant and a ring still mend");
+            check(sim::mendable(tables.items[size_t(still)]), "Dinorant and a ring still mend");
         }
     }
 
@@ -11997,27 +12003,44 @@ void testPets(const content::Tables& tables) {
     check(price > 2.5 && price < 3.5, "the Imp costs 3 life a landed blow");
 }
 
-// The Angel's and the Imp's day (sim::timedPet, Realm::petClock): stamped the first second it
-// is worn, untouched in the bag, and gone with a PetLost when the real clock passes it.
+// The timed pets (sim::timedPet, Realm::petClock): they stack, one comes off the stack when
+// worn, its clock starts that second -- two hours for the Angel and the Imp, a day for Uniria --
+// one never worn is kept as it is, and at its second it is gone with a PetLost.
 void testPetDay(const content::Tables& tables) {
-    std::printf("the Angel's and the Imp's 24 hours\n");
-    const int angel = tables.itemAt(13, 0), imp = tables.itemAt(13, 1);
-    if (angel < 0 || imp < 0) return;
+    std::printf("the timed pets\n");
+    const int angel = tables.itemAt(13, 0), imp = tables.itemAt(13, 1), horn = tables.itemAt(13, 2);
+    if (angel < 0 || imp < 0 || horn < 0) return;
+    checkEqual(sim::petSeconds(tables.items[size_t(angel)]), int64_t(2 * 3600), "the Angel lasts two hours");
+    checkEqual(sim::petSeconds(tables.items[size_t(horn)]), int64_t(24 * 3600), "and Uniria a day");
     const int64_t start = 1800000000;
     sim::Realm realm;
-    realm.raise(&tables, 0, 135, 128, sim::Kin::DarkKnight, 40);
+    realm.raise(&tables, 0, 135, 128, sim::Kin::DarkKnight, 80);
     realm.setWallClock(start);
-    check(realm.give(angel, sim::kPet) >= 0, "the Angel is worn");
+    const int stack = realm.give(angel, -1);
+    realm.give(angel, -1);
+    realm.give(angel, -1);
+    check(stack >= 0, "three Angels given");
+    if (stack < 0) return;
+    checkEqual(int(realm.satchel()[stack].durability), 3, "and they stack in one cell");
+    check(realm.moveItem(stack, sim::kPet), "one is put on from the stack");
+    checkEqual(int(realm.satchel()[sim::kPet].durability), 1, "one worn");
+    checkEqual(int(realm.satchel()[stack].durability), 2, "and two left in the cell");
     const int carried = realm.give(imp, -1);
-    check(carried >= 0, "and an Imp carried");
+    check(carried >= 0 && realm.give(horn, sim::kMount) >= 0, "an Imp carried and Uniria ridden");
     for (int tick = 0; tick < 20; ++tick) realm.step();
-    checkEqual(sim::petUntil(realm.satchel()[sim::kPet]), start + sim::kPetDaySeconds,
-               "the worn Angel's day starts as it is worn");
-    if (carried >= 0) checkEqual(sim::petUntil(realm.satchel()[carried]), int64_t(0), "the carried Imp's has not");
-    realm.setWallClock(start + sim::kPetDaySeconds - 1);
+    const int64_t until = start + sim::kSpiritSeconds;
+    checkEqual(sim::petUntil(realm.satchel()[sim::kPet]), until, "the worn Angel's two hours start as it is worn");
+    checkEqual(sim::petUntil(realm.satchel()[sim::kMount]), start + sim::kHornSeconds, "Uniria's day too");
+    checkEqual(sim::petUntil(realm.satchel()[stack]), int64_t(0), "the stack's has not");
+    if (carried >= 0) checkEqual(sim::petUntil(realm.satchel()[carried]), int64_t(0), "nor the carried Imp's");
+    // Taken off, a started one does not go back onto the stack.
+    check(!realm.moveItem(sim::kPet, stack), "the worn Angel let go on its stack is refused");
+    checkEqual(int(realm.satchel()[stack].durability), 2, "is not poured into it");
+    checkEqual(int(realm.satchel()[sim::kPet].durability), 1, "nor swapped for the stack");
+    realm.setWallClock(until - 1);
     for (int tick = 0; tick < 20; ++tick) realm.step();
     check(!realm.satchel()[sim::kPet].empty(), "a second before, the Angel is still there");
-    realm.setWallClock(start + sim::kPetDaySeconds);
+    realm.setWallClock(until);
     bool said = false;
     for (int tick = 0; tick < 20; ++tick) {
         realm.step();
@@ -12025,7 +12048,11 @@ void testPetDay(const content::Tables& tables) {
     }
     check(realm.satchel()[sim::kPet].empty() && said, "at its second it is gone, and said");
     check(realm.hero().pet.taken == 1.0, "and its guard with it");
-    if (carried >= 0) check(!realm.satchel()[carried].empty(), "the Imp never worn is kept");
+    checkEqual(int(realm.satchel()[stack].durability), 2, "the two never worn are kept");
+    check(!realm.satchel()[sim::kMount].empty(), "and Uniria rides on");
+    // Blows wear none of them.
+    check(!sim::wears(tables.items[size_t(horn)]) && !sim::mendable(tables.items[size_t(horn)]),
+          "Uniria neither wears nor is mended");
 }
 
 // The Horn of Uniria (docs/game/mount.md): the mount's slot, no power but the ride, faster than the

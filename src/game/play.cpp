@@ -286,7 +286,7 @@ void Play::wornPet(const sim::Happening& happening) {
         Gain gain{Gain::Kind::Notice, 0};
         const bool day = happening.a >= 0 && size_t(happening.a) < tables_.items.size() &&
                          sim::timedPet(tables_.items[size_t(happening.a)]);
-        gain.line = "Your " + nameOf(happening.a) + (day ? "'s 24 hours are over: it is gone" : " has died");
+        gain.line = "Your " + nameOf(happening.a) + (day ? "'s time is over: it is gone" : " has died");
         gains_.push_back(gain);
         core::logf("pet: %s", gain.line.c_str());
         return;
@@ -296,7 +296,7 @@ void Play::wornPet(const sim::Happening& happening) {
     const int i = slot == sim::kPet ? 0 : 1;
     const int32_t item = realm_.satchel()[slot].item;
     if (item < 0) return;
-    // The Angel and the Imp do not wear (sim::timedPet); nothing to warn of.
+    // The Angel, the Imp and Uniria do not wear (sim::timedPet); nothing to warn of.
     const content::ItemRow& row = tables_.items[size_t(item)];
     if (sim::timedPet(row)) return;
     const int band = int(sim::wornBand(happening.b, happening.c));

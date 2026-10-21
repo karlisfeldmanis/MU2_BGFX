@@ -2014,7 +2014,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
             continue;
         }
         const content::ItemRow& row = realm.tables()->items[size_t(pet.item)];
-        const int most = sim::maximumDurability(row, pet);
+        const int most = sim::timedPet(row) ? 1 : sim::maximumDurability(row, pet);
         if (row.group == sim::kGroupPets && pet.durability > 0 && most > 0) {
             Hud::Boon& boon = boons[standing++];
             boon.pet = row.number;
@@ -2023,12 +2023,12 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
             boon.kinship = hero.excel.kinship;
             boon.idle = sim::petPower(row).mount && !sim::rideMap(realm.tables()->map);
             boon.share = float(pet.durability) / float(most);
-            // The Angel's and the Imp's bar is its day (sim::timedPet): minutes left of 1440.
+            // A timed pet's bar is its time (sim::timedPet): minutes left of its whole.
             if (sim::timedPet(row)) {
                 const int64_t until = sim::petUntil(pet);
                 const int64_t left =
-                    until == 0 ? sim::kPetDaySeconds : std::max<int64_t>(0, until - int64_t(std::time(nullptr)));
-                boon.lifeMost = int(sim::kPetDaySeconds / 60);
+                    until == 0 ? sim::petSeconds(row) : std::max<int64_t>(0, until - int64_t(std::time(nullptr)));
+                boon.lifeMost = int(sim::petSeconds(row) / 60);
                 boon.life = int((left + 59) / 60);
                 boon.share = float(boon.life) / float(boon.lifeMost);
             }

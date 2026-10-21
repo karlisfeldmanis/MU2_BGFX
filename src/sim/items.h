@@ -139,14 +139,20 @@ bool placesIn(const content::ItemRow& row, Kin kin, int slot);
 // A pet's powers (sim::PetPower): the Guardian Angel 13/0, the Imp 13/1 and the Horns of Uniria
 // 13/2 and Dinorant 13/3. Nothing for any other row, and nothing -- the caller's to check -- for one whose life is gone.
 PetPower petPower(const content::ItemRow& row);
-// **The Guardian Angel and the Imp last a day** (the user, 2026-10-21: "i want that its time
-// based 24 hours"): not worn down by blows and never mended, but gone kPetDaySeconds of real time
-// after they are first worn, worn or not, online or not (Realm::petClock). The second they go
-// is kept in what a pet otherwise leaves nought -- the three socket powers and the wing byte, as
-// one unix second, low byte first -- so the wire, the save, the vault and the Broker all carry it
-// without a field of their own. 0 for one never worn.
-constexpr int64_t kPetDaySeconds = 24 * 60 * 60;
+// **The Guardian Angel, the Imp and the Horn of Uniria are timed** (the user, 2026-10-21: "i
+// want that its time based 24 hours", then "make imp and gurdian angle not 24 hours but 2
+// hours", and Uniria a day as well): not worn down by blows and never mended, but gone
+// petSeconds of real time after they are first worn, worn or not, online or not
+// (Realm::petClock). The second they go is kept in what a pet otherwise leaves nought -- the
+// three socket powers and the wing byte, as one unix second, low byte first -- so the wire, the
+// save, the vault and the Broker all carry it without a field of their own. 0 for one never worn.
+// **They stack** (the user, the same day: "we need to stack imps and guardian angles and uniria
+// mounts"), kStackMost a cell, the count in the durability as a potion's: only ones never worn
+// (sim::tops), and one is taken off the stack when worn (sim::wearOn). A worn one is a 1.
+constexpr int64_t kSpiritSeconds = 2 * 60 * 60;  // the Angel and the Imp
+constexpr int64_t kHornSeconds = 24 * 60 * 60;   // Uniria
 bool timedPet(const content::ItemRow& row);
+int64_t petSeconds(const content::ItemRow& row);
 int64_t petUntil(const Held& pet);
 void setPetUntil(Held& pet, int64_t unixSecond);
 

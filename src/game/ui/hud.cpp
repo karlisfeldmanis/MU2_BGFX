@@ -871,10 +871,11 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
             if (one.idle) what.rows.push_back(prose("Cannot be ridden here", tip::Tone::Red));
         }
         if (lifted) what.rows.push_back(prose("its price lifted by your Kinship rune"));
-        // The Angel and the Imp keep a day, not Life (sim::timedPet): `life` is its minutes left.
-        const bool day = one.pet == 0 || one.pet == 1;
-        what.rows.push_back(prose(day ? "gone 24 hours after it is first worn"
-                                      : "loses Life as you take damage, and is gone at none"));
+        // A timed pet keeps time, not Life (sim::timedPet): `life` is its minutes left.
+        const bool day = sim::timedPet(row);
+        what.rows.push_back(prose(day ? "gone " + std::to_string(sim::petSeconds(row) / 3600) +
+                                            " hours after it is first worn"
+                                      : std::string("loses Life as you take damage, and is gone at none")));
         sheet.sections.push_back(what);
         sheet.wear = day ? "Time left " + std::to_string(one.life / 60) + "h " + std::to_string(one.life % 60) + "m"
                          : "Life " + std::to_string(one.life) + " / " + std::to_string(one.lifeMost);

@@ -105,8 +105,9 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
                 continue;
             }
             if (row->group == kGroupPets && row->number == 2) {
-                // `m_Durability == 255`: only a horn at its whole life counts.
-                ++(what.durability >= maximumDurability(*row, what) ? s.horns : s.wornHorns);
+                // `m_Durability == 255`: only a horn at its whole life counts -- ours, one never
+                // ridden, whose day has not started (sim::petUntil); a stack counts each.
+                (petUntil(what) == 0 ? s.horns : s.wornHorns) += n;
                 continue;
             }
             if (firstWing(*row)) {

@@ -31,8 +31,8 @@ namespace {
 //    and the second class's over Icarus and the class change (Dark Phoenix, Grand Soul, Divine;
 //    the Magic Gladiator's Storm Crow). Never a piece of a set a link before it.
 //  - Jewellery and pets climb too: a green ring at home, a pendant, the Angel and the Imp, a blue
-//    then purple ring, the Kinship that frees the pets, Uniria at the tower and the Dinorant at
-//    the Balrog -- the key to Icarus's door at 160, where wings ask 180.
+//    then purple ring, the Kinship that frees the pets, Uniria at the tower (the Dinorant the
+//    Balrog paid was taken off on 2026-10-21; the machine makes one).
 //  - Every clear's jewels rise: Bless at home, Soul from Devias, Chaos from the Halls (the
 //    machine), Life from Atlans (Add Socket); a Box of Luck early, a Box of Kundun off each boss.
 //  - A skill's orb or scroll comes at about the level it asks.
@@ -946,9 +946,8 @@ QuestRow tersiaBalrog() {
                                  .firstOnly = true};
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::Stormcall),
                                  .firstOnly = true};
-    // **And the Horn of Dinorant** (2026-10-09): Icarus's door above this floor asks 160 and
-    // wings or a Dinorant, and the first wings ask 180, so this is the key to the next contract.
-    row.paid[row.paidCount++] = {.item = "Helper04", .firstOnly = true};
+    // The Horn of Dinorant it paid from 2026-10-09 is gone from it (the user, 2026-10-21:
+    // "remove from quest reward dyno"): the Chaos Machine makes one, of ten Uniria and a Chaos.
     row.paid[row.paidCount++] = {.item = "MagicBox08", .plus = 2};  // a Box of Kundun +2
     // And the one legendary ring a quest pays: four powers.
     row.paid[row.paidCount++] = {.item = "RingWisdom", .plus = 4, .firstOnly = true,

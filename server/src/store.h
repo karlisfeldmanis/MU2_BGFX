@@ -190,7 +190,8 @@ private:
     // journal, on the one thread every world ticks on (sprint 25).
     void checkpoints(std::string path);
     // A read character's things to this server's rows, from the list his row was written with.
-    void renumber(sim::Kept& kept, int items) const;
+    // `layout` the row's: before 11 a timed pet's durability was its Life, and it is one now.
+    void renumber(sim::Kept& kept, int items, int layout) const;
     // The account's vault written, alone; vaultOf's first.
     bool keepVault(const std::string& account, const sim::Vault& vault);
 

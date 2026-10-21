@@ -89,6 +89,11 @@ OpenMU on rules, `docs/reference/webzen-audit.md`).
 4. **Town: the horse goes, he walks.** MU's alpha-0 cut, closed with a short fade **ours**
    (`visible-mu-pops-get-closed`). *Open: fade or MU's cut.*
 5. **Wear damage/100 per hit taken**, WebZen, as the pets. Destroyed at 0, no repair.
+   **Since 2026-10-21, ours: a day of real time instead** (the user: "make Uniria 24h too"):
+   Uniria is a timed pet (`sim::timedPet`, docs/game/pets.md), gone 24 hours after it is first
+   ridden, worn by no blow and mended by no one. Horns stack, 20 a cell, while never ridden; the
+   Dinorant's mix takes ten never ridden (`sim::petUntil` 0), one a cell or a stack of ten. The
+   Dinorant itself still wears and mends, and Tersia's seventh floor pays one no more.
 6. **Sold on Lumen's shelf** beside the pets, 15,700 **ours** (0.75 sells it nowhere), and in
    the jewel drop group from monster level 25.
 7. **Pet card**: type "Mount", "Moving speed" line (MuMain GT 68), `Life n / 255` in the foot; the

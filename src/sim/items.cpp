@@ -137,7 +137,11 @@ PetPower petPower(const content::ItemRow& row) {
 }
 
 bool timedPet(const content::ItemRow& row) {
-    return row.group == kGroupPets && (row.number == 0 || row.number == 1);
+    return row.group == kGroupPets && row.number >= 0 && row.number <= 2;
+}
+
+int64_t petSeconds(const content::ItemRow& row) {
+    return row.group == kGroupPets && row.number == 2 ? kHornSeconds : kSpiritSeconds;
 }
 
 int64_t petUntil(const Held& pet) {
@@ -931,6 +935,8 @@ int stackMost(const content::ItemRow& row) {
     // 2026-10-20: "we need stacking jewels", bug report #41). MU counts its own stacked jewels in
     // the durability as well. A Rune of Creation carries a power of its own and never stacks.
     if (refiningJewel(row)) return kStackMost;
+    // The Angel, the Imp and Uniria (sim::timedPet), never worn.
+    if (timedPet(row)) return kStackMost;
     // And what else he carries several of and spends one at a time (the user, 2026-10-20: "which
     // else items make sense we stack?", and the table's both halves): the Ale and the Town
     // Portal (Realm::use spends one), Loch's Feather and the castle's and the square's materials
@@ -956,6 +962,8 @@ bool tops(const content::Tables& tables, const Held& onto, const Held& what) {
     // quest's Firecrackers free.
     if (onto.bound != what.bound) return false;
     if (size_t(onto.item) >= tables.items.size()) return false;
+    // A timed pet whose clock has started stands alone (sim::petUntil).
+    if (timedPet(tables.items[size_t(onto.item)]) && (petUntil(onto) != 0 || petUntil(what) != 0)) return false;
     return onto.durability < poursMost(tables.items[size_t(onto.item)]);
 }
 
@@ -1091,7 +1099,14 @@ bool wearOn(const content::Tables& tables, const Wearer& who, Satchel& bag, int 
         (!across && !fits(tables, who, bag[from]))) {
         return false;
     }
-    const Held what = bag.lift(from);
+    Held what = bag.lift(from);
+    // One off a stack of timed pets is put on; the rest stays where it was.
+    if (timedPet(*row) && what.durability > 1) {
+        Held rest = what;
+        rest.durability = int16_t(what.durability - 1);
+        bag.put(from, rest);
+        what.durability = 1;
+    }
     if (across) {
         // What held the other hand takes the one this left when it may be held there, a swap;
         // otherwise, a shield that cannot go in the right hand, it goes into the bag.
@@ -1163,6 +1178,8 @@ bool movable(const content::Tables& tables, const Wearer& who, const Satchel& ba
     if (wearable(from)) {
         // A swap run the other way: what comes up to take its place has to pass the gates the
         // thing coming down just left.
+        // Never a stack of timed pets up into the worn slot: only one is worn (sim::wearOn).
+        if (timedPet(*other) && displaced.durability > 1) return false;
         return placesIn(*other, who.kin, from) && fits(tables, who, displaced) &&
                !handful(tables, bag, displaced, from);
     }

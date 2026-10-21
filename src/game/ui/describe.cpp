@@ -675,11 +675,12 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             line.mark = tip::Mark::Diamond;
             does.rows.push_back(line);
         }
-        // The Angel's and the Imp's day (sim::timedPet), said on the card and not only in its
-        // foot: a buyer at Lumen's shelf reads it before he pays.
+        // A timed pet's hours (sim::timedPet), said on the card and not only in its foot: a
+        // buyer at Lumen's shelf reads it before he pays.
         if (sim::timedPet(row)) {
             Row line;
-            line.free = "Lasts 24 hours from the first time it is worn";
+            line.free = "Lasts " + std::to_string(sim::petSeconds(row) / 3600) +
+                        " hours from the first time it is worn";
             line.freeTone = Tone::Orange;
             line.mark = tip::Mark::Diamond;
             does.rows.push_back(line);
@@ -1309,22 +1310,22 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         }
         if (what.durability <= 0) sheet.note = "Broken";
     }
-    // The Angel's and the Imp's foot is the time it has left, not its life (sim::timedPet): the
-    // bar is the day's share left, red in its last hour.
+    // A timed pet's foot is the time it has left, not its life (sim::timedPet): the bar is its
+    // time's share left, red in its last hour (its last ten minutes for the Angel and the Imp).
     if (sim::timedPet(row)) {
         const int64_t until = sim::petUntil(what);
         sheet.note.clear();
         sheet.wearTone = tip::Tone::White;
         if (until == 0) {
-            sheet.wear = "Lasts 24 hours once worn";
+            sheet.wear = "Lasts " + std::to_string(sim::petSeconds(row) / 3600) + " hours once worn";
             sheet.worn = 1.0f;
         } else {
             const int64_t left = std::max<int64_t>(0, until - int64_t(std::time(nullptr)));
             const int64_t minutes = (left + 59) / 60;
             sheet.wear = "Time left: " + std::to_string(minutes / 60) + "h " +
                          std::to_string(minutes % 60) + "m";
-            sheet.worn = float(double(left) / double(sim::kPetDaySeconds));
-            if (left < 3600) sheet.wearTone = tip::Tone::Red;
+            sheet.worn = float(double(left) / double(sim::petSeconds(row)));
+            if (left < sim::petSeconds(row) / 12) sheet.wearTone = tip::Tone::Red;
         }
     }
     return sheet;

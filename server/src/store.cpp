@@ -291,7 +291,7 @@ bool Store::useItems(const content::Tables& tables, std::string& error) {
     return true;
 }
 
-void Store::renumber(sim::Kept& kept, int items) const {
+void Store::renumber(sim::Kept& kept, int items, int layout) const {
     const auto found = renumbers_.find(items);
     if (found != renumbers_.end()) {
         const std::vector<int32_t>& map = found->second;
@@ -305,10 +305,13 @@ void Store::renumber(sim::Kept& kept, int items) const {
     // Scroll of Archangel and Blood Bone at 128 -- is one, not a stack of 128 (save.cpp's
     // durabilityOf, for the server's rows).
     if (tables_ == nullptr) return;
-    const auto one = [this](sim::Held h) {
+    // And an Angel, an Imp or a Uniria from before they stacked (layout 11, 2026-10-21) is one
+    // whatever its Life was, so a worn-down one is not read as a stack of it.
+    const auto one = [this, layout](sim::Held h) {
         if (h.empty() || h.item < 0 || size_t(h.item) >= tables_->items.size()) return h;
         const content::ItemRow& row = tables_->items[size_t(h.item)];
         if (sim::stacks(row) && h.durability > sim::stackMost(row)) h.durability = 1;
+        if (layout < 11 && sim::timedPet(row)) h.durability = 1;
         return h;
     };
     for (sim::Held& h : kept.hero.slots) h = one(h);
@@ -351,7 +354,7 @@ std::vector<Store::Roll> Store::everyone() {
             const auto* bytes = static_cast<const uint8_t*>(sqlite3_column_blob(q.s, 7));
             const std::vector<uint8_t> kept(bytes, bytes + sqlite3_column_bytes(q.s, 7));
             one.read = net::keptFrom(kept, one.kept, layout);
-            if (one.read) renumber(one.kept, sqlite3_column_int(q.s, 8));
+            if (one.read) renumber(one.kept, sqlite3_column_int(q.s, 8), layout);
         }
         all.push_back(std::move(one));
     }
@@ -383,7 +386,7 @@ std::vector<Store::Listed> Store::list(const std::string& account) {
                                (unsigned long long)one.token);
                 continue;
             }
-            renumber(one.kept, sqlite3_column_int(q.s, 7));
+            renumber(one.kept, sqlite3_column_int(q.s, 7), layout);
         }
         all.push_back(std::move(one));
     }
@@ -456,7 +459,7 @@ bool Store::find(uint64_t token, sim::Kept& out, std::string& world) {
                        (unsigned long long)token, layout, kLayout);
         return false;
     }
-    renumber(out, sqlite3_column_int(q.s, 3));
+    renumber(out, sqlite3_column_int(q.s, 3), layout);
     const auto* named = reinterpret_cast<const char*>(sqlite3_column_text(q.s, 2));
     world = named ? named : "";
     return true;
@@ -478,7 +481,7 @@ bool Store::vaultOf(const std::string& account, sim::Vault& out) {
                                account.c_str(), layout, kLayout);
                 return false;
             }
-            renumber(read, sqlite3_column_int(q.s, 2));
+            renumber(read, sqlite3_column_int(q.s, 2), layout);
             out = read.vault;
             return true;
         }

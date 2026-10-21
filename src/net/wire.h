@@ -170,8 +170,10 @@ constexpr const char* kDefaultHost = "mu-classic.com";
 // Tersia, 2026-10-09), where 3 and 4 carry 24; 6 the perch he logged out on (2026-10-09); 7 his auto-drink lines (2026-10-11); 8 27 quests, Aida's
 // two (2026-10-16), where 5-7 carry 25; 9 a 40th skill's cool, the Alquamos (2026-10-20), where
 // 3-8 carry 39 (and a few 8s written by 0f23a18a's server carry 40: keptFrom tries both); 10 his
-// talents' ranks, seven columns of nine bytes (2026-10-21), where 3-9 carry none.
-constexpr int kKeptLayout = 10;
+// talents' ranks, seven columns of nine bytes (2026-10-21), where 3-9 carry none; 11 the same
+// bytes, but the Angel's, the Imp's and Uniria's durability is a stack's count, where 3-10 kept
+// their Life (2026-10-21, sim::timedPet; the store's renumber makes each old one one).
+constexpr int kKeptLayout = 11;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame a client accepts: a Welcome with its snapshot, about half a MB for a town of

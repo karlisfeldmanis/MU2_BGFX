@@ -2023,8 +2023,8 @@ private:
     void sip();
     // A potion drunk for him under his auto-drink's lines (sim::AutoDrink), after sip().
     void autoDrink(Body& hero);
-    // The Angel's and the Imp's day (sim::timedPet): stamped on the first second it is worn, and
-    // anything of theirs past its second taken from the bag or the vault, once a second.
+    // The timed pets' clock (sim::timedPet): stamped on the first second one is worn, and any
+    // past its second taken from the bag or the vault, once a second.
     void petClock();
     void recover(Body& hero);
     // `byRoad`: kept to the roads where it can be (setRoads), for a townsperson's rounds.

@@ -1784,8 +1784,8 @@ void Realm::wearOnTaken(int took) {
     // damage BEFORE its own cut, since ObjAttack.cpp calls it ahead of gObjAngelSprite. Landing
     // a blow wears it not at all. At nought it is destroyed rather than left broken
     // (Player.cs:1991-2001), and its powers go with it.
-    // The mount in its own slot wears the same way, off the same uncut damage. The Angel and the
-    // Imp do not: theirs is a day of real time (sim::timedPet, Realm::petClock).
+    // The mount in its own slot wears the same way, off the same uncut damage. The Angel, the
+    // Imp and Uniria do not: theirs is real time (sim::timedPet, Realm::petClock).
     const double uncut = double(took) / mine().pet.taken;
     bool lostOne = false;
     for (int slot : {kPet, kMount}) {
@@ -1809,10 +1809,25 @@ void Realm::petClock() {
         return !h.empty() && size_t(h.item) < tables_->items.size() &&
                timedPet(tables_->items[size_t(h.item)]);
     };
-    // Its day starts the first second it is worn.
-    if (Held worn = me().bag[kPet]; timed(worn) && petUntil(worn) == 0) {
-        setPetUntil(worn, wall_ + kPetDaySeconds);
-        me().bag.put(kPet, worn);
+    // Its time starts the first second it is worn, and a worn one is one.
+    for (int slot : {kPet, kMount}) {
+        Held worn = me().bag[slot];
+        if (!timed(worn) || (petUntil(worn) != 0 && worn.durability == 1)) continue;
+        if (petUntil(worn) == 0) setPetUntil(worn, wall_ + petSeconds(tables_->items[size_t(worn.item)]));
+        worn.durability = 1;
+        me().bag.put(slot, worn);
+    }
+    // One kept from before they stacked, its Life where the count is now (a Broker's parcel, a
+    // save the store did not convert): one, not 255.
+    const auto counted = [&](Held h) {
+        if (timed(h) && h.durability > kStackMost) h.durability = 1;
+        return h;
+    };
+    for (int slot = kWorn; slot < kSlots; ++slot) {
+        if (timed(me().bag[slot]) && me().bag[slot].durability > kStackMost) me().bag.put(slot, counted(me().bag[slot]));
+    }
+    for (int cell = 0; cell < kVaultCells; ++cell) {
+        if (timed(me().vault[cell]) && me().vault[cell].durability > kStackMost) me().vault.put(cell, counted(me().vault[cell]));
     }
     const auto over = [&](const Held& h) {
         return timed(h) && petUntil(h) != 0 && wall_ >= petUntil(h);

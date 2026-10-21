@@ -94,14 +94,21 @@ cross-checked against a Season 6 1.00.90 decompile and the 0.97k emulator:
   (card: "Decrease 20% of attacking & Wizardry Dmg" in red); the Imp multiplies every blow dealt by 1.3 after the level floor (`rules.cpp` step 7)
   and takes 3 of his life for every blow that lands (`Realm::strikeAt`); with 3 or less he
   neither pays nor gets the x1.3 -- WebZen lays him at 0, ours stops short since 0 is dead here.
-- **A day, not wear** (ours, the user, 2026-10-21: "i want that its time based 24 hours"): the
-  Angel and the Imp (`sim::timedPet`) are not worn by blows. The first second one is worn,
-  `Realm::petClock` stamps it with `wall + kPetDaySeconds` (24 h of real time); it runs on worn
-  or not, online or not, and once a second anything past its second is taken from the bag or the
-  vault (`What::PetLost`, "Your Imp's 24 hours are over: it is gone"). The second is kept in the
-  three socket powers and the wing byte, which a pet otherwise leaves nought (`sim::petUntil`),
-  so the wire, the save, the vault and the Broker carry it with no field or layout of their own.
-  The card's foot and the buff cell's bar are the time left. sim_test `testPetDay`.
+- **Time, not wear, and they stack** (ours, the user, 2026-10-21: "i want that its time based 24
+  hours", then "make imp and gurdian angle not 24 hours but 2 hours", Uniria a day, and "we need to
+  stack imps and guardian angles and uniria mounts"): the Angel, the Imp and Uniria
+  (`sim::timedPet`) are not worn by blows and never mended. The first second one is worn,
+  `Realm::petClock` stamps it with `wall + petSeconds` -- 2 hours for the Angel and the Imp
+  (`kSpiritSeconds`), 24 for Uniria (`kHornSeconds`); it runs on worn or not, online or not, and
+  once a second anything past its second is taken from the bag or the vault (`What::PetLost`,
+  "Your Imp's time is over: it is gone"). The second is kept in the three socket powers and the
+  wing byte, which a pet otherwise leaves nought (`sim::petUntil`), so the wire, the save, the
+  vault and the Broker carry it with no field of their own. Never-worn ones stack, 20 a cell, the
+  count in the durability as a potion's (`sim::tops` refuses a started one either way); wearing
+  takes one off the stack (`sim::wearOn`), and a worn one is never swapped for a stack. Old ones,
+  whose durability was their Life, are one each: the store's `renumber` for rows before kept
+  layout 11, and `petClock` for anything over 20 that comes another way (a Broker parcel). The
+  card's foot and the buff cell's bar are the time left. sim_test `testPetDay`.
   (Before: every hit taken wore the Angel by 3/100 of the damage and the Imp by 2/100.)
 - **No repair** (`sim::mendable`, 2026-10-21, LoveMu: "Imp and angel in orginal mu cant be
   repaired just dissapear"): the Angel and the Imp (13/0-1) have no repair price at a counter or

@@ -22,7 +22,8 @@ int64_t round(int64_t price) {
 }  // namespace
 
 bool wears(const content::ItemRow& row) {
-    return row.durability > 0 && placeOf(row) >= 0 && !ammunition(row);
+    // Not the timed pets, whose life is a clock (sim::timedPet) and whose durability a count.
+    return row.durability > 0 && placeOf(row) >= 0 && !ammunition(row) && !timedPet(row);
 }
 
 bool mendable(const content::ItemRow& row) {
