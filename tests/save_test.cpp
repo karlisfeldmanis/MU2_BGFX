@@ -114,6 +114,18 @@ int main(int argc, char** argv) {
     std::string why;
     check(same(old, again, why), "to the same character (" + why + ")");
 
+    // 2b. His talents (sim/talents.h): written as a list a column, read back rank for rank; a
+    // character without any writes no key.
+    check(text.find("\"talents\"") == std::string::npos, "no talents, no key");
+    game::Saved talented = again;
+    talented.hero.talents[0] = {10, 10, 1, 4, 0, 0, 0, 0, 0};
+    talented.hero.talents[5][0] = 3;
+    const std::string withTalents = (scratch / "talents.json").string();
+    check(game::writeSave(withTalents, tables, talented), "a talented hero writes");
+    game::Saved talentsBack;
+    check(game::loadSave(withTalents, talentsBack), "and reads");
+    check(talentsBack.hero.talents == talented.hero.talents, "with every rank as it was");
+
     // 3. The quests reordered and a key no table has: an inserted row, as a file sees one.
     std::string moved = text;
     const size_t open = moved.find("\"quests\": {") + 11;
