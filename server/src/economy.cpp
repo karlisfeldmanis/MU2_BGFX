@@ -10,11 +10,14 @@ enum Why : int { Kills, Crackers, Sold, Quests, Shop, Repair, Machine, Travel, E
 const char* const kWhyNames[kWhys] = {"kills",  "crackers", "sold",   "quests", "shop",
                                       "repair", "machine",  "travel", "events", "market", "other"};
 
-// One side's hour: Zen in and out by why, and what trades moved.
+// One side's hour: Zen in and out by why, and what trades moved. And what kills left for him,
+// counted as they fall (2026-10-21, for the talents' Fortune): jewels (the refining four, Life,
+// Creation and the rest of the jewel group), excellent items, and every other thing.
 struct Ledger {
     int64_t in[kWhys] = {};
     int64_t out[kWhys] = {};
     int64_t traded = 0;
+    int64_t jewels = 0, excellent = 0, items = 0;
 };
 
 constexpr auto kEvery = std::chrono::hours(1);
@@ -75,6 +78,8 @@ std::string side(const char* name, const Ledger& l, int people, int64_t held) {
     }
     line += " | net " + std::string(in - out >= 0 ? "+" : "") + millions(in - out) + " | traded " +
             millions(l.traded);
+    line += " | drops jewels " + std::to_string(l.jewels) + " excellent " + std::to_string(l.excellent) +
+            " items " + std::to_string(l.items);
     return line;
 }
 
@@ -97,6 +102,25 @@ void economyTick(World& world, const std::vector<std::unique_ptr<Session>>& sess
     if (!g_file) return;
     const sim::Realm& realm = *world.realm;
     if (realm.playerCount() == 0) return;
+    // What a kill left this tick, said on the dead and lying for the one it was left for.
+    if (const content::Tables* tables = realm.tables()) {
+        for (const sim::Happening& said : realm.happenings()) {
+            if (said.what != sim::What::Dropped) continue;
+            for (const sim::Lying& one : realm.lying()) {
+                if (one.id != uint32_t(said.a) || one.owner == 0 || one.what.empty()) continue;
+                const auto session = std::find_if(sessions.begin(), sessions.end(), [&](const auto& s) {
+                    return s->world == &world && s->player == one.owner;
+                });
+                if (session == sessions.end() || size_t(one.what.item) >= tables->items.size()) break;
+                Ledger& l = (*session)->bot ? g_bots : g_players;
+                const content::ItemRow& row = tables->items[size_t(one.what.item)];
+                if (row.jewel()) ++l.jewels;
+                else if (one.what.excellent != 0) ++l.excellent;
+                else ++l.items;
+                break;
+            }
+        }
+    }
     for (const auto& one : sessions) {
         if (one->world != &world || !one->welcomed || one->player == 0) continue;
         // Read without lookAs: `me_` is in the snapshot and the hash, and a look back at a player
