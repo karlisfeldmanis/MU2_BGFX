@@ -2333,33 +2333,36 @@ void testCastLock(const content::Tables& tables) {
 
             // **With a monster under the pointer, at the monster** (bug report #48): the tile the
             // pointer's ray meets is behind a body and a step to one side. Pressed with that
-            // tile and the monster named, the beam goes where he stands when it is let go.
-            const uint32_t near = nearestTo(pointer);
-            check(near != 0, "a monster near the wizard to point at");
-            if (near != 0) {
+            // tile and the monster named, a beam and a wave go where he stands when they are let
+            // go -- turned onto him again as they leave the hand, so a walk in the clip is followed.
+            check(pointer.learn(sim::skill::kPowerWave), "and Power Wave");
+            for (const int32_t skill : {sim::skill::kAquaBeam, sim::skill::kPowerWave}) {
+                const uint32_t near = nearestTo(pointer);
+                check(near != 0, "a monster near the wizard to point at");
+                if (near == 0) continue;
                 const sim::Body& him = *pointer.find(near);
                 const int column = int(std::lround(him.x)) + 2, row = int(std::lround(him.y)) + 1;
-                pointer.invokeAt(sim::skill::kAquaBeam, column, row, near);
+                pointer.invokeAt(skill, column, row, near);
                 float loosed = 99.0f, wanted = -99.0f, tile = 0.0f;
                 for (int tick = 0; tick < 200 && loosed > 98.0f; ++tick) {
                     const float fromX = pointer.hero().x, fromY = pointer.hero().y;
-                    const float beforeX = him.x, beforeY = him.y;
+                    if (tick == 0) tile = std::atan2(float(row) - fromY, float(column) - fromX);
                     pointer.step();
                     for (const sim::Happening& one : pointer.happenings()) {
                         if (one.who == pointer.hero().id && one.what == sim::What::Loosed &&
-                            one.a == sim::skill::kAquaBeam) {
+                            one.a == skill) {
                             loosed = float(one.c) / 1000.0f;
-                            wanted = std::atan2(beforeY - fromY, beforeX - fromX);
-                            tile = std::atan2(float(row) - fromY, float(column) - fromX);
+                            wanted = std::atan2(him.y - pointer.hero().y, him.x - pointer.hero().x);
                         }
                     }
                 }
-                std::printf("  pointer on a monster: beam %.3f, at him %.3f, the tile %.3f radians\n",
-                            loosed, wanted, tile);
-                check(std::fabs(std::remainder(tile - wanted, 6.2831853f)) > 0.15f,
+                const char* name = sim::skillNumbered(skill)->name;
+                std::printf("  pointer on a monster: %s %.3f, at him %.3f, the tile %.3f radians\n",
+                            name, loosed, wanted, tile);
+                check(std::fabs(std::remainder(tile - wanted, 6.2831853f)) > 0.05f,
                       "the tile behind him is a different way from him");
-                check(std::fabs(std::remainder(loosed - wanted, 6.2831853f)) < 0.05f,
-                      "Aqua Beam pressed on a monster goes at him, not at the tile behind him");
+                check(std::fabs(std::remainder(loosed - wanted, 6.2831853f)) < 0.01f,
+                      "a skill pressed on a monster goes at him, not at the tile behind him");
             }
         }
 

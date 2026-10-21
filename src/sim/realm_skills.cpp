@@ -586,9 +586,17 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // at half the quickened `clip` the blow came long before the thrust -- a level-150
         // knight's Death Stab struck while the spear still pointed behind him (2026-10-02, the
         // user: "effect looked buggy"). For a spell and a primary `held` is `clip`, unchanged.
-        begin(hero, at, force(row, hero.totalPoints()), row.number, held);
+        // **A spell pressed on a monster is a spell at him** (bug report #48, the user: "also
+        // power wave"): let go at the body, it turns onto him again as it leaves his hand
+        // (Realm::land), so one that walked during the clip is not out of Power Wave's three
+        // quarters of a tile. A shower keeps its spot and a knight's arc its way, as before.
+        const Body* pressedOn = me().wantsBody != 0 ? find(me().wantsBody) : nullptr;
+        const bool atHim = pressedOn != nullptr && pressedOn->alive() && pressedOn->monster() &&
+                           me().wantsColumn >= 0 && row.aimsAtPointer() && row.wizardry &&
+                           !hero.blowGround;
+        begin(hero, atHim ? pressedOn->id : at, force(row, hero.totalPoints()), row.number, held);
         // Thrown at the pointer's ground: that way, whatever turns him before it is let go.
-        hero.blowAimed = me().wantsColumn >= 0 && row.aimsAtPointer();
+        hero.blowAimed = me().wantsColumn >= 0 && row.aimsAtPointer() && !atHim;
         hero.blowAim = hero.aim;
     }
     // The pointer's ground is spent with the press: a later throw off a click is aimed afresh.
