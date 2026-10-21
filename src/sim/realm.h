@@ -551,6 +551,9 @@ struct Body {
     int64_t boonUntil = 0;
     float boonDamageTaken = 1.0f;
     int32_t boonSkill = 0;
+    // Whether the boon was cast on him by another player -- a wizard's Magic Shield, an elf's
+    // ward -- so it stands behind the caster's shield and not his own (Realm::rearm).
+    bool boonLent = false;
     // Until when an Ale stands on him: kAleSpeed more attack speed, read by `reswing`. Beside
     // the boon and not through it, because the two are different effects in OpenMU (subtypes
     // 54 and the skill's own) and a guard raised with an Ale in him keeps both.

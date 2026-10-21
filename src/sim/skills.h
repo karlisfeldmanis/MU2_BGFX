@@ -459,8 +459,10 @@ struct SkillRow {
     // **Whether it may be cast on another player**: the elf's Heal, Greater Defense and Greater
     // Damage, as MU casts them on a player -- on whoever she is pointing at or has picked, within
     // kAidReach (Realm::throwSkill; the user, 2026-10-19: "elf can buff, heal other players by
-    // pressing on char").
-    bool aids() const { return kin == Kin::FairyElf && aura(); }
+    // pressing on char"). And the wizard's Magic Shield, as MU casts Soul Barrier on a player
+    // (ZzzCharacter.cpp:4983, on `to`): a tester, 2026-10-21, "i cant put mana shield on my party
+    // members". Self-only was ruled when there was no party.
+    bool aids() const { return (kin == Kin::FairyElf && aura()) || number == skill::kSoulBarrier; }
     // **A primary: no cooldown, cast over and over.** The wizard's Energy Ball on the quick
     // slot is his auto-attack (the user, 2026-09-28), paced by its own clip and nothing else,
     // and like a swing it can be walked out of and a hit pays mana back.
@@ -598,12 +600,18 @@ float magicSpeedStat(Kin kin, int agility);
 int32_t cooldownTicks(const SkillRow& row, int agility, int32_t floorTicks);
 
 // What the floor is for this row: the clip's length for an attack, the boon's duration and two
-// seconds for a buff -- but the clip's for the elf's two (elfBuff).
+// seconds for a buff -- but the clip's for a buff cast on others (lentBuff).
 int32_t floorTicksFor(const SkillRow& row, int32_t clipTicks);
 // Greater Defense and Greater Damage, the elf's buffs: cast on her party as well as herself, and
 // cooled at her hands rather than their length (floorTicksFor).
 inline bool elfBuff(const SkillRow& row) {
     return row.number == skill::kGreaterDefense || row.number == skill::kGreaterDamage;
+}
+// And the wizard's Magic Shield beside them since it is cast on others (2026-10-21): held at its
+// five minutes he could shield one player of his party in five minutes. Its own twelve seconds
+// are its wait, as her three seconds are hers.
+inline bool lentBuff(const SkillRow& row) {
+    return elfBuff(row) || row.number == skill::kSoulBarrier;
 }
 
 // How much of every blow Defense takes away, 0 to kGuardCap, off the shield he holds, his

@@ -94,6 +94,7 @@ bool Aura::open(const std::string& assetDir, content::Textures& textures) {
         return textures.load(path, content::TextureRole::Albedo);
     };
     flare_ = take("flare.png");
+    flareBlue_ = take("../defense/flare_blue.png");
     ground_ = take("magic_ground.png");
     // The fire's smoke sheets, which the skill's puff is made of.
     smoke_ = take("../fire/smoke02.png");
@@ -228,12 +229,12 @@ void Aura::learn(const float feet[3], float metresPerTile) {
 }
 
 void Aura::guard(uint32_t owner, const float feet[3], float yaw, float metresPerTile,
-                 float seconds) {
+                 float seconds, const Recipe& kind) {
     // One a body: a guard thrown again replaces the one standing, which is what the realm
     // does with the boon (`throwSkill` overwrites it) and what MU does with its own
     // `g_isCharacterBuff` test -- the circle flashes again and no second set of ribbons is made.
     release(owner);
-    Recipe recipe = kGuarding;
+    Recipe recipe = kind;
     recipe.ticks = std::max(1.0f, seconds * kReference);
     // A hundred units over the whole of it, however long that is: the climb is the boon's.
     recipe.slowRise = recipe.fastRise = 100.0f / recipe.ticks;
@@ -357,7 +358,7 @@ void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
 
         gfx::Sprite sprite;
         sprite.placed = true;
-        sprite.sheet = flare_;
+        sprite.sheet = b.r.blue && bgfx::isValid(flareBlue_) ? flareBlue_ : flare_;
         sprite.blend = gfx::Blend::Additive;
         sprite.colour[3] = 1.0f;
 

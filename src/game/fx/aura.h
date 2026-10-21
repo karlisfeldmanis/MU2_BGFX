@@ -95,6 +95,9 @@ struct Recipe {
     // dimming and then the whole strip gone in one frame, which on the +11 ribbon read as a pop
     // at his head (the user, 2026-10-16).
     bool runsOut = false;
+    // Drawn on MU's BITMAP_FLARE_BLUE (`flare_blue.png`) rather than the gold Flare: the sheet
+    // MU's own SPEARSKILL ribbons are made of, the wizard's Soul Barrier's among them.
+    bool blue = false;
 };
 
 // MU's level-up: fifteen flares on a ring of forty, climbing away and dimming. The circle is
@@ -112,6 +115,14 @@ inline constexpr Recipe kRising{};
 // and what is passed here is what is left of it.
 inline constexpr Recipe kGuarding{5,    20.0f, 20.0f, 100.0f, 0.0f, 0.0f, 12.0f, 150.0f,
                                   true, true,  true,  {0.18f, 1.0f, 0.35f}};
+// The wizard's Magic Shield (MU's Soul Barrier): the same five-ribbon cage, but MU's own look for
+// it -- `CreateJoint(MODEL_SPEARSKILL, ..., 0, to, 20.0f)` five times (ZzzCharacter.cpp:4984),
+// subtype 0 being BITMAP_FLARE_BLUE in white light (ZzzEffectJoint.cpp:1542-1546), where the
+// guard's subtype 4 tints the same sheet green. The blue circles a tester missed (2026-10-21,
+// "when i put magic shield i dont see the blue circles effect"), shown the user in MuMain.
+inline constexpr Recipe kBarrier{5,    20.0f, 20.0f, 100.0f, 0.0f, 0.0f, 12.0f, 150.0f,
+                                 true, true,  true,  {1.0f, 1.0f, 1.0f},
+                                 {0.4f, 0.6f, 1.0f}, 0.15f, 2.0f, 0.0f, 0.0f, false, true};
 // The elf's Heal and Greater Damage (sprint 15), ours: MuMain draws neither -- ReceiveMagic plays
 // the elf's cast and SOUND_SKILL_DEFENSE and registers the buff, and nothing renders
 // eBuff_Attack. Eight ribbons spread evenly round a ring wider than she is, thrown once at the
@@ -175,7 +186,9 @@ public:
     // duration, so the picture and the sim lapse together -- and follows the body until then.
     // Thrown again while one stands replaces it, which is what the realm does with the boon.
     // `owner` is the body it stands round: every player's guard is drawn, one to a body.
-    void guard(uint32_t owner, const float feet[3], float yaw, float metresPerTile, float seconds);
+    // `recipe` is the knight's green kGuarding or the wizard's blue kBarrier.
+    void guard(uint32_t owner, const float feet[3], float yaw, float metresPerTile, float seconds,
+               const Recipe& recipe = kGuarding);
     // Where the body is now, every frame it is drawn: the one thing a following burst needs.
     void follow(uint32_t owner, const float feet[3]);
     // Every living burst moved to where the body is now: an Aura of one body's own, as a set's
@@ -246,6 +259,7 @@ private:
     void gatherCircle(gfx::Effects& effects, const content::Ground& ground, const Burst& b) const;
 
     bgfx::TextureHandle flare_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle flareBlue_ = BGFX_INVALID_HANDLE;  // Recipe::blue; flare_ if missing
     bgfx::TextureHandle ground_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle smoke_ = BGFX_INVALID_HANDLE;  // smoke02, the body of the puff
     bgfx::TextureHandle wisp_ = BGFX_INVALID_HANDLE;   // smoke01, its glow

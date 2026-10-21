@@ -653,7 +653,8 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
     // Defense or Soul Barrier on the spot, aura and all (the user, 2026-09-28): the skill asks for
     // a shield to be cast, and a guard that outlived the shield would be the one way round that.
     // The cooldown is left running, so putting the shield back on is not a way to recast sooner.
-    if (hero.boonUntil > tick_) {
+    // One lent him by another player stood behind the caster's shield, not his, and stays.
+    if (hero.boonUntil > tick_ && !hero.boonLent) {
         const SkillRow* boon = skillNumbered(hero.boonSkill);
         const content::Arm* shield = hero.shield >= 0 ? &tables_->arms[size_t(hero.shield)] : nullptr;
         if (boon != nullptr && (boon->families & arms::kShield) != 0 &&

@@ -254,10 +254,24 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // one question -- does this hand suit this row -- rather than two rules that can drift.
         // A Bulwark answers for the shield (sim::armFamily).
         if (!row.suits(armFamily(hero, shield))) return false;
+        // The share a guard of hers or his takes off a blow, off the caster's stats and shield as
+        // they stand at the cast: `guardShare` in sim/skills.h, where the numbers are argued --
+        // or the wizard's `barrierShare`, off energy where the knight's is off his body, or the
+        // elf's `wardShare`, off agility with no shield at all.
+        // A Buckler or a Brace with no shield on his arm lets it up at its share.
+        const auto guardOf = [&] {
+            float guard = boonShare(row, hero.totalPoints(), hero.shieldDefense);
+            if (row.number != skill::kGreaterDefense && hero.excel.bulwark &&
+                hero.excel.bulwarkShare < 1.0f && (familyOf(shield) & arms::kShield) == 0) {
+                guard *= hero.excel.bulwarkShare;
+            }
+            return guard;
+        };
         // A self-cast has no target to be far from and reads its victim off the caster -- but for
         // **an elf's Heal, Greater Defense and Greater Damage on another player** (SkillRow::aids:
         // the user's of 2026-10-09, "elfs can heal", for her party; of 2026-10-19 for anyone she
-        // points at), within kAidReach and reckoned off her own energy and agility, as on herself.
+        // points at), within kAidReach and reckoned off her own energy and agility, as on herself
+        // -- and a wizard's Magic Shield, off his energy and shield (2026-10-21).
         // Aimed at one too far, or gone, it is refused -- nothing paid -- rather than turned on
         // her: the wish stands its half second and lands if he comes into reach (Realm::press).
         Body* aid = nullptr;
@@ -271,9 +285,11 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             // defense weaker if char already has stronger shield aura"): her ward on one whose
             // standing guard -- a knight's Defense, a wizard's Soul Barrier, another elf's ward --
             // already takes more of a blow is refused, nothing paid, and his stays. As strong or
-            // weaker, hers replaces it.
-            if (row.number == skill::kGreaterDefense && one->boonUntil > tick_ &&
-                one->boonDamageTaken < 1.0f - boonShare(row, hero.totalPoints(), hero.shieldDefense)) {
+            // weaker, hers replaces it. A wizard's Magic Shield on another the same (the user,
+            // 2026-10-21: "for wizards it has to be same rule as elf to apply shield only if its
+            // better than other players").
+            if (row.boonTicks > 0 && one->boonUntil > tick_ &&
+                one->boonDamageTaken < 1.0f - guardOf()) {
                 // Said to her once, and the wish dropped: held, it was refused every tick.
                 say(What::Outguarded, hero, row.number, 0, 0, one->id);
                 happenings_.back().audience = hero.id;
@@ -315,26 +331,20 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             For theirs(*this, to);
             rearm(to);
         } else if (aid != nullptr) {
-            // Greater Defense on one of her party: her ward, off her own agility, on him. It takes
-            // the one boon he has -- a knight's Defense guard among them.
+            // Greater Defense or Magic Shield on another player: her ward, off her own agility, or
+            // his barrier, off his energy and shield, on him. It takes the one boon he has -- a
+            // knight's Defense guard among them.
             aid->boonSkill = row.number;
-            aid->boonDamageTaken = 1.0f - boonShare(row, hero.totalPoints(), hero.shieldDefense);
+            aid->boonLent = true;
+            aid->boonDamageTaken = 1.0f - guardOf();
             aid->boonUntil = tick_ + row.boonTicks;
             aid->stats.damageTaken = double(aid->boonDamageTaken) * aid->pet.taken;
         } else {
             hero.boonSkill = row.number;
-            // The guard's share off his shield and stats as they stand at the cast, held for its
-            // whole length: `guardShare` in sim/skills.h, where the numbers are argued -- or the
-            // wizard's `barrierShare`, off energy where the knight's is off his body, or the
-            // elf's `wardShare`, off agility with no shield at all.
-            // A Buckler or a Brace with no shield on his arm lets it up at its share.
-            float guard = boonShare(row, hero.totalPoints(), hero.shieldDefense);
-            if (row.number != skill::kGreaterDefense && hero.excel.bulwark &&
-                hero.excel.bulwarkShare < 1.0f &&
-                (familyOf(shield) & arms::kShield) == 0) {
-                guard *= hero.excel.bulwarkShare;
-            }
-            hero.boonDamageTaken = 1.0f - guard;
+            hero.boonLent = false;
+            // The guard's share as it stands at the cast (guardOf, above), held for its whole
+            // length.
+            hero.boonDamageTaken = 1.0f - guardOf();
             hero.boonUntil = tick_ + row.boonTicks;
             hero.stats.damageTaken = double(hero.boonDamageTaken) * hero.pet.taken;
         }

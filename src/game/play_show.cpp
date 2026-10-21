@@ -1124,22 +1124,27 @@ void Play::landed() {
 }
 
 // The knight's guard raised, and then kept on him while it stands -- and the wizard's Soul
-// Barrier, which is the same cage on the user's word of 2026-09-28.
+// Barrier, which is the same cage on the user's word of 2026-09-28, drawn in MU's own blue
+// since 2026-10-21 (fx/aura.h, kBarrier).
 //
 // Two calls and not one because the barrier follows the body, which the level-up's flares do
 // not: MU leaves a burst where it was thrown (`TargetPosition` is never assigned), and a guard
 // that stayed behind while he walked out of it would be a guard around nobody.
-void Play::guardRise(uint32_t who, float seconds) {
+void Play::guardRise(uint32_t who, float seconds, int32_t skill) {
     const Drawn* caster = drawnOf(who);
     if (caster == nullptr || !caster->placed || ground_ == nullptr) return;
     const float feet[3] = {caster->crown[0],
                            ground_->heightAt(caster->crown[0], caster->crown[2]),
                            caster->crown[2]};
-    aura_.guard(who, feet, caster->yaw, ground_->metresPerTile(), seconds);
+    aura_.guard(who, feet, caster->yaw, ground_->metresPerTile(), seconds,
+                skill == sim::skill::kSoulBarrier ? kBarrier : kGuarding);
 }
 
 void Play::showGuard() {
-    guardRise(realm_.hero().id, kGuardShowSeconds);
+    // The hero's own class's: a wizard's preview is his blue Magic Shield.
+    const bool wizard = realm_.hero().kin == sim::Kin::DarkWizard;
+    guardRise(realm_.hero().id, kGuardShowSeconds,
+              wizard ? sim::skill::kSoulBarrier : sim::skill::kDefense);
     guardPreview_ = realm_.tick() + int64_t(kGuardShowSeconds / kTickSeconds);
 }
 

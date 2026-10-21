@@ -981,8 +981,9 @@ public:
         return was;
     }
     // The guard: thrown when Defense lands, and kept on the body every frame after -- on
-    // whichever player cast it, the hero or another.
-    void guardRise(uint32_t who, float seconds);
+    // whichever player cast it, the hero or another. `skill` picks its look: the wizard's Magic
+    // Shield is MU's blue, every other guard the knight's green.
+    void guardRise(uint32_t who, float seconds, int32_t skill = sim::skill::kDefense);
     void guardStep();
     // The realm tick a `showGuard` preview holds the cage until; zero when none is running.
     int64_t guardPreview_ = 0;

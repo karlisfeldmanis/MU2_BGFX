@@ -932,13 +932,14 @@ void Play::update(double seconds) {
                     // user's, 2026-09-25. A guard's alone -- Defense, Soul Barrier and the elf's
                     // Greater Defense -- and not her Heal or Greater Damage, which raise none.
                     // Any player's, not the hero's alone (the user, 2026-10-16).
-                    // On whom it fell: an elf's aid on another player rises on him (sim::SkillRow::aids).
+                    // On whom it fell: an elf's aid -- or a wizard's Magic Shield -- on another player
+                    // rises on him (sim::SkillRow::aids).
                     const uint32_t onWhom = row && row->aids() && happening.whom != 0 ? happening.whom
                                                                                        : happening.who;
                     Drawn* aided = onWhom != happening.who ? drawnOf(onWhom) : caster;
                     if (aided == nullptr) aided = caster;
                     if (row && row->boonTicks > 0 && (happening.who == heroId || caster->visible)) {
-                        guardRise(aided->id, kGuardShowSeconds);
+                        guardRise(aided->id, kGuardShowSeconds, row->number);
                     }
                     // Her Heal and Greater Damage: a burst on whom it fell, once (fx/aura.h,
                     // kMending and kMight -- ours, MU draws neither).

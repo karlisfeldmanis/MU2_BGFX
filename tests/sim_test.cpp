@@ -4519,9 +4519,9 @@ void testSkills(const content::Tables& tables) {
         check(sim::barrierShare({0, 30000, 0, 30000}, 5000) < sim::kGuardCap,
               "and no build reaches the cap");
         const sim::SkillRow& barrier = *sim::skillNumbered(sim::skill::kSoulBarrier);
-        check(barrier.onSelf() && barrier.kin == sim::Kin::DarkWizard &&
+        check(barrier.onSelf() && barrier.aids() && barrier.kin == sim::Kin::DarkWizard &&
                   barrier.families == sim::arms::kShield && !barrier.wizardry,
-              "Soul Barrier is the wizard's, thrown on himself, off a shield");
+              "Soul Barrier is the wizard's, a self-cast that aids, off a shield");
         checkEqual(barrier.boonTicks, sim::skillNumbered(sim::skill::kDefense)->boonTicks,
                    "and it stands as long as Defense");
 
@@ -4585,6 +4585,50 @@ void testSkills(const content::Tables& tables) {
         check(field.hero().boonUntil <= field.tick() && field.hero().stats.damageTaken == 1.0,
               "and the barrier falls with it");
         check(field.cooling(sim::skill::kSoulBarrier) > 0, "while its wait runs on");
+
+        // **On another player** (a tester, 2026-10-21: "i cant put mana shield on my party
+        // members"): his barrier, off his own shield, on an elf beside him, who keeps it with no
+        // shield of her own -- and the elf's rule (the user, the same day): never a weaker barrier
+        // over a stronger.
+        {
+            sim::Realm two;
+            check(two.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 60), "a wizard and an elf");
+            check(two.learn(sim::skill::kSoulBarrier) &&
+                      two.equip(tables.armNamed("Staff01"), tables.armNamed("Shield07"), true),
+                  "the wizard behind a Skull Shield");
+            const uint32_t elf = two.join(sim::Kin::FairyElf, 60, two.hero().column(), two.hero().row());
+            check(elf != 0, "an elf joins beside him");
+            const auto onHer = [&](sim::What* said) {
+                *said = sim::What::Cast;
+                for (int tick = 0; tick < 400 && two.cooling(sim::skill::kSoulBarrier) > 0; ++tick) two.step();
+                bool cast = false, refused = false;
+                two.invoke(sim::skill::kSoulBarrier, elf);
+                for (int tick = 0; tick < 60 && !cast && !refused; ++tick) {
+                    two.step();
+                    for (const sim::Happening& one : two.happenings()) {
+                        cast |= one.what == sim::What::Cast && one.who == two.hero().id;
+                        refused |= one.what == sim::What::Outguarded && one.who == two.hero().id;
+                    }
+                }
+                if (refused) *said = sim::What::Outguarded;
+                return cast;
+            };
+            sim::What said{};
+            check(onHer(&said), "throws the barrier on her");
+            const sim::Body* her = two.find(elf);
+            const sim::Body& him = two.hero();
+            check(her->boonSkill == sim::skill::kSoulBarrier && her->boonLent &&
+                      std::fabs(her->boonDamageTaken -
+                                (1.0f - sim::barrierShare(him.points, him.shieldDefense))) < 1e-6f,
+                  "and she takes his share, off his shield");
+            check(him.boonUntil <= two.tick(), "and he has none of it himself");
+            check(two.equip(tables.armNamed("Staff01"), tables.armNamed("Shield01"), true),
+                  "the Skull Shield swapped for a Small Shield");
+            const float stood = two.find(elf)->boonDamageTaken;
+            check(!onHer(&said) && said == sim::What::Outguarded,
+                  "and the weaker barrier is refused on her stronger one");
+            check(two.find(elf)->boonDamageTaken == stood, "whose stays");
+        }
 
         // And a knight may not read it, whatever his level.
         sim::Realm knightRealm;

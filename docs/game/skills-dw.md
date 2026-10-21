@@ -111,18 +111,28 @@ one tick could lose the clip to the drawn body still sliding in; the streak now 
 Asked for on 2026-09-28 to balance the two classes: the knight had Defense (a five-minute guard
 behind his shield) and the wizard had nothing. The wizard now buys the **Scroll of Soul Barrier**
 at Pasi's (slot 7, the one empty cell after the seven 0.75 scrolls), reads it, and casts it on
-himself. MU's own name and number: skill 16, `AT_SKILL_SOUL_BARRIER`, scroll group 15 number 15
+himself or another player. MU's own name and number: skill 16, `AT_SKILL_SOUL_BARRIER`, scroll group 15 number 15
 (`Book16`). Season 6 in OpenMU's tree, not 0.75, and brought down to the knight's level on purpose.
 
 What is the knight's, column for column (`sim/skills.cpp`):
 
-- **Self only, behind a shield.** `families = kShield`, the same gate as Defense; the wizard wears
-  the Small Shield, the Buckler and the Skull Shield. MU casts it on a party member too; there is
-  no party, and the user ruled it self-only.
-- Five minutes (`boonTicks` 6000), twelve seconds of cooldown floored at its length plus two.
+- **Behind a shield.** `families = kShield`, the same gate as Defense; the wizard wears
+  the Small Shield, the Buckler and the Skull Shield.
+- **On himself or another player** (since 2026-10-21; a tester: "i cant put mana shield on my
+  party members"). Self-only was ruled when there was no party; MU casts it on a party member
+  too (`ZzzCharacter.cpp:4983`). It is the elf's aid (`SkillRow::aids`): on whoever he points at
+  or has picked within `kAidReach`, off **his** energy and shield, and **refused on one whose guard
+  already takes more** (the user, 2026-10-21: "same rule as elf to apply shield only if its better
+  than other players"), the warning "This character already has a stronger shield aura". Lent, it
+  stands behind his shield, not hers, so her own gear changes do not end it (`Body::boonLent`).
+- Five minutes (`boonTicks` 6000), twelve seconds of cooldown. Floored at its length plus two
+  until 2026-10-21; since it is cast on others it cools at the clip, as the elf's buffs do
+  (`lentBuff`), or a wizard could shield one member of his party in five minutes.
 - Level 6 to read, no stat asked, drop level 6, 300 zen -- the Orb of Defense's own numbers.
-- **Drawn as Defense is**: the knight's stance (clip 187) and his green cage for two seconds at the
-  cast, and the same buff strip (its own cell, `eBuff_WizDefense`, the blue crescent). The reading
+- **Drawn in Defense's stance** (clip 187), and since 2026-10-21 **in MU's own blue**: five
+  `MODEL_SPEARSKILL` ribbons on `BITMAP_FLARE_BLUE` in white light (`ZzzCharacter.cpp:4984`,
+  `ZzzEffectJoint.cpp:1542`; `fx/aura.h` kBarrier), where the knight's guard is the same five
+  tinted green. Two seconds at the cast, on whoever it fell on, and the same buff strip (its own cell, `eBuff_WizDefense`, the blue crescent). The reading
   is every class's orb burst and swoosh (`Play::learned`).
 
 **Taking the shield off ends it** (and the knight's Defense), aura and share together, in

@@ -182,15 +182,20 @@ constexpr SkillRow kRows[kSkills] = {
 
     // Soul Barrier 16: the knight's Defense in the wizard's hand, and every column but the mana,
     // the wave and the class is Defense's own so the two classes stand level (the user, 2026-09-28): five minutes, a
-    // twelve-second cooldown floored at its own length and two, **thrown on himself only**, and
-    // **only behind a shield** -- `kShield`, which the wizard wears in the Small Shield, the
-    // Buckler and the Skull Shield -- or a Bulwark in his staff (sim/items.h). MU casts it on a party member as well (`ClassAttack.cpp`,
-    // the `SelectedCharacter` arm); there is no party here and the user ruled it self-only.
+    // twelve-second cooldown -- floored at its own length and two until it was cast on others,
+    // and at the clip since (lentBuff, 2026-10-21) -- and **only behind a shield** --
+    // `kShield`, which the wizard wears in the Small Shield, the Buckler and the Skull Shield --
+    // or a Bulwark in his staff (sim/items.h). **On himself or on another player**, as MU casts
+    // it on a party member (`ClassAttack.cpp`, the `SelectedCharacter` arm): self-only was ruled
+    // when there was no party, and a tester asked for it back on 2026-10-21 ("i cant put mana
+    // shield on my party members"). On another it is the elf's aid (SkillRow::aids): within
+    // kAidReach, off the wizard's own energy and shield, and refused on one whose guard already
+    // takes more (the user, 2026-10-21).
     //
-    // **And it is drawn as Defense is**, the user's of 2026-09-28: the knight's stance (187) and
-    // his green cage, where MU casts it with `SetPlayerMagic`'s two hands and five blue
-    // `MODEL_SPEARSKILL` ribbons (ClassAttack.cpp:1200, ZzzCharacter.cpp:4984). What stays MU's
-    // own is the wave, `SOUND_SOULBARRIER`, and the mana, 70
+    // **Drawn in the knight's stance** (187), the user's of 2026-09-28, where MU casts it with
+    // `SetPlayerMagic`'s two hands; and since 2026-10-21 in MU's own five blue `MODEL_SPEARSKILL`
+    // ribbons (ZzzCharacter.cpp:4984; fx/aura.h kBarrier) rather than the knight's green cage.
+    // What stays MU's own is the wave, `SOUND_SOULBARRIER`, and the mana, 70
     // (`VersionSeasonSix/SkillsInitializer.cs:134`). What it takes off a blow is `barrierShare`,
     // off energy where the knight's is off his body.
     //
@@ -199,8 +204,8 @@ constexpr SkillRow kRows[kSkills] = {
     // Shown as Magic Shield (the user, 2026-10-07: 'rename soul barier to Magic Shield').
     {skill::kSoulBarrier, "Magic Shield", 70, 0.0f, 1.0f, 0.0f, 240, false, Spread::One, 6000,
      0.50f,
-     "A barrier drawn up behind the shield for five minutes. The better the shield and the "
-     "keener the wizard, the more of every blow it takes.",
+     "A barrier drawn up behind the shield for five minutes, on himself or on another player. "
+     "The better the shield and the keener the wizard, the more of every blow it takes.",
      187, "spell_soul_barrier", true, arms::kShield, 6, Kin::DarkWizard},
 
     // Fire Ball 4, 0.75's row: `CreateSkill(FireBall, ..., DamageType.Wizardry, 8, 6,
@@ -1037,7 +1042,8 @@ int32_t floorTicksFor(const SkillRow& row, int32_t clipTicks) {
     // cooldown for elf buff auras"): held at their five minutes she could raise one on a single
     // player of her party in five minutes. Five minutes cast every five is already always up,
     // and 0.75 cools neither, so the guard's floor guards nothing here.
-    if (elfBuff(row)) return std::max<int32_t>(1, clipTicks);
+    // The wizard's Magic Shield the same, since it is cast on others (lentBuff, 2026-10-21).
+    if (lentBuff(row)) return std::max<int32_t>(1, clipTicks);
     if (row.boonTicks > 0) return row.boonTicks + kBoonGapTicks;
     if (row.mightTicks > 0) return row.mightTicks + kBoonGapTicks;
     // A channel's own length, and two seconds: it is never ready again before it has ended.
