@@ -1,7 +1,16 @@
 # Talents: the build plan
 
 **Status, 2026-10-21: building.** The user: "lets starst to implement". Resets are still open, so the
-small caps stay at 10 for now. Until 2026-10-20 the patch was held ("this will be a big patch, so we are
+small caps stay at 10 for now.
+- Done in the sim: phase 1 (2fa16e44), phase 2 (93d8c7e0, protocol 45, layout 10), phase 3 (5cddd7d2),
+  phase 4 (e689b1ce), and the bots' builds (b435df62, a live lockstep run on a private port agreed).
+  A hero with no talents plays line for line as before.
+- Not yet: the window, button, key, sound and animation (phase 5, in progress); the buff strip's
+  cells for the timed states; the client's skill cells reading `sim::manaCostOf`; the jewel and item
+  counts in `economy.log`; the measured A/B; reading a copy of the live `characters.db` (the read of
+  the box was refused by the session's permissions, so it waits for the user).
+- Small things left out on purpose: Patron does not lift an elf's ward on a party member (only
+  Blessed Hands does), and Frost Edge and Icy Shot chill the next body the swing lands on, once. Until 2026-10-20 the patch was held ("this will be a big patch, so we are
 still holding for talents update ... you can do some preparations without real commits"). The prepared
 files were:
 
