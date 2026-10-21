@@ -317,6 +317,16 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     out->wizardMinimum = wizard ? double(points.energy) / 9.0 + arms.wingWizardry : 0.0;
     out->wizardMaximum = wizard ? double(points.energy) / 4.0 + arms.wingWizardry : 0.0;
     out->wizardryRate = 1.0 + arms.staffRise / 100.0;
+    // Off-Hand Mastery, on the left hand's band; Gladiator's Edge, a share of his wizardry band
+    // on both ends of his weapon's (sim/talents.h).
+    if (talent.offHand != 0 && arms.dual) {
+        out->offhandMinimumDamage = int(double(out->offhandMinimumDamage) * (1.0 + talent.offHand));
+        out->offhandMaximumDamage = int(double(out->offhandMaximumDamage) * (1.0 + talent.offHand));
+    }
+    if (talent.wizardryIntoSwings != 0) {
+        out->minimumDamage += int(out->wizardMinimum * out->wizardryRate * talent.wizardryIntoSwings);
+        out->maximumDamage += int(out->wizardMaximum * out->wizardryRate * talent.wizardryIntoSwings);
+    }
     // Three pieces of a set, then the excellent armour's.
     out->defenseRate = float(double(out->defenseRate) * (1.0 + arms.setDefenseRate));
     out->defenseRate = float(double(out->defenseRate) * excel.defenseRateRate);

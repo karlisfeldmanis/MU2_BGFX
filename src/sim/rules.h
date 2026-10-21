@@ -371,7 +371,8 @@ struct Arms {
     // 0.1 is a tenth more. All nought for a hero with none, and for every monster.
     struct Talented {
         double attackRate = 0, defenseRate = 0, defense = 0, critical = 0, excellent = 0,
-               ignoreDefense = 0, damageDecrease = 0, block = 0, maxLife = 0;
+               ignoreDefense = 0, damageDecrease = 0, block = 0, maxLife = 0, offHand = 0,
+               wizardryIntoSwings = 0;
     } talent;
 };
 

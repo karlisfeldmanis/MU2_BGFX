@@ -5512,6 +5512,116 @@ void testTalentStats(const content::Tables& tables) {
     checkNear(capped.blockChance, sim::kSteadfastMost, 1e-9, "talent block counts under Steadfast's 25%");
 }
 
+// The special majors (phase 4): the conditions in a blow's one sum, the timed states, a proc's
+// rate, and the guards on him. Each asked of the realm's own helpers on a fixed hero.
+void testTalentSpecials(const content::Tables& tables) {
+    std::printf("talents: the special majors\n");
+    // Opens and takes the node named `name` in his tree: ten in the first small of every tier
+    // above it and that tier's major, then the node (ten in a small, or its small first).
+    const auto learn = [](sim::Realm& realm, const char* name) {
+        const sim::TalentTree tree = sim::talentTree(realm.hero().kin);
+        for (int c = 0; c < tree.count; ++c) {
+            for (int i = 0; i < sim::kTalentNodes; ++i) {
+                if (std::string(tree.columns[c].nodes[i].name) != name) continue;
+                for (int tier = 0; tier < i / 3; ++tier) {
+                    realm.talentTake(c, tier * 3, 10);
+                    realm.talentTake(c, tier * 3 + 2, 1);
+                }
+                if (sim::isMajor(i)) realm.talentTake(c, i - 2, 10);
+                return realm.talentTake(c, i, 10) > 0 || realm.hero().talents[size_t(c)][size_t(i)] > 0;
+            }
+        }
+        return false;
+    };
+    sim::Realm realm;
+    check(realm.raise(&tables, 31, 138, 124, sim::Kin::DarkKnight, 400), "a level-400 knight raises");
+    sim::Body& hero = const_cast<sim::Body&>(realm.hero());
+    const sim::Body* beast = nullptr;
+    for (const sim::Body& one : realm.bodies()) {
+        if (one.monster() && one.alive()) {
+            beast = &one;
+            break;
+        }
+    }
+    check(beast != nullptr, "a monster to strike");
+    if (!beast) return;
+    sim::Body low = *beast, whole = *beast;
+    low.health = std::max(1, low.maxHealth / 5);
+    low.x = whole.x = hero.x + 1.0f;
+    low.y = whole.y = hero.y;
+    checkNear(realm.talentBlow(hero, whole, nullptr), 1.0, 1e-6, "no talents, no factor on a blow");
+    checkNear(realm.talentSpared(hero), 1.0, 1e-6, "and none on a blow on him");
+
+    // Executioner asks two hands and a monster under 30%.
+    std::string two;
+    for (const content::Arm& arm : tables.arms) {
+        if (!arm.isShield() && !arm.missile() && arm.group == 0 && (arm.classes & 4) != 0 && arm.twoHanded()) {
+            two = arm.name;
+            break;
+        }
+    }
+    check(realm.equip(tables.armNamed(two), -1, true), "a two-handed sword");
+    check(learn(realm, "Executioner"), "Executioner learned");
+    // Heft's ten went in on the way (the first tier's first small).
+    checkNear(realm.talentBlow(hero, whole, nullptr), 1.10, 1e-5, "a whole monster: Heft alone");
+    checkNear(realm.talentBlow(hero, low, nullptr), 1.30, 1e-5, "under 30%: Heft and Executioner in one sum");
+    // Riposte, armed by a miss, spent on the next blow.
+    check(learn(realm, "Riposte"), "Riposte learned");
+    hero.riposte = true;
+    const float armed = realm.talentBlow(hero, whole, nullptr);
+    checkNear(armed, 1.40, 1e-5, "armed: +30% on the next blow");
+    check(!hero.riposte, "and spent on it");
+    checkNear(realm.talentBlow(hero, whole, nullptr), 1.10, 1e-5, "the one after has none");
+    // Last Stand: a fifth less on him under 30% life.
+    check(learn(realm, "Last Stand"), "Last Stand learned");
+    const int full = hero.health;
+    checkNear(realm.talentSpared(hero), 1.0, 1e-6, "whole, nothing spared");
+    hero.health = hero.maxHealth / 5;
+    checkNear(realm.talentSpared(hero), 0.8, 1e-5, "under 30%, a fifth less");
+    hero.ironWillUntil = realm.tick() + 10;
+    hero.ironWill = 30.0f;
+    checkNear(realm.talentSpared(hero), 0.5, 1e-5, "Iron Will adds into the same sum");
+    hero.ironWillUntil = 0;
+    hero.health = full;
+    // Battle Fury: 10% a swing, off its own dice, once a release.
+    check(learn(realm, "Battle Fury"), "Battle Fury learned");
+    int procs = 0;
+    for (int i = 0; i < 4000; ++i) {
+        hero.procUntil = 0;
+        realm.talentRelease(hero, nullptr);
+        if (hero.procUntil != 0) ++procs;
+    }
+    check(procs > 320 && procs < 480, "Battle Fury rolls near one in ten");
+    hero.procUntil = realm.tick() + 100;
+    hero.procAmount = 20.0f;
+    hero.procWizardry = false;
+    // Heft 10, Strength of Arms 10 (on the way to Battle Fury) and the proc's 20.
+    checkNear(realm.talentBlow(hero, whole, nullptr), 1.40, 1e-5, "while it stands, +20% in the sum");
+    hero.procUntil = 0;
+    // Bloodlust and Eye of the Storm count the monsters near him: none here.
+    checkEqual(realm.monstersNear(hero, 0.5f), 0, "nobody inside half a tile");
+
+    // A wizard: Frostbite on every spell against a chilled monster, never a swing.
+    sim::Realm wiz;
+    check(wiz.raise(&tables, 31, 138, 124, sim::Kin::DarkWizard, 400), "a level-400 wizard raises");
+    sim::Body& dw = const_cast<sim::Body&>(wiz.hero());
+    check(learn(wiz, "Frostbite"), "Frostbite learned");
+    sim::Body cold = whole;
+    cold.chilledUntil = wiz.tick() + 100;
+    const sim::SkillRow* fireBall = sim::skillNumbered(sim::skill::kFireBall);
+    check(fireBall != nullptr, "Fire Ball's row");
+    if (fireBall) {
+        const float warm = wiz.talentBlow(dw, whole, fireBall);
+        const float chilled = wiz.talentBlow(dw, cold, fireBall);
+        checkNear(chilled - warm, 0.15, 1e-5, "+15% on a chilled monster");
+    }
+    checkNear(wiz.talentBlow(dw, cold, nullptr), wiz.talentBlow(dw, whole, nullptr), 1e-6, "not on his staff's swing");
+    // Wider Rings: Hellfire reaches a tile further.
+    check(learn(wiz, "Wider Rings"), "Wider Rings learned");
+    checkNear(sim::talentReach(dw, sim::skill::kHellfire), 1.0, 1e-6, "Hellfire a tile further");
+    checkNear(sim::talentReach(dw, sim::skill::kFireBall), 0.0, 1e-6, "Fire Ball no further");
+}
+
 void testResetPoints(const content::Tables& tables) {
     std::printf("spend many and reset points\n");
     using Kind = sim::Command::Kind;
@@ -14682,6 +14792,7 @@ int main() {
     testTalents();
     testTalentCommands(tables);
     testTalentStats(tables);
+    testTalentSpecials(tables);
     testExcellent(tables);
     testSets(tables);
     testWear(tables);

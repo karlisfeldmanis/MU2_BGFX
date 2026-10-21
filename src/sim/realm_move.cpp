@@ -609,8 +609,11 @@ void Realm::think(Body& beast) {
             // field in MU2 once, so making a monster think oftener made it hit oftener, which
             // is a fight the player loses for reasons nothing on screen explains. It is also
             // where a per-skill cooldown will go.
-            beast.swingsAt =
-                tick_ + kind.attackTicks + (beast.chilledUntil > tick_ ? kChillSwingTicks : 0);
+            // Numbing's share more on a chill a hero with it laid (sim/talents.h).
+            const int64_t chill = beast.chillSlow == 0.0f
+                                      ? kChillSwingTicks
+                                      : int64_t(float(kChillSwingTicks) * (1.0f + beast.chillSlow / 100.0f));
+            beast.swingsAt = tick_ + kind.attackTicks + (beast.chilledUntil > tick_ ? chill : 0);
             if (const SplitBlow* split = splitOf(beast)) {
                 // The first part is the swing's blow; the rest follow (beamOn).
                 strikeAt(beast, *body(chosen), 1.0f / float(split->parts));

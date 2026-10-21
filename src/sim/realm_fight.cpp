@@ -60,11 +60,12 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         if (row != nullptr && row->chillTicks > 0 && target.alive() && target.monster() &&
             !fixed(target) && target.chilledUntil <= tick_ && !shrugs(target) &&
             !resists(target, true, dice)) {
-            target.chilledUntil = tick_ + row->chillTicks;
+            target.chilledUntil = tick_ + talentLonger(row->chillTicks, attacker.talentShare.chillLonger);
+            target.chillSlow = attacker.talentShare.chilledSlower;
         }
         if (row != nullptr && row->poisonTicks > 0 && target.alive() && target.monster() &&
             !poisoned(target) && !venomProof(target) && !resists(target, false, dice)) {
-            target.poisonUntil = tick_ + row->poisonTicks;
+            target.poisonUntil = tick_ + talentLonger(row->poisonTicks, attacker.talentShare.poisonLonger);
             target.poisonNext = tick_ + kPoisonFirst;
             target.poisonDamage = damage > 0
                                       ? std::max(1, damage / 4)
@@ -103,6 +104,11 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // A burner's fire lay, two blows in three (realm_tuning.h kBurners).
     const bool fireLay = burner(number) && !thrown && attacker.blowsThrown++ % 3 != 0;
     if (!blow.hit) {
+        // Riposte: a monster's miss arms his next landed blow.
+        if (target.player && !attacker.player && target.talentShare.any && !target.riposte &&
+            talentSpecial(target.kin, target.talents, Special::Riposte, TalentAsk{}) > 0.0f) {
+            target.riposte = true;
+        }
         say(What::Missed, attacker, 0, 0, 0, target.id);
         happenings_.back().thrown = thrown;
         happenings_.back().boss = flame;
@@ -160,7 +166,10 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // (`sweep_`). Not on a rune's own blow -- thrown, unpaid and of no skill -- whose force
     // already carries them (runeForce).
     const bool runeBlow = row == nullptr && thrown && !pays;
-    if (attacker.player && !runeBlow) force *= talentForce(attacker, row ? row : sweep_);
+    // Kept apart from `force`, which says whether this was a plain swing (`generates` below).
+    const float talented =
+        (attacker.player && !runeBlow ? talentBlow(attacker, target, row ? row : sweep_) : 1.0f) *
+        talentSpared(target);
     // A Twin Guard's, while his Defense is up (sim::kTwinGuardDamage).
     if (attacker.player && attacker.excel.twinGuard && attacker.boonSkill == skill::kDefense &&
         attacker.boonUntil > tick_) {
@@ -191,7 +200,8 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // floor, which is where OpenMU spends `Stats.SkillMultiplier`
     // (AttackableExtensions.cs:226-247). One for an ordinary swing, so nothing changes for one.
     // No draw is taken, so a seeded log's dice are untouched by the arithmetic.
-    if (force != 1.0f) blow.damage = std::max(1, int(float(blow.damage) * force));
+    const float whole = force * talented;
+    if (whole != 1.0f) blow.damage = std::max(1, int(float(blow.damage) * whole));
     // The shield takes nine tenths, and what it cannot cover falls through to health: a pool
     // with three points left protects by three and no more. MU2's Realm.Wound, off OpenMU's
     // GetHitInfo shieldRatio and Player.HitAsync's overflow. Monsters have none. **Ours**, and
@@ -268,6 +278,23 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
             attacker.frenzyUntil = tick_ + kFrenzyTicks;
             if (more) reswing(attacker);
         }
+    }
+    // Iron Will: a heavy blow on him braces him for the next ones.
+    if (target.player && target.talentShare.any && target.alive() && wound * 10 >= target.maxHealth) {
+        const TalentEffect* will = nullptr;
+        const float amount = talentSpecial(target.kin, target.talents, Special::IronWill, TalentAsk{}, &will);
+        if (amount > 0.0f && will) {
+            target.ironWillUntil = tick_ + int64_t(will->seconds) * kTalentTicksPerSecond;
+            target.ironWill = amount;
+        }
+    }
+    // Frost Edge's and Icy Shot's chill, armed when he let this blow go (talentRelease).
+    if (attacker.player && attacker.chillArmed && !runeBlow && target.alive() && target.monster() &&
+        !fixed(target) && !shrugs(target) && target.chilledUntil <= tick_) {
+        attacker.chillArmed = false;
+        target.chilledUntil = tick_ + int64_t(attacker.chillSeconds) * kTalentTicksPerSecond;
+        target.chillSlow = attacker.talentShare.chilledSlower;
+        core::logf("talent chill: tick %lld, #%u for %d s", (long long)tick_, target.id, attacker.chillSeconds);
     }
     if (attacker.player && blow.critical) {
         core::logf("critical: tick %lld, %d on #%u", (long long)tick_, blow.damage, target.id);
@@ -476,7 +503,10 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         if (spell == nullptr) return;
         if (ice) {
             // The raid's dragon takes the frost below and not the chill.
-            if (!shrugs(struck)) struck.chilledUntil = tick_ + spell->chillTicks;
+            if (!shrugs(struck)) {
+                struck.chilledUntil = tick_ + spell->chillTicks;
+                struck.chillSlow = hero.talentShare.chilledSlower;
+            }
         } else {
             struck.poisonUntil = tick_ + spell->poisonTicks;
             struck.poisonNext = tick_ + kPoisonEvery;
@@ -705,7 +735,10 @@ void Realm::ringStings(Body& hero, Body& struck, int wound) {
     // no chill (the raid's dragon takes the bite and not the chill).
     if (e.iceRing > 0 && !fixed(struck) && struck.chilledUntil <= tick_ && rolls(e.iceRing)) {
         const SkillRow* ice = skillNumbered(skill::kIce);
-        if (ice != nullptr && !shrugs(struck)) struck.chilledUntil = tick_ + ice->chillTicks;
+        if (ice != nullptr && !shrugs(struck)) {
+            struck.chilledUntil = tick_ + ice->chillTicks;
+            struck.chillSlow = hero.talentShare.chilledSlower;
+        }
         say(What::Loosed, hero, skill::kIce, 0, 0, struck.id);
         core::logf("ring of ice: tick %lld, on #%u", (long long)tick_, struck.id);
         runeStrike(hero, struck, kRingFrostForce * runeForce(hero, Element::Ice));
@@ -726,6 +759,93 @@ void Realm::ringStings(Body& hero, Body& struck, int wound) {
         core::logf("ring of wind: tick %lld, on #%u", (long long)tick_, struck.id);
         runeStrike(hero, struck, kRingGustForce * runeForce(hero, Element::Wind));
         if (struck.alive() && !fixed(struck)) push(struck, hero);
+    }
+}
+
+float Realm::talentBlow(Body& attacker, const Body& target, const SkillRow* row) {
+    if (!attacker.talentShare.any) return 1.0f;
+    const TalentShares& t = attacker.talentShare;
+    const Kin kin = attacker.kin;
+    const TalentRanks& ranks = attacker.talents;
+    TalentAsk ask = holdingOf(attacker);
+    ask.skill = row ? row->number : 0;
+    ask.element = row ? skillElement(row->number) : Element::None;
+    ask.spell = row && row->wizardry;
+    float sum = ask.spell ? t.wizardry : t.damage;
+    sum += t.element[int(ask.element)];
+    if (row) sum += talentSum(kin, ranks, TalentStat::SkillDamage, ask);
+    // The conditions, each a major he has taken.
+    if (target.monster() && target.health * 100 < target.maxHealth * kTalentLowLifePercent) {
+        sum += talentSpecial(kin, ranks, Special::Executioner, ask);
+    }
+    const float dx = target.x - attacker.x, dy = target.y - attacker.y;
+    if (dx * dx + dy * dy >= kTalentFarTiles * kTalentFarTiles) sum += talentSpecial(kin, ranks, Special::FarShot, ask);
+    if (target.chilledUntil > tick_) sum += talentSpecial(kin, ranks, Special::VsChilled, ask);
+    const float crowd = talentSpecial(kin, ranks, Special::Crowd, ask);
+    const float eye = talentSpecial(kin, ranks, Special::EyeOfTheStorm, ask);
+    if (crowd > 0.0f || eye > 0.0f) {
+        const int near = monstersNear(attacker, kTalentNearTiles);
+        if (near >= kTalentCrowd) sum += crowd;
+        sum += eye * float(std::min(near, kTalentEyeMost));
+    }
+    sum += talentAttunement(kin, ranks, ask.element, attacker.excel.elementRunes);
+    // The timed ones: Battle Fury on a swing or skill, Battle Mage on a spell too.
+    if (attacker.procUntil > tick_ && (!ask.spell || attacker.procWizardry)) sum += attacker.procAmount;
+    // Riposte, spent on this blow.
+    if (attacker.riposte) {
+        sum += talentSpecial(kin, ranks, Special::Riposte, ask);
+        attacker.riposte = false;
+    }
+    return sum == 0.0f ? 1.0f : float(1.0 + double(sum) / 100.0);
+}
+
+float Realm::talentSpared(const Body& target) const {
+    if (!target.player) return 1.0f;
+    float spared = 0.0f;
+    if (target.talentShare.any && target.health * 100 < target.maxHealth * kTalentLowLifePercent) {
+        spared += talentSpecial(target.kin, target.talents, Special::LastStand, TalentAsk{});
+    }
+    if (target.ironWillUntil > tick_) spared += target.ironWill;
+    if (target.mercyUntil > tick_) spared += target.mercy;
+    return spared == 0.0f ? 1.0f : std::max(0.0f, 1.0f - spared / 100.0f);
+}
+
+int Realm::monstersNear(const Body& hero, float tiles) const {
+    int n = 0;
+    for (const Body& one : bodies_) {
+        if (!one.monster() || !one.alive()) continue;
+        const float dx = one.x - hero.x, dy = one.y - hero.y;
+        if (dx * dx + dy * dy <= tiles * tiles) ++n;
+    }
+    return n;
+}
+
+void Realm::talentRelease(Body& hero, const SkillRow* row) {
+    if (!hero.player || !hero.talentShare.any || echoing_) return;
+    hero.chillArmed = false;
+    TalentAsk ask = holdingOf(hero);
+    ask.skill = row ? row->number : 0;
+    ask.spell = row && row->wizardry;
+    const TalentEffect* found = nullptr;
+    const float proc = talentSpecial(hero.kin, hero.talents, Special::DamageProc, ask, &found);
+    if (proc > 0.0f && found && talentDice_.nextInt(0, 100) < found->chance) {
+        hero.procUntil = tick_ + int64_t(found->seconds) * kTalentTicksPerSecond;
+        hero.procAmount = proc;
+        hero.procWizardry = found->wizardry;
+        core::logf("talent proc: tick %lld, +%.0f%% for %d s", (long long)tick_, double(proc), found->seconds);
+    }
+    talentSpecial(hero.kin, hero.talents, Special::ChillOnHit, ask, &found);
+    if (found && talentDice_.nextInt(0, 100) < found->chance) {
+        hero.chillArmed = true;
+        hero.chillSeconds = int8_t(found->seconds);
+    }
+    // Mana Surge: a spell's mana back.
+    if (row && row->wizardry) {
+        talentSpecial(hero.kin, hero.talents, Special::ManaBack, ask, &found);
+        if (found && talentDice_.nextInt(0, 100) < found->chance) {
+            hero.mana = std::min(hero.maxMana, hero.mana + manaCostOf(hero, *row));
+            core::logf("mana surge: tick %lld, %d mana back", (long long)tick_, manaCostOf(hero, *row));
+        }
     }
 }
 
@@ -758,10 +878,12 @@ bool Realm::spiritsGoing(uint32_t owner) const {
 bool Realm::letSpiritsGo(Body& hero, float force, bool rune) {
     Random& dice = rune ? runeDice_ : dice_;
     int held = 0, near = 0;
+    // Legion's, on his spell and not on the rune's (sim/talents.h).
+    const float reach = kSpiritReach + (rune ? 0.0f : talentReach(hero, skill::kEvilSpirit));
     for (const Body& b : bodies_) {
         if (!b.monster() || !b.alive()) continue;
         const float dx = b.x - hero.x, dy = b.y - hero.y;
-        if (dx * dx + dy * dy >= kSpiritReach * kSpiritReach) continue;
+        if (dx * dx + dy * dy >= reach * reach) continue;
         // WebZen asks no wall of the spirits; here they stop at one (Realm::seen, the user's
         // 2026-10-02 rule for every skill).
         if (!seen(hero, b)) continue;
@@ -934,6 +1056,8 @@ void Realm::release(Body& hero, uint32_t at, float force, int32_t skill, const f
     // not. He cannot have moved or turned himself in between -- `castUntil` holds him -- so the
     // centre and the facing are the ones he threw it with.
     const SkillRow* row = skillNumbered(skill);
+    // His talents' procs, once a swing or cast (talentRelease).
+    talentRelease(hero, row);
     // A line is let go along where he aimed, whether or not what he aimed at still stands, and
     // flies to every body in it.
     if (row && row->spread == Spread::Line) {
@@ -1558,7 +1682,7 @@ void Realm::rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force)
         if (!one.monster() || (!one.alive() && one.id != aimedAt)) continue;
         if (tables_->grid.safe(one.column(), one.row())) continue;
         const float gap = fm::hypot(one.x - cx, one.y - cy);
-        if (gap > row.splash || found >= kVictims) continue;
+        if (gap > row.splash + talentReach(hero, row.number) || found >= kVictims) continue;
         // The splash stops at a wall, as the blow it rides on does (Realm::seen).
         if (one.id != aimed->id && !seen(cx, cy, one)) continue;
         int at = found;
@@ -1869,12 +1993,16 @@ void Realm::kill(Body& dead, Body& killer) {
         // sets StopByDeath false, so there he would rise still drunk. One rule for everything in
         // the buff strip was the user's (2026-09-25), and a knight who stands up in town with
         // the red still on him reads as a bug.
-        if (dead.aleUntil != 0 || dead.frenzyUntil != 0) {
+        if (dead.aleUntil != 0 || dead.frenzyUntil != 0 || dead.killSpeedUntil != 0) {
             dead.aleUntil = 0;
             dead.frenzyUntil = 0;
             dead.frenzyStacks = 0;
+            dead.killSpeedUntil = 0;
             reswing(dead);
         }
+        // And his talents' timed states.
+        dead.procUntil = dead.ironWillUntil = dead.mercyUntil = 0;
+        dead.riposte = dead.chillArmed = false;
         me().order = Request{};
         me().pending = Request{};
         // And the blow he had in the air goes with him. Left, it waited out the three seconds
@@ -2011,6 +2139,17 @@ void Realm::kill(Body& dead, Body& killer) {
     // An excellent weapon's first two: an eighth of each pool back after a kill (OpenMU's
     // Regeneration after monster kill, off the pool's maximum).
     if (killer.player && killer.alive()) {
+        // Bloodrush: a kill quickens him for a while.
+        if (killer.talentShare.any) {
+            const TalentEffect* rush = nullptr;
+            const float speed = talentSpecial(killer.kin, killer.talents, Special::KillSpeed, TalentAsk{}, &rush);
+            if (speed > 0.0f && rush) {
+                const bool was = killer.killSpeedUntil > tick_;
+                killer.killSpeedUntil = tick_ + int64_t(rush->seconds) * kTalentTicksPerSecond;
+                killer.killSpeed = int32_t(speed);
+                if (!was) reswing(killer);
+            }
+        }
         if (killer.excel.killLife > 0.0) {
             killer.health = std::min(killer.maxHealth,
                                      killer.health + int(double(killer.maxHealth) * killer.excel.killLife));

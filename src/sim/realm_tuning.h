@@ -571,6 +571,26 @@ inline int32_t manaCostOf(const Body& hero, const SkillRow& row) {
     return std::max<int32_t>(1, int32_t(float(row.mana) * (1.0f + less / 100.0f)));
 }
 
+// How much further his talents carry a skill (Special::Reach: Wider Rings, Frost Burst, Legion),
+// in tiles, and how many more bodies Lightning leaps to (Special::ChainMore). 0 for none.
+inline float talentReach(const Body& hero, int32_t skill) {
+    if (!hero.player || !hero.talentShare.any) return 0.0f;
+    TalentAsk ask;
+    ask.skill = skill;
+    return talentSpecial(hero.kin, hero.talents, Special::Reach, ask);
+}
+inline int talentChain(const Body& hero, int32_t skill) {
+    if (!hero.player || !hero.talentShare.any) return 0;
+    TalentAsk ask;
+    ask.skill = skill;
+    return int(talentSpecial(hero.kin, hero.talents, Special::ChainMore, ask));
+}
+// A chill's or a poison's length with his talents' share more (sim/talents.h), the spell's own
+// for a hero with none.
+inline int64_t talentLonger(int64_t ticks, float more) {
+    return more == 0.0f ? ticks : int64_t(float(ticks) * (1.0f + more / 100.0f));
+}
+
 // What his Wraths multiply every blow of his by (sim::kWrathDamage): 1 for none, or a monster's.
 inline float wrathForce(const Body& hero) {
     return hero.player

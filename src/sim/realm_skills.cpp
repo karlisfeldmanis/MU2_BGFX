@@ -118,7 +118,8 @@ int32_t Realm::clipTicksOf(const Body& hero, const SkillRow& row) const {
                                    ? &tables_->arms[size_t(hero.shield)]
                                    : nullptr;
     // And his talents': attack speed on a skill's clip, casting speed on a spell's.
-    const float talented = row.wizardry ? hero.talentShare.castSpeed : hero.talentShare.attackSpeed;
+    const float talented = row.wizardry ? hero.talentShare.castSpeed
+                                        : hero.talentShare.attackSpeed + float(hero.talentSpeed(tick_));
     return castTicks(*tables_, hero.kin, hero.totalPoints().agility, right, left, row,
                      hero.castSpeed(tick_) + int(talented));
 }
@@ -267,6 +268,14 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
                 hero.excel.bulwarkShare < 1.0f && (familyOf(shield) & arms::kShield) == 0) {
                 guard *= hero.excel.bulwarkShare;
             }
+            // His talents: Bastion on Defense and Mana Ward on Magic Shield lift it past
+            // kGuardCap; Blessed Hands on her ward stays under it (sim/talents.h).
+            const TalentShares& t = hero.talentShare;
+            if (t.guardEffect != 0 && row.number == skill::kDefense) guard *= 1.0f + t.guardEffect / 100.0f;
+            if (t.barrierEffect != 0 && row.number == skill::kSoulBarrier) guard *= 1.0f + t.barrierEffect / 100.0f;
+            if (t.buffEffect != 0 && row.number == skill::kGreaterDefense) {
+                guard = std::min(kGuardCap, guard * (1.0f + t.buffEffect / 100.0f));
+            }
             return guard;
         };
         // A self-cast has no target to be far from and reads its victim off the caster -- but for
@@ -280,7 +289,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         if (row.aids() && at != 0 && at != hero.id) {
             Body* one = body(at);
             if (one == nullptr || !one->player || one->gone || !one->alive() ||
-                !within(hero, *one, kAidReach)) {
+                !within(hero, *one, kAidReach + hero.talentShare.aidReach)) {
                 return false;
             }
             // **Never a weaker guard over a stronger** (the user, 2026-10-19: "just dont make
@@ -322,13 +331,35 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             // monsters after him, when she is of a party (Realm::healThreat).
             Body& to = aid != nullptr ? *aid : hero;
             const int before = to.health;
-            to.health = std::min(to.maxHealth, to.health + healOf(hero.totalPoints()));
+            // Her talents (sim/talents.h): Mending on every heal, Patron on a party member's.
+            int heal = healOf(hero.totalPoints());
+            const float more = talentAid(hero, to) + hero.talentShare.healing;
+            if (more != 0.0f) heal = int(float(heal) * (1.0f + more / 100.0f));
+            to.health = std::min(to.maxHealth, to.health + heal);
             healThreat(hero, to, to.health - before);
+            if (&to != &hero && hero.talentShare.any) {
+                // Shared Light: a share of a heal on another back to her.
+                const float shared = talentSpecial(hero.kin, hero.talents, Special::SharedLight, TalentAsk{});
+                if (shared > 0.0f && to.health > before) {
+                    hero.health = std::min(hero.maxHealth, hero.health + int(float(to.health - before) * shared / 100.0f));
+                }
+                // Mercy: a chance the healed takes less for a while.
+                const TalentEffect* mercy = nullptr;
+                const float spare = talentSpecial(hero.kin, hero.talents, Special::Mercy, TalentAsk{}, &mercy);
+                if (spare > 0.0f && mercy && talentDice_.nextInt(0, 100) < mercy->chance) {
+                    to.mercyUntil = tick_ + int64_t(mercy->seconds) * kTalentTicksPerSecond;
+                    to.mercy = spare;
+                }
+            }
         } else if (row.mightTicks > 0) {
             // Greater Damage: reckoned off her energy now and held for the minute; a second cast
             // replaces the first rather than stacking, as MU's magic effects do.
             Body& to = aid != nullptr ? *aid : hero;
             to.might = mightOf(hero.totalPoints());
+            // Blessed Hands, and Patron on a party member's (sim/talents.h).
+            if (const float more = hero.talentShare.buffEffect + talentAid(hero, to); more != 0.0f) {
+                to.might = int32_t(float(to.might) * (1.0f + more / 100.0f));
+            }
             to.mightUntil = tick_ + row.mightTicks;
             For theirs(*this, to);
             rearm(to);
@@ -500,15 +531,20 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // and its strike window by the share his casting speed takes off the clip's authored length,
     // the window never fewer ticks than the chain has bodies, so a quick wizard strikes as many.
     const int32_t authored = authoredCastTicks(*tables_, row);
-    const float haste = row.channelled() && authored > 0 && clip > 0
-                            ? std::min(1.0f, float(clip) / float(authored))
-                            : 1.0f;
+    float haste = row.channelled() && authored > 0 && clip > 0
+                      ? std::min(1.0f, float(clip) / float(authored))
+                      : 1.0f;
+    // Conductor's share off Lightning's channel (sim/talents.h).
+    if (row.number == skill::kLightning && hero.talentShare.lightningChannel != 0) {
+        haste /= 1.0f + hero.talentShare.lightningChannel / 100.0f;
+    }
     const auto quicken = [&](int32_t ticks) {
         return std::max<int32_t>(1, int32_t(std::lround(float(ticks) * haste)));
     };
     const int32_t strikeFrom = quicken(row.strikeFrom);
     const int32_t strikeUntil =
-        std::max(quicken(row.strikeUntil), strikeFrom + int32_t(kLightningBodies) - 1);
+        std::max(quicken(row.strikeUntil),
+                 strikeFrom + int32_t(kLightningBodies) + talentChain(hero, row.number) - 1);
     const int32_t channelTicks = std::max(quicken(row.channelTicks), strikeUntil + 1);
     hero.swingsAt = tick_ + (row.channelled() ? channelTicks
                              : row.wizardry  ? std::max<int32_t>(1, clip)
@@ -640,7 +676,8 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
         if (!within(hero, one,
                     row.spread == Spread::Line   ? kLineTiles
                     : row.spread == Spread::Beam ? kBeamTiles
-                                                 : row.reach + float(bulkOf(numberOf(one))))) {
+                                                 : row.reach + talentReach(hero, row.number) +
+                                                       float(bulkOf(numberOf(one))))) {
             continue;
         }
         // Sheltered ground is sheltered from a spin as well: the same test a single blow makes.
@@ -736,6 +773,11 @@ void Realm::strikeAround(Body& hero, const SkillRow& row, float force) {
             }
         }
     }
+}
+
+float Realm::talentAid(const Body& hero, const Body& to) const {
+    if (!hero.talentShare.any || &to == &hero || hero.party == 0 || to.party != hero.party) return 0.0f;
+    return talentSpecial(hero.kin, hero.talents, Special::Patron, TalentAsk{});
 }
 
 bool Realm::armed(const Body& hero, const SkillRow& row) const {
@@ -834,7 +876,8 @@ void Realm::channel(Body& hero) {
         return row->strikesEach > 0 && times(b.id) >= row->strikesEach;
     };
     // Lightning's chain ends at its most (kLightningBodies), his arm held up the rest of the window.
-    if (row->number == skill::kLightning && hero.channelStruckCount >= kLightningBodies) {
+    if (row->number == skill::kLightning &&
+        hero.channelStruckCount >= kLightningBodies + talentChain(hero, row->number)) {
         hero.channelNext = hero.channelUntil;
         return;
     }

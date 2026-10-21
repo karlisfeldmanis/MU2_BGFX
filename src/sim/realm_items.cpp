@@ -77,7 +77,8 @@ Arms Realm::armsOf(const Body& one) const {
             const TalentShares& t = one.talentShare;
             arms.talent = {t.attackRate / 100.0, t.defenseRate / 100.0, t.defense / 100.0, t.critical / 100.0,
                            t.excellent / 100.0, t.ignoreDefense / 100.0, t.damageDecrease / 100.0,
-                           t.block / 100.0, t.maxLife / 100.0};
+                           t.block / 100.0, t.maxLife / 100.0, t.offHand / 100.0,
+                           t.wizardryIntoSwings / 100.0};
         }
     }
     return arms;
@@ -122,7 +123,8 @@ void Realm::reswing(Body& hero) {
                                    : nullptr;
     // An Ale's twenty ride with the excellent option's seven: both are AttackSpeedAny in OpenMU.
     const int extra = hero.excel.speed + (hero.aleUntil > tick_ ? kAleSpeed : 0) +
-                      hero.frenzySpeed(tick_) + int(hero.talentShare.attackSpeed);
+                      hero.frenzySpeed(tick_) + int(hero.talentShare.attackSpeed) +
+                      hero.talentSpeed(tick_);
     const int milliseconds =
         swingMilliseconds(*tables_, hero.kin, hero.totalPoints().agility, right, left, extra);
     hero.swingMs = milliseconds;
@@ -134,7 +136,8 @@ void Realm::reswing(Body& hero) {
 int Realm::attackSpeed() const {
     const Body& hero = mine();
     const int extra = hero.excel.speed + (hero.aleUntil > tick_ ? kAleSpeed : 0) +
-                      hero.frenzySpeed(tick_) + int(hero.talentShare.attackSpeed);
+                      hero.frenzySpeed(tick_) + int(hero.talentShare.attackSpeed) +
+                      hero.talentSpeed(tick_);
     const int agility = hero.totalPoints().agility;
     if (hero.kin == Kin::DarkWizard) return int(magicSpeedStat(hero.kin, agility)) + extra;
     const auto arm = [&](int32_t at) -> const content::Arm* {

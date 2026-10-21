@@ -73,6 +73,8 @@ bool counts(const TalentEffect& effect, const TalentAsk& ask) {
     if (effect.elements != 0 && (ask.element == Element::None || (effect.elements & bit(ask.element)) == 0)) {
         return false;
     }
+    // Frostbite's: every spell and nothing else.
+    if (effect.special == Special::VsChilled && effect.skills[0] == 0 && !ask.spell) return false;
     if (effect.skills[0] != 0) {
         for (const int32_t skill : effect.skills) {
             if (skill != 0 && skill == ask.skill) return true;
@@ -160,13 +162,37 @@ TalentShares talentShares(Kin kin, const TalentRanks& ranks, const TalentAsk& ho
                 case TalentStat::MoreItems: s.moreItems += v; break;
                 case TalentStat::MoreExcellentItems: s.moreExcellent += v; break;
                 case TalentStat::PotionHealing: s.potionHealing += v; break;
+                case TalentStat::Special:
+                    if (e.special == Special::OffHand) s.offHand += v;
+                    if (e.special == Special::WizardryIntoSwings) s.wizardryIntoSwings += v;
+                    break;
                 case TalentStat::SkillDamage:
-                case TalentStat::SkillManaCost:
-                case TalentStat::Special: break;
+                case TalentStat::SkillManaCost: break;
             }
         }
     }
     return s;
+}
+
+float talentAttunement(Kin kin, const TalentRanks& ranks, Element element, const int runes[kElements]) {
+    if (element == Element::None) return 0.0f;
+    const TalentTree tree = talentTree(kin);
+    float sum = 0.0f;
+    for (int c = 0; c < tree.count; ++c) {
+        for (int i = 2; i < kTalentNodes; i += 3) {
+            const TalentEffect& effect = tree.columns[c].nodes[i].effect;
+            if (ranks[size_t(c)][size_t(i)] == 0 || effect.special != Special::Attunement ||
+                (effect.elements & bit(element)) == 0) {
+                continue;
+            }
+            int worn = 0;
+            for (int e = 1; e < kElements; ++e) {
+                if (effect.elements & bit(Element(e))) worn += runes[e];
+            }
+            sum += effect.amount * float(std::min(worn, kTalentAttunedMost));
+        }
+    }
+    return sum;
 }
 
 float talentSpecial(Kin kin, const TalentRanks& ranks, Special special, const TalentAsk& ask,

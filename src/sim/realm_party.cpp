@@ -233,6 +233,8 @@ void Realm::retarget(Body& beast) {
 void Realm::partyBlow(Body& beast, const Body& attacker, int32_t damage) {
     const bool tank = tanking(attacker);
     int64_t amount = int64_t(std::max(1, damage)) * (tank ? kPartyTankThreat : 1);
+    // Taunt's share more (sim/talents.h).
+    if (attacker.talentShare.threat != 0) amount = int64_t(double(amount) * (1.0 + attacker.talentShare.threat / 100.0));
     if (tank && threatOf(beast, attacker.id) == 0) amount += beast.maxHealth / kTankOpener;
     addThreat(beast, attacker, int32_t(std::min<int64_t>(amount, std::numeric_limits<int32_t>::max())));
     retarget(beast);

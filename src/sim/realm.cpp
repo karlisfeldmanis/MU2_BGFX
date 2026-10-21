@@ -309,6 +309,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     wingDice_.seed(seed ^ 0x6e2b94d1c7a35f08ull);
     gearDice_.seed(seed ^ 0x2f6a9c1d7e4b5803ull);
     ticketDice_.seed(seed ^ 0x9fb21c651e98df25ull);
+    talentDice_.seed(seed ^ 0x7a3d5c19b2e4f681ull);
     devilDice_.seed(seed ^ 0x2545f4914f6cdd1dull);
     treasureDice_.seed(seed ^ 0x3c6ef372fe94f82bull);
     orbDice_.seed(seed ^ 0x4cf5ad432745937full);
@@ -1082,6 +1083,11 @@ void Realm::press() {
         hero.aleUntil = 0;
         reswing(hero);
     }
+    // And Bloodrush's (sim/talents.h), the same way.
+    if (hero.killSpeedUntil != 0 && tick_ >= hero.killSpeedUntil) {
+        hero.killSpeedUntil = 0;
+        reswing(hero);
+    }
     // And a Frenzy's speed, the same way.
     if (hero.frenzyUntil != 0 && tick_ >= hero.frenzyUntil) {
         hero.frenzyUntil = 0;
@@ -1438,7 +1444,9 @@ void Realm::heroAfter() {
             }
             core::logf("arcane echo: tick %lld, skill %d at #%u", (long long)tick_, echo.skill,
                        echo.target);
+            echoing_ = true;
             release(hero, echo.target, echo.force, echo.skill, echo.ground ? echo.spot : nullptr);
+            echoing_ = false;
         }
         // And whatever he let go earlier and has now arrived, and the fires on the ground.
         arrive();

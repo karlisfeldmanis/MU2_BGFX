@@ -102,6 +102,26 @@ void Realm::fitSummon(Body& summon, const Body& hero) {
     summon.stats.defense = fit.defense;
     summon.stats.minimumDamage = fit.minimumDamage;
     summon.stats.maximumDamage = fit.maximumDamage;
+    // Her summon talents (sim/talents.h), refit with it every tick (Realm::tend), so they show
+    // as soon as they are taken.
+    if (hero.talentShare.any) {
+        const TalentShares& t = hero.talentShare;
+        const auto more = [](float share) { return 1.0 + double(share) / 100.0; };
+        if (t.summonLife != 0) {
+            const int life = int(double(fit.health) * more(t.summonLife));
+            if (summon.maxHealth > 0 && summon.maxHealth != life) {
+                summon.health = std::max(1, int(int64_t(summon.health) * life / summon.maxHealth));
+            }
+            summon.maxHealth = life;
+        }
+        if (t.summonDamage != 0) {
+            summon.stats.minimumDamage = int(double(fit.minimumDamage) * more(t.summonDamage));
+            summon.stats.maximumDamage = int(double(fit.maximumDamage) * more(t.summonDamage));
+        }
+        if (t.summonDefense != 0) summon.stats.defense = int(double(fit.defense) * more(t.summonDefense));
+        if (t.summonAttackRate != 0) summon.stats.attackRate = float(double(fit.attackRate) * more(t.summonAttackRate));
+        summon.stats.damageTaken = t.summonDamageTaken != 0 ? more(t.summonDamageTaken) : 1.0;
+    }
 }
 
 void Realm::dismiss(Body& summon) {

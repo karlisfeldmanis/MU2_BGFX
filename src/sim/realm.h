@@ -510,6 +510,22 @@ struct Body {
     TalentRanks talents{};
     // What they come to for what he holds, summed at each rearm (sim::talentShares).
     TalentShares talentShare;
+    // The talents' timed states (sim::Special), each until its tick, 0 for none; none is ever
+    // set on a hero without the talent, and none survives his death (Realm::kill).
+    int64_t procUntil = 0;       // Battle Fury, Battle Mage: `procAmount` more for a while
+    float procAmount = 0.0f;
+    bool procWizardry = false;   // Battle Mage's lifts his spells too
+    int64_t killSpeedUntil = 0;  // Bloodrush: `killSpeed` more attack speed after a kill
+    int32_t killSpeed = 0;
+    int64_t ironWillUntil = 0;   // Iron Will: `ironWill`% less taken after a heavy blow
+    float ironWill = 0.0f;
+    int64_t mercyUntil = 0;      // Mercy, an elf's on whoever she healed: `mercy`% less taken
+    float mercy = 0.0f;
+    bool riposte = false;        // Riposte: armed by a monster's miss, spent on his next blow
+    bool chillArmed = false;     // Frost Edge, Icy Shot: his next landed blow chills, `chillSeconds`
+    float chillSlow = 0.0f;      // on a monster: Numbing's share of its chill, off whoever laid it
+    int8_t chillSeconds = 0;
+    int talentSpeed(int64_t tick) const { return killSpeedUntil > tick ? killSpeed : 0; }
 
     // ---- skills (docs/game/skills-dk.md) --------------------------------------------------------
     // What he has learned, as a bit per row of the skill table and NOT per skill number: the
@@ -924,6 +940,18 @@ public:
     // What he holds that a talent asks (sim::Hold), and his talents' shares for it.
     TalentAsk holdingOf(const Body& one) const;
     TalentShares talentSharesOf(const Body& one) const;
+    // His talents on a blow he lands on `target` (rule 1: one sum, the conditional majors in it),
+    // and what the talents on `target` take off a blow on him. 1 for a hero with none.
+    float talentBlow(Body& attacker, const Body& target, const SkillRow* row);
+    float talentSpared(const Body& target) const;
+    // Monsters alive within `tiles` of him, for Bloodlust and Eye of the Storm.
+    int monstersNear(const Body& hero, float tiles) const;
+    // His talents' procs as he lets a swing or cast go (Realm::release): Battle Fury's and Battle
+    // Mage's roll, Frost Edge's and Icy Shot's chill armed for the blow, Mana Surge's mana. Once a
+    // swing or cast, off talentDice_; never for an Arcane Echo's throw or a rune's blow.
+    void talentRelease(Body& hero, const SkillRow* row);
+    // Patron's share on a heal or buff of hers on `to`, a member of her party; 0 otherwise.
+    float talentAid(const Body& hero, const Body& to) const;
     int talentGive(int column, int node, int count);
     bool talentReset();
     // His talent points earned and not spent.
@@ -2146,6 +2174,8 @@ private:
     // The physical sweep a blow in hand belongs to (strikeAround), so strikeAt lays its skill's
     // talents on a blow that carries no row. Only ever set around that one call.
     const SkillRow* sweep_ = nullptr;
+    // An Arcane Echo's second throw is being let go: it rolls no talent proc (the plan).
+    bool echoing_ = false;
     bool wingDemo_ = false;  // `wingDemo`
     bool benchUndying_ = false;
     bool benchMonstersDie_ = false;
@@ -2186,6 +2216,8 @@ private:
     // Blood Castle's scroll and bone, rolled on every kill outside a castle (Realm::leave), off
     // a stream of their own so the kill's own drops draw as they did.
     Random ticketDice_{0};
+    // The talents' procs (sim/talents.h), drawn only when a hero has the talent that rolls.
+    Random talentDice_{0};
     // The Devil's Eye and Key's own rolls (sim/square.h), apart so Blood Castle's do not move.
     Random devilDice_{0};
     bool squareOpen_ = false;  // see openSquareDoor

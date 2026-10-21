@@ -132,6 +132,7 @@ struct TalentAsk {
     Hold holding[3] = {Hold::Any, Hold::Any, Hold::Any};  // what he holds that counts, Any first
     int32_t skill = 0;                                      // the blow's skill, 0 a plain swing
     Element element = Element::None;                        // the blow's (skillElement)
+    bool spell = false;  // a wizardry blow: Frostbite's "all your spells" asks it
 };
 float talentSum(Kin kin, const TalentRanks& ranks, TalentStat stat, const TalentAsk& ask);
 // The taken Special majors of one kind that count for `ask`, their amounts summed (0 for none).
@@ -163,7 +164,24 @@ struct TalentShares {
     float summonDamage = 0, summonLife = 0, summonDefense = 0, summonAttackRate = 0, summonManaCost = 0,
           summonDamageTaken = 0;
     float moreZen = 0, moreJewels = 0, moreItems = 0, moreExcellent = 0, potionHealing = 0;
+    // Two majors that are a band's share: Off-Hand Mastery's on the left hand's, Gladiator's
+    // Edge's of his wizardry on his weapon's.
+    float offHand = 0, wizardryIntoSwings = 0;
 };
 TalentShares talentShares(Kin kin, const TalentRanks& ranks, const TalentAsk& holding);
+// The Attunements on a blow of `element`: each taken one whose elements take it adds its amount
+// for every rune of its elements he wears (`runes`, by sim::Element), to five runes.
+float talentAttunement(Kin kin, const TalentRanks& ranks, Element element, const int runes[kElements]);
+// How long a talent's timed state lasts, in the realm's twenty ticks a second.
+constexpr int64_t kTalentTicksPerSecond = 20;
+// Under this share of his life a monster is Executioner's and he is Last Stand's.
+constexpr int kTalentLowLifePercent = 30;
+// How near a monster stands to count for Bloodlust and Eye of the Storm, in tiles, and how many
+// Eye of the Storm counts; Bloodlust asks kTalentCrowd. Deadeye's shot is kTalentFarTiles or more.
+constexpr float kTalentNearTiles = 3.0f;
+constexpr int kTalentEyeMost = 5;
+constexpr int kTalentCrowd = 3;
+constexpr float kTalentFarTiles = 5.0f;
+constexpr int kTalentAttunedMost = 5;
 
 }  // namespace mu::sim
