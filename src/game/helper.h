@@ -59,9 +59,12 @@ struct HelperSettings {
     bool back = true;
     // Each skill's use, by MU's skill number; one not here takes its kind's default.
     std::map<int32_t, HelperUse> uses;
-    // What it picks up besides Zen, a bit each (kPick...).
+    // What it picks up besides Zen, a bit each (kPick...). Pets are the Angel, the Imp and the
+    // Horns, which MU flags as jewels; their own tick, off at first (Discord, 2026-10-21: "have
+    // the Helper include the option to include/exclude them from auto-pickup? They blow up my
+    // inventory really quick").
     static constexpr uint8_t kPickJewels = 1, kPickRunes = 2, kPickLegendary = 4, kPickExcellent = 8,
-                             kPickSockets = 16, kPickAll = 32;
+                             kPickSockets = 16, kPickAll = 32, kPickPets = 64;
     uint8_t picks = kPickJewels | kPickRunes | kPickLegendary | kPickExcellent;
     // The window has been up once: the first H opens it, every H after starts and stops.
     bool seen = false;

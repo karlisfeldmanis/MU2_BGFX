@@ -127,7 +127,7 @@ bool loadHelper(const std::string& savePath, HelperSettings& out) {
         int a = 0, b = 0;
         if (!std::strcmp(key, "range") && std::fscanf(f, "%d", &a) == 1) read.range = std::clamp(a, 0, 2);
         else if (!std::strcmp(key, "back") && std::fscanf(f, "%d", &a) == 1) read.back = a != 0;
-        else if (!std::strcmp(key, "picks") && std::fscanf(f, "%d", &a) == 1) read.picks = uint8_t(a & 63);
+        else if (!std::strcmp(key, "picks") && std::fscanf(f, "%d", &a) == 1) read.picks = uint8_t(a & 127);
         else if (!std::strcmp(key, "seen") && std::fscanf(f, "%d", &a) == 1) read.seen = a != 0;
         else if (!std::strcmp(key, "use") && std::fscanf(f, "%d %d", &a, &b) == 2) {
             if (b >= 0 && b <= int(HelperUse::Never)) read.uses[a] = HelperUse(b);
@@ -356,7 +356,10 @@ bool Helper::loot(Play& play, const HelperSettings& settings) {
             const content::ItemRow& row = tables.items[size_t(one.what.item)];
             const uint8_t p = settings.picks;
             bool wanted = (p & HelperSettings::kPickAll) != 0;
-            wanted |= (p & HelperSettings::kPickJewels) && (row.jewel() || sim::refiningJewel(row));
+            const int place = sim::placeOf(row);
+            const bool pet = place == sim::kPet || place == sim::kMount;
+            wanted |= (p & HelperSettings::kPickJewels) && !pet && (row.jewel() || sim::refiningJewel(row));
+            wanted |= (p & HelperSettings::kPickPets) && pet;
             wanted |= (p & HelperSettings::kPickRunes) && sim::creation(row);
             wanted |= (p & HelperSettings::kPickLegendary) && qualityOf(row, one.what) == tip::Tone::RuneLegendary;
             wanted |= (p & HelperSettings::kPickExcellent) && one.what.excellent != 0;

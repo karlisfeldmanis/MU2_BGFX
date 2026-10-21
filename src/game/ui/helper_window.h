@@ -61,7 +61,7 @@ private:
     panel::Arts* arts_ = nullptr;
     bool up_ = false;
     std::vector<Row> rows_;
-    gfx::Box ranges_[3], back_, switch_, segs_[2][9], picks_[6], go_;
+    gfx::Box ranges_[3], back_, switch_, segs_[2][9], picks_[7], go_;
     float huntTop_ = 0.0f, skillsTop_ = 0.0f, drinkTop_ = 0.0f, pickTop_ = 0.0f;
     // over_/pressing_: 0 the close, 10 + a range, 20 the walk back, 30 + a row, 50 + 10 x a meter +
     // a segment, 80 + a pick, 90 Start or Stop.

@@ -48,12 +48,15 @@ struct Pick {
     uint8_t bit;
     uint32_t ink;
 };
-constexpr Pick kPicks[6] = {{"Jewels", HelperSettings::kPickJewels, kJewelInk},
-                            {"Runes", HelperSettings::kPickRunes, kRuneInk},
-                            {"Legendary", HelperSettings::kPickLegendary, kLegendInk},
-                            {"Excellent", HelperSettings::kPickExcellent, kExcellentInk},
-                            {"+Socket", HelperSettings::kPickSockets, style::kBoneHi},
-                            {"All", HelperSettings::kPickAll, style::kBoneHi}};
+// Four a row, two rows: the window keeps its height (Pets made seven).
+constexpr int kPickCount = 7, kPickColumns = 4;
+constexpr Pick kPicks[kPickCount] = {{"Jewels", HelperSettings::kPickJewels, kJewelInk},
+                                     {"Runes", HelperSettings::kPickRunes, kRuneInk},
+                                     {"Pets", HelperSettings::kPickPets, style::kBoneHi},
+                                     {"+Socket", HelperSettings::kPickSockets, style::kBoneHi},
+                                     {"Legendary", HelperSettings::kPickLegendary, kLegendInk},
+                                     {"Excellent", HelperSettings::kPickExcellent, kExcellentInk},
+                                     {"All", HelperSettings::kPickAll, style::kBoneHi}};
 
 Box placed(float x, float y, const Box& b, float u) {
     return {std::round(x + b.x * u), std::round(y + b.y * u), std::round(b.w * u), std::round(b.h * u)};
@@ -173,9 +176,10 @@ void HelperWindow::layout(const Play& play, const HelperSettings& settings, cons
 
     pickTop_ = y;
     y += kKick;
-    const float pickW = (inner - kPickGap * 2.0f) / 3.0f;
-    for (int i = 0; i < 6; ++i) {
-        picks_[i] = {kSide + float(i % 3) * (pickW + kPickGap), y + float(i / 3) * (kPickH + kPickGap), pickW, kPickH};
+    const float pickW = (inner - kPickGap * float(kPickColumns - 1)) / float(kPickColumns);
+    for (int i = 0; i < kPickCount; ++i) {
+        picks_[i] = {kSide + float(i % kPickColumns) * (pickW + kPickGap),
+                     y + float(i / kPickColumns) * (kPickH + kPickGap), pickW, kPickH};
     }
 
     go_ = {kSide, tall_ - kSide - kGoH, inner, kGoH};
@@ -215,7 +219,7 @@ void HelperWindow::update(float seconds, const Play& play, HelperSettings& setti
                 if (segs_[m][s].grown(2.0f).has(ux, uy)) over = 50 + m * 10 + s;
             }
         }
-        for (int i = 0; i < 6 && over < 0; ++i) {
+        for (int i = 0; i < kPickCount && over < 0; ++i) {
             if (picks_[i].has(ux, uy)) over = 80 + i;
         }
         if (over < 0 && go_.has(ux, uy)) over = 90;
@@ -385,7 +389,7 @@ void HelperWindow::rebuild(const Play& play, const HelperSettings& settings, boo
 
     // ---- pick up ---------------------------------------------------------------------------------
     kicker(pickTop_, "Pick up");
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < kPickCount; ++i) {
         const bool on = (settings.picks & kPicks[i].bit) != 0;
         const Box box = at(picks_[i]);
         const bool hot = over_ == 80 + i;
