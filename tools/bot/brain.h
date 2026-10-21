@@ -4684,7 +4684,7 @@ private:
             const double base = row.wizardry
                                     ? ((w.wizardMinimum + w.wizardMaximum) / 2.0 + row.damage * 1.25) * w.wizardryRate
                                     : blow();
-            const double one = base * sim::force(row, hero.points);
+            const double one = base * sim::force(row, hero.points, hero.kin);
             const int32_t cast = sim::castTicks(*tables_, hero.kin, hero.points.agility, arm(hero.weapon),
                                                 arm(hero.shield), row);
             const int32_t t = std::max<int32_t>(1, row.wizardry ? cast : std::max(cast, swing));
@@ -5636,7 +5636,7 @@ private:
             const double base = row.wizardry
                                     ? ((w.wizardMinimum + w.wizardMaximum) / 2.0 + row.damage * 1.25) * w.wizardryRate
                                     : blow();
-            const double hit = base * sim::force(row, hero.points);
+            const double hit = base * sim::force(row, hero.points, hero.kin);
             if (wizardly()) continue;  // a spellcaster's is spell() below
             if (hit > strongest) {
                 strongest = hit;
@@ -5756,7 +5756,7 @@ private:
                                           row.reach + (row.wizardry ? 0.0f : 0.5f))) continue;
             if (target && std::hypot(target->x - hero.x, target->y - hero.y) > row.reach + 0.5f) continue;
             const double hit = ((w.wizardMinimum + w.wizardMaximum) / 2.0 + row.damage * 1.25) * w.wizardryRate *
-                               sim::force(row, hero.points);
+                               sim::force(row, hero.points, hero.kin);
             const double bodies = struck(row, target);
             const double worth = hit * bodies;
             const double pace = worth / ticksOf(row);

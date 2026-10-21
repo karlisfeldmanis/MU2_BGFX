@@ -648,7 +648,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         const bool atHim = pressedOn != nullptr && pressedOn->alive() && pressedOn->monster() &&
                            me().wantsColumn >= 0 && row.aimsAtPointer() && row.wizardry &&
                            !hero.blowGround;
-        begin(hero, atHim ? pressedOn->id : at, force(row, hero.totalPoints()), row.number, held);
+        begin(hero, atHim ? pressedOn->id : at, force(row, hero.totalPoints(), hero.kin), row.number, held);
         // Thrown at the pointer's ground: that way, whatever turns him before it is let go.
         hero.blowAimed = me().wantsColumn >= 0 && row.aimsAtPointer() && !atHim;
         hero.blowAim = hero.aim;
@@ -950,7 +950,7 @@ void Realm::channel(Body& hero) {
     hero.channelLast = next->id;
     hero.channelLastX = next->x;
     hero.channelLastY = next->y;
-    strikeAt(hero, *next, force(*row, hero.totalPoints()), row, true);
+    strikeAt(hero, *next, force(*row, hero.totalPoints(), hero.kin), row, true);
 }
 
 bool Realm::blinkTo(const Body& hero, const SkillRow& row, int column, int row_, int* outColumn,

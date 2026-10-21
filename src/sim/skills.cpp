@@ -974,15 +974,16 @@ int skillIndexOf(int32_t number) {
     return -1;
 }
 
-float force(const SkillRow& row, const HeroPoints& points) {
+float force(const SkillRow& row, const HeroPoints& points, Kin who) {
     // A wizard's `SkillMultiplier` is a flat one (ClassDarkWizard.cs:112): his spells take their
     // force from the wizardry band instead, which is where energy already went.
     // A spell's own `force` column only, where 0.75 has none: one on every spell but Lightning,
     // whose two is what a ten-second cooldown buys (the user, 2026-09-28: "lightning has to be
     // stronger because it's a cooldown spell"). Energy and the staff are already in the band.
     if (row.wizardry) return row.force;
-    return row.force + float(points.strength) * row.forcePerStrength +
-           float(points.energy) * kForcePerEnergy;
+    const float sum = row.force + float(points.strength) * row.forcePerStrength +
+                      float(points.energy) * kForcePerEnergy;
+    return who == Kin::DarkKnight && row.kin == Kin::DarkKnight ? sum * kKnightSkillBoost : sum;
 }
 
 int skillPercent(const HeroPoints& points) {

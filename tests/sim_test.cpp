@@ -2948,8 +2948,8 @@ void testCastLock(const content::Tables& tables) {
                   bolt.pushes && bolt.spread == sim::Spread::Ring && bolt.damage == 17 &&
                   bolt.mana == 40 && bolt.coolTicks == 0 && bolt.channelTicks == 25,
               "Lightning is a channel, its clip quickened, with no cooldown, and it pushes");
-        check(bolt.force == 1.8f && sim::force(bolt, sim::HeroPoints{}) == 1.8f && bolt.reach == 6.0f &&
-                  sim::force(*sim::skillNumbered(sim::skill::kFireBall), sim::HeroPoints{}) == 1.8f,
+        check(bolt.force == 1.8f && sim::force(bolt, sim::HeroPoints{}, sim::Kin::DarkWizard) == 1.8f && bolt.reach == 6.0f &&
+                  sim::force(*sim::skillNumbered(sim::skill::kFireBall), sim::HeroPoints{}, sim::Kin::DarkWizard) == 1.8f,
               "and each strike is at 1.8 the band, six tiles a leap, as Fire Ball's is");
         check(bolt.pulseTicks == 1 && bolt.strikeFrom == 8 && bolt.strikeUntil == 21 &&
                   bolt.strikesEach == 1,
@@ -4321,9 +4321,13 @@ void testSkills(const content::Tables& tables) {
     }
     check(sim::guardShare({30000, 30000, 0, 30000}, 5000) < sim::kGuardCap,
           "and no build reaches the guard's cap");
-    check(sim::force(cyclone, sim::HeroPoints{2000, 0, 0, 0}) >
-              sim::force(cyclone, sim::HeroPoints{28, 0, 0, 0}),
+    check(sim::force(cyclone, sim::HeroPoints{2000, 0, 0, 0}, sim::Kin::DarkKnight) >
+              sim::force(cyclone, sim::HeroPoints{28, 0, 0, 0}, sim::Kin::DarkKnight),
           "strength is force");
+    // A knight's own skill is kKnightSkillBoost of another's hands on it (2026-10-21).
+    check(std::fabs(sim::force(cyclone, sim::HeroPoints{500, 0, 0, 0}, sim::Kin::DarkKnight) -
+                    sim::force(cyclone, sim::HeroPoints{500, 0, 0, 0}, sim::Kin::MagicGladiator) * sim::kKnightSkillBoost) < 1e-4f,
+          "and a knight's own skills are 15% stronger in his hands than a Gladiator's");
 
     sim::Realm realm;
     // Level 120, the top of the orb ladder since Rageful Blow's orb moved there (2026-10-02).
@@ -12010,7 +12014,7 @@ void testPetDay(const content::Tables& tables) {
     std::printf("the timed pets\n");
     const int angel = tables.itemAt(13, 0), imp = tables.itemAt(13, 1), horn = tables.itemAt(13, 2);
     if (angel < 0 || imp < 0 || horn < 0) return;
-    checkEqual(sim::petSeconds(tables.items[size_t(angel)]), int64_t(2 * 3600), "the Angel lasts two hours");
+    checkEqual(sim::petSeconds(tables.items[size_t(angel)]), int64_t(12 * 3600), "the Angel lasts twelve hours");  // 2 until 6ce5e22b
     checkEqual(sim::petSeconds(tables.items[size_t(horn)]), int64_t(24 * 3600), "and Uniria a day");
     const int64_t start = 1800000000;
     sim::Realm realm;
@@ -12029,7 +12033,7 @@ void testPetDay(const content::Tables& tables) {
     check(carried >= 0 && realm.give(horn, sim::kMount) >= 0, "an Imp carried and Uniria ridden");
     for (int tick = 0; tick < 20; ++tick) realm.step();
     const int64_t until = start + sim::kSpiritSeconds;
-    checkEqual(sim::petUntil(realm.satchel()[sim::kPet]), until, "the worn Angel's two hours start as it is worn");
+    checkEqual(sim::petUntil(realm.satchel()[sim::kPet]), until, "the worn Angel's time starts as it is worn");
     checkEqual(sim::petUntil(realm.satchel()[sim::kMount]), start + sim::kHornSeconds, "Uniria's day too");
     checkEqual(sim::petUntil(realm.satchel()[stack]), int64_t(0), "the stack's has not");
     if (carried >= 0) checkEqual(sim::petUntil(realm.satchel()[carried]), int64_t(0), "nor the carried Imp's");

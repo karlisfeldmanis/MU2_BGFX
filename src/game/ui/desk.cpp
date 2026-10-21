@@ -2382,7 +2382,7 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
         // info is bugs, it show some kind of absorb").
         selfLines(row, tables, realm.wearer(), false, facts.rows);
     } else {
-        facts.rows.push_back(line("Damage", "x" + number(sim::force(row, hero.totalPoints()), 2) +
+        facts.rows.push_back(line("Damage", "x" + number(sim::force(row, hero.totalPoints(), hero.kin), 2) +
                                                 " of a swing",
                                   tip::Tone::Yellow));
         // And the sum that made it, on one grey line: the row's own base plus strength over the
