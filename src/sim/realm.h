@@ -664,6 +664,14 @@ struct Body {
     int64_t bleedUntil = 0, bleedNext = 0;
     int32_t bleedDamage = 0;
     uint32_t bleedBy = 0;
+    // Weakened (the Ancient rune Weakness, sim/items.h kWeakness...): until this tick its blows
+    // lose `weakCut` percent. 0 for never.
+    int64_t weakUntil = 0;
+    int32_t weakCut = 0;
+    // And on the one who wears it: his Weakness field, MU's monster 821 -- until this tick, its
+    // next look round, and the tile it lies on. 0 for none; one a caster.
+    int64_t curseUntil = 0, curseNext = 0;
+    float curseX = 0.0f, curseY = 0.0f;
     int32_t blinkColumn = 0, blinkRow = 0;
     // Sitting, leaning or hanging, and off which perch (an index into Tables::perches, -1 for
     // none). The player's only; a monster never poses.
@@ -1878,6 +1886,11 @@ private:
     // A channelled spell's (Lightning, Aqua Beam...), begun on `aimed`: only his Ancient spell
     // runes roll, once a channel, as `land` rolls them once a cast -- Stormcall is not asked here.
     void channelRunes(Body& hero, Body& aimed);
+    // His Weakness field's look round, while it lies (sim/items.h kWeakness...): each monster in
+    // its reach not cursed already rolls MU's odds. How many it cursed.
+    int weaknessLook(Body& hero);
+    // Every caster's field, in body order, once a tick after the players' halves.
+    void weaknessFields();
     // One power's roll and, when it answers, its lightning, rock, chill or poison.
     void callDown(Body& hero, Body& struck, const PowerRow& power, int wound);
     // A magic rune's blow: his swing's roll with his energy's band on top (sim::kRuneEnergyLow

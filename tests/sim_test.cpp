@@ -10624,6 +10624,162 @@ void testElementRunes(const content::Tables& tables) {
 // that no monster up to Aida's hardest lets fall and no fuse makes. Ice Storm, the first, is the
 // Soul Master's blizzard: about one cast in ten, every monster round what he struck frozen and
 // struck.
+// A level-150 Soul Master's Lightning hunt in Lorencia with `power` in his staff (none for a bare
+// one), 12000 ticks, his health and mana kept up; `each` sees the realm after every tick.
+template <typename Each>
+void ancientHunt(const content::Tables& tables, int staff, sim::Power power, bool cast,
+                 Each each) {
+    sim::Realm realm;
+    realm.raise(&tables, 5, 200, 160, sim::Kin::DarkWizard, 150);
+    promote(realm);
+    realm.learn(sim::skill::kLightning);
+    const uint8_t powers[3] = {uint8_t(power), 0, 0};
+    realm.give(staff, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+    realm.undying(true);
+    uint32_t fighting = 0;
+    for (int tick = 0; tick < 12000 && realm.hero().alive(); ++tick) {
+        if (realm.hero().mana < 100) {
+            sim::HeroRecord record = realm.record();
+            record.mana = realm.hero().maxMana;
+            realm.restore(record);
+        }
+        const sim::Body& hero = realm.hero();
+        uint32_t nearest = 0;
+        float best = 1e9f;
+        for (const sim::Body& one : realm.bodies()) {
+            if (!one.monster() || !one.alive()) continue;
+            const float dx = one.x - hero.x, dy = one.y - hero.y;
+            if (dx * dx + dy * dy < best) {
+                best = dx * dx + dy * dy;
+                nearest = one.id;
+            }
+        }
+        if (nearest != 0 && nearest != fighting) {
+            fighting = nearest;
+            sim::Request request;
+            request.kind = sim::Request::Kind::Attack;
+            request.target = nearest;
+            if (cast) request.skill = sim::skill::kLightning;
+            realm.ask(request);
+        }
+        realm.step();
+        each(realm);
+    }
+}
+
+// Weakness, the Summoner's curse on a Soul Master's staff (sim/items.h kWeakness...): a field on
+// his tile about one cast in ten, which curses round it as it lies and keeps cursing, and a
+// cursed monster's blows are lighter by MU's cut.
+void testWeaknessRune(const content::Tables& tables, int rune, int staff, int sword) {
+    std::printf("weakness rune\n");
+    using sim::Kin;
+    using sim::Power;
+    const sim::PowerRow* row = sim::powerOf(uint8_t(Power::Weakness));
+    check(row != nullptr && row->rarity == sim::Rarity::Ancient && row->second && row->once &&
+              row->weapon(),
+          "Weakness is an Ancient weapon rune, a second class's, one to a thing");
+    const auto held = [](int item, uint8_t sockets, Power first) {
+        sim::Held h{int32_t(item), 0, 1};
+        h.sockets = sockets;
+        h.powers[0] = uint8_t(first);
+        return h;
+    };
+    const auto sets = [&](int into, Kin kin, bool second) {
+        return sim::settable(tables, held(rune, 0, Power::Weakness), held(into, 1, Power::None),
+                             kin, second);
+    };
+    check(sets(staff, Kin::DarkWizard, true), "a Soul Master sets Weakness in his staff");
+    check(!sets(staff, Kin::DarkWizard, false) && !sets(sword, Kin::DarkKnight, true) &&
+              !sets(staff, Kin::FairyElf, true),
+          "nobody else does");
+    {
+        sim::Random dice(20261022);
+        int at = 0, below = 0;
+        for (int i = 0; i < 4000; ++i) {
+            at += sim::drawRunePower(dice, Kin::DarkWizard, true, 160) == uint8_t(Power::Weakness);
+            below += sim::drawRunePower(dice, Kin::DarkWizard, true, 140) == uint8_t(Power::Weakness);
+        }
+        std::printf("  Weakness in 4000 drops: %d at 140, %d at 160\n", below, at);
+        check(at > 0 && below == 0, "it falls past Aida and not before");
+    }
+    // MU's formulas, at a thousand energy on a level-80 monster: 52% for 12 s, 21% off.
+    checkEqual(sim::weaknessOdds(1000), 52, "MU's odds");
+    checkEqual(sim::weaknessSeconds(1000, 80), 12, "MU's seconds");
+    checkEqual(sim::weaknessCut(1000), 21, "MU's cut");
+
+    int casts = 0, fields = 0, cursedAtOnce = 0, cursedLater = 0, cursedSeen = 0;
+    int64_t fieldEnds = 0;
+    bool farCursed = false;
+    ancientHunt(tables, staff, Power::Weakness, true, [&](const sim::Realm& realm) {
+        const int64_t now = int64_t(realm.tick());
+        bool laid = false;
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.who != realm.hero().id) continue;
+            if (h.what == sim::What::Cast && h.a == sim::skill::kLightning) ++casts;
+            if (h.what == sim::What::Loosed && h.a == sim::skill::kWeakness) {
+                ++fields;
+                cursedAtOnce += h.c;
+                laid = true;
+                fieldEnds = now + sim::kWeaknessFieldTicks;
+            }
+        }
+        const sim::Body& hero = realm.hero();
+        if (hero.curseUntil != 0) check(hero.curseUntil == fieldEnds, "the field lasts 30 s");
+        for (const sim::Body& one : realm.bodies()) {
+            if (!one.monster() || !one.alive() || one.weakUntil <= now) continue;
+            // Freshly cursed this tick by the field's later look, not by the rune's roll.
+            const int64_t whole =
+                int64_t(sim::weaknessSeconds(hero.totalPoints().energy, one.level)) * 20;
+            if (one.weakUntil == now + whole && !laid) ++cursedLater;
+            ++cursedSeen;
+            const float dx = one.x - hero.curseX, dy = one.y - hero.curseY;
+            if (one.weakUntil == now + whole &&
+                dx * dx + dy * dy > sim::kWeaknessTiles * sim::kWeaknessTiles + 0.01f) {
+                farCursed = true;
+            }
+            checkEqual(one.weakCut, sim::weaknessCut(hero.totalPoints().energy),
+                       "a cursed monster's cut is MU's");
+        }
+    });
+    std::printf("  Weakness: %d casts, %d fields, %d cursed as laid, %d by a later look\n", casts,
+                fields, cursedAtOnce, cursedLater);
+    check(fields > 0 && cursedAtOnce > 0, "Weakness lays its field and curses round it");
+    check(cursedLater > 0, "and the field keeps cursing as it lies");
+    check(!farCursed, "never past its four tiles");
+    if (casts > 0) {
+        const double rate = double(fields) / casts;
+        check(rate > 0.05 && rate < 0.16, "about one cast in ten");
+    }
+
+    // A cursed monster's blows: the same fight twice, once with every monster cursed by a 40% cut.
+    long long plain = 0, weak = 0;
+    int plainHits = 0, weakHits = 0;
+    for (int pass = 0; pass < 2; ++pass) {
+        ancientHunt(tables, staff, Power::None, false, [&](const sim::Realm& realm) {
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.what != sim::What::Hit || h.whom != realm.hero().id || h.thrown) continue;
+                (pass == 0 ? plain : weak) += h.a;
+                ++(pass == 0 ? plainHits : weakHits);
+            }
+            if (pass == 1) {
+                for (const sim::Body& one : realm.bodies()) {
+                    if (!one.monster()) continue;
+                    auto& b = const_cast<sim::Body&>(one);
+                    b.weakUntil = int64_t(realm.tick()) + 100;
+                    b.weakCut = 40;
+                }
+            }
+        });
+    }
+    const double plainMean = plainHits ? double(plain) / plainHits : 0.0,
+                 weakMean = weakHits ? double(weak) / weakHits : 0.0;
+    std::printf("  blows on him: %d at %.1f plain, %d at %.1f cursed\n", plainHits, plainMean,
+                weakHits, weakMean);
+    check(plainHits > 20 && weakHits > 20 && weakMean < plainMean * 0.7 &&
+              weakMean > plainMean * 0.45,
+          "a cursed monster strikes about 40% lighter");
+}
+
 void testAncientRunes(const content::Tables& tables) {
     std::printf("ancient runes\n");
     using sim::Kin;
@@ -10666,12 +10822,20 @@ void testAncientRunes(const content::Tables& tables) {
         checkEqual(below, 0, "no Ancient falls from Aida's hardest");
         check(at > 0, "one falls past it");
         checkEqual(knight + wizard, 0, "and never for a knight or a first-class wizard");
-        // The Ancient share of every rune past Aida, and Ice Storm the only Ancient a Soul Master
-        // may set: 0.11 of the shares his drawable rarities hold.
+        // The Ancient share of every rune past Aida, 0.11 of the shares his drawable rarities
+        // hold, shared evenly among the Ancients a Soul Master may set.
         double held = 0.0;
         for (int r = 0; r < sim::kRarities; ++r) held += sim::kRuneRarityShare[r];
-        const double rate = double(at) / 4000.0, wanted = sim::kRuneRarityShare[4] / held;
-        check(rate > wanted * 0.7 && rate < wanted * 1.3, "at about its share");
+        int ancients = 0;
+        for (int p = 0; p < 256; ++p) {
+            const sim::PowerRow* row = sim::powerOf(uint8_t(p));
+            ancients += row != nullptr && row->rarity == sim::Rarity::Ancient &&
+                        row->takenBy(Kin::DarkWizard, true);
+        }
+        std::printf("  %d Ancients a Soul Master may set\n", ancients);
+        const double rate = double(at) / 4000.0,
+                     wanted = sim::kRuneRarityShare[4] / held / std::max(1, ancients);
+        check(rate > wanted * 0.6 && rate < wanted * 1.4, "at about its share");
     }
     // The fuse refuses three Ancients, as it refuses three Legendaries.
     check(sim::nextRarity(sim::Rarity::Ancient) == sim::Rarity::Ancient,
@@ -10736,6 +10900,7 @@ void testAncientRunes(const content::Tables& tables) {
         const double rate = double(storms) / casts;
         check(rate > 0.05 && rate < 0.16, "about one cast in ten");
     }
+    testWeaknessRune(tables, rune, staff, sword);
 }
 
 void testGroupRunes(const content::Tables& tables) {

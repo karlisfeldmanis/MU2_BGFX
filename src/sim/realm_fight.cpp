@@ -197,6 +197,11 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         force *= float(1.0 - std::min(kResistanceCutMost,
                                       kResistanceCut * double(target.excel.windResistance)));
     }
+    // A Weakness on the one who swings (sim/items.h kWeakness...): MU's buff 76, its attack
+    // power down by its cut, on every blow it lands -- on a hero, a raider or her summon.
+    if (!attacker.player && attacker.weakUntil > tick_ && attacker.weakCut > 0) {
+        force *= std::max(0.0f, 1.0f - float(attacker.weakCut) / 100.0f);
+    }
     // A skill's multiplier, and it goes exactly here: after the roll, the defence and the level
     // floor, which is where OpenMU spends `Stats.SkillMultiplier`
     // (AttackableExtensions.cs:226-247). One for an ordinary swing, so nothing changes for one.
@@ -452,13 +457,49 @@ void Realm::channelRunes(Body& hero, Body& aimed) {
         if (hand.empty()) continue;
         for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
             const PowerRow* power = powerOf(hand.powers[socket]);
-            if (power == nullptr || power->power != Power::IceStorm ||
+            // His Ancient spell runes (Ice Storm, Weakness...), each once a channel.
+            if (power == nullptr || power->rarity != Rarity::Ancient || !power->weapon() ||
                 !power->takenBy(hero.kin, hero.second)) {
                 continue;
             }
             callDown(hero, aimed, *power, 0);
             if (!hero.alive()) return;
         }
+    }
+}
+
+int Realm::weaknessLook(Body& hero) {
+    // summoner_debuff_ai's monster arm, his energy for the Summoner's, and curse 0: no book.
+    const int energy = hero.totalPoints().energy;
+    int cursed = 0;
+    for (Body& b : bodies_) {
+        if (!b.monster() || !b.alive() || b.weakUntil > tick_) continue;
+        const float dx = b.x - hero.curseX, dy = b.y - hero.curseY;
+        if (dx * dx + dy * dy > kWeaknessTiles * kWeaknessTiles) continue;
+        if (!seen(hero.curseX, hero.curseY, b) || shrugs(b)) continue;
+        const int odds = weaknessOdds(energy);
+        const int seconds = weaknessSeconds(energy, b.level);
+        if (odds <= 0 || seconds <= 0) continue;
+        if (runeDice_.nextInt(0, 100) >= odds) continue;
+        b.weakUntil = tick_ + int64_t(seconds) * kTalentTicksPerSecond;  // twenty a second
+        b.weakCut = weaknessCut(energy);
+        ++cursed;
+    }
+    return cursed;
+}
+
+void Realm::weaknessFields() {
+    for (Body& hero : bodies_) {
+        if (hero.curseUntil == 0) continue;
+        // MU's field goes with him: dead, gone, or its time out.
+        if (!hero.alive() || hero.gone || tick_ >= hero.curseUntil) {
+            hero.curseUntil = hero.curseNext = 0;
+            continue;
+        }
+        if (tick_ < hero.curseNext) continue;
+        hero.curseNext = tick_ + kWeaknessCheckTicks;
+        const RaiderRunes dice(runeDice_, raiderDice_, hero.raider >= 0);
+        weaknessLook(hero);
     }
 }
 
@@ -713,6 +754,25 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
             }
             runeStrike(hero, *victim, force);
         }
+        return;
+    }
+    // His Weakness (sim/items.h kWeakness...): MU's field laid on his own tile for 30 s, the one
+    // before it gone, and its first look round at once.
+    if (power.power == Power::Weakness) {
+        if (!runeDice_.nextBool(kWeaknessChance)) return;
+        hero.curseX = float(hero.column());
+        hero.curseY = float(hero.row());
+        hero.curseUntil = tick_ + kWeaknessFieldTicks;
+        hero.curseNext = tick_ + kWeaknessCheckTicks;
+        say(What::Loosed, hero, skill::kWeakness, 0, 0, 0);
+        const size_t said = happenings_.size() - 1;
+        happenings_[said].rune = true;
+        happenings_[said].x = hero.curseX;
+        happenings_[said].y = hero.curseY;
+        const int cursed = weaknessLook(hero);
+        happenings_[said].c = cursed;
+        core::logf("weakness rune: tick %lld, at %.0f,%.0f, %d cursed", (long long)tick_,
+                   double(hero.curseX), double(hero.curseY), cursed);
         return;
     }
     // His Immolate rune: the monster he struck set burning, while it stands; a second restarts it.
@@ -2053,6 +2113,8 @@ void Realm::kill(Body& dead, Body& killer) {
         dead.bleedNext = 0;
         dead.chilledUntil = 0;
         dead.frozenUntil = 0;
+        // And his Weakness field, which MU takes up as he dies.
+        dead.curseUntil = dead.curseNext = 0;
         dead.boonSkill = skill::kNone;
         dead.boonDamageTaken = 1.0f;
         dead.stats.damageTaken = dead.pet.taken;
@@ -2394,6 +2456,8 @@ void Realm::raiseBeast(Body& beast) {
     beast.poisonUntil = 0;
     beast.bleed = 0;
     beast.bleedUntil = 0;
+    beast.weakUntil = 0;
+    beast.weakCut = 0;
     beast.walking = false;
     route(beast).clear();
     beast.onStep = 0;

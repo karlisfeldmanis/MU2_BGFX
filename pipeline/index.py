@@ -397,6 +397,13 @@ EFFECTS = {
     "nova_streak_soft": "effects/nova/streak_soft.png",
     "explosion_mono": "effects/firecracker/explotion01mono.png",
 
+    # The Ancient rune Weakness's (game/fx/weakness.h): MU's BITMAP_MAGIC_ZIN circle on the
+    # ground, Effect/mzine_typer2.jpg; BITMAP_SHINY + 6, Effect/shiny05.jpg; and BITMAP_PIN_LIGHT,
+    # Effect/pin_lights.jpg (ZzzOpenData.cpp:5223, 5224, 5448).
+    "weakness_circle": "effects/weakness/mzine_typer2.png",
+    "weakness_shiny": "effects/weakness/shiny05.png",
+    "weakness_pin": "effects/weakness/pin_lights.png",
+
     # And what the wizard's Flame burns with. See client/core/Flame.cs.
     #
     # BITMAP_FLAME, which ZzzOpenData loads from Effect/Flame01.jpg with GL_CLAMP_TO_EDGE - a
@@ -2070,6 +2077,7 @@ def missiles(root: Path, build: Path) -> dict:
         **_models(root, build, "impale"),
         **_models(root, build, "tarkan"),
         **_models(root, build, "aida"),
+        **_models(root, build, "weakness"),
     }
 
 

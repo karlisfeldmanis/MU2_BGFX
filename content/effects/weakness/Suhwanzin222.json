@@ -1,0 +1,21 @@
+{
+  "item": "Suhwanzin222",
+  "mu_name": "One of the three turning walls of red lines Weakness raises round the caster",
+  "mu_name_from": "ZzzOpenData.cpp:4533-4536: MODEL_SUMMONER_CASTING_EFFECT222, Data/Effect/Suhwanzin222.bmd on Data/Effect/monolines.jpg. MuMain (Season 6).",
+  "kind": "weakness",
+  "why_this_one": "Created beside Suhwanzin2 at Weakness's let-go (ZzzCharacter.cpp:4725-4740), at 0.6; see Suhwanzin2.json for the whole of it and game/fx/weakness for the drawing.",
+  "mesh": "Suhwanzin222.obj",
+  "mesh_from": "muextract export-obj on Data/Effect/Suhwanzin222.bmd, from MuMain. One mesh of 36 triangles, a ring wall of streaks 586 units across.",
+  "parts": [
+    {
+      "group": "monolines",
+      "sheet": "monolines.png",
+      "blend": "additive",
+      "note": "As Suhwanzin2's: added, at BlendMeshLight."
+    }
+  ],
+  "scale": 0.6,
+  "scale_from": "The let-go's 0.6, as Suhwanzin2's.",
+  "frames": 40,
+  "frames_from": "`o->LifeTime = 40`; it turns +3 degrees a frame (MoveHandlers.cpp:1153-1158)."
+}

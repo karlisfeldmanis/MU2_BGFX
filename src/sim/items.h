@@ -782,7 +782,10 @@ enum class Power : uint8_t {
     Rend = 72,
     Hemorrhage = 73,
     // The Ancient runes (Rarity::Ancient), each one of MU's later spells (kIceStorm...).
-    IceStorm = 74
+    IceStorm = 74,
+    // The Summoner's spells on the Soul Master's weapon (the user, 2026-10-21: "we want to take
+    // summoner spells and attach to ancient runes"; kWeakness...).
+    Weakness = 75
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -1147,6 +1150,26 @@ constexpr double kIceStormChance = 0.10;
 constexpr float kIceStormForce = 1.2f;
 constexpr float kIceStormTiles = 3.0f;
 constexpr int64_t kIceStormTicks = 30;  // a second and a half
+// **Weakness**, the second Ancient and the first of the Summoner's spells (the user, 2026-10-21:
+// "we want to take summoner spells and attach to ancient runes"): MU's AT_SKILL_ALICE_WEAKNESS
+// (S17 skill_template 221: 30000 ms, effect radius 4, buff 76 "attack power reduction"). As
+// SkillHandler::SkillBuffWeakness lays it, a field (monster 821) set on the caster's tile for the
+// skill's 30 s, one a caster -- a second replaces the first -- that every 500 ms (821's
+// attack_speed, summoner_debuff_ai) curses each monster within kWeaknessTiles of it that is not
+// cursed already: it takes at (energy / 50 + curse / 6 + 32)% for (energy / 100 + 4 - its level
+// / 40) s, and its blows lose (energy / 58 + 4)% (ai_summoner_debuff.cpp, the monster arm; whole
+// numbers, as MU's int32). `curse` is a Summoner book's curse damage: he holds no book, so it is
+// nought. The field ends with him dying. Ours: the 10% a cast or a landed swing that lets it go
+// (as Ice Storm, Realm::land), and walls -- a monster the field cannot see is not cursed (the
+// user's 2026-10-02 rule for every skill). The Golden Dragon is immune, as MU's bosses are
+// (IsDebuffInmune). A Soul Master's weapon only.
+constexpr double kWeaknessChance = 0.10;  // a cast in ten; the user may tune it
+constexpr float kWeaknessTiles = 4.0f;
+constexpr int64_t kWeaknessFieldTicks = 600;  // the skill's 30000 ms
+constexpr int64_t kWeaknessCheckTicks = 10;   // 821's attack_speed, 500 ms
+inline int weaknessOdds(int energy) { return energy / 50 + 0 / 6 + 32; }
+inline int weaknessSeconds(int energy, int level) { return energy / 100 + 4 - level / 40; }
+inline int weaknessCut(int energy) { return energy / 58 + 4; }
 // **The Common runes** (Rarity::Common), each a Legendary at a fraction, every one first-class:
 // **Cinder** Ring of Fire's ring and **Gust** Twister's storm, a knight's; **Chill** Frost Arrow's
 // freeze for half as long with half its wound, the elf's; **Faint Echo** Arcane Echo's second

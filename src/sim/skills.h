@@ -139,6 +139,10 @@ constexpr int32_t kNova = 40;
 // only the Ancient rune's (sim/items.h kIceStorm...), said as Loosed so the drawing lets its
 // blizzard fall (fx/blizzard.h). MU's number, free in this table.
 constexpr int32_t kIceStorm = 39;
+// `AT_SKILL_ALICE_WEAKNESS`, the Summoner's Weakness: the same, the Ancient rune Weakness's
+// (sim/items.h kWeakness...), said as Loosed where its field is laid (fx/weakness.h). MU's number,
+// past kSkills and never a row.
+constexpr int32_t kWeakness = 221;
 }  // namespace skill
 
 // What an iced body's walking is multiplied by: OpenMU's `IcedMovementSpeedFactor`, 0.5, which

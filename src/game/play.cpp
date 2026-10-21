@@ -1328,6 +1328,12 @@ void Play::update(double seconds) {
                         const float feet[3] = {to[0], floor, to[2]};
                         blizzard_.cast(feet, caster->yaw);
                         if (heard_.iceStorm >= 0) emit(heard_.iceStorm, to[0], to[2], caster->id);
+                    } else if (happening.a == sim::skill::kWeakness) {
+                        // The Ancient rune Weakness: MU's let-go under the caster, where the realm
+                        // laid its field, with SOUND_SKILL_WEAKNESS (fx/weakness.h).
+                        const float at[3] = {caster->crown[0], feet, caster->crown[2]};
+                        weakness_.cast(at);
+                        if (heard_.weakness >= 0) emit(heard_.weakness, at[0], at[2], caster->id);
                     } else if (happening.a == sim::skill::kIce) {
                         // The block where the body is drawn, turned to his yaw, as MU turns it.
                         const float floor = ground_->heightAt(to[0], to[2]);
@@ -2345,6 +2351,7 @@ void Play::update(double seconds) {
     // SOUND_SUDDEN_ICE2 (fx/blizzard.h).
     blizzardLandings_.clear();
     blizzard_.update(float(seconds), blizzardLandings_);
+    weakness_.update(float(seconds));
     for (const Blizzard::Landing& one : blizzardLandings_) {
         const float feet[3] = {one.x, one.y, one.z};
         if (one.shard) ice_.splinter(feet);

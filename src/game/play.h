@@ -43,6 +43,7 @@
 #include "game/fx/arrow.h"
 #include "game/fx/blink.h"
 #include "game/fx/blizzard.h"
+#include "game/fx/weakness.h"
 #include "game/fx/ice.h"
 #include "game/fx/stains.h"
 #include "game/world/trap_show.h"
@@ -1025,6 +1026,8 @@ public:
     Ice& ice() { return ice_; }
     // And the Ancient rune Ice Storm's blizzard. fx/blizzard.h.
     Blizzard& blizzard() { return blizzard_; }
+    // And the Ancient rune Weakness's red circles and its curse's mark. fx/weakness.h.
+    Weakness& weakness() { return weakness_; }
     // What a death leaves by the head: MU's CreateBlood. fx/stains.h.
     Stains& stains() { return stains_; }
     void gatherStains(gfx::Effects& effects) const {
@@ -1371,6 +1374,7 @@ private:
         // An Immolate rune's burn on it (kEmberFlames): frames owed, and its draw of bones.
         float burningOwed = 0.0f;
         float sickOwed = 0.0f, bleedOwed = 0.0f;  // poison's smoke, a bleed's drips: owed
+        float weakOwed = 0.0f;  // a Weakness curse's red, frames owed (fx/weakness.h)
         uint32_t burningDice = 0;
         float snortOwed = 0.0f;
         // An Elite Yeti's breath: the same puff out of Box03, in every action, one in four
@@ -1851,6 +1855,7 @@ private:
     Blink blink_;
     Ice ice_;
     Blizzard blizzard_;
+    Weakness weakness_;
     Stains stains_;
     TrapShow trapShow_;
     Poison poison_;
@@ -2015,6 +2020,7 @@ private:
         int rage2 = -1, rage3 = -1;    // Rageful Blow's streaks and its cracks
         int iceCast = -1;                                 // spell_ice, on an Ice Monster's cast
         int iceStorm = -1, iceStormLand = -1;  // eSuddenIce_1 and _2, the Ancient rune Ice Storm's
+        int weakness = -1;                     // SE_Ch_summoner_weakness, the Ancient rune Weakness's
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
         int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};

@@ -1,0 +1,22 @@
+{
+  "item": "Suhwanzin2",
+  "mu_name": "The tallest of the three turning walls of red lines Weakness raises round the caster",
+  "mu_name_from": "ZzzOpenData.cpp:4531-4532: `AccessModel(MODEL_SUMMONER_CASTING_EFFECT2, L\"Data\\\\Effect\\\\\", L\"Suhwanzin2\")` and `OpenTexture(MODEL_SUMMONER_CASTING_EFFECT2, L\"Effect\\\\\")`, so Data/Effect/Suhwanzin2.bmd on Data/Effect/monolines.jpg. MuMain (Season 6); the Summoner's casting circle.",
+  "kind": "weakness",
+  "why_this_one": "It is a third of the Summoner's Weakness, AT_SKILL_ALICE_WEAKNESS (221), at the let-go in ZzzCharacter.cpp (:4725-4740):\n\n    Vector(2.0f, 0.1f, 0.1f, Light);\n    CreateEffect(BITMAP_MAGIC_ZIN, o->Position, o->Angle, Light, 1, NULL, -1, 0, 0, 0, 7.0f);\n    Vector(2.0f, 0.4f, 0.3f, Light);\n    CreateEffect(BITMAP_MAGIC_ZIN, o->Position, o->Angle, Light, 0, NULL, -1, 0, 0, 0, 2.0f);\n    CreateEffect(BITMAP_MAGIC_ZIN, ..., 2, ..., 1.0f);  // and at 0.2 and 0.1\n    CreateEffect(MODEL_SUMMONER_CASTING_EFFECT2, o->Position, o->Angle, Light, 1, NULL, -1, 0, 0, 0, 0.6f);\n    CreateEffect(MODEL_SUMMONER_CASTING_EFFECT22, ...0.6f);\n    CreateEffect(MODEL_SUMMONER_CASTING_EFFECT222, ...0.6f);\n    Vector(1.4f, 0.2f, 0.2f, Light);\n    CreateEffect(BITMAP_SHINY + 6, o->Position, o->Angle, Light, 0, NULL, -1, 0, 0, 0, 0.5f);\n    CreateEffect(BITMAP_PIN_LIGHT, o->Position, o->Angle, Light, 0, NULL, -1, 0, 0, 0, 1.f);\n    PlayBuffer(SOUND_SKILL_WEAKNESS);\n\nHere the Ancient rune Weakness's (sim/items.h kWeakness...), drawn by game/fx/weakness where its field is laid, on the Soul Master's tile.",
+  "mesh": "Suhwanzin2.obj",
+  "mesh_from": "muextract export-obj on Data/Effect/Suhwanzin2.bmd, from MuMain. One mesh of 36 triangles: a ring wall of streaks 384 units across and 307 tall, open at both ends.",
+  "parts": [
+    {
+      "group": "monolines",
+      "sheet": "monolines.png",
+      "blend": "additive",
+      "note": "Data/Effect/monolines.OZJ (a JPEG behind 24 bytes), 32 by 64, grey streaks on black. Added: the create arm sets `o->BlendMesh = 0`, the model's one mesh blended, at `o->BlendMeshLight`, which starts at nought."
+    }
+  ],
+  "scale": 0.6,
+  "scale_from": "The let-go's last argument, 0.6. The create arm's `if (o->SubType = 0) o->Scale = 1.0f;` (ZzzEffect.cpp:766) is an assignment, never true, so the scale passed in stands and the subtype becomes 0.",
+  "frames": 40,
+  "frames_from": "`o->LifeTime = 40` (ZzzEffect.cpp:767).",
+  "turn_note": "Move_MODEL_SUMMONER_CASTING_EFFECT1 (MoveHandlers.cpp:1134-1165): BlendMeshLight climbs 0.05 a frame to 0.5, and falls 0.03 a frame once fewer than 20 frames are left; Suhwanzin2 and 222 turn +3 degrees a frame about the vertical, Suhwanzin22 -3. Lit by the let-go's Light then, (2.0, 0.4, 0.3), clamped to one a channel as MU's glColor is."
+}
