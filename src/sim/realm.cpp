@@ -622,7 +622,11 @@ void Realm::restore(const HeroRecord& saved) {
     for (int slot = 0; slot < kSlots; ++slot) {
         const Held& one = saved.slots[slot];
         if (one.empty() || size_t(one.item) >= tables_->items.size()) continue;
-        me().bag.put(slot, one);
+        // A jewel, potion or box a quest paid bound before 2b067f5e comes back free here, as an
+        // offline save's does (game/save.cpp): the server's kept heroes never passed through that.
+        Held free = one;
+        free.bound = one.bound && bindable(tables_->items[size_t(one.item)]);
+        me().bag.put(slot, free);
     }
     // The buff he was saved with, for the ticks it had left and at the factor it was cast at --
     // a skill he knows, lasting no longer than the skill's own length, so an edited file cannot

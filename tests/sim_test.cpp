@@ -8091,6 +8091,32 @@ void testChaosMachine() {
             if (back >= 0) realm.sell(back);
         }
         check(realm.machine().empty(), "and the box is emptied");
+        // And a server's kept hero from before the rule (Crylos, 2026-10-21: "I have a stack of
+        // 10 that still say Bound"): restored, his old bound jewels come free in the bag, the
+        // vault and the box, and his bound gear stays bound.
+        sim::Kept kept = realm.keptOf(realm.hero().id);
+        sim::Held stack{chaos, 0, 10};
+        stack.bound = true;
+        sim::Held blade{sword, 9, 30};
+        blade.bound = true;
+        int bagCell = -1;
+        for (int slot = sim::kWorn; slot < sim::kSlots && bagCell < 0; ++slot) {
+            if (kept.hero.slots[slot].empty()) bagCell = slot;
+        }
+        kept.hero.slots[bagCell] = stack;
+        kept.vault.put(0, stack);
+        kept.machine.put(0, stack);
+        kept.vault.put(5, blade);
+        realm.restoreKept(kept);
+        check(!realm.satchel()[bagCell].bound && realm.satchel()[bagCell].durability == 10,
+              "an old bound stack of ten Chaos comes back free in the bag");
+        check(!realm.vault()[0].bound && !realm.machine()[0].bound, "and in the vault and the box");
+        check(realm.vault()[5].bound, "a bound sword stays bound");
+        realm.sell(bagCell);
+        sim::Kept emptied = realm.keptOf(realm.hero().id);
+        emptied.vault.clear();
+        emptied.machine.clear();
+        realm.restoreKept(emptied);
     }
     // **Jewels stack**, twenty a cell as the potions (the user, 2026-10-20: "we need stacking
     // jewels", bug report #41), and a window's move carries how many of a stack in c: split off

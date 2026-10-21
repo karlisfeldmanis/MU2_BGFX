@@ -53,6 +53,20 @@ void Realm::restoreKept(const Kept& kept) {
     restore(kept.hero);
     me().vault = kept.vault;
     me().machine = kept.machine;
+    // And so in the vault and the machine's box (Realm::restore's bag, sim::bindable).
+    const auto loosen = [&](auto& grid, int cells) {
+        for (int cell = 0; cell < cells; ++cell) {
+            Held one = grid[cell];
+            if (!one.bound || size_t(one.item) >= tables_->items.size() ||
+                bindable(tables_->items[size_t(one.item)])) {
+                continue;
+            }
+            one.bound = false;
+            grid.put(cell, one);
+        }
+    };
+    loosen(me().vault, kVaultCells);
+    loosen(me().machine, kMachineCells);
 }
 
 Kept Realm::keptOf(uint32_t id) {
