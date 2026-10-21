@@ -170,6 +170,13 @@ constexpr size_t kHeardMost = 256;
 // plays on, logged, rather than reconnecting for ever. **ours**.
 constexpr int kMostResyncs = 3;
 int resyncs = 0;
+// **A world that stands still with the line alive is joined again** (RemoteLink::pump): the server
+// sends twenty ticks a second, so this long with none taken while it is still heard is a mirror
+// that cannot take the next one -- what it waits for will never come. The user, 2026-10-21,
+// auto-play in Devias at 128,91: tick 30671 held for 303 s, Pings answered and datagrams coming,
+// nothing logged, while the server walked him on and kept him at 193,41. Joined again on the
+// server's snapshot, as a divergence is (kMostResyncs). **ours**.
+constexpr auto kTicklessMost = std::chrono::seconds(4);
 
 // The Disconnected window's line for each of the server's reasons (net::Why).
 const char* whyOf(net::Why why) {
@@ -282,7 +289,13 @@ void RemoteLink::offer(net::Tick&& tick, bool byUdp) {
     if (lastTick_ >= 0 && int64_t(tick.tick) <= lastTick_) return;  // had already
     if (lastTick_ >= 0 && int64_t(tick.tick) > lastTick_ + 1) {
         // Past a gap: only a datagram can be, the stream is in order. Kept for the gap's filling.
+        // One by the stream means the gap will never fill: counted, for pump's still-world line.
         if (byUdp && strays_.size() < 256) strays_.emplace(tick.tick, std::move(tick));
+        if (!byUdp && pastGap_++ == 0) {
+            pastGapFirst_ = tick.tick;
+            core::logError("server: tick %u came by the stream past a gap after %lld; %zu datagram tick(s) held",
+                           tick.tick, (long long)lastTick_, strays_.size());
+        }
         return;
     }
     if (lastTick_ < 0 && byUdp) return;  // the stream says where the ticks begin
@@ -294,6 +307,7 @@ void RemoteLink::offer(net::Tick&& tick, bool byUdp) {
                    byUdp ? "datagram" : "the stream", double(rttMs_), byUdp_, byStream_);
     }
     takenAt_ = now;
+    pastGap_ = 0;
     lastTick_ = tick.tick;
     ++(byUdp ? byUdp_ : byStream_);
     ticks_.push_back(std::move(tick));
@@ -525,6 +539,23 @@ void RemoteLink::pump() {
                        double(std::chrono::duration<float>(now - heardAt_).count()), ticks_.size());
         cutSilent_ = true;
         close("The server stopped answering.");
+    }
+    if (socket_.open() && takenAt_ != Clock::time_point{} && now - takenAt_ > kTicklessMost &&
+        heardAt_ != Clock::time_point{} && now - heardAt_ < kTicklessMost && !stillSaid_) {
+        stillSaid_ = true;
+        core::logError("server: no tick taken in %.0f s with the line alive: the mirror at tick %lld, the last "
+                       "taken %lld, %zu in hand, %zu datagram tick(s) held (%lld to %lld), %u by the stream "
+                       "past the gap from %u; %u by datagram and %u by the stream so far",
+                       double(std::chrono::duration<float>(now - takenAt_).count()), (long long)mirror_.tick(),
+                       (long long)lastTick_, ticks_.size(), strays_.size(),
+                       strays_.empty() ? -1LL : (long long)strays_.begin()->first,
+                       strays_.empty() ? -1LL : (long long)strays_.rbegin()->first, pastGap_, pastGapFirst_,
+                       byUdp_, byStream_);
+        if (resync_ && resyncs < kMostResyncs) {
+            ++resyncs;
+            core::logf("server: joining again on the server's snapshot (%d of %d)", resyncs, kMostResyncs);
+            close("Out of step with the server. Joining again...");
+        }
     }
 }
 
