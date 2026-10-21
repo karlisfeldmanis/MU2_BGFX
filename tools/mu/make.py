@@ -245,15 +245,18 @@ def head(things, threads):
         step = Step(f"build {thing.build_name}", None, build_test(thing), "glb")
         step.thing = thing
         steps.append(step)
-    steps.append(Step("checkpoint mu.db", None, wal_test(), "db", after=None))
-    steps.append(Step("index", ["python3", os.path.join(PIPELINE, "index.py"), SOURCE, WORKSHOP],
-                      index_test(things), "index"))
-    worlds = sorted({t.world for t in things})
+    return steps + upstream(things, sorted({t.world for t in things}))
+
+
+def upstream(things, worlds):
+    """Checkpoint, index, sync: what the cooks read. Each runs only when its input is newer."""
     sync = ["python3", os.path.join(PIPELINE, "sync.py"), "--src", WORKSHOP, "--dst", ASSETS]
     for world in worlds:
         sync += ["--world", world]
-    steps.append(Step("sync", sync + ["--only-world"], sync_test(things), "assets"))
-    return steps
+    return [Step("checkpoint mu.db", None, wal_test(), "db", after=None),
+            Step("index", ["python3", os.path.join(PIPELINE, "index.py"), SOURCE, WORKSHOP],
+                 index_test(things), "index"),
+            Step("sync", sync + ["--only-world"], sync_test(things), "assets")]
 
 
 def manifest(world):
@@ -584,7 +587,9 @@ def build_game(threads):
 
 
 def plan_tables(threads):
-    return tables(threads)
+    # A world's nests.json is read by the index, not the cook: without these an edited nest
+    # cooked into the tables as it stood before (2026-10-22, LT6, LT7 and Atlans).
+    return upstream([], cooked_worlds()) + tables(threads)
 
 
 def plan_realm():
@@ -688,7 +693,7 @@ def plan(target, threads, say, folder=None, reimport=False):
         steps = [s for s in tables(threads) if s.name == f"tables {target[1]}"]
         if not steps:
             raise NotFound(f"no cooked world {target[1]}")
-        return steps
+        return upstream([], [target[1]]) + steps
     if target in (["realm"], ["gates"]):
         return plan_realm()
     if target == ["rehearsal"]:
