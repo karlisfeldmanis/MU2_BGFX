@@ -94,8 +94,15 @@ cross-checked against a Season 6 1.00.90 decompile and the 0.97k emulator:
   (card: "Decrease 20% of attacking & Wizardry Dmg" in red); the Imp multiplies every blow dealt by 1.3 after the level floor (`rules.cpp` step 7)
   and takes 3 of his life for every blow that lands (`Realm::strikeAt`); with 3 or less he
   neither pays nor gets the x1.3 -- WebZen lays him at 0, ours stops short since 0 is dead here.
-  Every hit taken wears the Angel by 3/100 of the damage before its cut and the Imp by 2/100
-  (`Realm::wearOnTaken`), and at 0 it is destroyed (`What::PetLost`). sim_test `testPets`.
+- **A day, not wear** (ours, the user, 2026-10-21: "i want that its time based 24 hours"): the
+  Angel and the Imp (`sim::timedPet`) are not worn by blows. The first second one is worn,
+  `Realm::petClock` stamps it with `wall + kPetDaySeconds` (24 h of real time); it runs on worn
+  or not, online or not, and once a second anything past its second is taken from the bag or the
+  vault (`What::PetLost`, "Your Imp's 24 hours are over: it is gone"). The second is kept in the
+  three socket powers and the wing byte, which a pet otherwise leaves nought (`sim::petUntil`),
+  so the wire, the save, the vault and the Broker carry it with no field or layout of their own.
+  The card's foot and the buff cell's bar are the time left. sim_test `testPetDay`.
+  (Before: every hit taken wore the Angel by 3/100 of the damage and the Imp by 2/100.)
 - **No repair** (`sim::mendable`, 2026-10-21, LoveMu: "Imp and angel in orginal mu cant be
   repaired just dissapear"): the Angel and the Imp (13/0-1) have no repair price at a counter or
   by the hammer. MuMain's `IsRepairBan` (ZzzInventory.cpp:7866) and WebZen's protocol.cpp:5753
@@ -106,9 +113,9 @@ cross-checked against a Season 6 1.00.90 decompile and the 0.97k emulator:
 - **Card** (`game/ui/describe.cpp`): type "Pet", MU's own lines ("Absorb 30% of Damage", "Max HP
   +50 increased", "Increase 30% of attacking & Wizardry Dmg") with the numbers off `petPower`, and
   the Imp's price in red, "Life -3 for each successful attack" (ours: MuMain never printed it),
-  `Life n / 255` in the foot. They
+  `Time left: 23h 12m` in the foot (`Lasts 24 hours once worn` before). They
   ride in the jewel drop group but are not jewels: no gold name, droppable, not bold on the ground.
-- **Buff strip** (`game/ui/hud.cpp`): the pet's cell first, its Life as the bar. The two icons are
+- **Buff strip** (`game/ui/hud.cpp`): the pet's cell first, its Life as the bar (the Angel's and the Imp's time left). The two icons are
   ours, rendered from the pets' own models by `pipeline/model_icons.py` (MuDream has no pet cell).
 - **Drawn** (`game/pets.h`): cooked as standalone figures on every map (`pipeline/cook.py`). The Imp
   rides `Bip01 L Clavicle` at (20,0,0) in the bone's frame (`Figure::mount`); the Angel flies

@@ -11997,6 +11997,37 @@ void testPets(const content::Tables& tables) {
     check(price > 2.5 && price < 3.5, "the Imp costs 3 life a landed blow");
 }
 
+// The Angel's and the Imp's day (sim::timedPet, Realm::petClock): stamped the first second it
+// is worn, untouched in the bag, and gone with a PetLost when the real clock passes it.
+void testPetDay(const content::Tables& tables) {
+    std::printf("the Angel's and the Imp's 24 hours\n");
+    const int angel = tables.itemAt(13, 0), imp = tables.itemAt(13, 1);
+    if (angel < 0 || imp < 0) return;
+    const int64_t start = 1800000000;
+    sim::Realm realm;
+    realm.raise(&tables, 0, 135, 128, sim::Kin::DarkKnight, 40);
+    realm.setWallClock(start);
+    check(realm.give(angel, sim::kPet) >= 0, "the Angel is worn");
+    const int carried = realm.give(imp, -1);
+    check(carried >= 0, "and an Imp carried");
+    for (int tick = 0; tick < 20; ++tick) realm.step();
+    checkEqual(sim::petUntil(realm.satchel()[sim::kPet]), start + sim::kPetDaySeconds,
+               "the worn Angel's day starts as it is worn");
+    if (carried >= 0) checkEqual(sim::petUntil(realm.satchel()[carried]), int64_t(0), "the carried Imp's has not");
+    realm.setWallClock(start + sim::kPetDaySeconds - 1);
+    for (int tick = 0; tick < 20; ++tick) realm.step();
+    check(!realm.satchel()[sim::kPet].empty(), "a second before, the Angel is still there");
+    realm.setWallClock(start + sim::kPetDaySeconds);
+    bool said = false;
+    for (int tick = 0; tick < 20; ++tick) {
+        realm.step();
+        for (const sim::Happening& h : realm.happenings()) said |= h.what == sim::What::PetLost && h.a == angel;
+    }
+    check(realm.satchel()[sim::kPet].empty() && said, "at its second it is gone, and said");
+    check(realm.hero().pet.taken == 1.0, "and its guard with it");
+    if (carried >= 0) check(!realm.satchel()[carried].empty(), "the Imp never worn is kept");
+}
+
 // The Horn of Uniria (docs/game/mount.md): the mount's slot, no power but the ride, faster than the
 // run off a safe tile and gone in town, worn by a hundredth of each hit taken.
 void testMount(const content::Tables& tables) {
@@ -15218,6 +15249,7 @@ int main() {
     testGearScore(tables);
     testPoweredJewellery(tables);
     testPets(tables);
+    testPetDay(tables);
     testMount(tables);
     testDinorant(tables);
     testFireBreath(tables);

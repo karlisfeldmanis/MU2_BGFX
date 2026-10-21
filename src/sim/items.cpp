@@ -136,6 +136,21 @@ PetPower petPower(const content::ItemRow& row) {
     return power;
 }
 
+bool timedPet(const content::ItemRow& row) {
+    return row.group == kGroupPets && (row.number == 0 || row.number == 1);
+}
+
+int64_t petUntil(const Held& pet) {
+    return int64_t(uint32_t(pet.powers[0]) | uint32_t(pet.powers[1]) << 8 |
+                   uint32_t(pet.powers[2]) << 16 | uint32_t(pet.wing) << 24);
+}
+
+void setPetUntil(Held& pet, int64_t unixSecond) {
+    const uint32_t at = uint32_t(std::clamp<int64_t>(unixSecond, 0, int64_t(0xffffffffLL)));
+    for (int i = 0; i < 3; ++i) pet.powers[i] = uint8_t(at >> (8 * i));
+    pet.wing = uint8_t(at >> 24);
+}
+
 bool ring(const content::ItemRow& row) {
     // MU's two, the four powered rings (sim::Affix), and the Rings of Lightning, Fire and Wind.
     return row.group == kGroupPets &&

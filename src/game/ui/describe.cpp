@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cctype>
 #include <cstdio>
+#include <ctime>
 #include <string>
 
 #include "sim/quests.h"
@@ -1298,6 +1299,24 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             default: break;
         }
         if (what.durability <= 0) sheet.note = "Broken";
+    }
+    // The Angel's and the Imp's foot is the time it has left, not its life (sim::timedPet): the
+    // bar is the day's share left, red in its last hour.
+    if (sim::timedPet(row)) {
+        const int64_t until = sim::petUntil(what);
+        sheet.note.clear();
+        sheet.wearTone = tip::Tone::White;
+        if (until == 0) {
+            sheet.wear = "Lasts 24 hours once worn";
+            sheet.worn = 1.0f;
+        } else {
+            const int64_t left = std::max<int64_t>(0, until - int64_t(std::time(nullptr)));
+            const int64_t minutes = (left + 59) / 60;
+            sheet.wear = "Time left: " + std::to_string(minutes / 60) + "h " +
+                         std::to_string(minutes % 60) + "m";
+            sheet.worn = float(double(left) / double(sim::kPetDaySeconds));
+            if (left < 3600) sheet.wearTone = tip::Tone::Red;
+        }
     }
     return sheet;
 }

@@ -1404,6 +1404,7 @@ void Realm::heroBefore() {
         else if (way.ticksLeft > 0) --way.ticksLeft;
         else if (++way.closedTicks >= kGoBackClosedTicks) way = WayBack{};
     }
+    petClock();
     sip();
     autoDrink(hero);
     chargeTick(hero);

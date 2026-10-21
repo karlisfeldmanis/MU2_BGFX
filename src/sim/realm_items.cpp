@@ -1784,12 +1784,14 @@ void Realm::wearOnTaken(int took) {
     // damage BEFORE its own cut, since ObjAttack.cpp calls it ahead of gObjAngelSprite. Landing
     // a blow wears it not at all. At nought it is destroyed rather than left broken
     // (Player.cs:1991-2001), and its powers go with it.
-    // The mount in its own slot wears the same way, off the same uncut damage.
+    // The mount in its own slot wears the same way, off the same uncut damage. The Angel and the
+    // Imp do not: theirs is a day of real time (sim::timedPet, Realm::petClock).
     const double uncut = double(took) / mine().pet.taken;
     bool lostOne = false;
     for (int slot : {kPet, kMount}) {
         const Held& pet = me().bag[slot];
         if (pet.empty() || pet.durability <= 0) continue;
+        if (timedPet(tables_->items[size_t(pet.item)])) continue;
         const PetPower power = petPower(tables_->items[size_t(pet.item)]);
         wearDown(slot, uncut * power.wear);
         if (me().bag[slot].durability > 0) continue;
@@ -1799,6 +1801,34 @@ void Realm::wearOnTaken(int took) {
         lostOne = true;
     }
     if (lostOne) rearm(mine());
+}
+
+void Realm::petClock() {
+    if (wall_ <= 0 || tick_ % 20 != 0) return;
+    const auto timed = [&](const Held& h) {
+        return !h.empty() && size_t(h.item) < tables_->items.size() &&
+               timedPet(tables_->items[size_t(h.item)]);
+    };
+    // Its day starts the first second it is worn.
+    if (Held worn = me().bag[kPet]; timed(worn) && petUntil(worn) == 0) {
+        setPetUntil(worn, wall_ + kPetDaySeconds);
+        me().bag.put(kPet, worn);
+    }
+    const auto over = [&](const Held& h) {
+        return timed(h) && petUntil(h) != 0 && wall_ >= petUntil(h);
+    };
+    bool rearmed = false;
+    for (int slot = 0; slot < kSlots; ++slot) {
+        if (!over(me().bag[slot])) continue;
+        const int32_t lost = me().bag[slot].item;
+        me().bag.lift(slot);
+        say(What::PetLost, mine(), lost);
+        rearmed = rearmed || slot == kPet;
+    }
+    for (int cell = 0; cell < kVaultCells; ++cell) {
+        if (over(me().vault[cell])) me().vault.lift(cell);
+    }
+    if (rearmed) rearm(mine());
 }
 
 void Realm::wearOnLanded(int defense) {

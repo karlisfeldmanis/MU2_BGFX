@@ -178,7 +178,8 @@ void Endurance::update(float width, float height, const Hud& hud, const sim::Rea
             if (held.empty() || !artFor(slot)) continue;
             const content::ItemRow& row = tables->items[size_t(held.item)];
             // Ammunition's count is its shots and not its wear, and MuMain skips both quivers.
-            if (!sim::wears(row)) continue;
+            // Nor the Angel and the Imp, whose life is a day and not their wear (sim::timedPet).
+            if (!sim::wears(row) || sim::timedPet(row)) continue;
             const int maximum = sim::maximumDurability(row, held);
             const sim::Worn band = sim::wornBand(held.durability, maximum);
             if (band == sim::Worn::Fine) continue;

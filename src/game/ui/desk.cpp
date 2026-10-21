@@ -2023,6 +2023,15 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
             boon.kinship = hero.excel.kinship;
             boon.idle = sim::petPower(row).mount && !sim::rideMap(realm.tables()->map);
             boon.share = float(pet.durability) / float(most);
+            // The Angel's and the Imp's bar is its day (sim::timedPet): minutes left of 1440.
+            if (sim::timedPet(row)) {
+                const int64_t until = sim::petUntil(pet);
+                const int64_t left =
+                    until == 0 ? sim::kPetDaySeconds : std::max<int64_t>(0, until - int64_t(std::time(nullptr)));
+                boon.lifeMost = int(sim::kPetDaySeconds / 60);
+                boon.life = int((left + 59) / 60);
+                boon.share = float(boon.life) / float(boon.lifeMost);
+            }
         }
     }
     // Her summon while it stands (Realm::summoned): hidden in a safe zone it is not standing.
