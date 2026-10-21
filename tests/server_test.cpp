@@ -835,9 +835,12 @@ void testMarketLine() {
     const std::string key(64, 'a');
     std::string error;
     check(marketKey(key) && marketServe(45691, error), "the keeper takes lines: " + error);
+    // The loop's own order each pass: the line heard, then the saves and what waited for them. The
+    // check that an answer waits for the save does its passes by hand, without the save.
     const auto pump = [&](net::Socket& probe, std::vector<uint8_t>& in, LinkKind want, std::vector<uint8_t>& body) {
         for (int i = 0; i < 100; ++i) {
             marketPass(sessions);
+            brokerKeep();
             probe.receive(in);
             size_t at = 0;
             LinkKind kind{};
@@ -905,8 +908,6 @@ void testMarketLine() {
               answer.no == uint8_t(sim::BrokerNo::Yes) && answer.view.mine.size() == 1 && answer.view.answered == 77,
           "saved: listed, answered with her window");
     send(line, LinkKind::Ask, bodyOf(up));
-    marketPass(sessions);
-    brokerKeep();
     check(pump(line, in, LinkKind::Answer, body) && parse(body, answer) && answer.view.mine.size() == 1,
           "said again after a lost answer: still one listing");
     const uint32_t hers = answer.view.mine.empty() ? 0 : answer.view.mine[0].id;
