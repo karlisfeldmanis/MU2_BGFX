@@ -2072,7 +2072,7 @@ void testCastLock(const content::Tables& tables) {
         const sim::SkillRow& twister = *sim::skillNumbered(sim::skill::kTwister);
         check(twister.wizardry && twister.primary() && twister.damage == 35 && twister.mana == 60 &&
                   twister.reach == 6.0f && twister.burns == 3 && twister.burnTiles == 1.5f &&
-                  twister.walks == 0.125f && twister.clip == 147 && twister.clipOther == 148 &&
+                  twister.walks == 0.2f && twister.clip == 147 && twister.clipOther == 148 &&
                   twister.kin == sim::Kin::DarkWizard,
               "Twister is a no-cooldown storm of thirty-five damage and sixty mana, striking "
               "three times");
@@ -2140,7 +2140,7 @@ void testCastLock(const content::Tables& tables) {
                         if (age != 11 && age != 23 && age != 35) continue;
                         beat = true;
                         if (age == 35) ++thrice;
-                        const float walked = float(age + 1) * 0.125f;
+                        const float walked = float(age + 1) * twister.walks;
                         const float sx = storm.x + storm.dx * walked, sy = storm.y + storm.dy * walked;
                         if (std::hypot(at->x - sx, at->y - sy) <= 1.5f + 0.3f) near = true;
                     }
@@ -2155,7 +2155,7 @@ void testCastLock(const content::Tables& tables) {
             // Not every storm: one cast at a body six tiles off meets it walking in, and what
             // walks through the storm between its beats is not struck, as in MU.
             check(struck > casts / 2, "and its storms strike");
-            check(thrice > 0, "as late as its third strike, four and a half tiles out");
+            check(thrice > 0, "as late as its third strike, seven tiles out");
             checkEqual(offBeat, 0, "every blow on a storm's beat, 11, 23 or 35 ticks in");
             checkEqual(offPath, 0, "and only within a tile and a half of where it has walked");
         }

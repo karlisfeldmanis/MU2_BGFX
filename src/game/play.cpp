@@ -1437,7 +1437,10 @@ void Play::update(double seconds) {
                         // world z, so its y is drawn negated (fx/storm.h).
                         const float ground[3] = {caster->crown[0], feet, caster->crown[2]};
                         const float way = float(happening.c) / 1000.0f;
-                        storm_.cast(ground, std::cos(way), -std::sin(way));
+                        // At the pace the realm walks it: the spell's row, a rune's MU's own.
+                        const sim::SkillRow* row = sim::skillNumbered(sim::skill::kTwister);
+                        const float pace = happening.rune || row == nullptr ? 1.0f : row->walks / 0.125f;
+                        storm_.cast(ground, std::cos(way), -std::sin(way), pace);
                     } else if (happening.a == sim::skill::kInferno) {
                         // The ring at his feet, its blasts and sparks, and its eight bombs'
                         // stones -- the meteor's (fx/inferno.h).

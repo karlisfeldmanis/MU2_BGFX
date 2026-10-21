@@ -180,7 +180,8 @@ constexpr SkillRow kRows[kSkills] = {
     // **One and a half times the band** (the user, 2026-10-02: "basic DW spells also multipliers
     // so its more balanced"). Ours: at 1.0 the bot's wizard dealt a third of the knight's damage
     // a minute until Meteorite arrived (--fights, seed 1: 1,716 against 5,829 at two hours).
-    {skill::kEnergyBall, "Energy Ball", 1, 9.0f, 1.5f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+    // **2.1, not 1.5** (the user, 2026-10-22: "raise Twister, Energy Ball, Power Wave"; tests/skill_sweep.cpp had them at 0.3-0.8 of the wizard's middle spell).
+    {skill::kEnergyBall, "Energy Ball", 1, 9.0f, 2.1f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "A bolt of light thrown at one body up to nine tiles off. Its force is his energy and his "
      "staff's.",
      147, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 3, 148},
@@ -254,7 +255,8 @@ constexpr SkillRow kRows[kSkills] = {
     // which MU plays for both. Sixty units a reference frame, the bolt's fifteen tiles a second.
     //
     // **1.6 times the band**, on the same word: under Fire Ball, since it strikes the whole line.
-    {skill::kPowerWave, "Power Wave", 5, 6.0f, 1.6f, 0.0f, 0, false, Spread::Line, 0, 1.0f,
+    // **2.1, not 1.6** (the user, 2026-10-22: "raise Twister, Energy Ball, Power Wave"; tests/skill_sweep.cpp had them at 0.3-0.8 of the wizard's middle spell).
+    {skill::kPowerWave, "Power Wave", 5, 6.0f, 2.1f, 0.0f, 0, false, Spread::Line, 0, 1.0f,
      "A wave of light swept along the ground for twelve tiles, striking everything in its line "
      "harder than an Energy Ball.",
      147, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 14, 148, 15.0f},
@@ -689,13 +691,15 @@ constexpr SkillRow kRows[kSkills] = {
     // **1.65 the band** (the user, 2026-10-05: "twister has to be also stronger than meteorit bit
     // weaker than evil spirits"): ~277 a strike on a 689-energy wizard, between a Meteorite
     // rock's ~240 and a spirit's ~320.
-    {.number = skill::kTwister, .name = "Twister", .mana = 60, .reach = 6.0f, .force = 1.65f,
+    // **1.9, not 1.65, and walking 0.2 a tick, not 0.125** (the user, 2026-10-22: "raise Twister, Energy Ball, Power Wave"; tests/skill_sweep.cpp had them at 0.3-0.8 of the wizard's middle spell): where monsters fall in a
+    // blow, the slow wind wandered off among the dead.
+    {.number = skill::kTwister, .name = "Twister", .mana = 60, .reach = 6.0f, .force = 1.9f,
      .spread = Spread::One,
      .tells = "Sends a whirlwind walking out ahead of him, striking everything it passes three "
               "times.",
      .clip = 147, .sound = "spell_storm", .built = true, .families = arms::kNone,
      .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 35, .clipOther = 148,
-     .flies = 1000.0f, .burns = 3, .burnTiles = 1.5f, .walks = 0.125f},
+     .flies = 1000.0f, .burns = 3, .burnTiles = 1.5f, .walks = 0.2f},
 
     // ---- Inferno 14, the wizard's, after Twister for the same reason ----------------------------
     //
