@@ -10,6 +10,7 @@
 #include "core/log.h"
 #include "game/play.h"
 #include "game/ui/describe.h"
+#include "game/ui/tracker.h"
 #include "sim/items.h"
 #include "sim/quests.h"
 #include "sim/realm.h"
@@ -51,13 +52,19 @@ bool followable(const sim::Realm& realm, int quest) {
     return true;
 }
 
-// The tracker's pinned quest when it may be followed, else the first taken one, -1 for none.
-int questToFollow(const sim::Realm& realm, int pinned) {
-    if (followable(realm, pinned)) return pinned;
+// The quest the tracker shows when it may be followed, else the first taken one hunted on this
+// map, else the first taken one; -1 for none. In the Dungeon with the Catacombs under way it
+// plays the Catacombs, not Marlon's quest above it (the user, 2026-10-21: "if char is on dungeon
+// and he has quest there auto-play quest folow has to work there").
+int questToFollow(const sim::Realm& realm, int shown) {
+    if (followable(realm, shown)) return shown;
+    int first = -1;
     for (int q = 0; q < sim::kQuests; ++q) {
-        if (followable(realm, q)) return q;
+        if (!followable(realm, q)) continue;
+        if (Tracker::here(realm, q)) return q;
+        if (first < 0) first = q;
     }
-    return -1;
+    return first;
 }
 
 }  // namespace
@@ -222,13 +229,13 @@ std::string Helper::halt(const std::string& why) {
 }
 
 std::string Helper::update(Play& play, const HelperSettings& settings, double seconds, const int32_t* bar,
-                           int barCount, int pinned) {
+                           int barCount, int shown) {
     if (!on_) return {};
     clock_ += seconds;
     stats_.seconds += seconds;
     barCount_ = bar ? std::min(barCount, 8) : 0;
     for (int i = 0; i < barCount_; ++i) bar_[i] = bar[i];
-    if (settings.quest) return follow(play, settings, seconds, pinned);
+    if (settings.quest) return follow(play, settings, seconds, shown);
     if (following_ >= 0) {
         // Follow my quest ticked off while it helps: it hunts round where he stands now.
         quester_.reset();
@@ -433,7 +440,7 @@ bool Helper::aid(Play& play, const HelperSettings& settings) {
 
 // **Follow my quest**: Auto-play's hand on the quest it follows (game/quest_auto.h), with the
 // Helper's own aids and pickups before it each beat. A quest handed in, the next taken one.
-std::string Helper::follow(Play& play, const HelperSettings& settings, double seconds, int pinned) {
+std::string Helper::follow(Play& play, const HelperSettings& settings, double seconds, int shown) {
     if (!play.isOpen() || play.realm().tables() == nullptr) return {};
     const sim::Realm& realm = play.realm();
     const content::Tables& tables = *realm.tables();
@@ -455,7 +462,7 @@ std::string Helper::follow(Play& play, const HelperSettings& settings, double se
             following_ = -1;
         }
         if (following_ < 0) {
-            following_ = questToFollow(realm, pinned);
+            following_ = questToFollow(realm, shown);
             if (following_ < 0) {
                 return halt(stats_.quests > 0 ? "Helper stopped: no taken quest is left to follow."
                                               : "Helper stopped: no taken quest to follow.");

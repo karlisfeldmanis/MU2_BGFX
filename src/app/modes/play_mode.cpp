@@ -1422,7 +1422,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
         desk_.setAutoPlaying(ctx.autoQuest);
         if (const std::string said = helper_.update(world_.played(), desk_.helperSettings(), deltaSeconds, bar,
-                                                    game::Hud::kSkillBoxes, desk_.followedQuest());
+                                                    game::Hud::kSkillBoxes, desk_.shownQuest());
             !said.empty()) {
             desk_.notice(said);
         }

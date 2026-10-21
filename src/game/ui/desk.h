@@ -217,6 +217,9 @@ public:
     // The quest the tracker is pinned to, -1 for none: what the save keeps (Tracker::pinned).
     int followedQuest() const { return tracker_.pinned(); }
     void followQuest(int quest) { tracker_.pin(quest); }
+    // The quest the tracker shows, -1 for none: the pinned one while it is hunted on this map or
+    // none taken is, else one that is (Tracker::following). The Helper's Follow my quest plays it.
+    int shownQuest() const { return tracker_.following(); }
     // The four skill keys, by MU's skill number, 0 for empty: what the save keeps. Restoring
     // marks the arrangement as the player's, so the first-free-key convenience does not put
     // back on the next frame what he took off before he quit -- see `autoBound_`.

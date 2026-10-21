@@ -71,9 +71,10 @@ struct HelperSettings {
     // The window has been up once: the first H opens it, every H after starts and stops.
     bool seen = false;
     // **Follow my quest** (the user, 2026-10-21: "helper can follow active quest, similiar like
-    // auto-play"): instead of hunting round a spot, it plays the quest the tracker is pinned to,
-    // else the first one taken, as Auto-play does -- the hunt, the travel, the hand-in -- then
-    // the next taken one, and stops when none is left. Its other ticks still hold.
+    // auto-play"): instead of hunting round a spot, it plays the quest the tracker shows, else
+    // the first taken one hunted on this map, else the first taken, as Auto-play does -- the
+    // hunt, the travel, the hand-in -- then the next taken one, and stops when none is left. Its
+    // other ticks still hold.
     bool quest = false;
     // While it helps (the user, the same day): a party's invite answered for him -- asked of
     // him as ever, joined, or declined; the aids on his bar (Heal, Greater Defense, Greater
@@ -110,14 +111,14 @@ public:
     // One frame. `bar` is his skill bar (the five keys, then the right button's slot, MU's skill
     // numbers, 0 for empty). Returns a line for the player when it stops by itself, else empty.
     std::string update(Play& play, const HelperSettings& settings, double seconds, const int32_t* bar,
-                       int barCount, int pinned = -1);
+                       int barCount, int shown = -1);
     // The quest it follows, -1 for none.
     int following() const { return on_ ? following_ : -1; }
 
 private:
     std::string halt(const std::string& why);
-    // Following a quest (HelperSettings::quest): `pinned`, the tracker's.
-    std::string follow(Play& play, const HelperSettings& settings, double seconds, int pinned);
+    // Following a quest (HelperSettings::quest): `shown`, the one the tracker shows.
+    std::string follow(Play& play, const HelperSettings& settings, double seconds, int shown);
     // The aids on his bar on one of his party in reach, the most hurt healed first.
     bool aid(Play& play, const HelperSettings& settings);
     bool support(Play& play, const HelperSettings& settings);
