@@ -1646,7 +1646,11 @@ void Chat::build(float u, const Pointer& pointer) {
     const float line = std::max(1.0f, std::round(u));
     // Idle, the chrome and the lines dimmed by the setting; lit, at full.
     const float idle = float(idle_) / 100.0f;
-    const float chrome = idle + 0.05f + (1.0f - idle - 0.05f) * lit_;
+    // The container all but goes while idle -- the fill and edge at four tenths of the setting --
+    // while the words stay readable: the tabs a tenth over it, the lines two (the user, 2026-10-21:
+    // "its to vissible when inactive"). At 50%: the fill 12%, the tabs 60%, the lines 70%.
+    const float chrome = idle * 0.4f + (1.0f - idle * 0.4f) * lit_;
+    const float words = std::min(1.0f, idle + 0.1f) + (1.0f - std::min(1.0f, idle + 0.1f)) * lit_;
     const float fillA = float(fill_) / 100.0f * chrome;
     const uint32_t fill = faded(kFill, fillA);
     const float r = kRadius * u;
@@ -1701,7 +1705,7 @@ void Chat::build(float u, const Pointer& pointer) {
         const bool hovered = one.box.has(pointer.x, pointer.y);
         const uint32_t ink = isChosen ? kBoneHi : hovered ? mix(kTabQuiet, kBoneHi, 0.6f) : kTabQuiet;
         float x = one.box.x + (isChosen ? 14.0f : 12.0f) * u;
-        x += word(tabsDrawn_, x, tabBase, kWord * u, faded(ink, chrome), one.word);
+        x += word(tabsDrawn_, x, tabBase, kWord * u, faded(ink, words), one.word);
         const auto it = unread_.find(one.key);
         if (it == unread_.end() || it->second <= 0 || isChosen) continue;
         const std::string count = std::to_string(std::min(it->second, 99));
@@ -1709,7 +1713,7 @@ void Chat::build(float u, const Pointer& pointer) {
         const bool whispers = one.key == "whispers", global = one.key == "global";
         pill(tabsDrawn_, x + kPillGap * u, row_.midY(), u, count,
              whispers ? kPillTop : global ? kGlobalPillTop : kIronPillTop,
-             whispers ? kPillFoot : global ? kGlobalPillFoot : kIronPillFoot, chrome);
+             whispers ? kPillFoot : global ? kGlobalPillFoot : kIronPillFoot, words);
     }
     // The settings' sliders at the row's end, lit while they are open or under the pointer.
     {
@@ -1718,7 +1722,7 @@ void Chat::build(float u, const Pointer& pointer) {
             tabsDrawn_.shade(gear_, faded(kWarm, 0.0f), faded(kWarm, 0.0f), faded(kWarm, 0.10f * chrome),
                              faded(kWarm, 0.10f * chrome));
         }
-        const uint32_t rail = faded(lit ? kBone2 : kAshInk, chrome), knob = faded(lit ? kBoneHi : kBone2, chrome);
+        const uint32_t rail = faded(lit ? kBone2 : kAshInk, words), knob = faded(lit ? kBoneHi : kBone2, words);
         const float x0 = gear_.midX() - 7.0f * u, x1 = gear_.midX() + 7.0f * u;
         const float knobs[3] = {0.25f, 0.7f, 0.45f};
         for (int k = 0; k < 3; ++k) {
@@ -1732,7 +1736,7 @@ void Chat::build(float u, const Pointer& pointer) {
     // The log, clipped to its well, the newest at the foot.
     lines_.clip(logBox_);
     const float size = textSize() * u, rowH = rowTall() * u;
-    const float lineIdle = std::min(1.0f, idle + 0.1f);
+    const float lineIdle = std::min(1.0f, idle + 0.2f);
     float y = logBox_.bottom() - logTall_ + logScroll_;
     for (size_t k = 0; k < rows_.size(); ++k) {
         const Row& row = rows_[k];
