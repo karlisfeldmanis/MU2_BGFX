@@ -113,8 +113,8 @@ void Realm::riseElite(Body& elite) {
     elite.stats.attackRate = kind.attackRate;
     elite.stats.defenseRate = kind.defenseRate;
     elite.stats.defense = int32_t(std::lround(float(kind.defense) * kEliteDefense));
-    elite.stats.minimumDamage = kind.minimumDamage * kEliteDamage;
-    elite.stats.maximumDamage = kind.maximumDamage * kEliteDamage;
+    elite.stats.minimumDamage = int32_t(std::lround(float(kind.minimumDamage) * kEliteDamage));
+    elite.stats.maximumDamage = int32_t(std::lround(float(kind.maximumDamage) * kEliteDamage));
     elite.swingTicks = std::max(1, int(std::lround(float(kind.attackTicks) / kEliteSwing)));
     elite.speed = kEliteStride / float(std::max(1, kind.moveTicks));
     elite.homeColumn = column;
@@ -186,10 +186,14 @@ void Realm::eliteSpoils(const Body& dead, const Body& killer) {
     Held spoils[kEliteMostPieces + 2];
     int count = 0;
     const int pieces = eliteDice_.nextInt(kEliteLeastPieces, kEliteMostPieces + 1);
-    // Which of them is excellent, -1 for none.
-    const int excellentAt = eliteDice_.nextInt(0, 100) < kEliteExcellentIn100 ? eliteDice_.nextInt(0, pieces) : -1;
+    // Which of them are excellent: one always, a second sometimes (-1 for none).
+    const int excellentAt = eliteDice_.nextInt(0, pieces);
+    int secondAt = -1;
+    if (pieces > 1 && eliteDice_.nextInt(0, 100) < kEliteSecondExcellentIn100) {
+        secondAt = (excellentAt + 1 + eliteDice_.nextInt(0, pieces - 1)) % pieces;
+    }
     for (int i = 0; i < pieces; ++i) {
-        const bool excellent = i == excellentAt;
+        const bool excellent = i == excellentAt || i == secondAt;
         const int32_t item = draw([&](const content::ItemRow& r) { return gear(r) && (!excellent || excellentable(r)); });
         if (item < 0) continue;
         const content::ItemRow& row = tables_->items[size_t(item)];

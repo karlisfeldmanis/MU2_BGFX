@@ -2,6 +2,7 @@
 // against its breed's, killed, its spoils, and its time down before it rises again elsewhere.
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <vector>
 #include <string>
@@ -48,8 +49,9 @@ void testElites(void (*checkOf)(bool, const char*),
     const content::MonsterKind& kind = lorencia.kinds[size_t(elite->kind)];
     std::printf("  an Elite %s at (%d, %d)\n", kind.label.c_str(), elite->column(), elite->row());
     check(elite->alive() && elite->monster(), "standing from the first tick, a monster to the fight");
-    checkEqual(elite->maxHealth, sim::eliteHealth(kind.health, 0), "Lorencia's eight times its breed's life");
-    checkEqual(elite->stats.maximumDamage, kind.maximumDamage * sim::kEliteDamage, "twice its damage");
+    checkEqual(elite->maxHealth, sim::eliteHealth(kind.health, 0), "Lorencia's sixteen times its breed's life");
+    checkEqual(elite->stats.maximumDamage, int32_t(std::lround(float(kind.maximumDamage) * sim::kEliteDamage)),
+               "two and a half times its damage");
     check(elite->stats.defense >= kind.defense, "and more defence");
     check(!lorencia.grid.safe(elite->column(), elite->row()), "out in the field, not in town");
     bool ofTheMap = false;
@@ -77,15 +79,17 @@ void testElites(void (*checkOf)(bool, const char*),
     // A strong knight beside it, a +9 sword in hand, fights it to the end.
     const int column = elite->column(), row = elite->row();
     sim::Realm realm;
-    realm.raise(&lorencia, 7, column + 1, row, sim::Kin::DarkKnight, 150);
-    realm.spend(500, 150, 90, 0);
+    // Level 220 and life to spare since the Elites' life doubled and their blows went to x2.5
+    // (2026-10-21): the 150 knight left the 8,400 one at 440 and fell.
+    realm.raise(&lorencia, 7, column + 1, row, sim::Kin::DarkKnight, 220);
+    realm.spend(550, 200, 300, 0);
     realm.give(lorencia.itemAt(0, 8), sim::kWeaponRight, 9);
     const sim::Body* target = eliteOf(realm);
     check(target != nullptr, "the Elite stands by him");
     if (!target) return;
     const uint32_t id = target->id;
     const uint64_t before = realm.hero().experience;
-    int drops = 0, runes = 0, jewels = 0;
+    int drops = 0, runes = 0, jewels = 0, excellents = 0;
     bool died = false;
     for (int tick = 0; tick < 6000 && !died && realm.hero().alive(); ++tick) {
         if (tick % 20 == 0) {
@@ -102,13 +106,19 @@ void testElites(void (*checkOf)(bool, const char*),
                 const content::ItemRow& row = lorencia.items[size_t(h.b)];
                 runes += sim::creation(row) ? 1 : 0;
                 jewels += sim::refiningJewel(row) ? 1 : 0;
+                for (const sim::Lying& one : realm.lying()) {
+                    if (one.id == uint32_t(h.a) && one.what.excellent != 0) ++excellents;
+                }
             }
         }
     }
     check(died, "and kills it");
-    std::printf("  it left %d things, %d jewels\n", drops, jewels);
+    std::printf("  it left %d things, %d jewels, %d excellent; he %s, the Elite at %d/%d\n", drops, jewels, excellents,
+                realm.hero().alive() ? "stands" : "fell", died ? 0 : (eliteOf(realm) ? eliteOf(realm)->health : -1),
+                died ? 0 : (eliteOf(realm) ? eliteOf(realm)->maxHealth : -1));
     check(drops >= sim::kEliteLeastPieces && drops <= sim::kEliteMostPieces + 2, "its spoils: 4 to 7 pieces and its jewels");
     check(jewels >= 1, "and a jewel, always");
+    check(excellents >= 1 && excellents <= 2, "and one or two excellent pieces, never none");
     checkEqual(runes, 0, "and never a rune");
     check(realm.hero().experience > before, "worth his while");
 
