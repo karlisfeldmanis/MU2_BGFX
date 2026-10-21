@@ -3038,6 +3038,12 @@ def main() -> None:
         path.stem: str(path.relative_to(root))
         for path in sorted((root / "interface" / "buffs").glob("buff_*.png"))
     })
+    # And MU's master-tree sheets, whole, for the Talents window's nodes: talent_icons and its
+    # grey twin, copied by talent_icons.py; the window cuts each cell from them itself.
+    icons.update({
+        path.stem: str(path.relative_to(root))
+        for path in sorted((root / "interface" / "talents").glob("talent_*.png"))
+    })
 
     for key, relative in {**EFFECTS, **icons}.items():
         source = root / relative
