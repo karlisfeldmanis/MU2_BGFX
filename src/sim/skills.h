@@ -576,6 +576,10 @@ int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const con
 // poison, comet attack animation speed so it is casted little bit faster", "also lighting",
 // "they all from 1 casting type familiy"): Cometfall's too, and Lightning's row by 1.4/1.7.
 constexpr float kSpellQuicken = 1.7f;
+// Ice's own, in Meteorite's pose since 2026-10-21 (the user: "we need to nerf ice spell speed",
+// then "it can bee quicker but not so quick like it was"): about 0.65 s a cast at 100 agility,
+// between the 0.43 of Energy Ball's hands at kSpellQuicken and Meteorite's 0.93. Ours.
+constexpr float kIceQuicken = 2.4f;
 
 // How long the clip takes at its authored pace, in ticks -- what the drawing plays a knight's
 // skill with a cooldown at (game/play.cpp, `swingPace` 1 on a cast); a primary is fitted to

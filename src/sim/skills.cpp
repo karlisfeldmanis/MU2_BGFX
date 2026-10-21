@@ -410,10 +410,14 @@ constexpr SkillRow kRows[kSkills] = {
     // forces and reach (sim/items.h), so this is his. **A tenth down again** the same day (the
     // user: "lets nerf wizard little bit", after the bots had him 186-214 to the others' 175-190
     // at eight hours): Meteorite 2.6 -> 2.3, the other three 2.0 -> 1.8; the reach stays.
+    // **Cast in Meteorite's pose** (the user, 2026-10-21: "we need to nerf ice spell speed"):
+    // MU's "Skill recovery" (183), the arm up, thirteen keys where Energy Ball's two hands
+    // (147/148) are six, played at kIceQuicken: about 0.65 s a cast at 100 agility where it was
+    // 0.43, and quicker than Meteorite's 0.93 ("quicker but not so quick like it was"). Ours.
     {skill::kIce, "Ice", 38, 9.0f, 1.8f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "Ice bursts on a body up to nine tiles off and on everything within six tiles of it; what "
      "it strikes walks at half speed for ten seconds.",
-     147, "spell_ice", true, arms::kNone, 0, Kin::DarkWizard, true, 10, 148, 1000.0f, false, 0, 0,
+     183, "spell_ice", true, arms::kNone, 0, Kin::DarkWizard, true, 10, 0, 1000.0f, false, 0, 0,
      0, 0, 0, 0, 6.0f, false, 200},
 
     // Poison 1: 0.75's row, `CreateSkill(Poison, ..., DamageType.Wizardry, 12, 6, manaConsumption:
@@ -994,9 +998,9 @@ int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const con
                         : row.wizardry ? (magicSpeedStat(kin, agility) + float(extra)) * 0.004f
                                        : (attackSpeedStat(kin, agility, right, left) + float(extra)) * 0.004f;
     const bool quick = row.number == skill::kMeteorite || row.number == skill::kCometfall ||
-                       row.number == skill::kIce ||
                        row.number == skill::kPoison;
-    const float rate = (clip->speed + bonus) * 25.0f * (quick ? kSpellQuicken : 1.0f);
+    const float quicken = row.number == skill::kIce ? kIceQuicken : quick ? kSpellQuicken : 1.0f;
+    const float rate = (clip->speed + bonus) * 25.0f * quicken;
     if (rate <= 0.0f) return 0;
     return swingTicks(int(float(clip->keys) / rate * 1000.0f));
 }
