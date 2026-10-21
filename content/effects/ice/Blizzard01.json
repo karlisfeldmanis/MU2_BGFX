@@ -1,0 +1,24 @@
+{
+  "item": "Blizzard01",
+  "mu_name": "The crystal of ice an Ice Storm brings down, ten at a time",
+  "mu_name_from": "ZzzOpenData.cpp OpenSkills(): `AccessModel(MODEL_BLIZZARD, \"Data\\\\Skill\\\\\", \"Blizzard\")` (:6026) and `OpenTexture(MODEL_BLIZZARD, \"Skill\\\\\")` (:5975), so Data/Skill/blizzard.bmd on Data/Skill/ice.jpg. Main 1.03.35; MuMain's and S17's file are byte for byte the same.",
+  "kind": "ice",
+  "why_this_one": "It is the whole of the client's Ice Storm, AT_SKILL_BLAST_FREEZE (39), in ZzzCharacter.cpp's let-go (:5247-5277):\n\n    for (int i = 0; i < 10; ++i) {\n        Pos = TargetPosition; Pos[2] += (rand() % 50) * i;\n        CreateEffect(MODEL_BLIZZARD, Pos, o->Angle, Light, 0, NULL, i + 1);\n    }\n    PlayBuffer(SOUND_SUDDEN_ICE1);\n\nTen crystals over the tile the spell was thrown at, each a little higher than the last, the caster's angle on all of them. Here the first Ancient rune's, Ice Storm (sim/items.h kIceStorm), drawn by game/fx/blizzard.",
+  "mesh": "Blizzard01.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/blizzard.bmd, from MuMain. Sixteen triangles in one mesh on ice.jpg, a spike about 75 x 194 x 43 units, long along the model's Y. No poses: its one action does not move it.",
+  "parts": [
+    {
+      "group": "ice",
+      "sheet": "ice.png",
+      "blend": "additive",
+      "note": "The Ice block's own sheet (Ice01.json): MU loads blizzard.bmd's texture from the same Data/Skill/ice.jpg. Additive off the create arm's `o->BlendMesh = -2` -- the whole model blended -- and lit by `o->Light`, which starts at nought and climbs a tenth a frame as it falls (MoveEffect, ZzzEffect.cpp:14283), so a crystal brightens on its way down."
+    }
+  ],
+  "scale": 0.5,
+  "scale_from": "`o->Scale = 0.5f` in the create arm (ZzzEffect.cpp:3777), for every crystal.",
+  "lift": 600,
+  "lift_from": "`o->Position[2] += 600.f` at birth (:3783), on top of the `(rand() % 50) * i` the let-go laid on the i-th crystal, so the tenth starts up to 1050 units over the tile -- six to ten and a half metres.",
+  "frames": 15,
+  "frames_from": "`o->LifeTime = rand() % 15 + 15` (:3768), 15 to 29 reference frames; most land first, at the ground line in MoveEffect, and the highest can run out in the air.",
+  "flight_note": "*How it falls* (MoveEffect's MODEL_BLIZZARD, ZzzEffect.cpp:14262-14303). Born `rand() % 300 - 150` aside on both ground axes and a hundred units further along X, falling at `Gravity = -20 - (rand() % 30 + 10)` units a frame and gaining `rand() % 5` more every frame. Its line is its `StartPosition`, which moves ten units a frame against X, so every crystal comes in slantwise from the same side, and it shivers ten units either way about that line every frame. Every frame it throws a BITMAP_SMOKE (subtype 0, 1.5), then a BITMAP_ENERGY spark or a BITMAP_FIRE+2 flame by a coin, and draws a BITMAP_SHINY+1 star and a BITMAP_LIGHT glow on itself in its rising light. On the ground: a blue smoke (0.24, 0.28, 0.8; subtype 11) half a metre up, one in five times an Ice shard (MODEL_ICE_SMALL), and the crystal left standing there (subtype 1) twenty frames, its light falling by a tenth a frame; the first crystal's sounds SOUND_SUDDEN_ICE2 two frames after it lands."
+}

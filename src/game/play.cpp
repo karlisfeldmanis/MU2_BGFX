@@ -1315,6 +1315,13 @@ void Play::update(double seconds) {
                         }
                         at[1] = ground_->heightAt(at[0], at[2]);
                         flame_.light(at, caster->yaw);
+                    } else if (happening.a == sim::skill::kIceStorm) {
+                        // The Ancient rune Ice Storm: MU's ten crystals over the body the realm
+                        // brought it down on, turned to his yaw, with SOUND_SUDDEN_ICE1 there.
+                        const float floor = ground_->heightAt(to[0], to[2]);
+                        const float feet[3] = {to[0], floor, to[2]};
+                        blizzard_.cast(feet, caster->yaw);
+                        if (heard_.iceStorm >= 0) emit(heard_.iceStorm, to[0], to[2], caster->id);
                     } else if (happening.a == sim::skill::kIce) {
                         // The block where the body is drawn, turned to his yaw, as MU turns it.
                         const float floor = ground_->heightAt(to[0], to[2]);
@@ -2328,6 +2335,15 @@ void Play::update(double seconds) {
     // Not MU's fire blast (Explotion01): the user, 2026-10-06, read it as Meteorite's.
     cometLandings_.clear();
     comet_.update(float(seconds), cometLandings_);
+    // Ice Storm's crystals down: one in five throws an Ice shard, and the first sounds
+    // SOUND_SUDDEN_ICE2 (fx/blizzard.h).
+    blizzardLandings_.clear();
+    blizzard_.update(float(seconds), blizzardLandings_);
+    for (const Blizzard::Landing& one : blizzardLandings_) {
+        const float feet[3] = {one.x, one.y, one.z};
+        if (one.shard) ice_.splinter(feet);
+        if (one.first && heard_.iceStormLand >= 0) emit(heard_.iceStormLand, one.x, one.z);
+    }
     // A Tarkan boss's staffs: each under the ground an explosion 80 units up and six stones
     // (MoveHandlers.cpp:4342-4363), the eighteen heard as one.
     staffLandings_.clear();

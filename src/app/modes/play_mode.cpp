@@ -525,6 +525,9 @@ bool PlayMode::open(Context& ctx) {
                                              world_.played().showing().table());
                 world_.played().ice().open(assets, ctx.textures,
                                            world_.played().showing().table());
+                world_.played().blizzard().open(assets, ctx.textures,
+                                                world_.played().showing().table(),
+                                                &world_.ground());
                 world_.played().stains().open(assets, ctx.textures,
                                               world_.played().showing().table());
                 world_.played().trapShow().open(assets, args.world, ctx.textures,
@@ -1934,6 +1937,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().thunder().gather(ctx.renderer.effects());
         world_.played().blink().gather(ctx.renderer.effects());
         world_.played().ice().gather(ctx.renderer.effects());
+        world_.played().blizzard().gather(ctx.renderer.effects());
         world_.played().trapShow().gatherEffects(ctx.renderer.effects());
         world_.played().poison().gather(ctx.renderer.effects());
         world_.played().flame().gather(ctx.renderer.effects());

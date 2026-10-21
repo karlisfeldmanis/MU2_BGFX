@@ -284,7 +284,8 @@ uint32_t moneyColour(long long) { return gfx::rgba(0.851f, 0.706f, 0.373f); }
 // A rune's rarity in WoW's colour for it (sim::Rarity): a legendary one orange, not the green
 // of every other legendary (the user, 2026-10-04: 'legendary runes has to use orange color').
 static Tone rarityTone(sim::Rarity rarity) {
-    return rarity == sim::Rarity::Legendary ? Tone::RuneLegendary
+    return rarity == sim::Rarity::Ancient     ? Tone::RuneAncient
+           : rarity == sim::Rarity::Legendary ? Tone::RuneLegendary
            : rarity == sim::Rarity::Epic    ? Tone::Epic
            : rarity == sim::Rarity::Common  ? Tone::White  // the Common runes' white
                                             : Tone::Rare;

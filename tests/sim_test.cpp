@@ -10619,6 +10619,124 @@ void testElementRunes(const content::Tables& tables) {
 // The rune groups (sim::PowerRow, the user, 2026-10-02: "group runes which is only for specific
 // classes, for specific weapon slots") and their first four: the knight's Fireburst, Ring of Fire
 // and Bulwark in his weapon alone, and every class's Kinship in a ring or the pendant alone.
+// The Ancient runes (2026-10-21, sim/items.h Rarity::Ancient): a fifth rarity, above Legendary,
+// that no monster up to Aida's hardest lets fall and no fuse makes. Ice Storm, the first, is the
+// Soul Master's blizzard: about one cast in ten, every monster round what he struck frozen and
+// struck.
+void testAncientRunes(const content::Tables& tables) {
+    std::printf("ancient runes\n");
+    using sim::Kin;
+    using sim::Power;
+    const int rune = tables.itemAt(14, 22), staff = tables.itemNamed("Staff01"),
+              sword = tables.itemNamed("Sword01");
+    check(rune >= 0 && staff >= 0 && sword >= 0, "the Rune of Creation, a staff and a sword");
+    if (rune < 0 || staff < 0 || sword < 0) return;
+    const sim::PowerRow* storm = sim::powerOf(uint8_t(Power::IceStorm));
+    check(storm != nullptr && storm->rarity == sim::Rarity::Ancient && storm->second && storm->once,
+          "Ice Storm is an Ancient, a second class's, one to a thing");
+    check(std::string(sim::rarityName(sim::Rarity::Ancient)) == "Ancient", "and is called so");
+    // Who may set it: a Soul Master's staff, nobody else's and nothing else.
+    const auto held = [](int item, uint8_t sockets, Power first) {
+        sim::Held h{int32_t(item), 0, 1};
+        h.sockets = sockets;
+        h.powers[0] = uint8_t(first);
+        return h;
+    };
+    const auto sets = [&](int into, Kin kin, bool second) {
+        return sim::settable(tables, held(rune, 0, Power::IceStorm), held(into, 1, Power::None), kin,
+                             second);
+    };
+    check(sets(staff, Kin::DarkWizard, true), "a Soul Master sets it in his staff");
+    check(!sets(staff, Kin::DarkWizard, false), "a Dark Wizard does not");
+    check(!sets(sword, Kin::DarkKnight, true) && !sets(staff, Kin::MagicGladiator, false),
+          "nor a Blade Knight or a Gladiator");
+    // Where it falls: never from Aida's hardest (140), from kAncientLevel up, and only for him.
+    {
+        sim::Random dice(20261021);
+        int below = 0, at = 0, knight = 0, wizard = 0;
+        for (int i = 0; i < 4000; ++i) {
+            below += sim::drawRunePower(dice, Kin::DarkWizard, true, 140) == uint8_t(Power::IceStorm);
+            at += sim::drawRunePower(dice, Kin::DarkWizard, true, sim::kAncientLevel) ==
+                  uint8_t(Power::IceStorm);
+            knight += sim::drawRunePower(dice, Kin::DarkKnight, true, 160) == uint8_t(Power::IceStorm);
+            wizard += sim::drawRunePower(dice, Kin::DarkWizard, false, 160) == uint8_t(Power::IceStorm);
+        }
+        std::printf("  Ice Storm in 4000 drops: %d at 140, %d at %d\n", below, at, sim::kAncientLevel);
+        checkEqual(below, 0, "no Ancient falls from Aida's hardest");
+        check(at > 0, "one falls past it");
+        checkEqual(knight + wizard, 0, "and never for a knight or a first-class wizard");
+        // The Ancient share of every rune past Aida, and Ice Storm the only Ancient a Soul Master
+        // may set: 0.11 of the shares his drawable rarities hold.
+        double held = 0.0;
+        for (int r = 0; r < sim::kRarities; ++r) held += sim::kRuneRarityShare[r];
+        const double rate = double(at) / 4000.0, wanted = sim::kRuneRarityShare[4] / held;
+        check(rate > wanted * 0.7 && rate < wanted * 1.3, "at about its share");
+    }
+    // The fuse refuses three Ancients, as it refuses three Legendaries.
+    check(sim::nextRarity(sim::Rarity::Ancient) == sim::Rarity::Ancient,
+          "an Ancient fuses into nothing higher or lower");
+
+    // A Soul Master's hunt with Ice Storm in his staff, casting Lightning at the nearest.
+    sim::Realm realm;
+    realm.raise(&tables, 5, 200, 160, Kin::DarkWizard, 150);
+    promote(realm);
+    realm.learn(sim::skill::kLightning);
+    const uint8_t powers[3] = {uint8_t(Power::IceStorm), 0, 0};
+    realm.give(staff, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+    int casts = 0, storms = 0, caught = 0, frozen = 0, blows = 0;
+    uint32_t fighting = 0;
+    for (int tick = 0; tick < 12000 && realm.hero().alive(); ++tick) {
+        if (realm.hero().health < realm.hero().maxHealth / 2 || realm.hero().mana < 100) {
+            sim::HeroRecord record = realm.record();
+            record.health = realm.hero().maxHealth;
+            record.mana = realm.hero().maxMana;
+            realm.restore(record);
+        }
+        const sim::Body& hero = realm.hero();
+        uint32_t nearest = 0;
+        float best = 1e9f;
+        for (const sim::Body& one : realm.bodies()) {
+            if (!one.monster() || !one.alive()) continue;
+            const float dx = one.x - hero.x, dy = one.y - hero.y;
+            if (dx * dx + dy * dy < best) {
+                best = dx * dx + dy * dy;
+                nearest = one.id;
+            }
+        }
+        if (nearest != 0 && nearest != fighting) {
+            fighting = nearest;
+            sim::Request request;
+            request.kind = sim::Request::Kind::Attack;
+            request.target = nearest;
+            request.skill = sim::skill::kLightning;
+            realm.ask(request);
+        }
+        realm.step();
+        bool storming = false;
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.who != realm.hero().id) continue;
+            if (h.what == sim::What::Cast && h.a == sim::skill::kLightning) ++casts;
+            if (h.what == sim::What::Loosed && h.a == sim::skill::kIceStorm) {
+                ++storms;
+                caught += h.c;
+                storming = true;
+                for (const sim::Body& one : realm.bodies()) {
+                    frozen += one.monster() && one.alive() && one.frozenUntil > int64_t(realm.tick());
+                }
+            }
+            if (storming && h.what == sim::What::Hit && h.thrown) ++blows;
+        }
+    }
+    std::printf("  Ice Storm: %d casts, %d storms, %d caught, %d left frozen, %d blows\n", casts,
+                storms, caught, frozen, blows);
+    check(storms > 0 && caught >= storms, "Ice Storm comes down on what he struck");
+    check(frozen > 0 && blows > 0, "and freezes and strikes round it");
+    if (casts > 0) {
+        const double rate = double(storms) / casts;
+        check(rate > 0.05 && rate < 0.16, "about one cast in ten");
+    }
+}
+
 void testGroupRunes(const content::Tables& tables) {
     std::printf("group runes\n");
     const int rune = tables.itemAt(14, 22), sword = tables.itemNamed("Sword01");
@@ -14845,6 +14963,7 @@ int main() {
     testDungeonRunes(tables);
     testElementRunes(tables);
     testGroupRunes(tables);
+    testAncientRunes(tables);
     testRuneRarity(tables);
     testEvilSpirit(tables);
     testFanArrowsFly(tables);

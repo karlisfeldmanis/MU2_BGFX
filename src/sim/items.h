@@ -780,7 +780,9 @@ enum class Power : uint8_t {
     Graze = 70,
     Lacerate = 71,
     Rend = 72,
-    Hemorrhage = 73
+    Hemorrhage = 73,
+    // The Ancient runes (Rarity::Ancient), each one of MU's later spells (kIceStorm...).
+    IceStorm = 74
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -811,8 +813,12 @@ constexpr uint8_t kInJewellery = 8;  // the rings and the pendant
 // like super light version of legendary runes', 'green runes lets say', 'or white'): a Legendary's
 // power at a fraction, the only rune a monster under kCreationLevel lets fall. White and not
 // green, as green is a legendary item's. Last in the enum so the rest keep their numbers.
-enum class Rarity : uint8_t { Rare = 0, Epic = 1, Legendary = 2, Common = 3 };
-constexpr int kRarities = 4;
+// **Ancient**, above Legendary (the user, 2026-10-21: "it will be class for runes - Ancient",
+// "ancient is tire, after legendary", "lets add powers new spells in those runes"): a power that
+// casts one of MU's later spells, falling only from monsters past Aida (kRuneRarityLevel), never
+// fused into. Appended, so every rarity before it keeps its number. invention.
+enum class Rarity : uint8_t { Rare = 0, Epic = 1, Legendary = 2, Common = 3, Ancient = 4 };
+constexpr int kRarities = 5;
 // What a rune sells for to a merchant, of the Jewel of Creation's 12,000,000, by its rarity (in
 // Rarity's order: Rare, Epic, Legendary, Common). A Common's 1% since 2026-10-06, so a Lorencia
 // kill does not pay a fortune (seen on the card). **Each rarity about three times the one under
@@ -820,15 +826,20 @@ constexpr int kRarities = 4;
 // whole 12,000,000, and three Commons (~360,000), a Chaos and the fuse's 100,000 made a Rare a
 // merchant paid 12,000,000 for, at 100%. Three for one, as the fuse takes them, so a fuse about
 // breaks even at the counter and pays only where a buyer values the rune more. Ours.
-constexpr double kRuneSale[kRarities] = {0.03, 0.10, 0.30, 0.01};
+// An Ancient three times a Legendary, the same step.
+constexpr double kRuneSale[kRarities] = {0.03, 0.10, 0.30, 0.01, 0.90};
 // The rarity a fuse of three makes (sim/machine.h): Common to Rare, Rare to Epic, Epic to
-// Legendary; a Legendary is the top and gives itself back.
+// Legendary; a Legendary is the top and gives itself back. An Ancient is never made by a fuse
+// and gives itself back too (fuseRunes refuses both).
 constexpr Rarity nextRarity(Rarity rarity) {
     return rarity == Rarity::Common ? Rarity::Rare
            : rarity == Rarity::Rare ? Rarity::Epic
-                                    : Rarity::Legendary;
+           : rarity == Rarity::Ancient ? Rarity::Ancient
+                                       : Rarity::Legendary;
 }
-constexpr double kRuneRarityShare[kRarities] = {0.60, 0.30, 0.10, 0.25};
+// An Ancient's share is a twelfth of every rune a monster past Aida drops, beside the other four
+// (0.11 of 1.36). invention.
+constexpr double kRuneRarityShare[kRarities] = {0.60, 0.30, 0.10, 0.25, 0.11};
 const char* rarityName(Rarity rarity);
 struct PowerRow {
     Power power;
@@ -976,7 +987,11 @@ constexpr int kCreationLevel = 15;
 // Death Knight 62) and anything harder after it. A rarity a kill cannot reach is out of the
 // draw, and kRuneRarityShare is shared among the rest. invention.
 // A Common from the first monster, and the only rune below kCreationLevel.
-constexpr int kRuneRarityLevel[kRarities] = {kCreationLevel, 40, 60, 1};
+// An Ancient from kAncientLevel, one past Aida's hardest (the Bloody Witch Queen, 140): nothing
+// built yet reaches it, so it falls first from Kanturu, whose breeds stand above Aida's (the
+// user, 2026-10-21: "just drop new runes in katuru").
+constexpr int kAncientLevel = 141;
+constexpr int kRuneRarityLevel[kRarities] = {kCreationLevel, 40, 60, 1, kAncientLevel};
 // A rune's power as a drop draws it, for a monster of `level` and a hero of `kin`: one his class
 // may set -- an element rune only where his class throws something of its element
 // (elementServes) -- its rarity drawn first at kRuneRarityShare among the rarities `level`
@@ -1120,6 +1135,18 @@ constexpr double kHellfireRuneChance = 0.10;
 constexpr float kHellfireRuneForce = 0.9f;
 constexpr double kTwisterRuneChance = 0.10;
 constexpr float kTwisterRuneForce = 0.8f;
+// **Ice Storm**, the first Ancient (the user, 2026-10-21: "lets cook 1 of soul master new spells"):
+// the Soul Master's Season 3 spell, MU's AT_SKILL_BLAST_FREEZE (S17 skill_template 39: 80
+// damage, a three-tile area). A spell he casts, or a swing that lands, has kIceStormChance to
+// bring it down on what he struck -- on a cast with no monster struck, the nearest within
+// kStormcallReach -- freezing every monster within kIceStormTiles of it for kIceStormTicks, as
+// MU's eDeBuff_Freeze holds it, and striking each with his rune's blow (runeStrike), ice, so
+// Glacier raises it. Once a cast, as Stormcall rolls (Realm::land). A Soul Master's weapon only.
+// invention, but the spell, its reach and its freeze.
+constexpr double kIceStormChance = 0.10;
+constexpr float kIceStormForce = 1.2f;
+constexpr float kIceStormTiles = 3.0f;
+constexpr int64_t kIceStormTicks = 30;  // a second and a half
 // **The Common runes** (Rarity::Common), each a Legendary at a fraction, every one first-class:
 // **Cinder** Ring of Fire's ring and **Gust** Twister's storm, a knight's; **Chill** Frost Arrow's
 // freeze for half as long with half its wound, the elf's; **Faint Echo** Arcane Echo's second

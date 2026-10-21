@@ -642,6 +642,10 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Hemorrhage, "Hemorrhage",
          "25% on hit: the target bleeds 12% of the hit a second a stack, 5 s",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Legendary},
+        // The Ancient runes (sim/items.h kIceStorm...), each one of MU's later spells.
+        {Power::IceStorm, "Ice Storm",
+         "10% on a cast or a hit: an ice storm freezes monsters within 3 tiles for 1.5 s",
+         kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
@@ -698,6 +702,7 @@ const char* rarityName(Rarity rarity) {
         case Rarity::Epic: return "Epic";
         case Rarity::Legendary: return "Legendary";
         case Rarity::Common: return "Common";
+        case Rarity::Ancient: return "Ancient";
     }
     return "";
 }

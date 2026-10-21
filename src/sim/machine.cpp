@@ -527,6 +527,12 @@ void fuseRunes(const content::Tables& tables, const Machine& box, const Sorted& 
         j.blocked = true;
         return;
     }
+    // An Ancient is found, never made, and fuses into nothing (sim/items.h Rarity::Ancient).
+    if (rarity == int(Rarity::Ancient)) {
+        j.title = "Ancient runes do not fuse";
+        j.blocked = true;
+        return;
+    }
     const char* next = rarityName(nextRarity(Rarity(rarity)));
     j.title = std::string("Fuse into ") + next;
     j.success = std::string("A random ") + next + " rune";

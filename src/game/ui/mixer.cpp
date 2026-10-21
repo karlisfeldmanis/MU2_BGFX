@@ -81,6 +81,7 @@ uint32_t rarityInk(sim::Rarity rarity) {
         case sim::Rarity::Epic: return gfx::rgba(0.698f, 0.361f, 0.961f);
         case sim::Rarity::Legendary: return gfx::rgba(1.0f, 0x80 / 255.0f, 0.0f);  // a rune's orange
         case sim::Rarity::Common: return gfx::rgba(0.949f, 0.949f, 0.949f);
+        case sim::Rarity::Ancient: return gfx::rgba(0.0f, 0xcc / 255.0f, 1.0f);  // #00ccff
     }
     return style::kBone;
 }

@@ -542,7 +542,10 @@ bool Helper::loot(Play& play, const HelperSettings& settings) {
             wanted |= (p & HelperSettings::kPickJewels) && !pet && (row.jewel() || sim::refiningJewel(row));
             wanted |= (p & HelperSettings::kPickPets) && pet;
             wanted |= (p & HelperSettings::kPickRunes) && sim::creation(row);
-            wanted |= (p & HelperSettings::kPickLegendary) && qualityOf(row, one.what) == tip::Tone::RuneLegendary;
+            // An Ancient rune is picked with the Legendaries: it is rarer than any of them.
+            wanted |= (p & HelperSettings::kPickLegendary) &&
+                      (qualityOf(row, one.what) == tip::Tone::RuneLegendary ||
+                       qualityOf(row, one.what) == tip::Tone::RuneAncient);
             wanted |= (p & HelperSettings::kPickExcellent) && one.what.excellent != 0;
             wanted |= (p & HelperSettings::kPickSockets) && one.what.sockets > 0;
             if (!wanted) continue;

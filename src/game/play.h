@@ -42,6 +42,7 @@
 #include "game/fx/wave.h"
 #include "game/fx/arrow.h"
 #include "game/fx/blink.h"
+#include "game/fx/blizzard.h"
 #include "game/fx/ice.h"
 #include "game/fx/stains.h"
 #include "game/world/trap_show.h"
@@ -1022,6 +1023,8 @@ public:
     Blink& blink() { return blink_; }
     // And his Ice. fx/ice.h.
     Ice& ice() { return ice_; }
+    // And the Ancient rune Ice Storm's blizzard. fx/blizzard.h.
+    Blizzard& blizzard() { return blizzard_; }
     // What a death leaves by the head: MU's CreateBlood. fx/stains.h.
     Stains& stains() { return stains_; }
     void gatherStains(gfx::Effects& effects) const {
@@ -1843,6 +1846,7 @@ private:
     int64_t lastEvilTick_ = -1000;
     Blink blink_;
     Ice ice_;
+    Blizzard blizzard_;
     Stains stains_;
     TrapShow trapShow_;
     Poison poison_;
@@ -1960,6 +1964,8 @@ private:
     std::vector<Meteor::Impact> meteorImpacts_;
     // Cometfall's landings this frame, each laid as a rock's impact (Play::update).
     std::vector<Comet::Landing> cometLandings_;
+    // And Ice Storm's crystals down this frame (Play::update).
+    std::vector<Blizzard::Landing> blizzardLandings_;
     // The wandering cry's own dice: the drawing's, so that hearing a spider never moves the
     // sim's seeded stream.
     uint32_t wanderDice_ = 0x6d2b79f5u;
@@ -2003,6 +2009,7 @@ private:
         int boltThunder = -1, witchThunder = -1;  // eThunder, a Hydra's and Lizard King's bolts; eElec, a Witch Queen's ring
         int rage2 = -1, rage3 = -1;    // Rageful Blow's streaks and its cracks
         int iceCast = -1;                                 // spell_ice, on an Ice Monster's cast
+        int iceStorm = -1, iceStormLand = -1;  // eSuddenIce_1 and _2, the Ancient rune Ice Storm's
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
         int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};

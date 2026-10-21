@@ -135,6 +135,10 @@ constexpr int32_t kImpale = 47;
 // AT_SKILL_NOVA_BEGIN and AT_SKILL_NOVA). Taught by the Scroll of Nova (Book19); the user,
 // 2026-10-07: 'lets first make that nova for soul master, than use it for dragon'.
 constexpr int32_t kNova = 40;
+// `AT_SKILL_BLAST_FREEZE`, Ice Storm, the Soul Master's Season 3 spell: no row and never learned,
+// only the Ancient rune's (sim/items.h kIceStorm...), said as Loosed so the drawing lets its
+// blizzard fall (fx/blizzard.h). MU's number, free in this table.
+constexpr int32_t kIceStorm = 39;
 }  // namespace skill
 
 // What an iced body's walking is multiplied by: OpenMU's `IcedMovementSpeedFactor`, 0.5, which

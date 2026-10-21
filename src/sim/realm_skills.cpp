@@ -604,6 +604,12 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         hero.channelLast = 0;
         hero.channelStruckCount = 0;
         hero.channelEcho = false;
+        // His Ancient spell rune, once a channel as once a cast (Realm::land): a channel never
+        // comes down through `land` (sim/items.h kIceStorm...).
+        if (hero.player && row.wizardry) {
+            Body* aimed = body(at);
+            channelRunes(hero, aimed != nullptr ? *aimed : hero);
+        }
     }
     hero.walking = false;
     route(hero).clear();

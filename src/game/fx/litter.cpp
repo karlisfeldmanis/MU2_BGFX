@@ -171,7 +171,9 @@ void jewelColour(const content::ItemRow& row, float out[3]) {
 bool legendary(const content::ItemRow& row, const sim::Held& what) {
     if (sim::creation(row)) {
         const sim::PowerRow* power = sim::powerOf(what.powers[0]);
-        return !power || power->rarity == sim::Rarity::Legendary;
+        // An Ancient stands under its column as a Legendary does.
+        return !power || power->rarity == sim::Rarity::Legendary ||
+               power->rarity == sim::Rarity::Ancient;
     }
     return sim::powered(row) && sim::affixCount(row, what) >= 4;
 }
@@ -182,11 +184,13 @@ void runeColour(const sim::Held& what, float out[3]) {
     const sim::PowerRow* power = sim::powerOf(what.powers[0]);
     const sim::Rarity rarity = power ? power->rarity : sim::Rarity::Legendary;
     const float rare[3] = {0.3f, 0.55f, 1.0f}, epic[3] = {0.7f, 0.35f, 1.0f},
-                legendary[3] = {1.0f, 0.5f, 0.0f}, common[3] = {0.9f, 0.9f, 0.9f};
-    const float* c = rarity == sim::Rarity::Rare     ? rare
-                     : rarity == sim::Rarity::Epic   ? epic
-                     : rarity == sim::Rarity::Common ? common
-                                                     : legendary;
+                legendary[3] = {1.0f, 0.5f, 0.0f}, common[3] = {0.9f, 0.9f, 0.9f},
+                ancient[3] = {0.0f, 0.8f, 1.0f};  // the card's #00ccff (tip::Tone::RuneAncient)
+    const float* c = rarity == sim::Rarity::Rare      ? rare
+                     : rarity == sim::Rarity::Epic    ? epic
+                     : rarity == sim::Rarity::Common  ? common
+                     : rarity == sim::Rarity::Ancient ? ancient
+                                                      : legendary;
     for (int k = 0; k < 3; ++k) out[k] = c[k];
 }
 

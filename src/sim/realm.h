@@ -1872,6 +1872,9 @@ private:
     // each one rolls, Stormcall's lightning or Meteor's rock on another monster near him, Ice's
     // chill or Poison's pulses on `struck` itself. Draws nothing unless one is worn.
     void stormcall(Body& hero, Body& struck, int wound);
+    // A channelled spell's (Lightning, Aqua Beam...), begun on `aimed`: only his Ancient spell
+    // runes roll, once a channel, as `land` rolls them once a cast -- Stormcall is not asked here.
+    void channelRunes(Body& hero, Body& aimed);
     // One power's roll and, when it answers, its lightning, rock, chill or poison.
     void callDown(Body& hero, Body& struck, const PowerRow& power, int wound);
     // A magic rune's blow: his swing's roll with his energy's band on top (sim::kRuneEnergyLow

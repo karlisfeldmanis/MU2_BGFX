@@ -40,7 +40,11 @@ enum class Tone : uint8_t {
     Quest,
     // A legendary rune's (the user, 2026-10-04: 'legendary runes has to use orange color'): WoW's
     // legendary orange, kept for the runes when every other legendary went green.
-    RuneLegendary
+    RuneLegendary,
+    // An Ancient rune's (sim::Rarity::Ancient, 2026-10-21): WoW's heirloom cyan, #00ccff, the one
+    // hue the ladder had not taken -- clear of the rare's blue, the runes' orange and the warnings'
+    // red, and cold as the first of them is ice.
+    RuneAncient
 };
 uint32_t colourOf(Tone tone);
 

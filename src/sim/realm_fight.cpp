@@ -442,6 +442,25 @@ void Realm::stormcall(Body& hero, Body& struck, int wound) {
     }
 }
 
+void Realm::channelRunes(Body& hero, Body& aimed) {
+    if (!tables_) return;
+    const Satchel& kit = kitOf(hero);
+    const RaiderRunes dice(runeDice_, raiderDice_, hero.raider >= 0);
+    for (const int slot : {int(kWeaponRight), int(kWeaponLeft)}) {
+        const Held& hand = kit[slot];
+        if (hand.empty()) continue;
+        for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
+            const PowerRow* power = powerOf(hand.powers[socket]);
+            if (power == nullptr || power->power != Power::IceStorm ||
+                !power->takenBy(hero.kin, hero.second)) {
+                continue;
+            }
+            callDown(hero, aimed, *power, 0);
+            if (!hero.alive()) return;
+        }
+    }
+}
+
 void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound) {
     // Frost Arrow takes the monster her arrow struck: frozen where it stands, and wounded again
     // for half the arrow, said as the wizard's Ice let go at it so the drawing freezes it there.
@@ -643,6 +662,55 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
             happenings_.back().rune = true;
             core::logf("twister rune: tick %lld, a storm toward #%u", (long long)tick_, struck.id);
             return;
+        }
+        return;
+    }
+    // His Ice Storm, the first Ancient (sim/items.h kIceStorm...): the Soul Master's blizzard
+    // brought down on what he struck -- on a cast that struck no monster, the nearest in his
+    // sight within kStormcallReach -- every monster within kIceStormTiles of it frozen and struck.
+    if (power.power == Power::IceStorm) {
+        if (!runeDice_.nextBool(kIceStormChance)) return;
+        const Body* centre = struck.monster() && struck.alive() ? &struck : nullptr;
+        if (centre == nullptr) {
+            float best = kStormcallReach * kStormcallReach;
+            for (const Body& b : bodies_) {
+                if (!b.monster() || !b.alive()) continue;
+                const float dx = b.x - hero.x, dy = b.y - hero.y, d = dx * dx + dy * dy;
+                if (d <= best && router_.sees(hero.x, hero.y, b.x, b.y, content::kWallNoMove)) {
+                    best = d;
+                    centre = &b;
+                }
+            }
+        }
+        if (centre == nullptr) return;
+        const float cx = centre->x, cy = centre->y;
+        // Everything round it first, in body order so the log is fixed, then the blows: a kill
+        // among them must not move what the storm took.
+        uint32_t victims[kVictims];
+        int found = 0;
+        for (const Body& b : bodies_) {
+            if (found >= kVictims) break;
+            if (!b.monster() || !b.alive()) continue;
+            const float dx = b.x - cx, dy = b.y - cy;
+            if (dx * dx + dy * dy <= kIceStormTiles * kIceStormTiles) victims[found++] = b.id;
+        }
+        say(What::Loosed, hero, skill::kIceStorm, 0, found, centre->id);
+        happenings_.back().rune = true;
+        happenings_.back().x = cx;
+        happenings_.back().y = cy;
+        core::logf("ice storm rune: tick %lld, on #%u, %d frozen", (long long)tick_, centre->id,
+                   found);
+        const float force = kIceStormForce * runeForce(hero, Element::Ice);
+        for (int i = 0; i < found && hero.alive(); ++i) {
+            Body* victim = body(victims[i]);
+            if (victim == nullptr || !victim->alive()) continue;
+            // The Statue of Saint and the raid's dragon take the blow and not the freeze, as
+            // Frost Arrow's.
+            if (!fixed(*victim) && !shrugs(*victim)) {
+                victim->frozenUntil = std::max(victim->frozenUntil, tick_ + kIceStormTicks);
+                halt(*victim);
+            }
+            runeStrike(hero, *victim, force);
         }
         return;
     }
@@ -1021,7 +1089,8 @@ void Realm::land(Body& hero) {
     // And Stormcall answers the cast as it answers a swing (the user, 2026-10-03: "that rune
     // which has chance to cast lightnings on monsters on casts"), once a cast, on a monster near
     // him or else the one it was cast at. Only Stormcall rolls here: callDown passes over the
-    // wizard's other weapon powers, and the knight's are not his to set.
+    // wizard's other weapon powers, and the knight's are not his to set. And the Soul Master's
+    // Ice Storm, once a cast as well (sim/items.h kIceStorm...).
     if (spell && spell->wizardry && hero.player && hero.alive()) {
         Body* aimed = body(at);
         stormcall(hero, aimed != nullptr ? *aimed : hero, 0);
