@@ -75,6 +75,12 @@ int maximumDurability(const content::ItemRow& row, const Held& held);
 // What a new one starts with -- off a shelf, off a body, into a hand: whole for gear, and the
 // row's own number for anything else (a quiver's shots; the caller counts a stack).
 int fullDurability(const content::ItemRow& row, int refinement);
+// A thing that drops or comes out of a box at +0 with nothing on it: whole when it wears (a pet,
+// a mount, a ring), and one when it does not (a jewel, an Ale, a scroll: a stack of one). The
+// pets came out of the jewels' draw and Kundun's and the Firecracker's bare ones at 1 Life of 255
+// until 2026-10-21, and died on the first blow once worn (Crylos: "I pick up, and they eventually
+// die without me equipping them").
+int bareDurability(const content::ItemRow& row);
 
 // Whether this NPC's counter mends as well as sells: MuMain's `isRepairNpc`
 // (ZzzInterface.cpp:1565) -- Hanzo the Blacksmith (251), Eo the Craftsman (243) and Zienna

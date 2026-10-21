@@ -59,6 +59,8 @@ int fullDurability(const content::ItemRow& row, int refinement) {
     return wears(row) ? maximumDurability(row, refinement) : row.durability;
 }
 
+int bareDurability(const content::ItemRow& row) { return wears(row) ? maximumDurability(row, 0) : 1; }
+
 bool repairsAt(int npc) { return npc == 251 || npc == 243 || npc == 246; }
 
 float wearCut(int durability, int maximum) {

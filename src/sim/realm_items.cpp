@@ -1450,7 +1450,8 @@ void Realm::leave(const Body& dead, const Body& killer) {
     } else if ((roll -= kJewelChance) <= kJewel) {
         const int32_t item = draw([&](const content::ItemRow& r) { return jewelGroup(r) && reaches(r); });
         if (item < 0) return;
-        one.what = Held{item, 0, 1};
+        // The Angel and the Imp are in this group too, and come whole.
+        one.what = Held{item, 0, int16_t(bareDurability(tables_->items[size_t(item)]))};
     } else if ((roll -= kJewel) <= excellentItemChance) {
         // Nothing from a monster under 25, and otherwise what a monster 25 levels lower would
         // drop, at +0, luck at 1 in 100, the option as on any drop, and NewOptionRand's options.
@@ -2236,7 +2237,7 @@ Cracked Realm::crack(int slot) {
             one.what.option = int8_t(option);
         } else {
             // "혼석, 축석, 영석은 레벨이 없게": the Chaos, the Bless and the Soul come bare.
-            one.what = Held{item, 0, 1};
+            one.what = Held{item, 0, int16_t(bareDurability(row))};
         }
         std::tie(one.column, one.row) = clearing(hero.column(), hero.row());
         one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
@@ -2359,8 +2360,9 @@ Cracked Realm::openBox(Cracked cracked, bool luck, int tier) {
             const content::ItemRow& row = tables_->items[size_t(item)];
             Lying one;
             if (!takesOptions(row)) {
-                // The jewels, the pets and the jewellery come bare (Event.cpp's level 0 rows).
-                one.what = Held{item, 0, 1};
+                // The jewels, the pets and the jewellery come bare (Event.cpp's level 0 rows),
+                // and the pets and the jewellery whole.
+                one.what = Held{item, 0, int16_t(bareDurability(row))};
             } else {
                 // An excellent one at +0 with the skill; a plain one at the bag's level and up to
                 // one more, the skill at a half. The luck at a half either way, and the option where
