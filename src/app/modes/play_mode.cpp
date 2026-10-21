@@ -819,6 +819,7 @@ void PlayMode::runScript(Context& ctx) {
     if (args.windows.find("whatsnew") != std::string::npos) desk_.showWhatsNew();
     if (args.windows.find("quests") != std::string::npos) desk_.showQuestLog();
     if (args.windows.find("helper") != std::string::npos) desk_.showHelper();
+    if (args.windows.find("talents") != std::string::npos) desk_.showTalents();
 }
 
 void PlayMode::openProbes(Context& ctx) {

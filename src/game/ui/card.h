@@ -30,9 +30,11 @@ public:
     // requests; the caller answers them. `realm` is asked for what only it reckons (his attack
     // speed, what a reset would take off); the window keeps nothing of it. `name` is his, as the
     // server said it, and heads the window; empty off a server.
+    // `talents` as whether the Talents button on its top edge was (button C2 of the Talents
+    // canvas: MU's master icon standing on the frame, his unspent talent points on its corner).
     void update(float width, float height, const sim::Body* hero, const sim::Realm* realm,
                 const std::string& name, const Pointer& pointer, int* spend, int* count, bool* reset,
-                bool* close);
+                bool* close, bool* talents = nullptr);
 
     int tab() const { return tab_; }  // the open page: 0 Attributes, 1 Combat, 2 Bonuses
     bool covers(float x, float y) const;
@@ -79,6 +81,8 @@ private:
         int returnable = 0;    // the points a reset would take back
         int strips = 0;        // the worn pieces it would take off, -1 no room for them
         bool asking = false;   // the reset's question is up
+        int talents = 0;       // his talent points in hand, on the Talents button's corner
+        bool overSeal = false, pressSeal = false;
         bool operator==(const Sheet&) const = default;
     };
     void rebuild();
@@ -97,6 +101,7 @@ private:
     bool asking_ = false;  // the reset's question is up
     bool closing_ = false;
     bool overClose_ = false;
+    bool sealing_ = false;  // a press went down on the Talents button
     uint64_t rebuilds_ = 0;
     std::string guild_;
 };

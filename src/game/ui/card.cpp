@@ -60,6 +60,16 @@ constexpr float kFootRight = kRight;
 constexpr float kExpTop = kResetSquare.y + kResetSquare.h + 5.0f;
 constexpr Box kBar{panel::kGridX, kExpTop + 12.0f, kFootRight - panel::kGridX, 4.0f};
 
+// **The Talents button** (board C2 of the Talents canvas, picked 2026-10-20): MU's master icon in
+// an iron frame standing on the window's top edge at its left end, its foot joined to the frame,
+// his unspent talent points in red on its corner and "Talents" beside it. At its left end and not
+// down the window's left side, because the bag opens there, twenty-four units off (kColumnGap).
+// The canvas's pixels at half, as the window's 2x mockup has them: a frame 24 by 32 round a 20
+// by 28 cell, MU's own size, so the icon is one texel a unit.
+constexpr Box kSeal{4.5f, -32.0f, 24.0f, 32.0f};
+constexpr Box kSealHit{kSeal.x, kSeal.y, 60.0f, kSeal.h};  // the frame and its word
+constexpr int kSealIcon = 335;  // "Strength of Arms": the canvas's, MU's damage master icon
+
 // Type, in units. A figure is a size above its label, so the eye runs down the numbers.
 constexpr float kClassSize = 9.0f, kNameSize = 8.5f, kFigureSize = 10.0f, kLineSize = 7.5f,
                 kSmallCaps = 6.5f, kKeySize = 9.5f, kTabSize = 7.5f,
@@ -164,12 +174,13 @@ void Card::open(const gfx::Interface& interface, panel::Arts* arts) {
 
 bool Card::covers(float x, float y) const {
     return now_.who != nullptr &&
-           Box{x_, y_, panel::kWidth * panel::scale(), panel::kHeight * panel::scale()}.has(x, y);
+           (Box{x_, y_, panel::kWidth * panel::scale(), panel::kHeight * panel::scale()}.has(x, y) ||
+            panel::scaled(x_, y_, kSealHit).has(x, y));
 }
 
 void Card::update(float width, float height, const sim::Body* hero, const sim::Realm* realm,
                   const std::string& name, const Pointer& pointer, int* spend, int* count, bool* reset,
-                  bool* close) {
+                  bool* close, bool* talents) {
     // The right-hand column, always.
     x_ = panel::columnX(width, 1);
     y_ = panel::panelY(height);
@@ -301,6 +312,7 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         // The pointer, against this frame's layout.
         const Box cross = panel::scaled(x_, y_, panel::frameClose());
         overClose_ = cross.has(pointer.x, pointer.y);
+        const bool overSeal = panel::scaled(x_, y_, kSealHit).has(pointer.x, pointer.y);
         const size_t counts[4] = {now_.lines[0].size(), now_.lines[1].size(), now_.lines[2].size(),
                                   now_.lines[3].size()};
         const int points = hero->pointsInHand;
@@ -348,12 +360,15 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         const int overTab = tabUnder();
         if (pointer.pressed) {
             if (overClose_) closing_ = true;
+            sealing_ = overSeal;
             pushed_ = over_;
             pressTab_ = overTab;
         }
         if (pointer.released) {
             // Only if the pointer is still on it, which is how a press is taken back.
             if (closing_ && overClose_ && close) *close = true;
+            if (sealing_ && overSeal && talents) *talents = true;
+            sealing_ = false;
             if (pushed_ >= 0 && pushed_ == over_) {
                 if (pushed_ < 4) {
                     if (spend) *spend = pushed_;
@@ -454,6 +469,9 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         now_.over = over_;
         now_.closing = closing_;
         now_.overClose = overClose_;
+        now_.talents = realm ? realm->talentsInHand() : 0;
+        now_.overSeal = overSeal;
+        now_.pressSeal = sealing_ && overSeal;
     }
     // A tab changed this frame draws its page on the next, which has built it.
     if (now_ == drawn_ && rebuilds_ > 0) return;
@@ -471,6 +489,45 @@ void Card::rebuild() {
     const float u = tip::unit();
 
     panel::frame(canvas_, arts, x, y, "Character");
+    // ---- the Talents button, standing on the top edge (kSeal) ------------------------------------
+    {
+        const float line = std::max(1.0f, std::round(0.5f * k));
+        const Box seal = panel::scaled(x, y, kSeal);
+        const bool lit = now_.overSeal;
+        // A black seam round its top and sides, the iron rim (lit under the pointer), the void
+        // inside, MU's cell on it; no rim at its foot, which is the window's own edge.
+        canvas_.rect({seal.x - line, seal.y - line, seal.w + line * 2.0f, seal.h + line}, style::kSeam);
+        canvas_.rect(seal, lit ? style::kIronHi : style::kIron);
+        canvas_.rect({seal.x + line, seal.y + line, seal.w - line * 2.0f, seal.h - line}, style::kVoid);
+        const gfx::Art& sheet = arts.get("talent_icons");
+        const Box cell = panel::scaled(x, y, {kSeal.x + 2.0f, kSeal.y + 2.0f, 20.0f, 28.0f});
+        if (sheet.valid()) {
+            const int n = kSealIcon - 300;
+            canvas_.region(sheet, cell, {float(n % 25) * 20.0f + 0.5f, float(n / 25) * 28.0f + 0.5f, 19.0f, 27.0f},
+                           now_.pressSeal ? gfx::rgba(0.8f, 0.8f, 0.8f) : 0xFFFFFFFFu);
+        }
+        // The word beside it, on the world over the window, so with its drop.
+        controls::caps(canvas_, std::round(x + (kSeal.x + 29.0f) * k), std::round(y + (kSeal.y + 25.0f) * k), 6.0f * k,
+                       lit ? style::kBoneHi : style::kBone2, "Talents", 0.08f);
+        // His talent points in hand, red on the frame's corner; none, no tag.
+        if (now_.talents > 0) {
+            const std::string count = std::to_string(now_.talents);
+            const float size = 5.5f * k;
+            const gfx::Face* tf = panel::titleFace();
+            const float w = tf ? tf->measure(size, count) : controls::labelWidth(size, count);
+            const Box tag{std::round(x + (kSeal.x + 18.0f) * k), std::round(y + (kSeal.y - 3.5f) * k),
+                          std::round(std::max(11.0f * k, w + 4.0f * k)), std::round(9.0f * k)};
+            canvas_.rect(tag, style::kBloodHi);
+            canvas_.rect(tag.grown(-line), style::kBloodMd);
+            const float base = controls::middle(tag.y, tag.h, size);
+            if (tf) {
+                canvas_.lettered(*tf, panel::titleTexture(), std::round(tag.midX() - w * 0.5f), base, size, 0.0f,
+                                 style::kBoneHi, count);
+            } else {
+                controls::label(canvas_, tag.midX() - w * 0.5f, base, size, style::kBoneHi, count);
+            }
+        }
+    }
     // **His name, small under the title, his guild in brackets after it, then his level and
     // resets** -- the user, 2026-10-10: 'show chatacyer title how it was and small character name
     // [guild] under the title, same as Inventory and gear score', then 'move lvl,resets also where

@@ -675,6 +675,7 @@ add_library(mu_game STATIC
   src/game/ui/player_menu.cpp
   src/game/ui/inspect.cpp
   src/game/ui/helper_window.cpp
+  src/game/ui/talent_window.cpp
   src/game/ui/quest_log.cpp
   src/game/ui/target_frame.cpp
   src/game/portrait.cpp

@@ -129,6 +129,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     questDialog_.open(interface_);
     questLog_.open(interface_, assetDir);
     helperWindow_.open(interface_, &arts_);
+    talents_.open(interface_, &arts_);
     tracker_.open(interface_);
     travel_.open(interface_, assetDir, &arts_);
     goBack_.open(interface_);
@@ -167,6 +168,7 @@ void Desk::shutdown() {
     questDialog_.close();
     questLog_.close();
     helperWindow_.close();
+    talents_.close();
     tracker_.close();
     travel_.close();
     goBack_.close();
@@ -213,6 +215,38 @@ void Desk::openHelper() {
     core::logf("window: helper up");
 }
 
+// **Talents hides the others** (the user, 2026-10-20): it is 1260 wide and stands over every
+// column, so the bag, the character window, the quest log, the Helper and the guild go down while
+// it is up, and what went down comes back as it shuts. An inspected player is let go, as a counter
+// lets him go.
+void Desk::openTalents(Play& play) {
+    (void)play;
+    hidden_ = {inventoryOpen_, characterOpen_, questLog_.up(), helperWindow_.up(), guild_.up()};
+    inventoryOpen_ = characterOpen_ = false;
+    questLog_.hide();
+    helperWindow_.hide();
+    guild_.hide();
+    travel_.hide();
+    closeInspect();
+    fanLatched_ = false;
+    talents_.show();
+    core::logf("window: talents up");
+}
+
+void Desk::closeTalents(bool bringBack) {
+    if (!talents_.up()) return;
+    talents_.hide();
+    if (bringBack) {
+        inventoryOpen_ = hidden_.bag;
+        characterOpen_ = hidden_.card;
+        if (hidden_.quests) questLog_.show(autoPlaying_ >= 0 ? autoPlaying_ : tracker_.following());
+        if (hidden_.helper) helperWindow_.show();
+        if (hidden_.guild) guild_.show();
+    }
+    hidden_ = {};
+    core::logf("window: talents down%s", bringBack ? "" : ", the others left shut");
+}
+
 void Desk::expect(uint32_t ticket, Then then, int key) {
     if (ticket != 0) waiting_.push_back({ticket, then, key});
 }
@@ -222,6 +256,7 @@ bool Desk::overWindows(float x, float y) const {
            guildMake_.covers(x, y) || chat_.covers(x, y) || (!minimap_.full() && partyBar_.covers(x, y)) ||
            playerMenu_.covers(x, y) || targetFrame_.covers(x, y) || minimap_.covers(x, y) ||
            questDialog_.covers(x, y) || questLog_.covers(x, y) || helperWindow_.covers(x, y) || travel_.covers(x, y) || goBack_.covers(x, y) ||
+           talents_.covers(x, y) ||
            (!watching_ && lineChip_.covers(x, y)) ||
            herald_.covers(x, y) || squareResult_.covers(x, y) ||
            (specimenOpen_ && specimen_.covers(x, y)) ||
@@ -280,6 +315,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             refused();
             return;
         }
+        // Over Talents, C is the character window alone: Talents goes, and what it hid stays shut.
+        closeTalents(false);
         characterOpen_ = !characterOpen_;
         click();
     };
@@ -287,6 +324,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // Escape shuts both: left up alone, the shop took clicks the player meant for the world (bug
     // report #15: "Suggestion to be closed together with the inventory to avoid misclicks").
     const auto toggleBag = [&]() {
+        closeTalents(false);  // as C does over Talents
         inventoryOpen_ = !inventoryOpen_;
         if (!inventoryOpen_) {
             if (trading_) play.closeTrade();
@@ -321,6 +359,19 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 break;
             case Then::Refused: if (!one.ok()) refused(); break;
             case Then::Spark: one.ok() ? mixer_.spark() : refused(); break;
+            // The unlock's sword cut only for a point that opened something (the plan's "The
+            // unlock"): his ranks already hold the answer, so what it opened is read off them.
+            case Then::Talent:
+                if (!one.ok()) {
+                    refused();
+                } else if (struck >= 1000 && TalentWindow::unlocks(play.realm().hero().talents, (struck - 1000) / 16,
+                                                                   (struck - 1000) % 16, one.value)) {
+                    play.ui(Play::Ui::Talent);
+                    core::logf("window: talent opened something: the unlock's cut");
+                } else {
+                    click();
+                }
+                break;
             case Then::Jewel:
                 jeweler_.answered(one.ok(), one.value, play.realm().refusal());
                 if (!one.ok()) refused();
@@ -584,6 +635,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // same handler ends `if (Data->Flag) g_pUIMapName->ShowMapName()`, which a warp has set even
     // into the map it left, so the town's name comes up at once, as it does on the way in.
     if (play.takeWarp()) {
+        closeTalents(false);
         inventoryOpen_ = characterOpen_ = false;
         closeInspect();
         fanLatched_ = false;
@@ -596,7 +648,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // or down.
     const bool windowsOpen = inventoryOpen_ || characterOpen_ || trading_ || banking_ || brokering_ || mixing_ || jeweling_ ||
                              dealing_ || travel_.up() || guild_.up() || guildMake_.up() || inspecting() ||
-                             questLog_.up() || helperWindow_.up();
+                             questLog_.up() || helperWindow_.up() || talents_.up();
     {
         std::string place = hero ? placeName(worldName_, hero->column(), hero->row()) : worldName_;
         if (hero) {
@@ -606,6 +658,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         // The server's line gone (Play::cut): the game holds and the Disconnected page is up
         // over it, with every other window shut, and stays up -- Escape does not take it down.
         if (play.isOpen() && play.cut() && !menu_.lost()) {
+            closeTalents(false);
             inventoryOpen_ = characterOpen_ = false;
             travel_.hide();
             amount_.hide();
@@ -626,6 +679,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             } else if (playerMenu_.up()) {
                 playerMenu_.hide();
             } else if (windowsOpen) {
+                closeTalents(false);  // Escape shuts every window, what Talents hid among them
                 inventoryOpen_ = characterOpen_ = false;
                 closeInspect();
                 questLog_.hide();
@@ -773,6 +827,46 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             play.setAutoDrink(result.health, result.mana);
             core::logf("window: auto-drink %d%% health, %d%% mana", result.health, result.mana);
         }
+    }
+
+    // A, Talents (game/ui/talent_window.h): MU's own master-tree key since Season 4. Not over a
+    // counter, which the realm holds open beside the bag: there A is the interface's no, as C is.
+    talents_.watch(seconds, hero);
+    {
+        const bool asked = scriptTalents_ || (talentsAsked_ && play.isOpen());
+        scriptTalents_ = talentsAsked_ = false;
+        if (play.isOpen() && ((!keysHeld && window.pressed(gfx::Window::Key::Talents)) || asked)) {
+            if (talents_.up()) {
+                closeTalents(true);
+                click();
+            } else if (trading_ || banking_ || brokering_ || mixing_ || jeweling_ || dealing_) {
+                refused();
+            } else {
+                openTalents(play);
+                click();
+            }
+        }
+    }
+    // A counter opened under it (a merchant spoken to): Talents makes way, and the bag the
+    // counter opened stays.
+    if (talents_.up() && (trading_ || banking_ || brokering_ || mixing_ || jeweling_ || dealing_)) closeTalents(false);
+    if (talents_.up() && play.isOpen()) {
+        TalentWindow::Result result;
+        talents_.update(play, float(window.width()), float(window.height()), hud_.plateTop(),
+                        typing ? Pointer{} : pointer, &result);
+        if (result.clicked) click();
+        if (result.close) {
+            closeTalents(true);
+            click();
+        }
+        // The point asked; its sound is the answer's (Then::Talent), so a refused + never plays
+        // the unlock.
+        if (result.column >= 0) {
+            expect(play.talent(result.take, result.column, result.node, 1), Then::Talent,
+                   (result.take ? 1000 : 0) + result.column * 16 + result.node);
+        }
+        // Reset is free; its press clicked, and only a no is heard.
+        if (result.reset) expect(play.resetTalents(), Then::Refused);
     }
 
     // M, the travel list (game/ui/travel.h): M again or Escape shuts it, and a map pressed
@@ -981,13 +1075,18 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // and the window sees the answer on its next frame.
     if (characterOpen_) {
         int spend = -1, count = 1;
-        bool reset = false, close = false;
+        bool reset = false, close = false, talents = false;
         std::string name;
         if (!hero || !play.playerName(hero->id, &name, nullptr)) name = heroName_;
         card_.setGuild(play.guild().name);
         const int page = card_.tab();
         card_.update(float(window.width()), float(window.height()), hero, &play.realm(), name,
-                     pointer, &spend, &count, &reset, &close);
+                     pointer, &spend, &count, &reset, &close, &talents);
+        // The Talents button on its top edge: Talents, which hides this window till it shuts.
+        if (talents && play.isOpen()) {
+            openTalents(play);
+            click();
+        }
         // A tab changing its page clicks, as every button does (the user, 2026-10-16).
         if (card_.tab() != page) click();
         // The stat button clicks whether or not the point lands: CNewUICharacterInfoWindow
@@ -2684,6 +2783,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (dealOnTop) interface_.add(deal_.canvas());
     if (vaultOnTop) interface_.add(chest_.canvas());
     if (machineOnTop) interface_.add(mixer_.canvas());
+    if (talents_.up()) interface_.add(talents_.canvas());
     // The worn-gear warning hangs left of the windows and so never lies under one; over them,
     // because its hover line is the one part of it that can reach one.
     if (endurance_.showing()) interface_.add(endurance_.canvas());
@@ -2698,6 +2798,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (inventoryOpen_) interface_.add(bag_.tipCanvas());
     if (inspecting()) interface_.add(inspect_.tipCanvas());
     if (questLog_.up()) interface_.add(questLog_.tipCanvas());
+    if (talents_.up()) interface_.add(talents_.card());
     if (endurance_.showing()) interface_.add(endurance_.tipCanvas());
     if (chat_.tipping()) interface_.add(chat_.tipCanvas());
     // Last of all, over every window too: MU2's own CanvasLayer{Layer=128} -- a pointer is over

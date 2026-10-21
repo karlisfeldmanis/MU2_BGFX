@@ -210,7 +210,7 @@ void printUsage() {
         "  --plus N                  the viewer's items at +N, 0 to 15: the refinement shine\n"
         "  --windows LIST            open these from the first frame: inventory,character; menu,\n"
         "                            options or graphics raise the game menu on that page; whatsnew\n"
-        "                            its slides; off: no HUD\n"
+        "                            its slides; talents the tree; off: no HUD\n"
         "  --ui-click F:X:Y[:X2:Y2]  press the windows at screen fraction X,Y on frame F\n"
         "  --ui-type F:TEXT          type TEXT into the open box on frame F (enter, escape)\n"
         "  --give LIST               put NAME[:COUNT],... in the bag at the start\n"

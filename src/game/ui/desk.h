@@ -44,6 +44,7 @@
 #include "game/ui/specimen.h"
 #include "game/ui/tally.h"
 #include "game/ui/helper_window.h"
+#include "game/ui/talent_window.h"
 #include "game/ui/quest_log.h"
 #include "game/ui/speech.h"
 #include "game/ui/boss_bar.h"
@@ -93,6 +94,7 @@ public:
         else if (text == "journal") scriptJournal_ = true;  // L, the quest journal
         else if (text == "guild") scriptGuild_ = true;      // G, the guild window
         else if (text == "bag") scriptBag_ = true;          // I, the bag
+        else if (text == "talents") scriptTalents_ = true;  // A, Talents
         else scriptTyped_ += text;
     }
     // Whether a box has the keyboard, which the window is told so Escape cancels the box
@@ -214,6 +216,8 @@ public:
     }
     // Its window up, for a review: --windows helper.
     void showHelper() { helperAsked_ = true; }
+    // Talents up, for a review: --windows talents (the first frame he is in the world).
+    void showTalents() { talentsAsked_ = true; }
     // The quest the tracker is pinned to, -1 for none: what the save keeps (Tracker::pinned).
     int followedQuest() const { return tracker_.pinned(); }
     void followQuest(int quest) { tracker_.pin(quest); }
@@ -341,7 +345,10 @@ private:
     // Bound is TookOrRefused for a bound thing, whose no the tally's lane explains (Tally::bound).
     enum class Then : uint8_t {
         TookOrRefused, Refused, Spark, ZenBox, Strike, CloseQuest, Travel, Click, CloseAngel, Quiet,
-        Bound, Reset, Jewel
+        Bound, Reset, Jewel,
+        // A talent point, `key` its column x 16 + node, plus 1000 for a take: an unlock's cut on
+        // a yes that opened something, else the click; the error on a no.
+        Talent
     };
     struct Waiting {
         uint32_t ticket = 0;
@@ -396,6 +403,18 @@ private:
     QuestLog questLog_;
     bool questLogAsked_ = false;
     HelperWindow helperWindow_;
+    // **Talents** (game/ui/talent_window.h): A, or the character window's button. It hides the
+    // other column windows while it is up and brings back on closing what it hid; the counters,
+    // which the realm holds open, it does not open over at all.
+    TalentWindow talents_;
+    bool talentsAsked_ = false;   // --windows talents: up on the first frame in the world
+    bool scriptTalents_ = false;  // a script's A for the next update (--ui-type FRAME:talents)
+    struct Hidden {
+        bool bag = false, card = false, quests = false, helper = false, guild = false;
+    } hidden_;
+    void openTalents(Play& play);
+    // Shut it; `bringBack` false forgets what it hid (Escape, or another window asked for).
+    void closeTalents(bool bringBack);
     HelperSettings helperSettings_;
     Helper::Stats helperStats_;
     bool helping_ = false, helperChanged_ = false, helperAsked_ = false;

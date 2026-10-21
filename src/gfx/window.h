@@ -156,6 +156,8 @@ public:
         Shot,    // F12: the frame as drawn, a PNG in the player's screenshots folder
         Pick,    // Space: the nearest drop picked up (game/play_pointer.cpp, Play::pickNearest)
         Helper,  // H: the Helper started and stopped, its window the first time (game/helper.h)
+        Talents, // A: Talents, shown and shut -- MU's master-tree key since Season 4 (the user,
+                 // 2026-10-20; game/ui/talent_window.h)
         Count
     };
     // Neither while a box has the keyboard (setTyping): an I typed into the chat is a letter,
