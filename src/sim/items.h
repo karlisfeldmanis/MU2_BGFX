@@ -141,7 +141,7 @@ bool placesIn(const content::ItemRow& row, Kin kin, int slot);
 PetPower petPower(const content::ItemRow& row);
 // **The Guardian Angel, the Imp and the Horn of Uniria are timed** (the user, 2026-10-21: "i
 // want that its time based 24 hours", then "make imp and gurdian angle not 24 hours but 2
-// hours", and Uniria a day as well): not worn down by blows and never mended, but gone
+// hours", and Uniria a day as well; then "we need that imp and angel is for 12 hours"): not worn down by blows and never mended, but gone
 // petSeconds of real time after they are first worn, worn or not, online or not
 // (Realm::petClock). The second they go is kept in what a pet otherwise leaves nought -- the
 // three socket powers and the wing byte, as one unix second, low byte first -- so the wire, the
@@ -149,7 +149,7 @@ PetPower petPower(const content::ItemRow& row);
 // **They stack** (the user, the same day: "we need to stack imps and guardian angles and uniria
 // mounts"), kStackMost a cell, the count in the durability as a potion's: only ones never worn
 // (sim::tops), and one is taken off the stack when worn (sim::wearOn). A worn one is a 1.
-constexpr int64_t kSpiritSeconds = 2 * 60 * 60;  // the Angel and the Imp
+constexpr int64_t kSpiritSeconds = 12 * 60 * 60;  // the Angel and the Imp
 constexpr int64_t kHornSeconds = 24 * 60 * 60;   // Uniria
 bool timedPet(const content::ItemRow& row);
 int64_t petSeconds(const content::ItemRow& row);
