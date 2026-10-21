@@ -62,6 +62,26 @@
 .gear .what .sub { display: block; font-size: 14px; color: var(--quiet); }
 .gear .exc { color: #8FD3A0; }
 .gear .rare { color: #E8C978; }
+/* The day-by-day graphs (/api/online `days`): new accounts, and players with the peak on at once. */
+.graphs { --amber: #C0823A; --blue: #3E8CC4; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 16px; }
+.graph { position: relative; padding: 14px 16px 10px; border-radius: 6px; background: rgba(5,3,3,.5); box-shadow: inset 0 0 0 1px var(--line); min-width: 0; }
+.graph h3 { margin: 0; font: 700 15px/1.2 'Alegreya Sans SC', sans-serif; color: var(--quiet); }
+.graph .head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.graph .big { line-height: 1.3; font-size: 26px; font-weight: 500; color: var(--bone-hi); font-variant-numeric: tabular-nums; }
+.graph .big small { font-size: 14px; color: var(--quiet); margin-left: 6px; }
+.graph .key { display: flex; gap: 14px; font-size: 14px; color: var(--label); }
+.graph .key i { display: inline-block; flex: none; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.graph .key i.stroke { width: 14px; height: 2px; vertical-align: 4px; border-radius: 1px; }
+.graph .key span { white-space: nowrap; }
+.graph svg { display: block; width: 100%; height: 200px; margin-top: 8px; overflow: visible; }
+.graph svg text { font: 12px 'Alegreya Sans', sans-serif; fill: var(--quiet); font-variant-numeric: tabular-nums; }
+.graph .tip { position: absolute; pointer-events: none; padding: 6px 10px; border-radius: 4px; font-size: 14px; white-space: nowrap;
+  background: #1C1410; box-shadow: 0 0 0 1px #3A2D24, 0 8px 24px rgba(0,0,0,.6); color: var(--bone); z-index: 2; }
+.graph .tip b { color: var(--bone-hi); font-weight: 500; }
+.ranges { display: flex; justify-content: flex-end; gap: 6px; }
+.ranges button { background: none; border: 0; padding: 4px 10px; border-radius: 4px; font: 500 14px 'Alegreya Sans', sans-serif; color: var(--quiet); cursor: pointer; }
+.ranges button[aria-pressed="true"] { color: var(--bone-hi); box-shadow: inset 0 0 0 1px var(--field-focus); }
+.ranges button:focus-visible { outline: 2px solid var(--field-focus); outline-offset: 2px; }
 /* At phone width the table becomes one card a player. */
 @media (max-width: 680px) {
   .who thead { display: none; }
@@ -93,6 +113,13 @@
 <div class="count" id="count"></div>
 <div class="realms" id="realms"></div>
 <p id="stale" class="stale" hidden></p>
+<div class="ranges" id="ranges" role="group" aria-label="Days shown">
+<button type="button" data-days="14">14 days</button><button type="button" data-days="30" aria-pressed="true">30 days</button><button type="button" data-days="90">90 days</button><button type="button" data-days="0">All</button>
+</div>
+<div class="graphs">
+<div class="graph" id="g-accounts"><div class="head"><h3>New accounts a day</h3></div><div class="big" id="g-accounts-big"></div><svg aria-hidden="true"></svg></div>
+<div class="graph" id="g-players"><div class="head"><h3>Players a day</h3><span class="key"><span><i style="background: var(--amber)"></i>Played that day</span><span><i class="stroke" style="background: var(--blue)"></i>Most on at once</span></span></div><div class="big" id="g-players-big"></div><svg aria-hidden="true"></svg></div>
+</div>
 <table class="who">
 <thead><tr><th>Character</th><th>Class</th><th>Level</th><th>Map</th><th>Region</th><th>Platform</th><th>Graphics</th><th>Ping</th><th>Online for</th></tr></thead>
 <tbody id="rows"></tbody>
@@ -245,6 +272,106 @@
     return td;
   }
 
+  // The graphs: a bar a UTC day, the last `range` days (0 all), redrawn only when the days change.
+  const NS = 'http://www.w3.org/2000/svg';
+  function svg(tag, attrs) { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; }
+  const dayName = (d) => new Date(d + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  // Four whole steps up to at least v, each a round number.
+  function niceMax(v) {
+    const s = v / 4, p = 10 ** Math.floor(Math.log10(Math.max(1, s)));
+    for (const m of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (Number.isInteger(m * p) && m * p >= s) return 4 * m * p;
+    return 4 * Math.ceil(s);
+  }
+  let days = [], daysKey = '', range = 30;
+  try { const r = localStorage.getItem('online-range'); if (r !== null) range = parseInt(r, 10) || 0; } catch (e) { /* default */ }
+  // bars: [{key, color}], line: {key, color} or null; tip(row) -> [label, value] pairs.
+  function graph(box, rows, bars, line, tip) {
+    const root = $(box), area = root.querySelector('svg');
+    const W = Math.max(280, area.clientWidth || root.clientWidth - 32), H = 200, L = 34, B = 22, T = 6;
+    const max = niceMax(Math.max(1, ...rows.flatMap((r) => bars.map((b) => r[b.key]).concat(line ? [r[line.key]] : []))));
+    const n = rows.length, step = (W - L) / Math.max(1, n), bw = Math.max(1, Math.min(28, step - 2));
+    const y = (v) => T + (H - T - B) * (1 - v / max);
+    area.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    area.replaceChildren();
+    for (let i = 0; i <= 4; i++) {
+      const v = max * i / 4, yy = y(v);
+      area.appendChild(svg('line', { x1: L, x2: W, y1: yy, y2: yy, stroke: i ? 'rgba(201,191,174,.08)' : 'rgba(201,191,174,.25)', 'stroke-width': 1 }));
+      const t = svg('text', { x: L - 6, y: yy + 4, 'text-anchor': 'end' });
+      t.textContent = fmt(v);
+      area.appendChild(t);
+    }
+    // A date label every so many days, so they never touch.
+    const every = Math.max(1, Math.ceil(56 / step));
+    rows.forEach((r, i) => {
+      const cx = L + step * (i + .5);
+      for (const b of bars) {
+        const v = r[b.key];
+        if (!v) continue;
+        const top = y(v), h = H - B - top, rr = Math.min(4, bw / 2, h);
+        area.appendChild(svg('path', { fill: b.color, d: 'M' + (cx - bw / 2) + ',' + (H - B) + 'V' + (top + rr) + 'q0,-' + rr + ' ' + rr + ',-' + rr +
+          'H' + (cx + bw / 2 - rr) + 'q' + rr + ',0 ' + rr + ',' + rr + 'V' + (H - B) + 'Z' }));
+      }
+      if ((n - 1 - i) % every === 0) {
+        const t = svg('text', { x: cx, y: H - 5, 'text-anchor': 'middle' });
+        t.textContent = dayName(r.day);
+        area.appendChild(t);
+      }
+    });
+    if (line) {
+      const pts = rows.map((r, i) => (L + step * (i + .5)) + ',' + y(r[line.key]));
+      area.appendChild(svg('polyline', { points: pts.join(' '), fill: 'none', stroke: line.color, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+      if (n <= 45) rows.forEach((r, i) => area.appendChild(svg('circle', { cx: L + step * (i + .5), cy: y(r[line.key]), r: 3, fill: line.color, stroke: '#0D0B0A', 'stroke-width': 2 })));
+    }
+    // Hover: a column the width of its day, a guide and a tip.
+    const guide = svg('line', { y1: T, y2: H - B, stroke: 'rgba(243,232,212,.35)', 'stroke-width': 1, visibility: 'hidden' });
+    area.appendChild(guide);
+    let tipBox = root.querySelector('.tip');
+    if (!tipBox) { tipBox = el('div', 'tip'); tipBox.hidden = true; root.appendChild(tipBox); }
+    const hit = svg('rect', { x: L, y: 0, width: W - L, height: H, fill: 'transparent' });
+    area.appendChild(hit);
+    const show = (e) => {
+      const box = area.getBoundingClientRect(), x = (e.clientX - box.left) * W / box.width;
+      const i = Math.min(n - 1, Math.max(0, Math.floor((x - L) / step)));
+      const r = rows[i], cx = L + step * (i + .5);
+      guide.setAttribute('x1', cx); guide.setAttribute('x2', cx); guide.setAttribute('visibility', 'visible');
+      tipBox.replaceChildren(el('div', '', new Date(r.day + 'T00:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })));
+      for (const [k, v] of tip(r)) { const d = el('div', '', k + ' '); d.appendChild(el('b', '', v)); tipBox.appendChild(d); }
+      tipBox.hidden = false;
+      const at = root.getBoundingClientRect(), px = cx * box.width / W + box.left - at.left, w = tipBox.offsetWidth;
+      // Beside the day's column, on the side with room, at the plot's top.
+      tipBox.style.left = (px + 12 + w < at.width ? px + 12 : Math.max(4, px - 12 - w)) + 'px';
+      tipBox.style.top = (box.top - at.top) + 'px';
+    };
+    hit.addEventListener('pointermove', show);
+    hit.addEventListener('pointerdown', show);
+    hit.addEventListener('pointerleave', () => { guide.setAttribute('visibility', 'hidden'); tipBox.hidden = true; });
+  }
+  function big(id, n, sub) { const b = $(id); b.replaceChildren(document.createTextNode(fmt(n))); b.appendChild(el('small', '', sub)); }
+  function drawGraphs() {
+    if (!days.length) return;
+    const rows = range ? days.slice(-range) : days;
+    const today = days[days.length - 1];
+    const sum = (k) => rows.reduce((n, r) => n + r[k], 0);
+    big('g-accounts-big', today.accounts, 'accounts · ' + fmt(sum('registered')) + ' new in these ' + rows.length + ' days · ' + fmt(today.registered) + ' today');
+    big('g-players-big', today.players, 'played today · most on at once ' + fmt(Math.max(...rows.map((r) => r.peak))) + ' in these days');
+    const amber = 'var(--amber)', blue = 'var(--blue)';
+    graph('g-accounts', rows, [{ key: 'registered', color: amber }], null,
+          (r) => [['New accounts', fmt(r.registered)], ['All accounts', fmt(r.accounts)]]);
+    graph('g-players', rows, [{ key: 'players', color: amber }], { key: 'peak', color: blue },
+          (r) => [['Played', fmt(r.players)], ['Most on at once', fmt(r.peak) + (r.peak_at ? ' at ' + new Date(r.peak_at * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) + ' UTC' : '')]]);
+  }
+  for (const b of $('ranges').querySelectorAll('button')) {
+    b.setAttribute('aria-pressed', String(parseInt(b.dataset.days, 10) === range));
+    b.addEventListener('click', () => {
+      range = parseInt(b.dataset.days, 10);
+      try { localStorage.setItem('online-range', String(range)); } catch (e) { /* kept for this visit */ }
+      for (const o of $('ranges').querySelectorAll('button')) o.setAttribute('aria-pressed', String(o === b));
+      drawGraphs();
+    });
+  }
+  let resizing;
+  window.addEventListener('resize', () => { clearTimeout(resizing); resizing = setTimeout(drawGraphs, 150); });
+
   function render(o) {
     const people = o.players.filter((p) => !p.bot), bots = o.players.length - people.length;
     const maps = new Set(o.players.map((p) => p.world)).size;
@@ -345,6 +472,9 @@
       all.appendChild(tr);
     }
     tally(o);
+    $('v-list').hidden = false;
+    const key = JSON.stringify(o.days || []);
+    if (key !== daysKey) { daysKey = key; days = o.days || []; drawGraphs(); }
     $('told').textContent = o.at ? 'Updated ' + when(o.at) + ' · refreshes every 10 s' : '';
     $('v-list').hidden = false;
     $('v-none').hidden = true;
