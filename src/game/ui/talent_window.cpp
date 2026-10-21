@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdio>
 
+#include "core/log.h"
 #include "game/play.h"
 #include "game/ui/controls.h"
 #include "game/ui/panel.h"
@@ -38,7 +39,7 @@ constexpr float kSkillW = 16.0f, kSkillH = 22.0f;
 // smalls; the smalls stand 42 either side of the column's middle.
 constexpr float kSmallW = 40.0f, kSmallH = 56.0f, kMajorW = 48.0f, kMajorH = 67.0f;
 constexpr float kStrip = 20.0f;  // the − | + strip inside the frame
-constexpr float kBand = 15.0f;   // the x/10 band over the icon's foot
+constexpr float kBand = 17.0f;   // the x/10 band over the icon's foot, tall enough for its 13
 constexpr float kTier = 214.0f, kMajorDrop = 100.0f, kSmallOff = 42.0f;
 constexpr float kTreeTall = kTier * 2.0f + kMajorDrop + kMajorH + kStrip + 1.0f + 4.0f;
 // MU's sheet: twenty-five 20x28 cells a row, skill N in cell N - 300 (pipeline/talent_icons.py).
@@ -46,8 +47,12 @@ constexpr int kSheetRow = 25;
 constexpr float kCellW = 20.0f, kCellH = 28.0f;
 
 // The type, in units.
-constexpr float kClassSize = 16.0f, kFreeSize = 20.0f, kFreeWord = 14.0f;
-constexpr float kNameSize = 18.0f, kSpentSize = 14.0f, kSubSize = 12.0f, kCountSize = 11.0f;
+constexpr float kClassSize = 16.0f, kFreeSize = 22.0f, kFreeWord = 16.0f;
+constexpr float kNameSize = 18.0f, kSpentSize = 14.0f, kSubSize = 12.0f, kCountSize = 13.0f;
+// The least a small figure is set at, in pixels, whatever the unit: at 1280x720 the window's unit
+// is two thirds and the canvas's 11 for a count came out at 7 pixels, which could not be read
+// (the user, 2026-10-21). The window keeps its size; only these few words are held up.
+constexpr float kLeastCount = 10.0f, kLeastWord = 11.0f;
 constexpr float kSelName = 19.0f, kSelSmall = 14.0f, kSelText = 15.0f;
 
 // ---- the motion, in seconds: the plan's "The unlock" -------------------------------------------
@@ -63,6 +68,11 @@ constexpr float kEmberSeconds = 0.6f;
 constexpr float kRippleStep = 0.1f, kFadeSeconds = 0.12f;
 // A line out of a major waits for the lines into it, then fills one after the other.
 constexpr float kOutAfterIn = 0.15f;
+// The head's figure, as the points in hand change: a white-gold flash settling, and a small pop.
+constexpr float kFreeFlash = 0.25f;
+// The breath round a node that can take a point: one in two seconds, at most a quarter lit at the
+// ring nearest the frame -- seen at the edge of the eye, never a blink (the user, 2026-10-21).
+constexpr float kBreathSeconds = 2.0f, kBreathMost = 0.26f;
 
 // The lines of a column: each tier's two smalls into its major, and each major out to the next
 // tier's two smalls. Upper node first.
@@ -213,15 +223,13 @@ uint32_t lineInk(int state) {
     return state == 2 ? style::kBlood : state == 1 ? style::kBloodMd : style::kIronDk;
 }
 
-// The skills a column feeds, by MU's number, as its talents name them: its head's icons.
+// The skills a column feeds, by MU's number: the canvas's own list for its head (TalentColumn::
+// feeds, 0 ends), which the head's icons and the strip's "where" both read.
 int fedSkills(const sim::TalentColumn& column, int32_t* out, int most) {
     int n = 0;
-    for (const sim::TalentNode& node : column.nodes) {
-        for (const int32_t skill : node.effect.skills) {
-            if (skill == 0) break;
-            if (std::find(out, out + n, skill) != out + n) continue;
-            if (n < most) out[n++] = skill;
-        }
+    for (const int16_t skill : column.feeds) {
+        if (skill == 0 || n >= most) break;
+        out[n++] = skill;
     }
     return n;
 }
@@ -233,6 +241,7 @@ const char* titleOf(sim::Kin kin, bool second) { return sim::className(int(kin),
 void TalentWindow::open(const gfx::Interface& interface, panel::Arts* arts) {
     interface.adopt(canvas_);
     interface.adopt(card_);
+    interface.adopt(breath_);
     arts_ = arts;
     for (auto& column : ringAt_) {
         for (double& at : column) at = -1.0e9;
@@ -242,6 +251,7 @@ void TalentWindow::open(const gfx::Interface& interface, panel::Arts* arts) {
 void TalentWindow::close() {
     canvas_.clear();
     card_.clear();
+    breath_.clear();
     up_ = false;
     built_ = false;
     carded_ = -1;
@@ -443,12 +453,12 @@ void TalentWindow::update(const Play& play, float width, float height, float flo
             if (at == kCloseId) {
                 out->close = true;
             } else if (at == kResetId) {
-                out->clicked = true;
                 if (armed_) {
-                    out->reset = true;
+                    out->reset = true;  // silent here: the answer is heard (Desk)
                     armed_ = false;
-                } else if (sim::talentsSpent(ranks) > 0) {
-                    armed_ = true;
+                } else {
+                    out->clicked = true;
+                    armed_ = sim::talentsSpent(ranks) > 0;
                 }
             } else if (at >= kIconIds) {
                 const int id = at >= kPlusIds ? at - kPlusIds : at >= kMinusIds ? at - kMinusIds : at - kIconIds;
@@ -473,6 +483,13 @@ void TalentWindow::update(const Play& play, float width, float height, float flo
         }
         pressing_ = -1;
     }
+
+    // The head's figure flashes as it changes (the user, 2026-10-21: "ui effects").
+    if (lastFree_ >= 0 && free != lastFree_) {
+        freeAt_ = clock_;
+        busyUntil_ = std::max(busyUntil_, clock_ + double(kFreeFlash));
+    }
+    lastFree_ = free;
 
     // Drawn again only when something it shows has changed, or while something moves.
     Drawn now;
@@ -503,6 +520,29 @@ void TalentWindow::update(const Play& play, float width, float height, float flo
         carded_ = hovered;
         cardRanks_ = ranks;
         rebuildCard(play);
+    }
+
+    // **Where a point can go** breathes: every open node not full, while he has points in hand,
+    // a soft ember round its frame, slow and low (kBreathSeconds, kBreathMost), so the eye finds
+    // them without the tree flickering. None at no points. Every frame, on its own canvas.
+    breath_.clear();
+    if (free > 0) {
+        const float breath = 0.5f - 0.5f * std::cos(6.2831853f * float(std::fmod(clock_, double(kBreathSeconds))) /
+                                                     kBreathSeconds);
+        const float colW = (wide_ - kPadX * 2.0f - kColumnGap * float(columns_ - 1)) / float(columns_);
+        const float treeTop = kColumnTop + kColumnHead + 2.0f + (kColumnTall - kColumnHead - 2.0f - kTreeTall) * 0.5f;
+        const float ring = std::max(1.0f, std::round(2.0f * u_));
+        for (int c = 0; c < columns_; ++c) {
+            for (int i = 0; i < sim::kTalentNodes; ++i) {
+                if (!canAdd(c, i)) continue;
+                const Geo g = geoOf(kPadX + float(c) * (colW + kColumnGap), colW, treeTop, i);
+                const Box frame = placed(x_, y_, g.frame, u_);
+                for (int k = 1; k <= 3; ++k) {
+                    const float alpha = kBreathMost * (0.35f + 0.65f * breath) / float(k);
+                    breath_.outline(frame.grown(ring * float(k)), ring, alphaOf(kEmber, alpha));
+                }
+            }
+        }
     }
 }
 
@@ -537,12 +577,17 @@ void TalentWindow::rebuild(const Play& play) {
     // the colour brightening from the canvas's 0.62 to whole from 1 to 2.
     const auto icon = [&](const Box& box, int number, float level) {
         const Box from = cellOf(number);
+        // Open and empty is the canvas's brightness(0.62) saturate(0.75): the colour at 0.62 with a
+        // quarter of MU's grey twin laid over it, which is the same painting without its colour.
         if (level < 1.0f) {
             if (greyed.valid()) canvas_.region(greyed, box, from, grey(0.8f));
             else canvas_.rect(box, style::kAsh2);
             if (level > 0.0f && colour.valid()) canvas_.region(colour, box, from, grey(0.62f, level));
+            if (level > 0.0f && greyed.valid()) canvas_.region(greyed, box, from, grey(0.62f, 0.25f * level));
         } else if (colour.valid()) {
-            canvas_.region(colour, box, from, grey(0.62f + 0.38f * std::min(1.0f, level - 1.0f)));
+            const float lit = std::min(1.0f, level - 1.0f);
+            canvas_.region(colour, box, from, grey(0.62f + 0.38f * lit));
+            if (lit < 1.0f && greyed.valid()) canvas_.region(greyed, box, from, grey(0.62f + 0.38f * lit, 0.25f * (1.0f - lit)));
         }
     };
 
@@ -557,11 +602,18 @@ void TalentWindow::rebuild(const Play& play) {
         heading(canvas_, sx(16.0f), base, kClassSize * u, style::kAshInk, titleOf(hero.kin, hero.second));
         const std::string figureText = std::to_string(free);
         const float right = sx(wide_ - 52.0f);
-        const float wordW = controls::labelWidth(kFreeWord * u, "talent points");
-        controls::label(canvas_, right - wordW, base, kFreeWord * u, style::kAshInk, "talent points");
-        const float figW = cinzelWidth(kFreeSize * u, figureText);
-        cinzel(canvas_, right - wordW - 6.0f * u - figW, base + 1.0f * u, kFreeSize * u,
-               free > 0 ? style::kBoneHi : style::kAshInk, figureText);
+        const float word = std::max(kFreeWord * u, kLeastWord);
+        const float wordW = controls::labelWidth(word, "talent points");
+        controls::label(canvas_, right - wordW, base, word, free > 0 ? style::kBone2 : style::kAshInk, "talent points");
+        uint32_t figInk = free > 0 ? style::kBoneHi : style::kAshInk;
+        float figSize = kFreeSize * u;
+        const float flash = float((t - freeAt_) / double(kFreeFlash));
+        if (flash >= 0.0f && flash < 1.0f) {
+            figInk = mixed(kFlash, figInk, smooth(flash));
+            figSize *= 1.0f + 0.1f * std::sin(3.14159265f * flash);
+        }
+        const float figW = cinzelWidth(figSize, figureText);
+        cinzel(canvas_, right - wordW - 6.0f * u - figW, base + 1.0f * u, figSize, figInk, figureText);
     }
 
     // ---- the columns ---------------------------------------------------------------------------------
@@ -584,8 +636,8 @@ void TalentWindow::rebuild(const Play& play) {
             controls::ranged(canvas_, sx(left + colW - 10.0f), sy(kColumnTop + 27.0f), kSpentSize * u, style::kBone2,
                              std::to_string(spent));
         }
-        int32_t fed[5];
-        const int feeds = fedSkills(column, fed, 5);
+        int32_t fed[6];
+        const int feeds = fedSkills(column, fed, 6);
         float ix = left + 10.0f;
         const float iy = kColumnTop + 34.0f;
         for (int s = 0; s < feeds; ++s) {
@@ -596,17 +648,22 @@ void TalentWindow::rebuild(const Play& play) {
             else canvas_.rect(box, style::kVoid);
             ix += kSkillW + 3.0f;
         }
+        // What the column is for, in words, beside its skills -- only where it feeds two or fewer
+        // (the canvas: `skills.length > 2 ? '' : sub`), whole, cut only where it truly cannot fit.
         if (feeds <= 2) {
-            // What the column is for, in words, where its skills leave room.
-            const float room = (left + colW - 8.0f - (ix + 3.0f)) * u;
+            float size = std::max(kSubSize * u, kLeastWord);
+            const float from = feeds > 0 ? ix + 3.0f : left + 10.0f;
+            const float room = (left + colW - 8.0f - from) * u;
             std::string sub = column.sub;
-            const float size = kSubSize * u;
+            // Whole before legible-sized: at 720 the least size outgrows a column with two icons, so
+            // it steps down to 9 pixels before any of it is cut.
+            while (size > 9.0f && controls::labelWidth(size, sub) > room) size -= 0.5f;
             if (controls::labelWidth(size, sub) > room) {
                 while (sub.size() > 1 && controls::labelWidth(size, sub + "...") > room) sub.pop_back();
                 while (!sub.empty() && sub.back() == ' ') sub.pop_back();
                 sub += "...";
             }
-            controls::label(canvas_, sx(ix + 3.0f), sy(iy + kSkillH * 0.5f) + size * 0.35f, size, style::kAshInk, sub);
+            controls::label(canvas_, sx(from), sy(iy + kSkillH * 0.5f) + size * 0.35f, size, style::kAshInk, sub);
         }
         canvas_.rect(at({left + 1.0f, kColumnTop + kColumnHead, colW - 2.0f, 1.0f}), style::kIronDk);
 
@@ -649,6 +706,12 @@ void TalentWindow::rebuild(const Play& play) {
             uint32_t countInk = r >= most ? style::kBloodHi : r > 0 ? style::kBoneHi : open ? style::kBone2 : style::kAshInk2;
             float level = float(levelOf(col, i));
             float pop = 1.0f;
+            // Under the pointer, anywhere on it, its frame a step brighter.
+            const int id = c * sim::kTalentNodes + i;
+            if (over_ == kIconIds + id || over_ == kMinusIds + id || over_ == kPlusIds + id) {
+                rim = r > 0 ? (r >= most ? mixed(style::kBloodHi, kFlash, 0.4f) : style::kBloodHi)
+                            : (open ? style::kIronHi : style::kIron);
+            }
 
             const Glow& glow = glow_[c][i];
             if (glow.motion != Motion::None && glow.at > -1.0e8) {
@@ -689,7 +752,7 @@ void TalentWindow::rebuild(const Play& play) {
             if (!sim::isMajor(i)) {
                 const Box band = scaled(g.band);
                 canvas_.rect(band, kBandInk);
-                centred(canvas_, band, kCountSize * u * pop, countInk, std::to_string(r) + "/" + std::to_string(most));
+                centred(canvas_, band, std::max(kCountSize * u, kLeastCount) * pop, countInk, std::to_string(r) + "/" + std::to_string(most));
             }
             // The − | + strip, under a rule of the frame's own ink.
             const Box minus = scaled(g.minus), plus = scaled(g.plus);
@@ -698,7 +761,7 @@ void TalentWindow::rebuild(const Play& play) {
             const bool overMinus = over_ == minusId, overPlus = over_ == plusId;
             const bool downMinus = overMinus && pressing_ == minusId, downPlus = overPlus && pressing_ == plusId;
             if (take) {
-                const uint32_t top = overMinus ? style::kAsh4 : style::kAsh3;
+                const uint32_t top = overMinus ? style::kIronLo : style::kAsh4;
                 canvas_.shade(minus, downMinus ? kMinusFoot : top, downMinus ? kMinusFoot : top, kMinusFoot, kMinusFoot);
             } else {
                 canvas_.rect(minus, style::kAsh1);
@@ -784,8 +847,8 @@ void TalentWindow::rebuild(const Play& play) {
                                                       : std::to_string(r) + " / " + std::to_string(most);
             tx += controls::label(canvas_, sx(tx), sy(nameBase), kSelSmall * u, style::kBone2, count) / u + 10.0f;
             std::string where = column.name;
-            int32_t fed[5];
-            const int feeds = fedSkills(column, fed, 5);
+            int32_t fed[6];
+            const int feeds = fedSkills(column, fed, 6);
             for (int s = 0; s < feeds; ++s) {
                 const sim::SkillRow* skill = sim::skillNumbered(fed[s]);
                 if (skill == nullptr) continue;
@@ -794,7 +857,7 @@ void TalentWindow::rebuild(const Play& play) {
             tx += controls::label(canvas_, sx(tx), sy(nameBase), kSelSmall * u, style::kAshInk, where) / u + 10.0f;
             std::string why;
             if (!open) why = sim::isMajor(i) ? "opens at 10 points in a talent above" : "opens when the major above is taken";
-            else if (r > 0 && !sim::talentTakeable(col, i)) why = "take back the talents below first";
+            else if (r > 0 && !sim::talentTakeable(col, i)) why = "holds the talents below it";
             else if (r < most && free <= 0) why = "no talent points left";
             if (!why.empty()) controls::label(canvas_, sx(tx), sy(nameBase), kSelSmall * u, style::kAshInk, "\xC2\xB7  " + why);
 
@@ -805,10 +868,17 @@ void TalentWindow::rebuild(const Play& play) {
         const float resetW = armed_ ? 170.0f : 90.0f;
         const Box reset{strip.right() - 10.0f - resetW, strip.y + (kStripTall - style::kButtonS) * 0.5f, resetW,
                         style::kButtonS};
-        controls::State s = state(kResetId);
-        s.off = sim::talentsSpent(ranks) == 0;
-        controls::button(canvas_, at(reset), armed_ ? "Click again to reset" : "Reset",
-                         armed_ ? controls::Kind::Danger : controls::Kind::Secondary, s, u);
+        // The canvas's own button: an iron rim (blood once armed, lit under the pointer) round the
+        // ash gradient, its word in the bold small capitals, bone2 or, armed, bloodHi.
+        const bool none = sim::talentsSpent(ranks) == 0;
+        const bool hot = over_ == kResetId && !none, down = hot && pressing_ == kResetId;
+        const Box box = at(reset);
+        canvas_.rect(box, armed_ ? (hot ? style::kBloodHi : style::kBlood) : hot ? style::kIronHi : style::kIron);
+        const Box in = box.grown(-line);
+        canvas_.shade(in, down ? kMinusFoot : style::kAsh4, down ? kMinusFoot : style::kAsh4, kMinusFoot, kMinusFoot);
+        centred(canvas_, box, std::max(13.0f * u, kLeastWord),
+                none ? style::kAshInk2 : armed_ ? style::kBloodHi : style::kBone2,
+                armed_ ? "Click again to reset" : "Reset");
     }
 }
 
@@ -854,7 +924,7 @@ void TalentWindow::rebuildCard(const Play& play) {
         prose("", sim::isMajor(i) ? "Opens at 10 points in a talent above" : "Opens when the major above is taken",
               tip::Tone::Gray);
     } else if (r > 0 && !sim::talentTakeable(col, i)) {
-        prose("", "Take back the talents below first", tip::Tone::Gray);
+        prose("", "Holds the talents below it", tip::Tone::Gray);
     }
     sheet.sections.push_back(what);
 

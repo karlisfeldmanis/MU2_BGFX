@@ -62,6 +62,9 @@ public:
     bool covers(float x, float y) const;
     const gfx::Canvas& canvas() const { return canvas_; }
     const gfx::Canvas& card() const { return card_; }
+    // The breathing round the nodes that can take a point, drawn over the window: a canvas of its
+    // own, rebuilt every frame while up, so the window's own stays drawn only on a change.
+    const gfx::Canvas& glow() const { return breath_; }
     // Whether `took` points into node `node` of `column`, as the realm answered them, opened
     // something: the node's first point, or a node of the column closed before them and open
     // after. `now` is his ranks with the points in. The unlock's sound plays on it (Desk).
@@ -97,7 +100,7 @@ private:
     void rebuildCard(const Play& play);
     int hitAt(float ux, float uy) const;
 
-    gfx::Canvas canvas_, card_;
+    gfx::Canvas canvas_, card_, breath_;
     panel::Arts* arts_ = nullptr;
     bool up_ = false;
     int columns_ = 6;
@@ -109,6 +112,8 @@ private:
     Drawn drawn_;
     bool built_ = false;
     int carded_ = -1;            // the node the card was built for, -1 none
+    int lastFree_ = -1;          // the points in hand last frame: a change flashes the head's figure
+    double freeAt_ = -1.0e9;
     sim::TalentRanks cardRanks_{};
 
     // What the window last saw, and the clock the animation runs on.

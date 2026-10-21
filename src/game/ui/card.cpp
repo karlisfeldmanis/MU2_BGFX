@@ -169,7 +169,31 @@ std::string plusPercent(int v) { return "+" + std::to_string(v) + "%"; }
 
 void Card::open(const gfx::Interface& interface, panel::Arts* arts) {
     interface.adopt(canvas_);
+    interface.adopt(glow_);
     arts_ = arts;
+}
+
+void Card::tick(float seconds) {
+    clock_ += double(std::max(0.0f, seconds));
+    glow_.clear();
+    if (now_.who == nullptr || now_.talents <= 0) return;
+    // A slow ember round the frame's top and sides while points wait to be spent: one breath in
+    // two seconds, half lit at most at the ring nearest -- over Lorencia's grass a fifth could not
+    // be seen at all (2026-10-21). Sanctuary's quiet, no sparkle.
+    constexpr double kBreath = 2.0;
+    constexpr float kMost = 0.5f;
+    const float breath = 0.5f - 0.5f * float(std::cos(6.283185307 * std::fmod(clock_, kBreath) / kBreath));
+    const float k = panel::scale();
+    const Box seal = panel::scaled(x_, y_, kSeal);
+    const float ring = std::max(1.0f, std::round(0.75f * k));
+    for (int i = 1; i <= 3; ++i) {
+        const float a = kMost * (0.3f + 0.7f * breath) / float(i);
+        const uint32_t ink = gfx::rgba(0.941f, 0.380f, 0.314f, a);  // style::kBloodHi, faded
+        const float g = ring * float(i);
+        glow_.rect({seal.x - g - ring, seal.y - g - ring, seal.w + (g + ring) * 2.0f, ring}, ink);   // top
+        glow_.rect({seal.x - g - ring, seal.y - g, ring, seal.h + g}, ink);                          // left
+        glow_.rect({seal.right() + g, seal.y - g, ring, seal.h + g}, ink);                           // right
+    }
 }
 
 bool Card::covers(float x, float y) const {
@@ -509,8 +533,9 @@ void Card::rebuild() {
         // The word beside it, on the world over the window, so with its drop.
         controls::caps(canvas_, std::round(x + (kSeal.x + 29.0f) * k), std::round(y + (kSeal.y + 25.0f) * k), 6.0f * k,
                        lit ? style::kBoneHi : style::kBone2, "Talents", 0.08f);
-        // His talent points in hand, red on the frame's corner; none, no tag.
-        if (now_.talents > 0) {
+        // His talent points in hand, red on the frame's corner, nought too (the canvas's tag is
+        // never hidden).
+        {
             const std::string count = std::to_string(now_.talents);
             const float size = 5.5f * k;
             const gfx::Face* tf = panel::titleFace();

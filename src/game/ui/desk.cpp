@@ -368,6 +368,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                                                                    (struck - 1000) % 16, one.value)) {
                     play.ui(Play::Ui::Talent);
                     core::logf("window: talent opened something: the unlock's cut");
+                } else if (struck < 1000) {
+                    play.ui(Play::Ui::Soft);  // a point given back: the lighter click
                 } else {
                     click();
                 }
@@ -865,8 +867,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             expect(play.talent(result.take, result.column, result.node, 1), Then::Talent,
                    (result.take ? 1000 : 0) + result.column * 16 + result.node);
         }
-        // Reset is free; its press clicked, and only a no is heard.
-        if (result.reset) expect(play.resetTalents(), Then::Refused);
+        // Reset is free. Its confirming press is silent, and the answer is heard once: MU's
+        // SOUND_GET_ITEM01 for a tree given back whole, as Reset points' yes is, else the error.
+        if (result.reset) expect(play.resetTalents(), Then::TookOrRefused);
     }
 
     // M, the travel list (game/ui/travel.h): M again or Escape shuts it, and a map pressed
@@ -1082,6 +1085,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         const int page = card_.tab();
         card_.update(float(window.width()), float(window.height()), hero, &play.realm(), name,
                      pointer, &spend, &count, &reset, &close, &talents);
+        card_.tick(seconds);
         // The Talents button on its top edge: Talents, which hides this window till it shuts.
         if (talents && play.isOpen()) {
             openTalents(play);
@@ -2797,7 +2801,10 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (lineChip_.showing()) interface_.add(lineChip_.canvas());
     // A party invite, centred over the plate where a fight's Zen is said.
     if (chat_.inviting()) interface_.add(chat_.invite());
-    if (characterOpen_) interface_.add(card_.canvas());
+    if (characterOpen_) {
+        interface_.add(card_.glow());
+        interface_.add(card_.canvas());
+    }
     if (inspecting()) interface_.add(inspect_.canvas());
     if (questLog_.up()) {
         interface_.add(questLog_.canvas());
@@ -2822,7 +2829,10 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (dealOnTop) interface_.add(deal_.canvas());
     if (vaultOnTop) interface_.add(chest_.canvas());
     if (machineOnTop) interface_.add(mixer_.canvas());
-    if (talents_.up()) interface_.add(talents_.canvas());
+    if (talents_.up()) {
+        interface_.add(talents_.canvas());
+        interface_.add(talents_.glow());
+    }
     // The worn-gear warning hangs left of the windows and so never lies under one; over them,
     // because its hover line is the one part of it that can reach one.
     if (endurance_.showing()) interface_.add(endurance_.canvas());

@@ -41,6 +41,10 @@ public:
     // His guild's name, in brackets after his own (docs/game/guild.md); empty for none.
     void setGuild(const std::string& guild) { guild_ = guild; }
     const gfx::Canvas& canvas() const { return canvas_; }
+    // The ember breathing round the Talents button while he has talent points to spend, under the
+    // window's own canvas: rebuilt every frame by `tick`, which the window's own is not.
+    void tick(float seconds);
+    const gfx::Canvas& glow() const { return glow_; }
     uint64_t rebuilds() const { return rebuilds_; }
 
 private:
@@ -87,7 +91,8 @@ private:
     };
     void rebuild();
 
-    gfx::Canvas canvas_;
+    gfx::Canvas canvas_, glow_;
+    double clock_ = 0.0;
     panel::Arts* arts_ = nullptr;
     Sheet drawn_, now_;
     float x_ = 0.0f, y_ = 0.0f;
