@@ -12,6 +12,9 @@ namespace {
 
 // MU's reference clock; every rate below is per tick of it (Aura.cs Reference).
 constexpr float kReference = 25.0f;
+// Reference ticks between a looping burst's laps: the +11 ribbon's breath (set_shine.cpp,
+// kRibbonEvery 125 against its 100 and 19).
+constexpr float kLapBreath = 6.0f;
 // MU's units in a tile, which every length here is divided by on the way to metres.
 constexpr float kPerTile = 100.0f;
 
@@ -153,6 +156,7 @@ Aura::Burst* Aura::throwOne(const Recipe& recipe, const float feet[3], float yaw
     b.yaw = yaw;
     b.per = metresPerTile / kPerTile;
     b.age = 0.0f;
+    b.laps = 0;
     for (int k = 0; k < b.r.joints; ++k) {
         Joint& j = b.joints[k];
         // Drawn for the level-up, where where a flare starts on its ring is not a fact; laid
@@ -229,16 +233,12 @@ void Aura::learn(const float feet[3], float metresPerTile) {
 }
 
 void Aura::guard(uint32_t owner, const float feet[3], float yaw, float metresPerTile,
-                 float seconds, const Recipe& kind) {
+                 const Recipe& kind) {
     // One a body: a guard thrown again replaces the one standing, which is what the realm
     // does with the boon (`throwSkill` overwrites it) and what MU does with its own
     // `g_isCharacterBuff` test -- the circle flashes again and no second set of ribbons is made.
     release(owner);
-    Recipe recipe = kind;
-    recipe.ticks = std::max(1.0f, seconds * kReference);
-    // A hundred units over the whole of it, however long that is: the climb is the boon's.
-    recipe.slowRise = recipe.fastRise = 100.0f / recipe.ticks;
-    Burst* b = throwOne(recipe, feet, yaw, metresPerTile);
+    Burst* b = throwOne(kind, feet, yaw, metresPerTile);
     if (b != nullptr) b->owner = owner;
 }
 
@@ -276,6 +276,15 @@ void Aura::update(float seconds) {
     for (Burst& b : bursts_) {
         if (!b.living) continue;
         b.age += ticks;
+        if (b.r.loops) {
+            // A lap is its climb, its tail running out and a breath; then the next begins.
+            const float lap = b.r.ticks + b.r.trail + kLapBreath;
+            while (b.age > lap) {
+                b.age -= lap;
+                ++b.laps;
+            }
+            continue;
+        }
         float ends = b.r.circle ? std::max(b.r.ticks, kRingTicks) : b.r.ticks;
         if (b.r.runsOut) ends = std::max(ends, b.r.ticks + b.r.trail);
         if (b.age > ends) b.living = false;
@@ -335,7 +344,7 @@ void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
     gatherPuffs(effects);
     for (const Burst& b : bursts_) {
         if (!b.living) continue;
-        if (b.r.circle) gatherCircle(effects, ground, b);
+        if (b.r.circle && b.laps == 0) gatherCircle(effects, ground, b);
         // Past its life a strip that runs out (Recipe::runsOut) is drawn from where its head
         // stopped, `over` ticks back, to its tail: the tail still climbing, the strip shortening.
         const float over = b.r.runsOut ? std::max(0.0f, b.age - b.r.ticks) : 0.0f;

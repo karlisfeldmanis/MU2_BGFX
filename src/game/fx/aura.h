@@ -98,31 +98,35 @@ struct Recipe {
     // Drawn on MU's BITMAP_FLARE_BLUE (`flare_blue.png`) rather than the gold Flare: the sheet
     // MU's own SPEARSKILL ribbons are made of, the wizard's Soul Barrier's among them.
     bool blue = false;
+    // Thrown again and again for as long as it is held -- a guard while its boon stands -- each
+    // climb starting a breath after the last has run out, as a +11 set's ribbon does
+    // (game/fx/set_shine.cpp). Only the first lap flashes the circle.
+    bool loops = false;
 };
 
 // MU's level-up: fifteen flares on a ring of forty, climbing away and dimming. The circle is
 // switched on from outside (`setCircle`), which is where it has always been.
 inline constexpr Recipe kRising{};
-// And the guard: five ribbons evenly round a ring of twenty, climbing a hundred units over the
-// boon's own length, following the body, in the elf's green, under one flash of the circle.
-// The trail is one turn of the ring and no more (the ring turns half a radian a tick, so
-// twelve ticks is a shade under a full circle), and the five ribbons are spread up a hundred
-// units of him rather than climbing away: a guard is a cage that stands, and MU's climb is what
-// makes the level-up's flares LEAVE. That much is this engine's reading of `Shape.Barrier`.
-// The band is 150 and not MU2's 100 because a hundred units is a tile, and a tile is his waist:
-// the cage has to close over his head to read as one. And the green is pushed well past MU2's
-// (0.4, 0.8, 0.2), which over this sheet's own gold came out olive -- the sheet is the colour,
-// and what is passed here is what is left of it.
-inline constexpr Recipe kGuarding{5,    20.0f, 20.0f, 100.0f, 0.0f, 0.0f, 12.0f, 150.0f,
-                                  true, true,  true,  {0.18f, 1.0f, 0.35f}};
-// The wizard's Magic Shield (MU's Soul Barrier): the same five-ribbon cage, but MU's own look for
-// it -- `CreateJoint(MODEL_SPEARSKILL, ..., 0, to, 20.0f)` five times (ZzzCharacter.cpp:4984),
-// subtype 0 being BITMAP_FLARE_BLUE in white light (ZzzEffectJoint.cpp:1542-1546), where the
-// guard's subtype 4 tints the same sheet green. The blue circles a tester missed (2026-10-21,
-// "when i put magic shield i dont see the blue circles effect"), shown the user in MuMain.
-inline constexpr Recipe kBarrier{5,    20.0f, 20.0f, 100.0f, 0.0f, 0.0f, 12.0f, 150.0f,
+// And the guard: the +11 set's ribbon (game/fx/set_shine.cpp kSetRibbon) three times over, laid
+// evenly round him -- a ring of fifty, a cross twelve wide, climbing 1.85 units a tick from his
+// feet to over his head in a hundred ticks, about one and a half turns at a key of 10, its tail
+// running up into the stopped head (Recipe::runsOut) -- and thrown again a breath after, for as
+// long as the guard stands (the user, 2026-10-21: "use similiar ribbon which we use for +11
+// effect for defense aura animations", "it is active all the time when its active on char").
+// It was a cage of five standing ribbons of MU2's `Shape.Barrier`, shown two seconds at the cast.
+// The knight's and the elf's in green, pushed past MU2's (0.4, 0.8, 0.2), which over Flare's own
+// gold came out olive -- the sheet is the colour, and what is passed here is what is left of it.
+inline constexpr Recipe kGuarding{3,    50.0f, 12.0f, 100.0f, 1.85f, 1.85f, 19.0f, 0.0f,
+                                  true, true,  true,  {0.18f, 1.0f, 0.35f},
+                                  {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, false, true};
+// The wizard's Magic Shield (MU's Soul Barrier): the same ribbons in MU's own look for it --
+// `CreateJoint(MODEL_SPEARSKILL, ..., 0, to, 20.0f)` (ZzzCharacter.cpp:4984), subtype 0 being
+// BITMAP_FLARE_BLUE in white light (ZzzEffectJoint.cpp:1542-1546), where the guard's subtype 4
+// tints the same sheet green. The blue circles a tester missed (2026-10-21, "when i put magic
+// shield i dont see the blue circles effect"), shown the user in MuMain.
+inline constexpr Recipe kBarrier{3,    50.0f, 12.0f, 100.0f, 1.85f, 1.85f, 19.0f, 0.0f,
                                  true, true,  true,  {1.0f, 1.0f, 1.0f},
-                                 {0.4f, 0.6f, 1.0f}, 0.15f, 2.0f, 0.0f, 0.0f, false, true};
+                                 {0.4f, 0.6f, 1.0f}, 0.15f, 10.0f, 0.0f, 0.0f, true, true, true};
 // The elf's Heal and Greater Damage (sprint 15), ours: MuMain draws neither -- ReceiveMagic plays
 // the elf's cast and SOUND_SKILL_DEFENSE and registers the buff, and nothing renders
 // eBuff_Attack. Eight ribbons spread evenly round a ring wider than she is, thrown once at the
@@ -182,12 +186,12 @@ public:
         throwOne(recipe, feet, yaw, metresPerTile);
     }
 
-    // The knight's guard: thrown like a burst, but it lives for `seconds` -- the boon's own
-    // duration, so the picture and the sim lapse together -- and follows the body until then.
+    // The guard: thrown like a burst, but it loops (Recipe::loops) and follows the body until
+    // it is released -- when the boon lapses, which play reads off the realm (Play::guardStep).
     // Thrown again while one stands replaces it, which is what the realm does with the boon.
     // `owner` is the body it stands round: every player's guard is drawn, one to a body.
-    // `recipe` is the knight's green kGuarding or the wizard's blue kBarrier.
-    void guard(uint32_t owner, const float feet[3], float yaw, float metresPerTile, float seconds,
+    // `recipe` is the knight's and the elf's green kGuarding or the wizard's blue kBarrier.
+    void guard(uint32_t owner, const float feet[3], float yaw, float metresPerTile,
                const Recipe& recipe = kGuarding);
     // Where the body is now, every frame it is drawn: the one thing a following burst needs.
     void follow(uint32_t owner, const float feet[3]);
@@ -235,7 +239,8 @@ private:
         float across[3] = {1.0f, 0.0f, 0.0f};  // the joint's local X, turned by the hero's yaw
         float yaw = 0.0f;
         float per = 0.01f;    // metres in one of MU's units
-        float age = 0.0f;     // reference ticks since it was thrown
+        float age = 0.0f;     // reference ticks since it was thrown, or since its lap began
+        int laps = 0;         // laps run, for a burst that loops
         Joint joints[kJoints];
     };
 

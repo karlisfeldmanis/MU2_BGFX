@@ -88,9 +88,10 @@ constexpr float kBlinkFadeSeconds = 0.4f;
 
 // How long the character takes to dissolve in when the game has loaded. Invention.
 constexpr float kAppearSeconds = 1.1f;
-// How long Defense's ribbons play at the cast: once, and not for the guard's whole length.
-// Invention, 2026-09-25.
-constexpr float kGuardShowSeconds = 2.0f;
+// How long a `--guard` preview holds the ribbons with no boon behind them: two of their laps.
+// They were shown this long at a real cast too (2026-09-25), and stand for the guard's whole
+// length since 2026-10-21.
+constexpr float kGuardShowSeconds = 10.0f;
 // A body Evil Spirit strikes spins (the user, 2026-10-02: "when evil spirit hit monster we need
 // that monster is rotatinig, this is how i remember it from MuMain"). The spin is MuMain's own,
 // PushingCharacter's `Angle[2] += StormTime * 10` a frame with StormTime counted down a frame at

@@ -1124,45 +1124,54 @@ void Play::landed() {
 }
 
 // The knight's guard raised, and then kept on him while it stands -- and the wizard's Soul
-// Barrier, which is the same cage on the user's word of 2026-09-28, drawn in MU's own blue
-// since 2026-10-21 (fx/aura.h, kBarrier).
+// Barrier, the same ribbons on the user's word of 2026-09-28, drawn in MU's own blue since
+// 2026-10-21 (fx/aura.h, kBarrier). Looping for the whole of the boon since the same day.
 //
 // Two calls and not one because the barrier follows the body, which the level-up's flares do
 // not: MU leaves a burst where it was thrown (`TargetPosition` is never assigned), and a guard
 // that stayed behind while he walked out of it would be a guard around nobody.
-void Play::guardRise(uint32_t who, float seconds, int32_t skill) {
+void Play::guardRise(uint32_t who, int32_t skill) {
     const Drawn* caster = drawnOf(who);
     if (caster == nullptr || !caster->placed || ground_ == nullptr) return;
     const float feet[3] = {caster->crown[0],
                            ground_->heightAt(caster->crown[0], caster->crown[2]),
                            caster->crown[2]};
-    aura_.guard(who, feet, caster->yaw, ground_->metresPerTile(), seconds,
+    aura_.guard(who, feet, caster->yaw, ground_->metresPerTile(),
                 skill == sim::skill::kSoulBarrier ? kBarrier : kGuarding);
 }
 
 void Play::showGuard() {
     // The hero's own class's: a wizard's preview is his blue Magic Shield.
     const bool wizard = realm_.hero().kin == sim::Kin::DarkWizard;
-    guardRise(realm_.hero().id, kGuardShowSeconds,
-              wizard ? sim::skill::kSoulBarrier : sim::skill::kDefense);
+    guardRise(realm_.hero().id, wizard ? sim::skill::kSoulBarrier : sim::skill::kDefense);
     guardPreview_ = realm_.tick() + int64_t(kGuardShowSeconds / kTickSeconds);
 }
 
 void Play::guardStep() {
     if (ground_ == nullptr) return;
     const sim::Body& hero = realm_.hero();
-    // A `--guard` preview has no boon behind it, and is held for its own two seconds instead.
+    // A `--guard` preview has no boon behind it, and is held for its own seconds instead.
     const bool preview = realm_.tick() < guardPreview_;
     // The realm decides when it lapses, as it decides everything else; the drawing reads it.
     // Both halves matter: a boon that ran out and a character who died take the ribbons away.
     // Every player's, the hero's and the street's (Aura::guard keeps one a body).
+    // And raised on whoever stands guarded without one -- come into sight, or logged in, with
+    // the boon already up -- since the ribbons are the guard's for as long as it stands (the
+    // user, 2026-10-21: "it is active all the time when its active on char").
     const std::vector<sim::Body>& bodies = realm_.bodies();
     for (size_t i = 0; i < bodies.size() && i < drawn_.size(); ++i) {
         const sim::Body& body = bodies[i];
         const Drawn& drawn = drawn_[i];
-        if (!body.player || drawn.id != body.id || !aura_.guarding(body.id)) continue;
+        if (!body.player || drawn.id != body.id) continue;
         const bool held = preview && body.id == hero.id;
-        if (!held && (!body.alive() || body.boonUntil <= realm_.tick())) {
+        const bool guarded = body.alive() && body.boonUntil > realm_.tick();
+        if (!aura_.guarding(body.id)) {
+            if (guarded && drawn.placed && (body.id == hero.id || drawn.visible)) {
+                guardRise(body.id, body.boonSkill);
+            }
+            continue;
+        }
+        if (!held && !guarded) {
             aura_.release(body.id);
             continue;
         }
