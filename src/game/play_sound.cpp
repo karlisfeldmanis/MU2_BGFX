@@ -417,11 +417,12 @@ void Play::ui(Ui which) {
     }
 }
 
-// Each from where it is loudest straight away: the castle's bed from its top, Devil Square's
-// track 39 s in, past its quiet opening (-22 to -28 dB through its first eight seconds).
+// One cinematic hit for both gates (the user, 2026-10-21: "lets use ... soundreality-cinematic-sfx
+// for opening DS,BS gates"), content/music/gate_open.mp3: from 0.25 s, past its quarter second of
+// silence, so the strike lands with the green dot; it has decayed to -44 dB by three seconds.
 void Play::gatePeek(int gate, float seconds) {
-    if (gate == 0) sound_.stinger("sounds/ibloodcastle.wav", 0.6f, 0.0f, seconds);
-    else sound_.stinger("music/devil_square.mp3", 0.6f, 39.0f, seconds);
+    (void)gate;
+    sound_.stinger("music/gate_open.mp3", 0.7f, 0.25f, seconds);
 }
 
 void Play::hear(const gfx::Camera& camera, bool indoors) {
