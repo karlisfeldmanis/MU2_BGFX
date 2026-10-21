@@ -62,7 +62,7 @@ private:
         int32_t item = -1;
     };
     int hitAt(float ux, float uy) const;
-    int slotsHeld() const;
+    bool holding() const;
     void keep(const sim::Realm& realm);
     std::string key(const sim::Realm& realm) const;
     void rebuild(const sim::Realm& realm, Stage* stage);

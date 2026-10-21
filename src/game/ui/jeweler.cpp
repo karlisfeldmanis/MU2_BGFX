@@ -198,8 +198,11 @@ void Jeweler::keep(const sim::Realm& realm) {
     }
 }
 
-int Jeweler::slotsHeld() const {
-    return int(std::count_if(std::begin(slots_), std::end(slots_), [](const Slot& s) { return s.bag >= 0; }));
+// Anything Take out would empty: a piece in a slot, or what the last ask made, still in its card
+// (the user, 2026-10-21: "take out was not active then jewel or ring was created").
+bool Jeweler::holding() const {
+    if (made_.page == page_ && (made_.prize >= 0 || made_.bag >= 0)) return true;
+    return std::any_of(std::begin(slots_), std::end(slots_), [](const Slot& s) { return s.bag >= 0; });
 }
 
 int Jeweler::hitAt(float ux, float uy) const {
@@ -278,7 +281,7 @@ void Jeweler::update(float width, float height, int column, const sim::Realm& re
                 line_ = lit_ = -1;
                 confirming_ = false;
                 out->click = true;
-            } else if (hit == kOut && !waiting_ && slotsHeld() > 0) {
+            } else if (hit == kOut && !waiting_ && holding()) {
                 for (Slot& s : slots_) s = Slot{};
                 line_ = lit_ = -1;
                 made_ = Made{};
@@ -593,7 +596,7 @@ void Jeweler::rebuild(const sim::Realm& realm, Stage* stage) {
         controls::button(canvas_, P(kYesBox), "Salvage", controls::Kind::Primary, stateOf(kYes, false), u);
     } else {
         controls::button(canvas_, P(kOutBox), "Take out", controls::Kind::Secondary,
-                         stateOf(kOut, slotsHeld() == 0 || waiting_), u);
+                         stateOf(kOut, !holding() || waiting_), u);
         controls::button(canvas_, P(kRunBox), verb,
                          page_ == Page::Salvage ? controls::Kind::Danger : controls::Kind::Primary,
                          stateOf(kRun, !ready || waiting_), u);
