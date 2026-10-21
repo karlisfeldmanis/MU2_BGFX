@@ -48,7 +48,7 @@ void testElites(void (*checkOf)(bool, const char*),
     const content::MonsterKind& kind = lorencia.kinds[size_t(elite->kind)];
     std::printf("  an Elite %s at (%d, %d)\n", kind.label.c_str(), elite->column(), elite->row());
     check(elite->alive() && elite->monster(), "standing from the first tick, a monster to the fight");
-    checkEqual(elite->maxHealth, kind.health * sim::kEliteLife, "eight times its breed's life");
+    checkEqual(elite->maxHealth, sim::eliteHealth(kind.health, 0), "Lorencia's eight times its breed's life");
     checkEqual(elite->stats.maximumDamage, kind.maximumDamage * sim::kEliteDamage, "twice its damage");
     check(elite->stats.defense >= kind.defense, "and more defence");
     check(!lorencia.grid.safe(elite->column(), elite->row()), "out in the field, not in town");
@@ -122,7 +122,7 @@ void testElites(void (*checkOf)(bool, const char*),
     if (risen) {
         std::printf("  risen as an Elite %s at (%d, %d)\n", lorencia.kinds[size_t(risen->kind)].label.c_str(),
                     risen->column(), risen->row());
-        checkEqual(risen->maxHealth, lorencia.kinds[size_t(risen->kind)].health * sim::kEliteLife,
+        checkEqual(risen->maxHealth, sim::eliteHealth(lorencia.kinds[size_t(risen->kind)].health, 0),
                    "its numbers its new breed's");
     }
 
@@ -145,7 +145,8 @@ void testElites(void (*checkOf)(bool, const char*),
             if (!one.elite) continue;
             standing += one.alive() ? 1 : 0;
             const content::MonsterKind& kind = tables.kinds[size_t(one.kind)];
-            names += " " + kind.label + " (" + std::to_string(one.column()) + "," + std::to_string(one.row()) + ")";
+            names += " " + kind.label + " (level " + std::to_string(kind.level) + ", " + std::to_string(kind.health) +
+                     " health, defence " + std::to_string(kind.defense) + "; as an Elite " + std::to_string(one.maxHealth) + ")";
             std::vector<int32_t> above;
             for (const content::MonsterNest& nest : tables.nests) {
                 const content::MonsterKind& other = tables.kinds[nest.kind];
@@ -159,6 +160,9 @@ void testElites(void (*checkOf)(bool, const char*),
         }
         std::printf("  %s:%s\n", world, names.c_str());
         checkEqual(standing, sim::elitesOn(uint32_t(row->number)), "each field map stands its Elites");
+        for (const sim::Body& one : map.bodies()) {
+            if (one.elite) fair = fair && one.maxHealth == sim::eliteHealth(tables.kinds[size_t(one.kind)].health, uint32_t(row->number));
+        }
         check(fair, "each one of its three strongest, no boss, out of town");
     }
 }

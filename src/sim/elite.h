@@ -22,20 +22,25 @@ namespace mu::sim {
 // How many stand on each map, by MU's map number. Lorencia's first (the user, 2026-10-21: "lets
 // build first elite in lorencia"), Devias's the same day, then every other field map ("lets make
 // elites on all maps"). Never the events' maps (Blood Castle, Devil Square): raiseElites skips them.
+// And its life against its breed's, by map (the user, 2026-10-21: "do life multiplier per map"):
+// the strong maps' breeds have tens of times the weak ones' life already, and one x8 for all made
+// Devias's Elite Yeti 9,600 and Aida's riders 1,320,000 -- the first one a level-400 knight did
+// not kill in 40 s. High where the breeds are weak, low where they are already huge.
 struct EliteMap {
     uint32_t map;
     int count;
+    float life;
 };
 constexpr EliteMap kEliteMaps[] = {
-    {0, 1},  // Lorencia
-    {2, 2},  // Devias (the user, 2026-10-21: "show some devias kill")
-    {3, 1},  // Noria
-    {1, 2},  // Dungeon
-    {4, 2},  // Lost Tower
-    {7, 2},  // Atlans
-    {8, 2},  // Tarkan
-    {10, 1}, // Icarus
-    {33, 2}, // Aida
+    {0, 1, 8.0f},   // Lorencia: the Lich 255 -> 2,040
+    {3, 1, 6.0f},   // Noria: the Forest Monster 295 -> 1,770
+    {2, 2, 3.0f},   // Devias (the user, 2026-10-21: "show some devias kill"): the Elite Yeti 1,200 -> 3,600
+    {1, 2, 3.0f},   // Dungeon: the Poison Bull 2,500 -> 7,500
+    {4, 2, 2.5f},   // Lost Tower: the Devil 5,000 -> 12,500
+    {7, 2, 2.5f},   // Atlans: the Lizard King 9,000 -> 22,500
+    {8, 2, 2.0f},   // Tarkan: the Beam Knight 25,000 -> 50,000
+    {10, 1, 2.0f},  // Icarus: the Phantom Knight 41,000 -> 82,000
+    {33, 2, 1.5f},  // Aida: the Bloody Death Rider 165,000 -> 247,500
 };
 // The bosses, which are never made Elites: an Elite is an ordinary breed made strong. MU's
 // numbers: the Gorgon, the Ice Queen, the Balrog, the Hydra, Zaikan, the Death Beam Knight, the
@@ -55,9 +60,19 @@ inline int elitesOn(uint32_t map) {
     }
     return 0;
 }
+// Its life against its breed's on that map, 1 on a map with none.
+inline float eliteLifeOn(uint32_t map) {
+    for (const EliteMap& row : kEliteMaps) {
+        if (row.map == map) return row.life;
+    }
+    return 1.0f;
+}
+// An Elite's life of a breed's on that map, rounded.
+inline int32_t eliteHealth(int32_t health, uint32_t map) {
+    return int32_t(double(health) * double(eliteLifeOn(map)) + 0.5);
+}
 
 // What it is against its breed (the proposal of 2026-10-21, to tune in play).
-constexpr int kEliteLife = 8;              // health x8
 constexpr int kEliteDamage = 2;            // both ends of the damage band x2
 constexpr float kEliteDefense = 1.5f;      // defence x1.5
 constexpr float kEliteSwing = 1.15f;       // swings 15% quicker

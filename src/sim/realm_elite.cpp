@@ -96,7 +96,7 @@ void Realm::riseElite(Body& elite) {
     const content::MonsterKind& kind = tables_->kinds[nests[nestAt].kind];
     elite.kind = int32_t(nests[nestAt].kind);
     elite.level = kind.level;
-    elite.maxHealth = kind.health * kEliteLife;
+    elite.maxHealth = eliteHealth(kind.health, tables_->map);
     elite.stats = Fighter{};
     elite.stats.level = kind.level;
     elite.stats.attackRate = kind.attackRate;
