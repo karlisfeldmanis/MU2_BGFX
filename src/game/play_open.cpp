@@ -547,6 +547,7 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
     heard_.whoosh = sound_.load("window_talent_whoosh", false);
     heard_.soft = sound_.load("window_click_soft", false);
     heard_.bell = sound_.load("elite_bell", false);
+    heard_.whispered = sound_.load("whisper_ping", false);
     heard_.repair = sound_.load("window_repair", false);
     heard_.mix = sound_.load("machine_mix", false);
     heard_.mixBreak = sound_.load("machine_break", false);

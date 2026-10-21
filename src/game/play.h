@@ -1151,8 +1151,9 @@ public:
     // Opened is SOUND_INTERFACE01, which a merchant's counter opens on beside the click.
     // Talent is the user's sword cut, for a + the realm answered by opening a talent; Soft the
     // click a step quieter, for a talent point given back. Bell the Elite's, on each pulse of its
-    // mark on the minimap (game/ui/minimap.h).
-    enum class Ui { Click, Refused, Took, Opened, Invited, Talent, Soft, Whoosh, Bell };
+    // mark on the minimap (game/ui/minimap.h). Whispered the user's two notes, for a whisper to
+    // him from another player (game/ui/chat.cpp).
+    enum class Ui { Click, Refused, Took, Opened, Invited, Talent, Soft, Whoosh, Bell, Whispered };
     void ui(Ui which);
     // An event's gate opening (game/ui/herald.h): a peek of its music, `seconds` long and faded
     // out at its end. 0 Blood Castle, 1 Devil Square; both the one hit, content/music/gate_open.mp3.
@@ -2021,6 +2022,7 @@ private:
         int whoosh = -1;   // window_talent_whoosh: its swell, under the light down the lines
         int soft = -1;     // window_click_soft: a talent point given back
         int bell = -1;     // elite_bell: an Elite's mark on the minimap, each pulse
+        int whispered = -1;  // whisper_ping: a whisper to him from another player
         int levelUp = -1;                               // another player's level, heard at him
         int repair = -1;                                // SOUND_REPAIR: a counter mended
         int mix = -1, mixBreak = -1;                    // eMix and eBreak: the Chaos Machine

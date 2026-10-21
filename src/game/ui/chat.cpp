@@ -1379,6 +1379,12 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
             if (!log_.empty() && log_.back().channel == net::Channel::Party && !log_.back().inviter.empty()) {
                 play.ui(Play::Ui::Invited);
             }
+            // A whisper to him from another player: its two notes (whisper_ping). Not his own
+            // echoed back, nor the server's "is not here", which has no name.
+            if (!log_.empty() && log_.back().channel == net::Channel::Whisper && !log_.back().name.empty() &&
+                log_.back().name != me_) {
+                play.ui(Play::Ui::Whispered);
+            }
             // A Local, Map, Party or Guild line said by someone in view: over his head too, links and
             // all, unless the settings keep the lines in the chat (game/ui/speech.cpp). Global's
             // never: it is the server's, not the street's.

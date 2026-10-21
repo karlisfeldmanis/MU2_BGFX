@@ -2770,6 +2770,13 @@
       ],
       "from": "SOUND_SUMMOM_RARGLE (sic), which ZzzOpenData loads from Data\\\\Sound\\\\Rargle.wav with one voice (:4913). CSummonSystem::CreateSummonObject plays it as Pollution lets Lagle loose at the target (SummonSystem.cpp:184).",
       "note": "The Ancient rune Pollution (sim/items.h kPollution...), played where its ghosts are let loose (game/fx/pollution)."
+    },
+    "whisper_ping": {
+      "files": [
+        "whisper_ping.wav"
+      ],
+      "from": "Not MU's file. universfield 'message notification' (Pixabay 199577, downloads/), given by the user 2026-10-21 for a whisper to him: 1.59 s of 44 kHz stereo MP3, two soft notes. Its lead-in silence cut (-60 dB) and held to 1.3 s with a 0.3 s fade out from 1.0 s; it is gone by 1.2 s anyway (-75 dB).",
+      "note": "**An invention, marked.** The user (2026-10-21): 'use ... universfield-message-notification-199577.mp3 when char receives whisper'. Played by the chat (game/ui/chat.cpp) when a whisper from another player lands, not for his own. Unplaced, as every interface sound is."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

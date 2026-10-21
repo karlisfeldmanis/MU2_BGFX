@@ -414,6 +414,7 @@ void Play::ui(Ui which) {
         case Ui::Soft: sound_.play(heard_.soft); break;
         case Ui::Whoosh: sound_.play(heard_.whoosh); break;
         case Ui::Bell: sound_.play(heard_.bell); break;
+        case Ui::Whispered: sound_.play(heard_.whispered); break;
     }
 }
 
