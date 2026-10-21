@@ -126,13 +126,6 @@
 </table>
 <p class="center muted" style="font-size: 14px" id="told"></p>
 
-<h2 class="h2" style="margin-top: 24px">All players</h2>
-<div class="count" id="all-count"></div>
-<table class="who">
-<thead><tr><th>Account</th><th>Characters</th><th>Last played</th></tr></thead>
-<tbody id="all"></tbody>
-</table>
-
 <details style="margin-top: 24px">
 <summary class="h2" style="cursor: pointer">Players' machines</summary>
 <div class="tally" id="tally" style="margin-top: 12px"></div>
@@ -431,45 +424,6 @@
       tr.appendChild(cell(p.ms >= 0 ? p.ms + ' ms' : '—', '', 'Ping', p.ms >= 0 ? 'num' : 'num muted'));
       tr.appendChild(cell(since(p.since), '', 'Online for'));
       rows.appendChild(tr);
-    }
-    const all = $('all');
-    all.replaceChildren();
-    const chars = o.everyone.reduce((n, a) => n + a.characters.length, 0);
-    const allCount = $('all-count');
-    allCount.replaceChildren();
-    for (const [n, word] of [[o.everyone.length, o.everyone.length === 1 ? 'account' : 'accounts'], [chars, chars === 1 ? 'character' : 'characters']]) {
-      const s = el('span');
-      s.appendChild(el('b', '', String(n)));
-      s.appendChild(document.createTextNode(word));
-      allCount.appendChild(s);
-    }
-    if (!o.everyone.length) {
-      const tr = el('tr');
-      const td = cell('The game server has not listed its characters yet; it does once a minute.', '', '', 'muted');
-      td.colSpan = 3;
-      tr.appendChild(td);
-      all.appendChild(tr);
-    }
-    // One line an account: its characters by name and level, never-played ones left out.
-    for (const a of o.everyone) {
-      const tr = el('tr');
-      tr.appendChild(cell(a.account_name || a.email));
-      const td = el('td');
-      td.dataset.k = 'Characters';
-      const played = a.characters.filter((c) => !c.fresh);
-      played.forEach((c, i) => {
-        if (i) td.appendChild(document.createTextNode(' · '));
-        const b = el('button', 'open', c.name);
-        b.type = 'button';
-        b.title = c.class + ' · ' + map(c.world);
-        b.addEventListener('click', () => openCard(a.account, c.name));
-        td.appendChild(b);
-        td.appendChild(el('span', 'muted', ' ' + c.level));
-      });
-      if (!played.length) td.appendChild(el('span', 'muted', 'never played'));
-      tr.appendChild(td);
-      tr.appendChild(cell(a.last ? when(a.last) : 'never', '', 'Last played'));
-      all.appendChild(tr);
     }
     tally(o);
     $('v-list').hidden = false;
