@@ -797,21 +797,28 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
     {
         const float reach = kSpans[zoom_] * 0.5f * kEliteReach;
         bool near = false;
+        // In a fight with one -- his order an attack on it, or it after him -- the bell is quiet
+        // and the dot pulses on (the user, 2026-10-21: "dont play alert sound when char is
+        // attacking the monster"): it has been found.
+        bool fighting = false;
+        const sim::Request& order = realm.order();
         for (const sim::Body& body : realm.bodies()) {
             if (!body.elite || !body.alive()) continue;
             float column = body.x, row = body.y;
             play.shownAt(body.id, &column, &row);
             near |= std::hypot(column - heroX_, row - heroY_) <= reach;
+            fighting |= body.quarry == hero.id ||
+                        (order.kind == sim::Request::Kind::Attack && order.target == body.id);
         }
         near = near && hero.alive();
         if (near && !eliteNear_) {
             eliteClock_ = 0.0f;
-            bellOwed_ = true;
+            bellOwed_ = !fighting;
         } else if (near) {
             eliteClock_ += seconds;
             if (eliteClock_ >= kElitePulseSeconds) {
                 eliteClock_ = std::fmod(eliteClock_, kElitePulseSeconds);
-                bellOwed_ = true;
+                bellOwed_ = !fighting;
             }
         }
         eliteNear_ = near;

@@ -142,7 +142,7 @@ public:
     // **An Elite near** (sim/elite.h): while one is within the disc's reach its mark, a gold
     // dot, pulses once every kElitePulseSeconds, brightening with the strike of its bell
     // and easing off with the ring; each pulse owes the bell, which takeBell() hands on once
-    // (the desk plays it, Play::Ui::Bell). The only alert there is (the user, 2026-10-21:
+    // (the desk plays it, Play::Ui::Bell), but not while he fights it. The only alert there is (the user, 2026-10-21:
     // "minimap with pulsing golden monster will do the trick", "it will be notification loop
     // when char is nearby when point is visible on minimap").
     bool takeBell() {
