@@ -35,6 +35,13 @@ Every quarter second it works in MU Helper's order (`MuHelper.cpp`'s `Work`):
    its use says: *when ready*, or only with *2+* or *3+* monsters within 3 tiles of the one he
    fights.
 
+All the while (MuHelper.cpp's `RepairEquipments`, MU Helper's *Repair Item*): with **Repair my
+gear** on, the default, each worn piece at half its durability or under is mended by his own hand
+where he stands, at the bag's self-repair price (two and a half times Hanzo's), whenever the purse
+holds it. He does not stop fighting for it. It works from level 50, as the bag's hammer does; under
+that the switch is veiled and reads "level 50". The Angel and the Imp do not mend and are passed
+over. A piece he cannot pay for is left as it is; the Helper does not stop for it.
+
 Each skill's kind decides the uses its row offers (`helperKind`, `helperUses`). The first is the
 default.
 
@@ -68,7 +75,7 @@ Each stop says why on the notice line.
 
 ## Kept
 
-The settings are kept per character beside his save, as `Name.helper`: range, walk back, picks,
+The settings are kept per character beside his save, as `Name.helper`: range, walk back, picks, the repair,
 whether the window has been seen, and each skill's use by MU's skill number.
 
 ## Ours, not WebZen's

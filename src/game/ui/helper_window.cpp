@@ -10,6 +10,7 @@
 #include "game/ui/tip.h"
 #include "sim/realm.h"
 #include "sim/skills.h"
+#include "sim/wear.h"
 
 namespace mu::game {
 namespace {
@@ -135,7 +136,7 @@ void HelperWindow::layout(const Play& play, const HelperSettings& settings, cons
     for (auto& meter : segs_) {
         for (Box& b : meter) b = {};
     }
-    back_ = quest_ = aid_ = trades_ = {};
+    back_ = quest_ = aid_ = trades_ = repair_ = {};
     rangeRow_ = rangeBox_ = inviteRow_ = inviteBox_ = {};
     rows_.clear();
     for (int t = 0; t < 2; ++t) tabs_[t] = {kSide + float(t) * inner * 0.5f, kTabsTop, inner * 0.5f, kTabsH};
@@ -170,6 +171,7 @@ void HelperWindow::layout(const Play& play, const HelperSettings& settings, cons
         parts(inviteBox_, invites_, 3);
         toggle(aid_);
         toggle(trades_);
+        toggle(repair_);
         return;
     }
 
@@ -243,6 +245,7 @@ void HelperWindow::update(float seconds, const Play& play, HelperSettings& setti
         if (over < 0 && quest_.row.has(ux, uy)) over = 21;
         if (over < 0 && aid_.row.has(ux, uy)) over = 22;
         if (over < 0 && trades_.row.has(ux, uy)) over = 23;
+        if (over < 0 && repair_.row.has(ux, uy)) over = 27;
         for (int i = 0; i < 3 && over < 0; ++i) {
             if (invites_[i].has(ux, uy)) over = 24 + i;
         }
@@ -287,6 +290,9 @@ void HelperWindow::update(float seconds, const Play& play, HelperSettings& setti
             } else if (at == 23) {
                 settings.noTrades = !settings.noTrades;
                 out->changed = true;
+            } else if (at == 27) {
+                settings.repair = !settings.repair;
+                out->changed = true;
             } else if (at >= 24 && at < 27) {
                 settings.invites = uint8_t(at - 24);
                 out->changed = true;
@@ -325,7 +331,7 @@ void HelperWindow::update(float seconds, const Play& play, HelperSettings& setti
                                 settings.back, settings.picks, drink.health, drink.mana, helping,
                                 helping ? int64_t(stats.seconds) : 0, stats.kills, stats.picked, page_,
                                 settings.quest, settings.aidParty, settings.noTrades, settings.invites,
-                                stats.quests};
+                                stats.quests, settings.repair, realm.selfMending()};
     for (const Row& row : rows_) {
         now.push_back(row.skill);
         now.push_back(int(row.use) + (row.suits ? 0 : 16));
@@ -396,6 +402,11 @@ void HelperWindow::rebuild(const Play& play, const HelperSettings& settings, boo
                 over_ >= 24 && over_ < 27 ? over_ - 24 : -1, false);
         toggle(aid_, 22, settings.aidParty, "Buff and heal my party", false);
         toggle(trades_, 23, settings.noTrades, "Decline trades", false);
+        // His own hand mends from kSelfRepairLevel, as the bag's hammer does; under it, veiled.
+        const bool young = !realm.selfMending() && realm.hero().alive();
+        const std::string mendWord =
+            young ? "Repair my gear \xC2\xB7 level " + std::to_string(sim::kSelfRepairLevel) : "Repair my gear";
+        toggle(repair_, 27, settings.repair, mendWord.c_str(), young);
     } else {
         // ---- hunt --------------------------------------------------------------------------------
         kicker(huntTop_, "Hunt");

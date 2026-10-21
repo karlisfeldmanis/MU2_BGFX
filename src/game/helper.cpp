@@ -16,6 +16,7 @@
 #include "sim/realm.h"
 #include "sim/rules.h"
 #include "sim/skills.h"
+#include "sim/wear.h"
 
 namespace mu::game {
 namespace {
@@ -35,6 +36,11 @@ constexpr float kCrowd = 3.0f;
 constexpr double kLootGiveUp = 6.0;
 // He has wandered back when he is this near the spot, in tiles.
 constexpr float kHome = 1.5f;
+// A worn piece is mended at this share of its durability or under, in percent: MU Helper's
+// DEFAULT_DURABILITY_THRESHOLD (MuHelper.cpp:24), and the slot's yellow band (sim::Worn::Half).
+constexpr int kMendAt = 50;
+// A repair asked and not answered yet (the server's round trip) is not asked again before this.
+constexpr double kMendRetry = 3.0;
 // His health under which a Heal set to "when hurt" is cast, when his auto-drink line is off.
 constexpr int kHurtDefault = 50;
 
@@ -166,6 +172,7 @@ bool loadHelper(const std::string& savePath, HelperSettings& out) {
         else if (!std::strcmp(key, "invites") && std::fscanf(f, "%d", &a) == 1) read.invites = uint8_t(std::clamp(a, 0, 2));
         else if (!std::strcmp(key, "party") && std::fscanf(f, "%d", &a) == 1) read.aidParty = a != 0;
         else if (!std::strcmp(key, "trades") && std::fscanf(f, "%d", &a) == 1) read.noTrades = a != 0;
+        else if (!std::strcmp(key, "repair") && std::fscanf(f, "%d", &a) == 1) read.repair = a != 0;
         else if (!std::strcmp(key, "use") && std::fscanf(f, "%d %d", &a, &b) == 2) {
             if (b >= 0 && b <= int(HelperUse::Never)) read.uses[a] = HelperUse(b);
         } else {
@@ -193,6 +200,7 @@ bool writeHelper(const std::string& savePath, const HelperSettings& settings) {
                  int(settings.picks), settings.seen ? 1 : 0);
     std::fprintf(f, "quest %d\ninvites %d\nparty %d\ntrades %d\n", settings.quest ? 1 : 0, int(settings.invites),
                  settings.aidParty ? 1 : 0, settings.noTrades ? 1 : 0);
+    std::fprintf(f, "repair %d\n", settings.repair ? 1 : 0);
     for (const auto& [skill, use] : settings.uses) std::fprintf(f, "use %d %d\n", int(skill), int(use));
     std::fclose(f);
     return true;
@@ -207,6 +215,7 @@ void Helper::start(const Play& play, const Stats* carried) {
     quester_.reset();
     following_ = -1;
     aidTried_.clear();
+    mendTried_.clear();
     anchorColumn_ = hero.column();
     anchorRow_ = hero.row();
     since_ = kThink;
@@ -288,6 +297,7 @@ std::string Helper::update(Play& play, const HelperSettings& settings, double se
         }
         if (shots == 0) return halt(hero.archer == 1 ? "Helper stopped: out of arrows." : "Helper stopped: out of bolts.");
     }
+    mend(play, settings);
     if (realm.held()) return {};
 
     // MU Helper's order (MuHelper.cpp's Work): his buffs, his heal, then what lies about, then
@@ -472,6 +482,7 @@ std::string Helper::follow(Play& play, const HelperSettings& settings, double se
             }
             core::logf("helper: following %s", sim::questAt(following_).title);
         }
+        if (hero.alive()) mend(play, settings);
         if (hero.alive() && !realm.held()) {
             if (support(play, settings)) return {};
             bool chased = false;
@@ -558,6 +569,30 @@ bool Helper::loot(Play& play, const HelperSettings& settings) {
     play.orderHero(request);
     target_ = 0;
     return true;
+}
+
+// **Repair my gear**: each worn piece at kMendAt percent of its durability or under, mended by his
+// own hand at its self-repair price while the purse holds it, as RepairEquipments asks each beat
+// (MuHelper.cpp:698). Not a move: he goes on fighting. What does not mend (the Angel, the Imp)
+// costs nought and is passed over.
+void Helper::mend(Play& play, const HelperSettings& settings) {
+    const sim::Realm& realm = play.realm();
+    if (!settings.repair || !realm.selfMending()) return;
+    const content::Tables& tables = *realm.tables();
+    const sim::Satchel& bag = realm.satchel();
+    for (int slot = 0; slot < sim::kWorn; ++slot) {
+        const sim::Held& h = bag[slot];
+        if (h.empty() || size_t(h.item) >= tables.items.size()) continue;
+        const int most = sim::maximumDurability(tables.items[size_t(h.item)], h);
+        if (most <= 0 || (h.durability * 100 + most - 1) / most > kMendAt) continue;
+        const int64_t cost = realm.repairCost(slot);
+        if (cost <= 0 || cost > realm.money()) continue;
+        if (const auto tried = mendTried_.find(slot); tried != mendTried_.end() && tried->second > clock_) continue;
+        mendTried_[slot] = clock_ + kMendRetry;
+        core::logf("helper: repairing %s (%d/%d) for %lld Zen", tables.items[size_t(h.item)].label.c_str(),
+                   int(h.durability), most, (long long)cost);
+        play.repair(slot);
+    }
 }
 
 // His keys while he fights: each attack on them thrown at the one he fights as its use says --

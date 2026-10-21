@@ -9,8 +9,8 @@
 // under his auto-drink lines, as it always does; the window sets those lines too.
 //
 // A hand, not a brain, as Auto-play is (game/quest_auto.h): it raises the orders a player's own
-// clicks raise and decides nothing the realm decides. It stops when he dies, when he stands in a
-// safe zone, when the bag is full, when the healing potions he set out with or his shots run out,
+// clicks raise and decides nothing the realm decides. It mends his worn gear as it goes. It
+// stops when he dies, when he stands in a safe zone, when the bag is full, when the healing potions he set out with or his shots run out,
 // on another map, and when the player clicks the world himself. Ours: WebZen's helper charged Zen every five
 // minutes and ran on the server; this one is the client's and costs nothing.
 #pragma once
@@ -83,6 +83,11 @@ struct HelperSettings {
     uint8_t invites = kInviteAsk;
     bool aidParty = true;
     bool noTrades = true;
+    // **Repair my gear** (Discord, 2026-10-21: "we need auto repair in Helper!"): MU Helper's
+    // bRepairItem (MuHelper.cpp's RepairEquipments). Each worn piece at half its durability or
+    // under is mended by his own hand where he stands, at its self-repair price (two and a half
+    // times Hanzo's), when the Zen is there for it. From kSelfRepairLevel, as the bag's hammer.
+    bool repair = true;
 
     int tiles() const { return kRanges[range < 0 ? 0 : range > 2 ? 2 : range]; }
     HelperUse use(int32_t skill, HelperKind kind) const;
@@ -123,6 +128,7 @@ private:
     bool aid(Play& play, const HelperSettings& settings);
     bool support(Play& play, const HelperSettings& settings);
     bool loot(Play& play, const HelperSettings& settings);
+    void mend(Play& play, const HelperSettings& settings);
     void keys(Play& play, const HelperSettings& settings, uint32_t target);
     int32_t striker(Play& play) const;
 
@@ -140,6 +146,7 @@ private:
     std::map<int32_t, double> tried_;       // a skill asked: not again before this
     std::map<uint32_t, double> lootTried_;  // a pickup asked: given up after this
     std::map<uint64_t, double> aidTried_;   // an aid asked on one of his party: not again before this
+    std::map<int, double> mendTried_;       // a worn slot's repair asked: not again before this
     QuestAuto quester_;                     // Auto-play's hand, while it follows a quest
     int following_ = -1;                    // the quest it follows, -1 for none yet
 };
