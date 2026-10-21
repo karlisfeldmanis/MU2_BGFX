@@ -59,7 +59,14 @@ constexpr float kSelName = 19.0f, kSelSmall = 14.0f, kSelText = 15.0f;
 
 // ---- the motion, in seconds: the plan's "The unlock" -------------------------------------------
 
-constexpr float kFillSeconds = 0.34f;   // blood runs down a line, an energy at its head
+// The lines' light rides the unlock's whoosh (window_talent_whoosh), which swells from nothing to
+// its peak kWhooshPeak on: a line out to a talent it opens takes kOpenRun and lights that talent
+// on the peak, where the sword cut's hit is laid (the user, 2026-10-21: "sync with audio"). The
+// lines into a talent just taken, and a reset's, are quick.
+constexpr float kWhooshPeak = 0.6f;     // the whoosh's loudest, from its start
+constexpr float kCutHit = 0.1f;         // the sword cut's hit, from its start (window_talent)
+constexpr float kOpenRun = kWhooshPeak / 0.85f;  // lights its talent at 0.85 of the run: the peak
+constexpr float kFillSeconds = 0.22f;   // a line into a taken talent, or a reset's
 constexpr float kWakeSeconds = 0.2f;    // grey to colour, and the frame's pop
 constexpr float kWakePop = 0.12f;       // 1.0 -> 1.12 -> 1.0
 constexpr float kPointSeconds = 0.25f;  // a plain point's flash
@@ -69,8 +76,6 @@ constexpr float kPointPop = 0.05f;
 constexpr float kOpenSeconds = 0.95f, kMajorSeconds = 1.4f, kGlintSeconds = 0.45f;
 // A reset runs up the tree a tier at a time, bottom first: three tiers in about 0.3 s.
 constexpr float kRippleStep = 0.1f, kFadeSeconds = 0.12f;
-// A line out of a major waits for the lines into it, then fills one after the other.
-constexpr float kOutAfterIn = 0.15f;
 // The head's figure, as the points in hand change: a white-gold flash settling, and a small pop.
 constexpr float kFreeFlash = 0.25f;
 // The breath round a node that can take a point: one in two seconds, at most a quarter lit at the
@@ -400,6 +405,22 @@ bool TalentWindow::unlocks(const sim::TalentRanks& now, int column, int node, in
     return false;
 }
 
+void TalentWindow::unlocked(bool ownFirstPoint) {
+    cueCount_ = 0;
+    cues_[cueCount_++] = {clock_, Cue::Whoosh};
+    cues_[cueCount_++] = {ownFirstPoint ? clock_ : clock_ + double(kWhooshPeak - kCutHit), Cue::Cut};
+}
+
+bool TalentWindow::takeSound(Cue* out) {
+    for (int i = 0; i < cueCount_; ++i) {
+        if (cues_[i].at > clock_) continue;
+        *out = cues_[i].cue;
+        cues_[i] = cues_[--cueCount_];
+        return true;
+    }
+    return false;
+}
+
 void TalentWindow::watch(float seconds, const sim::Body* hero) {
     clock_ += double(std::max(0.0f, seconds));
     if (hero == nullptr) return;
@@ -432,7 +453,7 @@ void TalentWindow::animate(const sim::TalentRanks& before, const sim::TalentRank
                 const int was = stateOf(before[size_t(c)], e), is = stateOf(after[size_t(c)], e);
                 if (was == is) continue;
                 const double at = now + double(kRippleStep) * double(sim::kTalentTiers - 1 - kEdge[e][1] / 3);
-                fill_[c][e] = {at, uint8_t(was), uint8_t(is)};
+                fill_[c][e] = {at, uint8_t(was), uint8_t(is), kFillSeconds};
                 busy(at + kFillSeconds);
             }
         }
@@ -470,30 +491,28 @@ void TalentWindow::animate(const sim::TalentRanks& before, const sim::TalentRank
         }
         // The lines it lights: those into it first, then those out of it, one after another,
         // each waking the talent it opens as the blood reaches it.
-        bool into = false;
         for (int e = 0; e < kEdges; ++e) {
             const int from = stateOf(was, e), to = stateOf(is, e);
             if (to <= from || kEdge[e][1] != raised) continue;
-            fill_[c][e] = {now, uint8_t(from), uint8_t(to)};
+            fill_[c][e] = {now, uint8_t(from), uint8_t(to), kFillSeconds};
             busy(now + kFillSeconds);
-            into = true;
         }
-        int outs = 0;
         for (int e = 0; e < kEdges; ++e) {
             const int from = stateOf(was, e), to = stateOf(is, e);
             if (to <= from || kEdge[e][1] == raised) continue;
-            const double at = now + (into ? double(kOutAfterIn) : 0.0) + double(kFillSeconds) * double(outs++);
-            fill_[c][e] = {at, uint8_t(from), uint8_t(to)};
-            busy(at + kFillSeconds);
+            // Every line out at once, on the whoosh: all reach their talents on its peak.
+            const double at = now;
+            fill_[c][e] = {at, uint8_t(from), uint8_t(to), kOpenRun};
+            busy(at + kOpenRun);
             const int b = kEdge[e][1];
             const int lb = levelOf(was, b), la = levelOf(is, b);
             if (la > lb) {
                 // The icon wakes as the line's head comes into it.
-                const double wake = at + double(kFillSeconds) * 0.7;
+                const double wake = at + double(kOpenRun) * 0.8;
                 glow_[c][b] = {wake, kWakeSeconds, float(lb), float(la), Motion::Wake};
                 busy(wake + kWakeSeconds);
                 // And ignites as the energy reaches it.
-                burst_[c][b] = {at + double(kFillSeconds) * 0.85, Burst::Open};
+                burst_[c][b] = {at + double(kOpenRun) * 0.85, Burst::Open};
             }
         }
     }
@@ -689,7 +708,7 @@ void TalentWindow::effects() {
         for (int e = 0; e < kEdges; ++e) {
             const Fill& f = fill_[c][e];
             if (f.at < -1.0e8 || f.to <= f.from) continue;
-            const float k = float((t - f.at) / double(kFillSeconds));
+            const float k = float((t - f.at) / double(f.seconds));
             if (k < 0.0f || k > 1.6f) continue;
             const Geo ga = geoOf(left, colW, treeTop, kEdge[e][0]), gb = geoOf(left, colW, treeTop, kEdge[e][1]);
             const float x1 = x_ + ga.frame.midX() * u, y1 = y_ + ga.frame.bottom() * u;
@@ -903,7 +922,7 @@ void TalentWindow::rebuild(const Play& play) {
             const float x2 = sx(gb.frame.midX()), y2 = sy(gb.frame.y);
             const float thick = 2.0f * u;
             const Fill& f = fill_[c][e];
-            const float p = float((t - f.at) / double(kFillSeconds));
+            const float p = float((t - f.at) / double(f.seconds));
             if (p >= 1.0f || f.at < -1.0e8) {
                 const uint32_t ink = lineInk(stateOf(col, e));
                 stroke(canvas_, x1, y1, x2, y2, thick, ink, ink);

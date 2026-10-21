@@ -69,6 +69,14 @@ public:
     // something: the node's first point, or a node of the column closed before them and open
     // after. `now` is his ranks with the points in. The unlock's sound plays on it (Desk).
     static bool unlocks(const sim::TalentRanks& now, int column, int node, int took);
+    // **The unlock's sounds, timed to its light** (the user, 2026-10-21: "use this sound ... when
+    // unlock block also and sync with audio"): the whoosh at once, its swell carrying the light
+    // down the lines to the talents opened on its peak; the sword cut at once for a talent's own
+    // first point, or laid so its hit lands on that peak when the point only opens others.
+    // Queued on the window's clock; the desk plays each as it falls due (takeSound).
+    enum class Cue : uint8_t { Whoosh, Cut };
+    void unlocked(bool ownFirstPoint);
+    bool takeSound(Cue* out);
 
 private:
     // A node's look moving: from one level to another (0 grey, 1 open, 2 taken) after `at`.
@@ -83,6 +91,7 @@ private:
     struct Fill {
         double at = -1.0e9;
         uint8_t from = 0, to = 0;
+        float seconds = 0.22f;  // its run
     };
     static constexpr int kEdges = 10;  // in a column: 2 a tier into its major, 2 out of each of two
     // Everything the drawing reads, so a frame that changes none of it draws nothing.
@@ -133,6 +142,12 @@ private:
         Burst kind = Burst::None;
     };
     Spark burst_[sim::kTalentColumnsMost][sim::kTalentNodes];
+    struct Due {
+        double at;
+        Cue cue;
+    };
+    Due cues_[4] = {};
+    int cueCount_ = 0;
     // Draws the ignitions, and the energy running down each filling line, onto breath_.
     void effects();
     Fill fill_[sim::kTalentColumnsMost][kEdges];

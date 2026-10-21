@@ -721,6 +721,15 @@
       "gain_note": "Three down, as window_invite: its peak sits near the windows' own and the cut stands out without jumping.",
       "note": "**An invention, marked.** The user (2026-10-21): 'use ... when talent is unlocked'. Played once for an answered + that opens something new -- a talent's first point, or the point that opens a closed one (the 10th in a small opens its major; a taken major opens the next tier) -- in place of the click (game/ui/desk.cpp, Then::Talent). Never on the press, so a refused point never plays it. Unplaced, as every interface sound is."
     },
+    "window_talent_whoosh": {
+      "files": [
+        "iwhoosh.wav"
+      ],
+      "from": "Not MU's file. dragon-studio 'whoosh cinematic' (Pixabay 376889, downloads/), given by the user 2026-10-21 for a talent unlocked: 3.08 s of 44 kHz stereo MP3 made 22 kHz mono 16-bit, cut at 2.5 s where its tail falls under -60 dB, with a 0.3 s fade out. It swells from silence to its peak at 0.6 s.",
+      "gain_db": -4.0,
+      "gain_note": "Four down, a step under window_talent's three: the swell carries, the sword cut lands on it.",
+      "note": "**An invention, marked.** The user (2026-10-21): 'use this sound ... when unlock block also and sync with audio'. Played with window_talent on every unlock (game/ui/talent_window.cpp, TalentWindow::unlocked): the light running down a line rides its swell and reaches the talent it opens on its peak, 0.6 s on, where the sword cut's hit is laid. Unplaced, as every interface sound is."
+    },
     "window_refused": {
       "files": [
         "ibuttonerror.wav"

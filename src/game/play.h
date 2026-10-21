@@ -1142,7 +1142,7 @@ public:
     // Opened is SOUND_INTERFACE01, which a merchant's counter opens on beside the click.
     // Talent is the user's sword cut, for a + the realm answered by opening a talent; Soft the
     // click a step quieter, for a talent point given back.
-    enum class Ui { Click, Refused, Took, Opened, Invited, Talent, Soft };
+    enum class Ui { Click, Refused, Took, Opened, Invited, Talent, Soft, Whoosh };
     void ui(Ui which);
     void gatherAura(gfx::Effects& effects, const float eye[3]) const {
         if (ground_) aura_.gather(effects, *ground_, eye);
@@ -1993,6 +1993,7 @@ private:
         int click = -1, refused = -1, opened = -1;      // the windows
         int invited = -1;  // window_invite: a party, guild or trade invite to him
         int talent = -1;   // window_talent: a talent opened by a point
+        int whoosh = -1;   // window_talent_whoosh: its swell, under the light down the lines
         int soft = -1;     // window_click_soft: a talent point given back
         int levelUp = -1;                               // another player's level, heard at him
         int repair = -1;                                // SOUND_REPAIR: a counter mended

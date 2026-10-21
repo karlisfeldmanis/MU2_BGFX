@@ -367,8 +367,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                     refused();
                 } else if (struck >= 1000 && TalentWindow::unlocks(play.realm().hero().talents, (struck - 1000) / 16,
                                                                    (struck - 1000) % 16, one.value)) {
-                    play.ui(Play::Ui::Talent);
-                    core::logf("window: talent opened something: the unlock's cut");
+                    // The whoosh and the cut, timed to the light (TalentWindow::unlocked): the cut
+                    // at once on the talent's own first point, else on the whoosh's peak.
+                    const int c = (struck - 1000) / 16, n = (struck - 1000) % 16;
+                    const bool own = int(play.realm().hero().talents[size_t(c)][size_t(n)]) == one.value;
+                    talents_.unlocked(own);
+                    core::logf("window: talent opened something: the whoosh, the cut %s", own ? "at once" : "on its peak");
                 } else if (struck < 1000) {
                     play.ui(Play::Ui::Soft);  // a point given back: the lighter click
                 } else {
@@ -836,6 +840,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // A, Talents (game/ui/talent_window.h): MU's own master-tree key since Season 4. Not over a
     // counter, which the realm holds open beside the bag: there A is the interface's no, as C is.
     talents_.watch(seconds, hero);
+    for (TalentWindow::Cue cue; talents_.takeSound(&cue);) {
+        play.ui(cue == TalentWindow::Cue::Whoosh ? Play::Ui::Whoosh : Play::Ui::Talent);
+    }
     {
         const bool asked = scriptTalents_ || (talentsAsked_ && play.isOpen());
         scriptTalents_ = talentsAsked_ = false;
