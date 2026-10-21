@@ -75,14 +75,13 @@ constexpr float kPointPop = 0.05f;
 // (the user, 2026-10-21: "remove those unlock rings and sparkles").
 constexpr float kOpenSeconds = 0.95f, kMajorSeconds = 1.4f, kGlintSeconds = 0.45f;
 // **The smoke** (the user, 2026-10-21: "can we use better some smoke effect on unlocking talent
-// block?"): when a talent lights, soft puffs billow out from its frame, rise, curl, grow and fade.
-// MU's own smoke -- smoke01, BITMAP_SMOKE, a grey wisp on black, laid on as light so it glows
-// warm grey and lit from below by the ember -- over smoke02, the fire's brown puff, faint, for
-// body. A major's is a third bigger, with a few more puffs. How long a puff lives, at most -- and
-// toned down once (the user, 2026-10-21: "smoke effect is little bit too much"): fainter, nearer
-// the frame, shorter, greyer, the brown body all but gone:
+// block?"): when a talent lights, soft puffs breathe out of its frame -- "from all sides evenly"
+// (the user, 2026-10-21), a rim of smoke -- and grow and fade. MU's own smoke -- smoke01,
+// BITMAP_SMOKE, a grey wisp on black, laid on as light so it glows warm grey and lit from below
+// by the ember -- over smoke02, the fire's brown puff, a trace, for body. Toned down once (the
+// user: "smoke effect is little bit too much"): faint, a short way out, gone by these, at most:
 constexpr float kOpenSmoke = 1.0f, kMajorSmoke = 1.2f;
-constexpr int kOpenPuffs = 7, kMajorPuffs = 8;
+constexpr int kOpenPuffs = 14, kMajorPuffs = 22;  // along the rim, and a puff at each corner
 // A reset runs up the tree a tier at a time, bottom first: three tiers in about 0.3 s.
 constexpr float kRippleStep = 0.1f, kFadeSeconds = 0.12f;
 // The head's figure, as the points in hand change: a white-gold flash settling, and a small pop.
@@ -751,38 +750,59 @@ void TalentWindow::effects() {
             const float cx = icon.midX(), cy = icon.midY(), size = frame.h;
             const uint32_t seed = uint32_t(c * 31 + i * 7) ^ uint32_t(int64_t(b.at * 1000.0));
 
-            // **The smoke**, under the light: each puff leaves the frame's edge a little after the
-            // last, billows out and up, curls, grows and fades; the ember under it dies first.
+            // **The smoke**, under the light: out of the frame's rim on every side at once, each
+            // puff growing and fading as it goes; the ember under it dies first.
             if (smoky && arts_ != nullptr) {
                 const gfx::Art& wisp = arts_->get("smoke01");
                 const gfx::Art& thick = arts_->get("smoke");
                 const bool major = b.kind == Burst::Major;
+                // Evenly along the frame's whole rim, the four corners among them: each puff
+                // starts on the edge and breathes straight out along its normal (the corners'
+                // out on the diagonal), all within a short ripple, so the block exhales a rim of
+                // smoke the same on every side. A major has more of them, not bigger ones.
                 const int puffs = major ? kMajorPuffs : kOpenPuffs;
-                const float grow = major ? 1.33f : 1.0f;
-                for (int k = 0; k < puffs; ++k) {
+                const float rim = 2.0f * (frame.w + frame.h);
+                for (int k = 0; k < puffs + 4; ++k) {
                     const auto n = [&](uint32_t ch) { return noise01(seed, uint32_t(300 + k * 8) + ch); };
-                    const float delay = 0.05f * float(k) * (major ? 0.6f : 1.0f) + 0.04f * n(0);
-                    const float life = smokeFor * (0.7f + 0.3f * n(1)) - delay;
+                    float sx, sy, nx, ny;
+                    if (k >= puffs) {
+                        const int corner = k - puffs;  // top left, top right, bottom right, bottom left
+                        const bool right = corner == 1 || corner == 2, low = corner >= 2;
+                        sx = right ? frame.right() : frame.x;
+                        sy = low ? frame.bottom() : frame.y;
+                        nx = (right ? 1.0f : -1.0f) * 0.70710678f;
+                        ny = (low ? 1.0f : -1.0f) * 0.70710678f;
+                    } else {
+                        float d = rim * (float(k) + 0.5f) / float(puffs);
+                        if (d < frame.w) {
+                            sx = frame.x + d, sy = frame.y, nx = 0.0f, ny = -1.0f;
+                        } else if ((d -= frame.w) < frame.h) {
+                            sx = frame.right(), sy = frame.y + d, nx = 1.0f, ny = 0.0f;
+                        } else if ((d -= frame.h) < frame.w) {
+                            sx = frame.right() - d, sy = frame.bottom(), nx = 0.0f, ny = 1.0f;
+                        } else {
+                            d -= frame.w;
+                            sx = frame.x, sy = frame.bottom() - d, nx = -1.0f, ny = 0.0f;
+                        }
+                    }
+                    const float delay = 0.03f * n(0);
+                    const float life = smokeFor * (0.85f + 0.15f * n(1)) - delay;
                     const float a = age - delay;
                     if (a <= 0.0f || a >= life) continue;
                     const float q = a / life;
                     const float out = easeOut(q);
-                    // Where it leaves the frame: anywhere round it, more of them low and to the sides.
-                    const float at = 6.2831853f * (float(k) + n(2)) / float(puffs);
-                    const float ex = std::cos(at), ey = std::sin(at);
-                    const float sx = cx + ex * frame.w * 0.42f, sy = cy + ey * frame.h * 0.42f;
-                    // Out from the frame, up as it cools, and a curl across its path.
-                    const float push = size * (0.21f + 0.25f * n(3)) * grow * out;
-                    const float lift = size * (0.25f + 0.38f * n(4)) * grow * (0.4f * out + 0.6f * q);
-                    const float curl = std::sin(q * 4.2f + 6.2831853f * n(5)) * size * 0.10f * q;
-                    const float px = sx + ex * push - ey * curl, py = sy + ey * push * 0.7f - lift + ex * curl;
-                    const float r = size * (0.24f + 0.35f * out) * grow * (0.8f + 0.4f * n(6));
-                    const float turn = 6.2831853f * n(7) + (n(1) - 0.5f) * 2.4f * a;
-                    const float in = std::min(1.0f, a / 0.12f);
+                    // Out along the normal, a slight lift as it cools, a small sway along the edge.
+                    const float push = size * (0.16f + 0.06f * n(3)) * out;
+                    const float lift = size * 0.05f * q;
+                    const float sway = std::sin(q * 3.6f + 6.2831853f * n(5)) * size * 0.03f * q;
+                    const float px = sx + nx * push - ny * sway, py = sy + ny * push + nx * sway - lift;
+                    const float r = size * (0.13f + 0.15f * out) * (0.9f + 0.2f * n(6));
+                    const float turn = 6.2831853f * n(7) + (n(1) - 0.5f) * 2.0f * a;
+                    const float in = std::min(1.0f, a / 0.1f);
                     const float fade = in * std::pow(1.0f - q, 1.4f);
-                    const float ember = std::pow(std::max(0.0f, 1.0f - a / 0.55f), 1.5f);
-                    puff(fx, wisp, thick, px, py, r, turn, (major ? 0.62f : 0.56f) * fade, ember,
-                         (major ? 0.08f : 0.06f) * fade);
+                    const float ember = std::pow(std::max(0.0f, 1.0f - a / 0.5f), 1.5f);
+                    puff(fx, wisp, thick, px, py, r, turn, (major ? 0.5f : 0.46f) * fade, ember,
+                         (major ? 0.06f : 0.05f) * fade);
                 }
             }
             if (age > length) continue;
