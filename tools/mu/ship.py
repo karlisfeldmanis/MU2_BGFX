@@ -289,7 +289,8 @@ def report(say, until="HEAD"):
         how = ("STAGED, not switched" if box["staged"] else "running") if box["active"] else "STOPPED"
         say(f"server   {box['region']:15} {box['deployed']}  protocol {box['protocol']}  {how}  "
             f"{'?' if todo is None else (str(len(todo)) + ' behind' if todo else 'current')}")
-        row("server", box["region"], box["deployed"], todo, protocol=box["protocol"], how=how)
+        row("server", box["region"], box["deployed"], todo, protocol=box["protocol"], how=how,
+            warns=bool(box.get("warns")), staged=box["staged"])
         if todo or box["staged"] or not box["active"]:
             server_todo.append(box)
         plan["parts"][f"server-{box['host']}"] = {"live": box["deployed"], "staged": box["staged"],

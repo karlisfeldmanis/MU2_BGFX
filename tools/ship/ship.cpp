@@ -8,6 +8,7 @@
 //   ./mu ship app                     build it and open it
 //   out/build/mu_ship [--web URL]     a local web/server.py's lines instead of the box's
 //   out/build/mu_ship --tab updates --shot out.png   a picture once the status is in, and close
+//   out/build/mu_ship --log out/logs/ship/X.log      a kept run's output, read by lane
 //
 // What it knows it asks of `./mu ship ... --json` (tools/mu/ship.py), which reads the manifests,
 // the boxes and git: the rules are there once, and the terminal and this window say the same. Each
@@ -204,6 +205,18 @@ std::string longDay(const std::string& day) {
 
 // ---- what the window shows ---------------------------------------------------------------------
 
+// What a switch's told servers wait before they restart (server/src/host.h kRestartWarn).
+constexpr double kWarnSeconds = 60.0;
+
+// One lane of a step's output: what `mu ship prepare` and `switch` say of one place, "[windows] ...".
+struct Lane {
+    std::string label;
+    std::vector<std::string> lines;
+    enum class State { Waiting, Running, Done, Failed } state = State::Waiting;
+    Clock::time_point started{}, ended{}, toldAt{};
+    bool restarted = false;  // a told server back on its new build
+};
+
 struct Step {
     std::string command, note;
     bool live = false;
@@ -243,6 +256,12 @@ public:
     // --draft-from SHA: as if typed into "from" and Draft pressed, once the site's lines are in.
     void draftFrom(const std::string& sha) { autoDraft_ = sha; }
     void openTab(const std::string& t) { wantTab_ = t; }
+    // --log FILE: a kept run's output (out/logs/ship/) read into the console and its lanes.
+    void showLog(const std::string& path) {
+        logJob_ = std::make_unique<Job>(root_, "cat " + quoted(path));
+        console_ = logJob_.get();
+        lastLog_ = path;
+    }
 
     // Each frame: whatever finished is taken in; the next of a run of steps is started.
     void poll() {
@@ -329,6 +348,7 @@ public:
             }
         }
 
+        parseLanes();
         // The step running, and the next of a Run all.
         if (running_ >= 0 && step_ && step_->done()) {
             Step& s = steps_[size_t(running_)];
@@ -342,10 +362,10 @@ public:
             if (s.state == Step::State::Failed) runAll_ = false;
             if (runAll_) {
                 const int next = nextWaiting(was + 1);
-                if (next < 0) runAll_ = false;
+                if (next < 0) runAll_ = false, needsRefresh_ = true;
                 else ask(next);
             }
-            if (wasLive && !runAll_) needsRefresh_ = true;
+            if ((wasLive || s.command.rfind("./mu ship prepare", 0) == 0) && !runAll_) needsRefresh_ = true;
         }
         if (needsRefresh_ && running_ < 0 && !runAll_) {
             needsRefresh_ = false;
@@ -455,7 +475,8 @@ private:
             }
             return;
         }
-        step_ = std::make_unique<Job>(root_, s.command);
+        const bool now = s.command.rfind("./mu ship switch", 0) == 0 && !warnPlayers_;
+        step_ = std::make_unique<Job>(root_, s.command + (now ? " --now" : ""));
         console_ = step_.get();
         s.state = Step::State::Running;
         running_ = i;
@@ -522,6 +543,58 @@ private:
     }
 
     // ---- the release ----
+    //
+    // (the user, 2026-10-21: "improve UX/UI for deploy app") Three phases across the top, each a
+    // card with its one button: Prepare (nothing players see), Go live (the moment), Tell players
+    // (the front page's lines). Under them every place a release lands is a card of its own, which
+    // during a run shows its lane of the step's output; the commits not yet shipped beside them;
+    // the output below, all of it or one lane's.
+
+    static ImU32 u32(const ImVec4& c, float alpha = 1.0f) { return ImGui::GetColorU32(ImVec4(c.x, c.y, c.z, c.w * alpha)); }
+
+    // A small rounded label in a tone.
+    static void chip(const char* text, const ImVec4& tone) {
+        const ImVec2 size = ImGui::CalcTextSize(text);
+        const ImVec2 pad(9, 3);
+        const ImVec2 at = ImGui::GetCursorScreenPos();
+        const ImVec2 end(at.x + size.x + pad.x * 2, at.y + size.y + pad.y * 2);
+        ImDrawList* draw = ImGui::GetWindowDrawList();
+        draw->AddRectFilled(at, end, u32(tone, 0.16f), 10.0f);
+        draw->AddRect(at, end, u32(tone, 0.5f), 10.0f);
+        draw->AddText(ImVec2(at.x + pad.x, at.y + pad.y), u32(tone), text);
+        ImGui::Dummy(ImVec2(end.x - at.x, end.y - at.y));
+    }
+
+    // A coloured dot on the text's line.
+    static void dot(const ImVec4& tone) {
+        const ImVec2 at = ImGui::GetCursorScreenPos();
+        const float h = ImGui::GetTextLineHeight();
+        ImGui::GetWindowDrawList()->AddCircleFilled(ImVec2(at.x + 5, at.y + h * 0.5f), 4.5f, u32(tone));
+        ImGui::Dummy(ImVec2(12, h));
+        ImGui::SameLine();
+    }
+
+    int stepNamed(const char* prefix) const {
+        for (size_t i = 0; i < steps_.size(); ++i) {
+            if (steps_[i].command.rfind(prefix, 0) == 0) return int(i);
+        }
+        return -1;
+    }
+    bool prepared() const {
+        const int prep = stepNamed("./mu ship prepare");
+        return !plan_["prepared"].isNull() || (prep >= 0 && steps_[size_t(prep)].state == Step::State::Done);
+    }
+    // The servers a switch restarts: behind, staged or stopped.
+    std::vector<const Json*> switching() const {
+        std::vector<const Json*> out;
+        const Json& rows = plan_["rows"];
+        for (size_t i = 0; i < rows.size(); ++i) {
+            const Json& r = rows.at(i);
+            if (r["kind"].stringOr("") != "server") continue;
+            if (r["behind"].numberOr(1) != 0 || r["how"].stringOr("running") != "running") out.push_back(&r);
+        }
+        return out;
+    }
 
     void releaseTab() {
         if (!statusError_.empty()) ImGui::TextColored(kRed, "mu ship failed:\n%s", statusError_.c_str());
@@ -529,56 +602,92 @@ private:
             ImGui::TextDisabled("Reading the manifests, the servers and the site...");
             return;
         }
-        verdict();
+        banner();
         ImGui::Spacing();
-        const float consoleHeight = std::max(180.0f, ImGui::GetContentRegionAvail().y * 0.34f);
+        phases();
+        countdown();
+        ImGui::Spacing();
+        const float consoleHeight = console_ ? std::max(170.0f, ImGui::GetContentRegionAvail().y * 0.32f) : 90.0f;
         const float top = ImGui::GetContentRegionAvail().y - consoleHeight - 8.0f;
         if (ImGui::BeginTable("cols", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInnerV, ImVec2(0, top))) {
-            ImGui::TableSetupColumn("left", ImGuiTableColumnFlags_WidthStretch, 0.46f);
-            ImGui::TableSetupColumn("right", ImGuiTableColumnFlags_WidthStretch, 0.54f);
+            ImGui::TableSetupColumn("left", ImGuiTableColumnFlags_WidthStretch, 0.58f);
+            ImGui::TableSetupColumn("right", ImGuiTableColumnFlags_WidthStretch, 0.42f);
             ImGui::TableNextColumn();
             ImGui::BeginChild("left", ImVec2(0, top - 4));
-            liveTable();
-            ImGui::Spacing();
-            unshipped();
+            targets();
             ImGui::EndChild();
             ImGui::TableNextColumn();
             ImGui::BeginChild("right", ImVec2(0, top - 4));
-            stepsList();
+            unshipped();
             ImGui::EndChild();
             ImGui::EndTable();
         }
         console(consoleHeight);
     }
 
-    void verdict() {
-        const std::string v = plan_["verdict"].stringOr("");
+    // What is waiting, in a line and a row of chips; Ship updates runs every phase.
+    void banner() {
         const bool bump = plan_["bump"].boolOr(false);
-        const bool nothing = v.rfind("nothing", 0) == 0;
+        const Json& todo = plan_["todo"];
+        const size_t boxes = todo["boxes"].size(), clients = todo["clients"].size();
+        const bool launcher = todo["launcher"].boolOr(false), web = todo["web"].boolOr(false);
+        const bool nothing = !boxes && !clients && !launcher && !web;
         const ImVec4 tone = bump ? kRed : nothing ? kGreen : kGold;
-        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(tone.x * 0.18f, tone.y * 0.18f, tone.z * 0.18f, 1.0f));
-        ImGui::BeginChild("verdict", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding);
-        // **Ship updates** (the user, 2026-10-19: "we need button ship updates"): every step, asked once.
-        if (!steps_.empty()) {
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(tone.x * 0.14f, tone.y * 0.14f, tone.z * 0.14f, 1.0f));
+        ImGui::BeginChild("banner", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding);
+        if (!steps_.empty() && !nothing) {
             const bool idle = running_ < 0 && !runAll_;
             ImGui::BeginDisabled(!idle || nextWaiting(0) < 0);
             ImGui::PushStyleColor(ImGuiCol_Button, bump ? ImVec4(0.62f, 0.22f, 0.18f, 1) : ImVec4(0.62f, 0.46f, 0.15f, 1));
             ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * 1.2f);
-            if (ImGui::Button(shipAll_ ? "Shipping..." : "Ship updates", ImVec2(170, 40))) askShip_ = true;
+            if (ImGui::Button(shipAll_ ? "Shipping..." : "Ship updates", ImVec2(170, 46))) askShip_ = true;
             ImGui::PopFont();
             ImGui::PopStyleColor();
             ImGui::EndDisabled();
-            ImGui::SameLine();
+            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) ImGui::SetTooltip("Prepare, then go live, then draft the notes: asked once.");
+            ImGui::SameLine(0, 16);
         }
         ImGui::BeginGroup();
-        ImGui::PushTextWrapPos(0.0f);
-        ImGui::TextColored(tone, "%s", v.c_str());
-        ImGui::PopTextWrapPos();
-        // A prepare done (mu ship prepare): everything staged, only the switch left.
-        const Json& prepared = plan_["prepared"];
-        if (!prepared.isNull())
-            ImGui::TextColored(kGreen, "Prepared %s at %s: only the switch is left",
-                               prepared["commit"].stringOr("").c_str(), prepared["at"].stringOr("").c_str());
+        ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * 1.2f);
+        ImGui::TextColored(tone, "%s", nothing ? "Everything is live" : bump ? "A protocol change: every server and client go together"
+                                                                              : "Updates waiting to ship");
+        ImGui::PopFont();
+        if (ImGui::IsItemHovered()) {
+            ImGui::BeginTooltip();
+            ImGui::PushTextWrapPos(620.0f);
+            ImGui::TextUnformatted(plan_["verdict"].stringOr("").c_str());
+            ImGui::PopTextWrapPos();
+            ImGui::EndTooltip();
+        }
+        if (!nothing) {
+            char text[160];
+            if (bump) {
+                std::snprintf(text, sizeof text, "protocol %d", int(plan_["protocol"].numberOr(0)));
+                chip(text, kRed);
+                ImGui::SameLine();
+            }
+            if (boxes) {
+                std::snprintf(text, sizeof text, "%zu server%s restart", boxes, boxes == 1 ? "" : "s");
+                chip(text, kRed);
+                ImGui::SameLine();
+            }
+            if (clients) {
+                std::string names;
+                for (size_t i = 0; i < clients; ++i) names += (i ? ", " : "") + todo["clients"].at(i).stringOr("");
+                std::snprintf(text, sizeof text, "client patch: %s", names.c_str());
+                chip(text, kBlue);
+                ImGui::SameLine();
+            }
+            if (launcher) {
+                chip("launcher", kGold);
+                ImGui::SameLine();
+            }
+            if (web) {
+                chip("site", kGreen);
+                ImGui::SameLine();
+            }
+            ImGui::NewLine();
+        }
         const Json& errors = plan_["errors"];
         for (size_t i = 0; i < errors.size(); ++i) ImGui::TextColored(kRed, "could not read %s", errors.at(i).stringOr("").c_str());
         const Json& dirty = plan_["dirty"];
@@ -596,87 +705,291 @@ private:
             ImGui::TextColored(kRed, "%s", failure_.c_str());
             ImGui::PopTextWrapPos();
         }
-        if (shipAll_) {
-            int done = 0;
-            for (const Step& st : steps_) done += st.state == Step::State::Done || st.state == Step::State::Skipped;
-            ImGui::TextColored(kGold, "step %d of %zu", std::min(done + 1, int(steps_.size())), steps_.size());
-        }
         ImGui::EndGroup();
         ImGui::EndChild();
         ImGui::PopStyleColor();
     }
 
-    void liveTable() {
-        ImGui::TextColored(kGold, "Live");
-        if (!ImGui::BeginTable("live", 5, ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit)) return;
-        ImGui::TableSetupColumn("Part");
-        ImGui::TableSetupColumn("Where");
-        ImGui::TableSetupColumn("Commit");
-        ImGui::TableSetupColumn("Protocol");
-        ImGui::TableSetupColumn("State", ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableHeadersRow();
-        const Json& rows = plan_["rows"];
-        const int headProtocol = int(plan_["protocol"].numberOr(0));
-        for (size_t i = 0; i < rows.size(); ++i) {
-            const Json& r = rows.at(i);
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-            ImGui::TextDisabled("%s", r["kind"].stringOr("").c_str());
-            ImGui::TableNextColumn();
-            ImGui::TextUnformatted(r["name"].stringOr("").c_str());
-            ImGui::TableNextColumn();
-            ImGui::TextUnformatted(r["live"].stringOr("?").c_str());
-            ImGui::TableNextColumn();
-            if (r["protocol"].type == Json::Type::Number) {
-                const int p = int(r["protocol"].number);
-                ImGui::TextColored(p == headProtocol ? kDim : kRed, "%d", p);
-            }
-            ImGui::TableNextColumn();
-            const std::string how = r["how"].stringOr("");
-            const Json& behind = r["behind"];
-            if (!how.empty() && how != "running") {
-                ImGui::TextColored(kRed, "%s", how.c_str());
-                ImGui::SameLine();
-            }
-            if (behind.type != Json::Type::Number) ImGui::TextColored(kRed, "not on HEAD's line");
-            else if (behind.number == 0) ImGui::TextColored(kGreen, "current");
-            else ImGui::TextColored(kGold, "%d behind", int(behind.number));
+    // ---- the phases ----
+
+    struct Phase {
+        const char* id;
+        int number;
+        const char* title;
+        const char* about;
+        int step;            // its step, or -1
+        bool done;           // done before this window ran it (a prepare on disk)
+        std::string doneText;
+        const char* button;
+        ImVec4 tone;
+        bool enabled;
+        std::string waiting;  // said when there is nothing to press yet
+    };
+
+    void phases() {
+        const float gap = ImGui::GetStyle().ItemSpacing.x;
+        const float width = (ImGui::GetContentRegionAvail().x - gap * 2) / 3.0f;
+        const int prep = stepNamed("./mu ship prepare"), sw = stepNamed("./mu ship switch"), notes = stepNamed("./mu ship notes");
+        const bool ready = prepared();
+        const bool nothing = steps_.empty();
+
+        std::string at = plan_["prepared"]["at"].stringOr("");
+        Phase p{"prepare", 1, "Prepare", "Build and stage on every box and for every client, side by side. Players see nothing.",
+                prep, ready, at.size() >= 16 ? "Ready since " + at.substr(11, 5) : "Ready", "Prepare", kGold, prep >= 0,
+                nothing ? "Nothing to prepare" : ""};
+        if (phaseCard(p, width) && prep >= 0) ask(prep);
+        ImGui::SameLine();
+
+        const size_t restarting = switching().size();
+        char about[200];
+        std::snprintf(about, sizeof about, "%s%s at one moment, then each read back where it lives.",
+                      restarting ? (warnPlayers_ ? "Players told 60 s, servers restart, " : "Servers restart at once, ") : "",
+                      "updates go live");
+        Phase g{"golive", 2, "Go live", about, sw, false, "Live", "Go live...", kRed, sw >= 0 && ready,
+                nothing ? "Nothing to ship" : (!ready ? "After Prepare" : "")};
+        if (phaseCard(g, width) && sw >= 0) ask(sw);
+        ImGui::SameLine();
+
+        Phase t{"tell", 3, "Tell players", "Draft the front page's Latest updates from what went live; an admin publishes them.",
+                notes, false, "Drafted", "Draft notes", kBlue, notes >= 0, nothing ? "Nothing new to tell" : ""};
+        if (phaseCard(t, width)) {
+            if (notes >= 0) ask(notes);
         }
-        ImGui::EndTable();
+    }
+
+    // One phase: its number, title and what it does; its state and its button at the foot.
+    bool phaseCard(const Phase& p, float width) {
+        const Step* s = p.step >= 0 ? &steps_[size_t(p.step)] : nullptr;
+        const bool running = s && s->state == Step::State::Running;
+        const bool failed = s && s->state == Step::State::Failed;
+        const bool done = (s && s->state == Step::State::Done) || (!s && p.done);
+        const ImVec4 tone = failed ? kRed : running ? kGold : done ? kGreen : kDim;
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.09f, 0.10f, 0.125f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_Border, running ? ImVec4(kGold.x, kGold.y, kGold.z, 0.6f) : ImVec4(1, 1, 1, 0.08f));
+        ImGui::BeginChild(p.id, ImVec2(width, 118), ImGuiChildFlags_Borders | ImGuiChildFlags_AlwaysUseWindowPadding,
+                          ImGuiWindowFlags_NoScrollbar);
+        // The number in a ring, filled once done.
+        const ImVec2 at = ImGui::GetCursorScreenPos();
+        const float r = 13.0f;
+        const ImVec2 centre(at.x + r, at.y + r);
+        ImDrawList* draw = ImGui::GetWindowDrawList();
+        if (done || running || failed) draw->AddCircleFilled(centre, r, u32(tone, done ? 0.9f : 0.25f));
+        draw->AddCircle(centre, r, u32(tone), 0, 2.0f);
+        char number[4];
+        std::snprintf(number, sizeof number, "%d", p.number);
+        const ImVec2 size = ImGui::CalcTextSize(number);
+        draw->AddText(ImVec2(centre.x - size.x * 0.5f, centre.y - size.y * 0.5f),
+                      done ? u32(ImVec4(0.07f, 0.08f, 0.09f, 1)) : u32(tone), number);
+        ImGui::Dummy(ImVec2(r * 2, r * 2));
+        ImGui::SameLine(0, 10);
+        ImGui::BeginGroup();
+        ImGui::PushFont(nullptr, ImGui::GetStyle().FontSizeBase * 1.2f);
+        ImGui::TextUnformatted(p.title);
+        ImGui::PopFont();
+        ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + width - 70);
+        ImGui::TextColored(kDim, "%s", p.about);
+        ImGui::PopTextWrapPos();
+        ImGui::EndGroup();
+
+        // The foot: the state on the left, the button on the right.
+        const float footY = 118 - ImGui::GetStyle().WindowPadding.y - ImGui::GetFrameHeight() - 2;
+        ImGui::SetCursorPosY(footY);
+        if (running) ImGui::TextColored(kGold, "running %s", clock(step_ ? step_->seconds() : 0.0).c_str());
+        else if (failed) ImGui::TextColored(kRed, "failed -- the output below says why");
+        else if (s && s->state == Step::State::Done) ImGui::TextColored(kGreen, "%s in %s", p.doneText.c_str(), clock(s->seconds).c_str());
+        else if (done) ImGui::TextColored(kGreen, "%s", p.doneText.c_str());
+        else if (s && s->state == Step::State::Skipped) ImGui::TextDisabled("skipped");
+        else if (!p.waiting.empty()) ImGui::TextDisabled("%s", p.waiting.c_str());
+        bool pressed = false;
+        const float buttonW = 120;
+        ImGui::SameLine(width - buttonW - ImGui::GetStyle().WindowPadding.x);
+        ImGui::SetCursorPosY(footY - 3);
+        if (running) {
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.35f, 0.16f, 0.14f, 1));
+            if (ImGui::Button("Stop", ImVec2(buttonW, 0)) && step_) step_->stop();
+            ImGui::PopStyleColor();
+        } else {
+            const bool idle = running_ < 0 && !runAll_;
+            ImGui::BeginDisabled(!p.enabled || !idle);
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(p.tone.x * 0.62f, p.tone.y * 0.62f, p.tone.z * 0.62f, 1));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(p.tone.x * 0.8f, p.tone.y * 0.8f, p.tone.z * 0.8f, 1));
+            pressed = ImGui::Button(done ? "Again" : p.button, ImVec2(buttonW, 0));
+            ImGui::PopStyleColor(2);
+            ImGui::EndDisabled();
+        }
+        ImGui::EndChild();
+        ImGui::PopStyleColor(2);
+        return pressed;
+    }
+
+    static std::string clock(double seconds) {
+        char text[24];
+        const int s = int(seconds + 0.5);
+        if (s < 60) std::snprintf(text, sizeof text, "%d s", s);
+        else std::snprintf(text, sizeof text, "%d:%02d", s / 60, s % 60);
+        return text;
+    }
+
+    // While the servers tell their players: how long until they restart, as a bar.
+    void countdown() {
+        std::string told;
+        double longest = -1.0;
+        int back = 0, telling = 0;
+        for (const Lane& lane : lanes_) {
+            if (lane.toldAt == Clock::time_point{}) continue;
+            if (lane.restarted) {
+                ++back;
+                continue;
+            }
+            ++telling;
+            told += (told.empty() ? "" : ", ") + lane.label;
+            longest = std::max(longest, kWarnSeconds - std::chrono::duration<double>(Clock::now() - lane.toldAt).count());
+        }
+        if (!telling && !(back && console_ && !console_->done())) return;
+        ImGui::Spacing();
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.20f, 0.09f, 0.08f, 1.0f));
+        ImGui::BeginChild("countdown", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding);
+        if (telling) {
+            const double left = std::max(0.0, longest);
+            ImGui::TextColored(kRed, "Players on %s are being told.", told.c_str());
+            ImGui::SameLine();
+            ImGui::Text(left > 0.5 ? "The servers restart in %.0f s." : "The servers are restarting...", left);
+            ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.78f, 0.36f, 0.30f, 1));
+            ImGui::ProgressBar(float(1.0 - left / kWarnSeconds), ImVec2(-1, 6), "");
+            ImGui::PopStyleColor();
+        } else {
+            ImGui::TextColored(kGreen, "The servers are back; the clients' updates are turning.");
+        }
+        ImGui::EndChild();
+        ImGui::PopStyleColor();
+    }
+
+    // ---- where it lands ----
+
+    void targets() {
+        targetGroup("Servers", "server");
+        targetGroup("Clients", "client");
+        targetGroup("Launcher and site", "launcher", "site");
+    }
+
+    void targetGroup(const char* title, const char* kind, const char* also = "") {
+        const Json& rows = plan_["rows"];
+        std::vector<size_t> mine;
+        for (size_t i = 0; i < rows.size(); ++i) {
+            const std::string k = rows.at(i)["kind"].stringOr("");
+            if (k == kind || k == also) mine.push_back(i);
+        }
+        if (mine.empty()) return;
+        ImGui::TextColored(kGold, "%s", title);
+        const float gap = ImGui::GetStyle().ItemSpacing.x;
+        const float width = std::floor((ImGui::GetContentRegionAvail().x - gap * 3) / 4.0f);
+        for (size_t n = 0; n < mine.size(); ++n) {
+            if (n % 4) ImGui::SameLine();
+            targetCard(rows.at(mine[n]), width, int(mine[n]));
+        }
+        ImGui::Spacing();
+    }
+
+    // The lane of the running step's output that lands on this row: a server by its region, a
+    // client by its platform, the launcher's and the site's by name.
+    const Lane* laneOf(const Json& r) const {
+        const std::string kind = r["kind"].stringOr("");
+        const std::string label = kind == "launcher" ? "launcher" : kind == "site" ? "site" : r["name"].stringOr("");
+        for (const Lane& lane : lanes_) {
+            if (lane.label == label) return &lane;
+        }
+        return nullptr;
+    }
+
+    void targetCard(const Json& r, float width, int id) {
+        const Lane* lane = laneOf(r);
+        const std::string how = r["how"].stringOr("running");
+        const Json& behind = r["behind"];
+        const bool stopped = how == "STOPPED";
+        const bool staged = r["staged"].boolOr(false);
+        const bool jobOver = !console_ || console_->done();
+        // The lane says what is happening now; without one, the row says how it stands.
+        ImVec4 tone;
+        std::string badge;
+        if (lane && lane->state == Lane::State::Failed) tone = kRed, badge = "failed";
+        else if (lane && lane->state == Lane::State::Running && jobOver) tone = kRed, badge = "stopped";
+        else if (lane && lane->state == Lane::State::Running && lane->toldAt != Clock::time_point{} && !lane->restarted)
+            tone = kRed, badge = "telling players";
+        else if (lane && lane->state == Lane::State::Running) tone = kGold, badge = "working";
+        else if (lane && lane->state == Lane::State::Waiting) tone = kGold, badge = "waiting";
+        else if (lane && lane->state == Lane::State::Done) tone = kGreen, badge = "done";
+        else if (stopped) tone = kRed, badge = "STOPPED";
+        else if (behind.type != Json::Type::Number) tone = kRed, badge = "off HEAD";
+        else if (staged) tone = kBlue, badge = "staged";
+        else if (behind.number == 0) tone = kGreen, badge = "current";
+        else tone = kGold, badge = std::to_string(int(behind.number)) + " behind";
+
+        const bool chosen = lane && laneFilter_ == lane->label;
+        ImGui::PushID(id);
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, chosen ? ImVec4(0.14f, 0.15f, 0.19f, 1) : ImVec4(0.09f, 0.10f, 0.125f, 1));
+        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(tone.x, tone.y, tone.z, chosen ? 0.8f : 0.22f));
+        ImGui::BeginChild("card", ImVec2(width, 78), ImGuiChildFlags_Borders | ImGuiChildFlags_AlwaysUseWindowPadding,
+                          ImGuiWindowFlags_NoScrollbar);
+        dot(tone);
+        const std::string kind = r["kind"].stringOr("");
+        ImGui::TextUnformatted((kind == "launcher" ? "launcher " + r["name"].stringOr("") : r["name"].stringOr("")).c_str());
+        const float badgeW = ImGui::CalcTextSize(badge.c_str()).x;
+        ImGui::SameLine(std::max(ImGui::GetCursorPosX() + 6, width - badgeW - ImGui::GetStyle().WindowPadding.x));
+        ImGui::TextColored(tone, "%s", badge.c_str());
+
+        const int headProtocol = int(plan_["protocol"].numberOr(0));
+        ImGui::TextDisabled("%s", r["live"].stringOr("?").c_str());
+        if (r["protocol"].type == Json::Type::Number) {
+            ImGui::SameLine();
+            const int p = int(r["protocol"].number);
+            ImGui::TextColored(p == headProtocol ? kDim : kRed, "protocol %d", p);
+        }
+        // The third line: the lane's last word, or what a switch would do here.
+        if (lane) {
+            const double secs = std::chrono::duration<double>(
+                (lane->ended != Clock::time_point{} ? lane->ended : Clock::now()) - lane->started).count();
+            const std::string last = lane->lines.empty() ? "" : lane->lines.back();
+            if (lane->state == Lane::State::Running && !jobOver) ImGui::TextColored(kGold, "%s  %s", clock(secs).c_str(), last.c_str());
+            else ImGui::TextColored(lane->state == Lane::State::Failed ? kRed : kDim, "%s", last.c_str());
+        } else if (r["kind"].stringOr("") == "server") {
+            if (r["warns"].boolOr(false)) ImGui::TextColored(kDim, "warns players 60 s before a restart");
+            else ImGui::TextColored(kGold, "no restart warning yet");
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("Its running server is older than the 60 s warning: the next deploy restarts it at once.");
+        }
+        if (lane && ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            laneFilter_ = chosen ? "" : lane->label;
+        if (lane && ImGui::IsWindowHovered()) ImGui::SetTooltip(chosen ? "Show all output" : "Show only this lane's output");
+        ImGui::EndChild();
+        ImGui::PopStyleColor(2);
+        ImGui::PopID();
     }
 
     void unshipped() {
         const Json& list = plan_["unshipped"];
         ImGui::TextColored(kGold, "Not yet shipped");
         ImGui::SameLine();
-        ImGui::TextDisabled("%zu commits", list.size());
+        ImGui::TextDisabled("%zu commits, newest first", list.size());
         if (!list.size()) {
             ImGui::TextDisabled("Every commit is everywhere it ships.");
             return;
         }
-        if (!ImGui::BeginTable("unshipped", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit)) return;
-        ImGui::TableSetupColumn("Commit");
+        if (!ImGui::BeginTable("unshipped", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit)) return;
         ImGui::TableSetupColumn("Needs");
         ImGui::TableSetupColumn("What", ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableHeadersRow();
-        for (size_t i = list.size(); i-- > 0;) {  // newest first
+        for (size_t i = list.size(); i-- > 0;) {
             const Json& c = list.at(i);
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
-            ImGui::TextDisabled("%s", c["sha"].stringOr("").c_str());
-            ImGui::TableNextColumn();
-            if (c["protocol"].boolOr(false)) {
-                ImGui::TextColored(kRed, "PROTOCOL");
-                ImGui::SameLine();
-            }
+            if (c["protocol"].boolOr(false)) chip("protocol", kRed);
             const Json& where = c["where"];
             for (size_t w = 0; w < where.size(); ++w) {
                 const std::string part = where.at(w).stringOr("");
-                if (w) ImGui::SameLine();
                 ImGui::TextColored(part == "server" ? kRed : part == "client" ? kBlue : part == "launcher" ? kGold : kGreen,
                                    "%s", part.c_str());
             }
             ImGui::TableNextColumn();
+            ImGui::TextDisabled("%s  %s", c["sha"].stringOr("").c_str(), c["day"].stringOr("").c_str());
             ImGui::PushTextWrapPos(0.0f);
             ImGui::TextUnformatted(c["text"].stringOr("").c_str());
             ImGui::PopTextWrapPos();
@@ -691,66 +1004,68 @@ private:
         ImGui::EndTable();
     }
 
-    void stepsList() {
-        ImGui::TextColored(kGold, "Steps");
-        if (steps_.empty()) {
-            ImGui::TextDisabled("Nothing to do.");
-            return;
+    // ---- the output ----
+
+    // The running step's output read into lanes as it comes: `mu ship prepare` and `switch` say
+    // each line as "[North Europe] ...", "[windows] ...".
+    void parseLanes() {
+        if (console_ != lanesOf_) {
+            lanes_.clear();
+            lanesParsed_ = 0;
+            lanesOf_ = console_;
+            laneFilter_.clear();
         }
-        ImGui::SameLine();
-        const bool idle = running_ < 0 && !runAll_;
-        ImGui::BeginDisabled(!idle || nextWaiting(0) < 0);
-        if (ImGui::SmallButton("Run all")) {
-            runAll_ = true;
-            ask(nextWaiting(0));
-        }
-        ImGui::EndDisabled();
-        if (runAll_) {
-            ImGui::SameLine();
-            if (ImGui::SmallButton("Stop after this step")) runAll_ = false;
-        }
-        ImGui::SameLine();
-        ImGui::TextDisabled("built from %s", plan_["head"].stringOr("").c_str());
-        if (!ImGui::BeginTable("steps", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit)) return;
-        ImGui::TableSetupColumn("#");
-        ImGui::TableSetupColumn("Command", ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("State");
-        ImGui::TableSetupColumn("");
-        for (size_t i = 0; i < steps_.size(); ++i) {
-            Step& s = steps_[i];
-            ImGui::PushID(int(i));
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-            ImGui::TextDisabled("%zu", i + 1);
-            ImGui::TableNextColumn();
-            ImGui::TextUnformatted(s.command.c_str());
-            ImGui::TextColored(s.live ? kRed : kDim, "%s", s.note.c_str());
-            ImGui::TableNextColumn();
-            switch (s.state) {
-            case Step::State::Waiting: ImGui::TextDisabled("-"); break;
-            case Step::State::Running: ImGui::TextColored(kGold, "running %.0f s", step_ ? step_->seconds() : 0.0); break;
-            case Step::State::Done: ImGui::TextColored(kGreen, "done %.0f s", s.seconds); break;
-            case Step::State::Failed: ImGui::TextColored(kRed, "failed"); break;
-            case Step::State::Skipped: ImGui::TextDisabled("skipped"); break;
+        if (!console_) return;
+        const std::string text = console_->output();
+        const auto now = Clock::now();
+        size_t at = lanesParsed_;
+        for (size_t nl = text.find('\n', at); nl != std::string::npos; at = nl + 1, nl = text.find('\n', at)) {
+            const std::string line = text.substr(at, nl - at);
+            const size_t close = line.find("] ");
+            if (line.size() < 4 || line[0] != '[' || close == std::string::npos) continue;
+            const std::string label = line.substr(1, close - 1);
+            std::string said = line.substr(close + 2);
+            const size_t cr = said.rfind('\r');
+            if (cr != std::string::npos) said = said.substr(cr + 1);
+            Lane* lane = nullptr;
+            for (Lane& l : lanes_) {
+                if (l.label == label) lane = &l;
             }
-            ImGui::TableNextColumn();
-            if (s.state == Step::State::Running) {
-                if (ImGui::SmallButton("Stop") && step_) step_->stop();
-            } else {
-                ImGui::BeginDisabled(running_ >= 0 || runAll_);
-                if (ImGui::SmallButton(s.state == Step::State::Done ? "Again" : "Run")) ask(int(i));
-                ImGui::SameLine();
-                if (s.state == Step::State::Waiting && ImGui::SmallButton("Skip")) s.state = Step::State::Skipped;
-                ImGui::EndDisabled();
+            if (!lane) {
+                lanes_.push_back({});
+                lane = &lanes_.back();
+                lane->label = label;
+                lane->started = now;
             }
-            ImGui::PopID();
+            if (said.rfind("$ ", 0) == 0) lane->state = Lane::State::Running;
+            else if (said.rfind("done in ", 0) == 0 || said.rfind("already ", 0) == 0) lane->state = Lane::State::Done, lane->ended = now;
+            else if (said.rfind("FAILED", 0) == 0) lane->state = Lane::State::Failed, lane->ended = now;
+            else if (said.rfind("the manifest turns in", 0) == 0) lane->state = Lane::State::Waiting;
+            if (said.find("players told") != std::string::npos) lane->toldAt = now;
+            if (said.find("restarted after") != std::string::npos || said.find("not back in") != std::string::npos) lane->restarted = true;
+            if (!said.empty()) lane->lines.push_back(said);
         }
-        ImGui::EndTable();
+        lanesParsed_ = at;
     }
 
     void console(float height) {
         ImGui::Separator();
+        ImGui::TextColored(kGold, "Output");
+        if (!lanes_.empty()) {
+            ImGui::SameLine();
+            const auto pick = [&](const std::string& label, const char* shown) {
+                const bool on = laneFilter_ == label;
+                ImGui::PushStyleColor(ImGuiCol_Button, on ? ImVec4(0.30f, 0.33f, 0.40f, 1) : ImVec4(0.13f, 0.14f, 0.17f, 1));
+                if (ImGui::SmallButton(shown)) laneFilter_ = label;
+                ImGui::PopStyleColor();
+                ImGui::SameLine();
+            };
+            pick("", "All");
+            for (const Lane& lane : lanes_) pick(lane.label, lane.label.c_str());
+            ImGui::NewLine();
+        }
         if (console_) {
+            ImGui::SameLine();
             ImGui::TextDisabled("$ %s", console_->command().c_str());
             ImGui::SameLine();
             if (console_->done()) ImGui::TextColored(console_->ok() ? kGreen : kRed, "exit %d", console_->exitCode());
@@ -761,20 +1076,29 @@ private:
                 ImGui::TextDisabled("kept in %s", lastLog_.c_str());
             }
         } else {
-            ImGui::TextDisabled("A step's output shows here.");
+            ImGui::SameLine();
+            ImGui::TextDisabled("a step's output shows here");
         }
-        ImGui::BeginChild("console", ImVec2(0, height - 30), ImGuiChildFlags_Borders, ImGuiWindowFlags_HorizontalScrollbar);
+        ImGui::BeginChild("console", ImVec2(0, std::max(60.0f, ImGui::GetContentRegionAvail().y)), ImGuiChildFlags_Borders,
+                          ImGuiWindowFlags_HorizontalScrollbar);
         if (console_) {
-            const std::string text = console_->output();
-            // rsync's --progress redraws a line with \r; the last of each is what is shown.
             std::string shown;
-            shown.reserve(text.size());
-            size_t lineStart = 0;
-            for (char c : text) {
-                if (c == '\r') shown.resize(lineStart);
-                else {
-                    shown += c;
-                    if (c == '\n') lineStart = shown.size();
+            if (!laneFilter_.empty()) {
+                for (const Lane& lane : lanes_) {
+                    if (lane.label != laneFilter_) continue;
+                    for (const std::string& l : lane.lines) shown += l + "\n";
+                }
+            } else {
+                // rsync's --progress redraws a line with \r; the last of each is what is shown.
+                const std::string text = console_->output();
+                shown.reserve(text.size());
+                size_t lineStart = 0;
+                for (char c : text) {
+                    if (c == '\r') shown.resize(lineStart);
+                    else {
+                        shown += c;
+                        if (c == '\n') lineStart = shown.size();
+                    }
                 }
             }
             const bool atEnd = ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 4.0f;
@@ -782,6 +1106,52 @@ private:
             if (atEnd) ImGui::SetScrollHereY(1.0f);
         }
         ImGui::EndChild();
+        (void)height;
+    }
+
+    // ---- asked first ----
+
+    // What going live does, in its order, with the switch for telling the players.
+    void goLiveTimeline() {
+        const bool bump = plan_["bump"].boolOr(false);
+        const Json& todo = plan_["todo"];
+        std::string warners, sudden;
+        for (const Json* r : switching()) {
+            std::string& into = (warnPlayers_ && (*r)["warns"].boolOr(false)) ? warners : sudden;
+            into += (into.empty() ? "" : ", ") + (*r)["name"].stringOr("");
+        }
+        if (bump) {
+            ImGui::TextColored(kRed, "Protocol %d: players on the old game cannot log in from their server's restart until",
+                               int(plan_["protocol"].numberOr(0)));
+            ImGui::TextColored(kRed, "their launcher has the new client -- seconds, as the manifests turn with the restart.");
+            ImGui::Spacing();
+        }
+        if (!warners.empty() || !sudden.empty()) ImGui::Checkbox("Tell players 60 s before their server restarts", &warnPlayers_);
+        ImGui::Spacing();
+        if (!ImGui::BeginTable("timeline", 2, ImGuiTableFlags_SizingFixedFit)) return;
+        ImGui::TableSetupColumn("when", ImGuiTableColumnFlags_WidthFixed, 70);
+        ImGui::TableSetupColumn("what", ImGuiTableColumnFlags_WidthFixed, 560);
+        const auto row = [](const char* when, const ImVec4& tone, const std::string& what) {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::TextColored(kDim, "%s", when);
+            ImGui::TableNextColumn();
+            ImGui::PushTextWrapPos(0.0f);
+            ImGui::TextColored(tone, "%s", what.c_str());
+            ImGui::PopTextWrapPos();
+        };
+        const bool waits = !warners.empty();
+        if (waits) row("now", kGold, "Players on " + warners + " are told the server restarts in 60 s.");
+        if (!sudden.empty())
+            row("now", kRed, sudden + (warnPlayers_ ? " cannot warn yet (an older server): restarted at once." : ": restarted at once."));
+        if (waits) row("+60 s", kGold, warners + " restart; the game reconnects its players by itself.");
+        std::string clients;
+        for (size_t i = 0; i < todo["clients"].size(); ++i) clients += (i ? ", " : "") + todo["clients"].at(i).stringOr("");
+        if (!clients.empty()) row(bump && waits ? "+65 s" : "now", kBlue, "The " + clients + " update goes live in the launcher.");
+        if (todo["launcher"].boolOr(false)) row("now", kGold, "Every launcher replaces itself with the new one.");
+        if (todo["web"].boolOr(false)) row("now", kGreen, "The site restarts on the new commit.");
+        row("then", kDim, "Each part read back where it lives; anything not on " + plan_["head"].stringOr("") + " is marked WRONG.");
+        ImGui::EndTable();
     }
 
     void confirmPopup() {
@@ -790,21 +1160,13 @@ private:
             ImGui::OpenPopup("Ship updates?");
         }
         if (ImGui::BeginPopupModal("Ship updates?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGui::TextColored(plan_["bump"].boolOr(false) ? kRed : kGold, "%s", plan_["verdict"].stringOr("").c_str());
-            ImGui::TextDisabled("Every step below runs in turn from %s, with no more questions; the first that fails stops the rest.",
-                                plan_["head"].stringOr("").c_str());
+            ImGui::TextColored(kGold, "Prepare, go live and draft the notes from %s, asked only now;", plan_["head"].stringOr("").c_str());
+            ImGui::TextColored(kGold, "the first phase that fails stops the rest.");
             ImGui::Spacing();
-            for (size_t i = 0; i < steps_.size(); ++i) {
-                const Step& st = steps_[i];
-                if (st.state == Step::State::Done || st.state == Step::State::Skipped) continue;
-                ImGui::TextDisabled("%2zu.", i + 1);
-                ImGui::SameLine();
-                ImGui::TextColored(st.live ? kRed : ImGui::GetStyle().Colors[ImGuiCol_Text], "%-48s", st.command.c_str());
-                ImGui::SameLine();
-                ImGui::TextColored(st.live ? kRed : kDim, "%s", st.note.c_str());
-            }
+            goLiveTimeline();
             ImGui::Spacing();
-            if (ImGui::Button("Ship", ImVec2(120, 0))) {
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.62f, 0.22f, 0.18f, 1));
+            if (ImGui::Button("Ship", ImVec2(140, 0))) {
                 ImGui::CloseCurrentPopup();
                 const int first = nextWaiting(0);
                 if (first >= 0) {
@@ -812,23 +1174,29 @@ private:
                     start(first);
                 }
             }
+            ImGui::PopStyleColor();
             ImGui::SameLine();
             if (ImGui::Button("Not now", ImVec2(120, 0))) ImGui::CloseCurrentPopup();
             ImGui::EndPopup();
         }
-        if (confirm_ >= 0 && !ImGui::IsPopupOpen("Run a live step?")) ImGui::OpenPopup("Run a live step?");
-        if (ImGui::BeginPopupModal("Run a live step?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        if (confirm_ >= 0 && !ImGui::IsPopupOpen("Go live?")) ImGui::OpenPopup("Go live?");
+        if (ImGui::BeginPopupModal("Go live?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
             if (confirm_ >= 0) {
                 const Step& s = steps_[size_t(confirm_)];
-                ImGui::TextColored(kRed, "%s", s.note.c_str());
-                ImGui::Text("%s", s.command.c_str());
+                if (s.command.rfind("./mu ship switch", 0) == 0) goLiveTimeline();
+                else {
+                    ImGui::TextColored(kRed, "%s", s.note.c_str());
+                    ImGui::Text("%s", s.command.c_str());
+                }
                 ImGui::Spacing();
-                if (ImGui::Button("Run it", ImVec2(120, 0))) {
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.62f, 0.22f, 0.18f, 1));
+                if (ImGui::Button("Go live", ImVec2(140, 0))) {
                     const int i = confirm_;
                     confirm_ = -1;
                     ImGui::CloseCurrentPopup();
                     start(i);
                 }
+                ImGui::PopStyleColor();
                 ImGui::SameLine();
                 if (ImGui::Button("Not now", ImVec2(120, 0))) {
                     confirm_ = -1;
@@ -1040,7 +1408,7 @@ private:
 
     std::string root_, web_;
     std::string wantTab_;
-    std::unique_ptr<Job> status_, lines_, drafting_, sending_, step_, importing_;
+    std::unique_ptr<Job> status_, lines_, drafting_, sending_, step_, importing_, logJob_;
     bool statusTaken_ = false, linesTaken_ = false, draftTaken_ = false;
     Json plan_;
     std::string statusError_, siteError_, draftError_;
@@ -1060,6 +1428,11 @@ private:
     std::string autoDraft_;
     bool plain_ = false;
     int filter_ = 0;
+    std::vector<Lane> lanes_;
+    const Job* lanesOf_ = nullptr;
+    size_t lanesParsed_ = 0;
+    std::string laneFilter_;   // the lane the output shows, "" all
+    bool warnPlayers_ = true;  // Go live tells the players 60 s first; off adds --now
 };
 
 void style() {
@@ -1089,15 +1462,16 @@ void style() {
 }  // namespace
 
 int main(int argc, char** argv) {
-    std::string root = MU2_SOURCE_DIR, web, shot, tab, draftFrom;
+    std::string root = MU2_SOURCE_DIR, web, shot, tab, draftFrom, log;
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
         if (a == "--web" && i + 1 < argc) web = argv[++i];
         else if (a == "--shot" && i + 1 < argc) shot = argv[++i];
         else if (a == "--tab" && i + 1 < argc) tab = argv[++i];
         else if (a == "--draft-from" && i + 1 < argc) draftFrom = argv[++i];
+        else if (a == "--log" && i + 1 < argc) log = argv[++i];
         else {
-            std::fprintf(stderr, "usage: mu_ship [--web URL] [--tab release|updates] [--shot PNG]\n");
+            std::fprintf(stderr, "usage: mu_ship [--web URL] [--tab release|updates] [--log FILE] [--shot PNG]\n");
             return 2;
         }
     }
@@ -1120,6 +1494,7 @@ int main(int argc, char** argv) {
         app.refresh();
         if (!tab.empty()) app.openTab(tab);
         if (!draftFrom.empty()) app.draftFrom(draftFrom);
+        if (!log.empty()) app.showLog(log);
         auto last = Clock::now();
         Clock::time_point shotAt{};
         int shotFrames = -1;
