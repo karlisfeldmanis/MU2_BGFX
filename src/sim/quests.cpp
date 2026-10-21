@@ -1688,7 +1688,7 @@ QuestRow sealedWood() {
     row.receiverPlace = "Aida";
     row.title = "The Sealed Wood";
     row.offer[0] =
-        "\"North-east of here the trees end in a gate no elf walks through. Beyond it is Aida, a "
+        "\"South-west of here the trees end in a gate no elf walks through. Beyond it is Aida, a "
         "wood older than Noria, cut off from the rest of the world for as long as our songs "
         "remember.\"";
     row.offer[1] =
@@ -1698,7 +1698,7 @@ QuestRow sealedWood() {
         "\"Whoever is doing it has been alone in that wood a very long time. Go through the gate "
         "and find them, before the wood finishes what it started.\"";
     row.underway =
-        "\"The gate is north-east of town, past the last of the trees. Whoever plants the seeds "
+        "\"The gate is south-west of town, past the last of the trees. Whoever plants the seeds "
         "will be where the wood is quietest.\"";
     // The Seed Master's, in Aida's hall; what the wood became is his own quest's offer, which
     // opens as this closes (seedMastersClearing).

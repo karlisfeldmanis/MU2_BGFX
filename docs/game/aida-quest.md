@@ -17,8 +17,9 @@ MU's own facts, the rest ours:
   aida-port §1.1).
 - **Hell Maine is "a demon in league with Kundun"** (쿤둔과 계약을 맺은 마족, the same notice).
 - **The way in is a warp gate in Noria** (the same notice): Noria gate 120 at 220,30-226,30, in
-  the north-east, 82 steps from Noria's town. **Since 46b5dd27 it asks level 300** (the user:
-  'lets ask LVL 300 its a late game activity'), 200 for the Magic Gladiator.
+  the south-west as the camera sees it (north-east on the map grid), 82 steps from Noria's town.
+  **Since 46b5dd27 it asks level 300** (the user: 'lets ask LVL 300 its a late game activity'),
+  200 for the Magic Gladiator.
 - **The giver's figure is MU's Seed Master** (NPC 452, `MODEL_SEED_MASTER`,
   `Data/NPC/goblinmaster.bmd`, `ZzzOpenData.cpp:2105`): an old goblin sage with long ears, a
   white beard, a red and blue robe and a staff. In MU he is Season 4's socket NPC, who makes Seed
@@ -58,7 +59,7 @@ handed in at least once). Once. One uncounted step, "Find the Seed Master in Aid
 talking to him and handed in to him (`receiver`), as The Drowned Song is to Lirien.
 
 Offer (Peia's voice):
-> "North-east of here the trees end in a gate no elf walks through. Beyond it is Aida, a wood
+> "South-west of here the trees end in a gate no elf walks through. Beyond it is Aida, a wood
 > older than Noria, cut off from the rest of the world for as long as our songs remember."
 >
 > "Something lives in there that is not a monster. Every spring, seeds come through the gate on
@@ -68,7 +69,7 @@ Offer (Peia's voice):
 > them, before the wood finishes what it started."
 
 Underway:
-> "The gate is north-east of town, past the last of the trees. Whoever plants the seeds will be
+> "The gate is south-west of town, past the last of the trees. Whoever plants the seeds will be
 > where the wood is quietest."
 
 Hand-in (the Seed Master's voice):
