@@ -8,7 +8,7 @@
 //   * him: a bone arrow at the middle, turned the way he faces;
 //   * her summon: a paler green dot with his hairline of ink, held to the edge when it is out of
 //     reach, so a summon left behind is found (the user, 2026-10-02: 'show summon on minimap');
-//   * every other player: an orange dot, rimmed, held to the edge (2026-10-08: 'i need to see on
+//   * every other player: a green dot (orange until 2026-10-21), rimmed, held to the edge (2026-10-08: 'i need to see on
 //     map bots with some ornage color circle'); hovered, his name, level and class -- not "Bot"
 //     (2026-10-16: 'we need to show player not bot on orange circle on minimap');
 //   * the quest's monsters: a red dot on each live one of a breed a quest still counts -- the
@@ -140,7 +140,7 @@ public:
     enum class Glyph : uint8_t { Hero, Quarry, Offer, HandIn, Vendor, Smith, Vault, Gate, Folk, Potion, Summon,
                                  Player, Dragon, Elite };
     // **An Elite near** (sim/elite.h): while one is within the disc's reach its mark, a gold
-    // horned head, pulses once every kElitePulseSeconds, brightening with the strike of its bell
+    // dot, pulses once every kElitePulseSeconds, brightening with the strike of its bell
     // and easing off with the ring; each pulse owes the bell, which takeBell() hands on once
     // (the desk plays it, Play::Ui::Bell). The only alert there is (the user, 2026-10-21:
     // "minimap with pulsing golden monster will do the trick", "it will be notification loop

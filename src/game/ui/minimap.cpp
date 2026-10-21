@@ -167,9 +167,6 @@ constexpr float kDragon[10][2] = {
     {kMid, 2.6f},  {11.6f, 7.0f}, {18.2f, 4.6f}, {14.6f, 11.2f}, {11.5f, 12.0f},
     {kMid, 17.6f}, {8.5f, 12.0f}, {5.4f, 11.2f}, {1.8f, 4.6f},   {8.4f, 7.0f},
 };
-// An Elite (sim/elite.h): a monster's round head with two horns swept up and out, its eyes cut.
-constexpr float kHornLeft[3][2] = {{6.6f, 9.0f}, {2.8f, 2.6f}, {9.0f, 7.0f}};
-constexpr float kHornRight[3][2] = {{13.4f, 9.0f}, {17.2f, 2.6f}, {11.0f, 7.0f}};
 // The merchant's pouch: its neck, over a round body.
 constexpr float kNeck[4][2] = {{8.4f, 6.2f}, {11.6f, 6.2f}, {10.9f, 8.4f}, {9.1f, 8.4f}};
 
@@ -203,12 +200,9 @@ float shape(Minimap::Glyph glyph, float x, float y) {
         // Another player: the summon's dot, a size up again.
         case Glyph::Player: return circle(x, y, kMid, kMid, 3.8f);
         case Glyph::Dragon: return polygon(x, y, kDragon);
-        case Glyph::Elite: {
-            const float head = std::min({circle(x, y, kMid, 11.6f, 4.9f), polygon(x, y, kHornLeft),
-                                         polygon(x, y, kHornRight)});
-            const float eyes = std::min(circle(x, y, 8.1f, 11.2f, 1.15f), circle(x, y, 11.9f, 11.2f, 1.15f));
-            return std::max(head, -eyes);
-        }
+        // An Elite (sim/elite.h): a plain dot, a player's size, its gold and its pulse what tell it
+        // (the user, 2026-10-21: "dont use special icon in minimap just pulsating gold dots").
+        case Glyph::Elite: return circle(x, y, kMid, kMid, 3.8f);
         // Anyone else worth a name: a head over shoulders, the townsperson himself.
         case Glyph::Folk:
             return std::min(circle(x, y, kMid, 6.6f, 2.4f),
@@ -265,12 +259,13 @@ constexpr uint32_t kAgainBlue = gfx::rgba(0.56f, 0.80f, 1.00f);
 constexpr uint32_t kHeroGreen = gfx::rgba(0.42f, 0.86f, 0.36f);
 // Her summon, his green paled toward bone, so it reads as his and not as him.
 constexpr uint32_t kSummonGreen = gfx::rgba(0.66f, 0.90f, 0.60f);
-// Another player in orange (the user, 2026-10-08).
-constexpr uint32_t kPlayerOrange = gfx::rgba(1.00f, 0.58f, 0.12f);
+// Another player in green (the user, 2026-10-21: "make players green dots on minimap"; orange
+// since 2026-10-08), a deeper green than his arrow's, so a dot is a player and the arrow him.
+constexpr uint32_t kPlayerGreen = gfx::rgba(0.22f, 0.74f, 0.30f);
 // The Golden Dragon where it has landed (the user, 2026-10-08: "show on minimap special dragon
 // dot when he lands"): its own gold, paler than a hand-in's, rimmed in ink.
 constexpr uint32_t kDragonGold = gfx::rgba(1.00f, 0.84f, 0.30f);
-// An Elite's head in a deeper gold, and the white gold it flares to on its bell's strike.
+// An Elite's dot in a deeper gold, and the white gold it flares to on its bell's strike.
 constexpr uint32_t kEliteGold = gfx::rgba(1.00f, 0.76f, 0.16f);
 constexpr uint32_t kEliteFlare = gfx::rgba(1.00f, 0.96f, 0.74f);
 // The pulse, one every two seconds, laid on the bell's own loudness (content/sounds/elite_bell.wav,
@@ -297,7 +292,7 @@ uint32_t toneOf(Minimap::Glyph glyph) {
     switch (glyph) {
         case Glyph::Hero: return kHeroGreen;
         case Glyph::Summon: return kSummonGreen;
-        case Glyph::Player: return kPlayerOrange;
+        case Glyph::Player: return kPlayerGreen;
         case Glyph::Dragon: return kDragonGold;
         case Glyph::Elite: return kEliteGold;
         // A quest ready to hand in is gold, the user's (2026-10-01): "lets color finished quests
@@ -1075,7 +1070,7 @@ void Minimap::rebuild(const Play& play) {
                             : mark.pinned               ? 0.7f
                                                         : float(mark.fade) / 16.0f;
         tone = (tone & 0x00FFFFFFu) | (uint32_t(shown * 255.0f + 0.5f) << 24);
-        // An Elite: its halo swelling and fading with the bell, and the head over it flaring.
+        // An Elite: its halo swelling and fading with the bell, and the dot over it flaring.
         if (mark.glyph == Glyph::Elite) {
             const float glow = float(mark.pulse) / 16.0f;
             const auto at = [&](uint32_t ink, float alpha) { return (ink & 0x00FFFFFFu) | (uint32_t(alpha * 255.0f + 0.5f) << 24); };
