@@ -301,6 +301,23 @@ void Chat::open(const gfx::Interface& interface) {
 }
 
 bool Chat::covers(float x, float y) const {
+    if (showing_ && !open_ && frame_.has(x, y) && !row_.has(x, y)) {
+        const float u = tip::unit();
+        const bool acts =
+            (!locked_ && grip_.has(x, y)) || (unseen_ > 0 && newer_.has(x, y)) ||
+            (logTall_ > logBox_.h && x >= logBox_.right() - 8.0f * u && logBox_.has(x, y)) ||
+            std::any_of(nameBoxes_.begin(), nameBoxes_.end(), [&](const NameBox& one) { return one.box.has(x, y); }) ||
+            std::any_of(linkBoxes_.begin(), linkBoxes_.end(), [&](const LinkBox& one) { return one.box.has(x, y); }) ||
+            std::any_of(choices_.begin(), choices_.end(), [&](const Choice& one) { return one.box.has(x, y); });
+        if (!acts) {
+            return (settingsOpen_ && settingsBox_.has(x, y)) || (menu_ != Menu::None && menuBox_.has(x, y)) ||
+                   (inviting_ && inviteCard_.has(x, y));
+        }
+    }
+    return over(x, y);
+}
+
+bool Chat::over(float x, float y) const {
     return (showing_ && (frame_.has(x, y) || (settingsOpen_ && settingsBox_.has(x, y)) ||
                          (menu_ != Menu::None && menuBox_.has(x, y)) ||
                          (open_ && !suggestions_.empty() && suggestBox_.has(x, y)))) ||
@@ -1509,7 +1526,7 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
     }
 
     // Lit: the pointer on it, the box open, a drag, a menu or the settings.
-    const bool over = covers(pointer.x, pointer.y);
+    const bool over = this->over(pointer.x, pointer.y);
     const bool wantLit = open_ || over || drag_ != Drag::None || menu_ != Menu::None || settingsOpen_;
     lit_ = std::clamp(lit_ + (wantLit ? 1.0f : -1.0f) * seconds / kLight, 0.0f, 1.0f);
 

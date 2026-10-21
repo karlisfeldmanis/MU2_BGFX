@@ -81,8 +81,13 @@ public:
 
     // Whether it has the keyboard: typing, so no other key is the game's.
     bool typing() const { return open_; }
-    // Whether the pointer is on it: the tabs, the panel, the settings, a menu of its own.
+    // Whether a press there is its: the tabs, the settings, a menu of its own, and the panel while
+    // the edit box is open. Shut, the panel takes only what acts -- the grip, the slider, a name,
+    // a link, an invite's answer -- and a press on its bare log walks him (the user, 2026-10-21:
+    // "u cant click to move by pressing on chat region. chat is not activated").
     bool covers(float x, float y) const;
+    // Whether the pointer is anywhere on it, for its light and the wheel.
+    bool over(float x, float y) const;
 
     bool showing() const { return showing_; }
     // The suggestions over the input, a hovered link's card and its menus: their own canvas,
