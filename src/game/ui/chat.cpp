@@ -263,7 +263,7 @@ struct Chat::Carried {
     std::vector<std::string> whispers;
     std::map<std::string, int> unread;
     std::string tab, lastFrom, draft;
-    Sticky sticky;
+    Sticky sticky, generalSticky;
     std::vector<Sent> sent;
     bool wasInParty = false;
 };
@@ -284,6 +284,7 @@ void Chat::carry() {
     kept->lastFrom = lastFrom_;
     kept->draft = draft_;
     kept->sticky = sticky_;
+    kept->generalSticky = generalSticky_;
     kept->sent = std::move(sent_);
     kept->wasInParty = wasInParty_;
     carried_ = std::move(kept);
@@ -361,6 +362,7 @@ void Chat::load() {
         lastFrom_ = carried_->lastFrom;
         draft_ = carried_->draft;
         sticky_ = carried_->sticky;
+        generalSticky_ = carried_->generalSticky;
         sent_ = std::move(carried_->sent);
         wasInParty_ = carried_->wasInParty;
         carried_.reset();
@@ -442,6 +444,8 @@ std::string Chat::channelWord() const {
 void Chat::stick(net::Channel channel, const std::string& to) {
     sticky_.channel = channel;
     sticky_.to = channel == net::Channel::Whisper ? to : std::string();
+    // General's own channel, for when its tab is chosen again: Say, Map, Party or Guild.
+    if (channel != net::Channel::Global && channel != net::Channel::Whisper) generalSticky_ = sticky_;
     if (channel == net::Channel::Whisper && !to.empty()) {
         whispers_.erase(std::remove(whispers_.begin(), whispers_.end(), to), whispers_.end());
         whispers_.push_back(to);
@@ -809,6 +813,23 @@ void Chat::select(const std::string& key) {
     logScroll_ = 0.0f;
     unseen_ = 0;
     menu_ = Menu::None;
+    // The tab chosen is where he talks next (the user, 2026-10-21: "if i press global chat, user
+    // needs to write on global chat, if i press on whisper i reply on that whisper"): Global on
+    // Global; Whispers to the last who whispered him, else the last he whispered; General back on
+    // its own channel, the one he last said something on there. The box's word says which, and a
+    // slash still changes it.
+    if (key == "global" && !leftGlobal_) {
+        stick(net::Channel::Global);
+    } else if (key == "whispers") {
+        const std::string to = !lastFrom_.empty() ? lastFrom_ : whispers_.empty() ? std::string() : whispers_.back();
+        if (!to.empty()) stick(net::Channel::Whisper, to);
+    } else if (key == "general") {
+        Sticky back = generalSticky_;
+        if ((back.channel == net::Channel::Party && !inParty_) || (back.channel == net::Channel::Guild && !inGuild_)) {
+            back = {inParty_ ? net::Channel::Party : net::Channel::Local, {}};
+        }
+        stick(back.channel, back.to);
+    }
 }
 
 void Chat::whisperTo(const std::string& name) {

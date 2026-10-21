@@ -2,10 +2,12 @@
 // typed and said (net::Say). WoW's way, as the user tuned it on claude.ai/artifact/S5h6Pt8CarQMb8bUWCyPd8
 // (2026-10-21: "we need to refactor how the chat works, its seems clumsy. i like how WoW is designed"):
 //
-//   * **Where you read and where you talk are two things.** The tabs only filter what the log
-//     shows: General (everything but Global), Global, Whispers (every whisper, when the setting
-//     keeps them a tab). The line goes where the edit box says -- its channel's word at its left
-//     ("Say", "Party", "Global", "To Ilse") -- and the box keeps the last channel used. Joining a
+//   * **The tabs filter what the log shows**: General (everything but Global), Global, Whispers
+//     (every whisper, when the setting keeps them a tab). The line goes where the edit box says --
+//     its channel's word at its left ("Say", "Party", "Global", "To Ilse") -- and the box keeps the
+//     last channel used. Choosing a tab sets it (the user, 2026-10-21: "if i press global chat,
+//     user needs to write on global chat, if i press on whisper i reply on that whisper"): Global
+//     on Global, Whispers to the last who whispered, General back on its own channel. Joining a
 //     party sets it to Party once (the 2026-10-09 rule, softened); leaving one puts Say back.
 //     /s /y /m /p /g /1 and a space switch it as he types, the slash eaten; /w NAME and a space
 //     whisper him; /r and a space answer the last whisper. Tab steps through the people he has
@@ -303,6 +305,7 @@ private:
 
     // The edit box's channel, and how he stood with a party and a guild last frame.
     Sticky sticky_;
+    Sticky generalSticky_;  // General's own: what its tab puts back (Say, Map, Party, Guild)
     bool inParty_ = false, inGuild_ = false, wasInParty_ = false;
     std::string lastFrom_;  // the last who whispered him: /r's
     std::string draft_;
