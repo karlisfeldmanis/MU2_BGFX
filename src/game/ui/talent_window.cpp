@@ -78,9 +78,11 @@ constexpr float kOpenSeconds = 0.95f, kMajorSeconds = 1.4f, kGlintSeconds = 0.45
 // block?"): when a talent lights, soft puffs billow out from its frame, rise, curl, grow and fade.
 // MU's own smoke -- smoke01, BITMAP_SMOKE, a grey wisp on black, laid on as light so it glows
 // warm grey and lit from below by the ember -- over smoke02, the fire's brown puff, faint, for
-// body. A major's is bigger and denser. How long a puff lives, at most:
-constexpr float kOpenSmoke = 1.25f, kMajorSmoke = 1.55f;
-constexpr int kOpenPuffs = 7, kMajorPuffs = 12;
+// body. A major's is a third bigger, with a few more puffs. How long a puff lives, at most -- and
+// toned down once (the user, 2026-10-21: "smoke effect is little bit too much"): fainter, nearer
+// the frame, shorter, greyer, the brown body all but gone:
+constexpr float kOpenSmoke = 1.0f, kMajorSmoke = 1.2f;
+constexpr int kOpenPuffs = 7, kMajorPuffs = 8;
 // A reset runs up the tree a tier at a time, bottom first: three tiers in about 0.3 s.
 constexpr float kRippleStep = 0.1f, kFadeSeconds = 0.12f;
 // The head's figure, as the points in hand change: a white-gold flash settling, and a small pop.
@@ -317,7 +319,7 @@ void puff(gfx::Canvas& canvas, const gfx::Art& wisp, const gfx::Art& thick, floa
         xy[k * 2 + 1] = cy + off[k][0] * n + off[k][1] * c;
     }
     if (body > 0.003f && thick.valid()) {
-        const uint32_t ink = gfx::rgba(0.86f, 0.80f, 0.74f, std::clamp(body, 0.0f, 1.0f));
+        const uint32_t ink = gfx::rgba(0.80f, 0.79f, 0.78f, std::clamp(body, 0.0f, 1.0f));
         const uint32_t inks[4] = {ink, ink, ink, ink};
         canvas.polygon(thick, xy, uv, inks, 4);
     }
@@ -335,8 +337,8 @@ void puff(gfx::Canvas& canvas, const gfx::Art& wisp, const gfx::Art& thick, floa
                 // 0 at the puff's top, 1 at its foot, as it stands on the screen.
                 const float down = std::clamp((lxy[k * 2 + 1] - cy) / (g * 1.42f) * 0.5f + 0.5f, 0.0f, 1.0f);
                 const float e = ember * down;
-                const float gr = s * (0.80f * (1.0f - e) + 1.00f * e), gg = s * (0.74f * (1.0f - e) + 0.52f * e),
-                            gb = s * (0.68f * (1.0f - e) + 0.24f * e);
+                const float gr = s * (0.78f * (1.0f - e) + 1.00f * e), gg = s * (0.75f * (1.0f - e) + 0.52f * e),
+                            gb = s * (0.72f * (1.0f - e) + 0.24f * e);
                 inks[k] = gfx::rgba(std::min(1.0f, gr), std::min(1.0f, gg), std::min(1.0f, gb), 0.0f);
             }
             canvas.lightImage(wisp, lxy, uv, inks, 4);
@@ -756,7 +758,7 @@ void TalentWindow::effects() {
                 const gfx::Art& thick = arts_->get("smoke");
                 const bool major = b.kind == Burst::Major;
                 const int puffs = major ? kMajorPuffs : kOpenPuffs;
-                const float grow = major ? 1.35f : 1.0f;
+                const float grow = major ? 1.33f : 1.0f;
                 for (int k = 0; k < puffs; ++k) {
                     const auto n = [&](uint32_t ch) { return noise01(seed, uint32_t(300 + k * 8) + ch); };
                     const float delay = 0.05f * float(k) * (major ? 0.6f : 1.0f) + 0.04f * n(0);
@@ -770,17 +772,17 @@ void TalentWindow::effects() {
                     const float ex = std::cos(at), ey = std::sin(at);
                     const float sx = cx + ex * frame.w * 0.42f, sy = cy + ey * frame.h * 0.42f;
                     // Out from the frame, up as it cools, and a curl across its path.
-                    const float push = size * (0.30f + 0.35f * n(3)) * grow * out;
-                    const float lift = size * (0.35f + 0.55f * n(4)) * grow * (0.4f * out + 0.6f * q);
+                    const float push = size * (0.21f + 0.25f * n(3)) * grow * out;
+                    const float lift = size * (0.25f + 0.38f * n(4)) * grow * (0.4f * out + 0.6f * q);
                     const float curl = std::sin(q * 4.2f + 6.2831853f * n(5)) * size * 0.10f * q;
                     const float px = sx + ex * push - ey * curl, py = sy + ey * push * 0.7f - lift + ex * curl;
-                    const float r = size * (0.26f + 0.50f * out) * grow * (0.8f + 0.4f * n(6));
+                    const float r = size * (0.24f + 0.35f * out) * grow * (0.8f + 0.4f * n(6));
                     const float turn = 6.2831853f * n(7) + (n(1) - 0.5f) * 2.4f * a;
                     const float in = std::min(1.0f, a / 0.12f);
                     const float fade = in * std::pow(1.0f - q, 1.4f);
                     const float ember = std::pow(std::max(0.0f, 1.0f - a / 0.55f), 1.5f);
-                    puff(fx, wisp, thick, px, py, r, turn, (major ? 1.0f : 0.9f) * fade, ember,
-                         (major ? 0.32f : 0.26f) * fade);
+                    puff(fx, wisp, thick, px, py, r, turn, (major ? 0.62f : 0.56f) * fade, ember,
+                         (major ? 0.08f : 0.06f) * fade);
                 }
             }
             if (age > length) continue;
