@@ -16,6 +16,7 @@
 #include <deque>
 #include <string>
 #include <utility>
+#include <unordered_map>
 #include <vector>
 
 #include "content/ground.h"
@@ -500,9 +501,17 @@ public:
     void closeDeal() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Deal)}); }
     // What the realm said of his trades since the desk last took it (What::Deal, his own).
     std::vector<sim::Happening> takeDealNews() { return std::exchange(dealNews_, {}); }
+    // Things picked up off the ground since the last ask: by whom (a body id) and what.
+    struct Looted {
+        uint32_t who = 0;
+        sim::Held what;
+    };
+    std::vector<Looted> takeLooted() { return std::exchange(looted_, {}); }
     // The player in this world called `name`, by body id, or 0.
     uint32_t playerNamed(const std::string& name) const;
     std::vector<sim::Happening> dealNews_;
+    std::vector<Looted> looted_;
+    std::unordered_map<uint32_t, sim::Held> lyingSeen_;  // a lying thing's id to what it is
     // The last mix's answer while it stands: 1 made, 0 failed, -1 none since the box was last
     // filled or closed. The window's line in place of the recipe.
     int mixAnswer() const { return realm_.mixing() >= 0 ? mixAnswer_ : -1; }

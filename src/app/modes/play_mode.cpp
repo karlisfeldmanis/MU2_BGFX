@@ -1290,6 +1290,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             for (const auto& [frame, text] : args.uiTyped) {
                 if (at.index == frame) desk_.scriptType(text);
             }
+            if (args.chatSample && at.index == 2) desk_.sampleChat();
             feedLine(ctx, float(deltaSeconds));
             desk_.update(float(deltaSeconds), ctx.window, world_.played(), pointerX, pointerY);
             // The chip's list opened: the regions timed to fill it, once a run. Its note closed:

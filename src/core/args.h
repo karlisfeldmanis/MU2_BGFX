@@ -455,6 +455,9 @@ struct Args {
     // A cue file that plays the pointer and the keys (app/modes/director.h); the mouse is not
     // read while it runs.
     std::string script;
+    // `--chat-sample`: the chat filled with a line of every kind on its first frames -- a review
+    // run's picture of it, off a server.
+    bool chatSample = false;
     // Things put in the bag at the start: NAME or NAME:COUNT, comma separated.
     std::string give;
     // --auto-drink H:M: his auto-drink lines in percent, 0 for never (sim::AutoDrink), until the

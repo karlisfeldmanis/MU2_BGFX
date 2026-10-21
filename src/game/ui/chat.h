@@ -1,48 +1,47 @@
-// The chat, at the bottom left over the HUD's left wing (the user's mockup,
-// claude.ai/artifact/AMHkjGrUWpJVkPmAbuDvGX, 2026-10-09): what the server passes on (net::Heard)
-// read on tabs, and a line typed and said (net::Say).
+// The chat, at the bottom left: what the server passes on (net::Heard) read on tabs, and a line
+// typed and said (net::Say). WoW's way, as the user tuned it on claude.ai/artifact/S5h6Pt8CarQMb8bUWCyPd8
+// (2026-10-21: "we need to refactor how the chat works, its seems clumsy. i like how WoW is designed"):
 //
-// MU 0.75's chat was one box with its lines over the heads. Ours, as the user tuned the page:
+//   * **Where you read and where you talk are two things.** The tabs only filter what the log
+//     shows: General (everything but Global), Global, Whispers (every whisper, when the setting
+//     keeps them a tab). The line goes where the edit box says -- its channel's word at its left
+//     ("Say", "Party", "Global", "To Ilse") -- and the box keeps the last channel used. Joining a
+//     party sets it to Party once (the 2026-10-09 rule, softened); leaving one puts Say back.
+//     /s /y /m /p /g /1 and a space switch it as he types, the slash eaten; /w NAME and a space
+//     whisper him; /r and a space answer the last whisper. Tab steps through the people he has
+//     whispered with, Up and Down bring back what he said. A click on the channel's word lists
+//     the channels for those who never type a slash.
+//   * **Always shown**, quieter while idle (the user: "lets always show chat, but when its not
+//     active make it less vissible"): the fill, the edge, the tabs and the lines dimmed by the
+//     When-idle setting; a line arriving stands at full for a few seconds and settles. The
+//     pointer on it, or Enter, brings it to full. Enter opens the edit box and nothing else.
+//   * **The look** ("B · Edged", then "tabs has to be outside the main container", "active tab
+//     has to be perfectly merged with container color with some gradient coming from top"): a
+//     flat see-through fill, a 1-unit iron edge brighter at the top drawn as its own line (a
+//     layer under the fill tints it), a soft drop, and the tabs standing on the panel's top edge
+//     as plain words; the chosen one wears the panel's own fill and edge, the edge broken under
+//     it, a warm light from its top running down into the panel. No red bar.
+//   * **Lines read as WoW's**: the whole line in its channel's ink ("[Party] [Elva]: ...",
+//     "[Ilse] whispers: ...", "To [Ilse]: ..."), names in brackets that answer the pointer -- a
+//     click whispers, a right click asks for the player menu (Chat::takeMenuAsk). General also
+//     says what he and his party pick up ("You loot [X].", "Brann loots [X]."; the user, "in
+//     general we need to also show what items was pickup by player or party member") and the
+//     answers to invites and trades ("also acepted,declined trades/parties/guildinvites").
+//   * **Settings** dock on the chat's right, behind the sliders button at the tab row's end
+//     ("settong has to be right side of chat container not overlaping the chat"): text size,
+//     the fill's strength, how bright it stays idle, time stamps, lines over heads, whispers in
+//     their own tab or in General, the lock, and a reset. A tab's right click lists what it
+//     shows. Everything kept in chat.txt in the player's folder.
+//   * **Its size and place** the player's: the corner grip at the panel's top right sets width and
+//     height (it grows up and right from its foot), a double click on it puts the first size back;
+//     a tab dragged moves the whole chat. The lock keeps both.
+//   * **A party, guild or trade invite** stands in the middle over the HUD with Accept and Decline,
+//     as it did; the log keeps its line.
 //
-//   * **Tabs.** General and Global, WoW's (the user picked A on
-//     claude.ai/artifact/VQZvp1SfnaQMegCmGgA5rD, 2026-10-18): each shows the channels ticked on
-//     its list, behind the lines icon at the row's right -- General every one but Global, Global
-//     Global alone, to begin with. Each player who whispers him, or whom he whispers, opens a tab
-//     of his own with a close. The row scrolls sideways on a thin slider when it is too long
-//     ("slider has to be for whole head").
-//   * **No box.** The quest tracker's soft dark cloud behind it, centred on the screen's left
-//     edge, and two iron rules fading out over their last third ("similiar like we do for
-//     quests", "gradient has to be darker"). The chosen tab lit gold and rising from its bar.
-//   * **Its height** the player's: an up-and-down grip on its top edge; and the lines scroll
-//     inside, on a slider of their own at the right.
-//   * **Closed**, the last lines stay over the world a while and fade -- as many as his height
-//     for it holds -- with no cloud under them, "Enter to chat" and the whispers waiting.
-//   * **A party invite** stands in the middle over the HUD, above where a fight's Zen is said
-//     (game/ui/tally.h), with Accept and Decline, open or shut ("party invites has to be middle
-//     of center similiar position where zen is gained"). The log keeps its line.
-//
-// Enter opens it with the keyboard (Desk::typing, so I and C and Q type and do nothing else);
-// Enter again says the line and shuts it, Escape shuts it, the draft kept.
-//
-// **Where a line goes** (the user, 2026-10-09: "default chat channel has to be /all and only when
-// char is inside part it should go to party not provates messages", "whispering is something
-// whuch need addiitonal click"): on General, to his party when he has one and to those near him
-// (Local) when not, or the channel he pressed the chip to; on Global, Global; a whisper only on
-// its player's tab. A whisper heard never moves it. A slash is a command for one line, the
-// default left as it was: /s Local, /y or /m Map, /1 Global, /p, /g, /w NAME TEXT, /r TEXT; one
-// with nothing after it sets the chip instead. /leave global and /join global; /ignore NAME and
-// /unignore NAME, whose lines, whispers and invites he no longer hears. The ticks, Global left and
-// the ignored are kept in chat.txt in the player's folder.
-// A Local or Map line said by someone in view goes up over his head too, as MU's did
-// (Play::bubble); a Global line never does.
-//
-// **Items named** (the user, 2026-10-11: "allow bots to write on chat [item name] with working
-// tooltips", then "autocompletion ... when they write [item name]"): a line may carry item links
-// (sim/item_link.h), drawn "[Name]" in the thing's quality colour; the pointer on one, the chat
-// open, shows its card. Typing "[" and a few letters lists what he carries that is so named, then
-// every thing the world knows by it; Tab, Enter or a click puts the link in, Up and Down choose.
-// Shift and a click on a thing in the bag links it. A "[Name]" typed out whole and sent becomes
-// the link of the first thing so named, his own before the catalogue's.
+// **Items named** (2026-10-11): a line may carry item links (sim/item_link.h), drawn "[Name]" in
+// the thing's quality colour; the pointer on one shows its card. Typing "[" and a few letters lists
+// what he carries so named, then what the world knows; Tab, Enter or a click puts the link in.
+// Shift and a click on a thing in the bag links it. A "[Name]" typed out whole becomes a link.
 #pragma once
 
 #include <map>
@@ -67,8 +66,8 @@ public:
     // first frame, as chat.txt is read on it. Empty is the local realm.
     void setRealm(const std::string& server) { realm_ = server.empty() ? "local" : server; }
 
-    // A frame. `bottom` is where its foot stands (over the HUD's plate) and `right` the most it
-    // may reach (short of the buffs); `typed`, `enter` and `escape` are the keyboard's when no
+    // A frame. `bottom` is the HUD plate's top (the invite card stands over it); `right` is kept
+    // for the desk's call and unused. `typed`, `enter` and `escape` are the keyboard's when no
     // other box has it; `wheel` the scroll wheel's.
     void update(float seconds, float width, float height, float bottom, float right,
                 const Pointer& pointer, float wheel, const std::string& typed, int backspaces,
@@ -76,11 +75,12 @@ public:
 
     // Whether it has the keyboard: typing, so no other key is the game's.
     bool typing() const { return open_; }
-    // Whether the pointer is on it: only while it is open. Closed, the lines take no clicks.
+    // Whether the pointer is on it: the tabs, the panel, the settings, a menu of its own.
     bool covers(float x, float y) const;
 
     bool showing() const { return showing_; }
-    // The suggestions over the input and a hovered link's card: their own canvas, drawn last.
+    // The suggestions over the input, a hovered link's card and its menus: their own canvas,
+    // drawn last.
     bool tipping() const { return tipping_; }
     const gfx::Canvas& tipCanvas() const { return tip_; }
     void useTipStage(Stage* stage) { tipStage_ = stage; }
@@ -90,13 +90,18 @@ public:
     // The open invite in the middle (its own canvas, over the plate), while there is one.
     bool inviting() const { return inviting_; }
     const gfx::Canvas& invite() const { return inviteDrawn_; }
-    const gfx::Canvas& back() const { return back_; }    // the cloud, the rules, the input
-    const gfx::Canvas& tabs() const { return tabsDrawn_; }  // the tab row, clipped to it
+    const gfx::Canvas& back() const { return back_; }    // the drop, the fill, the edge, the input
+    const gfx::Canvas& tabs() const { return tabsDrawn_; }  // the tab row's words and icons
     const gfx::Canvas& lines() const { return lines_; }   // the log, clipped to its well
+    // The settings docked on the right, while they are open.
+    bool setting() const { return settingsOpen_; }
+    const gfx::Canvas& settings() const { return settingsDrawn_; }
 
-    // A whisper to `name` begun from outside (the party bar's menu): his tab opened and chosen,
-    // and the line open to type, as /w and a name alone does.
+    // A whisper to `name` begun from outside (the party bar's menu, a name clicked): the edit
+    // box opened on "To NAME".
     void whisperTo(const std::string& name);
+    // A name right-clicked in the log: whose, and where the pointer was, once.
+    bool takeMenuAsk(std::string* name, float* x, float* y);
 
     // A line from outside: Play's own, as a party's or the server's would be. `name` empty is a
     // line of the channel itself.
@@ -112,32 +117,39 @@ public:
     // his guild. The party's card in the middle, kicked "Guild", with the mark and a line of what
     // joining means; Accept and Decline answer the server's guild (net::GuildAsk).
     bool guildCalled(const net::GuildCall& call);  // false likewise
-    // The open asks of one kind answered at once, as their buttons would answer them: `trades`
-    // the trades' asks, else the party's and raid's invites (never a guild's). The Helper's
-    // (HelperSettings::invites and noTrades). How many it answered.
-    int answerOpen(Play& play, bool trades, bool accept);
     // The guild's latest line from the server ("You invited Wren."), heard within `within`
     // seconds, or empty: the guild windows' foot says it under what was pressed.
     std::string guildSaid(float within) const;
+    // The open invites or trades answered for him, as the Helper's settings say (desk.cpp): each
+    // as Accept or Decline on its card would. The count answered.
+    int answerOpen(Play& play, bool trades, bool accept);
 
-    // On to another world (a gate, a warp, the travel window): the log, the whisper tabs, the
-    // chosen tab and its height go with him, since the world's screen -- this chat with it -- is
+    // A review run's lines (--chat-sample): one of every kind, so a picture shows them all.
+    void sample();
+
+    // On to another world (a gate, a warp, the travel window): the log, the chosen tab, the
+    // channel and the draft go with him, since the world's screen -- this chat with it -- is
     // made anew for each map (application.cpp). The next world's chat takes them on its first
     // frame. The character screen leaves them behind.
     void carry();
 
 private:
+    // What a line is, beyond its channel: said by someone, a pickup, or an invite's or trade's
+    // news. The last two are General's own ticks (kLootBit, kAnswerBit).
+    enum class Kind : uint8_t { Said, Loot, Answer };
     struct Line {
         net::Channel channel = net::Channel::Map;
+        Kind kind = Kind::Said;
         std::string name, to, text;
         // `text` as it reads, its links "[Name]", and where each stands in it.
         std::string shown;
         std::vector<sim::ItemLink> links;
         const content::Tables* resolved = nullptr;  // the tables `links` were read against
         bool bot = false;
-        float age = 0.0f;  // seconds since heard
+        float age = 0.0f;   // seconds since heard
+        std::string stamp;  // "21:04", the wall clock when heard
         // A party invite, the server's line on Party: who asks, and how it was answered (0 not
-        // yet, 1 accepted, -1 declined). An open one wears Accept and Decline under it.
+        // yet, 1 accepted, -1 declined).
         std::string inviter;
         int answer = 0;
         // A trade's ask instead (Chat::askedToTrade): the asker's body, 0 for a party's invite.
@@ -148,30 +160,49 @@ private:
         std::string meta;
         std::string guildName;  // set in the guild's green on the card
     };
+    // A line as the log sets it: its stamp, its tag and name, and what was said, as one string,
+    // with where its name and its links stand in it.
+    struct Set {
+        std::string text;
+        size_t nameFrom = 0, nameTo = 0;  // the "[Name]" a pointer answers, empty for none
+        std::string who;                  // whose name that is
+        size_t stampTo = 0;               // the stamp's end: drawn quiet
+        std::vector<sim::ItemLink> links;
+    };
     // One row of the log as it is set: a line wraps into several.
     struct Row {
         size_t line = 0;
         bool first = true;
-        std::string text;  // this row's part of the line's shown text
-        size_t start = 0;  // ... from this byte of it
+        size_t start = 0, end = 0;  // this row's bytes of the line's Set
     };
     struct Carried;
     static std::unique_ptr<Carried> carried_;  // carry()'s, until the next world's load()
     struct Tab {
-        std::string key;    // "general", "global", or "w:" and the name
+        std::string key;  // "general", "global", "whispers"
         std::string word;
-        bool closable = false;
-        float x = 0.0f, w = 0.0f;  // laid on the row, before its scroll
+        gfx::Box box;     // laid this frame
+    };
+    // The edit box's channel: where the next line goes.
+    struct Sticky {
+        net::Channel channel = net::Channel::Local;
+        std::string to;  // a whisper's
+    };
+    // A line he said, for Up and Down.
+    struct Sent {
+        Sticky where;
+        std::string text;
     };
 
     void send(Play& play);
     // A line's links read and its shown text set (hear), and found in these tables (update).
     static void read(Line& line);
     void resolve(Line& line) const;
-    // `text` from `start`, its links' parts in their colours and the rest in `ink`; each link
-    // part's box kept in linkBoxes_ for `line` when `hits`. Its advance.
-    float spans(gfx::Canvas& canvas, float x, float base, float size, uint32_t ink, const std::string& text,
-                size_t start, const std::vector<sim::ItemLink>& links, float alpha, float u, long line);
+    Set setOf(const Line& line) const;
+    uint32_t inkOf(const Line& line) const;
+    // `text` from `start` to `end` of a Set, its links in their colours and its name lit when
+    // the pointer is on it; each link's and the name's box kept for the pointer when `line` >= 0.
+    float spans(gfx::Canvas& canvas, float x, float base, float size, uint32_t ink, const Set& set,
+                size_t start, size_t end, float alpha, float u, long line, const Pointer& pointer);
     uint32_t linkInk(const sim::ItemLink& link) const;
     // The suggestions for the "[" being typed, and one taken.
     void suggest(const sim::Realm& realm);
@@ -183,38 +214,46 @@ private:
     void answer(Play& play, long index, const std::string& name, bool accept);
     uint64_t signature(float u, const Pointer& pointer) const;
     void select(const std::string& key);
-    void closeTab(const std::string& key);
     void system(net::Channel channel, const std::string& text);
     bool shows(const Line& line, const std::string& tab) const;
-    void layTabs(float u);
-    // The channels a tab shows, as bits of 1 << Channel; a whisper tab's are not its own.
+    // The bits a tab shows: 1 << Channel, and the loot's and the answers'.
     uint32_t& filter(const std::string& tab);
     bool ignored(const std::string& name) const;
-    // chat.txt in the player's folder: the tabs' ticks, Global left, each realm's ignored.
+    void stick(net::Channel channel, const std::string& to = std::string());
+    // A slash and a space typed: the channel switched and the slash eaten.
+    void switchBySlash();
+    // chat.txt in the player's folder: the ticks, the settings, the frame, Global left, each
+    // realm's ignored.
     void load();
     void save() const;
-    void buildFilters(float u, const Pointer& pointer);
-    void layRows(float u, float wide, const std::string& tab, size_t from);
+    void place(float u, float width, float height);
+    void layTabs(float u);
+    void layRows(float u);
+    void layLog(float u);
     void build(float u, const Pointer& pointer);
-    void buildClosed(float u);
-    int closedRows(float u) const;  // the lines shown while it is shut, from its height
+    void buildSettings(float u, const Pointer& pointer);
     void buildInvite(float u, float width, float bottom, const Pointer& pointer);
     long pendingInvite() const;  // the newest open invite's line, or -1
-    void cloud(gfx::Canvas& canvas, float middle, float tall, float strength, float u);
     std::string channelWord() const;
-    static const char* tagOf(net::Channel channel);
     uint32_t channelInk(net::Channel channel) const;
+    float textSize() const;
+    float rowTall() const;
 
-    gfx::Canvas back_, tabsDrawn_, lines_, inviteDrawn_, tip_;
+    gfx::Canvas back_, tabsDrawn_, lines_, inviteDrawn_, tip_, settingsDrawn_;
     Stage* tipStage_ = nullptr;
     bool tipping_ = false;
     const content::Tables* tables_ = nullptr;  // his world's, this frame
-    // The links as last drawn, for the pointer: the box, the line, which of its links.
+    // The links and names as last drawn, for the pointer.
     struct LinkBox {
         gfx::Box box;
         size_t line = 0, link = 0;
     };
     std::vector<LinkBox> linkBoxes_;
+    struct NameBox {
+        gfx::Box box;
+        std::string who;
+    };
+    std::vector<NameBox> nameBoxes_;
     // The "[" being typed: what it would be, the one chosen, and where each was drawn.
     struct Suggestion {
         std::string label;
@@ -228,15 +267,16 @@ private:
     std::vector<gfx::Box> suggestBoxes_;
     gfx::Box suggestBox_;
     float pointerX_ = 0.0f, pointerY_ = 0.0f;  // last frame's: a still pointer leaves the arrows' pick
-    bool open_ = false;
+    bool open_ = false;     // the edit box up, the keyboard ours
     bool showing_ = false;
-    std::string me_;  // his own name, as the server says it
+    float lit_ = 0.0f;      // 0 idle to 1 full, eased: the pointer on it or the box open
+    std::string me_;        // his own name, as the server says it
     std::vector<Line> log_;
     std::vector<Tab> tabs_;
-    std::vector<std::string> whispers_;  // the open whisper tabs, by name, in the order opened
+    std::vector<std::string> whispers_;  // who he whispered with, the latest last: Tab's round
     std::map<std::string, int> unread_;  // by tab key
     std::string tab_ = "general";
-    uint32_t generalShows_ = 0, globalShows_ = 0;  // filter()'s, set by load()
+    uint32_t generalShows_ = 0, globalShows_ = 0, whispersShows_ = 0;  // filter()'s, set by load()
     bool loaded_ = false;
     bool leftGlobal_ = false;
     std::vector<std::string> ignored_;  // lower case, this realm's
@@ -245,32 +285,35 @@ private:
     // chat.txt untouched, "realm name" each.
     std::string realm_ = "local";
     std::vector<std::string> elsewhere_;
-    // The list of what the chosen tab shows, open over the log, and its rows as drawn.
-    bool filtering_ = false;
-    gfx::Box filterButton_, filterBox_;
-    std::vector<std::pair<gfx::Box, net::Channel>> filterRows_;
-    net::Channel channel_ = net::Channel::Map;  // where the next line goes, as the tab says (update)
-    // The channel's word pressed on General: Local, Map, Global, Party or Guild in its place until
-    // the tab changes.
-    bool chipSet_ = false;
-    // Whether he is in a party or a guild: the chip offers them only then. His guild is the
-    // server's (docs/game/guild.md).
-    bool inParty_ = false, inGuild_ = false;
-    net::Channel chipChannel_ = net::Channel::Map;
-    std::string target_;    // a whisper's
+
+    // The settings (chat.txt): the text's size (0 S, 1 M, 2 L), the fill's strength and how
+    // bright it stays idle (percent), time stamps, lines over heads, whispers in a tab of their
+    // own, and the lock.
+    int size_ = 1;
+    int fill_ = 62, idle_ = 50;
+    bool stamps_ = false, bubbles_ = true, whisperTab_ = true, locked_ = false;
+    // Its frame, in units: the left edge, the foot's height over the screen's bottom, the width
+    // and the height (the tab row's in it).
+    float left_ = 0.0f, foot_ = 0.0f, wide_ = 0.0f, tall_ = 0.0f;
+
+    // The edit box's channel, and how he stood with a party and a guild last frame.
+    Sticky sticky_;
+    bool inParty_ = false, inGuild_ = false, wasInParty_ = false;
     std::string lastFrom_;  // the last who whispered him: /r's
     std::string draft_;
+    std::vector<Sent> sent_;
+    int recalled_ = -1;  // Up's place in sent_, -1 for the draft
     float clock_ = 0.0f;
-    float tall_ = 0.0f;  // the panel's height in units, the player's (0: the default)
 
     // Where things were laid this frame, in pixels.
-    gfx::Box panel_, grip_, tabRow_, logBox_, input_, chip_;
-    float tabScroll_ = 0.0f;   // pixels the tab row is scrolled on
-    float tabsWide_ = 0.0f;    // the whole row
-    float logScroll_ = 0.0f;   // pixels up from the newest line
-    float logTall_ = 0.0f;     // the whole log as set
+    gfx::Box frame_, row_, panel_, logBox_, input_, chip_, grip_, gear_, settingsBox_;
+    float logScroll_ = 0.0f;  // pixels up from the newest line
+    float logTall_ = 0.0f;    // the whole log as set
+    int unseen_ = 0;          // lines come in while he reads back: the "new lines" button's
+    gfx::Box newer_;          // that button, while it shows
     std::vector<Row> rows_;
-    std::vector<size_t> closedLines_;  // the lines shown while it is shut, newest last
+    std::vector<Set> sets_;  // log_'s, by index, for the rows
+    uint64_t laid_ = 0;      // what rows_ were laid for
     // The invites' buttons as last drawn, for the next press.
     struct Choice {
         gfx::Box box;
@@ -278,16 +321,38 @@ private:
         bool accept = false;
     };
     std::vector<Choice> choices_;
-    // What the canvases were last built from: rebuilt only when it changes (a caret's blink, a
-    // line, the pointer over it, a closed line fading), as every window here is.
-    uint64_t built_ = 0;
+    uint64_t built_ = 0, settingsBuilt_ = 0;
     bool inviting_ = false;
     gfx::Box inviteCard_;
 
-    // A drag: the grip, the tabs' slider or the log's.
-    enum class Drag : uint8_t { None, Grip, TabSlider, LogSlider };
+    // A menu of its own, in tip_: the channels for the edit box, or what a tab shows.
+    enum class Menu : uint8_t { None, Channels, Shows };
+    Menu menu_ = Menu::None;
+    std::string menuTab_;  // the tab whose ticks the Shows menu sets
+    gfx::Box menuBox_;
+    struct MenuRow {
+        gfx::Box box;
+        int what = 0;  // a channel, or a filter bit
+    };
+    std::vector<MenuRow> menuRows_;
+
+    // The settings, docked: open, and their rows as drawn.
+    bool settingsOpen_ = false;
+    gfx::Box sizeBox_, fillBox_, idleBox_, stampsBox_, bubblesBox_, whispersBox_, lockBox_, resetBox_, closeBox_;
+
+    // A name right-clicked, for the desk.
+    std::string menuAsk_;
+    float menuAskX_ = 0.0f, menuAskY_ = 0.0f;
+
+    // A drag: the corner, the frame by a tab, the log's slider, a setting's slider.
+    enum class Drag : uint8_t { None, Grip, Move, LogSlider, Fill, Idle };
     Drag drag_ = Drag::None;
-    float dragFrom_ = 0.0f, dragStart_ = 0.0f;
+    float dragX_ = 0.0f, dragY_ = 0.0f;  // where it began
+    float startA_ = 0.0f, startB_ = 0.0f, startC_ = 0.0f, startD_ = 0.0f;
+    std::string pressedTab_;  // a tab pressed, chosen on release unless it was dragged
+    bool moved_ = false;
+    float gripClicked_ = -10.0f;  // the clock at the grip's last press: a second inside one is a double
+    bool sampleWanted_ = false;   // sample() asked: heard on the first frame with tables
 };
 
 }  // namespace mu::game

@@ -923,11 +923,13 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         partyBar_.update(seconds, play, minimap_.full() ? Pointer{} : under, partyFaces_, partyFacesTaken_);
         targetFrame_.update(seconds, play, under, arts_, float(window.width()), hud_.plateTop() - 26.0f * u,
                             portrait_.picture(), portrait_.taken());
-        // A right click on a capsule or on the target frame: his menu. Never from the world.
+        // A right click on a capsule, on the target frame or on a name in the chat: his menu.
+        // Never from the world.
         {
             std::string whom;
             float x = 0.0f, y = 0.0f;
-            if (partyBar_.takeMenuAsk(&whom, &x, &y) || targetFrame_.takeMenuAsk(&whom, &x, &y)) {
+            if (partyBar_.takeMenuAsk(&whom, &x, &y) || targetFrame_.takeMenuAsk(&whom, &x, &y) ||
+                chat_.takeMenuAsk(&whom, &x, &y)) {
                 playerMenu_.show(play, whom, x, y, float(window.width()), float(window.height()));
             }
         }
@@ -2644,11 +2646,12 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     // The Warp list (M) over the party's capsules, which it opens across (bug #20: "party window
     // is being drawn over Warp Window").
     if (travel_.up()) interface_.add(travel_.canvas());
-    // The chat under the plate, whose left wing its cloud runs behind.
+    // The chat, at the bottom left; the plate is drawn over it.
     if (chat_.showing()) {
         interface_.add(chat_.back());
         interface_.add(chat_.tabs());
         interface_.add(chat_.lines());
+        if (chat_.setting()) interface_.add(chat_.settings());
     }
     interface_.add(hud_.canvas());
     // The line's chip in the corner over the minimap, its list over whatever lies under it.

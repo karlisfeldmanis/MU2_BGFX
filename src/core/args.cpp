@@ -225,6 +225,7 @@ void printUsage() {
         "  --mute                    every sound plays and is logged, at no volume\n"
         "  --offscreen               no window on the screen; frames of exactly --width x --height\n"
         "  --raw-frames PATH         with --offscreen, the shots as raw BGRA into PATH (a pipe)\n"
+        "  --chat-sample             the chat filled with a line of every kind (a review run's)\n"
         "  --unseen                  no monster notices the hero: a run past their nests\n"
         "  --stride-log FILE         a line a frame: the hero's clip and the clocks a cut carries\n"
         "  --script FILE             the pointer and the keys played from a cue file (director.h)\n"
@@ -794,6 +795,8 @@ Args parseArgs(int argc, char** argv) {
             a.mute = true;
         } else if (!std::strcmp(s, "--offscreen")) {
             a.offscreen = true;
+        } else if (!std::strcmp(s, "--chat-sample")) {
+            a.chatSample = true;
         } else if (!std::strcmp(s, "--unseen")) {
             a.unseen = true;
         } else if (!std::strcmp(s, "--stride-log")) {

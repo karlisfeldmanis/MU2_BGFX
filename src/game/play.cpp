@@ -562,6 +562,13 @@ void Play::update(double seconds) {
         // The monster that fell last on this tick: Realm::kill says the death before the
         // experience it pays, so a gain that follows one is that body's and rises over it.
         uint32_t fell = 0;
+        // What lies on the ground, as it was last seen: a pickup says only the thing's id, and the
+        // chat's loot lines want what it was (Play::takeLooted). Insert only, so a thing taken on
+        // this tick is still here to be read; cleared now and then as things vanish unpicked.
+        if (lyingSeen_.size() > realm_.lying().size() + 256) lyingSeen_.clear();
+        for (const sim::Lying& lying : realm_.lying()) {
+            if (!lying.what.empty()) lyingSeen_[lying.id] = lying.what;
+        }
         for (const sim::Happening& happening : realm_.happenings()) {
             // The arena's own line first, so that what the log says happened on a tick is in
             // the log before anything the drawing decides to do about it. Nothing in an
@@ -588,6 +595,15 @@ void Play::update(double seconds) {
             }
             if (happening.what == sim::What::Answered) answered(happening);
             if (happening.what == sim::What::Deal && happening.who == heroId) dealNews_.push_back(happening);
+            // A thing off the ground by him or anyone in view (a pickup is the street's): for the
+            // chat's "You loot" and "Brann loots" (Chat::looted). Zen is not a thing.
+            if (happening.what == sim::What::Picked && happening.b >= 0) {
+                const auto seen = lyingSeen_.find(uint32_t(happening.a));
+                if (seen != lyingSeen_.end()) {
+                    looted_.push_back({happening.who, seen->second});
+                    lyingSeen_.erase(seen);
+                }
+            }
             invasionSaid(happening);
             raidSaid(happening);
             // The marker, off the realm's own word for where the walk ends: `Walked` carries
