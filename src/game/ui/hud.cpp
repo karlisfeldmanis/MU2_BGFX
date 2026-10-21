@@ -438,9 +438,12 @@ void Hud::open(const gfx::Interface& interface, panel::Arts* arts) {
 }
 
 // The Talents button (kTalentsButton): the disc every side button stands on, and MU's master
-// icon on it cut round to its well as a fan, the icon's middle filling the circle. Under the
-// pointer or with Talents up the icon is whole and a gold hairline rings it, as the other icons'
-// own lit states turn gold; at rest it is a shade down. MU's grey twin while no point waits.
+// icon on it cut round to its well as a fan, the icon's middle filling the circle. **Lit only
+// while a talent point waits** (the user, 2026-10-21: "we need also when talent button is not
+// active/disabled, and only when there is skill points we use that color and glow"): then the
+// icon is in colour, whole under the pointer or with Talents up, where a gold hairline rings it.
+// With none it reads off: MU's grey twin, dimmed to the flat grey of the discs beside it, a dark
+// seam and no gold, lifting only a little under the pointer. It is still pressed as ever.
 void Hud::talentsDisc(const Box& box, bool hovered, bool open, bool waiting) {
     panel::Arts& arts = *arts_;
     canvas_.image(arts.get("hud_disc"), box);
@@ -462,11 +465,13 @@ void Hud::talentsDisc(const Box& box, bool hovered, bool open, bool waiting) {
             uv[i * 2] = u0 + std::cos(a) * ru;
             uv[i * 2 + 1] = v0 + std::sin(a) * rv;
         }
-        const uint32_t tint = hovered || open ? 0xFFFFFFFFu : gfx::rgba(0.82f, 0.82f, 0.82f);
+        const float lift = waiting ? (hovered || open ? 1.0f : 0.86f) : (hovered || open ? 0.62f : 0.48f);
+        const uint32_t tint = gfx::rgba(lift, lift, lift);
         canvas_.polygon(&sheet, xy, uv, kRim, tint);
     }
-    // Its rim: a dark seam at rest, gold lit.
-    const uint32_t ink = hovered || open ? gfx::rgba(0.886f, 0.706f, 0.396f) : gfx::rgba(0.0f, 0.0f, 0.0f, 0.7f);
+    // Its rim: a dark seam, gold lit only while a point waits.
+    const uint32_t ink = waiting && (hovered || open) ? gfx::rgba(0.886f, 0.706f, 0.396f)
+                                                      : gfx::rgba(0.0f, 0.0f, 0.0f, 0.7f);
     const float t = std::max(1.0f, std::round(box.w / 40.0f));
     for (int i = 0; i < kRim; ++i) {
         const float a0 = 6.283185307f * float(i) / float(kRim), a1 = 6.283185307f * float(i + 1) / float(kRim);
