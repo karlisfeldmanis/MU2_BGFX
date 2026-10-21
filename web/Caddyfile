@@ -27,6 +27,21 @@
 		file_server
 	}
 
+	# The game's files, kept on another host (tools/mu/release.py FILES_HOST) and fetched through
+	# here, so the manifests and the players only ever name this site.
+	handle_path /files/* {
+		rewrite * /muclassic{uri}
+		reverse_proxy https://aurorarave.lv {
+			header_up Host {upstream_hostport}
+			header_up -X-Forwarded-For
+			header_up -X-Forwarded-Host
+			header_up -X-Forwarded-Proto
+			header_down -Server
+			header_down -X-Powered-By
+		}
+		header Cache-Control "public, max-age=31536000, immutable"
+	}
+
 	# mu-classic.com/discord, the short name for the Discord's invite (also under a language's
 	# /pt/ and the rest). 302, so the invite can change without browsers keeping the old one;
 	# the game's and the launcher's button go here too (src/core/browser.h kDiscordInvite).

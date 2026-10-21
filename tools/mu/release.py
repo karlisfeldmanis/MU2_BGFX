@@ -45,7 +45,7 @@ KEEP = 2                         # releases whose files stay on the box
 # FTPS to the name its certificate carries. The login is the user's, in FILES_NETRC (0600), never
 # here. Without it, the files go to the box as before.
 FILES_HOST = "webhost.dualnode.com"
-FILES_URL = "https://aurorarave.lv/muclassic"
+FILES_URL = "https://mu-classic.com/files"  # web/Caddyfile passes /files/* on to the host above
 FILES_NETRC = os.path.expanduser("~/.config/mu2/ftp.netrc")
 SYMBOLS = "/var/lib/mu2-symbols"  # on the box, root's alone; never under /srv
 LEFT_OUT = {"BUILT_FROM"}        # dist's own note; logs/ is the player's
