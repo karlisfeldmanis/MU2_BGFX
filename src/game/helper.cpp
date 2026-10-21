@@ -539,6 +539,9 @@ bool Helper::loot(Play& play, const HelperSettings& settings) {
             const content::ItemRow& row = tables.items[size_t(one.what.item)];
             const uint8_t p = settings.picks;
             bool wanted = (p & HelperSettings::kPickAll) != 0;
+            // A Firecracker, a Box of Luck or a Box of Kundun, always, as Zen is (the user,
+            // 2026-10-21: "helper auto-play also pickup firecracrehs, box of kundum and box of luck").
+            wanted |= sim::firecracker(row) || sim::boxOfLuck(row) || sim::boxOfKundun(row);
             const int place = sim::placeOf(row);
             const bool pet = place == sim::kPet || place == sim::kMount;
             wanted |= (p & HelperSettings::kPickJewels) && !pet && (row.jewel() || sim::refiningJewel(row));

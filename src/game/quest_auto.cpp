@@ -545,7 +545,7 @@ bool QuestAuto::guard(Play& play) {
 
 // **What he picks up** (the user, 2026-10-19: "on auto-play character has to auto-pickup jewel
 // drops and rune drops and exc drops, if inventiry is full it does not pickup anything"): a
-// jewel, a Rune of Creation or an excellent piece he may take, lying within kLootReach tiles he
+// jewel, a Rune of Creation, an excellent piece or a box he may take, lying within kLootReach tiles he
 // can walk, and only when it fits his bag as it stands -- with no room it is left where it
 // lies, not walked to and refused. The nearest first, by the same Pick a Space press asks. One
 // he has been walking to for kLootGiveUp seconds without it going is left for good.
@@ -561,7 +561,9 @@ bool QuestAuto::loot(Play& play) {
     for (const sim::Lying& one : realm.lying()) {
         if (one.what.empty() || one.what.item < 0 || size_t(one.what.item) >= tables.items.size()) continue;
         const content::ItemRow& row = tables.items[size_t(one.what.item)];
-        if (!row.jewel() && !sim::creation(row) && !sim::refiningJewel(row) && one.what.excellent == 0) continue;
+        // And a Firecracker, a Box of Luck or a Box of Kundun (the user, 2026-10-21).
+        const bool box = sim::firecracker(row) || sim::boxOfLuck(row) || sim::boxOfKundun(row);
+        if (!row.jewel() && !sim::creation(row) && !sim::refiningJewel(row) && one.what.excellent == 0 && !box) continue;
         if (!realm.mayTake(one)) continue;
         if (const auto tried = lootTried_.find(one.id); tried != lootTried_.end() && tried->second < clock_) continue;
         const float away = std::max(std::fabs(float(one.column) - hero.x), std::fabs(float(one.row) - hero.y));
