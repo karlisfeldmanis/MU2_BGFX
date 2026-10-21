@@ -707,6 +707,9 @@ struct Body {
     // fight the dragon beside him. Not a monster, and not the player: its blows roll off its own
     // reckoned stats, as a guard's do, and a dead one stays down for the fight.
     int32_t raider = -1;
+    // **An Elite** (sim/elite.h, realm_elite.cpp): a monster promoted, a breed of the map's drawn
+    // again at each rise. A monster all the same: what asks `monster()` fights it.
+    bool elite = false;
     // **His party** (docs/game/party.md): the server's number for it, 0 for none. The server keeps the
     // parties -- they span maps, and a map is a realm -- and says each change into every world a
     // member stands in (Command::Kind::PartySet); the realm reads it to share a kill's
@@ -2239,6 +2242,17 @@ private:
     friend struct InvasionInstance;
     // Where the dragon comes down, so a landing moves no other roll.
     Random invasionDice_{0};
+    // ---- the Elites (sim/elite.h, realm_elite.cpp) ---------------------------------------------
+    // Their bodies' indices, raised last; their breeds, tiles, rises and spoils off their own dice.
+    std::vector<int32_t> eliteSlots_;
+    Random eliteDice_{0};
+    void raiseElites();
+    // Drawn again and stood up: a breed of the map's nests, a tile in one, its numbers raised.
+    void riseElite(Body& elite);
+    // What it leaves, in place of leave()'s roll.
+    void eliteSpoils(const Body& dead, const Body& killer);
+    // Each tick: no chill, freeze, push or pull holds it.
+    void shrugControl(Body& elite);
     // ---- the Golden Dragon's raid (realm_raid.cpp) ---------------------------------------------
     struct RaidState {
         RaidStage stage = RaidStage::None;

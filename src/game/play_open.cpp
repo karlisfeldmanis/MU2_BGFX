@@ -546,6 +546,7 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
     heard_.talent = sound_.load("window_talent", false);
     heard_.whoosh = sound_.load("window_talent_whoosh", false);
     heard_.soft = sound_.load("window_click_soft", false);
+    heard_.bell = sound_.load("elite_bell", false);
     heard_.repair = sound_.load("window_repair", false);
     heard_.mix = sound_.load("machine_mix", false);
     heard_.mixBreak = sound_.load("machine_break", false);
@@ -602,13 +603,34 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
     core::logf("sound: cries for %d monster bodies", breeds);
 }
 
+void Play::wearBreed(Drawn& one, const sim::Body& body) {
+    if (!figures_ || body.kind < 0 || size_t(body.kind) >= tables_.kinds.size()) return;
+    const content::MonsterKind& kind = tables_.kinds[size_t(body.kind)];
+    const FigureBody* look = figures_->body(kind.figure);
+    if (!look) {
+        core::logError("elite: %s has no figure in this world", kind.figure.c_str());
+        return;
+    }
+    if (look == one.figure.body()) return;
+    fit(one, body, look);
+    std::string named;
+    for (char c : kind.label) {
+        if (c != ' ') named += char(std::tolower(static_cast<unsigned char>(c)));
+    }
+    const auto cry = [&](const char* what) { return sound_.load(named + what, true, true); };
+    one.cryAttack = cry("_attack"), one.cryAttack2 = cry("_attack2");
+    one.cryDie = cry("_die"), one.cryMove = cry("_move");
+    one.deadFor = -1.0f;
+    one.fallOwed = false;
+}
 
 // A figure put on a drawn body, and every clip and bone it will ask for found once: what open
 // does for each body, and what a summon's body is given again when she raises one of another
 // breed (sprint 15) -- the one body in `drawn_` whose figure changes.
 void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
     const float at[3] = {0, 0, 0};
-    one.figure.stand(look, at, 0.0f, look->scale);
+    // An Elite a quarter bigger than its breed (kEliteScale).
+    one.figure.stand(look, at, 0.0f, look->scale * (body.elite ? kEliteScale : 1.0f));
     one.seeThrough = look->has("see_through") ? kSeeThroughAlpha : 1.0f;
     one.murderer = look->has("murderer");
     // MU's CreateBlood needs a head bone (BoneHead 20 for MODEL_PLAYER), and a monster bleeds

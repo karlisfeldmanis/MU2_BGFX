@@ -2747,6 +2747,15 @@
       ],
       "from": "SOUND_SUDDEN_ICE2, Data\\\\Sound\\\\eSuddenIce_2.wav. MoveEffect plays it for the first crystal of an Ice Storm two frames after it stands in the ground (ZzzEffect.cpp, MODEL_BLIZZARD subtype 1, LifeTime == 18 && PKKey == 1).",
       "note": "Once a storm, as MU: the first crystal down."
+    },
+    "elite_bell": {
+      "files": [
+        "elite_bell.wav"
+      ],
+      "from": "Not MU's file. dragon-studio 'notification bell sound 1' (Pixabay 376885, downloads/), given by the user 2026-10-21 for an Elite near: 2.12 s of 44 kHz stereo MP3, one strike at 0.048 s. Cut from 0.045 s (3 ms ahead of the strike, 3 ms fade in) for 1.9 s with a 0.5 s fade out from 1.4 s, so it is over before the next pulse 2 s on. Its shape: loudest 0.01-0.11 s (-15 dB RMS, peak 0.36 at 0.07 s), a shoulder to 0.5 s (-30), gone by 0.8 s (-52).",
+      "gain_db": -3.0,
+      "gain_note": "Three down: it rings every two seconds while the Elite is on the minimap, so it is a bell heard, not a bell that interrupts. Worth a pass by ear.",
+      "note": "**An invention, marked.** The user (2026-10-21): 'use this sound for minimap pulsating dot perfectly synced with sound', 'it will be notification loop when char is nearby when point is visible on minimap'. Played on every pulse of the Elite's gold mark (game/ui/minimap.cpp, Minimap::eliteRang), the mark brightening on the strike and easing off with the ring. Unplaced, as every interface sound is."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

@@ -13,6 +13,7 @@
 #include <utility>
 
 #include "core/log.h"
+#include "sim/elite.h"
 #include "sim/realm_tuning.h"
 
 namespace mu::sim {
@@ -2101,6 +2102,8 @@ void Realm::kill(Body& dead, Body& killer) {
     // the Ice Queen eleven (kDropRates' regen) -- where the cook's OpenMU numbers were ten and
     // fifty. The user's pick of 2026-09-30.
     dead.risesAt = tick_ + int64_t(dropRateOf(kind.number).regen + 1) * 20;
+    // An Elite is down 20 to 40 minutes, off its own dice (sim/elite.h).
+    if (dead.elite) dead.risesAt = tick_ + eliteDice_.nextInt(int(kEliteRiseLeastTicks), int(kEliteRiseMostTicks) + 1);
     // Blood Castle's statue is the run's, raised once by it and never again; its Spirit Sorcerers
     // rise again as the garrison does while the run is on and quota 2 is not met
     // (CastleRun::sorcerersWanted); the run's kill lays the dead down for good as the quota fills.

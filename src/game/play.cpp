@@ -820,7 +820,13 @@ void Play::update(double seconds) {
                     othersRise_.push_back({happening.who, on});
                 }
             } else if (happening.what == sim::What::Rose) {
-                if (Drawn* risen = drawnOf(happening.who)) stand(*risen);
+                if (Drawn* risen = drawnOf(happening.who)) {
+                    // An Elite rises as another breed (sim/elite.h): dressed again first.
+                    if (const sim::Body* elite = realm_.find(happening.who); elite && elite->elite) {
+                        wearBreed(*risen, *elite);
+                    }
+                    stand(*risen);
+                }
                 // Risen on a map with no safe zone: owed Lorencia, as a Town Portal read there is.
                 if (happening.who == heroId && happening.c == 1) homeOwed_ = true;
             } else if (happening.what == sim::What::Warped && happening.who == heroId &&

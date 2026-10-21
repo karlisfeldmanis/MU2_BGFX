@@ -1144,8 +1144,9 @@ public:
     // a slot -- MU has no equip or bind sound of its own and plays SOUND_GET_ITEM01 for both.
     // Opened is SOUND_INTERFACE01, which a merchant's counter opens on beside the click.
     // Talent is the user's sword cut, for a + the realm answered by opening a talent; Soft the
-    // click a step quieter, for a talent point given back.
-    enum class Ui { Click, Refused, Took, Opened, Invited, Talent, Soft, Whoosh };
+    // click a step quieter, for a talent point given back. Bell the Elite's, on each pulse of its
+    // mark on the minimap (game/ui/minimap.h).
+    enum class Ui { Click, Refused, Took, Opened, Invited, Talent, Soft, Whoosh, Bell };
     void ui(Ui which);
     void gatherAura(gfx::Effects& effects, const float eye[3]) const {
         if (ground_) aura_.gather(effects, *ground_, eye);
@@ -1626,6 +1627,9 @@ private:
     // A figure put on a drawn body with its clips and bones found (play_open.cpp): every body at
     // open, and her summon's again whenever she raises one (sprint 15).
     void fit(Drawn& one, const sim::Body& body, const FigureBody* look);
+    // And an Elite risen as another breed (sim/elite.h): that breed's figure and cries, fitted
+    // only when the breed has changed.
+    void wearBreed(Drawn& one, const sim::Body& body);
     // Starts every owed fall whose killing blow is no longer waiting to be shown.
     void fallWhenLanded();
     // SetPlayerShock on a blow that did damage: a monster flinches one time in two, and so does
@@ -2001,6 +2005,7 @@ private:
         int talent = -1;   // window_talent: a talent opened by a point
         int whoosh = -1;   // window_talent_whoosh: its swell, under the light down the lines
         int soft = -1;     // window_click_soft: a talent point given back
+        int bell = -1;     // elite_bell: an Elite's mark on the minimap, each pulse
         int levelUp = -1;                               // another player's level, heard at him
         int repair = -1;                                // SOUND_REPAIR: a counter mended
         int mix = -1, mixBreak = -1;                    // eMix and eBreak: the Chaos Machine

@@ -5375,6 +5375,10 @@ private:
 
     // ---- hunting --------------------------------------------------------------------------
     bool barred(uint32_t id) const {
+        // An Elite (sim/elite.h) is left to the real players: a bot never takes one on.
+        if (realm_ != nullptr) {
+            if (const sim::Body* one = realm_->find(id); one != nullptr && one->elite) return true;
+        }
         const auto it = banned_.find(id);
         return it != banned_.end() && it->second > clock_;
     }

@@ -10282,6 +10282,7 @@ void testRunes(const content::Tables& tables) {
         const uint8_t powers[3] = {power, 0, 0};
         realm.give(serpent, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
         uint32_t fighting = 0;
+        // Never at the Elite (sim/elite.h), which no chill holds.
         // After a poisoning he stands off for five seconds, so the monster lives to its pulses
         // (the first is three seconds on) rather than dying to his next swing.
         int standOff = 0;
@@ -10290,7 +10291,7 @@ void testRunes(const content::Tables& tables) {
             uint32_t nearest = 0;
             float best = 1e9f;
             for (const sim::Body& one : realm.bodies()) {
-                if (!one.monster() || !one.alive()) continue;
+                if (!one.monster() || !one.alive() || one.elite) continue;
                 const float dx = one.x - hero.x, dy = one.y - hero.y;
                 if (dx * dx + dy * dy < best) {
                     best = dx * dx + dy * dy;
@@ -14861,6 +14862,8 @@ void testBroker(const content::Tables& tables, void (*check)(bool, const char*),
                 void (*checkEqual)(long long, long long, const char*));  // tests/sim_test_broker.cpp
 void testJeweler(void (*check)(bool, const char*),
                  void (*checkEqual)(long long, long long, const char*));  // tests/sim_test_jeweler.cpp
+void testElites(void (*check)(bool, const char*),
+                void (*checkEqual)(long long, long long, const char*));  // tests/sim_test_elite.cpp
 
 int main() {
     const std::string path =
@@ -14987,6 +14990,7 @@ int main() {
     testDeal(tables);
     testBroker(tables, check, checkEqual);  // tests/sim_test_broker.cpp
     testJeweler(check, checkEqual);         // tests/sim_test_jeweler.cpp
+    testElites(check, checkEqual);          // tests/sim_test_elite.cpp
     testThreat(tables);
     testElfAid(tables);
     testQuestLadder(tables);

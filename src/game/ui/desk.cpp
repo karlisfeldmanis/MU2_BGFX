@@ -1651,6 +1651,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     minimap_.setHelping(helping_);
     minimap_.update(seconds, play, typing || menuHeld || lineChip_.covers(pointer.x, pointer.y) ? Pointer{} : pointer,
                     typing || menuHeld ? 0.0f : window.scroll(), window.width(), window.height());
+    // An Elite near: its bell on each pulse of its mark (Minimap::takeBell).
+    if (minimap_.takeBell() && play.isOpen()) play.ui(Play::Ui::Bell);
     // Its H, as H is; and its right click, the window.
     if (minimap_.takeHelperToggle() && play.isOpen()) {
         helperPressed();

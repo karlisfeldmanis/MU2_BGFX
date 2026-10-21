@@ -10,6 +10,7 @@
 #include <limits>
 
 #include "core/log.h"
+#include "sim/elite.h"
 #include "sim/event.h"
 #include "sim/realm_tuning.h"
 
@@ -318,6 +319,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     invasionDice_.seed(seed ^ 0x510e527f9b05688cull);
     raidDice_.seed(seed ^ 0x1f83d9ab5be0cd19ull);
     raiderDice_.seed(seed ^ 0x5be0cd19137e2179ull);
+    eliteDice_.seed(seed ^ 0xa54ff53a3c6ef372ull);
     for (int slot = 0; slot < kWorn; ++slot) {
         me().wearCarry[slot] = 0.0;
         me().wearItem[slot] = -1;
@@ -483,6 +485,8 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     invasion_.raise(*this);
     // And the raid's minions and party, after it, so no id before them moves (realm_raid.cpp).
     raiseRaid();
+    // And the map's Elites, last of all, so no id before them moves (realm_elite.cpp).
+    raiseElites();
 
     players_.clear();
     // kNoBody, not the vector's size, for an id with no body (an item's): a size would come to
@@ -1310,6 +1314,9 @@ void Realm::step() {
         burnPulse(beast);
         bleedPulse(beast);   // a bleed rune's cuts (Realm::rend)
         beamOn(beast);
+        // An Elite takes no crowd control: what this tick laid on it is shrugged off before it
+        // walks (realm_elite.cpp).
+        if (beast.elite && beast.alive()) shrugControl(beast);
         if (beast.alive() && beast.pushTicks > 0) {
             // Pushed: it slides and does nothing else until it lands on its tile.
             beast.x += beast.pushX;
@@ -1345,7 +1352,13 @@ void Realm::step() {
                 advance(beast);
             }
         } else if (tick_ >= beast.risesAt) {
-            raiseBeast(beast);
+            // An Elite comes back as another breed in another place (realm_elite.cpp).
+            if (beast.elite) {
+                riseElite(beast);
+                if (!beast.alive()) beast.risesAt = tick_ + kEliteRiseLeastTicks;
+            } else {
+                raiseBeast(beast);
+            }
         }
     }
     // What the tick's blows on the dragon were worth to its threat (realm_raid.cpp).

@@ -2067,8 +2067,11 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         // its BodyLight (ZzzObject.cpp:1126).
         const sim::Body* inRealm = realm_.find(one.id);
         // A Frost Arrow's freeze is ice as much as the chill is.
-        const bool iced = inRealm != nullptr && (inRealm->chilledUntil > realm_.tick() ||
-                                                 inRealm->frozenUntil > realm_.tick());
+        // An Elite (sim/elite.h) wears its steel chrome always, and is never iced: it shrugs the
+        // chill off on the tick it lands.
+        const bool elite = inRealm != nullptr && inRealm->elite;
+        const bool iced = inRealm != nullptr && !elite &&
+                          (inRealm->chilledUntil > realm_.tick() || inRealm->frozenUntil > realm_.tick());
         // And a poisoned one green, MU's `eDeBuff_Poison` (0.3, 1.0, 0.5); both, (0.3, 1.0, 0.8).
         const bool poisoned = one.venomous ||
                               (inRealm != nullptr && inRealm->poisonUntil > realm_.tick());
@@ -2101,6 +2104,14 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
             if (placeLit || darkLevel || aflame) {
                 for (size_t i = tintFrom; i < out.size(); ++i) {
                     for (int k = 0; k < 3; ++k) out[i].light[k] *= place[k];
+                }
+            }
+            // The Elite's chrome (kEliteChrome): the +7 pass in steel over every part it wears.
+            if (elite) {
+                for (size_t i = tintFrom; i < out.size(); ++i) {
+                    if (shineLevelOf(out[i].refine) >= kElitePlus) continue;
+                    out[i].refine = shineFlagsOf(out[i].refine) + kElitePlus;
+                    std::copy(kEliteChrome, kEliteChrome + 3, out[i].refineColour);
                 }
             }
             if (!soused && !iced && !poisoned && !burning && !bleeding && !one.murderer) return;

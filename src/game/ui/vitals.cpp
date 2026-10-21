@@ -28,6 +28,11 @@ namespace {
 // trail a warm bone at two thirds. The same five jobs, in the interface's one palette.
 constexpr float kInk[4] = {243 / 255.0f, 232 / 255.0f, 212 / 255.0f, 1.0f};
 constexpr float kHalo[4] = {0.0f, 0.0f, 0.0f, 0.85f};
+// An Elite's name (sim/elite.h) in the gold of its mark on the minimap, under a small ELITE tag
+// in the same gold, spaced out: the tier said beside the name, never in it, since MU has breeds
+// named "Elite" already. Ours, the proposal of 2026-10-21 ("elite tag is good").
+constexpr float kEliteInk[4] = {1.00f, 0.82f, 0.25f, 1.0f};
+constexpr float kEliteTagTall = 0.62f;  // of the name's size
 constexpr float kFrame[4] = {0.0f, 0.0f, 0.0f, 0.85f};
 constexpr float kCast = 0.38f;  // MU2's 0.55, lightened: a lift, not a halo
 constexpr float kTrack[4] = {13 / 255.0f, 10 / 255.0f, 8 / 255.0f, 1.0f};
@@ -198,7 +203,7 @@ void flat(gfx::Canvas& canvas, const gfx::Box& box, float radius, float cut, uin
 // A string in its outline, which is how anything here is legible over the world: eight
 // copies in the halo a pixel or two out, and the ink over them.
 void type(gfx::Canvas& canvas, float x, float baseline, float size, float alpha,
-          const std::string& text) {
+          const std::string& text, const float* ink = kInk) {
     const float round = std::max(1.0f, std::round(size / 12.0f));
     const uint32_t halo = colour(kHalo, alpha);
     for (int dy = -1; dy <= 1; ++dy) {
@@ -207,7 +212,7 @@ void type(gfx::Canvas& canvas, float x, float baseline, float size, float alpha,
             canvas.text(x + float(dx) * round, baseline + float(dy) * round, size, halo, text);
         }
     }
-    canvas.text(x, baseline, size, colour(kInk, alpha), text);
+    canvas.text(x, baseline, size, colour(ink, alpha), text);
 }
 
 uint32_t faded(uint32_t abgr, float alpha) {
@@ -548,7 +553,13 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
     const float nameSize = points(kNameTall * unit);
     const float nameTop = bar.y - (kGap + kNameTall) * unit;
     type(canvas_, std::round(r.x - face.measure(nameSize, name) * 0.5f),
-         std::round(nameTop + face.ascent(nameSize)), nameSize, alpha, name);
+         std::round(nameTop + face.ascent(nameSize)), nameSize, alpha, name, beast->elite ? kEliteInk : kInk);
+    if (beast->elite) {
+        const std::string tag = "E L I T E";
+        const float tagSize = points(kNameTall * kEliteTagTall * unit);
+        type(canvas_, std::round(r.x - face.measure(tagSize, tag) * 0.5f),
+             std::round(nameTop - face.descent(tagSize) - 1.0f * unit), tagSize, alpha, tag, kEliteInk);
+    }
 
     // The shadow, as the track's StyleBoxFlat cast it: the bar's shape dropped by ShadowOffset,
     // fading out over ShadowSize. Both whole pixels, as Vitals.Bar rounded them, and the

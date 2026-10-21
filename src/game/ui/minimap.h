@@ -138,7 +138,18 @@ public:
 
     // What a mark is: the glyph's cell in the baked strip.
     enum class Glyph : uint8_t { Hero, Quarry, Offer, HandIn, Vendor, Smith, Vault, Gate, Folk, Potion, Summon,
-                                 Player, Dragon };
+                                 Player, Dragon, Elite };
+    // **An Elite near** (sim/elite.h): while one is within the disc's reach its mark, a gold
+    // horned head, pulses once every kElitePulseSeconds, brightening with the strike of its bell
+    // and easing off with the ring; each pulse owes the bell, which takeBell() hands on once
+    // (the desk plays it, Play::Ui::Bell). The only alert there is (the user, 2026-10-21:
+    // "minimap with pulsing golden monster will do the trick", "it will be notification loop
+    // when char is nearby when point is visible on minimap").
+    bool takeBell() {
+        const bool owed = bellOwed_;
+        bellOwed_ = false;
+        return owed;
+    }
 
 private:
     // One thing on the square, in sixteenths of a screen pixel, rounded, so two frames that would draw the same
@@ -152,9 +163,11 @@ private:
         int32_t kind = -1;   // a monster's breed, or a gate's number, for the hint
         int fade = 16;       // how much of it the rim's fade leaves, in sixteenths
         bool again = false;  // a giver's quest cleared once before: the beacon's repeat blue
+        int pulse = 0;       // an Elite's glow this frame, in sixteenths
         bool operator==(const Mark& o) const {
             return glyph == o.glyph && x == o.x && y == o.y && angle == o.angle && fade == o.fade &&
-                   pinned == o.pinned && name == o.name && kind == o.kind && again == o.again;
+                   pinned == o.pinned && name == o.name && kind == o.kind && again == o.again &&
+                   pulse == o.pulse;
         }
     };
 
@@ -194,6 +207,9 @@ private:
     float helperX_ = 0.0f, helperY_ = 0.0f, helperR_ = 0.0f;
     float helperLift_ = 0.0f, helperClock_ = 0.0f;
     bool helping_ = false, helperPressing_ = false, helperToggleAsked_ = false, helperWindowAsked_ = false;
+    // The Elites' pulse: where in it the clock stands, whether one was near last frame, the bell owed.
+    float eliteClock_ = 0.0f;
+    bool eliteNear_ = false, bellOwed_ = false;
 
     gfx::Canvas canvas_;
     bool showing_ = false;

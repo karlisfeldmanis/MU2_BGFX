@@ -315,6 +315,8 @@ std::string Helper::update(Play& play, const HelperSettings& settings, double se
             attacker = &body;
         }
         if (tilesApart(float(anchorColumn_), float(anchorRow_), body.x, body.y) > reach) continue;
+        // An Elite (sim/elite.h) is left to the player: never sought, only fought back.
+        if (body.elite) continue;
         if (away < best && realm.reaches(hero, hero.column(), hero.row(), body.column(), body.row())) {
             best = away;
             nearest = &body;

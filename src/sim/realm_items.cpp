@@ -1210,6 +1210,11 @@ int Realm::autoDrinkSlot(bool mana) const {
 // No skill roll on a dropped piece. Its plus is `(monster level - drop level) / 3`, held to
 // the cap of nine and to the breed's MaxItemLevel.
 void Realm::leave(const Body& dead, const Body& killer) {
+    // An Elite leaves its own spoils, and nothing of this roll: no rune (realm_elite.cpp).
+    if (dead.elite) {
+        eliteSpoils(dead, killer);
+        return;
+    }
     // What a kill leaves: a jewel, then an item, then Zen, then nothing.
     //
     // **The item chance is ours, not MU2's 0.3.** A nest of spiders dropped a weapon or a piece

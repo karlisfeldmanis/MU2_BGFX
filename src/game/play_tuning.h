@@ -224,6 +224,12 @@ constexpr float kIcedLight[3] = {0.3f, 0.5f, 1.0f};
 // refined to +7 or more wears is left as it is.
 constexpr int kIcedPlus = 7;
 constexpr float kIcedChrome[3] = {0.35f, 0.6f, 1.0f};
+// **Ours.** An Elite (sim/elite.h) wears the same +7 chrome pass all the time, in gold (the
+// user, 2026-10-21: "chrome has to be golden", over the steel first proposed), the gold of its
+// mark on the minimap, and stands a quarter bigger than its breed.
+constexpr int kElitePlus = 7;
+constexpr float kEliteChrome[3] = {1.0f, 0.76f, 0.22f};
+constexpr float kEliteScale = 1.25f;
 // A poisoned body's, `eDeBuff_Poison`, and one both poisoned and iced (ZzzObject.cpp:1118-1123).
 constexpr float kPoisonedLight[3] = {0.3f, 1.0f, 0.5f};
 // **Ours.** A character's, a third of MU's green: his green smoke (Poison::sicken) carries the read

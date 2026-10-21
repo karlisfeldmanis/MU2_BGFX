@@ -331,6 +331,7 @@ add_library(mu_sim STATIC
   src/sim/realm.cpp
   src/sim/realm_items.cpp
   src/sim/realm_jeweler.cpp
+  src/sim/realm_elite.cpp
   src/sim/realm_machine.cpp
   src/sim/realm_deal.cpp
   src/sim/broker.cpp
@@ -1013,6 +1014,7 @@ add_executable(sim_test EXCLUDE_FROM_ALL
   tests/sim_test.cpp
   tests/sim_test_broker.cpp
   tests/sim_test_jeweler.cpp
+  tests/sim_test_elite.cpp
 )
 target_link_libraries(sim_test PRIVATE mu_net mu_sim)
 target_include_directories(sim_test PRIVATE src)

@@ -112,7 +112,7 @@ constexpr float kWaterAlpha = 0.22f;
 
 constexpr float kCell = 20.0f;
 constexpr float kMid = kCell * 0.5f;
-constexpr int kGlyphs = 13;
+constexpr int kGlyphs = 14;
 
 float clamp01(float v) { return std::clamp(v, 0.0f, 1.0f); }
 
@@ -167,6 +167,9 @@ constexpr float kDragon[10][2] = {
     {kMid, 2.6f},  {11.6f, 7.0f}, {18.2f, 4.6f}, {14.6f, 11.2f}, {11.5f, 12.0f},
     {kMid, 17.6f}, {8.5f, 12.0f}, {5.4f, 11.2f}, {1.8f, 4.6f},   {8.4f, 7.0f},
 };
+// An Elite (sim/elite.h): a monster's round head with two horns swept up and out, its eyes cut.
+constexpr float kHornLeft[3][2] = {{6.6f, 9.0f}, {2.8f, 2.6f}, {9.0f, 7.0f}};
+constexpr float kHornRight[3][2] = {{13.4f, 9.0f}, {17.2f, 2.6f}, {11.0f, 7.0f}};
 // The merchant's pouch: its neck, over a round body.
 constexpr float kNeck[4][2] = {{8.4f, 6.2f}, {11.6f, 6.2f}, {10.9f, 8.4f}, {9.1f, 8.4f}};
 
@@ -200,6 +203,12 @@ float shape(Minimap::Glyph glyph, float x, float y) {
         // Another player: the summon's dot, a size up again.
         case Glyph::Player: return circle(x, y, kMid, kMid, 3.8f);
         case Glyph::Dragon: return polygon(x, y, kDragon);
+        case Glyph::Elite: {
+            const float head = std::min({circle(x, y, kMid, 11.6f, 4.9f), polygon(x, y, kHornLeft),
+                                         polygon(x, y, kHornRight)});
+            const float eyes = std::min(circle(x, y, 8.1f, 11.2f, 1.15f), circle(x, y, 11.9f, 11.2f, 1.15f));
+            return std::max(head, -eyes);
+        }
         // Anyone else worth a name: a head over shoulders, the townsperson himself.
         case Glyph::Folk:
             return std::min(circle(x, y, kMid, 6.6f, 2.4f),
@@ -261,6 +270,26 @@ constexpr uint32_t kPlayerOrange = gfx::rgba(1.00f, 0.58f, 0.12f);
 // The Golden Dragon where it has landed (the user, 2026-10-08: "show on minimap special dragon
 // dot when he lands"): its own gold, paler than a hand-in's, rimmed in ink.
 constexpr uint32_t kDragonGold = gfx::rgba(1.00f, 0.84f, 0.30f);
+// An Elite's head in a deeper gold, and the white gold it flares to on its bell's strike.
+constexpr uint32_t kEliteGold = gfx::rgba(1.00f, 0.76f, 0.16f);
+constexpr uint32_t kEliteFlare = gfx::rgba(1.00f, 0.96f, 0.74f);
+// The pulse, one every two seconds, laid on the bell's own loudness (content/sounds/elite_bell.wav,
+// measured 2026-10-21): up with the strike in 0.06 s, full while it is loudest to 0.11 s, easing
+// to 0.4 through the ring to 0.5 s, gone as it dies away by 0.85 s, and still till the next.
+constexpr float kElitePulseSeconds = 2.0f;
+float eliteGlow(float t) {
+    if (t < 0.06f) return t / 0.06f;
+    if (t < 0.11f) return 1.0f;
+    if (t < 0.5f) return 1.0f - 0.6f * (t - 0.11f) / 0.39f;
+    if (t < 0.85f) return 0.4f * (1.0f - (t - 0.5f) / 0.35f);
+    return 0.0f;
+}
+// How far it is heard: the disc's own reach at its zoom, a little inside the rim.
+constexpr float kEliteReach = 0.9f;
+// Its halo at the strike: the head again, this much larger, at this alpha.
+constexpr float kEliteHaloGrow = 0.8f;
+constexpr float kEliteHaloAlpha = 0.45f;
+constexpr float kEliteSwell = 0.2f;  // and the head itself this much larger
 
 // The tone each is drawn in: bone for what matters, the quieter inks for the rest.
 uint32_t toneOf(Minimap::Glyph glyph) {
@@ -270,6 +299,7 @@ uint32_t toneOf(Minimap::Glyph glyph) {
         case Glyph::Summon: return kSummonGreen;
         case Glyph::Player: return kPlayerOrange;
         case Glyph::Dragon: return kDragonGold;
+        case Glyph::Elite: return kEliteGold;
         // A quest ready to hand in is gold, the user's (2026-10-01): "lets color finished quests
         // more vissible gold color". Bone sank into the lit ground. A quest not yet taken wears
         // the same gold (the user, 2026-10-02); the sign, "!" or hook, tells them apart.
@@ -346,7 +376,7 @@ bool Minimap::bake(float unit) {
             // White where the glyph is, so the tint is its tone; him with a hairline of ink round
             // him too, which the tint leaves black, so he holds his shape on the lit town.
             const bool rimmed = glyph == Glyph::Hero || glyph == Glyph::Summon ||
-                                glyph == Glyph::Player || glyph == Glyph::Dragon;
+                                glyph == Glyph::Player || glyph == Glyph::Dragon || glyph == Glyph::Elite;
             float fill = 0.0f, alpha = 0.0f;
             for (int sy = 0; sy < kSamples; ++sy) {
                 for (int sx = 0; sx < kSamples; ++sx) {
@@ -767,6 +797,41 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
         put(Glyph::Dragon, column, row, true, -1, dragon->kind);
     }
 
+    // The Elites within the disc's reach (sim/elite.h), pulsing on the bell's clock: begun on the
+    // frame the first comes near, the bell with it, and every kElitePulseSeconds after.
+    {
+        const float reach = kSpans[zoom_] * 0.5f * kEliteReach;
+        bool near = false;
+        for (const sim::Body& body : realm.bodies()) {
+            if (!body.elite || !body.alive()) continue;
+            float column = body.x, row = body.y;
+            play.shownAt(body.id, &column, &row);
+            near |= std::hypot(column - heroX_, row - heroY_) <= reach;
+        }
+        near = near && hero.alive();
+        if (near && !eliteNear_) {
+            eliteClock_ = 0.0f;
+            bellOwed_ = true;
+        } else if (near) {
+            eliteClock_ += seconds;
+            if (eliteClock_ >= kElitePulseSeconds) {
+                eliteClock_ = std::fmod(eliteClock_, kElitePulseSeconds);
+                bellOwed_ = true;
+            }
+        }
+        eliteNear_ = near;
+        const int glow = near ? int(std::lround(eliteGlow(eliteClock_) * 16.0f)) : 0;
+        for (const sim::Body& body : realm.bodies()) {
+            if (!near || !body.elite || !body.alive()) continue;
+            float column = body.x, row = body.y;
+            play.shownAt(body.id, &column, &row);
+            if (std::hypot(column - heroX_, row - heroY_) > reach) continue;
+            const size_t before = marks.size();
+            put(Glyph::Elite, column, row, false, -1, body.kind);
+            if (marks.size() > before) marks.back().pulse = glow;
+        }
+    }
+
     // Him, last and on top: his facing as a screen direction, clockwise from up.
     {
         float fx = 0.0f, fy = 0.0f;
@@ -1010,6 +1075,25 @@ void Minimap::rebuild(const Play& play) {
                             : mark.pinned               ? 0.7f
                                                         : float(mark.fade) / 16.0f;
         tone = (tone & 0x00FFFFFFu) | (uint32_t(shown * 255.0f + 0.5f) << 24);
+        // An Elite: its halo swelling and fading with the bell, and the head over it flaring.
+        if (mark.glyph == Glyph::Elite) {
+            const float glow = float(mark.pulse) / 16.0f;
+            const auto at = [&](uint32_t ink, float alpha) { return (ink & 0x00FFFFFFu) | (uint32_t(alpha * 255.0f + 0.5f) << 24); };
+            if (glow > 0.0f) {
+                const float big = cellPx * (1.0f + kEliteHaloGrow * glow);
+                canvas_.region(glyphs_, {x - big * 0.5f, y - big * 0.5f, big, big}, {from, 0.0f, cellPx, cellPx},
+                               at(kEliteGold, kEliteHaloAlpha * glow * shown));
+            }
+            uint32_t lit = 0;
+            for (int shift = 0; shift < 24; shift += 8) {
+                const float a = float((kEliteGold >> shift) & 0xFF), b = float((kEliteFlare >> shift) & 0xFF);
+                lit |= uint32_t(std::lround(a + (b - a) * glow)) << shift;
+            }
+            const float size = cellPx * (1.0f + kEliteSwell * glow);
+            canvas_.region(glyphs_, {x - size * 0.5f, y - size * 0.5f, size, size}, {from, 0.0f, cellPx, cellPx},
+                           at(lit, shown));
+            continue;
+        }
         if (mark.glyph == Glyph::Hero) {
             const float a = float(mark.angle) * 3.14159265f / 1800.0f;
             const float cs = std::cos(a), sn = std::sin(a), h = cellPx * 0.5f;
@@ -1101,6 +1185,8 @@ void Minimap::rebuild(const Play& play) {
                     mark.glyph == Glyph::Dragon) &&
                    mark.kind >= 0) {
             words = tables.kinds[size_t(mark.kind)].label;
+        } else if (mark.glyph == Glyph::Elite && mark.kind >= 0) {
+            words = tables.kinds[size_t(mark.kind)].label + "  \xC2\xB7  Elite";
         } else if (mark.glyph == Glyph::Player && mark.kind >= 0 &&
                    size_t(mark.kind) < play.realm().bodies().size()) {
             const sim::Body& other = play.realm().bodies()[size_t(mark.kind)];
