@@ -505,6 +505,11 @@ constexpr int kSkills = 40;
 // What each of Nova's stages adds to its blow: OpenMU's NovaDamageTable (NovaSkillStartPlugin.cs:30),
 // stage 0 to 12, with the strength's half beside it (SkillsInitializer.cs:610-611).
 constexpr int32_t kNovaStageDamage[13] = {0, 20, 50, 99, 160, 225, 325, 425, 550, 700, 880, 1090, 1320};
+// **Whole at kNovaFullEnergy energy, and his energy's share of it below** (ours, the user,
+// 2026-10-22: "Scale its burst with energy"): the stages are flat, and a level-150 wizard's
+// burst (~3,900 a body) was 1.6 of every other skill of any class, tests/kits/level150.json,
+// where at level 400 it stands in the middle.
+constexpr int kNovaFullEnergy = 1000;
 static_assert(kSkills <= 64, "the learned mask (Body::learned) is sixty-four bits");
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing

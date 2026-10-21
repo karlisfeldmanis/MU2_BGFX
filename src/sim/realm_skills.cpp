@@ -1123,7 +1123,11 @@ void Realm::burstCharge(Body& hero) {
     say(What::Loosed, hero, row->number, 0, stage, 0);
     // Its stages and the strength's half on the blow (OpenMU's SkillBaseDamageBonus), for this
     // burst alone.
-    me().chargeDamage = kNovaStageDamage[std::clamp(stage, 0, 12)] + hero.totalPoints().strength / 2;
+    // The stages at his energy's share of kNovaFullEnergy, to the whole (skills.h).
+    const HeroPoints points = hero.totalPoints();
+    const int stageDamage = int(int64_t(kNovaStageDamage[std::clamp(stage, 0, 12)]) *
+                                std::min(points.energy, kNovaFullEnergy) / kNovaFullEnergy);
+    me().chargeDamage = stageDamage + points.strength / 2;
     strikeAround(hero, *row, row->force);
     me().chargeDamage = 0;
     core::logf("nova: tick %lld, burst at stage %d", (long long)tick_, stage);
