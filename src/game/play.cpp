@@ -344,6 +344,8 @@ void Play::update(double seconds) {
     // This frame's gains, and only this frame's: whoever draws the lane runs after this and
     // reads them once. See Play::gains.
     gains_.clear();
+    gains_.insert(gains_.end(), notices_.begin(), notices_.end());
+    notices_.clear();
     tossedIds_.clear();
     answers_.clear();
     heroCast_ = 0;

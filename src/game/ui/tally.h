@@ -73,6 +73,7 @@ private:
         int64_t value = 0;
         float age = 0.0f;
         std::string line;  // a Notice's words (Play::Gain::line)
+        bool calm = false;  // a Notice that is not a warning: on a dark box, not the red
     };
 
     // A kill's experience, risen from over the body it came off and not said in the lane

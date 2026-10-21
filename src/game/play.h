@@ -652,7 +652,9 @@ public:
         // NotYours: a click on another player's drop (sim::Lying::owner, Play::leftClick).
         // TooFar: an elf's aid pointed at a player out of sim::kAidReach (Play::aidTarget).
         // Outguarded: her Greater Defense refused, his guard stronger (sim::What::Outguarded).
-        // Notice: a warning in its own words, `line` -- his pet or mount worn low, or gone.
+        // Notice: a warning in its own words, `line` -- his pet or mount worn low, or gone; or,
+        // `calm`, the game's word on what he asked (the Helper started), in the lane and never in
+        // the chat (the user, 2026-10-21: "dont put system related messages on global chat").
         enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died, Gapped, BagFull, NotYours, TooFar,
                                     Outguarded, Notice };
         Kind kind = Kind::Experience;
@@ -664,8 +666,17 @@ public:
         bool anchored = false;
         float at[3] = {0.0f, 0.0f, 0.0f};
         std::string line;
+        bool calm = false;
     };
     const std::vector<Gain>& gains() const { return gains_; }
+    // A line of the game's own said in the lane over the HUD (a Notice): the Helper started or
+    // stopped, Auto-play, the Graphics eased. Held to the next update, whose gains carry it.
+    void notice(std::string line, bool warning) {
+        Gain gain{Gain::Kind::Notice, 0};
+        gain.line = std::move(line);
+        gain.calm = !warning;
+        notices_.push_back(std::move(gain));
+    }
     // The skill the hero threw on this frame's ticks, by its number, or 0: the realm's yes to a
     // key, which a press alone is not -- the press is held until he is in reach, and refused
     // while the skill cools. What the skill box rings on.
@@ -1129,7 +1140,8 @@ public:
     // (SOUND_CLICK01), a request the realm said no to (iButtonError), and a thing going into
     // a slot -- MU has no equip or bind sound of its own and plays SOUND_GET_ITEM01 for both.
     // Opened is SOUND_INTERFACE01, which a merchant's counter opens on beside the click.
-    enum class Ui { Click, Refused, Took, Opened, Invited };
+    // Talent is the user's sword cut, for a + the realm answered by opening a talent.
+    enum class Ui { Click, Refused, Took, Opened, Invited, Talent };
     void ui(Ui which);
     void gatherAura(gfx::Effects& effects, const float eye[3]) const {
         if (ground_) aura_.gather(effects, *ground_, eye);
@@ -1979,6 +1991,7 @@ private:
         int grate = -1, trapFlame = -1;                 // the traps' aGrate and sFlame
         int click = -1, refused = -1, opened = -1;      // the windows
         int invited = -1;  // window_invite: a party, guild or trade invite to him
+        int talent = -1;   // window_talent: a talent opened by a point
         int levelUp = -1;                               // another player's level, heard at him
         int repair = -1;                                // SOUND_REPAIR: a counter mended
         int mix = -1, mixBreak = -1;                    // eMix and eBreak: the Chaos Machine
@@ -2051,6 +2064,7 @@ private:
     std::vector<Cue> due_;
     // And what he gained on this frame's ticks -- see gains(). A member for the same reason.
     std::vector<Gain> gains_;
+    std::vector<Gain> notices_;  // Play::notice's, for the next update
     std::vector<uint32_t> tossedIds_;  // see tossedDrops()
     uint32_t pickAsked_ = 0;  // the drop his last order went to pick up, until that ends
     bool pickSeen_ = false;   // and whether the realm has carried that order yet

@@ -266,6 +266,7 @@ const uint32_t kHealthInk = byteColour(134, 201, 143);
 // A warning is white Open Sans on a flat red box (the user, 2026-10-11: "red background ... white text").
 const uint32_t kWarningBox = byteColour(196, 24, 20, 0.92f);
 const uint32_t kWarningInk = byteColour(255, 255, 255);
+const uint32_t kCalmBox = byteColour(20, 18, 16, 0.78f);  // a calm Notice's (Play::notice)
 constexpr float kWarningPadX = 4.0f, kWarningPadY = 1.6f;
 const uint32_t kManaInk = byteColour(138, 166, 224);
 const uint32_t kHalo = gfx::rgba(0.0f, 0.0f, 0.0f, kHaloAlpha);
@@ -514,12 +515,14 @@ void Tally::collect(const Play& play, float seconds) {
                 break;
             }
             case Play::Gain::Kind::Notice: {
-                if (!lane_.empty() && lane_.back().kind == Row::Kind::Notice && lane_.back().line == gain.line) {
+                if (!lane_.empty() && lane_.back().kind == Row::Kind::Notice && lane_.back().line == gain.line &&
+                    lane_.back().calm == gain.calm) {
                     lane_.back().age = std::min(lane_.back().age, kNoticeLife * kRowIn);
                     break;
                 }
                 Row row{Row::Kind::Notice, 0, 0.0f};
                 row.line = gain.line;
+                row.calm = gain.calm;
                 lane_.push_back(row);
                 scroll_ += 1.0f;
                 break;
@@ -838,7 +841,7 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
             const float left = kLaneLeft * unit, at = std::round(baseline);
             const float padX = kWarningPadX * unit, padY = kWarningPadY * unit;
             canvas_.rect({left, at - face.ascent(rowSize) - padY, face.measure(rowSize, said) + padX * 2.0f,
-                          face.height(rowSize) + padY * 2.0f}, withAlpha(kWarningBox, alpha));
+                          face.height(rowSize) + padY * 2.0f}, withAlpha(row.calm ? kCalmBox : kWarningBox, alpha));
             canvas_.lettered(face, texture, left + padX, at, rowSize, 0.0f, withAlpha(kWarningInk, alpha), said);
             baseline += rowStep;
             place += 1.0f;

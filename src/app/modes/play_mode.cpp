@@ -1344,15 +1344,15 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         if (const int asked = desk_.takeAutoPlay(); asked != -2) {
             if (asked >= 0) {
                 ctx.autoQuest = asked;
-                desk_.notice(std::string("Auto-play: ") + sim::questAt(asked).title + ".");
+                world_.played().notice(std::string("Auto-play: ") + sim::questAt(asked).title + ".", false);
             } else if (ctx.autoQuest >= 0) {
                 ctx.autoQuest = -1;
-                desk_.notice("Auto-play stopped.");
+                world_.played().notice("Auto-play stopped.", false);
             }
         }
         if (ctx.autoQuest >= 0 && !windowed && (mouseLeft || mouseRight)) {
             ctx.autoQuest = -1;
-            desk_.notice("Auto-play stopped.");
+            world_.played().notice("Auto-play stopped.", false);
         }
         // **The Helper** (game/helper.h): started and stopped by H, the minimap's H and its
         // window, stopped by a click of his own on the world, as Auto-play is; the two never run
@@ -1377,21 +1377,21 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             const game::Play& played = world_.played();
             const sim::Body& hero = played.realm().hero();
             if (asked == 0) {
-                if (helper_.on()) desk_.notice("Helper stopped.");
+                if (helper_.on()) world_.played().notice("Helper stopped.", false);
                 helper_.stop();
             } else if (!desk_.helperSettings().quest && played.realm().tables()->grid.safe(hero.column(), hero.row())) {
-                desk_.notice("The Helper works outside safe zones.");
+                world_.played().notice("The Helper works outside safe zones.", true);
                 core::logf("helper: not started on a safe tile, %d,%d", hero.column(), hero.row());
             } else if (hero.alive()) {
                 if (ctx.autoQuest >= 0) ctx.autoQuest = -1;
                 helper_.start(played);
-                desk_.notice("Helper started.");
+                world_.played().notice("Helper started.", false);
             }
         }
         // A scripted press on the world (--ui-click) counts as his own click.
         if (helper_.on() && (ctx.autoQuest >= 0 || (!windowed && (mouseLeft || mouseRight || uiPress)))) {
             helper_.stop();
-            desk_.notice("Helper stopped.");
+            world_.played().notice("Helper stopped.", false);
         }
         if (desk_.takeHelperChanged()) game::writeHelper(savePath_, desk_.helperSettings());
         if ((mouseLeft && !windowed) || clickNow || (uiPress && !uiRight && !windowed)) {
@@ -1418,13 +1418,15 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         if (const std::string said = questAuto_.update(world_.played(), &ctx.autoQuest, deltaSeconds, bar,
                                                        game::Hud::kSkillBoxes);
             !said.empty()) {
-            desk_.notice(said);
+            const bool done = said.size() > 10 && said.compare(said.size() - 10, 10, " complete.") == 0;
+            world_.played().notice(said, !done);
         }
         desk_.setAutoPlaying(ctx.autoQuest);
         if (const std::string said = helper_.update(world_.played(), desk_.helperSettings(), deltaSeconds, bar,
                                                     game::Hud::kSkillBoxes, desk_.shownQuest());
             !said.empty()) {
-            desk_.notice(said);
+            const bool done = said.size() > 10 && said.compare(said.size() - 10, 10, " complete.") == 0;
+            world_.played().notice(said, !done);
         }
         if (world_.played().isOpen()) {
             ctx.helperFollows = helper_.on() && desk_.helperSettings().quest;
@@ -2124,8 +2126,9 @@ void PlayMode::writeProbes(Context& ctx, const Frame& at) {
 
 void PlayMode::graphicsEased(Context& ctx, const char* to) {
     fillSettings(ctx.window, ctx.args, &desk_.settings());
-    desk_.notice(std::string("Graphics lowered to ") + to +
-                 " to keep the game smooth. Options > Graphics changes it back.");
+    world_.played().notice(std::string("Graphics lowered to ") + to +
+                                " to keep the game smooth. Options > Graphics changes it back.",
+                            false);
 }
 
 void PlayMode::report(Context& ctx) {

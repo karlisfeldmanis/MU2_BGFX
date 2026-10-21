@@ -71,7 +71,10 @@ int questToFollow(const sim::Realm& realm, int shown) {
 
 HelperKind helperKind(const sim::SkillRow& row, bool rightSlot) {
     if (rightSlot) return HelperKind::Right;
-    if (row.blinks || row.chargeTicks > 0 || row.mounted) return HelperKind::Moves;
+    // Nova (a charge) is pressed once and bursts where he stands (Realm::invoke): a crowd's, not a
+    // move; Fire Breath (mounted) is a blow at one body while he rides (the user, 2026-10-21: "i
+    // draged ini new spell on quckslot but helper did not work with that").
+    if (row.blinks) return HelperKind::Moves;
     if (row.channelled()) return HelperKind::Held;
     if (row.summons > 0) return HelperKind::Summon;
     if (row.mends) return HelperKind::Heal;
@@ -581,7 +584,9 @@ void Helper::keys(Play& play, const HelperSettings& settings, uint32_t target) {
         const HelperUse use = settings.use(skill, kind);
         const bool now = use == HelperUse::Ready || (use == HelperUse::Near2 && crowd >= 2) ||
                          (use == HelperUse::Near3 && crowd >= 3);
-        if (!now || hero.mana < row->mana || !row->suits(hand)) continue;
+        // A charge pays every stage at once (Realm::invoke).
+        const int32_t price = row->chargeTicks > 0 ? row->mana * row->chargeStages : row->mana;
+        if (!now || hero.mana < price || !row->suits(hand)) continue;
         if (const auto tried = tried_.find(skill); tried != tried_.end() && tried->second > clock_) continue;
         tried_[skill] = clock_ + kSkillRetry;
         core::logf("helper: %s at %u, %d about it", row->name, unsigned(target), crowd);
