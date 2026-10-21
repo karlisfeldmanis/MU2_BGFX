@@ -548,7 +548,7 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::KeenEye, "Keen Eye", "+10% critical chance", kEveryClass, kWorn, Rarity::Rare},
         {Power::Bloodwell, "Bloodwell", "Heal 3% of damage dealt, 5% mana per kill",
          kEveryClass, kWorn, Rarity::Epic},
-        {Power::Frenzy, "Frenzy", "Each hit: +8 attack speed for 4 s, stacks to +40",
+        {Power::Frenzy, "Frenzy", "Each hit: +5 attack speed for 4 s, stacks to +25",
          kEveryClass, kWorn, Rarity::Epic, false, true},
         {Power::Renewal, "Renewal", "Restore 3% life every 3 s",
          kEveryClass, kWorn, Rarity::Epic},
