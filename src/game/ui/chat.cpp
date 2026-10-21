@@ -70,7 +70,7 @@ constexpr uint32_t kSheet = gfx::rgba(0.051f, 0.039f, 0.031f, 0.97f);
 constexpr uint32_t kRowLit = gfx::rgba(1.0f, 0.94f, 0.86f, 0.07f);
 
 // Measures, in tip::unit() (a pixel at 1080 lines), from the canvas's 1080p boards.
-constexpr float kLeftFirst = 32.0f, kFootFirst = 92.0f, kWideFirst = 460.0f, kTallFirst = 360.0f;
+constexpr float kLeftFirst = 32.0f, kFootFirst = 92.0f, kWideFirst = 460.0f, kTallFirst = 300.0f;
 constexpr float kWideLeast = 340.0f, kTallLeast = 240.0f, kWideMost = 760.0f, kTallMost = 720.0f;
 constexpr float kTabRow = 30.0f, kPadTop = 12.0f, kPadSide = 14.0f, kPadFoot = 14.0f;
 constexpr float kInput = 40.0f, kInputGap = 12.0f, kIndent = 14.0f;
@@ -1115,9 +1115,11 @@ void Chat::place(float u, float width, float height) {
     panel_ = {frame_.x, row_.bottom(), frame_.w, frame_.bottom() - row_.bottom()};
     input_ = {panel_.x + kPadSide * u, panel_.bottom() - (kPadFoot + kInput) * u, panel_.w - 2.0f * kPadSide * u,
               kInput * u};
+    // The log holds whole rows only, its foot on the input's gap: no sliver of a cut line at its top.
     const float logTop = panel_.y + kPadTop * u;
-    logBox_ = {panel_.x + kPadSide * u, logTop, panel_.w - 2.0f * kPadSide * u,
-               std::max(rowTall() * u, input_.y - kInputGap * u - logTop)};
+    const float rowH = rowTall() * u;
+    const float logTall = std::max(rowH, std::floor((input_.y - kInputGap * u - logTop) / rowH) * rowH);
+    logBox_ = {panel_.x + kPadSide * u, input_.y - kInputGap * u - logTall, panel_.w - 2.0f * kPadSide * u, logTall};
     grip_ = {panel_.right() - 18.0f * u, panel_.y + 2.0f * u, 16.0f * u, 16.0f * u};
     gear_ = {row_.right() - 30.0f * u, row_.y, 30.0f * u, row_.h};
     chip_ = {input_.x, input_.y, wordWidth(kWord * u, channelWord()) + 28.0f * u, input_.h};
