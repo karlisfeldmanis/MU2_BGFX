@@ -196,7 +196,19 @@ int main(int argc, char** argv) {
         sim::Realm dressed;
         dressed.raise(&tables, 1000, map->arrive[0], map->arrive[1], kit->kin, kit->level);
         dressed.benchDressHero(*kit);
-        for (int slot = 0; slot < sim::kWorn; ++slot) worn += dressed.satchel()[slot].empty() ? 0 : 1;
+        for (int slot = 0; slot < sim::kWorn; ++slot) {
+            const sim::Held& h = dressed.satchel()[slot];
+            if (h.empty()) continue;
+            ++worn;
+            // The bench puts a kit on whole, asked nothing: what his points could not wear is said.
+            if (!sim::fits(tables, dressed.wearer(), h)) {
+                const content::ItemRow& r = tables.items[size_t(h.item)];
+                const sim::Needs a = sim::asks(r, h.refinement, h.excellent != 0);
+                std::printf("  (%s cannot wear %s +%d: it asks level %d, strength %d, agility %d, energy %d, vitality %d)\n",
+                            kitName.c_str(), r.label.c_str(), int(h.refinement), a.level, a.strength, a.agility,
+                            a.energy, a.vitality);
+            }
+        }
     }
     std::printf("%s on %s, %d seeds x %.1f min, level %d, %d of %zu pieces worn; per hour, best talent build; x median of the class\n",
                 kitName.c_str(), world.c_str(), seeds, minutes, kit->level, worn, kit->pieces.size());
