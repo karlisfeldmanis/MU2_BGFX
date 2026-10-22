@@ -1,0 +1,64 @@
+{
+  "item": "Object36",
+  "mu_name": "Object36",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 35,
+  "placements": 3,
+  "profile": "world",
+  "sheets": {
+    "song_k0a1": "kr_song_k0a1.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k0a1": "plank"
+  },
+  "material_note": "song_k0a1: an iron-banded plank wall (Object29's sheet): plank.",
+  "why_this_one": "A plank planter: a U of iron-banded planks, a half octagon 2 m across and 1.8 m tall, open on one side, round a carnivorous plant (seen at 150,63); 3 of them, at 150,63, 164,42 and 176,27. No arm in GM_Kanturu_1st.cpp for type 35: one static mesh. The user, 2026-10-22: looked at first, then \"you decide\". docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plank",
+      "triangles": 36,
+      "area": 177384.1,
+      "along": [
+        -125.1,
+        122.0
+      ],
+      "mu_uv": [
+        0.012,
+        0.02,
+        2.611,
+        0.992
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.935,
+        0.678
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plank",
+      "triangles": 24,
+      "area": 19996.0,
+      "along": [
+        -126.6,
+        125.5
+      ],
+      "mu_uv": [
+        0.012,
+        0.649,
+        2.785,
+        0.794
+      ],
+      "bake_uv": [
+        0.003,
+        0.684,
+        0.997,
+        0.753
+      ]
+    }
+  ]
+}

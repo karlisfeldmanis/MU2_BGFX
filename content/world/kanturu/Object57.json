@@ -1,0 +1,46 @@
+{
+  "item": "Object57",
+  "mu_name": "Object57",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 56,
+  "placements": 20,
+  "profile": "world",
+  "sheets": {
+    "han_moss6": "kr_han_moss6.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "han_moss6": "foliage"
+  },
+  "material_note": "han_moss6: mossy vines dripping long strands, cut out: foliage.",
+  "cutout": [
+    "han_moss6"
+  ],
+  "cutout_from": "decode_texture found a real alpha channel cutting the sheet.",
+  "why_this_one": "Moss hanging off the rope bridges' railings: one card 1.45 by 1.3 m, 20 of them at scale 1.1-5.8, along the bridges at 58-69,44-69 and 184-196,35-42 (the ones 4-11 m down hang under the spans, over the chasm). MU has no rig and no arm in GM_Kanturu_1st.cpp for type 56: it does not sway. The user, 2026-10-22: looked at first, then \"you decide\". docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "foliage",
+      "triangles": 4,
+      "area": 20785.2,
+      "along": [
+        -12.5,
+        17.1
+      ],
+      "mu_uv": [
+        0.0,
+        -0.001,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.0,
+        -0.001,
+        1.0,
+        1.0
+      ]
+    }
+  ]
+}
