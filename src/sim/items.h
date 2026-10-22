@@ -1229,16 +1229,19 @@ constexpr float kPollutionTiles = 3.0f;
 constexpr int kPollutionMost = 4;
 // **Chain Lightning**, the fourth Ancient (the user, 2026-10-22: "lets work on Chain Lightning
 // (215) and Drain Life (214)"): MU's AT_SKILL_ALICE_CHAINLIGHTNING (OpenMU's S6 row: 70 damage,
-// an explicit target). As OpenMU's ChainLightningSkillPlugIn lays it, the bolt strikes what it was
-// thrown at, leaps to a monster within kChainHopTiles of it at kChainSecond, and on to a third
-// within kChainHopTiles of that at kChainThird, never one already struck -- MU's ReceiveChainMagic
-// draws the three. A spell he casts, or a swing that lands, has kChainChance to throw it at what
-// he struck -- on a cast with no monster struck, the nearest within kStormcallReach -- each blow
-// his rune's (runeStrike) at kChainForce, lightning: MU's 70 against Pollution's 80 at 1.2. Ours:
-// the three land on the tick it is thrown, where OpenMU waits 300 ms before each leap.
+// an explicit target). A spell he casts, or a swing that lands, has kChainChance to throw it at
+// what he struck -- on a cast with no monster struck, the nearest within kStormcallReach -- and
+// then it leaps as his own Lightning's chain does (the user, 2026-10-22: "cant we just replace
+// this chain lighting with already eisting chain lighting which we have now?"): every
+// kChainLeapTicks to the nearest living monster in sight within kChainReach of the last one
+// struck, never one struck already, kChainMost bodies in all. Each blow his rune's (runeStrike)
+// at kChainForce, lightning -- MU's 70 against Pollution's 80 at 1.2 -- the first whole, the
+// leaps at kChainSecond and kChainThird as OpenMU's ChainLightningSkillPlugIn. The leap's pause
+// is OpenMU's 300 ms; the reach is Lightning's six tiles where OpenMU's is two.
 constexpr double kChainChance = 0.10;  // a cast in ten; the user may tune it
 constexpr float kChainForce = 1.05f;
-constexpr float kChainHopTiles = 2.0f;
+constexpr float kChainReach = 6.0f;
+constexpr int64_t kChainLeapTicks = 6;  // 300 ms
 constexpr float kChainSecond = 0.7f, kChainThird = 0.5f;
 constexpr int kChainMost = 3;
 // **Drain Life**, the fifth Ancient: MU's AT_SKILL_ALICE_DRAINLIFE (OpenMU's S6 row: 35 damage).

@@ -672,7 +672,7 @@ const PowerRow* powerOf(uint8_t power) {
          "10% on a cast or a hit: Lagle's ghosts strike up to 4 monsters within 3 tiles",
          kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
         {Power::ChainLightning, "Chain Lightning",
-         "10% on a cast or a hit: lightning leaps from the monster to 2 more within 2 tiles",
+         "10% on a cast or a hit: lightning strikes the monster and leaps to 2 more within 6 tiles",
          kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
         {Power::DrainLife, "Drain Life",
          "10% on a cast or a hit: drains the monster and heals you",
