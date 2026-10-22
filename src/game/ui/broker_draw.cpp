@@ -186,7 +186,31 @@ void Broker::rebuild(Play& play, Stage* stage) {
         };
         const float ix = well.right() + 12.0f, iw = block.right() - 8.0f - ix;
         constexpr float kFace = 14.0f;  // a class's face before the class line
-        constexpr float kStep = 13.0f, kHead = 30.0f;  // the name and its kind, then a gap
+        constexpr float kStep = 13.0f;
+        // The name at 16, at 13.5 when that is too wide, and on two lines at 13.5 when even that
+        // runs past the block's edge ("Rune of Greater Wellspring", the user, 2026-10-22:
+        // "overlaping text on market").
+        const std::string name = nameOf(tables, what);
+        const float nameSize = controls::labelWidth(S(16.0f), name) / k > iw ? 13.5f : 16.0f;
+        std::vector<std::string> named{name};
+        if (controls::labelWidth(S(nameSize), name) / k > iw) {
+            named.clear();
+            std::string row, word;
+            for (size_t i = 0; i <= name.size(); ++i) {
+                if (i < name.size() && name[i] != ' ') {
+                    word += name[i];
+                    continue;
+                }
+                const std::string tried = row.empty() ? word : row + " " + word;
+                if (!row.empty() && named.empty() && controls::labelWidth(S(nameSize), tried) / k > iw) named.push_back(row), row = word;
+                else row = tried;
+                word.clear();
+            }
+            if (!row.empty()) named.push_back(row);
+        }
+        constexpr float kNameStep = 15.0f;  // a second line of the name
+        const float nameDrop = float(named.size() - 1) * kNameStep;
+        const float kHead = 30.0f + nameDrop;  // the name and its kind, then a gap
         // How many lines stand beside the picture; the rest run under the block at its width.
         const int fit = std::max(0, int((pic - kHead - 4.0f) / kStep));
         std::vector<Said> said;
@@ -281,20 +305,21 @@ void Broker::rebuild(Play& play, Stage* stage) {
         }
         if (!sheet.note.empty() && sheet.noteTone != tip::Tone::Gray) add(sheet.note, tip::colourOf(sheet.noteTone), "", 0);
         if (stop <= ay) said.clear(), beside = 0;
-        const std::string name = nameOf(tables, what);
-        const float nameSize = controls::labelWidth(S(16.0f), name) / k > iw ? 13.5f : 16.0f;
         const float tall = kHead + float(beside) * kStep + (beside > 0 ? 4.0f : 0.0f);
         const float top = ay + 4.0f + std::max(0.0f, (pic - tall) * 0.5f);
-        text(ix, top + 13.0f, nameSize, ink, name);
+        for (size_t i = 0; i < named.size(); ++i) text(ix, top + 13.0f + float(i) * kNameStep, nameSize, ink, named[i]);
         {
-            // A prize's kind line opens on a gold star and "Rare".
+            // A prize's kind line opens on a gold star and "Rare", its dot only when a kind
+            // follows it.
+            const std::string& kindWord = kind.empty() ? sheet.base : kind;
+            const float ky = top + 26.0f + nameDrop;
             float kx = ix;
             if (prize) {
-                tip::glyphAt(canvas_, tip::Mark::Star, x + (kx + 4.0f) * k, y + (top + 22.0f) * k, 8.0f * k, kGold);
+                tip::glyphAt(canvas_, tip::Mark::Star, x + (kx + 4.0f) * k, y + (ky - 4.0f) * k, 8.0f * k, kGold);
                 kx += 10.0f;
-                kx += text(kx, top + 26.0f, kCaption, kGold, "Rare \xC2\xB7 ") / k;
+                kx += text(kx, ky, kCaption, kGold, kindWord.empty() ? "Rare" : "Rare \xC2\xB7 ") / k;
             }
-            text(kx, top + 26.0f, kCaption, style::kAshInk, kind.empty() ? sheet.base : kind);
+            if (!kindWord.empty()) text(kx, ky, kCaption, style::kAshInk, kindWord);
         }
         float ly = top + kHead + 12.0f;
         for (int i = 0; i < int(said.size()); ++i) {
