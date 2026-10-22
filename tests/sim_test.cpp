@@ -1001,7 +1001,7 @@ void testItems(const content::Tables& tables) {
         check(duo.equip(axeArm, axeArm, true), "two axes, the second in the shield's place");
         check(duo.hero().dual, "and he holds two");
         checkEqual(duo.satchel()[sim::kWeaponLeft].item, axe, "the second in the left hand");
-        checkEqual(duo.hero().stats.minimumDamage, matched, "a matched pair: each hand at 70%");
+        checkEqual(duo.hero().stats.minimumDamage, matched, "a matched pair: each hand at 62%");
         checkEqual(duo.hero().stats.offhandMinimumDamage, matched,
                    "and the left band is the right's again");
         check(duo.moveItem(sim::kWeaponLeft, sim::kWorn + 30), "the second comes off");
@@ -1021,7 +1021,7 @@ void testItems(const content::Tables& tables) {
               "the axe left, the sword right");
         check(duo.moveItem(sim::kWeaponRight, sim::kWeaponLeft), "and swap back");
         checkEqual(duo.hero().stats.minimumDamage, int(double(single) * sim::kMixedPair),
-                   "a mixed pair: each hand at 55%");
+                   "a mixed pair: each hand at 49%");
         check(!sim::offHanded(tables.items[size_t(axe)], sim::Kin::DarkWizard),
               "only a knight holds a second weapon");
         check(!sim::offHanded(tables.items[size_t(staff)], sim::Kin::DarkKnight),
