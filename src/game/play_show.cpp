@@ -1609,9 +1609,13 @@ void Play::follow(float seconds) {
             // user, 2026-10-20: "hp bar has very high offset on big monsters"). 0.40 of the
             // figure's own metres, a head: a man's box (1.89 to a head joint at 1.61) is under it
             // and keeps its bar. A rig without a head joint keeps the box.
+            // The head as bound, not as posed: the posed one bobs with every step of a run and
+            // breath of an idle, and the name and bar bobbed with it (the user, 2026-10-22: "char
+            // name label above is bouncing with character not fixed").
             constexpr float kBarOverHead = 0.40f;
             float head[3];
-            if (look->headBone >= 0 && one.figure.pointOnBind(look->headBone, look->headJoint, head)) {
+            if (look->headBone >= 0) {
+                one.figure.pointInModel(look->headJoint, head);
                 one.crown[1] = std::min(one.crown[1], head[1] + kBarOverHead * look->scale);
             }
             one.crown[2] = position[2];
