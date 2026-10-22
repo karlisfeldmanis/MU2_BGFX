@@ -155,6 +155,7 @@ void main()
 	float ao = orm.r;
 	float roughness = clamp(orm.g * MATERIAL.z + roughShift, 0.04, 1.0);
 	float metal = orm.b * MATERIAL.w;
+	float sheen = mix(1.0, u_weather.y, u_weather.z * (1.0 - metal));
 
 	// Specular anti-aliasing (Tokuyoshi and Kaplanyan, "Improved Geometric Specular
 	// Antialiasing", 2019): where the normal turns faster than a pixel can hold -- a normal
@@ -267,8 +268,10 @@ void main()
 			float fv = pow(1.0 - min(ndotv, 1.0), 5.0);
 			kd *= mix(1.0, (1.0 + (fd90 - 1.0) * fl) * (1.0 + (fd90 - 1.0) * fv), matte);
 		}
-		// The sheet's sheen on the town's placements (gfx::Lighting::sheen).
-		spec *= mix(1.0, u_weather.y, u_weather.z);
+		// The sheet's sheen on the town's placements (gfx::Lighting::sheen). Not on metal: a
+		// metal has no diffuse, so its highlight and the sky are all its colour, and at sheen 0
+		// Kanturu's iron pipes stood pure black (the user, 2026-10-22: "black pipes in kanturu").
+		spec *= sheen;
 		colour += (kd + spec) * u_sunColour.rgb * u_sunDir.w * ndotl * shadow * microShadow;
 	}
 
@@ -313,7 +316,7 @@ void main()
 	float specAo = saturate(pow(ndotv + ao, exp2(-16.0 * roughness - 1.0)) - 1.0 + ao);
 	float horizon = saturate(1.0 + 1.1 * dot(r, ng));
 	colour += env * (f0 * envAB.x + vec3_splat(envAB.y)) * energy * specAo * horizon * horizon
-	          * mix(1.0, u_weather.y, u_weather.z);
+	          * sheen;
 
 	// The lamps, on the texture's own albedo rather than on the albedo times MU's baked
 	// light: lights.sh says why.
