@@ -207,9 +207,10 @@
       "note": "MU's second pass over the crystals, mesh 0 again RENDER_CHROME7 with BITMAP_CHROME (GM_Kanturu_1st.cpp:368-370): Chrome01 added at the body light, slid by the normals and WorldTime*0.00006 (ZzzBMD.cpp:1409-1457, 1667-1671). game/world/crystal_sparks.h lendCrystalChrome."
     },
     "music": {
-      "track": "/music/kanturu_1st.mp3",
+      "track": "/music/kanturu_ambient.mp3",
       "where": "safe",
-      "note": "MU's kanturu_1st (Data/Music), which MU plays in the Ruins; here in the camp's safe zone only, the house rule (the user, 2026-10-11: 'we play music on safezones only'), as Aida."
+      "note": "Ours, not WebZen's kanturu_1st: freesound_community scary-ambient-05 (the user, 2026-10-22: 'use this music for kunturu not webzen'), looped in the camp's safe zone only, the house rule (the user, 2026-10-11: 'we play music on safezones only').",
+      "loops": true
     },
     "leaves": "leaf"
   },
