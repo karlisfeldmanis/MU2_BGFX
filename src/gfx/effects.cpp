@@ -241,16 +241,20 @@ void Effects::draw(uint16_t view, const float* viewMtx, const float* projMtx, co
         for (uint32_t n = 0; n < quads; ++n) {
             const Sprite& s = sprites_[order_[n]];
             const bool isMinus = s.blend == Blend::Minus;
+            const bool isSoft = s.soft > 0.0f;
             uint32_t slot = 0;
             while (slot < run.boundCount && run.bound[slot].idx != s.sheet.idx) ++slot;
-            if (n > runStart && (isMinus != run.minus || slot == kSheetSlots)) {
+            if (n > runStart && (isMinus != run.minus || isSoft != run.soft || slot == kSheetSlots)) {
                 run.end = n;
                 runs_.push_back(run);
                 run = Run{};
                 runStart = n;
                 slot = 0;
             }
-            if (n == runStart) run.minus = isMinus;
+            if (n == runStart) {
+                run.minus = isMinus;
+                run.soft = isSoft && bgfx::isValid(prepass_);
+            }
             if (slot == run.boundCount) run.bound[run.boundCount++] = s.sheet;
             slots_[n] = uint8_t(slot);
         }
@@ -318,7 +322,9 @@ void Effects::draw(uint16_t view, const float* viewMtx, const float* projMtx, co
 
     uint32_t runStart = 0;
     for (const Run& run : runs_) {
-        bgfx::setState(common | (run.minus ? minus : over));
+        // A soft run tests no depth: its fragment does, softly, against the prepass, so it thins
+        // behind an edge instead of ending on it.
+        bgfx::setState((run.soft ? BGFX_STATE_WRITE_RGB : common) | (run.minus ? minus : over));
         // The WHOLE vertex buffer, and the run selected by the index range alone.
         //
         // Not `setVertexBuffer(0, &tvb, runStart * 4, runQuads * 4)`, which is the obvious

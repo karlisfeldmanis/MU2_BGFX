@@ -165,6 +165,7 @@ private:
     struct Run {
         uint32_t end = 0;
         bool minus = false;
+        bool soft = false;  // no depth test: fs_effect_body.sh fades it against the prepass
         uint32_t boundCount = 0;
         bgfx::TextureHandle bound[kSheetSlots];
     };

@@ -49,17 +49,30 @@ SAMPLER2D(s_sheet6, 15);
 
 uniform vec4 u_flame;  // x: how bright full heat is  yzw: unused
 
-// A soft sprite (gfx::Sprite::soft) thins to nothing as it nears what stands behind it, so a
-// big cloud passing through the ground or a wall fades out there instead of ending on a cut
-// line. The kind's whole number above 8 carries the reach in quarter metres; `depth` is
+// A soft sprite (gfx::Sprite::soft) thins to nothing as it nears what stands behind it, and
+// goes over the last metre behind what stands in front, so a big cloud passing through the
+// ground or behind the lip fades there instead of ending on a cut line (the user, 2026-10-23:
+// "vissible lines"). The kind's whole number above 8 carries the reach in quarter metres; `depth` is
 // the fragment's own view depth. A pixel the prepass left clear (the void) is infinitely far.
 float softness(float code, vec2 pixel, float depth)
 {
 	float quarters = floor(code / 8.0);
 	if (quarters < 0.5) return 1.0;
-	float behind = prepassAt(pixel * u_viewTexel.xy).a;
-	if (behind <= 0.0) return 1.0;
-	return saturate((behind - depth) / (quarters * 0.25));
+	// The farthest of the pixel and its four neighbours, the void (left clear) the farthest of
+	// all: a silhouette's pixel, its depth averaged with the void's 0 where the prepass is read
+	// resolved (Metal), otherwise stands as a near wall and draws a black line along the lip.
+	float behind = 0.0;
+	for (int i = 0; i < 5; ++i)
+	{
+		vec2 step = i == 0 ? vec2(0.0, 0.0) : i == 1 ? vec2(1.0, 0.0) : i == 2 ? vec2(-1.0, 0.0)
+		          : i == 3 ? vec2(0.0, 1.0) : vec2(0.0, -1.0);
+		float at = prepassAt((pixel + step) * u_viewTexel.xy).a;
+		behind = max(behind, at <= 0.0 ? 1.0e4 : at);
+	}
+	// Full a reach in front of what stands behind it, nothing a metre behind what stands in
+	// front of it: the pass tests no depth for a soft sprite (gfx::Effects), so this is its
+	// occlusion too, and a cloud just behind the lip shows faintly over it.
+	return smoothstep(-3.0, quarters * 0.25, behind - depth);
 }
 
 vec4 sheetAt(float slot, vec2 uv)
