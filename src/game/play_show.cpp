@@ -1535,7 +1535,13 @@ void Play::follow(float seconds) {
             flyZ += one.flingWay[1] * gone;
         }
         raidCircle(*body, &flyX, &flyZ, &one.yaw);
-        const float position[3] = {flyX, ground_->heightAt(flyX, flyZ) + lift,
+        // Stood on the highest ground a stride reaches, so a slope does not swallow a foot.
+        // Half a running stride, 0.45 m, for a man; bigger figures by their scale, up to twice.
+        // 0.3 m still let a foot under on the steepest of Kanturu (the user: 'still happens on
+        // some places, buts its better').
+        const FigureBody* stands = one.figure.body();
+        const float stride = 0.45f * std::min(stands ? stands->scale : 1.0f, 2.0f);
+        const float position[3] = {flyX, ground_->standAt(flyX, flyZ, stride) + lift,
                                    statue ? flyZ - 1.2f * metresPerTile : flyZ};
         // The safe zone is a stance and not only a place: inside one MU carries the weapon on
         // the back and stands in the unarmed idle, and steps out of it with the weapon drawn.

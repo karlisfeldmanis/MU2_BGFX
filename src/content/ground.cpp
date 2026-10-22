@@ -1808,9 +1808,25 @@ float Ground::heightAt(float x, float z) const {
     const float fc = column - float(c0), fr = row - float(r0);
 
     const auto at = [&](int c, int r) { return height_[size_t(r) * size_t(size_) + size_t(c)]; };
-    const float top = at(c0, r0) * (1.0f - fc) + at(c0 + 1, r0) * fc;
-    const float bottom = at(c0, r0 + 1) * (1.0f - fc) + at(c0 + 1, r0 + 1) * fc;
-    return top * (1.0f - fr) + bottom * fr;
+    // On the triangle the ground is drawn with, not bilinear across the tile: pipeline/ground.py
+    // splits every tile from (c, r) to (c + 1, r + 1). Bilinear stood a figure up to 36 cm off
+    // the drawn surface on Kanturu's bumpy tiles, 9 cm or more on one walkable tile in twenty,
+    // and his feet went under it as he ran (the user, 2026-10-22: 'feet sinks inside ground').
+    const float h00 = at(c0, r0), h11 = at(c0 + 1, r0 + 1);
+    if (fc >= fr) return h00 + (at(c0 + 1, r0) - h00) * fc + (h11 - at(c0 + 1, r0)) * fr;
+    return h00 + (at(c0, r0 + 1) - h00) * fr + (h11 - at(c0, r0 + 1)) * fc;
+}
+
+float Ground::standAt(float x, float z, float reach) const {
+    float high = heightAt(x, z);
+    if (reach <= 0.0f) return high;
+    // Eight points round the middle: a stride can fall any way the figure faces.
+    constexpr float kDiagonal = 0.70710678f;
+    const float ways[8][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1},
+                              {kDiagonal, kDiagonal}, {kDiagonal, -kDiagonal},
+                              {-kDiagonal, kDiagonal}, {-kDiagonal, -kDiagonal}};
+    for (const auto& way : ways) high = std::max(high, heightAt(x + way[0] * reach, z + way[1] * reach));
+    return high;
 }
 
 // The trap: off the map this returns 0, and 0 is MU's value for a tile that is walkable and

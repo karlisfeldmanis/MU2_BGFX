@@ -85,9 +85,15 @@ public:
     int size() const { return size_; }
     float metresPerTile() const { return metresPerTile_; }
 
-    // The land's height in metres at a point, bilinear across the tile the point falls in.
+    // The land's height in metres at a point, on the triangle the ground is drawn with.
     // Off the map returns 0.
     float heightAt(float x, float z) const;
+    // Where a figure stands: the highest of the ground under its middle and `reach` metres out
+    // round it, so on a slope the foot a stride puts uphill lands on the surface, not in it.
+    // Figures stand at one height with no foot placement, as MU's do; Kanturu's cliffy ground
+    // sank a running hero's feet (the user, 2026-10-22: 'sinkinig happens because ground is very
+    // cliffy'). Flat ground answers what heightAt does.
+    float standAt(float x, float z, float reach) const;
 
     // MU's own attribute word for a tile. 0 off the map -- which is also MU's value for open
     // walkable ground, so this alone never answers "may something stand here". Ask walkable(),
