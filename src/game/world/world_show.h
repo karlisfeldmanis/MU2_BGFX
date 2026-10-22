@@ -84,6 +84,7 @@ struct WorldShow {
     bool smallFires = false;      // Aida's (small_fires.h)
     bool skullGhosts = false;     // Aida's (skull_ghosts.h)
     bool castleSparks = false; // Blood Castle's (castle_sparks.h)
+    bool smokeVents = false;   // Kanturu's: its smoke anchors puff (lamps.h, Fire::vent)
     bool drawbridge = false;   // Blood Castle's (drawbridge.h)
     bool beacon = false;       // Devias's Lost Tower beacon, its type 100 (ornaments.h)
     std::string traps;         // "dungeon" or "tower" (trap_show.h); empty none

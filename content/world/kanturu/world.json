@@ -61,6 +61,9 @@
       "calls": false,
       "flap": 6.25,
       "note": "Ours, as Aida: MU throws a MODEL_BUTTERFLY01 SubType 3 off each of 58 hidden Object38 boxes about once a second (type 37, GM_Kanturu_1st.cpp:137-148); here Noria's butterfly pool on Noria's numbers flies round the hero instead. Velocity 0.3, LightEnable false (GOBoid.cpp:1335). 6.25: the cook's 0.25 s keys over MU's 0.04 s."
+    },
+    "smoke_vents": {
+      "note": "Object60's 16 smoke vents by the factories: MU's BITMAP_SMOKE SubType 21 one frame in three (GM_Kanturu_1st.cpp:149-156), drawn by Lamps as a fire that only smokes (lamps.h, Fire::vent)."
     }
   }
 }

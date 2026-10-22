@@ -113,7 +113,7 @@ bool World::open(const std::string& assetDir, const std::string& name,
     // run yet says so in the log rather than failing the launch.
     town_.open(assetDir, name, textures);
     // And what burns in it. Nothing without a town, since every light hangs on a placement.
-    if (town_.isOpen()) lamps_.open(assetDir, town_, ground_, textures);
+    if (town_.isOpen()) lamps_.open(assetDir, town_, ground_, textures, show_.smokeVents);
     core::Loading::stage("the town's lights and grass", 0.56f, 0.63f);
     if (town_.isOpen()) sway_.open(assetDir, name, town_);
     // Devias's bridges are decked in slot 3, the planks MU counts as a floor indoors, so a

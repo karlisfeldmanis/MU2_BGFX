@@ -160,7 +160,7 @@ uint32_t Lamps::next() {
 float Lamps::unit() { return float(next() & 0xFFFFFF) / float(0x1000000); }
 
 bool Lamps::open(const std::string& assetDir, const Town& town, const content::Ground& ground,
-                 content::Textures& textures) {
+                 content::Textures& textures, bool smokeVents) {
     shutdown();
     const content::CookedTown& cooked = town.cooked();
 
@@ -344,6 +344,14 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
             for (int i = 0; i < 3; ++i) vent.at[i] = one->at[i];
             vents_.push_back(vent);
         }
+        // Kanturu's smoke vents: a fire that only smokes, MU's puffs (Fire::vent).
+        if (smokeVents && one->kind == content::EmitterKind::Smoke) {
+            Fire fire;
+            for (int i = 0; i < 3; ++i) fire.at[i] = one->at[i];
+            fire.vent = true;
+            fire.smoke = unit();
+            fires_.push_back(fire);
+        }
     }
 
     levels_.assign(lights_.size(), 1.0f);
@@ -487,6 +495,20 @@ void Lamps::spawn(const Fire& fire, uint8_t kind) {
     one.position[2] = fire.at[2] + std::sin(angle) * radius;
     const float lean[3] = {fire.drift[0] * kPerMetre * p.lean, 0.0f,
                            fire.drift[2] * kPerMetre * p.lean};
+    if (fire.vent) {
+        // MU's SubType 21 (lamps.h). Born on the box, not spread round a hearth. Its size is
+        // ours: the cook carries no Scale for a smoke anchor, so MU's 0.32-0.64 of it is taken
+        // of kVentPuffMetres, judged by eye; `heat` its thickness, a bonfire's smoke's.
+        for (int i = 0; i < 3; ++i) one.position[i] = fire.at[i];
+        one.vent = true;
+        one.life = kVentPuffLife;
+        one.size = mix(0.32f, 0.64f, unit()) * kVentPuffMetres;
+        one.heat = 1.0f;
+        one.spin = 6.2831853f * unit();
+        one.velocity[1] = mix(kVentPuffRise[0], kVentPuffRise[1], unit());
+        particles_.push_back(one);
+        return;
+    }
     if (kind == kFlame) {
         one.life = mix(p.life[0], p.life[1], unit());
         one.size = mix(p.size[0], p.size[1], unit());
@@ -593,6 +615,11 @@ void Lamps::update(float seconds, Town& town, gfx::Renderer& renderer, const flo
             one.velocity[1] += kTorch.lift * dt;
             one.velocity[0] += swayX * 0.9f * dt;
             one.velocity[2] += swayZ * 0.9f * dt;
+        } else if (one.vent) {
+            // Slowed by MU's 0.1 a frame each frame, past standing into a slow sink, and carried
+            // along -x by a fifth of its climb (MU's Position[0] -= Gravity * 0.2).
+            one.velocity[1] -= kVentPuffSlowing * dt;
+            one.velocity[0] = -kVentPuffLean * one.velocity[1];
         } else if (one.kind == kEmber) {
             // Carried up by the heat and then losing it; kicked about by the air.
             one.velocity[1] += (0.6f - 1.4f * t) * dt;
@@ -615,6 +642,14 @@ void Lamps::update(float seconds, Town& town, gfx::Renderer& renderer, const flo
         const float dx = fire.at[0] - near[0], dz = fire.at[2] - near[2];
         if (dx * dx + dz * dz > wake2) {
             fire.clock = 0.0f;
+            continue;
+        }
+        if (fire.vent) {
+            fire.smoke += dt * kVentPuffsPerSecond;
+            while (fire.smoke >= 1.0f) {
+                fire.smoke -= 1.0f;
+                if (bgfx::isValid(smoke_)) spawn(fire, kSmoke);
+            }
             continue;
         }
         const Profile& p = fire.bonfire ? kBonfire : kTorch;
@@ -677,6 +712,19 @@ void Lamps::gather(gfx::Effects& effects, const float near[3], float daylight) c
             sprite.colour[3] = twinkle * (1.0f - smooth(0.6f, 1.0f, t));
             sprite.sheet = spark_;
             sprite.blend = gfx::Blend::Flame;
+        } else if (one.vent) {
+            // MU's puff shrinks a hundredth of its Scale a frame, and its light is LifeTime / 50:
+            // full over its first 30 frames of 80, then dimming to nothing. Grey by the day's
+            // light, as the fires' smoke, with no fire under it to warm it.
+            const float size = std::max(0.05f, one.size - one.age * 25.0f * 0.01f * kVentPuffMetres);
+            sprite.halfWidth = sprite.halfHeight = 0.5f * size;
+            sprite.colour[0] = 0.30f * daylight;
+            sprite.colour[1] = 0.29f * daylight;
+            sprite.colour[2] = 0.30f * daylight;
+            const float left = (1.0f - t) * 80.0f / 50.0f;
+            sprite.colour[3] = 0.85f * one.heat * smooth(0.0f, 0.08f, t) * std::min(1.0f, left);
+            sprite.sheet = smoke_;
+            sprite.blend = gfx::Blend::Smoke;
         } else {
             const float size = one.size * (1.0f + 1.8f * t);
             sprite.halfWidth = sprite.halfHeight = 0.5f * size;

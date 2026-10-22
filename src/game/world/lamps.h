@@ -31,8 +31,10 @@ class Lamps {
 public:
     // Every light and fire the cooked town names, resolved into the world. The fire's sheet is
     // the showing's `fire`, Effect/Fire01; without it the fires burn with no flame drawn.
+    // `smokeVents`: the world's smoke anchors puff (world_show.h), Kanturu's; elsewhere a smoke
+    // anchor throws nothing here.
     bool open(const std::string& assetDir, const Town& town, const content::Ground& ground,
-              content::Textures& textures);
+              content::Textures& textures, bool smokeVents = false);
     void shutdown();
 
     // One more light that never moves and is not the town's: Hanzo's forge, which stands with
@@ -126,9 +128,22 @@ private:
         bool breath = false;
         float mouth[3] = {0, 0, 0};   // a breath's: between the jaws, in the world
         float facing[3] = {0, 0, 0};  // and the way the head looks, flat and unit length
+        // A smoke vent: Kanturu's Object60, a hidden box MU throws BITMAP_SMOKE SubType 21 off
+        // one frame in three (GM_Kanturu_1st.cpp:149-156). Smoke only: no flame, ember or light.
+        bool vent = false;
         // What each kind is owed, in particles; a whole one is spawned and taken off.
         float clock = 0.0f, embers = 0.0f, smoke = 0.0f;
     };
+    // A vent's puff, MU's SubType 21 (ZzzEffectParticle.cpp:1340-1345, 5484-5490) in metres and
+    // seconds at its 25 frames a second: 80 frames; thrown up at 6-9.1 units a frame and slowed
+    // 0.1 a frame each frame; carried along -x by a fifth of that; shrinking 0.01 a frame from
+    // 0.32-0.64 of the box's Scale; its light LifeTime / 50, so full for its first 30 frames.
+    static constexpr float kVentPuffsPerSecond = 25.0f / 3.0f;
+    static constexpr float kVentPuffLife = 80.0f / 25.0f;
+    static constexpr float kVentPuffRise[2] = {6.0f * 25.0f / 100.0f, 9.1f * 25.0f / 100.0f};
+    static constexpr float kVentPuffSlowing = 0.1f * 25.0f * 25.0f / 100.0f;
+    static constexpr float kVentPuffLean = 0.2f;
+    static constexpr float kVentPuffMetres = 2.0f;  // ours: a puff of Scale 1, by eye
     // A flame, an ember or a puff, in metres and seconds. Sprint 8b; lamps.cpp says why none
     // of it is MU's clock any more.
     static constexpr uint8_t kFlame = 0, kEmber = 1, kSmoke = 2;
@@ -143,6 +158,7 @@ private:
         uint8_t kind = kFlame;
         uint8_t cell = 0;
         bool breath = false;
+        bool vent = false;  // a vent's puff: MU's motion, not a fire's smoke
     };
 
     void step(Flicker& one, float seconds);
