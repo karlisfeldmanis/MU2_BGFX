@@ -1,0 +1,244 @@
+{
+  "item": "Object96",
+  "mu_name": "Object96",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 95,
+  "placements": 128,
+  "profile": "world",
+  "sheets": {
+    "songk3crystal_R": "kr_songk3crystal_r.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "songk3crystal_R": "lamplight"
+  },
+  "material_note": "songk3crystal_R: pink crystal, MU's bright sheet: lamplight, drawn added.",
+  "why_this_one": "Pink crystal clusters up to 4 m, 128 of them, 59 in the plateau's pits: the Ruins' own look. Batch 3 (the user, 2026-10-22: 'continou'). docs/worlds/kanturu-port.md.",
+  "additive": [
+    "songk3crystal_R"
+  ],
+  "additive_from": "An _R sheet: MU's TextureScript marks it bright (TextureScript.cpp:16-58), so it is drawn added. MuMain also lays a RENDER_CHROME7|RENDER_DARK pass over it and ten blue BITMAP_SPARK+1 sprites on bones 0-9 (GM_Kanturu_1st.cpp:361-381); those wait for the effects batch.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 18,
+      "area": 42326.5,
+      "along": [
+        118.3,
+        171.7
+      ],
+      "mu_uv": [
+        0.083,
+        -0.046,
+        1.801,
+        0.97
+      ],
+      "bake_uv": [
+        0.016,
+        0.135,
+        0.805,
+        0.916
+      ]
+    },
+    {
+      "island": 1,
+      "material": "lamplight",
+      "triangles": 18,
+      "area": 94406.0,
+      "along": [
+        -177.5,
+        -79.1
+      ],
+      "mu_uv": [
+        -0.314,
+        0.137,
+        0.913,
+        0.87
+      ],
+      "bake_uv": [
+        0.01,
+        0.214,
+        0.967,
+        0.811
+      ]
+    },
+    {
+      "island": 2,
+      "material": "lamplight",
+      "triangles": 15,
+      "area": 103866.5,
+      "along": [
+        -244.7,
+        -23.3
+      ],
+      "mu_uv": [
+        -0.897,
+        -0.773,
+        1.008,
+        0.877
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.915,
+        0.974
+      ]
+    },
+    {
+      "island": 3,
+      "material": "lamplight",
+      "triangles": 18,
+      "area": 58345.6,
+      "along": [
+        -361.7,
+        -165.6
+      ],
+      "mu_uv": [
+        0.031,
+        0.316,
+        1.507,
+        0.976
+      ],
+      "bake_uv": [
+        0.105,
+        0.012,
+        0.581,
+        0.69
+      ]
+    },
+    {
+      "island": 4,
+      "material": "lamplight",
+      "triangles": 18,
+      "area": 40394.9,
+      "along": [
+        -38.2,
+        46.9
+      ],
+      "mu_uv": [
+        0.208,
+        0.022,
+        1.636,
+        0.953
+      ],
+      "bake_uv": [
+        0.452,
+        0.302,
+        0.878,
+        0.951
+      ]
+    },
+    {
+      "island": 5,
+      "material": "lamplight",
+      "triangles": 20,
+      "area": 64488.9,
+      "along": [
+        128.1,
+        218.4
+      ],
+      "mu_uv": [
+        -0.736,
+        0.266,
+        0.799,
+        0.851
+      ],
+      "bake_uv": [
+        0.028,
+        0.011,
+        0.971,
+        0.929
+      ]
+    },
+    {
+      "island": 6,
+      "material": "lamplight",
+      "triangles": 10,
+      "area": 26090.6,
+      "along": [
+        -82.6,
+        -27.4
+      ],
+      "mu_uv": [
+        -0.614,
+        0.246,
+        1.789,
+        1.005
+      ],
+      "bake_uv": [
+        0.064,
+        0.337,
+        0.967,
+        0.971
+      ]
+    },
+    {
+      "island": 7,
+      "material": "lamplight",
+      "triangles": 18,
+      "area": 42706.9,
+      "along": [
+        66.1,
+        162.5
+      ],
+      "mu_uv": [
+        -0.917,
+        0.341,
+        1.454,
+        1.001
+      ],
+      "bake_uv": [
+        0.205,
+        0.237,
+        0.79,
+        0.821
+      ]
+    },
+    {
+      "island": 8,
+      "material": "lamplight",
+      "triangles": 13,
+      "area": 40393.9,
+      "along": [
+        -59.5,
+        86.4
+      ],
+      "mu_uv": [
+        -0.811,
+        -0.59,
+        0.998,
+        0.83
+      ],
+      "bake_uv": [
+        0.155,
+        0.106,
+        0.987,
+        0.846
+      ]
+    },
+    {
+      "island": 9,
+      "material": "lamplight",
+      "triangles": 13,
+      "area": 59874.9,
+      "along": [
+        123.9,
+        313.0
+      ],
+      "mu_uv": [
+        -0.811,
+        -0.59,
+        0.998,
+        0.83
+      ],
+      "bake_uv": [
+        0.308,
+        0.057,
+        0.99,
+        0.894
+      ]
+    }
+  ]
+}
