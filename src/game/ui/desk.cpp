@@ -299,6 +299,14 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         std::string name;
         if (!play.playerName(hero->id, &name, nullptr)) name = heroName_;
         reborn_.announce(count, name);
+        // Off a server no one says it on Global, so the bench says it here (the server's own is
+        // announceRebirth, server/src/chat.cpp).
+        if (!play.remote()) {
+            net::Heard line;
+            line.channel = net::Channel::Global;
+            line.text = net::rebirthLine(name, count);
+            chat_.hear(line);
+        }
     }
     reborn_.update(seconds, float(window.width()), float(window.height()));
     hud_.follow(hero);

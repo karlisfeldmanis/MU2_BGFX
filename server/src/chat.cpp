@@ -22,6 +22,19 @@ void chatSystem(Session& one, net::Channel channel, const std::string& text) {
     hearLine(one, line);
 }
 
+void announceRebirth(const std::string& name, int count, std::vector<std::unique_ptr<Session>>& sessions) {
+    net::Heard line;
+    line.channel = net::Channel::Global;
+    line.text = net::rebirthLine(name, count);
+    int heard = 0;
+    for (auto& other : sessions) {
+        if (!other->welcomed || other->world == nullptr) continue;
+        hearLine(*other, line);
+        ++heard;
+    }
+    core::logf("chat global rebirth (%d heard): %s", heard, line.text.c_str());
+}
+
 // The welcomed player called `name` on any map, in any case, or nullptr.
 Session* playerNamed(const std::string& name, std::vector<std::unique_ptr<Session>>& sessions) {
     const auto lower = [](std::string s) {

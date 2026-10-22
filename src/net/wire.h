@@ -372,6 +372,12 @@ struct GuildCall {
 // whole UTF-8 letter. Empty when nothing is left.
 std::string saidText(const std::string& text);
 
+// A count as a Roman numeral, I to MMMCMXCIX: a rebirth's (game/ui/reborn.h).
+std::string romanNumeral(int count);
+// The server's line on Global when a character is reborn, said by no one: "Ken has been reborn
+// (Rebirth II)." The chat draws a speakerless Global line as a herald's, in gold (Chat::hear).
+std::string rebirthLine(const std::string& name, int count);
+
 // A character this machine played on the server before accounts, by the token kept beside his
 // save: claimed onto the account when it is nobody's yet.
 struct Claim {

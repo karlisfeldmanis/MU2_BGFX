@@ -442,6 +442,28 @@ void put(std::vector<uint8_t>& out, const PartyState& one) {
     });
 }
 
+std::string romanNumeral(int count) {
+    static const struct {
+        int value;
+        const char* letters;
+    } kParts[] = {{1000, "M"}, {900, "CM"}, {500, "D"}, {400, "CD"}, {100, "C"}, {90, "XC"},
+                  {50, "L"},   {40, "XL"},  {10, "X"},  {9, "IX"},   {5, "V"},   {4, "IV"},
+                  {1, "I"}};
+    std::string s;
+    int n = count < 1 ? 1 : count > 3999 ? 3999 : count;
+    for (const auto& part : kParts) {
+        while (n >= part.value) {
+            s += part.letters;
+            n -= part.value;
+        }
+    }
+    return s;
+}
+
+std::string rebirthLine(const std::string& name, int count) {
+    return name + " has been reborn (Rebirth " + romanNumeral(count) + ").";
+}
+
 std::string saidText(const std::string& text) {
     std::string kept;
     kept.reserve(text.size());

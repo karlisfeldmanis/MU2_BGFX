@@ -42,6 +42,8 @@ constexpr uint32_t kWhisperInk = hex(0xe7a0e4), kSystemInk = hex(0xd6ad5c);
 constexpr uint32_t kLocalInk = hex(0xf3eee6), kGlobalInk = hex(0xeb9c62);
 // A pickup's line, quiet, so the thing's own colour is what stands out.
 constexpr uint32_t kLootInk = hex(0xa99f8f);
+// A herald's line: the Rebirth numeral's gold (game/ui/reborn.cpp), #F0CF86.
+constexpr uint32_t kHeraldInk = hex(0xf0cf86);
 // An invite's asker, in the green of the name over a player's head (vitals.cpp, kTagGreen): the
 // one name in the chat with a colour of its own, on the card in the middle and its line.
 constexpr uint32_t kInviterInk = gfx::rgba(0.18f, 1.0f, 0.18f);
@@ -347,6 +349,7 @@ uint32_t Chat::channelInk(net::Channel channel) const {
 
 uint32_t Chat::inkOf(const Line& line) const {
     if (line.kind == Kind::Loot) return kLootInk;
+    if (line.kind == Kind::Herald) return kHeraldInk;
     if (line.kind == Kind::Answer || line.name.empty()) {
         // A whisper's own notice ("Brakka is not here.") stays in the whisper's ink.
         return line.channel == net::Channel::Whisper ? kWhisperInk : kSystemInk;
@@ -545,6 +548,7 @@ bool Chat::hear(const net::Heard& heard) {
     line.text = heard.text;
     line.bot = heard.bot;
     line.stamp = clockNow();
+    if (line.channel == net::Channel::Global && line.name.empty()) line.kind = Kind::Herald;
     // The server's invite (server/src/main.cpp, partyAsk): its asker, and the line without the
     // typing it asks for, since the card wears its own buttons. A raid's is said so.
     constexpr const char* kInvites = " invites you to a party.";
@@ -639,6 +643,8 @@ Chat::Set Chat::setOf(const Line& line) const {
             case net::Channel::Global: named("[1. Global] ", line.name, ": "); break;
             case net::Channel::Server: named("", line.name, ": "); break;
         }
+    } else if (line.kind == Kind::Herald) {
+        set.text += "[1. Global] ";
     } else if (!line.inviter.empty() && line.shown.rfind(line.inviter, 0) == 0) {
         // An invite's asker answers the pointer too, unbracketed as the server says him.
         set.nameFrom = set.text.size();
@@ -836,6 +842,8 @@ bool Chat::shows(const Line& line, const std::string& tab) const {
     // Global's tab is Global's lines alone (the user, 2026-10-21: "in global chat dont show other
     // chat messages"), not a filter he ticks.
     if (tab == "global") return kind == bit(net::Channel::Global);
+    // A herald's news is everyone's: on General whatever it filters, as on Global.
+    if (line.kind == Kind::Herald) return tab == "general";
     if (tab == "party") return kind == bit(net::Channel::Party);
     if (tab == "guild") return kind == bit(net::Channel::Guild);
     return (generalShows_ & kind) != 0;

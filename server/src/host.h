@@ -439,6 +439,9 @@ void keepEveryone(std::vector<std::unique_ptr<Session>>& sessions);
 // chat.cpp
 void hearLine(Session& one, const net::Heard& line);
 void chatSystem(Session& one, net::Channel channel, const std::string& text);
+// A character reborn, told on Global to everyone online by no one (net::rebirthLine). For the
+// reset to call once it is built; nothing calls it yet.
+void announceRebirth(const std::string& name, int count, std::vector<std::unique_ptr<Session>>& sessions);
 Session* playerNamed(const std::string& name, std::vector<std::unique_ptr<Session>>& sessions);
 bool nameInUse(const std::string& name, const std::vector<std::unique_ptr<Session>>& sessions,
     const Session* except);

@@ -147,7 +147,9 @@ public:
 private:
     // What a line is, beyond its channel: said by someone, a pickup, or an invite's or trade's
     // news. The last two are General's own ticks (kLootBit, kAnswerBit).
-    enum class Kind : uint8_t { Said, Loot, Answer };
+    // Herald: a Global line said by no one, the server's news to everyone -- a rebirth
+    // (net::rebirthLine) -- in gold, on Global's tab and General's.
+    enum class Kind : uint8_t { Said, Loot, Answer, Herald };
     struct Line {
         net::Channel channel = net::Channel::Map;
         Kind kind = Kind::Said;

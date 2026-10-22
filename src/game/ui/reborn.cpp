@@ -6,6 +6,7 @@
 #include <initializer_list>
 
 #include "core/log.h"
+#include "net/wire.h"
 
 namespace mu::game {
 namespace {
@@ -96,24 +97,6 @@ constexpr float kPrimed = pc(5.6f);   // the flash and glow still waiting
 constexpr float kHit = pc(5.9f);      // 0.27 s
 constexpr float kThump = pc(8.2f);    // 0.375 s
 constexpr float kHeld = pc(78.3f);    // 3.6 s: the fade begins
-
-std::string roman(int n) {
-    static const struct {
-        int value;
-        const char* letters;
-    } kParts[] = {{1000, "M"}, {900, "CM"}, {500, "D"}, {400, "CD"}, {100, "C"}, {90, "XC"},
-                  {50, "L"},   {40, "XL"},  {10, "X"},  {9, "IX"},   {5, "V"},   {4, "IV"},
-                  {1, "I"}};
-    std::string s;
-    n = std::clamp(n, 1, 3999);
-    for (const auto& part : kParts) {
-        while (n >= part.value) {
-            s += part.letters;
-            n -= part.value;
-        }
-    }
-    return s;
-}
 
 bool bakeOne(gfx::Face& face, bgfx::TextureHandle& texture, const char* path, float pixels,
              int size, float sigmaAt1080, float emAt1080, const char* name) {
@@ -227,7 +210,7 @@ void Reborn::shutdown() {
 }
 
 void Reborn::announce(int count, const std::string& name) {
-    numeral_ = roman(count);
+    numeral_ = net::romanNumeral(count);
     who_ = name;
     clock_ = kHeard;
     fresh_ = true;
