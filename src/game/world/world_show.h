@@ -50,10 +50,11 @@ struct WorldShow {
     std::string music;       // the track under assets, "/music/Noria.mp3"; empty for none
     std::string musicWhere;  // "safe", "indoors", "safe_indoors", "everywhere"
     bool musicLoops = false; // round and round while there, rather than once and rested
-    // The rain's track (`music.rain`), looped while a wet spell is on, out under the sky
-    // everywhere, the safe zone too, in place of `music` (the user, 2026-10-22: "replacing defult
-    // noria music while its raining"). Noria's only: "lorencia keeps original rain sound which is
-    // timed with thunder". Under a roof the world's own indoor track still plays. Empty for none.
+    // The rain's track (`music.rain`), looped while a wet spell is on, everywhere, the safe zone
+    // too, as a bed under `music` rather than in its place (the user, 2026-10-22: "allow to
+    // noria ambient sound overlap with noria music if rain happens at same time"; Sound::bed).
+    // Noria's only: "lorencia keeps original rain sound which is timed with thunder". Under a
+    // roof with its own indoor track, that track alone. Empty for none.
     std::string musicRain;
     // The hunt's track (`music.wild`), looped while he is out of the safe zone, where the world's
     // own `music` is not playing (the user, 2026-10-22: "when char is not in kanturu safe zone we

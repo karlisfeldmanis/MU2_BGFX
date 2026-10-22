@@ -1630,6 +1630,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             if (!first) sound.stopMusic();
         }
         if (!sound.musicPlaying(fightTrack)) sound.music(fightTrack, 0.8f, !squareFighting);
+        sound.stopBed();
     } else if (world_.played().isOpen()) {
         // The world's track and where it plays are its manifest's `music`
         // (game/world/world_show.h): in the safe zone, under a roof, both, or everywhere.
@@ -1644,27 +1645,27 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         bool pub = !show.music.empty() &&
                    (where == "everywhere" || (where == "safe" && safe) ||
                     (where == "indoors" && roofed) || (where == "safe_indoors" && safe && roofed));
-        // A wet spell's own track, out under the sky, over the world's (world_show.h musicRain);
-        // a roof that has its own music keeps it.
+        // A wet spell's own track, a bed under the world's, which goes on as it would
+        // (world_show.h musicRain); a roof that has its own music keeps it alone.
         const bool roofMusic = pub && (where == "indoors" || where == "safe_indoors");
         const bool rainy = !show.musicRain.empty() && world_.weather().wet() && !roofMusic;
+        game::Sound& sound = world_.played().sound();
+        if (rainy) {
+            sound.bed(ctx.paths.assets + show.musicRain, 0.6f);
+        } else {
+            sound.stopBed();
+        }
         // Out on the hunt, where the world's own track is not playing: its `wild` loop.
-        const bool wild = !show.musicWild.empty() && !safe && !pub && !rainy;
-        if (rainy || wild) pub = true;
-        const bool loops = rainy || wild || show.musicLoops;  // round and round, not once and rested
-        const char* roofTrack = rainy ? show.musicRain.c_str()
-                              : wild  ? show.musicWild.c_str()
-                                      : show.music.c_str();
+        const bool wild = !show.musicWild.empty() && !safe && !pub;
+        if (wild) pub = true;
+        const bool loops = wild || show.musicLoops;  // round and round, not once and rested
+        const char* roofTrack = wild ? show.musicWild.c_str() : show.music.c_str();
         // No music out on the hunt, and none for fights (the user, 2026-09-30: "we dont need
         // fight music anymore").
         const std::string path = ctx.paths.assets + (pub ? roofTrack : "");
-        game::Sound& sound = world_.played().sound();
-        // The spell has cleared (or he went under a roof with music), or he is back in the safe
-        // zone: that loop goes now, not when the world's own track has rested.
-        if ((!rainy && !show.musicRain.empty() &&
-             sound.musicPlaying(ctx.paths.assets + show.musicRain)) ||
-            (!wild && !show.musicWild.empty() &&
-             sound.musicPlaying(ctx.paths.assets + show.musicWild))) {
+        // He is back in the safe zone: the wild loop goes now, not when the world's own track
+        // has rested.
+        if (!wild && !show.musicWild.empty() && sound.musicPlaying(ctx.paths.assets + show.musicWild)) {
             sound.stopMusic();
         }
         if (pub && sound.musicPlaying(path)) musicHeard()[path] = runSeconds();

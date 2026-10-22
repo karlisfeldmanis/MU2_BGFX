@@ -166,6 +166,12 @@ public:
     void stopMusic();
     // Whether this track is sounding now: started and not stopped or run to its end.
     bool musicPlaying(const std::string& path) const;
+    // A bed of music under the track, looping, streamed from `path` at `gain` in its own slot:
+    // it neither replaces the track nor steps aside for it -- Noria's rain over Noria's theme
+    // (the user, 2026-10-22: "allow to noria ambient sound overlap with noria music if rain
+    // happens at same time"). Asking again for the bed playing does nothing; stopBed fades it.
+    void bed(const std::string& path, float gain = 0.6f);
+    void stopBed();
 
     // A spoken line, `relative` to the assets, played once and unplaced: a quest giver reading
     // his page. One at a time: a new line cuts the last.
