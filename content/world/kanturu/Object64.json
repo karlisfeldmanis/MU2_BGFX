@@ -502,5 +502,9 @@
         0.992
       ]
     }
-  ]
+  ],
+  "cutout": [
+    "cho_tree_a"
+  ],
+  "cutout_from": "Real alpha in cho_tree_a.tga (kr_cho_tree_a_branches.png, decoded by hand as the .jpg twin's partner), cutting away 88%. Left out in batch 7, so its branch cards drew as brown slabs (seen 2026-10-22, effects 2c)."
 }
