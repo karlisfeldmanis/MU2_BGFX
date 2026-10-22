@@ -1504,16 +1504,18 @@ public:
     // -- its quota, its drop, its rise -- without the walk and the swings (tests/sim_test.cpp).
     void smite(uint32_t id);  // realm_commands.cpp
     int64_t wallClock() const { return wall_; }
-    // Whether his class may be paid this choice: the item's own class bits, as a purchase asks.
-    bool questChoiceFits(int index, int choice) const;
+    // Whether he may be paid this choice: as a thing `paid` is (questPaysHero, questItemFits) --
+    // its class, its first clear and its rank, on the Magic Gladiator's `path`.
+    bool questChoiceFits(int index, int choice, QuestPath path = QuestPath::Melee) const;
     // Whether a thing paid is his to use by the same bits: the Magic Gladiator on the knight's
     // path is not paid a knight's helm or the Orb of Death Stab, which he could never wear or
     // read. A thing naming nothing cooked does not fit, nor one of another rank (QuestItem::rank).
     bool questItemFits(const QuestItem& what) const;
     // Accept, at the giver: offered, and his dialog open. Refused whole and silent otherwise.
     bool acceptQuest(int index);
-    // Hand in, at the giver: ready, the choice his class may take (or -1 when none is offered
-    // him), and room in the bag for all of it before anything is given. Pays and rests it.
+    // Hand in, at the giver: ready, the choice his class may take (or -1: the first that fits,
+    // or none when none is offered him), and room in the bag for all of it before anything is
+    // given. Pays and rests it.
     // `path`: the Magic Gladiator's, melee or magic (sim::questPaidKin); nobody else's.
     bool completeQuest(int index, int choice, QuestPath path = QuestPath::Melee);
     // Whether he is his class's second, Sevina's treasure handed in (sim::promoted).

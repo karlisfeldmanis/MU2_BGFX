@@ -4713,6 +4713,33 @@ void testSkills(const content::Tables& tables) {
               "but a mace throws it, as the Morning Star did");
         check(!sim::skillNumbered(sim::skill::kSlash)->suits(sim::arms::kSword1),
               "and Slash needs both hands on it");
+        // But a two-hander throws every orb (the user, 2026-10-22).
+        bool twoHandsThrowOrbs = true;
+        for (int32_t skill : {sim::skill::kFallingSlash, sim::skill::kLunge, sim::skill::kUppercut,
+                              sim::skill::kCyclone, sim::skill::kSlash}) {
+            for (uint32_t family : {sim::arms::kSword2, sim::arms::kAxe2, sim::arms::kMace2,
+                                    sim::arms::kSpear}) {
+                twoHandsThrowOrbs &= sim::skillNumbered(skill)->suits(family);
+            }
+        }
+        check(twoHandsThrowOrbs, "every knight orb is thrown off any two-handed weapon");
+        // And every quest that pays the knight a weapon lets him take a two-hander instead.
+        bool twoHandOffered = true;
+        int knightChoices = 0;
+        for (int q = 0; q < sim::kQuests; ++q) {
+            const sim::QuestRow& row = sim::questAt(q);
+            int oneHand = 0, twoHand = 0;
+            for (int c = 0; c < row.choiceCount; ++c) {
+                if (row.choices[c].kin != int(sim::Kin::DarkKnight)) continue;
+                const int32_t at = tables.armNamed(row.choices[c].item);
+                if (at < 0) { twoHandOffered = false; continue; }
+                (tables.arms[size_t(at)].twoHanded() ? twoHand : oneHand) += 1;
+            }
+            if (oneHand + twoHand > 0) ++knightChoices;
+            twoHandOffered &= oneHand == twoHand;
+        }
+        check(twoHandOffered && knightChoices == 5,
+              "the knight's five quest weapons are each a one-hander or a two-hander, his pick");
     }
 
     int casts[sim::kSkills] = {};

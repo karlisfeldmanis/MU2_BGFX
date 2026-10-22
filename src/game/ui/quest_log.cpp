@@ -212,6 +212,12 @@ void QuestLog::layout(const Play& play, int playing) {
                         one.items.push_back(&row.paid[p]);
                     }
                 }
+                for (int c = 0; c < row.choiceCount; ++c) {
+                    if (row.choices[c].kin == kWhose[g] &&
+                        realm.questChoiceFits(selected_, c, sim::QuestPath(g))) {
+                        one.items.push_back(&row.choices[c]);
+                    }
+                }
                 groups.push_back(std::move(one));
             }
             Group either{"Either path", {}};
@@ -223,7 +229,9 @@ void QuestLog::layout(const Play& play, int playing) {
                 }
             }
             for (int c = 0; c < row.choiceCount; ++c) {
-                if (realm.questChoiceFits(selected_, c)) either.items.push_back(&row.choices[c]);
+                if (row.choices[c].kin < 0 && realm.questChoiceFits(selected_, c)) {
+                    either.items.push_back(&row.choices[c]);
+                }
             }
             if (!either.items.empty()) groups.push_back(std::move(either));
         } else {

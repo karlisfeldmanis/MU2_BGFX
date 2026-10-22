@@ -138,8 +138,13 @@ QuestRow marlon() {
     row.firstExperience = 100000;
     row.zen = 50000;
     int n = 0;
-    row.paid[n++] = {.item = "Sword08", .kin = knight, .sockets = 1,
-                     .firstOnly = true};  // Falchion
+    // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
+    // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
+    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
+    row.choices[row.choiceCount++] = {.item = "Sword08", .kin = knight, .sockets = 1,
+                                      .firstOnly = true};  // Falchion
+    row.choices[row.choiceCount++] = {.item = "Sword10", .kin = knight, .sockets = 1,
+                                      .firstOnly = true};  // Sword of Salamander
     row.paid[n++] = {.item = "Staff03", .kin = wizard, .sockets = 1,
                      .firstOnly = true};  // Serpent Staff
     // The weapon's rune a Common (the ladder, above): the faint kin of the Legendary Lirien pays
@@ -313,8 +318,13 @@ QuestRow devin() {
     // one-handed Legendary Staff and the elf's Tiger Bow. Devias paid each class's top
     // 0.75 armour until this day, a piece of the Lost Tower's set two maps early.
     int n = 0;
-    row.paid[n++] = {.item = "Sword14", .kin = knight, .sockets = 2,
-                     .firstOnly = true};  // Double Blade
+    // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
+    // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
+    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
+    row.choices[row.choiceCount++] = {.item = "Sword14", .kin = knight, .sockets = 2,
+                                      .firstOnly = true};  // Double Blade
+    row.choices[row.choiceCount++] = {.item = "Sword16", .kin = knight, .sockets = 2,
+                                      .firstOnly = true};  // Giant Sword
     // The wizard's one-handed Legendary Staff, and the Legendary Shield for the other hand, his
     // class's best first-class shield, so his Magic Shield works from here on (2026-10-09: the
     // two-handed Thunder Staff left him without it; then the user, of the Small Shield it first
@@ -1437,8 +1447,13 @@ QuestRow lirienHalls() {
     // his fire, the elf's Plague Arrows for her Multi-Shot. The wizard's one hand is for the
     // Legendary Shield of Tersia's fifth floor. The knight's was the two-handed Crystal Sword.
     int n = 0;
-    row.paid[n++] = {.item = "Sword15", .kin = knight, .sockets = 2,
-                     .firstOnly = true};  // Lighting Sword
+    // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
+    // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
+    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
+    row.choices[row.choiceCount++] = {.item = "Sword15", .kin = knight, .sockets = 2,
+                                      .firstOnly = true};  // Lighting Sword
+    row.choices[row.choiceCount++] = {.item = "Mace06", .kin = knight, .sockets = 2,
+                                      .firstOnly = true};  // Crystal Sword
     // The wizard's was the Staff of Resurrection until 2026-10-21, which Kantur's Legion pays at
     // +7 (the user: "we are giving staff of resorection 2 times"): the Legendary Staff, one hand.
     row.paid[n++] = {.item = "Staff06", .kin = wizard, .sockets = 2,
@@ -1606,8 +1621,13 @@ QuestRow kantursLegion() {
     // Reign Blade from the knight). Kantur's Captain pays those since 2026-10-21.
     using Rank = QuestItem::Rank;
     int n = 0;
-    row.paid[n++] = {.item = "Sword17", .plus = 7, .kin = knight, .sockets = 3,
-                     .firstOnly = true, .rank = Rank::First};  // Sword of Destruction +7
+    // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
+    // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
+    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
+    row.choices[row.choiceCount++] = {.item = "Sword17", .plus = 7, .kin = knight, .sockets = 3,
+                                      .firstOnly = true, .rank = Rank::First};  // Sword of Destruction +7
+    row.choices[row.choiceCount++] = {.item = "Mace07", .plus = 7, .kin = knight, .sockets = 3,
+                                      .firstOnly = true, .rank = Rank::First};  // Chaos Dragon Axe +7
     row.paid[n++] = {.item = "Staff07", .plus = 7, .kin = wizard, .sockets = 3,
                      .firstOnly = true, .rank = Rank::First};  // Staff of Resurrection +7
     row.paid[n++] = {.item = "CrossBow17", .kin = elf, .sockets = 3,
@@ -1685,8 +1705,13 @@ QuestRow kantursCaptain() {
     // The weapon, by rank, as Kantur's Legion's comment above tells.
     using Rank = QuestItem::Rank;
     int n = 0;
-    row.paid[n++] = {.item = "Sword21", .plus = 7, .kin = knight, .sockets = 3,
-                     .firstOnly = true, .rank = Rank::Second};  // Knight Blade +7, the BK's
+    // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
+    // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
+    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
+    row.choices[row.choiceCount++] = {.item = "Sword21", .plus = 7, .kin = knight, .sockets = 3,
+                                      .firstOnly = true, .rank = Rank::Second};  // Knight Blade +7, the BK's
+    row.choices[row.choiceCount++] = {.item = "Sword25", .plus = 7, .kin = knight, .sockets = 3,
+                                      .firstOnly = true, .rank = Rank::Second};  // Daybreak +7, the BK's
     row.paid[n++] = {.item = "Sword22", .plus = 7, .kin = knight, .sockets = 3,
                      .firstOnly = true, .rank = Rank::Second};  // Dark Reign Blade +7, the MG's
     row.paid[n++] = {.item = "Staff12", .kin = wizard, .sockets = 3, .firstOnly = true,
@@ -1872,8 +1897,8 @@ QuestRow seedMastersClearing() {
     // Wellspring, +30% max mana in a ring or a pendant, every class's, and paid by no quest
     // before (Wrath, the first try, is the Balrog's already: testQuestLadder pays no weapon rune
     // twice). A choice of the class's own was the doc's proposal, but QuestRow::choices are
-    // offered by the item's classes alone, a Rune of Creation fits every class, and they ignore
-    // firstOnly (Realm::questChoiceFits).
+    // offered by the item's classes (and since 2026-10-22 its kin, first clear and rank,
+    // Realm::questChoiceFits), and a Rune of Creation fits every class.
     row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::GreaterWellspring),
                      .firstOnly = true};
     row.paidCount = n;

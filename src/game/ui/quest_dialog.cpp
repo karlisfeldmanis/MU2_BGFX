@@ -542,7 +542,7 @@ void QuestDialog::layout(const Play& play) {
         }
         grid(paid);
         for (int c = 0; c < row.choiceCount; ++c) {
-            if (realm.questChoiceFits(quest_, c)) fits.push_back({c, &row.choices[c]});
+            if (realm.questChoiceFits(quest_, c, path_)) fits.push_back({c, &row.choices[c]});
         }
         if (!fits.empty()) y += kAsk;
         grid(fits);

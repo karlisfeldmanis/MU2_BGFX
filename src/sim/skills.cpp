@@ -52,24 +52,26 @@ constexpr SkillRow kRows[kSkills] = {
     //
     // **The families are 0.75's own carriers** (§1.2, `Version075/Items/Weapons.cs:93-132`):
     // whichever weapons granted a skill in the original are the weapons that may throw it here.
-    // Not one of the five is a choice made at this desk.
+    // **And every two-hander throws all five** (the user, 2026-10-22: "we need that chars can use
+    // orbs on 2-hand weapons"), ours: a two-handed sword had Slash and the two everyone has, so
+    // the orbs bought for the one-handed bar were dead the day he took up a Giant Sword.
     //
     // Falling Slash: the Morning Star (a mace), the Double Axe and the Tomahawk (one-handed),
     // the Battle Axe and the Nikkea Axe (two-handed). Axes and maces, in either hand -- and the
     // icon MU painted for it is an axe, which is the same fact from the artist's side.
     {skill::kFallingSlash, "Falling Slash", 9, 1.0f, 2.0f, 1.0f / 1000.0f, 80, false, Spread::One,
      0, 1.0f, "An overhead blow brought down on one body -- the heaviest single strike he has.",
-     60, "player_skill_sword1", true, arms::kAxes | arms::kMaces, 13},
+     60, "player_skill_sword1", true, arms::kAxes | arms::kMaces | arms::kTwoHand, 13},
     // Lunge: the Gladius, and nothing else in 0.75 carried it. A one-handed sword, which is what
     // MU's own description says in as many words -- "used with weapons like Gladius and Katana
     // to execute quick stabs".
     {skill::kLunge, "Lunge", 9, 1.0f, 1.6f, 1.0f / 1400.0f, 30, false, Spread::One, 0, 1.0f,
      "A thrust straight ahead: the cheapest key and the one that comes back soonest.", 61,
-     "player_skill_sword2", true, arms::kSword1, 20},
+     "player_skill_sword2", true, arms::kSword1 | arms::kTwoHand, 20},
     // Uppercut: the Sword of Assassin, the Falchion and the Serpent Sword. All one-handed.
     {skill::kUppercut, "Uppercut", 8, 1.0f, 1.8f, 1.0f / 1200.0f, 40, false, Spread::One, 0, 1.0f,
      "A rising blow under the guard, between the jab and the overhead in force and in wait.",
-     62, "player_skill_sword3", true, arms::kSword1, 12},
+     62, "player_skill_sword3", true, arms::kSword1 | arms::kTwoHand, 12},
     // Cyclone: the Blade (a one-handed sword), the Berdysh and the Great Scythe (polearms). The
     // odd pair is MU's own, and it reads as a spin with something long or something quick.
     // **Two tiles and not one** (the user, 2026-10-21: "Make Cyclone and Twisting Slash" wider,
@@ -80,7 +82,7 @@ constexpr SkillRow kRows[kSkills] = {
     {skill::kCyclone, "Cyclone", 9, 2.0f, 2.0f, 1.0f / 1400.0f, 40, false, Spread::Ring, 0, 1.0f,
      "A spin that catches everything within two tiles, harder than Twisting Slash and back in "
      "two seconds.",
-     63, "player_skill_sword4", true, arms::kSword1 | arms::kSpear, 36},
+     63, "player_skill_sword4", true, arms::kSword1 | arms::kTwoHand, 36},
     // Every row is built now. `built` used to mean "and the bar has a key for it", which is why
     // Slash sat here false with its arc written and tested; the list of 2026-09-23 holds every
     // learned skill and the four keys are the player's to fill from it, so the two questions
@@ -91,7 +93,7 @@ constexpr SkillRow kRows[kSkills] = {
     // the Giant Sword; the other two are elsewhere and the family is written for them anyway.
     {skill::kSlash, "Slash", 10, 1.0f, 1.8f, 1.0f / 1000.0f, 80, false, Spread::Arc, 0, 1.0f,
      "A wide sweep across the three tiles he faces, thrown with both hands on the haft.", 64,
-     "player_skill_sword4", true, arms::kSword2 | arms::kAxe2, 52},
+     "player_skill_sword4", true, arms::kTwoHand, 52},
 
     // ---- past 0.75, and appended so the six keep their indices -------------------------------
     //

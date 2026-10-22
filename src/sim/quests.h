@@ -161,8 +161,9 @@ struct QuestRow {
     // Every one of these his class is paid (questPays), all of them.
     QuestItem paid[kQuestPaid];
     int paidCount = 0;
-    // One of these, the player's choice, from those his class may use. The table lists every
-    // class's candidates; the dialog shows his. None, when the whole reward is `paid`.
+    // One of these, the player's choice, from those paid him as `paid` is (Realm::questChoiceFits:
+    // class, first clear, rank) -- the knight's one-hander or two-hander (the user, 2026-10-22).
+    // None, when the whole reward is `paid`.
     QuestItem choices[kQuestChoices];
     int choiceCount = 0;
 };
@@ -186,6 +187,9 @@ inline bool questPathPays(const QuestRow& row, QuestPath path, bool first) {
     const int kin = int(path == QuestPath::Magic ? Kin::DarkWizard : Kin::DarkKnight);
     for (int i = 0; i < row.paidCount; ++i) {
         if (row.paid[i].kin == kin && questPays(row.paid[i], kin, first)) return true;
+    }
+    for (int i = 0; i < row.choiceCount; ++i) {
+        if (row.choices[i].kin == kin && questPays(row.choices[i], kin, first)) return true;
     }
     return false;
 }
