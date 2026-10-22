@@ -997,6 +997,51 @@ bool tops(const content::Tables& tables, const Held& onto, const Held& what) {
     return onto.durability < poursMost(tables.items[size_t(onto.item)]);
 }
 
+bool standsIn(const content::Tables& tables, int32_t carried, int32_t bound) {
+    const content::ItemRow& c = tables.items[size_t(carried)];
+    const content::ItemRow& b = tables.items[size_t(bound)];
+    if (c.group != b.group) return false;
+    if (ale(b) || portal(b) || antidote(b)) return c.number == b.number;
+    return c.number <= b.number && (b.number >= 4 ? restores(c) : heals(c));
+}
+
+int bindArrivals(const content::Tables& tables, const Satchel& bag, PotionsSeen& seen,
+                 int32_t quick[kQuickKeys]) {
+    int held[7] = {};
+    int32_t rowOf[7] = {-1, -1, -1, -1, -1, -1, -1};
+    for (int slot = kWorn; slot < kSlots; ++slot) {
+        if (bag[slot].empty()) continue;
+        const content::ItemRow& row = tables.items[size_t(bag[slot].item)];
+        if (!heals(row) && !restores(row)) continue;
+        held[row.number] += std::max<int>(1, bag[slot].durability);
+        rowOf[row.number] = bag[slot].item;
+    }
+    const bool first = seen.held[0] < 0;
+    int bound = 0;
+    for (int number = 0; number < 7; ++number) {
+        const bool arrived = !first && held[number] > seen.held[number];
+        seen.held[number] = held[number];
+        if (!arrived) continue;
+        const int32_t item = rowOf[number];
+        int weaker = -1, empty = -1;
+        bool drunk = false;
+        for (int key = 0; key < kQuickKeys; ++key) {
+            if (quick[key] < 0) {
+                if (empty < 0) empty = key;
+                continue;
+            }
+            if (standsIn(tables, item, quick[key])) drunk = true;
+            else if (weaker < 0 && standsIn(tables, quick[key], item)) weaker = key;
+        }
+        if (drunk) continue;
+        const int key = weaker >= 0 ? weaker : empty;
+        if (key < 0) continue;
+        quick[key] = item;
+        ++bound;
+    }
+    return bound;
+}
+
 // ---- the satchel ------------------------------------------------------------------------------
 
 const Held& Satchel::operator[](int slot) const {

@@ -1606,4 +1606,27 @@ inline constexpr BagRow kFirecrackerBag[] = {
     {14, 13}, {14, 14}, {12, 15},
 };
 
+// ---- the potion keys --------------------------------------------------------------------------
+//
+// The client's five potion keys, as item rows, -1 for none (game/ui/desk.h keeps them; here so
+// the rule is checked in sim_test).
+constexpr int kQuickKeys = 5;
+// Whether a carried row may stand in for a bound one: the same group, and either exactly the
+// Ale, the Town Portal or the Antidote, or the same family at no higher a rank -- the healing
+// family falls to the apple and the mana family to the small mana potion. Quick.Substitutes.
+bool standsIn(const content::Tables& tables, int32_t carried, int32_t bound);
+// **A healing or mana potion, or an Apple, binds itself as it arrives** (the user, 2026-10-22:
+// "when char first time pickup some hp/mana potion or apple we need to attach to quick slot so
+// user understand that is usable"). Ours: MU binds nothing by itself. Only on an arrival -- a
+// row the bag holds more of than at the last look -- and only when no key drinks it already: a
+// key holding a weaker one of its kind is raised to it (and still drinks the weaker, standsIn),
+// else it takes the first empty key. A key cleared by hand stays clear while the bottles sit in
+// the bag, and the first look (a load, a server's first snapshot) only counts. `seen` is the
+// last look, -1 before the first. Answers how many keys it bound.
+struct PotionsSeen {
+    int held[7] = {-1, -1, -1, -1, -1, -1, -1};  // the Apple (14, 0) to the Large Mana (14, 6)
+};
+int bindArrivals(const content::Tables& tables, const Satchel& bag, PotionsSeen& seen,
+                 int32_t quick[kQuickKeys]);
+
 }  // namespace mu::sim

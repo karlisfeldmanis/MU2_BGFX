@@ -852,6 +852,71 @@ void testSwapOverlap(const content::Tables& tables) {
           "a swap with room for both still goes through");
 }
 
+// The potion keys bind a healing or mana potion as it arrives (sim::bindArrivals; the user,
+// 2026-10-22: "when char first time pickup some hp/mana potion or apple we need to attach to
+// quick slot"), walked as a bag changes under a player.
+void testQuickBind(const content::Tables& tables) {
+    std::printf("quick bind\n");
+    const int32_t apple = tables.itemAt(14, 0), small = tables.itemAt(14, 1),
+                  large = tables.itemAt(14, 3), mana = tables.itemAt(14, 4),
+                  antidote = tables.itemAt(14, 8), ale = tables.itemAt(14, 9);
+    check(apple >= 0 && small >= 0 && large >= 0 && mana >= 0 && antidote >= 0 && ale >= 0,
+          "the potions are in the tables");
+    if (apple < 0 || small < 0 || large < 0 || mana < 0 || antidote < 0 || ale < 0) return;
+    const auto keys = [](int32_t a, int32_t b, int32_t c, int32_t d, int32_t e, const int32_t* q) {
+        return q[0] == a && q[1] == b && q[2] == c && q[3] == d && q[4] == e;
+    };
+    sim::Satchel bag;
+    sim::PotionsSeen seen;
+    int32_t quick[sim::kQuickKeys] = {-1, -1, -1, -1, -1};
+    const int a = sim::kWorn, b = sim::kWorn + 1, c = sim::kWorn + 2, d = sim::kWorn + 3;
+
+    bag.put(a, sim::Held{apple, 0, 2, false});
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 0, "the first look only counts");
+    check(keys(-1, -1, -1, -1, -1, quick), "so a loaded bag binds nothing");
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 0, "and nothing arriving binds nothing");
+
+    bag.put(a, sim::Held{apple, 0, 3, false});
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 1, "an apple picked up binds");
+    check(keys(apple, -1, -1, -1, -1, quick), "to the first key");
+
+    bag.put(b, sim::Held{small, 0, 10, false});
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 1, "a small healing potion bought");
+    check(keys(small, -1, -1, -1, -1, quick), "raises the apple's key, not a second key");
+    check(sim::standsIn(tables, apple, quick[0]), "which still drinks the apples");
+
+    bag.put(a, sim::Held{apple, 0, 4, false});
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 0, "another apple is drunk by it already");
+
+    bag.put(c, sim::Held{mana, 0, 10, false});
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 1, "a mana potion bought");
+    check(keys(small, mana, -1, -1, -1, quick), "takes the next empty key");
+
+    quick[1] = -1;  // he takes it off the bar by hand
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 0, "a key cleared by hand");
+    bag.put(c, sim::Held{mana, 0, 9, false});
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 0, "stays clear as he drinks");
+    check(keys(small, -1, -1, -1, -1, quick), "both looks");
+
+    bag.put(d, sim::Held{large, 0, 3, false});
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 1, "a large healing potion");
+    check(keys(large, -1, -1, -1, -1, quick), "raises the healing key again");
+
+    bag.put(b, sim::Held{small, 0, 20, false});
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 0, "and a weaker one after it changes nothing");
+    check(keys(large, -1, -1, -1, -1, quick), "the large key drinks it");
+
+    int32_t full[sim::kQuickKeys] = {ale, antidote, ale, antidote, ale};
+    sim::Satchel other;
+    sim::PotionsSeen otherSeen;
+    sim::bindArrivals(tables, other, otherSeen, full);
+    other.put(a, sim::Held{small, 0, 1, false});
+    checkEqual(sim::bindArrivals(tables, other, otherSeen, full), 0, "every key held by something else");
+    check(full[0] == ale && full[1] == antidote, "binds nothing over it");
+    other.put(b, sim::Held{ale, 0, 5, false});
+    checkEqual(sim::bindArrivals(tables, other, otherSeen, full), 0, "and an Ale never binds itself");
+}
+
 void testItems(const content::Tables& tables) {
     std::printf("items\n");
     // 157: the catalogue's 118, the nine knight orbs added on 2026-09-23, the wizard's Scroll
@@ -15541,6 +15606,7 @@ int main() {
     testInvasion(tables);
     testRaid(tables);
     testItems(tables);
+    testQuickBind(tables);
     testSwapOverlap(tables);
     testLoot(tables);
     testDrops(tables);
