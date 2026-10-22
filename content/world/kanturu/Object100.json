@@ -1,0 +1,64 @@
+{
+  "item": "Object100",
+  "mu_name": "Object100",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 99,
+  "placements": 80,
+  "profile": "world",
+  "sheets": {
+    "iplant": "kr_iplant.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "iplant": "foliage"
+  },
+  "material_note": "iplant: the plant's veined green-red pod: foliage.",
+  "why_this_one": "Small plant sprouts, 80 of them, swaying. Batch 8, the plants (the user, 2026-10-22: 'next'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "foliage",
+      "triangles": 27,
+      "area": 2515.9,
+      "along": [
+        -2.8,
+        28.5
+      ],
+      "mu_uv": [
+        0.003,
+        0.782,
+        1.427,
+        0.937
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.497,
+        0.89
+      ]
+    },
+    {
+      "island": 1,
+      "material": "foliage",
+      "triangles": 27,
+      "area": 2323.5,
+      "along": [
+        -8.8,
+        74.5
+      ],
+      "mu_uv": [
+        0.003,
+        0.782,
+        1.427,
+        0.937
+      ],
+      "bake_uv": [
+        0.003,
+        0.185,
+        0.997,
+        0.713
+      ]
+    }
+  ]
+}

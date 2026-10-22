@@ -1,0 +1,200 @@
+{
+  "item": "Object70",
+  "mu_name": "Object70",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 69,
+  "placements": 34,
+  "profile": "world",
+  "sheets": {
+    "Pool001": "kr_pool001.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "Pool001": "foliage"
+  },
+  "material_note": "Pool001: a fern frond, cut out: foliage.",
+  "cutout": [
+    "Pool001"
+  ],
+  "cutout_from": "decode_texture found a real alpha channel cutting the sheet.",
+  "why_this_one": "Ferns, 34 of them, swaying. Batch 8, the plants (the user, 2026-10-22: 'next'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "foliage",
+      "triangles": 12,
+      "area": 8244.3,
+      "along": [
+        -37.3,
+        39.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.328,
+        0.328
+      ]
+    },
+    {
+      "island": 1,
+      "material": "foliage",
+      "triangles": 12,
+      "area": 17827.7,
+      "along": [
+        -148.2,
+        -4.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.339,
+        0.328,
+        0.661
+      ]
+    },
+    {
+      "island": 2,
+      "material": "foliage",
+      "triangles": 12,
+      "area": 17837.4,
+      "along": [
+        -104.4,
+        46.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.339,
+        0.005,
+        0.661,
+        0.328
+      ]
+    },
+    {
+      "island": 3,
+      "material": "foliage",
+      "triangles": 12,
+      "area": 17837.4,
+      "along": [
+        -27.6,
+        148.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.339,
+        0.339,
+        0.661,
+        0.661
+      ]
+    },
+    {
+      "island": 4,
+      "material": "foliage",
+      "triangles": 12,
+      "area": 16128.8,
+      "along": [
+        -56.8,
+        82.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.672,
+        0.328,
+        0.995
+      ]
+    },
+    {
+      "island": 5,
+      "material": "foliage",
+      "triangles": 12,
+      "area": 8244.3,
+      "along": [
+        -80.7,
+        4.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.339,
+        0.672,
+        0.661,
+        0.995
+      ]
+    },
+    {
+      "island": 6,
+      "material": "foliage",
+      "triangles": 12,
+      "area": 8244.3,
+      "along": [
+        -38.5,
+        30.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.672,
+        0.005,
+        0.995,
+        0.328
+      ]
+    },
+    {
+      "island": 7,
+      "material": "foliage",
+      "triangles": 12,
+      "area": 8244.3,
+      "along": [
+        -15.8,
+        66.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.672,
+        0.339,
+        0.995,
+        0.661
+      ]
+    }
+  ]
+}
