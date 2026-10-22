@@ -130,7 +130,7 @@ private:
     bool loot(Play& play, const HelperSettings& settings);
     void mend(Play& play, const HelperSettings& settings);
     void keys(Play& play, const HelperSettings& settings, uint32_t target);
-    int32_t striker(Play& play) const;
+    int32_t striker(Play& play, const HelperSettings& settings) const;
 
     bool on_ = false;
     bool potions_ = false;  // he carried a healing potion when it started

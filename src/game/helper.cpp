@@ -357,7 +357,7 @@ std::string Helper::update(Play& play, const HelperSettings& settings, double se
         }
         return {};
     }
-    if (!onIt) play.fight(target_, striker(play));
+    if (!onIt) play.fight(target_, striker(play, settings));
     keys(play, settings, target_);
     return {};
 }
@@ -645,8 +645,10 @@ void Helper::keys(Play& play, const HelperSettings& settings, uint32_t target) {
 }
 
 // What the right button fights with: its own skill, else the first attack on his keys he may throw
-// (QuestAuto::striker's rule, asked of the hand that swings); -1 keeps the quick slot's.
-int32_t Helper::striker(Play& play) const {
+// (QuestAuto::striker's rule, asked of the hand that swings) and not turned off in the window (the
+// user, 2026-10-22: "i turned off all skill on helper but dk keeps using them"); -1 keeps the
+// quick slot's, and with none there he swings bare.
+int32_t Helper::striker(Play& play, const HelperSettings& settings) const {
     if (play.quickSkill() != 0) return -1;
     const sim::Realm& realm = play.realm();
     const uint32_t hand = realm.wearer().hand;
@@ -656,6 +658,7 @@ int32_t Helper::striker(Play& play) const {
         const sim::SkillRow* row = skill > 0 ? sim::skillNumbered(skill) : nullptr;
         if (row == nullptr || !realm.knows(skill) || !row->suits(hand)) continue;
         if (row->onSelf() || row->chargeTicks > 0 || row->channelled() || row->blinks) continue;
+        if (settings.use(skill, helperKind(*row, false)) == HelperUse::Off) continue;
         if (row->primary()) return skill;
         if (any < 0) any = skill;
     }
