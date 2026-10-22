@@ -140,11 +140,17 @@ QuestRow marlon() {
     int n = 0;
     // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
     // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
-    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
+    // (auto-play's), as the orbs throw off either since the same day (sim::kRows). Each two-hander
+    // is the one nearest its one-hander's NPC price (sim::npcValue; the user, the same day: "this
+    // little bit breaks economy"), so neither pick is the richer -- the Spear 1,400 to the
+    // Falchion's 1,200, the Legendary Sword 6,800 to the Double Blade's 6,700, the Crescent Axe
+    // 11,400 to the Lighting Sword's 11,500, the Crystal Sword +7 91,600 to the Sword of
+    // Destruction's 91,700, and Daybreak +7 217,100 under the Knight Blade's 260,600, the only
+    // knight's two-hander that high.
     row.choices[row.choiceCount++] = {.item = "Sword08", .kin = knight, .sockets = 1,
                                       .firstOnly = true};  // Falchion
-    row.choices[row.choiceCount++] = {.item = "Sword10", .kin = knight, .sockets = 1,
-                                      .firstOnly = true};  // Sword of Salamander
+    row.choices[row.choiceCount++] = {.item = "Spear02", .kin = knight, .sockets = 1,
+                                      .firstOnly = true};  // Spear
     row.paid[n++] = {.item = "Staff03", .kin = wizard, .sockets = 1,
                      .firstOnly = true};  // Serpent Staff
     // The weapon's rune a Common (the ladder, above): the faint kin of the Legendary Lirien pays
@@ -320,11 +326,11 @@ QuestRow devin() {
     int n = 0;
     // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
     // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
-    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
+    // (auto-play's), its two-hander the one nearest its NPC price (Marlon's row says why).
     row.choices[row.choiceCount++] = {.item = "Sword14", .kin = knight, .sockets = 2,
                                       .firstOnly = true};  // Double Blade
-    row.choices[row.choiceCount++] = {.item = "Sword16", .kin = knight, .sockets = 2,
-                                      .firstOnly = true};  // Giant Sword
+    row.choices[row.choiceCount++] = {.item = "Sword12", .kin = knight, .sockets = 2,
+                                      .firstOnly = true};  // Legendary Sword
     // The wizard's one-handed Legendary Staff, and the Legendary Shield for the other hand, his
     // class's best first-class shield, so his Magic Shield works from here on (2026-10-09: the
     // two-handed Thunder Staff left him without it; then the user, of the Small Shield it first
@@ -1449,11 +1455,11 @@ QuestRow lirienHalls() {
     int n = 0;
     // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
     // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
-    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
+    // (auto-play's), its two-hander the one nearest its NPC price (Marlon's row says why).
     row.choices[row.choiceCount++] = {.item = "Sword15", .kin = knight, .sockets = 2,
                                       .firstOnly = true};  // Lighting Sword
-    row.choices[row.choiceCount++] = {.item = "Mace06", .kin = knight, .sockets = 2,
-                                      .firstOnly = true};  // Crystal Sword
+    row.choices[row.choiceCount++] = {.item = "Axe09", .kin = knight, .sockets = 2,
+                                      .firstOnly = true};  // Crescent Axe
     // The wizard's was the Staff of Resurrection until 2026-10-21, which Kantur's Legion pays at
     // +7 (the user: "we are giving staff of resorection 2 times"): the Legendary Staff, one hand.
     row.paid[n++] = {.item = "Staff06", .kin = wizard, .sockets = 2,
@@ -1623,11 +1629,11 @@ QuestRow kantursLegion() {
     int n = 0;
     // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
     // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
-    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
+    // (auto-play's), its two-hander the one nearest its NPC price (Marlon's row says why).
     row.choices[row.choiceCount++] = {.item = "Sword17", .plus = 7, .kin = knight, .sockets = 3,
                                       .firstOnly = true, .rank = Rank::First};  // Sword of Destruction +7
-    row.choices[row.choiceCount++] = {.item = "Mace07", .plus = 7, .kin = knight, .sockets = 3,
-                                      .firstOnly = true, .rank = Rank::First};  // Chaos Dragon Axe +7
+    row.choices[row.choiceCount++] = {.item = "Mace06", .plus = 7, .kin = knight, .sockets = 3,
+                                      .firstOnly = true, .rank = Rank::First};  // Crystal Sword +7
     row.paid[n++] = {.item = "Staff07", .plus = 7, .kin = wizard, .sockets = 3,
                      .firstOnly = true, .rank = Rank::First};  // Staff of Resurrection +7
     row.paid[n++] = {.item = "CrossBow17", .kin = elf, .sockets = 3,
@@ -1707,7 +1713,7 @@ QuestRow kantursCaptain() {
     int n = 0;
     // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
     // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
-    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
+    // (auto-play's), its two-hander the one nearest its NPC price (Marlon's row says why).
     row.choices[row.choiceCount++] = {.item = "Sword21", .plus = 7, .kin = knight, .sockets = 3,
                                       .firstOnly = true, .rank = Rank::Second};  // Knight Blade +7, the BK's
     row.choices[row.choiceCount++] = {.item = "Sword25", .plus = 7, .kin = knight, .sockets = 3,

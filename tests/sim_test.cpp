@@ -4740,6 +4740,29 @@ void testSkills(const content::Tables& tables) {
         }
         check(twoHandOffered && knightChoices == 5,
               "the knight's five quest weapons are each a one-hander or a two-hander, his pick");
+        // And neither pick is the richer: the pair sell to an NPC within a quarter of each other.
+        bool pricedAlike = true;
+        for (int q = 0; q < sim::kQuests; ++q) {
+            const sim::QuestRow& row = sim::questAt(q);
+            int64_t least = INT64_MAX, most = 0;
+            for (int c = 0; c < row.choiceCount; ++c) {
+                const sim::QuestItem& what = row.choices[c];
+                if (what.kin != int(sim::Kin::DarkKnight)) continue;
+                const int32_t it = tables.itemNamed(what.item);
+                if (it < 0) continue;
+                sim::Held held;
+                held.item = it;
+                held.refinement = int16_t(what.plus);
+                held.durability = int16_t(sim::fullDurability(tables.items[size_t(it)], what.plus));
+                held.luck = true;
+                held.option = int8_t(sim::kQuestOption);
+                const int64_t value = sim::npcValue(tables, held);
+                least = std::min(least, value);
+                most = std::max(most, value);
+            }
+            if (most > 0) pricedAlike &= most * 4 <= least * 5;
+        }
+        check(pricedAlike, "and the two sell for about the same");
     }
 
     int casts[sim::kSkills] = {};
