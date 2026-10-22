@@ -22,6 +22,10 @@
 // and stops when the pool is full. Ours throws one in kRatio of them, each kRatio times as bright
 // (the minus kind: as dark as kRatio of MU's laid over each other), into a pool of kMost: the
 // same sum of light in far fewer, larger draws. "Seen" is within kReach of the camera's point.
+// Ours, after the user's 'vissible lines' and 'vissible' (2026-10-23): a puff 10 m across
+// straddles the trench's lip and was cut on it. A rising puff is born only where the void lies
+// under half its width, a few tries at MU's spread, and every puff is drawn as faint as little of
+// it lies over the void, so the ones that do reach the lip thin out before it.
 // Nothing here reaches the sim.
 #pragma once
 
@@ -31,6 +35,7 @@
 
 #include <bgfx/bgfx.h>
 
+#include "content/ground.h"
 #include "content/texture.h"
 #include "gfx/effects.h"
 
@@ -40,7 +45,8 @@ class ChasmMist {
 public:
     // Opens where the world's show asks for `chasm_mist`: the boxes from the world's placements
     // (assetDir/world/<w>/<w>.json), the sheet the showing's `cloud`.
-    void open(const std::string& assetDir, const std::string& world, content::Textures& textures);
+    void open(const std::string& assetDir, const std::string& world, const content::Ground& ground,
+              content::Textures& textures);
     void shutdown();
     bool isOpen() const { return open_; }
 
@@ -61,6 +67,7 @@ private:
         float scale = 1.0f;     // MU's Scale
         float turning = 0.0f;   // Hover's
         float phase = 0.0f;     // milliseconds, MU's Gravity
+        float edge = 1.0f;      // ours: how much of it lies over the void, squared (overVoid)
     };
     struct Box {
         Kind kind = Kind::Rise;
@@ -70,9 +77,12 @@ private:
         bool seen = false;
     };
     void throwPuff(uint16_t index);
+    bool voidAt(float x, float z) const;
+    float overVoid(float x, float z, float radius) const;
     float unit();
 
     bool open_ = false;
+    const content::Ground* ground_ = nullptr;
     std::vector<Box> boxes_;
     std::vector<Puff> puffs_;
     float clock_ = 0.0f;  // milliseconds, MU's WorldTime

@@ -33,8 +33,10 @@ float ChasmMist::unit() {
     return float(seed_ >> 8) / 16777216.0f;
 }
 
-void ChasmMist::open(const std::string& assetDir, const std::string& world, content::Textures& textures) {
+void ChasmMist::open(const std::string& assetDir, const std::string& world, const content::Ground& ground,
+                     content::Textures& textures) {
     shutdown();
+    ground_ = &ground;
     if (!worldShow(world).chasmMist) return;
     strength_ = std::clamp(worldShow(world).chasmMistStrength, 0.0f, 1.0f);
     content::Showing table;
@@ -75,7 +77,25 @@ void ChasmMist::shutdown() {
     open_ = false;
     boxes_.clear();
     puffs_.clear();
+    ground_ = nullptr;
     sheet_ = BGFX_INVALID_HANDLE;
+}
+
+bool ChasmMist::voidAt(float x, float z) const {
+    const float m = ground_->metresPerTile();
+    const int c = int(std::floor(x / m)), r = int(std::floor(-z / m));
+    if (c < 0 || r < 0 || c >= ground_->size() || r >= ground_->size()) return true;
+    return (ground_->attributesAt(c, r) & content::kNoGround) != 0;
+}
+
+// The share of its middle and sixteen points round it, at `radius`, that are over the void.
+float ChasmMist::overVoid(float x, float z, float radius) const {
+    int over = voidAt(x, z) ? 1 : 0;
+    for (int k = 0; k < 16; ++k) {
+        const float a = 0.3926991f * float(k);
+        over += voidAt(x + std::cos(a) * radius, z + std::sin(a) * radius) ? 1 : 0;
+    }
+    return float(over) / 17.0f;
 }
 
 void ChasmMist::throwPuff(uint16_t index) {
@@ -89,6 +109,15 @@ void ChasmMist::throwPuff(uint16_t index) {
     puff.at[2] += (std::floor(unit() * 500.0f) - 250.0f) * kUnit;
     puff.phase = std::floor(unit() * 1000.0f);
     if (box.kind == Kind::Rise) {
+        // MU's spread, tried a few times for a spot with the void under half its width.
+        const float half = 0.5f * kSheetMetres * 1.9f * box.scale;
+        bool clear = false;
+        for (int tries = 0; tries < 4 && !clear; ++tries) {
+            puff.at[0] = box.at[0] + (std::floor(unit() * 500.0f) - 250.0f) * kUnit;
+            puff.at[2] = box.at[2] + (std::floor(unit() * 500.0f) - 250.0f) * kUnit;
+            clear = overVoid(puff.at[0], puff.at[2], 0.5f * half) >= 0.99f;
+        }
+        if (!clear) return;
         puff.at[1] += (std::floor(unit() * 20.0f) - 20.0f) * kUnit;
         puff.left = kRiseLife;
         puff.alpha = 0.1f;
@@ -97,6 +126,12 @@ void ChasmMist::throwPuff(uint16_t index) {
         puff.at[1] += (20.0f + std::floor(unit() * 20.0f)) * kUnit;
         puff.scale = (180.0f + std::floor(unit() * 20.0f)) * 0.01f;
         puff.turning = box.scale + std::floor(unit() * 30.0f) / 100.0f;
+    }
+    // Fainter the less of it lies over the void (Rise and Hover; Shade darkens the ground it
+    // stands on, as MU's does).
+    if (box.kind != Kind::Shade) {
+        const float over = overVoid(puff.at[0], puff.at[2], 0.45f * kSheetMetres * puff.scale);
+        puff.edge = box.kind == Kind::Rise ? over * over : 1.0f;
     }
     puff.bornY = puff.at[1];
     puffs_.push_back(puff);
@@ -161,7 +196,7 @@ void ChasmMist::gather(gfx::Effects& effects) const {
         gfx::Blend blend = gfx::Blend::Additive;
         switch (one.kind) {
             case Kind::Rise:
-                level = kRiseLight * one.alpha * kRatio * strength_;
+                level = kRiseLight * one.alpha * kRatio * strength_ * one.edge;
                 break;
             case Kind::Hover:
                 level = kHoverLight * kRatio * strength_;

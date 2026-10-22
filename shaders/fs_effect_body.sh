@@ -69,10 +69,10 @@ float softness(float code, vec2 pixel, float depth)
 		float at = prepassAt((pixel + step) * u_viewTexel.xy).a;
 		behind = max(behind, at <= 0.0 ? 1.0e4 : at);
 	}
-	// Full a reach in front of what stands behind it, nothing a metre behind what stands in
-	// front of it: the pass tests no depth for a soft sprite (gfx::Effects), so this is its
-	// occlusion too, and a cloud just behind the lip shows faintly over it.
-	return smoothstep(-3.0, quarters * 0.25, behind - depth);
+	// Full a reach in front of what stands behind it, nothing half a metre behind what stands
+	// in front of it: the pass tests no depth for a soft sprite (gfx::Effects), so this is its
+	// occlusion too, and the cut where it passes behind an edge is soft.
+	return smoothstep(-0.5, quarters * 0.25, behind - depth);
 }
 
 vec4 sheetAt(float slot, vec2 uv)
