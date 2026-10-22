@@ -531,6 +531,20 @@
       "tile": [140, 139],
       "facing": 3,
       "ours": "the Broker (docs/game/broker.md, sim::kBroker), the market's keeper, by the fenced garden at 140,139 (the user, 2026-10-12; first three tiles east of Baz): MuMain's Mirage (Npc/mirazu.bmd, scale 0.95), the user's pick of 2026-10-11, one figure in all three towns"
+    },
+    {
+      "model": "Lugard",
+      "who": "Lugard",
+      "tile": [
+        144,
+        127
+      ],
+      "shift": [
+        0,
+        50
+      ],
+      "facing": 5,
+      "ours": "the reset keeper, on the town centre east of the fountain, his back to it, his wings over the two planters, facing down the lane between them where the reset is held: MuMain's Lugard (Npc/Lugard.bmd, scale 1.1), the user's pick of 2026-10-22. shift puts him on the fountain's middle line, y 128.0, a tile edge"
     }
   ],
   "spawns_from": [
