@@ -1,0 +1,42 @@
+{
+  "item": "Object09",
+  "mu_name": "Object09",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 8,
+  "placements": 8,
+  "profile": "world",
+  "sheets": {
+    "cho_obj04": "kr_cho_obj04.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "cho_obj04": "plank"
+  },
+  "material_note": "cho_obj04: plank walls with iron straps: plank.",
+  "why_this_one": "A barrel, 8 of them. Batch 10, pillars, barrels and walls (the user, 2026-10-22: 'do it', the small ruins in three batches). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plank",
+      "triangles": 56,
+      "area": 37093.6,
+      "along": [
+        -47.8,
+        47.8
+      ],
+      "mu_uv": [
+        0.016,
+        0.031,
+        0.858,
+        0.996
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.971,
+        0.992
+      ]
+    }
+  ]
+}

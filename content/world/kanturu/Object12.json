@@ -1,0 +1,176 @@
+{
+  "item": "Object12",
+  "mu_name": "Object12",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 11,
+  "placements": 1,
+  "profile": "world",
+  "sheets": {
+    "cho_obj03": "kr_cho_obj03.png",
+    "cho_obj02": "kr_cho_obj02.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "cho_obj03": "plank",
+    "cho_obj02": "flagstone"
+  },
+  "material_note": "cho_obj03: framed boards, brick and a mossy post: plank. cho_obj02: brick and plaster: flagstone.",
+  "why_this_one": "A broken wall, one. Batch 10, pillars, barrels and walls (the user, 2026-10-22: 'do it', the small ruins in three batches). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plank",
+      "triangles": 35,
+      "area": 31996.3,
+      "along": [
+        -112.7,
+        58.5
+      ],
+      "mu_uv": [
+        0.511,
+        0.508,
+        0.994,
+        0.992
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.991,
+        0.839
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plank",
+      "triangles": 35,
+      "area": 30646.3,
+      "along": [
+        -112.7,
+        58.5
+      ],
+      "mu_uv": [
+        0.511,
+        0.508,
+        0.994,
+        0.992
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.968,
+        0.843
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plank",
+      "triangles": 16,
+      "area": 24813.0,
+      "along": [
+        -128.1,
+        35.1
+      ],
+      "mu_uv": [
+        0.512,
+        0.508,
+        0.994,
+        0.99
+      ],
+      "bake_uv": [
+        0.009,
+        0.275,
+        0.932,
+        0.821
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plank",
+      "triangles": 16,
+      "area": 14644.9,
+      "along": [
+        -2.4,
+        15.6
+      ],
+      "mu_uv": [
+        0.718,
+        0.509,
+        0.837,
+        0.958
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.79,
+        0.768
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plank",
+      "triangles": 16,
+      "area": 14644.8,
+      "along": [
+        -2.4,
+        15.6
+      ],
+      "mu_uv": [
+        0.718,
+        0.509,
+        0.837,
+        0.958
+      ],
+      "bake_uv": [
+        0.493,
+        0.009,
+        0.895,
+        0.754
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plank",
+      "triangles": 8,
+      "area": 6986.8,
+      "along": [
+        -135.7,
+        4.2
+      ],
+      "mu_uv": [
+        0.718,
+        0.509,
+        0.837,
+        0.958
+      ],
+      "bake_uv": [
+        0.203,
+        0.009,
+        0.738,
+        0.755
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plank",
+      "triangles": 8,
+      "area": 6986.8,
+      "along": [
+        -135.7,
+        4.2
+      ],
+      "mu_uv": [
+        0.718,
+        0.509,
+        0.837,
+        0.958
+      ],
+      "bake_uv": [
+        0.361,
+        0.524,
+        0.659,
+        0.755
+      ]
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "item": "Object08",
+  "mu_name": "Object08",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 7,
+  "placements": 4,
+  "profile": "world",
+  "sheets": {
+    "cho_obj03": "kr_cho_obj03.png",
+    "cho_obj02": "kr_cho_obj02.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "cho_obj03": "plank",
+    "cho_obj02": "flagstone"
+  },
+  "material_note": "cho_obj03: framed boards, brick and a mossy post: plank. cho_obj02: brick and plaster: flagstone.",
+  "why_this_one": "A pillar, 4 of them. Batch 10, pillars, barrels and walls (the user, 2026-10-22: 'do it', the small ruins in three batches). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 34,
+      "area": 110176.3,
+      "along": [
+        -53.9,
+        48.3
+      ],
+      "mu_uv": [
+        0.106,
+        0.02,
+        0.974,
+        0.993
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.994,
+        0.908
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plank",
+      "triangles": 28,
+      "area": 9778.5,
+      "along": [
+        0.7,
+        53.9
+      ],
+      "mu_uv": [
+        0.578,
+        0.013,
+        0.861,
+        0.482
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.258,
+        0.425
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plank",
+      "triangles": 36,
+      "area": 17920.5,
+      "along": [
+        -44.6,
+        8.4
+      ],
+      "mu_uv": [
+        0.578,
+        0.013,
+        0.861,
+        0.482
+      ],
+      "bake_uv": [
+        0.27,
+        0.006,
+        0.523,
+        0.425
+      ]
+    }
+  ]
+}
