@@ -1,0 +1,42 @@
+{
+  "item": "Object65",
+  "mu_name": "Object65",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 64,
+  "placements": 15,
+  "profile": "world",
+  "sheets": {
+    "cho_tree_a": "kr_cho_tree_a.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "cho_tree_a": "bark"
+  },
+  "material_note": "cho_tree_a: bark (Object65, the .jpg) or bare branches cut out (Object64, the .tga): bark.",
+  "why_this_one": "A dead tree, 15 of them. Batch 7, the trees (the user, 2026-10-22: 'do next'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "bark",
+      "triangles": 184,
+      "area": 136883.6,
+      "along": [
+        -171.0,
+        171.0
+      ],
+      "mu_uv": [
+        0.008,
+        0.0,
+        0.988,
+        0.986
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.997,
+        0.996
+      ]
+    }
+  ]
+}

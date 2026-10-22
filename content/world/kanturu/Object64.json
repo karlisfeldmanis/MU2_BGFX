@@ -1,0 +1,506 @@
+{
+  "item": "Object64",
+  "mu_name": "Object64",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 63,
+  "placements": 6,
+  "profile": "world",
+  "sheets": {
+    "cho_tree_a": "kr_cho_tree_a_branches.png",
+    "cho_tree_b": "kr_cho_tree_b.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`; cho_tree_a twice in MU: Object65 wears cho_tree_a.jpg (bark, kr_cho_tree_a.png) and Object64 cho_tree_a.tga (bare branches cut out), decoded by hand from cho_tree_a.OZT to kr_cho_tree_a_branches.png. docs/worlds/kanturu-port.md B 3.",
+  "sheet_materials": {
+    "cho_tree_a": "bark",
+    "cho_tree_b": "bark"
+  },
+  "material_note": "cho_tree_a: bark (Object65, the .jpg) or bare branches cut out (Object64, the .tga): bark. cho_tree_b: furrowed bark: bark.",
+  "why_this_one": "A leafy tree, 6 of them, swaying. Batch 7, the trees (the user, 2026-10-22: 'do next'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "bark",
+      "triangles": 8,
+      "area": 13206.5,
+      "along": [
+        24.3,
+        137.0
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.212,
+        0.212
+      ]
+    },
+    {
+      "island": 1,
+      "material": "bark",
+      "triangles": 8,
+      "area": 30451.7,
+      "along": [
+        -84.8,
+        125.5
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.008,
+        0.228,
+        0.212,
+        0.432
+      ]
+    },
+    {
+      "island": 2,
+      "material": "bark",
+      "triangles": 8,
+      "area": 11351.1,
+      "along": [
+        -86.8,
+        -8.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.228,
+        0.008,
+        0.432,
+        0.212
+      ]
+    },
+    {
+      "island": 3,
+      "material": "bark",
+      "triangles": 8,
+      "area": 18161.0,
+      "along": [
+        -95.4,
+        66.2
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.228,
+        0.228,
+        0.432,
+        0.432
+      ]
+    },
+    {
+      "island": 4,
+      "material": "bark",
+      "triangles": 8,
+      "area": 5509.4,
+      "along": [
+        -109.3,
+        -24.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.008,
+        0.447,
+        0.212,
+        0.651
+      ]
+    },
+    {
+      "island": 5,
+      "material": "bark",
+      "triangles": 8,
+      "area": 8764.0,
+      "along": [
+        -177.0,
+        -95.4
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.447,
+        0.008,
+        0.651,
+        0.212
+      ]
+    },
+    {
+      "island": 6,
+      "material": "bark",
+      "triangles": 8,
+      "area": 48005.3,
+      "along": [
+        -96.9,
+        127.5
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.447,
+        0.228,
+        0.651,
+        0.432
+      ]
+    },
+    {
+      "island": 7,
+      "material": "bark",
+      "triangles": 8,
+      "area": 18160.5,
+      "along": [
+        -108.7,
+        13.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.228,
+        0.447,
+        0.432,
+        0.651
+      ]
+    },
+    {
+      "island": 8,
+      "material": "bark",
+      "triangles": 8,
+      "area": 15007.4,
+      "along": [
+        -29.3,
+        88.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.447,
+        0.447,
+        0.651,
+        0.651
+      ]
+    },
+    {
+      "island": 9,
+      "material": "bark",
+      "triangles": 8,
+      "area": 9730.8,
+      "along": [
+        73.4,
+        161.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.008,
+        0.667,
+        0.212,
+        0.871
+      ]
+    },
+    {
+      "island": 10,
+      "material": "bark",
+      "triangles": 8,
+      "area": 30448.5,
+      "along": [
+        -8.4,
+        169.1
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.667,
+        0.008,
+        0.871,
+        0.212
+      ]
+    },
+    {
+      "island": 11,
+      "material": "bark",
+      "triangles": 8,
+      "area": 4409.8,
+      "along": [
+        80.6,
+        136.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.228,
+        0.667,
+        0.432,
+        0.871
+      ]
+    },
+    {
+      "island": 12,
+      "material": "bark",
+      "triangles": 8,
+      "area": 10558.6,
+      "along": [
+        -26.0,
+        99.1
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.667,
+        0.228,
+        0.871,
+        0.432
+      ]
+    },
+    {
+      "island": 13,
+      "material": "bark",
+      "triangles": 8,
+      "area": 8810.9,
+      "along": [
+        47.1,
+        164.1
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.447,
+        0.667,
+        0.651,
+        0.871
+      ]
+    },
+    {
+      "island": 14,
+      "material": "bark",
+      "triangles": 8,
+      "area": 8770.7,
+      "along": [
+        -15.4,
+        71.2
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.667,
+        0.447,
+        0.871,
+        0.651
+      ]
+    },
+    {
+      "island": 15,
+      "material": "bark",
+      "triangles": 13,
+      "area": 4400.2,
+      "along": [
+        -5.8,
+        89.0
+      ],
+      "mu_uv": [
+        0.598,
+        0.012,
+        0.988,
+        0.984
+      ],
+      "bake_uv": [
+        0.771,
+        0.667,
+        0.873,
+        0.883
+      ]
+    },
+    {
+      "island": 16,
+      "material": "bark",
+      "triangles": 13,
+      "area": 4112.7,
+      "along": [
+        -116.9,
+        -0.0
+      ],
+      "mu_uv": [
+        0.598,
+        0.012,
+        0.988,
+        0.984
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.967,
+        0.887
+      ]
+    },
+    {
+      "island": 17,
+      "material": "bark",
+      "triangles": 13,
+      "area": 2881.2,
+      "along": [
+        -58.7,
+        10.0
+      ],
+      "mu_uv": [
+        0.598,
+        0.227,
+        0.988,
+        0.984
+      ],
+      "bake_uv": [
+        0.024,
+        0.178,
+        0.967,
+        0.887
+      ]
+    },
+    {
+      "island": 18,
+      "material": "bark",
+      "triangles": 13,
+      "area": 1328.6,
+      "along": [
+        62.0,
+        100.8
+      ],
+      "mu_uv": [
+        0.598,
+        0.012,
+        0.988,
+        0.984
+      ],
+      "bake_uv": [
+        0.04,
+        0.349,
+        0.967,
+        0.887
+      ]
+    },
+    {
+      "island": 19,
+      "material": "bark",
+      "triangles": 114,
+      "area": 26646.2,
+      "along": [
+        -66.4,
+        81.0
+      ],
+      "mu_uv": [
+        0.012,
+        0.0,
+        0.551,
+        0.98
+      ],
+      "bake_uv": [
+        0.055,
+        0.667,
+        0.777,
+        0.955
+      ]
+    },
+    {
+      "island": 20,
+      "material": "bark",
+      "triangles": 13,
+      "area": 2002.3,
+      "along": [
+        -4.8,
+        68.1
+      ],
+      "mu_uv": [
+        0.598,
+        0.012,
+        0.988,
+        0.984
+      ],
+      "bake_uv": [
+        0.071,
+        0.667,
+        0.968,
+        0.887
+      ]
+    },
+    {
+      "island": 21,
+      "material": "bark",
+      "triangles": 13,
+      "area": 1716.2,
+      "along": [
+        14.4,
+        32.5
+      ],
+      "mu_uv": [
+        0.598,
+        0.012,
+        0.988,
+        0.984
+      ],
+      "bake_uv": [
+        0.087,
+        0.838,
+        0.873,
+        0.992
+      ]
+    }
+  ]
+}

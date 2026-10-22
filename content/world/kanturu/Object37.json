@@ -1,0 +1,42 @@
+{
+  "item": "Object37",
+  "mu_name": "Object37",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 36,
+  "placements": 50,
+  "profile": "world",
+  "sheets": {
+    "cho_tree_b": "kr_cho_tree_b.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "cho_tree_b": "bark"
+  },
+  "material_note": "cho_tree_b: furrowed bark: bark.",
+  "why_this_one": "Fallen logs, 6 m, 50 of them. Batch 7, the trees (the user, 2026-10-22: 'do next'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "bark",
+      "triangles": 80,
+      "area": 67692.4,
+      "along": [
+        -43.1,
+        43.1
+      ],
+      "mu_uv": [
+        -0.773,
+        0.118,
+        -0.154,
+        0.999
+      ],
+      "bake_uv": [
+        -0.773,
+        0.118,
+        -0.154,
+        0.999
+      ]
+    }
+  ]
+}
