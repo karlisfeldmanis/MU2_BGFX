@@ -37,8 +37,16 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     airLoop_ = show.air;
     objectLoops_.clear();
     for (const WorldShow::ObjectLoop& one : show.objectLoops) {
+        ObjectLoopHeard* same = nullptr;
+        for (ObjectLoopHeard& had : objectLoops_) {
+            if (had.loop == one.loop) same = &had;
+        }
+        if (same) {
+            same->models.push_back(one.model);
+            continue;
+        }
         ObjectLoopHeard heard;
-        heard.model = one.model;
+        heard.models.push_back(one.model);
         heard.loop = one.loop;
         heard.full = one.full;
         heard.reach = one.reach;

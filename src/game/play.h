@@ -1744,7 +1744,11 @@ private:
     // stands, found in the town the first time hearWorld is given one. Flat x, y, z triples.
     struct ObjectLoopHeard {
         int event = -1;
-        std::string model, loop;
+        // Every model whose placements carry it: one voice an event (Sound::load hands the same
+        // handle back), so rows naming one loop are heard as one -- Kanturu's torch stands and
+        // gate posts both crackle as the bonfire.
+        std::vector<std::string> models;
+        std::string loop;
         float full = 4.0f, reach = 16.0f;
         std::vector<float> at;
         bool found = false;

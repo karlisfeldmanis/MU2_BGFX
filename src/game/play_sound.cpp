@@ -507,7 +507,11 @@ void Play::hearWorld(const Lamps* lamps, const Ornaments& ornaments, Inside insi
     const bool burns =
         placed && lamps != nullptr && lamps->nearestBonfire(hero->crown, fire, heard, &ears);
     const bool flows = placed && ornaments.nearestFountain(hero->crown, water);
-    hearFrom(heard_.fire, burns ? fire : nullptr, kFireFull, kFireReach);
+    // Left to the world's object loops where one of them is the bonfire (Kanturu's torches):
+    // one event, one voice, and silenced here every frame it would never be heard there.
+    bool fireLooped = false;
+    for (const ObjectLoopHeard& one : objectLoops_) fireLooped |= one.event == heard_.fire;
+    if (!fireLooped) hearFrom(heard_.fire, burns ? fire : nullptr, kFireFull, kFireReach);
     hearFrom(heard_.fountain, flows ? water : nullptr, kFountainFull, kFountainReach);
     // The world's object loops (WorldShow::objectLoops): each from the nearest placement of
     // its model. MU plays Kanturu's flat while any one is moved (GM_Kanturu_1st.cpp:68-116);
@@ -517,9 +521,14 @@ void Play::hearWorld(const Lamps* lamps, const Ornaments& ornaments, Inside insi
         if (!one.found && town != nullptr) {
             one.found = true;
             for (const content::TownInstance& instance : town->instances) {
-                if (town->models[instance.model].name != one.model) continue;
+                const std::string& name = town->models[instance.model].name;
+                if (std::find(one.models.begin(), one.models.end(), name) == one.models.end()) {
+                    continue;
+                }
                 one.at.insert(one.at.end(), instance.position, instance.position + 3);
             }
+            core::logf("sound: %s from %zu placement(s) of %zu model(s)", one.loop.c_str(),
+                       one.at.size() / 3, one.models.size());
         }
         const float* nearest = nullptr;
         if (placed) {

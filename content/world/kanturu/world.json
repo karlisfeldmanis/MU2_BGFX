@@ -187,6 +187,18 @@
         "loop": "kanturu_plant",
         "full": 3,
         "reach": 10
+      },
+      {
+        "model": "Object85",
+        "loop": "world_bonfire",
+        "full": 2,
+        "reach": 8
+      },
+      {
+        "model": "Object67",
+        "loop": "world_bonfire",
+        "full": 2,
+        "reach": 8
       }
     ],
     "object_loops_note": "MU plays its wheel, waterfall, electric and plant sounds flat while any glowing wheel (Object47), fall (Object78), blue tank (Object93) or carnivorous plant (Object99) is moved, which is the ones near the camera (GM_Kanturu_1st.cpp:64-117). Ours, marked: each from its nearest one, full to `full` metres and gone at `reach` (Play::hearWorld). First distances, for the user to judge.",
