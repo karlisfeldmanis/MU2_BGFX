@@ -731,6 +731,16 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
         if (said.what != sim::What::Deal || said.a != int32_t(sim::DealEvent::Done)) continue;
         if (Session* one = playing(world, sessions, said.who)) one->keepAt = Clock::time_point{};
     }
+    // A rebirth (sim/rebirth.h): written at once, as a trade is -- 10M Zen and 399 levels gone
+    // must not come back after a crash -- and told on Global to everyone online.
+    for (const sim::Happening& said : realm.happenings()) {
+        if (said.what != sim::What::Reborn) continue;
+        if (Session* one = playing(world, sessions, said.who)) {
+            one->keepAt = Clock::time_point{};
+            core::logf("%s: reborn, rebirth %d", one->who.c_str(), int(said.a));
+            announceRebirth(one->name, int(said.a), sessions);
+        }
+    }
     // The market's commands answered: a listing up, a purchase paid (broker.h).
     brokerHeard(world, t.commands, realm.happenings(), sessions);
     // Blood Castle's run over and its rest out: its player to the castle's town. The run is the

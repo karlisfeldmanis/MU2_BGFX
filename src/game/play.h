@@ -486,6 +486,10 @@ public:
         return send({.kind = sim::Command::Kind::JewelCombine, .a = a, .b = b, .c = c});
     }
     void closeJeweler() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Jeweler)}); }
+    // Rebirth (sim/rebirth.h): the rite asked at Lugard's, and his window shut. The rite itself
+    // starts on the realm's Reborn (startRite), for whoever was reborn.
+    uint32_t rebirth() { return send({.kind = sim::Command::Kind::Rebirth}); }
+    void closeRebirth() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Rebirth)}); }
     void jewelHeard(sim::Command::Kind kind, bool ok, int32_t value);
     void restoreMachine(const sim::Machine& saved) { if (here("the machine")) local_.restoreMachine(saved); }
     // A trade with another player (sim/realm_deal.cpp), as the realm keeps it: ask him by his
@@ -954,13 +958,13 @@ public:
         if (ground_) warp_.gather(effects, *ground_);
     }
     // The Rebirth rite (fx/rite.h), opened by the caller for the same reason. startRite() holds
-    // the hero on his knee where he stands and starts the rite and its sound: the show alone,
-    // no reset -- the bench's `--rite F` until the realm's rite command is built.
+    // `body` (0 for the hero) on his knee where he stands and starts the rite and its sound: on the
+    // realm's Reborn, `count` his rebirths now, or the bench's `--rite F`, the show alone.
     Rite& rite() { return rite_; }
     void gatherRite(gfx::Effects& effects, const float eye[3]) const {
         if (ground_) rite_.gather(effects, *ground_, eye);
     }
-    void startRite();
+    void startRite(uint32_t body = 0, int count = 1);
     // The Rebirth message owed as he rises off his knee (Rite::kStands): the reset count, and
     // `rite_reborn` played as it is taken, so the message (game/ui/reborn.h) and its sound start
     // on the one frame. The bench's rite is the first rebirth.
@@ -1755,6 +1759,8 @@ private:
     float riteYaw_ = 0.0f;   // the way he kneels: to the nearest townsperson, Lugard (startRite)
     bool riteFaces_ = false;
     int rebornOwed_ = 0;     // a Rebirth message to show, its count; 0 for none (takeReborn)
+    uint32_t riteBody_ = 0;  // whose rite it is: the kneel and the facing are his
+    int riteCount_ = 1;      // and his rebirths, for the message when it is the hero's
     bool warpOwed_ = false;
     bool homeOwed_ = false;
     int portalFrom_[2] = {-1, -1};  // takePortalFrom's tile, -1 for none

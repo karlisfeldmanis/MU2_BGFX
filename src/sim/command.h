@@ -118,14 +118,17 @@ struct Command {
         TalentTake,
         TalentGive,
         TalentReset,
+        // **Rebirth** (sim/rebirth.h; Realm::rebirth), at Lugard's: answered with how many
+        // rebirths he has made now, or -1 refused.
+        Rebirth,
     };
     // The last kind there is: what a wire reads past it is None (net::takeCommand). Moved with
     // every kind added at the end.
-    static constexpr Kind kLastKind = Kind::TalentReset;
+    static constexpr Kind kLastKind = Kind::Rebirth;
     // Close's a.
     // Trade is the merchant's counter, as the realm has always called it; Deal is a trade between
     // two players, which closing cancels for both.
-    enum class Window : uint8_t { Trade, Vault, Machine, Quest, Gate, Angel, Deal, Broker, Jeweler };
+    enum class Window : uint8_t { Trade, Vault, Machine, Quest, Gate, Angel, Deal, Broker, Jeweler, Rebirth };
     Kind kind = Kind::None;
     // Who asks: a player's body id. 0 is the one hero this realm has until phase 2.
     uint32_t player = 0;

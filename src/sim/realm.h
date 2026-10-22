@@ -158,6 +158,9 @@ enum class What : uint8_t {
                  // (Realm::throwSkill): refused, nothing paid. `whom` that player. For him alone.
     Leeched,   // life back off a blow he landed: Bloodwell's share and the Leech's life per hit
                // together (realm_fight.cpp). a: what came back. Shown "+N" over him.
+    Reborn,    // a rebirth (sim/rebirth.h, Realm::rebirth): a: how many he has made now, b: the
+               // worn pieces it put in the bag. `who` is the player; said to everyone, as the
+               // rite is seen and the server tells Global.
 };
 
 // What a trade between two players did (What::Deal). MU's trade packets 0x36-0x3D in one.
@@ -511,6 +514,9 @@ struct Body {
     // His talents, a rank a node of his class's tree (sim/talents.h). The points to spend on them
     // are not kept: they are his level's (sim::talentPoints) less what these hold.
     TalentRanks talents{};
+    // How many times he has been reborn (sim/rebirth.h). His talent points count each life's
+    // levels with it (sim::talentPoints).
+    int32_t rebirths = 0;
     // What they come to for what he holds, summed at each rearm (sim::talentShares).
     TalentShares talentShare;
     // The talents' timed states (sim::Special), each until its tick, 0 for none; none is ever
@@ -775,6 +781,7 @@ struct HeroRecord {
     int32_t pointsInHand = 0;
     HeroPoints points;
     TalentRanks talents{};  // checked on restore by sim::talentsValid, dropped whole when wrong
+    int32_t rebirths = 0;   // sim/rebirth.h
     int32_t health = 0, mana = 0;
     int64_t money = 0;
     // What he has learned, by the skill table's own index. Saved because learning is permanent
@@ -1234,6 +1241,17 @@ public:
     // refusal() saying why.
     int jeweling() const { return me().jeweling; }
     void closeJeweler() { me().jeweling = -1; }
+
+    // ---- Rebirth (sim/rebirth.h) ---------------------------------------------------------------
+    // Lugard's window, opened by a Talk and shut by any order, as the Jeweler's is: his folk
+    // index, or -1. rebirth() is the rite asked there: answered with how many rebirths he has made
+    // now, or -1 refused, with refusal() saying why.
+    int rebirthing() const { return me().rebirthing; }
+    void closeRebirth() { me().rebirthing = -1; }
+    int rebirth();
+    // How many worn pieces a rebirth would put in the bag, or -1 when the bag has no room for
+    // them: the window's question, nothing changed.
+    int rebirthStrips() const;
     int recut(int slot, int line);
     int salvage(int slot);
     int combine(int first, int second, int third);
@@ -2482,6 +2500,7 @@ private:
         int banking = -1;
         int brokering = -1;  // see brokering()
         int jeweling = -1;   // see jeweling()
+        int rebirthing = -1; // see rebirthing()
         Vault vault;
         bool jeweled = false;
         int mixing = -1;

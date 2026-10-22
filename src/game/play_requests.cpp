@@ -785,6 +785,12 @@ void Play::answered(const sim::Happening& said) {
                        asked.a == 0 ? "strength" : asked.a == 1 ? "agility" : asked.a == 2 ? "vitality" : "energy",
                        ok ? "spent" : "refused, too few in hand");
             break;
+        case Kind::Rebirth:
+            core::logf("window: rebirth %s", ok ? ("done, rebirth " + std::to_string(said.b)).c_str()
+                                                : ("refused, " + realm_.refusal()).c_str());
+            // What he could no longer wear went to the bag.
+            if (ok) redress();
+            break;
         case Kind::ResetPoints:
             core::logf("window: reset points %s", said.b == 1    ? "done"
                                                   : said.b == -2 ? "refused, no room in the bag for his gear"

@@ -202,6 +202,7 @@ void putKept(Out& o, const sim::Kept& k) {
     for (const auto& column : r.talents) {
         for (const uint8_t rank : column) o.u8(rank);
     }
+    o.i32(r.rebirths);
 }
 
 sim::Kept takeKept(In& in, int layout = kKeptLayout) {
@@ -275,6 +276,7 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
             for (uint8_t& rank : column) rank = in.u8();
         }
     }
+    if (layout >= 13) r.rebirths = in.i32();
     return k;
 }
 

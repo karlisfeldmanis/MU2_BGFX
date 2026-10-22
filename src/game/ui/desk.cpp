@@ -123,6 +123,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     deal_.open(interface_, &arts_);
     mixer_.open(interface_, &arts_);
     jeweler_.open(interface_, &arts_);
+    rebirthWindow_.open(interface_, &arts_);
     amount_.open(interface_, &arts_);
     report_.open(interface_);
     whatsNew_.open(interface_, &arts_);
@@ -268,7 +269,7 @@ bool Desk::overWindows(float x, float y) const {
            (banking_ && (chest_.covers(x, y) || chest_.dragging())) ||
            (brokering_ && broker_.covers(x, y)) ||
            (mixing_ && (mixer_.covers(x, y) || mixer_.dragging())) ||
-           (jeweling_ && jeweler_.covers(x, y)) ||
+           (jeweling_ && jeweler_.covers(x, y)) || (rebirthing_ && rebirthWindow_.covers(x, y)) ||
            (dealing_ && (deal_.covers(x, y) || deal_.dragging()));
 }
 
@@ -397,6 +398,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 break;
             case Then::Jewel:
                 jeweler_.answered(one.ok(), one.value, play.realm().refusal());
+                if (!one.ok()) refused();
+                break;
+            case Then::Rebirth:
+                rebirthWindow_.answered(one.ok(), play.realm().refusal());
                 if (!one.ok()) refused();
                 break;
             case Then::ZenBox:
@@ -1442,6 +1447,27 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
     } else {
         jeweler_.cancel();
+    }
+
+    // Lugard, the Rebirth (game/ui/rebirth_window.h), as the quest dialog is: the left column,
+    // walking away shuts him in the realm, and a yes shuts him there too as the rite begins.
+    const bool rebirthing = play.isOpen() && play.realm().rebirthing() >= 0;
+    if (rebirthing && !rebirthing_) {
+        click();
+        if (play.isOpen()) play.ui(Play::Ui::Opened);
+    }
+    rebirthing_ = rebirthing;
+    if (rebirthing_) {
+        RebirthRequests asked;
+        rebirthWindow_.update(float(window.width()), float(window.height()), play.realm(), pointer, &asked);
+        if (asked.click) click();
+        if (asked.reborn) expect(play.rebirth(), Then::Rebirth);
+        if (asked.close) {
+            play.closeRebirth();
+            click();
+        }
+    } else {
+        rebirthWindow_.cancel();
     }
 
     // A trade with another player, as the vault is: it opens the bag beside it and closes the
@@ -2868,6 +2894,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     const bool machineOnTop = mixing_ && mixer_.dragging();
     if (mixing_ && !machineOnTop) interface_.add(mixer_.canvas());
     if (jeweling_) interface_.add(jeweler_.canvas());
+    if (rebirthing_) interface_.add(rebirthWindow_.canvas());
     const bool dealOnTop = dealing_ && deal_.dragging();
     if (dealing_ && !dealOnTop) interface_.add(deal_.canvas());
     if (inventoryOpen_) interface_.add(bag_.canvas());

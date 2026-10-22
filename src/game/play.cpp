@@ -810,6 +810,10 @@ void Play::update(double seconds) {
                                            hero->crown[2]};
                     showing_.gain(Mark::Life, happening.a, feet);
                 }
+            } else if (happening.what == sim::What::Reborn) {
+                // A rebirth (sim/rebirth.h): the rite where he stands, his or another's; the
+                // message comes as he rises, when it is his (takeReborn).
+                startRite(happening.who, happening.a);
             } else if (happening.what == sim::What::Levelled && happening.who == heroId) {
                 // Off a kill, one rise however many levels it carried: the realm has added them
                 // all, and only a quest's are shown one by one (the user, 2026-10-01). A rise
@@ -3086,11 +3090,14 @@ void Play::update(double seconds) {
     // down to kRiteLow, held there, then let run to its end from Rite::kStands: he rises.
     const float riteWas = rite_.age();
     rite_.update(float(seconds));
-    if (rite_.live() && riteWas < Rite::kStands && rite_.age() >= Rite::kStands) rebornOwed_ = 1;
+    if (rite_.live() && riteWas < Rite::kStands && rite_.age() >= Rite::kStands &&
+        riteBody_ == realm_.hero().id) {
+        rebornOwed_ = riteCount_;
+    }
     if (rite_.live()) {
         constexpr int kRespectAction = 217;
         constexpr float kRiteLow = 1.0f;  // seconds into the clip: the knee down, the head bowed
-        Drawn* hero = drawnOf(realm_.hero().id);
+        Drawn* hero = drawnOf(riteBody_);
         const FigureBody* look = hero ? hero->figure.body() : nullptr;
         const int kneel = look && look->library ? look->library->find(kRespectAction) : -1;
         if (hero && kneel >= 0) {
@@ -3203,9 +3210,12 @@ uint32_t Play::wardenBody(int folk) const {
 // breed another map adds falls through to the plain ones rather than to silence. Which of a
 // breed's lines is said is off the monster's id and the tick: steady for a replayed seed, and
 // not the same line twice in a row at one gate.
-void Play::startRite() {
-    const Drawn* hero = drawnOf(realm_.hero().id);
+void Play::startRite(uint32_t body, int count) {
+    if (body == 0) body = realm_.hero().id;
+    const Drawn* hero = drawnOf(body);
     if (!hero || !hero->placed || !ground_) return;
+    riteBody_ = body;
+    riteCount_ = std::max(1, count);
     const float feet[3] = {hero->crown[0], ground_->heightAt(hero->crown[0], hero->crown[2]), hero->crown[2]};
     // He kneels to the keeper: the nearest townsperson within eight tiles, Lugard on his rite
     // tile. None that near and he keeps his own facing.
@@ -3223,7 +3233,11 @@ void Play::startRite() {
         }
     }
     rite_.begin(feet);
-    if (heard_.rite >= 0) sound_.play(heard_.rite);
+    // His own is heard whole, unplaced; another's where he kneels.
+    if (heard_.rite >= 0) {
+        if (body == realm_.hero().id) sound_.play(heard_.rite);
+        else emit(heard_.rite, feet[0], feet[2], body);
+    }
 }
 
 void Play::speak(const sim::Happening& happening) {

@@ -163,7 +163,10 @@ namespace mu::net {
 //     its server reads as None.
 // 46: a Kept carries 28 quests, Tarkan's in two -- Kantur's Legion, then Kantur's Captain the
 //     28th (layout 12, 2026-10-21), so a client on 45 is refused instead of reading one short.
-constexpr uint32_t kVersion = 46;
+// 47: Rebirth (sim/rebirth.h): Command Rebirth and Window Rebirth at Lugard's, What::Reborn, and
+//     the count in a character's bytes (kKeptLayout 13) (2026-10-22), so a client on 46 is
+//     refused instead of sending a kind its server reads as None.
+constexpr uint32_t kVersion = 47;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";
@@ -175,8 +178,9 @@ constexpr const char* kDefaultHost = "mu-classic.com";
 // talents' ranks, seven columns of nine bytes (2026-10-21), where 3-9 carry none; 11 the same
 // bytes, but the Angel's, the Imp's and Uniria's durability is a stack's count, where 3-10 kept
 // their Life (2026-10-21, sim::timedPet; the store's renumber makes each old one one); 12 28
-// quests, the Keeper's second, Kantur's Captain (2026-10-21), where 8-11 carry 27.
-constexpr int kKeptLayout = 12;
+// quests, the Keeper's second, Kantur's Captain (2026-10-21), where 8-11 carry 27; 13 his rebirths
+// (sim/rebirth.h, 2026-10-22), where 3-12 carry none.
+constexpr int kKeptLayout = 13;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame a client accepts: a Welcome with its snapshot, about half a MB for a town of

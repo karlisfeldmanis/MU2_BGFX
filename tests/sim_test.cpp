@@ -5444,7 +5444,13 @@ void testTalentCommands(const content::Tables& tables) {
         size_t at = 0;
         while (at < bytes.size() && bytes[at] == markedBytes[at]) ++at;
         constexpr size_t kQuestBytes = 1 + 4 * sim::kQuestSteps + 8 + 4;
-        std::vector<uint8_t> eleven = bytes;
+        // A layout-12 row has no rebirths (sim/rebirth.h, layout 13): its last four bytes.
+        std::vector<uint8_t> twelve(bytes.begin(), bytes.end() - 4);
+        sim::Kept unborn;
+        check(net::keptFrom(twelve, unborn, 12) && unborn.hero.rebirths == 0 && unborn.hero.talents == saved.talents,
+              "a layout-12 row reads, never reborn");
+        check(!net::keptFrom(twelve, unborn, 13), "and is not a layout 13");
+        std::vector<uint8_t> eleven = twelve;
         eleven.erase(eleven.begin() + std::ptrdiff_t(at), eleven.begin() + std::ptrdiff_t(at + kQuestBytes));
         sim::Kept older;
         check(net::keptFrom(eleven, older, 11) &&
@@ -15245,6 +15251,8 @@ void testBroker(const content::Tables& tables, void (*check)(bool, const char*),
                 void (*checkEqual)(long long, long long, const char*));  // tests/sim_test_broker.cpp
 void testJeweler(void (*check)(bool, const char*),
                  void (*checkEqual)(long long, long long, const char*));  // tests/sim_test_jeweler.cpp
+void testRebirth(void (*check)(bool, const char*),
+                 void (*checkEqual)(long long, long long, const char*));  // tests/sim_test_rebirth.cpp
 void testElites(void (*check)(bool, const char*),
                 void (*checkEqual)(long long, long long, const char*));  // tests/sim_test_elite.cpp
 
@@ -15374,6 +15382,7 @@ int main() {
     testDeal(tables);
     testBroker(tables, check, checkEqual);  // tests/sim_test_broker.cpp
     testJeweler(check, checkEqual);         // tests/sim_test_jeweler.cpp
+    testRebirth(check, checkEqual);         // tests/sim_test_rebirth.cpp
     testElites(check, checkEqual);          // tests/sim_test_elite.cpp
     testThreat(tables);
     testElfAid(tables);

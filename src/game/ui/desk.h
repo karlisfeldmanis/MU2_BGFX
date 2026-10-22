@@ -15,6 +15,7 @@
 #include "game/ui/amount.h"
 #include "game/ui/arrival.h"
 #include "game/ui/reborn.h"
+#include "game/ui/rebirth_window.h"
 #include "game/ui/bag.h"
 #include "game/ui/beacon.h"
 #include "game/ui/card.h"
@@ -353,7 +354,7 @@ private:
     // Bound is TookOrRefused for a bound thing, whose no the tally's lane explains (Tally::bound).
     enum class Then : uint8_t {
         TookOrRefused, Refused, Spark, ZenBox, Strike, CloseQuest, Travel, Click, CloseAngel, Quiet,
-        Bound, Reset, Jewel,
+        Bound, Reset, Jewel, Rebirth,
         // A talent point, `key` its column x 16 + node, plus 1000 for a take: an unlock's cut on
         // a yes that opened something, else the click; the error on a no.
         Talent
@@ -383,6 +384,8 @@ private:
     bool bagForMachine_ = false;
     // Moss the Gambler's window (game/ui/jeweler.h), opened as the machine is.
     Jeweler jeweler_;
+    RebirthWindow rebirthWindow_;
+    bool rebirthing_ = false;  // Lugard's window up (game/ui/rebirth_window.h)
     bool jeweling_ = false;
     bool bagForJeweler_ = false;
     // The number box the vault's coin buttons open. Modal: see Desk::update.

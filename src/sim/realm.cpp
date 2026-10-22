@@ -1,4 +1,6 @@
 #include "sim/realm.h"
+
+#include "sim/rebirth.h"
 #include "sim/maps.h"
 
 #include "sim/swings.h"
@@ -552,6 +554,7 @@ HeroRecord Realm::record() const {
     out.pointsInHand = hero.pointsInHand;
     out.points = hero.points;
     out.talents = hero.talents;
+    out.rebirths = hero.rebirths;
     out.health = hero.health;
     out.mana = hero.mana;
     out.money = me().money;
@@ -593,9 +596,11 @@ void Realm::restore(const HeroRecord& saved) {
     hero.experience = saved.experience;
     hero.pointsInHand = std::max(0, saved.pointsInHand);
     hero.points = saved.points;
+    hero.rebirths = std::max(0, saved.rebirths);
     // His talents as saved, if they are a tree his class and level could have spent; an edited or
     // stale save loses them whole and keeps its points (sim::talentsValid).
-    hero.talents = talentsValid(hero.kin, saved.talents, talentPoints(hero.kin, hero.level, 0)) ? saved.talents
+    hero.talents = talentsValid(hero.kin, saved.talents, talentPoints(hero.kin, hero.level, hero.rebirths))
+                       ? saved.talents
                                                                                                 : TalentRanks{};
     // ORed rather than assigned, and only while `raise` still hands a knight his first skill: a
     // save written before the skills existed carries a nought mask, and assigning it would take
@@ -795,11 +800,71 @@ Realm::Reset Realm::resetPoints() {
     return Reset::Done;
 }
 
+// ---- Rebirth (sim/rebirth.h) ----------------------------------------------------------
+
+int Realm::rebirthStrips() const {
+    if (!tables_) return -1;
+    const Body& hero = mine();
+    Satchel trial = me().bag;
+    Wearer who = wearer();
+    who.level = 1;
+    int moved = 0;
+    if (!stripped(*tables_, who, hero.points, rulesOf(tables_->map).flight, &trial, &moved)) return -1;
+    return moved;
+}
+
+int Realm::rebirth() {
+    if (me().rebirthing < 0 || !tables_) {
+        refusal_ = "not at Lugard";
+        return -1;
+    }
+    Body& hero = mine();
+    if (!hero.alive()) {
+        refusal_ = "not while dead";
+        return -1;
+    }
+    if (hero.level < kRebirthLevel) {
+        refusal_ = "not level " + std::to_string(kRebirthLevel) + " yet";
+        return -1;
+    }
+    const int64_t zen = rebirthZen(hero.rebirths + 1);
+    if (me().money < zen) {
+        refusal_ = "not the Zen for it";
+        return -1;
+    }
+    // What he wears and could not wear at level 1, into the bag; tried on a copy, so a refusal
+    // changes nothing.
+    Satchel trial = me().bag;
+    Wearer who = wearer();
+    who.level = 1;
+    int moved = 0;
+    if (!stripped(*tables_, who, hero.points, rulesOf(tables_->map).flight, &trial, &moved)) {
+        refusal_ = "no room in the bag for the gear he could no longer wear";
+        return -1;
+    }
+    me().bag = trial;
+    me().money -= zen;
+    // The body back to its first day; the soul keeps the rest: his stats and points in hand, his
+    // skills and his talents (whose points now count this life's levels too).
+    hero.level = 1;
+    hero.experience = 0;
+    ++hero.rebirths;
+    // His window shut, and the Talk that keeps it open ended: a Talk is served every tick he
+    // stands within reach, and would open it again over the rite.
+    me().rebirthing = -1;
+    if (me().order.kind == Request::Kind::Talk) me().order = Request{};
+    rearm(hero);
+    hero.health = hero.maxHealth;
+    hero.mana = hero.maxMana;
+    say(What::Reborn, hero, hero.rebirths, moved);
+    return hero.rebirths;
+}
+
 // ---- talents (sim/talents.h) ----------------------------------------------------------
 
 int Realm::talentsInHand() const {
     const Body& hero = mine();
-    return std::max(0, talentPoints(hero.kin, hero.level, 0) - talentsSpent(hero.talents));
+    return std::max(0, talentPoints(hero.kin, hero.level, hero.rebirths) - talentsSpent(hero.talents));
 }
 
 int Realm::talentTake(int column, int node, int count) {
@@ -914,6 +979,7 @@ void Realm::accept() {
         me().banking = -1;
         me().brokering = -1;
         me().jeweling = -1;
+        me().rebirthing = -1;
         me().questing = -1;
         closeMachine();
         me().gating = -1;
@@ -1814,6 +1880,10 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::Leeched:
             std::snprintf(line, sizeof(line), "%6u %s leeched %d life", happening.tick, who,
                           happening.a);
+            break;
+        case What::Reborn:
+            std::snprintf(line, sizeof(line), "%6u %s reborn, rebirth %d, %d piece(s) to the bag",
+                          happening.tick, who, happening.a, happening.b);
             break;
         case What::Cracked:
             if (happening.a < 0) {

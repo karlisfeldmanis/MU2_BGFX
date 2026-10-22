@@ -1475,7 +1475,7 @@ void Play::follow(float seconds) {
         // On his knee in the rite, turned to the keeper (Play::startRite): turned in over a third
         // of a second as he goes down, and given back to his own facing over half a second once
         // he has stood -- never a snap either way.
-        if (riteFaces_ && rite_.live() && one.id == realm_.hero().id) {
+        if (riteFaces_ && rite_.live() && one.id == riteBody_) {
             const float age = rite_.age();
             const auto smooth01 = [](float k) {
                 k = std::clamp(k, 0.0f, 1.0f);

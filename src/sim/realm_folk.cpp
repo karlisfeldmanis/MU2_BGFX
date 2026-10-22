@@ -20,6 +20,7 @@
 #include "sim/broker.h"
 #include "sim/event.h"
 #include "sim/jeweler.h"
+#include "sim/rebirth.h"
 #include "sim/realm_tuning.h"
 
 namespace mu::sim {
@@ -267,7 +268,8 @@ void Realm::stroll(Body& walker) {
         for (const Player& one : heroes_) {
             busy = busy || (partner >= 0 &&
                             (one.trading == partner || one.banking == partner ||
-                             one.mixing == partner || one.jeweling == partner || one.gating == partner ||
+                             one.mixing == partner || one.jeweling == partner || one.rebirthing == partner ||
+                             one.gating == partner ||
                              one.questing == partner ||
                              (one.order.kind == Request::Kind::Talk && int(one.order.target) == partner)));
         }
@@ -317,6 +319,11 @@ void Realm::talk(Body& hero) {
     } else if (one.number == kJeweler) {
         me().jeweling = int(me().order.target);
         say(What::Served, hero, me().jeweling, one.number);
+    } else if (one.number == kLugard) {
+        // The rite's keeper (sim/rebirth.h): his window opens whatever the hero's level, and says
+        // what the rite asks.
+        me().rebirthing = int(me().order.target);
+        say(What::Served, hero, me().rebirthing, one.number);
     } else if (const int quest = questHere(one.number);
                quest >= 0 && (!questLocked(quest) || questListed(one.number))) {
         // A quest giver: his dialog opens, whatever it has to say -- the offer, the quest under

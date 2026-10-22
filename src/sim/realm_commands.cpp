@@ -213,6 +213,7 @@ void Realm::applyCommands() {
             case Kind::TalentGive: answer = talentGive(one.a, one.b, one.c); break;
             case Kind::TalentReset: answer = talentReset() ? 1 : -1; break;
             case Kind::JewelRecut: answer = recut(one.a, one.b); break;
+            case Kind::Rebirth: answer = rebirth(); break;
             case Kind::JewelSalvage: answer = salvage(one.a); break;
             case Kind::JewelCombine: answer = combine(one.a, one.b, one.c); break;
             case Kind::AcceptQuest: answer = acceptQuest(one.a) ? 1 : -1; break;
@@ -246,6 +247,7 @@ void Realm::applyCommands() {
                     case Command::Window::Deal: closeDeal(); break;
                     case Command::Window::Broker: closeBroker(); break;
                     case Command::Window::Jeweler: closeJeweler(); break;
+                    case Command::Window::Rebirth: closeRebirth(); break;
                 }
                 answer = 1;
                 break;
