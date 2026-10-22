@@ -898,6 +898,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                                              scriptMapHeld_);
     if (mapWanted != minimap_.full()) {
         minimap_.setFull(mapWanted);
+        play.hideHero(mapWanted);
         core::logf("window: map %s", mapWanted ? "up" : "down");
         // The journal's page turn, on opening only (the user, 2026-10-01: 'plat map sound only
         // when open TAB, not close').

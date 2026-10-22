@@ -1953,6 +1953,7 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
     const auto fadeOf = [&](const Drawn& one) -> float {
         // A Teleport: out over MU's ten frames, gone until he is put down, and back in.
         const bool himself = heroDrawn() && &one == &drawn_[heroAt()];
+        if (himself && heroHidden_) return 0.0f;
         if (himself && blinkOut_ >= 0.0f) {
             const float t = std::clamp(blinkOut_ / kBlinkFadeSeconds, 0.0f, 1.0f);
             return 1.0f - t * t * (3.0f - 2.0f * t);
@@ -2167,7 +2168,7 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
     // The Golden Invasion's dragons in the sky.
     sky_.gather(renderer, scratch_.data(), out, casters);
     // His pet, after him, so the Imp takes his clavicle as this frame posed it.
-    if (Drawn* hero = drawnOf(realm_.hero().id); hero && hero->visible) {
+    if (Drawn* hero = drawnOf(realm_.hero().id); hero && hero->visible && !heroHidden_) {
         pets_.gather(renderer, hero->figure, scratch_, out, casters);
         wing_.gather(renderer, hero->figure, scratch_, out, casters);
     }
