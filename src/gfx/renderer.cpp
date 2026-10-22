@@ -278,6 +278,8 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             // RENDER_CHROME4's clock instead: MU's WorldTime * 0.001, in seconds, wrapped where
             // cos(t) and sin(2t) both come round (fs_glow, shine.sh's chromePassUv).
             if (material.chromePass == 3) scrollOffset = std::fmod(elapsed_, 6.2831853f * 1000.0f);
+            // RENDER_CHROME7's drift, WorldTime * 0.00006: 0.06 a second, wrapped as a slide.
+            if (material.chromePass == 5) scrollOffset = std::fmod(elapsed_ * 0.06f, 1.0f);
             // MU's water frames: the frame, 0 to 31, rather than a slide (content::Material).
             if (material.waterFrames) {
                 scrollOffset = std::floor(std::fmod(elapsed_ * material.scrollPerSecond, 32.0f));

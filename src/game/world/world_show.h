@@ -93,6 +93,9 @@ struct WorldShow {
     bool castleSparks = false; // Blood Castle's (castle_sparks.h)
     bool smokeVents = false;   // Kanturu's: its smoke anchors puff (lamps.h, Fire::vent)
     bool crystalSparks = false;  // Kanturu's (crystal_sparks.h)
+    // The model whose glow takes MU's RENDER_CHROME7 pass over it (crystal_sparks.h,
+    // lendCrystalChrome): Kanturu's Object96. Empty for none.
+    std::string crystalChrome;
     bool ruinEffects = false;    // Kanturu's tank arcs and plant spit (ruin_effects.h)
     bool drawbridge = false;   // Blood Castle's (drawbridge.h)
     bool beacon = false;       // Devias's Lost Tower beacon, its type 100 (ornaments.h)

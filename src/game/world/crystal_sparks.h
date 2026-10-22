@@ -9,8 +9,8 @@
 // positions in the model's own frame, and each placement's are laid here once at open, turned
 // AND scaled by the placement (MU's BoneTransform carries BodyScale; a fire's offset does not).
 //
-// Not carried: the arm's second pass, mesh 0 again RENDER_CHROME7 | RENDER_DARK with
-// BITMAP_CHROME. Ours: only points within kReach of the camera's point are drawn.
+// The arm's second pass, mesh 0 again RENDER_CHROME7 | RENDER_DARK with BITMAP_CHROME, is
+// lendCrystalChrome below. Ours: only points within kReach of the camera's point are drawn.
 // Nothing here reaches the sim.
 #pragma once
 
@@ -25,6 +25,19 @@
 #include "gfx/effects.h"
 
 namespace mu::game {
+
+class Town;
+
+// MU's second pass over the crystal (GM_Kanturu_1st.cpp:368-370): mesh 0 again, RENDER_CHROME7
+// with BITMAP_CHROME (Effect/Chrome01). RenderMesh tests CHROME7 before DARK, so it is added,
+// GL_ONE, GL_ONE, at the same BodyLight as the body (ZzzBMD.cpp:1409-1457), its coordinates
+// u = v = (n.z + n.x) * 0.8 + WorldTime * 0.00006 (:1667-1671): a chrome slid over the facets
+// by their normals, drifting 0.06 a second. Each glow part of the world show's crystal_chrome
+// model takes a second part over the same triangles, a copy of its material with
+// content::Material::chromePass 5 and Chrome01 for its sheet (fs_glow, shine.sh's
+// chromePassUv). Called once the town's meshes are built.
+void lendCrystalChrome(Town& town, const std::string& assetDir, const std::string& world,
+                       content::Textures& textures);
 
 class CrystalSparks {
 public:

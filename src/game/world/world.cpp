@@ -133,6 +133,7 @@ bool World::open(const std::string& assetDir, const std::string& name,
     voidClouds_.open(assetDir, name, ground_, textures);
     castleSparks_.open(assetDir, name, town_.cooked(), textures);
     crystalSparks_.open(assetDir, name, town_.cooked(), textures);
+    lendCrystalChrome(town_, assetDir, name, textures);
     ruinEffects_.open(assetDir, name, town_.cooked(), textures);
     desertVents_.open(assetDir, name, town_.cooked(), textures);
     waterfallSpray_.open(assetDir, name, town_.cooked(), textures);

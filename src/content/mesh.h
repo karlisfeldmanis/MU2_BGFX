@@ -134,7 +134,8 @@ struct Material {
     // blue veins. Its albedo is the tinted chrome image and its emissive the mask of where it
     // shows, in the mesh's own UVs. 0 for every other material; 1 the chrome at its own UVs
     // (sliding, RENDER_TEXTURE with BITMAP_CHROME bound), 2 at RENDER_CHROME's off the normal,
-    // 3 at RENDER_CHROME4's (ZzzBMD.cpp:1608-1660). fs_glow.
+    // 3 at RENDER_CHROME4's (ZzzBMD.cpp:1608-1660), 5 at RENDER_CHROME7's (Kanturu's crystals,
+    // game/world/crystal_sparks.h, set at load, not cooked). fs_glow.
     uint8_t chromePass = 0;
     // A glow sliding both ways at two rates, MU's BlendMeshTexCoordU and V apart: the main slide
     // along U (scrollPerSecond) and this along V -- the Elemental Mace's veins, the Dragon Spear's
@@ -204,6 +205,16 @@ public:
 
     const std::vector<Part>& parts() const { return parts_; }
     const std::vector<Material>& materials() const { return materials_; }
+    // One more part over an existing part's triangles, in its own material: a second pass of
+    // the same mesh, as MU's RenderMesh of one mesh twice (Kanturu's crystals' chrome,
+    // game/world/crystal_sparks.h). Before the first draw: a material's address is its key.
+    void addPart(size_t over, Material material) {
+        if (over >= parts_.size()) return;
+        Part part = parts_[over];
+        part.material = uint32_t(materials_.size());
+        materials_.push_back(std::move(material));
+        parts_.push_back(part);
+    }
     bgfx::VertexBufferHandle vertexBuffer() const { return vbh_; }
     bgfx::IndexBufferHandle indexBuffer() const { return ibh_; }
     const Bounds& bounds() const { return bounds_; }

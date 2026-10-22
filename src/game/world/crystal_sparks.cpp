@@ -3,6 +3,7 @@
 #include "content/placement.h"
 #include "content/showing.h"
 #include "core/log.h"
+#include "game/world/town.h"
 #include "game/world/world_show.h"
 
 namespace mu::game {
@@ -14,6 +15,49 @@ constexpr float kSheetMetres = 0.32f;
 constexpr float kReach = 30.0f;
 
 }  // namespace
+
+void lendCrystalChrome(Town& town, const std::string& assetDir, const std::string& world,
+                       content::Textures& textures) {
+    const std::string& model = worldShow(world).crystalChrome;
+    if (model.empty() || !town.isOpen()) return;
+    content::Showing table;
+    std::string error;
+    const content::EffectSheet* sheet = nullptr;
+    if (content::loadShowing(assetDir + "/cooked/showing/showing.mus", table, error)) {
+        sheet = table.effect("chrome");
+    }
+    if (!sheet) {
+        core::logError("crystal chrome: the showing has no chrome sheet");
+        return;
+    }
+    const bgfx::TextureHandle chrome =
+        textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
+    const content::CookedTown& cooked = town.cooked();
+    size_t lent = 0;
+    for (size_t i = 0; i < cooked.models.size(); ++i) {
+        if (cooked.models[i].name != model) continue;
+        content::Mesh* mesh = town.meshAt(i);
+        if (!mesh) continue;
+        const size_t parts = mesh->parts().size();
+        for (size_t p = 0; p < parts; ++p) {
+            content::Material pass = mesh->materials()[mesh->parts()[p].material];
+            if (!pass.glow) continue;
+            // The body's glow at its own light, its sheet swapped for the chrome and every
+            // slide of its own taken off: the chrome moves by its normals and the clock.
+            pass.albedo = chrome;
+            pass.emissive = BGFX_INVALID_HANDLE;
+            pass.chromePass = 5;
+            pass.scrollPerSecond = 0.0f;
+            pass.scrollVPerSecond = 0.0f;
+            pass.scrollAlongU = pass.scrollAlongUV = pass.maskHeld = pass.waterFrames = false;
+            pass.jitter = 0.0f;
+            pass.glowShadow = 0.0f;
+            mesh->addPart(p, pass);
+            ++lent;
+        }
+    }
+    core::logf("crystal chrome: %zu part(s) of %s take Chrome01", lent, model.c_str());
+}
 
 void CrystalSparks::open(const std::string& assetDir, const std::string& world,
                          const content::CookedTown& town, content::Textures& textures) {

@@ -150,6 +150,9 @@ public:
     const content::Mesh* meshAt(size_t model) const {
         return model < meshes_.size() ? &meshes_[model] : nullptr;
     }
+    content::Mesh* meshAt(size_t model) {
+        return model < meshes_.size() ? &meshes_[model] : nullptr;
+    }
 
     // **The sun's casters, kept on the GPU** (2026-10-04, the user: "lets continue to use GPU
     // on processes where we can"). Every placement's instance lives in one buffer, grouped by

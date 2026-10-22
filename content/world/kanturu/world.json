@@ -162,7 +162,11 @@
         "reach": 10
       }
     ],
-    "object_loops_note": "MU plays its wheel, waterfall, electric and plant sounds flat while any glowing wheel (Object47), fall (Object78), blue tank (Object93) or carnivorous plant (Object99) is moved, which is the ones near the camera (GM_Kanturu_1st.cpp:64-117). Ours, marked: each from its nearest one, full to `full` metres and gone at `reach` (Play::hearWorld). First distances, for the user to judge."
+    "object_loops_note": "MU plays its wheel, waterfall, electric and plant sounds flat while any glowing wheel (Object47), fall (Object78), blue tank (Object93) or carnivorous plant (Object99) is moved, which is the ones near the camera (GM_Kanturu_1st.cpp:64-117). Ours, marked: each from its nearest one, full to `full` metres and gone at `reach` (Play::hearWorld). First distances, for the user to judge.",
+    "crystal_chrome": {
+      "model": "Object96",
+      "note": "MU's second pass over the crystals, mesh 0 again RENDER_CHROME7 with BITMAP_CHROME (GM_Kanturu_1st.cpp:368-370): Chrome01 added at the body light, slid by the normals and WorldTime*0.00006 (ZzzBMD.cpp:1409-1457, 1667-1671). game/world/crystal_sparks.h lendCrystalChrome."
+    }
   },
   "rules": {
     "arrive": [
