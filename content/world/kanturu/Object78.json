@@ -1,0 +1,75 @@
+{
+  "item": "Object78",
+  "mu_name": "Object78",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 77,
+  "placements": 52,
+  "profile": "world",
+  "sheets": {
+    "waterfall_R": "kr_waterfall_r.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "waterfall_R": "lamplight"
+  },
+  "material_note": "waterfall_R: falling water, MU's bright sheet: lamplight, drawn added and scrolled.",
+  "why_this_one": "A 5.7 m waterfall strip, 52 of them, 21 falling into the chasm. Batch 5 (the user, 2026-10-22: 'do next'). docs/worlds/kanturu-port.md.",
+  "additive": [
+    "waterfall_R"
+  ],
+  "additive_from": "An _R sheet: MU's TextureScript marks it bright (TextureScript.cpp:16-58), so it is drawn added, as Aida's waterfalls.",
+  "glow": {
+    "waterfall_R": {
+      "scrolls_per_second": 0.2
+    }
+  },
+  "glow_from": "MoveKanturu1stObject, type 77: BlendMeshTexCoordV = -(WorldTime % 10000) * 0.0002, 0.2 sheet a second by the wall clock, wrapping every 10 s (GM_Kanturu_1st.cpp:94-97); positive here, as Aida's: the water runs down.",
+  "effects_note": "The spray at its foot is Object82-84's (hidden emitters, Aida's waterfall_spray kinds 18-20), and its sound kan_ruin_waterfall.wav: both wait for the effects batch.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 14,
+      "area": 83664.3,
+      "along": [
+        -59.7,
+        58.9
+      ],
+      "mu_uv": [
+        0.995,
+        0.0,
+        1.991,
+        1.0
+      ],
+      "bake_uv": [
+        0.995,
+        0.0,
+        1.991,
+        1.0
+      ]
+    },
+    {
+      "island": 1,
+      "material": "lamplight",
+      "triangles": 14,
+      "area": 51760.7,
+      "along": [
+        -36.4,
+        48.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        0.996,
+        1.0
+      ],
+      "bake_uv": [
+        0.0,
+        0.0,
+        0.996,
+        1.0
+      ]
+    }
+  ]
+}
