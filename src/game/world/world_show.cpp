@@ -84,6 +84,7 @@ void readShow(const core::Json& show, WorldShow& out) {
     readString(weather, "kind", &out.weather);
     readFloat(weather, "peak", &out.weatherPeak);
     weather.readInto("jungle", &out.jungle);
+    weather.readInto("thunder", &out.thunder);
     readString(weather, "bed", &out.jungleBed);
 
     readString(show, "leaves", &out.leaves);

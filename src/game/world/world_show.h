@@ -66,6 +66,10 @@ struct WorldShow {
     std::string weather;  // "rain", "snow", "sand", "sky", "square"; empty for none
     float weatherPeak = -1.0f;  // the pool's share at the spell's height; < 0 is the kind's own
     bool jungle = false;        // Noria's jungle bed under its weather
+    // A wet spell's thunder and its flashes (`weather.thunder`); Noria's rain has none (the user,
+    // 2026-10-22: "we remove thunder from noria, because noria has its own lighter lighting rain
+    // with other ambient sound/music"). Lorencia's claps are timed with its rain sound.
+    bool thunder = true;
     std::string jungleBed = "world_jungle";  // the bed's sound: Aida's is world_crickets
 
     // ---- On the land (game/world/world.cpp) ----
