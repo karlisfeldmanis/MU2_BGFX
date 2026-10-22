@@ -927,10 +927,12 @@ void testItems(const content::Tables& tables) {
     // second-class sets and arms, Blood Castle 6's and Tarkan's drops, the raid's boxes, the
     // new orbs and scrolls, and the Magic Gladiator's sword, armour and Storm Crow set; and the
     // second sets and the strongest arms of each line (Great Dragon, Dark Soul, Red Spirit,
-    // Hurricane; Knight Blade, Dark Reign Blade, Staff of Kundun, Arrow Viper Bow). A count
+    // Hurricane; Knight Blade, Dark Reign Blade, Staff of Kundun, Arrow Viper Bow). 342 since
+    // 2026-10-22: the 39 rows after a3d4dc48 -- Kanturu's dormant 380 sets and arms (8a1d6e55)
+    // and the shields, bows, staffs, mace and swords between. A count
     // rather than a list, because what it is guarding is the cook -- a
     // recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 303, "303 item rows cooked");
+    checkEqual(long(tables.items.size()), 342, "342 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
     // And Lumen's, whose Guardian Angel and Imp are ours (the user, 2026-09-30: "put imp and

@@ -157,6 +157,22 @@ VOICES = {
                                "[d][w][sh]amix=inputs=3:normalize=0,"
                                "acompressor=threshold=0.15:ratio=2.5:attack=10:release=200,"
                                "loudnorm=I=-16:TP=-1.5:LRA=11"),
+    # Lugard, the reset keeper in Devias (docs: resets are being designed): "deep knight mystical
+    # voice" (the user, 2026-10-22), B of four auditions, "i choose B". Kokoro-82M's bm_lewis
+    # (Apache 2.0) reading a solemn watch line at 0.8 speed, content/voice/ref/lugard_lewis_knight.wav,
+    # cloned at 0.6 and 0.3, seed 11. The finish: three semitones down, a touch slower (atempo 1.12),
+    # the voice an octave lower at 0.32 under it, chest, a stone hall's tail at 120 to 700 ms; and
+    # pauses held to 0.45 s, not SQUEEZE's 0.3, as the audition was heard. His pages are in
+    # ref/pending_pages.json, not sim/quests.cpp: game/ui/desk.cpp plays them at his Rebirth window.
+    "lugard": dict(ref="lugard_lewis_knight.wav", exaggeration=0.6, cfg_weight=0.3, seed=11,
+                   squeeze=SQUEEZE.replace("stop_duration=0.3", "stop_duration=0.45")
+                                  .replace("stop_silence=0.3", "stop_silence=0.45"),
+                   polish="asetrate=24000*0.84,aresample=24000,atempo=1.12,asplit=2[a][b];"
+                          "[b]asetrate=24000*0.5,aresample=24000,atempo=2.0,lowpass=f=600,volume=0.32[lo];"
+                          "[a][lo]amix=inputs=2:normalize=0,highpass=f=55,bass=g=4:f=110,"
+                          "aecho=0.8:0.6:120|260|450|700:0.24|0.15|0.09|0.05,"
+                          "acompressor=threshold=0.15:ratio=2.5:attack=10:release=200,"
+                          "apad=pad_dur=0.6,loudnorm=I=-16:TP=-1.5:LRA=11"),
 }
 
 # WORLD (pipeline/world_shift.py) needs pyworld, which lives in this other Python, with
@@ -173,7 +189,9 @@ PENDING = REFS / "pending_pages.json"
 # opening word. His voice loses a "cl" on any seed or spelling, so "Clear the rows" became "Cut
 # down the rows", and a lone "Quiet." is dropped, so it is "Quiet, quiet." (2026-10-16).
 RETAKES = {("sevina_1", "handin"): 23, ("sevina_2", "handin"): 23,
-           ("seed_master_1", "offer"): 23, ("seed_master_1", "handin"): 23}
+           ("seed_master_1", "offer"): 23, ("seed_master_1", "handin"): 23,
+           # Lugard on seed 11 read "not yet the edge", "Right" for "Rise" and "the lot" for "the light".
+           ("lugard", "resting"): 23, ("lugard", "risen"): 23, ("lugard", "again"): 23}
 
 # Words the model says wrong, spelled as they are said: the window keeps the written form. MU is
 # one syllable, "moo" (the user, 2026-09-29: "Moo is correct").
@@ -377,7 +395,7 @@ def main():
                     pace(raw, paced, spoken(words), how["sentence_gap"])
                     raw = paced
                 else:
-                    polish = SQUEEZE + polish
+                    polish = how.get("squeeze", SQUEEZE) + polish
                 subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(raw), "-af", polish,
                                 "-ar", "24000", "-ac", "1", "-sample_fmt", "s16", str(part)],
                                check=True)
