@@ -45,8 +45,10 @@ public:
 
     // **A thin bolt down into Twister's storm** (fx/storm.h): MU's `BITMAP_JOINT_THUNDER` at
     // sub-type 0 and scale 10, two frames long (ZzzEffectJoint.cpp:1093-1102) -- the crackle's
-    // thin arc, from `from` to `to`, with no spark, light or smoke.
-    void fork(const float from[3], const float to[3]);
+    // thin arc, from `from` to `to`, with no spark, light or smoke. `wide`: the full fifty-unit
+    // joint with its thin one, still with no spark, light or smoke -- Kanturu's tanks' arcs, MU's
+    // sub-type 18 at scale 50 (game/world/ruin_effects.h).
+    void fork(const float from[3], const float to[3], bool wide = false);
 
     // `alive(id)` and `where(id, out)` as the bolt takes them: the far end follows the body.
     template <typename Alive, typename Where>
@@ -75,6 +77,7 @@ private:
         float sparkRoll;
         float glow;
         bool small;                     // a crackle on the caster: thin, brief, no spark or light
+        bool quiet = false;             // a wide fork: full width, no spark, light or smoke
         bool smoked;                    // the smoke is laid once, as it starts to go out
     };
     struct Puff {

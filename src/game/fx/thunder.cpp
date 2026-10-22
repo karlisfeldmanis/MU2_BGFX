@@ -93,12 +93,13 @@ void Thunder::crackle(const float feet[3], float tall, float seconds) {
     }
 }
 
-void Thunder::fork(const float from[3], const float to[3]) {
+void Thunder::fork(const float from[3], const float to[3], bool wide) {
     for (Arc& one : arcs_) {
         if (one.alive) continue;
         one = Arc{};
         one.alive = true;
-        one.small = true;
+        one.small = !wide;
+        one.quiet = wide;
         for (int k = 0; k < 3; ++k) {
             one.from[k] = from[k];
             one.to[k] = to[k];
@@ -201,7 +202,7 @@ void Thunder::smoke(const Arc& arc) {
 
 void Thunder::step(Arc& arc, float frames) {
     // The smoke rises off the path it last took, as the bolt starts to go out.
-    if (!arc.small && !arc.smoked && arc.left - frames <= kFadeFrames) {
+    if (!arc.small && !arc.quiet && !arc.smoked && arc.left - frames <= kFadeFrames) {
         arc.smoked = true;
         smoke(arc);
     }
@@ -277,7 +278,7 @@ void Thunder::gather(gfx::Effects& effects) const {
         }
         // The spark where it bites: MU's Thunder01 at the wide joint's head, re-rolled a frame.
         // (The smoke is gathered below, once, for every bolt's puffs together.)
-        if (!arc.small && bgfx::isValid(spark_)) {
+        if (!arc.small && !arc.quiet && bgfx::isValid(spark_)) {
             gfx::Sprite spark;
             for (int k = 0; k < 3; ++k) spark.position[k] = arc.to[k];
             spark.halfWidth = spark.halfHeight = kSparkWidth * arc.spark * 0.5f;
@@ -318,7 +319,7 @@ uint32_t Thunder::lights(gfx::PointLight* out, uint32_t max) const {
         for (int k = 0; k < 3; ++k) light.colour[k] = kCrackleGlow[k] * crackleRoll_;
     }
     for (const Arc& arc : arcs_) {
-        if (!arc.alive || arc.small || count >= max) continue;
+        if (!arc.alive || arc.small || arc.quiet || count >= max) continue;
         const float lit = std::min(1.0f, arc.left / kFadeFrames) * arc.glow;
         gfx::PointLight& light = out[count++];
         for (int k = 0; k < 3; ++k) light.position[k] = arc.to[k];

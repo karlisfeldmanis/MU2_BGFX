@@ -355,5 +355,24 @@
         0.26
       ]
     }
-  ]
+  ],
+  "emitters": [
+    {
+      "kind": "spit",
+      "colour": [
+        0.5,
+        0.6,
+        0.1
+      ],
+      "low": 0,
+      "high": 0,
+      "range_tiles": 0,
+      "at": [
+        -0.3,
+        0.0,
+        -5.6
+      ]
+    }
+  ],
+  "emitters_from": "RenderKanturu1stObjectVisual type 98 (GM_Kanturu_1st.cpp:237-247): one frame in three a BITMAP_TWINTAIL_WATER sub-type 2 at bone 1, light (0.5, 0.6, 0.1). Bone 1 at the rig's first key, laid through bone 0 (Object99.rig.json): the middle of the plant's foot. Ours: the plant sways and this point does not. Drawn by game/world/ruin_effects.h."
 }

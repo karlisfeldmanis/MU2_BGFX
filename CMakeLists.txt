@@ -623,6 +623,7 @@ add_library(mu_game STATIC
   src/game/world/void_clouds.cpp
   src/game/world/castle_sparks.cpp
   src/game/world/crystal_sparks.cpp
+  src/game/world/ruin_effects.cpp
   src/game/world/desert_vents.cpp
   src/game/world/waterfall_spray.cpp
   src/game/world/small_fires.cpp

@@ -207,7 +207,10 @@ enum class EmitterKind : uint8_t {
     SmallFireLight = 23,
     // Kanturu's crystals' sparks, carried by Object96 at its bones (game/world/crystal_sparks.h);
     // `high` carries MU's sprite Scale.
-    CrystalSpark = 24
+    CrystalSpark = 24,
+    // Kanturu's tanks' arcs, from and to (Object93, bones 1 and 2), and its plants' spit
+    // (Object99, bone 1): game/world/ruin_effects.h.
+    TankArcFrom = 25, TankArcTo = 26, PlantSpit = 27
 };
 struct TownEmitter {
     static constexpr uint16_t kWorld = 0xFFFF;

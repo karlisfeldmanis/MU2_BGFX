@@ -17,6 +17,7 @@
 #include "game/world/bubbles.h"
 #include "game/world/castle_sparks.h"
 #include "game/world/crystal_sparks.h"
+#include "game/world/ruin_effects.h"
 #include "game/world/desert_vents.h"
 #include "game/world/skull_ghosts.h"
 #include "game/world/small_fires.h"
@@ -126,6 +127,7 @@ private:
     VoidClouds voidClouds_;
     CastleSparks castleSparks_;
     CrystalSparks crystalSparks_;
+    RuinEffects ruinEffects_;
     DesertVents desertVents_;
     WaterfallSpray waterfallSpray_;
     SmallFires smallFires_;

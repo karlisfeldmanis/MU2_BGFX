@@ -649,6 +649,9 @@ EFFECTS = {
     "waterfall_drops": "effects/aida/waterfall1.png",
     "waterfall_mist": "effects/aida/waterfall2.png",
     "waterfall_spray": "effects/aida/waterfall3.png",
+    # Kanturu's carnivorous plants' spit, BITMAP_TWINTAIL_WATER, Effect/water.OZJ
+    # (ZzzOpenData.cpp:5428): a 32 square on black, added (game/world/ruin_effects.h).
+    "plant_spit": "effects/kanturu/water.png",
     # The Witch Queen's (game/fx/witch_queen.h): BITMAP_CHROME3, Effect/Chrome03.OZJ
     # (ZzzOpenData.cpp:5300), a grey cloud her blows' BITMAP_SMOKE sub 27 wears; and
     # BITMAP_TRUE_BLUE, Effect/fantaB.OZJ (:5186), the blue lick where each of her strikes lands.

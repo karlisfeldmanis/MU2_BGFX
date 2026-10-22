@@ -1,0 +1,77 @@
+// Kanturu's tank arcs and plant spit: two of MU's RenderKanturu1stObjectVisual arms
+// (GM_Kanturu_1st.cpp:214-247).
+//
+//   Arcs  Object93, the blue tanks (type 92), 2: on a roll of one in 30 each rendered frame, a
+//         BITMAP_JOINT_THUNDER sub-type 18 at scale 50 from bone 1 to bone 2 -- a jagged bolt
+//         fifty units wide across the tank, kinked +-32 units (ZzzEffectJoint.cpp:4927-4931).
+//         Drawn as Thunder's wide fork, which has no spark, light or smoke (fx/thunder.h).
+//   Spit  Object99, the carnivorous plants (type 98), 46: one frame in three a
+//         BITMAP_TWINTAIL_WATER sub-type 2 (Effect/water, 32 texels) at bone 1, light
+//         (0.5, 0.6, 0.1), added: born within 20 units across and 40 up, Scale 1.0-1.62
+//         shrinking 0.026 a frame and gone at nothing, rising 2-3 units a frame, its light
+//         dimming 1.02 times a frame (ZzzEffectParticle.cpp:1133-1139, 5258-5266, 9006-9010).
+//
+// The points are the recipes' `emitters` (kinds "arc_from", "arc_to", "spit"), the rigs' rest
+// positions in the model's frame, laid once per placement turned and scaled as MU's bones are.
+// Ours, marked: the plants sway (E2c) and the spit leaves from bone 1 at rest, which is the
+// middle of the plant's foot, so it does not follow the sway. MU's roll of one in 30 is per
+// rendered frame; here it is per reference frame, 25 a second. Only points within kReach of
+// the camera's point throw. Nothing here reaches the sim.
+#pragma once
+
+#include <cstdint>
+#include <string>
+#include <vector>
+
+#include <bgfx/bgfx.h>
+
+#include "content/cooked.h"
+#include "content/texture.h"
+#include "game/fx/thunder.h"
+#include "gfx/effects.h"
+
+namespace mu::game {
+
+class RuinEffects {
+public:
+    // Opens where the world's show has ruin_effects; takes the showing's `plant_spit` and
+    // Thunder's sheets.
+    void open(const std::string& assetDir, const std::string& world, const content::CookedTown& town,
+              content::Textures& textures);
+    void shutdown();
+    bool isOpen() const { return open_; }
+
+    void update(float seconds, const float near[3]);
+    void gather(gfx::Effects& effects) const;
+
+private:
+    struct Tank {
+        float from[3] = {0, 0, 0}, to[3] = {0, 0, 0};
+    };
+    struct Plant {
+        float at[3] = {0, 0, 0};
+        float colour[3] = {0.5f, 0.6f, 0.1f};
+        float scale = 1.0f;  // the placement's, which MU's bones carry
+        float owed = 0.0f;
+    };
+    struct Blob {
+        float at[3] = {0, 0, 0};
+        float rise = 0.0f;   // metres a second
+        float scale = 1.0f;  // MU's Scale, shrinking to nothing
+        float age = 0.0f, life = 1.0f;
+        float colour[3] = {0, 0, 0};
+    };
+    float unit();
+
+    std::vector<Tank> tanks_;
+    std::vector<Plant> plants_;
+    std::vector<Blob> blobs_;
+    Thunder thunder_;
+    bool thunderOpen_ = false;
+    float near_[3] = {0, 0, 0};
+    uint32_t seed_ = 0x4A17u;
+    bool open_ = false;
+    bgfx::TextureHandle spit_ = BGFX_INVALID_HANDLE;
+};
+
+}  // namespace mu::game

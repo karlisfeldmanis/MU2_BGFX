@@ -67,6 +67,9 @@
     },
     "crystal_sparks": {
       "note": "Object96's blue sparks, ten a crystal (GM_Kanturu_1st.cpp:361-381; game/world/crystal_sparks.h)."
+    },
+    "ruin_effects": {
+      "note": "Object93's arcs across the blue tanks and Object99's green spit (GM_Kanturu_1st.cpp:214-247; game/world/ruin_effects.h)."
     }
   }
 }

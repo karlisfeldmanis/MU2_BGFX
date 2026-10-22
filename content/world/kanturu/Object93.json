@@ -42,5 +42,40 @@
         0.506
       ]
     }
-  ]
+  ],
+  "emitters": [
+    {
+      "kind": "arc_from",
+      "colour": [
+        1,
+        1,
+        1
+      ],
+      "low": 0,
+      "high": 0,
+      "range_tiles": 0,
+      "at": [
+        102.3,
+        8.8,
+        5.3
+      ]
+    },
+    {
+      "kind": "arc_to",
+      "colour": [
+        1,
+        1,
+        1
+      ],
+      "low": 0,
+      "high": 0,
+      "range_tiles": 0,
+      "at": [
+        -111.8,
+        -13.8,
+        0.6
+      ]
+    }
+  ],
+  "emitters_from": "RenderKanturu1stObjectVisual type 92 (GM_Kanturu_1st.cpp:214-226): on one in 30, a BITMAP_JOINT_THUNDER sub-type 18 at scale 50 from bone 1 to bone 2. The tank holds one key: the two are its rig's rest positions (MuExtract export-rig of MuMain's Object93.bmd; bone 2 a child of bone 1, laid through it), MU units in the model's frame. Drawn by game/world/ruin_effects.h."
 }
