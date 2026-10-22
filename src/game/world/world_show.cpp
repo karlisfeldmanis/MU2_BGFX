@@ -140,6 +140,8 @@ void readShow(const core::Json& show, WorldShow& out) {
     out.crystalSparks = named(show, "crystal_sparks");
     readString(show["crystal_chrome"], "model", &out.crystalChrome);
     out.ruinEffects = named(show, "ruin_effects");
+    out.chasmMist = named(show, "chasm_mist");
+    readFloat(show["chasm_mist"], "strength", &out.chasmMistStrength);
     out.drawbridge = named(show, "drawbridge");
     out.beacon = named(show, "beacon");
     readString(show, "traps", &out.traps);

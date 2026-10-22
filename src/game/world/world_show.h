@@ -110,6 +110,8 @@ struct WorldShow {
     // The model whose glow takes MU's RENDER_CHROME7 pass over it (crystal_sparks.h,
     // lendCrystalChrome): Kanturu's Object96. Empty for none.
     std::string crystalChrome;
+    bool chasmMist = false;      // Kanturu's mist boxes (chasm_mist.h)
+    float chasmMistStrength = 1.0f;  // its light, 1 MU's full pool's (chasm_mist.h)
     bool ruinEffects = false;    // Kanturu's tank arcs and plant spit (ruin_effects.h)
     bool drawbridge = false;   // Blood Castle's (drawbridge.h)
     bool beacon = false;       // Devias's Lost Tower beacon, its type 100 (ornaments.h)

@@ -626,6 +626,7 @@ add_library(mu_game STATIC
   src/game/world/ruin_effects.cpp
   src/game/world/desert_vents.cpp
   src/game/world/waterfall_spray.cpp
+  src/game/world/chasm_mist.cpp
   src/game/world/small_fires.cpp
   src/game/world/skull_ghosts.cpp
   src/game/world/sky_clouds.cpp

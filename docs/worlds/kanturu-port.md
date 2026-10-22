@@ -1042,7 +1042,7 @@ Hooks:
 16. **37 (Object38 ×58):** in the first 10 ms of every 1024 ms, a MODEL_BUTTERFLY01 effect, subtype 3 (`:137-148`): **butterflies**, about one a second per box. 17 stand by rubble, 12 by crystals, and 48 are on the plateau. MuMain loads the butterfly from `Data/Object1` (`MapManager.cpp:377-378`).
 17. **59 (Object60 ×16):** BITMAP_SMOKE subtype 21, 1 frame in 3 (`:149-156`): **smoke vents** by the factories.
 18. **62 (Object63 ×60), 107 (Object108 ×77), 108 (Object109 ×11):** 20 BITMAP_CLOUD a frame (subtypes 20, 2 and 7; grey 0.04, 0.06 and 0.2), **but only `if (HiddenMesh != -2)`**, which MoveKanturu1stObject sets every frame first (`:165-173, 273-292`).
-    - **As written they never emit:** 148 dead mist boxes, as in Aida.
+    - **They emit.** The doc had them dead, as in Aida, but Aida turns its own boxes off with HiddenMesh -2 (GMAida.cpp:85) and Kanturu's CreateKanturu1stObject sets nothing, so RenderObjectVisual runs them every frame they are seen (ZzzObject.cpp:3443-3462): 62 rising clouds (SubType 20), 107 hovering ones (SubType 2), 108 darkening ones (SubType 7, minus). Carried 2026-10-22 by game/world/chasm_mist.h.
     - They show where MU meant mist. **58 of Object63's 60 stand over the chasm's void.** Object108 stands 44 on the plateau (pits and rim) and 30 over void.
     - They are a record of intent for void clouds, not MU's frame.
 19. **81 (Object82 ×26):** BITMAP_WATERFALL_1 subtype 2, 1 frame in 2. **82 (Object83 ×35):** BITMAP_WATERFALL_3 subtype 4 every frame. **83 (Object84 ×52):** BITMAP_WATERFALL_2 subtype 2, 1 in 3 (`:186-202`).
@@ -1298,7 +1298,7 @@ Expect the first-shot fights to be:
 3. **Three white placeholder sheets** (TileGround03, TileRock04, TileWood01, one file) on 72 drawn tiles and 7 overlays. Remap them, or white patches show.
 4. **TileRock01 is TileGrass01's painting.** Materials go by the art (§3).
 5. **The `_R` sheets are the glow**, not a BlendMesh. `cho_scarp_01_r` (lowercase) is **not** bright in MU. That matters in the Relics (300 placements).
-6. **The mist boxes 62/107/108 are dead in MuMain.** Building them as MU's emitters would be ours, not MU's.
+6. **The mist boxes 62/107/108 emit in MuMain** (corrected 2026-10-22; game/world/chasm_mist.h carries them).
 7. **Wall-clock rates:** the waterfall's V slide is `WT·0.0002` per ms (0.2 sheet/s), not a per-frame rate. Do not ×25.
 8. **`cho_tree_a` is a twin:** Object64 takes the .tga leaves and Object65 the .jpg bark.
 9. **Object86-88 duplicate Tarkan's gate.** Reuse rather than re-export, or prefix apart from `tk_`.

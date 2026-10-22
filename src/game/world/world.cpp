@@ -135,6 +135,7 @@ bool World::open(const std::string& assetDir, const std::string& name,
     crystalSparks_.open(assetDir, name, town_.cooked(), textures);
     lendCrystalChrome(town_, assetDir, name, textures);
     ruinEffects_.open(assetDir, name, town_.cooked(), textures);
+    chasmMist_.open(assetDir, name, textures);
     desertVents_.open(assetDir, name, town_.cooked(), textures);
     waterfallSpray_.open(assetDir, name, town_.cooked(), textures);
     smallFires_.open(assetDir, name, town_.cooked(), textures);
@@ -499,6 +500,7 @@ void World::shutdown() {
     castleSparks_.shutdown();
     crystalSparks_.shutdown();
     ruinEffects_.shutdown();
+    chasmMist_.shutdown();
     desertVents_.shutdown();
     waterfallSpray_.shutdown();
     smallFires_.shutdown();
@@ -525,6 +527,8 @@ void World::throwAround(float seconds, const float near[3], gfx::Effects& effect
     crystalSparks_.gather(effects);
     ruinEffects_.update(seconds, near);
     ruinEffects_.gather(effects);
+    chasmMist_.update(seconds, near);
+    chasmMist_.gather(effects);
     waterfallSpray_.update(seconds, near);
     waterfallSpray_.gather(effects);
     smallFires_.update(seconds, near);
