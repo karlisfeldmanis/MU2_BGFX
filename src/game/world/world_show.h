@@ -50,6 +50,11 @@ struct WorldShow {
     std::string music;       // the track under assets, "/music/Noria.mp3"; empty for none
     std::string musicWhere;  // "safe", "indoors", "safe_indoors", "everywhere"
     bool musicLoops = false; // round and round while there, rather than once and rested
+    // The rain's track (`music.rain`), looped while a wet spell is on, out under the sky
+    // everywhere, the safe zone too, in place of `music` (the user, 2026-10-22: "when its raining
+    // in lorencia use this music, also in safe zone which is replacing defult noria music while
+    // its raining"). Under a roof the world's own indoor track still plays. Empty for none.
+    std::string musicRain;
     float musicRest = -1.0f; // seconds of silence after it ends before it plays again; < 0 is
                              // the towns' rule, kMusicRestSeconds after it last began
 

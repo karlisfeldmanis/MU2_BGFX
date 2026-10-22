@@ -1644,12 +1644,23 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         bool pub = !show.music.empty() &&
                    (where == "everywhere" || (where == "safe" && safe) ||
                     (where == "indoors" && roofed) || (where == "safe_indoors" && safe && roofed));
-        const bool loops = show.musicLoops;  // played round and round, not once and rested
-        const char* roofTrack = show.music.c_str();
+        // A wet spell's own track, out under the sky, over the world's (world_show.h musicRain);
+        // a roof that has its own music keeps it.
+        const bool roofMusic = pub && (where == "indoors" || where == "safe_indoors");
+        const bool rainy = !show.musicRain.empty() && world_.weather().wet() && !roofMusic;
+        if (rainy) pub = true;
+        const bool loops = rainy || show.musicLoops;  // played round and round, not once and rested
+        const char* roofTrack = rainy ? show.musicRain.c_str() : show.music.c_str();
         // No music out on the hunt, and none for fights (the user, 2026-09-30: "we dont need
         // fight music anymore").
         const std::string path = ctx.paths.assets + (pub ? roofTrack : "");
         game::Sound& sound = world_.played().sound();
+        // The spell has cleared (or he went under a roof with music): its loop goes now, not
+        // when the world's own track has rested.
+        if (!rainy && !show.musicRain.empty() &&
+            sound.musicPlaying(ctx.paths.assets + show.musicRain)) {
+            sound.stopMusic();
+        }
         if (pub && sound.musicPlaying(path)) musicHeard()[path] = runSeconds();
         if (pub && loops && core::fileExists(path) && !sound.musicPlaying(path)) {
             sound.music(path, 0.6f, true);

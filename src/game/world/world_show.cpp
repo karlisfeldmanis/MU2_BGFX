@@ -75,6 +75,7 @@ void readShow(const core::Json& show, WorldShow& out) {
     const core::Json& music = show["music"];
     readString(music, "track", &out.music);
     readString(music, "where", &out.musicWhere);
+    readString(music, "rain", &out.musicRain);
     music.readInto("loops", &out.musicLoops);
     readFloat(music, "rest", &out.musicRest);
 

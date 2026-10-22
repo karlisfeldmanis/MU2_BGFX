@@ -24,7 +24,8 @@
     "music": {
       "track": "/music/Noria.mp3",
       "where": "safe",
-      "note": "MUSIC_NORIA in its safe zone (SceneManager.cpp:1028-1036; the user, 2026-10-05)."
+      "note": "MUSIC_NORIA in its safe zone (SceneManager.cpp:1028-1036; the user, 2026-10-05).",
+      "rain": "/music/rain_ambient.mp3"
     },
     "weather": {
       "kind": "rain",
