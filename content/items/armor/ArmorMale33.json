@@ -1,0 +1,324 @@
+{
+  "item": "ArmorMale33",
+  "mu_name": "Volcano Armor",
+  "mu_name_from": "MuMain loads MODEL_VOLCANO_* from Data/Player/HDK_ArmorMale04.bmd (ZzzOpenData.cpp:222-228; no helm). MU's number 32. Ours is *Male33 by the index-plus-one rule; MU never loads a *Male33 file.",
+  "why_this_one": "The Magic Gladiator's level-380 set, Kanturu's gear (the user, 2026-10-22: 'lets now cook kanturu weapons and armors', dormant until Kanturu drops them).",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (Season 2's level-380 sets; 0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:149.",
+    "call": "CreateArmor(32, 3, 2, 3, \"Volcano Armor\", 147, 86, 95, 380, 145, 60, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0)",
+    "group": 8,
+    "number": 32,
+    "drop_level": 147,
+    "drops_from_monsters": false,
+    "drops_from_monsters_note": "Dormant: MU drops it in Kanturu, which is not on main yet. Built, worn and cooked, but no monster leaves it until the map ships (the user, 2026-10-22: 'Dormant until Kanturu'). Its drop level is MU's.",
+    "slot": 3,
+    "width": 2,
+    "height": 3,
+    "defense": 86,
+    "durability": 95,
+    "requires": {
+      "level": 0,
+      "strength": 145,
+      "agility": 60,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "MU asks level 380 (OpenMU's levelRequirement). Left at 0 for now: the user, 2026-10-22, settles it with Kanturu's levels ('Formula, decide later').",
+    "classes": [
+      "gladiator"
+    ],
+    "class_level_note": "The Magic Gladiator's alone: OpenMU's magicGladiatorClassLevel 1, his only class. No helm: his sets go bare-headed (MuMain loads no HDK_HelmMale 4)."
+  },
+  "sheets": {
+    "hoblinset_upper": "hoblinset_upper.png",
+    "hoblinset_glove": "hoblinset_glove.png",
+    "hoblinset_lower": "hoblinset_lower.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player hoblinset_*.OZJ, decoded with pipeline/decode_texture.py: grey steel plate with gold scrollwork, copper straps and black mail. hoblinset_head.OZJ is not decoded: there is no helm.",
+  "sheet_materials": {
+    "hoblinset_upper": "painted_steel",
+    "hoblinset_glove": "painted_steel",
+    "hoblinset_lower": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain, the gold and the shading painted on, as every second set here.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain has no render arm for MODEL_VOLCANO_* (no glow, no chrome pass). Its +10 boots' violet (0.5, 0.24, 0.8) set aura (ZzzCharacter.cpp:11004-11030) is not built: fx/set_shine has no 380 sets yet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 20,
+      "area": 1431.2,
+      "along": [
+        -7.9,
+        9.5
+      ],
+      "mu_uv": [
+        0.177,
+        0.029,
+        0.576,
+        0.734
+      ],
+      "bake_uv": [
+        0.612,
+        0.214,
+        0.964,
+        0.924
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 20,
+      "area": 1431.2,
+      "along": [
+        -7.9,
+        9.5
+      ],
+      "mu_uv": [
+        0.177,
+        0.029,
+        0.576,
+        0.734
+      ],
+      "bake_uv": [
+        0.272,
+        0.009,
+        0.975,
+        0.975
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 120,
+      "area": 7629.7,
+      "along": [
+        -22.7,
+        23.3
+      ],
+      "mu_uv": [
+        0.005,
+        0.007,
+        0.984,
+        0.993
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.883,
+        0.898
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 19,
+      "area": 901.1,
+      "along": [
+        -3.7,
+        16.6
+      ],
+      "mu_uv": [
+        0.652,
+        0.028,
+        0.986,
+        0.515
+      ],
+      "bake_uv": [
+        0.571,
+        0.009,
+        0.729,
+        0.239
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 19,
+      "area": 901.1,
+      "along": [
+        -3.7,
+        16.6
+      ],
+      "mu_uv": [
+        0.652,
+        0.028,
+        0.986,
+        0.515
+      ],
+      "bake_uv": [
+        0.68,
+        0.405,
+        0.838,
+        0.635
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 596.4,
+      "along": [
+        -15.5,
+        8.1
+      ],
+      "mu_uv": [
+        0.671,
+        0.836,
+        0.972,
+        0.997
+      ],
+      "bake_uv": [
+        0.185,
+        0.88,
+        0.816,
+        0.991
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 70,
+      "area": 1867.0,
+      "along": [
+        -18.2,
+        20.4
+      ],
+      "mu_uv": [
+        0.435,
+        0.023,
+        0.994,
+        0.824
+      ],
+      "bake_uv": [
+        0.29,
+        0.009,
+        0.554,
+        0.388
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 18,
+      "area": 1189.2,
+      "along": [
+        -12.6,
+        12.6
+      ],
+      "mu_uv": [
+        0.335,
+        0.008,
+        0.673,
+        0.222
+      ],
+      "bake_uv": [
+        0.349,
+        0.287,
+        0.731,
+        0.961
+      ]
+    },
+    {
+      "island": 8,
+      "material": "painted_steel",
+      "triangles": 70,
+      "area": 1867.0,
+      "along": [
+        -18.2,
+        20.4
+      ],
+      "mu_uv": [
+        0.435,
+        0.023,
+        0.994,
+        0.824
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.273,
+        0.388
+      ]
+    },
+    {
+      "island": 9,
+      "material": "painted_steel",
+      "triangles": 18,
+      "area": 1189.2,
+      "along": [
+        -12.6,
+        12.6
+      ],
+      "mu_uv": [
+        0.335,
+        0.008,
+        0.673,
+        0.222
+      ],
+      "bake_uv": [
+        0.009,
+        0.287,
+        0.907,
+        0.981
+      ]
+    },
+    {
+      "island": 10,
+      "material": "painted_steel",
+      "triangles": 28,
+      "area": 250.9,
+      "along": [
+        4.9,
+        12.4
+      ],
+      "mu_uv": [
+        0.555,
+        0.076,
+        0.694,
+        0.225
+      ],
+      "bake_uv": [
+        0.526,
+        0.552,
+        0.92,
+        0.93
+      ]
+    },
+    {
+      "island": 11,
+      "material": "painted_steel",
+      "triangles": 12,
+      "area": 306.3,
+      "along": [
+        -6.7,
+        7.2
+      ],
+      "mu_uv": [
+        0.666,
+        0.002,
+        0.83,
+        0.09
+      ],
+      "bake_uv": [
+        0.834,
+        0.156,
+        0.977,
+        0.972
+      ]
+    }
+  ]
+}

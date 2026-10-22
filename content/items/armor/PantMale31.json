@@ -1,0 +1,79 @@
+{
+  "item": "PantMale31",
+  "mu_name": "Venom Mist Pants",
+  "mu_name_from": "MuMain loads MODEL_VENOM_MIST_* from Data/Player/HDK_PantMale02.bmd (ZzzOpenData.cpp:222-231; the helm is HDK_HelmMale 2). MU's number 30. Ours is *Male31 by the index-plus-one rule; MU never loads a *Male31 file.",
+  "why_this_one": "The Soul Master's level-380 set, Kanturu's gear (the user, 2026-10-22: 'lets now cook kanturu weapons and armors', dormant until Kanturu drops them).",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (Season 2's level-380 sets; 0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:206.",
+    "call": "CreateArmor(30, 4, 2, 2, \"Venom Mist Pants\", 135, 55, 86, 380, 44, 15, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0)",
+    "group": 9,
+    "number": 30,
+    "drop_level": 135,
+    "drops_from_monsters": false,
+    "drops_from_monsters_note": "Dormant: MU drops it in Kanturu, which is not on main yet. Built, worn and cooked, but no monster leaves it until the map ships (the user, 2026-10-22: 'Dormant until Kanturu'). Its drop level is MU's.",
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 55,
+    "durability": 86,
+    "requires": {
+      "level": 0,
+      "strength": 44,
+      "agility": 15,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "MU asks level 380 (OpenMU's levelRequirement). Left at 0 for now: the user, 2026-10-22, settles it with Kanturu's levels ('Formula, decide later').",
+    "classes": [
+      "wizard"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Soul Master's alone: OpenMU's darkWizardClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "sheets": {
+    "cobraset_lower_s": "cobraset_lower_s.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player cobraset_*.OZJ and cobraset_hair.OZT, decoded with pipeline/decode_texture.py: violet plate and robe traced in gold; the helm's white hair card cut by its own alpha (17% away).",
+  "sheet_materials": {
+    "cobraset_lower_s": "cloth"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the gold painted on (Dark Phoenix's lesson: plate_steel on a dark sheet goes polished black); the lower sheet's robe panels cloth, as Dark Soul's; the hair card hair.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain has no render arm for MODEL_VENOM_MIST_* (no glow, no chrome pass). Its +10 boots' blue (0.1, 0.1, 0.9) set aura (ZzzCharacter.cpp:11004-11030) is not built: fx/set_shine has no 380 sets yet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 84,
+      "area": 8573.1,
+      "along": [
+        -15.3,
+        14.0
+      ],
+      "mu_uv": [
+        0.296,
+        0.099,
+        0.833,
+        0.996
+      ],
+      "bake_uv": [
+        0.003,
+        0.004,
+        0.997,
+        0.994
+      ]
+    }
+  ]
+}

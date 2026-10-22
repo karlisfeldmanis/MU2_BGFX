@@ -1,0 +1,268 @@
+{
+  "item": "Staff13",
+  "mu_name": "Grand Viper Staff",
+  "mu_name_from": "MODEL_GRAND_VIPER_STAFF (MODEL_STAFF + 12), loaded from Item/HDK_Staff.bmd (ZzzOpenData.cpp:1099). Group 5 number 12 in OpenMU S6 Weapons.cs.",
+  "why_this_one": "Kanturu's level-380 weapons (the user, 2026-10-22: 'lets now cook kanturu weapons and armors'), every class's but the Dark Lord's (the Soleil Scepter, HDK_Mace, left out); dormant until Kanturu drops them.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:254.",
+    "call": "CreateWeapon(5, 12, 0, 0, 1, 4, true, \"Grand Viper Staff\", 147, 66, 74, 30, 100, 130, 380, 39, 13, 0, 0, 2, 0, 0, 0, 0, 0, 0)",
+    "call_note": "The Season 6 CreateWeapon: group, number, slot, skill, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strength, agility, energy, vitality, then darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel.",
+    "group": 5,
+    "number": 12,
+    "drop_level": 147,
+    "drops_from_monsters": false,
+    "drops_from_monsters_note": "Dormant: MU drops it in Kanturu, which is not on main yet. Built, worn and cooked, but no monster leaves it until the map ships (the user, 2026-10-22: 'Dormant until Kanturu'). Its drop level is MU's.",
+    "slot": 0,
+    "width": 1,
+    "height": 4,
+    "minimum_damage": 66,
+    "maximum_damage": 74,
+    "attack_speed": 30,
+    "durability": 100,
+    "magic_power": 130,
+    "requires": {
+      "level": 0,
+      "strength": 39,
+      "agility": 13,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "MU asks level 380 (OpenMU's levelRequirement). Left at 0 for now: the user, 2026-10-22, settles the 380 items' level with Kanturu's ('Formula, decide later').",
+    "classes": [
+      "wizard"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Soul Master's alone: OpenMU's darkWizardClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "stance": "sword",
+  "stance_from": "Width 1: a one-handed staff stands as a sword does, as the Dragon Soul Staff.",
+  "two_handed": false,
+  "sheets": {
+    "cobraset_wand_s": "cobraset_wand_s.png"
+  },
+  "sheet_from": "Data/Item/cobraset_wand_s.OZJ (64x128, a gold serpent over violet, Venom Mist's colours, 326 triangles), decoded with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "cobraset_wand_s": "brass"
+  },
+  "material_overrides": {
+    "brass": {
+      "roughness": 0.6
+    }
+  },
+  "material_overrides_note": "Gold serpent work: brass at 0.6, as the Dragon Shield; at brass's ceiling it blows out.",
+  "glow_note": "RenderPartObjectBody's arm (ZzzObject.cpp:7644-7666): mesh 0 solid, then again RENDER_TEXTURE | RENDER_BRIGHT, added, with BITMAP_CHROME_ENERGY (Effect/energy01.jpg, a red-violet burst) at the mesh's own UVs, U and V sliding WorldTime%2000*0.0002. Here the chrome pass below, sliding along U alone.",
+  "chrome": [
+    {
+      "slot": "cobraset_wand_s",
+      "image": "energy01",
+      "uv": "mesh",
+      "where": "over",
+      "light": 0.35,
+      "scrolls_per_second": 0.2,
+      "axis": "u"
+    }
+  ],
+  "chrome_from": "The arm's second pass, at 0.35 where MU draws 1: at 0.6 the energy burst turned the whole staff hot pink at night in the studio (2026-10-22). pipeline/chrome_sheets.py.",
+  "rig_note": "export-rig --actions=all: ten bones, one action of one key; nothing moves, no rig kept. Held, MuMain's arm is ZzzCharacter.cpp:7178-7200: a pink light and shinies 170 units up from bone 0, the head, and an energy joint (fx/held_lights; the joint not thrown).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "brass",
+      "triangles": 44,
+      "area": 3999.4,
+      "along": [
+        -65.1,
+        132.0
+      ],
+      "mu_uv": [
+        0.442,
+        0.015,
+        0.992,
+        0.974
+      ],
+      "bake_uv": [
+        0.139,
+        0.011,
+        0.979,
+        0.979
+      ]
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 1,
+      "area": 0.3,
+      "along": [
+        -65.1,
+        -63.0
+      ],
+      "mu_uv": [
+        0.718,
+        0.028,
+        0.841,
+        0.104
+      ],
+      "bake_uv": [
+        0.495,
+        0.623,
+        0.551,
+        0.659
+      ]
+    },
+    {
+      "island": 2,
+      "material": "brass",
+      "triangles": 1,
+      "area": 7.0,
+      "along": [
+        -65.1,
+        -51.9
+      ],
+      "mu_uv": [
+        0.653,
+        0.028,
+        0.718,
+        0.145
+      ],
+      "bake_uv": [
+        0.462,
+        0.476,
+        0.492,
+        0.53
+      ]
+    },
+    {
+      "island": 3,
+      "material": "brass",
+      "triangles": 20,
+      "area": 487.7,
+      "along": [
+        62.8,
+        74.4
+      ],
+      "mu_uv": [
+        0.114,
+        0.138,
+        0.316,
+        0.361
+      ],
+      "bake_uv": [
+        0.131,
+        0.749,
+        0.343,
+        0.952
+      ]
+    },
+    {
+      "island": 4,
+      "material": "brass",
+      "triangles": 20,
+      "area": 583.6,
+      "along": [
+        69.2,
+        82.4
+      ],
+      "mu_uv": [
+        0.114,
+        0.138,
+        0.316,
+        0.361
+      ],
+      "bake_uv": [
+        0.206,
+        0.433,
+        0.826,
+        0.961
+      ]
+    },
+    {
+      "island": 5,
+      "material": "brass",
+      "triangles": 20,
+      "area": 734.0,
+      "along": [
+        76.3,
+        89.9
+      ],
+      "mu_uv": [
+        0.114,
+        0.137,
+        0.316,
+        0.361
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.899,
+        0.92
+      ]
+    },
+    {
+      "island": 6,
+      "material": "brass",
+      "triangles": 20,
+      "area": 824.6,
+      "along": [
+        84.7,
+        98.6
+      ],
+      "mu_uv": [
+        0.11,
+        0.135,
+        0.316,
+        0.361
+      ],
+      "bake_uv": [
+        0.013,
+        0.012,
+        0.751,
+        0.879
+      ]
+    },
+    {
+      "island": 7,
+      "material": "brass",
+      "triangles": 190,
+      "area": 6368.1,
+      "along": [
+        75.8,
+        182.6
+      ],
+      "mu_uv": [
+        -0.005,
+        0.01,
+        0.932,
+        0.979
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.897,
+        0.989
+      ]
+    },
+    {
+      "island": 8,
+      "material": "brass",
+      "triangles": 3,
+      "area": 122.8,
+      "along": [
+        -61.9,
+        -38.1
+      ],
+      "mu_uv": [
+        0.442,
+        0.022,
+        0.648,
+        0.207
+      ],
+      "bake_uv": [
+        0.365,
+        0.473,
+        0.46,
+        0.558
+      ]
+    }
+  ]
+}

@@ -47,7 +47,12 @@ FOLDERS = (WEAPONS, os.path.join(CONTENT, "monsters"), os.path.join(CONTENT, "it
 # dancerfire, the Sword Dancer's swordmagum_06e, its fire sliding over the lava MU lays first.
 IMAGES = {"chrome01": "refine/chrome01.png", "chrome02": "refine/chrome02.png",
           "bab2": "refine/bab2.png", "shiny01": "drop/shiny01.png",
-          "socketstaff": "refine/socketstaff.png", "dancerfire": "refine/dancerfire.png"}
+          "socketstaff": "refine/socketstaff.png", "dancerfire": "refine/dancerfire.png",
+          "chrome06": "refine/chrome06.png", "chrome07": "refine/chrome07.png",
+          "energy01": "refine/energy01.png"}
+# And Kanturu's weapons' three (ZzzOpenData.cpp:5301-5303): BITMAP_CHROME6 (Effect/Chrome06.jpg,
+# the Sylph Wind Bow's), BITMAP_CHROME7 (Chrome07.jpg, the Bone Blade's) and BITMAP_CHROME_ENERGY
+# (energy01.jpg, the Grand Viper Staff's), each laid at the mesh's own UVs (ZzzObject.cpp:7644-7666).
 # Where an alpha-tested sheet counts as cut: MU's own test, alpha under a half
 # (EnableAlphaTest's GL_GREATER 0.25 on a .tga is sharper than any sheet here needs).
 CUT_BELOW = 128

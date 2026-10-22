@@ -144,6 +144,10 @@ const char* HeldLights::mesh(Item item) {
         case Item::CrimsonGlory: return "Shield18";
         case Item::SalamanderShield: return "Shield19";
         case Item::GuardianShield: return "Shield21";
+        case Item::BoneBlade: return "Sword23";
+        case Item::ExplosionBlade: return "Sword24";
+        case Item::SylphWindBow: return "Bow22";
+        case Item::GrandViperStaff: return "Staff13";
     }
     return "";
 }
@@ -499,6 +503,37 @@ int HeldLights::points(Item item, float out[kMostPoints][3]) {
             }
             return 9;
         }
+        case Item::BoneBlade: {
+            // Box01 (bone 0) of HDK_Sword.bmd at rest, MU's (+-5, -22, -10) off it: the guard.
+            static const float kBones[2][3] = {{5.0f, -10.0f, 23.7f}, {-5.0f, -10.0f, 23.7f}};
+            for (int i = 0; i < 2; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 2;
+        }
+        case Item::ExplosionBlade: {
+            // HDK_Sword2.bmd at rest: Bone05 (bone 4), 30 out from it, then Bone07-Bone09 (6-8).
+            static const float kBones[5][3] = {{0.0f, -2.1f, 58.3f}, {0.0f, -2.1f, 88.3f}, {0.0f, -4.2f, 118.5f}, {0.0f, -4.4f, 149.2f}, {0.0f, -1.7f, 176.0f}};
+            for (int i = 0; i < 5; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 5;
+        }
+        case Item::SylphWindBow: {
+            // HDK_Bow.bmd at rest: zx03 and zx06 (bones 7, 15), the limb tips, then 20 out from
+            // Bone10 (bone 0), the grip.
+            static const float kBones[3][3] = {{0.0f, 38.2f, 133.0f}, {0.0f, 38.2f, -124.8f}, {0.0f, -20.0f, 6.3f}};
+            for (int i = 0; i < 3; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 3;
+        }
+        case Item::GrandViperStaff:
+            // Object01 (bone 0) of HDK_Staff.bmd at rest, 170 along it: the serpent's head.
+            out[0][0] = 0.0f;
+            out[0][1] = 0.2f * kUnit;
+            out[0][2] = 170.3f * kUnit;
+            return 1;
     }
     return 0;
 }
@@ -946,6 +981,37 @@ void HeldLights::gather(gfx::Effects& effects) const {
             case Item::GuardianShield: {
                 const float lumi = std::fabs(std::sin(clock_)) + 0.1f;
                 for (int i = 0; i < one.count; ++i) put(light_, one.at[i], halfOf(1.5f), 0.8f * lumi, 0.3f * lumi, 0.8f * lumi);
+                break;
+            }
+            case Item::BoneBlade: {
+                // MU's sin(WorldTime*0.4)*0.25 + 0.7 turns faster than its frame: the hand roll.
+                const float f = 0.45f + handLuminosity_ * 0.5f;
+                for (int i = 0; i < one.count; ++i) put(light_, one.at[i], halfOf(0.75f), f, f - 0.5f, f - 0.5f);
+                break;
+            }
+            case Item::ExplosionBlade: {
+                if (one.count < 5) break;
+                const float f = 0.3f + linkLuminosity_ * 0.5f;
+                put(shiny_, one.at[0], halfOf(2.2f), 0.2f, 0.2f, f);
+                put(shiny_, one.at[0], halfOf(1.8f), 0.2f, 0.2f, f);
+                put(light_, one.at[0], halfOf(2.3f), 0.2f, 0.2f, f);
+                static const float kSizes[4] = {2.0f, 2.0f, 2.0f, 1.0f};
+                for (int i = 0; i < 4; ++i) put(light_, one.at[1 + i], halfOf(kSizes[i]), 0.2f, 0.2f, f);
+                break;
+            }
+            case Item::SylphWindBow: {
+                if (one.count < 3) break;
+                put(light_, one.at[0], halfOf(2.0f), 0.5f, 0.5f, 0.1f);
+                put(light_, one.at[1], halfOf(2.0f), 0.5f, 0.5f, 0.1f);
+                for (const float size : {0.8f, 1.3f, 2.0f}) put(light_, one.at[2], halfOf(size), 1.0f, 1.0f, 0.4f);
+                break;
+            }
+            case Item::GrandViperStaff: {
+                const float size = 1.0f + handLuminosity_ * 0.5f;
+                put(shiny_, one.at[0], halfOf(size + 0.8f), 0.4f, 0.4f, 0.4f);
+                put(light_, one.at[0], halfOf(size), 1.0f, 0.4f, 1.0f);
+                put(shiny_, one.at[0], halfOf(size), 1.0f, 0.4f, 1.0f);
+                put(shiny_, one.at[0], halfOf(size - 0.3f), 1.0f, 0.4f, 1.0f);
                 break;
             }
         }

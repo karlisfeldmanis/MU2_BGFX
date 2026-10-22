@@ -1,0 +1,101 @@
+{
+  "item": "GloveMale33",
+  "mu_name": "Volcano Gloves",
+  "mu_name_from": "MuMain loads MODEL_VOLCANO_* from Data/Player/HDK_GloveMale04.bmd (ZzzOpenData.cpp:222-228; no helm). MU's number 32. Ours is *Male33 by the index-plus-one rule; MU never loads a *Male33 file.",
+  "why_this_one": "The Magic Gladiator's level-380 set, Kanturu's gear (the user, 2026-10-22: 'lets now cook kanturu weapons and armors', dormant until Kanturu drops them).",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (Season 2's level-380 sets; 0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:267.",
+    "call": "CreateGloves(32, \"Volcano Gloves\", 127, 55, 7, 95, 380, 145, 60, 0, 0, 0, 1, 0, 0)",
+    "group": 10,
+    "number": 32,
+    "drop_level": 127,
+    "drops_from_monsters": false,
+    "drops_from_monsters_note": "Dormant: MU drops it in Kanturu, which is not on main yet. Built, worn and cooked, but no monster leaves it until the map ships (the user, 2026-10-22: 'Dormant until Kanturu'). Its drop level is MU's.",
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 55,
+    "durability": 95,
+    "requires": {
+      "level": 0,
+      "strength": 145,
+      "agility": 60,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "MU asks level 380 (OpenMU's levelRequirement). Left at 0 for now: the user, 2026-10-22, settles it with Kanturu's levels ('Formula, decide later').",
+    "classes": [
+      "gladiator"
+    ],
+    "attack_speed": 7,
+    "class_level_note": "The Magic Gladiator's alone: OpenMU's magicGladiatorClassLevel 1, his only class. No helm: his sets go bare-headed (MuMain loads no HDK_HelmMale 4)."
+  },
+  "sheets": {
+    "hoblinset_glove": "hoblinset_glove.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player hoblinset_*.OZJ, decoded with pipeline/decode_texture.py: grey steel plate with gold scrollwork, copper straps and black mail. hoblinset_head.OZJ is not decoded: there is no helm.",
+  "sheet_materials": {
+    "hoblinset_glove": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain, the gold and the shading painted on, as every second set here.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain has no render arm for MODEL_VOLCANO_* (no glow, no chrome pass). Its +10 boots' violet (0.5, 0.24, 0.8) set aura (ZzzCharacter.cpp:11004-11030) is not built: fx/set_shine has no 380 sets yet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 104,
+      "area": 2702.9,
+      "along": [
+        -17.8,
+        7.9
+      ],
+      "mu_uv": [
+        0.068,
+        0.005,
+        0.977,
+        0.994
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.835,
+        0.835
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 104,
+      "area": 2702.9,
+      "along": [
+        -17.8,
+        7.9
+      ],
+      "mu_uv": [
+        0.068,
+        0.005,
+        0.977,
+        0.994
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.994,
+        0.945
+      ]
+    }
+  ]
+}

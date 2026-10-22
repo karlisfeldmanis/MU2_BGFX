@@ -1,0 +1,185 @@
+{
+  "item": "Sword23",
+  "mu_name": "Bone Blade",
+  "mu_name_from": "MODEL_BONE_BLADE (MODEL_SWORD + 22), loaded from Item/HDK_Sword.bmd (ZzzOpenData.cpp:1095). Group 0 number 22 in OpenMU S6 Weapons.cs.",
+  "why_this_one": "Kanturu's level-380 weapons (the user, 2026-10-22: 'lets now cook kanturu weapons and armors'), every class's but the Dark Lord's (the Soleil Scepter, HDK_Mace, left out); dormant until Kanturu drops them.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:159.",
+    "call": "CreateWeapon(0, 22, 0, 22, 1, 4, true, \"Bone Blade\", 147, 122, 135, 40, 95, 0, 380, 100, 35, 0, 0, 0, 2, 0, 0, 0, 0, 0)",
+    "call_note": "The Season 6 CreateWeapon: group, number, slot, skill, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strength, agility, energy, vitality, then darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel.",
+    "group": 0,
+    "number": 22,
+    "drop_level": 147,
+    "drops_from_monsters": false,
+    "drops_from_monsters_note": "Dormant: MU drops it in Kanturu, which is not on main yet. Built, worn and cooked, but no monster leaves it until the map ships (the user, 2026-10-22: 'Dormant until Kanturu'). Its drop level is MU's.",
+    "slot": 0,
+    "width": 1,
+    "height": 4,
+    "minimum_damage": 122,
+    "maximum_damage": 135,
+    "attack_speed": 40,
+    "durability": 95,
+    "requires": {
+      "level": 0,
+      "strength": 100,
+      "agility": 35,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "MU asks level 380 (OpenMU's levelRequirement). Left at 0 for now: the user, 2026-10-22, settles the 380 items' level with Kanturu's ('Formula, decide later').",
+    "classes": [
+      "knight"
+    ],
+    "skill": 22,
+    "class_level": 2,
+    "class_level_note": "The Blade Knight's alone: OpenMU's darkKnightClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "stance": "sword",
+  "stance_from": "Width 1: one-handed, PLAYER_STOP_SWORD.",
+  "two_handed": false,
+  "sheets": {
+    "bksword": "bksword.png"
+  },
+  "sheet_from": "Data/Item/bksword.OZJ (256x64, a pale violet-grey blade over a gold guard, 215 triangles), decoded with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "bksword": "steel"
+  },
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "As every broad flat blade passed in the studio: steel's own 0.2 mirrors the grass black.",
+  "glow_note": "RenderPartObjectBody's arm (ZzzObject.cpp:7644-7666): mesh 0 solid, then again RENDER_TEXTURE | RENDER_BRIGHT, added, under BodyLight (1, 0.7, 0.4) with BITMAP_CHROME7 (Effect/Chrome07.jpg) bound at the mesh's own UVs, U sliding WorldTime%4000*0.0004 - 0.7. Here the chrome pass below, the tint carried in its sheet.",
+  "chrome": [
+    {
+      "slot": "bksword",
+      "image": "chrome07",
+      "uv": "mesh",
+      "where": "over",
+      "light": 0.6,
+      "tint": [
+        1.0,
+        0.7,
+        0.4
+      ],
+      "scrolls_per_second": 0.4,
+      "axis": "u"
+    }
+  ],
+  "chrome_from": "The arm's second pass, at 0.6 where MU draws 1: MU's stacked passes overshoot under our bloom (the Flamberge's lesson). pipeline/chrome_sheets.py.",
+  "rig_note": "export-rig --actions=all: one bone, one action of one key; nothing moves, no rig kept. Held, MuMain's arm is ZzzCharacter.cpp:7131-7143: two orange BITMAP_LIGHT + 1 either side of the guard (fx/held_lights).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 122,
+      "area": 10255.5,
+      "along": [
+        -28.0,
+        197.4
+      ],
+      "mu_uv": [
+        0.018,
+        0.026,
+        0.992,
+        0.988
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.995,
+        0.986
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 53,
+      "area": 567.5,
+      "along": [
+        -23.5,
+        12.6
+      ],
+      "mu_uv": [
+        0.199,
+        0.521,
+        0.295,
+        0.943
+      ],
+      "bake_uv": [
+        0.005,
+        0.006,
+        0.591,
+        0.094
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 30,
+      "area": 950.7,
+      "along": [
+        33.1,
+        154.4
+      ],
+      "mu_uv": [
+        0.137,
+        0.023,
+        0.987,
+        0.289
+      ],
+      "bake_uv": [
+        0.078,
+        0.006,
+        0.956,
+        0.53
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 6,
+      "area": 539.2,
+      "along": [
+        54.1,
+        149.1
+      ],
+      "mu_uv": [
+        0.164,
+        0.023,
+        0.84,
+        0.098
+      ],
+      "bake_uv": [
+        0.094,
+        0.006,
+        0.871,
+        0.365
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 4,
+      "area": 376.2,
+      "along": [
+        63.6,
+        154.4
+      ],
+      "mu_uv": [
+        0.084,
+        0.219,
+        0.457,
+        0.289
+      ],
+      "bake_uv": [
+        0.006,
+        0.49,
+        0.223,
+        0.58
+      ]
+    }
+  ]
+}

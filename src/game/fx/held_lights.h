@@ -119,6 +119,15 @@
 //         particles not thrown.
 //     MODEL_GUARDIAN_SHILED (:8169-8191): violet (0.8, 0.3, 0.8) lights at 1.5 on bones 1-9,
 //         breathing |sin(WorldTime*0.001)| + 0.1.
+//   And Kanturu's four (2026-10-22), on their bones at rest, MU's offsets turned by the bone:
+//     MODEL_BONE_BLADE (:7131-7143): two orange BITMAP_LIGHT + 1 at 0.75 either side of the guard,
+//         (f, f - 0.5, f - 0.5), f flickering about 0.7.
+//     MODEL_EXPLOSION_BLADE (:7145-7176): blue (0.2, 0.2, f) lights up the blade, bones 4 and 6-8
+//         and 30 out from 4, and two shinies on 4; MU turns them, here they stand.
+//     MODEL_SYLPH_WIND_BOW (:7079-7101): yellow (0.5, 0.5, 0.1) lights at 2 on the limb tips (bones
+//         7, 15) and three (1, 1, 0.4) at 0.8, 1.3 and 2 at the grip; its sparks not thrown.
+//     MODEL_GRAND_VIPER_STAFF (:7178-7200): at the head, 170 up bone 0, a grey shiny and a pink
+//         (1, 0.4, 1) light and two shinies; its energy joint not thrown.
 //
 // A blue string of lights down the crossbow, a blue spark on the shield's face, eight
 // violet-blue lights along the spear's swirl; the staff's two blue ends, the mace's yellow
@@ -186,10 +195,14 @@ public:
         CrimsonGlory,
         SalamanderShield,
         GuardianShield,
+        BoneBlade,
+        ExplosionBlade,
+        SylphWindBow,
+        GrandViperStaff,
     };
     // The Stinger Bow's 44 bones, each with its light (ZzzCharacter.cpp:7972-7999).
     static constexpr int kMostPoints = 44;
-    static constexpr Item kItems[41] = {Item::SaintCrossbow,   Item::GrandSoulShield,
+    static constexpr Item kItems[45] = {Item::SaintCrossbow,   Item::GrandSoulShield,
                                         Item::DragonSpear,     Item::DragonSoulStaff,
                                         Item::ElementalMace,   Item::GreatReignCrossbow,
                                         Item::ThunderBlade,    Item::LegendaryShield,
@@ -209,7 +222,9 @@ public:
                                         Item::FrostMace,       Item::StingerBow,
                                         Item::DeadlyStaff,     Item::ImperialStaff,
                                         Item::CrimsonGlory,    Item::SalamanderShield,
-                                        Item::GuardianShield};
+                                        Item::GuardianShield,  Item::BoneBlade,
+                                        Item::ExplosionBlade,  Item::SylphWindBow,
+                                        Item::GrandViperStaff};
 
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);

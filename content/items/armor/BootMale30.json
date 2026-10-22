@@ -1,0 +1,101 @@
+{
+  "item": "BootMale30",
+  "mu_name": "Dragon Knight Boots",
+  "mu_name_from": "MuMain loads MODEL_DRAGON_KNIGHT_* from Data/Player/HDK_BootMale01.bmd (ZzzOpenData.cpp:222-230; the helm is HDK_HelmMale 1). MU's group 11 number 29. Ours is named BootMale30 by the index-plus-one rule every other set keeps: MU never loads a *Male30 file, so nothing collides, and the set tooling groups it by its Helm/Armor/... prefix.",
+  "why_this_one": "The Blade Knight's level-380 set, Kanturu's gear (the user, 2026-10-22: 'we need to work on missing weapons and armors', then the four 380 sets and their weapons first, built on main and dormant until Kanturu drops them).",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (Season 2's level-380 sets; 0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:319.",
+    "call": "CreateBoots(29, \"Dragon Knight Boots\", 119, 63, 0, 90, 380, 170, 60, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0)",
+    "group": 11,
+    "number": 29,
+    "drop_level": 119,
+    "drops_from_monsters": false,
+    "drops_from_monsters_note": "Dormant: MU drops it in Kanturu, which is not on main yet. Built, worn and cooked, but no monster leaves it until the map ships (the user, 2026-10-22: 'Dormant until Kanturu'). Its drop level is MU's.",
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 63,
+    "durability": 90,
+    "requires": {
+      "level": 0,
+      "strength": 170,
+      "agility": 60,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "MU asks level 380 (OpenMU's levelRequirement). Left at 0 for now: the user, 2026-10-22, settles it with Kanturu's levels ('Formula, decide later').",
+    "classes": [
+      "knight"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Blade Knight's alone: OpenMU's darkKnightClassLevel 2, not the third class. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "sheets": {
+    "blackdrager_boots": "blackdrager_boots.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player blackdrager_*.OZJ, decoded with pipeline/decode_texture.py: dark gunmetal plate traced in gold, a touch of orange.",
+  "sheet_materials": {
+    "blackdrager_boots": "painted_steel"
+  },
+  "material_note": "painted_steel, as Great Dragon's: dark plate with its gold painted on. plate_steel on a dark sheet read as polished black with white blowouts (Dark Phoenix, 2026-10-04).",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.05,
+        "roughness_range": 0.06
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain has no render arm for MODEL_DRAGON_KNIGHT_* (no ItemObjectAttribute glow, no chrome pass; its only other use is GMNewTown's display NPC): drawn as its sheet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 88,
+      "area": 6037.3,
+      "along": [
+        -16.8,
+        33.7
+      ],
+      "mu_uv": [
+        0.011,
+        0.015,
+        0.996,
+        0.942
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.881,
+        0.965
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 88,
+      "area": 6037.3,
+      "along": [
+        -17.4,
+        33.1
+      ],
+      "mu_uv": [
+        0.011,
+        0.015,
+        0.996,
+        0.942
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.993,
+        0.979
+      ]
+    }
+  ]
+}

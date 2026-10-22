@@ -1,0 +1,373 @@
+{
+  "item": "PantMale32",
+  "mu_name": "Sylphid Ray Pants",
+  "mu_name_from": "MuMain loads MODEL_SYLPHID_RAY_* from Data/Player/HDK_PantMale03.bmd (ZzzOpenData.cpp:222-232; the helm is HDK_HelmMale 3). MU's number 31. Ours is *Male32 by the index-plus-one rule; MU never loads a *Male32 file.",
+  "why_this_one": "The Muse Elf's level-380 set, Kanturu's gear (the user, 2026-10-22: 'lets now cook kanturu weapons and armors', dormant until Kanturu drops them).",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (Season 2's level-380 sets; 0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:207.",
+    "call": "CreateArmor(31, 4, 2, 2, \"Sylphid Ray Pants\", 135, 61, 86, 380, 38, 80, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0)",
+    "group": 9,
+    "number": 31,
+    "drop_level": 135,
+    "drops_from_monsters": false,
+    "drops_from_monsters_note": "Dormant: MU drops it in Kanturu, which is not on main yet. Built, worn and cooked, but no monster leaves it until the map ships (the user, 2026-10-22: 'Dormant until Kanturu'). Its drop level is MU's.",
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 61,
+    "durability": 86,
+    "requires": {
+      "level": 0,
+      "strength": 38,
+      "agility": 80,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "MU asks level 380 (OpenMU's levelRequirement). Left at 0 for now: the user, 2026-10-22, settles it with Kanturu's levels ('Formula, decide later').",
+    "classes": [
+      "elf"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Muse Elf's alone: OpenMU's elfClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "sheets": {
+    "lowerta_1": "sylphid_lowerta_1.tga.png",
+    "lower_s": "sylphid_lower_s.png",
+    "sal_s": "sylphid_sal_s.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under a sylphid_ prefix (MU's names -- upper_s, lower_s, helmet_s -- are too generic to keep in content/textures): lilac and silver plate with gold, over a bare-skinned suit trimmed in lace (sal_s), black mesh stockings, and two translucent veil cards, upperta_s.OZT and lowerta_1.OZT, cut by their own alpha (62% and 17% away); level_man033 her head and hair, Red Spirit's.",
+  "sheet_materials": {
+    "lowerta_1": "cloth",
+    "lower_s": "leather",
+    "sal_s": "skin"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, as her Red Spirit; sal_s her skin; lower_s (skin, stockings and lace) leather, as Red Spirit's undersuit; the veils cloth; level_man033 hair. sal_s is not named skin*/level*/hair*, so a plus shines on it as on the plate (content::Material::skinSheet reads the name): ours, left.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain has no render arm for MODEL_SYLPHID_RAY_* (no glow, no chrome pass). Its +10 boots' green (0, 0.32, 0.24) set aura (ZzzCharacter.cpp:11004-11030) is not built: fx/set_shine has no 380 sets yet.",
+  "cutout": [
+    "lowerta_1"
+  ],
+  "cutout_from": "Declared: lowerta_1.OZT's alpha is real (17% cut away), a veil card.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 37,
+      "area": 1936.6,
+      "along": [
+        -10.6,
+        9.0
+      ],
+      "mu_uv": [
+        0.013,
+        0.082,
+        0.666,
+        0.787
+      ],
+      "bake_uv": [
+        0.009,
+        0.025,
+        0.286,
+        0.746
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather",
+      "triangles": 74,
+      "area": 1653.0,
+      "along": [
+        -12.9,
+        9.4
+      ],
+      "mu_uv": [
+        0.471,
+        0.02,
+        0.925,
+        0.563
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.864,
+        0.898
+      ]
+    },
+    {
+      "island": 2,
+      "material": "leather",
+      "triangles": 7,
+      "area": 148.2,
+      "along": [
+        -10.0,
+        6.9
+      ],
+      "mu_uv": [
+        0.547,
+        0.14,
+        0.726,
+        0.475
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.085,
+        0.151
+      ]
+    },
+    {
+      "island": 3,
+      "material": "leather",
+      "triangles": 15,
+      "area": 451.6,
+      "along": [
+        -15.5,
+        10.9
+      ],
+      "mu_uv": [
+        0.752,
+        0.46,
+        0.987,
+        0.992
+      ],
+      "bake_uv": [
+        0.802,
+        0.426,
+        0.902,
+        0.652
+      ]
+    },
+    {
+      "island": 4,
+      "material": "leather",
+      "triangles": 11,
+      "area": 384.8,
+      "along": [
+        -15.5,
+        10.9
+      ],
+      "mu_uv": [
+        0.752,
+        0.46,
+        0.987,
+        0.992
+      ],
+      "bake_uv": [
+        0.842,
+        0.104,
+        0.942,
+        0.33
+      ]
+    },
+    {
+      "island": 5,
+      "material": "leather",
+      "triangles": 7,
+      "area": 148.2,
+      "along": [
+        -10.0,
+        6.9
+      ],
+      "mu_uv": [
+        0.547,
+        0.14,
+        0.726,
+        0.475
+      ],
+      "bake_uv": [
+        0.251,
+        0.376,
+        0.327,
+        0.518
+      ]
+    },
+    {
+      "island": 6,
+      "material": "leather",
+      "triangles": 37,
+      "area": 1936.6,
+      "along": [
+        -10.6,
+        9.0
+      ],
+      "mu_uv": [
+        0.013,
+        0.082,
+        0.666,
+        0.787
+      ],
+      "bake_uv": [
+        0.093,
+        0.007,
+        0.859,
+        0.306
+      ]
+    },
+    {
+      "island": 7,
+      "material": "leather",
+      "triangles": 7,
+      "area": 148.2,
+      "along": [
+        -10.0,
+        6.9
+      ],
+      "mu_uv": [
+        0.547,
+        0.14,
+        0.726,
+        0.475
+      ],
+      "bake_uv": [
+        0.493,
+        0.009,
+        0.569,
+        0.151
+      ]
+    },
+    {
+      "island": 8,
+      "material": "leather",
+      "triangles": 15,
+      "area": 451.6,
+      "along": [
+        -15.5,
+        10.9
+      ],
+      "mu_uv": [
+        0.752,
+        0.46,
+        0.987,
+        0.992
+      ],
+      "bake_uv": [
+        0.86,
+        0.739,
+        0.96,
+        0.964
+      ]
+    },
+    {
+      "island": 9,
+      "material": "leather",
+      "triangles": 11,
+      "area": 384.8,
+      "along": [
+        -15.5,
+        10.9
+      ],
+      "mu_uv": [
+        0.752,
+        0.46,
+        0.987,
+        0.992
+      ],
+      "bake_uv": [
+        0.893,
+        0.426,
+        0.993,
+        0.652
+      ]
+    },
+    {
+      "island": 10,
+      "material": "leather",
+      "triangles": 7,
+      "area": 148.2,
+      "along": [
+        -10.0,
+        6.9
+      ],
+      "mu_uv": [
+        0.547,
+        0.14,
+        0.726,
+        0.475
+      ],
+      "bake_uv": [
+        0.65,
+        0.675,
+        0.726,
+        0.817
+      ]
+    },
+    {
+      "island": 11,
+      "material": "cloth",
+      "triangles": 20,
+      "area": 1001.7,
+      "along": [
+        -19.6,
+        9.6
+      ],
+      "mu_uv": [
+        0.021,
+        0.017,
+        0.994,
+        0.991
+      ],
+      "bake_uv": [
+        0.275,
+        0.275,
+        0.688,
+        0.688
+      ]
+    },
+    {
+      "island": 12,
+      "material": "cloth",
+      "triangles": 20,
+      "area": 1001.7,
+      "along": [
+        -19.6,
+        9.6
+      ],
+      "mu_uv": [
+        0.021,
+        0.017,
+        0.994,
+        0.991
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.42,
+        0.421
+      ]
+    },
+    {
+      "island": 13,
+      "material": "skin",
+      "triangles": 74,
+      "area": 2717.4,
+      "along": [
+        -12.3,
+        9.5
+      ],
+      "mu_uv": [
+        0.013,
+        0.142,
+        0.697,
+        0.982
+      ],
+      "bake_uv": [
+        0.009,
+        0.036,
+        0.812,
+        0.963
+      ]
+    }
+  ]
+}
