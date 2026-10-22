@@ -597,6 +597,10 @@ private:
     int32_t carrying_ = 0;    // the skill the pointer is holding, 0 for none
     int carryFrom_ = -1;      // the key it was lifted off, or -1 out of the list
     int liftedQuick_ = -1;    // the potion box the pointer is holding, or -1
+    // How many of each healing and mana row (the Apple through the Large Mana Potion) the bag
+    // held last frame, for the bind on arrival (Desk::bindArrivals); -1 before the first look.
+    int heldPotions_[7] = {-1, -1, -1, -1, -1, -1, -1};
+    void bindArrivals(const content::Tables& tables, const sim::Satchel& bag);
     int scriptedSkill_ = -1;
     int scriptedHold_ = -1;
     void skillKeys(const gfx::Window& window, Play& play, const Pointer& pointer);

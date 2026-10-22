@@ -416,11 +416,15 @@ bool portal(const content::ItemRow& row);
 // counted in `Held::durability`, up to twenty a cell. INVENTION: 0.75 caps nothing and merges
 // nothing -- a bought three is its own cell for good and a dropped potion takes a fresh one.
 constexpr int kStackMost = 20;
+// The drinkable potions and the Antidote a hundred a cell (ByPass's bug #55, 2026-10-22: "we need
+// larger potion sizes"; the user picked a hundred and ten-packs on the shelves). Ours, as the
+// twenty: what else stacks, and the timed pets' old-save check, keep kStackMost.
+constexpr int kPotionStackMost = 100;
 // Firecrackers stack too, five a cell (the user, 2026-10-04: 'allow them to stack them, max 5').
 // Ours, as the potions' twenty.
 constexpr int kFirecrackerStackMost = 5;
-// How many of a row's pieces one cell holds: kStackMost for the drinkable potions and the four
-// refining jewels, kFirecrackerStackMost for a Firecracker, 0 for a row that does not stack.
+// How many of a row's pieces one cell holds: kPotionStackMost for the drinkable potions,
+// kStackMost for the four refining jewels, kFirecrackerStackMost for a Firecracker, 0 for a row that does not stack.
 int stackMost(const content::ItemRow& row);
 // Whether a row's pieces stack.
 bool stacks(const content::ItemRow& row);

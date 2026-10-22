@@ -30,13 +30,14 @@ constexpr Offer scroll(int slot, int number) { return Offer{slot, kScrolls, numb
 // Eye and Key (no Devil Square here). OpenMU's Version075 shelves, which these replace, were
 // Season 6's with its later rows taken out, at +3 with luck and options -- far fuller.
 
-// Potion Girl Amy (shop5): the eight potions, single and three, arrows and bolts to +2. **Not
+// Potion Girl Amy (shop5): the eight potions, single and ten (a ten since ByPass's bug #55,
+// 2026-10-22, where WebZen sells three: a cell holds a hundred now, sim::kPotionStackMost), arrows and bolts to +2. **Not
 // the Town Portal Scroll, on no shelf** (the user, 2026-10-04: "there is no point of town
 // portal"): Tab and the warp list take him home.
 constexpr Offer kPotionGirl[] = {
     sip(0, 0, 1), sip(1, 1, 1), sip(2, 2, 1), sip(3, 3, 1), sip(4, 4, 1), sip(5, 5, 1),
-    sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 3), sip(9, 1, 3), sip(10, 2, 3), sip(11, 3, 3),
-    sip(12, 4, 3), sip(13, 5, 3), sip(14, 6, 3), sip(15, 8, 3), gear(16, kBows, 7, 0),
+    sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 10), sip(9, 1, 10), sip(10, 2, 10), sip(11, 3, 10),
+    sip(12, 4, 10), sip(13, 5, 10), sip(14, 6, 10), sip(15, 8, 10), gear(16, kBows, 7, 0),
     gear(17, kBows, 7, 1), gear(18, kBows, 7, 2), gear(19, kBows, 15, 0), gear(20, kBows, 15, 1),
     gear(21, kBows, 15, 2),
 };
@@ -44,8 +45,8 @@ constexpr Offer kPotionGirl[] = {
 // Harold (shop3), the wandering merchant east of town: the potions and the Leather set.
 constexpr Offer kHarold[] = {
     sip(0, 0, 1), sip(1, 1, 1), sip(2, 2, 1), sip(3, 3, 1), sip(4, 4, 1), sip(5, 5, 1),
-    sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 3), sip(9, 1, 3), sip(10, 2, 3), sip(11, 3, 3),
-    sip(12, 4, 3), sip(13, 5, 3), sip(14, 6, 3), sip(15, 8, 3), gear(16, kHelms, 5, 0),
+    sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 10), sip(9, 1, 10), sip(10, 2, 10), sip(11, 3, 10),
+    sip(12, 4, 10), sip(13, 5, 10), sip(14, 6, 10), sip(15, 8, 10), gear(16, kHelms, 5, 0),
     gear(18, kPants, 5, 0), gear(20, kBoots, 5, 0), gear(22, kGloves, 5, 0),
     gear(32, kArmours, 5, 0),
 };
@@ -56,8 +57,8 @@ constexpr Offer kHarold[] = {
 // (the user, 2026-10-01): with the skills on the orbs a copy was the same weapon dearer.
 constexpr Offer kMartin[] = {
     sip(0, 0, 1), sip(1, 1, 1), sip(2, 2, 1), sip(3, 3, 1), sip(4, 4, 1), sip(5, 5, 1),
-    sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 3), sip(9, 1, 3), sip(10, 2, 3), sip(11, 3, 3),
-    sip(12, 4, 3), sip(13, 5, 3), sip(14, 6, 3), sip(15, 8, 3), gear(16, kHelms, 4, 0),
+    sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 10), sip(9, 1, 10), sip(10, 2, 10), sip(11, 3, 10),
+    sip(12, 4, 10), sip(13, 5, 10), sip(14, 6, 10), sip(15, 8, 10), gear(16, kHelms, 4, 0),
     gear(18, kPants, 4, 0), gear(20, kHelms, 6, 0), gear(22, kArmours, 6, 0),
     gear(32, kPants, 6, 0), gear(34, kGloves, 8, 0), gear(36, kBoots, 8, 0),
     gear(38, kShields, 2, 0), gear(48, kShields, 6, 0), gear(50, kSpears, 2, 0),
@@ -116,7 +117,7 @@ constexpr Offer kBarmaid[] = {
 // **And Lumen's own, which is ours** (the user, 2026-09-30): the same bar, the Horns of Uniria
 // and Dinorant beside the pets (docs/game/mount.md, ours: 0.75 sells neither, and the Dinorant is
 // made in a Chaos Machine this game does not have -- the user's pick), with Amy's potions on
-// the two rows below it, laid out as Amy lays them, a single over its three. Lorencia only --
+// the two rows below it, laid out as Amy lays them, a single over its ten. Lorencia only --
 // Caren keeps the plain bar, since Izabel sells the potions in Devias. **The pets and the mounts
 // off it since 2026-10-11**, as off Caren's: the Angel, the Imp and Uniria drop, and the Dinorant
 // is made in the Chaos Machine. **And the arrows and
@@ -124,9 +125,9 @@ constexpr Offer kBarmaid[] = {
 // lorencia tavern", "+0,+1,+2,+3"): Amy and Eo stop at +2; the +3 is priced off quiver().
 constexpr Offer kLumen[] = {
     sip(0, 9, 1),
-    sip(16, 0, 1),  sip(24, 0, 3),  sip(17, 1, 1),  sip(25, 1, 3),  sip(18, 2, 1),  sip(26, 2, 3),
-    sip(19, 3, 1),  sip(27, 3, 3),  sip(20, 4, 1),  sip(28, 4, 3),  sip(21, 5, 1),  sip(29, 5, 3),
-    sip(22, 6, 1),  sip(30, 6, 3),  sip(23, 8, 1),  sip(31, 8, 3),
+    sip(16, 0, 1),  sip(24, 0, 10),  sip(17, 1, 1),  sip(25, 1, 10),  sip(18, 2, 1),  sip(26, 2, 10),
+    sip(19, 3, 1),  sip(27, 3, 10),  sip(20, 4, 1),  sip(28, 4, 10),  sip(21, 5, 1),  sip(29, 5, 10),
+    sip(22, 6, 1),  sip(30, 6, 10),  sip(23, 8, 1),  sip(31, 8, 10),
     gear(32, kBows, 15, 0), gear(33, kBows, 15, 1), gear(34, kBows, 15, 2), gear(35, kBows, 15, 3),
     gear(36, kBows, 7, 0),  gear(37, kBows, 7, 1),  gear(38, kBows, 7, 2),  gear(39, kBows, 7, 3),
 };
@@ -143,8 +144,8 @@ constexpr Offer kLumen[] = {
 // (the user, 2026-10-19: "lets remove elite yeti orb from vendor on noria").
 constexpr Offer kElfLala[] = {
     sip(0, 0, 1), sip(1, 1, 1), sip(2, 2, 1), sip(3, 3, 1), sip(4, 4, 1), sip(5, 5, 1),
-    sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 3), sip(9, 1, 3), sip(10, 2, 3), sip(11, 3, 3),
-    sip(12, 4, 3), sip(13, 5, 3), sip(14, 6, 3), sip(15, 8, 3), gear(16, kHelms, 10, 0),
+    sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 10), sip(9, 1, 10), sip(10, 2, 10), sip(11, 3, 10),
+    sip(12, 4, 10), sip(13, 5, 10), sip(14, 6, 10), sip(15, 8, 10), gear(16, kHelms, 10, 0),
     gear(18, kHelms, 12, 0), gear(20, kArmours, 10, 0), gear(22, kArmours, 12, 0),
     gear(32, kPants, 10, 0), gear(34, kPants, 12, 0), gear(36, kGloves, 10, 0),
     gear(38, kBoots, 10, 0), gear(48, kHelms, 11, 0), gear(50, kArmours, 11, 0),
@@ -169,8 +170,8 @@ constexpr Offer kCraftsman[] = {
 // Pasi's (the user: "remove twisting slash,multi-shot,meteor from vendors").
 constexpr Offer kIzabel[] = {
     sip(0, 0, 1), sip(1, 1, 1), sip(2, 2, 1), sip(3, 3, 1), sip(4, 4, 1), sip(5, 5, 1),
-    sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 3), sip(9, 1, 3), sip(10, 2, 3), sip(11, 3, 3),
-    sip(12, 4, 3), sip(13, 5, 3), sip(14, 6, 3), sip(15, 8, 3), scroll(17, 2),
+    sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 10), sip(9, 1, 10), sip(10, 2, 10), sip(11, 3, 10),
+    sip(12, 4, 10), sip(13, 5, 10), sip(14, 6, 10), sip(15, 8, 10), scroll(17, 2),
     scroll(18, 5), gear(20, kHelms, 7, 0), gear(22, kArmours, 4, 0),
     gear(32, kPants, 7, 0), gear(34, kGloves, 7, 0), gear(36, kBoots, 7, 0),
     gear(38, kStaves, 2, 0),

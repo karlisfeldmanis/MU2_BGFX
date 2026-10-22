@@ -959,7 +959,7 @@ bool portal(const content::ItemRow& row) {
 // And the Antidote, the user's (2026-09-30: "antidotes are not stacking"): the Dungeon's poisons
 // stack now, and a player carries a few.
 int stackMost(const content::ItemRow& row) {
-    if (heals(row) || restores(row) || antidote(row)) return kStackMost;
+    if (heals(row) || restores(row) || antidote(row)) return kPotionStackMost;
     if (firecracker(row)) return kFirecrackerStackMost;
     // The Bless, the Soul, the Life and the Chaos too, twenty a cell as the potions (the user,
     // 2026-10-20: "we need stacking jewels", bug report #41). MU counts its own stacked jewels in

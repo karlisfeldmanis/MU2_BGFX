@@ -1771,10 +1771,53 @@ void Desk::script(float x, float y, bool press, bool release, bool right, bool s
                double(x), double(y));
 }
 
+// **A healing or mana potion, or an Apple, binds itself as it arrives** (the user, 2026-10-22:
+// "when char first time pickup some hp/mana potion or apple we need to attach to quick slot so
+// user understand that is usable"). Ours: MU binds nothing by itself. Only on an arrival -- a
+// row the bag holds more of than last frame -- and only when no key drinks it already: a key
+// holding a weaker one of its kind is raised to it (and still drinks the weaker, `substitutes`),
+// else it takes the first empty key. A key cleared by hand stays clear while the bottles sit in
+// the bag, and the first look (a load, a server's first snapshot) only counts.
+void Desk::bindArrivals(const content::Tables& tables, const sim::Satchel& bag) {
+    int held[7] = {};
+    int32_t rowOf[7] = {-1, -1, -1, -1, -1, -1, -1};
+    for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+        if (bag[slot].empty()) continue;
+        const content::ItemRow& row = tables.items[size_t(bag[slot].item)];
+        if (!sim::heals(row) && !sim::restores(row)) continue;
+        held[row.number] += std::max<int>(1, bag[slot].durability);
+        rowOf[row.number] = bag[slot].item;
+    }
+    const bool first = heldPotions_[0] < 0;
+    for (int number = 0; number < 7; ++number) {
+        const bool arrived = !first && held[number] > heldPotions_[number];
+        heldPotions_[number] = held[number];
+        if (!arrived) continue;
+        const int32_t item = rowOf[number];
+        int weaker = -1, empty = -1;
+        bool drunk = false;
+        for (int key = 0; key < Hud::kQuickKeys; ++key) {
+            if (quick_[key] < 0) {
+                if (empty < 0) empty = key;
+                continue;
+            }
+            if (substitutes(tables, item, quick_[key])) drunk = true;
+            else if (weaker < 0 && substitutes(tables, quick_[key], item)) weaker = key;
+        }
+        if (drunk) continue;
+        const int key = weaker >= 0 ? weaker : empty;
+        if (key < 0) continue;
+        quick_[key] = item;
+        core::logf("window: %s bound to key %d as it arrived", tables.items[size_t(item)].label.c_str(),
+                   key + 1);
+    }
+}
+
 void Desk::quickKeys(const gfx::Window& window, Play& play, const Pointer& pointer) {
     const sim::Realm& realm = play.realm();
     const content::Tables& tables = *realm.tables();
     const sim::Satchel& bag = realm.satchel();
+    bindArrivals(tables, bag);
     // **The boxes rearrange by dragging**, as the skill keys do (the user, 2026-10-01: "i cant
     // reorder potions / drag/drop"). A press lifts a bound box; let go on another box it is a
     // swap, on its own box nothing, and anywhere off the boxes it is taken off the bar -- the
