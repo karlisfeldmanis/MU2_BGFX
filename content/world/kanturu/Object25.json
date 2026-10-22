@@ -1,0 +1,160 @@
+{
+  "item": "Object25",
+  "mu_name": "Object25",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 24,
+  "placements": 11,
+  "profile": "world",
+  "sheets": {
+    "song_k0w2": "kr_song_k0w2.png",
+    "song_k0w1": "kr_song_k0w1.png",
+    "song_k0t1": "kr_song_k0t1.png",
+    "song_k0t2": "kr_song_k0t2.png",
+    "song_k0w3": "kr_song_k0w3.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k0w2": "flagstone",
+    "song_k0w1": "plaster",
+    "song_k0t1": "timber",
+    "song_k0t2": "timber",
+    "song_k0w3": "plaster"
+  },
+  "material_note": "song_k0w2: a brick wall with a barred window: flagstone. song_k0w1: plaster over brick: plaster. song_k0t1: a rope-bound log wall: timber. song_k0t2: a log's end grain: timber. song_k0w3: plaster over brick: plaster.",
+  "why_this_one": "A thatched hut, 11 of them (the song_k0 village set). The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "timber",
+      "triangles": 18,
+      "area": 26033.6,
+      "along": [
+        80.3,
+        112.3
+      ],
+      "mu_uv": [
+        0.036,
+        -0.996,
+        1.005,
+        1.0
+      ],
+      "bake_uv": [
+        0.441,
+        0.008,
+        0.984,
+        0.992
+      ]
+    },
+    {
+      "island": 1,
+      "material": "timber",
+      "triangles": 18,
+      "area": 29390.1,
+      "along": [
+        -112.3,
+        -71.6
+      ],
+      "mu_uv": [
+        0.0,
+        -0.996,
+        1.005,
+        1.0
+      ],
+      "bake_uv": [
+        0.008,
+        0.304,
+        0.989,
+        0.992
+      ]
+    },
+    {
+      "island": 2,
+      "material": "timber",
+      "triangles": 14,
+      "area": 12680.4,
+      "along": [
+        85.4,
+        106.4
+      ],
+      "mu_uv": [
+        0.007,
+        0.0,
+        4.533,
+        1.0
+      ],
+      "bake_uv": [
+        0.264,
+        0.304,
+        0.718,
+        0.953
+      ]
+    },
+    {
+      "island": 3,
+      "material": "timber",
+      "triangles": 12,
+      "area": 10284.9,
+      "along": [
+        -78.5,
+        88.5
+      ],
+      "mu_uv": [
+        0.347,
+        -0.013,
+        0.595,
+        0.817
+      ],
+      "bake_uv": [
+        0.386,
+        0.757,
+        0.501,
+        0.992
+      ]
+    },
+    {
+      "island": 4,
+      "material": "timber",
+      "triangles": 14,
+      "area": 12292.3,
+      "along": [
+        -93.6,
+        -74.7
+      ],
+      "mu_uv": [
+        0.007,
+        0.0,
+        4.533,
+        1.0
+      ],
+      "bake_uv": [
+        0.008,
+        0.304,
+        0.797,
+        0.953
+      ]
+    },
+    {
+      "island": 5,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 174577.5,
+      "along": [
+        -96.7,
+        95.7
+      ],
+      "mu_uv": [
+        -0.052,
+        0.0,
+        1.075,
+        1.183
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.565,
+        0.741
+      ]
+    }
+  ]
+}

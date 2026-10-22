@@ -1,0 +1,158 @@
+{
+  "item": "Object26",
+  "mu_name": "Object26",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 25,
+  "placements": 16,
+  "profile": "world",
+  "sheets": {
+    "song_k0r1": "kr_song_k0r1.png",
+    "song_k0w1": "kr_song_k0w1.png",
+    "song_k0t1": "kr_song_k0t1.png",
+    "song_k0t2": "kr_song_k0t2.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k0r1": "plank",
+    "song_k0w1": "plaster",
+    "song_k0t1": "timber",
+    "song_k0t2": "timber"
+  },
+  "material_note": "song_k0r1: splintered boards: plank. song_k0w1: plaster over brick: plaster. song_k0t1: a rope-bound log wall: timber. song_k0t2: a log's end grain: timber.",
+  "why_this_one": "A lean-to, 16 of them. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plank",
+      "triangles": 37,
+      "area": 26899.4,
+      "along": [
+        -112.1,
+        101.7
+      ],
+      "mu_uv": [
+        -1.246,
+        -1.378,
+        1.969,
+        1.005
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.809,
+        0.843
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plank",
+      "triangles": 4,
+      "area": 3701.5,
+      "along": [
+        -95.2,
+        180.5
+      ],
+      "mu_uv": [
+        -0.296,
+        -0.011,
+        1.044,
+        3.204
+      ],
+      "bake_uv": [
+        0.328,
+        0.008,
+        0.691,
+        0.922
+      ]
+    },
+    {
+      "island": 2,
+      "material": "timber",
+      "triangles": 14,
+      "area": 23084.2,
+      "along": [
+        88.1,
+        121.3
+      ],
+      "mu_uv": [
+        -0.992,
+        -0.013,
+        1.003,
+        0.806
+      ],
+      "bake_uv": [
+        0.45,
+        0.007,
+        0.921,
+        0.843
+      ]
+    },
+    {
+      "island": 3,
+      "material": "timber",
+      "triangles": 10,
+      "area": 10857.0,
+      "along": [
+        -119.4,
+        115.4
+      ],
+      "mu_uv": [
+        0.0,
+        0.158,
+        1.0,
+        1.845
+      ],
+      "bake_uv": [
+        0.308,
+        0.227,
+        0.944,
+        0.814
+      ]
+    },
+    {
+      "island": 4,
+      "material": "timber",
+      "triangles": 4,
+      "area": 3982.5,
+      "along": [
+        -120.0,
+        132.9
+      ],
+      "mu_uv": [
+        -0.34,
+        -0.307,
+        1.0,
+        1.728
+      ],
+      "bake_uv": [
+        0.007,
+        0.398,
+        0.993,
+        0.976
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plaster",
+      "triangles": 2,
+      "area": 57334.4,
+      "along": [
+        -120.6,
+        117.6
+      ],
+      "mu_uv": [
+        -0.09,
+        -0.003,
+        0.984,
+        0.898
+      ],
+      "bake_uv": [
+        0.007,
+        0.277,
+        0.313,
+        0.533
+      ]
+    }
+  ]
+}

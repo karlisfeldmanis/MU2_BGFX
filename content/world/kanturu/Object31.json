@@ -1,0 +1,46 @@
+{
+  "item": "Object31",
+  "mu_name": "Object31",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 30,
+  "placements": 21,
+  "profile": "world",
+  "sheets": {
+    "han_puzzle": "kr_han_puzzle.png",
+    "han_w3": "kr_han_w3.png",
+    "han_w1": "kr_han_w1.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "han_puzzle": "flagstone",
+    "han_w3": "plank",
+    "han_w1": "rock"
+  },
+  "material_note": "han_puzzle: carved stone blocks: flagstone. han_w3: weathered mossy boards: plank. han_w1: mossy stone: rock.",
+  "why_this_one": "A carved stone block, 21 of them. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 54,
+      "area": 26482.3,
+      "along": [
+        -37.2,
+        37.1
+      ],
+      "mu_uv": [
+        -2.086,
+        -5.334,
+        4.65,
+        2.014
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.992,
+        0.992
+      ]
+    }
+  ]
+}

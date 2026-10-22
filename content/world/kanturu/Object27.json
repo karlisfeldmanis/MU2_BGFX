@@ -1,0 +1,44 @@
+{
+  "item": "Object27",
+  "mu_name": "Object27",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 26,
+  "placements": 30,
+  "profile": "world",
+  "sheets": {
+    "song_k0w1": "kr_song_k0w1.png",
+    "han_w1": "kr_han_w1.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k0w1": "plaster",
+    "han_w1": "rock"
+  },
+  "material_note": "song_k0w1: plaster over brick: plaster. han_w1: mossy stone: rock.",
+  "why_this_one": "Wall planks, 30 of them. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 53,
+      "area": 67911.5,
+      "along": [
+        -127.9,
+        127.9
+      ],
+      "mu_uv": [
+        -0.915,
+        -0.992,
+        4.171,
+        1.331
+      ],
+      "bake_uv": [
+        -0.915,
+        -0.992,
+        4.171,
+        1.331
+      ]
+    }
+  ]
+}

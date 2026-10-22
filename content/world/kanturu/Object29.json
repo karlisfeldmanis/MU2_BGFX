@@ -1,0 +1,134 @@
+{
+  "item": "Object29",
+  "mu_name": "Object29",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 28,
+  "placements": 5,
+  "profile": "world",
+  "sheets": {
+    "song_k0a1": "kr_song_k0a1.png",
+    "song_k0t1": "kr_song_k0t1.png",
+    "song_k0t2": "kr_song_k0t2.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k0a1": "plank",
+    "song_k0t1": "timber",
+    "song_k0t2": "timber"
+  },
+  "material_note": "song_k0a1: an iron-banded plank wall: plank. song_k0t1: a rope-bound log wall: timber. song_k0t2: a log's end grain: timber.",
+  "why_this_one": "A hut, 5 of them. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plank",
+      "triangles": 44,
+      "area": 19537.3,
+      "along": [
+        -28.2,
+        28.2
+      ],
+      "mu_uv": [
+        -1.108,
+        -0.928,
+        1.731,
+        0.601
+      ],
+      "bake_uv": [
+        0.008,
+        0.009,
+        0.924,
+        0.992
+      ]
+    },
+    {
+      "island": 1,
+      "material": "timber",
+      "triangles": 8,
+      "area": 1157.5,
+      "along": [
+        -38.6,
+        14.1
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.994,
+        1.0
+      ],
+      "bake_uv": [
+        0.008,
+        0.211,
+        0.955,
+        0.981
+      ]
+    },
+    {
+      "island": 2,
+      "material": "timber",
+      "triangles": 8,
+      "area": 1157.5,
+      "along": [
+        -14.1,
+        38.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.99,
+        1.0
+      ],
+      "bake_uv": [
+        0.265,
+        0.008,
+        0.861,
+        0.775
+      ]
+    },
+    {
+      "island": 3,
+      "material": "timber",
+      "triangles": 8,
+      "area": 1157.5,
+      "along": [
+        -14.1,
+        38.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.99,
+        1.0
+      ],
+      "bake_uv": [
+        0.421,
+        0.008,
+        0.93,
+        0.778
+      ]
+    },
+    {
+      "island": 4,
+      "material": "timber",
+      "triangles": 8,
+      "area": 1157.5,
+      "along": [
+        -38.6,
+        14.1
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.99,
+        1.0
+      ],
+      "bake_uv": [
+        0.515,
+        0.008,
+        0.98,
+        0.981
+      ]
+    }
+  ]
+}
