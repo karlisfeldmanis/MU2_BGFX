@@ -44,10 +44,14 @@ struct WorldShow {
     std::string musicWhere;  // "safe", "indoors", "safe_indoors", "everywhere"
     bool musicLoops = false; // round and round while there, rather than once and rested
     // The rain's track (`music.rain`), looped while a wet spell is on, out under the sky
-    // everywhere, the safe zone too, in place of `music` (the user, 2026-10-22: "when its raining
-    // in lorencia use this music, also in safe zone which is replacing defult noria music while
-    // its raining"). Under a roof the world's own indoor track still plays. Empty for none.
+    // everywhere, the safe zone too, in place of `music` (the user, 2026-10-22: "replacing defult
+    // noria music while its raining"). Noria's only: "lorencia keeps original rain sound which is
+    // timed with thunder". Under a roof the world's own indoor track still plays. Empty for none.
     std::string musicRain;
+    // The hunt's track (`music.wild`), looped while he is out of the safe zone, where the world's
+    // own `music` is not playing (the user, 2026-10-22: "when char is not in kanturu safe zone we
+    // play thellywellyn-horror-ambience"). A wet spell's `rain` goes over it. Empty for none.
+    std::string musicWild;
     float musicRest = -1.0f; // seconds of silence after it ends before it plays again; < 0 is
                              // the towns' rule, kMusicRestSeconds after it last began
 
