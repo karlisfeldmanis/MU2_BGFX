@@ -209,8 +209,9 @@
     "music": {
       "track": "/music/kanturu_ambient.mp3",
       "where": "safe",
-      "note": "Ours, not WebZen's kanturu_1st: freesound_community scary-ambient-05 (the user, 2026-10-22: 'use this music for kunturu not webzen'), looped in the camp's safe zone only, the house rule (the user, 2026-10-11: 'we play music on safezones only').",
-      "loops": true
+      "note": "Ours, not WebZen's kanturu_1st: freesound_community scary-ambient-05 (the user, 2026-10-22: 'use this music for kunturu not webzen'), looped in the camp's safe zone only, the house rule (the user, 2026-10-11: 'we play music on safezones only'). And out of the safe zone, thellywellyn horror-ambience-4 looped (the user, 2026-10-22: 'when char is not in kanturu safe zone we play thellywellyn-horror-ambience-4-303645.mp3').",
+      "loops": true,
+      "wild": "/music/kanturu_wild.mp3"
     },
     "leaves": "leaf"
   },
