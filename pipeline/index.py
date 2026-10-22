@@ -1061,8 +1061,8 @@ def fixed(declared: dict, corrections: Path) -> dict:
         # and it is nought for everybody else. See placements.json.
 
         # And a shift off the tile's middle, in units, for a figure that has to stand on a line
-        # the tiles do not: Lorencia's Lugard sits on the fountain's middle, which runs along
-        # a tile edge. The server keeps his tile; only the figure moves.
+        # the tiles do not, such as a fountain's middle that runs along a tile edge. The server
+        # keeps his tile; only the figure moves.
         if (shift := spawn.get("shift")):
             placement["at"][0] += float(shift[0])
             placement["at"][1] += float(shift[1])

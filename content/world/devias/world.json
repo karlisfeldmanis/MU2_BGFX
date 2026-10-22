@@ -139,11 +139,11 @@
       "name": "Kesra the Broker",
       "figure": "mirazu",
       "at": [
-        207,
-        45
+        216,
+        59
       ],
       "look": 3,
-      "note": "Ours: the Broker (docs/game/broker.md), in MuMain's Mirage (Npc/mirazu.bmd), the Broker's one figure in all three towns. Moved from 221,63 beside Baz to 207,45 on the snow beside the cobbled crossing (the user, 2026-10-22: 'we need to put devias broker here', then 'lets move him here')."
+      "note": "Ours: the Broker (docs/game/broker.md), in MuMain's Mirage (Npc/mirazu.bmd), the Broker's one figure in all three towns. Moved from 221,63 beside Baz to 216,59 on the open cobbles up the path from the vault (the user, 2026-10-22: 'we need to put devias broker here')."
     },
     {
       "npc": 406,
@@ -177,6 +177,17 @@
       ],
       "look": 4,
       "note": "Ours: the Messenger of Archangel (233), Blood Castle's gatekeeper, at the first of the two tiles Season Six stands him on (VersionSeasonSix/Maps/Devias.cs:45). 0.75 has no Blood Castle; until it is written he says the hero is not ready (the user, 2026-09-30)."
+    },
+    {
+      "npc": 540,
+      "name": "Lugard",
+      "figure": "Lugard",
+      "at": [
+        207,
+        45
+      ],
+      "look": 3,
+      "note": "Ours: the reset keeper (resets are being designed, 2026-10-22), on the snow between the cobbled paths where the user showed (2026-10-22: 'lets move him here', 'rset npc'; first by the Lorencia fountain). MuMain's MONSTER_LUGARD (540), the Doppelganger keeper in later seasons; not Version075's."
     }
   ],
   "gates": {

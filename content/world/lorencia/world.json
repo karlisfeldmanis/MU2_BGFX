@@ -207,17 +207,6 @@
       ],
       "look": 3,
       "note": "Ours: the Broker (sim::kBroker, docs/game/broker.md), the market Lorencia, Devias and Noria share, three tiles east of Baz so the vault and the market stand together (the user, 2026-10-11). Moved to 140,139, on the street by the fenced garden (the user, 2026-10-12: 'move broker here in lorencia'). Look 4 to 3, facing up the street toward one who comes to him from the garden's corner ('rotate broker so he is facing character'). Not a MU NPC; he wears MuMain's Mirage (Npc/mirazu.bmd, scale 0.95), the user's pick, the same figure in all three towns."
-    },
-    {
-      "npc": 540,
-      "name": "Lugard",
-      "figure": "Lugard",
-      "at": [
-        144,
-        127
-      ],
-      "look": 5,
-      "note": "Ours: the reset keeper (resets are being designed, 2026-10-22), the user's pick and spot: the town centre east of the fountain, facing down the lane between the planters. MuMain's MONSTER_LUGARD (540), the Doppelganger keeper in later seasons; not Version075's. The figure is shifted half a tile onto the fountain's middle line (placements.json); his tile is 144,127."
     }
   ],
   "gates": {
