@@ -56,7 +56,8 @@ void Thunder::strike(const float from[3], const float to[3], uint32_t target) {
     throwPath(*arc);
 }
 
-void Thunder::chain(const float from[3], const float to[3], uint32_t target, float tall) {
+void Thunder::chain(const float from[3], const float to[3], uint32_t target, float tall,
+                    uint32_t source) {
     strike(from, to, target);
     // The one strike just laid, the last place taken.
     for (Arc& one : arcs_) {
@@ -65,7 +66,21 @@ void Thunder::chain(const float from[3], const float to[3], uint32_t target, flo
         one.blue = true;
         one.glintIn = kGlintFrames;
         one.tall = tall;
+        one.source = source;
         return;
+    }
+}
+
+void Thunder::moveFrom(Arc& arc, const float at[3]) {
+    const float by[3] = {at[0] - arc.from[0], at[1] - arc.from[1], at[2] - arc.from[2]};
+    for (int k = 0; k < 3; ++k) arc.from[k] = at[k];
+    const int last = std::max(1, arc.points - 1);
+    for (int i = 0; i < arc.points; ++i) {
+        const float weight = 1.0f - float(i) / float(last);
+        for (int k = 0; k < 3; ++k) {
+            arc.wide[i][k] += by[k] * weight;
+            arc.thin[i][k] += by[k] * weight;
+        }
     }
 }
 

@@ -1437,7 +1437,12 @@ void Play::update(double seconds) {
                             const FigureBody* look = target->figure.body();
                             tall = look ? look->height * look->scale : 1.0f;
                         }
-                        if (off != nullptr && off->placed) {
+                        if (happening.rune) {
+                            // A passive's -- Stormcall, the ring of lightning: off his body,
+                            // fixed (the user, 2026-10-22: "only when its passive it can come
+                            // from character body"); only the spell leaves his weapon.
+                            thunder_.chain(from, to, happening.whom, tall);
+                        } else if (off != nullptr && off->placed) {
                             const FigureBody* look = off->figure.body();
                             const float offTall = look ? look->height * look->scale : 1.0f;
                             const float at[3] = {off->crown[0], off->crown[1] - offTall * 0.5f,
@@ -1449,8 +1454,8 @@ void Play::update(double seconds) {
                             int thrown = 0;
                             float tip[3];
                             if (weaponHead(*caster, tip)) {
-                                thunder_.chain(tip, to, happening.whom, tall);
-                                thunder_.chain(tip, to, happening.whom, tall);
+                                thunder_.chain(tip, to, happening.whom, tall, happening.who);
+                                thunder_.chain(tip, to, happening.whom, tall, happening.who);
                                 thrown = 2;
                             }
                             for (const int hand : {0, 3}) {
@@ -2757,6 +2762,11 @@ void Play::update(double seconds) {
         if (blinkIn_ >= kBlinkFadeSeconds) blinkIn_ = -1.0f;
     }
     thunder_.update(float(seconds), standing, middle);
+    // Lightning's bolts held on his weapon's head as he moves (Thunder::anchor).
+    thunder_.anchor([&](uint32_t id, float* out) {
+        const Drawn* drawn = drawnOf(id);
+        return drawn != nullptr && drawn->placed && weaponHead(*drawn, out);
+    });
     // Twisting Slash's wheel follows him as he is drawn, and sounds as it starts to turn.
     wheel_.update(
         float(seconds),

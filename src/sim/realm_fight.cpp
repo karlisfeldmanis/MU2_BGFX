@@ -899,6 +899,9 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
     // Said as Lightning let go at it, which is what the drawing throws a thunder on; the blow
     // is his swing's roll, on the same tick -- lightning does not fly -- and pays no mana.
     say(What::Loosed, hero, skill::kLightning, 0, 0, struckBy->id);
+    // A rune's, so the drawing throws it off his body and not his weapon (the user, 2026-10-22:
+    // "only when its passive it can come from character body").
+    happenings_.back().rune = true;
     core::logf("stormcall: tick %lld, lightning on #%u beside #%u", (long long)tick_,
                struckBy->id, struck.id);
     runeStrike(hero, *struckBy, kStormcallForce * runeForce(hero, Element::Lightning));
@@ -934,6 +937,7 @@ void Realm::ringStings(Body& hero, Body& struck, int wound) {
     // Lightning: a bolt on it, said as Lightning let go at it, which pushes as Lightning does.
     if (e.lightningRing > 0 && rolls(e.lightningRing)) {
         say(What::Loosed, hero, skill::kLightning, 0, 0, struck.id);
+        happenings_.back().rune = true;  // a passive's: off his body, as Stormcall's
         core::logf("ring of lightning: tick %lld, on #%u", (long long)tick_, struck.id);
         runeStrike(hero, struck, kRingBoltForce * runeForce(hero, Element::Lightning));
         if (struck.alive() && !fixed(struck)) push(struck, hero);

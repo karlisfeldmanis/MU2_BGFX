@@ -44,7 +44,18 @@ public:
     // frames in (its LifeTime 15 of 20), blue BITMAP_LIGHT glints thrown over the body it struck,
     // (0.2, 0.2, 0.8), MU's one on every bone; here kGlints on random points of the body, `tall`
     // its drawn height, as this has no bones. One call a bolt: Play throws one from each hand.
-    void chain(const float from[3], const float to[3], uint32_t target, float tall);
+    // `source`: the body whose weapon it leaves, so `anchor` holds its start on the weapon's head
+    // as he moves (the user, 2026-10-22: "lightiing has to be attach with weapon, not fixed
+    // position"); 0 for a bolt that leaves a fixed point -- a leap off a body, which `to`'s
+    // own follow already carries.
+    void chain(const float from[3], const float to[3], uint32_t target, float tall,
+               uint32_t source = 0);
+
+    // Each frame after `update`: `head(id, out)` gives the head of body id's weapon now, false
+    // when it has none drawn; every bolt with that source starts there, its path bent along with
+    // it, wholly at the weapon and not at all at the far end.
+    template <typename Head>
+    void anchor(Head head);
 
     // **The crackle on the caster himself** while he channels (the user, 2026-09-28: "add some
     // electric effect to the character itself"), ours: every couple of reference frames two small
@@ -88,6 +99,7 @@ private:
         bool blue = false;              // Chain Lightning's: tinted, its glints still to throw
         float glintIn = 0.0f;           // reference frames until they are
         float tall = 1.0f;              // the struck body's drawn height
+        uint32_t source = 0;            // the body whose weapon it leaves; 0 holds `from`
     };
     struct Glint {
         bool alive = false;
@@ -175,6 +187,7 @@ private:
     void step(Arc& arc, float frames);
     void smoke(const Arc& arc);
     void glint(const Arc& arc);
+    void moveFrom(Arc& arc, const float at[3]);
 };
 
 template <typename Alive, typename Where>
@@ -207,6 +220,15 @@ void Thunder::update(float seconds, Alive alive, Where where) {
         if (!one.alive) continue;
         one.left -= frames;
         if (one.left <= 0.0f) one.alive = false;
+    }
+}
+
+template <typename Head>
+void Thunder::anchor(Head head) {
+    for (Arc& arc : arcs_) {
+        if (!arc.alive || arc.source == 0) continue;
+        float at[3];
+        if (head(arc.source, at)) moveFrom(arc, at);
     }
 }
 
