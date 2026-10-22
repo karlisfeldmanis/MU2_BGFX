@@ -388,6 +388,11 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                 const float translucency[4] = {material.translucency, 0.0f, 0.0f, 0.0f};
                 bgfx::setUniform(uTranslucency_, translucency);
                 bindShadeInputs();
+                // z: a town placement (its resident run), which takes the sheet's sheen; a
+                // figure or an item keeps its highlights (gfx::Lighting::sheen).
+                const float weather[4] = {weather_[0], weather_[1],
+                                          bgfx::isValid(batch.resident) ? 1.0f : 0.0f, 0.0f};
+                bgfx::setUniform(uWeather_, weather);
                 // Here and not in bindShadeInputs: the land binds its second layer on stages 9
                 // to 11 and then calls that, and the chrome went down over the town's ground.
                 bindShine();
@@ -738,6 +743,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     metalGain_ = lighting.metalGain;
     probeTaken_[3] = lighting.probeDiffuse;
     weather_[0] = bgfx::isValid(weatherNoise_) ? std::max(lighting.weathering, 0.0f) : 0.0f;
+    weather_[1] = std::max(lighting.sheen, 0.0f);
     shineStrength_ = lighting.refineStrength;
     shineTint_ = lighting.refineTint;
     shineStageStrength_ = lighting.refineStageStrength;

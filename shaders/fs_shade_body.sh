@@ -13,7 +13,7 @@
 #include "shine.sh"
 
 uniform vec4 u_translucency;  // x: the fraction of a leaf's light that comes through it, or 0
-uniform vec4 u_weather;       // x: the sheet's weathering, 0 off. See below
+uniform vec4 u_weather;       // x: the sheet's weathering, 0 off; y: its sheen (gfx::Lighting); z: 1 on the town's placements. See below
 // The weathering's noise, made by Renderer::init: r blotches a metre or two across and a
 // another of them, g half a metre, b a few centimetres; repeating every 8 m of world.
 SAMPLER2D(s_weather, 12);
@@ -267,6 +267,8 @@ void main()
 			float fv = pow(1.0 - min(ndotv, 1.0), 5.0);
 			kd *= mix(1.0, (1.0 + (fd90 - 1.0) * fl) * (1.0 + (fd90 - 1.0) * fv), matte);
 		}
+		// The sheet's sheen on the town's placements (gfx::Lighting::sheen).
+		spec *= mix(1.0, u_weather.y, u_weather.z);
 		colour += (kd + spec) * u_sunColour.rgb * u_sunDir.w * ndotl * shadow * microShadow;
 	}
 
@@ -310,7 +312,8 @@ void main()
 	// under the surface it belongs to, where it would reflect the inside of the mesh.
 	float specAo = saturate(pow(ndotv + ao, exp2(-16.0 * roughness - 1.0)) - 1.0 + ao);
 	float horizon = saturate(1.0 + 1.1 * dot(r, ng));
-	colour += env * (f0 * envAB.x + vec3_splat(envAB.y)) * energy * specAo * horizon * horizon;
+	colour += env * (f0 * envAB.x + vec3_splat(envAB.y)) * energy * specAo * horizon * horizon
+	          * mix(1.0, u_weather.y, u_weather.z);
 
 	// The lamps, on the texture's own albedo rather than on the albedo times MU's baked
 	// light: lights.sh says why.

@@ -349,6 +349,12 @@ struct Lighting {
     // the materials as they were. Only texels whose recipe says `weathering`, which tiled_maps
     // writes into the ORM's alpha. Ours, judged by eye.
     float weathering = 1.0f;
+    // How much sun highlight and sky reflection the town's placements take (figures and items
+    // keep theirs): 1 as the shade pass draws them, 0 matte, as MU's fixed-function light is.
+    // Then the trees' bark too (the user: 'also trees has that glossiness effect'). Kanturu's boulders took a teal sky's sheen at grazing
+    // angles over the dark-painted brown, and stood grey and glossy beside the ground they share
+    // a sheet with (the user, 2026-10-22: 'its like cliffs has some kind of glossined effect').
+    float sheen = 1.0f;
     // The refinement shine (sprint 14). `refineStrength` multiplies the
     // chrome and the star MuMain adds from +7 and +9; 1 is MuMain's own Bright, which it added
     // to an 8-bit frame that clipped, where this frame is HDR under exposure and bloom.
