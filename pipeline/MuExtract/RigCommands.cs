@@ -167,16 +167,24 @@ internal static class RigCommands
         {
             var mesh = geometry[index];
 
+            // Only the vertices a triangle uses. Blender's OBJ importer keeps those, in the
+            // file's order, and drops the rest, so a loose vertex here would put every later
+            // one a bone out of step -- clean_lowpoly refuses the count instead. Kanturu's
+            // Object05 has three in cho_obj02 (535 written, 532 imported).
+            var used = new HashSet<int>(mesh.Indices);
+            var bones = Enumerable.Range(0, mesh.VertexCount)
+                .Where(used.Contains).Select(v => mesh.BoneIndices[v]).ToArray();
+
             json.Append("    {");
             json.Append($"\"texture\": {Quote(mesh.TextureName)}, ");
             json.Append($"\"group\": {Quote(groups[index])}, ");
-            json.Append($"\"vertices\": {mesh.VertexCount}, ");
+            json.Append($"\"vertices\": {bones.Length}, ");
             json.Append("\"vertex_bones\": [");
             // Remapped into engine order here, so nothing downstream has to know that
             // BMD numbering exists. An unbound vertex is anchored to bone 0 rather than
             // left at -1, which is what the old client does and keeps it with the model
             // instead of at the origin.
-            json.Append(string.Join(",", mesh.BoneIndices.Select(
+            json.Append(string.Join(",", bones.Select(
                 b => b >= 0 && b < order.ToEngine.Length ? order.ToEngine[b] : 0)));
             json.Append(']');
             json.Append(index == geometry.Length - 1 ? "}\n" : "},\n");
