@@ -134,7 +134,8 @@ public:
     // log, L, or a giver's dialog), unless he is typing in it (the user, 2026-10-22: "we need hide
     // chat when we open map list (M)", then "when quest window is opened hide chat").
     bool chatHidden() const {
-        return (minimap_.full() || travel_.up() || questLog_.up() || questDialog_.up()) && !chat_.typing();
+        return (minimap_.full() || travel_.up() || questLog_.up() || questDialog_.up() || rebirthing_) &&
+               !chat_.typing();
     }
     // The drop whose name plate is under this pixel, or 0. The last drawn is on top and wins.
     uint32_t labelUnder(float x, float y) const;
@@ -386,6 +387,7 @@ private:
     Jeweler jeweler_;
     RebirthWindow rebirthWindow_;
     bool rebirthing_ = false;  // Lugard's window up (game/ui/rebirth_window.h)
+    bool rebirthAsked_ = false;  // the rite asked from it: his window shutting does not hush him
     bool jeweling_ = false;
     bool bagForJeweler_ = false;
     // The number box the vault's coin buttons open. Modal: see Desk::update.

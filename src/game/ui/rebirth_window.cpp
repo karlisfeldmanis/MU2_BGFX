@@ -28,7 +28,9 @@ constexpr float kParagraph = 5.0f;
 // The heading under the frame's band, his words, and the rite's card down to the foot.
 constexpr float kHeadTop = 44.0f;
 constexpr float kWordsTop = 82.0f;
-constexpr float kCardTop = 222.0f, kCardBottom = 374.0f;
+// The card stops short of the foot: the line said over it (the ask, a refusal) has its own
+// strip above the rule, kFootRule - 13 (the user, 2026-10-22: it lay over the card's "Needs").
+constexpr float kCardTop = 222.0f, kCardBottom = 362.0f;
 constexpr float kCardPad = 7.0f;
 constexpr float kRow = 11.0f;
 

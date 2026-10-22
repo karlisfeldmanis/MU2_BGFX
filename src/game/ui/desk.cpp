@@ -14,6 +14,7 @@
 #include "game/world/world_show.h"
 #include "sim/maps.h"
 #include "sim/quests.h"
+#include "sim/rebirth.h"
 
 namespace mu::game {
 
@@ -297,6 +298,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         std::string name;
         if (!play.playerName(hero->id, &name, nullptr)) name = heroName_;
         reborn_.announce(count, name);
+        play.sound().voice("voice/lugard/lugard_risen.wav");
         // Off a server no one says it on Global, so the bench says it here (the server's own is
         // announceRebirth, server/src/chat.cpp).
         if (!play.remote()) {
@@ -399,7 +401,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 break;
             case Then::Rebirth:
                 rebirthWindow_.answered(one.ok(), play.realm().refusal());
-                if (!one.ok()) refused();
+                // Refused: the rite's words he began on the yes are taken back.
+                if (!one.ok()) {
+                    refused();
+                    play.sound().stopVoice();
+                    rebirthAsked_ = false;
+                }
                 break;
             case Then::ZenBox:
                 if (one.ok()) {
@@ -1449,16 +1456,31 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // Lugard, the Rebirth (game/ui/rebirth_window.h), as the quest dialog is: the left column,
     // walking away shuts him in the realm, and a yes shuts him there too as the rite begins.
     const bool rebirthing = play.isOpen() && play.realm().rebirthing() >= 0;
+    // He reads his page as it opens, in his own voice (content/voice/lugard): one not yet at the
+    // edge is sent away, the first rite is offered at length, the next ones in a line. Shut by
+    // hand or walked off, he stops mid-line, as a quest giver does; a yes lets him go on.
     if (rebirthing && !rebirthing_) {
         click();
         if (play.isOpen()) play.ui(Play::Ui::Opened);
+        const sim::Body& hero = play.realm().hero();
+        const char* page = hero.level < sim::kRebirthLevel ? "resting" : hero.rebirths > 0 ? "again" : "offer";
+        play.sound().voice(std::string("voice/lugard/lugard_") + page + ".wav");
+        rebirthAsked_ = false;
     }
+    if (!rebirthing && rebirthing_ && !rebirthAsked_) play.sound().stopVoice();
     rebirthing_ = rebirthing;
     if (rebirthing_) {
         RebirthRequests asked;
         rebirthWindow_.update(float(window.width()), float(window.height()), play.realm(), pointer, &asked);
         if (asked.click) click();
-        if (asked.reborn) expect(play.rebirth(), Then::Rebirth);
+        // The yes: he says the rite's words over the kneel, cutting his offer as it is given (the
+        // user, 2026-10-22: "NPC audio kept playing while a agreed to kneel faster"); "Rise"
+        // waits for the stand.
+        if (asked.reborn) {
+            play.sound().voice("voice/lugard/lugard_ceremony.wav");
+            expect(play.rebirth(), Then::Rebirth);
+            rebirthAsked_ = true;
+        }
         if (asked.close) {
             play.closeRebirth();
             click();
