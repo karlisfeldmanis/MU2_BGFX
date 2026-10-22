@@ -46,8 +46,9 @@ accounts stay the website's, on the Hetzner box.
 | deploy | `MU2_HOST=root@216.238.127.33 server/deploy.sh` |
 | accounts | the game asks the website about a ticket at `127.0.0.1:8080/internal/ticket`, which only the Hetzner box answers. An SSH tunnel brings it here: the key `/root/.ssh/mu2_accounts`, which Helsinki's `authorized_keys` lets forward to `127.0.0.1:8080` and nothing else (no shell). |
 
-## The Southeast Asia box
+## The Southeast Asia box (closed)
 
+Closed 2026-10-22: nobody played there. Out of the launcher, the website and `mu ship`.
 The third region, rented 2026-10-17 for a player in Da Nang, Vietnam, far from both. Set up as
 the South America box is: its own world and `characters.db`, the accounts through the same kind
 of tunnel (its own key `/root/.ssh/mu2_accounts`, "mu2-singapore accounts tunnel" in Helsinki's
@@ -61,6 +62,23 @@ of tunnel (its own key `/root/.ssh/mu2_accounts`, "mu2-singapore accounts tunnel
 | system | Ubuntu 26.04.1, x86_64, 1 vCPU, 927 MB, 2 GB swap (`/swapfile`); g++ 15.2, CMake 4.2 |
 | deploy | `MU2_HOST=singapore server/deploy.sh` |
 | settings | `/etc/default/mu2-server`: MU2_REGION=Southeast Asia |
+
+## The East Asia box
+
+Rented 2026-10-22 for China and Vietnam (Waerd, China Unicom, Henan, 331 ms and AM2020, Viettel,
+200 ms on Central Europe), after Singapore closed. Tokyo over Seoul (Webzen's home) and Singapore
+(China's routes to it are poor). Set up as the South America box is: its own world and
+`characters.db`, the accounts and the market through its own tunnel key ("mu2-tokyo accounts
+tunnel" in Helsinki's `authorized_keys`, limited the same way).
+
+| | |
+|---|---|
+| name | `mu2-tokyo`, Vultr Tokyo, no backups |
+| address | 45.76.195.120 |
+| login | `ssh root@45.76.195.120` (`~/.ssh/id_ed25519`, put in by `ssh-copy-id`); passwords off (`/etc/ssh/sshd_config.d/00-keys-only.conf`) |
+| system | Ubuntu 26.10, x86_64, 1 vCPU, 950 MB, 2.3 GB swap (`/swapfile`) |
+| deploy | `MU2_HOST=root@45.76.195.120 server/deploy.sh` |
+| settings | `/etc/default/mu2-server`: MU2_REGION=East Asia, and the market's key and address as São Paulo's |
 
 ## The Central Europe box
 

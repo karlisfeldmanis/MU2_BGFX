@@ -202,6 +202,7 @@ void putKept(Out& o, const sim::Kept& k) {
     for (const auto& column : r.talents) {
         for (const uint8_t rank : column) o.u8(rank);
     }
+    o.i32(r.rebirths);
 }
 
 sim::Kept takeKept(In& in, int layout = kKeptLayout) {
@@ -232,8 +233,9 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     r.might = in.i32();
     r.mightTicksLeft = in.i64();
     for (sim::Held& h : r.slots) h = takeHeld(in);
-    // Layouts 3 and 4 carry 24 quests, 5 to 7 carry 25; the rest stand untaken.
-    const int quests = layout >= 8 ? sim::kQuests : std::min(layout >= 5 ? 25 : 24, sim::kQuests);
+    // Layouts 3 and 4 carry 24 quests, 5 to 7 carry 25, 8 to 11 carry 27; the rest stand untaken.
+    const int quests = layout >= 12 ? sim::kQuests
+                                    : std::min(layout >= 8 ? 27 : layout >= 5 ? 25 : 24, sim::kQuests);
     for (int i = 0; i < quests; ++i) {
         sim::QuestProgress& q = r.quests[size_t(i)];
         q.state = sim::QuestState(in.u8());
@@ -274,6 +276,7 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
             for (uint8_t& rank : column) rank = in.u8();
         }
     }
+    if (layout >= 13) r.rebirths = in.i32();
     return k;
 }
 
@@ -439,6 +442,29 @@ void put(std::vector<uint8_t>& out, const PartyState& one) {
         }
         o.u8(one.raid ? 1 : 0);
     });
+}
+
+std::string romanNumeral(int count) {
+    static const struct {
+        int value;
+        const char* letters;
+    } kParts[] = {{1000, "M"}, {900, "CM"}, {500, "D"}, {400, "CD"}, {100, "C"}, {90, "XC"},
+                  {50, "L"},   {40, "XL"},  {10, "X"},  {9, "IX"},   {5, "V"},   {4, "IV"},
+                  {1, "I"}};
+    std::string s;
+    int n = count < 1 ? 1 : count > 3999 ? 3999 : count;
+    for (const auto& part : kParts) {
+        while (n >= part.value) {
+            s += part.letters;
+            n -= part.value;
+        }
+    }
+    return s;
+}
+
+std::string rebirthLine(const std::string& name, int count, const std::string& realm) {
+    return name + " has been reborn" + (realm.empty() ? "" : " in " + realm) + " (Rebirth " +
+           romanNumeral(count) + ").";
 }
 
 std::string saidText(const std::string& text) {

@@ -575,6 +575,13 @@ EFFECTS = {
     # RenderCircle wraps once round twelve quads, a JPEG over black and so additive. The circle
     # under the walls is magic_ground above, in orange. See src/game/fx/warp.h.
     "magic_circle": "effects/warp/magic_circle.png",
+    # The Rebirth rite's own (pipeline/rite_sheets.py, src/game/fx/rite.h): the light from heaven,
+    # its shafts, the pool where it lands and level-up's magic_ground made grey for a gold tint.
+    "rite_beam": "effects/rite/beam.png",
+    "rite_rays": "effects/rite/rays.png",
+    "rite_pool": "effects/rite/pool.png",
+    "rite_runes": "effects/rite/runes.png",
+    "rite_ring": "effects/rite/ring.png",
 
     # The elf's summon, which borrows magic_ground above for its ground decal - BITMAP_MAGIC + 1
     # at sub-type 3, tinted orange - and adds three sheets of its own. JointEnergy01.OZJ is
@@ -1062,6 +1069,13 @@ def fixed(declared: dict, corrections: Path) -> dict:
         # up rather than animating it — `Position[2] = RequestTerrainHeight(...) + 140.f`. It
         # rides on the spawn because a table of tiles and facings has nowhere else to put it,
         # and it is nought for everybody else. See placements.json.
+
+        # And a shift off the tile's middle, in units, for a figure that has to stand on a line
+        # the tiles do not, such as a fountain's middle that runs along a tile edge. The server
+        # keeps his tile; only the figure moves.
+        if (shift := spawn.get("shift")):
+            placement["at"][0] += float(shift[0])
+            placement["at"][1] += float(shift[1])
 
         # The one clip this one holds, where the spawn says. A guard's stance is a fact
         # about his tile rather than about his model - inside a safe zone SetPlayerStop

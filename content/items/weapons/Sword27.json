@@ -1,0 +1,233 @@
+{
+  "item": "Sword27",
+  "mu_name": "Flamberge",
+  "mu_name_from": "MODEL_FLAMBERGE (MODEL_SWORD + 26), loaded from Item/Sword_27.bmd (ZzzOpenData.cpp:1107). Group 0 number 26 in OpenMU S6 Weapons.cs:163.",
+  "why_this_one": "The 100-140 weapons MU has and this game lacked (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's, then 'do next missing weapons for lower levels'): the second batch's swords.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:163.",
+    "call": "CreateWeapon(0, 26, 0, 22, 1, 4, true, \"Flamberge\", 137, 115, 126, 40, 90, 0, 380, 193, 53, 0, 0, 0, 2, 0, 0, 0, 0, 0)",
+    "call_note": "The Season 6 CreateWeapon: group, number, slot, skill, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strength, agility, energy, vitality, then darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel.",
+    "group": 0,
+    "number": 26,
+    "drop_level": 137,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 1,
+    "height": 4,
+    "minimum_damage": 115,
+    "maximum_damage": 126,
+    "attack_speed": 40,
+    "durability": 90,
+    "requires": {
+      "level": 0,
+      "strength": 193,
+      "agility": 53,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "MU asks level 380 (OpenMU's levelRequirement). Left at 0 for now: the user, 2026-10-22, settles the 380 items' level with Kanturu's ('Formula, decide later').",
+    "classes": [
+      "knight"
+    ],
+    "skill": 22,
+    "class_level": 2,
+    "class_level_note": "The Blade Knight's alone: OpenMU's darkKnightClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "stance": "sword",
+  "stance_from": "Width 1: one-handed, PLAYER_STOP_SWORD.",
+  "two_handed": false,
+  "sheets": {
+    "soketnight_mulagzuberuzu": "soketnight_mulagzuberuzu.png",
+    "gra": "gra_flamberge.png",
+    "RingPenOfLordEvent": "ringpenoflordevent.png",
+    "gold": "gold.png",
+    "a_2": "a_2.png",
+    "flamestani": "flamestani.png"
+  },
+  "sheet_from": "Data/Item: soketnight_mulagzuberuzu.OZJ (64x64, pale blue-silver plate, mesh 0, 352 triangles), gra (256x64, a grey ramp, mesh 1), RingPenOfLordEvent (16x16, a red gem, mesh 2), gold (mesh 3) and a_2 (mesh 4), both already here, and flamestani (256x256, four rows of flame, mesh 5), decoded from MuMain with pipeline/decode_texture.py. gra_flamberge.png is ours: gra times MU's BodyLight (1, 0, 0.2) for that pass, as a glow here carries no tint.",
+  "sheet_materials": {
+    "soketnight_mulagzuberuzu": "steel",
+    "RingPenOfLordEvent": "painted_steel"
+  },
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "As every broad flat blade passed in the studio: steel's own 0.2 mirrors the grass black.",
+  "glow": {
+    "gra": {},
+    "gold": {},
+    "a_2": {},
+    "flamestani": {"jitter": 0.25}
+  },
+  "glow_note": "RenderPartObjectBody's MODEL_FLAMBERGE arm (ZzzObject.cpp:7162-7177): meshes 0 and 2 plain; mesh 1 (gra, the blade) added under BodyLight (1, 0, 0.2) -- here out of the bake on the tinted gra_flamberge, added -- and again RENDER_CHROME added (the chrome below); meshes 3 and 4 RENDER_BRIGHT, added (ZzzBMD.cpp:1534); mesh 5 (flamestani) added with V stepping a quarter every 80 ms through its four rows of flame -- here added, jumping a quarter of V at random 25 times a second (jitter 0.25), so the flame burns; MU walks the rows in order, ours picks one. The user, 2026-10-22: 'that fire weapon is missing some animation'. Its other draws hide mesh 5 (:9093, 9252).",
+  "chrome": [
+    {
+      "slot": "gra",
+      "image": "chrome01",
+      "uv": "chrome",
+      "where": "over",
+      "light": 0.3
+    }
+  ],
+  "chrome_from": "The arm's second pass of mesh 1, RENDER_TEXTURE | RENDER_BRIGHT | RENDER_CHROME under white (ZzzObject.cpp:7171). pipeline/chrome_sheets.py.",
+  "rig_note": "export-rig --actions=all: eighteen bones, one action of one key; nothing moves, no rig kept. Held, MuMain's arm is ZzzCharacter.cpp:7733-7766 (fx/held_lights, to do).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 210,
+      "area": 2786.1,
+      "along": [
+        -37.5,
+        149.7
+      ],
+      "mu_uv": [
+        -0.492,
+        -0.66,
+        1.925,
+        1.707
+      ],
+      "bake_uv": [
+        0.01,
+        0.011,
+        0.935,
+        0.966
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 2,
+      "area": 7.9,
+      "along": [
+        15.0,
+        20.3
+      ],
+      "mu_uv": [
+        -0.699,
+        -0.684,
+        0.68,
+        0.59
+      ],
+      "bake_uv": [
+        0.09,
+        0.345,
+        0.325,
+        0.473
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 204,
+      "area": 2742.5,
+      "along": [
+        -37.5,
+        149.7
+      ],
+      "mu_uv": [
+        -0.699,
+        -0.684,
+        0.99,
+        0.982
+      ],
+      "bake_uv": [
+        0.01,
+        0.011,
+        0.99,
+        0.966
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 2,
+      "area": 18.2,
+      "along": [
+        26.5,
+        33.9
+      ],
+      "mu_uv": [
+        1.184,
+        0.34,
+        1.598,
+        1.648
+      ],
+      "bake_uv": [
+        0.011,
+        0.049,
+        0.391,
+        0.225
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 2,
+      "area": 18.2,
+      "along": [
+        26.5,
+        33.9
+      ],
+      "mu_uv": [
+        1.184,
+        0.34,
+        1.598,
+        1.648
+      ],
+      "bake_uv": [
+        0.322,
+        0.151,
+        0.552,
+        0.34
+      ]
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 2,
+      "area": 10241.8,
+      "along": [
+        21.5,
+        179.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.75,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.388,
+        0.012,
+        0.45,
+        0.027
+      ]
+    },
+    {
+      "island": 6,
+      "material": "steel",
+      "triangles": 2,
+      "area": 10241.8,
+      "along": [
+        21.5,
+        179.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.75,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.013,
+        0.012,
+        0.074,
+        0.027
+      ]
+    }
+  ]
+}

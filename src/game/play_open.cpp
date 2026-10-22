@@ -542,6 +542,8 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
     heard_.moneyDrop = sound_.load("money_drop", true);
     heard_.jewel = sound_.load("jewel_get", true);
     heard_.firework = sound_.load("firework", true);
+    heard_.rite = sound_.load("rite", false);
+    heard_.riteReborn = sound_.load("rite_reborn", false);
     heard_.take = sound_.load("item_get", false);
     heard_.drink = sound_.load("player_drink", false);
     heard_.warp = sound_.load("spell_magic", false);
@@ -558,6 +560,7 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
     heard_.whoosh = sound_.load("window_talent_whoosh", false);
     heard_.soft = sound_.load("window_click_soft", false);
     heard_.bell = sound_.load("elite_bell", false);
+    heard_.whispered = sound_.load("whisper_ping", false);
     heard_.repair = sound_.load("window_repair", false);
     heard_.mix = sound_.load("machine_mix", false);
     heard_.mixBreak = sound_.load("machine_break", false);

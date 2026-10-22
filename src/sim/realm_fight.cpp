@@ -691,6 +691,9 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         if (!runeDice_.nextBool(faint ? kGustChance : kTwisterRuneChance)) return;
         const SkillRow* storm = skillNumbered(skill::kTwister);
         if (storm == nullptr) return;
+        // The rune's storm walks at the spell's old pace: a knight's swing looses it at what he
+        // stands beside, and the wizard's quicker 0.2 (2026-10-22) carried it off his monsters.
+        constexpr float kTwisterRuneWalks = 0.125f;
         const float way = fm::atan2(struck.y - hero.y, struck.x - hero.x);
         for (Fire& one : fires_) {
             if (one.next != 0) continue;
@@ -698,7 +701,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
                        (faint ? kGustForce : kTwisterRuneForce) *
                            runeForce(hero, Element::Wind),
                        0,
-                       fm::cos(way) * storm->walks, fm::sin(way) * storm->walks, true};
+                       fm::cos(way) * kTwisterRuneWalks, fm::sin(way) * kTwisterRuneWalks, true};
             one.owner = hero.id;
             say(What::Loosed, hero, skill::kTwister, 0, int32_t(std::lround(way * 1000.0f)), 0);
             happenings_.back().rune = true;

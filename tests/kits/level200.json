@@ -1,0 +1,452 @@
+{
+  "from": "tests/skill_sweep.cpp's level-200 heroes (2026-10-22, the user: \"can test some lvl 200 builds?\"): 25 + 5 points a level (7 the Gladiator's), the class's 2nd-tier set at +9 with luck and +12 option, a +9 weapon with two runes, first wings +3 (+7 asks level 208), the Imp, +6 jewellery. Ken2 two-handed (the Chaos Dragon Axe, of the swords' tier; the Bill of Balrog dealt two thirds of it) and Kai2 two Swords of Destruction (the Dragon set +9: Black Dragon +9 asks 616 strength), Wren2 (Grand Soul, Staff of Destruction), Lia2 (Chaos Nature Bow: the Celestial +9 asks 726 agility), Max2 (Storm Crow). Played on Icarus (10) and Aida (33).",
+  "party": [
+    {
+      "name": "Ken2",
+      "role": "melee",
+      "class": "knight",
+      "second": true,
+      "level": 200,
+      "points": {
+        "strength": 545,
+        "agility": 260,
+        "vitality": 195,
+        "energy": 20
+      },
+      "potions": 20,
+      "skills": [],
+      "wear": [
+        {
+          "slot": "helm",
+          "item": "HelmMale02",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "armour",
+          "item": "ArmorMale02",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "pants",
+          "item": "PantMale02",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "gloves",
+          "item": "GloveMale02",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "boots",
+          "item": "BootMale02",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "right",
+          "item": "Mace07",
+          "plus": 9,
+          "luck": true,
+          "option": 3,
+          "sockets": [
+            19,
+            21
+          ]
+        },
+        {
+          "slot": "wings",
+          "item": "Wing03",
+          "plus": 3,
+          "luck": true
+        },
+        {
+          "slot": "pet",
+          "item": "Helper02"
+        },
+        {
+          "slot": "amulet",
+          "item": "NecklaceFury",
+          "plus": 6
+        },
+        {
+          "slot": "ring_right",
+          "item": "Ring01",
+          "plus": 6
+        },
+        {
+          "slot": "ring_left",
+          "item": "RingLeech",
+          "plus": 6
+        }
+      ]
+    },
+    {
+      "name": "Kai2",
+      "role": "melee",
+      "class": "knight",
+      "second": true,
+      "level": 200,
+      "points": {
+        "strength": 545,
+        "agility": 260,
+        "vitality": 195,
+        "energy": 20
+      },
+      "potions": 20,
+      "skills": [],
+      "wear": [
+        {
+          "slot": "helm",
+          "item": "HelmMale02",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "armour",
+          "item": "ArmorMale02",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "pants",
+          "item": "PantMale02",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "gloves",
+          "item": "GloveMale02",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "boots",
+          "item": "BootMale02",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "right",
+          "item": "Sword17",
+          "plus": 9,
+          "luck": true,
+          "option": 3,
+          "sockets": [
+            19,
+            21
+          ]
+        },
+        {
+          "slot": "left",
+          "item": "Sword17",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "wings",
+          "item": "Wing03",
+          "plus": 3,
+          "luck": true
+        },
+        {
+          "slot": "pet",
+          "item": "Helper02"
+        },
+        {
+          "slot": "amulet",
+          "item": "NecklaceFury",
+          "plus": 6
+        },
+        {
+          "slot": "ring_right",
+          "item": "Ring01",
+          "plus": 6
+        },
+        {
+          "slot": "ring_left",
+          "item": "RingLeech",
+          "plus": 6
+        }
+      ]
+    },
+    {
+      "name": "Wren2",
+      "role": "wizard",
+      "class": "wizard",
+      "second": true,
+      "level": 200,
+      "points": {
+        "strength": 235,
+        "agility": 95,
+        "vitality": 185,
+        "energy": 505
+      },
+      "potions": 20,
+      "skills": [],
+      "wear": [
+        {
+          "slot": "helm",
+          "item": "HelmMale19",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "armour",
+          "item": "ArmorMale19",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "pants",
+          "item": "PantMale19",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "gloves",
+          "item": "GloveMale19",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "boots",
+          "item": "BootMale19",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "right",
+          "item": "Staff09",
+          "plus": 9,
+          "luck": true,
+          "option": 3,
+          "sockets": [
+            6,
+            1
+          ]
+        },
+        {
+          "slot": "left",
+          "item": "Shield16",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "wings",
+          "item": "Wing02",
+          "plus": 3,
+          "luck": true
+        },
+        {
+          "slot": "pet",
+          "item": "Helper02"
+        },
+        {
+          "slot": "amulet",
+          "item": "Necklace02",
+          "plus": 6
+        },
+        {
+          "slot": "ring_right",
+          "item": "Ring01",
+          "plus": 6
+        },
+        {
+          "slot": "ring_left",
+          "item": "RingWisdom",
+          "plus": 6
+        }
+      ]
+    },
+    {
+      "name": "Lia2",
+      "role": "archer",
+      "class": "elf",
+      "second": true,
+      "level": 200,
+      "points": {
+        "strength": 190,
+        "agility": 620,
+        "vitality": 170,
+        "energy": 40
+      },
+      "potions": 20,
+      "skills": [],
+      "wear": [
+        {
+          "slot": "helm",
+          "item": "HelmElf05",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "armour",
+          "item": "ArmorElf05",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "pants",
+          "item": "PantElf05",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "gloves",
+          "item": "GloveElf05",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "boots",
+          "item": "BootElf05",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "right",
+          "item": "Bow07",
+          "plus": 9,
+          "luck": true,
+          "option": 3,
+          "sockets": [
+            5,
+            1
+          ]
+        },
+        {
+          "slot": "wings",
+          "item": "Wing01",
+          "plus": 3,
+          "luck": true
+        },
+        {
+          "slot": "pet",
+          "item": "Helper02"
+        },
+        {
+          "slot": "amulet",
+          "item": "NecklaceFury",
+          "plus": 6
+        },
+        {
+          "slot": "ring_right",
+          "item": "Ring01",
+          "plus": 6
+        },
+        {
+          "slot": "ring_left",
+          "item": "RingLeech",
+          "plus": 6
+        }
+      ]
+    },
+    {
+      "name": "Max2",
+      "role": "melee",
+      "class": "gladiator",
+      "second": false,
+      "level": 200,
+      "points": {
+        "strength": 560,
+        "agility": 260,
+        "vitality": 200,
+        "energy": 398
+      },
+      "potions": 20,
+      "skills": [],
+      "wear": [
+        {
+          "slot": "armour",
+          "item": "ArmorMale16",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "pants",
+          "item": "PantMale16",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "gloves",
+          "item": "GloveMale16",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "boots",
+          "item": "BootMale16",
+          "plus": 9,
+          "luck": true,
+          "option": 3
+        },
+        {
+          "slot": "right",
+          "item": "Sword17",
+          "plus": 9,
+          "luck": true,
+          "option": 3,
+          "sockets": [
+            19,
+            21
+          ]
+        },
+        {
+          "slot": "wings",
+          "item": "Wing03",
+          "plus": 3,
+          "luck": true
+        },
+        {
+          "slot": "pet",
+          "item": "Helper02"
+        },
+        {
+          "slot": "amulet",
+          "item": "NecklaceFury",
+          "plus": 6
+        },
+        {
+          "slot": "ring_right",
+          "item": "Ring01",
+          "plus": 6
+        },
+        {
+          "slot": "ring_left",
+          "item": "RingLeech",
+          "plus": 6
+        }
+      ]
+    }
+  ]
+}

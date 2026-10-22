@@ -167,6 +167,7 @@ bool loadSave(const std::string& path, Saved& out) {
     hero.level = int(doc["level"].numberOr(1));
     hero.experience = uint64_t(doc["experience"].numberOr(0.0));
     hero.pointsInHand = int(doc["points_in_hand"].numberOr(0));
+    hero.rebirths = int(doc["rebirths"].numberOr(0));
     hero.points.strength = int(doc["strength"].numberOr(0));
     hero.points.agility = int(doc["agility"].numberOr(0));
     hero.points.vitality = int(doc["vitality"].numberOr(0));
@@ -397,6 +398,7 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
     std::fprintf(f, "  \"level\": %d,\n  \"experience\": %llu,\n  \"points_in_hand\": %d,\n",
                  hero.level, static_cast<unsigned long long>(hero.experience),
                  hero.pointsInHand);
+    if (hero.rebirths > 0) std::fprintf(f, "  \"rebirths\": %d,\n", hero.rebirths);
     std::fprintf(f, "  \"strength\": %d,\n  \"agility\": %d,\n  \"vitality\": %d,\n"
                     "  \"energy\": %d,\n",
                  hero.points.strength, hero.points.agility, hero.points.vitality,

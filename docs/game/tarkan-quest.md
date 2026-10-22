@@ -1,4 +1,20 @@
-# Tarkan's quests: The Road of Kantur and Kantur's Legion
+# Tarkan's quests: The Road of Kantur, Kantur's Legion and Kantur's Captain
+
+**In two since 2026-10-21** (the user: "we need tarkan on 2 parts, because now there is confusion"):
+the Keeper's clear below is now two quests, each every 12 hours on its own clock.
+
+**First quest, first class; second quest, second class** (the user, the same night: "first quest
+gives first class rewards, 2nd quest gives second class rewards").
+
+| part | quest (key) | steps | who | every clear | first clear |
+|---|---|---|---|---|---|
+| 1 | Kantur's Legion (`kanturs_legion`, 21) | Mutants 40, Bloody Wolves 35, Iron Wheels 30, Tantalos 30, Beam Knights 25: 160 kills | everyone | 150,000 exp, 250,000 Zen, a Life, 2 Bless, 2 Soul, a Chaos, a Loch's Feather, a Box of Kundun +3 | 600,000 exp; the class's two runes, the Pendant of Fury +4; the first class's weapon: Sword of Destruction +7, Staff of Resurrection +7, Saint Crossbow |
+| 2 | Kantur's Captain (`kanturs_captain`, 27) | the Zaikan, the Death Beam Knight | past the class change, and the Magic Gladiator (`QuestRow::second`); not shown to a first class | 150,000 exp, 250,000 Zen, a Life, a Loch's Feather | 600,000 exp; Knight Blade +7, Staff of Kundun, Great Reign Crossbow, or the Gladiator's Dark Reign Blade +7 / Staff of Kundun by his path |
+
+Part 2 is offered once part 1 has been handed in. The 3 Firecrackers come with each. Kantur's
+Captain is the table's 28th quest: protocol 46, kept layout 12 (src/net/wire.h). Voices: `keeper_1`
+(the legion) and `keeper_2` (the captain), read 2026-10-22.
+The rest of this page is the one-quest design as it was, kept for its lore and history.
 
 Written 2026-10-06 (the user: 'we need a lore for atlans quest give and min lvl requirment to go
 to tarkan and meet next quest giver'), **built the same day** ('lets implement it together with
@@ -122,6 +138,24 @@ of Soul and a **Loch's Feather**, with the 3 Firecrackers every quest pays. The 
 The three pieces are drop level 100, which no Tarkan or Blood Castle 6 breed reaches: the quest is
 their only home outside Atlans's 1-in-400 gear roll. The runes are the second class's Legendaries
 no quest paid before. Eleven things paid and the Firecrackers make twelve, `kQuestPaid`.
+
+**Since 2026-10-09** the table above is Icarus's and the class change's, and the first clear pays the
+first class's best weapon, three sockets (`kantursLegion` has the whole list). **Since 2026-10-21**
+(the user: "this quest has to give better weapon for SM and same for BK and ME and MG") the weapon
+goes by rank (`QuestItem::rank`, checked in `Realm::questItemFits`):
+
+| hero | weapon, three sockets |
+|---|---|
+| Dark Knight | Sword of Destruction +7 (`Sword17`) |
+| Dark Wizard | Staff of Resurrection +7 (`Staff07`) |
+| Fairy Elf | Saint Crossbow (`CrossBow17`) |
+| Blade Knight | Knight Blade +7 (`Sword21`), one-handed |
+| Soul Master | Staff of Kundun (`Staff12`), one-handed |
+| Muse Elf | Great Reign Crossbow (`CrossBow20`) |
+| Magic Gladiator, Melee | Dark Reign Blade +7 (`Sword22`), his own |
+| Magic Gladiator, Magic | Staff of Kundun (`Staff12`) |
+
+The Magic Gladiator has no second class and counts as promoted.
 
 ## Decisions open
 

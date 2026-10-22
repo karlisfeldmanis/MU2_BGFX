@@ -51,7 +51,7 @@ void Storm::clear() {
     for (Puff& one : puffs_) one = Puff{};
 }
 
-void Storm::cast(const float feet[3], float wayX, float wayZ) {
+void Storm::cast(const float feet[3], float wayX, float wayZ, float pace) {
     if (keyCount_ == 0) return;
     for (Whirl& whirl : whirls_) {
         if (whirl.alive) continue;
@@ -63,6 +63,7 @@ void Storm::cast(const float feet[3], float wayX, float wayZ) {
         // The model's loaded Z (MU's -Y, the way Direction points) turned onto the way it walks.
         whirl.yaw = std::atan2(wayX, wayZ);
         whirl.left = kFrames;
+        whirl.pace = pace;
         return;
     }
 }

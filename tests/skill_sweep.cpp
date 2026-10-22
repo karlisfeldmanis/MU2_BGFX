@@ -6,7 +6,9 @@
 //   clang++ -std=c++20 -O2 -I src -DMU2_ASSET_DIR=\"$PWD/out/assets\" tests/skill_sweep.cpp
 //     out/build/libmu_sim.a out/build/libmu_content_data.a out/build/libmu_core.a
 //     out/build/libmu_zstd.a -lz -o out/build/skill_sweep
-//   skill_sweep KIT MAP SEEDS MINUTES
+//   skill_sweep KIT MAP SEEDS MINUTES [KITS.json]
+// The kits are content/raid/party.json's, or another file's of its shape: tests/kits/sweep.json
+// holds the Magic Gladiator and a knight with two swords, whom no raider is.
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -41,6 +43,10 @@ static sim::TalentRanks build(sim::Kin kin, const std::string& which) {
     } else if (kin == sim::Kin::FairyElf) {
         if (which == "penetration") put({F, F, Z, Z, F, f10});
         else put({F, S, Z, Z, F, fMore});
+    } else if (kin == sim::Kin::MagicGladiator) {
+        // tests/talents_bench.cpp's two, seven columns.
+        if (which == "caster") put({F, Z, F, S, F, S, Col{10, 10, 1, 3, 0, 0, 0, 0, 0}});
+        else put({F, F, Z, Z, F, F, Col{10, 10, 1, 6, 0, 0, 0, 0, 0}});
     }
     return r;
 }
@@ -48,6 +54,7 @@ static sim::TalentRanks build(sim::Kin kin, const std::string& which) {
 static std::vector<std::string> buildsOf(sim::Kin kin) {
     if (kin == sim::Kin::DarkKnight) return {"whirlwind", "dual", "tank"};
     if (kin == sim::Kin::DarkWizard) return {"fire", "lightning", "spirit"};
+    if (kin == sim::Kin::MagicGladiator) return {"spellblade", "caster"};
     return {"multishot", "penetration"};
 }
 
@@ -82,7 +89,7 @@ static Result fight(const content::Tables& tables, const sim::MapRow& map, const
             if (item >= 0) realm.give(item, -1, 0, sim::stackMost(tables.items[size_t(item)]));
         }
         if (!talents.empty()) {
-            const sim::TalentRanks want = build(kit.kin, talents == "whirlwind" || talents == "fire" || talents == "multishot" ? "" : talents);
+            const sim::TalentRanks want = build(kit.kin, talents == "whirlwind" || talents == "fire" || talents == "multishot" || talents == "spellblade" ? "" : talents);
             for (int pass = 0; pass < 3; ++pass)
                 for (int c = 0; c < sim::kTalentColumnsMost; ++c)
                     for (int i = 0; i < sim::kTalentNodes; ++i) {
@@ -131,14 +138,14 @@ static Result fight(const content::Tables& tables, const sim::MapRow& map, const
 
 int main(int argc, char** argv) {
     if (argc < 5) {
-        std::printf("skill_sweep KIT MAP SEEDS MINUTES\n");
+        std::printf("skill_sweep KIT MAP SEEDS MINUTES [KITS.json]\n");
         return 2;
     }
     const std::string kitName = argv[1];
     const int mapNumber = std::atoi(argv[2]), seeds = std::atoi(argv[3]);
     const double minutes = std::atof(argv[4]);
     std::vector<sim::RaiderKit> party;
-    sim::readParty(std::string(MU2_ASSET_DIR) + "/../../content/raid/party.json", &party);
+    sim::readParty(argc > 5 ? std::string(argv[5]) : std::string(MU2_ASSET_DIR) + "/../../content/raid/party.json", &party);
     const sim::RaiderKit* kit = nullptr;
     for (const auto& one : party) if (one.name == kitName) kit = &one;
     const sim::MapRow* map = sim::mapNumbered(mapNumber);
@@ -159,7 +166,8 @@ int main(int argc, char** argv) {
     std::vector<Line> lines;
     for (int i = 0; i < sim::kSkills; ++i) {
         const sim::SkillRow& row = sim::skillAt(i);
-        if (row.kin != kit->kin || !strikes(row)) continue;
+        // His class's, and a Gladiator's borrowed knight's and wizard's (sim::skillFor).
+        if (!sim::skillFor(row, kit->kin) || !strikes(row)) continue;
         Line line{row.name, row.number, fight(tables, *map, *kit, row.number, "", seeds, minutes), {}, "-"};
         for (const std::string& b : buildsOf(kit->kin)) {
             const Result r = fight(tables, *map, *kit, row.number, b, seeds, minutes);
@@ -182,8 +190,28 @@ int main(int argc, char** argv) {
     std::sort(damages.begin(), damages.end());
     const double median = damages.empty() ? 1.0 : damages[damages.size() / 2];
     std::sort(lines.begin(), lines.end(), [](const Line& a, const Line& b) { return a.best.damage > b.best.damage; });
-    std::printf("%s on %s, %d seeds x %.1f min, level %d; per hour, best talent build; x median of the class\n",
-                kitName.c_str(), world.c_str(), seeds, minutes, kit->level);
+    // What the kit put on him, so a piece his class refuses shows as missing.
+    int worn = 0;
+    {
+        sim::Realm dressed;
+        dressed.raise(&tables, 1000, map->arrive[0], map->arrive[1], kit->kin, kit->level);
+        dressed.benchDressHero(*kit);
+        for (int slot = 0; slot < sim::kWorn; ++slot) {
+            const sim::Held& h = dressed.satchel()[slot];
+            if (h.empty()) continue;
+            ++worn;
+            // The bench puts a kit on whole, asked nothing: what his points could not wear is said.
+            if (!sim::fits(tables, dressed.wearer(), h)) {
+                const content::ItemRow& r = tables.items[size_t(h.item)];
+                const sim::Needs a = sim::asks(r, h.refinement, h.excellent != 0);
+                std::printf("  (%s cannot wear %s +%d: it asks level %d, strength %d, agility %d, energy %d, vitality %d)\n",
+                            kitName.c_str(), r.label.c_str(), int(h.refinement), a.level, a.strength, a.agility,
+                            a.energy, a.vitality);
+            }
+        }
+    }
+    std::printf("%s on %s, %d seeds x %.1f min, level %d, %d of %zu pieces worn; per hour, best talent build; x median of the class\n",
+                kitName.c_str(), world.c_str(), seeds, minutes, kit->level, worn, kit->pieces.size());
     std::printf("%-18s %4s | %9s %6s | %9s %6s %6s %5s %-12s | %6s %5s\n", "skill", "no", "bare dmg", "kills",
                 "talent dmg", "kills", "deaths", "gain", "build", "dmg/hit", "x med");
     std::printf("%-18s %4s | %8.2fM %6.0f |\n", "(plain attack)", "-", plain.damage / 1e6, plain.kills);

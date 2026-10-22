@@ -505,6 +505,11 @@ constexpr int kSkills = 40;
 // What each of Nova's stages adds to its blow: OpenMU's NovaDamageTable (NovaSkillStartPlugin.cs:30),
 // stage 0 to 12, with the strength's half beside it (SkillsInitializer.cs:610-611).
 constexpr int32_t kNovaStageDamage[13] = {0, 20, 50, 99, 160, 225, 325, 425, 550, 700, 880, 1090, 1320};
+// **Whole at kNovaFullEnergy energy, and his energy's share of it below** (ours, the user,
+// 2026-10-22: "Scale its burst with energy"): the stages are flat, and a level-150 wizard's
+// burst (~3,900 a body) was 1.6 of every other skill of any class, tests/kits/level150.json,
+// where at level 400 it stands in the middle.
+constexpr int kNovaFullEnergy = 1000;
 static_assert(kSkills <= 64, "the learned mask (Body::learned) is sixty-four bits");
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
@@ -567,7 +572,16 @@ constexpr float kAgilityPerDoubling = 300.0f;
 
 // The multiplier on a skill's blow. 0.75's `2 + energy/1000` with strength added at the row's
 // own rate, which is the whole of the user's rule: strength is force, as energy is for a wizard.
-float force(const SkillRow& row, const HeroPoints& points);
+// A Dark Knight's own skills are kKnightSkillBoost of that, by `who`, and a Gladiator's knight's
+// skills too since the class balance (2026-10-21): the user, 2026-10-21, "well DW is very strong now... maybe we need to boost DKs?", +15%
+// on every one, off tests/skill_sweep.cpp (the best knight ~2/3 of a wizard on Icarus).
+constexpr float kKnightSkillBoost = 1.15f;
+// And a knight's own skills with a two-handed weapon, on top (sim::heroForce): the two-handed knight
+// was the weakest build on hard ground, 1.61M an hour on Icarus at level 200 against the wizard's
+// 3.17M and two swords' 2.23M (tests/kits/level200.json; the user, 2026-10-22, "dk still is pretty
+// weak", then two-handed weapons +20%).
+constexpr float kTwoHandBoost = 1.20f;
+float force(const SkillRow& row, const HeroPoints& points, Kin who);
 // The same as the character window prints it, MuMain's "Skill Damage: %d%%": a force-two row's
 // blow in percent of his swing, 200 + energy / 10 (CNewUICharacterInfoWindow.cpp:1474). Read for
 // the knight and the gladiator, whose skills take energy here; a wizard's take it in the band.

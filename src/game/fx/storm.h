@@ -53,8 +53,10 @@ public:
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table, const content::Ground* ground);
 
-    // A storm at `feet`, walking along the flat world direction (`wayX`, `wayZ`), unit length.
-    void cast(const float feet[3], float wayX, float wayZ);
+    // A storm at `feet`, walking along the flat world direction (`wayX`, `wayZ`), unit length, at
+    // `pace` of MU's ten units a frame: the realm's storm walks SkillRow::walks a tick, and MU's
+    // stride is its old 0.125 (the wizard's is 0.2 since 2026-10-22; a knight's rune keeps 0.125).
+    void cast(const float feet[3], float wayX, float wayZ, float pace = 1.0f);
 
     // `fork(from, to)` for a thin bolt down into it, `stone(at)` when it kicks one up.
     template <typename Fork, typename Stone>
@@ -89,6 +91,7 @@ private:
         float left = 0.0f;  // LifeTime, reference frames
         float key = 0.0f;   // its action's frame
         float smokeDue = 0.0f;
+        float pace = 1.0f;  // of kStride
     };
     struct Puff {
         bool alive = false;
@@ -135,7 +138,7 @@ void Storm::update(float seconds, Fork fork, Stone stone) {
             continue;
         }
         whirl.key = std::fmin(float(keyCount_ - 1), whirl.key + kKeysPerFrame * frames);
-        const float stride = kStride * perUnit * frames;
+        const float stride = kStride * whirl.pace * perUnit * frames;
         whirl.at[0] += whirl.way[0] * stride;
         whirl.at[2] += whirl.way[1] * stride;
         whirl.at[1] = floorAt(whirl.at[0], whirl.at[2], whirl.at[1]);

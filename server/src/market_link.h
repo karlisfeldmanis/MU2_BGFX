@@ -88,6 +88,9 @@ enum class LinkKind : uint8_t {
     Present = 8,    // hands: who is on, (token, bot) each
     Holders = 9,    // keeper: the tokens of this realm's that have a listing, a Collect or a hold
     Live = 10,      // hands: the holds it still works on, after its outbox
+    Herald = 11,    // either way: a Global line said by no one, for every realm's players -- a
+                    // rebirth (announceRebirth). The keeper tells its own and passes it on to every
+                    // other line; a server from before this kind reads past it.
 };
 constexpr uint32_t kMostLinkFrame = 64u << 20;
 
@@ -151,6 +154,9 @@ void marketKeep();
 void marketWatch(std::vector<pollfd>& watch);
 // The keeper: news for a seller on another realm; false when that realm's line is down.
 bool marketNewsTo(const std::string& region, const MarketNews& news);
+// A herald's Global line to every other realm: the hands send it to the keeper, the keeper to
+// every line. Not kept: a realm whose line is down at that moment misses it.
+void marketHerald(const std::string& text);
 // The hands: whether the keeper has said this token holds something here.
 bool marketHolder(uint64_t token);
 

@@ -52,30 +52,37 @@ constexpr SkillRow kRows[kSkills] = {
     //
     // **The families are 0.75's own carriers** (§1.2, `Version075/Items/Weapons.cs:93-132`):
     // whichever weapons granted a skill in the original are the weapons that may throw it here.
-    // Not one of the five is a choice made at this desk.
+    // **And every two-hander throws all five** (the user, 2026-10-22: "we need that chars can use
+    // orbs on 2-hand weapons"), ours: a two-handed sword had Slash and the two everyone has, so
+    // the orbs bought for the one-handed bar were dead the day he took up a Giant Sword.
     //
     // Falling Slash: the Morning Star (a mace), the Double Axe and the Tomahawk (one-handed),
     // the Battle Axe and the Nikkea Axe (two-handed). Axes and maces, in either hand -- and the
     // icon MU painted for it is an axe, which is the same fact from the artist's side.
     {skill::kFallingSlash, "Falling Slash", 9, 1.0f, 2.0f, 1.0f / 1000.0f, 80, false, Spread::One,
      0, 1.0f, "An overhead blow brought down on one body -- the heaviest single strike he has.",
-     60, "player_skill_sword1", true, arms::kAxes | arms::kMaces, 13},
+     60, "player_skill_sword1", true, arms::kAxes | arms::kMaces | arms::kTwoHand, 13},
     // Lunge: the Gladius, and nothing else in 0.75 carried it. A one-handed sword, which is what
     // MU's own description says in as many words -- "used with weapons like Gladius and Katana
     // to execute quick stabs".
     {skill::kLunge, "Lunge", 9, 1.0f, 1.6f, 1.0f / 1400.0f, 30, false, Spread::One, 0, 1.0f,
      "A thrust straight ahead: the cheapest key and the one that comes back soonest.", 61,
-     "player_skill_sword2", true, arms::kSword1, 20},
+     "player_skill_sword2", true, arms::kSword1 | arms::kTwoHand, 20},
     // Uppercut: the Sword of Assassin, the Falchion and the Serpent Sword. All one-handed.
     {skill::kUppercut, "Uppercut", 8, 1.0f, 1.8f, 1.0f / 1200.0f, 40, false, Spread::One, 0, 1.0f,
      "A rising blow under the guard, between the jab and the overhead in force and in wait.",
-     62, "player_skill_sword3", true, arms::kSword1, 12},
+     62, "player_skill_sword3", true, arms::kSword1 | arms::kTwoHand, 12},
     // Cyclone: the Blade (a one-handed sword), the Berdysh and the Great Scythe (polearms). The
     // odd pair is MU's own, and it reads as a spin with something long or something quick.
-    {skill::kCyclone, "Cyclone", 9, 1.0f, 2.0f, 1.0f / 1400.0f, 40, false, Spread::Ring, 0, 1.0f,
-     "A spin that catches everything within a tile, harder than Twisting Slash and back in two "
-     "seconds.",
-     63, "player_skill_sword4", true, arms::kSword1 | arms::kSpear, 36},
+    // **Two tiles and not one** (the user, 2026-10-21: "Make Cyclone and Twisting Slash" wider,
+    // tests/skill_sweep.cpp having the knight ~40% under the wizard and the elf where monsters fall
+    // in a blow or two, a pack's width being what their spells have and his spin had not).
+    // Three for a day in the class balance (2026-10-21), then two again (2026-10-22): with
+    // 8f2e3afb's fuller Aida packs three had the knights at 11.5M and 14.7M an hour there.
+    {skill::kCyclone, "Cyclone", 9, 2.0f, 2.0f, 1.0f / 1400.0f, 40, false, Spread::Ring, 0, 1.0f,
+     "A spin that catches everything within two tiles, harder than Twisting Slash and back in "
+     "two seconds.",
+     63, "player_skill_sword4", true, arms::kSword1 | arms::kTwoHand, 36},
     // Every row is built now. `built` used to mean "and the bar has a key for it", which is why
     // Slash sat here false with its arc written and tested; the list of 2026-09-23 holds every
     // learned skill and the four keys are the player's to fill from it, so the two questions
@@ -86,7 +93,7 @@ constexpr SkillRow kRows[kSkills] = {
     // the Giant Sword; the other two are elsewhere and the family is written for them anyway.
     {skill::kSlash, "Slash", 10, 1.0f, 1.8f, 1.0f / 1000.0f, 80, false, Spread::Arc, 0, 1.0f,
      "A wide sweep across the three tiles he faces, thrown with both hands on the haft.", 64,
-     "player_skill_sword4", true, arms::kSword2 | arms::kAxe2, 52},
+     "player_skill_sword4", true, arms::kTwoHand, 52},
 
     // ---- past 0.75, and appended so the six keep their indices -------------------------------
     //
@@ -121,10 +128,11 @@ constexpr SkillRow kRows[kSkills] = {
     // it was a plain swing round him, and the bot pressed it 71 times in three hours. **1.7**
     // the same day ("we need to boost twisting slash little bit"), with mana back on every body
     // it wounds (`kTwistManaShare`, recovery.h).
-    {skill::kTwistingSlash, "Twisting Slash", 22, 1.0f, 1.7f, 1.0f / 1500.0f, 0, false,
+    // Two tiles, as Cyclone (the user, 2026-10-21).
+    {skill::kTwistingSlash, "Twisting Slash", 22, 2.0f, 1.7f, 1.0f / 1500.0f, 0, false,
      Spread::Ring, 0, 1.0f,
-     "A whirl of whatever he is holding, into everything within a tile. Every weapon can throw "
-     "it; none throws it hard.",
+     "A whirl of whatever he is holding, into everything within two tiles. Every weapon can "
+     "throw it; none throws it hard.",
      65, "player_skill_sword4", true, arms::kEvery, 60},
     // Rageful Blow: **any weapon**, on the user's word of 2026-09-23. It was written for the
     // heavy hands -- MU's description is a "colossal area attack that unleashes shockwaves ... to
@@ -175,7 +183,8 @@ constexpr SkillRow kRows[kSkills] = {
     // **One and a half times the band** (the user, 2026-10-02: "basic DW spells also multipliers
     // so its more balanced"). Ours: at 1.0 the bot's wizard dealt a third of the knight's damage
     // a minute until Meteorite arrived (--fights, seed 1: 1,716 against 5,829 at two hours).
-    {skill::kEnergyBall, "Energy Ball", 1, 9.0f, 1.5f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+    // **2.1, not 1.5** (the user, 2026-10-22: "raise Twister, Energy Ball, Power Wave"; tests/skill_sweep.cpp had them at 0.3-0.8 of the wizard's middle spell).
+    {skill::kEnergyBall, "Energy Ball", 1, 9.0f, 2.1f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "A bolt of light thrown at one body up to nine tiles off. Its force is his energy and his "
      "staff's.",
      147, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 3, 148},
@@ -249,7 +258,8 @@ constexpr SkillRow kRows[kSkills] = {
     // which MU plays for both. Sixty units a reference frame, the bolt's fifteen tiles a second.
     //
     // **1.6 times the band**, on the same word: under Fire Ball, since it strikes the whole line.
-    {skill::kPowerWave, "Power Wave", 5, 6.0f, 1.6f, 0.0f, 0, false, Spread::Line, 0, 1.0f,
+    // **2.1, not 1.6** (the user, 2026-10-22: "raise Twister, Energy Ball, Power Wave"; tests/skill_sweep.cpp had them at 0.3-0.8 of the wizard's middle spell).
+    {skill::kPowerWave, "Power Wave", 5, 6.0f, 2.1f, 0.0f, 0, false, Spread::Line, 0, 1.0f,
      "A wave of light swept along the ground for twelve tiles, striking everything in its line "
      "harder than an Energy Ball.",
      147, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 14, 148, 15.0f},
@@ -419,7 +429,8 @@ constexpr SkillRow kRows[kSkills] = {
     // MU's "Skill recovery" (183), the arm up, thirteen keys where Energy Ball's two hands
     // (147/148) are six, played at kIceQuicken: about 0.65 s a cast at 100 agility where it was
     // 0.43, and quicker than Meteorite's 0.93 ("quicker but not so quick like it was"). Ours.
-    {skill::kIce, "Ice", 38, 9.0f, 1.8f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+    // Force 1.8 -> 1.62, -10% (the user's class balance, 2026-10-21: "we need balances classes", toward 13M an hour on Icarus and 8M on Aida, tests/skill_sweep.cpp).
+    {skill::kIce, "Ice", 38, 9.0f, 1.62f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "Ice bursts on a body up to nine tiles off and on everything within six tiles of it; what "
      "it strikes walks at half speed for ten seconds.",
      183, "spell_ice", true, arms::kNone, 0, Kin::DarkWizard, true, 10, 0, 1000.0f, false, 0, 0,
@@ -451,7 +462,8 @@ constexpr SkillRow kRows[kSkills] = {
     // at eight hours): Meteorite 2.6 -> 2.3, the other three 2.0 -> 1.8; the reach stays.
     // Force 1.8 -> 1.44 (the user, 2026-10-21: "a lot of spells are pretty brokenly strong";
     // tests/skill_sweep.cpp had it the wizard's strongest without talents): -20%.
-    {skill::kPoison, "Poison", 42, 9.0f, 1.44f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+    // And 1.44 -> 1.30, -10% more (the user's class balance, 2026-10-21: "we need balances classes", toward 13M an hour on Icarus and 8M on Aida, tests/skill_sweep.cpp).
+    {skill::kPoison, "Poison", 42, 9.0f, 1.30f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "A cloud of poison bursts on a body up to nine tiles off and on everything within six tiles "
      "of it, and goes on hurting them for twenty seconds.",
      147, "spell_heart", true, arms::kNone, 0, Kin::DarkWizard, true, 12, 148, 1000.0f, false, 0,
@@ -580,7 +592,8 @@ constexpr SkillRow kRows[kSkills] = {
     // -- fifty mana for less than the cheapest spell, and no bot threw it. At 1.5 a burn is ~236,
     // ~470 over the fire's two on everything in it.
     // Force 1.5 -> 1.275, -15% (the user's nerf of 2026-10-21, off tests/skill_sweep.cpp).
-    {.number = skill::kFlame, .name = "Flame", .mana = 50, .reach = 9.0f, .force = 1.275f,
+    // And 1.275 -> 1.15, -10% more (the user's class balance, 2026-10-21: "we need balances classes", toward 13M an hour on Icarus and 8M on Aida, tests/skill_sweep.cpp).
+    {.number = skill::kFlame, .name = "Flame", .mana = 50, .reach = 9.0f, .force = 1.15f,
      .spread = Spread::One,
      .tells = "Sets the ground under a body up to nine tiles off alight, and the fire strikes "
               "everything standing in it twice.",
@@ -681,13 +694,15 @@ constexpr SkillRow kRows[kSkills] = {
     // **1.65 the band** (the user, 2026-10-05: "twister has to be also stronger than meteorit bit
     // weaker than evil spirits"): ~277 a strike on a 689-energy wizard, between a Meteorite
     // rock's ~240 and a spirit's ~320.
-    {.number = skill::kTwister, .name = "Twister", .mana = 60, .reach = 6.0f, .force = 1.65f,
+    // **1.9, not 1.65, and walking 0.2 a tick, not 0.125** (the user, 2026-10-22: "raise Twister, Energy Ball, Power Wave"; tests/skill_sweep.cpp had them at 0.3-0.8 of the wizard's middle spell): where monsters fall in a
+    // blow, the slow wind wandered off among the dead.
+    {.number = skill::kTwister, .name = "Twister", .mana = 60, .reach = 6.0f, .force = 1.9f,
      .spread = Spread::One,
      .tells = "Sends a whirlwind walking out ahead of him, striking everything it passes three "
               "times.",
      .clip = 147, .sound = "spell_storm", .built = true, .families = arms::kNone,
      .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 35, .clipOther = 148,
-     .flies = 1000.0f, .burns = 3, .burnTiles = 1.5f, .walks = 0.125f},
+     .flies = 1000.0f, .burns = 3, .burnTiles = 1.5f, .walks = 0.2f},
 
     // ---- Inferno 14, the wizard's, after Twister for the same reason ----------------------------
     //
@@ -756,7 +771,7 @@ constexpr SkillRow kRows[kSkills] = {
     // 2774-2779). Wind (realm_fight.cpp `skillElement`), so Tempest raises it.
     // Force 1.5 -> 1.275, -15% (the user's nerf of 2026-10-21: the strongest skill on Aida).
     {.number = skill::kPenetration, .name = "Penetration", .mana = 7, .reach = 8.0f,
-     .force = 1.275f, .spread = Spread::Fan,
+     .force = 1.15f, .spread = Spread::Fan,  // and 1.275 -> 1.15, -10% more (the class balance)
      .tells = "An arrow loosed at a body up to eight tiles off, flying on through everything in "
               "its line. One arrow is spent for every body struck.",
      .clip = 50, .sound = "player_piercing", .built = true, .families = arms::kMissiles,
@@ -803,7 +818,8 @@ constexpr SkillRow kRows[kSkills] = {
     // (Hellfire's row, above). MU's two comets, its 150 units and its cast in two hands are not
     // followed; its mana and energy are. No sound at the let-go, as MU has none: each comet's
     // landing is SOUND_EXPLOTION01, BITMAP_EXPLOTION's own. All the shower ours.
-    {.number = skill::kCometfall, .name = "Cometfall", .mana = 150, .reach = 9.0f, .force = 1.8f,
+    // Force 1.8 -> 1.62, -10% (the user's class balance, 2026-10-21: "we need balances classes", toward 13M an hour on Icarus and 8M on Aida, tests/skill_sweep.cpp).
+    {.number = skill::kCometfall, .name = "Cometfall", .mana = 150, .reach = 9.0f, .force = 1.62f,
      .spread = Spread::One,
      .tells = "With his arm raised to the sky he calls blue comets down on the ground up to nine "
               "tiles off, falling at random within four tiles of it.",
@@ -974,15 +990,19 @@ int skillIndexOf(int32_t number) {
     return -1;
 }
 
-float force(const SkillRow& row, const HeroPoints& points) {
+float force(const SkillRow& row, const HeroPoints& points, Kin who) {
     // A wizard's `SkillMultiplier` is a flat one (ClassDarkWizard.cs:112): his spells take their
     // force from the wizardry band instead, which is where energy already went.
     // A spell's own `force` column only, where 0.75 has none: one on every spell but Lightning,
     // whose two is what a ten-second cooldown buys (the user, 2026-09-28: "lightning has to be
     // stronger because it's a cooldown spell"). Energy and the staff are already in the band.
     if (row.wizardry) return row.force;
-    return row.force + float(points.strength) * row.forcePerStrength +
-           float(points.energy) * kForcePerEnergy;
+    const float sum = row.force + float(points.strength) * row.forcePerStrength +
+                      float(points.energy) * kForcePerEnergy;
+    // The Gladiator's too since the class balance (2026-10-21): his blades were the knight's
+    // unboosted, and Aida's 6.7M against the knight's 8.1M.
+    const bool blade = (who == Kin::DarkKnight || who == Kin::MagicGladiator) && row.kin == Kin::DarkKnight;
+    return blade ? sum * kKnightSkillBoost : sum;
 }
 
 int skillPercent(const HeroPoints& points) {

@@ -41,8 +41,12 @@ WEAPONS = os.path.join(CONTENT, "items", "weapons")
 # A monster's passes too (Hell Maine's red chrome over its armour and wings, GMAida.cpp:
 # 1389-1405), written beside its recipe, where export_gltf looks: content/monsters/chrome/.
 FOLDERS = (WEAPONS, os.path.join(CONTENT, "monsters"))
+# And socketstaff, MU's BITMAP_SOCKETSTAFF (Item/soketmagic_stape02.jpg, ZzzOpenData.cpp:5451):
+# the Imperial Staff's gold lightning, laid three times over its body at its own UVs. And
+# dancerfire, the Sword Dancer's swordmagum_06e, its fire sliding over the lava MU lays first.
 IMAGES = {"chrome01": "refine/chrome01.png", "chrome02": "refine/chrome02.png",
-          "bab2": "refine/bab2.png", "shiny01": "drop/shiny01.png"}
+          "bab2": "refine/bab2.png", "shiny01": "drop/shiny01.png",
+          "socketstaff": "refine/socketstaff.png", "dancerfire": "refine/dancerfire.png"}
 # Where an alpha-tested sheet counts as cut: MU's own test, alpha under a half
 # (EnableAlphaTest's GL_GREATER 0.25 on a .tga is sharper than any sheet here needs).
 CUT_BELOW = 128

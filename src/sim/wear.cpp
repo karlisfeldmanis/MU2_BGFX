@@ -61,6 +61,7 @@ int maximumDurability(const content::ItemRow& row, const Held& held) {
 }
 
 int fullDurability(const content::ItemRow& row, int refinement) {
+    if (timedPet(row)) return 1;
     return wears(row) ? maximumDurability(row, refinement) : row.durability;
 }
 

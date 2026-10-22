@@ -1,0 +1,148 @@
+{
+  "item": "Sword25",
+  "mu_name": "Daybreak",
+  "mu_name_from": "MODEL_DAYBREAK (MODEL_SWORD + 24), loaded from Item/CW_Sword.bmd (ZzzOpenData.cpp:1101). Ours is named Sword25 by the index-plus-one rule the other swords keep; MU never loads a Sword25 file. Group 0 number 24 in OpenMU S6 Weapons.cs:161.",
+  "why_this_one": "The 100-140 weapons MU has and this game lacked (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's); the first four, one a class, lowest first.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:161.",
+    "call": "CreateWeapon(0, 24, 0, 22, 2, 4, true, \"Daybreak\", 115, 182, 218, 40, 90, 0, 0, 192, 30, 0, 0, 0, 2, 0, 0, 0, 0, 0)",
+    "call_note": "The Season 6 CreateWeapon: group, number, slot, skill, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strength, agility, energy, vitality, then darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel.",
+    "group": 0,
+    "number": 24,
+    "drop_level": 115,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 182,
+    "maximum_damage": 218,
+    "attack_speed": 40,
+    "durability": 90,
+    "requires": {
+      "level": 0,
+      "strength": 192,
+      "agility": 30,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "skill": 22,
+    "class_level": 2,
+    "class_level_note": "The Blade Knight's alone: OpenMU's darkKnightClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "stance": "two_hand_sword",
+  "stance_from": "Width 2: MuMain's ItemAttribute TwoHand, PLAYER_STOP_TWO_HAND_SWORD, as the Dark Breaker.",
+  "two_handed": true,
+  "sheets": {
+    "dn3_darksw": "dn3_darksw.png",
+    "Thunder01": "thunder01.png"
+  },
+  "sheet_from": "Data/Item/dn3_darksw.OZJ (64x128, a dark steel blade with a violet-grey edge, mesh 0, 242 triangles) and Thunder01 (64x64, a blue-white flare on black, mesh 1, 12 triangles: crossed cards), decoded from MuMain with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "dn3_darksw": "steel"
+  },
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "As every broad flat blade passed in the studio: steel's own 0.2 mirrors the grass black.",
+  "glow": {
+    "Thunder01": {}
+  },
+  "glow_note": "MuMain has no RenderPartObjectBody arm for MODEL_DAYBREAK; its Thunder01 cards are a black-backed flare, drawn added here as every such card. PartObjectColor2 gives it Color 24 (ZzzObject.cpp:6636).",
+  "rig_note": "export-rig --actions=all: three bones, one action of one key; nothing moves, no rig kept. Held, MuMain hangs two BITMAP_LIGHT + 1 at 0.45 either side of bone 2, a BITMAP_SHINY + 1 at 0.7 and a turning one of random size on it, grey (0.6), and a breathing Flare01 (ZzzCharacter.cpp:7226-7260; fx/held_lights, to do).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 74,
+      "area": 1223.9,
+      "along": [
+        -28.5,
+        21.1
+      ],
+      "mu_uv": [
+        0.336,
+        0.018,
+        0.988,
+        0.63
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.973,
+        0.982
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 168,
+      "area": 7260.4,
+      "along": [
+        -9.4,
+        160.3
+      ],
+      "mu_uv": [
+        0.002,
+        0.013,
+        0.987,
+        0.992
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.994,
+        0.994
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 6,
+      "area": 62.3,
+      "along": [
+        30.3,
+        38.0
+      ],
+      "mu_uv": [
+        0.017,
+        -0.059,
+        0.984,
+        1.059
+      ],
+      "bake_uv": [
+        0.489,
+        0.131,
+        0.577,
+        0.233
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 6,
+      "area": 62.3,
+      "along": [
+        30.3,
+        38.0
+      ],
+      "mu_uv": [
+        0.017,
+        -0.059,
+        0.984,
+        1.059
+      ],
+      "bake_uv": [
+        0.213,
+        0.493,
+        0.301,
+        0.594
+      ]
+    }
+  ]
+}

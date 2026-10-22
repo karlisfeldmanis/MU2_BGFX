@@ -21,8 +21,9 @@ namespace {
 //    Devias, Atlans, the Balrog, Tarkan, the Phoenix. **The knight's and the wizard's one-handed**
 //    (the user, 2026-10-09: "giving two hand weapon is pretty useless because without magic
 //    defense DW will be very weaks same as DK" -- Defense and Magic Shield ask a shield): past
-//    Atlans no better one-hander is built, so the Balrog pays the top one at +0 and Tarkan the
-//    same at +7 (the user's pick). One two-hander, the Blade Knight's Dark Breaker, paid with
+//    Atlans no better one-hander is built, so Tarkan pays the top one at +7 and the Balrog
+//    pays the knight and the wizard jewels instead (the user, 2026-10-21: the same weapon twice
+//    was one too many). One two-hander, the Blade Knight's Dark Breaker, paid with
 //    Bulwark, which keeps his guard without a shield (the user: "only point to give good
 //    two-handers when chars has rune for using defense auras without shields"). The Serpent
 //    Staff at home is held one-handed here (its stance), as the Legendary and Resurrection are.
@@ -137,8 +138,13 @@ QuestRow marlon() {
     row.firstExperience = 100000;
     row.zen = 50000;
     int n = 0;
-    row.paid[n++] = {.item = "Sword08", .kin = knight, .sockets = 1,
-                     .firstOnly = true};  // Falchion
+    // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
+    // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
+    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
+    row.choices[row.choiceCount++] = {.item = "Sword08", .kin = knight, .sockets = 1,
+                                      .firstOnly = true};  // Falchion
+    row.choices[row.choiceCount++] = {.item = "Sword10", .kin = knight, .sockets = 1,
+                                      .firstOnly = true};  // Sword of Salamander
     row.paid[n++] = {.item = "Staff03", .kin = wizard, .sockets = 1,
                      .firstOnly = true};  // Serpent Staff
     // The weapon's rune a Common (the ladder, above): the faint kin of the Legendary Lirien pays
@@ -312,8 +318,13 @@ QuestRow devin() {
     // one-handed Legendary Staff and the elf's Tiger Bow. Devias paid each class's top
     // 0.75 armour until this day, a piece of the Lost Tower's set two maps early.
     int n = 0;
-    row.paid[n++] = {.item = "Sword14", .kin = knight, .sockets = 2,
-                     .firstOnly = true};  // Double Blade
+    // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
+    // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
+    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
+    row.choices[row.choiceCount++] = {.item = "Sword14", .kin = knight, .sockets = 2,
+                                      .firstOnly = true};  // Double Blade
+    row.choices[row.choiceCount++] = {.item = "Sword16", .kin = knight, .sockets = 2,
+                                      .firstOnly = true};  // Giant Sword
     // The wizard's one-handed Legendary Staff, and the Legendary Shield for the other hand, his
     // class's best first-class shield, so his Magic Shield works from here on (2026-10-09: the
     // two-handed Thunder Staff left him without it; then the user, of the Small Shield it first
@@ -827,7 +838,7 @@ QuestRow tersiaFifth() {
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);
     // The set's armour, which makes it whole (2026-10-09). And a shield of its set's own -- the
-    // knight's Dragon Shield, the wizard's Legendary, for his one-handed Staff of Resurrection
+    // knight's Dragon Shield, the wizard's Legendary, for his one-handed Legendary Staff
     // from Atlans -- and Renewal for it; the elf's bow takes both hands, so hers is a Ring of
     // Ice. Its Undying and Wellspring went (the user, 2026-10-17, of too many runes): the Pit
     // pays the pair already, and a hero wears three jewels at most.
@@ -928,16 +939,20 @@ QuestRow tersiaBalrog() {
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);
     // **The tower's weapon, three sockets** (the user, 2026-10-03: "lets give some weapons with
-    // +3 sockets"; the ladder, 2026-10-09): the top one-handers, as two hands leave Defense and
-    // Magic Shield behind -- the knight's Sword of Destruction, the wizard's Staff of Resurrection
-    // again, raised to +4 over Atlans's -- and the elf's Chaos Nature Bow. The Bill of Balrog and
-    // the Chaos Lightning Staff, two-handed, were these until the same day.
-    row.paid[row.paidCount++] = {.item = "Sword17", .kin = knight, .sockets = 3,
-                                 .firstOnly = true};  // Sword of Destruction
-    row.paid[row.paidCount++] = {.item = "Staff07", .plus = 4, .kin = wizard, .sockets = 3,
-                                 .firstOnly = true};  // Staff of Resurrection +4
+    // +3 sockets"; the ladder, 2026-10-09): the elf's Chaos Nature Bow. The knight's Sword of
+    // Destruction and the wizard's Staff of Resurrection +4 were here too until 2026-10-21 (the
+    // user: "we are giving staff of resorection 2 times"): Kantur's Legion pays each once, at
+    // +7, and the knight and the wizard take two Jewels of Bless and two of Soul here instead.
     row.paid[row.paidCount++] = {.item = "Bow07", .kin = elf, .sockets = 3,
                                  .firstOnly = true};  // Chaos Nature Bow
+    row.paid[row.paidCount++] = {.item = "Jewel01", .count = 2, .kin = knight,
+                                 .firstOnly = true};  // Jewels of Bless
+    row.paid[row.paidCount++] = {.item = "Jewel02", .count = 2, .kin = knight,
+                                 .firstOnly = true};  // Jewels of Soul
+    row.paid[row.paidCount++] = {.item = "Jewel01", .count = 2, .kin = wizard,
+                                 .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel02", .count = 2, .kin = wizard,
+                                 .firstOnly = true};
     // The rune, every class's Wrath since 2026-10-03 (the user: "LT7 has to be +20% damage rune
     // for all classes, create that rune its legendary"), and Stormcall beside it, Rolling Fire's
     // until 2026-10-09 (the user, 2026-10-03: "that rune which has chance to cast lightnings on
@@ -1432,10 +1447,17 @@ QuestRow lirienHalls() {
     // his fire, the elf's Plague Arrows for her Multi-Shot. The wizard's one hand is for the
     // Legendary Shield of Tersia's fifth floor. The knight's was the two-handed Crystal Sword.
     int n = 0;
-    row.paid[n++] = {.item = "Sword15", .kin = knight, .sockets = 2,
-                     .firstOnly = true};  // Lighting Sword
-    row.paid[n++] = {.item = "Staff07", .kin = wizard, .sockets = 2,
-                     .firstOnly = true};  // Staff of Resurrection
+    // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
+    // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
+    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
+    row.choices[row.choiceCount++] = {.item = "Sword15", .kin = knight, .sockets = 2,
+                                      .firstOnly = true};  // Lighting Sword
+    row.choices[row.choiceCount++] = {.item = "Mace06", .kin = knight, .sockets = 2,
+                                      .firstOnly = true};  // Crystal Sword
+    // The wizard's was the Staff of Resurrection until 2026-10-21, which Kantur's Legion pays at
+    // +7 (the user: "we are giving staff of resorection 2 times"): the Legendary Staff, one hand.
+    row.paid[n++] = {.item = "Staff06", .kin = wizard, .sockets = 2,
+                     .firstOnly = true};  // Legendary Staff
     row.paid[n++] = {.item = "CrossBow07", .kin = elf, .sockets = 2,
                      .firstOnly = true};  // Aquagold Crossbow
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Twister),
@@ -1541,29 +1563,25 @@ QuestRow kantursLegion() {
     row.offer[3] =
         "\"Then Kundun gave it a new master. The Mutants and the Bloody Wolves came with him out "
         "of the sand. The Beam Knights came on wings.\"";
-    row.offer[4] =
-        "\"The legion's own captain leads them now, the Zaikan, shining with what Kundun poured "
-        "into him. And past the dunes the Death Beam Knight burns, and never burns out. Break the "
-        "legion from the town outward. Then the captain. Then the burning knight.\"";
+    row.offer[4] = "\"Break the legion from the town outward, and come back to me.\"";
     row.underway = "\"The legion still marches. I can hear the wheels.\"";
     row.handIn[0] =
-        "\"The dunes are quiet. I had forgotten what wind sounds like with nothing in it.\"";
-    row.handIn[1] =
-        "\"Take these, with Kantur's thanks, what is left of it. The legion mends itself. When it "
-        "marches again, come back.\"";
+        "\"The wheels have stopped. But the legion's captain still stands, and the burning knight "
+        "past the dunes.\"";
+    row.handIn[1] = "\"Take these, with Kantur's thanks, what is left of it. Then hear me again.\"";
     row.resting = "\"Rest. By morning the wheels will turn again.\"";
-    // His own voice (VOICES["keeper"] by the stem), read off docs/game/tarkan-quest.md's six
-    // paragraphs; the window's fifth holds the last two.
+    // His own voice (VOICES["keeper"] by the stem), read off docs/game/tarkan-quest.md.
     row.voice = "keeper_1";
+    // **The legion alone** (the user, 2026-10-21: "we need tarkan on 2 parts, because now there is
+    // confusion"): its five breeds, 160 kills; the Zaikan and the Death Beam Knight are Kantur's
+    // Captain's, the Keeper's second (below).
     row.steps[0] = {QuestStepKind::Clear, 62, 40, "Mutants"};            // level 72
     row.steps[1] = {QuestStepKind::Clear, 60, 35, "Bloody Wolves"};      // 76
     row.steps[2] = {QuestStepKind::Clear, 57, 30, "Iron Wheels"};        // 80
     row.steps[3] = {QuestStepKind::Clear, 58, 30, "Tantalos"};           // 83
     row.steps[4] = {QuestStepKind::Clear, 61, 25, "Beam Knights"};       // 84
-    row.steps[5] = {QuestStepKind::Clear, 59, 1, "Zaikan"};              // 90, the captain
-    row.steps[6] = {QuestStepKind::Clear, 63, 1, "Death Beam Knight"};   // 93, the burning knight
-    row.steps[7] = {QuestStepKind::Return, 0, 1, "Return to the Keeper"};
-    row.stepCount = 8;
+    row.steps[5] = {QuestStepKind::Return, 0, 1, "Return to the Keeper"};
+    row.stepCount = 6;
     row.repeatSeconds = 12 * 60 * 60;
     row.minLevel = 100;
     row.gateLevel = true;
@@ -1574,6 +1592,10 @@ QuestRow kantursLegion() {
     // Every class's, as Lirien's: no class is born in Tarkan.
     row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
     row.strangers = true;
+    // **The first class's half** (the user, 2026-10-21: "first quest gives first class rewards, 2nd
+    // quest gives second class rewards"): the whole clear's pay as it was, the first class's weapon
+    // among it; a promoted hero or the Magic Gladiator is paid the rest and his weapon at Kantur's
+    // Captain, the second class's half (below).
     row.experience = 150000;
     row.firstExperience = 600000;
     row.zen = 250000;
@@ -1582,18 +1604,34 @@ QuestRow kantursLegion() {
     // gear and Legendaries above wait a hundred levels for Sevina, so they went to Icarus and the
     // class change, and Tarkan pays **the first class's best weapon, three sockets**, worn at once
     // -- the knight's Sword of Destruction and the wizard's Staff of Resurrection, both one-handed
-    // and at +7, over the Balrog's (the user, 2026-10-09: two hands leave Defense and Magic Shield
+    // and at +7, paid nowhere else (the user, 2026-10-09: two hands leave Defense and Magic Shield
     // behind, and no better one-hander is built; "same weapon, higher plus"), the elf's Saint
     // Crossbow -- with two runes each for it: the knight's Immolate and Ice, the wizard's Inferno
     // and Thunder (his Spirit Plague went to Tersia's sixth floor), the elf's Greater Barrage and
     // Glacier. And the legendary pendant, four powers, beside the Balrog's legendary ring.
+    //
+    // **A promoted hero's own** (the user, 2026-10-21: "this quest has to give better weapon for SM
+    // and same for BK and ME and MG"): one who comes to the Keeper after Sevina is paid his second
+    // class's, past Icarus's -- the Blade Knight's one-handed Knight Blade, the Soul Master's
+    // one-handed Staff of Kundun, the sword at +7 as the first class's and the staff at +0 (the
+    // user, the same day: "dont give +7 staff of kundun that to much"), and the Muse Elf's Great Reign
+    // Crossbow, the Saint's own line. The Magic Gladiator is paid by his path: on the knight's his
+    // own Dark Reign Blade, the sword that casts, on the wizard's the Staff of Kundun, which is his
+    // too (Realm::questItemFits keeps the Knight Blade from him by its class bits, and the Dark
+    // Reign Blade from the knight). Kantur's Captain pays those since 2026-10-21.
+    using Rank = QuestItem::Rank;
     int n = 0;
-    row.paid[n++] = {.item = "Sword17", .plus = 7, .kin = knight, .sockets = 3,
-                     .firstOnly = true};  // Sword of Destruction +7
+    // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
+    // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
+    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
+    row.choices[row.choiceCount++] = {.item = "Sword17", .plus = 7, .kin = knight, .sockets = 3,
+                                      .firstOnly = true, .rank = Rank::First};  // Sword of Destruction +7
+    row.choices[row.choiceCount++] = {.item = "Mace07", .plus = 7, .kin = knight, .sockets = 3,
+                                      .firstOnly = true, .rank = Rank::First};  // Chaos Dragon Axe +7
     row.paid[n++] = {.item = "Staff07", .plus = 7, .kin = wizard, .sockets = 3,
-                     .firstOnly = true};  // Staff of Resurrection +7
+                     .firstOnly = true, .rank = Rank::First};  // Staff of Resurrection +7
     row.paid[n++] = {.item = "CrossBow17", .kin = elf, .sockets = 3,
-                     .firstOnly = true};  // Saint Crossbow
+                     .firstOnly = true, .rank = Rank::First};  // Saint Crossbow
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Burn),
                      .firstOnly = true};  // Immolate
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Ice),
@@ -1615,6 +1653,73 @@ QuestRow kantursLegion() {
     row.paid[n++] = {.item = "Jewel15"};              // a Jewel of Chaos
     row.paid[n++] = {.item = "Quest04"};              // Loch's Feather
     row.paid[n++] = {.item = "MagicBox08", .plus = 3};  // a Box of Kundun +3, off the legion
+    row.paidCount = n;
+    return row;
+}
+
+// Kantur's Captain, the Keeper's second (the user, 2026-10-21: "we need tarkan on 2 parts,
+// because now there is confusion"): the Zaikan and the Death Beam Knight, the two Kantur's Legion
+// asked last until that day, offered once the legion has been handed in and every 12 hours after,
+// on its own clock. **The second class's half** (the user, the same day: "first quest gives first
+// class rewards, 2nd quest gives second class rewards"): offered only past the class change and to
+// the Magic Gladiator (QuestRow::second), its first clear his second class's weapon.
+QuestRow kantursCaptain() {
+    QuestRow row;
+    row.giver = kKeeperNumber;
+    row.giverName = "the Keeper";
+    row.place = "Tarkan";
+    row.title = "Kantur's Captain";
+    row.offer[0] =
+        "\"The legion's own captain leads them now, the Zaikan, shining with what Kundun poured "
+        "into him.\"";
+    row.offer[1] = "\"And past the dunes the Death Beam Knight burns, and never burns out.\"";
+    row.offer[2] =
+        "\"Break the captain. Then the burning knight. Then the legion has no one to march for.\"";
+    row.underway = "\"The captain still stands. The wheels wait on his word.\"";
+    row.handIn[0] =
+        "\"The dunes are quiet. I had forgotten what wind sounds like with nothing in it.\"";
+    row.handIn[1] =
+        "\"Take these, with Kantur's thanks, what is left of it. The legion mends itself. When it "
+        "marches again, come back.\"";
+    row.resting = "\"Rest. Kundun will raise another captain before long.\"";
+    // The Keeper's voice (VOICES["keeper"] by the stem); content/voice/keeper_2 until it is read
+    // stays silent.
+    row.voice = "keeper_2";
+    row.steps[0] = {QuestStepKind::Clear, 59, 1, "Zaikan"};             // 90, the captain
+    row.steps[1] = {QuestStepKind::Clear, 63, 1, "Death Beam Knight"};  // 93, the burning knight
+    row.steps[2] = {QuestStepKind::Return, 0, 1, "Return to the Keeper"};
+    row.stepCount = 3;
+    row.repeatSeconds = 12 * 60 * 60;
+    row.minLevel = 100;
+    row.gateLevel = true;
+    row.afterAny = 1u << kKantursLegion;
+    row.second = true;
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
+    row.strangers = true;
+    row.experience = 150000;
+    row.firstExperience = 600000;
+    row.zen = 250000;
+    // The weapon, by rank, as Kantur's Legion's comment above tells.
+    using Rank = QuestItem::Rank;
+    int n = 0;
+    // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
+    // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
+    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
+    row.choices[row.choiceCount++] = {.item = "Sword21", .plus = 7, .kin = knight, .sockets = 3,
+                                      .firstOnly = true, .rank = Rank::Second};  // Knight Blade +7, the BK's
+    row.choices[row.choiceCount++] = {.item = "Sword25", .plus = 7, .kin = knight, .sockets = 3,
+                                      .firstOnly = true, .rank = Rank::Second};  // Daybreak +7, the BK's
+    row.paid[n++] = {.item = "Sword22", .plus = 7, .kin = knight, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::Second};  // Dark Reign Blade +7, the MG's
+    row.paid[n++] = {.item = "Staff12", .kin = wizard, .sockets = 3, .firstOnly = true,
+                     .rank = Rank::Second};  // Staff of Kundun, +0 (+7 too much, the user)
+    row.paid[n++] = {.item = "CrossBow20", .kin = elf, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::Second};  // Great Reign Crossbow
+    row.paid[n++] = {.item = "Jewel03"};  // a Jewel of Life
+    row.paid[n++] = {.item = "Quest04"};  // Loch's Feather
     row.paidCount = n;
     return row;
 }
@@ -1792,8 +1897,8 @@ QuestRow seedMastersClearing() {
     // Wellspring, +30% max mana in a ring or a pendant, every class's, and paid by no quest
     // before (Wrath, the first try, is the Balrog's already: testQuestLadder pays no weapon rune
     // twice). A choice of the class's own was the doc's proposal, but QuestRow::choices are
-    // offered by the item's classes alone, a Rune of Creation fits every class, and they ignore
-    // firstOnly (Realm::questChoiceFits).
+    // offered by the item's classes (and since 2026-10-22 its kin, first clear and rank,
+    // Realm::questChoiceFits), and a Rune of Creation fits every class.
     row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::GreaterWellspring),
                      .firstOnly = true};
     row.paidCount = n;
@@ -1833,6 +1938,7 @@ const QuestRow kRawTable[kQuests] = {
     keyed(towerErrand(), "tower_errand"),
     keyed(sealedWood(), "sealed_wood"),
     keyed(seedMastersClearing(), "seed_masters_clearing"),
+    keyed(kantursCaptain(), "kanturs_captain"),
 };
 
 // **Every quest pays three Firecrackers** besides its own reward, every completion, to every

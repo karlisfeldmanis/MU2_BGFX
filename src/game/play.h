@@ -53,6 +53,7 @@
 #include "game/fx/spirits.h"
 #include "game/fx/nova.h"
 #include "game/fx/firework.h"
+#include "game/fx/rite.h"
 #include "game/fx/thunder.h"
 #include "game/fx/wheel.h"
 #include "game/fx/fury.h"
@@ -485,6 +486,10 @@ public:
         return send({.kind = sim::Command::Kind::JewelCombine, .a = a, .b = b, .c = c});
     }
     void closeJeweler() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Jeweler)}); }
+    // Rebirth (sim/rebirth.h): the rite asked at Lugard's, and his window shut. The rite itself
+    // starts on the realm's Reborn (startRite), for whoever was reborn.
+    uint32_t rebirth() { return send({.kind = sim::Command::Kind::Rebirth}); }
+    void closeRebirth() { send({.kind = sim::Command::Kind::Close, .a = int(sim::Command::Window::Rebirth)}); }
     void jewelHeard(sim::Command::Kind kind, bool ok, int32_t value);
     void restoreMachine(const sim::Machine& saved) { if (here("the machine")) local_.restoreMachine(saved); }
     // A trade with another player (sim/realm_deal.cpp), as the realm keeps it: ask him by his
@@ -952,6 +957,24 @@ public:
     void gatherWarp(gfx::Effects& effects) const {
         if (ground_) warp_.gather(effects, *ground_);
     }
+    // The Rebirth rite (fx/rite.h), opened by the caller for the same reason. startRite() holds
+    // `body` (0 for the hero) on his knee where he stands and starts the rite and its sound: on the
+    // realm's Reborn, `count` his rebirths now, or the bench's `--rite F`, the show alone.
+    Rite& rite() { return rite_; }
+    void gatherRite(gfx::Effects& effects, const float eye[3]) const {
+        if (ground_) rite_.gather(effects, *ground_, eye);
+    }
+    void startRite(uint32_t body = 0, int count = 1);
+    // The Rebirth message owed as he rises off his knee (Rite::kStands): the reset count, and
+    // `rite_reborn` played as it is taken, so the message (game/ui/reborn.h) and its sound start
+    // on the one frame. The bench's rite is the first rebirth.
+    bool takeReborn(int* count) {
+        if (rebornOwed_ <= 0) return false;
+        *count = rebornOwed_;
+        rebornOwed_ = 0;
+        if (heard_.riteReborn >= 0) sound_.play(heard_.riteReborn);
+        return true;
+    }
     // Whether he has warped since this was last asked, and forgets it: what the windows shut
     // on, as MuMain's ReceiveTeleport shuts every one (`g_pNewUISystem->HideAll()`).
     // A Town Portal read where the map has no safe zone (the Dungeon): Lorencia is owed, and
@@ -1152,11 +1175,12 @@ public:
     // Opened is SOUND_INTERFACE01, which a merchant's counter opens on beside the click.
     // Talent is the user's sword cut, for a + the realm answered by opening a talent; Soft the
     // click a step quieter, for a talent point given back. Bell the Elite's, on each pulse of its
-    // mark on the minimap (game/ui/minimap.h).
-    enum class Ui { Click, Refused, Took, Opened, Invited, Talent, Soft, Whoosh, Bell };
+    // mark on the minimap (game/ui/minimap.h). Whispered the user's two notes, for a whisper to
+    // him from another player (game/ui/chat.cpp).
+    enum class Ui { Click, Refused, Took, Opened, Invited, Talent, Soft, Whoosh, Bell, Whispered };
     void ui(Ui which);
     // An event's gate opening (game/ui/herald.h): a peek of its music, `seconds` long and faded
-    // out at its end. 0 Blood Castle, its iBloodCastle bed; 1 Devil Square, its fight's track.
+    // out at its end. 0 Blood Castle, 1 Devil Square; both the one hit, content/music/gate_open.mp3.
     void gatePeek(int gate, float seconds);
     void gatherAura(gfx::Effects& effects, const float eye[3]) const {
         if (ground_) aura_.gather(effects, *ground_, eye);
@@ -1742,6 +1766,12 @@ private:
     // A complete set at +10 and +11: its flares and ribbons (game/fx/set_shine.h).
     SetShine setShine_;
     Warp warp_;
+    Rite rite_;
+    float riteYaw_ = 0.0f;   // the way he kneels: to the nearest townsperson, Lugard (startRite)
+    bool riteFaces_ = false;
+    int rebornOwed_ = 0;     // a Rebirth message to show, its count; 0 for none (takeReborn)
+    uint32_t riteBody_ = 0;  // whose rite it is: the kneel and the facing are his
+    int riteCount_ = 1;      // and his rebirths, for the message when it is the hero's
     bool warpOwed_ = false;
     bool homeOwed_ = false;
     int portalFrom_[2] = {-1, -1};  // takePortalFrom's tile, -1 for none
@@ -2025,6 +2055,8 @@ private:
         int drink = -1, apple = -1;                     // a potion going down
         int orb = -1;                                   // an orb read, and the skill kept
         int warp = -1;                                  // sMagic: a Town Portal landing
+        int rite = -1;                                  // the Rebirth rite, its whole 14 s
+        int riteReborn = -1;                            // and its message, as he stands
         int grate = -1, trapFlame = -1;                 // the traps' aGrate and sFlame
         int click = -1, refused = -1, opened = -1;      // the windows
         int invited = -1;  // window_invite: a party, guild or trade invite to him
@@ -2032,6 +2064,7 @@ private:
         int whoosh = -1;   // window_talent_whoosh: its swell, under the light down the lines
         int soft = -1;     // window_click_soft: a talent point given back
         int bell = -1;     // elite_bell: an Elite's mark on the minimap, each pulse
+        int whispered = -1;  // whisper_ping: a whisper to him from another player
         int levelUp = -1;                               // another player's level, heard at him
         int repair = -1;                                // SOUND_REPAIR: a counter mended
         int mix = -1, mixBreak = -1;                    // eMix and eBreak: the Chaos Machine

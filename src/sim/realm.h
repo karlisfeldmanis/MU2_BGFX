@@ -158,6 +158,9 @@ enum class What : uint8_t {
                  // (Realm::throwSkill): refused, nothing paid. `whom` that player. For him alone.
     Leeched,   // life back off a blow he landed: Bloodwell's share and the Leech's life per hit
                // together (realm_fight.cpp). a: what came back. Shown "+N" over him.
+    Reborn,    // a rebirth (sim/rebirth.h, Realm::rebirth): a: how many he has made now, b: the
+               // worn pieces it put in the bag. `who` is the player; said to everyone, as the
+               // rite is seen and the server tells Global.
 };
 
 // What a trade between two players did (What::Deal). MU's trade packets 0x36-0x3D in one.
@@ -386,6 +389,9 @@ struct Body {
     int32_t weapon = -1;
     int32_t shield = -1;
     bool dual = false;
+    // A weapon in his right hand that takes both (content::Arm::twoHanded): a knight's skills are
+    // kTwoHandBoost harder with one (sim::heroForce).
+    bool twoHanded = false;
     int32_t level = 1;
     int32_t health = 0;
     int32_t maxHealth = 0;
@@ -508,6 +514,9 @@ struct Body {
     // His talents, a rank a node of his class's tree (sim/talents.h). The points to spend on them
     // are not kept: they are his level's (sim::talentPoints) less what these hold.
     TalentRanks talents{};
+    // How many times he has been reborn (sim/rebirth.h). His talent points count each life's
+    // levels with it (sim::talentPoints).
+    int32_t rebirths = 0;
     // What they come to for what he holds, summed at each rearm (sim::talentShares).
     TalentShares talentShare;
     // The talents' timed states (sim::Special), each until its tick, 0 for none; none is ever
@@ -772,6 +781,7 @@ struct HeroRecord {
     int32_t pointsInHand = 0;
     HeroPoints points;
     TalentRanks talents{};  // checked on restore by sim::talentsValid, dropped whole when wrong
+    int32_t rebirths = 0;   // sim/rebirth.h
     int32_t health = 0, mana = 0;
     int64_t money = 0;
     // What he has learned, by the skill table's own index. Saved because learning is permanent
@@ -1231,6 +1241,17 @@ public:
     // refusal() saying why.
     int jeweling() const { return me().jeweling; }
     void closeJeweler() { me().jeweling = -1; }
+
+    // ---- Rebirth (sim/rebirth.h) ---------------------------------------------------------------
+    // Lugard's window, opened by a Talk and shut by any order, as the Jeweler's is: his folk
+    // index, or -1. rebirth() is the rite asked there: answered with how many rebirths he has made
+    // now, or -1 refused, with refusal() saying why.
+    int rebirthing() const { return me().rebirthing; }
+    void closeRebirth() { me().rebirthing = -1; }
+    int rebirth();
+    // How many worn pieces a rebirth would put in the bag, or -1 when the bag has no room for
+    // them: the window's question, nothing changed.
+    int rebirthStrips() const;
     int recut(int slot, int line);
     int salvage(int slot);
     int combine(int first, int second, int third);
@@ -1483,16 +1504,18 @@ public:
     // -- its quota, its drop, its rise -- without the walk and the swings (tests/sim_test.cpp).
     void smite(uint32_t id);  // realm_commands.cpp
     int64_t wallClock() const { return wall_; }
-    // Whether his class may be paid this choice: the item's own class bits, as a purchase asks.
-    bool questChoiceFits(int index, int choice) const;
+    // Whether he may be paid this choice: as a thing `paid` is (questPaysHero, questItemFits) --
+    // its class, its first clear and its rank, on the Magic Gladiator's `path`.
+    bool questChoiceFits(int index, int choice, QuestPath path = QuestPath::Melee) const;
     // Whether a thing paid is his to use by the same bits: the Magic Gladiator on the knight's
     // path is not paid a knight's helm or the Orb of Death Stab, which he could never wear or
-    // read. A thing naming nothing cooked does not fit.
+    // read. A thing naming nothing cooked does not fit, nor one of another rank (QuestItem::rank).
     bool questItemFits(const QuestItem& what) const;
     // Accept, at the giver: offered, and his dialog open. Refused whole and silent otherwise.
     bool acceptQuest(int index);
-    // Hand in, at the giver: ready, the choice his class may take (or -1 when none is offered
-    // him), and room in the bag for all of it before anything is given. Pays and rests it.
+    // Hand in, at the giver: ready, the choice his class may take (or -1: the first that fits,
+    // or none when none is offered him), and room in the bag for all of it before anything is
+    // given. Pays and rests it.
     // `path`: the Magic Gladiator's, melee or magic (sim::questPaidKin); nobody else's.
     bool completeQuest(int index, int choice, QuestPath path = QuestPath::Melee);
     // Whether he is his class's second, Sevina's treasure handed in (sim::promoted).
@@ -2479,6 +2502,7 @@ private:
         int banking = -1;
         int brokering = -1;  // see brokering()
         int jeweling = -1;   // see jeweling()
+        int rebirthing = -1; // see rebirthing()
         Vault vault;
         bool jeweled = false;
         int mixing = -1;

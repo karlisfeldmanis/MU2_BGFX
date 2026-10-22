@@ -467,6 +467,9 @@ struct Args {
     // kill's drop lies -- the fall, the landing sound and the label -- for looking at a drop
     // nothing in Lorencia leaves (the Bless and the Soul). FRAME:LIST.
     int layFrame = -1;
+    // The bench's too: on frame `riteFrame`, the Rebirth rite's show where he stands (fx/rite.h),
+    // no reset. --rite F.
+    int riteFrame = -1;
     std::string lay;
     // And on these frames, Space: the nearest drop walked to and picked up (Play::pickNearest).
     std::vector<int> uiPicks;

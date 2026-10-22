@@ -240,7 +240,9 @@ void Broker::layout(Play& play) {
                 spot({kCard.x + in, kCard.bottom() - 88.0f, 110.0f, 14.0f}, Hit::Seller);
                 // A seller on another realm is no one to whisper (docs/game/shared-market.md).
                 const bool elsewhere = (row->flags & net::BrokerRow::Elsewhere) != 0;
-                if (!own && !elsewhere) spot({kCard.right() - in - 56.0f, kCard.bottom() - 88.0f, 56.0f, kButtonH}, Hit::Whisper);
+                // Small and quiet on the seller's line (the user, 2026-10-22: "why whisper button so
+                // big?"): it is beside his name, not an action of the card's.
+                if (!own && !elsewhere) spot({kCard.right() - in - 44.0f, kCard.bottom() - 88.0f, 44.0f, 14.0f}, Hit::Whisper);
             }
             if (!own) spot({kCard.x + in, kCard.bottom() - in - kPrimaryH, kCard.w - 2.0f * in, kPrimaryH}, Hit::Buy);
         }

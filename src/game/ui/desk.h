@@ -14,6 +14,8 @@
 #include "content/texture.h"
 #include "game/ui/amount.h"
 #include "game/ui/arrival.h"
+#include "game/ui/reborn.h"
+#include "game/ui/rebirth_window.h"
 #include "game/ui/bag.h"
 #include "game/ui/beacon.h"
 #include "game/ui/card.h"
@@ -128,8 +130,12 @@ public:
     bool takesPointer() const { return takesPointer_; }
     // Whether a window, the HUD or a box covers this pixel, as the windows stand now.
     bool overWindows(float x, float y) const;
-    // The chat steps aside under the whole map (M), unless he is typing in it.
-    bool chatHidden() const { return minimap_.full() && !chat_.typing(); }
+    // The chat steps aside under the whole map (Tab), the travel list (M) and a quest window (the
+    // log, L, or a giver's dialog), unless he is typing in it (the user, 2026-10-22: "we need hide
+    // chat when we open map list (M)", then "when quest window is opened hide chat").
+    bool chatHidden() const {
+        return (minimap_.full() || travel_.up() || questLog_.up() || questDialog_.up()) && !chat_.typing();
+    }
     // The drop whose name plate is under this pixel, or 0. The last drawn is on top and wins.
     uint32_t labelUnder(float x, float y) const;
 
@@ -348,7 +354,7 @@ private:
     // Bound is TookOrRefused for a bound thing, whose no the tally's lane explains (Tally::bound).
     enum class Then : uint8_t {
         TookOrRefused, Refused, Spark, ZenBox, Strike, CloseQuest, Travel, Click, CloseAngel, Quiet,
-        Bound, Reset, Jewel,
+        Bound, Reset, Jewel, Rebirth,
         // A talent point, `key` its column x 16 + node, plus 1000 for a take: an unlock's cut on
         // a yes that opened something, else the click; the error on a no.
         Talent
@@ -378,6 +384,8 @@ private:
     bool bagForMachine_ = false;
     // Moss the Gambler's window (game/ui/jeweler.h), opened as the machine is.
     Jeweler jeweler_;
+    RebirthWindow rebirthWindow_;
+    bool rebirthing_ = false;  // Lugard's window up (game/ui/rebirth_window.h)
     bool jeweling_ = false;
     bool bagForJeweler_ = false;
     // The number box the vault's coin buttons open. Modal: see Desk::update.
@@ -517,6 +525,7 @@ private:
     Beacon beacon_;
     Tally tally_;
     Arrival arrival_;
+    Reborn reborn_;
     ItemModels* models_ = nullptr;
     ItemStage bagStagePicture_, shelfStagePicture_, quickStagePicture_, tipStagePicture_;
     ItemStage inspectStagePicture_;  // the inspect window's, open beside the bag's

@@ -101,6 +101,8 @@ bool Realm::questUnderLevel(int index) const {
     if (index < 0 || index >= kQuests) return false;
     const QuestRow& row = questAt(index);
     if (!questOpen(row, int(mine().kin)) || mine().level >= questLevel(index)) return false;
+    // A second class's quest is not shown to the first, even as one his level waits on.
+    if (row.second && !promoted() && mine().kin != Kin::MagicGladiator) return false;
     const QuestProgress& one = me().quests[index];
     if (one.state != QuestState::Untaken || one.completions > 0) return false;
     if (row.afterAny == 0) return true;
@@ -141,6 +143,7 @@ bool Realm::questLocked(int index) const {
     const QuestRow& row = questAt(index);
     const QuestProgress& one = me().quests[index];
     if (one.state != QuestState::Untaken || one.completions > 0) return false;
+    if (row.second && !promoted() && mine().kin != Kin::MagicGladiator) return true;
     // Below its level: Sevina's, until 200 (the user, 2026-10-04).
     if (mine().level < questLevel(index)) return true;
     if (row.afterAny == 0) return false;
@@ -150,20 +153,24 @@ bool Realm::questLocked(int index) const {
     return true;
 }
 
-bool Realm::questChoiceFits(int index, int choice) const {
+bool Realm::questChoiceFits(int index, int choice, QuestPath path) const {
     if (!tables_ || index < 0 || index >= kQuests) return false;
     const QuestRow& row = questAt(index);
     if (choice < 0 || choice >= row.choiceCount) return false;
-    const int32_t item = tables_->itemNamed(row.choices[choice].item);
-    if (item < 0) return false;
-    const content::ItemRow& one = tables_->items[size_t(item)];
-    return one.classes == 0 || (one.classes & (1 << int(mine().kin))) != 0;
+    const int kin = int(mine().kin);
+    const bool first = questFirst(row, kin, me().quests[index].completions);
+    return questPaysHero(row.choices[choice], kin, questPaidKin(row, kin, first, path), first) &&
+           questItemFits(row.choices[choice]);
 }
 
 bool Realm::questItemFits(const QuestItem& what) const {
     const int32_t item = tables_ && what.item ? tables_->itemNamed(what.item) : -1;
     if (item < 0) return false;
     const content::ItemRow& one = tables_->items[size_t(item)];
+    if (what.rank != QuestItem::Rank::Any) {
+        const bool second = promoted() || mine().kin == Kin::MagicGladiator;
+        if (second != (what.rank == QuestItem::Rank::Second)) return false;
+    }
     return one.classes == 0 || (one.classes & (1 << int(mine().kin))) != 0;
 }
 
@@ -333,8 +340,12 @@ bool Realm::completeQuest(int index, int choice, QuestPath path) {
     }
     // A choice is owed whenever his class has one to make.
     bool anyFits = false;
-    for (int i = 0; i < row.choiceCount; ++i) anyFits |= questChoiceFits(index, i);
-    if (anyFits && !questChoiceFits(index, choice)) return false;
+    for (int i = 0; i < row.choiceCount; ++i) anyFits |= questChoiceFits(index, i, path);
+    // None named (a bot, auto-play, a test) takes the first that fits: the knight's one-hander.
+    for (int i = 0; anyFits && choice < 0 && i < row.choiceCount; ++i) {
+        if (questChoiceFits(index, i, path)) choice = i;
+    }
+    if (anyFits && !questChoiceFits(index, choice, path)) return false;
 
     // Everything into the bag or nothing: tried on the bag itself and put back on a refusal, so
     // the check is the placing and the two cannot disagree.

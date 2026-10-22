@@ -383,13 +383,18 @@ constexpr double kDamageDecreaseMost = 0.5;
 // A knight's two weapons of different kinds -- a sword and an axe, a mace and a spear -- each
 // hit for 55%: OpenMU's double wield (Season 6, AttackableExtensions.cs:131 and
 // FixDamageCalcsPlugInBase's -0.45), kept for a mixed pair only. The split is the user's,
-// 2026-10-01. INVENTION.
-constexpr double kMixedPair = 0.55;
-// Two of one kind -- two swords, two axes -- each hit for 70%, about 1.4 of one blade: WebZen's
+// 2026-10-01. 0.43 since the class balance (2026-10-22), kMatchedPair's share of it. INVENTION.
+constexpr double kMixedPair = 0.43;
+// Two of one kind -- two swords, two axes -- each hit for 55%, about 1.1 of one blade: WebZen's
 // whole two bands came to nearly double (the user, 2026-10-17: "dual viel 100% boost is
-// overkill"). INVENTION.
-constexpr double kMatchedPair = 0.70;
+// overkill"), and 70% -- 1.4 of a blade, with the monster's defence taken once off the two --
+// had a knight with two swords at 17.7M an hour on Icarus and 17.2M on Aida against the
+// two-handed 12.3M and 8.3M; a plain second sword alone was 5.8M -> 13.6M on Aida (the class
+// balance, 2026-10-22, tests/skill_sweep.cpp, tests/kits/sweep.json). INVENTION.
+constexpr double kMatchedPair = 0.55;
 
+// The Magic Gladiator's defence over what his points and gear reckon (the class balance, 2026-10-21).
+constexpr double kGladiatorDefense = 1.15;
 void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Fighter* out,
             int* maxHealth);
 

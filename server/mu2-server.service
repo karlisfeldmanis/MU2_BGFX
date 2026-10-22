@@ -6,8 +6,8 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-# The box's own settings, if any: MU2_REGION=South America on the São Paulo box, Southeast Asia
-# on Singapore's, Central Europe on Nuremberg's (host.h g_region); none on Helsinki's, which is North Europe.
+# The box's own settings, if any: MU2_REGION=South America on the São Paulo box,
+# Central Europe on Nuremberg's, East Asia on Tokyo's (host.h g_region); none on Helsinki's, which is North Europe.
 EnvironmentFile=-/etc/default/mu2-server
 ExecStart=/opt/mu2/build/mu2_server --port 44406 --assets /opt/mu2/out/assets --store /var/lib/mu2/characters.db --accounts http://127.0.0.1:8080 --launcher-only
 Restart=always

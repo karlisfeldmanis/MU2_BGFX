@@ -8,24 +8,42 @@
 
 #include <cctype>
 #include <cstdio>
+#include <filesystem>
 #include <map>
 
 namespace mu::server {
 
 namespace {
-// A world's rules (net::rulesPrint) on its cooked tables as this server reads them, once a world:
-// what a Hello's must be.
-uint64_t rulesOf(const std::string& assets, const std::string& world) {
-    static std::map<std::string, uint64_t> known;
-    const auto at = known.find(world);
-    if (at != known.end()) return at->second;
+// A world's cooked tables and their rules (net::rulesPrint), read once (readWorlds, at the start):
+// what a Hello's must be and what the world is raised on. Read from disk when first wanted, a
+// deploy staged under a running server (deploy.sh --stage writes out/assets/cooked) gave a world
+// not yet raised the next build's tables, and its print refused every client of this one: back at
+// the character screen at each login (Remora, Aida on Central Europe, 2026-10-22).
+struct Read {
     content::Tables tables;
-    std::string error;
-    const std::string path = assets + "/cooked/" + world + "/" + world + ".mur";
-    const uint64_t print = content::loadTables(path, tables, error) ? net::rulesPrint(tables) : 0;
-    if (print == 0) core::logError("rules: %s", error.c_str());
-    known[world] = print;
-    return print;
+    uint64_t print = 0;
+};
+std::map<std::string, Read> g_read;
+
+const Read* readOf(const std::string& assets, const std::string& world) {
+    auto at = g_read.find(world);
+    if (at == g_read.end()) {
+        Read one;
+        std::string error;
+        const std::string path = assets + "/cooked/" + world + "/" + world + ".mur";
+        if (content::loadTables(path, one.tables, error)) {
+            one.print = net::rulesPrint(one.tables);
+        } else {
+            core::logError("cannot load %s: %s", path.c_str(), error.c_str());
+        }
+        at = g_read.emplace(world, std::move(one)).first;
+    }
+    return at->second.print != 0 ? &at->second : nullptr;
+}
+
+uint64_t rulesOf(const std::string& assets, const std::string& world) {
+    const Read* read = readOf(assets, world);
+    return read ? read->print : 0;
 }
 
 // A Hello of another build, told why before the line closes (net::Why::Outdated): RemoteLink::join
@@ -72,6 +90,19 @@ void announce(const World& world, const std::vector<std::unique_ptr<Session>>& s
     }
 }
 
+int readWorlds(const std::string& assets) {
+    std::error_code failed;
+    int n = 0;
+    for (const auto& entry : std::filesystem::directory_iterator(assets + "/cooked", failed)) {
+        // cooked/ holds more than worlds (wardrobe, figures, showing): a world has its own .mur.
+        const std::string name = entry.path().filename().string();
+        if (!entry.is_directory() || !worldName(name)) continue;
+        if (!std::filesystem::exists(entry.path() / (name + ".mur"), failed)) continue;
+        if (readOf(assets, name)) ++n;
+    }
+    return n;
+}
+
 bool worldName(const std::string& name) {
     // A world's name is a folder under cooked/: letters only, so a Hello cannot name a path.
     if (name.empty()) return false;
@@ -89,12 +120,12 @@ World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello&
     world->name = hello.world;
     world->castle = castle;
     world->square = square;
-    std::string error;
-    const std::string path = assets + "/cooked/" + hello.world + "/" + hello.world + ".mur";
-    if (!content::loadTables(path, world->tables, error)) {
-        core::logError("%s: cannot load %s: %s", who.c_str(), path.c_str(), error.c_str());
+    const Read* read = readOf(assets, hello.world);
+    if (!read) {
+        core::logError("%s: no tables for %s", who.c_str(), hello.world.c_str());
         return nullptr;
     }
+    world->tables = read->tables;
     const int level = std::clamp(kept ? kept->hero.level : hello.level, 1, sim::kMaximumLevel);
     const sim::Kin kin =
         kept ? kept->hero.kin : sim::Kin(std::min<int>(hello.kin, int(sim::Kin::MagicGladiator)));
@@ -699,6 +730,16 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
     for (const sim::Happening& said : realm.happenings()) {
         if (said.what != sim::What::Deal || said.a != int32_t(sim::DealEvent::Done)) continue;
         if (Session* one = playing(world, sessions, said.who)) one->keepAt = Clock::time_point{};
+    }
+    // A rebirth (sim/rebirth.h): written at once, as a trade is -- 10M Zen and 399 levels gone
+    // must not come back after a crash -- and told on Global to everyone online.
+    for (const sim::Happening& said : realm.happenings()) {
+        if (said.what != sim::What::Reborn) continue;
+        if (Session* one = playing(world, sessions, said.who)) {
+            one->keepAt = Clock::time_point{};
+            core::logf("%s: reborn, rebirth %d", one->who.c_str(), int(said.a));
+            announceRebirth(one->name, int(said.a), sessions);
+        }
     }
     // The market's commands answered: a listing up, a purchase paid (broker.h).
     brokerHeard(world, t.commands, realm.happenings(), sessions);

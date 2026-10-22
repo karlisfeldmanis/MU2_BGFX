@@ -648,7 +648,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         const bool atHim = pressedOn != nullptr && pressedOn->alive() && pressedOn->monster() &&
                            me().wantsColumn >= 0 && row.aimsAtPointer() && row.wizardry &&
                            !hero.blowGround;
-        begin(hero, atHim ? pressedOn->id : at, force(row, hero.totalPoints()), row.number, held);
+        begin(hero, atHim ? pressedOn->id : at, heroForce(hero, row), row.number, held);
         // Thrown at the pointer's ground: that way, whatever turns him before it is let go.
         hero.blowAimed = me().wantsColumn >= 0 && row.aimsAtPointer() && !atHim;
         hero.blowAim = hero.aim;
@@ -950,7 +950,7 @@ void Realm::channel(Body& hero) {
     hero.channelLast = next->id;
     hero.channelLastX = next->x;
     hero.channelLastY = next->y;
-    strikeAt(hero, *next, force(*row, hero.totalPoints()), row, true);
+    strikeAt(hero, *next, heroForce(hero, *row), row, true);
 }
 
 bool Realm::blinkTo(const Body& hero, const SkillRow& row, int column, int row_, int* outColumn,
@@ -1123,7 +1123,11 @@ void Realm::burstCharge(Body& hero) {
     say(What::Loosed, hero, row->number, 0, stage, 0);
     // Its stages and the strength's half on the blow (OpenMU's SkillBaseDamageBonus), for this
     // burst alone.
-    me().chargeDamage = kNovaStageDamage[std::clamp(stage, 0, 12)] + hero.totalPoints().strength / 2;
+    // The stages at his energy's share of kNovaFullEnergy, to the whole (skills.h).
+    const HeroPoints points = hero.totalPoints();
+    const int stageDamage = int(int64_t(kNovaStageDamage[std::clamp(stage, 0, 12)]) *
+                                std::min(points.energy, kNovaFullEnergy) / kNovaFullEnergy);
+    me().chargeDamage = stageDamage + points.strength / 2;
     strikeAround(hero, *row, row->force);
     me().chargeDamage = 0;
     core::logf("nova: tick %lld, burst at stage %d", (long long)tick_, stage);

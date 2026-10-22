@@ -227,6 +227,9 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     // And his talents' share on top of that (sim::TalentShares).
     const Arms::Talented& talent = arms.talent;
     if (talent.defense != 0) out->defense += int(double(out->defense) * talent.defense);
+    // A Gladiator's defence x kGladiatorDefense (the class balance, 2026-10-21: he fell 6 to 12
+    // times an hour on Aida's blades, where the knights did not).
+    if (kin == Kin::MagicGladiator) out->defense = int(double(out->defense) * kGladiatorDefense);
     // The arms, and then what is in them. A naked level-1 knight doing one point to a Bull
     // Fighter is not a bug -- it is what 0.75 says about hitting an armoured animal six levels
     // up with your fists, and the damage floor is what he has instead of nothing. A weapon adds

@@ -317,11 +317,11 @@ instead of two rules that can drift apart.
 
 | skill | families | why |
 |---|---|---|
-| Falling Slash 19 | axes and maces, either hand | its carriers: Morning Star, Double Axe, Tomahawk, Battle Axe, Nikkea Axe. MU painted it an **axe** for an icon |
-| Lunge 20 | one-handed sword | its carrier: the Gladius. MU's own line says "used with weapons like Gladius and Katana" |
-| Uppercut 21 | one-handed sword | its carriers: Sword of Assassin, Falchion, Serpent Sword |
-| Cyclone 22 | one-handed sword, spear | its carriers: Blade, Berdysh, Great Scythe |
-| Slash 23 | two-handed sword, two-handed axe | its carriers: Giant Sword, Crystal Sword, Chaos Dragon Axe — which is MU's own description word for word |
+| Falling Slash 19 | axes and maces, either hand; **any two-hander** | its carriers: Morning Star, Double Axe, Tomahawk, Battle Axe, Nikkea Axe. MU painted it an **axe** for an icon |
+| Lunge 20 | one-handed sword; **any two-hander** | its carrier: the Gladius. MU's own line says "used with weapons like Gladius and Katana" |
+| Uppercut 21 | one-handed sword; **any two-hander** | its carriers: Sword of Assassin, Falchion, Serpent Sword |
+| Cyclone 22 | one-handed sword; **any two-hander** | its carriers: Blade, Berdysh, Great Scythe |
+| Slash 23 | **any two-hander** | its carriers: Giant Sword, Crystal Sword, Chaos Dragon Axe — which is MU's own description word for word |
 | Defense 18 | shield | `Version075/Items/Armors.cs:40`, the Buckler and the nine after it |
 | Twisting Slash 41 | **any weapon** | MU puts no weapon requirement on it at all; it is the knight's staple |
 | Rageful Blow 42 | **any weapon** | **ours**, and MU puts no weapon requirement on it either |
@@ -343,11 +343,15 @@ punishment:**
 | in his hand | keys | with a shield |
 |---|---|---|
 | one-handed sword | Lunge, Uppercut, Cyclone, Twisting Slash, Rageful Blow | + Defense = 6 |
-| two-handed sword | Slash, Twisting Slash, Rageful Blow | 3 |
+| two-handed sword | Falling Slash, Lunge, Uppercut, Cyclone, Slash, Twisting Slash, Rageful Blow | 7 |
 | one-handed axe | Falling Slash, Twisting Slash, Rageful Blow | + Defense = 4 |
-| two-handed axe | Falling Slash, Slash, Twisting Slash, Rageful Blow | 4 |
+| two-handed axe | Falling Slash, Lunge, Uppercut, Cyclone, Slash, Twisting Slash, Rageful Blow | 7 |
 | mace | Falling Slash, Twisting Slash, Rageful Blow | + Defense = 4 |
-| spear | Cyclone, Twisting Slash, Death Stab, Rageful Blow | 4 |
+| spear | Falling Slash, Lunge, Uppercut, Cyclone, Slash, Twisting Slash, Death Stab, Impale, Rageful Blow | 9 |
+
+**Every two-hander throws all five orbs** (the user, 2026-10-22: "we need that chars can use orbs
+on 2-hand weapons"), ours: the carriers above still gate the one-handed weapons, and a two-hander
+trades the shield's Defense for the whole bar.
 
 **Twisting Slash and Rageful Blow are the two every hand has** — the wide answer and the heavy one
 — which is the user's rule of 2026-09-23 and is also what MU does: neither carries a weapon

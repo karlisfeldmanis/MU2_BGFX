@@ -123,6 +123,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     deal_.open(interface_, &arts_);
     mixer_.open(interface_, &arts_);
     jeweler_.open(interface_, &arts_);
+    rebirthWindow_.open(interface_, &arts_);
     amount_.open(interface_, &arts_);
     report_.open(interface_);
     whatsNew_.open(interface_, &arts_);
@@ -150,6 +151,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     beacon_.open(interface_);
     tally_.open(interface_);
     arrival_.open(interface_);
+    reborn_.open(interface_);
     // The Sanctuary controls' faces and stone, which every window's frame is drawn with.
     controls::open();
     specimen_.open(interface_);
@@ -187,6 +189,7 @@ void Desk::shutdown() {
     inspectFigure_.shutdown();
     for (Portrait& face : classFaces_) face.shutdown();
     arrival_.shutdown();
+    reborn_.shutdown();
     tally_.shutdown();
     beacon_.close();
     if (bgfx::isValid(groundTexture_)) bgfx::destroy(groundTexture_);
@@ -266,7 +269,7 @@ bool Desk::overWindows(float x, float y) const {
            (banking_ && (chest_.covers(x, y) || chest_.dragging())) ||
            (brokering_ && broker_.covers(x, y)) ||
            (mixing_ && (mixer_.covers(x, y) || mixer_.dragging())) ||
-           (jeweling_ && jeweler_.covers(x, y)) ||
+           (jeweling_ && jeweler_.covers(x, y)) || (rebirthing_ && rebirthWindow_.covers(x, y)) ||
            (dealing_ && (deal_.covers(x, y) || deal_.dragging()));
 }
 
@@ -292,6 +295,21 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     const bool pressedOnWindow = pointer.pressed && overWindows(pointer.x, pointer.y);
     arrival_.update(seconds, float(window.width()), float(window.height()));
     const sim::Body* hero = play.isOpen() ? &play.realm().hero() : nullptr;
+    // A rebirth, as he rises in the rite: the message and its sound on this frame.
+    if (int count = 0; hero && play.takeReborn(&count)) {
+        std::string name;
+        if (!play.playerName(hero->id, &name, nullptr)) name = heroName_;
+        reborn_.announce(count, name);
+        // Off a server no one says it on Global, so the bench says it here (the server's own is
+        // announceRebirth, server/src/chat.cpp).
+        if (!play.remote()) {
+            net::Heard line;
+            line.channel = net::Channel::Global;
+            line.text = net::rebirthLine(name, count);
+            chat_.hear(line);
+        }
+    }
+    reborn_.update(seconds, float(window.width()), float(window.height()));
     hud_.follow(hero);
 
     // Every window opened or shut clicks, by key or by button: MU2's Desk.Click on each
@@ -380,6 +398,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 break;
             case Then::Jewel:
                 jeweler_.answered(one.ok(), one.value, play.realm().refusal());
+                if (!one.ok()) refused();
+                break;
+            case Then::Rebirth:
+                rebirthWindow_.answered(one.ok(), play.realm().refusal());
                 if (!one.ok()) refused();
                 break;
             case Then::ZenBox:
@@ -1427,6 +1449,27 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         jeweler_.cancel();
     }
 
+    // Lugard, the Rebirth (game/ui/rebirth_window.h), as the quest dialog is: the left column,
+    // walking away shuts him in the realm, and a yes shuts him there too as the rite begins.
+    const bool rebirthing = play.isOpen() && play.realm().rebirthing() >= 0;
+    if (rebirthing && !rebirthing_) {
+        click();
+        if (play.isOpen()) play.ui(Play::Ui::Opened);
+    }
+    rebirthing_ = rebirthing;
+    if (rebirthing_) {
+        RebirthRequests asked;
+        rebirthWindow_.update(float(window.width()), float(window.height()), play.realm(), pointer, &asked);
+        if (asked.click) click();
+        if (asked.reborn) expect(play.rebirth(), Then::Rebirth);
+        if (asked.close) {
+            play.closeRebirth();
+            click();
+        }
+    } else {
+        rebirthWindow_.cancel();
+    }
+
     // A trade with another player, as the vault is: it opens the bag beside it and closes the
     // character window; the realm shuts it when either walks off, and the windows follow.
     if (play.isOpen()) {
@@ -2382,7 +2425,7 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
         // info is bugs, it show some kind of absorb").
         selfLines(row, tables, realm.wearer(), false, facts.rows);
     } else {
-        facts.rows.push_back(line("Damage", "x" + number(sim::force(row, hero.totalPoints()), 2) +
+        facts.rows.push_back(line("Damage", "x" + number(sim::heroForce(hero, row), 2) +
                                                 " of a swing",
                                   tip::Tone::Yellow));
         // And the sum that made it, on one grey line: the row's own base plus strength over the
@@ -2793,6 +2836,8 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (tally_.showing()) interface_.add(tally_.canvas());
     // The map's name, a reading on the scene as well, and under every window.
     if (arrival_.showing()) interface_.add(arrival_.canvas());
+    // A rebirth's message where the map's name stands, as a reading on the scene.
+    if (reborn_.showing()) interface_.add(reborn_.canvas());
     if (tracker_.showing() && !watching_) interface_.add(tracker_.canvas());
     if (tracker_.announcing() && !watching_) interface_.add(tracker_.banner());
     // Go Back! over the HUD's middle: chrome, under every window.
@@ -2849,6 +2894,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     const bool machineOnTop = mixing_ && mixer_.dragging();
     if (mixing_ && !machineOnTop) interface_.add(mixer_.canvas());
     if (jeweling_) interface_.add(jeweler_.canvas());
+    if (rebirthing_) interface_.add(rebirthWindow_.canvas());
     const bool dealOnTop = dealing_ && deal_.dragging();
     if (dealing_ && !dealOnTop) interface_.add(deal_.canvas());
     if (inventoryOpen_) interface_.add(bag_.canvas());

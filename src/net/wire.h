@@ -161,7 +161,12 @@ namespace mu::net {
 // 45: talents (sim/talents.h): TalentTake, TalentGive and TalentReset, and the ranks in a
 //     character's bytes (kKeptLayout 10), so a client on 44 is refused instead of sending kinds
 //     its server reads as None.
-constexpr uint32_t kVersion = 45;
+// 46: a Kept carries 28 quests, Tarkan's in two -- Kantur's Legion, then Kantur's Captain the
+//     28th (layout 12, 2026-10-21), so a client on 45 is refused instead of reading one short.
+// 47: Rebirth (sim/rebirth.h): Command Rebirth and Window Rebirth at Lugard's, What::Reborn, and
+//     the count in a character's bytes (kKeptLayout 13) (2026-10-22), so a client on 46 is
+//     refused instead of sending a kind its server reads as None.
+constexpr uint32_t kVersion = 47;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";
@@ -172,8 +177,10 @@ constexpr const char* kDefaultHost = "mu-classic.com";
 // 3-8 carry 39 (and a few 8s written by 0f23a18a's server carry 40: keptFrom tries both); 10 his
 // talents' ranks, seven columns of nine bytes (2026-10-21), where 3-9 carry none; 11 the same
 // bytes, but the Angel's, the Imp's and Uniria's durability is a stack's count, where 3-10 kept
-// their Life (2026-10-21, sim::timedPet; the store's renumber makes each old one one).
-constexpr int kKeptLayout = 11;
+// their Life (2026-10-21, sim::timedPet; the store's renumber makes each old one one); 12 28
+// quests, the Keeper's second, Kantur's Captain (2026-10-21), where 8-11 carry 27; 13 his rebirths
+// (sim/rebirth.h, 2026-10-22), where 3-12 carry none.
+constexpr int kKeptLayout = 13;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame a client accepts: a Welcome with its snapshot, about half a MB for a town of
@@ -368,6 +375,14 @@ struct GuildCall {
 // A said line made fit to pass on: control bytes gone, spaces trimmed, cut to kMostSaid at a
 // whole UTF-8 letter. Empty when nothing is left.
 std::string saidText(const std::string& text);
+
+// A count as a Roman numeral, I to MMMCMXCIX: a rebirth's (game/ui/reborn.h).
+std::string romanNumeral(int count);
+// The server's line on Global when a character is reborn, said by no one: "Ken has been reborn in
+// Central Europe (Rebirth II)." -- the realm he was reborn on, since every realm hears it (the user,
+// 2026-10-22: "show on which realm reset was done so users understand"); none off a server. The
+// chat draws a speakerless Global line as a herald's, in gold (Chat::hear).
+std::string rebirthLine(const std::string& name, int count, const std::string& realm = {});
 
 // A character this machine played on the server before accounts, by the token kept beside his
 // save: claimed onto the account when it is nobody's yet.

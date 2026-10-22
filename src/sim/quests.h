@@ -26,7 +26,7 @@
 namespace mu::sim {
 
 // How many quests the table holds. A save carries one progress a quest by this index.
-inline constexpr int kQuests = 27;
+inline constexpr int kQuests = 28;
 inline constexpr int kQuestSteps = 9;
 inline constexpr int kQuestChoices = 7;
 inline constexpr int kQuestPaid = 24;
@@ -66,6 +66,12 @@ struct QuestItem {
     bool firstOnly = false;   // paid on the first completion and never again
     // A powered ring's or pendant's further powers (sim::Affix), past its signature.
     uint8_t affixes[3] = {};
+    // Whose rank it is paid to (Realm::questItemFits): every hero, or only one who has not
+    // changed class, or only a Blade Knight, Soul Master, Muse Elf or Magic Gladiator -- so a
+    // giver a promoted hero comes to late pays his second class's weapon, not his first's (the
+    // user, 2026-10-21: "this quest has to give better weapon for SM and same for BK and ME and
+    // MG"). The Magic Gladiator has no second class and counts as one. Ours.
+    enum class Rank : uint8_t { Any, First, Second } rank = Rank::Any;
 };
 
 // Every weapon, piece of armour and shield a quest pays comes with luck and the additional
@@ -134,6 +140,11 @@ struct QuestRow {
     // (Realm::promoted). Sevina's treasures; `boon` is what the dialog's rewards say of it.
     bool promotes = false;
     const char* boon = "";
+    // Offered only to one past his class change, and to the Magic Gladiator, who has none
+    // (Realm::questLocked): Kantur's Captain, the second class's half of Tarkan (the user,
+    // 2026-10-21: "first quest gives first class rewards, 2nd quest gives second class rewards").
+    // Before it he is not shown it at all. Ours.
+    bool second = false;
     // Who was born in the giver's town (1 << sim::Kin, each class its starting map). One born
     // elsewhere may take the quest only if `strangers`, and is then never paid the first clear's
     // things or experience -- the user's rule of 2026-09-29: an elf may clear Lorencia for its
@@ -150,8 +161,9 @@ struct QuestRow {
     // Every one of these his class is paid (questPays), all of them.
     QuestItem paid[kQuestPaid];
     int paidCount = 0;
-    // One of these, the player's choice, from those his class may use. The table lists every
-    // class's candidates; the dialog shows his. None, when the whole reward is `paid`.
+    // One of these, the player's choice, from those paid him as `paid` is (Realm::questChoiceFits:
+    // class, first clear, rank) -- the knight's one-hander or two-hander (the user, 2026-10-22).
+    // None, when the whole reward is `paid`.
     QuestItem choices[kQuestChoices];
     int choiceCount = 0;
 };
@@ -175,6 +187,9 @@ inline bool questPathPays(const QuestRow& row, QuestPath path, bool first) {
     const int kin = int(path == QuestPath::Magic ? Kin::DarkWizard : Kin::DarkKnight);
     for (int i = 0; i < row.paidCount; ++i) {
         if (row.paid[i].kin == kin && questPays(row.paid[i], kin, first)) return true;
+    }
+    for (int i = 0; i < row.choiceCount; ++i) {
+        if (row.choices[i].kin == kin && questPays(row.choices[i], kin, first)) return true;
     }
     return false;
 }
@@ -226,8 +241,12 @@ inline constexpr int kRoadOfKantur = 20;
 // The Keeper of Kantur, in Tarkan's safe hall: our own NPC number, as Lirien's (pipeline/cook.py's
 // Tarkan folk, content/npc/NpcSenatus.json, MU's Senior).
 inline constexpr int32_t kKeeperNumber = 701;
-// The Keeper's own: Tarkan cleared, the Zaikan and the Death Beam Knight last.
+// The Keeper's own, in two (the user, 2026-10-21: "we need tarkan on 2 parts, because now there
+// is confusion"): the legion's five breeds, then its captain, the Zaikan and the Death Beam
+// Knight, offered once the legion has been handed in. The second is the table's last, so no
+// saved quest moves.
 inline constexpr int kKantursLegion = 21;
+inline constexpr int kKantursCaptain = 27;
 // Tersia's Icarus links (docs/game/icarus-quest.md): the door held, then the Dark Phoenix. Taking the
 // first opens Icarus's travel row.
 inline constexpr int kSkyDoor = 22;

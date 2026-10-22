@@ -53,6 +53,7 @@ The routes:
          the front page's server status: each region (REGIONS) up while its mu2_server tells.
     GET  /api/online     Bearer T of an admin       -> 200 {at, fresh, players: [...]} | 404 for anyone else
          who is on the game server now, as mu2_server last told it (the admins' /online page), and
+         `days`: a row a UTC day {day, registered, accounts, players, peak, peak_at} (days_report);
          `recent`: the last RECENT_SHOWN plays of the last RECENT_DAYS days, bots left out; and
          `machines`: by account id, the machine its launcher last reported (devices); and `everyone`:
          every account with a character, its characters as mu2_server last listed them (a minute
@@ -114,6 +115,7 @@ SHA-256, for a day, which files the game's crash reports under the account. Pass
 
 import argparse
 import base64
+import calendar
 import hashlib
 import hmac
 import json
@@ -163,7 +165,7 @@ DEFAULT_REGION = "North Europe"
 REGION_GONE_SECONDS = 600
 # The regions the front page shows, up or not (/api/status): the launcher's list, by name, with the
 # city of each one's server.
-REGIONS = (("North Europe", "Helsinki"), ("Central Europe", "Nuremberg"), ("South America", "São Paulo"), ("Southeast Asia", "Singapore"))
+REGIONS = (("North Europe", "Helsinki"), ("Central Europe", "Nuremberg"), ("South America", "São Paulo"), ("East Asia", "Tokyo"))  # Southeast Asia (Singapore) closed 2026-10-22
 # A character's move to another region (transfers, docs/game/transfer.md), one way through:
 #   asked  the website took it; the server he leaves checks him and hands over his bytes -> out, or failed
 #   out    the website holds his bytes; that server marks him gone from its disk -> gone
@@ -358,6 +360,19 @@ CREATE TABLE IF NOT EXISTS transfers (
     changed     INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS transfers_account ON transfers(account_id, changed);
+-- Each UTC day's players, kept for good for the /online page's graphs (told_online): the accounts
+-- that played that day, and the most people on at once across every region. No foreign key: a
+-- deleted account still played that day.
+CREATE TABLE IF NOT EXISTS days (
+    day     TEXT PRIMARY KEY,       -- YYYY-MM-DD, UTC
+    peak    INTEGER NOT NULL,
+    peak_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS day_players (
+    day        TEXT NOT NULL,
+    account_id INTEGER NOT NULL,
+    PRIMARY KEY (day, account_id)
+) WITHOUT ROWID;
 CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -366,6 +381,10 @@ CREATE TABLE IF NOT EXISTS settings (
 
 
 # ---- passwords and tokens ------------------------------------------------------------------------
+
+def utc_day(at: float) -> str:
+    return time.strftime("%Y-%m-%d", time.gmtime(at))
+
 
 def hash_password(password: str) -> str:
     salt = secrets.token_bytes(16)
@@ -488,6 +507,29 @@ class Store:
             for column in ("ip", "agent"):
                 if column not in have:
                     db.execute(f"ALTER TABLE sessions ADD COLUMN {column} TEXT NOT NULL DEFAULT ''")
+            if db.execute("SELECT count(*) FROM days").fetchone()[0] == 0:
+                self.backfill_days(db)
+
+    @staticmethod
+    def backfill_days(db: sqlite3.Connection):
+        """The days before `days` was kept, from the plays `games` still holds (RECENT_DAYS): each
+        day's accounts, and its peak as the most plays that overlapped."""
+        rows = db.execute("SELECT account_id, since, until FROM games").fetchall()
+        steps = []
+        for account, since, until in rows:
+            at = since - since % 86400
+            while at <= until:
+                db.execute("INSERT OR IGNORE INTO day_players VALUES (?, ?)", (utc_day(at), account))
+                at += 86400
+            steps += [(since, 1), (until + 1, -1)]
+        on, peaks = 0, {}
+        for at, step in sorted(steps):
+            on += step
+            day = utc_day(at)
+            if step > 0 and on > peaks.get(day, (0, 0))[0]:
+                peaks[day] = (on, at)
+        for day, (peak, at) in peaks.items():
+            db.execute("INSERT INTO days VALUES (?, ?, ?)", (day, peak, at))
 
     def db(self) -> sqlite3.Connection:
         db = getattr(self.local, "db", None)
@@ -815,6 +857,16 @@ class Store:
                                    "until = excluded.until",
                                    (account, str(p.get("name"))[:32], str(p.get("class"))[:32],
                                     int(p.get("level") or 0), str(p.get("world"))[:32], p["since"], now))
+                # The day's players, and its peak: the people on every region still telling, this list in.
+                day = utc_day(now)
+                for p in players:
+                    if isinstance(p.get("account"), int) and p["account"] > 0 and not p.get("bot"):
+                        db.execute("INSERT OR IGNORE INTO day_players VALUES (?, ?)", (day, p["account"]))
+                people = sum(1 for p in players if not p.get("bot")) + sum(
+                    1 for other, told in self.online.items() if other != region
+                    and now - told["at"] < ONLINE_STALE_SECONDS for p in told["players"] if not p.get("bot"))
+                db.execute("INSERT INTO days VALUES (?, ?, ?) ON CONFLICT DO UPDATE SET peak = excluded.peak, "
+                           "peak_at = excluded.peak_at WHERE excluded.peak > days.peak", (day, people, now))
                 if now - self.games_swept > 3600:
                     db.execute("DELETE FROM games WHERE until < ?", (now - RECENT_DAYS * 86400,))
                     self.games_swept = now
@@ -999,6 +1051,29 @@ class Store:
             print(f"transfer {move}: {row[0]} -> {state}{' (' + why + ')' if why else ''} by {region}", flush=True)
         return True
 
+    def days_report(self) -> list:
+        """One row a UTC day from the first account to today (the /online page's graphs): the
+        accounts made that day and all made by its end, the accounts that played, and the peak."""
+        db = self.db()
+        made = dict(db.execute("SELECT strftime('%Y-%m-%d', created, 'unixepoch'), count(*) FROM accounts GROUP BY 1"))
+        played = dict(db.execute("SELECT day, count(*) FROM day_players GROUP BY day"))
+        peaks = {day: (peak, at) for day, peak, at in db.execute("SELECT day, peak, peak_at FROM days")}
+        known = list(made) + list(played) + list(peaks)
+        if not known:
+            return []
+        at = calendar.timegm(time.strptime(min(known), "%Y-%m-%d"))
+        today = utc_day(time.time())
+        out, total = [], 0
+        while True:
+            day = utc_day(at)
+            total += made.get(day, 0)
+            peak, peak_at = peaks.get(day, (0, 0))
+            out.append({"day": day, "registered": made.get(day, 0), "accounts": total,
+                        "players": played.get(day, 0), "peak": peak, "peak_at": peak_at})
+            if day >= today:
+                return out
+            at += 86400
+
     def online_report(self) -> dict:
         # Every region's list as one: newest told, fresh only while every region still tells.
         regions = self.regions_told()
@@ -1044,7 +1119,7 @@ class Store:
                              "players": sum(1 for p in regions.get(region, {}).get("players", []) if not p.get("bot")),
                              "bots": sum(1 for p in regions.get(region, {}).get("players", []) if p.get("bot"))}
                             for region, city in REGIONS],
-                "recent": recent, "machines": machines, "everyone": everyone}
+                "recent": recent, "machines": machines, "everyone": everyone, "days": self.days_report()}
 
     def logout(self, token: str):
         self.db().execute("DELETE FROM sessions WHERE token_hash = ?", (token_hash(token or ""),))

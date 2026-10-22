@@ -1,0 +1,173 @@
+{
+  "item": "Staff14",
+  "mu_name": "Platina Staff",
+  "mu_name_from": "MODEL_PLATINA_STAFF (MODEL_STAFF + 13), loaded from Item/CW_Staff.bmd (ZzzOpenData.cpp:1105). Ours is named Staff14 by the index-plus-one rule; MU never loads a Staff14 file. Group 5 number 13 in OpenMU S6 Weapons.cs:255.",
+  "why_this_one": "The 100-140 weapons MU has and this game lacked (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's); the first four, one a class, lowest first.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:255.",
+    "call": "CreateWeapon(5, 13, 0, 0, 1, 4, true, \"Platina Staff\", 110, 51, 53, 30, 78, 120, 0, 50, 16, 0, 0, 2, 0, 0, 0, 0, 0, 0)",
+    "call_note": "The Season 6 CreateWeapon: group, number, slot, skill, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strength, agility, energy, vitality, then darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel.",
+    "group": 5,
+    "number": 13,
+    "drop_level": 110,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 1,
+    "height": 4,
+    "minimum_damage": 51,
+    "maximum_damage": 53,
+    "attack_speed": 30,
+    "durability": 78,
+    "magic_power": 120,
+    "requires": {
+      "level": 0,
+      "strength": 50,
+      "agility": 16,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Soul Master's alone: OpenMU's darkWizardClassLevel 2, the gladiator 0. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "stance": "sword",
+  "stance_from": "Width 1: a one-handed staff stands as a sword does, as the Dragon Soul Staff.",
+  "two_handed": false,
+  "sheets": {
+    "bubsa": "bubsa.png",
+    "blast_r": "blast_r.png"
+  },
+  "sheet_from": "Data/Item/bubsa.OZJ (64x128, pale silver-grey with green gems, mesh 0, 236 triangles) and blast_r (64x64, blue lightning web on black, mesh 1, 48 triangles), decoded from MuMain with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "bubsa": "steel"
+  },
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "As the Devias staves' and the Dragon Soul Staff's: steel's own 0.2 mirrors the scene.",
+  "glow": {
+    "blast_r": {
+      "scrolls_per_second": -0.9,
+      "axis": "uv"
+    }
+  },
+  "glow_note": "RenderPartObjectBody's MODEL_PLATINA_STAFF arm (ZzzObject.cpp:7725-7730): HiddenMesh 1, the body drawn plain, then mesh 1 (blast_r) bright and added with U and V sliding WorldTime*0.0009 -- here out of the bake, added, sliding along U and V together at 0.9 a second. ItemObjectAttribute scales it 0.7 (:5221). PartObjectColor2 gives it Color 25 (:6640).",
+  "rig_note": "export-rig --actions=all: fifteen bones, one action of one key; nothing moves, no rig kept. Held, MuMain hangs a white BITMAP_LIGHT at 0.3 and a green one at 4.0 breathing sin(WorldTime*0.7)*0.2+0.3 on bone 9, with shiny02 sparkles (ZzzCharacter.cpp:7379-7420; fx/held_lights, to do).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 48,
+      "area": 700.8,
+      "along": [
+        100.5,
+        116.5
+      ],
+      "mu_uv": [
+        0.032,
+        0.001,
+        0.968,
+        0.999
+      ],
+      "bake_uv": [
+        0.327,
+        0.013,
+        0.399,
+        0.09
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 108,
+      "area": 3008.3,
+      "along": [
+        47.1,
+        126.2
+      ],
+      "mu_uv": [
+        0.042,
+        0.167,
+        0.911,
+        0.984
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.984,
+        0.989
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 38,
+      "area": 1274.3,
+      "along": [
+        52.9,
+        111.4
+      ],
+      "mu_uv": [
+        0.017,
+        0.018,
+        0.904,
+        0.973
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.964,
+        0.974
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 38,
+      "area": 1274.3,
+      "along": [
+        52.9,
+        111.4
+      ],
+      "mu_uv": [
+        0.017,
+        0.018,
+        0.904,
+        0.973
+      ],
+      "bake_uv": [
+        0.011,
+        0.013,
+        0.979,
+        0.984
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 52,
+      "area": 2715.6,
+      "along": [
+        -129.2,
+        53.7
+      ],
+      "mu_uv": [
+        0.013,
+        0.005,
+        0.991,
+        0.995
+      ],
+      "bake_uv": [
+        0.11,
+        0.011,
+        0.974,
+        0.96
+      ]
+    }
+  ]
+}

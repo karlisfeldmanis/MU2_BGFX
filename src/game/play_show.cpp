@@ -1472,6 +1472,18 @@ void Play::follow(float seconds) {
         if (one.novaKilled && one.deadFor >= 0.0f) {
             one.yaw = std::atan2(-one.flingWay[0], -one.flingWay[1]);
         }
+        // On his knee in the rite, turned to the keeper (Play::startRite): turned in over a third
+        // of a second as he goes down, and given back to his own facing over half a second once
+        // he has stood -- never a snap either way.
+        if (riteFaces_ && rite_.live() && one.id == riteBody_) {
+            const float age = rite_.age();
+            const auto smooth01 = [](float k) {
+                k = std::clamp(k, 0.0f, 1.0f);
+                return k * k * (3.0f - 2.0f * k);
+            };
+            const float held = std::min(smooth01(age / 0.35f), 1.0f - smooth01((age - Rite::kStands - 1.5f) / 0.5f));
+            one.yaw += wrapped(riteYaw_ - one.yaw) * held;
+        }
 
         // On the Dinorant he sits 30 over the ground and the dragon stands on it (game/pets.h).
         float lift = 0.0f;
@@ -1597,9 +1609,13 @@ void Play::follow(float seconds) {
             // user, 2026-10-20: "hp bar has very high offset on big monsters"). 0.40 of the
             // figure's own metres, a head: a man's box (1.89 to a head joint at 1.61) is under it
             // and keeps its bar. A rig without a head joint keeps the box.
+            // The head as bound, not as posed: the posed one bobs with every step of a run and
+            // breath of an idle, and the name and bar bobbed with it (the user, 2026-10-22: "char
+            // name label above is bouncing with character not fixed").
             constexpr float kBarOverHead = 0.40f;
             float head[3];
-            if (look->headBone >= 0 && one.figure.pointOnBind(look->headBone, look->headJoint, head)) {
+            if (look->headBone >= 0) {
+                one.figure.pointInModel(look->headJoint, head);
                 one.crown[1] = std::min(one.crown[1], head[1] + kBarOverHead * look->scale);
             }
             one.crown[2] = position[2];

@@ -130,6 +130,17 @@ const char* HeldLights::mesh(Item item) {
         case Item::SilverBow: return "Bow06";
         case Item::ChaosNatureBow: return "Bow07";
         case Item::CelestialBow: return "Bow18";
+        case Item::Daybreak: return "Sword25";
+        case Item::PlatinaStaff: return "Staff14";
+        case Item::AlbatrossBow: return "Bow23";
+        case Item::SwordDancer: return "Sword26";
+        case Item::Flamberge: return "Sword27";
+        case Item::SwordBreaker: return "Sword28";
+        case Item::ImperialSword: return "Sword29";
+        case Item::FrostMace: return "Mace17";
+        case Item::StingerBow: return "Bow24";
+        case Item::DeadlyStaff: return "Staff31";
+        case Item::ImperialStaff: return "Staff32";
     }
     return "";
 }
@@ -364,6 +375,102 @@ int HeldLights::points(Item item, float out[kMostPoints][3]) {
                 for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
             }
             return 3;
+        }
+        case Item::Daybreak:
+            // zx01 (bone 2) of CW_Sword.bmd at rest, at the guard; MU's (0, 0, +-3) off it are
+            // left out.
+            out[0][0] = 0.0f;
+            out[0][1] = 5.1f * kUnit;
+            out[0][2] = 34.3f * kUnit;
+            return 1;
+        case Item::PlatinaStaff: {
+            // CW_Staff.bmd at rest: zx01 (bone 9, the head), zx03, zx02, zx05, zx04 (5-8, round
+            // the head's gem), zx12, zx09, zx11, zx10 (10-13, the four prongs), zx06 (4, down
+            // the shaft) and zx08 (2, the foot).
+            static const float kBones[11][3] = {
+                {0.0f, 0.0f, 106.0f},   {0.0f, 3.4f, 78.3f},    {0.0f, 3.4f, 87.0f},
+                {0.0f, -3.1f, 78.3f},   {0.0f, -3.1f, 87.0f},   {22.0f, 1.1f, 123.9f},
+                {0.0f, 30.7f, 110.0f},  {-22.9f, 1.1f, 123.9f}, {0.0f, -30.7f, 110.0f},
+                {0.0f, 0.0f, 42.3f},    {0.0f, 0.0f, -99.5f}};
+            for (int i = 0; i < 11; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 11;
+        }
+        case Item::AlbatrossBow: {
+            // CW_Bow.bmd at rest: zx08 (bone 10) and zx11 (28), the limb tips, and Bone34 (16)
+            // and Bone28 (34), either side of the grip.
+            static const float kBones[4][3] = {
+                {0.0f, 42.4f, 117.1f}, {0.0f, 40.8f, -104.1f},
+                {0.0f, -9.2f, 48.4f},  {0.0f, -12.9f, -37.2f}};
+            for (int i = 0; i < 4; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 4;
+        }
+        case Item::SwordDancer: {
+            // CW_Sword2.bmd at rest: bone 1, then bones 2-6 up the blade.
+            static const float kBones[6][3] = {{0.0f, 4.3f, -31.6f}, {0.0f, 4.3f, 33.1f}, {0.0f, 4.3f, 62.6f}, {-1.3f, 3.8f, 91.5f}, {0.0f, 6.2f, 121.2f}, {0.0f, 13.2f, 158.1f}};
+            for (int i = 0; i < 6; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 6;
+        }
+        case Item::Flamberge: {
+            // Sword_27.bmd at rest: Gold01 (bone 11), b01 and n02 (12, 13), then Zx01-Zx07 (1-7) up the blade.
+            static const float kBones[10][3] = {{0.0f, 0.0f, -34.5f}, {6.8f, 0.0f, 17.7f}, {-6.8f, 1.1f, 17.7f}, {0.0f, 0.0f, 34.3f}, {0.0f, 0.0f, 51.7f}, {0.0f, 0.0f, 68.9f}, {0.0f, 0.0f, 86.2f}, {0.0f, 0.0f, 102.9f}, {0.0f, 0.0f, 120.8f}, {0.0f, 0.0f, 136.6f}};
+            for (int i = 0; i < 10; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 10;
+        }
+        case Item::SwordBreaker: {
+            // Sword_28.bmd at rest: Zx01-Zx07 (bones 1-7) up the blade.
+            static const float kBones[7][3] = {{0.0f, 0.6f, 21.0f}, {0.0f, -1.6f, 44.3f}, {0.0f, -8.6f, 68.7f}, {0.0f, -6.9f, 88.4f}, {0.0f, -5.3f, 110.3f}, {0.0f, -4.3f, 133.5f}, {0.0f, -2.1f, 155.8f}};
+            for (int i = 0; i < 7; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 7;
+        }
+        case Item::ImperialSword: {
+            // Sword_29.bmd at rest: Zx01-Zx04 (bones 8-11), the guard and the tip, then rx01-Zx06 (2-7) up the blade.
+            static const float kBones[10][3] = {{10.1f, -0.3f, 30.4f}, {-10.1f, -0.3f, 30.4f}, {3.7f, -0.3f, 148.9f}, {-3.5f, -0.3f, 148.9f}, {0.0f, -0.3f, 49.1f}, {0.0f, -0.3f, 74.4f}, {0.0f, -0.3f, 101.7f}, {0.0f, -0.3f, 125.9f}, {0.0f, -0.3f, 148.8f}, {0.0f, -0.3f, 168.4f}};
+            for (int i = 0; i < 10; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 10;
+        }
+        case Item::FrostMace: {
+            // Mace_17.bmd at rest (its loop moves them): bone 24, the crystal; 1; 8-11; then 12-23 up the spike.
+            static const float kBones[18][3] = {{0.0f, 0.0f, 97.0f}, {0.0f, 0.0f, -31.6f}, {1.6f, 0.2f, -14.6f}, {-1.6f, 0.2f, -14.7f}, {3.5f, 0.2f, 12.9f}, {-2.9f, 0.2f, 12.9f}, {0.0f, 0.2f, 26.3f}, {0.0f, 0.2f, 31.2f}, {0.0f, 0.2f, 36.2f}, {0.0f, 0.2f, 41.1f}, {0.0f, 0.2f, 46.1f}, {0.0f, 0.2f, 51.0f}, {0.0f, 0.2f, 56.0f}, {0.0f, 0.2f, 60.9f}, {0.0f, 0.2f, 65.9f}, {0.0f, 0.2f, 70.8f}, {0.0f, 0.2f, 75.8f}, {0.0f, 0.2f, 80.7f}};
+            for (int i = 0; i < 18; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 18;
+        }
+        case Item::StingerBow: {
+            // Bow_24.bmd at rest: every bone, 0-43.
+            static const float kBones[44][3] = {{0.0f, -2.8f, 0.1f}, {0.0f, -8.7f, -0.1f}, {0.0f, 4.8f, -39.2f}, {0.0f, 25.0f, -80.5f}, {0.0f, 41.0f, -97.4f}, {0.1f, 29.2f, -91.1f}, {6.4f, -5.7f, -20.6f}, {20.0f, 10.4f, -34.3f}, {29.9f, 24.1f, -44.6f}, {5.1f, -7.1f, -17.2f}, {20.1f, 2.0f, -18.8f}, {39.9f, 17.9f, -21.7f}, {7.2f, -8.6f, -12.6f}, {16.5f, -0.7f, -6.1f}, {22.1f, 5.9f, -0.4f}, {-7.7f, -8.2f, -12.3f}, {-16.9f, -2.1f, -5.6f}, {-23.6f, 5.3f, 0.4f}, {-7.1f, -5.5f, -17.2f}, {-27.1f, 4.2f, -21.0f}, {-46.2f, 19.2f, -25.3f}, {-6.9f, -4.8f, -17.8f}, {-26.8f, 10.5f, -31.8f}, {-41.8f, 23.3f, -43.0f}, {0.6f, 0.3f, -20.8f}, {0.0f, -8.7f, -0.1f}, {0.0f, 7.6f, 48.2f}, {0.0f, 25.6f, 85.5f}, {0.0f, 40.6f, 102.6f}, {-0.1f, 28.8f, 94.8f}, {-6.7f, -6.5f, 23.3f}, {-16.6f, 1.1f, 25.3f}, {-33.8f, 17.3f, 31.1f}, {-6.1f, -5.3f, 27.0f}, {-14.1f, 4.0f, 35.1f}, {-30.1f, 31.1f, 52.9f}, {6.9f, -7.9f, 23.3f}, {18.3f, 2.6f, 25.7f}, {34.0f, 20.0f, 31.7f}, {5.8f, -5.5f, 26.7f}, {13.8f, 5.1f, 34.2f}, {32.4f, 30.6f, 51.9f}, {-0.6f, -0.9f, 23.5f}, {0.0f, 28.8f, 1.8f}};
+            for (int i = 0; i < 44; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 44;
+        }
+        case Item::DeadlyStaff: {
+            // Staff_31.bmd at rest: Red01 and Red02 (bones 2, 3), the eyes, then Rx01-Zx05 (4-9).
+            static const float kBones[8][3] = {{6.4f, 0.1f, 98.5f}, {-6.2f, 0.1f, 98.5f}, {0.0f, 0.3f, 118.4f}, {0.0f, 0.3f, 135.5f}, {0.0f, 0.3f, -84.6f}, {0.0f, 0.3f, 82.2f}, {0.0f, 15.0f, 77.8f}, {0.0f, -14.9f, 77.8f}};
+            for (int i = 0; i < 8; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 8;
+        }
+        case Item::ImperialStaff: {
+            // Staff_32.bmd at rest: Zx01-Zx04 (bones 2-5).
+            static const float kBones[4][3] = {{0.0f, -0.7f, -87.2f}, {0.0f, -0.7f, 63.9f}, {0.0f, -0.7f, 128.1f}, {0.0f, -0.7f, 158.8f}};
+            for (int i = 0; i < 4; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 4;
         }
     }
     return 0;
@@ -680,6 +787,120 @@ void HeldLights::gather(gfx::Effects& effects) const {
                     put(light_, one.at[2], halfOf(s * 0.8f), g, g, g);
                     put(shiny_, one.at[2], halfOf(0.8f), 3.0f * g, g, g);
                 }
+                break;
+            }
+            case Item::Daybreak: {
+                // The hand roll, 0.7 to 1, as MU's flicker's -1 to 1.
+                const float swing = (handLuminosity_ - 0.85f) / 0.15f;
+                const float f = swing * 0.25f + 0.6f;
+                put(light_, one.at[0], halfOf(0.45f), 1.2f, 1.2f, 1.2f);
+                put(shiny_, one.at[0], halfOf(0.7f), 0.6f, 0.6f, 0.6f);
+                put(shiny_, one.at[0], halfOf(0.5f + 0.55f * (linkLuminosity_ - 0.35f) / 0.15f),
+                    0.6f, 0.6f, 0.6f);
+                put(light_, one.at[0], halfOf(3.0f), f, f, f);
+                break;
+            }
+            case Item::PlatinaStaff: {
+                if (one.count < 11) break;
+                const float swing = (handLuminosity_ - 0.85f) / 0.15f;
+                const float f = swing * 0.2f + 0.3f;
+                const float* head = one.at[0];
+                const float* foot = one.at[10];
+                put(light_, head, halfOf(0.3f), 0.7f, 0.7f, 0.7f);
+                put(light_, head, halfOf(4.0f), 0.2f, 0.6f + f, 0.2f);
+                put(shiny_, head, halfOf(1.45f), 0.4f, 0.5f + f, 0.4f);
+                for (int i = 1; i <= 4; ++i) put(light_, one.at[i], halfOf(0.2f), 0.1f, 0.8f, 0.1f);
+                for (int i = 5; i <= 8; ++i) put(light_, one.at[i], halfOf(0.3f), 0.5f, 0.5f, 0.5f);
+                put(shiny_, one.at[9], halfOf(0.6f), 0.1f, 0.8f, 0.1f);
+                put(light_, foot, halfOf(0.7f), 0.8f, 0.8f, 0.8f);
+                put(shiny_, foot, halfOf(0.5f), 0.1f, 1.0f, 0.1f);
+                put(light_, foot, halfOf(2.0f), 0.2f, 0.6f + f, 0.2f);
+                break;
+            }
+            case Item::AlbatrossBow: {
+                for (int i = 0; i < one.count; ++i) {
+                    put(light_, one.at[i], halfOf(1.2f), 0.0f, 0.7f, 0.0f);
+                }
+                break;
+            }
+            case Item::SwordDancer: {
+                if (one.count < 6) break;
+                const float swing = (handLuminosity_ - 0.85f) / 0.15f;
+                const float f = swing * 0.2f + 0.3f;
+                put(light_, one.at[0], halfOf(1.0f), 1.0f, 0.1f, 0.0f);
+                put(shiny_, one.at[0], halfOf(0.2f + (linkLuminosity_ - 0.35f) / 0.3f), 0.1f + f, 0.2f, 0.0f);
+                const float red = swing * 0.25f + 0.2f;
+                for (int i = 1; i < 6; ++i) put(light_, one.at[i], halfOf(1.1f), 0.8f + red, 0.1f, 0.0f);
+                break;
+            }
+            case Item::Flamberge: {
+                if (one.count < 10) break;
+                put(light_, one.at[0], halfOf(0.6f), 1.6f, 1.2f, 0.4f);
+                put(light_, one.at[1], halfOf(0.5f), 0.3f, 0.8f, 0.7f);
+                put(light_, one.at[2], halfOf(0.5f), 0.3f, 0.8f, 0.7f);
+                put(light_, one.at[1], halfOf(0.3f), 0.3f, 0.8f, 0.7f);
+                put(light_, one.at[2], halfOf(0.3f), 0.3f, 0.8f, 0.7f);
+                static const float kMarks[7] = {0.8f, 0.7f, 0.7f, 0.7f, 0.6f, 0.5f, 0.5f};
+                for (int i = 0; i < 7; ++i) put(light_, one.at[3 + i], halfOf(kMarks[i]), 0.9f, 0.1f, 0.1f);
+                break;
+            }
+            case Item::SwordBreaker: {
+                static const float kMarks[7] = {0.6f, 0.5f, 0.5f, 0.5f, 0.4f, 0.3f, 0.3f};
+                for (int i = 0; i < std::min(one.count, 7); ++i) {
+                    put(light_, one.at[i], halfOf(kMarks[i]), 0.1f, 0.9f, 0.1f);
+                }
+                break;
+            }
+            case Item::ImperialSword: {
+                if (one.count < 10) break;
+                const float big = 0.5f + (linkLuminosity_ - 0.35f) / 0.3f;  // MU's 0.5 to 1
+                for (int i = 0; i < 4; ++i) {
+                    put(light_, one.at[i], halfOf(0.4f), 0.6f, 0.7f, 1.0f);
+                    put(shiny_, one.at[i], halfOf(i < 2 ? big : 0.4f), 0.1f, 0.4f, 0.9f);
+                }
+                static const float kMarks[6] = {1.0f, 0.8f, 0.6f, 0.4f, 0.2f, 0.1f};
+                for (int i = 0; i < 6; ++i) put(light_, one.at[4 + i], halfOf(kMarks[i]), 0.0f, 0.3f, 0.7f);
+                break;
+            }
+            case Item::FrostMace: {
+                if (one.count < 18) break;
+                put(shiny_, one.at[0], halfOf(0.3f), 0.5f, 0.8f, 0.6f);
+                put(light_, one.at[0], halfOf(2.0f), 0.5f, 0.8f, 0.6f);
+                put(shiny_, one.at[1], halfOf(0.2f), 0.9f, 0.1f, 0.3f);
+                put(light_, one.at[1], halfOf(0.8f), 0.9f, 0.1f, 0.3f);
+                put(shiny_, one.at[2], halfOf(0.2f), 0.9f, 0.1f, 0.3f);
+                put(shiny_, one.at[3], halfOf(0.2f), 0.9f, 0.1f, 0.3f);
+                put(shiny_, one.at[4], halfOf(0.2f), 0.5f, 0.8f, 0.5f);
+                put(shiny_, one.at[5], halfOf(0.2f), 0.5f, 0.8f, 0.5f);
+                for (int i = 6; i < 18; ++i) {
+                    const float size = i < 10 ? 0.2f : i < 15 ? 0.3f : 0.4f;
+                    put(light_, one.at[i], halfOf(size), 0.5f, 0.8f, 0.6f);
+                }
+                break;
+            }
+            case Item::StingerBow: {
+                for (int i = 0; i < one.count; ++i) put(light_, one.at[i], halfOf(0.8f), 0.2f, 0.25f, 0.3f);
+                break;
+            }
+            case Item::DeadlyStaff: {
+                if (one.count < 8) break;
+                const float lumi = std::fabs(std::sin(clock_)) * 0.8f + 0.2f;
+                const float shine = 0.5f + (linkLuminosity_ - 0.35f) / 0.3f;
+                for (int i = 0; i < 2; ++i) {
+                    put(light_, one.at[i], halfOf(2.0f), 0.8f * lumi, 0.1f * lumi, 0.3f * lumi);
+                    put(shiny_, one.at[i], halfOf(shine), 0.8f, 0.2f, 0.4f);
+                }
+                static const float kSizes[6] = {0.8f, 0.4f, 0.8f, 0.8f, 2.0f, 0.8f};
+                for (int i = 0; i < 6; ++i) put(light_, one.at[2 + i], halfOf(kSizes[i]), 0.8f, 0.3f, 0.1f);
+                break;
+            }
+            case Item::ImperialStaff: {
+                if (one.count < 4) break;
+                put(light_, one.at[0], halfOf(2.0f), 0.6f, 0.6f, 1.8f);
+                put(light_, one.at[1], halfOf(2.5f), 0.6f, 0.6f, 1.8f);
+                put(light_, one.at[2], halfOf(3.0f), 0.3f, 0.3f, 0.9f);
+                put(light_, one.at[3], halfOf(2.0f), 0.7f, 0.1f, 0.2f);
+                put(shiny_, one.at[3], halfOf(0.8f), 0.9f, 0.3f, 0.5f);
                 break;
             }
         }

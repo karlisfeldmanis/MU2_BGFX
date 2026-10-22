@@ -342,6 +342,7 @@ int main(int argc, char** argv) {
         core::logError("%s", error.c_str());
         return 1;
     }
+    core::logf("mu2_server: %d worlds' tables read", readWorlds(assets));
     economyOpen(store);
     if (marketServePort > 0 || !marketAtAddress.empty()) {
         if (marketKeyHex.empty() && std::getenv("MU2_MARKET_KEY") != nullptr) marketKeyHex = std::getenv("MU2_MARKET_KEY");

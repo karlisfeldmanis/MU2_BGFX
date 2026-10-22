@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "host.h"
+#include "market_link.h"
 
 namespace mu::server {
 
@@ -20,6 +21,26 @@ void chatSystem(Session& one, net::Channel channel, const std::string& text) {
     line.channel = channel;
     line.text = text;
     hearLine(one, line);
+}
+
+void heraldHere(const std::string& text, std::vector<std::unique_ptr<Session>>& sessions) {
+    net::Heard line;
+    line.channel = net::Channel::Global;
+    line.text = text;
+    int heard = 0;
+    for (auto& other : sessions) {
+        if (!other->welcomed || other->world == nullptr) continue;
+        hearLine(*other, line);
+        ++heard;
+    }
+    core::logf("chat global herald (%d heard): %s", heard, text.c_str());
+}
+
+void announceRebirth(const std::string& name, int count, std::vector<std::unique_ptr<Session>>& sessions) {
+    const std::string text = net::rebirthLine(name, count, g_region);
+    heraldHere(text, sessions);
+    // And every other realm, over the market's line (market_link.h, marketHerald).
+    marketHerald(text);
 }
 
 // The welcomed player called `name` on any map, in any case, or nullptr.
