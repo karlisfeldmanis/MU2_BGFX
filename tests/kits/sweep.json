@@ -1,5 +1,5 @@
 {
-  "from": "tests/skill_sweep.cpp's own kits (2026-10-21), for what no raider is: Gaius the Magic Gladiator, and Dirk, Daric with a second Sword of Destruction in his left hand, since no raider wields two. Bran's gear at Bran's plus (content/raid/party.json), no helm as MU's Gladiator wears none, a sword in both his trades, and seven points a level split between strength and energy. DirkNoRunes and DirkPlain are Dirk with no sockets in the left sword, and with no sockets or excellent option, to tell what of two swords is the second band and what is the second sword's runes.",
+  "from": "tests/skill_sweep.cpp's own kits (2026-10-21), for what no raider is: Gaius the Magic Gladiator (Storm Crow +11, Wings of Darkness +11, 25 + 7 points a level -- knight-only Dark Phoenix and Wings of Dragon until 2026-10-22), and Dirk, Daric with a second Sword of Destruction in his left hand, since no raider wields two. Bran's gear at Bran's plus (content/raid/party.json), no helm as MU's Gladiator wears none, a sword in both his trades, and seven points a level split between strength and energy. DirkNoRunes and DirkPlain are Dirk with no sockets in the left sword, and with no sockets or excellent option, to tell what of two swords is the second band and what is the second sword's runes.",
   "party": [
     {
       "name": "Gaius",
@@ -8,10 +8,10 @@
       "second": false,
       "level": 400,
       "points": {
-        "strength": 900,
+        "strength": 950,
         "agility": 450,
-        "vitality": 350,
-        "energy": 900
+        "vitality": 400,
+        "energy": 1000
       },
       "potions": 20,
       "skills": [
@@ -21,7 +21,7 @@
       "wear": [
         {
           "slot": "armour",
-          "item": "ArmorMale18",
+          "item": "ArmorMale16",
           "plus": 11,
           "luck": true,
           "option": 3,
@@ -31,21 +31,21 @@
         },
         {
           "slot": "pants",
-          "item": "PantMale18",
+          "item": "PantMale16",
           "plus": 11,
           "luck": true,
           "option": 3
         },
         {
           "slot": "gloves",
-          "item": "GloveMale18",
+          "item": "GloveMale16",
           "plus": 11,
           "luck": true,
           "option": 3
         },
         {
           "slot": "boots",
-          "item": "BootMale18",
+          "item": "BootMale16",
           "plus": 11,
           "luck": true,
           "option": 3
@@ -65,7 +65,7 @@
         },
         {
           "slot": "wings",
-          "item": "Wing06",
+          "item": "Wing07",
           "plus": 11,
           "luck": true
         },
