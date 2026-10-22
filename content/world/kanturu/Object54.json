@@ -1,0 +1,134 @@
+{
+  "item": "Object54",
+  "mu_name": "Object54",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 53,
+  "placements": 47,
+  "profile": "world",
+  "sheets": {
+    "han_moss5": "kr_han_moss5.png",
+    "han_mwall3": "kr_han_mwall3.png",
+    "han_mwall2": "kr_han_mwall2.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "han_moss5": "foliage",
+    "han_mwall3": "rock",
+    "han_mwall2": "flagstone"
+  },
+  "material_note": "han_moss5: hanging moss, cut out: foliage. han_mwall3: weathered stone: rock. han_mwall2: carved stone with a glyph band: flagstone.",
+  "why_this_one": "A mossy wall or log, 47 of them. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "foliage",
+      "triangles": 12,
+      "area": 10169.9,
+      "along": [
+        108.3,
+        160.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.034,
+        3.216,
+        1.033
+      ],
+      "bake_uv": [
+        0.008,
+        0.141,
+        0.583,
+        0.67
+      ]
+    },
+    {
+      "island": 1,
+      "material": "foliage",
+      "triangles": 4,
+      "area": 6201.8,
+      "along": [
+        79.2,
+        110.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.53,
+        1.0,
+        0.952
+      ],
+      "bake_uv": [
+        0.499,
+        0.028,
+        0.728,
+        0.125
+      ]
+    },
+    {
+      "island": 2,
+      "material": "foliage",
+      "triangles": 22,
+      "area": 52503.6,
+      "along": [
+        -170.8,
+        118.6
+      ],
+      "mu_uv": [
+        -2.018,
+        1.185,
+        -0.982,
+        1.905
+      ],
+      "bake_uv": [
+        0.496,
+        0.522,
+        0.733,
+        0.687
+      ]
+    },
+    {
+      "island": 3,
+      "material": "flagstone",
+      "triangles": 32,
+      "area": 28466.7,
+      "along": [
+        80.6,
+        158.1
+      ],
+      "mu_uv": [
+        -2.848,
+        -0.004,
+        2.694,
+        0.922
+      ],
+      "bake_uv": [
+        0.009,
+        0.008,
+        0.982,
+        0.992
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 14,
+      "area": 74477.8,
+      "along": [
+        -163.6,
+        110.4
+      ],
+      "mu_uv": [
+        0.0,
+        -0.318,
+        2.072,
+        1.07
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.483,
+        0.751
+      ]
+    }
+  ]
+}

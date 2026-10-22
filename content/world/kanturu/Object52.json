@@ -1,0 +1,90 @@
+{
+  "item": "Object52",
+  "mu_name": "Object52",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 51,
+  "placements": 29,
+  "profile": "world",
+  "sheets": {
+    "han_mwall2": "kr_han_mwall2.png",
+    "han_moss4": "kr_han_moss4.png",
+    "han_moss5": "kr_han_moss5.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "han_mwall2": "flagstone",
+    "han_moss4": "foliage",
+    "han_moss5": "foliage"
+  },
+  "material_note": "han_mwall2: carved stone with a glyph band: flagstone. han_moss4: moss, cut out: foliage. han_moss5: hanging moss, cut out: foliage.",
+  "why_this_one": "A mossy wall, 29 of them. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "foliage",
+      "triangles": 26,
+      "area": 20239.4,
+      "along": [
+        -49.4,
+        52.2
+      ],
+      "mu_uv": [
+        0.037,
+        0.009,
+        0.95,
+        0.996
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.944,
+        0.962
+      ]
+    },
+    {
+      "island": 1,
+      "material": "foliage",
+      "triangles": 12,
+      "area": 41069.1,
+      "along": [
+        -43.8,
+        45.2
+      ],
+      "mu_uv": [
+        0.095,
+        -0.002,
+        0.898,
+        0.511
+      ],
+      "bake_uv": [
+        0.306,
+        0.422,
+        0.994,
+        0.858
+      ]
+    },
+    {
+      "island": 2,
+      "material": "flagstone",
+      "triangles": 12,
+      "area": 45140.1,
+      "along": [
+        -43.2,
+        44.7
+      ],
+      "mu_uv": [
+        1.003,
+        -0.002,
+        1.805,
+        0.974
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.86,
+        0.826
+      ]
+    }
+  ]
+}
