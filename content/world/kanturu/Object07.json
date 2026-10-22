@@ -1,0 +1,86 @@
+{
+  "item": "Object07",
+  "mu_name": "Object07",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 6,
+  "placements": 84,
+  "profile": "world",
+  "sheets": {
+    "stone_01": "kr_stone_01.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "stone_01": "rock"
+  },
+  "material_note": "stone_01: stone: rock.",
+  "why_this_one": "Stones and small rock heaps, 84 of them. Batch 9, the houses and stones (the user, 2026-10-22: 'do it', the small ruins in three batches). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 24,
+      "area": 21271.8,
+      "along": [
+        -70.0,
+        69.2
+      ],
+      "mu_uv": [
+        -0.066,
+        -0.067,
+        1.101,
+        1.105
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.988,
+        0.98
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 24,
+      "area": 5441.5,
+      "along": [
+        -102.0,
+        -37.9
+      ],
+      "mu_uv": [
+        -0.072,
+        -0.074,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.013,
+        0.012,
+        0.951,
+        0.929
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 24,
+      "area": 2751.2,
+      "along": [
+        55.8,
+        101.4
+      ],
+      "mu_uv": [
+        -0.071,
+        -0.073,
+        0.999,
+        1.104
+      ],
+      "bake_uv": [
+        0.036,
+        0.03,
+        0.973,
+        0.955
+      ]
+    }
+  ]
+}
