@@ -1,0 +1,252 @@
+{
+  "item": "PantMale36",
+  "mu_name": "Eclipse Pants",
+  "mu_name_from": "MuMain loads MODEL_ECLIPSE_* from Data/Player/CW_PantMale02.bmd (ZzzOpenData.cpp:236-245; the helm is CW_HelmMale 2). MU's number 35. Ours is *Male36 by the index-plus-one rule.",
+  "why_this_one": "Season 2's lower-level sets, missing here (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's): the Dark Wizard's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (Season 2's sets; 0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:211.",
+    "call": "CreateArmor(35, 4, 2, 2, \"Eclipse Pants\", 69, 25, 54, 0, 53, 12, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0)",
+    "group": 9,
+    "number": 35,
+    "drop_level": 69,
+    "drops_from_monsters": true,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 25,
+    "durability": 54,
+    "requires": {
+      "level": 0,
+      "strength": 53,
+      "agility": 12,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "class_level_note": "The Dark Wizard's, first class and up: OpenMU's darkWizardClassLevel 1. OpenMU gives the Magic Gladiator none of it."
+  },
+  "sheets": {
+    "richlower": "richlower.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player rich*.OZJ and richfama.OZT, decoded with pipeline/decode_texture.py: dark plate traced in silver over a dark robe; richface his face, richfama the hair card cut by its own alpha, richcrystal a teal gem.",
+  "sheet_materials": {
+    "richlower": "cloth"
+  },
+  "material_note": "painted_steel with the cast grain for the plate; the robe (richlower) cloth, as Dark Soul's; the face skin; the hair card hair.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain has no render arm for MODEL_ECLIPSE_* (no glow, no chrome pass).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 128,
+      "area": 10438.7,
+      "along": [
+        -18.9,
+        17.4
+      ],
+      "mu_uv": [
+        0.287,
+        0.015,
+        0.932,
+        0.834
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.922,
+        0.915
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 16,
+      "area": 1119.0,
+      "along": [
+        -29.0,
+        19.4
+      ],
+      "mu_uv": [
+        0.024,
+        0.238,
+        0.527,
+        0.825
+      ],
+      "bake_uv": [
+        0.007,
+        0.008,
+        0.284,
+        0.33
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 10,
+      "area": 1011.5,
+      "along": [
+        -28.2,
+        18.6
+      ],
+      "mu_uv": [
+        0.024,
+        0.238,
+        0.527,
+        0.825
+      ],
+      "bake_uv": [
+        0.158,
+        0.11,
+        0.435,
+        0.433
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 16,
+      "area": 1119.0,
+      "along": [
+        -29.0,
+        19.4
+      ],
+      "mu_uv": [
+        0.024,
+        0.238,
+        0.527,
+        0.825
+      ],
+      "bake_uv": [
+        0.303,
+        0.257,
+        0.58,
+        0.579
+      ]
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 10,
+      "area": 1011.5,
+      "along": [
+        -28.2,
+        18.6
+      ],
+      "mu_uv": [
+        0.024,
+        0.238,
+        0.527,
+        0.825
+      ],
+      "bake_uv": [
+        0.45,
+        0.404,
+        0.726,
+        0.726
+      ]
+    },
+    {
+      "island": 5,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 106.3,
+      "along": [
+        10.8,
+        17.0
+      ],
+      "mu_uv": [
+        0.491,
+        0.231,
+        0.767,
+        0.375
+      ],
+      "bake_uv": [
+        0.343,
+        0.192,
+        0.495,
+        0.272
+      ]
+    },
+    {
+      "island": 6,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 106.3,
+      "along": [
+        10.8,
+        17.0
+      ],
+      "mu_uv": [
+        0.491,
+        0.231,
+        0.767,
+        0.375
+      ],
+      "bake_uv": [
+        0.803,
+        0.007,
+        0.955,
+        0.086
+      ]
+    },
+    {
+      "island": 7,
+      "material": "cloth",
+      "triangles": 17,
+      "area": 726.7,
+      "along": [
+        -13.4,
+        12.2
+      ],
+      "mu_uv": [
+        0.014,
+        0.051,
+        0.367,
+        0.303
+      ],
+      "bake_uv": [
+        0.3,
+        0.008,
+        0.95,
+        0.951
+      ]
+    },
+    {
+      "island": 8,
+      "material": "cloth",
+      "triangles": 17,
+      "area": 726.7,
+      "along": [
+        -13.4,
+        12.2
+      ],
+      "mu_uv": [
+        0.014,
+        0.051,
+        0.367,
+        0.303
+      ],
+      "bake_uv": [
+        0.008,
+        0.437,
+        0.979,
+        0.993
+      ]
+    }
+  ]
+}

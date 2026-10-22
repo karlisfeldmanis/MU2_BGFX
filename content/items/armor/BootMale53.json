@@ -1,0 +1,187 @@
+{
+  "item": "BootMale53",
+  "mu_name": "Hades Boots",
+  "mu_name_from": "MuMain's MODEL_HADES_* (_enum.h: MODEL_BOOT + 52), loaded from Data/Player/BootMale53.bmd by the index-plus-one rule. MU's number 52; ours is *Male53.",
+  "why_this_one": "The missing-gear audit, 2026-10-22: one set a class at drop levels 93-132 (the user: 'Then one set per class at 93-132: Brave, Faith, Hades and Phantom'). Hades is the Dark Wizard's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:342.",
+    "call": "CreateBoots(52, \"Hades Boots\", 94, 34, 0, 86, 0, 60, 15, 181, 0, 0, 1, 0, 0, 0, 0, 0, 0)",
+    "group": 11,
+    "number": 52,
+    "drop_level": 94,
+    "drops_from_monsters": true,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 34,
+    "durability": 86,
+    "requires": {
+      "level": 0,
+      "strength": 60,
+      "agility": 15,
+      "energy": 181,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "class_level_note": "OpenMU's darkWizardClassLevel 1, its only class."
+  },
+  "sheets": {
+    "item1001_Boot": "item1001_boot.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased: dark steel traced in silver; skinClass302 the wizard's own face under the helm.",
+  "sheet_materials": {
+    "item1001_Boot": "painted_steel",
+    "item1001_boot": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the other sets.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss.",
+  "effects_note": "MuMain has no render arm for MODEL_HADES_* (no glow, no chrome pass).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 92,
+      "area": 1625.4,
+      "along": [
+        -11.3,
+        17.1
+      ],
+      "mu_uv": [
+        0.011,
+        0.142,
+        0.937,
+        0.992
+      ],
+      "bake_uv": [
+        0.209,
+        0.01,
+        0.954,
+        0.647
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 69,
+      "area": 2973.1,
+      "along": [
+        -11.3,
+        27.4
+      ],
+      "mu_uv": [
+        0.009,
+        0.004,
+        0.993,
+        0.996
+      ],
+      "bake_uv": [
+        0.009,
+        0.01,
+        0.942,
+        0.943
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 46,
+      "area": 835.5,
+      "along": [
+        -14.7,
+        6.3
+      ],
+      "mu_uv": [
+        0.033,
+        0.469,
+        0.548,
+        0.996
+      ],
+      "bake_uv": [
+        0.238,
+        0.148,
+        0.892,
+        0.805
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 92,
+      "area": 1625.4,
+      "along": [
+        -11.3,
+        17.1
+      ],
+      "mu_uv": [
+        0.011,
+        0.142,
+        0.937,
+        0.992
+      ],
+      "bake_uv": [
+        0.009,
+        0.011,
+        0.991,
+        0.745
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 69,
+      "area": 2973.1,
+      "along": [
+        -11.3,
+        27.4
+      ],
+      "mu_uv": [
+        0.009,
+        0.004,
+        0.993,
+        0.996
+      ],
+      "bake_uv": [
+        0.01,
+        0.047,
+        0.794,
+        0.983
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 46,
+      "area": 835.5,
+      "along": [
+        -14.7,
+        6.3
+      ],
+      "mu_uv": [
+        0.033,
+        0.469,
+        0.548,
+        0.996
+      ],
+      "bake_uv": [
+        0.088,
+        0.394,
+        0.903,
+        0.922
+      ]
+    }
+  ]
+}

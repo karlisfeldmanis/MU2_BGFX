@@ -1,0 +1,142 @@
+{
+  "item": "PantMale38",
+  "mu_name": "Valiant Pants",
+  "mu_name_from": "MuMain loads MODEL_VALIANT_* from Data/Player/CW_PantMale04.bmd (ZzzOpenData.cpp:236-243; no helm). MU's number 37. Ours is *Male38 by the index-plus-one rule.",
+  "why_this_one": "Season 2's lower-level sets, missing here (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's): the Magic Gladiator's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (Season 2's sets; 0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:213.",
+    "call": "CreateArmor(37, 4, 2, 2, \"Valiant Pants\", 101, 41, 81, 0, 155, 50, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0)",
+    "group": 9,
+    "number": 37,
+    "drop_level": 101,
+    "drops_from_monsters": true,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 41,
+    "durability": 81,
+    "requires": {
+      "level": 0,
+      "strength": 155,
+      "agility": 50,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "gladiator"
+    ],
+    "class_level_note": "The Magic Gladiator's: OpenMU's magicGladiatorClassLevel 1, his only class. No helm: his sets go bare-headed (MuMain loads no CW_HelmMale 4)."
+  },
+  "sheets": {
+    "flamset_lower": "flamset_lower.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player flamset_*.OZJ, decoded with pipeline/decode_texture.py: red plate edged in silver; flamset_head the collar and hood on the armour.",
+  "sheet_materials": {
+    "flamset_lower": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain, the shading painted on.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain has no render arm for MODEL_VALIANT_* (no glow, no chrome pass). Its full-set bonus is not given: sim::setDefense counts only Storm Crow and Hurricane for the Magic Gladiator.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 96,
+      "area": 2390.0,
+      "along": [
+        -13.4,
+        21.9
+      ],
+      "mu_uv": [
+        0.294,
+        0.318,
+        0.867,
+        0.988
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.629,
+        0.636
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 100,
+      "area": 7160.3,
+      "along": [
+        -14.3,
+        17.0
+      ],
+      "mu_uv": [
+        0.011,
+        0.009,
+        0.992,
+        0.985
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.978,
+        0.994
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 31,
+      "area": 1679.1,
+      "along": [
+        -10.7,
+        11.8
+      ],
+      "mu_uv": [
+        0.009,
+        0.329,
+        0.375,
+        0.977
+      ],
+      "bake_uv": [
+        0.19,
+        0.007,
+        0.912,
+        0.643
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 31,
+      "area": 1679.1,
+      "along": [
+        -10.7,
+        11.8
+      ],
+      "mu_uv": [
+        0.009,
+        0.329,
+        0.375,
+        0.977
+      ],
+      "bake_uv": [
+        0.215,
+        0.007,
+        0.922,
+        0.783
+      ]
+    }
+  ]
+}

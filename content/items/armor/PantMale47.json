@@ -1,0 +1,374 @@
+{
+  "item": "PantMale47",
+  "mu_name": "Brave Pants",
+  "mu_name_from": "MuMain's MODEL_BRAVE_* (_enum.h: MODEL_PANT + 46), loaded from Data/Player/PantMale47.bmd by the index-plus-one rule. MU's number 46; ours is *Male47.",
+  "why_this_one": "The missing-gear audit, 2026-10-22: one set a class at drop levels 93-132 (the user: 'Then one set per class at 93-132: Brave, Faith, Hades and Phantom'). Brave is the Dark Knight's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:222.",
+    "call": "CreateArmor(46, 4, 2, 2, \"Brave Pants\", 112, 58, 86, 0, 74, 162, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)",
+    "group": 9,
+    "number": 46,
+    "drop_level": 112,
+    "drops_from_monsters": true,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 58,
+    "durability": 86,
+    "requires": {
+      "level": 0,
+      "strength": 74,
+      "agility": 162,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "class_level_note": "OpenMU's darkKnightClassLevel 1, its only class."
+  },
+  "sheets": {
+    "Item2002_Pant": "item2002_pant.png",
+    "Item2002_cloth": "item2002_cloth.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased: bronze-gold plate over dark leather and steel; Item2002_R small green gem inlays; Item2002_cloth.OZT the chain mail under the tassets, cut by its alpha (72% away); skinClass301 the knight's own face under the helm.",
+  "sheet_materials": {
+    "Item2002_Pant": "painted_steel",
+    "item2002_pant": "painted_steel",
+    "Item2002_cloth": "steel",
+    "item2002_cloth": "steel"
+  },
+  "cutout": [
+    "Item2002_cloth"
+  ],
+  "cutout_from": "Declared, not detected: the .OZT's alpha is real and the UVs cover it.",
+  "cutout_alpha": [
+    "Item2002_cloth"
+  ],
+  "cutout_alpha_from": "The sheet's own alpha, not its brightness (Divine's trap, 2026-10-04).",
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the other sets.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss.",
+  "effects_note": "MuMain has no render arm for MODEL_BRAVE_*. Item2002_R's `_R` makes TextureScript draw those meshes bright, i.e. added (TextureScript.cpp parsingTScriptA, ZzzBMD.cpp:2238): not built here -- armour bakes to one atlas, where an added sheet has nowhere to live (asset.sh). Baked opaque as glass: dark green gems.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 6,
+      "area": 683.6,
+      "along": [
+        11.9,
+        19.1
+      ],
+      "mu_uv": [
+        0.02,
+        0.007,
+        0.432,
+        0.993
+      ],
+      "bake_uv": [
+        0.01,
+        0.274,
+        0.183,
+        0.689
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 18,
+      "area": 1000.6,
+      "along": [
+        -18.3,
+        -13.9
+      ],
+      "mu_uv": [
+        0.417,
+        0.303,
+        0.829,
+        0.992
+      ],
+      "bake_uv": [
+        0.333,
+        0.197,
+        0.922,
+        0.853
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 6,
+      "area": 688.5,
+      "along": [
+        5.0,
+        14.5
+      ],
+      "mu_uv": [
+        0.02,
+        0.007,
+        0.432,
+        0.993
+      ],
+      "bake_uv": [
+        0.525,
+        0.211,
+        0.699,
+        0.625
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 104,
+      "area": 7825.5,
+      "along": [
+        -14.2,
+        15.4
+      ],
+      "mu_uv": [
+        0.014,
+        0.011,
+        0.993,
+        0.989
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.819,
+        0.745
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 58,
+      "area": 1257.8,
+      "along": [
+        9.0,
+        23.3
+      ],
+      "mu_uv": [
+        0.428,
+        0.008,
+        0.818,
+        0.996
+      ],
+      "bake_uv": [
+        0.437,
+        0.086,
+        0.911,
+        0.741
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 30,
+      "area": 438.6,
+      "along": [
+        -16.9,
+        -4.1
+      ],
+      "mu_uv": [
+        0.798,
+        0.54,
+        0.991,
+        0.747
+      ],
+      "bake_uv": [
+        0.544,
+        0.048,
+        0.936,
+        0.741
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 4,
+      "area": 201.4,
+      "along": [
+        -16.5,
+        -7.7
+      ],
+      "mu_uv": [
+        0.716,
+        0.816,
+        0.99,
+        0.989
+      ],
+      "bake_uv": [
+        0.835,
+        0.314,
+        0.951,
+        0.387
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 56,
+      "area": 1923.1,
+      "along": [
+        -18.1,
+        18.1
+      ],
+      "mu_uv": [
+        0.006,
+        0.055,
+        0.856,
+        0.514
+      ],
+      "bake_uv": [
+        0.011,
+        0.01,
+        0.633,
+        0.857
+      ]
+    },
+    {
+      "island": 8,
+      "material": "painted_steel",
+      "triangles": 1,
+      "area": 5.1,
+      "along": [
+        0.0,
+        0.0
+      ],
+      "mu_uv": [
+        0.151,
+        0.345,
+        0.208,
+        0.351
+      ],
+      "bake_uv": [
+        0.072,
+        0.814,
+        0.096,
+        0.816
+      ]
+    },
+    {
+      "island": 9,
+      "material": "painted_steel",
+      "triangles": 42,
+      "area": 1908.7,
+      "along": [
+        -13.0,
+        13.0
+      ],
+      "mu_uv": [
+        0.012,
+        0.019,
+        0.505,
+        0.334
+      ],
+      "bake_uv": [
+        0.011,
+        0.01,
+        0.918,
+        0.954
+      ]
+    },
+    {
+      "island": 10,
+      "material": "painted_steel",
+      "triangles": 4,
+      "area": 201.4,
+      "along": [
+        -16.5,
+        -7.7
+      ],
+      "mu_uv": [
+        0.716,
+        0.816,
+        0.99,
+        0.989
+      ],
+      "bake_uv": [
+        0.835,
+        0.766,
+        0.951,
+        0.839
+      ]
+    },
+    {
+      "island": 11,
+      "material": "painted_steel",
+      "triangles": 56,
+      "area": 1923.1,
+      "along": [
+        -18.1,
+        18.1
+      ],
+      "mu_uv": [
+        0.006,
+        0.055,
+        0.856,
+        0.514
+      ],
+      "bake_uv": [
+        0.438,
+        0.01,
+        0.947,
+        0.839
+      ]
+    },
+    {
+      "island": 12,
+      "material": "painted_steel",
+      "triangles": 1,
+      "area": 5.1,
+      "along": [
+        -0.0,
+        0.0
+      ],
+      "mu_uv": [
+        0.151,
+        0.345,
+        0.208,
+        0.351
+      ],
+      "bake_uv": [
+        0.75,
+        0.494,
+        0.774,
+        0.497
+      ]
+    },
+    {
+      "island": 13,
+      "material": "painted_steel",
+      "triangles": 42,
+      "area": 1908.7,
+      "along": [
+        -13.0,
+        13.0
+      ],
+      "mu_uv": [
+        0.012,
+        0.019,
+        0.505,
+        0.334
+      ],
+      "bake_uv": [
+        0.12,
+        0.785,
+        0.947,
+        0.991
+      ]
+    }
+  ]
+}

@@ -1,0 +1,275 @@
+{
+  "item": "BootMale51",
+  "mu_name": "Faith Boots",
+  "mu_name_from": "MuMain's MODEL_FAITH_* (_enum.h: MODEL_BOOT + 50), loaded from Data/Player/BootMale51.bmd by the index-plus-one rule. MU's number 50; ours is *Male51.",
+  "why_this_one": "The missing-gear audit, 2026-10-22: one set a class at drop levels 93-132 (the user: 'Then one set per class at 93-132: Brave, Faith, Hades and Phantom'). Faith is the Fairy Elf's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:340.",
+    "call": "CreateBoots(50, \"Faith Boots\", 92, 35, 0, 86, 0, 32, 29, 138, 0, 0, 0, 0, 1, 0, 0, 0, 0)",
+    "group": 11,
+    "number": 50,
+    "drop_level": 92,
+    "drops_from_monsters": true,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 35,
+    "durability": 86,
+    "requires": {
+      "level": 0,
+      "strength": 32,
+      "agility": 29,
+      "energy": 138,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "class_level_note": "OpenMU's elfClassLevel 1, its only class."
+  },
+  "sheets": {
+    "Item3002_Boot": "item3002_boot.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased: green lacquer with gold scrollwork; Item3002_Head her own face, Item3002_headhair.OZT her blond hair cut by its alpha (21% away).",
+  "sheet_materials": {
+    "Item3002_Boot": "painted_steel",
+    "item3002_boot": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the other sets.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss.",
+  "effects_note": "MuMain's arms for MODEL_FAITH_ARMOR/PANTS (ZzzObject.cpp:7846-7906) swap in her skin sheet only when the part HideSkin, which no worn part does; drawn as RenderBody. No glow, no chrome pass.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 116,
+      "area": 2986.0,
+      "along": [
+        -11.5,
+        22.4
+      ],
+      "mu_uv": [
+        0.012,
+        0.006,
+        0.995,
+        0.996
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.802,
+        0.945
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 133.1,
+      "along": [
+        -9.7,
+        1.1
+      ],
+      "mu_uv": [
+        0.09,
+        0.395,
+        0.295,
+        0.536
+      ],
+      "bake_uv": [
+        0.32,
+        0.255,
+        0.578,
+        0.624
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 1,
+      "area": 26.8,
+      "along": [
+        -9.7,
+        -1.7
+      ],
+      "mu_uv": [
+        0.09,
+        0.482,
+        0.243,
+        0.609
+      ],
+      "bake_uv": [
+        0.32,
+        0.321,
+        0.394,
+        0.382
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 133.1,
+      "along": [
+        -10.4,
+        0.7
+      ],
+      "mu_uv": [
+        0.09,
+        0.395,
+        0.295,
+        0.536
+      ],
+      "bake_uv": [
+        0.009,
+        0.262,
+        0.693,
+        0.767
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 1,
+      "area": 26.8,
+      "along": [
+        -10.4,
+        -2.2
+      ],
+      "mu_uv": [
+        0.09,
+        0.482,
+        0.243,
+        0.609
+      ],
+      "bake_uv": [
+        0.595,
+        0.741,
+        0.669,
+        0.803
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 116,
+      "area": 2986.0,
+      "along": [
+        -11.5,
+        22.4
+      ],
+      "mu_uv": [
+        0.012,
+        0.006,
+        0.995,
+        0.996
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.992,
+        0.989
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 133.1,
+      "along": [
+        -9.7,
+        1.1
+      ],
+      "mu_uv": [
+        0.09,
+        0.395,
+        0.295,
+        0.536
+      ],
+      "bake_uv": [
+        0.306,
+        0.175,
+        0.812,
+        0.609
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 1,
+      "area": 26.8,
+      "along": [
+        -9.7,
+        -1.7
+      ],
+      "mu_uv": [
+        0.09,
+        0.482,
+        0.243,
+        0.609
+      ],
+      "bake_uv": [
+        0.29,
+        0.008,
+        0.364,
+        0.07
+      ]
+    },
+    {
+      "island": 8,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 133.1,
+      "along": [
+        -10.4,
+        0.7
+      ],
+      "mu_uv": [
+        0.09,
+        0.395,
+        0.295,
+        0.536
+      ],
+      "bake_uv": [
+        0.009,
+        0.565,
+        0.107,
+        0.728
+      ]
+    },
+    {
+      "island": 9,
+      "material": "painted_steel",
+      "triangles": 1,
+      "area": 26.8,
+      "along": [
+        -10.4,
+        -2.2
+      ],
+      "mu_uv": [
+        0.09,
+        0.482,
+        0.243,
+        0.609
+      ],
+      "bake_uv": [
+        0.009,
+        0.702,
+        0.083,
+        0.764
+      ]
+    }
+  ]
+}

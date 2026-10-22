@@ -1,0 +1,181 @@
+{
+  "item": "PantMale21",
+  "mu_name": "Thunder Hawk Pants",
+  "mu_name_from": "MuMain loads MU's Thunder Hawk as the fourth MODEL_DARK_PHOENIX_* slot from Data/Player/PantMale21.bmd (ZzzOpenData.cpp:170-198: file 18 + i, i = 3; no helm, i < 3 only). MU's number 20. Ours is *Male21 by the index-plus-one rule.",
+  "why_this_one": "The missing-gear audit, 2026-10-22: the Magic Gladiator's set that fills drop levels 88-107 (the user: 'start with Thunder Hawk, since it fills the gap at drop levels 88-107').",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:196.",
+    "call": "CreateArmor(20, 4, 2, 2, \"Thunder Hawk Pants\", 99, 49, 82, 0, 150, 70, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0)",
+    "group": 9,
+    "number": 20,
+    "drop_level": 99,
+    "drops_from_monsters": true,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 49,
+    "durability": 82,
+    "requires": {
+      "level": 0,
+      "strength": 150,
+      "agility": 70,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "gladiator"
+    ],
+    "class_level_note": "The Magic Gladiator's: OpenMU's magicGladiatorClassLevel 1, his only class. No helm: MU loads none for this slot."
+  },
+  "sheets": {
+    "lower_15": "thunderhawk_lower.png",
+    "upper_15": "thunderhawk_upper.png",
+    "hide": "hide.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player {upper,lower,gloves,boots}_15.OZT, decoded with pipeline/decode_texture.py and prefixed thunderhawk_: dark violet plate striped in pink with gold rivets. hide is MU's black 2x2 sheet, drawn as it is.",
+  "sheet_materials": {
+    "lower_15": "painted_steel",
+    "thunderhawk_lower": "painted_steel",
+    "upper_15": "painted_steel",
+    "thunderhawk_upper": "painted_steel",
+    "hide": "painted_steel"
+  },
+  "cutout": [
+    "lower_15",
+    "upper_15"
+  ],
+  "cutout_from": "Declared, not detected: the .OZT's alpha is real (decode_texture: upper 11%, lower 17%, gloves 6%, boots 6% cut away) and the UVs cover it -- the pink-edged slits through the plate.",
+  "cutout_alpha": [
+    "lower_15",
+    "upper_15"
+  ],
+  "cutout_alpha_from": "The sheet's own alpha, not its brightness: this violet is dark, and a brightness key would cut the paint away (Divine's trap, 2026-10-04).",
+  "material_note": "painted_steel with the cast grain, the shading painted on.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss.",
+  "effects_note": "MuMain has no render arm for Thunder Hawk (no glow, no chrome pass). Its full-set bonus is not given: sim::setDefense counts only Storm Crow and Hurricane for the Magic Gladiator.",
+  "sheets_note": "By group, as the bake matches: the pants carry an upper_15 group too, painted by the cuirass's sheet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 114,
+      "area": 8404.3,
+      "along": [
+        -13.3,
+        11.0
+      ],
+      "mu_uv": [
+        0.001,
+        -0.045,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.92,
+        0.78
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 25,
+      "area": 1537.9,
+      "along": [
+        -11.7,
+        10.9
+      ],
+      "mu_uv": [
+        0.635,
+        0.105,
+        0.994,
+        0.972
+      ],
+      "bake_uv": [
+        0.017,
+        0.009,
+        0.987,
+        0.882
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 14,
+      "area": 645.7,
+      "along": [
+        -9.4,
+        8.6
+      ],
+      "mu_uv": [
+        0.635,
+        0.44,
+        0.994,
+        0.718
+      ],
+      "bake_uv": [
+        0.056,
+        0.671,
+        0.699,
+        0.991
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 25,
+      "area": 1537.9,
+      "along": [
+        -11.7,
+        10.9
+      ],
+      "mu_uv": [
+        0.635,
+        0.105,
+        0.994,
+        0.972
+      ],
+      "bake_uv": [
+        0.481,
+        0.026,
+        0.977,
+        0.954
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 14,
+      "area": 645.7,
+      "along": [
+        -9.4,
+        8.6
+      ],
+      "mu_uv": [
+        0.635,
+        0.44,
+        0.994,
+        0.718
+      ],
+      "bake_uv": [
+        0.52,
+        0.01,
+        0.984,
+        0.981
+      ]
+    }
+  ]
+}

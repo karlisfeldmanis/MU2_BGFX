@@ -1,0 +1,386 @@
+{
+  "item": "HelmMale37",
+  "mu_name": "Iris Helm",
+  "mu_name_from": "MuMain loads MODEL_IRIS_* from Data/Player/CW_HelmMale03.bmd (ZzzOpenData.cpp:236-246; the helm is CW_HelmMale 3). MU's number 36. Ours is *Male37 by the index-plus-one rule.",
+  "why_this_one": "Season 2's lower-level sets, missing here (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's): the Fairy Elf's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (Season 2's sets; 0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:97.",
+    "call": "CreateArmor(36, 2, 2, 2, \"Iris Helm\", 67, 30, 59, 0, 50, 70, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0)",
+    "group": 7,
+    "number": 36,
+    "drop_level": 67,
+    "drops_from_monsters": true,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 30,
+    "durability": 59,
+    "requires": {
+      "level": 0,
+      "strength": 50,
+      "agility": 70,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "class_level_note": "The Fairy Elf's, first class and up: OpenMU's elfClassLevel 1."
+  },
+  "sheets": {
+    "armor_helmet": "iris_armor_helmet.png",
+    "level_man033": "level_man033.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under an iris_ prefix (MU's armor_* and forest_* are too generic to keep): green lacquer plate with pink inlay, a dark skirt, and forest_* her bare skin hung with chain jewellery; level_man033 her head and hair, Red Spirit's.",
+  "sheet_materials": {
+    "armor_helmet": "painted_steel",
+    "level_man033": "hair"
+  },
+  "material_note": "painted_steel with the cast grain for the plate; the skirt cloth; forest_* skin (the chains painted on it); forest_legs, a dark strap, leather; level_man033 hair.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain's arms for MODEL_IRIS_ARMOR, PANTS and GLOVES (ZzzObject.cpp:7731-7763) draw one mesh alone when the skin is hidden, else the whole body: no glow, no chrome pass.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 8,
+      "area": 153.1,
+      "along": [
+        -4.7,
+        4.4
+      ],
+      "mu_uv": [
+        0.018,
+        0.194,
+        0.356,
+        0.687
+      ],
+      "bake_uv": [
+        0.011,
+        0.369,
+        0.837,
+        0.877
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 1,
+      "area": 36.6,
+      "along": [
+        -8.6,
+        1.0
+      ],
+      "mu_uv": [
+        0.143,
+        0.588,
+        0.503,
+        0.983
+      ],
+      "bake_uv": [
+        0.07,
+        0.554,
+        0.239,
+        0.74
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 6,
+      "area": 123.4,
+      "along": [
+        -12.3,
+        0.9
+      ],
+      "mu_uv": [
+        0.386,
+        0.503,
+        0.867,
+        0.944
+      ],
+      "bake_uv": [
+        0.196,
+        0.472,
+        0.829,
+        0.746
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 12,
+      "area": 253.9,
+      "along": [
+        -19.8,
+        0.2
+      ],
+      "mu_uv": [
+        0.156,
+        0.004,
+        0.99,
+        0.927
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.404,
+        0.645
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 6,
+      "area": 41.4,
+      "along": [
+        -12.7,
+        -4.3
+      ],
+      "mu_uv": [
+        0.579,
+        0.012,
+        0.861,
+        0.172
+      ],
+      "bake_uv": [
+        0.567,
+        0.87,
+        0.8,
+        0.977
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 6,
+      "area": 40.5,
+      "along": [
+        -9.3,
+        -2.5
+      ],
+      "mu_uv": [
+        0.747,
+        0.047,
+        0.976,
+        0.287
+      ],
+      "bake_uv": [
+        0.725,
+        0.012,
+        0.905,
+        0.274
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 6,
+      "area": 40.5,
+      "along": [
+        -6.4,
+        -1.0
+      ],
+      "mu_uv": [
+        0.802,
+        0.209,
+        0.982,
+        0.504
+      ],
+      "bake_uv": [
+        0.824,
+        0.239,
+        0.933,
+        0.937
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 8,
+      "area": 153.1,
+      "along": [
+        -4.7,
+        4.4
+      ],
+      "mu_uv": [
+        0.018,
+        0.194,
+        0.356,
+        0.687
+      ],
+      "bake_uv": [
+        0.423,
+        0.373,
+        0.607,
+        0.901
+      ]
+    },
+    {
+      "island": 8,
+      "material": "painted_steel",
+      "triangles": 1,
+      "area": 36.6,
+      "along": [
+        -8.6,
+        1.0
+      ],
+      "mu_uv": [
+        0.143,
+        0.588,
+        0.503,
+        0.983
+      ],
+      "bake_uv": [
+        0.482,
+        0.558,
+        0.652,
+        0.744
+      ]
+    },
+    {
+      "island": 9,
+      "material": "painted_steel",
+      "triangles": 6,
+      "area": 123.4,
+      "along": [
+        -12.3,
+        0.9
+      ],
+      "mu_uv": [
+        0.386,
+        0.503,
+        0.867,
+        0.944
+      ],
+      "bake_uv": [
+        0.011,
+        0.281,
+        0.804,
+        0.847
+      ]
+    },
+    {
+      "island": 10,
+      "material": "painted_steel",
+      "triangles": 12,
+      "area": 253.9,
+      "along": [
+        -19.8,
+        0.2
+      ],
+      "mu_uv": [
+        0.156,
+        0.004,
+        0.99,
+        0.927
+      ],
+      "bake_uv": [
+        0.227,
+        0.011,
+        0.841,
+        0.446
+      ]
+    },
+    {
+      "island": 11,
+      "material": "painted_steel",
+      "triangles": 6,
+      "area": 41.4,
+      "along": [
+        -12.7,
+        -4.3
+      ],
+      "mu_uv": [
+        0.579,
+        0.012,
+        0.861,
+        0.172
+      ],
+      "bake_uv": [
+        0.054,
+        0.363,
+        0.989,
+        0.989
+      ]
+    },
+    {
+      "island": 12,
+      "material": "painted_steel",
+      "triangles": 6,
+      "area": 40.5,
+      "along": [
+        -9.3,
+        -2.5
+      ],
+      "mu_uv": [
+        0.747,
+        0.047,
+        0.976,
+        0.287
+      ],
+      "bake_uv": [
+        0.765,
+        0.084,
+        0.905,
+        0.593
+      ]
+    },
+    {
+      "island": 13,
+      "material": "painted_steel",
+      "triangles": 6,
+      "area": 40.5,
+      "along": [
+        -6.4,
+        -1.0
+      ],
+      "mu_uv": [
+        0.802,
+        0.209,
+        0.982,
+        0.504
+      ],
+      "bake_uv": [
+        0.012,
+        0.543,
+        0.925,
+        0.937
+      ]
+    },
+    {
+      "island": 14,
+      "material": "hair",
+      "triangles": 112,
+      "area": 2921.9,
+      "along": [
+        -22.0,
+        10.5
+      ],
+      "mu_uv": [
+        0.502,
+        0.606,
+        0.993,
+        1.0
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.961,
+        0.989
+      ]
+    }
+  ]
+}

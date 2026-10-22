@@ -1,0 +1,76 @@
+{
+  "item": "PantMale35",
+  "mu_name": "Ashcrow Pants",
+  "mu_name_from": "MuMain loads MODEL_ASHCROW_* from Data/Player/CW_PantMale01.bmd (ZzzOpenData.cpp:236-244; the helm is CW_HelmMale 1). MU's number 34. Ours is *Male35 by the index-plus-one rule.",
+  "why_this_one": "Season 2's lower-level sets, missing here (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's): the Dark Knight's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (Season 2's sets; 0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:210.",
+    "call": "CreateArmor(34, 4, 2, 2, \"Ashcrow Pants\", 69, 33, 72, 0, 160, 50, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)",
+    "group": 9,
+    "number": 34,
+    "drop_level": 69,
+    "drops_from_monsters": true,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 33,
+    "durability": 72,
+    "requires": {
+      "level": 0,
+      "strength": 160,
+      "agility": 50,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "class_level_note": "The Dark Knight's, first class and up: OpenMU's darkKnightClassLevel 1. OpenMU gives the Magic Gladiator none of it."
+  },
+  "sheets": {
+    "darknight_lower": "darknight_lower.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player darknight_*.OZJ, decoded with pipeline/decode_texture.py: grey-violet plate edged in silver; darknight_face the face under the visor.",
+  "sheet_materials": {
+    "darknight_lower": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain, the shading painted on; the face skin.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain has no render arm for MODEL_ASHCROW_* (no glow, no chrome pass).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 112,
+      "area": 8776.8,
+      "along": [
+        -15.2,
+        16.9
+      ],
+      "mu_uv": [
+        0.013,
+        0.019,
+        0.805,
+        0.977
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.995,
+        0.979
+      ]
+    }
+  ]
+}

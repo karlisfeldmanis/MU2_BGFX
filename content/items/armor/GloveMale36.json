@@ -1,0 +1,143 @@
+{
+  "item": "GloveMale36",
+  "mu_name": "Eclipse Gloves",
+  "mu_name_from": "MuMain loads MODEL_ECLIPSE_* from Data/Player/CW_GloveMale02.bmd (ZzzOpenData.cpp:236-245; the helm is CW_HelmMale 2). MU's number 35. Ours is *Male36 by the index-plus-one rule.",
+  "why_this_one": "Season 2's lower-level sets, missing here (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's): the Dark Wizard's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (Season 2's sets; 0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:270.",
+    "call": "CreateGloves(35, \"Eclipse Gloves\", 61, 15, 6, 54, 0, 53, 12, 1, 0, 0, 0, 0, 0)",
+    "group": 10,
+    "number": 35,
+    "drop_level": 61,
+    "drops_from_monsters": true,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 15,
+    "durability": 54,
+    "requires": {
+      "level": 0,
+      "strength": 53,
+      "agility": 12,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "attack_speed": 6,
+    "class_level_note": "The Dark Wizard's, first class and up: OpenMU's darkWizardClassLevel 1. OpenMU gives the Magic Gladiator none of it."
+  },
+  "sheets": {
+    "richgloves": "richgloves.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player rich*.OZJ and richfama.OZT, decoded with pipeline/decode_texture.py: dark plate traced in silver over a dark robe; richface his face, richfama the hair card cut by its own alpha, richcrystal a teal gem.",
+  "sheet_materials": {
+    "richgloves": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain for the plate; the robe (richlower) cloth, as Dark Soul's; the face skin; the hair card hair.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain has no render arm for MODEL_ECLIPSE_* (no glow, no chrome pass).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 33,
+      "area": 1448.6,
+      "along": [
+        -9.5,
+        11.3
+      ],
+      "mu_uv": [
+        0.491,
+        0.02,
+        0.982,
+        0.725
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.839,
+        0.515
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 33,
+      "area": 1448.6,
+      "along": [
+        -9.5,
+        11.3
+      ],
+      "mu_uv": [
+        0.491,
+        0.02,
+        0.982,
+        0.725
+      ],
+      "bake_uv": [
+        0.263,
+        0.006,
+        0.839,
+        0.731
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 68,
+      "area": 1796.6,
+      "along": [
+        -7.4,
+        9.0
+      ],
+      "mu_uv": [
+        0.02,
+        0.023,
+        0.915,
+        0.983
+      ],
+      "bake_uv": [
+        0.006,
+        0.179,
+        0.93,
+        0.903
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 68,
+      "area": 1796.6,
+      "along": [
+        -7.4,
+        9.0
+      ],
+      "mu_uv": [
+        0.02,
+        0.023,
+        0.915,
+        0.983
+      ],
+      "bake_uv": [
+        0.231,
+        0.006,
+        0.994,
+        0.864
+      ]
+    }
+  ]
+}
