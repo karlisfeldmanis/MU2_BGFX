@@ -1,5 +1,5 @@
 {
-  "note": "Kanturu Ruins' light, laid over lighting.json while a character stands in map 37. MU draws it on its default black clear and fog (SceneManager.cpp:401-402), 44.8% of the map NoGround and undrawn, the ground lit by a near-neutral, faintly green TerrainLight (walkable mean 127, 132, 122) speckled with baked gold, teal and pink lamp pools, over sheets as dark as Aida's (walkable sheet x light luminance 29) but browner (hue 43, saturation 0.49), with 63 flickering fire lights (GM_Kanturu_1st.cpp:70-83), 128 glowing crystals, pulsing wheels and 52 waterfalls into a black chasm. So: overgrown industrial ruins by day, the house 52-degree sun softer than Noria's so the fires and crystals read, a grey-teal fill, exposure up for the dark paint, a faint cool chasm mist (MU placed mist boxes over the chasm and never let them emit, :165-173), the grade warm in the light and a touch teal in the shade. Invention on MU's look; first cut 2026-10-21 from the Kanturu Part B, unshot.",
+  "note": "Kanturu Ruins' light, laid over lighting.json while a character stands in map 37. MU draws it on its default black clear and fog (SceneManager.cpp:401-402), 44.8% of the map NoGround and undrawn, the ground lit by a near-neutral, faintly green TerrainLight (walkable mean 127, 132, 122) speckled with baked gold, teal and pink lamp pools, over sheets as dark as Aida's (walkable sheet x light luminance 29) but browner (hue 43, saturation 0.49), with 63 flickering fire lights (GM_Kanturu_1st.cpp:70-83), 128 glowing crystals, pulsing wheels and 52 waterfalls into a black chasm. So: overgrown industrial ruins by day, the house 52-degree sun softer than Noria's so the fires and crystals read, a grey-teal fill, exposure up for the dark paint, a faint cool chasm mist (MU placed mist boxes over the chasm and never let them emit, :165-173), the grade warm in the light and a touch teal in the shade. Invention on MU's look; first cut 2026-10-21 from the Kanturu Part B, unshot. The ponds slide at water_flow 0.2, a sheet in a hundred seconds, not MU's twenty: the house rule for small ground water, as Lorencia's puddles (the user, 2026-10-22: \"we have a rule that small water ponds on ground has to move much slower\").",
   "elevation": 52.0,
   "sun_colour": [
     1.0,
@@ -59,6 +59,6 @@
   "grass_meadow": 0.0,
   "grass_height": 0.45,
   "grass_density": 0.7,
-  "water_flow": 0.0,
+  "water_flow": 0.2,
   "water_sheen": 0.5
 }
