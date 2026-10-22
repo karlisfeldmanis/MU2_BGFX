@@ -29,7 +29,8 @@
     },
     "weather": {
       "kind": "rain",
-      "jungle": true
+      "jungle": true,
+      "thunder": false
     },
     "leaves": "leaf",
     "roads": [
