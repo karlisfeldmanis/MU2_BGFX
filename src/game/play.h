@@ -938,10 +938,6 @@ public:
         appearing_ = true;
         appearAt_ = -delay;
     }
-    // He, his pet and his wings are not drawn while the whole map is laid over the middle of
-    // the screen, where he stands under it (the user, 2026-10-22: "when i press M char still is
-    // vissible"). The desk sets it with the map; the realm and the camera are untouched.
-    void hideHero(bool hidden) { heroHidden_ = hidden; }
     // Where a click sent him. Opened by the caller for the same reason as the showing.
     Marker& marker() { return marker_; }
     void gatherMarker(gfx::Effects& effects) const {
@@ -2096,7 +2092,6 @@ private:
     bool stepNow_ = false;
     bool appearing_ = false;  // the character's fade-in is running; see appear()
     float appearAt_ = 0.0f;   // seconds into it, negative while it waits
-    bool heroHidden_ = false;  // under the whole map; see hideHero()
     float sinceEarly_ = 1.0f;  // seconds since a click last took a tick early
     // The cues that came due this frame. A member and not a local so that it keeps its
     // capacity: a fight must not allocate to show itself.
