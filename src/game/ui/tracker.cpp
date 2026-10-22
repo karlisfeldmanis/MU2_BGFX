@@ -949,6 +949,9 @@ void Tracker::rebuildEvent(int width) {
                 figure = "in " + clockOf(std::max(0, from - elapsed));
                 counted = true;
             }
+            // The last wave rises until the clock runs out: nothing to clear, so say so, else a
+            // checked boss row under it reads as a step skipped.
+            if (mark == StepMark::Live && w == sim::kSquareWaves - 1) figure = "to the end";
             rows.push_back({names[w], figure, mark});
         }
         {
