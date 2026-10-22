@@ -21,7 +21,8 @@
       "track": "/music/Pub.mp3",
       "where": "safe_indoors",
       "loops": true,
-      "note": "The tavern's, looped while he is inside the town (the user, 2026-10-08)."
+      "note": "The tavern's, looped while he is inside the town (the user, 2026-10-08).",
+      "rain": "/music/rain_ambient.mp3"
     },
     "weather": {
       "kind": "rain",
