@@ -1648,17 +1648,23 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // a roof that has its own music keeps it.
         const bool roofMusic = pub && (where == "indoors" || where == "safe_indoors");
         const bool rainy = !show.musicRain.empty() && world_.weather().wet() && !roofMusic;
-        if (rainy) pub = true;
-        const bool loops = rainy || show.musicLoops;  // played round and round, not once and rested
-        const char* roofTrack = rainy ? show.musicRain.c_str() : show.music.c_str();
+        // Out on the hunt, where the world's own track is not playing: its `wild` loop.
+        const bool wild = !show.musicWild.empty() && !safe && !pub && !rainy;
+        if (rainy || wild) pub = true;
+        const bool loops = rainy || wild || show.musicLoops;  // round and round, not once and rested
+        const char* roofTrack = rainy ? show.musicRain.c_str()
+                              : wild  ? show.musicWild.c_str()
+                                      : show.music.c_str();
         // No music out on the hunt, and none for fights (the user, 2026-09-30: "we dont need
         // fight music anymore").
         const std::string path = ctx.paths.assets + (pub ? roofTrack : "");
         game::Sound& sound = world_.played().sound();
-        // The spell has cleared (or he went under a roof with music): its loop goes now, not
-        // when the world's own track has rested.
-        if (!rainy && !show.musicRain.empty() &&
-            sound.musicPlaying(ctx.paths.assets + show.musicRain)) {
+        // The spell has cleared (or he went under a roof with music), or he is back in the safe
+        // zone: that loop goes now, not when the world's own track has rested.
+        if ((!rainy && !show.musicRain.empty() &&
+             sound.musicPlaying(ctx.paths.assets + show.musicRain)) ||
+            (!wild && !show.musicWild.empty() &&
+             sound.musicPlaying(ctx.paths.assets + show.musicWild))) {
             sound.stopMusic();
         }
         if (pub && sound.musicPlaying(path)) musicHeard()[path] = runSeconds();
