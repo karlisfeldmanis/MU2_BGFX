@@ -18,10 +18,11 @@ the rules below. Where this disagrees with an older quest doc's reward section, 
    piece it goes in.
 4. **A rune family is taught weak first**: Common at home, Epic mid-game, Legendary later.
 5. **One weapon an act**, each better than the last, sockets 1, 2, 2, 3, 3, 3. **The wizard's
-   are one-handed**, since Magic Shield needs a shield (the user, 2026-10-09). **The knight
-   picks** a one-hander or a two-hander at Marlon, Devin, Lirien and Tarkan (the user,
-   2026-10-22: "we are not giving some 2-hand weapon rewards in quest lines for DKs which want
-   to play like that"), and the shieldless guard comes as runes: Buckler at Atlans, Twin Guard
+   are one-handed**, since Magic Shield needs a shield (the user, 2026-10-09). **The knight is
+   paid both** a one-hander and a two-hander at Marlon, Devin, Lirien and Tarkan's two (the
+   user, 2026-10-22: "we are not giving some 2-hand weapon rewards in quest lines for DKs which
+   want to play like that", then "we dont need that choise": the Magic Gladiator's Melee or
+   Magic is the one choice a hand-in asks), and the shieldless guard comes as runes: Buckler at Atlans, Twin Guard
    (two matched swords) at Tarkan, Bulwark with the Dark Breaker at the Phoenix. The Balrog pays
    the knight and the wizard jewels, not a third copy of a weapon (2026-10-21).
 6. **One whole set per chain**, a piece or two a link, so the five-piece set bonus is earned.
@@ -43,14 +44,14 @@ the rules below. Where this disagrees with an older quest doc's reward section, 
 
 | act | quest(s) | level | weapon | armour | runes (first clear) | other |
 |---|---|---|---|---|---|---|
-| I | Marlon / Peia | 1-30 | DK Falchion or Spear, DW Serpent Staff, Elf Battle Bow (1 socket) | -- | Common: DK Gust + Graze, DW Faint Echo, Elf Chill | Ring of Wealth (green); Lunge / Ice / Greater Damage; 3 Bless, 20 potions, Box of Luck every clear |
-| II | Devin | 30-50 | DK Double Blade, DW Legendary Staff + Legendary Shield, Elf Tiger Bow (2 sockets) | -- | Lesser Ascendance (Elf: Barrage) + class Rare stat (Might / Insight / Grace); Renewal | Pendant of Fire (1 socket); **2 Guardian Angels every clear**; Flame / Summon +3; 3 Bless, 1 Soul, Box of Luck |
+| I | Marlon / Peia | 1-30 | DK Falchion and Spear, DW Serpent Staff, Elf Battle Bow (1 socket) | -- | Common: DK Gust + Graze, DW Faint Echo, Elf Chill | Ring of Wealth (green); Lunge / Ice / Greater Damage; 3 Bless, 20 potions, Box of Luck every clear |
+| II | Devin | 30-50 | DK Double Blade and Legendary Sword, DW Legendary Staff + Legendary Shield, Elf Tiger Bow (2 sockets) | -- | Lesser Ascendance (Elf: Barrage) + class Rare stat (Might / Insight / Grace); Renewal | Pendant of Fire (1 socket); **2 Guardian Angels every clear**; Flame / Summon +3; 3 Bless, 1 Soul, Box of Luck |
 | III | Golden Archer: Catacombs, Halls, Pit | 40-75 | -- | **Set A**: DK Plate, DW Sphinx, Elf Spirit. Catacombs helm+gloves, Halls pants+boots (2 sockets), Pit armour | Keen Eye, Ironskin; Bloodwell, Frenzy; Undying | Halls: DK **Serpent Shield** + Steadfast, Ring of the Leech (blue), first **Jewel of Chaos**. Pit: Pendant of Fury (purple), **2 Imps every clear**, Box of Kundun +1. Skills: Twisting Slash, Cyclone / Twister, Evil Spirit, Hellfire / Summon +4 |
-| IV | Lirien (Atlans) | 70-100 | DK Lighting Sword or Crescent Axe, DW Legendary Staff (1H), Elf Aquagold Crossbow (2 sockets) | -- | **First Legendary**: DK Twister, DW Arcane Echo, Elf Frost Arrow; Epic: Eddy / Scorch / Plague Arrows; **Buckler** (DK, DW) | first **Jewel of Life**, 2 Soul, Box of Kundun +2; Aqua Beam |
+| IV | Lirien (Atlans) | 70-100 | DK Lighting Sword and Crescent Axe, DW Legendary Staff (1H), Elf Aquagold Crossbow (2 sockets) | -- | **First Legendary**: DK Twister, DW Arcane Echo, Elf Frost Arrow; Epic: Eddy / Scorch / Plague Arrows; **Buckler** (DK, DW) | first **Jewel of Life**, 2 Soul, Box of Kundun +2; Aqua Beam |
 | V | Tersia, floors 1-5 | 80-120 | -- | **Set B**: DK Dragon, DW Legendary, Elf Guardian. A piece a floor: helm, gloves, boots (2), pants, armour | Greater Vigor; class Greater stat + Kinship; Second Wind; Bloodwell; Renewal | LT1 **Horn of Uniria every clear**; LT2 Ring of Poison (socket); LT4 Ring of Wealth (purple), Slash; LT5 **Dragon Shield / Legendary Shield +5 (2 sockets)** (Elf: Ring of Ice) |
 | V | Tersia, floors 6-7 | 120-160 | Balrog: Elf Chaos Nature Bow (3 sockets); DK and DW 2 Bless + 2 Soul instead | -- | LT6: Meteor / Spirit Plague / Scatter Volley; Balrog: **Wrath** + Stormcall | LT6 Death Stab, Penetration; Balrog: Ring of Wisdom (legendary), Rageful Blow, Inferno, Summon +5 (Bali), Chaos, Box of Kundun +2. No Dinorant (2026-10-21: the machine makes one) |
-| VI | the Keeper (Tarkan): Kantur's Legion | 100-160 | DK Sword of Destruction +7 or Crystal Sword +7, DW Staff of Resurrection +7, Elf Saint Crossbow (3 sockets; first class only) | -- | DK Immolate + Ice + **Twin Guard**; DW Inferno + Thunder; Elf **Greater Barrage** + Glacier | Pendant of Fury (legendary); Life, Chaos, Feather, Box of Kundun +3 every clear |
-| VI | the Keeper: Kantur's Captain (2nd class and MG only) | 200+ | BK Knight Blade +7 or Daybreak +7, SM Staff of Kundun, ME **Stinger Bow**, MG Dark Reign Blade +7 (3 sockets) | **The 2nd class's shield** (2 sockets): Crimson Glory, Guardian Shield, Frost Barrier, Salamander Shield | -- | Life, Feather |
+| VI | the Keeper (Tarkan): Kantur's Legion | 100-160 | DK Sword of Destruction +7 and Crystal Sword +7, DW Staff of Resurrection +7, Elf Saint Crossbow (3 sockets; first class only) | -- | DK Immolate + Ice + **Twin Guard**; DW Inferno + Thunder; Elf **Greater Barrage** + Glacier | Pendant of Fury (legendary); Life, Chaos, Feather, Box of Kundun +3 every clear |
+| VI | the Keeper: Kantur's Captain (2nd class and MG only) | 200+ | BK Knight Blade +7 and Daybreak +7, SM Staff of Kundun, ME **Stinger Bow**, MG Dark Reign Blade +7 (3 sockets) | **The 2nd class's shield** (2 sockets): Crimson Glory, Guardian Shield, Frost Barrier, Salamander Shield | -- | Life, Feather |
 | VII | Tersia, Icarus: Sky Door, Phoenix | 160-200 | Phoenix: DK Dark Breaker, DW Dragon Soul Staff, Elf Celestial Bow (3 sockets, 2nd class) | **Set C (2nd class)**: Dark Phoenix, Grand Soul, Divine. Sky Door gloves+boots, Phoenix helm+pants. **Magic Gladiator: Storm Crow** gloves, boots, pants, armour | Sky Door: Greater Ascendance, **element runes** (DK and Elf Tempest; DW Tempest + Venom); Phoenix: Evil Spirit, Bulwark (DK, with the Dark Breaker) | Sky Door: Cometfall (SM), Summon +6 (Alquamos); Feathers, Life, Chaos, Box of Kundun +3 |
 | VIII | Sevina | 200 | -- | the treasure: Set C's armour | trial: Second Wind. Treasure: **Whirlwind / Pyroblaster / Piercing Volley** | DW: Grand Soul Shield; 10 Firecrackers each part |
 | IX | Peia, the Seed Master (Aida) | 300+ | -- | -- | Greater Wellspring | 12M experience first, 3M a repeat; Life, Chaos, 2 Bless, 2 Soul, Box of Kundun +3 |

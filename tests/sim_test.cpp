@@ -4811,33 +4811,45 @@ void testSkills(const content::Tables& tables) {
             }
         }
         check(twoHandsThrowOrbs, "every knight orb is thrown off any two-handed weapon");
-        // And every quest that pays the knight a weapon lets him take a two-hander instead.
-        bool twoHandOffered = true;
-        int knightChoices = 0;
+        // And every quest that pays the knight a weapon pays him a two-hander beside it, no pick
+        // (the user, 2026-10-22: "we dont need that choise"). Not the Phoenix's lone Dark Breaker,
+        // nor the Magic Gladiator's own on the knight's row.
+        bool twoHandPaid = true;
+        int knightPairs = 0;
+        const auto knightArm = [&](const sim::QuestItem& what) -> int32_t {
+            if (what.kin != int(sim::Kin::DarkKnight) || !what.item) return -1;
+            const int32_t it = tables.itemNamed(what.item);
+            if (it < 0 || (tables.items[size_t(it)].classes & (1 << int(sim::Kin::DarkKnight))) == 0 ||
+                tables.items[size_t(it)].shield()) {
+                return -1;
+            }
+            return tables.armNamed(what.item);
+        };
         for (int q = 0; q < sim::kQuests; ++q) {
             const sim::QuestRow& row = sim::questAt(q);
             int oneHand = 0, twoHand = 0;
-            for (int c = 0; c < row.choiceCount; ++c) {
-                if (row.choices[c].kin != int(sim::Kin::DarkKnight)) continue;
-                const int32_t at = tables.armNamed(row.choices[c].item);
-                if (at < 0) { twoHandOffered = false; continue; }
+            for (int i = 0; i < row.paidCount; ++i) {
+                const int32_t at = knightArm(row.paid[i]);
+                if (at < 0) continue;
                 (tables.arms[size_t(at)].twoHanded() ? twoHand : oneHand) += 1;
             }
-            if (oneHand + twoHand > 0) ++knightChoices;
-            twoHandOffered &= oneHand == twoHand;
+            if (q == sim::kPhoenixContract) continue;
+            if (oneHand + twoHand > 0) ++knightPairs;
+            twoHandPaid &= oneHand == twoHand;
+            twoHandPaid &= row.choiceCount == 0;
         }
-        check(twoHandOffered && knightChoices == 5,
-              "the knight's five quest weapons are each a one-hander or a two-hander, his pick");
+        check(twoHandPaid && knightPairs == 5,
+              "the knight's five quest weapons each come with a two-hander, nothing to pick");
         // And neither pick is the richer: the pair sell to an NPC within a quarter of each other.
         bool pricedAlike = true;
         for (int q = 0; q < sim::kQuests; ++q) {
             const sim::QuestRow& row = sim::questAt(q);
             int64_t least = INT64_MAX, most = 0;
-            for (int c = 0; c < row.choiceCount; ++c) {
-                const sim::QuestItem& what = row.choices[c];
-                if (what.kin != int(sim::Kin::DarkKnight)) continue;
+            if (q == sim::kPhoenixContract) continue;
+            for (int c = 0; c < row.paidCount; ++c) {
+                const sim::QuestItem& what = row.paid[c];
+                if (knightArm(what) < 0) continue;
                 const int32_t it = tables.itemNamed(what.item);
-                if (it < 0) continue;
                 sim::Held held;
                 held.item = it;
                 held.refinement = int16_t(what.plus);
@@ -13845,13 +13857,15 @@ void testQuestLadder(const content::Tables& tables) {
                 // Not the Magic Gladiator's own on the knight's row (his Dark Reign Blade).
                 if ((one.classes & (1 << kin)) == 0) continue;
                 if (!one.weapon() || !one.twoHanded()) continue;
+                // The knight's two-handers come beside his one-hander (the user, 2026-10-22).
+                if (kin == int(sim::Kin::DarkKnight) && one.name != "Sword18") continue;
                 const bool allowed = one.name == "Sword18";
-                check(allowed, "a knight's or a wizard's quest weapon is one-handed");
+                check(allowed, "a wizard's quest weapon is one-handed");
                 ++twoHanders;
             }
         }
     }
-    checkEqual(twoHanders, 1, "the one two-hander is the Dark Breaker");
+    checkEqual(twoHanders, 1, "the one unpaired two-hander is the Dark Breaker");
     // And the Dark Breaker comes with the rune that keeps his guard without a shield.
     bool bulwark = false;
     const sim::QuestRow& phoenix = sim::questAt(sim::kPhoenixContract);
