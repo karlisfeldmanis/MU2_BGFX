@@ -121,6 +121,14 @@
         ]
       },
       "note": "Ours, as Aida (terrain.py BORDER_FILL_BY_MAP): MU leaves everything outside the Ruins ring bare black, which at 16:9 and pulled back reads as holes (Aida, the user 2026-10-11). Kanturu has no wall of cliffs round its inner chasm, so the walk from the map edge is held 10 tiles off MU's mist boxes (types 62, 107, 108), which stand only over the chasm: the outer frame fills (15,608 tiles, NoMove) and the chasm round the plateau stays void. 6 tiles ate into the chasm. Picked 2026-10-22 (the user: \"you decide\"), docs on the look-calls page."
+    },
+    "ground_light": {
+      "value": {
+        "contrast": 1.0,
+        "scale": 1.0,
+        "depth": 1.0
+      },
+      "note": "Ours (pipeline/ground.py corner_light). The town's curve (MU's painted light to the power 1.45, times 0.72, half its variation kept) drew the Ruins' ground at about half its objects' light (median 0.51 over the walkable tiles), and the objects take MU's light straight (cook.py lit): the boulders Object80/81 and the ground under them wear the same brown (mean 48 and 49) and stood 1.7 times apart at 166,221 (the user, 2026-10-22: 'color difference between cligs and ground is very vissible, alsmost like bug'). Straight, at 0.9 for the sun the ground faces fuller, every variation kept: the ground at 0.9 of its objects everywhere, as MU draws them both by one TerrainLight."
     }
   },
   "show": {

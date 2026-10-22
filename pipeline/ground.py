@@ -208,7 +208,8 @@ def light_chroma(rgb: np.ndarray, chroma: float) -> np.ndarray:
 
 
 def corner_light(lit: np.ndarray | None, size: int, depth: float = LIGHT_DEPTH,
-                 chroma: float = 1.0) -> np.ndarray:
+                 chroma: float = 1.0, contrast: float = LIGHT_CONTRAST,
+                 scale: float = LIGHT_SCALE) -> np.ndarray:
     """MU's baked light at every corner, wrapped, in 0..1. White where there is none.
 
     `depth` is the world's own LIGHT_DEPTH where it sets one (`light_depth` in its json): the
@@ -218,7 +219,7 @@ def corner_light(lit: np.ndarray | None, size: int, depth: float = LIGHT_DEPTH,
         return np.ones((size + 1, size + 1, 3), dtype=np.float32)
 
     grid = np.ones((size + 1, size + 1, 3), dtype=np.float32)
-    plane = np.power(lit.astype(np.float32) / 255.0, LIGHT_CONTRAST) * LIGHT_SCALE
+    plane = np.power(lit.astype(np.float32) / 255.0, contrast) * scale
     plane = plane.mean() + (plane - plane.mean()) * depth
     plane = light_chroma(plane, chroma)
 
@@ -399,8 +400,20 @@ def main() -> None:
         print(f"  light      MU's own, mean "
               f"{lit.reshape(-1, 3).mean(axis=0).round().astype(int).tolist()} of 255")
 
-    light = corner_light(lit, size, float(world.get("light_depth", LIGHT_DEPTH)),
-                         float(world.get("light_chroma", 1.0)))
+    # A world's own curve where it names one (its manifest's `ground_light`): Kanturu's ground and
+    # boulders wear the same brown, and under the town's curve the ground drew at half the
+    # objects' light, which take MU's straight (cook.py `lit`). Every other world keeps the town's.
+    import world_manifest
+    curve = world_manifest.by_world("ground_light").get(world["world"]) or {}
+    light = corner_light(lit, size,
+                         float(curve.get("depth", world.get("light_depth", LIGHT_DEPTH))),
+                         float(world.get("light_chroma", 1.0)),
+                         float(curve.get("contrast", LIGHT_CONTRAST)),
+                         float(curve.get("scale", LIGHT_SCALE)))
+    # And its tint, where it names one: Kanturu's mossy overlays lay olive over the brown its
+    # bare boulders wear, and the ground stood yellow-green beside them (the user, 2026-10-22).
+    if "tint" in curve:
+        light = light * np.asarray(curve["tint"], dtype=np.float32)[None, None, :3]
 
     def sheet_for(name: str, blended: bool = False):
         """The prepared sheet for a slot, how far it reaches, and its material.
