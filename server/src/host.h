@@ -405,6 +405,8 @@ constexpr float kSayBurst = 5.0f, kSayEvery = 1.5f;
 void bye(Session& one, net::Why why);
 void announce(const World& world, const std::vector<std::unique_ptr<Session>>& sessions);
 bool worldName(const std::string& name);
+// Every world's cooked tables, read now and kept: none is read again while the server runs.
+int readWorlds(const std::string& assets);
 World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello& hello,
     const std::string& assets, const sim::RealmConfig& config, uint64_t seed,
     const std::string& who, const sim::Kept* kept, int castle, int square = 0, int squareWait = 0);
