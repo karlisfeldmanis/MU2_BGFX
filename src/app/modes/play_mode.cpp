@@ -2353,10 +2353,29 @@ void PlayMode::rejoin(Context& ctx, double seconds) {
     // restarted on other rules under the running game answers Refused::Outdated, and the page
     // says update; going in would be a Hello refused and a world that never opens. Anything
     // else -- the line shut on the knock, or no word in a few seconds -- is the way in.
+    // The prints are the lobby's, Lorencia's tables, as the server checks an Account
+    // (server/src/accounts.cpp, g_items): this world's own, the Dungeon's say, is another print,
+    // and the knock was told to update under a game that was the server's build (the user,
+    // 2026-10-23: dual cut in the Dungeon, "showed there is updated launcher").
+    if (!knockPrints_) {
+        content::Tables lobby;
+        std::string error;
+        const std::string path = core::join(ctx.paths.assets, "cooked/lorencia/lorencia.mur");
+        if (content::loadTables(path, lobby, error)) {
+            knockItems_ = lobby.itemsPrint();
+            knockRules_ = net::rulesPrint(lobby);
+        } else {
+            core::logError("reconnect: no lobby tables at %s (%s); knocking with this world's",
+                           path.c_str(), error.c_str());
+            knockItems_ = play.realm().tables()->itemsPrint();
+            knockRules_ = net::rulesPrint(*play.realm().tables());
+        }
+        knockPrints_ = true;
+    }
     net::Account probe;
     probe.key = net::kKnockKey;
-    probe.items = play.realm().tables()->itemsPrint();
-    probe.rules = net::rulesPrint(*play.realm().tables());
+    probe.items = knockItems_;
+    probe.rules = knockRules_;
     std::thread([knock = knock_, host, port, probe] {
         net::Socket socket;
         std::string error;
