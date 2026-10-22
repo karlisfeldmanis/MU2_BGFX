@@ -45,6 +45,7 @@
 #include "game/fx/blizzard.h"
 #include "game/fx/weakness.h"
 #include "game/fx/pollution.h"
+#include "game/fx/drain.h"
 #include "game/fx/ice.h"
 #include "game/fx/stains.h"
 #include "game/world/trap_show.h"
@@ -1054,6 +1055,8 @@ public:
     Weakness& weakness() { return weakness_; }
     // And the Ancient rune Pollution's circle and Lagle's ghosts. fx/pollution.h.
     Pollution& pollution() { return pollution_; }
+    // And the Ancient rune Drain Life's motes, ghosts and strands. fx/drain.h.
+    Drain& drain() { return drain_; }
     // What a death leaves by the head: MU's CreateBlood. fx/stains.h.
     Stains& stains() { return stains_; }
     void gatherStains(gfx::Effects& effects) const {
@@ -1896,6 +1899,7 @@ private:
     Blizzard blizzard_;
     Weakness weakness_;
     Pollution pollution_;
+    Drain drain_;
     Stains stains_;
     TrapShow trapShow_;
     Poison poison_;
@@ -2065,6 +2069,8 @@ private:
         int iceStorm = -1, iceStormLand = -1;  // eSuddenIce_1 and _2, the Ancient rune Ice Storm's
         int weakness = -1;                     // SE_Ch_summoner_weakness, the Ancient rune Weakness's
         int pollution = -1;                    // Rargle, the Ancient rune Pollution's
+        int chainLightning = -1;               // the Ancient rune Chain Lightning's
+        int drainLife = -1;                    // and Drain Life's (SE_Ch_summoner_skill07/08)
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
         int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};

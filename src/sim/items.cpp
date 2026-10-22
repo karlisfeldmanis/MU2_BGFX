@@ -671,6 +671,12 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Pollution, "Pollution",
          "10% on a cast or a hit: Lagle's ghosts strike up to 4 monsters within 3 tiles",
          kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
+        {Power::ChainLightning, "Chain Lightning",
+         "10% on a cast or a hit: lightning leaps from the monster to 2 more within 2 tiles",
+         kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
+        {Power::DrainLife, "Drain Life",
+         "10% on a cast or a hit: drains the monster and heals you",
+         kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;

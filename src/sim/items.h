@@ -807,7 +807,9 @@ enum class Power : uint8_t {
     // The Summoner's spells on the Soul Master's weapon (the user, 2026-10-21: "we want to take
     // summoner spells and attach to ancient runes"; kWeakness...).
     Weakness = 75,
-    Pollution = 76
+    Pollution = 76,
+    ChainLightning = 77,
+    DrainLife = 78
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -1207,6 +1209,29 @@ constexpr double kPollutionChance = 0.10;  // a cast in ten; the user may tune i
 constexpr float kPollutionForce = 1.2f;
 constexpr float kPollutionTiles = 3.0f;
 constexpr int kPollutionMost = 4;
+// **Chain Lightning**, the fourth Ancient (the user, 2026-10-22: "lets work on Chain Lightning
+// (215) and Drain Life (214)"): MU's AT_SKILL_ALICE_CHAINLIGHTNING (OpenMU's S6 row: 70 damage,
+// an explicit target). As OpenMU's ChainLightningSkillPlugIn lays it, the bolt strikes what it was
+// thrown at, leaps to a monster within kChainHopTiles of it at kChainSecond, and on to a third
+// within kChainHopTiles of that at kChainThird, never one already struck -- MU's ReceiveChainMagic
+// draws the three. A spell he casts, or a swing that lands, has kChainChance to throw it at what
+// he struck -- on a cast with no monster struck, the nearest within kStormcallReach -- each blow
+// his rune's (runeStrike) at kChainForce, lightning: MU's 70 against Pollution's 80 at 1.2. Ours:
+// the three land on the tick it is thrown, where OpenMU waits 300 ms before each leap.
+constexpr double kChainChance = 0.10;  // a cast in ten; the user may tune it
+constexpr float kChainForce = 1.05f;
+constexpr float kChainHopTiles = 2.0f;
+constexpr float kChainSecond = 0.7f, kChainThird = 0.5f;
+constexpr int kChainMost = 3;
+// **Drain Life**, the fifth Ancient: MU's AT_SKILL_ALICE_DRAINLIFE (OpenMU's S6 row: 35 damage).
+// A spell he casts, or a swing that lands, has kDrainChance to drain what he struck -- on a cast
+// with no monster struck, the nearest within kStormcallReach -- with his rune's blow at
+// kDrainForce (35 against Pollution's 80 at 1.2), no element; if it lands he takes back, as
+// OpenMU's DrainLifeSkillPlugIn heals off a monster, energy / 15 + the monster's level / 2.5,
+// said as Leeched so it shows "+N" over him.
+constexpr double kDrainChance = 0.10;  // a cast in ten; the user may tune it
+constexpr float kDrainForce = 0.525f;
+inline int drainLife(int energy, int level) { return energy / 15 + int(float(level) / 2.5f); }
 // **The Common runes** (Rarity::Common), each a Legendary at a fraction, every one first-class:
 // **Cinder** Ring of Fire's ring and **Gust** Twister's storm, a knight's; **Chill** Frost Arrow's
 // freeze for half as long with half its wound, the elf's; **Faint Echo** Arcane Echo's second

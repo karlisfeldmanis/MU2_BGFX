@@ -783,18 +783,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
     // kPollutionMost bodies round it, as SkillAttackPollution counts them.
     if (power.power == Power::Pollution) {
         if (!runeDice_.nextBool(kPollutionChance)) return;
-        const Body* centre = struck.monster() && struck.alive() ? &struck : nullptr;
-        if (centre == nullptr) {
-            float best = kStormcallReach * kStormcallReach;
-            for (const Body& b : bodies_) {
-                if (!b.monster() || !b.alive()) continue;
-                const float dx = b.x - hero.x, dy = b.y - hero.y, d = dx * dx + dy * dy;
-                if (d <= best && router_.sees(hero.x, hero.y, b.x, b.y, content::kWallNoMove)) {
-                    best = d;
-                    centre = &b;
-                }
-            }
-        }
+        const Body* centre = runeAim(hero, struck);
         if (centre == nullptr) return;
         const float cx = centre->x, cy = centre->y;
         // What it struck first, then the rest round it in body order, so the log is fixed; all
@@ -820,6 +809,73 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
             if (victim == nullptr || !victim->alive()) continue;
             runeStrike(hero, *victim, force);
         }
+        return;
+    }
+    // His Chain Lightning (sim/items.h kChain...): a bolt on what he struck, leaping to a monster
+    // within kChainHopTiles of it and on again from there, as OpenMU's ChainLightningSkillPlugIn.
+    if (power.power == Power::ChainLightning) {
+        if (!runeDice_.nextBool(kChainChance)) return;
+        const Body* first = runeAim(hero, struck);
+        if (first == nullptr) return;
+        // Each leap the nearest from where the last one landed, not one already struck; all
+        // chosen before any blow, so a kill among them does not move what it took.
+        uint32_t chain[kChainMost] = {first->id, 0, 0};
+        int found = 1;
+        const Body* from = first;
+        while (found < kChainMost) {
+            const Body* next = nullptr;
+            float best = kChainHopTiles * kChainHopTiles;
+            for (const Body& b : bodies_) {
+                if (!b.monster() || !b.alive()) continue;
+                if (b.id == chain[0] || b.id == chain[1]) continue;
+                const float dx = b.x - from->x, dy = b.y - from->y, d = dx * dx + dy * dy;
+                if (d <= best) {
+                    best = d;
+                    next = &b;
+                }
+            }
+            if (next == nullptr) break;
+            chain[found++] = next->id;
+            from = next;
+        }
+        // a: the skill; b, c: the second and third (0 for none); whom: the first.
+        say(What::Loosed, hero, skill::kChainLightning, int32_t(chain[1]), int32_t(chain[2]),
+            chain[0]);
+        happenings_.back().rune = true;
+        happenings_.back().x = first->x;
+        happenings_.back().y = first->y;
+        core::logf("chain lightning rune: tick %lld, on #%u, %d struck", (long long)tick_,
+                   chain[0], found);
+        const float force = kChainForce * runeForce(hero, Element::Lightning);
+        const float share[kChainMost] = {1.0f, kChainSecond, kChainThird};
+        for (int i = 0; i < found && hero.alive(); ++i) {
+            Body* victim = body(chain[i]);
+            if (victim == nullptr || !victim->alive()) continue;
+            runeStrike(hero, *victim, force * share[i]);
+        }
+        return;
+    }
+    // His Drain Life (sim/items.h kDrain...): his rune's blow on what he struck, and life back
+    // off it if it lands, as OpenMU's DrainLifeSkillPlugIn heals off a monster.
+    if (power.power == Power::DrainLife) {
+        if (!runeDice_.nextBool(kDrainChance)) return;
+        const Body* aim = runeAim(hero, struck);
+        Body* target = aim == nullptr ? nullptr : body(aim->id);
+        if (target == nullptr) return;
+        say(What::Loosed, hero, skill::kDrainLife, 0, 0, target->id);
+        happenings_.back().rune = true;
+        happenings_.back().x = target->x;
+        happenings_.back().y = target->y;
+        const int before = target->health;
+        const int level = target->level;
+        runeStrike(hero, *target, kDrainForce * runeForce(hero, Element::None));
+        if (target->health >= before || !hero.alive()) return;  // a miss heals nothing
+        const int was = hero.health;
+        hero.health = std::min(hero.maxHealth,
+                               hero.health + drainLife(hero.totalPoints().energy, level));
+        core::logf("drain life rune: tick %lld, on #%u, +%d life", (long long)tick_, target->id,
+                   hero.health - was);
+        if (hero.health > was) say(What::Leeched, hero, hero.health - was);
         return;
     }
     // His Immolate rune: the monster he struck set burning, while it stands; a second restarts it.
@@ -1023,6 +1079,23 @@ void Realm::talentRelease(Body& hero, const SkillRow* row) {
             core::logf("mana surge: tick %lld, %d mana back", (long long)tick_, manaCostOf(hero, *row));
         }
     }
+}
+
+// What an Ancient rune is thrown at: the monster he struck, while it stands, or -- on a cast
+// that struck none -- the nearest he sees within kStormcallReach. Nothing when there is none.
+const Body* Realm::runeAim(const Body& hero, const Body& struck) const {
+    if (struck.monster() && struck.alive()) return &struck;
+    const Body* aim = nullptr;
+    float best = kStormcallReach * kStormcallReach;
+    for (const Body& b : bodies_) {
+        if (!b.monster() || !b.alive()) continue;
+        const float dx = b.x - hero.x, dy = b.y - hero.y, d = dx * dx + dy * dy;
+        if (d <= best && router_.sees(hero.x, hero.y, b.x, b.y, content::kWallNoMove)) {
+            best = d;
+            aim = &b;
+        }
+    }
+    return aim;
 }
 
 void Realm::runeStrike(Body& hero, Body& target, float force) {

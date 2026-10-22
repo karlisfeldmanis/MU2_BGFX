@@ -1919,6 +1919,8 @@ private:
     // A magic rune's blow: his swing's roll with his energy's band on top (sim::kRuneEnergyLow
     // and High), at `force`, unpaid. Stormcall's lightning and the knight's fire runes.
     void runeStrike(Body& hero, Body& target, float force);
+    // What an Ancient rune is thrown at: what he struck, or the nearest he sees.
+    const Body* runeAim(const Body& hero, const Body& struck) const;
     // Spirit Plague's and Plague Arrows' poison on what a blow of `blowDamage` struck.
     void plague(Body& hero, Body& target, int blowDamage, int worn);
     // That poison laid on, unrolled: a Plague Arrows lane's arrow.

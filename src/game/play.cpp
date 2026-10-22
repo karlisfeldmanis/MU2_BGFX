@@ -1355,6 +1355,35 @@ void Play::update(double seconds) {
                         const float there[3] = {to[0], ground_->heightAt(to[0], to[2]), to[2]};
                         pollution_.cast(self, there);
                         if (heard_.pollution >= 0) emit(heard_.pollution, to[0], to[2], caster->id);
+                    } else if (happening.a == sim::skill::kChainLightning) {
+                        // The Ancient rune Chain Lightning: MU's MODEL_CHAIN_LIGHTNING, a bolt
+                        // from his hand to what it struck first and on from the middle of each to
+                        // the next (`b`, `c`), as ReceiveChainMagic lays them, all at once, with
+                        // SOUND_SKILL_CHAIN_LIGHTNING. The wizard's own bolt (fx/thunder.h).
+                        thunder_.strike(from, to, happening.whom);
+                        float off[3] = {to[0], to[1], to[2]};
+                        for (const int32_t next : {happening.b, happening.c}) {
+                            const Drawn* on = next != 0 ? drawnOf(uint32_t(next)) : nullptr;
+                            if (on == nullptr || !on->placed) break;
+                            const FigureBody* look = on->figure.body();
+                            const float tall = look ? look->height * look->scale : 1.0f;
+                            const float at[3] = {on->crown[0], on->crown[1] - tall * 0.5f,
+                                                 on->crown[2]};
+                            thunder_.strike(off, at, uint32_t(next));
+                            for (int k = 0; k < 3; ++k) off[k] = at[k];
+                        }
+                        if (heard_.chainLightning >= 0) {
+                            emit(heard_.chainLightning, caster->crown[0], caster->crown[2], caster->id);
+                        }
+                    } else if (happening.a == sim::skill::kDrainLife) {
+                        // The Ancient rune Drain Life: MU's MODEL_ALICE_DRAIN_LIFE between him and
+                        // what it drained, with SOUND_SKILL_DRAIN_LIFE (fx/drain.h). The life it
+                        // gave back is the Leeched after it.
+                        const float self[3] = {caster->crown[0], from[1], caster->crown[2]};
+                        drain_.cast(happening.who, happening.whom, self, to);
+                        if (heard_.drainLife >= 0) {
+                            emit(heard_.drainLife, caster->crown[0], caster->crown[2], caster->id);
+                        }
                     } else if (happening.a == sim::skill::kIce) {
                         // The block where the body is drawn, turned to his yaw, as MU turns it.
                         const float floor = ground_->heightAt(to[0], to[2]);
@@ -2416,6 +2445,7 @@ void Play::update(double seconds) {
         return true;
     };
     bolt_.update(float(seconds), standing, middle);
+    drain_.update(float(seconds), middle);
     for (Volley& volley : volleys_) {
         volley.wait -= float(seconds);
         if (volley.wait <= 0.0f) volleyShot(volley.shooter, volley.target);

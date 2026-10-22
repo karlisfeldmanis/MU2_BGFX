@@ -404,6 +404,12 @@ EFFECTS = {
     "weakness_shiny": "effects/weakness/shiny05.png",
     "weakness_pin": "effects/weakness/pin_lights.png",
 
+    # The Ancient rune Drain Life's (game/fx/drain.h): BITMAP_LIGHT + 2, Effect/cra_04.jpg, its
+    # red motes; and BITMAP_DRAIN_LIFE_GHOST, Effect/gostmark01.jpg, the ghosts it throws
+    # (ZzzOpenData.cpp:5429, 5222).
+    "drain_mote": "effects/drain/cra_04.png",
+    "drain_ghost": "effects/drain/gostmark01.png",
+
     # And what the wizard's Flame burns with. See client/core/Flame.cs.
     #
     # BITMAP_FLAME, which ZzzOpenData loads from Effect/Flame01.jpg with GL_CLAMP_TO_EDGE - a

@@ -10725,10 +10725,11 @@ void testElementRunes(const content::Tables& tables) {
 // Soul Master's blizzard: about one cast in ten, every monster round what he struck frozen and
 // struck.
 // A level-150 Soul Master's Lightning hunt in Lorencia with `power` in his staff (none for a bare
-// one), 12000 ticks, his health and mana kept up; `each` sees the realm after every tick.
+// one), 12000 ticks, his health and mana kept up -- `wounded`, his health held at half instead,
+// so a heal has room; `each` sees the realm after every tick.
 template <typename Each>
 void ancientHunt(const content::Tables& tables, int staff, sim::Power power, bool cast,
-                 Each each) {
+                 Each each, bool wounded = false) {
     sim::Realm realm;
     realm.raise(&tables, 5, 200, 160, sim::Kin::DarkWizard, 150);
     promote(realm);
@@ -10741,6 +10742,11 @@ void ancientHunt(const content::Tables& tables, int staff, sim::Power power, boo
         if (realm.hero().mana < 100) {
             sim::HeroRecord record = realm.record();
             record.mana = realm.hero().maxMana;
+            realm.restore(record);
+        }
+        if (wounded && realm.hero().health > realm.hero().maxHealth / 2) {
+            sim::HeroRecord record = realm.record();
+            record.health = realm.hero().maxHealth / 2;
             realm.restore(record);
         }
         const sim::Body& hero = realm.hero();
@@ -10954,6 +10960,113 @@ void testPollutionRune(const content::Tables& tables, int rune, int staff, int s
     }
 }
 
+// The checks every Ancient weapon rune of the Soul Master's shares: the row, who sets it, and
+// that it falls past Aida and not before.
+void ancientRow(const content::Tables& tables, sim::Power power, const char* name, int rune,
+                int staff, int sword) {
+    using sim::Kin;
+    using sim::Power;
+    const sim::PowerRow* row = sim::powerOf(uint8_t(power));
+    check(row != nullptr && row->rarity == sim::Rarity::Ancient && row->second && row->once &&
+              row->weapon(),
+          "an Ancient weapon rune, a second class's, one to a thing");
+    const auto held = [](int item, uint8_t sockets, Power first) {
+        sim::Held h{int32_t(item), 0, 1};
+        h.sockets = sockets;
+        h.powers[0] = uint8_t(first);
+        return h;
+    };
+    const auto sets = [&](int into, Kin kin, bool second) {
+        return sim::settable(tables, held(rune, 0, power), held(into, 1, Power::None), kin, second);
+    };
+    check(sets(staff, Kin::DarkWizard, true), "a Soul Master sets it in his staff");
+    check(!sets(staff, Kin::DarkWizard, false) && !sets(sword, Kin::DarkKnight, true) &&
+              !sets(staff, Kin::FairyElf, true),
+          "nobody else does");
+    sim::Random dice(20261022);
+    int at = 0, below = 0;
+    for (int i = 0; i < 4000; ++i) {
+        at += sim::drawRunePower(dice, Kin::DarkWizard, true, 160) == uint8_t(power);
+        below += sim::drawRunePower(dice, Kin::DarkWizard, true, 140) == uint8_t(power);
+    }
+    std::printf("  %s in 4000 drops: %d at 140, %d at 160\n", name, below, at);
+    check(at > 0 && below == 0, "it falls past Aida and not before");
+}
+
+// Chain Lightning, the Summoner's bolt on a Soul Master's staff (sim/items.h kChain...): about one
+// cast in ten, what he struck and up to two more, each leap within two tiles of the last, never
+// one struck twice, the leaps lighter than the first.
+void testChainLightningRune(const content::Tables& tables, int rune, int staff, int sword) {
+    std::printf("chain lightning rune\n");
+    ancientRow(tables, sim::Power::ChainLightning, "Chain Lightning", rune, staff, sword);
+    int casts = 0, chains = 0, leaps = 0, far = 0, twice = 0, blows = 0;
+    ancientHunt(tables, staff, sim::Power::ChainLightning, true, [&](const sim::Realm& realm) {
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.who != realm.hero().id) continue;
+            if (h.what == sim::What::Cast && h.a == sim::skill::kLightning) ++casts;
+            if (h.what == sim::What::Hit && h.thrown) ++blows;
+            if (h.what != sim::What::Loosed || h.a != sim::skill::kChainLightning) continue;
+            ++chains;
+            const uint32_t chain[3] = {h.whom, uint32_t(h.b), uint32_t(h.c)};
+            twice += (chain[1] != 0 && chain[1] == chain[0]) ||
+                     (chain[2] != 0 && (chain[2] == chain[0] || chain[2] == chain[1]));
+            for (int i = 1; i < 3 && chain[i] != 0; ++i) {
+                ++leaps;
+                const sim::Body* a = realm.find(chain[i - 1]);
+                const sim::Body* b = realm.find(chain[i]);
+                if (a == nullptr || b == nullptr) continue;
+                const float dx = a->x - b->x, dy = a->y - b->y;
+                const float reach = sim::kChainHopTiles + 0.5f;
+                far += dx * dx + dy * dy > reach * reach;
+            }
+        }
+    });
+    std::printf("  Chain Lightning: %d casts, %d thrown, %d leaps, %d rune blows, %d far, %d twice\n",
+                casts, chains, leaps, blows, far, twice);
+    check(chains > 0 && blows >= chains, "Chain Lightning strikes what he struck");
+    check(leaps > 0, "and leaps on");
+    checkEqual(far, 0, "never more than two tiles a leap");
+    checkEqual(twice, 0, "never the same monster twice");
+    if (casts > 0) {
+        const double rate = double(chains) / casts;
+        check(rate > 0.05 && rate < 0.16, "about one cast in ten");
+    }
+}
+
+// Drain Life, the Summoner's drain on a Soul Master's staff (sim/items.h kDrain...): about one
+// cast in ten, a blow on what he struck and, when it lands, his energy / 15 + its level / 2.5
+// back as life.
+void testDrainLifeRune(const content::Tables& tables, int rune, int staff, int sword) {
+    std::printf("drain life rune\n");
+    ancientRow(tables, sim::Power::DrainLife, "Drain Life", rune, staff, sword);
+    checkEqual(sim::drainLife(300, 50), 40, "energy 300 off a level-50 monster heals 40");
+    int casts = 0, drains = 0, healed = 0, life = 0;
+    ancientHunt(tables, staff, sim::Power::DrainLife, true, [&](const sim::Realm& realm) {
+        bool drained = false;
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.who != realm.hero().id) continue;
+            if (h.what == sim::What::Cast && h.a == sim::skill::kLightning) ++casts;
+            if (h.what == sim::What::Loosed && h.a == sim::skill::kDrainLife) {
+                ++drains;
+                drained = true;
+            }
+            if (drained && h.what == sim::What::Leeched) {
+                ++healed;
+                life += h.a;
+                drained = false;
+            }
+        }
+    }, true);
+    std::printf("  Drain Life: %d casts, %d drains, %d healed, %d life\n", casts, drains, healed,
+                life);
+    check(drains > 0, "Drain Life strikes what he struck");
+    check(healed > 0 && life > 0, "and gives him life back");
+    if (casts > 0) {
+        const double rate = double(drains) / casts;
+        check(rate > 0.05 && rate < 0.16, "about one cast in ten");
+    }
+}
+
 void testAncientRunes(const content::Tables& tables) {
     std::printf("ancient runes\n");
     using sim::Kin;
@@ -11076,6 +11189,8 @@ void testAncientRunes(const content::Tables& tables) {
     }
     testWeaknessRune(tables, rune, staff, sword);
     testPollutionRune(tables, rune, staff, sword);
+    testChainLightningRune(tables, rune, staff, sword);
+    testDrainLifeRune(tables, rune, staff, sword);
 }
 
 void testGroupRunes(const content::Tables& tables) {
