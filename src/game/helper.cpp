@@ -497,6 +497,10 @@ std::string Helper::follow(Play& play, const HelperSettings& settings, double se
             anchorRow_ = hero.row();
             if (!chased && loot(play, settings)) return {};
             picking_ = 0;
+            // His keys at what Auto-play's hand fights, as its window sets them: it gave only
+            // the right button's one skill, so the rest of his bar sat unused while it followed.
+            const sim::Request& order = realm.order();
+            if (order.kind == sim::Request::Kind::Attack && order.target != 0) keys(play, settings, order.target);
         }
     }
     if (picking_ != 0) return {};

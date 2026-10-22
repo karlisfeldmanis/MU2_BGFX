@@ -697,16 +697,18 @@ bool QuestAuto::resupply(Play& play, const std::function<std::string(const std::
 // staff if you do not have equipped any Main Skill. Could it use any or first registered in
 // QWERT?"). A primary first, as it is cast over and over; else any blow, and the realm swings
 // while its cooldown runs (Realm::press). No aura, summon, charge, channel or Teleport. -1 keeps
-// the quick slot's own.
+// the quick slot's own. Asked of the hand that swings, as the bar's plate asks it (the user,
+// 2026-10-22: "helper is not using DK spells" -- asked of the off hand, a knight with an axe and a
+// shield had his Falling Slash refused for the shield and swung bare).
 int32_t QuestAuto::striker(Play& play) const {
     if (play.quickSkill() != 0) return -1;
     const sim::Realm& realm = play.realm();
-    const uint32_t offHand = realm.wearer().offHand;
+    const uint32_t hand = realm.wearer().hand;
     int32_t any = -1;
     for (int i = 0; i < barCount_; ++i) {
         const int32_t skill = bar_[i];
         const sim::SkillRow* row = skill > 0 ? sim::skillNumbered(skill) : nullptr;
-        if (row == nullptr || !realm.knows(skill) || !row->suits(offHand)) continue;
+        if (row == nullptr || !realm.knows(skill) || !row->suits(hand)) continue;
         if (row->onSelf() || row->chargeTicks > 0 || row->channelled() || row->blinks) continue;
         if (row->primary()) return skill;
         if (any < 0) any = skill;
