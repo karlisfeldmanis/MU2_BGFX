@@ -1419,6 +1419,7 @@ LOWERED = {("Stone04", 3076.018, 14026.856): 1.53,
 
 # The world anchors' tables are pipeline/cook_anchors.py's.
 from cook_anchors import (ANCHOR_KINDS, ANCHOR_KINDS_BY_WORLD, ANCHOR_LIGHT,  # noqa: E402
+                          ANCHOR_LIGHT_BY_WORLD,
                           BRAZIER_BOWLS, HIDDEN_BY_WORLD, LIGHT_TWINS, SHOWN_LATER,
                           SPRAY_KINDS)
 
@@ -1924,7 +1925,8 @@ def cook_placements(world, out_dir, chunk_tiles):
                 glow_count += 1
                 break
     for index, (kind, at) in enumerate(anchors):
-        light = list(ANCHOR_LIGHT[kind])
+        own = ANCHOR_LIGHT_BY_WORLD.get(world, {}).get(str(kind))
+        light = [tuple(own[0]), *own[1:]] if own else list(ANCHOR_LIGHT[kind])
         if index in anchor_scales:
             light[2] = anchor_scales[index]  # `high`, the box's Scale; reach stays 0
         emitters += emitter(0xFFFF, kind, at, *light)

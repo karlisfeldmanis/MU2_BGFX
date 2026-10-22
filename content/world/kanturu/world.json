@@ -43,6 +43,35 @@
         "Object60": 4
       },
       "note": "Kanturu Ruins hidden boxes that throw something (MoveKanturu1stObject and RenderKanturu1stObjectVisual, GM_Kanturu_1st.cpp; docs/worlds/kanturu-port.md Part B 3, 4 and 16-19). 18, 19 and 20, the waterfall spray of Object82 (BITMAP_WATERFALL_1 SubType 2, 1 frame in 2, 26), Object83 (WATERFALL_3 SubType 4 every frame, 35) and Object84 (WATERFALL_2 SubType 2, 1 in 3, 52): the very arms Aida's spray uses (game/world/waterfall_spray.h). 1, Object62's 58 fires (amber AddTerrainLight r3 and BITMAP_TRUE_FIRE 1 frame in 3, :77-83, 157-164), Devias's brazier fire; ours throws CreateFire(0)'s light (0.6-1.1 over 4 tiles) where MU's is (1, 0.6, 0.2) x 0.3-0.6 over 3, to settle when the light is tuned. 23, Object61's 5 red-orange lights (0.9, 0.2, 0.1) x 0.3-0.6 r3, :70-76), light only, carried in the small fires' light (1, 0.6, 0.4). 4, Object60's 16 smoke vents by the factories (BITMAP_SMOKE SubType 21, 1 in 3, :149-156), cooked, but nothing draws a lone smoke anchor yet (only Blood Castle's castle_sparks reads kind 4 at a world point, with its own flares): the vents wait for the effects' third batch. Not carried: the mist boxes Object63, 108 and 109, which never emit in MU (:165-173), and Object98's bubble box, which throws nothing in the Ruins."
+    },
+    "anchor_lights": {
+      "value": {
+        "1": [
+          [
+            1.0,
+            0.6,
+            0.2
+          ],
+          0.3,
+          0.6,
+          3.0,
+          3.0,
+          0.12
+        ],
+        "23": [
+          [
+            0.9,
+            0.2,
+            0.1
+          ],
+          0.3,
+          0.6,
+          3.0,
+          3.0,
+          0.12
+        ]
+      },
+      "note": "MU's own light for the two fire kinds, over cook_anchors.py's ANCHOR_LIGHT (colour, low, high, reach in tiles, flicker hz, smoothing). 1, Object62's 58 fires: AddTerrainLight (L, 0.6L, 0.2L), L = 0.3-0.6 re-rolled every frame, over 3 tiles (GM_Kanturu_1st.cpp:77-83), where the brazier kind threw CreateFire(0)'s 0.6-1.1 over 4. 23, Object61's 5 lights: (0.9L, 0.2L, 0.1L), the same L and reach (:70-76), a deep red where the small fires' kind threw amber. The flicker keeps kind 1's 3 Hz eased over 0.12 s: MU's is a fresh roll each frame (ours)."
     }
   },
   "show": {

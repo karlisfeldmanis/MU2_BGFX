@@ -73,3 +73,7 @@ ANCHOR_LIGHT = {# A lamp: Tarkan's Object05, white, sin(WorldTime*0.002)*0.35+0.
                 # The small fires' own light (LIGHT_TWINS): CreateFire(0)'s, kind 1's colour and
                 # flicker, over three tiles, a torch rather than a bonfire.
                 23: ((1.0, 0.6, 0.4), 0.6, 1.1, 3.0, 3.0, 0.12)}
+# A world's own light for a kind, over ANCHOR_LIGHT's, by the kind's number as a string: world.json
+# `anchor_lights`, the same six values. Kanturu's fires and red lamps borrow Devias's brazier and
+# Aida's small fires, but MU lights them dimmer and redder (GM_Kanturu_1st.cpp:70-83).
+ANCHOR_LIGHT_BY_WORLD = world_manifest.by_world("anchor_lights", dict)
