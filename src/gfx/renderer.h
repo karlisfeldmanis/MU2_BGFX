@@ -634,6 +634,7 @@ private:
     // texture and u_abyss. content::Ground::abyss; y at 0 is off.
     bgfx::TextureHandle abyss_ = BGFX_INVALID_HANDLE;
     float abyssParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    float abyssColour_[4] = {0.0f, 0.0f, 0.0f, 0.0f};  // gfx::Lighting::abyssColour
     bgfx::TextureHandle lava_ = BGFX_INVALID_HANDLE;
     float lavaMap_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float lavaLight_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -822,6 +823,7 @@ private:
     bgfx::UniformHandle uDust_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uEdge_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uAbyss_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uAbyssColour_ = BGFX_INVALID_HANDLE;
     // The lava's light (Lighting::lavaLight): u_lava rgb and its rise in w, 0 off; u_lavaMap
     // and s_lava on stage 8, content::Ground::lava. Bound on every shaded draw.
     bgfx::UniformHandle uLava_ = BGFX_INVALID_HANDLE;

@@ -57,6 +57,7 @@ void Renderer::bindShadeInputs() {
     bgfx::setUniform(uEdge_, edge_);
     // Stage 6 for fs_shade, which reads no prepass; the land rebinds it to 15 after this.
     bgfx::setUniform(uAbyss_, abyssParams_);
+    bgfx::setUniform(uAbyssColour_, abyssColour_);
     bgfx::setTexture(6, sAbyss_, bgfx::isValid(abyss_) ? abyss_ : whiteAo_,
                      BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
     if (probePass_) {
@@ -744,6 +745,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     probeTaken_[3] = lighting.probeDiffuse;
     weather_[0] = bgfx::isValid(weatherNoise_) ? std::max(lighting.weathering, 0.0f) : 0.0f;
     weather_[1] = std::max(lighting.sheen, 0.0f);
+    for (int k = 0; k < 3; ++k) abyssColour_[k] = std::max(lighting.abyssColour[k], 0.0f);
     shineStrength_ = lighting.refineStrength;
     shineTint_ = lighting.refineTint;
     shineStageStrength_ = lighting.refineStageStrength;

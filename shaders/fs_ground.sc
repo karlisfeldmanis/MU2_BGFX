@@ -543,5 +543,5 @@ void main()
 	// Last, so the haze goes into the chasm's black with the land. Ground::splat's slope.
 	// And the floor's own last metres into the void, after the haze too, so they reach the
 	// void's black rather than the dust's grey (the Lost Tower's void.blend; 1 elsewhere).
-	gl_FragColor = vec4(abyss(dusty(colour, v_wpos), v_wpos) * abyssEdge(v_wpos), 1.0);
+	gl_FragColor = vec4(mix(u_abyssColour.rgb, abyss(dusty(colour, v_wpos), v_wpos), abyssEdge(v_wpos)), 1.0);
 }

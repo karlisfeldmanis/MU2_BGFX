@@ -145,11 +145,12 @@ vec3 dusty(vec3 colour, vec3 wpos)
 #ifdef MU2_ABYSS
 SAMPLER2D(s_abyss, MU2_ABYSS);
 uniform vec4 u_abyss;
+uniform vec4 u_abyssColour;  // rgb: what the dark is (gfx::Lighting::abyssColour), black as MU
 vec3 abyss(vec3 colour, vec3 wpos)
 {
 	if (u_abyss.y <= 0.0) return colour;
 	float level = texture2D(s_abyss, vec2(wpos.x, -wpos.z) * u_abyss.z + u_abyss.w).r;
-	return colour * (1.0 - smoothstep(u_abyss.x, u_abyss.x + u_abyss.y, level - wpos.y));
+	return mix(colour, u_abyssColour.rgb, smoothstep(u_abyss.x, u_abyss.x + u_abyss.y, level - wpos.y));
 }
 // And how near the void a point is, 0 at its edge to 1 a few tiles in (the world's void.blend),
 // 1 everywhere else: the ground's own fade into the void, laid after the haze (fs_ground).

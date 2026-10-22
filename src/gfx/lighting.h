@@ -119,6 +119,11 @@ struct Lighting {
     // rgb (3, 25, 44)/256 (SceneManager.cpp:385), and with no ground drawn there it is the sky
     // under the islands (docs/worlds/icarus-port.md). 0 everywhere else, so their void stays black.
     float clearColour[3] = {0.0f, 0.0f, 0.0f};
+    // What the chasm's dark fades into (abyss() in common.sh): the cliffs going down and the
+    // ground's lip, in the same linear light as clearColour. Black as MU; Kanturu's is its
+    // clear colour, a dark green-grey haze, so its narrow trench reads as depth rather than a
+    // hole cut in the screen (the user, 2026-10-22: "do here has be black void?", then "you decide").
+    float abyssColour[3] = {0.0f, 0.0f, 0.0f};
     // Wet ground, where the sheet asks (ground_wet, 0 to 1): stone darkened as water darkens it
     // and given a low, glassy sheen for the lamps and the sun or moon to streak across; and
     // `groundPuddles`, 0 to 1, how much of it lies as standing water in patches a few metres
