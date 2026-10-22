@@ -1182,7 +1182,7 @@ public:
     enum class Ui { Click, Refused, Took, Opened, Invited, Talent, Soft, Whoosh, Bell, Whispered };
     void ui(Ui which);
     // An event's gate opening (game/ui/herald.h): a peek of its music, `seconds` long and faded
-    // out at its end. 0 Blood Castle, 1 Devil Square; both the one hit, content/music/gate_open.mp3.
+    // out at its end. 0 Blood Castle, 1 Devil Square; both the one bell, content/music/gate_open.mp3.
     void gatePeek(int gate, float seconds);
     void gatherAura(gfx::Effects& effects, const float eye[3]) const {
         if (ground_) aura_.gather(effects, *ground_, eye);

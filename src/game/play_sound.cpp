@@ -418,12 +418,13 @@ void Play::ui(Ui which) {
     }
 }
 
-// One cinematic hit for both gates (the user, 2026-10-21: "lets use ... soundreality-cinematic-sfx
-// for opening DS,BS gates"), content/music/gate_open.mp3: from 0.25 s, past its quarter second of
-// silence, so the strike lands with the green dot; it has decayed to -44 dB by three seconds.
+// One bell for both gates (the user, 2026-10-22: "use this sound when we show notifications that
+// DS,BC gates are opened", kostyapl-pipe-bell-bass-impact), content/music/gate_open.mp3: from
+// 0.2 s, past its 0.21 s of silence, so the strike lands with the green dot; it peaks at -3.6 dB,
+// so at 1.0 it is about as loud as the 0.7 hit it replaced, and it is silent by 2.6 s.
 void Play::gatePeek(int gate, float seconds) {
     (void)gate;
-    sound_.stinger("music/gate_open.mp3", 0.7f, 0.25f, seconds);
+    sound_.stinger("music/gate_open.mp3", 1.0f, 0.2f, seconds);
 }
 
 void Play::hear(const gfx::Camera& camera, bool indoors) {
