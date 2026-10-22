@@ -139,11 +139,11 @@
       "name": "Kesra the Broker",
       "figure": "mirazu",
       "at": [
-        221,
-        63
+        207,
+        45
       ],
       "look": 3,
-      "note": "Ours: the Broker (docs/game/broker.md), beside Baz, in MuMain's Mirage (Npc/mirazu.bmd), the Broker's one figure in all three towns."
+      "note": "Ours: the Broker (docs/game/broker.md), in MuMain's Mirage (Npc/mirazu.bmd), the Broker's one figure in all three towns. Moved from 221,63 beside Baz to 207,45 on the snow beside the cobbled crossing (the user, 2026-10-22: 'we need to put devias broker here', then 'lets move him here')."
     },
     {
       "npc": 406,
