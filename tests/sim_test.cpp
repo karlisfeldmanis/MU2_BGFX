@@ -11954,6 +11954,9 @@ void testPets(const content::Tables& tables) {
     checkEqual(sim::bareDurability(tables.items[size_t(angel)]), 1, "a dropped Angel one to its stack");
     checkEqual(sim::bareDurability(tables.items[size_t(imp)]), 1, "and an Imp");
     check(uniria >= 0 && sim::bareDurability(tables.items[size_t(uniria)]) == 1, "and a boxed Uniria");
+    // And off the item draw, a shelf or a quest, where the row's 255 was poured as 255 Horns.
+    check(uniria >= 0 && sim::fullDurability(tables.items[size_t(uniria)], 0) == 1, "a Uniria off the item draw is one");
+    checkEqual(sim::fullDurability(tables.items[size_t(angel)], 0), 1, "and an Angel");
     check(chaos >= 0 && sim::bareDurability(tables.items[size_t(chaos)]) == 1, "a dropped Chaos one to its stack");
     check(ale >= 0 && sim::bareDurability(tables.items[size_t(ale)]) == 1, "and an Ale");
     // No one mends the Angel or the Imp (IsRepairBan; LoveMu, 2026-10-21): no price, worn or

@@ -79,7 +79,9 @@ int maximumDurability(const content::ItemRow& row, int refinement);
 int maximumDurability(const content::ItemRow& row, const Held& held);
 
 // What a new one starts with -- off a shelf, off a body, into a hand: whole for gear, and the
-// row's own number for anything else (a quiver's shots; the caller counts a stack).
+// row's own number for anything else (a quiver's shots; the caller counts a stack). A timed pet
+// is one: its durability is a stack's count since 2026-10-21, and the row's 255 made one Horn of
+// Uniria off the item draw 255 Horns in the bag, twenty a cell (LoveMu, 2026-10-22).
 int fullDurability(const content::ItemRow& row, int refinement);
 // A thing that drops or comes out of a box at +0 with nothing on it: whole when it wears (a pet,
 // a mount, a ring), and one when it does not (a jewel, an Ale, a scroll: a stack of one). The
