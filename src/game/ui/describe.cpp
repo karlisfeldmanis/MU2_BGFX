@@ -1231,8 +1231,12 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // orbs both are set, deliberately and to the same number (the recipes say so, and
     // `Realm::useItem` takes the larger), so printing each in turn read as "Level 13, Level 13"
     // on every orb in the shop. The card prints the larger, once. The user, 2026-09-23.
-    const int wantsLevel = std::max(asked.level, row.teaches > 0 ? row.teachesLevel : 0);
-    require("Level", wantsLevel, std::max(0, wantsLevel - who.level));
+    // And a rune's (sim::kRuneHeroLevel): a Rune of Creation's own, a socketed thing's highest
+    // set one over its own. Printed to a reborn hero too, but met: one rebirth meets them all.
+    const int ownLevel = std::max(asked.level, row.teaches > 0 ? row.teachesLevel : 0);
+    const int wantsLevel = std::max(ownLevel, sim::runeLevel(tables, what));
+    const int metLevel = std::max(ownLevel, sim::runeLevelFor(tables, who, what));
+    require("Level", wantsLevel, std::max(0, metLevel - who.level));
     require("Strength", asked.strength, owed.strength);
     require("Agility", asked.agility, owed.agility);
     require("Vitality", asked.vitality, owed.vitality);

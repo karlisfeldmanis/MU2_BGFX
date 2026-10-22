@@ -740,6 +740,7 @@ Wearer Realm::wearer() const {
     who.maxHealth = hero.maxHealth;
     who.maxMana = hero.maxMana;
     who.inCastle = event() == EventKind::Castle;
+    who.rebirths = hero.rebirths;
     return who;
 }
 
@@ -987,7 +988,7 @@ bool Realm::refine(int jewelSlot, int targetSlot) {
     Held thing = me().bag[targetSlot];
     // A Rune of Creation is set, not spent on a roll: its power into the thing's first empty
     // socket, and the rune gone. Nothing is drawn.
-    if (settable(*tables_, jewel, thing, hero.kin, hero.second)) {
+    if (settable(*tables_, jewel, thing, wearer())) {
         const int socket = freeSocket(thing);
         thing.powers[socket] = jewel.powers[0];
         // A quest's rune no longer binds what it is set in: it bound a dropped sword for good
@@ -2086,8 +2087,7 @@ int Realm::wearFromVault(int cell, int worn) {
 
 bool Realm::worksOn(const Held& jewel, const Held& thing) const {
     if (!tables_ || jewel.empty() || thing.empty()) return false;
-    const Body& hero = mine();
-    return settable(*tables_, jewel, thing, hero.kin, hero.second) ||
+    return settable(*tables_, jewel, thing, wearer()) ||
            refinable(*tables_, jewel, thing);
 }
 

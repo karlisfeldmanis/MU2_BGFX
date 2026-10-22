@@ -853,6 +853,30 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
     return (power->slots & kind) != 0;
 }
 
+int runeLevel(const content::Tables& tables, const Held& what) {
+    if (what.empty() || size_t(what.item) >= tables.items.size()) return 0;
+    const int count = creation(tables.items[size_t(what.item)])
+                          ? 1
+                          : std::min<int>(what.sockets, kMostSockets);
+    int level = 0;
+    for (int at = 0; at < count; ++at) {
+        if (const PowerRow* power = powerOf(what.powers[at])) {
+            level = std::max(level, kRuneHeroLevel[int(power->rarity)]);
+        }
+    }
+    return level;
+}
+
+int runeLevelFor(const content::Tables& tables, const Wearer& who, const Held& what) {
+    return who.rebirths > 0 ? 0 : runeLevel(tables, what);
+}
+
+bool settable(const content::Tables& tables, const Held& jewel, const Held& target,
+              const Wearer& who) {
+    return settable(tables, jewel, target, who.kin, who.second) &&
+           who.level >= runeLevelFor(tables, who, jewel);
+}
+
 int placeOf(const content::ItemRow& row) {
     if (row.group < kGroupShields) {
         // Every bow and crossbow in the weapon slot and every quiver in the left hand -- ours
@@ -1063,7 +1087,10 @@ bool fits(const content::Tables& tables, const Wearer& who, const Held& what) {
     // A 2nd level wing and the second class's gear are its class's second's: OpenMU's class
     // level 2 (docs/game/second-class-gear.md).
     if (secondClassFor(*row, who.kin) && !who.second) return false;
-    return shortOf(asks(*row, what.refinement, what.excellent != 0), who.level, who.points).none();
+    // Its runes' level over its own (sim::kRuneHeroLevel).
+    Needs asked = asks(*row, what.refinement, what.excellent != 0);
+    asked.level = std::max(asked.level, runeLevelFor(tables, who, what));
+    return shortOf(asked, who.level, who.points).none();
 }
 
 namespace {

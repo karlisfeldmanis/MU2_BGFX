@@ -808,6 +808,7 @@ int Realm::rebirthStrips() const {
     Satchel trial = me().bag;
     Wearer who = wearer();
     who.level = 1;
+    who.rebirths = hero.rebirths + 1;  // reborn, he meets every rune's level
     int moved = 0;
     if (!stripped(*tables_, who, hero.points, rulesOf(tables_->map).flight, &trial, &moved)) return -1;
     return moved;
@@ -837,6 +838,7 @@ int Realm::rebirth() {
     Satchel trial = me().bag;
     Wearer who = wearer();
     who.level = 1;
+    who.rebirths = hero.rebirths + 1;  // reborn, he meets every rune's level
     int moved = 0;
     if (!stripped(*tables_, who, hero.points, rulesOf(tables_->map).flight, &trial, &moved)) {
         refusal_ = "no room in the bag for the gear he could no longer wear";

@@ -3546,6 +3546,27 @@ void testPenetration(const content::Tables& tables) {
           "not a first-class elf's");
     check(!sim::settable(tables, carried, socketed, sim::Kin::DarkKnight, true), "nor a knight's");
     check(!sim::settable(tables, carried, ringed, sim::Kin::FairyElf, true), "nor in a ring");
+    // Its level (sim::kRuneHeroLevel): a Legendary asks 250 to be set, and the bow it is set in
+    // asks 250 to be worn; one rebirth meets both.
+    sim::Wearer muse;
+    muse.kin = sim::Kin::FairyElf;
+    muse.second = true;
+    muse.level = 249;
+    muse.points = {1000, 1000, 1000, 1000};
+    check(!sim::settable(tables, carried, socketed, muse), "a Legendary rune not below level 250");
+    muse.level = 250;
+    check(sim::settable(tables, carried, socketed, muse), "and set at 250");
+    sim::Held set = socketed;
+    set.powers[0] = volley;
+    check(sim::runeLevel(tables, set) == 250 && sim::runeLevel(tables, socketed) == 0,
+          "the bow asks its rune's level once set");
+    check(sim::fits(tables, muse, set), "worn at 250");
+    muse.level = 120;
+    check(!sim::fits(tables, muse, set) && sim::fits(tables, muse, socketed),
+          "not at 120, though the bare bow is");
+    muse.rebirths = 1;
+    check(sim::fits(tables, muse, set) && sim::settable(tables, carried, socketed, muse),
+          "a reborn elf meets it at 120");
 
     // One cast, set up: a tile where a monster stands in sight within six tiles and a second
     // stands fifteen degrees off it -- in a Volley's side lane and out of the straight one --
@@ -10219,7 +10240,7 @@ void testRunes(const content::Tables& tables) {
 
     {
         sim::Realm realm;
-        check(realm.raise(&tables, 11, 138, 124), "a realm raises for the sockets");
+        check(realm.raise(&tables, 11, 138, 124, sim::Kin::DarkKnight, sim::kMaximumLevel), "a realm raises for the sockets");
         const int sword = realm.give(serpent, -1, 0, -1, false, 0, 0, 3);
         const uint8_t one[3] = {storm, 0, 0}, two[3] = {meteor, 0, 0};
         const int first = realm.give(rune, -1, 0, 1, false, 0, 0, 0, one);
@@ -10244,7 +10265,7 @@ void testRunes(const content::Tables& tables) {
     // 2026-10-12's rule): set in a dropped sword, the sword stays free.
     {
         sim::Realm realm;
-        check(realm.raise(&tables, 11, 138, 124), "a realm raises for a bound rune");
+        check(realm.raise(&tables, 11, 138, 124, sim::Kin::DarkKnight, sim::kMaximumLevel), "a realm raises for a bound rune");
         const int sword = realm.give(serpent, -1, 0, -1, false, 0, 0, 2);
         const uint8_t one[3] = {storm, 0, 0}, two[3] = {meteor, 0, 0};
         const int found = realm.give(rune, -1, 0, 1, false, 0, 0, 0, one);

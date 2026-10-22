@@ -495,7 +495,9 @@ struct Wearer {
     int maxHealth = 0, maxMana = 0;
     // Whether he stands in a Blood Castle: where a plain Archangel weapon is the statue's quest
     // item and carded as one (archangelQuestItem).
-    bool inCastle = false;
+    bool inCastle = false;    // How many times he is reborn (Body::rebirths): once is enough to meet every rune's level
+    // (runeLevelFor).
+    int rebirths = 0;
 };
 // Whether this character may wear it at all: his class, and every requirement met.
 bool fits(const content::Tables& tables, const Wearer& who, const Held& what);
@@ -1043,6 +1045,22 @@ int freeSocket(const Held& thing);
 // with a free socket, of a kind the power's group takes, and a class in that group.
 bool settable(const content::Tables& tables, const Held& jewel, const Held& target, Kin kin,
               bool second);
+// The hero level each rune rarity asks, in Rarity's order: Rare 80, Epic 150, Legendary 250,
+// Common 20, Ancient 380 (the user, 2026-10-22: "we need to add level requirments for runes",
+// then "Much higher"). A rune asks it to be set, and a thing asks the highest of its set runes'
+// over its own to be worn -- Diablo II's rule, so a rune's level cannot be traded around in a
+// socket. A hero reborn once has met every one (the user picked it: the soul keeps what it
+// earned). Gear worn when the rule came stays worn and working: nothing re-checks worn gear
+// until it comes off (the user, 2026-10-22). invention.
+constexpr int kRuneHeroLevel[kRarities] = {80, 150, 250, 20, 380};
+// The level `what`'s runes ask: a Rune of Creation's own power's, or the highest set in a
+// socketed thing's. 0 for none.
+int runeLevel(const content::Tables& tables, const Held& what);
+// What they ask of `who`: runeLevel, and nothing once he is reborn.
+int runeLevelFor(const content::Tables& tables, const Wearer& who, const Held& what);
+// settable for this hero, his level against the rune's too.
+bool settable(const content::Tables& tables, const Held& jewel, const Held& target,
+              const Wearer& who);
 
 // **Stormcall**, the Dark Knight's first power: a swing that lands has this chance to call
 // lightning down on another monster within `kStormcallReach` tiles of him, which takes his
