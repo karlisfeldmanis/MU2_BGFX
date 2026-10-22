@@ -1057,7 +1057,11 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 carries.rows.push_back(line);
             }
             carries.rows.push_back(stat("Rarity", sim::rarityName(power->rarity), rarityTone(power->rarity)));
-            carries.rows.push_back(stat("Class", everyone ? "Every class" : classes, Tone::White));
+            // Red when the holder's class cannot take it: the realm reads a worn power only
+            // through `takenBy` (Realm's redress), so it would sit in his gear doing nothing.
+            const bool mine = power->takenBy(who.kin, who.second);
+            carries.rows.push_back(stat("Class", everyone ? "Every class" : classes,
+                                        mine ? Tone::White : Tone::Red));
             // **Which equipment it goes in** (the user, 2026-10-05: 'we need to show on rune
             // tooltips for which equipment slot is usable'), as few words as say it.
             constexpr uint8_t kAll =
