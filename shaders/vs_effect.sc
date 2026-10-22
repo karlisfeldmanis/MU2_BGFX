@@ -15,6 +15,7 @@ void main()
 {
 	v_texcoord0 = a_texcoord0;
 	v_colour = a_color0;
-	v_material = vec4(a_texcoord1.xy, 0.0, 0.0);
+	// z: the view depth, which a soft sprite measures against the prepass (fs_effect_body.sh).
+	v_material = vec4(a_texcoord1.xy, -mul(u_view, vec4(a_position, 1.0)).z, 0.0);
 	gl_Position = mul(u_modelViewProj, vec4(a_position, 1.0));
 }

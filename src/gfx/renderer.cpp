@@ -1316,6 +1316,10 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     // No clear at all: the shade pass's colour and the prepass's depth are both wanted.
     bgfx::setViewClear(ViewTransparent, 0, 0, 1.0f, 0);
     effects_.setFlameStrength(lighting.flameStrength);
+    // A soft sprite's depth is the prepass's, read as the SSAO reads it (one sample when it is
+    // multisampled, the resolve on Metal).
+    effects_.setPrepass(prepassColour_, msaa_ > 1 && bgfx::getRendererType() != bgfx::RendererType::Metal,
+                        float(width_), float(height_));
     effects_.draw(ViewTransparent, view, proj, camera.position);
     drawCount_ += effects_.lastDrawCount();
 

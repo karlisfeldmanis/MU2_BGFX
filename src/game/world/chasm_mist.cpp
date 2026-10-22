@@ -22,6 +22,9 @@ constexpr float kRiseLife = 300.0f, kRiseLight = 0.04f;
 constexpr float kHoverLight = 0.06f, kShadeLight = 0.2f;
 constexpr float kAfterSeen = 50.0f;    // frames a Hover or Shade outlives its box's sight
 constexpr float kDegrees = 0.0174533f;
+// Ours: metres over which a puff thins out as it nears the lip or a cliff behind it, where MU's
+// depth test cut it on a hard line (gfx::Sprite::soft).
+constexpr float kSoft = 2.0f;
 
 }  // namespace
 
@@ -179,6 +182,7 @@ void ChasmMist::gather(gfx::Effects& effects) const {
         sprite.spin = spin;
         sprite.sheet = sheet_;
         sprite.blend = blend;
+        sprite.soft = kSoft;
         effects.add(sprite);
     }
 }

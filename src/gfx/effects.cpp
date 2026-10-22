@@ -68,6 +68,11 @@ bool Effects::init(const std::string& shaderDir, uint32_t capacity) {
         sSheet_[i] = bgfx::createUniform(kSheetNames[i], bgfx::UniformType::Sampler);
     }
     uFlame_ = bgfx::createUniform("u_flame", bgfx::UniformType::Vec4);
+    // The multisampled twin, for a soft sprite over a multisampled prepass (not on Metal,
+    // which binds the resolved texture whatever it is asked; Renderer says why).
+    programMs_ = loadProgramFiles(shaderDir, "vs_effect", "fs_effect_ms");
+    sPrepass_ = bgfx::createUniform("s_prepass", bgfx::UniformType::Sampler);
+    uPrepassSize_ = bgfx::createUniform("u_prepassSize", bgfx::UniformType::Vec4);
     layout_.begin()
         .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
         .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
@@ -95,6 +100,12 @@ void Effects::shutdown() {
         u = BGFX_INVALID_HANDLE;
     }
     if (bgfx::isValid(uFlame_)) bgfx::destroy(uFlame_);
+    if (bgfx::isValid(programMs_)) bgfx::destroy(programMs_);
+    if (bgfx::isValid(sPrepass_)) bgfx::destroy(sPrepass_);
+    if (bgfx::isValid(uPrepassSize_)) bgfx::destroy(uPrepassSize_);
+    programMs_ = BGFX_INVALID_HANDLE;
+    sPrepass_ = BGFX_INVALID_HANDLE;
+    uPrepassSize_ = BGFX_INVALID_HANDLE;
     uFlame_ = BGFX_INVALID_HANDLE;
     program_ = BGFX_INVALID_HANDLE;
     sprites_.clear();
@@ -265,7 +276,9 @@ void Effects::draw(uint16_t view, const float* viewMtx, const float* projMtx, co
                                  (up[2] * cosine - right[2] * sine) * s.halfHeight};
 
             const uint32_t abgr = packAbgr(s.colour);
-            const float kind = kindOf(s.blend);
+            // The soft reach rides above the kind, in eighths (fs_effect_body.sh).
+            const float kind = kindOf(s.blend) +
+                               8.0f * std::min(std::round(std::max(s.soft, 0.0f) * 4.0f), 31.0f);
             const float slot = float(slots_[n]);
 
             const float corners[4][2] = {{-1.0f, -1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f}, {-1.0f, 1.0f}};
@@ -324,7 +337,11 @@ void Effects::draw(uint16_t view, const float* viewMtx, const float* projMtx, co
             bgfx::setTexture(kSheetStages[i], sSheet_[i], run.bound[i < run.boundCount ? i : 0]);
         }
         bgfx::setUniform(uFlame_, flame_);
-        bgfx::submit(view, program_);
+        if (bgfx::isValid(prepass_)) {
+            bgfx::setTexture(6, sPrepass_, prepass_);
+            bgfx::setUniform(uPrepassSize_, prepassSize_);
+        }
+        bgfx::submit(view, prepassMs_ && bgfx::isValid(programMs_) ? programMs_ : program_);
         ++drawCount_;
         runStart = run.end;
     }

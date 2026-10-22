@@ -63,6 +63,9 @@ struct Sprite {
     // depth sort reads. Used for what lies on the ground -- the click marker, cut into a grid
     // that follows the land -- and for a mesh drawn as triangles, which is a quad whose last
     // two corners are the same point. The size, spin and UV rectangle above are ignored.
+    // Metres over which it thins out as it nears the world behind it (fs_effect_body.sh's
+    // softness), in quarter metres up to 7.75; 0 is MU's hard cut, as every sprite had before.
+    float soft = 0.0f;
     bool placed = false;
     float corner[4][3] = {};
     float cornerUv[4][2] = {};
@@ -102,6 +105,14 @@ public:
     // How bright a flame at full heat is, in HDR. fs_flame's u_flame.x; the renderer sets it
     // from the lighting sheet before each draw.
     void setFlameStrength(float strength) { flame_[0] = strength; }
+    // The prepass a soft sprite reads its depth from, this frame: its texture, whether it is
+    // read one sample at a time, and its size in pixels.
+    void setPrepass(bgfx::TextureHandle texture, bool multisampled, float width, float height) {
+        prepass_ = texture;
+        prepassMs_ = multisampled;
+        prepassSize_[0] = width;
+        prepassSize_[1] = height;
+    }
 
     uint32_t highWater() const { return highWater_; }
     uint32_t refused() const { return refused_; }
@@ -128,6 +139,12 @@ private:
     bgfx::ProgramHandle program_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uFlame_ = BGFX_INVALID_HANDLE;
     float flame_[4] = {6.0f, 0.0f, 0.0f, 0.0f};
+    bgfx::ProgramHandle programMs_ = BGFX_INVALID_HANDLE;  // fs_effect_ms
+    bgfx::UniformHandle sPrepass_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uPrepassSize_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle prepass_ = BGFX_INVALID_HANDLE;
+    bool prepassMs_ = false;
+    float prepassSize_[4] = {1.0f, 1.0f, 0.0f, 0.0f};
     bgfx::UniformHandle sSheet_[kSheetSlots] = {BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE,
                                                 BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE,
                                                 BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE,
