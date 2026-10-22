@@ -989,6 +989,11 @@ void Play::update(double seconds) {
                         core::logf("channel: %s plays clip %d, %.3f s long", row->name, row->clip,
                                    double(caster->figure.length()));
                         caster->casting = lasts;
+                        // Which skill it is, so the weapon's streak knows a spell lays none: left
+                        // as the last swing's, a staff streaked its plus's colour through every
+                        // Lightning (the user, 2026-10-22: "why there is this slash ornage effect
+                        // to weapoons?").
+                        caster->swingSkill = happening.a;
                         // Once over the channel, however short its row makes it (Lightning's
                         // was the clip's own 2.08 s until kSpellQuicken, 2026-10-03).
                         caster->swingPace = lasts > 0.01f ? std::max(1.0f, caster->figure.length() / lasts)
