@@ -1,0 +1,42 @@
+{
+  "item": "Object73",
+  "mu_name": "Object73",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 72,
+  "placements": 27,
+  "profile": "world",
+  "sheets": {
+    "stone_01": "kr_stone_01.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "stone_01": "rock"
+  },
+  "material_note": "stone_01: stone: rock.",
+  "why_this_one": "A small rock heap, 27 of them. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 87,
+      "area": 87351.3,
+      "along": [
+        -79.5,
+        77.6
+      ],
+      "mu_uv": [
+        -0.688,
+        -0.123,
+        1.737,
+        1.432
+      ],
+      "bake_uv": [
+        -0.688,
+        -0.123,
+        1.737,
+        1.432
+      ]
+    }
+  ]
+}

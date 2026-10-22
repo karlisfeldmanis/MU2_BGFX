@@ -1,0 +1,152 @@
+{
+  "item": "Object85",
+  "mu_name": "Object85",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 84,
+  "placements": 34,
+  "profile": "world",
+  "sheets": {
+    "mingtorch": "kr_mingtorch.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "mingtorch": "flagstone"
+  },
+  "material_note": "mingtorch: a carved stone torch stand with glowing coals: flagstone.",
+  "why_this_one": "A torch stand, 34 of them; its fire is a hidden emitter beside it (the effects batch). The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 22,
+      "area": 11659.1,
+      "along": [
+        -50.5,
+        48.9
+      ],
+      "mu_uv": [
+        0.351,
+        0.003,
+        0.751,
+        0.994
+      ],
+      "bake_uv": [
+        0.062,
+        0.008,
+        0.682,
+        0.681
+      ]
+    },
+    {
+      "island": 1,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 10931.5,
+      "along": [
+        -11.0,
+        11.0
+      ],
+      "mu_uv": [
+        0.751,
+        0.013,
+        0.99,
+        0.986
+      ],
+      "bake_uv": [
+        0.13,
+        0.008,
+        0.737,
+        0.964
+      ]
+    },
+    {
+      "island": 2,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 10931.5,
+      "along": [
+        -92.4,
+        92.4
+      ],
+      "mu_uv": [
+        0.751,
+        0.013,
+        0.99,
+        0.986
+      ],
+      "bake_uv": [
+        0.184,
+        0.008,
+        0.95,
+        0.971
+      ]
+    },
+    {
+      "island": 3,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 10931.5,
+      "along": [
+        -11.0,
+        11.0
+      ],
+      "mu_uv": [
+        0.751,
+        0.013,
+        0.99,
+        0.986
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.95,
+        0.986
+      ]
+    },
+    {
+      "island": 4,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 10931.5,
+      "along": [
+        -92.4,
+        92.4
+      ],
+      "mu_uv": [
+        0.751,
+        0.013,
+        0.99,
+        0.986
+      ],
+      "bake_uv": [
+        0.337,
+        0.058,
+        0.878,
+        0.993
+      ]
+    },
+    {
+      "island": 5,
+      "material": "flagstone",
+      "triangles": 40,
+      "area": 8802.0,
+      "along": [
+        -42.5,
+        40.9
+      ],
+      "mu_uv": [
+        0.012,
+        -0.002,
+        0.512,
+        0.997
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.479,
+        0.462
+      ]
+    }
+  ]
+}

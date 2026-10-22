@@ -1,0 +1,42 @@
+{
+  "item": "Object41",
+  "mu_name": "Object41",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 40,
+  "placements": 13,
+  "profile": "world",
+  "sheets": {
+    "cho_obj03": "kr_cho_obj03.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "cho_obj03": "plank"
+  },
+  "material_note": "cho_obj03: framed boards, brick and a mossy post: plank.",
+  "why_this_one": "Arched roots, 13 of them, animated. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plank",
+      "triangles": 98,
+      "area": 18940.6,
+      "along": [
+        -16.3,
+        16.3
+      ],
+      "mu_uv": [
+        0.51,
+        0.0,
+        1.0,
+        0.5
+      ],
+      "bake_uv": [
+        0.51,
+        0.0,
+        1.0,
+        0.5
+      ]
+    }
+  ]
+}

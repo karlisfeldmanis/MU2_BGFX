@@ -1,0 +1,42 @@
+{
+  "item": "Object75",
+  "mu_name": "Object75",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 74,
+  "placements": 47,
+  "profile": "world",
+  "sheets": {
+    "wall_01": "kr_wall_01.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "wall_01": "rock"
+  },
+  "material_note": "wall_01: a mossy earth bank: rock.",
+  "why_this_one": "A 10 m earth bank, 47 of them, flat at scale 0.26-0.67. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 106,
+      "area": 782294.6,
+      "along": [
+        -294.4,
+        218.5
+      ],
+      "mu_uv": [
+        -0.879,
+        0.214,
+        1.199,
+        2.015
+      ],
+      "bake_uv": [
+        -0.879,
+        0.214,
+        1.199,
+        2.015
+      ]
+    }
+  ]
+}

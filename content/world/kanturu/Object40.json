@@ -1,0 +1,120 @@
+{
+  "item": "Object40",
+  "mu_name": "Object40",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 39,
+  "placements": 1,
+  "profile": "world",
+  "sheets": {
+    "song_k202w2": "kr_song_k202w2.png",
+    "song_k204a2": "kr_song_k204a2.png",
+    "song_k202w1": "kr_song_k202w1.png",
+    "song_k0t1": "kr_song_k0t1.png",
+    "song_k0t2": "kr_song_k0t2.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k202w2": "flagstone",
+    "song_k204a2": "wrought_iron",
+    "song_k202w1": "wrought_iron",
+    "song_k0t1": "timber",
+    "song_k0t2": "timber"
+  },
+  "material_note": "song_k202w2: a carved stone panel with a glyph band: flagstone. song_k204a2: a chain, cut out: wrought_iron. song_k202w1: an iron wheel in a riveted, carved frame: wrought_iron. song_k0t1: a rope-bound log wall: timber. song_k0t2: a log's end grain: timber.",
+  "cutout": [
+    "song_k204a2"
+  ],
+  "cutout_from": "decode_texture found a real alpha channel cutting the sheet.",
+  "why_this_one": "Chains, one, swaying. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "timber",
+      "triangles": 16,
+      "area": 60784.8,
+      "along": [
+        -33.6,
+        21.3
+      ],
+      "mu_uv": [
+        -1.144,
+        -0.667,
+        2.761,
+        1.067
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.469
+      ]
+    },
+    {
+      "island": 1,
+      "material": "wrought_iron",
+      "triangles": 13,
+      "area": 20312.9,
+      "along": [
+        -16.0,
+        21.3
+      ],
+      "mu_uv": [
+        -0.116,
+        0.0,
+        0.999,
+        0.421
+      ],
+      "bake_uv": [
+        0.646,
+        0.312,
+        0.688,
+        0.465
+      ]
+    },
+    {
+      "island": 2,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 206746.8,
+      "along": [
+        -54.9,
+        54.5
+      ],
+      "mu_uv": [
+        0.013,
+        0.002,
+        0.779,
+        1.002
+      ],
+      "bake_uv": [
+        0.004,
+        0.705,
+        0.473,
+        0.943
+      ]
+    },
+    {
+      "island": 3,
+      "material": "wrought_iron",
+      "triangles": 8,
+      "area": 11951.7,
+      "along": [
+        -16.0,
+        31.7
+      ],
+      "mu_uv": [
+        -0.928,
+        0.328,
+        2.535,
+        1.118
+      ],
+      "bake_uv": [
+        0.004,
+        0.477,
+        0.971,
+        0.697
+      ]
+    }
+  ]
+}
