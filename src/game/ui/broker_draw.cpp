@@ -187,6 +187,10 @@ void Broker::rebuild(Play& play, Stage* stage) {
         const float ix = well.right() + 12.0f, iw = block.right() - 8.0f - ix;
         constexpr float kFace = 14.0f;  // a class's face before the class line
         constexpr float kStep = 13.0f;
+        // A faces line stands this much clear of the lines above and below it: the 14-unit face in
+        // a 13-unit line touched "Excellent one-handed weapon" over it and "Damage" under it (the
+        // user, 2026-10-22: "overlaping text").
+        constexpr float kFaceRoom = 3.0f;
         // The name at 16, at 13.5 when that is too wide, and on two lines at 13.5 when even that
         // runs past the block's edge ("Rune of Greater Wellspring", the user, 2026-10-22:
         // "overlaping text on market").
@@ -211,11 +215,12 @@ void Broker::rebuild(Play& play, Stage* stage) {
         constexpr float kNameStep = 15.0f;  // a second line of the name
         const float nameDrop = float(named.size() - 1) * kNameStep;
         const float kHead = 30.0f + nameDrop;  // the name and its kind, then a gap
-        // How many lines stand beside the picture; the rest run under the block at its width.
-        const int fit = std::max(0, int((pic - kHead - 4.0f) / kStep));
+        // How tall the lines beside the picture may stand; the rest run under the block at its width.
+        const float room = pic - kHead - 4.0f;
         std::vector<Said> said;
         int beside = 0;  // how many of `said` stand beside the picture
-        bool under = fit == 0;
+        float besideTall = 0.0f;  // and how tall they stand
+        bool under = room < kStep;
         // A line of words wrapped to where it will stand: the column beside the picture while it
         // ends there, the block's full width under it once it would not (the narrow column's wrap
         // split "Increase 32% of / Damage" across the block's foot, the user, 2026-10-22).
@@ -238,17 +243,18 @@ void Broker::rebuild(Play& play, Stage* stage) {
         const auto add = [&](const std::string& left, uint32_t leftInk, const std::string& value, uint32_t valueInk,
                              std::vector<const gfx::Art*> faces = {}) {
             const float lead = float(faces.size()) * (kFace + 3.0f);
+            const float extra = faces.empty() ? 0.0f : 2.0f * kFaceRoom;
             std::vector<std::string> lines;
             if (!value.empty() || left.empty()) lines.push_back(left);
             if (!under) {
                 if (lines.empty()) lines = wrapped(left, iw - lead);
-                if (beside + int(lines.size()) > fit) under = true, lines.clear();
+                if (besideTall + float(lines.size()) * kStep + extra > room) under = true, lines.clear();
             }
             if (lines.empty()) lines = wrapped(left, aw - lead);
             for (const std::string& line : lines) {
+                if (!under) ++beside, besideTall += kStep + (faces.empty() ? 0.0f : extra);
                 said.push_back({line, value, leftInk, valueInk, faces});
                 faces.clear();
-                if (!under) ++beside;
             }
         };
         // Whose class it is, first: under a scroll's long words it ran off the card's foot (the
@@ -273,7 +279,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
             const uint32_t namesInk = tip::colourOf(sheet.who[0].tone);
             const float facesWide = float(faces.size()) * (kFace + 3.0f);
             if (!faces.empty() && facesWide + controls::labelWidth(S(kText), names) / k > iw) {
-                said.push_back({"", "", namesInk, 0, faces});
+                add("", namesInk, "", 0, faces);
                 add(names, namesInk, "", 0);
             } else {
                 add(names, namesInk, "", 0, faces);
@@ -305,7 +311,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
         }
         if (!sheet.note.empty() && sheet.noteTone != tip::Tone::Gray) add(sheet.note, tip::colourOf(sheet.noteTone), "", 0);
         if (stop <= ay) said.clear(), beside = 0;
-        const float tall = kHead + float(beside) * kStep + (beside > 0 ? 4.0f : 0.0f);
+        const float tall = kHead + besideTall + (beside > 0 ? 4.0f : 0.0f);
         const float top = ay + 4.0f + std::max(0.0f, (pic - tall) * 0.5f);
         for (size_t i = 0; i < named.size(); ++i) text(ix, top + 13.0f + float(i) * kNameStep, nameSize, ink, named[i]);
         {
@@ -328,6 +334,8 @@ void Broker::rebuild(Play& play, Stage* stage) {
             if (low && ly > stop) break;
             float lx = low ? ax : ix;
             const float rx = low ? block.right() : ix + iw;
+            const bool faced = !said[size_t(i)].faces.empty();
+            if (faced) ly += kFaceRoom;
             for (const gfx::Art* face : said[size_t(i)].faces) {
                 const Box disc{lx, ly - kFace + 3.0f, kFace, kFace};
                 canvas_.rect(P(disc), style::kVoid);
@@ -337,7 +345,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
             }
             text(lx, ly, kText, said[size_t(i)].leftInk, said[size_t(i)].left);
             if (!said[size_t(i)].value.empty()) right(rx, ly, kText, said[size_t(i)].valueInk, said[size_t(i)].value);
-            ly += kStep;
+            ly += kStep + (faced ? kFaceRoom : 0.0f);
         }
         return int(said.size()) > beside ? ly + 4.0f : block.bottom() + 16.0f;
     };
