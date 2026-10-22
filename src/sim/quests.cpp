@@ -1072,19 +1072,19 @@ QuestRow tersiaSkyDoor() {
     row.paid[row.paidCount++] = {.item = "Gem05", .plus = 6, .kin = elf, .firstOnly = true};
     // **An element rune for the talents' Attunements** (the reward audit, 2026-10-22): Wind
     // counts Tempest, Fire Inferno, Storm Thunder and Tempest, Frost and Venom Glacier and Venom,
-    // and no quest paid a Tempest or a Venom. The knight's is his Whirlwind's Tempest; the wizard
-    // and the elf choose one for the column they build. The Magic Gladiator is paid by his path.
+    // and no quest paid a Tempest or a Venom. Each class is paid the ones it had from no quest:
+    // the knight's and the elf's Tempest (Whirlwind, Penetration), the wizard's Tempest and Venom
+    // (Kantur's Legion pays him Inferno and Thunder). A choice of five was the first try, and it
+    // read clumsy at the hand-in (the user, 2026-10-22: "that choise of runes looked clumsy").
+    // The Magic Gladiator is paid by his path.
     row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Tempest),
                                  .firstOnly = true};
-    for (const Power one : {Power::Inferno, Power::Thunder, Power::Tempest, Power::Glacier,
-                            Power::Venom}) {
-        row.choices[row.choiceCount++] = {.item = "Jewel22", .kin = wizard,
-                                          .power = uint8_t(one), .firstOnly = true};
-    }
-    for (const Power one : {Power::Tempest, Power::Glacier}) {
-        row.choices[row.choiceCount++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(one),
-                                          .firstOnly = true};
-    }
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Tempest),
+                                 .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Venom),
+                                 .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Tempest),
+                                 .firstOnly = true};
     row.voice = "tersia_8";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }

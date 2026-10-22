@@ -13883,7 +13883,7 @@ void testQuestLadder(const content::Tables& tables) {
     }
     checkEqual(crow, 4, "the Magic Gladiator's Storm Crow, whole over Icarus");
     // The talents' Attunements count element runes (the reward audit, 2026-10-22): the Sky Door
-    // pays the knight a Tempest and gives the wizard and the elf a choice of them, first clear.
+    // pays each class the ones no other quest does, first clear, and asks no choice.
     const sim::QuestRow& sky = sim::questAt(sim::kSkyDoor);
     const auto offered = [&](int kin, sim::Power power) {
         for (int i = 0; i < sky.choiceCount; ++i) {
@@ -13896,10 +13896,10 @@ void testQuestLadder(const content::Tables& tables) {
     };
     check(offered(int(sim::Kin::DarkKnight), sim::Power::Tempest), "the knight's Tempest");
     check(offered(int(sim::Kin::DarkWizard), sim::Power::Venom) &&
-              offered(int(sim::Kin::DarkWizard), sim::Power::Inferno),
-          "the wizard's choice holds Venom and Inferno");
-    check(offered(int(sim::Kin::FairyElf), sim::Power::Tempest), "the elf's holds Tempest");
-    check(sky.choiceCount <= sim::kQuestChoices, "and fits the choices");
+              offered(int(sim::Kin::DarkWizard), sim::Power::Tempest),
+          "the wizard's Tempest and Venom");
+    check(offered(int(sim::Kin::FairyElf), sim::Power::Tempest), "the elf's Tempest");
+    checkEqual(sky.choiceCount, 0, "and no choice to make");
     // Kantur's Captain pays each second class its own shield (82870a67).
     const sim::QuestRow& captain = sim::questAt(sim::kKantursCaptain);
     int shields = 0;

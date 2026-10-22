@@ -30,9 +30,9 @@ the rules below. Where this disagrees with an older quest doc's reward section, 
    them **every clear**: 2 Angels (Devin), 2 Imps (the Pit), 1 Uniria (Tersia's first floor).
 8. Every quest still pays 3 Firecrackers, the class change 10.
 9. **The talents' Attunements get their runes.** Wind counts Tempest, Fire Inferno, Storm Thunder
-   and Tempest, Frost and Venom Glacier and Venom. The Sky Door pays the knight a Tempest and lets
-   the wizard (Inferno, Thunder, Tempest, Glacier, Venom) and the elf (Tempest, Glacier) choose
-   one; Kantur's Legion pays the wizard Inferno and Thunder and the elf Glacier. The rest drop.
+   and Tempest, Frost and Venom Glacier and Venom. The Sky Door pays the knight and the elf a
+   Tempest and the wizard a Tempest and a Venom (a choice of five read clumsy at the hand-in);
+   Kantur's Legion pays the wizard Inferno and Thunder and the elf Glacier. The rest drop.
 10. **A rebirth replays the experience, not the loot.** The first hand-in of a quest after each
    rebirth pays its first clear's experience again (`sim::questReborn`, `QuestProgress::life`,
    kept layout 14); gear and runes stay the first clear's.
@@ -51,7 +51,7 @@ the rules below. Where this disagrees with an older quest doc's reward section, 
 | V | Tersia, floors 6-7 | 120-160 | Balrog: Elf Chaos Nature Bow (3 sockets); DK and DW 2 Bless + 2 Soul instead | -- | LT6: Meteor / Spirit Plague / Scatter Volley; Balrog: **Wrath** + Stormcall | LT6 Death Stab, Penetration; Balrog: Ring of Wisdom (legendary), Rageful Blow, Inferno, Summon +5 (Bali), Chaos, Box of Kundun +2. No Dinorant (2026-10-21: the machine makes one) |
 | VI | the Keeper (Tarkan): Kantur's Legion | 100-160 | DK Sword of Destruction +7 or Crystal Sword +7, DW Staff of Resurrection +7, Elf Saint Crossbow (3 sockets; first class only) | -- | DK Immolate + Ice + **Twin Guard**; DW Inferno + Thunder; Elf **Greater Barrage** + Glacier | Pendant of Fury (legendary); Life, Chaos, Feather, Box of Kundun +3 every clear |
 | VI | the Keeper: Kantur's Captain (2nd class and MG only) | 200+ | BK Knight Blade +7 or Daybreak +7, SM Staff of Kundun, ME **Stinger Bow**, MG Dark Reign Blade +7 (3 sockets) | **The 2nd class's shield** (2 sockets): Crimson Glory, Guardian Shield, Frost Barrier, Salamander Shield | -- | Life, Feather |
-| VII | Tersia, Icarus: Sky Door, Phoenix | 160-200 | Phoenix: DK Dark Breaker, DW Dragon Soul Staff, Elf Celestial Bow (3 sockets, 2nd class) | **Set C (2nd class)**: Dark Phoenix, Grand Soul, Divine. Sky Door gloves+boots, Phoenix helm+pants. **Magic Gladiator: Storm Crow** gloves, boots, pants, armour | Sky Door: Greater Ascendance, **an element rune** (DK Tempest; DW and Elf a choice); Phoenix: Evil Spirit, Bulwark (DK, with the Dark Breaker) | Sky Door: Cometfall (SM), Summon +6 (Alquamos); Feathers, Life, Chaos, Box of Kundun +3 |
+| VII | Tersia, Icarus: Sky Door, Phoenix | 160-200 | Phoenix: DK Dark Breaker, DW Dragon Soul Staff, Elf Celestial Bow (3 sockets, 2nd class) | **Set C (2nd class)**: Dark Phoenix, Grand Soul, Divine. Sky Door gloves+boots, Phoenix helm+pants. **Magic Gladiator: Storm Crow** gloves, boots, pants, armour | Sky Door: Greater Ascendance, **element runes** (DK and Elf Tempest; DW Tempest + Venom); Phoenix: Evil Spirit, Bulwark (DK, with the Dark Breaker) | Sky Door: Cometfall (SM), Summon +6 (Alquamos); Feathers, Life, Chaos, Box of Kundun +3 |
 | VIII | Sevina | 200 | -- | the treasure: Set C's armour | trial: Second Wind. Treasure: **Whirlwind / Pyroblaster / Piercing Volley** | DW: Grand Soul Shield; 10 Firecrackers each part |
 | IX | Peia, the Seed Master (Aida) | 300+ | -- | -- | Greater Wellspring | 12M experience first, 3M a repeat; Life, Chaos, 2 Bless, 2 Soul, Box of Kundun +3 |
 
@@ -71,7 +71,7 @@ Wisp). At Icarus he is paid his own Storm Crow set (`QuestItem::kin` = Magic Gla
 | DW Fire Ball | -- | Scorch (Atlans) | Pyroblaster (Soul of Wizard, 2nd) |
 | Shieldless guard | -- | Buckler (Lirien) | Twin Guard (Tarkan, two matched swords), Bulwark (Phoenix, with the Dark Breaker, 2nd) |
 | DK Bleed | Graze (Marlon) | -- | Lacerate, Rend, Hemorrhage drop |
-| Elements (Attunement) | -- | -- | Rare: Inferno, Thunder (DW, Tarkan), Glacier (Elf, Tarkan); the Sky Door's Tempest (DK) or choice (DW, Elf) |
+| Elements (Attunement) | -- | -- | Rare: Inferno, Thunder (DW, Tarkan), Glacier (Elf, Tarkan); Tempest (all, Sky Door), Venom (DW, Sky Door) |
 | Elf Frost Arrow | Chill (Peia) | -- | Frost Arrow (Atlans) |
 | Elf Multi-Shot | -- | Barrage (Devin), Plague Arrows (Atlans) | Greater Barrage (Tarkan) |
 | Elf Penetration | -- | Scatter Volley (LT6) | Piercing Volley (Tear of Elf, 2nd) |
