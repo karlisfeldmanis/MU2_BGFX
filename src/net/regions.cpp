@@ -21,8 +21,6 @@ const std::vector<Region>& regions() {
         {"eu-central", "Central Europe", "Nuremberg", "178.104.232.133"},
         // Vultr São Paulo (server/README.md, the South America box).
         {"sa-east", "South America", "Sao Paulo", "216.238.127.33"},  // no ã in the launcher's face
-        // Hetzner Singapore (server/README.md, the Southeast Asia box).
-        {"ap-southeast", "Southeast Asia", "Singapore", "5.223.83.101"},
     };
     return all;
 }

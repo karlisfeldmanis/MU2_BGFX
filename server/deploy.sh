@@ -27,7 +27,7 @@
 # from the working tree as the cook last wrote them.
 #
 # MU2_HOST picks the box: hetzner by default (North Europe), root@216.238.127.33 for South America
-# (Vultr, São Paulo), singapore (root@5.223.83.101) for Southeast Asia, germany (root@178.104.232.133,
+# (Vultr, São Paulo), germany (root@178.104.232.133,
 # Nuremberg) for Central Europe; their accounts tunnels in server/README.md.
 set -e
 cd "$(dirname "$0")/.."
