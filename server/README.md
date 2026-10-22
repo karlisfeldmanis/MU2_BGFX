@@ -63,6 +63,23 @@ of tunnel (its own key `/root/.ssh/mu2_accounts`, "mu2-singapore accounts tunnel
 | deploy | `MU2_HOST=singapore server/deploy.sh` |
 | settings | `/etc/default/mu2-server`: MU2_REGION=Southeast Asia |
 
+## The East Asia box
+
+Rented 2026-10-22 for China and Vietnam (Waerd, China Unicom, Henan, 331 ms and AM2020, Viettel,
+200 ms on Central Europe), after Singapore closed. Tokyo over Seoul (Webzen's home) and Singapore
+(China's routes to it are poor). Set up as the South America box is: its own world and
+`characters.db`, the accounts and the market through its own tunnel key ("mu2-tokyo accounts
+tunnel" in Helsinki's `authorized_keys`, limited the same way).
+
+| | |
+|---|---|
+| name | `mu2-tokyo`, Vultr Tokyo, no backups |
+| address | 45.76.195.120 |
+| login | `ssh root@45.76.195.120` (`~/.ssh/id_ed25519`, put in by `ssh-copy-id`); passwords off (`/etc/ssh/sshd_config.d/00-keys-only.conf`) |
+| system | Ubuntu 26.10, x86_64, 1 vCPU, 950 MB, 2.3 GB swap (`/swapfile`) |
+| deploy | `MU2_HOST=root@45.76.195.120 server/deploy.sh` |
+| settings | `/etc/default/mu2-server`: MU2_REGION=East Asia, and the market's key and address as São Paulo's |
+
 ## The Central Europe box
 
 The fourth region, rented 2026-10-20 for the Balkans and the south (Greece ~55-70 ms from

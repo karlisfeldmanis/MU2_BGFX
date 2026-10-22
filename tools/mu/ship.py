@@ -57,6 +57,7 @@ BOXES = [
     ("North Europe", "hetzner", ""),
     ("Central Europe", "germany", "MU2_HOST=germany "),
     ("South America", "root@216.238.127.33", "MU2_HOST=root@216.238.127.33 "),
+    ("East Asia", "root@45.76.195.120", "MU2_HOST=root@45.76.195.120 "),
 ]
 CLIENTS = ("windows", "macos", "linux")
 LAUNCHERS = ("windows", "macos", "linux")

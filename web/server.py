@@ -165,7 +165,7 @@ DEFAULT_REGION = "North Europe"
 REGION_GONE_SECONDS = 600
 # The regions the front page shows, up or not (/api/status): the launcher's list, by name, with the
 # city of each one's server.
-REGIONS = (("North Europe", "Helsinki"), ("Central Europe", "Nuremberg"), ("South America", "São Paulo"))  # Southeast Asia (Singapore) closed 2026-10-22
+REGIONS = (("North Europe", "Helsinki"), ("Central Europe", "Nuremberg"), ("South America", "São Paulo"), ("East Asia", "Tokyo"))  # Southeast Asia (Singapore) closed 2026-10-22
 # A character's move to another region (transfers, docs/game/transfer.md), one way through:
 #   asked  the website took it; the server he leaves checks him and hands over his bytes -> out, or failed
 #   out    the website holds his bytes; that server marks him gone from its disk -> gone

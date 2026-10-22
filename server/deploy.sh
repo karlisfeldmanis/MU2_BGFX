@@ -28,7 +28,7 @@
 #
 # MU2_HOST picks the box: hetzner by default (North Europe), root@216.238.127.33 for South America
 # (Vultr, São Paulo), germany (root@178.104.232.133,
-# Nuremberg) for Central Europe; their accounts tunnels in server/README.md.
+# Nuremberg) for Central Europe, root@45.76.195.120 for East Asia (Vultr, Tokyo); their accounts tunnels in server/README.md.
 set -e
 cd "$(dirname "$0")/.."
 host=${MU2_HOST:-hetzner}   # ~/.ssh/config: root@37.27.158.226
