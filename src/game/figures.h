@@ -289,6 +289,9 @@ struct FigureBody {
     // `knife_gdf`, R Forearm, R UpperArm, `hand_bofdgne01`, L Forearm, L UpperArm. -1 where a
     // rig has none.
     int armBones[6] = {-1, -1, -1, -1, -1, -1};
+    // Bip01, the root at the pelvis: what a Kanturu set's puffs are thrown off (set_shine.h,
+    // MU's BoneTransform[0]). -1 where a rig has none.
+    int rootBone = -1;
     // What this figure stands in with its weapon put away. Inside a safe zone MU carries the
     // weapon on the back and stands in the UNARMED idle, and steps out of the zone with the
     // weapon drawn: the client's own rule, from RenderCharacterBackItem and the safe-zone

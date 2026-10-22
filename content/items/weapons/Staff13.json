@@ -51,19 +51,17 @@
     }
   },
   "material_overrides_note": "Gold serpent work: brass at 0.6, as the Dragon Shield; at brass's ceiling it blows out.",
-  "glow_note": "RenderPartObjectBody's arm (ZzzObject.cpp:7644-7666): mesh 0 solid, then again RENDER_TEXTURE | RENDER_BRIGHT, added, with BITMAP_CHROME_ENERGY (Effect/energy01.jpg, a red-violet burst) at the mesh's own UVs, U and V sliding WorldTime%2000*0.0002. Here the chrome pass below, sliding along U alone.",
+  "glow_note": "RenderPartObjectBody's arm (ZzzObject.cpp:7644-7666): mesh 0 solid, then again RENDER_TEXTURE | RENDER_BRIGHT, added, with BITMAP_CHROME_ENERGY (Effect/energy01.jpg, a red-violet burst) at the mesh's own UVs, U and V sliding WorldTime%2000*0.0002. Here the chrome pass below, held still at MU's middle.",
   "chrome": [
     {
       "slot": "cobraset_wand_s",
       "image": "energy01",
       "uv": "mesh",
       "where": "over",
-      "light": 0.35,
-      "scrolls_per_second": 0.2,
-      "axis": "u"
+      "light": 0.6
     }
   ],
-  "chrome_from": "The arm's second pass, at 0.35 where MU draws 1: at 0.6 the energy burst turned the whole staff hot pink at night in the studio (2026-10-22). pipeline/chrome_sheets.py.",
+  "chrome_from": "The arm's second pass at 0.6 for our bloom, held still. MU slides it only from -0.3 to +0.1 of the sheet and jumps back (WorldTime%2000*0.0002 - 0.3); a steady scroll wraps the whole sheet, and its pink core swept the shaft, which read hot pink at night (studio, 2026-10-22; a MU-style reference keeps the shaft violet). pipeline/chrome_sheets.py.",
   "rig_note": "export-rig --actions=all: ten bones, one action of one key; nothing moves, no rig kept. Held, MuMain's arm is ZzzCharacter.cpp:7178-7200: a pink light and shinies 170 units up from bone 0, the head, and an energy joint (fx/held_lights; the joint not thrown).",
   "islands": [
     {

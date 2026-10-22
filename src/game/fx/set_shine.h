@@ -25,9 +25,18 @@
 // it never takes a level-up's place.
 //
 // And from +9 a complete set glows at the arms (:10988): every frame a soft light on each hand's
-// grip, elbow and shoulder, flare01 at 1.3 in the boots' chrome colour at half. The knight's
-// boots' waterfalls are a later set's and not here. Presentation only: the set is read off his
-// worn pieces.
+// grip, elbow and shoulder, flare01 at 1.3 in the boots' chrome colour at half. Presentation only:
+// the set is read off his worn pieces.
+//
+// And Kanturu's four sets at +10 and over (:11004-11075, boots MODEL_DRAGON_KNIGHT_BOOTS to
+// MODEL_VOLCANO_BOOTS): three puffs at once, at the root bone (Bip01, the pelvis, 107 up) plus
+// (0, -18, 50), (0, 0, 70) and (0, 18, 50), so round the shoulders and head -- one frame in four at +10, three at +11, two at +12, every frame past -- each
+// CreateParticle(BITMAP_WATERFALL_2, ..., 3) in the set's colour, Dragon Knight (0.65, 0.3, 0.1),
+// Venom Mist (0.1, 0.1, 0.9), Sylphid Ray (0, 0.32, 0.24), Volcano (0.5, 0.24, 0.8). Subtype 3
+// (ZzzEffectParticle.cpp:3499-3550, 8476-8515) is BITMAP_LIGHT + 2 (Effect/cra_04.jpg), twelve
+// frames, set off up to 10 aside and 20 up or down, scale 0.54 to 0.9 losing 0.008 a frame,
+// climbing from 2 a frame by 0.08 more, wandering up to 1 aside, its light / 1.02 a frame and
+// / 1.1 more in its last ten. A soft glow climbing off his shoulders and head in the set's colour.
 //
 // For every player drawn, not the hero alone: MuMain asks CheckFullSet of each MODEL_PLAYER it
 // renders (ZzzCharacter.cpp:9156-9161) and draws the set's light round whoever wears one. Each
@@ -67,8 +76,18 @@ public:
     // ..., 1.3f, Light) (ZzzCharacter.cpp:10988-10999), Light being the boots' chrome colour at
     // half. A wearer not handed in on a frame lights nothing and throws nothing; what he threw
     // stays in the air where he stood.
+    // `spray` a Kanturu set's colour (sprayOf), null for any other set; `puffAt` the three
+    // points it throws from this frame, world metres (kPuffPoints carried by his pelvis), or null
+    // to throw from a still body's.
     void wear(uint32_t id, int plus, const float feet[3], float yaw, const float (*arms)[3],
-              int lit, const float colour[3]);
+              int lit, const float colour[3], const float* spray = nullptr,
+              const float (*puffAt)[3] = nullptr);
+    // The puffs' colour for a Kanturu set's boots, at its brightness, or null.
+    static const float* sprayOf(const content::ItemRow& boots);
+    // MU's (0, -18, 50), (0, 0, 70), (0, 18, 50) off Bip01 in the bind pose, in the figure's
+    // model space in metres (MU's x, z, -y): 18 either side at 157 up, and 177 up the middle.
+    static constexpr float kPuffPoints[3][3] = {
+        {-0.18f, 1.569f, 0.0f}, {0.0f, 1.769f, 0.0f}, {0.18f, 1.569f, 0.0f}};
     // One frame: the flares and ribbons in the air age, and each wearer handed in throws anew.
     void update(float seconds, float metresPerTile);
     void gather(gfx::Effects& effects, const content::Ground& ground, const float eye[3]) const;
@@ -99,6 +118,19 @@ private:
         float lightAt[6][3] = {};
         int lights = 0;
         float lightColour[3] = {};
+        bool spray = false;  // a Kanturu set's
+        float sprayColour[3] = {};
+        bool posed = false;  // puffAt handed in this frame
+        float puffAt[3][3] = {};
+    };
+    struct Puff {
+        bool alive = false;
+        float at[3] = {};    // world metres
+        float rise = 0.0f;   // units a frame
+        float life = 0.0f;   // frames left
+        float scale = 0.0f;
+        float light[3] = {};
+        float spin = 0.0f;
     };
 
     static constexpr float kReferenceFps = 25.0f;
@@ -114,6 +146,10 @@ private:
     float per_ = 0.01f;
     Wearer wearers_[kWearers];
     Flare flares_[kFlares] = {};
+    static constexpr int kPuffs = 96;
+    Puff puffs_[kPuffs] = {};
+    bgfx::TextureHandle puff_ = BGFX_INVALID_HANDLE;  // cra_04, MU's BITMAP_LIGHT + 2
+    void throwPuffs(const Wearer& one);
     bool full_ = false;  // said that a wearer found no slot
     int wearing_ = 0;    // wearers seen last frame, logged when it changes
     // Drawn only by the drawing and never seeded: the realm's log must not see it.
