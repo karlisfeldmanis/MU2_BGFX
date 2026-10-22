@@ -941,6 +941,9 @@ def cook_meshes(world, out_dir):
                                               hidden=carried.get(model, {}).get("hidden_part"),
                                               scroll_per_second=scroll,
                                               scrolls=carried.get(model, {}).get("glow"),
+                                              # A sheet MU blends as well as tests: Kanturu's
+                                              # gate veil (cook_mesh's `soft`).
+                                              soft=set(carried.get(model, {}).get("soft_alpha", [])),
                                               weathering=weathering_of(world, model))
         triangles += tris
         vertices += verts

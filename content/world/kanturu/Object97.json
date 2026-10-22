@@ -1,0 +1,57 @@
+{
+  "item": "Object97",
+  "mu_name": "Object97",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 96,
+  "placements": 1,
+  "profile": "world",
+  "sheets": {
+    "cho_gate_d": "kr_cho_gate_d.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "cho_gate_d": "cloth"
+  },
+  "material_note": "cho_gate_d: a pale, wavy curtain of light, mostly half seen through (alpha 3-255, mean 71): cloth, lit, as MU draws it RENDER_TEXTURE.",
+  "cutout": [
+    "cho_gate_d"
+  ],
+  "cutout_from": "decode_texture found a real alpha channel cutting the sheet.",
+  "why_this_one": "The gate's veil, one, hung in the doorway of the gate (Object86) at 16.6,223.9, by MU's door back to Tarkan (gate 127). The user, 2026-10-22: the gate next. docs/worlds/kanturu-port.md.",
+  "soft_alpha": [
+    "cho_gate_d"
+  ],
+  "soft_alpha_from": "MU draws the body at its usual alpha-test 0.25 and then mesh 0 again at alpha ref 0 (GM_Kanturu_1st.cpp:227-236), both blended by the sheet's alpha (EnableAlphaTest): a soft veil, not a hard cut.",
+  "glow": {
+    "cho_gate_d": {
+      "scrolls_per_second": 0.05,
+      "stream": true
+    }
+  },
+  "glow_from": "RenderKanturu1stObjectVisual type 96 (GM_Kanturu_1st.cpp:227-236): mesh 0 drawn again as StreamMesh, its V at -(WorldTime % 20000) * 0.00005, a sheet in 20 s, MU's usual direction, so +0.05 here (as Aida's serpents, Object66). MU's streamed copy lies over a still one; here the veil's own sheet slides (ours).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 36,
+      "area": 51364.9,
+      "along": [
+        -210.6,
+        109.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.267,
+        0.999,
+        2.164
+      ],
+      "bake_uv": [
+        0.001,
+        0.267,
+        0.999,
+        2.164
+      ]
+    }
+  ]
+}
