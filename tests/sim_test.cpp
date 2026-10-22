@@ -6932,8 +6932,9 @@ void testDeviasFolk() {
     std::string error;
     const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/devias/devias.mur";
     check(content::loadTables(path, devias, error), "Devias's tables load");
-    checkEqual(long(devias.folk.size()), 13L,
-               "thirteen townsfolk stand in Devias (Thompson off since 2026-10-02, Kesra the Broker on 2026-10-11)");
+    checkEqual(long(devias.folk.size()), 14L,
+               "fourteen townsfolk stand in Devias (Thompson off since 2026-10-02, Kesra the Broker on 2026-10-11, "
+               "Lugard on 2026-10-22)");
     int master = -1;
     for (size_t i = 0; i < devias.folk.size(); ++i) {
         if (devias.folk[i].number == sim::kGuildMaster) master = int(i);
