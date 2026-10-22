@@ -150,6 +150,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     beacon_.open(interface_);
     tally_.open(interface_);
     arrival_.open(interface_);
+    reborn_.open(interface_);
     // The Sanctuary controls' faces and stone, which every window's frame is drawn with.
     controls::open();
     specimen_.open(interface_);
@@ -187,6 +188,7 @@ void Desk::shutdown() {
     inspectFigure_.shutdown();
     for (Portrait& face : classFaces_) face.shutdown();
     arrival_.shutdown();
+    reborn_.shutdown();
     tally_.shutdown();
     beacon_.close();
     if (bgfx::isValid(groundTexture_)) bgfx::destroy(groundTexture_);
@@ -292,6 +294,13 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     const bool pressedOnWindow = pointer.pressed && overWindows(pointer.x, pointer.y);
     arrival_.update(seconds, float(window.width()), float(window.height()));
     const sim::Body* hero = play.isOpen() ? &play.realm().hero() : nullptr;
+    // A rebirth, as he rises in the rite: the message and its sound on this frame.
+    if (int count = 0; hero && play.takeReborn(&count)) {
+        std::string name;
+        if (!play.playerName(hero->id, &name, nullptr)) name = heroName_;
+        reborn_.announce(count, name);
+    }
+    reborn_.update(seconds, float(window.width()), float(window.height()));
     hud_.follow(hero);
 
     // Every window opened or shut clicks, by key or by button: MU2's Desk.Click on each
@@ -2793,6 +2802,8 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (tally_.showing()) interface_.add(tally_.canvas());
     // The map's name, a reading on the scene as well, and under every window.
     if (arrival_.showing()) interface_.add(arrival_.canvas());
+    // A rebirth's message where the map's name stands, as a reading on the scene.
+    if (reborn_.showing()) interface_.add(reborn_.canvas());
     if (tracker_.showing() && !watching_) interface_.add(tracker_.canvas());
     if (tracker_.announcing() && !watching_) interface_.add(tracker_.banner());
     // Go Back! over the HUD's middle: chrome, under every window.

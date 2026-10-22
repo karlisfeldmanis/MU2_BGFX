@@ -670,6 +670,7 @@ add_library(mu_game STATIC
   src/game/fx/marker.cpp
   src/game/fx/omen.cpp
   src/game/ui/arrival.cpp
+  src/game/ui/reborn.cpp
   src/game/ui/chat.cpp
   src/game/ui/party_bar.cpp
   src/game/ui/capsule.cpp
@@ -683,6 +684,7 @@ add_library(mu_game STATIC
   src/game/fx/aura.cpp
   src/game/fx/set_shine.cpp
   src/game/fx/warp.cpp
+  src/game/fx/rite.cpp
   src/game/fx/bones.cpp
   src/game/fx/breath.cpp
   src/game/fx/snort.cpp

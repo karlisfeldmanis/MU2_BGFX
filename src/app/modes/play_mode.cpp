@@ -449,6 +449,7 @@ bool PlayMode::open(Context& ctx) {
             world_.played().aura().open(assets, ctx.textures);
             world_.played().setShine().open(assets, ctx.textures);
             world_.played().warp().open(assets, ctx.textures);
+            world_.played().rite().open(assets, ctx.textures);
             if (world_.played().showing().isOpen()) {
                 if (const content::EffectSheet* light =
                         world_.played().showing().table().effect("light")) {
@@ -1282,6 +1283,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                 if (at.index == one.frame) args.hoverX = one.x, args.hoverY = one.y;
             }
             if (args.hoverX >= 0.0f) desk_.script(args.hoverX * w, args.hoverY * h, false, false);
+            // --rite: the Rebirth rite's show where he stands, on its frame (fx/rite.h).
+            if (at.index == args.riteFrame && world_.played().isOpen()) world_.played().startRite();
             // --lay: the bench's drops, on their frame, one after another as a kill's pile lands.
             if (at.index == args.layFrame && world_.played().isOpen()) {
                 size_t from = 0;
@@ -1719,6 +1722,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                                                kGatheredLights - count);
         count += world_.played().thunder().lights(falling + count,
                                                   kGatheredLights - count);
+        // And the Rebirth rite's light from heaven, which lights him (fx/rite.h).
+        count += world_.played().rite().lights(falling + count, kGatheredLights - count);
         // And a Poison cloud's green miasma, two tiles.
         count += world_.played().poison().lights(falling + count,
                                                  kGatheredLights - count);
@@ -1953,6 +1958,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().gatherStains(ctx.renderer.effects());
         world_.played().gatherAura(ctx.renderer.effects(), eye.position);
         world_.played().gatherWarp(ctx.renderer.effects());
+        world_.played().gatherRite(ctx.renderer.effects(), eye.position);
         world_.played().breath().gather(ctx.renderer.effects());
         world_.played().snorts().gather(ctx.renderer.effects());
         world_.played().dust().gather(ctx.renderer.effects());

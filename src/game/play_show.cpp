@@ -1472,6 +1472,18 @@ void Play::follow(float seconds) {
         if (one.novaKilled && one.deadFor >= 0.0f) {
             one.yaw = std::atan2(-one.flingWay[0], -one.flingWay[1]);
         }
+        // On his knee in the rite, turned to the keeper (Play::startRite): turned in over a third
+        // of a second as he goes down, and given back to his own facing over half a second once
+        // he has stood -- never a snap either way.
+        if (riteFaces_ && rite_.live() && one.id == realm_.hero().id) {
+            const float age = rite_.age();
+            const auto smooth01 = [](float k) {
+                k = std::clamp(k, 0.0f, 1.0f);
+                return k * k * (3.0f - 2.0f * k);
+            };
+            const float held = std::min(smooth01(age / 0.35f), 1.0f - smooth01((age - Rite::kStands - 1.5f) / 0.5f));
+            one.yaw += wrapped(riteYaw_ - one.yaw) * held;
+        }
 
         // On the Dinorant he sits 30 over the ground and the dragon stands on it (game/pets.h).
         float lift = 0.0f;

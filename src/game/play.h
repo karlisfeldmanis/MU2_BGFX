@@ -53,6 +53,7 @@
 #include "game/fx/spirits.h"
 #include "game/fx/nova.h"
 #include "game/fx/firework.h"
+#include "game/fx/rite.h"
 #include "game/fx/thunder.h"
 #include "game/fx/wheel.h"
 #include "game/fx/fury.h"
@@ -952,6 +953,24 @@ public:
     void gatherWarp(gfx::Effects& effects) const {
         if (ground_) warp_.gather(effects, *ground_);
     }
+    // The Rebirth rite (fx/rite.h), opened by the caller for the same reason. startRite() holds
+    // the hero on his knee where he stands and starts the rite and its sound: the show alone,
+    // no reset -- the bench's `--rite F` until the realm's rite command is built.
+    Rite& rite() { return rite_; }
+    void gatherRite(gfx::Effects& effects, const float eye[3]) const {
+        if (ground_) rite_.gather(effects, *ground_, eye);
+    }
+    void startRite();
+    // The Rebirth message owed as he rises off his knee (Rite::kStands): the reset count, and
+    // `rite_reborn` played as it is taken, so the message (game/ui/reborn.h) and its sound start
+    // on the one frame. The bench's rite is the first rebirth.
+    bool takeReborn(int* count) {
+        if (rebornOwed_ <= 0) return false;
+        *count = rebornOwed_;
+        rebornOwed_ = 0;
+        if (heard_.riteReborn >= 0) sound_.play(heard_.riteReborn);
+        return true;
+    }
     // Whether he has warped since this was last asked, and forgets it: what the windows shut
     // on, as MuMain's ReceiveTeleport shuts every one (`g_pNewUISystem->HideAll()`).
     // A Town Portal read where the map has no safe zone (the Dungeon): Lorencia is owed, and
@@ -1732,6 +1751,10 @@ private:
     // A complete set at +10 and +11: its flares and ribbons (game/fx/set_shine.h).
     SetShine setShine_;
     Warp warp_;
+    Rite rite_;
+    float riteYaw_ = 0.0f;   // the way he kneels: to the nearest townsperson, Lugard (startRite)
+    bool riteFaces_ = false;
+    int rebornOwed_ = 0;     // a Rebirth message to show, its count; 0 for none (takeReborn)
     bool warpOwed_ = false;
     bool homeOwed_ = false;
     int portalFrom_[2] = {-1, -1};  // takePortalFrom's tile, -1 for none
@@ -2015,6 +2038,8 @@ private:
         int drink = -1, apple = -1;                     // a potion going down
         int orb = -1;                                   // an orb read, and the skill kept
         int warp = -1;                                  // sMagic: a Town Portal landing
+        int rite = -1;                                  // the Rebirth rite, its whole 14 s
+        int riteReborn = -1;                            // and its message, as he stands
         int grate = -1, trapFlame = -1;                 // the traps' aGrate and sFlame
         int click = -1, refused = -1, opened = -1;      // the windows
         int invited = -1;  // window_invite: a party, guild or trade invite to him

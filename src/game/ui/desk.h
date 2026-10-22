@@ -14,6 +14,7 @@
 #include "content/texture.h"
 #include "game/ui/amount.h"
 #include "game/ui/arrival.h"
+#include "game/ui/reborn.h"
 #include "game/ui/bag.h"
 #include "game/ui/beacon.h"
 #include "game/ui/card.h"
@@ -521,6 +522,7 @@ private:
     Beacon beacon_;
     Tally tally_;
     Arrival arrival_;
+    Reborn reborn_;
     ItemModels* models_ = nullptr;
     ItemStage bagStagePicture_, shelfStagePicture_, quickStagePicture_, tipStagePicture_;
     ItemStage inspectStagePicture_;  // the inspect window's, open beside the bag's

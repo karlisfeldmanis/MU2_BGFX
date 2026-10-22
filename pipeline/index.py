@@ -575,6 +575,13 @@ EFFECTS = {
     # RenderCircle wraps once round twelve quads, a JPEG over black and so additive. The circle
     # under the walls is magic_ground above, in orange. See src/game/fx/warp.h.
     "magic_circle": "effects/warp/magic_circle.png",
+    # The Rebirth rite's own (pipeline/rite_sheets.py, src/game/fx/rite.h): the light from heaven,
+    # its shafts, the pool where it lands and level-up's magic_ground made grey for a gold tint.
+    "rite_beam": "effects/rite/beam.png",
+    "rite_rays": "effects/rite/rays.png",
+    "rite_pool": "effects/rite/pool.png",
+    "rite_runes": "effects/rite/runes.png",
+    "rite_ring": "effects/rite/ring.png",
 
     # The elf's summon, which borrows magic_ground above for its ground decal - BITMAP_MAGIC + 1
     # at sub-type 3, tinted orange - and adds three sheets of its own. JointEnergy01.OZJ is

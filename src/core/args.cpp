@@ -264,6 +264,7 @@ void printUsage() {
         "  --bolt-skill N            which spell the bench throws: 17 Energy Ball, 4 Fire Ball, 11 Power Wave,\n"
         "                            3 Lightning, 2 Meteorite, 0 the hero's arrow\n"
         "  --lay F:LIST              on frame F lay NAME,... on the ground beside him (bench)\n"
+        "  --rite F                  on frame F the Rebirth rite's show where he stands, no reset (bench)\n"
         "  --ui-pick F               on frame F press Space: pick up the nearest drop\n"
         "  --arena BREED             one breed alone on a clear patch, fighting the hero from\n"
         "                            the first tick; no other spawn stands on the map. The name\n"
@@ -871,6 +872,8 @@ Args parseArgs(int argc, char** argv) {
                     a.autoHealth = a.autoMana = -1;
                 }
             }
+        } else if (!std::strcmp(s, "--rite")) {
+            if (const char* v = next(s)) a.riteFrame = std::atoi(v);
         } else if (!std::strcmp(s, "--lay")) {
             if (const char* v = next(s)) {
                 const char* colon = std::strchr(v, ':');

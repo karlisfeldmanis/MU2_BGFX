@@ -3080,6 +3080,36 @@ void Play::update(double seconds) {
     }
     setShine_.update(float(seconds), ground_ ? ground_->metresPerTile() : 1.0f);
     warp_.update(float(seconds));
+    // The Rebirth rite (fx/rite.h): its show, and the hero held on his knee through it -- MU's
+    // PLAYER_RESPECT1, player.muc's clip 217 whatever its label says (a kneel on one knee, the
+    // head bowed, the weapon planted; seen on the bench 2026-10-22). Played from its first key
+    // down to kRiteLow, held there, then let run to its end from Rite::kStands: he rises.
+    const float riteWas = rite_.age();
+    rite_.update(float(seconds));
+    if (rite_.live() && riteWas < Rite::kStands && rite_.age() >= Rite::kStands) rebornOwed_ = 1;
+    if (rite_.live()) {
+        constexpr int kRespectAction = 217;
+        constexpr float kRiteLow = 1.0f;  // seconds into the clip: the knee down, the head bowed
+        Drawn* hero = drawnOf(realm_.hero().id);
+        const FigureBody* look = hero ? hero->figure.body() : nullptr;
+        const int kneel = look && look->library ? look->library->find(kRespectAction) : -1;
+        if (hero && kneel >= 0) {
+            const float t = rite_.age();
+            // Let go a breath before the clip's end, so it never wraps to its first key.
+            const float rises = std::max(0.0f, hero->figure.length() - kRiteLow - 0.05f);
+            if (t < Rite::kStands + rises) {
+                if (hero->figure.clip() != kneel) hero->figure.play(kneel, true);
+                hero->swinging = 1e9f;
+                hero->casting = 0.0f;
+                const bool held = t >= kRiteLow && t < Rite::kStands;
+                if (held) hero->figure.setClock(kRiteLow);
+                hero->swingPace = held ? 0.0f : 1.0f;
+            } else if (hero->swinging > 1e8f) {
+                hero->swinging = 0.0f;
+                hero->swingPace = 1.0f;
+            }
+        }
+    }
     // And the guard walks with him, or goes when the realm says it has gone.
     if (isOpen()) guardStep();
     // What the town's guards said, aged and taken down.
@@ -3173,6 +3203,29 @@ uint32_t Play::wardenBody(int folk) const {
 // breed another map adds falls through to the plain ones rather than to silence. Which of a
 // breed's lines is said is off the monster's id and the tick: steady for a replayed seed, and
 // not the same line twice in a row at one gate.
+void Play::startRite() {
+    const Drawn* hero = drawnOf(realm_.hero().id);
+    if (!hero || !hero->placed || !ground_) return;
+    const float feet[3] = {hero->crown[0], ground_->heightAt(hero->crown[0], hero->crown[2]), hero->crown[2]};
+    // He kneels to the keeper: the nearest townsperson within eight tiles, Lugard on his rite
+    // tile. None that near and he keeps his own facing.
+    riteFaces_ = false;
+    const float metresPerTile = ground_->metresPerTile();
+    float best = 8.0f * metresPerTile;
+    for (const content::Townsperson& one : tables_.folk) {
+        const float dx = (float(one.x) + 0.5f) * metresPerTile - feet[0];
+        const float dz = -(float(one.y) + 0.5f) * metresPerTile - feet[2];
+        const float apart = std::sqrt(dx * dx + dz * dz);
+        if (apart < best && apart > 0.01f) {
+            best = apart;
+            riteYaw_ = std::atan2(dx, dz);  // a model looks down +z: play_show.cpp's yaw
+            riteFaces_ = true;
+        }
+    }
+    rite_.begin(feet);
+    if (heard_.rite >= 0) sound_.play(heard_.rite);
+}
+
 void Play::speak(const sim::Happening& happening) {
     struct Lines {
         const char* breed;  // a piece of the label, lowered

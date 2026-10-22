@@ -712,6 +712,13 @@
       "gain_note": "Three down, so its peak sits near window_open's and it stands out without jumping.",
       "note": "**An invention, marked.** The user (2026-10-16): 'use it when player gets invited to party, guild or trade'. Played as the card in the middle comes up: a party or raid invite (Chat::hear), a guild's invite or a player asking to join his guild (Chat::guildCalled), a trade asked of him (desk_deal.cpp), in place of window_open there. Unplaced, as every interface sound is."
     },
+    "rite": {
+      "files": [
+        "rite.wav"
+      ],
+      "from": "Not MU's file. soundreality 'intro sound effect' (Pixabay 272811, downloads/), given by the user 2026-10-22 for the Rebirth rite, 'perfectly synced with light beam': 18.0 s of 48 kHz stereo MP3 made 22 kHz mono 16-bit, cut at 14.0 s where its tail falls under -58 dB, with a 1.5 s fade out. A swell: it builds to 3.8 s, a layer enters at 3.0-3.15 s, it peaks at 6.75-7.25 s, its bass drops at 8.5 s.",
+      "note": "**An invention, marked.** The rite's clock (game/fx/rite.h): begun on the kneel, the pillar falls on its 3.0 s onset, bursts on its 7.0 s peak and lifts on its 8.5 s drop. Unplaced for now, the hero's own (Play::startRite)."
+    },
     "window_talent": {
       "files": [
         "italent.wav"
@@ -2777,6 +2784,13 @@
       ],
       "from": "Not MU's file. universfield 'message notification' (Pixabay 199577, downloads/), given by the user 2026-10-21 for a whisper to him: 1.59 s of 44 kHz stereo MP3, two soft notes. Its lead-in silence cut (-60 dB) and held to 1.3 s with a 0.3 s fade out from 1.0 s; it is gone by 1.2 s anyway (-75 dB).",
       "note": "**An invention, marked.** The user (2026-10-21): 'use ... universfield-message-notification-199577.mp3 when char receives whisper'. Played by the chat (game/ui/chat.cpp) when a whisper from another player lands, not for his own. Unplaced, as every interface sound is."
+    },
+    "rite_reborn": {
+      "files": [
+        "rite_reborn.wav"
+      ],
+      "from": "Not MU's file. impact1 (Pixabay 523410, downloads/u_03zpxbws1q-impact1-523410.mp3), given by the user 2026-10-22 for the Rebirth message: 5.7 s of 48 kHz stereo MP3 made 22 kHz mono 16-bit, its first 0.098 s of silence trimmed (the game skips 8.5 ms more, to -50 dBFS), cut at 4.7 s with a 0.6 s fade out. On the trimmed file: a swoosh to 0.18 s, the hit at 0.19 s, a second thump at 0.28 s, the tail under -60 dB by 4.5 s. An RMS of -22.9 dB, peaking at -0.7.",
+      "note": "**An invention, marked.** The Rebirth message's clock (game/ui/reborn.h): played on the frame the message starts, as he rises off his knee in the rite (Rite::kStands). Unplaced, the hero's own (Play::takeReborn)."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."
