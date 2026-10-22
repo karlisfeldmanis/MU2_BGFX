@@ -1,0 +1,64 @@
+{
+  "item": "Object46",
+  "mu_name": "Object46",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 45,
+  "placements": 38,
+  "profile": "world",
+  "sheets": {
+    "song_k202w1": "kr_song_k202w1.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k202w1": "wrought_iron"
+  },
+  "material_note": "song_k202w1: an iron wheel in a riveted, carved frame: wrought_iron.",
+  "why_this_one": "A half-wheel frame, 38 of them. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wrought_iron",
+      "triangles": 54,
+      "area": 183492.8,
+      "along": [
+        -203.1,
+        203.2
+      ],
+      "mu_uv": [
+        -1.017,
+        -1.012,
+        0.843,
+        0.986
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.992,
+        0.946
+      ]
+    },
+    {
+      "island": 1,
+      "material": "wrought_iron",
+      "triangles": 14,
+      "area": 70283.2,
+      "along": [
+        -120.5,
+        130.9
+      ],
+      "mu_uv": [
+        0.003,
+        0.071,
+        0.357,
+        0.971
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.788,
+        0.843
+      ]
+    }
+  ]
+}

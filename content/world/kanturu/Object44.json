@@ -1,0 +1,250 @@
+{
+  "item": "Object44",
+  "mu_name": "Object44",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 43,
+  "placements": 14,
+  "profile": "world",
+  "sheets": {
+    "song_k203a1": "kr_song_k203a1.png",
+    "song_k202w1": "kr_song_k202w1.png",
+    "song_k202w2": "kr_song_k202w2.png",
+    "song_k0t2": "kr_song_k0t2.png",
+    "song_k0t1": "kr_song_k0t1.png",
+    "song_k204a2": "kr_song_k204a2.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k203a1": "wrought_iron",
+    "song_k202w1": "wrought_iron",
+    "song_k202w2": "flagstone",
+    "song_k0t2": "timber",
+    "song_k0t1": "timber",
+    "song_k204a2": "wrought_iron"
+  },
+  "material_note": "song_k203a1: hanging chains: wrought_iron. song_k202w1: an iron wheel in a riveted, carved frame: wrought_iron. song_k202w2: a carved stone panel with a glyph band: flagstone. song_k0t2: a log's end grain: timber. song_k0t1: a rope-bound log wall: timber. song_k204a2: a chain, cut out: wrought_iron.",
+  "why_this_one": "A machine housing, 14 of them. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "timber",
+      "triangles": 12,
+      "area": 2287.6,
+      "along": [
+        -168.3,
+        -156.9
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.573,
+        0.13,
+        0.858,
+        0.846
+      ]
+    },
+    {
+      "island": 1,
+      "material": "timber",
+      "triangles": 16,
+      "area": 11485.7,
+      "along": [
+        -198.3,
+        -55.9
+      ],
+      "mu_uv": [
+        -1.144,
+        -0.647,
+        3.889,
+        1.067
+      ],
+      "bake_uv": [
+        0.423,
+        0.13,
+        0.75,
+        0.464
+      ]
+    },
+    {
+      "island": 2,
+      "material": "wrought_iron",
+      "triangles": 44,
+      "area": 64765.1,
+      "along": [
+        -138.5,
+        -86.4
+      ],
+      "mu_uv": [
+        0.009,
+        0.016,
+        0.843,
+        1.979
+      ],
+      "bake_uv": [
+        0.646,
+        0.13,
+        0.852,
+        0.766
+      ]
+    },
+    {
+      "island": 3,
+      "material": "wrought_iron",
+      "triangles": 10,
+      "area": 46120.6,
+      "along": [
+        -107.4,
+        291.1
+      ],
+      "mu_uv": [
+        0.043,
+        0.13,
+        0.113,
+        1.0
+      ],
+      "bake_uv": [
+        0.842,
+        0.13,
+        0.881,
+        0.75
+      ]
+    },
+    {
+      "island": 4,
+      "material": "wrought_iron",
+      "triangles": 10,
+      "area": 43664.3,
+      "along": [
+        -113.0,
+        -77.4
+      ],
+      "mu_uv": [
+        0.054,
+        0.13,
+        0.113,
+        1.0
+      ],
+      "bake_uv": [
+        0.726,
+        0.313,
+        0.895,
+        0.896
+      ]
+    },
+    {
+      "island": 5,
+      "material": "wrought_iron",
+      "triangles": 12,
+      "area": 56600.8,
+      "along": [
+        -87.3,
+        143.1
+      ],
+      "mu_uv": [
+        -1.709,
+        -4.501,
+        1.163,
+        0.517
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.41,
+        0.712
+      ]
+    },
+    {
+      "island": 6,
+      "material": "wrought_iron",
+      "triangles": 12,
+      "area": 10771.7,
+      "along": [
+        28.3,
+        102.2
+      ],
+      "mu_uv": [
+        0.044,
+        -4.501,
+        1.015,
+        -2.099
+      ],
+      "bake_uv": [
+        0.423,
+        0.313,
+        0.56,
+        0.65
+      ]
+    },
+    {
+      "island": 7,
+      "material": "wrought_iron",
+      "triangles": 6,
+      "area": 10241.2,
+      "along": [
+        -27.8,
+        27.5
+      ],
+      "mu_uv": [
+        -1.522,
+        0.328,
+        2.535,
+        1.118
+      ],
+      "bake_uv": [
+        0.006,
+        0.725,
+        0.577,
+        0.836
+      ]
+    },
+    {
+      "island": 8,
+      "material": "wrought_iron",
+      "triangles": 6,
+      "area": 8506.6,
+      "along": [
+        -141.6,
+        -107.8
+      ],
+      "mu_uv": [
+        -1.522,
+        0.328,
+        2.535,
+        1.118
+      ],
+      "bake_uv": [
+        0.006,
+        0.849,
+        0.577,
+        0.96
+      ]
+    },
+    {
+      "island": 9,
+      "material": "wrought_iron",
+      "triangles": 6,
+      "area": 10486.5,
+      "along": [
+        -20.5,
+        74.3
+      ],
+      "mu_uv": [
+        -1.522,
+        0.328,
+        2.535,
+        1.118
+      ],
+      "bake_uv": [
+        0.423,
+        0.006,
+        0.994,
+        0.118
+      ]
+    }
+  ]
+}

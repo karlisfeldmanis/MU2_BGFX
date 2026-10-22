@@ -1,0 +1,64 @@
+{
+  "item": "Object43",
+  "mu_name": "Object43",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 42,
+  "placements": 17,
+  "profile": "world",
+  "sheets": {
+    "song_k3mmater03": "kr_song_k3mmater03.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k3mmater03": "wrought_iron"
+  },
+  "material_note": "song_k3mmater03: riveted iron plates: wrought_iron.",
+  "why_this_one": "An iron vat, 17 of them. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wrought_iron",
+      "triangles": 50,
+      "area": 193983.7,
+      "along": [
+        -128.7,
+        128.7
+      ],
+      "mu_uv": [
+        0.007,
+        0.007,
+        0.516,
+        0.989
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.813,
+        0.94
+      ]
+    },
+    {
+      "island": 1,
+      "material": "wrought_iron",
+      "triangles": 20,
+      "area": 47888.1,
+      "along": [
+        -117.3,
+        41.5
+      ],
+      "mu_uv": [
+        0.102,
+        0.213,
+        0.812,
+        0.991
+      ],
+      "bake_uv": [
+        0.007,
+        0.006,
+        0.994,
+        0.956
+      ]
+    }
+  ]
+}

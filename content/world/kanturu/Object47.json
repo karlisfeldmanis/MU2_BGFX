@@ -1,0 +1,70 @@
+{
+  "item": "Object47",
+  "mu_name": "Object47",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 46,
+  "placements": 43,
+  "profile": "world",
+  "sheets": {
+    "song_k202w1": "kr_song_k202w1.png",
+    "songk3matereff_R": "kr_songk3matereff_r.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k202w1": "wrought_iron",
+    "songk3matereff_R": "lamplight"
+  },
+  "material_note": "song_k202w1: an iron wheel in a riveted, carved frame: wrought_iron. songk3matereff_R: a cyan glow, MU's bright sheet: lamplight.",
+  "why_this_one": "The glowing wheel, 43 of them, turning (MU: Velocity 0.01). The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "additive": [
+    "songk3matereff_R"
+  ],
+  "additive_from": "songk3matereff_R is an _R sheet, drawn RENDER_BRIGHT, added (TextureScript.cpp:16-58); MuMain pulses it (BlendMeshLight, GM_Kanturu_1st.cpp), which waits for the effects batch.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wrought_iron",
+      "triangles": 44,
+      "area": 145231.9,
+      "along": [
+        -33.9,
+        34.2
+      ],
+      "mu_uv": [
+        0.009,
+        -0.558,
+        0.839,
+        2.443
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.995,
+        0.907
+      ]
+    },
+    {
+      "island": 1,
+      "material": "lamplight",
+      "triangles": 24,
+      "area": 25301.1,
+      "along": [
+        -16.1,
+        16.5
+      ],
+      "mu_uv": [
+        0.009,
+        -0.558,
+        0.999,
+        2.443
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.736,
+        0.552
+      ]
+    }
+  ]
+}
