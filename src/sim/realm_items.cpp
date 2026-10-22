@@ -357,6 +357,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
     // (ObjCalCharacter.cpp:522-531).
     hero.dual = weaponSlot == kWeaponRight && right->group < kGroupBows && swung(left) &&
                 offHanded(*left, hero.kin);
+    hero.twoHanded = weaponSlot == kWeaponRight && right->group < kGroupBows && right->twoHanded();
     hero.offhandBonus = 0;
     if (hero.dual) {
         const Held& h = kit[kWeaponLeft];

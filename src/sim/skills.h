@@ -576,6 +576,11 @@ constexpr float kAgilityPerDoubling = 300.0f;
 // skills too since the class balance (2026-10-21): the user, 2026-10-21, "well DW is very strong now... maybe we need to boost DKs?", +15%
 // on every one, off tests/skill_sweep.cpp (the best knight ~2/3 of a wizard on Icarus).
 constexpr float kKnightSkillBoost = 1.15f;
+// And a knight's own skills with a two-handed weapon, on top (sim::heroForce): the two-handed knight
+// was the weakest build on hard ground, 1.61M an hour on Icarus at level 200 against the wizard's
+// 3.17M and two swords' 2.23M (tests/kits/level200.json; the user, 2026-10-22, "dk still is pretty
+// weak", then two-handed weapons +20%).
+constexpr float kTwoHandBoost = 1.20f;
 float force(const SkillRow& row, const HeroPoints& points, Kin who);
 // The same as the character window prints it, MuMain's "Skill Damage: %d%%": a force-two row's
 // blow in percent of his swing, 200 + energy / 10 (CNewUICharacterInfoWindow.cpp:1474). Read for

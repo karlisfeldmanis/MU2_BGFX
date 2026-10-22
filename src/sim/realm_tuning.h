@@ -533,11 +533,15 @@ inline float elementForce(const Body& hero, Element element) {
 // **His talents on a blow** (sim/talents.h, the plan's rule 1): his damage share -- wizardry on a
 // spell -- the skill's own and its element's, summed and multiplied once, beside the runes'
 // factors. 1 for a hero with none and for every monster, so nothing else moves.
-// **His force on a skill**: sim::force by his class, what every blow of his skills and the skill
-// window read. (A dual-wield +10% stood here for an hour on 2026-10-22, off a sweep whose
-// "dual" knights held one sword; a knight with two is the strongest of all, tests/kits/sweep.json.)
+// **His force on a skill**: sim::force by his class, and a knight's kTwoHandBoost on his own
+// skills with a two-handed weapon (2026-10-22); what every blow of his skills and the skill window
+// read. (A dual-wield +10% stood here for an hour on 2026-10-22, off a sweep whose "dual" knights
+// held one sword; a knight with two is the strongest of all, tests/kits/sweep.json.)
 inline float heroForce(const Body& hero, const SkillRow& row) {
-    return force(row, hero.totalPoints(), hero.kin);
+    const float base = force(row, hero.totalPoints(), hero.kin);
+    return hero.kin == Kin::DarkKnight && hero.twoHanded && row.kin == Kin::DarkKnight && !row.wizardry
+               ? base * kTwoHandBoost
+               : base;
 }
 
 inline float talentForce(const Body& hero, const SkillRow* row) {

@@ -386,6 +386,9 @@ struct Body {
     int32_t weapon = -1;
     int32_t shield = -1;
     bool dual = false;
+    // A weapon in his right hand that takes both (content::Arm::twoHanded): a knight's skills are
+    // kTwoHandBoost harder with one (sim::heroForce).
+    bool twoHanded = false;
     int32_t level = 1;
     int32_t health = 0;
     int32_t maxHealth = 0;
