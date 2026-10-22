@@ -133,5 +133,16 @@
       }
     ],
     "object_loops_note": "MU plays its wheel, waterfall, electric and plant sounds flat while any glowing wheel (Object47), fall (Object78), blue tank (Object93) or carnivorous plant (Object99) is moved, which is the ones near the camera (GM_Kanturu_1st.cpp:64-117). Ours, marked: each from its nearest one, full to `full` metres and gone at `reach` (Play::hearWorld). First distances, for the user to judge."
+  },
+  "rules": {
+    "arrive": [
+      20,
+      218
+    ],
+    "home": 8,
+    "event": false,
+    "floors": false,
+    "move_order": 11,
+    "note": "Kanturu Ruins, MU's map 37, entered from Tarkan's west door (gates 125/127, the next step). arrive is the middle of the spawn gate 138's box, the camp by the door (OpenMU VersionSeasonSix Gates.cs:276-280), where a death lands too; not 126's arrival box, which overlaps the way back on three tiles (docs/worlds/kanturu-port.md 2.1). The Town Portal goes to Tarkan's town (home 8): the camp has no merchant (decision 6). Last on the M key's walk (11), so no other map's order moves. No drops yet: no breed stands here."
   }
 }
