@@ -245,6 +245,10 @@ struct Sound::Impl {
     bool voiceReady = false;
     ma_sound stingerLine{};
     bool stingerReady = false;
+    // The bed under the track (Sound::bed): one, looping; left fading in its slot when stopped.
+    ma_sound bedLine{};
+    bool bedReady = false;
+    std::string bedPath;  // empty while none is wanted
     // The track held silent under a stinger, to come back when it ends (Sound::stinger).
     bool musicHeld = false;
     bool stingerSounding() {
@@ -732,6 +736,38 @@ void Sound::stopMusic() {
     impl_->musicPath.clear();
 }
 
+void Sound::bed(const std::string& path, float gain) {
+    if (!impl_ || !impl_->open) return;
+    Impl& im = *impl_;
+    if (im.bedPath == path) return;
+    if (im.bedReady) {
+        ma_sound_stop(&im.bedLine);
+        ma_sound_uninit(&im.bedLine);
+        im.bedReady = false;
+    }
+    // As the music is: streamed, straight to the engine, no room's reverb.
+    const ma_uint32 flags = MA_SOUND_FLAG_STREAM | MA_SOUND_FLAG_NO_SPATIALIZATION;
+    if (ma_sound_init_from_file(&im.engine, path.c_str(), flags, nullptr, nullptr,
+                                &im.bedLine) != MA_SUCCESS) {
+        core::logError("sound: the bed %s would not open", path.c_str());
+        return;
+    }
+    im.bedReady = true;
+    im.bedPath = path;
+    ma_sound_set_looping(&im.bedLine, MA_TRUE);
+    ma_sound_set_volume(&im.bedLine, std::clamp(gain, 0.0f, 1.0f));
+    ma_sound_set_fade_in_milliseconds(&im.bedLine, 0.0f, 1.0f, kMusicInMs);
+    ma_sound_start(&im.bedLine);
+    core::logf("sound: bed %s", path.c_str());
+}
+
+void Sound::stopBed() {
+    if (!impl_ || !impl_->bedReady || impl_->bedPath.empty()) return;
+    ma_sound_stop_with_fade_in_milliseconds(&impl_->bedLine, kMusicOutMs);
+    impl_->bedPath.clear();
+    core::logf("sound: bed off");
+}
+
 void Sound::voice(const std::string& relative) {
     if (!impl_ || !impl_->open) return;
     Impl& im = *impl_;
@@ -815,6 +851,12 @@ void Sound::shutdown() {
         impl_->stingerReady = false;
     }
     // At once here: the device is closing and nothing is left to hear a fade.
+    if (impl_->bedReady) {
+        ma_sound_stop(&impl_->bedLine);
+        ma_sound_uninit(&impl_->bedLine);
+        impl_->bedReady = false;
+    }
+    impl_->bedPath.clear();
     for (int slot = 0; slot < 2; ++slot) {
         if (!impl_->musicReady[slot]) continue;
         ma_sound_stop(&impl_->music[slot]);
