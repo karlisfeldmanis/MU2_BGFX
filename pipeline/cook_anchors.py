@@ -30,7 +30,9 @@ ANCHOR_KINDS = {"Light01": 1, "Light02": 4, "Light03": 4}
 ANCHOR_KINDS_BY_WORLD = world_manifest.by_world("anchor_kinds", dict)
 # The anchor kinds whose particles grow with the box: the box's Scale rides in the emitter's
 # `high`, its reach left 0 so Lamps lights nothing.
-SPRAY_KINDS = (18, 19, 20, 21, 22)
+# And 4, the smoke anchors: Kanturu's vents hand their box's Scale to every puff (Lamps,
+# Fire::vent). A smoke throws no light, so its `high` was spare everywhere.
+SPRAY_KINDS = (4, 18, 19, 20, 21, 22)
 # A spray kind's `high` carries its box's Scale, so it cannot carry a light's level too. One that
 # should light is given a second anchor beside it of a light-only kind: Aida's small fires, MU's
 # type 67, which lights nothing in MU -- ours (the user, 2026-10-11: 'fire has to make emiter').

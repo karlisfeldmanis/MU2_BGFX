@@ -131,19 +131,31 @@ private:
         // A smoke vent: Kanturu's Object60, a hidden box MU throws BITMAP_SMOKE SubType 21 off
         // one frame in three (GM_Kanturu_1st.cpp:149-156). Smoke only: no flame, ember or light.
         bool vent = false;
+        float scale = 1.0f;  // a vent's box's Scale, which MU hands its puffs
+
         // What each kind is owed, in particles; a whole one is spawned and taken off.
         float clock = 0.0f, embers = 0.0f, smoke = 0.0f;
     };
     // A vent's puff, MU's SubType 21 (ZzzEffectParticle.cpp:1340-1345, 5484-5490) in metres and
     // seconds at its 25 frames a second: 80 frames; thrown up at 6-9.1 units a frame and slowed
-    // 0.1 a frame each frame; carried along -x by a fifth of that; shrinking 0.01 a frame from
-    // 0.32-0.64 of the box's Scale; its light LifeTime / 50, so full for its first 30 frames.
+    // 0.1 a frame each frame; carried along -x by a fifth of that; its Scale 0.32-0.64 of the
+    // box's, shrinking 0.01 a frame, and gone at 0; its light LifeTime / 50, so full for its
+    // first 30 frames. Drawn as smoke01 (64 texels, so 64 units a Scale wide, :8923) subtracted
+    // (EnableAlphaBlendMinus, :9014): a dark puff, sooty, darkening what is behind it.
     static constexpr float kVentPuffsPerSecond = 25.0f / 3.0f;
     static constexpr float kVentPuffLife = 80.0f / 25.0f;
     static constexpr float kVentPuffRise[2] = {6.0f * 25.0f / 100.0f, 9.1f * 25.0f / 100.0f};
     static constexpr float kVentPuffSlowing = 0.1f * 25.0f * 25.0f / 100.0f;
     static constexpr float kVentPuffLean = 0.2f;
-    static constexpr float kVentPuffMetres = 2.0f;  // ours: a puff of Scale 1, by eye
+    static constexpr float kVentPuffMetres = 0.64f;  // a puff of Scale 1: smoke01's 64 units
+    static constexpr float kVentPuffShrink = 0.01f * 25.0f;  // Scale a second
+    // kVentPuffSubtracts, ours, marked: MU subtracts smoke01 (dim, its core 71 of 255) in gamma
+    // space, taking about half the light at a puff's core. Our Minus pass reads it as sRGB,
+    // 0.065 linear, and a sprite's colour cannot lift it past 1, so it took 6% and was all but
+    // invisible (the user, 2026-10-22: "there is but very minimal"). Laid over as near-black
+    // soot through Smoke it rose as a line of round blots, the sheet having no alpha for that
+    // blend to shape it by. The user picked light wisps: the sheet ADDED, which keeps its wisp
+    // shapes, at the day's light so a vent does not glow at night.
     // A flame, an ember or a puff, in metres and seconds. Sprint 8b; lamps.cpp says why none
     // of it is MU's clock any more.
     static constexpr uint8_t kFlame = 0, kEmber = 1, kSmoke = 2;
@@ -187,6 +199,7 @@ private:
     bgfx::TextureHandle sheet_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle spark_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle smoke_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle ventSmoke_ = BGFX_INVALID_HANDLE;  // Effect/smoke01, BITMAP_SMOKE
     mutable uint32_t drawn_ = 0;
     uint32_t refused_ = 0;
     // Fixed, so two runs of the same --fixed-dt draw the same flames. Not the sim's dice.

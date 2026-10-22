@@ -349,6 +349,8 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
             Fire fire;
             for (int i = 0; i < 3; ++i) fire.at[i] = one->at[i];
             fire.vent = true;
+            // The box's Scale rides in `high` (pipeline/cook_anchors.py SPRAY_KINDS).
+            fire.scale = one->high > 0.0f ? one->high : 1.0f;
             fire.smoke = unit();
             fires_.push_back(fire);
         }
@@ -374,6 +376,7 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
         sheet_ = take("fire");     // Effect/Fire01, MU's own flame
         spark_ = take("light");    // Effect/flare01, a soft round dot: an ember
         smoke_ = take("smoke");    // Effect/smoke02
+        if (smokeVents) ventSmoke_ = take("smoke01");  // Effect/smoke01, BITMAP_SMOKE
     }
     if (!bgfx::isValid(sheet_) && !fires_.empty()) {
         core::logError("no cooked 'fire' sheet: %zu fires will burn with no flame drawn "
@@ -395,7 +398,7 @@ void Lamps::shutdown() {
     glows_.clear();
     fires_.clear();
     particles_.clear();
-    sheet_ = spark_ = smoke_ = BGFX_INVALID_HANDLE;
+    sheet_ = spark_ = smoke_ = ventSmoke_ = BGFX_INVALID_HANDLE;
 }
 
 void Lamps::add(const gfx::PointLight& light, float low, float high, float hz, float smooth) {
@@ -496,13 +499,12 @@ void Lamps::spawn(const Fire& fire, uint8_t kind) {
     const float lean[3] = {fire.drift[0] * kPerMetre * p.lean, 0.0f,
                            fire.drift[2] * kPerMetre * p.lean};
     if (fire.vent) {
-        // MU's SubType 21 (lamps.h). Born on the box, not spread round a hearth. Its size is
-        // ours: the cook carries no Scale for a smoke anchor, so MU's 0.32-0.64 of it is taken
-        // of kVentPuffMetres, judged by eye; `heat` its thickness, a bonfire's smoke's.
+        // MU's SubType 21 (lamps.h). Born on the box, not spread round a hearth. `size` is the
+        // puff's MU Scale, 0.32-0.64 of the box's.
         for (int i = 0; i < 3; ++i) one.position[i] = fire.at[i];
         one.vent = true;
         one.life = kVentPuffLife;
-        one.size = mix(0.32f, 0.64f, unit()) * kVentPuffMetres;
+        one.size = mix(0.32f, 0.64f, unit()) * fire.scale;
         one.heat = 1.0f;
         one.spin = 6.2831853f * unit();
         one.velocity[1] = mix(kVentPuffRise[0], kVentPuffRise[1], unit());
@@ -648,7 +650,7 @@ void Lamps::update(float seconds, Town& town, gfx::Renderer& renderer, const flo
             fire.smoke += dt * kVentPuffsPerSecond;
             while (fire.smoke >= 1.0f) {
                 fire.smoke -= 1.0f;
-                if (bgfx::isValid(smoke_)) spawn(fire, kSmoke);
+                if (bgfx::isValid(ventSmoke_)) spawn(fire, kSmoke);
             }
             continue;
         }
@@ -713,18 +715,18 @@ void Lamps::gather(gfx::Effects& effects, const float near[3], float daylight) c
             sprite.sheet = spark_;
             sprite.blend = gfx::Blend::Flame;
         } else if (one.vent) {
-            // MU's puff shrinks a hundredth of its Scale a frame, and its light is LifeTime / 50:
-            // full over its first 30 frames of 80, then dimming to nothing. Grey by the day's
-            // light, as the fires' smoke, with no fire under it to warm it.
-            const float size = std::max(0.05f, one.size - one.age * 25.0f * 0.01f * kVentPuffMetres);
-            sprite.halfWidth = sprite.halfHeight = 0.5f * size;
-            sprite.colour[0] = 0.30f * daylight;
-            sprite.colour[1] = 0.29f * daylight;
-            sprite.colour[2] = 0.30f * daylight;
-            const float left = (1.0f - t) * 80.0f / 50.0f;
-            sprite.colour[3] = 0.85f * one.heat * smooth(0.0f, 0.08f, t) * std::min(1.0f, left);
-            sprite.sheet = smoke_;
-            sprite.blend = gfx::Blend::Smoke;
+            // MU's puff shrinks a hundredth of a Scale a frame and is gone at nothing; its light,
+            // LifeTime / 50, is how much it takes away: all of it over its first 30 frames of 80,
+            // then less. MU subtracts it; here it is added, light, by the day's light (lamps.h,
+            // kVentPuffSubtracts), so smoke01's own wisps show and it does not glow at night.
+            const float scale = one.size - one.age * kVentPuffShrink;
+            if (scale <= 0.0f) continue;
+            sprite.halfWidth = sprite.halfHeight = 0.5f * scale * kVentPuffMetres;
+            const float light = std::min(1.0f, (1.0f - t) * 80.0f / 50.0f);
+            sprite.colour[0] = sprite.colour[1] = sprite.colour[2] =
+                light * std::min(1.0f, daylight) * smooth(0.0f, 0.08f, t);
+            sprite.sheet = ventSmoke_;
+            sprite.blend = gfx::Blend::Additive;
         } else {
             const float size = one.size * (1.0f + 1.8f * t);
             sprite.halfWidth = sprite.halfHeight = 0.5f * size;
