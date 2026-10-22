@@ -79,6 +79,39 @@
 //         Silver Bows' bones 2 and 6 in L*(1, 0.6, 0.2), the Chaos Nature Bow's 13-18 in
 //         L*(0.6, 1, 0.8), and the Celestial Bow's 13-18 and 5-8 in L*(0.5, 0.5, 0.8).
 //
+//   And the 100-140 wave's first three (2026-10-22), RenderLinkObject's, on the items' own
+//   bones at rest; MU's two flickers, sin(WorldTime*0.4) and sin(WorldTime*0.7), turn faster
+//   than its frame, so here they are the hand roll's swing:
+//     MODEL_DAYBREAK (:7226-7255): on bone 2 two BITMAP_LIGHT + 1 at 0.45 and BITMAP_SHINY + 1
+//         at 0.7 and at 0.5-1.05, grey 0.6; and BITMAP_LIGHT at 3 in (f, f, f), f the flicker
+//         *0.25 + 0.6.
+//     MODEL_PLATINA_STAFF (:7379-7444), f the flicker *0.2 + 0.3: on bone 9, the head,
+//         BITMAP_LIGHT at 0.3 grey 0.7 and at 4 in (0.2, 0.6 + f, 0.2), BITMAP_SHINY + 1 at
+//         1.2-1.7 in (0.4, 0.5 + f, 0.4); on bones 5-8 green (0.1, 0.8, 0.1) lights at 0.2, on
+//         10-13 grey 0.5 ones at 0.3; on bone 4 a green BITMAP_SHINY + 1 at 0.6; on bone 2, the
+//         foot, BITMAP_LIGHT at 0.7 grey 0.8 and at 2 in (0.2, 0.6 + f, 0.2) and a green shiny
+//         at 0.5. Its BITMAP_MAGIC rings on bones 9 and 2 are not drawn.
+//     MODEL_ALBATROSS_BOW (:7346-7377): green (0, 0.7, 0) BITMAP_LIGHT at 1.2 on bones 10, 28,
+//         34 and 16, the limb tips and either side of the grip; its green sparks not thrown.
+//   And the 100-140 wave's second eight (2026-10-22), RenderLinkObject's, on the items' bones at
+//   rest. MU's BITMAP_LIGHTMARKS and BITMAP_FLARE_BLUE are drawn here with BITMAP_LIGHT, and its
+//   BITMAP_SHINY + 6 with BITMAP_SHINY + 1, in MU's colours and sizes; its pin lights, waterfall
+//   sprites, clouds, joints and feathers are not thrown.
+//     MODEL_SWORD_DANCER (:7257-7300): a red light at 1 and a flash on bone 1; red lights at 1.1
+//         on bones 2-6, (0.8 + f, 0.1, 0).
+//     MODEL_FLAMBERGE (:7733-7766): a gold light on Gold01, green-blue ones on b01 and n02, and
+//         red marks (0.9, 0.1, 0.1) down bones 1-7, 0.8 to 0.5.
+//     MODEL_SWORD_BREAKER (:7767-7797): green marks (0.1, 0.9, 0.1) down bones 1-7, 0.6 to 0.3.
+//     MODEL_IMPERIAL_SWORD (:7798-7841): blue flares and shinies on bones 8-11, and blue marks
+//         (0, 0.3, 0.7) down bones 2-7, 1 to 0.1.
+//     MODEL_FROST_MACE (:7842-7890): its crystal (bone 24) lit (0.5, 0.8, 0.6) at 2, red shinies on
+//         bones 1, 8 and 9, green on 10 and 11, and small lights up bones 12-23.
+//     MODEL_STINGER_BOW (:7972-7999): a dim (0.2, 0.25, 0.3) light at 0.8 on every bone.
+//     MODEL_DEADLY_STAFF (:8000-8036): orange lights (0.8, 0.3, 0.1) on bones 4-9, and on its two
+//         red eyes (bones 2, 3) a light at 2 breathing |sin(WorldTime*0.001)|*0.8 + 0.2.
+//     MODEL_IMPERIAL_STAFF (:8037-8075): blue lights (0.3, 0.3, 0.9) at 2-3 on bones 2-4, and on
+//         bone 5 a red light and pink shinies.
+//
 // A blue string of lights down the crossbow, a blue spark on the shield's face, eight
 // violet-blue lights along the spear's swirl; the staff's two blue ends, the mace's yellow
 // head, and lights at the Great Reign's four limb tips and nose.
@@ -131,9 +164,21 @@ public:
         SilverBow,
         ChaosNatureBow,
         CelestialBow,
+        Daybreak,
+        PlatinaStaff,
+        AlbatrossBow,
+        SwordDancer,
+        Flamberge,
+        SwordBreaker,
+        ImperialSword,
+        FrostMace,
+        StingerBow,
+        DeadlyStaff,
+        ImperialStaff,
     };
-    static constexpr int kMostPoints = 11;
-    static constexpr Item kItems[27] = {Item::SaintCrossbow,   Item::GrandSoulShield,
+    // The Stinger Bow's 44 bones, each with its light (ZzzCharacter.cpp:7972-7999).
+    static constexpr int kMostPoints = 44;
+    static constexpr Item kItems[38] = {Item::SaintCrossbow,   Item::GrandSoulShield,
                                         Item::DragonSpear,     Item::DragonSoulStaff,
                                         Item::ElementalMace,   Item::GreatReignCrossbow,
                                         Item::ThunderBlade,    Item::LegendaryShield,
@@ -146,7 +191,12 @@ public:
                                         Item::ChaosLightningStaff, Item::BluewingCrossbow,
                                         Item::AquagoldCrossbow, Item::TigerBow,
                                         Item::SilverBow,       Item::ChaosNatureBow,
-                                        Item::CelestialBow};
+                                        Item::CelestialBow,    Item::Daybreak,
+                                        Item::PlatinaStaff,    Item::AlbatrossBow,
+                                        Item::SwordDancer,     Item::Flamberge,
+                                        Item::SwordBreaker,    Item::ImperialSword,
+                                        Item::FrostMace,       Item::StingerBow,
+                                        Item::DeadlyStaff,     Item::ImperialStaff};
 
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);

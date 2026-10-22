@@ -1,0 +1,130 @@
+{
+  "item": "Staff31",
+  "mu_name": "Deadly Staff",
+  "mu_name_from": "MODEL_DEADLY_STAFF (MODEL_STAFF + 30), loaded from Item/Staff_31.bmd (ZzzOpenData.cpp:1113). Ours is named Staff31 by the index-plus-one rule. Group 5 number 30 in OpenMU S6 Weapons.cs:266.",
+  "why_this_one": "The 100-140 weapons MU has and this game lacked (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's, then 'do next missing weapons for lower levels'): the second batch's mace, bow and staves.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:266.",
+    "call": "CreateWeapon(5, 30, 0, 0, 1, 4, true, \"Deadly Staff\", 138, 57, 59, 30, 91, 126, 380, 47, 18, 0, 0, 0, 0, 0, 1, 0, 0, 0)",
+    "call_note": "The Season 6 CreateWeapon: group, number, slot, skill, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strength, agility, energy, vitality, then darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel.",
+    "group": 5,
+    "number": 30,
+    "drop_level": 138,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 1,
+    "height": 4,
+    "minimum_damage": 57,
+    "maximum_damage": 59,
+    "attack_speed": 30,
+    "durability": 91,
+    "magic_power": 126,
+    "requires": {
+      "level": 0,
+      "strength": 47,
+      "agility": 18,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "MU asks level 380 (OpenMU's levelRequirement). Left at 0 for now: the user, 2026-10-22, settles the 380 items' level with Kanturu's ('Formula, decide later').",
+    "classes": [
+      "gladiator"
+    ]
+  },
+  "stance": "sword",
+  "stance_from": "Width 1: a one-handed staff stands as a sword does, as the Dragon Soul Staff.",
+  "two_handed": false,
+  "sheets": {
+    "soketmagum_deadstape01": "soketmagum_deadstape01.png",
+    "GRA": "gra_deadly.png"
+  },
+  "sheet_from": "Data/Item/soketmagum_deadstape01.OZJ (64x128, dark red and black traced in gold, with a silver haft, mesh 0, 572 triangles) and GRA (the grey ramp, mesh 1, 116), decoded from MuMain with pipeline/decode_texture.py. gra_deadly.png is ours: gra times MU's BodyLight (1, 0.5, 0.5) for that pass, as a glow here carries no tint.",
+  "sheet_materials": {
+    "soketmagum_deadstape01": "painted_steel"
+  },
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "Lacquer with gold traced on: a shallow cast grain.",
+  "glow": {
+    "GRA": {}
+  },
+  "glow_note": "RenderPartObjectBody's MODEL_DEADLY_STAFF arm (ZzzObject.cpp:7199-7206): the body, then mesh 1 again added (BlendMesh 1) at 1 under BodyLight (1, 0.5, 0.5) -- here out of the bake on the tinted gra_deadly, added.",
+  "rig_note": "export-rig --actions=all: ten bones, one action of one key; nothing moves, no rig kept. Held sprites: ZzzCharacter.cpp:8000-8036 (fx/held_lights, to do).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 474,
+      "area": 5256.8,
+      "along": [
+        50.5,
+        146.0
+      ],
+      "mu_uv": [
+        0.017,
+        -1.883,
+        1.02,
+        1.887
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.854,
+        0.841
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 206,
+      "area": 679.3,
+      "along": [
+        -100.1,
+        -72.7
+      ],
+      "mu_uv": [
+        0.027,
+        0.011,
+        0.926,
+        1.0
+      ],
+      "bake_uv": [
+        0.145,
+        0.009,
+        0.881,
+        0.714
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 8,
+      "area": 1693.7,
+      "along": [
+        -72.7,
+        50.5
+      ],
+      "mu_uv": [
+        0.856,
+        0.009,
+        0.985,
+        0.988
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.992,
+        0.924
+      ]
+    }
+  ]
+}

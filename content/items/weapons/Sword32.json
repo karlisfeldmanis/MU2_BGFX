@@ -1,0 +1,219 @@
+{
+  "item": "Sword32",
+  "mu_name": "Rune Blade",
+  "mu_name_from": "MODEL_RUNE_BLADE, loaded from Item/Sword32.bmd (ZzzOpenData.cpp:627). Group 0 number 31 in OpenMU S6 Weapons.cs:166.",
+  "why_this_one": "The 100-140 weapons MU has and this game lacked (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's); the first four, one a class, lowest first.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:166.",
+    "call": "CreateWeapon(0, 31, 0, 56, 2, 4, true, \"Rune Blade\", 100, 104, 130, 35, 93, 104, 0, 135, 62, 9, 0, 0, 0, 0, 1, 0, 0, 0)",
+    "call_note": "The Season 6 CreateWeapon: group, number, slot, skill, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strength, agility, energy, vitality, then darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel.",
+    "group": 0,
+    "number": 31,
+    "drop_level": 100,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 104,
+    "maximum_damage": 130,
+    "attack_speed": 35,
+    "durability": 93,
+    "magic_power": 104,
+    "requires": {
+      "level": 0,
+      "strength": 135,
+      "agility": 62,
+      "energy": 9,
+      "vitality": 0
+    },
+    "classes": [
+      "gladiator"
+    ],
+    "skill": 56
+  },
+  "stance": "two_hand_sword",
+  "stance_from": "Width 2: PLAYER_STOP_TWO_HAND_SWORD and its sweeps, as the Dark Reign Blade (MuMain's own *_TWO_HAND_SWORD_TWO, ZzzCharacter.cpp:362, tried there and not taken).",
+  "two_handed": true,
+  "sheets": {
+    "MMsS_r": "mmss_r.png",
+    "MMsS": "mmss.png",
+    "MMsSs_r": "mmsss_r.png",
+    "MMsS2": "mmss2.png"
+  },
+  "sheet_from": "Data/Item/MMsS_r.OZJ (32x64, the pale gold blade, mesh 0), MMsS (32x32, dark navy, mesh 1), MMsSs_r (64x64, blue lightning on black, mesh 2; the Grand Soul Shield's own, the same file) and MMsS2 (64x32, the navy hilt traced in gold, mesh 3), decoded from MuMain with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "MMsS_r": "brass",
+    "MMsS": "painted_steel",
+    "MMsS2": "painted_steel"
+  },
+  "material_overrides": {
+    "brass": {
+      "roughness": 0.6
+    }
+  },
+  "material_overrides_note": "A pale gold blade at brass's reflectance ceiling blows out; 0.6 as the gold passed in the studio.",
+  "glow": {
+    "MMsSs_r": {
+      "pulse": [
+        0.5,
+        0.5
+      ],
+      "pulse_rate": "slow",
+      "scrolls_per_second": 0.5,
+      "axis": "v"
+    },
+    "MMsS": {
+      "over": true,
+      "pulse": [
+        1.0,
+        0.0
+      ]
+    }
+  },
+  "glow_note": "ItemObjectAttribute: HiddenMesh 2 (ZzzObject.cpp:5281). RenderPartObjectBody's MODEL_RUNE_BLADE arm (:7098-7112): mesh 3 and mesh 1 drawn plain; mesh 1 again added at sin(WorldTime*0.01) -- here `over` from nothing to full at the item rate, slower than MU's; mesh 0 (the blade) RENDER_CHROME added, Chrome01 with V sliding WorldTime*0.001 (the chrome below, its slide not carried); mesh 2 (the lightning) bright and added at sin(WorldTime*0.001)*0.5+0.5, U sliding WorldTime*0.0001 and V -WorldTime*0.0005 -- here out of the bake, added, breathing at the slow rate and V sliding at MU's 0.5 (the renderer's offset being minus the rate; U's tenth not carried). PartObjectColor2 gives it Color 10 (:6572).",
+  "chrome": [
+    {
+      "slot": "MMsS_r",
+      "image": "chrome01",
+      "uv": "chrome",
+      "where": "over"
+    }
+  ],
+  "chrome_from": "RenderPartObjectBody's MODEL_RUNE_BLADE arm (ZzzObject.cpp:7105): mesh 0 RENDER_CHROME | RENDER_TEXTURE with BlendMesh 0, Chrome01 added over the gold blade; MU slides its V at WorldTime*0.001, not carried. pipeline/chrome_sheets.py.",
+  "rig_note": "export-rig --actions=all: two bones, one action of one key; nothing moves, no rig kept. MuMain's held arm (ZzzCharacter.cpp:7701-7720) throws four BITMAP_JOINT_SPARK and sparks off bone 1 only on PLAYER_RUN_TWO_HAND_SWORD_TWO, which this game runs as its own run; not built, as the Dark Reign Blade's. Its swing trail is BlurMapping 1 (:3799), the Lighting Sword's.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 180,
+      "area": 9623.9,
+      "along": [
+        -37.0,
+        178.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.0,
+        0.999,
+        1.0
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.976,
+        0.988
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 28,
+      "area": 551.7,
+      "along": [
+        1.1,
+        32.1
+      ],
+      "mu_uv": [
+        0.228,
+        0.027,
+        0.984,
+        0.979
+      ],
+      "bake_uv": [
+        0.447,
+        0.716,
+        0.763,
+        0.867
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 28,
+      "area": 551.7,
+      "along": [
+        1.1,
+        32.1
+      ],
+      "mu_uv": [
+        0.228,
+        0.027,
+        0.984,
+        0.979
+      ],
+      "bake_uv": [
+        0.77,
+        0.012,
+        0.879,
+        0.236
+      ]
+    },
+    {
+      "island": 3,
+      "material": "brass",
+      "triangles": 24,
+      "area": 405.5,
+      "along": [
+        20.0,
+        57.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.017,
+        0.985,
+        0.986
+      ],
+      "bake_uv": [
+        0.268,
+        0.157,
+        0.648,
+        0.633
+      ]
+    },
+    {
+      "island": 4,
+      "material": "brass",
+      "triangles": 24,
+      "area": 405.5,
+      "along": [
+        20.0,
+        57.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.017,
+        0.985,
+        0.986
+      ],
+      "bake_uv": [
+        0.012,
+        0.017,
+        0.672,
+        0.651
+      ]
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 46,
+      "area": 7405.2,
+      "along": [
+        35.3,
+        178.8
+      ],
+      "mu_uv": [
+        0.007,
+        0.002,
+        1.006,
+        1.001
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.248,
+        0.249
+      ]
+    }
+  ]
+}

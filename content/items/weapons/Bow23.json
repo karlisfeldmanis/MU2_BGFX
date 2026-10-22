@@ -1,0 +1,93 @@
+{
+  "item": "Bow23",
+  "mu_name": "Albatross Bow",
+  "mu_name_from": "MODEL_ALBATROSS_BOW (MODEL_BOW + 22), loaded from Item/CW_Bow.bmd (ZzzOpenData.cpp:1104). Ours is named Bow23 by the index-plus-one rule; MU never loads a Bow23 file. Group 4 number 22 in OpenMU S6 Weapons.cs:238.",
+  "why_this_one": "The 100-140 weapons MU has and this game lacked (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's); the first four, one a class, lowest first.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:238.",
+    "call": "CreateWeapon(4, 22, 1, 24, 2, 4, true, \"Albatross Bow\", 110, 155, 177, 45, 70, 0, 0, 60, 265, 0, 0, 0, 0, 2, 0, 0, 0, 0)",
+    "call_note": "The Season 6 CreateWeapon: group, number, slot, skill, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strength, agility, energy, vitality, then darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel.",
+    "group": 4,
+    "number": 22,
+    "drop_level": 110,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 155,
+    "maximum_damage": 177,
+    "attack_speed": 45,
+    "durability": 70,
+    "requires": {
+      "level": 0,
+      "strength": 60,
+      "agility": 265,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "skill": 24,
+    "class_level": 2,
+    "class_level_note": "The Muse Elf's alone: OpenMU's elfClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "stance": "bow",
+  "stance_from": "CharacterManager's bows count MODEL_ALBATROSS_BOW (ZzzEffectMagicSkill.cpp:273), so PLAYER_STOP_BOW and PLAYER_WALK_BOW; held level (ZzzObject.cpp:5398).",
+  "two_handed": true,
+  "fires": "Arrow01",
+  "fires_from": "ZzzEffectMagicSkill.cpp:248: `case MODEL_ALBATROSS_BOW: CreateEffect(MODEL_ARROW_RING, ...)`. Not built: the missiles are an arrow and a bolt (the user, 2026-10-03), so the wooden arrow.",
+  "sheets": {
+    "elfw3_06": "elfw3_06.png",
+    "elfw_06": "elfw_06.png",
+    "elfw2_06": "elfw2_06.png"
+  },
+  "sheet_from": "Data/Item/elfw3_06.OZT (64x128, the dark green limbs with a pale horn tip, mesh 0, 310 triangles, 1% cut), elfw_06.OZJ (64x64, green leaves, mesh 1) and elfw2_06.OZJ (64x16, a pink-white band, mesh 2), decoded from MuMain with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "elfw3_06": "painted_steel"
+  },
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "As the Arrow Viper Bow's lacquered limbs: a shallow cast grain, no blade streaks, no specks.",
+  "glow": {
+    "elfw_06": {},
+    "elfw2_06": {}
+  },
+  "glow_note": "RenderPartObjectBody's MODEL_ALBATROSS_BOW arm (ZzzObject.cpp:7717-7724): HiddenMesh 1, the body drawn plain, then mesh 1 (the leaves) again with BlendMesh 1, added -- here out of the bake and added; mesh 2 (elfw2_06, the pink-white tips) RENDER_TEXTURE | RENDER_BRIGHT, which MU draws added (ZzzBMD.cpp:1534-1537, EnableAlphaBlend) -- here out of the bake and added too; and mesh 2 again RENDER_CHROME5 at 0.5, a faint sheen this cook has no RENDER_CHROME5 coordinates for, not carried. ItemObjectAttribute scales it 0.7 (:5221) and holds it level (:5398). PartObjectColor2 gives it Color 26 (:6644).",
+  "release": 0.667,
+  "release_from": "Key 4 of this rig's six, as the Celestial Bow's: Box01 (bone 38), the nock, draws back -34.0, -44.4, -63.7, -74.1 and snaps to +1.3 on key 4. 4/6.",
+  "rig_note": "export-rig --actions=all: 41 bones, one action of six keys, the draw. No nocked arrow in the mesh, so no muzzle bone, as the Silver Bow. Held, MuMain hangs a green BITMAP_LIGHT (0, 0.7, 0) at 1.2 on its bones 10, 28, 34 and 16 and throws green BITMAP_SPARK + 1 off them (ZzzCharacter.cpp:7346-7377; fx/held_lights, to do).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 492,
+      "area": 17937.1,
+      "along": [
+        -124.8,
+        137.4
+      ],
+      "mu_uv": [
+        0.002,
+        0.006,
+        0.998,
+        0.998
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.932,
+        0.994
+      ]
+    }
+  ]
+}

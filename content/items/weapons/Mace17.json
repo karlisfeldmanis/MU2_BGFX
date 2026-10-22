@@ -1,0 +1,191 @@
+{
+  "item": "Mace17",
+  "mu_name": "Frost Mace",
+  "mu_name_from": "MODEL_FROST_MACE (MODEL_MACE + 16), loaded from Item/Mace_17.bmd (ZzzOpenData.cpp:1110). Ours is named Mace17 by the index-plus-one rule. Group 2 number 16 in OpenMU S6 Weapons.cs:198.",
+  "why_this_one": "The 100-140 weapons MU has and this game lacked (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's, then 'do next missing weapons for lower levels'): the second batch's mace, bow and staves.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:198.",
+    "call": "CreateWeapon(2, 16, 0, 0, 1, 3, true, \"Frost Mace\", 121, 106, 146, 50, 80, 0, 0, 27, 19, 0, 0, 0, 0, 2, 0, 0, 0, 0)",
+    "call_note": "The Season 6 CreateWeapon: group, number, slot, skill, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strength, agility, energy, vitality, then darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel.",
+    "group": 2,
+    "number": 16,
+    "drop_level": 121,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 1,
+    "height": 3,
+    "minimum_damage": 106,
+    "maximum_damage": 146,
+    "attack_speed": 50,
+    "durability": 80,
+    "requires": {
+      "level": 0,
+      "strength": 27,
+      "agility": 19,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Muse Elf's alone: OpenMU's elfClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "stance": "sword",
+  "stance_from": "Width 1: one-handed, as the Elemental Mace.",
+  "two_handed": false,
+  "sheets": {
+    "socketelf_frostmace": "socketelf_frostmace.png",
+    "GRA": "gra.png",
+    "bloodbone02": "bloodbone02.png"
+  },
+  "sheet_from": "Data/Item/socketelf_frostmace.OZJ (64x64, icy blue-silver with a red gem, mesh 0, 364 triangles), GRA (the grey ramp, mesh 1, 200) and bloodbone02 (16x16, red, mesh 2, 24), decoded from MuMain with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "socketelf_frostmace": "painted_steel"
+  },
+  "material_overrides": {"painted_steel": {"grain": {"kind": "cast", "scale": 260, "depth": 0.02, "roughness_range": 0.03}}},
+  "material_overrides_note": "Its handle is gold and green painted on, which steel turned near-black in the studio (2026-10-22, against a MU-style render of its arm): painted_steel with a shallow cast grain.",
+  "glow": {
+    "GRA": {},
+    "bloodbone02": {}
+  },
+  "glow_note": "RenderPartObjectBody's MODEL_FROST_MACE arm (ZzzObject.cpp:7192-7198): the body with mesh 1 hidden, then meshes 1, 3 (none: it has three) and 2 RENDER_TEXTURE | RENDER_BRIGHT, added (ZzzBMD.cpp:1534) -- here both out of the bake, added.",
+  "held_loop": 1.14,
+  "held_loop_from": "MuMain plays its action 0 always while held, at PLAYER_STOP_MALE's PlaySpeed (ZzzCharacter.cpp:10151-10155): 0.28 of a key a 25 Hz frame, 7 keys a second round its 8 keys, a loop of 8/7 s.",
+  "rig_note": "Mace17.rig.json from export-rig --actions=all: 25 bones, one action of eight keys, the frost spikes turning, kept and played always (held_loop). Held, MuMain's sprites are ZzzCharacter.cpp:7842-7971 (fx/held_lights, to do).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 24,
+      "area": 43.5,
+      "along": [
+        -33.7,
+        -29.5
+      ],
+      "mu_uv": [
+        0.03,
+        0.025,
+        0.979,
+        0.975
+      ],
+      "bake_uv": [
+        0.326,
+        0.138,
+        0.38,
+        0.192
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 8,
+      "area": 433.8,
+      "along": [
+        22.6,
+        83.9
+      ],
+      "mu_uv": [
+        0.004,
+        0.0,
+        1.004,
+        1.0
+      ],
+      "bake_uv": [
+        0.161,
+        0.04,
+        0.228,
+        0.218
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 80,
+      "area": 403.2,
+      "along": [
+        92.0,
+        102.9
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.008,
+        0.009,
+        0.708,
+        0.646
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 80,
+      "area": 775.6,
+      "along": [
+        87.6,
+        107.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.172,
+        0.152,
+        0.676,
+        0.736
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 32,
+      "area": 508.7,
+      "along": [
+        90.0,
+        103.9
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.458,
+        0.178,
+        0.515,
+        0.235
+      ]
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 356,
+      "area": 1079.7,
+      "along": [
+        -29.8,
+        19.9
+      ],
+      "mu_uv": [
+        0.028,
+        0.011,
+        0.969,
+        0.981
+      ],
+      "bake_uv": [
+        0.008,
+        0.009,
+        0.947,
+        0.992
+      ]
+    }
+  ]
+}
