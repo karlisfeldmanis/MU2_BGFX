@@ -1,0 +1,174 @@
+{
+  "item": "Object79",
+  "mu_name": "Object79",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 78,
+  "placements": 25,
+  "profile": "world",
+  "sheets": {
+    "mingwall": "kr_mingwall.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "mingwall": "flagstone"
+  },
+  "material_note": "mingwall: carved stone panels: flagstone.",
+  "why_this_one": "Stone towers, 25 of them. Batch 6, the most-placed ruins (the user, 2026-10-22: 'do next'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 62590.9,
+      "along": [
+        -42.6,
+        40.0
+      ],
+      "mu_uv": [
+        0.164,
+        0.002,
+        0.998,
+        0.998
+      ],
+      "bake_uv": [
+        0.293,
+        0.008,
+        0.703,
+        0.97
+      ]
+    },
+    {
+      "island": 1,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 11843.4,
+      "along": [
+        -34.7,
+        34.7
+      ],
+      "mu_uv": [
+        0.009,
+        0.649,
+        0.761,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.771,
+        0.86
+      ]
+    },
+    {
+      "island": 2,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 4722.5,
+      "along": [
+        -39.3,
+        39.3
+      ],
+      "mu_uv": [
+        0.005,
+        0.008,
+        0.158,
+        0.645
+      ],
+      "bake_uv": [
+        0.438,
+        0.008,
+        0.906,
+        0.933
+      ]
+    },
+    {
+      "island": 3,
+      "material": "flagstone",
+      "triangles": 20,
+      "area": 25672.1,
+      "along": [
+        16.5,
+        59.1
+      ],
+      "mu_uv": [
+        0.469,
+        0.0,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.992,
+        0.642
+      ]
+    },
+    {
+      "island": 4,
+      "material": "flagstone",
+      "triangles": 20,
+      "area": 25672.1,
+      "along": [
+        16.5,
+        59.1
+      ],
+      "mu_uv": [
+        0.469,
+        0.0,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.389,
+        0.938
+      ]
+    },
+    {
+      "island": 5,
+      "material": "flagstone",
+      "triangles": 14,
+      "area": 18230.7,
+      "along": [
+        -58.5,
+        -15.9
+      ],
+      "mu_uv": [
+        0.469,
+        0.0,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.124,
+        0.304,
+        0.879,
+        0.919
+      ]
+    },
+    {
+      "island": 6,
+      "material": "flagstone",
+      "triangles": 14,
+      "area": 18230.7,
+      "along": [
+        -58.5,
+        -15.9
+      ],
+      "mu_uv": [
+        0.469,
+        0.0,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.304,
+        0.887,
+        0.862
+      ]
+    }
+  ]
+}

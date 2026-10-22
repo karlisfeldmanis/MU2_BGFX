@@ -1,0 +1,42 @@
+{
+  "item": "Object21",
+  "mu_name": "Object21",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 20,
+  "placements": 31,
+  "profile": "world",
+  "sheets": {
+    "han_b2": "kr_han_b2.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "han_b2": "plank"
+  },
+  "material_note": "han_b2: worn boards: plank.",
+  "why_this_one": "Ground slabs, 31 of them, flat at scale 0.2-0.6. Batch 6, the most-placed ruins (the user, 2026-10-22: 'do next'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plank",
+      "triangles": 56,
+      "area": 427661.4,
+      "along": [
+        -194.5,
+        194.7
+      ],
+      "mu_uv": [
+        -1.007,
+        -2.229,
+        2.002,
+        2.264
+      ],
+      "bake_uv": [
+        0.006,
+        0.005,
+        0.995,
+        0.97
+      ]
+    }
+  ]
+}

@@ -1,0 +1,860 @@
+{
+  "item": "Object23",
+  "mu_name": "Object23",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 22,
+  "placements": 50,
+  "profile": "world",
+  "sheets": {
+    "mingwall2": "kr_mingwall2.png",
+    "mingwall3": "kr_mingwall3.png",
+    "song_k0r1": "kr_song_k0r1.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "mingwall2": "flagstone",
+    "mingwall3": "timber",
+    "song_k0r1": "plank"
+  },
+  "material_note": "mingwall2: carved stone blocks: flagstone. mingwall3: rope-bound weathered planks: timber. song_k0r1: splintered boards: plank.",
+  "why_this_one": "Thatched and stone walls, 50 of them. Batch 6, the most-placed ruins (the user, 2026-10-22: 'do next'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 10,
+      "area": 13248.4,
+      "along": [
+        -21.6,
+        21.6
+      ],
+      "mu_uv": [
+        0.003,
+        0.0,
+        0.996,
+        0.989
+      ],
+      "bake_uv": [
+        0.041,
+        0.013,
+        0.709,
+        0.842
+      ]
+    },
+    {
+      "island": 1,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 10514.9,
+      "along": [
+        -13.8,
+        13.8
+      ],
+      "mu_uv": [
+        0.252,
+        0.693,
+        0.996,
+        0.886
+      ],
+      "bake_uv": [
+        0.394,
+        0.607,
+        0.692,
+        0.755
+      ]
+    },
+    {
+      "island": 2,
+      "material": "flagstone",
+      "triangles": 10,
+      "area": 12205.7,
+      "along": [
+        -21.6,
+        21.6
+      ],
+      "mu_uv": [
+        0.182,
+        0.017,
+        0.996,
+        0.693
+      ],
+      "bake_uv": [
+        0.267,
+        0.175,
+        0.695,
+        0.799
+      ]
+    },
+    {
+      "island": 3,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 38699.1,
+      "along": [
+        -17.3,
+        17.3
+      ],
+      "mu_uv": [
+        0.182,
+        0.004,
+        0.995,
+        0.571
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.64,
+        0.626
+      ]
+    },
+    {
+      "island": 4,
+      "material": "timber",
+      "triangles": 20,
+      "area": 17253.2,
+      "along": [
+        -26.7,
+        119.9
+      ],
+      "mu_uv": [
+        0.003,
+        0.0,
+        1.002,
+        1.0
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.7,
+        0.692
+      ]
+    },
+    {
+      "island": 5,
+      "material": "timber",
+      "triangles": 20,
+      "area": 17216.9,
+      "along": [
+        -26.7,
+        119.9
+      ],
+      "mu_uv": [
+        0.003,
+        0.0,
+        1.002,
+        1.0
+      ],
+      "bake_uv": [
+        0.093,
+        0.013,
+        0.73,
+        0.534
+      ]
+    },
+    {
+      "island": 6,
+      "material": "timber",
+      "triangles": 8,
+      "area": 5403.0,
+      "along": [
+        16.6,
+        105.1
+      ],
+      "mu_uv": [
+        0.005,
+        -0.002,
+        0.411,
+        0.995
+      ],
+      "bake_uv": [
+        0.105,
+        0.205,
+        0.51,
+        0.736
+      ]
+    },
+    {
+      "island": 7,
+      "material": "timber",
+      "triangles": 8,
+      "area": 5336.9,
+      "along": [
+        16.6,
+        101.2
+      ],
+      "mu_uv": [
+        0.005,
+        -0.002,
+        0.411,
+        0.995
+      ],
+      "bake_uv": [
+        0.336,
+        0.013,
+        0.701,
+        0.744
+      ]
+    },
+    {
+      "island": 8,
+      "material": "timber",
+      "triangles": 8,
+      "area": 3418.8,
+      "along": [
+        -20.6,
+        31.8
+      ],
+      "mu_uv": [
+        0.005,
+        -0.002,
+        0.411,
+        0.995
+      ],
+      "bake_uv": [
+        0.267,
+        0.013,
+        0.581,
+        0.749
+      ]
+    },
+    {
+      "island": 9,
+      "material": "timber",
+      "triangles": 8,
+      "area": 3523.5,
+      "along": [
+        -22.4,
+        31.8
+      ],
+      "mu_uv": [
+        0.005,
+        -0.002,
+        0.411,
+        0.995
+      ],
+      "bake_uv": [
+        0.013,
+        0.325,
+        0.599,
+        0.75
+      ]
+    },
+    {
+      "island": 10,
+      "material": "timber",
+      "triangles": 24,
+      "area": 18793.3,
+      "along": [
+        -39.7,
+        -17.0
+      ],
+      "mu_uv": [
+        0.003,
+        0.0,
+        1.002,
+        1.0
+      ],
+      "bake_uv": [
+        0.169,
+        0.013,
+        0.642,
+        0.737
+      ]
+    },
+    {
+      "island": 11,
+      "material": "timber",
+      "triangles": 24,
+      "area": 21139.5,
+      "along": [
+        -39.7,
+        -17.0
+      ],
+      "mu_uv": [
+        0.003,
+        0.0,
+        1.002,
+        1.0
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.484,
+        0.737
+      ]
+    },
+    {
+      "island": 12,
+      "material": "plank",
+      "triangles": 3,
+      "area": 551.2,
+      "along": [
+        33.8,
+        83.7
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.687,
+        0.368,
+        0.756,
+        0.476
+      ]
+    },
+    {
+      "island": 13,
+      "material": "plank",
+      "triangles": 3,
+      "area": 434.3,
+      "along": [
+        28.9,
+        60.7
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.169,
+        0.501,
+        0.756,
+        0.782
+      ]
+    },
+    {
+      "island": 14,
+      "material": "plank",
+      "triangles": 3,
+      "area": 452.2,
+      "along": [
+        24.3,
+        45.4
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.717,
+        0.175,
+        0.789,
+        0.626
+      ]
+    },
+    {
+      "island": 15,
+      "material": "plank",
+      "triangles": 3,
+      "area": 687.0,
+      "along": [
+        28.9,
+        68.5
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.637,
+        0.013,
+        0.789,
+        0.789
+      ]
+    },
+    {
+      "island": 16,
+      "material": "plank",
+      "triangles": 3,
+      "area": 872.5,
+      "along": [
+        28.9,
+        82.7
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.509,
+        0.057,
+        0.794,
+        0.793
+      ]
+    },
+    {
+      "island": 17,
+      "material": "plank",
+      "triangles": 3,
+      "area": 551.2,
+      "along": [
+        33.8,
+        83.7
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.041,
+        0.718,
+        0.799,
+        0.794
+      ]
+    },
+    {
+      "island": 18,
+      "material": "plank",
+      "triangles": 3,
+      "area": 505.4,
+      "along": [
+        28.9,
+        60.7
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.356,
+        0.131,
+        0.824,
+        0.825
+      ]
+    },
+    {
+      "island": 19,
+      "material": "plank",
+      "triangles": 3,
+      "area": 452.2,
+      "along": [
+        24.3,
+        45.4
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.169,
+        0.807,
+        0.799,
+        0.834
+      ]
+    },
+    {
+      "island": 20,
+      "material": "plank",
+      "triangles": 3,
+      "area": 633.9,
+      "along": [
+        28.9,
+        68.5
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.041,
+        0.368,
+        0.85,
+        0.839
+      ]
+    },
+    {
+      "island": 21,
+      "material": "plank",
+      "triangles": 3,
+      "area": 854.7,
+      "along": [
+        28.9,
+        82.7
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.781,
+        0.412,
+        0.85,
+        0.52
+      ]
+    },
+    {
+      "island": 22,
+      "material": "plank",
+      "triangles": 3,
+      "area": 1230.8,
+      "along": [
+        20.2,
+        94.9
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.169,
+        0.851,
+        0.705,
+        0.878
+      ]
+    },
+    {
+      "island": 23,
+      "material": "plank",
+      "triangles": 3,
+      "area": 1128.6,
+      "along": [
+        -16.0,
+        26.1
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.731,
+        0.562,
+        0.88,
+        0.878
+      ]
+    },
+    {
+      "island": 24,
+      "material": "plank",
+      "triangles": 3,
+      "area": 1415.6,
+      "along": [
+        -14.9,
+        42.6
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.509,
+        0.175,
+        0.883,
+        0.882
+      ]
+    },
+    {
+      "island": 25,
+      "material": "plank",
+      "triangles": 3,
+      "area": 1486.5,
+      "along": [
+        -15.2,
+        20.9
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.041,
+        0.013,
+        0.883,
+        0.883
+      ]
+    },
+    {
+      "island": 26,
+      "material": "plank",
+      "triangles": 3,
+      "area": 995.5,
+      "along": [
+        16.6,
+        76.9
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.819,
+        0.664,
+        0.893,
+        0.789
+      ]
+    },
+    {
+      "island": 27,
+      "material": "plank",
+      "triangles": 3,
+      "area": 1128.6,
+      "along": [
+        -16.0,
+        26.1
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.825,
+        0.131,
+        0.897,
+        0.878
+      ]
+    },
+    {
+      "island": 28,
+      "material": "plank",
+      "triangles": 3,
+      "area": 1415.6,
+      "along": [
+        -14.9,
+        42.6
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.169,
+        0.291,
+        0.918,
+        0.915
+      ]
+    },
+    {
+      "island": 29,
+      "material": "plank",
+      "triangles": 3,
+      "area": 1516.1,
+      "along": [
+        -15.2,
+        44.6
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.637,
+        0.903,
+        0.893,
+        0.923
+      ]
+    },
+    {
+      "island": 30,
+      "material": "plank",
+      "triangles": 3,
+      "area": 898.9,
+      "along": [
+        -53.4,
+        -25.0
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.041,
+        0.368,
+        0.944,
+        0.928
+      ]
+    },
+    {
+      "island": 31,
+      "material": "plank",
+      "triangles": 3,
+      "area": 1009.8,
+      "along": [
+        -82.9,
+        -35.0
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.875,
+        0.412,
+        0.944,
+        0.52
+      ]
+    },
+    {
+      "island": 32,
+      "material": "plank",
+      "triangles": 3,
+      "area": 898.4,
+      "along": [
+        -65.5,
+        -24.8
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.169,
+        0.94,
+        0.705,
+        0.967
+      ]
+    },
+    {
+      "island": 33,
+      "material": "plank",
+      "triangles": 3,
+      "area": 1696.8,
+      "along": [
+        -82.0,
+        -24.8
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.509,
+        0.948,
+        0.893,
+        0.971
+      ]
+    },
+    {
+      "island": 34,
+      "material": "plank",
+      "triangles": 3,
+      "area": 1032.6,
+      "along": [
+        -53.0,
+        -25.0
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.041,
+        0.562,
+        0.974,
+        0.972
+      ]
+    },
+    {
+      "island": 35,
+      "material": "plank",
+      "triangles": 3,
+      "area": 945.8,
+      "along": [
+        -82.5,
+        -35.0
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.908,
+        0.013,
+        0.977,
+        0.239
+      ]
+    },
+    {
+      "island": 36,
+      "material": "plank",
+      "triangles": 3,
+      "area": 1063.0,
+      "along": [
+        -72.6,
+        -24.8
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.908,
+        0.057,
+        0.983,
+        0.737
+      ]
+    },
+    {
+      "island": 37,
+      "material": "plank",
+      "triangles": 3,
+      "area": 1696.8,
+      "along": [
+        -82.0,
+        -24.8
+      ],
+      "mu_uv": [
+        0.594,
+        0.001,
+        1.005,
+        0.116
+      ],
+      "bake_uv": [
+        0.919,
+        0.77,
+        0.987,
+        0.878
+      ]
+    }
+  ]
+}

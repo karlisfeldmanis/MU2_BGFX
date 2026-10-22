@@ -1,0 +1,108 @@
+{
+  "item": "Object35",
+  "mu_name": "Object35",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 34,
+  "placements": 33,
+  "profile": "world",
+  "sheets": {
+    "mingwall2": "kr_mingwall2.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "mingwall2": "flagstone"
+  },
+  "material_note": "mingwall2: carved stone blocks: flagstone.",
+  "why_this_one": "Rubble walls, 33 of them. Batch 6, the most-placed ruins (the user, 2026-10-22: 'do next'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 13,
+      "area": 6788.8,
+      "along": [
+        -21.6,
+        21.6
+      ],
+      "mu_uv": [
+        -0.002,
+        0.313,
+        0.658,
+        0.999
+      ],
+      "bake_uv": [
+        0.571,
+        0.402,
+        0.993,
+        0.981
+      ]
+    },
+    {
+      "island": 1,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 5700.8,
+      "along": [
+        -13.8,
+        13.8
+      ],
+      "mu_uv": [
+        0.002,
+        0.604,
+        0.686,
+        1.005
+      ],
+      "bake_uv": [
+        0.431,
+        0.234,
+        0.945,
+        0.813
+      ]
+    },
+    {
+      "island": 2,
+      "material": "flagstone",
+      "triangles": 13,
+      "area": 7153.1,
+      "along": [
+        -21.6,
+        21.6
+      ],
+      "mu_uv": [
+        0.01,
+        0.252,
+        0.745,
+        0.994
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.695,
+        0.984
+      ]
+    },
+    {
+      "island": 3,
+      "material": "flagstone",
+      "triangles": 24,
+      "area": 34676.1,
+      "along": [
+        -17.3,
+        17.3
+      ],
+      "mu_uv": [
+        -0.005,
+        0.004,
+        0.995,
+        0.998
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.964,
+        0.97
+      ]
+    }
+  ]
+}
