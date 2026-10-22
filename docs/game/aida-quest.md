@@ -78,7 +78,7 @@ Hand-in (the Seed Master's voice):
 
 Resting: "Mind the beds. Everything here grows, even what should not."
 
-Pay as the Road of Kantur, scaled to its level: proposed **300,000 experience, 150,000 Zen**
+Pay as the Road of Kantur, scaled to its level: **3,000,000 experience** (300,000 until the reward audit of 2026-10-22, 3% of a level at 300), **150,000 Zen**
 (+ the 3 Firecrackers every quest pays). It opens an Aida Tab row, as the Road opens Tarkan's
 (`realm_travel.cpp`), if Aida gets one (aida-port decision 3).
 
@@ -141,9 +141,9 @@ The ladder's acts stop at Sevina's 200 (docs/game/quest-rewards.md). Aida at 300
 (IX), so its pay is new. The ladder's rules still hold: a rune no rarer than its map, a rune with
 the socket it fits.
 
-- **Every clear:** 300,000 experience, 500,000 Zen, a Jewel of Life, a Jewel of Chaos, 2 Jewels of
+- **Every clear:** 3,000,000 experience (300,000 until the reward audit, 2026-10-22), 500,000 Zen, a Jewel of Life, a Jewel of Chaos, 2 Jewels of
   Bless, 2 of Soul, a Box of Kundun +3, the 3 Firecrackers.
-- **The first clear:** 1,200,000 experience in place of 300,000, and a **Rune of Creation**,
+- **The first clear:** 12,000,000 experience in place of 3,000,000 (1,200,000 until the audit: 13% of a level at 300), and a **Rune of Creation**,
   the Seed Master's own pay: **Greater Wellspring** (+30% max mana, a ring or a pendant, every
   class), which no quest paid before. Wrath was tried first, but the Balrog pays it already
   and the ladder pays no weapon rune twice (testQuestLadder). The doc's first idea, a rune of

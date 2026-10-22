@@ -13,6 +13,10 @@ The reset. Ours: MU 0.75 has none. The rules were settled with the user on 2026-
 - **Accumulative:** every level on the way back up gives its stat points again. Talent points
   count every life's levels (`talentPoints(kin, level, rebirths)`), so the first rebirth shows
   79 -> 80 for a knight at 400.
+- **Quests:** the first hand-in of each quest after a rebirth pays its first clear's experience
+  again, once a life, to one born in its town (`sim::questReborn`; `QuestProgress::life`, the
+  rebirth of the last hand-in, kept layout 14, protocol 48). Its gear and runes are not paid
+  again (the reward audit, 2026-10-22).
 - **Gear:** what he wears and could not wear at level 1 goes into the bag, as Reset Points does.
   A bag without room refuses the rebirth whole and nothing changes.
 - **Says:** `What::Reborn` (a: the count, b: pieces to the bag), to everyone.

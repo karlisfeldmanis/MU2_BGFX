@@ -395,9 +395,12 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
                        was.state == sim::QuestState::Ready) {
                 bannerKicker_ = "Quest complete";
                 bannerTitle_ = row.title;
+                // was's life is the one before this hand-in: a reborn hero's first again.
                 bannerLine_ = grouped(sim::questExperience(
                                   row, sim::questFirst(row, int(realm.hero().kin),
-                                                       was.completions))) +
+                                                       was.completions) ||
+                                           sim::questReborn(row, int(realm.hero().kin), was,
+                                                            realm.hero().rebirths))) +
                               " experience      ";
                 bannerZen_ = grouped(row.zen) + " Zen";
                 bannerNext_ = row.next;

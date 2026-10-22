@@ -158,6 +158,11 @@ QuestRow marlon() {
     // Echo. They were Stormcall (Epic) and Arcane Echo itself (Legendary) until 2026-10-09.
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Gust),
                      .firstOnly = true};
+    // And the bleed's Common, Graze, so that family is taught weak first too (the reward audit,
+    // 2026-10-22: no quest taught Graze to Hemorrhage). The Falchion's one socket takes one of the
+    // two; the other waits for Devin's two.
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Graze),
+                     .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::FaintEcho),
                      .firstOnly = true};
     // The first powered ring, a green one (sim::Affix; the user, 2026-10-03: "also add some
@@ -361,8 +366,9 @@ QuestRow devin() {
     // "life regeneration rune which is much more important i think than just max hp").
     row.paid[n++] = {.item = "Necklace02", .sockets = 1, .firstOnly = true};  // Pendant of Fire
     row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::Renewal), .firstOnly = true};
-    // And the first pet, the Guardian Angel, for the first road away from home.
-    row.paid[n++] = {.item = "Helper01", .firstOnly = true};
+    // And the first pet, the Guardian Angel, for the first road away from home: two, every clear,
+    // since it lasts two hours and stacks (1298be3b) -- one on the first clear alone was a trial.
+    row.paid[n++] = {.item = "Helper01", .count = 2};
     // And a skill (2026-10-07): the wizard's Flame, which no shop sells, and for the elf the Orb
     // of Summoning +3 -- the Elite Yeti she has just hunted. The knight's Cyclone asks level 72
     // and went to the Pit (2026-10-09).
@@ -585,8 +591,9 @@ QuestRow pit() {
     // The first powered pendant, purple, three powers.
     row.paid[n++] = {.item = "NecklaceFury", .plus = 3, .firstOnly = true,
                      .affixes = {uint8_t(Affix::Leech), uint8_t(Affix::Wisdom)}};
-    // And the second pet, the Imp, for the Angel's other shoulder of the game: the damage one.
-    row.paid[n++] = {.item = "Helper02", .firstOnly = true};
+    // And the second pet, the Imp, for the Angel's other shoulder of the game: the damage one. Two,
+    // every clear, as Devin's Angels.
+    row.paid[n++] = {.item = "Helper02", .count = 2};
     // And the chain's last skills (2026-10-07): the knight's Cyclone, Devias's until 2026-10-09
     // (its orb asks 72; Death Stab's 120 went to Tersia's sixth floor), and the wizard's
     // Hellfire. The elf's Penetration went to Tersia's sixth floor too (the user, 2026-10-09:
@@ -686,8 +693,9 @@ QuestRow tersiaDoor() {
                                  .firstOnly = true};  // Guardian
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::GreaterVigor),
                                  .firstOnly = true};
-    // And the guild's horse: the Horn of Uniria, level 60, the first mount.
-    row.paid[row.paidCount++] = {.item = "Helper03", .firstOnly = true};
+    // And the guild's horse: the Horn of Uniria, level 60, the first mount -- one every clear, a
+    // day's ride (kHornSeconds).
+    row.paid[row.paidCount++] = {.item = "Helper03"};
     row.voice = "tersia_1";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }
@@ -1062,6 +1070,21 @@ QuestRow tersiaSkyDoor() {
     // clear"): the Orb of Summoning +6, the Alquamos, the first time she clears the sky's first
     // four (skill::kSummonAlquamos). Hers alone, as Tersia's seventh link gave her Bali at +5.
     row.paid[row.paidCount++] = {.item = "Gem05", .plus = 6, .kin = elf, .firstOnly = true};
+    // **An element rune for the talents' Attunements** (the reward audit, 2026-10-22): Wind
+    // counts Tempest, Fire Inferno, Storm Thunder and Tempest, Frost and Venom Glacier and Venom,
+    // and no quest paid a Tempest or a Venom. The knight's is his Whirlwind's Tempest; the wizard
+    // and the elf choose one for the column they build. The Magic Gladiator is paid by his path.
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Tempest),
+                                 .firstOnly = true};
+    for (const Power one : {Power::Inferno, Power::Thunder, Power::Tempest, Power::Glacier,
+                            Power::Venom}) {
+        row.choices[row.choiceCount++] = {.item = "Jewel22", .kin = wizard,
+                                          .power = uint8_t(one), .firstOnly = true};
+    }
+    for (const Power one : {Power::Tempest, Power::Glacier}) {
+        row.choices[row.choiceCount++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(one),
+                                          .firstOnly = true};
+    }
     row.voice = "tersia_8";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }
@@ -1478,6 +1501,13 @@ QuestRow lirienHalls() {
                      .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::PlagueArrows),
                      .firstOnly = true};
+    // And Buckler, the Epic that keeps Defense and Magic Shield at 60% without a shield, the
+    // knight's and the wizard's: the ladder's "Buckler before Bulwark", which no quest paid until
+    // the reward audit (2026-10-22). It lets the Crescent Axe pick hold its guard.
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Buckler),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Buckler),
+                     .firstOnly = true};
     // And the drowned halls' own spell for the wizard (2026-10-07): Aqua Beam.
     row.paid[n++] = {.item = "Book12", .kin = wizard, .firstOnly = true};  // Scroll of Aqua Beam
     row.paid[n++] = {.item = "Jewel02", .count = 2};  // Jewels of Soul
@@ -1650,6 +1680,11 @@ QuestRow kantursLegion() {
                      .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Glacier),
                      .firstOnly = true};
+    // And the knight's Twin Guard, the two-weapon kin of Bulwark: two matched swords keep Defense
+    // and hit 30% harder. His quest swords match (the Lighting Sword, this Sword of Destruction),
+    // and his Dual Wield talents had no rune from any quest (the reward audit, 2026-10-22).
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::TwinGuard),
+                     .firstOnly = true};
     row.paid[n++] = {.item = "NecklaceFury", .plus = 4, .firstOnly = true,
                      .affixes = {uint8_t(Affix::Leech), uint8_t(Affix::Wisdom),
                                  uint8_t(Affix::Wealth)}};  // Pendant of Fury, legendary
@@ -1722,8 +1757,22 @@ QuestRow kantursCaptain() {
                      .firstOnly = true, .rank = Rank::Second};  // Dark Reign Blade +7, the MG's
     row.paid[n++] = {.item = "Staff12", .kin = wizard, .sockets = 3, .firstOnly = true,
                      .rank = Rank::Second};  // Staff of Kundun, +0 (+7 too much, the user)
-    row.paid[n++] = {.item = "CrossBow20", .kin = elf, .sockets = 3,
-                     .firstOnly = true, .rank = Rank::Second};  // Great Reign Crossbow
+    // The Muse Elf's the Stinger Bow (drop level 134) since the reward audit (2026-10-22): the
+    // Great Reign Crossbow's 100 lagged the others' 140 once the Season 6 bows were built.
+    row.paid[n++] = {.item = "Bow24", .kin = elf, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::Second};  // Stinger Bow
+    // And the second class's shield (82870a67), each class's own: the Blade Knight's Crimson
+    // Glory, the Soul Master's Guardian Shield, the Muse Elf's Frost Barrier, the Magic
+    // Gladiator's Salamander Shield. The knight's last was the Dragon Shield, sixty levels down.
+    constexpr int8_t gladiator = int8_t(Kin::MagicGladiator);
+    row.paid[n++] = {.item = "Shield18", .kin = knight, .sockets = 2,
+                     .firstOnly = true, .rank = Rank::Second};  // Crimson Glory
+    row.paid[n++] = {.item = "Shield21", .kin = wizard, .sockets = 2,
+                     .firstOnly = true, .rank = Rank::Second};  // Guardian Shield
+    row.paid[n++] = {.item = "Shield20", .kin = elf, .sockets = 2,
+                     .firstOnly = true, .rank = Rank::Second};  // Frost Barrier
+    row.paid[n++] = {.item = "Shield19", .kin = gladiator, .sockets = 2,
+                     .firstOnly = true, .rank = Rank::Second};  // Salamander Shield
     row.paid[n++] = {.item = "Jewel03"};  // a Jewel of Life
     row.paid[n++] = {.item = "Quest04"};  // Loch's Feather
     row.paidCount = n;
@@ -1829,7 +1878,9 @@ QuestRow sealedWood() {
     row.afterAny = 1u << 1;  // Noria's Song handed in
     row.natives = 0x7;
     row.strangers = true;
-    row.experience = 300000;
+    // A third of a level at 300 (neededExperience: 9.5M a level there), as the other errands pay
+    // near their own level; 300,000 was 3% (the reward audit, 2026-10-22).
+    row.experience = 3000000;
     row.zen = 150000;
     return row;
 }
@@ -1890,8 +1941,11 @@ QuestRow seedMastersClearing() {
     // Every class's, as the Keeper's: no class is born in Aida.
     row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
     row.strangers = true;
-    row.experience = 300000;
-    row.firstExperience = 1200000;
+    // Priced on the curve past 256, where a level climbs steeply (9.5M at 300, 53M at 380): the
+    // first clear about a level and a third at 300, a repeat about a fifth more than its 146 kills
+    // pay. They were 1.2M and 300,000 -- 13% and 3% of a level (the reward audit, 2026-10-22).
+    row.experience = 3000000;
+    row.firstExperience = 12000000;
     row.zen = 500000;
     int n = 0;
     row.paid[n++] = {.item = "Jewel03"};                // a Jewel of Life

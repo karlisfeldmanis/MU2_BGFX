@@ -5526,8 +5526,15 @@ void testTalentCommands(const content::Tables& tables) {
         size_t at = 0;
         while (at < bytes.size() && bytes[at] == markedBytes[at]) ++at;
         constexpr size_t kQuestBytes = 1 + 4 * sim::kQuestSteps + 8 + 4;
+        // A layout-13 row has no quests' lives (QuestProgress::life, layout 14): a byte a quest.
+        std::vector<uint8_t> thirteen(bytes.begin(), bytes.end() - sim::kQuests);
+        sim::Kept unlived;
+        check(net::keptFrom(thirteen, unlived, 13) && unlived.hero.quests[0].life == 0 &&
+                  unlived.hero.talents == saved.talents,
+              "a layout-13 row reads, every quest in the first life");
+        check(!net::keptFrom(thirteen, unlived, 14), "and is not a layout 14");
         // A layout-12 row has no rebirths (sim/rebirth.h, layout 13): its last four bytes.
-        std::vector<uint8_t> twelve(bytes.begin(), bytes.end() - 4);
+        std::vector<uint8_t> twelve(thirteen.begin(), thirteen.end() - 4);
         sim::Kept unborn;
         check(net::keptFrom(twelve, unborn, 12) && unborn.hero.rebirths == 0 && unborn.hero.talents == saved.talents,
               "a layout-12 row reads, never reborn");
@@ -9526,19 +9533,23 @@ void testGladiatorPath(const content::Tables& tables) {
         const int32_t sword = tables.itemNamed("Sword08"), staff = tables.itemNamed("Staff03");
         const int32_t rune = tables.itemNamed("Jewel22");
         int swords = 0, staves = 0;
-        uint8_t power = 0;
+        // Every rune paid: the knight's two Commons (Gust, Graze) or the wizard's Faint Echo.
+        bool runes[256] = {};
         for (int slot = 0; slot < sim::kSlots; ++slot) {
             const sim::Held& one = realm.satchel()[slot];
             swords += one.item == sword ? 1 : 0;
             staves += one.item == staff ? 1 : 0;
-            if (one.item == rune) power = one.powers[0];
+            if (one.item == rune) runes[one.powers[0]] = true;
         }
         if (path == sim::QuestPath::Melee) {
             check(swords == 1 && staves == 0, "Melee: the Falchion, not the staff");
-            checkEqual(int(power), int(sim::Power::Gust), "and Gust, the knight's Common");
+            check(runes[uint8_t(sim::Power::Gust)] && runes[uint8_t(sim::Power::Graze)],
+                  "and Gust and Graze, the knight's Commons");
+            check(!runes[uint8_t(sim::Power::FaintEcho)], "not the wizard's");
         } else {
             check(swords == 0 && staves == 1, "Magic: the Serpent Staff, not the Falchion");
-            checkEqual(int(power), int(sim::Power::FaintEcho), "and the wizard's Faint Echo");
+            check(runes[uint8_t(sim::Power::FaintEcho)] && !runes[uint8_t(sim::Power::Gust)],
+                  "and the wizard's Faint Echo");
         }
     }
 }
@@ -13854,6 +13865,37 @@ void testQuestLadder(const content::Tables& tables) {
         }
     }
     checkEqual(crow, 4, "the Magic Gladiator's Storm Crow, whole over Icarus");
+    // The talents' Attunements count element runes (the reward audit, 2026-10-22): the Sky Door
+    // pays the knight a Tempest and gives the wizard and the elf a choice of them, first clear.
+    const sim::QuestRow& sky = sim::questAt(sim::kSkyDoor);
+    const auto offered = [&](int kin, sim::Power power) {
+        for (int i = 0; i < sky.choiceCount; ++i) {
+            if (sky.choices[i].power == uint8_t(power) && sim::questPays(sky.choices[i], kin, true)) return true;
+        }
+        for (int i = 0; i < sky.paidCount; ++i) {
+            if (sky.paid[i].power == uint8_t(power) && sim::questPays(sky.paid[i], kin, true)) return true;
+        }
+        return false;
+    };
+    check(offered(int(sim::Kin::DarkKnight), sim::Power::Tempest), "the knight's Tempest");
+    check(offered(int(sim::Kin::DarkWizard), sim::Power::Venom) &&
+              offered(int(sim::Kin::DarkWizard), sim::Power::Inferno),
+          "the wizard's choice holds Venom and Inferno");
+    check(offered(int(sim::Kin::FairyElf), sim::Power::Tempest), "the elf's holds Tempest");
+    check(sky.choiceCount <= sim::kQuestChoices, "and fits the choices");
+    // Kantur's Captain pays each second class its own shield (82870a67).
+    const sim::QuestRow& captain = sim::questAt(sim::kKantursCaptain);
+    int shields = 0;
+    for (int i = 0; i < captain.paidCount; ++i) {
+        const int item = tables.itemNamed(captain.paid[i].item);
+        if (item < 0) continue;
+        const content::ItemRow& one = tables.items[size_t(item)];
+        if (one.shield() && captain.paid[i].rank == sim::QuestItem::Rank::Second &&
+            (one.classes & (1 << captain.paid[i].kin)) != 0) {
+            ++shields;
+        }
+    }
+    checkEqual(shields, 4, "the captain pays four second-class shields, each to its class");
 }
 
 void testQuestFirecrackers(const content::Tables& tables) {

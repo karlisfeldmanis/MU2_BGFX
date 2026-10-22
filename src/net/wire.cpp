@@ -203,6 +203,7 @@ void putKept(Out& o, const sim::Kept& k) {
         for (const uint8_t rank : column) o.u8(rank);
     }
     o.i32(r.rebirths);
+    for (const sim::QuestProgress& q : r.quests) o.u8(q.life);
 }
 
 sim::Kept takeKept(In& in, int layout = kKeptLayout) {
@@ -277,6 +278,10 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
         }
     }
     if (layout >= 13) r.rebirths = in.i32();
+    // Layout 14 each quest's life (QuestProgress::life); before it, every one the first.
+    if (layout >= 14) {
+        for (sim::QuestProgress& q : r.quests) q.life = in.u8();
+    }
     return k;
 }
 

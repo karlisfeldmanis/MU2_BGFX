@@ -1319,7 +1319,9 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             controls::label(body_, sx(kInset), by(cy + 18.0f), kBody * u, style::kBone,
                             panel::commas(sim::questExperience(
                                 row, sim::questFirst(row, int(realm.hero().kin),
-                                                     progress.completions))) +
+                                                     progress.completions) ||
+                                         sim::questReborn(row, int(realm.hero().kin), progress,
+                                                          realm.hero().rebirths))) +
                                 " experience");
             controls::ranged(body_, sx(kInset + inner()), by(cy + 18.0f), kBody * u, kZenGold,
                              panel::commas(row.zen) + " Zen");

@@ -264,6 +264,7 @@ bool loadSave(const std::string& path, Saved& out) {
         }
         into.availableAt = int64_t(one.at(2).numberOr(0.0));
         into.completions = uint32_t(one.at(3).numberOr(0.0));
+        into.life = uint8_t(std::clamp(int(one.at(4).numberOr(0.0)), 0, 255));  // absent: the first
     }
 
     const core::Json& items = doc["items"];
@@ -461,7 +462,8 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
         for (int step = 0; step < sim::kQuestSteps; ++step) {
             std::fprintf(f, "%s%d", step ? ", " : "", int(one.counts[step]));
         }
-        std::fprintf(f, "], %lld, %u]", static_cast<long long>(one.availableAt), one.completions);
+        std::fprintf(f, "], %lld, %u, %d]", static_cast<long long>(one.availableAt), one.completions,
+                     int(one.life));
     }
     std::fprintf(f, "},\n");
     bool cooling = false;

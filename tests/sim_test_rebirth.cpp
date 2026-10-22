@@ -7,6 +7,7 @@
 #include "content/tables.h"
 #include "net/wire.h"
 #include "sim/command.h"
+#include "sim/quests.h"
 #include "sim/rebirth.h"
 #include "sim/realm.h"
 #include "sim/talents.h"
@@ -98,4 +99,30 @@ void testRebirth(void (*check)(bool, const char*), void (*checkEqual)(long long,
     check(again.raise(&devias, 5, 210, 45, sim::Kin::DarkKnight, 1), "a realm raises him again");
     again.restore(back.hero);
     checkEqual(again.hero().rebirths, 1, "restored with it");
+
+    // A quest handed in before the rebirth pays its first clear's experience again, once a life,
+    // to one born in its town (sim::questReborn); its gear and runes stay the first clear's.
+    const sim::QuestRow& marlon = sim::questAt(sim::questIndexOf("marlon"));
+    const int knight = int(sim::Kin::DarkKnight);
+    sim::QuestProgress done;
+    done.state = sim::QuestState::Resting;
+    done.completions = 3;
+    check(!sim::questReborn(marlon, knight, done, 0), "never reborn: no bonus");
+    check(sim::questReborn(marlon, knight, done, 1), "his first hand-in after the rebirth pays it");
+    checkEqual(sim::questExperience(marlon, true), marlon.firstExperience, "the first clear's experience");
+    check(!sim::questReborn(marlon, int(sim::Kin::FairyElf), done, 1), "not to a stranger to the town");
+    done.life = 1;
+    check(!sim::questReborn(marlon, knight, done, 1), "once a life");
+    check(sim::questReborn(marlon, knight, done, 2), "and again in the next");
+    sim::QuestProgress never;
+    check(!sim::questReborn(marlon, knight, never, 1), "a quest never handed in has its true first clear");
+    // And the life through a character's bytes.
+    sim::Kept lived;
+    lived.hero = realm.record();
+    lived.hero.quests[0] = done;
+    std::vector<uint8_t> livedBytes;
+    net::putKept(livedBytes, lived);
+    sim::Kept livedBack;
+    check(net::keptFrom(livedBytes, livedBack) && livedBack.hero.quests[0].life == 1,
+          "a quest's life read back");
 }
