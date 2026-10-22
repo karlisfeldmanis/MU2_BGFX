@@ -3137,7 +3137,17 @@ void Play::update(double seconds) {
                 const ShineLook shine = shineOf(tables.items[size_t(boots.item)], boots.refinement);
                 std::copy(shine.colour, shine.colour + 3, colour);
             }
-            setShine_.wear(body.id, plus, feet, drawn.yaw, arms, lit, colour);
+            const float* spray = boots.empty() || size_t(boots.item) >= tables.items.size()
+                                     ? nullptr
+                                     : SetShine::sprayOf(tables.items[size_t(boots.item)]);
+            // A Kanturu set's puffs off his pelvis as posed (MU's BoneTransform[0]).
+            float puffAt[3][3];
+            const bool posed = spray && look && look->rootBone >= 0 &&
+                               drawn.figure.pointOnBind(look->rootBone, SetShine::kPuffPoints[0], puffAt[0]) &&
+                               drawn.figure.pointOnBind(look->rootBone, SetShine::kPuffPoints[1], puffAt[1]) &&
+                               drawn.figure.pointOnBind(look->rootBone, SetShine::kPuffPoints[2], puffAt[2]);
+            setShine_.wear(body.id, plus, feet, drawn.yaw, arms, lit, colour, spray,
+                           posed ? puffAt : nullptr);
         }
     }
     setShine_.update(float(seconds), ground_ ? ground_->metresPerTile() : 1.0f);
