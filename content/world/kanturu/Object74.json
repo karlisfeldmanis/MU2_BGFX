@@ -1,0 +1,68 @@
+{
+  "item": "Object74",
+  "mu_name": "Object74",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 73,
+  "placements": 51,
+  "profile": "world",
+  "sheets": {
+    "Treeange_R": "kr_treeange_r.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "Treeange_R": "lamplight"
+  },
+  "material_note": "Treeange_R: a soft light streak, MU's bright sheet: lamplight.",
+  "why_this_one": "Additive light streaks (Aida's tree angel), 51 of them. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "additive": [
+    "Treeange_R"
+  ],
+  "additive_from": "Treeange_R is an _R sheet, drawn added, as Aida's tree angel (TextureScript.cpp:16-58).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 6,
+      "area": 730300.7,
+      "along": [
+        0.7,
+        283.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.498,
+        0.498
+      ]
+    },
+    {
+      "island": 1,
+      "material": "lamplight",
+      "triangles": 6,
+      "area": 943509.9,
+      "along": [
+        -70.8,
+        211.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.002,
+        0.502,
+        0.498,
+        0.998
+      ]
+    }
+  ]
+}

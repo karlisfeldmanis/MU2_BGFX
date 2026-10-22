@@ -1,0 +1,50 @@
+{
+  "item": "Object77",
+  "mu_name": "Object77",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 76,
+  "placements": 10,
+  "profile": "world",
+  "sheets": {
+    "sunlight2": "kr_sunlight2.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "sunlight2": "lamplight"
+  },
+  "material_note": "sunlight2: a pale sunbeam, alpha: lamplight.",
+  "cutout": [
+    "sunlight2"
+  ],
+  "cutout_from": "decode_texture found a real alpha channel cutting the sheet.",
+  "why_this_one": "Sunbeam planes, 3 by 8.7 m, 10 of them. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "additive": [
+    "sunlight2"
+  ],
+  "additive_from": "Not an _R sheet in MU: alpha 0.5, then mesh 0 again RENDER_BRIGHT at BodyLight 0.52, streamed one sheet in 100 s (GM_Kanturu_1st.cpp:91-93, 348-359); drawn added here, as Aida's sunbeams, the stream waiting for the effects batch.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 2,
+      "area": 261497.5,
+      "along": [
+        -150.8,
+        156.1
+      ],
+      "mu_uv": [
+        0.155,
+        0.0,
+        0.636,
+        1.044
+      ],
+      "bake_uv": [
+        0.155,
+        0.0,
+        0.636,
+        1.044
+      ]
+    }
+  ]
+}
