@@ -441,8 +441,10 @@ void keepEveryone(std::vector<std::unique_ptr<Session>>& sessions);
 // chat.cpp
 void hearLine(Session& one, const net::Heard& line);
 void chatSystem(Session& one, net::Channel channel, const std::string& text);
-// A character reborn, told on Global to everyone online by no one (net::rebirthLine). For the
-// reset to call once it is built; nothing calls it yet.
+// A line on Global said by no one, to everyone welcomed on this server: a herald's (Chat::hear).
+void heraldHere(const std::string& text, std::vector<std::unique_ptr<Session>>& sessions);
+// A character reborn (sim/rebirth.h), told on Global to everyone online on every realm, naming
+// this one (net::rebirthLine): here, and over the market's line to the rest (marketHerald).
 void announceRebirth(const std::string& name, int count, std::vector<std::unique_ptr<Session>>& sessions);
 Session* playerNamed(const std::string& name, std::vector<std::unique_ptr<Session>>& sessions);
 bool nameInUse(const std::string& name, const std::vector<std::unique_ptr<Session>>& sessions,

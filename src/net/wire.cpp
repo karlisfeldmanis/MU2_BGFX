@@ -462,8 +462,9 @@ std::string romanNumeral(int count) {
     return s;
 }
 
-std::string rebirthLine(const std::string& name, int count) {
-    return name + " has been reborn (Rebirth " + romanNumeral(count) + ").";
+std::string rebirthLine(const std::string& name, int count, const std::string& realm) {
+    return name + " has been reborn" + (realm.empty() ? "" : " in " + realm) + " (Rebirth " +
+           romanNumeral(count) + ").";
 }
 
 std::string saidText(const std::string& text) {

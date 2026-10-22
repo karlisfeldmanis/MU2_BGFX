@@ -533,6 +533,11 @@ void handsPass(std::vector<std::unique_ptr<Session>>& sessions) {
                 if (parse(body, news)) brokerNews(news, sessions);
                 break;
             }
+            case LinkKind::Herald: {
+                std::string text;
+                if (parse(body, text)) heraldHere(text, sessions);
+                break;
+            }
             case LinkKind::Holders: {
                 std::vector<std::pair<uint64_t, bool>> tokens;
                 if (!parse(body, tokens)) break;
@@ -649,6 +654,17 @@ void keeperPass(std::vector<std::unique_ptr<Session>>& sessions) {
                 case LinkKind::Present: {
                     std::vector<std::pair<uint64_t, bool>> on;
                     if (parse(body, on)) keeperPresent(b.region, on);
+                    break;
+                }
+                case LinkKind::Herald: {
+                    // Another realm's: told here, and passed on to every line but its own.
+                    std::string text;
+                    if (!parse(body, text)) break;
+                    heraldHere(text, sessions);
+                    for (auto& other : g_branches) {
+                        if (other.get() == &b || !other->known || !other->socket.open()) continue;
+                        putLink(other->owed, LinkKind::Herald, bodyOf(text));
+                    }
                     break;
                 }
                 case LinkKind::Live: {
@@ -816,5 +832,15 @@ bool marketNewsTo(const std::string& region, const MarketNews& news) {
 }
 
 bool marketHolder(uint64_t token) { return g_holders.count(token) != 0; }
+
+void marketHerald(const std::string& text) {
+    if (g_role == Role::Hands) {
+        if (g_welcomed && g_line.open()) sendFrame(g_line, LinkKind::Herald, bodyOf(text));
+        return;
+    }
+    for (auto& b : g_branches) {
+        if (b->known && b->socket.open()) putLink(b->owed, LinkKind::Herald, bodyOf(text));
+    }
+}
 
 }  // namespace mu::server

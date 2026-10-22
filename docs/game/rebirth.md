@@ -26,8 +26,12 @@ The reset. Ours: MU 0.75 has none. The rules were settled with the user on 2026-
 
 ## The server (server/src/world.cpp)
 
-On `Reborn`: the character is written at once, as a trade is, and the server tells Global
-(`announceRebirth`, net::rebirthLine): "[1. Global] Ken has been reborn (Rebirth I)." in gold.
+On `Reborn`: the character is written at once, as a trade is, and the server tells Global on
+every realm (`announceRebirth`, net::rebirthLine), naming the realm it happened on: "[1. Global]
+Ken has been reborn in Central Europe (Rebirth I)." in gold. Its own players hear it at once; the
+rest over the market's line (`LinkKind::Herald`, server/src/market_link.h): a realm's server sends
+it to the keeper (Helsinki), which tells its own players and passes it to every other line. Not
+kept: a realm whose line is down at that moment misses it.
 
 ## The client
 
