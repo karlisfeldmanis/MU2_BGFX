@@ -811,38 +811,6 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         }
         return;
     }
-    // His Chain Lightning (sim/items.h kChain...): a bolt on what he struck, then leaping on as
-    // his Lightning's chain leaps (Realm::chainLeap), a leap a kChainLeapTicks.
-    if (power.power == Power::ChainLightning) {
-        if (!runeDice_.nextBool(kChainChance)) return;
-        const Body* aim = runeAim(hero, struck);
-        Body* first = aim == nullptr ? nullptr : body(aim->id);
-        if (first == nullptr) return;
-        // c 0: from his hand.
-        say(What::Loosed, hero, skill::kChainLightning, 0, 0, first->id);
-        happenings_.back().rune = true;
-        happenings_.back().x = first->x;
-        happenings_.back().y = first->y;
-        core::logf("chain lightning rune: tick %lld, on #%u", (long long)tick_, first->id);
-        const float force = kChainForce * runeForce(hero, Element::Lightning);
-        Flight leap;
-        leap.owner = hero.id;
-        leap.at = tick_ + kChainLeapTicks;
-        leap.target = first->id;  // the body it leaps off
-        leap.skill = skill::kChainLightning;
-        leap.force = force;
-        leap.pays = false;
-        leap.swung = true;
-        leap.hops = 1;
-        leap.chained[0] = first->id;
-        runeStrike(hero, *first, force);
-        for (Flight& one : flights_) {
-            if (one.at != 0) continue;
-            one = leap;
-            break;
-        }
-        return;
-    }
     // His Drain Life (sim/items.h kDrain...): his rune's blow on what he struck, and life back
     // off it if it lands, as OpenMU's DrainLifeSkillPlugIn heals off a monster.
     if (power.power == Power::DrainLife) {
@@ -1491,58 +1459,6 @@ void Realm::hop(Body& hero, const Flight& from, uint32_t off, float x, float y) 
     }
 }
 
-// A Chain Lightning rune's leap, due now: off the body it last struck (`target`), from where that
-// stands or fell, to the nearest living monster in its sight within kChainReach that this chain
-// has not struck, as his Lightning's chain finds its next (Realm::channel); by distance and then
-// by id, so the log is fixed. Said as the rune's Loosed with `c` the body it leaps off, and its
-// blow on the same tick; the next leap kChainLeapTicks on, while the chain has bodies left.
-void Realm::chainLeap(Body& hero, const Flight& from) {
-    static_assert(kChainMost <= kPyroblastChain + 1, "a Flight holds the chain's bodies");
-    const Body* off = body(from.target);
-    if (off == nullptr || !hero.alive() || from.hops >= kChainMost) return;
-    const float x = off->x, y = off->y;
-    const auto struckAlready = [&](uint32_t id) {
-        for (int i = 0; i < from.hops; ++i) {
-            if (from.chained[i] == id) return true;
-        }
-        return false;
-    };
-    Body* next = nullptr;
-    float best = kChainReach * kChainReach;
-    for (Body& b : bodies_) {
-        if (!b.monster() || !b.alive() || struckAlready(b.id)) continue;
-        const float dx = b.x - x, dy = b.y - y;
-        const float d2 = dx * dx + dy * dy;
-        if (d2 > best || (d2 == best && next != nullptr && b.id > next->id)) continue;
-        if (!router_.sees(x, y, b.x, b.y, content::kWallNoMove)) continue;
-        best = d2;
-        next = &b;
-    }
-    if (next == nullptr) {
-        core::logf("chain lightning rune: tick %lld, the chain ends at #%u", (long long)tick_,
-                   off->id);
-        return;
-    }
-    say(What::Loosed, hero, skill::kChainLightning, 0, int32_t(off->id), next->id);
-    happenings_.back().rune = true;
-    happenings_.back().x = next->x;
-    happenings_.back().y = next->y;
-    core::logf("chain lightning rune: tick %lld, leap %d, #%u to #%u", (long long)tick_, from.hops,
-               off->id, next->id);
-    Flight leap = from;
-    leap.chained[leap.hops] = next->id;
-    leap.hops = int8_t(from.hops + 1);
-    leap.target = next->id;
-    leap.at = tick_ + kChainLeapTicks;
-    runeStrike(hero, *next, from.force * (from.hops == 1 ? kChainSecond : kChainThird));
-    if (leap.hops >= kChainMost) return;
-    for (Flight& one : flights_) {
-        if (one.at != 0) continue;
-        one = leap;
-        return;
-    }
-}
-
 // A plain shot: the spell's flight with the arrow's speed and no row, so `arrive` lands it as a
 // swing -- the archery band, not the wizardry sum. Said as a `Loosed` with no skill number.
 void Realm::looseArrow(Body& hero, uint32_t at, float force) {
@@ -1747,12 +1663,6 @@ void Realm::arrive() {
         if (next < 0) return;
         const Flight flight = flights_[next];
         flights_[next] = Flight{};
-        // A Chain Lightning rune's leap is not a flight that lands on its target: it leaps off
-        // it (Realm::chainLeap).
-        if (flight.skill == skill::kChainLightning) {
-            chainLeap(hero, flight);
-            continue;
-        }
         const SkillRow* row = skillNumbered(flight.skill);
         // A bolt whose target died in the air flies on past the corpse and lands on nothing:
         // `CheckTargetRange`'s own first line is `to->Live`.

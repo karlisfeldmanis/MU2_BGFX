@@ -2797,7 +2797,7 @@
         "SE_Ch_summoner_skill08_chainlightning.wav"
       ],
       "from": "SOUND_SKILL_CHAIN_LIGHTNING, which ZzzOpenData loads from Data\\\\Sound\\\\SE_Ch_summoner_skill08_chainlightning.wav with one voice (:4918). ZzzCharacter plays it as the Summoner throws Chain Lightning (:5208-5212).",
-      "note": "The Ancient rune Chain Lightning (sim/items.h kChain...), played as its bolts are thrown (game/play.cpp)."
+      "note": "The wizard's Lightning (game/play_open.cpp), once a cast on the strike from his hands -- the user, 2026-10-22: \"new lighting chaiin has to work how its now but with new animation and sound\". Was the Ancient rune Chain Lightning's, retired the same day."
     },
     "spell_drain_life": {
       "files": [

@@ -146,10 +146,8 @@ constexpr int32_t kWeakness = 221;
 // `AT_SKILL_SUMMON_POLLUTION`, the Summoner's Book of Lagle: the Ancient rune Pollution's
 // (sim/items.h kPollution...), said as Loosed on what it struck (fx/pollution.h). MU's number.
 constexpr int32_t kPollution = 225;
-// `AT_SKILL_ALICE_CHAINLIGHTNING` and `AT_SKILL_ALICE_DRAINLIFE`: the Ancient runes Chain Lightning's
-// and Drain Life's (sim/items.h kChain... and kDrain...), said as Loosed on what they struck
-// (fx/thunder.h's bolts, fx/drain.h). MU's numbers.
-constexpr int32_t kChainLightning = 215;
+// `AT_SKILL_ALICE_DRAINLIFE`: the Ancient rune Drain Life's (sim/items.h kDrain...), said as
+// Loosed on what it struck (fx/drain.h). MU's number.
 constexpr int32_t kDrainLife = 214;
 }  // namespace skill
 

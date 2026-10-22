@@ -1355,24 +1355,6 @@ void Play::update(double seconds) {
                         const float there[3] = {to[0], ground_->heightAt(to[0], to[2]), to[2]};
                         pollution_.cast(self, there);
                         if (heard_.pollution >= 0) emit(heard_.pollution, to[0], to[2], caster->id);
-                    } else if (happening.a == sim::skill::kChainLightning) {
-                        // The Ancient rune Chain Lightning, drawn as his Lightning's chain is: the
-                        // first bolt from his hand, each leap from the middle of the body it leaves
-                        // (`c`), with SOUND_SKILL_CHAIN_LIGHTNING as it is thrown (fx/thunder.h).
-                        const Drawn* off =
-                            happening.c != 0 ? drawnOf(uint32_t(happening.c)) : nullptr;
-                        if (off != nullptr && off->placed) {
-                            const FigureBody* look = off->figure.body();
-                            const float tall = look ? look->height * look->scale : 1.0f;
-                            const float at[3] = {off->crown[0], off->crown[1] - tall * 0.5f,
-                                                 off->crown[2]};
-                            thunder_.strike(at, to, happening.whom);
-                        } else {
-                            thunder_.strike(from, to, happening.whom);
-                        }
-                        if (happening.c == 0 && heard_.chainLightning >= 0) {
-                            emit(heard_.chainLightning, caster->crown[0], caster->crown[2], caster->id);
-                        }
                     } else if (happening.a == sim::skill::kDrainLife) {
                         // The Ancient rune Drain Life: MU's MODEL_ALICE_DRAIN_LIFE between him and
                         // what it drained, with SOUND_SKILL_DRAIN_LIFE (fx/drain.h). The life it
@@ -1434,19 +1416,49 @@ void Play::update(double seconds) {
                                         float(fall) * float(kTickSeconds));
                         }
                     } else if (happening.a == sim::skill::kLightning) {
-                        // A chain's leap: from the middle of the body it leaps off (`c`,
-                        // Realm::channel), not his hand -- the corpse's too, if the last strike
-                        // killed it.
+                        // Drawn as the Summoner's Chain Lightning (fx/thunder.h Thunder::chain;
+                        // the user, 2026-10-22: "new lighting chaiin has to work how its now but
+                        // with new animation and sound"). A chain's leap: from the middle of the
+                        // body it leaps off (`c`, Realm::channel) -- the corpse's too, if the last
+                        // strike killed it -- as MU's subtypes 1 and 2 leave the body before. The
+                        // first: from his weapon (the user, 2026-10-22: "chain has to come from
+                        // weapon"), its head (Play::weaponHead), two bolts where MU's
+                        // subtype 0 throws from the Summoner's two hands; from his hands when the
+                        // weapon marks none, and from the chest when the rig marks no hands.
                         const Drawn* off =
                             happening.c != 0 ? drawnOf(uint32_t(happening.c)) : nullptr;
+                        float tall = 1.0f;
+                        if (target && target->placed) {
+                            const FigureBody* look = target->figure.body();
+                            tall = look ? look->height * look->scale : 1.0f;
+                        }
                         if (off != nullptr && off->placed) {
                             const FigureBody* look = off->figure.body();
-                            const float tall = look ? look->height * look->scale : 1.0f;
-                            const float at[3] = {off->crown[0], off->crown[1] - tall * 0.5f,
+                            const float offTall = look ? look->height * look->scale : 1.0f;
+                            const float at[3] = {off->crown[0], off->crown[1] - offTall * 0.5f,
                                                  off->crown[2]};
-                            thunder_.strike(at, to, happening.whom);
+                            thunder_.chain(at, to, happening.whom, tall);
                         } else {
-                            thunder_.strike(from, to, happening.whom);
+                            const FigureBody* look = caster->figure.body();
+                            const float grip[3] = {0.0f, 0.0f, 0.0f};
+                            int thrown = 0;
+                            float tip[3];
+                            if (weaponHead(*caster, tip)) {
+                                thunder_.chain(tip, to, happening.whom, tall);
+                                thunder_.chain(tip, to, happening.whom, tall);
+                                thrown = 2;
+                            }
+                            for (const int hand : {0, 3}) {
+                                if (thrown > 0) break;
+                                float at[3];
+                                if (look == nullptr || look->armBones[hand] < 0 ||
+                                    !caster->figure.pointOn(look->armBones[hand], grip, at)) {
+                                    continue;
+                                }
+                                thunder_.chain(at, to, happening.whom, tall);
+                                ++thrown;
+                            }
+                            if (thrown == 0) thunder_.chain(from, to, happening.whom, tall);
                         }
                     } else if (happening.a == sim::skill::kPowerWave) {
                         // A curtain standing on the ground, under where every spell leaves, sent
@@ -1522,7 +1534,10 @@ void Play::update(double seconds) {
                     // Nova's rings on the key it bursts on, not here (novaOwed_).
                     const bool spell = loosed != nullptr && loosed->wizardry &&
                                        happening.a != sim::skill::kNova;
-                    if (spell && !again && index >= 0 && heard_.skill[index] >= 0) {
+                    // Lightning's is Chain Lightning's, once a cast as MU plays it: on the strike
+                    // from his hands, not on every leap.
+                    const bool leap = happening.a == sim::skill::kLightning && happening.c != 0;
+                    if (spell && !again && !leap && index >= 0 && heard_.skill[index] >= 0) {
                         emit(heard_.skill[index], from[0], from[2], caster->id);
                     }
                 }

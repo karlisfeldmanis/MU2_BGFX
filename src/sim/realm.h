@@ -2136,8 +2136,6 @@ private:
     // A Pyroblaster's chain flying on from `off`, which it struck at (x, y): to the nearest
     // monster it has not struck yet, while it has hops left.
     void hop(Body& hero, const Flight& from, uint32_t off, float x, float y);
-    // A Chain Lightning rune's leap off the body it last struck (sim/items.h kChain...).
-    void chainLeap(Body& hero, const Flight& from);
     // Room for a line's worth of bodies and the bolts around it.
     static constexpr int kFlights = 48;  // 32 until a Meteorite rained on 24 (2026-10-03)
     Flight flights_[kFlights] = {};

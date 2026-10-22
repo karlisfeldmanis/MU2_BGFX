@@ -11090,55 +11090,6 @@ void ancientRow(const content::Tables& tables, sim::Power power, const char* nam
     check(at > 0 && below == 0, "it falls past Aida and not before");
 }
 
-// Chain Lightning, the Summoner's bolt on a Soul Master's staff (sim/items.h kChain...): about one
-// cast in ten, what he struck, then leaps as his Lightning's chain does -- each a kChainLeapTicks
-// after the last, within six tiles of the body it leaves, never one struck twice, three in all.
-void testChainLightningRune(const content::Tables& tables, int rune, int staff, int sword) {
-    std::printf("chain lightning rune\n");
-    ancientRow(tables, sim::Power::ChainLightning, "Chain Lightning", rune, staff, sword);
-    int casts = 0, chains = 0, leaps = 0, far = 0, twice = 0, long_ = 0, early = 0;
-    uint32_t struck[sim::kChainMost] = {};
-    int count = 0;
-    uint32_t lastTick = 0;
-    ancientHunt(tables, staff, sim::Power::ChainLightning, true, [&](const sim::Realm& realm) {
-        for (const sim::Happening& h : realm.happenings()) {
-            if (h.who != realm.hero().id) continue;
-            if (h.what == sim::What::Cast && h.a == sim::skill::kLightning) ++casts;
-            if (h.what != sim::What::Loosed || h.a != sim::skill::kChainLightning) continue;
-            if (h.c == 0) {
-                ++chains;
-                count = 0;
-                struck[count++] = h.whom;
-                lastTick = h.tick;
-                continue;
-            }
-            ++leaps;
-            early += int64_t(h.tick) - int64_t(lastTick) < sim::kChainLeapTicks;
-            lastTick = h.tick;
-            for (int i = 0; i < count; ++i) twice += struck[i] == h.whom;
-            if (count >= sim::kChainMost) ++long_;
-            else struck[count++] = h.whom;
-            const sim::Body* a = realm.find(uint32_t(h.c));
-            const sim::Body* b = realm.find(h.whom);
-            if (a == nullptr || b == nullptr) continue;
-            const float dx = a->x - b->x, dy = a->y - b->y;
-            const float reach = sim::kChainReach + 0.5f;
-            far += dx * dx + dy * dy > reach * reach;
-        }
-    });
-    std::printf("  Chain Lightning: %d casts, %d thrown, %d leaps, %d far, %d twice, %d too long, "
-                "%d early\n", casts, chains, leaps, far, twice, long_, early);
-    check(chains > 0 && leaps > 0, "Chain Lightning strikes what he struck and leaps on");
-    checkEqual(far, 0, "never more than six tiles a leap");
-    checkEqual(twice, 0, "never the same monster twice");
-    checkEqual(long_, 0, "never more than three");
-    checkEqual(early, 0, "a leap every 300 ms");
-    if (casts > 0) {
-        const double rate = double(chains) / casts;
-        check(rate > 0.05 && rate < 0.16, "about one cast in ten");
-    }
-}
-
 // Drain Life, the Summoner's drain on a Soul Master's staff (sim/items.h kDrain...): about one
 // cast in ten, a blow on what he struck and, when it lands, his energy / 15 + its level / 2.5
 // back as life.
@@ -11295,7 +11246,6 @@ void testAncientRunes(const content::Tables& tables) {
     }
     testWeaknessRune(tables, rune, staff, sword);
     testPollutionRune(tables, rune, staff, sword);
-    testChainLightningRune(tables, rune, staff, sword);
     testDrainLifeRune(tables, rune, staff, sword);
 }
 

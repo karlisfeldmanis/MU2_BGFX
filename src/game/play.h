@@ -1566,6 +1566,8 @@ private:
     // Where a shot leaves a bow or crossbow that carries no nocked missile and no muzzle bone: a
     // bow's middle, a crossbow's front end toward `toward` less half a bolt; false with none in
     // hand or none posed.
+    // The head of the weapon in his hand: Lightning's bolts leave it.
+    bool weaponHead(const Drawn& caster, float out[3]) const;
     bool weaponFront(const Drawn& shooter, const float toward[3], float out[3]) const;
     // Whose string is held empty this frame because an arrow of theirs is flying (Arrows::owners).
     std::vector<uint32_t> nockHeld_;
@@ -2069,8 +2071,7 @@ private:
         int iceStorm = -1, iceStormLand = -1;  // eSuddenIce_1 and _2, the Ancient rune Ice Storm's
         int weakness = -1;                     // SE_Ch_summoner_weakness, the Ancient rune Weakness's
         int pollution = -1;                    // Rargle, the Ancient rune Pollution's
-        int chainLightning = -1;               // the Ancient rune Chain Lightning's
-        int drainLife = -1;                    // and Drain Life's (SE_Ch_summoner_skill07/08)
+        int drainLife = -1;                    // SE_Ch_summoner_skill07, the Ancient rune Drain Life's
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
         int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};

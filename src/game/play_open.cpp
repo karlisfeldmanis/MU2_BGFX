@@ -565,7 +565,6 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
     heard_.iceStormLand = sound_.load("spell_ice_storm_land", true);
     heard_.weakness = sound_.load("spell_weakness", true);
     heard_.pollution = sound_.load("spell_pollution", true);
-    heard_.chainLightning = sound_.load("spell_chain_lightning", true);
     heard_.drainLife = sound_.load("spell_drain_life", true);
     // The knight's skills, by the table's own index, so a cast asks for its wave by the same
     // number its cooldown is kept under. Both `sKnightSkill4` names are the same file: MU plays
@@ -578,6 +577,13 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
         // Penetration's SOUND_PIERCING is not heard: its bow or crossbow is (the user,
         // 2026-10-09: "dont play penetration sound for penetration skill, crossbow is enough").
         if (row.number == sim::skill::kPenetration) continue;
+        // Lightning sounds as the Summoner's Chain Lightning, SOUND_SKILL_CHAIN_LIGHTNING (the
+        // user, 2026-10-22: "new lighting chaiin has to work how its now but with new animation
+        // and sound"), where the row's own is the thunder.
+        if (row.number == sim::skill::kLightning) {
+            heard_.skill[i] = sound_.load("spell_chain_lightning", true);
+            continue;
+        }
         if (row.sound[0] != '\0') heard_.skill[i] = sound_.load(row.sound, true);
     }
     heard_.explosion = sound_.load("explosion", true);

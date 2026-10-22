@@ -814,8 +814,9 @@ enum class Power : uint8_t {
     // summoner spells and attach to ancient runes"; kWeakness...).
     Weakness = 75,
     Pollution = 76,
-    ChainLightning = 77,
-    DrainLife = 78
+    // 77 was Chain Lightning for a day (2026-10-22), retired before release: the wizard's
+    // Lightning plays its look and sound. The numbers run unbroken (drawRunePower walks them).
+    DrainLife = 77
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -1231,24 +1232,8 @@ constexpr double kPollutionChance = 0.10;  // a cast in ten; the user may tune i
 constexpr float kPollutionForce = 1.2f;
 constexpr float kPollutionTiles = 3.0f;
 constexpr int kPollutionMost = 4;
-// **Chain Lightning**, the fourth Ancient (the user, 2026-10-22: "lets work on Chain Lightning
-// (215) and Drain Life (214)"): MU's AT_SKILL_ALICE_CHAINLIGHTNING (OpenMU's S6 row: 70 damage,
-// an explicit target). A spell he casts, or a swing that lands, has kChainChance to throw it at
-// what he struck -- on a cast with no monster struck, the nearest within kStormcallReach -- and
-// then it leaps as his own Lightning's chain does (the user, 2026-10-22: "cant we just replace
-// this chain lighting with already eisting chain lighting which we have now?"): every
-// kChainLeapTicks to the nearest living monster in sight within kChainReach of the last one
-// struck, never one struck already, kChainMost bodies in all. Each blow his rune's (runeStrike)
-// at kChainForce, lightning -- MU's 70 against Pollution's 80 at 1.2 -- the first whole, the
-// leaps at kChainSecond and kChainThird as OpenMU's ChainLightningSkillPlugIn. The leap's pause
-// is OpenMU's 300 ms; the reach is Lightning's six tiles where OpenMU's is two.
-constexpr double kChainChance = 0.10;  // a cast in ten; the user may tune it
-constexpr float kChainForce = 1.05f;
-constexpr float kChainReach = 6.0f;
-constexpr int64_t kChainLeapTicks = 6;  // 300 ms
-constexpr float kChainSecond = 0.7f, kChainThird = 0.5f;
-constexpr int kChainMost = 3;
-// **Drain Life**, the fifth Ancient: MU's AT_SKILL_ALICE_DRAINLIFE (OpenMU's S6 row: 35 damage).
+// **Drain Life**, the fifth Ancient (the fourth, Chain Lightning, retired the same day: the
+// wizard's Lightning plays its look and sound instead): MU's AT_SKILL_ALICE_DRAINLIFE (OpenMU's S6 row: 35 damage).
 // A spell he casts, or a swing that lands, has kDrainChance to drain what he struck -- on a cast
 // with no monster struck, the nearest within kStormcallReach -- with his rune's blow at
 // kDrainForce (35 against Pollution's 80 at 1.2), no element; if it lands he takes back, as
