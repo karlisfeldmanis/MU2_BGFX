@@ -258,5 +258,7 @@
         0.993
       ]
     }
-  ]
+  ],
+  "play_speed": 0.04,
+  "play_speed_from": "MoveKanturu1stObject, type 90: o->Velocity = 0.04 (GM_Kanturu_1st.cpp:98-100). One bone over 10 keys (Object91.rig.json)."
 }

@@ -46,5 +46,13 @@
         1.044
       ]
     }
-  ]
+  ],
+  "glow": {
+    "sunlight2": {
+      "scrolls_per_second": 0.01,
+      "stream": true,
+      "axis": "u"
+    }
+  },
+  "glow_from": "GM_Kanturu_1st.cpp:348-359, after the characters: mesh 0 drawn again RENDER_BRIGHT at BodyLight 0.52 with its U at -(WorldTime % 100000) * 0.00001, a sheet in 100 s, MU's usual direction, so +0.01 here (as Aida's serpents, Object66). MU's second pass is drawn over the first; here the beam's own sheet slides. Its Alpha 0.5 (:91-93) is not carried."
 }

@@ -38,5 +38,7 @@
         0.991
       ]
     }
-  ]
+  ],
+  "play_speed": 0.02,
+  "play_speed_from": "MoveKanturu1stObject, type 44: o->Velocity = 0.02 (GM_Kanturu_1st.cpp:61-63), against every object's flat 0.16: the gears turn slowly. Its clip is one bone over 6 keys (Object45.rig.json, MuExtract export-rig --actions=all)."
 }

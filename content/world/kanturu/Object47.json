@@ -40,8 +40,8 @@
       "bake_uv": [
         0.005,
         0.005,
-        0.995,
-        0.907
+        0.862,
+        0.995
       ]
     },
     {
@@ -61,10 +61,21 @@
       ],
       "bake_uv": [
         0.005,
-        0.005,
-        0.736,
-        0.552
+        0.789,
+        0.158,
+        0.898
       ]
     }
-  ]
+  ],
+  "play_speed": 0.01,
+  "play_speed_from": "MoveKanturu1stObject, type 46: o->Velocity = 0.01 (GM_Kanturu_1st.cpp:64-69), the slowest wheel. Two bones over 6 keys (Object47.rig.json).",
+  "glow": {
+    "songk3matereff_R": {
+      "low": 0.2,
+      "high": 1.8,
+      "hz": 0.48,
+      "smooth_seconds": 2.1
+    }
+  },
+  "glow_from": "MU: BlendMeshLight = sin(WorldTime * 0.0015) * 0.8 + 1.0 (GM_Kanturu_1st.cpp:64-69), a pulse between 0.2 and 1.8 every 4.2 s. Ours, marked: our glow flicker has no sine, so it wanders over MU's range, re-aimed every 2.1 s (half MU's period) and eased over the whole of it, a slow breathing with a random depth. A true sine is a game change, asked first."
 }
