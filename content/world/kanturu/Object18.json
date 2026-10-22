@@ -1,0 +1,46 @@
+{
+  "item": "Object18",
+  "mu_name": "Object18",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 17,
+  "placements": 38,
+  "profile": "world",
+  "sheets": {
+    "song_k0w2": "kr_song_k0w2.png",
+    "han_w3": "kr_han_w3.png",
+    "han_w1": "kr_han_w1.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k0w2": "flagstone",
+    "han_w3": "plank",
+    "han_w1": "rock"
+  },
+  "material_note": "song_k0w2: a brick wall with a barred window: flagstone. han_w3: weathered mossy boards: plank. han_w1: mossy stone: rock.",
+  "why_this_one": "A wall with a barred window, 38 of them. Batch 11, walls, columns and a hut (the user, 2026-10-22: 'do it', the small ruins in three batches). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plank",
+      "triangles": 70,
+      "area": 68221.1,
+      "along": [
+        -43.7,
+        43.7
+      ],
+      "mu_uv": [
+        -1.0,
+        -2.022,
+        2.909,
+        1.053
+      ],
+      "bake_uv": [
+        -1.0,
+        -2.022,
+        2.909,
+        1.053
+      ]
+    }
+  ]
+}
