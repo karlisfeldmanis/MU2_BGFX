@@ -1,0 +1,330 @@
+{
+  "item": "Object48",
+  "mu_name": "Object48",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 47,
+  "placements": 14,
+  "profile": "world",
+  "sheets": {
+    "ming_dari01": "kr_ming_dari01.png",
+    "ming_rope": "kr_ming_rope.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "ming_dari01": "plank",
+    "ming_rope": "cloth"
+  },
+  "material_note": "ming_dari01: bridge planks with iron fittings: plank. ming_rope: twisted rope: cloth.",
+  "why_this_one": "A rope bridge, 14 of them. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plank",
+      "triangles": 20,
+      "area": 59550.2,
+      "along": [
+        -200.4,
+        198.0
+      ],
+      "mu_uv": [
+        0.014,
+        0.0,
+        0.5,
+        0.997
+      ],
+      "bake_uv": [
+        0.008,
+        0.722,
+        0.762,
+        0.86
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plank",
+      "triangles": 20,
+      "area": 57924.5,
+      "along": [
+        -200.4,
+        176.3
+      ],
+      "mu_uv": [
+        0.502,
+        0.0,
+        0.988,
+        0.997
+      ],
+      "bake_uv": [
+        0.008,
+        0.722,
+        0.492,
+        0.86
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plank",
+      "triangles": 20,
+      "area": 58682.6,
+      "along": [
+        -200.4,
+        187.6
+      ],
+      "mu_uv": [
+        0.513,
+        0.0,
+        0.999,
+        0.997
+      ],
+      "bake_uv": [
+        0.141,
+        0.722,
+        0.755,
+        0.881
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plank",
+      "triangles": 10,
+      "area": 3292.3,
+      "along": [
+        144.5,
+        175.6
+      ],
+      "mu_uv": [
+        0.502,
+        0.0,
+        0.634,
+        0.122
+      ],
+      "bake_uv": [
+        0.042,
+        0.821,
+        0.724,
+        0.87
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plank",
+      "triangles": 20,
+      "area": 58053.5,
+      "along": [
+        -200.4,
+        187.6
+      ],
+      "mu_uv": [
+        0.014,
+        0.0,
+        0.5,
+        0.997
+      ],
+      "bake_uv": [
+        0.008,
+        0.722,
+        0.762,
+        0.892
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plank",
+      "triangles": 20,
+      "area": 59879.9,
+      "along": [
+        -200.4,
+        200.4
+      ],
+      "mu_uv": [
+        0.007,
+        0.0,
+        0.493,
+        0.997
+      ],
+      "bake_uv": [
+        0.141,
+        0.722,
+        0.623,
+        0.86
+      ]
+    },
+    {
+      "island": 6,
+      "material": "cloth",
+      "triangles": 8,
+      "area": 5120.6,
+      "along": [
+        152.9,
+        176.3
+      ],
+      "mu_uv": [
+        0.005,
+        -0.714,
+        1.013,
+        1.75
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.303,
+        0.349
+      ]
+    },
+    {
+      "island": 7,
+      "material": "cloth",
+      "triangles": 8,
+      "area": 5328.5,
+      "along": [
+        152.9,
+        165.4
+      ],
+      "mu_uv": [
+        0.005,
+        -0.714,
+        1.013,
+        1.75
+      ],
+      "bake_uv": [
+        0.32,
+        0.008,
+        0.614,
+        0.349
+      ]
+    },
+    {
+      "island": 8,
+      "material": "cloth",
+      "triangles": 8,
+      "area": 5120.7,
+      "along": [
+        152.9,
+        177.6
+      ],
+      "mu_uv": [
+        0.005,
+        -0.714,
+        1.013,
+        1.75
+      ],
+      "bake_uv": [
+        0.008,
+        0.365,
+        0.303,
+        0.705
+      ]
+    },
+    {
+      "island": 9,
+      "material": "cloth",
+      "triangles": 8,
+      "area": 5381.7,
+      "along": [
+        144.4,
+        165.4
+      ],
+      "mu_uv": [
+        0.005,
+        -0.714,
+        1.013,
+        1.75
+      ],
+      "bake_uv": [
+        0.32,
+        0.365,
+        0.614,
+        0.705
+      ]
+    },
+    {
+      "island": 10,
+      "material": "cloth",
+      "triangles": 8,
+      "area": 5113.0,
+      "along": [
+        152.9,
+        165.4
+      ],
+      "mu_uv": [
+        0.005,
+        -0.714,
+        1.013,
+        1.75
+      ],
+      "bake_uv": [
+        0.631,
+        0.008,
+        0.77,
+        0.705
+      ]
+    },
+    {
+      "island": 11,
+      "material": "cloth",
+      "triangles": 4,
+      "area": 3490.7,
+      "along": [
+        152.9,
+        165.4
+      ],
+      "mu_uv": [
+        0.005,
+        -0.632,
+        1.013,
+        1.663
+      ],
+      "bake_uv": [
+        0.787,
+        0.008,
+        0.926,
+        0.325
+      ]
+    },
+    {
+      "island": 12,
+      "material": "cloth",
+      "triangles": 4,
+      "area": 2769.8,
+      "along": [
+        152.9,
+        165.4
+      ],
+      "mu_uv": [
+        0.005,
+        -0.632,
+        1.013,
+        1.663
+      ],
+      "bake_uv": [
+        0.787,
+        0.342,
+        0.926,
+        0.658
+      ]
+    },
+    {
+      "island": 13,
+      "material": "cloth",
+      "triangles": 4,
+      "area": 2770.4,
+      "along": [
+        152.9,
+        165.4
+      ],
+      "mu_uv": [
+        0.005,
+        -0.632,
+        1.013,
+        1.663
+      ],
+      "bake_uv": [
+        0.787,
+        0.675,
+        0.926,
+        0.992
+      ]
+    }
+  ]
+}

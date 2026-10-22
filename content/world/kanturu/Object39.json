@@ -1,0 +1,42 @@
+{
+  "item": "Object39",
+  "mu_name": "Object39",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 38,
+  "placements": 3,
+  "profile": "world",
+  "sheets": {
+    "song_k0a4": "kr_song_k0a4.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k0a4": "cloth"
+  },
+  "material_note": "song_k0a4: a rope net, cut out: cloth.",
+  "why_this_one": "A net, 3 of them, swaying. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 12,
+      "area": 70315.8,
+      "along": [
+        -187.0,
+        94.8
+      ],
+      "mu_uv": [
+        -0.014,
+        -0.019,
+        1.023,
+        1.033
+      ],
+      "bake_uv": [
+        -0.014,
+        -0.019,
+        1.023,
+        1.033
+      ]
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "item": "Object42",
+  "mu_name": "Object42",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 41,
+  "placements": 4,
+  "profile": "world",
+  "sheets": {
+    "song_k0a2": "kr_song_k0a2.png",
+    "song_k0t1": "kr_song_k0t1.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k0a2": "cloth",
+    "song_k0t1": "timber"
+  },
+  "material_note": "song_k0a2: a ragged banner: cloth. song_k0t1: a rope-bound log wall: timber.",
+  "why_this_one": "Sailcloth, 4 of them, swaying. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 32,
+      "area": 60488.9,
+      "along": [
+        -92.2,
+        184.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.474,
+        0.474
+      ]
+    },
+    {
+      "island": 1,
+      "material": "timber",
+      "triangles": 18,
+      "area": 14182.7,
+      "along": [
+        134.2,
+        157.5
+      ],
+      "mu_uv": [
+        -0.72,
+        -0.102,
+        0.39,
+        1.008
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.735,
+        0.56
+      ]
+    },
+    {
+      "island": 2,
+      "material": "timber",
+      "triangles": 18,
+      "area": 14558.0,
+      "along": [
+        149.4,
+        181.6
+      ],
+      "mu_uv": [
+        -0.72,
+        -0.102,
+        0.39,
+        1.008
+      ],
+      "bake_uv": [
+        0.229,
+        0.003,
+        0.997,
+        0.56
+      ]
+    }
+  ]
+}
