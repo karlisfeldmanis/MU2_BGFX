@@ -64,6 +64,9 @@
     },
     "smoke_vents": {
       "note": "Object60's 16 smoke vents by the factories: MU's BITMAP_SMOKE SubType 21 one frame in three (GM_Kanturu_1st.cpp:149-156), drawn by Lamps as a fire that only smokes (lamps.h, Fire::vent)."
+    },
+    "crystal_sparks": {
+      "note": "Object96's blue sparks, ten a crystal (GM_Kanturu_1st.cpp:361-381; game/world/crystal_sparks.h)."
     }
   }
 }

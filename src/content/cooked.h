@@ -204,7 +204,10 @@ enum class EmitterKind : uint8_t {
     // carries the box's Scale too.
     SmallFire = 21, SkullGhost = 22,
     // A small fire's light, beside it (pipeline/cook_anchors.py LIGHT_TWINS): Lamps lights it.
-    SmallFireLight = 23
+    SmallFireLight = 23,
+    // Kanturu's crystals' sparks, carried by Object96 at its bones (game/world/crystal_sparks.h);
+    // `high` carries MU's sprite Scale.
+    CrystalSpark = 24
 };
 struct TownEmitter {
     static constexpr uint16_t kWorld = 0xFFFF;

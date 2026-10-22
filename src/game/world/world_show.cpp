@@ -126,6 +126,7 @@ void readShow(const core::Json& show, WorldShow& out) {
     out.skullGhosts = named(show, "skull_ghosts");
     out.castleSparks = named(show, "castle_sparks");
     out.smokeVents = named(show, "smoke_vents");
+    out.crystalSparks = named(show, "crystal_sparks");
     out.drawbridge = named(show, "drawbridge");
     out.beacon = named(show, "beacon");
     readString(show, "traps", &out.traps);

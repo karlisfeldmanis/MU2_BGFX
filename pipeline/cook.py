@@ -1886,7 +1886,8 @@ def cook_placements(world, out_dir, chunk_tiles):
     # The lights. Per model in its own frame, and the anchors in the world's.
     emitters = bytearray()
     emitter_count = 0
-    kinds = {"lamp": 0, "fire": 1, "candle": 2, "window": 3, "smoke": 4, "vent": 5}
+    kinds = {"lamp": 0, "fire": 1, "candle": 2, "window": 3, "smoke": 4, "vent": 5,
+             "spark": 24}  # spark: Kanturu's crystals (game/world/crystal_sparks.h)
 
     # `wrap`, 0 to 1, in the byte that was spare: how far round the light reaches what it lights
     # (content::TownEmitter::wrap). 0 for every light but Atlans's.
