@@ -102,6 +102,25 @@
         ]
       },
       "note": "MU's own light for the two fire kinds, over cook_anchors.py's ANCHOR_LIGHT (colour, low, high, reach in tiles, flicker hz, smoothing). 1, Object62's 58 fires: AddTerrainLight (L, 0.6L, 0.2L), L = 0.3-0.6 re-rolled every frame, over 3 tiles (GM_Kanturu_1st.cpp:77-83), where the brazier kind threw CreateFire(0)'s 0.6-1.1 over 4. 23, Object61's 5 lights: (0.9L, 0.2L, 0.1L), the same L and reach (:70-76), a deep red where the small fires' kind threw amber. The flicker keeps kind 1's 3 Hz eased over 0.12 s: MU's is a fresh roll each frame (ours)."
+    },
+    "border_fill": {
+      "value": {
+        "walls": [
+          62,
+          107,
+          108
+        ],
+        "clear": 10,
+        "keep": [
+          [
+            0,
+            0,
+            255,
+            255
+          ]
+        ]
+      },
+      "note": "Ours, as Aida (terrain.py BORDER_FILL_BY_MAP): MU leaves everything outside the Ruins ring bare black, which at 16:9 and pulled back reads as holes (Aida, the user 2026-10-11). Kanturu has no wall of cliffs round its inner chasm, so the walk from the map edge is held 10 tiles off MU's mist boxes (types 62, 107, 108), which stand only over the chasm: the outer frame fills (15,608 tiles, NoMove) and the chasm round the plateau stays void. 6 tiles ate into the chasm. Picked 2026-10-22 (the user: \"you decide\"), docs on the look-calls page."
     }
   },
   "show": {
