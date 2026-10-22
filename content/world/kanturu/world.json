@@ -213,7 +213,12 @@
       "loops": true,
       "wild": "/music/kanturu_wild.mp3"
     },
-    "leaves": "leaf"
+    "leaves": "leaf",
+    "leaf_field": {
+      "count": 120,
+      "size": 1.3,
+      "note": "Aida's (the user, 2026-10-22: 'more denser like Aida'): the game's 80 specks read thin in the Ruins."
+    }
   },
   "rules": {
     "arrive": [
