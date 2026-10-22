@@ -34,6 +34,13 @@ struct WorldShow {
     std::string air = "world_wind";
     bool airEverywhere = false;  // played under a roof too, the whole map
     std::string room;            // the reverb: "stone", "water", "open"; empty is by the roof
+    // Loops heard from the nearest placement of a model: Kanturu's wheels, falls, tanks and
+    // plants (Play::hearWorld). Full to `full` metres, then fading out to nothing at `reach`.
+    struct ObjectLoop {
+        std::string model, loop;
+        float full = 4.0f, reach = 16.0f;
+    };
+    std::vector<ObjectLoop> objectLoops;
     std::string bed;             // a looped bed while the map's event runs (Blood Castle's)
     std::string steps;           // "grass" where slot 0 is grass, "snow"; empty is soil and stone
     bool swims = false;          // off the safe zone a player swims (Atlans)

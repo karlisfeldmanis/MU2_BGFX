@@ -1143,8 +1143,9 @@ public:
     // indoors is heard only by a character indoors too, and never through the wall (the user,
     // 2026-09-29).
     using Inside = bool (*)(void* context, float x, float z);
+    // `town`: where the world's object loops find their models (WorldShow::objectLoops).
     void hearWorld(const Lamps* lamps, const Ornaments& ornaments, Inside inside = nullptr,
-                   void* context = nullptr);
+                   void* context = nullptr, const content::CookedTown* town = nullptr);
     // The interface's own noises, raised by the windows: a button acknowledging the finger
     // (SOUND_CLICK01), a request the realm said no to (iButtonError), and a thing going into
     // a slot -- MU has no equip or bind sound of its own and plays SOUND_GET_ITEM01 for both.
@@ -1715,6 +1716,16 @@ private:
     // its room ("stone", "water", "open"; empty is by the roof), and an event's bed.
     std::string airLoop_, airRoom_, airBed_;
     bool airEverywhere_ = false;
+    // The world's object loops (WorldShow::objectLoops): each its event, and where its model
+    // stands, found in the town the first time hearWorld is given one. Flat x, y, z triples.
+    struct ObjectLoopHeard {
+        int event = -1;
+        std::string model, loop;
+        float full = 4.0f, reach = 16.0f;
+        std::vector<float> at;
+        bool found = false;
+    };
+    std::vector<ObjectLoopHeard> objectLoops_;
     // Over Tarkan the Dinorant flies, 90 over the ground (game/pets.h, `mounts_fly`).
     bool flying_ = false;
     // Under the sea: off its safe zone a player swims (FigureBody::swimWalkClip), MU's Fly

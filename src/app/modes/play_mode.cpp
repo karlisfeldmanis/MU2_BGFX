@@ -1663,7 +1663,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             [](void* self, float x, float z) {
                 return static_cast<const game::World*>(self)->indoors(x, z);
             },
-            &world_);
+            &world_, world_.town().isOpen() ? &world_.town().cooked() : nullptr);
     }
     // The lamps flicker, the fires burn, and the glows' levels go into the town before
     // it is gathered, since each rides in its instance. Sprint 8a.

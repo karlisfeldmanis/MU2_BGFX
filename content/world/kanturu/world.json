@@ -70,6 +70,39 @@
     },
     "ruin_effects": {
       "note": "Object93's arcs across the blue tanks and Object99's green spit (GM_Kanturu_1st.cpp:214-247; game/world/ruin_effects.h)."
-    }
+    },
+    "air": {
+      "loop": "world_kanturu",
+      "everywhere": true,
+      "room": "open",
+      "note": "SOUND_KANTURU_1ST_BG_GLOBAL, kan_ruin_global.wav, which MoveKanturu1stObject plays from every object every frame (GM_Kanturu_1st.cpp:123): always on, the whole map, under the open black sky."
+    },
+    "object_loops": [
+      {
+        "model": "Object47",
+        "loop": "kanturu_wheel",
+        "full": 4,
+        "reach": 14
+      },
+      {
+        "model": "Object78",
+        "loop": "kanturu_waterfall",
+        "full": 6,
+        "reach": 20
+      },
+      {
+        "model": "Object93",
+        "loop": "kanturu_elec",
+        "full": 4,
+        "reach": 14
+      },
+      {
+        "model": "Object99",
+        "loop": "kanturu_plant",
+        "full": 3,
+        "reach": 10
+      }
+    ],
+    "object_loops_note": "MU plays its wheel, waterfall, electric and plant sounds flat while any glowing wheel (Object47), fall (Object78), blue tank (Object93) or carnivorous plant (Object99) is moved, which is the ones near the camera (GM_Kanturu_1st.cpp:64-117). Ours, marked: each from its nearest one, full to `full` metres and gone at `reach` (Play::hearWorld). First distances, for the user to judge."
   }
 }

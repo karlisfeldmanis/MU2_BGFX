@@ -2770,6 +2770,51 @@
       ],
       "from": "SOUND_SUMMOM_RARGLE (sic), which ZzzOpenData loads from Data\\\\Sound\\\\Rargle.wav with one voice (:4913). CSummonSystem::CreateSummonObject plays it as Pollution lets Lagle loose at the target (SummonSystem.cpp:184).",
       "note": "The Ancient rune Pollution (sim/items.h kPollution...), played where its ghosts are let loose (game/fx/pollution)."
+    },
+    "world_kanturu": {
+      "files": [
+        "kan_ruin_global.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_BG_GLOBAL, Data\\Sound\\w37\\kan_ruin_global.wav (MapManager.cpp:384; the folder is the map number, 37). MoveKanturu1stObject plays it from every object every frame (GM_Kanturu_1st.cpp:123), so it is always on in the Ruins: a 6.6 s loop.",
+      "loop": true,
+      "gain_db": -24.0,
+      "note": "On Aida's air bed: 2 dB hotter than aida_ambi, so 4 dB further down than world_aida's -20 (2026-10-22)."
+    },
+    "kanturu_wheel": {
+      "files": [
+        "kan_ruin_wheel.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_BG_WHEEL, Data\\Sound\\w37\\kan_ruin_wheel.wav (MapManager.cpp:382), played flat while an Object47 is moved (GM_Kanturu_1st.cpp:68).",
+      "loop": true,
+      "gain_db": -26.0,
+      "note": "Ours: heard from the nearest glowing wheel (world.json show.object_loops). A first level, 2 dB under the air, for the user to judge."
+    },
+    "kanturu_waterfall": {
+      "files": [
+        "kan_ruin_waterfall.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_BG_WATERFALL, Data\\Sound\\w37\\kan_ruin_waterfall.wav (MapManager.cpp:380), played flat while an Object78 is moved (GM_Kanturu_1st.cpp:96).",
+      "loop": true,
+      "gain_db": -17.0,
+      "note": "Ours: heard from the nearest fall. 10 dB quieter a file than the wheel, so 9 dB less down: a first level for the user to judge."
+    },
+    "kanturu_elec": {
+      "files": [
+        "kan_ruin_elec.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_BG_ELEC, Data\\Sound\\w37\\kan_ruin_elec.wav (MapManager.cpp:381), played flat while an Object93 is moved (GM_Kanturu_1st.cpp:102).",
+      "loop": true,
+      "gain_db": -21.0,
+      "note": "Ours: heard from the nearest blue tank. A first level for the user to judge."
+    },
+    "kanturu_plant": {
+      "files": [
+        "kan_ruin_plant.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_BG_PLANT, Data\\Sound\\w37\\kan_ruin_plant.wav (MapManager.cpp:383), played flat while an Object99 is moved (GM_Kanturu_1st.cpp:116).",
+      "loop": true,
+      "gain_db": -12.0,
+      "note": "Ours: heard from the nearest carnivorous plant. The quietest file of the five, -35.8 dB: a first level for the user to judge."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

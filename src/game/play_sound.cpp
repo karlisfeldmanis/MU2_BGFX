@@ -485,7 +485,7 @@ void Play::hear(const gfx::Camera& camera, bool indoors) {
 }
 
 void Play::hearWorld(const Lamps* lamps, const Ornaments& ornaments, Inside inside,
-                     void* context) {
+                     void* context, const content::CookedTown* town) {
     if (!sound_.isOpen()) return;
     const Drawn* hero = drawnOf(realm_.hero().id);
     const bool placed = hero != nullptr && hero->placed && shotKnown_;
@@ -507,6 +507,31 @@ void Play::hearWorld(const Lamps* lamps, const Ornaments& ornaments, Inside insi
     const bool flows = placed && ornaments.nearestFountain(hero->crown, water);
     hearFrom(heard_.fire, burns ? fire : nullptr, kFireFull, kFireReach);
     hearFrom(heard_.fountain, flows ? water : nullptr, kFountainFull, kFountainReach);
+    // The world's object loops (WorldShow::objectLoops): each from the nearest placement of
+    // its model. MU plays Kanturu's flat while any one is moved (GM_Kanturu_1st.cpp:68-116);
+    // ours, marked: heard from the nearest, fading with distance as the fountain is.
+    for (ObjectLoopHeard& one : objectLoops_) {
+        if (one.event < 0) continue;
+        if (!one.found && town != nullptr) {
+            one.found = true;
+            for (const content::TownInstance& instance : town->instances) {
+                if (town->models[instance.model].name != one.model) continue;
+                one.at.insert(one.at.end(), instance.position, instance.position + 3);
+            }
+        }
+        const float* nearest = nullptr;
+        if (placed) {
+            float best = one.reach * one.reach;
+            for (size_t i = 0; i + 2 < one.at.size(); i += 3) {
+                const float dx = one.at[i] - hero->crown[0], dz = one.at[i + 2] - hero->crown[2];
+                if (dx * dx + dz * dz < best) {
+                    best = dx * dx + dz * dz;
+                    nearest = &one.at[i];
+                }
+            }
+        }
+        hearFrom(one.event, nearest, one.full, one.reach);
+    }
 }
 
 void Play::hearFrom(int event, const float* at, float full, float reach) {

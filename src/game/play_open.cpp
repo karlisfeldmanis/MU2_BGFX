@@ -35,6 +35,15 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // How the world sounds underfoot and in the air is its manifest's (game/world/world_show.h).
     const WorldShow& show = worldShow(world);
     airLoop_ = show.air;
+    objectLoops_.clear();
+    for (const WorldShow::ObjectLoop& one : show.objectLoops) {
+        ObjectLoopHeard heard;
+        heard.model = one.model;
+        heard.loop = one.loop;
+        heard.full = one.full;
+        heard.reach = one.reach;
+        objectLoops_.push_back(heard);
+    }
     airRoom_ = show.room;
     airBed_ = show.bed;
     airEverywhere_ = show.airEverywhere;
@@ -497,6 +506,8 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
     heard_.castleBed = airBed_.empty() ? -1 : sound_.load(airBed_.c_str(), false);
     heard_.fire = sound_.load("world_bonfire", false);
     heard_.fountain = sound_.load("world_fountain", false);
+    // The world's object loops, unplaced voices heard by distance as the fountain is.
+    for (ObjectLoopHeard& one : objectLoops_) one.event = sound_.load(one.loop.c_str(), false);
     heard_.hammer = sound_.load("npc_blacksmith", true);
     // The townsfolk with a voice of their own. rand_fps_check(N) is one frame in N at the 60
     // the client's rolls are written against, so the roll comes up every N/60 seconds.

@@ -59,6 +59,14 @@ void readShow(const core::Json& show, WorldShow& out) {
     readString(air, "loop", &out.air);
     air.readInto("everywhere", &out.airEverywhere);
     readString(air, "room", &out.room);
+    for (const core::Json& one : show["object_loops"].items) {
+        WorldShow::ObjectLoop row;
+        row.model = one["model"].stringOr("");
+        row.loop = one["loop"].stringOr("");
+        row.full = float(one["full"].numberOr(row.full));
+        row.reach = float(one["reach"].numberOr(row.reach));
+        if (!row.model.empty() && !row.loop.empty()) out.objectLoops.push_back(row);
+    }
     readString(air, "bed", &out.bed);
     readString(show, "steps", &out.steps);
     show.readInto("swims", &out.swims);
