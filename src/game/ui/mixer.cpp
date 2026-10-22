@@ -236,7 +236,7 @@ void star(gfx::Canvas& canvas, float cx, float cy, float reach, float waist, con
 
 std::string needCount(const sim::Need& n) {
     if (n.need == 0) return n.have > 0 ? std::to_string(n.have) : "any";
-    return std::to_string(n.have) + " / " + std::to_string(n.need);
+    return std::to_string(n.have) + " / " + std::to_string(n.need) + (n.atLeast ? "+" : "");
 }
 
 // The confirm's question, MU's for a Combine.
@@ -727,7 +727,7 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
             std::string bag;
             if (n.need == 0) {
                 ink = n.have > 0 ? style::kBone : style::kAshInk;
-            } else if (n.have == n.need) {
+            } else if (n.have == n.need || (n.atLeast && n.have > n.need)) {
                 ink = style::kFits;
             } else if (n.have > n.need) {
                 ink = style::kDanger;
