@@ -1060,11 +1060,21 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             body_.outline(box, std::max(2.0f, 2.0f * u), style::kBlood);
         }
         const content::ItemRow& item = tables.items[size_t(one.item)];
-        std::string name = item.label;
+        // A rune by its power, "Rune of Inferno", as the bag names it (sim::itemLabel): five
+        // read "Rune of Creation" alike in the Sky Door's choice (the reward audit, 2026-10-22).
+        sim::Held named;
+        named.powers[0] = one.power;
+        std::string name = sim::itemLabel(item, named);
         if (one.plus > 0) name += " +" + std::to_string(one.plus);
         // The name beside the picture, at most two lines, centred on it.
         std::vector<std::string> lines;
         wrap(name, kName, one.box.w - kIcon - kNameGap, lines);
+        // A rune too long for two lines goes by its power alone ("Greater Ascendance"): its
+        // picture says it is a rune, and "Rune of Greater" said nothing.
+        if (lines.size() > 2 && name.rfind("Rune of ", 0) == 0) {
+            lines.clear();
+            wrap(name.substr(8), kName, one.box.w - kIcon - kNameGap, lines);
+        }
         if (lines.size() > 2) lines.resize(2);
         const float lead = kName * 1.2f;
         float ly = one.box.y + (kIcon - lead * float(lines.size())) * 0.5f + kName * 0.9f;
