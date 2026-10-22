@@ -40,7 +40,8 @@ from paths import CONTENT
 WEAPONS = os.path.join(CONTENT, "items", "weapons")
 # A monster's passes too (Hell Maine's red chrome over its armour and wings, GMAida.cpp:
 # 1389-1405), written beside its recipe, where export_gltf looks: content/monsters/chrome/.
-FOLDERS = (WEAPONS, os.path.join(CONTENT, "monsters"))
+# And a shield's (the Crimson Glory's rim, ZzzObject.cpp:7229): content/items/shields/chrome/.
+FOLDERS = (WEAPONS, os.path.join(CONTENT, "monsters"), os.path.join(CONTENT, "items", "shields"))
 # And socketstaff, MU's BITMAP_SOCKETSTAFF (Item/soketmagic_stape02.jpg, ZzzOpenData.cpp:5451):
 # the Imperial Staff's gold lightning, laid three times over its body at its own UVs. And
 # dancerfire, the Sword Dancer's swordmagum_06e, its fire sliding over the lava MU lays first.

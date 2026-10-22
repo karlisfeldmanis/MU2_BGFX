@@ -1,0 +1,228 @@
+{
+  "item": "Shield20",
+  "mu_name": "Frost Barrier",
+  "mu_name_from": "MODEL_FROST_BARRIER (MODEL_SHIELD + 19), loaded from Item/Shield_20.bmd (ZzzOpenData.cpp:1118). Group 6 number 19 in OpenMU S6 Armors.cs:60.",
+  "why_this_one": "The 100-140 gear MU has and this game lacked (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's): the four second-class shields of Season 6's wave, beside the twelve weapons.",
+  "profile": "weapon",
+  "profile_from": "The weapon profile, as every built shield uses.",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:60. 0.75 and 0.95d have no second-class gear.",
+    "call": "CreateShield(19, 1, 0, 2, 2, \"Frost Barrier\", 99, 14, 58, 51, 0, 26, 53, 26, 0, 0, 0, 0, 2, 0, 0, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateShield(number, slot, skill, width, height, name, dropLevel, defense, defenseRate, durability, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, leadershipRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel); the group is slot + 5, 6.",
+    "group": 6,
+    "number": 19,
+    "drop_level": 99,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 2,
+    "defense": 14,
+    "defense_rate": 58,
+    "defense_rate_note": "The shield's own block chance, which the fight does not roll yet. Recorded and unread.",
+    "durability": 51,
+    "requires": {
+      "level": 0,
+      "strength": 26,
+      "agility": 53,
+      "energy": 26,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Muse Elf's alone: OpenMU's elfClassLevel 2 (docs/game/second-class-gear.md)."
+  },
+  "sheets": {
+    "PBshield_a": "pbshield_a.png",
+    "a_2": "a_2.png",
+    "PBshield_b": "pbshield_b.png"
+  },
+  "sheet_from": "Data/Item: PBshield_a.OZJ (64x128, a grey frame with blue-white frost edges, mesh 0, 236 triangles), a_2 (mesh 1, 48, the two studs), already here, and PBshield_b.OZJ (64x128, blue snowflakes on black, mesh 2, 80, the two faces), decoded with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "PBshield_a": "steel"
+  },
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    },
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_note": "The frame is grey frost-edged metal: steel at 0.45, as every broad flat piece passed in the studio.",
+  "glow": {
+    "a_2": {},
+    "PBshield_b": {
+      "pulse": [
+        0.35,
+        0.35
+      ],
+      "pulse_rate": "half"
+    }
+  },
+  "glow_note": "RenderPartObjectBody's MODEL_FROST_BARRIER arm (ZzzObject.cpp:7236-7243): mesh 0 solid, mesh 1 (a_2) RENDER_TEXTURE | RENDER_BRIGHT, added, and mesh 2 (PBshield_b) added at BlendMeshLight |sin(WorldTime*0.001)|. Here a_2 a glow, and PBshield_b a glow at sin(WorldTime*0.002)*0.5 + 0.5 (pulse_rate half): the same 0 to 1 over the same 3.1 s as MU's |sin|, a smooth sine where MU's bounces. PartObjectColor gives it Color 29 (ZzzObject.cpp:6680). Its other draws keep mesh 0 alone (:9116, 9256). Turned down to 0 to 0.7 (pulse [0.35, 0.35]) after the studio, 2026-10-22: at full the snowflakes washed to a glare under our bloom, MU's stacked passes overshooting.",
+  "rig_note": "MuMain hangs no sprites on it held (ZzzCharacter.cpp has no case). export-rig --actions=all: seven bones, one action of one key; nothing moves, no rig kept.",
+  "material_overrides_note": "Steel at 0.45, as every broad flat piece passed in the studio: its own 0.2 mirrors the grass black.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 12,
+      "area": 18.9,
+      "along": [
+        -26.9,
+        -23.9
+      ],
+      "mu_uv": [
+        0.076,
+        0.031,
+        0.98,
+        0.827
+      ],
+      "bake_uv": [
+        0.616,
+        0.265,
+        0.994,
+        0.967
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 12,
+      "area": 19.2,
+      "along": [
+        3.7,
+        7.2
+      ],
+      "mu_uv": [
+        0.076,
+        0.031,
+        0.98,
+        0.827
+      ],
+      "bake_uv": [
+        0.759,
+        0.394,
+        0.994,
+        0.967
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 12,
+      "area": 18.9,
+      "along": [
+        7.3,
+        10.4
+      ],
+      "mu_uv": [
+        0.076,
+        0.031,
+        0.98,
+        0.827
+      ],
+      "bake_uv": [
+        0.935,
+        0.006,
+        0.994,
+        0.639
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 12,
+      "area": 19.2,
+      "along": [
+        -23.6,
+        -20.0
+      ],
+      "mu_uv": [
+        0.076,
+        0.031,
+        0.98,
+        0.827
+      ],
+      "bake_uv": [
+        0.935,
+        0.135,
+        0.994,
+        0.768
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 236,
+      "area": 1454.6,
+      "along": [
+        -42.1,
+        25.6
+      ],
+      "mu_uv": [
+        0.008,
+        0.026,
+        0.989,
+        0.986
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.922,
+        0.903
+      ]
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 40,
+      "area": 6757.7,
+      "along": [
+        -53.0,
+        37.1
+      ],
+      "mu_uv": [
+        0.013,
+        0.012,
+        0.989,
+        0.983
+      ],
+      "bake_uv": [
+        0.006,
+        0.915,
+        0.451,
+        0.979
+      ]
+    },
+    {
+      "island": 6,
+      "material": "steel",
+      "triangles": 40,
+      "area": 6757.7,
+      "along": [
+        -53.0,
+        37.1
+      ],
+      "mu_uv": [
+        0.013,
+        0.012,
+        0.989,
+        0.983
+      ],
+      "bake_uv": [
+        0.159,
+        0.915,
+        0.603,
+        0.979
+      ]
+    }
+  ]
+}

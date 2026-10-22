@@ -141,6 +141,9 @@ const char* HeldLights::mesh(Item item) {
         case Item::StingerBow: return "Bow24";
         case Item::DeadlyStaff: return "Staff31";
         case Item::ImperialStaff: return "Staff32";
+        case Item::CrimsonGlory: return "Shield18";
+        case Item::SalamanderShield: return "Shield19";
+        case Item::GuardianShield: return "Shield21";
     }
     return "";
 }
@@ -471,6 +474,30 @@ int HeldLights::points(Item item, float out[kMostPoints][3]) {
                 for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
             }
             return 4;
+        }
+        case Item::CrimsonGlory: {
+            // Shield_18.bmd at rest: zx01, zx02 and zx002 (bones 1-3), the flares, then zx03-zx09
+            // (4-10) round the rim.
+            static const float kBones[10][3] = {{20.8f, 39.7f, -23.5f}, {20.0f, 19.9f, -2.9f}, {20.0f, 12.1f, -16.0f}, {11.7f, 56.2f, 0.7f}, {12.6f, 24.8f, 13.8f}, {12.3f, -12.8f, 26.1f}, {12.2f, -46.0f, 28.0f}, {12.3f, -28.8f, -0.6f}, {12.6f, -0.2f, -28.0f}, {11.7f, 26.1f, -49.5f}};
+            for (int i = 0; i < 10; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 10;
+        }
+        case Item::SalamanderShield:
+            // zx01 (bone 1) of Shield_19.bmd at rest, the gem: (27.2, 0, 0.6).
+            out[0][0] = 27.2f * kUnit;
+            out[0][1] = 0.6f * kUnit;
+            out[0][2] = 0.0f;
+            return 1;
+        case Item::GuardianShield: {
+            // Shield_21.bmd at rest: b01, zx01, zx05, zx04, Object04, Object05, zx02, Object01 and
+            // Object03 (bones 1-9), the crystals.
+            static const float kBones[9][3] = {{17.1f, -27.1f, 14.4f}, {15.3f, -1.3f, 14.7f}, {17.5f, -20.5f, 5.0f}, {15.3f, -12.9f, -7.1f}, {14.2f, 33.3f, 8.7f}, {14.2f, 11.6f, -32.3f}, {17.5f, -15.6f, 14.2f}, {14.4f, 53.4f, -12.5f}, {14.4f, 40.4f, -37.0f}};
+            for (int i = 0; i < 9; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 9;
         }
     }
     return 0;
@@ -901,6 +928,24 @@ void HeldLights::gather(gfx::Effects& effects) const {
                 put(light_, one.at[2], halfOf(3.0f), 0.3f, 0.3f, 0.9f);
                 put(light_, one.at[3], halfOf(2.0f), 0.7f, 0.1f, 0.2f);
                 put(shiny_, one.at[3], halfOf(0.8f), 0.9f, 0.3f, 0.5f);
+                break;
+            }
+            case Item::CrimsonGlory: {
+                if (one.count < 10) break;
+                for (int i = 3; i < 10; ++i) put(light_, one.at[i], halfOf(1.5f), 0.8f, 0.6f, 0.2f);
+                // BITMAP_FLARE_RED under white: here the light in its red.
+                const float lumi = std::fabs(std::sin(clock_ * 0.5f));
+                static const float kFlares[3] = {0.5f, 0.3f, 0.3f};
+                for (int i = 0; i < 3; ++i) put(light_, one.at[i], halfOf(kFlares[i]), lumi, 0.15f * lumi, 0.1f * lumi);
+                break;
+            }
+            case Item::SalamanderShield: {
+                put(light_, one.at[0], halfOf(2.0f), 0.9f, 0.0f, 0.2f);
+                break;
+            }
+            case Item::GuardianShield: {
+                const float lumi = std::fabs(std::sin(clock_)) + 0.1f;
+                for (int i = 0; i < one.count; ++i) put(light_, one.at[i], halfOf(1.5f), 0.8f * lumi, 0.3f * lumi, 0.8f * lumi);
                 break;
             }
         }

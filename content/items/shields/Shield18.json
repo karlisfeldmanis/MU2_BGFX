@@ -1,0 +1,216 @@
+{
+  "item": "Shield18",
+  "mu_name": "Crimson Glory",
+  "mu_name_from": "MODEL_CRIMSONGLORY (MODEL_SHIELD + 17), loaded from Item/Shield_18.bmd (ZzzOpenData.cpp:1116). Group 6 number 17 in OpenMU S6 Armors.cs:58.",
+  "why_this_one": "The 100-140 gear MU has and this game lacked (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's): the four second-class shields of Season 6's wave, beside the twelve weapons.",
+  "profile": "weapon",
+  "profile_from": "The weapon profile, as every built shield uses.",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:58. 0.75 and 0.95d have no second-class gear.",
+    "call": "CreateShield(17, 1, 18, 2, 2, \"Crimson Glory\", 104, 19, 90, 51, 0, 95, 48, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateShield(number, slot, skill, width, height, name, dropLevel, defense, defenseRate, durability, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, leadershipRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel); the group is slot + 5, 6.",
+    "group": 6,
+    "number": 17,
+    "drop_level": 104,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 2,
+    "defense": 19,
+    "defense_rate": 90,
+    "defense_rate_note": "The shield's own block chance, which the fight does not roll yet. Recorded and unread.",
+    "skill": 18,
+    "skill_note": "The shield's block skill in OpenMU's table, carried for the row and nothing more.",
+    "durability": 51,
+    "requires": {
+      "level": 0,
+      "strength": 95,
+      "agility": 48,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Blade Knight's alone: OpenMU's darkKnightClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "sheets": {
+    "CGshield_a": "cgshield_a.png",
+    "flareRed": "flarered.png",
+    "flareRed_glow": "flarered.png",
+    "gra": "gra.png"
+  },
+  "sheet_from": "Data/Item: CGshield_a.OZJ (128x128, dark red-brown plate with a silver band and gilt edging, mesh 0, 238 triangles), gra (256x64, a grey ramp, mesh 2, the steel rim, 104), already here; flareRed (64x64, a red star on black, mesh 1, 16, the gem at the boss) from Data/Effect/flareRed.OZJ, as Data/Item has none in this MuMain (Item/xmas/flareRed.OZJ is the same file). Decoded with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "CGshield_a": "painted_steel",
+    "flareRed": "painted_steel",
+    "gra": "steel"
+  },
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    },
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_note": "The face is MU's paint: painted_steel with the cast grain (a blade's brushed grain stripes plate). The rim is the gra ramp, bare steel.",
+  "glow": {
+    "flareRed_glow": {}
+  },
+  "glow_note": "RenderPartObjectBody's MODEL_CRIMSONGLORY arm (ZzzObject.cpp:7225-7230): the body solid, then mesh 1 (flareRed, the gem) again RENDER_TEXTURE | RENDER_BRIGHT, added (ZzzBMD.cpp:1534), and mesh 2 (gra, the rim) again added with RENDER_CHROME. Here the gem solid and flareRed_glow, a copy of mesh 1's faces, added; the rim's pass is the chrome below. PartObjectColor gives it no Color.",
+  "chrome": [
+    {
+      "slot": "gra",
+      "image": "chrome01",
+      "uv": "chrome",
+      "where": "over",
+      "light": 0.3
+    }
+  ],
+  "chrome_from": "The arm's pass of mesh 2, RENDER_TEXTURE | RENDER_BRIGHT | RENDER_CHROME (ZzzObject.cpp:7229), at the Flamberge's 0.3 as MU's stacked passes overshoot under our bloom. pipeline/chrome_sheets.py.",
+  "separate_meshes": true,
+  "separate_meshes_why": "flareRed_glow is mesh 1's own faces again; welded across meshes the two shells become duplicate faces and Blender keeps one (Wing05's trap, the Elemental Shield's WD_a_glow).",
+  "rig_note": "Held, MuMain's arm is ZzzCharacter.cpp:8118-8144: gold BITMAP_LIGHTs on bones 4-10 and red flares breathing |sin(WorldTime*0.0005)| on 1-3 (fx/held_lights). export-rig --actions=all: twelve bones, one action of one key; nothing moves, no rig kept.",
+  "material_overrides_note": "Steel at 0.45, as every broad flat piece passed in the studio: its own 0.2 mirrors the grass black.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 234,
+      "area": 7956.9,
+      "along": [
+        -46.5,
+        26.5
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.987,
+        0.933
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 1,
+      "area": 10.5,
+      "along": [
+        -47.6,
+        -39.3
+      ],
+      "mu_uv": [
+        0.872,
+        0.692,
+        0.982,
+        0.771
+      ],
+      "bake_uv": [
+        0.855,
+        0.794,
+        0.892,
+        0.821
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 1,
+      "area": 10.5,
+      "along": [
+        0.3,
+        3.6
+      ],
+      "mu_uv": [
+        0.872,
+        0.692,
+        0.982,
+        0.771
+      ],
+      "bake_uv": [
+        0.953,
+        0.696,
+        0.99,
+        0.723
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 16,
+      "area": 57.0,
+      "along": [
+        -26.0,
+        -20.0
+      ],
+      "mu_uv": [
+        0.328,
+        0.352,
+        0.484,
+        0.664
+      ],
+      "bake_uv": [
+        0.418,
+        0.088,
+        0.916,
+        0.804
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 16,
+      "area": 57.0,
+      "along": [
+        -26.0,
+        -20.0
+      ],
+      "mu_uv": [
+        0.328,
+        0.352,
+        0.484,
+        0.664
+      ],
+      "bake_uv": [
+        0.053,
+        0.106,
+        0.422,
+        0.358
+      ]
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 104,
+      "area": 5758.8,
+      "along": [
+        -68.8,
+        36.2
+      ],
+      "mu_uv": [
+        -0.824,
+        -0.711,
+        0.974,
+        1.818
+      ],
+      "bake_uv": [
+        0.011,
+        0.03,
+        0.716,
+        0.884
+      ]
+    }
+  ]
+}
