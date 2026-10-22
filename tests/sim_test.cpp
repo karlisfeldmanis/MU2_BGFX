@@ -4763,6 +4763,17 @@ void testSkills(const content::Tables& tables) {
             if (most > 0) pricedAlike &= most * 4 <= least * 5;
         }
         check(pricedAlike, "and the two sell for about the same");
+        // Though bound, as a quest pays them, they fetch almost nothing (the user, 2026-10-22).
+        {
+            sim::Held blade;
+            blade.item = tables.itemNamed("Sword21");
+            blade.refinement = 7;
+            blade.durability = int16_t(sim::fullDurability(tables.items[size_t(blade.item)], 7));
+            const int64_t free = sim::npcValue(tables, blade);
+            blade.bound = true;
+            const int64_t bound = sim::npcValue(tables, blade);
+            check(bound > 0 && bound * 100 <= free, "a bound Knight Blade sells for a hundredth");
+        }
     }
 
     int casts[sim::kSkills] = {};

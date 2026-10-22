@@ -11,6 +11,9 @@
 
 namespace mu::sim {
 
+// What a bound thing sells for, a part of its price (npcValue).
+constexpr int64_t kBoundSale = 100;
+
 int64_t npcValue(const content::Tables& tables, const Held& what) {
     if (what.empty() || size_t(what.item) >= tables.items.size()) return -1;
     const content::ItemRow& row = tables.items[size_t(what.item)];
@@ -27,6 +30,9 @@ int64_t npcValue(const content::Tables& tables, const Held& what) {
     if (const PowerRow* power = powerOf(what.powers[0]); creation(row) && power != nullptr) {
         paid = int64_t(double(paid) * kRuneSale[int(power->rarity)]);
     }
+    // **A bound thing fetches almost nothing** (the user, 2026-10-22: "bound items has to sell for
+    // almsot nothing"): a hundredth, so a quest's gear is worn and not cashed. Ours.
+    if (what.bound && paid > 0) paid = std::max<int64_t>(1, paid / kBoundSale);
     return paid > 0 ? paid : -1;
 }
 
