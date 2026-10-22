@@ -8,7 +8,37 @@
       "number": 138,
       "box": [19, 217, 21, 219],
       "note": "OpenMU's spawn gate 138 (VersionSeasonSix Gates.cs:276-280): the camp by the Tarkan door, the box a dead character stands up in. Without it a death in Kanturu rises in Lorencia. docs/worlds/kanturu-port.md Part C, C4."
-    }
+    },
+    "exits": [
+      {
+        "number": 126,
+        "box": [
+          19,
+          217,
+          21,
+          219
+        ],
+        "faces": [
+          0,
+          0
+        ],
+        "note": "Kanturu, from Tarkan. MU's 126 is 17,219-21,220 (Gates.cs:279), which overlaps the way back (127) on three tiles, 17-19,220: a character dropped there would stand on the door home. So it lands on the camp's box, spawn gate 138's (19,217-21,219), as research 2.1 settled."
+      }
+    ],
+    "enters": [
+      {
+        "number": 127,
+        "box": [
+          17,
+          220,
+          19,
+          222
+        ],
+        "level": 0,
+        "target": 128,
+        "note": "Kanturu's way back to Tarkan, in the gate's doorway (Gates.cs:538). MU asks 130, ours free, as every way out."
+      }
+    ]
   },
   "pipeline": {
     "hidden": {

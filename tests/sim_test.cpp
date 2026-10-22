@@ -7733,6 +7733,58 @@ void testAidaGates() {
                120, "the tracker points Noria's hero at the door to Aida");
 }
 
+void testKanturuGates() {
+    std::printf("kanturu gates\n");
+    struct Seen { int gated = 0, barred = 0, column = 0, row = 0; };
+    const auto walk = [](const content::Tables& tables, int fromC, int fromR, int toC, int toR,
+                         int level) {
+        Seen seen;
+        sim::Realm realm;
+        check(realm.raise(&tables, 7, fromC, fromR, sim::Kin::DarkKnight, level),
+              "a realm raises by the gate");
+        sim::Request go;
+        go.kind = sim::Request::Kind::WalkTo;
+        go.column = toC;
+        go.row = toR;
+        realm.ask(go);
+        for (int tick = 0; tick < 400 && seen.gated == 0; ++tick) {
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) {
+                if (one.who != realm.hero().id) continue;
+                if (one.what == sim::What::Barred && seen.barred == 0) seen.barred = one.b;
+                if (one.what == sim::What::Gated) {
+                    seen.gated = one.a;
+                    seen.column = one.b;
+                    seen.row = one.c;
+                }
+            }
+        }
+        return seen;
+    };
+    content::Tables tarkan, kanturu;
+    std::string error;
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/tarkan/tarkan.mur", tarkan,
+                              error),
+          "Tarkan's tables load");
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/kanturu/kanturu.mur",
+                              kanturu, error),
+          "Kanturu's tables load");
+    // Tarkan's west door to Kanturu, gate 125 (OpenMU Season Six Gates.cs:537): MU asks 150,
+    // ours 320, just above Aida's 300; it lets out on the camp's box (gate 126 laid on 138's,
+    // since MU's own overlaps the way back).
+    Seen s = walk(tarkan, 10, 200, 6, 200, 320);
+    checkEqual(s.gated, 125, "a level 320 knight takes Tarkan's door to Kanturu, gate 125");
+    check(s.column >= 19 && s.column <= 21 && s.row >= 217 && s.row <= 219,
+          "out on Kanturu's gate 126, the camp");
+    s = walk(tarkan, 10, 200, 6, 200, 319);
+    checkEqual(s.gated, 0, "a level 319 knight does not");
+    checkEqual(s.barred, 320, "and is told it asks level 320");
+    // And back, gate 127 (Gates.cs:538): MU asks 130, ours free, as every way out.
+    s = walk(kanturu, 20, 218, 18, 221, 1);
+    checkEqual(s.gated, 127, "a level 1 knight takes Kanturu's way back, gate 127");
+    check(s.column == 7 && s.row >= 199 && s.row <= 201, "out on Tarkan's gate 128 in the arch");
+}
+
 void testTarkanGates() {
     std::printf("tarkan gates\n");
     struct Seen { int gated = 0, barred = 0, column = 0, row = 0; };
@@ -15259,6 +15311,7 @@ int main() {
     testAtlansGates();
     testTarkanGates();
     testAidaGates();
+    testKanturuGates();
     testIcarusGates();
     testTraps();
     testQuests(tables);
