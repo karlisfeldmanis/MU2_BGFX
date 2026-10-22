@@ -1,0 +1,42 @@
+{
+  "item": "Object110",
+  "mu_name": "Object110",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 109,
+  "placements": 5,
+  "profile": "world",
+  "sheets": {
+    "cho_scarp_02": "kr_cho_scarp_02.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "cho_scarp_02": "plate_steel"
+  },
+  "material_note": "cho_scarp_02: riveted grey iron plates: plate_steel.",
+  "why_this_one": "A 4 m scaffold pole, 5 of them, sunk 7.6 m into the void. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 58,
+      "area": 88532.4,
+      "along": [
+        -15.6,
+        10.8
+      ],
+      "mu_uv": [
+        -0.126,
+        0.005,
+        0.995,
+        0.906
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.952,
+        0.994
+      ]
+    }
+  ]
+}

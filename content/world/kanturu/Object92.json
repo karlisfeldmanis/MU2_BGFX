@@ -1,0 +1,46 @@
+{
+  "item": "Object92",
+  "mu_name": "Object92",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 91,
+  "placements": 1,
+  "profile": "world",
+  "sheets": {
+    "songk3mmater0302_R": "kr_songk3mmater0302_r.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "songk3mmater0302_R": "lamplight"
+  },
+  "material_note": "songk3mmater0302_R: blue liquid, MU's bright sheet: lamplight.",
+  "why_this_one": "A blue liquid tank, one. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "additive": [
+    "songk3mmater0302_R"
+  ],
+  "additive_from": "songk3mmater0302_R is an _R sheet, drawn added (TextureScript.cpp:16-58); Object93's electric arcs wait for the effects batch.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 16,
+      "area": 172025.0,
+      "along": [
+        -91.8,
+        91.8
+      ],
+      "mu_uv": [
+        0.117,
+        -0.026,
+        1.117,
+        0.99
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.998,
+        0.506
+      ]
+    }
+  ]
+}

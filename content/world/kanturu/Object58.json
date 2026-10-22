@@ -1,0 +1,66 @@
+{
+  "item": "Object58",
+  "mu_name": "Object58",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 57,
+  "placements": 46,
+  "profile": "world",
+  "sheets": {
+    "song_k3metal0202": "kr_song_k3metal0202.png",
+    "song_k202w1": "kr_song_k202w1.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k3metal0202": "wrought_iron",
+    "song_k202w1": "wrought_iron"
+  },
+  "material_note": "song_k3metal0202: rusted iron plate: wrought_iron. song_k202w1: an iron wheel in a riveted, carved frame: wrought_iron.",
+  "why_this_one": "Iron girders, 46 of them. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wrought_iron",
+      "triangles": 28,
+      "area": 17232.7,
+      "along": [
+        -46.3,
+        46.3
+      ],
+      "mu_uv": [
+        0.286,
+        0.058,
+        0.984,
+        0.82
+      ],
+      "bake_uv": [
+        0.002,
+        0.609,
+        0.311,
+        0.819
+      ]
+    },
+    {
+      "island": 1,
+      "material": "wrought_iron",
+      "triangles": 12,
+      "area": 70443.4,
+      "along": [
+        -35.9,
+        35.9
+      ],
+      "mu_uv": [
+        -0.465,
+        0.609,
+        1.546,
+        1.824
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.998,
+        0.604
+      ]
+    }
+  ]
+}

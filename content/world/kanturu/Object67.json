@@ -1,0 +1,42 @@
+{
+  "item": "Object67",
+  "mu_name": "Object67",
+  "mu_name_from": "kanturu's object slot: type N is Object{N+1}.bmd, from Data/Object38.",
+  "world": "kanturu",
+  "object_type": 66,
+  "placements": 17,
+  "profile": "world",
+  "sheets": {
+    "cho_gate_c": "kr_cho_gate_c.png"
+  },
+  "sheet_from": "Data/Object38/, decoded under the kr_ prefix by `mu new`.",
+  "sheet_materials": {
+    "cho_gate_c": "flagstone"
+  },
+  "material_note": "cho_gate_c: a carved stone gate post (Tarkan's sheet): flagstone.",
+  "why_this_one": "Gate posts, 17 of them. The remaining kinds (the user, 2026-10-22: 'finish remaining'). docs/worlds/kanturu-port.md.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 50,
+      "area": 13275.5,
+      "along": [
+        -29.4,
+        29.4
+      ],
+      "mu_uv": [
+        0.003,
+        0.0,
+        0.995,
+        0.991
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.995,
+        0.853
+      ]
+    }
+  ]
+}
