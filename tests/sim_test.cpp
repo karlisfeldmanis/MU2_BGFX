@@ -6249,6 +6249,14 @@ void testWear(const content::Tables& tables) {
     checkEqual(sim::repairPrice(small, 0, false, 11, false), 57, "and by his own hand, 2.5 times");
     // Leather Armour buys at 2400, a base of 800: 3 x 28.28 x 5.318 x 0.5 + 1 = 226.6, to 220.
     checkEqual(sim::repairPrice(armour, 0, false, 17, true), 220, "half a Leather Armour, 220");
+    // An excellent one is full at 15 more: at 22 of 37 it is worn, and mends (the user: "i tried
+    // to repair excellent item was not able to do that").
+    sim::Held fine;
+    fine.durability = 22;
+    fine.excellent = 1;
+    check(sim::repairPrice(small, fine, true) > 0, "an excellent shield at 22 of 37 mends");
+    fine.durability = 37;
+    checkEqual(sim::repairPrice(small, fine, true), 0, "and at 37 it is whole");
     // Selling: 0.6 of the share gone comes off.
     checkEqual(sim::wornSellingPrice(1000, 50, 100), 700, "half worn sells for seven tenths");
     checkEqual(sim::wornSellingPrice(1000, 100, 100), 1000, "and whole for the whole");

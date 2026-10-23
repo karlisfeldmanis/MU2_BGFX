@@ -114,6 +114,9 @@ Worn wornBand(int durability, int maximum);
 // missing or the row does not wear or mend.
 int64_t repairPrice(const content::ItemRow& row, int refinement, bool skill, int durability,
                     bool atMerchant);
+// The same for a piece held, whose full is its own maximumDurability: an excellent one's 15 more,
+// or one worn less than 15 points under it would read as whole and could not be mended.
+int64_t repairPrice(const content::ItemRow& row, const Held& held, bool atMerchant);
 
 // And what a worn one fetches over the counter: its selling price less 0.6 of the share gone
 // (CalculateSellingPrice, ItemValue's goldType 1).

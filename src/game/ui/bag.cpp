@@ -765,8 +765,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
             for (int slot = 0; slot < sim::kSlots; ++slot) {
                 const sim::Held& h = bag[slot];
                 if (h.empty()) continue;
-                own += sim::repairPrice(tables.items[size_t(h.item)], h.refinement, h.skill,
-                                        h.durability, false);
+                own += sim::repairPrice(tables.items[size_t(h.item)], h, false);
             }
             tip::Section cost;
             cost.rows.push_back(own > 0

@@ -89,10 +89,11 @@ Worn wornBand(int durability, int maximum) {
     return Worn::Fine;
 }
 
-int64_t repairPrice(const content::ItemRow& row, int refinement, bool skill, int durability,
-                    bool atMerchant) {
+namespace {
+
+int64_t repairPriceTo(const content::ItemRow& row, int refinement, bool skill, int durability,
+                      int maximum, bool atMerchant) {
     if (!mendable(row)) return 0;
-    const int maximum = maximumDurability(row, refinement);
     if (maximum <= 0 || durability >= maximum) return 0;
     // CalculateRepairPrice: a third of the final buying price, rounded, never over 400 million.
     const int64_t base =
@@ -103,6 +104,19 @@ int64_t repairPrice(const content::ItemRow& row, int refinement, bool skill, int
     if (durability <= 0) price *= float(kBrokenRepairFactor);
     if (!atMerchant) price *= float(kSelfRepairFactor);
     return round(int64_t(price));
+}
+
+}  // namespace
+
+int64_t repairPrice(const content::ItemRow& row, int refinement, bool skill, int durability,
+                    bool atMerchant) {
+    return repairPriceTo(row, refinement, skill, durability, maximumDurability(row, refinement),
+                         atMerchant);
+}
+
+int64_t repairPrice(const content::ItemRow& row, const Held& held, bool atMerchant) {
+    return repairPriceTo(row, held.refinement, held.skill, held.durability,
+                         maximumDurability(row, held), atMerchant);
 }
 
 int64_t wornSellingPrice(int64_t sellingPrice, int durability, int maximum) {

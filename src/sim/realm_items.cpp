@@ -1923,8 +1923,7 @@ int64_t Realm::repairCost(int slot) const {
     const Held& h = me().bag[slot];
     if (h.empty()) return 0;
     // CalcRepairCost's SelfRepair: the counter's price at a counter that mends, else his own.
-    return repairPrice(tables_->items[size_t(h.item)], h.refinement, h.skill, h.durability,
-                       mending());
+    return repairPrice(tables_->items[size_t(h.item)], h, mending());
 }
 
 int64_t Realm::repairAllCost() const {
