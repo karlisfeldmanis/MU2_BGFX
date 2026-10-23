@@ -6,11 +6,11 @@
    "model": "Storage01",
    "who": "Baz The Vault Keeper",
    "tile": [
-    22,
-    215
+    24,
+    211
    ],
-   "facing": 3,
-   "ours": "the camp vault just inside the Tarkan door, west of the way in, facing the camera"
+   "facing": 5,
+   "ours": "the camp vault on the grass two tiles off the cobbled way in, beside Amy, turned to the camera (Kanturu's camera puts north at the screen's foot)"
   },
   {
    "model": "PotionGirlAmy",
