@@ -1,0 +1,244 @@
+{
+  "item": "Object11",
+  "mu_name": "Object11",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 10,
+  "placements": 21,
+  "profile": "world",
+  "sheets": {
+    "song_k21crystal01": "kl_song_k21crystal01.png",
+    "songk21crystal02_R": "kl_songk21crystal02_r.png",
+    "song_k21magma02": "kl_song_k21magma02.png",
+    "song_k21magma01": "kl_song_k21magma01.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k21crystal01": "flagstone",
+    "songk21crystal02_R": "lamplight",
+    "song_k21magma02": "lamplight",
+    "song_k21magma01": "bark"
+  },
+  "material_note": "song_k21crystal01: a carved stone frame with glyph panels round a magma recess: flagstone. songk21crystal02_R: an orange light beam, MU's bright sheet: lamplight. song_k21magma02: molten rock: lamplight. song_k21magma01: a woven root cage, its gaps cut out: bark.",
+  "cutout": [
+    "song_k21magma01"
+  ],
+  "cutout_from": "decode_texture found a real alpha channel cutting the sheet.",
+  "why_this_one": "A magma crystal pylon, 21 of them: a carved stone frame round a turning core of magma in a root cage, a light beam above it. Batch 3 of the Relics (the user, 2026-10-23: \"first we eed to finish actual map then we go to monsters\", \"next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "additive": [
+    "songk21crystal02_R",
+    "song_k21magma02"
+  ],
+  "additive_from": "songk21crystal02_R is an _R sheet, drawn RENDER_BRIGHT, added (TextureScript.cpp:16-58). song_k21magma02 (mesh 2) is hidden from the body and drawn only RENDER_CHROME|RENDER_BRIGHT with BITMAP_CHROME after the characters (Render_Kanturu2nd_AfterObjectMesh type 10, GM_Kanturu_2nd.cpp:641-646): an added shine. Not carried as chrome, as the Ruins' crystals: here its own sheet is added.",
+  "glow": {
+    "songk21crystal02_R": {
+      "low": 0.1,
+      "high": 0.9,
+      "hz": 0.48,
+      "smooth_seconds": 2.1
+    }
+  },
+  "glow_from": "MU: BlendMeshLight = sin(WorldTime * 0.0015) + 1 clamped to 0.1-0.9 (MoveKanturu2ndObject type 10, GM_Kanturu_2nd.cpp:220-234), so mostly held at a bound with a swing between every 4.2 s. Ours, marked, as the Ruins' Object47: our glow wanders over MU's range, re-aimed every half period and eased over it.",
+  "play_speed": 0.04,
+  "play_speed_from": "MoveKanturu2ndObject type 10: o->Velocity = 0.04 (GM_Kanturu_2nd.cpp:222). Bone 1 (the magma core and its root cage) turns over 5 keys (Object11.rig.json, MuExtract export-rig --actions=all of MuMain's Object39); 398 vertices, as the .obj. MU's waterfall specks from 4.1 m (:375-385) wait for the effects batch.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 28,
+      "area": 10988.2,
+      "along": [
+        -33.7,
+        33.7
+      ],
+      "mu_uv": [
+        0.068,
+        0.015,
+        0.99,
+        0.714
+      ],
+      "bake_uv": [
+        0.188,
+        0.012,
+        0.962,
+        0.98
+      ]
+    },
+    {
+      "island": 1,
+      "material": "flagstone",
+      "triangles": 16,
+      "area": 16334.6,
+      "along": [
+        -41.2,
+        41.2
+      ],
+      "mu_uv": [
+        0.068,
+        0.015,
+        0.594,
+        0.75
+      ],
+      "bake_uv": [
+        0.012,
+        0.176,
+        0.948,
+        0.918
+      ]
+    },
+    {
+      "island": 2,
+      "material": "flagstone",
+      "triangles": 24,
+      "area": 19143.0,
+      "along": [
+        -29.5,
+        29.5
+      ],
+      "mu_uv": [
+        0.006,
+        0.711,
+        0.898,
+        0.991
+      ],
+      "bake_uv": [
+        0.218,
+        0.012,
+        0.866,
+        0.875
+      ]
+    },
+    {
+      "island": 3,
+      "material": "flagstone",
+      "triangles": 70,
+      "area": 15514.3,
+      "along": [
+        -58.9,
+        58.9
+      ],
+      "mu_uv": [
+        0.005,
+        0.09,
+        0.993,
+        0.674
+      ],
+      "bake_uv": [
+        0.011,
+        0.012,
+        0.983,
+        0.989
+      ]
+    },
+    {
+      "island": 4,
+      "material": "bark",
+      "triangles": 12,
+      "area": 2505.9,
+      "along": [
+        -25.7,
+        25.7
+      ],
+      "mu_uv": [
+        -0.025,
+        -0.004,
+        1.092,
+        1.354
+      ],
+      "bake_uv": [
+        0.474,
+        0.427,
+        0.699,
+        0.701
+      ]
+    },
+    {
+      "island": 5,
+      "material": "bark",
+      "triangles": 6,
+      "area": 1844.9,
+      "along": [
+        -14.5,
+        14.5
+      ],
+      "mu_uv": [
+        0.0,
+        0.326,
+        1.033,
+        0.963
+      ],
+      "bake_uv": [
+        0.013,
+        0.043,
+        0.761,
+        0.809
+      ]
+    },
+    {
+      "island": 6,
+      "material": "lamplight",
+      "triangles": 24,
+      "area": 12407.8,
+      "along": [
+        -32.2,
+        32.2
+      ],
+      "mu_uv": [
+        -1.917,
+        -0.074,
+        1.75,
+        2.223
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.872,
+        0.8
+      ]
+    },
+    {
+      "island": 7,
+      "material": "lamplight",
+      "triangles": 12,
+      "area": 31857.8,
+      "along": [
+        -38.3,
+        38.3
+      ],
+      "mu_uv": [
+        -0.083,
+        0.0,
+        0.917,
+        1.0
+      ],
+      "bake_uv": [
+        0.287,
+        0.943,
+        0.316,
+        0.971
+      ]
+    },
+    {
+      "island": 8,
+      "material": "lamplight",
+      "triangles": 12,
+      "area": 14967.7,
+      "along": [
+        -27.1,
+        27.1
+      ],
+      "mu_uv": [
+        -0.083,
+        0.0,
+        0.917,
+        1.0
+      ],
+      "bake_uv": [
+        0.105,
+        0.946,
+        0.133,
+        0.974
+      ]
+    }
+  ]
+}
