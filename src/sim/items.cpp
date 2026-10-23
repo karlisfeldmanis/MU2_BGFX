@@ -298,6 +298,13 @@ bool expensive(const content::Tables& tables, const Held& what) {
            creation(row);
 }
 
+int piecesSold(const content::Tables& tables, const Held& what) {
+    if (what.empty() || size_t(what.item) >= tables.items.size()) return 0;
+    const content::ItemRow& row = tables.items[size_t(what.item)];
+    const bool jewel = row.jewel() && row.group != kGroupPets;
+    return jewel && what.durability > 1 ? 1 : 0;
+}
+
 bool takesOptions(const content::ItemRow& row) {
     return row.group <= kGroupBoots && !ammunition(row);
 }

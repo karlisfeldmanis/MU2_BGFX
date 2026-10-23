@@ -1146,7 +1146,8 @@ public:
     // The bag slot, or -1 refused (nothing to undo, no counter, no room, no Zen).
     int buyBack();
     // What `sellItem` would pay for the thing in this slot at any counter, or -1 when it cannot
-    // be sold at all: a worn slot, an empty one, or a thing worth nothing. The item card's.
+    // be sold at all: a worn slot, an empty one, or a thing worth nothing. The item card's, so
+    // of the pieces a click sells (piecesSold): one jewel of a stack.
     int64_t sellValue(int slot) const;
     // Whether he is close enough to be served by this townsperson right now. Asked again on
     // every purchase and sale, not once when the counter opened.

@@ -14306,6 +14306,7 @@ void testCommands(const content::Tables& tables) {
         while (realm.give(tables.itemNamed("Potion01"), -1, 0, 1) >= 0) {}
         check(stack >= 0, "three Jewels of Bless in a full bag");
         const int64_t purse = realm.money();
+        const int64_t card = realm.sellValue(stack);
         realm.command({.kind = sim::Command::Kind::Sell, .ticket = 9, .a = stack, .c = 1});
         realm.step();
         checkEqual(int(realm.satchel()[stack].durability), 2, "one jewel sold off the stack");
@@ -14313,6 +14314,7 @@ void testCommands(const content::Tables& tables) {
         one.durability = 1;
         checkEqual((long long)(realm.money() - purse), (long long)sim::npcValue(tables, one),
                    "for one jewel's price");
+        checkEqual((long long)card, (long long)(realm.money() - purse), "which is the card's price");
         checkEqual(realm.buyBack(), stack, "bought back onto the stack");
         checkEqual(int(realm.satchel()[stack].durability), 3, "which is three again");
         for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {

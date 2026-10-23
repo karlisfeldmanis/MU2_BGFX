@@ -412,8 +412,7 @@ private:
     // How many of the bag's stack at `slot` a drop into the machine's box asks for: `part` when
     // a part rides, else as many as the open service wants (sim::piecesWanted); 0 all of it.
     int piecesForBox(const Play& play, int slot, int part) const;
-    // How many a sale at a merchant takes: `part` when a part rides, one of a stack of jewels
-    // (the user, 2026-10-23: "dont sell whole stack but single jewel"), else 0, all of it.
+    // How many a sale at a merchant takes: `part` when a part rides, else sim::piecesSold.
     int piecesForSale(const Play& play, int slot, int part) const;
     Report report_;
     BugAsk reportAsk_;

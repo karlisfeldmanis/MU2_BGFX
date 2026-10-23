@@ -1708,7 +1708,9 @@ int Realm::buy(int shelfSlot) {
 // they drop (2026-10-10); no counter stands in a Blood Castle, where one is a quest item.
 int64_t Realm::sellValue(int slot) const {
     if (!baggable(slot) || me().bag[slot].empty()) return -1;
-    return npcValue(*tables_, me().bag[slot]);
+    Held sold = me().bag[slot];
+    if (const int pieces = piecesSold(*tables_, sold); pieces > 0) sold.durability = int16_t(pieces);
+    return npcValue(*tables_, sold);
 }
 
 int64_t Realm::sellItem(int slot, int pieces) {

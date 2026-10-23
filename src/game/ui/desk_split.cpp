@@ -75,12 +75,7 @@ int Desk::piecesForSale(const Play& play, int slot, int part) const {
     if (part > 0) return part;
     const sim::Realm& realm = play.realm();
     if (!realm.tables() || slot < 0 || slot >= sim::kSlots) return 0;
-    const sim::Held& what = realm.satchel()[slot];
-    if (what.empty() || size_t(what.item) >= realm.tables()->items.size()) return 0;
-    const content::ItemRow& row = realm.tables()->items[size_t(what.item)];
-    // The pets ride in the jewel drop group and are not jewels (describe's kindOf).
-    const bool jewel = row.jewel() && row.group != sim::kGroupPets;
-    return jewel && what.durability > 1 ? 1 : 0;
+    return sim::piecesSold(*realm.tables(), realm.satchel()[slot]);
 }
 
 }  // namespace mu::game

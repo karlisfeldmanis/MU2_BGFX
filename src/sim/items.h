@@ -629,6 +629,10 @@ constexpr int kSoulResetFrom = 7;
 // cannot disagree with it. Ours on top: the Rune of Creation (a socket alone is nothing dear).
 bool expensive(const content::Tables& tables, const Held& what);
 
+// How many of it a click sells at a counter: one of a stack of jewels (the user, 2026-10-23:
+// "dont sell whole stack but single jewel"), else 0, all of it. The window's and the card's.
+int piecesSold(const content::Tables& tables, const Held& what);
+
 // ---- luck and the additional option -------------------------------------------------------
 //
 // Who may carry them: every weapon, armour piece and shield (Weapons.cs:305-313,
