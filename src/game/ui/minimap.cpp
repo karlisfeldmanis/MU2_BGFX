@@ -585,7 +585,7 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
     } else {
         // The server's time stands over the disc as the map's name stands under it: a line of room.
         const int64_t wall = play.isOpen() ? play.realm().wallClock() : 0;
-        const float clockLine = wall > 0 ? std::round(kFigure * 1.1f * u) : 0.0f;
+        const float clockLine = wall > 0 ? std::round(kFigure * 1.6f * u) : 0.0f;
         const float side = std::round(kSide * u),
                     at = (top_ > 0.0f ? std::round(top_) : std::round(kInset * u)) + clockLine;
         // The fade stands past the disc that reads, so it is the disc inside it that lines up.
@@ -1195,8 +1195,8 @@ void Minimap::rebuild(const Play& play) {
         // clock Blood Castle and Devil Square open on.
         if (now_.clock >= 0) {
             char clock[16];
-            std::snprintf(clock, sizeof clock, "Server %02d:%02d", now_.clock / 60, now_.clock % 60);
-            const float over = std::round(cy - radius_ + fade * kRimIn - 4.0f * u);
+            std::snprintf(clock, sizeof clock, "%02d:%02d", now_.clock / 60, now_.clock % 60);
+            const float over = std::round(cy - radius_ + fade * kRimIn - 11.0f * u);
             const float clockWide = controls::labelWidth(figure, clock);
             controls::label(canvas_, std::round(cx - clockWide * 0.5f), over, figure, style::kBone2, clock);
         }
