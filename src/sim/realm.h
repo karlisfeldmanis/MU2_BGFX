@@ -2202,6 +2202,12 @@ private:
     bool lands(uint32_t owner) const {
         return owner == mine().id || (me_ == 0 && playerOfId(owner) < 0);
     }
+    // Whose blow a flight or a fire that `lands` is: a raider's own body for his runes' (a
+    // Meteor's rock, a Fireburst hop, a Twister storm), the hero `me` for the rest.
+    Body& striker(uint32_t owner, Body& me) {
+        Body* by = owner == me.id ? nullptr : body(owner);
+        return by != nullptr && by->raider >= 0 ? *by : me;
+    }
     bool letSpiritsGo(Body& hero, float force, bool rune);
     void spiritStrike(Body& hero, const SpiritBlow& blow);
     // Flames burning on the ground (`SkillRow::burns`): where, when each strikes next and how
@@ -2225,6 +2231,8 @@ private:
     const SkillRow* sweep_ = nullptr;
     // An Arcane Echo's second throw is being let go: it rolls no talent proc (the plan).
     bool echoing_ = false;
+    // A shield rune's spirit is striking (spiritStrike): a passive's blow, which stings no ring.
+    bool runeSpirit_ = false;
     bool wingDemo_ = false;  // `wingDemo`
     bool benchUndying_ = false;
     bool benchMonstersDie_ = false;

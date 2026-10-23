@@ -343,8 +343,10 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     }
     elements(blow.damage);
     // The rings' stings on a landed blow (sim::ringStingChance), never on a rune's or a ring's
-    // own blow, which would sting again.
-    if (attacker.player && target.monster() && wound > 0 && !(row == nullptr && !pays)) {
+    // own blow, which would sting again -- a shield rune's spirit among them, which strikes with
+    // Evil Spirit's row (runeSpirit_).
+    if (attacker.player && target.monster() && wound > 0 && !(row == nullptr && !pays) &&
+        !runeSpirit_) {
         ringStings(attacker, target, blow.damage);
     }
     // An Ice Monster's: iced, whatever the blow did.
@@ -887,13 +889,16 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         core::logf("meteor rune: tick %lld, a rock on #%u beside #%u", (long long)tick_,
                    struckBy->id, struck.id);
         const float rockForce = kMeteorForce * runeForce(hero, Element::Fire);
+        // It lands as his rune's blow (`swung`), his energy's band on top as Stormcall's: it
+        // landed as a bare swing, the one passive energy did not raise.
         for (Flight& one : flights_) {
             if (one.at != 0) continue;
             one = Flight{tick_ + fall, struckBy->id, 0, rockForce, false};
+            one.swung = true;
             one.owner = hero.id;
             return;
         }
-        strikeAt(hero, *struckBy, rockForce, nullptr, true, false);
+        runeStrike(hero, *struckBy, rockForce);
         return;
     }
     // Said as Lightning let go at it, which is what the drawing throws a thunder on; the blow
@@ -931,6 +936,7 @@ void Realm::ringStings(Body& hero, Body& struck, int wound) {
             struck.chillSlow = hero.talentShare.chilledSlower;
         }
         say(What::Loosed, hero, skill::kIce, 0, 0, struck.id);
+        happenings_.back().rune = true;
         core::logf("ring of ice: tick %lld, on #%u", (long long)tick_, struck.id);
         runeStrike(hero, struck, kRingFrostForce * runeForce(hero, Element::Ice));
     }
@@ -948,6 +954,8 @@ void Realm::ringStings(Body& hero, Body& struck, int wound) {
     if (e.windRing > 0 && rolls(e.windRing)) {
         const float way = fm::atan2(struck.y - hero.y, struck.x - hero.x);
         say(What::Loosed, hero, skill::kTwister, 0, int32_t(std::lround(way * 1000.0f)), struck.id);
+        // A passive's, so the drawing walks its storm at the rune's pace and not the spell's.
+        happenings_.back().rune = true;
         core::logf("ring of wind: tick %lld, on #%u", (long long)tick_, struck.id);
         runeStrike(hero, struck, kRingGustForce * runeForce(hero, Element::Wind));
         if (struck.alive() && !fixed(struck)) push(struck, hero);
@@ -1154,7 +1162,9 @@ void Realm::spiritStrike(Body& hero, const SpiritBlow& blow) {
         hero.stats.wizardMaximum = double(hero.totalPoints().energy) * kRuneEnergyHigh;
     }
     const size_t said = happenings_.size();
+    runeSpirit_ = blow.rune;
     strikeAt(hero, *target, blow.force, row, true, false);
+    runeSpirit_ = false;
     // Its Hit or Missed is the first thing the blow says, shown whatever his body is playing
     // (`thrown`), and in the rune's colour when the shield let it go.
     if (said < happenings_.size()) {
@@ -1652,7 +1662,7 @@ void Realm::looseLine(Body& hero, const SkillRow& row, uint32_t aimedAt, float f
 }
 
 void Realm::arrive() {
-    Body& hero = mine();
+    Body& me = mine();
     // In the order they were let go when two arrive together, which is the order of the array
     // only while nothing has been freed out of the middle -- so the earliest `at` goes first,
     // and a tie goes to the lower place. Fixed either way, which is what the seeded log needs.
@@ -1674,7 +1684,12 @@ void Realm::arrive() {
         if (!target || !target->alive()) continue;
         const float x = target->x, y = target->y;
         const size_t said = happenings_.size();
-        // A knight's Fireburst hop lands as his rune's blow; every other flight as its own.
+        // A raider's rune flight is the raider's blow, off his kit and to his credit, not the
+        // hero's; one whose raider has fallen lands nothing.
+        Body& hero = striker(flight.owner, me);
+        if (!hero.alive()) continue;
+        // A knight's Fireburst hop and a Meteor's rock land as his rune's blow; every other
+        // flight as its own.
         if (flight.swung) {
             runeStrike(hero, *target, flight.force);
         } else {
@@ -2044,9 +2059,15 @@ void Realm::light(Body& hero, const SkillRow& row, uint32_t aimedAt, float force
 }
 
 void Realm::burn() {
-    Body& hero = mine();
+    Body& me = mine();
     for (Fire& fire : fires_) {
         if (fire.next == 0 || !lands(fire.owner)) continue;
+        // A raider's rune storm strikes as the raider (Realm::striker).
+        Body& hero = striker(fire.owner, me);
+        if (!hero.alive()) {
+            fire = Fire{};
+            continue;
+        }
         // A storm walks every tick, struck or not; it was stood at his feet on the let-go's tick.
         fire.x += fire.dx;
         fire.y += fire.dy;

@@ -12729,6 +12729,64 @@ void testEvilSpirit(const content::Tables& tables) {
         check(struck > 0.5 && struck < 0.8, "about two in three of those near are struck, once");
         checkEqual(late, 0, "each within its two seconds");
     }
+    // A shield rune's spirit is a passive's blow and stings no ring (2026-10-23). A Ring of
+    // Lightning +9 beside the shield: its bolt is said straight after the blow that stung, so a
+    // bolt after a spirit's hit would be the spirit's.
+    {
+        sim::Realm realm;
+        realm.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
+        realm.undying(true);
+        const uint8_t powers[3] = {uint8_t(sim::Power::Spirits), 0, 0};
+        realm.give(shield, sim::kWeaponLeft, 0, -1, false, 0, 0, 1, powers);
+        realm.give(tables.itemAt(13, 26), sim::kRingRight, 9);
+        check(realm.hero().excel.lightningRing == 10, "a Ring of Lightning +9 beside the shield");
+        // Four that no spirit kills round him, so each spirit's hit leaves one to sting.
+        sim::Body model;
+        for (const sim::Body& one : realm.bodies()) {
+            if (one.monster() && one.alive()) {
+                model = one;
+                break;
+            }
+        }
+        for (int i = 0; i < 4; ++i) {
+            sim::Body tank = model;
+            tank.maxHealth = tank.health = 1000000;
+            tank.x = realm.hero().x + (i % 2 == 0 ? 1.0f : -1.0f);
+            tank.y = realm.hero().y + (i < 2 ? 0.0f : 1.0f);
+            realm.spawn(std::move(tank));
+        }
+        int spirits = 0, swings = 0, offSpirit = 0, offSwing = 0;
+        uint32_t fighting = 0;
+        for (int tick = 0; tick < 20000; ++tick) {
+            const uint32_t nearest = nearestTo(realm);
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                realm.ask(request);
+            }
+            realm.step();
+            bool lastSpirit = false;
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who != realm.hero().id) continue;
+                if (h.what == sim::What::Hit && !h.rune) {
+                    lastSpirit = false;
+                    ++swings;
+                } else if (h.what == sim::What::Hit && h.spirit) {
+                    // Only one that leaves it standing can sting (ringStings).
+                    lastSpirit = true;
+                    spirits += h.c > 0 ? 1 : 0;
+                } else if (h.what == sim::What::Loosed && h.a == sim::skill::kLightning) {
+                    (lastSpirit ? offSpirit : offSwing) += 1;
+                }
+            }
+        }
+        std::printf("  ring of lightning: %d swings stung %d, %d spirit hits it lived through stung %d\n", swings,
+                    offSwing, spirits, offSpirit);
+        check(spirits >= 20 && offSwing > 0, "his swings sting and his spirits land");
+        checkEqual(offSpirit, 0, "but no spirit stings the ring");
+    }
     {
         sim::Realm realm;
         realm.raise(&tables, 5, 200, 160, sim::Kin::DarkWizard, 60);
