@@ -930,7 +930,7 @@ class Store:
             self.characters[region] = characters
         self.set_setting(f"roster:{region}", json.dumps([{k: c.get(k) for k in self.ROSTER_KEEPS} for c in characters]))
 
-    def played(self, account: int, name: str) -> int:
+    def seconds_played(self, account: int, name: str) -> int:
         """A character's seconds on any server, every play of his the website has seen (since 2026-10-16)."""
         db = self.db()
         swept = db.execute("SELECT seconds FROM played WHERE account_id = ? AND name = ?", (account, name)).fetchone()
@@ -1154,7 +1154,7 @@ class Store:
         for p in told["players"]:
             email, name = accounts.get(p.get("account"), ("", ""))
             players.append(p | {"email": email, "account_name": name,
-                                "played": self.played(p["account"], str(p.get("name"))) if p.get("account") else 0})
+                                "played": self.seconds_played(p["account"], str(p.get("name"))) if p.get("account") else 0})
         players.sort(key=lambda p: (p.get("bot", False), str(p.get("world")), -int(p.get("level") or 0)))
         on = {(p.get("account"), p.get("name"), p.get("since")) for p in told["players"]}
         recent = [{"account": account, "email": email, "account_name": name or "", "name": who, "class": kind,
@@ -2199,7 +2199,7 @@ class Handler(BaseHTTPRequestHandler):
                 account = 0
             found = self.store.character(account, asked.get("name", [""])[0])
             if found:
-                found = found | {"played": self.store.played(account, str(found.get("name")))}
+                found = found | {"played": self.store.seconds_played(account, str(found.get("name")))}
             return self.reply(200, found) if found else self.reply(404, {"error": "not listed"})
         if url.path == "/api/comments":
             post = parse_qs(url.query).get("post", [""])[0]
