@@ -903,12 +903,17 @@ constexpr SkillRow kRows[kSkills] = {
     // 4243-4259), and SOUND_ATTACK_SPEAR with the waves it lets go (ZzzCharacter.cpp:5057-5063,
     // the effect's).
     // **His primary** (the plan, section 3): no cooldown, on the right button, as the wizard's
-    // Energy Ball.
+    // Energy Ball; and no mana back on a hit, as MU gives none.
+    // **Landed where it is let go, and never flown**: MU's server deals it as the cast arrives
+    // (WebZen ObjUseSkill.cpp:3584-3593), and the piercing stands at him (MoveHandlers.cpp:
+    // 5360-5366, its VectorAdd commented out) -- let go on key 3 of STRIKE's 7, where MU makes it
+    // (`AnimationFrame >= 3`, ZzzCharacter.cpp:2866-2873), so `release` 3/7; and `flies` so fast
+    // that the four tiles take no tick.
     {.number = skill::kForce, .name = "Force", .mana = 10, .reach = 4.0f, .force = 2.0f,
      .spread = Spread::One,
      .tells = "A blow of force struck at one body up to four tiles off. His energy multiplies it.",
      .clip = 80, .sound = "player_skill_sword1", .built = true, .families = arms::kNone,
-     .kin = Kin::DarkLord, .damage = 10, .anyHand = true},
+     .kin = Kin::DarkLord, .damage = 10, .flies = 1000.0f, .anyHand = true, .release = 3.0f / 7.0f},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

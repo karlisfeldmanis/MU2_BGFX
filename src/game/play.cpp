@@ -941,8 +941,10 @@ void Play::update(double seconds) {
                         const bool wizard = row->kin == sim::Kin::DarkWizard;
                         if (happening.who == heroId && realm_.hero().riding && !row->arrows &&
                             (!row->onSelf() || wizard)) {
-                            const int ridden =
-                                caster->figure.body()->library->find(wizard ? 155 : 68);
+                            // The Dark Lord's strike skills have MU's own ride strike,
+                            // PLAYER_ATTACK_RIDE_STRIKE (82; WSclient.cpp:4245-4248).
+                            const int ridden = caster->figure.body()->library->find(
+                                wizard ? 155 : row->kin == sim::Kin::DarkLord ? 82 : 68);
                             if (ridden >= 0) caster->castClip = ridden;
                         }
                     }
@@ -1668,6 +1670,7 @@ void Play::update(double seconds) {
                                     const int ridden = swinger->figure.body()->library->find(
                                         row->kin == sim::Kin::DarkWizard     ? 155
                                         : row->number == sim::skill::kImpale ? 70
+                                        : row->kin == sim::Kin::DarkLord     ? 82
                                                                              : 68);
                                     if (ridden >= 0) swinger->castClip = ridden;
                                 }

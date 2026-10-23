@@ -1,7 +1,9 @@
 // Force, the Dark Lord's primary: what MU draws as he lets it go. MuMain's AT_SKILL_FORCE arm of
 // the attack effects (ZzzCharacter.cpp:5057-5063), on PLAYER_ATTACK_STRIKE (player.muc's 80, 7
-// keys at 0.25, so AttackTime runs to 28), let go on AttackTime 3 as every STRIKE skill is
-// (ZzzCharacter.cpp:2866-2905), with SOUND_ATTACK_SPEAR beside it, cued here.
+// keys at 0.25), let go on its key 3 as every STRIKE skill is: `AnimationFrame >= 3` sets
+// AttackTime to its limit, 15, and the let-go runs there (ZzzCharacter.cpp:2866-2873, 4140), with
+// SOUND_ATTACK_SPEAR beside it, cued here. The realm lands the blow on the same key (the row's
+// `release`, 3/7), so the number comes with the piercing.
 //
 // **The piercing.** One MODEL_PIERCING2 (Skill/m_Piercing.bmd): a violet cone and a white burst,
 // Scale 2, 130 units over his feet and down his facing, its tip some four tiles out -- the reach
@@ -56,8 +58,8 @@ public:
 
 private:
     static constexpr float kReferenceFps = 25.0f;
-    static constexpr float kClipFrames = 7.0f / 0.25f;  // 80's AttackTime
-    static constexpr float kLetGo = 3.0f;               // AttackTime >= 3
+    static constexpr float kClipFrames = 7.0f / 0.25f;  // 80's length in reference frames
+    static constexpr float kLetGo = kClipFrames * 3.0f / 7.0f;  // its key 3 of 7
     static constexpr float kUp = 130.0f;                // both, over his feet
     static constexpr float kScatter = 50.0f;            // rand() % 100 - 50
     // The piercing's bone: 21 across and 31 up, at its Scale.

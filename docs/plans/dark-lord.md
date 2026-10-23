@@ -52,7 +52,7 @@ A `hasSecondClass(kin)` helper replaces ~9 `== MagicGladiator` checks; a `kLastK
 
 | ours | MU | role | notes |
 |---|---|---|---|
-| right-click primary | **Force** 60 | no cooldown, a hit refunds (as Energy Ball) | a scepter with the skill option turns it into **Force Wave** 66 (a line) -- MU's own rule, kept |
+| right-click primary | **Force** 60 | no cooldown, no mana back (MU's); lands on key 3 of its strike, never flies | a scepter with the skill option turns it into **Force Wave** 66 (a line) -- MU's own rule, kept |
 | Q/W/E/R | **Fire Burst** 61 | target + everything within 3 tiles after 0.5 s | scroll |
 | | **Electric Spike** 65 | line, +Cmd/10 +50 per party member | scroll; drain per decision 6 |
 | | **Critical Damage** 64 | party buff 10 tiles, +Cmd/25 + Ene/30 crit dmg, 60 + Ene/10 s | scroll |

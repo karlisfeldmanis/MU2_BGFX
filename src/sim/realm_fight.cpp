@@ -45,9 +45,22 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     const double dealt = attacker.stats.damageDealt;
     if (impCost > 0 && !impPaid) attacker.stats.damageDealt = 1.0;
     // A charge's stages ride on the skill's damage for its burst (Realm::burstCharge).
+    // **A Dark Lord's skill adds to his swing before the defence**: its own damage, rolled from it
+    // to half again (WebZen MagicInf.cpp:237-238, Force's 10-15), and Str/25 + Ene/50 (WebZen
+    // ObjAttack.cpp:3259-3266), on both ends of the band the swing rolls in.
+    Fighter lord;
+    const Fighter* swinger = &attacker.stats;
+    if (row != nullptr && row->kin == Kin::DarkLord && !row->wizardry && attacker.player) {
+        const HeroPoints p = attacker.totalPoints();
+        const int flat = p.strength / 25 + p.energy / 50;
+        lord = attacker.stats;
+        lord.minimumDamage += row->damage + flat;
+        lord.maximumDamage += row->damage + row->damage / 2 + flat;
+        swinger = &lord;
+    }
     Blow blow = row && row->wizardry ? cast(attacker.stats, target.stats,
                                             row->damage + (attacker.player ? me().chargeDamage : 0), dice)
-                                     : strike(attacker.stats, target.stats, dice);
+                                     : strike(*swinger, target.stats, dice);
     attacker.stats.damageDealt = dealt;
     if (blow.hit && impPaid) attacker.health -= impCost;
     // Ice's and Poison's elements, and a poisoner's bite on him. WebZen lays them before the
@@ -208,13 +221,6 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // floor, which is where OpenMU spends `Stats.SkillMultiplier`
     // (AttackableExtensions.cs:226-247). One for an ordinary swing, so nothing changes for one.
     // No draw is taken, so a seeded log's dice are untouched by the arithmetic.
-    // **A Dark Lord's skill adds before it multiplies**: Str/25 + Ene/50 and the skill's own damage
-    // (WebZen ObjAttack.cpp:3259-3266, Force's ten), which WebZen puts on the attack before the
-    // defence. Added after it here, where the multiplier is, it is the same sum but at the floor.
-    if (row != nullptr && row->kin == Kin::DarkLord && attacker.player) {
-        const HeroPoints p = attacker.totalPoints();
-        blow.damage += row->damage + p.strength / 25 + p.energy / 50;
-    }
     const float whole = force * talented;
     if (whole != 1.0f) blow.damage = std::max(1, int(float(blow.damage) * whole));
     // The shield takes nine tenths, and what it cannot cover falls through to health: a pool

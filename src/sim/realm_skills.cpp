@@ -420,7 +420,9 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // off, the user's "goes to the opposite direction", on two casts in 160 of a hunt. MU
         // snaps the angle onto the target as it attacks (ZzzInterface.cpp:1303, `o->Angle[2] =
         // CreateAngle2D`); the knight's swing keeps its turn, as above.
-        if (aimed && row.wizardry) hero.facing = hero.aim;
+        // And the Dark Lord's skills: MU snaps him onto the body as he casts Force
+        // (SkillCast.cpp:381), its piercing thrust straight down that line.
+        if (aimed && (row.wizardry || row.kin == Kin::DarkLord)) hero.facing = hero.aim;
         // **Or at the ground under the pointer**, which wins: a press of a skill with a direction
         // carries the tile the mouse is on (`invokeAt`), and he turns to it and casts that way
         // whatever stands there (SkillRow::aimsAtPointer).
