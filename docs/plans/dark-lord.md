@@ -234,6 +234,7 @@ window), rebirth window, signin JSON, bots' `build[4]`, sim_test loops over thre
 2. **Class** -- `Kin::DarkLord`, every switch and clamp, Command (decision 1), creation behind the gate, the character window; sim_test green.
 3. **Primary and gear** -- Force / Force Wave and its effect, scepter stance, the first scepters and Light Plate cooked; he fights in Lorencia.
    His clips' speeds first: actions.json entries 76-89 only (his and the horse rider's, used by no code), each given its real MU play speed -- Force 0.25 (now 0.3), Earthshake 0.2 (0.3), the horse idles 1.0 (0.2). The rest of the table stays (2026-10-23).
+   **Done 2026-10-23** (82773543 and the next): the runtime speeds win over ZzzOpenData's load-time ones, as everywhere in the table -- walk and horse run 0.33 (ZzzCharacter.cpp:532-533, every frame), Force 0.25 and Earthshake 0.3 (SetAttackSpeed, :949, :1013). Index and figures/clips/player.muc re-cooked on the branch.
 4. **Skills** -- Fire Burst, Electric Spike, Critical Damage, Summon, Fire Scream: sim then fx, one at a time, judged in game.
 5. **Pets** -- Pet Trainer, Spirits, Dark Horse + Earthshake, Dark Raven + modes, pet levels.
 6. **Rest of the gear** -- Adamantine, Dark Steel, Glorious, Dark Master, Paewang, Cross Shield, the later scepters, Cape of Lord, Crest.

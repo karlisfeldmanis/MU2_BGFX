@@ -393,7 +393,7 @@
     "77": {
       "enum": "PLAYER_DARKLORD_STAND",
       "name": "Darklord stand",
-      "play_speed": 0.3
+      "play_speed": 0.33
     },
     "78": {
       "enum": "PLAYER_DARKLORD_WALK",
@@ -403,7 +403,7 @@
     "79": {
       "enum": "PLAYER_STOP_RIDE_HORSE",
       "name": "Stop ride horse",
-      "play_speed": 0.3
+      "play_speed": 0.33
     },
     "80": {
       "enum": "PLAYER_RUN_RIDE_HORSE",
@@ -443,7 +443,7 @@
     "87": {
       "enum": "PLAYER_ATTACK_RIDE_ATTACK_MAGIC",
       "name": "Attack ride attack magic",
-      "play_speed": 0.2
+      "play_speed": 0.3
     },
     "88": {
       "enum": "PLAYER_ATTACK_DARKHORSE",
