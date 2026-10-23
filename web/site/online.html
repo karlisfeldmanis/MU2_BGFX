@@ -185,11 +185,28 @@
     return String(os);
   }
   const ram = (m) => m && m.ram ? Math.round(m.ram / 1024) + ' GB' : '';
+  // The game's own report of its graphics (POST /api/graphics): under the preset, the frame rate,
+  // the scale and the textures; every row on hover.
+  function drawnLine(d) {
+    return [d.fps > 0 ? d.fps + ' fps' : '', d.scale ? d.scale + '%' : '',
+            d.textures === 0 ? 'half textures' : '', d.hand ? 'by hand' : d.tuned ? 'measured' : ''].filter(Boolean).join(' · ');
+  }
+  function drawnRows(d) {
+    const level = ['Low', 'Medium', 'High'];
+    const on = (v) => v ? 'on' : 'off';
+    return [d.width && d.height ? d.width + '×' + d.height + (d.fullscreen ? ' fullscreen' : ' window') : '',
+            'Scale ' + d.scale + '%', 'Antialiasing ' + (d.msaa > 1 ? d.msaa + 'x' : 'off'),
+            'Shadows ' + (d.shadows >= 0 ? level[d.shadows] || d.shadows : 'off'), 'Ambient occlusion ' + on(d.ssao),
+            'Bloom ' + on(d.bloom), 'Reflections ' + on(d.reflections), 'Grass ' + (['off', 'less', 'full'][d.grass] || d.grass),
+            'Lights ' + on(d.lights), 'Textures ' + (d.textures === 0 ? 'half' : 'full'),
+            'Frame limit ' + (d.cap > 0 ? d.cap : 'off'),
+            d.at ? 'said ' + when(d.at) : ''].filter(Boolean).join('\n');
+  }
   function tally(o) {
     const accounts = [...new Set(o.players.concat(o.recent, o.everyone).filter((p) => !p.bot && p.account).map((p) => String(p.account)))];
     const box = $('tally');
     box.replaceChildren();
-    const groups = [['System', (m) => osName(m.os)], ['Graphics card', (m) => m.gpu], ['Memory', (m) => ram(m)], ['Graphics setting', (m) => m.graphics]];
+    const groups = [['System', (m) => osName(m.os)], ['Graphics card', (m) => m.gpu], ['Memory', (m) => ram(m)], ['Graphics setting', (m) => m.drawn ? m.drawn.preset : m.graphics ? m.graphics + ' (launcher)' : '']];
     for (const [title, of] of groups) {
       const counts = new Map();
       for (const a of accounts) {
@@ -433,12 +450,21 @@
       const which = p.castle > 0 ? 'Blood Castle ' + p.castle : p.square > 0 ? 'Devil Square ' + p.square : '';
       tr.appendChild(cell(which || map(p.world) + (p.copy > 1 ? ' ' + p.copy : ''), '', 'Map'));
       // The machine its launcher last reported (web/server.py online_report `machines`): the system
-      // with the renderer under it, and the graphics preset the launcher picked for the card.
+      // with the renderer under it. The graphics are what the game itself last said it draws with
+      // (`drawn`); a game too old to say leaves the launcher's first guess, marked as one.
       const m = o.machines[String(p.account)] || {};
+      const d = m.drawn;
       const system = osName(m.os);
-      const drawer = !system ? '' : system.startsWith('macOS') ? 'Metal' : m.renderer === 2 ? 'Direct3D 11' : 'Vulkan';
+      const drawer = d && d.renderer ? d.renderer
+                   : !system ? '' : system.startsWith('macOS') ? 'Metal' : m.renderer === 2 ? 'Direct3D 11' : 'Vulkan';
       tr.appendChild(cell(system || '—', drawer, 'Platform', system ? '' : 'muted'));
-      tr.appendChild(cell(m.graphics || '—', '', 'Graphics', m.graphics ? '' : 'muted'));
+      if (d) {
+        const td = cell(d.preset, drawnLine(d), 'Graphics');
+        td.title = drawnRows(d);
+        tr.appendChild(td);
+      } else {
+        tr.appendChild(cell(m.graphics || '—', m.graphics ? 'launcher’s guess' : '', 'Graphics', 'muted'));
+      }
       // The line's round trip as the server's kernel smooths it (net::Socket::rttMs).
       tr.appendChild(cell(p.ms >= 0 ? p.ms + ' ms' : '—', '', 'Ping', p.ms >= 0 ? 'num' : 'num muted'));
       tr.appendChild(cell(since(p.since), '', 'Online for'));

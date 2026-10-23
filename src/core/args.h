@@ -548,4 +548,8 @@ bool fitGraphics(Args& args, int backbufferWidth, int backbufferHeight);
 // name, or null at Lowest.
 const char* easeGraphics(Args& args);
 
+// The preset the run's Graphics rows are, as the Options page names them (game/ui/menu.cpp
+// presetOf): every row equal to one, the Textures among them, or "Custom".
+const char* graphicsName(const Args& args);
+
 }  // namespace mu::core

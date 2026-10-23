@@ -45,6 +45,10 @@ The routes:
          a player's bug report from the game: their words (1 to MOST_BUG_TEXT characters) and where
          they stood. A line in bugs.jsonl beside the database; a token, or the game's `ticket:secret`,
          files it under its account, as for /api/crash. BUG_LIMIT an address, MOST_BUGS_A_DAY in all.
+    POST /api/graphics   Bearer ticket:secret {preset, renderer, scale, msaa, ...}  -> 200 {ok} | 400 | 401 | 429
+         what the game draws with, from the game (src/launcher/graphics_report.h): its Graphics rows
+         as the run has them, measured or set by hand. The account's last one is kept (`drawn`) and
+         the /online page shows it in place of the launcher's first guess.
     GET  /api/bugs       Bearer T of an admin       -> 200 {bugs: [...]} | 404 for anyone else
          every report, newest first, each with its state and its account's email and name (the /bugs page).
     POST /api/bugs/state Bearer T of an admin {id, state}  -> 200 {ok} | 400 | 404
@@ -223,6 +227,11 @@ MACHINE_KEYS = {"gpu": 160, "vendor": 8, "driver": 64, "date": 32, "cpu": 128, "
                 "vulkan": 4, "old": 4, "software": 4, "tuned": 4, "renderer": 4}
 # What one machine is counted by: the card, the CPU and the memory around it, and the OS.
 MACHINE_FINGERPRINT = ("gpu", "cpu", "ram", "os")
+# What the game's own report of its graphics may carry (src/launcher/graphics_report.cpp): the
+# preset its rows are (or "Custom") and the renderer, cut to size, and the rows as whole numbers.
+GRAPHICS_TEXTS = {"preset": 16, "renderer": 32}
+GRAPHICS_NUMBERS = ("scale", "msaa", "shadows", "ssao", "bloom", "reflections", "grass", "lights",
+                    "textures", "cap", "fps", "tuned", "hand", "width", "height", "fullscreen")
 
 # A crash report's request: a megabyte of text and three of minidump at most (crash_upload.cpp),
 # in base64, with room for the fields around them.
@@ -311,6 +320,13 @@ CREATE TABLE IF NOT EXISTS devices (
     ip         TEXT NOT NULL,
     seen       INTEGER NOT NULL,
     PRIMARY KEY (account_id, fp)
+);
+-- What each account's game last said it draws with (POST /api/graphics): the rows the run has,
+-- measured or set by hand, and not the launcher's first guess (devices.report's `graphics`).
+CREATE TABLE IF NOT EXISTS drawn (
+    account_id INTEGER PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
+    report     TEXT NOT NULL,      -- JSON, inside GRAPHICS_TEXTS and GRAPHICS_NUMBERS
+    at         INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS comments (
     id         INTEGER PRIMARY KEY,
@@ -662,6 +678,10 @@ class Store:
     def device(self, account: int, report: dict, ip: str):
         self.db().execute("INSERT OR REPLACE INTO devices VALUES (?, ?, ?, ?, ?)",
                           (account, report["fp"], json.dumps(report, separators=(",", ":")), ip, report["at"]))
+
+    def drew(self, account: int, report: dict):
+        self.db().execute("INSERT OR REPLACE INTO drawn VALUES (?, ?, ?)",
+                          (account, json.dumps(report, separators=(",", ":")), int(time.time())))
 
     def account(self, account: int, token: str) -> dict:
         db = self.db()
@@ -1176,6 +1196,10 @@ class Store:
                 row = json.loads(report)
                 machines[str(account)] = {key: row.get(key) for key in
                                           ("gpu", "vendor", "driver", "date", "cpu", "ram", "os", "graphics", "renderer")}
+            # And what its game last said it draws with, beside the launcher's guess.
+            for account, report, at in self.db().execute(
+                    f"SELECT account_id, report, at FROM drawn WHERE account_id IN ({marks})", ids):
+                machines.setdefault(str(account), {})["drawn"] = json.loads(report) | {"at": at}
         return {"at": told["at"], "fresh": bool(regions) and not stale, "stale": stale, "players": players,
                 # Every region of REGIONS, told or not, with its people and bots apart (the page's realm row).
                 "regions": [{"name": region, "city": city, "at": regions.get(region, {}).get("at", 0),
@@ -1337,6 +1361,8 @@ MACHINE_LIMIT = Limit(60, 3600)
 CRASH_LIMIT = Limit(24, 3600)
 # Bug reports: a player who finds ten in an hour has said what there is to say.
 BUG_LIMIT = Limit(10, 3600)
+# The game's graphics: a change and its settling, and once each ten minutes (graphics_report.h).
+GRAPHICS_LIMIT = Limit(60, 3600)
 # A ticket a Play: sixty an hour is a player who starts the game every minute.
 TICKET_LIMIT = Limit(60, 3600)
 # Comments, per account: a conversation, not a flood.
@@ -1642,6 +1668,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.crash()
         if path == "/api/bug":
             return self.bug()
+        if path == "/api/graphics":
+            return self.graphics()
         if path == "/api/bugs/state":
             return self.bug_state()
         if path == "/api/ticket":
@@ -1799,6 +1827,30 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(429, {"error": "later"})
         print(f"{self.client()} crash {kept}: {row['program']} {row['kind']} {row.get('platform', '?')} "
               f"{row.get('gpu') or row.get('renderer', '')} | {row['what']} {row['where']}", flush=True)
+        self.reply(200, {"ok": True})
+
+    def graphics(self):
+        """What the game draws with, said by the game under its launcher's ticket."""
+        said = self.body()
+        if not isinstance(said, dict):
+            return self.reply(400, {"error": "bad request"})
+        if not GRAPHICS_LIMIT.allow(self.client()):
+            return self.reply(429, {"error": "later"})
+        account = self.store.ticket_account(self.bearer())
+        if not account:
+            return self.reply(401, {"error": "no ticket"})
+        report = {}
+        for key, room in GRAPHICS_TEXTS.items():
+            value = said.get(key)
+            if isinstance(value, str) and value.strip():
+                report[key] = value.strip()[:room]
+        for key in GRAPHICS_NUMBERS:
+            value = said.get(key)
+            if isinstance(value, (int, float)) and not isinstance(value, bool) and abs(value) < 100000:
+                report[key] = int(round(value))
+        if not report.get("preset"):
+            return self.reply(400, {"error": "no preset"})
+        self.store.drew(account, report)
         self.reply(200, {"ok": True})
 
     def bug(self):
