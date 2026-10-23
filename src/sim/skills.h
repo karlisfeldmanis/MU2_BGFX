@@ -123,6 +123,9 @@ constexpr int32_t kSummonAlquamos = 37;
 // zzzitem.cpp:977-995, ObjUseSkill.cpp:3589-3593); the number is the drawing's.
 constexpr int32_t kForce = 60;
 constexpr int32_t kForceWave = 66;
+// `AT_SKILL_FIREBURST`, Fire Burst: the aimed body, then everything round it half a second on
+// (WebZen ObjUseSkill.cpp:3675-3777; docs/plans/dark-lord-spells/fire-burst.md).
+constexpr int32_t kFireBurst = 61;
 // `AT_SKILL_PENETRATION`, off the Orb of Penetration (group 12 number 17): 0.95d's and not
 // 0.75's (Version095d is where OpenMU first has it; VersionSeasonSix/SkillsInitializer.cs:171
 // carries the row). An arrow that flies on through everything in its line.
@@ -509,9 +512,9 @@ struct SkillRow {
 // Impale; past sixty-four it needs widening
 // again, which the static_assert below says. Also the width of a body's cooldown array -- and
 // the learned mask is by INDEX, so a new row goes on the END of the table or an old save
-// gives a knight somebody else's skill. The Dark Lord's Force past the Alquamos (41; a kept
-// layout before 15 carries 40 cools, net/wire.cpp).
-constexpr int kSkills = 41;
+// gives a knight somebody else's skill. The Dark Lord's Force past the Alquamos (41) and his Fire
+// Burst (42); a kept layout before 15 carries 40 cools, net/wire.cpp.
+constexpr int kSkills = 42;
 
 // What each of Nova's stages adds to its blow: OpenMU's NovaDamageTable (NovaSkillStartPlugin.cs:30),
 // stage 0 to 12, with the strength's half beside it (SkillsInitializer.cs:610-611).
@@ -550,6 +553,12 @@ constexpr float kFirstRockOff = 1.0f;
 // root of its weight, 1.3 to 2.8 tiles, so a boulder does not cover the whole shower.
 constexpr float kLightestRock = 0.4f, kHeaviestRock = 2.0f;
 constexpr int32_t kShowerSpreadTicks = 12;
+// Fire Burst's round its body (Realm::fireBurst): whole tiles under three, as WebZen's
+// `gObjCalDistance(...) < 3`; and its blow `500 + (rand()*17)%300` ms on (ObjUseSkill.cpp:3757),
+// ten to fifteen of our ticks. Anything within three of a body at six is in his sight, so MU's
+// viewport asks nothing more.
+constexpr int kBurstTiles = 3;
+constexpr int32_t kBurstFirstTick = 10, kBurstLastTick = 15;
 
 // Half the Arc's spread, in radians: 67.5 degrees either side of where he is facing, which is
 // exactly the three compass eighths of "ahead and the two diagonals beside it". Written as an

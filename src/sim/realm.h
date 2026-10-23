@@ -1811,6 +1811,9 @@ private:
     void looseArrow(Body& hero, uint32_t at, float force);
     // Meteorite: a rock let go at every body within its splash of the one it was called on.
     void rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
+    // Fire Burst: the aimed body, said and flown to as any throw; and every monster within
+    // `kBurstTiles` whole tiles of it, unsaid, struck `burstDice_`'s 10-15 ticks on.
+    void fireBurst(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
     // A shower (SkillRow::showers): `kShowerRocks` rocks at random within the splash of `spot`
     // (tiles), or of the body `aimedAt` when there is none, each said as a `Loosed` with no body
     // and its ground in `x`/`y`; every monster within `kRockBlast` of one, in its sight, takes
@@ -2299,6 +2302,9 @@ private:
     // Their bodies' indices, raised last; their breeds, tiles, rises and spoils off their own dice.
     std::vector<int32_t> eliteSlots_;
     Random eliteDice_{0};
+    // When each body round a Fire Burst burns (Realm::fireBurst), so a Dark Lord's casts move no
+    // other roll.
+    Random burstDice_{0};
     void raiseElites();
     // Drawn again and stood up: a breed of the map's nests, a tile in one, its numbers raised.
     void riseElite(Body& elite);

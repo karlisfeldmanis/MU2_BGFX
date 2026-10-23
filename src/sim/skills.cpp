@@ -914,6 +914,22 @@ constexpr SkillRow kRows[kSkills] = {
      .tells = "A blow of force struck at one body up to four tiles off. His energy multiplies it.",
      .clip = 80, .sound = "player_skill_sword1", .built = true, .families = arms::kNone,
      .kin = Kin::DarkLord, .damage = 10, .flies = 1000.0f, .anyHand = true, .release = 3.0f / 7.0f},
+    // Fire Burst 61 (docs/plans/dark-lord-spells/fire-burst.md): MU's row, WebZen skill(Kor).txt:50
+    // -- level 74, a hundred damage (rolled to 150, MagicInf.cpp:237-238), 25 mana, six tiles --
+    // and the energy 79 its raw 20 asks (MagicDamage.cpp:664-671). Let go on STRIKE's key 3 of 7 as
+    // Force (ZzzCharacter.cpp:2876-2883). Everything within three whole tiles of the aimed body
+    // takes its own blow half a second to 0.8 s on (Realm::fireBurst).
+    // **Ours**: a cooldown skill (the plan, section 3), five seconds before agility's haste; and
+    // the aimed body is struck when the fire reaches it, not as the cast leaves -- MU's server
+    // strikes before he swings (SkillCast.cpp:405, ObjUseSkill.cpp:3690) and its middle head
+    // reaches three tiles in 0.28 s and six in 0.48 s, which `flies` 10 (less the tile a bolt stops
+    // short) lands within a tick of.
+    {.number = skill::kFireBurst, .name = "Fire Burst", .mana = 25, .reach = 6.0f, .force = 2.0f,
+     .coolTicks = 100, .spread = Spread::One,
+     .tells = "Three fires flung at one body up to six tiles off; everything within three tiles of "
+              "it burns half a second later. His energy multiplies it.",
+     .clip = 80, .sound = "fire_burst", .built = true, .families = arms::kNone, .needLevel = 74,
+     .kin = Kin::DarkLord, .damage = 100, .flies = 10.0f, .anyHand = true, .release = 3.0f / 7.0f},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

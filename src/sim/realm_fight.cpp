@@ -1328,6 +1328,11 @@ void Realm::release(Body& hero, uint32_t at, float force, int32_t skill, const f
         shower(hero, *row, at, force, spot);
         return;
     }
+    // Fire Burst: the aimed body, and everything round it after.
+    if (row && row->number == skill::kFireBurst) {
+        fireBurst(hero, *row, at, force);
+        return;
+    }
     // Ice and Poison: their own on everything round what he threw them at.
     if (row && row->splash > 0.0f) {
         rain(hero, *row, at, force);
@@ -1385,11 +1390,12 @@ void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force, boo
     const float dx = target ? target->x - hero.x : 0.0f;
     const float dy = target ? target->y - hero.y : 0.0f;
     const float gap = std::max(0.0f, std::sqrt(dx * dx + dy * dy) - kBoltStopsShort);
-    // A rock out of the sky takes its fall, however far off the body stands.
+    // A rock out of the sky takes its fall, however far off the body stands; a blow held back
+    // (Fire Burst's round its body) takes its wait, however far.
     const int32_t air =
-        row.fallTicks > 0
-            ? row.fallTicks + std::max<int32_t>(0, delay)
-            : int32_t(std::lround(gap / std::max(1.0f, row.flies) * kTicksPerSecond));
+        row.fallTicks > 0 ? row.fallTicks + std::max<int32_t>(0, delay)
+        : delay > 0       ? delay
+                          : int32_t(std::lround(gap / std::max(1.0f, row.flies) * kTicksPerSecond));
     if (announce) say(What::Loosed, hero, row.number, air, 0, at);
     if (air > 0) {
         for (Flight& one : flights_) {
@@ -1951,6 +1957,27 @@ void Realm::rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force)
     for (int i = 0; i < found; ++i) {
         const bool aimedOne = victims[i] == aimedAt;
         loose(hero, row, victims[i], force, true, aimedOne, 0);
+    }
+}
+
+void Realm::fireBurst(Body& hero, const SkillRow& row, uint32_t aimedAt, float force) {
+    // The aimed body as any throw: said, so the fire is drawn, and struck when it gets there.
+    const Body* aimed = body(aimedAt);
+    if (aimed == nullptr) return;
+    const int cx = aimed->column(), cy = aimed->row();
+    loose(hero, row, aimedAt, force);
+    // Then every monster in his sight with `gObjCalDistance(target, it) < 3`, whole tiles
+    // truncated (WebZen ObjUseSkill.cpp:3755, user.cpp:7042-7053), each its own blow 500-799 ms on
+    // (:3757-3762) -- every one of them: the `rand()%3` thinning at :3741 waits on a `loopcount`
+    // that never moves. No wall stops it and nothing is drawn on them (WSclient.cpp:3237-3410);
+    // the aimed one alone pays back.
+    for (const Body& one : bodies_) {
+        if (!one.monster() || !one.alive() || one.id == aimedAt) continue;
+        if (tables_->grid.safe(one.column(), one.row())) continue;
+        const int dx = one.column() - cx, dy = one.row() - cy;
+        if (dx * dx + dy * dy >= kBurstTiles * kBurstTiles) continue;
+        loose(hero, row, one.id, force, false, false,
+              burstDice_.nextInt(kBurstFirstTick, kBurstLastTick + 1));
     }
 }
 

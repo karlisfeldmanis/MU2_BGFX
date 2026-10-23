@@ -58,15 +58,17 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
     check(net::keptFrom(bytes, back), "his bytes read back");
     checkEqual(back.hero.points.command, 30, "his Command read back");
     checkEqual(int(back.hero.kin), int(sim::Kin::DarkLord), "and his class");
-    // Layout 15 also carries Force's cool, the 41st: found by the first byte a mark on it moves.
+    // Layout 15 also carries his skills' cools from the 41st, Force's: found by the first byte a
+    // mark on it moves, eight bytes each.
     sim::Kept forced = kept;
-    forced.hero.coolsLeft[sim::kSkills - 1] = 0x7F;
+    forced.hero.coolsLeft[40] = 0x7F;
     std::vector<uint8_t> forcedBytes;
     net::putKept(forcedBytes, forced);
     size_t cool = 0;
     while (cool < bytes.size() && bytes[cool] == forcedBytes[cool]) ++cool;
     std::vector<uint8_t> older(bytes.begin(), bytes.end() - 4);
-    older.erase(older.begin() + std::ptrdiff_t(cool), older.begin() + std::ptrdiff_t(cool + 8));
+    older.erase(older.begin() + std::ptrdiff_t(cool),
+                older.begin() + std::ptrdiff_t(cool + 8 * size_t(sim::kSkills - 40)));
     sim::Kept old;
     check(net::keptFrom(older, old, 14), "a layout-14 record reads");
     checkEqual(old.hero.points.command, 0, "with no Command in it");
@@ -139,5 +141,74 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
         }
         std::printf("  force: %d loosed, %d hits, %d damage\n", loosed, hits, damage);
         check(loosed > 0 && hits > 0 && damage > 0, "Force is thrown and lands");
+    }
+
+    // **Fire Burst** (61, docs/plans/dark-lord-spells/fire-burst.md): MU's row, a cooldown; the
+    // aimed body struck when the fire gets there, and everything within three whole tiles of it
+    // 10-15 ticks on, unsaid.
+    {
+        const sim::SkillRow* burst = sim::skillNumbered(sim::skill::kFireBurst);
+        check(burst != nullptr && !burst->primary() && burst->kin == sim::Kin::DarkLord && burst->mana == 25 &&
+                  burst->reach == 6.0f && burst->damage == 100 && burst->needLevel == 74 && burst->coolTicks == 100 &&
+                  burst->clip == 80 && burst->suits(sim::arms::kNone),
+              "Fire Burst: level 74, 25 mana, six tiles, a hundred damage, five seconds' cooldown");
+        sim::Realm lordRealm;
+        check(lordRealm.raise(&lorencia, 9, 160, 60, sim::Kin::DarkLord, 80), "a level-80 Dark Lord raises in the north field");
+        check(!lordRealm.knows(sim::skill::kFireBurst), "he is not born knowing Fire Burst");
+        check(lordRealm.learn(sim::skill::kFireBurst), "he learns it");
+        lordRealm.unseen(true);
+        lordRealm.benchUndying(true);
+        // Four monsters stood off him: the aimed one four tiles east, one (2,2) and one (0,2) off it
+        // (whole tiles under three), and one (3,0) off it, which is three and out.
+        const sim::Body& me = lordRealm.hero();
+        const int hx = me.column(), hy = me.row();
+        const int offsets[4][2] = {{4, 0}, {6, 2}, {4, 2}, {7, 0}};
+        uint32_t ids[4] = {};
+        int found = 0;
+        for (const sim::Body& one : lordRealm.bodies()) {
+            if (found == 4) break;
+            if (!one.monster() || !one.alive()) continue;
+            auto& moved = const_cast<sim::Body&>(one);
+            moved.x = float(hx + offsets[found][0]);
+            moved.y = float(hy + offsets[found][1]);
+            ids[found++] = one.id;
+        }
+        check(found == 4, "four monsters to burn");
+        lordRealm.invoke(sim::skill::kFireBurst, ids[0]);
+        int64_t letGo = -1;
+        int64_t struck[4] = {-1, -1, -1, -1};
+        int loosed = 0;
+        int64_t cooledAt = 0;
+        for (int tick = 0; tick < 120; ++tick) {
+            // Held where they were stood until the let-go: a monster that does not see him still
+            // wanders, and the rule is measured at the let-go.
+            for (int i = 0; i < 4 && letGo < 0; ++i) {
+                auto* held = const_cast<sim::Body*>(lordRealm.find(ids[i]));
+                held->x = float(hx + offsets[i][0]);
+                held->y = float(hy + offsets[i][1]);
+            }
+            lordRealm.step();
+            for (const sim::Happening& one : lordRealm.happenings()) {
+                if (one.who != lordRealm.hero().id) continue;
+                if (one.what == sim::What::Loosed && one.a == sim::skill::kFireBurst) {
+                    ++loosed, letGo = tick;
+                    cooledAt = lordRealm.cooling(sim::skill::kFireBurst);
+                }
+                if (one.what != sim::What::Hit && one.what != sim::What::Missed) continue;
+                for (int i = 0; i < 4; ++i) {
+                    if (one.whom == ids[i] && struck[i] < 0) struck[i] = tick;
+                }
+            }
+        }
+        std::printf("  fire burst: let go %lld, struck %lld %lld %lld %lld\n", (long long)letGo,
+                    (long long)struck[0], (long long)struck[1], (long long)struck[2], (long long)struck[3]);
+        checkEqual(loosed, 1, "one fire is said, at the aimed body");
+        check(letGo >= 0 && struck[0] > letGo && struck[0] - letGo <= 7,
+              "the aimed body burns when the fire reaches it, four tiles in a third of a second");
+        check(struck[1] - letGo >= 10 && struck[1] - letGo <= 15 && struck[2] - letGo >= 10 &&
+                  struck[2] - letGo <= 15,
+              "the two within three tiles of it burn 10-15 ticks after the let-go");
+        check(struck[3] < 0, "the one three tiles off it does not");
+        check(cooledAt > 0, "and it is cooling as it is let go");
     }
 }

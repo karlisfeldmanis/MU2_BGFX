@@ -5628,16 +5628,19 @@ void testTalentCommands(const content::Tables& tables) {
         while (at < bytes.size() && bytes[at] == markedBytes[at]) ++at;
         constexpr size_t kQuestBytes = 1 + 4 * sim::kQuestSteps + 8 + 4;
         // A layout-14 row has no Command (the Dark Lord's, layout 15): its last four bytes; nor
-        // Force's cool, the 41st (found as the captain's quest is, by the first byte it moves).
+        // the Dark Lord's cools from the 41st, Force's (found as the captain's quest is, by the
+        // first byte it moves), eight bytes each.
         sim::Kept forced = kept;
-        forced.hero.coolsLeft[sim::kSkills - 1] = 0x7F;
+        forced.hero.coolsLeft[40] = 0x7F;
+        const size_t lordCools = 8 * size_t(sim::kSkills - 40);
         std::vector<uint8_t> forcedBytes;
         net::putKept(forcedBytes, forced);
         size_t cool = 0;
         while (cool < bytes.size() && bytes[cool] == forcedBytes[cool]) ++cool;
         std::vector<uint8_t> fourteen(bytes.begin(), bytes.end() - 4);
-        fourteen.erase(fourteen.begin() + std::ptrdiff_t(cool), fourteen.begin() + std::ptrdiff_t(cool + 8));
-        if (at > cool) at -= 8;
+        fourteen.erase(fourteen.begin() + std::ptrdiff_t(cool),
+                       fourteen.begin() + std::ptrdiff_t(cool + lordCools));
+        if (at > cool) at -= lordCools;
         sim::Kept uncommanded;
         check(net::keptFrom(fourteen, uncommanded, 14) && uncommanded.hero.points.command == 0 &&
                   uncommanded.hero.talents == saved.talents,
