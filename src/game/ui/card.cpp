@@ -109,7 +109,7 @@ constexpr Box kYesBox{kWellX + kWellW - kAskPad - 36.0f, kAskBox.y + (kAskBox.h 
 constexpr Box kNoBox{kYesBox.x - 3.0f - 28.0f, kYesBox.y, 28.0f, kAskButtonTall};
 // The plus a little wider when it says "+10" or "All".
 constexpr float kWidePlus = 22.0f;
-// Sheet::over and pushed past the four pluses.
+// Sheet::over and pushed past the pluses (five at most).
 constexpr int kStepIds = 10, kResetId = 20, kNoId = 21, kYesId = 22;
 
 // The switch's parts as shown: 1 | 10 | All, or 1 | All under ten points in hand (the user,
@@ -125,22 +125,23 @@ int stepParts(int points, int* steps) {
 int stepNow(int step, int points) { return step == 10 && points < 10 ? 0 : step; }
 int gainOf(int step, int points) { return step == 0 ? points : std::min(step, points); }
 
-// Where each attribute's well stands: one after another, each pushed down by the lines the one
+// Where each attribute's well stands (four, or the Dark Lord's five): one after another, each pushed down by the lines the one
 // before it carries, from the page's top (`drop` under the switch's row). Returns the step
 // between lines, which closes up (and the gaps with it) for a class whose lines would run into
 // the floor.
-float attrTops(const size_t counts[4], float tops[4], float drop) {
+float attrTops(int wells, const size_t counts[5], float tops[5], float drop) {
     size_t lines = 0;
-    for (int i = 0; i < 4; ++i) lines += counts[i];
+    for (int i = 0; i < wells; ++i) lines += counts[i];
     const float top = kBodyTop + drop;
     float step = kLineStep, gap = kAttrGap;
-    const float fixed = 4.0f * (kAttrTall + kLineTop);
-    if (lines > 0 && top + fixed + 3.0f * gap + step * float(lines) > kAttrBottom) {
+    const float fixed = float(wells) * (kAttrTall + kLineTop);
+    const float gaps = float(wells - 1);
+    if (lines > 0 && top + fixed + gaps * gap + step * float(lines) > kAttrBottom) {
         gap = 5.0f;
-        step = std::min(kLineStep, (kAttrBottom - top - fixed - 3.0f * gap) / float(lines));
+        step = std::min(kLineStep, (kAttrBottom - top - fixed - gaps * gap) / float(lines));
     }
     float y = top;
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < wells; ++i) {
         tops[i] = y;
         y += kAttrTall + kLineTop + step * float(counts[i]) + gap;
     }
@@ -176,13 +177,14 @@ std::string tenths(double v) {
     return out;
 }
 
-tip::Sheet statSheet(int stat, sim::Kin kin, const int totals[4]) {
+tip::Sheet statSheet(int stat, sim::Kin kin, const int totals[5]) {
     using sim::Kin;
     const bool knight = kin == Kin::DarkKnight, wizard = kin == Kin::DarkWizard;
     const bool elf = kin == Kin::FairyElf, gladiator = kin == Kin::MagicGladiator;
+    const bool lord = kin == Kin::DarkLord;
     const sim::ClassRow& row = sim::rowOf(kin);
     constexpr double kTen = 10.0;
-    static const char* const kNames[4] = {"Strength", "Agility", "Vitality", "Energy"};
+    static const char* const kNames[5] = {"Strength", "Agility", "Vitality", "Energy", "Command"};
 
     tip::Sheet sheet;
     sheet.name = kNames[stat];
@@ -244,11 +246,18 @@ tip::Sheet statSheet(int stat, sim::Kin kin, const int totals[4]) {
         row2("Life", tenths(kTen * row.healthPerVitality));
         row2("Shield", tenths(shield));
         if (elf) row2("Summon life", "+" + std::to_string(int(std::lround(kTen * sim::kSummonHealthPerVitality * 100.0))) + "%");
+    } else if (stat == 4) {
+        // The Dark Lord's Command: a tenth of it is attack rate, and it joins the shield's sum.
+        // The raven, Critical Damage, Electric Spike and Earthshake read it once he has them.
+        ten.command = 10;
+        row2("Attack rate", tenths(kTen * row.ratePerCommand));
+        row2("Shield", tenths(sim::maximumShield(0, ten, 0) - sim::maximumShield(0, {}, 0)));
+        note("The Dark Lord's alone.");
     } else {
         ten.energy = 10;
         const int mana = sim::maximumMana(kin, 0, ten) - sim::maximumMana(kin, 0, {});
         if (wizard || gladiator) row2("Wizardry", band(kTen / 9.0, kTen / 4.0));
-        if (gladiator) row2("Damage", band(kTen * row.minimumDamagePerEnergy, kTen * row.maximumDamagePerEnergy));
+        if (gladiator || lord) row2("Damage", band(kTen * row.minimumDamagePerEnergy, kTen * row.maximumDamagePerEnergy));
         if (knight || gladiator) row2("Skill damage", "+" + std::to_string(sim::skillPercent(ten) - sim::skillPercent({})) + "%");
         if (elf) {
             ten.energy = 70;  // the two blessings step at every seventh and fifth point
@@ -295,6 +304,7 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         const sim::Kin kin = hero->kin;
         const bool knight = kin == sim::Kin::DarkKnight, wizard = kin == sim::Kin::DarkWizard;
         const bool elf = kin == sim::Kin::FairyElf, gladiator = kin == sim::Kin::MagicGladiator;
+        const bool lord = kin == sim::Kin::DarkLord;
         const sim::HeroPoints total = hero->totalPoints();
         const sim::Fighter& f = hero->stats;
         const auto& ex = hero->excel;
@@ -329,6 +339,11 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         if (knight) now_.lines[3] = {skill, mana};
         if (gladiator) now_.lines[3] = {wizardry, skill, mana};
         if (elf) now_.lines[3] = {might, ward, heal, mana};
+        // The Dark Lord's energy adds to his damage (Str/7 + Ene/14 to Str/5 + Ene/10); his skill
+        // percent comes with his skills (phase 4). Under Command, what it buys today.
+        if (lord) now_.lines[3] = {damage, mana};
+        if (lord) now_.lines[4] = {attackRate, shield};
+        now_.wells = lord ? 5 : 4;
 
         // The three his class lives by, at the top whatever page is open. Life and mana show
         // their whole, the pool's top.
@@ -338,6 +353,7 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         if (wizard) { now_.keys[0] = wizardry; now_.keys[1] = manaTop; now_.keys[2] = lifeTop; }
         if (elf) { now_.keys[0] = damage; now_.keys[1] = might; now_.keys[2] = defenseRate; }
         if (gladiator) { now_.keys[0] = damage; now_.keys[1] = wizardry; now_.keys[2] = lifeTop; }
+        if (lord) { now_.keys[0] = damage; now_.keys[1] = {"Command", number(total.command)}; now_.keys[2] = lifeTop; }
 
         if (tab_ == 1) {
             // Combat: what he deals, what he turns aside, what he lasts by. A chance the gear
@@ -377,6 +393,9 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                                     rune("Agility", share.agility, total.agility - hero->points.agility),
                                     rune("Vitality", share.vitality, total.vitality - hero->points.vitality),
                                     rune("Energy", share.energy, total.energy - hero->points.energy)}});
+            if (lord)
+                now_.groups.back().lines.push_back(
+                    rune("Command", share.command, total.command - hero->points.command));
             now_.groups.push_back({"Resistances",
                                    {row("Ice", ex.iceResistance, false),
                                     row("Poison", ex.poisonResistance, false),
@@ -413,22 +432,25 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         now_.stats[1] = hero->points.agility;
         now_.stats[2] = hero->points.vitality;
         now_.stats[3] = hero->points.energy;
+        now_.stats[4] = hero->points.command;
 
         // The pointer, against this frame's layout.
         const Box cross = panel::scaled(x_, y_, panel::frameClose());
         overClose_ = cross.has(pointer.x, pointer.y);
-        const size_t counts[4] = {now_.lines[0].size(), now_.lines[1].size(), now_.lines[2].size(),
-                                  now_.lines[3].size()};
+        const int wells = now_.wells;
+        const size_t counts[5] = {now_.lines[0].size(), now_.lines[1].size(), now_.lines[2].size(),
+                                  now_.lines[3].size(), now_.lines[4].size()};
         const int points = hero->pointsInHand;
         const float drop = dropFor(points);
-        float tops[4];
-        attrTops(counts, tops, drop);
+        float tops[5];
+        attrTops(wells, counts, tops, drop);
         const bool spending = tab_ == 0 && points > 0;
         const int step = stepNow(step_, points);
         // What a reset would take back, and whether the bag has room for what it takes off.
         const sim::HeroPoints start = sim::startingPoints(kin);
         now_.returnable = (hero->points.strength - start.strength) + (hero->points.agility - start.agility) +
-                          (hero->points.vitality - start.vitality) + (hero->points.energy - start.energy);
+                          (hero->points.vitality - start.vitality) + (hero->points.energy - start.energy) +
+                          (hero->points.command - start.command);
         now_.strips = realm && now_.returnable > 0 ? realm->resetStrips() : 0;
         if (now_.returnable <= 0) asking_ = false;
         int steps[3];
@@ -450,7 +472,7 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                 }
             }
             if (spending) {
-                for (int i = 0; i < 4; ++i)
+                for (int i = 0; i < wells; ++i)
                     if (under(plusFor(tops[i], step))) return i;
             }
             return -1;
@@ -463,14 +485,15 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         over_ = controlUnder();
         const int overTab = tabUnder();
         // A stat's well, off its plus: its card.
-        if (tab_ == 0 && (over_ < 0 || over_ >= 4)) {
-            for (int i = 0; i < 4; ++i)
+        if (tab_ == 0 && (over_ < 0 || over_ >= wells)) {
+            for (int i = 0; i < wells; ++i)
                 if (under({kWellX, tops[i], kWellW, kAttrTall})) now_.overStat = i;
         }
         now_.totals[0] = total.strength;
         now_.totals[1] = total.agility;
         now_.totals[2] = total.vitality;
         now_.totals[3] = total.energy;
+        now_.totals[4] = total.command;
         if (pointer.pressed) {
             if (overClose_) closing_ = true;
             pushed_ = over_;
@@ -480,7 +503,7 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
             // Only if the pointer is still on it, which is how a press is taken back.
             if (closing_ && overClose_ && close) *close = true;
             if (pushed_ >= 0 && pushed_ == over_) {
-                if (pushed_ < 4) {
+                if (pushed_ < wells) {
                     if (spend) *spend = pushed_;
                     if (count) *count = gainOf(step, points);
                 } else if (pushed_ >= kStepIds && pushed_ < kStepIds + parts) {
@@ -507,7 +530,7 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         // Under a plus: what the press would make of each line under that stat, the gain before
         // it and the value in gold (the canvas's hover). The realm reckons both sides the same
         // way, so the difference lands on what the line prints whatever gear adds on top.
-        if (spending && realm && over_ >= 0 && over_ < 4) {
+        if (spending && realm && over_ >= 0 && over_ < wells) {
             const sim::Realm::SpendPreview p = realm->previewSpend(over_, gainOf(now_.step, points));
             const sim::Fighter& a = p.before;
             const sim::Fighter& b = p.after;
@@ -740,13 +763,13 @@ void Card::rebuild() {
 
     // ---- the page -------------------------------------------------------------------------------
     if (now_.tab == 0) {
-        const char* names[4] = {"Strength", "Agility", "Vitality", "Energy"};
-        const size_t counts[4] = {now_.lines[0].size(), now_.lines[1].size(), now_.lines[2].size(),
-                                  now_.lines[3].size()};
-        float tops[4];
-        const float lineStep = attrTops(counts, tops, drop);
+        const char* names[5] = {"Strength", "Agility", "Vitality", "Energy", "Command"};
+        const size_t counts[5] = {now_.lines[0].size(), now_.lines[1].size(), now_.lines[2].size(),
+                                  now_.lines[3].size(), now_.lines[4].size()};
+        float tops[5];
+        const float lineStep = attrTops(now_.wells, counts, tops, drop);
         const int gain = gainOf(now_.step, now_.points);
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < now_.wells; ++i) {
             const Box well{kWellX, tops[i], kWellW, kAttrTall};
             // Under the pointer the plus says what it would make of the stat: its well's rim lit,
             // the figure in gold with the gain before it, and the same on each line under it.
@@ -877,10 +900,10 @@ void Card::rebuild() {
     panel::close(canvas_, x, y, now_.overClose, now_.closing);
 
     if (now_.tab == 0 && now_.overStat >= 0) {
-        const size_t counts[4] = {now_.lines[0].size(), now_.lines[1].size(), now_.lines[2].size(),
-                                  now_.lines[3].size()};
-        float tops[4];
-        attrTops(counts, tops, drop);
+        const size_t counts[5] = {now_.lines[0].size(), now_.lines[1].size(), now_.lines[2].size(),
+                                  now_.lines[3].size(), now_.lines[4].size()};
+        float tops[5];
+        attrTops(now_.wells, counts, tops, drop);
         const tip::Sheet sheet = statSheet(now_.overStat, now_.who->kin, now_.totals);
         tip::draw(tip_, sheet, panel::scaled(x, y, {kWellX, tops[now_.overStat], kWellW, kAttrTall}),
                   now_.width, now_.height);

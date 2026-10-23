@@ -69,18 +69,20 @@ private:
         int level = 0, points = 0, resets = 0;
         unsigned long long experience = 0;
         std::string name, guild;
-        int stats[4] = {};
+        // The wells shown: MU's four, five for the Dark Lord, whose Command is the fifth.
+        int wells = 4;
+        int stats[5] = {};
         Line keys[3];
-        std::vector<Line> lines[4];  // what each attribute buys, under its well
+        std::vector<Line> lines[5];  // what each attribute buys, under its well
         std::vector<Group> groups;   // the page open, when it is not Attributes
         int tab = 0, overTab = -1, pressTab = -1;
-        // pushed and over: 0-3 a stat's plus, kStepIds + i a part of the switch, then the reset,
+        // pushed and over: 0-4 a stat's plus, kStepIds + i a part of the switch, then the reset,
         // its No and its Yes (card.cpp's ids).
         int pushed = -1, over = -1;
-        // The stat whose well the pointer is on, off its plus (0 strength to 3 energy), or -1:
+        // The stat whose well the pointer is on, off its plus (0 strength to 4 command), or -1:
         // its card is up. `totals` is what it reads, his points with the runes in.
         int overStat = -1;
-        int totals[4] = {};
+        int totals[5] = {};
         bool closing = false, overClose = false;
         int step = 1;          // 1, 10 or 0 for all, as a press now spends (10 is All under ten)
         int returnable = 0;    // the points a reset would take back

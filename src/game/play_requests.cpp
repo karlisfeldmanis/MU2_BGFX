@@ -25,7 +25,7 @@
 namespace mu::game {
 
 uint32_t Play::spendPoint(int stat, int count) {
-    if (stat < 0 || stat > 3 || count < 1) return 0;
+    if (stat < 0 || stat > 4 || count < 1) return 0;  // 4 Command, the Dark Lord's (the realm refuses it for others)
     return send({.kind = sim::Command::Kind::Spend, .a = stat, .b = count});
 }
 

@@ -322,7 +322,8 @@ void RebirthWindow::rebuild(const sim::Realm& realm) {
         at(cl, cy, style::kAshInk, "Level");
         change(cr, cy, style::kBoneHi, std::to_string(hero.level), kShort, "1");
         cy += kRow;
-        row("Strength, Agility, Vitality, Energy", kKept, "kept");
+        row(hero.kin == sim::Kin::DarkLord ? "All five stats, Command too" : "Strength, Agility, Vitality, Energy",
+            kKept, "kept");
         row("Skills and talents", kKept, "kept");
         at(cl, cy, style::kAshInk, "Talent points");
         change(cr, cy, style::kBoneHi, std::to_string(sim::talentPoints(hero.kin, hero.level, hero.rebirths)), kGold,
