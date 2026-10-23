@@ -23,7 +23,7 @@ constexpr float kPadRight = 26.0f;
 constexpr float kRuleGap = 20.0f;    // either side of the upright rule
 constexpr float kRuleInset = 15.0f;  // the rule's ends, in from the frame's top and foot
 constexpr float kRadius = 8.0f;
-constexpr float kHairline = 1.5f;
+constexpr float kHairline = 2.0f;
 constexpr float kOverHud = 0.0f;     // the frame's foot above the HUD plate's top edge; the gems rise past it
 constexpr float kTitleSize = 20.0f;
 constexpr float kWhereSize = 14.0f;
@@ -48,6 +48,11 @@ constexpr float kCloseInset = 6.0f;   // from the frame's top and right; it stay
 // "yours" on 2026-09-30, kept here for the way back to the field.
 constexpr uint32_t kGold = gfx::rgba(0.722f, 0.600f, 0.353f);
 constexpr uint32_t kGoldHi = gfx::rgba(0.886f, 0.776f, 0.541f);
+// The stroke's gold, lit from above (the user, 2026-10-23: "gradient style gold stroke"): pale at
+// the top edge, the travel list's gold through the middle, an old dark gold at the foot.
+constexpr uint32_t kStrokeTop = gfx::rgba(0.980f, 0.894f, 0.663f);
+constexpr uint32_t kStrokeFoot = gfx::rgba(0.420f, 0.318f, 0.165f);
+constexpr uint32_t kBloodFoot = gfx::rgba(0.330f, 0.060f, 0.050f);
 
 uint32_t faded(uint32_t abgr, float a) {
     return (abgr & 0x00FFFFFFu) | (gfx::rgbaByte(a * float(abgr >> 24) / 255.0f) << 24);
@@ -88,6 +93,36 @@ void ring(gfx::Canvas& canvas, const Box& box, float r, float thick, uint32_t in
         const int j = (i + 1) % kOutline;
         const float quad[8] = {outer[i * 2], outer[i * 2 + 1], outer[j * 2], outer[j * 2 + 1],
                                inner[j * 2], inner[j * 2 + 1], inner[i * 2], inner[i * 2 + 1]};
+        canvas.polygon(quad, inks, 4);
+    }
+}
+
+// Two inks mixed byte by byte, `t` of the way from `a` to `b`.
+uint32_t mix(uint32_t a, uint32_t b, float t) {
+    uint32_t out = 0;
+    for (int shift = 0; shift < 32; shift += 8) {
+        const float x = float((a >> shift) & 0xFFu), y = float((b >> shift) & 0xFFu);
+        out |= uint32_t(std::lround(x + (y - x) * t)) << shift;
+    }
+    return out;
+}
+
+// The ring again, its ink running down the frame: `top` at the top edge, `middle` halfway, `foot`
+// at the bottom, each point of the outline taking the ink of its height.
+void ringGraded(gfx::Canvas& canvas, const Box& box, float r, float thick, uint32_t top, uint32_t middle,
+                uint32_t foot) {
+    float outer[kOutline * 2], inner[kOutline * 2];
+    outline(box, r, outer);
+    outline(box.grown(-thick), std::max(0.0f, r - thick), inner);
+    const auto at = [&](float y) {
+        const float t = std::clamp((y - box.y) / std::max(1.0f, box.h), 0.0f, 1.0f);
+        return t < 0.5f ? mix(top, middle, t * 2.0f) : mix(middle, foot, (t - 0.5f) * 2.0f);
+    };
+    for (int i = 0; i < kOutline; ++i) {
+        const int j = (i + 1) % kOutline;
+        const float quad[8] = {outer[i * 2], outer[i * 2 + 1], outer[j * 2], outer[j * 2 + 1],
+                               inner[j * 2], inner[j * 2 + 1], inner[i * 2], inner[i * 2 + 1]};
+        const uint32_t inks[4] = {at(quad[1]), at(quad[3]), at(quad[5]), at(quad[7])};
         canvas.polygon(quad, inks, 4);
     }
 }
@@ -210,7 +245,18 @@ void GoBackPlate::rebuild(const Drawn& now) {
                       std::round(b.w - 2.0f * kRadius * u), edge},
                      faded(kGoldHi, kTopEdgeAlpha * a));
     }
-    ring(canvas_, b, kRadius * u, std::max(1.0f, kHairline * u), faded(rim, a));
+    const float thick = std::max(1.0f, kHairline * u);
+    if (now.closed) {
+        ring(canvas_, b, kRadius * u, thick, faded(rim, a));
+    } else if (late) {
+        ringGraded(canvas_, b, kRadius * u, thick, faded(style::kBloodHi, a), faded(rim, a),
+                   faded(kBloodFoot, a));
+    } else {
+        // Under the pointer the whole stroke lifts toward its top's light.
+        const float lift = now.hover ? 0.45f : 0.0f;
+        ringGraded(canvas_, b, kRadius * u, thick, faded(kStrokeTop, a),
+                   faded(mix(kGold, kStrokeTop, lift), a), faded(mix(kStrokeFoot, kGold, lift), a));
+    }
 
     const float left = b.x + kPadLeft * u;
     if (now.closed) {
