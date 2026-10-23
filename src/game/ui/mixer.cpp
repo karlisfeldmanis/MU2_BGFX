@@ -823,6 +823,18 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
                        : "A lucky item adds " + std::to_string(j.luck) + "%");
             top += kLine;
         }
+        // Add Socket's chance falls with each socket the thing has (GeraColorz on Discord, a 20%
+        // third read as the 50%): the three rates side by side, the one rolled lit.
+        if (service == sim::Service::AddSocket) {
+            static const char* const kNth[sim::kMostSockets] = {"1st", "2nd", "3rd"};
+            const float wide = (kRight - kLeft) / float(sim::kMostSockets);
+            for (int i = 0; i < sim::kMostSockets; ++i) {
+                const bool lit = j.target >= 0 && j.rate == sim::kAddSocketRate[i];
+                at(kLeft + wide * float(i), top, lit ? style::kBoneHi : style::kAshInk,
+                   std::string(kNth[i]) + " socket " + std::to_string(sim::kAddSocketRate[i]) + "%");
+            }
+            top += kLine;
+        }
         const auto outcome = [&](const char* label, uint32_t ink, const std::string& s) {
             at(kLeft, top, style::kAshInk, label);
             at(kLeft + 46.0f, top, ink, s);
