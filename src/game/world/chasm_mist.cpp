@@ -133,6 +133,12 @@ void ChasmMist::throwPuff(uint16_t index) {
         puff.alpha = 0.1f;
         puff.scale = (180.0f + std::floor(unit() * 20.0f)) * 0.01f * box.scale;
     } else {
+        // Ours: only over the chasm, as the rising kind. One of Object108's boxes stands over
+        // the east arm's lit stream (230,154), and its puffs, held while the box is seen, piled
+        // into a white wash over the water (the user's river, 2026-10-23).
+        if (box.kind == Kind::Hover &&
+            overVoid(puff.at[0], puff.at[2], 0.25f * kSheetMetres * 1.9f) < 0.99f)
+            return;
         puff.at[1] += (20.0f + std::floor(unit() * 20.0f)) * kUnit;
         puff.scale = (180.0f + std::floor(unit() * 20.0f)) * 0.01f;
         puff.turning = box.scale + std::floor(unit() * 30.0f) / 100.0f;
