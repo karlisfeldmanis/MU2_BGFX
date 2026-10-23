@@ -464,5 +464,7 @@
  "Delete the folder <span translate=\"no\">~/.local/share/MU2</span>, the command <span translate=\"no\">~/.local/bin/mu2-launcher</span> and the menu entry <span translate=\"no\">~/.local/share/applications/mu-classic.desktop</span>.": "Xóa thư mục <span translate=\"no\">~/.local/share/MU2</span>, lệnh <span translate=\"no\">~/.local/bin/mu2-launcher</span> và mục menu <span translate=\"no\">~/.local/share/applications/mu-classic.desktop</span>.",
  "Also on <a href=\"/mac\" style=\"text-decoration: underline\">Mac</a> and Windows. <a href=\"/\" style=\"text-decoration: underline\">See what's new in MU Classic</a>.": "Cũng có trên <a href=\"/mac\" style=\"text-decoration: underline\">Mac</a> và Windows. <a href=\"/\" style=\"text-decoration: underline\">Xem MU Classic có gì mới</a>.",
  "© 2026 MU Classic · MU Online is a trademark of WebZen Inc. · Unofficial and non-commercial": "© 2026 MU Classic · MU Online là thương hiệu của WebZen Inc. · Không chính thức và phi thương mại",
- "Site": "Trang"
+ "Site": "Trang",
+ "4 GB free": "Trống 4 GB",
+ "8 GB of memory and 4 GB free": "8 GB RAM và 4 GB trống"
 }

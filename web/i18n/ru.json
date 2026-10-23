@@ -464,5 +464,7 @@
  "Delete the folder <span translate=\"no\">~/.local/share/MU2</span>, the command <span translate=\"no\">~/.local/bin/mu2-launcher</span> and the menu entry <span translate=\"no\">~/.local/share/applications/mu-classic.desktop</span>.": "Удалите папку <span translate=\"no\">~/.local/share/MU2</span>, команду <span translate=\"no\">~/.local/bin/mu2-launcher</span> и пункт меню <span translate=\"no\">~/.local/share/applications/mu-classic.desktop</span>.",
  "Also on <a href=\"/mac\" style=\"text-decoration: underline\">Mac</a> and Windows. <a href=\"/\" style=\"text-decoration: underline\">See what's new in MU Classic</a>.": "Также на <a href=\"/mac\" style=\"text-decoration: underline\">Mac</a> и Windows. <a href=\"/\" style=\"text-decoration: underline\">Что нового в MU Classic</a>.",
  "© 2026 MU Classic · MU Online is a trademark of WebZen Inc. · Unofficial and non-commercial": "© 2026 MU Classic · MU Online — товарный знак WebZen Inc. · Неофициальный и некоммерческий проект",
- "Site": "Сайт"
+ "Site": "Сайт",
+ "4 GB free": "4 ГБ свободно",
+ "8 GB of memory and 4 GB free": "8 ГБ памяти и 4 ГБ свободного места"
 }
