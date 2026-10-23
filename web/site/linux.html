@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MU Online on Linux — MU Classic, a native Vulkan build</title>
+<meta name="description" content="Play classic MU Online on Linux. MU Classic is a free remaster with a native Linux build on Vulkan for Ubuntu, Debian, Fedora, Mint and Arch: no Wine, no Proton.">
+<link rel="canonical" href="https://mu-classic.com/linux">
+<!--alternates-->
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#0D0B0A">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MU Classic">
+<meta property="og:url" content="https://mu-classic.com/linux">
+<meta property="og:title" content="MU Online on Linux — MU Classic, a native Vulkan build">
+<meta property="og:description" content="Play classic MU Online on Linux. MU Classic is a free remaster with a native Linux build on Vulkan for Ubuntu, Debian, Fedora, Mint and Arch: no Wine, no Proton.">
+<meta property="og:image" content="https://mu-classic.com/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Alegreya+Sans+SC:wght@700&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+
+<div class="bar">
+<a href="/"><img src="/logo.svg" alt="MU Classic home" width="435" height="261"></a>
+<a href="/" style="font-weight: 500">Home</a>
+</div>
+
+<main class="account-page">
+<div class="wrap text-page">
+<h1 class="page-title">MU Online on Linux</h1>
+<p>MU Classic is classic MU Online, remastered, with a native Linux build. No Wine, no Proton, no Lutris: the game is built for Linux and draws with Vulkan, on X11 or Wayland.</p>
+<img class="platform-shot" src="/shots/devias-960.webp" alt="MU Classic on Linux: a hunt in the snow of Devias" width="960" height="540" loading="lazy">
+
+<h2>Install in one line</h2>
+<p>Open a terminal, paste this line and press Enter:</p>
+<code class="line" translate="no">curl -fsSL https://mu-classic.com/downloads/install-linux.sh | sh</code>
+<p>It needs no root. The launcher goes in your home folder, with a MU Classic entry in your applications menu and a <span translate="no">mu2-launcher</span> command. Sign in, and the launcher downloads the game and keeps it up to date each time you start it.</p>
+<p>No account yet? <a href="/#account" style="text-decoration: underline">Make one on the front page</a>. It's free.</p>
+
+<h2>System requirements</h2>
+<ul>
+<li>A 64-bit PC (x86_64) with glibc 2.35 or newer: Ubuntu 22.04, Debian 12, Fedora 36, Linux Mint 21, Arch or newer</li>
+<li>Graphics with Vulkan 1.1: Mesa for AMD and Intel, or NVIDIA's own driver</li>
+<li>X11 or Wayland</li>
+<li>8 GB of memory and 2 GB free</li>
+<li>An internet connection: the game is played online</li>
+</ul>
+
+<h2>If the game doesn't start: Vulkan</h2>
+<p>The installer warns you when it finds no Vulkan. Install your distribution's packages:</p>
+<ul>
+<li>Ubuntu, Debian and Mint: <span translate="no">libvulkan1 mesa-vulkan-drivers</span></li>
+<li>Fedora: <span translate="no">vulkan-loader mesa-vulkan-drivers</span></li>
+<li>Arch: <span translate="no">vulkan-icd-loader</span> and <span translate="no">vulkan-radeon</span>, <span translate="no">vulkan-intel</span> or <span translate="no">nvidia-utils</span> for your card</li>
+</ul>
+
+<h2>Questions</h2>
+<p><b>Is it the same game as on Windows?</b> Yes. Players on Linux, Windows and Mac play in the same worlds, together.</p>
+<p><b>Is it free?</b> Yes, the open beta is free to play.</p>
+<p><b>Is MU Classic a private server?</b> No. It's a complete remaster: a new engine, client and server, written from scratch. Classic MU's worlds, monsters and items are its foundation, with reworked skills, new systems and modern graphics.</p>
+<p><b>How do I remove it?</b> Delete the folder <span translate="no">~/.local/share/MU2</span>, the command <span translate="no">~/.local/bin/mu2-launcher</span> and the menu entry <span translate="no">~/.local/share/applications/mu-classic.desktop</span>.</p>
+
+<p>Also on <a href="/mac" style="text-decoration: underline">Mac</a> and Windows. <a href="/" style="text-decoration: underline">See what's new in MU Classic</a>.</p>
+</div>
+</main>
+
+<footer>
+<div class="wrap">
+<img src="/logo.svg" alt="MU Classic" width="435" height="261" translate="no">
+<nav class="foot-links"><a href="https://discord.gg/frqaT5k3EF" rel="noopener" target="_blank" translate="no">Discord</a><a href="/mac">Mac</a><a href="/linux">Linux</a><a href="/privacy">Privacy</a><a href="/contact">Contact</a></nav>
+<!--langs-->
+</div>
+</footer>
+
+</body>
+</html>
