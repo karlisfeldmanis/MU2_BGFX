@@ -578,9 +578,13 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // A click drops the blow until it lands or leaves his hand, Twisting Slash's spin included,
     // which replaces the 2026-10-01 hold on it. What still holds him: a self-cast (an aura, a
     // buff), a channel, and an attack skill with a cooldown.
-    const int32_t held = row.wizardry || row.primary()
-                             ? clip
-                             : std::max(clip, authoredCastTicks(*tables_, row));
+    //
+    // **And a skill with a cooldown is held for its quickened clip too**, as a wizard's spell
+    // is: the user, 2026-10-23 -- "we need that animation speed also becomes faster when there
+    // is more agi" -- of a knight's Q/W/E/R staying at the authored pace however much agility he
+    // had. The drawing fits every cast that is not on himself to `clip` (game/play.cpp). A
+    // self-cast's `clip` is its authored length already (castTicks gives it no bonus).
+    const int32_t held = clip;
     hero.castUntil = row.channelled() ? tick_ + channelTicks
                      : row.primary()  ? tick_
                                       : tick_ + held;
@@ -635,11 +639,10 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // knock, when a skill has one, belongs to the landing too and is why `shove` is reached
         // from there rather than here.
         //
-        // **Over the clip as it is drawn, `held`**: a skill with a cooldown is played at its
-        // authored pace (game/play.cpp fits only a spell's and a primary's to `clip`), so landed
-        // at half the quickened `clip` the blow came long before the thrust -- a level-150
-        // knight's Death Stab struck while the spear still pointed behind him (2026-10-02, the
-        // user: "effect looked buggy"). For a spell and a primary `held` is `clip`, unchanged.
+        // **Over the clip as it is drawn, `held`**: landed at half a `clip` the drawing did not
+        // play, the blow came long before the thrust -- a level-150 knight's Death Stab struck
+        // while the spear still pointed behind him (2026-10-02, the user: "effect looked
+        // buggy"). Since 2026-10-23 every such cast is drawn fitted to `clip`, so `held` is it.
         // **A spell pressed on a monster is a spell at him** (bug report #48, the user: "also
         // power wave"): let go at the body, it turns onto him again as it leaves his hand
         // (Realm::land), so one that walked during the clip is not out of Power Wave's three

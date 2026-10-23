@@ -1785,10 +1785,12 @@ void Play::update(double seconds) {
                             cast ? sim::skillNumbered(swinger->castSkill) : nullptr;
                         // A primary's does the same at AttackSpeed, every class's: the realm
                         // holds Twisting Slash and Skillshot for their quickened clip
-                        // (Realm::throwSkill), so the spin has to end when the hold does.
+                        // (Realm::throwSkill), so the spin has to end when the hold does. And
+                        // so does a skill with a cooldown since 2026-10-23 ("animation speed
+                        // also becomes faster when there is more agi"): a knight's Cyclone at
+                        // his attack speed, as a wizard's Meteorite is at his MagicSpeed.
                         // A channel is paced by its own length where it starts, above.
-                        if (spell && (spell->wizardry || spell->primary()) &&
-                            !spell->channelled() && body) {
+                        if (spell && !spell->onSelf() && !spell->channelled() && body) {
                             const auto armAt = [&](int32_t at) -> const content::Arm* {
                                 return at >= 0 && size_t(at) < tables_.arms.size()
                                            ? &tables_.arms[size_t(at)] : nullptr;
