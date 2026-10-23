@@ -23,6 +23,7 @@
 #include "game/quest_auto.h"
 
 namespace mu::sim {
+struct Held;
 struct SkillRow;
 }
 
@@ -71,6 +72,13 @@ struct HelperSettings {
     static constexpr uint8_t kPickJewels = 1, kPickRunes = 2, kPickLegendary = 4, kPickExcellent = 8,
                              kPickSockets = 16, kPickAll = 32, kPickPets = 64, kPickBoxes = 128;
     uint8_t picks = kPickJewels | kPickRunes | kPickLegendary | kPickExcellent | kPickBoxes;
+    // **Pick up by name** (Discord, 2026-10-23: "type in the names of the specific items you want
+    // to be collected", as MU Helper's own list): a thing whose name holds one of these, any case,
+    // is picked whatever the ticks say -- "chaos" takes the Jewel of Chaos, "kundun" every Box of
+    // Kundun even with Boxes off. Twelve, as MU's own list (WSclient.h's ExtraItems[12][15]), each
+    // a little longer than its 15 so "Lower Refining Stone" fits. Kept as a `name` line each.
+    static constexpr size_t kNameMost = 12, kNameLong = 20;
+    std::vector<std::string> names;
     // The window has been up once: the first H opens it, every H after starts and stops.
     bool seen = false;
     // **Follow my quest** (the user, 2026-10-21: "helper can follow active quest, similiar like
@@ -94,12 +102,47 @@ struct HelperSettings {
 
     int tiles() const { return kRanges[range < 0 ? 0 : range > 2 ? 2 : range]; }
     HelperUse use(int32_t skill, HelperKind kind) const;
+    // Whether `label` holds one of the names, any case.
+    bool named(const std::string& label) const;
+    // `typed` trimmed and added to the names; false when it is empty, already there, or the list
+    // is full.
+    bool addName(const std::string& typed);
 };
 
 std::string helperPath(const std::string& savePath);
 // False when there is none or it does not read: `out` is left as it was, the defaults.
 bool loadHelper(const std::string& savePath, HelperSettings& out);
 bool writeHelper(const std::string& savePath, const HelperSettings& settings);
+
+// **The pickup log** (Discord, 2026-10-23, Crylos: "I'd love to have a helper pick-up log, so i
+// know what i picked up exactly with quantities while afking. bonus if log includes timestamp and
+// remembers the last active helper, so i can access it even if i DC"; the user's design,
+// claude.ai/artifact/BbDLeKxZrc15tAyTdF115X): what the last run took into his bag and purse, each
+// thing with its count and the time, Zen summed. Kept beside his save as Name.helperlog, a line
+// written as each comes, so a run cut off -- a disconnect, the game closed -- is there when he is
+// played again; the next start begins it afresh.
+struct HelperLog {
+    struct Entry {
+        int64_t at = 0;     // the clock's seconds (std::time)
+        std::string label;  // as the card names it, "Jewel of Bless", "Kris +5"
+        uint8_t tone = 0;   // its name's colour, a tip::Tone; nothing for Zen
+        int count = 0;      // pieces, for a thing
+        int64_t zen = 0;    // for Zen: a run of it between two things, summed
+        bool isZen() const { return label.empty(); }
+    };
+    int64_t began = 0, ended = 0;  // 0: none kept, and not yet ended
+    std::string place;             // the map it ran on, the last one if a quest took it on
+    std::string why;               // how it ended, "You died"; empty while it runs or cut off
+    double seconds = 0.0;
+    int kills = 0;
+    int64_t zen = 0;
+    std::vector<Entry> entries;  // oldest first
+    bool kept() const { return began != 0; }
+    bool ending() const { return ended != 0; }
+};
+std::string helperLogPath(const std::string& savePath);
+// The last run's log, or an empty one.
+HelperLog loadHelperLog(const std::string& savePath);
 
 class Helper {
 public:
@@ -112,10 +155,20 @@ public:
     };
     // Begun where he stands now; `carried`, the stats of the Helper on the map he came from (a
     // followed quest's travel raises a new mode, app::Context::helperFollows).
+    // A carried start goes on with the log it was keeping; a new one begins it again.
     void start(const Play& play, const Stats* carried = nullptr);
-    void stop();
+    // `why` goes in the log as how it ended.
+    void stop(const std::string& why = "You stopped it");
     bool on() const { return on_; }
     const Stats& stats() const { return stats_; }
+    // Where its log is kept (beside the save; none for a run with no save) and the map's name, once
+    // as the mode opens: the last run's log is read back.
+    void keepLog(const std::string& savePath, const std::string& place);
+    const HelperLog& log() const { return log_; }
+    // The last run's log let go, its file too; not while it runs.
+    void clearLog();
+    // Something come to him off the ground or with a kill (Play::takePicked): logged while it helps.
+    void picked(const Play& play, const sim::Held& what, int64_t zen);
     // One frame. `bar` is his skill bar (the five keys, then the right button's slot, MU's skill
     // numbers, 0 for empty). Returns a line for the player when it stops by itself, else empty.
     std::string update(Play& play, const HelperSettings& settings, double seconds, const int32_t* bar,
@@ -154,6 +207,10 @@ private:
     std::map<int, double> mendTried_;       // a worn slot's repair asked: not again before this
     QuestAuto quester_;                     // Auto-play's hand, while it follows a quest
     int following_ = -1;                    // the quest it follows, -1 for none yet
+    HelperLog log_;
+    std::string logPath_, place_;
+    // One line onto the log's file, made if `fresh`.
+    void logLine(const std::string& text, bool fresh = false);
 };
 
 }  // namespace mu::game

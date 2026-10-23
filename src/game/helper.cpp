@@ -1,9 +1,11 @@
 #include "game/helper.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <ctime>
 #include <filesystem>
 
 #include "content/tables.h"
@@ -148,6 +150,37 @@ HelperUse HelperSettings::use(int32_t skill, HelperKind kind) const {
     return offered.front();
 }
 
+namespace {
+std::string lowered(std::string text) {
+    for (char& c : text) c = char(std::tolower(static_cast<unsigned char>(c)));
+    return text;
+}
+}  // namespace
+
+bool HelperSettings::named(const std::string& label) const {
+    if (names.empty()) return false;
+    const std::string in = lowered(label);
+    return std::any_of(names.begin(), names.end(),
+                       [&](const std::string& name) { return in.find(lowered(name)) != std::string::npos; });
+}
+
+bool HelperSettings::addName(const std::string& typed) {
+    size_t from = 0, to = typed.size();
+    while (from < to && std::isspace(static_cast<unsigned char>(typed[from]))) ++from;
+    while (to > from && std::isspace(static_cast<unsigned char>(typed[to - 1]))) --to;
+    std::string name;
+    for (size_t i = from; i < to && name.size() < kNameLong; ++i) {
+        if (static_cast<unsigned char>(typed[i]) >= 32) name += typed[i];
+    }
+    if (name.empty() || names.size() >= kNameMost) return false;
+    const std::string low = lowered(name);
+    if (std::any_of(names.begin(), names.end(), [&](const std::string& one) { return lowered(one) == low; })) {
+        return false;
+    }
+    names.push_back(name);
+    return true;
+}
+
 // ---- kept beside the save --------------------------------------------------------------------
 
 std::string helperPath(const std::string& savePath) {
@@ -176,6 +209,11 @@ bool loadHelper(const std::string& savePath, HelperSettings& out) {
         else if (!std::strcmp(key, "party") && std::fscanf(f, "%d", &a) == 1) read.aidParty = a != 0;
         else if (!std::strcmp(key, "trades") && std::fscanf(f, "%d", &a) == 1) read.noTrades = a != 0;
         else if (!std::strcmp(key, "repair") && std::fscanf(f, "%d", &a) == 1) read.repair = a != 0;
+        else if (!std::strcmp(key, "name")) {
+            char line[64] = {};
+            if (std::fgets(line, sizeof line, f) == nullptr) ok = false;
+            else read.addName(line);
+        }
         else if (!std::strcmp(key, "use") && std::fscanf(f, "%d %d", &a, &b) == 2) {
             if (b >= 0 && b <= int(HelperUse::Never)) read.uses[a] = HelperUse(b);
         } else {
@@ -206,8 +244,135 @@ bool writeHelper(const std::string& savePath, const HelperSettings& settings) {
                  settings.aidParty ? 1 : 0, settings.noTrades ? 1 : 0);
     std::fprintf(f, "repair %d\n", settings.repair ? 1 : 0);
     for (const auto& [skill, use] : settings.uses) std::fprintf(f, "use %d %d\n", int(skill), int(use));
+    for (const std::string& name : settings.names) std::fprintf(f, "name %s\n", name.c_str());
     std::fclose(f);
     return true;
+}
+
+// ---- the pickup log ----------------------------------------------------------------------------
+
+namespace {
+
+// An entry onto the log: Zen into the run of it it follows, so the timeline is the things with
+// what came between them.
+void noted(HelperLog& log, HelperLog::Entry entry) {
+    if (entry.isZen()) {
+        log.zen += entry.zen;
+        if (!log.entries.empty() && log.entries.back().isZen()) {
+            log.entries.back().zen += entry.zen;
+            log.entries.back().at = entry.at;
+            return;
+        }
+    }
+    log.entries.push_back(std::move(entry));
+}
+
+// The rest of a line, from `at`: its leading spaces and its newline off.
+std::string restOf(const char* at) {
+    while (*at == ' ') ++at;
+    std::string text = at;
+    while (!text.empty() && (text.back() == '\n' || text.back() == '\r')) text.pop_back();
+    return text;
+}
+
+// A stop's line as the log says how it ended: "Helper stopped: you died." is "You died".
+std::string endedBy(std::string why) {
+    constexpr const char* kPrefix = "Helper stopped: ";
+    if (why.rfind(kPrefix, 0) == 0) why = why.substr(std::strlen(kPrefix));
+    while (!why.empty() && why.back() == '.') why.pop_back();
+    if (!why.empty()) why[0] = char(std::toupper(static_cast<unsigned char>(why[0])));
+    return why;
+}
+
+}  // namespace
+
+std::string helperLogPath(const std::string& savePath) {
+    return std::filesystem::path(savePath).replace_extension(".helperlog").string();
+}
+
+// One line a fact: `began <time> <place>`, `place <place>` when a followed quest took it on,
+// `item <time> <count> <tone> <label>`, `zen <time> <amount>`, and
+// `end <time> <seconds> <kills> <why>` -- none when it was cut off.
+HelperLog loadHelperLog(const std::string& savePath) {
+    HelperLog log;
+    if (savePath.empty()) return log;
+    FILE* f = std::fopen(helperLogPath(savePath).c_str(), "r");
+    if (f == nullptr) return log;
+    char line[512];
+    while (std::fgets(line, sizeof line, f) != nullptr) {
+        long long at = 0, amount = 0;
+        int count = 0, tone = 0, kills = 0, used = 0;
+        double seconds = 0.0;
+        if (std::sscanf(line, "began %lld%n", &at, &used) == 1) {
+            log = {};
+            log.began = at;
+            log.place = restOf(line + used);
+        } else if (std::strncmp(line, "place ", 6) == 0) {
+            log.place = restOf(line + 6);
+        } else if (std::sscanf(line, "item %lld %d %d%n", &at, &count, &tone, &used) == 3) {
+            noted(log, {at, restOf(line + used), uint8_t(tone), count, 0});
+        } else if (std::sscanf(line, "zen %lld %lld", &at, &amount) == 2) {
+            noted(log, {at, {}, 0, 0, amount});
+        } else if (std::sscanf(line, "end %lld %lf %d%n", &at, &seconds, &kills, &used) == 3) {
+            log.ended = at;
+            log.seconds = seconds;
+            log.kills = kills;
+            log.why = restOf(line + used);
+        }
+    }
+    std::fclose(f);
+    return log;
+}
+
+void Helper::keepLog(const std::string& savePath, const std::string& place) {
+    logPath_ = savePath.empty() ? std::string() : helperLogPath(savePath);
+    place_ = place;
+    if (!on_) log_ = loadHelperLog(savePath);
+}
+
+void Helper::clearLog() {
+    if (on_) return;
+    log_ = {};
+    if (!logPath_.empty()) {
+        std::error_code ignored;
+        std::filesystem::remove(logPath_, ignored);
+    }
+}
+
+void Helper::logLine(const std::string& text, bool fresh) {
+    if (logPath_.empty()) return;
+    FILE* f = std::fopen(logPath_.c_str(), fresh ? "w" : "a");
+    if (f == nullptr) {
+        core::logError("helper: cannot write %s", logPath_.c_str());
+        return;
+    }
+    std::fprintf(f, "%s\n", text.c_str());
+    std::fclose(f);
+}
+
+void Helper::picked(const Play& play, const sim::Held& what, int64_t zen) {
+    if (!on_ || play.realm().tables() == nullptr) return;
+    const content::Tables& tables = *play.realm().tables();
+    HelperLog::Entry entry;
+    entry.at = int64_t(std::time(nullptr));
+    char text[320];
+    if (what.empty()) {
+        if (zen <= 0) return;
+        entry.zen = zen;
+        std::snprintf(text, sizeof text, "zen %lld %lld", (long long)entry.at, (long long)zen);
+    } else {
+        if (what.item < 0 || size_t(what.item) >= tables.items.size()) return;
+        const content::ItemRow& row = tables.items[size_t(what.item)];
+        entry.label = sim::itemLabel(row, what);
+        if (what.refinement > 0) entry.label += " +" + std::to_string(what.refinement);
+        entry.tone = uint8_t(qualityOf(row, what));
+        entry.count = sim::stacks(row) ? std::max<int>(1, what.durability) : 1;
+        ++stats_.picked;
+        std::snprintf(text, sizeof text, "item %lld %d %d %s", (long long)entry.at, entry.count, int(entry.tone),
+                      entry.label.c_str());
+    }
+    noted(log_, std::move(entry));
+    logLine(text);
 }
 
 // ---- the hand ----------------------------------------------------------------------------------
@@ -230,16 +395,36 @@ void Helper::start(const Play& play, const Stats* carried) {
     lootTried_.clear();
     potions_ = play.realm().autoDrinkSlot(false) >= 0;
     core::logf("helper: started at %d,%d", anchorColumn_, anchorRow_);
+    // A followed quest's travel goes on with its log, on the new map; any other start begins one.
+    if (carried != nullptr && log_.kept() && !log_.ending()) {
+        log_.place = place_;
+        logLine("place " + place_);
+    } else {
+        log_ = {};
+        log_.began = int64_t(std::time(nullptr));
+        log_.place = place_;
+        logLine("began " + std::to_string(log_.began) + " " + place_, true);
+    }
 }
 
-void Helper::stop() {
-    if (on_) core::logf("helper: stopped after %.0f s, %d kills, %d picked up", stats_.seconds, stats_.kills, stats_.picked);
+void Helper::stop(const std::string& why) {
+    if (on_) {
+        core::logf("helper: stopped after %.0f s, %d kills, %d picked up", stats_.seconds, stats_.kills, stats_.picked);
+        log_.ended = int64_t(std::time(nullptr));
+        log_.why = why;
+        log_.seconds = stats_.seconds;
+        log_.kills = stats_.kills;
+        char text[256];
+        std::snprintf(text, sizeof text, "end %lld %.0f %d %s", (long long)log_.ended, stats_.seconds, stats_.kills,
+                      why.c_str());
+        logLine(text);
+    }
     on_ = false;
     target_ = picking_ = 0;
 }
 
 std::string Helper::halt(const std::string& why) {
-    stop();
+    stop(endedBy(why));
     core::logf("helper: %s", why.c_str());
     return why;
 }
@@ -282,9 +467,9 @@ std::string Helper::update(Play& play, const HelperSettings& settings, double se
             target_ = 0;
         }
     }
+    // Taken, by him or not: what he took is counted as it comes (Helper::picked).
     if (picking_ != 0 && std::none_of(realm.lying().begin(), realm.lying().end(),
                                       [&](const sim::Lying& one) { return one.id == picking_; })) {
-        ++stats_.picked;
         picking_ = 0;
     }
 
@@ -476,7 +661,6 @@ std::string Helper::follow(Play& play, const HelperSettings& settings, double se
         since_ = 0.0;
         if (picking_ != 0 && std::none_of(realm.lying().begin(), realm.lying().end(),
                                           [&](const sim::Lying& one) { return one.id == picking_; })) {
-            ++stats_.picked;
             picking_ = 0;
         }
         if (realm.satchel().free(tables, 1, 1) < 0) return halt("Helper stopped: the bag is full.");
@@ -566,8 +750,10 @@ bool Helper::loot(Play& play, const HelperSettings& settings) {
                        qualityOf(row, one.what) == tip::Tone::RuneAncient);
             wanted |= (p & HelperSettings::kPickExcellent) && one.what.excellent != 0;
             wanted |= (p & HelperSettings::kPickSockets) && one.what.sockets > 0;
-            // Boxes off leaves them lying under All as well: they are what fills his bag.
-            if (!wanted || (box && !(p & HelperSettings::kPickBoxes))) continue;
+            // Boxes off leaves them lying under All as well: they are what fills his bag. A name
+            // he typed is asked for outright, Boxes or not.
+            const bool named = settings.named(row.label);
+            if (!named && (!wanted || (box && !(p & HelperSettings::kPickBoxes)))) continue;
             sim::Satchel bag = realm.satchel();
             if (sim::pour(tables, bag, sim::kWorn, sim::kSlots, one.what) < 0) continue;
         }

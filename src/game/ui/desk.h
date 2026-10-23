@@ -32,6 +32,7 @@
 #include "game/ui/cursor.h"
 #include "game/ui/hud.h"
 #include "game/ui/line_chip.h"
+#include "game/ui/rejoin_badge.h"
 #include "game/item_models.h"
 #include "game/ui/items_stage.h"
 #include "game/ui/menu.h"
@@ -104,7 +105,7 @@ public:
     // rather than quitting the game.
     bool typing() const {
         return amount_.up() || report_.up() || whatsNew_.up() || chat_.typing() || broker_.typing() || guild_.typing() ||
-               guildMake_.typing();
+               guildMake_.typing() || helperWindow_.typing();
     }
     // A scripted potion key for the next update, 0 to 3.
     void scriptKey(int key) { scriptedKey_ = key; }
@@ -208,9 +209,17 @@ public:
     // **The Helper** (game/helper.h): the mode's hand, told each frame whether it helps and what it
     // has done; what H, the minimap's H and the window asked since the last call -- 1 start, 0 stop,
     // -2 nothing; its settings, which the window changes and the mode keeps beside the save.
-    void setHelping(bool on, const Helper::Stats& stats) {
+    // `log`, its pickup log, the last run's while it is off.
+    void setHelping(bool on, const Helper::Stats& stats, const HelperLog* log = nullptr) {
         helping_ = on;
         helperStats_ = stats;
+        helperLog_ = log;
+    }
+    // The Log page's Clear, since the last call.
+    bool takeHelperClear() {
+        const bool asked = helperClear_;
+        helperClear_ = false;
+        return asked;
     }
     int takeHelperAsk() {
         const int asked = helperAsk_;
@@ -318,13 +327,18 @@ public:
     // The line gone and coming back by itself (PlayMode's reconnect): the Disconnected page's
     // second line says how it goes, and its Reconnect tries at once rather than going back to
     // the character screen. `here` false: Reconnect is the character screen, as it was.
-    void rejoining(bool here, std::string note) {
+    // `count` the seconds to the next knock, or -1: the badge's (RejoinBadge) while the page is down.
+    void rejoining(bool here, std::string note, int count = -1) {
         rejoinHere_ = here;
+        rejoinCount_ = count;
         menu_.setLostNote(std::move(note));
     }
     // The server is another build than this game's (PlayMode's knock): the Disconnected page
     // says update, with Close Game alone.
-    void outdated() { menu_.outdated(); }
+    void outdated() {
+        rejoinOutdated_ = true;
+        menu_.outdated();
+    }
     bool takeRejoin() {
         const bool asked = rejoinAsked_;
         rejoinAsked_ = false;
@@ -438,6 +452,8 @@ private:
     void closeTalents(bool bringBack);
     HelperSettings helperSettings_;
     Helper::Stats helperStats_;
+    const HelperLog* helperLog_ = nullptr;
+    bool helperClear_ = false;
     bool helping_ = false, helperChanged_ = false, helperAsked_ = false;
     int helperAsk_ = -2;
     // H or the minimap's H: the window the first time, else start or stop.
@@ -520,6 +536,12 @@ private:
     bool quitAsked_ = false;
     bool switchAsked_ = false;
     bool rejoinHere_ = false, rejoinAsked_ = false;
+    // The line joined again by itself under the badge rather than the Disconnected page: how long
+    // so far, whether it was said, the knock's count, and a knock told this game is outdated.
+    RejoinBadge rejoinBadge_;
+    float rejoinQuiet_ = 0.0f;
+    bool rejoinQuietSaid_ = false, rejoinOutdated_ = false;
+    int rejoinCount_ = -1;
     bool holdEscape_ = false;
     bool settingsChanged_ = false;
     std::string scriptTyped_;

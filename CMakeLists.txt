@@ -775,6 +775,7 @@ add_library(mu_game STATIC
   src/game/ui/travel.cpp
   src/game/ui/go_back.cpp
   src/game/ui/line_chip.cpp
+  src/game/ui/rejoin_badge.cpp
   src/game/ui/guild.cpp
   src/game/ui/herald.cpp
   src/game/ui/minimap.cpp

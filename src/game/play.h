@@ -520,10 +520,18 @@ public:
         sim::Held what;
     };
     std::vector<Looted> takeLooted() { return std::exchange(looted_, {}); }
+    // What came to him himself since the last ask: a thing off the ground, or Zen (`what` empty)
+    // with a kill or off the ground, as the lane posts it. The Helper's log (Helper::picked).
+    struct Picked {
+        sim::Held what;
+        int64_t zen = 0;
+    };
+    std::vector<Picked> takePicked() { return std::exchange(picked_, {}); }
     // The player in this world called `name`, by body id, or 0.
     uint32_t playerNamed(const std::string& name) const;
     std::vector<sim::Happening> dealNews_;
     std::vector<Looted> looted_;
+    std::vector<Picked> picked_;
     std::unordered_map<uint32_t, sim::Held> lyingSeen_;  // a lying thing's id to what it is
     // The last mix's answer while it stands: 1 made, 0 failed, -1 none since the box was last
     // filled or closed. The window's line in place of the recipe.

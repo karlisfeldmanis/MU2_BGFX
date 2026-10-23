@@ -133,6 +133,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     travel_.open(interface_, assetDir, &arts_);
     goBack_.open(interface_);
     lineChip_.open(interface_);
+    rejoinBadge_.open(interface_);
     squareResult_.open(interface_);
     herald_.open(interface_);
     minimap_.open(interface_);
@@ -173,6 +174,7 @@ void Desk::shutdown() {
     travel_.close();
     goBack_.close();
     lineChip_.close();
+    rejoinBadge_.close();
     squareResult_.close();
     herald_.close();
     minimap_.close();
@@ -448,7 +450,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // windows under it do not hear a click on its OK and a 1 typed into it is not the first
     // potion drunk. `typing` is taken before the box answers, so the frame Return closes it on
     // does not hand the same keys on either. The cursor is still drawn where the pointer is.
-    const bool typing = amount_.up() || report_.up() || whatsNew_.up() || broker_.typing() || guild_.typing() || guildMake_.typing();
+    const bool typing = amount_.up() || report_.up() || whatsNew_.up() || broker_.typing() || guild_.typing() || guildMake_.typing() ||
+                        helperWindow_.typing();
     // The chat's keyboard, taken before the box spends the script's: it types only while it is
     // open and no box is up, and its Enter and Escape are then its own.
     const bool chatTyping = chat_.typing() && !typing;
@@ -687,9 +690,32 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             place += (place.empty() ? "" : "  \xC2\xB7  ") + std::to_string(hero->column()) +
                      ", " + std::to_string(hero->row());
         }
-        // The server's line gone (Play::cut): the game holds and the Disconnected page is up
-        // over it, with every other window shut, and stays up -- Escape does not take it down.
-        if (play.isOpen() && play.cut() && !menu_.lost()) {
+        // The server's line gone (Play::cut): the game holds. While PlayMode's reconnect may
+        // bring him back by itself (Play::rejoinIn), the badge turns in the top left and
+        // nothing else changes; the Disconnected page comes when it cannot -- played
+        // elsewhere, unreadable, another build -- or has not in kQuietMost (RejoinBadge).
+        constexpr float kQuietMost = 30.0f;
+        const bool cut = play.isOpen() && play.cut();
+        const bool quiet = cut && !menu_.lost() && play.rejoinIn() >= 0.0 && !rejoinOutdated_ &&
+                           rejoinQuiet_ < kQuietMost;
+        if (quiet) {
+            rejoinQuiet_ += seconds;
+            if (!rejoinQuietSaid_) {
+                const std::string why = play.cutWhy();
+                core::logf("window: reconnecting under the badge -- %s", why.empty() ? "no reason kept" : why.c_str());
+                rejoinQuietSaid_ = true;
+            }
+        } else if (!cut) {
+            rejoinQuiet_ = 0.0f;
+            rejoinQuietSaid_ = false;
+        }
+        {
+            const float u = tip::unit();
+            rejoinBadge_.update(seconds, quiet, rejoinCount_, 10.0f * u, 4.0f * u);
+        }
+        // Then the Disconnected page over it, with every other window shut, and it stays up --
+        // Escape does not take it down.
+        if (cut && !quiet && !menu_.lost()) {
             closeTalents(false);
             inventoryOpen_ = characterOpen_ = false;
             travel_.hide();
@@ -849,13 +875,18 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         HelperWindow::Result result;
         int32_t bar[Hud::kSkillBoxes];
         for (int k = 0; k < Hud::kSkillBoxes; ++k) bar[k] = bound_[k];
-        helperWindow_.update(seconds, play, helperSettings_, bar, helping_, helperStats_, float(window.width()),
-                             float(window.height()), typing ? Pointer{} : pointer, &result);
+        // Its name field types as the broker's does: the keys its own, and the pointer while it has them.
+        HelperWindow::Keys keys;
+        if (helperWindow_.typing()) keys = {typedNow, window.backspaces(), enterNow, escapeNow};
+        helperWindow_.update(seconds, play, helperSettings_, bar, helping_, helperStats_, helperLog_, float(window.width()),
+                             float(window.height()), helperWindow_.typing() && !amount_.up() ? real : typing ? Pointer{} : pointer,
+                             keys, &result);
         if (result.clicked) click();
         if (result.changed) helperChanged_ = true;
         if (result.close) helperWindow_.hide();
         if (result.start) helperAsk_ = 1;
         if (result.stop) helperAsk_ = 0;
+        if (result.clearLog) helperClear_ = true;
         if (result.health >= 0 || result.mana >= 0) {
             play.setAutoDrink(result.health, result.mana);
             core::logf("window: auto-drink %d%% health, %d%% mana", result.health, result.mana);
@@ -2925,6 +2956,8 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     interface_.add(hud_.glowCanvas());  // the ember round its Talents button
     // The line's chip in the corner over the minimap, its list over whatever lies under it.
     if (lineChip_.showing()) interface_.add(lineChip_.canvas());
+    // And the rejoin's badge in the other corner, the same kind of thing.
+    if (rejoinBadge_.showing()) interface_.add(rejoinBadge_.canvas());
     // A party invite, centred over the plate where a fight's Zen is said.
     if (chat_.inviting()) interface_.add(chat_.invite());
     if (characterOpen_) {

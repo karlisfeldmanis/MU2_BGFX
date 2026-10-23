@@ -574,6 +574,7 @@ void Play::update(double seconds) {
         // chat's loot lines want what it was (Play::takeLooted). Insert only, so a thing taken on
         // this tick is still here to be read; cleared now and then as things vanish unpicked.
         if (lyingSeen_.size() > realm_.lying().size() + 256) lyingSeen_.clear();
+        if (picked_.size() > 512) picked_.clear();  // nobody asking (the studio)
         for (const sim::Lying& lying : realm_.lying()) {
             if (!lying.what.empty()) lyingSeen_[lying.id] = lying.what;
         }
@@ -611,6 +612,7 @@ void Play::update(double seconds) {
             if (happening.what == sim::What::Picked && happening.b >= 0) {
                 const auto seen = lyingSeen_.find(uint32_t(happening.a));
                 if (seen != lyingSeen_.end()) {
+                    if (happening.who == heroId) picked_.push_back({seen->second, 0});
                     looted_.push_back({happening.who, seen->second});
                     lyingSeen_.erase(seen);
                 }
@@ -690,6 +692,7 @@ void Play::update(double seconds) {
                     // and it is held here until the body it came off falls, where a drop would
                     // have landed, and then rings coins at him (Play::takeZen).
                     if (happening.b < 0) {
+                        picked_.push_back({{}, happening.c});
                         const uint32_t dropper = uint32_t(happening.a);
                         if (drawnOf(dropper)) held_.push_back({0, dropper, happening.c});
                         else takeZen(happening.c);
