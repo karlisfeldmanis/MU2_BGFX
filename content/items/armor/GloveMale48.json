@@ -36,28 +36,15 @@
   },
   "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased (an .OZT beside its .OZJ takes _t): dark steel traced in pink; Item4001_cloth the tabard; Item4001_R a pink orb.",
   "sheet_materials": {
-    "Item4001_glove": "painted_steel",
-    "item4001_glove": "painted_steel",
-    "Item4001_R": "glass",
-    "item4001_r": "glass"
+    "Item4001_glove": "plate_steel",
+    "item4001_glove": "plate_steel"
   },
-  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the other sets.",
-  "material_overrides": {
-    "painted_steel": {
-      "grain": {
-        "kind": "cast",
-        "scale": 260,
-        "depth": 0.02,
-        "roughness_range": 0.03
-      }
-    }
-  },
-  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss.",
-  "effects_note": "MuMain has no render arm for MODEL_DESTORY_*. Item4001_R's `_R` makes TextureScript draw those meshes bright, i.e. added (TextureScript.cpp parsingTScriptA, ZzzBMD.cpp:2238): not built here, as Brave's -- armour bakes to one atlas. Baked opaque as glass. Its full-set bonus is not given: sim::setDefense counts only Storm Crow and Hurricane for the Magic Gladiator.",
+  "material_note": "plate_steel: Destroy is grey steel traced in pink, not lacquer (the user, 2026-10-23: 'i think MG metal could be more metaalic no?'). Its tabard cloth.",
+  "effects_note": "MuMain has no render arm for MODEL_DESTORY_*; the pink orbs are added, see glow_note. Its full-set bonus is not given: sim::setDefense counts only Storm Crow and Hurricane for the Magic Gladiator.",
   "islands": [
     {
       "island": 0,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 66,
       "area": 1204.4,
       "along": [
@@ -79,7 +66,7 @@
     },
     {
       "island": 1,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 42,
       "area": 679.6,
       "along": [
@@ -101,7 +88,7 @@
     },
     {
       "island": 2,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 90,
       "area": 1165.5,
       "along": [
@@ -123,7 +110,7 @@
     },
     {
       "island": 3,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 66,
       "area": 1204.4,
       "along": [
@@ -145,7 +132,7 @@
     },
     {
       "island": 4,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 42,
       "area": 679.6,
       "along": [
@@ -167,7 +154,7 @@
     },
     {
       "island": 5,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 90,
       "area": 1165.5,
       "along": [
@@ -231,5 +218,9 @@
         0.658
       ]
     }
-  ]
+  ],
+  "glow": {
+    "Item4001_R": {}
+  },
+  "glow_note": "Item4001_R's `_R` makes TextureScript draw those meshes bright (TextureScript.cpp parsingTScriptA, ZzzBMD.cpp:2238): the pink orbs added, out of the bake, steady at BlendMeshLight 1 -- MuMain has no arm that moves it (the user, 2026-10-23: 'Glow steadily, as MU')."
 }

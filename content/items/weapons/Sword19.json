@@ -2,19 +2,35 @@
   "item": "Sword19",
   "mu_name": "Thunder Blade",
   "mu_name_from": "_enum.h:1513 MODEL_THUNDER_BLADE = MODEL_SWORD + 18, loaded from Item/Sword19.bmd (ZzzOpenData.cpp:622); OpenMU Version095d Weapons.cs:112.",
-  "why_this_one": "Icarus's Crusts carry it: the Mega Crust at +5 and the Alpha Crust at +9, each with a Legendary Shield (ZzzCharacter.cpp:13588-13611), as the Golden Crust does (:14895-14904). docs/worlds/icarus-port.md Part A 4.3.",
+  "why_this_one": "Icarus's Crusts carry it: the Mega Crust at +5 and the Alpha Crust at +9, each with a Legendary Shield (ZzzCharacter.cpp:13588-13611), as the Golden Crust does (:14895-14904). docs/worlds/icarus-port.md Part A 4.3. A player's weapon too since 2026-10-23 (the user: 'yes'): the Magic Gladiator's, at OpenMU's Season 6 row.",
   "profile": "weapon",
   "stats": {
-    "from": "OpenMU Version095d Weapons.cs:112: CreateWeapon(0, 18, 0, 23, 2, 3, true, \"Thunder Blade\", 105, 140, 168, 40, 86, 0, 0, 180, 50, 0, 0, 0, 0, 0, 1) -- drop 105, 140-168, speed 40, durability 86, 180 strength and 50 agility, the Magic Gladiator's alone.",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:155.",
+    "call": "CreateWeapon(0, 18, 0, 23, 2, 3, true, \"Thunder Blade\", 105, 140, 168, 40, 86, 0, 0, 180, 50, 0, 0, 0, 0, 0, 1, 0, 0, 0)",
+    "call_note": "The Season 6 CreateWeapon: group, number, slot, skill, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strength, agility, energy, vitality, then darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel.",
     "group": 0,
     "number": 18,
     "drop_level": 105,
-    "drops_from_monsters": false,
+    "drops_from_monsters": true,
     "slot": 0,
     "width": 2,
     "height": 3,
+    "minimum_damage": 140,
+    "maximum_damage": 168,
+    "attack_speed": 40,
     "durability": 86,
-    "note": "Built as a monster's arm, as the statue weapons are: OpenMU's row is the Magic Gladiator's only, a class we do not have (the Storm Crow set was skipped for the same reason, the user 2026-10-06), so nobody wears it and it does not drop. Its damage, requirements and class are left out so the card says none."
+    "skill": 23,
+    "requires": {
+      "level": 0,
+      "strength": 180,
+      "agility": 50,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "gladiator"
+    ],
+    "class_level_note": "The Magic Gladiator's alone: OpenMU's magicGladiatorClassLevel 1, MuMain's item.bmd RequireClass[3] 1."
   },
   "stance": "sword",
   "stance_from": "Held in the right hand with the Legendary Shield in the left (Weapon[0] and Weapon[1], ZzzCharacter.cpp:13595-13597), so held as a one-handed sword.",

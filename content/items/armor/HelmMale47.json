@@ -38,8 +38,6 @@
   "sheet_materials": {
     "Item2002_Helm": "painted_steel",
     "item2002_helm": "painted_steel",
-    "Item2002_R": "glass",
-    "item2002_r": "glass",
     "skinClass301": "skin",
     "skinclass301": "skin"
   },
@@ -55,7 +53,7 @@
     }
   },
   "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss.",
-  "effects_note": "MuMain has no render arm for MODEL_BRAVE_*. Item2002_R's `_R` makes TextureScript draw those meshes bright, i.e. added (TextureScript.cpp parsingTScriptA, ZzzBMD.cpp:2238): not built here -- armour bakes to one atlas, where an added sheet has nowhere to live (asset.sh). Baked opaque as glass: dark green gems.",
+  "effects_note": "MuMain has no render arm for MODEL_BRAVE_*; the green gems are added, see glow_note.",
   "islands": [
     {
       "island": 0,
@@ -871,5 +869,9 @@
         0.51
       ]
     }
-  ]
+  ],
+  "glow": {
+    "Item2002_R": {}
+  },
+  "glow_note": "Item2002_R's `_R` makes TextureScript draw those meshes bright (TextureScript.cpp parsingTScriptA, ZzzBMD.cpp:2238): the green gems added, out of the bake, steady at BlendMeshLight 1 -- MuMain has no arm that moves it (the user, 2026-10-23: 'Glow steadily, as MU')."
 }

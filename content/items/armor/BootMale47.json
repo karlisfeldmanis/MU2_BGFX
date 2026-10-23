@@ -36,9 +36,7 @@
   "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased: bronze-gold plate over dark leather and steel; Item2002_R small green gem inlays; Item2002_cloth.OZT the chain mail under the tassets, cut by its alpha (72% away); skinClass301 the knight's own face under the helm.",
   "sheet_materials": {
     "Item2002_boot": "painted_steel",
-    "item2002_boot": "painted_steel",
-    "Item2002_R": "glass",
-    "item2002_r": "glass"
+    "item2002_boot": "painted_steel"
   },
   "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the other sets.",
   "material_overrides": {
@@ -52,7 +50,7 @@
     }
   },
   "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss.",
-  "effects_note": "MuMain has no render arm for MODEL_BRAVE_*. Item2002_R's `_R` makes TextureScript draw those meshes bright, i.e. added (TextureScript.cpp parsingTScriptA, ZzzBMD.cpp:2238): not built here -- armour bakes to one atlas, where an added sheet has nowhere to live (asset.sh). Baked opaque as glass: dark green gems.",
+  "effects_note": "MuMain has no render arm for MODEL_BRAVE_*; the green gems are added, see glow_note.",
   "islands": [
     {
       "island": 0,
@@ -274,5 +272,9 @@
         0.538
       ]
     }
-  ]
+  ],
+  "glow": {
+    "Item2002_R": {}
+  },
+  "glow_note": "Item2002_R's `_R` makes TextureScript draw those meshes bright (TextureScript.cpp parsingTScriptA, ZzzBMD.cpp:2238): the green gems added, out of the bake, steady at BlendMeshLight 1 -- MuMain has no arm that moves it (the user, 2026-10-23: 'Glow steadily, as MU')."
 }
