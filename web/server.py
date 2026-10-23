@@ -545,6 +545,15 @@ class Store:
         for day, (peak, at) in peaks.items():
             db.execute("INSERT INTO days VALUES (?, ?, ?)", (day, peak, at))
 
+    def close(self):
+        """This thread's connection closed: a request's thread ends when its connection does, and an
+        unclosed one holds the database, its -wal and -shm until the collector comes, which ran
+        the service out of files (1024) in twelve busy minutes on 2026-10-23."""
+        db = getattr(self.local, "db", None)
+        if db is not None:
+            self.local.db = None
+            db.close()
+
     def db(self) -> sqlite3.Connection:
         db = getattr(self.local, "db", None)
         if db is None:
@@ -1528,6 +1537,12 @@ class Handler(BaseHTTPRequestHandler):
     store: Store = None
     site: Path = None
     downloads: Path = None
+
+    def finish(self):
+        try:
+            super().finish()
+        finally:
+            self.store.close()
 
     def log_message(self, fmt, *args):
         print(f"{self.client()} {fmt % args}", flush=True)

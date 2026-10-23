@@ -172,6 +172,7 @@ def main():
     sh.add_argument("--import-site", action="store_true", help="notes: index.html's lines into the site, once")
     sh.add_argument("--web", help="notes: a local web/server.py (http://127.0.0.1:8090) instead of the box")
     sh.add_argument("--plain", action="store_true", help="notes: one draft a commit, its subject; no claude -p")
+    sh.add_argument("--lang", help="translate: only these languages, comma between (pt,lv)")
 
     k = sub.add_parser("cores", parents=[common])
     k.add_argument("count", nargs="?", type=int)
@@ -340,7 +341,7 @@ def dispatch(args, say):
         if args.action == "switch":
             return ship.switch(say, commit=args.commit, now=args.now)
         if args.action == "translate":
-            return ship.translate(say, web=args.web, dry=args.dry)
+            return ship.translate(say, web=args.web, dry=args.dry, langs=args.lang.split(",") if args.lang else None)
         if args.action == "notes":
             if args.import_site:
                 return ship.import_site(say, web=args.web, since=args.since, dry=args.dry)

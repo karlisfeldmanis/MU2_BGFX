@@ -838,13 +838,13 @@ def translated(language, sources, examples, say):
             for t in out if isinstance(t.get("id"), int) and 0 <= t["id"] < len(sources) and t.get("text")}
 
 
-def translate(say, web=None, dry=False):
+def translate(say, web=None, dry=False, langs=None):
     """Each language's units with no translation, translated and put in (the site keeps only those
     that keep their tags, and only where there is still none)."""
     import shutil
     site = Site(web)
     told = site.get("/internal/untranslated")
-    missing = {lang: units for lang, units in told["missing"].items() if units}
+    missing = {lang: units for lang, units in told["missing"].items() if units and (not langs or lang in langs)}
     if not missing:
         say("every language has every line")
         return True, {"put": 0}
