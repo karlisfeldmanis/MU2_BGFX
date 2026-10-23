@@ -233,6 +233,7 @@ window), rebirth window, signin JSON, bots' `build[4]`, sim_test loops over thre
    action. **Not fixed, on purpose** (the user, 2026-10-23: "if it will break other systems its bad idea"): the table's speeds feed sim::castTicks, and some slots were already corrected by hand. Use his clips by their real numbers.
 2. **Class** -- `Kin::DarkLord`, every switch and clamp, Command (decision 1), creation behind the gate, the character window; sim_test green.
 3. **Primary and gear** -- Force / Force Wave and its effect, scepter stance, the first scepters and Light Plate cooked; he fights in Lorencia.
+   His clips' speeds first: actions.json entries 76-89 only (his and the horse rider's, used by no code), each given its real MU play speed -- Force 0.25 (now 0.3), Earthshake 0.2 (0.3), the horse idles 1.0 (0.2). The rest of the table stays (2026-10-23).
 4. **Skills** -- Fire Burst, Electric Spike, Critical Damage, Summon, Fire Scream: sim then fx, one at a time, judged in game.
 5. **Pets** -- Pet Trainer, Spirits, Dark Horse + Earthshake, Dark Raven + modes, pet levels.
 6. **Rest of the gear** -- Adamantine, Dark Steel, Glorious, Dark Master, Paewang, Cross Shield, the later scepters, Cape of Lord, Crest.
