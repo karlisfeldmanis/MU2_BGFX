@@ -1156,12 +1156,12 @@ void Realm::raiderStrike(Body& one, Body& target, const SkillRow* row) {
     }
     if (row->number == skill::kEvilSpirit) {
         // Evil Spirit as Realm::letSpiritsGo lets it go: round him, each monster within
-        // kSpiritReach taken at kSpiritOdds.
+        // kSpiritSpellReach taken at kSpiritOdds.
         for (const Body& other : bodies_) {
             if (found >= kVictims) break;
             if (!other.monster() || !other.alive()) continue;
             const float dx = other.x - one.x, dy = other.y - one.y;
-            if (dx * dx + dy * dy >= kSpiritReach * kSpiritReach) continue;
+            if (dx * dx + dy * dy >= kSpiritSpellReach * kSpiritSpellReach) continue;
             if (!raiderDice_.nextBool(kSpiritOdds)) continue;
             victims[found++] = other.id;
         }
