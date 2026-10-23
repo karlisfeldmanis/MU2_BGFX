@@ -34,15 +34,16 @@ constexpr float kRow[6] = {kTop,                                            // h
 // The whole width between the window's edges, behind both columns: his wings spread there and the
 // slots stand over their tips. Portrait's figure is 432 by 640, the same shape.
 constexpr Box kFigure{kLeft, 37.0f, 168.0f, 249.0f};
-// Under the hands: the score's words, its figure large ("gear score has to be bigger"), the
-// numbers' well down to the foot's rule with the same air over it as the hands have under them.
-// The words sit close over the figure (the user: "gear score label has to be closer to score").
-constexpr float kScoreWords = kRow[5] + kHandTall + 14.0f;
-constexpr float kScoreFigure = kScoreWords + 18.0f;
-constexpr float kNumbersTop = kScoreFigure + 7.0f;
-// Down to the window's foot, with the side margin under it: no buttons there since the user's
-// "remove footer buttons but show more stats" -- four rows of three.
+// The numbers' well stands on the window's foot, with the side margin under it (no buttons there
+// since the user's "remove footer buttons but show more stats"), its rows as tall as their type
+// wants (the user, 2026-10-23: "to big gaps between stats rows"). Over it the score's figure,
+// large ("gear score has to be bigger"), its words close over it ("gear score label has to be
+// closer to score"); what is left goes between the hands and the words.
 constexpr int kNumberRows = 6, kNumberColumns = 2;
+constexpr float kNumberRow = 14.5f;
+constexpr float kNumbersTop = panel::kHeight - kLeft - (kNumberRow * float(kNumberRows) + 4.0f);
+constexpr float kScoreFigure = kNumbersTop - 9.0f;
+constexpr float kScoreWords = kScoreFigure - 20.0f;
 constexpr Box kNumbers{kLeft, kNumbersTop, panel::kWellRight - kLeft, panel::kHeight - kLeft - kNumbersTop};
 
 // The ghost in an empty slot: the bag's own silhouette, faint, at its own aspect.
@@ -345,7 +346,7 @@ void Inspect::rebuild(const sim::Realm& realm, const sim::Body& who, const sim::
         canvas_.shade({from + words + air, ruleY, reach, std::max(1.0f, u)}, style::kIron, style::kIron & 0x00FFFFFFu,
                       style::kIron & 0x00FFFFFFu, style::kIron);
         const std::string figureText = commas(now_.score);
-        const float size = 32.0f * u;
+        const float size = 36.0f * u;
         const gfx::Face* face = panel::titleFace();
         if (face && bgfx::isValid(panel::titleTexture())) {
             const float wide = face->measure(size, figureText);
