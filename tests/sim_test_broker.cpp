@@ -255,6 +255,18 @@ void testBrokerRealm(const content::Tables& tables) {
     checkEqual(run(fromVault), 1, "taken straight out of the vault");
     check(realm.vault()[cell].empty(), "and the vault cell is clear");
 
+    // Part of a stack (zen's high half): those come off, the rest stays in its cell.
+    const int stackAt = realm.give(bless, -1, 0, 5);
+    sim::Command part{.kind = Kind::BrokerTake};
+    sim::packHeld(realm.satchel()[stackAt], part);
+    part.zen = stackAt | int64_t(2) << 32;
+    checkEqual(run(part), 1, "two of a stack of five are taken");
+    checkEqual(int(realm.satchel()[stackAt].durability), 3, "and three stay in the bag");
+    sim::packHeld(realm.satchel()[stackAt], part);
+    part.zen = stackAt | int64_t(3) << 32;
+    checkEqual(run(part), 1, "as many as the stack holds is the whole of it");
+    check(realm.satchel()[stackAt].empty(), "and the cell is clear");
+
     // A purchase: carried Zen first, then the vault's.
     realm.earn(1000);
     realm.depositZen(500);

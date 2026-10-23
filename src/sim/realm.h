@@ -1196,7 +1196,7 @@ public:
     int brokering() const { return me().brokering; }
     void closeBroker() { me().brokering = -1; }
     bool atBroker(uint32_t id) const;  // player `id` within kCounter of a Broker
-    int brokerTake(int slot, bool fromVault, const Held& expect);
+    int brokerTake(int slot, bool fromVault, const Held& expect, int pieces = 0);
     int brokerBuy(const Held& what, int64_t price, bool intoVault);
     int brokerGive(const Held& what);
     int64_t brokerZen(int64_t zen);

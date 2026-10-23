@@ -281,7 +281,8 @@ void Realm::applyCommands() {
             case Kind::DealZen: answer = dealZen(one.zen) ? 1 : -1; break;
             case Kind::DealAccept: answer = dealAccept(one.a == 1) ? 1 : -1; break;
             case Kind::BrokerTake:
-                answer = brokerTake(int(one.zen & 0xffff), (one.zen & 0x10000) != 0, unpackHeld(one));
+                answer = brokerTake(int(one.zen & 0xffff), (one.zen & 0x10000) != 0, unpackHeld(one),
+                                    int(one.zen >> 32));
                 break;
             case Kind::BrokerBuy:
                 answer = brokerBuy(unpackHeld(one), one.zen, (one.target & 0x80000000u) != 0);

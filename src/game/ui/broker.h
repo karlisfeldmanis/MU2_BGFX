@@ -67,7 +67,7 @@ public:
     enum class Hit : uint8_t {
         None, Close, Tab, Kind, Flag, Clear, Head, Row, Prev, Next, Search, Qty, MostQty, Buy,
         Whisper, Seller, Source, Thing, ThingPrev, ThingNext, Price, Quick, Hours, List,
-        Collect, Lower, Cancel, LowerField, Save, Back, Listing, Category,
+        Collect, Lower, Cancel, LowerField, Save, Back, Listing, Category, Pieces, AllPieces,
     };
     struct Spot {
         gfx::Box box;
@@ -93,6 +93,11 @@ private:
     void gather(Play& play);
     const net::BrokerRow* chosenRow() const;
     int64_t priceTyped() const;
+    // The Sell tab's stack: how many of it go up (1 for what never stacks), and that part of it.
+    bool sellStack(const Play& play) const;
+    int sellPieces(const Play& play) const;
+    sim::Held sellPart(const Play& play) const;
+    void requote(const Play& play);
 
     gfx::Canvas canvas_, tip_;
     Stage* tipStage_ = nullptr;
@@ -125,6 +130,8 @@ private:
     int thingsPage_ = 0;
     int sellSlot_ = -1;  // in the chosen source
     sim::Held sellSeen_;
+    int sellQty_ = 0;           // of a stack, how many go up
+    net::BrokerView quoteEach_;  // the server's quote, a piece's price; quote_ is it for sellQty_
     std::string priceText_;
     int hours_ = 1;  // sim::kBrokerHours[1], 24
     uint32_t editing_ = 0;

@@ -68,6 +68,37 @@ const net::BrokerRow* Broker::chosenRow() const {
 
 int64_t Broker::priceTyped() const { return parsed(priceText_); }
 
+// **Part of a stack goes up** (the user, 2026-10-23: "i cant sell stacked unirias as single
+// item"): the Sell tab asks how many, the whole stack at first, and the server lifts only those.
+bool Broker::sellStack(const Play& play) const {
+    const content::Tables* tables = play.realm().tables();
+    if (!tables || sellSeen_.empty() || size_t(sellSeen_.item) >= tables->items.size()) return false;
+    const content::ItemRow& row = tables->items[size_t(sellSeen_.item)];
+    return sim::stacks(row) && !sim::ammunition(row);
+}
+
+int Broker::sellPieces(const Play& play) const {
+    if (!sellStack(play)) return 1;
+    const int whole = std::max<int>(1, sellSeen_.durability);
+    return sellQty_ > 0 ? std::min(sellQty_, whole) : whole;
+}
+
+sim::Held Broker::sellPart(const Play& play) const {
+    sim::Held part = sellSeen_;
+    if (sellStack(play)) part.durability = int16_t(sellPieces(play));
+    return part;
+}
+
+// The server quotes a piece's price; a part of a stack is priced whole, so its figures are that
+// many times it.
+void Broker::requote(const Play& play) {
+    quote_ = quoteEach_;
+    if (quoteEach_.item != sellSeen_.item || !sellStack(play)) return;
+    const int64_t pieces = sellPieces(play);
+    quote_.cheapest *= pieces;
+    for (sim::Sale& sale : quote_.sales) sale.price *= pieces;
+}
+
 void Broker::ask(Play& play, net::BrokerAsk asked) {
     asked.ask = nextAsk_++;
     const bool moves = asked.what == net::BrokerWhat::List || asked.what == net::BrokerWhat::Buy ||
@@ -103,22 +134,14 @@ void Broker::heard(Play& play, const net::BrokerView& view) {
     }
     if (view.parts & net::BrokerView::Box) mine_.box = view.box;
     if (view.parts & net::BrokerView::Quoted) {
-        quote_ = view;
-        // The server quotes a piece's price; a stack of jewels on the Sell tab is priced whole,
-        // so its figures are that many times it.
-        const content::Tables* tables = play.realm().tables();
-        if (tables && sellSeen_.item == view.item && !sellSeen_.empty() &&
-            size_t(sellSeen_.item) < tables->items.size() && sim::stacks(tables->items[size_t(sellSeen_.item)])) {
-            const int64_t pieces = std::max<int64_t>(1, sellSeen_.durability);
-            quote_.cheapest *= pieces;
-            for (sim::Sale& sale : quote_.sales) sale.price *= pieces;
-        }
+        quoteEach_ = view;
+        requote(play);
         // A price to start from: the cheapest on sale, or what has sold, or four times the NPC's.
         if (priceText_.empty() && sellSeen_.item == view.item && !sellSeen_.empty()) {
             int64_t start = quote_.cheapest;
             if (start <= 0 && !quote_.sales.empty()) start = quote_.sales.front().price;
             if (start <= 0 && play.realm().tables()) {
-                start = 4 * std::max<int64_t>(1, sim::npcValue(*play.realm().tables(), sellSeen_));
+                start = 4 * std::max<int64_t>(1, sim::npcValue(*play.realm().tables(), sellPart(play)));
             }
             priceText_ = std::to_string(start);
         }
@@ -179,13 +202,16 @@ void Broker::gather(Play& play) {
         sellSeen_ = sim::Held{};
     } else if (at != things_.end() && sellSeen_.item != at->what.item) {
         sellSeen_ = at->what;
+        sellQty_ = 0;  // the whole stack
         priceText_.clear();
         net::BrokerAsk asked;
         asked.what = net::BrokerWhat::Quote;
         asked.item = sellSeen_.item;
         ask(play, asked);
     } else if (at != things_.end()) {
+        const bool resized = sellSeen_.durability != at->what.durability;
         sellSeen_ = at->what;
+        if (resized) requote(play);
     }
     const int pages = std::max(1, int((things_.size() + kThingRows - 1) / kThingRows));
     thingsPage_ = std::clamp(thingsPage_, 0, pages - 1);
@@ -271,6 +297,13 @@ void Broker::layout(Play& play) {
             spot({kPrice.x, kPrice.y + 20.0f, kPrice.w, kPrimaryH}, Hit::Price);
             for (int q = 0; q < 3; ++q) spot({kPrice.x + float(q) * (w + kGap), kPrice.y + 50.0f, w, kButtonH}, Hit::Quick, q);
             for (int h = 0; h < 3; ++h) spot({kPrice.x + float(h) * (w + kGap), kPrice.y + 112.0f, w, kButtonH}, Hit::Hours, h);
+            // How many of a stack: less, more, and all of it.
+            if (sellStack(play) && sellSeen_.durability > 1) {
+                spot({kPrice.x, kPrice.y + 160.0f, kButtonH, kButtonH}, Hit::Pieces, -1);
+                spot({kPrice.x + kButtonH + 40.0f, kPrice.y + 160.0f, kButtonH, kButtonH}, Hit::Pieces, 1);
+                const float ax = kPrice.x + 2.0f * kButtonH + 40.0f + kGap;
+                spot({ax, kPrice.y + 160.0f, kPrice.right() - ax, kButtonH}, Hit::AllPieces);
+            }
             spot({kPrice.x, kPrice.bottom() - kPrimaryH, kPrice.w, kPrimaryH}, Hit::List);
         }
     } else {
@@ -289,7 +322,6 @@ void Broker::layout(Play& play) {
             }
         }
     }
-    (void)play;
 }
 
 void Broker::press(Play& play, const Spot& s) {
@@ -444,7 +476,7 @@ void Broker::press(Play& play, const Spot& s) {
         case Hit::ThingPrev: thingsPage_ = std::max(0, thingsPage_ - 1); click(); break;
         case Hit::ThingNext: ++thingsPage_; click(); break;
         case Hit::Quick: {
-            const int64_t npc = realm.tables() && !sellSeen_.empty() ? sim::npcValue(*realm.tables(), sellSeen_) : 0;
+            const int64_t npc = realm.tables() && !sellSeen_.empty() ? sim::npcValue(*realm.tables(), sellPart(play)) : 0;
             const int64_t typical = !quote_.sales.empty() ? quote_.sales.front().price : 4 * std::max<int64_t>(1, npc);
             const int64_t cheapest = quote_.cheapest > 0 ? quote_.cheapest : typical;
             const int64_t v = s.index == 0 ? cheapest : s.index == 1 ? typical : cheapest * 95 / 100;
@@ -453,10 +485,25 @@ void Broker::press(Play& play, const Spot& s) {
             break;
         }
         case Hit::Hours: hours_ = s.index; click(); break;
+        case Hit::Pieces:
+        case Hit::AllPieces: {
+            const int before = sellPieces(play);
+            const int whole = std::max<int>(1, sellSeen_.durability);
+            sellQty_ = s.hit == Hit::AllPieces ? whole : std::clamp(before + s.index, 1, whole);
+            // A price typed for the old count stays the same each.
+            if (const int64_t typed = priceTyped(); typed > 0 && sellQty_ != before) {
+                priceText_ = std::to_string(std::max<int64_t>(1, typed * sellQty_ / before));
+            }
+            requote(play);
+            click();
+            break;
+        }
         case Hit::List:
             if (waiting_ != 0 || sellSeen_.empty()) break;
+            // count: how many of a stack, 0 the whole thing (server/src/broker.cpp piecesOf).
             ask(play, {.what = net::BrokerWhat::List, .fromVault = fromVault_, .slot = sellSlot_, .seen = sellSeen_,
-                       .price = priceTyped(), .hours = uint8_t(sim::kBrokerHours[hours_])});
+                       .price = priceTyped(), .hours = uint8_t(sim::kBrokerHours[hours_]),
+                       .count = sellStack(play) ? sellPieces(play) : 0});
             break;
         case Hit::Collect:
             if (s.index == 1) {  // the bar's pill: to My listings

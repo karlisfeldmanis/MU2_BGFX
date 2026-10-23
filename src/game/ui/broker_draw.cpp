@@ -701,7 +701,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
         } else {
             // The thing in full beside its picture (the user, 2026-10-11): its lines, the market's
             // three figures in one framed strip, and the last sales.
-            float ly = thingCard(sellSeen_, thing.x + in, thing.y + in, thing.w - 2.0f * in, 108.0f,
+            float ly = thingCard(sellPart(play), thing.x + in, thing.y + in, thing.w - 2.0f * in, 108.0f,
                                  fromVault_ ? "From your vault" : "From your bag", thing.bottom() - 100.0f) + 2.0f;
             const bool quoted = quote_.item == sellSeen_.item;
             const int64_t typical = quoted && !quote_.sales.empty() ? quote_.sales.front().price : 0;
@@ -744,7 +744,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
                 button(Hit::Quick, q, quick[q], controls::Kind::Secondary, q == 1 ? typical <= 0 : !(quoted && quote_.cheapest > 0));
             }
             const int64_t asked = priceTyped();
-            const int64_t floor = std::max<int64_t>(1, sim::npcValue(tables, sellSeen_));
+            const int64_t floor = std::max<int64_t>(1, sim::npcValue(tables, sellPart(play)));
             uint32_t guardInk = style::kLive;
             std::string guard;
             if (asked <= 0) {
@@ -769,6 +769,19 @@ void Broker::rebuild(Play& play, Stage* stage) {
                 if (const Spot* s = spotOf(Hit::Hours, h)) {
                     chip(s->box, std::to_string(sim::kBrokerHours[h]) + " hours", h == hours_, state(Hit::Hours, h).lift);
                 }
+            }
+            // How many of the stack go up, the rest left where it lies.
+            if (const Spot* s = spotOf(Hit::Pieces, -1)) {
+                const int pieces = sellPieces(play);
+                controls::kicker(canvas_, x + price.x * k, y + (price.y + 152.0f) * k,
+                                 "How many, of " + std::to_string(sellSeen_.durability), u);
+                controls::square(canvas_, P(s->box), controls::Glyph::Left, state(Hit::Pieces, -1), u);
+                const float cx = s->box.right() + 20.0f;
+                const std::string n = std::to_string(pieces);
+                text(cx - controls::labelWidth(S(kName), n) / k * 0.5f, mid(s->box.y, s->box.h, kName), kName, style::kBoneHi, n);
+                if (const Spot* r = spotOf(Hit::Pieces, 1)) controls::square(canvas_, P(r->box), controls::Glyph::Right, state(Hit::Pieces, 1), u);
+                button(Hit::AllPieces, 0, "All " + std::to_string(sellSeen_.durability), controls::Kind::Secondary,
+                       pieces >= sellSeen_.durability);
             }
             // What listing it means, line by line over the button.
             hair(price.x, price.bottom() - 78.0f, price.w, style::kIronDk);
