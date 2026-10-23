@@ -158,7 +158,10 @@ constexpr SkillRow kRows[kSkills] = {
     // **The knight's cooldown blow: 3.0 and not 2.1, and its 8.5 s kept** (the user, 2026-10-02:
     // "ragefull blow will be cooldown spell with some multiplier"). Ours: the hardest blow in
     // the table, paid for by the longest wait.
-    {skill::kRagefulBlow, "Rageful Blow", 25, 1.0f, 3.0f, 1.0f / 900.0f, 170, false, Spread::Arc,
+    // **Three tiles and not one** (the user, 2026-10-23, on a player's "raging blow nestrādā tieši
+    // iekš tarkan un atlantis"): the live log's refusals in Tarkan stood 1.3 to 2.2 tiles out, past
+    // a reach of one, so the arc his own description promises -- three tiles ahead -- held nobody.
+    {skill::kRagefulBlow, "Rageful Blow", 25, 3.0f, 3.0f, 1.0f / 900.0f, 170, false, Spread::Arc,
      0, 1.0f,
      "The weapon driven down into the ground, and what it breaks is the three tiles ahead of "
      "him.",
