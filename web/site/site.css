@@ -391,15 +391,55 @@ html:is([lang="ru"], [lang="vi"]) :is(.h2, .hero h1, .tile h3, .tile-beta .big, 
 }
 html:is([lang="ru"], [lang="vi"]) :is(.acct-stat b, .acct-region-head b, .acct-who b, .acct-level b, .acct-box h2) { font-family: 'Alegreya SC', serif; }
 
-/* The Privacy and Contact pages: one column of text */
-.text-page { max-width: 720px; }
-.text-page h2 { margin: 32px 0 8px; font: 700 15px/1.3 'Alegreya Sans SC', sans-serif; letter-spacing: .08em; color: var(--label); }
-.text-page p, .text-page ul { margin: 0 0 12px; }
-.text-page ul { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+/* The text pages (Privacy, Contact, Mac, Linux): a header with a rule under it, then panels */
+.text-main { padding: 56px 0 72px; }
+.account-page .wrap.text-page { max-width: 760px; gap: 14px; }
+.tp-head { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 18px; text-align: center; }
+.tp-head .page-title { margin: 0; font-size: clamp(30px, 5vw, 40px); }
+.tp-head .page-title::after { content: ""; display: block; width: 132px; height: 10px; margin: 16px auto 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='132' height='10'%3E%3Cdefs%3E%3ClinearGradient id='l'%3E%3Cstop offset='0' stop-color='%236E5640' stop-opacity='0'/%3E%3Cstop offset='1' stop-color='%236E5640'/%3E%3C/linearGradient%3E%3ClinearGradient id='r'%3E%3Cstop offset='0' stop-color='%236E5640'/%3E%3Cstop offset='1' stop-color='%236E5640' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='0' y='4.5' width='56' height='1' fill='url(%23l)'/%3E%3Crect x='76' y='4.5' width='56' height='1' fill='url(%23r)'/%3E%3Crect x='62' y='1' width='8' height='8' fill='none' stroke='%23A88A6E' transform='rotate(45 66 5)'/%3E%3C/svg%3E") no-repeat; }
+.tp-lead { margin: 0; max-width: 600px; font-size: 18.5px; line-height: 1.55; color: var(--label); }
+.tp-date { margin: 0; font: 700 12px/1.6 'Alegreya Sans SC', sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--quiet); }
+.text-page p, .text-page ul { margin: 0; }
+.text-page p, .text-page li { font-size: 16.5px; line-height: 1.65; color: var(--label); }
 .text-page b { color: var(--bone-hi); font-weight: 500; }
-/* The Mac and Linux pages: a shot under the opening, and the install line to copy */
-.platform-shot { display: block; width: 100%; height: auto; margin: 20px 0 4px; border-radius: 6px; }
-.text-page code.line { display: block; margin: 0 0 12px; padding: 12px 14px; border-radius: 4px; background: rgba(243,232,212,.06);
-  color: var(--bone-hi); font: 14px/1.5 ui-monospace, Menlo, monospace; word-break: break-all; user-select: all; }
+.text-page a { color: #E2BC8E; text-underline-offset: 3px; text-decoration-color: rgba(226,188,142,.45); transition: color .15s; }
+.text-page a:hover { color: var(--bone-hi); text-decoration-color: currentColor; }
+.text-page ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.text-page li { position: relative; padding-left: 20px; }
+.text-page li::before { content: ""; position: absolute; left: 3px; top: .72em; width: 5px; height: 5px; background: #A88A6E; transform: rotate(45deg); }
+.tp-card { display: flex; flex-direction: column; gap: 12px; padding: 24px 28px 26px; border: 1px solid #2A211A; border-radius: 8px;
+  background: linear-gradient(180deg, rgba(243,232,212,.025), rgba(243,232,212,0) 60%), #0E0A08; }
+.tp-card h2, .faq h2 { display: flex; align-items: center; gap: 10px; margin: 0; font: 700 19px/1.3 Cinzel, serif; letter-spacing: .03em; color: var(--bone-hi); }
+.tp-icon { flex: none; color: #C9A27E; }
+.tp-key { border-color: #4A3828; box-shadow: 0 0 0 1px rgba(201,162,126,.08), 0 18px 40px -24px rgba(201,162,126,.35); }
+.tp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.platform-shot { display: block; width: 100%; max-width: 100%; height: auto; margin: 4px 0; border-radius: 8px; border: 1px solid #2A211A; }
+.text-page code.line { display: block; padding: 12px 14px; border: 1px solid #2E241D; border-radius: 6px; background: #070504;
+  color: var(--bone-hi); font: 14px/1.55 ui-monospace, Menlo, monospace; word-break: break-all; user-select: all; }
+.tp-grid .tp-card h2 { font-size: 17px; }
 .req-more { margin-top: auto; font-size: 15px; color: var(--label); text-decoration: underline; }
+.tp-more { margin-top: 10px !important; text-align: center; font-size: 15.5px !important; }
+/* A page's questions: each one a row that opens */
+.faq { display: flex; flex-direction: column; gap: 14px; margin-top: 18px; }
+.faq h2 { justify-content: center; }
+.faq-list { border: 1px solid #2A211A; border-radius: 8px; background: #0E0A08; overflow: hidden; }
+.faq-item + .faq-item { box-shadow: inset 0 1px 0 #2A211A; }
+.faq-item summary { display: flex; align-items: center; gap: 14px; padding: 17px 24px; cursor: pointer; list-style: none; user-select: none;
+  font-weight: 500; font-size: 17px; color: var(--bone); transition: color .15s, background .15s; }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after { content: ""; flex: none; width: 7px; height: 7px; margin-left: auto; border: solid #A88A6E; border-width: 0 2px 2px 0;
+  transform: rotate(45deg) translateY(-2px); transition: transform .18s ease; }
+.faq-item[open] summary::after { transform: rotate(-135deg) translate(-2px, -1px); }
+.faq-item summary:hover { color: var(--bone-hi); background: rgba(243,232,212,.025); }
+.faq-item summary:focus-visible { outline: 1px solid var(--field-focus); outline-offset: -3px; }
+.faq-item[open] summary { color: var(--bone-hi); }
+.faq-item > p { padding: 0 24px 20px; }
+@media (max-width: 640px) {
+  .text-main { padding: 40px 0 56px; }
+  .tp-grid { grid-template-columns: 1fr; }
+  .tp-card { padding: 20px 20px 22px; }
+  .faq-item summary { padding: 15px 18px; }
+  .faq-item > p { padding: 0 18px 18px; }
+}
 .signed-note { text-align: center; font-size: 16px; color: var(--label); }

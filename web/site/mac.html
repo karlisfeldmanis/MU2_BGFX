@@ -31,21 +31,28 @@
 <a href="/" style="font-weight: 500">Home</a>
 </div>
 
-<main class="account-page">
+<main class="account-page text-main">
 <div class="wrap text-page">
+<header class="tp-head">
 <h1 class="page-title">MU Online on Mac</h1>
-<p>MU Classic is classic MU Online, remastered, and it runs natively on Macs with Apple silicon. No Wine, no CrossOver, no Parallels: the game is built for macOS and draws with Metal.</p>
+<p class="tp-lead">MU Classic is classic MU Online, remastered, and it runs natively on Macs with Apple silicon. No Wine, no CrossOver, no Parallels: the game is built for macOS and draws with Metal.</p>
+</header>
 <img class="platform-shot" src="/shots/lorencia-tavern-960.webp" alt="MU Classic on a Mac: players gathered in the tavern in Lorencia" width="960" height="540" loading="lazy">
 
+<section class="tp-card tp-key">
 <h2>Install in one line</h2>
 <p>Open <b>Terminal</b> (in Applications, then Utilities), paste this line and press Return:</p>
 <code class="line" translate="no">curl -fsSL https://mu-classic.com/downloads/install-macos.sh | sh</code>
 <p>It puts the MU Classic launcher in the Applications folder of your home folder and opens it. Sign in, and the launcher downloads the game and keeps it up to date each time you start it. Nothing asks for your password.</p>
 <p>No account yet? <a href="/#account" style="text-decoration: underline">Make one on the front page</a>. It's free.</p>
+</section>
 
+<section class="tp-card">
 <h2>Why a Terminal line and not a download</h2>
 <p>The launcher isn't signed by Apple yet, so macOS holds back an app downloaded in the browser. Fetched from Terminal, it opens straight away.</p>
+</section>
 
+<section class="tp-card">
 <h2>System requirements</h2>
 <ul>
 <li>macOS 14 Sonoma or newer</li>
@@ -53,15 +60,35 @@
 <li>8 GB of memory and 2 GB free</li>
 <li>An internet connection: the game is played online</li>
 </ul>
+</section>
 
-<h2>Questions</h2>
-<p><b>Does it run on an Intel Mac?</b> Not yet: the game is built for Apple silicon only.</p>
-<p><b>Is it the same game as on Windows?</b> Yes. Players on Mac, Windows and Linux play in the same worlds, together.</p>
-<p><b>Is it free?</b> Yes, the open beta is free to play.</p>
-<p><b>Is MU Classic a private server?</b> No. It's a complete remaster: a new engine, client and server, written from scratch. Classic MU's worlds, monsters and items are its foundation, with reworked skills, new systems and modern graphics.</p>
-<p><b>How do I remove it?</b> Delete <span translate="no">MU2Launcher</span> from the Applications folder in your home folder, and the game's folder <span translate="no">~/Library/Application Support/MU2</span>.</p>
+<section class="faq" aria-labelledby="faq-title">
+<h2 id="faq-title">Questions</h2>
+<div class="faq-list">
+<details class="faq-item">
+<summary>Does it run on an Intel Mac?</summary>
+<p>Not yet: the game is built for Apple silicon only.</p>
+</details>
+<details class="faq-item">
+<summary>Is it the same game as on Windows?</summary>
+<p>Yes. Players on Mac, Windows and Linux play in the same worlds, together.</p>
+</details>
+<details class="faq-item">
+<summary>Is it free?</summary>
+<p>Yes, the open beta is free to play.</p>
+</details>
+<details class="faq-item">
+<summary>Is MU Classic a private server?</summary>
+<p>No. It's a complete remaster: a new engine, client and server, written from scratch. Classic MU's worlds, monsters and items are its foundation, with reworked skills, new systems and modern graphics.</p>
+</details>
+<details class="faq-item">
+<summary>How do I remove it?</summary>
+<p>Delete <span translate="no">MU2Launcher</span> from the Applications folder in your home folder, and the game's folder <span translate="no">~/Library/Application Support/MU2</span>.</p>
+</details>
+</div>
+</section>
 
-<p>Also on <a href="/linux" style="text-decoration: underline">Linux</a> and Windows. <a href="/" style="text-decoration: underline">See what's new in MU Classic</a>.</p>
+<p class="tp-more">Also on <a href="/linux" style="text-decoration: underline">Linux</a> and Windows. <a href="/" style="text-decoration: underline">See what's new in MU Classic</a>.</p>
 </div>
 </main>
 

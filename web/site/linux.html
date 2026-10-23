@@ -31,18 +31,23 @@
 <a href="/" style="font-weight: 500">Home</a>
 </div>
 
-<main class="account-page">
+<main class="account-page text-main">
 <div class="wrap text-page">
+<header class="tp-head">
 <h1 class="page-title">MU Online on Linux</h1>
-<p>MU Classic is classic MU Online, remastered, with a native Linux build. No Wine, no Proton, no Lutris: the game is built for Linux and draws with Vulkan, on X11 or Wayland.</p>
+<p class="tp-lead">MU Classic is classic MU Online, remastered, with a native Linux build. No Wine, no Proton, no Lutris: the game is built for Linux and draws with Vulkan, on X11 or Wayland.</p>
+</header>
 <img class="platform-shot" src="/shots/devias-960.webp" alt="MU Classic on Linux: a hunt in the snow of Devias" width="960" height="540" loading="lazy">
 
+<section class="tp-card tp-key">
 <h2>Install in one line</h2>
 <p>Open a terminal, paste this line and press Enter:</p>
 <code class="line" translate="no">curl -fsSL https://mu-classic.com/downloads/install-linux.sh | sh</code>
 <p>It needs no root. The launcher goes in your home folder, with a MU Classic entry in your applications menu and a <span translate="no">mu2-launcher</span> command. Sign in, and the launcher downloads the game and keeps it up to date each time you start it.</p>
 <p>No account yet? <a href="/#account" style="text-decoration: underline">Make one on the front page</a>. It's free.</p>
+</section>
 
+<section class="tp-card">
 <h2>System requirements</h2>
 <ul>
 <li>A 64-bit PC (x86_64) with glibc 2.35 or newer: Ubuntu 22.04, Debian 12, Fedora 36, Linux Mint 21, Arch or newer</li>
@@ -51,7 +56,9 @@
 <li>8 GB of memory and 2 GB free</li>
 <li>An internet connection: the game is played online</li>
 </ul>
+</section>
 
+<section class="tp-card">
 <h2>If the game doesn't start: Vulkan</h2>
 <p>The installer warns you when it finds no Vulkan. Install your distribution's packages:</p>
 <ul>
@@ -59,14 +66,31 @@
 <li>Fedora: <span translate="no">vulkan-loader mesa-vulkan-drivers</span></li>
 <li>Arch: <span translate="no">vulkan-icd-loader</span> and <span translate="no">vulkan-radeon</span>, <span translate="no">vulkan-intel</span> or <span translate="no">nvidia-utils</span> for your card</li>
 </ul>
+</section>
 
-<h2>Questions</h2>
-<p><b>Is it the same game as on Windows?</b> Yes. Players on Linux, Windows and Mac play in the same worlds, together.</p>
-<p><b>Is it free?</b> Yes, the open beta is free to play.</p>
-<p><b>Is MU Classic a private server?</b> No. It's a complete remaster: a new engine, client and server, written from scratch. Classic MU's worlds, monsters and items are its foundation, with reworked skills, new systems and modern graphics.</p>
-<p><b>How do I remove it?</b> Delete the folder <span translate="no">~/.local/share/MU2</span>, the command <span translate="no">~/.local/bin/mu2-launcher</span> and the menu entry <span translate="no">~/.local/share/applications/mu-classic.desktop</span>.</p>
+<section class="faq" aria-labelledby="faq-title">
+<h2 id="faq-title">Questions</h2>
+<div class="faq-list">
+<details class="faq-item">
+<summary>Is it the same game as on Windows?</summary>
+<p>Yes. Players on Linux, Windows and Mac play in the same worlds, together.</p>
+</details>
+<details class="faq-item">
+<summary>Is it free?</summary>
+<p>Yes, the open beta is free to play.</p>
+</details>
+<details class="faq-item">
+<summary>Is MU Classic a private server?</summary>
+<p>No. It's a complete remaster: a new engine, client and server, written from scratch. Classic MU's worlds, monsters and items are its foundation, with reworked skills, new systems and modern graphics.</p>
+</details>
+<details class="faq-item">
+<summary>How do I remove it?</summary>
+<p>Delete the folder <span translate="no">~/.local/share/MU2</span>, the command <span translate="no">~/.local/bin/mu2-launcher</span> and the menu entry <span translate="no">~/.local/share/applications/mu-classic.desktop</span>.</p>
+</details>
+</div>
+</section>
 
-<p>Also on <a href="/mac" style="text-decoration: underline">Mac</a> and Windows. <a href="/" style="text-decoration: underline">See what's new in MU Classic</a>.</p>
+<p class="tp-more">Also on <a href="/mac" style="text-decoration: underline">Mac</a> and Windows. <a href="/" style="text-decoration: underline">See what's new in MU Classic</a>.</p>
 </div>
 </main>
 
