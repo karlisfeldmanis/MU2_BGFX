@@ -1,4 +1,4 @@
-$input v_texcoord0, v_colour, v_material
+$input v_texcoord0, v_colour, v_material, v_wpos
 
 // The multisampled twin: same body, reading one sample of the prepass for a soft sprite's
 // depth (gfx::Effects::setPrepass).

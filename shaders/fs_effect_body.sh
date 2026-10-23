@@ -36,6 +36,9 @@
 // Choosing a sheet and a kind by a varying is safe here: both are the same at all four corners
 // of a quad, and a 2x2 block of pixels never spans two triangles, so the branch is uniform
 // wherever a texture read takes its derivatives.
+// The abyss's level map on a stage the sheets leave free: a soft sprite asks how dark the
+// chasm has made what stands in front of it (softness, below).
+#define MU2_ABYSS 12
 #include "common.sh"
 
 // s_albedo (stage 0, from common.sh) is slot 0; the other six take stages common.sh leaves
@@ -48,13 +51,14 @@ SAMPLER2D(s_sheet5, 14);
 SAMPLER2D(s_sheet6, 15);
 
 uniform vec4 u_flame;  // x: how bright full heat is  yzw: unused
+uniform vec4 u_effectEye;  // xyz: the camera, world metres (gfx::Effects::setEye)
 
 // A soft sprite (gfx::Sprite::soft) thins to nothing as it nears what stands behind it, and
 // goes over the last metre behind what stands in front, so a big cloud passing through the
 // ground or behind the lip fades there instead of ending on a cut line (the user, 2026-10-23:
 // "vissible lines"). The kind's whole number above 8 carries the reach in quarter metres; `depth` is
 // the fragment's own view depth. A pixel the prepass left clear (the void) is infinitely far.
-float softness(float code, vec2 pixel, float depth)
+float softness(float code, vec2 pixel, float depth, vec3 wpos)
 {
 	float quarters = floor(code / 8.0);
 	if (quarters < 0.5) return 1.0;
@@ -62,18 +66,29 @@ float softness(float code, vec2 pixel, float depth)
 	//
 	// What stands in FRONT of it hides it, gone a metre and a half behind: the pass tests no
 	// depth for a soft sprite (gfx::Effects), so this is its occlusion. Read on the pixel and
-	// four 2.5 pixels round it, the farthest of them, the void (left clear) infinitely far: the
+	// four 1.5 pixels round it, the farthest of them, the void (left clear) infinitely far: the
 	// lip's last strip bending into the chasm and a silhouette's resolved depth (Metal) are a
 	// pixel or two wide and would otherwise draw a dark line along the lip.
 	float near = 0.0;
 	for (int i = 0; i < 5; ++i)
 	{
-		vec2 off = i == 0 ? vec2(0.0, 0.0) : i == 1 ? vec2(2.5, 0.0) : i == 2 ? vec2(-2.5, 0.0)
-		         : i == 3 ? vec2(0.0, 2.5) : vec2(0.0, -2.5);
+		vec2 off = i == 0 ? vec2(0.0, 0.0) : i == 1 ? vec2(1.5, 0.0) : i == 2 ? vec2(-1.5, 0.0)
+		         : i == 3 ? vec2(0.0, 1.5) : vec2(0.0, -1.5);
 		float at = prepassAt((pixel + off) * u_viewTexel.xy).a;
 		near = max(near, at <= 0.0 ? 1.0e4 : at);
 	}
 	float shown = smoothstep(-1.5, 0.0, near - depth);
+	// Unless the chasm has blacked it out: a hanging cliff face deep under the lip is drawn as
+	// black as the void beside it (abyss() in common.sh), and the mist passing behind it showed
+	// its jagged outline (the user, 2026-10-23: "vissible plate"). It stands on the same view
+	// ray, at `near` where this fragment is at `depth`, and as dark as the abyss makes it there,
+	// that much does it stop hiding the mist.
+	if (shown < 1.0 && u_abyss.y > 0.0)
+	{
+		vec3 at = u_effectEye.xyz + (wpos - u_effectEye.xyz) * (near / max(depth, 1.0e-3));
+		float level = texture2D(s_abyss, vec2(at.x, -at.z) * u_abyss.z + u_abyss.w).r;
+		shown = mix(shown, 1.0, smoothstep(u_abyss.x, u_abyss.x + u_abyss.y, level - at.y));
+	}
 	// What stands BEHIND it thins it, full its reach in front, so a sprite passing through the
 	// ground ends on no line. On the pixel alone: averaged round it, the plate of MU's ground
 	// ending over the void came out as a stack of parallel edges.
@@ -231,5 +246,5 @@ void main()
 	else if (kind < 3.5) gl_FragColor = smoke(slot, v_texcoord0, v_colour);
 	else if (kind < 4.5) gl_FragColor = dust(slot, v_texcoord0, v_colour);
 	else                 gl_FragColor = breath(slot, v_texcoord0, v_colour);
-	gl_FragColor *= softness(code, gl_FragCoord.xy, v_material.z);
+	gl_FragColor *= softness(code, gl_FragCoord.xy, v_material.z, v_wpos);
 }

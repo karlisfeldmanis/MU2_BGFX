@@ -107,6 +107,16 @@ public:
     void setFlameStrength(float strength) { flame_[0] = strength; }
     // The prepass a soft sprite reads its depth from, this frame: its texture, whether it is
     // read one sample at a time, and its size in pixels.
+    // The chasm's level map and its layout (content::Ground::abyss, u_abyss), or an invalid
+    // texture where there is none, and the camera: a soft sprite is not hidden by what the
+    // abyss has blacked out (fs_effect_body.sh).
+    void setAbyss(bgfx::TextureHandle texture, const float params[4]) {
+        abyss_ = texture;
+        for (int i = 0; i < 4; ++i) abyssParams_[i] = bgfx::isValid(texture) ? params[i] : 0.0f;
+    }
+    void setEye(const float eye[3]) {
+        for (int i = 0; i < 3; ++i) eye_[i] = eye[i];
+    }
     void setPrepass(bgfx::TextureHandle texture, bool multisampled, float width, float height) {
         prepass_ = texture;
         prepassMs_ = multisampled;
@@ -144,6 +154,12 @@ private:
     bgfx::UniformHandle uPrepassSize_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle prepass_ = BGFX_INVALID_HANDLE;
     bool prepassMs_ = false;
+    bgfx::TextureHandle abyss_ = BGFX_INVALID_HANDLE;
+    float abyssParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    float eye_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    bgfx::UniformHandle sAbyss_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uAbyss_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uEye_ = BGFX_INVALID_HANDLE;
     float prepassSize_[4] = {1.0f, 1.0f, 0.0f, 0.0f};
     bgfx::UniformHandle sSheet_[kSheetSlots] = {BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE,
                                                 BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE,

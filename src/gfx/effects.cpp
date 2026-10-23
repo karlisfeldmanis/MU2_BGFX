@@ -73,6 +73,9 @@ bool Effects::init(const std::string& shaderDir, uint32_t capacity) {
     programMs_ = loadProgramFiles(shaderDir, "vs_effect", "fs_effect_ms");
     sPrepass_ = bgfx::createUniform("s_prepass", bgfx::UniformType::Sampler);
     uPrepassSize_ = bgfx::createUniform("u_prepassSize", bgfx::UniformType::Vec4);
+    sAbyss_ = bgfx::createUniform("s_abyss", bgfx::UniformType::Sampler);
+    uAbyss_ = bgfx::createUniform("u_abyss", bgfx::UniformType::Vec4);
+    uEye_ = bgfx::createUniform("u_effectEye", bgfx::UniformType::Vec4);
     layout_.begin()
         .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
         .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
@@ -103,6 +106,10 @@ void Effects::shutdown() {
     if (bgfx::isValid(programMs_)) bgfx::destroy(programMs_);
     if (bgfx::isValid(sPrepass_)) bgfx::destroy(sPrepass_);
     if (bgfx::isValid(uPrepassSize_)) bgfx::destroy(uPrepassSize_);
+    for (bgfx::UniformHandle* u : {&sAbyss_, &uAbyss_, &uEye_}) {
+        if (bgfx::isValid(*u)) bgfx::destroy(*u);
+        *u = BGFX_INVALID_HANDLE;
+    }
     programMs_ = BGFX_INVALID_HANDLE;
     sPrepass_ = BGFX_INVALID_HANDLE;
     uPrepassSize_ = BGFX_INVALID_HANDLE;
@@ -347,6 +354,10 @@ void Effects::draw(uint16_t view, const float* viewMtx, const float* projMtx, co
             bgfx::setTexture(6, sPrepass_, prepass_);
             bgfx::setUniform(uPrepassSize_, prepassSize_);
         }
+        bgfx::setUniform(uAbyss_, abyssParams_);
+        bgfx::setUniform(uEye_, eye_);
+        if (bgfx::isValid(abyss_))
+            bgfx::setTexture(12, sAbyss_, abyss_, BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
         bgfx::submit(view, prepassMs_ && bgfx::isValid(programMs_) ? programMs_ : program_);
         ++drawCount_;
         runStart = run.end;

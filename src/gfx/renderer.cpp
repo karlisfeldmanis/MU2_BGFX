@@ -1318,6 +1318,8 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     effects_.setFlameStrength(lighting.flameStrength);
     // A soft sprite's depth is the prepass's, read as the SSAO reads it (one sample when it is
     // multisampled, the resolve on Metal).
+    effects_.setAbyss(abyss_, abyssParams_);
+    effects_.setEye(camera.position);
     effects_.setPrepass(prepassColour_, msaa_ > 1 && bgfx::getRendererType() != bgfx::RendererType::Metal,
                         float(width_), float(height_));
     effects_.draw(ViewTransparent, view, proj, camera.position);
