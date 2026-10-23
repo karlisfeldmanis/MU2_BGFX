@@ -65,6 +65,10 @@ void WaterfallSpray::open(const std::string& assetDir, const std::string& world,
         if (one.model != content::TownEmitter::kWorld) continue;
         const int k = int(one.kind) - int(content::EmitterKind::SprayDrops);
         if (k < 0 || k > 2) continue;
+        // The foot mist left out where the show says (Kanturu): a cloud set down in a steep,
+        // bumpy pool, its fade against the ground and the rocks came out in grey steps however
+        // it was softened (the user, 2026-10-23: "pixelated effect on water smoke", "still there").
+        if (k == 2 && !worldShow(world).sprayMist) continue;
         Box box;
         box.kind = Kind(k);
         for (int i = 0; i < 3; ++i) box.at[i] = one.at[i];

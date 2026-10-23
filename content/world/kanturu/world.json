@@ -138,7 +138,8 @@
   "show": {
     "waterfall_spray": {
       "note": "Its falls' drops, spray and mist from Object82-84 (game/world/waterfall_spray.h).",
-      "burst_scale": 0.35
+      "burst_scale": 0.35,
+      "mist": false
     },
     "boids": {
       "model": "Butterfly01",
@@ -249,22 +250,44 @@
       "name": "Baz The Vault Keeper",
       "figure": "Storage01",
       "at": [
-        23,
-        215
+        38,
+        211
       ],
       "look": 3,
-      "note": "Ours: the camp vault, as Tarkan, Atlans, the Lost Tower and Aida have one (the user, 2026-10-23: lets add kunturu npcs, then Both). MU and OpenMU stand nobody in the Ruins (VersionSeasonSix/Maps/KanturuRuins.cs has no CreateNpcSpawns). In the camp safe zone 4 tiles up the slope from the arrival (20,218), two tiles clear of every object, off gate boxes 126 and 127, facing the camera."
+      "note": "Ours: the camp vault, as Tarkan, Atlans, the Lost Tower and Aida have one (the user, 2026-10-23: lets add kunturu npcs, then Both; then find better locations for them). MU and OpenMU stand nobody in the Ruins. On the camp's cobbled plaza between its two brazier pairs, west of Elpis, facing the camera."
     },
     {
       "npc": 253,
       "name": "Potion Girl Amy",
       "figure": "PotionGirlAmy",
       "at": [
-        25,
-        212
+        46,
+        211
       ],
       "look": 3,
-      "note": "Ours: the camp potion seller beside Baz, as the other hunting maps camps have her (2026-10-23)."
+      "note": "Ours: the camp potion seller, east of Elpis on the plaza, facing the camera (2026-10-23)."
+    },
+    {
+      "npc": 368,
+      "name": "Elpis",
+      "figure": "Elpis",
+      "at": [
+        42,
+        213
+      ],
+      "look": 2,
+      "note": "MU's Elpis (368), the Refinery Tower's keeper (OpenMU KanturuEvent.cs:51, 77,177 in map 39), stood here in the Ruins camp because the Tower is not playable (the user, 2026-10-23: find better locations for them): the plaza's centrepiece between its brazier pairs, facing South-West toward the Tarkan door. Her refining is not built."
+    },
+    {
+      "npc": 367,
+      "name": "Gateway Machine",
+      "figure": "GatewayMachine",
+      "at": [
+        25,
+        205
+      ],
+      "look": 3,
+      "note": "MU's Gateway Machine (367), which stands in the Relics (OpenMU KanturuRelics.cs:46, 141,191), stood in the Ruins camp because the Relics are not playable (the user, 2026-10-23: find better locations for them): on the open ground north of the camp, 6.5 tiles from any object, a landmark facing the camera. First tried behind the Relics door (91,90), where it stood out over the chasm and could not be seen. The tower event it opens is not built."
     }
   ]
 }
