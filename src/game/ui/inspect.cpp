@@ -46,7 +46,7 @@ constexpr int kNumberRows = 6, kNumberColumns = 2;
 constexpr Box kNumbers{kLeft, kNumbersTop, panel::kWellRight - kLeft, panel::kHeight - kLeft - kNumbersTop};
 
 // The ghost in an empty slot: the bag's own silhouette, faint, at its own aspect.
-constexpr uint32_t kGhostInk = gfx::rgba(0.90f, 0.86f, 0.76f, 0.17f);
+constexpr uint32_t kGhostInk = gfx::rgba(0.90f, 0.86f, 0.76f, 0.22f);
 Box ghostIn(const Box& cell, const gfx::Art& art) {
     const Box room = cell.grown(-std::min(5.0f, 0.12f * std::min(cell.w, cell.h)));
     const float s = std::min(room.w / art.width, room.h / art.height) * 0.8f;
@@ -325,14 +325,14 @@ void Inspect::rebuild(const sim::Realm& realm, const sim::Body& who, const sim::
         if (held.empty() || held.refinement <= 0) continue;
         const Box b = panel::scaled(x, y, slotBox(slot));
         const std::string plus = "+" + std::to_string(held.refinement);
-        const float size = 9.5f * u;
+        const float size = 10.5f * u;
         controls::ranged(canvas_, b.right() - 3.0f * u, b.bottom() - 3.0f * u, size,
                          tip::colourOf(qualityOf(tables.items[size_t(held.item)], held)), plus);
     }
 
     // **The gear score at his feet**, in its rung's colour, as the bag's head prints his own.
     {
-        const float small = 9.0f * u;
+        const float small = 10.0f * u;
         const float words = controls::capsWidth(small, "GEAR SCORE");
         const float from = std::round(x + (panel::kWidth * k - words) * 0.5f);
         controls::caps(canvas_, from, std::round(y + kScoreWords * k), small, style::kAshInk, "GEAR SCORE");
@@ -378,15 +378,17 @@ void Inspect::rebuild(const sim::Realm& realm, const sim::Body& who, const sim::
         canvas_.rect(panel::scaled(x, y, {kNumbers.x + inset + cellW - 0.25f, kNumbers.y + inset, 0.5f,
                                           kNumbers.h - 2.0f * inset}),
                      style::kIronLo);
-        const float pad = 7.0f;
+        // The labels near their figures' size (the user, 2026-10-23: "work on styling and fontsizes"):
+        // 8-unit capitals read as specks beside 12-unit figures.
+        const float pad = 6.0f, words = 9.5f * u, track = 0.08f;
         for (int i = 0; i < kNumberColumns * kNumberRows; ++i) {
             const float cx = kNumbers.x + inset + cellW * float(i % kNumberColumns);
             const float cy = kNumbers.y + inset + cellH * float(i / kNumberColumns);
             const float baseline = std::round(y + (cy + cellH * 0.5f + 3.5f) * k);
-            controls::caps(canvas_, std::round(x + (cx + pad) * k), baseline, 8.0f * u, style::kAshInk, now_.labels[i],
-                           0.06f);
-            float size = 12.0f * u;
-            const float room = cellW - 2.0f * pad - controls::capsWidth(8.0f * u, now_.labels[i], 0.06f) / k - 4.0f;
+            controls::caps(canvas_, std::round(x + (cx + pad) * k), baseline, words, style::kAshInk, now_.labels[i],
+                           track);
+            float size = 12.5f * u;
+            const float room = cellW - 2.0f * pad - controls::capsWidth(words, now_.labels[i], track) / k - 4.0f;
             while (size > 7.5f * u && controls::labelWidth(size, now_.values[i]) > room * k) size -= 0.5f * u;
             controls::ranged(canvas_, std::round(x + (cx + cellW - pad) * k), baseline, size,
                              now_.raised[i] ? panel::kOptioned : style::kBoneHi, now_.values[i]);
