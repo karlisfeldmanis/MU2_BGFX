@@ -53,7 +53,11 @@
       "value": [[78, 106]],
       "note": "From the safe hall (spawn gate 137). The maze is one region of 4,454 tiles; the 75 stray open tiles on rows 250-251 become void. Ours."
     },
-    "flat_over_void": true
+    "flat_over_void": true,
+    "airs_from": {
+      "value": "bloodcastle",
+      "note": "The crows (show.boids) are Blood Castle's Crow01, built in its folder (the user, 2026-10-23: \"also maybe same birds which we had on BC\")."
+    }
   },
   "npcs": [
     {
@@ -78,5 +82,26 @@
     "floors": false,
     "move_order": 12,
     "note": "Kanturu Relics, MU's map 38, entered from the Ruins' door (gates 129/131). arrive is the middle of spawn gate 137's box, the safe hall (OpenMU VersionSeasonSix Gates.cs:283), where a death in the Relics stands up too (OM's spawn gate; WZ's 139 lies inside the same hall). The Town Portal goes to Tarkan's town (home 8), as the Ruins'. Last on the M key's walk (12), so no other map's order moves. No drops yet: no breed stands here."
+  },
+  "show": {
+    "void_clouds": {
+      "colour": [
+        0.3,
+        0.32,
+        0.38
+      ],
+      "note": "Big slow clouds drifting through the void round the maze, in Blood Castle's cold grey, which suits the Relics' lab light (game/world/void_clouds.h). In place of cliffs (the user, 2026-10-23: \"lets not use cliffs at all, but use clouds which we used for other maps to fill balck voids\")."
+    },
+    "boids": {
+      "model": "Crow01",
+      "call": [
+        "boid_crow",
+        ""
+      ],
+      "call_every": 128.0,
+      "call_rolls": 1,
+      "calls_over_safe": true,
+      "note": "Blood Castle's crows (MODEL_CROW, GOBoid.cpp:1342-1345; SOUND_CROW a frame in 128, :1495-1501) over the Relics' void and its clouds. Ours: MU flies none here (the user, 2026-10-23: \"also maybe same birds which we had on BC\")."
+    }
   }
 }

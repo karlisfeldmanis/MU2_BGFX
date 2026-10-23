@@ -1,0 +1,42 @@
+{
+  "item": "Object01",
+  "mu_name": "Object01",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 0,
+  "placements": 539,
+  "profile": "world",
+  "sheets": {
+    "cho_scarp_02": "kl_cho_scarp_02.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "cho_scarp_02": "flagstone"
+  },
+  "material_note": "cho_scarp_02: grey cut-stone panels scored with tech lines, the Ruins' cho_factory stone: flagstone.",
+  "why_this_one": "A 10 m stone panel hung into the void round the maze, 539 of them, the most-placed kind. Batch 1 of the Relics, the most-placed and biggest shapes first (the user, 2026-10-23: \"we need to finish first kanturu all objects before continue to make monsters\"; the light: \"Draft as is\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 58,
+      "area": 88532.4,
+      "along": [
+        -15.6,
+        10.8
+      ],
+      "mu_uv": [
+        -0.126,
+        0.005,
+        0.995,
+        0.906
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.952,
+        0.994
+      ]
+    }
+  ]
+}
