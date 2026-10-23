@@ -474,7 +474,9 @@ class Store:
         self.online = {}
         self.games_swept = 0
         # Every character of an account, as each region's mu2_server last listed it (told_characters):
-        # region -> [character], each carrying its region.
+        # region -> [character], each carrying its region. Kept in settings too (roster:<region>, the
+        # fields an account page shows), so a restart does not leave every account page empty until
+        # each region's next list, a minute on (the user, 2026-10-23: "dont see characters").
         self.characters = {}
         # The bug reports (bug()), in bugs.jsonl beside the database: a line for each report, and a
         # line {id, state, at} for each time an admin marks one, folded onto it as the file is read.
@@ -908,11 +910,22 @@ class Store:
                 raise
             self.online[region] = {"at": now, "players": players}
 
+    ROSTER_KEEPS = ("account", "name", "class", "level", "world", "fresh", "region", "saved", "zen")  # not the gear
+
     def told_characters(self, characters: list, region: str = DEFAULT_REGION):
         for c in characters:
             c["region"] = region
         with self.online_lock:
             self.characters[region] = characters
+        self.set_setting(f"roster:{region}", json.dumps([{k: c.get(k) for k in self.ROSTER_KEEPS} for c in characters]))
+
+    def load_rosters(self):
+        """The regions' last lists, as kept, until each region lists them again."""
+        rows = self.db().execute("SELECT key, value FROM settings WHERE key LIKE 'roster:%'").fetchall()
+        with self.online_lock:
+            for key, value in rows:
+                self.characters.setdefault(key[len("roster:"):], json.loads(value))
+        return sum(len(json.loads(v)) for _, v in rows)
 
     def regions_told(self) -> dict:
         """The regions whose servers still tell (REGION_GONE_SECONDS): region -> {at, players}."""
@@ -2323,6 +2336,7 @@ def main():
                     help="seconds a day's lines are left alone before #updates is told")
     args = ap.parse_args()
     Handler.store = Store(Path(args.db))
+    print(f"{Handler.store.load_rosters()} characters as their regions last listed them", flush=True)
     Handler.discord = Discord(Handler.store, Path(args.db).parent / "discord_webhook", args.discord_quiet)
     seeded = Handler.store.seed_texts(i18n.seeds(here / "i18n"))
     if seeded:
