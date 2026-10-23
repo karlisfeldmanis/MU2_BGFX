@@ -34,6 +34,18 @@ constexpr float kScrimAlpha = 0.72f;
 constexpr float kInsideAlpha = 0.42f;
 constexpr float kFadeSeconds = 0.4f;
 constexpr int kLateSeconds = 30;
+// The polish (the user, 2026-10-23: "polish that go back button so its not so basic"): a portal's
+// ring at the left, a graded fill with a faint lit top edge, a warm wash under the pointer, and
+// the five minutes as a thin gold line along the foot inside the frame, the outline left whole.
+constexpr float kEmblem = 30.0f;       // the ring's span
+constexpr float kEmblemGap = 14.0f;    // between it and the words
+constexpr float kFillTop = 0.62f, kFillFoot = 0.86f;  // the fill's dark, top and foot
+constexpr float kTopEdgeAlpha = 0.30f;
+constexpr float kWashAlpha = 0.16f;
+constexpr float kTimeLine = 2.0f;      // the clock's line along the foot
+constexpr float kTimeInset = 10.0f;    // its ends, in from the frame's sides
+constexpr float kTimeLift = 5.0f;      // above the frame's foot
+constexpr int kWholeSeconds = 300;     // sim::kGoBackTicks at 20 a second
 constexpr float kCloseSize = 16.0f;   // the x's box, in the frame's top right corner
 constexpr float kCloseInset = 3.0f;   // from the frame's top and right; it stays over the clock
 
@@ -118,7 +130,7 @@ Box layout(int width, float plateTop, bool closed, const std::string& where, flo
     } else {
         const float words = std::max(controls::capsWidth(kTitleSize * u, kTitle, 0.0f),
                                      controls::labelWidth(kWhereSize * u, where));
-        inside = words + kRuleGap * 2.0f * u + std::round(u) +
+        inside = (kEmblem + kEmblemGap) * u + words + kRuleGap * 2.0f * u + std::round(u) +
                  controls::capsWidth(kClockSize * u, "8:88", 0.0f);
     }
     const float w = std::round(inside + (kPadLeft + kPadRight) * u);
@@ -185,16 +197,61 @@ void GoBackPlate::rebuild(const Drawn& now) {
                          : now.hover ? kGoldHi
                                      : kGold;
     // A breath of dark inside the frame as well: the cloud alone left the words thin over
-    // Noria's bright stones.
-    tip::panel(canvas_, b, kRadius * u, faded(style::kVoid, kInsideAlpha * a),
-               faded(style::kVoid, kInsideAlpha * a));
+    // Noria's bright stones. Graded, darker toward the foot, as a forged plate is lit from above.
+    if (now.closed) {
+        tip::panel(canvas_, b, kRadius * u, faded(style::kVoid, kInsideAlpha * a),
+                   faded(style::kVoid, kInsideAlpha * a));
+    } else {
+        tip::panel(canvas_, b, kRadius * u, faded(style::kVoid, kFillTop * a),
+                   faded(style::kVoid, kFillFoot * a));
+        // Under the pointer a warm wash from the top, the gold's own.
+        if (now.hover) {
+            const uint32_t warm = late ? style::kBlood : kGold;
+            tip::panel(canvas_, b, kRadius * u, faded(warm, kWashAlpha * a), faded(warm, 0.0f));
+        }
+        // The lit top edge, a hairline inside the frame between its round corners.
+        const float edge = std::max(1.0f, std::round(u));
+        canvas_.rect({std::round(b.x + kRadius * u), std::round(b.y + std::max(1.0f, kHairline * u)),
+                      std::round(b.w - 2.0f * kRadius * u), edge},
+                     faded(kGoldHi, kTopEdgeAlpha * a));
+    }
     ring(canvas_, b, kRadius * u, std::max(1.0f, kHairline * u), faded(rim, a));
 
-    const float left = b.x + kPadLeft * u;
+    float left = b.x + kPadLeft * u;
     if (now.closed) {
         controls::caps(canvas_, left, controls::middle(b.y, b.h, kTitleSize * u), kTitleSize * u,
                        faded(style::kAshInk, a), kClosed, 0.0f);
         return;
+    }
+    // The portal's ring: a soft glow inside a hairline circle, its middle lit, MU's warp seen
+    // from above. Red with the plate in its last thirty seconds.
+    {
+        const float span = std::round(kEmblem * u);
+        const Box ringBox{std::round(left), std::round(b.midY() - span * 0.5f), span, span};
+        const uint32_t glow = late ? style::kBlood : kGold;
+        // A dark pit, then the light gathering toward the middle: each disc smaller and brighter.
+        tip::panel(canvas_, ringBox, span * 0.5f, faded(style::kVoid, 0.8f * a), faded(style::kVoid, 0.8f * a));
+        constexpr float kDiscs[4][2] = {{0.10f, 0.10f}, {0.20f, 0.16f}, {0.30f, 0.28f}, {0.38f, 0.55f}};
+        for (const auto& d : kDiscs) {
+            const Box disc = ringBox.grown(-span * d[0]);
+            tip::panel(canvas_, disc, disc.w * 0.5f, faded(glow, d[1] * a), faded(glow, d[1] * a));
+        }
+        const Box core = ringBox.grown(-span * 0.43f);
+        tip::panel(canvas_, core, core.w * 0.5f, faded(kGoldHi, (now.hover ? 1.0f : 0.85f) * a),
+                   faded(kGoldHi, (now.hover ? 1.0f : 0.85f) * a));
+        ring(canvas_, ringBox, span * 0.5f, std::max(1.0f, kHairline * u),
+             faded(late ? style::kBloodHi : now.hover ? kGoldHi : kGold, a));
+        left += (kEmblem + kEmblemGap) * u;
+    }
+    // The five minutes along the foot, draining from the right.
+    {
+        const float span = b.w - 2.0f * kTimeInset * u;
+        const float share = std::clamp(float(now.secondsLeft) / float(kWholeSeconds), 0.0f, 1.0f);
+        const float y = std::round(b.bottom() - kTimeLift * u - kTimeLine * u);
+        const float tall = std::max(1.0f, std::round(kTimeLine * u));
+        canvas_.rect({std::round(b.x + kTimeInset * u), y, std::round(span), tall}, faded(style::kVoid, 0.5f * a));
+        canvas_.rect({std::round(b.x + kTimeInset * u), y, std::round(span * share), tall},
+                     faded(late ? style::kBloodHi : kGold, 0.85f * a));
     }
     const uint32_t word = late ? style::kBloodHi : now.hover ? style::kBoneHi : kGoldHi;
     controls::caps(canvas_, left, b.y + kTitleBase * u, kTitleSize * u, faded(word, a), kTitle,
