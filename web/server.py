@@ -1818,7 +1818,7 @@ class Handler(BaseHTTPRequestHandler):
             if k not in seen:
                 seen.add(k)
                 groups.setdefault("js", []).append({"source": k, "tags": i18n.has_tags(k), "path": "/"})
-        order = ["index.html", "updates", "account.html", "privacy.html", "contact.html", "js"]
+        order = ["index.html", "updates", "account.html", "privacy.html", "contact.html", "mac.html", "linux.html", "js"]
         return {"langs": {code: v[0] for code, v in i18n.LANGS.items()},
                 "groups": [{"id": g, "name": names[g], "units": groups[g]} for g in order if g in groups],
                 "texts": self.store.texts()}
@@ -2020,6 +2020,11 @@ class Handler(BaseHTTPRequestHandler):
 
     # -- GET
 
+    def do_HEAD(self):
+        # Crawlers and link checkers ask HEAD: a GET's status and headers, its body dropped.
+        self.wfile = HeadersOnly(self.wfile)
+        self.do_GET()
+
     def do_GET(self):
         url = urlparse(self.path)
         if url.path == "/api/me":
@@ -2136,6 +2141,10 @@ class Handler(BaseHTTPRequestHandler):
             path = "/privacy.html"
         elif path in ("/contact", "/contact/"):
             path = "/contact.html"
+        elif path in ("/mac", "/mac/"):
+            path = "/mac.html"
+        elif path in ("/linux", "/linux/"):
+            path = "/linux.html"
         elif path in ("/translate", "/translate/"):
             path = "/translate.html"
         if lang and path.lstrip("/") not in i18n.PAGES:
@@ -2173,6 +2182,21 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Cache-Control", "public, max-age=86400")
         self.end_headers()
         self.wfile.write(data)
+
+
+class HeadersOnly:
+    """A HEAD's wfile: the headers go out in one write (end_headers), anything after is dropped."""
+    def __init__(self, out):
+        self.out, self.sent = out, False
+
+    def write(self, data):
+        if not self.sent:
+            self.sent = True
+            return self.out.write(data)
+        return len(data)
+
+    def flush(self):
+        self.out.flush()
 
 
 def main():

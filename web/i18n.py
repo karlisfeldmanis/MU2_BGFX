@@ -37,6 +37,8 @@ PAGES = {
     "account.html": ("/account", "Account"),
     "privacy.html": ("/privacy", "Privacy"),
     "contact.html": ("/contact", "Contact"),
+    "mac.html": ("/mac", "Mac"),
+    "linux.html": ("/linux", "Linux"),
 }
 SITE = "https://mu-classic.com"
 # Cinzel has no Cyrillic and no Vietnamese; those pages set its headings in Alegreya SC (site.css).
@@ -349,8 +351,10 @@ def structured(page: str, lang: str) -> str:
         {"@context": "https://schema.org", "@type": "VideoGame", "name": "MU Classic", "url": url,
          "description": about, "inLanguage": tag, "image": SITE + "/og.jpg", "genre": "MMORPG",
          "gamePlatform": ["Windows", "macOS", "Linux"], "playMode": "MultiPlayer",
-         "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"},
-         "sameAs": ["https://discord.gg/frqaT5k3EF"]},
+         "operatingSystem": "Windows 10, Windows 11, macOS 14 (Apple silicon), Linux (x86_64)",
+         "applicationCategory": "GameApplication", "isAccessibleForFree": True,
+         "sameAs": ["https://discord.gg/frqaT5k3EF"],
+         "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}},
     ]
     blob = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
     return f'<script type="application/ld+json">{blob}</script>'
