@@ -1108,8 +1108,9 @@ public:
     // -1 refused. Realm.Buy.
     int buy(int shelfSlot);
     // Sells a carried thing to the open shop: bag slots only, never what is worn. What was
-    // paid, or -1 refused. Realm.Sell.
-    int64_t sellItem(int slot);
+    // paid, or -1 refused. Realm.Sell. `pieces` of a stack, when fewer than all of it, are sold
+    // off the stack where it lies, so a full bag sells one jewel as well as an empty one.
+    int64_t sellItem(int slot, int pieces = 0);
     // The undo on a sale, and no rule of MU's (the user's, 2026-09-28): the last few sales stay
     // at the counter for `kBuybackSeconds`, and one bought back costs exactly what it fetched.
     // Newest first, at any merchant, while a counter is open and he is in reach of it.

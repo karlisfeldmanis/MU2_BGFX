@@ -14283,6 +14283,29 @@ void testCommands(const content::Tables& tables) {
     for (const sim::Happening& one : realm.happenings()) again = again || one.what == sim::What::Answered;
     check(!again, "and each is answered once");
 
+    // One jewel off a stack (the user, 2026-10-23: "dont sell whole stack but single jewel"),
+    // sold where the stack lies, so a full bag sells it as well.
+    {
+        const int32_t bless = tables.itemNamed("Jewel01");
+        const int stack = realm.give(bless, -1, 0, 3);
+        while (realm.give(tables.itemNamed("Potion01"), -1, 0, 1) >= 0) {}
+        check(stack >= 0, "three Jewels of Bless in a full bag");
+        const int64_t purse = realm.money();
+        realm.command({.kind = sim::Command::Kind::Sell, .ticket = 9, .a = stack, .c = 1});
+        realm.step();
+        checkEqual(int(realm.satchel()[stack].durability), 2, "one jewel sold off the stack");
+        sim::Held one = realm.satchel()[stack];
+        one.durability = 1;
+        checkEqual((long long)(realm.money() - purse), (long long)sim::npcValue(tables, one),
+                   "for one jewel's price");
+        checkEqual(realm.buyBack(), stack, "bought back onto the stack");
+        checkEqual(int(realm.satchel()[stack].durability), 3, "which is three again");
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            if (slot != stack) realm.sellItem(slot);
+        }
+        realm.sellItem(stack);
+    }
+
     // The bag's (batch 2): a potion used, a Firecracker thrown -- which the realm opens and answers
     // as a Crack, its burst tile in x and y and the Cracked said just before -- and an empty slot
     // thrown, refused as a Discard.

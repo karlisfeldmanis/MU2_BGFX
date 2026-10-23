@@ -1598,7 +1598,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         } else if (asked.use >= 0 && trading_ && sim::baggable(asked.use)) {
             // At a merchant a right-click sells it, as a drop on the shelf does (the user,
             // 2026-10-17: "allow to sell item with right click if vendor is opened").
-            expect(play.sell(asked.use), Then::Refused);
+            expect(play.sell(asked.use, piecesForSale(play, asked.use, 0)), Then::Refused);
         } else if (const int worn = asked.use >= 0 && sim::baggable(asked.use)
                                         ? wornSlotFor(play, play.realm().satchel()[asked.use])
                                         : -1;
@@ -1639,7 +1639,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         int carriedW = 1, carriedH = 1;
         if (asked.outside >= 0) footprint(play, play.realm().satchel()[asked.outside], &carriedW, &carriedH);
         if (asked.outside >= 0 && trading_ && shelf_.covers(asked.outsideX, asked.outsideY)) {
-            expect(play.sell(asked.outside, asked.pieces), Then::Refused);
+            expect(play.sell(asked.outside, piecesForSale(play, asked.outside, asked.pieces)), Then::Refused);
         } else if (asked.outside >= 0 && banking_ &&
                    chest_.covers(asked.outsideX, asked.outsideY)) {
             // Into the vault cell under the pointer; over the foot or the head, the first cell

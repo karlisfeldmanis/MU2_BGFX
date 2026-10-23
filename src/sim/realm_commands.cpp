@@ -118,7 +118,6 @@ void Realm::applyCommands() {
                 case Kind::Move: from = 0, same = true; break;
                 case Kind::Rearrange: from = 1, same = true; break;
                 case Kind::Shuffle: from = 2, same = true; break;
-                case Kind::Sell:
                 case Kind::Deposit:
                 case Kind::PutIn:
                 case Kind::DealPut: from = 0; break;
@@ -152,7 +151,7 @@ void Realm::applyCommands() {
         switch (run.kind) {
             case Kind::None: continue;
             case Kind::Buy: answer = buy(one.a); break;
-            case Kind::Sell: answer = sellItem(run.a); break;
+            case Kind::Sell: answer = sellItem(one.a, one.c); break;  // a part off the stack in place
             case Kind::BuyBack: answer = buyBack(); break;
             case Kind::Repair: answer = repair(one.a) ? 1 : -1; break;
             case Kind::RepairAll: {

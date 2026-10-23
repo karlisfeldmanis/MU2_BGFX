@@ -1711,14 +1711,23 @@ int64_t Realm::sellValue(int slot) const {
     return npcValue(*tables_, me().bag[slot]);
 }
 
-int64_t Realm::sellItem(int slot) {
+int64_t Realm::sellItem(int slot, int pieces) {
     if (me().trading < 0 || !serving(me().trading) || !baggable(slot) || me().bag[slot].empty()) return -1;
     // A quest item is not sold: the class treasure.
     const content::ItemRow& selling = tables_->items[size_t(me().bag[slot].item)];
     if (classTreasure(selling)) return -1;
-    const Held thing = me().bag[slot];
-    const int64_t paid = std::max<int64_t>(0, sellValue(slot));
-    me().bag.lift(slot);
+    const Held whole = me().bag[slot];
+    const bool part = poursMost(selling) > 0 && !ammunition(selling) && pieces > 0 && pieces < whole.durability;
+    Held thing = whole;
+    if (part) thing.durability = int16_t(pieces);
+    const int64_t paid = std::max<int64_t>(0, npcValue(*tables_, thing));
+    if (part) {
+        Held left = whole;
+        left.durability = int16_t(whole.durability - pieces);
+        me().bag.put(slot, left);
+    } else {
+        me().bag.lift(slot);
+    }
     me().money += paid;
     me().sold.push({thing, paid, slot, tick_});
     say(What::Sold, mine(), thing.item, int32_t(paid), slot);
