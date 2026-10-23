@@ -24,6 +24,12 @@ namespace {
 //     Twisting Slash, a free ring at 1.7, left Cyclone nothing to be for. The user, 2026-10-08
 //     ("mayeb for some we can reduce cooldown?", "do it"): Lunge 1.6 every 1.5 s, Uppercut 1.8
 //     every 2 s, Cyclone 2.0 every 2 s, Slash every 4 s. Ours.
+//     **One body is paid in force** (the user, 2026-10-23: "single target skilli kā lunge vēlāk
+//     paliek pilnīgi useless ... viņam ir jādara vairāk damage kā area damage skiliem"): at 1.6 +
+//     str/1400 a Lunge hit below Twisting Slash, a free ring, so it was never worth the key. Now
+//     a one-body blow is about 1.5x Twisting Slash at the jab and more the longer it waits --
+//     Lunge 2.6 + str/1000, Uppercut 2.9 + /900, Falling Slash, Impale and Fire Breath 3.4/3.2 +
+//     /800, Death Stab 3.9 + /700 -- and it grows faster with strength than the rings do. Ours.
 //   * `forcePerStrength` is 1/K_dmg: 1/1000 on the anchor, gentler on the jab, steeper on the
 //     two-handed sweep.
 //   * `coolTicks` is at 20 Hz: 60 is three seconds.
@@ -59,17 +65,17 @@ constexpr SkillRow kRows[kSkills] = {
     // Falling Slash: the Morning Star (a mace), the Double Axe and the Tomahawk (one-handed),
     // the Battle Axe and the Nikkea Axe (two-handed). Axes and maces, in either hand -- and the
     // icon MU painted for it is an axe, which is the same fact from the artist's side.
-    {skill::kFallingSlash, "Falling Slash", 9, 1.0f, 2.0f, 1.0f / 1000.0f, 80, false, Spread::One,
+    {skill::kFallingSlash, "Falling Slash", 9, 1.0f, 3.4f, 1.0f / 800.0f, 80, false, Spread::One,
      0, 1.0f, "An overhead blow brought down on one body -- the heaviest single strike he has.",
      60, "player_skill_sword1", true, arms::kAxes | arms::kMaces | arms::kTwoHand, 13},
     // Lunge: the Gladius, and nothing else in 0.75 carried it. A one-handed sword, which is what
     // MU's own description says in as many words -- "used with weapons like Gladius and Katana
     // to execute quick stabs".
-    {skill::kLunge, "Lunge", 9, 1.0f, 1.6f, 1.0f / 1400.0f, 30, false, Spread::One, 0, 1.0f,
+    {skill::kLunge, "Lunge", 9, 1.0f, 2.6f, 1.0f / 1000.0f, 30, false, Spread::One, 0, 1.0f,
      "A thrust straight ahead: the cheapest key and the one that comes back soonest.", 61,
      "player_skill_sword2", true, arms::kSword1 | arms::kTwoHand, 20},
     // Uppercut: the Sword of Assassin, the Falchion and the Serpent Sword. All one-handed.
-    {skill::kUppercut, "Uppercut", 8, 1.0f, 1.8f, 1.0f / 1200.0f, 40, false, Spread::One, 0, 1.0f,
+    {skill::kUppercut, "Uppercut", 8, 1.0f, 2.9f, 1.0f / 900.0f, 40, false, Spread::One, 0, 1.0f,
      "A rising blow under the guard, between the jab and the overhead in force and in wait.",
      62, "player_skill_sword3", true, arms::kSword1 | arms::kTwoHand, 12},
     // Cyclone: the Blade (a one-handed sword), the Berdysh and the Great Scythe (polearms). The
@@ -161,7 +167,7 @@ constexpr SkillRow kRows[kSkills] = {
     // right hand from 77 units behind him to 71 ahead between keys 2 and 3 of 6 -- so the blow
     // lands there as every swing's does. sKnightSkill2 is MU's own for it (ZzzCharacter.cpp:2631),
     // and its streaks, cones and the wound on what it strikes are game/fx/deathstab.h.
-    {skill::kDeathStab, "Death Stab", 15, 1.0f, 2.3f, 1.0f / 900.0f, 110, false, Spread::One, 0,
+    {skill::kDeathStab, "Death Stab", 15, 1.0f, 3.9f, 1.0f / 700.0f, 110, false, Spread::One, 0,
      1.0f, "The point driven through one body at speed. Nothing he has hits one thing harder.",
      71, "player_skill_sword2", true, arms::kSpear, 60},
 
@@ -791,7 +797,7 @@ constexpr SkillRow kRows[kSkills] = {
     // blow at twice his swing would be a primary stronger than Twisting Slash. Its breath crosses
     // the ground at MU's thirty units a frame, 7.5 tiles a second, so the blow lands as it arrives.
     {.number = skill::kFireBreath, .name = "Fire Breath", .mana = 9, .reach = 3.0f,
-     .force = 2.0f, .forcePerStrength = 1.0f / 1000.0f, .coolTicks = 80,
+     .force = 3.4f, .forcePerStrength = 1.0f / 800.0f, .coolTicks = 80,
      .tells = "The dragon under him breathes at one body up to three tiles off. Only while he "
               "rides the Dinorant.",
      .clip = 68, .sound = "player_skill_sword3", .built = true, .families = arms::kNone,
@@ -843,8 +849,8 @@ constexpr SkillRow kRows[kSkills] = {
     // thrust, 71, and on a horse MU's own 70 (Play, where the ride cast is chosen). The spear's
     // early blow, under Death Stab: 1.9 on a four-second wait, Falling Slash's, where Death Stab
     // is 2.3 on 5.5. Learned at 56, twice its 28 as the ladder asks (the orb's level_from).
-    {.number = skill::kImpale, .name = "Impale", .mana = 8, .reach = 1.0f, .force = 1.9f,
-     .forcePerStrength = 1.0f / 1000.0f, .coolTicks = 80, .spread = Spread::One,
+    {.number = skill::kImpale, .name = "Impale", .mana = 8, .reach = 1.0f, .force = 3.2f,
+     .forcePerStrength = 1.0f / 800.0f, .coolTicks = 80, .spread = Spread::One,
      .tells = "A spear driven through one body, and ghosts of it after. Thrown with a spear.",
      .clip = 71, .sound = "riding_spear", .built = true, .families = arms::kSpear,
      .needLevel = 56},
