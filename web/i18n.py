@@ -308,6 +308,28 @@ def switcher(page_path: str, lang: str) -> str:
     return '<nav class="langs" translate="no" aria-label="Language">' + "".join(out) + "</nav>"
 
 
+GLOBE = ('<svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" '
+         'stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>')
+# Closes the picker on a click outside it or on Escape; without it the picker still opens and closes.
+PICK_SCRIPT = ("<script>(()=>{const d=document.querySelector('.lang-pick');if(!d)return;"
+               "document.addEventListener('click',e=>{if(d.open&&!d.contains(e.target))d.open=false});"
+               "document.addEventListener('keydown',e=>{if(e.key==='Escape'&&d.open){d.open=false;d.querySelector('summary').focus()}})})()</script>")
+
+
+def picker(page_path: str, lang: str) -> str:
+    """The top bar's language picker: the language shown, and a menu of every one, each a link to
+    this page in it (with ?lang=, as the footer's)."""
+    items = []
+    for code, name in [("en", "English")] + [(c, v[0]) for c, v in LANGS.items()]:
+        href = (page_path if code == "en" else f"/{code}{page_path}") + f"?lang={code}"
+        here = ' aria-current="true"' if code == lang else ""
+        items.append(f'<a href="{href}" hreflang="{code}" lang="{code}"{here}>{name}<i aria-hidden="true"></i></a>')
+    shown = "English" if lang == "en" else LANGS[lang][0]
+    return (f'<details class="lang-pick" translate="no"><summary aria-label="Language: {shown}">{GLOBE}'
+            f'<span>{lang.upper()}</span><b aria-hidden="true"></b></summary>'
+            f'<nav class="lang-menu" aria-label="Language">{"".join(items)}</nav></details>{PICK_SCRIPT}')
+
+
 def localise(page: str, file: str, lang: str, texts: dict, script_strings: list) -> str:
     """The page in `lang` ("en" fills in only the languages), its units from `texts` {source key:
     translation}; a unit with none stays English. `script_strings`: what site.js says through t()."""
@@ -350,6 +372,7 @@ def localise(page: str, file: str, lang: str, texts: dict, script_strings: list)
         page = page.replace("</head>", structured(page, lang) + "\n</head>", 1)
     page = page.replace("<!--alternates-->", alternates(page_path), 1)
     page = page.replace("<!--langs-->", switcher(page_path, lang), 1)
+    page = page.replace("<!--langpick-->", picker(page_path, lang), 1)
     return page
 
 

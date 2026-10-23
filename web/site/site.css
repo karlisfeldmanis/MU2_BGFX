@@ -77,6 +77,28 @@ header.top { position: relative; overflow: hidden; }
 .bar-discord:hover { box-shadow: inset 0 0 0 1px rgba(236,207,173,.55); }
 .bar-discord:hover svg { color: #ECCFAD; }
 @media (max-width: 420px) { .bar-discord { padding: 0 10px; } .bar-discord span { display: none; } }
+/* Beside them: the language picker (web/i18n.py picker), the same quiet pill, opening a menu. */
+.lang-pick { position: relative; z-index: 5; }
+.lang-pick summary { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 12px; border-radius: 19px; cursor: pointer;
+  list-style: none; user-select: none; font: 700 14px/1 'Alegreya Sans', sans-serif; letter-spacing: .06em; color: var(--bone);
+  background: rgba(13,11,10,.55); box-shadow: inset 0 0 0 1px rgba(201,162,126,.28); transition: box-shadow .15s, color .15s; }
+.lang-pick summary::-webkit-details-marker { display: none; }
+.lang-pick summary svg { color: #C9A27E; }
+.lang-pick summary b { width: 6px; height: 6px; margin: -3px 1px 0 1px; border: solid #A88A6E; border-width: 0 1.6px 1.6px 0; transform: rotate(45deg); transition: transform .18s ease; }
+.lang-pick[open] summary b { transform: rotate(-135deg); margin-top: 3px; }
+.lang-pick summary:hover, .lang-pick[open] summary { box-shadow: inset 0 0 0 1px rgba(236,207,173,.55); color: var(--bone-hi); }
+.lang-pick summary:focus-visible { outline: 1px solid var(--field-focus); outline-offset: 2px; }
+.lang-menu { position: absolute; right: 0; top: calc(100% + 8px); min-width: 196px; padding: 6px; border-radius: 10px;
+  background: #110D0B; border: 1px solid #3A2E25; box-shadow: 0 18px 40px -12px rgba(0,0,0,.8), 0 0 0 1px rgba(0,0,0,.4);
+  display: flex; flex-direction: column; animation: lang-in .14s ease-out; }
+@keyframes lang-in { from { opacity: 0; transform: translateY(-4px); } }
+.lang-menu a { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 9px 12px; border-radius: 6px;
+  font-size: 15.5px; color: var(--label); }
+.lang-menu a:hover, .lang-menu a:focus-visible { background: rgba(243,232,212,.06); color: var(--bone-hi); outline: none; }
+.lang-menu a[aria-current] { color: var(--bone-hi); }
+.lang-menu a i { width: 9px; height: 5px; border: solid transparent; border-width: 0 0 1.8px 1.8px; transform: rotate(-45deg) translateY(-2px); }
+.lang-menu a[aria-current] i { border-color: #C9A27E; }
+@media (max-width: 420px) { .lang-pick summary { padding: 0 10px; gap: 5px; } }
 /* Under the updates: the Discord, a card with its button. */
 #community { padding: 0 0 64px; }
 #community .wrap { max-width: 1160px; }
