@@ -1,0 +1,190 @@
+{
+  "item": "HelmMale46",
+  "mu_name": "Titan Helm",
+  "mu_name_from": "MuMain's MODEL_TITAN_* (_enum.h: MODEL_HELM + 45), loaded from Data/Player/HelmMale46.bmd by the index-plus-one rule. MU's number 45; ours is *Male46.",
+  "why_this_one": "The missing-gear audit, 2026-10-23: the last sets missing at drop levels 93-132, which Kanturu's monsters reach (the user: 'we need to build all kanturu weapons and armors'). Titan is the Dark Knight's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:105.",
+    "call": "CreateArmor(45, 2, 2, 2, \"Titan Helm\", 111, 63, 86, 0, 222, 32, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)",
+    "group": 7,
+    "number": 45,
+    "drop_level": 111,
+    "drops_from_monsters": true,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 63,
+    "durability": 86,
+    "requires": {
+      "level": 0,
+      "strength": 222,
+      "agility": 32,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "class_level_note": "OpenMU's darkKnightClassLevel 1, its only class."
+  },
+  "sheets": {
+    "Item2001_Helm": "item2001_helm.png",
+    "skinClass301": "skinclass301.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased (an .OZT beside its .OZJ takes _t): navy lacquer plate edged in silver and gold; skinClass301 the knight's own face under the helm.",
+  "sheet_materials": {
+    "Item2001_Helm": "painted_steel",
+    "item2001_helm": "painted_steel",
+    "skinClass301": "skin",
+    "skinclass301": "skin"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the other sets.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss.",
+  "effects_note": "MuMain has no render arm for MODEL_TITAN_* (no glow, no chrome pass).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 30,
+      "area": 673.6,
+      "along": [
+        -2.9,
+        14.4
+      ],
+      "mu_uv": [
+        0.709,
+        0.135,
+        0.976,
+        0.985
+      ],
+      "bake_uv": [
+        0.007,
+        0.006,
+        0.841,
+        0.877
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 98,
+      "area": 2166.4,
+      "along": [
+        -16.3,
+        13.3
+      ],
+      "mu_uv": [
+        0.013,
+        0.008,
+        0.88,
+        0.993
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.947,
+        0.947
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 4,
+      "area": 25.3,
+      "along": [
+        11.0,
+        13.6
+      ],
+      "mu_uv": [
+        0.04,
+        0.284,
+        0.107,
+        0.417
+      ],
+      "bake_uv": [
+        0.02,
+        0.107,
+        0.435,
+        0.548
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 1,
+      "area": 0.0,
+      "along": [
+        -13.4,
+        0.2
+      ],
+      "mu_uv": [
+        0.521,
+        0.008,
+        0.827,
+        0.015
+      ],
+      "bake_uv": [
+        0.267,
+        0.773,
+        0.429,
+        0.776
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 1,
+      "area": 0.1,
+      "along": [
+        -13.9,
+        -13.4
+      ],
+      "mu_uv": [
+        0.622,
+        0.861,
+        0.735,
+        0.947
+      ],
+      "bake_uv": [
+        0.708,
+        0.784,
+        0.768,
+        0.829
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 110,
+      "area": 1838.8,
+      "along": [
+        -10.7,
+        12.1
+      ],
+      "mu_uv": [
+        0.503,
+        0.754,
+        0.994,
+        0.998
+      ],
+      "bake_uv": [
+        0.278,
+        0.102,
+        0.994,
+        0.6
+      ]
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+{
+  "item": "HelmMale50",
+  "mu_name": "Seraphim Helm",
+  "mu_name_from": "MuMain's MODEL_SERAPHIM_* (_enum.h: MODEL_HELM + 49), loaded from Data/Player/HelmMale50.bmd by the index-plus-one rule. MU's number 49; ours is *Male50.",
+  "why_this_one": "The missing-gear audit, 2026-10-23: the last sets missing at drop levels 93-132, which Kanturu's monsters reach (the user: 'we need to build all kanturu weapons and armors'). Seraphim is the Fairy Elf's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:107.",
+    "call": "CreateArmor(49, 2, 2, 2, \"Seraphim Helm\", 111, 50, 86, 0, 55, 197, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0)",
+    "group": 7,
+    "number": 49,
+    "drop_level": 111,
+    "drops_from_monsters": true,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 50,
+    "durability": 86,
+    "requires": {
+      "level": 0,
+      "strength": 55,
+      "agility": 197,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "class_level_note": "OpenMU's elfClassLevel 1, its only class."
+  },
+  "sheets": {
+    "Item302_Helm_tga": "item302_helm_t.png",
+    "Item302_Helm2": "item302_helm2.png",
+    "Item302_Helm_jpg": "item302_helm.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased (an .OZT beside its .OZJ takes _t): white and red plate with winged trim; Item302_Helm.OZJ her face and bare skin, Item302_Helm.OZT the winged ornament (no cut: 0% under 128), Item302_Helm2.OZT her blond hair cut by its alpha (13% away).",
+  "sheet_materials": {
+    "Item302_Helm_tga": "painted_steel",
+    "item302_helm_t": "painted_steel",
+    "Item302_Helm2": "hair",
+    "item302_helm2": "hair",
+    "Item302_Helm_jpg": "skin",
+    "item302_helm": "skin"
+  },
+  "cutout": [
+    "Item302_Helm2"
+  ],
+  "cutout_from": "Declared, not detected: the .OZT's alpha is real and the UVs cover it.",
+  "cutout_alpha": [
+    "Item302_Helm2"
+  ],
+  "cutout_alpha_from": "The sheet's own alpha, not its brightness (Divine's trap, 2026-10-04).",
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the other sets.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss.",
+  "effects_note": "MuMain's arms for MODEL_SERAPHIM_HELM/ARMOR (ZzzObject.cpp:7870-7893) draw one mesh only when the part HideSkin, which no worn part does; drawn as RenderBody. No glow, no chrome pass.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "hair",
+      "triangles": 122,
+      "area": 1938.0,
+      "along": [
+        -27.3,
+        11.6
+      ],
+      "mu_uv": [
+        0.037,
+        0.018,
+        0.981,
+        0.992
+      ],
+      "bake_uv": [
+        0.076,
+        0.319,
+        0.848,
+        0.995
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 162,
+      "area": 1119.9,
+      "along": [
+        -8.5,
+        12.9
+      ],
+      "mu_uv": [
+        0.038,
+        0.023,
+        1.826,
+        0.97
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.597,
+        0.595
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 74,
+      "area": 600.6,
+      "along": [
+        -15.5,
+        15.5
+      ],
+      "mu_uv": [
+        0.023,
+        0.092,
+        0.909,
+        0.978
+      ],
+      "bake_uv": [
+        0.402,
+        0.006,
+        0.796,
+        0.747
+      ]
+    }
+  ]
+}
