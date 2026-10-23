@@ -725,7 +725,9 @@ void Mixer::rebuild(const sim::Realm& realm, Stage* stage) {
             const int more = then ? std::max(0, then->have - n.have) : 0;
             uint32_t ink = style::kBone;
             std::string bag;
-            if (n.need == 0) {
+            if (n.remove) {
+                ink = style::kDanger;
+            } else if (n.need == 0) {
                 ink = n.have > 0 ? style::kBone : style::kAshInk;
             } else if (n.have == n.need || (n.atLeast && n.have > n.need)) {
                 ink = style::kFits;

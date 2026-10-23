@@ -8717,9 +8717,9 @@ void testChaosMachine() {
     check(realm.mixing() == goblin, "talking to the Goblin opens his machine");
     check(realm.judged().empty && realm.judged().recipe == sim::Recipe::None, "an empty box is nothing");
     realm.earn(50000000);
-    // A bound thing is only ever socketed or unsocketed (the user, 2026-10-19: "dont allow to use
-    // bound items on chaos machine", "allow to remove runes from bound item in chaos machine",
-    // "also allow add socket to bound item").
+    // A bound thing is socketed and unsocketed (the user, 2026-10-19: "allow to remove runes from
+    // bound item in chaos machine", "also allow add socket to bound item"), and since 2026-10-23
+    // goes into every mix ("also allow to craft with bound items").
     {
         const uint8_t set[3] = {uint8_t(sim::Power::LesserMight), 0, 0};
         const int held = realm.give(sword, -1, 0, -1, false, 0, 0, 1, set, nullptr, true);
@@ -8728,8 +8728,8 @@ void testChaosMachine() {
         check(in >= 0, "goes in the box");
         realm.putIn(realm.give(chaos));
         const sim::Judged plus = realm.judged(sim::Service::Upgrade);
-        check(!plus.ready && plus.title.find("Bound") != std::string::npos,
-              "where every mix but two is refused, and says so");
+        check(!plus.blocked && plus.title.find("Bound") == std::string::npos,
+              "where no mix refuses it for being bound");
         check(realm.judged(sim::Service::AddSocket).title.find("Bound") == std::string::npos &&
                   realm.judged(sim::Service::FuseRunes).title.find("Bound") == std::string::npos,
               "Add Socket and Fuse Runes are not");
@@ -8751,7 +8751,7 @@ void testChaosMachine() {
         check(realm.machine().empty(), "and the box is emptied");
     }
     // A quest's jewels are never bound (sim::bindable; the user, 2026-10-20: "lets remove bound
-    // from jewels completly"): asked bound, they come free, and bound gear stays out of a mix.
+    // from jewels completly"): asked bound, they come free; bound gear goes into a mix.
     {
         const auto boundOne = [&](int32_t item, int plus) {
             return realm.give(item, -1, plus, -1, false, 0, 0, 1, nullptr, nullptr, true);
@@ -8766,7 +8766,10 @@ void testChaosMachine() {
         realm.putIn(realm.give(bless));
         realm.putIn(realm.give(soul));
         const sim::Judged j = realm.judged();
-        check(!j.ready && j.blocked, "a bound sword is still refused");
+        // Bound gear goes into any mix now (the user, 2026-10-23: "also allow to craft with
+        // bound items"), what it makes bound as it was.
+        check(j.ready && !j.blocked && j.recipe == sim::Recipe::PlusTen,
+              "a bound +9 sword is a +10's box");
         for (int cell = 0; cell < sim::kMachineCells; ++cell) {
             if (realm.machine()[cell].empty()) continue;
             const int back = realm.takeOut(cell);
@@ -9194,6 +9197,27 @@ void testChaosMachine() {
         page.put(4, more);
         check(sim::judge(noria, page, sim::Service::ChaosWeapon).rate > alone.rate,
               "another +4 with an option raises it");
+        // An excellent thing at +4 or better raises it with no option, and at +3 not at all
+        // (the user, 2026-10-23, from Kaspars).
+        sim::Machine boosted;
+        boosted.put(0, optioned);
+        boosted.put(8, sim::Held{chaos, 0, 1});
+        sim::Held shiny{sword, 3, 20};
+        shiny.excellent = 1;
+        boosted.put(2, shiny);
+        checkEqual(sim::judge(noria, boosted, sim::Service::ChaosWeapon).rate, alone.rate,
+                   "an excellent +3 adds nothing");
+        boosted.lift(2);
+        shiny.refinement = 9;
+        boosted.put(2, shiny);
+        const sim::Judged lifted = sim::judge(noria, boosted);
+        check(lifted.recipe == sim::Recipe::ChaosWeapon && lifted.rate > alone.rate,
+              "an excellent +9 with no option raises it, on Combine too");
+        sim::Machine onlyShiny;
+        onlyShiny.put(2, shiny);
+        onlyShiny.put(8, sim::Held{chaos, 0, 1});
+        check(!sim::judge(noria, onlyShiny, sim::Service::ChaosWeapon).ready,
+              "but stands in for no +4 with an option");
     }
 
     // The 1st level wings: the same box with one Chaos weapon at +4 with an option in it.
@@ -9250,8 +9274,8 @@ void testChaosMachine() {
                       sim::judge(noria, weapon, sim::Service::FirstWings).recipe == sim::Recipe::None,
                   "a Chaos Weapon box is Combine's, not the Wings page's");
             // A Chaos weapon a quest's jewel made is bound, and climbs to the wings all the same
-            // (MAGICTOMA on Discord, 2026-10-21: "i still cannot create 1st Wings"); nothing else
-            // does with it, and other bound gear stays out.
+            // (MAGICTOMA on Discord, 2026-10-21: "i still cannot create 1st Wings"), and since
+            // 2026-10-23 other bound gear goes in too.
             {
                 sim::Machine climb;
                 sim::Held boundAxe = chaosAxe;
@@ -9262,13 +9286,14 @@ void testChaosMachine() {
                 check(up.recipe == sim::Recipe::Wings && up.ready && !up.blocked,
                       "a bound +4 Chaos weapon makes the 1st wings");
                 check(sim::judge(noria, climb).ready, "on Combine too");
-                check(sim::judge(noria, climb, sim::Service::Upgrade).blocked,
-                      "but nothing else: the Upgrade refuses it");
                 sim::Held boundOther = optioned;
                 boundOther.bound = true;
+                boundOther.refinement = 9;
+                boundOther.option = 3;
                 climb.put(1, boundOther);
-                check(sim::judge(noria, climb, sim::Service::FirstWings).blocked,
-                      "and a bound +4 that is not a Chaos weapon still spoils the box");
+                const sim::Judged more = sim::judge(noria, climb, sim::Service::FirstWings);
+                check(more.ready && !more.blocked && more.rate > up.rate,
+                      "and a bound +4 that is not a Chaos weapon raises its rate (2026-10-23)");
             }
             // Every mix a page of its own, and no plain Combine on the row (the user, 2026-10-05).
             bool combineShown = false;
@@ -9506,7 +9531,16 @@ void testChaosMachine() {
                       "an excellent +4 thing raises it");
                 second.put(23, sim::Held{bless, 0, 1});
                 check(sim::judge(noria, second).recipe == sim::Recipe::None, "a Bless spoils it");
+                // And its page says so, in a line of its own (the user, 2026-10-23).
+                const sim::Judged spoiled = sim::judge(noria, second, sim::Service::SecondWings);
+                const sim::Need& last = spoiled.needs[spoiled.needCount - 1];
+                check(!spoiled.ready && last.remove && last.name == "Remove Jewel of Bless" &&
+                          !last.met(),
+                      "the 2nd Wings page names the Bless to take out");
                 second.lift(23);
+                const sim::Judged clean = sim::judge(noria, second, sim::Service::SecondWings);
+                check(clean.ready && !clean.needs[clean.needCount - 1].remove,
+                      "and without it no such line");
                 // Sevina's bound feather makes them too (bug report #42, 2026-10-20).
                 sim::Held boundFeather{feather, 0, 1};
                 boundFeather.bound = true;

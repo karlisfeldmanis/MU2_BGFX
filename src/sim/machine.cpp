@@ -51,8 +51,9 @@ struct Sorted {
     int optioned = 0;   // things at +4 or better with the additional option or a socket: the Chaos Weapon's
     int chaosWeapons = 0;  // and of them the Chaos weapons, which make it the wings' box
     int chaosWeaponCell = -1;
-    // The Chaos Weapon's and the 1st wings' rate: the old price of the optioned things and the
-    // three jewels, and nothing else (WebZen's ChaosBoxMix `value`).
+    int boosters = 0;   // excellent things at +4 or better with no option, which only raise it
+    // The Chaos Weapon's and the 1st wings' rate: the old price of the optioned things, the
+    // boosters and the three jewels, and nothing else (WebZen's ChaosBoxMix `value`).
     int64_t worth = 0;
     int at[2] = {};     // raisable things at +9 and at +10
     int atCell[2] = {-1, -1};
@@ -135,6 +136,12 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
                     ++s.chaosWeapons;
                     s.chaosWeaponCell = cell;
                 }
+            } else if (what.excellent != 0 && what.refinement >= 4) {
+                // An excellent thing at +4 or better raises the rate with no option, and stands in
+                // for no optioned thing (the user, 2026-10-23, from Kaspars: "allow to boost with
+                // exc items but exc items has to be atleast +4"). Ours; WebZen asks the option.
+                ++s.boosters;
+                s.worth += mixValue(tables, what);
             }
             for (int k = 0; k < 2; ++k) {
                 if (raisable(*row) && what.refinement == 9 + k) {
@@ -172,9 +179,11 @@ bool exactly(Recipe recipe, const Sorted& s, bool loose = false) {
                    s.soul == jewels;
         }
         case Recipe::ChaosWeapon:
-            return s.optioned >= 1 && (loose || s.things == s.optioned) && s.chaos >= 1;
+            return s.optioned >= 1 && (loose || s.things == s.optioned + s.boosters) &&
+                   s.chaos >= 1;
         case Recipe::Wings:
-            return s.chaosWeapons >= 1 && (loose || s.things == s.optioned) && s.chaos >= 1;
+            return s.chaosWeapons >= 1 && (loose || s.things == s.optioned + s.boosters) &&
+                   s.chaos >= 1;
         case Recipe::SecondWings:
             return s.firstWings == 1 && s.feathers == 1 && s.chaos == 1 && s.secondWings == 0 &&
                    s.bless == 0 && s.soul == 0 && s.things == 2 + s.excellents;
@@ -211,7 +220,7 @@ int likeness(Recipe recipe, const Sorted& s) {
             break;
         }
         case Recipe::ChaosWeapon:
-            if (s.things != s.optioned) return 0;
+            if (s.things != s.optioned + s.boosters) return 0;
             if (s.optioned > 0) points += 10;
             if (s.bless > 0) points += 3;
             if (s.soul > 0) points += 3;
@@ -228,7 +237,7 @@ int likeness(Recipe recipe, const Sorted& s) {
         case Recipe::Wings:
             // Ahead of the Chaos Weapon in kOrder, so a box with a Chaos weapon in it looks
             // like wings at the same points, and one without none at all.
-            if (s.things != s.optioned || s.chaosWeapons == 0) return 0;
+            if (s.things != s.optioned + s.boosters || s.chaosWeapons == 0) return 0;
             points += 10;
             if (s.bless > 0) points += 3;
             if (s.soul > 0) points += 3;
@@ -266,6 +275,12 @@ void need(Judged& j, std::string name, int have, int want, bool atLeast = false)
     j.needs[j.needCount].need = want;
     j.needs[j.needCount].atLeast = atLeast;
     ++j.needCount;
+}
+
+void unwanted(Judged& j, std::string name, int have) {
+    if (j.needCount >= kMostNeeds) return;
+    need(j, std::move(name), have, 0);
+    j.needs[j.needCount - 1].remove = true;
 }
 
 std::string labelAt(const content::Tables& tables, const Machine& box, int cell) {
@@ -380,6 +395,18 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             need(j, "Loch's Feather", s.feathers, 1);
             need(j, "Jewel of Chaos", s.chaos, 1);
             need(j, "Excellent item +4", s.excellents, 0);
+            // Anything else spoils the box (exactly()); the first of it is named, so a grey button
+            // says why (the user, 2026-10-23). WebZen's WingChaosMix takes it along, lost.
+            const int strangers = s.things - s.firstWings - s.feathers - s.excellents + s.bless + s.soul;
+            for (int cell = 0; cell < kMachineCells && strangers > 0; ++cell) {
+                const content::ItemRow* row = rowOf(tables, box[cell]);
+                if (!row || firstWing(*row) || lochsFeather(*row) || jewelOfChaos(*row) ||
+                    (box[cell].excellent != 0 && box[cell].refinement >= 4 && !secondWing(*row))) {
+                    continue;
+                }
+                unwanted(j, "Remove " + labelAt(tables, box, cell), strangers);
+                break;
+            }
             // The wing's price over 4,000,000 and the excellent things' over 40,000.
             int64_t wing = 0, excellent = 0;
             for (int cell = 0; cell < kMachineCells; ++cell) {
@@ -629,15 +656,6 @@ bool jewelOfSoul(const content::ItemRow& row) {
 bool jewelOfLife(const content::ItemRow& row) {
     return row.group == kGroupPotions && row.number == 16;
 }
-bool spentBound(const content::ItemRow& row) {
-    return jewelOfChaos(row) || jewelOfBless(row) || jewelOfSoul(row) || lochsFeather(row);
-}
-bool climbsBound(const content::ItemRow& row, Recipe recipe) {
-    if (chaosWeapon(row)) return recipe == Recipe::Wings || recipe == Recipe::None;
-    if (firstWing(row)) return recipe == Recipe::SecondWings || recipe == Recipe::None;
-    return false;
-}
-
 int64_t mixValue(const content::Tables& tables, const Held& what) {
     const content::ItemRow* row = rowOf(tables, what);
     if (!row) return 0;
@@ -669,35 +687,10 @@ Judged judge(const content::Tables& tables, const Machine& box, Service service,
         case Service::Cloak:
         case Service::Invitation: combine(tables, box, s, kin, j, service); break;
     }
-    // **A bound thing only has its sockets worked** (the user, 2026-10-19: "dont allow to use
-    // bound items on chaos machine", then "allow to remove runes from bound item in chaos
-    // machine", "also allow add socket to bound item", "also allow to fuse bound runes"): with one
-    // in the box, every service but Remove Rune, Add Socket and Fuse Runes is refused, so no mix
-    // makes a quest's reward into something else; what comes out stays bound -- the thing, the
-    // rune it frees, the rune fused from bound ones (Realm::mix).
-    //
-    // But a bound Jewel of Chaos goes into any mix (the user, 2026-10-19: "allow to use bound
-    // chaos jewel in chaos machine"): it is spent either way, and what a mix with one makes is
-    // bound (Realm::mix), so a quest's jewel still never leaves him as something to sell.
-    // So does Sevina's bound Loch's Feather, which she pays for the 2nd wings (bug report #42,
-    // 2026-10-20: "loch's feather is a bound item sometimes and it can't be used for wings").
-    // And the quests' Bless and Soul (the user, 2026-10-20, Bruno on Discord: "I have all items
-    // but cant create Chaos Weapon"): the quests pay most of a player's early ones, bound.
-    // And what such a mix made climbs its own ladder: a bound Chaos weapon makes the 1st wings, a
-    // bound 1st wing the 2nd (sim::climbsBound), the wing bound in its turn.
-    if (service != Service::RemoveRune && service != Service::AddSocket &&
-        service != Service::FuseRunes) {
-        for (int cell = 0; cell < kMachineCells; ++cell) {
-            if (box[cell].empty() || !box[cell].bound) continue;
-            const content::ItemRow& row = tables.items[size_t(box[cell].item)];
-            if (!spentBound(row) && !(j.recipe != Recipe::None && climbsBound(row, j.recipe))) {
-                j.ready = false;
-                j.blocked = true;
-                j.title = "Bound items: runes and sockets only";
-                break;
-            }
-        }
-    }
+    // **A bound thing goes into any mix** (the user, 2026-10-23: "also allow to craft with bound
+    // items"), and what a mix with one makes is bound (Realm::mix), so a quest's reward still
+    // never leaves him as something to sell. It was refused but for its sockets (2026-10-19),
+    // then let in piece by piece: the jewels, Loch's Feather, a Chaos weapon or 1st wing.
     return j;
 }
 
@@ -710,6 +703,7 @@ int nearness(const Judged& j) {
     int points = j.ready ? 1000 : 0;
     for (int i = 0; i < j.needCount; ++i) {
         const Need& n = j.needs[i];
+        if (n.remove) points -= 8 * n.have;
         if (n.need <= 0) continue;
         points += 4 * std::min(n.have, n.need) - 8 * std::max(0, n.have - n.need);
     }
@@ -753,8 +747,6 @@ Planned plan(const content::Tables& tables, const Machine& box, const Satchel& b
     Machine trial = box;
     Judged now = judge(tables, trial, service, socket, kin);
     int best = nearness(now);
-    const bool runes = service == Service::RemoveRune || service == Service::AddSocket ||
-                       service == Service::FuseRunes;
     bool taken[kSlots] = {};
     // What a slot would make of the box, or false when it cannot go in or makes it no nearer.
     // A stack gives as many as the box wants of it (piecesWanted), into `pieces`.
@@ -762,7 +754,6 @@ Planned plan(const content::Tables& tables, const Machine& box, const Satchel& b
         Held what = bag[slot];
         const content::ItemRow* row = rowOf(tables, what);
         if (!row || taken[slot]) return false;
-        if (what.bound && !runes && !spentBound(*row) && !climbsBound(*row, Recipe::None)) return false;
         *cell = trial.free(tables, row->width, row->height);
         if (*cell < 0) return false;
         *pieces = stacks(*row) ? piecesWanted(tables, trial, what, service, socket, kin) : 0;
