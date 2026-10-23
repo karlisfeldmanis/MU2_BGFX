@@ -2,6 +2,7 @@
 #include "game/world/world.h"
 
 #include <cmath>
+#include <cstdlib>
 
 #include "content/showing.h"
 #include "core/files.h"
@@ -218,6 +219,10 @@ bool World::play(const std::string& assetDir, const std::string& name, uint64_t 
     // what `--kin` speaks: 0 Dark Wizard, 1 Fairy Elf, 2 Dark Knight, 3 Magic Gladiator; the
     // names are game::bareBody's.
     const char* bare = bareBody(sim::kinValid(kin) ? sim::Kin(kin) : sim::Kin::DarkKnight, false, &figures_);
+    // A dev switch: MU2_BARE_BODY=DarkLordBare draws this hero, and only him, in another cooked
+    // bare body -- a class's body tried on the ground before the class exists (the user,
+    // 2026-10-23: "i want to test him on ground"). The rules are still his own class's.
+    if (const char* tried = std::getenv("MU2_BARE_BODY"); tried && figures_.body(tried)) bare = tried;
     const FigureBody* look = figures_.dress("Hero", bare, weapon, shield);
     // The character is put down where the camera was told to look, which is the town by
     // default and `--at` otherwise. The realm moves him to the nearest tile he may stand on.

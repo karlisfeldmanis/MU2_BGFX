@@ -1,0 +1,274 @@
+{
+  "item": "ArmorClass05",
+  "mu_name": "Dark Lord torso",
+  "mu_name_from": "ZzzOpenData.cpp:115-120: MODEL_BODY_HELM + i and its fellows load HelmClass{i+1}, ArmorClass{i+1} and the rest, and a character with no armour wears MODEL_BODY_* + SkinIndex (ZzzCharacter.cpp:12124-12346), numbered one over MU's zero-based classes -- so Class05 is the Dark Lord, class 4.",
+  "part_note": "The torso, 470 triangles. Bound to 185 on Bip01 Spine1, 83 on Bip01 Spine, 47 on Bip01 L UpperArm, 47 on Bip01 R UpperArm, 18 on Bip01 L Thigh, 18 on Bip01 R Thigh, 6 on Bip01 L Forearm, 6 on Bip01 R Forearm.",
+  "profile": "armour",
+  "sheets": {
+    "HQlevel_man02": "HQlevel_man02.png"
+  },
+  "sheet_from": "Data/Player/HQlevel_man02.OZJ (256x256), from the Season 17 client (third_party/MuClient_S17_v1.19.74). All five of the Dark Lord's parts name it.",
+  "model_from": "Season 17's remake of MU's Dark Lord body, read out of Data/Player/ArmorClass05.bmd in the S17 client: a version-14 file, which MuExtract opens through Webzen's ModulusCryptor (pipeline/MuExtract/MuAssets/Crypto). The user, 2026-10-23: \"we are taking naked skins from MuClient_S17_v1.19.74\". Its 51 bones are the first 51 of player.bmd's, by name and order, so it rides our rig and clips as the other classes' do.",
+  "material_note": "painted_steel for the breastplate and shoulder armour, cloth for the coat panels and collar, leather for the belt.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 286,
+      "area": 9222.3,
+      "along": [
+        -15.0,
+        12.6
+      ],
+      "mu_uv": [
+        0.079,
+        0.004,
+        0.997,
+        0.862
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.991,
+        0.958
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 4,
+      "area": 81.9,
+      "along": [
+        9.8,
+        12.3
+      ],
+      "mu_uv": [
+        0.651,
+        0.432,
+        0.707,
+        0.661
+      ],
+      "bake_uv": [
+        0.601,
+        0.608,
+        0.645,
+        0.788
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 4,
+      "area": 81.9,
+      "along": [
+        9.6,
+        12.2
+      ],
+      "mu_uv": [
+        0.651,
+        0.432,
+        0.707,
+        0.661
+      ],
+      "bake_uv": [
+        0.419,
+        0.778,
+        0.463,
+        0.958
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 12,
+      "area": 827.9,
+      "along": [
+        -0.9,
+        12.5
+      ],
+      "mu_uv": [
+        0.855,
+        0.44,
+        0.997,
+        0.779
+      ],
+      "bake_uv": [
+        0.67,
+        0.516,
+        0.782,
+        0.783
+      ]
+    },
+    {
+      "island": 4,
+      "material": "leather",
+      "triangles": 4,
+      "area": 129.7,
+      "along": [
+        -12.7,
+        -9.6
+      ],
+      "mu_uv": [
+        0.78,
+        0.004,
+        0.881,
+        0.037
+      ],
+      "bake_uv": [
+        0.235,
+        0.927,
+        0.942,
+        0.958
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 70,
+      "area": 1698.5,
+      "along": [
+        -9.4,
+        6.9
+      ],
+      "mu_uv": [
+        0.689,
+        0.468,
+        0.996,
+        0.992
+      ],
+      "bake_uv": [
+        0.243,
+        0.01,
+        0.913,
+        0.911
+      ]
+    },
+    {
+      "island": 6,
+      "material": "cloth",
+      "triangles": 4,
+      "area": 81.9,
+      "along": [
+        9.8,
+        12.3
+      ],
+      "mu_uv": [
+        0.651,
+        0.432,
+        0.707,
+        0.661
+      ],
+      "bake_uv": [
+        0.922,
+        0.01,
+        0.966,
+        0.19
+      ]
+    },
+    {
+      "island": 7,
+      "material": "cloth",
+      "triangles": 4,
+      "area": 81.9,
+      "along": [
+        9.6,
+        12.2
+      ],
+      "mu_uv": [
+        0.651,
+        0.432,
+        0.707,
+        0.661
+      ],
+      "bake_uv": [
+        0.703,
+        0.798,
+        0.747,
+        0.978
+      ]
+    },
+    {
+      "island": 8,
+      "material": "cloth",
+      "triangles": 12,
+      "area": 827.9,
+      "along": [
+        -0.9,
+        12.5
+      ],
+      "mu_uv": [
+        0.855,
+        0.44,
+        0.997,
+        0.779
+      ],
+      "bake_uv": [
+        0.478,
+        0.585,
+        0.589,
+        0.852
+      ]
+    },
+    {
+      "island": 9,
+      "material": "painted_steel",
+      "triangles": 70,
+      "area": 1698.5,
+      "along": [
+        -9.4,
+        6.9
+      ],
+      "mu_uv": [
+        0.689,
+        0.468,
+        0.996,
+        0.992
+      ],
+      "bake_uv": [
+        0.022,
+        0.01,
+        0.926,
+        0.951
+      ]
+    }
+  ],
+  "uv_overrides": [
+    {
+      "material": "leather",
+      "u": [
+        0.53,
+        0.92
+      ],
+      "v": [
+        0.03,
+        0.11
+      ],
+      "why": "The studded belt along the bottom."
+    },
+    {
+      "material": "cloth",
+      "u": [
+        0.33,
+        0.5
+      ],
+      "v": [
+        0.6,
+        0.87
+      ],
+      "why": "The gold-piped collar flap."
+    },
+    {
+      "material": "cloth",
+      "u": [
+        0.91,
+        1.0
+      ],
+      "v": [
+        0.08,
+        0.4
+      ],
+      "why": "The coat strip down the right edge."
+    }
+  ],
+  "uv_overrides_why": "The breastplate and shoulder armour are painted steel with their gold edging painted in; the coat panels, collar and belt are lifted out. Read off the sheet with the UV layout drawn over it (2026-10-23)."
+}

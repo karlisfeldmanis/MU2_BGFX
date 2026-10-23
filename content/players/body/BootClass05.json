@@ -1,0 +1,74 @@
+{
+  "item": "BootClass05",
+  "mu_name": "Dark Lord boots",
+  "mu_name_from": "ZzzOpenData.cpp:115-120: MODEL_BODY_HELM + i and its fellows load HelmClass{i+1}, ArmorClass{i+1} and the rest, and a character with no armour wears MODEL_BODY_* + SkinIndex (ZzzCharacter.cpp:12124-12346), numbered one over MU's zero-based classes -- so Class05 is the Dark Lord, class 4.",
+  "part_note": "The boots, 244 triangles. Bound to 55 on Bip01 L Calf, 55 on Bip01 R Calf, 47 on Bip01 L Foot, 47 on Bip01 R Foot.",
+  "profile": "armour",
+  "sheets": {
+    "HQlevel_man02": "HQlevel_man02.png"
+  },
+  "sheet_from": "Data/Player/HQlevel_man02.OZJ (256x256), from the Season 17 client (third_party/MuClient_S17_v1.19.74). All five of the Dark Lord's parts name it.",
+  "model_from": "Season 17's remake of MU's Dark Lord body, read out of Data/Player/BootClass05.bmd in the S17 client: a version-14 file, which MuExtract opens through Webzen's ModulusCryptor (pipeline/MuExtract/MuAssets/Crypto). The user, 2026-10-23: \"we are taking naked skins from MuClient_S17_v1.19.74\". Its 51 bones are the first 51 of player.bmd's, by name and order, so it rides our rig and clips as the other classes' do.",
+  "material_note": "leather for the boot, painted_steel for the shin greave, by uv_overrides.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 122,
+      "area": 3685.3,
+      "along": [
+        -11.7,
+        21.1
+      ],
+      "mu_uv": [
+        0.002,
+        0.006,
+        0.753,
+        0.776
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.856,
+        0.92
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather",
+      "triangles": 122,
+      "area": 3685.3,
+      "along": [
+        -11.7,
+        21.1
+      ],
+      "mu_uv": [
+        0.002,
+        0.006,
+        0.753,
+        0.776
+      ],
+      "bake_uv": [
+        0.16,
+        0.061,
+        0.994,
+        0.99
+      ]
+    }
+  ],
+  "uv_overrides": [
+    {
+      "material": "painted_steel",
+      "u": [
+        0.0,
+        0.2
+      ],
+      "v": [
+        0.02,
+        0.37
+      ],
+      "why": "The segmented greave on the shin."
+    }
+  ],
+  "uv_overrides_why": "The boot is black leather; the shin greave is lifted out as painted steel. Read off the sheet with the UV layout drawn over it (2026-10-23)."
+}
