@@ -39,6 +39,9 @@ public:
     // His guild's name, in brackets after his own (docs/game/guild.md); empty for none.
     void setGuild(const std::string& guild) { guild_ = guild; }
     const gfx::Canvas& canvas() const { return canvas_; }
+    // The card a stat's name raises under the pointer (what a point of it buys his class), over
+    // every window as the other tips are.
+    const gfx::Canvas& tipCanvas() const { return tip_; }
     uint64_t rebuilds() const { return rebuilds_; }
 
 private:
@@ -74,6 +77,10 @@ private:
         // pushed and over: 0-3 a stat's plus, kStepIds + i a part of the switch, then the reset,
         // its No and its Yes (card.cpp's ids).
         int pushed = -1, over = -1;
+        // The stat whose well the pointer is on, off its plus (0 strength to 3 energy), or -1:
+        // its card is up. `totals` is what it reads, his points with the runes in.
+        int overStat = -1;
+        int totals[4] = {};
         bool closing = false, overClose = false;
         int step = 1;          // 1, 10 or 0 for all, as a press now spends (10 is All under ten)
         int returnable = 0;    // the points a reset would take back
@@ -84,6 +91,7 @@ private:
     void rebuild();
 
     gfx::Canvas canvas_;
+    gfx::Canvas tip_;
     panel::Arts* arts_ = nullptr;
     Sheet drawn_, now_;
     float x_ = 0.0f, y_ = 0.0f;

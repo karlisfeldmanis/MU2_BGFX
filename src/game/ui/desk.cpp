@@ -2946,6 +2946,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (questLog_.up()) interface_.add(questLog_.tipCanvas());
     if (talents_.up()) interface_.add(talents_.card());
     if (endurance_.showing()) interface_.add(endurance_.tipCanvas());
+    if (characterOpen_) interface_.add(card_.tipCanvas());
     if (chat_.tipping() && !chatHidden()) interface_.add(chat_.tipCanvas());
     // Last of all, over every window too: MU2's own CanvasLayer{Layer=128} -- a pointer is over
     // whatever it is pointing at, and the panel is something you point at as well.
