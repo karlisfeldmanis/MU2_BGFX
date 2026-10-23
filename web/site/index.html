@@ -411,9 +411,9 @@ Signed in as <b id="signed-name" style="color: var(--bone-hi)"></b> · <a href="
     row.replaceChildren();
     for (const r of said.regions) {
       const pill = el('span', 'live' + (r.up ? '' : ' down'));
-      pill.title = t('Server in {city}', { city: r.city });
+      pill.title = t('Server in {city}', { city: r.city }) + ' · ' + (r.up ? t('Online') : t('Offline'));
       pill.appendChild(el('i'));
-      pill.appendChild(document.createTextNode((names[r.name] || r.name) + ' · ' + (r.up ? t('Online') : t('Offline'))));
+      pill.appendChild(document.createTextNode(names[r.name] || r.name));
       row.appendChild(pill);
     }
   }).catch(() => {});
