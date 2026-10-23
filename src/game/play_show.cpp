@@ -225,6 +225,7 @@ void Play::exhale(float seconds) {
         if (look == nullptr) continue;
         const FigureBody::Claws& claws = look->claws;
         if (claws.until >= 0.0f && keyOf(one.figure) > claws.until) continue;
+        if (claws.after >= 0.0f && keyOf(one.figure) < claws.after) continue;
         if (claws.firstOnly && clip != one.attackClip) continue;
         float grip[3] = {0.0f, 0.0f, 0.0f}, tip[3] = {0.0f, 0.0f, 0.0f};
         if (claws.axis < 3) {
@@ -612,10 +613,12 @@ void Play::snort(float seconds) {
 void Play::shade(float seconds) {
     shadowStars_.update(seconds);
     for (Drawn& one : drawn_) {
-        // An Iron Rider has none of these and its shows all the same (play_breeds.cpp).
+        // An Iron Rider and a Blade Hunter have none of these and their shows all the same
+        // (play_breeds.cpp).
         const bool shown = !one.shadeBones.empty() || one.auraBone >= 0 || one.embers ||
                            !one.starBones.empty() ||
-                           (one.figure.body() && one.figure.body()->has("iron_rider"));
+                           (one.figure.body() && (one.figure.body()->has("iron_rider") ||
+                                                  one.figure.body()->has("blade_hunter")));
         if (!shown || !one.visible || !one.placed) {
             continue;
         }

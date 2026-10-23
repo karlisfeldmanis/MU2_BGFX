@@ -80,6 +80,7 @@ void Figures::readShows() {
             show.claws.light[i] = float(claws["light"].items[size_t(i)].numberOr(0.0));
         }
         show.claws.until = float(claws["until"].numberOr(-1.0));
+        show.claws.after = float(claws["after"].numberOr(-1.0));
         show.claws.firstOnly = claws["swing"].numberOr(0.0) == 1.0;
         const std::string axis = claws["axis"].stringOr("x");
         show.claws.axis = axis == "through" ? 3 : axis == "z" ? 2 : axis == "y" ? 1 : 0;

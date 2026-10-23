@@ -39,6 +39,7 @@
 #include "game/fx/witch_queen.h"
 #include "game/fx/aida_sparks.h"
 #include "game/fx/iron_rider.h"
+#include "game/fx/blade_hunter.h"
 #include "game/fx/tree_roots.h"
 #include "gfx/effects.h"
 #include "gfx/renderer.h"
@@ -54,6 +55,7 @@ public:
     HellMaine& hellMaine() { return hellMaine_; }
     AidaSparks& aidaSparks() { return aidaSparks_; }
     IronRider& ironRider() { return ironRider_; }
+    BladeHunter& bladeHunter() { return bladeHunter_; }
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);
     void shutdown();
@@ -191,6 +193,7 @@ private:
     HellMaine hellMaine_;     // Hell Maine's lights, hand fire, storm and fire lay (fx/hell_maine.h)
     AidaSparks aidaSparks_;   // the Death Rider's and Death Tree's sparks (fx/aida_sparks.h)
     IronRider ironRider_;     // a Kanturu Iron Rider's sparks, arrow and smoke (fx/iron_rider.h)
+    BladeHunter bladeHunter_; // a Kanturu Blade Hunter's swirl and blasts (fx/blade_hunter.h)
     static constexpr int kRibbonTails = 15;
     struct Ribbon {
         float points[kRibbonTails][3];

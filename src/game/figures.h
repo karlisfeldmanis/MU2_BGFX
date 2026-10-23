@@ -205,6 +205,7 @@ struct FigureBody {
         float from = 0.0f, to = 0.0f;  // metres along the first bone and along the last
         float light[3] = {0.0f, 0.0f, 0.0f};
         float until = -1.0f;  // the last key of a swing that lays one; -1, the whole swing
+        float after = -1.0f;  // the first; -1 from the swing's start (the Blade Hunter's 5.9)
         bool firstOnly = false;  // swing 1: on Attack 1 alone (the Death Tree's; its second is roots)
         // Which of the bone's own axes in this engine, 0 x, 1 y, 2 z ("x", "y", "z"); the Death
         // Tree's "z" as the user passed it. 3, "through": from the first bone's point along the
