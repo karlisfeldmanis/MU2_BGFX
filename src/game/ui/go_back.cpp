@@ -17,35 +17,30 @@ using gfx::Box;
 // The whole plate at 85% of the page's measures: drawn at 1:1 it was too large over the HUD
 // (the user, 2026-10-01: 'scale Go Back button little bit its to large').
 constexpr float kScale = 0.85f;
-constexpr float kTall = 70.0f;
-constexpr float kPadLeft = 18.0f;
+constexpr float kTall = 64.0f;
+constexpr float kPadLeft = 22.0f;
 constexpr float kPadRight = 26.0f;
 constexpr float kRuleGap = 20.0f;    // either side of the upright rule
-constexpr float kRuleInset = 15.0f;  // the rule's ends, in from the top and from the time line
+constexpr float kRuleInset = 15.0f;  // the rule's ends, in from the frame's top and foot
 constexpr float kRadius = 8.0f;
 constexpr float kHairline = 1.5f;
 constexpr float kOverHud = 0.0f;     // the frame's foot above the HUD plate's top edge; the gems rise past it
 constexpr float kTitleSize = 20.0f;
 constexpr float kWhereSize = 14.0f;
 constexpr float kClockSize = 22.0f;
-constexpr float kTitleBase = 29.0f;  // the two lines' baselines, down from the frame's top
-constexpr float kWhereBase = 47.0f;
+constexpr float kTitleBase = 28.0f;  // the two lines' baselines, down from the frame's top
+constexpr float kWhereBase = 46.0f;
 constexpr float kScrimAlpha = 0.72f;
 constexpr float kInsideAlpha = 0.42f;
 constexpr float kFadeSeconds = 0.4f;
 constexpr int kLateSeconds = 30;
-// The polish (the user, 2026-10-23: "polish that go back button so its not so basic"): a portal's
-// ring at the left, a graded fill with a faint lit top edge, a warm wash under the pointer, and
-// the five minutes as a thin gold line along the foot inside the frame, the outline left whole.
-constexpr float kEmblem = 32.0f;       // the ring's span
-constexpr float kEmblemGap = 14.0f;    // between it and the words
+// The polish (the user, 2026-10-23: "polish that go back button so its not so basic"): a graded
+// fill with a faint lit top edge and a warm wash under the pointer. A portal's ring at the left
+// and the five minutes as a line along the foot were tried and taken out ("remove that circle
+// and timer line").
 constexpr float kFillTop = 0.62f, kFillFoot = 0.86f;  // the fill's dark, top and foot
 constexpr float kTopEdgeAlpha = 0.30f;
 constexpr float kWashAlpha = 0.16f;
-constexpr float kTimeLine = 2.0f;      // the clock's line along the foot
-constexpr float kTimeInset = 14.0f;    // its ends, in from the frame's sides
-constexpr float kTimeLift = 8.0f;      // above the frame's foot
-constexpr int kWholeSeconds = 300;     // sim::kGoBackTicks at 20 a second
 constexpr float kCloseSize = 14.0f;   // the x's box, in the frame's top right corner
 constexpr float kCloseInset = 6.0f;   // from the frame's top and right; it stays over the clock
 
@@ -130,7 +125,7 @@ Box layout(int width, float plateTop, bool closed, const std::string& where, flo
     } else {
         const float words = std::max(controls::capsWidth(kTitleSize * u, kTitle, 0.0f),
                                      controls::labelWidth(kWhereSize * u, where));
-        inside = (kEmblem + kEmblemGap) * u + words + kRuleGap * 2.0f * u + std::round(u) +
+        inside = words + kRuleGap * 2.0f * u + std::round(u) +
                  controls::capsWidth(kClockSize * u, "8:88", 0.0f);
     }
     const float w = std::round(inside + (kPadLeft + kPadRight) * u);
@@ -217,43 +212,11 @@ void GoBackPlate::rebuild(const Drawn& now) {
     }
     ring(canvas_, b, kRadius * u, std::max(1.0f, kHairline * u), faded(rim, a));
 
-    float left = b.x + kPadLeft * u;
+    const float left = b.x + kPadLeft * u;
     if (now.closed) {
         controls::caps(canvas_, left, controls::middle(b.y, b.h, kTitleSize * u), kTitleSize * u,
                        faded(style::kAshInk, a), kClosed, 0.0f);
         return;
-    }
-    // What stands over the time line is centred in the room above it, not in the whole frame.
-    const float room = b.h - (kTimeLift + kTimeLine) * u;
-    // The portal's ring: a soft glow inside a hairline circle, its middle lit, MU's warp seen
-    // from above. Red with the plate in its last thirty seconds.
-    {
-        const float span = std::round(kEmblem * u);
-        const Box ringBox{std::round(left), std::round(b.y + room * 0.5f - span * 0.5f), span, span};
-        const uint32_t glow = late ? style::kBlood : kGold;
-        // A dark pit, then the light gathering toward the middle: each disc smaller and brighter.
-        tip::panel(canvas_, ringBox, span * 0.5f, faded(style::kVoid, 0.8f * a), faded(style::kVoid, 0.8f * a));
-        constexpr float kDiscs[4][2] = {{0.10f, 0.10f}, {0.20f, 0.16f}, {0.30f, 0.28f}, {0.38f, 0.55f}};
-        for (const auto& d : kDiscs) {
-            const Box disc = ringBox.grown(-span * d[0]);
-            tip::panel(canvas_, disc, disc.w * 0.5f, faded(glow, d[1] * a), faded(glow, d[1] * a));
-        }
-        const Box core = ringBox.grown(-span * 0.43f);
-        tip::panel(canvas_, core, core.w * 0.5f, faded(kGoldHi, (now.hover ? 1.0f : 0.85f) * a),
-                   faded(kGoldHi, (now.hover ? 1.0f : 0.85f) * a));
-        ring(canvas_, ringBox, span * 0.5f, std::max(1.0f, kHairline * u),
-             faded(late ? style::kBloodHi : now.hover ? kGoldHi : kGold, a));
-        left += (kEmblem + kEmblemGap) * u;
-    }
-    // The five minutes along the foot, draining from the right.
-    {
-        const float span = b.w - 2.0f * kTimeInset * u;
-        const float share = std::clamp(float(now.secondsLeft) / float(kWholeSeconds), 0.0f, 1.0f);
-        const float y = std::round(b.bottom() - kTimeLift * u - kTimeLine * u);
-        const float tall = std::max(1.0f, std::round(kTimeLine * u));
-        canvas_.rect({std::round(b.x + kTimeInset * u), y, std::round(span), tall}, faded(style::kVoid, 0.5f * a));
-        canvas_.rect({std::round(b.x + kTimeInset * u), y, std::round(span * share), tall},
-                     faded(late ? style::kBloodHi : kGold, 0.85f * a));
     }
     const uint32_t word = late ? style::kBloodHi : now.hover ? style::kBoneHi : kGoldHi;
     controls::caps(canvas_, left, b.y + kTitleBase * u, kTitleSize * u, faded(word, a), kTitle,
@@ -265,11 +228,11 @@ void GoBackPlate::rebuild(const Drawn& now) {
     const float right = b.right() - kPadRight * u;
     const float clockWide = controls::capsWidth(kClockSize * u, "8:88", 0.0f);
     const float ruleX = std::round(right - clockWide - kRuleGap * u);
-    canvas_.rect({ruleX, b.y + kRuleInset * u, std::max(1.0f, std::round(u)), room - 2.0f * kRuleInset * u},
+    canvas_.rect({ruleX, b.y + kRuleInset * u, std::max(1.0f, std::round(u)), b.h - 2.0f * kRuleInset * u},
                  faded(style::kIron, a * 0.55f));
     const std::string text = clock(now.secondsLeft);
     const float wide = controls::capsWidth(kClockSize * u, text, 0.0f);
-    controls::caps(canvas_, right - wide, controls::middle(b.y, room, kClockSize * u),
+    controls::caps(canvas_, right - wide, controls::middle(b.y, b.h, kClockSize * u),
                    kClockSize * u, faded(late ? style::kBloodHi : kGoldHi, a), text, 0.0f);
     // The x: the frame's gold at rest, lit under the pointer.
     controls::bare(canvas_, x_.grown(4.0f * u), controls::Glyph::Close,
