@@ -459,11 +459,16 @@ struct SkillRow {
     // his facing, the ring burns round him, empty or not -- mana and clip spent on air, which
     // 0.75's "no target, no skill" refused. Ours. **Twisting Slash too** (the user, 2026-10-10:
     // "twisting slash is aoe spell similar like ragefull blow ... casted also without monster
-    // click hover"): Rageful Blow's arc already goes off on the pointer's ground; the knight's
-    // whirl is a ring round him and has no direction to aim, so it spins where he stands.
+    // click hover"): the knight's whirl is a ring round him and has no direction to aim, so it
+    // spins where he stands. **Rageful Blow and Cyclone too** (the user, 2026-10-23: "rageful
+    // blow jakas pa brīdim pārstāj vispār strādāt"): the note here said Rageful Blow's arc went
+    // off on the pointer's ground, but an arc with nobody in it was refused in silence -- its one
+    // tile ahead toward the mouse empty, the key did nothing at all. Now it breaks the ground
+    // there, mana and cooldown spent, and Cyclone, an arc since the same day, spins there.
     bool castsBare() const {
         return number == skill::kEvilSpirit || number == skill::kTwister ||
-               number == skill::kHellfire || number == skill::kTwistingSlash;
+               number == skill::kHellfire || number == skill::kTwistingSlash ||
+               number == skill::kRagefulBlow || number == skill::kCyclone;
     }
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0; }

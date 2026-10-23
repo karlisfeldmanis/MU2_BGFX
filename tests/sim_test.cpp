@@ -4366,26 +4366,31 @@ void testSkills(const content::Tables& tables) {
     }
     check(falls, "more agility is never a longer cooldown");
     check(floored, "and no cooldown falls under the clip that floors it");
-    // Twisting Slash spins with nothing round him, as Rageful Blow breaks bare ground (the user,
-    // 2026-10-10): a press with no target is a cast, mana spent.
-    {
+    // Twisting Slash spins with nothing round him (the user, 2026-10-10): a press with no target
+    // is a cast, mana spent. And Rageful Blow and Cyclone, the arcs, pressed with the pointer on
+    // bare ground (2026-10-23): until then an arc with nobody in it did nothing at all.
+    for (const int32_t bare : {sim::skill::kTwistingSlash, sim::skill::kRagefulBlow,
+                               sim::skill::kCyclone}) {
         sim::Realm realm;
         realm.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 200);
-        check(realm.learn(sim::skill::kTwistingSlash), "a knight knows Twisting Slash");
+        const sim::SkillRow& row = *sim::skillNumbered(bare);
+        check(realm.learn(bare), "a knight knows it");
         check(realm.equip(tables.armNamed("Sword16"), -1, true), "with a sword in hand");
-        check(sim::skillNumbered(sim::skill::kTwistingSlash)->castsBare(),
-              "and it is cast bare");
+        check(row.castsBare(), "and it is cast bare");
         const int mana = realm.hero().mana;
         bool cast = false;
-        realm.invoke(sim::skill::kTwistingSlash, 0);
+        if (row.aimsAtPointer()) {
+            realm.invokeAt(bare, realm.hero().column() + 3, realm.hero().row());
+        } else {
+            realm.invoke(bare, 0);
+        }
         for (int tick = 0; tick < 40 && !cast; ++tick) {
             realm.step();
             for (const sim::Happening& h : realm.happenings()) {
-                cast |= h.what == sim::What::Cast && h.who == realm.hero().id &&
-                        h.a == sim::skill::kTwistingSlash;
+                cast |= h.what == sim::What::Cast && h.who == realm.hero().id && h.a == bare;
             }
         }
-        check(cast, "pressed at nothing, he spins");
+        check(cast, "pressed at nothing, it is thrown");
         check(realm.hero().mana < mana, "and pays its mana");
     }
     checkEqual(sim::cooldownTicks(cyclone, 300, 1), cyclone.coolTicks / 2,
@@ -4919,8 +4924,12 @@ void testSkills(const content::Tables& tables) {
                     const sim::SkillRow& row = sim::skillAt(i);
                     if (!realm.knows(row.number) || realm.cooling(row.number) > 0) continue;
                     // A skill cast bare spins on air when pressed out of reach: held, as the bot
-                    // holds it, until something is in its ring.
-                    if (row.castsBare() && closest > row.reach + 0.5f) continue;
+                    // holds it, until something is in its ring -- and an arc until it is in
+                    // reach, or it is thrown the way he faces and catches nothing.
+                    if (row.castsBare() &&
+                        closest > row.reach + (row.spread == sim::Spread::Arc ? 0.0f : 0.5f)) {
+                        continue;
+                    }
                     realm.invoke(row.number, nearest);
                     pressed = i;
                     break;
