@@ -2150,6 +2150,18 @@ class Handler(BaseHTTPRequestHandler):
         if lang and path.lstrip("/") not in i18n.PAGES:
             self.send_error(HTTPStatus.NOT_FOUND)
             return
+        # A language picked in the footer (?lang=, i18n.switcher) is kept in the mu-lang cookie and the
+        # page asked again without it, so the pick holds on every page, script or none.
+        picked = parse_qs(urlparse(self.path).query).get("lang", [""])[0]
+        if path.lstrip("/") in i18n.PAGES and (picked == "en" or picked in i18n.LANGS):
+            secure = "; Secure" if self.headers.get("X-Forwarded-Proto", "") == "https" else ""
+            self.send_response(302)
+            self.send_header("Location", ("" if picked == "en" else f"/{picked}") + (asked if asked.startswith("/") else "/" + asked))
+            self.send_header("Set-Cookie", f"{i18n.CHOICE}={picked}; Path=/; Max-Age=31536000; SameSite=Lax{secure}")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
         # An English page, asked by a browser in one of the site's languages (or by someone who
         # picked one in the footer), is that page in it: sent there before anything is drawn.
         if lang is None and path.lstrip("/") in i18n.PAGES:

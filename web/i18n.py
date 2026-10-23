@@ -301,7 +301,8 @@ def switcher(page_path: str, lang: str) -> str:
     """The footer's languages, each a link to this page in it; the one shown marked."""
     out = []
     for code, name in [("en", "English")] + [(c, v[0]) for c, v in LANGS.items()]:
-        href = page_path if code == "en" else f"/{code}{page_path}"
+        # ?lang= has the server keep the pick (server.py file) and send the page without it.
+        href = (page_path if code == "en" else f"/{code}{page_path}") + f"?lang={code}"
         here = ' aria-current="true"' if code == lang else ""
         out.append(f'<a href="{href}" hreflang="{code}" data-lang="{code}"{here}>{name}</a>')
     return '<nav class="langs" translate="no" aria-label="Language">' + "".join(out) + "</nav>"

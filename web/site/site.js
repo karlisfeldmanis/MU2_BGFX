@@ -14,11 +14,7 @@ window.MU = (() => {
   };
   const home = LANG === 'en' ? '/' : '/' + LANG + '/';
   // The server sends an English page to the browser's language (web/i18n.py pick); a language
-  // picked in the footer is kept a year in the mu-lang cookie, and outranks the browser's.
-  document.addEventListener('click', (e) => {
-    const a = e.target.closest && e.target.closest('.langs a[data-lang]');
-    if (a) document.cookie = 'mu-lang=' + a.dataset.lang + '; Path=/; Max-Age=31536000; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
-  });
+  // picked in the footer (?lang=) the server keeps a year in the mu-lang cookie, outranking it.
 
   const el = (tag, cls, text) => {
     const e = document.createElement(tag);
