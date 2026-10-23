@@ -1138,8 +1138,10 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         // need to also show for which weapon type its usable"): the row the skill's own card
         // prints (`Desk::skillSheet`), one family a line under the label, white when what he
         // holds will throw it and red when it will not. A spell asks nothing of the hand and has
-        // no such row, as on its card.
-        if (const sim::SkillRow* skill = sim::skillNumbered(row.teaches); skill && !skill->wizardry) {
+        // no such row, as on its card; nor one any weapon throws (`Desk::skillSheet`).
+        if (const sim::SkillRow* skill = sim::skillNumbered(row.teaches);
+            skill && !skill->wizardry &&
+            (skill->families & sim::arms::kEvery) != sim::arms::kEvery) {
             const std::string families = sim::familiesListed(skill->families);
             if (!families.empty()) {
                 const bool holds = skill->suits(skill->onSelf() ? who.offHand : who.hand);

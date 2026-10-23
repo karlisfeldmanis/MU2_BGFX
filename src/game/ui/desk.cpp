@@ -2480,8 +2480,12 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     weapon.values.push_back({sim::familiesListed(row.families), met, false, "", 0});
     // A spell asks nothing of the hand, so it has no such row. Nor does a mount's skill, which
     // asks for the mount under him instead: white while he rides it, red off it.
-    // Nor one any hand throws -- a buff or a summon -- whose list is empty.
+    // Nor one any hand throws -- a buff or a summon -- whose list is empty. Nor one any weapon
+    // throws, every knight's blow since e4054cd5 (the user, 2026-10-23: "we can remove that
+    // completly because all orbs work for all weapons"): "Any weapon" asks nothing of the hand.
+    // What is left are the real asks, Defense's shield and the elf's bows.
     if (!row.wizardry && !row.mounted && !(row.anyHand && row.onSelf()) &&
+        (row.families & sim::arms::kEvery) != sim::arms::kEvery &&
         !sim::familiesListed(row.families).empty()) {
         facts.rows.push_back(weapon);
     }
