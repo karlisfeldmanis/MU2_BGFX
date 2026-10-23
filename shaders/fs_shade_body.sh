@@ -318,7 +318,20 @@ void main()
 	// under the surface it belongs to, where it would reflect the inside of the mesh.
 	float specAo = saturate(pow(ndotv + ao, exp2(-16.0 * roughness - 1.0)) - 1.0 + ao);
 	float horizon = saturate(1.0 + 1.1 * dot(r, ng));
-	colour += env * (f0 * envAB.x + vec3_splat(envAB.y)) * energy * specAo * horizon * horizon;
+	vec3 mirrored = env * (f0 * envAB.x + vec3_splat(envAB.y)) * energy * specAo * horizon * horizon;
+	// The sheet's metal_highlight on what a metal mirrors too, against a white card in this
+	// light -- the sun full on it and the ambient: a glossy blade mirroring the noon sky or the
+	// fire beside it read as a white panel (the user, 2026-10-23: "Cap on metal highlights has
+	// to be global also for weapons"). Ours.
+	if (u_weather.y > 0.0)
+	{
+		vec3 card = u_sunColour.rgb * (u_sunDir.w * 0.31830989) + ambient;
+		float cardPeak = max(card.r, max(card.g, card.b));
+		float mirrorPeak = max(mirrored.r, max(mirrored.g, mirrored.b));
+		float mirrorCap = u_weather.y * cardPeak;
+		if (mirrorPeak > mirrorCap) mirrored *= mix(1.0, mirrorCap / mirrorPeak, metal);
+	}
+	colour += mirrored;
 
 	// The lamps, on the texture's own albedo rather than on the albedo times MU's baked
 	// light: lights.sh says why.
