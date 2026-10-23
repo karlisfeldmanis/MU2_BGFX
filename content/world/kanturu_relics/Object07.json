@@ -18,7 +18,7 @@
     "han_t": "rock"
   },
   "material_note": "han_gigantis: a green-grey relief of the Gigantis' armoured body, carved stone: marble. hangigantiscorn_R: a pale horn glow, MU's bright sheet: lamplight. han_t: a 16 x 64 black strip: rock.",
-  "why_this_one": "A small Gigantis statue, 21 of them. Batch 3 of the Relics (the user, 2026-10-23: \"first we eed to finish actual map then we go to monsters\", \"next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "why_this_one": "A small animated Gigantis figure, 21 of them. Batch 3 of the Relics (the user, 2026-10-23: \"first we eed to finish actual map then we go to monsters\", \"next\"). docs/worlds/kanturu-port.md Part B 8.1.",
   "additive": [
     "hangigantiscorn_R"
   ],
@@ -530,5 +530,7 @@
         0.831
       ]
     }
-  ]
+  ],
+  "play_speed": 0.16,
+  "play_speed_from": "No Move code for type 6, so every object's flat Velocity 0.16. 19 of its 19 bones move over 9 keys (Object07.rig.json, MuExtract export-rig --actions=all; 815 vertices, as the .obj): the little Gigantis stirs (the user, 2026-10-24: \"when you cook objects you also make animations\")."
 }

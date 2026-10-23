@@ -1,0 +1,262 @@
+{
+  "item": "Object37",
+  "mu_name": "Object37",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 36,
+  "placements": 15,
+  "profile": "world",
+  "sheets": {
+    "han_x2": "kl_han_x2.png",
+    "songk3mmater0302_R": "kr_songk3mmater0302_r.png",
+    "han_x4": "kl_han_x4.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "han_x2": "plate_steel",
+    "songk3mmater0302_R": "lamplight",
+    "han_x4": "wrought_iron"
+  },
+  "material_note": "han_x2: grey steel machinery with green glowing runes: plate_steel; songk3mmater0302_R: the blue liquid of the tanks, MU's bright sheet, the Ruins' own (kr_songk3mmater0302_r.png, byte-identical): lamplight; han_x4: a bronze ring, cut out: wrought_iron.",
+  "cutout": [
+    "han_x4"
+  ],
+  "cutout_from": "decode_texture found a real alpha channel cutting the sheet.",
+  "why_this_one": "An incubator tank in grey steel with runes and rings, 5 m tall. 15 placed. Batch 4 of the Relics (the user, 2026-10-23: \"first we eed to finish actual map then we go to monsters\", \"do next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "additive": [
+    "songk3mmater0302_R"
+  ],
+  "additive_from": "songk3mmater0302_R is an _R sheet, drawn RENDER_BRIGHT, added (TextureScript.cpp:16-58); Render_Kanturu2nd_AfterObjectMesh types 35/36 hide mesh 1 and draw it RENDER_TEXTURE|RENDER_BRIGHT (GM_Kanturu_2nd.cpp:647-652).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 24,
+      "area": 62017.5,
+      "along": [
+        -115.0,
+        114.4
+      ],
+      "mu_uv": [
+        0.134,
+        0.287,
+        0.926,
+        0.99
+      ],
+      "bake_uv": [
+        0.39,
+        0.009,
+        0.89,
+        0.865
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 48,
+      "area": 68878.1,
+      "along": [
+        -120.2,
+        119.6
+      ],
+      "mu_uv": [
+        0.357,
+        0.659,
+        0.629,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.29,
+        0.571
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 26732.7,
+      "along": [
+        -90.4,
+        89.8
+      ],
+      "mu_uv": [
+        0.582,
+        0.365,
+        0.69,
+        0.525
+      ],
+      "bake_uv": [
+        0.019,
+        0.528,
+        0.869,
+        0.869
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 36,
+      "area": 19877.8,
+      "along": [
+        -4.8,
+        75.9
+      ],
+      "mu_uv": [
+        0.681,
+        0.007,
+        0.993,
+        0.416
+      ],
+      "bake_uv": [
+        0.072,
+        0.008,
+        0.831,
+        0.69
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 46,
+      "area": 8083.1,
+      "along": [
+        49.3,
+        93.0
+      ],
+      "mu_uv": [
+        0.174,
+        0.546,
+        0.641,
+        0.849
+      ],
+      "bake_uv": [
+        0.061,
+        0.009,
+        0.903,
+        0.899
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 36,
+      "area": 5746.1,
+      "along": [
+        -50.9,
+        -15.8
+      ],
+      "mu_uv": [
+        0.174,
+        0.546,
+        0.641,
+        0.849
+      ],
+      "bake_uv": [
+        0.34,
+        0.009,
+        0.882,
+        0.903
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 46,
+      "area": 8083.1,
+      "along": [
+        -95.5,
+        -51.8
+      ],
+      "mu_uv": [
+        0.174,
+        0.546,
+        0.641,
+        0.849
+      ],
+      "bake_uv": [
+        0.008,
+        0.108,
+        0.903,
+        0.899
+      ]
+    },
+    {
+      "island": 7,
+      "material": "plate_steel",
+      "triangles": 36,
+      "area": 5425.4,
+      "along": [
+        -43.9,
+        -11.7
+      ],
+      "mu_uv": [
+        0.174,
+        0.546,
+        0.641,
+        0.849
+      ],
+      "bake_uv": [
+        0.193,
+        0.009,
+        0.903,
+        0.899
+      ]
+    },
+    {
+      "island": 8,
+      "material": "wrought_iron",
+      "triangles": 16,
+      "area": 39144.2,
+      "along": [
+        -94.5,
+        93.9
+      ],
+      "mu_uv": [
+        -0.001,
+        0.003,
+        1.0,
+        0.993
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.841,
+        0.993
+      ]
+    },
+    {
+      "island": 9,
+      "material": "lamplight",
+      "triangles": 40,
+      "area": 184123.0,
+      "along": [
+        -90.6,
+        91.2
+      ],
+      "mu_uv": [
+        -0.881,
+        -0.478,
+        4.591,
+        4.157
+      ],
+      "bake_uv": [
+        0.008,
+        0.009,
+        0.873,
+        0.741
+      ]
+    }
+  ],
+  "glow": {
+    "songk3mmater0302_R": {
+      "low": 0.7,
+      "high": 1.2,
+      "hz": 0.25,
+      "smooth_seconds": 2.0,
+      "scrolls_per_second": 0.08
+    }
+  },
+  "glow_from": "Ours, marked: MU's tank is still, one key and no Move or glow code for its type, its liquid drawn at a steady light. Here the liquid drifts through the glass a sheet in 12.5 s and its light breathes between 0.7 and 1.2, re-aimed every 4 s (the user, 2026-10-23: \"does those boxes has to be static? no aniamtion there?\", \"blue cilynders\")."
+}
