@@ -270,7 +270,12 @@ footer .vote img { display: block; width: 168px; max-width: 100%; height: auto; 
 footer p.foot-legal { margin-top: -8px; font-size: 12px; color: rgba(143,133,117,.65); }
 /* Cinzel has no Cyrillic and no Vietnamese: those pages set its headings in Alegreya SC. */
 html:is([lang="ru"], [lang="vi"]) :is(.h2, .hero h1, .tile h3, .tile-beta .big, .req h3, .fixes h3, .fix-date,
-  .intro strong, .post h3, .page-title) { font-family: 'Alegreya SC', serif; }
+  .intro strong, .post h3, .page-title, .tp-card h2, .faq h2) { font-family: 'Alegreya SC', serif; }
+/* Chinese: headings in Noto Serif SC, the rest in the system's own Chinese font. */
+html[lang="zh-CN"] :is(.h2, .hero h1, .tile h3, .tile-beta .big, .req h3, .fixes h3, .fix-date,
+  .intro strong, .post h3, .page-title, .tp-card h2, .faq h2, .acct-stat b, .acct-region-head b, .acct-who b, .acct-level b, .acct-box h2) {
+  font-family: 'Noto Serif SC', 'Songti SC', serif; letter-spacing: .04em; }
+html[lang="zh-CN"] body { font-family: 'Alegreya Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif; }
 
 @media (max-width: 700px) {
   .intro strong { font-size: 27px; }

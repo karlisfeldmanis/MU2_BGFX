@@ -23,13 +23,17 @@ from pathlib import Path
 
 # The languages beside English, by the path they are served under: its name in itself, the
 # <html lang>, and og:locale. Chosen 2026-10-19 for MU's private-server communities: Brazil,
-# Spanish-speaking Latin America and Spain, Russia and its neighbours, Vietnam, Poland.
+# Spanish-speaking Latin America and Spain, Russia and its neighbours, Vietnam, Poland; Chinese
+# (Simplified, for the East Asia region), Malay and Latvian added 2026-10-23.
 LANGS = {
     "pt": ("Português", "pt-BR", "pt_BR"),
     "es": ("Español", "es", "es_ES"),
     "ru": ("Русский", "ru", "ru_RU"),
     "vi": ("Tiếng Việt", "vi", "vi_VN"),
     "pl": ("Polski", "pl", "pl_PL"),
+    "zh": ("简体中文", "zh-CN", "zh_CN"),
+    "ms": ("Bahasa Melayu", "ms", "ms_MY"),
+    "lv": ("Latviešu", "lv", "lv_LV"),
 }
 # The pages served in every language, by file, their path, and their name on the /translate page.
 PAGES = {
@@ -41,10 +45,13 @@ PAGES = {
     "linux.html": ("/linux", "Linux"),
 }
 SITE = "https://mu-classic.com"
-# Cinzel has no Cyrillic and no Vietnamese; those pages set its headings in Alegreya SC (site.css).
+# Cinzel has no Cyrillic, Vietnamese or Chinese; those pages set its headings in Alegreya SC, and
+# Chinese in Noto Serif SC (site.css). Chinese body text falls back to the system's own font.
 HEADING_FONT = ('<link href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@700&display=swap" '
                 'rel="stylesheet">')
-NEEDS_HEADING_FONT = ("ru", "vi")
+HEADING_FONTS = {"ru": HEADING_FONT, "vi": HEADING_FONT,
+                 "zh": ('<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&display=swap" '
+                        'rel="stylesheet">')}
 
 # What ends a unit: a child that is a block, or a picture or a field, makes its parent's text
 # loose pieces of their own.
@@ -226,12 +233,18 @@ MONTHS = {
     "es": "enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre",
     "ru": "января февраля марта апреля мая июня июля августа сентября октября ноября декабря",
     "pl": "stycznia lutego marca kwietnia maja czerwca lipca sierpnia września października listopada grudnia",
+    "ms": "Januari Februari Mac April Mei Jun Julai Ogos September Oktober November Disember",
+    "lv": "janvārī februārī martā aprīlī maijā jūnijā jūlijā augustā septembrī oktobrī novembrī decembrī",
 }
 
 
 def day_label(lang: str, year: int, month: int, date: int) -> str:
     if lang == "vi":
         return f"{date} tháng {month}, {year}"
+    if lang == "zh":
+        return f"{year}年{month}月{date}日"
+    if lang == "lv":
+        return f"{year}. gada {date}. {MONTHS['lv'].split()[month - 1]}"
     name = MONTHS.get(lang, MONTHS["en"]).split()[month - 1]
     if lang in ("pt", "es"):
         return f"{date} de {name} de {year}"
@@ -261,6 +274,14 @@ def count_label(lang: str, new: int, fixed: int) -> str:
                               else ("poprawka" if n == 1 else _slavic(n, "poprawka", "poprawki", "poprawek")))
         if lang == "vi":
             return f"{n} " + ("mới", "bản sửa")[kind]
+        if lang == "zh":
+            return f"{n} 项" + ("新内容", "修复")[kind]
+        if lang == "ms":
+            return f"{n} " + ("baharu", "pembaikan")[kind]
+        if lang == "lv":
+            # "1 jaunums", "21 jaunums", "2 jaunumi"; "1 labojums", "2 labojumi".
+            one = n % 10 == 1 and n % 100 != 11
+            return f"{n} " + (("jaunums", "jaunumi"), ("labojums", "labojumi"))[kind][not one]
         return f"{n} new" if kind == 0 else f"{n} fix{'es' if n != 1 else ''}"
     return " · ".join(words(n, k) for k, n in ((0, new), (1, fixed)) if n)
 
@@ -318,8 +339,8 @@ def localise(page: str, file: str, lang: str, texts: dict, script_strings: list)
         # Links to the pages served in every language stay in this one.
         paths = "|".join(re.escape(p.lstrip("/")) for p, _ in PAGES.values() if p != "/")
         page = re.sub(r'href="/(' + paths + r'|#[\w-]*|)"', lambda m: f'href="/{lang}/{m.group(1)}"', page)
-        if lang in NEEDS_HEADING_FONT:
-            page = page.replace('<link rel="stylesheet" href="/site.css">', HEADING_FONT + '\n<link rel="stylesheet" href="/site.css">', 1)
+        if lang in HEADING_FONTS:
+            page = page.replace('<link rel="stylesheet" href="/site.css">', HEADING_FONTS[lang] + '\n<link rel="stylesheet" href="/site.css">', 1)
         blob = json.dumps(said, ensure_ascii=False).replace("</", "<\\/")
         page = page.replace('<script src="/site.js"></script>',
                             f'<script>window.MU_T = {blob};</script>\n<script src="/site.js"></script>', 1)
