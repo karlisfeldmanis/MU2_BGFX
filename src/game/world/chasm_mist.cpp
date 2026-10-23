@@ -87,7 +87,15 @@ bool ChasmMist::voidAt(float x, float z) const {
     const float m = ground_->metresPerTile();
     const int c = int(std::floor(x / m)), r = int(std::floor(-z / m));
     if (c < 0 || r < 0 || c >= ground_->size() || r >= ground_->size()) return true;
-    return (ground_->attributesAt(c, r) & content::kNoGround) != 0;
+    const uint16_t at = ground_->attributesAt(c, r);
+    if ((at & content::kNoGround) != 0) return true;
+    // MU's own black: NoMove ground its TerrainLight paints down to nothing reads as the
+    // chasm, and the mist ended on its edge as a plate (the user, 2026-10-23: "vissible plate",
+    // at 170,160 -- the strip west of the trench, cols 148-155).
+    if ((at & content::kNoMove) == 0) return false;
+    float rgb[3];
+    ground_->lightAt(c, r, rgb);
+    return std::max(rgb[0], std::max(rgb[1], rgb[2])) < 0.15f;
 }
 
 // The share of its middle and sixteen points round it, at `radius`, that are over the void.

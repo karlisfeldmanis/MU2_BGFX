@@ -87,7 +87,10 @@ float softness(float code, vec2 pixel, float depth, vec3 wpos)
 	{
 		vec3 at = u_effectEye.xyz + (wpos - u_effectEye.xyz) * (near / max(depth, 1.0e-3));
 		float level = texture2D(s_abyss, vec2(at.x, -at.z) * u_abyss.z + u_abyss.w).r;
-		shown = mix(shown, 1.0, smoothstep(u_abyss.x, u_abyss.x + u_abyss.y, level - at.y));
+		// Over two metres below the rim, not the abyss's six: a face just under the lip is as
+		// black from MU's painted light as one deep down is from the abyss, and the mist went
+		// round it as a black wedge (the user, 2026-10-23, at 170,160).
+		shown = mix(shown, 1.0, smoothstep(u_abyss.x, u_abyss.x + min(u_abyss.y, 2.0), level - at.y));
 	}
 	// What stands BEHIND it thins it, full its reach in front, so a sprite passing through the
 	// ground ends on no line. On the pixel alone: averaged round it, the plate of MU's ground
