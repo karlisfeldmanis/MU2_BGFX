@@ -12740,6 +12740,9 @@ void testEvilSpirit(const content::Tables& tables) {
         realm.give(shield, sim::kWeaponLeft, 0, -1, false, 0, 0, 1, powers);
         realm.give(tables.itemAt(13, 26), sim::kRingRight, 9);
         check(realm.hero().excel.lightningRing == 10, "a Ring of Lightning +9 beside the shield");
+        // And a Ring of the Leech: a passive's blow gives no life back either (2026-10-23).
+        realm.give(tables.itemAt(13, 24), sim::kRingLeft, 9);
+        check(realm.hero().excel.lifeOnHit > 0, "and a Ring of the Leech +9");
         // Four that no spirit kills round him, so each spirit's hit leaves one to sting.
         sim::Body model;
         for (const sim::Body& one : realm.bodies()) {
@@ -12755,7 +12758,7 @@ void testEvilSpirit(const content::Tables& tables) {
             tank.y = realm.hero().y + (i < 2 ? 0.0f : 1.0f);
             realm.spawn(std::move(tank));
         }
-        int spirits = 0, swings = 0, offSpirit = 0, offSwing = 0;
+        int spirits = 0, swings = 0, offSpirit = 0, offSwing = 0, leechSpirit = 0, leechSwing = 0;
         uint32_t fighting = 0;
         for (int tick = 0; tick < 20000; ++tick) {
             const uint32_t nearest = nearestTo(realm);
@@ -12767,9 +12770,14 @@ void testEvilSpirit(const content::Tables& tables) {
                 realm.ask(request);
             }
             realm.step();
-            bool lastSpirit = false;
+            bool lastSpirit = false, leeched = false;
             for (const sim::Happening& h : realm.happenings()) {
                 if (h.who != realm.hero().id) continue;
+                // A Leeched is said before the Hit it came off (Realm::strikeAt).
+                if (h.what == sim::What::Hit && leeched) {
+                    (h.spirit ? leechSpirit : leechSwing) += 1;
+                    leeched = false;
+                }
                 if (h.what == sim::What::Hit && !h.rune) {
                     lastSpirit = false;
                     ++swings;
@@ -12779,6 +12787,8 @@ void testEvilSpirit(const content::Tables& tables) {
                     spirits += h.c > 0 ? 1 : 0;
                 } else if (h.what == sim::What::Loosed && h.a == sim::skill::kLightning) {
                     (lastSpirit ? offSpirit : offSwing) += 1;
+                } else if (h.what == sim::What::Leeched) {
+                    leeched = true;
                 }
             }
         }
@@ -12786,6 +12796,9 @@ void testEvilSpirit(const content::Tables& tables) {
                     offSwing, spirits, offSpirit);
         check(spirits >= 20 && offSwing > 0, "his swings sting and his spirits land");
         checkEqual(offSpirit, 0, "but no spirit stings the ring");
+        std::printf("  the Leech: %d after a swing, %d after a spirit\n", leechSwing, leechSpirit);
+        check(leechSwing > 0, "his swings leech");
+        checkEqual(leechSpirit, 0, "his spirits do not");
     }
     {
         sim::Realm realm;

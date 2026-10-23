@@ -167,6 +167,8 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // (`sweep_`). Not on a rune's own blow -- thrown, unpaid and of no skill -- whose force
     // already carries them (runeForce).
     const bool runeBlow = row == nullptr && thrown && !pays;
+    // And a shield rune's spirit, which carries Evil Spirit's row: either is a passive's blow.
+    const bool passive = runeBlow || runeSpirit_;
     // Kept apart from `force`, which says whether this was a plain swing (`generates` below).
     const float talented =
         (attacker.player && !runeBlow ? talentBlow(attacker, target, row ? row : sweep_) : 1.0f) *
@@ -232,7 +234,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // soaked whole wears nothing, as a miss wears nothing (OpenMU reads HitInfo.HealthDamage).
     if (wound > 0) {
         if (target.player) wearOnTaken(wound);
-        if (attacker.player) wearOnLanded(target.stats.defense);
+        if (attacker.player && !passive) wearOnLanded(target.stats.defense);
     }
     // What the blow gives back. A landed SWING pays the knight a twentieth of his mana; a skill's
     // own blow pays nothing, which is what makes the basic attack the generator and the skill the
@@ -253,7 +255,9 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     }
     // The Dungeon's runes on a wound he dealt, swing, arrow or spell (sim/items.h): Bloodwell's
     // share back as life, and a Frenzy's stack (sim::kFrenzyStackSpeed). Neither draws.
-    if (attacker.player && target.monster() && wound > 0 && attacker.alive()) {
+    // Not on a passive's own blow (2026-10-23): a Ring of Fire on eight monsters gave eight
+    // Leech heals and eight Frenzy stacks, where Frost's and Ice's wounds gave none.
+    if (attacker.player && target.monster() && wound > 0 && attacker.alive() && !passive) {
         const int lifeBefore = attacker.health;
         if (attacker.excel.lifeSteal > 0.0 && attacker.health < attacker.maxHealth) {
             attacker.stealCarry += float(double(wound) * attacker.excel.lifeSteal);
@@ -560,13 +564,14 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         const bool ice = power.power == Power::Ice;
         if (!runeDice_.nextBool(ice ? kIceRuneChance : kPoisonRuneChance)) return;
         if (!struck.alive() || !struck.monster()) return;
-        if (ice && fixed(struck)) return;  // the Statue of Saint takes no chill
         if (!ice && venomProof(struck)) return;
         const SkillRow* spell = skillNumbered(ice ? skill::kIce : skill::kPoison);
         if (spell == nullptr) return;
+        // The Statue of Saint (fixed) and the raid's dragon take the frost below and not the
+        // chill, as Frost Arrow's wound and freeze (2026-10-23: the statue took neither).
+        const bool chills = !ice || (!fixed(struck) && !shrugs(struck));
         if (ice) {
-            // The raid's dragon takes the frost below and not the chill.
-            if (!shrugs(struck)) {
+            if (chills) {
                 struck.chilledUntil = tick_ + spell->chillTicks;
                 struck.chillSlow = hero.talentShare.chilledSlower;
             }
@@ -577,7 +582,7 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
                 std::max(1, int(float(wound / 4) * runeForce(hero, Element::Poison)));
             struck.poisonBy = hero.id;
         }
-        say(What::Loosed, hero, ice ? skill::kIce : skill::kPoison, 0, 0, struck.id);
+        if (chills) say(What::Loosed, hero, ice ? skill::kIce : skill::kPoison, 0, 0, struck.id);
         core::logf("%s rune: tick %lld, on #%u", ice ? "ice" : "poison", (long long)tick_,
                    struck.id);
         // And Ice wounds as it chills, as Stormcall's lightning and the Poison rune's sickness
@@ -1161,12 +1166,18 @@ void Realm::spiritStrike(Body& hero, const SpiritBlow& blow) {
         hero.stats.wizardMinimum = double(hero.totalPoints().energy) * kRuneEnergyLow;
         hero.stats.wizardMaximum = double(hero.totalPoints().energy) * kRuneEnergyHigh;
     }
-    const size_t said = happenings_.size();
+    size_t said = happenings_.size();
     runeSpirit_ = blow.rune;
     strikeAt(hero, *target, blow.force, row, true, false);
     runeSpirit_ = false;
-    // Its Hit or Missed is the first thing the blow says, shown whatever his body is playing
-    // (`thrown`), and in the rune's colour when the shield let it go.
+    // Its Hit or Missed, shown whatever his body is playing (`thrown`), and in the rune's colour
+    // when the shield let it go. Not always the first thing the blow says: a Leech's or a
+    // Bloodwell's life is said before the Hit, and took its marks and the Plague's roll
+    // (2026-10-23).
+    while (said < happenings_.size() && happenings_[said].what != What::Hit &&
+           happenings_[said].what != What::Missed) {
+        ++said;
+    }
     if (said < happenings_.size()) {
         happenings_[said].rune = blow.rune;
         happenings_[said].spirit = happenings_[said].what == What::Hit;
