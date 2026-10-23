@@ -116,6 +116,13 @@ constexpr int32_t kSummonBali = 35;
 // flying summon and no summon at all over Icarus; 37 is the empty cell after Summon Soldier's 36
 // on MU's skill sheet, so 36 stays free for MU's own.
 constexpr int32_t kSummonAlquamos = 37;
+// **The Dark Lord's** (docs/plans/dark-lord.md), at MU's numbers. `AT_SKILL_SPEAR`, Force: born
+// knowing it (WebZen user.cpp:3781-3788, OpenMU AddForceForDarkLord.cs), ten damage, four tiles,
+// ten mana (VersionSeasonSix/SkillsInitializer.cs:178). And `AT_SKILL_LONGSPEAR`, Force Wave: no
+// row of its own, what Force becomes in a scepter carrying the skill option (WebZen
+// zzzitem.cpp:977-995, ObjUseSkill.cpp:3589-3593); the number is the drawing's.
+constexpr int32_t kForce = 60;
+constexpr int32_t kForceWave = 66;
 // `AT_SKILL_PENETRATION`, off the Orb of Penetration (group 12 number 17): 0.95d's and not
 // 0.75's (Version095d is where OpenMU first has it; VersionSeasonSix/SkillsInitializer.cs:171
 // carries the row). An arrow that flies on through everything in its line.
@@ -502,8 +509,9 @@ struct SkillRow {
 // Impale; past sixty-four it needs widening
 // again, which the static_assert below says. Also the width of a body's cooldown array -- and
 // the learned mask is by INDEX, so a new row goes on the END of the table or an old save
-// gives a knight somebody else's skill.
-constexpr int kSkills = 40;
+// gives a knight somebody else's skill. The Dark Lord's Force past the Alquamos (41; a kept
+// layout before 15 carries 40 cools, net/wire.cpp).
+constexpr int kSkills = 41;
 
 // What each of Nova's stages adds to its blow: OpenMU's NovaDamageTable (NovaSkillStartPlugin.cs:30),
 // stage 0 to 12, with the strength's half beside it (SkillsInitializer.cs:610-611).

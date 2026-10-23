@@ -2933,8 +2933,8 @@ void testCastLock(const content::Tables& tables) {
         {
             const sim::SkillRow& alq = sim::skillAt(sim::skillIndexOf(sim::skill::kSummonAlquamos));
             const sim::SkillRow& bali = sim::skillAt(sim::skillIndexOf(sim::skill::kSummonBali));
-            check(sim::skillIndexOf(sim::skill::kSummonAlquamos) == sim::kSkills - 1 && sim::kSkills == 40,
-                  "Summon Alquamos is the last row");
+            check(sim::skillIndexOf(sim::skill::kSummonAlquamos) == 39,
+                  "Summon Alquamos is the 40th row, the Dark Lord's Force past it");
             check(alq.summons == 69 && alq.summonsAs == 150 && alq.airborne && alq.kin == sim::Kin::FairyElf,
                   "it raises the Alquamos, standing as Bali, flying, the elf's");
             check(sim::summonsHere(alq, sim::kIcarusMap) && !sim::summonsHere(bali, sim::kIcarusMap) &&
@@ -5627,8 +5627,17 @@ void testTalentCommands(const content::Tables& tables) {
         size_t at = 0;
         while (at < bytes.size() && bytes[at] == markedBytes[at]) ++at;
         constexpr size_t kQuestBytes = 1 + 4 * sim::kQuestSteps + 8 + 4;
-        // A layout-14 row has no Command (the Dark Lord's, layout 15): its last four bytes.
+        // A layout-14 row has no Command (the Dark Lord's, layout 15): its last four bytes; nor
+        // Force's cool, the 41st (found as the captain's quest is, by the first byte it moves).
+        sim::Kept forced = kept;
+        forced.hero.coolsLeft[sim::kSkills - 1] = 0x7F;
+        std::vector<uint8_t> forcedBytes;
+        net::putKept(forcedBytes, forced);
+        size_t cool = 0;
+        while (cool < bytes.size() && bytes[cool] == forcedBytes[cool]) ++cool;
         std::vector<uint8_t> fourteen(bytes.begin(), bytes.end() - 4);
+        fourteen.erase(fourteen.begin() + std::ptrdiff_t(cool), fourteen.begin() + std::ptrdiff_t(cool + 8));
+        if (at > cool) at -= 8;
         sim::Kept uncommanded;
         check(net::keptFrom(fourteen, uncommanded, 14) && uncommanded.hero.points.command == 0 &&
                   uncommanded.hero.talents == saved.talents,

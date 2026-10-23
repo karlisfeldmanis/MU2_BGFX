@@ -890,11 +890,33 @@ constexpr SkillRow kRows[kSkills] = {
               "too. It strikes from range.",
      .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
      .kin = Kin::FairyElf, .anyHand = true, .summons = 69, .summonsAs = 150, .airborne = true},
+
+    // ---- Force 60, the Dark Lord's, past the Alquamos ------------------------------------------
+    //
+    // MU's row (VersionSeasonSix/SkillsInitializer.cs:178): ten damage, four tiles, ten mana, born
+    // knowing it. Its blow is WebZen's for every Dark Lord skill: the swing with Str/25 + Ene/50 and
+    // the skill's ten on top (ObjAttack.cpp:3259-3266; Realm::strike), times (200 + Ene/20)%
+    // (ObjAttack.cpp:1452-1463; sim::force). Thrown with anything in his hands or none, at the one
+    // body pressed on (ObjUseSkill.cpp:3589-3593); a scepter with the skill option makes it Force
+    // Wave's line (phase 3, with the scepters). PLAYER_ATTACK_STRIKE, player.muc's 80, at 0.25 plus
+    // his attack speed (ZzzCharacter.cpp:949); SOUND_SKILL_SWORD1 as it is cast (WSclient.cpp:
+    // 4243-4259), and SOUND_ATTACK_SPEAR with the waves it lets go (ZzzCharacter.cpp:5057-5063,
+    // the effect's).
+    // **His primary** (the plan, section 3): no cooldown, on the right button, as the wizard's
+    // Energy Ball.
+    {.number = skill::kForce, .name = "Force", .mana = 10, .reach = 4.0f, .force = 2.0f,
+     .spread = Spread::One,
+     .tells = "A blow of force struck at one body up to four tiles off. His energy multiplies it.",
+     .clip = 80, .sound = "player_skill_sword1", .built = true, .families = arms::kNone,
+     .kin = Kin::DarkLord, .damage = 10, .anyHand = true},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy
 // still gets his tenth of a percent a point, as he does in the original.
 constexpr float kForcePerEnergy = 0.001f;
+// The Dark Lord's: every skill of his at (200 + Ene/20)% (WebZen ObjAttack.cpp:1452-1463), half the
+// knight's energy share, and nothing from strength (his strength is in the flat, Realm::strike).
+constexpr float kLordForcePerEnergy = 0.0005f;
 
 // Two seconds over a boon's duration, so half damage always has a gap in it.
 constexpr int32_t kBoonGapTicks = 40;
@@ -1006,6 +1028,7 @@ float force(const SkillRow& row, const HeroPoints& points, Kin who) {
     // whose two is what a ten-second cooldown buys (the user, 2026-09-28: "lightning has to be
     // stronger because it's a cooldown spell"). Energy and the staff are already in the band.
     if (row.wizardry) return row.force;
+    if (row.kin == Kin::DarkLord) return row.force + float(points.energy) * kLordForcePerEnergy;
     const float sum = row.force + float(points.strength) * row.forcePerStrength +
                       float(points.energy) * kForcePerEnergy;
     // The Gladiator's too since the class balance (2026-10-21): his blades were the knight's

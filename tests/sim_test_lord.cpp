@@ -1,5 +1,7 @@
 // The Dark Lord (docs/plans/dark-lord.md): his fifth stat, Command, on the hero, through Spend,
 // a points reset and a character's bytes. Run from tests/sim_test.cpp's main.
+#include <cmath>
+#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -7,6 +9,7 @@
 #include "net/wire.h"
 #include "sim/realm.h"
 #include "sim/rules.h"
+#include "sim/skills.h"
 
 using namespace mu;
 
@@ -55,7 +58,15 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
     check(net::keptFrom(bytes, back), "his bytes read back");
     checkEqual(back.hero.points.command, 30, "his Command read back");
     checkEqual(int(back.hero.kin), int(sim::Kin::DarkLord), "and his class");
+    // Layout 15 also carries Force's cool, the 41st: found by the first byte a mark on it moves.
+    sim::Kept forced = kept;
+    forced.hero.coolsLeft[sim::kSkills - 1] = 0x7F;
+    std::vector<uint8_t> forcedBytes;
+    net::putKept(forcedBytes, forced);
+    size_t cool = 0;
+    while (cool < bytes.size() && bytes[cool] == forcedBytes[cool]) ++cool;
     std::vector<uint8_t> older(bytes.begin(), bytes.end() - 4);
+    older.erase(older.begin() + std::ptrdiff_t(cool), older.begin() + std::ptrdiff_t(cool + 8));
     sim::Kept old;
     check(net::keptFrom(older, old, 14), "a layout-14 record reads");
     checkEqual(old.hero.points.command, 0, "with no Command in it");
@@ -82,4 +93,47 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
     check(realm.resetPoints() == sim::Realm::Reset::Done, "his points reset");
     checkEqual(realm.hero().points.command, 25, "Command back to 25");
     checkEqual(realm.hero().pointsInHand, inHand, "every point in hand again");
+
+    // **Force** (60): born knowing it, MU's multiplier, and thrown it lands on a monster.
+    {
+        sim::Realm lordRealm;
+        check(lordRealm.raise(&lorencia, 7, 130, 130, sim::Kin::DarkLord, 40), "a level-40 Dark Lord raises");
+        check(lordRealm.knows(sim::skill::kForce), "he is born knowing Force");
+        check(!knight.knows(sim::skill::kForce), "a knight is not");
+        const sim::SkillRow* force = sim::skillNumbered(sim::skill::kForce);
+        check(force != nullptr && force->primary() && force->kin == sim::Kin::DarkLord && force->mana == 10 &&
+                  force->reach == 4.0f && force->suits(sim::arms::kNone),
+              "Force: his primary, ten mana, four tiles, bare-handed too");
+        sim::HeroPoints hundred;
+        hundred.energy = 100;
+        check(std::fabs(sim::force(*force, hundred, sim::Kin::DarkLord) - 2.05f) < 1e-4f,
+              "(200 + Ene/20)%: 100 energy is 205%");
+        // Thrown at the nearest monster until one is struck.
+        int loosed = 0, hits = 0, damage = 0;
+        for (int tick = 0; tick < 3000 && hits < 3; ++tick) {
+            uint32_t nearest = 0;
+            float best = 1e9f;
+            const sim::Body& me = lordRealm.hero();
+            for (const sim::Body& one : lordRealm.bodies()) {
+                if (!one.monster() || !one.alive()) continue;
+                const float d = std::fabs(one.x - me.x) + std::fabs(one.y - me.y);
+                if (d < best) best = d, nearest = one.id;
+            }
+            if (nearest != 0 && lordRealm.hero().blowSkill == 0 && tick % 20 == 0) {
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                request.skill = sim::skill::kForce;
+                lordRealm.ask(request);
+            }
+            lordRealm.step();
+            for (const sim::Happening& one : lordRealm.happenings()) {
+                if (one.who != lordRealm.hero().id) continue;
+                if (one.what == sim::What::Loosed && one.a == sim::skill::kForce) ++loosed;
+                if (one.what == sim::What::Hit && one.thrown) ++hits, damage += one.a;
+            }
+        }
+        std::printf("  force: %d loosed, %d hits, %d damage\n", loosed, hits, damage);
+        check(loosed > 0 && hits > 0 && damage > 0, "Force is thrown and lands");
+    }
 }

@@ -90,6 +90,11 @@ bool Realm::dressNew(Body& hero, Kin kin, int level, int playerColumn, int playe
     if (hero.kin == Kin::DarkWizard) {
         hero.learned |= uint64_t(1) << skillIndexOf(skill::kEnergyBall);
     }
+    // And the Dark Lord's Force, which MU gives him at creation and puts back if it is missing
+    // (WebZen user.cpp:3781-3788; OpenMU AddForceForDarkLord.cs).
+    if (hero.kin == Kin::DarkLord) {
+        hero.learned |= uint64_t(1) << skillIndexOf(skill::kForce);
+    }
     return true;
 }
 

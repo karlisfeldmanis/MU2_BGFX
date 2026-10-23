@@ -208,6 +208,13 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // floor, which is where OpenMU spends `Stats.SkillMultiplier`
     // (AttackableExtensions.cs:226-247). One for an ordinary swing, so nothing changes for one.
     // No draw is taken, so a seeded log's dice are untouched by the arithmetic.
+    // **A Dark Lord's skill adds before it multiplies**: Str/25 + Ene/50 and the skill's own damage
+    // (WebZen ObjAttack.cpp:3259-3266, Force's ten), which WebZen puts on the attack before the
+    // defence. Added after it here, where the multiplier is, it is the same sum but at the floor.
+    if (row != nullptr && row->kin == Kin::DarkLord && attacker.player) {
+        const HeroPoints p = attacker.totalPoints();
+        blow.damage += row->damage + p.strength / 25 + p.energy / 50;
+    }
     const float whole = force * talented;
     if (whole != 1.0f) blow.damage = std::max(1, int(float(blow.damage) * whole));
     // The shield takes nine tenths, and what it cannot cover falls through to health: a pool

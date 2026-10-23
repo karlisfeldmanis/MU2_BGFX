@@ -119,6 +119,9 @@ SKILLS = {
     # Penetration"): 0.95d's, off the Orb of Penetration, group 12 number 17. Below 57 and not
     # use-type 4, so the arithmetic above finds its cell.
     52: ("Fairy Elf", "Penetration"),
+    # The Dark Lord's Force (docs/plans/dark-lord.md): 60, past Spiral Slash, so on the second
+    # sheet (SECOND_FROM below). MuMain only (--mumain).
+    60: ("Dark Lord", "Force"),
     # And Fire Breath, cut on 2026-10-04 because the game now has it (the user: "do it", of the
     # Dinorant's breath): 0.95d's, carried by the Horn of Dinorant and not learned. Below 57 and
     # not use-type 4, so the arithmetic above finds its cell.
@@ -156,9 +159,16 @@ MUMAIN_SIZE = (256, 256)
 MUMAIN_FACTOR = 3
 
 
+#: RenderSkillIcon's second branch: from AT_SKILL_SPIRAL_SLASH (57) up -- the Dark Lord's among
+#: them -- the cell is counted from 57 on `newui_skill2`, eight to a row (NewUIMuHelper.cpp,
+#: KOS_SKILL2). The same 20 by 28 grid.
+SECOND_FROM = 57
+SECOND_SHEET = "newui_skill2.OZJ"
+
+
 def cell(number: int, size: tuple[int, int] = CELL) -> tuple[int, int, int, int]:
-    """The pixel rectangle of skill `number` on the sheet, RenderSkillIcon's arithmetic."""
-    index = number - 1
+    """The pixel rectangle of skill `number` on its sheet, RenderSkillIcon's arithmetic."""
+    index = number - SECOND_FROM if number >= SECOND_FROM else number - 1
     x = (index % PER_ROW) * size[0]
     y = (index // PER_ROW) * size[1]
     return (x, y, x + size[0], y + size[1])
@@ -205,9 +215,13 @@ def main() -> None:
     if args.mumain:
         args.out.mkdir(parents=True, exist_ok=True)
         size = (CELL[0] * MUMAIN_FACTOR // 4, CELL[1] * MUMAIN_FACTOR // 4)
-        sheet = mumain_sheet(args.mumain_sheet, args.out)
+        sheets = {}
         for number, (_, name) in sorted(wanted.items()):
-            icon = sheet.crop(cell(number, size))
+            second = number >= SECOND_FROM
+            if second not in sheets:
+                path = args.mumain_sheet.with_name(SECOND_SHEET) if second else args.mumain_sheet
+                sheets[second] = mumain_sheet(path, args.out)
+            icon = sheets[second].crop(cell(number, size))
             target = args.out / f"skill_{number}.png"
             icon.save(target, optimize=True)
             print(f"  {target.name:<14} {name:<20} {cell(number, size)}")
@@ -224,6 +238,8 @@ def main() -> None:
 
     args.out.mkdir(parents=True, exist_ok=True)
     for number, (_, name) in sorted(wanted.items()):
+        if number >= SECOND_FROM:
+            sys.exit(f"skill {number} is on the second sheet: cut it with --mumain")
         icon = sheet.crop(cell(number))
         target = args.out / f"skill_{number}.png"
         icon.save(target, optimize=True)
