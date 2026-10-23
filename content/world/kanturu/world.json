@@ -236,5 +236,29 @@
     "floors": false,
     "move_order": 11,
     "note": "Kanturu Ruins, MU's map 37, entered from Tarkan's west door (gates 125/127, the next step). arrive is the middle of the spawn gate 138's box, the camp by the door (OpenMU VersionSeasonSix Gates.cs:276-280), where a death lands too; not 126's arrival box, which overlaps the way back on three tiles (docs/worlds/kanturu-port.md 2.1). The Town Portal goes to Tarkan's town (home 8): the camp has no merchant (decision 6). Last on the M key's walk (11), so no other map's order moves. No drops yet: no breed stands here."
-  }
+  },
+  "npcs": [
+    {
+      "npc": 240,
+      "name": "Baz The Vault Keeper",
+      "figure": "Storage01",
+      "at": [
+        23,
+        215
+      ],
+      "look": 3,
+      "note": "Ours: the camp vault, as Tarkan, Atlans, the Lost Tower and Aida have one (the user, 2026-10-23: lets add kunturu npcs, then Both). MU and OpenMU stand nobody in the Ruins (VersionSeasonSix/Maps/KanturuRuins.cs has no CreateNpcSpawns). In the camp safe zone 4 tiles up the slope from the arrival (20,218), two tiles clear of every object, off gate boxes 126 and 127, facing the camera."
+    },
+    {
+      "npc": 253,
+      "name": "Potion Girl Amy",
+      "figure": "PotionGirlAmy",
+      "at": [
+        25,
+        212
+      ],
+      "look": 3,
+      "note": "Ours: the camp potion seller beside Baz, as the other hunting maps camps have her (2026-10-23)."
+    }
+  ]
 }
