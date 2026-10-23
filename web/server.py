@@ -99,6 +99,9 @@ The routes:
          (class Discord), by the webhook URL in discord_webhook beside the database.
     POST /internal/discord          (127.0.0.1 only) {day}  -> 200 {ok} | 400 | 409 with no webhook
          that day's #updates message sent, edited or taken away now.
+    POST /internal/translate        (127.0.0.1 only)  -> 200 {ok} | 409 with no key
+         every unit with no translation in a language translated now (class Translator), not at
+         the next round.
     GET  /api/texts      Bearer T of an admin       -> 200 {langs, groups, texts} | 404 for anyone else
     POST /api/texts      Bearer T of an admin {lang, source, text}  -> 200 {ok} | 400 {error} | 404
          the site in other languages (the admins' /translate page, web/i18n.py): every English unit
@@ -258,6 +261,19 @@ DISCORD_WEBHOOK = re.compile(r"^https://(?:discord|discordapp)\.com/api/webhooks
 DISCORD_COLOUR = 0xC9A45C
 DISCORD_MOST_TEXT = 4000
 SITE_URL = "https://mu-classic.com/"
+
+# The site's units with no translation in a language, translated by Claude (class Translator): the
+# Latest updates as they are published, and any new words of a page. What an admin wrote on
+# /translate is never touched; a line the translator wrote (texts.by = TRANSLATOR) an admin can
+# reword there like any other. The Claude API key is the file anthropic_key beside the database,
+# read at each round: set or changed without a restart, and with none, nothing is translated.
+TRANSLATE_MODEL = "claude-opus-5-5"
+TRANSLATE_EVERY = 900      # seconds between rounds, besides a publish waking one
+TRANSLATE_QUIET = 60       # after a publish: the admin's next lines come along in the same round
+TRANSLATE_BATCH = 40       # units in one request
+TRANSLATOR = 0             # texts.by of a line the translator wrote (accounts start at 1)
+LANG_NAMES = {"pt": "Brazilian Portuguese", "es": "Spanish", "ru": "Russian", "vi": "Vietnamese", "pl": "Polish",
+              "zh": "Simplified Chinese", "ms": "Malay (Malaysia)", "lv": "Latvian"}
 
 # The launchers that must be replaced: they cannot update themselves, so the site tells them so.
 # A launcher says "MU2Launcher/<build>" (src/launcher/https.h kAgent); those before crash reports
@@ -783,6 +799,15 @@ class Store:
             db.execute("DELETE FROM texts WHERE lang = ? AND source = ?", (lang, source))
         self.texts_version += 1
 
+    def fill_text(self, lang: str, source: str, text: str) -> bool:
+        """A translation where there is none yet (the translator's): an admin's, or one put in
+        meanwhile, stands."""
+        put = self.db().execute("INSERT OR IGNORE INTO texts (lang, source, text, changed, by) VALUES (?, ?, ?, ?, ?)",
+                                (lang, source, text, int(time.time()), TRANSLATOR)).rowcount > 0
+        if put:
+            self.texts_version += 1
+        return put
+
     def seed_texts(self, seeds: dict) -> int:
         """web/i18n/<lang>.json put in wherever a unit has no translation yet; an admin's word stands."""
         db, now, added = self.db(), int(time.time()), 0
@@ -1279,6 +1304,157 @@ TICKET_LIMIT = Limit(60, 3600)
 COMMENT_LIMIT = Limit(10, 600)
 
 
+# ---- the site's words --------------------------------------------------------------------------------
+
+def site_page(site: Path, store: "Store", file: str, lang: str = "en") -> str:
+    """A page as it is served in English (with the published Latest updates), before any translation."""
+    data = (site / file).read_bytes()
+    if file == "index.html":
+        data = with_updates(data, store.updates(published_only=True), lang)
+    return data.decode()
+
+
+def site_units(site: Path, store: "Store") -> list:
+    """Every unit of the site, each once where it first stands: {group, source, path}; the group is
+    the page's file, "updates" for the Latest updates, or "js" for what a script says."""
+    out, seen = [], set()
+    for file, (path, _) in i18n.PAGES.items():
+        page = site_page(site, store, file)
+        for start, end, kind, source in i18n.units(page):
+            group = "js" if kind == "js" else "updates" if file == "index.html" and i18n.in_updates(page, start) else file
+            k = i18n.key(source)
+            if k not in seen:
+                seen.add(k)
+                out.append({"group": group, "source": k, "path": path})
+    for source in i18n.script_units((site / "site.js").read_text()):
+        k = i18n.key(source)
+        if k not in seen:
+            seen.add(k)
+            out.append({"group": "js", "source": k, "path": "/"})
+    return out
+
+
+# ---- the site translated -----------------------------------------------------------------------------
+
+TRANSLATE_SYSTEM = """You translate the website of MU Classic, a free remaster of the classic MMORPG MU Online (a new engine, client and server, not a private server), from English into {language}.
+
+Each item is one piece of the site: a heading, a button, a sentence, or a line of the game's patch notes. Translate each so a native {language} speaker who plays MMORPGs reads it as natural, idiomatic text written in {language}, never word for word from English: say what the English means the way {language} says it.
+
+Rules:
+- Keep every HTML tag exactly as it is in the English, with the same attributes, and put the words inside and around them where {language} needs them.
+- Keep every {{placeholder}} in braces exactly as written.
+- The game's own names stay in English, exactly as written: maps and towns (Lorencia, Noria, Devias, Lost Tower, Icarus, Aida, Kanturu, Blood Castle, Devil Square), classes, skills, items, jewels, runes, monsters, NPCs, pets, buttons and messages the game shows in English (Play, Helper, Broker, Jeweler, Chaos Machine, Zen, MISS), and anything in quotes.
+- Patch notes are short and plain, in the voice of the examples. Do not add or leave out facts.
+- Use the same words for the same things as the examples below do.
+
+Examples of this site's {language}:
+{examples}"""
+
+TRANSLATE_SCHEMA = {
+    "type": "object",
+    "properties": {"translations": {"type": "array", "items": {
+        "type": "object", "properties": {"id": {"type": "integer"}, "text": {"type": "string"}},
+        "required": ["id", "text"], "additionalProperties": False}}},
+    "required": ["translations"], "additionalProperties": False}
+
+
+class Translator:
+    """Every unit of the site with no translation in a language, translated by Claude, a round
+    every TRANSLATE_EVERY seconds and TRANSLATE_QUIET seconds after a publish (poke). A translation
+    goes in only where there is none (Store.fill_text), and only when it keeps its English's tags."""
+
+    def __init__(self, store: "Store", site: Path, key: Path):
+        self.store, self.site, self.key_path = store, site, key
+        self.wake = threading.Event()
+        self.lock = threading.Lock()
+        threading.Thread(target=self.run, daemon=True).start()
+
+    def key(self) -> str:
+        try:
+            return self.key_path.read_text().strip()
+        except OSError:
+            return ""
+
+    def poke(self):
+        self.wake.set()
+
+    def run(self):
+        time.sleep(5)
+        while True:
+            try:
+                self.round()
+            except Exception as e:  # the network or the API: tried again next round
+                print(f"translate: {e}", flush=True)
+            if self.wake.wait(TRANSLATE_EVERY):
+                time.sleep(TRANSLATE_QUIET)
+                self.wake.clear()
+
+    def round(self) -> dict:
+        """Each language's missing units translated; {lang: how many put in}."""
+        with self.lock:
+            key = self.key()
+            if not key:
+                return {}
+            units = [u["source"] for u in site_units(self.site, self.store)]
+            texts = self.store.texts()
+            done = {}
+            for lang in i18n.LANGS:
+                have = texts.get(lang, {})
+                missing = [s for s in units if s not in have]
+                for n in range(0, len(missing), TRANSLATE_BATCH):
+                    batch = missing[n:n + TRANSLATE_BATCH]
+                    for source, text in self.translate(key, lang, batch, have).items():
+                        if self.store.fill_text(lang, source, text):
+                            done[lang] = done.get(lang, 0) + 1
+            if done:
+                print("translate: " + ", ".join(f"{lang} {n}" for lang, n in done.items()), flush=True)
+            return done
+
+    @staticmethod
+    def examples(have: dict) -> str:
+        """Up to 40 of a language's translations, the patch notes' voice and tags among them."""
+        import html as _html
+        picked = [(s, t) for s, t in have.items() if 20 < len(s) < 220][:28]
+        picked += [(s, t) for s, t in have.items() if i18n.has_tags(s) and len(s) < 300][:6]
+        picked += [(s, t) for s, t in have.items() if len(s) <= 20][:6]
+        return "\n".join(f"EN: {_html.unescape(s)}\n→ {t}" for s, t in picked) or "(none yet)"
+
+    def translate(self, key: str, lang: str, sources: list, have: dict) -> dict:
+        import html as _html
+        import urllib.request
+        import urllib.error
+        # A unit with no tags is plain text (put in escaped, i18n.as_text): it is sent as it reads.
+        items = [{"id": n, "text": source if i18n.has_tags(source) else _html.unescape(source)}
+                 for n, source in enumerate(sources)]
+        body = {
+            "model": TRANSLATE_MODEL, "max_tokens": 16000,
+            "system": TRANSLATE_SYSTEM.format(language=LANG_NAMES[lang], examples=self.examples(have)),
+            "messages": [{"role": "user", "content": "Translate each item's text. Answer with every id.\n\n"
+                                                     + json.dumps(items, ensure_ascii=False)}],
+            "output_config": {"effort": "medium", "format": {"type": "json_schema", "schema": TRANSLATE_SCHEMA}},
+            # Declined (it should never be, for a game's patch notes) -> the API's own fallback model answers.
+            "fallbacks": "default",
+        }
+        request = urllib.request.Request(
+            "https://api.anthropic.com/v1/messages", data=json.dumps(body).encode(), method="POST",
+            headers={"Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01",
+                     "anthropic-beta": "server-side-fallback-2026-07-01"})
+        try:
+            with urllib.request.urlopen(request, timeout=300) as reply:
+                said = json.loads(reply.read())
+        except urllib.error.HTTPError as e:
+            raise RuntimeError(f"{lang}: {e.code} {e.read()[:300]!r}")
+        if said.get("stop_reason") != "end_turn":
+            raise RuntimeError(f"{lang}: stopped on {said.get('stop_reason')}")
+        text = next((b["text"] for b in said.get("content", []) if b.get("type") == "text"), "")
+        out = {}
+        for item in json.loads(text).get("translations", []):
+            n, t = item.get("id"), " ".join(str(item.get("text", "")).split())
+            if isinstance(n, int) and 0 <= n < len(sources) and t and not i18n.check(sources[n], t):
+                out[sources[n]] = t
+        return out
+
+
 # ---- the Latest updates in Discord ---------------------------------------------------------------
 
 class Discord:
@@ -1554,6 +1730,13 @@ class Handler(BaseHTTPRequestHandler):
             return self.told_updates()
         if path == "/internal/discord":
             return self.tell_discord()
+        if path == "/internal/translate":
+            if not self.direct():
+                return self.reply(404, {"error": "not found"})
+            if not self.translator.key():
+                return self.reply(409, {"error": "no key in anthropic_key beside the database"})
+            self.translator.poke()
+            return self.reply(200, {"ok": True})
         if path == "/api/texts":
             return self.save_text()
         if path == "/api/transfer":
@@ -1767,6 +1950,8 @@ class Handler(BaseHTTPRequestHandler):
         if saved is None:
             return self.reply(404, {"error": "no such line"})
         self.discord.touch(was, checked["day"])
+        if checked["state"] == "published":
+            self.translator.poke()
         print(f"{self.client()} account {row[0]} saved update {saved} ({checked['state']})", flush=True)
         self.reply(200, {"ok": True, "id": saved})
 
@@ -1792,32 +1977,18 @@ class Handler(BaseHTTPRequestHandler):
         self.reply(200, {"ok": True})
 
     def site_page(self, file: str, lang: str = "en") -> str:
-        """A page as it is served in English (with the published Latest updates), before any translation."""
-        data = (self.site / file).read_bytes()
-        if file == "index.html":
-            data = with_updates(data, self.store.updates(published_only=True), lang)
-        return data.decode()
+        return site_page(self.site, self.store, file, lang)
 
     def texts_report(self) -> dict:
         """Every unit of the site, grouped as the /translate page shows them, each once (where it
         first stands), and each language's translations."""
-        groups, seen = {}, set()
+        groups = {}
         names = {"index.html": "Front page", "updates": "Latest updates", "js": "Messages"}
         for file, (path, name) in i18n.PAGES.items():
             names.setdefault(file, name)
-            page = self.site_page(file)
-            for start, end, kind, source in i18n.units(page):
-                group = "js" if kind == "js" else "updates" if file == "index.html" and i18n.in_updates(page, start) else file
-                k = i18n.key(source)
-                if k in seen:
-                    continue
-                seen.add(k)
-                groups.setdefault(group, []).append({"source": k, "tags": i18n.has_tags(k), "path": path})
-        for source in i18n.script_units((self.site / "site.js").read_text()):
-            k = i18n.key(source)
-            if k not in seen:
-                seen.add(k)
-                groups.setdefault("js", []).append({"source": k, "tags": i18n.has_tags(k), "path": "/"})
+        for unit in site_units(self.site, self.store):
+            groups.setdefault(unit["group"], []).append({"source": unit["source"], "tags": i18n.has_tags(unit["source"]),
+                                                        "path": unit["path"]})
         order = ["index.html", "updates", "account.html", "privacy.html", "contact.html", "mac.html", "linux.html", "js"]
         return {"langs": {code: v[0] for code, v in i18n.LANGS.items()},
                 "groups": [{"id": g, "name": names[g], "units": groups[g]} for g in order if g in groups],
@@ -1862,6 +2033,7 @@ class Handler(BaseHTTPRequestHandler):
         for line in gone:
             self.store.delete_update(line)
         self.discord.touch(*days, *(line["day"] for line in checked))
+        self.translator.poke()
         print(f"mu ship: {added} update lines, {len(gone)} deleted, noted through {noted or '(unchanged)'}", flush=True)
         self.reply(200, {"ok": True, "added": added})
 
@@ -2229,6 +2401,7 @@ def main():
         print(f"{seeded} translations put in from web/i18n/", flush=True)
     Handler.site = Path(args.site)
     Handler.downloads = Path(args.downloads)
+    Handler.translator = Translator(Handler.store, Handler.site, Path(args.db).parent / "anthropic_key")
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"mu2-web on http://{args.host}:{args.port}, accounts in {args.db}", flush=True)
     httpd.serve_forever()
