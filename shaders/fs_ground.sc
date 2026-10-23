@@ -343,7 +343,12 @@ void main()
 	// is x and the bitangent is z, with no TANGENT attribute to carry for a quarter of a
 	// million vertices.
 	vec3 ng = normalize(v_normal);
-	vec3 t = normalize(vec3(1.0, 0.0, 0.0) - ng * ng.x);
+	// Off the z axis where the land faces along x: the chasm's sunk walls (void.fade) stand
+	// facing east or west, and (1,0,0) less its own projection was zero there, its normalize NaN
+	// -- black shards over the mist, which no blend can lighten (the user, 2026-10-23: "black
+	// thingies", 207,130).
+	vec3 axis = abs(ng.x) > 0.9 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+	vec3 t = normalize(axis - ng * dot(ng, axis));
 	vec3 b = cross(ng, t);
 	// Z rebuilt, never read (unpackNormal): cooked normals are BC5 and carry two channels, so
 	// .z arrives as zero and every normal would lie flat in the tangent plane.
@@ -543,5 +548,9 @@ void main()
 	// Last, so the haze goes into the chasm's black with the land. Ground::splat's slope.
 	// And the floor's own last metres into the void, after the haze too, so they reach the
 	// void's black rather than the dust's grey (the Lost Tower's void.blend; 1 elsewhere).
-	gl_FragColor = vec4(mix(u_abyssColour.rgb, abyss(dusty(colour, v_wpos), v_wpos), abyssEdge(v_wpos)), 1.0);
+	vec3 shown = mix(u_abyssColour.rgb, abyss(dusty(colour, v_wpos), v_wpos), abyssEdge(v_wpos));
+	// max() drops a NaN on Metal (fmax returns the other operand): a sunk wall's steep, unrolled
+	// tiles shaded NaN somewhere upstream on a few pixels, and NaN stayed black under every
+	// blend -- black shards over the mist (the user, 2026-10-23: "black thingies", 207,130).
+	gl_FragColor = vec4(min(max(shown, vec3_splat(0.0)), vec3_splat(65000.0)), 1.0);
 }

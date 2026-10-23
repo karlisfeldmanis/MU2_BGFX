@@ -87,10 +87,13 @@ float softness(float code, vec2 pixel, float depth, vec3 wpos)
 	{
 		vec3 at = u_effectEye.xyz + (wpos - u_effectEye.xyz) * (near / max(depth, 1.0e-3));
 		float level = texture2D(s_abyss, vec2(at.x, -at.z) * u_abyss.z + u_abyss.w).r;
-		// Over two metres below the rim, not the abyss's six: a face just under the lip is as
+		// From a few centimetres below the rim (the ground itself reads its own height there, so
+		// it is never below): the sunk walls' tops hang from a lip MU paints black, and stood as
+		// black shards against the mist (the user, 2026-10-23: "black thingies", 207,130). Before,
+		// over two metres below the rim, not the abyss's six: a face just under the lip is as
 		// black from MU's painted light as one deep down is from the abyss, and the mist went
 		// round it as a black wedge (the user, 2026-10-23, at 170,160).
-		shown = mix(shown, 1.0, smoothstep(u_abyss.x, u_abyss.x + min(u_abyss.y, 1.0), level - at.y));
+		shown = mix(shown, 1.0, smoothstep(0.05, 0.6, level - at.y));
 		// And as far as the ground there has faded into the void (abyssEdge, the world's
 		// void.blend): a plate's edge thins away behind the mist, smoothly, instead of ending
 		// on a line (the user, 2026-10-23: "we need that other plat edges is transparent").
@@ -108,7 +111,7 @@ float softness(float code, vec2 pixel, float depth, vec3 wpos)
 	{
 		vec3 at = u_effectEye.xyz + (wpos - u_effectEye.xyz) * (behind / max(depth, 1.0e-3));
 		float level = texture2D(s_abyss, vec2(at.x, -at.z) * u_abyss.z + u_abyss.w).r;
-		thin = mix(thin, 1.0, smoothstep(u_abyss.x, u_abyss.x + 1.0, level - at.y));
+		thin = mix(thin, 1.0, smoothstep(0.05, 0.6, level - at.y));
 	}
 	return shown * thin;
 }
