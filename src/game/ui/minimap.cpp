@@ -583,7 +583,11 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
         scale_ = side / (chartTiles_ * kFullFit);
         focusX_ = focusY_ = chartTiles_ * 0.5f - 0.5f;
     } else {
-        const float side = std::round(kSide * u), at = top_ > 0.0f ? std::round(top_) : std::round(kInset * u);
+        // The server's time stands over the disc as the map's name stands under it: a line of room.
+        const int64_t wall = play.isOpen() ? play.realm().wallClock() : 0;
+        const float clockLine = wall > 0 ? std::round(kFigure * 1.1f * u) : 0.0f;
+        const float side = std::round(kSide * u),
+                    at = (top_ > 0.0f ? std::round(top_) : std::round(kInset * u)) + clockLine;
         // The fade stands past the disc that reads, so it is the disc inside it that lines up.
         const float right = float(width) - kRight * u + kFade * u;
         map_ = {std::round(right - side), at, side, side};
@@ -894,6 +898,8 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
         now_.dragonRow = landed.row;
     }
     now_.column = int(std::lround(hero.x));
+    const int64_t wall = play.realm().wallClock();
+    now_.clock = wall > 0 && !full_ ? int(wall % 86400 / 60) : -1;
     now_.row = int(std::lround(hero.y));
     now_.bugLift = int(std::lround(bugLift_ * 8.0f));
     now_.bugPressed = bugPressing_ && overBug(pointer.x, pointer.y);
@@ -1184,6 +1190,16 @@ void Minimap::rebuild(const Play& play) {
         controls::label(canvas_, std::round(cx - wide * 0.5f), std::round(line + figure * 1.2f),
                         figure, style::kBone2, where);
         under_ = line + figure * 1.5f;
+        // The server's time over the disc (Crylos, Discord, 2026-10-23: "seeing server time
+        // in-game would be nice"; the user: "above minimap similiar like map name"): UTC, the
+        // clock Blood Castle and Devil Square open on.
+        if (now_.clock >= 0) {
+            char clock[16];
+            std::snprintf(clock, sizeof clock, "Server %02d:%02d", now_.clock / 60, now_.clock % 60);
+            const float over = std::round(cy - radius_ + fade * kRimIn - 4.0f * u);
+            const float clockWide = controls::labelWidth(figure, clock);
+            controls::label(canvas_, std::round(cx - clockWide * 0.5f), over, figure, style::kBone2, clock);
+        }
         // The Golden Dragon landed on another map, under it for every player wherever he is (the
         // user, 2026-10-15: "all players has to see dragon on minimap if its landed"): its mark
         // and name in its gold, then the map and the tile in bone, two lines to stay in the disc's

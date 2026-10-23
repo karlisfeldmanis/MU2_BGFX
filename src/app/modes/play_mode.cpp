@@ -2502,8 +2502,6 @@ void PlayMode::feedLine(Context& ctx, float seconds) {
     const int fps = ctx.readout.sample();
     line.fps = args.fps ? fps : -1;
     line.ping = world_.played().rttMs();
-    const int64_t wall = world_.played().isOpen() ? world_.played().realm().wallClock() : 0;
-    line.clock = wall > 0 ? int(wall % 86400 / 60) : -1;
     if (line.ping >= 0.0f) {
         line.here = net::regionOfServer(args.server);
         if (!args.region.empty()) {

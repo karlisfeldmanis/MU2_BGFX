@@ -91,11 +91,6 @@ std::string fpsText(int fps) {
     std::snprintf(text, sizeof text, "%d fps", fps);
     return text;
 }
-std::string clockText(int minutes) {
-    char text[16];
-    std::snprintf(text, sizeof text, "%02d:%02d", minutes / 60, minutes % 60);
-    return text;
-}
 
 // The three bars, their feet on `foot`, from `x`.
 void bars(gfx::Canvas& canvas, float x, float foot, int lit, uint32_t ink, float u, float a) {
@@ -148,7 +143,7 @@ const char* const kNoteAfter = " is nearer";
 
 void LineChip::update(float seconds, const Line& line, const Pointer& pointer, int width, int height,
                       float right, float top) {
-    const bool shown = line.fps >= 0 || line.ping >= 0.0f || line.clock >= 0;
+    const bool shown = line.fps >= 0 || line.ping >= 0.0f;
     if (!shown) {
         if (built_) canvas_.clear();
         built_ = false;
@@ -162,10 +157,8 @@ void LineChip::update(float seconds, const Line& line, const Pointer& pointer, i
     // The chip, its right edge at `right` and its top at `top`.
     float inside = 0.0f;
     if (ping >= 0) inside += barsWide(u) + kChipGap * u + controls::labelWidth(kChipText * u, msText(ping));
+    if (ping >= 0 && line.fps >= 0) inside += kChipGap * 2.0f * u + std::max(1.0f, std::round(1.5f * u));
     if (line.fps >= 0) inside += controls::labelWidth(kChipText * u, fpsText(line.fps));
-    if (line.clock >= 0) inside += controls::labelWidth(kChipText * u, clockText(line.clock));
-    const int parts = (ping >= 0 ? 1 : 0) + (line.fps >= 0 ? 1 : 0) + (line.clock >= 0 ? 1 : 0);
-    if (parts > 1) inside += float(parts - 1) * (kChipGap * 2.0f * u + std::max(1.0f, std::round(1.5f * u)));
     const float chipTall = std::round(kChipTall * u);
     const float chipWide = std::round(inside + 2.0f * kChipPad * u);
     chip_ = {std::round(right) - chipWide, std::round(top), chipWide, chipTall};
@@ -226,7 +219,6 @@ void LineChip::update(float seconds, const Line& line, const Pointer& pointer, i
     now.width = width;
     now.height = height;
     now.fps = line.fps;
-    now.clock = line.clock;
     now.ping = ping;
     now.here = line.here;
     now.nearer = noteUp_ ? line.nearer : -1;
@@ -265,27 +257,14 @@ void LineChip::rebuild(const Drawn& now) {
             x += barsWide(u) + kChipGap * u;
             x += controls::label(canvas_, x, base, kChipText * u, faded(ink, a), msText(now.ping));
         }
-        // A thin upright rule between each two parts shown.
-        bool before = now.ping >= 0;
-        const auto rule = [&]() {
-            if (!before) {
-                before = true;
-                return;
-            }
+        if (now.ping >= 0 && now.fps >= 0) {
             x += kChipGap * u;
-            const float wide = std::max(1.0f, std::round(1.5f * u));
+            const float rule = std::max(1.0f, std::round(1.5f * u));
             const float tall = std::round(kChipText * 0.7f * u);
-            canvas_.rect({std::round(x), std::round(b.midY() - tall * 0.5f), wide, tall}, faded(kOff, a));
-            x += wide + kChipGap * u;
-        };
-        if (now.fps >= 0) {
-            rule();
-            x += controls::label(canvas_, x, base, kChipText * u, faded(kFpsInk, a), fpsText(now.fps));
+            canvas_.rect({std::round(x), std::round(b.midY() - tall * 0.5f), rule, tall}, faded(kOff, a));
+            x += rule + kChipGap * u;
         }
-        if (now.clock >= 0) {
-            rule();
-            controls::label(canvas_, x, base, kChipText * u, faded(kFpsInk, a), clockText(now.clock));
-        }
+        if (now.fps >= 0) controls::label(canvas_, x, base, kChipText * u, faded(kFpsInk, a), fpsText(now.fps));
     }
 
     // The note: "<region> is nearer · 34 ms", and its cross.
