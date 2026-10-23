@@ -835,7 +835,15 @@ void Helper::keys(Play& play, const HelperSettings& settings, uint32_t target) {
         if (const auto tried = tried_.find(skill); tried != tried_.end() && tried->second > clock_) continue;
         tried_[skill] = clock_ + kSkillRetry;
         core::logf("helper: %s at %u, %d about it", row->name, unsigned(target), crowd);
-        play.castSkill(skill, target);
+        // **At the one he fights, never the mouse** (Israphel on Discord: "power wave missed a lot
+        // with the helper"): Play::castSkill sends a skill with a direction the way the pointer is,
+        // which while the helper hunts is wherever the hand left it. Pressed on him instead, as a
+        // press with the pointer on a monster is (Realm::invokeAt), it turns onto him as it goes.
+        if (row->aimsAtPointer()) {
+            play.castHeroAt(skill, at->column(), at->row(), target);
+        } else {
+            play.castSkill(skill, target);
+        }
         return;
     }
 }
