@@ -253,6 +253,9 @@ private:
     // showLater says, as MU draws a tile whose NoGround the run clears (AddTerrainAttributeRange,
     // ZzzObject.cpp:163). The world's `void.later`. Blood Castle's drawbridge gap.
     std::vector<std::array<int, 4>> later_;
+    // Tile boxes, inclusive, whose void takes no sunk wall (void.no_walls): the narrow gap under
+    // a bridge, which walls from both sides filled with rock. Kanturu.
+    std::vector<std::array<int, 4>> noWalls_;
     bool laterShown_ = false;
     bool sky_ = false;          // the world's `sky`; see draws
     float figureLight_ = 0.0f;  // the world's `figure_light`; see figureLightAt

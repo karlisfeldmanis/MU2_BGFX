@@ -658,8 +658,9 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     blendKeepMask_.clear();
     later_.clear();
     laterShown_ = false;
-    for (const char* key : {"blend_keep", "later"}) {
-        auto& boxes = key[0] == 'l' ? later_ : blendKeep_;
+    noWalls_.clear();
+    for (const char* key : {"blend_keep", "later", "no_walls"}) {
+        auto& boxes = key[0] == 'l' ? later_ : key[0] == 'n' ? noWalls_ : blendKeep_;
         for (size_t i = 0; i < chasm[key].size(); ++i) {
             const core::Json& box = chasm[key].at(i);
             if (box.size() != 4) continue;
@@ -1712,7 +1713,10 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
             // Under MU's hanging cliffs as well: cut there, a lip with no cliff over it ended on a
             // jagged black line (the user, 2026-10-23: "cuted clif without gradient", 173,191).
             // The black shapes that kept walls off them (e2ad83f4) were the stone heap's light.
-            if (voidFade_ <= 0.0f || std::min(std::min(at(tc, tr), at(tc + 1, tr)),
+            bool walled = true;
+            for (const auto& box : noWalls_)
+                if (tc >= box[0] && tr >= box[1] && tc <= box[2] && tr <= box[3]) walled = false;
+            if (voidFade_ <= 0.0f || !walled || std::min(std::min(at(tc, tr), at(tc + 1, tr)),
                                               std::min(at(tc, tr + 1), at(tc + 1, tr + 1))) >=
                                          black - 1e-4f) {
                 ++voids;
