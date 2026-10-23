@@ -62,6 +62,8 @@ public:
                        int barCount = 0);
     // Forget what this map's hand was doing: a new quest, or Stop.
     void reset();
+    // Whether it picks up Firecrackers and boxes: the Helper window's Boxes tick.
+    void pickBoxes(bool on) { boxes_ = on; }
 
 private:
     // For a hunt, `breed` picks the Move row landing nearest its nests.
@@ -76,6 +78,7 @@ private:
                   std::string* said);
     int32_t striker(Play& play) const;
 
+    bool boxes_ = true;
     double since_ = 0.0;
     int quest_ = -1;
     uint32_t target_ = 0;

@@ -53,14 +53,15 @@ struct Pick {
     uint8_t bit;
     uint32_t ink;
 };
-// Four a row, two rows: the window keeps its height (Pets made seven).
-constexpr int kPickCount = 7, kPickColumns = 4;
+// Four a row, two rows: the window keeps its height (Pets made seven, Boxes eight).
+constexpr int kPickCount = 8, kPickColumns = 4;
 constexpr Pick kPicks[kPickCount] = {{"Jewels", HelperSettings::kPickJewels, kJewelInk},
                                      {"Runes", HelperSettings::kPickRunes, kRuneInk},
                                      {"Pets", HelperSettings::kPickPets, style::kBoneHi},
                                      {"+Socket", HelperSettings::kPickSockets, style::kBoneHi},
                                      {"Legendary", HelperSettings::kPickLegendary, kLegendInk},
                                      {"Excellent", HelperSettings::kPickExcellent, kExcellentInk},
+                                     {"Boxes", HelperSettings::kPickBoxes, style::kBoneHi},
                                      {"All", HelperSettings::kPickAll, style::kBoneHi}};
 
 Box placed(float x, float y, const Box& b, float u) {

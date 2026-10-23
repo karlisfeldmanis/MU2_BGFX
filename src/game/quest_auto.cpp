@@ -561,8 +561,10 @@ bool QuestAuto::loot(Play& play) {
     for (const sim::Lying& one : realm.lying()) {
         if (one.what.empty() || one.what.item < 0 || size_t(one.what.item) >= tables.items.size()) continue;
         const content::ItemRow& row = tables.items[size_t(one.what.item)];
-        // And a Firecracker, a Box of Luck or a Box of Kundun (the user, 2026-10-21).
+        // And a Firecracker, a Box of Luck or a Box of Kundun (the user, 2026-10-21), while the
+        // Helper window's Boxes tick is on.
         const bool box = sim::firecracker(row) || sim::boxOfLuck(row) || sim::boxOfKundun(row);
+        if (box && !boxes_) continue;
         if (!row.jewel() && !sim::creation(row) && !sim::refiningJewel(row) && one.what.excellent == 0 && !box) continue;
         if (!realm.mayTake(one)) continue;
         if (const auto tried = lootTried_.find(one.id); tried != lootTried_.end() && tried->second < clock_) continue;
@@ -756,7 +758,12 @@ bool QuestAuto::hunt(Play& play, int32_t breed) {
     }
     // The one he was on, while he can still walk to it: not one left on another floor.
     const bool holding = held && held->alive() && ofBreed(*held) && walkable(held->column(), held->row());
-    const sim::Body* fightNow = attacker ? attacker : holding ? held : nearest;
+    // One he is walking to is kept over one that has only seen him: an attacker takes over only
+    // when it is on him (kSetOn), else he went back and forth between two (Crylos, Discord,
+    // 2026-10-23: Atlans' Hydras, two killed and risen again as he was halfway to the other two,
+    // "your character is stuck going back and forth because it switches to the closest").
+    const bool onHim = attacker != nullptr && attackerAway <= kSetOn * kSetOn;
+    const sim::Body* fightNow = holding && !onHim ? held : attacker ? attacker : holding ? held : nearest;
     // A jewel, rune or excellent piece first, while nothing is on him.
     if (attacker == nullptr && loot(play)) return true;
     // His guard first, when it has lapsed and something is to be fought.

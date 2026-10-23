@@ -34,6 +34,8 @@ constexpr float kScrimAlpha = 0.72f;
 constexpr float kInsideAlpha = 0.42f;
 constexpr float kFadeSeconds = 0.4f;
 constexpr int kLateSeconds = 30;
+constexpr float kCloseSize = 16.0f;   // the x's box, in the frame's top right corner
+constexpr float kCloseInset = 3.0f;   // from the frame's top and right; it stays over the clock
 
 // The travel list's gold (game/ui/travel.cpp), the quest marker's: what the user chose for
 // "yours" on 2026-09-30, kept here for the way back to the field.
@@ -127,7 +129,7 @@ Box layout(int width, float plateTop, bool closed, const std::string& where, flo
 
 }  // namespace
 
-bool GoBackPlate::update(float seconds, bool shown, int secondsLeft, bool closed,
+GoBackPlate::Asked GoBackPlate::update(float seconds, bool shown, int secondsLeft, bool closed,
                          const std::string& where, const Pointer& pointer, int width, int height,
                          float plateTop) {
     const float target = shown ? 1.0f : 0.0f;
@@ -137,13 +139,19 @@ bool GoBackPlate::update(float seconds, bool shown, int secondsLeft, bool closed
         if (built_) canvas_.clear();
         built_ = false;
         box_ = {};
-        return false;
+        x_ = {};
+        return Asked::None;
     }
     const float u = tip::unit() * kScale;
     // The closed line is a reading, not a button.
     box_ = layout(width, plateTop, closed, where, u);
-    const bool hover = shown && !closed && box_.has(pointer.x, pointer.y);
-    const bool clicked = hover && pointer.pressed;
+    x_ = closed ? Box{}
+                : Box{std::round(box_.right() - (kCloseInset + kCloseSize) * u),
+                      std::round(box_.y + kCloseInset * u), std::round(kCloseSize * u),
+                      std::round(kCloseSize * u)};
+    const bool inside = shown && !closed && box_.has(pointer.x, pointer.y);
+    const bool hoverX = inside && x_.has(pointer.x, pointer.y);
+    const bool hover = inside && !hoverX;
 
     Drawn now;
     now.width = width;
@@ -152,6 +160,7 @@ bool GoBackPlate::update(float seconds, bool shown, int secondsLeft, bool closed
     now.secondsLeft = secondsLeft;
     now.closed = closed;
     now.hover = hover;
+    now.hoverX = hoverX;
     now.alpha = int(std::round(alpha_ * 64.0f));
     now.where = where;
     if (!built_ || !(now == drawn_)) {
@@ -159,7 +168,8 @@ bool GoBackPlate::update(float seconds, bool shown, int secondsLeft, bool closed
         built_ = true;
         rebuild(now);
     }
-    return clicked;
+    if (!pointer.pressed) return Asked::None;
+    return hoverX ? Asked::Dismiss : hover ? Asked::Go : Asked::None;
 }
 
 void GoBackPlate::rebuild(const Drawn& now) {
@@ -202,6 +212,9 @@ void GoBackPlate::rebuild(const Drawn& now) {
     const float wide = controls::capsWidth(kClockSize * u, text, 0.0f);
     controls::caps(canvas_, right - wide, controls::middle(b.y, b.h, kClockSize * u),
                    kClockSize * u, faded(late ? style::kBloodHi : kGoldHi, a), text, 0.0f);
+    // The x: the frame's gold at rest, lit under the pointer.
+    controls::bare(canvas_, x_.grown(4.0f * u), controls::Glyph::Close,
+                   faded(now.hoverX ? style::kBoneHi : kGold, a), u * 1.6f);
 }
 
 }  // namespace mu::game

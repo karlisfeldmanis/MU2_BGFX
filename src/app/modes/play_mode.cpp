@@ -1459,6 +1459,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
         int32_t bar[game::Hud::kSkillBoxes] = {};
         for (int k = 0; k < game::Hud::kSkillBoxes; ++k) bar[k] = desk_.bound(k);
+        questAuto_.pickBoxes((desk_.helperSettings().picks & game::HelperSettings::kPickBoxes) != 0);
         if (const std::string said = questAuto_.update(world_.played(), &ctx.autoQuest, deltaSeconds, bar,
                                                        game::Hud::kSkillBoxes);
             !said.empty()) {
@@ -2431,11 +2432,23 @@ void PlayMode::goBack(Context& ctx, double seconds) {
     const sim::WayBack& way = world_.played().realm().wayBack();
     const game::MapRow* to = game::mapNumbered(way.map);
     if (way.map < 0 || to == nullptr) {
+        ctx.goBack.dismissedMap = -1;
         desk_.goBack(false, 0, false, {});
         return;
     }
     if (desk_.takeGoBack() && way.open()) {
         world_.played().goBack();
+        desk_.goBack(false, 0, false, {});
+        return;
+    }
+    if (desk_.takeGoBackDismissed()) {
+        ctx.goBack.dismissedMap = way.map;
+        ctx.goBack.dismissedColumn = way.column;
+        ctx.goBack.dismissedRow = way.row;
+        core::logf("go back: put away, %lld s left", (long long)(way.ticksLeft / 20));
+    }
+    if (ctx.goBack.dismissedMap == way.map && ctx.goBack.dismissedColumn == way.column &&
+        ctx.goBack.dismissedRow == way.row) {
         desk_.goBack(false, 0, false, {});
         return;
     }
@@ -2489,6 +2502,8 @@ void PlayMode::feedLine(Context& ctx, float seconds) {
     const int fps = ctx.readout.sample();
     line.fps = args.fps ? fps : -1;
     line.ping = world_.played().rttMs();
+    const int64_t wall = world_.played().isOpen() ? world_.played().realm().wallClock() : 0;
+    line.clock = wall > 0 ? int(wall % 86400 / 60) : -1;
     if (line.ping >= 0.0f) {
         line.here = net::regionOfServer(args.server);
         if (!args.region.empty()) {

@@ -7,6 +7,8 @@
 // returns to under it, and the clock on the right behind a thin upright rule. Gold, red for the
 // last thirty seconds, no pulse. Clicked, never keyed (the user: "dont use key, have to click").
 // When the five minutes run out it says "Go Back! has closed" in a dark frame for three seconds.
+// A small x in its top right corner puts it away without waiting (Crylos, 2026-10-23: "A small
+// x button to close the Go Back! window instead of forcing me to wait would be nice").
 //
 // A mirror, as every window is: told what to show each frame, and it rebuilds only when that
 // moved -- the second, the hover, the fade.
@@ -27,8 +29,9 @@ public:
     void close() { canvas_.clear(); built_ = false; alpha_ = 0.0f; }
     // One frame. `secondsLeft` above 0 shows the clock; 0 with `closed` shows the closed line;
     // `shown` false takes it down. `plateTop` is the HUD's top edge in pixels, which it stands
-    // over. Returns true on the frame it was clicked.
-    bool update(float seconds, bool shown, int secondsLeft, bool closed, const std::string& where,
+    // over. Says on the frame it was clicked whether that was the way back or its x.
+    enum class Asked : uint8_t { None, Go, Dismiss };
+    Asked update(float seconds, bool shown, int secondsLeft, bool closed, const std::string& where,
                 const Pointer& pointer, int width, int height, float plateTop);
     bool covers(float x, float y) const { return alpha_ > 0.0f && box_.has(x, y); }
     bool showing() const { return alpha_ > 0.0f; }
@@ -41,12 +44,13 @@ private:
         int secondsLeft = 0;
         bool closed = false;
         bool hover = false;
+        bool hoverX = false;
         int alpha = 0;  // in 64ths
         std::string where;
         bool operator==(const Drawn& o) const {
             return width == o.width && height == o.height && plateTop == o.plateTop &&
                    secondsLeft == o.secondsLeft && closed == o.closed && hover == o.hover &&
-                   alpha == o.alpha && where == o.where;
+                   hoverX == o.hoverX && alpha == o.alpha && where == o.where;
         }
     };
     void rebuild(const Drawn& now);
@@ -56,6 +60,7 @@ private:
     bool built_ = false;
     float alpha_ = 0.0f;
     gfx::Box box_;
+    gfx::Box x_;  // the x's box, empty on the closed line
 };
 
 }  // namespace mu::game

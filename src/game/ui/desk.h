@@ -278,6 +278,12 @@ public:
         goBackAsked_ = false;
         return was;
     }
+    // Its x clicked since this was last asked, once: the plate put away, the way left to run out.
+    bool takeGoBackDismissed() {
+        const bool was = goBackDismissed_;
+        goBackDismissed_ = false;
+        return was;
+    }
 
     // The line's chip, top right (game/ui/line_chip.h): what it shows, from the mode each frame;
     // whether its list opened (the mode times the regions) and whether the note's cross was
@@ -447,7 +453,7 @@ private:
     SquareResult squareResult_;
     std::vector<sim::Realm::SquareResult> squareResults_;
     std::vector<SquareResult::Row> squareRows_;
-    bool goBackShown_ = false, goBackClosed_ = false, goBackAsked_ = false;
+    bool goBackShown_ = false, goBackClosed_ = false, goBackAsked_ = false, goBackDismissed_ = false;
     int goBackLeft_ = 0;
     std::string goBackWhere_;
     // The events coming for his level, one line at the top centre (game/ui/herald.h).

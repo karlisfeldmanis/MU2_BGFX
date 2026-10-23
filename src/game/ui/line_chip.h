@@ -36,6 +36,10 @@ public:
         // that did not answer.
         std::vector<double> pings;
         int nearer = -1;  // the region the note names, -1 for no note
+        // The server's time, in minutes of its day (UTC, the clock the events open on); -1 before
+        // the realm has a wall clock. Crylos, Discord, 2026-10-23: "seeing server time in-game
+        // would be nice ... where you see your ping/ms and fps".
+        int clock = -1;
     };
     void open(const gfx::Interface& interface) { interface.adopt(canvas_); }
     void close() {
@@ -75,12 +79,12 @@ public:
 private:
     struct Drawn {
         int width = 0, height = 0, plateTop = 0;
-        int fps = -1, ping = -1, here = -1, nearer = -1;
+        int fps = -1, ping = -1, here = -1, nearer = -1, clock = -1;
         std::vector<int> pings;
         bool listUp = false, noteUp = false, hover = false, crossHover = false;
         int alpha = 0;  // in 64ths
         bool operator==(const Drawn& o) const {
-            return width == o.width && height == o.height && plateTop == o.plateTop && fps == o.fps &&
+            return width == o.width && height == o.height && plateTop == o.plateTop && fps == o.fps && clock == o.clock &&
                    ping == o.ping && here == o.here && nearer == o.nearer && pings == o.pings &&
                    listUp == o.listUp && noteUp == o.noteUp && hover == o.hover &&
                    crossHover == o.crossHover && alpha == o.alpha;

@@ -167,7 +167,9 @@ bool loadHelper(const std::string& savePath, HelperSettings& out) {
         int a = 0, b = 0;
         if (!std::strcmp(key, "range") && std::fscanf(f, "%d", &a) == 1) read.range = std::clamp(a, 0, 2);
         else if (!std::strcmp(key, "back") && std::fscanf(f, "%d", &a) == 1) read.back = a != 0;
-        else if (!std::strcmp(key, "picks") && std::fscanf(f, "%d", &a) == 1) read.picks = uint8_t(a & 127);
+        else if (!std::strcmp(key, "picks") && std::fscanf(f, "%d", &a) == 1) read.picks = uint8_t((a & 127) | (read.picks & HelperSettings::kPickBoxes));
+        else if (!std::strcmp(key, "boxes") && std::fscanf(f, "%d", &a) == 1)
+            read.picks = uint8_t(a != 0 ? read.picks | HelperSettings::kPickBoxes : read.picks & ~HelperSettings::kPickBoxes);
         else if (!std::strcmp(key, "seen") && std::fscanf(f, "%d", &a) == 1) read.seen = a != 0;
         else if (!std::strcmp(key, "quest") && std::fscanf(f, "%d", &a) == 1) read.quest = a != 0;
         else if (!std::strcmp(key, "invites") && std::fscanf(f, "%d", &a) == 1) read.invites = uint8_t(std::clamp(a, 0, 2));
@@ -198,7 +200,8 @@ bool writeHelper(const std::string& savePath, const HelperSettings& settings) {
         return false;
     }
     std::fprintf(f, "range %d\nback %d\npicks %d\nseen %d\n", settings.range, settings.back ? 1 : 0,
-                 int(settings.picks), settings.seen ? 1 : 0);
+                 int(settings.picks & 127), settings.seen ? 1 : 0);
+    std::fprintf(f, "boxes %d\n", (settings.picks & HelperSettings::kPickBoxes) != 0 ? 1 : 0);
     std::fprintf(f, "quest %d\ninvites %d\nparty %d\ntrades %d\n", settings.quest ? 1 : 0, int(settings.invites),
                  settings.aidParty ? 1 : 0, settings.noTrades ? 1 : 0);
     std::fprintf(f, "repair %d\n", settings.repair ? 1 : 0);
@@ -505,6 +508,7 @@ std::string Helper::follow(Play& play, const HelperSettings& settings, double se
     }
     if (picking_ != 0) return {};
     int playing = following_;
+    quester_.pickBoxes((settings.picks & HelperSettings::kPickBoxes) != 0);
     const std::string said = quester_.update(play, &playing, seconds, bar_, barCount_);
     if (playing >= 0 || said.empty()) return {};
     // Auto-play's hand is done with it: handed in, or it can go no further.
@@ -543,9 +547,10 @@ bool Helper::loot(Play& play, const HelperSettings& settings) {
             const content::ItemRow& row = tables.items[size_t(one.what.item)];
             const uint8_t p = settings.picks;
             bool wanted = (p & HelperSettings::kPickAll) != 0;
-            // A Firecracker, a Box of Luck or a Box of Kundun, always, as Zen is (the user,
-            // 2026-10-21: "helper auto-play also pickup firecracrehs, box of kundum and box of luck").
-            wanted |= sim::firecracker(row) || sim::boxOfLuck(row) || sim::boxOfKundun(row);
+            // A Firecracker, a Box of Luck or a Box of Kundun under its Boxes tick, on at first (the
+            // user, 2026-10-21: "helper auto-play also pickup firecracrehs, box of kundum and box of luck").
+            const bool box = sim::firecracker(row) || sim::boxOfLuck(row) || sim::boxOfKundun(row);
+            wanted |= (p & HelperSettings::kPickBoxes) && box;
             const int place = sim::placeOf(row);
             const bool pet = place == sim::kPet || place == sim::kMount;
             wanted |= (p & HelperSettings::kPickJewels) && !pet && (row.jewel() || sim::refiningJewel(row));
@@ -557,7 +562,8 @@ bool Helper::loot(Play& play, const HelperSettings& settings) {
                        qualityOf(row, one.what) == tip::Tone::RuneAncient);
             wanted |= (p & HelperSettings::kPickExcellent) && one.what.excellent != 0;
             wanted |= (p & HelperSettings::kPickSockets) && one.what.sockets > 0;
-            if (!wanted) continue;
+            // Boxes off leaves them lying under All as well: they are what fills his bag.
+            if (!wanted || (box && !(p & HelperSettings::kPickBoxes))) continue;
             sim::Satchel bag = realm.satchel();
             if (sim::pour(tables, bag, sim::kWorn, sim::kSlots, one.what) < 0) continue;
         }

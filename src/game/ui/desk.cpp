@@ -945,10 +945,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // the warp's own sMagic plays as he lands. Not while a box or the menu has the screen.
     {
         const bool held = amount_.up() || report_.up() || whatsNew_.up() || menu_.up();
-        if (goBack_.update(seconds, goBackShown_ && play.isOpen(), goBackLeft_, goBackClosed_,
+        const GoBackPlate::Asked asked =
+            goBack_.update(seconds, goBackShown_ && play.isOpen(), goBackLeft_, goBackClosed_,
                            goBackWhere_, held ? Pointer{} : pointer, window.width(),
-                           window.height(), hud_.plateTop())) {
-            goBackAsked_ = true;
+                           window.height(), hud_.plateTop());
+        if (asked != GoBackPlate::Asked::None) {
+            (asked == GoBackPlate::Asked::Go ? goBackAsked_ : goBackDismissed_) = true;
             click();
         }
     }
