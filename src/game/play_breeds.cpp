@@ -3,8 +3,9 @@
 // Death Rider's head and a Death Tree's horns (fx/aida_sparks.h), and Hell Maine's lights, storm and
 // fire lay (fx/hell_maine.h), a Kanturu Iron Rider's bow sparks, arrow and death smoke
 // (fx/iron_rider.h), a Blade Hunter's swirl, blasts and walking dust (fx/blade_hunter.h) and a
-// Kentauros's bow smoke, arrows and death smoke (fx/kentauros.h) and a Berserker's breath
-// (fx/berserker.h), each by its recipe's show tag.
+// Kentauros's bow smoke, arrows and death smoke (fx/kentauros.h), a Berserker's breath
+// (fx/berserker.h) and the dust and stones a Genocider's weapon drags, each by its recipe's show
+// tag.
 // Out of play_show.cpp, which is at its size.
 #include "game/play.h"
 
@@ -30,7 +31,7 @@ void Play::breedShows(Drawn& one, float fade, float seconds) {
     }
     if (!look->has("blue_golem") && !look->has("witch_queen") && !look->has("hell_maine") &&
         !look->has("iron_rider") && !look->has("blade_hunter") && !look->has("kentauros") &&
-        !look->has("berserker"))
+        !look->has("berserker") && !look->has("genocider"))
         return;
     // What it hunts: its quarry, or its blow's target; that one's feet, or null.
     const sim::Body* self = realm_.find(one.id);
@@ -76,6 +77,33 @@ void Play::breedShows(Drawn& one, float fade, float seconds) {
         shadowStars_.kentauros().watch(one.id, one.figure, attack, keyOf(one.figure), one.yaw,
                                        aim ? target : nullptr, one.deadFor >= 0.0f, fade, seconds);
         walkDust();
+        return;
+    }
+    // A Genocider walking drags its weapon: each reference frame, dust off GENO_WP (bone 47,
+    // Bone12), on the ground under it, and one of the meteor's stones (GM_Kanturu_1st.cpp:
+    // 1208-1216). Ours: a stone one frame in five and at a third of MU's size -- one a frame at
+    // full size, each living 32-48 frames, kept forty rocks hopping round it (the user,
+    // 2026-10-23: "something looks vierd, those fly things from monster").
+    if (look->has("genocider")) {
+        if (slotOf(one.figure) != kMonsterWalkSlot || !ground_ || one.deadFor >= 0.0f || !look->skeletonMesh) {
+            one.walkSandOwed = 0.0f;
+            return;
+        }
+        int weapon = -1;
+        const auto& bones = look->skeletonMesh->bones();
+        for (size_t b = 0; b < bones.size() && weapon < 0; ++b)
+            if (bones[b].name == "Bone12") weapon = int(b);
+        float at[3];
+        const float origin[3] = {0.0f, 0.0f, 0.0f};
+        if (weapon < 0 || !one.figure.pointOn(weapon, origin, at)) return;
+        const float floor = ground_->heightAt(at[0], at[2]);
+        const float feet[3] = {at[0], floor, at[2]};
+        const float along[2] = {std::sin(one.yaw), std::cos(one.yaw)};
+        static uint32_t kicked = 0;  // every Genocider's frames, one count: one in five throws
+        for (one.walkSandOwed += seconds * 25.0f; one.walkSandOwed >= 1.0f; one.walkSandOwed -= 1.0f) {
+            breath_.walkSand(feet, along, 0.0f, kWalkSandAlpha);
+            if (++kicked % 5 == 0) meteor_.stones(at[0], at[2], floor, 1, 0.33f);
+        }
         return;
     }
     // A Berserker's green breath, while it neither swings nor has fallen.
