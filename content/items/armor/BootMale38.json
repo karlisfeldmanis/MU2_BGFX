@@ -34,25 +34,14 @@
   },
   "sheet_from": "MuMain/src/bin/Data/Player flamset_*.OZJ, decoded with pipeline/decode_texture.py: red plate edged in silver; flamset_head the collar and hood on the armour.",
   "sheet_materials": {
-    "flamset_boots": "painted_steel"
+    "flamset_boots": "plate_steel"
   },
-  "material_note": "painted_steel with the cast grain, the shading painted on.",
-  "material_overrides": {
-    "painted_steel": {
-      "grain": {
-        "kind": "cast",
-        "scale": 260,
-        "depth": 0.02,
-        "roughness_range": 0.03
-      }
-    }
-  },
-  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "material_note": "plate_steel, as Destroy: Valiant's paint reflects as coloured steel rather than lacquer (the user, 2026-10-23: 'i think MG metal could be more metaalic no?', then all three of his lacquered sets).",
   "effects_note": "MuMain has no render arm for MODEL_VALIANT_* (no glow, no chrome pass). Its full-set bonus is not given: sim::setDefense counts only Storm Crow and Hurricane for the Magic Gladiator.",
   "islands": [
     {
       "island": 0,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 122,
       "area": 4706.5,
       "along": [
@@ -74,7 +63,7 @@
     },
     {
       "island": 1,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 122,
       "area": 4706.5,
       "along": [

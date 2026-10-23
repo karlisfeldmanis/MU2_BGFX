@@ -17,6 +17,9 @@
 
 uniform vec4 u_lampGrid;    // xy: the grid's corner, world x and z  z: cells a metre  w: cells a side
 uniform vec4 u_lampParams;  // x: lamp_strength  y: 1 when any light is set  z: transient count  w: lamp_shadow
+// x: the sheet's weathering (fs_shade)  y: metal_highlight, the most a highlight may be in white
+// cards (0 off; 0 too where a pass sets none)
+uniform vec4 u_weather;
 
 SAMPLER2D(s_lamps, 13);
 SAMPLER2D(s_lampGrid, 14);
@@ -134,6 +137,11 @@ vec3 lampAt(vec4 at, vec4 lit, vec4 side, vec3 wpos, vec3 n, vec3 v, vec3 diffus
 	float dd = distributionGGX(ndoth, roughness);
 	float g = geometrySmith(ndotv, ndotl, roughness);
 	vec3 spec = f * dd * g / max(4.0 * ndotv * ndotl, 1e-5);
+	// The sheet's metal_highlight, as on the sun (fs_shade): a lamp's peak on glossy plate a
+	// few steps from a bonfire burned white. Only a metal's f0 reaches it. Ours.
+	float specPeak = max(spec.r, max(spec.g, spec.b));
+	float specCap = u_weather.y * 0.31830989;
+	if (specCap > 0.0 && specPeak > specCap) spec *= specCap / specPeak;
 	vec3 kd = (vec3_splat(1.0) - f) * diffuseColour / 3.14159265;
 
 	return (kd + spec) * lit.rgb * (u_lampParams.x * ndotl * fall * facing);

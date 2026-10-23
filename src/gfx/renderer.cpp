@@ -736,6 +736,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     metalGain_ = lighting.metalGain;
     probeTaken_[3] = lighting.probeDiffuse;
     weather_[0] = bgfx::isValid(weatherNoise_) ? std::max(lighting.weathering, 0.0f) : 0.0f;
+    weather_[1] = std::max(lighting.metalHighlight, 0.0f);  // fs_shade: the metal highlight's cap
     shineStrength_ = lighting.refineStrength;
     shineTint_ = lighting.refineTint;
     shineStageStrength_ = lighting.refineStageStrength;

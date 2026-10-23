@@ -35,26 +35,15 @@
   },
   "sheet_from": "MuMain/src/bin/Data/Player flamset_*.OZJ, decoded with pipeline/decode_texture.py: red plate edged in silver; flamset_head the collar and hood on the armour.",
   "sheet_materials": {
-    "flamset_upper": "painted_steel",
-    "flamset_head": "painted_steel"
+    "flamset_upper": "plate_steel",
+    "flamset_head": "plate_steel"
   },
-  "material_note": "painted_steel with the cast grain, the shading painted on.",
-  "material_overrides": {
-    "painted_steel": {
-      "grain": {
-        "kind": "cast",
-        "scale": 260,
-        "depth": 0.02,
-        "roughness_range": 0.03
-      }
-    }
-  },
-  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "material_note": "plate_steel, as Destroy: Valiant's paint reflects as coloured steel rather than lacquer (the user, 2026-10-23: 'i think MG metal could be more metaalic no?', then all three of his lacquered sets).",
   "effects_note": "MuMain has no render arm for MODEL_VALIANT_* (no glow, no chrome pass). Its full-set bonus is not given: sim::setDefense counts only Storm Crow and Hurricane for the Magic Gladiator.",
   "islands": [
     {
       "island": 0,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 20,
       "area": 164.7,
       "along": [
@@ -76,7 +65,7 @@
     },
     {
       "island": 1,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 18,
       "area": 143.6,
       "along": [
@@ -98,7 +87,7 @@
     },
     {
       "island": 2,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 10,
       "area": 20.3,
       "along": [
@@ -120,7 +109,7 @@
     },
     {
       "island": 3,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 5,
       "area": 3.7,
       "along": [
@@ -142,7 +131,7 @@
     },
     {
       "island": 4,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 10,
       "area": 20.3,
       "along": [
@@ -164,7 +153,7 @@
     },
     {
       "island": 5,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 5,
       "area": 3.7,
       "along": [
@@ -186,7 +175,7 @@
     },
     {
       "island": 6,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 116,
       "area": 4645.1,
       "along": [
@@ -208,7 +197,7 @@
     },
     {
       "island": 7,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 16,
       "area": 434.4,
       "along": [
@@ -230,7 +219,7 @@
     },
     {
       "island": 8,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 20,
       "area": 1431.2,
       "along": [
@@ -252,7 +241,7 @@
     },
     {
       "island": 9,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 20,
       "area": 1431.2,
       "along": [
@@ -274,7 +263,7 @@
     },
     {
       "island": 10,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 6,
       "area": 232.6,
       "along": [
@@ -296,7 +285,7 @@
     },
     {
       "island": 11,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 48,
       "area": 1985.6,
       "along": [
@@ -318,7 +307,7 @@
     },
     {
       "island": 12,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 44,
       "area": 2565.4,
       "along": [
@@ -340,7 +329,7 @@
     },
     {
       "island": 13,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 3,
       "area": 80.1,
       "along": [
@@ -362,7 +351,7 @@
     },
     {
       "island": 14,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 4,
       "area": 109.6,
       "along": [
@@ -384,7 +373,7 @@
     },
     {
       "island": 15,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 8,
       "area": 253.3,
       "along": [
@@ -406,7 +395,7 @@
     },
     {
       "island": 16,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 8,
       "area": 181.2,
       "along": [

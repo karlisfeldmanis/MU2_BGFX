@@ -13,7 +13,7 @@
 #include "shine.sh"
 
 uniform vec4 u_translucency;  // x: the fraction of a leaf's light that comes through it, or 0
-uniform vec4 u_weather;       // x: the sheet's weathering, 0 off. See below
+// u_weather (x: the sheet's weathering, 0 off, see below; y: metal_highlight) is in lights.sh.
 // The weathering's noise, made by Renderer::init: r blotches a metre or two across and a
 // another of them, g half a metre, b a few centimetres; repeating every 8 m of world.
 SAMPLER2D(s_weather, 12);
@@ -255,6 +255,14 @@ void main()
 		float d = distributionGGX(ndoth, roughness);
 		float g = geometrySmith(ndotv, ndotl, roughness);
 		vec3 spec = f * d * g / max(4.0 * ndotv * ndotl, 1e-5) * energy;
+		// The sheet's metal_highlight (u_weather.y, 0 off): a metal's sun peak held to that many
+		// times the sun on a white card, its colour kept. A glossy plate's GGX peak ran to
+		// several times it and burned white spots into chests at noon. Ours.
+		// A white card's BRDF is 1/pi, so the cap is u_weather.y / pi.
+		float specPeak = max(spec.r, max(spec.g, spec.b));
+		float specCap = u_weather.y * 0.31830989;
+		if (specCap > 0.0 && specPeak > specCap)
+			spec *= mix(1.0, specCap / specPeak, metal);
 		vec3 kd = (vec3_splat(1.0) - f) * diffuseColour / 3.14159265;
 		// A weathered surface takes Burley's diffuse ("Physically Based Shading at Disney",
 		// 2012) for Lambert's: a rough face is brighter with the sun behind the eye and
