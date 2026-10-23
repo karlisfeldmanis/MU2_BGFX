@@ -24,6 +24,8 @@ constexpr float kHoverLight = 0.06f, kShadeLight = 0.2f;
 // half MU's speed, so it moves slower at the same density (the user, 2026-10-23: "make smoke
 // move slower").
 constexpr float kPace = 0.5f;
+// The added kinds' fixed grey; their level rides in alpha (gather).
+constexpr float kBase = 0.016f;
 // Ours (the user, 2026-10-23: "need more random smoke movement, and more subtle, also when game
 // loads i see smoke suddenly appears"): each puff wanders on its own drift up to kWander metres a
 // second, sways kSway metres side to side, turns up to kTurn radians a second; it fades in over
@@ -261,11 +263,17 @@ void ChasmMist::gather(gfx::Effects& effects) const {
         level *= ease * warm * warm;
         if (blend == gfx::Blend::Additive) spin += one.spin;
         gfx::Sprite sprite;
+        // A sprite's colour is eight bits a channel: at the mist's light (about 2 of 255) every
+        // fade stepped by half its own brightness, so puffs popped on and the mist shimmered
+        // (the user, 2026-10-23: "smoke appears suddenly and its little but shuttering"). The
+        // added kinds hold a fixed grey and carry the level in alpha, which fs_effect multiplies
+        // in (plain(): rgb * tint.rgb * a), over a hundred steps instead of two.
+        const bool added = blend == gfx::Blend::Additive;
         for (int i = 0; i < 3; ++i) {
             sprite.position[i] = one.at[i];
-            sprite.colour[i] = level;
+            sprite.colour[i] = added ? kBase : level;
         }
-        sprite.colour[3] = 1.0f;
+        sprite.colour[3] = added ? std::min(level / kBase, 1.0f) : 1.0f;
         sprite.halfWidth = sprite.halfHeight = 0.5f * kSheetMetres * one.scale;
         sprite.spin = spin;
         sprite.sheet = sheet_;
