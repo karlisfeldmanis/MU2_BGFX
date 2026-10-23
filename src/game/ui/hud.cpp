@@ -951,8 +951,7 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
     }
     if (debuffCard(one, sheet)) return sheet;   // Dragonfire and a bleed (debuff_cards.cpp)
     if (one.party) {
-        // What a kill pays the party near him, by its size (sim::partyExperience): a share of it
-        // by level, each his own; the row he stands on now lit, the others gray.
+        // What a kill pays the party near him, by its size (sim::partyExperience), shared by level.
         sheet.name = "Party";
         sheet.nameTone = tip::Tone::Green;
         sheet.base = "AURA \xc2\xb7 EXPERIENCE";
@@ -972,23 +971,11 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
             now.rows.push_back(prose(std::to_string(one.stacks) + (one.stacks == 1 ? " member" : " members") +
                                      " near you, the kill shared by level"));
         }
+        // What more of them would pay, in one line rather than a table (the user, 2026-10-23:
+        // "isnt this over kill?").
+        now.rows.push_back(prose("Up to " + boost(sim::kPartyMost, false) + " with five near, " +
+                                 boost(sim::kPartyMost, true) + " with a wizard, a knight and an elf"));
         sheet.sections.push_back(now);
-        // A table by size, then WebZen's set's (a wizard, a knight and an elf among them), which
-        // pays more from three.
-        const auto table = [&](bool trio, int from) {
-            tip::Section sizes;
-            if (trio) sizes.rows.push_back(prose("With a wizard, a knight and an elf", tip::Tone::White));
-            for (int near = from; near <= sim::kPartyMost; ++near) {
-                const bool here = std::min(one.stacks, sim::kPartyMost) == near && one.trio == trio;
-                sizes.rows.push_back(said(std::to_string(near) + (near == sim::kPartyMost ? " or more" : " near"),
-                                          boost(near, trio), here ? tip::Tone::Green : tip::Tone::Gray));
-            }
-            return sizes;
-        };
-        sheet.sections.push_back(table(false, 2));
-        tip::Section sizes = table(true, 3);
-        sizes.rows.push_back(prose("near is within ten steps of the kill"));
-        sheet.sections.push_back(sizes);
         return sheet;
     }
     if (one.frenzy) {
