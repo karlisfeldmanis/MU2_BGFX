@@ -1,6 +1,7 @@
 #include "net/wire.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cstring>
 
 #include <zlib.h>
@@ -470,6 +471,12 @@ std::string romanNumeral(int count) {
 std::string rebirthLine(const std::string& name, int count, const std::string& realm) {
     return name + " has been reborn" + (realm.empty() ? "" : " in " + realm) + " (Rebirth " +
            romanNumeral(count) + ").";
+}
+
+std::string newcomerLine(const std::string& name, const std::string& kind, const std::string& town) {
+    std::string place = town;
+    if (!place.empty()) place[0] = char(std::toupper(uint8_t(place[0])));
+    return "A new " + kind + ", " + name + ", sets foot in " + place + ". Welcome to MU!";
 }
 
 std::string saidText(const std::string& text) {

@@ -75,6 +75,21 @@ void testStore() {
     check(store.list("abcdef0123456789").size() == 1, "and her account lists her");
     check(store.remove("abcdef0123456789", 7), "she is deleted");
     check(store.list("abcdef0123456789").empty(), "and listed no more");
+
+    // The newcomer's line: an account none of whose characters has ever played is a new player's;
+    // one played, even deleted since, makes the next an alt.
+    check(store.create(8, "fedcba9876543210", "Ken", sim::Kin::DarkKnight, 0, "lorencia"), "a new player's first");
+    check(store.create(9, "fedcba9876543210", "Kenalt", sim::Kin::FairyElf, 1, "noria"), "and a second, unplayed");
+    check(!store.anyPlayed("fedcba9876543210"), "neither has played: still a new player");
+    Store::Row ken;
+    ken.token = 8;
+    ken.world = "lorencia";
+    check(store.keep(ken), "Ken plays");
+    check(store.remove("fedcba9876543210", 8), "and is deleted");
+    check(store.anyPlayed("fedcba9876543210"), "the account has played: its next is an alt");
+    check(net::newcomerLine("Ken", "Dark Knight", "lorencia") ==
+              "A new Dark Knight, Ken, sets foot in Lorencia. Welcome to MU!",
+          "the newcomer's line");
 }
 
 // ---- a save's item numbers across a new item -------------------------------------------------

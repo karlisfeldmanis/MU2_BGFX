@@ -387,6 +387,12 @@ std::string romanNumeral(int count);
 // 2026-10-22: "show on which realm reset was done so users understand"); none off a server. The
 // chat draws a speakerless Global line as a herald's, in gold (Chat::hear).
 std::string rebirthLine(const std::string& name, int count, const std::string& realm = {});
+// The server's line on Global the first time a new player's first character comes into the world,
+// said by no one and heard on his realm alone: "A new Dark Knight, Ken, sets foot in Lorencia.
+// Welcome to MU!" (the user, 2026-10-23: "when there is fresh characters made from fresh account,
+// not alt char, lets say that on global chat in that specific realm"). `town` is the world's
+// folder name, said with a capital.
+std::string newcomerLine(const std::string& name, const std::string& kind, const std::string& town);
 
 // A character this machine played on the server before accounts, by the token kept beside his
 // save: claimed onto the account when it is nobody's yet.
