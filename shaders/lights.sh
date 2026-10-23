@@ -141,7 +141,7 @@ vec3 lampAt(vec4 at, vec4 lit, vec4 side, vec3 wpos, vec3 n, vec3 v, vec3 diffus
 	// few steps from a bonfire burned white. Only a metal's f0 reaches it. Ours.
 	float specPeak = max(spec.r, max(spec.g, spec.b));
 	float specCap = u_weather.y * 0.31830989;
-	if (specCap > 0.0 && specPeak > specCap) spec *= specCap / specPeak;
+	if (specCap > 0.0 && specPeak > specCap) spec *= specCap / max(specPeak, 1e-6);
 	vec3 kd = (vec3_splat(1.0) - f) * diffuseColour / 3.14159265;
 
 	return (kd + spec) * lit.rgb * (u_lampParams.x * ndotl * fall * facing);
