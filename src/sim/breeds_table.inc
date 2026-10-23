@@ -98,6 +98,7 @@ constexpr Resistance kResistances[] = {
     {352, 21, 21},  // Iron Rider
     {353, 22, 22},  // Satyros
     {354, 23, 23},  // Blade Hunter
+    {355, 24, 24},  // Kentauros
     {549, 20, 20},  // Bloody Orc
     {550, 20, 20},  // Bloody Death Rider
     {552, 20, 20},  // Bloody Witch Queen
@@ -173,6 +174,7 @@ constexpr DropRate kDropRates[] = {
     {352, 30, 3, 10},  // Iron Rider
     {353, 30, 3, 10},  // Satyros
     {354, 30, 3, 10},  // Blade Hunter
+    {355, 30, 3, 10},  // Kentauros
     {549, 30, 3, 8},  // Bloody Orc
     {550, 30, 3, 10},  // Bloody Death Rider
     {552, 30, 3, 10},  // Bloody Witch Queen

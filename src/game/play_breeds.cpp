@@ -2,8 +2,8 @@
 // (fx/golem_water.h), a Witch Queen's lights and strikes (fx/witch_queen.h), and the sparks off a
 // Death Rider's head and a Death Tree's horns (fx/aida_sparks.h), and Hell Maine's lights, storm and
 // fire lay (fx/hell_maine.h), a Kanturu Iron Rider's bow sparks, arrow and death smoke
-// (fx/iron_rider.h) and a Blade Hunter's swirl, blasts and walking dust (fx/blade_hunter.h),
-// each by its recipe's show tag.
+// (fx/iron_rider.h), a Blade Hunter's swirl, blasts and walking dust (fx/blade_hunter.h) and a
+// Kentauros's bow smoke, arrows and death smoke (fx/kentauros.h), each by its recipe's show tag.
 // Out of play_show.cpp, which is at its size.
 #include "game/play.h"
 
@@ -28,7 +28,7 @@ void Play::breedShows(Drawn& one, float fade, float seconds) {
         return;
     }
     if (!look->has("blue_golem") && !look->has("witch_queen") && !look->has("hell_maine") &&
-        !look->has("iron_rider") && !look->has("blade_hunter"))
+        !look->has("iron_rider") && !look->has("blade_hunter") && !look->has("kentauros"))
         return;
     // What it hunts: its quarry, or its blow's target; that one's feet, or null.
     const sim::Body* self = realm_.find(one.id);
@@ -43,16 +43,10 @@ void Play::breedShows(Drawn& one, float fade, float seconds) {
                                        aim ? target : nullptr, one.deadFor >= 0.0f, fade, seconds);
         return;
     }
-    // A Blade Hunter's strike, its blasts' one sound; and walking, a puff of dust at its feet one
-    // reference frame in ten (RenderKanturu1stMonsterVisual's rand_fps_check(10) BITMAP_SMOKE + 1,
-    // GM_Kanturu_1st.cpp:1347-1354), the sand Tarkan's walkers throw every frame.
-    if (look->has("blade_hunter")) {
-        const int attack = one.figure.clip() == one.attackClip ? 1 : one.figure.clip() == one.attackClip2 ? 2 : 0;
-        float at[3];
-        if (shadowStars_.bladeHunter().watch(one.id, one.figure, attack, keyOf(one.figure), one.yaw, look->scale,
-                                             aim ? target : nullptr, fade, seconds, at) &&
-            heard_.explosion >= 0)
-            emit(heard_.explosion, at[0], at[2]);
+    // Walking, a puff of dust at its feet one reference frame in ten (RenderKanturu1stMonsterVisual's
+    // rand_fps_check(10) BITMAP_SMOKE + 1: the Blade Hunter's and the Kentauros's, GM_Kanturu_1st.cpp:
+    // 1347-1354, 1415-1420), the sand Tarkan's walkers throw every frame.
+    const auto walkDust = [&] {
         if (slotOf(one.figure) != kMonsterWalkSlot || !ground_ || one.deadFor >= 0.0f) {
             one.walkSandOwed = 0.0f;
             return;
@@ -62,6 +56,24 @@ void Play::breedShows(Drawn& one, float fade, float seconds) {
             const float along[2] = {std::sin(one.yaw), std::cos(one.yaw)};
             breath_.walkSand(feet, along, 0.0f, kWalkSandAlpha);
         }
+    };
+    // A Blade Hunter's strike, its blasts' one sound, and its dust.
+    if (look->has("blade_hunter")) {
+        const int attack = one.figure.clip() == one.attackClip ? 1 : one.figure.clip() == one.attackClip2 ? 2 : 0;
+        float at[3];
+        if (shadowStars_.bladeHunter().watch(one.id, one.figure, attack, keyOf(one.figure), one.yaw, look->scale,
+                                             aim ? target : nullptr, fade, seconds, at) &&
+            heard_.explosion >= 0)
+            emit(heard_.explosion, at[0], at[2]);
+        walkDust();
+        return;
+    }
+    // A Kentauros's bow smoke, its arrows loosed at what it hunts, its smoke as it falls, and its dust.
+    if (look->has("kentauros")) {
+        const int attack = one.figure.clip() == one.attackClip ? 1 : one.figure.clip() == one.attackClip2 ? 2 : 0;
+        shadowStars_.kentauros().watch(one.id, one.figure, attack, keyOf(one.figure), one.yaw,
+                                       aim ? target : nullptr, one.deadFor >= 0.0f, fade, seconds);
+        walkDust();
         return;
     }
     // Hell Maine's lights and hand fire, Attack 1's storm (its stones are the meteor's) and
