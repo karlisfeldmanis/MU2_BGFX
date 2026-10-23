@@ -36,7 +36,7 @@
     "note": "What the orb teaches. Read once and gone -- the durability of one is what 'used once' means on this row.",
     "number": 47,
     "name": "Impale",
-    "tells": "A spear driven through one body, and ghosts of it after. Thrown with a spear.",
+    "tells": "A thrust driven through one body, and ghosts of it after.",
     "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter so the orb's tooltip and the skill's card cannot say different things about the same blow. MU never prints a line like this at all; it is ours, as it is on the elf's orbs.",
     "level_requirement": 56,
     "energy_requirement": 0,

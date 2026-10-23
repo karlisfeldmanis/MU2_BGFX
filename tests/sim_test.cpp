@@ -2903,9 +2903,9 @@ void testCastLock(const content::Tables& tables) {
     {
         const sim::SkillRow& impale = *sim::skillNumbered(sim::skill::kImpale);
         check(impale.kin == sim::Kin::DarkKnight && !impale.wizardry && impale.mana == 8 &&
-                  impale.families == sim::arms::kSpear && impale.reach == 1.0f &&
+                  impale.families == sim::arms::kEvery && impale.reach == 1.0f &&
                   impale.spread == sim::Spread::One && impale.needLevel == 56,
-              "Impale is the knight's, eight mana, a spear's alone, at his own reach");
+              "Impale is the knight's, eight mana, any weapon's, at his own reach");
         check(sim::skillIndexOf(sim::skill::kImpale) == 37,
               "and its row is the 38th, so no save's learned bit moves");
         // **The Alquamos, the elf's flying seventh** (the user, 2026-10-20): the last row, raised
@@ -3007,7 +3007,10 @@ void testCastLock(const content::Tables& tables) {
         const auto spear = hunt("Spear01");
         check(spear.first > 0, "with a spear he throws it");
         checkEqual(spear.second, 0, "and only from beside what he strikes");
-        checkEqual(hunt("Sword01").first, 0, "with a sword, never");
+        // And with a sword too: every knight orb is any weapon's (the user, 2026-10-23).
+        const auto sword = hunt("Sword01");
+        check(sword.first > 0, "with a sword as well");
+        checkEqual(sword.second, 0, "and from beside what he strikes there too");
     }
 
     // ---- Lightning: a channel -- a chain leaping body to body while his arm is up ------------
@@ -4801,23 +4804,21 @@ void testSkills(const content::Tables& tables) {
         checkEqual((long long)familyNamed("Bow01"), (long long)sim::arms::kBow,
                    "and a bow is the elf's own family");
         checkEqual((long long)sim::familyOf(nullptr), 0LL, "as is an empty hand");
-        // And the two that matter in play: 0.75's own carriers decide who may throw what.
-        check(!sim::skillNumbered(sim::skill::kFallingSlash)->suits(sim::arms::kSword1),
-              "an axe's Falling Slash cannot be thrown off a sword");
-        check(sim::skillNumbered(sim::skill::kFallingSlash)->suits(sim::arms::kMace1),
-              "but a mace throws it, as the Morning Star did");
-        check(!sim::skillNumbered(sim::skill::kSlash)->suits(sim::arms::kSword1),
-              "and Slash needs both hands on it");
-        // But a two-hander throws every orb (the user, 2026-10-22).
-        bool twoHandsThrowOrbs = true;
+        // Every knight orb is thrown off any weapon (the user, 2026-10-23), and none off a bow or
+        // an empty hand.
+        bool anyHandThrowsOrbs = true;
         for (int32_t skill : {sim::skill::kFallingSlash, sim::skill::kLunge, sim::skill::kUppercut,
-                              sim::skill::kCyclone, sim::skill::kSlash}) {
-            for (uint32_t family : {sim::arms::kSword2, sim::arms::kAxe2, sim::arms::kMace2,
+                              sim::skill::kCyclone, sim::skill::kSlash, sim::skill::kDeathStab,
+                              sim::skill::kImpale}) {
+            for (uint32_t family : {sim::arms::kSword1, sim::arms::kSword2, sim::arms::kAxe1,
+                                    sim::arms::kAxe2, sim::arms::kMace1, sim::arms::kMace2,
                                     sim::arms::kSpear}) {
-                twoHandsThrowOrbs &= sim::skillNumbered(skill)->suits(family);
+                anyHandThrowsOrbs &= sim::skillNumbered(skill)->suits(family);
             }
+            anyHandThrowsOrbs &= !sim::skillNumbered(skill)->suits(sim::arms::kBow) &&
+                                 !sim::skillNumbered(skill)->suits(sim::arms::kNone);
         }
-        check(twoHandsThrowOrbs, "every knight orb is thrown off any two-handed weapon");
+        check(anyHandThrowsOrbs, "every knight orb is thrown off any weapon");
         // And every quest that pays the knight a weapon pays him a two-hander beside it, no pick
         // (the user, 2026-10-22: "we dont need that choise"). Not the Phoenix's lone Dark Breaker,
         // nor the Magic Gladiator's own on the knight's row.

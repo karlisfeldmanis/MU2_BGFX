@@ -62,23 +62,27 @@ constexpr SkillRow kRows[kSkills] = {
     // **And every two-hander throws all five** (the user, 2026-10-22: "we need that chars can use
     // orbs on 2-hand weapons"), ours: a two-handed sword had Slash and the two everyone has, so
     // the orbs bought for the one-handed bar were dead the day he took up a Giant Sword.
+    // **And now every weapon throws every orb** (the user, 2026-10-23: "allow to use death stab to
+    // all weapon types. actualy lets remove all restrictons for weapons to use orbs for DK for
+    // balance"), ours: the carriers below are the record of what was lifted, every knight row past
+    // Defense is `arms::kEvery`, and Defense alone still asks a shield.
     //
     // Falling Slash: the Morning Star (a mace), the Double Axe and the Tomahawk (one-handed),
     // the Battle Axe and the Nikkea Axe (two-handed). Axes and maces, in either hand -- and the
     // icon MU painted for it is an axe, which is the same fact from the artist's side.
     {skill::kFallingSlash, "Falling Slash", 9, 1.0f, 2.5f, 1.0f / 900.0f, 80, false, Spread::One,
      0, 1.0f, "An overhead blow brought down on one body -- the heaviest single strike he has.",
-     60, "player_skill_sword1", true, arms::kAxes | arms::kMaces | arms::kTwoHand, 13},
+     60, "player_skill_sword1", true, arms::kEvery, 13},
     // Lunge: the Gladius, and nothing else in 0.75 carried it. A one-handed sword, which is what
     // MU's own description says in as many words -- "used with weapons like Gladius and Katana
     // to execute quick stabs".
     {skill::kLunge, "Lunge", 9, 1.0f, 2.0f, 1.0f / 1200.0f, 30, false, Spread::One, 0, 1.0f,
      "A thrust straight ahead: the cheapest key and the one that comes back soonest.", 61,
-     "player_skill_sword2", true, arms::kSword1 | arms::kTwoHand, 20},
+     "player_skill_sword2", true, arms::kEvery, 20},
     // Uppercut: the Sword of Assassin, the Falchion and the Serpent Sword. All one-handed.
     {skill::kUppercut, "Uppercut", 8, 1.0f, 2.2f, 1.0f / 1100.0f, 40, false, Spread::One, 0, 1.0f,
      "A rising blow under the guard, between the jab and the overhead in force and in wait.",
-     62, "player_skill_sword3", true, arms::kSword1 | arms::kTwoHand, 12},
+     62, "player_skill_sword3", true, arms::kEvery, 12},
     // Cyclone: the Blade (a one-handed sword), the Berdysh and the Great Scythe (polearms). The
     // odd pair is MU's own, and it reads as a spin with something long or something quick.
     // **Two tiles and not one** (the user, 2026-10-21: "Make Cyclone and Twisting Slash" wider,
@@ -95,7 +99,7 @@ constexpr SkillRow kRows[kSkills] = {
     {skill::kCyclone, "Cyclone", 9, 3.0f, 2.0f, 1.0f / 1400.0f, 40, false, Spread::Arc, 0, 1.0f,
      "A spin thrown into everything in front of him within three tiles, harder than Twisting "
      "Slash and back in two seconds, sooner the quicker he is.",
-     63, "player_skill_sword4", true, arms::kSword1 | arms::kTwoHand, 36},
+     63, "player_skill_sword4", true, arms::kEvery, 36},
     // Every row is built now. `built` used to mean "and the bar has a key for it", which is why
     // Slash sat here false with its arc written and tested; the list of 2026-09-23 holds every
     // learned skill and the four keys are the player's to fill from it, so the two questions
@@ -106,7 +110,7 @@ constexpr SkillRow kRows[kSkills] = {
     // the Giant Sword; the other two are elsewhere and the family is written for them anyway.
     {skill::kSlash, "Slash", 10, 1.0f, 1.8f, 1.0f / 1000.0f, 80, false, Spread::Arc, 0, 1.0f,
      "A wide sweep across the three tiles he faces, thrown with both hands on the haft.", 64,
-     "player_skill_sword4", true, arms::kTwoHand, 52},
+     "player_skill_sword4", true, arms::kEvery, 52},
 
     // ---- past 0.75, and appended so the six keep their indices -------------------------------
     //
@@ -179,7 +183,7 @@ constexpr SkillRow kRows[kSkills] = {
     // and its streaks, cones and the wound on what it strikes are game/fx/deathstab.h.
     {skill::kDeathStab, "Death Stab", 15, 1.0f, 2.8f, 1.0f / 800.0f, 110, false, Spread::One, 0,
      1.0f, "The point driven through one body at speed. Nothing he has hits one thing harder.",
-     71, "player_skill_sword2", true, arms::kSpear, 60},
+     71, "player_skill_sword2", true, arms::kEvery, 60},
 
     // ---- the wizard's, appended after the knight's nine ----------------------------------------
     //
@@ -861,8 +865,8 @@ constexpr SkillRow kRows[kSkills] = {
     // is 2.3 on 5.5. Learned at 56, twice its 28 as the ladder asks (the orb's level_from).
     {.number = skill::kImpale, .name = "Impale", .mana = 8, .reach = 1.0f, .force = 2.4f,
      .forcePerStrength = 1.0f / 900.0f, .coolTicks = 80, .spread = Spread::One,
-     .tells = "A spear driven through one body, and ghosts of it after. Thrown with a spear.",
-     .clip = 71, .sound = "riding_spear", .built = true, .families = arms::kSpear,
+     .tells = "A thrust driven through one body, and ghosts of it after.",
+     .clip = 71, .sound = "riding_spear", .built = true, .families = arms::kEvery,
      .needLevel = 56},
 
     // ---- Nova 40, the Soul Master's, past Impale -------------------------------------------------
