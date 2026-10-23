@@ -1486,17 +1486,30 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
                             sum += was[u];
                             ++count;
                         }
-                    if (count) y[v] = was[v] + (sum / float(count) - was[v]) * w;
+                    // Only ever down: raised, the bed buried the falls' mist set down on MU's
+                    // heights, and its soft fade came out in grey steps ("pixelated", 2026-10-23).
+                    if (count) y[v] = was[v] + std::min(sum / float(count) - was[v], 0.0f) * w;
                 }
         }
         auto yAt = [&](int c, int r) {
             return y[size_t(std::clamp(r, 0, side - 1)) * size_t(side) + size_t(std::clamp(c, 0, side - 1))];
         };
         const float span = 2.0f * metresPerTile_;
+        // Every corner next to one that moved takes its normal again too: a land corner beside
+        // the smoothed bed kept its old one and lit as a grey facet (2026-10-23).
+        std::vector<uint8_t> moved(water.size(), 0);
+        for (size_t v = 0; v < water.size(); ++v) moved[v] = water[v] > 0.25f;
         for (size_t i = 0; i < vertices.size(); ++i) {
             const int corner = quadCorner[i];
-            if (water[size_t(corner)] <= 0.25f) continue;
             const int c = corner % side, r = corner / side;
+            bool near = false;
+            for (int dr = -1; dr <= 1 && !near; ++dr)
+                for (int dc = -1; dc <= 1 && !near; ++dc) {
+                    const int rr = r + dr, cc = c + dc;
+                    if (rr >= 0 && cc >= 0 && rr < side && cc < side)
+                        near = moved[size_t(rr) * size_t(side) + size_t(cc)] != 0;
+                }
+            if (!near) continue;
             vertices[i].position[1] = y[size_t(corner)];
             const float dx = (yAt(c + 1, r) - yAt(c - 1, r)) / span;
             const float dz = -(yAt(c, r + 1) - yAt(c, r - 1)) / span;
