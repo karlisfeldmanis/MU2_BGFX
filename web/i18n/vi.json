@@ -26,7 +26,6 @@
  "Native on Windows 10 and 11, on Macs with Apple silicon, and on Linux. No emulators.": "Chạy native trên Windows 10 và 11, trên Mac chip Apple silicon và trên Linux. Không cần giả lập.",
  "Gameplay": "Gameplay",
  "Classic at heart": "Giữ chất cổ điển",
- "The worlds, monsters, items and drops you remember, from Lorencia to Icarus.": "Map, quái, item và đồ rơi bạn còn nhớ, từ Lorencia đến Icarus.",
  "Reworked spells": "Skill được làm lại",
  "Every class’s skills redone, with new effects, auras and animations, and rebalanced scaling.": "Skill của mọi class được làm lại, với hiệu ứng, aura và animation mới, scaling cân bằng lại.",
  "Raids": "Raid",
@@ -404,5 +403,17 @@
  "Global chat": "Chat toàn cầu",
  "Talk nearby or to your whole region, and Shift-click an item to link it so others can see it.": "Nói chuyện với người gần bạn hoặc cả khu vực, và Shift-click vào món đồ để gắn link cho người khác xem.",
  "Four regions": "Bốn khu vực",
- "Servers in North Europe, Central Europe, South America and East Asia, and your character can move between them from the Account page.": "Máy chủ ở Bắc Âu, Trung Âu, Nam Mỹ và Đông Á, và bạn có thể chuyển nhân vật giữa chúng từ trang Tài khoản."
+ "Servers in North Europe, Central Europe, South America and East Asia, and your character can move between them from the Account page.": "Máy chủ ở Bắc Âu, Trung Âu, Nam Mỹ và Đông Á, và bạn có thể chuyển nhân vật giữa chúng từ trang Tài khoản.",
+ "The worlds, monsters, items and drops you remember, from Lorencia to Aida.": "Map, quái, item và đồ rơi bạn còn nhớ, từ Lorencia đến Aida.",
+ "Aida": "Aida",
+ "The late-game forest past Icarus opens at level 300, with Bloody Orcs, Witch Queens and the Seed Master’s quests.": "Khu rừng end-game sau Icarus mở từ cấp 300, với Bloody Orc, Witch Queen và nhiệm vụ của Seed Master.",
+ "Powered rings and pendants": "Nhẫn và dây chuyền có sức mạnh",
+ "Jewellery rolls up to four powers, such as more experience, Zen or resistances, its colour telling how many.": "Trang sức ra tới bốn dòng sức mạnh, như thêm kinh nghiệm, Zen hay kháng, màu của nó cho biết có bao nhiêu dòng.",
+ "Pets": "Pet",
+ "The Angel and the Imp fight at your side, and the Horn of Uniria carries you.": "Angel và Imp chiến đấu bên bạn, còn Horn of Uniria chở bạn đi.",
+ "Guilds, parties and trade": "Guild, party và giao dịch",
+ "Found a guild under your own mark, hunt in a party of five, and trade face to face.": "Lập guild dưới huy hiệu của riêng bạn, săn quái trong party năm người và giao dịch trực tiếp.",
+ "Coming soon": "Sắp ra mắt",
+ "Kanturu": "Kanturu",
+ "The next world is on its way.": "Thế giới tiếp theo sắp đến."
 }

@@ -26,7 +26,6 @@
  "Native on Windows 10 and 11, on Macs with Apple silicon, and on Linux. No emulators.": "Natywnie na Windows 10 i 11, na Macach z Apple silicon i na Linuxie. Bez emulatorów.",
  "Gameplay": "Rozgrywka",
  "Classic at heart": "Klasyka w sercu",
- "The worlds, monsters, items and drops you remember, from Lorencia to Icarus.": "Światy, potwory, przedmioty i dropy, które pamiętasz, od Lorencii po Icarus.",
  "Reworked spells": "Przerobione zaklęcia",
  "Every class’s skills redone, with new effects, auras and animations, and rebalanced scaling.": "Skille każdej klasy zrobione na nowo, z nowymi efektami, aurami i animacjami oraz zbalansowanym skalowaniem.",
  "Raids": "Rajdy",
@@ -404,5 +403,17 @@
  "Global chat": "Czat globalny",
  "Talk nearby or to your whole region, and Shift-click an item to link it so others can see it.": "Pisz do tych obok albo do całego regionu, a Shift+klik na przedmiot wstawi link, żeby inni go zobaczyli.",
  "Four regions": "Cztery regiony",
- "Servers in North Europe, Central Europe, South America and East Asia, and your character can move between them from the Account page.": "Serwery w Europie Północnej, Europie Środkowej, Ameryce Południowej i Azji Wschodniej, a postać może przenosić się między nimi na stronie konta."
+ "Servers in North Europe, Central Europe, South America and East Asia, and your character can move between them from the Account page.": "Serwery w Europie Północnej, Europie Środkowej, Ameryce Południowej i Azji Wschodniej, a postać może przenosić się między nimi na stronie konta.",
+ "The worlds, monsters, items and drops you remember, from Lorencia to Aida.": "Światy, potwory, przedmioty i dropy, które pamiętasz, od Lorencii po Aidę.",
+ "Aida": "Aida",
+ "The late-game forest past Icarus opens at level 300, with Bloody Orcs, Witch Queens and the Seed Master’s quests.": "Leśny end-game za Icarusem otwiera się od 300 poziomu: Bloody Orki, Witch Queen i questy Seed Mastera.",
+ "Powered rings and pendants": "Pierścienie i amulety z mocami",
+ "Jewellery rolls up to four powers, such as more experience, Zen or resistances, its colour telling how many.": "Biżuteria losuje do czterech mocy, na przykład więcej expa, Zen albo odporności, a jej kolor mówi, ile ich ma.",
+ "Pets": "Pety",
+ "The Angel and the Imp fight at your side, and the Horn of Uniria carries you.": "Angel i Imp walczą u twego boku, a Horn of Uniria cię niesie.",
+ "Guilds, parties and trade": "Gildie, party i handel",
+ "Found a guild under your own mark, hunt in a party of five, and trade face to face.": "Załóż gildię pod własnym znakiem, poluj w pięcioosobowym party i handluj twarzą w twarz.",
+ "Coming soon": "Wkrótce",
+ "Kanturu": "Kanturu",
+ "The next world is on its way.": "Kolejny świat jest w drodze."
 }

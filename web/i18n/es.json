@@ -26,7 +26,6 @@
  "Native on Windows 10 and 11, on Macs with Apple silicon, and on Linux. No emulators.": "Nativo en Windows 10 y 11, en Mac con Apple silicon y en Linux. Sin emuladores.",
  "Gameplay": "Jugabilidad",
  "Classic at heart": "Clásico de corazón",
- "The worlds, monsters, items and drops you remember, from Lorencia to Icarus.": "Los mundos, monstruos, ítems y drops que recuerdas, de Lorencia a Icarus.",
  "Reworked spells": "Hechizos renovados",
  "Every class’s skills redone, with new effects, auras and animations, and rebalanced scaling.": "Las skills de cada clase rehechas, con nuevos efectos, auras y animaciones, y un escalado rebalanceado.",
  "Raids": "Raids",
@@ -404,5 +403,17 @@
  "Global chat": "Chat global",
  "Talk nearby or to your whole region, and Shift-click an item to link it so others can see it.": "Habla con los de cerca o con toda tu región, y haz Shift-clic en un item para enlazarlo y que otros lo vean.",
  "Four regions": "Cuatro regiones",
- "Servers in North Europe, Central Europe, South America and East Asia, and your character can move between them from the Account page.": "Servidores en Europa del Norte, Europa Central, Sudamérica y Asia Oriental, y tu personaje puede moverse entre ellos desde la página de la cuenta."
+ "Servers in North Europe, Central Europe, South America and East Asia, and your character can move between them from the Account page.": "Servidores en Europa del Norte, Europa Central, Sudamérica y Asia Oriental, y tu personaje puede moverse entre ellos desde la página de la cuenta.",
+ "The worlds, monsters, items and drops you remember, from Lorencia to Aida.": "Los mundos, monstruos, ítems y drops que recuerdas, de Lorencia a Aida.",
+ "Aida": "Aida",
+ "The late-game forest past Icarus opens at level 300, with Bloody Orcs, Witch Queens and the Seed Master’s quests.": "El bosque del juego final, más allá de Icarus, se abre en el nivel 300, con Bloody Orcs, Witch Queens y las misiones del Seed Master.",
+ "Powered rings and pendants": "Anillos y colgantes con poderes",
+ "Jewellery rolls up to four powers, such as more experience, Zen or resistances, its colour telling how many.": "La joyería sale con hasta cuatro poderes, como más experiencia, Zen o resistencias, y su color dice cuántos tiene.",
+ "Pets": "Mascotas",
+ "The Angel and the Imp fight at your side, and the Horn of Uniria carries you.": "El Angel y el Imp luchan a tu lado, y el Horn of Uniria te lleva.",
+ "Guilds, parties and trade": "Guilds, parties y comercio",
+ "Found a guild under your own mark, hunt in a party of five, and trade face to face.": "Funda una guild con tu propio emblema, caza en una party de cinco y comercia cara a cara.",
+ "Coming soon": "Próximamente",
+ "Kanturu": "Kanturu",
+ "The next world is on its way.": "El próximo mundo está en camino."
 }
