@@ -140,6 +140,8 @@ EFFECTS = {
     # cut to the picture's shape, 840x768. Read when its slide is shown, never warmed
     # (panel::Arts::warm skips the whatsnew_ keys): they are seen once an update.
     "whatsnew_welcome": "interface/whatsnew/whatsnew_welcome.jpg",
+    "whatsnew_talents": "interface/whatsnew/whatsnew_talents.jpg",
+    "whatsnew_elites": "interface/whatsnew/whatsnew_elites.jpg",
     "whatsnew_runes": "interface/whatsnew/whatsnew_runes.jpg",
     "whatsnew_raids": "interface/whatsnew/whatsnew_raids.jpg",
     "whatsnew_quests": "interface/whatsnew/whatsnew_quests.jpg",

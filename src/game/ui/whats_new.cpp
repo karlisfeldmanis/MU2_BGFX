@@ -28,16 +28,16 @@ constexpr float kHeadTall = 64.0f;
 constexpr float kBarTop = kHeadTall, kBarTall = 46.0f, kBarPad = 4.0f;
 constexpr float kBodyTop = kBarTop + kBarTall + 22.0f;
 constexpr float kLeadSize = 18.0f, kLeadStep = 27.0f;
-constexpr float kRowTall = 41.0f, kRowTight = 29.0f, kTopicTall = 35.0f, kWellPad = 2.0f, kRowInset = 16.0f;
+constexpr float kRowTall = 41.0f, kRowTight = 27.0f, kTopicTall = 35.0f, kWellPad = 2.0f, kRowInset = 16.0f;
 constexpr float kProgressTop = kTall - 80.0f;
 constexpr float kButtonTop = kProgressTop + 2.0f + 17.0f, kButtonTall = 44.0f;
 constexpr float kNextWide = 156.0f, kBackWide = 110.0f;
 constexpr float kSkipWide = 56.0f;
 constexpr float kTitleSize = 48.0f;
 
-// Targets: 0-5 the tabs, then Back, Next, Skip, then the welcome's six topics.
-constexpr int kTabs = 6;
-constexpr int kBack = 6, kNext = 7, kSkip = 8, kTopic = 9;
+// Targets: 0-7 the tabs, then Back, Next, Skip, then the welcome's eight topics.
+constexpr int kTabs = 8;
+constexpr int kBack = 8, kNext = 9, kSkip = 10, kTopic = 11;
 
 // The canvas's colours.
 constexpr uint32_t kGold = gfx::rgba(0.886f, 0.741f, 0.447f);
@@ -71,13 +71,30 @@ const std::vector<Slide>& deck() {
     static const std::vector<Slide> slides = {
         {"whatsnew_welcome", "Welcome back", "A New Era",
          "MU as you remember it, with new things to learn. Pick one, or walk through them in order.",
-         {{"Runes", "Sockets and their powers"},
+         {{"Talents", "A tree for every class"},
+          {"Elites", "Golden, tougher, richer"},
+          {"Runes", "Sockets and their powers"},
           {"Raids", "Ten together, anywhere"},
           {"Quests", "Voiced, with great rewards"},
           {"Market", "Trade without meeting"},
           {"Scaling", "Points that matter"},
           {"More", "Things MU never had"}},
          "Open this again any time from the game menu."},
+        {"whatsnew_talents", "New", "Talents",
+         "Earn a talent point every five levels and spend it on your class's own tree: build a "
+         "two-handed knight, a fire wizard or a pure support elf.",
+         {{"Six columns", "A build in each, passives only"},
+          {"Small talents", "Up to 10 points, a stat each"},
+          {"Majors", "One point, opened by 10 above"},
+          {"Reset", "Free, any time"}},
+         "Press A to open your talents."},
+        {"whatsnew_elites", "New", "Elite monsters",
+         "Bigger, golden Elites roam every field map. A pulsing gold dot on the minimap, and its "
+         "bell, tell you one is near.",
+         {{"Every field map", "Lorencia to Aida, one or two each"},
+          {"Tough", "Many times the life, hits harder"},
+          {"Unshaken", "Freezing and slowing don't hold"},
+          {"Spoils", "Always an excellent item, ten times the exp"}}},
         {"whatsnew_runes", "New", "Runes and sockets",
          "Gear can drop with +Socket, up to three. Drop a rune on the item to set it, and its power "
          "is yours. The greatest runes come from finishing quest lines.",
@@ -114,6 +131,7 @@ const std::vector<Slide>& deck() {
           {"Level and stats", "The Elf's summons"}}},
         {"whatsnew_more", "And", "& more", "And things MU never had before.",
          {{"Powered jewellery", "Rings and pendants with up to three powers"},
+          {"Jeweler", "Moss in Noria recuts, salvages, combines"},
           {"Loot beams", "Legendary and quest drops under a light"},
           {"Gear score", "One number for everything you wear"},
           {"Item compare", "Every card shows the change to what you wear"},
@@ -129,7 +147,7 @@ const std::vector<Slide>& deck() {
     return slides;
 }
 
-const char* const kTabNames[kTabs] = {"Runes", "Raids", "Quests", "Market", "Scaling", "More"};
+const char* const kTabNames[kTabs] = {"Talents", "Elites", "Runes", "Raids", "Quests", "Market", "Scaling", "More"};
 
 Box placed(float x, float y, const Box& b, float u) {
     return {std::round(x + b.x * u), std::round(y + b.y * u), std::round(b.w * u), std::round(b.h * u)};
@@ -444,7 +462,7 @@ void WhatsNew::rebuild() {
             }
             const uint32_t ink = chosen ? gfx::rgba(0.937f, 0.824f, 0.561f)
                                         : mix(gfx::rgba(0.604f, 0.569f, 0.518f), gfx::rgba(0.937f, 0.902f, 0.839f), lift(i));
-            word(canvas_, tab, 14.0f * u, ink, kTabNames[i]);
+            word(canvas_, tab, 13.0f * u, ink, kTabNames[i]);
         }
     }
 
@@ -518,7 +536,7 @@ void WhatsNew::rebuild() {
         const Box next = placed(x, y, nextBox(), u);
         const float size = 16.0f * u;
         const std::string counted =
-            slide_ == 0 ? std::string("5 new things and more") : std::to_string(slide_) + " of " + std::to_string(count - 1);
+            slide_ == 0 ? std::to_string(count - 2) + " new things and more" : std::to_string(slide_) + " of " + std::to_string(count - 1);
         controls::caps(canvas_, col, controls::middle(next.y, next.h, size), size, gfx::rgba(0.659f, 0.624f, 0.569f),
                        counted, 0.02f);
         if (slide_ > 0) {
