@@ -114,6 +114,13 @@ header.top { position: relative; overflow: hidden; }
 .hero { max-width: 900px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 88px 0 40px; }
 .live { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; color: var(--bone); font-weight: 500; font-size: 15px; line-height: 1; white-space: nowrap; }
 .live i { width: 7px; height: 7px; border-radius: 50%; background: var(--live); box-shadow: 0 0 8px var(--live); }
+/* The name centred on its capitals, not on the font's line box (Alegreya sits it high or low by
+   browser): trimmed to cap height, its middle is the dot's and the capsule's; the padding keeps
+   the capsule the height it was. */
+@supports (text-box: trim-both cap alphabetic) {
+  .live { padding-block: 10.5px; }
+  .live span { text-box: trim-both cap alphabetic; }
+}
 /* The front page's servers: every region in one capsule, its dot green while up (index.html, /api/status);
    the status itself is in each region's title. */
 .servers { display: inline-flex; flex-wrap: wrap; justify-content: center; max-width: 100%; padding: 2px; border-radius: 999px;
