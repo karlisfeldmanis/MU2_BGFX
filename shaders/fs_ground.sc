@@ -16,6 +16,7 @@ uniform vec4 u_groundRelief;  // xyz: each layer's relief  w: which layers are w
 uniform vec4 u_waterGlow;     // rgb: the water sheet's own light, the sheet's water_glow (lava)  w: water_variety
 uniform vec4 u_groundWet;     // x: how wet the ground is (ground_wet)  y: how much lies as puddles
                               // z: how far the land is kept from repeating (ground_variety)
+                              // w: 1 when water keeps to slopes (water_on_slopes), no cliff fade
 uniform vec4 u_groundSlots;   // xyz: each layer's slot in the weight map  w: 1 when it is bound
 uniform vec4 u_groundWeights; // xy: the weight map's size in texels  z: rows a band  w: pad rows
 uniform vec4 u_caustic;       // x: MU's caustic frame, 0-31  y: how bright  z: which layers, a bit each
@@ -292,7 +293,10 @@ void main()
 	{
 		// The face's own slope, off the position's derivatives: the mesh's normals are smoothed
 		// over the tile beside, and on a one-tile cliff they still read nearly level.
-		float level = smoothstep(0.45, 0.8, facetLevel(v_wpos));
+		// Off where the sheet says its water runs on slopes (water_on_slopes): measured per
+		// triangle, the fade switched the water off triangle by triangle down Kanturu's sloped
+		// pools, in straight lines (the user, 2026-10-23: "cuted lines on water").
+		float level = u_groundWet.w > 0.5 ? 1.0 : smoothstep(0.45, 0.8, facetLevel(v_wpos));
 		vec3 kept = w * (vec3_splat(1.0) - isWater * (1.0 - level));
 		float left = kept.x + kept.y + kept.z;
 		if (left > 0.05) w = kept / left;

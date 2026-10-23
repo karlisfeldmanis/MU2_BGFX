@@ -61,5 +61,6 @@
   "grass_density": 0.7,
   "water_flow": 0.2,
   "water_sheen": 0.5,
-  "sheen": 0.0
+  "sheen": 0.0,
+  "water_on_slopes": 1
 }

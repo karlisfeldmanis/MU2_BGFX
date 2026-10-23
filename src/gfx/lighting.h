@@ -124,6 +124,10 @@ struct Lighting {
     // clear colour, a dark green-grey haze, so its narrow trench reads as depth rather than a
     // hole cut in the screen (the user, 2026-10-22: "do here has be black void?", then "you decide").
     float abyssColour[3] = {0.0f, 0.0f, 0.0f};
+    // 1: the ground's water layers stay on steep faces (fs_ground's cliff fade off). The fade
+    // keeps the Lost Tower's lava off its walls; Kanturu's pools run down slopes under the
+    // falls, and the fade, measured per triangle, cut them in straight lines.
+    float waterOnSlopes = 0.0f;
     // Wet ground, where the sheet asks (ground_wet, 0 to 1): stone darkened as water darkens it
     // and given a low, glassy sheen for the lamps and the sun or moon to streak across; and
     // `groundPuddles`, 0 to 1, how much of it lies as standing water in patches a few metres

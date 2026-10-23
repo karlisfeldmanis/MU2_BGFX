@@ -91,6 +91,7 @@ void Lighting::apply(const core::Json& doc, const std::string& from) {
     doc.readInto("stone_sheen", &stoneSheen);
     doc.readVec3Into("clear_colour", clearColour);
     doc.readVec3Into("abyss_colour", abyssColour);
+    doc.readInto("water_on_slopes", &waterOnSlopes);
     doc.readInto("ground_wet", &groundWet);
     doc.readInto("ground_puddles", &groundPuddles);
     doc.readInto("water_variety", &waterVariety);
@@ -120,7 +121,7 @@ void Lighting::apply(const core::Json& doc, const std::string& from) {
         "ground_colour", "ambient_strength", "exposure", "dust_colour", "dust_density", "shadow_range", "shadow_fit_below", "shadow_bias_metres",
         "shadow_normal_bias", "sun_angle_degrees", "lamp_strength", "lamp_shadow", "glow_strength", "bloom_threshold", "bloom_knee", "bloom_strength", "flame_strength", "sharpen", "contrast", "tonemap", "saturation", "split", "tint_low", "tint_high", "vibrance", "green_pull", "ssao_radius", "ssao_strength", "contact_length", "contact_thickness", "contact_strength", "probe", "probe_view", "metal_gain", "probe_diffuse", "weathering", "sheen", "refine_strength", "refine_tint", "refine_stage_strength", "refine_star", "excellent_strength", "refine_glow",
         "grass", "grass_radius", "grass_fade", "grass_thin", "grass_mip_bias", "grass_density", "grass_height", "grass_aspect",
-        "grass_lean", "grass_rank", "grass_dry", "grass_vary", "water_flow", "water_sheen", "water_glow", "lava_light", "lava_rise", "stone_sheen", "clear_colour", "abyss_colour", "water_variety", "ground_variety", "ground_wet", "ground_puddles", "caustic", "sway", "grass_meadow", "grass_meadow_height", "grass_widen", "grass_root_colour", "grass_tip_colour", "grass_colour", "grass_cutout", "grass_painted", "grass_root_ao", "grass_through_colour", "grass_through", "grass_length_spread", "grass_rank_height", "grass_tufts",
+        "grass_lean", "grass_rank", "grass_dry", "grass_vary", "water_flow", "water_sheen", "water_glow", "lava_light", "lava_rise", "stone_sheen", "clear_colour", "abyss_colour", "water_on_slopes", "water_variety", "ground_variety", "ground_wet", "ground_puddles", "caustic", "sway", "grass_meadow", "grass_meadow_height", "grass_widen", "grass_root_colour", "grass_tip_colour", "grass_colour", "grass_cutout", "grass_painted", "grass_root_ao", "grass_through_colour", "grass_through", "grass_length_spread", "grass_rank_height", "grass_tufts",
         "grass_roughness", "grass_wind_strength", "grass_wind_degrees", "note"};
     for (const auto& [key, value] : doc.members) {
         bool known = false;

@@ -699,6 +699,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     groundWet_[0] = lighting.groundWet;
     groundWet_[1] = lighting.groundPuddles;
     groundWet_[2] = lighting.groundVariety;
+    groundWet_[3] = lighting.waterOnSlopes > 0.0f ? 1.0f : 0.0f;
     caustic_ = lighting.caustic;
     sway_ = lighting.sway;
     causticSheet_ = ground ? ground->caustic() : bgfx::TextureHandle{bgfx::kInvalidHandle};
