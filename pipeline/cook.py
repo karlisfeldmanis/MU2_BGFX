@@ -2374,7 +2374,8 @@ def cook_tables(world, out_dir):
     # Every weapon and shield with a combat row, in name order so the table is stable.
     # "gladiator" is the Magic Gladiator's bit, sim::Kin 3, ahead of his class (docs/worlds/mg-port.md):
     # an unknown name would be 0, which is every class.
-    kClass = {"wizard": 1, "elf": 2, "knight": 4, "gladiator": 8}
+    # "lord" the Dark Lord's, sim::Kin 4 (docs/plans/dark-lord.md).
+    kClass = {"wizard": 1, "elf": 2, "knight": 4, "gladiator": 8, "lord": 16}
     # Two-handedness, a bow and a crossbow off the stance the cook already reads from the item's
     # own row. The client's ladder tests MU's model constants; the stance is what MU2's pipeline
     # wrote them down as, and it is the same fact by another name.

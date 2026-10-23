@@ -34,9 +34,11 @@
       "wizard",
       "knight",
       "elf",
-      "gladiator"
+      "gladiator",
+      "lord"
     ],
-    "classes_from": "The last three ints of the call are 1, 1, 1 - wizard, knight, elf - which MuWeapons.cs states as the same flag set from the client's side. Sixty strength with no level requirement is the one gate on it. And the Magic Gladiator, as every wizard's or knight's weapon is his (Version095d Weapons.cs:300-301); his starting weapon (the user, 2026-10-07: 'mg will start with short sword')."
+    "classes_from": "The last three ints of the call are 1, 1, 1 - wizard, knight, elf - which MuWeapons.cs states as the same flag set from the client's side. Sixty strength with no level requirement is the one gate on it. And the Magic Gladiator, as every wizard's or knight's weapon is his (Version095d Weapons.cs:300-301); his starting weapon (the user, 2026-10-07: 'mg will start with short sword').",
+    "classes_lord": "MU lets the Dark Lord hold the Short Sword (OpenMU Weapons.cs, darkLordClassLevel 1), and it is his first weapon (sim::cradleWeapon; docs/plans/dark-lord.md)."
   },
   "stance": "sword",
   "stance_from": "MuWeapons.cs: WeaponStance.Sword, one-handed. Actions 4 and 17, the same family the Kris and the Small Axe use.",

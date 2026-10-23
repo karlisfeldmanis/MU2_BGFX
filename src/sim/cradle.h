@@ -60,10 +60,12 @@ const char* homeWorld(Kin kin);
 // phase 6): five characters an account, and a name of letters and digits, four to ten of them --
 // OpenMU's `^[a-zA-Z0-9]{3,10}$` with MuMain's "Type more than 4 letters" -- unique on the server
 // without regard to case. The Magic Gladiator only once a character of the account has reached
-// kGladiatorLevel: OpenMU's LevelRequirementByCreation (ClassMagicGladiator.cs:36).
+// kGladiatorLevel: OpenMU's LevelRequirementByCreation (ClassMagicGladiator.cs:36); the Dark Lord
+// once one has reached kLordLevel (ClassDarkLord.cs:36; the user's decision 2, MU's 250).
 constexpr int kRosterSlots = 5;
 constexpr int kNameFewest = 4, kNameMost = 10;
 constexpr int kGladiatorLevel = 220;
+constexpr int kLordLevel = 250;
 // Letters and digits only, kNameFewest to kNameMost of them.
 bool goodName(const std::string& name);
 

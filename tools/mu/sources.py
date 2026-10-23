@@ -172,7 +172,8 @@ REQUIRES = {"levelRequirement": "level", "strengthRequirement": "strength",
             "vitalityRequirement": "vitality", "leadershipRequirement": "leadership"}
 CLASSES = {"wizardClass": "wizard", "darkWizardClassLevel": "wizard", "knightClass": "knight",
            "darkKnightClassLevel": "knight", "elfClass": "elf", "elfClassLevel": "elf",
-           "magicGladiatorClassLevel": "gladiator", "magicGladiatorClass": "gladiator"}
+           "magicGladiatorClassLevel": "gladiator", "magicGladiatorClass": "gladiator",
+           "darkLordClassLevel": "lord", "darkLordClass": "lord"}
 # The groups the armour helpers do not take as an argument, and the footprint the 0.75
 # overloads without one give a piece (ArmorInitializerBase.cs).
 HELPER_GROUP = {"CreateShield": 6, "CreateGloves": 10, "CreateBoots": 11}

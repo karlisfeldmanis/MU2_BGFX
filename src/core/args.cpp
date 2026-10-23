@@ -326,7 +326,7 @@ void printUsage() {
     logf(
         "  --lobby                   the character screen first, then the world he is in\n"
         "  --lobby-pick N            pick pedestal N (0-4)\n"
-        "  --lobby-create K          the create window on class K: 0 wizard, 1 knight, 2 elf, 3 MG\n"
+        "  --lobby-create K          the create window on class K: 0 wizard, 1 knight, 2 elf, 3 MG, 4 DL\n"
         "  --lobby-name S            and S typed into its name\n"
         "  --lobby-delete            the deletion's question over the pick\n"
         "  --lobby-enter F           enter the pick on frame F (review)\n"

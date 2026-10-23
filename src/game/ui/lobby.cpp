@@ -232,6 +232,7 @@ Box Lobby::boxOf(int target) const {
         case kClass1:
         case kClass2:
         case kClass3:
+        case kClass4:
             return makeCell(w, h, 346.0f, 131.0f + float(target - kClass0) * 26.0f, 108.0f, 26.0f);
         // Inside the name bar (see the drawing), at the input's own height.
         case kMake: return makeCell(w, h, 344.0f, 322.0f, 52.0f, 28.0f);
@@ -265,10 +266,18 @@ bool Lobby::gladiatorOpen() const {
     return false;
 }
 
+bool Lobby::lordOpen() const {
+    for (const Seat& one : roster_) {
+        if (one.level >= kLordLevel) return true;
+    }
+    return false;
+}
+
 bool Lobby::enabled(int target) const {
     const int count = view_.roster ? int(view_.roster->size()) : 0;
     switch (target) {
         case kClass3: return gladiatorOpen();
+        case kClass4: return lordOpen();
         case kCreate: return count < kRosterSlots && !view_.offline;
         case kMenu: return true;
         case kEnter:
@@ -354,6 +363,11 @@ void Lobby::update(float seconds, float width, float height, const Pointer& poin
             result.refused = true;
             return;
         }
+        if (kClasses[classRow_] == sim::Kin::DarkLord && !lordOpen()) {
+            notice("A level 250 character is needed for a Dark Lord.", true);
+            result.refused = true;
+            return;
+        }
         creating_ = false;
         result.create = true;
         result.name = name;
@@ -435,7 +449,8 @@ void Lobby::update(float seconds, float width, float height, const Pointer& poin
             case kClass0:
             case kClass1:
             case kClass2:
-            case kClass3: classRow_ = fired - kClass0; break;
+            case kClass3:
+            case kClass4: classRow_ = fired - kClass0; break;
             case kMake: create(); break;
             case kCancel:
             case kShut: creating_ = false; break;
@@ -637,13 +652,16 @@ void Lobby::rebuild() {
 
         // The stat panel, black at 143, the labels at +22, +10 down and seventeen a line, the
         // values at +76 in orange.
-        const Box stats = cell(346.0f, 24.0f, 108.0f, 80.0f);
+        // The Dark Lord's Command a fifth line, the panel a line taller (it still ends above the
+        // class buttons at 131).
+        const bool commands = kClasses[classRow_] == sim::Kin::DarkLord;
+        const Box stats = cell(346.0f, 24.0f, 108.0f, commands ? 97.0f : 80.0f);
         tip::panel(canvas_, stats, 6.0f * k, strip, strip);
         const sim::HeroPoints points = sim::startingPoints(kClasses[classRow_]);
-        const char* names[4] = {"Strength", "Agility", "Vitality", "Energy"};
-        const int values[4] = {points.strength, points.agility, points.vitality, points.energy};
+        const char* names[5] = {"Strength", "Agility", "Vitality", "Energy", "Command"};
+        const int values[5] = {points.strength, points.agility, points.vitality, points.energy, points.command};
         const float px = 9.0f * m;
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < (commands ? 5 : 4); ++i) {
             const float baseline =
                 std::round(stats.y + (10.0f + float(i) * 17.0f) * m + face.ascent(px));
             sheet::printed(canvas_, stats.x + 14.0f * m, baseline, px, sheet::ink::kFigure,

@@ -131,14 +131,16 @@ bool account(Session& one, const net::Account& said) {
 bool create(Session& one, const net::Create& asked, std::mt19937_64& seeds,
             const std::vector<std::unique_ptr<Session>>& sessions) {
     const auto mine = g_store.list(one.account);
-    const sim::Kin kin = sim::Kin(std::min<int>(asked.kin, int(sim::Kin::MagicGladiator)));
-    bool gladiator = false;
+    const sim::Kin kin = sim::Kin(std::min<int>(asked.kin, int(sim::kLastKin)));
+    bool gladiator = false, lord = false;
     for (const server::Store::Listed& m : mine) {
         gladiator = gladiator || (!m.fresh && m.kept.hero.level >= sim::kGladiatorLevel);
+        lord = lord || (!m.fresh && m.kept.hero.level >= sim::kLordLevel);
     }
     net::Refused refused = net::Refused::None;
     if (!sim::goodName(asked.name)) refused = net::Refused::BadName;
     else if (kin == sim::Kin::MagicGladiator && !gladiator) refused = net::Refused::BadName;
+    else if (kin == sim::Kin::DarkLord && !lord) refused = net::Refused::BadName;
     // Taken by a character kept, or by one playing now: a bot's name is in no account's list.
     else if (g_store.named(asked.name) || nameInUse(asked.name, sessions, nullptr)) refused = net::Refused::Taken;
     const int slot = freeSlot(one.account);

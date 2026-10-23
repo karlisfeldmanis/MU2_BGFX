@@ -41,16 +41,20 @@ class Lobby {
 public:
     // The class buttons' order, which is MU's create window's (Screens.Trades), the Magic
     // Gladiator fourth as MU's CLASS_DARK, once a character on the account has reached
-    // kGladiatorLevel (the user, 2026-10-07: both the set and the gate; docs/worlds/mg-port.md).
-    static constexpr int kClassRows = 4;
+    // kGladiatorLevel (the user, 2026-10-07: both the set and the gate; docs/worlds/mg-port.md),
+    // and the Dark Lord fifth, MU's CLASS_DARK_LORD, once one has reached kLordLevel
+    // (docs/plans/dark-lord.md).
+    static constexpr int kClassRows = 5;
     // The level a character on the account must have reached before the Magic Gladiator may be
     // made: OpenMU's LevelRequirementByCreation (ClassMagicGladiator.cs:36). Under it his button
     // stands greyed, as CharMakeWin disables a class it does not offer (CharMakeWin.cpp:292-302).
     static constexpr int kGladiatorLevel = sim::kGladiatorLevel;
     bool gladiatorOpen() const;
+    static constexpr int kLordLevel = sim::kLordLevel;
+    bool lordOpen() const;
     static constexpr sim::Kin kClasses[kClassRows] = {sim::Kin::DarkWizard, sim::Kin::DarkKnight,
-                                                      sim::Kin::FairyElf,
-                                                      sim::Kin::MagicGladiator};
+                                                      sim::Kin::FairyElf, sim::Kin::MagicGladiator,
+                                                      sim::Kin::DarkLord};
 
     // What the scene behind the screen is showing this frame, handed in by the mode.
     struct View {
@@ -110,7 +114,7 @@ private:
     enum class Then : uint8_t { None, Create, Name };
     enum Target : int {
         kCreate = 0, kMenu, kEnter, kDelete,        // the bar
-        kClass0, kClass1, kClass2, kClass3, kMake, kCancel, kShut,  // the create window
+        kClass0, kClass1, kClass2, kClass3, kClass4, kMake, kCancel, kShut,  // the create window
         kBoxOk, kBoxCancel,                          // the box
         kTargets
     };
