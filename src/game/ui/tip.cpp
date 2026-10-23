@@ -639,6 +639,57 @@ std::vector<Span> spansOf(const gfx::Face& face, float size, const std::string& 
     return out;
 }
 
+// A labelled row's values, each broken to the room its label leaves it (`wide` is the row's whole
+// width). A value too long for it walked left over its own label: the Weapon row of a skill
+// thrown with four families, "2-hand swords, 2-hand axes, 2-hand maces, Spears" (the user,
+// 2026-10-23: "text outside the tooltip"). A list breaks after its commas, so each name stays
+// whole, and anything else at its spaces; a chip is never broken. One line a value is the old
+// layout, so a row that fits is drawn as it was.
+std::vector<std::vector<std::string>> valueLines(const gfx::Face& face, float size, float deltaSize,
+                                                 float gap, const Row& row, float wide) {
+    const float labelW = row.label.empty() ? 0.0f : face.measure(size, row.label) + gap;
+    std::vector<std::vector<std::string>> out;
+    for (const Value& value : row.values) {
+        float room = wide - labelW;
+        if (!value.delta.empty()) room -= face.measure(deltaSize, value.delta) + gap * 0.5f;
+        if (value.chip || face.measure(size, value.text) <= room) {
+            out.push_back({value.text});
+            continue;
+        }
+        const bool list = value.text.find(", ") != std::string::npos;
+        const std::string cut = list ? ", " : " ";
+        std::vector<std::string> words;
+        for (size_t at = 0;;) {
+            const size_t next = value.text.find(cut, at);
+            if (next == std::string::npos) {
+                words.push_back(value.text.substr(at));
+                break;
+            }
+            words.push_back(value.text.substr(at, next - at) + (list ? "," : ""));
+            at = next + cut.size();
+        }
+        std::vector<std::string> lines;
+        std::string line;
+        for (const std::string& word : words) {
+            const std::string tried = line.empty() ? word : line + " " + word;
+            if (!line.empty() && face.measure(size, tried) > room) {
+                lines.push_back(line);
+                line = word;
+            } else {
+                line = tried;
+            }
+        }
+        if (!line.empty()) lines.push_back(line);
+        out.push_back(lines);
+    }
+    return out;
+}
+size_t lineCount(const std::vector<std::vector<std::string>>& lines) {
+    size_t n = 0;
+    for (const auto& value : lines) n += value.size();
+    return std::max<size_t>(1, n);
+}
+
 }  // namespace
 
 void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float screenWidth,
@@ -735,7 +786,9 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                                           (within ? inner : 0.0f));
                 tall += float(prose[s][r].size()) * rowTall;
             } else {
-                tall += std::max<size_t>(1, row.values.size()) * rowTall;
+                tall += float(lineCount(valueLines(face, rowSize, footSize, pad * 0.8f, row,
+                                                   textWide - (section.framed ? pad : 0.0f)))) *
+                        rowTall;
             }
         }
         if (section.framed) tall += railPad;
@@ -996,10 +1049,14 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                 say(type, canvas, left, middle(face, rowPen, rowTall, rowSize), rowSize,
                     fade(row.labelToned ? colourOf(row.labelTone) : kLabel), row.label, drop);
             }
+            const std::vector<std::vector<std::string>> lines =
+                valueLines(face, rowSize, footSize, pad * 0.8f, row, right - left);
             float chipPen = right;
             for (size_t v = row.values.size(); v-- > 0;) {
                 const Value& value = row.values[v];
-                const float baseline = middle(face, rowPen + rowTall * float(value.chip ? 0 : v),
+                size_t first = 0;
+                for (size_t k = 0; k < v; ++k) first += lines[k].size();
+                const float baseline = middle(face, rowPen + rowTall * float(value.chip ? 0 : first),
                                              rowTall, rowSize);
                 if (value.chip) {
                     // Chips sit side by side on one row, filled from the right.
@@ -1023,10 +1080,14 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                             value.delta, drop);
                     end -= dw + pad * 0.4f;
                 }
-                const float w = face.measure(rowSize, value.text);
-                say(type, canvas, end - w, baseline, rowSize, fade(colourOf(value.tone)), value.text, drop);
+                for (size_t l = 0; l < lines[v].size(); ++l) {
+                    const std::string& text = lines[v][l];
+                    const float w = face.measure(rowSize, text);
+                    say(type, canvas, end - w, baseline + rowTall * float(l), rowSize,
+                        fade(colourOf(value.tone)), text, drop);
+                }
             }
-            rowPen += rowTall * float(std::max<size_t>(1, row.values.size()));
+            rowPen += rowTall * float(lineCount(lines));
         }
         pen += sectionTall[s];
     }
