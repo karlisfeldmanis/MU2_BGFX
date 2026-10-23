@@ -59,8 +59,8 @@ The routes:
          every account with a character, its characters as mu2_server last listed them (a minute
          apart), and its Plays (launcher starts) of the last PLAYS_DAYS days.
     GET  /api/character?account=N&name=X   Bearer T of an admin -> 200 {name, class, level, world, saved,
-         second, experience, zen, points, worn, bag} | 404: one character's stats and gear, as mu2_server
-         last listed it (a minute apart).
+         second, experience, zen, points, worn, bag, played} | 404: one character's stats and gear, as mu2_server
+         last listed it (a minute apart), and `played`, his seconds on (Store.played).
     POST /internal/online   (127.0.0.1 only) {region?, players: [{account, name, class, level, world, copy, x, y, bot, ms}],
                              characters?: [{account, name, class, level, world, saved, fresh}]}
          a region's mu2_server's list of who is on, every 5 s (server/src/signin.cpp tellOnline); kept in
@@ -331,6 +331,14 @@ CREATE TABLE IF NOT EXISTS games (
     PRIMARY KEY (account_id, name, since)
 );
 CREATE INDEX IF NOT EXISTS games_until ON games(until);
+-- Each character's play before the oldest kept in `games`: its plays' seconds, added in as they are
+-- swept (told_online), so a character's total (Store.played) outlives RECENT_DAYS.
+CREATE TABLE IF NOT EXISTS played (
+    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    name       TEXT NOT NULL,
+    seconds    INTEGER NOT NULL,
+    PRIMARY KEY (account_id, name)
+) WITHOUT ROWID;
 CREATE TABLE IF NOT EXISTS tickets (
     ticket      TEXT PRIMARY KEY,
     account_id  INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
@@ -902,7 +910,10 @@ class Store:
                 db.execute("INSERT INTO days VALUES (?, ?, ?) ON CONFLICT DO UPDATE SET peak = excluded.peak, "
                            "peak_at = excluded.peak_at WHERE excluded.peak > days.peak", (day, people, now))
                 if now - self.games_swept > 3600:
-                    db.execute("DELETE FROM games WHERE until < ?", (now - RECENT_DAYS * 86400,))
+                    old = now - RECENT_DAYS * 86400
+                    db.execute("INSERT INTO played SELECT account_id, name, sum(until - since) FROM games WHERE until < ? "
+                               "GROUP BY account_id, name ON CONFLICT DO UPDATE SET seconds = seconds + excluded.seconds", (old,))
+                    db.execute("DELETE FROM games WHERE until < ?", (old,))
                     self.games_swept = now
                 db.execute("COMMIT")
             except (sqlite3.Error, ValueError, TypeError):
@@ -918,6 +929,13 @@ class Store:
         with self.online_lock:
             self.characters[region] = characters
         self.set_setting(f"roster:{region}", json.dumps([{k: c.get(k) for k in self.ROSTER_KEEPS} for c in characters]))
+
+    def played(self, account: int, name: str) -> int:
+        """A character's seconds on any server, every play of his the website has seen (since 2026-10-16)."""
+        db = self.db()
+        swept = db.execute("SELECT seconds FROM played WHERE account_id = ? AND name = ?", (account, name)).fetchone()
+        kept = db.execute("SELECT sum(until - since) FROM games WHERE account_id = ? AND name = ?", (account, name)).fetchone()
+        return (swept[0] if swept else 0) + (kept[0] or 0)
 
     def load_rosters(self):
         """The regions' last lists, as kept, until each region lists them again."""
@@ -1135,7 +1153,8 @@ class Store:
         players = []
         for p in told["players"]:
             email, name = accounts.get(p.get("account"), ("", ""))
-            players.append(p | {"email": email, "account_name": name})
+            players.append(p | {"email": email, "account_name": name,
+                                "played": self.played(p["account"], str(p.get("name"))) if p.get("account") else 0})
         players.sort(key=lambda p: (p.get("bot", False), str(p.get("world")), -int(p.get("level") or 0)))
         on = {(p.get("account"), p.get("name"), p.get("since")) for p in told["players"]}
         recent = [{"account": account, "email": email, "account_name": name or "", "name": who, "class": kind,
@@ -2179,6 +2198,8 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError:
                 account = 0
             found = self.store.character(account, asked.get("name", [""])[0])
+            if found:
+                found = found | {"played": self.store.played(account, str(found.get("name")))}
             return self.reply(200, found) if found else self.reply(404, {"error": "not listed"})
         if url.path == "/api/comments":
             post = parse_qs(url.query).get("post", [""])[0]

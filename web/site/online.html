@@ -37,6 +37,8 @@
 .who th { text-align: left; font: 700 15px/1.2 'Alegreya Sans SC', sans-serif; color: var(--quiet); padding: 8px 10px; box-shadow: inset 0 -1px 0 var(--edge); }
 .who td { padding: 10px; box-shadow: inset 0 -1px 0 var(--line); vertical-align: top; }
 .who td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.who tr.region td { padding: 18px 10px 6px; font: 700 15px/1.2 'Alegreya Sans SC', sans-serif; color: var(--bone-hi); box-shadow: inset 0 -1px 0 var(--edge); }
+.who tr.region .n { margin-left: 10px; font: 400 14px 'Alegreya Sans', sans-serif; color: var(--quiet); }
 .who .sub { display: block; font-size: 14px; color: var(--quiet); }
 .who .open { background: none; border: 0; padding: 0; font: inherit; color: var(--bone-hi); text-decoration: underline;
   text-decoration-color: rgba(201,162,126,.45); text-underline-offset: 3px; cursor: pointer; text-align: left; }
@@ -121,7 +123,7 @@
 <div class="graph" id="g-players"><div class="head"><h3>Players a day</h3><span class="key"><span><i style="background: var(--amber)"></i>Played that day</span><span><i class="stroke" style="background: var(--blue)"></i>Most on at once</span></span></div><div class="big" id="g-players-big"></div><svg aria-hidden="true"></svg></div>
 </div>
 <table class="who">
-<thead><tr><th>Character</th><th>Class</th><th>Level</th><th>Map</th><th>Region</th><th>Platform</th><th>Graphics</th><th>Ping</th><th>Online for</th></tr></thead>
+<thead><tr><th>Character</th><th>Class</th><th>Level</th><th>Map</th><th>Platform</th><th>Graphics</th><th>Ping</th><th>Online for</th><th>Played</th></tr></thead>
 <tbody id="rows"></tbody>
 </table>
 <p class="center muted" style="font-size: 14px" id="told"></p>
@@ -234,7 +236,7 @@
     catch (e) { $('c-wait').textContent = 'Can’t reach the website.'; return; }
     const c = got.said;
     if (got.status !== 200) { $('c-wait').textContent = 'The game server has not listed this character yet. It lists them once a minute.'; return; }
-    $('c-sub').textContent = c.class + ' · level ' + c.level + ' · ' + map(c.world) + (c.saved ? ' · saved ' + when(c.saved) : '');
+    $('c-sub').textContent = c.class + ' · level ' + c.level + ' · ' + map(c.world) + (c.played ? ' · played ' + span(c.played) : '') + (c.saved ? ' · saved ' + when(c.saved) : '');
     if (c.fresh || !c.points) { $('c-wait').textContent = c.fresh ? 'Made, never played: nothing to show yet.' : 'Its saved data could not be read.'; return; }
     const stats = $('c-stats');
     stats.replaceChildren();
@@ -404,7 +406,21 @@
       tr.appendChild(td);
       rows.appendChild(tr);
     }
-    for (const p of people) {
+    // A heading row a region, in REGIONS' order (the realm tiles'), its people under it.
+    const order = (o.regions || []).map((r) => r.name);
+    const at = (p) => { const i = order.indexOf(p.region || 'North Europe'); return i < 0 ? order.length : i; };
+    let region = null;
+    for (const p of people.slice().sort((a, b) => at(a) - at(b))) {
+      if ((p.region || 'North Europe') !== region) {
+        region = p.region || 'North Europe';
+        const n = people.filter((q) => (q.region || 'North Europe') === region).length;
+        const head = el('tr', 'region');
+        const td = el('td', '', region);
+        td.colSpan = 9;
+        td.appendChild(el('span', 'n', n + (n === 1 ? ' player' : ' players')));
+        head.appendChild(td);
+        rows.appendChild(head);
+      }
       const tr = el('tr');
       tr.appendChild(nameCell(p.account, p.name, p.account_name || p.email || ''));
       tr.appendChild(cell(p.class || '—', '', 'Class'));
@@ -412,7 +428,6 @@
       // Blood Castle and Devil Square by their number (mu2_server's World::castle and ::square).
       const which = p.castle > 0 ? 'Blood Castle ' + p.castle : p.square > 0 ? 'Devil Square ' + p.square : '';
       tr.appendChild(cell(which || map(p.world) + (p.copy > 1 ? ' ' + p.copy : ''), '', 'Map'));
-      tr.appendChild(cell(p.region || 'North Europe', '', 'Region'));
       // The machine its launcher last reported (web/server.py online_report `machines`): the system
       // with the renderer under it, and the graphics preset the launcher picked for the card.
       const m = o.machines[String(p.account)] || {};
@@ -423,6 +438,8 @@
       // The line's round trip as the server's kernel smooths it (net::Socket::rttMs).
       tr.appendChild(cell(p.ms >= 0 ? p.ms + ' ms' : '—', '', 'Ping', p.ms >= 0 ? 'num' : 'num muted'));
       tr.appendChild(cell(since(p.since), '', 'Online for'));
+      // Every play of his the website has seen (web/server.py Store.played).
+      tr.appendChild(cell(span(p.played), '', 'Played'));
       rows.appendChild(tr);
     }
     tally(o);
