@@ -75,6 +75,26 @@ constexpr float kTagGuild = 11.0f;
 // green").
 constexpr float kTagGreen[4] = {0.18f, 1.0f, 0.18f, 1.0f};
 constexpr float kTagDead[4] = {0.62f, 0.62f, 0.62f, 1.0f};
+// A reborn's banner over his name (the user, 2026-10-23: "rebirth tag has to be above char name
+// with some nice design banner"): a swallow-tailed ribbon, its tails folded behind it and hung a
+// little lower, a deep wine body between two gold rules, and REBIRTH and his numeral in Cinzel
+// gold -- the rite's gold (game/ui/reborn.cpp), in tip::unit() pixels.
+constexpr float kBannerType = 11.0f;
+constexpr float kBannerTracking = 0.16f;  // of the type's size
+constexpr float kBannerTall = 18.0f;
+constexpr float kBannerPad = 11.0f;       // the type's ends to the body's
+constexpr float kBannerTail = 11.0f;      // how far each tail reaches past the body
+constexpr float kBannerNotch = 5.0f;      // the swallow-tail's cut into it
+constexpr float kBannerDrop = 4.0f;       // the tails hung below the body
+constexpr float kBannerRule = 2.0f;       // the gold rules inside the body's edges
+constexpr float kBannerOver = 3.0f;       // the body's foot over the name's cap
+constexpr uint32_t kBannerTop = gfx::rgba(0.42f, 0.08f, 0.07f, 0.94f);
+constexpr uint32_t kBannerFoot = gfx::rgba(0.20f, 0.03f, 0.03f, 0.94f);
+constexpr uint32_t kBannerTailTop = gfx::rgba(0.30f, 0.05f, 0.05f, 0.94f);
+constexpr uint32_t kBannerTailFoot = gfx::rgba(0.14f, 0.02f, 0.02f, 0.94f);
+constexpr uint32_t kBannerFold = gfx::rgba(0.05f, 0.01f, 0.01f, 0.96f);
+constexpr float kBannerGold[4] = {0.93f, 0.76f, 0.42f, 1.0f};
+constexpr float kBannerInk[4] = {1.0f, 0.90f, 0.62f, 1.0f};
 // How far off another player is named, in tiles, and the last stretch of it faded out over.
 constexpr float kNameRange = 22.0f;
 constexpr float kNameFade = 4.0f;
@@ -218,6 +238,64 @@ void type(gfx::Canvas& canvas, float x, float baseline, float size, float alpha,
 uint32_t faded(uint32_t abgr, float alpha) {
     const float a = float(abgr >> 24) / 255.0f;
     return (abgr & 0x00FFFFFFu) | (gfx::rgbaByte(a * alpha) << 24);
+}
+
+// A reborn's banner, centred on `x`, its body's foot on `foot` (see kBannerType). The tails first,
+// each a swallow-tail in two convex halves with its inner end tucked under the body and a dark
+// fold where it turns behind; the body graded top to foot; the two gold rules faded in at their
+// ends; a gold diamond either side of the words.
+void banner(gfx::Canvas& canvas, float x, float foot, float u, float alpha, int rebirths) {
+    const gfx::Face* face = panel::titleFace();
+    const bgfx::TextureHandle texture = panel::titleTexture();
+    if (face == nullptr || !bgfx::isValid(texture) || alpha <= 0.0f) return;
+    const std::string words = "REBIRTH " + net::romanNumeral(rebirths);
+    const float size = std::round(kBannerType * u), tracking = size * kBannerTracking;
+    const float wordsWide = face->measure(size, words) + tracking * float(words.size() - 1);
+    const float w = std::round(wordsWide + 2.0f * kBannerPad * u), h = std::round(kBannerTall * u);
+    const float x0 = std::round(x - w * 0.5f), x1 = x0 + w, y1 = std::round(foot), y0 = y1 - h;
+    const float mid = (y0 + y1) * 0.5f;
+    const float drop = std::round(kBannerDrop * u), tail = std::round(kBannerTail * u),
+                notch = std::round(kBannerNotch * u);
+    const uint32_t tailTop = faded(kBannerTailTop, alpha), tailFoot = faded(kBannerTailFoot, alpha);
+    const uint32_t fold = faded(kBannerFold, alpha);
+    for (const float side : {-1.0f, 1.0f}) {
+        const float edge = side < 0.0f ? x0 : x1;           // the body's end
+        const float tucked = edge - side * drop;             // the tail's inner end, under it
+        const float out = edge + side * tail, cut = out - side * notch;
+        const float upper[8] = {out, y0 + drop, tucked, y0 + drop, tucked, mid + drop, cut, mid + drop};
+        const float lower[8] = {cut, mid + drop, tucked, mid + drop, tucked, y1 + drop, out, y1 + drop};
+        const uint32_t upperInk[4] = {tailTop, tailTop, tailFoot, tailFoot};
+        const uint32_t lowerInk[4] = {tailFoot, tailFoot, tailFoot, tailFoot};
+        canvas.polygon(upper, upperInk, 4);
+        canvas.polygon(lower, lowerInk, 4);
+        const float turn[6] = {edge, y1, tucked, y1, tucked, y1 + drop};
+        const uint32_t turnInk[3] = {fold, fold, fold};
+        canvas.polygon(turn, turnInk, 3);
+    }
+    const uint32_t top = faded(kBannerTop, alpha), bottom = faded(kBannerFoot, alpha);
+    canvas.shade({x0, y0, w, h}, top, top, bottom, bottom);
+    // The rules, a pixel or so thick, inside the top and foot, faded in over their ends.
+    const float rule = std::max(1.0f, std::round(u)), inset = std::round(kBannerRule * u);
+    const float ease = std::round(10.0f * u), left = x0 + inset, right = x1 - inset;
+    const uint32_t gold = colour(kBannerGold, alpha), clear = colour(kBannerGold, 0.0f);
+    for (const float ruleY : {y0 + inset, y1 - inset - rule}) {
+        canvas.shade({left, ruleY, ease, rule}, clear, gold, gold, clear);
+        canvas.rect({left + ease, ruleY, right - left - 2.0f * ease, rule}, gold);
+        canvas.shade({right - ease, ruleY, ease, rule}, gold, clear, clear, gold);
+    }
+    // The diamonds, halfway between the words and the body's ends.
+    const float wordsLeft = std::round(x - wordsWide * 0.5f);
+    const float gem = std::max(2.0f, std::round(2.5f * u));
+    for (const float cx : {x0 + (wordsLeft - x0) * 0.5f, x1 - (wordsLeft - x0) * 0.5f}) {
+        const float diamond[8] = {cx, mid - gem, cx + gem, mid, cx, mid + gem, cx - gem, mid};
+        const uint32_t diamondInk[4] = {gold, gold, gold, gold};
+        canvas.polygon(diamond, diamondInk, 4);
+    }
+    // The words on the body's middle: Cinzel's capitals stand about 0.7 of its size.
+    const float baseline = std::round(mid + size * 0.35f);
+    canvas.lettered(*face, texture, wordsLeft, baseline + 1.0f, size, tracking, gfx::rgba(0, 0, 0, 0.7f * alpha),
+                    words);
+    canvas.lettered(*face, texture, wordsLeft, baseline, size, tracking, colour(kBannerInk, alpha), words);
 }
 
 }  // namespace
@@ -426,6 +504,7 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
                 tag.guild = guild->name;
                 tag.mark = guild->mark;
             }
+            tag.rebirths = one.rebirths;
             near.push_back({d, std::move(tag)});
         }
         std::sort(near.begin(), near.end(), [](const Far& a, const Far& b) { return a.d > b.d; });
@@ -517,6 +596,10 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
             if (name) {
                 outlined(name, nameTexture, t.x - name->measure(nameSize, t.name) * 0.5f,
                          nameBaseline, nameSize, ink, t.alpha, t.name);
+                if (t.rebirths > 0) {
+                    banner(canvas_, t.x, nameBaseline - name->ascent(nameSize) - std::round(kBannerOver * u), u,
+                           t.alpha * (t.dead ? 0.6f : 1.0f), t.rebirths);
+                }
             }
             // The guild's line: its mark and its name (the user's pick A, 2026-10-13); a bot in no
             // guild says `<Bot>`.
