@@ -735,6 +735,7 @@ add_library(mu_game STATIC
   src/game/fx/deathstab.cpp
   src/game/fx/impale.cpp
   src/game/fx/force.cpp
+  src/game/fx/fire_burst.cpp
   src/game/fx/firebreath.cpp
   src/game/fx/bolt.cpp
   src/game/sound.cpp

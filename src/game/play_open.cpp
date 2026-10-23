@@ -561,6 +561,7 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
     // returned the placed one and `play` refuses a placed event in silence. See useItem.
     heard_.orb = sound_.load("player_learn_skill", false);
     heard_.darkSpear = sound_.load("dark_spear", true);
+    heard_.fireBurstBoom = sound_.load("fire_burst_boom", true);
     heard_.click = sound_.load("window_click", false);
     heard_.refused = sound_.load("window_refused", false);
     heard_.opened = sound_.load("window_open", false);

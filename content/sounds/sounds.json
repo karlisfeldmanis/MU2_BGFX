@@ -2856,6 +2856,18 @@
         "sDarkSpear.wav"
       ],
       "from": "SOUND_ATTACK_SPEAR, Data\\Sound\\sDarkSpear.wav (ZzzOpenData.cpp:4868). Force let go, with its waves and piercing (ZzzCharacter.cpp:5057-5063); cued by game/fx/force.h."
+    },
+    "fire_burst": {
+      "files": [
+        "eFirebust.wav"
+      ],
+      "from": "SOUND_ATTACK_FIRE_BUST, Data\\Sound\\eFirebust.wav (ZzzOpenData.cpp:4869). Fire Burst cast, on the echo that starts his strike (WSclient.cpp:4277); the skill row's own sound (sim/skills.cpp)."
+    },
+    "fire_burst_boom": {
+      "files": [
+        "eFirebustBoom.wav"
+      ],
+      "from": "SOUND_ATTACK_FIRE_BUST_EXP, Data\\Sound\\eFirebustBoom.wav (ZzzOpenData.cpp:4870). Asked every frame of every Fire Burst head (MoveHandlers.cpp:5642), but a playing buffer ignores Play, so one boom a cast from the heads' first frame; cued by game/fx/fire_burst.h at the let-go."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

@@ -1528,6 +1528,8 @@ void Play::update(double seconds) {
                         // Its burst is drawn above (fx/nova.h); it throws no bolt.
                     } else if (happening.a == sim::skill::kForce) {
                         // Nor Force: its piercing, waves and streaks stand at him (fx/force.h).
+                    } else if (happening.a == sim::skill::kFireBurst) {
+                        // Nor Fire Burst: its heads fly from the let-go (fx/fire_burst.h).
                     } else {
                         bolt_.cast(from, to, happening.whom, atHand);
                     }
@@ -1887,6 +1889,10 @@ void Play::update(double seconds) {
                         // Force's piercing, waves and streaks (fx/force.h).
                         if (cast && happening.a == sim::skill::kForce) {
                             force_.begin(happening.who, happening.whom, swinger->swinging);
+                        }
+                        // Fire Burst's heads, trail, fire and flash (fx/fire_burst.h).
+                        if (cast && happening.a == sim::skill::kFireBurst) {
+                            fireBurst_.begin(happening.who, happening.whom, swinger->swinging);
                         }
 
                         // What this swing was thrown with, kept until the blow settles -- for a
@@ -2880,6 +2886,13 @@ void Play::update(double seconds) {
         const Drawn* drawn = drawnOf(id);
         if (heard_.darkSpear >= 0 && drawn && drawn->placed) {
             emit(heard_.darkSpear, drawn->crown[0], drawn->crown[2], id);
+        }
+    });
+    // Fire Burst's, and eFirebustBoom as it is let go (fx/fire_burst.h).
+    fireBurst_.update(float(seconds), bodyAt, [&](uint32_t id) {
+        const Drawn* drawn = drawnOf(id);
+        if (heard_.fireBurstBoom >= 0 && drawn && drawn->placed) {
+            emit(heard_.fireBurstBoom, drawn->crown[0], drawn->crown[2], id);
         }
     });
     // The fire on him while he calls a Meteorite down: while its clip is on him, not while the

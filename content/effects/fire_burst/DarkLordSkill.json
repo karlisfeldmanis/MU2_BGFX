@@ -1,0 +1,16 @@
+{
+  "item": "DarkLordSkill",
+  "mu_name_from": "Data/Skill/DarkLordSkill.bmd, MODEL_DARKLORD_SKILL (ZzzOpenData.cpp:4320), made twice by Fire Burst as it is let go (ZzzCharacter.cpp:5083-5085).",
+  "kind": "skill",
+  "why_this_one": "Fire Burst's flash: two at sub-types 0 and 1, angled (45, +45, 0) and (45, -45, 0), additive (1, 0.6, 0.3), ten frames, Scale 0.2 grown by a velocity of 0.1 growing 0.02 a frame, BlendMeshLight / 1.8 a frame under seven left -- Main 1.03.35's move (ZzzEffect.cpp:14791-14799); MuMain's Move_MODEL_DARKLORD_SKILL is empty. game/fx/fire_burst.h turns it to his facing and keeps it ahead of him.",
+  "mesh": "DarkLordSkill.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/DarkLordSkill.bmd: one quad, 206 x 114 units, flat in MU's XY.",
+  "parts": [
+    {
+      "group": "KingS_R",
+      "sheet": "KingS_R.png",
+      "blend": "additive",
+      "note": "Data/Skill/KingS_R.OZJ, 128 x 128; the _R makes MU draw it bright and additive (TextureScript.cpp:16-45)."
+    }
+  ]
+}

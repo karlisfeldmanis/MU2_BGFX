@@ -122,6 +122,8 @@ SKILLS = {
     # The Dark Lord's Force (docs/plans/dark-lord.md): 60, past Spiral Slash, so on the second
     # sheet (SECOND_FROM below). MuMain only (--mumain).
     60: ("Dark Lord", "Force"),
+    # And his Fire Burst, 61: cell 4 of the second sheet.
+    61: ("Dark Lord", "Fire Burst"),
     # And Fire Breath, cut on 2026-10-04 because the game now has it (the user: "do it", of the
     # Dinorant's breath): 0.95d's, carried by the Horn of Dinorant and not learned. Below 57 and
     # not use-type 4, so the arithmetic above finds its cell.

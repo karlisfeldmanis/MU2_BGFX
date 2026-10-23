@@ -1,0 +1,28 @@
+{
+  "item": "PierPart",
+  "mu_name_from": "Data/Skill/PierPart.bmd, MODEL_PIER_PART (ZzzOpenData.cpp:4319), made by Fire Burst as it is let go (ZzzCharacter.cpp:5065-5086).",
+  "kind": "skill",
+  "why_this_one": "Fire Burst (AT_SKILL_FIREBURST): three sub-type 0 heads off his facing +90, 0 and -90, homing on the body he named for twenty frames, drawing mesh 0; every step stamps a sub-type 1 trail piece drawing mesh 1 at Scale 0.5, and a BITMAP_FIRE+1 with it (ZzzEffect.cpp:3381-3405, MoveHandlers.cpp:5598-5657). game/fx/fire_burst.h draws it; docs/plans/dark-lord-spells/fire-burst.md.",
+  "mesh": "PierPart.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/PierPart.bmd: two meshes. m_Piercing, 120 triangles, an ellipsoid +-15 x +-15 x +-37 down its flight (the export's Z); m_Piercing02, 4 triangles, crossed quads +-25 x +-19 x +-37.",
+  "parts": [
+    {
+      "group": "m_Piercing",
+      "sheet": "m_Piercing.png",
+      "blend": "alpha",
+      "note": "Data/Skill/m_Piercing.OZT, 64 x 64, opaque: the head, lit and drawn with a normal blend (ZzzBMD.cpp:1532-1550)."
+    },
+    {
+      "group": "m_Piercing02",
+      "sheet": "m_Piercing02.png",
+      "blend": "alpha",
+      "note": "Data/Skill/m_Piercing02.OZT, 32 x 32, its alpha cutting 70%: the trail pieces."
+    },
+    {
+      "group": "fire02",
+      "sheet": "fire02.png",
+      "blend": "additive",
+      "note": "Not a mesh of PierPart: the sheet of the fire each trail piece lays, carried in this folder as Death Stab carries NSkill.png. Data/Effect/Fire02.OZJ (BITMAP_FIRE+1, ZzzOpenData.cpp:5180), 64 x 64; the same picture as content/effects/fire/fire02.png."
+    }
+  ]
+}
