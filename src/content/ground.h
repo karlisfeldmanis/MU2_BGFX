@@ -276,6 +276,10 @@ private:
     // The tiles `void_floor` floored, a byte a tile, and the light they are given (load, splat).
     std::vector<uint8_t> floored_;
     float voidLight_[3] = {0.6f, 0.6f, 0.6f};
+    // The world's `water_smooth`: passes of a 3x3 average over the drawn heights of corners
+    // that carry water, so a stream MU painted over a bumpy bed lies smooth instead of showing
+    // its little steps as stripes (Kanturu). Drawn only; heightAt is MU's. 0 off.
+    int waterSmooth_ = 0;
     float voidLevel_ = 0.0f;  // the floored tiles' height, metres
     std::vector<bool> grassSlots_;  // which entries of the world's tile_slots are TileGrass*
     std::vector<std::string> slotNames_;  // and what each of them is called

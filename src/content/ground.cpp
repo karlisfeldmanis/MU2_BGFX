@@ -652,6 +652,7 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     // A void floored (`void_floor`, below) is ground to look at, not a chasm: no abyss over it.
     if (!doc["void_floor"].stringOr("").empty()) abyssDepth_ = 0.0f;
     figureLight_ = float(doc["figure_light"].numberOr(0.0));
+    waterSmooth_ = int(doc["water_smooth"].numberOr(0.0));
     sky_ = doc["sky"].boolOr(false);
     blendKeep_.clear();
     blendKeepMask_.clear();
@@ -1449,6 +1450,61 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
             if (index < q * 4 || index >= q * 4 + 4) return false;
         }
         quadTile[q] = minR * n + minC;
+    }
+
+    // The water's bed smoothed (water_smooth): corners whose painted weight is water at least
+    // a quarter take the mean of the 3x3 drawn corners round them, the void's left out, the
+    // water's share deciding how far they move; then their normals again. The user,
+    // 2026-10-23: "cuted lines on water", then "same", "so we cant fix this?" -- the lines were
+    // MU's own bed, a metre of bumps under a stream, its sheet stretched over each step.
+    if (waterSmooth_ > 0) {
+        std::vector<float> water(size_t(side) * size_t(side), 0.0f);
+        for (size_t v = 0; v < water.size(); ++v)
+            for (int s = 0; s < slots; ++s)
+                if (slotLayers[size_t(s)].water) water[v] += mix[v * size_t(slots) + size_t(s)];
+        std::vector<float> y(water.size(), 0.0f);
+        std::vector<uint8_t> has(water.size(), 0);
+        for (size_t i = 0; i < vertices.size(); ++i) {
+            y[size_t(quadCorner[i])] = vertices[i].position[1];
+            has[size_t(quadCorner[i])] = 1;
+        }
+        for (int pass = 0; pass < waterSmooth_; ++pass) {
+            std::vector<float> was = y;
+            for (int r = 0; r < side; ++r)
+                for (int c = 0; c < side; ++c) {
+                    const size_t v = size_t(r) * size_t(side) + size_t(c);
+                    const float w = std::clamp((water[v] - 0.25f) / 0.5f, 0.0f, 1.0f);
+                    if (w <= 0.0f || !has[v]) continue;
+                    float sum = 0.0f;
+                    int count = 0;
+                    for (int dr = -1; dr <= 1; ++dr)
+                        for (int dc = -1; dc <= 1; ++dc) {
+                            const int rr = r + dr, cc = c + dc;
+                            if (rr < 0 || cc < 0 || rr >= side || cc >= side) continue;
+                            const size_t u = size_t(rr) * size_t(side) + size_t(cc);
+                            if (!has[u]) continue;
+                            sum += was[u];
+                            ++count;
+                        }
+                    if (count) y[v] = was[v] + (sum / float(count) - was[v]) * w;
+                }
+        }
+        auto yAt = [&](int c, int r) {
+            return y[size_t(std::clamp(r, 0, side - 1)) * size_t(side) + size_t(std::clamp(c, 0, side - 1))];
+        };
+        const float span = 2.0f * metresPerTile_;
+        for (size_t i = 0; i < vertices.size(); ++i) {
+            const int corner = quadCorner[i];
+            if (water[size_t(corner)] <= 0.25f) continue;
+            const int c = corner % side, r = corner / side;
+            vertices[i].position[1] = y[size_t(corner)];
+            const float dx = (yAt(c + 1, r) - yAt(c - 1, r)) / span;
+            const float dz = -(yAt(c, r + 1) - yAt(c, r - 1)) / span;
+            const float len = std::sqrt(dx * dx + 1.0f + dz * dz);
+            vertices[i].normal[0] = -dx / len;
+            vertices[i].normal[1] = 1.0f / len;
+            vertices[i].normal[2] = -dz / len;
+        }
     }
 
     // A chasm's edge, into the dark. MU cuts a NoGround tile and the clear colour shows
