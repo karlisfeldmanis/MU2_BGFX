@@ -35,26 +35,15 @@
   },
   "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased: dark steel traced in silver; skinClass302 the wizard's own face under the helm.",
   "sheet_materials": {
-    "item1001_Glove": "painted_steel",
-    "item1001_glove": "painted_steel"
+    "item1001_Glove": "plate_steel",
+    "item1001_glove": "plate_steel"
   },
-  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the other sets.",
-  "material_overrides": {
-    "painted_steel": {
-      "grain": {
-        "kind": "cast",
-        "scale": 260,
-        "depth": 0.02,
-        "roughness_range": 0.03
-      }
-    }
-  },
-  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss.",
+  "material_note": "Metal, not lacquer, now that metal_highlight caps the hot spots: plate_steel (the user, 2026-10-23: 'More sets to metal. Brave, Titan and Hades').",
   "effects_note": "MuMain has no render arm for MODEL_HADES_* (no glow, no chrome pass).",
   "islands": [
     {
       "island": 0,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 30,
       "area": 819.0,
       "along": [
@@ -76,7 +65,7 @@
     },
     {
       "island": 1,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 52,
       "area": 1193.9,
       "along": [
@@ -98,7 +87,7 @@
     },
     {
       "island": 2,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 32,
       "area": 449.8,
       "along": [
@@ -120,7 +109,7 @@
     },
     {
       "island": 3,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 42,
       "area": 679.6,
       "along": [
@@ -142,7 +131,7 @@
     },
     {
       "island": 4,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 30,
       "area": 819.0,
       "along": [
@@ -164,7 +153,7 @@
     },
     {
       "island": 5,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 52,
       "area": 1193.9,
       "along": [
@@ -186,7 +175,7 @@
     },
     {
       "island": 6,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 32,
       "area": 449.8,
       "along": [
@@ -208,7 +197,7 @@
     },
     {
       "island": 7,
-      "material": "painted_steel",
+      "material": "plate_steel",
       "triangles": 42,
       "area": 679.6,
       "along": [
