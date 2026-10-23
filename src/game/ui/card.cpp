@@ -1,7 +1,6 @@
 #include "game/ui/card.h"
 
 #include <algorithm>
-#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <string>
@@ -177,7 +176,7 @@ std::string tenths(double v) {
     return out;
 }
 
-tip::Sheet statSheet(int stat, sim::Kin kin, bool second, const int totals[4]) {
+tip::Sheet statSheet(int stat, sim::Kin kin, const int totals[4]) {
     using sim::Kin;
     const bool knight = kin == Kin::DarkKnight, wizard = kin == Kin::DarkWizard;
     const bool elf = kin == Kin::FairyElf, gladiator = kin == Kin::MagicGladiator;
@@ -188,9 +187,8 @@ tip::Sheet statSheet(int stat, sim::Kin kin, bool second, const int totals[4]) {
     tip::Sheet sheet;
     sheet.name = kNames[stat];
     sheet.nameTone = tip::Tone::White;
-    std::string kind = sim::className(int(kin), second);
-    for (char& c : kind) c = char(std::toupper((unsigned char)c));
-    sheet.base = "FOR A " + kind;
+    // No class line under the name: it is always his own (the user, 2026-10-23: "dont show for
+    // the dark knight, becaue user aleady plays that class").
     sheet.wide = kStatTipWide;
 
     tip::Section every;
@@ -883,7 +881,7 @@ void Card::rebuild() {
                                   now_.lines[3].size()};
         float tops[4];
         attrTops(counts, tops, drop);
-        const tip::Sheet sheet = statSheet(now_.overStat, now_.who->kin, now_.second, now_.totals);
+        const tip::Sheet sheet = statSheet(now_.overStat, now_.who->kin, now_.totals);
         tip::draw(tip_, sheet, panel::scaled(x, y, {kWellX, tops[now_.overStat], kWellW, kAttrTall}),
                   now_.width, now_.height);
     }
