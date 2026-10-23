@@ -244,6 +244,13 @@ std::string Helper::halt(const std::string& why) {
     return why;
 }
 
+std::string Helper::finished() {
+    ++stats_.quests;
+    const std::string title = sim::questAt(following_).title;
+    following_ = -1;
+    return halt("Helper stopped: " + title + " complete.");
+}
+
 std::string Helper::update(Play& play, const HelperSettings& settings, double seconds, const int32_t* bar,
                            int barCount, int shown) {
     if (!on_) return {};
@@ -458,7 +465,7 @@ bool Helper::aid(Play& play, const HelperSettings& settings) {
 }
 
 // **Follow my quest**: Auto-play's hand on the quest it follows (game/quest_auto.h), with the
-// Helper's own aids and pickups before it each beat. A quest handed in, the next taken one.
+// Helper's own aids and pickups before it each beat. A quest handed in, it stops.
 std::string Helper::follow(Play& play, const HelperSettings& settings, double seconds, int shown) {
     if (!play.isOpen() || play.realm().tables() == nullptr) return {};
     const sim::Realm& realm = play.realm();
@@ -476,8 +483,10 @@ std::string Helper::follow(Play& play, const HelperSettings& settings, double se
         if (potions_ && realm.autoDrink().health > 0 && realm.autoDrinkSlot(false) < 0) {
             return halt("Helper stopped: no healing potions left.");
         }
+        // A quest handed in stops it: it does not go on to another taken one (the user,
+        // 2026-10-23: "dont allow to continoy to do other quests if its finsihed").
         if (following_ >= 0 && !followable(realm, following_)) {
-            if (realm.quest(following_).state == sim::QuestState::Resting) ++stats_.quests;
+            if (realm.quest(following_).state == sim::QuestState::Resting) return finished();
             following_ = -1;
         }
         if (following_ < 0) {
@@ -512,12 +521,7 @@ std::string Helper::follow(Play& play, const HelperSettings& settings, double se
     const std::string said = quester_.update(play, &playing, seconds, bar_, barCount_);
     if (playing >= 0 || said.empty()) return {};
     // Auto-play's hand is done with it: handed in, or it can go no further.
-    if (realm.quest(following_).state == sim::QuestState::Resting) {
-        ++stats_.quests;
-        const std::string done = std::string("Helper: ") + sim::questAt(following_).title + " complete.";
-        following_ = -1;
-        return done;
-    }
+    if (realm.quest(following_).state == sim::QuestState::Resting) return finished();
     constexpr const char* kPrefix = "Auto-play: ";
     const bool prefixed = said.rfind(kPrefix, 0) == 0;
     return halt("Helper stopped: " + (prefixed ? said.substr(std::strlen(kPrefix)) : said));

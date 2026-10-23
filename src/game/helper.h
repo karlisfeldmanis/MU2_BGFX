@@ -76,7 +76,7 @@ struct HelperSettings {
     // **Follow my quest** (the user, 2026-10-21: "helper can follow active quest, similiar like
     // auto-play"): instead of hunting round a spot, it plays the quest the tracker shows, else
     // the first taken one hunted on this map, else the first taken, as Auto-play does -- the
-    // hunt, the travel, the hand-in -- then the next taken one, and stops when none is left. Its
+    // hunt, the travel, the hand-in -- and stops when that one is handed in. Its
     // other ticks still hold.
     bool quest = false;
     // While it helps (the user, the same day): a party's invite answered for him -- asked of
@@ -125,6 +125,8 @@ public:
 
 private:
     std::string halt(const std::string& why);
+    // The quest it follows handed in: counted, and the Helper stops.
+    std::string finished();
     // Following a quest (HelperSettings::quest): `shown`, the one the tracker shows.
     std::string follow(Play& play, const HelperSettings& settings, double seconds, int shown);
     // The aids on his bar on one of his party in reach, the most hurt healed first.
