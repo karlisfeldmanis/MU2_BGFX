@@ -1,6 +1,6 @@
 {
  "world": "kanturu",
- "summary": "What the extraction cannot know, for the Kanturu Ruins: its camp's townspeople. MU and OpenMU stand nobody in the Ruins (VersionSeasonSix/Maps/KanturuRuins.cs has no CreateNpcSpawns); Baz and Amy stand here as in Tarkan, Atlans, the Lost Tower and Aida (the user, 2026-10-23: 'lets add kunturu npcs', then 'Both'). With MU's Elpis and Gateway Machine, brought here from the Tower and the Relics, which are not playable (the user: 'find better locations for them'). They are world.json's npcs 0-3; these are their figures.",
+ "summary": "What the extraction cannot know, for the Kanturu Ruins: its camp's townspeople. MU and OpenMU stand nobody in the Ruins (VersionSeasonSix/Maps/KanturuRuins.cs has no CreateNpcSpawns); Baz and Amy stand here as in Tarkan, Atlans, the Lost Tower and Aida (the user, 2026-10-23: 'lets add kunturu npcs', then 'Both'). With MU's Elpis, brought here from the Tower, which is not playable (the user: 'find better locations for them'). The Gateway Machine stands at its own place in the Relics (the user, 2026-10-23: 'put it where it has to be'). They are world.json's npcs 0-2; these are their figures.",
  "spawns": [
   {
    "model": "Storage01",
@@ -31,16 +31,6 @@
    ],
    "facing": 3,
    "ours": "MU's refinery keeper before the north ruin wall, a shrine at the head of the camp, facing the camera"
-  },
-  {
-   "model": "GatewayMachine",
-   "who": "Gateway Machine",
-   "tile": [
-    41,
-    212
-   ],
-   "facing": 3,
-   "ours": "MU's Relics machine as the centrepiece of the lit east plaza between its brazier pairs, facing the camera"
   }
  ]
 }

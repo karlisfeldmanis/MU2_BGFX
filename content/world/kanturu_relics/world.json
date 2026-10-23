@@ -24,5 +24,18 @@
       "note": "From the safe hall (spawn gate 137). The maze is one region of 4,454 tiles; the 75 stray open tiles on rows 250-251 become void. Ours."
     },
     "flat_over_void": true
-  }
+  },
+  "npcs": [
+    {
+      "npc": 367,
+      "name": "Gateway Machine",
+      "figure": "GatewayMachine",
+      "at": [
+        141,
+        191
+      ],
+      "look": 3,
+      "note": "MU's place: OpenMU KanturuRelics.cs:46, 141,191 facing south, at the head of the Laser Trap corridor (x 138-144, y 166-183), on a NoMove tile; reached from 141,186 (the user, 2026-10-23: put it where it has to be). The tower event it opens is not built."
+    }
+  ]
 }

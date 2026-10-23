@@ -278,17 +278,6 @@
       ],
       "look": 3,
       "note": "MU's Elpis (368), the Refinery Tower's keeper (OpenMU KanturuEvent.cs:51, 77,177 in map 39), stood in the Ruins camp because the Tower is not playable (the user, 2026-10-23: find better locations for them, then you decide): before the north ruin wall at the head of the camp, a shrine, facing the camera. Her refining is not built."
-    },
-    {
-      "npc": 367,
-      "name": "Gateway Machine",
-      "figure": "GatewayMachine",
-      "at": [
-        41,
-        212
-      ],
-      "look": 3,
-      "note": "MU's Gateway Machine (367), which stands in the Relics (OpenMU KanturuRelics.cs:46, 141,191), stood in the Ruins camp because the Relics are not playable (the user, 2026-10-23: find better locations for them, then you decide): the centrepiece of the lit east plaza between its brazier pairs, facing the camera. Tried first behind the Relics door, out over the chasm and unseen, then on the north ground, where it crowded the way. The tower event it opens is not built."
     }
   ]
 }
