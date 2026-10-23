@@ -35,8 +35,8 @@
 // he is ringed green, app/modes/play_mode.cpp); dead, it is grey. It fades out toward the edge of
 // the range, and the nearer names are drawn over the farther. No bar. Pointed at, a small line
 // under it all gives his level and class (the user chose W4 of the WoW names page, 2026-10-08).
-// A reborn (sim/rebirth.h) wears a banner over his name: a wine swallow-tailed ribbon between gold
-// rules, "REBIRTH" and his numeral in Cinzel gold (the user, 2026-10-23).
+// A reborn (sim/rebirth.h) wears a mark over his name: small spaced gold capitals between two
+// fading gold hairlines, "REBIRTH" and his numeral (the user, 2026-10-23).
 //
 // **And what the fight laid on the monster, under its bar** (the user, 2026-10-16: "we need to show
 // debufs under monster hp bar, for example if char does poison,fire,bleed,slow,etc"): a small cell
@@ -102,7 +102,7 @@ private:
         // His guild's name and mark (docs/game/guild.md, the user's pick A): the line under his name.
         std::string guild;
         net::GuildMarkBits mark{};
-        // His rebirths (sim/rebirth.h): a reborn's banner over his name, 0 for none.
+        // His rebirths (sim/rebirth.h): a reborn's mark over his name, 0 for none.
         int rebirths = 0;
         bool operator==(const Tag& o) const {
             return id == o.id && x == o.x && y == o.y && alpha == o.alpha && lit == o.lit &&
