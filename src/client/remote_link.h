@@ -181,6 +181,7 @@ private:
     bool pingUnread_ = false;  // the Ping out has waited past a gap between pumps
     float rttMs_ = -1.0f;
     Clock::time_point heardAt_{};   // the last byte from the server, by stream or datagram
+    Clock::time_point streamAt_{};  // the last byte by the stream alone (kTicklessMost, kStreamSilentMost)
     Clock::time_point pumpedAt_{};  // the last pump: a Ping's answer read later than kUnreadMost is not counted
     bool pumpSteady_ = false;       // this pump came soon after the last: a late tick is the line's
     Clock::time_point takenAt_{};   // when the newest tick was taken (RemoteLink::offer)
