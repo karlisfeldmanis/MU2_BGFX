@@ -95,6 +95,7 @@ constexpr Resistance kResistances[] = {
     {308, 18, 18},  // Death Tree
     {309, 50, 50},  // Hell Maine
     {351, 20, 20},  // Splinter Wolf
+    {352, 21, 21},  // Iron Rider
     {549, 20, 20},  // Bloody Orc
     {550, 20, 20},  // Bloody Death Rider
     {552, 20, 20},  // Bloody Witch Queen
@@ -167,6 +168,7 @@ constexpr DropRate kDropRates[] = {
     {308, 30, 3, 10},  // Death Tree
     {309, 30, 4, 150},  // Hell Maine
     {351, 30, 3, 10},  // Splinter Wolf
+    {352, 30, 3, 10},  // Iron Rider
     {549, 30, 3, 8},  // Bloody Orc
     {550, 30, 3, 10},  // Bloody Death Rider
     {552, 30, 3, 10},  // Bloody Witch Queen

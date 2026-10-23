@@ -599,8 +599,11 @@ void Play::snort(float seconds) {
 void Play::shade(float seconds) {
     shadowStars_.update(seconds);
     for (Drawn& one : drawn_) {
-        if ((one.shadeBones.empty() && one.auraBone < 0 && !one.embers && one.starBones.empty()) ||
-            !one.visible || !one.placed) {
+        // An Iron Rider has none of these and its shows all the same (play_breeds.cpp).
+        const bool shown = !one.shadeBones.empty() || one.auraBone >= 0 || one.embers ||
+                           !one.starBones.empty() ||
+                           (one.figure.body() && one.figure.body()->has("iron_rider"));
+        if (!shown || !one.visible || !one.placed) {
             continue;
         }
         float fade = 1.0f;

@@ -1,7 +1,8 @@
 // The Aida breeds' own shows, fed each frame from Play::shade: a Blue Golem's water
 // (fx/golem_water.h), a Witch Queen's lights and strikes (fx/witch_queen.h), and the sparks off a
 // Death Rider's head and a Death Tree's horns (fx/aida_sparks.h), and Hell Maine's lights, storm and
-// fire lay (fx/hell_maine.h), each by its recipe's show tag.
+// fire lay (fx/hell_maine.h), and a Kanturu Iron Rider's bow sparks, arrow and death smoke
+// (fx/iron_rider.h), each by its recipe's show tag.
 // Out of play_show.cpp, which is at its size.
 #include "game/play.h"
 
@@ -25,13 +26,22 @@ void Play::breedShows(Drawn& one, float fade, float seconds) {
             if (float horn[3]; one.figure.pointOn(bone, origin, horn)) shadowStars_.aidaSparks().horn(horn, fade, seconds);
         return;
     }
-    if (!look->has("blue_golem") && !look->has("witch_queen") && !look->has("hell_maine")) return;
+    if (!look->has("blue_golem") && !look->has("witch_queen") && !look->has("hell_maine") &&
+        !look->has("iron_rider"))
+        return;
     // What it hunts: its quarry, or its blow's target; that one's feet, or null.
     const sim::Body* self = realm_.find(one.id);
     const Drawn* prey = self ? drawnOf(self->quarry ? self->quarry : self->blowTarget) : nullptr;
     const FigureBody* aim = prey && prey->placed ? prey->figure.body() : nullptr;
     const float target[3] = {aim ? prey->crown[0] : 0.0f,
                              aim ? prey->crown[1] - aim->height * aim->scale : 0.0f, aim ? prey->crown[2] : 0.0f};
+    // An Iron Rider's bow sparks, its arrow loosed at what it hunts, its smoke as it falls.
+    if (look->has("iron_rider")) {
+        const int attack = one.figure.clip() == one.attackClip ? 1 : one.figure.clip() == one.attackClip2 ? 2 : 0;
+        shadowStars_.ironRider().watch(one.id, one.figure, attack, keyOf(one.figure), one.yaw,
+                                       aim ? target : nullptr, one.deadFor >= 0.0f, fade, seconds);
+        return;
+    }
     // Hell Maine's lights and hand fire, Attack 1's storm (its stones are the meteor's) and
     // Attack 2's fire lay, both thrown at what it hunts.
     if (look->has("hell_maine")) {

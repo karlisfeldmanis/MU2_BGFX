@@ -705,6 +705,7 @@ add_library(mu_game STATIC
   src/game/fx/witch_queen.cpp
   src/game/fx/hell_maine.cpp
   src/game/fx/aida_sparks.cpp
+  src/game/fx/iron_rider.cpp
   src/game/fx/tree_roots.cpp
   src/game/fx/forge.cpp
   src/game/fx/meteor.cpp
