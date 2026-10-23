@@ -1886,7 +1886,7 @@ class Handler(BaseHTTPRequestHandler):
         or loses its English's tags, is refused."""
         if not self.direct():
             return self.reply(404, {"error": "not found"})
-        said = (self.body() or {}).get("texts")
+        said = (self.body(most=2_000_000) or {}).get("texts")  # this machine only: a whole language at once
         if not isinstance(said, dict):
             return self.reply(400, {"error": "texts: {lang: {source: text}}"})
         units = {u["source"] for u in site_units(self.site, self.store)}

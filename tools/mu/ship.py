@@ -853,16 +853,22 @@ def translate(say, web=None, dry=False):
         return True, {"missing": missing}
     if not shutil.which("claude"):
         raise RuntimeError("claude is not on the PATH: Claude Code translates the site")
-    put = 0
+    put, failed = 0, []
     for lang, units in missing.items():
-        texts = {}
         for n in range(0, len(units), TRANSLATE_BATCH):
-            texts.update(translated(told["langs"][lang], units[n:n + TRANSLATE_BATCH], told["examples"][lang], say))
-        if texts:
-            got = site.post({"texts": {lang: texts}}, "/internal/translations")
+            # Each batch sent as it is done: a failure later loses only its own batch.
+            try:
+                texts = translated(told["langs"][lang], units[n:n + TRANSLATE_BATCH], told["examples"][lang], say)
+                got = site.post({"texts": {lang: texts}}, "/internal/translations") if texts else {"put": 0, "refused": 0}
+            except (RuntimeError, subprocess.TimeoutExpired) as e:
+                failed.append(lang)
+                say(f"  {lang}: {e}")
+                continue
             put += got["put"]
             say(f"  {lang}: {got['put']} put in" + (f", {got['refused']} refused" if got["refused"] else ""))
-    return True, {"put": put}
+    if failed:
+        say(f"not done: {', '.join(sorted(set(failed)))}; the next run tries them again")
+    return not failed, {"put": put}
 
 
 class PanelParser(HTMLParser):
