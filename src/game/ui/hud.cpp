@@ -968,8 +968,11 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
             now.rows.push_back(prose("You are more than " + std::to_string(sim::kPartyGap) +
                                      " levels below the highest near you, and share nothing", tip::Tone::Red));
         } else {
+            // Every member's kills are shared, so the percent is his hour against hunting alone,
+            // not one kill's (the user, 2026-10-23: "+230% with a wizard seem crazy").
+            now.rows.push_back(prose("an hour, while everyone near keeps killing"));
             now.rows.push_back(prose(std::to_string(one.stacks) + (one.stacks == 1 ? " member" : " members") +
-                                     " near you, the kill shared by level"));
+                                     " near you, every kill shared by level"));
         }
         // What more of them would pay, in one line rather than a table (the user, 2026-10-23:
         // "isnt this over kill?").
