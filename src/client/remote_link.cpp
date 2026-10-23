@@ -27,10 +27,23 @@ bool RemoteLink::join(const std::string& host, int port, const net::Hello& hello
     }
     // The one wait the client makes on the server: before the world is raised, nothing is
     // drawn that the wait could hold up.
-    const auto until = std::chrono::steady_clock::now() + std::chrono::duration<double>(seconds);
+    // `seconds` of nothing, not of everything: a Welcome still coming in on a slow line is waited
+    // for, up to kWelcomeMost, `seconds` past its last byte (LoveMu on Central Europe, 2026-10-23:
+    // dropped back to the character screen ten seconds into each Lost Tower Welcome).
+    constexpr auto kWelcomeMost = std::chrono::seconds(60);
+    const auto began = std::chrono::steady_clock::now();
+    const auto quiet = std::chrono::duration<double>(seconds);
+    auto until = began + std::chrono::duration_cast<std::chrono::steady_clock::duration>(quiet);
+    size_t had = in_.size();
     while (std::chrono::steady_clock::now() < until && !net::waitsAbandoned()) {
         // What came before a close is read first: an Elsewhere is said and the line shut.
         const bool open = socket_.receive(in_) && socket_.flush();
+        if (in_.size() > had) {
+            had = in_.size();
+            const auto now = std::chrono::steady_clock::now();
+            until = std::min(began + kWelcomeMost,
+                             now + std::chrono::duration_cast<std::chrono::steady_clock::duration>(quiet));
+        }
         net::Kind kind{};
         std::vector<uint8_t> body;
         const int took = net::take(in_, kind, body);
@@ -94,7 +107,14 @@ bool RemoteLink::join(const std::string& host, int port, const net::Hello& hello
     if (net::waitsAbandoned()) {
         core::logf("server: the wait for %s:%d given up; the window closed", host.c_str(), port);
     } else {
-        core::logError("server: %s:%d said nothing in %.0f s", host.c_str(), port, seconds);
+        const double waited =
+            std::chrono::duration<double>(std::chrono::steady_clock::now() - began).count();
+        if (in_.empty()) {
+            core::logError("server: %s:%d said nothing in %.0f s", host.c_str(), port, waited);
+        } else {
+            core::logError("server: %s:%d sent %zu KB of the Welcome in %.0f s, not all of it", host.c_str(),
+                           port, in_.size() / 1024, waited);
+        }
     }
     socket_.close();
     return false;
