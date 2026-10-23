@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- `mu ship translate` every half hour while this Mac is on: the site's untranslated lines (a
+     published update, a page's new words) translated by claude -p and put in (tools/mu/ship.py).
+     Installed by: cp tools/mu/translate.plist ~/Library/LaunchAgents/com.mu-classic.translate.plist
+                   launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.mu-classic.translate.plist
+     Removed by:   launchctl bootout gui/$(id -u)/com.mu-classic.translate -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.mu-classic.translate</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string><string>-lc</string>
+    <string>cd ~/Documents/muremaster2/MU2_BGFX &amp;&amp; date &amp;&amp; nice -n 10 ./mu ship translate</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict><key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string></dict>
+  <key>StartInterval</key><integer>1800</integer>
+  <key>RunAtLoad</key><true/>
+  <key>LowPriorityIO</key><true/>
+  <key>StandardOutPath</key><string>/tmp/mu-translate.log</string>
+  <key>StandardErrorPath</key><string>/tmp/mu-translate.log</string>
+</dict>
+</plist>

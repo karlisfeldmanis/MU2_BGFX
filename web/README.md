@@ -140,16 +140,15 @@ it is set or changed without a restart; with no file, nothing is told.
 
 ## Translated by itself
 
-Anything on the site with no translation in a language (a Latest updates line as it is published,
-a page's new words) is translated by Claude (`class Translator` in `server.py`, `claude-opus-5-5`):
-a minute after a line is published, and every fifteen minutes besides. It only fills what is
-missing: what an admin wrote on `/translate` is never touched, and a translation that loses its
-English's tags is not put in. Its lines have `texts.by = 0`, and an admin rewords them on
-`/translate` like any other. The Claude API key is a secret on the box only, in
-`/var/lib/mu2-web/anthropic_key` beside the database, read at each round; with no file, nothing is
-translated.
+Anything on the site with no translation in a language (a Latest updates line once it is
+published, a page's new words) is translated on the Mac by `./mu ship translate` (tools/mu/ship.py,
+`claude -p` on the user's Claude subscription, no API key): it reads the gaps from
+`GET /internal/untranslated` over ssh and puts its lines in with `POST /internal/translations`.
+The site only fills what is missing: what an admin wrote on `/translate` is never touched, a line
+that loses its English's tags is refused, and the translator's lines have `texts.by = 0` for an
+admin to reword on `/translate` like any other. launchd runs it every half hour while the Mac is
+on (`tools/mu/translate.plist`, its log in `/tmp/mu-translate.log`); a line published while the Mac
+is off is translated when it is back.
 
-    ssh hetzner 'cd /var/lib/private/mu2-web && umask 077 && cat > anthropic_key && chown --reference=accounts.db anthropic_key'   # paste, Return, ctrl-D
-    ssh hetzner 'curl -s -X POST http://127.0.0.1:8080/internal/translate'   # a round now
-
-`journalctl -u mu2-web | grep translate` shows what each round put in, per language, or why not.
+    ./mu ship translate --dry     # what is missing, per language
+    ./mu ship translate           # translate it now

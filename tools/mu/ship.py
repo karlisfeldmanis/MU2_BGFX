@@ -14,6 +14,10 @@ the front page's Latest updates for what they were given.
                                and not yet told; an admin words them there and publishes them
     ./mu ship notes --import-site   the lines written into web/site/index.html by hand, put in as
                                published (once, the first time the site keeps them itself)
+    ./mu ship translate [--dry]   whatever on the site has no translation in a language (a published
+                               update line, a page's new words) translated by claude -p and put in
+                               there; what an admin wrote is never touched. launchd runs it every
+                               half hour (tools/mu/translate.plist)
 
 What is live is read where it lives, never remembered here:
   - each client: https://mu-classic.com/game/<platform>/manifest.json, its "version" and "protocol"
@@ -614,20 +618,20 @@ class Site:
     def __init__(self, web=None):
         self.web = web
 
-    def get(self):
+    def get(self, path="/internal/updates"):
         if self.web:
-            return fetch(f"{self.web}/internal/updates")
-        return json.loads(ssh(WEB_HOST, "curl -sf http://127.0.0.1:8080/internal/updates"))
+            return fetch(f"{self.web}{path}")
+        return json.loads(ssh(WEB_HOST, f"curl -sf http://127.0.0.1:8080{path}", timeout=60))
 
-    def post(self, body):
+    def post(self, body, path="/internal/updates"):
         data = json.dumps(body)
         if self.web:
             done = subprocess.run(["curl", "-sf", "-H", "Content-Type: application/json", "--data-binary", "@-",
-                                   f"{self.web}/internal/updates"], input=data, capture_output=True, text=True)
+                                   f"{self.web}{path}"], input=data, capture_output=True, text=True)
         else:
             done = subprocess.run(["ssh", "-o", "BatchMode=yes", WEB_HOST,
                                    "curl -sf -H 'Content-Type: application/json' --data-binary @- "
-                                   "http://127.0.0.1:8080/internal/updates"], input=data, capture_output=True, text=True)
+                                   f"http://127.0.0.1:8080{path}"], input=data, capture_output=True, text=True)
         if done.returncode != 0:
             raise RuntimeError(f"the site took no lines: {done.stderr.strip() or done.stdout.strip()}")
         return json.loads(done.stdout)
@@ -775,6 +779,90 @@ def notes(say, dry=False, day=None, web=None, since=None, plain=False):
         site.post({"entries": drafts, "noted_through": through})
         say(f"on {web or SITE}/updates as drafts: word them there and publish")
     return True, {"drafts": drafts, "noted_through": through}
+
+
+# ---- the site in its other languages ----------------------------------------------------------
+
+TRANSLATING = """You translate the website of MU Classic, a free remaster of the classic MMORPG MU Online (a new
+engine, client and server, not a private server), from English into {language}.
+
+Each item is one piece of the site: a heading, a button, a sentence, or a line of the game's patch
+notes. Translate each so a native {language} speaker who plays MMORPGs reads it as natural,
+idiomatic text written in {language}, never word for word from English: say what the English
+means the way {language} says it.
+
+Rules:
+- Keep every HTML tag exactly as it is in the English, with the same attributes, and put the
+  words inside and around them where {language} needs them.
+- Keep every {{placeholder}} in braces exactly as written.
+- The game's own names stay in English, exactly as written: maps and towns (Lorencia, Noria,
+  Devias, Lost Tower, Icarus, Aida, Kanturu, Blood Castle, Devil Square), classes, skills, items,
+  jewels, runes, monsters, NPCs, pets, buttons and messages the game shows in English (Play, Helper,
+  Broker, Jeweler, Chaos Machine, Zen, MISS), and anything in quotes. Only names: ordinary words
+  (ring, pendant, sword, arrow, jewel, party, guild, map, monster) are translated as usual.
+- Patch notes are short and plain, in the voice of the examples. Do not add or leave out facts.
+- Use the same words for the same things as the examples do.
+
+Examples of this site's {language}:
+{examples}
+
+Translate each item's text; answer with every id.
+
+{items}
+"""
+
+TRANSLATING_SCHEMA = {"type": "object", "required": ["translations"], "properties": {"translations": {
+    "type": "array", "items": {"type": "object", "required": ["id", "text"],
+                               "properties": {"id": {"type": "integer"}, "text": {"type": "string"}}}}}}
+TRANSLATE_BATCH = 60
+
+
+def translated(language, sources, examples, say):
+    """{source: text} for each of `sources` claude -p translated; {} when it gave nothing."""
+    import html
+    import tempfile
+    items = [{"id": n, "text": src if "<" in src else html.unescape(src)} for n, src in enumerate(sources)]
+    prompt = TRANSLATING.format(language=language, items=json.dumps(items, ensure_ascii=False),
+                                examples="\n".join(f"EN: {html.unescape(s)}\n-> {t}" for s, t in examples) or "(none yet)")
+    # Run from an empty folder: the project's CLAUDE.md and memory are not this job's.
+    with tempfile.TemporaryDirectory() as here:
+        done = subprocess.run(["claude", "-p", "--model", "opus", "--output-format", "json", "--tools", "",
+                               "--json-schema", json.dumps(TRANSLATING_SCHEMA)],
+                              input=prompt, capture_output=True, text=True, cwd=here, timeout=1200)
+    try:
+        out = json.loads(done.stdout)["structured_output"]["translations"]
+    except (ValueError, KeyError, TypeError):
+        say(f"  claude -p gave nothing for {language} ({(done.stderr or done.stdout).strip()[:160]})")
+        return {}
+    return {sources[t["id"]]: " ".join(str(t.get("text", "")).split())
+            for t in out if isinstance(t.get("id"), int) and 0 <= t["id"] < len(sources) and t.get("text")}
+
+
+def translate(say, web=None, dry=False):
+    """Each language's units with no translation, translated and put in (the site keeps only those
+    that keep their tags, and only where there is still none)."""
+    import shutil
+    site = Site(web)
+    told = site.get("/internal/untranslated")
+    missing = {lang: units for lang, units in told["missing"].items() if units}
+    if not missing:
+        say("every language has every line")
+        return True, {"put": 0}
+    say("missing: " + ", ".join(f"{lang} {len(units)}" for lang, units in missing.items()))
+    if dry:
+        return True, {"missing": missing}
+    if not shutil.which("claude"):
+        raise RuntimeError("claude is not on the PATH: Claude Code translates the site")
+    put = 0
+    for lang, units in missing.items():
+        texts = {}
+        for n in range(0, len(units), TRANSLATE_BATCH):
+            texts.update(translated(told["langs"][lang], units[n:n + TRANSLATE_BATCH], told["examples"][lang], say))
+        if texts:
+            got = site.post({"texts": {lang: texts}}, "/internal/translations")
+            put += got["put"]
+            say(f"  {lang}: {got['put']} put in" + (f", {got['refused']} refused" if got["refused"] else ""))
+    return True, {"put": put}
 
 
 class PanelParser(HTMLParser):

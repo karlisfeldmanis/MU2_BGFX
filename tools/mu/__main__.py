@@ -40,6 +40,7 @@
     ./mu release linux [--dry]               the Linux client the same way, under /game/linux/
     ./mu ship [--go]                         what is live, what HEAD adds, what it needs, the steps (ship.py)
     ./mu ship notes [--dry]                  drafts on the site's /updates for what is now live
+    ./mu ship translate [--dry]              the site's untranslated lines, translated by claude -p
     ./mu ship app                            the Ship window (tools/ship/ship.cpp), built first
 
 Every command takes --json and then prints one JSON object as its last line, for a script or
@@ -158,7 +159,7 @@ def main():
                     help="send the files, leave manifest.json on the release before (a protocol switch)")
 
     sh = sub.add_parser("ship", parents=[common])
-    sh.add_argument("action", nargs="?", choices=["notes", "updates", "send", "app", "prepare", "switch"],
+    sh.add_argument("action", nargs="?", choices=["notes", "translate", "updates", "send", "app", "prepare", "switch"],
                     help="notes: drafts on the site's /updates; updates: its lines; send FILE: lines to it; app: the window; "
                          "prepare: build and stage everywhere; switch: make what prepare staged live")
     sh.add_argument("file", nargs="?", help="send: the JSON file of lines")
@@ -338,6 +339,8 @@ def dispatch(args, say):
             return ship.prepare(say, commit=args.commit)
         if args.action == "switch":
             return ship.switch(say, commit=args.commit, now=args.now)
+        if args.action == "translate":
+            return ship.translate(say, web=args.web, dry=args.dry)
         if args.action == "notes":
             if args.import_site:
                 return ship.import_site(say, web=args.web, since=args.since, dry=args.dry)
