@@ -381,14 +381,14 @@ void Inspect::rebuild(const sim::Realm& realm, const sim::Body& who, const sim::
                      style::kIronLo);
         // The labels near their figures' size (the user, 2026-10-23: "work on styling and fontsizes"):
         // 8-unit capitals read as specks beside 12-unit figures.
-        const float pad = 5.0f, words = 10.5f * u, track = 0.06f;
+        const float pad = 5.0f, words = 11.5f * u, track = 0.06f;
         for (int i = 0; i < kNumberColumns * kNumberRows; ++i) {
             const float cx = kNumbers.x + inset + cellW * float(i % kNumberColumns);
             const float cy = kNumbers.y + inset + cellH * float(i / kNumberColumns);
             const float baseline = std::round(y + (cy + cellH * 0.5f + 3.5f) * k);
             controls::caps(canvas_, std::round(x + (cx + pad) * k), baseline, words, style::kAshInk, now_.labels[i],
                            track);
-            float size = 14.0f * u;
+            float size = 15.0f * u;
             const float room = cellW - 2.0f * pad - controls::capsWidth(words, now_.labels[i], track) / k - 4.0f;
             while (size > 7.5f * u && controls::labelWidth(size, now_.values[i]) > room * k) size -= 0.5f * u;
             controls::ranged(canvas_, std::round(x + (cx + cellW - pad) * k), baseline, size,
