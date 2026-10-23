@@ -24,6 +24,12 @@ constexpr float kHoverLight = 0.06f, kShadeLight = 0.2f;
 // half MU's speed, so it moves slower at the same density (the user, 2026-10-23: "make smoke
 // move slower").
 constexpr float kPace = 0.5f;
+// Ours (the user, 2026-10-23: "need more random smoke movement, and more subtle, also when game
+// loads i see smoke suddenly appears"): each puff wanders on its own drift up to kWander metres a
+// second, sways kSway metres side to side, turns up to kTurn radians a second; it fades in over
+// its first kEase frames and out over its last; and the whole mist fades in over kWarm seconds
+// after the world opens.
+constexpr float kWander = 0.18f, kSway = 0.6f, kTurn = 0.12f, kEase = 60.0f, kWarm = 8.0f;
 constexpr float kAfterSeen = 50.0f;    // frames a Hover or Shade outlives its box's sight
 constexpr float kDegrees = 0.0174533f;
 // Ours: metres over which a puff thins out as it nears the ground or a cliff behind it, where
@@ -83,6 +89,7 @@ void ChasmMist::shutdown() {
     open_ = false;
     boxes_.clear();
     puffs_.clear();
+    warm_ = 0.0f;
     ground_ = nullptr;
     sheet_ = BGFX_INVALID_HANDLE;
 }
@@ -154,6 +161,14 @@ void ChasmMist::throwPuff(uint16_t index) {
         const float over = overVoid(puff.at[0], puff.at[2], 0.25f * kSheetMetres * puff.scale);
         puff.edge = box.kind == Kind::Rise ? over * over : 1.0f;
     }
+    const float heading = 6.2831853f * unit();
+    const float speed = kWander * (0.3f + 0.7f * unit());
+    puff.drift[0] = std::cos(heading) * speed;
+    puff.drift[1] = std::sin(heading) * speed;
+    puff.sway = 6.2831853f * unit();
+    puff.swayHz = 0.03f + 0.05f * unit();
+    puff.spin = 6.2831853f * unit();
+    puff.spinRate = (unit() * 2.0f - 1.0f) * kTurn;
     puff.bornY = puff.at[1];
     puffs_.push_back(puff);
 }
@@ -167,8 +182,15 @@ void ChasmMist::update(float seconds, const float near[3]) {
         const float dx = box.at[0] - near[0], dz = box.at[2] - near[2];
         box.seen = dx * dx + dz * dz <= kReach * kReach;
     }
+    warm_ += seconds / kPace;
     for (Puff& one : puffs_) {
         one.age += frames;
+        // Its own wander: a drift, and a sway across it.
+        const float s = std::cos(one.sway + 6.2831853f * one.swayHz * one.age * kFrame) * kSway *
+                        6.2831853f * one.swayHz * seconds;
+        one.at[0] += one.drift[0] * seconds - one.drift[1] / (std::hypot(one.drift[0], one.drift[1]) + 1e-4f) * s;
+        one.at[2] += one.drift[1] * seconds + one.drift[0] / (std::hypot(one.drift[0], one.drift[1]) + 1e-4f) * s;
+        one.spin += one.spinRate * seconds;
         if (one.kind == Kind::Rise) {
             one.left -= frames;
             if (one.left > 150.0f) {
@@ -228,6 +250,16 @@ void ChasmMist::gather(gfx::Effects& effects) const {
                 blend = gfx::Blend::Minus;
                 break;
         }
+        // In over its first kEase frames, out over its last (a held Hover: out once its box is
+        // gone from sight), and the whole mist in over kWarm seconds after the world opens.
+        float ease = std::min(one.age / kEase, 1.0f);
+        if (one.kind == Kind::Rise) ease = std::min(ease, one.left / kEase);
+        else ease = std::min(ease, 1.0f - one.left / kAfterSeen);
+        ease = std::clamp(ease, 0.0f, 1.0f);
+        ease *= ease * (3.0f - 2.0f * ease);
+        const float warm = std::min(warm_ / kWarm, 1.0f);
+        level *= ease * warm * warm;
+        if (blend == gfx::Blend::Additive) spin += one.spin;
         gfx::Sprite sprite;
         for (int i = 0; i < 3; ++i) {
             sprite.position[i] = one.at[i];

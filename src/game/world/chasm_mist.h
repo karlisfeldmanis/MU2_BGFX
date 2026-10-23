@@ -67,6 +67,10 @@ private:
         float scale = 1.0f;     // MU's Scale
         float turning = 0.0f;   // Hover's
         float phase = 0.0f;     // milliseconds, MU's Gravity
+        float drift[2] = {0, 0};  // ours: metres a second, its own slow wander
+        float sway = 0.0f;        // ours: the phase of its side-to-side sway
+        float swayHz = 0.0f;
+        float spin = 0.0f, spinRate = 0.0f;  // ours: radians, and a second
         float edge = 1.0f;      // ours: how much of it lies over the void, squared (overVoid)
     };
     struct Box {
@@ -86,6 +90,7 @@ private:
     std::vector<Box> boxes_;
     std::vector<Puff> puffs_;
     float clock_ = 0.0f;  // milliseconds, MU's WorldTime
+    float warm_ = 0.0f;  // seconds since open: the mist fades in, not on (kWarm)
     float strength_ = 1.0f;  // the show's `strength`: 1 is MU's full pool of light
     uint32_t seed_ = 0xC4A5Eu;
     bgfx::TextureHandle sheet_ = BGFX_INVALID_HANDLE;

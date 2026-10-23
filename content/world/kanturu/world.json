@@ -221,7 +221,7 @@
     },
     "chasm_mist": {
       "note": "MU's mist boxes 62, 107 and 108 (Object63, 108, 109), which RenderKanturu1stObjectVisual runs every frame they are seen: rising grey clouds over the chasm, hovering ones over the plateau, and a few that darken (game/world/chasm_mist.h). The user, 2026-10-22: \"mayeb we are missing something\", then \"yes\".",
-      "strength": 0.03
+      "strength": 0.02
     }
   },
   "rules": {
