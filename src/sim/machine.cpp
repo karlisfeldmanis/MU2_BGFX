@@ -51,6 +51,9 @@ struct Sorted {
     int optioned = 0;   // things at +4 or better with the additional option or a socket: the Chaos Weapon's
     int chaosWeapons = 0;  // and of them the Chaos weapons, which make it the wings' box
     int chaosWeaponCell = -1;
+    // The Chaos Weapon's and the 1st wings' rate: the old price of the optioned things and the
+    // three jewels, and nothing else (WebZen's ChaosBoxMix `value`).
+    int64_t worth = 0;
     int at[2] = {};     // raisable things at +9 and at +10
     int atCell[2] = {-1, -1};
     int runed = 0, runedCell = -1;        // things with a rune set in a socket
@@ -77,10 +80,13 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
         const int n = piecesOf(*row, what);
         if (jewelOfChaos(*row)) {
             s.chaos += n;
+            s.worth += mixValue(tables, what);
         } else if (jewelOfBless(*row)) {
             s.bless += n;
+            s.worth += mixValue(tables, what);
         } else if (jewelOfSoul(*row)) {
             s.soul += n;
+            s.worth += mixValue(tables, what);
         } else if (jewelOfLife(*row)) {
             s.life += n;
             s.things += n;
@@ -124,6 +130,7 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
             // also item + socket works same as +opti'). Ours; MU asks the option alone.
             if (what.refinement >= 4 && (what.option > 0 || what.sockets > 0)) {
                 ++s.optioned;
+                s.worth += mixValue(tables, what);
                 if (chaosWeapon(*row)) {
                     ++s.chaosWeapons;
                     s.chaosWeaponCell = cell;
@@ -151,8 +158,11 @@ Sorted sort(const content::Tables& tables, const Machine& box) {
 // ---- Combine: MU's machine --------------------------------------------------------------------
 
 // Whether the box is exactly this recipe, MixMgr's CheckRecipeSub: every line met and nothing
-// left over.
-bool exactly(Recipe recipe, const Sorted& s) {
+// left over. `loose`, on the Chaos Weapon's and the 1st wings' own pages, lets other things ride
+// along as WebZen's ChaosBoxMix does: they add nothing to the rate and go down with the box (the
+// user, 2026-10-23: "if I add items for extra chance the percent rises but nothing can be
+// pressed"). Combine keeps MixMgr's, so its recipes do not overlap.
+bool exactly(Recipe recipe, const Sorted& s, bool loose = false) {
     switch (recipe) {
         case Recipe::PlusTen:
         case Recipe::PlusEleven: {
@@ -162,9 +172,9 @@ bool exactly(Recipe recipe, const Sorted& s) {
                    s.soul == jewels;
         }
         case Recipe::ChaosWeapon:
-            return s.optioned >= 1 && s.things == s.optioned && s.chaos >= 1;
+            return s.optioned >= 1 && (loose || s.things == s.optioned) && s.chaos >= 1;
         case Recipe::Wings:
-            return s.chaosWeapons >= 1 && s.things == s.optioned && s.chaos >= 1;
+            return s.chaosWeapons >= 1 && (loose || s.things == s.optioned) && s.chaos >= 1;
         case Recipe::SecondWings:
             return s.firstWings == 1 && s.feathers == 1 && s.chaos == 1 && s.secondWings == 0 &&
                    s.bless == 0 && s.soul == 0 && s.things == 2 + s.excellents;
@@ -280,7 +290,7 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
         }
     };
     for (Recipe one : kOrder) {
-        if (offered(one) && exactly(one, s)) {
+        if (offered(one) && exactly(one, s, service != Service::Combine)) {
             j.recipe = one;
             break;
         }
@@ -351,10 +361,9 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             need(j, "Jewel of Chaos", s.chaos, 1, true);
             need(j, "Jewel of Bless", s.bless, 0);
             need(j, "Jewel of Soul", s.soul, 0);
-            // The old buying price over NpcPriceDivisor, MoneyPerFinalSuccessPercentage a point.
-            int64_t worth = 0;
-            for (int cell = 0; cell < kMachineCells; ++cell) worth += mixValue(tables, box[cell]);
-            j.rate = int(std::min<int64_t>(100, worth / 20000));
+            // The old buying price over NpcPriceDivisor, MoneyPerFinalSuccessPercentage a point:
+            // of the optioned things and the jewels alone, so a thing riding along shows nothing.
+            j.rate = int(std::min<int64_t>(100, s.worth / 20000));
             j.zen = kMixZenPerPoint * j.rate;
             if (j.nearest == Recipe::Wings) {
                 j.target = s.chaosWeaponCell;

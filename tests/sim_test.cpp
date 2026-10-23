@@ -9159,6 +9159,25 @@ void testChaosMachine() {
     box.put(1, plain);
     check(sim::judge(noria, box).recipe == sim::Recipe::None, "a thing with no option spoils it");
     check(sim::judge(noria, box).nearest == sim::Recipe::None, "and nothing is like it");
+    // On its own page it rides along, as WebZen's ChaosBoxMix lets it, and adds nothing (the
+    // user, 2026-10-23: the percent rose and the button went grey).
+    {
+        sim::Machine page;
+        page.put(0, optioned);
+        page.put(8, sim::Held{chaos, 0, 1});
+        const sim::Judged alone = sim::judge(noria, page, sim::Service::ChaosWeapon);
+        page.put(2, plain);
+        const sim::Judged riding = sim::judge(noria, page, sim::Service::ChaosWeapon);
+        check(riding.ready && riding.recipe == sim::Recipe::ChaosWeapon,
+              "on the Chaos Weapon page a thing with no option does not spoil it");
+        checkEqual(riding.rate, alone.rate, "and adds nothing to the rate");
+        sim::Held more = optioned;
+        more.refinement = 9;
+        more.option = 3;
+        page.put(4, more);
+        check(sim::judge(noria, page, sim::Service::ChaosWeapon).rate > alone.rate,
+              "another +4 with an option raises it");
+    }
 
     // The 1st level wings: the same box with one Chaos weapon at +4 with an option in it.
     {
