@@ -523,7 +523,7 @@ void World::throwAround(float seconds, const float near[3], gfx::Effects& effect
     voidClouds_.gather(effects);
     castleSparks_.update(seconds, near);
     castleSparks_.gather(effects);
-    crystalSparks_.update(near);
+    crystalSparks_.update(seconds, near);
     crystalSparks_.gather(effects);
     ruinEffects_.update(seconds, near);
     ruinEffects_.gather(effects);

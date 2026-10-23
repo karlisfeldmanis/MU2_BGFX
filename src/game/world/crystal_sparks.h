@@ -49,7 +49,7 @@ public:
     bool isOpen() const { return open_; }
 
     // Where the camera looks, in metres: what is near enough to draw.
-    void update(const float near[3]);
+    void update(float seconds, const float near[3]);
     void gather(gfx::Effects& effects) const;
 
     uint32_t pointCount() const { return uint32_t(points_.size()); }
@@ -62,6 +62,7 @@ private:
     };
     std::vector<Point> points_;
     float near_[3] = {0, 0, 0};
+    float clock_ = 0.0f;  // seconds, for the twinkle
     bool open_ = false;
     bgfx::TextureHandle sheet_ = BGFX_INVALID_HANDLE;
 };

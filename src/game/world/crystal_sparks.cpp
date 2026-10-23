@@ -1,3 +1,4 @@
+#include <cmath>
 #include "game/world/crystal_sparks.h"
 
 #include "content/placement.h"
@@ -106,7 +107,8 @@ void CrystalSparks::shutdown() {
     sheet_ = BGFX_INVALID_HANDLE;
 }
 
-void CrystalSparks::update(const float near[3]) {
+void CrystalSparks::update(float seconds, const float near[3]) {
+    clock_ += seconds;
     for (int k = 0; k < 3; ++k) near_[k] = near[k];
 }
 
@@ -115,13 +117,23 @@ void CrystalSparks::gather(gfx::Effects& effects) const {
     for (const Point& one : points_) {
         const float dx = one.at[0] - near_[0], dz = one.at[2] - near_[2];
         if (dx * dx + dz * dz > kReach * kReach) continue;
+        // Ours, so the sparks sit in the crystal rather than on it (the user, 2026-10-23: "that
+        // blue light has to be better integrated on crystal so it does not look like just
+        // placed there"): MU's blue taken halfway to the crystal's own pink-violet, at its
+        // brightness; 0.6 of MU's size; each twinkling slowly on its own phase from 0.45 to 1;
+        // and soft, thinning where it meets the facets instead of ending as a disc on them.
+        const float phase = (one.at[0] * 1.7f + one.at[2] * 2.3f + one.at[1] * 3.1f);
+        const float twinkle = 0.45f + 0.55f * (0.5f + 0.5f * std::sin(clock_ * 1.3f + phase));
+        const float own = (one.colour[0] + one.colour[1] + one.colour[2]) / 3.0f;
+        const float crystal[3] = {1.0f, 0.7f, 0.95f};
         gfx::Sprite sprite;
         for (int k = 0; k < 3; ++k) {
             sprite.position[k] = one.at[k];
-            sprite.colour[k] = one.colour[k];
+            sprite.colour[k] = (0.5f * one.colour[k] + 0.5f * crystal[k] * own * 1.6f) * twinkle;
         }
         sprite.colour[3] = 1.0f;
-        sprite.halfWidth = sprite.halfHeight = one.halfWidth;
+        sprite.halfWidth = sprite.halfHeight = one.halfWidth * 0.6f;
+        sprite.soft = 0.4f;
         sprite.sheet = sheet_;
         sprite.blend = gfx::Blend::Additive;
         if (!effects.add(sprite)) break;
