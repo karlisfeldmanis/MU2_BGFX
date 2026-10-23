@@ -178,6 +178,10 @@ void WaterfallSpray::gather(gfx::Effects& effects) const {
         sprite.spin = one.spin;
         sprite.sheet = sheet;
         sprite.blend = gfx::Blend::Additive;
+        // The mist soft (gfx::Sprite::soft, ours): a cloud a metre or two across sat in the
+        // pool and was cut on the water and the rocks in hard lines (the user, 2026-10-23: "water
+        // smoke is not smooth and little bit striped/cuted").
+        if (one.kind == Kind::Mist) sprite.soft = 1.0f;
         effects.add(sprite);
     }
 }
