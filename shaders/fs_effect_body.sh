@@ -58,23 +58,28 @@ float softness(float code, vec2 pixel, float depth)
 {
 	float quarters = floor(code / 8.0);
 	if (quarters < 0.5) return 1.0;
-	// The farthest of the pixel and four 2.5 pixels round it, the void (left clear) the farthest
-	// of all: a silhouette's pixel, its depth averaged with the void's 0 where the prepass is read
-	// resolved (Metal), and the lip's last tiles bending down into the chasm, a strip a pixel or
-	// two wide seen from above, otherwise stand as a near wall and draw a dark line along the lip
-	// (the user, 2026-10-23: "vissible", twice).
-	float behind = 0.0;
+	// Two things, read apart (the user, 2026-10-23: "vissible", "still see the plate").
+	//
+	// What stands in FRONT of it hides it, gone a metre and a half behind: the pass tests no
+	// depth for a soft sprite (gfx::Effects), so this is its occlusion. Read on the pixel and
+	// four 2.5 pixels round it, the farthest of them, the void (left clear) infinitely far: the
+	// lip's last strip bending into the chasm and a silhouette's resolved depth (Metal) are a
+	// pixel or two wide and would otherwise draw a dark line along the lip.
+	float near = 0.0;
 	for (int i = 0; i < 5; ++i)
 	{
-		vec2 step = i == 0 ? vec2(0.0, 0.0) : i == 1 ? vec2(2.5, 0.0) : i == 2 ? vec2(-2.5, 0.0)
-		          : i == 3 ? vec2(0.0, 2.5) : vec2(0.0, -2.5);
-		float at = prepassAt((pixel + step) * u_viewTexel.xy).a;
-		behind = max(behind, at <= 0.0 ? 1.0e4 : at);
+		vec2 off = i == 0 ? vec2(0.0, 0.0) : i == 1 ? vec2(2.5, 0.0) : i == 2 ? vec2(-2.5, 0.0)
+		         : i == 3 ? vec2(0.0, 2.5) : vec2(0.0, -2.5);
+		float at = prepassAt((pixel + off) * u_viewTexel.xy).a;
+		near = max(near, at <= 0.0 ? 1.0e4 : at);
 	}
-	// Full a reach in front of what stands behind it, nothing a metre and a half behind what
-	// stands in front of it: the pass tests no depth for a soft sprite (gfx::Effects), so this is its
-	// occlusion too, and the cut where it passes behind an edge is soft.
-	return smoothstep(-1.5, quarters * 0.25, behind - depth);
+	float shown = smoothstep(-1.5, 0.0, near - depth);
+	// What stands BEHIND it thins it, full its reach in front, so a sprite passing through the
+	// ground ends on no line. On the pixel alone: averaged round it, the plate of MU's ground
+	// ending over the void came out as a stack of parallel edges.
+	float behind = prepassAt(pixel * u_viewTexel.xy).a;
+	float thin = behind <= depth ? 1.0 : smoothstep(0.0, quarters * 0.25, behind - depth);
+	return shown * thin;
 }
 
 vec4 sheetAt(float slot, vec2 uv)

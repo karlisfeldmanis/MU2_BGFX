@@ -22,9 +22,11 @@ constexpr float kRiseLife = 300.0f, kRiseLight = 0.04f;
 constexpr float kHoverLight = 0.06f, kShadeLight = 0.2f;
 constexpr float kAfterSeen = 50.0f;    // frames a Hover or Shade outlives its box's sight
 constexpr float kDegrees = 0.0174533f;
-// Ours: metres over which a puff thins out as it nears the lip or a cliff behind it, where MU's
-// depth test cut it on a hard line (gfx::Sprite::soft).
-constexpr float kSoft = 2.0f;
+// Ours: metres over which a puff thins out as it nears the ground or a cliff behind it, where
+// MU's depth test cut it on a hard line (gfx::Sprite::soft). Half a metre: at 2 the dark plate
+// of ground west of the trench, a metre or two under the mist, dimmed it and showed its edge
+// through it (the user, 2026-10-23: "still see the plate"); the puffs keep off the ground now.
+constexpr float kSoft = 0.5f;
 
 }  // namespace
 
