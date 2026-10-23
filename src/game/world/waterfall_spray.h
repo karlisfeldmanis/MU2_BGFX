@@ -52,7 +52,7 @@ public:
     size_t dropCount() const { return drops_.size(); }
 
 private:
-    enum class Kind : uint8_t { Drops, Burst, Mist };
+    enum class Kind : uint8_t { Drops, Burst, Mist, Steam };
     struct Drop {
         Kind kind = Kind::Drops;
         float at[3] = {0, 0, 0};
@@ -73,7 +73,8 @@ private:
     float unit();
 
     bool open_ = false;
-    float burstScale_ = 1.0f;  // the show's burst_scale: the white specks' size, ours
+    float burstScale_ = 1.0f;
+    bool steam_ = false;  // the show's steam: ours, rising from the Burst boxes  // the show's burst_scale: the white specks' size, ours
     std::vector<Box> boxes_;
     std::vector<Drop> drops_;
     uint32_t seed_ = 0x51A7E2u;

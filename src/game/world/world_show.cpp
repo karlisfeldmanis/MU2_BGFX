@@ -135,6 +135,7 @@ void readShow(const core::Json& show, WorldShow& out) {
     out.waterfallSpray = named(show, "waterfall_spray");
     readFloat(show["waterfall_spray"], "burst_scale", &out.sprayBurstScale);
     show["waterfall_spray"].readInto("mist", &out.sprayMist);
+    show["waterfall_spray"].readInto("steam", &out.spraySteam);
     out.smallFires = named(show, "small_fires");
     out.skullGhosts = named(show, "skull_ghosts");
     out.castleSparks = named(show, "castle_sparks");

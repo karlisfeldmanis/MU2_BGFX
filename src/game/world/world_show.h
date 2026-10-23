@@ -103,6 +103,7 @@ struct WorldShow {
     bool desertVents = false;  // Tarkan's (desert_vents.h)
     bool waterfallSpray = false;  // Aida's (waterfall_spray.h)
     float sprayBurstScale = 1.0f;  // its white specks' size, 1 MU's (waterfall_spray.h)
+    bool spraySteam = false;       // ours: a faint steam rising from the specks' boxes
     bool sprayMist = true;         // its grey foot mist (waterfall_spray.h); false leaves it out
     bool smallFires = false;      // Aida's (small_fires.h)
     bool skullGhosts = false;     // Aida's (skull_ghosts.h)

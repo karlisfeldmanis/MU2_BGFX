@@ -20,6 +20,10 @@ constexpr float kTau = 6.2831853f;
 // Per kind, in MU's frames and units (waterfall_spray.h has the lines).
 constexpr float kDropsLife = 30.0f, kBurstLife = 20.0f, kMistLife = 40.0f;
 constexpr float kDropsLight = 0.2f, kBurstLight = 1.0f, kMistLight = 0.4f;
+// Ours (the user, 2026-10-23: "from those tiny sparkles has to come subtle water smoke"): a
+// steam puff thrown from a speck box one frame in kSteamEvery, born half a metre over it, rising
+// slowly and widening, faint, in and out over its life -- clear of the pool it rises from.
+constexpr float kSteamLife = 100.0f, kSteamLight = 0.08f, kSteamEvery = 6.0f;
 
 float perSecond(float unitsPerFrame) { return unitsPerFrame * kUnit / kFrame; }
 float accel(float unitsPerFramePerFrame) { return unitsPerFramePerFrame * kUnit / (kFrame * kFrame); }
@@ -52,6 +56,7 @@ void WaterfallSpray::open(const std::string& assetDir, const std::string& world,
     shutdown();
     if (!worldShow(world).waterfallSpray) return;
     burstScale_ = std::clamp(worldShow(world).sprayBurstScale, 0.05f, 2.0f);
+    steam_ = worldShow(world).spraySteam;
     content::Showing table;
     std::string error;
     if (content::loadShowing(assetDir + "/cooked/showing/showing.mus", table, error)) {
@@ -107,6 +112,14 @@ void WaterfallSpray::throwDrop(const Box& box) {
             drop.speed = perSecond(2.0f + std::floor(unit() * 5.0f));
             drop.scale = (10.0f + std::floor(unit() * 10.0f)) * 0.02f + box.scale;
             break;
+        case Kind::Steam:
+            drop.life = kSteamLife * (0.8f + 0.4f * unit());
+            drop.speed = perSecond(0.6f + 0.6f * unit());
+            drop.scale = 0.8f + 0.6f * unit();
+            drop.at[0] += (unit() - 0.5f) * 0.8f;
+            drop.at[1] += 0.5f;
+            drop.at[2] += (unit() - 0.5f) * 0.8f;
+            break;
         case Kind::Mist:
             drop.life = kMistLife;
             drop.speed = -perSecond(3.0f + std::floor(unit() * 3.0f));
@@ -135,6 +148,11 @@ void WaterfallSpray::update(float seconds, const float near[3]) {
                 one.speed -= accel(2.5f) * seconds;
                 one.scale += 0.005f * frames;
                 break;
+            case Kind::Steam:
+                one.scale += 0.012f * frames;
+                one.at[0] += (unit() * 2.0f - 1.0f) * kUnit * frames;
+                one.at[2] += (unit() * 2.0f - 1.0f) * kUnit * frames;
+                break;
             case Kind::Mist:
                 one.speed += accel(0.1f) * seconds;
                 one.scale += 0.03f * frames;
@@ -161,6 +179,11 @@ void WaterfallSpray::update(float seconds, const float near[3]) {
             // rand_fps_check(2), every frame, rand_fps_check(3).
             const float odds = box.kind == Kind::Drops ? 0.5f : box.kind == Kind::Burst ? 1.0f : 1.0f / 3.0f;
             if (odds >= 1.0f || unit() < odds) throwDrop(box);
+            if (steam_ && box.kind == Kind::Burst && unit() < 1.0f / kSteamEvery) {
+                Box steam = box;
+                steam.kind = Kind::Steam;
+                throwDrop(steam);
+            }
         }
     }
 }
@@ -168,15 +191,24 @@ void WaterfallSpray::update(float seconds, const float near[3]) {
 void WaterfallSpray::gather(gfx::Effects& effects) const {
     if (!open_) return;
     for (const Drop& one : drops_) {
-        const bgfx::TextureHandle sheet = sheets_[int(one.kind)];
+        const bool steam = one.kind == Kind::Steam;
+        const bgfx::TextureHandle sheet = sheets_[steam ? int(Kind::Mist) : int(one.kind)];
         if (!bgfx::isValid(sheet)) continue;
-        const float level = lightOf(uint8_t(one.kind), one.age, one.life);
+        float level;
+        if (steam) {
+            const float t = std::clamp(one.age / one.life, 0.0f, 1.0f);
+            const float rise = std::sin(3.14159265f * t);
+            level = kSteamLight * rise * rise;
+        } else {
+            level = lightOf(uint8_t(one.kind), one.age, one.life);
+        }
         gfx::Sprite sprite;
         for (int i = 0; i < 3; ++i) {
             sprite.position[i] = one.at[i];
-            sprite.colour[i] = level;
+            sprite.colour[i] = steam ? 0.25f : level;
         }
-        sprite.colour[3] = 1.0f;
+        // The steam's faint level in alpha, which has the steps its fade needs (chasm_mist.cpp).
+        sprite.colour[3] = steam ? std::min(level / 0.25f, 1.0f) : 1.0f;
         sprite.halfWidth = sprite.halfHeight =
             0.5f * kSheetMetres * one.scale * (one.kind == Kind::Burst ? burstScale_ : 1.0f);
         sprite.spin = one.spin;
@@ -185,7 +217,7 @@ void WaterfallSpray::gather(gfx::Effects& effects) const {
         // The mist soft (gfx::Sprite::soft, ours): a cloud a metre or two across sat in the
         // pool and was cut on the water and the rocks in hard lines (the user, 2026-10-23: "water
         // smoke is not smooth and little bit striped/cuted").
-        if (one.kind == Kind::Mist) sprite.soft = 1.0f;
+        if (one.kind == Kind::Mist || steam) sprite.soft = 1.0f;
         effects.add(sprite);
     }
 }
