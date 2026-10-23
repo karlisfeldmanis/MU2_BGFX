@@ -1516,6 +1516,28 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
                 }
             }
 
+            // Smoothed over the corners round it, twice, the rim held level: measured in whole
+            // tiles the drop came in terraces, one lit strip each down the wall (the user,
+            // 2026-10-23: "still striped at bottom").
+            for (int pass = 0; pass < 2; ++pass) {
+                std::vector<float> was = sink;
+                for (int r = 0; r < side; ++r)
+                    for (int c = 0; c < side; ++c) {
+                        const size_t v = size_t(r) * size_t(side) + size_t(c);
+                        if (rim[v] || was[v] <= 0.0f) continue;
+                        float sum = 0.0f;
+                        int count = 0;
+                        for (int dr = -1; dr <= 1; ++dr)
+                            for (int dc = -1; dc <= 1; ++dc) {
+                                const int rr = r + dr, cc = c + dc;
+                                if (rr < 0 || cc < 0 || rr >= side || cc >= side) continue;
+                                sum += was[size_t(rr) * size_t(side) + size_t(cc)];
+                                ++count;
+                            }
+                        sink[v] = std::max(sum / float(count), 0.05f);
+                    }
+            }
+
             // The sunk heights, and the normals of every corner whose neighbourhood moved:
             // the rim's own corners too, since the slope beside them is new.
             std::vector<float> cornerY(sink.size(), 0.0f);
