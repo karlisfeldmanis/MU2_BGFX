@@ -1515,7 +1515,10 @@ def updates_html(lines: list, lang: str = "en") -> str:
         for heading, texts in (("New", new), ("Fixed", fixed)):
             if texts:
                 out.append(f'<div class="fix-group">\n<h4>{heading}</h4>\n<ul>\n'
-                           + "".join(f"<li>{escape(t)}</li>\n" for t in texts) + "</ul>\n</div>")
+                           # The lines stay English in every language (the user, 2026-10-23: "lets use
+                           # english for update notes"): translate="no" keeps them out of i18n's units,
+                           # so neither /translate nor mu ship translate sees them.
+                           + "".join(f'<li translate="no">{escape(t)}</li>\n' for t in texts) + "</ul>\n</div>")
         out.append("</details>")
     return "\n".join(out)
 
