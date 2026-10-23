@@ -14,6 +14,7 @@
 #include "game/world/world_show.h"
 #include "sim/maps.h"
 #include "sim/quests.h"
+#include "sim/rebirth.h"
 
 namespace mu::game {
 
@@ -67,12 +68,9 @@ static int wornSlotFor(const Play& play, const sim::Held& what) {
 // Whether a carried row may stand in for a bound one: the same group, and either exactly the
 // Ale or the Town Portal, or the same family at no higher a rank -- the healing family falls
 // to the apple and the mana family to the small mana potion. Quick.Substitutes.
+static_assert(sim::kQuickKeys == Hud::kQuickKeys, "the desk's potion keys are the sim's");
 static bool substitutes(const content::Tables& tables, int32_t carried, int32_t bound) {
-    const content::ItemRow& c = tables.items[size_t(carried)];
-    const content::ItemRow& b = tables.items[size_t(bound)];
-    if (c.group != b.group) return false;
-    if (sim::ale(b) || sim::portal(b) || sim::antidote(b)) return c.number == b.number;
-    return c.number <= b.number && (b.number >= 4 ? sim::restores(c) : sim::heals(c));
+    return sim::standsIn(tables, carried, bound);
 }
 
 
@@ -300,6 +298,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         std::string name;
         if (!play.playerName(hero->id, &name, nullptr)) name = heroName_;
         reborn_.announce(count, name);
+        play.sound().voice("voice/lugard/lugard_risen.wav");
         // Off a server no one says it on Global, so the bench says it here (the server's own is
         // announceRebirth, server/src/chat.cpp).
         if (!play.remote()) {
@@ -402,7 +401,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 break;
             case Then::Rebirth:
                 rebirthWindow_.answered(one.ok(), play.realm().refusal());
-                if (!one.ok()) refused();
+                // Refused: the rite's words he began on the yes are taken back.
+                if (!one.ok()) {
+                    refused();
+                    play.sound().stopVoice();
+                    rebirthAsked_ = false;
+                }
                 break;
             case Then::ZenBox:
                 if (one.ok()) {
@@ -941,10 +945,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // the warp's own sMagic plays as he lands. Not while a box or the menu has the screen.
     {
         const bool held = amount_.up() || report_.up() || whatsNew_.up() || menu_.up();
-        if (goBack_.update(seconds, goBackShown_ && play.isOpen(), goBackLeft_, goBackClosed_,
+        const GoBackPlate::Asked asked =
+            goBack_.update(seconds, goBackShown_ && play.isOpen(), goBackLeft_, goBackClosed_,
                            goBackWhere_, held ? Pointer{} : pointer, window.width(),
-                           window.height(), hud_.plateTop())) {
-            goBackAsked_ = true;
+                           window.height(), hud_.plateTop());
+        if (asked != GoBackPlate::Asked::None) {
+            (asked == GoBackPlate::Asked::Go ? goBackAsked_ : goBackDismissed_) = true;
             click();
         }
     }
@@ -1452,16 +1458,31 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // Lugard, the Rebirth (game/ui/rebirth_window.h), as the quest dialog is: the left column,
     // walking away shuts him in the realm, and a yes shuts him there too as the rite begins.
     const bool rebirthing = play.isOpen() && play.realm().rebirthing() >= 0;
+    // He reads his page as it opens, in his own voice (content/voice/lugard): one not yet at the
+    // edge is sent away, the first rite is offered at length, the next ones in a line. Shut by
+    // hand or walked off, he stops mid-line, as a quest giver does; a yes lets him go on.
     if (rebirthing && !rebirthing_) {
         click();
         if (play.isOpen()) play.ui(Play::Ui::Opened);
+        const sim::Body& hero = play.realm().hero();
+        const char* page = hero.level < sim::kRebirthLevel ? "resting" : hero.rebirths > 0 ? "again" : "offer";
+        play.sound().voice(std::string("voice/lugard/lugard_") + page + ".wav");
+        rebirthAsked_ = false;
     }
+    if (!rebirthing && rebirthing_ && !rebirthAsked_) play.sound().stopVoice();
     rebirthing_ = rebirthing;
     if (rebirthing_) {
         RebirthRequests asked;
         rebirthWindow_.update(float(window.width()), float(window.height()), play.realm(), pointer, &asked);
         if (asked.click) click();
-        if (asked.reborn) expect(play.rebirth(), Then::Rebirth);
+        // The yes: he says the rite's words over the kneel, cutting his offer as it is given (the
+        // user, 2026-10-22: "NPC audio kept playing while a agreed to kneel faster"); "Rise"
+        // waits for the stand.
+        if (asked.reborn) {
+            play.sound().voice("voice/lugard/lugard_ceremony.wav");
+            expect(play.rebirth(), Then::Rebirth);
+            rebirthAsked_ = true;
+        }
         if (asked.close) {
             play.closeRebirth();
             click();
@@ -1577,7 +1598,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         } else if (asked.use >= 0 && trading_ && sim::baggable(asked.use)) {
             // At a merchant a right-click sells it, as a drop on the shelf does (the user,
             // 2026-10-17: "allow to sell item with right click if vendor is opened").
-            expect(play.sell(asked.use), Then::Refused);
+            expect(play.sell(asked.use, piecesForSale(play, asked.use, 0)), Then::Refused);
         } else if (const int worn = asked.use >= 0 && sim::baggable(asked.use)
                                         ? wornSlotFor(play, play.realm().satchel()[asked.use])
                                         : -1;
@@ -1618,7 +1639,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         int carriedW = 1, carriedH = 1;
         if (asked.outside >= 0) footprint(play, play.realm().satchel()[asked.outside], &carriedW, &carriedH);
         if (asked.outside >= 0 && trading_ && shelf_.covers(asked.outsideX, asked.outsideY)) {
-            expect(play.sell(asked.outside, asked.pieces), Then::Refused);
+            expect(play.sell(asked.outside, piecesForSale(play, asked.outside, asked.pieces)), Then::Refused);
         } else if (asked.outside >= 0 && banking_ &&
                    chest_.covers(asked.outsideX, asked.outsideY)) {
             // Into the vault cell under the pointer; over the foot or the head, the first cell
@@ -1775,6 +1796,8 @@ void Desk::quickKeys(const gfx::Window& window, Play& play, const Pointer& point
     const sim::Realm& realm = play.realm();
     const content::Tables& tables = *realm.tables();
     const sim::Satchel& bag = realm.satchel();
+    // A healing or mana potion binds itself to a key as it arrives (sim::bindArrivals).
+    if (sim::bindArrivals(tables, bag, potionsSeen_, quick_) > 0) core::logf("window: a potion bound itself to a key");
     // **The boxes rearrange by dragging**, as the skill keys do (the user, 2026-10-01: "i cant
     // reorder potions / drag/drop"). A press lifts a bound box; let go on another box it is a
     // swap, on its own box nothing, and anywhere off the boxes it is taken off the bar -- the
@@ -2923,6 +2946,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (questLog_.up()) interface_.add(questLog_.tipCanvas());
     if (talents_.up()) interface_.add(talents_.card());
     if (endurance_.showing()) interface_.add(endurance_.tipCanvas());
+    if (characterOpen_) interface_.add(card_.tipCanvas());
     if (chat_.tipping() && !chatHidden()) interface_.add(chat_.tipCanvas());
     // Last of all, over every window too: MU2's own CanvasLayer{Layer=128} -- a pointer is over
     // whatever it is pointing at, and the panel is something you point at as well.

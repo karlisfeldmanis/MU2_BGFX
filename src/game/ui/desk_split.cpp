@@ -71,4 +71,11 @@ int Desk::piecesForBox(const Play& play, int slot, int part) const {
     return wanted >= what.durability ? 0 : wanted;
 }
 
+int Desk::piecesForSale(const Play& play, int slot, int part) const {
+    if (part > 0) return part;
+    const sim::Realm& realm = play.realm();
+    if (!realm.tables() || slot < 0 || slot >= sim::kSlots) return 0;
+    return sim::piecesSold(*realm.tables(), realm.satchel()[slot]);
+}
+
 }  // namespace mu::game

@@ -1,0 +1,233 @@
+{
+  "item": "GloveMale37",
+  "mu_name": "Iris Gloves",
+  "mu_name_from": "MuMain loads MODEL_IRIS_* from Data/Player/CW_GloveMale03.bmd (ZzzOpenData.cpp:236-246; the helm is CW_HelmMale 3). MU's number 36. Ours is *Male37 by the index-plus-one rule.",
+  "why_this_one": "Season 2's lower-level sets, missing here (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's): the Fairy Elf's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (Season 2's sets; 0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:271.",
+    "call": "CreateGloves(36, \"Iris Gloves\", 61, 22, 6, 59, 0, 50, 70, 0, 0, 1, 0, 0, 0)",
+    "group": 10,
+    "number": 36,
+    "drop_level": 61,
+    "drops_from_monsters": true,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 22,
+    "durability": 59,
+    "requires": {
+      "level": 0,
+      "strength": 50,
+      "agility": 70,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "attack_speed": 6,
+    "class_level_note": "The Fairy Elf's, first class and up: OpenMU's elfClassLevel 1."
+  },
+  "sheets": {
+    "armor_arm": "iris_armor_arm.png",
+    "forest_h1": "iris_forest_h1.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under an iris_ prefix (MU's armor_* and forest_* are too generic to keep): green lacquer plate with pink inlay, a dark skirt, and forest_* her bare skin hung with chain jewellery; level_man033 her head and hair, Red Spirit's.",
+  "sheet_materials": {
+    "armor_arm": "painted_steel",
+    "forest_h1": "skin"
+  },
+  "material_note": "painted_steel with the cast grain for the plate; the skirt cloth; forest_* skin (the chains painted on it); forest_legs, a dark strap, leather; level_man033 hair.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain's arms for MODEL_IRIS_ARMOR, PANTS and GLOVES (ZzzObject.cpp:7731-7763) draw one mesh alone when the skin is hidden, else the whole body: no glow, no chrome pass.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 50,
+      "area": 485.2,
+      "along": [
+        -1.8,
+        8.2
+      ],
+      "mu_uv": [
+        0.585,
+        0.002,
+        0.997,
+        0.97
+      ],
+      "bake_uv": [
+        0.01,
+        0.008,
+        0.86,
+        0.85
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 13,
+      "area": 304.8,
+      "along": [
+        -7.7,
+        5.9
+      ],
+      "mu_uv": [
+        0.014,
+        0.036,
+        0.861,
+        0.995
+      ],
+      "bake_uv": [
+        0.423,
+        0.036,
+        0.923,
+        0.895
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 33,
+      "area": 830.3,
+      "along": [
+        -6.8,
+        6.5
+      ],
+      "mu_uv": [
+        0.138,
+        0.004,
+        0.997,
+        0.985
+      ],
+      "bake_uv": [
+        0.008,
+        0.224,
+        0.199,
+        0.816
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 50,
+      "area": 485.2,
+      "along": [
+        -1.8,
+        8.2
+      ],
+      "mu_uv": [
+        0.585,
+        0.002,
+        0.997,
+        0.97
+      ],
+      "bake_uv": [
+        0.089,
+        0.008,
+        0.992,
+        0.857
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 13,
+      "area": 304.8,
+      "along": [
+        -7.7,
+        5.9
+      ],
+      "mu_uv": [
+        0.014,
+        0.036,
+        0.861,
+        0.995
+      ],
+      "bake_uv": [
+        0.502,
+        0.075,
+        0.976,
+        0.447
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 33,
+      "area": 830.3,
+      "along": [
+        -6.8,
+        6.5
+      ],
+      "mu_uv": [
+        0.138,
+        0.004,
+        0.997,
+        0.985
+      ],
+      "bake_uv": [
+        0.31,
+        0.204,
+        0.681,
+        0.677
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 55,
+      "area": 678.6,
+      "along": [
+        -4.0,
+        7.9
+      ],
+      "mu_uv": [
+        0.008,
+        0.011,
+        0.987,
+        0.992
+      ],
+      "bake_uv": [
+        0.009,
+        0.008,
+        0.41,
+        0.954
+      ]
+    },
+    {
+      "island": 7,
+      "material": "skin",
+      "triangles": 55,
+      "area": 678.6,
+      "along": [
+        -4.0,
+        7.9
+      ],
+      "mu_uv": [
+        0.008,
+        0.011,
+        0.987,
+        0.992
+      ],
+      "bake_uv": [
+        0.008,
+        0.221,
+        0.78,
+        0.944
+      ]
+    }
+  ]
+}

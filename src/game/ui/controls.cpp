@@ -454,6 +454,10 @@ void glyph(gfx::Canvas& canvas, const Box& box, Glyph which, uint32_t ink, float
 
 }  // namespace
 
+void bare(gfx::Canvas& canvas, const Box& box, Glyph which, uint32_t ink, float u) {
+    glyph(canvas, box, which, ink, u);
+}
+
 // ---- lifetime ------------------------------------------------------------------------------------
 
 // Opened by each screen that draws controls -- the desk in the world, the character screen

@@ -1,0 +1,149 @@
+{
+  "item": "Sword24",
+  "mu_name": "Explosion Blade",
+  "mu_name_from": "MODEL_EXPLOSION_BLADE (MODEL_SWORD + 23), loaded from Item/HDK_Sword2.bmd (ZzzOpenData.cpp:1096). Group 0 number 23 in OpenMU S6 Weapons.cs.",
+  "why_this_one": "Kanturu's level-380 weapons (the user, 2026-10-22: 'lets now cook kanturu weapons and armors'), every class's but the Dark Lord's (the Soleil Scepter, HDK_Mace, left out); dormant until Kanturu drops them.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:160.",
+    "call": "CreateWeapon(0, 23, 0, 56, 2, 4, true, \"Explosion Blade\", 147, 127, 155, 45, 110, 134, 380, 98, 48, 7, 0, 0, 0, 0, 1, 0, 0, 0)",
+    "call_note": "The Season 6 CreateWeapon: group, number, slot, skill, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strength, agility, energy, vitality, then darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel.",
+    "group": 0,
+    "number": 23,
+    "drop_level": 147,
+    "drops_from_monsters": false,
+    "drops_from_monsters_note": "Dormant: MU drops it in Kanturu, which is not on main yet. Built, worn and cooked, but no monster leaves it until the map ships (the user, 2026-10-22: 'Dormant until Kanturu'). Its drop level is MU's.",
+    "slot": 0,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 127,
+    "maximum_damage": 155,
+    "attack_speed": 45,
+    "durability": 110,
+    "magic_power": 134,
+    "requires": {
+      "level": 0,
+      "strength": 98,
+      "agility": 48,
+      "energy": 7,
+      "vitality": 0
+    },
+    "requires_note": "MU asks level 380 (OpenMU's levelRequirement). Left at 0 for now: the user, 2026-10-22, settles the 380 items' level with Kanturu's ('Formula, decide later').",
+    "classes": [
+      "gladiator"
+    ],
+    "skill": 56,
+    "class_level_note": "The Magic Gladiator's alone: OpenMU's magicGladiatorClassLevel 1, his only class."
+  },
+  "stance": "two_hand_sword",
+  "stance_from": "Width 2: PLAYER_STOP_TWO_HAND_SWORD and its sweeps, as the Rune Blade (MuMain's *_TWO_HAND_SWORD_TWO, ZzzCharacter.cpp:362).",
+  "two_handed": true,
+  "sheets": {
+    "BB": "explosion_bb.png",
+    "aa": "explosion_aa.tga.png",
+    "CC": "explosion_cc.png"
+  },
+  "sheet_from": "Data/Item: BB.OZJ (64x32, the gold-and-steel hilt, mesh 0, 87 triangles), aa.OZT (256x64, the steel blade with an orange inlay, its alpha cutting the edge, mesh 1, 110) and CC.OZJ (64x16, a pale violet haze, mesh 2, 48), decoded under an explosion_ prefix (MU's names are too generic).",
+  "cutout": [
+    "aa"
+  ],
+  "cutout_alpha": [
+    "aa"
+  ],
+  "cutout_alpha_from": "aa.OZT's alpha is the blade's cut edge.",
+  "sheet_materials": {
+    "BB": "painted_steel",
+    "aa": "steel"
+  },
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    },
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "glow": {
+    "CC": {
+      "pulse": [
+        0.0,
+        0.4
+      ]
+    }
+  },
+  "glow_note": "RenderPartObjectBody's arm (ZzzObject.cpp:7668-7685): the body solid; mesh 0 again added; mesh 2 (CC, the haze) again added under (0.3, 0.3, 0.4); mesh 1 (aa) again added at 0.5 under (0.4, 0.4, 0.8). Here the haze a glow alone at 0.4, the rest solid: the re-added hilt and blade overshoot under our bloom, left out.",
+  "rig_note": "export-rig --actions=all: twelve bones, one action of one key; nothing moves, no rig kept. Held, MuMain's arm is ZzzCharacter.cpp:7145-7176: blue lights and turning shinies on bones 4 and 6-8 (fx/held_lights).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 110,
+      "area": 10623.2,
+      "along": [
+        -27.0,
+        192.3
+      ],
+      "mu_uv": [
+        0.01,
+        0.011,
+        0.996,
+        0.958
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.685,
+        0.774
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 87,
+      "area": 2850.9,
+      "along": [
+        -30.3,
+        36.2
+      ],
+      "mu_uv": [
+        -0.006,
+        0.012,
+        0.999,
+        0.985
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.992,
+        0.993
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 48,
+      "area": 3324.0,
+      "along": [
+        18.7,
+        177.6
+      ],
+      "mu_uv": [
+        0.01,
+        0.016,
+        0.99,
+        0.975
+      ],
+      "bake_uv": [
+        0.17,
+        0.007,
+        0.523,
+        0.322
+      ]
+    }
+  ]
+}

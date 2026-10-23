@@ -111,6 +111,32 @@
 //         red eyes (bones 2, 3) a light at 2 breathing |sin(WorldTime*0.001)|*0.8 + 0.2.
 //     MODEL_IMPERIAL_STAFF (:8037-8075): blue lights (0.3, 0.3, 0.9) at 2-3 on bones 2-4, and on
 //         bone 5 a red light and pink shinies.
+//   And three of the wave's shields (2026-10-22), on their bones at rest; MU's BITMAP_FLARE_RED
+//   is drawn with BITMAP_LIGHT in red. The Frost Barrier has no case.
+//     MODEL_CRIMSONGLORY (:8118-8144): gold (0.8, 0.6, 0.2) lights at 1.5 on bones 4-10, and red
+//         flares at 0.5, 0.3 and 0.3 on bones 1-3 breathing |sin(WorldTime*0.0005)|.
+//     MODEL_SALAMANDER_SHIELD (:8146-8167): a red (0.9, 0, 0.2) light at 2 on bone 1; its fire
+//         particles not thrown.
+//     MODEL_GUARDIAN_SHILED (:8169-8191): violet (0.8, 0.3, 0.8) lights at 1.5 on bones 1-9,
+//         breathing |sin(WorldTime*0.001)| + 0.1.
+//   And Kanturu's four (2026-10-22), on their bones at rest, MU's offsets turned by the bone:
+//     MODEL_BONE_BLADE (:7131-7143): two orange BITMAP_LIGHT + 1 at 0.75 either side of the guard,
+//         (f, f - 0.5, f - 0.5), f flickering about 0.7.
+//     MODEL_EXPLOSION_BLADE (:7145-7176): blue (0.2, 0.2, f) lights up the blade, bones 4 and 6-8
+//         and 30 out from 4, and two shinies on 4; MU turns them, here they stand.
+//     MODEL_SYLPH_WIND_BOW (:7079-7101): yellow (0.5, 0.5, 0.1) lights at 2 on the limb tips (bones
+//         7, 15) and three (1, 1, 0.4) at 0.8, 1.3 and 2 at the grip; its sparks not thrown.
+//     MODEL_GRAND_VIPER_STAFF (:7178-7200): at the head, 170 up bone 0, a grey shiny and a pink
+//         (1, 0.4, 1) light and two shinies; its energy joint not thrown.
+//   And the three gambling-shop weapons (2026-10-23), on their bones at rest; MU's BITMAP_MAGIC
+//   rings, its moon and the bow's shock waves not thrown, BITMAP_SHINY + 6 drawn as + 1:
+//     MODEL_CHROMATIC_STAFF (:8223-8252): on zx01 (bone 8), the head, a pink (0.9, 0.1, 0.4)
+//         light at 3.5 and a yellow shiny at 1; on bones 1-7, the beads, pink lights at 0.6 and
+//         yellow shinies at 0.3.
+//     MODEL_BEUROBA (:8293-8310): pink-violet (0.9, 0.2, 0.7) shinies at 0.8 and 0.3 on zx01 and
+//         zx02 (bones 3, 4), the blade's gems; a green (0.2, 0.9, 0.1) light at 1.5 on bone 5.
+//     MODEL_AIR_LYN_BOW (:8347-8380): two teal (0.2, 0.8, 0.5) lights at 0.8 on each limb tip,
+//         zx02 and zx03 (bones 7, 11); its flares on rx01-rx08 in a shot not thrown.
 //
 // A blue string of lights down the crossbow, a blue spark on the shield's face, eight
 // violet-blue lights along the spear's swirl; the staff's two blue ends, the mace's yellow
@@ -175,10 +201,20 @@ public:
         StingerBow,
         DeadlyStaff,
         ImperialStaff,
+        CrimsonGlory,
+        SalamanderShield,
+        GuardianShield,
+        BoneBlade,
+        ExplosionBlade,
+        SylphWindBow,
+        GrandViperStaff,
+        ChromaticStaff,
+        Beuroba,
+        AirLynBow,
     };
     // The Stinger Bow's 44 bones, each with its light (ZzzCharacter.cpp:7972-7999).
     static constexpr int kMostPoints = 44;
-    static constexpr Item kItems[38] = {Item::SaintCrossbow,   Item::GrandSoulShield,
+    static constexpr Item kItems[48] = {Item::SaintCrossbow,   Item::GrandSoulShield,
                                         Item::DragonSpear,     Item::DragonSoulStaff,
                                         Item::ElementalMace,   Item::GreatReignCrossbow,
                                         Item::ThunderBlade,    Item::LegendaryShield,
@@ -196,7 +232,12 @@ public:
                                         Item::SwordDancer,     Item::Flamberge,
                                         Item::SwordBreaker,    Item::ImperialSword,
                                         Item::FrostMace,       Item::StingerBow,
-                                        Item::DeadlyStaff,     Item::ImperialStaff};
+                                        Item::DeadlyStaff,     Item::ImperialStaff,
+                                        Item::CrimsonGlory,    Item::SalamanderShield,
+                                        Item::GuardianShield,  Item::BoneBlade,
+                                        Item::ExplosionBlade,  Item::SylphWindBow,
+                                        Item::GrandViperStaff, Item::ChromaticStaff,
+                                        Item::Beuroba,         Item::AirLynBow};
 
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);

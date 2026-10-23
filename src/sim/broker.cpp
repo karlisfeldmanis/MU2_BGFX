@@ -11,22 +11,34 @@
 
 namespace mu::sim {
 
+// What a bound thing sells for, a part of its price (npcValue).
+constexpr int64_t kBoundSale = 100;
+
 int64_t npcValue(const content::Tables& tables, const Held& what) {
     if (what.empty() || size_t(what.item) >= tables.items.size()) return -1;
     const content::ItemRow& row = tables.items[size_t(what.item)];
     // A quest item is not a merchant's: the class treasure. The Archangel's weapons are sold as
     // any, in the world where the counters are (archangelQuestItem).
     if (classTreasure(row)) return -1;
-    const bool stacks = row.group == kGroupPotions;
-    int64_t paid = sellingPrice(row, what.refinement, stacks ? std::max<int>(1, what.durability) : 1,
-                                what.skill, what.durability, row.durability, what.luck,
-                                what.option, excellentCount(what.excellent));
+    // A stack is that many pieces' price. The jewels and the drinks are priced by their count
+    // (buyingPrice); everything else that stacks -- the Chaos, the Ale and the Town Portal, the
+    // pets, Loch's Feather, the tickets and the boxes -- is one piece's price times the count. A
+    // stack of five Feathers sold for one Feather's 158,200.
+    const int pieces = stacks(row) ? std::max<int>(1, what.durability) : 1;
+    const bool counted = refiningJewel(row) || heals(row) || restores(row) || antidote(row);
+    int64_t paid = sellingPrice(row, what.refinement, counted ? pieces : 1, what.skill,
+                                what.durability, row.durability, what.luck, what.option,
+                                excellentCount(what.excellent));
+    if (!counted) paid *= pieces;
     // Worn gear fetches less: 0.6 of the share gone comes off (CalculateSellingPrice).
     if (wears(row)) paid = wornSellingPrice(paid, what.durability, maximumDurability(row, what));
     // A rune is a share of the Jewel of Creation's price by its rarity (sim/items.h kRuneSale).
     if (const PowerRow* power = powerOf(what.powers[0]); creation(row) && power != nullptr) {
         paid = int64_t(double(paid) * kRuneSale[int(power->rarity)]);
     }
+    // **A bound thing fetches almost nothing** (the user, 2026-10-22: "bound items has to sell for
+    // almsot nothing"): a hundredth, so a quest's gear is worn and not cashed. Ours.
+    if (what.bound && paid > 0) paid = std::max<int64_t>(1, paid / kBoundSale);
     return paid > 0 ? paid : -1;
 }
 

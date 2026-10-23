@@ -740,6 +740,7 @@ Wearer Realm::wearer() const {
     who.maxHealth = hero.maxHealth;
     who.maxMana = hero.maxMana;
     who.inCastle = event() == EventKind::Castle;
+    who.rebirths = hero.rebirths;
     return who;
 }
 
@@ -975,8 +976,6 @@ bool Realm::useItem(int slot) {
 // Luck is `Held::luck`, rolled on a drop. And the Bless draws nothing from the dice: at 100 the
 // roll cannot matter, and a seeded log without a Soul in it stays the log it was.
 bool Realm::refine(int jewelSlot, int targetSlot) {
-    constexpr int kSoulChance = 50;    // SoulJewelConsumeHandlerPlugIn.SuccessRatePercentage
-    constexpr int kSoulResetFrom = 7;  // ResetToLevel0WhenFailMinLevel
     if (!tables_ || !baggable(jewelSlot) || targetSlot < 0 || targetSlot >= kSlots ||
         jewelSlot == targetSlot) {
         return false;
@@ -987,7 +986,7 @@ bool Realm::refine(int jewelSlot, int targetSlot) {
     Held thing = me().bag[targetSlot];
     // A Rune of Creation is set, not spent on a roll: its power into the thing's first empty
     // socket, and the rune gone. Nothing is drawn.
-    if (settable(*tables_, jewel, thing, hero.kin, hero.second)) {
+    if (settable(*tables_, jewel, thing, wearer())) {
         const int socket = freeSocket(thing);
         thing.powers[socket] = jewel.powers[0];
         // A quest's rune no longer binds what it is set in: it bound a dropped sword for good
@@ -1709,17 +1708,28 @@ int Realm::buy(int shelfSlot) {
 // they drop (2026-10-10); no counter stands in a Blood Castle, where one is a quest item.
 int64_t Realm::sellValue(int slot) const {
     if (!baggable(slot) || me().bag[slot].empty()) return -1;
-    return npcValue(*tables_, me().bag[slot]);
+    Held sold = me().bag[slot];
+    if (const int pieces = piecesSold(*tables_, sold); pieces > 0) sold.durability = int16_t(pieces);
+    return npcValue(*tables_, sold);
 }
 
-int64_t Realm::sellItem(int slot) {
+int64_t Realm::sellItem(int slot, int pieces) {
     if (me().trading < 0 || !serving(me().trading) || !baggable(slot) || me().bag[slot].empty()) return -1;
     // A quest item is not sold: the class treasure.
     const content::ItemRow& selling = tables_->items[size_t(me().bag[slot].item)];
     if (classTreasure(selling)) return -1;
-    const Held thing = me().bag[slot];
-    const int64_t paid = std::max<int64_t>(0, sellValue(slot));
-    me().bag.lift(slot);
+    const Held whole = me().bag[slot];
+    const bool part = poursMost(selling) > 0 && !ammunition(selling) && pieces > 0 && pieces < whole.durability;
+    Held thing = whole;
+    if (part) thing.durability = int16_t(pieces);
+    const int64_t paid = std::max<int64_t>(0, npcValue(*tables_, thing));
+    if (part) {
+        Held left = whole;
+        left.durability = int16_t(whole.durability - pieces);
+        me().bag.put(slot, left);
+    } else {
+        me().bag.lift(slot);
+    }
     me().money += paid;
     me().sold.push({thing, paid, slot, tick_});
     say(What::Sold, mine(), thing.item, int32_t(paid), slot);
@@ -1997,6 +2007,8 @@ int Realm::deposit(int bagSlot, int cell) {
     const int onto = me().vault.holder(*tables_, cell);
     if (const int went = onto >= 0 ? topUp(*tables_, me().vault, onto, me().bag[bagSlot]) : 0) {
         unstack(me().bag, bagSlot, went);
+        // A worn quiver poured onto the vault's: his quiver's plus goes with it.
+        if (worn) rearm(mine());
         return onto;
     }
     // A jewel let go on a thing it works: applied, not stored.
@@ -2086,8 +2098,7 @@ int Realm::wearFromVault(int cell, int worn) {
 
 bool Realm::worksOn(const Held& jewel, const Held& thing) const {
     if (!tables_ || jewel.empty() || thing.empty()) return false;
-    const Body& hero = mine();
-    return settable(*tables_, jewel, thing, hero.kin, hero.second) ||
+    return settable(*tables_, jewel, thing, wearer()) ||
            refinable(*tables_, jewel, thing);
 }
 

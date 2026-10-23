@@ -151,6 +151,10 @@ private:
     std::shared_ptr<Knock> knock_;
     double knockWait_ = 0.0;
     int knocks_ = 0;
+    // The lobby's prints the knock carries, read from Lorencia's tables at the first knock.
+    bool knockPrints_ = false;
+    uint64_t knockItems_ = 0;
+    uint64_t knockRules_ = 0;
     static constexpr double kKnockEvery = 3.0;
     void sendBug(const Context& ctx, const game::Desk::BugAsk& ask);
     // The line's chip, top right (game/ui/line_chip.h): the frame rate, the ping and, on a line

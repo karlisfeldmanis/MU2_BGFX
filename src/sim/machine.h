@@ -188,7 +188,10 @@ constexpr int kFuseLife = 1;
 struct Need {
     std::string name;
     int have = 0, need = 0;
-    bool met() const { return need == 0 ? true : have == need; }
+    // More than `need` is welcome, not an error: the Chaos Weapon's and the wings' items and
+    // Chaos, where each thing past the first raises the rate (exactly()'s `>= 1`).
+    bool atLeast = false;
+    bool met() const { return need == 0 ? true : atLeast ? have >= need : have == need; }
 };
 constexpr int kMostNeeds = 5;  // Add Socket's five
 

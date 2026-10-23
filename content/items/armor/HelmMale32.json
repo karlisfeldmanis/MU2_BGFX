@@ -1,0 +1,103 @@
+{
+  "item": "HelmMale32",
+  "mu_name": "Sylphid Ray Helm",
+  "mu_name_from": "MuMain loads MODEL_SYLPHID_RAY_* from Data/Player/HDK_HelmMale03.bmd (ZzzOpenData.cpp:222-232; the helm is HDK_HelmMale 3). MU's number 31. Ours is *Male32 by the index-plus-one rule; MU never loads a *Male32 file.",
+  "why_this_one": "The Muse Elf's level-380 set, Kanturu's gear (the user, 2026-10-22: 'lets now cook kanturu weapons and armors', dormant until Kanturu drops them).",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (Season 2's level-380 sets; 0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:93.",
+    "call": "CreateArmor(31, 2, 2, 2, \"Sylphid Ray Helm\", 126, 57, 86, 380, 38, 80, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0)",
+    "group": 7,
+    "number": 31,
+    "drop_level": 126,
+    "drops_from_monsters": false,
+    "drops_from_monsters_note": "Dormant: MU drops it in Kanturu, which is not on main yet. Built, worn and cooked, but no monster leaves it until the map ships (the user, 2026-10-22: 'Dormant until Kanturu'). Its drop level is MU's.",
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 57,
+    "durability": 86,
+    "requires": {
+      "level": 0,
+      "strength": 38,
+      "agility": 80,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "MU asks level 380 (OpenMU's levelRequirement). Left at 0 for now: the user, 2026-10-22, settles it with Kanturu's levels ('Formula, decide later').",
+    "classes": [
+      "elf"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Muse Elf's alone: OpenMU's elfClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "sheets": {
+    "helmet_s": "sylphid_helmet_s.png",
+    "level_man033": "level_man033.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under a sylphid_ prefix (MU's names -- upper_s, lower_s, helmet_s -- are too generic to keep in content/textures): lilac and silver plate with gold, over a bare-skinned suit trimmed in lace (sal_s), black mesh stockings, and two translucent veil cards, upperta_s.OZT and lowerta_1.OZT, cut by their own alpha (62% and 17% away); level_man033 her head and hair, Red Spirit's.",
+  "sheet_materials": {
+    "helmet_s": "painted_steel",
+    "level_man033": "hair"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, as her Red Spirit; sal_s her skin; lower_s (skin, stockings and lace) leather, as Red Spirit's undersuit; the veils cloth; level_man033 hair. sal_s is not named skin*/level*/hair*, so a plus shines on it as on the plate (content::Material::skinSheet reads the name): ours, left.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain has no render arm for MODEL_SYLPHID_RAY_* (no glow, no chrome pass). Its +10 boots' green (0, 0.32, 0.24) set aura (ZzzCharacter.cpp:11004-11030) is not built: fx/set_shine has no 380 sets yet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 68,
+      "area": 529.9,
+      "along": [
+        2.6,
+        12.0
+      ],
+      "mu_uv": [
+        0.014,
+        0.011,
+        0.984,
+        0.993
+      ],
+      "bake_uv": [
+        0.004,
+        0.005,
+        0.586,
+        0.996
+      ]
+    },
+    {
+      "island": 1,
+      "material": "hair",
+      "triangles": 112,
+      "area": 2921.9,
+      "along": [
+        -22.0,
+        10.5
+      ],
+      "mu_uv": [
+        0.502,
+        0.606,
+        0.993,
+        1.0
+      ],
+      "bake_uv": [
+        0.005,
+        0.004,
+        0.737,
+        0.499
+      ]
+    }
+  ]
+}

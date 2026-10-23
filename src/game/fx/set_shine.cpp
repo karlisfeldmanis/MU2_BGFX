@@ -46,6 +46,14 @@ constexpr float kArmGain = 1.6f;
 // sparkles smaller', then 'much smaller', then 'smaller' again. At MU's own they read as blobs
 // round a lit suit; here they are motes.
 constexpr float kFlareSize = 0.18f;
+// The Kanturu sets' puffs (set_shine.h): MU's colour, added, each set at its own brightness.
+// Invention: MU's four colours read very differently -- Venom Mist's (0.1, 0.1, 0.9) all but
+// vanished on a lit suit while Dragon Knight's orange showed -- so each is levelled to twice
+// Dragon Knight's luminance (Rec. 709), Venom Mist's held at 4 (2026-10-22, 'finetune details').
+constexpr float kPuffLevel = 0.72f;
+constexpr float kPuffMostGain = 4.0f;
+// Invention: the puffs at half MU's size -- the user, 2026-10-22: 'make aura sparkles smaller'.
+constexpr float kPuffSize = 0.5f;
 
 }  // namespace
 
@@ -69,6 +77,12 @@ bool SetShine::open(const std::string& assetDir, content::Textures& textures) {
     } else {
         core::logError("set shine: no %s; a set's arms do not glow", light.c_str());
     }
+    const std::string puff = assetDir + "/effects/drain/cra_04.png";
+    if (core::fileExists(puff)) {
+        puff_ = textures.load(puff, content::TextureRole::Albedo);
+    } else {
+        core::logError("set shine: no %s; Kanturu's sets throw no puffs", puff.c_str());
+    }
     // One Aura opened, and its sheets lent to every wearer's: they are Textures' handles.
     Aura ribbons;
     ribbons.open(assetDir, textures);
@@ -83,7 +97,9 @@ void SetShine::shutdown() {
     }
     flare_ = BGFX_INVALID_HANDLE;
     light_ = BGFX_INVALID_HANDLE;
+    puff_ = BGFX_INVALID_HANDLE;
     for (Flare& one : flares_) one.alive = false;
+    for (Puff& one : puffs_) one.alive = false;
 }
 
 int SetShine::setPlus(const content::Tables& tables, const sim::Satchel& bag, sim::Kin kin) {
@@ -100,6 +116,25 @@ int SetShine::setPlus(const content::Tables& tables, const sim::Satchel& bag, si
         lowest = std::min<int>(lowest, worn.refinement);
     }
     return lowest;
+}
+
+const float* SetShine::sprayOf(const content::ItemRow& boots) {
+    // Group 11, the boots, numbers 29 to 32 (OpenMU S6 Armors.cs:319-322).
+    static const float kColours[4][3] = {
+        {0.65f, 0.3f, 0.1f}, {0.1f, 0.1f, 0.9f}, {0.0f, 0.32f, 0.24f}, {0.5f, 0.24f, 0.8f}};
+    static float lit[4][3];
+    static bool made = false;
+    if (!made) {
+        for (int k = 0; k < 4; ++k) {
+            const float* c = kColours[k];
+            const float luma = 0.2126f * c[0] + 0.7152f * c[1] + 0.0722f * c[2];
+            const float gain = std::min(kPuffLevel / luma, kPuffMostGain);
+            for (int i = 0; i < 3; ++i) lit[k][i] = c[i] * gain;
+        }
+        made = true;
+    }
+    if (boots.group != 11 || boots.number < 29 || boots.number > 32) return nullptr;
+    return lit[boots.number - 29];
 }
 
 int SetShine::slotFor(uint32_t id) {
@@ -121,7 +156,8 @@ int SetShine::slotFor(uint32_t id) {
 }
 
 void SetShine::wear(uint32_t id, int plus, const float feet[3], float yaw,
-                    const float (*arms)[3], int lit, const float colour[3]) {
+                    const float (*arms)[3], int lit, const float colour[3], const float* spray,
+                    const float (*puffAt)[3]) {
     if (id == 0 || plus < 9) return;
     const int at = slotFor(id);
     if (at < 0) return;
@@ -133,6 +169,44 @@ void SetShine::wear(uint32_t id, int plus, const float feet[3], float yaw,
     one.lights = std::clamp(lit, 0, 6);
     for (int k = 0; k < one.lights; ++k) std::copy(arms[k], arms[k] + 3, one.lightAt[k]);
     if (colour) std::copy(colour, colour + 3, one.lightColour);
+    one.spray = spray != nullptr;
+    if (spray) std::copy(spray, spray + 3, one.sprayColour);
+    one.posed = puffAt != nullptr;
+    if (puffAt) {
+        for (int k = 0; k < 3; ++k) std::copy(puffAt[k], puffAt[k] + 3, one.puffAt[k]);
+    }
+}
+
+void SetShine::throwPuffs(const Wearer& one) {
+    // From his pelvis as it is posed this frame (puffAt), or, with no pose, a standing body's:
+    // the same points off his feet, turned to his facing.
+    float from[3][3];
+    for (int k = 0; k < 3; ++k) {
+        if (one.posed) {
+            std::copy(one.puffAt[k], one.puffAt[k] + 3, from[k]);
+            continue;
+        }
+        const float side = kPuffPoints[k][0], up = kPuffPoints[k][1];
+        from[k][0] = one.feet[0] + std::cos(one.yaw) * side;
+        from[k][1] = one.feet[1] + up;
+        from[k][2] = one.feet[2] - std::sin(one.yaw) * side;
+    }
+    for (const auto& at : from) {
+        for (Puff& puff : puffs_) {
+            if (puff.alive) continue;
+            // CreateParticle's own scatter: up to 10 aside each way, 20 up or down.
+            puff.alive = true;
+            puff.at[0] = at[0] + (unit() * 20.0f - 10.0f) * per_;
+            puff.at[1] = at[1] + (unit() * 40.0f - 20.0f) * per_;
+            puff.at[2] = at[2] + (unit() * 20.0f - 10.0f) * per_;
+            puff.rise = 2.0f;
+            puff.life = 12.0f;
+            puff.scale = float(int(unit() * 3.0f) + 3) * 0.18f;
+            std::copy(one.sprayColour, one.sprayColour + 3, puff.light);
+            puff.spin = unit() * 6.2831853f;
+            break;
+        }
+    }
 }
 
 void SetShine::throwFlare(int wearer) {
@@ -166,6 +240,19 @@ void SetShine::update(float seconds, float metresPerTile) {
             ++flying[one.wearer];
         }
     }
+    // The puffs, on MU's frames: up and wandering, shrinking, fading.
+    for (Puff& one : puffs_) {
+        if (!one.alive) continue;
+        one.life -= frames;
+        one.scale -= 0.008f * frames;
+        one.rise += 0.08f * frames;
+        one.at[0] += (unit() * 2.0f - 1.0f) * frames * per_;
+        one.at[2] += (unit() * 2.0f - 1.0f) * frames * per_;
+        one.at[1] += one.rise * frames * per_;
+        const float fade = std::pow(1.0f / 1.02f, frames) * (one.life < 10.0f ? std::pow(1.0f / 1.1f, frames) : 1.0f);
+        for (float& c : one.light) c *= fade;
+        if (one.life <= 0.0f || one.scale <= 0.0f) one.alive = false;
+    }
     int wearing = 0;
     for (const Wearer& one : wearers_) wearing += one.id != 0 && one.seen ? 1 : 0;
     if (wearing != wearing_) {
@@ -194,9 +281,13 @@ void SetShine::update(float seconds, float metresPerTile) {
             continue;
         }
         one.clock += frames;
+        // MU's rand_fps_check: one frame in four at +10, three at +11, two at +12, then all.
+        const float puffChance = one.plus == 10 ? 0.25f : one.plus == 11 ? 1.0f / 3.0f
+                                 : one.plus == 12 ? 0.5f : 1.0f;
         while (one.clock >= 1.0f) {
             one.clock -= 1.0f;
             if (unit() < kFlareChance) throwFlare(w);
+            if (one.spray && unit() < puffChance) throwPuffs(one);
         }
         if (one.plus >= 11) {
             one.sinceRings += frames;
@@ -221,6 +312,19 @@ void SetShine::gather(gfx::Effects& effects, const content::Ground& ground,
             sprite.halfWidth = sprite.halfHeight = kTexels * 1.3f * per_ * 0.5f;
             for (int c = 0; c < 3; ++c) sprite.colour[c] = one.lightColour[c] * 0.5f * kArmGain;
             sprite.sheet = light_;
+            sprite.blend = gfx::Blend::Additive;
+            effects.add(sprite);
+        }
+    }
+    if (bgfx::isValid(puff_)) {
+        for (const Puff& one : puffs_) {
+            if (!one.alive) continue;
+            gfx::Sprite sprite;
+            std::copy(one.at, one.at + 3, sprite.position);
+            sprite.halfWidth = sprite.halfHeight = kTexels * one.scale * kPuffSize * per_ * 0.5f;
+            sprite.spin = one.spin;
+            for (int k = 0; k < 3; ++k) sprite.colour[k] = one.light[k];
+            sprite.sheet = puff_;
             sprite.blend = gfx::Blend::Additive;
             effects.add(sprite);
         }

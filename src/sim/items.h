@@ -268,8 +268,9 @@ constexpr int kJewelleryMostPlus = 4;
 // logic"). invention: WebZen's rings resist and do no more;
 // Lightning (26), Fire (27) and Wind (28) are ours in group 13's free numbers.
 constexpr double kRingStingChance = 0.05;
-constexpr double kRingStingChancePerPlus = 0.025;
-constexpr double kRingStingChanceMost = 0.30;
+// Halved 2026-10-23 with the powers' plus (kJewelleryPlusShare): 2.5% a plus to 30% was.
+constexpr double kRingStingChancePerPlus = 0.0125;
+constexpr double kRingStingChanceMost = 0.15;
 inline double ringStingChance(int refinement) {
     return std::min(kRingStingChanceMost,
                     kRingStingChance + kRingStingChancePerPlus * std::max(0, refinement));
@@ -340,11 +341,14 @@ int gearScore(const content::Tables& tables, const Satchel& bag);
 // to 2,000.
 inline constexpr int kGearRungs[4] = {300, 600, 1000, 1500};
 int gearRung(int score);
-// A power's value at a plus: lo + (hi - lo) x (plus / 9)^2, rounded. Percent for all but the
-// Leech, whose is life a blow.
+// A power's value at a plus: lo + (hi - lo) x kJewelleryPlusShare x (plus / 9)^2, rounded.
+// Percent for all but the Leech, whose is life a blow. The share halved what Bless and Soul add
+// on 2026-10-23 (the user: "nerf jewel/pendant upgrades when we attach jewels").
+constexpr double kJewelleryPlusShare = 0.5;
 int affixValue(Affix affix, int refinement);
-// The Pendant of Fury's second half, its critical chance in percent at a plus, 2 at +0 to 10 at
-// +9 on the same curve (2026-10-16): critical damage alone was nothing on a chance of luck's 5%.
+// The Pendant of Fury's second half, its critical chance in percent at a plus, 2 at +0 to 6 at
+// +9 on the same curve (2026-10-16, halved 2026-10-23): critical damage alone was nothing on a
+// chance of luck's 5%.
 int furyChance(int refinement);
 const char* affixName(Affix affix);   // the card's words: "Experience from kills", ...
 // The share of drops each count takes (1 to 4 powers), and the monster level the three- and
@@ -416,11 +420,15 @@ bool portal(const content::ItemRow& row);
 // counted in `Held::durability`, up to twenty a cell. INVENTION: 0.75 caps nothing and merges
 // nothing -- a bought three is its own cell for good and a dropped potion takes a fresh one.
 constexpr int kStackMost = 20;
+// The drinkable potions and the Antidote a hundred a cell (ByPass's bug #55, 2026-10-22: "we need
+// larger potion sizes"; the user picked a hundred and ten-packs on the shelves). Ours, as the
+// twenty: what else stacks, and the timed pets' old-save check, keep kStackMost.
+constexpr int kPotionStackMost = 100;
 // Firecrackers stack too, five a cell (the user, 2026-10-04: 'allow them to stack them, max 5').
 // Ours, as the potions' twenty.
 constexpr int kFirecrackerStackMost = 5;
-// How many of a row's pieces one cell holds: kStackMost for the drinkable potions and the four
-// refining jewels, kFirecrackerStackMost for a Firecracker, 0 for a row that does not stack.
+// How many of a row's pieces one cell holds: kPotionStackMost for the drinkable potions,
+// kStackMost for the four refining jewels, kFirecrackerStackMost for a Firecracker, 0 for a row that does not stack.
 int stackMost(const content::ItemRow& row);
 // Whether a row's pieces stack.
 bool stacks(const content::ItemRow& row);
@@ -495,7 +503,9 @@ struct Wearer {
     int maxHealth = 0, maxMana = 0;
     // Whether he stands in a Blood Castle: where a plain Archangel weapon is the statue's quest
     // item and carded as one (archangelQuestItem).
-    bool inCastle = false;
+    bool inCastle = false;    // How many times he is reborn (Body::rebirths): once is enough to meet every rune's level
+    // (runeLevelFor).
+    int rebirths = 0;
 };
 // Whether this character may wear it at all: his class, and every requirement met.
 bool fits(const content::Tables& tables, const Wearer& who, const Held& what);
@@ -609,6 +619,12 @@ bool refinable(const content::Tables& tables, const Held& jewel, const Held& tar
 // (PLUS_WING_OP1_TYPE, `rand()%2`, :28797-28808), the 2nd wings only.
 constexpr int kLifeChance = 50;
 
+// The Jewel of Soul's (SoulJewelConsumeHandlerPlugIn): SuccessRatePercentage 50, and a miss takes
+// a plus off, or everything from ResetToLevel0WhenFailMinLevel's +7. A lucky thing always rises.
+// The Bless's is 100. Here and not in Realm::refine, so the jewel's card reads the same numbers.
+constexpr int kSoulChance = 50;
+constexpr int kSoulResetFrom = 7;
+
 // Whether it is too dear to throw on the ground: MuMain's `IsHighValueItem`
 // (ZzzInventory.cpp:7407), which both of its drop paths refuse with "You are not allowed to drop
 // this expensive item". Of its list the rows this tree has are the three jewels, anything
@@ -616,6 +632,10 @@ constexpr int kLifeChance = 50;
 // A client rule -- OpenMU's DropItemAction takes anything -- kept in the realm so the window
 // cannot disagree with it. Ours on top: the Rune of Creation (a socket alone is nothing dear).
 bool expensive(const content::Tables& tables, const Held& what);
+
+// How many of it a click sells at a counter: one of a stack of jewels (the user, 2026-10-23:
+// "dont sell whole stack but single jewel"), else 0, all of it. The window's and the card's.
+int piecesSold(const content::Tables& tables, const Held& what);
 
 // ---- luck and the additional option -------------------------------------------------------
 //
@@ -690,12 +710,13 @@ constexpr double kExcellentSetDefense = 0.10;
 int setOf(const content::ItemRow& row);
 // What the five worn pieces raise the defence by: 0, kSetDefense or kExcellentSetDefense.
 // The Magic Gladiator's set is armour to boots, his head bare, and counts only when it is his own
-// -- Storm Crow, kGladiatorSet -- as MuMain's CheckFullSet has it (ZzzCharacter.cpp:5404-5466:
-// `end = EQUIPMENT_ARMOR` for CLASS_DARK, then no added defence unless the armour is
-// ITEM_STORM_CROW_ARMOR or a later set of his -- the Hurricane, kHurricaneSet). A knight's set on
-// him without its helm is none.
+// -- Storm Crow, kGladiatorSet, and his later sets -- as MuMain's CheckFullSet has it
+// (ZzzCharacter.cpp:5404-5467: `end = EQUIPMENT_ARMOR` for CLASS_DARK, then no added defence
+// unless the armour is ITEM_STORM_CROW_ARMOR, THUNDER_HAWK, HURRICANE, VOLCANO, VALIANT, DESTORY
+// or PHANTOM: numbers 15, 20, 23, 32, 37, 47, 48). A knight's set on him without its helm is none.
 constexpr int kGladiatorSet = 15;
 constexpr int kHurricaneSet = 23;
+bool gladiatorSet(int set);
 double setDefense(const content::Tables& tables, const Satchel& bag, Kin kin = Kin::DarkKnight);
 // **Three and four pieces** (the user's, 2026-10-10): steps below the whole set, so a set is
 // worth gathering before its last piece drops. They stack -- three pieces of one number raise
@@ -807,7 +828,10 @@ enum class Power : uint8_t {
     // The Summoner's spells on the Soul Master's weapon (the user, 2026-10-21: "we want to take
     // summoner spells and attach to ancient runes"; kWeakness...).
     Weakness = 75,
-    Pollution = 76
+    Pollution = 76,
+    // 77 was Chain Lightning for a day (2026-10-22), retired before release: the wizard's
+    // Lightning plays its look and sound. The numbers run unbroken (drawRunePower walks them).
+    DrainLife = 77
 };
 // **A rune's group** (the user, 2026-10-02: "we need to start group runes which is only for
 // specific classes, for specific weapon slots"): which classes may set it, a bit a class, and
@@ -1041,6 +1065,22 @@ int freeSocket(const Held& thing);
 // with a free socket, of a kind the power's group takes, and a class in that group.
 bool settable(const content::Tables& tables, const Held& jewel, const Held& target, Kin kin,
               bool second);
+// The hero level each rune rarity asks, in Rarity's order: Rare 80, Epic 150, Legendary 250,
+// Common 20, Ancient 380 (the user, 2026-10-22: "we need to add level requirments for runes",
+// then "Much higher"). A rune asks it to be set, and a thing asks the highest of its set runes'
+// over its own to be worn -- Diablo II's rule, so a rune's level cannot be traded around in a
+// socket. A hero reborn once has met every one (the user picked it: the soul keeps what it
+// earned). Gear worn when the rule came stays worn and working: nothing re-checks worn gear
+// until it comes off (the user, 2026-10-22). invention.
+constexpr int kRuneHeroLevel[kRarities] = {80, 150, 250, 20, 380};
+// The level `what`'s runes ask: a Rune of Creation's own power's, or the highest set in a
+// socketed thing's. 0 for none.
+int runeLevel(const content::Tables& tables, const Held& what);
+// What they ask of `who`: runeLevel, and nothing once he is reborn.
+int runeLevelFor(const content::Tables& tables, const Wearer& who, const Held& what);
+// settable for this hero, his level against the rune's too.
+bool settable(const content::Tables& tables, const Held& jewel, const Held& target,
+              const Wearer& who);
 
 // **Stormcall**, the Dark Knight's first power: a swing that lands has this chance to call
 // lightning down on another monster within `kStormcallReach` tiles of him, which takes his
@@ -1054,8 +1094,11 @@ constexpr float kStormcallForce = 1.0f;
 // his energy on top, the wizard's own band -- `energy / 9` to `energy / 4` (ClassDarkWizard.cs:
 // 72-73) -- whatever his class (the user, 2026-10-01: "dmg scale with his energy"). Arcane Echo
 // needs none: it is the spell again, which is the wizardry sum already. invention.
-constexpr double kRuneEnergyLow = 1.0 / 9.0;
-constexpr double kRuneEnergyHigh = 1.0 / 4.0;
+// kRuneEnergyShare of that band since 2026-10-23 (the user: "passive spells scale little bit
+// less with energy"): energy / 11.25 to energy / 5.
+constexpr double kRuneEnergyShare = 0.8;
+constexpr double kRuneEnergyLow = kRuneEnergyShare / 9.0;
+constexpr double kRuneEnergyHigh = kRuneEnergyShare / 4.0;
 // **Meteor**, his second: the same chance and reach, and a burning rock -- the wizard's
 // Meteorite, drawn as his -- lands its fall later at `kMeteorForce` of his swing's roll. invention.
 constexpr double kMeteorChance = 0.15;
@@ -1207,6 +1250,16 @@ constexpr double kPollutionChance = 0.10;  // a cast in ten; the user may tune i
 constexpr float kPollutionForce = 1.2f;
 constexpr float kPollutionTiles = 3.0f;
 constexpr int kPollutionMost = 4;
+// **Drain Life**, the fifth Ancient (the fourth, Chain Lightning, retired the same day: the
+// wizard's Lightning plays its look and sound instead): MU's AT_SKILL_ALICE_DRAINLIFE (OpenMU's S6 row: 35 damage).
+// A spell he casts, or a swing that lands, has kDrainChance to drain what he struck -- on a cast
+// with no monster struck, the nearest within kStormcallReach -- with his rune's blow at
+// kDrainForce (35 against Pollution's 80 at 1.2), no element; if it lands he takes back, as
+// OpenMU's DrainLifeSkillPlugIn heals off a monster, energy / 15 + the monster's level / 2.5,
+// said as Leeched so it shows "+N" over him.
+constexpr double kDrainChance = 0.10;  // a cast in ten; the user may tune it
+constexpr float kDrainForce = 0.525f;
+inline int drainLife(int energy, int level) { return energy / 15 + int(float(level) / 2.5f); }
 // **The Common runes** (Rarity::Common), each a Legendary at a fraction, every one first-class:
 // **Cinder** Ring of Fire's ring and **Gust** Twister's storm, a knight's; **Chill** Frost Arrow's
 // freeze for half as long with half its wound, the elf's; **Faint Echo** Arcane Echo's second
@@ -1555,5 +1608,28 @@ inline constexpr BagRow kFirecrackerBag[] = {
     // the Bless, the Soul and the Chaos, which come bare
     {14, 13}, {14, 14}, {12, 15},
 };
+
+// ---- the potion keys --------------------------------------------------------------------------
+//
+// The client's five potion keys, as item rows, -1 for none (game/ui/desk.h keeps them; here so
+// the rule is checked in sim_test).
+constexpr int kQuickKeys = 5;
+// Whether a carried row may stand in for a bound one: the same group, and either exactly the
+// Ale, the Town Portal or the Antidote, or the same family at no higher a rank -- the healing
+// family falls to the apple and the mana family to the small mana potion. Quick.Substitutes.
+bool standsIn(const content::Tables& tables, int32_t carried, int32_t bound);
+// **A healing or mana potion, or an Apple, binds itself as it arrives** (the user, 2026-10-22:
+// "when char first time pickup some hp/mana potion or apple we need to attach to quick slot so
+// user understand that is usable"). Ours: MU binds nothing by itself. Only on an arrival -- a
+// row the bag holds more of than at the last look -- and only when no key drinks it already: a
+// key holding a weaker one of its kind is raised to it (and still drinks the weaker, standsIn),
+// else it takes the first empty key. A key cleared by hand stays clear while the bottles sit in
+// the bag, and the first look (a load, a server's first snapshot) only counts. `seen` is the
+// last look, -1 before the first. Answers how many keys it bound.
+struct PotionsSeen {
+    int held[7] = {-1, -1, -1, -1, -1, -1, -1};  // the Apple (14, 0) to the Large Mana (14, 6)
+};
+int bindArrivals(const content::Tables& tables, const Satchel& bag, PotionsSeen& seen,
+                 int32_t quick[kQuickKeys]);
 
 }  // namespace mu::sim

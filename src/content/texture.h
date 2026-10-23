@@ -106,6 +106,9 @@ public:
         uint64_t flags = 0;
     };
     bool infoOf(bgfx::TextureHandle handle, Info* info) const;
+    // What it was loaded by, for the log; empty for a handle this did not load. A walk of the
+    // whole table, so never per frame.
+    std::string pathOf(bgfx::TextureHandle handle) const;
 
     size_t count() const { return byPath_.size(); }
 

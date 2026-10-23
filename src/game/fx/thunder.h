@@ -37,6 +37,26 @@ public:
     // A bolt from `from` to the middle of body `target` (`to` is where it is now; 0 holds `to`).
     void strike(const float from[3], const float to[3], uint32_t target);
 
+    // **The Summoner's Chain Lightning look** (the user, 2026-10-22: "new lighting chaiin has to
+    // work how its now but with new animation and sound"), the wizard's Lightning drawn as MU
+    // draws MODEL_CHAIN_LIGHTNING (MoveHandlers.cpp:1977-2063): the same joint in (0.4, 0.4, 1)
+    // -- here 1.4 times that, clamped, ours, so it holds its own against the day -- and, five
+    // frames in (its LifeTime 15 of 20), blue BITMAP_LIGHT glints thrown over the body it struck,
+    // (0.2, 0.2, 0.8), MU's one on every bone; here kGlints on random points of the body, `tall`
+    // its drawn height, as this has no bones. One call a bolt: Play throws one from each hand.
+    // `source`: the body whose weapon it leaves, so `anchor` holds its start on the weapon's head
+    // as he moves (the user, 2026-10-22: "lightiing has to be attach with weapon, not fixed
+    // position"); 0 for a bolt that leaves a fixed point -- a leap off a body, which `to`'s
+    // own follow already carries.
+    void chain(const float from[3], const float to[3], uint32_t target, float tall,
+               uint32_t source = 0);
+
+    // Each frame after `update`: `head(id, out)` gives the head of body id's weapon now, false
+    // when it has none drawn; every bolt with that source starts there, its path bent along with
+    // it, wholly at the weapon and not at all at the far end.
+    template <typename Head>
+    void anchor(Head head);
+
     // **The crackle on the caster himself** while he channels (the user, 2026-09-28: "add some
     // electric effect to the character itself"), ours: every couple of reference frames two small
     // sparks jump between random points round his body -- `feet` and his drawn `tall` -- and a blue
@@ -79,6 +99,17 @@ private:
         bool small;                     // a crackle on the caster: thin, brief, no spark or light
         bool quiet = false;             // a wide fork: full width, no spark, light or smoke
         bool smoked;                    // the smoke is laid once, as it starts to go out
+        bool blue = false;              // Chain Lightning's: tinted, its glints still to throw
+        float glintIn = 0.0f;           // reference frames until they are
+        float tall = 1.0f;              // the struck body's drawn height
+        uint32_t source = 0;            // the body whose weapon it leaves; 0 holds `from`
+    };
+    struct Glint {
+        bool alive = false;
+        float at[3];
+        float size;                     // metres across
+        float spin;
+        float left;                     // reference frames
     };
     struct Puff {
         bool alive = false;
@@ -131,11 +162,21 @@ private:
     static constexpr float kSmokeDrift = 0.15f;                       // metres a second
     static constexpr float kSmokeTint[3] = {0.48f, 0.50f, 0.58f};
     static constexpr int kMostPuffs = 96;
+    // Chain Lightning's: its blue, the glints' blue, how many on a body, how big and how long
+    // (ours: MU's subtype 5 at scale 3 is a 2 m sheet; here a third of a metre, fading in ten).
+    static constexpr float kBlue[3] = {0.56f, 0.56f, 1.0f};
+    static constexpr float kGlintBlue[3] = {0.28f, 0.28f, 1.0f};
+    static constexpr float kGlintFrames = 5.0f;   // MU's LifeTime 15 of 20
+    static constexpr int kGlints = 18;
+    static constexpr float kGlintSize = 0.35f, kGlintLife = 10.0f;
+    static constexpr int kMostGlints = 192;
 
     bgfx::TextureHandle joint_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle spark_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle smoke_ = BGFX_INVALID_HANDLE;
     Puff puffs_[kMostPuffs] = {};
+    Glint glints_[kMostGlints] = {};
+    bgfx::TextureHandle glow_ = BGFX_INVALID_HANDLE;   // BITMAP_LIGHT, the glints' sheet
     Arc arcs_[kMost] = {};
     float crackleDue_ = 0.0f;       // reference frames to the next pair
     float crackleLit_ = 0.0f;       // seconds the light on him has left; 0 is off
@@ -148,6 +189,8 @@ private:
     void throwPath(Arc& arc);
     void step(Arc& arc, float frames);
     void smoke(const Arc& arc);
+    void glint(const Arc& arc);
+    void moveFrom(Arc& arc, const float at[3]);
 };
 
 template <typename Alive, typename Where>
@@ -175,6 +218,20 @@ void Thunder::update(float seconds, Alive alive, Where where) {
         }
         for (int k = 0; k < 3; ++k) one.at[k] += one.drift[k] * seconds;
         one.size += kSmokeGrows * frames;
+    }
+    for (Glint& one : glints_) {
+        if (!one.alive) continue;
+        one.left -= frames;
+        if (one.left <= 0.0f) one.alive = false;
+    }
+}
+
+template <typename Head>
+void Thunder::anchor(Head head) {
+    for (Arc& arc : arcs_) {
+        if (!arc.alive || arc.source == 0) continue;
+        float at[3];
+        if (head(arc.source, at)) moveFrom(arc, at);
     }
 }
 

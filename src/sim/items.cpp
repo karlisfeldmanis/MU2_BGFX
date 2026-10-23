@@ -218,16 +218,18 @@ int affixValue(Affix affix, int refinement) {
     // Fury 10 to 50 since 2026-10-16: at 2 to 12% on luck's 5% chance it moved no hunt. The
     // Leech stays 1 to 5: a geared knight drinks 26 to 30% fewer potions at +4, 60% at +9.
     static const int kLow[kAffixes + 1] = {0, 1, 2, 1, 1, 10, 1, 1, 1, 1, 2};
+    // The plus earns kJewelleryPlusShare of the climb from kLow to kHigh (the user, 2026-10-23:
+    // "nerf jewel/pendant upgrades when we attach jewels"): +9 Wisdom 5%, Fury 30%.
     static const int kHigh[kAffixes + 1] = {0, 8, 12, 10, 5, 50, 4, 4, 4, 4, 10};
     const int at = int(affix);
     if (at <= 0 || at > kAffixes) return 0;
     const double t = double(std::clamp(refinement, 0, kRefineCap)) / double(kRefineCap);
-    return int(std::lround(kLow[at] + (kHigh[at] - kLow[at]) * t * t));
+    return int(std::lround(kLow[at] + (kHigh[at] - kLow[at]) * kJewelleryPlusShare * t * t));
 }
 
 int furyChance(int refinement) {
     const double t = double(std::clamp(refinement, 0, kRefineCap)) / double(kRefineCap);
-    return int(std::lround(2.0 + 8.0 * t * t));
+    return int(std::lround(2.0 + 8.0 * kJewelleryPlusShare * t * t));
 }
 
 const char* affixName(Affix affix) {
@@ -298,6 +300,13 @@ bool expensive(const content::Tables& tables, const Held& what) {
            creation(row);
 }
 
+int piecesSold(const content::Tables& tables, const Held& what) {
+    if (what.empty() || size_t(what.item) >= tables.items.size()) return 0;
+    const content::ItemRow& row = tables.items[size_t(what.item)];
+    const bool jewel = row.jewel() && row.group != kGroupPets;
+    return jewel && what.durability > 1 ? 1 : 0;
+}
+
 bool takesOptions(const content::ItemRow& row) {
     return row.group <= kGroupBoots && !ammunition(row);
 }
@@ -324,6 +333,22 @@ int setOf(const content::ItemRow& row) {
     return row.group >= kGroupHelms && row.group <= kGroupBoots ? row.number : -1;
 }
 
+bool gladiatorSet(int set) {
+    // MuMain's CheckFullSet list (ZzzCharacter.cpp:5456-5467); MU's numbers are ours.
+    switch (set) {
+        case kGladiatorSet:  // Storm Crow
+        case 20:             // Thunder Hawk
+        case kHurricaneSet:
+        case 32:             // Volcano, Kanturu's
+        case 37:             // Valiant
+        case 47:             // Destroy
+        case 48:             // Phantom
+            return true;
+        default:
+            return false;
+    }
+}
+
 double setDefense(const content::Tables& tables, const Satchel& bag, Kin kin) {
     int set = -1;
     bool excellent = true;
@@ -336,7 +361,7 @@ double setDefense(const content::Tables& tables, const Satchel& bag, Kin kin) {
         set = of;
         excellent = excellent && worn.excellent != 0;
     }
-    if (gladiator && set != kGladiatorSet && set != kHurricaneSet) return 0.0;
+    if (gladiator && !gladiatorSet(set)) return 0.0;
     return excellent ? kExcellentSetDefense : kSetDefense;
 }
 
@@ -671,6 +696,9 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Pollution, "Pollution",
          "10% on a cast or a hit: Lagle's ghosts strike up to 4 monsters within 3 tiles",
          kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
+        {Power::DrainLife, "Drain Life",
+         "10% on a cast or a hit: drains the monster and heals you",
+         kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
@@ -847,6 +875,30 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
     return (power->slots & kind) != 0;
 }
 
+int runeLevel(const content::Tables& tables, const Held& what) {
+    if (what.empty() || size_t(what.item) >= tables.items.size()) return 0;
+    const int count = creation(tables.items[size_t(what.item)])
+                          ? 1
+                          : std::min<int>(what.sockets, kMostSockets);
+    int level = 0;
+    for (int at = 0; at < count; ++at) {
+        if (const PowerRow* power = powerOf(what.powers[at])) {
+            level = std::max(level, kRuneHeroLevel[int(power->rarity)]);
+        }
+    }
+    return level;
+}
+
+int runeLevelFor(const content::Tables& tables, const Wearer& who, const Held& what) {
+    return who.rebirths > 0 ? 0 : runeLevel(tables, what);
+}
+
+bool settable(const content::Tables& tables, const Held& jewel, const Held& target,
+              const Wearer& who) {
+    return settable(tables, jewel, target, who.kin, who.second) &&
+           who.level >= runeLevelFor(tables, who, jewel);
+}
+
 int placeOf(const content::ItemRow& row) {
     if (row.group < kGroupShields) {
         // Every bow and crossbow in the weapon slot and every quiver in the left hand -- ours
@@ -929,7 +981,7 @@ bool portal(const content::ItemRow& row) {
 // And the Antidote, the user's (2026-09-30: "antidotes are not stacking"): the Dungeon's poisons
 // stack now, and a player carries a few.
 int stackMost(const content::ItemRow& row) {
-    if (heals(row) || restores(row) || antidote(row)) return kStackMost;
+    if (heals(row) || restores(row) || antidote(row)) return kPotionStackMost;
     if (firecracker(row)) return kFirecrackerStackMost;
     // The Bless, the Soul, the Life and the Chaos too, twenty a cell as the potions (the user,
     // 2026-10-20: "we need stacking jewels", bug report #41). MU counts its own stacked jewels in
@@ -965,6 +1017,51 @@ bool tops(const content::Tables& tables, const Held& onto, const Held& what) {
     // A timed pet whose clock has started stands alone (sim::petUntil).
     if (timedPet(tables.items[size_t(onto.item)]) && (petUntil(onto) != 0 || petUntil(what) != 0)) return false;
     return onto.durability < poursMost(tables.items[size_t(onto.item)]);
+}
+
+bool standsIn(const content::Tables& tables, int32_t carried, int32_t bound) {
+    const content::ItemRow& c = tables.items[size_t(carried)];
+    const content::ItemRow& b = tables.items[size_t(bound)];
+    if (c.group != b.group) return false;
+    if (ale(b) || portal(b) || antidote(b)) return c.number == b.number;
+    return c.number <= b.number && (b.number >= 4 ? restores(c) : heals(c));
+}
+
+int bindArrivals(const content::Tables& tables, const Satchel& bag, PotionsSeen& seen,
+                 int32_t quick[kQuickKeys]) {
+    int held[7] = {};
+    int32_t rowOf[7] = {-1, -1, -1, -1, -1, -1, -1};
+    for (int slot = kWorn; slot < kSlots; ++slot) {
+        if (bag[slot].empty()) continue;
+        const content::ItemRow& row = tables.items[size_t(bag[slot].item)];
+        if (!heals(row) && !restores(row)) continue;
+        held[row.number] += std::max<int>(1, bag[slot].durability);
+        rowOf[row.number] = bag[slot].item;
+    }
+    const bool first = seen.held[0] < 0;
+    int bound = 0;
+    for (int number = 0; number < 7; ++number) {
+        const bool arrived = !first && held[number] > seen.held[number];
+        seen.held[number] = held[number];
+        if (!arrived) continue;
+        const int32_t item = rowOf[number];
+        int weaker = -1, empty = -1;
+        bool drunk = false;
+        for (int key = 0; key < kQuickKeys; ++key) {
+            if (quick[key] < 0) {
+                if (empty < 0) empty = key;
+                continue;
+            }
+            if (standsIn(tables, item, quick[key])) drunk = true;
+            else if (weaker < 0 && standsIn(tables, quick[key], item)) weaker = key;
+        }
+        if (drunk) continue;
+        const int key = weaker >= 0 ? weaker : empty;
+        if (key < 0) continue;
+        quick[key] = item;
+        ++bound;
+    }
+    return bound;
 }
 
 // ---- the satchel ------------------------------------------------------------------------------
@@ -1057,7 +1154,10 @@ bool fits(const content::Tables& tables, const Wearer& who, const Held& what) {
     // A 2nd level wing and the second class's gear are its class's second's: OpenMU's class
     // level 2 (docs/game/second-class-gear.md).
     if (secondClassFor(*row, who.kin) && !who.second) return false;
-    return shortOf(asks(*row, what.refinement, what.excellent != 0), who.level, who.points).none();
+    // Its runes' level over its own (sim::kRuneHeroLevel).
+    Needs asked = asks(*row, what.refinement, what.excellent != 0);
+    asked.level = std::max(asked.level, runeLevelFor(tables, who, what));
+    return shortOf(asked, who.level, who.points).none();
 }
 
 namespace {

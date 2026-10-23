@@ -97,6 +97,9 @@ private:
 // mode and raises the next one.
 struct GoBack {
     bool landing = false;
+    // The way back whose plate was put away by its x: the plate stays down for it, in every world,
+    // until that way is gone. Ours alone; the realm's way runs out as it would have.
+    int dismissedMap = -1, dismissedColumn = 0, dismissedRow = 0;
 };
 
 struct Context {

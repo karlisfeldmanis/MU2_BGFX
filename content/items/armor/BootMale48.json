@@ -1,0 +1,225 @@
+{
+  "item": "BootMale48",
+  "mu_name": "Destroy Boots",
+  "mu_name_from": "MuMain's MODEL_DESTORY_* (_enum.h: MODEL_BOOT + 47), loaded from Data/Player/BootMale48.bmd by the index-plus-one rule. MU's number 47; ours is *Male48. OpenMU spells the armour, pants and boots 'Destory' (MU's MODEL_DESTORY_*), the gloves 'Destroy'; ours is Destroy throughout.",
+  "why_this_one": "The missing-gear audit, 2026-10-23: the last sets missing at drop levels 93-132, which Kanturu's monsters reach (the user: 'we need to build all kanturu weapons and armors'). Destroy is the Magic Gladiator's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:337.",
+    "call": "CreateBoots(47, \"Destory Boots\", 97, 54, 0, 86, 0, 212, 57, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0)",
+    "group": 11,
+    "number": 47,
+    "drop_level": 97,
+    "drops_from_monsters": true,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 54,
+    "durability": 86,
+    "requires": {
+      "level": 0,
+      "strength": 212,
+      "agility": 57,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "gladiator"
+    ],
+    "class_level_note": "OpenMU's magicGladiatorClassLevel 1, its only class. No helm: OpenMU has no row for one (MuMain's HelmMale48.bmd is left unbuilt)."
+  },
+  "sheets": {
+    "Item4001_boot": "item4001_boot.png",
+    "Item4001_R": "item4001_r.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased (an .OZT beside its .OZJ takes _t): dark steel traced in pink; Item4001_cloth the tabard; Item4001_R a pink orb.",
+  "sheet_materials": {
+    "Item4001_boot": "plate_steel",
+    "item4001_boot": "plate_steel"
+  },
+  "material_note": "plate_steel: Destroy is grey steel traced in pink, not lacquer (the user, 2026-10-23: 'i think MG metal could be more metaalic no?'). Its tabard cloth.",
+  "effects_note": "MuMain has no render arm for MODEL_DESTORY_*; the pink orbs are added, see glow_note. Its full-set bonus is not given: sim::setDefense counts only Storm Crow and Hurricane for the Magic Gladiator.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 88,
+      "area": 3263.2,
+      "along": [
+        -11.3,
+        27.4
+      ],
+      "mu_uv": [
+        0.007,
+        0.011,
+        0.989,
+        0.998
+      ],
+      "bake_uv": [
+        0.191,
+        0.022,
+        0.978,
+        0.802
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 42,
+      "area": 815.5,
+      "along": [
+        4.2,
+        14.1
+      ],
+      "mu_uv": [
+        0.203,
+        0.017,
+        0.987,
+        0.257
+      ],
+      "bake_uv": [
+        0.198,
+        0.01,
+        0.659,
+        0.991
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 42,
+      "area": 1297.4,
+      "along": [
+        -13.1,
+        7.1
+      ],
+      "mu_uv": [
+        0.239,
+        0.252,
+        0.502,
+        0.973
+      ],
+      "bake_uv": [
+        0.02,
+        0.01,
+        0.875,
+        0.952
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 88,
+      "area": 3263.2,
+      "along": [
+        -11.3,
+        27.4
+      ],
+      "mu_uv": [
+        0.007,
+        0.011,
+        0.989,
+        0.998
+      ],
+      "bake_uv": [
+        0.01,
+        0.009,
+        0.978,
+        0.949
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 42,
+      "area": 815.5,
+      "along": [
+        4.2,
+        14.1
+      ],
+      "mu_uv": [
+        0.203,
+        0.017,
+        0.987,
+        0.257
+      ],
+      "bake_uv": [
+        0.01,
+        0.009,
+        0.991,
+        0.975
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 42,
+      "area": 1297.4,
+      "along": [
+        -13.1,
+        7.1
+      ],
+      "mu_uv": [
+        0.239,
+        0.252,
+        0.502,
+        0.973
+      ],
+      "bake_uv": [
+        0.318,
+        0.395,
+        0.941,
+        0.965
+      ]
+    },
+    {
+      "island": 6,
+      "material": "glass",
+      "triangles": 8,
+      "area": 98.1,
+      "along": [
+        10.5,
+        15.7
+      ],
+      "mu_uv": [
+        0.068,
+        0.004,
+        0.932,
+        0.994
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.311,
+        0.355
+      ]
+    },
+    {
+      "island": 7,
+      "material": "glass",
+      "triangles": 8,
+      "area": 98.1,
+      "along": [
+        10.5,
+        15.7
+      ],
+      "mu_uv": [
+        0.068,
+        0.004,
+        0.932,
+        0.994
+      ],
+      "bake_uv": [
+        0.255,
+        0.21,
+        0.556,
+        0.556
+      ]
+    }
+  ],
+  "glow": {
+    "Item4001_R": {}
+  },
+  "glow_note": "Item4001_R's `_R` makes TextureScript draw those meshes bright (TextureScript.cpp parsingTScriptA, ZzzBMD.cpp:2238): the pink orbs added, out of the bake, steady at BlendMeshLight 1 -- MuMain has no arm that moves it (the user, 2026-10-23: 'Glow steadily, as MU')."
+}

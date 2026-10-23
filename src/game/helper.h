@@ -64,10 +64,13 @@ struct HelperSettings {
     // What it picks up besides Zen, a bit each (kPick...). Pets are the Angel, the Imp and the
     // Horns, which MU flags as jewels; their own tick, off at first (Discord, 2026-10-21: "have
     // the Helper include the option to include/exclude them from auto-pickup? They blow up my
-    // inventory really quick").
+    // inventory really quick"). Boxes are the Firecracker, the Box of Luck and the Box of Kundun,
+    // on at first as they always were (the user, 2026-10-21); their own tick since Crylos asked
+    // (Discord, 2026-10-23: "make picking up Firecrackers optional? its also blowing up the
+    // inventory"). Kept as its own line in the file, so one written before it reads as on.
     static constexpr uint8_t kPickJewels = 1, kPickRunes = 2, kPickLegendary = 4, kPickExcellent = 8,
-                             kPickSockets = 16, kPickAll = 32, kPickPets = 64;
-    uint8_t picks = kPickJewels | kPickRunes | kPickLegendary | kPickExcellent;
+                             kPickSockets = 16, kPickAll = 32, kPickPets = 64, kPickBoxes = 128;
+    uint8_t picks = kPickJewels | kPickRunes | kPickLegendary | kPickExcellent | kPickBoxes;
     // The window has been up once: the first H opens it, every H after starts and stops.
     bool seen = false;
     // **Follow my quest** (the user, 2026-10-21: "helper can follow active quest, similiar like
@@ -130,7 +133,7 @@ private:
     bool loot(Play& play, const HelperSettings& settings);
     void mend(Play& play, const HelperSettings& settings);
     void keys(Play& play, const HelperSettings& settings, uint32_t target);
-    int32_t striker(Play& play) const;
+    int32_t striker(Play& play, const HelperSettings& settings) const;
 
     bool on_ = false;
     bool potions_ = false;  // he carried a healing potion when it started

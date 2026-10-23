@@ -208,6 +208,22 @@ bool Window::open(const WindowDesc& desc) {
     // UHD on old drivers (docs/plans/low-end-windows.md, P7). Its DXBC shaders ship beside the
     // SPIR-V, so this fallback can draw ours.
     init.type = desc.renderer == 2 ? bgfx::RendererType::Direct3D11 : bgfx::RendererType::Vulkan;
+    // A capture hook in the game -- Medal's, OBS's game capture -- and NVIDIA's Vulkan holds the
+    // next back buffer for seconds, past the acquire patch's tenth of a second: every one of a
+    // player's fifty 5 s freezes in Tarkan had medal-hook64.dll loaded and the main thread in
+    // SwapChainVK::acquire (hang reports of 2026-10-22, RTX 4080 SUPER; OBS's on 2026-10-15).
+    // On auto such a game opens on Direct3D 11, where these hooks are at home. Vulkan asked for
+    // by name stays Vulkan; the hook is in the log either way. One that comes in after this
+    // stays on Vulkan, and the log says when it came (application.cpp).
+    {
+        const char* hook = captureHook();
+        if (hook != nullptr && desc.renderer == 0) {
+            core::logf("graphics: %s is in the game; Direct3D 11, not Vulkan", hook);
+            init.type = bgfx::RendererType::Direct3D11;
+        } else if (hook != nullptr) {
+            core::logf("graphics: %s is in the game, on the renderer asked for", hook);
+        }
+    }
 #elif defined(__linux__)
     // Vulkan and nothing else on Linux, with the same SPIR-V as Windows (docs/plans/linux-release.md).
     init.type = bgfx::RendererType::Vulkan;
@@ -626,6 +642,15 @@ void Window::pointer(float* x, float* y) const {
 
 bool Window::escapePressed() const {
     return !escapeHeld_ && !typing_ && !escapeSwallowed_ && glfwGetKey(handle_, GLFW_KEY_ESCAPE) == GLFW_PRESS;
+}
+
+const char* captureHook() {
+#ifdef _WIN32
+    for (const char* name : {"medal-hook64.dll", "graphics-hook64.dll"}) {
+        if (GetModuleHandleA(name) != nullptr) return name;
+    }
+#endif
+    return nullptr;
 }
 
 const char* shaderProfile() {

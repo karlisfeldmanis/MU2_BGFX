@@ -348,6 +348,12 @@ struct Lighting {
     // What a metal's painted albedo is multiplied by to give its reflectance. MU paints metal
     // dark, with its shading in the paint; 1 is the paint as it is. Invention, judged by eye.
     float metalGain = 1.0f;
+    // The brightest a metal's sun highlight may be, as a multiple of the sun's own light on a
+    // white card: a glossy plate's GGX peak runs to several times that and burned white
+    // hot spots into chests and pauldrons at noon (the user, 2026-10-23: "can we reduce the
+    // global shine effect on metal because time to time its overbright"). Metal alone; 0 lifts
+    // the cap. Ours, judged by eye.
+    float metalHighlight = 1.5f;
     // How much of the ambient a surface takes from the probe's roughest mip rather than the
     // two-colour hemisphere: 1 lets a wall take the colour of the lit street and the lamps'
     // pools round it, 0 is the hemisphere alone. Near the probe only; fs_shade fades it out

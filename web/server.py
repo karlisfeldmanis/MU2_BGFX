@@ -242,7 +242,7 @@ BUG_STATES = ("new", "seen", "fixed", "wontfix")
 UPDATE_KINDS = ("new", "fixed")
 UPDATE_STATES = ("draft", "published")
 MOST_UPDATE_TEXT = 400
-# The days the front page lists, newest first and only the newest open.
+# The days the front page lists, newest first, all closed until the reader opens one.
 UPDATE_DAYS_SHOWN = 10
 UPDATE_DAY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 MOST_UPDATES_BODY = 256 * 1024
@@ -1428,17 +1428,17 @@ def update_fields(said: dict, default_state: str = None):
 
 def updates_html(lines: list, lang: str = "en") -> str:
     """The front page's Latest updates: a <details> for each of the newest UPDATE_DAYS_SHOWN days,
-    the newest open, its New and its Fixed lines (site.css .fix-day). The date and the count in
+    each closed until clicked, its New and its Fixed lines (site.css .fix-day). The date and the count in
     `lang`; the lines and headings are units of the page, put in its language with the rest."""
     from html import escape
     days = {}
     for line in lines:
         days.setdefault(line["day"], {"new": [], "fixed": []})[line["kind"]].append(line["text"])
     out = []
-    for n, day in enumerate(sorted(days, reverse=True)[:UPDATE_DAYS_SHOWN]):
+    for day in sorted(days, reverse=True)[:UPDATE_DAYS_SHOWN]:
         year, month, date = (int(x) for x in day.split("-"))
         new, fixed = days[day]["new"], days[day]["fixed"]
-        out.append(f'<details class="fix-day"{" open" if n == 0 else ""}>\n'
+        out.append(f'<details class="fix-day">\n'
                    f'<summary><span class="fix-date" translate="no">{i18n.day_label(lang, year, month, date)}</span>'
                    f'<span class="fix-count" translate="no">{i18n.count_label(lang, len(new), len(fixed))}</span></summary>')
         for heading, texts in (("New", new), ("Fixed", fixed)):

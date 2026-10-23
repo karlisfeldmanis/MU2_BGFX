@@ -661,6 +661,44 @@ bool Play::shoots(uint32_t id, Arrows::Model* model) {
     return false;
 }
 
+// The head of the weapon in his hand, in the world: of the held weapon's box, the end of its
+// longest axis farther from the hand that grips it -- a staff's crown, a sword's point. For
+// Lightning's bolts (the user, 2026-10-22: "chain has to come from weapon"). False when he
+// holds none.
+bool Play::weaponHead(const Drawn& caster, float out[3]) const {
+    const FigureBody* held = caster.figure.body();
+    if (held == nullptr) return false;
+    for (const HeldItem& item : held->held) {
+        if (!item.mesh || item.kind != "weapon") continue;
+        const content::Bounds& box = item.mesh->bounds();
+        int axis = 0;
+        for (int k = 1; k < 3; ++k) {
+            if (box.max[k] - box.min[k] > box.max[axis] - box.min[axis]) axis = k;
+        }
+        float ends[2][3];
+        for (int e = 0; e < 2; ++e) {
+            float local[3] = {box.centre[0], box.centre[1], box.centre[2]};
+            local[axis] = e == 0 ? box.min[axis] : box.max[axis];
+            if (!caster.figure.heldPoint(item.mesh->name(), local, ends[e])) return false;
+        }
+        // The grip: the bone it hangs from, at the bone itself.
+        const float origin[3] = {0.0f, 0.0f, 0.0f};
+        float grip[3];
+        if (item.bone < 0 || !caster.figure.pointOn(item.bone, origin, grip)) {
+            for (int k = 0; k < 3; ++k) out[k] = ends[1][k];
+            return true;
+        }
+        float far[2] = {0.0f, 0.0f};
+        for (int e = 0; e < 2; ++e) {
+            for (int k = 0; k < 3; ++k) far[e] += (ends[e][k] - grip[k]) * (ends[e][k] - grip[k]);
+        }
+        const int head = far[1] > far[0] ? 1 : 0;
+        for (int k = 0; k < 3; ++k) out[k] = ends[head][k];
+        return true;
+    }
+    return false;
+}
+
 bool Play::weaponFront(const Drawn& shooter, const float toward[3], float out[3]) const {
     const FigureBody* held = shooter.figure.body();
     if (held == nullptr) return false;

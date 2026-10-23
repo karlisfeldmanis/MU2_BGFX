@@ -135,13 +135,18 @@ void Figure::seat(int clip, bool handsOnly) {
 }
 
 void Figure::upper(int clip) {
-    if (clip == upper_) return;
+    upperOn_ = clip >= 0;
+    if (clip < 0 || clip == upper_) return;
     upper_ = clip;
     upperTime_ = 0.0f;
 }
 
 void Figure::update(float seconds, float clipRate) {
     if (!body_ || !body_->library || clip_ < 0) return;
+    // The upper layer fades at a swing's own blend, in real seconds.
+    upperWeight_ = upperOn_ ? std::min(1.0f, upperWeight_ + seconds / kBlendSeconds)
+                            : std::max(0.0f, upperWeight_ - seconds / kBlendSeconds);
+    if (upperWeight_ <= 0.0f) upper_ = -1;
     if (upper_ >= 0 && size_t(upper_) < body_->library->clips.clips.size()) {
         const float length = body_->library->clips.clips[size_t(upper_)].duration;
         upperTime_ = length > 0.0f ? std::fmod(upperTime_ + seconds, length) : 0.0f;
@@ -367,7 +372,7 @@ int Figure::pose(float* rows12) {
     // so a leg is a thigh or a child of one.
     const size_t clipCount = body_->library->clips.clips.size();
     const bool seating = seat_ >= 0 && size_t(seat_) < clipCount;
-    const bool uppering = upper_ >= 0 && size_t(upper_) < clipCount;
+    const bool uppering = upper_ >= 0 && size_t(upper_) < clipCount && upperWeight_ > 0.0f;
     if (seating || uppering) {
         if (seatBody_ != body_) {
             seatBody_ = body_;
@@ -388,19 +393,29 @@ int Figure::pose(float* rows12) {
         // The layer's bones out of its own clip: the seated ones for a seat, the rest for an
         // upper body.
         // A hands-only seat takes every bone but the arms.
-        const auto layer = [&](int clip, float time, bool below) {
+        // `weight` blends the layer over what is there, 1 replacing it.
+        const auto layer = [&](int clip, float time, bool below, float weight) {
             float layerRotations[kMaxBones * 4];
             float layerTranslations[kMaxBones * 3];
             sample(clip, time, posed, layerRotations, layerTranslations);
             for (size_t i = 0; i < posed && i < seated_.size(); ++i) {
                 const bool covered = below && seatHands_ ? !arm_[i] : bool(seated_[i]) == below;
                 if (!covered) continue;
-                std::memcpy(&rotations[i * 4], &layerRotations[i * 4], 4 * sizeof(float));
-                std::memcpy(&translations[i * 3], &layerTranslations[i * 3], 3 * sizeof(float));
+                if (weight >= 1.0f) {
+                    std::memcpy(&rotations[i * 4], &layerRotations[i * 4], 4 * sizeof(float));
+                    std::memcpy(&translations[i * 3], &layerTranslations[i * 3], 3 * sizeof(float));
+                    continue;
+                }
+                float blended[4];
+                core::nlerpQuat(&rotations[i * 4], &layerRotations[i * 4], weight, blended);
+                std::memcpy(&rotations[i * 4], blended, sizeof(blended));
+                float moved[3];
+                core::lerpVec3(&translations[i * 3], &layerTranslations[i * 3], weight, moved);
+                std::memcpy(&translations[i * 3], moved, sizeof(moved));
             }
         };
-        if (seating) layer(seat_, seatTime_, true);
-        if (uppering) layer(upper_, upperTime_, false);
+        if (seating) layer(seat_, seatTime_, true, 1.0f);
+        if (uppering) layer(upper_, upperTime_, false, upperWeight_);
     }
 
     // One walk of the hierarchy, parents first -- which the cook guarantees and the reader

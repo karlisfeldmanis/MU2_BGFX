@@ -1,0 +1,164 @@
+{
+  "item": "Bow22",
+  "mu_name": "Sylph Wind Bow",
+  "mu_name_from": "MODEL_SYLPH_WIND_BOW (MODEL_BOW + 21), loaded from Item/HDK_Bow.bmd (ZzzOpenData.cpp:1098). Group 4 number 21 in OpenMU S6 Weapons.cs.",
+  "why_this_one": "Kanturu's level-380 weapons (the user, 2026-10-22: 'lets now cook kanturu weapons and armors'), every class's but the Dark Lord's (the Soleil Scepter, HDK_Mace, left out); dormant until Kanturu drops them.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Weapons.cs:237.",
+    "call": "CreateWeapon(4, 21, 1, 24, 2, 4, true, \"Sylph Wind Bow\", 147, 177, 200, 45, 93, 0, 380, 46, 210, 0, 0, 0, 0, 2, 0, 0, 0, 0)",
+    "call_note": "The Season 6 CreateWeapon: group, number, slot, skill, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strength, agility, energy, vitality, then darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel.",
+    "group": 4,
+    "number": 21,
+    "drop_level": 147,
+    "drops_from_monsters": false,
+    "drops_from_monsters_note": "Dormant: MU drops it in Kanturu, which is not on main yet. Built, worn and cooked, but no monster leaves it until the map ships (the user, 2026-10-22: 'Dormant until Kanturu'). Its drop level is MU's.",
+    "slot": 1,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 177,
+    "maximum_damage": 200,
+    "attack_speed": 45,
+    "durability": 93,
+    "requires": {
+      "level": 0,
+      "strength": 46,
+      "agility": 210,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "MU asks level 380 (OpenMU's levelRequirement). Left at 0 for now: the user, 2026-10-22, settles the 380 items' level with Kanturu's ('Formula, decide later').",
+    "classes": [
+      "elf"
+    ],
+    "skill": 24,
+    "class_level": 2,
+    "class_level_note": "The Muse Elf's alone: OpenMU's elfClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "stance": "bow",
+  "stance_from": "Held level as the Albatross and the Arrow Viper (ZzzObject.cpp:5398), so PLAYER_STOP_BOW and PLAYER_WALK_BOW.",
+  "two_handed": true,
+  "fires": "Arrow01",
+  "fires_from": "The missiles are an arrow and a bolt (the user, 2026-10-03), so the wooden arrow.",
+  "sheets": {
+    "bow07": "bow07.png"
+  },
+  "sheet_from": "Data/Item/bow07.OZJ (64x128, dark steel limbs inlaid in gold and orange, 296 triangles), decoded with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "bow07": "painted_steel"
+  },
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "glow_note": "RenderPartObjectBody's arm (ZzzObject.cpp:7644-7666): mesh 0 solid, then again RENDER_TEXTURE | RENDER_BRIGHT, added, with BITMAP_CHROME6 (Effect/Chrome06.jpg) at the mesh's own UVs, U and V sliding WorldTime%4000*0.0002. Here the chrome pass below, sliding along U alone.",
+  "chrome": [
+    {
+      "slot": "bow07",
+      "image": "chrome06",
+      "uv": "mesh",
+      "where": "over",
+      "light": 0.6,
+      "scrolls_per_second": 0.2,
+      "axis": "u"
+    }
+  ],
+  "chrome_from": "The arm's second pass, at 0.6 for our bloom. pipeline/chrome_sheets.py.",
+  "rig_note": "export-rig --actions=all: twenty bones, one action of six keys, the draw; kept. Held, MuMain's arm is ZzzCharacter.cpp:7079-7101: yellow lights on bones 7 and 15, the limb tips, and three at the grip (fx/held_lights); its sparks not thrown.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 134,
+      "area": 8729.9,
+      "along": [
+        15.0,
+        136.7
+      ],
+      "mu_uv": [
+        0.018,
+        0.019,
+        0.974,
+        0.966
+      ],
+      "bake_uv": [
+        0.009,
+        0.01,
+        0.972,
+        0.982
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 16,
+      "area": 744.5,
+      "along": [
+        -22.8,
+        29.6
+      ],
+      "mu_uv": [
+        0.015,
+        0.019,
+        0.103,
+        0.329
+      ],
+      "bake_uv": [
+        0.864,
+        0.011,
+        0.978,
+        0.916
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 134,
+      "area": 8729.9,
+      "along": [
+        -129.9,
+        -8.3
+      ],
+      "mu_uv": [
+        0.018,
+        0.019,
+        0.974,
+        0.966
+      ],
+      "bake_uv": [
+        0.01,
+        0.011,
+        0.92,
+        0.982
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 12,
+      "area": 845.9,
+      "along": [
+        -107.3,
+        114.5
+      ],
+      "mu_uv": [
+        0.011,
+        0.427,
+        0.045,
+        0.983
+      ],
+      "bake_uv": [
+        0.972,
+        0.177,
+        0.991,
+        0.479
+      ]
+    }
+  ]
+}

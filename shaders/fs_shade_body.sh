@@ -13,7 +13,8 @@
 #include "shine.sh"
 
 uniform vec4 u_translucency;  // x: the fraction of a leaf's light that comes through it, or 0
-uniform vec4 u_weather;       // x: the sheet's weathering, 0 off; y: its sheen (gfx::Lighting); z: 1 on the town's placements. See below
+// u_weather (x: the sheet's weathering, 0 off, see below; y: metal_highlight) is in lights.sh;
+// z: 1 on the town's placements, w: their sheen (gfx::Lighting::sheen).
 // The weathering's noise, made by Renderer::init: r blotches a metre or two across and a
 // another of them, g half a metre, b a few centimetres; repeating every 8 m of world.
 SAMPLER2D(s_weather, 12);
@@ -155,7 +156,7 @@ void main()
 	float ao = orm.r;
 	float roughness = clamp(orm.g * MATERIAL.z + roughShift, 0.04, 1.0);
 	float metal = orm.b * MATERIAL.w;
-	float sheen = mix(1.0, u_weather.y, u_weather.z * (1.0 - metal));
+	float sheen = mix(1.0, u_weather.w, u_weather.z * (1.0 - metal));
 
 	// Specular anti-aliasing (Tokuyoshi and Kaplanyan, "Improved Geometric Specular
 	// Antialiasing", 2019): where the normal turns faster than a pixel can hold -- a normal
@@ -256,6 +257,14 @@ void main()
 		float d = distributionGGX(ndoth, roughness);
 		float g = geometrySmith(ndotv, ndotl, roughness);
 		vec3 spec = f * d * g / max(4.0 * ndotv * ndotl, 1e-5) * energy;
+		// The sheet's metal_highlight (u_weather.y, 0 off): a metal's sun peak held to that many
+		// times the sun on a white card, its colour kept. A glossy plate's GGX peak ran to
+		// several times it and burned white spots into chests at noon. Ours.
+		// A white card's BRDF is 1/pi, so the cap is u_weather.y / pi.
+		float specPeak = max(spec.r, max(spec.g, spec.b));
+		float specCap = u_weather.y * 0.31830989;
+		if (specCap > 0.0 && specPeak > specCap)
+			spec *= mix(1.0, specCap / specPeak, metal);
 		vec3 kd = (vec3_splat(1.0) - f) * diffuseColour / 3.14159265;
 		// A weathered surface takes Burley's diffuse ("Physically Based Shading at Disney",
 		// 2012) for Lambert's: a rough face is brighter with the sun behind the eye and
@@ -315,8 +324,20 @@ void main()
 	// under the surface it belongs to, where it would reflect the inside of the mesh.
 	float specAo = saturate(pow(ndotv + ao, exp2(-16.0 * roughness - 1.0)) - 1.0 + ao);
 	float horizon = saturate(1.0 + 1.1 * dot(r, ng));
-	colour += env * (f0 * envAB.x + vec3_splat(envAB.y)) * energy * specAo * horizon * horizon
-	          * sheen;
+	vec3 mirrored = env * (f0 * envAB.x + vec3_splat(envAB.y)) * energy * specAo * horizon * horizon;
+	// The sheet's metal_highlight on what a metal mirrors too, against a white card in this
+	// light -- the sun full on it and the ambient: a glossy blade mirroring the noon sky or the
+	// fire beside it read as a white panel (the user, 2026-10-23: "Cap on metal highlights has
+	// to be global also for weapons"). Ours.
+	if (u_weather.y > 0.0)
+	{
+		vec3 card = u_sunColour.rgb * (u_sunDir.w * 0.31830989) + ambient;
+		float cardPeak = max(card.r, max(card.g, card.b));
+		float mirrorPeak = max(mirrored.r, max(mirrored.g, mirrored.b));
+		float mirrorCap = u_weather.y * cardPeak;
+		if (mirrorPeak > mirrorCap) mirrored *= mix(1.0, mirrorCap / mirrorPeak, metal);
+	}
+	colour += mirrored * sheen;
 
 	// The lamps, on the texture's own albedo rather than on the albedo times MU's baked
 	// light: lights.sh says why.

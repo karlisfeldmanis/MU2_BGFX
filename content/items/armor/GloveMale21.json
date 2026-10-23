@@ -1,0 +1,143 @@
+{
+  "item": "GloveMale21",
+  "mu_name": "Thunder Hawk Gloves",
+  "mu_name_from": "MuMain loads MU's Thunder Hawk as the fourth MODEL_DARK_PHOENIX_* slot from Data/Player/GloveMale21.bmd (ZzzOpenData.cpp:170-198: file 18 + i, i = 3; no helm, i < 3 only). MU's number 20. Ours is *Male21 by the index-plus-one rule.",
+  "why_this_one": "The missing-gear audit, 2026-10-22: the Magic Gladiator's set that fills drop levels 88-107 (the user: 'start with Thunder Hawk, since it fills the gap at drop levels 88-107').",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:255.",
+    "call": "CreateGloves(20, \"Thunder Hawk Gloves\", 88, 34, 7, 82, 0, 150, 70, 0, 0, 0, 1, 0, 0)",
+    "group": 10,
+    "number": 20,
+    "drop_level": 88,
+    "drops_from_monsters": true,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 34,
+    "durability": 82,
+    "requires": {
+      "level": 0,
+      "strength": 150,
+      "agility": 70,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "gladiator"
+    ],
+    "attack_speed": 7,
+    "class_level_note": "The Magic Gladiator's: OpenMU's magicGladiatorClassLevel 1, his only class. No helm: MU loads none for this slot."
+  },
+  "sheets": {
+    "gloves_15": "thunderhawk_gloves.png",
+    "hide": "hide.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player {upper,lower,gloves,boots}_15.OZT, decoded with pipeline/decode_texture.py and prefixed thunderhawk_: dark violet plate striped in pink with gold rivets. hide is MU's black 2x2 sheet, drawn as it is.",
+  "sheet_materials": {
+    "gloves_15": "plate_steel",
+    "thunderhawk_gloves": "plate_steel",
+    "hide": "plate_steel"
+  },
+  "cutout": [
+    "gloves_15"
+  ],
+  "cutout_from": "Declared, not detected: the .OZT's alpha is real (decode_texture: upper 11%, lower 17%, gloves 6%, boots 6% cut away) and the UVs cover it -- the pink-edged slits through the plate.",
+  "cutout_alpha": [
+    "gloves_15"
+  ],
+  "cutout_alpha_from": "The sheet's own alpha, not its brightness: this violet is dark, and a brightness key would cut the paint away (Divine's trap, 2026-10-04).",
+  "material_note": "plate_steel, as Destroy: Thunder Hawk's paint reflects as coloured steel rather than lacquer (the user, 2026-10-23: 'i think MG metal could be more metaalic no?', then all three of his lacquered sets).",
+  "effects_note": "MuMain has no render arm for Thunder Hawk (no glow, no chrome pass). Its full-set bonus is not given: sim::setDefense counts only Storm Crow and Hurricane for the Magic Gladiator.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 77,
+      "area": 1686.4,
+      "along": [
+        -7.2,
+        8.1
+      ],
+      "mu_uv": [
+        0.003,
+        0.009,
+        0.685,
+        0.992
+      ],
+      "bake_uv": [
+        0.343,
+        0.232,
+        0.769,
+        0.77
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 14,
+      "area": 1159.1,
+      "along": [
+        -23.9,
+        7.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.865,
+        0.672
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 77,
+      "area": 1686.4,
+      "along": [
+        -7.2,
+        8.1
+      ],
+      "mu_uv": [
+        0.003,
+        0.009,
+        0.685,
+        0.992
+      ],
+      "bake_uv": [
+        0.304,
+        0.006,
+        0.733,
+        0.907
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 14,
+      "area": 1159.2,
+      "along": [
+        -23.9,
+        7.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.938,
+        0.994
+      ]
+    }
+  ]
+}

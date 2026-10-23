@@ -512,6 +512,27 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         line.mark = tip::Mark::Diamond;
         does.rows.push_back(line);
     }
+    // A jewel's odds under its sentence, off the constants Realm::refine rolls by (a player,
+    // Crylos, 2026-10-23: "include the success rate of jewels into the description").
+    const auto odds = [&](const std::string& text) {
+        Row line;
+        line.free = text;
+        line.freeTone = Tone::Gray;
+        does.rows.push_back(line);
+    };
+    switch (sim::jewelOf(row)) {
+        case sim::Jewel::Bless: odds("Success rate 100%"); break;
+        case sim::Jewel::Soul:
+            odds("Success rate " + std::to_string(sim::kSoulChance) + "%, 100% with Luck");
+            odds("A failure takes one level off, and from +" +
+                 std::to_string(sim::kSoulResetFrom) + " takes it to +0");
+            break;
+        case sim::Jewel::Life:
+            odds("Success rate " + std::to_string(sim::kLifeChance) + "%, 100% with Luck");
+            odds("A failure takes the item's option back to none");
+            break;
+        default: break;
+    }
     // A pet's powers in MU's own words, which ZzzInventory prints for ITEM_GUARDIAN_ANGEL and
     // ITEM_IMP (ZzzInventory.cpp:4258-4268; Game.en.resx "Absorb %d%% of Damage", "Max HP +%d
     // increased", "Increase 30%% of attacking & Wizardry Dmg"), with the numbers off the rule the
@@ -1057,7 +1078,11 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 carries.rows.push_back(line);
             }
             carries.rows.push_back(stat("Rarity", sim::rarityName(power->rarity), rarityTone(power->rarity)));
-            carries.rows.push_back(stat("Class", everyone ? "Every class" : classes, Tone::White));
+            // Red when the holder's class cannot take it: the realm reads a worn power only
+            // through `takenBy` (Realm's redress), so it would sit in his gear doing nothing.
+            const bool mine = power->takenBy(who.kin, who.second);
+            carries.rows.push_back(stat("Class", everyone ? "Every class" : classes,
+                                        mine ? Tone::White : Tone::Red));
             // **Which equipment it goes in** (the user, 2026-10-05: 'we need to show on rune
             // tooltips for which equipment slot is usable'), as few words as say it.
             constexpr uint8_t kAll =
@@ -1231,8 +1256,12 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // orbs both are set, deliberately and to the same number (the recipes say so, and
     // `Realm::useItem` takes the larger), so printing each in turn read as "Level 13, Level 13"
     // on every orb in the shop. The card prints the larger, once. The user, 2026-09-23.
-    const int wantsLevel = std::max(asked.level, row.teaches > 0 ? row.teachesLevel : 0);
-    require("Level", wantsLevel, std::max(0, wantsLevel - who.level));
+    // And a rune's (sim::kRuneHeroLevel): a Rune of Creation's own, a socketed thing's highest
+    // set one over its own. Printed to a reborn hero too, but met: one rebirth meets them all.
+    const int ownLevel = std::max(asked.level, row.teaches > 0 ? row.teachesLevel : 0);
+    const int wantsLevel = std::max(ownLevel, sim::runeLevel(tables, what));
+    const int metLevel = std::max(ownLevel, sim::runeLevelFor(tables, who, what));
+    require("Level", wantsLevel, std::max(0, metLevel - who.level));
     require("Strength", asked.strength, owed.strength);
     require("Agility", asked.agility, owed.agility);
     require("Vitality", asked.vitality, owed.vitality);

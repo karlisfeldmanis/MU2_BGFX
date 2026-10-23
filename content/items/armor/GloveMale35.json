@@ -1,0 +1,187 @@
+{
+  "item": "GloveMale35",
+  "mu_name": "Ashcrow Gloves",
+  "mu_name_from": "MuMain loads MODEL_ASHCROW_* from Data/Player/CW_GloveMale01.bmd (ZzzOpenData.cpp:236-244; the helm is CW_HelmMale 1). MU's number 34. Ours is *Male35 by the index-plus-one rule.",
+  "why_this_one": "Season 2's lower-level sets, missing here (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's): the Dark Knight's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (Season 2's sets; 0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:269.",
+    "call": "CreateGloves(34, \"Ashcrow Gloves\", 61, 18, 6, 72, 0, 160, 50, 0, 1, 0, 0, 0, 0)",
+    "group": 10,
+    "number": 34,
+    "drop_level": 61,
+    "drops_from_monsters": true,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 18,
+    "durability": 72,
+    "requires": {
+      "level": 0,
+      "strength": 160,
+      "agility": 50,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "attack_speed": 6,
+    "class_level_note": "The Dark Knight's, first class and up: OpenMU's darkKnightClassLevel 1. OpenMU gives the Magic Gladiator none of it."
+  },
+  "sheets": {
+    "darknight_gloves": "darknight_gloves.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player darknight_*.OZJ, decoded with pipeline/decode_texture.py: grey-violet plate edged in silver; darknight_face the face under the visor.",
+  "sheet_materials": {
+    "darknight_gloves": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain, the shading painted on; the face skin.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain has no render arm for MODEL_ASHCROW_* (no glow, no chrome pass).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 4,
+      "area": 40.7,
+      "along": [
+        7.0,
+        12.0
+      ],
+      "mu_uv": [
+        0.293,
+        0.034,
+        0.708,
+        0.986
+      ],
+      "bake_uv": [
+        0.01,
+        0.319,
+        0.855,
+        0.962
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 2,
+      "area": 27.1,
+      "along": [
+        7.0,
+        10.2
+      ],
+      "mu_uv": [
+        0.293,
+        0.869,
+        0.464,
+        0.935
+      ],
+      "bake_uv": [
+        0.011,
+        0.905,
+        0.264,
+        0.941
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 100,
+      "area": 3200.4,
+      "along": [
+        -20.0,
+        11.1
+      ],
+      "mu_uv": [
+        0.015,
+        0.015,
+        0.979,
+        0.986
+      ],
+      "bake_uv": [
+        0.011,
+        0.009,
+        0.978,
+        0.974
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 4,
+      "area": 40.7,
+      "along": [
+        7.0,
+        12.0
+      ],
+      "mu_uv": [
+        0.293,
+        0.034,
+        0.708,
+        0.986
+      ],
+      "bake_uv": [
+        0.01,
+        0.319,
+        0.855,
+        0.962
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 6,
+      "area": 67.8,
+      "along": [
+        7.0,
+        12.0
+      ],
+      "mu_uv": [
+        0.293,
+        0.034,
+        0.708,
+        0.986
+      ],
+      "bake_uv": [
+        0.1,
+        0.364,
+        0.739,
+        0.945
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 100,
+      "area": 3200.4,
+      "along": [
+        -20.0,
+        11.1
+      ],
+      "mu_uv": [
+        0.015,
+        0.015,
+        0.979,
+        0.986
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.991,
+        0.927
+      ]
+    }
+  ]
+}

@@ -852,6 +852,71 @@ void testSwapOverlap(const content::Tables& tables) {
           "a swap with room for both still goes through");
 }
 
+// The potion keys bind a healing or mana potion as it arrives (sim::bindArrivals; the user,
+// 2026-10-22: "when char first time pickup some hp/mana potion or apple we need to attach to
+// quick slot"), walked as a bag changes under a player.
+void testQuickBind(const content::Tables& tables) {
+    std::printf("quick bind\n");
+    const int32_t apple = tables.itemAt(14, 0), small = tables.itemAt(14, 1),
+                  large = tables.itemAt(14, 3), mana = tables.itemAt(14, 4),
+                  antidote = tables.itemAt(14, 8), ale = tables.itemAt(14, 9);
+    check(apple >= 0 && small >= 0 && large >= 0 && mana >= 0 && antidote >= 0 && ale >= 0,
+          "the potions are in the tables");
+    if (apple < 0 || small < 0 || large < 0 || mana < 0 || antidote < 0 || ale < 0) return;
+    const auto keys = [](int32_t a, int32_t b, int32_t c, int32_t d, int32_t e, const int32_t* q) {
+        return q[0] == a && q[1] == b && q[2] == c && q[3] == d && q[4] == e;
+    };
+    sim::Satchel bag;
+    sim::PotionsSeen seen;
+    int32_t quick[sim::kQuickKeys] = {-1, -1, -1, -1, -1};
+    const int a = sim::kWorn, b = sim::kWorn + 1, c = sim::kWorn + 2, d = sim::kWorn + 3;
+
+    bag.put(a, sim::Held{apple, 0, 2, false});
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 0, "the first look only counts");
+    check(keys(-1, -1, -1, -1, -1, quick), "so a loaded bag binds nothing");
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 0, "and nothing arriving binds nothing");
+
+    bag.put(a, sim::Held{apple, 0, 3, false});
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 1, "an apple picked up binds");
+    check(keys(apple, -1, -1, -1, -1, quick), "to the first key");
+
+    bag.put(b, sim::Held{small, 0, 10, false});
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 1, "a small healing potion bought");
+    check(keys(small, -1, -1, -1, -1, quick), "raises the apple's key, not a second key");
+    check(sim::standsIn(tables, apple, quick[0]), "which still drinks the apples");
+
+    bag.put(a, sim::Held{apple, 0, 4, false});
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 0, "another apple is drunk by it already");
+
+    bag.put(c, sim::Held{mana, 0, 10, false});
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 1, "a mana potion bought");
+    check(keys(small, mana, -1, -1, -1, quick), "takes the next empty key");
+
+    quick[1] = -1;  // he takes it off the bar by hand
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 0, "a key cleared by hand");
+    bag.put(c, sim::Held{mana, 0, 9, false});
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 0, "stays clear as he drinks");
+    check(keys(small, -1, -1, -1, -1, quick), "both looks");
+
+    bag.put(d, sim::Held{large, 0, 3, false});
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 1, "a large healing potion");
+    check(keys(large, -1, -1, -1, -1, quick), "raises the healing key again");
+
+    bag.put(b, sim::Held{small, 0, 20, false});
+    checkEqual(sim::bindArrivals(tables, bag, seen, quick), 0, "and a weaker one after it changes nothing");
+    check(keys(large, -1, -1, -1, -1, quick), "the large key drinks it");
+
+    int32_t full[sim::kQuickKeys] = {ale, antidote, ale, antidote, ale};
+    sim::Satchel other;
+    sim::PotionsSeen otherSeen;
+    sim::bindArrivals(tables, other, otherSeen, full);
+    other.put(a, sim::Held{small, 0, 1, false});
+    checkEqual(sim::bindArrivals(tables, other, otherSeen, full), 0, "every key held by something else");
+    check(full[0] == ale && full[1] == antidote, "binds nothing over it");
+    other.put(b, sim::Held{ale, 0, 5, false});
+    checkEqual(sim::bindArrivals(tables, other, otherSeen, full), 0, "and an Ale never binds itself");
+}
+
 void testItems(const content::Tables& tables) {
     std::printf("items\n");
     // 157: the catalogue's 118, the nine knight orbs added on 2026-09-23, the wizard's Scroll
@@ -862,10 +927,14 @@ void testItems(const content::Tables& tables) {
     // second-class sets and arms, Blood Castle 6's and Tarkan's drops, the raid's boxes, the
     // new orbs and scrolls, and the Magic Gladiator's sword, armour and Storm Crow set; and the
     // second sets and the strongest arms of each line (Great Dragon, Dark Soul, Red Spirit,
-    // Hurricane; Knight Blade, Dark Reign Blade, Staff of Kundun, Arrow Viper Bow). A count
+    // Hurricane; Knight Blade, Dark Reign Blade, Staff of Kundun, Arrow Viper Bow). 342 since
+    // 2026-10-22: the 39 rows after a3d4dc48 -- Kanturu's dormant 380 sets and arms (8a1d6e55)
+    // and the shields, bows, staffs, mace and swords between. 401 since 2026-10-23: the 59 rows
+    // of the missing-gear audit -- twelve sets' 56 pieces (*Male21, 35-38, 46-49, 51, 53) and
+    // the three gamble arms (Spear12, Bow25, Staff34). A count
     // rather than a list, because what it is guarding is the cook -- a
     // recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 303, "303 item rows cooked");
+    checkEqual(long(tables.items.size()), 401, "401 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
     // And Lumen's, whose Guardian Angel and Imp are ours (the user, 2026-09-30: "put imp and
@@ -934,7 +1003,7 @@ void testItems(const content::Tables& tables) {
         check(duo.equip(axeArm, axeArm, true), "two axes, the second in the shield's place");
         check(duo.hero().dual, "and he holds two");
         checkEqual(duo.satchel()[sim::kWeaponLeft].item, axe, "the second in the left hand");
-        checkEqual(duo.hero().stats.minimumDamage, matched, "a matched pair: each hand at 70%");
+        checkEqual(duo.hero().stats.minimumDamage, matched, "a matched pair: each hand at 62%");
         checkEqual(duo.hero().stats.offhandMinimumDamage, matched,
                    "and the left band is the right's again");
         check(duo.moveItem(sim::kWeaponLeft, sim::kWorn + 30), "the second comes off");
@@ -954,7 +1023,7 @@ void testItems(const content::Tables& tables) {
               "the axe left, the sword right");
         check(duo.moveItem(sim::kWeaponRight, sim::kWeaponLeft), "and swap back");
         checkEqual(duo.hero().stats.minimumDamage, int(double(single) * sim::kMixedPair),
-                   "a mixed pair: each hand at 55%");
+                   "a mixed pair: each hand at 49%");
         check(!sim::offHanded(tables.items[size_t(axe)], sim::Kin::DarkWizard),
               "only a knight holds a second weapon");
         check(!sim::offHanded(tables.items[size_t(staff)], sim::Kin::DarkKnight),
@@ -990,21 +1059,21 @@ void testItems(const content::Tables& tables) {
     check(realm.useItem(potionAt), "and the last one");
     check(realm.satchel()[potionAt].empty(), "leaves the slot empty");
 
-    // Stacks, twenty a cell: a count pours onto its kind before it takes a cell.
+    // Stacks, a hundred a potion cell: a count pours onto its kind before it takes a cell.
     const int first = realm.give(small, -1, 0, 3);
-    checkEqual(realm.give(small, -1, 0, 25), first, "twenty-five more top the three up first");
-    checkEqual(realm.satchel()[first].durability, sim::kStackMost, "to twenty");
+    checkEqual(realm.give(small, -1, 0, 105), first, "a hundred and five more top the three up first");
+    checkEqual(realm.satchel()[first].durability, sim::kPotionStackMost, "to a hundred");
     int rest = -1;
     for (int s = sim::kWorn; s < sim::kSlots; ++s) {
         if (s != first && realm.satchel()[s].item == small) rest = s;
     }
     check(rest >= 0 && realm.satchel()[rest].durability == 8, "and the eight left take a cell");
     check(realm.moveItem(rest, first) && realm.satchel()[first].durability == 8 &&
-              realm.satchel()[rest].durability == 20,
+              realm.satchel()[rest].durability == 100,
           "a stack on a full stack swaps with it");
     const int plusOne = realm.give(small, -1, 1, 2);
     check(plusOne != first && plusOne != rest, "a +1 is not poured into a +0");
-    check(realm.moveItem(rest, first) && realm.satchel()[first].durability == 20 &&
+    check(realm.moveItem(rest, first) && realm.satchel()[first].durability == 100 &&
               realm.satchel()[rest].durability == 8,
           "one let go on another tops it up and leaves the rest behind");
     check(realm.moveItem(rest, plusOne) && realm.satchel()[plusOne].refinement == 0,
@@ -3546,6 +3615,27 @@ void testPenetration(const content::Tables& tables) {
           "not a first-class elf's");
     check(!sim::settable(tables, carried, socketed, sim::Kin::DarkKnight, true), "nor a knight's");
     check(!sim::settable(tables, carried, ringed, sim::Kin::FairyElf, true), "nor in a ring");
+    // Its level (sim::kRuneHeroLevel): a Legendary asks 250 to be set, and the bow it is set in
+    // asks 250 to be worn; one rebirth meets both.
+    sim::Wearer muse;
+    muse.kin = sim::Kin::FairyElf;
+    muse.second = true;
+    muse.level = 249;
+    muse.points = {1000, 1000, 1000, 1000};
+    check(!sim::settable(tables, carried, socketed, muse), "a Legendary rune not below level 250");
+    muse.level = 250;
+    check(sim::settable(tables, carried, socketed, muse), "and set at 250");
+    sim::Held set = socketed;
+    set.powers[0] = volley;
+    check(sim::runeLevel(tables, set) == 250 && sim::runeLevel(tables, socketed) == 0,
+          "the bow asks its rune's level once set");
+    check(sim::fits(tables, muse, set), "worn at 250");
+    muse.level = 120;
+    check(!sim::fits(tables, muse, set) && sim::fits(tables, muse, socketed),
+          "not at 120, though the bare bow is");
+    muse.rebirths = 1;
+    check(sim::fits(tables, muse, set) && sim::settable(tables, carried, socketed, muse),
+          "a reborn elf meets it at 120");
 
     // One cast, set up: a tile where a monster stands in sight within six tiles and a second
     // stands fifteen degrees off it -- in a Volley's side lane and out of the straight one --
@@ -4723,23 +4813,69 @@ void testSkills(const content::Tables& tables) {
             }
         }
         check(twoHandsThrowOrbs, "every knight orb is thrown off any two-handed weapon");
-        // And every quest that pays the knight a weapon lets him take a two-hander instead.
-        bool twoHandOffered = true;
-        int knightChoices = 0;
+        // And every quest that pays the knight a weapon pays him a two-hander beside it, no pick
+        // (the user, 2026-10-22: "we dont need that choise"). Not the Phoenix's lone Dark Breaker,
+        // nor the Magic Gladiator's own on the knight's row.
+        bool twoHandPaid = true;
+        int knightPairs = 0;
+        const auto knightArm = [&](const sim::QuestItem& what) -> int32_t {
+            if (what.kin != int(sim::Kin::DarkKnight) || !what.item) return -1;
+            const int32_t it = tables.itemNamed(what.item);
+            if (it < 0 || (tables.items[size_t(it)].classes & (1 << int(sim::Kin::DarkKnight))) == 0 ||
+                tables.items[size_t(it)].shield()) {
+                return -1;
+            }
+            return tables.armNamed(what.item);
+        };
         for (int q = 0; q < sim::kQuests; ++q) {
             const sim::QuestRow& row = sim::questAt(q);
             int oneHand = 0, twoHand = 0;
-            for (int c = 0; c < row.choiceCount; ++c) {
-                if (row.choices[c].kin != int(sim::Kin::DarkKnight)) continue;
-                const int32_t at = tables.armNamed(row.choices[c].item);
-                if (at < 0) { twoHandOffered = false; continue; }
+            for (int i = 0; i < row.paidCount; ++i) {
+                const int32_t at = knightArm(row.paid[i]);
+                if (at < 0) continue;
                 (tables.arms[size_t(at)].twoHanded() ? twoHand : oneHand) += 1;
             }
-            if (oneHand + twoHand > 0) ++knightChoices;
-            twoHandOffered &= oneHand == twoHand;
+            if (q == sim::kPhoenixContract) continue;
+            if (oneHand + twoHand > 0) ++knightPairs;
+            twoHandPaid &= oneHand == twoHand;
+            twoHandPaid &= row.choiceCount == 0;
         }
-        check(twoHandOffered && knightChoices == 5,
-              "the knight's five quest weapons are each a one-hander or a two-hander, his pick");
+        check(twoHandPaid && knightPairs == 5,
+              "the knight's five quest weapons each come with a two-hander, nothing to pick");
+        // And neither pick is the richer: the pair sell to an NPC within a quarter of each other.
+        bool pricedAlike = true;
+        for (int q = 0; q < sim::kQuests; ++q) {
+            const sim::QuestRow& row = sim::questAt(q);
+            int64_t least = INT64_MAX, most = 0;
+            if (q == sim::kPhoenixContract) continue;
+            for (int c = 0; c < row.paidCount; ++c) {
+                const sim::QuestItem& what = row.paid[c];
+                if (knightArm(what) < 0) continue;
+                const int32_t it = tables.itemNamed(what.item);
+                sim::Held held;
+                held.item = it;
+                held.refinement = int16_t(what.plus);
+                held.durability = int16_t(sim::fullDurability(tables.items[size_t(it)], what.plus));
+                held.luck = true;
+                held.option = int8_t(sim::kQuestOption);
+                const int64_t value = sim::npcValue(tables, held);
+                least = std::min(least, value);
+                most = std::max(most, value);
+            }
+            if (most > 0) pricedAlike &= most * 4 <= least * 5;
+        }
+        check(pricedAlike, "and the two sell for about the same");
+        // Though bound, as a quest pays them, they fetch almost nothing (the user, 2026-10-22).
+        {
+            sim::Held blade;
+            blade.item = tables.itemNamed("Sword21");
+            blade.refinement = 7;
+            blade.durability = int16_t(sim::fullDurability(tables.items[size_t(blade.item)], 7));
+            const int64_t free = sim::npcValue(tables, blade);
+            blade.bound = true;
+            const int64_t bound = sim::npcValue(tables, blade);
+            check(bound > 0 && bound * 100 <= free, "a bound Knight Blade sells for a hundredth");
+        }
     }
 
     int casts[sim::kSkills] = {};
@@ -5471,8 +5607,15 @@ void testTalentCommands(const content::Tables& tables) {
         size_t at = 0;
         while (at < bytes.size() && bytes[at] == markedBytes[at]) ++at;
         constexpr size_t kQuestBytes = 1 + 4 * sim::kQuestSteps + 8 + 4;
+        // A layout-13 row has no quests' lives (QuestProgress::life, layout 14): a byte a quest.
+        std::vector<uint8_t> thirteen(bytes.begin(), bytes.end() - sim::kQuests);
+        sim::Kept unlived;
+        check(net::keptFrom(thirteen, unlived, 13) && unlived.hero.quests[0].life == 0 &&
+                  unlived.hero.talents == saved.talents,
+              "a layout-13 row reads, every quest in the first life");
+        check(!net::keptFrom(thirteen, unlived, 14), "and is not a layout 14");
         // A layout-12 row has no rebirths (sim/rebirth.h, layout 13): its last four bytes.
-        std::vector<uint8_t> twelve(bytes.begin(), bytes.end() - 4);
+        std::vector<uint8_t> twelve(thirteen.begin(), thirteen.end() - 4);
         sim::Kept unborn;
         check(net::keptFrom(twelve, unborn, 12) && unborn.hero.rebirths == 0 && unborn.hero.talents == saved.talents,
               "a layout-12 row reads, never reborn");
@@ -6000,6 +6143,19 @@ void testSets(const content::Tables& tables) {
         }
         checkNear(sim::setDefense(tables, hurricane.satchel(), sim::Kin::MagicGladiator),
                   sim::kSetDefense, 1e-9, "the Hurricane's four are his set too");
+        // And the rest of MuMain's list (ZzzCharacter.cpp:5456-5467): Thunder Hawk 21, Volcano 33,
+        // Valiant 38, Destroy 48 and Phantom 49 by our files.
+        for (const char* set : {"21", "33", "38", "48", "49"}) {
+            sim::Realm his;
+            his.raise(&tables, 3, 140, 128, sim::Kin::MagicGladiator, 1);
+            for (const char* part : {"Armor", "Pant", "Glove", "Boot"}) {
+                const int32_t item = tables.itemNamed(std::string(part) + "Male" + set);
+                const int slot = item >= 0 ? sim::placeOf(tables.items[size_t(item)]) : -1;
+                if (slot >= 0) his.give(item, slot);
+            }
+            checkNear(sim::setDefense(tables, his.satchel(), sim::Kin::MagicGladiator),
+                      sim::kSetDefense, 1e-9, (std::string("set Male") + set + " is his").c_str());
+        }
         // The Staff of Kundun asks the wizard his second and not the gladiator, who has none
         // (OpenMU S6 Weapons.cs:253: darkWizardClassLevel 2, magicGladiatorClassLevel 1).
         const int32_t kundun = tables.itemNamed("Staff12");
@@ -7150,6 +7306,33 @@ void testVault(const content::Tables& tables) {
     for (int tick = 0; tick < 2000 && realm.banking() < 0; ++tick) realm.step();
     check(realm.banking() == baz, "walked to Baz and the vault opened");
     check(realm.trading() < 0, "and no counter with it");
+    // A worn quiver poured onto the vault's takes its plus off her (a deposit that topped up a
+    // stack never re-armed, so a +2 quiver stored that way still counted).
+    {
+        sim::Realm elf;
+        check(elf.raise(&tables, 11, 144, 112, sim::Kin::FairyElf, 10) &&
+                  elf.equip(tables.armNamed("Bow01"), -1, true),
+              "an elf with the Short Bow by the vault");
+        elf.ask(talk);
+        for (int tick = 0; tick < 2000 && elf.banking() < 0; ++tick) elf.step();
+        sim::Realm& realm = elf;
+        const int arrows = tables.itemAt(4, 15);
+        const int spare = realm.give(arrows, -1, 2, 100);
+        check(spare >= 0 && realm.deposit(spare, 60) == 60, "a +2 quiver of a hundred in the vault");
+        realm.discard(sim::kWeaponLeft);  // the quiver the bow came with
+        check(realm.give(arrows, sim::kWeaponLeft, 2, 100) == sim::kWeaponLeft &&
+                  realm.hero().quiverPlus == 2,
+              "and another worn, its plus counted");
+        check(realm.deposit(sim::kWeaponLeft, 60) == 60 && realm.satchel()[sim::kWeaponLeft].empty(),
+              "the worn one poured onto the vault's");
+        checkEqual(int(realm.vault()[60].durability), 200, "two hundred there now");
+        checkEqual(int(realm.hero().quiverPlus), 0, "and its plus is gone with it");
+        realm.withdraw(60, -1);
+        for (int s = sim::kWorn; s < sim::kSlots; ++s) {
+            if (!realm.satchel()[s].empty() && realm.satchel()[s].item == arrows) realm.discard(s);
+        }
+
+    }
 
     // Worn gear crosses the counter too (the user, 2026-10-05): off him into the vault, and
     // from the vault back into his hand.
@@ -7200,11 +7383,11 @@ void testVault(const content::Tables& tables) {
     const int five = realm.give(potion, -1, 0, 5);
     const int stored = realm.deposit(five);
     check(stored >= 0 && realm.satchel()[five].empty(), "five potions go into the vault");
-    check(realm.deposit(realm.give(potion, -1, 0, 18)) == stored &&
-              realm.vault()[stored].durability == sim::kStackMost,
-          "eighteen more fill that stack to twenty");
+    check(realm.deposit(realm.give(potion, -1, 0, 98)) == stored &&
+              realm.vault()[stored].durability == sim::kPotionStackMost,
+          "ninety-eight more fill that stack to a hundred");
     const int spill = realm.give(potion, -1, 0, 7);
-    check(realm.withdraw(stored, spill) == spill && realm.satchel()[spill].durability == 20 &&
+    check(realm.withdraw(stored, spill) == spill && realm.satchel()[spill].durability == 100 &&
               realm.vault()[stored].durability == 7,
           "and a stack let go on a bag stack tops it up and leaves the rest");
 
@@ -9523,19 +9706,23 @@ void testGladiatorPath(const content::Tables& tables) {
         const int32_t sword = tables.itemNamed("Sword08"), staff = tables.itemNamed("Staff03");
         const int32_t rune = tables.itemNamed("Jewel22");
         int swords = 0, staves = 0;
-        uint8_t power = 0;
+        // Every rune paid: the knight's two Commons (Gust, Graze) or the wizard's Faint Echo.
+        bool runes[256] = {};
         for (int slot = 0; slot < sim::kSlots; ++slot) {
             const sim::Held& one = realm.satchel()[slot];
             swords += one.item == sword ? 1 : 0;
             staves += one.item == staff ? 1 : 0;
-            if (one.item == rune) power = one.powers[0];
+            if (one.item == rune) runes[one.powers[0]] = true;
         }
         if (path == sim::QuestPath::Melee) {
             check(swords == 1 && staves == 0, "Melee: the Falchion, not the staff");
-            checkEqual(int(power), int(sim::Power::Gust), "and Gust, the knight's Common");
+            check(runes[uint8_t(sim::Power::Gust)] && runes[uint8_t(sim::Power::Graze)],
+                  "and Gust and Graze, the knight's Commons");
+            check(!runes[uint8_t(sim::Power::FaintEcho)], "not the wizard's");
         } else {
             check(swords == 0 && staves == 1, "Magic: the Serpent Staff, not the Falchion");
-            checkEqual(int(power), int(sim::Power::FaintEcho), "and the wizard's Faint Echo");
+            check(runes[uint8_t(sim::Power::FaintEcho)] && !runes[uint8_t(sim::Power::Gust)],
+                  "and the wizard's Faint Echo");
         }
     }
 }
@@ -10237,7 +10424,7 @@ void testRunes(const content::Tables& tables) {
 
     {
         sim::Realm realm;
-        check(realm.raise(&tables, 11, 138, 124), "a realm raises for the sockets");
+        check(realm.raise(&tables, 11, 138, 124, sim::Kin::DarkKnight, sim::kMaximumLevel), "a realm raises for the sockets");
         const int sword = realm.give(serpent, -1, 0, -1, false, 0, 0, 3);
         const uint8_t one[3] = {storm, 0, 0}, two[3] = {meteor, 0, 0};
         const int first = realm.give(rune, -1, 0, 1, false, 0, 0, 0, one);
@@ -10262,7 +10449,7 @@ void testRunes(const content::Tables& tables) {
     // 2026-10-12's rule): set in a dropped sword, the sword stays free.
     {
         sim::Realm realm;
-        check(realm.raise(&tables, 11, 138, 124), "a realm raises for a bound rune");
+        check(realm.raise(&tables, 11, 138, 124, sim::Kin::DarkKnight, sim::kMaximumLevel), "a realm raises for a bound rune");
         const int sword = realm.give(serpent, -1, 0, -1, false, 0, 0, 2);
         const uint8_t one[3] = {storm, 0, 0}, two[3] = {meteor, 0, 0};
         const int found = realm.give(rune, -1, 0, 1, false, 0, 0, 0, one);
@@ -10743,10 +10930,11 @@ void testElementRunes(const content::Tables& tables) {
 // Soul Master's blizzard: about one cast in ten, every monster round what he struck frozen and
 // struck.
 // A level-150 Soul Master's Lightning hunt in Lorencia with `power` in his staff (none for a bare
-// one), 12000 ticks, his health and mana kept up; `each` sees the realm after every tick.
+// one), 12000 ticks, his health and mana kept up -- `wounded`, his health held at half instead,
+// so a heal has room; `each` sees the realm after every tick.
 template <typename Each>
 void ancientHunt(const content::Tables& tables, int staff, sim::Power power, bool cast,
-                 Each each) {
+                 Each each, bool wounded = false) {
     sim::Realm realm;
     realm.raise(&tables, 5, 200, 160, sim::Kin::DarkWizard, 150);
     promote(realm);
@@ -10759,6 +10947,11 @@ void ancientHunt(const content::Tables& tables, int staff, sim::Power power, boo
         if (realm.hero().mana < 100) {
             sim::HeroRecord record = realm.record();
             record.mana = realm.hero().maxMana;
+            realm.restore(record);
+        }
+        if (wounded && realm.hero().health > realm.hero().maxHealth / 2) {
+            sim::HeroRecord record = realm.record();
+            record.health = realm.hero().maxHealth / 2;
             realm.restore(record);
         }
         const sim::Body& hero = realm.hero();
@@ -10972,6 +11165,73 @@ void testPollutionRune(const content::Tables& tables, int rune, int staff, int s
     }
 }
 
+// The checks every Ancient weapon rune of the Soul Master's shares: the row, who sets it, and
+// that it falls past Aida and not before.
+void ancientRow(const content::Tables& tables, sim::Power power, const char* name, int rune,
+                int staff, int sword) {
+    using sim::Kin;
+    using sim::Power;
+    const sim::PowerRow* row = sim::powerOf(uint8_t(power));
+    check(row != nullptr && row->rarity == sim::Rarity::Ancient && row->second && row->once &&
+              row->weapon(),
+          "an Ancient weapon rune, a second class's, one to a thing");
+    const auto held = [](int item, uint8_t sockets, Power first) {
+        sim::Held h{int32_t(item), 0, 1};
+        h.sockets = sockets;
+        h.powers[0] = uint8_t(first);
+        return h;
+    };
+    const auto sets = [&](int into, Kin kin, bool second) {
+        return sim::settable(tables, held(rune, 0, power), held(into, 1, Power::None), kin, second);
+    };
+    check(sets(staff, Kin::DarkWizard, true), "a Soul Master sets it in his staff");
+    check(!sets(staff, Kin::DarkWizard, false) && !sets(sword, Kin::DarkKnight, true) &&
+              !sets(staff, Kin::FairyElf, true),
+          "nobody else does");
+    sim::Random dice(20261022);
+    int at = 0, below = 0;
+    for (int i = 0; i < 4000; ++i) {
+        at += sim::drawRunePower(dice, Kin::DarkWizard, true, 160) == uint8_t(power);
+        below += sim::drawRunePower(dice, Kin::DarkWizard, true, 140) == uint8_t(power);
+    }
+    std::printf("  %s in 4000 drops: %d at 140, %d at 160\n", name, below, at);
+    check(at > 0 && below == 0, "it falls past Aida and not before");
+}
+
+// Drain Life, the Summoner's drain on a Soul Master's staff (sim/items.h kDrain...): about one
+// cast in ten, a blow on what he struck and, when it lands, his energy / 15 + its level / 2.5
+// back as life.
+void testDrainLifeRune(const content::Tables& tables, int rune, int staff, int sword) {
+    std::printf("drain life rune\n");
+    ancientRow(tables, sim::Power::DrainLife, "Drain Life", rune, staff, sword);
+    checkEqual(sim::drainLife(300, 50), 40, "energy 300 off a level-50 monster heals 40");
+    int casts = 0, drains = 0, healed = 0, life = 0;
+    ancientHunt(tables, staff, sim::Power::DrainLife, true, [&](const sim::Realm& realm) {
+        bool drained = false;
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.who != realm.hero().id) continue;
+            if (h.what == sim::What::Cast && h.a == sim::skill::kLightning) ++casts;
+            if (h.what == sim::What::Loosed && h.a == sim::skill::kDrainLife) {
+                ++drains;
+                drained = true;
+            }
+            if (drained && h.what == sim::What::Leeched) {
+                ++healed;
+                life += h.a;
+                drained = false;
+            }
+        }
+    }, true);
+    std::printf("  Drain Life: %d casts, %d drains, %d healed, %d life\n", casts, drains, healed,
+                life);
+    check(drains > 0, "Drain Life strikes what he struck");
+    check(healed > 0 && life > 0, "and gives him life back");
+    if (casts > 0) {
+        const double rate = double(drains) / casts;
+        check(rate > 0.05 && rate < 0.16, "about one cast in ten");
+    }
+}
+
 void testAncientRunes(const content::Tables& tables) {
     std::printf("ancient runes\n");
     using sim::Kin;
@@ -11094,6 +11354,7 @@ void testAncientRunes(const content::Tables& tables) {
     }
     testWeaknessRune(tables, rune, staff, sword);
     testPollutionRune(tables, rune, staff, sword);
+    testDrainLifeRune(tables, rune, staff, sword);
 }
 
 void testGroupRunes(const content::Tables& tables) {
@@ -11878,11 +12139,11 @@ void testPoweredJewellery(const content::Tables& tables) {
     check(sim::signatureOf(row(tables.itemAt(13, 8))) == sim::Affix::None, "MU's carry none");
     checkEqual(sim::affixValue(sim::Affix::Wisdom, 0), 1, "Wisdom +1% at +0");
     checkEqual(sim::affixValue(sim::Affix::Wisdom, 4), 2, "+2% at +4");
-    checkEqual(sim::affixValue(sim::Affix::Wisdom, 9), 8, "+8% at +9");
-    checkEqual(sim::affixValue(sim::Affix::Leech, 9), 5, "the Leech 5 life a hit at +9");
-    checkEqual(sim::affixValue(sim::Affix::Fury, 9), 50, "Fury +50% critical damage at +9");
+    checkEqual(sim::affixValue(sim::Affix::Wisdom, 9), 5, "+5% at +9");
+    checkEqual(sim::affixValue(sim::Affix::Leech, 9), 3, "the Leech 3 life a hit at +9");
+    checkEqual(sim::affixValue(sim::Affix::Fury, 9), 30, "Fury +30% critical damage at +9");
     checkEqual(sim::furyChance(0), 2, "and +2% critical chance at +0");
-    checkEqual(sim::furyChance(9), 10, "+10% at +9");
+    checkEqual(sim::furyChance(9), 6, "+6% at +9");
     sim::Held two{wisdom, 0, 50};
     two.affixes[0] = uint8_t(sim::Affix::Wealth);
     checkEqual(sim::affixCount(row(wisdom), two), 2, "a signature and one more is two");
@@ -11897,12 +12158,12 @@ void testPoweredJewellery(const content::Tables& tables) {
     check(realm.give(fury, sim::kAmulet, 9, -1, false, 0, 0, 0, nullptr, amulet) >= 0,
           "a Pendant of Fury +9 with Wisdom and the Leech");
     const sim::Excellence& e = realm.hero().excel;
-    checkEqual(e.moreExperience, 16, "experience: the ring's 8 and the pendant's 8");
-    checkEqual(e.moreZen, 14, "Zen: the +9's 12 and the +0's 2");
-    check(std::abs(e.zenRate - 1.14) < 1e-9, "on the Zen rate");
-    checkEqual(e.lifeOnHit, 5, "life a hit: the pendant's");
-    checkEqual(realm.hero().stats.criticalDamage, 50, "critical damage reaches the blow");
-    check(std::abs(realm.hero().stats.criticalChance - 0.10) < 1e-9, "and Fury's 10% chance");
+    checkEqual(e.moreExperience, 10, "experience: the ring's 5 and the pendant's 5");
+    checkEqual(e.moreZen, 9, "Zen: the +9's 7 and the +0's 2");
+    check(std::abs(e.zenRate - 1.09) < 1e-9, "on the Zen rate");
+    checkEqual(e.lifeOnHit, 3, "life a hit: the pendant's");
+    checkEqual(realm.hero().stats.criticalDamage, 30, "critical damage reaches the blow");
+    check(std::abs(realm.hero().stats.criticalChance - 0.06) < 1e-9, "and Fury's 6% chance");
     // And what it gives back is said, for the "+N" over him (the user, 2026-10-19: "if char es
     // getting life steal show it on char +life and number"): hurt, he hunts, and a landed blow
     // says Leeched with no more than the Leech's 5.
@@ -11938,7 +12199,7 @@ void testPoweredJewellery(const content::Tables& tables) {
 
     // The resistance powers (2026-10-04): every worn piece's on top of MU's largest.
     checkEqual(sim::affixValue(sim::Affix::FireResistance, 0), 1, "a resistance 1 at +0");
-    checkEqual(sim::affixValue(sim::Affix::IceResistance, 9), 4, "4 at +9, MU's ring at +4");
+    checkEqual(sim::affixValue(sim::Affix::IceResistance, 9), 3, "3 at +9");
     sim::Realm wards;
     wards.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
     const uint8_t iceFire[3] = {uint8_t(sim::Affix::IceResistance),
@@ -11951,8 +12212,8 @@ void testPoweredJewellery(const content::Tables& tables) {
     check(wards.give(fury, sim::kAmulet, 0, -1, false, 0, 0, 0, nullptr, fireLightning) >= 0,
           "a Pendant of Fury +0 with Fire and Lightning resistance");
     const sim::Excellence& w = wards.hero().excel;
-    checkEqual(w.iceResistance, 7, "ice: the ring's 3 and the power's 4");
-    checkEqual(w.fireResistance, 5, "fire: 4 and 1");
+    checkEqual(w.iceResistance, 6, "ice: the ring's 3 and the power's 3");
+    checkEqual(w.fireResistance, 4, "fire: 3 and 1");
     checkEqual(w.lightningResistance, 1, "lightning: the pendant's 1");
     checkEqual(w.poisonResistance, 0, "poison: none worn");
 
@@ -11993,13 +12254,13 @@ void testPoweredJewellery(const content::Tables& tables) {
     check(haste >= 0 && sim::pendant(row(haste)), "the Pendant of Haste is a pendant");
     if (haste >= 0) {
         checkEqual(sim::affixValue(sim::Affix::Haste, 0), 2, "Haste +2 at +0");
-        checkEqual(sim::affixValue(sim::Affix::Haste, 9), 10, "+10 at +9");
+        checkEqual(sim::affixValue(sim::Affix::Haste, 9), 6, "+6 at +9");
         sim::Realm quick;
         quick.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
         const int before = quick.attackSpeed();
         check(quick.give(haste, sim::kAmulet, 9) >= 0, "a Pendant of Haste +9 worn");
-        checkEqual(quick.hero().excel.haste, 10, "its 10 on the casting clip");
-        checkEqual(quick.attackSpeed() - before, 10, "and on his attack speed");
+        checkEqual(quick.hero().excel.haste, 6, "its 6 on the casting clip");
+        checkEqual(quick.attackSpeed() - before, 6, "and on his attack speed");
         bool drawn = false;
         sim::Realm drops;
         drops.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
@@ -12520,6 +12781,77 @@ void testEvilSpirit(const content::Tables& tables) {
         check(struck > 0.5 && struck < 0.8, "about two in three of those near are struck, once");
         checkEqual(late, 0, "each within its two seconds");
     }
+    // A shield rune's spirit is a passive's blow and stings no ring (2026-10-23). A Ring of
+    // Lightning +9 beside the shield: its bolt is said straight after the blow that stung, so a
+    // bolt after a spirit's hit would be the spirit's.
+    {
+        sim::Realm realm;
+        realm.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
+        realm.undying(true);
+        const uint8_t powers[3] = {uint8_t(sim::Power::Spirits), 0, 0};
+        realm.give(shield, sim::kWeaponLeft, 0, -1, false, 0, 0, 1, powers);
+        realm.give(tables.itemAt(13, 26), sim::kRingRight, 9);
+        check(realm.hero().excel.lightningRing == 10, "a Ring of Lightning +9 beside the shield");
+        // And a Ring of the Leech: a passive's blow gives no life back either (2026-10-23).
+        realm.give(tables.itemAt(13, 24), sim::kRingLeft, 9);
+        check(realm.hero().excel.lifeOnHit > 0, "and a Ring of the Leech +9");
+        // Four that no spirit kills round him, so each spirit's hit leaves one to sting.
+        sim::Body model;
+        for (const sim::Body& one : realm.bodies()) {
+            if (one.monster() && one.alive()) {
+                model = one;
+                break;
+            }
+        }
+        for (int i = 0; i < 4; ++i) {
+            sim::Body tank = model;
+            tank.maxHealth = tank.health = 1000000;
+            tank.x = realm.hero().x + (i % 2 == 0 ? 1.0f : -1.0f);
+            tank.y = realm.hero().y + (i < 2 ? 0.0f : 1.0f);
+            realm.spawn(std::move(tank));
+        }
+        int spirits = 0, swings = 0, offSpirit = 0, offSwing = 0, leechSpirit = 0, leechSwing = 0;
+        uint32_t fighting = 0;
+        for (int tick = 0; tick < 20000; ++tick) {
+            const uint32_t nearest = nearestTo(realm);
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                realm.ask(request);
+            }
+            realm.step();
+            bool lastSpirit = false, leeched = false;
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who != realm.hero().id) continue;
+                // A Leeched is said before the Hit it came off (Realm::strikeAt).
+                if (h.what == sim::What::Hit && leeched) {
+                    (h.spirit ? leechSpirit : leechSwing) += 1;
+                    leeched = false;
+                }
+                if (h.what == sim::What::Hit && !h.rune) {
+                    lastSpirit = false;
+                    ++swings;
+                } else if (h.what == sim::What::Hit && h.spirit) {
+                    // Only one that leaves it standing can sting (ringStings).
+                    lastSpirit = true;
+                    spirits += h.c > 0 ? 1 : 0;
+                } else if (h.what == sim::What::Loosed && h.a == sim::skill::kLightning) {
+                    (lastSpirit ? offSpirit : offSwing) += 1;
+                } else if (h.what == sim::What::Leeched) {
+                    leeched = true;
+                }
+            }
+        }
+        std::printf("  ring of lightning: %d swings stung %d, %d spirit hits it lived through stung %d\n", swings,
+                    offSwing, spirits, offSpirit);
+        check(spirits >= 20 && offSwing > 0, "his swings sting and his spirits land");
+        checkEqual(offSpirit, 0, "but no spirit stings the ring");
+        std::printf("  the Leech: %d after a swing, %d after a spirit\n", leechSwing, leechSpirit);
+        check(leechSwing > 0, "his swings leech");
+        checkEqual(leechSpirit, 0, "his spirits do not");
+    }
     {
         sim::Realm realm;
         realm.raise(&tables, 5, 200, 160, sim::Kin::DarkWizard, 60);
@@ -12595,7 +12927,7 @@ void testEvilSpirit(const content::Tables& tables) {
                   element(28) == sim::Element::Wind,
               "the Rings of Lightning, Fire and Wind carry their elements");
         checkNear(sim::ringStingChance(0), 0.05, 1e-9, "a sting is 5% at +0");
-        checkNear(sim::ringStingChance(11), 0.30, 1e-9, "and no more than 30%");
+        checkNear(sim::ringStingChance(11), 0.15, 1e-9, "and no more than 15%");
     }
     // Spirit Plague (2026-10-06), in a ring: about one landed spirit in five poisons what it
     // struck, and the poison pulses.
@@ -13690,13 +14022,15 @@ void testQuestLadder(const content::Tables& tables) {
                 // Not the Magic Gladiator's own on the knight's row (his Dark Reign Blade).
                 if ((one.classes & (1 << kin)) == 0) continue;
                 if (!one.weapon() || !one.twoHanded()) continue;
+                // The knight's two-handers come beside his one-hander (the user, 2026-10-22).
+                if (kin == int(sim::Kin::DarkKnight) && one.name != "Sword18") continue;
                 const bool allowed = one.name == "Sword18";
-                check(allowed, "a knight's or a wizard's quest weapon is one-handed");
+                check(allowed, "a wizard's quest weapon is one-handed");
                 ++twoHanders;
             }
         }
     }
-    checkEqual(twoHanders, 1, "the one two-hander is the Dark Breaker");
+    checkEqual(twoHanders, 1, "the one unpaired two-hander is the Dark Breaker");
     // And the Dark Breaker comes with the rune that keeps his guard without a shield.
     bool bulwark = false;
     const sim::QuestRow& phoenix = sim::questAt(sim::kPhoenixContract);
@@ -13727,6 +14061,37 @@ void testQuestLadder(const content::Tables& tables) {
         }
     }
     checkEqual(crow, 4, "the Magic Gladiator's Storm Crow, whole over Icarus");
+    // The talents' Attunements count element runes (the reward audit, 2026-10-22): the Sky Door
+    // pays each class the ones no other quest does, first clear, and asks no choice.
+    const sim::QuestRow& sky = sim::questAt(sim::kSkyDoor);
+    const auto offered = [&](int kin, sim::Power power) {
+        for (int i = 0; i < sky.choiceCount; ++i) {
+            if (sky.choices[i].power == uint8_t(power) && sim::questPays(sky.choices[i], kin, true)) return true;
+        }
+        for (int i = 0; i < sky.paidCount; ++i) {
+            if (sky.paid[i].power == uint8_t(power) && sim::questPays(sky.paid[i], kin, true)) return true;
+        }
+        return false;
+    };
+    check(offered(int(sim::Kin::DarkKnight), sim::Power::Tempest), "the knight's Tempest");
+    check(offered(int(sim::Kin::DarkWizard), sim::Power::Venom) &&
+              offered(int(sim::Kin::DarkWizard), sim::Power::Tempest),
+          "the wizard's Tempest and Venom");
+    check(offered(int(sim::Kin::FairyElf), sim::Power::Tempest), "the elf's Tempest");
+    checkEqual(sky.choiceCount, 0, "and no choice to make");
+    // Kantur's Captain pays each second class its own shield (82870a67).
+    const sim::QuestRow& captain = sim::questAt(sim::kKantursCaptain);
+    int shields = 0;
+    for (int i = 0; i < captain.paidCount; ++i) {
+        const int item = tables.itemNamed(captain.paid[i].item);
+        if (item < 0) continue;
+        const content::ItemRow& one = tables.items[size_t(item)];
+        if (one.shield() && captain.paid[i].rank == sim::QuestItem::Rank::Second &&
+            (one.classes & (1 << captain.paid[i].kin)) != 0) {
+            ++shields;
+        }
+    }
+    checkEqual(shields, 4, "the captain pays four second-class shields, each to its class");
 }
 
 void testQuestFirecrackers(const content::Tables& tables) {
@@ -14082,6 +14447,45 @@ void testCommands(const content::Tables& tables) {
     bool again = false;
     for (const sim::Happening& one : realm.happenings()) again = again || one.what == sim::What::Answered;
     check(!again, "and each is answered once");
+
+    // One jewel off a stack (the user, 2026-10-23: "dont sell whole stack but single jewel"),
+    // sold where the stack lies, so a full bag sells it as well.
+    {
+        const int32_t bless = tables.itemNamed("Jewel01");
+        const int stack = realm.give(bless, -1, 0, 3);
+        while (realm.give(tables.itemNamed("Potion01"), -1, 0, 1) >= 0) {}
+        check(stack >= 0, "three Jewels of Bless in a full bag");
+        const int64_t purse = realm.money();
+        const int64_t card = realm.sellValue(stack);
+        realm.command({.kind = sim::Command::Kind::Sell, .ticket = 9, .a = stack, .c = 1});
+        realm.step();
+        checkEqual(int(realm.satchel()[stack].durability), 2, "one jewel sold off the stack");
+        sim::Held one = realm.satchel()[stack];
+        one.durability = 1;
+        checkEqual((long long)(realm.money() - purse), (long long)sim::npcValue(tables, one),
+                   "for one jewel's price");
+        checkEqual((long long)card, (long long)(realm.money() - purse), "which is the card's price");
+        checkEqual(realm.buyBack(), stack, "bought back onto the stack");
+        checkEqual(int(realm.satchel()[stack].durability), 3, "which is three again");
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            if (slot != stack) realm.sellItem(slot);
+        }
+        realm.sellItem(stack);
+    }
+    // Every stack a merchant buys is that many pieces' price: the Chaos, the Feather, the Ale and
+    // the Town Portal, the pets and the tickets sold a stack for one piece's.
+    for (size_t i = 0; i < tables.items.size(); ++i) {
+        if (!sim::stacks(tables.items[i])) continue;
+        sim::Held one{};
+        one.item = int32_t(i);
+        one.durability = 1;
+        sim::Held five = one;
+        five.durability = int16_t(std::min(5, sim::stackMost(tables.items[i])));
+        const int64_t each = sim::npcValue(tables, one), all = sim::npcValue(tables, five);
+        if (each <= 0) continue;  // a small potion alone fetches nothing; five of them do
+        check(all >= each * five.durability * 9 / 10,
+              (tables.items[i].name + " sells a stack for its count").c_str());
+    }
 
     // The bag's (batch 2): a potion used, a Firecracker thrown -- which the realm opens and answers
     // as a Crack, its burst tile in x and y and the Cracked said just before -- and an empty slot
@@ -15372,6 +15776,7 @@ int main() {
     testInvasion(tables);
     testRaid(tables);
     testItems(tables);
+    testQuickBind(tables);
     testSwapOverlap(tables);
     testLoot(tables);
     testDrops(tables);

@@ -141,6 +141,16 @@ const char* HeldLights::mesh(Item item) {
         case Item::StingerBow: return "Bow24";
         case Item::DeadlyStaff: return "Staff31";
         case Item::ImperialStaff: return "Staff32";
+        case Item::CrimsonGlory: return "Shield18";
+        case Item::SalamanderShield: return "Shield19";
+        case Item::GuardianShield: return "Shield21";
+        case Item::BoneBlade: return "Sword23";
+        case Item::ExplosionBlade: return "Sword24";
+        case Item::SylphWindBow: return "Bow22";
+        case Item::GrandViperStaff: return "Staff13";
+        case Item::ChromaticStaff: return "Staff34";
+        case Item::Beuroba: return "Spear12";
+        case Item::AirLynBow: return "Bow25";
     }
     return "";
 }
@@ -471,6 +481,87 @@ int HeldLights::points(Item item, float out[kMostPoints][3]) {
                 for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
             }
             return 4;
+        }
+        case Item::CrimsonGlory: {
+            // Shield_18.bmd at rest: zx01, zx02 and zx002 (bones 1-3), the flares, then zx03-zx09
+            // (4-10) round the rim.
+            static const float kBones[10][3] = {{20.8f, 39.7f, -23.5f}, {20.0f, 19.9f, -2.9f}, {20.0f, 12.1f, -16.0f}, {11.7f, 56.2f, 0.7f}, {12.6f, 24.8f, 13.8f}, {12.3f, -12.8f, 26.1f}, {12.2f, -46.0f, 28.0f}, {12.3f, -28.8f, -0.6f}, {12.6f, -0.2f, -28.0f}, {11.7f, 26.1f, -49.5f}};
+            for (int i = 0; i < 10; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 10;
+        }
+        case Item::SalamanderShield:
+            // zx01 (bone 1) of Shield_19.bmd at rest, the gem: (27.2, 0, 0.6).
+            out[0][0] = 27.2f * kUnit;
+            out[0][1] = 0.6f * kUnit;
+            out[0][2] = 0.0f;
+            return 1;
+        case Item::GuardianShield: {
+            // Shield_21.bmd at rest: b01, zx01, zx05, zx04, Object04, Object05, zx02, Object01 and
+            // Object03 (bones 1-9), the crystals.
+            static const float kBones[9][3] = {{17.1f, -27.1f, 14.4f}, {15.3f, -1.3f, 14.7f}, {17.5f, -20.5f, 5.0f}, {15.3f, -12.9f, -7.1f}, {14.2f, 33.3f, 8.7f}, {14.2f, 11.6f, -32.3f}, {17.5f, -15.6f, 14.2f}, {14.4f, 53.4f, -12.5f}, {14.4f, 40.4f, -37.0f}};
+            for (int i = 0; i < 9; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 9;
+        }
+        case Item::BoneBlade: {
+            // Box01 (bone 0) of HDK_Sword.bmd at rest, MU's (+-5, -22, -10) off it: the guard.
+            static const float kBones[2][3] = {{5.0f, -10.0f, 23.7f}, {-5.0f, -10.0f, 23.7f}};
+            for (int i = 0; i < 2; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 2;
+        }
+        case Item::ExplosionBlade: {
+            // HDK_Sword2.bmd at rest: Bone05 (bone 4), 30 out from it, then Bone07-Bone09 (6-8).
+            static const float kBones[5][3] = {{0.0f, -2.1f, 58.3f}, {0.0f, -2.1f, 88.3f}, {0.0f, -4.2f, 118.5f}, {0.0f, -4.4f, 149.2f}, {0.0f, -1.7f, 176.0f}};
+            for (int i = 0; i < 5; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 5;
+        }
+        case Item::SylphWindBow: {
+            // HDK_Bow.bmd at rest: zx03 and zx06 (bones 7, 15), the limb tips, then 20 out from
+            // Bone10 (bone 0), the grip.
+            static const float kBones[3][3] = {{0.0f, 38.2f, 133.0f}, {0.0f, 38.2f, -124.8f}, {0.0f, -20.0f, 6.3f}};
+            for (int i = 0; i < 3; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 3;
+        }
+        case Item::GrandViperStaff:
+            // Object01 (bone 0) of HDK_Staff.bmd at rest, 170 along it: the serpent's head.
+            out[0][0] = 0.0f;
+            out[0][1] = 0.2f * kUnit;
+            out[0][2] = 170.3f * kUnit;
+            return 1;
+        case Item::ChromaticStaff: {
+            // gamble_wand.bmd at rest: zx01 (bone 8), the head, then zx02 and rx01-rx06 (1-7),
+            // the beads.
+            static const float kBones[8][3] = {{0.0f, 0.0f, 115.0f}, {0.0f, 0.0f, -52.0f}, {-20.0f, 0.0f, 88.7f}, {17.9f, 0.0f, 88.7f}, {12.3f, -13.3f, 114.3f}, {12.0f, 12.1f, 114.3f}, {-13.0f, -13.3f, 114.3f}, {-13.0f, 12.1f, 114.3f}};
+            for (int i = 0; i < 8; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 8;
+        }
+        case Item::Beuroba: {
+            // gamble_scyder01.bmd at rest: zx01 and zx02 (bones 3, 4), the blade's gems, then
+            // Bone02 (5), the butt.
+            static const float kBones[3][3] = {{3.5f, -8.1f, 101.1f}, {-3.5f, -8.1f, 101.1f}, {0.0f, -0.6f, -62.0f}};
+            for (int i = 0; i < 3; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 3;
+        }
+        case Item::AirLynBow: {
+            // gamblebow.bmd at rest: zx02 and zx03 (bones 7, 11), the limb tips.
+            static const float kBones[2][3] = {{0.0f, 29.7f, -91.3f}, {0.0f, 25.6f, 91.9f}};
+            for (int i = 0; i < 2; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 2;
         }
     }
     return 0;
@@ -901,6 +992,81 @@ void HeldLights::gather(gfx::Effects& effects) const {
                 put(light_, one.at[2], halfOf(3.0f), 0.3f, 0.3f, 0.9f);
                 put(light_, one.at[3], halfOf(2.0f), 0.7f, 0.1f, 0.2f);
                 put(shiny_, one.at[3], halfOf(0.8f), 0.9f, 0.3f, 0.5f);
+                break;
+            }
+            case Item::CrimsonGlory: {
+                if (one.count < 10) break;
+                for (int i = 3; i < 10; ++i) put(light_, one.at[i], halfOf(1.5f), 0.8f, 0.6f, 0.2f);
+                // BITMAP_FLARE_RED under white: here the light in its red.
+                const float lumi = std::fabs(std::sin(clock_ * 0.5f));
+                static const float kFlares[3] = {0.5f, 0.3f, 0.3f};
+                for (int i = 0; i < 3; ++i) put(light_, one.at[i], halfOf(kFlares[i]), lumi, 0.15f * lumi, 0.1f * lumi);
+                break;
+            }
+            case Item::SalamanderShield: {
+                put(light_, one.at[0], halfOf(2.0f), 0.9f, 0.0f, 0.2f);
+                break;
+            }
+            case Item::GuardianShield: {
+                const float lumi = std::fabs(std::sin(clock_)) + 0.1f;
+                for (int i = 0; i < one.count; ++i) put(light_, one.at[i], halfOf(1.5f), 0.8f * lumi, 0.3f * lumi, 0.8f * lumi);
+                break;
+            }
+            case Item::BoneBlade: {
+                // MU's sin(WorldTime*0.4)*0.25 + 0.7 turns faster than its frame: the hand roll.
+                const float f = 0.45f + handLuminosity_ * 0.5f;
+                for (int i = 0; i < one.count; ++i) put(light_, one.at[i], halfOf(0.75f), f, f - 0.5f, f - 0.5f);
+                break;
+            }
+            case Item::ExplosionBlade: {
+                if (one.count < 5) break;
+                const float f = 0.3f + linkLuminosity_ * 0.5f;
+                put(shiny_, one.at[0], halfOf(2.2f), 0.2f, 0.2f, f);
+                put(shiny_, one.at[0], halfOf(1.8f), 0.2f, 0.2f, f);
+                put(light_, one.at[0], halfOf(2.3f), 0.2f, 0.2f, f);
+                static const float kSizes[4] = {2.0f, 2.0f, 2.0f, 1.0f};
+                for (int i = 0; i < 4; ++i) put(light_, one.at[1 + i], halfOf(kSizes[i]), 0.2f, 0.2f, f);
+                break;
+            }
+            case Item::SylphWindBow: {
+                if (one.count < 3) break;
+                put(light_, one.at[0], halfOf(2.0f), 0.5f, 0.5f, 0.1f);
+                put(light_, one.at[1], halfOf(2.0f), 0.5f, 0.5f, 0.1f);
+                for (const float size : {0.8f, 1.3f, 2.0f}) put(light_, one.at[2], halfOf(size), 1.0f, 1.0f, 0.4f);
+                break;
+            }
+            case Item::GrandViperStaff: {
+                const float size = 1.0f + handLuminosity_ * 0.5f;
+                put(shiny_, one.at[0], halfOf(size + 0.8f), 0.4f, 0.4f, 0.4f);
+                put(light_, one.at[0], halfOf(size), 1.0f, 0.4f, 1.0f);
+                put(shiny_, one.at[0], halfOf(size), 1.0f, 0.4f, 1.0f);
+                put(shiny_, one.at[0], halfOf(size - 0.3f), 1.0f, 0.4f, 1.0f);
+                break;
+            }
+            case Item::ChromaticStaff: {
+                if (one.count < 8) break;
+                put(light_, one.at[0], halfOf(3.5f), 0.9f, 0.1f, 0.4f);
+                put(shiny_, one.at[0], halfOf(1.0f), 0.8f, 0.8f, 0.2f);
+                for (int i = 1; i < 8; ++i) {
+                    put(light_, one.at[i], halfOf(0.6f), 0.8f, 0.1f, 0.4f);
+                    put(shiny_, one.at[i], halfOf(0.3f), 0.8f, 0.8f, 0.2f);
+                }
+                break;
+            }
+            case Item::Beuroba: {
+                if (one.count < 3) break;
+                for (int i = 0; i < 2; ++i) {
+                    put(shiny_, one.at[i], halfOf(0.8f), 0.9f, 0.2f, 0.7f);
+                    put(shiny_, one.at[i], halfOf(0.3f), 0.9f, 0.2f, 0.7f);
+                }
+                put(light_, one.at[2], halfOf(1.5f), 0.2f, 0.9f, 0.1f);
+                break;
+            }
+            case Item::AirLynBow: {
+                for (int i = 0; i < one.count; ++i) {
+                    put(light_, one.at[i], halfOf(0.8f), 0.2f, 0.8f, 0.5f);
+                    put(light_, one.at[i], halfOf(0.8f), 0.2f, 0.8f, 0.5f);
+                }
                 break;
             }
         }

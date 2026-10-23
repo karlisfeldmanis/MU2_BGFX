@@ -568,7 +568,10 @@ void QuestLog::rebuild(const Play& play, int playing, Stage* stage) {
             const float zenWide = controls::labelWidth(kLine * u, zen) / u;
             controls::ranged(words, sx(kSide + inner), sy(cy + 12.0f), kLine * u, kZenGold, zen);
             controls::ranged(words, sx(kSide + inner - zenWide - 10.0f), sy(cy + 12.0f), kLine * u, style::kBone,
-                             panel::commas(sim::questExperience(row, first)) + " experience  \xC2\xB7");
+                             panel::commas(sim::questExperience(
+                                 row, first || sim::questReborn(row, kin, progress,
+                                                                realm.hero().rebirths))) +
+                                 " experience  \xC2\xB7");
         }
     }
     // The Magic Gladiator's paths, each over its own rewards.

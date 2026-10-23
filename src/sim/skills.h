@@ -146,6 +146,9 @@ constexpr int32_t kWeakness = 221;
 // `AT_SKILL_SUMMON_POLLUTION`, the Summoner's Book of Lagle: the Ancient rune Pollution's
 // (sim/items.h kPollution...), said as Loosed on what it struck (fx/pollution.h). MU's number.
 constexpr int32_t kPollution = 225;
+// `AT_SKILL_ALICE_DRAINLIFE`: the Ancient rune Drain Life's (sim/items.h kDrain...), said as
+// Loosed on what it struck (fx/drain.h). MU's number.
+constexpr int32_t kDrainLife = 214;
 }  // namespace skill
 
 // What an iced body's walking is multiplied by: OpenMU's `IcedMovementSpeedFactor`, 0.5, which
@@ -575,7 +578,10 @@ constexpr float kAgilityPerDoubling = 300.0f;
 // A Dark Knight's own skills are kKnightSkillBoost of that, by `who`, and a Gladiator's knight's
 // skills too since the class balance (2026-10-21): the user, 2026-10-21, "well DW is very strong now... maybe we need to boost DKs?", +15%
 // on every one, off tests/skill_sweep.cpp (the best knight ~2/3 of a wizard on Icarus).
-constexpr float kKnightSkillBoost = 1.15f;
+// 1.15 -> 1.05 when his cooldown skills began to animate at his attack speed (f79bb459, the
+// user, 2026-10-23: "we can nerw DK little bit so its not a such boost"): that alone took the
+// level-400 knight's best skill +19% on Icarus and +30% on Aida, and the level-150 one +8%.
+constexpr float kKnightSkillBoost = 1.05f;
 // And a knight's own skills with a two-handed weapon, on top (sim::heroForce): the two-handed knight
 // was the weakest build on hard ground, 1.61M an hour on Icarus at level 200 against the wizard's
 // 3.17M and two swords' 2.23M (tests/kits/level200.json; the user, 2026-10-22, "dk still is pretty
@@ -607,6 +613,12 @@ constexpr float kSpellQuicken = 1.7f;
 // then "it can bee quicker but not so quick like it was"): about 0.65 s a cast at 100 agility,
 // between the 0.43 of Energy Ball's hands at kSpellQuicken and Meteorite's 0.93. Ours.
 constexpr float kIceQuicken = 2.4f;
+
+// **A cooldown skill takes half of his attack speed** (the user, 2026-10-23, the smaller of the
+// two nerfs offered after f79bb459 made a knight's cooldown skills animate at it): the share of
+// the AttackSpeed bonus an attack skill with a cooldown is quickened by (castTicks). A spell takes
+// MagicSpeed whole and a primary (Twisting Slash, Skillshot) AttackSpeed whole. Ours.
+constexpr float kCooldownSkillHaste = 0.5f;
 
 // How long the clip takes at its authored pace, in ticks -- what the drawing plays a knight's
 // skill with a cooldown at (game/play.cpp, `swingPace` 1 on a cast); a primary is fitted to

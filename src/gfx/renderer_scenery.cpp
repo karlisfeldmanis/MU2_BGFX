@@ -144,7 +144,7 @@ void Renderer::drawGpuScenery(const GpuScenery& c, bgfx::ViewId view, bgfx::Prog
             bgfx::setTexture(2, sOrm_, set.orm);
             bindShadeInputs();
             // Every part here is the town's: the sheet's sheen (gfx::Lighting::sheen).
-            const float weather[4] = {weather_[0], weather_[1], 1.0f, 0.0f};
+            const float weather[4] = {weather_[0], weather_[1], 1.0f, weather_[3]};
             bgfx::setUniform(uWeather_, weather);
             bindShine();
         }

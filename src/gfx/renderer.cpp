@@ -395,7 +395,7 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                 // z: a town placement (its resident run), which takes the sheet's sheen; a
                 // figure or an item keeps its highlights (gfx::Lighting::sheen).
                 const float weather[4] = {weather_[0], weather_[1],
-                                          bgfx::isValid(batch.resident) ? 1.0f : 0.0f, 0.0f};
+                                          bgfx::isValid(batch.resident) ? 1.0f : 0.0f, weather_[3]};
                 bgfx::setUniform(uWeather_, weather);
                 // Here and not in bindShadeInputs: the land binds its second layer on stages 9
                 // to 11 and then calls that, and the chrome went down over the town's ground.
@@ -751,7 +751,8 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     metalGain_ = lighting.metalGain;
     probeTaken_[3] = lighting.probeDiffuse;
     weather_[0] = bgfx::isValid(weatherNoise_) ? std::max(lighting.weathering, 0.0f) : 0.0f;
-    weather_[1] = std::max(lighting.sheen, 0.0f);
+    weather_[1] = std::max(lighting.metalHighlight, 0.0f);  // fs_shade: the metal highlight's cap
+    weather_[3] = std::max(lighting.sheen, 0.0f);           // fs_shade: the town's sheen (z flags it)
     softGlowOk_ = msaa_ <= 1 || bgfx::getRendererType() == bgfx::RendererType::Metal;
     for (int k = 0; k < 3; ++k) abyssColour_[k] = std::max(lighting.abyssColour[k], 0.0f);
     shineStrength_ = lighting.refineStrength;

@@ -989,6 +989,11 @@ void Play::update(double seconds) {
                         core::logf("channel: %s plays clip %d, %.3f s long", row->name, row->clip,
                                    double(caster->figure.length()));
                         caster->casting = lasts;
+                        // Which skill it is, so the weapon's streak knows a spell lays none: left
+                        // as the last swing's, a staff streaked its plus's colour through every
+                        // Lightning (the user, 2026-10-22: "why there is this slash ornage effect
+                        // to weapoons?").
+                        caster->swingSkill = happening.a;
                         // Once over the channel, however short its row makes it (Lightning's
                         // was the clip's own 2.08 s until kSpellQuicken, 2026-10-03).
                         caster->swingPace = lasts > 0.01f ? std::max(1.0f, caster->figure.length() / lasts)
@@ -1355,6 +1360,15 @@ void Play::update(double seconds) {
                         const float there[3] = {to[0], ground_->heightAt(to[0], to[2]), to[2]};
                         pollution_.cast(self, there);
                         if (heard_.pollution >= 0) emit(heard_.pollution, to[0], to[2], caster->id);
+                    } else if (happening.a == sim::skill::kDrainLife) {
+                        // The Ancient rune Drain Life: MU's MODEL_ALICE_DRAIN_LIFE between him and
+                        // what it drained, with SOUND_SKILL_DRAIN_LIFE (fx/drain.h). The life it
+                        // gave back is the Leeched after it.
+                        const float self[3] = {caster->crown[0], from[1], caster->crown[2]};
+                        drain_.cast(happening.who, happening.whom, self, to);
+                        if (heard_.drainLife >= 0) {
+                            emit(heard_.drainLife, caster->crown[0], caster->crown[2], caster->id);
+                        }
                     } else if (happening.a == sim::skill::kIce) {
                         // The block where the body is drawn, turned to his yaw, as MU turns it.
                         const float floor = ground_->heightAt(to[0], to[2]);
@@ -1407,19 +1421,54 @@ void Play::update(double seconds) {
                                         float(fall) * float(kTickSeconds));
                         }
                     } else if (happening.a == sim::skill::kLightning) {
-                        // A chain's leap: from the middle of the body it leaps off (`c`,
-                        // Realm::channel), not his hand -- the corpse's too, if the last strike
-                        // killed it.
+                        // Drawn as the Summoner's Chain Lightning (fx/thunder.h Thunder::chain;
+                        // the user, 2026-10-22: "new lighting chaiin has to work how its now but
+                        // with new animation and sound"). A chain's leap: from the middle of the
+                        // body it leaps off (`c`, Realm::channel) -- the corpse's too, if the last
+                        // strike killed it -- as MU's subtypes 1 and 2 leave the body before. The
+                        // first: from his weapon (the user, 2026-10-22: "chain has to come from
+                        // weapon"), its head (Play::weaponHead), two bolts where MU's
+                        // subtype 0 throws from the Summoner's two hands; from his hands when the
+                        // weapon marks none, and from the chest when the rig marks no hands.
                         const Drawn* off =
                             happening.c != 0 ? drawnOf(uint32_t(happening.c)) : nullptr;
-                        if (off != nullptr && off->placed) {
+                        float tall = 1.0f;
+                        if (target && target->placed) {
+                            const FigureBody* look = target->figure.body();
+                            tall = look ? look->height * look->scale : 1.0f;
+                        }
+                        if (happening.rune) {
+                            // A passive's -- Stormcall, the ring of lightning: off his body,
+                            // fixed (the user, 2026-10-22: "only when its passive it can come
+                            // from character body"); only the spell leaves his weapon.
+                            thunder_.chain(from, to, happening.whom, tall);
+                        } else if (off != nullptr && off->placed) {
                             const FigureBody* look = off->figure.body();
-                            const float tall = look ? look->height * look->scale : 1.0f;
-                            const float at[3] = {off->crown[0], off->crown[1] - tall * 0.5f,
+                            const float offTall = look ? look->height * look->scale : 1.0f;
+                            const float at[3] = {off->crown[0], off->crown[1] - offTall * 0.5f,
                                                  off->crown[2]};
-                            thunder_.strike(at, to, happening.whom);
+                            thunder_.chain(at, to, happening.whom, tall);
                         } else {
-                            thunder_.strike(from, to, happening.whom);
+                            const FigureBody* look = caster->figure.body();
+                            const float grip[3] = {0.0f, 0.0f, 0.0f};
+                            int thrown = 0;
+                            float tip[3];
+                            if (weaponHead(*caster, tip)) {
+                                thunder_.chain(tip, to, happening.whom, tall, happening.who);
+                                thunder_.chain(tip, to, happening.whom, tall, happening.who);
+                                thrown = 2;
+                            }
+                            for (const int hand : {0, 3}) {
+                                if (thrown > 0) break;
+                                float at[3];
+                                if (look == nullptr || look->armBones[hand] < 0 ||
+                                    !caster->figure.pointOn(look->armBones[hand], grip, at)) {
+                                    continue;
+                                }
+                                thunder_.chain(at, to, happening.whom, tall);
+                                ++thrown;
+                            }
+                            if (thrown == 0) thunder_.chain(from, to, happening.whom, tall);
                         }
                     } else if (happening.a == sim::skill::kPowerWave) {
                         // A curtain standing on the ground, under where every spell leaves, sent
@@ -1495,7 +1544,10 @@ void Play::update(double seconds) {
                     // Nova's rings on the key it bursts on, not here (novaOwed_).
                     const bool spell = loosed != nullptr && loosed->wizardry &&
                                        happening.a != sim::skill::kNova;
-                    if (spell && !again && index >= 0 && heard_.skill[index] >= 0) {
+                    // Lightning's is Chain Lightning's, once a cast as MU plays it: on the strike
+                    // from his hands, not on every leap.
+                    const bool leap = happening.a == sim::skill::kLightning && happening.c != 0;
+                    if (spell && !again && !leap && index >= 0 && heard_.skill[index] >= 0) {
                         emit(heard_.skill[index], from[0], from[2], caster->id);
                     }
                 }
@@ -1733,10 +1785,12 @@ void Play::update(double seconds) {
                             cast ? sim::skillNumbered(swinger->castSkill) : nullptr;
                         // A primary's does the same at AttackSpeed, every class's: the realm
                         // holds Twisting Slash and Skillshot for their quickened clip
-                        // (Realm::throwSkill), so the spin has to end when the hold does.
+                        // (Realm::throwSkill), so the spin has to end when the hold does. And
+                        // so does a skill with a cooldown since 2026-10-23 ("animation speed
+                        // also becomes faster when there is more agi"): a knight's Cyclone at
+                        // his attack speed, as a wizard's Meteorite is at his MagicSpeed.
                         // A channel is paced by its own length where it starts, above.
-                        if (spell && (spell->wizardry || spell->primary()) &&
-                            !spell->channelled() && body) {
+                        if (spell && !spell->onSelf() && !spell->channelled() && body) {
                             const auto armAt = [&](int32_t at) -> const content::Arm* {
                                 return at >= 0 && size_t(at) < tables_.arms.size()
                                            ? &tables_.arms[size_t(at)] : nullptr;
@@ -2416,6 +2470,7 @@ void Play::update(double seconds) {
         return true;
     };
     bolt_.update(float(seconds), standing, middle);
+    drain_.update(float(seconds), middle);
     for (Volley& volley : volleys_) {
         volley.wait -= float(seconds);
         if (volley.wait <= 0.0f) volleyShot(volley.shooter, volley.target);
@@ -2709,6 +2764,11 @@ void Play::update(double seconds) {
         if (blinkIn_ >= kBlinkFadeSeconds) blinkIn_ = -1.0f;
     }
     thunder_.update(float(seconds), standing, middle);
+    // Lightning's bolts held on his weapon's head as he moves (Thunder::anchor).
+    thunder_.anchor([&](uint32_t id, float* out) {
+        const Drawn* drawn = drawnOf(id);
+        return drawn != nullptr && drawn->placed && weaponHead(*drawn, out);
+    });
     // Twisting Slash's wheel follows him as he is drawn, and sounds as it starts to turn.
     wheel_.update(
         float(seconds),
@@ -3079,7 +3139,17 @@ void Play::update(double seconds) {
                 const ShineLook shine = shineOf(tables.items[size_t(boots.item)], boots.refinement);
                 std::copy(shine.colour, shine.colour + 3, colour);
             }
-            setShine_.wear(body.id, plus, feet, drawn.yaw, arms, lit, colour);
+            const float* spray = boots.empty() || size_t(boots.item) >= tables.items.size()
+                                     ? nullptr
+                                     : SetShine::sprayOf(tables.items[size_t(boots.item)]);
+            // A Kanturu set's puffs off his pelvis as posed (MU's BoneTransform[0]).
+            float puffAt[3][3];
+            const bool posed = spray && look && look->rootBone >= 0 &&
+                               drawn.figure.pointOnBind(look->rootBone, SetShine::kPuffPoints[0], puffAt[0]) &&
+                               drawn.figure.pointOnBind(look->rootBone, SetShine::kPuffPoints[1], puffAt[1]) &&
+                               drawn.figure.pointOnBind(look->rootBone, SetShine::kPuffPoints[2], puffAt[2]);
+            setShine_.wear(body.id, plus, feet, drawn.yaw, arms, lit, colour, spray,
+                           posed ? puffAt : nullptr);
         }
     }
     setShine_.update(float(seconds), ground_ ? ground_->metresPerTile() : 1.0f);

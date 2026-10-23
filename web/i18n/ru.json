@@ -26,7 +26,6 @@
  "Native on Windows 10 and 11, on Macs with Apple silicon, and on Linux. No emulators.": "Нативно на Windows 10 и 11, на Mac с Apple silicon и на Linux. Без эмуляторов.",
  "Gameplay": "Геймплей",
  "Classic at heart": "Классика в основе",
- "The worlds, monsters, items and drops you remember, from Lorencia to Icarus.": "Миры, монстры, предметы и дроп, которые вы помните, от Lorencia до Icarus.",
  "Reworked spells": "Переработанные скиллы",
  "Every class’s skills redone, with new effects, auras and animations, and rebalanced scaling.": "Скиллы всех классов сделаны заново: новые эффекты, ауры и анимации, пересмотренный скейлинг.",
  "Raids": "Рейды",
@@ -404,5 +403,17 @@
  "Global chat": "Глобальный чат",
  "Talk nearby or to your whole region, and Shift-click an item to link it so others can see it.": "Говорите с теми, кто рядом, или со всем регионом, а Shift+клик по предмету вставит ссылку, чтобы другие его увидели.",
  "Four regions": "Четыре региона",
- "Servers in North Europe, Central Europe, South America and East Asia, and your character can move between them from the Account page.": "Серверы в Северной Европе, Центральной Европе, Южной Америке и Восточной Азии, и ваш персонаж может переходить между ними на странице аккаунта."
+ "Servers in North Europe, Central Europe, South America and East Asia, and your character can move between them from the Account page.": "Серверы в Северной Европе, Центральной Европе, Южной Америке и Восточной Азии, и ваш персонаж может переходить между ними на странице аккаунта.",
+ "The worlds, monsters, items and drops you remember, from Lorencia to Aida.": "Миры, монстры, предметы и дроп, которые вы помните, от Lorencia до Aida.",
+ "Aida": "Aida",
+ "The late-game forest past Icarus opens at level 300, with Bloody Orcs, Witch Queens and the Seed Master’s quests.": "Лесной лейт-гейм за Icarus открывается с 300 уровня: Bloody Orc, Witch Queen и квесты Seed Master.",
+ "Powered rings and pendants": "Кольца и пенданты с силами",
+ "Jewellery rolls up to four powers, such as more experience, Zen or resistances, its colour telling how many.": "На бижутерии выпадает до четырёх сил, например больше опыта, Zen или сопротивления, а её цвет показывает, сколько их.",
+ "Pets": "Петы",
+ "The Angel and the Imp fight at your side, and the Horn of Uniria carries you.": "Angel и Imp сражаются рядом с вами, а Horn of Uniria несёт вас.",
+ "Guilds, parties and trade": "Гильдии, пати и трейд",
+ "Found a guild under your own mark, hunt in a party of five, and trade face to face.": "Основайте гильдию под своим знаком, качайтесь в пати из пяти и торгуйте лицом к лицу.",
+ "Coming soon": "Скоро",
+ "Kanturu": "Kanturu",
+ "The next world is on its way.": "Следующий мир уже в пути."
 }

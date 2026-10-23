@@ -1,0 +1,143 @@
+{
+  "item": "BootMale46",
+  "mu_name": "Titan Boots",
+  "mu_name_from": "MuMain's MODEL_TITAN_* (_enum.h: MODEL_BOOT + 45), loaded from Data/Player/BootMale46.bmd by the index-plus-one rule. MU's number 45; ours is *Male46.",
+  "why_this_one": "The missing-gear audit, 2026-10-23: the last sets missing at drop levels 93-132, which Kanturu's monsters reach (the user: 'we need to build all kanturu weapons and armors'). Titan is the Dark Knight's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:335.",
+    "call": "CreateBoots(45, \"Titan Boots\", 96, 57, 0, 86, 0, 222, 32, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)",
+    "group": 11,
+    "number": 45,
+    "drop_level": 96,
+    "drops_from_monsters": true,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 57,
+    "durability": 86,
+    "requires": {
+      "level": 0,
+      "strength": 222,
+      "agility": 32,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "class_level_note": "OpenMU's darkKnightClassLevel 1, its only class."
+  },
+  "sheets": {
+    "Item2001_boot": "item2001_boot.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased (an .OZT beside its .OZJ takes _t): navy lacquer plate edged in silver and gold; skinClass301 the knight's own face under the helm.",
+  "sheet_materials": {
+    "Item2001_boot": "painted_steel",
+    "item2001_boot": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the other sets.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss.",
+  "effects_note": "MuMain has no render arm for MODEL_TITAN_* (no glow, no chrome pass).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 89,
+      "area": 3540.5,
+      "along": [
+        -13.2,
+        27.4
+      ],
+      "mu_uv": [
+        0.006,
+        0.004,
+        0.995,
+        0.994
+      ],
+      "bake_uv": [
+        0.009,
+        0.01,
+        0.977,
+        0.884
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 78,
+      "area": 2192.1,
+      "along": [
+        -15.9,
+        15.8
+      ],
+      "mu_uv": [
+        0.009,
+        0.005,
+        0.613,
+        0.993
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.839,
+        0.943
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 89,
+      "area": 3540.5,
+      "along": [
+        -13.2,
+        27.4
+      ],
+      "mu_uv": [
+        0.006,
+        0.004,
+        0.995,
+        0.994
+      ],
+      "bake_uv": [
+        0.009,
+        0.01,
+        0.991,
+        0.96
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 78,
+      "area": 2192.1,
+      "along": [
+        -15.9,
+        15.8
+      ],
+      "mu_uv": [
+        0.009,
+        0.005,
+        0.613,
+        0.993
+      ],
+      "bake_uv": [
+        0.009,
+        0.24,
+        0.572,
+        0.981
+      ]
+    }
+  ]
+}

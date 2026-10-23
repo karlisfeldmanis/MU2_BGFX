@@ -270,6 +270,8 @@ private:
         // copy), MU's map number -1 for none, its copy and the tile it came down on
         // (Play::dragonLanded, net::Invasion).
         int dragonMap = -1, dragonCopy = 0, dragonColumn = 0, dragonRow = 0;
+        // The server's time over the disc, in minutes of its day (UTC); -1 with no wall clock.
+        int clock = -1;
         // The bug button: its hover in eighths, pressed, and lit for the window being up.
         int bugLift = 0;
         bool bugPressed = false, reporting = false;
@@ -292,7 +294,7 @@ private:
                    row == o.row && heroX == o.heroX && heroY == o.heroY && turn == o.turn &&
                    zoom == o.zoom && full == o.full && hovered == o.hovered && marks == o.marks &&
                    dragonMap == o.dragonMap && dragonCopy == o.dragonCopy &&
-                   dragonColumn == o.dragonColumn && dragonRow == o.dragonRow;
+                   dragonColumn == o.dragonColumn && dragonRow == o.dragonRow && clock == o.clock;
         }
     };
     Face now_, drawn_;

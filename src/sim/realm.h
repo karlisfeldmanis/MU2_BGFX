@@ -1108,8 +1108,9 @@ public:
     // -1 refused. Realm.Buy.
     int buy(int shelfSlot);
     // Sells a carried thing to the open shop: bag slots only, never what is worn. What was
-    // paid, or -1 refused. Realm.Sell.
-    int64_t sellItem(int slot);
+    // paid, or -1 refused. Realm.Sell. `pieces` of a stack, when fewer than all of it, are sold
+    // off the stack where it lies, so a full bag sells one jewel as well as an empty one.
+    int64_t sellItem(int slot, int pieces = 0);
     // The undo on a sale, and no rule of MU's (the user's, 2026-09-28): the last few sales stay
     // at the counter for `kBuybackSeconds`, and one bought back costs exactly what it fetched.
     // Newest first, at any merchant, while a counter is open and he is in reach of it.
@@ -1145,7 +1146,8 @@ public:
     // The bag slot, or -1 refused (nothing to undo, no counter, no room, no Zen).
     int buyBack();
     // What `sellItem` would pay for the thing in this slot at any counter, or -1 when it cannot
-    // be sold at all: a worn slot, an empty one, or a thing worth nothing. The item card's.
+    // be sold at all: a worn slot, an empty one, or a thing worth nothing. The item card's, so
+    // of the pieces a click sells (piecesSold): one jewel of a stack.
     int64_t sellValue(int slot) const;
     // Whether he is close enough to be served by this townsperson right now. Asked again on
     // every purchase and sale, not once when the counter opened.
@@ -1919,6 +1921,8 @@ private:
     // A magic rune's blow: his swing's roll with his energy's band on top (sim::kRuneEnergyLow
     // and High), at `force`, unpaid. Stormcall's lightning and the knight's fire runes.
     void runeStrike(Body& hero, Body& target, float force);
+    // What an Ancient rune is thrown at: what he struck, or the nearest he sees.
+    const Body* runeAim(const Body& hero, const Body& struck) const;
     // Spirit Plague's and Plague Arrows' poison on what a blow of `blowDamage` struck.
     void plague(Body& hero, Body& target, int blowDamage, int worn);
     // That poison laid on, unrolled: a Plague Arrows lane's arrow.
@@ -2198,6 +2202,12 @@ private:
     bool lands(uint32_t owner) const {
         return owner == mine().id || (me_ == 0 && playerOfId(owner) < 0);
     }
+    // Whose blow a flight or a fire that `lands` is: a raider's own body for his runes' (a
+    // Meteor's rock, a Fireburst hop, a Twister storm), the hero `me` for the rest.
+    Body& striker(uint32_t owner, Body& me) {
+        Body* by = owner == me.id ? nullptr : body(owner);
+        return by != nullptr && by->raider >= 0 ? *by : me;
+    }
     bool letSpiritsGo(Body& hero, float force, bool rune);
     void spiritStrike(Body& hero, const SpiritBlow& blow);
     // Flames burning on the ground (`SkillRow::burns`): where, when each strikes next and how
@@ -2221,6 +2231,8 @@ private:
     const SkillRow* sweep_ = nullptr;
     // An Arcane Echo's second throw is being let go: it rolls no talent proc (the plan).
     bool echoing_ = false;
+    // A shield rune's spirit is striking (spiritStrike): a passive's blow, which stings no ring.
+    bool runeSpirit_ = false;
     bool wingDemo_ = false;  // `wingDemo`
     bool benchUndying_ = false;
     bool benchMonstersDie_ = false;

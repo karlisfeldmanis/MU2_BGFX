@@ -68,7 +68,9 @@ public:
     void seat(int clip, bool handsOnly = false);
     // The other way round: the spine and everything above it from `clip`, on its own clock,
     // over the clip playing -- a two-handed grip held over the ride's own seat, where MU's one
-    // armed ride stance is a one-handed one. -1 for none.
+    // armed ride stance is a one-handed one. -1 for none. It fades in and out over a blend
+    // rather than switching: a two-handed rider's arms snapped from the grip into his swing
+    // and back (the user: "looked buggy and instant").
     void upper(int clip);
 
     // `clipRate` advances the CLIP's clock faster or slower than the world's, while the
@@ -212,8 +214,10 @@ private:
     int seat_ = -1;
     float seatTime_ = 0.0f;
     bool seatHands_ = false;
-    int upper_ = -1;
+    int upper_ = -1;  // the clip shown, kept while it fades out
     float upperTime_ = 0.0f;
+    bool upperOn_ = false;
+    float upperWeight_ = 0.0f;  // 0 the clip playing, 1 the upper layer whole
     const FigureBody* seatBody_ = nullptr;
     std::vector<uint8_t> seated_;
     std::vector<uint8_t> arm_;  // a clavicle or a child of one

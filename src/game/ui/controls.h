@@ -82,6 +82,8 @@ void tab(gfx::Canvas& canvas, const gfx::Box& box, const std::string& word, bool
          const State& state, float u, bool floor = true);
 
 enum class Glyph : uint8_t { Close, Plus, Left, Right, CoinIn, CoinOut, Hammer, Hammers, Undo, Bottle };
+// A glyph alone, centred in `box`, with no square under it: Go Back!'s close on its bare plate.
+void bare(gfx::Canvas& canvas, const gfx::Box& box, Glyph which, uint32_t ink, float u);
 // A worded button with a glyph before its word, the two centred together: the character window's
 // Reset points with its turning arrow.
 void button(gfx::Canvas& canvas, const gfx::Box& box, const std::string& word, Glyph icon, Kind kind,

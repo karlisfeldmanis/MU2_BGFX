@@ -1,0 +1,220 @@
+{
+  "item": "BootMale49",
+  "mu_name": "Phantom Boots",
+  "mu_name_from": "MuMain's MODEL_PHANTOM_* (_enum.h: MODEL_BOOT + 48), loaded from Data/Player/BootMale49.bmd by the index-plus-one rule. MU's number 48; ours is *Male49.",
+  "why_this_one": "The missing-gear audit, 2026-10-22: one set a class at drop levels 93-132 (the user: 'Then one set per class at 93-132: Brave, Faith, Hades and Phantom'). Phantom is the Magic Gladiator's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:338.",
+    "call": "CreateBoots(48, \"Phantom Boots\", 94, 44, 0, 86, 0, 62, 19, 165, 0, 0, 0, 0, 0, 1, 0, 0, 0)",
+    "group": 11,
+    "number": 48,
+    "drop_level": 94,
+    "drops_from_monsters": true,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 44,
+    "durability": 86,
+    "requires": {
+      "level": 0,
+      "strength": 62,
+      "agility": 19,
+      "energy": 165,
+      "vitality": 0
+    },
+    "classes": [
+      "gladiator"
+    ],
+    "class_level_note": "OpenMU's magicGladiatorClassLevel 1, its only class. No helm: MuMain loads none for this set."
+  },
+  "sheets": {
+    "Item402_Boot": "item402_boot.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased: red lacquer on dark steel, edged in silver. The pants carry the sheet twice, Item402_Pants.OZJ and .OZT (the .OZT has no cut: 0% under 128), both opaque.",
+  "sheet_materials": {
+    "Item402_Boot": "plate_steel",
+    "item402_boot": "plate_steel"
+  },
+  "material_note": "plate_steel, as Destroy: Phantom's paint reflects as coloured steel rather than lacquer (the user, 2026-10-23: 'i think MG metal could be more metaalic no?', then all three of his lacquered sets).",
+  "effects_note": "MuMain has no render arm for MODEL_PHANTOM_* (no glow, no chrome pass). Its full-set bonus is not given: sim::setDefense counts only Storm Crow and Hurricane for the Magic Gladiator.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 94,
+      "area": 1508.8,
+      "along": [
+        -10.7,
+        15.0
+      ],
+      "mu_uv": [
+        0.018,
+        0.415,
+        1.083,
+        0.991
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.97,
+        0.922
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 44,
+      "area": 1160.3,
+      "along": [
+        -10.8,
+        24.1
+      ],
+      "mu_uv": [
+        0.022,
+        0.018,
+        0.948,
+        0.634
+      ],
+      "bake_uv": [
+        0.265,
+        0.01,
+        0.883,
+        0.405
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 42,
+      "area": 1585.1,
+      "along": [
+        -12.7,
+        6.3
+      ],
+      "mu_uv": [
+        0.01,
+        0.011,
+        0.597,
+        0.497
+      ],
+      "bake_uv": [
+        0.01,
+        0.075,
+        0.689,
+        0.794
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 94,
+      "area": 1508.8,
+      "along": [
+        -10.7,
+        15.0
+      ],
+      "mu_uv": [
+        0.018,
+        0.415,
+        1.083,
+        0.991
+      ],
+      "bake_uv": [
+        0.009,
+        0.073,
+        0.97,
+        0.974
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 44,
+      "area": 1160.3,
+      "along": [
+        -10.8,
+        24.1
+      ],
+      "mu_uv": [
+        0.022,
+        0.018,
+        0.948,
+        0.634
+      ],
+      "bake_uv": [
+        0.265,
+        0.376,
+        0.881,
+        0.904
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 42,
+      "area": 1585.1,
+      "along": [
+        -12.7,
+        6.3
+      ],
+      "mu_uv": [
+        0.01,
+        0.011,
+        0.597,
+        0.497
+      ],
+      "bake_uv": [
+        0.495,
+        0.307,
+        0.929,
+        0.93
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 32,
+      "area": 765.6,
+      "along": [
+        -11.9,
+        6.7
+      ],
+      "mu_uv": [
+        0.006,
+        0.435,
+        0.992,
+        0.804
+      ],
+      "bake_uv": [
+        0.01,
+        0.009,
+        0.949,
+        0.887
+      ]
+    },
+    {
+      "island": 7,
+      "material": "plate_steel",
+      "triangles": 32,
+      "area": 765.6,
+      "along": [
+        -11.9,
+        6.7
+      ],
+      "mu_uv": [
+        0.006,
+        0.435,
+        0.992,
+        0.804
+      ],
+      "bake_uv": [
+        0.254,
+        0.198,
+        0.953,
+        0.991
+      ]
+    }
+  ]
+}

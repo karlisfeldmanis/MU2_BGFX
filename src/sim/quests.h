@@ -286,6 +286,9 @@ enum class QuestState : uint8_t {
 // Where a hero stands on one quest. Saved whole.
 struct QuestProgress {
     QuestState state = QuestState::Untaken;
+    // His rebirths (Body::rebirths) at his last hand-in of it, to 255: a reborn hero's first
+    // hand-in in a new life pays the first clear's experience again (questReborn). Ours.
+    uint8_t life = 0;
     uint16_t counts[kQuestSteps] = {};  // each Clear's kills so far
     // Unix seconds when a Resting quest is offered again. The realm has no clock of its own
     // for this: the game hands it the wall clock (Realm::setWallClock), because twelve hours
@@ -293,6 +296,14 @@ struct QuestProgress {
     int64_t availableAt = 0;
     uint32_t completions = 0;
 };
+
+// Whether this hand-in is his first since a rebirth of a quest he has handed in before, in his
+// own town (the reward audit, 2026-10-22): it pays the first clear's experience again, and
+// nothing else of the first clear's -- he keeps the gear and the runes. Ours.
+inline bool questReborn(const QuestRow& row, int kin, const QuestProgress& progress, int rebirths) {
+    return progress.completions > 0 && rebirths > int(progress.life) && row.firstExperience > 0 &&
+           questNative(row, kin);
+}
 
 // Sevina's class change (docs/game/class-change-quest.md): the trial, a hunt in the Lost Tower's
 // seventh floor and Atlans from level 200, then each class's treasure, found on the same ground,

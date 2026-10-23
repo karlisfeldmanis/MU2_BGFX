@@ -395,9 +395,12 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
                        was.state == sim::QuestState::Ready) {
                 bannerKicker_ = "Quest complete";
                 bannerTitle_ = row.title;
+                // was's life is the one before this hand-in: a reborn hero's first again.
                 bannerLine_ = grouped(sim::questExperience(
                                   row, sim::questFirst(row, int(realm.hero().kin),
-                                                       was.completions))) +
+                                                       was.completions) ||
+                                           sim::questReborn(row, int(realm.hero().kin), was,
+                                                            realm.hero().rebirths))) +
                               " experience      ";
                 bannerZen_ = grouped(row.zen) + " Zen";
                 bannerNext_ = row.next;
@@ -946,6 +949,9 @@ void Tracker::rebuildEvent(int width) {
                 figure = "in " + clockOf(std::max(0, from - elapsed));
                 counted = true;
             }
+            // The last wave rises until the clock runs out: nothing to clear, so say so, else a
+            // checked boss row under it reads as a step skipped.
+            if (mark == StepMark::Live && w == sim::kSquareWaves - 1) figure = "to the end";
             rows.push_back({names[w], figure, mark});
         }
         {

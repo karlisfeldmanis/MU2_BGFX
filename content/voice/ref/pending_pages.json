@@ -1,0 +1,22 @@
+{
+  "lugard": {
+    "resting": [
+      "You are not yet at the edge. Come back when your body can take no more."
+    ],
+    "offer": [
+      "I know that weight. Every blow lands as hard as the last, and the world has stopped growing around you.",
+      "I stood where you stand. The heavens offered me what I offer you now, and I said no. Look at what it cost me.",
+      "Kneel in the light. It will take your body back to its first day, but your soul keeps everything it has learned. You will rise weaker, and you will grow stronger than you have ever been.",
+      "Will you be reborn?"
+    ],
+    "ceremony": [
+      "Heavens, take what was earned. Leave what was learned."
+    ],
+    "risen": [
+      "Rise. The road is long again. Walk it better this time."
+    ],
+    "again": [
+      "Again the weight. Again the light. Kneel."
+    ]
+  }
+}

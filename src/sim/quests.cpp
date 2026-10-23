@@ -138,19 +138,32 @@ QuestRow marlon() {
     row.firstExperience = 100000;
     row.zen = 50000;
     int n = 0;
-    // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
-    // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
-    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
-    row.choices[row.choiceCount++] = {.item = "Sword08", .kin = knight, .sockets = 1,
-                                      .firstOnly = true};  // Falchion
-    row.choices[row.choiceCount++] = {.item = "Sword10", .kin = knight, .sockets = 1,
-                                      .firstOnly = true};  // Sword of Salamander
+    // **And a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
+    // quest lines for DKs which want to play like that"): the knight is paid both, the one-hander
+    // and the two-hander, as the orbs throw off either since the same day (sim::kRows). A pick of
+    // one was the first try; the user, the same evening: "we dont need that choise" -- the Magic
+    // Gladiator's Melee or Magic is the one choice a hand-in asks. Each two-hander
+    // is the one nearest its one-hander's NPC price (sim::npcValue; the user, the same day: "this
+    // little bit breaks economy"), and bound, so the pair is not a fortune -- the Spear 1,400 to the
+    // Falchion's 1,200, the Legendary Sword 6,800 to the Double Blade's 6,700, the Crescent Axe
+    // 11,400 to the Lighting Sword's 11,500, the Crystal Sword +7 91,600 to the Sword of
+    // Destruction's 91,700, and Daybreak +7 217,100 under the Knight Blade's 260,600, the only
+    // knight's two-hander that high.
+    row.paid[n++] = {.item = "Sword08", .kin = knight, .sockets = 1,
+                     .firstOnly = true};  // Falchion
+    row.paid[n++] = {.item = "Spear02", .kin = knight, .sockets = 1,
+                     .firstOnly = true};  // Spear
     row.paid[n++] = {.item = "Staff03", .kin = wizard, .sockets = 1,
                      .firstOnly = true};  // Serpent Staff
     // The weapon's rune a Common (the ladder, above): the faint kin of the Legendary Lirien pays
     // in Atlans -- the knight's Gust, a little Twister; the wizard's Faint Echo, a little Arcane
     // Echo. They were Stormcall (Epic) and Arcane Echo itself (Legendary) until 2026-10-09.
     row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Gust),
+                     .firstOnly = true};
+    // And the bleed's Common, Graze, so that family is taught weak first too (the reward audit,
+    // 2026-10-22: no quest taught Graze to Hemorrhage). The Falchion's one socket takes one of the
+    // two; the other waits for Devin's two.
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Graze),
                      .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::FaintEcho),
                      .firstOnly = true};
@@ -318,13 +331,12 @@ QuestRow devin() {
     // one-handed Legendary Staff and the elf's Tiger Bow. Devias paid each class's top
     // 0.75 armour until this day, a piece of the Lost Tower's set two maps early.
     int n = 0;
-    // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
-    // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
-    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
-    row.choices[row.choiceCount++] = {.item = "Sword14", .kin = knight, .sockets = 2,
-                                      .firstOnly = true};  // Double Blade
-    row.choices[row.choiceCount++] = {.item = "Sword16", .kin = knight, .sockets = 2,
-                                      .firstOnly = true};  // Giant Sword
+    // **And a two-hander** (the user, 2026-10-22): the knight is paid both, the two-hander the one
+    // nearest the one-hander's NPC price (Marlon's row says why).
+    row.paid[n++] = {.item = "Sword14", .kin = knight, .sockets = 2,
+                     .firstOnly = true};  // Double Blade
+    row.paid[n++] = {.item = "Sword12", .kin = knight, .sockets = 2,
+                     .firstOnly = true};  // Legendary Sword
     // The wizard's one-handed Legendary Staff, and the Legendary Shield for the other hand, his
     // class's best first-class shield, so his Magic Shield works from here on (2026-10-09: the
     // two-handed Thunder Staff left him without it; then the user, of the Small Shield it first
@@ -355,8 +367,9 @@ QuestRow devin() {
     // "life regeneration rune which is much more important i think than just max hp").
     row.paid[n++] = {.item = "Necklace02", .sockets = 1, .firstOnly = true};  // Pendant of Fire
     row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::Renewal), .firstOnly = true};
-    // And the first pet, the Guardian Angel, for the first road away from home.
-    row.paid[n++] = {.item = "Helper01", .firstOnly = true};
+    // And the first pet, the Guardian Angel, for the first road away from home: two, every clear,
+    // since it lasts two hours and stacks (1298be3b) -- one on the first clear alone was a trial.
+    row.paid[n++] = {.item = "Helper01", .count = 2};
     // And a skill (2026-10-07): the wizard's Flame, which no shop sells, and for the elf the Orb
     // of Summoning +3 -- the Elite Yeti she has just hunted. The knight's Cyclone asks level 72
     // and went to the Pit (2026-10-09).
@@ -579,8 +592,9 @@ QuestRow pit() {
     // The first powered pendant, purple, three powers.
     row.paid[n++] = {.item = "NecklaceFury", .plus = 3, .firstOnly = true,
                      .affixes = {uint8_t(Affix::Leech), uint8_t(Affix::Wisdom)}};
-    // And the second pet, the Imp, for the Angel's other shoulder of the game: the damage one.
-    row.paid[n++] = {.item = "Helper02", .firstOnly = true};
+    // And the second pet, the Imp, for the Angel's other shoulder of the game: the damage one. Two,
+    // every clear, as Devin's Angels.
+    row.paid[n++] = {.item = "Helper02", .count = 2};
     // And the chain's last skills (2026-10-07): the knight's Cyclone, Devias's until 2026-10-09
     // (its orb asks 72; Death Stab's 120 went to Tersia's sixth floor), and the wizard's
     // Hellfire. The elf's Penetration went to Tersia's sixth floor too (the user, 2026-10-09:
@@ -680,8 +694,9 @@ QuestRow tersiaDoor() {
                                  .firstOnly = true};  // Guardian
     row.paid[row.paidCount++] = {.item = "Jewel22", .power = uint8_t(Power::GreaterVigor),
                                  .firstOnly = true};
-    // And the guild's horse: the Horn of Uniria, level 60, the first mount.
-    row.paid[row.paidCount++] = {.item = "Helper03", .firstOnly = true};
+    // And the guild's horse: the Horn of Uniria, level 60, the first mount -- one every clear, a
+    // day's ride (kHornSeconds).
+    row.paid[row.paidCount++] = {.item = "Helper03"};
     row.voice = "tersia_1";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }
@@ -1056,6 +1071,21 @@ QuestRow tersiaSkyDoor() {
     // clear"): the Orb of Summoning +6, the Alquamos, the first time she clears the sky's first
     // four (skill::kSummonAlquamos). Hers alone, as Tersia's seventh link gave her Bali at +5.
     row.paid[row.paidCount++] = {.item = "Gem05", .plus = 6, .kin = elf, .firstOnly = true};
+    // **An element rune for the talents' Attunements** (the reward audit, 2026-10-22): Wind
+    // counts Tempest, Fire Inferno, Storm Thunder and Tempest, Frost and Venom Glacier and Venom,
+    // and no quest paid a Tempest or a Venom. Each class is paid the ones it had from no quest:
+    // the knight's and the elf's Tempest (Whirlwind, Penetration), the wizard's Tempest and Venom
+    // (Kantur's Legion pays him Inferno and Thunder). A choice of five was the first try, and it
+    // read clumsy at the hand-in (the user, 2026-10-22: "that choise of runes looked clumsy").
+    // The Magic Gladiator is paid by his path.
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Tempest),
+                                 .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Tempest),
+                                 .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Venom),
+                                 .firstOnly = true};
+    row.paid[row.paidCount++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Tempest),
+                                 .firstOnly = true};
     row.voice = "tersia_8";  // pipeline/voice.py, VOICES["tersia"]
     return row;
 }
@@ -1447,13 +1477,12 @@ QuestRow lirienHalls() {
     // his fire, the elf's Plague Arrows for her Multi-Shot. The wizard's one hand is for the
     // Legendary Shield of Tersia's fifth floor. The knight's was the two-handed Crystal Sword.
     int n = 0;
-    // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
-    // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
-    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
-    row.choices[row.choiceCount++] = {.item = "Sword15", .kin = knight, .sockets = 2,
-                                      .firstOnly = true};  // Lighting Sword
-    row.choices[row.choiceCount++] = {.item = "Mace06", .kin = knight, .sockets = 2,
-                                      .firstOnly = true};  // Crystal Sword
+    // **And a two-hander** (the user, 2026-10-22): the knight is paid both, the two-hander the one
+    // nearest the one-hander's NPC price (Marlon's row says why).
+    row.paid[n++] = {.item = "Sword15", .kin = knight, .sockets = 2,
+                     .firstOnly = true};  // Lighting Sword
+    row.paid[n++] = {.item = "Axe09", .kin = knight, .sockets = 2,
+                     .firstOnly = true};  // Crescent Axe
     // The wizard's was the Staff of Resurrection until 2026-10-21, which Kantur's Legion pays at
     // +7 (the user: "we are giving staff of resorection 2 times"): the Legendary Staff, one hand.
     row.paid[n++] = {.item = "Staff06", .kin = wizard, .sockets = 2,
@@ -1471,6 +1500,13 @@ QuestRow lirienHalls() {
     row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Scorch),
                      .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::PlagueArrows),
+                     .firstOnly = true};
+    // And Buckler, the Epic that keeps Defense and Magic Shield at 60% without a shield, the
+    // knight's and the wizard's: the ladder's "Buckler before Bulwark", which no quest paid until
+    // the reward audit (2026-10-22). It lets the Crescent Axe pick hold its guard.
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Buckler),
+                     .firstOnly = true};
+    row.paid[n++] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Buckler),
                      .firstOnly = true};
     // And the drowned halls' own spell for the wizard (2026-10-07): Aqua Beam.
     row.paid[n++] = {.item = "Book12", .kin = wizard, .firstOnly = true};  // Scroll of Aqua Beam
@@ -1621,13 +1657,12 @@ QuestRow kantursLegion() {
     // Reign Blade from the knight). Kantur's Captain pays those since 2026-10-21.
     using Rank = QuestItem::Rank;
     int n = 0;
-    // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
-    // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
-    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
-    row.choices[row.choiceCount++] = {.item = "Sword17", .plus = 7, .kin = knight, .sockets = 3,
-                                      .firstOnly = true, .rank = Rank::First};  // Sword of Destruction +7
-    row.choices[row.choiceCount++] = {.item = "Mace07", .plus = 7, .kin = knight, .sockets = 3,
-                                      .firstOnly = true, .rank = Rank::First};  // Chaos Dragon Axe +7
+    // **And a two-hander** (the user, 2026-10-22): the knight is paid both, the two-hander the one
+    // nearest the one-hander's NPC price (Marlon's row says why).
+    row.paid[n++] = {.item = "Sword17", .plus = 7, .kin = knight, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::First};  // Sword of Destruction +7
+    row.paid[n++] = {.item = "Mace06", .plus = 7, .kin = knight, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::First};  // Crystal Sword +7
     row.paid[n++] = {.item = "Staff07", .plus = 7, .kin = wizard, .sockets = 3,
                      .firstOnly = true, .rank = Rank::First};  // Staff of Resurrection +7
     row.paid[n++] = {.item = "CrossBow17", .kin = elf, .sockets = 3,
@@ -1643,6 +1678,11 @@ QuestRow kantursLegion() {
     row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::GreaterBarrage),
                      .firstOnly = true};
     row.paid[n++] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Glacier),
+                     .firstOnly = true};
+    // And the knight's Twin Guard, the two-weapon kin of Bulwark: two matched swords keep Defense
+    // and hit 30% harder. His quest swords match (the Lighting Sword, this Sword of Destruction),
+    // and his Dual Wield talents had no rune from any quest (the reward audit, 2026-10-22).
+    row.paid[n++] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::TwinGuard),
                      .firstOnly = true};
     row.paid[n++] = {.item = "NecklaceFury", .plus = 4, .firstOnly = true,
                      .affixes = {uint8_t(Affix::Leech), uint8_t(Affix::Wisdom),
@@ -1705,19 +1745,32 @@ QuestRow kantursCaptain() {
     // The weapon, by rank, as Kantur's Legion's comment above tells.
     using Rank = QuestItem::Rank;
     int n = 0;
-    // **Or a two-hander** (the user, 2026-10-22: "we are not giving some 2-hand weapon rewards in
-    // quest lines for DKs which want to play like that"): the knight picks, the one-hander first
-    // (auto-play's), as the orbs throw off either since the same day (sim::kRows).
-    row.choices[row.choiceCount++] = {.item = "Sword21", .plus = 7, .kin = knight, .sockets = 3,
-                                      .firstOnly = true, .rank = Rank::Second};  // Knight Blade +7, the BK's
-    row.choices[row.choiceCount++] = {.item = "Sword25", .plus = 7, .kin = knight, .sockets = 3,
-                                      .firstOnly = true, .rank = Rank::Second};  // Daybreak +7, the BK's
+    // **And a two-hander** (the user, 2026-10-22): the knight is paid both, the two-hander the one
+    // nearest the one-hander's NPC price (Marlon's row says why).
+    row.paid[n++] = {.item = "Sword21", .plus = 7, .kin = knight, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::Second};  // Knight Blade +7, the BK's
+    row.paid[n++] = {.item = "Sword25", .plus = 7, .kin = knight, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::Second};  // Daybreak +7, the BK's
     row.paid[n++] = {.item = "Sword22", .plus = 7, .kin = knight, .sockets = 3,
                      .firstOnly = true, .rank = Rank::Second};  // Dark Reign Blade +7, the MG's
     row.paid[n++] = {.item = "Staff12", .kin = wizard, .sockets = 3, .firstOnly = true,
                      .rank = Rank::Second};  // Staff of Kundun, +0 (+7 too much, the user)
-    row.paid[n++] = {.item = "CrossBow20", .kin = elf, .sockets = 3,
-                     .firstOnly = true, .rank = Rank::Second};  // Great Reign Crossbow
+    // The Muse Elf's the Stinger Bow (drop level 134) since the reward audit (2026-10-22): the
+    // Great Reign Crossbow's 100 lagged the others' 140 once the Season 6 bows were built.
+    row.paid[n++] = {.item = "Bow24", .kin = elf, .sockets = 3,
+                     .firstOnly = true, .rank = Rank::Second};  // Stinger Bow
+    // And the second class's shield (82870a67), each class's own: the Blade Knight's Crimson
+    // Glory, the Soul Master's Guardian Shield, the Muse Elf's Frost Barrier, the Magic
+    // Gladiator's Salamander Shield. The knight's last was the Dragon Shield, sixty levels down.
+    constexpr int8_t gladiator = int8_t(Kin::MagicGladiator);
+    row.paid[n++] = {.item = "Shield18", .kin = knight, .sockets = 2,
+                     .firstOnly = true, .rank = Rank::Second};  // Crimson Glory
+    row.paid[n++] = {.item = "Shield21", .kin = wizard, .sockets = 2,
+                     .firstOnly = true, .rank = Rank::Second};  // Guardian Shield
+    row.paid[n++] = {.item = "Shield20", .kin = elf, .sockets = 2,
+                     .firstOnly = true, .rank = Rank::Second};  // Frost Barrier
+    row.paid[n++] = {.item = "Shield19", .kin = gladiator, .sockets = 2,
+                     .firstOnly = true, .rank = Rank::Second};  // Salamander Shield
     row.paid[n++] = {.item = "Jewel03"};  // a Jewel of Life
     row.paid[n++] = {.item = "Quest04"};  // Loch's Feather
     row.paidCount = n;
@@ -1823,7 +1876,9 @@ QuestRow sealedWood() {
     row.afterAny = 1u << 1;  // Noria's Song handed in
     row.natives = 0x7;
     row.strangers = true;
-    row.experience = 300000;
+    // A third of a level at 300 (neededExperience: 9.5M a level there), as the other errands pay
+    // near their own level; 300,000 was 3% (the reward audit, 2026-10-22).
+    row.experience = 3000000;
     row.zen = 150000;
     return row;
 }
@@ -1884,8 +1939,11 @@ QuestRow seedMastersClearing() {
     // Every class's, as the Keeper's: no class is born in Aida.
     row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
     row.strangers = true;
-    row.experience = 300000;
-    row.firstExperience = 1200000;
+    // Priced on the curve past 256, where a level climbs steeply (9.5M at 300, 53M at 380): the
+    // first clear about a level and a third at 300, a repeat about a fifth more than its 146 kills
+    // pay. They were 1.2M and 300,000 -- 13% and 3% of a level (the reward audit, 2026-10-22).
+    row.experience = 3000000;
+    row.firstExperience = 12000000;
     row.zen = 500000;
     int n = 0;
     row.paid[n++] = {.item = "Jewel03"};                // a Jewel of Life

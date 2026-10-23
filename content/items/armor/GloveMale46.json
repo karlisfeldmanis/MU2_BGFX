@@ -1,0 +1,276 @@
+{
+  "item": "GloveMale46",
+  "mu_name": "Titan Gloves",
+  "mu_name_from": "MuMain's MODEL_TITAN_* (_enum.h: MODEL_GLOVE + 45), loaded from Data/Player/GloveMale46.bmd by the index-plus-one rule. MU's number 45; ours is *Male46.",
+  "why_this_one": "The missing-gear audit, 2026-10-23: the last sets missing at drop levels 93-132, which Kanturu's monsters reach (the user: 'we need to build all kanturu weapons and armors'). Titan is the Dark Knight's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:280.",
+    "call": "CreateGloves(45, \"Titan Gloves\", 100, 56, 7, 86, 0, 222, 32, 0, 1, 0, 0, 0, 0)",
+    "group": 10,
+    "number": 45,
+    "drop_level": 100,
+    "drops_from_monsters": true,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 56,
+    "durability": 86,
+    "requires": {
+      "level": 0,
+      "strength": 222,
+      "agility": 32,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "attack_speed": 7,
+    "class_level_note": "OpenMU's darkKnightClassLevel 1, its only class."
+  },
+  "sheets": {
+    "Item2001_glove": "item2001_glove.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under MU's own names, lower-cased (an .OZT beside its .OZJ takes _t): navy lacquer plate edged in silver and gold; skinClass301 the knight's own face under the helm.",
+  "sheet_materials": {
+    "Item2001_glove": "painted_steel",
+    "item2001_glove": "painted_steel"
+  },
+  "material_note": "painted_steel with the cast grain for the plate, the shading painted on, as the other sets.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, shallow for the gloss.",
+  "effects_note": "MuMain has no render arm for MODEL_TITAN_* (no glow, no chrome pass).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 44,
+      "area": 986.5,
+      "along": [
+        -14.8,
+        2.5
+      ],
+      "mu_uv": [
+        0.41,
+        0.009,
+        0.993,
+        0.995
+      ],
+      "bake_uv": [
+        0.201,
+        0.011,
+        0.761,
+        0.93
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 66,
+      "area": 1679.6,
+      "along": [
+        -11.3,
+        9.0
+      ],
+      "mu_uv": [
+        0.007,
+        0.417,
+        0.998,
+        0.988
+      ],
+      "bake_uv": [
+        0.009,
+        0.158,
+        0.966,
+        0.82
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 42,
+      "area": 679.6,
+      "along": [
+        -4.0,
+        9.7
+      ],
+      "mu_uv": [
+        0.005,
+        0.007,
+        0.626,
+        0.605
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.209,
+        0.797
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 14,
+      "area": 129.4,
+      "along": [
+        -0.5,
+        5.6
+      ],
+      "mu_uv": [
+        0.368,
+        -0.693,
+        13.731,
+        0.75
+      ],
+      "bake_uv": [
+        0.01,
+        0.27,
+        0.862,
+        0.537
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 14,
+      "area": 129.4,
+      "along": [
+        -10.5,
+        -3.5
+      ],
+      "mu_uv": [
+        0.368,
+        -0.693,
+        13.731,
+        0.75
+      ],
+      "bake_uv": [
+        0.744,
+        0.586,
+        0.951,
+        0.897
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 44,
+      "area": 986.5,
+      "along": [
+        -14.8,
+        2.5
+      ],
+      "mu_uv": [
+        0.41,
+        0.009,
+        0.993,
+        0.995
+      ],
+      "bake_uv": [
+        0.353,
+        0.239,
+        0.962,
+        0.901
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 66,
+      "area": 1679.6,
+      "along": [
+        -11.3,
+        9.0
+      ],
+      "mu_uv": [
+        0.007,
+        0.417,
+        0.998,
+        0.988
+      ],
+      "bake_uv": [
+        0.172,
+        0.009,
+        0.973,
+        0.851
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 42,
+      "area": 679.6,
+      "along": [
+        -4.0,
+        9.7
+      ],
+      "mu_uv": [
+        0.005,
+        0.007,
+        0.626,
+        0.605
+      ],
+      "bake_uv": [
+        0.159,
+        0.105,
+        0.858,
+        0.393
+      ]
+    },
+    {
+      "island": 8,
+      "material": "painted_steel",
+      "triangles": 14,
+      "area": 129.4,
+      "along": [
+        -0.5,
+        5.6
+      ],
+      "mu_uv": [
+        0.368,
+        -0.693,
+        13.731,
+        0.75
+      ],
+      "bake_uv": [
+        0.221,
+        0.021,
+        0.89,
+        0.991
+      ]
+    },
+    {
+      "island": 9,
+      "material": "painted_steel",
+      "triangles": 14,
+      "area": 129.4,
+      "along": [
+        -10.5,
+        -3.5
+      ],
+      "mu_uv": [
+        0.368,
+        -0.693,
+        13.731,
+        0.75
+      ],
+      "bake_uv": [
+        0.055,
+        0.672,
+        0.951,
+        0.933
+      ]
+    }
+  ]
+}

@@ -134,7 +134,8 @@ public:
     // log, L, or a giver's dialog), unless he is typing in it (the user, 2026-10-22: "we need hide
     // chat when we open map list (M)", then "when quest window is opened hide chat").
     bool chatHidden() const {
-        return (minimap_.full() || travel_.up() || questLog_.up() || questDialog_.up()) && !chat_.typing();
+        return (minimap_.full() || travel_.up() || questLog_.up() || questDialog_.up() || rebirthing_) &&
+               !chat_.typing();
     }
     // The drop whose name plate is under this pixel, or 0. The last drawn is on top and wins.
     uint32_t labelUnder(float x, float y) const;
@@ -277,6 +278,12 @@ public:
         goBackAsked_ = false;
         return was;
     }
+    // Its x clicked since this was last asked, once: the plate put away, the way left to run out.
+    bool takeGoBackDismissed() {
+        const bool was = goBackDismissed_;
+        goBackDismissed_ = false;
+        return was;
+    }
 
     // The line's chip, top right (game/ui/line_chip.h): what it shows, from the mode each frame;
     // whether its list opened (the mode times the regions) and whether the note's cross was
@@ -386,6 +393,7 @@ private:
     Jeweler jeweler_;
     RebirthWindow rebirthWindow_;
     bool rebirthing_ = false;  // Lugard's window up (game/ui/rebirth_window.h)
+    bool rebirthAsked_ = false;  // the rite asked from it: his window shutting does not hush him
     bool jeweling_ = false;
     bool bagForJeweler_ = false;
     // The number box the vault's coin buttons open. Modal: see Desk::update.
@@ -404,6 +412,8 @@ private:
     // How many of the bag's stack at `slot` a drop into the machine's box asks for: `part` when
     // a part rides, else as many as the open service wants (sim::piecesWanted); 0 all of it.
     int piecesForBox(const Play& play, int slot, int part) const;
+    // How many a sale at a merchant takes: `part` when a part rides, else sim::piecesSold.
+    int piecesForSale(const Play& play, int slot, int part) const;
     Report report_;
     BugAsk reportAsk_;
     bool reportReady_ = false;
@@ -445,7 +455,7 @@ private:
     SquareResult squareResult_;
     std::vector<sim::Realm::SquareResult> squareResults_;
     std::vector<SquareResult::Row> squareRows_;
-    bool goBackShown_ = false, goBackClosed_ = false, goBackAsked_ = false;
+    bool goBackShown_ = false, goBackClosed_ = false, goBackAsked_ = false, goBackDismissed_ = false;
     int goBackLeft_ = 0;
     std::string goBackWhere_;
     // The events coming for his level, one line at the top centre (game/ui/herald.h).
@@ -568,7 +578,7 @@ private:
     void dealNews(Play& play);
     // The four potion keys' bindings, as MU's item row. The interface's; game/save.cpp writes
     // them (mu.db's character_hotkeys is where MU2 kept them).
-    int32_t quick_[Hud::kQuickKeys] = {-1, -1, -1, -1, -1};
+    int32_t quick_[sim::kQuickKeys] = {-1, -1, -1, -1, -1};
     int scriptedKey_ = -1;
     void quickKeys(const gfx::Window& window, Play& play, const Pointer& pointer);
     // What is on Q W E R, by MU's skill number. A newly learned skill takes the first free key
@@ -597,6 +607,8 @@ private:
     int32_t carrying_ = 0;    // the skill the pointer is holding, 0 for none
     int carryFrom_ = -1;      // the key it was lifted off, or -1 out of the list
     int liftedQuick_ = -1;    // the potion box the pointer is holding, or -1
+    // The healing and mana potions the bag held last frame, for the bind on arrival.
+    sim::PotionsSeen potionsSeen_;
     int scriptedSkill_ = -1;
     int scriptedHold_ = -1;
     void skillKeys(const gfx::Window& window, Play& play, const Pointer& pointer);

@@ -535,6 +535,8 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().pollution().open(assets, ctx.textures,
                                                  world_.played().showing().table(),
                                                  &world_.ground());
+                world_.played().drain().open(assets, ctx.textures,
+                                             world_.played().showing().table());
                 world_.played().stains().open(assets, ctx.textures,
                                               world_.played().showing().table());
                 world_.played().trapShow().open(assets, args.world, ctx.textures,
@@ -1457,6 +1459,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
         int32_t bar[game::Hud::kSkillBoxes] = {};
         for (int k = 0; k < game::Hud::kSkillBoxes; ++k) bar[k] = desk_.bound(k);
+        questAuto_.pickBoxes((desk_.helperSettings().picks & game::HelperSettings::kPickBoxes) != 0);
         if (const std::string said = questAuto_.update(world_.played(), &ctx.autoQuest, deltaSeconds, bar,
                                                        game::Hud::kSkillBoxes);
             !said.empty()) {
@@ -1999,6 +2002,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().blizzard().gather(ctx.renderer.effects());
         world_.played().weakness().gather(ctx.renderer.effects());
         world_.played().pollution().gather(ctx.renderer.effects());
+        world_.played().drain().gather(ctx.renderer.effects());
         world_.played().trapShow().gatherEffects(ctx.renderer.effects());
         world_.played().poison().gather(ctx.renderer.effects());
         world_.played().flame().gather(ctx.renderer.effects());
@@ -2350,10 +2354,29 @@ void PlayMode::rejoin(Context& ctx, double seconds) {
     // restarted on other rules under the running game answers Refused::Outdated, and the page
     // says update; going in would be a Hello refused and a world that never opens. Anything
     // else -- the line shut on the knock, or no word in a few seconds -- is the way in.
+    // The prints are the lobby's, Lorencia's tables, as the server checks an Account
+    // (server/src/accounts.cpp, g_items): this world's own, the Dungeon's say, is another print,
+    // and the knock was told to update under a game that was the server's build (the user,
+    // 2026-10-23: dual cut in the Dungeon, "showed there is updated launcher").
+    if (!knockPrints_) {
+        content::Tables lobby;
+        std::string error;
+        const std::string path = core::join(ctx.paths.assets, "cooked/lorencia/lorencia.mur");
+        if (content::loadTables(path, lobby, error)) {
+            knockItems_ = lobby.itemsPrint();
+            knockRules_ = net::rulesPrint(lobby);
+        } else {
+            core::logError("reconnect: no lobby tables at %s (%s); knocking with this world's",
+                           path.c_str(), error.c_str());
+            knockItems_ = play.realm().tables()->itemsPrint();
+            knockRules_ = net::rulesPrint(*play.realm().tables());
+        }
+        knockPrints_ = true;
+    }
     net::Account probe;
     probe.key = net::kKnockKey;
-    probe.items = play.realm().tables()->itemsPrint();
-    probe.rules = net::rulesPrint(*play.realm().tables());
+    probe.items = knockItems_;
+    probe.rules = knockRules_;
     std::thread([knock = knock_, host, port, probe] {
         net::Socket socket;
         std::string error;
@@ -2409,6 +2432,7 @@ void PlayMode::goBack(Context& ctx, double seconds) {
     const sim::WayBack& way = world_.played().realm().wayBack();
     const game::MapRow* to = game::mapNumbered(way.map);
     if (way.map < 0 || to == nullptr) {
+        ctx.goBack.dismissedMap = -1;
         desk_.goBack(false, 0, false, {});
         return;
     }
@@ -2417,11 +2441,22 @@ void PlayMode::goBack(Context& ctx, double seconds) {
         desk_.goBack(false, 0, false, {});
         return;
     }
+    if (desk_.takeGoBackDismissed()) {
+        ctx.goBack.dismissedMap = way.map;
+        ctx.goBack.dismissedColumn = way.column;
+        ctx.goBack.dismissedRow = way.row;
+        core::logf("go back: put away, %lld s left", (long long)(way.ticksLeft / 20));
+    }
+    if (ctx.goBack.dismissedMap == way.map && ctx.goBack.dismissedColumn == way.column &&
+        ctx.goBack.dismissedRow == way.row) {
+        desk_.goBack(false, 0, false, {});
+        return;
+    }
     // Up once the map's name has come and gone (game/ui/arrival.h's 5.4 s), so the two never
     // stand on the screen together; the clock is running from the landing all the same.
     std::string where = game::placeName(to->world, way.column, way.row);
     if (!where.empty()) where[0] = char(std::toupper(static_cast<unsigned char>(where[0])));
-    where += " " + std::to_string(way.column) + ", " + std::to_string(way.row);
+    where += " \xC2\xB7 " + std::to_string(way.column) + ", " + std::to_string(way.row);
     const bool shown = !way.open() || sinceLanded_ >= kGoBackWaits;
     desk_.goBack(shown, int((way.ticksLeft + 19) / 20), !way.open(), where);
 }

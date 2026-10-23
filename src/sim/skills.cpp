@@ -1027,7 +1027,8 @@ int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const con
     // (ZzzCharacter.cpp:939, the RGZ_FIX arm under 509).
     const float bonus = row.onSelf()     ? 0.0f
                         : row.wizardry ? (magicSpeedStat(kin, agility) + float(extra)) * 0.004f
-                                       : (attackSpeedStat(kin, agility, right, left) + float(extra)) * 0.004f;
+                                       : (attackSpeedStat(kin, agility, right, left) + float(extra)) * 0.004f *
+                                             (row.primary() ? 1.0f : kCooldownSkillHaste);
     const bool quick = row.number == skill::kMeteorite || row.number == skill::kCometfall ||
                        row.number == skill::kPoison;
     const float quicken = row.number == skill::kIce ? kIceQuicken : quick ? kSpellQuicken : 1.0f;

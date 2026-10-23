@@ -249,11 +249,12 @@ constexpr Recipe kOrder[] = {Recipe::PlusTen, Recipe::PlusEleven, Recipe::Dinora
                              Recipe::Cloak, Recipe::Invitation, Recipe::SecondWings, Recipe::Wings,
                              Recipe::ChaosWeapon};
 
-void need(Judged& j, std::string name, int have, int want) {
+void need(Judged& j, std::string name, int have, int want, bool atLeast = false) {
     if (j.needCount >= kMostNeeds) return;
     j.needs[j.needCount].name = std::move(name);
     j.needs[j.needCount].have = have;
     j.needs[j.needCount].need = want;
+    j.needs[j.needCount].atLeast = atLeast;
     ++j.needCount;
 }
 
@@ -345,9 +346,9 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             if (j.nearest == Recipe::Wings) {
                 need(j, "Chaos weapon +4 with an option or socket", std::min(s.chaosWeapons, 1), 1);
             } else {
-                need(j, "Item +4 with an option or socket", s.optioned, 1);
+                need(j, "Item +4 with an option or socket", s.optioned, 1, true);
             }
-            need(j, "Jewel of Chaos", s.chaos, 1);
+            need(j, "Jewel of Chaos", s.chaos, 1, true);
             need(j, "Jewel of Bless", s.bless, 0);
             need(j, "Jewel of Soul", s.soul, 0);
             // The old buying price over NpcPriceDivisor, MoneyPerFinalSuccessPercentage a point.

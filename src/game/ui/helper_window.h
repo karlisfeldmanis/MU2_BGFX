@@ -69,7 +69,7 @@ private:
     // The two pages (the user, 2026-10-21, four more settings than the window had room for):
     // Hunt, and Loot & Party.
     int page_ = 0;
-    gfx::Box tabs_[2], ranges_[3], segs_[2][9], picks_[7], invites_[3], go_;
+    gfx::Box tabs_[2], ranges_[3], segs_[2][9], picks_[8], invites_[3], go_;
     // The rows Range and Party invites stand in, and their choices' whole boxes.
     gfx::Box rangeRow_, rangeBox_, inviteRow_, inviteBox_;
     Toggle back_, quest_, aid_, trades_, repair_;

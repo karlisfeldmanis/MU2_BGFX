@@ -1,0 +1,107 @@
+{
+  "item": "Shield19",
+  "mu_name": "Salamander Shield",
+  "mu_name_from": "MODEL_SALAMANDER_SHIELD (MODEL_SHIELD + 18), loaded from Item/Shield_19.bmd (ZzzOpenData.cpp:1117). Group 6 number 18 in OpenMU S6 Armors.cs:59.",
+  "why_this_one": "The 100-140 gear MU has and this game lacked (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's): the four second-class shields of Season 6's wave, beside the twelve weapons.",
+  "profile": "weapon",
+  "profile_from": "The weapon profile, as every built shield uses.",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:59. 0.75 and 0.95d have no second-class gear.",
+    "call": "CreateShield(18, 1, 18, 2, 2, \"Salamander Shield\", 102, 20, 96, 51, 0, 80, 61, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateShield(number, slot, skill, width, height, name, dropLevel, defense, defenseRate, durability, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, leadershipRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel); the group is slot + 5, 6.",
+    "group": 6,
+    "number": 18,
+    "drop_level": 102,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 2,
+    "defense": 20,
+    "defense_rate": 96,
+    "defense_rate_note": "The shield's own block chance, which the fight does not roll yet. Recorded and unread.",
+    "skill": 18,
+    "skill_note": "The shield's block skill in OpenMU's table, carried for the row and nothing more.",
+    "durability": 51,
+    "requires": {
+      "level": 0,
+      "strength": 80,
+      "agility": 61,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "gladiator"
+    ],
+    "class_level_note": "The Magic Gladiator's alone: OpenMU's magicGladiatorClassLevel 1, his only class."
+  },
+  "sheets": {
+    "SMshield_a": "smshield_a.png",
+    "firehik02": "firehik02.png"
+  },
+  "sheet_from": "Data/Item: SMshield_a.OZJ (128x128, red lacquer traced in gold flame lines, mesh 0, 304 triangles) and firehik02.OZJ (64x64, an orange fire burst on black, mesh 1, 8, the gem at the centre), decoded with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "SMshield_a": "painted_steel"
+  },
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_note": "Red lacquer: painted_steel with the cast grain.",
+  "glow": {
+    "firehik02": {}
+  },
+  "glow_note": "RenderPartObjectBody's MODEL_SALAMANDER_SHIELD arm (ZzzObject.cpp:7231-7235): the body with HiddenMesh 1, solid, then mesh 1 (firehik02) RENDER_TEXTURE | RENDER_BRIGHT, added (ZzzBMD.cpp:1534). Here firehik02 a glow alone.",
+  "rig_note": "Held, MuMain's arm is ZzzCharacter.cpp:8146-8167: a red (0.9, 0, 0.2) BITMAP_LIGHT at 2 on bone 1 (fx/held_lights); its fire particles are not thrown. export-rig --actions=all: two bones, one action of one key; nothing moves, no rig kept.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 8,
+      "area": 374.3,
+      "along": [
+        -5.6,
+        5.2
+      ],
+      "mu_uv": [
+        -0.451,
+        -0.679,
+        0.781,
+        1.718
+      ],
+      "bake_uv": [
+        0.005,
+        0.004,
+        0.198,
+        0.226
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 304,
+      "area": 12564.5,
+      "along": [
+        -49.1,
+        30.9
+      ],
+      "mu_uv": [
+        0.014,
+        0.02,
+        0.979,
+        0.986
+      ],
+      "bake_uv": [
+        0.005,
+        0.004,
+        0.861,
+        0.996
+      ]
+    }
+  ]
+}

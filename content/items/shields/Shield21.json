@@ -1,0 +1,308 @@
+{
+  "item": "Shield21",
+  "mu_name": "Guardian Shield",
+  "mu_name_from": "MODEL_GUARDIAN_SHILED (MODEL_SHIELD + 20, MU's spelling), loaded from Item/Shield_21.bmd (ZzzOpenData.cpp:1119). Group 6 number 20 in OpenMU S6 Armors.cs:61.",
+  "why_this_one": "The 100-140 gear MU has and this game lacked (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's): the four second-class shields of Season 6's wave, beside the twelve weapons.",
+  "profile": "weapon",
+  "profile_from": "The weapon profile, as every built shield uses.",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:61. 0.75 and 0.95d have no second-class gear.",
+    "call": "CreateShield(20, 1, 0, 2, 2, \"Guardian Shield\", 106, 12, 30, 51, 0, 54, 18, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateShield(number, slot, skill, width, height, name, dropLevel, defense, defenseRate, durability, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, leadershipRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel, magicGladiatorClassLevel, darkLordClassLevel, summonerClassLevel, ragefighterClassLevel); the group is slot + 5, 6.",
+    "group": 6,
+    "number": 20,
+    "drop_level": 106,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 2,
+    "defense": 12,
+    "defense_rate": 30,
+    "defense_rate_note": "The shield's own block chance, which the fight does not roll yet. Recorded and unread.",
+    "durability": 51,
+    "requires": {
+      "level": 0,
+      "strength": 54,
+      "agility": 18,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "class_level": 2,
+    "class_level_note": "The Soul Master's alone: OpenMU's darkWizardClassLevel 2. sim::fits asks Wearer::second (docs/game/second-class-gear.md)."
+  },
+  "sheets": {
+    "GDshield_a": "gdshield_a.png",
+    "GDshield_b": "gdshield_b.png",
+    "GDshield_b_glow": "gdshield_b.png"
+  },
+  "sheet_from": "Data/Item: GDshield_a.OZJ (128x128, black plate with white curling scrollwork, mesh 0, 246 triangles) and GDshield_b.OZJ (128x128, violet crystal on grey, mesh 1, 66, the shards round the rim), decoded with pipeline/decode_texture.py.",
+  "sheet_materials": {
+    "GDshield_a": "painted_steel",
+    "GDshield_b": "painted_steel"
+  },
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_note": "Black lacquer and painted crystal: painted_steel with the cast grain.",
+  "glow": {
+    "GDshield_b_glow": {}
+  },
+  "glow_note": "RenderPartObjectBody's MODEL_GUARDIAN_SHILED arm (ZzzObject.cpp:7244-7248): the body solid, then mesh 1 (GDshield_b, the crystals) again RENDER_TEXTURE | RENDER_BRIGHT, added. Here the crystals solid and GDshield_b_glow, a copy of mesh 1's faces, added. PartObjectColor gives it Color 36 (ZzzObject.cpp:6684). Its other draws keep mesh 0 alone (:9120).",
+  "separate_meshes": true,
+  "separate_meshes_why": "GDshield_b_glow is mesh 1's own faces again; welded across meshes the two shells become duplicate faces and Blender keeps one (Wing05's trap, the Elemental Shield's WD_a_glow).",
+  "rig_note": "Held, MuMain's arm is ZzzCharacter.cpp:8169-8191: violet (0.8, 0.3, 0.8) BITMAP_LIGHTs at 1.5 on bones 1-9, breathing |sin(WorldTime*0.001)| + 0.1 (fx/held_lights). export-rig --actions=all: ten bones, one action of one key; nothing moves, no rig kept.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 242,
+      "area": 9297.1,
+      "along": [
+        -47.2,
+        28.2
+      ],
+      "mu_uv": [
+        0.017,
+        0.023,
+        0.979,
+        0.984
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.848,
+        0.84
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 26,
+      "area": 1958.1,
+      "along": [
+        -18.7,
+        22.2
+      ],
+      "mu_uv": [
+        0.019,
+        0.026,
+        0.982,
+        0.978
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.873,
+        0.699
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 477.4,
+      "along": [
+        1.2,
+        15.3
+      ],
+      "mu_uv": [
+        0.415,
+        0.034,
+        0.975,
+        0.434
+      ],
+      "bake_uv": [
+        0.01,
+        0.661,
+        0.757,
+        0.834
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 477.4,
+      "along": [
+        -41.3,
+        -24.3
+      ],
+      "mu_uv": [
+        0.415,
+        0.034,
+        0.975,
+        0.434
+      ],
+      "bake_uv": [
+        0.22,
+        0.009,
+        0.879,
+        0.92
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 466.7,
+      "along": [
+        -23.0,
+        -2.8
+      ],
+      "mu_uv": [
+        0.415,
+        0.034,
+        0.975,
+        0.434
+      ],
+      "bake_uv": [
+        0.73,
+        0.357,
+        0.932,
+        0.923
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 466.7,
+      "along": [
+        -44.6,
+        -28.7
+      ],
+      "mu_uv": [
+        0.415,
+        0.034,
+        0.975,
+        0.434
+      ],
+      "bake_uv": [
+        0.01,
+        0.606,
+        0.947,
+        0.992
+      ]
+    },
+    {
+      "island": 6,
+      "material": "steel",
+      "triangles": 26,
+      "area": 1958.1,
+      "along": [
+        -18.7,
+        22.2
+      ],
+      "mu_uv": [
+        0.019,
+        0.026,
+        0.982,
+        0.978
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.386,
+        0.368
+      ]
+    },
+    {
+      "island": 7,
+      "material": "steel",
+      "triangles": 10,
+      "area": 477.4,
+      "along": [
+        1.2,
+        15.3
+      ],
+      "mu_uv": [
+        0.415,
+        0.034,
+        0.975,
+        0.434
+      ],
+      "bake_uv": [
+        0.013,
+        0.105,
+        0.359,
+        0.255
+      ]
+    },
+    {
+      "island": 8,
+      "material": "steel",
+      "triangles": 10,
+      "area": 477.4,
+      "along": [
+        -41.3,
+        -24.3
+      ],
+      "mu_uv": [
+        0.415,
+        0.034,
+        0.975,
+        0.434
+      ],
+      "bake_uv": [
+        0.187,
+        0.009,
+        0.368,
+        0.298
+      ]
+    },
+    {
+      "island": 9,
+      "material": "steel",
+      "triangles": 10,
+      "area": 466.7,
+      "along": [
+        -23.0,
+        -2.8
+      ],
+      "mu_uv": [
+        0.415,
+        0.034,
+        0.975,
+        0.434
+      ],
+      "bake_uv": [
+        0.231,
+        0.009,
+        0.404,
+        0.255
+      ]
+    },
+    {
+      "island": 10,
+      "material": "steel",
+      "triangles": 10,
+      "area": 466.7,
+      "along": [
+        -44.6,
+        -28.7
+      ],
+      "mu_uv": [
+        0.415,
+        0.034,
+        0.975,
+        0.434
+      ],
+      "bake_uv": [
+        0.279,
+        0.009,
+        0.416,
+        0.294
+      ]
+    }
+  ]
+}

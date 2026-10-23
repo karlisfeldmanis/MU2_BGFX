@@ -30,6 +30,7 @@ bool Thunder::open(const std::string& assetDir, content::Textures& textures,
     joint_ = cooked("joint_thunder");
     spark_ = cooked("energy");
     smoke_ = cooked("smoke01");
+    glow_ = cooked("light");
     core::logf("thunder: joint %s, spark %s", bgfx::isValid(joint_) ? "yes" : "NO",
                bgfx::isValid(spark_) ? "yes" : "NO");
     return bgfx::isValid(joint_);
@@ -53,6 +54,52 @@ void Thunder::strike(const float from[3], const float to[3], uint32_t target) {
     arc->target = target;
     arc->left = kFrames;
     throwPath(*arc);
+}
+
+void Thunder::chain(const float from[3], const float to[3], uint32_t target, float tall,
+                    uint32_t source) {
+    strike(from, to, target);
+    // The one strike just laid, the last place taken.
+    for (Arc& one : arcs_) {
+        if (!one.alive || one.blue || one.target != target || one.left != kFrames) continue;
+        if (one.from[0] != from[0] || one.from[2] != from[2]) continue;
+        one.blue = true;
+        one.glintIn = kGlintFrames;
+        one.tall = tall;
+        one.source = source;
+        return;
+    }
+}
+
+void Thunder::moveFrom(Arc& arc, const float at[3]) {
+    const float by[3] = {at[0] - arc.from[0], at[1] - arc.from[1], at[2] - arc.from[2]};
+    for (int k = 0; k < 3; ++k) arc.from[k] = at[k];
+    const int last = std::max(1, arc.points - 1);
+    for (int i = 0; i < arc.points; ++i) {
+        const float weight = 1.0f - float(i) / float(last);
+        for (int k = 0; k < 3; ++k) {
+            arc.wide[i][k] += by[k] * weight;
+            arc.thin[i][k] += by[k] * weight;
+        }
+    }
+}
+
+void Thunder::glint(const Arc& arc) {
+    // Over the body round its middle (`to`), a third either side of it up and down.
+    int laid = 0;
+    for (Glint& one : glints_) {
+        if (laid == kGlints) break;
+        if (one.alive) continue;
+        ++laid;
+        const float turn = unit() * kTwoPi, reach = 0.35f * unit();
+        one.alive = true;
+        one.at[0] = arc.to[0] + std::cos(turn) * reach;
+        one.at[1] = arc.to[1] + (unit() - 0.5f) * arc.tall * 0.8f;
+        one.at[2] = arc.to[2] + std::sin(turn) * reach;
+        one.size = kGlintSize * (0.7f + unit() * 0.6f);
+        one.spin = unit() * kTwoPi;
+        one.left = kGlintLife;
+    }
 }
 
 void Thunder::crackle(const float feet[3], float tall, float seconds) {
@@ -206,6 +253,10 @@ void Thunder::step(Arc& arc, float frames) {
         arc.smoked = true;
         smoke(arc);
     }
+    if (arc.blue && arc.glintIn > 0.0f) {
+        arc.glintIn -= frames;
+        if (arc.glintIn <= 0.0f) glint(arc);
+    }
     arc.left -= frames;
     if (arc.left <= 0.0f) {
         arc.alive = false;
@@ -259,7 +310,9 @@ void Thunder::gather(gfx::Effects& effects) const {
                     quad.placed = true;
                     quad.sheet = joint_;
                     quad.blend = gfx::Blend::Additive;
-                    for (int k = 0; k < 3; ++k) quad.colour[k] = kWhite[k] * bright;
+                    for (int k = 0; k < 3; ++k) {
+                        quad.colour[k] = (arc.blue ? kBlue[k] : kWhite[k]) * bright;
+                    }
                     quad.colour[3] = 1.0f;
                     for (int k = 0; k < 3; ++k) {
                         quad.corner[0][k] = a[k] - side[k] * half;
@@ -288,6 +341,20 @@ void Thunder::gather(gfx::Effects& effects) const {
             spark.blend = gfx::Blend::Additive;
             effects.add(spark);
         }
+    }
+    for (const Glint& one : glints_) {
+        if (!one.alive || !bgfx::isValid(glow_)) continue;
+        const float fade = std::min(1.0f, one.left / (kGlintLife * 0.5f));
+        gfx::Sprite sprite;
+        for (int k = 0; k < 3; ++k) {
+            sprite.position[k] = one.at[k];
+            sprite.colour[k] = kGlintBlue[k] * fade;
+        }
+        sprite.halfWidth = sprite.halfHeight = one.size * 0.5f;
+        sprite.spin = one.spin;
+        sprite.sheet = glow_;
+        sprite.blend = gfx::Blend::Additive;
+        effects.add(sprite);
     }
 }
 

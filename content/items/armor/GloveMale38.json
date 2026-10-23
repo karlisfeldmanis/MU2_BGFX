@@ -1,0 +1,88 @@
+{
+  "item": "GloveMale38",
+  "mu_name": "Valiant Gloves",
+  "mu_name_from": "MuMain loads MODEL_VALIANT_* from Data/Player/CW_GloveMale04.bmd (ZzzOpenData.cpp:236-243; no helm). MU's number 37. Ours is *Male38 by the index-plus-one rule.",
+  "why_this_one": "Season 2's lower-level sets, missing here (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's): the Magic Gladiator's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (Season 2's sets; 0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:272.",
+    "call": "CreateGloves(37, \"Valiant Gloves\", 91, 27, 7, 81, 0, 155, 50, 0, 0, 0, 1, 0, 0)",
+    "group": 10,
+    "number": 37,
+    "drop_level": 91,
+    "drops_from_monsters": true,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 27,
+    "durability": 81,
+    "requires": {
+      "level": 0,
+      "strength": 155,
+      "agility": 50,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "gladiator"
+    ],
+    "attack_speed": 7,
+    "class_level_note": "The Magic Gladiator's: OpenMU's magicGladiatorClassLevel 1, his only class. No helm: his sets go bare-headed (MuMain loads no CW_HelmMale 4)."
+  },
+  "sheets": {
+    "flamset_glove": "flamset_glove.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player flamset_*.OZJ, decoded with pipeline/decode_texture.py: red plate edged in silver; flamset_head the collar and hood on the armour.",
+  "sheet_materials": {
+    "flamset_glove": "plate_steel"
+  },
+  "material_note": "plate_steel, as Destroy: Valiant's paint reflects as coloured steel rather than lacquer (the user, 2026-10-23: 'i think MG metal could be more metaalic no?', then all three of his lacquered sets).",
+  "effects_note": "MuMain has no render arm for MODEL_VALIANT_* (no glow, no chrome pass). Its full-set bonus is not given: sim::setDefense counts only Storm Crow and Hurricane for the Magic Gladiator.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 116,
+      "area": 2766.1,
+      "along": [
+        -10.5,
+        7.9
+      ],
+      "mu_uv": [
+        0.014,
+        0.01,
+        0.992,
+        0.994
+      ],
+      "bake_uv": [
+        0.007,
+        0.008,
+        0.883,
+        0.911
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 116,
+      "area": 2766.1,
+      "along": [
+        -10.5,
+        7.9
+      ],
+      "mu_uv": [
+        0.014,
+        0.01,
+        0.992,
+        0.994
+      ],
+      "bake_uv": [
+        0.008,
+        0.087,
+        0.943,
+        0.993
+      ]
+    }
+  ]
+}

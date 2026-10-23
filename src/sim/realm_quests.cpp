@@ -180,9 +180,11 @@ bool Realm::acceptQuest(int index) {
     if (!questOffered(index)) return false;
     QuestProgress& one = me().quests[index];
     const uint32_t completions = one.completions;
+    const uint8_t life = one.life;
     one = QuestProgress{};
     one.state = QuestState::Active;
     one.completions = completions;
+    one.life = life;
     if (index == kSkyDoor) discover(int32_t(kIcarusMap));
     openChained();
     say(What::QuestTaken, mine(), index);
@@ -406,11 +408,14 @@ bool Realm::completeQuest(int index, int choice, QuestPath path) {
     const int32_t chosenItem =
         anyFits ? tables_->itemNamed(row.choices[choice].item) : -1;
     say(What::QuestDone, hero, index, chosenItem, chosenSlot);
-    gain(hero, int32_t(questExperience(row, first)));
+    // The first clear's experience, or again the first time in a new life (questReborn).
+    const bool reborn = questReborn(row, int(hero.kin), one, hero.rebirths);
+    gain(hero, int32_t(questExperience(row, first || reborn)));
     const uint32_t completions = one.completions + 1;
     one = QuestProgress{};
     one.state = QuestState::Resting;
     one.completions = completions;
+    one.life = uint8_t(std::clamp(hero.rebirths, 0, 255));
     one.availableAt = wall_ + row.repeatSeconds;
     if (row.promotes) hero.second = sim::promoted(me().quests, int(hero.kin));
     return true;

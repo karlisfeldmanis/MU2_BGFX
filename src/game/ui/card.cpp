@@ -2,14 +2,17 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <string>
 
 #include "game/ui/controls.h"
 #include "game/ui/sheet.h"
 #include "game/ui/style.h"
+#include "game/ui/tip.h"
 #include "sim/quests.h"
 #include "sim/rules.h"
 #include "sim/skills.h"
+#include "sim/swings.h"
 
 namespace mu::game {
 namespace {
@@ -155,10 +158,123 @@ std::string percent(double share) { return std::to_string(int(std::lround(share 
 std::string plus(int v) { return "+" + std::to_string(v); }
 std::string plusPercent(int v) { return "+" + std::to_string(v) + "%"; }
 
+// ---- what a stat buys: the card its name raises ------------------------------------------------
+//
+// The user, 2026-10-23: "we need some tooltips for general stats for str,agi,vit,ene", then "how
+// it affect each class" -- a player asking on Discord which stat shortens a cooldown. Every figure
+// is read off the rules the realm reckons with (sim::rowOf, maximumMana, attackSpeedStat,
+// magicSpeedStat, kAgilityPerDoubling...), at ten points, which is what the 10 under the stats
+// spends; nothing here is a copy that can drift from them.
+constexpr float kStatTipWide = 250.0f;
+
+// A tenth-rounded figure with its sign: "+1.7", "+15".
+std::string tenths(double v) {
+    char out[24];
+    const double r = std::round(v * 10.0) / 10.0;
+    if (std::fabs(r - std::round(r)) < 1e-6) std::snprintf(out, sizeof out, "+%d", int(std::lround(r)));
+    else std::snprintf(out, sizeof out, "+%.1f", r);
+    return out;
+}
+
+tip::Sheet statSheet(int stat, sim::Kin kin, const int totals[4]) {
+    using sim::Kin;
+    const bool knight = kin == Kin::DarkKnight, wizard = kin == Kin::DarkWizard;
+    const bool elf = kin == Kin::FairyElf, gladiator = kin == Kin::MagicGladiator;
+    const sim::ClassRow& row = sim::rowOf(kin);
+    constexpr double kTen = 10.0;
+    static const char* const kNames[4] = {"Strength", "Agility", "Vitality", "Energy"};
+
+    tip::Sheet sheet;
+    sheet.name = kNames[stat];
+    sheet.nameTone = tip::Tone::White;
+    // No class line under the name: it is always his own (the user, 2026-10-23: "dont show for
+    // the dark knight, becaue user aleady plays that class").
+    sheet.wide = kStatTipWide;
+
+    tip::Section every;
+    every.kicker = "Every 10 points";
+    const auto row2 = [&](const std::string& label, const std::string& value, tip::Tone tone = tip::Tone::White) {
+        every.rows.push_back(tip::Row{label, {tip::Value{value, tone}}, "", tip::Tone::White});
+    };
+    const auto band = [](double lo, double hi) { return tenths(lo) + " ~ " + tenths(hi).substr(1); };
+    tip::Section notes;
+    const auto note = [&](const std::string& text) {
+        notes.rows.push_back(tip::Row{"", {}, text, tip::Tone::Gray});
+    };
+    sim::HeroPoints ten;
+    const int shield = sim::maximumShield(0, sim::HeroPoints{10, 0, 0, 0}, 0) - sim::maximumShield(0, {}, 0);
+
+    if (stat == 0) {
+        if (elf) {
+            row2("Bow damage", band(kTen / 14.0, kTen / 8.0));
+            row2("Melee damage", band(kTen * row.minimumDamagePerStrengthAndAgility,
+                                      kTen * row.maximumDamagePerStrengthAndAgility));
+        } else {
+            row2(wizard ? "Weapon damage" : "Damage",
+                 band(kTen * row.minimumDamagePerStrength, kTen * row.maximumDamagePerStrength));
+        }
+        row2("Attack rate", tenths(kTen * row.ratePerStrength));
+        row2("Shield", tenths(shield));
+        if (knight || gladiator)
+            note("Raises the multiplier of every knight skill; each skill's card shows its own sum.");
+        if (knight) note("And Defense's guard: strength is its main stat.");
+        if (wizard) note("A wizard's spells take nothing from it: it is for the gear that asks for it.");
+        if (elf) note("Agility is her bow's main stat; strength adds half as much.");
+    } else if (stat == 1) {
+        const int agility = totals[1];
+        const double shorter = 1.0 - 1.0 / (1.0 + double(std::max(0, agility)) / sim::kAgilityPerDoubling);
+        if (elf) row2("Bow damage", band(kTen / 7.0, kTen / 4.0));
+        if (elf) row2("Melee damage", band(kTen * row.minimumDamagePerStrengthAndAgility,
+                                            kTen * row.maximumDamagePerStrengthAndAgility));
+        row2("Attack speed", tenths(sim::attackSpeedStat(kin, 10, nullptr, nullptr)));
+        if (wizard || gladiator) row2("Magic speed", tenths(sim::magicSpeedStat(kin, 10)));
+        row2("Attack rate", tenths(kTen * row.ratePerAgility));
+        row2("Defense", tenths(kTen * row.defensePerAgility * 0.5));
+        row2("Defense rate", tenths(kTen * row.defenseRatePerAgility));
+        row2("Shield", tenths(shield));
+        row2("Cooldowns now", "-" + std::to_string(int(std::lround(shorter * 100.0))) + "%", tip::Tone::Yellow);
+        note("Every cooldown is divided by 1 + agility / " + std::to_string(int(sim::kAgilityPerDoubling)) +
+             ": " + std::to_string(int(sim::kAgilityPerDoubling)) +
+             " agility halves them. Never shorter than the skill's own animation.");
+        note(wizard ? "Magic speed casts spells faster; attack speed swings the staff faster."
+             : gladiator ? "Attack speed speeds his swings and knight skills, magic speed his spells."
+                         : "Attack speed speeds swings and every attack skill's animation.");
+        if (elf) note("Her main stat, and Greater Defense's.");
+    } else if (stat == 2) {
+        row2("Life", tenths(kTen * row.healthPerVitality));
+        row2("Shield", tenths(shield));
+        if (elf) row2("Summon life", "+" + std::to_string(int(std::lround(kTen * sim::kSummonHealthPerVitality * 100.0))) + "%");
+    } else {
+        ten.energy = 10;
+        const int mana = sim::maximumMana(kin, 0, ten) - sim::maximumMana(kin, 0, {});
+        if (wizard || gladiator) row2("Wizardry", band(kTen / 9.0, kTen / 4.0));
+        if (gladiator) row2("Damage", band(kTen * row.minimumDamagePerEnergy, kTen * row.maximumDamagePerEnergy));
+        if (knight || gladiator) row2("Skill damage", "+" + std::to_string(sim::skillPercent(ten) - sim::skillPercent({})) + "%");
+        if (elf) {
+            ten.energy = 70;  // the two blessings step at every seventh and fifth point
+            row2("Greater Damage", tenths(double(sim::mightOf(ten) - sim::mightOf({})) / 7.0));
+            row2("Heal", tenths(double(sim::healOf(ten) - sim::healOf({})) / 7.0));
+            row2("Summon life", "+" + std::to_string(int(std::lround(kTen * sim::kSummonHealthPerEnergy * 100.0))) + "%");
+            row2("Summon damage", "+" + std::to_string(int(std::lround(kTen * sim::kSummonForcePerEnergy * 100.0))) + "%");
+        }
+        row2("Mana", tenths(mana));
+        row2("Shield", tenths(shield));
+        if (wizard) note("His main stat: every spell's band, and Soul Barrier's guard.");
+        if (gladiator) note("His spells' band, and his swings and knight skills as well.");
+        if (elf) note("Her summons and blessings. Greater Defense takes half of it.");
+        note("And the rune strikes on your gear.");
+    }
+    if (stat != 2) note("Gear asks for it too.");
+    sheet.sections.push_back(every);
+    if (!notes.rows.empty()) sheet.sections.push_back(notes);
+    return sheet;
+}
+
 }  // namespace
 
 void Card::open(const gfx::Interface& interface, panel::Arts* arts) {
     interface.adopt(canvas_);
+    interface.adopt(tip_);
     arts_ = arts;
 }
 
@@ -346,6 +462,15 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         };
         over_ = controlUnder();
         const int overTab = tabUnder();
+        // A stat's well, off its plus: its card.
+        if (tab_ == 0 && (over_ < 0 || over_ >= 4)) {
+            for (int i = 0; i < 4; ++i)
+                if (under({kWellX, tops[i], kWellW, kAttrTall})) now_.overStat = i;
+        }
+        now_.totals[0] = total.strength;
+        now_.totals[1] = total.agility;
+        now_.totals[2] = total.vitality;
+        now_.totals[3] = total.energy;
         if (pointer.pressed) {
             if (overClose_) closing_ = true;
             pushed_ = over_;
@@ -464,6 +589,7 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
 void Card::rebuild() {
     ++rebuilds_;
     canvas_.clear();
+    tip_.clear();
     if (!now_.who || !arts_) return;
     panel::Arts& arts = *arts_;
     const float x = x_, y = y_, k = panel::scale();
@@ -749,6 +875,16 @@ void Card::rebuild() {
     }
 
     panel::close(canvas_, x, y, now_.overClose, now_.closing);
+
+    if (now_.tab == 0 && now_.overStat >= 0) {
+        const size_t counts[4] = {now_.lines[0].size(), now_.lines[1].size(), now_.lines[2].size(),
+                                  now_.lines[3].size()};
+        float tops[4];
+        attrTops(counts, tops, drop);
+        const tip::Sheet sheet = statSheet(now_.overStat, now_.who->kin, now_.totals);
+        tip::draw(tip_, sheet, panel::scaled(x, y, {kWellX, tops[now_.overStat], kWellW, kAttrTall}),
+                  now_.width, now_.height);
+    }
 }
 
 }  // namespace mu::game

@@ -1,0 +1,122 @@
+{
+  "item": "PantMale37",
+  "mu_name": "Iris Pants",
+  "mu_name_from": "MuMain loads MODEL_IRIS_* from Data/Player/CW_PantMale03.bmd (ZzzOpenData.cpp:236-246; the helm is CW_HelmMale 3). MU's number 36. Ours is *Male37 by the index-plus-one rule.",
+  "why_this_one": "Season 2's lower-level sets, missing here (the user, 2026-10-22: 'we need those low level items now', every class's but the Dark Lord's): the Fairy Elf's.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row: OpenMU's Season 6 initialiser (Season 2's sets; 0.75 and 0.95d have none).",
+    "from": "openmu/src/Persistence/Initialization/VersionSeasonSix/Items/Armors.cs:212.",
+    "call": "CreateArmor(36, 4, 2, 2, \"Iris Pants\", 69, 32, 59, 0, 50, 70, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0)",
+    "group": 9,
+    "number": 36,
+    "drop_level": 69,
+    "drops_from_monsters": true,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 32,
+    "durability": 59,
+    "requires": {
+      "level": 0,
+      "strength": 50,
+      "agility": 70,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "class_level_note": "The Fairy Elf's, first class and up: OpenMU's elfClassLevel 1."
+  },
+  "sheets": {
+    "armor_skirt": "iris_armor_skirt.png",
+    "forest_b2": "iris_forest_b2.png"
+  },
+  "sheet_from": "MuMain/src/bin/Data/Player, decoded with pipeline/decode_texture.py under an iris_ prefix (MU's armor_* and forest_* are too generic to keep): green lacquer plate with pink inlay, a dark skirt, and forest_* her bare skin hung with chain jewellery; level_man033 her head and hair, Red Spirit's.",
+  "sheet_materials": {
+    "armor_skirt": "cloth",
+    "forest_b2": "skin"
+  },
+  "material_note": "painted_steel with the cast grain for the plate; the skirt cloth; forest_* skin (the chains painted on it); forest_legs, a dark strap, leather; level_man033 hair.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "material_overrides_note": "painted_steel's own grain is a blade's, brushed along V; on plate it drew vertical streaks (studio, 2026-10-04). plate_steel's cast grain instead, the paint left as it is.",
+  "effects_note": "MuMain's arms for MODEL_IRIS_ARMOR, PANTS and GLOVES (ZzzObject.cpp:7731-7763) draw one mesh alone when the skin is hidden, else the whole body: no glow, no chrome pass.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 68,
+      "area": 3572.3,
+      "along": [
+        -15.5,
+        11.4
+      ],
+      "mu_uv": [
+        0.011,
+        0.012,
+        0.981,
+        0.99
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.995,
+        0.7
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 20,
+      "area": 608.4,
+      "along": [
+        -14.9,
+        11.4
+      ],
+      "mu_uv": [
+        0.007,
+        0.006,
+        0.623,
+        0.658
+      ],
+      "bake_uv": [
+        0.005,
+        0.717,
+        0.488,
+        0.967
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 97,
+      "area": 4402.6,
+      "along": [
+        -12.3,
+        8.6
+      ],
+      "mu_uv": [
+        -0.012,
+        0.014,
+        0.969,
+        0.837
+      ],
+      "bake_uv": [
+        0.005,
+        0.39,
+        0.755,
+        0.747
+      ]
+    }
+  ]
+}

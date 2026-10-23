@@ -45,6 +45,7 @@
 #include "game/fx/blizzard.h"
 #include "game/fx/weakness.h"
 #include "game/fx/pollution.h"
+#include "game/fx/drain.h"
 #include "game/fx/ice.h"
 #include "game/fx/stains.h"
 #include "game/world/trap_show.h"
@@ -1054,6 +1055,8 @@ public:
     Weakness& weakness() { return weakness_; }
     // And the Ancient rune Pollution's circle and Lagle's ghosts. fx/pollution.h.
     Pollution& pollution() { return pollution_; }
+    // And the Ancient rune Drain Life's motes, ghosts and strands. fx/drain.h.
+    Drain& drain() { return drain_; }
     // What a death leaves by the head: MU's CreateBlood. fx/stains.h.
     Stains& stains() { return stains_; }
     void gatherStains(gfx::Effects& effects) const {
@@ -1180,7 +1183,7 @@ public:
     enum class Ui { Click, Refused, Took, Opened, Invited, Talent, Soft, Whoosh, Bell, Whispered };
     void ui(Ui which);
     // An event's gate opening (game/ui/herald.h): a peek of its music, `seconds` long and faded
-    // out at its end. 0 Blood Castle, 1 Devil Square; both the one hit, content/music/gate_open.mp3.
+    // out at its end. 0 Blood Castle, 1 Devil Square; both the one bell, content/music/gate_open.mp3.
     void gatePeek(int gate, float seconds);
     void gatherAura(gfx::Effects& effects, const float eye[3]) const {
         if (ground_) aura_.gather(effects, *ground_, eye);
@@ -1564,6 +1567,8 @@ private:
     // Where a shot leaves a bow or crossbow that carries no nocked missile and no muzzle bone: a
     // bow's middle, a crossbow's front end toward `toward` less half a bolt; false with none in
     // hand or none posed.
+    // The head of the weapon in his hand: Lightning's bolts leave it.
+    bool weaponHead(const Drawn& caster, float out[3]) const;
     bool weaponFront(const Drawn& shooter, const float toward[3], float out[3]) const;
     // Whose string is held empty this frame because an arrow of theirs is flying (Arrows::owners).
     std::vector<uint32_t> nockHeld_;
@@ -1911,6 +1916,7 @@ private:
     Blizzard blizzard_;
     Weakness weakness_;
     Pollution pollution_;
+    Drain drain_;
     Stains stains_;
     TrapShow trapShow_;
     Poison poison_;
@@ -2080,6 +2086,7 @@ private:
         int iceStorm = -1, iceStormLand = -1;  // eSuddenIce_1 and _2, the Ancient rune Ice Storm's
         int weakness = -1;                     // SE_Ch_summoner_weakness, the Ancient rune Weakness's
         int pollution = -1;                    // Rargle, the Ancient rune Pollution's
+        int drainLife = -1;                    // SE_Ch_summoner_skill07, the Ancient rune Drain Life's
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
         int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};

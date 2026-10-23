@@ -15,11 +15,13 @@
 
 #include <sqlite3.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 #include "core/files.h"
 #include "host.h"
 #include "keeper.h"
 #include "broker.h"
+#include "sim/rebirth.h"
 #include "sim/wear.h"
 #include "market_link.h"
 #include "net/pass.h"
@@ -599,6 +601,122 @@ void testInvasion() {
           "landed: Lorencia, at (" + std::to_string(now.column) + ", " + std::to_string(now.row) + ")");
 }
 
+// ---- the rebirth over the server (sim/rebirth.h, world.cpp) -----------------------------------
+//
+// The user, 2026-10-22: "all is testes? server side? clients?". A level-400 knight kept at Lugard
+// in Devias, his wings, ring and pendant on: the server's own tick takes his talk and his rite as
+// a client sends them, a mirror fed the same commands keeps its hash, he is written at once, and
+// Global carries his name.
+void testRebirthServed() {
+    std::printf("rebirth served\n");
+    const std::string assets = MU2_ASSET_DIR;
+    content::Tables tables;
+    std::string error;
+    check(content::loadTables(assets + "/cooked/devias/devias.mur", tables, error), "Devias's tables: " + error);
+    int lugard = -1;
+    for (size_t i = 0; i < tables.folk.size(); ++i) {
+        if (tables.folk[i].number == sim::kLugard) lugard = int(i);
+    }
+    check(lugard >= 0, "Lugard stands in Devias");
+    if (lugard < 0) return;
+
+    // Made as --kit makes one: at 400, the gear worn, the Zen in his purse.
+    sim::Realm scratch;
+    check(scratch.raise(&tables, 5, 210, 45, sim::Kin::DarkKnight, sim::kRebirthLevel), "a level-400 knight");
+    // His points spent as a player's are, strength first: the sword asks 130 raw, scaled.
+    check(scratch.spend(300, 100, 0, 0), "his points spent");
+    const std::pair<const char*, int> gear[] = {{"Sword09", sim::kWeaponRight}, {"Wing03", sim::kWings},
+                                                {"Ring01", sim::kRingRight}, {"Necklace01", sim::kAmulet}};
+    for (const auto& [stem, slot] : gear) {
+        check(scratch.give(tables.itemNamed(stem), slot) >= 0, std::string("worn: ") + stem);
+    }
+    scratch.earn(sim::rebirthZen(1) + 5);
+    sim::Kept kept = scratch.keptOf(scratch.hero().id);
+
+    std::vector<std::unique_ptr<World>> worlds;
+    sim::RealmConfig config;
+    net::Hello hello;
+    hello.world = "devias";
+    hello.kin = uint8_t(sim::Kin::DarkKnight);
+    hello.level = sim::kRebirthLevel;
+    hello.column = 210;
+    hello.row = 45;
+    World* world = raiseWorld(worlds, hello, assets, config, 20261022, "test", &kept, 0);
+    check(world != nullptr, "the server raises Devias round him");
+    if (!world) return;
+    sim::Realm mirror;
+    check(sim::raiseFrom(mirror, &tables, net::raiseOrder(world->start)), "his client's mirror raises");
+
+    // His line to the server: what it sends him is read off the far end each tick.
+    int fds[2];
+    check(::socketpair(AF_UNIX, SOCK_STREAM, 0, fds) == 0, "a line to him");
+    std::vector<std::unique_ptr<Session>> sessions;
+    sessions.push_back(std::make_unique<Session>());
+    Session& him = *sessions.back();
+    him.socket = net::Socket(fds[0]);
+    him.world = world;
+    him.player = world->realm->hero().id;
+    him.welcomed = true;
+    him.token = 4001;
+    him.name = "Kneeler";
+    him.keepAt = Clock::now() + std::chrono::hours(1);
+    std::vector<std::string> global;
+    std::vector<uint8_t> inbox;
+    bool reborn = false, diverged = false;
+    // One server tick and the mirror's step on the same commands (RemoteLink::step), then his mail.
+    const auto step = [&](std::vector<sim::Command> commands) {
+        for (const sim::Command& c : commands) world->queued.push_back(c);
+        tick(*world, sessions, worlds);
+        mirror.setWallClock(world->realm->wallClock());
+        for (const sim::Command& c : commands) mirror.command(c);
+        mirror.step();
+        for (const sim::Happening& one : world->realm->happenings()) reborn = reborn || one.what == sim::What::Reborn;
+        if (net::stateHash(*world->realm) != net::stateHash(mirror)) diverged = true;
+        uint8_t chunk[65536];
+        for (ssize_t n; (n = ::recv(fds[1], chunk, sizeof chunk, MSG_DONTWAIT)) > 0;) {
+            inbox.insert(inbox.end(), chunk, chunk + n);
+        }
+        net::Kind kind{};
+        std::vector<uint8_t> body;
+        while (net::take(inbox, kind, body) == 1) {
+            net::Heard line;
+            if (kind == net::Kind::Chat && net::parse(body, line) && line.channel == net::Channel::Global) {
+                global.push_back(line.text);
+            }
+        }
+    };
+
+    sim::Command talk{.kind = sim::Command::Kind::Order};
+    talk.player = him.player;
+    talk.a = int32_t(sim::Request::Kind::Talk);
+    talk.target = uint32_t(lugard);
+    step({talk});
+    for (int t = 0; t < 400 && world->realm->rebirthing() < 0; ++t) step({});
+    check(world->realm->rebirthing() == lugard && mirror.rebirthing() == lugard, "his window opens, and on his mirror");
+    check(world->realm->rebirthStrips() == 3, "three pieces would go to the bag: " +
+                                                  std::to_string(world->realm->rebirthStrips()));
+
+    sim::Command rite{.kind = sim::Command::Kind::Rebirth};
+    rite.player = him.player;
+    rite.ticket = 9;
+    step({rite});
+    for (int t = 0; t < 40; ++t) step({});
+    const sim::Body& hero = world->realm->hero();
+    check(reborn, "the server's realm says Reborn");
+    check(!diverged, "his mirror kept the server's hash through the rite");
+    check(hero.level == 1 && hero.rebirths == 1 && world->realm->money() == 5, "level 1, rebirth 1, the Zen paid");
+    check(mirror.hero().level == 1 && mirror.hero().rebirths == 1, "and so on his mirror");
+    const sim::Satchel& bag = world->realm->satchel();
+    check(!bag[sim::kWeaponRight].empty(), "the sword asks no level: still in his hand");
+    check(bag[sim::kWings].empty() && bag[sim::kRingRight].empty() && bag[sim::kAmulet].empty(),
+          "the wings, the ring and the pendant off him");
+    check(him.keepAt <= Clock::now(), "he is written at once, as a trade is");
+    check(global.size() == 1 && global[0] == net::rebirthLine("Kneeler", 1, g_region) &&
+              global[0].find("Kneeler") != std::string::npos,
+          "Global carries his name: " + (global.empty() ? std::string("nothing heard") : global[0]));
+    ::close(fds[1]);
+}
+
 }  // namespace
 
 // **A trade's partner gone in the tick of the other's Accept** (world.cpp part): he is kept with his
@@ -1009,6 +1127,7 @@ int main() {
     testTicketsBack();
     testRaid();
     testInvasion();
+    testRebirthServed();
     testSharedMarket();
     testMarketLine();
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
