@@ -102,7 +102,7 @@ bool Realm::questUnderLevel(int index) const {
     const QuestRow& row = questAt(index);
     if (!questOpen(row, int(mine().kin)) || mine().level >= questLevel(index)) return false;
     // A second class's quest is not shown to the first, even as one his level waits on.
-    if (row.second && !promoted() && mine().kin != Kin::MagicGladiator) return false;
+    if (row.second && !promoted() && hasSecondClass(mine().kin)) return false;
     const QuestProgress& one = me().quests[index];
     if (one.state != QuestState::Untaken || one.completions > 0) return false;
     if (row.afterAny == 0) return true;
@@ -143,7 +143,7 @@ bool Realm::questLocked(int index) const {
     const QuestRow& row = questAt(index);
     const QuestProgress& one = me().quests[index];
     if (one.state != QuestState::Untaken || one.completions > 0) return false;
-    if (row.second && !promoted() && mine().kin != Kin::MagicGladiator) return true;
+    if (row.second && !promoted() && hasSecondClass(mine().kin)) return true;
     // Below its level: Sevina's, until 200 (the user, 2026-10-04).
     if (mine().level < questLevel(index)) return true;
     if (row.afterAny == 0) return false;
@@ -168,7 +168,7 @@ bool Realm::questItemFits(const QuestItem& what) const {
     if (item < 0) return false;
     const content::ItemRow& one = tables_->items[size_t(item)];
     if (what.rank != QuestItem::Rank::Any) {
-        const bool second = promoted() || mine().kin == Kin::MagicGladiator;
+        const bool second = promoted() || !hasSecondClass(mine().kin);
         if (second != (what.rank == QuestItem::Rank::Second)) return false;
     }
     return one.classes == 0 || (one.classes & (1 << int(mine().kin))) != 0;

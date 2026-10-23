@@ -1332,9 +1332,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         Broker::Keys keys;
         if (broker_.typing()) keys = {typedNow, window.backspaces(), enterNow, escapeNow};
         // Its own box typing, it keeps the pointer: a price typed and then List pressed.
-        const gfx::Art* faces[8] = {};
-        for (int i = 0; i < 8; ++i) faces[i] = classFaces_[i].taken() ? &classFaces_[i].picture() : nullptr;
-        faces[int(sim::Kin::MagicGladiator) * 2 + 1] = faces[int(sim::Kin::MagicGladiator) * 2];
+        const gfx::Art* faces[sim::kKinCount * 2] = {};
+        for (int i = 0; i < sim::kKinCount * 2; ++i) faces[i] = classFaces_[i].taken() ? &classFaces_[i].picture() : nullptr;
+        // A class with no second shows its first face for both.
+        for (int k = 0; k < sim::kKinCount; ++k) {
+            if (!sim::hasSecondClass(sim::Kin(k))) faces[k * 2 + 1] = faces[k * 2];
+        }
         broker_.classFaces(faces);
         broker_.update(seconds, float(window.width()), float(window.height()), play,
                        broker_.typing() && !amount_.up() ? real : pointer, keys, shelfStage_);
@@ -2834,7 +2837,7 @@ void Desk::portrait(gfx::Renderer& renderer, Play& play) {
         for (int i = 0; i < sim::kKinCount * 2; ++i) {
             const sim::Kin kin = sim::Kin(i / 2);
             const bool second = (i % 2) != 0;
-            if (classFaces_[i].taken() || (second && kin == sim::Kin::MagicGladiator)) continue;
+            if (classFaces_[i].taken() || (second && !sim::hasSecondClass(kin))) continue;
             if (!renderer.openStages(shaderDir_)) return;
             float head[3] = {}, scale = 1.0f;
             if (!play.poseClass(renderer, kin, second, classBody_, head, &scale)) continue;

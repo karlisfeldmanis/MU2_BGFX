@@ -44,6 +44,7 @@ bool kinNamed(const std::string& name, Kin* out) {
     else if (name == "elf") *out = Kin::FairyElf;
     else if (name == "wizard") *out = Kin::DarkWizard;
     else if (name == "gladiator") *out = Kin::MagicGladiator;
+    else if (name == "lord") *out = Kin::DarkLord;
     else return false;
     return true;
 }

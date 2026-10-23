@@ -9,6 +9,7 @@
 #include <string>
 
 #include "gfx/interface.h"
+#include "sim/rules.h"
 
 namespace mu::game::capsule {
 
@@ -34,8 +35,8 @@ struct Look {
 
 // MU's short names for the four classes, as the item card's requirement rows say them, and each
 // one's muted tint.
-extern const char* const kKinShort[4];
-extern const uint32_t kKinInk[4];
+extern const char* const kKinShort[sim::kKinCount];
+extern const uint32_t kKinInk[sim::kKinCount];
 constexpr uint32_t kGold = gfx::rgba(0.878f, 0.714f, 0.361f);      // the leader: the tracker's gold
 constexpr uint32_t kCrownDrop = gfx::rgba(0.0f, 0.0f, 0.0f, 0.85f); // under the leader's badge
 constexpr uint32_t kShadow = gfx::rgba(0.0f, 0.0f, 0.0f, 0.22f);    // under a capsule or a menu

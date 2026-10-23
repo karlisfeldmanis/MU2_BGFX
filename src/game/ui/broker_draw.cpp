@@ -267,7 +267,7 @@ void Broker::rebuild(Play& play, Stage* stage) {
                 const content::ItemRow& row = tables.items[size_t(what.item)];
                 for (int i = 0; i < sim::kKinCount; ++i) {
                     if (!((row.classes >> i) & 1)) continue;
-                    const bool second = ((row.classes >> (8 + i)) & 1) && sim::Kin(i) != sim::Kin::MagicGladiator;
+                    const bool second = ((row.classes >> (8 + i)) & 1) && sim::hasSecondClass(sim::Kin(i));
                     const gfx::Art* face = classFaces_[i * 2 + (second ? 1 : 0)];
                     if (face && face->valid()) faces.push_back(face);
                 }

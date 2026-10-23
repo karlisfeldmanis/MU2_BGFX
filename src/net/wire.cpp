@@ -210,7 +210,7 @@ void putKept(Out& o, const sim::Kept& k) {
 sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     sim::Kept k;
     sim::HeroRecord& r = k.hero;
-    r.kin = sim::Kin(std::min<int>(in.u8(), int(sim::Kin::MagicGladiator)));
+    r.kin = sim::Kin(std::min<int>(in.u8(), int(sim::kLastKin)));
     r.column = in.i32();
     r.row = in.i32();
     r.facing = floatOf(in.u32());

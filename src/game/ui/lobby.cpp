@@ -41,6 +41,11 @@ const char* describe(sim::Kin kin) {
         case sim::Kin::MagicGladiator:
             return "Complex character that has a characteristics of the Dark knight and Dark "
                    "wizard. Master in a close-range combat and can command spells freely.";
+        // Ours: MU's text 1709 is in Text.bmd, which none of our references carry
+        // (docs/plans/dark-lord.md). Replace with MU's words when it turns up.
+        case sim::Kin::DarkLord:
+            return "A lord who commands others. With his raven and his dark horse he leads the "
+                   "battle, and his presence makes his companions stronger.";
     }
     return "";
 }

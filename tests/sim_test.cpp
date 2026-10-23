@@ -152,6 +152,26 @@ void testRules() {
     checkEqual(sim::secondWingOf(sim::Kin::MagicGladiator), sim::kDarknessNumber,
                "his 2nd wing is Darkness");
 
+    // The Dark Lord (WebZen 1.00.93's classdef.cpp:39 and ObjCalCharacter.cpp; OpenMU's
+    // ClassDarkLord.cs): 26/20/20/15, 90 life and 40 mana at level one.
+    const sim::HeroPoints lord = sim::startingPoints(sim::Kin::DarkLord);
+    checkEqual(lord.strength * 1000000 + lord.agility * 10000 + lord.vitality * 100 + lord.energy,
+               26202015, "the lord's 26/20/20/15");
+    sim::reckon(sim::Kin::DarkLord, 1, lord, sim::Arms{}, &fighter, &health);
+    checkEqual(health, 90, "the lord's health, 90");
+    checkEqual(sim::maximumMana(sim::Kin::DarkLord, 1, lord), 40, "the lord's mana, 40");
+    checkEqual(fighter.defense, 1, "the lord's defence is agility/7, halved");
+    checkEqual(fighter.minimumDamage, int(26 / 7.0 + 15 / 14.0), "the lord's fists, low");
+    checkEqual(fighter.maximumDamage, int(26 / 5.0 + 15 / 10.0), "the lord's fists, high");
+    checkNear(fighter.attackRate, 5.0 + 20 * 3.0 + 26 / 4.0, 1e-4,
+              "his attack rate is WebZen's, level x 5 + agility x 3 + strength / 4");
+    checkEqual(sim::pointsPerLevel(sim::Kin::DarkLord), 7, "the lord's seven points a level");
+    checkEqual(sim::moveLevel(70, sim::Kin::DarkLord), 46, "a gate asks the lord two thirds");
+    check(!sim::hasSecondClass(sim::Kin::DarkLord) && !sim::hasSecondClass(sim::Kin::MagicGladiator) &&
+              sim::hasSecondClass(sim::Kin::DarkKnight),
+          "the lord and the gladiator have no second class");
+    check(sim::kinValid(4) && !sim::kinValid(5) && sim::kLastKin == sim::Kin::DarkLord, "five classes");
+
     // The order of a blow is the behaviour. A defender who out-rates the attacker takes three
     // tenths, and the level floor comes after that, not before.
     sim::Fighter attacker;

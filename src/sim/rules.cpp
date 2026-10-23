@@ -157,6 +157,15 @@ static void settle(Blow& blow, int damage, const Fighter& attacker, const Fighte
 // FairyElf        5  1.5  0.25    0.25   1/10      0       0       1/7    1/4       0     0    39   1   2
 // DarkKnight      5  1.5  0.25    1/3    1/3      1/6     1/4       0      0        0     0    35   2   3
 // MagicGladiator  5  1.5  0.25    1/3    1/5      1/6     1/4       0      0       1/12  1/8   57   1   2
+// DarkLord        5   3   0.25    1/7    1/7      1/7     1/5       0      0       1/14  1/10  48.5 1.5 2
+//
+// The Dark Lord has no 0.75 or 0.95d class; his row is WebZen's GameServer 1.00.93, which outranks
+// OpenMU: attack rate level x 5 + agility x 3 + strength / 4 (ObjBaseAttack.cpp:921-923; OpenMU's
+// ClassDarkLord.cs:60-63 says agility x 2.5 + strength / 6, the client's), defence and its rate
+// agility / 7 (ObjCalCharacter.cpp:856-859, :1061-1062), damage strength / 7 to / 5 plus energy
+// / 14 to / 10 (:399-405), life 90 at level one -- 90 + 1.5 a level + 2 a vitality point over 20
+// (user.cpp:3536-3542), so a base of 48.5. Command's tenth of the attack rate is the fifth
+// stat's (docs/plans/dark-lord.md phase 2).
 //
 // ClassDarkWizard.cs:51-56, :66-71, :111; ClassFairyElf.cs:56-61, :73-80, :119;
 // ClassDarkKnight.cs:51-56, :68-71, :107; ClassMagicGladiator.cs:53-69, :113 (Version095d's
@@ -176,15 +185,20 @@ const ClassRow kRows[kKinCount] = {
     // Magic Gladiator
     {5.0f, 1.5f, 0.25f, 1.0f / 3.0f, 0.2f, 1.0f / 6.0f, 0.25f, 0.0f, 0.0f, 1.0f / 12.0f,
      1.0f / 8.0f, 57.0f, 1.0f, 2.0f},
+    // Dark Lord
+    {5.0f, 3.0f, 0.25f, 1.0f / 7.0f, 1.0f / 7.0f, 1.0f / 7.0f, 0.2f, 0.0f, 0.0f, 1.0f / 14.0f,
+     0.1f, 48.5f, 1.5f, 2.0f},
 };
 
 // ClassDarkWizard.cs:38-41, ClassFairyElf.cs:41-44, ClassDarkKnight.cs:38-41,
-// ClassMagicGladiator.cs:41-44.
+// ClassMagicGladiator.cs:41-44, ClassDarkLord.cs:43-46 (and WebZen's classdef.cpp:39; his
+// Command of 25 is the fifth stat's).
 const HeroPoints kStarting[kKinCount] = {
     {18, 18, 15, 30},  // Dark Wizard
     {22, 25, 20, 15},  // Fairy Elf
     {28, 20, 25, 10},  // Dark Knight
     {26, 26, 26, 26},  // Magic Gladiator
+    {26, 20, 20, 15},  // Dark Lord
 };
 
 // A class number out of range reads as the knight's, as an unknown save always has.
@@ -371,9 +385,14 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
 }
 
 int maximumMana(Kin kin, int level, const HeroPoints& points) {
-    // Wizard, elf, knight, gladiator: mu.db's own class order, as kRows.
-    static const float kMana[kKinCount][3] = {
-        {0.0f, 2.0f, 2.0f}, {6.0f, 1.5f, 1.5f}, {10.0f, 0.5f, 1.0f}, {7.0f, 1.0f, 2.0f}};
+    // Wizard, elf, knight, gladiator, lord: mu.db's own class order, as kRows. The Dark Lord's is
+    // WebZen's 40 + (level - 1) + 1.5 x (energy - 15) (user.cpp:3536-3542; OpenMU's
+    // ClassDarkLord.cs:74-76 the same): 40 at level one.
+    static const float kMana[kKinCount][3] = {{0.0f, 2.0f, 2.0f},
+                                              {6.0f, 1.5f, 1.5f},
+                                              {10.0f, 0.5f, 1.0f},
+                                              {7.0f, 1.0f, 2.0f},
+                                              {16.5f, 1.0f, 1.5f}};
     const float* m = kMana[rowIndex(kin)];
     // MU2's `(int)(base + level * a + energy * b)`: truncated once, at the end.
     return int(m[0] + float(level) * m[1] + float(points.energy) * m[2]);

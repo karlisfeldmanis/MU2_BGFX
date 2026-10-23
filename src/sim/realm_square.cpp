@@ -56,7 +56,9 @@ SquareRefusal Realm::squareRefusal(int square) const {
     if (invitationSlot(square) < 0) return SquareRefusal::NoInvitation;
     if (squareDoorLeft() == 0) return SquareRefusal::NotYet;
     const Body& hero = mine();
-    const int level = squareLevel(hero.level, hero.kin == Kin::MagicGladiator);
+    // The Dark Lord on the Magic Gladiator's band, as MU's MAGUMSA one is both
+    // (docs/worlds/blood-castle-port.md:122).
+    const int level = squareLevel(hero.level, hero.kin == Kin::MagicGladiator || hero.kin == Kin::DarkLord);
     // The band's floor only, as Blood Castle's since 2026-10-04 (the user, 2026-10-13: "bots can use
     // lower tire BC,DS they dont have to use higher tiers always"): WebZen's ceiling, TooHigh, is
     // never said.

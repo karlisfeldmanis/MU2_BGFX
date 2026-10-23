@@ -365,8 +365,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
 
     // The classes as players write them, DW, FE, DK, MG (the user, 2026-10-07: 'dont show full
     // class names in tooltips ... use DW,DK,MG,SM'), and their second classes' SM, ME, BK.
-    static const char* const kNames[sim::kKinCount] = {"DW", "FE", "DK", "MG"};
-    static const char* const kSeconds[sim::kKinCount] = {"SM", "ME", "BK", "MG"};
+    static const char* const kNames[sim::kKinCount] = {"DW", "FE", "DK", "MG", "DL"};
+    static const char* const kSeconds[sim::kKinCount] = {"SM", "ME", "BK", "MG", "DL"};
     int named = 0;
     for (int i = 0; i < sim::kKinCount; ++i) named += (row.classes >> i) & 1;
     // The type line, in the name's tone. GetItemName puts `Excellent ` before the name
@@ -1054,7 +1054,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             // A second class's rune names the second: 'Blade Knight' (sim::PowerRow::second).
             for (size_t i = 0; !everyone && i < size_t(sim::kKinCount); ++i) {
                 if (!power->takenBy(sim::Kin(i), true)) continue;
-                if (power->second && sim::Kin(i) == sim::Kin::MagicGladiator) continue;
+                if (power->second && !sim::hasSecondClass(sim::Kin(i))) continue;
                 classes += (classes.empty() ? "" : " / ") +
                            std::string(power->second ? kSeconds[i] : kNames[i]);
             }

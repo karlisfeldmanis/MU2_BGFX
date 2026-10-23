@@ -20,11 +20,13 @@ constexpr float kReferenceFps = 25.0f;
 
 // What one point of agility is worth in attack speed, by class.
 // ClassDarkKnight.cs:58, ClassDarkWizard.cs:58, ClassFairyElf.cs:63; the Magic Gladiator's is the
-// knight's fifteenth (ClassMagicGladiator.cs:58).
+// knight's fifteenth (ClassMagicGladiator.cs:58); the Dark Lord's a tenth (WebZen
+// ObjCalCharacter.cpp:657-661, ClassDarkLord.cs:65).
 float attackSpeedPerAgility(Kin kin) {
     switch (kin) {
         case Kin::DarkWizard: return 1.0f / 20.0f;
         case Kin::FairyElf: return 1.0f / 50.0f;
+        case Kin::DarkLord: return 1.0f / 10.0f;
         case Kin::DarkKnight:
         case Kin::MagicGladiator: break;
     }

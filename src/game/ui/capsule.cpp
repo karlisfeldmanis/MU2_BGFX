@@ -11,12 +11,13 @@ namespace mu::game::capsule {
 
 // The class's letters in its cell (the user, 2026-10-10: "we need to find place ehre to show
 // class"), each in a muted tint of its own so the elf and the tank are found at a glance.
-const char* const kKinShort[4] = {"DW", "FE", "DK", "MG"};
-const uint32_t kKinInk[4] = {
+const char* const kKinShort[sim::kKinCount] = {"DW", "FE", "DK", "MG", "DL"};
+const uint32_t kKinInk[sim::kKinCount] = {
     gfx::rgba(0.627f, 0.757f, 1.0f),    // Dark Wizard, a cold blue
     gfx::rgba(0.682f, 0.918f, 0.604f),  // Fairy Elf, a leaf green
     gfx::rgba(1.0f, 0.651f, 0.529f),    // Dark Knight, rust
     gfx::rgba(0.859f, 0.714f, 1.0f),    // Magic Gladiator, violet
+    gfx::rgba(1.0f, 0.859f, 0.502f),    // Dark Lord, gold
 };
 
 namespace {

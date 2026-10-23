@@ -1070,7 +1070,9 @@ float magicSpeedStat(Kin kin, int agility) {
     // Only the wizard's class file relates agility to MagicSpeed at a rate this game can reach,
     // and the Magic Gladiator's at half of it (ClassMagicGladiator.cs:59, a twentieth).
     if (kin == Kin::MagicGladiator) return float(agility) / 20.0f;
-    return kin == Kin::DarkWizard ? float(agility) / 10.0f : 0.0f;
+    // The Dark Lord's a tenth, as the wizard's (ClassDarkLord.cs:66; WebZen
+    // ObjCalCharacter.cpp:657-661).
+    return kin == Kin::DarkWizard || kin == Kin::DarkLord ? float(agility) / 10.0f : 0.0f;
 }
 
 int32_t floorTicksFor(const SkillRow& row, int32_t clipTicks) {

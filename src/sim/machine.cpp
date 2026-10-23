@@ -816,6 +816,10 @@ int firstWingOf(Kin kin) {
         // MU's 1st wing mix draws any of the three; ours answers by class, and his Satan's is
         // the knight's (docs/worlds/mg-port.md: Heaven, Satan and Darkness are his).
         case Kin::MagicGladiator: return 2;
+        // MU gives the Dark Lord no wing (OpenMU's Wings.cs: no wing has his class level); his
+        // back is the Cape of Lord's, phase 6 of docs/plans/dark-lord.md. The knight's answer
+        // until then, a wing he cannot wear.
+        case Kin::DarkLord: break;
     }
     return 2;
 }
@@ -827,6 +831,7 @@ int secondWingOf(Kin kin) {
         case Kin::DarkKnight: return kDragonNumber;
         // His own, without a class change (ChaosMachine's MG arm; docs/game/wings.md).
         case Kin::MagicGladiator: return kDarknessNumber;
+        case Kin::DarkLord: break;  // the Cape of Lord's, phase 6 (firstWingOf)
     }
     return kDragonNumber;
 }
@@ -837,6 +842,7 @@ const char* secondWingName(Kin kin) {
         case Kin::FairyElf: return "Wings of Spirits";
         case Kin::DarkKnight: return "Wings of Dragon";
         case Kin::MagicGladiator: return "Wings of Darkness";
+        case Kin::DarkLord: break;
     }
     return "";
 }
@@ -847,6 +853,7 @@ const char* firstWingName(Kin kin) {
         case Kin::FairyElf: return "Wings of Elf";
         case Kin::DarkKnight:
         case Kin::MagicGladiator: return "Wings of Satan";
+        case Kin::DarkLord: break;
     }
     return "";
 }

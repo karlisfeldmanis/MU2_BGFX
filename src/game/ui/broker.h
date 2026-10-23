@@ -16,6 +16,7 @@
 #include "game/ui/stage.h"
 #include "gfx/interface.h"
 #include "net/broker_wire.h"
+#include "sim/rules.h"
 
 namespace mu::game {
 
@@ -35,8 +36,8 @@ public:
     void useTipStage(Stage* stage) { tipStage_ = stage; }
     // The classes' faces for the card's class line: kin * 2 + second, null until taken (the desk's
     // classFaces_). Set before update.
-    void classFaces(const gfx::Art* const faces[8]) {
-        for (int i = 0; i < 8; ++i) classFaces_[i] = faces[i];
+    void classFaces(const gfx::Art* const faces[sim::kKinCount * 2]) {
+        for (int i = 0; i < sim::kKinCount * 2; ++i) classFaces_[i] = faces[i];
     }
 
     void update(float seconds, float width, float height, Play& play, const Pointer& pointer,
@@ -76,7 +77,7 @@ public:
     };
 
 private:
-    const gfx::Art* classFaces_[8] = {};
+    const gfx::Art* classFaces_[sim::kKinCount * 2] = {};
     void ask(Play& play, net::BrokerAsk asked);
     void heard(Play& play, const net::BrokerView& view);
     void browse(Play& play);

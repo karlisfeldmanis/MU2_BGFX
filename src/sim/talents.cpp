@@ -12,6 +12,8 @@ TalentTree talentTree(Kin kin) {
         case Kin::FairyElf: return {kFairyElfTalents, int(std::size(kFairyElfTalents))};
         case Kin::MagicGladiator:
             return {kMagicGladiatorTalents, int(std::size(kMagicGladiatorTalents))};
+        // His tree is phase 8's (docs/plans/dark-lord.md); none until then.
+        case Kin::DarkLord: break;
     }
     return {};
 }

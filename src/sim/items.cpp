@@ -782,6 +782,9 @@ bool elementServes(Element element, Kin kin) {
         case Kin::MagicGladiator: return element != Element::None;
         // Frost Arrow's wound; Penetration (wind).
         case Kin::FairyElf: return element == Element::Ice || element == Element::Wind;
+        // Fire Burst and Fire Scream (fire); Earthshake and Electric Spike (lightning)
+        // (docs/plans/dark-lord.md, Inferno and Thunder his element runes).
+        case Kin::DarkLord: return element == Element::Fire || element == Element::Lightning;
         default: return false;
     }
 }
@@ -925,9 +928,12 @@ int placeOf(const content::ItemRow& row) {
 
 bool offHanded(const content::ItemRow& row, Kin kin) {
     // The knight's, and the Magic Gladiator's, whose class takes the same double wield
-    // (ClassMagicGladiator.cs:51, AddDoubleWieldAttributeRelationships).
-    return (kin == Kin::DarkKnight || kin == Kin::MagicGladiator) && row.weapon() && !row.shield() && row.group < kGroupBows &&
-           !row.twoHanded();
+    // (ClassMagicGladiator.cs:51, AddDoubleWieldAttributeRelationships). And the Dark Lord's, at
+    // the same 55% (WebZen ObjCalCharacter.cpp:1502-1513), but never a mace or a scepter, MU's
+    // group 2, which he holds in his right hand alone (user.cpp:15877-15883).
+    if (kin == Kin::DarkLord && row.group == 2) return false;
+    return (kin == Kin::DarkKnight || kin == Kin::MagicGladiator || kin == Kin::DarkLord) && row.weapon() &&
+           !row.shield() && row.group < kGroupBows && !row.twoHanded();
 }
 
 bool placesIn(const content::ItemRow& row, Kin kin, int slot) {

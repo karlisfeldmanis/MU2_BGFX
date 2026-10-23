@@ -13,9 +13,9 @@
 
 namespace mu::sim {
 
-// MU's maximum level, and what a level pays for: five points, and the Magic Gladiator's seven
-// (sim::pointsPerLevel). GameConfigurationInitializerBase.cs:42, ClassDarkKnight.cs:37 and
-// ClassMagicGladiator.cs:40.
+// MU's maximum level, and what a level pays for: five points, and the Magic Gladiator's and the
+// Dark Lord's seven (sim::pointsPerLevel). GameConfigurationInitializerBase.cs:42,
+// ClassDarkKnight.cs:37, ClassMagicGladiator.cs:40 and ClassDarkLord.cs:41.
 constexpr int kMaximumLevel = 400;
 constexpr int kPointsPerLevel = 5;
 constexpr int kGladiatorPointsPerLevel = 7;
@@ -265,25 +265,37 @@ Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice);
 // Dark Wizard. Sprint 9's save writes this enumeration and says so. The Magic Gladiator is the
 // fourth, 3, which is his class bit 8 in the cooked tables (pipeline/cook.py kClass) and MU's own
 // third class (CLASS_DARK_LORD is the fifth); he has no second class (docs/worlds/mg-port.md).
+// The Dark Lord is the fifth, 4, class bit 16, and has no second class either
+// (docs/plans/dark-lord.md: Lord Emperor is Season 3's third class, not ours).
 enum class Kin : uint8_t {
     DarkWizard = 0,
     FairyElf = 1,
     DarkKnight = 2,
     MagicGladiator = 3,
+    DarkLord = 4,
 };
-constexpr int kKinCount = 4;
-// A saved or asked class number that is one of the four.
+constexpr int kKinCount = 5;
+// The last class, which a saved or sent class number is clamped to.
+constexpr Kin kLastKin = Kin::DarkLord;
+// A saved or asked class number that is one of the five.
 constexpr bool kinValid(int kin) { return kin >= 0 && kin < kKinCount; }
+// Whether Sevina's class change is this class's: the Magic Gladiator and the Dark Lord have none.
+constexpr bool hasSecondClass(Kin kin) {
+    return kin != Kin::MagicGladiator && kin != Kin::DarkLord;
+}
 // The points a level pays this class (kPointsPerLevel above).
 constexpr int pointsPerLevel(Kin kin) {
-    return kin == Kin::MagicGladiator ? kGladiatorPointsPerLevel : kPointsPerLevel;
+    return kin == Kin::MagicGladiator || kin == Kin::DarkLord ? kGladiatorPointsPerLevel
+                                                              : kPointsPerLevel;
 }
-// The level a gate or a travel asks of this class: the Magic Gladiator pays two thirds of it,
-// OpenMU's `level * (100 - 34) / 100` (CharacterExtensions.cs:113-125,
-// LevelWarpRequirementReductionPercent ceil(100 / 3), ClassMagicGladiator.cs:38), and a 400
-// in full.
+// The level a gate or a travel asks of this class: the Magic Gladiator and the Dark Lord pay two
+// thirds of it, OpenMU's `level * (100 - 34) / 100` (CharacterExtensions.cs:113-125,
+// LevelWarpRequirementReductionPercent ceil(100 / 3), ClassMagicGladiator.cs:38,
+// ClassDarkLord.cs:39; WebZen user.cpp:2348-2357), and a 400 in full.
 constexpr int moveLevel(int asked, Kin kin) {
-    return kin == Kin::MagicGladiator && asked != 400 ? asked * (100 - 34) / 100 : asked;
+    return (kin == Kin::MagicGladiator || kin == Kin::DarkLord) && asked != 400
+               ? asked * (100 - 34) / 100
+               : asked;
 }
 
 // A character's points. Each class starts with its own four, and they are the starting values

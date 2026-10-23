@@ -257,7 +257,7 @@ void Realm::applyCommands() {
             case Kind::EnterSquare: answer = enterSquare(one.a) ? 1 : -1; break;
             case Kind::AutoDrink: setAutoDrink(one.a, one.b); answer = 1; break;
             case Kind::Join: {
-                const uint32_t id = join(Kin(std::clamp(one.a, 0, int(Kin::MagicGladiator))),
+                const uint32_t id = join(Kin(std::clamp(one.a, 0, int(kLastKin))),
                                          std::clamp(one.b, 1, kMaximumLevel), one.c, one.d);
                 answer = id != 0 ? int64_t(id) : -1;
                 if (id != 0) {

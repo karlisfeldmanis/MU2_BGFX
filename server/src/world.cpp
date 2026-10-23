@@ -128,7 +128,7 @@ World* raiseWorld(std::vector<std::unique_ptr<World>>& worlds, const net::Hello&
     world->tables = read->tables;
     const int level = std::clamp(kept ? kept->hero.level : hello.level, 1, sim::kMaximumLevel);
     const sim::Kin kin =
-        kept ? kept->hero.kin : sim::Kin(std::min<int>(hello.kin, int(sim::Kin::MagicGladiator)));
+        kept ? kept->hero.kin : sim::Kin(std::min<int>(hello.kin, int(sim::kLastKin)));
     // The Welcome first, and the realm raised from it: every mirror raises its own from the same
     // frame by the same sim::raiseFrom, so the two cannot differ (docs/plans/order-plan.md sprint C).
     net::Welcome& w = world->start;
@@ -366,7 +366,7 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
         // A new character is the rules', not the client's: level 1, his class's weapon, at his
         // class's town's spawn gate (sim/cradle.h). Of the Hello only the class is his to choose,
         // as in MU's character creation. A first world elsewhere is told where he is born.
-        const sim::Kin kin = sim::Kin(std::min<int>(said.kin, int(sim::Kin::MagicGladiator)));
+        const sim::Kin kin = sim::Kin(std::min<int>(said.kin, int(sim::kLastKin)));
         const char* home = sim::homeWorld(kin);
         if (const sim::MapRow* born = sim::mapOf(home)) {
             if (said.world != home) {
@@ -467,7 +467,7 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
         sim::Command join;
         join.kind = sim::Command::Kind::Join;
         join.ticket = world->nextTicket++;
-        join.a = carried ? int(kept.hero.kin) : std::min<int>(said.kin, int(sim::Kin::MagicGladiator));
+        join.a = carried ? int(kept.hero.kin) : std::min<int>(said.kin, int(sim::kLastKin));
         join.b = std::clamp(carried ? kept.hero.level : said.level, 1, sim::kMaximumLevel);
         join.c = said.column;
         join.d = said.row;

@@ -14,6 +14,8 @@ const char* cradleWeapon(Kin kin) {
         case Kin::DarkKnight: return "Axe01";
         // The Short Sword (the user, 2026-10-07: 'mg will start with short sword').
         case Kin::MagicGladiator: return "Sword02";
+        // MU's, a Short Sword (docs/plans/dark-lord.md; his Small Shield and Force are phase 3's).
+        case Kin::DarkLord: return "Sword02";
     }
     return "";
 }

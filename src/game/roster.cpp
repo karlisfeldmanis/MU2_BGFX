@@ -31,7 +31,7 @@ std::vector<Seat> seatsOf(const net::Roster& roster, const content::Tables& tabl
         seat.token = one.token;
         seat.world = one.world;
         seat.slot = one.slot;
-        seat.kin = sim::Kin(std::min<int>(one.kin, int(sim::Kin::MagicGladiator)));
+        seat.kin = sim::Kin(std::min<int>(one.kin, int(sim::kLastKin)));
         seat.second = one.second;
         seat.level = std::max(1, one.level);
         for (const net::Seat::Worn& w : one.worn) {
@@ -178,14 +178,15 @@ const char* bareBody(sim::Kin kin, bool second, const Figures* figures) {
     const char* first = kin == sim::Kin::DarkWizard       ? "DarkWizardBare"
                         : kin == sim::Kin::FairyElf       ? "FairyElf"
                         : kin == sim::Kin::MagicGladiator ? "MagicGladiatorBare"
+                        : kin == sim::Kin::DarkLord       ? "DarkLordBare"
                                                           : "DarkKnightBare";
     // A world whose figure table was cooked before this class's body was is no reason to draw
     // him as nobody: the knight's bare body, the same rig. Dungeon, Atlans, Lost Tower, Tarkan
     // and Blood Castle were, and every Magic Gladiator in them stood invisible ('nothing cooked
     // called MagicGladiatorBare'; recooked 2026-10-11, pipeline/cook.py --only figures).
     if (figures && !figures->body(first)) first = "DarkKnightBare";
-    // The Magic Gladiator has no second class, and so no second body.
-    if (!second || kin == sim::Kin::MagicGladiator) return first;
+    // The Magic Gladiator and the Dark Lord have no second class, and so no second body.
+    if (!second || !sim::hasSecondClass(kin)) return first;
     const char* promoted = kin == sim::Kin::DarkWizard ? "SoulMaster"
                            : kin == sim::Kin::FairyElf ? "MuseElf"
                                                        : "BladeKnight";
@@ -198,6 +199,7 @@ const char* className(sim::Kin kin) {
         case sim::Kin::FairyElf: return "Fairy Elf";
         case sim::Kin::DarkKnight: return "Dark Knight";
         case sim::Kin::MagicGladiator: return "Magic Gladiator";
+        case sim::Kin::DarkLord: return "Dark Lord";
     }
     return "Dark Knight";
 }

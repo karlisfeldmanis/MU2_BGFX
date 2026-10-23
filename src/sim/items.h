@@ -845,7 +845,9 @@ constexpr uint8_t kKnightOnly = classBit(Kin::DarkKnight);
 // Epic ones beside them, never their Legendaries (the user, 2026-10-06: 'allow him to use same
 // weaker runes from DW and DK'; docs/worlds/mg-port.md).
 constexpr uint8_t kGladiatorOnly = classBit(Kin::MagicGladiator);
-constexpr uint8_t kEveryClass = kWizardOnly | kElfOnly | kKnightOnly | kGladiatorOnly;
+// The Dark Lord's: every class's runes, and his own (phase 7 of docs/plans/dark-lord.md).
+constexpr uint8_t kLordOnly = classBit(Kin::DarkLord);
+constexpr uint8_t kEveryClass = kWizardOnly | kElfOnly | kKnightOnly | kGladiatorOnly | kLordOnly;
 constexpr uint8_t kInWeapon = 1;     // either hand's weapon, never a shield
 constexpr uint8_t kInShield = 2;
 constexpr uint8_t kInArmour = 4;     // helm, armour, pants, gloves, boots, and wings (2026-10-05)

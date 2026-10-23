@@ -327,7 +327,7 @@ bool Store::who(uint64_t token, Who& out) {
     if (sqlite3_step(q.s) != SQLITE_ROW) return false;
     out.account = text(q.s, 0);
     out.name = text(q.s, 1);
-    out.kin = sim::Kin(std::clamp(sqlite3_column_int(q.s, 2), 0, int(sim::Kin::MagicGladiator)));
+    out.kin = sim::Kin(std::clamp(sqlite3_column_int(q.s, 2), 0, int(sim::kLastKin)));
     out.fresh = sqlite3_column_int(q.s, 3) == 0;
     out.deleted = sqlite3_column_int64(q.s, 4) != 0;
     return true;
@@ -345,7 +345,7 @@ std::vector<Store::Roll> Store::everyone() {
         one.account = text(q.s, 0);
         one.name = text(q.s, 1);
         one.world = text(q.s, 2);
-        one.kin = sim::Kin(std::clamp(sqlite3_column_int(q.s, 3), 0, int(sim::Kin::MagicGladiator)));
+        one.kin = sim::Kin(std::clamp(sqlite3_column_int(q.s, 3), 0, int(sim::kLastKin)));
         one.level = sqlite3_column_int(q.s, 4);
         one.saved = sqlite3_column_int64(q.s, 5);
         const int layout = sqlite3_column_int(q.s, 6);
@@ -376,7 +376,7 @@ std::vector<Store::Listed> Store::list(const std::string& account) {
         one.slot = sqlite3_column_int(q.s, 2);
         one.world = text(q.s, 3);
         const int layout = sqlite3_column_int(q.s, 4);
-        one.kin = sim::Kin(std::clamp(sqlite3_column_int(q.s, 6), 0, int(sim::Kin::MagicGladiator)));
+        one.kin = sim::Kin(std::clamp(sqlite3_column_int(q.s, 6), 0, int(sim::kLastKin)));
         one.fresh = layout == 0;
         if (!one.fresh) {
             const auto* bytes = static_cast<const uint8_t*>(sqlite3_column_blob(q.s, 5));
