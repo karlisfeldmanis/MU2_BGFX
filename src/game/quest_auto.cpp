@@ -193,7 +193,10 @@ void open(const std::string& assetDir) {
     opened = true;
     for (int number = 0; number < kMapNumbers; ++number) {
         const sim::MapRow* row = sim::mapNumbered(number);
-        if (row == nullptr) continue;
+        // Not an event map: Devil Square's waves are Icarus's breeds too, and as map 9 it came
+        // first, so The Sky Door's hunt went there, which no trip or gate reaches (Crylos,
+        // 2026-10-23: "cannot enter devil square after talking to NPC in LT1").
+        if (row == nullptr || row->event) continue;
         content::Tables tables;
         std::string error;
         const std::string path =
