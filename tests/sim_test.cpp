@@ -5014,13 +5014,13 @@ void testSkills(const content::Tables& tables) {
     check(casts[ring] > 0, "the spin was thrown");
     check(casts[arc] > 0, "and the sweep");
     check(caught[ring] >= casts[ring], "a spin catches at least what it was aimed at");
-    // Asked of the shape and not of Cyclone alone: Twisting Slash is a ring too, and which of the
-    // two meets a crowd in this hunt is the dice's.
-    int widestRing = 0;
+    // Asked of the shapes and not of Cyclone alone (an arc since 2026-10-23, Twisting Slash the
+    // ring): which of them meets a crowd in this hunt is the dice's.
+    int widestArea = 0;
     for (int i = 0; i < sim::skillCount(); ++i) {
-        if (sim::skillAt(i).spread == sim::Spread::Ring) widestRing = std::max(widestRing, widest[i]);
+        if (sim::skillAt(i).spread != sim::Spread::One) widestArea = std::max(widestArea, widest[i]);
     }
-    check(widestRing >= 2, "and a ring catches a crowd when there is one");
+    check(widestArea >= 2, "and an area skill catches a crowd when there is one");
     check(inShape, "nothing outside the shape was ever struck");
     check(ringOnly, "and nothing behind him by a sweep");
     check(inOrder, "and the nearest was struck first");

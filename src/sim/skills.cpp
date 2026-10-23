@@ -88,9 +88,13 @@ constexpr SkillRow kRows[kSkills] = {
     // 8f2e3afb's fuller Aida packs three had the knights at 11.5M and 14.7M an hour there.
     // **Three again** (the user, 2026-10-23: "we need that twisting slash and cyclone can get 3
     // tiles"), with Twisting Slash's wheel drawn out to the edge (fx/wheel.h).
-    {skill::kCyclone, "Cyclone", 9, 3.0f, 2.0f, 1.0f / 1400.0f, 40, false, Spread::Ring, 0, 1.0f,
-     "A spin that catches everything within three tiles, harder than Twisting Slash and back "
-     "in two seconds.",
+    // **Frontal** (the user, 2026-10-23: "cyclon has to be frontal, with some base spell
+    // cooldown, later its less. dmg can stay"): a player found it Twisting Slash's ring for less
+    // mana and more force, 7.2M an hour against 5.2M (skill_sweep, Bran on Aida). Now Slash's arc
+    // out to three tiles, thrown where the pointer is; its two seconds still fall with agility.
+    {skill::kCyclone, "Cyclone", 9, 3.0f, 2.0f, 1.0f / 1400.0f, 40, false, Spread::Arc, 0, 1.0f,
+     "A spin thrown into everything in front of him within three tiles, harder than Twisting "
+     "Slash and back in two seconds, sooner the quicker he is.",
      63, "player_skill_sword4", true, arms::kSword1 | arms::kTwoHand, 36},
     // Every row is built now. `built` used to mean "and the bar has a key for it", which is why
     // Slash sat here false with its arc written and tested; the list of 2026-09-23 holds every
