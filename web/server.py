@@ -103,6 +103,10 @@ The routes:
          (class Discord), by the webhook URL in discord_webhook beside the database.
     POST /internal/discord          (127.0.0.1 only) {day}  -> 200 {ok} | 400 | 409 with no webhook
          that day's #updates message sent, edited or taken away now.
+    POST /internal/rebirth          (127.0.0.1 only) {region, name, class, count}  -> 200 {ok} | 400
+         a character reborn on a region's game server (mu2_server's tellRebirth), posted in the
+         Discord's #announcements (class Announce) by the webhook URL in discord_announce_webhook
+         beside the database; with none, nothing is told.
     GET  /internal/untranslated     (127.0.0.1 only)  -> 200 {langs, missing, examples}
     POST /internal/translations     (127.0.0.1 only) {texts: {lang: {source: text}}}  -> 200 {put, refused}
          the units of the site with no translation in a language, and translations of them put in
@@ -130,6 +134,7 @@ import hmac
 import json
 import mimetypes
 import os
+import queue
 import re
 import secrets
 import sqlite3
@@ -1481,7 +1486,8 @@ class Discord:
                             "color": DISCORD_COLOUR}],
                 "allowed_mentions": {"parse": []}}
 
-    def call(self, method: str, url: str, body: dict = None) -> dict:
+    @staticmethod
+    def call(method: str, url: str, body: dict = None) -> dict:
         import urllib.request
         import urllib.error
         request = urllib.request.Request(
@@ -1529,6 +1535,63 @@ class Discord:
             sent = self.call("POST", f"{url}?wait=true", body)["id"]
             print(f"discord: {day} posted, {len(lines)} lines", flush=True)
         self.store.set_setting(key, f"{sent} {digest} {len(lines)}")
+
+
+# ---- rebirths in Discord's #announcements -------------------------------------------------------
+
+def roman(n: int) -> str:
+    """A count as a Roman numeral, I to MMMCMXCIX, as the game writes a rebirth's (net::romanNumeral)."""
+    n, out = max(1, min(3999, n)), ""
+    for value, letters in ((1000, "M"), (900, "CM"), (500, "D"), (400, "CD"), (100, "C"), (90, "XC"),
+                           (50, "L"), (40, "XL"), (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I")):
+        while n >= value:
+            out, n = out + letters, n - value
+    return out
+
+
+class Announce:
+    """Each rebirth a game server tells (/internal/rebirth) as one message in #announcements, by the
+    channel's webhook: the file discord_announce_webhook beside the database, read at each message,
+    so it is set or changed without a restart. Posted on a thread of its own, one at a time; one
+    Discord turns away is dropped, not tried again."""
+
+    def __init__(self, webhook: Path):
+        self.webhook_path = webhook
+        self.waiting = queue.Queue()
+        threading.Thread(target=self.run, daemon=True).start()
+
+    def webhook(self) -> str:
+        try:
+            url = self.webhook_path.read_text().strip()
+        except OSError:
+            return ""
+        return url if DISCORD_WEBHOOK.match(url) else ""
+
+    def rebirth(self, region: str, name: str, kind: str, count: int):
+        self.waiting.put((region, name, kind, count))
+
+    @staticmethod
+    def message(region: str, name: str, kind: str, count: int) -> dict:
+        def plain(text):
+            return re.sub(r"([\\*_~`|])", r"\\\1", text)
+        who = f"**{plain(name)}**" + (f", {plain(kind)}," if kind else "")
+        where = f" in {plain(region)}" if region else ""
+        return {"embeds": [{"title": f"Rebirth {roman(count)}",
+                            "description": f"{who} has been reborn{where}.",
+                            "color": DISCORD_COLOUR}],
+                "allowed_mentions": {"parse": []}}
+
+    def run(self):
+        while True:
+            region, name, kind, count = self.waiting.get()
+            url = self.webhook()
+            if not url:
+                continue
+            try:
+                Discord.call("POST", url, self.message(region, name, kind, count))
+                print(f"discord: {name} reborn ({count}) announced", flush=True)
+            except Exception as e:
+                print(f"discord: {name} reborn ({count}) not announced: {e}", flush=True)
 
 
 # ---- the handler ---------------------------------------------------------------------------------
@@ -1694,6 +1757,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.told_updates()
         if path == "/internal/discord":
             return self.tell_discord()
+        if path == "/internal/rebirth":
+            return self.told_rebirth()
         if path == "/internal/translations":
             return self.take_translations()
         if path == "/api/texts":
@@ -2016,6 +2081,19 @@ class Handler(BaseHTTPRequestHandler):
         if not self.discord.webhook():
             return self.reply(409, {"error": "no webhook in discord_webhook beside the database"})
         self.discord.touch(day, at=0)
+        self.reply(200, {"ok": True})
+
+    def told_rebirth(self):
+        if not self.direct():
+            return self.reply(404, {"error": "not found"})
+        said = self.body() or {}
+        name = str(said.get("name", "")).strip()
+        count = said.get("count")
+        if not NAME.match(name) or not isinstance(count, int) or count < 1:
+            return self.reply(400, {"error": "name and count"})
+        region = " ".join(str(said.get("region", "")).split())[:40]
+        kind = " ".join(str(said.get("class", "")).split())[:40]
+        self.announce.rebirth(region, name, kind, count)
         self.reply(200, {"ok": True})
 
     def told_updates(self):
@@ -2411,6 +2489,7 @@ def main():
     Handler.store = Store(Path(args.db))
     print(f"{Handler.store.load_rosters()} characters as their regions last listed them", flush=True)
     Handler.discord = Discord(Handler.store, Path(args.db).parent / "discord_webhook", args.discord_quiet)
+    Handler.announce = Announce(Path(args.db).parent / "discord_announce_webhook")
     seeded = Handler.store.seed_texts(i18n.seeds(here / "i18n"))
     if seeded:
         print(f"{seeded} translations put in from web/i18n/", flush=True)

@@ -37,6 +37,11 @@ rest over the market's line (`LinkKind::Herald`, server/src/market_link.h): a re
 it to the keeper (Helsinki), which tells its own players and passes it to every other line. Not
 kept: a realm whose line is down at that moment misses it.
 
+The realm's server also tells the website (`tellRebirth`, POST /internal/rebirth on the accounts'
+line, a bot's left out), which posts it in the Discord's #announcements: "Rebirth III -- **Ken**,
+Blade Knight, has been reborn in Central Europe." (`class Announce` in web/server.py, the webhook
+in `discord_announce_webhook` beside the database, web/README.md).
+
 ## The client
 
 - Lugard's window (`game/ui/rebirth_window.h`): the canvas's layout A, at the quest dialog's

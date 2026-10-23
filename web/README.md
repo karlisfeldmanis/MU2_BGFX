@@ -138,6 +138,13 @@ it is set or changed without a restart; with no file, nothing is told.
 
 `journalctl -u mu2-web | grep discord` shows each message posted, edited, taken away or not told.
 
+Each rebirth on any region's game server is one message in #announcements (`class Announce`): the
+server POSTs /internal/rebirth {region, name, class, count} on the accounts' line, and the site
+posts it by that channel's webhook, kept the same way in `discord_announce_webhook`; with no file,
+nothing is told. A message Discord turns away is dropped.
+
+    ssh hetzner 'cd /var/lib/private/mu2-web && umask 077 && cat > discord_announce_webhook && chown --reference=accounts.db discord_announce_webhook'
+
 ## Translated by itself
 
 Anything on the site with no translation in a language (a Latest updates line once it is
