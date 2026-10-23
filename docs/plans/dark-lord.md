@@ -230,7 +230,7 @@ window), rebirth window, signin JSON, bots' `build[4]`, sim_test loops over thre
    His clips: **76 stand** (the raven on his arm), **77 walk**, 78/79 stop/run on the horse,
    80 Force (Attack strike). content/players/rig/actions.json labels every action from 75 up one
    slot high: MuMain's `PLAYER_FLY_RIDE = PLAYER_ATTACK_END` (_enum.h) is an alias, not a new
-   action -- a fix for every class, held for the user.
+   action. **Not fixed, on purpose** (the user, 2026-10-23: "if it will break other systems its bad idea"): the table's speeds feed sim::castTicks, and some slots were already corrected by hand. Use his clips by their real numbers.
 2. **Class** -- `Kin::DarkLord`, every switch and clamp, Command (decision 1), creation behind the gate, the character window; sim_test green.
 3. **Primary and gear** -- Force / Force Wave and its effect, scepter stance, the first scepters and Light Plate cooked; he fights in Lorencia.
 4. **Skills** -- Fire Burst, Electric Spike, Critical Damage, Summon, Fire Scream: sim then fx, one at a time, judged in game.
