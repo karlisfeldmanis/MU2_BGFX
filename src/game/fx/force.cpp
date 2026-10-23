@@ -140,15 +140,17 @@ void Force::gatherEffects(gfx::Effects& effects) const {
                           one.scale * metre, colour, 1.0f);
     }
     // The piercing's long Z along his line, its bone already in the export (MuExtract bakes the
-    // rest pose): its point (the model's +Z, 193) flares out behind him and its mouth (-74) opens
-    // towards what he struck, as MU draws it (Force in MU's own client, youtube.com/watch?v=
-    // v7Z2mh3qJho, 2026-10-23: the pale cone behind his head, the beam ahead). The loader
-    // negates Z, so z is his facing.
+    // rest pose), its point (the model's +Z, 193) thrust out ahead of him. **Ours: all of it in
+    // front of him** (the user, 2026-10-23: "that spell dont has to go behind the DL only
+    // frontal"), where a clip of MU's client draws the cone flaring behind his head. The loader
+    // negates Z, so z is his facing turned back.
     for (const Pierce& one : pierces_) {
         if (!one.alive) continue;
         const float x[3] = {one.way[2], 0.0f, -one.way[0]};
-        const float z[3] = {one.way[0], one.way[1], one.way[2]};
-        const float* at = one.at;
+        const float z[3] = {-one.way[0], -one.way[1], -one.way[2]};
+        // Its back end (-74) brought up to his chest, so nothing of it is behind him.
+        float at[3];
+        for (int k = 0; k < 3; ++k) at[k] = one.at[k] + one.way[k] * kPierceBack * kPierceScale * metre;
         const float colour[3] = {one.light, one.light, one.light};
         submitEffectAlong(effects, cone_, coneSheet_, gfx::Blend::Additive, at, x, up, z,
                           kPierceScale * metre, colour, 1.0f);

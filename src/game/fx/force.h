@@ -6,8 +6,8 @@
 // `release`, 3/7), so the number comes with the piercing.
 //
 // **The piercing.** One MODEL_PIERCING2 (Skill/m_Piercing.bmd): a cone and a white burst, Scale
-// 2, 130 units over his feet along his line, its point flaring out behind him and its mouth
-// opening towards what he struck. Ten frames; its light falls by 1.6 a frame while more than five are left,
+// 2, 130 units over his feet along his line, its point thrust out ahead of him -- all of Force in
+// front of him (the user, 2026-10-23), where MU's client flares the cone behind his head. Ten frames; its light falls by 1.6 a frame while more than five are left,
 // and on each of those frames it lays a sub-type 2 wave at Scale LifeTime x 0.05
 // (ZzzEffect.cpp:3248-3262, Move_MODEL_PIERCING2, MoveHandlers.cpp:5360-5400).
 //
@@ -62,6 +62,7 @@ private:
     static constexpr float kLetGo = kClipFrames * 3.0f / 7.0f;  // its key 3 of 7
     static constexpr float kUp = 130.0f;                // both, over his feet
     static constexpr float kScatter = 50.0f;            // rand() % 100 - 50
+    static constexpr float kPierceBack = 74.0f;  // m_Piercing's back end, behind its origin
     static constexpr float kPierceScale = 2.0f, kPierceFrames = 10.0f, kPierceBright = 5.0f;
     static constexpr float kPierceFade = 1.6f;
     static constexpr float kWaveFrames = 15.0f, kWaveFade = 1.5f;
