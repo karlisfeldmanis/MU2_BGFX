@@ -9213,6 +9213,12 @@ void testChaosMachine() {
         const sim::Judged lifted = sim::judge(noria, boosted);
         check(lifted.recipe == sim::Recipe::ChaosWeapon && lifted.rate > alone.rate,
               "an excellent +9 with no option raises it, on Combine too");
+        const sim::Judged shown = sim::judge(noria, boosted, sim::Service::FirstWings);
+        const sim::Judged listed = sim::judge(noria, boosted, sim::Service::ChaosWeapon);
+        const sim::Need& line = listed.needs[listed.needCount - 1];
+        check(line.name == "Excellent item +4" && line.have == 1 && line.need == 0 &&
+                  shown.needs[shown.needCount - 1].name == "Excellent item +4",
+              "and the Chaos Weapon's and 1st Wings' pages list it");
         sim::Machine onlyShiny;
         onlyShiny.put(2, shiny);
         onlyShiny.put(8, sim::Held{chaos, 0, 1});

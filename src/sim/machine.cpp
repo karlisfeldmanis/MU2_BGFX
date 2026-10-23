@@ -376,6 +376,9 @@ void combine(const content::Tables& tables, const Machine& box, const Sorted& s,
             need(j, "Jewel of Chaos", s.chaos, 1, true);
             need(j, "Jewel of Bless", s.bless, 0);
             need(j, "Jewel of Soul", s.soul, 0);
+            // The boosters, any number, as the 2nd wings' page shows its own (the user,
+            // 2026-10-23: "we need that to show also on macine").
+            need(j, "Excellent item +4", s.boosters, 0);
             // The old buying price over NpcPriceDivisor, MoneyPerFinalSuccessPercentage a point:
             // of the optioned things and the jewels alone, so a thing riding along shows nothing.
             j.rate = int(std::min<int64_t>(100, s.worth / 20000));
