@@ -2315,11 +2315,14 @@ def cook_tables(world, out_dir):
     # `PLAYER_SKILL_INFERNO`, Inferno's own (ClassAttack.cpp:1212-1221) at 0.6, one before too.
     # And 152, `PLAYER_SKILL_FLASH`, Aqua Beam's (ClassAttack.cpp:1365-1376) at 0.4, one before.
     # And 71, `PLAYER_ATTACK_DEATHSTAB`, Death Stab's own (SkillCast.cpp:302-304), 7 keys at 0.25.
+    # And the Dark Lord's strike, 80, `PLAYER_ATTACK_STRIKE` (Force; WSclient.cpp:4243-4259), 7 keys
+    # at 0.25, and its ride twin 82, 6 at 0.2: missing, the realm took Force's clip for nothing and
+    # let every one go a tick after it began (docs/plans/dark-lord.md).
     keys = index.get("action_keys", {})
     speeds = index.get("action_speeds", {})
     unassigned = {"183": 0.25}
     actions = []
-    for action in list(range(38, 52)) + [60, 61, 62, 63, 64, 65, 66, 71, 147, 148, 152, 153, 154, 183, 187]:
+    for action in list(range(38, 52)) + [60, 61, 62, 63, 64, 65, 66, 71, 80, 82, 147, 148, 152, 153, 154, 183, 187]:
         name = str(action)
         speed = speeds.get(name, unassigned.get(name))
         if name not in keys or speed is None:

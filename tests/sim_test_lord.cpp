@@ -108,6 +108,10 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
         hundred.energy = 100;
         check(std::fabs(sim::force(*force, hundred, sim::Kin::DarkLord) - 2.05f) < 1e-4f,
               "(200 + Ene/20)%: 100 energy is 205%");
+        // Its clip is in the world's tables: without it the cast took no time and the blow went a
+        // tick after the press (the user, 2026-10-23: "monsters died faster than i casted").
+        const int32_t strike = sim::castTicks(lorencia, sim::Kin::DarkLord, 20, nullptr, nullptr, *force, 0);
+        check(strike >= 15, "Force's strike is a clip of over three quarters of a second");
         // Thrown at the nearest monster until one is struck.
         int loosed = 0, hits = 0, damage = 0;
         for (int tick = 0; tick < 3000 && hits < 3; ++tick) {
