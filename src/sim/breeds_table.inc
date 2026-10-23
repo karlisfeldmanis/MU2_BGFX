@@ -94,6 +94,7 @@ constexpr Resistance kResistances[] = {
     {307, 19, 19},  // Forest Orc
     {308, 18, 18},  // Death Tree
     {309, 50, 50},  // Hell Maine
+    {350, 25, 25},  // Berserker
     {351, 20, 20},  // Splinter Wolf
     {352, 21, 21},  // Iron Rider
     {353, 22, 22},  // Satyros
@@ -171,6 +172,7 @@ constexpr DropRate kDropRates[] = {
     {307, 30, 3, 10},  // Forest Orc
     {308, 30, 3, 10},  // Death Tree
     {309, 30, 4, 150},  // Hell Maine
+    {350, 30, 3, 10},  // Berserker
     {351, 30, 3, 10},  // Splinter Wolf
     {352, 30, 3, 10},  // Iron Rider
     {353, 30, 3, 10},  // Satyros

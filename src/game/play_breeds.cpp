@@ -3,7 +3,8 @@
 // Death Rider's head and a Death Tree's horns (fx/aida_sparks.h), and Hell Maine's lights, storm and
 // fire lay (fx/hell_maine.h), a Kanturu Iron Rider's bow sparks, arrow and death smoke
 // (fx/iron_rider.h), a Blade Hunter's swirl, blasts and walking dust (fx/blade_hunter.h) and a
-// Kentauros's bow smoke, arrows and death smoke (fx/kentauros.h), each by its recipe's show tag.
+// Kentauros's bow smoke, arrows and death smoke (fx/kentauros.h) and a Berserker's breath
+// (fx/berserker.h), each by its recipe's show tag.
 // Out of play_show.cpp, which is at its size.
 #include "game/play.h"
 
@@ -28,7 +29,8 @@ void Play::breedShows(Drawn& one, float fade, float seconds) {
         return;
     }
     if (!look->has("blue_golem") && !look->has("witch_queen") && !look->has("hell_maine") &&
-        !look->has("iron_rider") && !look->has("blade_hunter") && !look->has("kentauros"))
+        !look->has("iron_rider") && !look->has("blade_hunter") && !look->has("kentauros") &&
+        !look->has("berserker"))
         return;
     // What it hunts: its quarry, or its blow's target; that one's feet, or null.
     const sim::Body* self = realm_.find(one.id);
@@ -74,6 +76,12 @@ void Play::breedShows(Drawn& one, float fade, float seconds) {
         shadowStars_.kentauros().watch(one.id, one.figure, attack, keyOf(one.figure), one.yaw,
                                        aim ? target : nullptr, one.deadFor >= 0.0f, fade, seconds);
         walkDust();
+        return;
+    }
+    // A Berserker's green breath, while it neither swings nor has fallen.
+    if (look->has("berserker")) {
+        const bool swinging = one.figure.clip() == one.attackClip || one.figure.clip() == one.attackClip2;
+        shadowStars_.berserker().watch(one.id, one.figure, !swinging && one.deadFor < 0.0f, fade, seconds);
         return;
     }
     // Hell Maine's lights and hand fire, Attack 1's storm (its stones are the meteor's) and

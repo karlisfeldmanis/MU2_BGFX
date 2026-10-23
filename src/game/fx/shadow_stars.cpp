@@ -145,6 +145,7 @@ bool ShadowStars::open(const std::string& assetDir, content::Textures& textures,
     ironRider_.open(assetDir, textures, table);
     bladeHunter_.open(assetDir, textures, table);
     kentauros_.open(assetDir, textures, table);
+    berserker_.open(assetDir, textures, table);
     stars_.reserve(kStars);
     embers_.reserve(kEmbers);
     open_ = bgfx::isValid(shiny_) && bgfx::isValid(ring_);
@@ -161,6 +162,7 @@ void ShadowStars::shutdown() {
     ironRider_.shutdown();
     bladeHunter_.shutdown();
     kentauros_.shutdown();
+    berserker_.shutdown();
     open_ = false;
 }
 
@@ -173,6 +175,7 @@ void ShadowStars::update(float seconds) {
     ironRider_.update(seconds);
     bladeHunter_.update(seconds);
     kentauros_.update(seconds);
+    berserker_.update(seconds);
     stars_.clear();
     starlights_.clear();
     ribbons_.clear();
@@ -405,6 +408,7 @@ void ShadowStars::gather(gfx::Effects& effects) const {
     ironRider_.gather(effects);
     bladeHunter_.gather(effects);
     kentauros_.gather(effects);
+    berserker_.gather(effects);
     if (bgfx::isValid(light_)) {
         for (const Starlight& one : starlights_) {
             gfx::Sprite sprite;
