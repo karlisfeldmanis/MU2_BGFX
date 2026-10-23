@@ -1598,7 +1598,12 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
         if (isVoid(tc, tr) && !later && !floored) {
             const auto at = [&](int c, int r) { return sink[size_t(r) * size_t(side) + size_t(c)]; };
             const float black = std::min(voidSink_, abyssStart_ + std::max(abyssDepth_, 0.0f));
-            if (voidFade_ <= 0.0f || std::min(std::min(at(tc, tr), at(tc + 1, tr)),
+            // Not under MU's hanging cliffs (void.blend_keep_mask, the void beside its wall
+            // types): a sunk wall there stood lit behind them, and their black faces showed as
+            // black shapes against it (Kanturu, the user, 2026-10-23: "black object").
+            const bool underCliff = !blendKeepMask_.empty() &&
+                                    blendKeepMask_[size_t(tr) * size_t(n) + size_t(tc)] != 0;
+            if (voidFade_ <= 0.0f || underCliff || std::min(std::min(at(tc, tr), at(tc + 1, tr)),
                                               std::min(at(tc, tr + 1), at(tc + 1, tr + 1))) >=
                                          black - 1e-4f) {
                 ++voids;
