@@ -585,7 +585,7 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
     } else {
         // The server's time stands over the disc as the map's name stands under it: a line of room.
         const int64_t wall = play.isOpen() ? play.realm().wallClock() : 0;
-        const float clockLine = wall > 0 ? std::round(kFigure * 1.6f * u) : 0.0f;
+        const float clockLine = wall > 0 ? std::round(kFigure * 0.6f * u) : 0.0f;
         const float side = std::round(kSide * u),
                     at = (top_ > 0.0f ? std::round(top_) : std::round(kInset * u)) + clockLine;
         // The fade stands past the disc that reads, so it is the disc inside it that lines up.
