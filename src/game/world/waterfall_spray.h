@@ -73,6 +73,7 @@ private:
     float unit();
 
     bool open_ = false;
+    float burstScale_ = 1.0f;  // the show's burst_scale: the white specks' size, ours
     std::vector<Box> boxes_;
     std::vector<Drop> drops_;
     uint32_t seed_ = 0x51A7E2u;

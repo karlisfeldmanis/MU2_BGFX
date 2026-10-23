@@ -137,7 +137,8 @@
   },
   "show": {
     "waterfall_spray": {
-      "note": "Its falls' drops, spray and mist from Object82-84 (game/world/waterfall_spray.h)."
+      "note": "Its falls' drops, spray and mist from Object82-84 (game/world/waterfall_spray.h).",
+      "burst_scale": 0.35
     },
     "boids": {
       "model": "Butterfly01",

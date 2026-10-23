@@ -51,6 +51,7 @@ void WaterfallSpray::open(const std::string& assetDir, const std::string& world,
                           const content::CookedTown& town, content::Textures& textures) {
     shutdown();
     if (!worldShow(world).waterfallSpray) return;
+    burstScale_ = std::clamp(worldShow(world).sprayBurstScale, 0.05f, 2.0f);
     content::Showing table;
     std::string error;
     if (content::loadShowing(assetDir + "/cooked/showing/showing.mus", table, error)) {
@@ -172,7 +173,8 @@ void WaterfallSpray::gather(gfx::Effects& effects) const {
             sprite.colour[i] = level;
         }
         sprite.colour[3] = 1.0f;
-        sprite.halfWidth = sprite.halfHeight = 0.5f * kSheetMetres * one.scale;
+        sprite.halfWidth = sprite.halfHeight =
+            0.5f * kSheetMetres * one.scale * (one.kind == Kind::Burst ? burstScale_ : 1.0f);
         sprite.spin = one.spin;
         sprite.sheet = sheet;
         sprite.blend = gfx::Blend::Additive;
