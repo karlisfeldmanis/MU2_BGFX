@@ -2456,7 +2456,7 @@ void PlayMode::goBack(Context& ctx, double seconds) {
     // stand on the screen together; the clock is running from the landing all the same.
     std::string where = game::placeName(to->world, way.column, way.row);
     if (!where.empty()) where[0] = char(std::toupper(static_cast<unsigned char>(where[0])));
-    where += " " + std::to_string(way.column) + ", " + std::to_string(way.row);
+    where += " \xC2\xB7 " + std::to_string(way.column) + ", " + std::to_string(way.row);
     const bool shown = !way.open() || sinceLanded_ >= kGoBackWaits;
     desk_.goBack(shown, int((way.ticksLeft + 19) / 20), !way.open(), where);
 }
