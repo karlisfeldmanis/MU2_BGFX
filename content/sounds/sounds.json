@@ -2890,6 +2890,26 @@
         "ir_death.wav"
       ],
       "from": "SOUND_KANTURU_1ST_IR_DIE once as it dies (GM_Kanturu_1st.cpp:1283-1287); w37/ir_death.wav (MapManager.cpp:423)."
+    },
+    "satyros_move": {
+      "files": [
+        "sati_idle-01.wav",
+        "sati_idle-02.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_SATI_MOVE1 + rand() % 2, one frame in 15 while it walks (GM_Kanturu_1st.cpp:1295-1318); MapManager.cpp:409-410 loads w37/sati_idle-01.wav and -02.wav."
+    },
+    "satyros_attack": {
+      "files": [
+        "sati_attack-01.wav",
+        "sati_attack-02.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_SATI_ATTACK1 + rand() % 2, once a blow (GM_Kanturu_1st.cpp:1295-1318); w37/sati_attack-01.wav and -02.wav (MapManager.cpp:411-412)."
+    },
+    "satyros_die": {
+      "files": [
+        "sati_death.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_SATI_DIE once as it dies (GM_Kanturu_1st.cpp:1310-1316); w37/sati_death.wav (MapManager.cpp:413)."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

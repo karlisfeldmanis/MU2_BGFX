@@ -226,12 +226,25 @@ void Play::exhale(float seconds) {
         const FigureBody::Claws& claws = look->claws;
         if (claws.until >= 0.0f && keyOf(one.figure) > claws.until) continue;
         if (claws.firstOnly && clip != one.attackClip) continue;
-        const float grip[3] = {claws.alongZ ? 0.0f : claws.from, 0.0f, claws.alongZ ? claws.from : 0.0f};
-        const float tip[3] = {claws.alongZ ? 0.0f : claws.to, 0.0f, claws.alongZ ? claws.to : 0.0f};
+        float grip[3] = {0.0f, 0.0f, 0.0f}, tip[3] = {0.0f, 0.0f, 0.0f};
+        if (claws.axis < 3) {
+            grip[claws.axis] = claws.from;
+            tip[claws.axis] = claws.to;
+        }
         for (size_t c = 0; c + 1 < one.clawBones.size(); c += 2) {
             float from[3], to[3];
             if (!one.figure.pointOn(one.clawBones[c], grip, from)) continue;
             if (!one.figure.pointOn(one.clawBones[c + 1], tip, to)) continue;
+            if (claws.axis == 3) {
+                const float line[3] = {to[0] - from[0], to[1] - from[1], to[2] - from[2]};
+                const float far = std::sqrt(line[0] * line[0] + line[1] * line[1] + line[2] * line[2]);
+                if (far < 1e-4f) continue;
+                const float base[3] = {from[0], from[1], from[2]};
+                for (int k = 0; k < 3; ++k) {
+                    from[k] = base[k] + line[k] / far * claws.from * look->scale;
+                    to[k] = base[k] + line[k] / far * claws.to * look->scale;
+                }
+            }
             const uint32_t key = one.id ^ (uint32_t(c / 2 + 1) << 28);
             streak_.feed(key, from, to, Streak::Sheet::Spear, claws.light);
         }

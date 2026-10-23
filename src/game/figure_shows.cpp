@@ -81,7 +81,8 @@ void Figures::readShows() {
         }
         show.claws.until = float(claws["until"].numberOr(-1.0));
         show.claws.firstOnly = claws["swing"].numberOr(0.0) == 1.0;
-        show.claws.alongZ = claws["axis"].stringOr("x") == "z";
+        const std::string axis = claws["axis"].stringOr("x");
+        show.claws.axis = axis == "through" ? 3 : axis == "z" ? 2 : axis == "y" ? 1 : 0;
         show.landsAt = float(row["lands"].numberOr(-1.0));
         for (const core::Json& segment : row["burn"]["segments"].items) {
             if (segment.items.size() != 3) continue;

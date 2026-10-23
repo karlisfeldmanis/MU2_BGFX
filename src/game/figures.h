@@ -206,7 +206,11 @@ struct FigureBody {
         float light[3] = {0.0f, 0.0f, 0.0f};
         float until = -1.0f;  // the last key of a swing that lays one; -1, the whole swing
         bool firstOnly = false;  // swing 1: on Attack 1 alone (the Death Tree's; its second is roots)
-        bool alongZ = false;     // axis "z": along the bones' z, as MU lays the Death Tree's
+        // Which of the bone's own axes in this engine, 0 x, 1 y, 2 z ("x", "y", "z"); the Death
+        // Tree's "z" as the user passed it. 3, "through": from the first bone's point along the
+        // line to the second's, `from` and `to` metres at scale 1 -- for a blade whose bone's
+        // axes the Blender rebuild has rolled (the Satyros' axe, MU's 200 down bone 44's z).
+        int axis = 0;
     };
     Claws claws;
     // show.lands: the key of its swing its blow lands on, the hit's number and sound with it;
