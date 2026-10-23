@@ -8010,16 +8010,12 @@ void testKanturuGates() {
     check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/kanturu/kanturu.mur",
                               kanturu, error),
           "Kanturu's tables load");
-    // Tarkan's west door to Kanturu, gate 125 (OpenMU Season Six Gates.cs:537): MU asks 150,
-    // ours 320, just above Aida's 300; it lets out on the camp's box (gate 126 laid on 138's,
-    // since MU's own overlaps the way back).
-    Seen s = walk(tarkan, 10, 200, 6, 200, 320);
-    checkEqual(s.gated, 125, "a level 320 knight takes Tarkan's door to Kanturu, gate 125");
-    check(s.column >= 19 && s.column <= 21 && s.row >= 217 && s.row <= 219,
-          "out on Kanturu's gate 126, the camp");
-    s = walk(tarkan, 10, 200, 6, 200, 319);
-    checkEqual(s.gated, 0, "a level 319 knight does not");
-    checkEqual(s.barred, 320, "and is told it asks level 320");
+    // Tarkan's west door to Kanturu, gate 125 (OpenMU Season Six Gates.cs:537), is shut while
+    // Kanturu ships dormant (the user, 2026-10-23: "Kanturu inside, door closed"): a level 400
+    // knight walks onto the arch and nothing takes him. Reopened, it asks level 320 and lets out
+    // on the camp's box (d7151684 had this test so).
+    Seen s = walk(tarkan, 10, 200, 6, 200, 400);
+    checkEqual(s.gated, 0, "Tarkan's door to Kanturu is shut: a level 400 knight is not gated");
     // And back, gate 127 (Gates.cs:538): MU asks 130, ours free, as every way out.
     s = walk(kanturu, 20, 218, 18, 221, 1);
     checkEqual(s.gated, 127, "a level 1 knight takes Kanturu's way back, gate 127");
