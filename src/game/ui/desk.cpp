@@ -2105,6 +2105,35 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
             }
         }
     }
+    // His party's experience boon while he is in one: how many of it stand near enough to share
+    // a kill (Realm::partyInView's ten tiles and level gap, reckoned round him), and the percent
+    // that pays.
+    if (const net::PartyState& party = play.party(); party.members.size() > 1 && standing < Hud::kBoons) {
+        std::vector<const sim::Body*> near{&hero};
+        for (const auto& member : party.members) {
+            const sim::Body* one = member.here != 0 ? realm.find(member.here) : nullptr;
+            if (!one || one == &hero || one->gone || !one->alive()) continue;
+            const float dx = one->x - hero.x, dy = one->y - hero.y;
+            if (dx * dx + dy * dy < sim::kPartyReach * sim::kPartyReach) near.push_back(one);
+        }
+        int top = 0;
+        for (const sim::Body* one : near) top = std::max(top, one->level);
+        std::erase_if(near, [&](const sim::Body* one) { return one->level < top - sim::kPartyGap; });
+        // Himself past the gap: he shares nothing, whoever else is near.
+        const bool gapped = hero.level < top - sim::kPartyGap;
+        bool wizard = false, knight = false, elf = false;
+        for (const sim::Body* one : near) {
+            wizard |= one->kin == sim::Kin::DarkWizard;
+            knight |= one->kin == sim::Kin::DarkKnight;
+            elf |= one->kin == sim::Kin::FairyElf;
+        }
+        Hud::Boon& boon = boons[standing++];
+        boon.party = true;
+        boon.stacks = gapped ? 0 : int(near.size());
+        boon.idle = gapped;
+        boon.trio = wizard && knight && elf;
+        boon.share = 1.0f;
+    }
     // Her summon while it stands (Realm::summoned): hidden in a safe zone it is not standing.
     if (const sim::Body* summon = realm.summoned();
         summon && summon->alive() && !summon->gone && summon->maxHealth > 0 && standing < Hud::kBoons) {

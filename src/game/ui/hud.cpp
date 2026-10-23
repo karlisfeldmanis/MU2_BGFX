@@ -375,6 +375,7 @@ const char* Hud::artOf(const Boon& one) {
     if (one.talent >= 0 && one.talent < int(std::size(kTalentArt))) return kTalentArt[one.talent];
     return one.pet >= 0          ? petArt(one.pet)
            : one.summon           ? summonArt(one.skill)
+           : one.party            ? "buff_party"
            : one.poison           ? "buff_poison"
            : one.dragonfire       ? "buff_dragonfire"
            : one.bleed            ? "buff_bleed"
@@ -949,6 +950,47 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
         return sheet;
     }
     if (debuffCard(one, sheet)) return sheet;   // Dragonfire and a bleed (debuff_cards.cpp)
+    if (one.party) {
+        // What a kill pays the party near him, by its size (sim::partyExperience): a share of it
+        // by level, each his own; the row he stands on now lit, the others gray.
+        sheet.name = "Party";
+        sheet.nameTone = tip::Tone::Green;
+        sheet.base = "AURA \xc2\xb7 EXPERIENCE";
+        sheet.wear.clear();
+        const auto boost = [](int near, bool trio) {
+            double total = sim::partyPercent(near, trio);
+            if (near >= sim::kPartyMost) total *= sim::kFullPartyBonus;
+            return "+" + std::to_string(int(std::lround(total - 100.0))) + "%";
+        };
+        tip::Section now;
+        now.rows.push_back(said("Experience", one.stacks > 1 ? boost(one.stacks, one.trio) : "+0%",
+                                one.stacks > 1 ? tip::Tone::Green : tip::Tone::Gray));
+        if (one.idle) {
+            now.rows.push_back(prose("You are more than " + std::to_string(sim::kPartyGap) +
+                                     " levels below the highest near you, and share nothing", tip::Tone::Red));
+        } else {
+            now.rows.push_back(prose(std::to_string(one.stacks) + (one.stacks == 1 ? " member" : " members") +
+                                     " near you, the kill shared by level"));
+        }
+        sheet.sections.push_back(now);
+        // A table by size, then WebZen's set's (a wizard, a knight and an elf among them), which
+        // pays more from three.
+        const auto table = [&](bool trio, int from) {
+            tip::Section sizes;
+            if (trio) sizes.rows.push_back(prose("With a wizard, a knight and an elf", tip::Tone::White));
+            for (int near = from; near <= sim::kPartyMost; ++near) {
+                const bool here = std::min(one.stacks, sim::kPartyMost) == near && one.trio == trio;
+                sizes.rows.push_back(said(std::to_string(near) + (near == sim::kPartyMost ? " or more" : " near"),
+                                          boost(near, trio), here ? tip::Tone::Green : tip::Tone::Gray));
+            }
+            return sizes;
+        };
+        sheet.sections.push_back(table(false, 2));
+        tip::Section sizes = table(true, 3);
+        sizes.rows.push_back(prose("near is within ten steps of the kill"));
+        sheet.sections.push_back(sizes);
+        return sheet;
+    }
     if (one.frenzy) {
         // The Dungeon's boots rune, ours and Diablo 3's shape: a stack a wound, each
         // sim::kFrenzyStackSpeed on the swing and the cast, four seconds from the last.
@@ -1449,7 +1491,8 @@ void Hud::rebuild() {
             }
             continue;
         }
-        if (one.frenzy && one.stacks > 0) {
+        // The party's figure is how many of it are near him, as Frenzy's is its stacks.
+        if ((one.frenzy || one.party) && one.stacks > 0) {
             char count[8];
             std::snprintf(count, sizeof count, "%d", one.stacks);
             const float size = std::round(19.0f * kUnit * s.scale);

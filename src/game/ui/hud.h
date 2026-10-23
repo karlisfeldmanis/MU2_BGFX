@@ -168,6 +168,11 @@ public:
         // Stand have no clock: they stand while armed, or while he is under 30% life.
         int talent = -1;
         bool kinship = false; // a Kinship rune worn lifts the pet's price (sim::Power::Kinship)
+        // Or his party's experience boon (the user, 2026-10-23: "show aura icon how much exp boost
+        // party gets by size of party"): `stacks` of it near enough to share a kill with him (the
+        // card reckons their percent, sim::partyPercent and the full five's tenth), `trio` a wizard, a knight and an elf among them. No clock: it stands while
+        // he is in a party, drawn cold (`idle`) while he is past the level gap.
+        bool party = false, trio = false;
         // A mount worn on a map it is not ridden on (sim::rideMap): its cell drawn cold, as a
         // skill he cannot throw, and its card says why (the user, 2026-10-04: 'if mount is not
         // usable on area, remove the buff or disable the aura icon so user understands why').
@@ -176,7 +181,7 @@ public:
         float share = 0.0f;   // and that as a fraction of its whole, for the bar under it
         bool empty() const {
             return skill == 0 && !ale && !poison && !chill && !frenzy && !dragonfire && !bleed && !burn &&
-                   !frozen && pet < 0 && potion < 0 && !summon && talent < 0;
+                   !frozen && pet < 0 && potion < 0 && !summon && talent < 0 && !party;
         }
         // Something done TO him: its cell wears a red edge, as a debuff does in WoW's strip.
         bool debuff() const { return poison || chill || dragonfire || bleed || burn || frozen; }
@@ -187,6 +192,7 @@ public:
                    chill == o.chill && frenzy == o.frenzy && dragonfire == o.dragonfire && bleed == o.bleed &&
                    burn == o.burn && frozen == o.frozen && stacks == o.stacks && pet == o.pet && summon == o.summon &&
                    kinship == o.kinship && lifeMost == o.lifeMost && talent == o.talent &&
+                   party == o.party && trio == o.trio &&
                    potion == o.potion && amount == o.amount &&
                    idle == o.idle && life == o.life && int(seconds * 10.0f) == int(o.seconds * 10.0f);
         }
