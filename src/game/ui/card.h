@@ -49,6 +49,8 @@ private:
     struct Line {
         std::string label, value;
         bool dim = false;
+        // The value's ink on the Bonuses page (its element's, its stat's); 0 is the plain bone.
+        uint32_t ink = 0;
         // Under a plus the pointer is on: what the press would add, and the value lit in gold.
         std::string gain;
         bool lit = false;

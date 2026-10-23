@@ -79,6 +79,22 @@ constexpr uint32_t kSpendWash = gfx::rgba(0.165f, 0.051f, 0.035f);
 constexpr uint32_t kChosen = gfx::rgba(0.941f, 0.843f, 0.604f);
 constexpr uint32_t kChosenBar = gfx::rgba(0.788f, 0.639f, 0.353f);
 constexpr uint32_t kDivider = style::kAsh3;
+// The Bonuses page's values, each in what it is: a stat's, an element's, a fortune's colour.
+// Never red: red reads as a loss (the user, 2026-10-23).
+constexpr uint32_t kStrengthInk = gfx::rgba(1.0f, 0.647f, 0.282f);
+constexpr uint32_t kAgilityInk = gfx::rgba(0.553f, 0.851f, 0.459f);
+constexpr uint32_t kVitalityInk = gfx::rgba(1.0f, 0.871f, 0.408f);
+constexpr uint32_t kEnergyInk = gfx::rgba(0.502f, 0.706f, 1.0f);
+constexpr uint32_t kIceInk = gfx::rgba(0.561f, 0.847f, 1.0f);
+constexpr uint32_t kPoisonInk = gfx::rgba(0.588f, 0.878f, 0.333f);
+constexpr uint32_t kLightningInk = gfx::rgba(1.0f, 0.910f, 0.443f);
+constexpr uint32_t kFireInk = gfx::rgba(1.0f, 0.627f, 0.251f);
+constexpr uint32_t kWindInk = gfx::rgba(0.529f, 0.937f, 0.808f);
+constexpr uint32_t kExperienceInk = gfx::rgba(0.765f, 0.643f, 1.0f);
+constexpr uint32_t kZenInk = gfx::rgba(1.0f, 0.820f, 0.353f);
+constexpr uint32_t kFindInk = gfx::rgba(1.0f, 0.639f, 0.290f);
+constexpr uint32_t kLifeOnHitInk = gfx::rgba(0.475f, 0.902f, 0.427f);
+constexpr uint32_t kCriticalInk = gfx::rgba(1.0f, 0.765f, 0.431f);
 
 // **"Each press adds" under the general info** (the user, 2026-10-20: "each press adds
 // container has to be above stats under the general info"): its row stands under the three his
@@ -363,33 +379,37 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         } else if (tab_ == 2) {
             // Bonuses: the jewellery's, every row shown, a nought dimmed, so a player learns
             // what there is to find.
-            const auto row = [](const char* label, int v, bool percentSign) {
-                return Line{label, v <= 0 ? (percentSign ? "0%" : "0") : (percentSign ? plusPercent(v) : plus(v)), v <= 0};
+            const auto row = [](const char* label, int v, bool percentSign, uint32_t ink) {
+                Line line{label, v <= 0 ? (percentSign ? "0%" : "0") : (percentSign ? plusPercent(v) : plus(v)), v <= 0};
+                line.ink = ink;
+                return line;
             };
             // The stat runes worn (Body::runeShare): the share, and what it adds to his points.
-            const auto rune = [](const char* label, int share, int added) {
+            const auto rune = [](const char* label, int share, int added, uint32_t ink) {
                 if (share <= 0) return Line{label, "0%", true};
-                return Line{label, plusPercent(share) + " (" + plus(added) + ")", false};
+                Line line{label, plusPercent(share) + " (" + plus(added) + ")", false};
+                line.ink = ink;
+                return line;
             };
             const sim::HeroPoints& share = hero->runeShare;
             now_.groups.push_back({"Stat runes",
-                                   {rune("Strength", share.strength, total.strength - hero->points.strength),
-                                    rune("Agility", share.agility, total.agility - hero->points.agility),
-                                    rune("Vitality", share.vitality, total.vitality - hero->points.vitality),
-                                    rune("Energy", share.energy, total.energy - hero->points.energy)}});
+                                   {rune("Strength", share.strength, total.strength - hero->points.strength, kStrengthInk),
+                                    rune("Agility", share.agility, total.agility - hero->points.agility, kAgilityInk),
+                                    rune("Vitality", share.vitality, total.vitality - hero->points.vitality, kVitalityInk),
+                                    rune("Energy", share.energy, total.energy - hero->points.energy, kEnergyInk)}});
             now_.groups.push_back({"Resistances",
-                                   {row("Ice", ex.iceResistance, false),
-                                    row("Poison", ex.poisonResistance, false),
-                                    row("Lightning", ex.lightningResistance, false),
-                                    row("Fire", ex.fireResistance, false),
-                                    row("Wind", ex.windResistance, false)}});
+                                   {row("Ice", ex.iceResistance, false, kIceInk),
+                                    row("Poison", ex.poisonResistance, false, kPoisonInk),
+                                    row("Lightning", ex.lightningResistance, false, kLightningInk),
+                                    row("Fire", ex.fireResistance, false, kFireInk),
+                                    row("Wind", ex.windResistance, false, kWindInk)}});
             now_.groups.push_back({"Fortune",
-                                   {row("Experience", ex.moreExperience, true),
-                                    row("Zen", ex.moreZen, true),
-                                    row("Item find", ex.itemFind, true)}});
+                                   {row("Experience", ex.moreExperience, true, kExperienceInk),
+                                    row("Zen", ex.moreZen, true, kZenInk),
+                                    row("Item find", ex.itemFind, true, kFindInk)}});
             now_.groups.push_back({"On hit",
-                                   {row("Life on hit", ex.lifeOnHit, false),
-                                    row("Critical damage", ex.criticalDamage, true)}});
+                                   {row("Life on hit", ex.lifeOnHit, false, kLifeOnHitInk),
+                                    row("Critical damage", ex.criticalDamage, true, kCriticalInk)}});
         }
 
         now_.who = hero;
@@ -810,7 +830,7 @@ void Card::rebuild() {
                 const float base = panel::centredBaseline(face, panel::scaled(x, y, row), kRowSize * k);
                 controls::label(canvas_, x + kLeft * k, base, kRowSize * k, line.dim ? kDim : kPlain,
                                 line.label);
-                controls::ranged(canvas_, x + kRight * k, base, kRowSize * k, line.dim ? kDim : kHeading,
+                controls::ranged(canvas_, x + kRight * k, base, kRowSize * k, line.dim ? kDim : line.ink ? line.ink : kHeading,
                                  line.value);
             }
             uy += tall + kGroupGap;
