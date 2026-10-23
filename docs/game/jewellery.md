@@ -70,14 +70,15 @@ copy of ring.png (content/textures/ring_*.png, necklace_fury.png):
 
 | item | 13/n | file | drop level | signature power | +0 | +4 | +6 | +9 |
 |---|---|---|---|---|---|---|---|---|
-| Ring of Wisdom | 21 | RingWisdom (Ring01, sapphire) | 24 | experience from kills | 1% | 2% | 4% | 8% |
-| Ring of Wealth | 22 | RingWealth (Ring01, amber) | 18 | Zen from kills | 2% | 4% | 6% | 12% |
-| Ring of Fortune | 23 | RingFortune (Ring01, amethyst) | 40 | item find | 1% | 3% | 5% | 10% |
-| Ring of the Leech | 24 | RingLeech (Ring01, crimson) | 32 | life per landed blow | 1 | 2 | 3 | 5 |
-| Pendant of Fury | 25 | NecklaceFury (Necklace01, fire-orange) | 48 | critical damage, and critical chance | 10%, 2% | 18%, 4% | 28%, 6% | 50%, 10% |
+| Ring of Wisdom | 21 | RingWisdom (Ring01, sapphire) | 24 | experience from kills | 1% | 2% | 3% | 5% |
+| Ring of Wealth | 22 | RingWealth (Ring01, amber) | 18 | Zen from kills | 2% | 3% | 4% | 7% |
+| Ring of Fortune | 23 | RingFortune (Ring01, amethyst) | 40 | item find | 1% | 2% | 3% | 6% |
+| Ring of the Leech | 24 | RingLeech (Ring01, crimson) | 32 | life per landed blow | 1 | 1 | 2 | 3 |
+| Pendant of Fury | 25 | NecklaceFury (Necklace01, fire-orange) | 48 | critical damage, and critical chance | 10%, 2% | 14%, 3% | 19%, 4% | 30%, 6% |
 
-- **A value** is `lo + (hi - lo) x (plus / 9)^2`, rounded (sim::affixValue): weak at +0, most of
-  it in the last pluses. Every worn piece adds its own; two rings of a kind both count.
+- **A value** is `lo + (hi - lo) x 0.5 x (plus / 9)^2`, rounded (sim::affixValue): weak at +0,
+  most of it in the last pluses. The 0.5 (sim::kJewelleryPlusShare) halved what Bless and Soul
+  add on 2026-10-23 (the user: "nerf jewel/pendant upgrades"); `hi` is the old +9. Every worn piece adds its own; two rings of a kind both count.
 - **What each does.** Wisdom multiplies a kill's experience (the hero's own, a summon's for her,
   a guard's he helped). Wealth multiplies the Zen rate beside the excellent armour's x1.4.
   Fortune multiplies both item rolls of a kill (the excellent and the plain), out of the Zen and
@@ -103,8 +104,8 @@ copy of ring.png (content/textures/ring_*.png, necklace_fury.png):
   the Leech (The Scythe). Quest jewellery comes lucky with its option, as quest gear does.
 - **Resistances** (the user, 2026-10-04: "we need more resistance options for rings and
   pendants, all of them as potential options"). Four more powers any of the five may draw as a
-  further power, none a signature: Ice, Poison, Lightning and Fire resistance, 1 point at +0, 2
-  at +4 and +6, 4 at +9 (MU's own ring at +4). Every worn piece's adds on top of the largest of
+  further power, none a signature: Ice, Poison, Lightning and Fire resistance, 1 point at +0 and
+  +4, 2 at +6, 3 at +9 (4 at +9 until 2026-10-23). Every worn piece's adds on top of the largest of
   MU's four worn (Max3), so MU's Pendants of Fire and Lightning now count too. A drop's extra
   powers are drawn from eight, so about half are resistances. `--give` takes A6 Ice, A7 Poison,
   A8 Lightning, A9 Fire. See "Resistances" below for what each element stops.
@@ -116,7 +117,8 @@ copy of ring.png (content/textures/ring_*.png, necklace_fury.png):
   each, one piece worn against none), and on harder hunts where he is hurt (the Dungeon at 40 in
   Scale +2, Atlans at 70 in Plate +7). Fury was 2 to 12% critical damage alone, a critical
   riding only on luck's 5%: now 10 to 50% with 2 to 10% critical chance (sim::furyChance), +9
-  hunting 9 to 10% faster beside Haste's 8 to 11%. The Leech stays 1 to 5: he drinks 26 to 30%
+  hunting 9 to 10% faster beside Haste's 8 to 11%. The Leech stays 1 to 5 (both halved since,
+  2026-10-23, below): he drinks 26 to 30%
   fewer potions at +4 and 60% fewer at +9 (3 to 20 had him drink none at +9).
 
 ## The Pendant of Haste (2026-10-16)
@@ -124,7 +126,7 @@ copy of ring.png (content/textures/ring_*.png, necklace_fury.png):
 The user picked it as a second powered pendant, so the amulet slot is not Fury alone. 13/29,
 NecklaceHaste: Necklace01's mesh with the stone pixels Fury re-hued, here aqua
 (content/textures/necklace_haste.png), drop level 44, every class. Its signature is **attack and
-casting speed**, +2 at +0 to +10 at +9 on the same square curve (sim::Affix::Haste): on the swing
+casting speed**, +2 at +0 to +6 at +9 on the same square curve (+10 until 2026-10-23) (sim::Affix::Haste): on the swing
 beside the excellent option's 14 and the Ale's 20 (`Excellence::speed`), and on a spell's clip
 beside Frenzy's (`Excellence::haste`, Realm::clipTicksOf). It rolls one to three further powers
 as the other five do, but Haste itself is never a further power on another piece.
@@ -156,7 +158,7 @@ OpenMU, so she neither chills nor answers to Ice resistance; making her ice woul
 The user: "ring of poison need poison resistance and poison damage", then the same for
 lightning, fire, wind "and of course ring of ice". Every elemental **ring** (not a pendant) keeps
 MU's resistance -- a point a plus, the largest worn counting -- and adds a sting: a blow its
-wearer lands on a monster has `sim::ringStingChance` (5% at +0, 2.5% more a plus, to 30%) to deal
+wearer lands on a monster has `sim::ringStingChance` (5% at +0, 1.25% more a plus, to 15%; 2.5% to 30% until 2026-10-23) to deal
 its element too. Each element's largest worn ring counts; the element runes' force lies on each.
 
 | ring | 13/n | resistance | sting |

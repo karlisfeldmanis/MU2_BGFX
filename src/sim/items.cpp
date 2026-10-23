@@ -218,16 +218,18 @@ int affixValue(Affix affix, int refinement) {
     // Fury 10 to 50 since 2026-10-16: at 2 to 12% on luck's 5% chance it moved no hunt. The
     // Leech stays 1 to 5: a geared knight drinks 26 to 30% fewer potions at +4, 60% at +9.
     static const int kLow[kAffixes + 1] = {0, 1, 2, 1, 1, 10, 1, 1, 1, 1, 2};
+    // The plus earns kJewelleryPlusShare of the climb from kLow to kHigh (the user, 2026-10-23:
+    // "nerf jewel/pendant upgrades when we attach jewels"): +9 Wisdom 5%, Fury 30%.
     static const int kHigh[kAffixes + 1] = {0, 8, 12, 10, 5, 50, 4, 4, 4, 4, 10};
     const int at = int(affix);
     if (at <= 0 || at > kAffixes) return 0;
     const double t = double(std::clamp(refinement, 0, kRefineCap)) / double(kRefineCap);
-    return int(std::lround(kLow[at] + (kHigh[at] - kLow[at]) * t * t));
+    return int(std::lround(kLow[at] + (kHigh[at] - kLow[at]) * kJewelleryPlusShare * t * t));
 }
 
 int furyChance(int refinement) {
     const double t = double(std::clamp(refinement, 0, kRefineCap)) / double(kRefineCap);
-    return int(std::lround(2.0 + 8.0 * t * t));
+    return int(std::lround(2.0 + 8.0 * kJewelleryPlusShare * t * t));
 }
 
 const char* affixName(Affix affix) {

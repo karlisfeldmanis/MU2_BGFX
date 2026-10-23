@@ -12060,11 +12060,11 @@ void testPoweredJewellery(const content::Tables& tables) {
     check(sim::signatureOf(row(tables.itemAt(13, 8))) == sim::Affix::None, "MU's carry none");
     checkEqual(sim::affixValue(sim::Affix::Wisdom, 0), 1, "Wisdom +1% at +0");
     checkEqual(sim::affixValue(sim::Affix::Wisdom, 4), 2, "+2% at +4");
-    checkEqual(sim::affixValue(sim::Affix::Wisdom, 9), 8, "+8% at +9");
-    checkEqual(sim::affixValue(sim::Affix::Leech, 9), 5, "the Leech 5 life a hit at +9");
-    checkEqual(sim::affixValue(sim::Affix::Fury, 9), 50, "Fury +50% critical damage at +9");
+    checkEqual(sim::affixValue(sim::Affix::Wisdom, 9), 5, "+5% at +9");
+    checkEqual(sim::affixValue(sim::Affix::Leech, 9), 3, "the Leech 3 life a hit at +9");
+    checkEqual(sim::affixValue(sim::Affix::Fury, 9), 30, "Fury +30% critical damage at +9");
     checkEqual(sim::furyChance(0), 2, "and +2% critical chance at +0");
-    checkEqual(sim::furyChance(9), 10, "+10% at +9");
+    checkEqual(sim::furyChance(9), 6, "+6% at +9");
     sim::Held two{wisdom, 0, 50};
     two.affixes[0] = uint8_t(sim::Affix::Wealth);
     checkEqual(sim::affixCount(row(wisdom), two), 2, "a signature and one more is two");
@@ -12079,12 +12079,12 @@ void testPoweredJewellery(const content::Tables& tables) {
     check(realm.give(fury, sim::kAmulet, 9, -1, false, 0, 0, 0, nullptr, amulet) >= 0,
           "a Pendant of Fury +9 with Wisdom and the Leech");
     const sim::Excellence& e = realm.hero().excel;
-    checkEqual(e.moreExperience, 16, "experience: the ring's 8 and the pendant's 8");
-    checkEqual(e.moreZen, 14, "Zen: the +9's 12 and the +0's 2");
-    check(std::abs(e.zenRate - 1.14) < 1e-9, "on the Zen rate");
-    checkEqual(e.lifeOnHit, 5, "life a hit: the pendant's");
-    checkEqual(realm.hero().stats.criticalDamage, 50, "critical damage reaches the blow");
-    check(std::abs(realm.hero().stats.criticalChance - 0.10) < 1e-9, "and Fury's 10% chance");
+    checkEqual(e.moreExperience, 10, "experience: the ring's 5 and the pendant's 5");
+    checkEqual(e.moreZen, 9, "Zen: the +9's 7 and the +0's 2");
+    check(std::abs(e.zenRate - 1.09) < 1e-9, "on the Zen rate");
+    checkEqual(e.lifeOnHit, 3, "life a hit: the pendant's");
+    checkEqual(realm.hero().stats.criticalDamage, 30, "critical damage reaches the blow");
+    check(std::abs(realm.hero().stats.criticalChance - 0.06) < 1e-9, "and Fury's 6% chance");
     // And what it gives back is said, for the "+N" over him (the user, 2026-10-19: "if char es
     // getting life steal show it on char +life and number"): hurt, he hunts, and a landed blow
     // says Leeched with no more than the Leech's 5.
@@ -12120,7 +12120,7 @@ void testPoweredJewellery(const content::Tables& tables) {
 
     // The resistance powers (2026-10-04): every worn piece's on top of MU's largest.
     checkEqual(sim::affixValue(sim::Affix::FireResistance, 0), 1, "a resistance 1 at +0");
-    checkEqual(sim::affixValue(sim::Affix::IceResistance, 9), 4, "4 at +9, MU's ring at +4");
+    checkEqual(sim::affixValue(sim::Affix::IceResistance, 9), 3, "3 at +9");
     sim::Realm wards;
     wards.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
     const uint8_t iceFire[3] = {uint8_t(sim::Affix::IceResistance),
@@ -12133,8 +12133,8 @@ void testPoweredJewellery(const content::Tables& tables) {
     check(wards.give(fury, sim::kAmulet, 0, -1, false, 0, 0, 0, nullptr, fireLightning) >= 0,
           "a Pendant of Fury +0 with Fire and Lightning resistance");
     const sim::Excellence& w = wards.hero().excel;
-    checkEqual(w.iceResistance, 7, "ice: the ring's 3 and the power's 4");
-    checkEqual(w.fireResistance, 5, "fire: 4 and 1");
+    checkEqual(w.iceResistance, 6, "ice: the ring's 3 and the power's 3");
+    checkEqual(w.fireResistance, 4, "fire: 3 and 1");
     checkEqual(w.lightningResistance, 1, "lightning: the pendant's 1");
     checkEqual(w.poisonResistance, 0, "poison: none worn");
 
@@ -12175,13 +12175,13 @@ void testPoweredJewellery(const content::Tables& tables) {
     check(haste >= 0 && sim::pendant(row(haste)), "the Pendant of Haste is a pendant");
     if (haste >= 0) {
         checkEqual(sim::affixValue(sim::Affix::Haste, 0), 2, "Haste +2 at +0");
-        checkEqual(sim::affixValue(sim::Affix::Haste, 9), 10, "+10 at +9");
+        checkEqual(sim::affixValue(sim::Affix::Haste, 9), 6, "+6 at +9");
         sim::Realm quick;
         quick.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
         const int before = quick.attackSpeed();
         check(quick.give(haste, sim::kAmulet, 9) >= 0, "a Pendant of Haste +9 worn");
-        checkEqual(quick.hero().excel.haste, 10, "its 10 on the casting clip");
-        checkEqual(quick.attackSpeed() - before, 10, "and on his attack speed");
+        checkEqual(quick.hero().excel.haste, 6, "its 6 on the casting clip");
+        checkEqual(quick.attackSpeed() - before, 6, "and on his attack speed");
         bool drawn = false;
         sim::Realm drops;
         drops.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
@@ -12777,7 +12777,7 @@ void testEvilSpirit(const content::Tables& tables) {
                   element(28) == sim::Element::Wind,
               "the Rings of Lightning, Fire and Wind carry their elements");
         checkNear(sim::ringStingChance(0), 0.05, 1e-9, "a sting is 5% at +0");
-        checkNear(sim::ringStingChance(11), 0.30, 1e-9, "and no more than 30%");
+        checkNear(sim::ringStingChance(11), 0.15, 1e-9, "and no more than 15%");
     }
     // Spirit Plague (2026-10-06), in a ring: about one landed spirit in five poisons what it
     // struck, and the poison pulses.

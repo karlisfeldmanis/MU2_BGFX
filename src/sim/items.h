@@ -268,8 +268,9 @@ constexpr int kJewelleryMostPlus = 4;
 // logic"). invention: WebZen's rings resist and do no more;
 // Lightning (26), Fire (27) and Wind (28) are ours in group 13's free numbers.
 constexpr double kRingStingChance = 0.05;
-constexpr double kRingStingChancePerPlus = 0.025;
-constexpr double kRingStingChanceMost = 0.30;
+// Halved 2026-10-23 with the powers' plus (kJewelleryPlusShare): 2.5% a plus to 30% was.
+constexpr double kRingStingChancePerPlus = 0.0125;
+constexpr double kRingStingChanceMost = 0.15;
 inline double ringStingChance(int refinement) {
     return std::min(kRingStingChanceMost,
                     kRingStingChance + kRingStingChancePerPlus * std::max(0, refinement));
@@ -340,11 +341,14 @@ int gearScore(const content::Tables& tables, const Satchel& bag);
 // to 2,000.
 inline constexpr int kGearRungs[4] = {300, 600, 1000, 1500};
 int gearRung(int score);
-// A power's value at a plus: lo + (hi - lo) x (plus / 9)^2, rounded. Percent for all but the
-// Leech, whose is life a blow.
+// A power's value at a plus: lo + (hi - lo) x kJewelleryPlusShare x (plus / 9)^2, rounded.
+// Percent for all but the Leech, whose is life a blow. The share halved what Bless and Soul add
+// on 2026-10-23 (the user: "nerf jewel/pendant upgrades when we attach jewels").
+constexpr double kJewelleryPlusShare = 0.5;
 int affixValue(Affix affix, int refinement);
-// The Pendant of Fury's second half, its critical chance in percent at a plus, 2 at +0 to 10 at
-// +9 on the same curve (2026-10-16): critical damage alone was nothing on a chance of luck's 5%.
+// The Pendant of Fury's second half, its critical chance in percent at a plus, 2 at +0 to 6 at
+// +9 on the same curve (2026-10-16, halved 2026-10-23): critical damage alone was nothing on a
+// chance of luck's 5%.
 int furyChance(int refinement);
 const char* affixName(Affix affix);   // the card's words: "Experience from kills", ...
 // The share of drops each count takes (1 to 4 powers), and the monster level the three- and
