@@ -117,5 +117,6 @@
       ]
     }
   ],
-  "material_note": "The flask is glass and the collar is brass, and the islands separate them cleanly because the model does: the body samples one quarter of medicine1 and the cap samples medicine2. So the large island of each is the flask and takes glass, and the small ones are the cork and collar and take brass. glass rather than ceramic for the argument glass.json makes about the orbs: nothing fired under it, just a polished surface with its highlight already painted on. The antidote's small islands in medicine2's range - the ones whose v sits under 0.6 - are the collar and cork and take brass; the rest is the flask and takes glass."
+  "material_note": "The flask is glass and the collar is brass, and the islands separate them cleanly because the model does: the body samples one quarter of medicine1 and the cap samples medicine2. So the large island of each is the flask and takes glass, and the small ones are the cork and collar and take brass. glass rather than ceramic for the argument glass.json makes about the orbs: nothing fired under it, just a polished surface with its highlight already painted on. The antidote's small islands in medicine2's range - the ones whose v sits under 0.6 - are the collar and cork and take brass; the rest is the flask and takes glass.",
+  "material_maps": 512
 }

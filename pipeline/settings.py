@@ -143,7 +143,12 @@ def resolve(asset: Path, profiles: Path, textures: Path | None = None) -> dict:
     settings["enlarge"] = min(int(settings["enlarge"]), SCALE_CAP)
     settings["upscale_factor"] = min(int(settings["upscale_factor"]), SCALE_CAP)
 
-    settings["material_maps"] = MATERIAL_MAP
+    # An asset may ask for smaller, never larger: a potion's brass collar and glass, a few
+    # pixels on the screen, were 8 MB of these maps over a 96 albedo, and a 2 GB card ran out of
+    # memory (crash reports of 2026-10-23). Two texels a grain cell still holds -- brass's 256
+    # needs 512 -- and a material with no grain needs nothing.
+    asked = flatten(document).get("material_maps")
+    settings["material_maps"] = min(int(asked), MATERIAL_MAP) if asked else MATERIAL_MAP
 
     if "maps" not in flatten(document) and textures is not None:
         if (sized := map_size(document, textures)) is not None:
@@ -259,7 +264,7 @@ def flatten(document: dict) -> dict:
     """The keys a build cares about, with the nested upscale block spread out flat."""
     out = {}
 
-    for key in ("maps", "enlarge", "default_material", "play_speed"):
+    for key in ("maps", "material_maps", "enlarge", "default_material", "play_speed"):
         if key in document:
             out[key] = document[key]
 

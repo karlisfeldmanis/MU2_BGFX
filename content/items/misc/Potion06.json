@@ -71,5 +71,6 @@
       ]
     }
   ],
-  "material_note": "The flask is glass and the collar is brass, and the islands separate them cleanly because the model does: the body samples one quarter of medicine1 - v above 0.5 in Blender's frame, which is the top row of flasks once V is flipped for the healing potions and the bottom row for the mana potions, the liquid's colour coming out of which quarter - and the cap samples medicine2. So the large island of each is the flask and takes glass, and the small ones are the cork and collar and take brass. glass rather than ceramic for the argument glass.json makes about the orbs: nothing fired under it, just a polished surface with its highlight already painted on."
+  "material_note": "The flask is glass and the collar is brass, and the islands separate them cleanly because the model does: the body samples one quarter of medicine1 - v above 0.5 in Blender's frame, which is the top row of flasks once V is flipped for the healing potions and the bottom row for the mana potions, the liquid's colour coming out of which quarter - and the cap samples medicine2. So the large island of each is the flask and takes glass, and the small ones are the cork and collar and take brass. glass rather than ceramic for the argument glass.json makes about the orbs: nothing fired under it, just a polished surface with its highlight already painted on.",
+  "material_maps": 512
 }
