@@ -512,6 +512,27 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         line.mark = tip::Mark::Diamond;
         does.rows.push_back(line);
     }
+    // A jewel's odds under its sentence, off the constants Realm::refine rolls by (a player,
+    // Crylos, 2026-10-23: "include the success rate of jewels into the description").
+    const auto odds = [&](const std::string& text) {
+        Row line;
+        line.free = text;
+        line.freeTone = Tone::Gray;
+        does.rows.push_back(line);
+    };
+    switch (sim::jewelOf(row)) {
+        case sim::Jewel::Bless: odds("Success rate 100%"); break;
+        case sim::Jewel::Soul:
+            odds("Success rate " + std::to_string(sim::kSoulChance) + "%, 100% with Luck");
+            odds("A failure takes one level off, and from +" +
+                 std::to_string(sim::kSoulResetFrom) + " takes it to +0");
+            break;
+        case sim::Jewel::Life:
+            odds("Success rate " + std::to_string(sim::kLifeChance) + "%, 100% with Luck");
+            odds("A failure takes the item's option back to none");
+            break;
+        default: break;
+    }
     // A pet's powers in MU's own words, which ZzzInventory prints for ITEM_GUARDIAN_ANGEL and
     // ITEM_IMP (ZzzInventory.cpp:4258-4268; Game.en.resx "Absorb %d%% of Damage", "Max HP +%d
     // increased", "Increase 30%% of attacking & Wizardry Dmg"), with the numbers off the rule the

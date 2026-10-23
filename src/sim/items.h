@@ -615,6 +615,12 @@ bool refinable(const content::Tables& tables, const Held& jewel, const Held& tar
 // (PLUS_WING_OP1_TYPE, `rand()%2`, :28797-28808), the 2nd wings only.
 constexpr int kLifeChance = 50;
 
+// The Jewel of Soul's (SoulJewelConsumeHandlerPlugIn): SuccessRatePercentage 50, and a miss takes
+// a plus off, or everything from ResetToLevel0WhenFailMinLevel's +7. A lucky thing always rises.
+// The Bless's is 100. Here and not in Realm::refine, so the jewel's card reads the same numbers.
+constexpr int kSoulChance = 50;
+constexpr int kSoulResetFrom = 7;
+
 // Whether it is too dear to throw on the ground: MuMain's `IsHighValueItem`
 // (ZzzInventory.cpp:7407), which both of its drop paths refuse with "You are not allowed to drop
 // this expensive item". Of its list the rows this tree has are the three jewels, anything

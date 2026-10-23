@@ -976,8 +976,6 @@ bool Realm::useItem(int slot) {
 // Luck is `Held::luck`, rolled on a drop. And the Bless draws nothing from the dice: at 100 the
 // roll cannot matter, and a seeded log without a Soul in it stays the log it was.
 bool Realm::refine(int jewelSlot, int targetSlot) {
-    constexpr int kSoulChance = 50;    // SoulJewelConsumeHandlerPlugIn.SuccessRatePercentage
-    constexpr int kSoulResetFrom = 7;  // ResetToLevel0WhenFailMinLevel
     if (!tables_ || !baggable(jewelSlot) || targetSlot < 0 || targetSlot >= kSlots ||
         jewelSlot == targetSlot) {
         return false;
