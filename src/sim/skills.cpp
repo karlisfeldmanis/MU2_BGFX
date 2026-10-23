@@ -85,9 +85,11 @@ constexpr SkillRow kRows[kSkills] = {
     // in a blow or two, a pack's width being what their spells have and his spin had not).
     // Three for a day in the class balance (2026-10-21), then two again (2026-10-22): with
     // 8f2e3afb's fuller Aida packs three had the knights at 11.5M and 14.7M an hour there.
-    {skill::kCyclone, "Cyclone", 9, 2.0f, 2.0f, 1.0f / 1400.0f, 40, false, Spread::Ring, 0, 1.0f,
-     "A spin that catches everything within two tiles, harder than Twisting Slash and back in "
-     "two seconds.",
+    // **Three again** (the user, 2026-10-23: "we need that twisting slash and cyclone can get 3
+    // tiles"), with Twisting Slash's wheel drawn out to the edge (fx/wheel.h).
+    {skill::kCyclone, "Cyclone", 9, 3.0f, 2.0f, 1.0f / 1400.0f, 40, false, Spread::Ring, 0, 1.0f,
+     "A spin that catches everything within three tiles, harder than Twisting Slash and back "
+     "in two seconds.",
      63, "player_skill_sword4", true, arms::kSword1 | arms::kTwoHand, 36},
     // Every row is built now. `built` used to mean "and the bar has a key for it", which is why
     // Slash sat here false with its arc written and tested; the list of 2026-09-23 holds every
@@ -134,10 +136,10 @@ constexpr SkillRow kRows[kSkills] = {
     // it was a plain swing round him, and the bot pressed it 71 times in three hours. **1.7**
     // the same day ("we need to boost twisting slash little bit"), with mana back on every body
     // it wounds (`kTwistManaShare`, recovery.h).
-    // Two tiles, as Cyclone (the user, 2026-10-21).
-    {skill::kTwistingSlash, "Twisting Slash", 22, 2.0f, 1.7f, 1.0f / 1500.0f, 0, false,
+    // Three tiles, as Cyclone (the user, 2026-10-23), and its wheel turns at that edge.
+    {skill::kTwistingSlash, "Twisting Slash", 22, 3.0f, 1.7f, 1.0f / 1500.0f, 0, false,
      Spread::Ring, 0, 1.0f,
-     "A whirl of whatever he is holding, into everything within two tiles. Every weapon can "
+     "A whirl of whatever he is holding, into everything within three tiles. Every weapon can "
      "throw it; none throws it hard.",
      65, "player_skill_sword4", true, arms::kEvery, 60},
     // Rageful Blow: **any weapon**, on the user's word of 2026-09-23. It was written for the

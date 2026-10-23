@@ -20,6 +20,7 @@
 #include "game/frustum.h"
 #include "game/play_tuning.h"
 #include "game/world/lamps.h"
+#include "sim/realm_tuning.h"
 
 namespace mu::game {
 
@@ -997,8 +998,12 @@ void Play::throwWheel(const Drawn& swinger, const sim::Body* body) {
     const bool polearm = body != nullptr && body->weapon >= 0 &&
                          size_t(body->weapon) < tables_.arms.size() &&
                          tables_.arms[size_t(body->weapon)].group == 3;
+    // Drawn out to what the blow strikes, so the spin shows its reach.
+    const sim::SkillRow* row = sim::skillNumbered(sim::skill::kTwistingSlash);
+    const float reach = (row ? row->reach : 3.0f) +
+                        (body ? sim::talentReach(*body, sim::skill::kTwistingSlash) : 0.0f);
     wheel_.cast(swinger.id, weapon ? weapon->mesh : nullptr, weapon ? weapon->shine : ShineLook{},
-                polearm);
+                polearm, reach);
 }
 
 // The same weapon as the wheel's, thrown up off his hand a key into the clip and brought down a
