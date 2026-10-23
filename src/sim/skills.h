@@ -578,7 +578,10 @@ constexpr float kAgilityPerDoubling = 300.0f;
 // A Dark Knight's own skills are kKnightSkillBoost of that, by `who`, and a Gladiator's knight's
 // skills too since the class balance (2026-10-21): the user, 2026-10-21, "well DW is very strong now... maybe we need to boost DKs?", +15%
 // on every one, off tests/skill_sweep.cpp (the best knight ~2/3 of a wizard on Icarus).
-constexpr float kKnightSkillBoost = 1.15f;
+// 1.15 -> 1.05 when his cooldown skills began to animate at his attack speed (f79bb459, the
+// user, 2026-10-23: "we can nerw DK little bit so its not a such boost"): that alone took the
+// level-400 knight's best skill +19% on Icarus and +30% on Aida, and the level-150 one +8%.
+constexpr float kKnightSkillBoost = 1.05f;
 // And a knight's own skills with a two-handed weapon, on top (sim::heroForce): the two-handed knight
 // was the weakest build on hard ground, 1.61M an hour on Icarus at level 200 against the wizard's
 // 3.17M and two swords' 2.23M (tests/kits/level200.json; the user, 2026-10-22, "dk still is pretty
