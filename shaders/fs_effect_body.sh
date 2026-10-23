@@ -91,6 +91,11 @@ float softness(float code, vec2 pixel, float depth, vec3 wpos)
 		// black from MU's painted light as one deep down is from the abyss, and the mist went
 		// round it as a black wedge (the user, 2026-10-23, at 170,160).
 		shown = mix(shown, 1.0, smoothstep(u_abyss.x, u_abyss.x + min(u_abyss.y, 2.0), level - at.y));
+		// And as far as the ground there has faded into the void (abyssEdge, the world's
+		// void.blend): a plate's edge thins away behind the mist, smoothly, instead of ending
+		// on a line (the user, 2026-10-23: "we need that other plat edges is transparent").
+		float edge = texture2D(s_abyss, vec2(at.x, -at.z) * u_abyss.z + u_abyss.w).g;
+		shown = mix(shown, 1.0, 1.0 - edge);
 	}
 	// What stands BEHIND it thins it, full its reach in front, so a sprite passing through the
 	// ground ends on no line. On the pixel alone: averaged round it, the plate of MU's ground
