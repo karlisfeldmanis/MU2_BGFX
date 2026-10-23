@@ -129,6 +129,10 @@
         "depth": 1.0
       },
       "note": "Ours (pipeline/ground.py corner_light). The town's curve (MU's painted light to the power 1.45, times 0.72, half its variation kept) drew the Ruins' ground at about half its objects' light (median 0.51 over the walkable tiles), and the objects take MU's light straight (cook.py lit): the boulders Object80/81 and the ground under them wear the same brown (mean 48 and 49) and stood 1.7 times apart at 166,221 (the user, 2026-10-22: 'color difference between cligs and ground is very vissible, alsmost like bug'). Straight, at 0.9 for the sun the ground faces fuller, every variation kept: the ground at 0.9 of its objects everywhere, as MU draws them both by one TerrainLight."
+    },
+    "light_reach": {
+      "value": 3,
+      "note": "Ours: a placement takes the median light of the 7x7 tiles round it (void left out), not 3x3. A stone heap (Object07) in a pit MU paints black at 112-113,55-56 came out as a black blob (the user, 2026-10-23: \"black object\", \"try to avoid compelte balck object\")."
     }
   },
   "show": {
