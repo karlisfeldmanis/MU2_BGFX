@@ -635,6 +635,9 @@ private:
     bgfx::TextureHandle abyss_ = BGFX_INVALID_HANDLE;
     float abyssParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float abyssColour_[4] = {0.0f, 0.0f, 0.0f, 0.0f};  // gfx::Lighting::abyssColour
+    // Whether fs_glow may read the prepass as a plain texture: Metal binds the resolve, and
+    // without MSAA there is nothing to resolve. Elsewhere a soft glow stays hard.
+    bool softGlowOk_ = false;
     bgfx::TextureHandle lava_ = BGFX_INVALID_HANDLE;
     float lavaMap_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float lavaLight_[4] = {0.0f, 0.0f, 0.0f, 0.0f};

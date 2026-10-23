@@ -59,6 +59,10 @@ struct Material {
     // closed model gained in sprint 8a, and it costs the walls nothing: a glow is its own
     // program in its own view, not a variant of fs_shade. Sprint 8a.
     bool glow = false;
+    // A glow that thins over this many metres in front of what stands behind it (fs_glow's
+    // soft, ours), so an added sheet plunging into a pool ends softly instead of on the
+    // water's line: Kanturu's waterfalls (the world's show.soft_glow). 0, as MU, cuts hard.
+    float softGlow = 0.0f;
     // Whether the albedo's metal is already reflectance. MU2's item bake lifts a metal's
     // painted texels onto the metal's own f0 and writes the result as `<item>_basecolor`
     // (build_maps.base_colour); the world's tiled path does not, and its iron is the dark
@@ -205,6 +209,7 @@ public:
 
     const std::vector<Part>& parts() const { return parts_; }
     const std::vector<Material>& materials() const { return materials_; }
+    Material& materialAt(size_t i) { return materials_[i]; }
     // One more part over an existing part's triangles, in its own material: a second pass of
     // the same mesh, as MU's RenderMesh of one mesh twice (Kanturu's crystals' chrome,
     // game/world/crystal_sparks.h). Before the first draw: a material's address is its key.

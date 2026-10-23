@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "game/world/world.h"
 
 #include <cmath>
@@ -134,6 +135,17 @@ bool World::open(const std::string& assetDir, const std::string& name,
     castleSparks_.open(assetDir, name, town_.cooked(), textures);
     crystalSparks_.open(assetDir, name, town_.cooked(), textures);
     lendCrystalChrome(town_, assetDir, name, textures);
+    // The models whose glow parts end softly (show.soft_glow, mesh.h softGlow).
+    if (town_.isOpen()) {
+        const auto& soft = worldShow(name).softGlow;
+        const content::CookedTown& cooked = town_.cooked();
+        for (size_t i = 0; i < cooked.models.size(); ++i) {
+            if (std::find(soft.begin(), soft.end(), cooked.models[i].name) == soft.end()) continue;
+            if (content::Mesh* mesh = town_.meshAt(i))
+                for (size_t m = 0; m < mesh->materials().size(); ++m)
+                    if (mesh->materials()[m].glow) mesh->materialAt(m).softGlow = 1.5f;
+        }
+    }
     ruinEffects_.open(assetDir, name, town_.cooked(), textures);
     chasmMist_.open(assetDir, name, ground_, textures);
     desertVents_.open(assetDir, name, town_.cooked(), textures);

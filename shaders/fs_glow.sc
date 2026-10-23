@@ -45,7 +45,9 @@ void main()
 	float both = mod(floor(mode * 0.0625), 2.0);
 	float chromePass = floor(mod(mode, 256.0) / 32.0);
 	// +256: a second slide along V at its own rate, in x; w then slides U alone.
-	float two = floor(mode / 256.0);
+	float two = mod(floor(mode / 256.0), 2.0);
+	// +512: soft against what stands behind it (content::Material::softGlow).
+	float soft = floor(mode / 512.0);
 	vec2 along = both > 0.5 ? vec2_splat(1.0) : vec2(alongU, 1.0 - alongU);
 	vec2 uv = two > 0.5 ? v_texcoord0 + vec2(u_material.w, u_material.x)
 	                    : v_texcoord0 + u_material.w * along;
@@ -96,6 +98,14 @@ void main()
 		colour += (shineAdded(plus, n, v_refine.yzw) +
 		           shineExcellentAdded(shineExcellent(v_refine.x), n) +
 		           shineSweepAdded(plus, shineSweep(v_refine.x), n)) * fade * shineCover(sheet);
+	}
+	// A soft glow thins over its last 1.5 m in front of the prepass's depth: Kanturu's falls
+	// end in their pools on no line (the user, 2026-10-23: "water smoke is not smooth and
+	// little bit striped/cuted", then "same"). Ours; MU cuts it on the depth test.
+	if (soft > 0.5)
+	{
+		float behind = prepassAt(gl_FragCoord.xy * u_viewTexel.xy).a;
+		if (behind > 0.0) colour *= smoothstep(0.0, 1.5, behind - (-v_vpos.z));
 	}
 	gl_FragColor = vec4(colour, 1.0);
 }

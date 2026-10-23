@@ -334,7 +334,10 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                                                             32.0f * float(material.chromePass) +
                                                             // +256: x is a second slide, along V
                                                             (material.scrollVPerSecond != 0.0f
-                                                                 ? 256.0f : 0.0f)
+                                                                 ? 256.0f : 0.0f) +
+                                                            // +512: soft against the prepass
+                                                            (material.softGlow > 0.0f && softGlowOk_
+                                                                 ? 512.0f : 0.0f)
                                              : (material.twoSided ? 1.0f : 0.0f) +
                                                  (material.calibrated ? 2.0f : 0.0f) +
                                                  // A sixteenth a weathering kind: fs_shade.
@@ -400,6 +403,9 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             } else if (glowPass) {
                 // A levelled item's glow takes MU's tint and chrome as its body does (fs_glow).
                 bindShine();
+                // A soft glow reads the prepass's depth (fs_glow), resolved: only where that
+                // is what a plain sampler sees (softGlowOk_).
+                if (softGlowOk_) bgfx::setTexture(6, sPrepass_, prepassColour_);
             }
 
             uint64_t drawState = state;
@@ -745,6 +751,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     probeTaken_[3] = lighting.probeDiffuse;
     weather_[0] = bgfx::isValid(weatherNoise_) ? std::max(lighting.weathering, 0.0f) : 0.0f;
     weather_[1] = std::max(lighting.sheen, 0.0f);
+    softGlowOk_ = msaa_ <= 1 || bgfx::getRendererType() == bgfx::RendererType::Metal;
     for (int k = 0; k < 3; ++k) abyssColour_[k] = std::max(lighting.abyssColour[k], 0.0f);
     shineStrength_ = lighting.refineStrength;
     shineTint_ = lighting.refineTint;

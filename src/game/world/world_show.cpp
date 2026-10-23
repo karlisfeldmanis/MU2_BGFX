@@ -140,6 +140,7 @@ void readShow(const core::Json& show, WorldShow& out) {
     out.smokeVents = named(show, "smoke_vents");
     out.crystalSparks = named(show, "crystal_sparks");
     readString(show["crystal_chrome"], "model", &out.crystalChrome);
+    readStrings(show["soft_glow"], "models", &out.softGlow);
     out.ruinEffects = named(show, "ruin_effects");
     out.chasmMist = named(show, "chasm_mist");
     readFloat(show["chasm_mist"], "strength", &out.chasmMistStrength);
