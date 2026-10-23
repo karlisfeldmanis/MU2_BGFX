@@ -340,6 +340,21 @@ bool Play::takeOff(int slot) {
     return true;
 }
 
+// Whether two things may be held at once, one in each hand: sim::together's rule (items.cpp,
+// private there, and a src/sim edit would move the rules print). A bow or crossbow beside nothing
+// but its own ammunition, a two-handed weapon beside nothing but a quiver.
+static bool heldTogether(const content::ItemRow& a, const content::ItemRow& b) {
+    const bool bowA = a.group == sim::kGroupBows && !sim::ammunition(a);
+    const bool bowB = b.group == sim::kGroupBows && !sim::ammunition(b);
+    if (bowA || bowB) {
+        const content::ItemRow& bow = bowA ? a : b;
+        const content::ItemRow& other = bowA ? b : a;
+        return sim::ammunition(other) && other.number == (bow.number <= 6 ? 15 : 7);
+    }
+    if (sim::ammunition(a) || sim::ammunition(b)) return true;
+    return !a.twoHanded() && !b.twoHanded();
+}
+
 bool Play::give(const std::string& name, int count, const std::string& extras) {
     if (!here("--give")) return false;
     const int32_t item = tables_.itemNamed(name);
@@ -378,6 +393,19 @@ bool Play::give(const std::string& name, int count, const std::string& extras) {
             const content::ItemRow& onRow = tables_.items[size_t(on.item)];
             const int spare = realm_.satchel().free(tables_, onRow.width, onRow.height);
             if (spare >= 0) local_.moveItem(into, spare);
+        }
+        // And the other hand, when the two cannot be held together, as wearing does it
+        // (sim::wearOn): an elf given a bow over the arena's sword and shield kept the shield.
+        const int otherHand = into == int(sim::kWeaponRight) ? int(sim::kWeaponLeft)
+                              : into == int(sim::kWeaponLeft) ? int(sim::kWeaponRight)
+                                                              : -1;
+        if (otherHand >= 0 && !realm_.satchel()[otherHand].empty()) {
+            const content::ItemRow& otherRow =
+                tables_.items[size_t(realm_.satchel()[otherHand].item)];
+            if (!heldTogether(row, otherRow)) {
+                const int spare = realm_.satchel().free(tables_, otherRow.width, otherRow.height);
+                if (spare >= 0) local_.moveItem(otherHand, spare);
+            }
         }
         slot = local_.give(item, into, plus,
                            stacks ? durability
