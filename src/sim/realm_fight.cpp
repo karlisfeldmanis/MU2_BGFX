@@ -1093,7 +1093,7 @@ bool Realm::spiritsGoing(uint32_t owner) const {
 }
 
 // Evil Spirit let go round him, his spell's or his shield rune's, as WebZen's SkillEvil lets it
-// go (sim/items.h kSpiritReach): each monster within ten tiles (the spell's six), in id order so the dice are drawn
+// go (sim/items.h kSpiritReach): each monster within ten tiles, in id order so the dice are drawn
 // in a fixed one, has kSpiritOdds of a blow held 0-2 s. The rune's draws are the sockets' stream,
 // so a run is not moved by one being worn; the spell's are the realm's own. Said once, so the
 // drawing sends the spirits out. a: the longest hold.
@@ -1101,7 +1101,7 @@ bool Realm::letSpiritsGo(Body& hero, float force, bool rune) {
     Random& dice = rune ? runeDice_ : dice_;
     int held = 0, near = 0;
     // Legion's, on his spell and not on the rune's (sim/talents.h).
-    const float reach = rune ? kSpiritReach : kSpiritSpellReach + talentReach(hero, skill::kEvilSpirit);
+    const float reach = kSpiritReach + (rune ? 0.0f : talentReach(hero, skill::kEvilSpirit));
     for (const Body& b : bodies_) {
         if (!b.monster() || !b.alive()) continue;
         const float dx = b.x - hero.x, dy = b.y - hero.y;

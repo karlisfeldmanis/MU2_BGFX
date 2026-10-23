@@ -958,11 +958,6 @@ constexpr double kRenewalShare = 0.03;
 // (sim/skills.cpp). Invention: the rune and its trigger; the spell is WebZen's.
 constexpr double kSpiritChance = 0.15;
 constexpr float kSpiritReach = 10.0f;      // `< 10`: a tile short of it
-// **The wizard's spell six tiles and not ten** (the user, 2026-10-23: "DW evil spirit is super
-// super strong for early level ... nerf it litle bit"; a knight's: "kamēr aizeju līdz mobiem
-// visi dead"). Ten was every pack on his screen for thirty mana and no cooldown, so a knight in
-// his party walked to corpses. The shield's rune keeps WebZen's ten.
-constexpr float kSpiritSpellReach = 6.0f;
 constexpr double kSpiritOdds = 2.0 / 3.0;  // rand()%3 < 2
 constexpr int64_t kSpiritDelayTicks = 40;  // rand()%2000 ms, the realm's twenty ticks a second
 // **The stat runes** (the user, 2026-10-05: "+10% all stats ... +10% agility, energy, vitality,

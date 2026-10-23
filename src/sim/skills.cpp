@@ -644,7 +644,7 @@ constexpr SkillRow kRows[kSkills] = {
     {.number = skill::kEvilSpirit, .name = "Evil Spirit", .mana = 30, .reach = 9.0f,
      .force = 1.53f, .spread = Spread::One,
      .tells = "Lets evil spirits loose around him, which strike most of the monsters within "
-              "six tiles.",
+              "ten tiles.",
      .clip = 147, .sound = "spell_evil", .built = true, .families = arms::kNone,
      .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 45, .clipOther = 148,
      .flies = 1000.0f},

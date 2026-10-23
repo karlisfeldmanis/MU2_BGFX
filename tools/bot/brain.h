@@ -5684,9 +5684,9 @@ private:
             }
             return std::max(1, n);
         };
-        // The spirits round him (Realm::letSpiritsGo): each body within kSpiritSpellReach, two in three.
+        // The spirits round him (Realm::letSpiritsGo): each body within kSpiritReach, two in three.
         if (row.number == sim::skill::kEvilSpirit) {
-            return std::max(1.0, near(hero.x, hero.y, sim::kSpiritSpellReach) * sim::kSpiritOdds);
+            return std::max(1.0, near(hero.x, hero.y, sim::kSpiritReach) * sim::kSpiritOdds);
         }
         // Flame's fire (Realm::light): everything within burnTiles of the body, at each burn.
         if (row.burns > 0) return double(near(target->x, target->y, row.burnTiles) * row.burns);
