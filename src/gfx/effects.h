@@ -77,7 +77,12 @@ public:
     // whole sprint exists to make look right.
     // 8192 since the level-up: its trails are sampled a quarter tick apart, up to 2280 quads
     // a burst, and two bursts on top of a lit town's 900 did not fit in the old 2048.
-    bool init(const std::string& shaderDir, uint32_t capacity = 8192);
+    // 16384, the 16-bit index's whole reach, since Tarkan (2026-10-23): its Beam Knights,
+    // Zaikans, Tantalos, Drakans and Crusts each throw MU's Inferno on a swing, and five or six
+    // round a knight asked 7000-8600 a frame -- six rings of 548 triangles, their sparks and
+    // the meteor's stones. A player's log held 8192 with five million refused over 2.5 hours,
+    // and what is gathered after the pool fills is what goes missing.
+    bool init(const std::string& shaderDir, uint32_t capacity = 16384);
     void shutdown();
 
     // Empties the list. Called once at the top of a frame, before anything adds.
@@ -106,6 +111,17 @@ public:
     uint32_t highWater() const { return highWater_; }
     uint32_t refused() const { return refused_; }
     uint32_t capacity() const { return uint32_t(sprites_.capacity()); }
+
+    // Which sheets asked for the most sprites, in the busiest frame since the last take: a full
+    // pool says the picture is missing something, and this says whose (a Twisting Slash fight
+    // in Tarkan held 8192 of 8192 with five million refused, 2026-10-22). Counted in add(),
+    // refused or not, into a fixed table. take...() hands the second's worst frame and resets.
+    struct Asker {
+        bgfx::TextureHandle sheet = BGFX_INVALID_HANDLE;
+        uint32_t count = 0;
+    };
+    static constexpr uint32_t kAskers = 4;
+    uint32_t takeBusiest(Asker out[kAskers]);
 
 private:
     // One corner of one quad. Position is already in world space, billboarded on the CPU --
@@ -158,6 +174,14 @@ private:
     uint32_t lastSprites_ = 0;
     uint32_t highWater_ = 0;
     uint32_t refused_ = 0;
+
+    // The frame's asks by sheet, and which sheets it touched so begin() clears only those.
+    static constexpr uint32_t kSheetTable = 4096;  // bgfx's BGFX_CONFIG_MAX_TEXTURES
+    uint32_t askedBy_[kSheetTable] = {};
+    std::vector<uint16_t> asking_;
+    uint32_t asked_ = 0;
+    uint32_t busiest_ = 0;
+    Asker busiestBy_[kAskers];
 };
 
 }  // namespace mu::gfx

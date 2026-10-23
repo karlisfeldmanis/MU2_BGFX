@@ -84,6 +84,7 @@ bool Effects::init(const std::string& shaderDir, uint32_t capacity) {
     keysSpare_.reserve(capacity);
     slots_.reserve(capacity);
     runs_.reserve(capacity);
+    asking_.reserve(kSheetTable);
     core::logf("effects: transparent pass ready, %u sprites reserved", capacity);
     return true;
 }
@@ -114,12 +115,39 @@ void Effects::shutdown() {
 void Effects::begin() {
     // clear() keeps the capacity, which is the difference between this and a pass that
     // allocates. The vector never grows past what init reserved because add() refuses first.
+    // The frame just drawn, kept if it asked for more than any other this second: its four
+    // biggest askers, out of the sheets it touched.
+    if (asked_ > busiest_) {
+        busiest_ = asked_;
+        for (Asker& one : busiestBy_) one = Asker{};
+        for (uint16_t idx : asking_) {
+            Asker ask{bgfx::TextureHandle{idx}, askedBy_[idx]};
+            for (Asker& one : busiestBy_) {
+                if (ask.count > one.count) std::swap(ask, one);
+            }
+        }
+    }
+    for (uint16_t idx : asking_) askedBy_[idx] = 0;
+    asking_.clear();
+    asked_ = 0;
     sprites_.clear();
     order_.clear();
     drawCount_ = 0;
 }
 
+uint32_t Effects::takeBusiest(Asker out[kAskers]) {
+    const uint32_t busiest = busiest_;
+    for (uint32_t i = 0; i < kAskers; ++i) out[i] = busiestBy_[i];
+    busiest_ = 0;
+    for (Asker& one : busiestBy_) one = Asker{};
+    return busiest;
+}
+
 bool Effects::add(const Sprite& sprite) {
+    if (bgfx::isValid(sprite.sheet) && sprite.sheet.idx < kSheetTable) {
+        if (askedBy_[sprite.sheet.idx]++ == 0) asking_.push_back(sprite.sheet.idx);
+        ++asked_;
+    }
     if (sprites_.size() >= sprites_.capacity()) {
         ++refused_;
         return false;

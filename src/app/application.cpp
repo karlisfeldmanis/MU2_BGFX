@@ -576,6 +576,23 @@ int Application::run(int argc, char** argv) {
                            renderer_.effects().lastDrawCount(), renderer_.effects().highWater(),
                            renderer_.effects().capacity(), renderer_.effects().refused());
             }
+            // And when a frame this second asked for half the pool or more, whose sheets asked.
+            gfx::Effects::Asker askers[gfx::Effects::kAskers];
+            const uint32_t asked = renderer_.effects().takeBusiest(askers);
+            if (asked >= renderer_.effects().capacity() / 2) {
+                char line[512];
+                int used = std::snprintf(line, sizeof(line), "  effects asked %u in one frame:",
+                                         asked);
+                for (const auto& ask : askers) {
+                    if (ask.count == 0 || used >= int(sizeof(line))) continue;
+                    std::string path = textures_.pathOf(ask.sheet);
+                    const size_t slash = path.find_last_of('/');
+                    if (slash != std::string::npos) path = path.substr(slash + 1);
+                    used += std::snprintf(line + used, sizeof(line) - size_t(used), " %s %u",
+                                          path.empty() ? "?" : path.c_str(), ask.count);
+                }
+                core::logf("%s", line);
+            }
             mode->report(ctx);
             sinceLine = 0.0;
 

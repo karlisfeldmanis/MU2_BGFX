@@ -431,6 +431,13 @@ bgfx::TextureHandle Textures::loadFromMemory(const std::string& name, const void
     return handle;
 }
 
+std::string Textures::pathOf(bgfx::TextureHandle handle) const {
+    for (const auto& [path, held] : byPath_) {
+        if (held.idx == handle.idx) return path;
+    }
+    return {};
+}
+
 bool Textures::sizeOf(bgfx::TextureHandle handle, uint32_t* width, uint32_t* height) const {
     if (!bgfx::isValid(handle)) return false;
     auto found = sizes_.find(handle.idx);
