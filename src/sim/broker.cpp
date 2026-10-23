@@ -20,10 +20,16 @@ int64_t npcValue(const content::Tables& tables, const Held& what) {
     // A quest item is not a merchant's: the class treasure. The Archangel's weapons are sold as
     // any, in the world where the counters are (archangelQuestItem).
     if (classTreasure(row)) return -1;
-    const bool stacks = row.group == kGroupPotions;
-    int64_t paid = sellingPrice(row, what.refinement, stacks ? std::max<int>(1, what.durability) : 1,
-                                what.skill, what.durability, row.durability, what.luck,
-                                what.option, excellentCount(what.excellent));
+    // A stack is that many pieces' price. The jewels and the drinks are priced by their count
+    // (buyingPrice); everything else that stacks -- the Chaos, the Ale and the Town Portal, the
+    // pets, Loch's Feather, the tickets and the boxes -- is one piece's price times the count. A
+    // stack of five Feathers sold for one Feather's 158,200.
+    const int pieces = stacks(row) ? std::max<int>(1, what.durability) : 1;
+    const bool counted = refiningJewel(row) || heals(row) || restores(row) || antidote(row);
+    int64_t paid = sellingPrice(row, what.refinement, counted ? pieces : 1, what.skill,
+                                what.durability, row.durability, what.luck, what.option,
+                                excellentCount(what.excellent));
+    if (!counted) paid *= pieces;
     // Worn gear fetches less: 0.6 of the share gone comes off (CalculateSellingPrice).
     if (wears(row)) paid = wornSellingPrice(paid, what.durability, maximumDurability(row, what));
     // A rune is a share of the Jewel of Creation's price by its rarity (sim/items.h kRuneSale).

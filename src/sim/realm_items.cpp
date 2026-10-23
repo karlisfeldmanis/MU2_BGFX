@@ -2007,6 +2007,8 @@ int Realm::deposit(int bagSlot, int cell) {
     const int onto = me().vault.holder(*tables_, cell);
     if (const int went = onto >= 0 ? topUp(*tables_, me().vault, onto, me().bag[bagSlot]) : 0) {
         unstack(me().bag, bagSlot, went);
+        // A worn quiver poured onto the vault's: his quiver's plus goes with it.
+        if (worn) rearm(mine());
         return onto;
     }
     // A jewel let go on a thing it works: applied, not stored.

@@ -7306,6 +7306,33 @@ void testVault(const content::Tables& tables) {
     for (int tick = 0; tick < 2000 && realm.banking() < 0; ++tick) realm.step();
     check(realm.banking() == baz, "walked to Baz and the vault opened");
     check(realm.trading() < 0, "and no counter with it");
+    // A worn quiver poured onto the vault's takes its plus off her (a deposit that topped up a
+    // stack never re-armed, so a +2 quiver stored that way still counted).
+    {
+        sim::Realm elf;
+        check(elf.raise(&tables, 11, 144, 112, sim::Kin::FairyElf, 10) &&
+                  elf.equip(tables.armNamed("Bow01"), -1, true),
+              "an elf with the Short Bow by the vault");
+        elf.ask(talk);
+        for (int tick = 0; tick < 2000 && elf.banking() < 0; ++tick) elf.step();
+        sim::Realm& realm = elf;
+        const int arrows = tables.itemAt(4, 15);
+        const int spare = realm.give(arrows, -1, 2, 100);
+        check(spare >= 0 && realm.deposit(spare, 60) == 60, "a +2 quiver of a hundred in the vault");
+        realm.discard(sim::kWeaponLeft);  // the quiver the bow came with
+        check(realm.give(arrows, sim::kWeaponLeft, 2, 100) == sim::kWeaponLeft &&
+                  realm.hero().quiverPlus == 2,
+              "and another worn, its plus counted");
+        check(realm.deposit(sim::kWeaponLeft, 60) == 60 && realm.satchel()[sim::kWeaponLeft].empty(),
+              "the worn one poured onto the vault's");
+        checkEqual(int(realm.vault()[60].durability), 200, "two hundred there now");
+        checkEqual(int(realm.hero().quiverPlus), 0, "and its plus is gone with it");
+        realm.withdraw(60, -1);
+        for (int s = sim::kWorn; s < sim::kSlots; ++s) {
+            if (!realm.satchel()[s].empty() && realm.satchel()[s].item == arrows) realm.discard(s);
+        }
+
+    }
 
     // Worn gear crosses the counter too (the user, 2026-10-05): off him into the vault, and
     // from the vault back into his hand.
@@ -14321,6 +14348,20 @@ void testCommands(const content::Tables& tables) {
             if (slot != stack) realm.sellItem(slot);
         }
         realm.sellItem(stack);
+    }
+    // Every stack a merchant buys is that many pieces' price: the Chaos, the Feather, the Ale and
+    // the Town Portal, the pets and the tickets sold a stack for one piece's.
+    for (size_t i = 0; i < tables.items.size(); ++i) {
+        if (!sim::stacks(tables.items[i])) continue;
+        sim::Held one{};
+        one.item = int32_t(i);
+        one.durability = 1;
+        sim::Held five = one;
+        five.durability = int16_t(std::min(5, sim::stackMost(tables.items[i])));
+        const int64_t each = sim::npcValue(tables, one), all = sim::npcValue(tables, five);
+        if (each <= 0) continue;  // a small potion alone fetches nothing; five of them do
+        check(all >= each * five.durability * 9 / 10,
+              (tables.items[i].name + " sells a stack for its count").c_str());
     }
 
     // The bag's (batch 2): a potion used, a Firecracker thrown -- which the realm opens and answers
