@@ -1094,8 +1094,11 @@ constexpr float kStormcallForce = 1.0f;
 // his energy on top, the wizard's own band -- `energy / 9` to `energy / 4` (ClassDarkWizard.cs:
 // 72-73) -- whatever his class (the user, 2026-10-01: "dmg scale with his energy"). Arcane Echo
 // needs none: it is the spell again, which is the wizardry sum already. invention.
-constexpr double kRuneEnergyLow = 1.0 / 9.0;
-constexpr double kRuneEnergyHigh = 1.0 / 4.0;
+// kRuneEnergyShare of that band since 2026-10-23 (the user: "passive spells scale little bit
+// less with energy"): energy / 11.25 to energy / 5.
+constexpr double kRuneEnergyShare = 0.8;
+constexpr double kRuneEnergyLow = kRuneEnergyShare / 9.0;
+constexpr double kRuneEnergyHigh = kRuneEnergyShare / 4.0;
 // **Meteor**, his second: the same chance and reach, and a burning rock -- the wizard's
 // Meteorite, drawn as his -- lands its fall later at `kMeteorForce` of his swing's roll. invention.
 constexpr double kMeteorChance = 0.15;
