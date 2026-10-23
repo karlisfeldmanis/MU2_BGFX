@@ -702,12 +702,13 @@ constexpr double kExcellentSetDefense = 0.10;
 int setOf(const content::ItemRow& row);
 // What the five worn pieces raise the defence by: 0, kSetDefense or kExcellentSetDefense.
 // The Magic Gladiator's set is armour to boots, his head bare, and counts only when it is his own
-// -- Storm Crow, kGladiatorSet -- as MuMain's CheckFullSet has it (ZzzCharacter.cpp:5404-5466:
-// `end = EQUIPMENT_ARMOR` for CLASS_DARK, then no added defence unless the armour is
-// ITEM_STORM_CROW_ARMOR or a later set of his -- the Hurricane, kHurricaneSet). A knight's set on
-// him without its helm is none.
+// -- Storm Crow, kGladiatorSet, and his later sets -- as MuMain's CheckFullSet has it
+// (ZzzCharacter.cpp:5404-5467: `end = EQUIPMENT_ARMOR` for CLASS_DARK, then no added defence
+// unless the armour is ITEM_STORM_CROW_ARMOR, THUNDER_HAWK, HURRICANE, VOLCANO, VALIANT, DESTORY
+// or PHANTOM: numbers 15, 20, 23, 32, 37, 47, 48). A knight's set on him without its helm is none.
 constexpr int kGladiatorSet = 15;
 constexpr int kHurricaneSet = 23;
+bool gladiatorSet(int set);
 double setDefense(const content::Tables& tables, const Satchel& bag, Kin kin = Kin::DarkKnight);
 // **Three and four pieces** (the user's, 2026-10-10): steps below the whole set, so a set is
 // worth gathering before its last piece drops. They stack -- three pieces of one number raise

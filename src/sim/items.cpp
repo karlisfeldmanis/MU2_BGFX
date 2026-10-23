@@ -324,6 +324,22 @@ int setOf(const content::ItemRow& row) {
     return row.group >= kGroupHelms && row.group <= kGroupBoots ? row.number : -1;
 }
 
+bool gladiatorSet(int set) {
+    // MuMain's CheckFullSet list (ZzzCharacter.cpp:5456-5467); MU's numbers are ours.
+    switch (set) {
+        case kGladiatorSet:  // Storm Crow
+        case 20:             // Thunder Hawk
+        case kHurricaneSet:
+        case 32:             // Volcano, Kanturu's
+        case 37:             // Valiant
+        case 47:             // Destroy
+        case 48:             // Phantom
+            return true;
+        default:
+            return false;
+    }
+}
+
 double setDefense(const content::Tables& tables, const Satchel& bag, Kin kin) {
     int set = -1;
     bool excellent = true;
@@ -336,7 +352,7 @@ double setDefense(const content::Tables& tables, const Satchel& bag, Kin kin) {
         set = of;
         excellent = excellent && worn.excellent != 0;
     }
-    if (gladiator && set != kGladiatorSet && set != kHurricaneSet) return 0.0;
+    if (gladiator && !gladiatorSet(set)) return 0.0;
     return excellent ? kExcellentSetDefense : kSetDefense;
 }
 

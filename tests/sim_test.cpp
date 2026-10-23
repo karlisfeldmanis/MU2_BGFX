@@ -929,10 +929,12 @@ void testItems(const content::Tables& tables) {
     // second sets and the strongest arms of each line (Great Dragon, Dark Soul, Red Spirit,
     // Hurricane; Knight Blade, Dark Reign Blade, Staff of Kundun, Arrow Viper Bow). 342 since
     // 2026-10-22: the 39 rows after a3d4dc48 -- Kanturu's dormant 380 sets and arms (8a1d6e55)
-    // and the shields, bows, staffs, mace and swords between. A count
+    // and the shields, bows, staffs, mace and swords between. 401 since 2026-10-23: the 59 rows
+    // of the missing-gear audit -- twelve sets' 56 pieces (*Male21, 35-38, 46-49, 51, 53) and
+    // the three gamble arms (Spear12, Bow25, Staff34). A count
     // rather than a list, because what it is guarding is the cook -- a
     // recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 342, "342 item rows cooked");
+    checkEqual(long(tables.items.size()), 401, "401 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
     // And Lumen's, whose Guardian Angel and Imp are ours (the user, 2026-09-30: "put imp and
@@ -6141,6 +6143,19 @@ void testSets(const content::Tables& tables) {
         }
         checkNear(sim::setDefense(tables, hurricane.satchel(), sim::Kin::MagicGladiator),
                   sim::kSetDefense, 1e-9, "the Hurricane's four are his set too");
+        // And the rest of MuMain's list (ZzzCharacter.cpp:5456-5467): Thunder Hawk 21, Volcano 33,
+        // Valiant 38, Destroy 48 and Phantom 49 by our files.
+        for (const char* set : {"21", "33", "38", "48", "49"}) {
+            sim::Realm his;
+            his.raise(&tables, 3, 140, 128, sim::Kin::MagicGladiator, 1);
+            for (const char* part : {"Armor", "Pant", "Glove", "Boot"}) {
+                const int32_t item = tables.itemNamed(std::string(part) + "Male" + set);
+                const int slot = item >= 0 ? sim::placeOf(tables.items[size_t(item)]) : -1;
+                if (slot >= 0) his.give(item, slot);
+            }
+            checkNear(sim::setDefense(tables, his.satchel(), sim::Kin::MagicGladiator),
+                      sim::kSetDefense, 1e-9, (std::string("set Male") + set + " is his").c_str());
+        }
         // The Staff of Kundun asks the wizard his second and not the gladiator, who has none
         // (OpenMU S6 Weapons.cs:253: darkWizardClassLevel 2, magicGladiatorClassLevel 1).
         const int32_t kundun = tables.itemNamed("Staff12");
