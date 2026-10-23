@@ -66,6 +66,8 @@ public:
     std::string takeScene();
     // The refinement the inspector asked for this frame, once; -1 if none.
     int takePlus() { const int p = plusAsked_; plusAsked_ = -1; return p; }
+    // `effects off`: the frame drawn without its sprites, to tell what is a sprite.
+    bool effectsShown() const { return effectsShown_; }
     bool wantsPointer() const { return gui_.wantsPointer(); }
     // What the desk asked of the arena since it was last taken: 1 open (`breed` in `world`),
     // 2 close, 0 nothing; and BenchMode's word on whether it is up.
@@ -145,6 +147,7 @@ private:
     long long journalSize_ = -1;   // how much of workshop/.mu/journal.log has been read
     double journalLooked_ = 0.0;
     bool hidden_ = false;   // `hide`: the panels left undrawn, for a clean shot
+    bool effectsShown_ = true;  // `effects on|off`
 };
 
 }  // namespace mu::app

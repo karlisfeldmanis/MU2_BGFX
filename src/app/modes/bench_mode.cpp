@@ -329,6 +329,29 @@ void BenchMode::frame(Context& ctx, const Frame& at) {
             world_.lamps().gather(ctx.renderer.effects(), bench_.camera().target,
                                   daylightOf(ctx.lighting));
         }
+        // The world's own sprites round the view, as play throws them (PlayMode, after the
+        // ornaments): Kanturu's chasm mist, the falls' spray, the void's clouds, Icarus's road,
+        // the sand haze, the bubbles and the bridges' shade. Without them the studio's Kanturu
+        // had no mist, and what showed against it in the game could not be judged here.
+        if (!onStage_ && world_.town().isOpen()) {
+            const float step = desk_.holding() ? 0.0f : deltaSeconds;
+            const float* near = bench_.camera().target;
+            // The town's own animation first, as play poses it before the gather: the trees'
+            // sway, the wheels and the lamps carried on them, so the studio's world moves as
+            // the game's does.
+            world_.sway().update(step, nullptr, ctx.renderer, world_.town());
+            if (args.lampsOn) world_.lamps().follow(world_.sway(), ctx.renderer);
+            world_.ornaments().update(step, world_.sway());
+            world_.ornaments().gather(ctx.renderer.effects(), world_.sway());
+            world_.throwAround(step, near, ctx.renderer.effects());
+            world_.skyClouds().update(step, near, near, [](const float*, const float*) {});
+            world_.skyClouds().gather(ctx.renderer.effects());
+            world_.sandHaze().update(step);
+            world_.sandHaze().gather(ctx.renderer.effects(), bench_.camera());
+            world_.bubbles().update(step, near);
+            world_.bubbles().gather(ctx.renderer.effects());
+            world_.shades().gather(ctx.renderer.effects(), near);
+        }
         townDrawables_.clear();
         if (onStage_) {
             townDrawables_ = stage_.drawables();
@@ -366,6 +389,7 @@ void BenchMode::frame(Context& ctx, const Frame& at) {
             }
         }
         setShine_.gather(ctx.renderer.effects(), world_.ground(), bench_.camera().position);
+        if (desk_.isOpen() && !desk_.effectsShown()) ctx.renderer.effects().begin();
         ctx.renderer.draw(bench_.camera(), ctx.lighting, townDrawables_,
                           onStage_ ? nullptr : &world_.ground());
         if (desk_.isOpen()) {

@@ -12,6 +12,7 @@
 //   way <world>                                      a gate there at the view's middle, with its pair
 //   brush <slot> base|overlay <alpha> <radius> | dab | undo   the ground: a stroke at the view's middle
 //   tab light              the inspector's Light   hide | show  the panels off and on
+//   effects on|off         the frame with or without its sprites
 //   time noon|dusk|night   the time of day the scene is lit at
 //   shot <abs.png>         this frame to a file    wait <N>     N frames before the next line
 //   status                 what is on the bench    quit         close the studio
@@ -201,6 +202,10 @@ std::string StudioDesk::act(Context& ctx, game::ModelBench& bench, const std::st
         }
         if (!bench.playClip(index)) return "error no clip " + want + " of " + std::to_string(count);
         return "ok " + bench.clipName(index);
+    }
+    if (what == "effects on" || what == "effects off") {
+        effectsShown_ = what == "effects on";
+        return "ok " + what;
     }
     if (what == "hide" || what == "show") {
         hidden_ = what == "hide";

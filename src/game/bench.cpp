@@ -161,7 +161,10 @@ bool ModelBench::place(content::Textures& textures) {
     }
 
     drawables_.clear();
-    if (!haveWorldGround_) {
+    // Not in the studio, which stands the thing in a world: the plane lay at 0 m under Kanturu's
+    // 2.25 m rim and filled its chasm with a lit white floor (the user, 2026-10-23: "void is
+    // white for soome reasoon in studioi"). The figures' path below asked this already.
+    if (!haveWorldGround_ && !studio_) {
         if (!makeGround(textures, std::max(radius * 8.0f, 400.0f))) return false;
         gfx::Drawable groundDraw;
         groundDraw.mesh = &ground_;
