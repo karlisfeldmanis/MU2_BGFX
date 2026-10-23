@@ -50,7 +50,7 @@
       "note": "MU grows dark olive tufts on slot 0 (5,340 drawn tiles) and pale blue-white wisps on slot 1 (1,353), ZzzLodTerrain.cpp:2076-2120. Slot 0 only for the first look; the wisps wait for a shot (decision 11). docs/worlds/kanturu-port.md."
     },
     "void": {
-      "value": {"start": 0.5, "depth": 6.0, "blend": 1.5},
+      "value": {"start": 0.5, "depth": 6.0, "blend": 0, "fade": 3, "sink": 16},
       "note": "Aida's way, deeper: 44.8% of the map is NoGround, a chasm round the plateau, and Object06/76's 394 cliff faces hang 5-14 m into it (Aida's walls 4.7 m, depth 4.5). `blend` darkens the bare ring lips where no cliff stands, as Aida. docs/worlds/kanturu-port.md Part B 5."
     },
     "void_fill": {

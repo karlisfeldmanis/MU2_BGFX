@@ -7,6 +7,7 @@
 #include <bx/math.h>
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cmath>
 #include <cstring>
@@ -1488,6 +1489,10 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
         }
         if (anyVoid) {
             const int reach = int(std::ceil(voidFade_)) + 1;
+            // The light of the rim each sunk corner hangs from: MU paints its void black, and a
+            // slope lit by that paint was black before the abyss took it (Kanturu, the user,
+            // 2026-10-23: "cliffs that keep going down should work with gradient void").
+            std::vector<int> fromRim(size_t(side) * size_t(side), -1);
             for (int r = 0; r < side; ++r) {
                 for (int c = 0; c < side; ++c) {
                     const size_t v = size_t(r) * size_t(side) + size_t(c);
@@ -1498,7 +1503,11 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
                             const int rr = r + dr, cc = c + dc;
                             if (rr < 0 || cc < 0 || rr >= side || cc >= side) continue;
                             if (!rim[size_t(rr) * size_t(side) + size_t(cc)]) continue;
-                            nearest = std::min(nearest, std::sqrt(float(dr * dr + dc * dc)));
+                            const float d = std::sqrt(float(dr * dr + dc * dc));
+                            if (d < nearest) {
+                                nearest = d;
+                                fromRim[v] = rr * side + cc;
+                            }
                         }
                     }
                     const float t = std::clamp(nearest / voidFade_, 0.0f, 1.0f);
@@ -1510,10 +1519,19 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
             // The sunk heights, and the normals of every corner whose neighbourhood moved:
             // the rim's own corners too, since the slope beside them is new.
             std::vector<float> cornerY(sink.size(), 0.0f);
+            std::vector<std::array<float, 3>> rimLight(sink.size(), {0.0f, 0.0f, 0.0f});
+            for (size_t i = 0; i < vertices.size(); ++i) {
+                const size_t v = size_t(quadCorner[i]);
+                if (rim[v])
+                    for (int k = 0; k < 3; ++k) rimLight[v][k] = std::max(rimLight[v][k], vertices[i].colour[k]);
+            }
             for (size_t i = 0; i < vertices.size(); ++i) {
                 const size_t v = size_t(quadCorner[i]);
                 vertices[i].position[1] -= sink[v];
                 cornerY[v] = vertices[i].position[1];
+                if (sink[v] > 0.0f && fromRim[v] >= 0)
+                    for (int k = 0; k < 3; ++k)
+                        vertices[i].colour[k] = std::max(vertices[i].colour[k], rimLight[size_t(fromRim[v])][k]);
             }
             auto yAt = [&](int c, int r) {
                 c = std::clamp(c, 0, side - 1);
