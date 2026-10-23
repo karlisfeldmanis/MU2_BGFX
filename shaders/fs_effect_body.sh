@@ -90,7 +90,7 @@ float softness(float code, vec2 pixel, float depth, vec3 wpos)
 		// Over two metres below the rim, not the abyss's six: a face just under the lip is as
 		// black from MU's painted light as one deep down is from the abyss, and the mist went
 		// round it as a black wedge (the user, 2026-10-23, at 170,160).
-		shown = mix(shown, 1.0, smoothstep(u_abyss.x, u_abyss.x + min(u_abyss.y, 2.0), level - at.y));
+		shown = mix(shown, 1.0, smoothstep(u_abyss.x, u_abyss.x + min(u_abyss.y, 1.0), level - at.y));
 		// And as far as the ground there has faded into the void (abyssEdge, the world's
 		// void.blend): a plate's edge thins away behind the mist, smoothly, instead of ending
 		// on a line (the user, 2026-10-23: "we need that other plat edges is transparent").
@@ -102,6 +102,14 @@ float softness(float code, vec2 pixel, float depth, vec3 wpos)
 	// ending over the void came out as a stack of parallel edges.
 	float behind = prepassAt(pixel * u_viewTexel.xy).a;
 	float thin = behind <= depth ? 1.0 : smoothstep(0.0, quarters * 0.25, behind - depth);
+	// Not against what the chasm has blacked out: a puff passing through the sunk wall deep
+	// down faded on the wall's tile seams as dotted lines (the user, 2026-10-23).
+	if (thin < 1.0 && u_abyss.y > 0.0 && behind > 0.0)
+	{
+		vec3 at = u_effectEye.xyz + (wpos - u_effectEye.xyz) * (behind / max(depth, 1.0e-3));
+		float level = texture2D(s_abyss, vec2(at.x, -at.z) * u_abyss.z + u_abyss.w).r;
+		thin = mix(thin, 1.0, smoothstep(u_abyss.x, u_abyss.x + 1.0, level - at.y));
+	}
 	return shown * thin;
 }
 

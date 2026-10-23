@@ -20,6 +20,10 @@ constexpr size_t kMost = 300;          // MU's pool of 3,000, over kRatio
 constexpr float kThrows = 20.0f / kRatio;  // ours a box throws a frame
 constexpr float kRiseLife = 300.0f, kRiseLight = 0.04f;
 constexpr float kHoverLight = 0.06f, kShadeLight = 0.2f;
+// Ours: the mist's whole clock runs at this pace -- it climbs, turns, lives and is thrown at
+// half MU's speed, so it moves slower at the same density (the user, 2026-10-23: "make smoke
+// move slower").
+constexpr float kPace = 0.5f;
 constexpr float kAfterSeen = 50.0f;    // frames a Hover or Shade outlives its box's sight
 constexpr float kDegrees = 0.0174533f;
 // Ours: metres over which a puff thins out as it nears the ground or a cliff behind it, where
@@ -125,7 +129,7 @@ void ChasmMist::throwPuff(uint16_t index) {
         for (int tries = 0; tries < 4 && !clear; ++tries) {
             puff.at[0] = box.at[0] + (std::floor(unit() * 500.0f) - 250.0f) * kUnit;
             puff.at[2] = box.at[2] + (std::floor(unit() * 500.0f) - 250.0f) * kUnit;
-            clear = overVoid(puff.at[0], puff.at[2], 0.5f * half) >= 0.99f;
+            clear = overVoid(puff.at[0], puff.at[2], 0.25f * half) >= 0.99f;
         }
         if (!clear) return;
         puff.at[1] += (std::floor(unit() * 20.0f) - 20.0f) * kUnit;
@@ -146,7 +150,8 @@ void ChasmMist::throwPuff(uint16_t index) {
     // Fainter the less of it lies over the void (Rise and Hover; Shade darkens the ground it
     // stands on, as MU's does).
     if (box.kind != Kind::Shade) {
-        const float over = overVoid(puff.at[0], puff.at[2], 0.45f * kSheetMetres * puff.scale);
+        // A quarter of its width: the chasm's walls (void.fade) take the mist behind them now.
+        const float over = overVoid(puff.at[0], puff.at[2], 0.25f * kSheetMetres * puff.scale);
         puff.edge = box.kind == Kind::Rise ? over * over : 1.0f;
     }
     puff.bornY = puff.at[1];
@@ -155,7 +160,7 @@ void ChasmMist::throwPuff(uint16_t index) {
 
 void ChasmMist::update(float seconds, const float near[3]) {
     if (!open_) return;
-    seconds = std::min(seconds, 0.25f);
+    seconds = std::min(seconds, 0.25f) * kPace;
     const float frames = seconds / kFrame;
     clock_ += seconds * 1000.0f;
     for (Box& box : boxes_) {
