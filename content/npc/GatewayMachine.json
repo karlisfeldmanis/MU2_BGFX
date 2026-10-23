@@ -1,0 +1,426 @@
+{
+  "item": "GatewayMachine",
+  "mu_name": "Gateway Machine",
+  "mu_name_from": "NPC/to3gate.bmd, loaded as MODEL_KANTURU2ND_ENTER_NPC (ZzzOpenData.cpp:2034-2037), MuMain's MONSTER_GATEWAY_MACHINE, type 367 (_enum.h:4695; GM_Kanturu_2nd.cpp:106-113), the Relics' way into the Refinery Tower. OpenMU S6 KanturuRelics.cs:46 stands it at 141,191 facing South.",
+  "world": "kanturu",
+  "object_type": -1,
+  "why_this_one": "Kanturu's NPCs (the user, 2026-10-23: 'lets add kunturu npcs, if we dont have them cook them', then 'Both'). MU's machine opens the way to the Maya and Nightmare event; that event is not built, so it stands and is talked to.",
+  "profile": "npc",
+  "scale": 4.76,
+  "scale_from": "GM_Kanturu_2nd.cpp:110-112: Scale 4.76, Position -20 x and -200 y off its tile, no shadow, held on KANTURU2ND_NPC_ANI_STOP. The offset is not carried.",
+  "sheets": {
+    "khs_kan2gate001": "npc_khs_kan2gate001.png",
+    "khs_kan2gate002": "npc_khs_kan2gate002.png",
+    "khs_kan2gate003": "npc_khs_kan2gate003.png",
+    "khs_kan2gate004": "npc_khs_kan2gate004.png"
+  },
+  "sheet_from": "Out of MuMain's Data/NPC, decoded under an npc_ prefix, lower case: dark riveted iron with pink runes; 002 a red lamp, 003 a blue portal ring. The model names 001, 003 and 004 .tga, so their .OZT (1% cut) are the ones decoded; 002 is .OZJ.",
+  "sheet_materials": {
+    "khs_kan2gate001": "wrought_iron",
+    "khs_kan2gate002": "wrought_iron",
+    "khs_kan2gate003": "wrought_iron",
+    "khs_kan2gate004": "wrought_iron"
+  },
+  "sheet_materials_from": "A forged machine of dark iron.",
+  "effects_note": "Not carried yet: RenderKanturu2ndObjectMesh's arm (GM_Kanturu_2nd.cpp:729-745) lays chrome and the BITMAP_KANTURU_2ND_NPC1-3 sheets added over meshes 1-3, mesh 3's chrome sliding V; its opening (action 1, KANTURU2ND_NPC_ANI_ROT, 51 keys) with sparks and the hole's sound (:1089-1110) belongs to the event.",
+  "rig_note": "export-rig --actions=all: 51 bones; action 0 one key (STOP), action 1 the 51-key opening. Held on action 0.",
+  "islands_from": "The build fills this.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wrought_iron",
+      "triangles": 96,
+      "area": 7705.6,
+      "along": [
+        -67.1,
+        -13.7
+      ],
+      "mu_uv": [
+        0.002,
+        0.0,
+        0.997,
+        1.0
+      ],
+      "bake_uv": [
+        0.133,
+        0.012,
+        0.955,
+        0.893
+      ]
+    },
+    {
+      "island": 1,
+      "material": "wrought_iron",
+      "triangles": 58,
+      "area": 904.7,
+      "along": [
+        -47.4,
+        -20.7
+      ],
+      "mu_uv": [
+        0.209,
+        0.12,
+        0.706,
+        0.993
+      ],
+      "bake_uv": [
+        0.165,
+        0.493,
+        0.727,
+        0.918
+      ]
+    },
+    {
+      "island": 2,
+      "material": "wrought_iron",
+      "triangles": 58,
+      "area": 904.6,
+      "along": [
+        -47.4,
+        -20.7
+      ],
+      "mu_uv": [
+        0.209,
+        0.12,
+        0.706,
+        0.993
+      ],
+      "bake_uv": [
+        0.193,
+        0.539,
+        0.889,
+        0.926
+      ]
+    },
+    {
+      "island": 3,
+      "material": "wrought_iron",
+      "triangles": 58,
+      "area": 904.7,
+      "along": [
+        20.5,
+        47.2
+      ],
+      "mu_uv": [
+        0.209,
+        0.12,
+        0.706,
+        0.993
+      ],
+      "bake_uv": [
+        0.066,
+        0.092,
+        0.94,
+        0.915
+      ]
+    },
+    {
+      "island": 4,
+      "material": "wrought_iron",
+      "triangles": 58,
+      "area": 904.7,
+      "along": [
+        20.5,
+        47.2
+      ],
+      "mu_uv": [
+        0.209,
+        0.12,
+        0.706,
+        0.993
+      ],
+      "bake_uv": [
+        0.012,
+        0.277,
+        0.747,
+        0.944
+      ]
+    },
+    {
+      "island": 5,
+      "material": "wrought_iron",
+      "triangles": 98,
+      "area": 8053.3,
+      "along": [
+        13.5,
+        66.9
+      ],
+      "mu_uv": [
+        0.002,
+        0.0,
+        0.997,
+        1.0
+      ],
+      "bake_uv": [
+        0.014,
+        0.013,
+        0.948,
+        0.948
+      ]
+    },
+    {
+      "island": 6,
+      "material": "wrought_iron",
+      "triangles": 64,
+      "area": 12870.1,
+      "along": [
+        -69.6,
+        69.3
+      ],
+      "mu_uv": [
+        0.005,
+        0.001,
+        0.522,
+        0.695
+      ],
+      "bake_uv": [
+        0.013,
+        0.012,
+        0.97,
+        0.988
+      ]
+    },
+    {
+      "island": 7,
+      "material": "wrought_iron",
+      "triangles": 13,
+      "area": 1533.4,
+      "along": [
+        -66.4,
+        -38.0
+      ],
+      "mu_uv": [
+        0.791,
+        0.501,
+        0.967,
+        0.98
+      ],
+      "bake_uv": [
+        0.314,
+        0.013,
+        0.359,
+        0.135
+      ]
+    },
+    {
+      "island": 8,
+      "material": "wrought_iron",
+      "triangles": 16,
+      "area": 1693.1,
+      "along": [
+        16.8,
+        66.0
+      ],
+      "mu_uv": [
+        0.767,
+        0.474,
+        0.995,
+        0.949
+      ],
+      "bake_uv": [
+        0.104,
+        0.599,
+        0.163,
+        0.721
+      ]
+    },
+    {
+      "island": 9,
+      "material": "wrought_iron",
+      "triangles": 8,
+      "area": 1425.9,
+      "along": [
+        -68.1,
+        -50.9
+      ],
+      "mu_uv": [
+        0.002,
+        0.719,
+        0.406,
+        0.999
+      ],
+      "bake_uv": [
+        0.196,
+        0.013,
+        0.893,
+        0.908
+      ]
+    },
+    {
+      "island": 10,
+      "material": "wrought_iron",
+      "triangles": 8,
+      "area": 1425.9,
+      "along": [
+        50.7,
+        67.8
+      ],
+      "mu_uv": [
+        0.002,
+        0.719,
+        0.406,
+        0.999
+      ],
+      "bake_uv": [
+        0.276,
+        0.083,
+        0.929,
+        0.878
+      ]
+    },
+    {
+      "island": 11,
+      "material": "wrought_iron",
+      "triangles": 8,
+      "area": 347.7,
+      "along": [
+        -61.3,
+        -57.7
+      ],
+      "mu_uv": [
+        0.527,
+        0.004,
+        0.804,
+        0.195
+      ],
+      "bake_uv": [
+        0.112,
+        0.013,
+        0.585,
+        0.962
+      ]
+    },
+    {
+      "island": 12,
+      "material": "wrought_iron",
+      "triangles": 8,
+      "area": 347.7,
+      "along": [
+        57.4,
+        61.0
+      ],
+      "mu_uv": [
+        0.527,
+        0.004,
+        0.804,
+        0.195
+      ],
+      "bake_uv": [
+        0.013,
+        0.265,
+        0.951,
+        0.981
+      ]
+    },
+    {
+      "island": 13,
+      "material": "wrought_iron",
+      "triangles": 144,
+      "area": 10295.2,
+      "along": [
+        -45.3,
+        45.1
+      ],
+      "mu_uv": [
+        0.003,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.845,
+        0.82
+      ]
+    },
+    {
+      "island": 14,
+      "material": "wrought_iron",
+      "triangles": 60,
+      "area": 69.1,
+      "along": [
+        -3.8,
+        3.5
+      ],
+      "mu_uv": [
+        0.496,
+        0.46,
+        0.538,
+        0.542
+      ],
+      "bake_uv": [
+        0.202,
+        0.151,
+        0.333,
+        0.446
+      ]
+    },
+    {
+      "island": 15,
+      "material": "wrought_iron",
+      "triangles": 16,
+      "area": 1505.2,
+      "along": [
+        -21.6,
+        21.3
+      ],
+      "mu_uv": [
+        0.112,
+        0.113,
+        0.494,
+        0.885
+      ],
+      "bake_uv": [
+        0.29,
+        0.013,
+        0.628,
+        0.636
+      ]
+    },
+    {
+      "island": 16,
+      "material": "wrought_iron",
+      "triangles": 96,
+      "area": 4044.9,
+      "along": [
+        -43.0,
+        42.8
+      ],
+      "mu_uv": [
+        0.501,
+        0.008,
+        0.993,
+        0.996
+      ],
+      "bake_uv": [
+        0.166,
+        0.055,
+        0.515,
+        0.547
+      ]
+    },
+    {
+      "island": 17,
+      "material": "wrought_iron",
+      "triangles": 96,
+      "area": 2197.2,
+      "along": [
+        -30.8,
+        30.6
+      ],
+      "mu_uv": [
+        0.002,
+        0.003,
+        0.499,
+        0.997
+      ],
+      "bake_uv": [
+        0.013,
+        0.164,
+        0.418,
+        0.531
+      ]
+    }
+  ]
+}

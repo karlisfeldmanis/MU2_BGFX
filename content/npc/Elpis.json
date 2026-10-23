@@ -1,0 +1,469 @@
+{
+  "item": "Elpis",
+  "mu_name": "Elpis",
+  "mu_name_from": "NPC/Elpis.bmd, loaded as MODEL_SMELTING_NPC (ZzzOpenData.cpp:2040-2042), MuMain's MONSTER_ELPHIS, type 368 (_enum.h:4696; ZzzCharacter.cpp:14597-14603), the Refinery Tower's keeper. OpenMU S6 KanturuEvent.cs:51 stands her at 77,177.",
+  "world": "kanturu",
+  "object_type": -1,
+  "why_this_one": "Kanturu's NPCs (the user, 2026-10-23: 'lets add kunturu npcs, if we dont have them cook them', then 'Both' -- MU's two in their maps and camp folk in the Ruins). MU's Elpis refines Gemstones into Jewels of Harmony; that system is not built, so she stands and is talked to.",
+  "profile": "npc",
+  "scale": 2.5,
+  "scale_from": "CreateCharacter stands her at `c->Object.Scale = 2.5f`, one tile off her spot, (x + 1, y - 1) (ZzzCharacter.cpp:14599-14600), MU's own.",
+  "sheets": {
+    "kannpc01": "npc_kannpc01.png",
+    "kannpc02": "npc_kannpc02.png",
+    "kannpc03": "npc_kannpc03.png",
+    "kannpc04_R": "npc_kannpc04_r.png"
+  },
+  "sheet_from": "Out of MuMain's Data/NPC, decoded under an npc_ prefix, lower case: kannpc01.OZJ her face, auburn hair and dark teal robe; kannpc02.OZT teal plate traced in pink runes (5% cut); kannpc03.OZT her violet veil (15% cut); kannpc04_R.OZJ a teal rune strip on black.",
+  "sheet_materials": {
+    "kannpc01": "cloth",
+    "kannpc02": "painted_steel",
+    "kannpc03": "cloth"
+  },
+  "sheet_materials_from": "kannpc01 cloth (the robe is most of it; her face and hair share the sheet); kannpc02 the plate, lacquer with the cast grain; kannpc03 the veil.",
+  "material_overrides": {
+    "painted_steel": {
+      "grain": {
+        "kind": "cast",
+        "scale": 260,
+        "depth": 0.02,
+        "roughness_range": 0.03
+      }
+    }
+  },
+  "cutout": [
+    "kannpc02",
+    "kannpc03"
+  ],
+  "cutout_alpha": [
+    "kannpc02",
+    "kannpc03"
+  ],
+  "cutout_from": "Both .OZT, their alpha real: the plate's edges and the veil.",
+  "glow": {
+    "kannpc04_R": {}
+  },
+  "glow_from": "RenderKanturu3rdObjectMesh's MODEL_SMELTING_NPC case (GM_Kanturu_3rd.cpp:516-525) draws mesh 3, kannpc04_R, RENDER_TEXTURE | RENDER_BRIGHT, added, its V sliding (WorldTime % 2000 * 0.001): here added and steady; the slide is not carried.",
+  "effects_note": "Not carried yet: mesh 0's chrome pass and its body light of 10 (the same arm), her hover -- z at -60 + sin(WorldTime*0.002)*5.8, facing fixed (GM_Kanturu_3rd.cpp:943-947) -- and the green sparks round her (:1219-1231).",
+  "islands_from": "The build fills this.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 78,
+      "area": 5032.4,
+      "along": [
+        -28.2,
+        59.8
+      ],
+      "mu_uv": [
+        0.009,
+        0.01,
+        0.988,
+        0.99
+      ],
+      "bake_uv": [
+        0.15,
+        0.013,
+        0.935,
+        0.949
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 78,
+      "area": 5031.7,
+      "along": [
+        -28.2,
+        59.8
+      ],
+      "mu_uv": [
+        0.009,
+        0.01,
+        0.988,
+        0.99
+      ],
+      "bake_uv": [
+        0.014,
+        0.127,
+        0.97,
+        0.704
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 81,
+      "area": 1360.5,
+      "along": [
+        -37.7,
+        0.2
+      ],
+      "mu_uv": [
+        0.576,
+        0.669,
+        0.912,
+        0.843
+      ],
+      "bake_uv": [
+        0.048,
+        0.24,
+        0.837,
+        0.921
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 14,
+      "area": 87.4,
+      "along": [
+        -10.0,
+        -3.9
+      ],
+      "mu_uv": [
+        0.408,
+        0.01,
+        0.568,
+        0.065
+      ],
+      "bake_uv": [
+        0.073,
+        0.95,
+        0.658,
+        0.981
+      ]
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 14,
+      "area": 87.4,
+      "along": [
+        -10.0,
+        -3.9
+      ],
+      "mu_uv": [
+        0.408,
+        0.01,
+        0.568,
+        0.065
+      ],
+      "bake_uv": [
+        0.154,
+        0.95,
+        0.818,
+        0.988
+      ]
+    },
+    {
+      "island": 5,
+      "material": "cloth",
+      "triangles": 1170,
+      "area": 16586.0,
+      "along": [
+        -59.1,
+        12.9
+      ],
+      "mu_uv": [
+        0.005,
+        0.005,
+        0.993,
+        0.992
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.974,
+        0.974
+      ]
+    },
+    {
+      "island": 6,
+      "material": "cloth",
+      "triangles": 1,
+      "area": 0.0,
+      "along": [
+        -3.5,
+        -1.6
+      ],
+      "mu_uv": [
+        0.014,
+        0.29,
+        0.019,
+        0.323
+      ],
+      "bake_uv": [
+        0.868,
+        0.08,
+        0.869,
+        0.088
+      ]
+    },
+    {
+      "island": 7,
+      "material": "cloth",
+      "triangles": 1,
+      "area": 0.0,
+      "along": [
+        1.0,
+        2.1
+      ],
+      "mu_uv": [
+        0.015,
+        0.096,
+        0.02,
+        0.145
+      ],
+      "bake_uv": [
+        0.882,
+        0.723,
+        0.883,
+        0.735
+      ]
+    },
+    {
+      "island": 8,
+      "material": "cloth",
+      "triangles": 8,
+      "area": 185.0,
+      "along": [
+        -5.7,
+        6.5
+      ],
+      "mu_uv": [
+        0.245,
+        0.553,
+        0.383,
+        0.785
+      ],
+      "bake_uv": [
+        0.87,
+        0.404,
+        0.903,
+        0.46
+      ]
+    },
+    {
+      "island": 9,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 184.0,
+      "along": [
+        -4.0,
+        5.7
+      ],
+      "mu_uv": [
+        0.287,
+        0.553,
+        0.383,
+        0.782
+      ],
+      "bake_uv": [
+        0.68,
+        0.235,
+        0.704,
+        0.291
+      ]
+    },
+    {
+      "island": 10,
+      "material": "cloth",
+      "triangles": 7,
+      "area": 167.1,
+      "along": [
+        -5.7,
+        4.4
+      ],
+      "mu_uv": [
+        0.245,
+        0.553,
+        0.383,
+        0.785
+      ],
+      "bake_uv": [
+        0.887,
+        0.499,
+        0.921,
+        0.555
+      ]
+    },
+    {
+      "island": 11,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 163.6,
+      "along": [
+        -4.0,
+        5.4
+      ],
+      "mu_uv": [
+        0.287,
+        0.553,
+        0.383,
+        0.782
+      ],
+      "bake_uv": [
+        0.682,
+        0.711,
+        0.706,
+        0.767
+      ]
+    },
+    {
+      "island": 12,
+      "material": "painted_steel",
+      "triangles": 190,
+      "area": 5244.7,
+      "along": [
+        -36.2,
+        -1.9
+      ],
+      "mu_uv": [
+        0.206,
+        0.01,
+        0.989,
+        0.986
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.383,
+        0.401
+      ]
+    },
+    {
+      "island": 13,
+      "material": "painted_steel",
+      "triangles": 62,
+      "area": 765.5,
+      "along": [
+        -25.8,
+        -2.9
+      ],
+      "mu_uv": [
+        0.737,
+        0.018,
+        0.984,
+        0.395
+      ],
+      "bake_uv": [
+        0.014,
+        0.013,
+        0.953,
+        0.956
+      ]
+    },
+    {
+      "island": 14,
+      "material": "cloth",
+      "triangles": 42,
+      "area": 6829.4,
+      "along": [
+        -70.6,
+        10.3
+      ],
+      "mu_uv": [
+        0.012,
+        0.048,
+        0.694,
+        0.959
+      ],
+      "bake_uv": [
+        0.013,
+        0.013,
+        0.763,
+        0.643
+      ]
+    },
+    {
+      "island": 15,
+      "material": "cloth",
+      "triangles": 22,
+      "area": 260.4,
+      "along": [
+        -15.4,
+        -2.5
+      ],
+      "mu_uv": [
+        0.618,
+        0.334,
+        0.899,
+        0.97
+      ],
+      "bake_uv": [
+        0.014,
+        0.53,
+        0.714,
+        0.767
+      ]
+    },
+    {
+      "island": 16,
+      "material": "cloth",
+      "triangles": 22,
+      "area": 260.4,
+      "along": [
+        -15.2,
+        -2.4
+      ],
+      "mu_uv": [
+        0.618,
+        0.334,
+        0.899,
+        0.97
+      ],
+      "bake_uv": [
+        0.667,
+        0.339,
+        0.786,
+        0.788
+      ]
+    },
+    {
+      "island": 17,
+      "material": "skin",
+      "triangles": 16,
+      "area": 321.7,
+      "along": [
+        -3.1,
+        14.7
+      ],
+      "mu_uv": [
+        0.081,
+        0.022,
+        0.945,
+        0.986
+      ],
+      "bake_uv": [
+        0.336,
+        0.175,
+        0.963,
+        0.967
+      ]
+    },
+    {
+      "island": 18,
+      "material": "skin",
+      "triangles": 16,
+      "area": 321.7,
+      "along": [
+        -3.5,
+        14.2
+      ],
+      "mu_uv": [
+        0.081,
+        0.022,
+        0.945,
+        0.986
+      ],
+      "bake_uv": [
+        0.014,
+        0.722,
+        0.967,
+        0.977
+      ]
+    }
+  ]
+}

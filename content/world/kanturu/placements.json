@@ -1,26 +1,46 @@
 {
  "world": "kanturu",
- "summary": "What the extraction cannot know, for the Kanturu Ruins: its camp's townspeople. MU and OpenMU stand nobody in the Ruins (VersionSeasonSix/Maps/KanturuRuins.cs has no CreateNpcSpawns); Baz and Amy stand here as in Tarkan, Atlans, the Lost Tower and Aida (the user, 2026-10-23: 'lets add kunturu npcs', then 'Both'). They are world.json's npcs 0 and 1; these are their figures.",
+ "summary": "What the extraction cannot know, for the Kanturu Ruins: its camp's townspeople. MU and OpenMU stand nobody in the Ruins (VersionSeasonSix/Maps/KanturuRuins.cs has no CreateNpcSpawns); Baz and Amy stand here as in Tarkan, Atlans, the Lost Tower and Aida (the user, 2026-10-23: 'lets add kunturu npcs', then 'Both'). With MU's Elpis and Gateway Machine, brought here from the Tower and the Relics, which are not playable (the user: 'find better locations for them'). They are world.json's npcs 0-3; these are their figures.",
  "spawns": [
   {
    "model": "Storage01",
    "who": "Baz The Vault Keeper",
    "tile": [
-    23,
+    22,
     215
    ],
    "facing": 3,
-   "ours": "the camp vault, in the safe zone 4 tiles up from the arrival (20,218), two tiles clear of every object, off gate boxes 126 and 127, facing the camera"
+   "ours": "the camp vault just inside the Tarkan door, west of the way in, facing the camera"
   },
   {
    "model": "PotionGirlAmy",
    "who": "Potion Girl Amy",
    "tile": [
-    25,
+    26,
+    215
+   ],
+   "facing": 3,
+   "ours": "the camp potion seller east of the way in, beside Baz, facing the camera"
+  },
+  {
+   "model": "Elpis",
+   "who": "Elpis",
+   "tile": [
+    30,
+    202
+   ],
+   "facing": 3,
+   "ours": "MU's refinery keeper before the north ruin wall, a shrine at the head of the camp, facing the camera"
+  },
+  {
+   "model": "GatewayMachine",
+   "who": "Gateway Machine",
+   "tile": [
+    41,
     212
    ],
    "facing": 3,
-   "ours": "the camp potion seller beside Baz, facing the camera"
+   "ours": "MU's Relics machine as the centrepiece of the lit east plaza between its brazier pairs, facing the camera"
   }
  ]
 }
