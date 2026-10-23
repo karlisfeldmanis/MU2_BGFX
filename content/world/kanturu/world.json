@@ -1,0 +1,294 @@
+{
+  "world": "kanturu",
+  "name": "Kanturu",
+  "map": 37,
+  "note": "Kanturu Ruins, MU's map 37 (client Data/World38 + Object38, MuMain's WD_37KANTURU_1ST), Season 2 (2006), entered from Tarkan's west edge through the arch Tarkan already stands (Object86-88, gates 125/127). A broken ring of mossy industrial ruins round a black chasm, with a warp-only plateau in its middle (the 2010 Warriors' island). Step 1, 2026-10-21: the bare land, with no `rules` yet, so the realm does not know the map and no one stands in it but the studio. Its breeds will be raised past Aida's (the user, 2026-10-21: 'we will rise katuru monster levels so they are stronger than aida'), so the Ancient runes (141+) fall here. docs/worlds/kanturu-port.md.",
+  "gates": {
+    "spawn": {
+      "number": 138,
+      "box": [19, 217, 21, 219],
+      "note": "OpenMU's spawn gate 138 (VersionSeasonSix Gates.cs:276-280): the camp by the Tarkan door, the box a dead character stands up in. Without it a death in Kanturu rises in Lorencia. docs/worlds/kanturu-port.md Part C, C4."
+    },
+    "exits": [
+      {
+        "number": 126,
+        "box": [
+          19,
+          217,
+          21,
+          219
+        ],
+        "faces": [
+          0,
+          0
+        ],
+        "note": "Kanturu, from Tarkan. MU's 126 is 17,219-21,220 (Gates.cs:279), which overlaps the way back (127) on three tiles, 17-19,220: a character dropped there would stand on the door home. So it lands on the camp's box, spawn gate 138's (19,217-21,219), as research 2.1 settled."
+      }
+    ],
+    "enters": [
+      {
+        "number": 127,
+        "box": [
+          17,
+          220,
+          19,
+          222
+        ],
+        "level": 0,
+        "target": 128,
+        "note": "Kanturu's way back to Tarkan, in the gate's doorway (Gates.cs:538). MU asks 130, ours free, as every way out."
+      }
+    ]
+  },
+  "pipeline": {
+    "hidden": {
+      "value": [37, 59, 60, 61, 62, 81, 82, 83, 97, 107, 108],
+      "note": "Kanturu Ruins' eleven (MoveKanturu1stObject, GM_Kanturu_1st.cpp:52-60, 70-83, 107-108; 37 in RenderVisual :146): 37 the butterflies (58), 59 smoke vents (16), 60 and 61 red and amber fire lights (5, 58), 62, 107 and 108 the mist boxes (60, 77, 11), which never emit in MU (:165-173, 273-292), 81, 82 and 83 the waterfall spray (26, 35, 52), 97 the bubble box (1). 399 placements, all angeflo_R boxes, drawn by no mesh. docs/worlds/kanturu-port.md Part B 3."
+    },
+    "grass": {
+      "value": ["TileGrass01"],
+      "note": "MU grows dark olive tufts on slot 0 (5,340 drawn tiles) and pale blue-white wisps on slot 1 (1,353), ZzzLodTerrain.cpp:2076-2120. Slot 0 only for the first look; the wisps wait for a shot (decision 11). docs/worlds/kanturu-port.md."
+    },
+    "void": {
+      "value": {"start": 0.5, "depth": 6.0, "blend": 0, "fade": 3, "sink": 16, "no_walls": [[185, 31, 199, 45]]},
+      "note": "Aida's way, deeper: 44.8% of the map is NoGround, a chasm round the plateau, and Object06/76's 394 cliff faces hang 5-14 m into it (Aida's walls 4.7 m, depth 4.5). `blend` darkens the bare ring lips where no cliff stands, as Aida. docs/worlds/kanturu-port.md Part B 5."
+    },
+    "void_fill": {
+      "value": [[20, 218], [70, 187]],
+      "note": "From the camp (spawn gate 138) and from the plateau (warp gate 334, Ruins3), which no walk reaches: seeded from the camp alone the walker would void the whole plateau, 5,514 tiles. With both, only the 8 stray open tiles on rows 251-255 become void (checked). Ours. docs/worlds/kanturu-port.md Part B 3."
+    },
+    "blend_keep_near": {"walls": [5, 75], "reach": 2.5},
+    "flat_over_void": true,
+    "airs_from": {
+      "value": "lorencia",
+      "note": "MuMain loads MODEL_BUTTERFLY01 from Data/Object1, Lorencia's objects (MapManager.cpp:377-378), as for Noria and Aida."
+    },
+    "anchor_kinds": {
+      "value": {
+        "Object82": 18,
+        "Object83": 19,
+        "Object84": 20,
+        "Object62": 1,
+        "Object61": 23,
+        "Object60": 4
+      },
+      "note": "Kanturu Ruins hidden boxes that throw something (MoveKanturu1stObject and RenderKanturu1stObjectVisual, GM_Kanturu_1st.cpp; docs/worlds/kanturu-port.md Part B 3, 4 and 16-19). 18, 19 and 20, the waterfall spray of Object82 (BITMAP_WATERFALL_1 SubType 2, 1 frame in 2, 26), Object83 (WATERFALL_3 SubType 4 every frame, 35) and Object84 (WATERFALL_2 SubType 2, 1 in 3, 52): the very arms Aida's spray uses (game/world/waterfall_spray.h). 1, Object62's 58 fires (amber AddTerrainLight r3 and BITMAP_TRUE_FIRE 1 frame in 3, :77-83, 157-164), Devias's brazier fire; ours throws CreateFire(0)'s light (0.6-1.1 over 4 tiles) where MU's is (1, 0.6, 0.2) x 0.3-0.6 over 3, to settle when the light is tuned. 23, Object61's 5 red-orange lights (0.9, 0.2, 0.1) x 0.3-0.6 r3, :70-76), light only, carried in the small fires' light (1, 0.6, 0.4). 4, Object60's 16 smoke vents by the factories (BITMAP_SMOKE SubType 21, 1 in 3, :149-156), cooked, but nothing draws a lone smoke anchor yet (only Blood Castle's castle_sparks reads kind 4 at a world point, with its own flares): the vents wait for the effects' third batch. Not carried: the mist boxes Object63, 108 and 109, which never emit in MU (:165-173), and Object98's bubble box, which throws nothing in the Ruins."
+    },
+    "anchor_lights": {
+      "value": {
+        "1": [
+          [
+            1.0,
+            0.6,
+            0.2
+          ],
+          0.3,
+          0.6,
+          3.0,
+          3.0,
+          0.12
+        ],
+        "23": [
+          [
+            0.9,
+            0.2,
+            0.1
+          ],
+          0.3,
+          0.6,
+          3.0,
+          3.0,
+          0.12
+        ]
+      },
+      "note": "MU's own light for the two fire kinds, over cook_anchors.py's ANCHOR_LIGHT (colour, low, high, reach in tiles, flicker hz, smoothing). 1, Object62's 58 fires: AddTerrainLight (L, 0.6L, 0.2L), L = 0.3-0.6 re-rolled every frame, over 3 tiles (GM_Kanturu_1st.cpp:77-83), where the brazier kind threw CreateFire(0)'s 0.6-1.1 over 4. 23, Object61's 5 lights: (0.9L, 0.2L, 0.1L), the same L and reach (:70-76), a deep red where the small fires' kind threw amber. The flicker keeps kind 1's 3 Hz eased over 0.12 s: MU's is a fresh roll each frame (ours)."
+    },
+    "border_fill": {
+      "value": {
+        "walls": [
+          62,
+          107,
+          108
+        ],
+        "clear": 10,
+        "keep": [
+          [
+            0,
+            0,
+            255,
+            255
+          ]
+        ]
+      },
+      "note": "Ours, as Aida (terrain.py BORDER_FILL_BY_MAP): MU leaves everything outside the Ruins ring bare black, which at 16:9 and pulled back reads as holes (Aida, the user 2026-10-11). Kanturu has no wall of cliffs round its inner chasm, so the walk from the map edge is held 10 tiles off MU's mist boxes (types 62, 107, 108), which stand only over the chasm: the outer frame fills (15,608 tiles, NoMove) and the chasm round the plateau stays void. 6 tiles ate into the chasm. Picked 2026-10-22 (the user: \"you decide\"), docs on the look-calls page."
+    },
+    "ground_light": {
+      "value": {
+        "contrast": 1.0,
+        "scale": 1.0,
+        "depth": 1.0
+      },
+      "note": "Ours (pipeline/ground.py corner_light). The town's curve (MU's painted light to the power 1.45, times 0.72, half its variation kept) drew the Ruins' ground at about half its objects' light (median 0.51 over the walkable tiles), and the objects take MU's light straight (cook.py lit): the boulders Object80/81 and the ground under them wear the same brown (mean 48 and 49) and stood 1.7 times apart at 166,221 (the user, 2026-10-22: 'color difference between cligs and ground is very vissible, alsmost like bug'). Straight, at 0.9 for the sun the ground faces fuller, every variation kept: the ground at 0.9 of its objects everywhere, as MU draws them both by one TerrainLight."
+    },
+    "light_reach": {
+      "value": 3,
+      "note": "Ours: a placement takes the median light of the 7x7 tiles round it (void left out), not 3x3. A stone heap (Object07) in a pit MU paints black at 112-113,55-56 came out as a black blob (the user, 2026-10-23: \"black object\", \"try to avoid compelte balck object\")."
+    }
+  },
+  "show": {
+    "waterfall_spray": {
+      "note": "Its falls' drops, spray and mist from Object82-84 (game/world/waterfall_spray.h).",
+      "burst_scale": 0.35,
+      "mist": false,
+      "steam": true
+    },
+    "boids": {
+      "model": "Butterfly01",
+      "speed": 0.3,
+      "lit": false,
+      "tint": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "calls": false,
+      "flap": 6.25,
+      "note": "Ours, as Aida: MU throws a MODEL_BUTTERFLY01 SubType 3 off each of 58 hidden Object38 boxes about once a second (type 37, GM_Kanturu_1st.cpp:137-148); here Noria's butterfly pool on Noria's numbers flies round the hero instead. Velocity 0.3, LightEnable false (GOBoid.cpp:1335). 6.25: the cook's 0.25 s keys over MU's 0.04 s."
+    },
+    "smoke_vents": {
+      "note": "Object60's 16 smoke vents by the factories: MU's BITMAP_SMOKE SubType 21 one frame in three (GM_Kanturu_1st.cpp:149-156), drawn by Lamps as a fire that only smokes (lamps.h, Fire::vent)."
+    },
+    "ruin_effects": {
+      "note": "Object93's arcs across the blue tanks and Object99's green spit (GM_Kanturu_1st.cpp:214-247; game/world/ruin_effects.h)."
+    },
+    "air": {
+      "loop": "world_kanturu",
+      "everywhere": true,
+      "room": "open",
+      "note": "SOUND_KANTURU_1ST_BG_GLOBAL, kan_ruin_global.wav, which MoveKanturu1stObject plays from every object every frame (GM_Kanturu_1st.cpp:123): always on, the whole map, under the open black sky."
+    },
+    "object_loops": [
+      {
+        "model": "Object47",
+        "loop": "kanturu_wheel",
+        "full": 4,
+        "reach": 14
+      },
+      {
+        "model": "Object78",
+        "loop": "kanturu_waterfall",
+        "full": 6,
+        "reach": 20
+      },
+      {
+        "model": "Object93",
+        "loop": "kanturu_elec",
+        "full": 4,
+        "reach": 14
+      },
+      {
+        "model": "Object99",
+        "loop": "kanturu_plant",
+        "full": 3,
+        "reach": 10
+      },
+      {
+        "model": "Object85",
+        "loop": "world_bonfire",
+        "full": 2,
+        "reach": 8
+      },
+      {
+        "model": "Object67",
+        "loop": "world_bonfire",
+        "full": 2,
+        "reach": 8
+      }
+    ],
+    "object_loops_note": "MU plays its wheel, waterfall, electric and plant sounds flat while any glowing wheel (Object47), fall (Object78), blue tank (Object93) or carnivorous plant (Object99) is moved, which is the ones near the camera (GM_Kanturu_1st.cpp:64-117). Ours, marked: each from its nearest one, full to `full` metres and gone at `reach` (Play::hearWorld). First distances, for the user to judge.",
+    "crystal_chrome": {
+      "model": "Object96",
+      "note": "MU's second pass over the crystals, mesh 0 again RENDER_CHROME7 with BITMAP_CHROME (GM_Kanturu_1st.cpp:368-370): Chrome01 added at the body light, slid by the normals and WorldTime*0.00006 (ZzzBMD.cpp:1409-1457, 1667-1671). game/world/crystal_sparks.h lendCrystalChrome."
+    },
+    "music": {
+      "track": "/music/kanturu_ambient.mp3",
+      "where": "safe",
+      "note": "Ours, not WebZen's kanturu_1st: freesound_community scary-ambient-05 (the user, 2026-10-22: 'use this music for kunturu not webzen'), looped in the camp's safe zone only, the house rule (the user, 2026-10-11: 'we play music on safezones only'). And out of the safe zone, thellywellyn horror-ambience-4 looped (the user, 2026-10-22: 'when char is not in kanturu safe zone we play thellywellyn-horror-ambience-4-303645.mp3').",
+      "loops": true,
+      "wild": "/music/kanturu_wild.mp3"
+    },
+    "leaves": "leaf",
+    "leaf_field": {
+      "count": 120,
+      "size": 1.3,
+      "note": "Aida's (the user, 2026-10-22: 'more denser like Aida'): the game's 80 specks read thin in the Ruins."
+    },
+    "chasm_mist": {
+      "note": "MU's mist boxes 62, 107 and 108 (Object63, 108, 109), which RenderKanturu1stObjectVisual runs every frame they are seen: rising grey clouds over the chasm, hovering ones over the plateau, and a few that darken (game/world/chasm_mist.h). The user, 2026-10-22: \"mayeb we are missing something\", then \"yes\".",
+      "strength": 0.008
+    },
+    "soft_glow": {
+      "models": [
+        "Object78"
+      ],
+      "note": "Ours: the waterfalls (Object78, waterfall_R added) thin over their last 1.5 m in front of the pool instead of ending on its line (content::Material::softGlow, fs_glow). The user, 2026-10-23: \"water smoke is not smooth and little bit striped/cuted\", then \"same\"."
+    }
+  },
+  "rules": {
+    "arrive": [
+      20,
+      218
+    ],
+    "home": 8,
+    "event": false,
+    "floors": false,
+    "move_order": 11,
+    "note": "Kanturu Ruins, MU's map 37, entered from Tarkan's west door (gates 125/127, the next step). arrive is the middle of the spawn gate 138's box, the camp by the door (OpenMU VersionSeasonSix Gates.cs:276-280), where a death lands too; not 126's arrival box, which overlaps the way back on three tiles (docs/worlds/kanturu-port.md 2.1). The Town Portal goes to Tarkan's town (home 8): the camp has no merchant (decision 6). Last on the M key's walk (11), so no other map's order moves. No drops yet: no breed stands here."
+  },
+  "npcs": [
+    {
+      "npc": 240,
+      "name": "Baz The Vault Keeper",
+      "figure": "Storage01",
+      "at": [
+        38,
+        211
+      ],
+      "look": 3,
+      "note": "Ours: the camp vault, as Tarkan, Atlans, the Lost Tower and Aida have one (the user, 2026-10-23: lets add kunturu npcs, then Both; then find better locations for them). MU and OpenMU stand nobody in the Ruins. On the camp's cobbled plaza between its two brazier pairs, west of Elpis, facing the camera."
+    },
+    {
+      "npc": 253,
+      "name": "Potion Girl Amy",
+      "figure": "PotionGirlAmy",
+      "at": [
+        46,
+        211
+      ],
+      "look": 3,
+      "note": "Ours: the camp potion seller, east of Elpis on the plaza, facing the camera (2026-10-23)."
+    },
+    {
+      "npc": 368,
+      "name": "Elpis",
+      "figure": "Elpis",
+      "at": [
+        42,
+        213
+      ],
+      "look": 2,
+      "note": "MU's Elpis (368), the Refinery Tower's keeper (OpenMU KanturuEvent.cs:51, 77,177 in map 39), stood here in the Ruins camp because the Tower is not playable (the user, 2026-10-23: find better locations for them): the plaza's centrepiece between its brazier pairs, facing South-West toward the Tarkan door. Her refining is not built."
+    },
+    {
+      "npc": 367,
+      "name": "Gateway Machine",
+      "figure": "GatewayMachine",
+      "at": [
+        25,
+        205
+      ],
+      "look": 3,
+      "note": "MU's Gateway Machine (367), which stands in the Relics (OpenMU KanturuRelics.cs:46, 141,191), stood in the Ruins camp because the Relics are not playable (the user, 2026-10-23: find better locations for them): on the open ground north of the camp, 6.5 tiles from any object, a landmark facing the camera. First tried behind the Relics door (91,90), where it stood out over the chasm and could not be seen. The tower event it opens is not built."
+    }
+  ]
+}
