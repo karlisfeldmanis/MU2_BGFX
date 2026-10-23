@@ -1526,6 +1526,8 @@ void Play::update(double seconds) {
                         aqua_.cast(ground, std::cos(way), -std::sin(way));
                     } else if (happening.a == sim::skill::kNova) {
                         // Its burst is drawn above (fx/nova.h); it throws no bolt.
+                    } else if (happening.a == sim::skill::kForce) {
+                        // Nor Force: its piercing, waves and streaks stand at him (fx/force.h).
                     } else {
                         bolt_.cast(from, to, happening.whom, atHand);
                     }
