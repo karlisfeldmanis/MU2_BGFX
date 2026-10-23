@@ -253,9 +253,9 @@
       "high": 7.5,
       "range_tiles": 0,
       "at": [
-        28.2,
-        312.6,
-        140.4
+        38.2,
+        302.2,
+        146.8
       ]
     },
     {
@@ -269,9 +269,9 @@
       "high": 7.5,
       "range_tiles": 0,
       "at": [
-        74.6,
-        131.0,
-        315.8
+        108.1,
+        96.2,
+        280.1
       ]
     },
     {
@@ -285,9 +285,9 @@
       "high": 7.5,
       "range_tiles": 0,
       "at": [
-        -73.6,
-        133.8,
-        151.2
+        26.6,
+        150.7,
+        146.8
       ]
     },
     {
@@ -301,9 +301,9 @@
       "high": 7.5,
       "range_tiles": 0,
       "at": [
-        49.5,
-        52.6,
-        105.8
+        64.7,
+        53.2,
+        129.7
       ]
     },
     {
@@ -317,9 +317,9 @@
       "high": 7.5,
       "range_tiles": 0,
       "at": [
-        -145.2,
-        -27.5,
-        183.9
+        -33.4,
+        0.9,
+        32.7
       ]
     },
     {
@@ -333,9 +333,9 @@
       "high": 7.5,
       "range_tiles": 0,
       "at": [
-        186.5,
-        -84.3,
-        172.9
+        213.1,
+        -31.2,
+        173.2
       ]
     },
     {
@@ -349,9 +349,9 @@
       "high": 7.5,
       "range_tiles": 0,
       "at": [
-        219.2,
-        -173.1,
-        209.1
+        213.1,
+        -31.2,
+        173.2
       ]
     },
     {
@@ -365,9 +365,9 @@
       "high": 7.5,
       "range_tiles": 0,
       "at": [
-        45.5,
-        -151.0,
-        239.1
+        76.1,
+        -41.4,
+        145.0
       ]
     },
     {
@@ -381,9 +381,9 @@
       "high": 7.5,
       "range_tiles": 0,
       "at": [
-        131.9,
-        -213.1,
-        91.6
+        76.1,
+        -41.4,
+        145.0
       ]
     },
     {
@@ -397,9 +397,9 @@
       "high": 7.5,
       "range_tiles": 0,
       "at": [
-        40.7,
-        -9.7,
-        77.4
+        43.2,
+        -5.6,
+        75.7
       ]
     },
     {
@@ -430,5 +430,6 @@
     }
   },
   "glow_from": "RenderKanturu1stAfterObjectMesh type 95 (GM_Kanturu_1st.cpp:361-370): mesh 0 RENDER_TEXTURE|RENDER_BRIGHT, added at the body's light, which MU takes off the ground under it (Kanturu's walkable TerrainLight about 0.5); here a steady 0.5 on the sheet's glow_strength, where it stood at 1 and blew out near white. Then RENDER_CHROME7|RENDER_DARK with BITMAP_CHROME: CHROME7 is tested first in RenderMesh's chrome branch, so that pass is ADDED too (GL_ONE, GL_ONE, ZzzBMD.cpp:1409-1457), a chrome sheet slid by the normals and WorldTime*0.00006, not a darkening. Not carried yet: the shimmer.",
-  "lamp_from": "Ours: each crystal a pink light, its sheet songk3crystal_R's own colour (the bright texels average 1.0, 0.7, 0.72), over 3 tiles, breathing slowly 0.85-1.15, so a hero near one is lit by it. MU lights nothing from them. The user, 2026-10-23: \"we need that crystal is real light emiters, so when char is near them we can feel that\", \"light color has to match the crystals\"."
+  "lamp_from": "Ours: each crystal a pink light, its sheet songk3crystal_R's own colour (the bright texels average 1.0, 0.7, 0.72), over 3 tiles, breathing slowly 0.85-1.15, so a hero near one is lit by it. MU lights nothing from them. The user, 2026-10-23: \"we need that crystal is real light emiters, so when char is near them we can feel that\", \"light color has to match the crystals\".",
+  "emitters_snapped": "Ours: each spark moved from its bone (MuExtract rest position, up to 1.9 m off the shards) to the nearest point of the crystal's own triangles, 20% in towards that triangle's middle, so it lies on a shard (the user, 2026-10-23: \"those blue crystal effect has to be always be on crystal meshes non somewhere else\")."
 }
