@@ -1,0 +1,28 @@
+{
+  "item": "m_Piercing",
+  "mu_name_from": "Data/Skill/m_Piercing.bmd, MODEL_PIERCING2 (ZzzOpenData.cpp:4318), made by Force as it is let go (ZzzCharacter.cpp:5057-5063).",
+  "kind": "skill",
+  "why_this_one": "Force (AT_SKILL_FORCE): Scale 2, ten frames, 130 units over his feet along his facing, BlendMesh -2 at BlendMeshLight / 1.6 a frame while more than five are left, laying a sub-type 2 MODEL_WAVES each of those frames (ZzzEffect.cpp:3248-3262, Move_MODEL_PIERCING2). game/fx/force.h draws it.",
+  "mesh": "m_Piercing.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/m_Piercing.bmd: two meshes, 36 triangles, a cone down its own Z from -74 to 193. Its one bone, Box01, turns it 90 degrees about X (quaternion 0.707, 0, 0, 0.707) and sets it 21 units across and 31 up; game/fx/force.h lays the Z along his facing.",
+  "parts": [
+    {
+      "group": "strongP_R",
+      "sheet": "strongP_R.png",
+      "blend": "additive",
+      "note": "Data/Skill/strongP_R.OZJ, 64 x 64: a violet cone."
+    },
+    {
+      "group": "piercing",
+      "sheet": "piercing.png",
+      "blend": "additive",
+      "note": "Data/Skill/piercing.OZJ, 128 x 128: a white burst."
+    },
+    {
+      "group": "streak",
+      "sheet": "streak.png",
+      "blend": "additive",
+      "note": "Not a mesh of the piercing: the sheet of Force's streaks, carried in this folder as Death Stab carries NSkill.png. Data/Effect/Piercing.OZJ (BITMAP_PIERCING, ZzzOpenData.cpp:5188), 64 x 64: the two joints each sub-type 1 wave lays, thirty tails of twenty units straight down his facing (ZzzEffectJoint.cpp:2445-2465, 6481-6500). Named streak.png beside piercing.png, which a case-blind disk would take for the same file."
+    }
+  ]
+}

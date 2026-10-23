@@ -1879,6 +1879,10 @@ void Play::update(double seconds) {
                         if (cast && happening.a == sim::skill::kImpale) {
                             impale_.begin(happening.who, happening.whom, swinger->swinging);
                         }
+                        // Force's piercing, waves and streaks (fx/force.h).
+                        if (cast && happening.a == sim::skill::kForce) {
+                            force_.begin(happening.who, happening.whom, swinger->swinging);
+                        }
 
                         // What this swing was thrown with, kept until the blow settles -- for a
                         // player that is a tick or two later, in the branch below.
@@ -2866,6 +2870,13 @@ void Play::update(double seconds) {
     // Impale's sound and ghosts (fx/impale.h).
     impale_.update(float(seconds), bodyAt,
                    [&](uint32_t id) { skillWave(sim::skill::kImpale, id); });
+    // Force's, and sDarkSpear as it is let go (fx/force.h).
+    force_.update(float(seconds), bodyAt, [&](uint32_t id) {
+        const Drawn* drawn = drawnOf(id);
+        if (heard_.darkSpear >= 0 && drawn && drawn->placed) {
+            emit(heard_.darkSpear, drawn->crown[0], drawn->crown[2], id);
+        }
+    });
     // The fire on him while he calls a Meteorite down: while its clip is on him, not while the
     // realm holds him -- a cast on the tick he arrives is held while the drawn body is still
     // sliding in on its run, and the fire read as a man on fire running. And while he casts

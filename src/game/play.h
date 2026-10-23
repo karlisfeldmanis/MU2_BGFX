@@ -64,6 +64,7 @@
 #include "game/fx/aqua.h"
 #include "game/fx/deathstab.h"
 #include "game/fx/impale.h"
+#include "game/fx/force.h"
 #include "game/fx/firebreath.h"
 #include "game/invasion_sky.h"
 #include "game/fx/meteor.h"
@@ -1090,6 +1091,8 @@ public:
     DeathStab& deathStab() { return deathStab_; }
     // The spear's Impale: its sound and its ghosts. fx/impale.h.
     Impale& impale() { return impale_; }
+    // The Dark Lord's Force: its piercing, waves and streaks, and its sound. fx/force.h.
+    Force& force() { return force_; }
     // The Dinorant's Fire Breath: its sprays, its haze and its burst. fx/firebreath.h.
     FireBreath& fireBreath() { return fireBreath_; }
     void gatherBolt(gfx::Effects& effects, const float eye[3]) const { bolt_.gather(effects, eye); }
@@ -1942,6 +1945,7 @@ private:
     Aqua aqua_;
     DeathStab deathStab_;
     Impale impale_;
+    Force force_;
     FireBreath fireBreath_;
     // A Teleport's fade on the hero: seconds since he began to fade out, or since he was put
     // down and began to fade back in; -1 for neither. MU's tenth of alpha a frame, both ways.
@@ -2064,6 +2068,7 @@ private:
         int take = -1;                                  // pGetItem: a pickup, an equip, a bind
         int drink = -1, apple = -1;                     // a potion going down
         int orb = -1;                                   // an orb read, and the skill kept
+        int darkSpear = -1;  // sDarkSpear: Force let go (fx/force.h)
         int warp = -1;                                  // sMagic: a Town Portal landing
         int rite = -1;                                  // the Rebirth rite, its whole 14 s
         int riteReborn = -1;                            // and its message, as he stands

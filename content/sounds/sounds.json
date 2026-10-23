@@ -2850,6 +2850,12 @@
       ],
       "from": "SOUND_SKILL_DRAIN_LIFE, which ZzzOpenData loads from Data\\\\Sound\\\\SE_Ch_summoner_skill07_lifedrain.wav with one voice (:4919). ZzzCharacter plays it as Drain Life lets MODEL_ALICE_DRAIN_LIFE go (:5214-5223).",
       "note": "The Ancient rune Drain Life (sim/items.h kDrain...), played where it drains (game/fx/drain)."
+    },
+    "dark_spear": {
+      "files": [
+        "sDarkSpear.wav"
+      ],
+      "from": "SOUND_ATTACK_SPEAR, Data\\Sound\\sDarkSpear.wav (ZzzOpenData.cpp:4868). Force let go, with its waves and piercing (ZzzCharacter.cpp:5057-5063); cued by game/fx/force.h."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

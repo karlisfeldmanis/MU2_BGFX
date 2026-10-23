@@ -1,0 +1,16 @@
+{
+  "item": "m_waves",
+  "mu_name_from": "Data/Skill/m_waves.bmd, MODEL_WAVES (ZzzOpenData.cpp:4317), made by Force as it is let go (ZzzCharacter.cpp:5057-5063): two at sub-type 1, and one a frame at sub-type 2 from MODEL_PIERCING2 (MoveHandlers.cpp:5360-5400).",
+  "kind": "skill",
+  "why_this_one": "Force (AT_SKILL_FORCE): a ring laid flat 130 units over his feet (Angle[0] 90), sub-type 1 scattered 50 units, Scale 0.1-0.6 growing by a gravity that grows 0.07 a frame to 2, fifteen frames, BlendMesh -2 at BlendMeshLight / 1.5 a frame (ZzzEffect.cpp:3190-3245, Move_MODEL_WAVES). game/fx/force.h draws it.",
+  "mesh": "m_waves.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/m_waves.bmd: one mesh, 28 triangles, a ring 174 units round in its X and Z and 36 deep in its Y; its one bone, Box01, is the identity.",
+  "parts": [
+    {
+      "group": "combo3",
+      "sheet": "combo3.png",
+      "blend": "additive",
+      "note": "Data/Skill/combo3.OZJ, 64 x 128: cyan flames."
+    }
+  ]
+}
