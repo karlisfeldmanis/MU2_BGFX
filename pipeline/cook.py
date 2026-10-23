@@ -3566,6 +3566,9 @@ def cook_shows(out_dir):
             if "eye_trail" in show:
                 one["eye_trail"] = {"right": show["eye_trail"]["right"],
                                     "left": show["eye_trail"]["left"]}
+                for k in ("colour", "width", "tails"):
+                    if k in show["eye_trail"]:
+                        one["eye_trail"][k] = show["eye_trail"][k]
             if "bones" in show:
                 one["bones"] = {role: list(row["names"]) for role, row in show["bones"].items()}
             if "star_tint" in show:

@@ -1,0 +1,27 @@
+{
+  "about": "Where this world's monsters stand (sprint E3; mu.db's monster_spawns before it): each nest a box of tiles [x1, y1, x2, y2] holding `count` of `breed` (MU's monster number), raised in `id` order across every world. `./mu new monster --db` appends here.",
+  "nests": [
+    {"id": 2086, "breed": 351, "box": [188, 218, 188, 218], "count": 1},
+    {"id": 2087, "breed": 351, "box": [159, 232, 159, 232], "count": 1},
+    {"id": 2088, "breed": 351, "box": [36, 234, 36, 234], "count": 1},
+    {"id": 2089, "breed": 351, "box": [42, 235, 42, 235], "count": 1},
+    {"id": 2090, "breed": 351, "box": [118, 232, 118, 232], "count": 1},
+    {"id": 2091, "breed": 351, "box": [55, 228, 55, 228], "count": 1},
+    {"id": 2092, "breed": 351, "box": [75, 231, 75, 231], "count": 1},
+    {"id": 2093, "breed": 351, "box": [69, 238, 69, 238], "count": 1},
+    {"id": 2094, "breed": 351, "box": [174, 196, 174, 196], "count": 1},
+    {"id": 2095, "breed": 351, "box": [94, 234, 94, 234], "count": 1},
+    {"id": 2096, "breed": 351, "box": [100, 240, 100, 240], "count": 1},
+    {"id": 2097, "breed": 351, "box": [114, 239, 114, 239], "count": 1},
+    {"id": 2098, "breed": 351, "box": [135, 223, 135, 223], "count": 1},
+    {"id": 2099, "breed": 351, "box": [143, 239, 143, 239], "count": 1},
+    {"id": 2100, "breed": 351, "box": [151, 206, 151, 206], "count": 1},
+    {"id": 2101, "breed": 351, "box": [155, 196, 155, 196], "count": 1},
+    {"id": 2102, "breed": 351, "box": [180, 225, 180, 225], "count": 1},
+    {"id": 2103, "breed": 351, "box": [172, 215, 172, 215], "count": 1},
+    {"id": 2104, "breed": 351, "box": [42, 227, 42, 227], "count": 1},
+    {"id": 2105, "breed": 351, "box": [170, 224, 170, 224], "count": 1},
+    {"id": 2106, "breed": 351, "box": [157, 204, 157, 204], "count": 1},
+    {"id": 2107, "breed": 351, "box": [189, 211, 189, 211], "count": 1}
+  ]
+}

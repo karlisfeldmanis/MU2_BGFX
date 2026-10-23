@@ -161,8 +161,12 @@ struct FigureBody {
     std::string auraBone;
     float auraColour[3] = {0.0f, 0.0f, 0.0f};
     float auraTiles = 0.0f;
-    // Its two eye trails' bones, right and left (show.eye_trail), empty for none.
+    // Its two eye trails' bones, right and left (show.eye_trail), empty for none; their light,
+    // width in units and tails, right then left. Tarkan's by default: subtypes 3 and 2.
     std::string eyeTrail[2];
+    float eyeTrailColour[3] = {0.5f, 0.1f, 1.0f};
+    float eyeTrailWidth = 30.0f;
+    int eyeTrailTails[2] = {8, 20};
     // The bones its shows hang on, by role (show.bones, sprint E4b): "hand_flame", "stars",
     // "shade", "eyes"... each a list of MU's bone names, found once by Play::fit.
     std::vector<std::pair<std::string, std::vector<std::string>>> boneRoles;
@@ -530,6 +534,9 @@ private:
         float auraColour[3] = {0.0f, 0.0f, 0.0f};
         float auraTiles = 0.0f;
         std::string eyeTrail[2];
+        float eyeTrailColour[3] = {0.5f, 0.1f, 1.0f};
+        float eyeTrailWidth = 30.0f;
+        int eyeTrailTails[2] = {8, 20};
         std::vector<std::pair<std::string, std::vector<std::string>>> boneRoles;
         float tint[3] = {0.0f, 0.0f, 0.0f};
         bool tinted = false;

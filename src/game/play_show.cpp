@@ -448,10 +448,16 @@ void Play::snort(float seconds) {
         if (one.trailBones[0] < 0 || one.trailBones[1] < 0 || !one.visible || !one.placed) {
             continue;
         }
+        const FigureBody* look = one.figure.body();
+        if (look == nullptr) continue;
         const float origin[3] = {0.0f, 0.0f, 0.0f};
         float at[3];
-        if (one.figure.pointOn(one.trailBones[0], origin, at)) eyeTrails_.feed(one.id, false, at);
-        if (one.figure.pointOn(one.trailBones[1], origin, at)) eyeTrails_.feed(one.id, true, at);
+        for (int e = 0; e < 2; ++e) {
+            if (one.figure.pointOn(one.trailBones[e], origin, at)) {
+                eyeTrails_.feed(one.id, e == 1, at, look->eyeTrailColour, look->eyeTrailWidth,
+                                look->eyeTrailTails[e]);
+            }
+        }
     }
     // The plain Beam Knight's hand flames, one a claw each reference frame while it is drawn.
     for (Drawn& one : drawn_) {
