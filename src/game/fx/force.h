@@ -5,14 +5,14 @@
 // SOUND_ATTACK_SPEAR beside it, cued here. The realm lands the blow on the same key (the row's
 // `release`, 3/7), so the number comes with the piercing.
 //
-// **The piercing.** One MODEL_PIERCING2 (Skill/m_Piercing.bmd): a violet cone and a white burst,
-// Scale 2, 130 units over his feet and down his facing, its tip some four tiles out -- the reach
-// the realm gives Force. Ten frames; its light falls by 1.6 a frame while more than five are left,
+// **The piercing.** One MODEL_PIERCING2 (Skill/m_Piercing.bmd): a cone and a white burst, Scale
+// 2, 130 units over his feet along his line, its point flaring out behind him and its mouth
+// opening towards what he struck. Ten frames; its light falls by 1.6 a frame while more than five are left,
 // and on each of those frames it lays a sub-type 2 wave at Scale LifeTime x 0.05
 // (ZzzEffect.cpp:3248-3262, Move_MODEL_PIERCING2, MoveHandlers.cpp:5360-5400).
 //
 // **The waves.** Two MODEL_WAVES at sub-type 1 (Skill/m_waves.bmd, cyan flames on a ring),
-// laid flat (Angle[0] 90) 130 units up and scattered 50 units, Scale 0.1-0.6 growing by a
+// stood on edge across his line (Angle[0] 90; the model lies flat) 130 units up and scattered 50 units, Scale 0.1-0.6 growing by a
 // gravity that itself grows 0.07 a frame, to 2; fifteen frames, light / 1.5 a frame. A sub-type 2
 // grows by 0.01 a frame to 1.5 (ZzzEffect.cpp:3190-3245, Move_MODEL_WAVES).
 //
@@ -62,8 +62,6 @@ private:
     static constexpr float kLetGo = kClipFrames * 3.0f / 7.0f;  // its key 3 of 7
     static constexpr float kUp = 130.0f;                // both, over his feet
     static constexpr float kScatter = 50.0f;            // rand() % 100 - 50
-    // The piercing's bone: 21 across and 31 up, at its Scale.
-    static constexpr float kPierceAcross = 21.0f, kPierceUp = 31.0f;
     static constexpr float kPierceScale = 2.0f, kPierceFrames = 10.0f, kPierceBright = 5.0f;
     static constexpr float kPierceFade = 1.6f;
     static constexpr float kWaveFrames = 15.0f, kWaveFade = 1.5f;
@@ -81,7 +79,7 @@ private:
     struct Wave {
         bool alive = false;
         bool small = false;  // sub-type 2
-        float at[3] = {};
+        float at[3] = {}, way[3] = {0.0f, 0.0f, 1.0f};
         float scale = 0.0f, gravity = 0.0f, light = 1.0f, left = 0.0f;
     };
     struct Pierce {
@@ -113,7 +111,7 @@ private:
     float between(float a, float b) { return a + (b - a) * unit(); }
     float perUnit() const { return (ground_ ? ground_->metresPerTile() : 1.0f) / 100.0f; }
     void letGo(const float feet[3], const float way[3]);
-    void wave(const float at[3], bool small, float scale);
+    void wave(const float at[3], const float way[3], bool small, float scale);
     void streak(const float from[3], const float way[3]);
 };
 
@@ -151,7 +149,7 @@ void Force::update(float seconds, Place place, Cue cue) {
         if (one.left > kPierceBright) {
             one.light *= std::pow(1.0f / kPierceFade, frames);
             one.waveDue += frames;
-            for (; one.waveDue >= 1.0f; one.waveDue -= 1.0f) wave(one.at, true, one.left * 0.05f);
+            for (; one.waveDue >= 1.0f; one.waveDue -= 1.0f) wave(one.at, one.way, true, one.left * 0.05f);
         }
         one.left -= frames;
         if (one.left <= 0.0f) one.alive = false;

@@ -62,13 +62,16 @@ void Force::begin(uint32_t who, uint32_t target, float clipSeconds) {
     slot->rate = clipSeconds > 0.0f ? kClipFrames / (clipSeconds * kReferenceFps) : 1.0f;
 }
 
-void Force::wave(const float at[3], bool small, float scale) {
+void Force::wave(const float at[3], const float way[3], bool small, float scale) {
     for (Wave& one : waves_) {
         if (one.alive) continue;
         one = Wave{};
         one.alive = true;
         one.small = small;
-        for (int k = 0; k < 3; ++k) one.at[k] = at[k];
+        for (int k = 0; k < 3; ++k) {
+            one.at[k] = at[k];
+            one.way[k] = way[k];
+        }
         one.scale = scale;
         one.gravity = 0.01f;
         one.left = kWaveFrames;
@@ -116,31 +119,36 @@ void Force::letGo(const float feet[3], const float way[3]) {
         for (int j = 0; j < 2; ++j) streak(at, way);
         at[0] += between(-kScatter, kScatter) * metre;
         at[2] += between(-kScatter, kScatter) * metre;
-        wave(at, false, between(0.1f, 0.6f));
+        wave(at, way, false, between(0.1f, 0.6f));
     }
 }
 
 void Force::gatherEffects(gfx::Effects& effects) const {
     const float metre = perUnit();
     const float up[3] = {0.0f, 1.0f, 0.0f};
-    // The rings laid flat: the model's Y is up, its X and Z the ground's.
+    // The rings stood up across his line. The export is MU's model turned Y-up (MuExtract's
+    // AxisConvention: x, z, -y), so m_waves lies flat in it, 36 deep in its Y; MU's Angle[0] 90
+    // stands it on its edge, its face down his facing -- a ring the piercing passes through.
+    // So the model's X goes across him, its Y (the depth) along his line, and its Z (the
+    // loader negates it) up.
     for (const Wave& one : waves_) {
         if (!one.alive) continue;
-        const float x[3] = {1.0f, 0.0f, 0.0f};
-        const float z[3] = {0.0f, 0.0f, 1.0f};
+        const float x[3] = {one.way[2], 0.0f, -one.way[0]};
+        const float y[3] = {one.way[0], one.way[1], one.way[2]};
         const float colour[3] = {one.light, one.light, one.light};
-        submitEffectAlong(effects, wave_, waveSheet_, gfx::Blend::Additive, one.at, x, up, z,
+        submitEffectAlong(effects, wave_, waveSheet_, gfx::Blend::Additive, one.at, x, y, up,
                           one.scale * metre, colour, 1.0f);
     }
-    // The piercing's long Z down his line, its bone's turn and offset applied. The loader
-    // negates Z, so the model's +Z is drawn on -z: z is the facing turned back.
+    // The piercing's long Z along his line, its bone already in the export (MuExtract bakes the
+    // rest pose): its point (the model's +Z, 193) flares out behind him and its mouth (-74) opens
+    // towards what he struck, as MU draws it (Force in MU's own client, youtube.com/watch?v=
+    // v7Z2mh3qJho, 2026-10-23: the pale cone behind his head, the beam ahead). The loader
+    // negates Z, so z is his facing.
     for (const Pierce& one : pierces_) {
         if (!one.alive) continue;
         const float x[3] = {one.way[2], 0.0f, -one.way[0]};
-        const float z[3] = {-one.way[0], -one.way[1], -one.way[2]};
-        float at[3];
-        for (int k = 0; k < 3; ++k) at[k] = one.at[k] + x[k] * kPierceAcross * kPierceScale * metre;
-        at[1] += kPierceUp * kPierceScale * metre;
+        const float z[3] = {one.way[0], one.way[1], one.way[2]};
+        const float* at = one.at;
         const float colour[3] = {one.light, one.light, one.light};
         submitEffectAlong(effects, cone_, coneSheet_, gfx::Blend::Additive, at, x, up, z,
                           kPierceScale * metre, colour, 1.0f);
