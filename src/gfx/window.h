@@ -35,6 +35,9 @@ struct WindowDesc {
 // The shaders' folder for the renderer bgfx is running: metal, spirv or dxbc (CMakeLists.txt,
 // "shaders"). Asked after Window::open, since on Windows the renderer is known only then.
 const char* shaderProfile();
+// A capture hook that holds NVIDIA's Vulkan back buffer (Medal's, OBS's game capture) loaded in
+// the game, or null; always null off Windows. Window::open opens on Direct3D 11 for one.
+const char* captureHook();
 // `folder` with its last part made shaderProfile() when that part names a profile: what the
 // build and the packs call spirv is dxbc on a Direct3D 11 run. Any other folder is kept.
 std::string shadersFor(const std::string& folder);

@@ -396,6 +396,7 @@ int Application::run(int argc, char** argv) {
     int64_t last = bx::getHPCounter();
     const double toMs = 1000.0 / double(bx::getHPFrequency());
     double sinceLine = 0.0;
+    bool hookSeen = gfx::captureHook() != nullptr;  // one there at the open is already logged
     double sinceSheetCheck = 0.0;
     // The GPU's watch, for a player's run whose Graphics rows nobody set by hand: eight seconds
     // in a row below 40 frames a second with the GPU over 25 ms of each frame, and the rows go one
@@ -592,6 +593,15 @@ int Application::run(int argc, char** argv) {
                                           path.empty() ? "?" : path.c_str(), ask.count);
                 }
                 core::logf("%s", line);
+            }
+            // A capture hook that came in after the window opened (gfx::captureHook): Window::open
+            // only sees one already there, so the log says when this one did.
+            if (!hookSeen) {
+                if (const char* hook = gfx::captureHook()) {
+                    core::logf("graphics: %s came into the game after it opened, on %s", hook,
+                               bgfx::getRendererName(bgfx::getRendererType()));
+                    hookSeen = true;
+                }
             }
             mode->report(ctx);
             sinceLine = 0.0;
