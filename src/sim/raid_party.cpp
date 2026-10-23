@@ -75,6 +75,7 @@ bool readParty(const std::string& path, std::vector<RaiderKit>* out) {
         kit.points.agility = int(points["agility"].numberOr(0));
         kit.points.vitality = int(points["vitality"].numberOr(0));
         kit.points.energy = int(points["energy"].numberOr(0));
+        kit.points.command = int(points["command"].numberOr(0));
         kit.potions = int(one["potions"].numberOr(20));
         const core::Json& skills = one["skills"];
         for (size_t s = 0; s < skills.size(); ++s) {

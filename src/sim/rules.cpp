@@ -165,7 +165,7 @@ static void settle(Blow& blow, int damage, const Fighter& attacker, const Fighte
 // agility / 7 (ObjCalCharacter.cpp:856-859, :1061-1062), damage strength / 7 to / 5 plus energy
 // / 14 to / 10 (:399-405), life 90 at level one -- 90 + 1.5 a level + 2 a vitality point over 20
 // (user.cpp:3536-3542), so a base of 48.5. Command's tenth of the attack rate is the fifth
-// stat's (docs/plans/dark-lord.md phase 2).
+// stat's: ClassRow::ratePerCommand.
 //
 // ClassDarkWizard.cs:51-56, :66-71, :111; ClassFairyElf.cs:56-61, :73-80, :119;
 // ClassDarkKnight.cs:51-56, :68-71, :107; ClassMagicGladiator.cs:53-69, :113 (Version095d's
@@ -187,18 +187,18 @@ const ClassRow kRows[kKinCount] = {
      1.0f / 8.0f, 57.0f, 1.0f, 2.0f},
     // Dark Lord
     {5.0f, 3.0f, 0.25f, 1.0f / 7.0f, 1.0f / 7.0f, 1.0f / 7.0f, 0.2f, 0.0f, 0.0f, 1.0f / 14.0f,
-     0.1f, 48.5f, 1.5f, 2.0f},
+     0.1f, 48.5f, 1.5f, 2.0f, 0.1f},
 };
 
 // ClassDarkWizard.cs:38-41, ClassFairyElf.cs:41-44, ClassDarkKnight.cs:38-41,
-// ClassMagicGladiator.cs:41-44, ClassDarkLord.cs:43-46 (and WebZen's classdef.cpp:39; his
-// Command of 25 is the fifth stat's).
+// ClassMagicGladiator.cs:41-44, ClassDarkLord.cs:43-47 (and WebZen's classdef.cpp:39), his
+// Command 25.
 const HeroPoints kStarting[kKinCount] = {
     {18, 18, 15, 30},  // Dark Wizard
     {22, 25, 20, 15},  // Fairy Elf
     {28, 20, 25, 10},  // Dark Knight
     {26, 26, 26, 26},  // Magic Gladiator
-    {26, 20, 20, 15},  // Dark Lord
+    {26, 20, 20, 15, 25},  // Dark Lord
 };
 
 // A class number out of range reads as the knight's, as an unknown save always has.
@@ -220,7 +220,8 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     // the overrates test.
     out->attackRate = float(double(level) * double(row.ratePerLevel) +
                             agility * double(row.ratePerAgility) +
-                            strength * double(row.ratePerStrength));
+                            strength * double(row.ratePerStrength) +
+                            double(points.command) * double(row.ratePerCommand));
     // A shield's rate adds to DefenseRatePvm as it stands, where its defence goes through the
     // halving below: ArmorInitializerBase.CreateShield, AggregateType.AddRaw on each.
     out->defenseRate = float(agility * double(row.defenseRatePerAgility)) +
@@ -399,7 +400,8 @@ int maximumMana(Kin kin, int level, const HeroPoints& points) {
 }
 
 int maximumShield(int level, const HeroPoints& points, int defense) {
-    const int stats = points.strength + points.agility + points.vitality + points.energy;
+    // The Dark Lord's Command too, as WebZen adds it to the sum (ObjCalCharacter.cpp:2896-2899).
+    const int stats = points.strength + points.agility + points.vitality + points.energy + points.command;
     return int(1.2f * float(stats) + float(defense) + float(level) * float(level) / 30.0f);
 }
 

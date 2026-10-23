@@ -306,6 +306,9 @@ struct HeroPoints {
     int agility = 0;
     int vitality = 0;
     int energy = 0;
+    // The Dark Lord's fifth, Command (MU's Leadership; docs/plans/dark-lord.md, the user's
+    // decision 1): 25 to start, his alone to spend; nought for every other class.
+    int command = 0;
 };
 
 HeroPoints startingPoints(Kin kin);
@@ -333,6 +336,9 @@ struct ClassRow {
     float baseHealth;
     float healthPerLevel;
     float healthPerVitality;
+    // AttackRatePvm from TotalLeadership: the Dark Lord's tenth (WebZen ObjBaseAttack.cpp:921-923,
+    // ClassDarkLord.cs:63); nought for everybody else.
+    float ratePerCommand = 0.0f;
 };
 
 const ClassRow& rowOf(Kin kin);

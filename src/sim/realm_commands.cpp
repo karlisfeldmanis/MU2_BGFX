@@ -201,8 +201,9 @@ void Realm::applyCommands() {
             case Kind::Spend: {
                 // b: how many, 1 when not said (a client before protocol 43).
                 const int many = std::max(1, one.b);
+                // a 4: Command, the Dark Lord's (protocol 49).
                 answer = spend(one.a == 0 ? many : 0, one.a == 1 ? many : 0, one.a == 2 ? many : 0,
-                               one.a == 3 ? many : 0)
+                               one.a == 3 ? many : 0, one.a == 4 ? many : 0)
                              ? 1
                              : -1;
                 break;

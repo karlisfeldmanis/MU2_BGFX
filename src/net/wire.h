@@ -169,7 +169,10 @@ namespace mu::net {
 // 48: each quest's life in a character's bytes (kKeptLayout 14, QuestProgress::life): a reborn
 //     hero's first hand-in pays the first clear's experience again (2026-10-22), so a client on
 //     47 is refused instead of reading the record one short.
-constexpr uint32_t kVersion = 48;
+// 49: the Dark Lord, class 4 (docs/plans/dark-lord.md): his Command, the fifth stat, in Spend's
+//     a 4 and in a character's bytes (kKeptLayout 15), so a client on 48 is refused instead of
+//     reading the record one short.
+constexpr uint32_t kVersion = 49;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";
@@ -183,8 +186,9 @@ constexpr const char* kDefaultHost = "mu-classic.com";
 // their Life (2026-10-21, sim::timedPet; the store's renumber makes each old one one); 12 28
 // quests, the Keeper's second, Kantur's Captain (2026-10-21), where 8-11 carry 27; 13 his rebirths
 // (sim/rebirth.h, 2026-10-22), where 3-12 carry none; 14 each quest's life, the rebirth of its last
-// hand-in (QuestProgress::life, 2026-10-22), where 3-13 carry none and read as the first life.
-constexpr int kKeptLayout = 14;
+// hand-in (QuestProgress::life, 2026-10-22), where 3-13 carry none and read as the first life;
+// 15 the Dark Lord's Command, last (docs/plans/dark-lord.md), where 3-14 carry none and read as 0.
+constexpr int kKeptLayout = 15;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame a client accepts: a Welcome with its snapshot, about half a MB for a town of

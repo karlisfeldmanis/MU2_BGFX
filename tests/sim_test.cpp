@@ -163,8 +163,8 @@ void testRules() {
     checkEqual(fighter.defense, 1, "the lord's defence is agility/7, halved");
     checkEqual(fighter.minimumDamage, int(26 / 7.0 + 15 / 14.0), "the lord's fists, low");
     checkEqual(fighter.maximumDamage, int(26 / 5.0 + 15 / 10.0), "the lord's fists, high");
-    checkNear(fighter.attackRate, 5.0 + 20 * 3.0 + 26 / 4.0, 1e-4,
-              "his attack rate is WebZen's, level x 5 + agility x 3 + strength / 4");
+    checkNear(fighter.attackRate, 5.0 + 20 * 3.0 + 26 / 4.0 + 25 / 10.0, 1e-4,
+              "his attack rate is WebZen's, level x 5 + agility x 3 + strength / 4 + Command / 10");
     checkEqual(sim::pointsPerLevel(sim::Kin::DarkLord), 7, "the lord's seven points a level");
     checkEqual(sim::moveLevel(70, sim::Kin::DarkLord), 46, "a gate asks the lord two thirds");
     check(!sim::hasSecondClass(sim::Kin::DarkLord) && !sim::hasSecondClass(sim::Kin::MagicGladiator) &&
@@ -5627,8 +5627,15 @@ void testTalentCommands(const content::Tables& tables) {
         size_t at = 0;
         while (at < bytes.size() && bytes[at] == markedBytes[at]) ++at;
         constexpr size_t kQuestBytes = 1 + 4 * sim::kQuestSteps + 8 + 4;
+        // A layout-14 row has no Command (the Dark Lord's, layout 15): its last four bytes.
+        std::vector<uint8_t> fourteen(bytes.begin(), bytes.end() - 4);
+        sim::Kept uncommanded;
+        check(net::keptFrom(fourteen, uncommanded, 14) && uncommanded.hero.points.command == 0 &&
+                  uncommanded.hero.talents == saved.talents,
+              "a layout-14 row reads, with no Command");
+        check(!net::keptFrom(fourteen, uncommanded, 15), "and is not a layout 15");
         // A layout-13 row has no quests' lives (QuestProgress::life, layout 14): a byte a quest.
-        std::vector<uint8_t> thirteen(bytes.begin(), bytes.end() - sim::kQuests);
+        std::vector<uint8_t> thirteen(fourteen.begin(), fourteen.end() - sim::kQuests);
         sim::Kept unlived;
         check(net::keptFrom(thirteen, unlived, 13) && unlived.hero.quests[0].life == 0 &&
                   unlived.hero.talents == saved.talents,
@@ -15754,6 +15761,8 @@ void testRebirth(void (*check)(bool, const char*),
                  void (*checkEqual)(long long, long long, const char*));  // tests/sim_test_rebirth.cpp
 void testElites(void (*check)(bool, const char*),
                 void (*checkEqual)(long long, long long, const char*));  // tests/sim_test_elite.cpp
+void testDarkLord(void (*check)(bool, const char*),
+                  void (*checkEqual)(long long, long long, const char*));  // tests/sim_test_lord.cpp
 
 int main() {
     const std::string path =
@@ -15884,6 +15893,7 @@ int main() {
     testBroker(tables, check, checkEqual);  // tests/sim_test_broker.cpp
     testJeweler(check, checkEqual);         // tests/sim_test_jeweler.cpp
     testRebirth(check, checkEqual);         // tests/sim_test_rebirth.cpp
+    testDarkLord(check, checkEqual);        // tests/sim_test_lord.cpp
     testElites(check, checkEqual);          // tests/sim_test_elite.cpp
     testThreat(tables);
     testElfAid(tables);

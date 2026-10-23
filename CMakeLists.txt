@@ -1025,6 +1025,7 @@ add_executable(sim_test EXCLUDE_FROM_ALL
   tests/sim_test_broker.cpp
   tests/sim_test_jeweler.cpp
   tests/sim_test_rebirth.cpp
+  tests/sim_test_lord.cpp
   tests/sim_test_elite.cpp
 )
 target_link_libraries(sim_test PRIVATE mu_net mu_sim)

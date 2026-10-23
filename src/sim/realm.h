@@ -380,7 +380,8 @@ struct Body {
         return {points.strength + points.strength * runeShare.strength / 100,
                 points.agility + points.agility * runeShare.agility / 100,
                 points.vitality + points.vitality * runeShare.vitality / 100,
-                points.energy + points.energy * runeShare.energy / 100};
+                points.energy + points.energy * runeShare.energy / 100,
+                points.command + points.command * runeShare.command / 100};
     }
     // What is in his hands, as indices into Tables::arms, or -1. A monster's weapon is part of
     // its row and not an item: `monster_kinds` carries the damage band whole. `shield` is the
@@ -927,7 +928,8 @@ public:
     // sprint 7's stat window raises it, and sprint 9's save writes what came of it -- and it
     // is here rather than in raise() because spending a point is a choice and the sim does not
     // make choices. Refused, whole, when it asks for more points than are in hand.
-    bool spend(int strength, int agility, int vitality, int energy);
+    // Command is the Dark Lord's alone: asked of anybody else, refused.
+    bool spend(int strength, int agility, int vitality, int energy, int command = 0);
 
     // **Reset points** (the user, 2026-10-20: "we need option to reset all skill points with
     // special button"): every point he placed taken back into his hand, his four stats his class's

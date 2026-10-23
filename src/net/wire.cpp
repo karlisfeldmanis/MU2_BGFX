@@ -205,6 +205,7 @@ void putKept(Out& o, const sim::Kept& k) {
     }
     o.i32(r.rebirths);
     for (const sim::QuestProgress& q : r.quests) o.u8(q.life);
+    o.i32(r.points.command);
 }
 
 sim::Kept takeKept(In& in, int layout = kKeptLayout) {
@@ -283,6 +284,8 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     if (layout >= 14) {
         for (sim::QuestProgress& q : r.quests) q.life = in.u8();
     }
+    // Layout 15 the Dark Lord's Command; before it nobody had one.
+    if (layout >= 15) r.points.command = in.i32();
     return k;
 }
 

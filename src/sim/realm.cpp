@@ -690,15 +690,17 @@ void Realm::restore(const HeroRecord& saved) {
     setAutoDrink(saved.autoDrink.health, saved.autoDrink.mana);
 }
 
-bool Realm::spend(int strength, int agility, int vitality, int energy) {
-    if (strength < 0 || agility < 0 || vitality < 0 || energy < 0) return false;
+bool Realm::spend(int strength, int agility, int vitality, int energy, int command) {
+    if (strength < 0 || agility < 0 || vitality < 0 || energy < 0 || command < 0) return false;
     Body& hero = mine();
-    const int asked = strength + agility + vitality + energy;
+    if (command > 0 && hero.kin != Kin::DarkLord) return false;
+    const int asked = strength + agility + vitality + energy + command;
     if (asked == 0 || asked > hero.pointsInHand) return false;
     hero.points.strength += strength;
     hero.points.agility += agility;
     hero.points.vitality += vitality;
     hero.points.energy += energy;
+    hero.points.command += command;
     hero.pointsInHand -= asked;
     const int was = hero.maxHealth;
     reckon(hero.kin, hero.level, hero.totalPoints(), armsOf(hero), &hero.stats, &hero.maxHealth);
@@ -744,12 +746,14 @@ Realm::SpendPreview Realm::previewSpend(int stat, int count) const {
     if (stat == 1) spent.agility += count;
     if (stat == 2) spent.vitality += count;
     if (stat == 3) spent.energy += count;
+    if (stat == 4 && hero.kin == Kin::DarkLord) spent.command += count;
     // Body::totalPoints on the points with the press in: the stat runes' shares on top.
     const HeroPoints& share = hero.runeShare;
     const HeroPoints after{spent.strength + spent.strength * share.strength / 100,
                            spent.agility + spent.agility * share.agility / 100,
                            spent.vitality + spent.vitality * share.vitality / 100,
-                           spent.energy + spent.energy * share.energy / 100};
+                           spent.energy + spent.energy * share.energy / 100,
+                           spent.command + spent.command * share.command / 100};
     const Arms arms = armsOf(hero);
     p.totalsBefore = hero.totalPoints();
     p.totalsAfter = after;
@@ -768,7 +772,7 @@ int Realm::resetStrips() const {
     const HeroPoints start = startingPoints(hero.kin);
     const HeroPoints& now = hero.points;
     if (now.strength == start.strength && now.agility == start.agility && now.vitality == start.vitality &&
-        now.energy == start.energy) {
+        now.energy == start.energy && now.command == start.command) {
         return -2;
     }
     Satchel trial = me().bag;
@@ -782,7 +786,8 @@ Realm::Reset Realm::resetPoints() {
     Body& hero = mine();
     const HeroPoints start = startingPoints(hero.kin);
     const int back = (hero.points.strength - start.strength) + (hero.points.agility - start.agility) +
-                     (hero.points.vitality - start.vitality) + (hero.points.energy - start.energy);
+                     (hero.points.vitality - start.vitality) + (hero.points.energy - start.energy) +
+                     (hero.points.command - start.command);
     if (back <= 0) return Reset::NothingPlaced;
     // Tried on a copy, so a refusal changes nothing.
     Satchel trial = me().bag;

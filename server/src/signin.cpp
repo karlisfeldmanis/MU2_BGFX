@@ -311,6 +311,7 @@ std::string heroJson(const sim::HeroRecord& hero) {
                       ",\"agility\":" + std::to_string(hero.points.agility) +
                       ",\"vitality\":" + std::to_string(hero.points.vitality) +
                       ",\"energy\":" + std::to_string(hero.points.energy) +
+                      ",\"command\":" + std::to_string(hero.points.command) +
                       ",\"free\":" + std::to_string(hero.pointsInHand) + "},\"worn\":[";
     bool first = true;
     for (int slot = 0; slot < sim::kWorn; ++slot) {

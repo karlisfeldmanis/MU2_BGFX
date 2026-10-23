@@ -172,6 +172,7 @@ bool loadSave(const std::string& path, Saved& out) {
     hero.points.agility = int(doc["agility"].numberOr(0));
     hero.points.vitality = int(doc["vitality"].numberOr(0));
     hero.points.energy = int(doc["energy"].numberOr(0));
+    hero.points.command = int(doc["command"].numberOr(0));
     hero.health = int(doc["health"].numberOr(0));
     hero.mana = int(doc["mana"].numberOr(0));
     hero.money = int64_t(doc["zen"].numberOr(0.0));
@@ -404,6 +405,7 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
                     "  \"energy\": %d,\n",
                  hero.points.strength, hero.points.agility, hero.points.vitality,
                  hero.points.energy);
+    if (hero.points.command > 0) std::fprintf(f, "  \"command\": %d,\n", hero.points.command);
     std::fprintf(f, "  \"health\": %d,\n  \"mana\": %d,\n  \"zen\": %lld,\n", hero.health,
                  hero.mana, static_cast<long long>(hero.money));
     if (sim::talentsSpent(hero.talents) > 0) {
