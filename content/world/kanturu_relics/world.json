@@ -8,7 +8,37 @@
       "number": 137,
       "box": [71, 102, 82, 109],
       "note": "OpenMU's spawn gate 137 (VersionSeasonSix Gates.cs:283): the safe hall by the Ruins' door, where a death in the Relics or the boss map stands up. docs/worlds/kanturu-port.md Part A 2.1."
-    }
+    },
+    "exits": [
+      {
+        "number": 130,
+        "box": [
+          70,
+          104,
+          70,
+          107
+        ],
+        "faces": [
+          1,
+          0
+        ],
+        "note": "The Relics, from the Ruins (Gates.cs:285): the hall's west end, facing east, away from the way back (131) beside it."
+      }
+    ],
+    "enters": [
+      {
+        "number": 131,
+        "box": [
+          69,
+          104,
+          69,
+          107
+        ],
+        "level": 0,
+        "target": 132,
+        "note": "The Relics' way back to the Ruins (Gates.cs:540). MU asks 150, ours free, as every way out."
+      }
+    ]
   },
   "pipeline": {
     "hidden": {
@@ -37,5 +67,16 @@
       "look": 3,
       "note": "MU's place: OpenMU KanturuRelics.cs:46, 141,191 facing south, at the head of the Laser Trap corridor (x 138-144, y 166-183), on a NoMove tile; reached from 141,186 (the user, 2026-10-23: put it where it has to be). The tower event it opens is not built."
     }
-  ]
+  ],
+  "rules": {
+    "arrive": [
+      77,
+      105
+    ],
+    "home": 8,
+    "event": false,
+    "floors": false,
+    "move_order": 12,
+    "note": "Kanturu Relics, MU's map 38, entered from the Ruins' door (gates 129/131). arrive is the middle of spawn gate 137's box, the safe hall (OpenMU VersionSeasonSix Gates.cs:283), where a death in the Relics stands up too (OM's spawn gate; WZ's 139 lies inside the same hall). The Town Portal goes to Tarkan's town (home 8), as the Ruins'. Last on the M key's walk (12), so no other map's order moves. No drops yet: no breed stands here."
+  }
 }

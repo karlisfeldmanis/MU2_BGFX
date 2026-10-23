@@ -194,6 +194,9 @@ def cook_test(outputs, inputs, label):
         if missing:
             return True, f"{os.path.relpath(missing[0], ROOT)} is missing"
         ins = [i() if callable(i) else i for i in inputs]
+        # Nothing to make (a world whose manifest places no objects has no meshes): not needed.
+        if not outs:
+            return False, f"no {label} to make"
         if newest(ins) > min(mtime(o) for o in outs):
             return True, f"{label} is older than what it is cooked from"
         return False, f"{label} is newer than its inputs"

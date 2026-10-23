@@ -23,6 +23,20 @@
           0
         ],
         "note": "Kanturu, from Tarkan. MU's 126 is 17,219-21,220 (Gates.cs:279), which overlaps the way back (127) on three tiles, 17-19,220: a character dropped there would stand on the door home. So it lands on the camp's box, spawn gate 138's (19,217-21,219), as research 2.1 settled."
+      },
+      {
+        "number": 132,
+        "box": [
+          85,
+          89,
+          86,
+          92
+        ],
+        "faces": [
+          -1,
+          0
+        ],
+        "note": "The Ruins, from the Relics: beside the door (Gates.cs:280), facing west, away from 129."
       }
     ],
     "enters": [
@@ -37,6 +51,18 @@
         "level": 0,
         "target": 128,
         "note": "Kanturu's way back to Tarkan, in the gate's doorway (Gates.cs:538). MU asks 130, ours free, as every way out."
+      },
+      {
+        "number": 129,
+        "box": [
+          89,
+          89,
+          89,
+          92
+        ],
+        "level": 380,
+        "target": 130,
+        "note": "The Ruins' door to the Relics, at the end of the walk, 598 steps from the camp (Gates.cs:539). MU asks 220 (S17 290); ours 380, above the Tarkan door's 320 as MU's is 70 above its 150, and the tier of the dormant 380 gear and the Legendary rune requirement (the user, 2026-10-23: \"380\")."
       }
     ]
   },
