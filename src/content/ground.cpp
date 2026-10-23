@@ -1520,15 +1520,35 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
             // the rim's own corners too, since the slope beside them is new.
             std::vector<float> cornerY(sink.size(), 0.0f);
             std::vector<std::array<float, 3>> rimLight(sink.size(), {0.0f, 0.0f, 0.0f});
+            std::vector<std::array<float, 2>> cornerUv(sink.size(), {0.0f, 0.0f});
             for (size_t i = 0; i < vertices.size(); ++i) {
                 const size_t v = size_t(quadCorner[i]);
+                cornerUv[v] = {vertices[i].uv[0], vertices[i].uv[1]};
                 if (rim[v])
                     for (int k = 0; k < 3; ++k) rimLight[v][k] = std::max(rimLight[v][k], vertices[i].colour[k]);
+            }
+            // The wall's sheet unrolled down it: a sunk corner's uv is carried on away from its
+            // rim corner by the metres it fell, so the face keeps the sheet's scale instead of
+            // smearing one row of texels down 16 m (the user, 2026-10-23: "striped cliff").
+            std::vector<std::array<float, 2>> unrolled(cornerUv);
+            for (size_t v = 0; v < sink.size(); ++v) {
+                if (sink[v] <= 0.0f || fromRim[v] < 0) continue;
+                const auto& from = cornerUv[size_t(fromRim[v])];
+                const float du = cornerUv[v][0] - from[0], dv = cornerUv[v][1] - from[1];
+                const float len = std::sqrt(du * du + dv * dv);
+                if (len < 1e-4f) continue;
+                const float push = sink[v] / metresPerTile_;
+                unrolled[v][0] += du / len * push;
+                unrolled[v][1] += dv / len * push;
             }
             for (size_t i = 0; i < vertices.size(); ++i) {
                 const size_t v = size_t(quadCorner[i]);
                 vertices[i].position[1] -= sink[v];
                 cornerY[v] = vertices[i].position[1];
+                if (sink[v] > 0.0f) {
+                    vertices[i].uv[0] = unrolled[v][0];
+                    vertices[i].uv[1] = unrolled[v][1];
+                }
                 if (sink[v] > 0.0f && fromRim[v] >= 0)
                     for (int k = 0; k < 3; ++k)
                         vertices[i].colour[k] = std::max(vertices[i].colour[k], rimLight[size_t(fromRim[v])][k]);
