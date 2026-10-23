@@ -387,7 +387,8 @@
     },
     "76": {
       "enum": "PLAYER_FLY_RIDE_WEAPON",
-      "name": "Fly ride weapon"
+      "name": "Fly ride weapon",
+      "play_speed": 0.3
     },
     "77": {
       "enum": "PLAYER_DARKLORD_STAND",
@@ -407,47 +408,47 @@
     "80": {
       "enum": "PLAYER_RUN_RIDE_HORSE",
       "name": "Run ride horse",
-      "play_speed": 0.3
+      "play_speed": 0.25
     },
     "81": {
       "enum": "PLAYER_ATTACK_STRIKE",
       "name": "Attack strike",
-      "play_speed": 0.25
+      "play_speed": 0.28
     },
     "82": {
       "enum": "PLAYER_ATTACK_TELEPORT",
       "name": "Attack teleport",
-      "play_speed": 0.28
+      "play_speed": 0.2
     },
     "83": {
       "enum": "PLAYER_ATTACK_RIDE_STRIKE",
       "name": "Attack ride strike",
-      "play_speed": 0.2
+      "play_speed": 0.3
     },
     "84": {
       "enum": "PLAYER_ATTACK_RIDE_TELEPORT",
       "name": "Attack ride teleport",
-      "play_speed": 0.3
+      "play_speed": 0.25
     },
     "85": {
       "enum": "PLAYER_ATTACK_RIDE_HORSE_SWORD",
       "name": "Attack ride horse sword",
-      "play_speed": 0.25
+      "play_speed": 0.4
     },
     "86": {
       "enum": "PLAYER_ATTACK_RIDE_ATTACK_FLASH",
       "name": "Attack ride attack flash",
-      "play_speed": 0.4
+      "play_speed": 0.3
     },
     "87": {
       "enum": "PLAYER_ATTACK_RIDE_ATTACK_MAGIC",
       "name": "Attack ride attack magic",
-      "play_speed": 0.3
+      "play_speed": 0.2
     },
     "88": {
       "enum": "PLAYER_ATTACK_DARKHORSE",
       "name": "Attack darkhorse",
-      "play_speed": 0.2
+      "play_speed": 1.0
     },
     "89": {
       "enum": "PLAYER_IDLE1_DARKHORSE",
