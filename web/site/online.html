@@ -37,8 +37,11 @@
 .who th { text-align: left; font: 700 15px/1.2 'Alegreya Sans SC', sans-serif; color: var(--quiet); padding: 8px 10px; box-shadow: inset 0 -1px 0 var(--edge); }
 .who td { padding: 10px; box-shadow: inset 0 -1px 0 var(--line); vertical-align: top; }
 .who td.num { text-align: right; font-variant-numeric: tabular-nums; }
-.who tr.region td { padding: 18px 10px 6px; font: 700 15px/1.2 'Alegreya Sans SC', sans-serif; color: var(--bone-hi); box-shadow: inset 0 -1px 0 var(--edge); }
-.who tr.region .n { margin-left: 10px; font: 400 14px 'Alegreya Sans', sans-serif; color: var(--quiet); }
+/* A region's heading: a band across the table, a gap above every one but the first. */
+.who tr.region td { padding: 10px 14px; font: 700 20px/1.2 Cinzel, serif; letter-spacing: .03em; color: var(--bone-hi);
+  background: rgba(192,130,58,.14); box-shadow: inset 3px 0 0 #C0823A, inset 0 -1px 0 var(--edge); }
+.who tr.gap td { padding: 0; height: 22px; box-shadow: none; }
+.who tr.region .n { margin-left: 12px; font: 400 15px 'Alegreya Sans', sans-serif; letter-spacing: 0; color: var(--label); }
 .who .sub { display: block; font-size: 14px; color: var(--quiet); }
 .who .open { background: none; border: 0; padding: 0; font: inherit; color: var(--bone-hi); text-decoration: underline;
   text-decoration-color: rgba(201,162,126,.45); text-underline-offset: 3px; cursor: pointer; text-align: left; }
@@ -414,6 +417,7 @@
       if ((p.region || 'North Europe') !== region) {
         region = p.region || 'North Europe';
         const n = people.filter((q) => (q.region || 'North Europe') === region).length;
+        if (rows.children.length) { const gap = el('tr', 'gap'); const g = el('td'); g.colSpan = 9; gap.appendChild(g); rows.appendChild(gap); }
         const head = el('tr', 'region');
         const td = el('td', '', region);
         td.colSpan = 9;
