@@ -88,7 +88,7 @@ void testStore() {
     check(store.remove("fedcba9876543210", 8), "and is deleted");
     check(store.anyPlayed("fedcba9876543210"), "the account has played: its next is an alt");
     check(net::newcomerLine("Ken", "Dark Knight", "lorencia") ==
-              "A new Dark Knight, Ken, sets foot in Lorencia. Welcome to MU!",
+              "A new Dark Knight, Ken, sets foot in Lorencia. Welcome to MU-Classic Beta!",
           "the newcomer's line");
 }
 

@@ -476,7 +476,7 @@ std::string rebirthLine(const std::string& name, int count, const std::string& r
 std::string newcomerLine(const std::string& name, const std::string& kind, const std::string& town) {
     std::string place = town;
     if (!place.empty()) place[0] = char(std::toupper(uint8_t(place[0])));
-    return "A new " + kind + ", " + name + ", sets foot in " + place + ". Welcome to MU!";
+    return "A new " + kind + ", " + name + ", sets foot in " + place + ". Welcome to MU-Classic Beta!";
 }
 
 std::string saidText(const std::string& text) {
