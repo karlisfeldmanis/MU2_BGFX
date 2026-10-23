@@ -614,6 +614,12 @@ constexpr float kSpellQuicken = 1.7f;
 // between the 0.43 of Energy Ball's hands at kSpellQuicken and Meteorite's 0.93. Ours.
 constexpr float kIceQuicken = 2.4f;
 
+// **A cooldown skill takes half of his attack speed** (the user, 2026-10-23, the smaller of the
+// two nerfs offered after f79bb459 made a knight's cooldown skills animate at it): the share of
+// the AttackSpeed bonus an attack skill with a cooldown is quickened by (castTicks). A spell takes
+// MagicSpeed whole and a primary (Twisting Slash, Skillshot) AttackSpeed whole. Ours.
+constexpr float kCooldownSkillHaste = 0.5f;
+
 // How long the clip takes at its authored pace, in ticks -- what the drawing plays a knight's
 // skill with a cooldown at (game/play.cpp, `swingPace` 1 on a cast); a primary is fitted to
 // castTicks instead. Zero as castTicks is.
