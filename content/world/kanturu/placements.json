@@ -1,0 +1,26 @@
+{
+ "world": "kanturu",
+ "summary": "What the extraction cannot know, for the Kanturu Ruins: its camp's townspeople. MU and OpenMU stand nobody in the Ruins (VersionSeasonSix/Maps/KanturuRuins.cs has no CreateNpcSpawns); Baz and Amy stand here as in Tarkan, Atlans, the Lost Tower and Aida (the user, 2026-10-23: 'lets add kunturu npcs', then 'Both'). They are world.json's npcs 0 and 1; these are their figures.",
+ "spawns": [
+  {
+   "model": "Storage01",
+   "who": "Baz The Vault Keeper",
+   "tile": [
+    23,
+    215
+   ],
+   "facing": 3,
+   "ours": "the camp vault, in the safe zone 4 tiles up from the arrival (20,218), two tiles clear of every object, off gate boxes 126 and 127, facing the camera"
+  },
+  {
+   "model": "PotionGirlAmy",
+   "who": "Potion Girl Amy",
+   "tile": [
+    25,
+    212
+   ],
+   "facing": 3,
+   "ours": "the camp potion seller beside Baz, facing the camera"
+  }
+ ]
+}
