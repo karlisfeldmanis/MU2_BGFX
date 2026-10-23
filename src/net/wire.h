@@ -170,7 +170,8 @@ namespace mu::net {
 //     hero's first hand-in pays the first clear's experience again (2026-10-22), so a client on
 //     47 is refused instead of reading the record one short.
 // 49: the Dark Lord, class 4 (docs/plans/dark-lord.md): his Command, the fifth stat, in Spend's
-//     a 4 and in a character's bytes (kKeptLayout 15), so a client on 48 is refused instead of
+//     a 4 and in a character's bytes (kKeptLayout 15), and each Seat's rebirths (a reborn one opens
+//     the Magic Gladiator and the Dark Lord to his account), so a client on 48 is refused instead of
 //     reading the record one short.
 constexpr uint32_t kVersion = 49;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
@@ -440,6 +441,7 @@ struct Seat {
     uint8_t kin = 0;
     int32_t level = 1;
     bool second = false;  // his class's second (sim::promoted)
+    int32_t rebirths = 0; // a reborn one opens every class to his account (protocol 49)
     std::string world;    // where he comes in
     struct Worn {
         uint8_t slot = 0;  // below sim::kWorn

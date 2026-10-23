@@ -259,16 +259,18 @@ Box Lobby::boxOf(int target) const {
     return {};
 }
 
+// A reborn character has been to 400 and opens every class, whatever his level now (the user,
+// 2026-10-23: "allow reborn account to make any char"); the server's create says the same.
 bool Lobby::gladiatorOpen() const {
     for (const Seat& one : roster_) {
-        if (one.level >= kGladiatorLevel) return true;
+        if (one.level >= kGladiatorLevel || one.rebirths > 0) return true;
     }
     return false;
 }
 
 bool Lobby::lordOpen() const {
     for (const Seat& one : roster_) {
-        if (one.level >= kLordLevel) return true;
+        if (one.level >= kLordLevel || one.rebirths > 0) return true;
     }
     return false;
 }

@@ -45,6 +45,7 @@ net::Roster rosterOf(const std::string& account, net::Refused refused) {
             const sim::HeroRecord& hero = one.kept.hero;
             seat.level = hero.level;
             seat.second = sim::promoted(hero.quests, int(hero.kin));
+            seat.rebirths = hero.rebirths;
             seat.world = one.world.empty() ? sim::homeWorld(hero.kin) : one.world;
             for (int slot = 0; slot < sim::kWorn; ++slot) {
                 if (!hero.slots[slot].empty()) seat.worn.push_back({uint8_t(slot), hero.slots[slot]});
@@ -134,8 +135,11 @@ bool create(Session& one, const net::Create& asked, std::mt19937_64& seeds,
     const sim::Kin kin = sim::Kin(std::min<int>(asked.kin, int(sim::kLastKin)));
     bool gladiator = false, lord = false;
     for (const server::Store::Listed& m : mine) {
-        gladiator = gladiator || (!m.fresh && m.kept.hero.level >= sim::kGladiatorLevel);
-        lord = lord || (!m.fresh && m.kept.hero.level >= sim::kLordLevel);
+        // A reborn one has been to 400 and opens every class (the user, 2026-10-23: "allow reborn
+        // account to make any char").
+        const bool reborn = !m.fresh && m.kept.hero.rebirths > 0;
+        gladiator = gladiator || reborn || (!m.fresh && m.kept.hero.level >= sim::kGladiatorLevel);
+        lord = lord || reborn || (!m.fresh && m.kept.hero.level >= sim::kLordLevel);
     }
     net::Refused refused = net::Refused::None;
     if (!sim::goodName(asked.name)) refused = net::Refused::BadName;

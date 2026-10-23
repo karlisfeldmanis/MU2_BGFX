@@ -527,6 +527,7 @@ void put(std::vector<uint8_t>& out, const Roster& one) {
             o.u8(s.kin);
             o.i32(s.level);
             o.u8(s.second ? 1 : 0);
+            o.i32(s.rebirths);
             o.str(s.world);
             o.u8(uint8_t(s.worn.size()));
             for (const Seat::Worn& w : s.worn) {
@@ -860,6 +861,7 @@ bool parse(const std::vector<uint8_t>& body, Roster& out) {
         s.kin = in.u8();
         s.level = in.i32();
         s.second = in.u8() != 0;
+        s.rebirths = in.i32();
         s.world = in.str();
         const uint8_t worn = in.u8();
         for (uint8_t w = 0; w < worn && in.ok; ++w) {

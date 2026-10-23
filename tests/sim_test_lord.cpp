@@ -60,6 +60,24 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
     check(net::keptFrom(older, old, 14), "a layout-14 record reads");
     checkEqual(old.hero.points.command, 0, "with no Command in it");
 
+    // A reborn character opens every class to his account (the user, 2026-10-23: "allow reborn
+    // account to make any char"): his rebirths ride the Roster's Seat (protocol 49).
+    net::Roster roster;
+    net::Seat seat;
+    seat.name = "Reborn";
+    seat.level = 3;
+    seat.rebirths = 2;
+    seat.kin = uint8_t(sim::Kin::DarkKnight);
+    roster.seats.push_back(seat);
+    std::vector<uint8_t> said;
+    net::put(said, roster);
+    std::vector<uint8_t> body;
+    net::Kind kind{};
+    net::Roster heard;
+    check(net::take(said, kind, body) == 1 && kind == net::Kind::Roster && net::parse(body, heard) &&
+              heard.seats.size() == 1 && heard.seats[0].rebirths == 2 && heard.seats[0].level == 3,
+          "a seat's rebirths cross the wire");
+
     // A points reset gives his Command back to 25 and the rest to his hand.
     check(realm.resetPoints() == sim::Realm::Reset::Done, "his points reset");
     checkEqual(realm.hero().points.command, 25, "Command back to 25");
