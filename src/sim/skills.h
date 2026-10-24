@@ -140,6 +140,12 @@ constexpr int32_t kNova = 40;
 // VersionSeasonSix/SkillsInitializer.cs:173). A ribbon of fire round his front, and a body it
 // strikes may lose a tenth of its defence for ten seconds (docs/plans/mg-skills/fire-slash.md).
 constexpr int32_t kFireSlash = 55;
+// `AT_SKILL_SWORD6`, the Magic Gladiator's Power Slash (MuMain's AT_SKILL_POWER_SLASH): 0.99B's,
+// October 2003 (WebZen public.h:231, ADD_SKILL_20031022; OpenMU VersionSeasonSix/
+// SkillsInitializer.cs:175). Never an orb and never learned: his blade's, known while one whose
+// row carries it is in his right hand (Realm::knows). Five waves fan out ahead of him and strike
+// the bodies in a widening wedge as they reach them (docs/plans/mg-skills/power-slash.md).
+constexpr int32_t kPowerSlash = 56;
 // `AT_SKILL_BLAST_FREEZE`, Ice Storm, the Soul Master's Season 3 spell: no row and never learned,
 // only the Ancient rune's (sim/items.h kIceStorm...), said as Loosed so the drawing lets its
 // blizzard fall (fx/blizzard.h). MU's number, free in this table.
@@ -254,7 +260,9 @@ std::string familiesListed(uint32_t families);
 // from her feet to the row's reach -- MU2's `Realm.Passes`, off MuMain's Triple Shot, whose
 // arrows fly on through what they strike (`Kind = 1`). MU2 left the first 0.6 tiles out, which
 // let a monster pressed against her take nothing.
-enum class Spread : uint8_t { One, Ring, Arc, Line, Fan, Beam };
+// Frustum is Power Slash's: WebZen's SkillFrustrum, a trapezoid along his aim, `kFrustumNear`
+// either side at his feet widening to `kFrustumFar` at `kFrustumDeep` tiles out.
+enum class Spread : uint8_t { One, Ring, Arc, Line, Fan, Beam, Frustum };
 // How many bodies one Lightning chain strikes at most: eleven, not the fourteen its window
 // would reach (the user, 2026-10-04). The window and the arm keep their time. Realm::channel.
 constexpr int kLightningBodies = 11;
@@ -281,6 +289,26 @@ constexpr float kBeamStep = 1.5f;
 constexpr int kBeamPoints = 4;
 constexpr float kBeamRadius = 1.5f;
 constexpr float kBeamTiles = kBeamStart + kBeamStep * float(kBeamPoints) + kBeamRadius;
+
+// **Power Slash's** `Spread::Frustum`: WebZen's SkillFrustrum, local corners (-1,0) (1,0) (6,6)
+// (-6,6) turned to his angle (user.cpp:32069-32105) -- a tile either side at his feet, six at six
+// tiles out, six deep; its near edge runs through his own tile, so a body half a tile behind
+// his middle still stands in it. Measured here in floats on his aim, edges inclusive (OpenMU's
+// FrustumBasedTargetFilter.cs, which drops WebZen's integer corners).
+constexpr float kFrustumNear = 1.0f;
+constexpr float kFrustumFar = 6.0f;
+constexpr float kFrustumDeep = 6.0f;
+constexpr float kFrustumBehind = 0.5f;
+// **WebZen's count** (ObjUseSkill.cpp:2937-2957): every body in it counts, the nearest five are
+// struck, the sixth to the eleventh each at even odds, and none past the eleventh. Ours: nearest
+// first, where MU's order is the viewport's.
+constexpr int kFrustumSure = 5;
+constexpr int kFrustumMost = 11;
+constexpr float kFrustumOdds = 0.5f;
+// **And each is struck as its wave reaches it** (the dossier's 5.4, the Fire Burst rule "the
+// number comes with the visual"): MuMain's carriers go 60 units a frame at 25 -- fifteen tiles a
+// second (ZzzEffect.cpp:1991-1998, Direction (0, -60, 0)) -- leaving as his swing begins.
+constexpr float kWaveTilesPerSecond = 15.0f;
 
 struct SkillRow {
     int32_t number = 0;
@@ -461,8 +489,17 @@ struct SkillRow {
     int32_t cutTicks = 0;
     float cutChance = 0.0f;
     int32_t cutShare = 0;
+    // ---- Power Slash's, appended after Fire Slash's ------------------------------------------
+    // **His blade's and not his**: known while his right hand holds a weapon whose table row
+    // carries this skill (`content::ItemRow::skill`, Realm::knows) -- MU's weapon skill
+    // (zzzitem.cpp:980-995, gObjWeaponMagicAdd), with no learned bit and nothing in the save
+    // (user.cpp:3747) -- and never thrown riding (MuMain ClassAttack.cpp:660-697). Ours: the
+    // blade alone grants it; its rolled skill option (`Held::skill`) is not asked.
+    bool wielded = false;
     // The Arc's half-angle this row is gathered with (Realm::gather).
     float arcHalfAngle() const;
+    // Whether it is known off what he wears rather than learned: a mount's or a blade's.
+    bool granted() const { return mounted || wielded; }
     // **Whether a press aims it at the ground under the pointer** rather than at a body: the
     // shapes that have a direction -- Aqua Beam's beam, Power Wave's line, the knight's arcs and
     // Twister's walking storm. Thrown from the keys or the right button, he turns to where the
@@ -472,7 +509,7 @@ struct SkillRow {
     // have no direction and the single throws need a body to fly at.
     bool aimsAtPointer() const {
         return spread == Spread::Beam || spread == Spread::Line || spread == Spread::Arc ||
-               walks > 0.0f || showers();
+               spread == Spread::Frustum || walks > 0.0f || showers();
     }
     // **A shower**: rocks out of the sky on random ground within `splash` of where it is called
     // -- Meteorite's since 2026-10-04 (the user: "click on any spot on ground and on that area
@@ -492,11 +529,12 @@ struct SkillRow {
     // tile ahead toward the mouse empty, the key did nothing at all. Now it breaks the ground
     // there, mana and cooldown spent, and Cyclone, an arc since the same day, spins there.
     // Fire Slash with them (2026-10-24): an arc as Cyclone's, its ribbon thrown at empty air.
+    // And Power Slash, whose waves MU's client sends at its own angle, a body there or not.
     bool castsBare() const {
         return number == skill::kEvilSpirit || number == skill::kTwister ||
                number == skill::kHellfire || number == skill::kTwistingSlash ||
                number == skill::kRagefulBlow || number == skill::kCyclone ||
-               number == skill::kFireSlash;
+               number == skill::kFireSlash || number == skill::kPowerSlash;
     }
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0; }
@@ -532,12 +570,12 @@ struct SkillRow {
 // past Cometfall. The
 // learned mask is sixty-four bits since
 // Inferno, the thirty-third (`Body::learned`, and the save writes it whole), Nova past
-// Impale, and the Magic Gladiator's Fire Slash, the forty-first, past the Alquamos (kKeptLayout
-// 16 keeps its cool); past sixty-four it needs widening
+// Impale, the Magic Gladiator's Fire Slash, the forty-first, past the Alquamos, and his blade's
+// Power Slash past it (kKeptLayout 16 keeps both cools); past sixty-four it needs widening
 // again, which the static_assert below says. Also the width of a body's cooldown array -- and
 // the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 41;
+constexpr int kSkills = 42;
 
 // What each of Nova's stages adds to its blow: OpenMU's NovaDamageTable (NovaSkillStartPlugin.cs:30),
 // stage 0 to 12, with the strength's half beside it (SkillsInitializer.cs:610-611).

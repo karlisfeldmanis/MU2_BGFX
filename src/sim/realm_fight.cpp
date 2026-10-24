@@ -1340,6 +1340,11 @@ void Realm::release(Body& hero, uint32_t at, float force, int32_t skill, const f
         rain(hero, *row, at, force);
         return;
     }
+    // Power Slash: its waves, each body struck as one reaches it.
+    if (row && row->spread == Spread::Frustum) {
+        powerSlash(hero, *row, force);
+        return;
+    }
     if (row && row->spread != Spread::One) {
         strikeAround(hero, *row, force);
         return;
@@ -1392,11 +1397,12 @@ void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force, boo
     const float dx = target ? target->x - hero.x : 0.0f;
     const float dy = target ? target->y - hero.y : 0.0f;
     const float gap = std::max(0.0f, std::sqrt(dx * dx + dy * dy) - kBoltStopsShort);
-    // A rock out of the sky takes its fall, however far off the body stands.
+    // A rock out of the sky takes its fall, however far off the body stands; a blow held back
+    // (Power Slash's, till its wave gets there) takes its wait, however far.
     const int32_t air =
-        row.fallTicks > 0
-            ? row.fallTicks + std::max<int32_t>(0, delay)
-            : int32_t(std::lround(gap / std::max(1.0f, row.flies) * kTicksPerSecond));
+        row.fallTicks > 0 ? row.fallTicks + std::max<int32_t>(0, delay)
+        : delay > 0       ? delay
+                          : int32_t(std::lround(gap / std::max(1.0f, row.flies) * kTicksPerSecond));
     if (announce) say(What::Loosed, hero, row.number, air, 0, at);
     if (air > 0) {
         for (Flight& one : flights_) {
@@ -1958,6 +1964,26 @@ void Realm::rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force)
     for (int i = 0; i < found; ++i) {
         const bool aimedOne = victims[i] == aimedAt;
         loose(hero, row, victims[i], force, true, aimedOne, 0);
+    }
+}
+
+void Realm::powerSlash(Body& hero, const SkillRow& row, float force) {
+    // Everything in the wedge along his aim, nearest first (Realm::gather), counted as WebZen
+    // counts it -- the nearest five struck, the sixth to the eleventh each at even odds off the
+    // realm's dice, none past the eleventh (ObjUseSkill.cpp:2937-2957) -- and each struck when a
+    // wave gets to it, kWaveTilesPerSecond from his middle, a tick at the least. Nothing is said
+    // for them: the cast's `Cast` is what the drawing sends its waves off, and nothing is drawn
+    // on what they strike. No element, so no element runes.
+    uint32_t victims[kVictims];
+    const int found = gather(hero, row, victims, kVictims);
+    for (int i = 0; i < found && i < kFrustumMost; ++i) {
+        if (i >= kFrustumSure && !dice_.nextBool(kFrustumOdds)) continue;
+        const Body* one = body(victims[i]);
+        if (one == nullptr) continue;
+        const float gap = fm::hypot(one->x - hero.x, one->y - hero.y);
+        const int32_t wait =
+            std::max<int32_t>(1, int32_t(std::lround(gap / kWaveTilesPerSecond * kTicksPerSecond)));
+        loose(hero, row, victims[i], force, false, false, wait);
     }
 }
 

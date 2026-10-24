@@ -919,10 +919,14 @@ public:
         benchMonstersDie_ = monstersDie;
     }
     // Whether he may throw it at all: learned, or a mount's skill and that mount worn
-    // (`SkillRow::mounted`). What the bar and the list ask, and `throwSkill` before it spends.
+    // (`SkillRow::mounted`), or a blade's and that blade in his hand (`SkillRow::wielded`). What
+    // the bar and the list ask, and `throwSkill` before it spends.
     bool knows(int32_t skill) const;
     // A Horn of Dinorant in the mount's slot with life left: Fire Breath is known while it is.
     bool dinorantWorn() const;
+    // A weapon in his right hand whose table row carries `skill` (`content::ItemRow::skill`):
+    // Power Slash is known while one is.
+    bool wieldsSkill(int32_t skill) const;
     // Ticks left on a skill's cooldown, and the whole cooldown it was set to, which is what the
     // frame needs to draw a sweep. Zero and zero when it is ready.
     int64_t cooling(int32_t skill) const;
@@ -1814,6 +1818,9 @@ private:
     void looseArrow(Body& hero, uint32_t at, float force);
     // Meteorite: a rock let go at every body within its splash of the one it was called on.
     void rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
+    // Power Slash: the bodies in its wedge (`Spread::Frustum`), WebZen's count of them, each a
+    // blow held back till its wave reaches it, unsaid.
+    void powerSlash(Body& hero, const SkillRow& row, float force);
     // A shower (SkillRow::showers): `kShowerRocks` rocks at random within the splash of `spot`
     // (tiles), or of the body `aimedAt` when there is none, each said as a `Loosed` with no body
     // and its ground in `x`/`y`; every monster within `kRockBlast` of one, in its sight, takes

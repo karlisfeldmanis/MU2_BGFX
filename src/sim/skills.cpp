@@ -927,6 +927,34 @@ constexpr SkillRow kRows[kSkills] = {
      .needLevel = 120, .kin = Kin::MagicGladiator, .release = 0.43f,
      .arcHalf = 1.57079633f, .paceAfter = 0.54f, .paceKey = 3, .cutTicks = 200,
      .cutChance = 0.45f, .cutShare = 10},
+
+    // ---- Power Slash 56, the gladiator's blade's, past Fire Slash -----------------------------
+    //
+    // docs/plans/mg-skills/power-slash.md is the research; its section 5 is this row. MU's: mana
+    // 15, no element, the weapon's damage alone (skill damage 0, WebZen skill.txt:63, OpenMU
+    // SkillsInitializer.cs:175), no level of its own -- the blade's requirements are the gate.
+    // Known while a blade that carries it is in his right hand (`wielded`, Realm::knows): the
+    // Dark Reign Blade, the Explosion Blade, the Sword Dancer, the Imperial Sword and the Rune
+    // Blade. Never riding (ClassAttack.cpp:660-697). Its clip is those blades' own swing,
+    // PLAYER_ATTACK_TWO_HAND_SWORD_TWO (ZzzCharacter.cpp:1178-1181) -- player.muc's 146
+    // (content/players/rig/actions.json; the dossier counts MuMain's enum, 145) -- at its 0.25
+    // and his attack speed. WebZen's trapezoid and count (`Spread::Frustum`, kFrustum*), and
+    // the waves leave as the swing begins (`release` 0, a tick in), each body struck as one
+    // reaches it (kWaveTilesPerSecond, Realm::powerSlash).
+    // **Ours**: a key with a cooldown, two seconds as Fire Slash's -- the wide, capped answer to
+    // the narrow one that cuts (the dossier's 5.5). Force 2.3, Fire Slash's own, tuned from 2.0
+    // on the skill sweep (tests/kits/sweep.json's GaiusReign, 6 seeds x 4 min): with the same
+    // force it is below Fire Slash on one body, which has fire for his element runes and talents
+    // and its cut (4,609 a blow against 5,301 on Icarus, 1,622 against 1,997 on Aida), and close
+    // on a pack (8.56M an hour against 8.20M on Aida; about 10-11M against 12.7M on Icarus,
+    // where 2.2 and 2.4 read the same within the sweep's noise). Reach 5, MU's row's distance,
+    // is how near the key walks him; the wedge runs six.
+    {.number = skill::kPowerSlash, .name = "Power Slash", .mana = 15, .reach = 5.0f, .force = 2.3f,
+     .forcePerStrength = 1.0f / 1400.0f, .coolTicks = 40, .spread = Spread::Frustum,
+     .tells = "Five waves fanned out from his blade, striking what stands in a widening wedge "
+              "six tiles ahead of him as they reach it: the nearest five, and up to six more.",
+     .clip = 146, .sound = "player_skill_sword3", .built = true, .families = arms::kSwords,
+     .kin = Kin::MagicGladiator, .release = 0.0f, .wielded = true},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy
