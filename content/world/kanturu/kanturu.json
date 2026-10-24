@@ -29,7 +29,7 @@
  ],
  "void": {
   "start": 0.5,
-  "depth": 6.0,
+  "depth": 3.0,
   "blend": 0,
   "blend_keep_mask": "blend_keep.png",
   "fade": 3,

@@ -487,8 +487,10 @@ def plan_ground(world, folder, threads, reimport=False):
     def index_ground(changed):
         if changed & {"grids", "tiles", "land"}:
             return True, "the land changed; the index copies the grids into workshop/"
-        if newest(grids + [glb]) > mtime(os.path.join(WORKSHOP, "index.json")):
-            return True, "a grid or the ground is newer than the index"
+        # The world json too: it carries `void`, which the game reads off assets/ at load, and
+        # an edit to it alone (Kanturu's void.depth, 2026-10-24) was never copied there.
+        if newest(grids + [glb, placed]) > mtime(os.path.join(WORKSHOP, "index.json")):
+            return True, "a grid, the world json or the ground is newer than the index"
         return False, "the index is newer than the land"
 
     def sync_ground(changed):
