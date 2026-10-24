@@ -83,7 +83,8 @@ HelperKind helperKind(const sim::SkillRow& row, bool rightSlot) {
     // Nova (a charge) is pressed once and bursts where he stands (Realm::invoke): a crowd's, not a
     // move; Fire Breath (mounted) is a blow at one body while he rides (the user, 2026-10-21: "i
     // draged ini new spell on quckslot but helper did not work with that").
-    if (row.blinks) return HelperKind::Moves;
+    // Summon moves his party, never him: the Helper never casts it (summon.md section 8).
+    if (row.blinks || row.recalls) return HelperKind::Moves;
     if (row.channelled()) return HelperKind::Held;
     if (row.summons > 0) return HelperKind::Summon;
     if (row.mends) return HelperKind::Heal;

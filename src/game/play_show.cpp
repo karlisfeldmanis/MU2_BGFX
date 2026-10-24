@@ -1676,8 +1676,26 @@ void Play::follow(float seconds) {
             one.swinging = 0.0f;
             one.casting = 0.0f;
         }
+        // Summon's hold: past key 5.5 of PLAYER_ATTACK_TELEPORT (0.28 a frame: 0.79 s) MuMain plays
+        // it at a tenth (ZzzCharacter.cpp:2502-2507), the last 2.5 keys in 3.6 s, until the clip
+        // ends or he walks. Ours stops a key short (the closing key is left out of a once clip),
+        // so what is left is slowed to last MU's 3.6 s rather than to a tenth.
+        bool held = false;
+        float holdRate = 0.1f;
+        if (one.recallHold) {
+            constexpr float kHoldFrom = 5.5f / (0.28f * 25.0f);
+            constexpr float kHoldSeconds = 2.5f / (0.028f * 25.0f);
+            holdRate = std::max(0.01f, one.figure.played() - kHoldFrom) / kHoldSeconds;
+            if (body->walking || one.figure.clip() != one.castClip ||
+                one.figure.clock() >= one.figure.played() - 0.01f) {
+                one.recallHold = false;
+            } else if (one.figure.clock() >= kHoldFrom) {
+                held = true;
+                one.swinging = std::max(one.swinging, 0.1f);
+            }
+        }
         if (one.swinging > 0.0f) {
-            one.clipRate = one.swingPace;
+            one.clipRate = held ? holdRate : one.swingPace;
             one.shocked = 0.0f;
             continue;
         }

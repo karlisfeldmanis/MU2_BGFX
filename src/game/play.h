@@ -67,6 +67,7 @@
 #include "game/fx/electric_spike.h"
 #include "game/fx/fire_burst.h"
 #include "game/fx/critical_damage.h"
+#include "game/fx/recall.h"
 #include "game/fx/force.h"
 #include "game/fx/firebreath.h"
 #include "game/invasion_sky.h"
@@ -576,8 +577,9 @@ public:
     // rest -- and fight as one (Play::walkBench).
     // --sync-gear: another player's gear loaded on the frame (the baseline), not streamed.
     void setSyncGear(bool on) { syncGear_ = on; }
-    void setBench(int players, std::vector<sim::RaiderKit> kits, bool fight = false) {
+    void setBench(int players, std::vector<sim::RaiderKit> kits, bool fight = false, bool party = false) {
         benchPlayers_ = players;
+        benchPartied_ = party;
         benchKits_ = std::move(kits);
         benchFight_ = fight;
         if (fight) {
@@ -1103,6 +1105,8 @@ public:
     // And his Critical Damage: the cast's flash, and the coils on whoever is under it.
     // fx/critical_damage.h.
     CriticalDamage& criticalDamage() { return criticalDamage_; }
+    // The Dark Lord's Summon: the star and the wall at his feet, the pillars. fx/recall.h.
+    Recall& recall() { return recall_; }
     // The Dinorant's Fire Breath: its sprays, its haze and its burst. fx/firebreath.h.
     FireBreath& fireBreath() { return fireBreath_; }
     void gatherBolt(gfx::Effects& effects, const float eye[3]) const { bolt_.gather(effects, eye); }
@@ -1336,6 +1340,9 @@ private:
         // The clip a buff -- a cast on himself -- was started with, while it is the one playing:
         // on a horse only its arms are drawn, over the ride's seat (play_show). -1 for none.
         int selfClip = -1;
+        // A Dark Lord's Summon clip: past key 5.5 it runs at a tenth until it ends or he walks
+        // (MuMain ZzzCharacter.cpp:2502-2507), his left hand glittering (fx/recall.h).
+        bool recallHold = false;
         // Seconds of a cast's own animation still owed. A SWING is cancelled by a step -- see
         // play_show, where that rule and its measurement live -- and a SKILL is not: the realm
         // holds the character still for the whole clip (Realm::throwSkill takes the longer of
@@ -1841,6 +1848,7 @@ private:
     bool guildMasterAsked_ = false;  // takeGuildMaster
     bool benchName(uint32_t id, std::string* name, bool* bot) const;        // his kit put on in the sim before he was drawn: shown at the first update
     bool benchFight_ = false;
+    bool benchPartied_ = false;  // --bench-party
     float benchClock_ = 0.0f;
     // The bench's trade (walkBench): the tick it last looked, and whether it has put its thing up.
     int64_t benchDealTick_ = -1;
@@ -1959,6 +1967,7 @@ private:
     FireBurst fireBurst_;
     ElectricSpike electricSpike_;
     CriticalDamage criticalDamage_;
+    Recall recall_;
     FireBreath fireBreath_;
     // A Teleport's fade on the hero: seconds since he began to fade out, or since he was put
     // down and began to fade back in; -1 for neither. MU's tenth of alpha a frame, both ways.
@@ -2085,6 +2094,7 @@ private:
         int fireBurstBoom = -1;  // eFirebustBoom: Fire Burst let go (fx/fire_burst.h)
         int electricSpike = -1;  // sDarkElecSpike: Electric Spike let go (fx/electric_spike.h)
         int criticalDamage = -1;  // sDarkCritical: Critical Damage's flash (fx/critical_damage.h)
+        int recall = -1;          // eSummon: Summon's circles (fx/recall.h)
         int warp = -1;                                  // sMagic: a Town Portal landing
         int rite = -1;                                  // the Rebirth rite, its whole 14 s
         int riteReborn = -1;                            // and its message, as he stands

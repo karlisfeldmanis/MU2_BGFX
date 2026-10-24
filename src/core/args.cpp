@@ -444,6 +444,8 @@ Args parseArgs(int argc, char** argv) {
             }
         } else if (!std::strcmp(s, "--bench-fight")) {
             a.benchFight = true;
+        } else if (!std::strcmp(s, "--bench-party")) {
+            a.benchParty = true;
         } else if (!std::strcmp(s, "--bench-players")) {
             if (const char* v = next(s)) a.benchPlayers = std::max(0, std::atoi(v));
         } else if (!std::strcmp(s, "--crowd")) {

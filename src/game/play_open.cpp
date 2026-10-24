@@ -564,6 +564,7 @@ void Play::openSound(const std::string& assetDir, bool muted, bool offline) {
     heard_.fireBurstBoom = sound_.load("fire_burst_boom", true);
     heard_.electricSpike = sound_.load("electric_spike", true);
     heard_.criticalDamage = sound_.load("critical_damage", true);
+    heard_.recall = sound_.load("recall", true);
     heard_.click = sound_.load("window_click", false);
     heard_.refused = sound_.load("window_refused", false);
     heard_.opened = sound_.load("window_open", false);
@@ -1073,6 +1074,13 @@ void Play::raiseBench(int column, int row) {
         benchHome_.push_back(c);
         benchHome_.push_back(r);
         benchSkill_.push_back(kit.skills.empty() ? 0 : kit.skills.front());
+    }
+    // --bench-party: his party and nothing more, for a Dark Lord's Summon to call.
+    if (benchPartied_ && !benchFight_) {
+        local_.command({.kind = sim::Command::Kind::PartySet, .a = 1, .target = local_.hero().id});
+        for (const uint32_t id : benchIds_) {
+            local_.command({.kind = sim::Command::Kind::PartySet, .a = 1, .target = id});
+        }
     }
     if (benchFight_) {
         // The party never falls; the monsters do in an event's square (the user, 2026-10-10:

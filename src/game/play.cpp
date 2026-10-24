@@ -664,6 +664,38 @@ void Play::update(double seconds) {
                 }
                 if (happening.what == sim::What::Gapped) gains_.push_back({Gain::Kind::Gapped, happening.a});
                 if (happening.what == sim::What::Outguarded) gains_.push_back({Gain::Kind::Outguarded, 0});
+                // A Summon's notices, MU's words (WebZen 1243, 1251, 1254; summon.md section 8).
+                if (happening.what == sim::What::Recall) {
+                    char said[96] = {};
+                    bool warning = false;
+                    switch (sim::RecallEvent(happening.a)) {
+                        case sim::RecallEvent::Called:
+                            if (happening.b < 0) {
+                                std::snprintf(said, sizeof(said), "Summoning in process. It may be cancelled if you move.");
+                            } else {
+                                std::snprintf(said, sizeof(said), "Summoning %d people.", happening.b);
+                            }
+                            break;
+                        case sim::RecallEvent::Count:
+                            std::snprintf(said, sizeof(said), "Will be summoned in %d seconds.", happening.b);
+                            break;
+                        case sim::RecallEvent::Cancelled:
+                            std::snprintf(said, sizeof(said), "Summon cancelled.");
+                            warning = true;
+                            break;
+                        case sim::RecallEvent::Busy:
+                            std::snprintf(said, sizeof(said), "A party member is already being summoned.");
+                            warning = true;
+                            break;
+                        case sim::RecallEvent::Landed: break;
+                    }
+                    if (said[0] != 0) {
+                        Gain gain{Gain::Kind::Notice, 0};
+                        gain.line = said;
+                        gain.calm = !warning;
+                        gains_.push_back(std::move(gain));
+                    }
+                }
                 if (happening.what == sim::What::Worn || happening.what == sim::What::PetLost) wornPet(happening);
                 // His Zen is not here either: it is in the purse from the kill's tick, but
                 // shown with the fall, in Play::releaseDrops (below, at What::Picked).
@@ -1033,6 +1065,9 @@ void Play::update(double seconds) {
                         if (happening.a == sim::skill::kCriticalDamage) {
                             criticalDamage_.begin(caster->id, caster->figure.played());
                         }
+                        // Summon's circles, and MU's tenth-speed hold past key 5.5 (fx/recall.h).
+                        caster->recallHold = happening.a == sim::skill::kSummon;
+                        if (caster->recallHold) recall_.begin(caster->id);
                         // A new draw: the arrow is back on the string (Figure::nock).
                         caster->figure.nock(true);
                         const int index = sim::skillIndexOf(happening.a);
@@ -1160,6 +1195,31 @@ void Play::update(double seconds) {
                         const float z = -(summon->y + 0.5f) * metres;
                         const float feet[3] = {x, ground_->heightAt(x, z), z};
                         blink_.cast(feet);
+                    }
+                }
+            }
+            // Set down by a Dark Lord's Summon on this map: the wizard's Teleport where he stood and
+            // where he lands (WebZen's gObjRecall sends AT_SKILL_TELEPORT, MuMain's
+            // CreateTeleportBegin/End), drawn there from this frame, SOUND_MAGIC with it.
+            if (happening.what == sim::What::Recall && sim::RecallEvent(happening.a) == sim::RecallEvent::Landed) {
+                const sim::Body* body = realm_.find(happening.who);
+                if (Drawn* drawn = drawnOf(happening.who); drawn != nullptr && body != nullptr && ground_) {
+                    const float metres = ground_->metresPerTile();
+                    const float tiles[2][2] = {{drawn->nowX, drawn->nowY}, {body->x, body->y}};
+                    for (const auto& tile : tiles) {
+                        const float x = (tile[0] + 0.5f) * metres;
+                        const float z = -(tile[1] + 0.5f) * metres;
+                        const float feet[3] = {x, ground_->heightAt(x, z), z};
+                        blink_.cast(feet);
+                    }
+                    drawn->nowX = drawn->wasX = body->x;
+                    drawn->nowY = drawn->wasY = body->y;
+                    drawn->groundSpeed = 0.0f;
+                    if (happening.who == heroId) {
+                        streak_.clear();
+                        sound_.play(heard_.warp);
+                    } else if (drawn->placed) {
+                        emit(heard_.warp, drawn->crown[0], drawn->crown[2], happening.who);
                     }
                 }
             }
@@ -2983,6 +3043,32 @@ void Play::update(double seconds) {
             const Drawn* drawn = drawnOf(id);
             if (heard_.criticalDamage >= 0 && drawn && drawn->placed) {
                 emit(heard_.criticalDamage, drawn->crown[0], drawn->crown[2], id);
+            }
+        });
+    // Summon: its circles at his feet 5 ticks after the echo, and the glitter off his left hand
+    // while he holds the arm up (fx/recall.h, Drawn::recallHold).
+    for (const Drawn& one : drawn_) {
+        if (one.recallHold && one.placed && one.visible) recall_.holding(one.id);
+    }
+    recall_.update(
+        float(seconds),
+        [&](uint32_t id, float* out, float* yaw) {
+            const Drawn* drawn = drawnOf(id);
+            if (drawn == nullptr || !drawn->placed || !ground_) return false;
+            out[0] = drawn->crown[0];
+            out[2] = drawn->crown[2];
+            out[1] = ground_->heightAt(out[0], out[2]);
+            *yaw = drawn->yaw;
+            return true;
+        },
+        [&](uint32_t id, int bone, const float* local, float* out) {
+            const Drawn* drawn = drawnOf(id);
+            return drawn != nullptr && drawn->placed && drawn->figure.pointOn(bone, local, out);
+        },
+        [&](uint32_t id) {
+            const Drawn* drawn = drawnOf(id);
+            if (heard_.recall >= 0 && drawn && drawn->placed) {
+                emit(heard_.recall, drawn->crown[0], drawn->crown[2], id);
             }
         });
     // The fire on him while he calls a Meteorite down: while its clip is on him, not while the

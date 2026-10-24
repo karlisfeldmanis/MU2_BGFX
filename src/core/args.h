@@ -285,6 +285,9 @@ struct Args {
     int benchPlayers = 0;
     // --bench-fight: the bench's heroes fight the map's monsters, and nobody falls.
     bool benchFight = false;
+    // --bench-party: the bench heroes in his party, standing (or walking) as they would without a
+    // fight -- a Dark Lord's Summon to watch (tools/record/summon.cue).
+    bool benchParty = false;
     // --render-thread: bgfx encodes on a thread of its own (gfx::WindowDesc::renderThread).
     bool renderThread = false;
     char raidBox = 0;           // `--raid-box A-E`: which field it lands on (sim::kRaidLandings), else the dice's

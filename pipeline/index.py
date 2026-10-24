@@ -579,6 +579,9 @@ EFFECTS = {
     # The Dark Lord's Critical Damage: BITMAP_FIRECRACKER, Effect/Fire04 (ZzzOpenData.cpp:5296), the
     # three ribbons that coil up a buffed player's weapon (ZzzEffectJoint.cpp:2489-2575).
     "critical_damage_fire04": "effects/critical_damage/fire04.png",
+    # And Summon: BITMAP_MAGIC_EMBLEM, Effect/Magic_b (ZzzOpenData.cpp:5190), the blue quarter star
+    # MODEL_CIRCLE subtype 2 wears in place of Hellfire's magic_a01 (ZzzObject.cpp:1540-1544).
+    "recall_magic_b": "effects/recall/magic_b.png",
     "magic_ground": "effects/levelup/magic_ground.png",
 
     # A warp's walls: Magic_Circle1.OZJ, BITMAP_MAGIC + 2, which ReceiveTeleport throws under a

@@ -374,7 +374,7 @@ bool PlayMode::open(Context& ctx) {
                 std::vector<sim::RaiderKit> kits;
                 const std::string party = core::folders().content + "/raid/party.json";
                 if (!sim::readParty(party, &kits)) core::logError("--bench-players: %s did not read", party.c_str());
-                world_.played().setBench(args.benchPlayers, std::move(kits), args.benchFight);
+                world_.played().setBench(args.benchPlayers, std::move(kits), args.benchFight, args.benchParty);
             }
             if (args.raid > 0) {
                 world_.played().setRaid(args.raid, raidParty(), args.raidWatch,
@@ -581,6 +581,7 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().fireBurst().open(assets, ctx.textures, &world_.ground());
                 world_.played().electricSpike().open(assets, ctx.textures, &world_.ground());
                 world_.played().criticalDamage().open(assets, ctx.textures, &world_.ground());
+                world_.played().recall().open(assets, ctx.textures, &world_.ground());
                 world_.played().fireBreath().open(assets, ctx.textures,
                                                   world_.played().showing().table(),
                                                   &world_.ground());
@@ -1764,6 +1765,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And Hellfire's wall, MU's orange four tiles round (fx/hellfire.h).
         count += world_.played().hellfire().lights(falling + count,
                                                    kGatheredLights - count);
+        // And Summon's wall, white by its light four tiles round (fx/recall.h).
+        count += world_.played().recall().lights(falling + count, kGatheredLights - count);
         // And Twister's storm, a faint cool light under it -- ours (fx/storm.h).
         count += world_.played().storm().lights(falling + count,
                                                 kGatheredLights - count);
@@ -2031,6 +2034,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().fireBurst().gatherEffects(ctx.renderer.effects());
         world_.played().electricSpike().gatherEffects(ctx.renderer.effects());
         world_.played().criticalDamage().gatherEffects(ctx.renderer.effects());
+        world_.played().recall().gatherEffects(ctx.renderer.effects());
         world_.played().fireBreath().gatherEffects(ctx.renderer.effects(), eye.position,
                                                    eye.target, daylightOf(ctx.lighting));
         // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and
