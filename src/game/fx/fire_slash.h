@@ -174,8 +174,8 @@ private:
         uint32_t owner = 0;
         float wait = 0.0f;     // seconds to the key it is made on
         bool made = false;
-        int life = kRibbonLife;
-        float owed = 0.0f;
+        float age = 0.0f;      // MU frames since it was made, smooth (see lightAt)
+        float sweep = 0.0f;    // steps of the sweep owed, eight a MU frame, laid as they fall due
         float light = 1.0f;    // MU's o->Light: (1, 1, 1) as it is made
         float pivot[3] = {};
         float yaw = 0.0f;      // his, at the making
@@ -239,8 +239,13 @@ private:
     static void onBlade(const Gathering& one, float share, float out[3]);
     template <typename Sound>
     void makeRibbon(Ribbon& one, Sound& sound);
-    void stepRibbon(Ribbon& one);
-    void stepBolt(Bolt& one);
+    // Lays `steps` of the sweep (MU's eight a frame, here as they fall due).
+    void laySteps(Ribbon& one, int steps);
+    // The ribbon's light `age` MU frames after it is made: LifeTime / 30 down to ten, then a fifth
+    // less a frame (MU's a third, ours), as a smooth curve rather than MU's 25 steps a second.
+    static float lightAt(float age);
+    // Walks a bolt's tails afresh and ages it `ages` MU frames.
+    void stepBolt(Bolt& one, float ages = 1.0f);
 };
 
 template <typename Place, typename Blade, typename Sound, typename Cuts>
@@ -295,18 +300,34 @@ void FireSlash::update(float seconds, Place place, Blade blade, Sound sound, Cut
             one.last[0] = one.pivot[0] + made[0] * metre;
             one.last[1] = one.pivot[1];
             one.last[2] = one.pivot[2] + made[1] * metre;
-            one.owed = -one.wait * kReferenceFps;
+            one.age = -one.wait * kReferenceFps;
             makeRibbon(one, sound);
             continue;
         }
-        one.owed += frames;
-        while (one.alive && one.owed >= 1.0f) {
-            one.owed -= 1.0f;
-            stepRibbon(one);
-        }
+        // Smooth, not MU's 25 steps a second (the user, 2026-10-24: "finetune so it looks like
+        // 60fps not 30fps"): the sweep laid as its steps fall due, the light off a smooth age.
+        one.age += frames;
+        one.sweep += frames * float(kStepsAFrame);
+        const int due = int(one.sweep);
+        one.sweep -= float(due);
+        one.light = lightAt(one.age);
+        laySteps(one, due);
+        // Twenty-one frames: MU's LifeTime 20 to 0, dead below it.
+        if (one.age >= float(kRibbonLife + 1)) one.alive = false;
     }
     for (Bolt& one : bolts_) {
         if (!one.alive) continue;
+        if (one.on >= 0) {
+            // On the blade: laid afresh on it every drawn frame, so it keeps to the blade as it
+            // moves (the same day), aged by the frame's share of MU's.
+            one.left -= frames;
+            if (one.left <= 0.0f) {
+                one.alive = false;
+                continue;
+            }
+            stepBolt(one, 0.0f);
+            continue;
+        }
         one.owed += frames;
         while (one.alive && one.owed >= 1.0f) {
             one.owed -= 1.0f;
@@ -345,8 +366,11 @@ void FireSlash::makeRibbon(Ribbon& one, Sound& sound) {
     one.made = true;
     float feet[3] = {one.pivot[0], one.pivot[1] - kPivotLift * perUnit(), one.pivot[2]};
     sound(one.owner, feet);
-    // Made and moved on the same frame, as BITMAP_SWORD_FORCE makes it in its first move.
-    stepRibbon(one);
+    // Made and moved on the same frame, as BITMAP_SWORD_FORCE makes it in its first move: its
+    // first step now, the rest as they fall due.
+    one.light = 1.0f;
+    laySteps(one, 1);
+    one.light = lightAt(0.0f);
 }
 
 }  // namespace mu::game

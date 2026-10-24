@@ -169,7 +169,7 @@ void FireSlash::onBlade(const Gathering& one, float share, float out[3]) {
     for (int k = 0; k < 3; ++k) out[k] = one.grip[k] + (one.tip[k] - one.grip[k]) * share;
 }
 
-void FireSlash::stepBolt(Bolt& one) {
+void FireSlash::stepBolt(Bolt& one, float ages) {
     const float stride = kBoltStep * perUnit();
     const float reach = kBoltReach * perUnit();
     const float homing = kBoltHoming * kDegrees;
@@ -230,7 +230,7 @@ void FireSlash::stepBolt(Bolt& one) {
         // And Velocity along the thrown way.
         for (int k = 0; k < 3; ++k) one.at[k] += way[k] * stride;
     }
-    one.left -= 1.0f;
+    one.left -= ages;
     if (one.left <= 0.0f) one.alive = false;
 }
 
@@ -250,14 +250,20 @@ void FireSlash::stepGathering(Gathering& one) {
     if (--one.life <= 0) one.alive = false;
 }
 
-void FireSlash::stepRibbon(Ribbon& one) {
+float FireSlash::lightAt(float age) {
+    const float life = float(kRibbonLife) - age;
+    if (life >= 10.0f) return life / 30.0f;
+    return (10.0f / 30.0f) / std::pow(kFadeUnderTen, 10.0f - life);
+}
+
+void FireSlash::laySteps(Ribbon& one, int steps) {
     const float metre = perUnit();
     float axis[2];
     local(one.yaw, kStartTurn, 1.0f, 0.0f, axis);
     float ahead[2];
     local(one.yaw, kStartTurn, 0.0f, -1.0f, ahead);
     const float aheadYaw = std::atan2(ahead[0], ahead[1]);  // the joint's angle, for its bolts
-    for (int step = 0; step < kStepsAFrame && one.tails < kTails; ++step) {
+    for (int step = 0; step < steps && one.tails < kTails; ++step) {
         float off[2];
         local(one.yaw, one.turn, 0.0f, -kRadius, off);
         const float at[3] = {one.pivot[0] + off[0] * metre, one.pivot[1],
@@ -299,11 +305,6 @@ void FireSlash::stepRibbon(Ribbon& one) {
         ++one.tails;
         one.turn -= kStepTurn;
     }
-    // Its light, after the tails: LifeTime / 30 down to ten, then a fifth less each frame (MU's
-    // a third, ours).
-    one.light = one.life >= 10 ? float(one.life) / 30.0f : one.light / kFadeUnderTen;
-    // Twenty-one frames: MU's LifeTime 20 to 0, dead below it.
-    if (--one.life < 0) one.alive = false;
 }
 
 uint32_t FireSlash::lights(gfx::PointLight* out, uint32_t max) const {

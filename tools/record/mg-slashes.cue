@@ -2,7 +2,7 @@
 # Blade +11 (Power Slash comes with the blade) and Fire Slash taught, at a pack of six Bull
 # Fighters that do not fall. Three Fire Slashes on Q -- the ribbon, and the skulls on the bodies
 # whose defence it cuts -- then three Power Slashes on W -- the lightning trail and the five waves.
-# ./mu record mg-slashes --fps 30
+# ./mu record mg-slashes --fps 60
 args --arena bull_fighter --arena-count 6 --arena-undying --no-hand --class 3 --level 150
 args --teach 55 --give Sword22:1:+11W
 end 20
