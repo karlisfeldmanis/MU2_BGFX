@@ -1,10 +1,12 @@
 #include "net/wire.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cstring>
 
 #include <zlib.h>
 
+#include "core/utf8.h"
 #include "net/rules_print.h"
 #include "sim/realm.h"
 
@@ -224,8 +226,11 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     r.mana = in.i32();
     r.money = in.i64();
     r.learned = in.u64();
-    // Layouts 3 to 8 carry 39 skills' cools; 9 the Alquamos's too (kSkills 40). The rest stand cold.
-    const int cools = layout >= 9 ? sim::kSkills : std::min(39, sim::kSkills);
+    // Layouts 3 to 8 carry 39 skills' cools; 9 to 15 the Alquamos's too (40); 16 Fire Slash's
+    // and Power Slash's (kSkills 42). The rest stand cold.
+    const int cools = layout >= 16 ? sim::kSkills
+                      : layout >= 9 ? std::min(40, sim::kSkills)
+                                    : std::min(39, sim::kSkills);
     for (int i = 0; i < cools; ++i) r.coolsLeft[i] = in.i64();
     r.boonSkill = in.i32();
     r.boonDamageTaken = floatOf(in.u32());
@@ -247,10 +252,12 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     r.found = in.u32();
     r.summonSkill = in.i32();
     r.summonHealth = in.i32();
+    // Eighteen across from layout 15; MU's eight before it, each into its own column and row.
     k.vault.clear();
-    for (int cell = 0; cell < sim::kVaultCells; ++cell) {
+    const bool wide = layout >= 15;
+    for (int cell = 0; cell < (wide ? sim::kVaultCells : sim::kOldVaultCells); ++cell) {
         const sim::Held h = takeHeld(in);
-        if (!h.empty()) k.vault.put(cell, h);
+        if (!h.empty()) k.vault.put(wide ? cell : sim::widenedCell(cell), h);
     }
     k.vault.setZen(in.i64());
     k.machine.clear();
@@ -472,12 +479,38 @@ std::string rebirthLine(const std::string& name, int count, const std::string& r
            romanNumeral(count) + ").";
 }
 
+std::string newcomerLine(const std::string& name, const std::string& kind, const std::string& town) {
+    std::string place = town;
+    if (!place.empty()) place[0] = char(std::toupper(uint8_t(place[0])));
+    return "A new " + kind + ", " + name + ", sets foot in " + place + ". Welcome to MU-Classic Beta!";
+}
+
 std::string saidText(const std::string& text) {
+    // Any script's letters, as good UTF-8 only. Controls are spaces; bytes that are no letter, and
+    // the invisible ones that turn or hide what follows (bidi overrides, zero widths), go; and a
+    // letter takes three marks at most, so no line spills up and down the chat.
     std::string kept;
     kept.reserve(text.size());
-    for (const char c : text) {
-        const auto b = uint8_t(c);
-        kept.push_back(b < 0x20 || b == 0x7F ? ' ' : c);
+    int marks = 0;
+    for (size_t at = 0; at < text.size();) {
+        const size_t from = at;
+        const uint32_t cp = core::utf8::next(text, at);
+        if (cp >= 0x80 && at - from == 1) continue;  // a lone byte, not UTF-8
+        if (cp < 0x20 || (cp >= 0x7F && cp < 0xA0)) {
+            kept.push_back(' ');
+            marks = 0;
+            continue;
+        }
+        if ((cp >= 0x200B && cp <= 0x200F) || (cp >= 0x202A && cp <= 0x202E) ||
+            (cp >= 0x2060 && cp <= 0x206F) || cp == 0xFEFF || cp == 0xAD) {
+            continue;
+        }
+        const bool mark = (cp >= 0x0300 && cp <= 0x036F) || (cp >= 0x1AB0 && cp <= 0x1AFF) ||
+                          (cp >= 0x1DC0 && cp <= 0x1DFF) || (cp >= 0x20D0 && cp <= 0x20FF) ||
+                          (cp >= 0xFE20 && cp <= 0xFE2F);
+        if (mark && ++marks > 3) continue;
+        if (!mark) marks = 0;
+        kept.append(text, from, at - from);
     }
     const size_t first = kept.find_first_not_of(' ');
     if (first == std::string::npos) return {};

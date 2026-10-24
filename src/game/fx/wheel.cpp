@@ -37,7 +37,7 @@ void Wheel::clear() {
 }
 
 void Wheel::cast(uint32_t owner, const content::Mesh* weapon, const ShineLook& shine,
-                 bool polearm) {
+                 bool polearm, float reachTiles) {
     Turn* turn = nullptr;
     for (Turn& one : turns_) {
         if (!one.alive) {
@@ -52,14 +52,16 @@ void Wheel::cast(uint32_t owner, const content::Mesh* weapon, const ShineLook& s
     turn->weapon = weapon;
     turn->shine = shine;
     turn->polearm = polearm;
+    const float metres = ground_ ? ground_->metresPerTile() : 1.0f;
+    turn->radius = std::max(1.0f, reachTiles - (polearm ? kPoleInsideTiles : kInsideTiles)) * metres;
     turn->wait = kStartFrames;
 }
 
 void Wheel::place(Turn& turn, Copy& copy) const {
     // Its angle turns 18 a frame from his facing; in this engine's axes a yaw is MU's Angle[2]
-    // unchanged (content/placement.h), so MU's (0, -150, 0) is our (0, 0, 1.5) turned by it.
+    // unchanged (content/placement.h), so MU's (0, -150, 0) is our (0, 0, radius) turned by it.
     copy.orbit = turn.facing - kOrbitTurn * kDegrees * copy.age;
-    const float radius = (turn.polearm ? kPoleOrbitUnits : kOrbitUnits) * kUnit;
+    const float radius = turn.radius;
     copy.foot[0] = turn.feet[0] + std::sin(copy.orbit) * radius;
     copy.foot[1] = turn.feet[1];
     copy.foot[2] = turn.feet[2] + std::cos(copy.orbit) * radius;
@@ -187,7 +189,7 @@ uint32_t Wheel::lights(gfx::PointLight* out, uint32_t max) const {
         gfx::PointLight& light = out[count++];
         for (int k = 0; k < 3; ++k) light.position[k] = turn.feet[k];
         const float metres = ground_ ? ground_->metresPerTile() : 1.0f;
-        light.reach = (kOrbitUnits * kUnit + kLightTiles * metres);
+        light.reach = turn.radius + kLightTiles * metres;
         light.height = 1.0f;
         // Five of MU's lights summed would pass the brightest of the others here (Thunder's 1);
         // held there.

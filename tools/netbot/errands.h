@@ -344,7 +344,7 @@ private:
                 }
                 e.step = Step::List;
                 ask(bot, e, {.what = net::BrokerWhat::List, .slot = e.spares[e.spare], .seen = e.quoted,
-                             .price = e.price, .hours = 24});
+                             .price = e.price, .hours = 24, .count = 0});
                 return;
             }
             case Step::List: {

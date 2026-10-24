@@ -1,0 +1,100 @@
+{
+ "ref": "sword17_plus9_luck_option.png",
+ "note": "The dump's Sword17 '+9 luck +12' sheet; the reference was drawn for a reader who meets none of it, so its needs are Red.",
+ "sheet": {
+  "artScale": 1,
+  "base": "One-handed weapon",
+  "bound": "Cannot be dropped",
+  "boundTone": "RedPurple",
+  "classed": true,
+  "hero": {
+   "rail": [
+    {
+     "label": "base",
+     "values": [
+      {
+       "text": "82 ~ 90",
+       "tone": "White"
+      }
+     ]
+    },
+    {
+     "label": "refined to +9",
+     "values": [
+      {
+       "text": "+27",
+       "tone": "Yellow"
+      }
+     ]
+    },
+    {
+     "label": "attack speed",
+     "values": [
+      {
+       "text": "35",
+       "tone": "White"
+      }
+     ]
+    }
+   ],
+   "tone": "Yellow",
+   "value": "109 ~ 117",
+   "word": "Damage"
+  },
+  "item": true,
+  "name": "Sword of Destruction +9",
+  "nameTone": "Artifact",
+  "sections": [
+   {
+    "rows": [
+     {
+      "free": "62% with two swords,",
+      "freeTone": "White",
+      "keyword": "Dual Wield",
+      "mark": "Diamond",
+      "markTone": "White",
+      "tail": "49% mixed"
+     }
+    ]
+   },
+   {
+    "rows": [
+     {
+      "free": "+5% critical, Jewel of Soul always succeeds",
+      "freeTone": "Blue",
+      "keyword": "Luck",
+      "mark": "Diamond",
+      "markTone": "Blue"
+     },
+     {
+      "free": "Additional Dmg",
+      "freeTone": "Blue",
+      "mark": "Diamond",
+      "markTone": "Blue",
+      "tail": "+12"
+     }
+    ]
+   }
+  ],
+  "sell": "215,900",
+  "wear": "Durability: 100%",
+  "wearTone": "White",
+  "who": [
+   {
+    "text": "DK / MG",
+    "tone": "Green"
+   },
+   {
+    "quiet": false,
+    "text": "Strength 543",
+    "tone": "Red"
+   },
+   {
+    "quiet": false,
+    "text": "Agility 216",
+    "tone": "Red"
+   }
+  ],
+  "worn": 1
+ }
+}

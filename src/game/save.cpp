@@ -623,9 +623,21 @@ bool loadVault(const std::string& path, Saved& saved) {
         core::logError("save: %s is not a vault this reads; the vault starts empty", path.c_str());
         return false;
     }
+    // Its width: eighteen across since 2026-10-24 (sim/vault.h), MU's eight in a file from before
+    // that says none, each of whose things is moved to its own column and row of the wider one.
+    const int columns = int(doc["columns"].numberOr(double(sim::kOldVaultColumns)));
+    if (columns != sim::kOldVaultColumns && columns != sim::kVaultColumns) {
+        core::logError("save: %s is a vault %d across, not one this reads; the vault starts empty",
+                       path.c_str(), columns);
+        return false;
+    }
     saved.vaultZen = int64_t(doc["zen"].numberOr(0.0));
     const core::Json& items = doc["items"];
-    for (size_t i = 0; i < items.size(); ++i) saved.vaultItems.push_back(readItem(items.at(i)));
+    for (size_t i = 0; i < items.size(); ++i) {
+        Saved::Item item = readItem(items.at(i));
+        if (columns == sim::kOldVaultColumns && item.slot >= 0) item.slot = sim::widenedCell(item.slot);
+        saved.vaultItems.push_back(item);
+    }
     core::logf("save: vault %s -- %zu item(s), %lld Zen", path.c_str(), saved.vaultItems.size(),
                static_cast<long long>(saved.vaultZen));
     return true;
@@ -662,8 +674,8 @@ bool writeVault(const std::string& path, const content::Tables& tables, const si
     std::string temporary;
     std::FILE* f = begin(path, &temporary);
     if (!f) return false;
-    std::fprintf(f, "{\n  \"version\": %d,\n  \"zen\": %lld,\n  \"items\": [", kVersion,
-                 static_cast<long long>(vault.zen()));
+    std::fprintf(f, "{\n  \"version\": %d,\n  \"columns\": %d,\n  \"zen\": %lld,\n  \"items\": [",
+                 kVersion, int(sim::kVaultColumns), static_cast<long long>(vault.zen()));
     bool first = true;
     for (int cell = 0; cell < sim::kVaultCells; ++cell) {
         const sim::Held& held = vault[cell];

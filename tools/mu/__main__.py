@@ -40,7 +40,10 @@
     ./mu release linux [--dry]               the Linux client the same way, under /game/linux/
     ./mu ship [--go]                         what is live, what HEAD adds, what it needs, the steps (ship.py)
     ./mu ship notes [--dry]                  drafts on the site's /updates for what is now live
+    ./mu ship translate [--dry]              the site's untranslated lines, translated by claude -p
     ./mu ship app                            the Ship window (tools/ship/ship.cpp), built first
+    ./mu armory build [--commit REF]         the Armory's data, out/armory/<commit>/, from the live release
+    ./mu armory test [DIR]                   its headless tests: the output, the card against the game, the site's pages
 
 Every command takes --json and then prints one JSON object as its last line, for a script or
 an agent to read instead of the prose. Every step runs niced and held to `mu cores` (60% of
@@ -158,7 +161,7 @@ def main():
                     help="send the files, leave manifest.json on the release before (a protocol switch)")
 
     sh = sub.add_parser("ship", parents=[common])
-    sh.add_argument("action", nargs="?", choices=["notes", "updates", "send", "app", "prepare", "switch"],
+    sh.add_argument("action", nargs="?", choices=["notes", "translate", "updates", "send", "app", "prepare", "switch"],
                     help="notes: drafts on the site's /updates; updates: its lines; send FILE: lines to it; app: the window; "
                          "prepare: build and stage everywhere; switch: make what prepare staged live")
     sh.add_argument("file", nargs="?", help="send: the JSON file of lines")
@@ -171,6 +174,15 @@ def main():
     sh.add_argument("--import-site", action="store_true", help="notes: index.html's lines into the site, once")
     sh.add_argument("--web", help="notes: a local web/server.py (http://127.0.0.1:8090) instead of the box")
     sh.add_argument("--plain", action="store_true", help="notes: one draft a commit, its subject; no claude -p")
+    sh.add_argument("--lang", help="translate: only these languages, comma between (pt,lv)")
+    sh.add_argument("--install", action="store_true", help="translate: launchd runs it every half hour")
+
+    ar = sub.add_parser("armory", parents=[common])
+    ar.add_argument("action", choices=["build", "test"], help="build: out/armory/<commit>/; test: check it")
+    ar.add_argument("dir", nargs="?", help="test: the built release (the newest by default)")
+    ar.add_argument("--commit", help="build: the release (the live one, read from the manifests)")
+    ar.add_argument("--out", help="build: the folder the <commit>/ goes in (out/armory)")
+    ar.add_argument("--no-thumbs", action="store_true", help="build: skip the models and thumbnails")
 
     k = sub.add_parser("cores", parents=[common])
     k.add_argument("count", nargs="?", type=int)
@@ -338,11 +350,35 @@ def dispatch(args, say):
             return ship.prepare(say, commit=args.commit)
         if args.action == "switch":
             return ship.switch(say, commit=args.commit, now=args.now)
+        if args.action == "translate":
+            return ship.translate(say, web=args.web, dry=args.dry, langs=args.lang.split(",") if args.lang else None,
+                                  install=args.install)
         if args.action == "notes":
             if args.import_site:
                 return ship.import_site(say, web=args.web, since=args.since, dry=args.dry)
             return ship.notes(say, dry=args.dry, day=args.day, web=args.web, since=args.since, plain=args.plain)
         return ship.ship(say, run=args.go)
+    if args.command == "armory":
+        if args.action == "test":
+            import subprocess
+            tests = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "armory", "tests")
+            # The output's contract, the site's card against the game's renders, the pages in Chrome,
+            # and the figures' thumbnails framed whole.
+            passed, last = True, []
+            for script in ("armory_test.js", "card_check.js", "site_test.js", "thumb_check.py"):
+                extra = [] if script == "card_check.js" else ([args.dir] if args.dir else [])
+                runner = [sys.executable] if script.endswith(".py") else ["node"]
+                done = subprocess.run(runner + [os.path.join(tests, script)] + extra, capture_output=True, text=True)
+                for line in done.stdout.splitlines():
+                    say(line)
+                passed = passed and done.returncode == 0
+                last += done.stdout.splitlines()[-1:]
+            return passed, {"output": last}
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "armory"))
+        import build as armory_build
+        argv = (["--commit", args.commit] if args.commit else []) + (["--out", args.out] if args.out else []) \
+            + (["--no-thumbs"] if args.no_thumbs else [])
+        return armory_build.main(argv, say)
     if args.command == "where":
         return look.where(args.name, say, args.docs)
     if args.command == "shot":

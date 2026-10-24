@@ -1,0 +1,103 @@
+{
+  "item": "GloveClass05",
+  "mu_name": "Dark Lord hands",
+  "mu_name_from": "ZzzOpenData.cpp:115-120: MODEL_BODY_HELM + i and its fellows load HelmClass{i+1}, ArmorClass{i+1} and the rest, and a character with no armour wears MODEL_BODY_* + SkinIndex (ZzzCharacter.cpp:12124-12346), numbered one over MU's zero-based classes -- so Class05 is the Dark Lord, class 4.",
+  "part_note": "The arms and hands, 276 triangles. Bound to 75 on Bip01 L Forearm, 75 on Bip01 R Forearm, 44 on Bip01 L Hand, 44 on Bip01 R Hand.",
+  "profile": "armour",
+  "sheets": {
+    "HQlevel_man02": "HQlevel_man02.png"
+  },
+  "sheet_from": "Data/Player/HQlevel_man02.OZJ (256x256), from the Season 17 client (third_party/MuClient_S17_v1.19.74). All five of the Dark Lord's parts name it.",
+  "model_from": "Season 17's remake of MU's Dark Lord body, read out of Data/Player/GloveClass05.bmd in the S17 client: a version-14 file, which MuExtract opens through Webzen's ModulusCryptor (pipeline/MuExtract/MuAssets/Crypto). The user, 2026-10-23: \"we are taking naked skins from MuClient_S17_v1.19.74\". Its 51 bones are the first 51 of player.bmd's, by name and order, so it rides our rig and clips as the other classes' do.",
+  "material_note": "leather for the sleeve cuff and glove, painted_steel for the segmented vambrace.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 46,
+      "area": 1319.0,
+      "along": [
+        -9.2,
+        7.7
+      ],
+      "mu_uv": [
+        0.004,
+        0.361,
+        0.1,
+        0.645
+      ],
+      "bake_uv": [
+        0.591,
+        0.007,
+        0.887,
+        0.888
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather",
+      "triangles": 92,
+      "area": 1763.1,
+      "along": [
+        -7.5,
+        8.4
+      ],
+      "mu_uv": [
+        0.344,
+        0.438,
+        0.712,
+        0.996
+      ],
+      "bake_uv": [
+        0.043,
+        0.007,
+        0.799,
+        0.72
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 46,
+      "area": 1319.0,
+      "along": [
+        -9.2,
+        7.7
+      ],
+      "mu_uv": [
+        0.004,
+        0.361,
+        0.1,
+        0.645
+      ],
+      "bake_uv": [
+        0.305,
+        0.007,
+        0.994,
+        0.951
+      ]
+    },
+    {
+      "island": 3,
+      "material": "leather",
+      "triangles": 92,
+      "area": 1763.1,
+      "along": [
+        -7.5,
+        8.4
+      ],
+      "mu_uv": [
+        0.344,
+        0.438,
+        0.712,
+        0.996
+      ],
+      "bake_uv": [
+        0.007,
+        0.006,
+        0.758,
+        0.785
+      ]
+    }
+  ]
+}

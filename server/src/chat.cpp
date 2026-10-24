@@ -43,6 +43,14 @@ void announceRebirth(const std::string& name, int count, std::vector<std::unique
     marketHerald(text);
 }
 
+void welcomeNewcomer(Session& one, std::vector<std::unique_ptr<Session>>& sessions) {
+    if (!one.newcomer || one.world == nullptr) return;
+    one.newcomer = false;
+    const sim::Body* him = one.world->realm->find(one.player);
+    if (him == nullptr) return;
+    heraldHere(net::newcomerLine(one.name, sim::className(int(him->kin), false), one.world->name), sessions);
+}
+
 // The welcomed player called `name` on any map, in any case, or nullptr.
 Session* playerNamed(const std::string& name, std::vector<std::unique_ptr<Session>>& sessions) {
     const auto lower = [](std::string s) {
@@ -179,7 +187,7 @@ void say(Session& one, const net::Say& said, std::vector<std::unique_ptr<Session
         case net::Channel::Whisper: {
             Session* to = playerNamed(said.to, sessions);
             if (to == nullptr) {
-                chatSystem(one, net::Channel::Whisper, net::saidText(said.to).substr(0, 16) + " is not here.");
+                chatSystem(one, net::Channel::Whisper, net::saidText(said.to.substr(0, 16)) + " is not here.");
                 return;
             }
             if (to == &one) return;

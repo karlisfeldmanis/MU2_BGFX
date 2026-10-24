@@ -1000,7 +1000,7 @@ void Tracker::rebuildEvent(int width) {
                  : std::to_string(std::min(drawn_.eventKills, drawn_.eventKillsWanted)) + " / " +
                        std::to_string(drawn_.eventKillsWanted),
          waiting ? StepMark::Live : bridge ? StepMark::Done : StepMark::Live},
-        {"Slay the Spirit Sorcerers",
+        {"Slay the Magic Skeletons",
          std::to_string(std::min(drawn_.eventSorcerers, drawn_.eventSorcerersWanted)) + " / " +
              std::to_string(drawn_.eventSorcerersWanted),
          door ? StepMark::Done : bridge && !waiting ? StepMark::Live : StepMark::Waiting},

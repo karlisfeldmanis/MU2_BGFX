@@ -33,6 +33,10 @@ constexpr int kJeweler = 492;
 
 // What he works: the powered pieces alone, the six with a signature and a colour.
 inline bool jewelerTakes(const content::ItemRow& row) { return powered(row); }
+// What he salvages: those and MU's own rings and pendants, Ice to Lightning, which have no colour
+// (players, 2026-10-24, salvaging for a Jewel of Life: "both rings and pendants of
+// lightning/poison don't work there").
+inline bool jewelerSalvages(const content::ItemRow& row) { return ring(row) || pendant(row); }
 
 // ---- Recut -----------------------------------------------------------------------------------
 // 50,000 at +0 to 500,000 at +9 on the powers' own square curve, to the thousand.
@@ -53,8 +57,10 @@ Affix recutRoll(const content::ItemRow& row, const Held& what, int line, Random&
 constexpr int kSalvagePrizes = 5;
 ItemKey salvagePrize(int prize);
 int salvageCount(int prize);  // how many of it: 3 potions, 1 jewel
-// In hundredths, a row a colour (1 to 4 powers), a column a prize. Ours, a first draft.
-constexpr int kSalvageOdds[4][kSalvagePrizes] = {
+// In hundredths, a row a colour (0 to 4 powers), a column a prize. Ours, a first draft. A plain
+// piece of MU's drops often, so it is worse than white and never a Jewel of Life.
+constexpr int kSalvageOdds[5][kSalvagePrizes] = {
+    {55, 30, 12, 3, 0},   // plain, MU's own
     {45, 35, 15, 5, 0},   // white
     {30, 30, 25, 12, 3},  // blue
     {20, 20, 25, 25, 10}, // purple

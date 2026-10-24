@@ -139,6 +139,17 @@ const char* easeGraphics(Args& a) {
     return to.name;
 }
 
+const char* graphicsName(const Args& a) {
+    const int scale = int(a.scale * 100.0f + 0.5f);
+    for (const GraphicsPreset& p : kGraphicsPresets) {
+        if (scale == p.scale && a.msaa == p.msaa && a.shadows == p.shadows && a.ssao == p.ssao &&
+            a.bloom == p.bloom && a.reflections == p.reflections && a.grass == p.grass &&
+            a.lights == p.lights && a.textures == p.textures)
+            return p.name;
+    }
+    return "Custom";
+}
+
 void printUsage() {
     logf(
         "mu2 [options]\n"

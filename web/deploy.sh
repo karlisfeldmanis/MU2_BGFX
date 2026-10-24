@@ -30,6 +30,21 @@ fi
 ssh $host "mkdir -p $dest /srv/mu2-web/downloads"
 rsync -az --delete "$stage/" $host:$dest/
 echo "copied $commit to $host:$dest"
+
+# The Armory's data (tools/armory/build.py): out/armory/<release>/ to /srv/mu2-web/armory/<release>/,
+# then `current` moved to it, which web/server.py (--armory /srv/mu2-web/armory) and Caddy
+# (/armory/data/*) serve; the release is ARMORY (a commit), else the newest built. Its files are
+# named by commit, so the release before stays served for pages already open; the four newest kept.
+armory=${ARMORY:-$(ls -t out/armory/*/meta.json 2>/dev/null | head -1 | xargs -n1 dirname 2>/dev/null | xargs -n1 basename 2>/dev/null)}
+if [ -n "$armory" ] && [ -f "out/armory/$armory/meta.json" ]; then
+  ssh $host "mkdir -p /srv/mu2-web/armory"
+  rsync -az --chmod=a+rX "out/armory/$armory/" "$host:/srv/mu2-web/armory/$armory/"
+  ssh $host "cd /srv/mu2-web/armory && ln -sfn $armory current.new && mv -T current.new current && \
+    ls -1dt */ | grep -v '^current' | tail -n +5 | xargs -r rm -rf"
+  echo "the Armory of $armory is current on $host"
+else
+  echo "note: no built Armory in out/armory/ (./mu armory build); the site's /armory says so"
+fi
 [ "$1" = "--copy" ] && exit 0
 
 # Caddy 2.10 or later: Ubuntu's own (2.6) cannot ask Let's Encrypt for an IP certificate, so it

@@ -2318,11 +2318,13 @@ def cook_tables(world, out_dir):
     # `PLAYER_SKILL_INFERNO`, Inferno's own (ClassAttack.cpp:1212-1221) at 0.6, one before too.
     # And 152, `PLAYER_SKILL_FLASH`, Aqua Beam's (ClassAttack.cpp:1365-1376) at 0.4, one before.
     # And 71, `PLAYER_ATTACK_DEATHSTAB`, Death Stab's own (SkillCast.cpp:302-304), 7 keys at 0.25.
+    # And 146, `PLAYER_ATTACK_TWO_HAND_SWORD_TWO`, Power Slash's (ClassAttack.cpp:686-695), the
+    # gladiator's blades' own swing at 0.25 (docs/plans/mg-skills/power-slash.md).
     keys = index.get("action_keys", {})
     speeds = index.get("action_speeds", {})
     unassigned = {"183": 0.25}
     actions = []
-    for action in list(range(38, 52)) + [60, 61, 62, 63, 64, 65, 66, 71, 147, 148, 152, 153, 154, 183, 187]:
+    for action in list(range(38, 52)) + [60, 61, 62, 63, 64, 65, 66, 71, 146, 147, 148, 152, 153, 154, 183, 187]:
         name = str(action)
         speed = speeds.get(name, unassigned.get(name))
         if name not in keys or speed is None:

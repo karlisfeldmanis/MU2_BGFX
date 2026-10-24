@@ -46,7 +46,11 @@ int Realm::recut(int slot, int line) {
     }
     Held piece = me().bag[slot];
     const content::ItemRow* row = rowAt(*tables_, piece);
-    if (row == nullptr || !jewelerTakes(*row) || piece.affixes[line] == 0) {
+    if (row == nullptr || !jewelerTakes(*row)) {
+        refusal_ = "only powered pieces are recut";
+        return -1;
+    }
+    if (piece.affixes[line] == 0) {
         refusal_ = "nothing to recut";
         return -1;
     }
@@ -85,8 +89,8 @@ int Realm::salvage(int slot) {
     }
     const Held piece = me().bag[slot];
     const content::ItemRow* row = rowAt(*tables_, piece);
-    if (row == nullptr || !jewelerTakes(*row)) {
-        refusal_ = "nothing to salvage";
+    if (row == nullptr || !jewelerSalvages(*row)) {
+        refusal_ = "only rings and pendants";
         return -1;
     }
     const bool twice = piece.refinement >= kSalvageTwiceFrom || piece.luck;
@@ -124,7 +128,7 @@ int Realm::combine(int first, int second, int third) {
         const Held& piece = me().bag[s];
         const content::ItemRow* row = rowAt(*tables_, piece);
         if (row == nullptr || !jewelerTakes(*row)) {
-            refusal_ = "three pieces of one colour";
+            refusal_ = "only powered pieces combine";
             return -1;
         }
         const int count = affixCount(*row, piece);

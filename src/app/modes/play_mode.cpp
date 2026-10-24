@@ -566,6 +566,12 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().fury().open(assets, ctx.textures,
                                             world_.played().showing().table(),
                                             &world_.ground());
+                world_.played().fireSlash().open(assets, ctx.textures,
+                                                 world_.played().showing().table(),
+                                                 &world_.ground());
+                world_.played().powerSlash().open(assets, ctx.textures,
+                                                  world_.played().showing().table(),
+                                                  &world_.ground());
                 world_.played().hellfire().open(assets, ctx.textures, &world_.ground());
                 world_.played().storm().open(assets, ctx.textures,
                                              world_.played().showing().table(), &world_.ground());
@@ -618,6 +624,7 @@ bool PlayMode::open(Context& ctx) {
                 game::HelperSettings helper;
                 game::loadHelper(savePath_, helper);
                 desk_.setHelperSettings(helper);
+                helper_.keepLog(savePath_, game::worldShow(args.world).name);
             }
             // And the pictures the windows will ask for, last of all: after restore(), so the
             // bag being warmed is the one he is carrying and not an empty one.
@@ -1423,6 +1430,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             world_.played().notice("Helper stopped.", false);
         }
         if (desk_.takeHelperChanged()) game::writeHelper(savePath_, desk_.helperSettings());
+        if (desk_.takeHelperClear()) helper_.clearLog();
         if ((mouseLeft && !windowed) || clickNow || (uiPress && !uiRight && !windowed)) {
             world_.played().leftClick();
         } else if (mouseLeft || !mouseLeftHeld) {
@@ -1467,6 +1475,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             world_.played().notice(said, !done);
         }
         desk_.setAutoPlaying(ctx.autoQuest);
+        for (const game::Play::Picked& one : world_.played().takePicked()) helper_.picked(world_.played(), one.what, one.zen);
         if (const std::string said = helper_.update(world_.played(), desk_.helperSettings(), deltaSeconds, bar,
                                                     game::Hud::kSkillBoxes, desk_.shownQuest());
             !said.empty()) {
@@ -1480,7 +1489,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             ctx.helperPicked = helper_.stats().picked;
             ctx.helperQuests = helper_.stats().quests;
         }
-        desk_.setHelping(helper_.on(), helper_.stats());
+        desk_.setHelping(helper_.on(), helper_.stats(), &helper_.log());
         world_.played().update(deltaSeconds);
         // --stride-log: the clocks a recording's cut carries, as this frame is drawn.
         if (strideLog_) {
@@ -1757,6 +1766,11 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And Rageful Blow's broken ground, MU's red under its fires, as one.
         count += world_.played().fury().lights(falling + count,
                                                kGatheredLights - count);
+        // And Power Slash's waves, MU's blue under each (fx/power_slash.h).
+        count += world_.played().powerSlash().lights(falling + count,
+                                                     kGatheredLights - count);
+        // And Fire Slash's warm light under its ribbon -- ours (fx/fire_slash.h).
+        count += world_.played().fireSlash().lights(falling + count, kGatheredLights - count);
         // And Hellfire's wall, MU's orange four tiles round (fx/hellfire.h).
         count += world_.played().hellfire().lights(falling + count,
                                                    kGatheredLights - count);
@@ -2022,6 +2036,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().inferno().gatherEffects(ctx.renderer.effects());
         world_.played().aqua().gatherEffects(ctx.renderer.effects());
         world_.played().deathStab().gatherEffects(ctx.renderer.effects());
+        world_.played().fireSlash().gatherEffects(ctx.renderer.effects());
+        world_.played().powerSlash().gatherEffects(ctx.renderer.effects());
         world_.played().impale().gatherEffects(ctx.renderer.effects());
         world_.played().fireBreath().gatherEffects(ctx.renderer.effects(), eye.position,
                                                    eye.target, daylightOf(ctx.lighting));
@@ -2339,7 +2355,7 @@ void PlayMode::rejoin(Context& ctx, double seconds) {
     if (wait > 0.0) {
         char note[64];
         std::snprintf(note, sizeof note, "Reconnecting in %d s...", int(std::ceil(wait)));
-        desk_.rejoining(true, note);
+        desk_.rejoining(true, note, int(std::ceil(wait)));
         return;
     }
     const size_t colon = args.server.rfind(':');
@@ -2469,6 +2485,11 @@ void PlayMode::shutdown(Context& ctx) {
     // comes along.
     keep(ctx);
     if (!savePath_.empty()) core::logf("save: kept in %s", savePath_.c_str());
+    // The Helper's log says how it ended; a followed quest's travel takes it on to the next map.
+    if (helper_.on() && !(ctx.helperFollows && !travelTo_.empty())) {
+        const bool cut = world_.played().isOpen() && world_.played().cut();
+        helper_.stop(cut ? "Disconnected" : !travelTo_.empty() ? "You left the map" : "You left the world");
+    }
     ctx.time.setScene("");
     ctx.time.setWet("");
     if (shadowLog_) std::fclose(shadowLog_);

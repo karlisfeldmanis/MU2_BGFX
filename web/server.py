@@ -39,12 +39,17 @@ The routes:
     GET  /api/comments?post=ID                      -> 200 {comments: [{name, text, at}]}
     POST /api/comments   Bearer T {post, text}      -> 201 {ok} | 400 {error} | 401 | 429
          on the posts of site/posts.json, under the account's name.
+    GET  /armory/..., /api/armory/...               the Armory's pages, its release's files and its comments (web/armory.py)
     GET  /api/downloads                             -> 200 {windows: {file, bytes, sha256} | null, macos: ...}
     POST /api/bug        {text, platform?, build?, renderer?, gpu?, world?, x?, y?, character?, class?,
                           level?, server?}  [Bearer T]  -> 200 {ok, id} | 400 {error} | 413 | 429 {error: "later"}
          a player's bug report from the game: their words (1 to MOST_BUG_TEXT characters) and where
          they stood. A line in bugs.jsonl beside the database; a token, or the game's `ticket:secret`,
          files it under its account, as for /api/crash. BUG_LIMIT an address, MOST_BUGS_A_DAY in all.
+    POST /api/graphics   Bearer ticket:secret {preset, renderer, scale, msaa, ...}  -> 200 {ok} | 400 | 401 | 429
+         what the game draws with, from the game (src/launcher/graphics_report.h): its Graphics rows
+         as the run has them, measured or set by hand. The account's last one is kept (`drawn`) and
+         the /online page shows it in place of the launcher's first guess.
     GET  /api/bugs       Bearer T of an admin       -> 200 {bugs: [...]} | 404 for anyone else
          every report, newest first, each with its state and its account's email and name (the /bugs page).
     POST /api/bugs/state Bearer T of an admin {id, state}  -> 200 {ok} | 400 | 404
@@ -59,8 +64,8 @@ The routes:
          every account with a character, its characters as mu2_server last listed them (a minute
          apart), and its Plays (launcher starts) of the last PLAYS_DAYS days.
     GET  /api/character?account=N&name=X   Bearer T of an admin -> 200 {name, class, level, world, saved,
-         second, experience, zen, points, worn, bag} | 404: one character's stats and gear, as mu2_server
-         last listed it (a minute apart).
+         second, experience, zen, points, worn, bag, played} | 404: one character's stats and gear, as mu2_server
+         last listed it (a minute apart), and `played`, his seconds on (Store.played).
     POST /internal/online   (127.0.0.1 only) {region?, players: [{account, name, class, level, world, copy, x, y, bot, ms}],
                              characters?: [{account, name, class, level, world, saved, fresh}]}
          a region's mu2_server's list of who is on, every 5 s (server/src/signin.cpp tellOnline); kept in
@@ -99,6 +104,15 @@ The routes:
          (class Discord), by the webhook URL in discord_webhook beside the database.
     POST /internal/discord          (127.0.0.1 only) {day}  -> 200 {ok} | 400 | 409 with no webhook
          that day's #updates message sent, edited or taken away now.
+    POST /internal/rebirth          (127.0.0.1 only) {region, name, class, count}  -> 200 {ok} | 400
+         a character reborn on a region's game server (mu2_server's tellRebirth), posted in the
+         Discord's #announcements (class Announce) by the webhook URL in discord_announce_webhook
+         beside the database; with none, nothing is told.
+    GET  /internal/untranslated     (127.0.0.1 only)  -> 200 {langs, missing, examples}
+    POST /internal/translations     (127.0.0.1 only) {texts: {lang: {source: text}}}  -> 200 {put, refused}
+         the units of the site with no translation in a language, and translations of them put in
+         where there is still none: `mu ship translate` (tools/mu/ship.py) translates them with
+         claude -p on the Mac, and keeps doing so on a schedule.
     GET  /api/texts      Bearer T of an admin       -> 200 {langs, groups, texts} | 404 for anyone else
     POST /api/texts      Bearer T of an admin {lang, source, text}  -> 200 {ok} | 400 {error} | 404
          the site in other languages (the admins' /translate page, web/i18n.py): every English unit
@@ -121,6 +135,7 @@ import hmac
 import json
 import mimetypes
 import os
+import queue
 import re
 import secrets
 import sqlite3
@@ -136,6 +151,7 @@ from urllib.parse import parse_qs, urlparse
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import i18n  # noqa: E402
+import armory  # noqa: E402
 
 SESSION_DAYS = 90
 # The plays an account page lists, and how long each is kept.
@@ -218,6 +234,11 @@ MACHINE_KEYS = {"gpu": 160, "vendor": 8, "driver": 64, "date": 32, "cpu": 128, "
                 "vulkan": 4, "old": 4, "software": 4, "tuned": 4, "renderer": 4}
 # What one machine is counted by: the card, the CPU and the memory around it, and the OS.
 MACHINE_FINGERPRINT = ("gpu", "cpu", "ram", "os")
+# What the game's own report of its graphics may carry (src/launcher/graphics_report.cpp): the
+# preset its rows are (or "Custom") and the renderer, cut to size, and the rows as whole numbers.
+GRAPHICS_TEXTS = {"preset": 16, "renderer": 32}
+GRAPHICS_NUMBERS = ("scale", "msaa", "shadows", "ssao", "bloom", "reflections", "grass", "lights",
+                    "textures", "cap", "fps", "tuned", "hand", "width", "height", "fullscreen")
 
 # A crash report's request: a megabyte of text and three of minidump at most (crash_upload.cpp),
 # in base64, with room for the fields around them.
@@ -259,6 +280,15 @@ DISCORD_COLOUR = 0xC9A45C
 DISCORD_MOST_TEXT = 4000
 SITE_URL = "https://mu-classic.com/"
 
+# The site's units with no translation in a language are translated on the Mac by `mu ship translate`
+# (claude -p), through /internal/untranslated and /internal/translations: the Latest updates as they
+# are published, and any new words of a page. What an admin wrote on /translate is never touched; a
+# line the translator wrote (texts.by = TRANSLATOR) an admin can reword there like any other.
+TRANSLATOR = 0             # texts.by of a line the translator wrote (accounts start at 1)
+LANG_NAMES = {"pt": "Brazilian Portuguese", "es": "Spanish", "ru": "Russian", "vi": "Vietnamese", "pl": "Polish",
+              "zh": "Simplified Chinese", "ms": "Malay (Malaysia)", "lv": "Latvian"}
+EXAMPLES = 40              # a language's own lines sent with its missing ones, to keep its words
+
 # The launchers that must be replaced: they cannot update themselves, so the site tells them so.
 # A launcher says "MU2Launcher/<build>" (src/launcher/https.h kAgent); those before crash reports
 # said "MU2Launcher" alone. Their sign-in is refused with words their screen shows as they are
@@ -298,6 +328,13 @@ CREATE TABLE IF NOT EXISTS devices (
     seen       INTEGER NOT NULL,
     PRIMARY KEY (account_id, fp)
 );
+-- What each account's game last said it draws with (POST /api/graphics): the rows the run has,
+-- measured or set by hand, and not the launcher's first guess (devices.report's `graphics`).
+CREATE TABLE IF NOT EXISTS drawn (
+    account_id INTEGER PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
+    report     TEXT NOT NULL,      -- JSON, inside GRAPHICS_TEXTS and GRAPHICS_NUMBERS
+    at         INTEGER NOT NULL
+);
 CREATE TABLE IF NOT EXISTS comments (
     id         INTEGER PRIMARY KEY,
     post       TEXT NOT NULL,
@@ -317,6 +354,14 @@ CREATE TABLE IF NOT EXISTS games (
     PRIMARY KEY (account_id, name, since)
 );
 CREATE INDEX IF NOT EXISTS games_until ON games(until);
+-- Each character's play before the oldest kept in `games`: its plays' seconds, added in as they are
+-- swept (told_online), so a character's total (Store.played) outlives RECENT_DAYS.
+CREATE TABLE IF NOT EXISTS played (
+    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    name       TEXT NOT NULL,
+    seconds    INTEGER NOT NULL,
+    PRIMARY KEY (account_id, name)
+) WITHOUT ROWID;
 CREATE TABLE IF NOT EXISTS tickets (
     ticket      TEXT PRIMARY KEY,
     account_id  INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
@@ -460,7 +505,9 @@ class Store:
         self.online = {}
         self.games_swept = 0
         # Every character of an account, as each region's mu2_server last listed it (told_characters):
-        # region -> [character], each carrying its region.
+        # region -> [character], each carrying its region. Kept in settings too (roster:<region>, the
+        # fields an account page shows), so a restart does not leave every account page empty until
+        # each region's next list, a minute on (the user, 2026-10-23: "dont see characters").
         self.characters = {}
         # The bug reports (bug()), in bugs.jsonl beside the database: a line for each report, and a
         # line {id, state, at} for each time an admin marks one, folded onto it as the file is read.
@@ -530,6 +577,15 @@ class Store:
                 peaks[day] = (on, at)
         for day, (peak, at) in peaks.items():
             db.execute("INSERT INTO days VALUES (?, ?, ?)", (day, peak, at))
+
+    def close(self):
+        """This thread's connection closed: a request's thread ends when its connection does, and an
+        unclosed one holds the database, its -wal and -shm until the collector comes, which ran
+        the service out of files (1024) in twelve busy minutes on 2026-10-23."""
+        db = getattr(self.local, "db", None)
+        if db is not None:
+            self.local.db = None
+            db.close()
 
     def db(self) -> sqlite3.Connection:
         db = getattr(self.local, "db", None)
@@ -629,6 +685,10 @@ class Store:
     def device(self, account: int, report: dict, ip: str):
         self.db().execute("INSERT OR REPLACE INTO devices VALUES (?, ?, ?, ?, ?)",
                           (account, report["fp"], json.dumps(report, separators=(",", ":")), ip, report["at"]))
+
+    def drew(self, account: int, report: dict):
+        self.db().execute("INSERT OR REPLACE INTO drawn VALUES (?, ?, ?)",
+                          (account, json.dumps(report, separators=(",", ":")), int(time.time())))
 
     def account(self, account: int, token: str) -> dict:
         db = self.db()
@@ -783,6 +843,15 @@ class Store:
             db.execute("DELETE FROM texts WHERE lang = ? AND source = ?", (lang, source))
         self.texts_version += 1
 
+    def fill_text(self, lang: str, source: str, text: str) -> bool:
+        """A translation where there is none yet (the translator's): an admin's, or one put in
+        meanwhile, stands."""
+        put = self.db().execute("INSERT OR IGNORE INTO texts (lang, source, text, changed, by) VALUES (?, ?, ?, ?, ?)",
+                                (lang, source, text, int(time.time()), TRANSLATOR)).rowcount > 0
+        if put:
+            self.texts_version += 1
+        return put
+
     def seed_texts(self, seeds: dict) -> int:
         """web/i18n/<lang>.json put in wherever a unit has no translation yet; an admin's word stands."""
         db, now, added = self.db(), int(time.time()), 0
@@ -868,7 +937,10 @@ class Store:
                 db.execute("INSERT INTO days VALUES (?, ?, ?) ON CONFLICT DO UPDATE SET peak = excluded.peak, "
                            "peak_at = excluded.peak_at WHERE excluded.peak > days.peak", (day, people, now))
                 if now - self.games_swept > 3600:
-                    db.execute("DELETE FROM games WHERE until < ?", (now - RECENT_DAYS * 86400,))
+                    old = now - RECENT_DAYS * 86400
+                    db.execute("INSERT INTO played SELECT account_id, name, sum(until - since) FROM games WHERE until < ? "
+                               "GROUP BY account_id, name ON CONFLICT DO UPDATE SET seconds = seconds + excluded.seconds", (old,))
+                    db.execute("DELETE FROM games WHERE until < ?", (old,))
                     self.games_swept = now
                 db.execute("COMMIT")
             except (sqlite3.Error, ValueError, TypeError):
@@ -876,11 +948,29 @@ class Store:
                 raise
             self.online[region] = {"at": now, "players": players}
 
+    ROSTER_KEEPS = ("account", "name", "class", "level", "world", "fresh", "region", "saved", "zen")  # not the gear
+
     def told_characters(self, characters: list, region: str = DEFAULT_REGION):
         for c in characters:
             c["region"] = region
         with self.online_lock:
             self.characters[region] = characters
+        self.set_setting(f"roster:{region}", json.dumps([{k: c.get(k) for k in self.ROSTER_KEEPS} for c in characters]))
+
+    def seconds_played(self, account: int, name: str) -> int:
+        """A character's seconds on any server, every play of his the website has seen (since 2026-10-16)."""
+        db = self.db()
+        swept = db.execute("SELECT seconds FROM played WHERE account_id = ? AND name = ?", (account, name)).fetchone()
+        kept = db.execute("SELECT sum(until - since) FROM games WHERE account_id = ? AND name = ?", (account, name)).fetchone()
+        return (swept[0] if swept else 0) + (kept[0] or 0)
+
+    def load_rosters(self):
+        """The regions' last lists, as kept, until each region lists them again."""
+        rows = self.db().execute("SELECT key, value FROM settings WHERE key LIKE 'roster:%'").fetchall()
+        with self.online_lock:
+            for key, value in rows:
+                self.characters.setdefault(key[len("roster:"):], json.loads(value))
+        return sum(len(json.loads(v)) for _, v in rows)
 
     def regions_told(self) -> dict:
         """The regions whose servers still tell (REGION_GONE_SECONDS): region -> {at, players}."""
@@ -1090,7 +1180,8 @@ class Store:
         players = []
         for p in told["players"]:
             email, name = accounts.get(p.get("account"), ("", ""))
-            players.append(p | {"email": email, "account_name": name})
+            players.append(p | {"email": email, "account_name": name,
+                                "played": self.seconds_played(p["account"], str(p.get("name"))) if p.get("account") else 0})
         players.sort(key=lambda p: (p.get("bot", False), str(p.get("world")), -int(p.get("level") or 0)))
         on = {(p.get("account"), p.get("name"), p.get("since")) for p in told["players"]}
         recent = [{"account": account, "email": email, "account_name": name or "", "name": who, "class": kind,
@@ -1112,6 +1203,10 @@ class Store:
                 row = json.loads(report)
                 machines[str(account)] = {key: row.get(key) for key in
                                           ("gpu", "vendor", "driver", "date", "cpu", "ram", "os", "graphics", "renderer")}
+            # And what its game last said it draws with, beside the launcher's guess.
+            for account, report, at in self.db().execute(
+                    f"SELECT account_id, report, at FROM drawn WHERE account_id IN ({marks})", ids):
+                machines.setdefault(str(account), {})["drawn"] = json.loads(report) | {"at": at}
         return {"at": told["at"], "fresh": bool(regions) and not stale, "stale": stale, "players": players,
                 # Every region of REGIONS, told or not, with its people and bots apart (the page's realm row).
                 "regions": [{"name": region, "city": city, "at": regions.get(region, {}).get("at", 0),
@@ -1273,10 +1368,58 @@ MACHINE_LIMIT = Limit(60, 3600)
 CRASH_LIMIT = Limit(24, 3600)
 # Bug reports: a player who finds ten in an hour has said what there is to say.
 BUG_LIMIT = Limit(10, 3600)
+# The game's graphics: a change and its settling, and once each ten minutes (graphics_report.h).
+GRAPHICS_LIMIT = Limit(60, 3600)
 # A ticket a Play: sixty an hour is a player who starts the game every minute.
 TICKET_LIMIT = Limit(60, 3600)
 # Comments, per account: a conversation, not a flood.
 COMMENT_LIMIT = Limit(10, 600)
+
+
+# ---- the site's words --------------------------------------------------------------------------------
+
+def site_page(site: Path, store: "Store", file: str, lang: str = "en") -> str:
+    """A page as it is served in English (with the published Latest updates), before any translation."""
+    data = (site / file).read_bytes()
+    if file == "index.html":
+        data = with_updates(data, store.updates(published_only=True), lang)
+    return data.decode()
+
+
+def site_units(site: Path, store: "Store") -> list:
+    """Every unit of the site, each once where it first stands: {group, source, path}; the group is
+    the page's file, "updates" for the Latest updates, or "js" for what a script says."""
+    out, seen = [], set()
+    for file, (path, _) in i18n.PAGES.items():
+        page = site_page(site, store, file)
+        for start, end, kind, source in i18n.units(page):
+            group = "js" if kind == "js" else "updates" if file == "index.html" and i18n.in_updates(page, start) else file
+            k = i18n.key(source)
+            if k not in seen:
+                seen.add(k)
+                out.append({"group": group, "source": k, "path": path})
+    for source in i18n.script_units((site / "site.js").read_text()):
+        k = i18n.key(source)
+        if k not in seen:
+            seen.add(k)
+            out.append({"group": "js", "source": k, "path": "/"})
+    # The Armory's words: what its script says through t(), and its pages' own few (web/armory.py).
+    script = site / "armory" / "armory.js"
+    for source in (i18n.script_units(script.read_text()) if script.is_file() else []) + list(armory.PAGE_WORDS):
+        k = i18n.key(source)
+        if k not in seen:
+            seen.add(k)
+            out.append({"group": "armory", "source": k, "path": "/armory"})
+    return out
+
+
+def examples(have: dict) -> list:
+    """Up to EXAMPLES of a language's translations, [[source, text]]: the patch notes' voice, lines
+    with tags, and the short labels."""
+    picked = [(k, t) for k, t in have.items() if 20 < len(k) < 220][:28]
+    picked += [(k, t) for k, t in have.items() if i18n.has_tags(k) and len(k) < 300][:6]
+    picked += [(k, t) for k, t in have.items() if len(k) <= 20][:EXAMPLES - len(picked)]
+    return [list(pair) for pair in picked]
 
 
 # ---- the Latest updates in Discord ---------------------------------------------------------------
@@ -1352,7 +1495,8 @@ class Discord:
                             "color": DISCORD_COLOUR}],
                 "allowed_mentions": {"parse": []}}
 
-    def call(self, method: str, url: str, body: dict = None) -> dict:
+    @staticmethod
+    def call(method: str, url: str, body: dict = None) -> dict:
         import urllib.request
         import urllib.error
         request = urllib.request.Request(
@@ -1402,6 +1546,63 @@ class Discord:
         self.store.set_setting(key, f"{sent} {digest} {len(lines)}")
 
 
+# ---- rebirths in Discord's #announcements -------------------------------------------------------
+
+def roman(n: int) -> str:
+    """A count as a Roman numeral, I to MMMCMXCIX, as the game writes a rebirth's (net::romanNumeral)."""
+    n, out = max(1, min(3999, n)), ""
+    for value, letters in ((1000, "M"), (900, "CM"), (500, "D"), (400, "CD"), (100, "C"), (90, "XC"),
+                           (50, "L"), (40, "XL"), (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I")):
+        while n >= value:
+            out, n = out + letters, n - value
+    return out
+
+
+class Announce:
+    """Each rebirth a game server tells (/internal/rebirth) as one message in #announcements, by the
+    channel's webhook: the file discord_announce_webhook beside the database, read at each message,
+    so it is set or changed without a restart. Posted on a thread of its own, one at a time; one
+    Discord turns away is dropped, not tried again."""
+
+    def __init__(self, webhook: Path):
+        self.webhook_path = webhook
+        self.waiting = queue.Queue()
+        threading.Thread(target=self.run, daemon=True).start()
+
+    def webhook(self) -> str:
+        try:
+            url = self.webhook_path.read_text().strip()
+        except OSError:
+            return ""
+        return url if DISCORD_WEBHOOK.match(url) else ""
+
+    def rebirth(self, region: str, name: str, kind: str, count: int):
+        self.waiting.put((region, name, kind, count))
+
+    @staticmethod
+    def message(region: str, name: str, kind: str, count: int) -> dict:
+        def plain(text):
+            return re.sub(r"([\\*_~`|])", r"\\\1", text)
+        who = f"**{plain(name)}**" + (f", {plain(kind)}," if kind else "")
+        where = f" in {plain(region)}" if region else ""
+        return {"embeds": [{"title": f"Rebirth {roman(count)}",
+                            "description": f"{who} has been reborn{where}.",
+                            "color": DISCORD_COLOUR}],
+                "allowed_mentions": {"parse": []}}
+
+    def run(self):
+        while True:
+            region, name, kind, count = self.waiting.get()
+            url = self.webhook()
+            if not url:
+                continue
+            try:
+                Discord.call("POST", url, self.message(region, name, kind, count))
+                print(f"discord: {name} reborn ({count}) announced", flush=True)
+            except Exception as e:
+                print(f"discord: {name} reborn ({count}) not announced: {e}", flush=True)
+
+
 # ---- the handler ---------------------------------------------------------------------------------
 
 def update_fields(said: dict, default_state: str = None):
@@ -1444,7 +1645,10 @@ def updates_html(lines: list, lang: str = "en") -> str:
         for heading, texts in (("New", new), ("Fixed", fixed)):
             if texts:
                 out.append(f'<div class="fix-group">\n<h4>{heading}</h4>\n<ul>\n'
-                           + "".join(f"<li>{escape(t)}</li>\n" for t in texts) + "</ul>\n</div>")
+                           # The lines stay English in every language (the user, 2026-10-23: "lets use
+                           # english for update notes"): translate="no" keeps them out of i18n's units,
+                           # so neither /translate nor mu ship translate sees them.
+                           + "".join(f'<li translate="no">{escape(t)}</li>\n' for t in texts) + "</ul>\n</div>")
         out.append("</details>")
     return "\n".join(out)
 
@@ -1466,6 +1670,13 @@ class Handler(BaseHTTPRequestHandler):
     store: Store = None
     site: Path = None
     downloads: Path = None
+    armory: "armory.Armory" = None
+
+    def finish(self):
+        try:
+            super().finish()
+        finally:
+            self.store.close()
 
     def log_message(self, fmt, *args):
         print(f"{self.client()} {fmt % args}", flush=True)
@@ -1517,6 +1728,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
+        if path.startswith("/api/armory/") and self.armory.post(self, path):
+            return
         if path == "/api/register":
             return self.register()
         if path == "/api/login":
@@ -1530,6 +1743,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.crash()
         if path == "/api/bug":
             return self.bug()
+        if path == "/api/graphics":
+            return self.graphics()
         if path == "/api/bugs/state":
             return self.bug_state()
         if path == "/api/ticket":
@@ -1554,6 +1769,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.told_updates()
         if path == "/internal/discord":
             return self.tell_discord()
+        if path == "/internal/rebirth":
+            return self.told_rebirth()
+        if path == "/internal/translations":
+            return self.take_translations()
         if path == "/api/texts":
             return self.save_text()
         if path == "/api/transfer":
@@ -1687,6 +1906,30 @@ class Handler(BaseHTTPRequestHandler):
               f"{row.get('gpu') or row.get('renderer', '')} | {row['what']} {row['where']}", flush=True)
         self.reply(200, {"ok": True})
 
+    def graphics(self):
+        """What the game draws with, said by the game under its launcher's ticket."""
+        said = self.body()
+        if not isinstance(said, dict):
+            return self.reply(400, {"error": "bad request"})
+        if not GRAPHICS_LIMIT.allow(self.client()):
+            return self.reply(429, {"error": "later"})
+        account = self.store.ticket_account(self.bearer())
+        if not account:
+            return self.reply(401, {"error": "no ticket"})
+        report = {}
+        for key, room in GRAPHICS_TEXTS.items():
+            value = said.get(key)
+            if isinstance(value, str) and value.strip():
+                report[key] = value.strip()[:room]
+        for key in GRAPHICS_NUMBERS:
+            value = said.get(key)
+            if isinstance(value, (int, float)) and not isinstance(value, bool) and abs(value) < 100000:
+                report[key] = int(round(value))
+        if not report.get("preset"):
+            return self.reply(400, {"error": "no preset"})
+        self.store.drew(account, report)
+        self.reply(200, {"ok": True})
+
     def bug(self):
         """A player's bug report from the game, with where they stood when they wrote it."""
         if int(self.headers.get("Content-Length") or 0) > MOST_BUG_BODY:
@@ -1792,36 +2035,52 @@ class Handler(BaseHTTPRequestHandler):
         self.reply(200, {"ok": True})
 
     def site_page(self, file: str, lang: str = "en") -> str:
-        """A page as it is served in English (with the published Latest updates), before any translation."""
-        data = (self.site / file).read_bytes()
-        if file == "index.html":
-            data = with_updates(data, self.store.updates(published_only=True), lang)
-        return data.decode()
+        return site_page(self.site, self.store, file, lang)
 
     def texts_report(self) -> dict:
         """Every unit of the site, grouped as the /translate page shows them, each once (where it
         first stands), and each language's translations."""
-        groups, seen = {}, set()
-        names = {"index.html": "Front page", "updates": "Latest updates", "js": "Messages"}
+        groups = {}
+        names = {"index.html": "Front page", "updates": "Latest updates", "js": "Messages", "armory": "Armory"}
         for file, (path, name) in i18n.PAGES.items():
             names.setdefault(file, name)
-            page = self.site_page(file)
-            for start, end, kind, source in i18n.units(page):
-                group = "js" if kind == "js" else "updates" if file == "index.html" and i18n.in_updates(page, start) else file
-                k = i18n.key(source)
-                if k in seen:
-                    continue
-                seen.add(k)
-                groups.setdefault(group, []).append({"source": k, "tags": i18n.has_tags(k), "path": path})
-        for source in i18n.script_units((self.site / "site.js").read_text()):
-            k = i18n.key(source)
-            if k not in seen:
-                seen.add(k)
-                groups.setdefault("js", []).append({"source": k, "tags": i18n.has_tags(k), "path": "/"})
-        order = ["index.html", "updates", "account.html", "privacy.html", "contact.html", "mac.html", "linux.html", "js"]
+        for unit in site_units(self.site, self.store):
+            groups.setdefault(unit["group"], []).append({"source": unit["source"], "tags": i18n.has_tags(unit["source"]),
+                                                        "path": unit["path"]})
+        order = ["index.html", "updates", "account.html", "privacy.html", "contact.html", "mac.html", "linux.html", "js", "armory"]
         return {"langs": {code: v[0] for code, v in i18n.LANGS.items()},
                 "groups": [{"id": g, "name": names[g], "units": groups[g]} for g in order if g in groups],
                 "texts": self.store.texts()}
+
+    def untranslated(self):
+        """Each language's units with no translation, and some of its own lines to keep its words."""
+        units = [u["source"] for u in site_units(self.site, self.store)]
+        texts = self.store.texts()
+        return self.reply(200, {"langs": LANG_NAMES,
+                                "missing": {lang: [k for k in units if k not in texts.get(lang, {})] for lang in i18n.LANGS},
+                                "examples": {lang: examples(texts.get(lang, {})) for lang in i18n.LANGS}})
+
+    def take_translations(self):
+        """Translations put in where a unit still has none; one that is not a unit of the site now,
+        or loses its English's tags, is refused."""
+        if not self.direct():
+            return self.reply(404, {"error": "not found"})
+        said = (self.body(most=2_000_000) or {}).get("texts")  # this machine only: a whole language at once
+        if not isinstance(said, dict):
+            return self.reply(400, {"error": "texts: {lang: {source: text}}"})
+        units = {u["source"] for u in site_units(self.site, self.store)}
+        put, refused = 0, 0
+        for lang, table in said.items():
+            if lang not in i18n.LANGS or not isinstance(table, dict):
+                return self.reply(400, {"error": f"no language {lang!r}"})
+            for source, text in table.items():
+                text = " ".join(str(text).split())
+                if source in units and text and not i18n.check(source, text) and self.store.fill_text(lang, source, text):
+                    put += 1
+                else:
+                    refused += 1
+        print(f"translations: {put} put in, {refused} refused", flush=True)
+        self.reply(200, {"put": put, "refused": refused})
 
     def tell_discord(self):
         """A day's message sent (or put right) now, not after a quiet spell: on the box,
@@ -1834,6 +2093,19 @@ class Handler(BaseHTTPRequestHandler):
         if not self.discord.webhook():
             return self.reply(409, {"error": "no webhook in discord_webhook beside the database"})
         self.discord.touch(day, at=0)
+        self.reply(200, {"ok": True})
+
+    def told_rebirth(self):
+        if not self.direct():
+            return self.reply(404, {"error": "not found"})
+        said = self.body() or {}
+        name = str(said.get("name", "")).strip()
+        count = said.get("count")
+        if not NAME.match(name) or not isinstance(count, int) or count < 1:
+            return self.reply(400, {"error": "name and count"})
+        region = " ".join(str(said.get("region", "")).split())[:40]
+        kind = " ".join(str(said.get("class", "")).split())[:40]
+        self.announce.rebirth(region, name, kind, count)
         self.reply(200, {"ok": True})
 
     def told_updates(self):
@@ -2027,6 +2299,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         url = urlparse(self.path)
+        # The Armory's pages, its release's files and its comments (web/armory.py).
+        if self.armory.get(self, url.path, url.query):
+            return
         if url.path == "/api/me":
             if self.old_launcher():
                 return self.reply(401, {"error": OLD_LAUNCHER})
@@ -2052,6 +2327,8 @@ class Handler(BaseHTTPRequestHandler):
                     if self.admin() else None)
         if url.path == "/api/texts":
             return self.reply(200, self.texts_report()) if self.admin() else None
+        if url.path == "/internal/untranslated":
+            return self.untranslated() if self.direct() else self.reply(404, {"error": "not found"})
         if url.path == "/internal/updates":
             if not self.direct():
                 return self.reply(404, {"error": "not found"})
@@ -2066,6 +2343,8 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError:
                 account = 0
             found = self.store.character(account, asked.get("name", [""])[0])
+            if found:
+                found = found | {"played": self.store.seconds_played(account, str(found.get("name")))}
             return self.reply(200, found) if found else self.reply(404, {"error": "not listed"})
         if url.path == "/api/comments":
             post = parse_qs(url.query).get("post", [""])[0]
@@ -2150,6 +2429,18 @@ class Handler(BaseHTTPRequestHandler):
         if lang and path.lstrip("/") not in i18n.PAGES:
             self.send_error(HTTPStatus.NOT_FOUND)
             return
+        # A language picked in the footer (?lang=, i18n.switcher) is kept in the mu-lang cookie and the
+        # page asked again without it, so the pick holds on every page, script or none.
+        picked = parse_qs(urlparse(self.path).query).get("lang", [""])[0]
+        if path.lstrip("/") in i18n.PAGES and (picked == "en" or picked in i18n.LANGS):
+            secure = "; Secure" if self.headers.get("X-Forwarded-Proto", "") == "https" else ""
+            self.send_response(302)
+            self.send_header("Location", ("" if picked == "en" else f"/{picked}") + (asked if asked.startswith("/") else "/" + asked))
+            self.send_header("Set-Cookie", f"{i18n.CHOICE}={picked}; Path=/; Max-Age=31536000; SameSite=Lax{secure}")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
         # An English page, asked by a browser in one of the site's languages (or by someone who
         # picked one in the footer), is that page in it: sent there before anything is drawn.
         if lang is None and path.lstrip("/") in i18n.PAGES:
@@ -2207,16 +2498,24 @@ def main():
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--site", default=str(here / "site"))
     ap.add_argument("--downloads", default=str(here / "downloads"))
+    ap.add_argument("--armory", default=str(armory.default_root(here)),
+                    help="the Armory's built release, or a folder of them (current, else the newest)")
     ap.add_argument("--discord-quiet", type=int, default=DISCORD_QUIET,
                     help="seconds a day's lines are left alone before #updates is told")
     args = ap.parse_args()
     Handler.store = Store(Path(args.db))
+    print(f"{Handler.store.load_rosters()} characters as their regions last listed them", flush=True)
     Handler.discord = Discord(Handler.store, Path(args.db).parent / "discord_webhook", args.discord_quiet)
+    Handler.announce = Announce(Path(args.db).parent / "discord_announce_webhook")
     seeded = Handler.store.seed_texts(i18n.seeds(here / "i18n"))
     if seeded:
         print(f"{seeded} translations put in from web/i18n/", flush=True)
     Handler.site = Path(args.site)
     Handler.downloads = Path(args.downloads)
+    Handler.armory = armory.Armory(Path(args.armory), Handler.site)
+    # A page asks its pictures many at once (the Armory's thumbnails); the default backlog of 5
+    # resets the rest when Caddy is not in front (local runs).
+    ThreadingHTTPServer.request_queue_size = 128
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"mu2-web on http://{args.host}:{args.port}, accounts in {args.db}", flush=True)
     httpd.serve_forever()

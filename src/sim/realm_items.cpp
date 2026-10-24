@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <functional>
 
 #include "core/log.h"
 #include "sim/broker.h"
@@ -394,6 +395,19 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
             if (has(5)) e.excellentChance += 0.2;
         }
     }
+    // Which worn runes count (sim::stackMostOf): of a limited one the first so many found.
+    bool counted[kRingLeft + 1][kMostSockets] = {};
+    {
+        uint8_t found[256] = {};
+        for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
+            for (int at = 0; at < std::min<int>(kit[slot].sockets, kMostSockets); ++at) {
+                const PowerRow* power = powerOf(kit[slot].powers[at]);
+                if (!power) continue;
+                const int most = stackMostOf(power->power);
+                counted[slot][at] = most == 0 || found[uint8_t(power->power)]++ < most;
+            }
+        }
+    }
     // The armour runes, in any socket of anything worn that takes one: the armour, the shield,
     // the rings and the pendant, not a weapon. The Undying, sim::kUndyingHealth each, is the
     // rings' and the pendant's alone (2026-10-09).
@@ -402,9 +416,11 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
         if (!row || (row->weapon() && !row->shield())) continue;
         for (int at = 0; at < std::min<int>(kit[slot].sockets, kMostSockets); ++at) {
             const PowerRow* power = powerOf(kit[slot].powers[at]);
-            if (!power) continue;
+            if (!power || !counted[slot][at]) continue;
             Excellence& e = hero.excel;
-            if (power->power == Power::Undying && jewellery(*row)) e.undyingRate *= kUndyingHealth;
+            if (power->power == Power::Undying && jewellery(*row)) {
+                e.undyingRate += kUndyingHealth - 1.0;
+            }
             if (power->power == Power::KeenEye) e.runeCritical += kKeenEyeCritical;
             if (power->power == Power::Bloodwell) {
                 e.lifeSteal += kBloodwellLife;
@@ -428,7 +444,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
         const content::ItemRow* row = rowAt(slot);
         if (!row || row->shield()) continue;
         for (int at = 0; at < std::min<int>(kit[slot].sockets, kMostSockets); ++at) {
-            const PowerRow* power = powerOf(kit[slot].powers[at]);
+            const PowerRow* power = counted[slot][at] ? powerOf(kit[slot].powers[at]) : nullptr;
             if (power && elementOf(power->power) != Element::None) {
                 ++hero.excel.elementRunes[int(elementOf(power->power))];
             }
@@ -670,19 +686,33 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
             if (worn.wing & kWingIgnoreDefense) hero.excel.ignoreDefense += kWingIgnoreChance;
         }
     }
-    // The stat runes, in any socket of anything worn, summed (sim::statShareOf).
+    // The stat runes, in any socket of anything worn, summed (sim::statShareOf) -- the best
+    // sim::kStatRuneMost for each stat, Might and Ascendance alike.
     hero.runeShare = HeroPoints{};
-    for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
-        if (!rowAt(slot)) continue;
-        for (int at = 0; at < std::min<int>(kit[slot].sockets, kMostSockets); ++at) {
-            const PowerRow* power = powerOf(kit[slot].powers[at]);
-            if (!power) continue;
-            const HeroPoints share = statShareOf(power->power);
-            hero.runeShare.strength += share.strength;
-            hero.runeShare.agility += share.agility;
-            hero.runeShare.vitality += share.vitality;
-            hero.runeShare.energy += share.energy;
+    {
+        int shares[4][(kRingLeft + 1) * kMostSockets];
+        int counts[4] = {};
+        for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
+            if (!rowAt(slot)) continue;
+            for (int at = 0; at < std::min<int>(kit[slot].sockets, kMostSockets); ++at) {
+                const PowerRow* power = powerOf(kit[slot].powers[at]);
+                if (!power) continue;
+                const HeroPoints share = statShareOf(power->power);
+                const int each[4] = {share.strength, share.agility, share.vitality, share.energy};
+                for (int k = 0; k < 4; ++k) {
+                    if (each[k] > 0) shares[k][counts[k]++] = each[k];
+                }
+            }
         }
+        int sums[4] = {};
+        for (int k = 0; k < 4; ++k) {
+            std::sort(shares[k], shares[k] + counts[k], std::greater<int>());
+            for (int i = 0; i < std::min(counts[k], kStatRuneMost); ++i) sums[k] += shares[k][i];
+        }
+        hero.runeShare.strength = sums[0];
+        hero.runeShare.agility = sums[1];
+        hero.runeShare.vitality = sums[2];
+        hero.runeShare.energy = sums[3];
     }
     // His talents for what he now holds (sim::talentShares): a bow, two hands, a pair, a shield.
     hero.talentShare = talentSharesOf(hero);
@@ -868,6 +898,12 @@ bool Realm::useItem(int slot) {
         // forty is forty, so a new wizard with thirty keeps the scroll in his bag until he has
         // spent ten points. OpenMU asks it at the read (`CompliesRequirements`).
         if (hero.points.energy < read.teachesEnergy) return false;
+        // And an orb's strength, run through the requirements' formula as a wearable's is: the
+        // Orb of Fire Slash's raw 320 at drop level 60 is WebZen's 596 (zzzitem.cpp:457), asked
+        // of Strength+AddStrength at the read (protocol.cpp:17795). Every other orb asks none.
+        if (shortOf(asks(row, potion.refinement), hero.level, hero.totalPoints()).strength > 0) {
+            return false;
+        }
         // A second orb of something he knows is refused rather than eaten: `learn` says no to a
         // skill already learned, and the orb stays in the bag to be sold.
         if (!learn(read.teaches)) return false;
@@ -1923,8 +1959,7 @@ int64_t Realm::repairCost(int slot) const {
     const Held& h = me().bag[slot];
     if (h.empty()) return 0;
     // CalcRepairCost's SelfRepair: the counter's price at a counter that mends, else his own.
-    return repairPrice(tables_->items[size_t(h.item)], h.refinement, h.skill, h.durability,
-                       mending());
+    return repairPrice(tables_->items[size_t(h.item)], h, mending());
 }
 
 int64_t Realm::repairAllCost() const {
@@ -2557,12 +2592,20 @@ uint32_t Realm::lay(int32_t item, int refinement, bool luck, int option, uint8_t
     return one.id;
 }
 
+namespace {
+// Whether a drop may draw this rune for a hero of `kin`: one his class may set, an element rune
+// only where his class throws something of its element.
+bool runeDrawable(const PowerRow& row, Kin kin, bool second) {
+    const Element element = elementOf(row.power);
+    if (element != Element::None) return elementServes(element, kin);
+    return row.takenBy(kin, second);
+}
+}  // namespace
+
 uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool commons) {
     const auto drawable = [&](const PowerRow& row) {
         if (!commons && row.rarity == Rarity::Common) return false;
-        const Element element = elementOf(row.power);
-        if (element != Element::None) return elementServes(element, kin);
-        return row.takenBy(kin, second);
+        return runeDrawable(row, kin, second);
     };
     int count[kRarities] = {};
     double held = 0.0;
@@ -2588,6 +2631,20 @@ uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool common
         if (drawable(row) && int(row.rarity) == rarity && level >= kRuneRarityLevel[rarity] &&
             pick-- == 0)
             return uint8_t(p);
+    }
+    return 0;
+}
+
+uint8_t drawRuneOf(Random& dice, Kin kin, bool second, Rarity rarity) {
+    int count = 0;
+    for (int p = 1; powerOf(uint8_t(p)); ++p) {
+        const PowerRow& row = *powerOf(uint8_t(p));
+        count += row.rarity == rarity && runeDrawable(row, kin, second) ? 1 : 0;
+    }
+    int pick = count > 0 ? dice.nextInt(0, count) : -1;
+    for (int p = 1; pick >= 0 && powerOf(uint8_t(p)); ++p) {
+        const PowerRow& row = *powerOf(uint8_t(p));
+        if (row.rarity == rarity && runeDrawable(row, kin, second) && pick-- == 0) return uint8_t(p);
     }
     return 0;
 }

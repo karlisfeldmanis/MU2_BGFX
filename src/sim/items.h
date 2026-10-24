@@ -916,8 +916,10 @@ struct PowerRow {
 };
 
 // **The Undying**, the first armour power and every class's (the user, 2026-09-30: "its for
-// all classes the same"): x1.2 on maximum health for each set in anything worn, armour or
-// shield. Devin's first clear pays it (sim/quests.cpp). Invention, as every rune is.
+// all classes the same"): +20% maximum health for each set in anything worn, armour or
+// shield -- added since 2026-10-24, x1.4 for two, where each multiplied before (x1.44, and
+// x1.73 for three: the multiplying stacks outgrew every other source). Devin's first clear pays
+// it (sim/quests.cpp). Invention, as every rune is.
 constexpr double kUndyingHealth = 1.2;
 // The Dungeon's three, the Golden Archer's chain (the user, 2026-09-30: "same runes for all, for
 // helm, pants, boots ... life steal, mana gain back, increase attack speed, increased chance of
@@ -973,6 +975,32 @@ constexpr int64_t kSpiritDelayTicks = 40;  // rand()%2000 ms, the realm's twenty
 HeroPoints statShareOf(Power power);
 // Nullptr for none and for a number no row has.
 const PowerRow* powerOf(uint8_t power);
+// Whether a second of it, in another socket or another thing worn, does more: what
+// Realm::redress and the rolls make of it, said on its tooltip (the user, 2026-10-24: "runes
+// which dont stack we need to say the dont stack, if the stack we say they stack").
+// `stacks` false where a second adds nothing; `says` the line.
+struct Stacking {
+    bool stacks;
+    std::string says;
+};
+Stacking stackingOf(Power power);
+// How many of the strongest runes count, worn anywhere (the user, 2026-10-24: "check which
+// stacking runes is way to powerfull to stuck and nerf them", then a cap on every rune "to much
+// nerfed", then "just add some limiters for most OP runes of how many they can be used"): some
+// twenty-six sockets worn would have summed Keen Eye to +260% critical, Bloodwell to 78% of every
+// wound back, Renewal to 78% life a 3 s, Ironskin to +210% defense, an element to +220% and a
+// stat rune to +800%. The first so many found count, the rest are idle; 0 is no limit -- the
+// weapon's runes, held to its sockets, and Wellspring to the jewellery's five. Steadfast and the
+// Plagues keep the ceilings they had. Ours.
+int stackMostOf(Power power);
+// The kin a `once` rune is one of a thing among (PowerRow::once, settable): Bulwark, Buckler and
+// Brace one, the three Volleys one, where only the strongest worn works; any other its own.
+// The user, 2026-10-24: "there is some runes which it does not make sense to stuck such as
+// Bulwark" -- Kinship, the Bulwarks and the Volleys are once since.
+Power onceKinOf(Power power);
+// The stat runes': the best four for each stat, Might and Ascendance alike -- six were +180%,
+// far above every other limited rune's top (2026-10-24).
+constexpr int kStatRuneMost = 4;
 // A rune paid to the Magic Gladiator that he may not set -- a Legendary of the knight's or the
 // wizard's, from a giver's path -- comes as its weaker kin he may: Arcane Echo as Faint Echo,
 // Pyroblaster as Scorch, Whirlwind as Eddy, Fireburst as Sparkburst, Hellfire as Brimstone,
@@ -1049,6 +1077,9 @@ constexpr int kRuneRarityLevel[kRarities] = {kCreationLevel, 40, 60, 1, kAncient
 class Random;
 // `commons` false leaves the Common runes out: a reward's rune (Blood Castle) is never one.
 uint8_t drawRunePower(Random& dice, Kin kin, bool second, int level, bool commons = true);
+// One of `rarity` evenly, as drawRunePower draws within the rarity it picks, whatever the level:
+// the raid's dragon's Legendary runes (Realm::dragonHoard). 0 when none is his class's.
+uint8_t drawRuneOf(Random& dice, Kin kin, bool second, Rarity rarity);
 // The Bless (14, 13), the Soul (14, 14), the Life (14, 16) and the Chaos (12, 15): the
 // kJewelChance draws. The Life falls from 72 (OpenMU Version095d Jewels.cs:43), past Devias.
 bool refiningJewel(const content::ItemRow& row);
@@ -1324,6 +1355,7 @@ constexpr float kSplitArrowSide = 0.25f;
 // Of the guard a shield would let him raise, with no shield on his arm; a Bulwark's is whole.
 constexpr float kBucklerGuard = 0.6f;
 constexpr float kBraceGuard = 0.3f;
+// Kindle's +15% Fire Ball each, added (2026-10-24; multiplied before), three counting.
 constexpr float kKindleForce = 1.15f;
 // **Immolate** (the user, 2026-10-06: 'chance to burn monsters to do some % of damage of hp and
 // their has to be some burn efekt to the monster'), Epic, any knight's weapon: a swing that lands

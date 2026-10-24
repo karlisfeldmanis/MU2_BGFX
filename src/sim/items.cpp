@@ -534,11 +534,12 @@ const PowerRow* powerOf(uint8_t power) {
          kEveryClass, kInWeapon, Rarity::Epic},
         {Power::Meteor, "Meteor", "15% on hit: a meteor falls on a nearby monster",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
-        {Power::Ice, "Ice", "15% on hit: freezes the target to half speed and wounds it",
+        {Power::Ice, "Ice", "15% on hit: slows the target to half speed and deals frost damage",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
         {Power::Poison, "Poison", "15% on hit: poisons the target for 20 s",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
-        {Power::Fireburst, "Fireburst", "10% on hit: four fireballs chain from the target",
+        {Power::Fireburst, "Fireburst",
+         "10% on hit: 4 fireballs jump from the target to nearby monsters",
          kKnightOnly, kInWeapon, Rarity::Legendary, true},
         {Power::FireRing, "Ring of Fire", "10% on hit: a ring of fire bursts around you",
          kKnightOnly, kInWeapon, Rarity::Legendary, true},
@@ -546,46 +547,52 @@ const PowerRow* powerOf(uint8_t power) {
         // stronger Blade Knight pair (the user, 2026-10-06).
         {Power::Hellfire, "Hellfire", "10% on hit: hellfire erupts around you",
          kKnightOnly, kInWeapon, Rarity::Legendary, true},
-        {Power::Twister, "Twister", "10% on hit: a twister walks out at the target",
+        {Power::Twister, "Twister", "10% on hit: a twister travels toward the target",
          kKnightOnly, kInWeapon, Rarity::Legendary},
-        {Power::Burn, "Immolate", "15% on hit: the target burns for 3% of its life a second, 4 s",
+        {Power::Burn, "Immolate",
+         "15% on hit: the target burns for 3% of its max life per second, for 4 s",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
         {Power::Scorch, "Scorch",
-         "Fire spells: 15% to burn the target for 3% of its life a second, 4 s",
+         "Fire spells: 15% chance to burn for 3% of max life per second, for 4 s",
          kWizardOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
         // The wizard's too since 2026-10-07 (the user: 'we need also for DW'): Soul Barrier
         // with a two-handed staff, an empty hand or anything but a shield.
         {Power::Bulwark, "Bulwark", "Defense and Magic Shield work without a shield",
-         kKnightOnly | kWizardOnly, kInWeapon, Rarity::Legendary, true},
+         kKnightOnly | kWizardOnly, kInWeapon, Rarity::Legendary, true, true},
         // Every Fairy Elf's, as Arcane Echo is every wizard's (the user, 2026-10-05: Lirien's
         // Atlans clear pays it to the first-class elf).
-        {Power::Frost, "Frost Arrow", "20% on hit: freezes the target for 2 s and wounds it",
+        {Power::Frost, "Frost Arrow",
+         "20% on hit: freezes the target for 2 s and deals frost damage",
          kElfOnly, kInWeapon, Rarity::Legendary},
         // Every Dark Wizard's, not the Soul Master's alone (the user, 2026-10-04: "remove 2nd
         // class requirement for that rune, because we give this rune on lorencia quest for DW").
-        {Power::Echo, "Arcane Echo", "20% chance a spell casts twice, the second free",
+        {Power::Echo, "Arcane Echo", "20% chance a spell casts a second time, for free",
          kWizardOnly, kInWeapon, Rarity::Legendary},
-        {Power::Pyroblast, "Pyroblaster", "Fire Ball +50% damage, 20% to burst into four more",
+        {Power::Pyroblast, "Pyroblaster",
+         "Fire Ball deals +50% damage, 20% chance to split into 4 more",
          kWizardOnly, kInWeapon, Rarity::Legendary, true},
         // The rings' and the pendant's alone since 2026-10-09 (the user: "also HP runes has to go
         // to jewelry only"), as Wellspring is mana's.
         {Power::Undying, "Undying", "+20% max life", kEveryClass, kInJewellery, Rarity::Epic},
         {Power::KeenEye, "Keen Eye", "+10% critical chance", kEveryClass, kWorn, Rarity::Rare},
-        {Power::Bloodwell, "Bloodwell", "Heal 3% of damage dealt, 5% mana per kill",
+        {Power::Bloodwell, "Bloodwell", "Heals you for 3% of damage dealt; kills restore 5% mana",
          kEveryClass, kWorn, Rarity::Epic},
-        {Power::Frenzy, "Frenzy", "Each hit: +5 attack speed for 4 s, stacks to +25",
+        {Power::Frenzy, "Frenzy", "Each hit gives +5 attack speed for 4 s, up to +25",
          kEveryClass, kWorn, Rarity::Epic, false, true},
-        {Power::Renewal, "Renewal", "Restore 3% life every 3 s",
+        {Power::Renewal, "Renewal", "Restores 3% of max life every 3 s",
          kEveryClass, kWorn, Rarity::Epic},
-        {Power::Spirits, "Evil Spirit", "15% when missed: evil spirits strike monsters around you",
+        {Power::Spirits, "Evil Spirit",
+         "15% when a monster misses you: evil spirits strike monsters around you",
          kEveryClass, kInShield | kInJewellery, Rarity::Legendary, true},
         {Power::Plague, "Spirit Plague",
-         "Evil Spirit hits: 20% to poison for 3% of the target's life a pulse", kEveryClass,
-         kInWeapon | kInShield | kInJewellery, Rarity::Epic},
+         "Evil Spirit hits: 20% chance to poison for 3% of max life every 3 s",
+         kEveryClass, kInWeapon | kInShield | kInJewellery, Rarity::Epic},
         {Power::PlagueArrows, "Plague Arrows",
-         "Multi-Shot arrows: 20% each to poison for 3% of life a pulse", kElfOnly,
+         "Multi-Shot arrows: 20% chance each to poison for 3% of max life every 3 s",
+         kElfOnly,
          kInWeapon, Rarity::Epic},
-        {Power::Kinship, "Kinship", "Your pets lose their drawbacks", kEveryClass, kInJewellery, Rarity::Epic},
+        {Power::Kinship, "Kinship",
+         "Your pets lose their drawbacks", kEveryClass, kInJewellery, Rarity::Epic, false, true},
         {Power::Wrath, "Wrath", "+20% damage", kEveryClass, kInWeapon, Rarity::Legendary},
         {Power::Ironskin, "Ironskin", "+10% defense", kEveryClass, kInArmour | kInShield,
          Rarity::Rare},
@@ -593,10 +600,11 @@ const PowerRow* powerOf(uint8_t power) {
          kEveryClass, kInArmour | kInShield, Rarity::Rare},
         {Power::SecondWind, "Second Wind", "Kills restore 5% life and mana",
          kEveryClass, kWorn, Rarity::Epic},
-        {Power::Whirlwind, "Whirlwind", "Twisting Slash +50% damage, 25% to pull monsters in",
+        {Power::Whirlwind, "Whirlwind",
+         "Twisting Slash deals +50% damage, 25% chance to pull monsters in",
          kKnightOnly, kInWeapon, Rarity::Legendary, true},
-        {Power::Volley, "Piercing Volley", "Penetration fires three piercing arrows in a fan",
-         kElfOnly, kInWeapon, Rarity::Legendary, true},
+        {Power::Volley, "Piercing Volley", "Penetration fires 3 piercing arrows in a fan",
+         kElfOnly, kInWeapon, Rarity::Legendary, true, true},
         {Power::Inferno, "Inferno", "+20% fire damage", kEveryClass, kHeld, Rarity::Rare},
         {Power::Glacier, "Glacier", "+20% ice damage", kEveryClass, kHeld, Rarity::Rare},
         {Power::Venom, "Venom", "+20% poison damage", kEveryClass, kHeld, Rarity::Rare},
@@ -619,16 +627,17 @@ const PowerRow* powerOf(uint8_t power) {
          kInWeapon, Rarity::Legendary, true},
         // The Common runes (sim/items.h kCinderChance...), each a Legendary's faint copy.
         // The knight's and the wizard's Common and Epic runes are the Magic Gladiator's too.
-        {Power::Cinder, "Cinder", "5% on hit: a faint ring of fire around you",
+        {Power::Cinder, "Cinder", "5% on hit: a small ring of fire bursts around you",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
-        {Power::Gust, "Gust", "5% on hit: a small twister walks out at the target",
+        {Power::Gust, "Gust", "5% on hit: a small twister travels toward the target",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
         {Power::Chill, "Chill", "8% on hit: freezes the target for 1 s", kElfOnly, kInWeapon,
          Rarity::Common},
-        {Power::FaintEcho, "Faint Echo", "7% chance a spell casts twice",
+        {Power::FaintEcho, "Faint Echo", "7% chance a spell casts a second time",
          kWizardOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
         {Power::Spite, "Spite", "+5% damage", kEveryClass, kInWeapon, Rarity::Common},
-        {Power::Wisp, "Wisp", "5% when missed: faint spirits strike monsters around you",
+        {Power::Wisp, "Wisp",
+         "5% when a monster misses you: small spirits strike monsters around you",
          kEveryClass, kInShield | kInJewellery, Rarity::Common},
         // Multi-Shot's three tiers (sim::kBarrageDamage...), the elf's weapon alone.
         {Power::LesserBarrage, "Lesser Barrage", "Multi-Shot +15% damage", kElfOnly, kInWeapon,
@@ -638,29 +647,31 @@ const PowerRow* powerOf(uint8_t power) {
          Rarity::Legendary},
         // The weaker kin of the lone Legendaries (sim/items.h kSparkburst...), every one
         // first-class, and the knight's and the wizard's the Magic Gladiator's too.
-        {Power::Sparkburst, "Sparkburst", "7% on hit: two fireballs chain from the target",
+        {Power::Sparkburst, "Sparkburst",
+         "7% on hit: 2 fireballs jump from the target to nearby monsters",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
-        {Power::Ember, "Ember", "5% on hit: a fireball leaps from the target",
+        {Power::Ember, "Ember", "5% on hit: a fireball jumps from the target to a nearby monster",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
-        {Power::Brimstone, "Brimstone", "7% on hit: a lesser hellfire erupts around you",
+        {Power::Brimstone, "Brimstone", "7% on hit: a small hellfire erupts around you",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
-        {Power::Ashfall, "Ashfall", "5% on hit: a faint hellfire around you",
+        {Power::Ashfall, "Ashfall", "5% on hit: a weak hellfire erupts around you",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
-        {Power::Eddy, "Eddy", "Twisting Slash +25% damage, 12% to pull monsters in",
+        {Power::Eddy, "Eddy", "Twisting Slash deals +25% damage, 12% chance to pull monsters in",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
-        {Power::Swirl, "Swirl", "Twisting Slash +10% damage, 5% to pull monsters in",
+        {Power::Swirl, "Swirl", "Twisting Slash deals +10% damage, 5% chance to pull monsters in",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
         {Power::ScatterVolley, "Scatter Volley",
-         "Penetration fires two more piercing arrows at half damage", kElfOnly, kInWeapon,
-         Rarity::Epic},
+         "Penetration fires 2 more piercing arrows at half damage", kElfOnly, kInWeapon,
+         Rarity::Epic, false, true},
         {Power::SplitArrow, "Split Arrow",
-         "Penetration fires two more piercing arrows at a quarter damage", kElfOnly, kInWeapon,
-         Rarity::Common},
-        {Power::Buckler, "Buckler", "Defense and Magic Shield work without a shield, at 60%",
-         kKnightOnly | kWizardOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
-        {Power::Brace, "Brace", "Defense and Magic Shield work without a shield, at 30%",
-         kKnightOnly | kWizardOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
-        {Power::Kindle, "Kindle", "Fire Ball +15% damage", kWizardOnly | kGladiatorOnly,
+         "Penetration fires 2 more piercing arrows at a quarter damage", kElfOnly, kInWeapon,
+         Rarity::Common, false, true},
+        {Power::Buckler, "Buckler",
+         "Defense and Magic Shield work without a shield, at 60% strength",
+         kKnightOnly | kWizardOnly | kGladiatorOnly, kInWeapon, Rarity::Epic, false, true},
+        {Power::Brace, "Brace", "Defense and Magic Shield work without a shield, at 30% strength",
+         kKnightOnly | kWizardOnly | kGladiatorOnly, kInWeapon, Rarity::Common, false, true},
+        {Power::Kindle, "Kindle", "Fire Ball deals +15% damage", kWizardOnly | kGladiatorOnly,
          kInWeapon, Rarity::Common},
         // Max mana's four tiers (sim::kFaintWellspringMana...), every class's, jewellery alone.
         {Power::FaintWellspring, "Faint Wellspring", "+5% max mana", kEveryClass, kInJewellery,
@@ -673,37 +684,105 @@ const PowerRow* powerOf(uint8_t power) {
          kInJewellery, Rarity::Legendary},
         // The knight's and the Gladiator's twin blades (sim::kTwinGuardDamage), one an item.
         {Power::TwinGuard, "Twin Guard",
-         "Two matched weapons: Defense works without a shield, +30% damage while it is up",
+         "With two matching weapons: Defense works without a shield, +30% damage while it is on",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Legendary, false, true},
         // The bleed runes' four tiers (sim::bleedRuneOf), the knight's and the Gladiator's.
-        {Power::Graze, "Graze", "8% on hit: the target bleeds 4% of the hit a second a stack, 5 s",
+        {Power::Graze, "Graze",
+         "8% on hit: the target bleeds 4% of the hit per second for 5 s; bleeds add up",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
         {Power::Lacerate, "Lacerate",
-         "12% on hit: the target bleeds 6% of the hit a second a stack, 5 s",
+         "12% on hit: the target bleeds 6% of the hit per second for 5 s; bleeds add up",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Rare},
-        {Power::Rend, "Rend", "18% on hit: the target bleeds 9% of the hit a second a stack, 5 s",
+        {Power::Rend, "Rend",
+         "18% on hit: the target bleeds 9% of the hit per second for 5 s; bleeds add up",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
         {Power::Hemorrhage, "Hemorrhage",
-         "25% on hit: the target bleeds 12% of the hit a second a stack, 5 s",
+         "25% on hit: the target bleeds 12% of the hit per second for 5 s; bleeds add up",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Legendary},
         // The Ancient runes (sim/items.h kIceStorm...), each one of MU's later spells.
         {Power::IceStorm, "Ice Storm",
          "10% on a cast or a hit: an ice storm freezes monsters within 3 tiles for 1.5 s",
          kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
         {Power::Weakness, "Weakness",
-         "10% on a cast or a hit: a curse on the ground for 30 s weakens monsters within 4 tiles",
+         "10% on a cast or a hit: a 30 s curse on the ground weakens monsters within 4 tiles",
          kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
         {Power::Pollution, "Pollution",
-         "10% on a cast or a hit: Lagle's ghosts strike up to 4 monsters within 3 tiles",
+         "10% on a cast or a hit: ghosts strike up to 4 monsters within 3 tiles",
          kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
         {Power::DrainLife, "Drain Life",
-         "10% on a cast or a hit: drains the monster and heals you",
+         "10% on a cast or a hit: drains life from the monster and heals you",
          kWizardOnly, kInWeapon, Rarity::Ancient, true, true},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
     }
     return nullptr;
+}
+
+Stacking stackingOf(Power power) {
+    switch (power) {
+        // Read once, a flag or a count that is only asked `> 0` (Excellence::frenzies, volleys;
+        // skills.h lanesOf), or the best share of the worn kept (bulwarkShare, the volleys' side).
+        case Power::Frenzy:
+        case Power::Bulwark:
+        case Power::Buckler:
+        case Power::Brace:
+        case Power::TwinGuard:
+        case Power::Kinship:
+        case Power::Volley:
+        case Power::ScatterVolley:
+        case Power::SplitArrow:
+        case Power::IceStorm:
+        case Power::Weakness:
+        case Power::Pollution:
+        case Power::DrainLife: return {false, "Doesn't stack"};
+        // Half of each: whirlDamage summed and whirlPull the best; every Pyroblaster rolls its
+        // burst but Fire Ball's +50% is asked `pyroblasts() > 0`.
+        case Power::Whirlwind:
+        case Power::Eddy:
+        case Power::Swirl: return {true, "Damage stacks, pull chance doesn't"};
+        case Power::Pyroblast: return {true, "Burst chance stacks, damage doesn't"};
+        // Summed to kPlagueMost, which its own line leaves out (Steadfast's says its 25%).
+        case Power::Plague:
+        case Power::PlagueArrows: return {true, "Stacks, up to 50%"};
+        default: break;
+    }
+    if (statShareOf(power).strength || statShareOf(power).agility ||
+        statShareOf(power).vitality || statShareOf(power).energy) {
+        return {true, "Stacks, the best " + std::to_string(kStatRuneMost) + " of a stat count"};
+    }
+    if (const int most = stackMostOf(power); most > 0) {
+        return {true, "Stacks, up to " + std::to_string(most) + " worn"};
+    }
+    return {true, "Stacks"};
+}
+
+Power onceKinOf(Power power) {
+    switch (power) {
+        case Power::Buckler:
+        case Power::Brace: return Power::Bulwark;
+        case Power::ScatterVolley:
+        case Power::SplitArrow: return Power::Volley;
+        default: return power;
+    }
+}
+
+int stackMostOf(Power power) {
+    switch (power) {
+        case Power::Undying:
+        case Power::Kindle: return 3;
+        case Power::KeenEye:
+        case Power::Bloodwell:
+        case Power::Renewal:
+        case Power::SecondWind: return 5;
+        case Power::Ironskin:
+        case Power::Inferno:
+        case Power::Glacier:
+        case Power::Venom:
+        case Power::Thunder:
+        case Power::Tempest: return 6;
+        default: return 0;
+    }
 }
 
 BleedRune bleedRuneOf(Power power) {
@@ -859,10 +938,12 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
     const content::ItemRow& row = tables.items[size_t(target.item)];
     if (!socketsFit(row) || freeSocket(target) < 0) return false;
     // One of a `once` rune a thing (PowerRow::once): Frenzy, which two in one pair of boots
-    // stacked past what the game can carry. However many he wears, its stacks stop at five.
+    // stacked past what the game can carry. However many he wears, its stacks stop at five. And
+    // one of a kin where only the strongest works: no Buckler beside a Bulwark (onceKinOf).
     if (power->once) {
         for (int at = 0; at < std::min<int>(target.sockets, kMostSockets); ++at) {
-            if (target.powers[at] == uint8_t(power->power)) return false;
+            const PowerRow* set = powerOf(target.powers[at]);
+            if (set && onceKinOf(set->power) == onceKinOf(power->power)) return false;
         }
     }
     // Its group's sockets (sim::PowerRow::slots): a ring's and a pendant's take the armour runes

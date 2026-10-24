@@ -63,8 +63,8 @@ struct Excellence {
     int moreMana = 0;
     double ignoreDefense = 0.0;
     double healthRate = 1.0;      // 6: x1.04 on max life
-    // Not an option: the Rune of the Undying's x1.2 on max life, each one set in anything worn
-    // (sim::kUndyingHealth). Beside the excellent rate so the two multiply, kept apart so the
+    // Not an option: the Rune of the Undying's +20% max life, each one set in anything worn
+    // added (sim::kUndyingHealth). Beside the excellent rate so the two multiply, kept apart so the
     // character window can say which is which.
     double undyingRate = 1.0;
     // The Wellspring runes' shares of max mana in the rings and the pendant, summed
@@ -121,7 +121,7 @@ struct Excellence {
     // The side arrows' share of the straight one's force: 1 with a Piercing Volley, less with
     // only a Scatter Volley or a Split Arrow (sim::kScatterVolleySide...), counted in `volleys`.
     float volleySide = 0.0f;
-    // A wizard's Kindles, each raising his Fire Ball by sim::kKindleForce.
+    // A wizard's Kindles, each adding sim::kKindleForce's share to his Fire Ball.
     int kindles = 0;
     // Not options either: the rings' and the pendant's (docs/game/jewellery.md). The largest
     // resistance worn in each element and the resistance powers on top: Ice and Poison each turn

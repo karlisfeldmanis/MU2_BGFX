@@ -26,7 +26,7 @@ class Arts;
 
 // Raised whenever the slides change, so a player who saw the last edition sees the new one once.
 // options.txt keeps the edition seen (`whatsnew N`, core/args.cpp).
-inline constexpr int kWhatsNewEdition = 1;
+inline constexpr int kWhatsNewEdition = 2;  // 2: Talents, Elites and the Jeweler
 
 class WhatsNew {
 public:
@@ -51,8 +51,8 @@ public:
     static int slides();
 
 private:
-    // What the pointer can press: the six tabs, Back, Next, Skip, and the welcome's six topics.
-    static constexpr int kTargets = 15;
+    // What the pointer can press: the eight tabs, Back, Next, Skip, and the welcome's eight topics.
+    static constexpr int kTargets = 19;
     int targetAt(float ux, float uy) const;
     void go(int slide);
     void rebuild();

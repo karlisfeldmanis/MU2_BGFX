@@ -677,6 +677,11 @@ struct Body {
     // lose `weakCut` percent. 0 for never.
     int64_t weakUntil = 0;
     int32_t weakCut = 0;
+    // Its defence cut (Fire Slash's, SkillRow::cutTicks): until this tick every blow on it meets
+    // `defenseCut` percent less defence -- MU's BUFFTYPE_DEFENSE_POWER_DEC, its three skulls over
+    // the head (fx/fire_slash.h). 0 for never.
+    int64_t defenseCutUntil = 0;
+    int32_t defenseCut = 0;
     // And on the one who wears it: his Weakness field, MU's monster 821 -- until this tick, its
     // next look round, and the tile it lies on. 0 for none; one a caster.
     int64_t curseUntil = 0, curseNext = 0;
@@ -1196,7 +1201,7 @@ public:
     int brokering() const { return me().brokering; }
     void closeBroker() { me().brokering = -1; }
     bool atBroker(uint32_t id) const;  // player `id` within kCounter of a Broker
-    int brokerTake(int slot, bool fromVault, const Held& expect);
+    int brokerTake(int slot, bool fromVault, const Held& expect, int pieces = 0);
     int brokerBuy(const Held& what, int64_t price, bool intoVault);
     int brokerGive(const Held& what);
     int64_t brokerZen(int64_t zen);
@@ -1809,6 +1814,9 @@ private:
     void looseArrow(Body& hero, uint32_t at, float force);
     // Meteorite: a rock let go at every body within its splash of the one it was called on.
     void rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
+    // Power Slash: the bodies in its wedge (`Spread::Frustum`), WebZen's count of them, each a
+    // blow held back till its wave reaches it, unsaid.
+    void powerSlash(Body& hero, const SkillRow& row, float force);
     // A shower (SkillRow::showers): `kShowerRocks` rocks at random within the splash of `spot`
     // (tiles), or of the body `aimedAt` when there is none, each said as a `Loosed` with no body
     // and its ground in `x`/`y`; every monster within `kRockBlast` of one, in its sight, takes

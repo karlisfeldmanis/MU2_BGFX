@@ -84,6 +84,11 @@ int aurasOf(const sim::Realm& realm, const sim::Body& body, Hud::Boon* out) {
         }
     }
     if (Hud::Boon* one = add(body.chilledUntil, sim::kHeroChillTicks)) one->chill = true;
+    // Fire Slash's defence cut (MU's eDeBuff_Defense), its clock its row's ten seconds.
+    if (body.defenseCut > 0) {
+        const sim::SkillRow* row = sim::skillNumbered(sim::skill::kFireSlash);
+        if (Hud::Boon* one = add(body.defenseCutUntil, row ? row->cutTicks : 0)) one->cut = true;
+    }
     if (body.boonSkill != 0) {
         const sim::SkillRow* row = sim::skillNumbered(body.boonSkill);
         if (Hud::Boon* one = add(body.boonUntil, row ? row->boonTicks : 0)) one->skill = body.boonSkill;

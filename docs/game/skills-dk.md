@@ -213,7 +213,7 @@ table is the knob, not the range.
 | Falling Slash 19 | 1 | one | off | the overhead: the heaviest single blow |
 | Lunge 20 | 1 | one | off | the cheap jab — shortest cooldown, smallest multiplier |
 | Uppercut 21 | 1 | one | off | the rising blow, between the two |
-| Cyclone 22 | 1 | **everything within 1 tile** — all eight neighbours and his own | no | he spins; it is the crowd answer |
+| Cyclone 22 | 1 | **everything within 1 tile** — all eight neighbours and his own (since 2026-10-23 **Slash's arc out to 3 tiles**, frontal; Twisting Slash is the ring) | no | he spins; it is the crowd answer |
 | Slash 23 | 1 | **the three tiles in the facing arc** (ahead and the two diagonals beside it) | no | a wide two-handed sweep, heavy and slow |
 | Defense 18 | self | himself | — | the guard |
 

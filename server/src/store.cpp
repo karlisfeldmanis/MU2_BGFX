@@ -393,6 +393,14 @@ std::vector<Store::Listed> Store::list(const std::string& account) {
     return all;
 }
 
+bool Store::anyPlayed(const std::string& account) {
+    if (db_ == nullptr || account.empty()) return true;
+    Statement q(db_, "SELECT 1 FROM characters WHERE account = ? AND layout > 0");
+    if (!q) return true;
+    sqlite3_bind_text(q.s, 1, account.c_str(), -1, SQLITE_TRANSIENT);
+    return sqlite3_step(q.s) == SQLITE_ROW;
+}
+
 bool Store::named(const std::string& name) {
     if (db_ == nullptr) return false;
     Statement q(db_, "SELECT 1 FROM characters WHERE name = ? COLLATE NOCASE AND deleted = 0");

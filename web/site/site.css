@@ -77,6 +77,28 @@ header.top { position: relative; overflow: hidden; }
 .bar-discord:hover { box-shadow: inset 0 0 0 1px rgba(236,207,173,.55); }
 .bar-discord:hover svg { color: #ECCFAD; }
 @media (max-width: 420px) { .bar-discord { padding: 0 10px; } .bar-discord span { display: none; } }
+/* Beside them: the language picker (web/i18n.py picker), the same quiet pill, opening a menu. */
+.lang-pick { position: relative; z-index: 5; }
+.lang-pick summary { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 12px; border-radius: 19px; cursor: pointer;
+  list-style: none; user-select: none; font: 700 14px/1 'Alegreya Sans', sans-serif; letter-spacing: .06em; color: var(--bone);
+  background: rgba(13,11,10,.55); box-shadow: inset 0 0 0 1px rgba(201,162,126,.28); transition: box-shadow .15s, color .15s; }
+.lang-pick summary::-webkit-details-marker { display: none; }
+.lang-pick summary svg { color: #C9A27E; }
+.lang-pick summary b { width: 6px; height: 6px; margin: -3px 1px 0 1px; border: solid #A88A6E; border-width: 0 1.6px 1.6px 0; transform: rotate(45deg); transition: transform .18s ease; }
+.lang-pick[open] summary b { transform: rotate(-135deg); margin-top: 3px; }
+.lang-pick summary:hover, .lang-pick[open] summary { box-shadow: inset 0 0 0 1px rgba(236,207,173,.55); color: var(--bone-hi); }
+.lang-pick summary:focus-visible { outline: 1px solid var(--field-focus); outline-offset: 2px; }
+.lang-menu { position: absolute; right: 0; top: calc(100% + 8px); min-width: 196px; padding: 6px; border-radius: 10px;
+  background: #110D0B; border: 1px solid #3A2E25; box-shadow: 0 18px 40px -12px rgba(0,0,0,.8), 0 0 0 1px rgba(0,0,0,.4);
+  display: flex; flex-direction: column; animation: lang-in .14s ease-out; }
+@keyframes lang-in { from { opacity: 0; transform: translateY(-4px); } }
+.lang-menu a { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 9px 12px; border-radius: 6px;
+  font-size: 15.5px; color: var(--label); }
+.lang-menu a:hover, .lang-menu a:focus-visible { background: rgba(243,232,212,.06); color: var(--bone-hi); outline: none; }
+.lang-menu a[aria-current] { color: var(--bone-hi); }
+.lang-menu a i { width: 9px; height: 5px; border: solid transparent; border-width: 0 0 1.8px 1.8px; transform: rotate(-45deg) translateY(-2px); }
+.lang-menu a[aria-current] i { border-color: #C9A27E; }
+@media (max-width: 420px) { .lang-pick summary { padding: 0 10px; gap: 5px; } }
 /* Under the updates: the Discord, a card with its button. */
 #community { padding: 0 0 64px; }
 #community .wrap { max-width: 1160px; }
@@ -90,13 +112,23 @@ header.top { position: relative; overflow: hidden; }
 .community .btn { flex: none; }
 @media (max-width: 720px) { .community { flex-direction: column; text-align: center; gap: 18px; padding: 26px 22px; } }
 .hero { max-width: 900px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 88px 0 40px; }
-.live { display: inline-flex; align-items: center; gap: 9px; padding: 6px 14px 6px 12px; border-radius: 999px; color: #A8E89A; font-weight: 700; line-height: 1;
-  font-size: 16px; background: linear-gradient(rgba(36,64,28,.5), rgba(18,32,14,.45)); box-shadow: inset 0 0 0 1px rgba(127,214,106,.26); }
-.live i { width: 8px; height: 8px; border-radius: 50%; background: var(--live); box-shadow: 0 0 8px var(--live); }
-/* The front page's servers: a pill a region (index.html, /api/status), grey while it is down. */
-.servers { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-.live.down { color: #B5AB9B; background: linear-gradient(rgba(40,34,30,.5), rgba(20,17,15,.45)); box-shadow: inset 0 0 0 1px rgba(181,171,155,.22); }
+.live { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; color: var(--bone); font-weight: 500; font-size: 15px; line-height: 1; white-space: nowrap; }
+.live i { width: 7px; height: 7px; border-radius: 50%; background: var(--live); box-shadow: 0 0 8px var(--live); }
+/* The name centred on its capitals, not on the font's line box (Alegreya sits it high or low by
+   browser): trimmed to cap height, its middle is the dot's and the capsule's; the padding keeps
+   the capsule the height it was. */
+@supports (text-box: trim-both cap alphabetic) {
+  .live { padding-block: 10.5px; }
+  .live span { text-box: trim-both cap alphabetic; }
+}
+/* The front page's servers: every region in one capsule, its dot green while up (index.html, /api/status);
+   the status itself is in each region's title. */
+.servers { display: inline-flex; flex-wrap: wrap; justify-content: center; max-width: 100%; padding: 2px; border-radius: 999px;
+  background: rgba(13,11,10,.55); box-shadow: inset 0 0 0 1px rgba(201,162,126,.22); backdrop-filter: blur(6px); }
+.live + .live { box-shadow: inset 1px 0 0 rgba(201,162,126,.18); }
+.live.down { color: var(--quiet); }
 .live.down i { background: #6B6259; box-shadow: none; }
+@media (max-width: 560px) { .servers { border-radius: 14px; } .live { padding: 7px 12px; font-size: 14px; } .live + .live { box-shadow: none; } }
 .hero h1 { margin: 0; font: 700 clamp(40px, 5.6vw, 76px)/1.05 Cinzel, serif; color: var(--bone-hi); letter-spacing: .03em;
   text-shadow: 0 2px 24px rgba(0,0,0,.6); }
 .hero p { margin: 0; max-width: 680px; font-size: 20px; line-height: 1.5; }
@@ -247,22 +279,35 @@ header.top { position: relative; overflow: hidden; }
 .comment input { flex: 1; min-width: 0; height: 42px; }
 .comment .btn { min-height: 42px; padding: 0 16px; font-size: 15px; }
 
-footer { padding: 40px 0 48px; box-shadow: inset 0 1px 0 var(--edge); }
-footer .wrap { display: flex; flex-direction: column; align-items: center; gap: 20px; }
-footer img { height: 56px; width: auto; opacity: .3; }
-footer p { margin: 0 auto; max-width: 760px; text-align: center; font-size: 13px; line-height: 1.6; color: rgba(212,200,184,.55); }
-.foot-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 24px; font-size: 14px; }
-.foot-links a { color: var(--quiet); text-decoration: underline; }
-/* The Nostalgic.gg vote banner: its own colours, not the faded logo's. */
-footer .vote img { display: block; width: 200px; max-width: 100%; height: auto; opacity: 1; border: 0; }
-/* The site's languages (web/i18n.py), the one shown in full colour. */
-.langs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; font-size: 14px; }
+footer { padding: 52px 0 36px; box-shadow: inset 0 1px 0 var(--edge); }
+footer .wrap { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+footer img { height: 52px; width: auto; opacity: .3; }
+footer p { margin: 0 auto; max-width: 660px; text-align: center; font-size: 13px; line-height: 1.7; color: rgba(212,200,184,.5); }
+/* The site's pages in one small-caps row, a hairline between each */
+.foot-links { display: flex; flex-wrap: wrap; justify-content: center; row-gap: 8px; font: 700 13px/1.2 'Alegreya Sans SC', sans-serif; letter-spacing: .1em; }
+.foot-links a { padding: 2px 16px; color: var(--label); text-decoration: none; transition: color .15s; }
+.foot-links a + a { box-shadow: inset 1px 0 0 #3A2E25; }
+.foot-links a:hover { color: var(--bone-hi); }
+@media (max-width: 560px) { .foot-links { column-gap: 4px; } .foot-links a + a { box-shadow: none; } .foot-links a { padding: 2px 10px; } }
+/* The Nostalgic.gg vote banner: its own colours, not the faded logo's; quiet until pointed at. */
+footer .vote { opacity: .7; transition: opacity .15s; }
+footer .vote:hover, footer .vote:focus-visible { opacity: 1; }
+footer .vote img { display: block; width: 168px; max-width: 100%; height: auto; opacity: 1; border: 0; }
+/* The site's languages (web/i18n.py), the one shown in full colour, under a hairline. */
+.langs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px; width: min(100%, 560px); padding-top: 20px;
+  box-shadow: inset 0 1px 0 var(--edge); font-size: 13.5px; }
 .langs a { color: var(--quiet); }
 .langs a:hover { color: var(--bone); }
 .langs a[aria-current] { color: var(--bone-hi); }
+footer p.foot-legal { margin-top: -8px; font-size: 12px; color: rgba(143,133,117,.65); }
 /* Cinzel has no Cyrillic and no Vietnamese: those pages set its headings in Alegreya SC. */
 html:is([lang="ru"], [lang="vi"]) :is(.h2, .hero h1, .tile h3, .tile-beta .big, .req h3, .fixes h3, .fix-date,
-  .intro strong, .post h3, .page-title) { font-family: 'Alegreya SC', serif; }
+  .intro strong, .post h3, .page-title, .tp-card h2, .faq h2) { font-family: 'Alegreya SC', serif; }
+/* Chinese: headings in Noto Serif SC, the rest in the system's own Chinese font. */
+html[lang="zh-CN"] :is(.h2, .hero h1, .tile h3, .tile-beta .big, .req h3, .fixes h3, .fix-date,
+  .intro strong, .post h3, .page-title, .tp-card h2, .faq h2, .acct-stat b, .acct-region-head b, .acct-who b, .acct-level b, .acct-box h2) {
+  font-family: 'Noto Serif SC', 'Songti SC', serif; letter-spacing: .04em; }
+html[lang="zh-CN"] body { font-family: 'Alegreya Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif; }
 
 @media (max-width: 700px) {
   .intro strong { font-size: 27px; }
@@ -383,15 +428,55 @@ html:is([lang="ru"], [lang="vi"]) :is(.h2, .hero h1, .tile h3, .tile-beta .big, 
 }
 html:is([lang="ru"], [lang="vi"]) :is(.acct-stat b, .acct-region-head b, .acct-who b, .acct-level b, .acct-box h2) { font-family: 'Alegreya SC', serif; }
 
-/* The Privacy and Contact pages: one column of text */
-.text-page { max-width: 720px; }
-.text-page h2 { margin: 32px 0 8px; font: 700 15px/1.3 'Alegreya Sans SC', sans-serif; letter-spacing: .08em; color: var(--label); }
-.text-page p, .text-page ul { margin: 0 0 12px; }
-.text-page ul { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+/* The text pages (Privacy, Contact, Mac, Linux): a header with a rule under it, then panels */
+.text-main { padding: 56px 0 72px; }
+.account-page .wrap.text-page { max-width: 760px; gap: 14px; }
+.tp-head { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 18px; text-align: center; }
+.tp-head .page-title { margin: 0; font-size: clamp(30px, 5vw, 40px); }
+.tp-head .page-title::after { content: ""; display: block; width: 132px; height: 10px; margin: 16px auto 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='132' height='10'%3E%3Cdefs%3E%3ClinearGradient id='l'%3E%3Cstop offset='0' stop-color='%236E5640' stop-opacity='0'/%3E%3Cstop offset='1' stop-color='%236E5640'/%3E%3C/linearGradient%3E%3ClinearGradient id='r'%3E%3Cstop offset='0' stop-color='%236E5640'/%3E%3Cstop offset='1' stop-color='%236E5640' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='0' y='4.5' width='56' height='1' fill='url(%23l)'/%3E%3Crect x='76' y='4.5' width='56' height='1' fill='url(%23r)'/%3E%3Crect x='62' y='1' width='8' height='8' fill='none' stroke='%23A88A6E' transform='rotate(45 66 5)'/%3E%3C/svg%3E") no-repeat; }
+.tp-lead { margin: 0; max-width: 600px; font-size: 18.5px; line-height: 1.55; color: var(--label); }
+.tp-date { margin: 0; font: 700 12px/1.6 'Alegreya Sans SC', sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--quiet); }
+.text-page p, .text-page ul { margin: 0; }
+.text-page p, .text-page li { font-size: 16.5px; line-height: 1.65; color: var(--label); }
 .text-page b { color: var(--bone-hi); font-weight: 500; }
-/* The Mac and Linux pages: a shot under the opening, and the install line to copy */
-.platform-shot { display: block; width: 100%; height: auto; margin: 20px 0 4px; border-radius: 6px; }
-.text-page code.line { display: block; margin: 0 0 12px; padding: 12px 14px; border-radius: 4px; background: rgba(243,232,212,.06);
-  color: var(--bone-hi); font: 14px/1.5 ui-monospace, Menlo, monospace; word-break: break-all; user-select: all; }
+.text-page a { color: #E2BC8E; text-underline-offset: 3px; text-decoration-color: rgba(226,188,142,.45); transition: color .15s; }
+.text-page a:hover { color: var(--bone-hi); text-decoration-color: currentColor; }
+.text-page ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.text-page li { position: relative; padding-left: 20px; }
+.text-page li::before { content: ""; position: absolute; left: 3px; top: .72em; width: 5px; height: 5px; background: #A88A6E; transform: rotate(45deg); }
+.tp-card { display: flex; flex-direction: column; gap: 12px; padding: 24px 28px 26px; border: 1px solid #2A211A; border-radius: 8px;
+  background: linear-gradient(180deg, rgba(243,232,212,.025), rgba(243,232,212,0) 60%), #0E0A08; }
+.tp-card h2, .faq h2 { display: flex; align-items: center; gap: 10px; margin: 0; font: 700 19px/1.3 Cinzel, serif; letter-spacing: .03em; color: var(--bone-hi); }
+.tp-icon { flex: none; color: #C9A27E; }
+.tp-key { border-color: #4A3828; box-shadow: 0 0 0 1px rgba(201,162,126,.08), 0 18px 40px -24px rgba(201,162,126,.35); }
+.tp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.platform-shot { display: block; width: 100%; max-width: 100%; height: auto; margin: 4px 0; border-radius: 8px; border: 1px solid #2A211A; }
+.text-page code.line { display: block; padding: 12px 14px; border: 1px solid #2E241D; border-radius: 6px; background: #070504;
+  color: var(--bone-hi); font: 14px/1.55 ui-monospace, Menlo, monospace; word-break: break-all; user-select: all; }
+.tp-grid .tp-card h2 { font-size: 17px; }
 .req-more { margin-top: auto; font-size: 15px; color: var(--label); text-decoration: underline; }
+.tp-more { margin-top: 10px !important; text-align: center; font-size: 15.5px !important; }
+/* A page's questions: each one a row that opens */
+.faq { display: flex; flex-direction: column; gap: 14px; margin-top: 18px; }
+.faq h2 { justify-content: center; }
+.faq-list { border: 1px solid #2A211A; border-radius: 8px; background: #0E0A08; overflow: hidden; }
+.faq-item + .faq-item { box-shadow: inset 0 1px 0 #2A211A; }
+.faq-item summary { display: flex; align-items: center; gap: 14px; padding: 17px 24px; cursor: pointer; list-style: none; user-select: none;
+  font-weight: 500; font-size: 17px; color: var(--bone); transition: color .15s, background .15s; }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after { content: ""; flex: none; width: 7px; height: 7px; margin-left: auto; border: solid #A88A6E; border-width: 0 2px 2px 0;
+  transform: rotate(45deg) translateY(-2px); transition: transform .18s ease; }
+.faq-item[open] summary::after { transform: rotate(-135deg) translate(-2px, -1px); }
+.faq-item summary:hover { color: var(--bone-hi); background: rgba(243,232,212,.025); }
+.faq-item summary:focus-visible { outline: 1px solid var(--field-focus); outline-offset: -3px; }
+.faq-item[open] summary { color: var(--bone-hi); }
+.faq-item > p { padding: 0 24px 20px; }
+@media (max-width: 640px) {
+  .text-main { padding: 40px 0 56px; }
+  .tp-grid { grid-template-columns: 1fr; }
+  .tp-card { padding: 20px 20px 22px; }
+  .faq-item summary { padding: 15px 18px; }
+  .faq-item > p { padding: 0 18px 18px; }
+}
 .signed-note { text-align: center; font-size: 16px; color: var(--label); }

@@ -3,7 +3,14 @@
 // MU's warehouse is `CNewUIStorageInventory`'s control, `Create(STORAGE_TYPE::VAULT, ..., 8, 15)`
 // -- eight across and fifteen down, OpenMU's `InventoryConstants.WarehouseRows` 15 times its
 // `RowSize` 8 -- with an item recorded once at the top-left of the rectangle it covers, as in the
-// bag. A cell here is `row * 8 + column`, from 0 to 119, with no worn slots in front of it.
+// bag.
+//
+// Ours is wider: eighteen across, the two columns of windows beside the bag at the bag's own
+// pitch, and MU's fifteen down, so its rows end on the bag's line (the user, 2026-10-24: "we
+// want more space", from the Wide vault proposal, claude.ai/artifact/YQtc78Viuysd2qSnrCS1r4). A
+// cell is `row * 18 + column`, from 0 to 269, with no worn slots in front of it. A vault kept at
+// MU's eight across -- every one before kKeptLayout 15 and every save without "columns" -- is
+// read into the same column and row of this one (widenedCell), so nothing moves on the screen.
 //
 // It belongs to the ACCOUNT and not to the character, as MU's does (OpenMU keeps it on
 // `Account.Vault`), which is why the save writes it to a file of its own and why nothing here
@@ -22,10 +29,18 @@
 namespace mu::sim {
 
 enum : int {
-    kVaultColumns = 8,
+    kVaultColumns = 18,
     kVaultRows = 15,
-    kVaultCells = kVaultColumns * kVaultRows,  // 120, WarehouseSize
+    kVaultCells = kVaultColumns * kVaultRows,  // 270
+    // MU's eight across, WarehouseSize 120: the vault as it was kept until 2026-10-24.
+    kOldVaultColumns = 8,
+    kOldVaultCells = kOldVaultColumns * kVaultRows,
 };
+
+// A cell of an eight-across vault, as the cell at the same column and row of this one.
+constexpr int widenedCell(int old) {
+    return old / kOldVaultColumns * kVaultColumns + old % kOldVaultColumns;
+}
 
 // Baz The Vault Keeper, MU's NPC 240, whose window is OpenMU's NpcWindow.VaultStorage.
 constexpr int kVaultKeeper = 240;

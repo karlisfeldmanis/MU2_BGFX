@@ -88,6 +88,16 @@ struct Row {
     Tone labelTone = Tone::White;
     // A little air above the row: where a framed block turns from one list to the next.
     bool gap = false;
+    // A limited rune's pips after its name (the user, 2026-10-24: "some special UI design for
+    // that 5/1", then "use color coding for type"): `pips` rings, one a rune allowed, and in
+    // them the runes of its kind he wears, strongest first, each in its own rarity's ink -- a
+    // Lesser Might blue, a Greater purple -- and any past the limit dim and struck through.
+    int pips = 0;
+    std::vector<Tone> worn;
+    // The pips' legend, under the sockets that have them: a stone and "worn", a ring and "room
+    // for more" (the user, 2026-10-24: "its still hard to understand", then the legend). Its
+    // `free` holds the line's room, never printed.
+    bool legend = false;
 };
 
 // The item card's headline: the one number a thing is compared by, large, and the sum that made

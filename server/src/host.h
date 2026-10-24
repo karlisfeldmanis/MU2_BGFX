@@ -284,6 +284,9 @@ struct Session {
     // here now is a lagging client's, and dropped. His next line, to the world he is due in, is
     // a new Session.
     bool sentAway = false;
+    // A new player's first character, coming into the world for the first time: his welcome is
+    // said on this realm's Global (newcomerLine) once he stands there.
+    bool newcomer = false;
     // When he is written next: a minute after his welcome and every minute on, so each player's
     // write falls on his own tick and a full server's never lands on one (sprint 24).
     Clock::time_point keepAt{};
@@ -446,6 +449,9 @@ void heraldHere(const std::string& text, std::vector<std::unique_ptr<Session>>& 
 // A character reborn (sim/rebirth.h), told on Global to everyone online on every realm, naming
 // this one (net::rebirthLine): here, and over the market's line to the rest (marketHerald).
 void announceRebirth(const std::string& name, int count, std::vector<std::unique_ptr<Session>>& sessions);
+// A new player's first character in the world (Session::newcomer), told on Global to this realm's
+// players alone, himself among them (net::newcomerLine).
+void welcomeNewcomer(Session& one, std::vector<std::unique_ptr<Session>>& sessions);
 Session* playerNamed(const std::string& name, std::vector<std::unique_ptr<Session>>& sessions);
 bool nameInUse(const std::string& name, const std::vector<std::unique_ptr<Session>>& sessions,
     const Session* except);
@@ -515,6 +521,9 @@ void sweepLetGo();
 // Who is on the server, told to the website's /internal/online every 5 s for its admins' Online page
 // (web/README.md): the post on a job of its own, never the loop's.
 void tellOnline(const std::vector<std::unique_ptr<Session>>& sessions);
+// A character reborn, told to the website's /internal/rebirth, which posts it in the Discord's
+// #announcements (web/server.py, class Announce).
+void tellRebirth(const std::string& name, const char* kind, int count);
 
 // transfer.cpp: a character moved to another region's server (docs/game/transfer.md), each 15 s
 // asked of the website's /internal/transfers on the accounts' line; a character handed over is

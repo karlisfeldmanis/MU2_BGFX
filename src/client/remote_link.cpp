@@ -27,10 +27,23 @@ bool RemoteLink::join(const std::string& host, int port, const net::Hello& hello
     }
     // The one wait the client makes on the server: before the world is raised, nothing is
     // drawn that the wait could hold up.
-    const auto until = std::chrono::steady_clock::now() + std::chrono::duration<double>(seconds);
+    // `seconds` of nothing, not of everything: a Welcome still coming in on a slow line is waited
+    // for, up to kWelcomeMost, `seconds` past its last byte (LoveMu on Central Europe, 2026-10-23:
+    // dropped back to the character screen ten seconds into each Lost Tower Welcome).
+    constexpr auto kWelcomeMost = std::chrono::seconds(60);
+    const auto began = std::chrono::steady_clock::now();
+    const auto quiet = std::chrono::duration<double>(seconds);
+    auto until = began + std::chrono::duration_cast<std::chrono::steady_clock::duration>(quiet);
+    size_t had = in_.size();
     while (std::chrono::steady_clock::now() < until && !net::waitsAbandoned()) {
         // What came before a close is read first: an Elsewhere is said and the line shut.
         const bool open = socket_.receive(in_) && socket_.flush();
+        if (in_.size() > had) {
+            had = in_.size();
+            const auto now = std::chrono::steady_clock::now();
+            until = std::min(began + kWelcomeMost,
+                             now + std::chrono::duration_cast<std::chrono::steady_clock::duration>(quiet));
+        }
         net::Kind kind{};
         std::vector<uint8_t> body;
         const int took = net::take(in_, kind, body);
@@ -73,7 +86,7 @@ bool RemoteLink::join(const std::string& host, int port, const net::Hello& hello
             copy_ = std::max<int>(1, welcome.copy);
             udpKey_ = welcome.udpKey;
             snapshot_ = welcome.snapshot;
-            heardAt_ = std::chrono::steady_clock::now();
+            heardAt_ = streamAt_ = std::chrono::steady_clock::now();
             // The past follows the Welcome at once: every one of its Ticks in hand before the
             // world is raised, so catchUp steps it whole. A long-running world's is a few MB.
             const auto pastUntil = std::chrono::steady_clock::now() + std::chrono::seconds(60);
@@ -94,7 +107,14 @@ bool RemoteLink::join(const std::string& host, int port, const net::Hello& hello
     if (net::waitsAbandoned()) {
         core::logf("server: the wait for %s:%d given up; the window closed", host.c_str(), port);
     } else {
-        core::logError("server: %s:%d said nothing in %.0f s", host.c_str(), port, seconds);
+        const double waited =
+            std::chrono::duration<double>(std::chrono::steady_clock::now() - began).count();
+        if (in_.empty()) {
+            core::logError("server: %s:%d said nothing in %.0f s", host.c_str(), port, waited);
+        } else {
+            core::logError("server: %s:%d sent %zu KB of the Welcome in %.0f s, not all of it", host.c_str(),
+                           port, in_.size() / 1024, waited);
+        }
     }
     socket_.close();
     return false;
@@ -176,7 +196,15 @@ int resyncs = 0;
 // auto-play in Devias at 128,91: tick 30671 held for 303 s, Pings answered and datagrams coming,
 // nothing logged, while the server walked him on and kept him at 193,41. Joined again on the
 // server's snapshot, as a divergence is (kMostResyncs). **ours**.
+// Only while the stream itself is heard: a tick lost by datagram is filled by the stream, and a
+// stream gone quiet is a lost segment's resend still on its way, not a mirror that cannot take
+// the next one. BLDD (Quadro P2200, ~300 ms) in the Lost Tower, 2026-10-23: five rejoins in ten
+// minutes, each 9 ticks lost by datagram (each repeats only the last 4) while the stream was
+// quiet 4 s and more (a Ping answered in 4272 ms), the server well (the user: "there is
+// disconnect window very often now"). A stream quiet this long with the datagrams still
+// coming is taken for gone, as a silent line is (kSilentMost). **ours**.
 constexpr auto kTicklessMost = std::chrono::seconds(4);
+constexpr auto kStreamSilentMost = std::chrono::seconds(15);
 
 // The Disconnected window's line for each of the server's reasons (net::Why).
 const char* whyOf(net::Why why) {
@@ -408,6 +436,13 @@ void RemoteLink::pump() {
             inHeld_.pop_front();
         }
     }
+    if (in_.size() > had) {
+        if (pumpSteady_ && streamAt_ != Clock::time_point{} && now - streamAt_ > kTicklessMost) {
+            core::logf("server: the stream heard again after %.1f s quiet; %zu datagram tick(s) held",
+                       double(std::chrono::duration<float>(now - streamAt_).count()), strays_.size());
+        }
+        streamAt_ = now;
+    }
     // The datagrams: his key said once a second from the UDP socket, and every Ticks datagram
     // that came, each tick taken if it is the next (offer).
     if (udpKey_ != 0 && udpWanted_) {
@@ -541,7 +576,8 @@ void RemoteLink::pump() {
         close("The server stopped answering.");
     }
     if (socket_.open() && takenAt_ != Clock::time_point{} && now - takenAt_ > kTicklessMost &&
-        heardAt_ != Clock::time_point{} && now - heardAt_ < kTicklessMost && !stillSaid_) {
+        heardAt_ != Clock::time_point{} && now - heardAt_ < kTicklessMost &&
+        streamAt_ != Clock::time_point{} && now - streamAt_ < kTicklessMost && !stillSaid_) {
         stillSaid_ = true;
         core::logError("server: no tick taken in %.0f s with the line alive: the mirror at tick %lld, the last "
                        "taken %lld, %zu in hand, %zu datagram tick(s) held (%lld to %lld), %u by the stream "
@@ -556,6 +592,12 @@ void RemoteLink::pump() {
             core::logf("server: joining again on the server's snapshot (%d of %d)", resyncs, kMostResyncs);
             close("Out of step with the server. Joining again...");
         }
+    }
+    if (socket_.open() && streamAt_ != Clock::time_point{} && now - streamAt_ > kStreamSilentMost) {
+        core::logError("server: the stream quiet for %.0f s with %zu datagram tick(s) held; the line is taken for gone",
+                       double(std::chrono::duration<float>(now - streamAt_).count()), strays_.size());
+        cutSilent_ = true;
+        close("The server stopped answering.");
     }
 }
 

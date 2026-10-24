@@ -14,6 +14,11 @@ the front page's Latest updates for what they were given.
                                and not yet told; an admin words them there and publishes them
     ./mu ship notes --import-site   the lines written into web/site/index.html by hand, put in as
                                published (once, the first time the site keeps them itself)
+    ./mu ship translate [--dry]   whatever on the site has no translation in a language (a published
+                               update line, a page's new words) translated by claude -p and put in
+                               there; what an admin wrote is never touched (sitetranslate.py)
+    ./mu ship translate --install   that, run by launchd every half hour from a copy outside
+                               ~/Documents (tools/mu/translate.plist)
 
 What is live is read where it lives, never remembered here:
   - each client: https://mu-classic.com/game/<platform>/manifest.json, its "version" and "protocol"
@@ -480,6 +485,11 @@ def prepare(say, commit=None):
                     sent.append(sends.submit(lanes.run, p, [f"./mu release {p} --stage"]))
             if todo["launcher"]:
                 lanes.run("launcher", [f"./mu dist launcher --commit {commit}", "./mu release launcher --dry"])
+            # The Armory's data for this release (tools/armory/build.py), from dist/macos's packs, so
+            # after its dist: out/armory/<commit>/, nothing sent. Its result is said, never a reason
+            # the switch waits.
+            if "macos" not in todo["clients"] or lanes.results.get("macos"):
+                lanes.run("armory", [f"./mu armory build --commit {commit}", f"./mu armory test out/armory/{commit}"])
             for f in sent:
                 f.result()
 
@@ -495,7 +505,7 @@ def prepare(say, commit=None):
         for j in jobs:
             j.result()
 
-    failed = [k for k, ok in lanes.results.items() if not ok]
+    failed = [k for k, ok in lanes.results.items() if not ok and k != "armory"]
     ready = {"commit": commit, "protocol": protocol, "bump": plan["bump"], "at": time.strftime("%Y-%m-%d %H:%M:%S"),
              "boxes": [h for h in todo["boxes"] if lanes.results.get(boxes[h][0])],
              "clients": [p for p in todo["clients"] if lanes.results.get(p)],
@@ -614,20 +624,20 @@ class Site:
     def __init__(self, web=None):
         self.web = web
 
-    def get(self):
+    def get(self, path="/internal/updates"):
         if self.web:
-            return fetch(f"{self.web}/internal/updates")
-        return json.loads(ssh(WEB_HOST, "curl -sf http://127.0.0.1:8080/internal/updates"))
+            return fetch(f"{self.web}{path}")
+        return json.loads(ssh(WEB_HOST, f"curl -sf http://127.0.0.1:8080{path}", timeout=60))
 
-    def post(self, body):
+    def post(self, body, path="/internal/updates"):
         data = json.dumps(body)
         if self.web:
             done = subprocess.run(["curl", "-sf", "-H", "Content-Type: application/json", "--data-binary", "@-",
-                                   f"{self.web}/internal/updates"], input=data, capture_output=True, text=True)
+                                   f"{self.web}{path}"], input=data, capture_output=True, text=True)
         else:
             done = subprocess.run(["ssh", "-o", "BatchMode=yes", WEB_HOST,
                                    "curl -sf -H 'Content-Type: application/json' --data-binary @- "
-                                   "http://127.0.0.1:8080/internal/updates"], input=data, capture_output=True, text=True)
+                                   f"http://127.0.0.1:8080{path}"], input=data, capture_output=True, text=True)
         if done.returncode != 0:
             raise RuntimeError(f"the site took no lines: {done.stderr.strip() or done.stdout.strip()}")
         return json.loads(done.stdout)
@@ -775,6 +785,31 @@ def notes(say, dry=False, day=None, web=None, since=None, plain=False):
         site.post({"entries": drafts, "noted_through": through})
         say(f"on {web or SITE}/updates as drafts: word them there and publish")
     return True, {"drafts": drafts, "noted_through": through}
+
+
+# ---- the site in its other languages: tools/mu/sitetranslate.py ----------------------------------
+
+TRANSLATE_HOME = os.path.expanduser("~/Library/Application Support/mu-classic")
+TRANSLATE_AGENT = os.path.expanduser("~/Library/LaunchAgents/com.mu-classic.translate.plist")
+
+
+def translate(say, web=None, dry=False, langs=None, install=False):
+    """The site's untranslated lines translated by claude -p (sitetranslate.py); --install puts it
+    where launchd runs it every half hour, outside ~/Documents, and (re)starts the job."""
+    import shutil
+    import sitetranslate
+    if not install:
+        return sitetranslate.translate(say, web=web, dry=dry, langs=langs)
+    os.makedirs(TRANSLATE_HOME, exist_ok=True)
+    shutil.copy(os.path.join(os.path.dirname(__file__), "sitetranslate.py"), os.path.join(TRANSLATE_HOME, "sitetranslate.py"))
+    shutil.copy(os.path.join(os.path.dirname(__file__), "translate.plist"), TRANSLATE_AGENT)
+    me = f"gui/{os.getuid()}"
+    subprocess.run(["launchctl", "bootout", f"{me}/com.mu-classic.translate"], capture_output=True)
+    done = subprocess.run(["launchctl", "bootstrap", me, TRANSLATE_AGENT], capture_output=True, text=True)
+    if done.returncode != 0:
+        raise RuntimeError(f"launchctl: {done.stderr.strip()}")
+    say(f"installed in {TRANSLATE_HOME}; launchd runs it every half hour, its log in /tmp/mu-translate.log")
+    return True, {}
 
 
 class PanelParser(HTMLParser):

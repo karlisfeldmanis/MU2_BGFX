@@ -28,6 +28,13 @@ Every quarter second it works in MU Helper's order (`MuHelper.cpp`'s `Work`):
    ticks (Jewels, Runes, Legendary, Excellent, +Socket, All). It only takes what fits his bag,
    and never while something is fighting him. Zen goes to the purse on the kill, so it is not
    offered.
+
+   **Pick up by name**, under the ticks, is MU Helper's *Add Extra Item* list (`MuHelper.cpp`'s
+   `bPickExtraItems`), asked for on Discord on 2026-10-23. Up to 12 names of up to 20 letters
+   each, typed in the field and added with Add or Enter. A click on a name takes it off. Anything
+   lying whose name holds one of them, in any case, is picked whatever the ticks say, Boxes off
+   included: "chaos" takes the Jewel of Chaos, "kundun" every Box of Kundun. While the field has
+   the keyboard, H and the other keys are not the game's. Escape or a click elsewhere lets it go.
 3. **Back.** With nothing in reach and *Walk back* on, he walks back to where it started.
 4. **Fight.** It fights whatever is fighting him first, then the one it had, then the nearest
    monster within range of the start (Near 4, Mid 7, Far 11 tiles). The right button's skill (or
@@ -75,8 +82,25 @@ Each stop says why on the notice line.
 
 ## Kept
 
-The settings are kept per character beside his save, as `Name.helper`: range, walk back, picks, the repair,
+The settings are kept per character beside his save, as `Name.helper`: range, walk back, picks, the names to pick up, the repair,
 whether the window has been seen, and each skill's use by MU's skill number.
+
+## The pickup log
+
+The window's third page, **Log** (Discord, 2026-10-23, Crylos: "a helper pick-up log ... with
+quantities ... timestamp and remembers the last active helper, so i can access it even if i DC";
+the user's design, claude.ai/artifact/BbDLeKxZrc15tAyTdF115X). What the run took into his bag and
+purse, as the realm says it came (`What::Picked` for the hero, through `Play::takePicked`), so a
+thing another player took first is never counted; his own picks while it helps count too, and so
+does "N picked up" at the foot. The Zen is summed at the top. **Totals** is one row a kind, its
+pieces summed, the rarest first; **Timeline** each thing with its hour, newest first, and the Zen
+between two things as one gold line. Newer and Older page a long list.
+
+Kept beside his save as `Name.helperlog`, a line written as each thing comes (`began`, `place`,
+`item`, `zen`, `end`), so a run cut off is still there when he is played again. While it is off the
+page reads **Last run** with how it ended: the stop's own reason, "Disconnected", "You left the
+map", or "cut off, the game closed" when no `end` line was written. Clear lets it go; the next start
+begins it afresh, and a followed quest's travel carries it on to the next map.
 
 ## Ours, not WebZen's
 

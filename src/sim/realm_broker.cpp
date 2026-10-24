@@ -51,16 +51,29 @@ bool Realm::atBroker(uint32_t id) const {
     return false;
 }
 
-int Realm::brokerTake(int slot, bool fromVault, const Held& expect) {
+int Realm::brokerTake(int slot, bool fromVault, const Held& expect, int pieces) {
     if (!tables_ || !mine().alive() || expect.empty()) return -1;
+    // **Part of a stack** (the user, 2026-10-23: "i cant sell stacked unirias as single item"):
+    // that many come off and the rest stays in its cell; 0 or the whole stack lifts the cell.
+    const content::ItemRow* row = size_t(expect.item) < tables_->items.size() ? &tables_->items[size_t(expect.item)] : nullptr;
+    const bool part = row != nullptr && stacks(*row) && !ammunition(*row) && pieces > 0 && pieces < expect.durability;
+    const auto takeFrom = [&](auto& grid) {
+        if (!part) {
+            grid.lift(slot);
+            return;
+        }
+        Held left = expect;
+        left.durability = int16_t(expect.durability - pieces);
+        grid.put(slot, left);
+    };
     if (fromVault) {
         if (slot < 0 || slot >= kVaultCells || !same(me().vault[slot], expect)) return -1;
-        me().vault.lift(slot);
+        takeFrom(me().vault);
         return 1;
     }
     // From the bag, never off his body: a worn thing is taken off first, as for a trade.
     if (!baggable(slot) || !same(me().bag[slot], expect)) return -1;
-    me().bag.lift(slot);
+    takeFrom(me().bag);
     return 1;
 }
 

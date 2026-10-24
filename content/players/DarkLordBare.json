@@ -1,0 +1,18 @@
+{
+  "item": "DarkLordBare",
+  "mu_name": "Dark Lord, no armour",
+  "kind": "character",
+  "trade": "lord",
+  "trade_from": "OpenMU's ClassDarkLord: 26 strength, 20 agility, 20 vitality, 15 energy, 25 command at level one, 7 points a level (docs/plans/dark-lord.md). Nothing reads this field yet; his class is the plan's phase 2.",
+  "parts": [
+    "HelmClass05",
+    "ArmorClass05",
+    "PantClass05",
+    "GloveClass05",
+    "BootClass05"
+  ],
+  "note": "The Dark Lord with nothing equipped, built as the other bare bodies are: five parts of his own, skinned to the same rig and loaded at the origin. The user, 2026-10-23: \"lets starts with cooking dark lore skin\".",
+  "parts_from": "ZzzOpenData.cpp:115-120 and ZzzCharacter.cpp:12124-12346: MODEL_BODY_* + SkinIndex, Class05 for class 4.",
+  "hands": "Empty, as the other bare bodies: this entry is to show the body.",
+  "rig": "player.bmd, the same rig the other classes are skinned to."
+}

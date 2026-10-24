@@ -5629,10 +5629,12 @@ private:
             // the mana goes on air. A magic gladiator who had just read Twister threw 1,300 of
             // them in an hour, killed nothing and walked to town for mana every three minutes.
             // Twisting Slash too, cast bare since 2026-10-10: held until the body is on a tile
-            // beside him, a diagonal one included, or the spin goes on air.
+            // beside him, a diagonal one included, or the spin goes on air. Rageful Blow and
+            // Cyclone since 2026-10-23, arcs held until the body is in reach.
             if (row.castsBare() &&
-                (target == nullptr || std::hypot(target->x - hero.x, target->y - hero.y) >
-                                          row.reach + (row.wizardry ? 0.0f : 0.5f))) continue;
+                (target == nullptr ||
+                 std::hypot(target->x - hero.x, target->y - hero.y) >
+                     row.reach + (row.wizardry || row.spread == sim::Spread::Arc ? 0.0f : 0.5f))) continue;
             const double base = row.wizardry
                                     ? ((w.wizardMinimum + w.wizardMaximum) / 2.0 + row.damage * 1.25) * w.wizardryRate
                                     : blow();
@@ -5805,7 +5807,7 @@ private:
             const sim::SkillRow& row = sim::skillAt(i);
             if (!row.primary() || !row.wizardry || row.mana > kCheapMana || !realm_->knows(row.number)) continue;
             if (!row.suits(w.hand) || row.spread != sim::Spread::One) continue;
-            const double f = sim::force(row, realm_->hero().points);
+            const double f = sim::force(row, realm_->hero().points, realm_->hero().kin);
             if (f > strongest) strongest = f, best = row.number;
         }
         return best;

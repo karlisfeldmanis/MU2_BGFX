@@ -136,6 +136,16 @@ SKILLS = {
     # Scroll of Nova, group 15 number 18. Below 57 and not use-type 4, so the arithmetic above
     # finds its cell.
     40: ("Dark Wizard", "Nova"),
+    # And Fire Slash, cut on 2026-10-24 because the game now has it (docs/plans/mg-skills/
+    # fire-slash.md): the Magic Gladiator's own, the Icarus era's (WebZen AT_SKILL_DEFENSEDOWN),
+    # off the Orb of Fire Slash. Below 57 and not use-type 4, so the arithmetic above finds its
+    # cell.
+    55: ("Magic Gladiator", "Fire Slash"),
+    # And Power Slash, cut on 2026-10-24 (docs/plans/mg-skills/power-slash.md): the Magic
+    # Gladiator's blade's, 0.99B's (WebZen AT_SKILL_SWORD6), never an orb -- known while a Dark
+    # Reign Blade, an Explosion Blade, a Sword Dancer, an Imperial Sword or a Rune Blade is held.
+    # Below 57 and not use-type 4, so the arithmetic above finds its cell.
+    56: ("Magic Gladiator", "Power Slash"),
 }
 
 

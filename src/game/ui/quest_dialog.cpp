@@ -163,7 +163,7 @@ std::string angelWords(sim::AngelState state, sim::CastlePhase phase, const std:
                    "ours again.";
         case sim::AngelState::NoStaff:
             return "My " + weapon + " is still in the Statue of Saint's grip. Cut down the "
-                   "guards until the drawbridge falls, slay the Spirit Sorcerers who hold the "
+                   "guards until the drawbridge falls, slay the Magic Skeletons who hold the "
                    "door, and break the statue. Then bring my weapon to me, before the time "
                    "runs out.";
         case sim::AngelState::NotYet:
@@ -174,8 +174,8 @@ std::string angelWords(sim::AngelState state, sim::CastlePhase phase, const std:
                "warrior, and come back stronger when the gate opens again.";
     }
     return "Kundun's soldiers have taken this castle, and a Statue of Saint holds my " + weapon +
-           " beyond its door. When the gate opens, cut through the guards, slay the Spirit "
-           "Sorcerers and break the statue. Bring my weapon back to me, and you will not go "
+           " beyond its door. When the gate opens, cut through the guards, slay the Magic "
+           "Skeletons and break the statue. Bring my weapon back to me, and you will not go "
            "unrewarded.";
 }
 // The floor only: a castle below his band lets him in (Realm::castleRefusal).

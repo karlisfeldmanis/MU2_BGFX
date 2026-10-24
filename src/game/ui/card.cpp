@@ -1,11 +1,14 @@
 #include "game/ui/card.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
 #include <string>
 
 #include "game/ui/controls.h"
+#include "game/ui/describe.h"
 #include "game/ui/sheet.h"
 #include "game/ui/style.h"
 #include "game/ui/tip.h"
@@ -79,6 +82,28 @@ constexpr uint32_t kSpendWash = gfx::rgba(0.165f, 0.051f, 0.035f);
 constexpr uint32_t kChosen = gfx::rgba(0.941f, 0.843f, 0.604f);
 constexpr uint32_t kChosenBar = gfx::rgba(0.788f, 0.639f, 0.353f);
 constexpr uint32_t kDivider = style::kAsh3;
+// A rune row's pips (Card::pipsAt): where they start, their size and step, in units, and the
+// hole an empty one's ring is drawn round.
+constexpr float kPipsX = 64.0f, kPipRadius = 1.9f, kPipPitch = 5.4f;
+// A rune row's effect under its name: its share of a row's height, and its type.
+constexpr float kNoteShare = 0.7f, kNoteSize = 6.5f;
+constexpr uint32_t kPipHole = gfx::rgba(0.075f, 0.067f, 0.055f);
+// The Bonuses page's values, each in what it is: a stat's, an element's, a fortune's colour.
+// Never red: red reads as a loss (the user, 2026-10-23).
+constexpr uint32_t kStrengthInk = gfx::rgba(1.0f, 0.647f, 0.282f);
+constexpr uint32_t kAgilityInk = gfx::rgba(0.553f, 0.851f, 0.459f);
+constexpr uint32_t kVitalityInk = gfx::rgba(1.0f, 0.871f, 0.408f);
+constexpr uint32_t kEnergyInk = gfx::rgba(0.502f, 0.706f, 1.0f);
+constexpr uint32_t kIceInk = gfx::rgba(0.561f, 0.847f, 1.0f);
+constexpr uint32_t kPoisonInk = gfx::rgba(0.588f, 0.878f, 0.333f);
+constexpr uint32_t kLightningInk = gfx::rgba(1.0f, 0.910f, 0.443f);
+constexpr uint32_t kFireInk = gfx::rgba(1.0f, 0.627f, 0.251f);
+constexpr uint32_t kWindInk = gfx::rgba(0.529f, 0.937f, 0.808f);
+constexpr uint32_t kExperienceInk = gfx::rgba(0.765f, 0.643f, 1.0f);
+constexpr uint32_t kZenInk = gfx::rgba(1.0f, 0.820f, 0.353f);
+constexpr uint32_t kFindInk = gfx::rgba(1.0f, 0.639f, 0.290f);
+constexpr uint32_t kLifeOnHitInk = gfx::rgba(0.475f, 0.902f, 0.427f);
+constexpr uint32_t kCriticalInk = gfx::rgba(1.0f, 0.765f, 0.431f);
 
 // **"Each press adds" under the general info** (the user, 2026-10-20: "each press adds
 // container has to be above stats under the general info"): its row stands under the three his
@@ -363,33 +388,100 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         } else if (tab_ == 2) {
             // Bonuses: the jewellery's, every row shown, a nought dimmed, so a player learns
             // what there is to find.
-            const auto row = [](const char* label, int v, bool percentSign) {
-                return Line{label, v <= 0 ? (percentSign ? "0%" : "0") : (percentSign ? plusPercent(v) : plus(v)), v <= 0};
+            const auto row = [](const char* label, int v, bool percentSign, uint32_t ink) {
+                Line line{label, v <= 0 ? (percentSign ? "0%" : "0") : (percentSign ? plusPercent(v) : plus(v)), v <= 0};
+                line.ink = ink;
+                return line;
             };
-            // The stat runes worn (Body::runeShare): the share, and what it adds to his points.
-            const auto rune = [](const char* label, int share, int added) {
-                if (share <= 0) return Line{label, "0%", true};
-                return Line{label, plusPercent(share) + " (" + plus(added) + ")", false};
-            };
-            const sim::HeroPoints& share = hero->runeShare;
-            now_.groups.push_back({"Stat runes",
-                                   {rune("Strength", share.strength, total.strength - hero->points.strength),
-                                    rune("Agility", share.agility, total.agility - hero->points.agility),
-                                    rune("Vitality", share.vitality, total.vitality - hero->points.vitality),
-                                    rune("Energy", share.energy, total.energy - hero->points.energy)}});
+            // **Runes** (the user, 2026-10-24, the canvas's B): one row a kind of rune he wears --
+            // a limited one's pips (game::runePool), its total where its line is a "+N%", else
+            // how many; the stat runes a row a stat, their share and what it adds to his points.
+            Group runes{"Runes", {}};
+            {
+                const sim::Satchel* bag = realm ? &realm->satchel() : nullptr;
+                const auto pipsOf = [&](Line& line, sim::Power power) {
+                    if (!bag) return;
+                    const RunePool pool = runePool(*bag, power);
+                    line.pips = pool.most;
+                    for (const sim::Rarity rarity : pool.worn) {
+                        line.stones.push_back(tip::colourOf(rarityTone(rarity)));
+                    }
+                };
+                const sim::HeroPoints& share = hero->runeShare;
+                const int shares[4] = {share.strength, share.agility, share.vitality, share.energy};
+                // Named by the runes, not the stat (the user, 2026-10-24: "Strength is rune
+                // name?"): Might, Grace, Vigor, Insight, in the strongest worn's ink.
+                const char* const statWords[4] = {"Might", "Grace", "Vigor", "Insight"};
+                const char* const statLong[4] = {"strength", "agility", "vitality", "energy"};
+                const uint32_t statInks[4] = {kStrengthInk, kAgilityInk, kVitalityInk, kEnergyInk};
+                const sim::Power statRunes[4] = {sim::Power::LesserMight, sim::Power::LesserGrace,
+                                                 sim::Power::LesserVigor, sim::Power::LesserInsight};
+                for (int k = 0; k < 4; ++k) {
+                    if (shares[k] <= 0) continue;
+                    Line line{statWords[k], plusPercent(shares[k]), false};
+                    // The share alone (the user: "just show +percentage strength").
+                    line.note = plusPercent(shares[k]) + " " + statLong[k];
+                    line.ink = statInks[k];
+                    pipsOf(line, statRunes[k]);
+                    if (!line.stones.empty()) line.labelInk = line.stones.front();
+                    runes.lines.push_back(std::move(line));
+                }
+                // The rest, a row a power in the order worn; Bulwark's kin and the Volleys' each
+                // show the kin's one shared pip.
+                std::vector<uint8_t> seen;
+                for (int slot = sim::kWeaponRight; bag && slot <= sim::kRingLeft; ++slot) {
+                    const sim::Held& held = (*bag)[slot];
+                    if (held.empty()) continue;
+                    for (int at = 0; at < std::min<int>(held.sockets, sim::kMostSockets); ++at) {
+                        const sim::PowerRow* power = sim::powerOf(held.powers[at]);
+                        if (!power) continue;
+                        const sim::HeroPoints its = sim::statShareOf(power->power);
+                        if (its.strength || its.agility || its.vitality || its.energy) continue;
+                        if (std::find(seen.begin(), seen.end(), held.powers[at]) != seen.end()) continue;
+                        seen.push_back(held.powers[at]);
+                        int count = 0;
+                        for (int s2 = sim::kWeaponRight; s2 <= sim::kRingLeft; ++s2) {
+                            const sim::Held& h2 = (*bag)[s2];
+                            if (h2.empty()) continue;
+                            for (int a2 = 0; a2 < std::min<int>(h2.sockets, sim::kMostSockets); ++a2) {
+                                count += h2.powers[a2] == held.powers[at];
+                            }
+                        }
+                        Line line{power->name, "", false};
+                        line.labelInk = tip::colourOf(rarityTone(power->rarity));
+                        pipsOf(line, power->power);
+                        // "+10% critical chance" times those that count; otherwise how many.
+                        const char* tells = power->tells ? power->tells : "";
+                        const int counted = line.pips > 0 ? std::min(count, line.pips) : count;
+                        int each = 0;
+                        if (tells[0] == '+' && std::sscanf(tells + 1, "%d%%", &each) == 1 &&
+                            std::strchr(tells, '%') != nullptr) {
+                            line.value = plusPercent(each * counted);
+                            line.note = std::string(tells) + (count > 1 ? " each" : "");
+                        } else {
+                            line.value = "x" + std::to_string(count);
+                            line.note = tells;
+                        }
+                        line.ink = kHeading;
+                        runes.lines.push_back(std::move(line));
+                    }
+                }
+                if (runes.lines.empty()) runes.lines.push_back(Line{"No runes worn", "", true});
+            }
+            now_.groups.push_back(std::move(runes));
             now_.groups.push_back({"Resistances",
-                                   {row("Ice", ex.iceResistance, false),
-                                    row("Poison", ex.poisonResistance, false),
-                                    row("Lightning", ex.lightningResistance, false),
-                                    row("Fire", ex.fireResistance, false),
-                                    row("Wind", ex.windResistance, false)}});
+                                   {row("Ice", ex.iceResistance, false, kIceInk),
+                                    row("Poison", ex.poisonResistance, false, kPoisonInk),
+                                    row("Lightning", ex.lightningResistance, false, kLightningInk),
+                                    row("Fire", ex.fireResistance, false, kFireInk),
+                                    row("Wind", ex.windResistance, false, kWindInk)}});
             now_.groups.push_back({"Fortune",
-                                   {row("Experience", ex.moreExperience, true),
-                                    row("Zen", ex.moreZen, true),
-                                    row("Item find", ex.itemFind, true)}});
+                                   {row("Experience", ex.moreExperience, true, kExperienceInk),
+                                    row("Zen", ex.moreZen, true, kZenInk),
+                                    row("Item find", ex.itemFind, true, kFindInk)}});
             now_.groups.push_back({"On hit",
-                                   {row("Life on hit", ex.lifeOnHit, false),
-                                    row("Critical damage", ex.criticalDamage, true)}});
+                                   {row("Life on hit", ex.lifeOnHit, false, kLifeOnHitInk),
+                                    row("Critical damage", ex.criticalDamage, true, kCriticalInk)}});
         }
 
         now_.who = hero;
@@ -584,6 +676,37 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
     if (now_ == drawn_ && rebuilds_ > 0) return;
     drawn_ = now_;
     rebuild();
+}
+
+// A rune row's pips on the Bonuses page (Line::pips), as the item card draws them: a solid
+// stone for each worn in its rarity, an outlined ring for room left, past the limit dim and
+// struck through.
+void Card::pipsAt(const Line& line, float px, float cy, float k) {
+    const float r = kPipRadius * k, line1 = std::max(1.0f, 0.5f * k);
+    const auto disc = [&](float cx, float radius, uint32_t colour) {
+        constexpr int kSides = 16;
+        float xy[kSides * 2];
+        for (int i = 0; i < kSides; ++i) {
+            const float a = 6.2831853f * float(i) / float(kSides);
+            xy[i * 2] = cx + radius * std::cos(a);
+            xy[i * 2 + 1] = cy + radius * std::sin(a);
+        }
+        canvas_.polygon(nullptr, xy, nullptr, kSides, colour);
+    };
+    const int slots = std::max(line.pips, int(line.stones.size()));
+    for (int i = 0; i < slots; ++i) {
+        const float cx = px + r + kPipPitch * k * float(i);
+        const bool worn = i < int(line.stones.size());
+        if (i >= line.pips) {
+            disc(cx, r, kDim);
+            canvas_.rect({cx - r * 1.4f, cy - line1 * 0.5f, r * 2.8f, line1}, line.stones[size_t(i)]);
+        } else if (worn) {
+            disc(cx, r, line.stones[size_t(i)]);
+        } else {
+            disc(cx, r, kDim);
+            disc(cx, r - line1 * 1.2f, kPipHole);
+        }
+    }
 }
 
 void Card::rebuild() {
@@ -791,27 +914,42 @@ void Card::rebuild() {
             }
         }
     } else {
-        // A page heavy with gear's chances closes its rows up before it would cross the foot.
-        size_t rows = 0;
-        for (const Group& group : now_.groups) rows += group.lines.size();
+        // A page heavy with gear's chances closes its rows up before it would cross the foot. A
+        // rune's row has its effect under it (Line::note), the note kNoteShare of a row tall.
+        float rows = 0.0f;
+        for (const Group& group : now_.groups) {
+            for (const Line& line : group.lines) rows += line.note.empty() ? 1.0f : 1.0f + kNoteShare;
+        }
         const float heads = (kGroupHead + kGroupGap) * float(now_.groups.size());
         const float rowTall =
-            rows ? std::min(kRowTall, (kBodyBottom - kBodyTop - drop - heads) / float(rows)) : kRowTall;
+            rows > 0.0f ? std::min(kRowTall, (kBodyBottom - kBodyTop - drop - heads) / rows) : kRowTall;
         float uy = kBodyTop + drop;
         for (const Group& group : now_.groups) {
             smallCaps(kWellX + 2.0f, at(uy + 1.0f, kSmallCaps), kDim, group.name);
             uy += kGroupHead;
-            const float tall = rowTall * float(group.lines.size());
+            float tall = 0.0f;
+            for (const Line& line : group.lines) tall += rowTall * (line.note.empty() ? 1.0f : 1.0f + kNoteShare);
             panel::cell(canvas_, x, y, {kWellX, uy, kWellW, tall}, sheet::Cell::Rest);
+            float ly = uy;
             for (size_t l = 0; l < group.lines.size(); ++l) {
                 const Line& line = group.lines[l];
-                const Box row{kWellX, uy + rowTall * float(l), kWellW, rowTall};
+                const float noteTall = line.note.empty() ? 0.0f : rowTall * kNoteShare;
+                const Box row{kWellX, ly, kWellW, rowTall};
                 if (l > 0) canvas_.rect(panel::scaled(x, y, {row.x + 1.0f, row.y, row.w - 2.0f, 0.5f}), kDivider);
                 const float base = panel::centredBaseline(face, panel::scaled(x, y, row), kRowSize * k);
-                controls::label(canvas_, x + kLeft * k, base, kRowSize * k, line.dim ? kDim : kPlain,
-                                line.label);
-                controls::ranged(canvas_, x + kRight * k, base, kRowSize * k, line.dim ? kDim : kHeading,
+                controls::label(canvas_, x + kLeft * k, base, kRowSize * k,
+                                line.dim ? kDim : line.labelInk ? line.labelInk : kPlain, line.label);
+                if (line.pips > 0 || !line.stones.empty()) pipsAt(line, x + kPipsX * k, base - kRowSize * k * 0.32f, k);
+                controls::ranged(canvas_, x + kRight * k, base, kRowSize * k, line.dim ? kDim : line.ink ? line.ink : kHeading,
                                  line.value);
+                if (!line.note.empty()) {
+                    // What the rune does, quiet under its name.
+                    const Box under{kWellX, ly + rowTall - 1.5f, kWellW, noteTall};
+                    controls::label(canvas_, x + kLeft * k,
+                                    panel::centredBaseline(face, panel::scaled(x, y, under), kNoteSize * k),
+                                    kNoteSize * k, kQuiet, line.note);
+                }
+                ly += rowTall + noteTall;
             }
             uy += tall + kGroupGap;
         }

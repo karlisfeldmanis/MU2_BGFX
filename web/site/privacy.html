@@ -21,25 +21,29 @@
 
 <div class="bar">
 <a href="/"><img src="/logo.svg" alt="MU Classic home" width="435" height="261"></a>
-<a href="/" style="font-weight: 500">Home</a>
+<span class="bar-links"><!--langpick--><a href="/" style="font-weight: 500">Home</a></span>
 </div>
 
 <!-- What web/server.py, the launcher (src/launcher/) and the game send and keep, as of 2026-10-16.
      A new field sent home belongs on this page in the same change. -->
-<main class="account-page">
+<main class="account-page text-main">
 <div class="wrap text-page">
+<header class="tp-head">
 <h1 class="page-title">Privacy</h1>
-<p class="center muted">Last updated 16 October 2026</p>
+<p class="tp-date">Last updated 16 October 2026</p>
+<p class="tp-lead">MU Classic is a free fan remaster of MU Online, made by a small team. We keep only what the game needs to run and what helps us fix it. We show no ads, sell nothing to anyone and use no trackers or analytics.</p>
+</header>
 
-<p>MU Classic is a free fan remaster of MU Online, made by a small team. We keep only what the game needs to run and what helps us fix it. We show no ads, sell nothing to anyone and use no trackers or analytics.</p>
-
+<section class="tp-card">
 <h2>Your account</h2>
 <ul>
 <li><b>Email and display name</b>, to sign in and to show your name on comments.</li>
 <li><b>Your password</b>, only as a scrypt hash. We can't read it.</li>
 <li><b>Sign-ins</b> (on the website or the launcher): when, and a shortened network address, so you can see them on your account page and end them. Each lasts up to 90 days.</li>
 </ul>
+</section>
 
+<section class="tp-card">
 <h2>What the launcher sends</h2>
 <ul>
 <li><b>Your machine</b>: graphics card, its driver, processor, Windows/macOS version, memory and the graphics setting you picked. This tells us which hardware the game breaks on. You see it on your account page.</li>
@@ -47,30 +51,37 @@
 <li><b>Crash and freeze reports</b>: what the game or launcher was doing when it stopped, a short summary of its log, sometimes a memory dump of the program. These are filed under your account so we can tell you when it's fixed.</li>
 </ul>
 <p>The launcher downloads only the game's own files, checks each against its SHA-256, and installs into your user folder without administrator rights. It installs nothing else.</p>
+</section>
 
+<section class="tp-card">
 <h2>In the game</h2>
 <ul>
 <li><b>Your characters</b>: their level, stats, items and where they stand, as any online game keeps them.</li>
 <li><b>Bug reports</b> you send with the in-game button: your words, plus where you stood and the game's version and graphics card.</li>
 </ul>
+</section>
 
+<section class="tp-card">
 <h2>The website</h2>
 <p>The site keeps your sign-in in your browser's local storage, not in a cookie. It loads fonts from Google Fonts, and the front page plays a video from YouTube's privacy-enhanced player (youtube-nocookie.com). Those services see your network address when they serve them.</p>
 <p>The site shows each page in your browser's language when it has it. A language you pick at the foot of a page is kept in a cookie for a year, and nothing else is.</p>
+</section>
 
+<section class="tp-card">
 <h2>Removing it</h2>
 <p><b>Delete account</b> on your <a href="/account" style="text-decoration: underline">account page</a> removes the account at once, with its sign-ins, machines, plays and comments. Crash reports, bug reports and characters already on the game server are kept until we remove them. <a href="/contact" style="text-decoration: underline">Contact us</a> and we will.</p>
-
 <p>Everything is kept on our own server at Hetzner in Helsinki, Finland, and is never shared with anyone else.</p>
+</section>
 </div>
 </main>
 
 <footer>
 <div class="wrap">
 <img src="/logo.svg" alt="MU Classic" width="435" height="261" translate="no">
-<nav class="foot-links"><a href="https://discord.gg/frqaT5k3EF" rel="noopener" target="_blank" translate="no">Discord</a><a href="/mac">Mac</a><a href="/linux">Linux</a><a href="/privacy">Privacy</a><a href="/contact">Contact</a></nav>
+<nav class="foot-links" aria-label="Site"><a href="/mac">Mac</a><a href="/linux">Linux</a><a href="https://discord.gg/frqaT5k3EF" rel="noopener" target="_blank" translate="no">Discord</a><a href="/privacy">Privacy</a><a href="/contact">Contact</a></nav>
 <a class="vote" href="https://nostalgic.gg/en/mu-online/mu-classic-com#vote" target="_blank" rel="noopener" translate="no"><img src="https://nostalgic.gg/api/widgets/banner/2241.svg" alt="Vote on Nostalgic.gg" width="200" height="80"></a>
 <!--langs-->
+<p class="foot-legal">© 2026 MU Classic · MU Online is a trademark of WebZen Inc. · Unofficial and non-commercial</p>
 </div>
 </footer>
 

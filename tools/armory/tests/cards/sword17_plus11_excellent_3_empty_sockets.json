@@ -1,0 +1,143 @@
+{
+ "ref": "sword17_plus11_excellent_3_empty_sockets.png",
+ "note": "The dump's Sword17 '+11 excellent' sheet with its three sockets empty, as the reference shows them, and its needs Red.",
+ "sheet": {
+  "artScale": 1,
+  "base": "Excellent one-handed weapon",
+  "bound": "Cannot be dropped",
+  "boundTone": "RedPurple",
+  "classed": true,
+  "hero": {
+   "rail": [
+    {
+     "label": "base",
+     "values": [
+      {
+       "text": "82 ~ 90",
+       "tone": "White"
+      }
+     ]
+    },
+    {
+     "label": "refined to +11",
+     "values": [
+      {
+       "text": "+36",
+       "tone": "Yellow"
+      }
+     ]
+    },
+    {
+     "label": "excellent",
+     "values": [
+      {
+       "text": "+30",
+       "tone": "Green"
+      }
+     ]
+    },
+    {
+     "label": "attack speed",
+     "values": [
+      {
+       "text": "35",
+       "tone": "White"
+      }
+     ]
+    }
+   ],
+   "tone": "Yellow",
+   "value": "148 ~ 156",
+   "word": "Damage"
+  },
+  "item": true,
+  "name": "Sword of Destruction +11",
+  "nameTone": "Green",
+  "sections": [
+   {
+    "rows": [
+     {
+      "free": "62% with two swords,",
+      "freeTone": "White",
+      "keyword": "Dual Wield",
+      "mark": "Diamond",
+      "markTone": "White",
+      "tail": "49% mixed"
+     }
+    ]
+   },
+   {
+    "rows": [
+     {
+      "free": "+5% critical, Jewel of Soul always succeeds",
+      "freeTone": "Blue",
+      "keyword": "Luck",
+      "mark": "Diamond",
+      "markTone": "Blue"
+     },
+     {
+      "free": "Additional Dmg",
+      "freeTone": "Blue",
+      "mark": "Diamond",
+      "markTone": "Blue",
+      "tail": "+16"
+     },
+     {
+      "free": "Mana per kill",
+      "freeTone": "Blue",
+      "mark": "Star",
+      "markTone": "Green",
+      "tail": "+mana/4"
+     },
+     {
+      "free": "Damage",
+      "freeTone": "Blue",
+      "mark": "Star",
+      "markTone": "Green",
+      "tail": "+4%"
+     }
+    ]
+   },
+   {
+    "rows": [
+     {
+      "free": "Empty Socket",
+      "freeTone": "Blue",
+      "mark": "Ring",
+      "markTone": "Gray"
+     },
+     {
+      "free": "Empty Socket",
+      "freeTone": "Blue",
+      "mark": "Ring",
+      "markTone": "Gray"
+     },
+     {
+      "free": "Empty Socket",
+      "freeTone": "Blue",
+      "mark": "Ring",
+      "markTone": "Gray"
+     }
+    ]
+   }
+  ],
+  "sell": "604,100",
+  "wear": "Durability: 100%",
+  "wearTone": "White",
+  "who": [
+   {
+    "text": "DK / MG",
+    "tone": "Green"
+   },
+   {
+    "text": "Strength 692",
+    "tone": "Red"
+   },
+   {
+    "text": "Agility 272",
+    "tone": "Red"
+   }
+  ],
+  "worn": 1
+ }
+}

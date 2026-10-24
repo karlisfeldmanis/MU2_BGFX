@@ -11,12 +11,34 @@ Design: the "MU2 Launcher" canvas, Website page.
 | `i18n.py`, `i18n/` | the site in Portuguese, Spanish, Russian, Vietnamese and Polish under `/pt/`, `/es/`, `/ru/`, `/vi/`, `/pl/`: the English pages are the source, each language's words are kept in the database (`texts`) and edited by admins on `/translate` (`site/translate.html`); `i18n/<lang>.json` are the first words of each, put in at start wherever a line has none. A script's words go through `MU.t('...')` (`site.js`) |
 | `Caddyfile` | HTTPS on mu-classic.com (and still on 37.27.158.226 for launchers already out), installers from disk, the rest to server.py |
 | `mu2-web.service` | the systemd unit; accounts in `/var/lib/mu2-web/accounts.db` |
-| `deploy.sh` | HEAD's `web/` to `/opt/mu2-web`, Caddy installed if missing, both restarted |
+| `deploy.sh` | HEAD's `web/` to `/opt/mu2-web`, the newest built Armory to `/srv/mu2-web/armory/`, Caddy installed if missing, both restarted |
+| `armory.py`, `site/armory/` | the Armory (below) |
 
 ## Run it here
 
     python3 -I web/server.py --db out/web/accounts.db --port 8093
     open http://127.0.0.1:8093/
+
+## The Armory
+
+`armory.py` (routes asked by server.py first) and `site/armory/` (`armory.js` draws every page,
+`card.js` the game's item card, `armory.css`): the item, monster, NPC, quest, event, rune, skill,
+talent, mix and Elite database at `/armory`, read from a built release (`./mu armory build`,
+docs/plans/armory.md). Each entity has its own URL (`/armory/item/<slug>`, `/armory/monster/<slug>`, ...),
+served with its own head (title, description, og:image its thumbnail), a plain body and its JSON
+inline; a page fetches only its own file and the small indexes, from `/armory/data/<commit>/`
+(immutable). Comments are the accounts' (`armory_comments`, `armory_votes`, `armory_reports` in the
+same database), with upvotes, reports, a rate limit and delete by the writer or an admin; an
+admin reads the reports at `GET /api/armory/reports`. Its words are a group of `/translate`.
+
+    python3 -I web/server.py --db out/web/accounts.db --port 8091 --armory out/armory/5d7ddebc
+    open http://127.0.0.1:8091/armory
+
+`--armory` takes a release (a folder with meta.json) or a folder of them, serving `current` or the
+newest; locally it defaults to out/armory/. `web/deploy.sh` uploads the newest built release (or
+`ARMORY=<commit>`) to `/srv/mu2-web/armory/<commit>/` and moves `current`; Caddy serves
+`/armory/data/*` from there. `./mu armory test` checks the output, the card against the game's
+renders (tools/armory/tests/card_check.js) and the pages in headless Chrome (site_test.js).
 
 ## The accounts
 
@@ -137,3 +159,25 @@ it is set or changed without a restart; with no file, nothing is told.
     ssh hetzner "curl -s -d '{\"day\":\"2026-10-19\"}' http://127.0.0.1:8080/internal/discord"  # a day now
 
 `journalctl -u mu2-web | grep discord` shows each message posted, edited, taken away or not told.
+
+Each rebirth on any region's game server is one message in #announcements (`class Announce`): the
+server POSTs /internal/rebirth {region, name, class, count} on the accounts' line, and the site
+posts it by that channel's webhook, kept the same way in `discord_announce_webhook`; with no file,
+nothing is told. A message Discord turns away is dropped.
+
+    ssh hetzner 'cd /var/lib/private/mu2-web && umask 077 && cat > discord_announce_webhook && chown --reference=accounts.db discord_announce_webhook'
+
+## Translated by itself
+
+Anything on the site with no translation in a language (a Latest updates line once it is
+published, a page's new words) is translated on the Mac by `./mu ship translate` (tools/mu/ship.py,
+`claude -p` on the user's Claude subscription, no API key): it reads the gaps from
+`GET /internal/untranslated` over ssh and puts its lines in with `POST /internal/translations`.
+The site only fills what is missing: what an admin wrote on `/translate` is never touched, a line
+that loses its English's tags is refused, and the translator's lines have `texts.by = 0` for an
+admin to reword on `/translate` like any other. launchd runs it every half hour while the Mac is
+on (`tools/mu/translate.plist`, its log in `/tmp/mu-translate.log`); a line published while the Mac
+is off is translated when it is back.
+
+    ./mu ship translate --dry     # what is missing, per language
+    ./mu ship translate           # translate it now

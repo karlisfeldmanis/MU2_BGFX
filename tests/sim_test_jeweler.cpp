@@ -108,7 +108,13 @@ void testJeweler(void (*checkOf)(bool, const char*),
     for (int s = sim::kWorn; s < sim::kSlots; ++s) {
         if (realm.satchel()[s].item == got) check(!realm.satchel()[s].bound, "the prize is free");
     }
-    checkEqual(realm.salvage(realm.give(ice)), -1, "an unpowered ring is not his to salvage");
+    // MU's own Ring of Ice salvages too, never into a Jewel of Life; Recut and Combine refuse it.
+    checkEqual(sim::kSalvageOdds[0][sim::kSalvagePrizes - 1], 0, "a plain piece never salvages a Life");
+    const int plain = realm.give(ice);
+    checkEqual(realm.recut(plain, 0), -1, "a plain ring is not recut");
+    const int plainPrize = realm.salvage(plain);
+    check(plainPrize >= 1 && plainPrize < sim::kSalvagePrizes, "a plain ring salvages, short of Life");
+    check(realm.satchel()[plain].empty() || realm.satchel()[plain].item != ice, "and is gone");
 
     // Combine: three whites into one blue at the lowest plus; any bound makes it bound.
     const int a = realm.give(wisdom, -1, 2), b = realm.give(wisdom, -1, 5),

@@ -58,6 +58,8 @@
 #include "game/fx/thunder.h"
 #include "game/fx/wheel.h"
 #include "game/fx/fury.h"
+#include "game/fx/fire_slash.h"
+#include "game/fx/power_slash.h"
 #include "game/fx/hellfire.h"
 #include "game/fx/storm.h"
 #include "game/fx/inferno.h"
@@ -520,10 +522,18 @@ public:
         sim::Held what;
     };
     std::vector<Looted> takeLooted() { return std::exchange(looted_, {}); }
+    // What came to him himself since the last ask: a thing off the ground, or Zen (`what` empty)
+    // with a kill or off the ground, as the lane posts it. The Helper's log (Helper::picked).
+    struct Picked {
+        sim::Held what;
+        int64_t zen = 0;
+    };
+    std::vector<Picked> takePicked() { return std::exchange(picked_, {}); }
     // The player in this world called `name`, by body id, or 0.
     uint32_t playerNamed(const std::string& name) const;
     std::vector<sim::Happening> dealNews_;
     std::vector<Looted> looted_;
+    std::vector<Picked> picked_;
     std::unordered_map<uint32_t, sim::Held> lyingSeen_;  // a lying thing's id to what it is
     // The last mix's answer while it stands: 1 made, 0 failed, -1 none since the box was last
     // filled or closed. The window's line in place of the recipe.
@@ -1078,6 +1088,10 @@ public:
     Wheel& wheel() { return wheel_; }
     // The knight's Rageful Blow: his weapon thrown down and the ground broken. fx/fury.h.
     Fury& fury() { return fury_; }
+    // The gladiator's Fire Slash: its ribbon, the lightning at his hand, the skulls. fx/fire_slash.h.
+    FireSlash& fireSlash() { return fireSlash_; }
+    // The gladiator's Power Slash: its five waves and their smoke. fx/power_slash.h.
+    PowerSlash& powerSlash() { return powerSlash_; }
     // The wizard's Hellfire: the sigil and the wall of fire at his feet. fx/hellfire.h.
     Hellfire& hellfire() { return hellfire_; }
     // The wizard's Twister: the whirlwind walked out ahead of him. fx/storm.h.
@@ -1441,6 +1455,12 @@ private:
         // is under its fourth key (ZzzCharacter.cpp:10079). fx/fury.h.
         float handEmpty = 0.0f;
         float swingPace = 1.0f;  // how much faster than authored the swing clip must run
+        // And a second pace from a key on (Fire Slash's, sim::SkillRow::paceAfter): run at
+        // `swingPaceAfter` once `swinging` is down to `swingTurn`. 0 for one pace through.
+        float swingPaceAfter = 0.0f, swingTurn = 0.0f;
+        // The last defence cut seen on it (sim::Body::defenseCutUntil): one later is a cut laid
+        // or laid again, and sounds (fx/fire_slash.h).
+        int64_t cutSeen = 0;
         // Seconds of a flinch left to play, held as a swing is -- without it the idle took the
         // shock clip back on the next frame. A swing or a step ends it. See Play::flinch.
         float shocked = 0.0f;
@@ -1936,6 +1956,8 @@ private:
     Firework firework_;
     Wheel wheel_;
     Fury fury_;
+    FireSlash fireSlash_;
+    PowerSlash powerSlash_;
     Hellfire hellfire_;
     Storm storm_;
     Inferno inferno_;
@@ -2087,6 +2109,7 @@ private:
         int weakness = -1;                     // SE_Ch_summoner_weakness, the Ancient rune Weakness's
         int pollution = -1;                    // Rargle, the Ancient rune Pollution's
         int drainLife = -1;                    // SE_Ch_summoner_skill07, the Ancient rune Drain Life's
+        int bloodAttack = -1;                  // eBloodAttack, Fire Slash's cut landing on a body
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
         int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};

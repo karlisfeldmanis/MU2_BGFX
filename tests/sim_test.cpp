@@ -593,6 +593,29 @@ void testRaid(const content::Tables& tables) {
           "content/raid/party.json reads");
     checkEqual((long long)party.size(), 10, "ten in the party");
     if (party.size() != 10) return;
+    // Its hoard matches the fight (2026-10-24): each class's runes Legendary, never Ancient, and
+    // its excellents its own gear of the top band, worn by somebody.
+    {
+        sim::Random dice(7);
+        bool legendary = true, pools = true, inBand = true;
+        for (sim::Kin kin : {sim::Kin::DarkKnight, sim::Kin::DarkWizard, sim::Kin::FairyElf,
+                             sim::Kin::MagicGladiator}) {
+            for (int i = 0; i < 50; ++i) {
+                const sim::PowerRow* rune = sim::powerOf(sim::drawRuneOf(dice, kin, true, sim::Rarity::Legendary));
+                legendary &= rune && rune->rarity == sim::Rarity::Legendary;
+            }
+            int fine = 0;
+            for (const content::ItemRow& row : tables.items) {
+                if (!sim::hoardFine(row, kin, true)) continue;
+                ++fine;
+                inBand &= row.dropLevel >= sim::kHoardFineLeast && row.dropLevel <= sim::kHoardFineMost &&
+                          !sim::archangelWeapon(row) && (row.classes & (1 << int(kin))) != 0;
+            }
+            pools &= fine >= 8;
+        }
+        check(legendary, "the dragon's runes are Legendary, each his class's");
+        check(pools && inBand, "and its excellents each class's own top gear, eight pieces or more");
+    }
     {
         sim::Realm plain;
         plain.raise(&tables, 5, 140, 65);
@@ -931,10 +954,11 @@ void testItems(const content::Tables& tables) {
     // 2026-10-22: the 39 rows after a3d4dc48 -- Kanturu's dormant 380 sets and arms (8a1d6e55)
     // and the shields, bows, staffs, mace and swords between. 401 since 2026-10-23: the 59 rows
     // of the missing-gear audit -- twelve sets' 56 pieces (*Male21, 35-38, 46-49, 51, 53) and
-    // the three gamble arms (Spear12, Bow25, Staff34). A count
+    // the three gamble arms (Spear12, Bow25, Staff34). 402 since 2026-10-24: the Orb of Fire
+    // Slash (1bd2f5da). A count
     // rather than a list, because what it is guarding is the cook -- a
     // recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 401, "401 item rows cooked");
+    checkEqual(long(tables.items.size()), 402, "402 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
     // And Lumen's, whose Guardian Angel and Imp are ours (the user, 2026-09-30: "put imp and
@@ -1427,6 +1451,512 @@ void testGladiatorSkills(const content::Tables& tables) {
         }
     }
     check(thrown, "and throws Defense");
+}
+
+// Fire Slash, the Magic Gladiator's own (docs/plans/mg-skills/fire-slash.md, 2026-10-24): his
+// alone, a front half-disc, its blow at MU's key 3, and the cut -- 45% a body, -10% defence for
+// ten seconds, refreshed and never stacked, gone with its time and shrugged by the dragon.
+void testFireSlash(const content::Tables& tables) {
+    std::printf("fire slash\n");
+    const sim::Kin mg = sim::Kin::MagicGladiator;
+    const sim::SkillRow* row = sim::skillNumbered(sim::skill::kFireSlash);
+    check(row != nullptr, "Fire Slash has a row");
+    if (row == nullptr) return;
+    check(sim::skillFor(*row, mg) && !sim::skillFor(*row, sim::Kin::DarkKnight) &&
+              !sim::skillFor(*row, sim::Kin::DarkWizard),
+          "the gladiator's alone");
+    check(row->mana == 15 && row->spread == sim::Spread::Arc && row->reach == 2.5f &&
+              row->clip == 65 && row->coolTicks == 40 && row->needLevel == 120 && !row->wizardry,
+          "MU's mana, WHEEL, an arc of two and a half tiles, two seconds, learned at 120");
+    checkNear(row->arcHalfAngle(), 1.5707963, 1e-5, "a half-disc, +-90 degrees");
+    check(sim::skillElement(row->number) == sim::Element::Fire, "fire, for the element runes");
+    check(row->cutTicks == 200 && row->cutShare == 10 && row->castsBare(),
+          "ten seconds of a tenth off, and thrown at air like Cyclone");
+    // MU's two paces: quicker than one at 0.24, and the blow on key 3.
+    const content::PlayerAction* wheel = tables.action(row->clip);
+    const sim::SkillRow* twist = sim::skillNumbered(sim::skill::kTwistingSlash);
+    const int32_t authored = sim::authoredCastTicks(tables, *row);
+    if (wheel != nullptr && twist != nullptr) {
+        std::printf("  WHEEL %d keys: %d ticks at 0.24/0.54, %d at 0.24\n", wheel->keys, authored,
+                    sim::authoredCastTicks(tables, *twist));
+        check(authored > 0 && authored * 3 < sim::authoredCastTicks(tables, *twist) * 2,
+              "the two paces play the spin in well under two thirds of one pace's time");
+    }
+    {
+        const sim::HeroPoints points{900, 300, 300, 400};
+        const sim::SkillRow* cyclone = sim::skillNumbered(sim::skill::kCyclone);
+        check(sim::force(*row, points, mg) > sim::force(*cyclone, points, mg),
+              "his own sweep strikes harder than his Cyclone");
+    }
+
+    // The shape: four monsters pinned round him every tick -- ahead, 80 degrees off, 110 off and
+    // behind -- and the dead kept standing (benchUndying) so every cast finds the same four.
+    sim::Realm realm;
+    check(realm.raise(&tables, 7, 190, 110, mg, 150), "a gladiator's realm raises");
+    sim::HeroRecord record = realm.record();
+    record.points.strength = 900;
+    record.points.agility = 200;
+    realm.restore(record);
+    check(realm.equip(tables.armNamed("Sword02"), -1, true), "a sword in his hand");
+    check(realm.learn(sim::skill::kFireSlash), "he learns Fire Slash");
+    realm.benchUndying(true, false);
+    uint32_t pinned[4] = {};
+    int found = 0;
+    for (const sim::Body& one : realm.bodies()) {
+        if (one.monster() && one.alive() && found < 4) pinned[found++] = one.id;
+    }
+    check(found == 4, "four monsters to pin");
+    const float turns[4] = {0.0f, 80.0f, 110.0f, 180.0f};
+    const float tiles[4] = {1.5f, 1.8f, 1.5f, 1.5f};
+    float aim = 0.0f;
+    const auto pin = [&] {
+        const sim::Body& hero = realm.hero();
+        for (int k = 0; k < found; ++k) {
+            const sim::Body* one = realm.find(pinned[k]);
+            if (one == nullptr) continue;
+            auto& b = const_cast<sim::Body&>(*one);
+            const float a = aim + turns[k] * 3.14159265f / 180.0f;
+            b.x = hero.x + std::cos(a) * tiles[k];
+            b.y = hero.y + std::sin(a) * tiles[k];
+            b.walking = false;
+        }
+    };
+    int struck[4] = {}, cuts = 0, rolls = 0, casts = 0, refreshed = 0;
+    bool stacked = false, early = false;
+    int64_t castAt = -1, firstBlow = -1;
+    for (int tick = 0; tick < 3000 && casts < 40; ++tick) {
+        if (realm.cooling(sim::skill::kFireSlash) <= 0 && realm.hero().castUntil <= realm.tick()) {
+            aim = realm.hero().aim;
+            pin();
+            realm.invoke(sim::skill::kFireSlash, pinned[0]);
+        }
+        aim = realm.hero().aim;
+        pin();
+        int64_t before[4];
+        for (int k = 0; k < found; ++k) {
+            const sim::Body* one = realm.find(pinned[k]);
+            before[k] = one ? one->defenseCutUntil : 0;
+        }
+        const int64_t now = int64_t(realm.tick());
+        realm.step();
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.who != realm.hero().id) continue;
+            if (h.what == sim::What::Cast && h.a == sim::skill::kFireSlash) {
+                ++casts;
+                castAt = now;
+            }
+            if (h.what != sim::What::Hit && h.what != sim::What::Missed) continue;
+            for (int k = 0; k < found; ++k) {
+                if (h.whom != pinned[k]) continue;
+                ++struck[k];
+                if (firstBlow < 0 && castAt >= 0) firstBlow = now - castAt;
+                const sim::Body* one = realm.find(pinned[k]);
+                if (one == nullptr) continue;
+                ++rolls;
+                // Laid on this step's tick, which is `now` or the one after it.
+                if (one->defenseCutUntil >= now + row->cutTicks &&
+                    one->defenseCutUntil <= now + 1 + row->cutTicks) {
+                    ++cuts;
+                    if (before[k] > now) ++refreshed;
+                }
+                stacked |= one->defenseCut != 0 && one->defenseCut != row->cutShare;
+                early |= one->defenseCutUntil > now + 1 + row->cutTicks;
+            }
+        }
+    }
+    std::printf("  %d casts: ahead %d, 80deg %d, 110deg %d, behind %d struck; %d cuts in %d (%d "
+                "refreshed); the blow %lld ticks in\n",
+                casts, struck[0], struck[1], struck[2], struck[3], cuts, rolls, refreshed,
+                (long long)firstBlow);
+    check(casts >= 30, "he casts it on its cooldown");
+    check(struck[0] >= casts - 1 && struck[1] >= casts - 1, "it strikes ahead and to his side");
+    check(struck[2] == 0 && struck[3] == 0, "and nothing past his side or behind him");
+    const double share = rolls > 0 ? double(cuts) / rolls : 0.0;
+    check(share > 0.3 && share < 0.6, "about 45% of its blows cut");
+    check(refreshed > 0 && !stacked && !early, "a cut laid again starts its ten seconds over, never deeper");
+    if (authored > 0) {
+        const int64_t want = std::lround(float(authored) * row->release);
+        check(firstBlow > 0 && firstBlow <= want + 1, "the blow lands at key 3, before the spin's half");
+    }
+    // And it goes with its time, once the last cast's blow is down.
+    for (int tick = 0; tick < 40; ++tick) {
+        aim = realm.hero().aim;
+        pin();
+        realm.step();
+    }
+    const int64_t lasts = [&] {
+        int64_t most = 0;
+        for (int k = 0; k < found; ++k) {
+            if (const sim::Body* one = realm.find(pinned[k])) most = std::max(most, one->defenseCutUntil);
+        }
+        return most;
+    }();
+    while (int64_t(realm.tick()) <= lasts) {
+        aim = realm.hero().aim;
+        pin();
+        realm.step();
+    }
+    bool gone = true;
+    for (int k = 0; k < found; ++k) {
+        if (const sim::Body* one = realm.find(pinned[k])) gone &= one->defenseCutUntil <= int64_t(realm.tick());
+    }
+    check(lasts > 0 && gone, "and every cut runs out");
+
+    // What a cut does: two realms on one seed, his plain swings at one monster, in one of them
+    // that monster cut. The same dice give the same rolls, so every blow differs by its tenth.
+    {
+        int damage[2] = {}, hits[2] = {};
+        int defense = 0;
+        for (int pass = 0; pass < 2; ++pass) {
+            sim::Realm two;
+            two.raise(&tables, 11, 190, 110, mg, 150);
+            sim::HeroRecord r = two.record();
+            r.points.strength = 900;
+            two.restore(r);
+            two.equip(tables.armNamed("Sword02"), -1, true);
+            two.benchUndying(true, false);
+            uint32_t target = 0;
+            for (const sim::Body& one : two.bodies()) {
+                if (one.monster() && one.alive() && one.stats.defense >= 20) {
+                    target = one.id;
+                    defense = one.stats.defense;
+                    break;
+                }
+            }
+            if (target == 0) break;
+            // Held a tile east of him, so the swings begin at once and never walk.
+            const auto hold = [&] {
+                auto& b = const_cast<sim::Body&>(*two.find(target));
+                b.x = two.hero().x + 1.0f;
+                b.y = two.hero().y;
+                b.walking = false;
+            };
+            hold();
+            sim::Request request;
+            request.kind = sim::Request::Kind::Attack;
+            request.target = target;
+            two.ask(request);
+            for (int tick = 0; tick < 600 && hits[pass] < 6; ++tick) {
+                hold();
+                if (pass == 1) {
+                    auto& b = const_cast<sim::Body&>(*two.find(target));
+                    b.defenseCutUntil = int64_t(two.tick()) + 100;
+                    b.defenseCut = 10;
+                }
+                two.step();
+                for (const sim::Happening& h : two.happenings()) {
+                    if (h.what == sim::What::Hit && h.who == two.hero().id && h.whom == target &&
+                        !h.critical) {
+                        damage[pass] += h.a;
+                        ++hits[pass];
+                    }
+                }
+            }
+        }
+        std::printf("  plain swings: %d for %d, %d for %d cut (defence %d)\n", hits[0], damage[0],
+                    hits[1], damage[1], defense);
+        check(hits[0] > 0 && hits[0] == hits[1] &&
+                  damage[1] - damage[0] == hits[0] * (defense * 10 / 100),
+              "a cut monster takes each blow its defence's tenth harder");
+    }
+
+    // The Golden Dragon shrugs it: a gladiator's Fire Slash into it, and never a cut.
+    {
+        std::vector<sim::RaiderKit> party;
+        sim::readParty(std::string(MU2_SOURCE_DIR) + "/content/raid/party.json", &party);
+        if (!party.empty()) {
+            sim::Realm raid;
+            raid.setRaid(10, party, true);
+            raid.setRaidLanding(0);
+            raid.raise(&tables, 9, 140, 65, party[0].kin, party[0].level);
+            raid.invade();
+            for (int i = 0; i < 40 * 20 && raid.raidStage() == sim::RaidStage::None; ++i) raid.step();
+            const_cast<sim::Body&>(raid.hero()).kin = mg;
+            raid.learn(sim::skill::kFireSlash);
+            raid.equip(tables.armNamed("Sword02"), -1, true);
+            raid.benchUndying(true, false);
+            const sim::Body* dragon = raid.invader();
+            int onIt = 0;
+            bool cut = false;
+            for (int tick = 0; tick < 1600 && dragon != nullptr; ++tick) {
+                auto& hero = const_cast<sim::Body&>(raid.hero());
+                const float a = std::atan2(dragon->y - hero.y, dragon->x - hero.x);
+                hero.x = dragon->x - std::cos(a) * 1.5f;
+                hero.y = dragon->y - std::sin(a) * 1.5f;
+                if (raid.cooling(sim::skill::kFireSlash) <= 0 && hero.castUntil <= raid.tick()) {
+                    raid.invoke(sim::skill::kFireSlash, dragon->id);
+                }
+                raid.step();
+                for (const sim::Happening& h : raid.happenings()) {
+                    if ((h.what == sim::What::Hit || h.what == sim::What::Missed) &&
+                        h.who == raid.hero().id && h.whom == dragon->id) {
+                        ++onIt;
+                    }
+                }
+                cut |= dragon->defenseCutUntil != 0;
+            }
+            std::printf("  the dragon: %d of his blows on it\n", onIt);
+            check(onIt >= 5 && !cut, "the dragon takes his Fire Slash and shrugs off its cut");
+        }
+    }
+}
+
+// Power Slash, the Magic Gladiator's orb's (docs/plans/mg-skills/power-slash.md, 2026-10-24; the
+// user: "Power Slash has to be orb"): unknown until the Orb of Power Slash (12/28) is read, which
+// asks level 150 and his class; then his for good, saved, with any weapon but a staff, never
+// ridden; WebZen's wedge and count -- the nearest five, the sixth to the eleventh at even odds,
+// none past -- and each body struck as its wave reaches it, the farther the later.
+void testPowerSlash(const content::Tables& cooked) {
+    std::printf("power slash\n");
+    const sim::Kin mg = sim::Kin::MagicGladiator;
+    const sim::SkillRow* row = sim::skillNumbered(sim::skill::kPowerSlash);
+    check(row != nullptr, "Power Slash has a row");
+    if (row == nullptr) return;
+    check(sim::skillFor(*row, mg) && !sim::skillFor(*row, sim::Kin::DarkKnight) &&
+              !sim::skillFor(*row, sim::Kin::DarkWizard),
+          "the gladiator's alone");
+    check(row->mana == 15 && row->spread == sim::Spread::Frustum && row->afoot && !row->mounted &&
+              row->clip == 146 && row->coolTicks == 40 && row->needLevel == 150 &&
+              row->families == sim::arms::kEvery && !row->anyHand && !row->wizardry &&
+              row->castsBare() && row->aimsAtPointer(),
+          "MU's mana, his blades' swing, a wedge, two seconds, learned at 150, any weapon, afoot");
+    {
+        const sim::SkillRow* fire = sim::skillNumbered(sim::skill::kFireSlash);
+        check(fire != nullptr && row->families == fire->families && row->anyHand == fire->anyHand,
+              "Fire Slash's weapon rule");
+    }
+    check(sim::skillElement(row->number) == sim::Element::None, "no element");
+    check(sim::skillIndexOf(sim::skill::kPowerSlash) == sim::kSkills - 1 &&
+              sim::skillIndexOf(sim::skill::kFireSlash) == sim::kSkills - 2,
+          "the last row, past Fire Slash");
+    {
+        const sim::HeroPoints points{900, 300, 300, 400};
+        const sim::SkillRow* fire = sim::skillNumbered(sim::skill::kFireSlash);
+        check(sim::force(*row, points, mg) <= sim::force(*fire, points, mg),
+              "a body takes no more of it than of his Fire Slash, before that one's fire and cut");
+    }
+
+    // The orb: the cooked row (content/items/misc/OrbPowerSlash.json) once the tables cook has
+    // run, else the Orb of Fire Slash's row made into it as the JSON says, so the rules are tested
+    // before the cook.
+    content::Tables tables = cooked;
+    int32_t orb = tables.itemAt(12, 28);
+    if (orb < 0) {
+        const int32_t fireOrb = tables.itemAt(12, 27);
+        content::ItemRow made;
+        if (fireOrb >= 0) made = tables.items[size_t(fireOrb)];
+        made.name = "OrbPowerSlash";
+        made.label = "Orb of Power Slash";
+        made.group = 12;
+        made.number = 28;
+        made.dropLevel = 75;
+        made.classes = 1 << int(mg);
+        made.needLevel = 150;
+        made.needStrength = made.needAgility = made.needEnergy = made.needVitality = 0;
+        made.teaches = sim::skill::kPowerSlash;
+        made.teachesLevel = 150;
+        made.teachesEnergy = 0;
+        made.teachesName = row->name;
+        made.teachesTells = row->tells;
+        tables.items.push_back(made);
+        orb = int32_t(tables.items.size() - 1);
+        std::printf("  (12/28 not cooked: the orb made here from 12/27%s)\n",
+                    fireOrb >= 0 ? "" : ", which is not cooked either");
+    } else {
+        const content::ItemRow& cookedOrb = tables.items[size_t(orb)];
+        check(cookedOrb.teaches == sim::skill::kPowerSlash && cookedOrb.dropLevel == 75 &&
+                  cookedOrb.needLevel == 150 && cookedOrb.teachesLevel == 150 &&
+                  cookedOrb.needStrength == 0 && cookedOrb.needEnergy == 0 &&
+                  cookedOrb.classes == (1 << int(mg)),
+              "the cooked orb: Power Slash, drop level 75, level 150, no strength, his alone");
+    }
+    const auto readOrb = [&](sim::Realm& r) {
+        const int at = r.give(orb);
+        return at >= 0 && r.useItem(at);
+    };
+
+    sim::Realm realm;
+    check(realm.raise(&tables, 7, 190, 110, mg, 150), "a gladiator's realm raises");
+    sim::HeroRecord record = realm.record();
+    record.points.strength = 900;
+    record.points.agility = 200;
+    realm.restore(record);
+    const int index = sim::skillIndexOf(sim::skill::kPowerSlash);
+    check(realm.equip(tables.armNamed("Sword22"), -1, true) && !realm.knows(sim::skill::kPowerSlash),
+          "the Dark Reign Blade in his hand teaches nothing: the orb does");
+    {
+        sim::Realm young;
+        young.raise(&tables, 7, 190, 110, mg, 149);
+        check(!readOrb(young) && !young.knows(sim::skill::kPowerSlash),
+              "a gladiator at 149 cannot read the orb");
+        sim::Realm knight;
+        knight.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 400);
+        check(!readOrb(knight) && !knight.knows(sim::skill::kPowerSlash), "nor a knight at 400");
+    }
+    check(readOrb(realm) && realm.knows(sim::skill::kPowerSlash), "at 150 he reads it and knows it");
+    check(!readOrb(realm), "and a second orb is refused, not eaten");
+    check((realm.record().learned & (uint64_t(1) << index)) != 0, "it is in his learned skills");
+    {
+        sim::Kept kept;
+        kept.hero = realm.record();
+        std::vector<uint8_t> stored;
+        net::putKept(stored, kept);
+        sim::Kept read;
+        sim::Realm again;
+        again.raise(&tables, 7, 190, 110, mg, 150);
+        check(net::keptFrom(stored, read), "his bytes are read back");
+        again.restore(read.hero);
+        check(again.knows(sim::skill::kPowerSlash), "and Power Slash comes back with them");
+    }
+    record = realm.record();
+    const auto castsOn = [&](sim::Realm& r, int ticks) {
+        int casts = 0;
+        for (int tick = 0; tick < ticks; ++tick) {
+            if (r.cooling(sim::skill::kPowerSlash) <= 0 && r.hero().castUntil <= r.tick()) {
+                r.invoke(sim::skill::kPowerSlash, 0);
+            }
+            r.step();
+            for (const sim::Happening& h : r.happenings()) {
+                casts += h.what == sim::What::Cast && h.who == r.hero().id && h.a == sim::skill::kPowerSlash;
+            }
+        }
+        return casts;
+    };
+    // Any weapon but a staff; known with none, never thrown; on a mount refused.
+    {
+        sim::Realm off;
+        off.raise(&tables, 7, 190, 110, mg, 150);
+        off.restore(record);
+        off.equip(tables.armNamed("Sword02"), -1, true);
+        check(castsOn(off, 60) > 0, "he throws it with a plain sword, not one of his blades");
+        off.equip(tables.armNamed("Staff01"), -1, true);
+        check(off.knows(sim::skill::kPowerSlash) && castsOn(off, 120) == 0,
+              "a staff in his hand: known and never thrown");
+        off.equip(-1, -1, true);
+        check(off.knows(sim::skill::kPowerSlash) && castsOn(off, 120) == 0,
+              "bare-handed: known and never thrown");
+        const int horn = tables.itemAt(13, 3);
+        sim::Realm rider;
+        rider.raise(&tables, 7, 190, 110, mg, 150);
+        rider.restore(record);
+        rider.equip(tables.armNamed("Sword02"), -1, true);
+        if (horn >= 0) rider.give(horn, sim::kMount);
+        rider.step();
+        check(horn >= 0 && rider.hero().riding && rider.knows(sim::skill::kPowerSlash) &&
+                  castsOn(rider, 120) == 0,
+              "riding he knows it and never throws it");
+    }
+
+    // The wedge: bodies pinned round him every tick by where they stand along his aim and aside
+    // of it, the dead kept standing (benchUndying) so every cast finds the same ones.
+    realm.benchUndying(true, false);
+    std::vector<uint32_t> monsters;
+    for (const sim::Body& one : realm.bodies()) {
+        if (one.monster() && one.alive()) monsters.push_back(one.id);
+    }
+    check(monsters.size() >= 15, "fifteen monsters to pin");
+    if (monsters.size() < 15) return;
+    // In: straight ahead, at his feet a tile aside, half way out wide, by the far corner. Out: past
+    // the near edge's width, past the far edge, behind him.
+    struct Spot { float ahead, aside; bool in; };
+    const Spot spots[7] = {{3.0f, 0.0f, true},   {0.0f, 0.9f, true},  {3.0f, -3.3f, true},
+                           {5.8f, 5.6f, true},   {1.0f, 2.3f, false}, {6.6f, 0.0f, false},
+                           {-1.5f, 0.0f, false}};
+    float aim = 0.0f;
+    const auto place = [&](uint32_t id, float ahead, float aside) {
+        const sim::Body* one = realm.find(id);
+        if (one == nullptr) return;
+        auto& b = const_cast<sim::Body&>(*one);
+        const sim::Body& hero = realm.hero();
+        const float c = std::cos(aim), s = std::sin(aim);
+        b.x = hero.x + c * ahead - s * aside;
+        b.y = hero.y + s * ahead + c * aside;
+        b.walking = false;
+    };
+    // The rest out of the way, far behind him.
+    const auto park = [&](size_t from) {
+        for (size_t k = from; k < monsters.size(); ++k) place(monsters[k], -12.0f - float(k % 5), float(k % 7) - 3.0f);
+    };
+    int struck[7] = {}, casts = 0;
+    int64_t castAt = -1, wait[7] = {-1, -1, -1, -1, -1, -1, -1};
+    for (int tick = 0; tick < 3000 && casts < 30; ++tick) {
+        aim = realm.hero().aim;
+        for (int k = 0; k < 7; ++k) place(monsters[size_t(k)], spots[k].ahead, spots[k].aside);
+        park(7);
+        if (realm.cooling(sim::skill::kPowerSlash) <= 0 && realm.hero().castUntil <= realm.tick()) {
+            realm.invoke(sim::skill::kPowerSlash, monsters[0]);
+        }
+        const int64_t now = int64_t(realm.tick());
+        realm.step();
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.who != realm.hero().id) continue;
+            if (h.what == sim::What::Cast && h.a == sim::skill::kPowerSlash) {
+                ++casts;
+                castAt = now;
+            }
+            if (h.what != sim::What::Hit && h.what != sim::What::Missed) continue;
+            for (int k = 0; k < 7; ++k) {
+                if (h.whom != monsters[size_t(k)]) continue;
+                ++struck[k];
+                if (wait[k] < 0 && castAt >= 0) wait[k] = now - castAt;
+            }
+        }
+    }
+    std::printf("  %d casts: ahead %d, at his feet %d, half way wide %d, far corner %d; too wide %d, "
+                "too far %d, behind %d; struck %lld, %lld, %lld, %lld ticks after the cast\n",
+                casts, struck[0], struck[1], struck[2], struck[3], struck[4], struck[5], struck[6],
+                (long long)wait[1], (long long)wait[0], (long long)wait[2], (long long)wait[3]);
+    check(casts >= 25, "he casts it on its cooldown");
+    check(struck[0] >= casts - 1 && struck[1] >= casts - 1 && struck[2] >= casts - 1 &&
+              struck[3] >= casts - 1,
+          "it strikes ahead, at his feet, half way out wide and by the far corner every cast");
+    check(struck[4] == 0 && struck[5] == 0 && struck[6] == 0,
+          "and nothing too wide for its near end, past its far edge or behind him");
+    check(wait[1] > 0 && wait[1] < wait[0] && wait[0] < wait[2] && wait[2] < wait[3],
+          "the farther a body, the later its wave reaches it");
+    // A wave goes 0.75 tiles a tick: three tiles out is four ticks on from the let-go, eight out eleven.
+    check(wait[3] - wait[0] == 11 - 4, "at fifteen tiles a second");
+
+    // The count: fifteen in the wedge, a tile apart along it, so the order is fixed.
+    int ranked[15] = {}, fewest = 99, most = 0, counted = 0;
+    casts = 0;
+    for (int tick = 0; tick < 4000 && casts < 60; ++tick) {
+        aim = realm.hero().aim;
+        for (int k = 0; k < 15; ++k) {
+            place(monsters[size_t(k)], 0.4f * float(k) + 0.3f, (k % 2 ? 0.5f : -0.5f) * float(k % 3));
+        }
+        park(15);
+        if (realm.cooling(sim::skill::kPowerSlash) <= 0 && realm.hero().castUntil <= realm.tick()) {
+            realm.invoke(sim::skill::kPowerSlash, monsters[3]);
+            if (counted > 0) {
+                fewest = std::min(fewest, counted);
+                most = std::max(most, counted);
+            }
+            counted = 0;
+        }
+        realm.step();
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.who != realm.hero().id) continue;
+            casts += h.what == sim::What::Cast && h.a == sim::skill::kPowerSlash;
+            if (h.what != sim::What::Hit && h.what != sim::What::Missed) continue;
+            for (int k = 0; k < 15; ++k) {
+                if (h.whom != monsters[size_t(k)]) continue;
+                ++ranked[k];
+                ++counted;
+            }
+        }
+    }
+    int sure = 99, odds = 0, past = 0;
+    for (int k = 0; k < 5; ++k) sure = std::min(sure, ranked[k]);
+    for (int k = 5; k < 11; ++k) odds += ranked[k];
+    for (int k = 11; k < 15; ++k) past += ranked[k];
+    const double even = casts > 0 ? double(odds) / (6.0 * casts) : 0.0;
+    std::printf("  %d casts on fifteen: the nearest five at least %d each, the next six %.2f of the "
+                "time, past them %d; %d to %d a cast\n",
+                casts, sure, even, past, fewest, most);
+    check(casts >= 25 && sure >= casts - 1, "the nearest five every cast");
+    check(even > 0.35 && even < 0.65, "the sixth to the eleventh about half the time");
+    check(past == 0 && most <= 11 && fewest >= 5, "and none past the eleventh, five to eleven a cast");
 }
 
 void testAutoDrink(const content::Tables& tables) {
@@ -2903,9 +3433,9 @@ void testCastLock(const content::Tables& tables) {
     {
         const sim::SkillRow& impale = *sim::skillNumbered(sim::skill::kImpale);
         check(impale.kin == sim::Kin::DarkKnight && !impale.wizardry && impale.mana == 8 &&
-                  impale.families == sim::arms::kSpear && impale.reach == 1.0f &&
+                  impale.families == sim::arms::kEvery && impale.reach == 1.0f &&
                   impale.spread == sim::Spread::One && impale.needLevel == 56,
-              "Impale is the knight's, eight mana, a spear's alone, at his own reach");
+              "Impale is the knight's, eight mana, any weapon's, at his own reach");
         check(sim::skillIndexOf(sim::skill::kImpale) == 37,
               "and its row is the 38th, so no save's learned bit moves");
         // **The Alquamos, the elf's flying seventh** (the user, 2026-10-20): the last row, raised
@@ -2913,8 +3443,12 @@ void testCastLock(const content::Tables& tables) {
         {
             const sim::SkillRow& alq = sim::skillAt(sim::skillIndexOf(sim::skill::kSummonAlquamos));
             const sim::SkillRow& bali = sim::skillAt(sim::skillIndexOf(sim::skill::kSummonBali));
-            check(sim::skillIndexOf(sim::skill::kSummonAlquamos) == sim::kSkills - 1 && sim::kSkills == 40,
-                  "Summon Alquamos is the last row");
+            check(sim::skillIndexOf(sim::skill::kSummonAlquamos) == 39,
+                  "Summon Alquamos is the 40th row");
+            check(sim::skillIndexOf(sim::skill::kFireSlash) == 40,
+                  "and Fire Slash, the gladiator's, the 41st");
+            check(sim::skillIndexOf(sim::skill::kPowerSlash) == sim::kSkills - 1 && sim::kSkills == 42,
+                  "and Power Slash, his blade's, the last");
             check(alq.summons == 69 && alq.summonsAs == 150 && alq.airborne && alq.kin == sim::Kin::FairyElf,
                   "it raises the Alquamos, standing as Bali, flying, the elf's");
             check(sim::summonsHere(alq, sim::kIcarusMap) && !sim::summonsHere(bali, sim::kIcarusMap) &&
@@ -3007,7 +3541,10 @@ void testCastLock(const content::Tables& tables) {
         const auto spear = hunt("Spear01");
         check(spear.first > 0, "with a spear he throws it");
         checkEqual(spear.second, 0, "and only from beside what he strikes");
-        checkEqual(hunt("Sword01").first, 0, "with a sword, never");
+        // And with a sword too: every knight orb is any weapon's (the user, 2026-10-23).
+        const auto sword = hunt("Sword01");
+        check(sword.first > 0, "with a sword as well");
+        checkEqual(sword.second, 0, "and from beside what he strikes there too");
     }
 
     // ---- Lightning: a channel -- a chain leaping body to body while his arm is up ------------
@@ -4366,26 +4903,31 @@ void testSkills(const content::Tables& tables) {
     }
     check(falls, "more agility is never a longer cooldown");
     check(floored, "and no cooldown falls under the clip that floors it");
-    // Twisting Slash spins with nothing round him, as Rageful Blow breaks bare ground (the user,
-    // 2026-10-10): a press with no target is a cast, mana spent.
-    {
+    // Twisting Slash spins with nothing round him (the user, 2026-10-10): a press with no target
+    // is a cast, mana spent. And Rageful Blow and Cyclone, the arcs, pressed with the pointer on
+    // bare ground (2026-10-23): until then an arc with nobody in it did nothing at all.
+    for (const int32_t bare : {sim::skill::kTwistingSlash, sim::skill::kRagefulBlow,
+                               sim::skill::kCyclone}) {
         sim::Realm realm;
         realm.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 200);
-        check(realm.learn(sim::skill::kTwistingSlash), "a knight knows Twisting Slash");
+        const sim::SkillRow& row = *sim::skillNumbered(bare);
+        check(realm.learn(bare), "a knight knows it");
         check(realm.equip(tables.armNamed("Sword16"), -1, true), "with a sword in hand");
-        check(sim::skillNumbered(sim::skill::kTwistingSlash)->castsBare(),
-              "and it is cast bare");
+        check(row.castsBare(), "and it is cast bare");
         const int mana = realm.hero().mana;
         bool cast = false;
-        realm.invoke(sim::skill::kTwistingSlash, 0);
+        if (row.aimsAtPointer()) {
+            realm.invokeAt(bare, realm.hero().column() + 3, realm.hero().row());
+        } else {
+            realm.invoke(bare, 0);
+        }
         for (int tick = 0; tick < 40 && !cast; ++tick) {
             realm.step();
             for (const sim::Happening& h : realm.happenings()) {
-                cast |= h.what == sim::What::Cast && h.who == realm.hero().id &&
-                        h.a == sim::skill::kTwistingSlash;
+                cast |= h.what == sim::What::Cast && h.who == realm.hero().id && h.a == bare;
             }
         }
-        check(cast, "pressed at nothing, he spins");
+        check(cast, "pressed at nothing, it is thrown");
         check(realm.hero().mana < mana, "and pays its mana");
     }
     checkEqual(sim::cooldownTicks(cyclone, 300, 1), cyclone.coolTicks / 2,
@@ -4796,23 +5338,21 @@ void testSkills(const content::Tables& tables) {
         checkEqual((long long)familyNamed("Bow01"), (long long)sim::arms::kBow,
                    "and a bow is the elf's own family");
         checkEqual((long long)sim::familyOf(nullptr), 0LL, "as is an empty hand");
-        // And the two that matter in play: 0.75's own carriers decide who may throw what.
-        check(!sim::skillNumbered(sim::skill::kFallingSlash)->suits(sim::arms::kSword1),
-              "an axe's Falling Slash cannot be thrown off a sword");
-        check(sim::skillNumbered(sim::skill::kFallingSlash)->suits(sim::arms::kMace1),
-              "but a mace throws it, as the Morning Star did");
-        check(!sim::skillNumbered(sim::skill::kSlash)->suits(sim::arms::kSword1),
-              "and Slash needs both hands on it");
-        // But a two-hander throws every orb (the user, 2026-10-22).
-        bool twoHandsThrowOrbs = true;
+        // Every knight orb is thrown off any weapon (the user, 2026-10-23), and none off a bow or
+        // an empty hand.
+        bool anyHandThrowsOrbs = true;
         for (int32_t skill : {sim::skill::kFallingSlash, sim::skill::kLunge, sim::skill::kUppercut,
-                              sim::skill::kCyclone, sim::skill::kSlash}) {
-            for (uint32_t family : {sim::arms::kSword2, sim::arms::kAxe2, sim::arms::kMace2,
+                              sim::skill::kCyclone, sim::skill::kSlash, sim::skill::kDeathStab,
+                              sim::skill::kImpale}) {
+            for (uint32_t family : {sim::arms::kSword1, sim::arms::kSword2, sim::arms::kAxe1,
+                                    sim::arms::kAxe2, sim::arms::kMace1, sim::arms::kMace2,
                                     sim::arms::kSpear}) {
-                twoHandsThrowOrbs &= sim::skillNumbered(skill)->suits(family);
+                anyHandThrowsOrbs &= sim::skillNumbered(skill)->suits(family);
             }
+            anyHandThrowsOrbs &= !sim::skillNumbered(skill)->suits(sim::arms::kBow) &&
+                                 !sim::skillNumbered(skill)->suits(sim::arms::kNone);
         }
-        check(twoHandsThrowOrbs, "every knight orb is thrown off any two-handed weapon");
+        check(anyHandThrowsOrbs, "every knight orb is thrown off any weapon");
         // And every quest that pays the knight a weapon pays him a two-hander beside it, no pick
         // (the user, 2026-10-22: "we dont need that choise"). Not the Phoenix's lone Dark Breaker,
         // nor the Magic Gladiator's own on the knight's row.
@@ -4840,8 +5380,8 @@ void testSkills(const content::Tables& tables) {
             twoHandPaid &= oneHand == twoHand;
             twoHandPaid &= row.choiceCount == 0;
         }
-        check(twoHandPaid && knightPairs == 5,
-              "the knight's five quest weapons each come with a two-hander, nothing to pick");
+        check(twoHandPaid && knightPairs == 6,
+              "the knight's six quest weapons each come with a two-hander, nothing to pick");
         // And neither pick is the richer: the pair sell to an NPC within a quarter of each other.
         bool pricedAlike = true;
         for (int q = 0; q < sim::kQuests; ++q) {
@@ -4919,8 +5459,12 @@ void testSkills(const content::Tables& tables) {
                     const sim::SkillRow& row = sim::skillAt(i);
                     if (!realm.knows(row.number) || realm.cooling(row.number) > 0) continue;
                     // A skill cast bare spins on air when pressed out of reach: held, as the bot
-                    // holds it, until something is in its ring.
-                    if (row.castsBare() && closest > row.reach + 0.5f) continue;
+                    // holds it, until something is in its ring -- and an arc until it is in
+                    // reach, or it is thrown the way he faces and catches nothing.
+                    if (row.castsBare() &&
+                        closest > row.reach + (row.spread == sim::Spread::Arc ? 0.0f : 0.5f)) {
+                        continue;
+                    }
                     realm.invoke(row.number, nearest);
                     pressed = i;
                     break;
@@ -4968,7 +5512,7 @@ void testSkills(const content::Tables& tables) {
             inShape &= off <= row->reach + 0.3f;
             if (row->spread == sim::Spread::Arc) {
                 const float toward = std::atan2(victim->y - hero2.y, victim->x - hero2.x);
-                ringOnly &= std::fabs(sim::wrapped(toward - castAim)) <= sim::kArcHalfAngle + 0.2f;
+                ringOnly &= std::fabs(sim::wrapped(toward - castAim)) <= row->arcHalfAngle() + 0.2f;
             }
             // Nearest first: a landing's victims come out in the order they were struck.
             inOrder &= off >= lastOff - 0.3f;
@@ -5014,13 +5558,13 @@ void testSkills(const content::Tables& tables) {
     check(casts[ring] > 0, "the spin was thrown");
     check(casts[arc] > 0, "and the sweep");
     check(caught[ring] >= casts[ring], "a spin catches at least what it was aimed at");
-    // Asked of the shape and not of Cyclone alone: Twisting Slash is a ring too, and which of the
-    // two meets a crowd in this hunt is the dice's.
-    int widestRing = 0;
+    // Asked of the shapes and not of Cyclone alone (an arc since 2026-10-23, Twisting Slash the
+    // ring): which of them meets a crowd in this hunt is the dice's.
+    int widestArea = 0;
     for (int i = 0; i < sim::skillCount(); ++i) {
-        if (sim::skillAt(i).spread == sim::Spread::Ring) widestRing = std::max(widestRing, widest[i]);
+        if (sim::skillAt(i).spread != sim::Spread::One) widestArea = std::max(widestArea, widest[i]);
     }
-    check(widestRing >= 2, "and a ring catches a crowd when there is one");
+    check(widestArea >= 2, "and an area skill catches a crowd when there is one");
     check(inShape, "nothing outside the shape was ever struck");
     check(ringOnly, "and nothing behind him by a sweep");
     check(inOrder, "and the nearest was struck first");
@@ -5598,6 +6142,31 @@ void testTalentCommands(const content::Tables& tables) {
         sim::Kept back;
         check(net::keptFrom(bytes, back), "the kept bytes read");
         check(back.hero.talents == saved.talents, "with his talents");
+        // A layout-15 row has no 41st or 42nd cool, Fire Slash's and Power Slash's (kKeptLayout 16,
+        // 2026-10-24): found by the first byte the 41st moves, sixteen bytes. The older layouts
+        // below are cut from the whole row and then lose them too (`fifteen`), so every offset is
+        // the whole row's.
+        sim::Kept cooled = kept;
+        cooled.hero.coolsLeft[sim::kSkills - 2] = 33;
+        cooled.hero.coolsLeft[sim::kSkills - 1] = 34;
+        std::vector<uint8_t> cooledBytes;
+        net::putKept(cooledBytes, cooled);
+        size_t coolAt = 0;
+        while (coolAt < bytes.size() && bytes[coolAt] == cooledBytes[coolAt]) ++coolAt;  // its low byte
+        const auto fifteen = [&](std::vector<uint8_t> whole) {
+            whole.erase(whole.begin() + std::ptrdiff_t(coolAt), whole.begin() + std::ptrdiff_t(coolAt + 16));
+            return whole;
+        };
+        {
+            sim::Kept read;
+            check(net::keptFrom(cooledBytes, read) && read.hero.coolsLeft[sim::kSkills - 2] == 33 &&
+                      read.hero.coolsLeft[sim::kSkills - 1] == 34,
+                  "Fire Slash's and Power Slash's cools are kept");
+            check(net::keptFrom(fifteen(bytes), read, 15) && read.hero.coolsLeft[sim::kSkills - 2] == 0 &&
+                      read.hero.coolsLeft[sim::kSkills - 1] == 0 && read.hero.talents == saved.talents,
+                  "a layout-15 row reads, both cold");
+            check(!net::keptFrom(fifteen(bytes), read, 16), "and is not a layout 16");
+        }
         // A layout-11 row has no 28th quest, Kantur's Captain (2026-10-21): found by the first
         // byte a mark on it moves, and cut out whole (state, the steps' counts, when, how often).
         sim::Kept marked = kept;
@@ -5607,8 +6176,41 @@ void testTalentCommands(const content::Tables& tables) {
         size_t at = 0;
         while (at < bytes.size() && bytes[at] == markedBytes[at]) ++at;
         constexpr size_t kQuestBytes = 1 + 4 * sim::kQuestSteps + 8 + 4;
+        // A layout-14 row's vault is MU's eight across, 120 cells (sim::kOldVaultCells, layout 15):
+        // found by the first byte a thing in its first cell moves, a cell's bytes by the one in its
+        // last, and cut out of the empty cells between the 21st and the 170th.
+        const auto firstMoved = [&](const sim::Kept& other) {
+            std::vector<uint8_t> them;
+            net::putKept(them, other);
+            size_t i = 0;
+            while (i < bytes.size() && bytes[i] == them[i]) ++i;
+            return i;
+        };
+        sim::Kept inFirst = kept, inLast = kept;
+        inFirst.vault.put(0, sim::Held{1, 0, 1});
+        inLast.vault.put(sim::kVaultCells - 1, sim::Held{1, 0, 1});
+        const size_t vaultAt = firstMoved(inFirst);
+        const size_t cellBytes = (firstMoved(inLast) - vaultAt) / size_t(sim::kVaultCells - 1);
+        const auto narrowed = [&](const std::vector<uint8_t>& wide) {
+            std::vector<uint8_t> out = wide;
+            const auto from = out.begin() + std::ptrdiff_t(vaultAt + 20 * cellBytes);
+            out.erase(from, from + std::ptrdiff_t(cellBytes * size_t(sim::kVaultCells - sim::kOldVaultCells)));
+            return out;
+        };
+        const std::vector<uint8_t> fourteen = fifteen(narrowed(bytes));
+        sim::Kept narrow;
+        check(net::keptFrom(fourteen, narrow, 14) && narrow.hero.talents == saved.talents,
+              "a layout-14 row reads, its vault eight across");
+        check(!net::keptFrom(fourteen, narrow, 15), "and is not a layout 15");
+        sim::Kept placed = kept;
+        placed.vault.put(9, sim::Held{1, 0, 1});  // the second row's second cell, eight across
+        std::vector<uint8_t> placedBytes;
+        net::putKept(placedBytes, placed);
+        check(net::keptFrom(fifteen(narrowed(placedBytes)), narrow, 14) && narrow.vault[9].empty() &&
+                  narrow.vault[sim::widenedCell(9)].item == 1 && sim::widenedCell(9) == sim::kVaultColumns + 1,
+              "and what it kept stands in its own column and row");
         // A layout-13 row has no quests' lives (QuestProgress::life, layout 14): a byte a quest.
-        std::vector<uint8_t> thirteen(bytes.begin(), bytes.end() - sim::kQuests);
+        std::vector<uint8_t> thirteen(fourteen.begin(), fourteen.end() - sim::kQuests);
         sim::Kept unlived;
         check(net::keptFrom(thirteen, unlived, 13) && unlived.hero.quests[0].life == 0 &&
                   unlived.hero.talents == saved.talents,
@@ -5621,7 +6223,7 @@ void testTalentCommands(const content::Tables& tables) {
               "a layout-12 row reads, never reborn");
         check(!net::keptFrom(twelve, unborn, 13), "and is not a layout 13");
         std::vector<uint8_t> eleven = twelve;
-        eleven.erase(eleven.begin() + std::ptrdiff_t(at), eleven.begin() + std::ptrdiff_t(at + kQuestBytes));
+        eleven.erase(eleven.begin() + std::ptrdiff_t(at - 8), eleven.begin() + std::ptrdiff_t(at - 8 + kQuestBytes));
         sim::Kept older;
         check(net::keptFrom(eleven, older, 11) &&
                   older.hero.quests[sim::kKantursCaptain].state == sim::QuestState::Untaken &&
@@ -6240,6 +6842,14 @@ void testWear(const content::Tables& tables) {
     checkEqual(sim::repairPrice(small, 0, false, 11, false), 57, "and by his own hand, 2.5 times");
     // Leather Armour buys at 2400, a base of 800: 3 x 28.28 x 5.318 x 0.5 + 1 = 226.6, to 220.
     checkEqual(sim::repairPrice(armour, 0, false, 17, true), 220, "half a Leather Armour, 220");
+    // An excellent one is full at 15 more: at 22 of 37 it is worn, and mends (the user: "i tried
+    // to repair excellent item was not able to do that").
+    sim::Held fine;
+    fine.durability = 22;
+    fine.excellent = 1;
+    check(sim::repairPrice(small, fine, true) > 0, "an excellent shield at 22 of 37 mends");
+    fine.durability = 37;
+    checkEqual(sim::repairPrice(small, fine, true), 0, "and at 37 it is whole");
     // Selling: 0.6 of the share gone comes off.
     checkEqual(sim::wornSellingPrice(1000, 50, 100), 700, "half worn sells for seven tenths");
     checkEqual(sim::wornSellingPrice(1000, 100, 100), 1000, "and whole for the whole");
@@ -7306,6 +7916,27 @@ void testVault(const content::Tables& tables) {
     for (int tick = 0; tick < 2000 && realm.banking() < 0; ++tick) realm.step();
     check(realm.banking() == baz, "walked to Baz and the vault opened");
     check(realm.trading() < 0, "and no counter with it");
+    // Eighteen across (sim/vault.h, 2026-10-24): a sword in the far column and past MU's eighth,
+    // held all the way down, and nothing hangs off the right edge or the foot.
+    {
+        const int wide = tables.items[size_t(sword)].width;
+        const int far = sim::kVaultColumns - wide;
+        const int ninth = sim::kOldVaultColumns + sim::kVaultColumns * 2;
+        const int one = realm.give(sword), two = realm.give(sword);
+        check(realm.deposit(one, far) == far && realm.deposit(two, ninth) == ninth,
+              "a sword in the far column, and one in the ninth");
+        check(realm.vault().holder(tables, far + (tall - 1) * sim::kVaultColumns) == far,
+              "the far one held to its foot");
+        check(!realm.vault().room(tables, sim::kVaultColumns - 1, 2, 1) &&
+                  !realm.vault().room(tables, (sim::kVaultRows - tall + 1) * sim::kVaultColumns, 1, tall),
+              "nothing hangs off the right edge or the foot");
+        check(realm.withdraw(far, -1) >= 0 && realm.withdraw(ninth, -1) >= 0 &&
+                  realm.vault()[far].empty() && realm.vault()[ninth].empty(),
+              "and both come back out");
+        for (int s = sim::kWorn; s < sim::kSlots; ++s) {
+            if (s != slot && !realm.satchel()[s].empty() && realm.satchel()[s].item == sword) realm.discard(s);
+        }
+    }
     // A worn quiver poured onto the vault's takes its plus off her (a deposit that topped up a
     // stack never re-armed, so a +2 quiver stored that way still counted).
     {
@@ -8752,9 +9383,9 @@ void testChaosMachine() {
     check(realm.mixing() == goblin, "talking to the Goblin opens his machine");
     check(realm.judged().empty && realm.judged().recipe == sim::Recipe::None, "an empty box is nothing");
     realm.earn(50000000);
-    // A bound thing is only ever socketed or unsocketed (the user, 2026-10-19: "dont allow to use
-    // bound items on chaos machine", "allow to remove runes from bound item in chaos machine",
-    // "also allow add socket to bound item").
+    // A bound thing is socketed and unsocketed (the user, 2026-10-19: "allow to remove runes from
+    // bound item in chaos machine", "also allow add socket to bound item"), and since 2026-10-23
+    // goes into every mix ("also allow to craft with bound items").
     {
         const uint8_t set[3] = {uint8_t(sim::Power::LesserMight), 0, 0};
         const int held = realm.give(sword, -1, 0, -1, false, 0, 0, 1, set, nullptr, true);
@@ -8763,8 +9394,8 @@ void testChaosMachine() {
         check(in >= 0, "goes in the box");
         realm.putIn(realm.give(chaos));
         const sim::Judged plus = realm.judged(sim::Service::Upgrade);
-        check(!plus.ready && plus.title.find("Bound") != std::string::npos,
-              "where every mix but two is refused, and says so");
+        check(!plus.blocked && plus.title.find("Bound") == std::string::npos,
+              "where no mix refuses it for being bound");
         check(realm.judged(sim::Service::AddSocket).title.find("Bound") == std::string::npos &&
                   realm.judged(sim::Service::FuseRunes).title.find("Bound") == std::string::npos,
               "Add Socket and Fuse Runes are not");
@@ -8786,7 +9417,7 @@ void testChaosMachine() {
         check(realm.machine().empty(), "and the box is emptied");
     }
     // A quest's jewels are never bound (sim::bindable; the user, 2026-10-20: "lets remove bound
-    // from jewels completly"): asked bound, they come free, and bound gear stays out of a mix.
+    // from jewels completly"): asked bound, they come free; bound gear goes into a mix.
     {
         const auto boundOne = [&](int32_t item, int plus) {
             return realm.give(item, -1, plus, -1, false, 0, 0, 1, nullptr, nullptr, true);
@@ -8801,7 +9432,10 @@ void testChaosMachine() {
         realm.putIn(realm.give(bless));
         realm.putIn(realm.give(soul));
         const sim::Judged j = realm.judged();
-        check(!j.ready && j.blocked, "a bound sword is still refused");
+        // Bound gear goes into any mix now (the user, 2026-10-23: "also allow to craft with
+        // bound items"), what it makes bound as it was.
+        check(j.ready && !j.blocked && j.recipe == sim::Recipe::PlusTen,
+              "a bound +9 sword is a +10's box");
         for (int cell = 0; cell < sim::kMachineCells; ++cell) {
             if (realm.machine()[cell].empty()) continue;
             const int back = realm.takeOut(cell);
@@ -9211,6 +9845,52 @@ void testChaosMachine() {
     box.put(1, plain);
     check(sim::judge(noria, box).recipe == sim::Recipe::None, "a thing with no option spoils it");
     check(sim::judge(noria, box).nearest == sim::Recipe::None, "and nothing is like it");
+    // On its own page it rides along, as WebZen's ChaosBoxMix lets it, and adds nothing (the
+    // user, 2026-10-23: the percent rose and the button went grey).
+    {
+        sim::Machine page;
+        page.put(0, optioned);
+        page.put(8, sim::Held{chaos, 0, 1});
+        const sim::Judged alone = sim::judge(noria, page, sim::Service::ChaosWeapon);
+        page.put(2, plain);
+        const sim::Judged riding = sim::judge(noria, page, sim::Service::ChaosWeapon);
+        check(riding.ready && riding.recipe == sim::Recipe::ChaosWeapon,
+              "on the Chaos Weapon page a thing with no option does not spoil it");
+        checkEqual(riding.rate, alone.rate, "and adds nothing to the rate");
+        sim::Held more = optioned;
+        more.refinement = 9;
+        more.option = 3;
+        page.put(4, more);
+        check(sim::judge(noria, page, sim::Service::ChaosWeapon).rate > alone.rate,
+              "another +4 with an option raises it");
+        // An excellent thing at +4 or better raises it with no option, and at +3 not at all
+        // (the user, 2026-10-23, from Kaspars).
+        sim::Machine boosted;
+        boosted.put(0, optioned);
+        boosted.put(8, sim::Held{chaos, 0, 1});
+        sim::Held shiny{sword, 3, 20};
+        shiny.excellent = 1;
+        boosted.put(2, shiny);
+        checkEqual(sim::judge(noria, boosted, sim::Service::ChaosWeapon).rate, alone.rate,
+                   "an excellent +3 adds nothing");
+        boosted.lift(2);
+        shiny.refinement = 9;
+        boosted.put(2, shiny);
+        const sim::Judged lifted = sim::judge(noria, boosted);
+        check(lifted.recipe == sim::Recipe::ChaosWeapon && lifted.rate > alone.rate,
+              "an excellent +9 with no option raises it, on Combine too");
+        const sim::Judged shown = sim::judge(noria, boosted, sim::Service::FirstWings);
+        const sim::Judged listed = sim::judge(noria, boosted, sim::Service::ChaosWeapon);
+        const sim::Need& line = listed.needs[listed.needCount - 1];
+        check(line.name == "Excellent item +4" && line.have == 1 && line.need == 0 &&
+                  shown.needs[shown.needCount - 1].name == "Excellent item +4",
+              "and the Chaos Weapon's and 1st Wings' pages list it");
+        sim::Machine onlyShiny;
+        onlyShiny.put(2, shiny);
+        onlyShiny.put(8, sim::Held{chaos, 0, 1});
+        check(!sim::judge(noria, onlyShiny, sim::Service::ChaosWeapon).ready,
+              "but stands in for no +4 with an option");
+    }
 
     // The 1st level wings: the same box with one Chaos weapon at +4 with an option in it.
     {
@@ -9266,8 +9946,8 @@ void testChaosMachine() {
                       sim::judge(noria, weapon, sim::Service::FirstWings).recipe == sim::Recipe::None,
                   "a Chaos Weapon box is Combine's, not the Wings page's");
             // A Chaos weapon a quest's jewel made is bound, and climbs to the wings all the same
-            // (MAGICTOMA on Discord, 2026-10-21: "i still cannot create 1st Wings"); nothing else
-            // does with it, and other bound gear stays out.
+            // (MAGICTOMA on Discord, 2026-10-21: "i still cannot create 1st Wings"), and since
+            // 2026-10-23 other bound gear goes in too.
             {
                 sim::Machine climb;
                 sim::Held boundAxe = chaosAxe;
@@ -9278,13 +9958,14 @@ void testChaosMachine() {
                 check(up.recipe == sim::Recipe::Wings && up.ready && !up.blocked,
                       "a bound +4 Chaos weapon makes the 1st wings");
                 check(sim::judge(noria, climb).ready, "on Combine too");
-                check(sim::judge(noria, climb, sim::Service::Upgrade).blocked,
-                      "but nothing else: the Upgrade refuses it");
                 sim::Held boundOther = optioned;
                 boundOther.bound = true;
+                boundOther.refinement = 9;
+                boundOther.option = 3;
                 climb.put(1, boundOther);
-                check(sim::judge(noria, climb, sim::Service::FirstWings).blocked,
-                      "and a bound +4 that is not a Chaos weapon still spoils the box");
+                const sim::Judged more = sim::judge(noria, climb, sim::Service::FirstWings);
+                check(more.ready && !more.blocked && more.rate > up.rate,
+                      "and a bound +4 that is not a Chaos weapon raises its rate (2026-10-23)");
             }
             // Every mix a page of its own, and no plain Combine on the row (the user, 2026-10-05).
             bool combineShown = false;
@@ -9522,7 +10203,16 @@ void testChaosMachine() {
                       "an excellent +4 thing raises it");
                 second.put(23, sim::Held{bless, 0, 1});
                 check(sim::judge(noria, second).recipe == sim::Recipe::None, "a Bless spoils it");
+                // And its page says so, in a line of its own (the user, 2026-10-23).
+                const sim::Judged spoiled = sim::judge(noria, second, sim::Service::SecondWings);
+                const sim::Need& last = spoiled.needs[spoiled.needCount - 1];
+                check(!spoiled.ready && last.remove && last.name == "Remove Jewel of Bless" &&
+                          !last.met(),
+                      "the 2nd Wings page names the Bless to take out");
                 second.lift(23);
+                const sim::Judged clean = sim::judge(noria, second, sim::Service::SecondWings);
+                check(clean.ready && !clean.needs[clean.needCount - 1].remove,
+                      "and without it no such line");
                 // Sevina's bound feather makes them too (bug report #42, 2026-10-20).
                 sim::Held boundFeather{feather, 0, 1};
                 boundFeather.bound = true;
@@ -10134,10 +10824,10 @@ void testRunes(const content::Tables& tables) {
         sim::reckon(dk, 30, sim::startingPoints(dk), arms, &fighter, &bare);
         arms.excel.undyingRate = sim::kUndyingHealth;
         sim::reckon(dk, 30, sim::startingPoints(dk), arms, &fighter, &once);
-        arms.excel.undyingRate = sim::kUndyingHealth * sim::kUndyingHealth;
+        arms.excel.undyingRate = 1.0 + 2.0 * (sim::kUndyingHealth - 1.0);
         sim::reckon(dk, 30, sim::startingPoints(dk), arms, &fighter, &twice);
-        checkEqual(once, int(double(bare) * 1.2), "one Undying is x1.2 on maximum health");
-        checkEqual(twice, int(double(bare) * 1.44), "and two are x1.44");
+        checkEqual(once, int(double(bare) * 1.2), "one Undying is +20% maximum health");
+        checkEqual(twice, int(double(bare) * 1.4), "and two add to +40%");
         // Every quest that pays an Undying pays mana's Wellspring beside it (2026-10-09).
         int undyings = 0, unmatched = 0;
         for (int q = 0; q < sim::kQuests; ++q) {
@@ -10304,6 +10994,40 @@ void testRunes(const content::Tables& tables) {
         check(e.whirlwinds == 1 && e.runeDefense > 0.0 && e.blockChance > 0.0 &&
                   e.killLife >= sim::kSecondWindShare && e.killMana >= sim::kSecondWindShare,
               "worn, the four are each counted");
+        // The strongest runes count so many (sim::stackMostOf): nine Keen Eyes, in the armour, the
+        // helm and the pants, are five's critical; eight Greater Mights four's strength
+        // (sim::kStatRuneMost), and a Lesser none.
+        {
+            sim::Realm keen;
+            keen.raise(&tables, 7, 190, 110, dk, 200);
+            const uint8_t eyes[3] = {uint8_t(sim::Power::KeenEye), uint8_t(sim::Power::KeenEye),
+                                     uint8_t(sim::Power::KeenEye)};
+            const int32_t helm = tables.itemNamed("HelmMale01");
+            const int32_t pants = tables.itemNamed("PantMale01");
+            keen.give(plate, sim::placeOf(tables.items[size_t(plate)]), 0, -1, false, 0, 0, 3, eyes);
+            keen.give(helm, sim::kHelm, 0, -1, false, 0, 0, 3, eyes);
+            keen.give(pants, sim::kPants, 0, -1, false, 0, 0, 3, eyes);
+            checkNear(keen.hero().excel.runeCritical,
+                      sim::stackMostOf(sim::Power::KeenEye) * sim::kKeenEyeCritical, 1e-9,
+                      "nine Keen Eyes worn are five's critical chance");
+            const uint8_t might[3] = {uint8_t(sim::Power::GreaterMight),
+                                      uint8_t(sim::Power::GreaterMight),
+                                      uint8_t(sim::Power::LesserMight)};
+            const uint8_t greater[3] = {uint8_t(sim::Power::GreaterMight),
+                                        uint8_t(sim::Power::GreaterMight),
+                                        uint8_t(sim::Power::GreaterMight)};
+            sim::Realm mighty;
+            mighty.raise(&tables, 7, 190, 110, dk, 200);
+            mighty.give(plate, sim::placeOf(tables.items[size_t(plate)]), 0, -1, false, 0, 0, 3, might);
+            mighty.give(serpent, sim::kWeaponRight, 0, -1, false, 0, 0, 3, greater);
+            mighty.give(helm, sim::kHelm, 0, -1, false, 0, 0, 3, greater);
+            checkEqual(mighty.hero().runeShare.strength,
+                       sim::kStatRuneMost * sim::statShareOf(sim::Power::GreaterMight).strength,
+                       "eight Greater Mights and a Lesser are four Greaters' strength");
+            check(sim::stackingOf(sim::Power::KeenEye).stacks &&
+                      !sim::stackingOf(sim::Power::Frenzy).stacks,
+                  "and their tooltips say which stack");
+        }
         // Twisting Slash, again and again at the nearest: a Whirlwind's pull shoves monsters in.
         check(realm.learn(sim::skill::kTwistingSlash), "he knows Twisting Slash");
         int shoved = 0, casts = 0;
@@ -12032,6 +12756,28 @@ void testDungeonRunes(const content::Tables& tables) {
         rune.powers[0] = uint8_t(sim::Power::KeenEye);
         check(sim::settable(tables, rune, pair, sim::Kin::DarkKnight, false),
               "while another rune still goes beside it");
+    }
+    // And the runes where only the strongest works are one a thing too, a kin at a time
+    // (sim::onceKinOf; the user, 2026-10-24): no Buckler beside a Bulwark, no second Kinship.
+    {
+        const int runeRow = tables.itemAt(14, 22);
+        const int32_t sword = tables.itemNamed("Sword05");
+        const int32_t pendant = tables.itemNamed("Necklace02");
+        sim::Held rune{int32_t(runeRow), 0, 1};
+        rune.powers[0] = uint8_t(sim::Power::Buckler);
+        sim::Held blade{sword, 0, 1};
+        blade.sockets = 2;
+        check(sword >= 0 && sim::settable(tables, rune, blade, sim::Kin::DarkKnight, true),
+              "a Buckler goes in an empty socketed sword");
+        blade.powers[0] = uint8_t(sim::Power::Bulwark);
+        check(!sim::settable(tables, rune, blade, sim::Kin::DarkKnight, true),
+              "but not beside a Bulwark");
+        rune.powers[0] = uint8_t(sim::Power::Kinship);
+        sim::Held charm{pendant, 0, 1};
+        charm.sockets = 2;
+        charm.powers[0] = uint8_t(sim::Power::Kinship);
+        check(pendant >= 0 && !sim::settable(tables, rune, charm, sim::Kin::DarkKnight, true),
+              "and a second Kinship is refused in the same pendant");
     }
     // And the cast: a wizard's Energy Ball under five stacks is quicker.
     if (const sim::SkillRow* ball = sim::skillNumbered(sim::skill::kEnergyBall)) {
@@ -15888,6 +16634,8 @@ int main() {
     testQuests(tables);
     testGladiatorPath(tables);
     testGladiatorSkills(tables);
+    testFireSlash(tables);
+    testPowerSlash(tables);
     testDungeonRunes(tables);
     testElementRunes(tables);
     testGroupRunes(tables);

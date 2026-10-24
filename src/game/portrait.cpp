@@ -61,6 +61,13 @@ void Portrait::render(gfx::Renderer& renderer, const std::vector<gfx::Drawable>&
             BGFX_TEXTURE_RT_WRITE_ONLY | BGFX_TEXTURE_RT_MSAA_X4);
         const bgfx::TextureHandle both[2] = {colour, depth};
         target_ = bgfx::createFrameBuffer(2, both, true);
+        // Refused, it is not taken and is asked again: an invalid buffer is the backbuffer to
+        // bgfx, and the face would be drawn over the screen's corner.
+        if (!bgfx::isValid(target_)) {
+            bgfx::destroy(colour);
+            bgfx::destroy(depth);
+            return;
+        }
         picture_.handle = colour;
         picture_.width = float(wide);
         picture_.height = float(tall);

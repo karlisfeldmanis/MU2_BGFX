@@ -20,6 +20,7 @@
 #include "game/frustum.h"
 #include "game/play_tuning.h"
 #include "game/world/lamps.h"
+#include "sim/realm_tuning.h"
 
 namespace mu::game {
 
@@ -157,6 +158,9 @@ void Play::exhale(float seconds) {
         if (skill && one.swingSkill == sim::skill::kTwistingSlash) continue;
         // Nor Rageful Blow, past them too, whose weapon is out of his hand. fx/fury.h.
         if (skill && one.swingSkill == sim::skill::kRagefulBlow) continue;
+        // Nor Fire Slash, on the same WHEEL: MU lays no blur on it (ZzzCharacter.cpp:3783-3864),
+        // its ribbon is the look. fx/fire_slash.h.
+        if (skill && one.swingSkill == sim::skill::kFireSlash) continue;
         // Nor Death Stab: PLAYER_ATTACK_DEATHSTAB is on neither of CreateWeaponBlur's lists -- a
         // spear blurs PLAYER_ATTACK_SPEAR1..SCYTHE3 alone (ZzzCharacter.cpp:3859-3863) -- and the
         // blur the skill rung laid over its thrust was a pink-white smear MU never draws
@@ -166,9 +170,24 @@ void Play::exhale(float seconds) {
         if (skill && one.swingSkill == sim::skill::kImpale) continue;
         const FigureBody* look = one.figure.body();
         if (look == nullptr) continue;
+        // **Power Slash's blade trails the whole clip** (`AnimationFrame >= 3 || CurrentAction ==
+        // PLAYER_ATTACK_TWO_HAND_SWORD_TWO`, ZzzCharacter.cpp:3767-3770) on BlurMapping 1, the
+        // blue lightning of motion_blur -- 2, motion_blur_r's fire, on the Sword Dancer (0/25,
+        // :3830-3846). fx/power_slash.h is its waves.
+        const bool powerSlash = skill && one.swingSkill == sim::skill::kPowerSlash;
         // Three keys of wind-up: the client's `AnimationFrame >= 3`, so the gathering of the
         // swing leaves nothing and the streak appears as the blade comes round.
-        if (keyOf(one.figure) < kStreakWindUp) continue;
+        if (!powerSlash && keyOf(one.figure) < kStreakWindUp) continue;
+        Streak::Sheet skillSheet = Streak::Sheet::Skill;
+        if (powerSlash) {
+            skillSheet = Streak::Sheet::Lightning;
+            const sim::Body* body = realm_.find(one.id);
+            const content::Arm* arm = body != nullptr && body->weapon >= 0 &&
+                                              size_t(body->weapon) < tables_.arms.size()
+                                          ? &tables_.arms[size_t(body->weapon)]
+                                          : nullptr;
+            if (arm != nullptr && arm->group == 0 && arm->number == 25) skillSheet = Streak::Sheet::Skill;
+        }
         for (const HeldItem& held : look->held) {
             if (held.kind != "weapon" || held.mesh == nullptr || held.bone < 0) continue;
             if (held.stance == "bow" || held.stance == "crossbow") continue;
@@ -191,7 +210,7 @@ void Play::exhale(float seconds) {
             // The look: white on motion_blur_r for a skill; for a plain blow, blur01 from a sixth
             // of the blade, or blur02 over a spear's or a scythe's head, lit by mapping 0's ladder.
             const bool pole = held.stance == "spear" || held.stance == "scythe";
-            Streak::Sheet sheet = Streak::Sheet::Skill;
+            Streak::Sheet sheet = skillSheet;
             float light[3] = {1.0f, 1.0f, 1.0f};
             if (blow) {
                 sheet = pole ? Streak::Sheet::Spear : Streak::Sheet::Plain;
@@ -1025,8 +1044,12 @@ void Play::throwWheel(const Drawn& swinger, const sim::Body* body) {
     const bool polearm = body != nullptr && body->weapon >= 0 &&
                          size_t(body->weapon) < tables_.arms.size() &&
                          tables_.arms[size_t(body->weapon)].group == 3;
+    // Drawn out to what the blow strikes, so the spin shows its reach.
+    const sim::SkillRow* row = sim::skillNumbered(sim::skill::kTwistingSlash);
+    const float reach = (row ? row->reach : 3.0f) +
+                        (body ? sim::talentReach(*body, sim::skill::kTwistingSlash) : 0.0f);
     wheel_.cast(swinger.id, weapon ? weapon->mesh : nullptr, weapon ? weapon->shine : ShineLook{},
-                polearm);
+                polearm, reach);
 }
 
 // The same weapon as the wheel's, thrown up off his hand a key into the clip and brought down a
@@ -1515,6 +1538,8 @@ void Play::follow(float seconds) {
 
         // On the Dinorant he sits 30 over the ground and the dragon stands on it (game/pets.h).
         float lift = 0.0f;
+        // The part of it that is the run's bound, kept apart so the crown can leave it out.
+        float seatBob = 0.0f;
         if (body->player && body->riding) {
             // His own mount's, not the hero's: a rider on Uniria beside a hero on the Dinorant
             // sat 30 over the ground.
@@ -1529,7 +1554,8 @@ void Play::follow(float seconds) {
                 const int riding = one.figure.clip();
                 if (seatOn && riding >= 0 &&
                     (riding == seatOn->rideRunClip || riding == seatOn->rideRunArmedClip)) {
-                    lift += dinorantBob(one.figure.through());
+                    seatBob = dinorantBob(one.figure.through());
+                    lift += seatBob;
                 }
             }
         }
@@ -1652,6 +1678,10 @@ void Play::follow(float seconds) {
                 one.figure.pointInModel(look->headJoint, head);
                 one.crown[1] = std::min(one.crown[1], head[1] + kBarOverHead * look->scale);
             }
+            // Nor with the Dinorant's bound under him: his seat rides its back, and his name and
+            // bar rode it too (the user, 2026-10-24: "when char is riding on mount char name label
+            // is bouncing").
+            one.crown[1] -= seatBob;
             one.crown[2] = position[2];
             one.placed = true;
         }
@@ -1700,7 +1730,9 @@ void Play::follow(float seconds) {
             one.casting = 0.0f;
         }
         if (one.swinging > 0.0f) {
-            one.clipRate = one.swingPace;
+            // Fire Slash's second pace from its key 3 on (Drawn::swingPaceAfter).
+            one.clipRate = one.swingPaceAfter > 0.0f && one.swinging <= one.swingTurn ? one.swingPaceAfter
+                                                                                     : one.swingPace;
             one.shocked = 0.0f;
             continue;
         }

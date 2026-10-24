@@ -58,6 +58,11 @@ void onChar(GLFWwindow*, unsigned int code) {
         s_typed += char(0xE0 | (code >> 12));
         s_typed += char(0x80 | ((code >> 6) & 0x3F));
         s_typed += char(0x80 | (code & 0x3F));
+    } else if (code < 0x110000) {  // past the first plane: CJK's rarer letters, emoji
+        s_typed += char(0xF0 | (code >> 18));
+        s_typed += char(0x80 | ((code >> 12) & 0x3F));
+        s_typed += char(0x80 | ((code >> 6) & 0x3F));
+        s_typed += char(0x80 | (code & 0x3F));
     }
 }
 

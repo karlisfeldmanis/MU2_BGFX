@@ -184,6 +184,9 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // And a mount's skill only on the mount: off it -- on a safe tile, or the horn's life gone this
     // tick -- there is nothing under him to breathe.
     if (row.mounted && !hero.riding) return false;
+    // And Power Slash never on one: MuMain's click does nothing on Uniria, Dinorant, Dark Horse
+    // or Fenrir (ClassAttack.cpp:660-697), and the bar greys it there.
+    if (row.afoot && hero.riding) return false;
 
     // **A blink** (Teleport): no body, no blow -- the ground the key named, a fade, and him put
     // down there. The fight he was in is dropped, as a Town Portal drops it: left standing, the
@@ -683,10 +686,11 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
         if (!one.monster() || !one.alive()) continue;
         // A line runs as far as the wave sweeps, past the reach it is aimed within.
         if (!within(hero, one,
-                    row.spread == Spread::Line   ? kLineTiles
-                    : row.spread == Spread::Beam ? kBeamTiles
-                                                 : row.reach + talentReach(hero, row.number) +
-                                                       float(bulkOf(numberOf(one))))) {
+                    row.spread == Spread::Line      ? kLineTiles
+                    : row.spread == Spread::Beam    ? kBeamTiles
+                    : row.spread == Spread::Frustum ? fm::hypot(kFrustumFar, kFrustumDeep)
+                                                    : row.reach + talentReach(hero, row.number) +
+                                                          float(bulkOf(numberOf(one))))) {
             continue;
         }
         // Sheltered ground is sheltered from a spin as well: the same test a single blow makes.
@@ -716,12 +720,23 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
             }
             if (!struck) continue;
         }
+        if (row.spread == Spread::Frustum) {
+            // Power Slash's wedge along the aim: from half a tile behind his middle (the near edge
+            // through his own tile) to six out, a tile either side at his feet and six at its far
+            // edge.
+            const float c = fm::cos(hero.aim), s = fm::sin(hero.aim);
+            const float ahead = dx * c + dy * s;
+            const float aside = -dx * s + dy * c;
+            const float half = kFrustumNear + (kFrustumFar - kFrustumNear) *
+                                                  std::max(0.0f, ahead) / kFrustumDeep;
+            if (ahead < -kFrustumBehind || ahead > kFrustumDeep || std::fabs(aside) > half) continue;
+        }
         if (row.spread == Spread::Arc) {
             // The facing eighth and the two beside it. `aim` and not `facing`, because the throw
             // aims him at what the key named and the body turns to it over the clip; the blow
-            // belongs where he threw it.
+            // belongs where he threw it. Fire Slash's half-disc is its row's own (arcHalf).
             const float toward = fm::atan2(dy, dx);
-            if (std::fabs(wrapped(toward - hero.aim)) > kArcHalfAngle) continue;
+            if (std::fabs(wrapped(toward - hero.aim)) > row.arcHalfAngle()) continue;
         }
         if (found >= room) continue;
         // Insertion, because the list is at most a handful long and an insertion sort of a
@@ -793,7 +808,7 @@ bool Realm::armed(const Body& hero, const SkillRow& row) const {
     const int index = skillIndexOf(row.number);
     if (index < 0) return false;
     if (row.mounted ? !knows(row.number) || !hero.riding
-                    : (hero.learned & (uint64_t(1) << index)) == 0) {
+                    : (hero.learned & (uint64_t(1) << index)) == 0 || (row.afoot && hero.riding)) {
         return false;
     }
     if (!skillFor(row, hero.kin) || hero.mana < manaCostOf(hero, row) || (secondSkill(row) && !hero.second)) return false;

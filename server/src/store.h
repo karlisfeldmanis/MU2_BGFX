@@ -99,6 +99,9 @@ public:
         bool read = false;
     };
     std::vector<Roll> everyone();
+    // Whether a character of the account, deleted or not, has ever come into a world: false for a
+    // new player's first, an alt's true (the newcomer's line, net::newcomerLine).
+    bool anyPlayed(const std::string& account);
     // Whether a character not deleted already has this name, any case.
     bool named(const std::string& name);
     // A new character on the account, never played, in `slot`. False when the disk said no.

@@ -98,7 +98,8 @@ struct Command {
         // his things inside the lockstep. Each carries a whole Held in a, b, c, d and target
         // (sim::packHeld).
         BrokerTake,  // out of the bag (zen: the slot) or the vault (zen: the cell + 0x10000),
-                     // only if it still holds that very thing; answered 1
+                     // only if it still holds that very thing; answered 1. zen's high 32 bits:
+                     // how many of a stack (0 the whole)
         BrokerBuy,   // zen paid, his carried first and then his vault's, and the Held into his
                      // bag: answered 1, or 2 paid but the bag full (it goes to his Collect).
                      // target's top bit: into his vault instead -- 1 there, 3 in his bag

@@ -1,0 +1,253 @@
+{
+  "item": "HelmClass05",
+  "mu_name": "Dark Lord head",
+  "mu_name_from": "ZzzOpenData.cpp:115-120: MODEL_BODY_HELM + i and its fellows load HelmClass{i+1}, ArmorClass{i+1} and the rest, and a character with no armour wears MODEL_BODY_* + SkinIndex (ZzzCharacter.cpp:12124-12346), numbered one over MU's zero-based classes -- so Class05 is the Dark Lord, class 4.",
+  "part_note": "The head, 634 triangles. Bound to 466 on Bip01 Head, 14 on Bip01 Spine1. The Spine1 ring is taken onto the head by rebind, as on the other S17 heads.",
+  "profile": "armour",
+  "sheets": {
+    "HQlevel_man02": "HQlevel_man02.png",
+    "HQhair_R": "HQhair_R.png"
+  },
+  "sheet_from": "Data/Player/HQlevel_man02.OZJ (256x256), from the Season 17 client (third_party/MuClient_S17_v1.19.74). All five of the Dark Lord's parts name it. The head also names Data/Player/HQhair_R.OZJ (128x128, white hair on black) for its 156-triangle hair shell.",
+  "additive": [
+    "HQhair_R"
+  ],
+  "additive_from": "A texture named _R is MuMain's Bright mesh (TextureScript.cpp:38-39): drawn added. The user, 2026-10-23: \"DL has to be true on actual MU\".",
+  "separate_meshes": true,
+  "separate_meshes_why": "The hair shell is its own mesh in the S17 file; kept apart so it is not welded into the head.",
+  "cull": false,
+  "cull_from": "As HelmClass02: MU's hair is flat single-sided fins, and culled they wink out as the head turns (HelmClass02.json's cull_note).",
+  "model_from": "Season 17's remake of MU's Dark Lord body, read out of Data/Player/HelmClass05.bmd in the S17 client: a version-14 file, which MuExtract opens through Webzen's ModulusCryptor (pipeline/MuExtract/MuAssets/Crypto). The user, 2026-10-23: \"we are taking naked skins from MuClient_S17_v1.19.74\". Its 51 bones are the first 51 of player.bmd's, by name and order, so it rides our rig and clips as the other classes' do.",
+  "rebind": {
+    "Bip01 Spine1": "Bip01 Head"
+  },
+  "rebind_from": "As HelmClass02's: every S17 head binds a ring at the base of the neck to Bip01 Spine1, two joints down, and the head turns a long way from the chest in MU's poses; taken onto the head, as on every S17 head (the user, 2026-10-15).",
+  "material_note": "hair for the white mane, skin for the face and neck; the separate HQhair_R shell added, as MU's bright mesh.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "hair",
+      "triangles": 134,
+      "area": 1486.0,
+      "along": [
+        -12.8,
+        12.2
+      ],
+      "mu_uv": [
+        0.006,
+        0.021,
+        0.981,
+        0.993
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.994,
+        0.992
+      ]
+    },
+    {
+      "island": 1,
+      "material": "hair",
+      "triangles": 11,
+      "area": 45.4,
+      "along": [
+        7.7,
+        11.7
+      ],
+      "mu_uv": [
+        0.012,
+        0.108,
+        0.152,
+        0.697
+      ],
+      "bake_uv": [
+        0.755,
+        0.045,
+        0.838,
+        0.396
+      ]
+    },
+    {
+      "island": 2,
+      "material": "hair",
+      "triangles": 11,
+      "area": 45.4,
+      "along": [
+        7.7,
+        11.7
+      ],
+      "mu_uv": [
+        0.012,
+        0.108,
+        0.152,
+        0.697
+      ],
+      "bake_uv": [
+        0.008,
+        0.007,
+        0.091,
+        0.358
+      ]
+    },
+    {
+      "island": 3,
+      "material": "hair",
+      "triangles": 366,
+      "area": 2272.1,
+      "along": [
+        -12.7,
+        13.6
+      ],
+      "mu_uv": [
+        0.006,
+        0.422,
+        0.438,
+        0.994
+      ],
+      "bake_uv": [
+        0.172,
+        0.007,
+        0.77,
+        0.971
+      ]
+    },
+    {
+      "island": 4,
+      "material": "hair",
+      "triangles": 11,
+      "area": 45.5,
+      "along": [
+        7.7,
+        11.7
+      ],
+      "mu_uv": [
+        0.008,
+        0.672,
+        0.059,
+        0.886
+      ],
+      "bake_uv": [
+        0.487,
+        0.486,
+        0.517,
+        0.613
+      ]
+    },
+    {
+      "island": 5,
+      "material": "hair",
+      "triangles": 11,
+      "area": 45.5,
+      "along": [
+        7.7,
+        11.7
+      ],
+      "mu_uv": [
+        0.008,
+        0.672,
+        0.059,
+        0.886
+      ],
+      "bake_uv": [
+        0.038,
+        0.724,
+        0.068,
+        0.852
+      ]
+    },
+    {
+      "island": 6,
+      "material": "hair",
+      "triangles": 68,
+      "area": 802.6,
+      "along": [
+        -12.6,
+        8.9
+      ],
+      "mu_uv": [
+        0.06,
+        0.641,
+        0.358,
+        0.916
+      ],
+      "bake_uv": [
+        0.006,
+        0.58,
+        0.268,
+        0.878
+      ]
+    },
+    {
+      "island": 7,
+      "material": "hair",
+      "triangles": 11,
+      "area": 45.5,
+      "along": [
+        7.7,
+        11.7
+      ],
+      "mu_uv": [
+        0.008,
+        0.672,
+        0.059,
+        0.886
+      ],
+      "bake_uv": [
+        0.715,
+        0.204,
+        0.746,
+        0.331
+      ]
+    },
+    {
+      "island": 8,
+      "material": "hair",
+      "triangles": 11,
+      "area": 45.5,
+      "along": [
+        7.7,
+        11.7
+      ],
+      "mu_uv": [
+        0.008,
+        0.672,
+        0.059,
+        0.886
+      ],
+      "bake_uv": [
+        0.841,
+        0.308,
+        0.871,
+        0.436
+      ]
+    }
+  ],
+  "uv_overrides": [
+    {
+      "material": "skin",
+      "u": [
+        0.1,
+        0.36
+      ],
+      "v": [
+        0.4,
+        0.65
+      ],
+      "why": "The face block, under the hair."
+    },
+    {
+      "material": "skin",
+      "u": [
+        0.26,
+        0.44
+      ],
+      "v": [
+        0.85,
+        0.99
+      ],
+      "why": "The ear and neck block, top middle."
+    }
+  ],
+  "uv_overrides_why": "The white mane and the face share shells; the islands are hair and the face, ear and neck are lifted out. Read off the sheet with the UV layout drawn over it (2026-10-23)."
+}

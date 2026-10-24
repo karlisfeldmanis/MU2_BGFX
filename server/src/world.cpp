@@ -307,6 +307,7 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
     bool carried = asked.token != 0 && !fresh && g_store.find(asked.token, kept, keptIn);
     net::Hello said = asked;
     if (fresh) said.kin = uint8_t(whose.kin);
+    one.newcomer = fresh && !g_store.anyPlayed(asked.account);
     int castle = 0, square = 0, squareWait = 0;
     // His account's vault, whichever of its characters he is (bug #34, 2026-10-20).
     sim::Vault vault;
@@ -493,6 +494,7 @@ bool hello(Session& one, const net::Hello& asked, std::vector<std::unique_ptr<Wo
     announce(*world, sessions);
     guildArrived(one, sessions);
     sayInvasion(one, invasionNow(worlds));
+    welcomeNewcomer(one, sessions);
     return true;
 }
 
@@ -739,6 +741,8 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
             one->keepAt = Clock::time_point{};
             core::logf("%s: reborn, rebirth %d", one->who.c_str(), int(said.a));
             announceRebirth(one->name, int(said.a), sessions);
+            const sim::Body* him = realm.find(one->player);
+            if (him != nullptr && !one->bot) tellRebirth(one->name, sim::className(int(him->kin), him->second), int(said.a));
         }
     }
     // The market's commands answered: a listing up, a purchase paid (broker.h).
@@ -815,6 +819,7 @@ void tick(World& world, std::vector<std::unique_ptr<Session>>& sessions,
                 announce(world, sessions);
                 guildArrived(*one, sessions);
                 sayInvasion(*one, invasionNow(worlds));
+                welcomeNewcomer(*one, sessions);
             }
         }
     }

@@ -169,7 +169,15 @@ namespace mu::net {
 // 48: each quest's life in a character's bytes (kKeptLayout 14, QuestProgress::life): a reborn
 //     hero's first hand-in pays the first clear's experience again (2026-10-22), so a client on
 //     47 is refused instead of reading the record one short.
-constexpr uint32_t kVersion = 48;
+// 49: the vault eighteen across (sim/vault.h, kKeptLayout 15, 2026-10-24): 270 cells in a
+//     character's bytes and in every vault cell a command names, so a client on 48 is refused
+//     instead of reading the vault 150 cells short.
+// 50: the market's ecommerce redesign (2026-10-24): a Broker ask's query carries Luck, Socket and
+//     a piece's price from and to, so a client on 49 sends an ask the server reads short.
+// 51: Fire Slash and Power Slash, the Magic Gladiator's 41st and 42nd skills (sim::kSkills 42,
+//     kKeptLayout 16, 2026-10-24): two more cools in a character's bytes and rules a 50 client
+//     does not know.
+constexpr uint32_t kVersion = 51;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";
@@ -183,8 +191,11 @@ constexpr const char* kDefaultHost = "mu-classic.com";
 // their Life (2026-10-21, sim::timedPet; the store's renumber makes each old one one); 12 28
 // quests, the Keeper's second, Kantur's Captain (2026-10-21), where 8-11 carry 27; 13 his rebirths
 // (sim/rebirth.h, 2026-10-22), where 3-12 carry none; 14 each quest's life, the rebirth of its last
-// hand-in (QuestProgress::life, 2026-10-22), where 3-13 carry none and read as the first life.
-constexpr int kKeptLayout = 14;
+// hand-in (QuestProgress::life, 2026-10-22), where 3-13 carry none and read as the first life; 15 the vault eighteen across, 270 cells
+// (2026-10-24), where 3-14 carry MU's 120 at eight across and read each into its own column and
+// row (sim::widenedCell); 16 a 41st and a 42nd skill's cools, Fire Slash and Power Slash
+// (2026-10-24), where 9-15 carry 40.
+constexpr int kKeptLayout = 16;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame a client accepts: a Welcome with its snapshot, about half a MB for a town of
@@ -387,6 +398,12 @@ std::string romanNumeral(int count);
 // 2026-10-22: "show on which realm reset was done so users understand"); none off a server. The
 // chat draws a speakerless Global line as a herald's, in gold (Chat::hear).
 std::string rebirthLine(const std::string& name, int count, const std::string& realm = {});
+// The server's line on Global the first time a new player's first character comes into the world,
+// said by no one and heard on his realm alone: "A new Dark Knight, Ken, sets foot in Lorencia.
+// Welcome to MU-Classic Beta!" (the user, 2026-10-23: "when there is fresh characters made from fresh account,
+// not alt char, lets say that on global chat in that specific realm"). `town` is the world's
+// folder name, said with a capital.
+std::string newcomerLine(const std::string& name, const std::string& kind, const std::string& town);
 
 // A character this machine played on the server before accounts, by the token kept beside his
 // save: claimed onto the account when it is nobody's yet.

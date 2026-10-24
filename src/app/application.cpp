@@ -30,6 +30,7 @@
 #include "core/watch.h"
 #ifdef MU2_CRASH_UPLOAD
 #include "launcher/crash_upload.h"
+#include "launcher/graphics_report.h"
 #endif
 #include "build_version.h"
 #include "game/headless.h"
@@ -107,6 +108,41 @@ private:
     uint64_t written_ = 0;
     float buffer_[kChunk * 2];
 };
+
+#ifdef MU2_CRASH_UPLOAD
+// The run's Graphics rows as the website is told them (launcher/graphics_report.h), the frame
+// rate left to the caller.
+launcher::GraphicsReport graphicsNow(const core::Args& args, const gfx::Window& window) {
+    launcher::GraphicsReport r;
+    r.preset = core::graphicsName(args);
+    r.renderer = bgfx::getRendererName(bgfx::getRendererType());
+    r.scale = int(args.scale * 100.0f + 0.5f);
+    r.msaa = args.msaa;
+    r.shadows = args.shadows;
+    r.ssao = args.ssao;
+    r.bloom = args.bloom;
+    r.reflections = args.reflections;
+    r.grass = args.grass;
+    r.lights = args.lights;
+    r.textures = args.texturesLoaded;
+    r.cap = args.cap;
+    r.tuned = args.tuned;
+    r.hand = args.graphicsByHand;
+    r.width = window.width();
+    r.height = window.height();
+    r.fullscreen = window.fullscreen();
+    return r;
+}
+
+// Everything but the frame rate: what a change is.
+std::string rowsOf(const launcher::GraphicsReport& r) {
+    char rows[160];
+    std::snprintf(rows, sizeof rows, "%s %s %d %d %d %d%d%d%d %d %d %d %d%d %dx%d %d", r.preset.c_str(),
+                  r.renderer.c_str(), r.scale, r.msaa, r.shadows, r.ssao, r.bloom, r.reflections, r.lights,
+                  r.grass, r.textures, r.cap, r.tuned, r.hand, r.width, r.height, r.fullscreen);
+    return rows;
+}
+#endif
 
 }  // namespace
 
@@ -409,6 +445,25 @@ int Application::run(int argc, char** argv) {
     // The first run's graphics, measured on the character screen under its black (app/tuner.h).
     Tuner tuner;
     bool tuneAsked = false;
+    int lineFrames = 0;
+#ifdef MU2_CRASH_UPLOAD
+    // What the run draws with, told to the website (launcher/graphics_report.h) once the measure
+    // is over and the rows have held kGraphicsSteady seconds after a change, and again each
+    // kGraphicsAgainMs for the frame rate. The site is the crash reports' (as PlayMode::sendBug);
+    // a run the launcher did not start has no ticket to say it under, and says nothing.
+    constexpr int kGraphicsSteady = 5;
+    constexpr double kGraphicsAgainMs = 10.0 * 60.0 * 1000.0;
+    const char* graphicsAsked = std::getenv("MU2_CRASH_SITE");
+#ifdef MU2_SHIP
+    const std::string graphicsSite = graphicsAsked && *graphicsAsked ? graphicsAsked : launcher::kCrashSite;
+#else
+    const std::string graphicsSite = graphicsAsked ? graphicsAsked : "";
+#endif
+    const std::string graphicsToken = launcher::ticketFromEnvironment();
+    std::string graphicsRows, graphicsTold;
+    int graphicsSteady = 0;
+    double sinceGraphicsTold = 0.0;
+#endif
 
     bool quitEarly = mode->quitEarly();
     bool handoffFailed = false;
@@ -482,8 +537,10 @@ int Application::run(int argc, char** argv) {
         // Minimised, at most kMinimisedCap: a present to an icon returns at once on Direct3D 11
         // (DXGI_STATUS_OCCLUDED), so a free run drew whole frames flat out for nobody, the card
         // as hot as in play -- Gordichan's GTX 1650 laptop lost its device every few minutes,
-        // 2026-10-17, uncapped at 150 fps. The line and the world still step each frame.
-        constexpr int kMinimisedCap = 30;
+        // 2026-10-17, uncapped at 150 fps. The line and the world still step each frame. Ten,
+        // not thirty, on Gordichan's next word (2026-10-24: "limit the rendering to 1-5 fps"): nobody
+        // sees an icon, and ten keeps the line read often enough.
+        constexpr int kMinimisedCap = 10;
         const int cap = window_.minimised() && (args_.cap == 0 || args_.cap > kMinimisedCap)
                             ? kMinimisedCap
                             : args_.cap;
@@ -558,6 +615,7 @@ int Application::run(int argc, char** argv) {
         // Wall time, so the line stays a line a second when the run is paced.
         sinceLine += frameMs;
         sinceSheetCheck += frameMs;
+        ++lineFrames;
         if (sinceLine >= 1000.0) {
             const bgfx::Stats* s = bgfx::getStats();
             core::logf("frame %d: %.1f fps, cpu %.2f ms, gpu %.2f ms, %u draws", at.index,
@@ -604,7 +662,28 @@ int Application::run(int argc, char** argv) {
                 }
             }
             mode->report(ctx);
+#ifdef MU2_CRASH_UPLOAD
+            // Minimised, the rate is kMinimisedCap's and the rows are not being looked at.
+            if (!graphicsToken.empty() && !graphicsSite.empty() && args_.frames == 0 &&
+                !tuner.active() && !window_.minimised()) {
+                launcher::GraphicsReport report = graphicsNow(args_, window_);
+                report.fps = int(double(lineFrames) * 1000.0 / sinceLine + 0.5);
+                const std::string rows = rowsOf(report);
+                graphicsSteady = rows == graphicsRows ? graphicsSteady + 1 : 0;
+                graphicsRows = rows;
+                sinceGraphicsTold += sinceLine;
+                if (graphicsSteady >= kGraphicsSteady &&
+                    (rows != graphicsTold || sinceGraphicsTold >= kGraphicsAgainMs)) {
+                    graphicsTold = rows;
+                    sinceGraphicsTold = 0.0;
+                    std::thread([site = graphicsSite, token = graphicsToken, report] {
+                        launcher::sendGraphics(site, token, report);
+                    }).detach();
+                }
+            }
+#endif
             sinceLine = 0.0;
+            lineFrames = 0;
 
             if (args_.remember && args_.frames == 0 && !args_.graphicsByHand && !lightest &&
                 !tuner.active() && gpuFrames > 0) {

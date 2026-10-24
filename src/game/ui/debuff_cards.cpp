@@ -30,6 +30,20 @@ tip::Row prose(const std::string& text, tip::Tone tone = tip::Tone::Gray) {
 }  // namespace
 
 bool debuffCard(const Hud::Boon& one, tip::Sheet& sheet) {
+    if (one.cut) {
+        // A Magic Gladiator's Fire Slash (sim/skills.cpp): MU's BUFFTYPE_DEFENSE_POWER_DEC.
+        const sim::SkillRow* row = sim::skillNumbered(sim::skill::kFireSlash);
+        sheet.name = "Fire Slash";
+        sheet.nameTone = tip::Tone::Red;
+        sheet.base = "DEBUFF";
+        tip::Section what;
+        what.rows.push_back(said("Defence", "-" + std::to_string(row ? row->cutShare : 10) + "%",
+                                 tip::Tone::Red));
+        what.rows.push_back(prose("Every blow on it meets less defence. A second cut starts its "
+                                  "seconds again and goes no deeper."));
+        sheet.sections.push_back(what);
+        return true;
+    }
     if (one.dragonfire) {
         // The Golden Dragon's (sim/raid.h): each stack its fire bites deeper, and fire resistance
         // takes the edge off both (the user, 2026-10-08: "players need some fire resistance items").

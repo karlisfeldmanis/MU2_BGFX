@@ -44,10 +44,30 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     const bool impPaid = impCost > 0 && attacker.health > impCost;
     const double dealt = attacker.stats.damageDealt;
     if (impCost > 0 && !impPaid) attacker.stats.damageDealt = 1.0;
+    // Fire Slash's cut (SkillRow::cutTicks), WebZen's MaGumSkillDefenseDown: rolled on each body
+    // BEFORE the blow is asked, so the blow it lands with already profits, a miss lays it too
+    // (protocol.cpp:16718-16719, ObjUseSkill.cpp:1347), and laid again it starts its ten seconds
+    // over and never stacks (BuffEffectSlot.cpp:80-95). A boss shrugs it as it shrugs a Weakness.
+    // Its own draw, taken only by a row that cuts, so nothing else's dice move.
+    const SkillRow* cutter = row != nullptr ? row : sweep_;
+    if (cutter != nullptr && cutter->cutTicks > 0 && attacker.player && target.monster() &&
+        !shrugs(target) && dice.nextBool(cutter->cutChance)) {
+        target.defenseCutUntil = tick_ + cutter->cutTicks;
+        target.defenseCut = cutter->cutShare;
+    }
+    // And what stands of it meets every blow, anyone's: `targetdefense -= targetdefense *
+    // value / 100` (ObjBaseAttack.cpp:1299-1302).
+    Fighter cutDown;
+    const Fighter* guard = &target.stats;
+    if (target.defenseCutUntil > tick_ && target.defenseCut > 0) {
+        cutDown = target.stats;
+        cutDown.defense -= cutDown.defense * target.defenseCut / 100;
+        guard = &cutDown;
+    }
     // A charge's stages ride on the skill's damage for its burst (Realm::burstCharge).
-    Blow blow = row && row->wizardry ? cast(attacker.stats, target.stats,
+    Blow blow = row && row->wizardry ? cast(attacker.stats, *guard,
                                             row->damage + (attacker.player ? me().chargeDamage : 0), dice)
-                                     : strike(attacker.stats, target.stats, dice);
+                                     : strike(attacker.stats, *guard, dice);
     attacker.stats.damageDealt = dealt;
     if (blow.hit && impPaid) attacker.health -= impCost;
     // Ice's and Poison's elements, and a poisoner's bite on him. WebZen lays them before the
@@ -154,9 +174,9 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         pyroblasts(attacker) > 0) {
         force *= kPyroblastForce;
     }
-    // His Kindles on it, each its own (sim::kKindleForce).
+    // His Kindles on it, their shares added (sim::kKindleForce).
     if (row != nullptr && row->number == skill::kFireBall && attacker.player) {
-        for (int i = 0; i < attacker.excel.kindles; ++i) force *= kKindleForce;
+        force *= 1.0f + (kKindleForce - 1.0f) * float(attacker.excel.kindles);
     }
     // His element runes on a spell or a skill of their element; the sweeps' are laid in
     // strikeAround and the runes' own blows where each is let go.
@@ -1320,6 +1340,11 @@ void Realm::release(Body& hero, uint32_t at, float force, int32_t skill, const f
         rain(hero, *row, at, force);
         return;
     }
+    // Power Slash: its waves, each body struck as one reaches it.
+    if (row && row->spread == Spread::Frustum) {
+        powerSlash(hero, *row, force);
+        return;
+    }
     if (row && row->spread != Spread::One) {
         strikeAround(hero, *row, force);
         return;
@@ -1372,11 +1397,12 @@ void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force, boo
     const float dx = target ? target->x - hero.x : 0.0f;
     const float dy = target ? target->y - hero.y : 0.0f;
     const float gap = std::max(0.0f, std::sqrt(dx * dx + dy * dy) - kBoltStopsShort);
-    // A rock out of the sky takes its fall, however far off the body stands.
+    // A rock out of the sky takes its fall, however far off the body stands; a blow held back
+    // (Power Slash's, till its wave gets there) takes its wait, however far.
     const int32_t air =
-        row.fallTicks > 0
-            ? row.fallTicks + std::max<int32_t>(0, delay)
-            : int32_t(std::lround(gap / std::max(1.0f, row.flies) * kTicksPerSecond));
+        row.fallTicks > 0 ? row.fallTicks + std::max<int32_t>(0, delay)
+        : delay > 0       ? delay
+                          : int32_t(std::lround(gap / std::max(1.0f, row.flies) * kTicksPerSecond));
     if (announce) say(What::Loosed, hero, row.number, air, 0, at);
     if (air > 0) {
         for (Flight& one : flights_) {
@@ -1938,6 +1964,26 @@ void Realm::rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force)
     for (int i = 0; i < found; ++i) {
         const bool aimedOne = victims[i] == aimedAt;
         loose(hero, row, victims[i], force, true, aimedOne, 0);
+    }
+}
+
+void Realm::powerSlash(Body& hero, const SkillRow& row, float force) {
+    // Everything in the wedge along his aim, nearest first (Realm::gather), counted as WebZen
+    // counts it -- the nearest five struck, the sixth to the eleventh each at even odds off the
+    // realm's dice, none past the eleventh (ObjUseSkill.cpp:2937-2957) -- and each struck when a
+    // wave gets to it, kWaveTilesPerSecond from his middle, a tick at the least. Nothing is said
+    // for them: the cast's `Cast` is what the drawing sends its waves off, and nothing is drawn
+    // on what they strike. No element, so no element runes.
+    uint32_t victims[kVictims];
+    const int found = gather(hero, row, victims, kVictims);
+    for (int i = 0; i < found && i < kFrustumMost; ++i) {
+        if (i >= kFrustumSure && !dice_.nextBool(kFrustumOdds)) continue;
+        const Body* one = body(victims[i]);
+        if (one == nullptr) continue;
+        const float gap = fm::hypot(one->x - hero.x, one->y - hero.y);
+        const int32_t wait =
+            std::max<int32_t>(1, int32_t(std::lround(gap / kWaveTilesPerSecond * kTicksPerSecond)));
+        loose(hero, row, victims[i], force, false, false, wait);
     }
 }
 
@@ -2570,6 +2616,8 @@ void Realm::raiseBeast(Body& beast) {
     beast.bleedUntil = 0;
     beast.weakUntil = 0;
     beast.weakCut = 0;
+    beast.defenseCutUntil = 0;
+    beast.defenseCut = 0;
     beast.walking = false;
     route(beast).clear();
     beast.onStep = 0;

@@ -165,10 +165,13 @@ void put(std::vector<uint8_t>& out, const BrokerAsk& one) {
         o.i32(q.kind);
         o.str(q.text);
         o.i32(q.usableBy);
-        o.u8(uint8_t((q.excellentOnly ? 1 : 0) | (q.sevenUp ? 2 : 0) | (q.descending ? 4 : 0) | (q.watchedOnly ? 8 : 0)));
+        o.u8(uint8_t((q.excellentOnly ? 1 : 0) | (q.sevenUp ? 2 : 0) | (q.descending ? 4 : 0) | (q.watchedOnly ? 8 : 0) |
+                     (q.luckOnly ? 16 : 0) | (q.socketOnly ? 32 : 0)));
         o.str(q.sellerName);
         o.u8(uint8_t(q.sort));
         o.u16(uint16_t(std::max(0, q.page)));
+        o.i64(q.minPrice);
+        o.i64(q.maxPrice);
         o.i32(one.item);
         o.u8(one.fromVault ? 1 : 0);
         o.i32(one.slot);
@@ -195,11 +198,15 @@ bool parse(const std::vector<uint8_t>& body, BrokerAsk& out) {
     q.sevenUp = (flags & 2) != 0;
     q.descending = (flags & 4) != 0;
     q.watchedOnly = (flags & 8) != 0;
+    q.luckOnly = (flags & 16) != 0;
+    q.socketOnly = (flags & 32) != 0;
     q.sellerName = in.str();
     const uint8_t sort = in.u8();
     if (sort > uint8_t(sim::BrokerQuery::Sort::Newest)) return false;
     q.sort = sim::BrokerQuery::Sort(sort);
     q.page = in.u16();
+    q.minPrice = in.i64();
+    q.maxPrice = in.i64();
     out.item = in.i32();
     out.fromVault = in.u8() != 0;
     out.slot = in.i32();

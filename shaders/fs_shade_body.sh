@@ -264,7 +264,7 @@ void main()
 		float specPeak = max(spec.r, max(spec.g, spec.b));
 		float specCap = u_weather.y * 0.31830989;
 		if (specCap > 0.0 && specPeak > specCap)
-			spec *= mix(1.0, specCap / specPeak, metal);
+			spec *= mix(1.0, specCap / max(specPeak, 1e-6), metal);
 		vec3 kd = (vec3_splat(1.0) - f) * diffuseColour / 3.14159265;
 		// A weathered surface takes Burley's diffuse ("Physically Based Shading at Disney",
 		// 2012) for Lambert's: a rough face is brighter with the sun behind the eye and
@@ -335,7 +335,7 @@ void main()
 		float cardPeak = max(card.r, max(card.g, card.b));
 		float mirrorPeak = max(mirrored.r, max(mirrored.g, mirrored.b));
 		float mirrorCap = u_weather.y * cardPeak;
-		if (mirrorPeak > mirrorCap) mirrored *= mix(1.0, mirrorCap / mirrorPeak, metal);
+		if (mirrorPeak > mirrorCap) mirrored *= mix(1.0, mirrorCap / max(mirrorPeak, 1e-6), metal);
 	}
 	colour += mirrored * sheen;
 

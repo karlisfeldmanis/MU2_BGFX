@@ -176,6 +176,50 @@ void testBrokerRules(const content::Tables& tables) {
     found = sim::brokerMatches(shop, tables, query);
     check(found.size() == 1 && found[0]->what.item == armour, "and one seller's alone");
 
+    // The redesign's Options and price range (2026-10-24): Luck, a socket, a piece's price.
+    {
+        sim::Book opts;
+        sim::Listing lucky = listingOf("e", 5, armour, 8000);
+        lucky.what.luck = true;
+        sim::Listing socketed = listingOf("f", 6, armour, 12000);
+        socketed.what.sockets = 1;
+        sim::Listing stack = listingOf("g", 7, bless, 6000);
+        stack.what.durability = 3;  // three Blesses at 2,000 each
+        opts.list(lucky, 24, 1);
+        opts.list(socketed, 24, 2);
+        opts.list(stack, 24, 3);
+        sim::BrokerQuery q;
+        std::vector<const sim::Listing*> got;
+        q.luckOnly = true;
+        got = sim::brokerMatches(opts, tables, q);
+        check(got.size() == 1 && got[0]->what.luck, "Luck only: the lucky armour alone");
+        q = sim::BrokerQuery{};
+        q.socketOnly = true;
+        got = sim::brokerMatches(opts, tables, q);
+        check(got.size() == 1 && got[0]->what.sockets == 1, "a socket only: the socketed armour alone");
+        q = sim::BrokerQuery{};
+        q.luckOnly = q.socketOnly = true;
+        check(sim::brokerMatches(opts, tables, q).empty(), "both: nothing has both");
+        checkEqual(sim::brokerPiecePrice(tables.items[size_t(bless)], stack), 2000, "a stack's piece is its price over its count");
+        checkEqual(sim::brokerPiecePrice(tables.items[size_t(armour)], lucky), 8000, "a piece of gear is its price");
+        q = sim::BrokerQuery{};
+        q.minPrice = 2500;
+        got = sim::brokerMatches(opts, tables, q);
+        check(got.size() == 2 && got[0]->what.item == armour && got[1]->what.item == armour,
+              "from 2,500: the stack of three at 6,000 is 2,000 a piece and stays out");
+        q.minPrice = 0;
+        q.maxPrice = 2000;
+        got = sim::brokerMatches(opts, tables, q);
+        check(got.size() == 1 && got[0]->what.item == bless, "up to 2,000: the Blesses alone");
+        q.minPrice = 8000;
+        q.maxPrice = 8000;
+        got = sim::brokerMatches(opts, tables, q);
+        check(got.size() == 1 && got[0]->price == 8000, "a range of one price keeps that price");
+        q.minPrice = 9000;
+        q.maxPrice = 1000;
+        check(sim::brokerMatches(opts, tables, q).empty(), "a range upside down holds nothing");
+    }
+
     // The watch list: a gear piece by its listing, the Blesses all together, kept in the bytes.
     const uint32_t gear = found[0]->id;
     const uint64_t me = 77;
@@ -255,6 +299,18 @@ void testBrokerRealm(const content::Tables& tables) {
     checkEqual(run(fromVault), 1, "taken straight out of the vault");
     check(realm.vault()[cell].empty(), "and the vault cell is clear");
 
+    // Part of a stack (zen's high half): those come off, the rest stays in its cell.
+    const int stackAt = realm.give(bless, -1, 0, 5);
+    sim::Command part{.kind = Kind::BrokerTake};
+    sim::packHeld(realm.satchel()[stackAt], part);
+    part.zen = stackAt | int64_t(2) << 32;
+    checkEqual(run(part), 1, "two of a stack of five are taken");
+    checkEqual(int(realm.satchel()[stackAt].durability), 3, "and three stay in the bag");
+    sim::packHeld(realm.satchel()[stackAt], part);
+    part.zen = stackAt | int64_t(3) << 32;
+    checkEqual(run(part), 1, "as many as the stack holds is the whole of it");
+    check(realm.satchel()[stackAt].empty(), "and the cell is clear");
+
     // A purchase: carried Zen first, then the vault's.
     realm.earn(1000);
     realm.depositZen(500);
@@ -330,6 +386,10 @@ void testBrokerWire() {
     ask.query.sort = sim::BrokerQuery::Sort::Seller;
     ask.query.page = 3;
     ask.query.sellerName = "Elowen";
+    ask.query.luckOnly = true;
+    ask.query.socketOnly = true;
+    ask.query.minPrice = 250000;
+    ask.query.maxPrice = 9000000000LL;
     ask.fromVault = true;
     ask.slot = 17;
     ask.seen.item = 12;
@@ -369,6 +429,23 @@ void testBrokerWire() {
               askBack.query.page == 3 && askBack.query.sellerName == "Elowen" && askBack.fromVault && askBack.slot == 17 && askBack.seen.refinement == 7 &&
               askBack.price == 3400000 && askBack.hours == 48,
           "a BrokerAsk crosses the wire whole");
+    check(askBack.query.luckOnly && askBack.query.socketOnly && askBack.query.minPrice == 250000 &&
+              askBack.query.maxPrice == 9000000000LL && !askBack.query.excellentOnly && !askBack.query.descending,
+          "with its Luck, socket and price range, the other flags untouched");
+    {
+        net::BrokerAsk plain;
+        plain.what = net::BrokerWhat::Browse;
+        std::vector<uint8_t> b;
+        net::put(b, plain);
+        net::Kind k{};
+        std::vector<uint8_t> bd;
+        net::BrokerAsk back2;
+        check(net::take(b, k, bd) == 1 && net::parse(bd, back2) && !back2.query.luckOnly && !back2.query.socketOnly &&
+                  back2.query.minPrice == 0 && back2.query.maxPrice == 0,
+              "an ask with no range carries none");
+        bd.pop_back();
+        check(!net::parse(bd, back2), "and one cut short is refused");
+    }
     net::BrokerView viewBack;
     check(net::take(bytes, kind, body) == 1 && kind == net::Kind::BrokerView && net::parse(body, viewBack) &&
               viewBack.answered == 41 && viewBack.said == view.said && viewBack.rows.size() == 1 &&

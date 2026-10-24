@@ -25,7 +25,11 @@
 // **Ours, and marked.** The sparks are calmed as Hanzo's are (fx/forge.h, "sparkles is too
 // crazy"): one streak of MU's four, and a mote on one frame in two. The five terrain lights are
 // one point light at the hub, since the transient list is short and five lights 18 degrees apart
-// read as one. Nothing else: the count, the radius, the speeds and the alphas are MU's.
+// read as one. And **the radius**: MU turns it at 150 (180 for a polearm), a tile and a half,
+// where the blow reaches three (the user, 2026-10-23: "we need that user can see that twisting
+// slash is rotation on 3 tiles"). So the copies turn at the skill's reach less half a tile --
+// less a fifth for a polearm, MU's longer orbit -- and the blade's tip sweeps the edge of what
+// it strikes. The count, the speeds and the alphas are MU's.
 //
 // No weapon blur rides the swing: MuMain's blur and its hit spark are both gated to
 // PLAYER_ATTACK_SKILL_SWORD1..5 (ZzzCharacter.cpp:3853, :4885), and the wheel's action is past
@@ -58,8 +62,10 @@ public:
               const content::Showing& table, const content::Ground* ground);
 
     // A wheel for `owner`, to start turning when his attack clock reaches MU's fifteen. `weapon`
-    // is what his right hand holds; null throws the sparks and the smoke alone.
-    void cast(uint32_t owner, const content::Mesh* weapon, const ShineLook& shine, bool polearm);
+    // is what his right hand holds; null throws the sparks and the smoke alone. `reachTiles` is
+    // how far the blow strikes, which the wheel is drawn out to.
+    void cast(uint32_t owner, const content::Mesh* weapon, const ShineLook& shine, bool polearm,
+              float reachTiles);
 
     // `where(id, feet, yaw)` stands the owner as he is drawn now -- the wheel follows him -- and
     // is false when he is gone, which ends his wheel. `began(id, feet)` is called on the frame a
@@ -82,7 +88,7 @@ private:
     static constexpr int kCopies = 5;             // WHEEL1's LifeTime
     static constexpr float kCopyFrames = 25.0f;   // WHEEL2's
     static constexpr float kAlpha[kCopies] = {1.0f, 1.0f, 0.6f, 0.5f, 0.4f};
-    static constexpr float kOrbitUnits = 150.0f, kPoleOrbitUnits = 180.0f;
+    static constexpr float kInsideTiles = 0.5f, kPoleInsideTiles = 0.2f;  // ours, see above
     static constexpr float kOrbitTurn = 18.0f;  // degrees a frame
     static constexpr float kSpinTurn = 30.0f;   // and the weapon about itself, on top
     static constexpr float kRaiseUnits = 100.0f;
@@ -110,6 +116,7 @@ private:
         const content::Mesh* weapon = nullptr;
         ShineLook shine;
         bool polearm = false;
+        float radius = 1.5f;  // metres from his feet to a copy
         float wait = 0.0f;   // reference frames to the start
         float clock = 0.0f;  // reference frames since the start: WHEEL1's own life
         float facing = 0.0f;

@@ -167,12 +167,17 @@ constexpr float kHeadInset = 7.0f;
 constexpr float kHeadDrop = 1.0f;
 constexpr float kTitleSize = 9.5f;  // Cinzel reads a size larger than the body face does
 
-// The seat for a button in the plate's end cap -- the close, on the right.
-gfx::Box headSocket(bool right);
-inline gfx::Box frameClose() { return headSocket(true); }
+// The seat for a button in the plate's end cap -- the close, on the right. `width` is the
+// window's, here and below: kWidth but for the vault, which spans two columns (kWideWidth).
+gfx::Box headSocket(bool right, float width = kWidth);
+inline gfx::Box frameClose(float width = kWidth) { return headSocket(true, width); }
+
+// Two columns and the gap between them, as one window: the vault's (sim/vault.h).
+constexpr float kWideWidth = kWidth * 2.0f + kColumnGap;
 
 // The glass, its gradient stroke, the head's band, the mark, the title and the rule under it.
-void frame(gfx::Canvas& canvas, Arts& arts, float x, float y, const std::string& title);
+void frame(gfx::Canvas& canvas, Arts& arts, float x, float y, const std::string& title,
+           float width = kWidth);
 // **The head's own face: Cinzel Medium**, the map name's and the fight's figures' family, baked
 // once for every window. The user, 2026-09-23: *"maybe use that gothic font somehow"* -- it is
 // the one voice this game already says its own name in, and a window's title is the same kind of
@@ -187,7 +192,7 @@ const gfx::Face* titleFace();
 bgfx::TextureHandle titleTexture();
 // The cross in the head's right-hand end, in its three lights.
 void close(gfx::Canvas& canvas, Arts& arts, float x, float y, bool pressed);
-void close(gfx::Canvas& canvas, float x, float y, bool over, bool pressed);
+void close(gfx::Canvas& canvas, float x, float y, bool over, bool pressed, float width = kWidth);
 // A framed block at any size, in the card's own 3% fill under a 10% hairline. `Panel.Field`.
 void field(gfx::Canvas& canvas, Arts& arts, float x, float y, const gfx::Box& units,
            const char* key = "bag_field");
@@ -204,10 +209,11 @@ constexpr float kCarryX = 30.0f;
 // Where a thing whose footprint is `units` stands while it is carried.
 inline gfx::Box carryBox(const gfx::Box& units) { return {kCarryX, kHeight + 2.0f, units.w, units.h}; }
 // The stage's picture over the window at (x, y), less the strip.
-void standing(gfx::Canvas& canvas, const gfx::Art& picture, float x, float y);
+void standing(gfx::Canvas& canvas, const gfx::Art& picture, float x, float y, float width = kWidth);
 // What rides the pointer: the thing of footprint `units`, cut from the strip, its middle at
 // (px, py); a plain box where there is no picture yet.
-void carried(gfx::Canvas& canvas, const gfx::Art& picture, const gfx::Box& units, float px, float py);
+void carried(gfx::Canvas& canvas, const gfx::Art& picture, const gfx::Box& units, float px, float py,
+             float width = kWidth);
 // A part of a stack riding (Shift-click): its count at the lower left of what `carried` drew.
 void carriedCount(gfx::Canvas& canvas, const gfx::Box& units, float px, float py, int count);
 // **The Rune of Creation in its socket, as its own picture** (the user, 2026-09-29: "we need to
