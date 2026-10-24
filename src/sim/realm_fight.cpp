@@ -13,6 +13,7 @@
 #include <utility>
 
 #include "core/log.h"
+#include "sim/electric_spike_box.h"
 #include "sim/elite.h"
 #include "sim/realm_tuning.h"
 
@@ -52,7 +53,11 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     const Fighter* swinger = &attacker.stats;
     if (row != nullptr && row->kin == Kin::DarkLord && !row->wizardry && attacker.player) {
         const HeroPoints p = attacker.totalPoints();
-        const int flat = p.strength / 25 + p.energy / 50;
+        // Electric Spike's is Command/10 and fifty a party member near him, in place of it
+        // (WebZen ObjAttack.cpp:3210-3220, the head of the same else-if).
+        const int flat = row->number == skill::kElectricSpike
+                             ? p.command / 10 + 50 * partyNear(attacker)
+                             : p.strength / 25 + p.energy / 50;
         lord = attacker.stats;
         lord.minimumDamage += row->damage + flat;
         lord.maximumDamage += row->damage + row->damage / 2 + flat;
@@ -1302,6 +1307,11 @@ void Realm::release(Body& hero, uint32_t at, float force, int32_t skill, const f
     const SkillRow* row = skillNumbered(skill);
     // His talents' procs, once a swing or cast (talentRelease).
     talentRelease(hero, row);
+    // Electric Spike: down WebZen's table toward his aim.
+    if (row && row->number == skill::kElectricSpike) {
+        electricSpike(hero, *row, at, force);
+        return;
+    }
     // A line is let go along where he aimed, whether or not what he aimed at still stands, and
     // flies to every body in it.
     if (row && row->spread == Spread::Line) {
@@ -1979,6 +1989,55 @@ void Realm::fireBurst(Body& hero, const SkillRow& row, uint32_t aimedAt, float f
         loose(hero, row, one.id, force, false, false,
               burstDice_.nextInt(kBurstFirstTick, kBurstLastTick + 1));
     }
+}
+
+void Realm::electricSpike(Body& hero, const SkillRow& row, uint32_t aimedAt, float force) {
+    // Said once down his aim, so the bolt is drawn once, as a wave is.
+    say(What::Loosed, hero, row.number, 0, int32_t(std::lround(hero.aim * 1000.0f)), aimedAt);
+    // WebZen's GetAngle from his tile toward the ground he named: atan2(y - ty, x - tx) + 90
+    // degrees, whole, and a tenth of it the table's direction (ObjUseSkill.cpp:3485-3493,
+    // SkillHitBox.cpp:39-58).
+    const float c = fm::cos(hero.aim), s = fm::sin(hero.aim);
+    int angle = int(fm::atan2(-s, -c) * 57.2957795f + 90.0f);
+    if (angle < 0) angle += 360;
+    const int dir = std::min(angle / 10, kSparkBoxDirs - 1);
+    const int hx = hero.column(), hy = hero.row(), half = kSparkBoxSize / 2;
+    // Every monster the table marks, whatever stands between: WebZen tests no wall
+    // (ObjUseSkill.cpp:4238-4312). Nearest first and then by id, so the landings come in the
+    // order the bolt meets them and the log is fixed; only the aimed body pays back.
+    uint32_t victims[kVictims];
+    float off[kVictims] = {};
+    int found = 0;
+    for (const Body& one : bodies_) {
+        if (!one.monster() || !one.alive() || found >= kVictims) continue;
+        if (tables_->grid.safe(one.column(), one.row())) continue;
+        const int tx = one.column() - hx + half, ty = one.row() - hy + half;
+        if (tx < 0 || ty < 0 || tx >= kSparkBoxSize || ty >= kSparkBoxSize) continue;
+        if (((kSparkBox[dir][ty] >> tx) & 1u) == 0) continue;
+        const float gap = fm::hypot(one.x - hero.x, one.y - hero.y);
+        int at = found;
+        while (at > 0 && (off[at - 1] > gap || (off[at - 1] == gap && victims[at - 1] > one.id))) {
+            off[at] = off[at - 1];
+            victims[at] = victims[at - 1];
+            --at;
+        }
+        off[at] = gap;
+        victims[at] = one.id;
+        ++found;
+    }
+    for (int i = 0; i < found; ++i) loose(hero, row, victims[i], force, false, victims[i] == aimedAt);
+}
+
+int Realm::partyNear(const Body& hero) const {
+    if (hero.party == 0) return 0;
+    int near = 0;
+    for (const Body& one : bodies_) {
+        if (!one.player || one.party != hero.party) continue;
+        // `gObjCalDistance(...) < 10`, whole tiles truncated, as WebZen counts them.
+        const float dx = float(one.column() - hero.column()), dy = float(one.row() - hero.row());
+        if (int(std::sqrt(dx * dx + dy * dy)) < 10) ++near;
+    }
+    return near;
 }
 
 void Realm::shower(Body& hero, const SkillRow& row, uint32_t aimedAt, float force,

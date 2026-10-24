@@ -211,4 +211,67 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
         check(struck[3] < 0, "the one three tiles off it does not");
         check(cooledAt > 0, "and it is cooling as it is let go");
     }
+
+    // **Electric Spike** (65, docs/plans/dark-lord-spells/electric-spike.md): MU's row; WebZen's
+    // table decides who is struck, each when the bolt gets there; his party near him adds.
+    {
+        const sim::SkillRow* spike = sim::skillNumbered(sim::skill::kElectricSpike);
+        check(spike != nullptr && !spike->primary() && spike->kin == sim::Kin::DarkLord && spike->reach == 10.0f &&
+                  spike->damage == 250 && spike->needLevel == 92 && spike->coolTicks == 100 && spike->clip == 152 &&
+                  spike->aimsAtPointer(),
+              "Electric Spike: level 92, ten tiles, 250 damage, five seconds, thrown at the ground");
+        sim::Realm lordRealm;
+        check(lordRealm.raise(&lorencia, 9, 160, 60, sim::Kin::DarkLord, 100), "a level-100 Dark Lord raises");
+        check(lordRealm.learn(sim::skill::kElectricSpike), "he learns it");
+        lordRealm.unseen(true);
+        lordRealm.benchUndying(true);
+        const sim::Body& me = lordRealm.hero();
+        const int hx = me.column(), hy = me.row();
+        checkEqual(lordRealm.partyNear(me), 0, "outside a party, no party bonus");
+        check(lordRealm.setParty(me.id, 7), "he joins a party");
+        checkEqual(lordRealm.partyNear(me), 1, "and counts himself in it, as WebZen does");
+        check(lordRealm.setParty(me.id, 0), "and leaves it");
+        // Thrown due east: three and nine tiles along it are in WebZen's table, three tiles off
+        // the line and three tiles behind him are not.
+        const int offsets[4][2] = {{3, 0}, {9, 0}, {3, 3}, {-3, 0}};
+        uint32_t ids[4] = {};
+        int found = 0;
+        for (const sim::Body& one : lordRealm.bodies()) {
+            if (found == 4) break;
+            if (!one.monster() || !one.alive()) continue;
+            ids[found++] = one.id;
+        }
+        check(found == 4, "four monsters to strike");
+        const auto hold = [&] {
+            for (int i = 0; i < 4; ++i) {
+                auto* held = const_cast<sim::Body*>(lordRealm.find(ids[i]));
+                held->x = float(hx + offsets[i][0]);
+                held->y = float(hy + offsets[i][1]);
+            }
+        };
+        hold();
+        lordRealm.invokeAt(sim::skill::kElectricSpike, hx + 6, hy);
+        int64_t letGo = -1;
+        int64_t struck[4] = {-1, -1, -1, -1};
+        int loosed = 0;
+        for (int tick = 0; tick < 80; ++tick) {
+            if (letGo < 0) hold();
+            lordRealm.step();
+            for (const sim::Happening& one : lordRealm.happenings()) {
+                if (one.who != lordRealm.hero().id) continue;
+                if (one.what == sim::What::Loosed && one.a == sim::skill::kElectricSpike) ++loosed, letGo = tick;
+                if (one.what != sim::What::Hit && one.what != sim::What::Missed) continue;
+                for (int i = 0; i < 4; ++i) {
+                    if (one.whom == ids[i] && struck[i] < 0) struck[i] = tick;
+                }
+            }
+        }
+        std::printf("  electric spike: let go %lld, struck %lld %lld %lld %lld\n", (long long)letGo,
+                    (long long)struck[0], (long long)struck[1], (long long)struck[2], (long long)struck[3]);
+        checkEqual(loosed, 1, "one bolt is said");
+        check(letGo >= 0 && struck[0] > letGo && struck[0] - letGo <= 2,
+              "the body three tiles down the line is struck as the bolt reaches it");
+        check(struck[1] > struck[0] && struck[1] - letGo <= 5, "and the one at nine a little later");
+        check(struck[2] < 0 && struck[3] < 0, "off the table, beside it and behind him, nothing");
+    }
 }

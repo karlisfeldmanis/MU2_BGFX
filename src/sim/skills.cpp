@@ -930,6 +930,21 @@ constexpr SkillRow kRows[kSkills] = {
               "it burns half a second later. His energy multiplies it.",
      .clip = 80, .sound = "fire_burst", .built = true, .families = arms::kNone, .needLevel = 74,
      .kin = Kin::DarkLord, .damage = 100, .flies = 10.0f, .anyHand = true, .release = 3.0f / 7.0f},
+    // Electric Spike 65 (docs/plans/dark-lord-spells/electric-spike.md): MU's row, WebZen
+    // skill.txt:70 -- level 92, 250 damage (rolled to 375), ten tiles, five seconds' delay, energy
+    // 126 and Command 340 -- thrown at the ground he names (ClassAttack.cpp:916-930) on
+    // PLAYER_SKILL_FLASH (152), let go at its frame 5.5 of 13 (ZzzCharacter.cpp:2885-2895). Whatever
+    // WebZen's table marks is struck (Realm::electricSpike); Command/10 + 50 a party member near
+    // him go on the band in place of Str/25 + Ene/50 (ObjAttack.cpp:3210-3220).
+    // **Ours**: forty mana where MU spends 100 AG, which this game has not; each body struck when
+    // the bolt reaches it (`flies` 40: MU's bolt is ~900 units out six frames after the let-go),
+    // where WebZen strikes them all half a second after the click; no party drain (decision 6).
+    {.number = skill::kElectricSpike, .name = "Electric Spike", .mana = 40, .reach = 10.0f, .force = 2.0f,
+     .coolTicks = 100, .spread = Spread::Line,
+     .tells = "A bolt of lightning down a line ten tiles long toward the ground he names, through "
+              "everything in it. His Command and his party near him add to it.",
+     .clip = 152, .sound = "electric_spike_ready", .built = true, .families = arms::kNone, .needLevel = 92,
+     .kin = Kin::DarkLord, .damage = 250, .flies = 40.0f, .anyHand = true, .release = 5.5f / 13.0f},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

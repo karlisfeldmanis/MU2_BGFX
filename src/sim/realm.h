@@ -1656,6 +1656,9 @@ public:
     // **A body's party** (docs/game/party.md, Command::Kind::PartySet): the server's number for it, 0
     // for none. False for no player of that id.
     bool setParty(uint32_t id, uint32_t party);
+    // His party within ten whole tiles of him, himself included; none outside a party
+    // (WebZen GetPartyMemberCount, ObjBaseAttack.cpp:1347-1380): Electric Spike's fifty each.
+    int partyNear(const Body& hero) const;
     // **Threat** (realm_party.cpp, docs/game/party.md): whether he is a party's tank -- a knight or a
     // Magic Gladiator with his Defense guard up -- and what he holds on a monster. And for the
     // tests, a party member's blow of `damage` on a monster as the fight lands it (partyBlow).
@@ -1814,6 +1817,9 @@ private:
     // Fire Burst: the aimed body, said and flown to as any throw; and every monster within
     // `kBurstTiles` whole tiles of it, unsaid, struck `burstDice_`'s 10-15 ticks on.
     void fireBurst(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
+    // Electric Spike: one `Loosed` down his aim (in `c`, thousandths of a radian), and a flight to
+    // every monster WebZen's table marks in that direction (sim/electric_spike_box.h).
+    void electricSpike(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
     // A shower (SkillRow::showers): `kShowerRocks` rocks at random within the splash of `spot`
     // (tiles), or of the body `aimedAt` when there is none, each said as a `Loosed` with no body
     // and its ground in `x`/`y`; every monster within `kRockBlast` of one, in its sight, takes
