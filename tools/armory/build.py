@@ -379,6 +379,13 @@ def build(commit=None, out=None, thumbs=True, say=print):
                 drops_by_item[ik].append({**{k: it[k] for k in DROP_ROW if k in it},
                                           "monster_slug": mon_slug[mk], "monster_name": M[mk]["name"],
                                           **{k: place[k] for k in DROP_PLACE if k in place}})
+            # A quest's treasure drops only while the quest asks for it: on the item's page too, as such.
+            for wq in pl.get("while_quest") or []:
+                if isinstance(wq, dict) and wq.get("item") in I:
+                    drops_by_item[wq["item"]].append({"chance": wq.get("chance"), "rolls": [{"roll": "while_quest", "chance": wq.get("chance")}],
+                                                      "classes": wq.get("classes"), "quest": wq.get("quest"),
+                                                      "monster_slug": mon_slug[mk], "monster_name": M[mk]["name"],
+                                                      **{k: place[k] for k in DROP_PLACE if k in place}})
             drops_by_mon[mk].append({**place, "items": sorted(rows, key=lambda r: -(r.get("chance") or 0))})
 
     # ---- the rules' kinds published as their own pages, and their item references inverted
@@ -482,6 +489,9 @@ def build(commit=None, out=None, thumbs=True, say=print):
             live = (any((d.get("chance") or 0) > 0 for d in drops_by_item.get(k, []))
                     or any(r["role"] == "gives" for v in refs[k].values() for r in v))
         row["live"] = live
+        if isinstance(powers, dict) and isinstance(powers.get(k), dict) and isinstance(powers[k].get("needs"), dict):
+            # What it asks at +0, as the dump's gear powers say it (the list's Requires column).
+            row["need"] = {n: v for n, v in powers[k]["needs"].items() if v}
         rows.append(row)
         e = {"kind": "item", "key": k, "slug": s, "name": it["name"], "category": it["cat"], "sub": it["sub"],
              "classes": it["classes"], "two_handed": it["two_handed"], "stats": it["stats"], "live": live,
