@@ -1,0 +1,227 @@
+{
+  "item": "Object14",
+  "mu_name": "Object14",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 13,
+  "placements": 12,
+  "profile": "world",
+  "sheets": {
+    "song_k21wall05": "kl_song_k21wall05.png",
+    "song_k21magma03": "kl_song_k21magma03.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k21wall05": "flagstone",
+    "song_k21magma03": "lamplight"
+  },
+  "material_note": "song_k21wall05: grey stone carved with a red rune: flagstone; song_k21magma03: molten rock, streaming: lamplight.",
+  "why_this_one": "A 6.5 m stone wall carved with a red rune and a streaming magma vein. 12 placed. MU's model is still (no moving bone). Batch 6 of the Relics (the user, 2026-10-24: \"next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "glow": {
+    "song_k21magma03": {
+      "scrolls_per_second": 0.5,
+      "stream": true
+    }
+  },
+  "glow_from": "Render_Kanturu2nd_ObjectMesh type 13 (GM_Kanturu_2nd.cpp:565-572): mesh 1 drawn as StreamMesh, its V at -(WorldTime % 2000) * 0.0005, a sheet every 2 s, so +0.5 here as Object15. Drawn lit, not added.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 3,
+      "area": 538.4,
+      "along": [
+        3.6,
+        7.8
+      ],
+      "mu_uv": [
+        -0.232,
+        1.605,
+        0.026,
+        2.177
+      ],
+      "bake_uv": [
+        0.112,
+        0.006,
+        0.136,
+        0.059
+      ]
+    },
+    {
+      "island": 1,
+      "material": "lamplight",
+      "triangles": 11,
+      "area": 544.7,
+      "along": [
+        7.7,
+        11.5
+      ],
+      "mu_uv": [
+        -0.154,
+        1.078,
+        0.15,
+        1.559
+      ],
+      "bake_uv": [
+        0.297,
+        0.325,
+        0.325,
+        0.37
+      ]
+    },
+    {
+      "island": 2,
+      "material": "lamplight",
+      "triangles": 22,
+      "area": 1875.7,
+      "along": [
+        11.5,
+        21.4
+      ],
+      "mu_uv": [
+        0.006,
+        0.115,
+        0.66,
+        1.058
+      ],
+      "bake_uv": [
+        0.345,
+        0.058,
+        0.406,
+        0.145
+      ]
+    },
+    {
+      "island": 3,
+      "material": "lamplight",
+      "triangles": 37,
+      "area": 3017.0,
+      "along": [
+        20.2,
+        31.4
+      ],
+      "mu_uv": [
+        0.481,
+        -0.803,
+        1.265,
+        0.238
+      ],
+      "bake_uv": [
+        0.006,
+        0.194,
+        0.079,
+        0.291
+      ]
+    },
+    {
+      "island": 4,
+      "material": "lamplight",
+      "triangles": 3,
+      "area": 538.4,
+      "along": [
+        -8.0,
+        -3.9
+      ],
+      "mu_uv": [
+        -0.232,
+        1.605,
+        0.026,
+        2.177
+      ],
+      "bake_uv": [
+        0.184,
+        0.006,
+        0.208,
+        0.059
+      ]
+    },
+    {
+      "island": 5,
+      "material": "lamplight",
+      "triangles": 11,
+      "area": 544.7,
+      "along": [
+        -11.7,
+        -8.0
+      ],
+      "mu_uv": [
+        -0.154,
+        1.078,
+        0.15,
+        1.559
+      ],
+      "bake_uv": [
+        0.024,
+        0.296,
+        0.052,
+        0.341
+      ]
+    },
+    {
+      "island": 6,
+      "material": "lamplight",
+      "triangles": 22,
+      "area": 1875.7,
+      "along": [
+        -21.7,
+        -11.8
+      ],
+      "mu_uv": [
+        0.006,
+        0.115,
+        0.66,
+        1.058
+      ],
+      "bake_uv": [
+        0.32,
+        0.006,
+        0.381,
+        0.093
+      ]
+    },
+    {
+      "island": 7,
+      "material": "lamplight",
+      "triangles": 37,
+      "area": 3017.1,
+      "along": [
+        -31.6,
+        -20.4
+      ],
+      "mu_uv": [
+        0.481,
+        -0.803,
+        1.265,
+        0.238
+      ],
+      "bake_uv": [
+        0.103,
+        0.038,
+        0.176,
+        0.135
+      ]
+    },
+    {
+      "island": 8,
+      "material": "flagstone",
+      "triangles": 54,
+      "area": 182458.7,
+      "along": [
+        -41.8,
+        41.8
+      ],
+      "mu_uv": [
+        0.013,
+        0.008,
+        0.993,
+        0.992
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.914,
+        0.994
+      ]
+    }
+  ]
+}
