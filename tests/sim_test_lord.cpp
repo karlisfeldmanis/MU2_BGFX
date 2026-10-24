@@ -269,8 +269,8 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
         std::printf("  electric spike: let go %lld, struck %lld %lld %lld %lld\n", (long long)letGo,
                     (long long)struck[0], (long long)struck[1], (long long)struck[2], (long long)struck[3]);
         checkEqual(loosed, 1, "one bolt is said");
-        check(letGo >= 0 && struck[0] > letGo && struck[0] - letGo <= 2,
-              "the body three tiles down the line is struck as the bolt reaches it");
+        checkEqual(int(struck[0] - letGo), 4,
+                   "the body three tiles down the line is struck as MU's tip passes it, frame 5");
         check(struck[1] > struck[0] && struck[1] - letGo <= 5, "and the one at nine a little later");
         check(struck[2] < 0 && struck[3] < 0, "off the table, beside it and behind him, nothing");
     }

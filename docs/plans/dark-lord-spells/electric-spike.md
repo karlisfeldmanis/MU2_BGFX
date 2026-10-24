@@ -184,6 +184,10 @@ New:
 2. **Each body struck when the bolt reaches it**: let go at frame 5.5 of PLAYER_SKILL_FLASH's 13 keys (clip 152,
    `release` 5.5/13), the bolt ~900 units out in 6 MU frames, so `flies` 40 tiles a second. WebZen strikes them all
    500 ms after the click, which at the base speed is about the let-go.
+   **Changed 2026-10-24** ("the number comes with the visual"): each body is struck on the frame MU's tip passes it
+   down his line -- made 90 units ahead, f(f-1) steps of strides 3, 5, 7... by frame f -- and the second frame at the
+   soonest, so a body beside or behind him takes it with the bolt's first light (Realm's `sparkReaches`): 2 ticks
+   at a tile, 4 at three, 5 at nine.
 3. **Damage**: the band 250..375, plus Command/10 + 50 x (his party within 10 tiles, himself included; 0 outside a
    party) **in place of** Str/25 + Ene/50, then (200 + Ene/20)%.
 4. **No party drain** (decision 6), and so **no wisps** from the party, which only draw it.

@@ -1991,6 +1991,26 @@ void Realm::fireBurst(Body& hero, const SkillRow& row, uint32_t aimedAt, float f
     }
 }
 
+namespace {
+
+// When Electric Spike's tip passes a body `along` tiles down his line, in ticks after the let-go:
+// MU's main joint is made 90 units ahead and runs MultiUse - 1 steps a frame, MultiUse 1 and +2 a
+// frame, at strides of 3, 5, 7..., so by frame f it is f(f - 1) steps -- n(n + 2) units -- out
+// (ZzzEffectJoint.cpp:2489-2582, fx/electric_spike.h). The second frame at the soonest, the first
+// it is drawn with any length: a body beside or behind him, which the table strikes and the tip
+// never passes, takes it with the bolt's first light. The number comes with the bolt, not before.
+int32_t sparkReaches(float along) {
+    const float units = along * 100.0f;
+    int frame = 2;
+    for (; frame < 12; ++frame) {
+        const float steps = float(frame * (frame - 1));
+        if (90.0f + steps * (steps + 2.0f) >= units) break;
+    }
+    return int32_t(std::lround(float(frame) * kTicksPerSecond / 25.0f));
+}
+
+}  // namespace
+
 void Realm::electricSpike(Body& hero, const SkillRow& row, uint32_t aimedAt, float force) {
     // Said once down his aim, so the bolt is drawn once, as a wave is.
     say(What::Loosed, hero, row.number, 0, int32_t(std::lround(hero.aim * 1000.0f)), aimedAt);
@@ -2025,7 +2045,11 @@ void Realm::electricSpike(Body& hero, const SkillRow& row, uint32_t aimedAt, flo
         victims[at] = one.id;
         ++found;
     }
-    for (int i = 0; i < found; ++i) loose(hero, row, victims[i], force, false, victims[i] == aimedAt);
+    for (int i = 0; i < found; ++i) {
+        const Body* one = body(victims[i]);
+        const float along = one ? (one->x - hero.x) * c + (one->y - hero.y) * s : 0.0f;
+        loose(hero, row, victims[i], force, false, victims[i] == aimedAt, sparkReaches(along));
+    }
 }
 
 int Realm::partyNear(const Body& hero) const {
