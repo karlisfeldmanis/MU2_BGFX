@@ -85,15 +85,19 @@ private:
     static constexpr float kBlue[3] = {0.3f, 0.6f, 1.0f};
     static constexpr float kLightTiles = 3.0f;
     // ---- its sprites, a frame each ----------------------------------------------------------
-    static constexpr float kShinyScale = 1.5f, kShinyWide = 32.0f, kShinyTall = 64.0f;
-    static constexpr float kFlareScale = 3.5f, kFlarePixels = 64.0f;
+    // Ours, smaller than MU's 1.5 and 3.5 (a 224-unit flare on each of five heads): the user,
+    // 2026-10-24, "sparkles has to be much smaller".
+    static constexpr float kShinyScale = 0.6f, kShinyWide = 32.0f, kShinyTall = 64.0f;
+    static constexpr float kFlareScale = 1.2f, kFlarePixels = 64.0f;
     // ---- the puffs (BITMAP_SMOKE sub 3) and the haze (sub 11) -------------------------------
     static constexpr int kPuffsAFrame = 4;
     static constexpr float kSmokePixels = 64.0f;
     static constexpr float kPuffLife = 10.0f, kPuffGrows = 0.1f;
     static constexpr float kHazeLife = 50.0f, kHazeGrows = 0.05f, kHazeSinks = 1.0f;
     static constexpr float kSlows = 0.4f;
-    static constexpr float kPuffWhite[3] = {0.8f, 0.8f, 1.0f};
+    // Ours: the bright puffs pale blue and dimmer than MU's white (0.8, 0.8, 1), so five heads
+    // at once do not burn a white blot into the grass (the user, 2026-10-24).
+    static constexpr float kPuffTint[3] = {0.45f, 0.55f, 0.75f};
 
     struct Wave {
         bool alive = false;

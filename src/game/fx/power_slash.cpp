@@ -95,8 +95,7 @@ void PowerSlash::stepWave(Wave& one) {
     one.light = between(kLeast, kMost);
     if (one.life < 5) one.light = std::max(0.0f, one.light - float(5 - one.life) * 0.2f);
     for (int k = 0; k < 3; ++k) one.shown[k] = one.at[k];
-    const float white[3] = {1.0f, 1.0f, 1.0f};
-    for (int n = 0; n < kPuffsAFrame; ++n) smoke(puffs_, kPuffs, one.at, between(0.80f, 1.11f), white);
+    for (int n = 0; n < kPuffsAFrame; ++n) smoke(puffs_, kPuffs, one.at, between(0.80f, 1.11f), kPuffTint);
     // The haze set off it, +-32 aside and 32-95 up, lit by the wave as it is made.
     const float off[3] = {one.at[0] + between(-32.0f, 32.0f) * metre,
                           one.at[1] + between(32.0f, 95.0f) * metre,
@@ -142,11 +141,10 @@ void PowerSlash::gatherSmoke(gfx::Effects& effects, const Puff* pool, int size, 
         const float scale = one.scale + (haze ? kHazeGrows : kPuffGrows) * one.age;
         sprite.halfWidth = sprite.halfHeight = kSmokePixels * scale * metre * 0.5f;
         sprite.spin = one.spin;
-        // The bright puffs (0.8, 0.8, 1) times LifeTime / 8, overbright at first and clamped;
-        // the haze its wave's blue times LifeTime / 50.
+        // The bright puffs their tint times LifeTime / 8 (MU's is (0.8, 0.8, 1), overbright at
+        // first and clamped; ours `kPuffTint`); the haze its wave's blue times LifeTime / 50.
         for (int k = 0; k < 3; ++k) {
-            sprite.colour[k] = haze ? clampOne(one.tint[k] * left / kHazeLife)
-                                    : clampOne(kPuffWhite[k] * left / 8.0f);
+            sprite.colour[k] = clampOne(one.tint[k] * left / (haze ? kHazeLife : 8.0f));
         }
         sprite.sheet = smokeSheet_;
         sprite.blend = gfx::Blend::Additive;
@@ -182,6 +180,8 @@ void PowerSlash::gatherEffects(gfx::Effects& effects) const {
                 shiny.halfWidth = kShinyWide * kShinyScale * metre * 0.5f;
                 shiny.halfHeight = kShinyTall * kShinyScale * metre * 0.5f;
                 shiny.spin = one.shinyRoll[i];
+                // Ours: the wave's blue and its fade, not a full white glint.
+                for (int k = 0; k < 3; ++k) shiny.colour[k] = clampOne(kBlue[k] * one.light);
                 shiny.sheet = shinySheet_;
                 shiny.blend = gfx::Blend::Additive;
                 if (!effects.add(shiny)) return;

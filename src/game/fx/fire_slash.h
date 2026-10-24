@@ -83,7 +83,8 @@ private:
     static constexpr int kGatherPoints = 3;
     static constexpr float kGatherRadius = 120.0f;
     static constexpr float kHandLift = 10.0f;
-    static constexpr float kShinyLeast = 1.6f, kShinyMost = 3.0f;
+    // Ours, a third of MU's 1.6-3.0 (the user, 2026-10-24: "sparkles has to be much smaller").
+    static constexpr float kShinyLeast = 0.55f, kShinyMost = 1.0f;
     static constexpr float kShinyFrame = 0.6f;      // ours: AnimationFrame's middle, see above
     static constexpr float kShinyWide = 32.0f, kShinyTall = 64.0f;
     static constexpr float kSparkLife = 15.0f, kSparkPixels = 32.0f;
