@@ -1,0 +1,44 @@
+{
+  "item": "OrbFireSlash",
+  "mu_name": "Orb of Fire Slash",
+  "mu_name_from": "WebZen GameServer 1.00.93 lang/main/item.txt:351, group 12 index 16 (\"Orb of Fire Slash\", MagicInf.cpp:177 teaches AT_SKILL_DEFENSEDOWN, 55); OpenMU VersionSeasonSix/Items/Orbs.cs:46. MU's name; its number here is ours, 16 being the Jewel of Life's neighbour in this table (docs/plans/mg-skills/fire-slash.md section 1).",
+  "why_this_one": "The only way the Magic Gladiator learns Fire Slash, his own sweep (docs/plans/mg-skills/fire-slash.md). Group 12 number 27 is ours: MU's 16 is taken here, and 0-22 and 25 are used on main while branch darklord's plan holds 23, 24 and 26.\n\nIts drop level is MU's 60 (item.txt:351), 51,000 zen, and it drops only: Hanzo sells the early orbs (sim/market.cpp), not this one.",
+  "mesh": "Gem05",
+  "mesh_note": "No geometry of its own. Gem01.bmd through Gem05.bmd are byte-identical in MuMain's Data/Item -- one md5 across all five -- so every orb in MU is one model told apart by its row, and this names the one the pipeline has built.",
+  "stats": {
+    "note": "An orb has no damage roll and no hand: it is a Prize and nothing else, and the shape of the row is the elf orbs' own (Version075/Items/Orbs.cs:63-67) -- one cell, durability one, dropped by monsters.",
+    "group": 12,
+    "number": 27,
+    "drop_level": 60,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "durability_note": "One. One reading, as a scroll is.",
+    "value": 51000,
+    "classes": [
+      "gladiator"
+    ],
+    "classes_from": "MG1 alone in WebZen's row (item.txt:351) and OpenMU's CreateOrb(..., MG); the Magic Gladiator's, as its skill is (sim::skillFor).",
+    "requires": {
+      "level": 120,
+      "strength": 320,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "What the character must BE to read it. Level 120 is ours (the user, 2026-10-24: \"add some level requirments\"): our orbs ask about twice their drop level -- Cyclone 72 at 36, Slash 104 at 52, Death Stab 120 at 60 -- and this one drops at 60, so Death Stab's tier. The strength is MU's raw 320 (item.txt:351, OpenMU Orbs.cs:46), which sim::asks runs through the requirements' formula as WebZen's zzzitem.cpp:457 does: 20 + 320 x 60 x 3 / 100 = 596, asked of his strength with its bonuses at the read (Realm::useItem; protocol.cpp:17795). No energy (MagicDamage.cpp:705). The same level is on the skill block below and on the skill's row (sim/skills.cpp needLevel) -- the three must agree."
+  },
+  "skill": {
+    "note": "What the orb teaches. Read once and gone -- the durability of one is what 'used once' means on this row.",
+    "number": 55,
+    "name": "Fire Slash",
+    "tells": "A ribbon of fire swept round the half in front of him within two and a half tiles. What it burns may lose a tenth of its defence for ten seconds.",
+    "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter so the orb's tooltip and the skill's card cannot say different things about the same blow. MU never prints a line like this at all; it is ours, as it is on the elf's orbs.",
+    "level_requirement": 120,
+    "energy_requirement": 0,
+    "energy_from": "None: WebZen overrides skill 55 to no energy (MagicDamage.cpp:705), and OpenMU asks none.",
+    "value": 51000,
+    "level_from": "Ours: twice the orb's drop level, as Death Stab's 120 at 60 (the user, 2026-10-24: \"add some level requirments\"). MU asks no level (MagicDamage.cpp:683-689)."
+  }
+}

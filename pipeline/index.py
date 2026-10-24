@@ -406,6 +406,15 @@ EFFECTS = {
     "weakness_shiny": "effects/weakness/shiny05.png",
     "weakness_pin": "effects/weakness/pin_lights.png",
 
+    # The Magic Gladiator's Fire Slash (game/fx/fire_slash.h): BITMAP_JOINT_FORCE's ribbon,
+    # Effect/motion_blur_r2.jpg, 64 by 128, an orange-red flame gradient white-hot at U 1, laid
+    # wrapping (GL_REPEAT, ZzzOpenData.cpp:5295); and BITMAP_SKULL, Skill/Skull.jpg, 16 by 16 and
+    # GL_NEAREST (:5294), the three over a body whose defence it cut. Both JPEGs on black, added.
+    # Its flames, bolts, sparks and hand glow are "fire", "joint_thunder", "spark_flash" and
+    # "shiny_02", already here.
+    "fire_slash_ribbon": "effects/fireslash/motion_blur_r2.png",
+    "fire_slash_skull": "effects/fireslash/skull.png",
+
     # The Ancient rune Drain Life's (game/fx/drain.h): BITMAP_LIGHT + 2, Effect/cra_04.jpg, its
     # red motes; and BITMAP_DRAIN_LIFE_GHOST, Effect/gostmark01.jpg, the ghosts it throws
     # (ZzzOpenData.cpp:5429, 5222).

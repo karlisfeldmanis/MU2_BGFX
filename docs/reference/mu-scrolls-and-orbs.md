@@ -135,7 +135,7 @@ Note the orb's **drop level of 3** on a +0 orb: the item is meant to be in a lev
 | 12 | Orb of Rageful Blow | Rageful Blow | Season 6 in this tree | `VersionSeasonSix/Items/Orbs.cs:43` |
 | 13 | Orb of Impale | Impale | Season 6 | `…/Orbs.cs:44` |
 | 14 | Orb of Greater Fortitude | Swell Life | Season 6 | `…/Orbs.cs:45` |
-| 16 | Orb of Fire Slash | Fire Slash | Season 6 | `…/Orbs.cs:46` |
+| 16 | Orb of Fire Slash | Fire Slash | Season 6 (WebZen: Icarus era) | `…/Orbs.cs:46`; ours is **12/27** (OrbFireSlash, 2026-10-24: drop 60, level 120, strength 596) |
 | 17 | Orb of Penetration | Penetration | Season 6 | `…/Orbs.cs:47` |
 | 18 | Orb of Ice Arrow | Ice Arrow | Season 6 | `…/Orbs.cs:48` |
 | 19 | Orb of Death Stab | Death Stab | Season 6 | `…/Orbs.cs:49` |

@@ -529,7 +529,8 @@
       "files": [
         "sKnightSkill3.wav"
       ],
-      "from": "SOUND_SKILL_SWORD3, Data\\Sound\\sKnightSkill3.wav. WSclient plays it for AT_SKILL_UPPERCUT, skill 21."
+      "from": "SOUND_SKILL_SWORD3, Data\\Sound\\sKnightSkill3.wav. WSclient plays it for AT_SKILL_UPPERCUT, skill 21.",
+      "note": "And Fire Slash, skill 55: AttackStage plays SOUND_SKILL_SWORD3 as the ribbon is made, on WHEEL's third key (ZzzCharacter.cpp:2783-2818), cued by game/fx/fire_slash."
     },
     "player_skill_sword4": {
       "files": [
@@ -2850,6 +2851,13 @@
       ],
       "from": "SOUND_SKILL_DRAIN_LIFE, which ZzzOpenData loads from Data\\\\Sound\\\\SE_Ch_summoner_skill07_lifedrain.wav with one voice (:4919). ZzzCharacter plays it as Drain Life lets MODEL_ALICE_DRAIN_LIFE go (:5214-5223).",
       "note": "The Ancient rune Drain Life (sim/items.h kDrain...), played where it drains (game/fx/drain)."
+    },
+    "skill_blood_attack": {
+      "files": [
+        "eBloodAttack.wav"
+      ],
+      "from": "SOUND_BLOODATTACK (133), which ZzzOpenData loads from Data\\\\Sound\\\\eBloodAttack.wav (:4833). WSclient plays it on the body when Fire Slash cuts its defence (ReceiveMagic, 4364-4381) and when that debuff is registered from a state packet (InsertBuffPhysicalEffect, 15201-15208).",
+      "note": "Fire Slash's cut landing on a body, at the body (game/fx/fire_slash)."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."
