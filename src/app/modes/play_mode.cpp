@@ -1366,7 +1366,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
         const bool windowed = desk_.ready() && desk_.takesPointer();
         world_.played().point(world_.camera(), view, proj, pointerX, pointerY,
-                              ctx.window.width(), ctx.window.height());
+                              ctx.window.width(), ctx.window.height(), ctx.window.alt());
         // A name plate over the drop outranks what the ray found behind it, a monster included.
         if (desk_.ready() && !windowed) {
             world_.played().pointAtLabel(desk_.labelUnder(pointerX, pointerY));

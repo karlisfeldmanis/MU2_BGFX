@@ -459,6 +459,8 @@ bool Window::pump() {
                                              {GLFW_KEY_A, -1}};
     shift_ = glfwGetKey(handle_, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
              glfwGetKey(handle_, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
+    alt_ = glfwGetKey(handle_, GLFW_KEY_LEFT_ALT) == GLFW_PRESS ||
+           glfwGetKey(handle_, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS;
     for (size_t i = 0; i < size_t(Key::Count); ++i) {
         bool down = false;
         for (int k : keys[i]) {

@@ -196,8 +196,11 @@ public:
     // The pointer, and what a click does with it. The ray is cast against the land's own
     // height field rather than against a flat plane: the town is up to two metres of relief
     // and a flat-plane pick is a tile or two out wherever the ground is not level.
+    // `past`, Alt held: the pointer passes through every monster, so a click walks between
+    // them or picks up what lies under them, and never fights (Piddy on Discord, 2026-10-25:
+    // "move through the mobs without attacking them" in Blood Castle and Devil Square).
     void point(const gfx::Camera& camera, const float* view, const float* proj, float pixelX,
-               float pixelY, int width, int height);
+               float pixelY, int width, int height, bool past = false);
     void leftClick();   // walk to the tile under the pointer, or fight what is standing on it
     // Space (the player's report, 2026-10-16: "spacebar does not join objects"): the nearest
     // drop he may take within a few tiles of him, walked to and picked up. `fresh` for the
