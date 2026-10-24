@@ -314,7 +314,7 @@ def events_from_drops(drops_by_mon, M, mon_slug, I, item_slug, W, world_slug, sl
         ev = found[k]
         mons = sorted(ev["monsters"].values(), key=lambda m: (m["level"] or 0, m["name"]))
         drops = sorted(ev["drops"].values(), key=lambda d: -d["chance"])
-        levels = [m["level"] for m in mons if m["level"] is not None]
+        levels = [m["level"] for m in mons if m["level"]]  # a statue's 0 is no monster level
         w = ev["world"]
         rows.append({"k": k, "slug": sl[k], "n": ev["name"], "type": ev["type"], "number": ev["number"], "world": w,
                      "levels": [min(levels), max(levels)] if levels else None, "monsters": len(mons),
@@ -707,6 +707,8 @@ def build(commit=None, out=None, thumbs=True, say=print):
             "counts": counts, "dump": {"dir": str(dump_dir.relative_to(common.ROOT)), "missing": missing},
             "names": "English (the game's own); not translated", "notes": notes[:500]}
     write(dest / "meta.json", meta, stamp)
+    import pictures
+    pictures.run(dest, say=say)  # a picture for each page without one, from what it links to
     import history
     history.run(dest, say=say)
 

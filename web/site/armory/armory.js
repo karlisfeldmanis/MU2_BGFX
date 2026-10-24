@@ -132,6 +132,9 @@
   const rng = (v) => (Array.isArray(v) ? `${N(v[0])} – ${N(v[1])}` : v ? N(v) : '—');
   const low = (v) => (Array.isArray(v) ? v[0] : v || 0);
   const tiles = (n) => (n === 1 ? t('1 tile') : t('{n} tiles', { n }));
+  // A list row's picture: its own thumbnail, else the one its links give it (pictures.py `pic`).
+  const rowPic = (r) => (r && (r.t || (r.pic && r.pic.card))) || null;
+  const icoCell = (r, tone) => `<td style="width:60px"><span class="ico"${tone ? ` style="border-color:${tone};box-shadow:0 0 10px -2px ${tone}"` : ''}>${rowPic(r) ? `<img src="${pic(rowPic(r))}" alt="" loading="lazy" width="40" height="40">` : ''}</span></td>`;
   const isZen = (i) => i && (i.k === 'Gold01' || i.slug === 'zen');
 
   // ---- one entity, one panel: its head (picture, name, a line under it, the facts strip), a row
@@ -141,7 +144,7 @@
     const c = cells.filter(Boolean);
     return c.length ? `<dl class="sgrid">${c.map(([l, v, o]) => `<div class="sg"><dt>${esc(l)}</dt><dd${o.tone ? ` style="color:${o.tone}"` : ''}>${o.raw ? v : esc(typeof v === 'number' ? v.toLocaleString('en') : v)}</dd></div>`).join('')}</dl>` : '';
   };
-  const epic = (thumb, name, under) => `<div class="epicol"><div class="epic">${thumb && thumb.page ? `<img src="${pic(thumb.page)}" alt="${esc(t('{name}, as the game draws it', { name }))}" width="240" height="240">` : `<span class="mute small">${esc(t('No picture'))}</span>`}</div>${under || ''}</div>`;
+  const epic = (thumb, name, under, tone) => `<div class="epicol"><div class="epic${tone ? ' toned' : ''}"${tone ? ` style="--tone:${tone}"` : ''}>${thumb && thumb.page ? `<img src="${pic(thumb.page)}" alt="${esc(t('{name}, as the game draws it', { name }))}" width="240" height="240">` : `<span class="mute small">${esc(t('No picture'))}</span>`}</div>${under || ''}</div>`;
   const pickTab = (tabs) => (tabs.some(x => x[0] === R.q.tab) ? R.q.tab : tabs[0][0]);
   const tabBar = (tabs, cur, label, clear) => `<div class="tabs" role="tablist" aria-label="${esc(label)}">${tabs.map(x =>
     `<a class="tab${x[2] === 0 ? ' none' : ''}" role="tab" data-q data-keep href="${esc(qLink(Object.assign({ tab: x[0] === tabs[0][0] ? '' : x[0], all: '' }, clear || {})))}" aria-selected="${x[0] === cur ? 'true' : 'false'}"><span class="tw">${esc(x[1])}</span>${x[2] !== '' && x[2] != null ? `<span class="tc">${x[2]}</span>` : ''}</a>`).join('')}</div>`;
@@ -207,18 +210,21 @@ ${o.strip ? `<div class="estrip">${o.strip}</div>` : ''}${o.tabs ? tabBar(o.tabs
     const top = (list, key) => list.slice().sort((x, y) => (key(y) || 0) - (key(x) || 0))[0];
     const img = (p) => (p ? `<img src="${pic(p)}" alt="" loading="lazy" width="72" height="72">` : '');
     const MS0 = by('monsters', 'slug');
-    const evThumb = (r) => eventPic(have(`events/${r.slug}.json`), MS0);
+    const evThumb = (r) => rowPic(r) || eventPic(have(`events/${r.slug}.json`), MS0);
     const mapOf = (w) => (w ? chart(w, [], { square: true }) : '');
     const pick = {
       items: img((top(I.filter(i => i.t && i.c === 'Weapons' && i.live !== false), i => i.dl) || {}).t),
       monsters: img((top(rows('monsters').filter(m => m.t && m.live !== false), m => m.lv) || {}).t),
       npcs: img((rows('npcs').find(n => n.t && n.role === 'shop') || rows('npcs').find(n => n.t) || {}).t),
-      quests: img(((F[(rows('quests')[0] || {}).giver]) || {}).t),
+      quests: img(rowPic(rows('quests')[0]) || ((F[(rows('quests')[0] || {}).giver]) || {}).t),
+      runes: (() => { const r = rows('runes').filter(rowPic).sort((x, y) => (y.hero_level || 0) - (x.hero_level || 0))[0]; return r ? `<span class="toned-in" style="--tone:${runeTone(r)}">${img(rowPic(r))}</span>` : ''; })(),
+      elites: img(rowPic(rows('elites').filter(rowPic).sort((x, y) => (y.map || 0) - (x.map || 0))[0])),
+      talents: (() => { const tr = rows('talents')[0]; const T = tr && have(`talents/${tr.slug}.json`); const ic = T && T.icons && Object.values(T.icons)[0]; return ic ? `<span class="ticon" style="background-image:url(${pic(ic)})"></span>` : ''; })(),
       events: img((() => { const ev = rows('events'); const r = ev.find(x => x.type === 'raid') || ev[ev.length - 1]; return r ? evThumb(r) : null; })()),
       skills: (() => { const x = rows('skills').find(r => r.icon); return x ? `<span class="ticon" style="background-image:url(${pic(x.icon)})"></span>` : ''; })(),
-      mixes: img(((F[(rows('mixes')[0] || {}).npc]) || {}).t),
+      mixes: img(rowPic(rows('mixes')[0]) || ((F[(rows('mixes')[0] || {}).npc]) || {}).t),
       worlds: (() => { const w = rows('worlds').find(r => r.chart && r.live !== false && r.in_release); return w ? mapOf(w.k) : ''; })(),
-      boxes: img(((I.find(i => i.k === (rows('boxes')[0] || {}).item)) || {}).t),
+      boxes: img(rowPic(rows('boxes')[0]) || ((I.find(i => i.k === (rows('boxes')[0] || {}).item)) || {}).t),
     };
     const kinds = ['items', 'monsters', 'npcs', 'quests', 'events', 'runes', 'skills', 'talents', 'mixes', 'elites', 'worlds', 'boxes'].filter(k => (B.kinds || []).includes(k));
     const count = (k) => (k === 'talents' ? t('{n} classes', { n: C[k] }) : N(C[k]));
@@ -673,7 +679,12 @@ ${(pl.while_quest || []).length ? `<h2 class="h3" style="margin-top:24px">${esc(
     const mixes = (M || []).filter(m => m.npc === e.npc && m.listed !== false);
     const shelf = e.shelf || [];
     const W = by('worlds', 'k');
-    const services = (e.services || []).map(pretty).concat(e.repairs ? [t('Repairs')] : []);
+    // What it does, in words: the `repairs` flag and the `repair` service are the same thing.
+    const DOES = { shop: t('sells'), buys: t('buys'), repair: t('repairs'), quests: t('gives quests'), quest_hand_in: t('takes quests in'), guards_the_town: t('guards the town'),
+      broker: t('runs the market'), vault: t('keeps your vault'), chaos_machine: t('runs the Chaos Machine'), jeweler: t('sets jewels'), rebirth: t('gives rebirth'),
+      blood_castle_gate: t('opens Blood Castle'), devil_square_gate: t('opens Devil Square'), archangel: t('takes the Archangel weapons back') };
+    const does = [...new Set((e.services || []).concat(e.repairs ? ['repair'] : []))].map(x => DOES[x] || pretty(x).toLowerCase());
+    const services = does.length ? [does.join(', ').replace(/^./, (c) => c.toUpperCase())] : [];
     const worlds = [...new Set(where.map(x => worldName(x.world)))].join(', ');
     // A guard's own numbers (the dump's `guard`), as it fights.
     const gd = e.guard;
@@ -723,9 +734,9 @@ ${folk.length ? sec(t('Townsfolk'), folk.map(n => `<a class="sim" href="${href('
     crumbs([[LIST.quests]]);
     if (rows === undefined) return listPage(LIST.quests, '', missing.has('rules') ? waitDump('rules') : ld);
     const list = rows.slice().sort((x, y) => (x.index ?? 0) - (y.index ?? 0));
-    return listPage(LIST.quests, t('{n} quests', { n: list.length }), table([[t('Quest')], [t('Given by')], [t('Where')], [t('Level'), 1], [t('Experience'), 1], [t('Zen'), 1], [t('Repeats')]], list.map(q => {
+    return listPage(LIST.quests, t('{n} quests', { n: list.length }), table([[''], [t('Quest')], [t('Given by')], [t('Where')], [t('Level'), 1], [t('Experience'), 1], [t('Zen'), 1], [t('Repeats')]], list.map(q => {
       const g = F && F[q.giver];
-      return `<tr><td>${a('quests', q.slug, q.n)}</td><td>${g ? a('npcs', g.slug, q.giverName || g.n, 'crumb') : esc(q.giverName || '')}</td><td class="mute wrap">${esc(q.place || '')}</td><td class="r num">${q.minLevel ? N(q.minLevel) : '—'}</td>
+      return `<tr>${icoCell(q)}<td>${a('quests', q.slug, q.n)}</td><td>${g ? a('npcs', g.slug, q.giverName || g.n, 'crumb') : esc(q.giverName || '')}</td><td class="mute wrap">${esc(q.place || '')}</td><td class="r num">${q.minLevel ? N(q.minLevel) : '—'}</td>
 <td class="r"><span class="num" style="color:#B9A2F2">${N(q.experience)}</span>${q.firstExperience ? `<span class="sub2">${esc(t('first time {n}', { n: q.firstExperience.toLocaleString('en') }))}</span>` : ''}</td><td class="r num" style="color:#F2C14E">${N(q.zen)}</td><td class="mute">${esc(repeats(q.repeatSeconds))}</td></tr>`;
     })));
   }
@@ -754,7 +765,7 @@ ${folk.length ? sec(t('Townsfolk'), folk.map(n => `<a class="sim" href="${href('
     const body = (e.offer ? sec('', quote(e.offer)) : '') + sec(t('Objectives'), steps || absent(t('No steps in this release\'s data.'))) +
       sec(t('Rewards'), `${e.firstExperience ? `<p class="mute" style="margin:0 0 10px">${esc(t('Experience the first time: {n}', { n: e.firstExperience.toLocaleString('en') }))}</p>` : ''}${paid ? `<div class="rbox"><b>${esc(t('Items'))}</b>${paid}</div>` : ''}${e.boon ? `<p>${esc(e.boon)}</p>` : ''}${!paid && !e.boon && !e.firstExperience ? `<p class="mute" style="margin:0">${esc(t('Experience and Zen, above.'))}</p>` : ''}`) +
       ((e.handIn || []).length || e.next ? sec(t('When you return'), quote(e.handIn) + (e.next ? `<p class="mute" style="margin:12px 0 0">${esc(e.next)}</p>` : '')) : '') + sec(t('Comments'), comments('quests', e.slug, []));
-    return frame({ pic: g && g.t ? epic({ page: g.t.replace('.96.webp', '.webp') }, g.n) : '', name: e.title || e.name, sub, facts, body });
+    return frame({ pic: e.pic ? epic(e.pic, e.title || e.name) : g && g.t ? epic({ page: g.t.replace('.96.webp', '.webp') }, g.n) : '', name: e.title || e.name, sub, facts, body });
   }
 
   // ---- events
@@ -763,8 +774,8 @@ ${folk.length ? sec(t('Townsfolk'), folk.map(n => `<a class="sim" href="${href('
     crumbs([[LIST.events]]);
     if (rows === undefined) return listPage(LIST.events, '', ld);
     if (rows === null || !rows.length) return listPage(LIST.events, '', waitDump('drops'));
-    return listPage(LIST.events, t('Each castle and square has its own monsters and drops'), table([[t('Event')], [t('Monster levels'), 1], [t('Monsters'), 1], [t('Items drop'), 1]], rows.map(v =>
-      `<tr><td>${a('events', v.slug, v.n)}${notLive(v.live)}</td><td class="r num">${v.levels ? `${v.levels[0]}–${v.levels[1]}` : '—'}</td><td class="r num">${N(v.monsters)}</td><td class="r num">${N(v.items)}</td></tr>`), 'sm'));
+    return listPage(LIST.events, t('Each castle and square has its own monsters and drops'), table([[''], [t('Event')], [t('Monster levels'), 1], [t('Monsters'), 1], [t('Items drop'), 1]], rows.map(v =>
+      `<tr>${icoCell(v)}<td>${a('events', v.slug, v.n)}${notLive(v.live)}</td><td class="r num">${v.levels ? `${v.levels[0]}–${v.levels[1]}` : '—'}</td><td class="r num">${N(v.monsters)}</td><td class="r num">${N(v.items)}</td></tr>`), 'sm'));
   }
   function eventPage(e) {
     crumbs([[LIST.events, listHref('events')], [e.name]]);
@@ -775,7 +786,7 @@ ${folk.length ? sec(t('Townsfolk'), folk.map(n => `<a class="sim" href="${href('
     const cat = cats.includes(R.q.cat) ? R.q.cat : '';
     const shown = (e.drops || []).filter(d => !cat || d.cat === cat);
     const all = R.q.all === 'all';
-    const levels = (e.monsters || []).map(m => m.level).filter(x => x != null);
+    const levels = (e.monsters || []).map(m => m.level).filter(x => x);
     const what = { castle: t('Blood Castle'), square: t('Devil Square'), raid: t('Raid') }[e.type] || pretty(e.type || '');
     const towns = (e.towns || []).map(x => x.name);
     const facts = factsStrip([levels.length ? fact(t('Monster levels'), `${Math.min(...levels)}–${Math.max(...levels)}`) : null, fact(t('Monsters'), (e.monsters || []).length), fact(t('Items drop'), (e.drops || []).length),
@@ -788,7 +799,7 @@ ${table([[t('Item')], [t('Type')], [t('Best from')], [t('Chance a kill'), 1]], (
 <td class="mute">${esc(d.sub || '')}</td><td>${a('monsters', d.from_slug, d.from_name, 'crumb')}</td><td class="r">${oddsCell(d.chance)}</td></tr>`), 'sm pops')}${showAll(all ? shown.length : Math.min(30, shown.length), shown.length, 'all')}
 <p class="note">${esc(t('Chances are per kill of the monster named, for one player, before Item Find, talents and party bonuses.'))}</p>`, t('{n} items', { n: shown.length })) +
       sec(t('Comments'), comments('events', e.slug, []));
-    const top = eventPic(e, MI);
+    const top = e.pic ? e.pic.card : eventPic(e, MI);
     return frame({ pic: top ? epic({ page: top.replace('.96.webp', '.webp') }, e.name) : '', name: e.name, tone: e.type === 'raid' ? '#F2C14E' : '', sub, facts,
       more: e.live === false ? `<div class="erow">${notLive(e.live)}</div>` : '', strip, body });
   }
@@ -802,7 +813,7 @@ ${table([[t('Item')], [t('Type')], [t('Best from')], [t('Chance a kill'), 1]], (
     const rar = [...new Set(rows.map(r => r.rarity_name).filter(Boolean))];
     const list = rows.filter(r => !R.q.r || r.rarity_name === R.q.r).sort((x, y) => (x.hero_level || 0) - (y.hero_level || 0) || (x.n > y.n ? 1 : -1));
     return listPage(LIST.runes, t('{n} runes', { n: list.length }), `<div class="chips" style="margin-bottom:16px">${chip(esc(t('All')), !R.q.r, { r: '' })}${rar.map(x => chip(esc(x), R.q.r === x, { r: R.q.r === x ? '' : x })).join('')}</div>` +
-      table([[t('Rune')], [t('Effect')], [t('Hero level'), 1], [t('Class')], [t('Fits')]], list.map(r => `<tr><td style="white-space:nowrap"><a class="open" style="color:${runeTone(r)} !important" href="${href('runes', r.slug)}">${esc(r.n)}</a><span class="sub2">${esc(r.rarity_name || '')}</span>${notLive(r.live)}</td>
+      table([[''], [t('Rune')], [t('Effect')], [t('Hero level'), 1], [t('Class')], [t('Fits')]], list.map(r => `<tr>${icoCell(r, runeTone(r))}<td style="white-space:nowrap"><a class="open" style="color:${runeTone(r)} !important" href="${href('runes', r.slug)}">${esc(r.n)}</a><span class="sub2">${esc(r.rarity_name || '')}</span>${notLive(r.live)}</td>
 <td class="wrap">${esc(r.tells || '')}</td><td class="r num">${N(r.hero_level)}</td><td class="mute">${esc((r.classes || []).join(', '))}</td><td class="mute">${esc((r.slots || []).join(', '))}</td></tr>`), 'wrapc'));
   }
   function runePage(e) {
@@ -816,7 +827,7 @@ ${table([[t('Item')], [t('Type')], [t('Best from')], [t('Chance a kill'), 1]], (
       fact(t('Stacks'), e.stacking && e.stacking.says ? e.stacking.says : null), fact(t('Sells for'), e.sale != null ? pct(e.sale) + ' ' + t('of its item') : null)]);
     const body = sec(t('Where it comes from'), who.length ? `<p class="mute" style="margin:0 0 12px">${esc(e.chance_note || '')}</p>${table([[t('Kill level from')]].concat(who.map(c => [label(c), 1])), levels.map(l => `<tr><td class="num">${esc(l)}</td>${who.map(c => `<td class="r">${oddsCell(ch[c][l])}</td>`).join('')}</tr>`), 'sm')}` : absent(t('It does not drop from monsters.'))) +
       sec(t('Comments'), comments('runes', e.slug, []));
-    return frame({ name: e.name, tone, sub: `<span style="color:${tone}">${esc(t('{rarity} rune', { rarity: e.rarity_name || '' }))}</span>`, lead: e.tells ? `<span style="color:#E8A15A">${esc(e.tells)}</span>` : '', facts,
+    return frame({ pic: e.pic ? epic(e.pic, e.name, '', tone) : '', name: e.name, tone, sub: `<span style="color:${tone}">${esc(t('{rarity} rune', { rarity: e.rarity_name || '' }))}</span>`, lead: e.tells ? `<span style="color:#E8A15A">${esc(e.tells)}</span>` : '', facts,
       more: e.live === false ? `<div class="erow">${notLive(e.live)}</div>` : '', body });
   }
 
@@ -912,7 +923,7 @@ ${table([[t('Item')], [t('Type')], [t('Best from')], [t('Chance a kill'), 1]], (
 <div><div class="h3" style="margin-bottom:8px">${esc(t('You get'))}</div>${res || `<span>${esc(m.success || '')}</span>`}${m.failure ? `<div style="margin-top:8px;color:#E8A15A;font-size:15px">${esc(t('On failure: {what}', { what: m.failure }))}</div>` : ''}</div></div>`;
     if (full) return grid;
     return `<article class="rbox" style="padding:20px 24px;margin-bottom:16px"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;align-items:baseline;margin-bottom:12px">
-<h2 style="margin:0;font:700 22px/1.2 Cinzel,serif">${a('mixes', m.slug, m.name || m.n, 'open')}</h2>${npc ? a('npcs', npc.slug, npc.n, 'crumb') : ''}</div>${grid}</article>`;
+<h2 style="margin:0;font:700 22px/1.2 Cinzel,serif;display:flex;align-items:center;gap:14px">${rowPic(m) ? `<span class="ico"><img src="${pic(rowPic(m))}" alt="" loading="lazy" width="40" height="40"></span>` : ''}${a('mixes', m.slug, m.name || m.n, 'open')}</h2>${npc ? a('npcs', npc.slug, npc.n, 'crumb') : ''}</div>${grid}</article>`;
   }
   function mixesList() {
     const rows = rowsOf('mixes');
@@ -929,7 +940,7 @@ ${table([[t('Item')], [t('Type')], [t('Best from')], [t('Chance a kill'), 1]], (
     const e0 = rows[0] || {};
     return listPage(LIST.elites, t('{n} maps', { n: rows.length }), `<div class="roll" style="margin-bottom:20px"><div class="rbox"><b>${esc(t('What sets them apart'))}</b>${kv([[t('Damage'), e0.damage != null ? '×' + e0.damage : null], [t('Defense'), e0.defense != null ? '×' + e0.defense : null], [t('Experience'), e0.experience != null ? '×' + e0.experience : null], [t('Zen'), e0.zen_times != null ? '×' + e0.zen_times : null], [t('Levels higher'), e0.levels_up]])}</div>
 <div class="rbox"><b>${esc(t('Loot'))}</b>${kv([[t('Pieces'), e0.pieces ? e0.pieces.join('–') : null], [t('A jewel'), e0.jewel_in_100 != null ? e0.jewel_in_100 + '%' : null], [t('A second jewel'), e0.second_jewel_in_100 != null ? e0.second_jewel_in_100 + '%' : null], [t('A second excellent'), e0.second_excellent_in_100 != null ? e0.second_excellent_in_100 + '%' : null], [t('Luck'), e0.luck_in_100 != null ? e0.luck_in_100 + '%' : null]])}</div></div>` +
-      table([[t('Map')], [t('At once'), 1], [t('Life'), 1], [t('Damage'), 1], [t('Defense'), 1], [t('Rises every')]], rows.map(e => `<tr><td>${a('elites', e.slug, worldName(e.world || e.k))}${notLive(e.live)}</td><td class="r num">${N(e.count)}</td><td class="r num" style="color:#F2C14E">×${N(e.life)}</td><td class="r num">×${N(e.damage)}</td><td class="r num">×${N(e.defense)}</td>
+      table([[''], [t('Map')], [t('At once'), 1], [t('Life'), 1], [t('Damage'), 1], [t('Defense'), 1], [t('Rises every')]], rows.map(e => `<tr>${icoCell(e)}<td>${a('elites', e.slug, worldName(e.world || e.k))}${notLive(e.live)}</td><td class="r num">${N(e.count)}</td><td class="r num" style="color:#F2C14E">×${N(e.life)}</td><td class="r num">×${N(e.damage)}</td><td class="r num">×${N(e.defense)}</td>
 <td class="mute">${e.rise_seconds ? esc(t('{a}–{b} min', { a: e.rise_seconds[0] / 60, b: e.rise_seconds[1] / 60 })) : '—'}</td></tr>`), 'sm'));
   }
   // What a box gives when opened: its Zen first, then each item, the chances a box (together 1).
@@ -944,8 +955,8 @@ ${table([[t('Item')], [t('Type')], [t('Best from')], [t('Chance a kill'), 1]], (
       `<p class="note">${esc(t('One roll a box: Zen or one of these, the chances together one.'))}</p>`;
   }
   function genericPage(kind, e) {
-    crumbs([[LIST[kind] || kind, listHref(kind)], [e.name || e.title || e.slug]]);
-    let o = { name: e.name || e.title || e.slug, body: '' };
+    crumbs([[LIST[kind] || kind, listHref(kind)], [kind === 'elites' ? t('Elites of {map}', { map: worldName(e.world) }) : e.name || e.title || e.slug]]);
+    let o = { name: e.name || e.title || e.slug, body: '', pic: e.pic ? epic(e.pic, e.name || e.slug) : '' };
     if (kind === 'mixes') {
       const F = by('npcs', 'npc'), npc = F && F[e.npc];
       o.sub = npc ? `${esc(t('At'))} ${a('npcs', npc.slug, npc.n, 'open')}` : esc(t('Chaos Machine'));
@@ -954,7 +965,7 @@ ${table([[t('Item')], [t('Type')], [t('Best from')], [t('Chance a kill'), 1]], (
     } else if (kind === 'boxes') {
       const I = by('items', 'k'), it = I && I[e.item];
       const sibs = (rowsOf('boxes') || []).filter(b => b.item === e.item);
-      if (it) { o.pic = epic(it.t ? { page: it.t.replace('.96.webp', '.webp') } : null, it.n); o.sub = `${esc(t('What the box gives'))} · ${a('items', it.slug, it.n, 'open')}`; }
+      if (it) { o.pic = o.pic || epic(it.t ? { page: it.t.replace('.96.webp', '.webp') } : null, it.n); o.sub = `${esc(t('What the box gives'))} · ${a('items', it.slug, it.n, 'open')}`; }
       o.facts = factsStrip([fact(t('Zen'), e.zen != null ? pct(e.zen) + ' ' + t('of boxes') : null), fact(t('Zen it gives'), e.zen_amount || (e.zen_range ? `${N(e.zen_range[0])} – ${N(e.zen_range[1])}` : null)), fact(t('Items it can give'), (e.result || []).length)]);
       if (sibs.length > 1) o.strip = stripRow(t('Level'), sibs.map(b => `<a class="chip" href="${href('boxes', b.slug)}" aria-pressed="${b.slug === e.slug ? 'true' : 'false'}">${esc(b.n)}</a>`).join(''));
       o.body = sec('', boxContents(e));
@@ -974,7 +985,7 @@ ${table([[t('Item')], [t('Type')], [t('Best from')], [t('Chance a kill'), 1]], (
     const rows = rowsOf(kind);
     crumbs([[LIST[kind] || kind]]);
     if (rows === undefined) return listPage(LIST[kind] || kind, '', ld);
-    return listPage(LIST[kind] || kind, t('{n} in all', { n: rows.length }), table([[t('Name')]], rows.map(r => `<tr><td>${a(kind, r.slug, r.n)}</td></tr>`), 'sm'));
+    return listPage(LIST[kind] || kind, t('{n} in all', { n: rows.length }), table([[''], [t('Name')]], rows.map(r => `<tr>${icoCell(r.pic || r.t ? r : (kind === 'boxes' ? (by('items', 'k') || {})[r.item] : null))}<td>${a(kind, r.slug, r.n)}</td></tr>`), 'sm'));
   }
 
   // ---- drawing
@@ -994,12 +1005,12 @@ ${table([[t('Item')], [t('Type')], [t('Best from')], [t('Chance a kill'), 1]], (
     return (pages[R.kind] || ((x) => genericPage(R.kind, x)))(e);
   }
   // Every page's indexes, asked up front so they come together.
-  const NEEDS = { home: ['items', 'monsters', 'npcs', 'quests', 'events', 'skills', 'mixes', 'worlds', 'boxes'], items: ['items', 'boxes'], monsters: ['items', 'worlds', 'events', 'elites', 'monsters'], npcs: ['items', 'worlds', 'quests', 'mixes'], worlds: ['worlds'], quests: ['npcs', 'items', 'monsters', 'quests'],
+  const NEEDS = { home: ['items', 'monsters', 'npcs', 'quests', 'events', 'skills', 'mixes', 'worlds', 'boxes', 'runes', 'elites', 'talents'], items: ['items', 'boxes'], monsters: ['items', 'worlds', 'events', 'elites', 'monsters'], npcs: ['items', 'worlds', 'quests', 'mixes'], worlds: ['worlds'], quests: ['npcs', 'items', 'monsters', 'quests'],
     events: ['events', 'worlds', 'monsters'], runes: [], skills: [], mixes: ['npcs', 'items'], elites: ['worlds'], boxes: ['items', 'boxes'], talents: ['talents'] };
   function titleOf() {
     const e = R.view === 'entity' ? files[`${R.kind}/${R.slug}.json`] : null;
     if (R.view === 'home') return 'MU Classic Armory';
-    const name = e ? (e.name || e.title || e.class) : (LIST[R.kind] || '');
+    const name = e && R.kind === 'elites' ? t('Elites of {map}', { map: worldName(e.world) }) : e ? (e.name || e.title || e.class) : (LIST[R.kind] || '');
     return `${name || t('Armory')} — MU Classic Armory`;
   }
   let drawing = false;

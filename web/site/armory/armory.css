@@ -202,7 +202,7 @@ blockquote.say p { margin: 0 0 8px; }
 
 /* ---- one entity, one panel: its head (picture, name, the line under it, the facts strip), a row of
    where/which, its tabs or sections, and a foot; nothing about it outside the panel */
-.ent { background: #100C0A; border: 1px solid #221A15; border-radius: 8px; box-shadow: 0 30px 60px -30px rgba(0,0,0,.8); }
+.ent { margin-bottom: 56px; background: #100C0A; border: 1px solid #221A15; border-radius: 8px; box-shadow: 0 30px 60px -30px rgba(0,0,0,.8); }
 .ehead { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 24px 36px; align-items: start; padding: 32px;
   border-radius: 8px 8px 0 0; background: radial-gradient(60% 340px at 0% 0%, rgba(194,54,43,.07), rgba(194,54,43,0) 70%); }
 .ehead.nopic { grid-template-columns: minmax(0, 1fr); }
@@ -211,6 +211,9 @@ blockquote.say p { margin: 0 0 8px; }
   background: radial-gradient(ellipse at 50% 42%, #2A1F17 0%, #120D0A 62%, #0A0706 100%); overflow: hidden; }
 .epic img { width: 92%; height: 92%; object-fit: contain; }
 .epic.sm { width: 112px; }
+/* A picture borrowed from what a page links to, tinted by its rarity (a rune on its item). */
+.epic.toned { border-color: var(--tone); box-shadow: inset 0 0 40px -12px var(--tone); }
+.epic.toned img, .toned-in img { filter: drop-shadow(0 0 10px var(--tone)); }
 .epic.map { background: #0D0B0A; }
 .epic.map .chart { border: 0; border-radius: 0; width: 100%; height: 100%; max-width: none; }
 .emeta { min-width: 0; display: flex; flex-direction: column; }
@@ -349,3 +352,5 @@ blockquote.say p { margin: 0 0 8px; }
 @media (max-width: 420px) { .gcard { width: calc(100vw - 44px); max-width: 346px; } }
 /* The card in the panel's Stats tab: no wider than its column on a phone. */
 .cardcol .gcard { width: min(346px, calc(100% - 2px)); }
+/* The Armory's pages end on the panel: no rule over the site's footer (site.css draws one for the rest). */
+footer { box-shadow: none; }
