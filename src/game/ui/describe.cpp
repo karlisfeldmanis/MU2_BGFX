@@ -114,13 +114,26 @@ Row stat(const char* name, const std::string& text, Tone tone) {
 }
 
 // The runes worn that share a rune's limit, strongest first, as Realm::redress counts them: of a
-// limited rune its copies (sim::stackMostOf); of a stat rune every rune adding to its stat --
-// Lesser and Greater, Might and Ascendance -- the best kStatRuneMost of them counting. An
-// Ascendance's stat is the one he wears most runes for.
+// limited rune its copies (sim::stackMostOf), of a Bulwark or a Volley its kin too (kinOf); of a
+// stat rune every rune adding to its stat -- Lesser and Greater, Might and Ascendance -- the best
+// kStatRuneMost of them counting. An Ascendance's stat is the one he wears most runes for.
 struct Pool {
     int most = 0;
     std::vector<sim::Rarity> worn;
 };
+// Of the runes where only the strongest worn works (Excellence::bulwarkShare, volleySide), its
+// kin and its strength among them: Bulwark, Buckler and Brace one, the three Volleys another.
+std::pair<int, int> kinOf(sim::Power power) {
+    switch (power) {
+        case sim::Power::Bulwark: return {1, 3};
+        case sim::Power::Buckler: return {1, 2};
+        case sim::Power::Brace: return {1, 1};
+        case sim::Power::Volley: return {2, 3};
+        case sim::Power::ScatterVolley: return {2, 2};
+        case sim::Power::SplitArrow: return {2, 1};
+        default: return {0, 0};
+    }
+}
 Pool poolOf(const sim::Satchel& bag, sim::Power power) {
     Pool pool;
     const sim::HeroPoints mine = sim::statShareOf(power);
@@ -138,7 +151,10 @@ Pool poolOf(const sim::Satchel& bag, sim::Power power) {
             const sim::PowerRow* row = sim::powerOf(held.powers[at]);
             if (!row) continue;
             if (!stat) {
-                if (row->power == power) found[0].push_back({0, row->rarity});
+                const auto [kin, strength] = kinOf(row->power);
+                if (row->power == power || (kin != 0 && kin == kinOf(power).first)) {
+                    found[0].push_back({strength, row->rarity});
+                }
                 continue;
             }
             const sim::HeroPoints its = sim::statShareOf(row->power);
