@@ -92,6 +92,8 @@ constexpr float kPipRadius = 1.9f, kPipPitch = 5.4f;
 constexpr float kRowPad = 4.5f, kRowPadLeast = 2.0f, kNoteGap = 3.5f, kNoteStep = 8.0f, kNoteSize = 6.5f,
                 kCapShare = 0.72f;
 constexpr uint32_t kRowStroke = gfx::rgba(0.200f, 0.157f, 0.125f);
+// Where a row's words start and its figures end: 5 units in from the well's sides.
+constexpr float kRowLeft = kWellX + 5.0f, kRowRight = kWellX + kWellW - 5.0f;
 constexpr uint32_t kPipHole = gfx::rgba(0.075f, 0.067f, 0.055f);
 // The Bonuses page's values, each in what it is: a stat's, an element's, a fortune's colour.
 // Never red: red reads as a loss (the user, 2026-10-23).
@@ -407,6 +409,9 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                 const auto pipsOf = [&](Line& line, sim::Power power) {
                     if (!bag) return;
                     const RunePool pool = runePool(*bag, power);
+                    // One that only ever counts once has no room to show: no pips at all (the
+                    // user, 2026-10-25: "if rune is usable as 1 socket only, dont show rings").
+                    if (pool.most <= 1) return;
                     line.pips = pool.most;
                     for (const sim::Rarity rarity : pool.worn) {
                         line.stones.push_back(tip::colourOf(rarityTone(rarity)));
@@ -417,15 +422,16 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                 // Named by the runes, not the stat (the user, 2026-10-24: "Strength is rune
                 // name?"): Might, Grace, Vigor, Insight, in the strongest worn's ink.
                 const char* const statWords[4] = {"Might", "Grace", "Vigor", "Insight"};
-                const char* const statLong[4] = {"strength", "agility", "vitality", "energy"};
+                const char* const statLong[4] = {"Strength", "Agility", "Vitality", "Energy"};
                 const uint32_t statInks[4] = {kStrengthInk, kAgilityInk, kVitalityInk, kEnergyInk};
                 const sim::Power statRunes[4] = {sim::Power::LesserMight, sim::Power::LesserGrace,
                                                  sim::Power::LesserVigor, sim::Power::LesserInsight};
                 for (int k = 0; k < 4; ++k) {
                     if (shares[k] <= 0) continue;
                     Line line{statWords[k], plusPercent(shares[k]), false};
-                    // The share alone (the user: "just show +percentage strength").
-                    line.note = plusPercent(shares[k]) + " " + statLong[k];
+                    // What the share is of; the figure is the row's own, never twice (the user,
+                    // 2026-10-25: "there is some duplicates with percentages").
+                    line.note = statLong[k];
                     line.ink = statInks[k];
                     pipsOf(line, statRunes[k]);
                     if (!line.stones.empty()) line.labelInk = line.stones.front();
@@ -462,7 +468,12 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                         if (tells[0] == '+' && std::sscanf(tells + 1, "%d%%", &each) == 1 &&
                             std::strchr(tells, '%') != nullptr) {
                             line.value = plusPercent(each * counted);
-                            line.note = std::string(tells) + (count > 1 ? " each" : "");
+                            // The total stands at the right: the effect under it without its
+                            // "+10% ", "defense" and not "+10% defense each" beside a +30%.
+                            const char* rest = std::strchr(tells, '%') + 1;
+                            while (*rest == ' ') ++rest;
+                            line.note = rest;
+                            if (!line.note.empty()) line.note[0] = char(std::toupper((unsigned char)line.note[0]));
                         } else {
                             // One worn says nothing a count would: "x2" only once there are two.
                             if (count > 1) line.value = "x" + std::to_string(count);
@@ -923,7 +934,7 @@ void Card::rebuild() {
         // A group with nothing in it yet is its heading and a quiet "none" on one line, no well,
         // so the room goes to what he has. A rune is a block: its name, pips and total on a
         // line, what it does under it, wrapped at its words.
-        const float noteRoom = (kRight - kLeft) * k;
+        const float noteRoom = (kRowRight - kRowLeft) * k;
         const auto wrapped = [&](const std::string& note) {
             std::vector<std::string> out;
             std::string at;
@@ -975,7 +986,7 @@ void Card::rebuild() {
             smallCaps(kWellX + 2.0f, at(uy + 1.0f, kSmallCaps), kDim, group.name);
             if (empty(group)) {
                 const float base = at(uy + 1.0f, kSmallCaps);
-                controls::ranged(canvas_, x + kRight * k, base, kSmallCaps * k, kDim, "none");
+                controls::ranged(canvas_, x + kRowRight * k, base, kSmallCaps * k, kDim, "none");
                 uy += kGroupHead + kGroupGap;
                 continue;
             }
@@ -987,7 +998,7 @@ void Card::rebuild() {
             // row's pips end where the next one's do, whatever its name.
             float widest = 0.0f;
             for (const Line& line : group.lines) widest = std::max(widest, controls::labelWidth(kRowSize * k, line.value));
-            const float pipsEnd = x + kRight * k - widest - (widest > 0.0f ? kPipPitch * k : 0.0f);
+            const float pipsEnd = x + kRowRight * k - widest - (widest > 0.0f ? kPipPitch * k : 0.0f);
             float ly = uy;
             for (size_t l = 0; l < group.lines.size(); ++l) {
                 const Line& line = group.lines[l];
@@ -997,19 +1008,19 @@ void Card::rebuild() {
                                  kRowStroke);
                 }
                 const float base = std::round(y + (ly + pad + nameCap) * k);
-                controls::label(canvas_, x + kLeft * k, base, kRowSize * k,
+                controls::label(canvas_, x + kRowLeft * k, base, kRowSize * k,
                                 line.dim ? kDim : line.labelInk ? line.labelInk : kPlain, line.label);
                 const int slots = std::max(line.pips, int(line.stones.size()));
                 if (slots > 0) {
                     const float r = kPipRadius * k;
                     pipsAt(line, pipsEnd - 2.0f * r - kPipPitch * k * float(slots - 1), base - nameCap * k * 0.5f, k);
                 }
-                controls::ranged(canvas_, x + kRight * k, base, kRowSize * k, line.dim ? kDim : line.ink ? line.ink : kHeading,
+                controls::ranged(canvas_, x + kRowRight * k, base, kRowSize * k, line.dim ? kDim : line.ink ? line.ink : kHeading,
                                  line.value);
                 for (size_t n = 0; n < said.size(); ++n) {
                     // What the rune does, quiet under its name.
                     const float under = ly + pad + nameCap + kNoteGap + noteCap + kNoteStep * float(n);
-                    controls::label(canvas_, x + kLeft * k, std::round(y + under * k), kNoteSize * k, kQuiet, said[n]);
+                    controls::label(canvas_, x + kRowLeft * k, std::round(y + under * k), kNoteSize * k, kQuiet, said[n]);
                 }
                 ly += words(line) + 2.0f * pad;
             }
