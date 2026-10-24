@@ -60,7 +60,12 @@ soul master spells, ... only DK defense skill not DW soul barrier"):**
 - **Fire Slash (55), his own** (the Icarus era's; built 2026-10-24, docs/plans/mg-skills/fire-slash.md):
   a ribbon of fire over the half-disc in front of him, 2.5 tiles, 15 mana, 2 s; 45% a body to lose
   10% defence for 10 s. Off the Orb of Fire Slash (12/27, drop level 60, level 120, strength 596).
-Power Slash (56) and Spiral Slash (57) are Season skills and are not in 0.95d.
+- **Power Slash (56), his blade's** (0.99B's; built 2026-10-24, docs/plans/mg-skills/power-slash.md):
+  never an orb and never saved -- known while a Dark Reign Blade, Explosion Blade, Sword Dancer, Imperial
+  Sword or Rune Blade is in his right hand, and not while riding. Five waves fan out over a wedge ahead
+  of him (a tile either side at his feet to six at six tiles), the nearest five struck and the next six
+  at even odds, each as its wave reaches it; 15 mana, 2 s.
+Spiral Slash (57) is a Season skill and is not in 0.95d.
 
 **Defense and Soul Barrier (the user, 2026-10-07: "MG can use shield skill, and also can use Soul
 barrier, but only 1 DEF aura is usable at same time"):** both are his, overriding the list above;

@@ -317,10 +317,10 @@ standing dummy-like monster), so the skull halo does not show.
   kKeptLayout 15 for its cools, which main has since used for the wide vault. Fire Slash on main takes row 40 and
   layout 16; darklord moves its rows up one and takes layout 17 when it merges (nothing of it is deployed, so only its
   test saves see the shift).
-- **For darklord's merge** (2026-10-24, with Fire Slash on main): its four rows go on after Fire Slash's, at
-  indices 41-44 where its own tests and saves had them at 40-43, and kSkills becomes 45; its cools take kKeptLayout
-  **17** (main's 16 reads 41 cools, layouts 9-15 read 40), with wire.cpp's `cools` ladder one rung longer and its
-  kVersion past main's. Its test saves (layout 15 with 44 cools) do not read after the merge; nothing of it is
+- **For darklord's merge** (2026-10-24, with Fire Slash and Power Slash on main): its four rows go on after Power
+  Slash's, at indices 42-45 where its own tests and saves had them at 40-43, and kSkills becomes 46; its cools take
+  kKeptLayout **17** (main's 16 reads 42 cools, layouts 9-15 read 40), with wire.cpp's `cools` ladder one rung longer
+  and its kVersion past main's. Its test saves (layout 15 with 44 cools) do not read after the merge; nothing of it is
   deployed. Its orbs keep 12/23, 24 and 26; Fire Slash's orb is 12/27.
 - **Area**: `Spread::Arc` is ±`kArcHalfAngle` 67.5° (skills.h:555), one constant. `Realm::gather`
   (realm_skills.cpp:677-746, Arc test :719-725) skips safe tiles and walls. `strikeAround` (:748-785) strikes each with
