@@ -7357,6 +7357,27 @@ void testVault(const content::Tables& tables) {
     for (int tick = 0; tick < 2000 && realm.banking() < 0; ++tick) realm.step();
     check(realm.banking() == baz, "walked to Baz and the vault opened");
     check(realm.trading() < 0, "and no counter with it");
+    // Eighteen across (sim/vault.h, 2026-10-24): a sword in the far column and past MU's eighth,
+    // held all the way down, and nothing hangs off the right edge or the foot.
+    {
+        const int wide = tables.items[size_t(sword)].width;
+        const int far = sim::kVaultColumns - wide;
+        const int ninth = sim::kOldVaultColumns + sim::kVaultColumns * 2;
+        const int one = realm.give(sword), two = realm.give(sword);
+        check(realm.deposit(one, far) == far && realm.deposit(two, ninth) == ninth,
+              "a sword in the far column, and one in the ninth");
+        check(realm.vault().holder(tables, far + (tall - 1) * sim::kVaultColumns) == far,
+              "the far one held to its foot");
+        check(!realm.vault().room(tables, sim::kVaultColumns - 1, 2, 1) &&
+                  !realm.vault().room(tables, (sim::kVaultRows - tall + 1) * sim::kVaultColumns, 1, tall),
+              "nothing hangs off the right edge or the foot");
+        check(realm.withdraw(far, -1) >= 0 && realm.withdraw(ninth, -1) >= 0 &&
+                  realm.vault()[far].empty() && realm.vault()[ninth].empty(),
+              "and both come back out");
+        for (int s = sim::kWorn; s < sim::kSlots; ++s) {
+            if (s != slot && !realm.satchel()[s].empty() && realm.satchel()[s].item == sword) realm.discard(s);
+        }
+    }
     // A worn quiver poured onto the vault's takes its plus off her (a deposit that topped up a
     // stack never re-armed, so a +2 quiver stored that way still counted).
     {

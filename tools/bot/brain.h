@@ -5807,7 +5807,7 @@ private:
             const sim::SkillRow& row = sim::skillAt(i);
             if (!row.primary() || !row.wizardry || row.mana > kCheapMana || !realm_->knows(row.number)) continue;
             if (!row.suits(w.hand) || row.spread != sim::Spread::One) continue;
-            const double f = sim::force(row, realm_->hero().points);
+            const double f = sim::force(row, realm_->hero().points, realm_->hero().kin);
             if (f > strongest) strongest = f, best = row.number;
         }
         return best;
