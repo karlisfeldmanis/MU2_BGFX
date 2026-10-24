@@ -139,7 +139,14 @@ bool Jeweler::offer(int slot, const sim::Realm& realm) {
     if (!realm.tables() || slot < sim::kWorn || slot >= sim::kSlots) return false;
     const sim::Held& what = realm.satchel()[slot];
     const content::ItemRow* row = rowOf(*realm.tables(), what);
-    if (row == nullptr || !sim::jewelerTakes(*row)) return false;
+    if (row == nullptr || !sim::jewelerSalvages(*row)) return false;
+    if (page_ != Page::Salvage && !sim::jewelerTakes(*row)) {
+        // One of MU's own: no powers to recut or combine, only Salvage takes it.
+        said_ = page_ == Page::Recut ? "Only powered pieces recut. Salvage takes it."
+                                     : "Only powered pieces combine. Salvage takes it.";
+        saidOk_ = false;
+        return false;
+    }
     said_.clear();
     lit_ = -1;
     made_ = Made{};
@@ -271,7 +278,12 @@ void Jeweler::update(float width, float height, int column, const sim::Realm& re
                 const Page to = Page(hit - kTab0);
                 if (to != page_) {
                     // A piece stays in the first slot from page to page; Combine's other two go.
+                    // A plain one stays on Salvage alone.
                     page_ = to;
+                    if (to != Page::Salvage && slots_[0].bag >= 0) {
+                        const content::ItemRow* held = rowOf(tables, realm.satchel()[slots_[0].bag]);
+                        if (held == nullptr || !sim::jewelerTakes(*held)) slots_[0] = Slot{};
+                    }
                     line_ = lit_ = -1;
                     made_ = Made{};
                     confirming_ = false;

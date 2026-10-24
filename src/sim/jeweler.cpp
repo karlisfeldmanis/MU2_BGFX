@@ -41,7 +41,7 @@ ItemKey salvagePrize(int prize) {
 int salvageCount(int prize) { return prize == 0 ? 3 : 1; }
 
 int salvageRoll(int powers, bool twice, Random& dice) {
-    const int* odds = kSalvageOdds[std::clamp(powers, 1, 4) - 1];
+    const int* odds = kSalvageOdds[std::clamp(powers, 0, 4)];
     const auto once = [&] {
         int pick = dice.nextInt(0, 100);
         for (int p = 0; p < kSalvagePrizes; ++p) {
