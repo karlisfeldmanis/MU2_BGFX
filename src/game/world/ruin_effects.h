@@ -11,7 +11,18 @@
 //         shrinking 0.026 a frame and gone at nothing, rising 2-3 units a frame, its light
 //         dimming 1.02 times a frame (ZzzEffectParticle.cpp:1133-1139, 5258-5266, 9006-9010).
 //
-// The points are the recipes' `emitters` (kinds "arc_from", "arc_to", "spit"), the rigs' rest
+//   Tower The Relics' jade towers, Object09 (type 8), 18: at bone 4 MU draws a BITMAP_SPARK+1
+//         (Spark03) of Scale 10 lit fLumi = (sin(WorldTime * 0.001) + 1) / 2 in white, added
+//         -- not drawn here (the user, 2026-10-24: "remove that blue sphere") -- and one
+//         frame in 20 a BITMAP_JOINT_THUNDER sub-type 18 at scale 40 between two points thrown
+//         round it: from 50-150 units west, 0-50 north and 10 up, to 0-80 east, 0-50 south
+//         and 10 up (RenderKanturu2ndObjectVisual, GM_Kanturu_2nd.cpp:350-374). And each frame
+//         a BITMAP_ENERGY sub-type 0 (Effect/Thunder01, 64 texels) at Scale 1.5 * 0.6-1.3,
+//         turned at random and spinning 20 degrees a frame, lit fLumi, living MU's default 2
+//         frames (ZzzEffectParticle.cpp:721-724, 4937-4939): about two crackles over the spark,
+//         re-rolled every reference frame.
+//
+// The points are the recipes' `emitters` (kinds "arc_from", "arc_to", "spit", "tower"), the rigs' rest
 // positions in the model's frame, laid once per placement turned and scaled as MU's bones are.
 // Ours, marked: the plants sway (E2c) and the spit leaves from bone 1 at rest, which is the
 // middle of the plant's foot, so it does not follow the sway. MU's roll of one in 30 is per
@@ -63,8 +74,14 @@ private:
     };
     float unit();
 
+    struct Tower {
+        float at[3] = {0, 0, 0};
+    };
     std::vector<Tank> tanks_;
     std::vector<Plant> plants_;
+    std::vector<Tower> towers_;
+    float clock_ = 0.0f;  // seconds, for the towers' sparks
+    bgfx::TextureHandle energy_ = BGFX_INVALID_HANDLE;  // Effect/Thunder01, the showing's `energy`
     std::vector<Blob> blobs_;
     Thunder thunder_;
     bool thunderOpen_ = false;

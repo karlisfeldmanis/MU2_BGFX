@@ -772,5 +772,24 @@
         0.61
       ]
     }
-  ]
+  ],
+  "emitters": [
+    {
+      "kind": "tower",
+      "colour": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "low": 0.0,
+      "high": 1.0,
+      "range_tiles": 0,
+      "at": [
+        -0.2,
+        0.0,
+        151.4
+      ]
+    }
+  ],
+  "emitters_from": "RenderKanturu2ndObjectVisual type 8 (GM_Kanturu_2nd.cpp:350-374) at bone 4, which holds still in the tower's clip (MuExtract export-rig: -0.2, 0, 151.4 units, its parents' offsets summing to nothing): a Spark03 of Scale 10 lit fLumi = (sin(WorldTime * 0.001) + 1) / 2, and one frame in 20 a BITMAP_JOINT_THUNDER bolt thrown round it. Drawn by game/world/ruin_effects.h (kind tower). Its BITMAP_ENERGY particle is not carried. (the user, 2026-10-24: \"next\", effects 2)."
 }

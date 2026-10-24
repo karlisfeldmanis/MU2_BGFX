@@ -1894,8 +1894,9 @@ def cook_placements(world, out_dir, chunk_tiles):
              # Kanturu's: the crystals' sparks (game/world/crystal_sparks.h), the tanks' arcs and
              # the plants' spit (game/world/ruin_effects.h)
              "spark": 24, "arc_from": 25, "arc_to": 26, "spit": 27,
-             # the Relics' poles' pulsing flare (game/world/crystal_sparks.h)
-             "flare": 28}
+             # the Relics' poles' pulsing flare (game/world/crystal_sparks.h) and the jade towers'
+             # spark and bolts (game/world/ruin_effects.h)
+             "flare": 28, "tower": 29}
 
     # `wrap`, 0 to 1, in the byte that was spare: how far round the light reaches what it lights
     # (content::TownEmitter::wrap). 0 for every light but Atlans's.

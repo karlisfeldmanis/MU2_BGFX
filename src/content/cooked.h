@@ -213,7 +213,10 @@ enum class EmitterKind : uint8_t {
     TankArcFrom = 25, TankArcTo = 26, PlantSpit = 27,
     // The Relics' poles' pulsing flare (Object05, bone 1), drawn with the crystal sparks:
     // game/world/crystal_sparks.h. `low`/`high` MU's fLumi, `hz` its sine.
-    PoleFlare = 28
+    PoleFlare = 28,
+    // The Relics' jade towers (Object09, bone 4): a pulsing spark and random bolts,
+    // game/world/ruin_effects.h.
+    TowerSpark = 29
 };
 struct TownEmitter {
     static constexpr uint16_t kWorld = 0xFFFF;

@@ -122,6 +122,9 @@
     "crystal_chrome": {
       "model": "Object77",
       "note": "The crystals' second pass, mesh 0 again RENDER_CHROME7 with BITMAP_CHROME (Render_Kanturu2nd_AfterObjectMesh type 76, GM_Kanturu_2nd.cpp:662), as the Ruins' Object96 takes it: Chrome01 added at the body light, slid by the normals and WorldTime*0.00006. game/world/crystal_sparks.h lendCrystalChrome. (the user, 2026-10-24: \"nextwhats next\", effects 1)."
+    },
+    "ruin_effects": {
+      "note": "The jade towers' spark and bolts (Object09, kind tower): game/world/ruin_effects.h, the Ruins' tank arcs' class. (the user, 2026-10-24: \"next\", effects 2)."
     }
   }
 }
