@@ -8690,14 +8690,12 @@ void testKanturuRelicsGates() {
               std::string(MU2_ASSET_DIR) + "/cooked/kanturu_relics/kanturu_relics.mur", relics,
               error),
           "the Relics' tables load");
-    // The Ruins' door to the Relics, gate 129 (OpenMU Season Six Gates.cs:539): MU asks 220,
-    // ours 380 (the user, 2026-10-23), and it lets out on the Relics' 130, the hall's west end.
-    Seen s = walk(ruins, 86, 90, 89, 90, 380);
-    checkEqual(s.gated, 129, "a level 380 knight takes the Ruins' door to the Relics, gate 129");
-    check(s.column == 70 && s.row >= 104 && s.row <= 107, "into the Relics on gate 130");
-    s = walk(ruins, 86, 90, 89, 90, 379);
-    checkEqual(s.gated, 0, "a level 379 knight is not let through");
-    checkEqual(s.barred, 380, "and is told the door asks 380");
+    // The Ruins' door to the Relics, gate 129 (OpenMU Season Six Gates.cs:539), is shut while the
+    // Relics have no monsters, so the Ruins end there once Tarkan's door opens (2026-10-25): a
+    // level 400 knight walks onto it and nothing takes him. Reopened, it asks 380 (the user,
+    // 2026-10-23; MU 220) and lets out on the Relics' 130, the hall's west end (d467229b).
+    Seen s = walk(ruins, 86, 90, 89, 90, 400);
+    checkEqual(s.gated, 0, "the Ruins' door to the Relics is shut: a level 400 knight is not gated");
     // And back, gate 131 (Gates.cs:540): MU asks 150, ours free, onto the Ruins' 132.
     s = walk(relics, 77, 105, 69, 105, 1);
     checkEqual(s.gated, 131, "a level 1 knight takes the Relics' way back, gate 131");
