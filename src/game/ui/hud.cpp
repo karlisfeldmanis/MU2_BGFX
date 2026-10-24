@@ -63,7 +63,8 @@ struct ButtonRow {
     const char* art;
     bool left;
     bool live;
-    int place;  // its place in its row, left to right
+    int place;        // its place in its row, left to right
+    const char* key;  // the key that does what it does, in a cap on its rim
 };
 // Menu and chat left of the life gem, inventory, character and quests right of the mana gem. The
 // menu is live since 2026-09-27 and raises the game menu (game/ui/menu.h), as Escape does; the
@@ -82,14 +83,20 @@ constexpr int kQuestButton = 4;
 constexpr int kGuildButton = 5;
 constexpr int kTalentsButton = 6;
 constexpr ButtonRow kButtons[kButtonCount] = {
-    {"hud_button_menu", true, true, 0},
-    {"hud_button_chat", true, true, 1},
-    {"hud_button_inventory", false, true, 0},
-    {"hud_button_character", false, true, 1},
-    {"hud_button_quest", false, true, 3},
-    {"hud_button_guild", true, true, 2},
-    {"talent_icons", false, true, 2},
+    {"hud_button_menu", true, true, 0, "Esc"},
+    {"hud_button_chat", true, true, 1, "Enter"},
+    {"hud_button_inventory", false, true, 0, "V"},
+    {"hud_button_character", false, true, 1, "C"},
+    {"hud_button_quest", false, true, 3, "L"},
+    {"hud_button_guild", true, true, 2, "G"},
+    {"talent_icons", false, true, 2, "A"},
 };
+// The key's cap on a disc: the bar's own key caps' height (kLabelTall, by the same 1.2), its
+// middle on the rim at the disc's lower right, so the icon stays clear (the user, 2026-10-24:
+// "we need to inform user that by pressing C it opens character"). A word wider than the cap
+// grows left along the disc's foot rather than out over the next button.
+constexpr float kButtonCapTall = 14.0f * 1.2f;
+constexpr float kButtonCapAt = 0.35f;  // the cap's middle, off the disc's, in discs
 // The Talents icon: MU's "Strength of Arms" (skill 335, the Talents canvas's), cell 335 - 300 of
 // the 20 by 28 sheet, cut to a circle this share of the disc wide. Its ember: kBloodHi's warmth,
 // one breath in two seconds, at most this strong.
@@ -445,6 +452,18 @@ void Hud::open(const gfx::Interface& interface, panel::Arts* arts) {
 // icon is in colour, whole under the pointer or with Talents up, where a gold hairline rings it.
 // With none it reads off: MU's grey twin, dimmed to the flat grey of the discs beside it, a dark
 // seam and no gold, lifting only a little under the pointer. It is still pressed as ever.
+void Hud::buttonCap(const Box& disc, const char* key) {
+    const float tall = std::round(disc.h * kButtonCapTall / kButtonSide);
+    const float square = std::round(tall * 1.2f);
+    // keycap's own letter size, so the cap is as wide as its word and a margin.
+    const float size = std::min(12.0f * tip::unit(), (tall - 3.0f) * 1.35f);
+    const float wide = std::max(square, std::round(canvas_.face().measure(size, key) + tall * 0.7f));
+    const float cx = disc.midX() + disc.w * kButtonCapAt, cy = disc.midY() + disc.h * kButtonCapAt;
+    const float right = std::max(cx + square * 0.5f, std::min(cx + wide * 0.5f, disc.right()));
+    controls::keycap(canvas_, {std::round(right - wide), std::round(cy - tall * 0.5f), wide, tall}, key,
+                     tip::unit());
+}
+
 void Hud::talentsDisc(const Box& box, bool hovered, bool open, bool waiting) {
     panel::Arts& arts = *arts_;
     canvas_.image(arts.get("hud_disc"), box);
@@ -1590,6 +1609,7 @@ void Hud::rebuild() {
         const bool hovered = now_.hovered == 100 + i;
         if (i == kTalentsButton) {
             talentsDisc(box, hovered, now_.talents, now_.talentPoints);
+            buttonCap(box, row.key);
             continue;
         }
         const bool open = (i == 1 && now_.chat) || (i == 2 && now_.inventory) ||
@@ -1609,6 +1629,7 @@ void Hud::rebuild() {
         canvas_.region(sheet, {box.midX() - w * 0.5f, box.midY() - h * 0.5f, w, h},
                        {0.0f, float(state) * tall, sheet.width, tall},
                        row.live ? 0xFFFFFFFFu : kDeadIcon);
+        buttonCap(box, row.key);
     }
 
     // The level: the rail, and the fill as far as the hairline has slid.

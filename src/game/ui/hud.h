@@ -363,6 +363,7 @@ private:
     int hoveredAt(float x, float y) const;
     bool tipAt(float x, float y) const;
     void talentsDisc(const gfx::Box& box, bool hovered, bool open, bool waiting);
+    void buttonCap(const gfx::Box& disc, const char* key);  // the key's cap on a side button
     void glow(float width, float height);
     // Which buff cell a point is over, only one with something standing in it, or -1.
     int boonAt(float x, float y) const;
