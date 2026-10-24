@@ -218,12 +218,13 @@ void FireScream::gatherEffects(gfx::Effects& effects) const {
             const float back[3] = {-lane.way[0], 0.0f, -lane.way[2]};
             const float fire = kFireScale - kFireShrink * lane.frame;
             if (fire >= 0.1f) {
+                const float drawn = fire * kSheetSize;
                 float at[3];
-                head(lane, std::max(along, sheetTail_ * fire / kUnit), at);
+                head(lane, std::max(along, sheetTail_ * drawn / kUnit), at);
                 submitEffectAlong(effects, sheet_, sheetTex_, gfx::Blend::Additive, at, lane.across, up, back,
-                                  fire * tile, sheetLight, 1.0f);
+                                  drawn * tile, sheetLight, 1.0f);
                 submitEffectAlong(effects, streak_, streakTex_, gfx::Blend::Additive, at, lane.across, up, back,
-                                  fire * tile, sheetLight, 1.0f);
+                                  drawn * tile, sheetLight, 1.0f);
             }
             const float ring = kRingScale - kRingShrink * lane.frame;
             if (ring >= 0.1f) {

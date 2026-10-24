@@ -67,8 +67,9 @@ private:
     // very over the top can we make it little bit subtle and more clear?"). A hundred of MU's, up
     // to four metres across and stood on the ground, added up to one white mass over him.
     static constexpr float kFlameSize = 0.5f, kFlameLight = 0.55f;
-    // And the flame sheets' light, so their white tips do not flare past the lanes.
-    static constexpr float kSheetLight = 0.65f;
+    // And the flame sheets' size and light (the user, 2026-10-24, of their streaks: "those lines
+    // seems to much a overkill"): slid forward whole at MU's 2.3 they covered eight tiles.
+    static constexpr float kSheetSize = 0.4f, kSheetLight = 0.45f;
 
     struct Lane {
         bool alive = false;
