@@ -94,6 +94,10 @@ struct Row {
     // Lesser Might blue, a Greater purple -- and any past the limit dim and struck through.
     int pips = 0;
     std::vector<Tone> worn;
+    // The pips' legend, under the sockets that have them: a stone and "worn", a ring and "room
+    // for more" (the user, 2026-10-24: "its still hard to understand", then the legend). Its
+    // `free` holds the line's room, never printed.
+    bool legend = false;
 };
 
 // The item card's headline: the one number a thing is compared by, large, and the sum that made

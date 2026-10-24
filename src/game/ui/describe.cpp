@@ -1032,6 +1032,17 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             }
             socket.rows.push_back(line);
         }
+        // The pips' legend, once under them (tip::Row::legend).
+        bool pips = false;
+        for (const Row& one : socket.rows) pips = pips || one.pips > 0;
+        if (pips) {
+            Row legend;
+            legend.legend = true;
+            legend.free = "nn worn   nn room for more";
+            legend.freeTone = Tone::Gray;
+            legend.gap = true;
+            socket.rows.push_back(legend);
+        }
         sheet.sections.push_back(socket);
     }
 

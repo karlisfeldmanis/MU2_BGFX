@@ -626,6 +626,18 @@ std::string composed(const Row& row) {
 }
 bool prosaic(const Row& row) { return !row.free.empty() || !row.tail.empty(); }
 
+// A round stone, the pips' and their legend's.
+void stoneAt(gfx::Canvas& canvas, float cx, float cy, float radius, uint32_t colour) {
+    constexpr int kSides = 16;
+    float xy[kSides * 2];
+    for (int k = 0; k < kSides; ++k) {
+        const float a = 6.2831853f * float(k) / float(kSides);
+        xy[k * 2] = cx + radius * std::cos(a);
+        xy[k * 2 + 1] = cy + radius * std::sin(a);
+    }
+    canvas.polygon(nullptr, xy, nullptr, kSides, colour);
+}
+
 // A rune's pips over the room `composed` left them, from `x`: o o o o, round stones apart (the
 // user, 2026-10-24: "lets use 0 0 0 0 not 0-0-0-0-", "show all possible circle as outlines",
 // "use color coding for type") -- those worn solid stones in their rarities' ink, room left
@@ -636,14 +648,7 @@ void pipsAt(gfx::Canvas& canvas, const Row& row, float x, float cy, float size, 
     if (slots <= 0) return;
     const float r = size * 0.20f, pitch = r * 3.0f, line = std::max(1.0f, size * 0.07f);
     const auto disc = [&](float cx, float radius, uint32_t colour) {
-        constexpr int kSides = 16;
-        float xy[kSides * 2];
-        for (int k = 0; k < kSides; ++k) {
-            const float a = 6.2831853f * float(k) / float(kSides);
-            xy[k * 2] = cx + radius * std::cos(a);
-            xy[k * 2 + 1] = cy + radius * std::sin(a);
-        }
-        canvas.polygon(nullptr, xy, nullptr, kSides, colour);
+        stoneAt(canvas, cx, cy, radius, colour);
     };
     for (int i = 0; i < slots; ++i) {
         const float cx = x + r * 1.6f + pitch * float(i);
@@ -1056,6 +1061,23 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                     canvas.region(sheet.picture, {mx - side * 0.5f, my - side * 0.5f, side, side},
                                   sheet.runeFrom, fade(0xFFFFFFFFu));
                 }
+            }
+            if (row.legend && prosaic(row)) {
+                // The pips' legend (Row::legend): a stone, "worn", a ring, "room for more".
+                const float baseline = middle(face, rowPen, rowTall, rowSize);
+                const float cy = baseline - rowSize * 0.32f, rad = rowSize * 0.20f;
+                const float line = std::max(1.0f, rowSize * 0.07f);
+                const uint32_t ink = fade(colourOf(row.freeTone));
+                float px = left + rad;
+                stoneAt(canvas, px, cy, rad, ink);
+                px += rad * 2.0f;
+                px += say(type, canvas, px, baseline, rowSize, ink, " worn", drop) + rowSize;
+                stoneAt(canvas, px, cy, rad, ink);
+                stoneAt(canvas, px, cy, rad - line * 1.2f, fade(kBody));
+                px += rad * 2.0f;
+                say(type, canvas, px, baseline, rowSize, ink, " room for more", drop);
+                rowPen += rowTall * float(std::max<size_t>(1, prose[s][r].size()));
+                continue;
             }
             if (prosaic(row)) {
                 // Coloured by what part of the row each piece is: the keyword white, the prose in
