@@ -5617,8 +5617,41 @@ void testTalentCommands(const content::Tables& tables) {
         size_t at = 0;
         while (at < bytes.size() && bytes[at] == markedBytes[at]) ++at;
         constexpr size_t kQuestBytes = 1 + 4 * sim::kQuestSteps + 8 + 4;
+        // A layout-14 row's vault is MU's eight across, 120 cells (sim::kOldVaultCells, layout 15):
+        // found by the first byte a thing in its first cell moves, a cell's bytes by the one in its
+        // last, and cut out of the empty cells between the 21st and the 170th.
+        const auto firstMoved = [&](const sim::Kept& other) {
+            std::vector<uint8_t> them;
+            net::putKept(them, other);
+            size_t i = 0;
+            while (i < bytes.size() && bytes[i] == them[i]) ++i;
+            return i;
+        };
+        sim::Kept inFirst = kept, inLast = kept;
+        inFirst.vault.put(0, sim::Held{1, 0, 1});
+        inLast.vault.put(sim::kVaultCells - 1, sim::Held{1, 0, 1});
+        const size_t vaultAt = firstMoved(inFirst);
+        const size_t cellBytes = (firstMoved(inLast) - vaultAt) / size_t(sim::kVaultCells - 1);
+        const auto narrowed = [&](const std::vector<uint8_t>& wide) {
+            std::vector<uint8_t> out = wide;
+            const auto from = out.begin() + std::ptrdiff_t(vaultAt + 20 * cellBytes);
+            out.erase(from, from + std::ptrdiff_t(cellBytes * size_t(sim::kVaultCells - sim::kOldVaultCells)));
+            return out;
+        };
+        const std::vector<uint8_t> fourteen = narrowed(bytes);
+        sim::Kept narrow;
+        check(net::keptFrom(fourteen, narrow, 14) && narrow.hero.talents == saved.talents,
+              "a layout-14 row reads, its vault eight across");
+        check(!net::keptFrom(fourteen, narrow, 15), "and is not a layout 15");
+        sim::Kept placed = kept;
+        placed.vault.put(9, sim::Held{1, 0, 1});  // the second row's second cell, eight across
+        std::vector<uint8_t> placedBytes;
+        net::putKept(placedBytes, placed);
+        check(net::keptFrom(narrowed(placedBytes), narrow, 14) && narrow.vault[9].empty() &&
+                  narrow.vault[sim::widenedCell(9)].item == 1 && sim::widenedCell(9) == sim::kVaultColumns + 1,
+              "and what it kept stands in its own column and row");
         // A layout-13 row has no quests' lives (QuestProgress::life, layout 14): a byte a quest.
-        std::vector<uint8_t> thirteen(bytes.begin(), bytes.end() - sim::kQuests);
+        std::vector<uint8_t> thirteen(fourteen.begin(), fourteen.end() - sim::kQuests);
         sim::Kept unlived;
         check(net::keptFrom(thirteen, unlived, 13) && unlived.hero.quests[0].life == 0 &&
                   unlived.hero.talents == saved.talents,

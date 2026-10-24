@@ -249,10 +249,12 @@ sim::Kept takeKept(In& in, int layout = kKeptLayout) {
     r.found = in.u32();
     r.summonSkill = in.i32();
     r.summonHealth = in.i32();
+    // Eighteen across from layout 15; MU's eight before it, each into its own column and row.
     k.vault.clear();
-    for (int cell = 0; cell < sim::kVaultCells; ++cell) {
+    const bool wide = layout >= 15;
+    for (int cell = 0; cell < (wide ? sim::kVaultCells : sim::kOldVaultCells); ++cell) {
         const sim::Held h = takeHeld(in);
-        if (!h.empty()) k.vault.put(cell, h);
+        if (!h.empty()) k.vault.put(wide ? cell : sim::widenedCell(cell), h);
     }
     k.vault.setZen(in.i64());
     k.machine.clear();

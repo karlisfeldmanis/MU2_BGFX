@@ -13,19 +13,24 @@ namespace {
 
 using gfx::Box;
 
-// The grid on the line the bag's worn slots and the shelf's first row start on, at the skin's
-// shared pitch: fifteen rows from 44 end at 359, and the foot's rule is at 382.
-constexpr float kOriginX = panel::kGridX, kOriginY = 44.0f;
+// Two columns wide (the user, 2026-10-24: "we want more space"): the window spans the column
+// beside the bag and the next, and its eighteen columns of cells stand centred in it. The grid on
+// the line the bag's worn slots and the shelf's first row start on, at the skin's shared pitch:
+// fifteen rows from 44 end at 359, and the foot's rule is at 382 -- a sixteenth would end on it.
+constexpr float kWide = panel::kWideWidth;
 constexpr float kCell = panel::kPitch;
+constexpr float kOriginX = (kWide - kCell * float(sim::kVaultColumns)) * 0.5f;  // 13
+constexpr float kOriginY = 44.0f;
+constexpr float kGridRight = kOriginX + kCell * float(sim::kVaultColumns);
 
 // The foot: MU's money strip and its two coin buttons on one line, the buttons against the
 // window's right edge and the figure ranged against the first of them. MU's buttons are 36 x 29
 // under a 170-wide strip; here they are cut to the foot's own 26-unit strip at MU's aspect.
 constexpr float kButtonW = 30.0f, kButtonH = 24.0f, kButtonGap = 3.0f;
 constexpr float kButtonTop = panel::kFootTop + 1.0f;
-constexpr float kButtonRight = panel::kWellRight;
-constexpr Box kStrip{panel::kEdge, panel::kFootTop, panel::kWidth - panel::kEdge * 2.0f, 26.0f};
-constexpr Box kCoins{18.0f, panel::kFootTop + 4.0f, 20.0f, 18.0f};
+constexpr float kButtonRight = kGridRight;
+constexpr Box kStrip{kOriginX, panel::kFootTop, kGridRight - kOriginX, 26.0f};
+constexpr Box kCoins{kOriginX + 7.0f, panel::kFootTop + 4.0f, 20.0f, 18.0f};
 constexpr const char* kButtonTip[2] = {"Deposit Zen", "Withdraw Zen"};
 
 Box buttonBox(int which) {
@@ -76,7 +81,7 @@ void Chest::open(const gfx::Interface& interface, panel::Arts* arts) {
 }
 
 bool Chest::covers(float x, float y) const {
-    return up_ && Box{x_, y_, panel::kWidth * panel::scale(), panel::kHeight * panel::scale()}
+    return up_ && Box{x_, y_, kWide * panel::scale(), panel::kHeight * panel::scale()}
                       .has(x, y);
 }
 
@@ -105,7 +110,8 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
     const sim::Vault& vault = realm.vault();
     screenW_ = width;
     screenH_ = height;
-    x_ = panel::columnX(width, column);
+    // Its own column's right edge and the next one's left: columnX of the second.
+    x_ = panel::columnX(width, column + 1);
     y_ = panel::panelY(height);
     const float k = panel::scale();
     const float ux = (pointer.x - x_) / k, uy = (pointer.y - y_) / k;
@@ -115,7 +121,7 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
     hovered_ = cell >= 0 && incoming_.empty() ? vault.holder(tables, cell) : -1;
     button_ = inside ? buttonAt(ux, uy) : -1;
 
-    const Box cross = panel::frameClose();
+    const Box cross = panel::frameClose(kWide);
     overClose_ = inside && cross.has(ux, uy);
     // Click to pick and click to place, the bag's (bag.h): while a thing rides the pointer a
     // press is the start of placing it and nothing else.
@@ -204,7 +210,7 @@ void Chest::update(float width, float height, int column, const sim::Realm& real
     if (const int32_t rune = anySet ? runeRow(tables) : -1; rune >= 0) {
         standing_.push_back({rune, panel::kRuneStands, 0, false, false});
     }
-    if (stage) stage->stand(standing_, panel::kWidth, panel::kStageTall);
+    if (stage) stage->stand(standing_, kWide, panel::kStageTall);
 
     const sim::Body& hero = realm.hero();
     now_ = Contents{};
@@ -251,7 +257,7 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
     const float x = x_, y = y_, k = panel::scale();
     const gfx::Face& face = canvas_.face();
 
-    panel::frame(canvas_, arts, x, y, "Vault");
+    panel::frame(canvas_, arts, x, y, "Vault", kWide);
     panel::grid(canvas_, x, y, kOriginX, kOriginY, sim::kVaultColumns, sim::kVaultRows);
     // Each piece's cells washed teal, the bag's satchel wash, so the empty cells read as empty
     // (bug #35, 2026-10-20: "the items on the vault don't show the background like the
@@ -324,7 +330,7 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
     // buttons -- MU's newui_Bt_money sprites drawn as Sanctuary icon squares, a coin with an
     // arrow into it and one out of it, on MU's own rectangles.
     const float u = tip::unit();
-    controls::foot(canvas_, panel::scaled(x, y, {0.0f, 0.0f, panel::kWidth, panel::kHeight}),
+    controls::foot(canvas_, panel::scaled(x, y, {0.0f, 0.0f, kWide, panel::kHeight}),
                    y + panel::kFootRule * k, u);
     canvas_.image(arts.get("bag_zen"), panel::scaled(x, y, kCoins));
     const Box strip = panel::scaled(x, y, kStrip);
@@ -342,11 +348,11 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
                          which == 0 ? controls::Glyph::CoinIn : controls::Glyph::CoinOut, state, u);
     }
 
-    panel::close(canvas_, x, y, now_.overClose, now_.closing);
+    panel::close(canvas_, x, y, now_.overClose, now_.closing, kWide);
 
     const gfx::Art picture = stage ? stage->picture() : gfx::Art{};
     if (picture.valid()) {
-        panel::standing(canvas_, picture, x, y);
+        panel::standing(canvas_, picture, x, y, kWide);
     } else {
         for (const Standing& one : standing_) {
             const Box box = panel::scaled(x, y, one.box);
@@ -361,7 +367,7 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
     for (int at = 0; at < sim::kVaultCells; ++at) {
         const sim::Held& held = vault[at];
         if (held.empty() || socketsOf(held) == 0 || at == dragging_) continue;
-        panel::sockets(canvas_, picture, panel::scaled(x, y, itemBox(tables, at, held)), held, k);
+        panel::sockets(canvas_, picture, panel::scaled(x, y, itemBox(tables, at, held)), held, k, kWide);
     }
     // A stack's count at its cell's foot -- the bag's.
     for (int at = 0; at < sim::kVaultCells; ++at) {
@@ -378,7 +384,7 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
 
     // What rides the pointer, cut out of the stage at its own footprint -- the bag's drag.
     if (dragging_ >= 0 && !vault[dragging_].empty()) {
-        panel::carried(canvas_, picture, itemBox(tables, dragging_, vault[dragging_]), now_.dragX, now_.dragY);
+        panel::carried(canvas_, picture, itemBox(tables, dragging_, vault[dragging_]), now_.dragX, now_.dragY, kWide);
         if (part_ > 1) panel::carriedCount(canvas_, itemBox(tables, dragging_, vault[dragging_]), now_.dragX, now_.dragY, part_);
     }
 

@@ -145,10 +145,10 @@ bgfx::TextureHandle titleTexture() { return s_titleTexture; }
 
 // ---- the frame -------------------------------------------------------------------------------
 
-gfx::Box headSocket(bool right) {
+gfx::Box headSocket(bool right, float width) {
     // Centred in the WHOLE head, as the title is: MU's socket sat in its painted plate, from 11
     // to 35, five units below the title's own centre line, and the cross read as hanging low.
-    return {right ? kWidth - kHeadInset - kHeadButton : kHeadInset,
+    return {right ? width - kHeadInset - kHeadButton : kHeadInset,
             (kHeadBand - kHeadButton) * 0.5f, kHeadButton, kHeadButton};
 }
 
@@ -162,22 +162,23 @@ gfx::Box buttonState(const gfx::Art& art, bool pressed, int states) {
     return {0.0f, pressed ? tall : 0.0f, art.width, tall};
 }
 
-void frame(gfx::Canvas& canvas, Arts& arts, float x, float y, const std::string& title) {
+void frame(gfx::Canvas& canvas, Arts& arts, float x, float y, const std::string& title,
+           float width) {
     // **Sanctuary** (game/ui/style.h), chosen by the user on 2026-09-27 over skin B: iron rings
     // round a stone body, the title centred in Cinzel over a quiet iron rule, clean corners. The
     // frame is game/ui/controls.h's, cut to MU's own head band so every rectangle below it --
     // the grid at (11, 200), the foot at 382 -- stays exactly where MU put it.
     (void)arts;
     const float k = scale();
-    controls::frame(canvas, scaled(x, y, {0.0f, 0.0f, kWidth, kHeight}), tip::unit(), title,
+    controls::frame(canvas, scaled(x, y, {0.0f, 0.0f, width, kHeight}), tip::unit(), title,
                     nullptr, kHeadBand * k);
 }
 
 namespace {
 // The close button in the head's right-hand socket, at the controls' own size: MU's 24-unit box
 // is 41 pixels at 1080 lines, and the small square is 28.
-gfx::Box closeIn(float x, float y) {
-    const gfx::Box socket = scaled(x, y, frameClose());
+gfx::Box closeIn(float x, float y, float width) {
+    const gfx::Box socket = scaled(x, y, frameClose(width));
     const float s = std::round(std::min(style::kSmallSquare * tip::unit(), socket.h));
     return {std::round(socket.right() - s), std::round(socket.midY() - s * 0.5f), s, s};
 }
@@ -188,11 +189,11 @@ void close(gfx::Canvas& canvas, Arts& arts, float x, float y, bool pressed) {
     close(canvas, x, y, false, pressed);
 }
 
-void close(gfx::Canvas& canvas, float x, float y, bool over, bool pressed) {
+void close(gfx::Canvas& canvas, float x, float y, bool over, bool pressed, float width) {
     controls::State state;
     state.lift = over ? 1.0f : 0.0f;
     state.held = pressed;
-    controls::square(canvas, closeIn(x, y), controls::Glyph::Close, state, tip::unit());
+    controls::square(canvas, closeIn(x, y, width), controls::Glyph::Close, state, tip::unit());
 }
 
 void field(gfx::Canvas& canvas, Arts& arts, float x, float y, const gfx::Box& units,
@@ -202,10 +203,10 @@ void field(gfx::Canvas& canvas, Arts& arts, float x, float y, const gfx::Box& un
     controls::well(canvas, scaled(x, y, units), tip::unit());
 }
 
-void standing(gfx::Canvas& canvas, const gfx::Art& picture, float x, float y) {
-    const float sx = picture.width / kWidth, sy = picture.height / kStageTall;
-    canvas.region(picture, scaled(x, y, {0.0f, 0.0f, kWidth, kHeight}),
-                  {0.0f, 0.0f, kWidth * sx, kHeight * sy});
+void standing(gfx::Canvas& canvas, const gfx::Art& picture, float x, float y, float width) {
+    const float sx = picture.width / width, sy = picture.height / kStageTall;
+    canvas.region(picture, scaled(x, y, {0.0f, 0.0f, width, kHeight}),
+                  {0.0f, 0.0f, width * sx, kHeight * sy});
 }
 
 namespace {
@@ -286,7 +287,8 @@ void sockets(gfx::Canvas& canvas, const gfx::Art& picture, const gfx::Box& box,
     }
 }
 
-void carried(gfx::Canvas& canvas, const gfx::Art& picture, const gfx::Box& units, float px, float py) {
+void carried(gfx::Canvas& canvas, const gfx::Art& picture, const gfx::Box& units, float px, float py,
+             float width) {
     const float k = scale();
     const gfx::Box to{px - units.w * k * 0.5f, py - units.h * k * 0.5f, units.w * k, units.h * k};
     if (!picture.valid()) {
@@ -295,7 +297,7 @@ void carried(gfx::Canvas& canvas, const gfx::Art& picture, const gfx::Box& units
     }
     // The picture alone, whole: the dark box once under it read as a background the thing was
     // carried on (the user, 2026-10-02).
-    const float sx = picture.width / kWidth, sy = picture.height / kStageTall;
+    const float sx = picture.width / width, sy = picture.height / kStageTall;
     const gfx::Box from = carryBox(units);
     canvas.region(picture, to, {from.x * sx, from.y * sy, from.w * sx, from.h * sy});
 }
