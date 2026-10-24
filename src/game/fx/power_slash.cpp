@@ -151,18 +151,20 @@ void PowerSlash::gatherSmoke(gfx::Effects& effects, const Puff* pool, int size, 
         const float gone = one.speed * (1.0f - std::pow(kSlows, one.age)) / (1.0f - kSlows);
         gfx::Sprite sprite;
         for (int k = 0; k < 3; ++k) sprite.position[k] = one.from[k] + one.way[k] * gone;
-        if (haze) sprite.position[1] -= kHazeSinks * one.age * metre;
-        const float scale = one.scale + (haze ? kHazeGrows : kPuffGrows) * one.age;
+        sprite.position[1] += kSmokeLift;
+        if (haze) sprite.position[1] -= std::min(kHazeSinksMost, kHazeSinks * one.age * metre);
+        const float scale = (one.scale + (haze ? kHazeGrows : kPuffGrows) * one.age) * (haze ? kHazeBigger : kPuffBigger);
         sprite.halfWidth = sprite.halfHeight = kSmokePixels * scale * metre * 0.5f;
         sprite.spin = one.spin;
         // The bright puffs (0.8, 0.8, 1) times LifeTime / 8, 1.125 as they are made; the haze its
         // wave's blue times LifeTime / 50. MU's LifeTime is a frame down before it is drawn.
         float rgb[3];
         for (int k = 0; k < 3; ++k) {
-            rgb[k] = std::max(0.0f, one.tint[k] * (left - 1.0f) / (haze ? kHazeLife : 8.0f)) * kSmokeGain;
+            rgb[k] = std::max(0.0f, one.tint[k] * (left - 1.0f) / (haze ? kHazeLife : 8.0f)) * kSmokeGain *
+                     (haze ? 1.0f : kPuffBrighter);
         }
         sprite.sheet = smokeSheet_;
-        sprite.blend = gfx::Blend::Additive;
+        sprite.blend = gfx::Blend::Mist;  // blurred under a bell, never its square (gfx/effects.h)
         // Ours: soft, so a puff half sunk in the field thins into the ground and over the grass
         // instead of being cut by every blade into a stipple (MU's ground has no grass standing).
         sprite.soft = kSmokeSoft;

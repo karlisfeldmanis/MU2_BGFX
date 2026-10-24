@@ -358,27 +358,42 @@ void FireSlash::gatherEffects(gfx::Effects& effects) const {
             if (!addLit(effects, quad, rgb)) return;
         }
     }
-    // The flames: Fire01's four cells over their life, each a whole flame, never faded (MU
-    // writes no Luminosity into this subtype's Light); heat its joint's light, cooling a little.
+    // The flames: Fire01's first two cells over their life (MU runs all four), unfaded until
+    // their last share (MU writes no Luminosity into this subtype's Light; the dying away is ours);
+    // heat its joint's light, cooling a little.
     if (bgfx::isValid(fireSheet_)) {
         for (const Fire& one : fires_) {
             if (!one.alive || one.scale <= 0.0f) continue;
             gfx::Sprite sprite;
             for (int k = 0; k < 3; ++k) sprite.position[k] = one.at[k];
             sprite.halfWidth = sprite.halfHeight = kFirePixels * one.scale * metre * 0.5f;
-            const int cell = std::clamp(int((kFireLife - 1.0f - one.left) / 6.0f), 0, 3);
-            sprite.u0 = float(cell) * 0.25f;
-            sprite.u1 = float(cell + 1) * 0.25f;
+            // Where it is through the strip, eased between its cells (above).
+            const float last = float(kFireCells - 1);
+            const float through = std::clamp((kFireLife - one.left) / kFireLife * last, 0.0f, last);
+            const int cell = std::min(int(through), kFireCells - 1);
+            const int next = std::min(cell + 1, kFireCells - 1);
+            const float into = through - float(cell);
             const float aged = 1.0f - clampOne(one.left / kFireLife);
-            sprite.colour[0] = kFireCellGain[cell] * kFireFull / 20.0f;
+            // Its last share of life dying away (above).
+            const float dies = clampOne(one.left / (kFireLife * kFireDiesFrom));
             // The joint's light as heat on its square root: the ramp's brightness runs on the heat
             // squared, and MU's 0.67 (the flames of its second and third frames) is no ember.
-            sprite.colour[1] = clampOne(kFireHeat * std::sqrt(one.light) * (1.0f - kFireCools * aged));
+            const float heat = clampOne(kFireHeat * std::sqrt(one.light) * (1.0f - kFireCools * aged));
+            sprite.colour[1] = heat;
             sprite.colour[2] = 0.0f;
             sprite.colour[3] = 1.0f;
             sprite.sheet = fireSheet_;
             sprite.blend = gfx::Blend::Breath;
-            if (!effects.add(sprite)) return;
+            sprite.soft = kFireSoft;
+            for (int c = 0; c < 2; ++c) {
+                const int at = c == 0 ? cell : next;
+                const float share = c == 0 ? 1.0f - into : into;
+                if (share <= 0.001f || (c == 1 && next == cell)) continue;
+                sprite.u0 = float(at) * 0.25f;
+                sprite.u1 = float(at + 1) * 0.25f;
+                sprite.colour[0] = kFireCellGain[at] * kFireFull / 20.0f * share * dies;
+                if (!effects.add(sprite)) return;
+            }
         }
     }
     // The bolts: each tail's cross joined to the next, both faces, the sheet scrolling along

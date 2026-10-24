@@ -143,6 +143,12 @@ private:
     // ten; and the warm light under the ribbon -- its reach in tiles, its colour, its strength at
     // the ribbon's full light.
     static constexpr float kFireChance = 0.8f, kFireBigger = 1.15f, kFireScatter = 30.0f;
+    // Ours, smooth (the user, 2026-10-24: "without cut/crop effect"): a flame keeps to Fire01's
+    // first two cells, the whole flames -- its last two are painted as red shreds -- easing from
+    // the first into the second over its life rather than snapping, dies away over the last
+    // share of its life, and thins softly into what is behind it, metres.
+    static constexpr int kFireCells = 2;
+    static constexpr float kFireDiesFrom = 0.5f, kFireSoft = 0.5f;
     static constexpr float kFadeUnderTen = 1.25f;   // MU's 1.5
     static constexpr float kLightTiles = 4.0f;
     static constexpr float kLightColour[3] = {1.0f, 0.45f, 0.12f};

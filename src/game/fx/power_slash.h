@@ -98,7 +98,12 @@ private:
     static constexpr float kShinyScale = 0.3f, kShinyWide = 32.0f, kShinyTall = 64.0f;
     static constexpr float kFlareScale = 0.6f, kFlarePixels = 64.0f;
     // ---- the puffs (BITMAP_SMOKE sub 3) and the haze (sub 11) -------------------------------
-    static constexpr int kPuffsAFrame = 4;
+    // Ours, MU's 4: two a frame, each half as large again and a third brighter (kPuffBigger,
+    // kPuffBrighter), and the haze larger too -- MU's 64-pixel cloud is mottled, and twenty small
+    // ones stacked read as speckle where a few large ones read as a soft cloud (the user,
+    // 2026-10-24: "smoke effects nice and smooth").
+    static constexpr int kPuffsAFrame = 2;
+    static constexpr float kPuffBigger = 1.6f, kHazeBigger = 1.4f, kPuffBrighter = 1.35f;
     static constexpr float kSmokePixels = 64.0f;
     static constexpr float kPuffLife = 10.0f, kPuffGrows = 0.1f;
     static constexpr float kHazeLife = 50.0f, kHazeGrows = 0.05f, kHazeSinks = 1.0f;
@@ -109,7 +114,11 @@ private:
     // colour, where half of white on a dim field reads near white; added here in linear light
     // the same sheet is a third as strong, and the fan's fog a faint haze.
     static constexpr float kSmokeGain = 2.0f;
-    static constexpr float kSmokeSoft = 1.0f;  // metres, gfx::Sprite::soft (see gatherSmoke)
+    static constexpr float kSmokeSoft = 2.0f;  // metres, gfx::Sprite::soft (see gatherSmoke)
+    // Ours: the smoke lifted over the field's grass, and the haze's sinking stopped short of it, so
+    // no blade cuts it (the user, 2026-10-24: "check if smoke effects are nice and smooth without
+    // cut/crop effect"). Metres.
+    static constexpr float kSmokeLift = 0.5f, kHazeSinksMost = 0.3f;
 
     struct Wave {
         bool alive = false;
