@@ -108,6 +108,9 @@ STATES = {
     # refused the read that day -- so it is 60 by 84 where the others are 80 by 112, and a run
     # of this script that CAN read MuDream will replace it with the sharper cut for free.
     "soul_barrier": (4, "eBuff_WizDefense", "Soul Barrier, skill 16"),
+    # The Dark Lord's Critical Damage, a lookup: eBuff_AddCriticalDamage, which MuMain registers
+    # for skill 64 (WSclient.cpp:4683-4701) -- the orange raised fist (NewUIBuffWindow.cpp:336-349).
+    "critical_damage": (5, "eBuff_AddCriticalDamage", "Critical Damage, skill 64"),
     # The Ale, and the second borrowing, for the reason the first was: MuMain has no eBuffState
     # for it either - it is ABILITY_FAST_ATTACK_SPEED, shown as the hero turned red - and the
     # user asked for a cell with a tooltip on 2026-09-27, so the strip says how long it has left.

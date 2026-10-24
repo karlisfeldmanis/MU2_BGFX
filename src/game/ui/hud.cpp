@@ -146,6 +146,7 @@ const char* buffArt(int32_t skill) {
         case 18: return "buff_defense";
         case 27: return "buff_greater_defense";
         case 28: return "buff_greater_damage";
+        case 64: return "buff_critical_damage";
         default: return nullptr;
     }
 }

@@ -2136,6 +2136,15 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         boon.seconds = left * 0.05f;
         boon.share = row && row->mightTicks > 0 ? left / float(row->mightTicks) : 0.0f;
     }
+    // A Dark Lord's Critical Damage, his own or his party's lord's: its own clock (Body::keenUntil),
+    // its share of what his own Command and energy would give, for a lord's cast lasts by his.
+    if (hero.keenUntil > realm.tick() && standing < Hud::kBoons) {
+        const float left = float(hero.keenUntil - realm.tick());
+        Hud::Boon& boon = boons[standing++];
+        boon.skill = sim::skill::kCriticalDamage;
+        boon.seconds = left * 0.05f;
+        boon.share = std::min(1.0f, left / float(std::max(1, sim::keenTicksOf(hero.totalPoints()))));
+    }
     if (const int64_t left = realm.aleLeft(); left > 0) {
         Hud::Boon& boon = boons[standing++];
         boon.ale = true;

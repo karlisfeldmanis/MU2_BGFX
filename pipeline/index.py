@@ -576,6 +576,9 @@ EFFECTS = {
     # of radial spokes. Both are JPEGs over black, so both cut themselves out of an additive
     # pass the way the streak sheets do.
     "flare": "effects/levelup/flare.png",
+    # The Dark Lord's Critical Damage: BITMAP_FIRECRACKER, Effect/Fire04 (ZzzOpenData.cpp:5296), the
+    # three ribbons that coil up a buffed player's weapon (ZzzEffectJoint.cpp:2489-2575).
+    "critical_damage_fire04": "effects/critical_damage/fire04.png",
     "magic_ground": "effects/levelup/magic_ground.png",
 
     # A warp's walls: Magic_Circle1.OZJ, BITMAP_MAGIC + 2, which ReceiveTeleport throws under a

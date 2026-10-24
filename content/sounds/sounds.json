@@ -2880,6 +2880,12 @@
         "sDarkElecSpike.wav"
       ],
       "from": "SOUND_ELEC_STRIKE, Data\\Sound\\sDarkElecSpike.wav (ZzzOpenData.cpp:4873). Electric Spike let go, with its bolt (ZzzCharacter.cpp:4391-4404); played on the realm's Loosed (game/play.cpp, fx/electric_spike.h)."
+    },
+    "critical_damage": {
+      "files": [
+        "sDarkCritical.wav"
+      ],
+      "from": "SOUND_CRITICAL, Data\\Sound\\sDarkCritical.wav (ZzzOpenData.cpp:4875). Critical Damage's flash, 14 ticks after the echo (ZzzCharacter.cpp:4367-4384); MU plays it again on every 1.2 s pulse of every buffed player (:10063), which is not built (docs/plans/dark-lord-spells/critical-damage.md 7.8). The skill row's own sound, cued by game/fx/critical_damage.h at the flash."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

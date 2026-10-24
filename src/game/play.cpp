@@ -1029,6 +1029,10 @@ void Play::update(double seconds) {
                         caster->swingPace = 1.0f;
                         caster->swinging = caster->figure.played();
                         ++caster->swingToken;
+                        // Critical Damage's flash at his weapon hands (fx/critical_damage.h).
+                        if (happening.a == sim::skill::kCriticalDamage) {
+                            criticalDamage_.begin(caster->id, caster->figure.played());
+                        }
                         // A new draw: the arrow is back on the string (Figure::nock).
                         caster->figure.nock(true);
                         const int index = sim::skillIndexOf(happening.a);
@@ -2937,6 +2941,48 @@ void Play::update(double seconds) {
             const Drawn* drawn = drawnOf(id);
             if (heard_.fireBurstBoom >= 0 && drawn && drawn->placed) {
                 emit(heard_.fireBurstBoom, drawn->crown[0], drawn->crown[2], id);
+            }
+        });
+    // Critical Damage: its cast's flash, and the coils on every player under it with his weapons
+    // in his hands -- MU draws none while they are on his back (RenderCharacterBackItem), which here
+    // is a safe tile or out of a fight (Figure::slung).
+    for (const sim::Body& one : realm_.bodies()) {
+        if (!one.player || !one.alive() || one.keenUntil <= realm_.tick()) continue;
+        if (const Drawn* drawn = drawnOf(one.id);
+            drawn && drawn->placed && drawn->visible && !drawn->figure.slung()) {
+            criticalDamage_.standing(one.id);
+        }
+    }
+    criticalDamage_.update(
+        float(seconds),
+        [&](uint32_t id, int* bones, bool* bows) {
+            const Drawn* drawn = drawnOf(id);
+            const FigureBody* look = drawn ? drawn->figure.body() : nullptr;
+            if (look == nullptr) return 0;
+            int count = 0;
+            for (const HeldItem& held : look->held) {
+                if (count >= 2) break;
+                if (held.kind != "weapon" || held.bone < 0 || held.alwaysSlung) continue;
+                bones[count] = held.bone;
+                bows[count] = held.stance == "bow" || held.stance == "crossbow";
+                ++count;
+            }
+            return count;
+        },
+        [&](uint32_t id, int bone, const float* local, float* out) {
+            const Drawn* drawn = drawnOf(id);
+            return drawn != nullptr && drawn->placed && drawn->figure.pointOn(bone, local, out);
+        },
+        [&](uint32_t id, float* yaw) {
+            const Drawn* drawn = drawnOf(id);
+            if (drawn == nullptr || !drawn->placed) return false;
+            *yaw = drawn->yaw;
+            return true;
+        },
+        [&](uint32_t id) {
+            const Drawn* drawn = drawnOf(id);
+            if (heard_.criticalDamage >= 0 && drawn && drawn->placed) {
+                emit(heard_.criticalDamage, drawn->crown[0], drawn->crown[2], id);
             }
         });
     // The fire on him while he calls a Meteorite down: while its clip is on him, not while the
