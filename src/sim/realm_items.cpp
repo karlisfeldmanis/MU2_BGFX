@@ -868,6 +868,12 @@ bool Realm::useItem(int slot) {
         // forty is forty, so a new wizard with thirty keeps the scroll in his bag until he has
         // spent ten points. OpenMU asks it at the read (`CompliesRequirements`).
         if (hero.points.energy < read.teachesEnergy) return false;
+        // And an orb's strength, run through the requirements' formula as a wearable's is: the
+        // Orb of Fire Slash's raw 320 at drop level 60 is WebZen's 596 (zzzitem.cpp:457), asked
+        // of Strength+AddStrength at the read (protocol.cpp:17795). Every other orb asks none.
+        if (shortOf(asks(row, potion.refinement), hero.level, hero.totalPoints()).strength > 0) {
+            return false;
+        }
         // A second orb of something he knows is refused rather than eaten: `learn` says no to a
         // skill already learned, and the orb stays in the bag to be sold.
         if (!learn(read.teaches)) return false;

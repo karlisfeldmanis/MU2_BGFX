@@ -44,10 +44,30 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     const bool impPaid = impCost > 0 && attacker.health > impCost;
     const double dealt = attacker.stats.damageDealt;
     if (impCost > 0 && !impPaid) attacker.stats.damageDealt = 1.0;
+    // Fire Slash's cut (SkillRow::cutTicks), WebZen's MaGumSkillDefenseDown: rolled on each body
+    // BEFORE the blow is asked, so the blow it lands with already profits, a miss lays it too
+    // (protocol.cpp:16718-16719, ObjUseSkill.cpp:1347), and laid again it starts its ten seconds
+    // over and never stacks (BuffEffectSlot.cpp:80-95). A boss shrugs it as it shrugs a Weakness.
+    // Its own draw, taken only by a row that cuts, so nothing else's dice move.
+    const SkillRow* cutter = row != nullptr ? row : sweep_;
+    if (cutter != nullptr && cutter->cutTicks > 0 && attacker.player && target.monster() &&
+        !shrugs(target) && dice.nextBool(cutter->cutChance)) {
+        target.defenseCutUntil = tick_ + cutter->cutTicks;
+        target.defenseCut = cutter->cutShare;
+    }
+    // And what stands of it meets every blow, anyone's: `targetdefense -= targetdefense *
+    // value / 100` (ObjBaseAttack.cpp:1299-1302).
+    Fighter cutDown;
+    const Fighter* guard = &target.stats;
+    if (target.defenseCutUntil > tick_ && target.defenseCut > 0) {
+        cutDown = target.stats;
+        cutDown.defense -= cutDown.defense * target.defenseCut / 100;
+        guard = &cutDown;
+    }
     // A charge's stages ride on the skill's damage for its burst (Realm::burstCharge).
-    Blow blow = row && row->wizardry ? cast(attacker.stats, target.stats,
+    Blow blow = row && row->wizardry ? cast(attacker.stats, *guard,
                                             row->damage + (attacker.player ? me().chargeDamage : 0), dice)
-                                     : strike(attacker.stats, target.stats, dice);
+                                     : strike(attacker.stats, *guard, dice);
     attacker.stats.damageDealt = dealt;
     if (blow.hit && impPaid) attacker.health -= impCost;
     // Ice's and Poison's elements, and a poisoner's bite on him. WebZen lays them before the
@@ -2570,6 +2590,8 @@ void Realm::raiseBeast(Body& beast) {
     beast.bleedUntil = 0;
     beast.weakUntil = 0;
     beast.weakCut = 0;
+    beast.defenseCutUntil = 0;
+    beast.defenseCut = 0;
     beast.walking = false;
     route(beast).clear();
     beast.onStep = 0;

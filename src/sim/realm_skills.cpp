@@ -719,9 +719,9 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
         if (row.spread == Spread::Arc) {
             // The facing eighth and the two beside it. `aim` and not `facing`, because the throw
             // aims him at what the key named and the body turns to it over the clip; the blow
-            // belongs where he threw it.
+            // belongs where he threw it. Fire Slash's half-disc is its row's own (arcHalf).
             const float toward = fm::atan2(dy, dx);
-            if (std::fabs(wrapped(toward - hero.aim)) > kArcHalfAngle) continue;
+            if (std::fabs(wrapped(toward - hero.aim)) > row.arcHalfAngle()) continue;
         }
         if (found >= room) continue;
         // Insertion, because the list is at most a handful long and an insertion sort of a

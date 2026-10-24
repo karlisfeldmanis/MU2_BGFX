@@ -172,7 +172,11 @@ namespace mu::net {
 // 49: the vault eighteen across (sim/vault.h, kKeptLayout 15, 2026-10-24): 270 cells in a
 //     character's bytes and in every vault cell a command names, so a client on 48 is refused
 //     instead of reading the vault 150 cells short.
-constexpr uint32_t kVersion = 49;
+// 50: the market's ecommerce redesign (2026-10-24): a Broker ask's query carries Luck, Socket and
+//     a piece's price from and to, so a client on 49 sends an ask the server reads short.
+// 51: Fire Slash, the Magic Gladiator's 41st skill (sim::kSkills 41, kKeptLayout 16, 2026-10-24):
+//     a 41st cool in a character's bytes and a rule a 50 client does not know.
+constexpr uint32_t kVersion = 51;
 // The server the game plays on when it is not told another (server/README.md): the Hetzner box,
 // by its name, so the game talks to mu-classic.com as the launcher does, not to a bare address.
 constexpr const char* kDefaultHost = "mu-classic.com";
@@ -188,8 +192,8 @@ constexpr const char* kDefaultHost = "mu-classic.com";
 // (sim/rebirth.h, 2026-10-22), where 3-12 carry none; 14 each quest's life, the rebirth of its last
 // hand-in (QuestProgress::life, 2026-10-22), where 3-13 carry none and read as the first life; 15 the vault eighteen across, 270 cells
 // (2026-10-24), where 3-14 carry MU's 120 at eight across and read each into its own column and
-// row (sim::widenedCell).
-constexpr int kKeptLayout = 15;
+// row (sim::widenedCell); 16 a 41st skill's cool, Fire Slash (2026-10-24), where 9-15 carry 40.
+constexpr int kKeptLayout = 16;
 // MU's GameServer listened on 55901; ours is its own.
 constexpr int kDefaultPort = 44406;
 // The longest frame a client accepts: a Welcome with its snapshot, about half a MB for a town of

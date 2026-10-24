@@ -135,6 +135,11 @@ constexpr int32_t kImpale = 47;
 // AT_SKILL_NOVA_BEGIN and AT_SKILL_NOVA). Taught by the Scroll of Nova (Book19); the user,
 // 2026-10-07: 'lets first make that nova for soul master, than use it for dragon'.
 constexpr int32_t kNova = 40;
+// `AT_SKILL_DEFENSEDOWN`, the Magic Gladiator's Fire Slash (WebZen's "Blood Attack", MuMain's
+// AT_SKILL_FIRE_SLASH): the Icarus era's, past 0.97 (WebZen public.h:229, OpenMU
+// VersionSeasonSix/SkillsInitializer.cs:173). A ribbon of fire round his front, and a body it
+// strikes may lose a tenth of its defence for ten seconds (docs/plans/mg-skills/fire-slash.md).
+constexpr int32_t kFireSlash = 55;
 // `AT_SKILL_BLAST_FREEZE`, Ice Storm, the Soul Master's Season 3 spell: no row and never learned,
 // only the Ancient rune's (sim/items.h kIceStorm...), said as Loosed so the drawing lets its
 // blizzard fall (fx/blizzard.h). MU's number, free in this table.
@@ -437,6 +442,27 @@ struct SkillRow {
     int32_t summonsAs = 0;
     // **A summon that flies**: raised over a map whose rules forbid summons (Icarus's).
     bool airborne = false;
+    // ---- Fire Slash's, appended after the Alquamos's ------------------------------------------
+    // **Half its Arc's spread**, in radians, where it is not kArcHalfAngle's 67.5 degrees: Fire
+    // Slash's ribbon sweeps 187 degrees round his front (MuMain's JOINT_FORCE, +75 to -112 of his
+    // facing), made a symmetric half-disc, +-90 (the dossier's section 5.2). 0 for the default.
+    float arcHalf = 0.0f;
+    // **A second pace from a key on**: MU plays WHEEL at 0.24 until Fire Slash's AnimationFrame
+    // reaches 3 and then sets its PlaySpeed to 0.54 (ZzzCharacter.cpp:2783-2818, 813-816), so the
+    // spin after the blow is twice as quick. `paceKey` is the key it changes on and `paceAfter`
+    // the authored pace after it, each with his attack speed's share on top (sim::castTicks).
+    // 0 for one pace through.
+    float paceAfter = 0.0f;
+    int32_t paceKey = 0;
+    // **A cut to the defence of what it strikes** (Fire Slash's, WebZen's MaGumSkillDefenseDown,
+    // ObjUseSkill.cpp:1327-1358): on each body, `cutChance` to lose `cutShare` percent of its
+    // defence for `cutTicks`, rolled before the blow so that blow profits, a re-hit starting the
+    // clock again and never stacking (Realm::strikeAt, Body::defenseCutUntil). 0 for none.
+    int32_t cutTicks = 0;
+    float cutChance = 0.0f;
+    int32_t cutShare = 0;
+    // The Arc's half-angle this row is gathered with (Realm::gather).
+    float arcHalfAngle() const;
     // **Whether a press aims it at the ground under the pointer** rather than at a body: the
     // shapes that have a direction -- Aqua Beam's beam, Power Wave's line, the knight's arcs and
     // Twister's walking storm. Thrown from the keys or the right button, he turns to where the
@@ -465,10 +491,12 @@ struct SkillRow {
     // off on the pointer's ground, but an arc with nobody in it was refused in silence -- its one
     // tile ahead toward the mouse empty, the key did nothing at all. Now it breaks the ground
     // there, mana and cooldown spent, and Cyclone, an arc since the same day, spins there.
+    // Fire Slash with them (2026-10-24): an arc as Cyclone's, its ribbon thrown at empty air.
     bool castsBare() const {
         return number == skill::kEvilSpirit || number == skill::kTwister ||
                number == skill::kHellfire || number == skill::kTwistingSlash ||
-               number == skill::kRagefulBlow || number == skill::kCyclone;
+               number == skill::kRagefulBlow || number == skill::kCyclone ||
+               number == skill::kFireSlash;
     }
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0; }
@@ -503,12 +531,13 @@ struct SkillRow {
 // Inferno and Aqua Beam, on the end past the elf's, Cometfall past the Dinorant's, and Impale
 // past Cometfall. The
 // learned mask is sixty-four bits since
-// Inferno, the thirty-third (`Body::learned`, and the save writes it whole), and Nova past
-// Impale; past sixty-four it needs widening
+// Inferno, the thirty-third (`Body::learned`, and the save writes it whole), Nova past
+// Impale, and the Magic Gladiator's Fire Slash, the forty-first, past the Alquamos (kKeptLayout
+// 16 keeps its cool); past sixty-four it needs widening
 // again, which the static_assert below says. Also the width of a body's cooldown array -- and
 // the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 40;
+constexpr int kSkills = 41;
 
 // What each of Nova's stages adds to its blow: OpenMU's NovaDamageTable (NovaSkillStartPlugin.cs:30),
 // stage 0 to 12, with the strength's half beside it (SkillsInitializer.cs:610-611).
@@ -553,6 +582,7 @@ constexpr int32_t kShowerSpreadTicks = 12;
 // angle rather than as three tiles because a body stands at a fractional position and a tile
 // test would drop a monster straddling the line between two of them.
 constexpr float kArcHalfAngle = 1.17809725f;
+inline float SkillRow::arcHalfAngle() const { return arcHalf > 0.0f ? arcHalf : kArcHalfAngle; }
 
 int skillCount();
 const SkillRow& skillAt(int index);

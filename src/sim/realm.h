@@ -677,6 +677,11 @@ struct Body {
     // lose `weakCut` percent. 0 for never.
     int64_t weakUntil = 0;
     int32_t weakCut = 0;
+    // Its defence cut (Fire Slash's, SkillRow::cutTicks): until this tick every blow on it meets
+    // `defenseCut` percent less defence -- MU's BUFFTYPE_DEFENSE_POWER_DEC, its three skulls over
+    // the head (fx/fire_slash.h). 0 for never.
+    int64_t defenseCutUntil = 0;
+    int32_t defenseCut = 0;
     // And on the one who wears it: his Weakness field, MU's monster 821 -- until this tick, its
     // next look round, and the tile it lies on. 0 for none; one a caster.
     int64_t curseUntil = 0, curseNext = 0;

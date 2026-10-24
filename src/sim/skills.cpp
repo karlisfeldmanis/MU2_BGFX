@@ -901,6 +901,32 @@ constexpr SkillRow kRows[kSkills] = {
               "too. It strikes from range.",
      .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
      .kin = Kin::FairyElf, .anyHand = true, .summons = 69, .summonsAs = 150, .airborne = true},
+
+    // ---- Fire Slash 55, the Magic Gladiator's own, past the Alquamos ----------------------------
+    //
+    // docs/plans/mg-skills/fire-slash.md is the research; its section 5 is this row. MU's: mana
+    // 15 (WebZen skill.txt:61, OpenMU SkillsInitializer.cs:173; AG is no resource here), WHEEL
+    // (action 65, Twisting Slash's clip) at MU's two paces -- 0.24 to key 3, 0.54 after
+    // (ZzzCharacter.cpp:2783-2818) -- the blow on key 3, where the ribbon appears: 0.43 of the
+    // clip. The cut: 45% a body, -10% defence for ten seconds, a re-hit refreshing it
+    // (MaGumSkillDefenseDown, ObjUseSkill.cpp:1327-1358; BuffEffectSlot.cpp:80-95), rolled before
+    // the blow (protocol.cpp:16718-16719). Fire (OpenMU's ElementalType.Fire and its name, where
+    // WebZen's data says poison). Any right-hand weapon but a staff (MuMain ClassAttack.cpp:
+    // 484-489), and the families say that already.
+    // **Ours**: the area, a front half-disc out to two and a half tiles -- the ribbon's own shape,
+    // +-90 of his facing, everything in it struck once (WebZen lets the client name five; OpenMU's
+    // frustum is two tiles deep). Its force: his signature key, so above the Cyclone he also knows
+    // (2.0 every two seconds over three tiles), 2.3 on the same wait and strength rate, a blade's
+    // like his knight's skills (sim::force). Learned at 120 (the user, 2026-10-24: "add some level
+    // requirments"), twice the orb's drop level, as Death Stab's.
+    {.number = skill::kFireSlash, .name = "Fire Slash", .mana = 15, .reach = 2.5f, .force = 2.3f,
+     .forcePerStrength = 1.0f / 1400.0f, .coolTicks = 40, .spread = Spread::Arc,
+     .tells = "A ribbon of fire swept round the half in front of him within two and a half "
+              "tiles. What it burns may lose a tenth of its defence for ten seconds.",
+     .clip = 65, .sound = "player_skill_sword3", .built = true, .families = arms::kEvery,
+     .needLevel = 120, .kin = Kin::MagicGladiator, .release = 0.43f,
+     .arcHalf = 1.57079633f, .paceAfter = 0.54f, .paceKey = 3, .cutTicks = 200,
+     .cutChance = 0.45f, .cutShare = 10},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy
@@ -1021,7 +1047,10 @@ float force(const SkillRow& row, const HeroPoints& points, Kin who) {
                       float(points.energy) * kForcePerEnergy;
     // The Gladiator's too since the class balance (2026-10-21): his blades were the knight's
     // unboosted, and Aida's 6.7M against the knight's 8.1M.
-    const bool blade = (who == Kin::DarkKnight || who == Kin::MagicGladiator) && row.kin == Kin::DarkKnight;
+    // And his own Fire Slash (2026-10-24), a blade's as his knight's are, so the boost that lifts
+    // his Cyclone lifts his own sweep alike.
+    const bool blade = (who == Kin::DarkKnight || who == Kin::MagicGladiator) &&
+                       (row.kin == Kin::DarkKnight || (row.kin == Kin::MagicGladiator && !row.wizardry));
     return blade ? sum * kKnightSkillBoost : sum;
 }
 
@@ -1054,12 +1083,23 @@ int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const con
     const float quicken = row.number == skill::kIce ? kIceQuicken : quick ? kSpellQuicken : 1.0f;
     const float rate = (clip->speed + bonus) * 25.0f * quicken;
     if (rate <= 0.0f) return 0;
+    // Fire Slash's second pace from its key on (SkillRow::paceAfter), his speed on both.
+    if (row.paceAfter > 0.0f && row.paceKey > 0 && row.paceKey < clip->keys) {
+        const float after = (row.paceAfter + bonus) * 25.0f * quicken;
+        const float seconds = float(row.paceKey) / rate + float(clip->keys - row.paceKey) / after;
+        return swingTicks(int(seconds * 1000.0f));
+    }
     return swingTicks(int(float(clip->keys) / rate * 1000.0f));
 }
 
 int32_t authoredCastTicks(const content::Tables& tables, const SkillRow& row) {
     const content::PlayerAction* clip = tables.action(row.clip);
     if (!clip || clip->keys <= 0 || clip->speed <= 0.0f) return 0;
+    if (row.paceAfter > 0.0f && row.paceKey > 0 && row.paceKey < clip->keys) {
+        const float seconds = float(row.paceKey) / (clip->speed * 25.0f) +
+                              float(clip->keys - row.paceKey) / (row.paceAfter * 25.0f);
+        return swingTicks(int(seconds * 1000.0f));
+    }
     return swingTicks(int(float(clip->keys) / (clip->speed * 25.0f) * 1000.0f));
 }
 

@@ -504,6 +504,7 @@ inline Element skillElement(int32_t number) {
         case skill::kFlame:
         case skill::kHellfire:
         case skill::kInferno:
+        case skill::kFireSlash:  // OpenMU's ElementalType.Fire (WebZen's data says poison)
         case skill::kMeteorite: return Element::Fire;
         case skill::kIce: return Element::Ice;
         case skill::kPoison: return Element::Poison;
