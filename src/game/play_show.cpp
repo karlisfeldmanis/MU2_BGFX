@@ -1492,6 +1492,8 @@ void Play::follow(float seconds) {
 
         // On the Dinorant he sits 30 over the ground and the dragon stands on it (game/pets.h).
         float lift = 0.0f;
+        // The part of it that is the run's bound, kept apart so the crown can leave it out.
+        float seatBob = 0.0f;
         if (body->player && body->riding) {
             // His own mount's, not the hero's: a rider on Uniria beside a hero on the Dinorant
             // sat 30 over the ground.
@@ -1506,7 +1508,8 @@ void Play::follow(float seconds) {
                 const int riding = one.figure.clip();
                 if (seatOn && riding >= 0 &&
                     (riding == seatOn->rideRunClip || riding == seatOn->rideRunArmedClip)) {
-                    lift += dinorantBob(one.figure.through());
+                    seatBob = dinorantBob(one.figure.through());
+                    lift += seatBob;
                 }
             }
         }
@@ -1629,6 +1632,10 @@ void Play::follow(float seconds) {
                 one.figure.pointInModel(look->headJoint, head);
                 one.crown[1] = std::min(one.crown[1], head[1] + kBarOverHead * look->scale);
             }
+            // Nor with the Dinorant's bound under him: his seat rides its back, and his name and
+            // bar rode it too (the user, 2026-10-24: "when char is riding on mount char name label
+            // is bouncing").
+            one.crown[1] -= seatBob;
             one.crown[2] = position[2];
             one.placed = true;
         }
