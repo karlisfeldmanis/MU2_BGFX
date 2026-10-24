@@ -154,6 +154,13 @@ void Play::exhale(float seconds) {
             skill && row && row->wizardry) {
             continue;
         }
+        // The Dark Lord's streak on his strike alone (kLordStrikeClip; BlurType 1, mapping 2):
+        // Force, Force Wave, Fire Burst and Fire Scream. Summon's teleport (81), Electric Spike's
+        // flash (152) and Critical Damage's hand (147) are on none of CreateWeaponBlur's lists.
+        if (const sim::SkillRow* row = sim::skillNumbered(one.swingSkill);
+            skill && row && row->kin == sim::Kin::DarkLord && row->clip != kLordStrikeClip) {
+            continue;
+        }
         // Nor the wheel: MU blurs SKILL_SWORD1..5 and its action is past them. fx/wheel.h.
         if (skill && one.swingSkill == sim::skill::kTwistingSlash) continue;
         // Nor Rageful Blow, past them too, whose weapon is out of his hand. fx/fury.h.

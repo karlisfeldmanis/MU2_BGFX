@@ -116,6 +116,9 @@ constexpr float kCastBlend = 0.28f;
 // MU's 20-to-120 read as fractions of the weapon's own measured length.
 constexpr float kStreakWindUp = 3.0f;
 constexpr float kStreakFrom = 20.0f / 120.0f;
+// PLAYER_ATTACK_STRIKE, player.muc's 80: the one Dark Lord clip CreateWeaponBlur streaks
+// (ZzzCharacter.cpp:3804-3808).
+constexpr int32_t kLordStrikeClip = 80;
 // A plain blow with a spear or a scythe: MU's `BlurType 3`, from 100 of 120 -- the head alone.
 constexpr float kStreakPoleFrom = 100.0f / 120.0f;
 // And the plain blow's light, mapping 0's ladder in `CreateWeaponBlur`: grey, then red from +3,
