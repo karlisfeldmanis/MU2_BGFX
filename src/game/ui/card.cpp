@@ -423,7 +423,12 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                 for (int k = 0; k < 4; ++k) {
                     if (shares[k] <= 0) continue;
                     Line line{statWords[k], plusPercent(shares[k]), false};
-                    line.note = std::string(statLong[k]) + ", " + plus(added[k]) + " points";
+                    // His points before the runes and with them (the user: "what is means
+                    // strength +10 points?"): "Strength 18, now 28" -- the face is ASCII.
+                    const int spent[4] = {hero->points.strength, hero->points.agility,
+                                          hero->points.vitality, hero->points.energy};
+                    line.note = std::string(statLong[k]) + " " + number(spent[k]) + ", now " +
+                                number(spent[k] + added[k]);
                     line.note[0] = char(std::toupper(static_cast<unsigned char>(line.note[0])));
                     line.ink = statInks[k];
                     pipsOf(line, statRunes[k]);
