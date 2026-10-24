@@ -973,6 +973,15 @@ constexpr int64_t kSpiritDelayTicks = 40;  // rand()%2000 ms, the realm's twenty
 HeroPoints statShareOf(Power power);
 // Nullptr for none and for a number no row has.
 const PowerRow* powerOf(uint8_t power);
+// Whether a second of it, in another socket or another thing worn, does more: what
+// Realm::redress and the rolls make of it, said on its tooltip (the user, 2026-10-24: "runes
+// which dont stack we need to say the dont stack, if the stack we say they stack").
+// `stacks` false where a second adds nothing; `says` the line.
+struct Stacking {
+    bool stacks;
+    const char* says;
+};
+Stacking stackingOf(Power power);
 // A rune paid to the Magic Gladiator that he may not set -- a Legendary of the knight's or the
 // wizard's, from a giver's path -- comes as its weaker kin he may: Arcane Echo as Faint Echo,
 // Pyroblaster as Scorch, Whirlwind as Eddy, Fireburst as Sparkburst, Hellfire as Brimstone,

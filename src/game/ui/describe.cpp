@@ -907,6 +907,11 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 line.mark = tip::Mark::RingSet;
                 line.markTone = rarityTone(power->rarity);
                 socket.rows.push_back(line);
+                // Whether a second of it does more (sim::stackingOf), quiet under its effect.
+                Row stacking;
+                stacking.free = sim::stackingOf(power->power).says;
+                stacking.freeTone = Tone::Gray;
+                socket.rows.push_back(stacking);
                 // What the rune strikes for in his hands with THIS weapon (the user, 2026-10-01:
                 // "show damage for dps runes based on base dmg and scaling"): the swing's band as
                 // `sim::reckon` makes it off his strength and agility and this weapon, its share,
@@ -1107,6 +1112,10 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             carries.rows.push_back(stat("Fits", fits, Tone::White));
             // A rune set only once in a thing says so before it is refused (PowerRow::once).
             if (power->once) carries.rows.push_back(stat("Limit", "One per item", Tone::Yellow));
+            // And whether a second, in another socket or another thing, does more.
+            const sim::Stacking stacking = sim::stackingOf(power->power);
+            carries.rows.push_back(
+                stat("Stacking", stacking.says, stacking.stacks ? Tone::White : Tone::Yellow));
             Row how;
             how.free = "Drop it on an item with an empty socket";
             how.freeTone = Tone::Gray;

@@ -706,6 +706,36 @@ const PowerRow* powerOf(uint8_t power) {
     return nullptr;
 }
 
+Stacking stackingOf(Power power) {
+    switch (power) {
+        // Read once, a flag or a count that is only asked `> 0` (Excellence::frenzies, volleys;
+        // skills.h lanesOf), or the best share of the worn kept (bulwarkShare, the volleys' side).
+        case Power::Frenzy:
+        case Power::Bulwark:
+        case Power::Buckler:
+        case Power::Brace:
+        case Power::TwinGuard:
+        case Power::Kinship:
+        case Power::Volley:
+        case Power::ScatterVolley:
+        case Power::SplitArrow:
+        case Power::IceStorm:
+        case Power::Weakness:
+        case Power::Pollution:
+        case Power::DrainLife: return {false, "Doesn't stack"};
+        // Half of each: whirlDamage summed and whirlPull the best; every Pyroblaster rolls its
+        // burst but Fire Ball's +50% is asked `pyroblasts() > 0`.
+        case Power::Whirlwind:
+        case Power::Eddy:
+        case Power::Swirl: return {true, "Damage stacks, pull chance doesn't"};
+        case Power::Pyroblast: return {true, "Burst chance stacks, damage doesn't"};
+        // Summed to kPlagueMost, which its own line leaves out (Steadfast's says its 25%).
+        case Power::Plague:
+        case Power::PlagueArrows: return {true, "Stacks, up to 50%"};
+        default: return {true, "Stacks"};
+    }
+}
+
 BleedRune bleedRuneOf(Power power) {
     switch (power) {
         case Power::Graze: return kGrazeBleed;
