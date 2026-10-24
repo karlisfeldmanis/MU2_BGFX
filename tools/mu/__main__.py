@@ -362,11 +362,13 @@ def dispatch(args, say):
         if args.action == "test":
             import subprocess
             tests = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "armory", "tests")
-            # The output's contract, the site's card against the game's renders, and the pages in Chrome.
+            # The output's contract, the site's card against the game's renders, the pages in Chrome,
+            # and the figures' thumbnails framed whole.
             passed, last = True, []
-            for script in ("armory_test.js", "card_check.js", "site_test.js"):
+            for script in ("armory_test.js", "card_check.js", "site_test.js", "thumb_check.py"):
                 extra = [] if script == "card_check.js" else ([args.dir] if args.dir else [])
-                done = subprocess.run(["node", os.path.join(tests, script)] + extra, capture_output=True, text=True)
+                runner = [sys.executable] if script.endswith(".py") else ["node"]
+                done = subprocess.run(runner + [os.path.join(tests, script)] + extra, capture_output=True, text=True)
                 for line in done.stdout.splitlines():
                     say(line)
                 passed = passed and done.returncode == 0

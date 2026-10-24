@@ -48,14 +48,36 @@ window.render = async function (job) {
   const buf = await (await fetch(job.glb)).arrayBuffer();
   const gltf = await loader.parseAsync(buf, '');
   const root = gltf.scene;
+  const glow = m => m && m.userData && m.userData.mu_additive;
+  // A figure whose whole body is glow (the Ice Monster, Alquamos, Queen Rainer) is drawn
+  // brighter: on the game's dark ground it reads, on a transparent square it would not.
+  let solid = false;
+  root.traverse(o => { if (o.isMesh && !(Array.isArray(o.material) ? o.material : [o.material]).every(glow)) solid = true; });
   root.traverse(o => {
     if (!o.isMesh) return;
     const ms = Array.isArray(o.material) ? o.material : [o.material];
+    const swapped = ms.map(m => {
+      // MU's glow (models.py marks it extras.mu_additive): added in the game, never drawn over.
+      // A transparent picture has nothing to add to, so it is laid on by its own brightness
+      // (the texture's alpha is its brightest channel), unlit, at the middle of its pulse.
+      if (!glow(m)) return m;
+      const map = m.emissiveMap || m.map;
+      const k = m.userData.mu_strength == null ? 1 : m.userData.mu_strength;
+      const g = new THREE.MeshBasicMaterial({ map, transparent: true, depthWrite: false,
+        side: THREE.DoubleSide, toneMapped: false, opacity: k * (solid ? 1 : 2.5) });
+      g.userData = m.userData;
+      m.dispose();
+      return g;
+    });
+    o.material = Array.isArray(o.material) ? swapped : swapped[0];
     ms.forEach(m => {
-      // MU's glow: added, never drawn over (models.py marks it extras.mu_additive).
-      if (m.userData && m.userData.mu_additive) {
-        m.blending = THREE.AdditiveBlending; m.depthWrite = false; m.transparent = true;
-        return;
+      if (glow(m)) return;
+      // A figure's plate is MU's painting, not a mirror: at full strength the room's light
+      // panels came back off a flat cape or shield as white sheets (the Red Skeleton Knight's,
+      // the Death Rider's). Items keep their shine.
+      if (job.view !== 'item' && !job.elite) {
+        m.envMapIntensity = 0.6;
+        m.roughness = Math.max(m.roughness, 0.55);
       }
       if (job.elite) {
         // The Elite: its body lit warm gold (kEliteLight) under the +9 pass in kEliteChrome.
@@ -71,19 +93,56 @@ window.render = async function (job) {
     });
   });
   scene.add(root);
-  const box = new THREE.Box3().setFromObject(root);
+  root.updateMatrixWorld(true);
+  // Framed on what is drawn: what the game never draws as the body (the Hydra's beams, a
+  // hidden mesh) is left out of the GLB by models.py, so it neither shows nor counts.
+  const pts = [];
+  const v = new THREE.Vector3();
+  root.traverse(o => {
+    if (!o.isMesh || !o.geometry || !o.geometry.attributes.position) return;
+    const pos = o.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) pts.push(v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld).clone());
+  });
+  const box = new THREE.Box3().setFromPoints(pts);
   const sphere = box.getBoundingSphere(new THREE.Sphere());
-  const size = box.getSize(new THREE.Vector3());
   // Items face the camera broad side on (models.py turned them); figures from three quarters.
   const dir = job.view === 'item' ? new THREE.Vector3(0.0, 0.12, 1) : new THREE.Vector3(0.55, 0.22, 1);
   dir.normalize();
-  const fov = THREE.MathUtils.degToRad(camera.fov);
-  // Fit the box's silhouette, not the sphere, with a small margin.
-  const extent = Math.max(size.x, size.y, size.z * 0.6) * 0.5;
-  const dist = Math.max(extent / Math.tan(fov / 2) * 1.18, sphere.radius * 1.2);
-  camera.position.copy(sphere.center).addScaledVector(dir, dist);
+  const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+  // The same margin each side (MARGIN of the frame), fitted on the projected silhouette: the
+  // camera steps in or out and slides across until the body's widest side spans the frame
+  // less the margins. A figure stands on one ground line, its lowest point MARGIN off the
+  // bottom; an item is centred.
+  const MARGIN = 0.07, room = 1 - 2 * MARGIN;
+  const target = sphere.center.clone();
+  let dist = Math.max(sphere.radius, 1e-3) / Math.sin(Math.atan(tan)) * 1.05;
+  const right = new THREE.Vector3(), up = new THREE.Vector3(), p = new THREE.Vector3();
+  for (let it = 0; it < 8; it++) {
+    camera.position.copy(target).addScaledVector(dir, dist);
+    camera.near = dist / 100; camera.far = dist * 10;
+    camera.lookAt(target);
+    camera.updateMatrixWorld(true);
+    camera.updateProjectionMatrix();
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const q of pts) {
+      p.copy(q).project(camera);
+      if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x;
+      if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y;
+    }
+    const half = Math.max(x1 - x0, y1 - y0) / 2;
+    const grow = half / room;
+    const cx = (x0 + x1) / 2;
+    // Where the body's middle (or, for a figure, its feet) should land after this step's zoom.
+    const cy = job.view === 'item' ? (y0 + y1) / 2 : y0 + (1 - 2 * MARGIN) * grow;
+    right.setFromMatrixColumn(camera.matrixWorld, 0);
+    up.setFromMatrixColumn(camera.matrixWorld, 1);
+    target.addScaledVector(right, cx * dist * tan).addScaledVector(up, cy * dist * tan);
+    dist *= grow;
+    if (Math.abs(grow - 1) < 0.002 && Math.abs(cx) < 0.002 && Math.abs(cy) < 0.002) break;
+  }
+  camera.position.copy(target).addScaledVector(dir, dist);
   camera.near = dist / 100; camera.far = dist * 10;
-  camera.lookAt(sphere.center);
+  camera.lookAt(target);
   camera.updateProjectionMatrix();
   renderer.render(scene, camera);
   const big = canvas.toDataURL('image/webp', 0.9);
