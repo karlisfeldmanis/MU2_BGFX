@@ -1,0 +1,96 @@
+{
+ "from": "tests/skill_sweep.cpp's Dark Lord (branch darklord, 2026-10-24): Lucan, level 400, the Gladiator Gaius's tier of gear (Storm Crow +11, an excellent luck Sword17 +11 -- his own scepters and armour are not built yet), 900/400/400/700 and Command 500; Force, Fire Burst and Electric Spike.",
+ "party": [
+  {
+   "name": "Lucan",
+   "role": "melee",
+   "class": "lord",
+   "second": false,
+   "level": 400,
+   "points": {
+    "strength": 900,
+    "agility": 400,
+    "vitality": 400,
+    "energy": 700,
+    "command": 500
+   },
+   "potions": 20,
+   "skills": [
+    60,
+    61,
+    65
+   ],
+   "wear": [
+    {
+     "slot": "armour",
+     "item": "ArmorMale16",
+     "plus": 11,
+     "luck": true,
+     "option": 3,
+     "sockets": [
+      7
+     ]
+    },
+    {
+     "slot": "pants",
+     "item": "PantMale16",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "gloves",
+     "item": "GloveMale16",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "boots",
+     "item": "BootMale16",
+     "plus": 11,
+     "luck": true,
+     "option": 3
+    },
+    {
+     "slot": "right",
+     "item": "Sword17",
+     "plus": 11,
+     "luck": true,
+     "option": 3,
+     "excellent": 5,
+     "sockets": [
+      19,
+      21,
+      23
+     ]
+    },
+    {
+     "slot": "wings",
+     "item": "Wing07",
+     "plus": 11,
+     "luck": true
+    },
+    {
+     "slot": "pet",
+     "item": "Helper02"
+    },
+    {
+     "slot": "amulet",
+     "item": "NecklaceFury",
+     "plus": 11
+    },
+    {
+     "slot": "ring_right",
+     "item": "Ring01",
+     "plus": 11
+    },
+    {
+     "slot": "ring_left",
+     "item": "RingLeech",
+     "plus": 11
+    }
+   ]
+  }
+ ]
+}

@@ -61,7 +61,7 @@ static std::vector<std::string> buildsOf(sim::Kin kin) {
 // A skill that strikes: not a guard, a buff, a heal, a summon or a blink.
 static bool strikes(const sim::SkillRow& row) {
     return row.boonTicks == 0 && row.mightTicks == 0 && row.summons == 0 && !row.mends && !row.blinks &&
-           row.number != sim::skill::kDefense && row.number != sim::skill::kSoulBarrier;
+           row.number != sim::skill::kDefense && row.number != sim::skill::kSoulBarrier && !row.sharpens;
 }
 
 struct Result {
