@@ -81,9 +81,9 @@ constexpr float kRadius = 4.0f;
 constexpr float kWord = 15.0f, kDraft = 17.0f;
 // The text's three sizes and their rows (the user, 2026-10-10: the log a step smaller, 16 on 21).
 constexpr float kTextSizes[3] = {14.0f, 16.0f, 18.0f}, kRowTalls[3] = {19.0f, 21.0f, 24.0f};
-// The settings in the panel's place: their rows at most kSettingsWide across, and the panel at
-// least kSettingsTall while they show (the user, 2026-10-24: "show settings inside chat container").
-constexpr float kSettingsWide = 400.0f, kSettingsRow = 30.0f, kSettingsTall = 36.0f + 7.0f * kSettingsRow + 6.0f + 12.0f;
+// The settings in the panel's place, its whole width, and the panel at least kSettingsTall while
+// they show (the user, 2026-10-24: "show settings inside chat container", "full wdith").
+constexpr float kSettingsRow = 30.0f, kSettingsTall = 36.0f + 7.0f * kSettingsRow + 6.0f + 12.0f;
 // Idle: a line just come stands at full for kNewFor and settles over kSettle; the pointer on the
 // chat lights it over kLight (style.h's hover).
 constexpr float kNewFor = 6.0f, kSettle = 1.0f, kLight = 0.12f;
@@ -1562,7 +1562,7 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
     place(u, width, height);
     layTabs(u);
     layLog(u);
-    if (settingsOpen_) settingsBox_ = {panel_.x, panel_.y, std::min(panel_.w, kSettingsWide * u), panel_.h};
+    if (settingsOpen_) settingsBox_ = panel_;
 
     // Lit: the pointer on it, the box open, a drag, a menu or the settings.
     const bool over = this->over(pointer.x, pointer.y);
@@ -2030,13 +2030,21 @@ void Chat::buildSettings(float u, const Pointer& pointer) {
     // Its head: the kicker, the reset as a quiet link, the cross.
     const float pad = 14.0f * u;
     controls::caps(c, b.x + pad, b.y + 22.0f * u, 11.0f * u, kAshInk, "CHAT SETTINGS", 0.14f);
-    closeBox_ = {b.right() - pad - 16.0f * u, b.y + 8.0f * u, 18.0f * u, 18.0f * u};
+    // The cross on a framed square of its own, bright enough to be found (the user, 2026-10-24:
+    // "close has to be betetr vissible"); Escape does the same.
+    closeBox_ = {b.right() - pad - 24.0f * u, b.y + 5.0f * u, 24.0f * u, 24.0f * u};
     {
         const bool lit = closeBox_.has(pointer.x, pointer.y);
-        const float m = 4.5f * u;
-        const uint32_t ink = lit ? kBoneHi : kAshInk;
-        stroke(c, closeBox_.midX() - m, closeBox_.midY() - m, closeBox_.midX() + m, closeBox_.midY() + m, 1.4f * u, ink);
-        stroke(c, closeBox_.midX() + m, closeBox_.midY() - m, closeBox_.midX() - m, closeBox_.midY() + m, 1.4f * u, ink);
+        const float rr[4] = {r, r, r, r};
+        tip::rounded(c, closeBox_, rr, lit ? hex(0x3a2a20) : hex(0x261c16), lit ? hex(0x2c2019) : hex(0x1a130f));
+        const Box& k = closeBox_;
+        const uint32_t edge = lit ? kIronHi : kIron;
+        c.rect({k.x, k.y, k.w, line}, edge), c.rect({k.x, k.bottom() - line, k.w, line}, edge);
+        c.rect({k.x, k.y, line, k.h}, edge), c.rect({k.right() - line, k.y, line, k.h}, edge);
+        const float m = 5.0f * u;
+        const uint32_t ink = lit ? hex(0xffffff) : kBoneHi;
+        stroke(c, k.midX() - m, k.midY() - m, k.midX() + m, k.midY() + m, 2.0f * u, ink);
+        stroke(c, k.midX() + m, k.midY() - m, k.midX() - m, k.midY() + m, 2.0f * u, ink);
     }
     {
         const std::string reset = "Reset size and place";
