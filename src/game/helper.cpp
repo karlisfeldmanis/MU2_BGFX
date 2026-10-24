@@ -37,6 +37,10 @@ constexpr double kAuraRetry = 4.0;
 constexpr float kCrowd = 3.0f;
 // A thing walked to this long without going is left where it lies.
 constexpr double kLootGiveUp = 6.0;
+// While something hits him, what lies this near him is still taken, in tiles: MU Helper picks up
+// before it fights, hit or not (MuHelper.cpp's Work). Waiting for the last one to fall left it all
+// lying where the monsters never stop coming (the user, 2026-10-24, on Aida).
+constexpr float kLootUnderAttack = kSetOn;
 // He has wandered back when he is this near the spot, in tiles.
 constexpr float kHome = 1.5f;
 // A worn piece is mended at this share of its durability or under, in percent: MU Helper's
@@ -522,7 +526,7 @@ std::string Helper::update(Play& play, const HelperSettings& settings, double se
     const sim::Body* fightNow = attacker ? attacker : held ? held : nearest;
 
     if (support(play, settings)) return {};
-    if (attacker == nullptr && loot(play, settings)) return {};
+    if (loot(play, settings, attacker != nullptr)) return {};
 
     if (fightNow == nullptr) {
         target_ = 0;
@@ -688,10 +692,10 @@ std::string Helper::follow(Play& play, const HelperSettings& settings, double se
             for (const sim::Body& body : realm.bodies()) {
                 chased |= body.monster() && body.alive() && !body.gone && body.quarry == hero.id;
             }
-            // What lies about him that its window ticks, while nothing is after him.
+            // What lies about him that its window ticks: near him only while something is after him.
             anchorColumn_ = hero.column();
             anchorRow_ = hero.row();
-            if (!chased && loot(play, settings)) return {};
+            if (loot(play, settings, chased)) return {};
             picking_ = 0;
             // His keys at what Auto-play's hand fights, as its window sets them: it gave only
             // the right button's one skill, so the rest of his bar sat unused while it followed.
@@ -713,7 +717,7 @@ std::string Helper::follow(Play& play, const HelperSettings& settings, double se
 
 // The nearest thing lying within its range of the spot that its window ticks -- Zen always -- he
 // may take, can walk to and has room for.
-bool Helper::loot(Play& play, const HelperSettings& settings) {
+bool Helper::loot(Play& play, const HelperSettings& settings, bool attacked) {
     const sim::Realm& realm = play.realm();
     const content::Tables& tables = *realm.tables();
     const sim::Body& hero = realm.hero();
@@ -758,6 +762,7 @@ bool Helper::loot(Play& play, const HelperSettings& settings) {
             if (sim::pour(tables, bag, sim::kWorn, sim::kSlots, one.what) < 0) continue;
         }
         const float away = tilesApart(hero.x, hero.y, float(one.column), float(one.row));
+        if (attacked && away > kLootUnderAttack) continue;
         if (away >= best || !realm.reaches(hero, hero.column(), hero.row(), one.column, one.row)) continue;
         best = away;
         nearest = &one;

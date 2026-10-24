@@ -185,7 +185,7 @@ private:
     // The aids on his bar on one of his party in reach, the most hurt healed first.
     bool aid(Play& play, const HelperSettings& settings);
     bool support(Play& play, const HelperSettings& settings);
-    bool loot(Play& play, const HelperSettings& settings);
+    bool loot(Play& play, const HelperSettings& settings, bool attacked);
     void mend(Play& play, const HelperSettings& settings);
     void keys(Play& play, const HelperSettings& settings, uint32_t target);
     int32_t striker(Play& play, const HelperSettings& settings) const;
