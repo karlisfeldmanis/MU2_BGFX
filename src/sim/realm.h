@@ -939,6 +939,9 @@ public:
     // Whether he may throw it at all: learned, or a mount's skill and that mount worn
     // (`SkillRow::mounted`). What the bar and the list ask, and `throwSkill` before it spends.
     bool knows(int32_t skill) const;
+    // Whether the hand he fights with holds a scepter that makes Force Force Wave, worn as it
+    // may be (docs/plans/dark-lord-spells/force-wave.md section 8).
+    bool forceWaveHeld() const;
     // A Horn of Dinorant in the mount's slot with life left: Fire Breath is known while it is.
     bool dinorantWorn() const;
     // Ticks left on a skill's cooldown, and the whole cooldown it was set to, which is what the
@@ -1845,9 +1848,6 @@ private:
     // Force Wave: Force struck at every monster WebZen's spear table marks down his aim
     // (sim/spear_box.h), the aimed body always, all on the let-go.
     void forceWave(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
-    // Whether the hand he fights with holds a scepter that makes Force Force Wave, worn as it
-    // may be (docs/plans/dark-lord-spells/force-wave.md section 8).
-    bool forceWaveHeld() const;
     // Fire Scream (docs/plans/dark-lord-spells/fire-scream.md): its three lanes measured off his
     // facing, each body loosed the ticks its nearest lane's head takes to reach it; and its
     // Explosion, rolled on a landed blow and burst kExplosionTicks on (landBlasts).

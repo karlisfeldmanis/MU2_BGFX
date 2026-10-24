@@ -303,6 +303,10 @@ def item_model(group, number):
     base = GROUP_BASES[group]
     enums = read(os.path.join(MUMAIN, "Core", "Globals", "_enum.h"))
     names = {m.group(1) for m in re.finditer(rf"^\s*(MODEL_\w+)\s*=\s*{base}\s*\+\s*{number}\s*,", enums, re.M)}
+    # Every named model of the group and its number: a loop may count from one, as
+    # `MODEL_BATTLE_SCEPTER + i` (MODEL_MACE + 8) with `9 + i` loads the scepters from Mace09.
+    starts = {m.group(1): int(m.group(2)) for m in
+              re.finditer(rf"^\s*(MODEL_\w+)\s*=\s*{base}\s*\+\s*(\d+)\s*,", enums, re.M)}
     path = os.path.join(MUMAIN, "Engine", "Object", "ZzzOpenData.cpp")
     text = read(path)
     call = r'AccessModel\(([^,]+), L"Data\\\\(\w+)\\\\", L"(\w+)"(?:, ([^)]+))?\)'
@@ -311,10 +315,12 @@ def item_model(group, number):
         body = rest[:rest.find("}")] if rest.startswith("{") else rest[:rest.find(";") + 1]
         for c in re.finditer(call, body):
             # `MODEL_HELM + i + 10` with `i + 1`: the elf helms are helm 10 on in HelmElf01.
-            shape = re.fullmatch(rf"{base}\+i(?:\+(\d+))?", c.group(1).replace(" ", ""))
-            if not shape or not c.group(4):
+            target = c.group(1).replace(" ", "")
+            shape = re.fullmatch(rf"{base}\+i(?:\+(\d+))?", target)
+            named = re.fullmatch(r"(MODEL_\w+)\+i", target)
+            if not c.group(4) or not (shape or (named and named.group(1) in starts)):
                 continue
-            i = number - int(shape.group(1) or 0)
+            i = number - (int(shape.group(1) or 0) if shape else starts[named.group(1)])
             if int(m.group(1)) <= i < int(m.group(2)):
                 offset = int(re.sub(r"[^\d]", "", c.group(4)) or 0)
                 return f"{c.group(2)}/{c.group(3)}{i + offset:02d}.bmd", rel(path, line_of(text, m.start()))

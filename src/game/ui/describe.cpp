@@ -809,7 +809,9 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // and heavier, and a mark in the gutter that says which kind it is -- a blue diamond for
     // what a drop rolls, a green star for an excellent option. The text stays MU's blue. Luck's
     // two lines become "Luck" as a keyword on each, which is the only change to MU's wording.
-    const bool carriesSkill = what.skill && row.skill > 0;
+    // A scepter always carries Force Wave (docs/plans/dark-lord-spells/force-wave.md section 8).
+    const bool waves = row.skill == sim::skill::kForceWave;
+    const bool carriesSkill = (what.skill || waves) && row.skill > 0;
     if ((sim::takesOptions(row) || sim::jewellery(row)) &&
         (what.luck || what.option > 0 || what.excellent != 0 || carriesSkill ||
          (sim::secondWing(row) && what.wing != 0))) {
@@ -839,7 +841,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         // The weapon's own skill, first, as MU prints it above the options.
         if (carriesSkill) {
             const sim::SkillRow* skill = sim::skillNumbered(row.skill);
-            rolled("Skill", skill && skill->name[0] ? skill->name : "carried");
+            rolled("Skill", waves ? "Force Wave" : skill && skill->name[0] ? skill->name : "carried");
         }
         // One line (the tooltip audit, 2026-10-05), where MU prints two.
         if (what.luck) rolled("Luck", "+5% critical, Jewel of Soul always succeeds");

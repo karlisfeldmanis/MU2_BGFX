@@ -151,6 +151,7 @@ const char* HeldLights::mesh(Item item) {
         case Item::ChromaticStaff: return "Staff34";
         case Item::Beuroba: return "Spear12";
         case Item::AirLynBow: return "Bow25";
+        case Item::BattleScepter: return "Mace09";
     }
     return "";
 }
@@ -558,6 +559,14 @@ int HeldLights::points(Item item, float out[kMostPoints][3]) {
         case Item::AirLynBow: {
             // gamblebow.bmd at rest: zx02 and zx03 (bones 7, 11), the limb tips.
             static const float kBones[2][3] = {{0.0f, 29.7f, -91.3f}, {0.0f, 25.6f, 91.9f}};
+            for (int i = 0; i < 2; ++i) {
+                for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
+            }
+            return 2;
+        }
+        case Item::BattleScepter: {
+            // (-15, 0, 0) and (10, 0, 0) on Bone02 of Mace09.bmd at rest: either side of the head.
+            static const float kBones[2][3] = {{0.0f, 0.3f, 57.9f}, {0.0f, 0.3f, 82.9f}};
             for (int i = 0; i < 2; ++i) {
                 for (int k = 0; k < 3; ++k) out[i][k] = kBones[i][k] * kUnit;
             }
@@ -1067,6 +1076,17 @@ void HeldLights::gather(gfx::Effects& effects) const {
                     put(light_, one.at[i], halfOf(0.8f), 0.2f, 0.8f, 0.5f);
                     put(light_, one.at[i], halfOf(0.8f), 0.2f, 0.8f, 0.5f);
                 }
+                break;
+            }
+            case Item::BattleScepter: {
+                const float l = linkLuminosity_;
+                const float scale = std::sin(clock_) + 1.0f;
+                for (int i = 0; i < one.count; ++i) {
+                    put(light_, one.at[i], halfOf(scale), 0.2f * l, 0.1f * l, 3.0f * l);
+                }
+                const float grey = std::sin(clock_) * 0.5f + 0.5f;
+                put(shiny_, one.at[1], halfOf(0.6f), grey, grey, grey);
+                put(shiny_, one.at[1], halfOf(0.6f), grey, grey, grey);
                 break;
             }
         }

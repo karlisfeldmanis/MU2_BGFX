@@ -2364,7 +2364,10 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
 tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) const {
     const sim::Body& hero = realm.hero();
     tip::Sheet sheet;
-    sheet.name = row.name;
+    // Force from a scepter is Force Wave (Realm::forceWave), named so as MU's tooltip does while
+    // the right hand holds one (SkillTooltipModel.cpp:620-632).
+    const bool waves = row.number == sim::skill::kForce && realm.forceWaveHeld();
+    sheet.name = waves ? "Force Wave" : row.name;
     sheet.nameTone = tip::Tone::Blue;
     // Narrower than an item's card. An item wraps lore and a column of options; a skill has one
     // sentence and three numbers, and the item's width left most of the card empty.
@@ -2386,7 +2389,9 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     if (row.tells[0] != '\0') {
         tip::Section what;
         tip::Row prose;
-        prose.free = row.tells;
+        prose.free = waves ? "A blow of force struck at every monster in a line up to six tiles ahead "
+                             "of him, from his scepter. His energy multiplies it."
+                           : row.tells;
         prose.freeTone = tip::Tone::Gray;
         what.rows.push_back(prose);
         sheet.sections.push_back(what);

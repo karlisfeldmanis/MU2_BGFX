@@ -158,6 +158,12 @@
 #include "gfx/effects.h"
 #include "gfx/renderer.h"
 
+//   And the Dark Lord's first scepter (2026-10-25), RenderLinkObject's, L its link roll:
+//     MODEL_BATTLE_SCEPTER (:7578-7595): S = sin(WorldTime*0.001) + 1; BITMAP_LIGHT at S in
+//         L*(0.2, 0.1, 3) at (-15, 0, 0) and (10, 0, 0) on bone 1, the head; at the second two
+//         BITMAP_SHINY + 1 at 0.6, grey sin(WorldTime*0.001)*0.5 + 0.5. MU turns them, here they
+//         stand.
+
 namespace mu::game {
 
 class HeldLights {
@@ -211,10 +217,11 @@ public:
         ChromaticStaff,
         Beuroba,
         AirLynBow,
+        BattleScepter,
     };
     // The Stinger Bow's 44 bones, each with its light (ZzzCharacter.cpp:7972-7999).
     static constexpr int kMostPoints = 44;
-    static constexpr Item kItems[48] = {Item::SaintCrossbow,   Item::GrandSoulShield,
+    static constexpr Item kItems[49] = {Item::SaintCrossbow,   Item::GrandSoulShield,
                                         Item::DragonSpear,     Item::DragonSoulStaff,
                                         Item::ElementalMace,   Item::GreatReignCrossbow,
                                         Item::ThunderBlade,    Item::LegendaryShield,
@@ -237,7 +244,8 @@ public:
                                         Item::GuardianShield,  Item::BoneBlade,
                                         Item::ExplosionBlade,  Item::SylphWindBow,
                                         Item::GrandViperStaff, Item::ChromaticStaff,
-                                        Item::Beuroba,         Item::AirLynBow};
+                                        Item::Beuroba,         Item::AirLynBow,
+                                        Item::BattleScepter};
 
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);
