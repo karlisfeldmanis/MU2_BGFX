@@ -54,7 +54,7 @@ constexpr float kAttrTall = 19.0f, kLineStep = 10.5f, kLineTop = 3.0f, kAttrGap 
 // The plus, inside the well's right end.
 constexpr float kPlusSide = 13.0f;
 // A Combat or Bonuses group: its heading, its rows, the air after it.
-constexpr float kGroupHead = 10.0f, kRowTall = 13.0f, kGroupGap = 6.0f;
+constexpr float kGroupHead = 10.0f, kGroupGap = 6.0f;
 
 // The foot: the level's progress, at the panel's shared rule.
 constexpr float kFootRule = panel::kFootRule;
@@ -85,9 +85,13 @@ constexpr uint32_t kDivider = style::kAsh3;
 // A rune row's pips (Card::pipsAt): their size and step, in units, and the
 // hole an empty one's ring is drawn round.
 constexpr float kPipRadius = 1.9f, kPipPitch = 5.4f;
-// A rune's block on Bonuses, in units: the room above its name and under its effect, the
-// name's line, a line of the effect, and the effect's type.
-constexpr float kRunePad = 3.5f, kRuneName = 9.0f, kNoteLine = 7.5f, kNoteSize = 6.5f;
+// A Combat or Bonuses row, in units: the room above its words and under them (kRowPadLeast on
+// a page too long), from a name's baseline to the capitals of the effect under it, and from
+// one line of the effect to the next; the effect's type, and the share of a face's ascent its
+// capitals stand. The rule between rows, a step up from the well.
+constexpr float kRowPad = 4.5f, kRowPadLeast = 2.0f, kNoteGap = 3.5f, kNoteStep = 8.0f, kNoteSize = 6.5f,
+                kCapShare = 0.72f;
+constexpr uint32_t kRowStroke = gfx::rgba(0.200f, 0.157f, 0.125f);
 constexpr uint32_t kPipHole = gfx::rgba(0.075f, 0.067f, 0.055f);
 // The Bonuses page's values, each in what it is: a stat's, an element's, a fortune's colour.
 // Never red: red reads as a loss (the user, 2026-10-23).
@@ -918,7 +922,7 @@ void Card::rebuild() {
     } else {
         // A group with nothing in it yet is its heading and a quiet "none" on one line, no well,
         // so the room goes to what he has. A rune is a block: its name, pips and total on a
-        // line, what it does under it, wrapped at its words, kRunePad above and below.
+        // line, what it does under it, wrapped at its words.
         const float noteRoom = (kRight - kLeft) * k;
         const auto wrapped = [&](const std::string& note) {
             std::vector<std::string> out;
@@ -943,34 +947,41 @@ void Card::rebuild() {
         const auto empty = [](const Group& group) {
             return std::all_of(group.lines.begin(), group.lines.end(), [](const Line& line) { return line.dim; });
         };
-        const auto entry = [&](const Line& line) {
-            return line.note.empty() ? kRowTall
-                                     : 2.0f * kRunePad + kRuneName + kNoteLine * float(wrapped(line.note).size());
+        // Even room round every row's words, by the face's own measure: as much from the rule
+        // above to the top of the name's capitals as from the last line's baseline to the rule
+        // below. Capitals stand kCapShare of the ascent.
+        const float nameCap = face.ascent(kRowSize * k) * kCapShare / k;
+        const float noteCap = face.ascent(kNoteSize * k) * kCapShare / k;
+        const auto words = [&](const Line& line) {
+            if (line.note.empty()) return nameCap;
+            return nameCap + kNoteGap + noteCap + kNoteStep * float(wrapped(line.note).size() - 1);
         };
-        // Only a page still too long closes up, all of it by one share.
-        float need = 0.0f;
+        // Only a page still too long closes up, and only the room round the words.
+        float text = 0.0f, rows = 0.0f;
+        float heads = 0.0f;
         for (const Group& group : now_.groups) {
-            if (empty(group)) {
-                need += kGroupHead + kGroupGap;
-                continue;
+            heads += kGroupHead + kGroupGap;
+            if (empty(group)) continue;
+            for (const Line& line : group.lines) {
+                text += words(line);
+                rows += 1.0f;
             }
-            need += kGroupHead + kGroupGap;
-            for (const Line& line : group.lines) need += entry(line);
         }
-        const float room = kBodyBottom - kBodyTop - drop;
-        const float close = need > room ? std::max(0.6f, room / need) : 1.0f;
+        const float room = kBodyBottom - kBodyTop - drop - heads - text;
+        const float pad = rows > 0.0f ? std::clamp(room / (2.0f * rows), kRowPadLeast, kRowPad) : kRowPad;
+        const float stroke = std::max(1.0f, std::round(0.5f * k));
         float uy = kBodyTop + drop;
         for (const Group& group : now_.groups) {
             smallCaps(kWellX + 2.0f, at(uy + 1.0f, kSmallCaps), kDim, group.name);
             if (empty(group)) {
                 const float base = at(uy + 1.0f, kSmallCaps);
                 controls::ranged(canvas_, x + kRight * k, base, kSmallCaps * k, kDim, "none");
-                uy += (kGroupHead + kGroupGap) * close;
+                uy += kGroupHead + kGroupGap;
                 continue;
             }
             uy += kGroupHead;
             float tall = 0.0f;
-            for (const Line& line : group.lines) tall += entry(line) * close;
+            for (const Line& line : group.lines) tall += words(line) + 2.0f * pad;
             panel::cell(canvas_, x, y, {kWellX, uy, kWellW, tall}, sheet::Cell::Rest);
             // The pips stand in one column, right against the group's widest figure, so every
             // row's pips end where the next one's do, whatever its name.
@@ -981,28 +992,26 @@ void Card::rebuild() {
             for (size_t l = 0; l < group.lines.size(); ++l) {
                 const Line& line = group.lines[l];
                 const std::vector<std::string> said = line.note.empty() ? std::vector<std::string>{} : wrapped(line.note);
-                const float rowTall = entry(line) * close;
-                if (l > 0) canvas_.rect(panel::scaled(x, y, {kWellX + 4.0f, ly, kWellW - 8.0f, 0.5f}), kDivider);
-                const Box name = said.empty() ? Box{kWellX, ly, kWellW, rowTall}
-                                              : Box{kWellX, ly + kRunePad * close, kWellW, kRuneName * close};
-                const float base = panel::centredBaseline(face, panel::scaled(x, y, name), kRowSize * k);
+                if (l > 0) {
+                    canvas_.rect({std::round(x + (kWellX + 1.0f) * k), std::round(y + ly * k), (kWellW - 2.0f) * k, stroke},
+                                 kRowStroke);
+                }
+                const float base = std::round(y + (ly + pad + nameCap) * k);
                 controls::label(canvas_, x + kLeft * k, base, kRowSize * k,
                                 line.dim ? kDim : line.labelInk ? line.labelInk : kPlain, line.label);
                 const int slots = std::max(line.pips, int(line.stones.size()));
                 if (slots > 0) {
                     const float r = kPipRadius * k;
-                    pipsAt(line, pipsEnd - 2.0f * r - kPipPitch * k * float(slots - 1), base - kRowSize * k * 0.32f, k);
+                    pipsAt(line, pipsEnd - 2.0f * r - kPipPitch * k * float(slots - 1), base - nameCap * k * 0.5f, k);
                 }
                 controls::ranged(canvas_, x + kRight * k, base, kRowSize * k, line.dim ? kDim : line.ink ? line.ink : kHeading,
                                  line.value);
                 for (size_t n = 0; n < said.size(); ++n) {
                     // What the rune does, quiet under its name.
-                    const Box under{kWellX, name.y + name.h + kNoteLine * close * float(n), kWellW, kNoteLine * close};
-                    controls::label(canvas_, x + kLeft * k,
-                                    panel::centredBaseline(face, panel::scaled(x, y, under), kNoteSize * k),
-                                    kNoteSize * k, kQuiet, said[n]);
+                    const float under = ly + pad + nameCap + kNoteGap + noteCap + kNoteStep * float(n);
+                    controls::label(canvas_, x + kLeft * k, std::round(y + under * k), kNoteSize * k, kQuiet, said[n]);
                 }
-                ly += rowTall;
+                ly += words(line) + 2.0f * pad;
             }
             uy += tall + kGroupGap;
         }
