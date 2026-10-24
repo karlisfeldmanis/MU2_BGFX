@@ -1889,7 +1889,7 @@ QuestRow sealedWood() {
 //
 // The pay is the doc's proposal (the ladder stops at Sevina's 200; Aida at 300 is a new act):
 // every clear the jewels and a Box of Kundun +3, and the first clear a Legendary Rune of Creation,
-// Greater Wellspring, the Seed Master's own trade.
+// Greater Wellspring, the Seed Master's own trade, and the class's level-147 weapon.
 QuestRow seedMastersClearing() {
     QuestRow row;
     row.giver = kSeedMasterNumber;
@@ -1959,6 +1959,22 @@ QuestRow seedMastersClearing() {
     // Realm::questChoiceFits), and a Rune of Creation fits every class.
     row.paid[n++] = {.item = "Jewel22", .power = uint8_t(Power::GreaterWellspring),
                      .firstOnly = true};
+    // And the first clear's weapon, each class's: the three level-147 weapons MU sold only at its
+    // gambling shop, which drop here and wait for a quest (the user, 2026-10-23: 'we will create
+    // that quest later'; 2026-10-24: 'give for each class something which make sense'). +7 and
+    // three sockets as Kantur's Captain's; any rank, since no quest gates Aida on the class
+    // change and a first-only weapon held back from one not yet promoted would never come. The
+    // knight's Beuroba is a two-hander, so the Flamberge comes beside it (the Captain's rule);
+    // the Magic Gladiator takes the spear on the knight's path and the staff on the wizard's. The
+    // Flamberge a plus higher, so the pair sell alike (Beuroba +7 361,600, Flamberge +8 348,000).
+    row.paid[n++] = {.item = "Sword27", .plus = 8, .kin = knight, .sockets = 3,
+                     .firstOnly = true};  // Flamberge +8, the knight's one-hander
+    row.paid[n++] = {.item = "Spear12", .plus = 7, .kin = knight, .sockets = 3,
+                     .firstOnly = true};  // Beuroba +7
+    row.paid[n++] = {.item = "Staff34", .plus = 7, .kin = wizard, .sockets = 3,
+                     .firstOnly = true};  // Chromatic Staff +7
+    row.paid[n++] = {.item = "Bow25", .plus = 7, .kin = elf, .sockets = 3,
+                     .firstOnly = true};  // Air Lyn Bow +7
     row.paidCount = n;
     return row;
 }

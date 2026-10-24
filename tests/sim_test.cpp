@@ -5298,8 +5298,8 @@ void testSkills(const content::Tables& tables) {
             twoHandPaid &= oneHand == twoHand;
             twoHandPaid &= row.choiceCount == 0;
         }
-        check(twoHandPaid && knightPairs == 5,
-              "the knight's five quest weapons each come with a two-hander, nothing to pick");
+        check(twoHandPaid && knightPairs == 6,
+              "the knight's six quest weapons each come with a two-hander, nothing to pick");
         // And neither pick is the richer: the pair sell to an NPC within a quarter of each other.
         bool pricedAlike = true;
         for (int q = 0; q < sim::kQuests; ++q) {
