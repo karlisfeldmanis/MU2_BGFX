@@ -9,22 +9,6 @@
       "box": [71, 102, 82, 109],
       "note": "OpenMU's spawn gate 137 (VersionSeasonSix Gates.cs:283): the safe hall by the Ruins' door, where a death in the Relics or the boss map stands up. docs/worlds/kanturu-port.md Part A 2.1."
     },
-    "exits": [
-      {
-        "number": 130,
-        "box": [
-          70,
-          104,
-          70,
-          107
-        ],
-        "faces": [
-          1,
-          0
-        ],
-        "note": "The Relics, from the Ruins (Gates.cs:285): the hall's west end, facing east, away from the way back (131) beside it."
-      }
-    ],
     "enters": [
       {
         "number": 131,

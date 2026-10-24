@@ -51,18 +51,6 @@
         "level": 0,
         "target": 128,
         "note": "Kanturu's way back to Tarkan, in the gate's doorway (Gates.cs:538). MU asks 130, ours free, as every way out."
-      },
-      {
-        "number": 129,
-        "box": [
-          89,
-          89,
-          89,
-          92
-        ],
-        "level": 380,
-        "target": 130,
-        "note": "The Ruins' door to the Relics, at the end of the walk, 598 steps from the camp (Gates.cs:539). MU asks 220 (S17 290); ours 380, above the Tarkan door's 320 as MU's is 70 above its 150, and the tier of the dormant 380 gear and the Legendary rune requirement (the user, 2026-10-23: \"380\")."
       }
     ]
   },
