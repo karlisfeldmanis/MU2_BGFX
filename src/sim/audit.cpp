@@ -125,8 +125,7 @@ void audit(const Realm& realm, Findings& findings) {
             const Body* caster = realm.find(happening.who);
             if (index >= 0) {
                 // A mount's skill is never learned: the horn worn is what it asks (Realm::knows).
-                // Nor a blade's: the blade in his hand.
-                const bool horned = skillAt(index).granted() && caster == &realm.hero() &&
+                const bool horned = skillAt(index).mounted && caster == &realm.hero() &&
                                     realm.knows(happening.a);
                 if (caster && !horned && (caster->learned & (uint64_t(1) << index)) == 0) {
                     ++findings.castUnlearned;

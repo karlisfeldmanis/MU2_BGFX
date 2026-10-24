@@ -1,0 +1,44 @@
+{
+  "item": "OrbPowerSlash",
+  "mu_name": "Orb of Power Slash",
+  "mu_name_from": "Ours: MU has no Orb of Power Slash. Its Power Slash was a weapon skill of the Magic Gladiator's blades -- WebZen's AT_SKILL_SWORD6, skill 56, in item.txt's skill column on the Dark Reign, Explosion and Rune Blades, the Sword Dancer and the Imperial Sword -- known while one was held. The name is the orbs' own pattern, as the Orb of Fire Slash's.",
+  "why_this_one": "The only way the Magic Gladiator learns Power Slash (docs/plans/mg-skills/power-slash.md). The user, 2026-10-24: \"Power Slash has to be orb\" -- learned for good off this, with any weapon but a staff, not known only while a blade is held. Group 12 number 28 is ours: 0-22, 25 and 27 are used on main while branch darklord's plan holds 23, 24 and 26.\n\nIts drop level 75 is ours, past the Orb of Fire Slash's 60; 75,000 zen; it drops only: Hanzo sells the early orbs (sim/market.cpp), not this one.",
+  "mesh": "Gem05",
+  "mesh_note": "No geometry of its own. Gem01.bmd through Gem05.bmd are byte-identical in MuMain's Data/Item -- one md5 across all five -- so every orb in MU is one model told apart by its row, and this names the one the pipeline has built.",
+  "stats": {
+    "note": "An orb has no damage roll and no hand: it is a Prize and nothing else, and the shape of the row is the elf orbs' own (Version075/Items/Orbs.cs:63-67) -- one cell, durability one, dropped by monsters.",
+    "group": 12,
+    "number": 28,
+    "drop_level": 75,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "durability_note": "One. One reading, as a scroll is.",
+    "value": 75000,
+    "classes": [
+      "gladiator"
+    ],
+    "classes_from": "Ours, as the orb is: the Magic Gladiator's alone, as its skill is (sim::skillFor) and as MU's blades that carried it were his.",
+    "requires": {
+      "level": 150,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "What the character must BE to read it. Level 150 is ours (the user, 2026-10-24: \"Power Slash has to be orb\"): our orbs ask about twice their drop level -- Cyclone 72 at 36, Death Stab 120 at 60, Fire Slash 120 at 60 -- and this one drops at 75, between Fire Slash and his blades' tier. No strength and no energy: MU's skill asked neither, its blade's requirements were the gate. The same level is on the skill block below and on the skill's row (sim/skills.cpp needLevel) -- the three must agree."
+  },
+  "skill": {
+    "note": "What the orb teaches. Read once and gone -- the durability of one is what 'used once' means on this row.",
+    "number": 56,
+    "name": "Power Slash",
+    "tells": "Five waves fanned out from his blade, striking what stands in a widening wedge six tiles ahead of him as they reach it: the nearest five, and up to six more.",
+    "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter so the orb's tooltip and the skill's card cannot say different things about the same blow. MU never prints a line like this at all; it is ours, as it is on the elf's orbs.",
+    "level_requirement": 150,
+    "energy_requirement": 0,
+    "energy_from": "None: MU's skill 56 asks no energy (WebZen skill.txt:63, OpenMU SkillsInitializer.cs:175).",
+    "value": 75000,
+    "level_from": "Ours: twice the orb's drop level, 150 at 75 (the user, 2026-10-24: \"Power Slash has to be orb\"). MU asked no level of the skill: the blade was the gate."
+  }
+}

@@ -81,16 +81,7 @@ bool Realm::knows(int32_t skill) const {
     // and not saved -- for his class alone, as MuMain marks it the knight's on the horn.
     const SkillRow& row = skillAt(index);
     if (row.mounted) return skillFor(row, mine().kin) && dinorantWorn();
-    // And a blade's is the blade's (Power Slash): MU adds it as the weapon goes on and takes it
-    // away as it comes off (user.cpp:16682-16693, 14934-14940), asking the class alone.
-    if (row.wielded) return skillFor(row, mine().kin) && wieldsSkill(row.number);
     return (mine().learned & (uint64_t(1) << index)) != 0;
-}
-
-bool Realm::wieldsSkill(int32_t skill) const {
-    const Held& blade = me().bag[kWeaponRight];
-    if (blade.empty() || tables_ == nullptr || size_t(blade.item) >= tables_->items.size()) return false;
-    return tables_->items[size_t(blade.item)].skill == skill;
 }
 
 bool Realm::dinorantWorn() const {
@@ -142,8 +133,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
 
     // Learned. In 0.75 this question was asked of his hands; here it is asked of what he has
     // read, which is the one place the design leaves the original on purpose.
-    // A mount's skill asks the horn instead (`knows`), and a blade's the blade.
-    if (row.granted() ? !knows(row.number) : (hero.learned & (uint64_t(1) << index)) == 0) {
+    // A mount's skill asks the horn instead (`knows`).
+    if (row.mounted ? !knows(row.number) : (hero.learned & (uint64_t(1) << index)) == 0) {
         return false;
     }
     // And his class's. Learning already asks it -- an orb or a scroll refuses the wrong class --
@@ -193,9 +184,9 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // And a mount's skill only on the mount: off it -- on a safe tile, or the horn's life gone this
     // tick -- there is nothing under him to breathe.
     if (row.mounted && !hero.riding) return false;
-    // And a blade's never on one: MuMain's click does nothing on Uniria, Dinorant, Dark Horse or
-    // Fenrir (ClassAttack.cpp:660-697), and the bar greys it there.
-    if (row.wielded && hero.riding) return false;
+    // And Power Slash never on one: MuMain's click does nothing on Uniria, Dinorant, Dark Horse
+    // or Fenrir (ClassAttack.cpp:660-697), and the bar greys it there.
+    if (row.afoot && hero.riding) return false;
 
     // **A blink** (Teleport): no body, no blow -- the ground the key named, a fade, and him put
     // down there. The fight he was in is dropped, as a Town Portal drops it: left standing, the
@@ -817,8 +808,7 @@ bool Realm::armed(const Body& hero, const SkillRow& row) const {
     const int index = skillIndexOf(row.number);
     if (index < 0) return false;
     if (row.mounted ? !knows(row.number) || !hero.riding
-        : row.wielded ? !knows(row.number) || hero.riding
-                      : (hero.learned & (uint64_t(1) << index)) == 0) {
+                    : (hero.learned & (uint64_t(1) << index)) == 0 || (row.afoot && hero.riding)) {
         return false;
     }
     if (!skillFor(row, hero.kin) || hero.mana < manaCostOf(hero, row) || (secondSkill(row) && !hero.second)) return false;

@@ -1700,11 +1700,12 @@ void testFireSlash(const content::Tables& tables) {
     }
 }
 
-// Power Slash, the Magic Gladiator's blade's (docs/plans/mg-skills/power-slash.md, 2026-10-24):
-// known only with a blade that carries it in his right hand and gone with it, never ridden,
-// WebZen's wedge and count -- the nearest five, the sixth to the eleventh at even odds, none past
-// -- and each body struck as its wave reaches it, the farther the later.
-void testPowerSlash(const content::Tables& tables) {
+// Power Slash, the Magic Gladiator's orb's (docs/plans/mg-skills/power-slash.md, 2026-10-24; the
+// user: "Power Slash has to be orb"): unknown until the Orb of Power Slash (12/28) is read, which
+// asks level 150 and his class; then his for good, saved, with any weapon but a staff, never
+// ridden; WebZen's wedge and count -- the nearest five, the sixth to the eleventh at even odds,
+// none past -- and each body struck as its wave reaches it, the farther the later.
+void testPowerSlash(const content::Tables& cooked) {
     std::printf("power slash\n");
     const sim::Kin mg = sim::Kin::MagicGladiator;
     const sim::SkillRow* row = sim::skillNumbered(sim::skill::kPowerSlash);
@@ -1713,10 +1714,16 @@ void testPowerSlash(const content::Tables& tables) {
     check(sim::skillFor(*row, mg) && !sim::skillFor(*row, sim::Kin::DarkKnight) &&
               !sim::skillFor(*row, sim::Kin::DarkWizard),
           "the gladiator's alone");
-    check(row->mana == 15 && row->spread == sim::Spread::Frustum && row->wielded && row->granted() &&
-              !row->mounted && row->clip == 146 && row->coolTicks == 40 && row->needLevel == 0 &&
-              !row->wizardry && row->castsBare() && row->aimsAtPointer(),
-          "MU's mana, his blades' swing, a wedge, two seconds, the blade's and no level of its own");
+    check(row->mana == 15 && row->spread == sim::Spread::Frustum && row->afoot && !row->mounted &&
+              row->clip == 146 && row->coolTicks == 40 && row->needLevel == 150 &&
+              row->families == sim::arms::kEvery && !row->anyHand && !row->wizardry &&
+              row->castsBare() && row->aimsAtPointer(),
+          "MU's mana, his blades' swing, a wedge, two seconds, learned at 150, any weapon, afoot");
+    {
+        const sim::SkillRow* fire = sim::skillNumbered(sim::skill::kFireSlash);
+        check(fire != nullptr && row->families == fire->families && row->anyHand == fire->anyHand,
+              "Fire Slash's weapon rule");
+    }
     check(sim::skillElement(row->number) == sim::Element::None, "no element");
     check(sim::skillIndexOf(sim::skill::kPowerSlash) == sim::kSkills - 1 &&
               sim::skillIndexOf(sim::skill::kFireSlash) == sim::kSkills - 2,
@@ -1728,6 +1735,45 @@ void testPowerSlash(const content::Tables& tables) {
               "a body takes no more of it than of his Fire Slash, before that one's fire and cut");
     }
 
+    // The orb: the cooked row (content/items/misc/OrbPowerSlash.json) once the tables cook has
+    // run, else the Orb of Fire Slash's row made into it as the JSON says, so the rules are tested
+    // before the cook.
+    content::Tables tables = cooked;
+    int32_t orb = tables.itemAt(12, 28);
+    if (orb < 0) {
+        const int32_t fireOrb = tables.itemAt(12, 27);
+        content::ItemRow made;
+        if (fireOrb >= 0) made = tables.items[size_t(fireOrb)];
+        made.name = "OrbPowerSlash";
+        made.label = "Orb of Power Slash";
+        made.group = 12;
+        made.number = 28;
+        made.dropLevel = 75;
+        made.classes = 1 << int(mg);
+        made.needLevel = 150;
+        made.needStrength = made.needAgility = made.needEnergy = made.needVitality = 0;
+        made.teaches = sim::skill::kPowerSlash;
+        made.teachesLevel = 150;
+        made.teachesEnergy = 0;
+        made.teachesName = row->name;
+        made.teachesTells = row->tells;
+        tables.items.push_back(made);
+        orb = int32_t(tables.items.size() - 1);
+        std::printf("  (12/28 not cooked: the orb made here from 12/27%s)\n",
+                    fireOrb >= 0 ? "" : ", which is not cooked either");
+    } else {
+        const content::ItemRow& cookedOrb = tables.items[size_t(orb)];
+        check(cookedOrb.teaches == sim::skill::kPowerSlash && cookedOrb.dropLevel == 75 &&
+                  cookedOrb.needLevel == 150 && cookedOrb.teachesLevel == 150 &&
+                  cookedOrb.needStrength == 0 && cookedOrb.needEnergy == 0 &&
+                  cookedOrb.classes == (1 << int(mg)),
+              "the cooked orb: Power Slash, drop level 75, level 150, no strength, his alone");
+    }
+    const auto readOrb = [&](sim::Realm& r) {
+        const int at = r.give(orb);
+        return at >= 0 && r.useItem(at);
+    };
+
     sim::Realm realm;
     check(realm.raise(&tables, 7, 190, 110, mg, 150), "a gladiator's realm raises");
     sim::HeroRecord record = realm.record();
@@ -1735,24 +1781,33 @@ void testPowerSlash(const content::Tables& tables) {
     record.points.agility = 200;
     realm.restore(record);
     const int index = sim::skillIndexOf(sim::skill::kPowerSlash);
-    check(!realm.knows(sim::skill::kPowerSlash), "bare-handed he does not know it");
-    check(realm.equip(tables.armNamed("Sword02"), -1, true) && !realm.knows(sim::skill::kPowerSlash),
-          "nor with a sword that does not carry it");
-    // The five blades that do, every one (content/items/weapons, "skill": 56).
-    int carry = 0;
-    for (const char* name : {"Sword22", "Sword24", "Sword26", "Sword29", "Sword32"}) {
-        carry += realm.equip(tables.armNamed(name), -1, true) && realm.knows(sim::skill::kPowerSlash);
-    }
-    checkEqual(carry, 5, "each of his five blades that carry it teaches it while held");
-    check(realm.equip(tables.armNamed("Sword22"), -1, true), "the Dark Reign Blade in his hand");
-    checkEqual(realm.record().learned & (uint64_t(1) << index), uint64_t(0),
-               "and none of it goes in the save");
+    check(realm.equip(tables.armNamed("Sword22"), -1, true) && !realm.knows(sim::skill::kPowerSlash),
+          "the Dark Reign Blade in his hand teaches nothing: the orb does");
     {
+        sim::Realm young;
+        young.raise(&tables, 7, 190, 110, mg, 149);
+        check(!readOrb(young) && !young.knows(sim::skill::kPowerSlash),
+              "a gladiator at 149 cannot read the orb");
         sim::Realm knight;
-        knight.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 150);
-        knight.equip(tables.armNamed("Sword22"), -1, true);
-        check(!knight.knows(sim::skill::kPowerSlash), "a knight never knows it");
+        knight.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 400);
+        check(!readOrb(knight) && !knight.knows(sim::skill::kPowerSlash), "nor a knight at 400");
     }
+    check(readOrb(realm) && realm.knows(sim::skill::kPowerSlash), "at 150 he reads it and knows it");
+    check(!readOrb(realm), "and a second orb is refused, not eaten");
+    check((realm.record().learned & (uint64_t(1) << index)) != 0, "it is in his learned skills");
+    {
+        sim::Kept kept;
+        kept.hero = realm.record();
+        std::vector<uint8_t> stored;
+        net::putKept(stored, kept);
+        sim::Kept read;
+        sim::Realm again;
+        again.raise(&tables, 7, 190, 110, mg, 150);
+        check(net::keptFrom(stored, read), "his bytes are read back");
+        again.restore(read.hero);
+        check(again.knows(sim::skill::kPowerSlash), "and Power Slash comes back with them");
+    }
+    record = realm.record();
     const auto castsOn = [&](sim::Realm& r, int ticks) {
         int casts = 0;
         for (int tick = 0; tick < ticks; ++tick) {
@@ -1766,21 +1821,24 @@ void testPowerSlash(const content::Tables& tables) {
         }
         return casts;
     };
-    // Unequipped, it is gone; on a mount it is refused.
+    // Any weapon but a staff; known with none, never thrown; on a mount refused.
     {
         sim::Realm off;
         off.raise(&tables, 7, 190, 110, mg, 150);
         off.restore(record);
-        off.equip(tables.armNamed("Sword22"), -1, true);
-        check(castsOn(off, 60) > 0, "he throws it with the blade in hand");
+        off.equip(tables.armNamed("Sword02"), -1, true);
+        check(castsOn(off, 60) > 0, "he throws it with a plain sword, not one of his blades");
+        off.equip(tables.armNamed("Staff01"), -1, true);
+        check(off.knows(sim::skill::kPowerSlash) && castsOn(off, 120) == 0,
+              "a staff in his hand: known and never thrown");
         off.equip(-1, -1, true);
-        check(!off.knows(sim::skill::kPowerSlash) && castsOn(off, 120) == 0,
-              "and unequipped it is gone and never thrown");
+        check(off.knows(sim::skill::kPowerSlash) && castsOn(off, 120) == 0,
+              "bare-handed: known and never thrown");
         const int horn = tables.itemAt(13, 3);
         sim::Realm rider;
         rider.raise(&tables, 7, 190, 110, mg, 150);
         rider.restore(record);
-        rider.equip(tables.armNamed("Sword22"), -1, true);
+        rider.equip(tables.armNamed("Sword02"), -1, true);
         if (horn >= 0) rider.give(horn, sim::kMount);
         rider.step();
         check(horn >= 0 && rider.hero().riding && rider.knows(sim::skill::kPowerSlash) &&

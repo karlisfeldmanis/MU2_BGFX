@@ -928,14 +928,17 @@ constexpr SkillRow kRows[kSkills] = {
      .arcHalf = 1.57079633f, .paceAfter = 0.54f, .paceKey = 3, .cutTicks = 200,
      .cutChance = 0.45f, .cutShare = 10},
 
-    // ---- Power Slash 56, the gladiator's blade's, past Fire Slash -----------------------------
+    // ---- Power Slash 56, the gladiator's orb's, past Fire Slash -------------------------------
     //
     // docs/plans/mg-skills/power-slash.md is the research; its section 5 is this row. MU's: mana
     // 15, no element, the weapon's damage alone (skill damage 0, WebZen skill.txt:63, OpenMU
-    // SkillsInitializer.cs:175), no level of its own -- the blade's requirements are the gate.
-    // Known while a blade that carries it is in his right hand (`wielded`, Realm::knows): the
-    // Dark Reign Blade, the Explosion Blade, the Sword Dancer, the Imperial Sword and the Rune
-    // Blade. Never riding (ClassAttack.cpp:660-697). Its clip is those blades' own swing,
+    // SkillsInitializer.cs:175). MU's is a weapon skill, known while one of his blades is in his
+    // right hand (AT_SKILL_SWORD6 on the Dark Reign, Explosion and Rune Blades, the Sword Dancer
+    // and the Imperial Sword, item.txt's skill column). **Ours** (the user, 2026-10-24: "Power
+    // Slash has to be orb"): learned for good off the Orb of Power Slash (12/28), as Fire Slash
+    // is off its own, and thrown with any weapon in his right hand but a staff -- Fire Slash's
+    // rule, which the families say. Learned at 150, twice the orb's drop level of 75, past Fire
+    // Slash's 120. Never riding (ClassAttack.cpp:660-697, `afoot`). Its clip is those blades' own swing,
     // PLAYER_ATTACK_TWO_HAND_SWORD_TWO (ZzzCharacter.cpp:1178-1181) -- player.muc's 146
     // (content/players/rig/actions.json; the dossier counts MuMain's enum, 145) -- at its 0.25
     // and his attack speed. WebZen's trapezoid and count (`Spread::Frustum`, kFrustum*), and
@@ -953,8 +956,8 @@ constexpr SkillRow kRows[kSkills] = {
      .forcePerStrength = 1.0f / 1400.0f, .coolTicks = 40, .spread = Spread::Frustum,
      .tells = "Five waves fanned out from his blade, striking what stands in a widening wedge "
               "six tiles ahead of him as they reach it: the nearest five, and up to six more.",
-     .clip = 146, .sound = "player_skill_sword3", .built = true, .families = arms::kSwords,
-     .kin = Kin::MagicGladiator, .release = 0.0f, .wielded = true},
+     .clip = 146, .sound = "player_skill_sword3", .built = true, .families = arms::kEvery,
+     .needLevel = 150, .kin = Kin::MagicGladiator, .release = 0.0f, .afoot = true},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

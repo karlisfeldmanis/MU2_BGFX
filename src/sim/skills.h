@@ -490,16 +490,12 @@ struct SkillRow {
     float cutChance = 0.0f;
     int32_t cutShare = 0;
     // ---- Power Slash's, appended after Fire Slash's ------------------------------------------
-    // **His blade's and not his**: known while his right hand holds a weapon whose table row
-    // carries this skill (`content::ItemRow::skill`, Realm::knows) -- MU's weapon skill
-    // (zzzitem.cpp:980-995, gObjWeaponMagicAdd), with no learned bit and nothing in the save
-    // (user.cpp:3747) -- and never thrown riding (MuMain ClassAttack.cpp:660-697). Ours: the
-    // blade alone grants it; its rolled skill option (`Held::skill`) is not asked.
-    bool wielded = false;
+    // **Never thrown riding**: MuMain's click does nothing on Uniria, Dinorant, Dark Horse or
+    // Fenrir (ClassAttack.cpp:660-697), and the bar greys it there. Learned off its orb as any
+    // other; only the mount is asked.
+    bool afoot = false;
     // The Arc's half-angle this row is gathered with (Realm::gather).
     float arcHalfAngle() const;
-    // Whether it is known off what he wears rather than learned: a mount's or a blade's.
-    bool granted() const { return mounted || wielded; }
     // **Whether a press aims it at the ground under the pointer** rather than at a body: the
     // shapes that have a direction -- Aqua Beam's beam, Power Wave's line, the knight's arcs and
     // Twister's walking storm. Thrown from the keys or the right button, he turns to where the

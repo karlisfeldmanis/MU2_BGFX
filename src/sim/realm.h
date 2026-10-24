@@ -919,14 +919,10 @@ public:
         benchMonstersDie_ = monstersDie;
     }
     // Whether he may throw it at all: learned, or a mount's skill and that mount worn
-    // (`SkillRow::mounted`), or a blade's and that blade in his hand (`SkillRow::wielded`). What
-    // the bar and the list ask, and `throwSkill` before it spends.
+    // (`SkillRow::mounted`). What the bar and the list ask, and `throwSkill` before it spends.
     bool knows(int32_t skill) const;
     // A Horn of Dinorant in the mount's slot with life left: Fire Breath is known while it is.
     bool dinorantWorn() const;
-    // A weapon in his right hand whose table row carries `skill` (`content::ItemRow::skill`):
-    // Power Slash is known while one is.
-    bool wieldsSkill(int32_t skill) const;
     // Ticks left on a skill's cooldown, and the whole cooldown it was set to, which is what the
     // frame needs to draw a sweep. Zero and zero when it is ready.
     int64_t cooling(int32_t skill) const;

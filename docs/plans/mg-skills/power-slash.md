@@ -322,12 +322,17 @@ the table row's `skill` (src/content/tables.cpp:204, from each weapon's `"skill"
 
 # 5. Decided (2026-10-24, from this research and the user's standing taste)
 
-1. **Known from the blade.** Known while his right hand holds a weapon whose row's skill is 56, for the gladiator only,
-   never saved, never an orb (the Fire Breath pattern). **Ours:** the blade alone grants it; the rolled skill option
-   (`Held::skill`) is not asked, since our drops don't treat it as a fight option and all five blades should mean
-   the skill. Shown on the skill bar while held.
-2. **MU's row**: mana 15, physical, no element, the weapon's damage only. No level of its own: the blade's
-   requirements are the gate (Rune Blade 100 is the lowest drop level).
+1. **Learned off an orb** (the user, 2026-10-24: "Power Slash has to be orb"; it was first known from the blade, the
+   Fire Breath pattern, and that is taken back). The **Orb of Power Slash**, content group 12 number 28
+   (content/items/misc/OrbPowerSlash.json; 27 is Fire Slash's, 23, 24 and 26 darklord's), the gladiator's alone,
+   drop level 75, drop only, 75,000 zen. Read once, the skill is his for good: the learned bit, saved as every
+   learned skill is. Cast with **any weapon in his right hand but a staff**, Fire Slash's rule (`families`
+   `arms::kEvery`), and not riding (`SkillRow::afoot`). Ours: MU's Power Slash is a weapon skill of his blades
+   (WebZen's AT_SKILL_SWORD6, item.txt's skill column), and MU has no such orb. A weapon's rolled skill option
+   (`Held::skill`) still teaches nothing.
+2. **MU's row**: mana 15, physical, no element, the weapon's damage only. **Learned at 150** (the user, 2026-10-24),
+   on the orb's requirement, its skill block and the row's `needLevel`, which agree: our orbs' ladder of about twice
+   the drop level, past Fire Slash's 120 and below his blades' tier. No strength or energy asked.
 3. **Area: WebZen's trapezoid**, ±1 tile at his feet widening to ±6 at 6 tiles, 6 deep, facing his aim. **WebZen's
    cap**: the 5 nearest always, the 6th to 11th at 50% each off seeded dice, none past 11 (nearest first, ours; MU's
    order is the viewport's).
@@ -346,8 +351,8 @@ the table row's `skill` (src/content/tables.cpp:204, from each weapon's `"skill"
 8. **Row 41, kSkills 42**, folded into Fire Slash's unshipped kKeptLayout 16 and protocol 51 if no other change has
    claimed them since; darklord's rows then move up two.
 
-Built (2026-10-24): the sim -- row 41 (`skill::kPowerSlash`, kSkills 42, `SkillRow::wielded` and `granted()`,
-`Realm::knows`/`wieldsSkill`, refused riding in `throwSkill` and `armed`), `Spread::Frustum` in `Realm::gather`
+Built (2026-10-24): the sim -- row 41 (`skill::kPowerSlash`, kSkills 42, refused riding in `throwSkill` and
+`armed`), `Spread::Frustum` in `Realm::gather`
 (kFrustum*: half a tile behind his middle to six out, +-1 to +-6), `Realm::powerSlash` (the nearest five, the 6th-11th
 at even odds off the realm's dice, none past) striking each body as a held-back blow (`Realm::loose`'s `delay`, ported
 from darklord's a78205f8) `round(d / 0.75)` ticks after the let-go, which is the clip's first tick (`release` 0);
@@ -358,10 +363,14 @@ cut there (2026-10-10); pipeline/cook.py now writes 146 into the action table. F
 on the skill sweep (tests/kits/sweep.json's GaiusReign, a Dark Reign Blade +11, 6 seeds x 4 min, per hour with the best
 talent build; Fire Slash 12.70M / 5,301 a blow on Icarus and 8.20M / 1,997 on Aida): Power Slash 9.71M / 4,609 on Icarus
 and 8.56M / 1,622 on Aida -- below on one body, close on Aida's packs; 2.2 and 2.4 read alike within the sweep's noise.
-The bar (game/ui/desk.cpp) keeps a blade's skill on its key while the blade is held and draws the key empty, keeping
-it, when the blade is put away; its card says the blade and "Not while riding". The look, src/game/fx/power_slash.
+Its card says "Not while riding". The look, src/game/fx/power_slash.
 {h,cpp}: five carriers from his feet a tick after the cast along the realm's aim, MU's per-frame Shiny02 pair, blue
 flare01, blue ground light, four bright smoke puffs and one blue haze; twelve frames (7.2 tiles), not twenty; the blade
 trails the whole clip on motion_blur (motion_blur_r on the Sword Dancer, fx/streak.h's new Lightning sheet);
-sKnightSkill3 with the waves. skill_56.png cut by pipeline/skill_icons.py --mumain --only 56. Not yet cooked: the
-tables (clip 146's length) and the showing (the icon); not yet seen in game.
+sKnightSkill3 with the waves. skill_56.png cut by pipeline/skill_icons.py --mumain --only 56. **The orb, the same
+day** (5.1, the user: "Power Slash has to be orb"): the blade's grant (`SkillRow::wielded`, `granted()`,
+`Realm::wieldsSkill`, the bar's empty key, the card's blade line) taken out; the row learned at 150 with Fire
+Slash's weapon rule and `afoot`; the Orb of Power Slash, 12/28, made from the Orb of Fire Slash through `mu edit`;
+`testPowerSlash` reads it (unknown before; refused a knight and a gladiator at 149; a plain sword throws it, a staff
+and bare hands do not; saved and read back). Not yet cooked: the tables (clip 146's length, and the orb, every
+world's, so it drops) and the showing (the icon); not yet seen in game.
