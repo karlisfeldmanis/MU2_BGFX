@@ -14,6 +14,7 @@
 
 #include "core/log.h"
 #include "sim/electric_spike_box.h"
+#include "sim/spear_box.h"
 #include "sim/elite.h"
 #include "sim/realm_tuning.h"
 
@@ -58,9 +59,12 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         const int flat = row->number == skill::kElectricSpike
                              ? p.command / 10 + 50 * partyNear(attacker)
                              : p.strength / 25 + p.energy / 50;
+        // Force from a scepter is Force Wave's fifty, rolled to 75 (WebZen ObjAttack.cpp:3144-3148).
+        const int32_t skillDamage =
+            row->number == skill::kForce && forceWaveHeld() ? skill::kForceWaveDamage : row->damage;
         lord = attacker.stats;
-        lord.minimumDamage += row->damage + flat;
-        lord.maximumDamage += row->damage + row->damage / 2 + flat;
+        lord.minimumDamage += skillDamage + flat;
+        lord.maximumDamage += skillDamage + skillDamage / 2 + flat;
         swinger = &lord;
     }
     Blow blow = row && row->wizardry ? cast(attacker.stats, target.stats,
@@ -1312,6 +1316,11 @@ void Realm::release(Body& hero, uint32_t at, float force, int32_t skill, const f
         electricSpike(hero, *row, at, force);
         return;
     }
+    // Force from a scepter: Force Wave's strip down his aim.
+    if (row && row->number == skill::kForce && hero.player && forceWaveHeld()) {
+        forceWave(hero, *row, at, force);
+        return;
+    }
     // Fire Scream: its three lanes down his facing.
     if (row && row->number == skill::kFireScream) {
         fireScream(hero, *row, at, force);
@@ -2079,6 +2088,66 @@ void Realm::electricSpike(Body& hero, const SkillRow& row, uint32_t aimedAt, flo
         }
         loose(hero, row, victims[i], force, false, victims[i] == aimedAt, wait);
     }
+}
+
+// Force Wave's strip is cut this far down his aim, in tiles: **ours, and marked** -- WebZen's table
+// runs to 8.5, Force's streaks to six, and a number past them would come with no light.
+constexpr float kWaveReach = 6.5f;
+
+bool Realm::forceWaveHeld() const {
+    // WebZen's: the right hand's item, its row's skill AT_SKILL_LONGSPEAR (ObjCalCharacter.cpp:
+    // 509-516, zzzitem.cpp:977-995). **Ours**: every scepter carries it, no `+S` asked (the user,
+    // 2026-10-25, "every scepter"), and only one he may wear and that is not broken -- WebZen
+    // asks neither.
+    if (tables_ == nullptr) return false;
+    const Held& hand = me().bag[kWeaponRight];
+    if (hand.empty() || hand.durability <= 0 || size_t(hand.item) >= tables_->items.size()) {
+        return false;
+    }
+    return tables_->items[size_t(hand.item)].skill == skill::kForceWave &&
+           fits(*tables_, wearer(), hand);
+}
+
+void Realm::forceWave(Body& hero, const SkillRow& row, uint32_t aimedAt, float force) {
+    // WebZen's SkillSpear (ObjUseSkill.cpp:3570-3673): GetAngle toward the aimed body, a tenth of
+    // it the table's direction, and every monster the table marks struck once in the same pass --
+    // no wall, no cap, the 1-in-3 thinning waiting on a `loopcount` that never moves. His aim is
+    // that angle: he turned to the body as he threw it.
+    const float c = fm::cos(hero.aim), s = fm::sin(hero.aim);
+    int angle = int(fm::atan2(-s, -c) * 57.2957795f + 90.0f);
+    if (angle < 0) angle += 360;
+    const int dir = std::min(angle / 10, kSpearBoxDirs - 1);
+    const int hx = hero.column(), hy = hero.row(), half = kSpearBoxSize / 2;
+    // **Ours, and marked**: the aimed body always, as OpenMU (ForceSkillAction.cs:73-76) -- four
+    // of the eighty tiles in Force's reach fall off their own table, and a scepter must never
+    // lose the blow Force would land.
+    // Let go as Force is, said once so its streaks are drawn once, and landed by `arrive`.
+    if (body(aimedAt) != nullptr) loose(hero, row, aimedAt, force);
+    // Then nearest first and by id, so the log is fixed. Only monsters, as Electric Spike.
+    uint32_t victims[kVictims];
+    float off[kVictims] = {};
+    int found = 0;
+    for (const Body& one : bodies_) {
+        if (!one.monster() || !one.alive() || one.id == aimedAt || found >= kVictims) continue;
+        if (tables_->grid.safe(one.column(), one.row())) continue;
+        const int tx = one.column() - hx + half, ty = one.row() - hy + half;
+        if (tx < 0 || ty < 0 || tx >= kSpearBoxSize || ty >= kSpearBoxSize) continue;
+        if (((kSpearBox[dir][ty] >> tx) & 1u) == 0) continue;
+        const float dx = one.x - hero.x, dy = one.y - hero.y;
+        if (dx * c + dy * s > kWaveReach) continue;
+        const float gap = fm::hypot(dx, dy);
+        int at = found;
+        while (at > 0 && (off[at - 1] > gap || (off[at - 1] == gap && victims[at - 1] > one.id))) {
+            off[at] = off[at - 1];
+            victims[at] = victims[at - 1];
+            --at;
+        }
+        off[at] = gap;
+        victims[at] = one.id;
+        ++found;
+    }
+    // All on the let-go: Force's streaks stand full length on their first frame.
+    for (int i = 0; i < found; ++i) loose(hero, row, victims[i], force, false, false);
 }
 
 void Realm::fireScream(Body& hero, const SkillRow& row, uint32_t aimedAt, float force) {

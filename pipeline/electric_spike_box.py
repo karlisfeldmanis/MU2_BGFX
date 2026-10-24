@@ -1,6 +1,11 @@
 """Electric Spike's hit table, WebZen's own, as a C++ header.
 
     python3 pipeline/electric_spike_box.py <skillElect.hit> src/sim/electric_spike_box.h
+    python3 pipeline/electric_spike_box.py <skillSpear.hit> src/sim/spear_box.h Spear "Force Wave"
+
+The same class reads Force Wave's Data/skillSpear.hit (Gamemain.cpp:3220,
+docs/plans/dark-lord-spells/force-wave.md section 2): the third and fourth arguments name its
+symbols (kSpearBox) and the skill.
 
 WebZen GameServer 1.00.93 strikes with Electric Spike whatever its table marks (`CSkillHitBox`,
 SkillHitBox.cpp:39-58, loaded from Data/skillElect.hit at Gamemain.cpp:3221): 36 directions of ten
@@ -14,7 +19,7 @@ import sys
 SIZE, DIRS = 21, 36
 
 
-def main(source, header):
+def main(source, header, symbol="Spark", skill="Electric Spike"):
     data = open(source, "rb").read()
     if len(data) != SIZE * SIZE * DIRS:
         sys.exit(f"{source}: {len(data)} bytes, not {SIZE * SIZE * DIRS}")
@@ -29,17 +34,17 @@ def main(source, header):
             masks.append(f"0x{bits:06x}")
         rows.append("    {" + ", ".join(masks) + "},")
     with open(header, "w") as out:
-        out.write("// Electric Spike's hit table: WebZen GameServer 1.00.93's Data/skillElect.hit, as it is\n")
+        out.write(f"// {skill}'s hit table: WebZen GameServer 1.00.93's Data/{source.split('/')[-1]}, as it is\n")
         out.write("// (pipeline/electric_spike_box.py made this; do not edit it by hand). 36 directions of ten\n")
         out.write("// degrees, each 21 rows of a 21 x 21 grid centred on the caster, bit x the column\n")
         out.write("// (`CSkillHitBox::HitCheck`, SkillHitBox.cpp:39-58).\n")
         out.write("#pragma once\n\n#include <cstdint>\n\nnamespace mu::sim {\n\n")
-        out.write(f"constexpr int kSparkBoxSize = {SIZE}, kSparkBoxDirs = {DIRS};\n")
-        out.write("constexpr uint32_t kSparkBox[kSparkBoxDirs][kSparkBoxSize] = {\n")
+        out.write(f"constexpr int k{symbol}BoxSize = {SIZE}, k{symbol}BoxDirs = {DIRS};\n")
+        out.write(f"constexpr uint32_t k{symbol}Box[k{symbol}BoxDirs][k{symbol}BoxSize] = {{\n")
         out.write("\n".join(rows) + "\n};\n\n}  // namespace mu::sim\n")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
+    if len(sys.argv) not in (3, 5):
         sys.exit(__doc__)
-    main(sys.argv[1], sys.argv[2])
+    main(*sys.argv[1:])

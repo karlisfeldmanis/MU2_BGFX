@@ -1842,6 +1842,12 @@ private:
     // Electric Spike: one `Loosed` down his aim (in `c`, thousandths of a radian), and a flight to
     // every monster WebZen's table marks in that direction (sim/electric_spike_box.h).
     void electricSpike(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
+    // Force Wave: Force struck at every monster WebZen's spear table marks down his aim
+    // (sim/spear_box.h), the aimed body always, all on the let-go.
+    void forceWave(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
+    // Whether the hand he fights with holds a scepter that makes Force Force Wave, worn as it
+    // may be (docs/plans/dark-lord-spells/force-wave.md section 8).
+    bool forceWaveHeld() const;
     // Fire Scream (docs/plans/dark-lord-spells/fire-scream.md): its three lanes measured off his
     // facing, each body loosed the ticks its nearest lane's head takes to reach it; and its
     // Explosion, rolled on a landed blow and burst kExplosionTicks on (landBlasts).

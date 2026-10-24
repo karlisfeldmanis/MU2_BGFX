@@ -143,6 +143,71 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
         check(loosed > 0 && hits > 0 && damage > 0, "Force is thrown and lands");
     }
 
+    // **Force Wave** (66, docs/plans/dark-lord-spells/force-wave.md): Force from a scepter strikes
+    // every monster WebZen's spear table marks down his aim, the aimed body always, all on the
+    // let-go. A short sword marked with the scepters' skill stands in for one until they are cooked.
+    {
+        content::Tables waved = lorencia;
+        const int32_t stand = waved.itemNamed("Sword02");
+        check(stand >= 0, "a sword the lord may hold");
+        waved.items[size_t(stand)].skill = sim::skill::kForceWave;
+        // Due east the table marks one to six tiles along his row and one to three on the next:
+        // two on it, one off it, one behind him.
+        const int offsets[5][2] = {{2, 0}, {5, 0}, {3, 1}, {6, 2}, {-3, 0}};
+        const auto throwOnce = [&](bool scepter, int64_t* struck, int64_t* letGo) {
+            sim::Realm lordRealm;
+            check(lordRealm.raise(&waved, 9, 160, 60, sim::Kin::DarkLord, 100), "a level-100 Dark Lord raises");
+            if (scepter) check(lordRealm.equip(waved.armNamed("Sword02"), -1, true), "the scepter in his hand");
+            lordRealm.unseen(true);
+            lordRealm.benchUndying(true);
+            const int hx = lordRealm.hero().column(), hy = lordRealm.hero().row();
+            uint32_t ids[5] = {};
+            int found = 0;
+            for (const sim::Body& one : lordRealm.bodies()) {
+                if (found == 5) break;
+                if (one.monster() && one.alive()) ids[found++] = one.id;
+            }
+            check(found == 5, "five monsters to strike");
+            const auto hold = [&] {
+                for (int i = 0; i < 5; ++i) {
+                    auto* held = const_cast<sim::Body*>(lordRealm.find(ids[i]));
+                    held->x = float(hx + offsets[i][0]);
+                    held->y = float(hy + offsets[i][1]);
+                }
+            };
+            sim::Request request;
+            request.kind = sim::Request::Kind::Attack;
+            request.target = ids[0];
+            request.skill = sim::skill::kForce;
+            for (int i = 0; i < 5; ++i) struck[i] = -1;
+            *letGo = -1;
+            for (int tick = 0; tick < 60; ++tick) {
+                hold();
+                if (tick == 0) lordRealm.ask(request);
+                lordRealm.step();
+                for (const sim::Happening& one : lordRealm.happenings()) {
+                    if (one.who != lordRealm.hero().id) continue;
+                    if (one.what == sim::What::Loosed && one.a == sim::skill::kForce && *letGo < 0) *letGo = tick;
+                    if (one.what != sim::What::Hit && one.what != sim::What::Missed) continue;
+                    for (int i = 0; i < 5; ++i) {
+                        if (one.whom == ids[i] && struck[i] < 0) struck[i] = tick;
+                    }
+                }
+                if (lordRealm.hero().blowSkill == 0 && *letGo >= 0 && tick > *letGo + 2) break;
+            }
+        };
+        int64_t struck[5], letGo = -1;
+        throwOnce(true, struck, &letGo);
+        std::printf("  force wave: let go %lld, struck %lld %lld %lld %lld %lld\n", (long long)letGo,
+                    (long long)struck[0], (long long)struck[1], (long long)struck[2], (long long)struck[3],
+                    (long long)struck[4]);
+        check(struck[0] >= 0 && struck[0] == struck[1] && struck[0] == struck[2],
+              "the aimed body and the two on the strip, all on one tick");
+        check(struck[3] < 0 && struck[4] < 0, "off the strip and behind him, nothing");
+        throwOnce(false, struck, &letGo);
+        check(struck[0] >= 0 && struck[1] < 0 && struck[2] < 0, "without a scepter Force strikes the aimed body alone");
+    }
+
     // **Fire Burst** (61, docs/plans/dark-lord-spells/fire-burst.md): MU's row, a cooldown; the
     // aimed body struck when the fire gets there, and everything within three whole tiles of it
     // 10-15 ticks on, unsaid.

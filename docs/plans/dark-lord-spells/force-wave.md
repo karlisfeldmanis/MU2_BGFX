@@ -267,3 +267,20 @@ Stills (`force-wave-footage.jpg`; top row `v7Z2mh3qJho`, bottom row `Zt2_Rbt3-EE
 
 Blocks a build: **no scepter is cooked** (group 2 ends at Mace08 + Mace17), and **no item can carry the skill option** until open
 call 1 is settled. Everything else (the table reader, the release branch, the effect) exists.
+
+## 8. Decided
+
+Settled 2026-10-25. The user picked call 1 and the first scepter ("Every scepter", "Yes, Battle Scepter"); the rest were
+settled from section 7's recommendations against "DL has to be true on actual MU", "only frontal" and "the number with the visual":
+
+1. **Every scepter is Force Wave** (ours, marked): a right-hand item whose row's skill is 66 makes Force Force Wave, no `+S` asked;
+   no drop gets a skill roll ("skills are orbs" stands). `Realm::forceWaveHeld`.
+2. **WebZen's table, `skillSpear.hit`, cut at 6.5 tiles along his aim** (ours, marked: Force's streaks reach six), as
+   `src/sim/spear_box.h`, made by `pipeline/electric_spike_box.py` (now naming its symbols).
+3. **The aimed body is always struck** (OpenMU's; four of the 80 tiles in reach fall off their own table).
+4. **All on the let-go**, key 3 of the strike, each thrown as Force is (`loose`, flies 1000) and landed the next tick; said once.
+5. **Monsters only** on the strip, as Electric Spike; the aimed body whatever it is, as Force.
+6. **Only a scepter he may wear and not broken** (`fits`, durability > 0) -- WebZen asks neither.
+7. **Force's cost and no cooldown**; the skill damage 50..75 in place of 10..15 (`skill::kForceWaveDamage`, `Realm::strikeAt`).
+8. **The look is Force's**; MU draws nothing more. The tooltip names Force "Force Wave" while a scepter is held, and the scepter's
+   card carries "Force wave skill (Mana: 10)" -- with the Battle Scepter (Mace09, MU 2/8, skill 66), cooked in the studio.

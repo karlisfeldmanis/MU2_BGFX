@@ -123,6 +123,8 @@ constexpr int32_t kSummonAlquamos = 37;
 // zzzitem.cpp:977-995, ObjUseSkill.cpp:3589-3593); the number is the drawing's.
 constexpr int32_t kForce = 60;
 constexpr int32_t kForceWave = 66;
+// Force Wave's skill damage, WebZen skill.txt:71 (Force's own is ten): rolled to half again.
+constexpr int32_t kForceWaveDamage = 50;
 // `AT_SKILL_FIREBURST`, Fire Burst: the aimed body, then everything round it half a second on
 // (WebZen ObjUseSkill.cpp:3675-3777; docs/plans/dark-lord-spells/fire-burst.md).
 constexpr int32_t kFireBurst = 61;

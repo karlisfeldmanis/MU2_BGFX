@@ -897,9 +897,10 @@ constexpr SkillRow kRows[kSkills] = {
     // knowing it. Its blow is WebZen's for every Dark Lord skill: the swing with Str/25 + Ene/50 and
     // the skill's ten on top (ObjAttack.cpp:3259-3266; Realm::strike), times (200 + Ene/20)%
     // (ObjAttack.cpp:1452-1463; sim::force). Thrown with anything in his hands or none, at the one
-    // body pressed on (ObjUseSkill.cpp:3589-3593); a scepter with the skill option makes it Force
-    // Wave's line (phase 3, with the scepters). PLAYER_ATTACK_STRIKE, player.muc's 80, at 0.25 plus
-    // his attack speed (ZzzCharacter.cpp:949); SOUND_SKILL_SWORD1 as it is cast (WSclient.cpp:
+    // body pressed on (ObjUseSkill.cpp:3589-3593); every scepter makes it Force Wave's strip
+    // (Realm::forceWave; docs/plans/dark-lord-spells/force-wave.md). PLAYER_ATTACK_STRIKE,
+    // player.muc's 80, at 0.25 plus his attack speed (ZzzCharacter.cpp:949); SOUND_SKILL_SWORD1 as
+    // it is cast (WSclient.cpp:
     // 4243-4259), and SOUND_ATTACK_SPEAR with the waves it lets go (ZzzCharacter.cpp:5057-5063,
     // the effect's).
     // **His primary** (the plan, section 3): no cooldown, on the right button, as the wizard's
