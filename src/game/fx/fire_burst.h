@@ -25,11 +25,14 @@
 // grows 0.02 a frame, the light / 1.8 a frame under seven frames left of ten -- 1.03.35's
 // (ZzzEffect.cpp:14791-14799; MuMain's move lost it).
 //
+// **Where it is made** is MU's: Bip01 x (80,0,20) in the pose at the let-go (1.03.35's
+// ZzzCharacter.cpp:5987; MuMain's (40,0,10)), 40 units ahead of him at 130 up only for a body
+// with no Bip01 posed.
+//
 // **Ours, and marked**: the flash is turned to his facing (MU's yaw is 0, so where it points is
 // chance) and slid forward so none of it is behind where it is made -- the user's "only frontal";
-// the place it is all made is 40 units ahead of him at 130 up, where MU takes Bip01 x (80,0,20) in
-// the pose, a bone this engine does not read here; AttackTime is read as a share of the clip as
-// played. The heads fly in MU's units in a frame laid on his line at the let-go.
+// AttackTime is read as a share of the clip as played. The heads fly in MU's units in a frame laid
+// on his line at the let-go.
 //
 // Presentation only: the blows and their damage are the realm's.
 #pragma once
@@ -55,9 +58,10 @@ public:
     void begin(uint32_t who, uint32_t target, float clipSeconds);
 
     // Every frame. `place(id, feet, &tall, &yaw)` where a body is drawn, false for none;
-    // `cue(id)` the let-go's sound.
-    template <typename Place, typename Cue>
-    void update(float seconds, Place place, Cue cue);
+    // `root(id, local, out)` where `local`, metres in his Bip01's own frame, stands in the world
+    // on his pose, false for none; `cue(id)` the let-go's sound.
+    template <typename Place, typename Root, typename Cue>
+    void update(float seconds, Place place, Root root, Cue cue);
 
     void gatherEffects(gfx::Effects& effects) const;
     void clear();
@@ -66,7 +70,8 @@ private:
     static constexpr float kReferenceFps = 25.0f;
     static constexpr float kClipFrames = 7.0f / 0.25f;          // 80's length in reference frames
     static constexpr float kLetGo = kClipFrames * 3.0f / 7.0f;  // its key 3 of 7
-    static constexpr float kAhead = 40.0f, kUp = 130.0f;        // where it is made (ours)
+    static constexpr float kMade[3] = {80.0f, 0.0f, 20.0f};     // off Bip01, MU units
+    static constexpr float kAhead = 40.0f, kUp = 130.0f;        // with no Bip01 (ours)
     static constexpr float kHeadFrames = 20.0f, kHeadScale = 1.2f, kStep = 26.0f;
     static constexpr float kPieceScale = 0.5f;
     static constexpr float kFireFrames = 12.0f, kFireSize = 64.0f;
@@ -103,6 +108,7 @@ private:
     struct Flash {
         bool alive = false;
         Line line;
+        float made[3] = {};  // where it is made, MU units in its line
         float roll = 45.0f;
         float scale = 0.2f, velocity = 0.1f, light = 1.0f, left = kFlashFrames;
     };
@@ -126,7 +132,8 @@ private:
     float unit();
     float between(float a, float b) { return a + (b - a) * unit(); }
     float perUnit() const { return (ground_ ? ground_->metresPerTile() : 1.0f) / 100.0f; }
-    void letGo(const float feet[3], const float way[3], uint32_t target, float targetTall);
+    void letGo(const float feet[3], const float way[3], const float* made, uint32_t target,
+               float targetTall);
     void fly(Head& head, const float* there);
     void stamp(const Head& head);
     // A point of the line, MU units, to world metres; and a direction of it.
@@ -134,8 +141,8 @@ private:
     void wayToWorld(const Line& line, const float mu[3], float out[3]) const;
 };
 
-template <typename Place, typename Cue>
-void FireBurst::update(float seconds, Place place, Cue cue) {
+template <typename Place, typename Root, typename Cue>
+void FireBurst::update(float seconds, Place place, Root root, Cue cue) {
     seconds = std::fmin(seconds, 0.1f);
     const float frames = seconds * kReferenceFps;
     for (Charge& charge : charges_) {
@@ -158,7 +165,11 @@ void FireBurst::update(float seconds, Place place, Cue cue) {
         }
         charge.frame += frames * charge.rate;
         if (charge.frame >= kLetGo) {
-            letGo(feet, charge.way, named ? charge.target : 0, high);
+            const float metre = perUnit();
+            const float local[3] = {kMade[0] * metre, kMade[1] * metre, kMade[2] * metre};
+            float made[3];
+            const bool posed = root(charge.who, local, made);
+            letGo(feet, charge.way, posed ? made : nullptr, named ? charge.target : 0, high);
             cue(charge.who);
             charge.alive = false;
         }

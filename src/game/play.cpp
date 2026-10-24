@@ -2903,12 +2903,20 @@ void Play::update(double seconds) {
     // Electric Spike's gather, bolt and rings (fx/electric_spike.h).
     electricSpike_.update(float(seconds), gripOf);
     // Fire Burst's, and eFirebustBoom as it is let go (fx/fire_burst.h).
-    fireBurst_.update(float(seconds), bodyAt, [&](uint32_t id) {
-        const Drawn* drawn = drawnOf(id);
-        if (heard_.fireBurstBoom >= 0 && drawn && drawn->placed) {
-            emit(heard_.fireBurstBoom, drawn->crown[0], drawn->crown[2], id);
-        }
-    });
+    fireBurst_.update(
+        float(seconds), bodyAt,
+        [&](uint32_t id, const float* local, float* out) {
+            const Drawn* drawn = drawnOf(id);
+            const FigureBody* look = drawn ? drawn->figure.body() : nullptr;
+            return look != nullptr && look->rootBone >= 0 &&
+                   drawn->figure.pointOn(look->rootBone, local, out);
+        },
+        [&](uint32_t id) {
+            const Drawn* drawn = drawnOf(id);
+            if (heard_.fireBurstBoom >= 0 && drawn && drawn->placed) {
+                emit(heard_.fireBurstBoom, drawn->crown[0], drawn->crown[2], id);
+            }
+        });
     // The fire on him while he calls a Meteorite down: while its clip is on him, not while the
     // realm holds him -- a cast on the tick he arrives is held while the drawn body is still
     // sliding in on its run, and the fire read as a man on fire running. And while he casts

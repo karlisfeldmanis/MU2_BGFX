@@ -124,7 +124,8 @@ void FireBurst::wayToWorld(const Line& line, const float mu[3], float out[3]) co
     out[1] += mu[2];
 }
 
-void FireBurst::letGo(const float feet[3], const float way[3], uint32_t target, float targetTall) {
+void FireBurst::letGo(const float feet[3], const float way[3], const float* made, uint32_t target,
+                      float targetTall) {
     Line line;
     for (int k = 0; k < 3; ++k) {
         line.origin[k] = feet[k];
@@ -133,6 +134,15 @@ void FireBurst::letGo(const float feet[3], const float way[3], uint32_t target, 
     line.across[0] = way[2];
     line.across[1] = 0.0f;
     line.across[2] = -way[0];
+    // Where it is made, in the line: off his Bip01, or the fixed place for a body without one.
+    float start[3] = {0.0f, -kAhead, kUp};
+    if (made != nullptr) {
+        float d[3];
+        for (int k = 0; k < 3; ++k) d[k] = (made[k] - feet[k]) / perUnit();
+        start[0] = d[0] * line.across[0] + d[2] * line.across[2];
+        start[1] = -(d[0] * line.ahead[0] + d[2] * line.ahead[2]);
+        start[2] = d[1];
+    }
     const float tall = targetTall / perUnit();
     // Three heads off his facing +90, 0 and -90; the first at the body's crown, the others at
     // its middle (`Pos[2] -= BoundingBoxMax[2] / 2` after the first, ZzzCharacter.cpp:5076).
@@ -144,8 +154,7 @@ void FireBurst::letGo(const float feet[3], const float way[3], uint32_t target, 
             one.alive = true;
             one.target = target;
             one.line = line;
-            one.at[1] = -kAhead;
-            one.at[2] = kUp;
+            for (int k = 0; k < 3; ++k) one.at[k] = start[k];
             one.angle[2] = turns[h];
             one.aimUp = h == 0 ? tall : tall * 0.5f;
             // With no body, the middle of four tiles ahead.
@@ -161,6 +170,7 @@ void FireBurst::letGo(const float feet[3], const float way[3], uint32_t target, 
             one = Flash{};
             one.alive = true;
             one.line = line;
+            for (int k = 0; k < 3; ++k) one.made[k] = start[k];
             one.roll = roll;
             break;
         }
@@ -284,7 +294,7 @@ void FireBurst::gatherEffects(gfx::Effects& effects) const {
         for (const EffectCorner& c : flash_) {
             back = std::fmax(back, (m[1][0] * c.x + m[1][1] * c.z + m[1][2] * c.y) * one.scale);
         }
-        const float mu[3] = {0.0f, -kAhead - back, kUp};
+        const float mu[3] = {one.made[0], one.made[1] - back, one.made[2]};
         const float col0[3] = {m[0][0], m[1][0], m[2][0]};
         const float col1[3] = {m[0][1], m[1][1], m[2][1]};
         const float col2[3] = {m[0][2], m[1][2], m[2][2]};
