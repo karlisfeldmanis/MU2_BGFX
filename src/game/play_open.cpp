@@ -291,7 +291,9 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // both move together with `--level`.
     // A wizard's half goes into energy instead, which is his force: his Energy Ball rolls off it
     // and his strength does nothing for a spell.
-    if (!arena_.breed.empty() && realm_.hero().pointsInHand > 0) {
+    // `--spend-even` wins in an arena too, so a hero handed a weapon that asks agility -- a
+    // scepter -- wears it as a player would (Force Wave, 2026-10-25).
+    if (!arena_.breed.empty() && !arena_.spendEven && realm_.hero().pointsInHand > 0) {
         const int points = realm_.hero().pointsInHand;
         const int intoForce = points / 2;
         const bool wizard = realm_.hero().kin == sim::Kin::DarkWizard;
@@ -303,7 +305,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
                    hero.stats.minimumDamage, hero.stats.maximumDamage, hero.maxHealth);
     }
 
-    if (arena_.spendEven && arena_.breed.empty() && realm_.hero().pointsInHand > 0) {
+    if (arena_.spendEven && realm_.hero().pointsInHand > 0) {
         const int third = realm_.hero().pointsInHand / 3;
         const bool wizard = realm_.hero().kin == sim::Kin::DarkWizard;
         local_.spend(wizard ? 0 : third, third, realm_.hero().pointsInHand - 2 * third,
