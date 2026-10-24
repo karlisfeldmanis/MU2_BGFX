@@ -88,6 +88,10 @@ struct Row {
     Tone labelTone = Tone::White;
     // A little air above the row: where a framed block turns from one list to the next.
     bool gap = false;
+    // A short count at a prose row's right edge, on its first line, in its own tone: a rune's
+    // "3/5" of its limit worn (the user, 2026-10-24, the counter on the line).
+    std::string corner;
+    Tone cornerTone = Tone::Gray;
 };
 
 // The item card's headline: the one number a thing is compared by, large, and the sum that made

@@ -781,9 +781,11 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
             if (row.gap) tall += gapTall;
             if (prosaic(row)) {
                 const bool within = section.framed && row.mark != Mark::None;
+                const float corner =
+                    row.corner.empty() ? 0.0f : face.measure(rowSize, row.corner) + rowSize;
                 prose[s][r] = spansOf(face, rowSize, composed(row),
                                       textWide - (section.framed ? pad : 0.0f) -
-                                          (within ? inner : 0.0f));
+                                          (within ? inner : 0.0f) - corner);
                 tall += float(prose[s][r].size()) * rowTall;
             } else {
                 tall += float(lineCount(valueLines(face, rowSize, footSize, pad * 0.8f, row,
@@ -1020,6 +1022,11 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                 const size_t keyEnd = row.keyword.size();
                 const size_t tailAt = full.size() - row.tail.size();
                 const uint32_t tone = colourOf(row.freeTone);
+                if (!row.corner.empty()) {
+                    say(type, canvas, right - face.measure(rowSize, row.corner),
+                        middle(face, rowPen, rowTall, rowSize), rowSize,
+                        fade(colourOf(row.cornerTone)), row.corner, drop);
+                }
                 for (const Span& span : prose[s][r]) {
                     const float baseline = middle(face, rowPen, rowTall, rowSize);
                     float px = left;

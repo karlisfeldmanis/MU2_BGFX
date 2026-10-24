@@ -920,22 +920,17 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 line.mark = tip::Mark::RingSet;
                 line.markTone = rarityTone(power->rarity);
                 socket.rows.push_back(line);
-                // Whether a second of it does more (sim::stackingOf), quiet under its effect, and
-                // of a limited one how many he wears (the user, 2026-10-24: "we need to show on
-                // toolttip that he can use some amount of specific rune") -- yellow past the
-                // limit, where the rest do nothing.
-                Row stacking;
-                stacking.free = sim::stackingOf(power->power).says;
-                stacking.freeTone = Tone::Gray;
+                // Of a limited rune, how many of its limit he wears, at the line's end (the user,
+                // 2026-10-24: "we need to show on toolttip that he can use some amount of specific
+                // rune", then the counter on the line): "3/5", yellow once full; one that doesn't
+                // stack says "max 1".
                 if (const int most = sim::stackMostOf(power->power); most > 0) {
                     const int worn = runesWorn(bag, power->power);
-                    stacking.free += " \xB7 you wear " + std::to_string(worn);
-                    if (worn > most) {
-                        stacking.free += ", " + std::to_string(worn - most) + " do nothing";
-                        stacking.freeTone = Tone::Yellow;
-                    }
+                    socket.rows.back().corner = std::to_string(worn) + "/" + std::to_string(most);
+                    socket.rows.back().cornerTone = worn >= most ? Tone::Yellow : Tone::Gray;
+                } else if (!sim::stackingOf(power->power).stacks) {
+                    socket.rows.back().corner = "max 1";
                 }
-                socket.rows.push_back(stacking);
                 // What the rune strikes for in his hands with THIS weapon (the user, 2026-10-01:
                 // "show damage for dps runes based on base dmg and scaling"): the swing's band as
                 // `sim::reckon` makes it off his strength and agility and this weapon, its share,
@@ -1136,20 +1131,18 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             carries.rows.push_back(stat("Fits", fits, Tone::White));
             // A rune set only once in a thing says so before it is refused (PowerRow::once).
             if (power->once) carries.rows.push_back(stat("Limit", "One per item", Tone::Yellow));
-            // And whether a second, in another socket or another thing, does more.
+            // And whether a second, in another socket or another thing, does more: "Yes", "No,
+            // max 1", or of a limited one "Up to 5", and how many of it he wears, "3/5".
             const sim::Stacking stacking = sim::stackingOf(power->power);
-            carries.rows.push_back(
-                stat("Stacking", stacking.says, stacking.stacks ? Tone::White : Tone::Yellow));
-            // Of a limited one, how many of his allowance he wears; full, another does nothing.
+            Row stacks = stat("Stacks", stacking.stacks ? "Yes" : "No, max 1",
+                              stacking.stacks ? Tone::White : Tone::Yellow);
             if (const int most = sim::stackMostOf(power->power); most > 0) {
                 const int worn = runesWorn(bag, power->power);
-                carries.rows.push_back(
-                    worn >= most
-                        ? stat("You wear", std::to_string(worn) + " of " + std::to_string(most) +
-                                               ", another does nothing", Tone::Yellow)
-                        : stat("You wear", std::to_string(worn) + " of " + std::to_string(most),
-                               Tone::White));
+                stacks = stat("Stacks", "Up to " + std::to_string(most), Tone::White);
+                stacks.values.push_back({std::to_string(worn) + "/" + std::to_string(most) + " worn",
+                                         worn >= most ? Tone::Yellow : Tone::Gray, false, "", 0});
             }
+            carries.rows.push_back(stacks);
             Row how;
             how.free = "Drop it on an item with an empty socket";
             how.freeTone = Tone::Gray;
