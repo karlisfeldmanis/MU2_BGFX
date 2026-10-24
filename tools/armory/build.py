@@ -205,6 +205,81 @@ def made_by_words(success, items):
     return out
 
 
+def singular(kind):
+    """A kind's one: what search.json and the site's entity URLs call it (/armory/<one>/<slug>)."""
+    return {"mixes": "mix", "boxes": "box", "talents": "talents"}.get(kind, kind[:-1] if kind.endswith("s") else kind)
+
+
+def list_fields(x):
+    """What a list row carries of a dump entry, so a list page needs no entity file: its scalars
+    (short strings) and short lists of scalars."""
+    out = {}
+    for f, v in x.items():
+        if f in ("key", "name", "slug", "kind", "commit", "protocol"):
+            continue
+        if isinstance(v, (int, float, bool)) or v is None or (isinstance(v, str) and len(v) <= 160):
+            out[f] = v
+        elif isinstance(v, list) and len(v) <= 12 and all(not isinstance(i, (dict, list)) for i in v):
+            out[f] = v
+    return out
+
+
+# The events a drop's place can be: Blood Castle and Devil Square by their number, the raids as one.
+EVENT_KINDS = {"castle": "Blood Castle", "square": "Devil Square", "raid": "Golden Dragon"}
+
+
+def events_from_drops(drops_by_mon, M, mon_slug, I, item_slug, W, world_slug, slugs, is_live):
+    """The events as pages of their own, from the dump's drops by place (until the dump publishes
+    an "events" list): each castle and square, and the Golden Dragon's raids together, with their
+    monsters and each item's best chance a kill there. ([rows], [(slug, entity)])"""
+    found = {}
+    for mk, places in drops_by_mon.items():
+        for pl in places:
+            kind = pl.get("kind")
+            if kind not in EVENT_KINDS:
+                continue
+            n = pl.get(kind) if kind in ("castle", "square") else None
+            key = f"{kind}-{n}" if n else kind
+            name = f"{EVENT_KINDS[kind]} {n}" if n else EVENT_KINDS[kind]
+            ev = found.setdefault(key, {"key": key, "name": name, "type": kind, "number": n, "world": pl.get("world"),
+                                        "map": pl.get("map"), "towns": [], "monsters": {}, "drops": {}, "rules": pl.get("rules")})
+            if kind == "raid" and pl.get("world") not in ev["towns"]:
+                ev["towns"].append(pl.get("world"))
+            m = ev["monsters"].setdefault(mk, {"slug": mon_slug[mk], "name": M[mk]["name"], "level": pl.get("level"),
+                                               "elite": bool(pl.get("elite")), "items": 0, "places": []})
+            m["items"] = max(m["items"], len(pl.get("items") or []))
+            if pl.get("place") not in m["places"]:
+                m["places"].append(pl.get("place"))
+            for it in pl.get("items") or []:
+                c = it.get("chance") or 0
+                had = ev["drops"].get(it["item"])
+                if c > 0 and (had is None or c > had["chance"]):
+                    ev["drops"][it["item"]] = {"item": it["item"], "slug": it["slug"], "n": it["n"],
+                                               "sub": I[it["item"]].get("sub"), "cat": I[it["item"]].get("cat"),
+                                               "chance": c, "from_slug": mon_slug[mk], "from_name": M[mk]["name"],
+                                               "excellent": any(r.get("excellent") for r in it.get("rolls") or [])}
+    if not found:
+        return [], []
+    order = sorted(found, key=lambda k: (list(EVENT_KINDS).index(found[k]["type"]), found[k]["number"] or 0))
+    sl = slugs.assign("events", [(k, found[k]["name"]) for k in order])
+    rows, ents = [], []
+    for k in order:
+        ev = found[k]
+        mons = sorted(ev["monsters"].values(), key=lambda m: (m["level"] or 0, m["name"]))
+        drops = sorted(ev["drops"].values(), key=lambda d: -d["chance"])
+        levels = [m["level"] for m in mons if m["level"] is not None]
+        w = ev["world"]
+        rows.append({"k": k, "slug": sl[k], "n": ev["name"], "type": ev["type"], "number": ev["number"],
+                     "levels": [min(levels), max(levels)] if levels else None, "monsters": len(mons),
+                     "items": len(drops), "live": is_live(w)})
+        ents.append((sl[k], {"kind": "event", "key": k, "slug": sl[k], "name": ev["name"], "type": ev["type"],
+                             "number": ev["number"], "world": w, "world_slug": world_slug.get(w), "map": ev["map"],
+                             "towns": [{"world": t, "world_slug": world_slug.get(t), "name": W[t]["name"] if t in W else t}
+                                       for t in ev["towns"]],
+                             "live": is_live(w), "rules": ev["rules"], "monsters": mons, "drops": drops}))
+    return rows, ents
+
+
 GIVES = ("reward", "paid", "result", "sell", "shelf", "stock", "gives", "win", "hoard", "out")
 
 
@@ -489,8 +564,10 @@ def build(commit=None, out=None, thumbs=True, say=print):
         rows, ents = [], []
         for x in sk:
             s = sl[key_of(x)]
-            ic = icon["skills"].get(int(x["id"])) if str(x.get("id", "")).isdigit() else None
-            rows.append({"k": key_of(x), "slug": s, "n": name_of(x), "icon": f"icons/{ic}.png" if ic else None})
+            sid = x.get("id", x.get("number"))  # the dump names a skill by MU's number, as skill_<n>.png
+            ic = icon["skills"].get(int(sid)) if str(sid if sid is not None else "").isdigit() else None
+            rows.append({"k": key_of(x), "slug": s, "n": name_of(x), "icon": f"icons/{ic}.png" if ic else None,
+                         **list_fields(x)})
             ents.append((s, {"kind": "skill", "slug": s, **x, "icon_png": f"icons/{ic}.png" if ic else None}))
             search.append({"n": name_of(x), "k": "skill", "s": s})
         publish("skills", rows, ents)
@@ -514,14 +591,17 @@ def build(commit=None, out=None, thumbs=True, say=print):
             extra = {}
             if kind == "quests" and isinstance(x.get("voice"), str) and x["voice"] in V:
                 extra["voice_pages"] = V[x["voice"]]
-            row = {"k": k, "slug": s, "n": name_of(x)}
-            for f in ("level", "map", "giver", "live", "rate", "category"):
-                if f in x and not isinstance(x[f], (dict, list)):
-                    row[f] = x[f]
+            row = {"k": k, "slug": s, "n": name_of(x), **list_fields(x)}
             rows.append(row)
             ents.append((s, {"kind": kind, "slug": s, **x, **extra}))
-            search.append({"n": name_of(x), "k": kind.rstrip("s"), "s": s})
+            search.append({"n": name_of(x), "k": singular(kind), "s": s})
         publish(kind, rows, ents)
+    if "events" not in kinds and drops_by_mon:
+        rows, ents = events_from_drops(drops_by_mon, M, mon_slug, I, item_slug, W, world_slug, slugs, is_live)
+        for s, e in ents:
+            search.append({"n": e["name"], "k": "event", "s": s})
+        if rows:
+            publish("events", rows, ents)
 
     write(dest / "search.json", {"rows": sorted(search, key=lambda r: (r["n"].lower(), r["k"]))}, stamp)
     meta = {"built": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "previous": prev,
