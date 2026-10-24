@@ -558,7 +558,7 @@ const PowerRow* powerOf(uint8_t power) {
         // The wizard's too since 2026-10-07 (the user: 'we need also for DW'): Soul Barrier
         // with a two-handed staff, an empty hand or anything but a shield.
         {Power::Bulwark, "Bulwark", "Defense and Magic Shield work without a shield",
-         kKnightOnly | kWizardOnly, kInWeapon, Rarity::Legendary, true},
+         kKnightOnly | kWizardOnly, kInWeapon, Rarity::Legendary, true, true},
         // Every Fairy Elf's, as Arcane Echo is every wizard's (the user, 2026-10-05: Lirien's
         // Atlans clear pays it to the first-class elf).
         {Power::Frost, "Frost Arrow",
@@ -592,7 +592,7 @@ const PowerRow* powerOf(uint8_t power) {
          kElfOnly,
          kInWeapon, Rarity::Epic},
         {Power::Kinship, "Kinship",
-         "Your pets lose their drawbacks", kEveryClass, kInJewellery, Rarity::Epic},
+         "Your pets lose their drawbacks", kEveryClass, kInJewellery, Rarity::Epic, false, true},
         {Power::Wrath, "Wrath", "+20% damage", kEveryClass, kInWeapon, Rarity::Legendary},
         {Power::Ironskin, "Ironskin", "+10% defense", kEveryClass, kInArmour | kInShield,
          Rarity::Rare},
@@ -604,7 +604,7 @@ const PowerRow* powerOf(uint8_t power) {
          "Twisting Slash deals +50% damage, 25% chance to pull monsters in",
          kKnightOnly, kInWeapon, Rarity::Legendary, true},
         {Power::Volley, "Piercing Volley", "Penetration fires 3 piercing arrows in a fan",
-         kElfOnly, kInWeapon, Rarity::Legendary, true},
+         kElfOnly, kInWeapon, Rarity::Legendary, true, true},
         {Power::Inferno, "Inferno", "+20% fire damage", kEveryClass, kHeld, Rarity::Rare},
         {Power::Glacier, "Glacier", "+20% ice damage", kEveryClass, kHeld, Rarity::Rare},
         {Power::Venom, "Venom", "+20% poison damage", kEveryClass, kHeld, Rarity::Rare},
@@ -661,16 +661,16 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Swirl, "Swirl", "Twisting Slash deals +10% damage, 5% chance to pull monsters in",
          kKnightOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
         {Power::ScatterVolley, "Scatter Volley",
-         "Penetration fires two more piercing arrows at half damage", kElfOnly, kInWeapon,
-         Rarity::Epic},
+         "Penetration fires 2 more piercing arrows at half damage", kElfOnly, kInWeapon,
+         Rarity::Epic, false, true},
         {Power::SplitArrow, "Split Arrow",
-         "Penetration fires two more piercing arrows at a quarter damage", kElfOnly, kInWeapon,
-         Rarity::Common},
+         "Penetration fires 2 more piercing arrows at a quarter damage", kElfOnly, kInWeapon,
+         Rarity::Common, false, true},
         {Power::Buckler, "Buckler",
          "Defense and Magic Shield work without a shield, at 60% strength",
-         kKnightOnly | kWizardOnly | kGladiatorOnly, kInWeapon, Rarity::Epic},
+         kKnightOnly | kWizardOnly | kGladiatorOnly, kInWeapon, Rarity::Epic, false, true},
         {Power::Brace, "Brace", "Defense and Magic Shield work without a shield, at 30% strength",
-         kKnightOnly | kWizardOnly | kGladiatorOnly, kInWeapon, Rarity::Common},
+         kKnightOnly | kWizardOnly | kGladiatorOnly, kInWeapon, Rarity::Common, false, true},
         {Power::Kindle, "Kindle", "Fire Ball deals +15% damage", kWizardOnly | kGladiatorOnly,
          kInWeapon, Rarity::Common},
         // Max mana's four tiers (sim::kFaintWellspringMana...), every class's, jewellery alone.
@@ -755,6 +755,16 @@ Stacking stackingOf(Power power) {
         return {true, "Stacks, up to " + std::to_string(most) + " worn"};
     }
     return {true, "Stacks"};
+}
+
+Power onceKinOf(Power power) {
+    switch (power) {
+        case Power::Buckler:
+        case Power::Brace: return Power::Bulwark;
+        case Power::ScatterVolley:
+        case Power::SplitArrow: return Power::Volley;
+        default: return power;
+    }
 }
 
 int stackMostOf(Power power) {
@@ -928,10 +938,12 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
     const content::ItemRow& row = tables.items[size_t(target.item)];
     if (!socketsFit(row) || freeSocket(target) < 0) return false;
     // One of a `once` rune a thing (PowerRow::once): Frenzy, which two in one pair of boots
-    // stacked past what the game can carry. However many he wears, its stacks stop at five.
+    // stacked past what the game can carry. However many he wears, its stacks stop at five. And
+    // one of a kin where only the strongest works: no Buckler beside a Bulwark (onceKinOf).
     if (power->once) {
         for (int at = 0; at < std::min<int>(target.sockets, kMostSockets); ++at) {
-            if (target.powers[at] == uint8_t(power->power)) return false;
+            const PowerRow* set = powerOf(target.powers[at]);
+            if (set && onceKinOf(set->power) == onceKinOf(power->power)) return false;
         }
     }
     // Its group's sockets (sim::PowerRow::slots): a ring's and a pendant's take the armour runes

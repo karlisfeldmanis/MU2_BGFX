@@ -993,6 +993,11 @@ Stacking stackingOf(Power power);
 // weapon's runes, held to its sockets, and Wellspring to the jewellery's five. Steadfast and the
 // Plagues keep the ceilings they had. Ours.
 int stackMostOf(Power power);
+// The kin a `once` rune is one of a thing among (PowerRow::once, settable): Bulwark, Buckler and
+// Brace one, the three Volleys one, where only the strongest worn works; any other its own.
+// The user, 2026-10-24: "there is some runes which it does not make sense to stuck such as
+// Bulwark" -- Kinship, the Bulwarks and the Volleys are once since.
+Power onceKinOf(Power power);
 // The stat runes': the best four for each stat, Might and Ascendance alike -- six were +180%,
 // far above every other limited rune's top (2026-10-24).
 constexpr int kStatRuneMost = 4;

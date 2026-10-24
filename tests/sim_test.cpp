@@ -12705,6 +12705,28 @@ void testDungeonRunes(const content::Tables& tables) {
         check(sim::settable(tables, rune, pair, sim::Kin::DarkKnight, false),
               "while another rune still goes beside it");
     }
+    // And the runes where only the strongest works are one a thing too, a kin at a time
+    // (sim::onceKinOf; the user, 2026-10-24): no Buckler beside a Bulwark, no second Kinship.
+    {
+        const int runeRow = tables.itemAt(14, 22);
+        const int32_t sword = tables.itemNamed("Sword05");
+        const int32_t pendant = tables.itemNamed("Necklace02");
+        sim::Held rune{int32_t(runeRow), 0, 1};
+        rune.powers[0] = uint8_t(sim::Power::Buckler);
+        sim::Held blade{sword, 0, 1};
+        blade.sockets = 2;
+        check(sword >= 0 && sim::settable(tables, rune, blade, sim::Kin::DarkKnight, true),
+              "a Buckler goes in an empty socketed sword");
+        blade.powers[0] = uint8_t(sim::Power::Bulwark);
+        check(!sim::settable(tables, rune, blade, sim::Kin::DarkKnight, true),
+              "but not beside a Bulwark");
+        rune.powers[0] = uint8_t(sim::Power::Kinship);
+        sim::Held charm{pendant, 0, 1};
+        charm.sockets = 2;
+        charm.powers[0] = uint8_t(sim::Power::Kinship);
+        check(pendant >= 0 && !sim::settable(tables, rune, charm, sim::Kin::DarkKnight, true),
+              "and a second Kinship is refused in the same pendant");
+    }
     // And the cast: a wizard's Energy Ball under five stacks is quicker.
     if (const sim::SkillRow* ball = sim::skillNumbered(sim::skill::kEnergyBall)) {
         const int agility = sim::startingPoints(sim::Kin::DarkWizard).agility;
