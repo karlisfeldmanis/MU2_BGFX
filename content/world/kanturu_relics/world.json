@@ -42,8 +42,8 @@
   },
   "pipeline": {
     "hidden": {
-      "value": [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 65],
-      "note": "The Relics' emitter boxes (MoveKanturu2ndObject, GM_Kanturu_2nd.cpp:252-268): clouds, void glows, waterfall specks, water and thunder joints, every one an angeflo_R box drawn by no mesh. docs/worlds/kanturu-port.md Part B 8.1."
+      "value": [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 65, 67],
+      "note": "The Relics' emitter boxes (MoveKanturu2ndObject, GM_Kanturu_2nd.cpp:252-268): clouds, void glows, waterfall specks, water and thunder joints, every one an angeflo_R box drawn by no mesh. docs/worlds/kanturu-port.md Part B 8.1. And type 67 (Object68), ours: one more angeflo_R box, 0.9 m at 143,72 in the void, which MU's code leaves drawn, a green-sprite cube among the clouds (the user, 2026-10-24: \"go\")."
     },
     "void": {
       "value": {"start": 0.5, "depth": 6.0, "blend": 1.5},

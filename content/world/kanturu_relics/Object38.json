@@ -1,0 +1,108 @@
+{
+  "item": "Object38",
+  "mu_name": "Object38",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 37,
+  "placements": 2,
+  "profile": "world",
+  "sheets": {
+    "han_x2": "kl_han_x2.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "han_x2": "plate_steel"
+  },
+  "material_note": "han_x2: grey steel machinery with green glowing runes: plate_steel.",
+  "why_this_one": "A 5.9 m steel incubator machine, 2 of them (MU plays the incubator sound on type 37, GM_Kanturu_2nd.cpp:203-208: the sounds batch). MU's model is still (no moving bone). Batch 9, the Relics' last objects (the user, 2026-10-24: \"go\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 45,
+      "area": 68493.5,
+      "along": [
+        -7.9,
+        7.3
+      ],
+      "mu_uv": [
+        0.014,
+        0.005,
+        0.254,
+        0.982
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.926,
+        0.605
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 45,
+      "area": 68493.5,
+      "along": [
+        -194.2,
+        -79.6
+      ],
+      "mu_uv": [
+        0.014,
+        0.005,
+        0.254,
+        0.982
+      ],
+      "bake_uv": [
+        0.121,
+        0.006,
+        0.949,
+        0.715
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 45,
+      "area": 68493.5,
+      "along": [
+        -7.3,
+        7.9
+      ],
+      "mu_uv": [
+        0.014,
+        0.005,
+        0.254,
+        0.982
+      ],
+      "bake_uv": [
+        0.236,
+        0.006,
+        0.972,
+        0.834
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 45,
+      "area": 68493.5,
+      "along": [
+        79.6,
+        194.2
+      ],
+      "mu_uv": [
+        0.014,
+        0.005,
+        0.254,
+        0.982
+      ],
+      "bake_uv": [
+        0.35,
+        0.006,
+        0.995,
+        0.953
+      ]
+    }
+  ]
+}

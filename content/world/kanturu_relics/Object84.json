@@ -1,0 +1,42 @@
+{
+  "item": "Object84",
+  "mu_name": "Object84",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 83,
+  "placements": 4,
+  "profile": "world",
+  "sheets": {
+    "so_k34wao01": "kl_so_k34wao01.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "so_k34wao01": "plate_steel"
+  },
+  "material_note": "so_k34wao01: dark steel panels with a green-lit ladder channel: plate_steel.",
+  "why_this_one": "A 3 m dark steel pedestal, 4 of them at the Gateway Machine's corridor (136 and 145, 185-187). MU's model is still (no moving bone). Batch 9, the Relics' last objects (the user, 2026-10-24: \"go\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 22,
+      "area": 236246.1,
+      "along": [
+        -114.4,
+        114.4
+      ],
+      "mu_uv": [
+        0.582,
+        0.21,
+        0.996,
+        0.988
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.997,
+        0.814
+      ]
+    }
+  ]
+}
