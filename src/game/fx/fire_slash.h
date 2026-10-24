@@ -50,16 +50,21 @@
 // each cell scaled to a whole flame, as fx/breath.cpp draws this same subtype (game/world/
 // lamps.cpp kCellGain): added plain, its last
 // three cells are a ninth and a nineteenth of the first and the flames went out after six
-// frames. MU's Shiny02 is its pixels times Scale times an AnimationFrame running 0.2 to 1;
-// drawn here at that run's middle, 0.6, one a frame where MU lays three, and the glow and
-// the sparks smaller than MU's (the user's, below). No light: MU adds none.
+// frames.
+// **No sparks and no glow** (the user, 2026-10-24: "get rid of those sparkles", after asking
+// twice for them smaller): MU's Spark03 sparks and Shiny02 glow at the hand are not drawn.
+// **And a little more epic** (the same words, "finetune other parts of that spell to look more
+// little bit epic"), all ours: a warm light under the ribbon, fading with it (MU adds none); a
+// flame at most steps of the sweep, not on a coin, a little larger and scattered off the line;
+// the ribbon 90 either side
+// of its line where MU's is 75; and its light falling by a quarter a frame under ten, not a
+// third, so the crescent holds a few frames longer.
 // **The gathering is on his blade, not round his hand** (the user, 2026-10-24: "can we attach
 // that electricity effect and sparkle on weapon not just random offset which is not attached to
 // anything?"): MU's points on a sphere of 120 round bone 33 hung in the air, so here each frame
 // reads the blade's grip and tip, off the weapon's own mesh as fx/streak's ribbon does. Its
 // bolts crackle between two points on the blade, walked afresh on it every MU frame, and stop
-// at their target rather than curling round it; its sparks ride a point on the blade, drifting a
-// little off it; its glow runs along it.
+// at their target rather than curling round it.
 // The swing's two paces are game/play.cpp's (SkillRow::paceAfter); the blow is the realm's.
 //
 // Presentation only, `game` and not `sim`: nothing rolled here reaches the seeded log. Pools are
@@ -75,12 +80,13 @@
 #include "content/showing.h"
 #include "content/texture.h"
 #include "gfx/effects.h"
+#include "gfx/renderer.h"
 
 namespace mu::game {
 
 class FireSlash {
 public:
-    // The ribbon, the flames, the bolts, the sparks, the hand's glow and the skull, off the
+    // The ribbon, the flames, the bolts and the skull, off the
     // showing's table. False when the ribbon's sheet could not be had.
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table, const content::Ground* ground);
@@ -97,6 +103,8 @@ public:
     void update(float seconds, Place place, Blade blade, Sound sound, Cuts cuts);
 
     void gatherEffects(gfx::Effects& effects) const;
+    // The warm light under each ribbon (ours, the header), at most `max`.
+    uint32_t lights(gfx::PointLight* out, uint32_t max) const;
     void clear();
 
 private:
@@ -107,28 +115,18 @@ private:
     static constexpr int kGatherings = 2;           // AttackTime 1 and 2
     static constexpr int kGatherPoints = 3;
     // Ours, the blade (above): the share of it from the grip that the gathering keeps off (the
-    // hilt), a bolt's throw (MU's 512 / Scale is 51 degrees at 10, which leaves the blade), its
-    // frames, and how far a spark drifts off the blade a frame, in units.
+    // hilt), a bolt's throw (MU's 512 / Scale is 51 degrees at 10, which leaves the blade), and
+    // its frames.
     static constexpr float kBladeFrom = 0.15f;
     static constexpr float kBladeThrow = 22.0f;
     static constexpr float kBladeBoltFrames = 3.0f;
-    static constexpr float kSparkDrift = 1.5f;
-    // Ours, a third of MU's 1.6-3.0 (the user, 2026-10-24: "sparkles has to be much smaller").
-    // Then half that again, and the sparks under half MU's ("keep finetune sparkles still to
-    // large", the same day).
-    static constexpr float kShinyLeast = 0.3f, kShinyMost = 0.5f;
-    static constexpr float kSparkShrink = 0.45f;
-    static constexpr float kShinyFrame = 0.6f;      // ours: AnimationFrame's middle, see above
-    static constexpr float kShinyWide = 32.0f, kShinyTall = 64.0f;
-    static constexpr float kSparkLife = 15.0f, kSparkPixels = 32.0f;
-    static constexpr float kSparkGrows = 0.05f;
     // ---- the ribbon (BITMAP_JOINT_FORCE sub 0) ----------------------------------------------
     static constexpr int kRibbonLife = 20;
     static constexpr int kTails = 18;               // MaxTails; NumTails stops at 17
     static constexpr int kStepsAFrame = 8;
     static constexpr float kPivotLift = 100.0f;
     static constexpr float kRadius = 145.0f;
-    static constexpr float kHalfWidth = 75.0f;      // a tail's cross, +-75 on its X
+    static constexpr float kHalfWidth = 90.0f;      // a tail's cross on its X: MU's +-75, ours wider
     static constexpr float kStartTurn = 75.0f;      // HeadAngle 45 + 30
     static constexpr float kStepTurn = 11.0f;
     // ---- its fire (BITMAP_FIRE sub 0) -------------------------------------------------------
@@ -140,6 +138,15 @@ private:
     // much fuller, so the whole tongue burns orange as MU's added paint does and not only a hot
     // core: MU's flames are broad, two thirds of the ribbon's width.
     static constexpr float kFireHeat = 0.6f, kFireCools = 0.2f, kFireFull = 4.0f;
+    // Ours, a little more epic (the header): most steps a flame, a little larger and thrown up to
+    // this many units off the step so they do not stand in a row of beads; the light's fall under
+    // ten; and the warm light under the ribbon -- its reach in tiles, its colour, its strength at
+    // the ribbon's full light.
+    static constexpr float kFireChance = 0.8f, kFireBigger = 1.15f, kFireScatter = 30.0f;
+    static constexpr float kFadeUnderTen = 1.25f;   // MU's 1.5
+    static constexpr float kLightTiles = 4.0f;
+    static constexpr float kLightColour[3] = {1.0f, 0.45f, 0.12f};
+    static constexpr float kLightGain = 1.4f;
     static constexpr float kMadeFrom = 180.0f;      // the joint is made 180 out (2283-2293)
     // ---- the bolts (BITMAP_JOINT_THUNDER sub 3) ---------------------------------------------
     static constexpr int kBoltTails = 10;           // MaxTails, laid every frame
@@ -161,7 +168,6 @@ private:
         int life = kGatherLife;
         float owed = 0.0f;     // reference frames not yet stepped
         float grip[3] = {}, tip[3] = {};  // his blade this frame, metres
-        float shiny = 2.0f, shinyRoll = 0.0f, shinyAt = 0.5f;  // the glow, and where on the blade
     };
     struct Ribbon {
         bool alive = false;
@@ -191,13 +197,6 @@ private:
         int on = -1;           // the gathering whose blade it crackles on, or -1
         float from = 0.0f, upto = 1.0f;  // ...between these shares of it, grip to tip
     };
-    struct Spark {
-        bool alive = false;
-        float at[3] = {}, step[3] = {};  // metres, and metres a frame
-        float scale = 0.1f, left = 0.0f;
-        int on = -1;           // the gathering whose blade it rides, or -1
-        float along = 0.5f, off[3] = {};  // its share of the blade, and how far off it, metres
-    };
     struct Fire {
         bool alive = false;
         float at[3] = {}, drift[3] = {};
@@ -209,18 +208,15 @@ private:
 
     static constexpr int kCasts = 6;
     static constexpr int kBolts = 256;
-    static constexpr int kSparks = 128;
     static constexpr int kFires = 64;
     static constexpr int kMostSkulls = 64 * kSkulls;
 
     const content::Ground* ground_ = nullptr;
     bgfx::TextureHandle ribbonSheet_ = BGFX_INVALID_HANDLE, fireSheet_ = BGFX_INVALID_HANDLE,
-                        boltSheet_ = BGFX_INVALID_HANDLE, sparkSheet_ = BGFX_INVALID_HANDLE,
-                        shinySheet_ = BGFX_INVALID_HANDLE, skullSheet_ = BGFX_INVALID_HANDLE;
+                        boltSheet_ = BGFX_INVALID_HANDLE, skullSheet_ = BGFX_INVALID_HANDLE;
     Gathering gatherings_[kCasts * kGatherings] = {};
     Ribbon ribbons_[kCasts] = {};
     Bolt bolts_[kBolts] = {};
-    Spark sparks_[kSparks] = {};
     Fire fires_[kFires] = {};
     Skull skulls_[kMostSkulls] = {};
     int skullCount_ = 0;
@@ -316,24 +312,6 @@ void FireSlash::update(float seconds, Place place, Blade blade, Sound sound, Cut
             one.owed -= 1.0f;
             stepBolt(one);
         }
-    }
-    for (Spark& one : sparks_) {
-        if (!one.alive) continue;
-        one.left -= frames;
-        if (one.left <= 0.0f) {
-            one.alive = false;
-            continue;
-        }
-        if (one.on >= 0 && gatherings_[one.on].alive) {
-            // On the blade as it is now, drifting off it.
-            for (int k = 0; k < 3; ++k) one.off[k] += one.step[k] * frames;
-            onBlade(gatherings_[one.on], one.along, one.at);
-            for (int k = 0; k < 3; ++k) one.at[k] += one.off[k];
-        } else {
-            // Its blade's gathering is over: it stays where it was last.
-            one.on = -1;
-        }
-        one.scale += kSparkGrows * frames;
     }
     for (Fire& one : fires_) {
         if (!one.alive) continue;

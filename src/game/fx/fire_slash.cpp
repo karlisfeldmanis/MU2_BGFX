@@ -73,8 +73,6 @@ bool FireSlash::open(const std::string& assetDir, content::Textures& textures,
     skullSheet_ = sheet("fire_slash_skull");    // Skill/Skull
     fireSheet_ = sheet("fire");                 // Effect/Fire01, four cells
     boltSheet_ = sheet("joint_thunder");        // Effect/JointThunder01
-    sparkSheet_ = sheet("spark_flash");         // Effect/Spark03
-    shinySheet_ = sheet("shiny_02");            // Effect/Shiny02
     core::logf("fire slash: ribbon %s, skull %s, fire %s, bolt %s",
                bgfx::isValid(ribbonSheet_) ? "yes" : "NO", bgfx::isValid(skullSheet_) ? "yes" : "NO",
                bgfx::isValid(fireSheet_) ? "yes" : "NO", bgfx::isValid(boltSheet_) ? "yes" : "NO");
@@ -85,7 +83,6 @@ void FireSlash::clear() {
     for (Gathering& one : gatherings_) one = Gathering{};
     for (Ribbon& one : ribbons_) one = Ribbon{};
     for (Bolt& one : bolts_) one = Bolt{};
-    for (Spark& one : sparks_) one = Spark{};
     for (Fire& one : fires_) one = Fire{};
     skullCount_ = 0;
 }
@@ -238,39 +235,18 @@ void FireSlash::stepBolt(Bolt& one) {
 }
 
 void FireSlash::stepGathering(Gathering& one) {
-    const float metre = perUnit();
     const int index = int(&one - gatherings_);
     for (int n = 0; n < kGatherPoints; ++n) {
-        // MU's three points a frame, on the blade (the header's "ours").
+        // MU's three points a frame, on the blade (the header's "ours"); its sparks, on the odd
+        // frames, are not drawn.
         const float along = between(kBladeFrom, 1.0f);
         if (one.life % 2 == 0) {
             // A crackle from this point to another a third to a half of the blade on.
             const float span = between(0.3f, 0.5f) * (unit() < 0.5f ? -1.0f : 1.0f);
             const float upto = std::clamp(along + span, kBladeFrom, 1.0f);
             if (std::fabs(upto - along) > 0.1f) bladeBolt(index, along, upto);
-        } else {
-            for (Spark& spark : sparks_) {
-                if (spark.alive) continue;
-                spark = Spark{};
-                spark.alive = true;
-                spark.on = index;
-                spark.along = along;
-                // Off the blade on a random way, kSparkDrift units a frame.
-                const float z = unit() * 2.0f - 1.0f, turn = unit() * kTwoPi;
-                const float r = std::sqrt(std::max(0.0f, 1.0f - z * z));
-                spark.step[0] = r * std::cos(turn) * kSparkDrift * metre;
-                spark.step[1] = z * kSparkDrift * metre;
-                spark.step[2] = r * std::sin(turn) * kSparkDrift * metre;
-                onBlade(one, along, spark.at);
-                spark.scale = between(0.10f, 0.59f);
-                spark.left = kSparkLife;
-                break;
-            }
         }
     }
-    one.shiny = between(kShinyLeast, kShinyMost);
-    one.shinyRoll = unit() * kTwoPi;
-    one.shinyAt = between(kBladeFrom, 1.0f);
     if (--one.life <= 0) one.alive = false;
 }
 
@@ -298,17 +274,19 @@ void FireSlash::stepRibbon(Ribbon& one) {
             one.edge[0][e][2] = at[2] + axis[1] * side;
         }
         // A flame on a coin, drifting the joint's way, lit by the joint's light as it is now.
-        if (unit() < 0.5f) {
+        if (unit() < kFireChance) {
             for (Fire& fire : fires_) {
                 if (fire.alive) continue;
                 fire = Fire{};
                 fire.alive = true;
                 for (int k = 0; k < 3; ++k) fire.at[k] = at[k];
+                fire.at[0] += between(-kFireScatter, kFireScatter) * metre;
+                fire.at[2] += between(-kFireScatter, kFireScatter) * metre;
                 float drift[2];
                 local(one.yaw, kStartTurn, 0.0f, -between(3.2f, 4.7f), drift);
                 fire.drift[0] = drift[0] * metre;
                 fire.drift[2] = drift[1] * metre;
-                fire.scale = between(1.28f, 1.91f);
+                fire.scale = between(1.28f, 1.91f) * kFireBigger;
                 fire.left = kFireLife;
                 fire.light = one.light;
                 break;
@@ -321,10 +299,31 @@ void FireSlash::stepRibbon(Ribbon& one) {
         ++one.tails;
         one.turn -= kStepTurn;
     }
-    // Its light, after the tails: LifeTime / 30 down to ten, then a third less each frame.
-    one.light = one.life >= 10 ? float(one.life) / 30.0f : one.light / 1.5f;
+    // Its light, after the tails: LifeTime / 30 down to ten, then a fifth less each frame (MU's
+    // a third, ours).
+    one.light = one.life >= 10 ? float(one.life) / 30.0f : one.light / kFadeUnderTen;
     // Twenty-one frames: MU's LifeTime 20 to 0, dead below it.
     if (--one.life < 0) one.alive = false;
+}
+
+uint32_t FireSlash::lights(gfx::PointLight* out, uint32_t max) const {
+    if (out == nullptr) return 0;
+    uint32_t count = 0;
+    const float metres = ground_ ? ground_->metresPerTile() : 1.0f;
+    for (const Ribbon& one : ribbons_) {
+        if (!one.alive || !one.made || one.light <= 0.0f || count >= max) continue;
+        // Over the middle of the crescent, a tile ahead of him.
+        float ahead[2];
+        local(one.yaw, 0.0f, 0.0f, -100.0f, ahead);
+        gfx::PointLight& light = out[count++];
+        light.position[0] = one.pivot[0] + ahead[0] * perUnit();
+        light.position[1] = one.pivot[1];
+        light.position[2] = one.pivot[2] + ahead[1] * perUnit();
+        light.reach = kLightTiles * metres;
+        light.height = 1.0f;
+        for (int k = 0; k < 3; ++k) light.colour[k] = kLightColour[k] * std::min(1.0f, one.light) * kLightGain;
+    }
+    return count;
 }
 
 void FireSlash::gatherEffects(gfx::Effects& effects) const {
@@ -378,34 +377,6 @@ void FireSlash::gatherEffects(gfx::Effects& effects) const {
             sprite.colour[3] = 1.0f;
             sprite.sheet = fireSheet_;
             sprite.blend = gfx::Blend::Breath;
-            if (!effects.add(sprite)) return;
-        }
-    }
-    // The sparks riding his blade.
-    if (bgfx::isValid(sparkSheet_)) {
-        for (const Spark& one : sparks_) {
-            if (!one.alive) continue;
-            gfx::Sprite sprite;
-            for (int k = 0; k < 3; ++k) sprite.position[k] = one.at[k];
-            sprite.halfWidth = sprite.halfHeight = kSparkPixels * one.scale * kSparkShrink * metre * 0.5f;
-            const float lum = clampOne(one.left / 5.0f);
-            for (int k = 0; k < 3; ++k) sprite.colour[k] = lum;
-            sprite.sheet = sparkSheet_;
-            sprite.blend = gfx::Blend::Additive;
-            if (!effects.add(sprite)) return;
-        }
-    }
-    // The glow on his blade while a gathering lasts, a new place on it each frame.
-    if (bgfx::isValid(shinySheet_)) {
-        for (const Gathering& one : gatherings_) {
-            if (!one.alive || one.wait > 0.0f) continue;
-            gfx::Sprite sprite;
-            onBlade(one, one.shinyAt, sprite.position);
-            sprite.halfWidth = kShinyWide * one.shiny * kShinyFrame * metre * 0.5f;
-            sprite.halfHeight = kShinyTall * one.shiny * kShinyFrame * metre * 0.5f;
-            sprite.spin = one.shinyRoll;
-            sprite.sheet = shinySheet_;
-            sprite.blend = gfx::Blend::Additive;
             if (!effects.add(sprite)) return;
         }
     }

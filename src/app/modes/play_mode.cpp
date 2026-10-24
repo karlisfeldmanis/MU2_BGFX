@@ -1769,6 +1769,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And Power Slash's waves, MU's blue under each (fx/power_slash.h).
         count += world_.played().powerSlash().lights(falling + count,
                                                      kGatheredLights - count);
+        // And Fire Slash's warm light under its ribbon -- ours (fx/fire_slash.h).
+        count += world_.played().fireSlash().lights(falling + count, kGatheredLights - count);
         // And Hellfire's wall, MU's orange four tiles round (fx/hellfire.h).
         count += world_.played().hellfire().lights(falling + count,
                                                    kGatheredLights - count);
