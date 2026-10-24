@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include <tuple>
+#include <type_traits>
 
 #include "dump.h"
 #include "sim/broker.h"
@@ -17,6 +19,7 @@
 #include "sim/market.h"
 #include "sim/quests.h"
 #include "sim/realm.h"
+#include "sim/realm_tuning.h"
 #include "sim/rebirth.h"
 #include "sim/square.h"
 #include "sim/vault.h"
@@ -86,7 +89,13 @@ template <class P>
 J stackingJson(P power) {
     if constexpr (requires { stackingOf(power); }) {  // sim::stackingOf, found by its argument
         const auto s = stackingOf(power);
-        return J::obj().set("stacks", s.stacks).set("says", s.says ? s.says : "");
+        std::string says;
+        if constexpr (std::is_pointer_v<decltype(s.says)>) {
+            says = s.says ? s.says : "";
+        } else {
+            says = s.says;  // a std::string at HEAD
+        }
+        return J::obj().set("stacks", s.stacks).set("says", says);
     } else {
         return J();
     }
@@ -236,23 +245,38 @@ std::string serviceOf(int32_t n) {
     return "none";
 }
 
+// One page a townsperson as the game shows him: by NPC number, figure and name, so the Crossbow
+// Guards, the Elf Archers and the Elf Crossbow Guards (all MU's 247) are each their own, with their
+// own spots. What he does is the number's (Realm::talk; a guard's post is Realm::raiseWardens').
 J npcs(const Dump& d) {
     const content::Tables& items = d.items();
-    std::map<int32_t, J> byNumber;
+    std::map<std::tuple<int32_t, std::string, std::string>, J> placed;
     for (const World& w : d.worlds) {
         for (const content::Townsperson& one : w.tables->folk) {
-            J& o = byNumber[one.number];
+            J& o = placed[{one.number, one.figure, one.name}];
             if (o.null()) {
                 const std::string service = serviceOf(one.number);
+                const WardenRow* warden = wardenRow(one.number);
                 J services = J::arr();
                 if (service != "none" && service != "greets") services.push(service);
                 if (sells(one.number)) services.push("buys");
                 if (repairsAt(one.number)) services.push("repair");
                 if (questOf(one.number) >= 0 && service != "quests") services.push("quests");
                 if (questReceives(one.number)) services.push("quest_hand_in");
+                if (warden) services.push("guards_the_town");
+                const std::string role = service != "none" ? service : warden ? "guard" : "";
                 o = J::obj();
-                o.set("npc", one.number).set("name", one.name).set("role", service).set("services", services)
+                o.set("npc", one.number).set("name", one.name).set("figure", one.figure)
+                    .set("role", role.empty() ? J() : J(role)).set("services", services)
                     .set("repairs", repairsAt(one.number)).set("where", J::arr());
+                if (warden) {
+                    J damage = J::arr();
+                    damage.push(warden->minimumDamage);
+                    damage.push(warden->maximumDamage);
+                    o.set("guard", J::obj().set("level", warden->level).set("life", warden->health).set("damage", damage)
+                                       .set("defense", warden->defense).set("attack_range", warden->attackRange)
+                                       .set("view_range", warden->viewRange).set("leash", warden->leash));
+                }
                 int count = 0;
                 const Offer* stock = stockOf(one.number, &count);
                 if (count > 0) {
@@ -270,12 +294,11 @@ J npcs(const Dump& d) {
                     o.set("shelf", shelf);
                 }
             }
-            o["where"].push(J::obj().set("world", w.name).set("map", w.tables->map).set("name", one.name)
-                                .set("figure", one.figure).set("x", one.x).set("y", one.y));
+            o["where"].push(J::obj().set("world", w.name).set("map", w.tables->map).set("x", one.x).set("y", one.y));
         }
     }
     J list = J::arr();
-    for (auto& [n, o] : byNumber) list.push(std::move(o));
+    for (auto& [k, o] : placed) list.push(std::move(o));
     return list;
 }
 

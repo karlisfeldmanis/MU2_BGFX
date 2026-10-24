@@ -454,11 +454,21 @@ std::vector<int32_t> bagRows(const Tables& t, const sim::BagRow* rows, size_t co
 }
 
 // Realm::dragonHoard, for the raid's Golden Dragon, beside its leave().
+// Realm::dragonHoard, for the raid's Golden Dragon, beside its leave(). Which hoard is the
+// snapshot's own: ARMORY_HOARD_PER_CLASS is armory.cmake's probe of its sources (sim::hoardFine).
 void dragonHoard(const Kill& k, Model& m) {
     const Tables& t = *k.t;
+#ifdef ARMORY_HOARD_PER_CLASS
+    // Each hero's own: Boxes of Kundun +3, runes of his class, a Jewel of Life beside the three
+    // jewels, and excellents off his own class's top gear (sim::hoardFine).
+    constexpr int kBoxLow = sim::kKundunTiers;
+#else
+    // The release's: Boxes of Kundun +1..+3, the runes, the +3 box's excellents.
+    constexpr int kBoxLow = 1;
+#endif
     const int32_t box = first(t, [](const ItemRow& r) { return sim::boxOfKundun(r); });
     if (box >= 0) {
-        Roll r{Roll::Kind::Own, "raid_hoard", 1.0, sim::kKundunTiers, sim::kKundunTiers};
+        Roll r{Roll::Kind::Own, "raid_hoard", 1.0, kBoxLow, sim::kKundunTiers};
         r.count = sim::kHoardBoxes;
         m.add(box, r);
     }
@@ -468,32 +478,40 @@ void dragonHoard(const Kill& k, Model& m) {
         r.count = sim::kHoardRunes;
         m.add(rune, r);
     }
-    const int32_t life = t.itemAt(14, 16);
+#ifdef ARMORY_HOARD_PER_CLASS
+    const int32_t life = first(t, [](const ItemRow& r) { return sim::refiningJewel(r) && sim::jewelOf(r) == sim::Jewel::Life; });
     if (life >= 0) {
         Roll r{Roll::Kind::Own, "raid_hoard", 1.0};
         r.count = sim::kHoardLives;
         m.add(life, r);
     }
+#endif
     const auto jewels = pool(t, [](const ItemRow& r) { return sim::refiningJewel(r); });
     for (const int32_t item : jewels) {
         m.add(item, Roll{Roll::Kind::Own, "raid_hoard",
                          1.0 - std::pow(1.0 - 1.0 / double(jewels.size()), sim::kHoardJewels)});
     }
-    // Each class's own pool (sim::hoardFine), as a promoted hero of it draws.
     const double more = 1.0 / sim::kHoardExcellentOdds;
-    for (sim::Kin kin : kKins) {
-        const auto fine = pool(t, [kin](const ItemRow& r) { return sim::hoardFine(r, kin, true); });
+    const auto excellents = [&](const std::vector<int32_t>& fine, int kin) {
         for (const int32_t item : fine) {
-            const double miss = 1.0 - 1.0 / double(fine.size());
+            const double miss = 1.0 - double(std::count(fine.begin(), fine.end(), item)) / double(fine.size());
             Roll r{Roll::Kind::Own, "raid_hoard", 1.0 - ((1.0 - more) * std::pow(miss, sim::kHoardExcellents) +
                                                           more * std::pow(miss, sim::kHoardExcellents + 1))};
             r.excellent = true;
-            r.kin = int(kin);
+            r.kin = kin;
             boxOptions(r, sim::kBoxLuckIn100 / 100.0, false);
             r.twoOptions = secondOption();
             m.add(item, r);
         }
+    };
+#ifdef ARMORY_HOARD_PER_CLASS
+    // Each class's own pool, as a promoted hero of it draws.
+    for (sim::Kin kin : kKins) {
+        excellents(pool(t, [kin](const ItemRow& r) { return sim::hoardFine(r, kin, true); }), int(kin));
     }
+#else
+    excellents(bagRows(t, sim::kKundunExcellent3, std::size(sim::kKundunExcellent3), true), -1);
+#endif
     m.add(first(t, [](const ItemRow& r) { return sim::lochsFeather(r); }),
           Roll{Roll::Kind::Own, "raid_hoard", 1.0 / sim::kHoardFeatherOdds});
 }
@@ -582,6 +600,8 @@ J monsterJson(const Ground& g) {
     o.set("max_plus", rate.maxPlus).set("money_rate", rate.moneyRate);
     if (g.elite) o.set("spoils_level", mk.level + sim::kEliteLevelsUp);
     if (!g.elite) o.set("zen", J::p(m.zen)).set("no_ticket", J::p(m.pass));
+    // What it is there: the body the realm stands up (spawn.cpp), Elites and raid included.
+    if (const J* body = spawned(*g.world, g.castle, mk.number, g.elite)) o.set("spawned", *body);
     o.set("items", modelJson(*g.world->tables, m));
     if (m.whileQuest.size()) o.set("while_quest", m.whileQuest);
     if (m.notes.size()) o.set("notes", m.notes);

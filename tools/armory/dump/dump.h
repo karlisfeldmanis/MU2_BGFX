@@ -56,7 +56,10 @@ J dumpGearPowers(const Dump& d);
 J dumpDrops(const Dump& d);
 J dumpRules(const Dump& d);
 J dumpBoxes(const Dump& d);
-J lookJson();                // look.cpp: the game's own look numbers the site draws with  // drops.cpp: what each box opens into, for rules.json
+J lookJson();
+// spawn.cpp: a monster's numbers as the realm stands it up in that place (castle 0 for a map),
+// or nullptr when no body of it stands there.
+const J* spawned(const World& w, int castle, int32_t number, bool elite);                // look.cpp: the game's own look numbers the site draws with  // drops.cpp: what each box opens into, for rules.json
 
 // The analytic per-kill odds for one monster, for --check-odds to hold the real roll against:
 // item index -> the chance one kill leaves at least one, for a killer of `kin`.

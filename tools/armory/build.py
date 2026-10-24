@@ -353,6 +353,9 @@ def build(commit=None, out=None, thumbs=True, say=print):
     notes = []
 
     dump_dir, missing = run_dump(src, data, commit, protocol, say)
+    if missing:  # a dump that failed or fell short publishes nothing: the last build stays as it was
+        shutil.rmtree(dest, ignore_errors=True)
+        raise snapshot.Stop(f"the dump left out {', '.join(missing)}; out/armory/{commit}/ is left as it was")
     D = Dump(dump_dir, missing)
 
     # ---- data
@@ -435,8 +438,8 @@ def build(commit=None, out=None, thumbs=True, say=print):
             if kind == "npcs":
                 for x in entries:
                     num = x.get("npc", x.get("number"))
-                    if num is not None:
-                        npc_rules[int(num)] = x
+                    if num is not None:  # one a townsperson: number and name (247 is three of them)
+                        npc_rules[(int(num), x.get("name"))] = x
                 continue
             sl = slugs.assign(kind, [(key_of(x), name_of(x)) for x in entries])
             kinds[kind] = {key_of(x): (sl[key_of(x)], x) for x in entries}
@@ -448,9 +451,9 @@ def build(commit=None, out=None, thumbs=True, say=print):
                     r = {"kind": kind, "slug": s, "name": name_of(x), "role": role(path)}
                     if r not in refs[ik][kind]:
                         refs[ik][kind].append(r)
-    for num, x in npc_rules.items():
+    for (num, rname), x in npc_rules.items():
         for name, e in F.items():
-            if e["npc"] == num:
+            if e["npc"] == num and rname in (None, name):
                 for ik, path in item_refs(x, I):
                     r = {"kind": "npcs", "slug": npc_slug[name], "name": name, "role": role(path)}
                     if r not in refs[ik]["shops" if role(path) == "gives" else "npcs"]:
@@ -570,6 +573,19 @@ def build(commit=None, out=None, thumbs=True, say=print):
         if summoned_by.get(k):
             e["summoned_by"] = summoned_by[k]
             row["summoned"] = True
+        # The realm's own numbers where it is met (the dump's `spawned` per place: a raid's dragon,
+        # an Elite, a castle's garrison), over the content row; one no nest holds lives where met.
+        met = [{"place": d.get("place"), "world": d.get("world"), "elite": bool(d.get("elite")), **d["spawned"]}
+               for d in drops_by_mon.get(k, []) if isinstance(d.get("spawned"), dict)]
+        if met:
+            e["spawned"] = met
+            one = next((x for x in met if not x["elite"]), met[0])
+            row.update({"lv": one.get("level"), "hp": one.get("life"), "dmg": one.get("damage"), "def": one.get("defense")})
+            if not where:
+                towns = sorted({x["world"] for x in met if x.get("world")})
+                e["met_in"] = towns
+                row["maps"] = [W[w]["name"] if w in W else w for w in towns]
+                row["home"] = ", ".join(row["maps"])
         ents.append((s, e))
         search.append({"n": m["name"], "k": "monster", "s": s})
     publish("monsters", rows, ents)
@@ -580,13 +596,13 @@ def build(commit=None, out=None, thumbs=True, say=print):
         s = npc_slug[name]
         where = [dict(w, world_slug=world_slug[w["world"]], live=is_live(w["world"])) for w in f["where"]]
         p = pics(f"npc:{f['figure']}") if f["figure"] else None
-        r = npc_rules.get(f["npc"]) or {}
+        r = npc_rules.get((f["npc"], name)) or npc_rules.get((f["npc"], None)) or {}
         row = {"k": name, "slug": s, "n": name, "npc": f["npc"], "maps": sorted({w["map"] for w in where}),
                "role": r.get("role")}
         if p:
             row["t"] = p["card"]
         rows.append(row)
-        rr = {k: v for k, v in r.items() if k not in ("npc", "number", "name")}
+        rr = {k: v for k, v in r.items() if k not in ("npc", "number", "name", "where")}
         ents.append((s, {"kind": "npc", "key": name, "slug": s, "name": name, "npc": f["npc"], "figure": f["figure"] or None,
                          "where": where, "thumb": p, **rr}))
         search.append({"n": name, "k": "npc", "s": s})
