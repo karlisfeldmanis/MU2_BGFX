@@ -113,6 +113,19 @@ Row stat(const char* name, const std::string& text, Tone tone) {
     return row;
 }
 
+// How many of a rune he wears, in any socket of anything worn, as sim::stackMostOf counts them.
+int runesWorn(const sim::Satchel& bag, sim::Power power) {
+    int worn = 0;
+    for (int slot = sim::kWeaponRight; slot <= sim::kRingLeft; ++slot) {
+        const sim::Held& held = bag[slot];
+        if (held.empty()) continue;
+        for (int at = 0; at < std::min<int>(held.sockets, sim::kMostSockets); ++at) {
+            worn += held.powers[at] == uint8_t(power);
+        }
+    }
+    return worn;
+}
+
 }  // namespace
 
 void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
@@ -907,10 +920,21 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 line.mark = tip::Mark::RingSet;
                 line.markTone = rarityTone(power->rarity);
                 socket.rows.push_back(line);
-                // Whether a second of it does more (sim::stackingOf), quiet under its effect.
+                // Whether a second of it does more (sim::stackingOf), quiet under its effect, and
+                // of a limited one how many he wears (the user, 2026-10-24: "we need to show on
+                // toolttip that he can use some amount of specific rune") -- yellow past the
+                // limit, where the rest do nothing.
                 Row stacking;
                 stacking.free = sim::stackingOf(power->power).says;
                 stacking.freeTone = Tone::Gray;
+                if (const int most = sim::stackMostOf(power->power); most > 0) {
+                    const int worn = runesWorn(bag, power->power);
+                    stacking.free += " \xB7 you wear " + std::to_string(worn);
+                    if (worn > most) {
+                        stacking.free += ", " + std::to_string(worn - most) + " do nothing";
+                        stacking.freeTone = Tone::Yellow;
+                    }
+                }
                 socket.rows.push_back(stacking);
                 // What the rune strikes for in his hands with THIS weapon (the user, 2026-10-01:
                 // "show damage for dps runes based on base dmg and scaling"): the swing's band as
@@ -1116,6 +1140,16 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             const sim::Stacking stacking = sim::stackingOf(power->power);
             carries.rows.push_back(
                 stat("Stacking", stacking.says, stacking.stacks ? Tone::White : Tone::Yellow));
+            // Of a limited one, how many of his allowance he wears; full, another does nothing.
+            if (const int most = sim::stackMostOf(power->power); most > 0) {
+                const int worn = runesWorn(bag, power->power);
+                carries.rows.push_back(
+                    worn >= most
+                        ? stat("You wear", std::to_string(worn) + " of " + std::to_string(most) +
+                                               ", another does nothing", Tone::Yellow)
+                        : stat("You wear", std::to_string(worn) + " of " + std::to_string(most),
+                               Tone::White));
+            }
             Row how;
             how.free = "Drop it on an item with an empty socket";
             how.freeTone = Tone::Gray;

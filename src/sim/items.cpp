@@ -739,7 +739,7 @@ Stacking stackingOf(Power power) {
         return {true, "Stacks, the best " + std::to_string(kStatRuneMost) + " of a stat count"};
     }
     if (const int most = stackMostOf(power); most > 0) {
-        return {true, "Stacks, up to " + std::to_string(most)};
+        return {true, "Stacks, up to " + std::to_string(most) + " worn"};
     }
     return {true, "Stacks"};
 }
