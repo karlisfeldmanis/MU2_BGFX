@@ -322,7 +322,9 @@ def item_changes(a, b, R0, R1):
         group["places"].append((R1 if key in db else R0).place(place))
     for (mon, elite, _, _), g in merged.items():
         field = f"drops[{mon}{'@elite' if elite else ''}@{'+'.join(g['places'])}]"
-        out.append(change(field, f"Drops from {g['who']}, {places_said(g['places'])}", "chance", 1, g["x"], g["y"]))
+        c = change(field, f"Drops from {g['who']}, {places_said(g['places'])}", "chance", 1, g["x"], g["y"])
+        c["cause"] = f"drops:{g['who']}@{places_said(g['places'])}"
+        out.append(c)
     if shifted:
         out.append({"field": "drops.pool", "label": "Drop chances shifted slightly", "was": "",
                     "now": f"{shifted} places, by at most {most * 100:.0f}%: the pools it drops from changed size",
@@ -335,7 +337,7 @@ def item_changes(a, b, R0, R1):
             continue
         out.append({"field": f"from[{key[0]}:{key[1]}]", "label": f"{words} {name}",
                     "was": "" if key in sb else "yes", "now": "yes" if key in sb else "",
-                    "change": "new" if key in sb else "removed"})
+                    "change": "new" if key in sb else "removed", "cause": f"source:{words} {name}"})
     return out
 
 
@@ -358,7 +360,9 @@ def monster_changes(a, b, R0, R1):
         sx, sy = x.get("spawned") or {}, y.get("spawned") or {}
         for f, (label, how, better) in SPAWNED.items():
             if f in sx and f in sy and not same(sx[f], sy[f]):
-                out.append(change(f"spawned[{place}].{f}", f"{label}, {where}", how, better, sx[f], sy[f]))
+                c = change(f"spawned[{place}].{f}", f"{label}, {where}", how, better, sx[f], sy[f])
+                c["cause"] = f"spawned:{label}"
+                out.append(c)
         ia = {i.get("item"): i.get("chance") or 0 for i in x.get("items") or []}
         ib = {i.get("item"): i.get("chance") or 0 for i in y.get("items") or []}
         joined = [k for k in ib if k not in ia]
@@ -367,9 +371,9 @@ def monster_changes(a, b, R0, R1):
             name = R1.item_name.get(k) or R0.item_name.get(k) or k
             field = f"drops[{place}].{k}"
             if k not in ia:
-                out.append(change(field, f"Drops {name}, {where}", "chance", 1, None, ib[k]))
+                out.append(dict(change(field, f"Drops {name}, {where}", "chance", 1, None, ib[k]), cause=f"mdrop:{name}:new"))
             elif k not in ib:
-                out.append(change(field, f"Drops {name}, {where}", "chance", 1, ia[k], None))
+                out.append(dict(change(field, f"Drops {name}, {where}", "chance", 1, ia[k], None), cause=f"mdrop:{name}:removed"))
             elif not same(ia[k], ib[k]):
                 if pool_shift(ia[k], ib[k]):
                     shifted += 1
@@ -402,7 +406,7 @@ def shelf_changes(a, b, R0, R1):
         kind = "new" if x is None else "removed" if y is None else \
             ("buffed" if y[0] == x[0] and y[1] < x[1] else "nerfed" if y[0] == x[0] and y[1] > x[1] else "changed")
         out.append({"field": f"shelf[{item}+{plus}]", "label": f"Sells {name}", "was": said(x) if x else "",
-                    "now": said(y) if y else "", "change": kind})
+                    "now": said(y) if y else "", "change": kind, "cause": "shelf"})
     return out
 
 
@@ -461,7 +465,7 @@ def changes_of(kind, a, b, R0, R1):
             continue  # new to the schema: not an update
         x, y = get(a, path), get(b, path)
         if not same(x, y):
-            out.append(change(path, label, how, better, x, y))
+            out.append(dict(change(path, label, how, better, x, y), cause=f"field:{kind}:{label}"))
     if kind in SPECIAL:
         out += SPECIAL[kind](a, b, R0, R1)
     return out
@@ -497,6 +501,118 @@ def build_previous(prev, root, say):
     return False
 
 
+# A field changed across a kind, said as one line of the notes.
+HEADLINES = {("runes", "Rune text"): "Runes reworded", ("runes", "One per item"): "Runes now limited to one per item",
+             ("runes", "In the game"): "Runes now in the game", ("runes", "Level to use"): "Rune level requirements changed",
+             ("skills", "Skill text"): "Skills reworded", ("skills", "Reach"): "Skill reach changed",
+             ("items", "Sell price"): "Sell prices changed", ("items", "In the game"): "Items now in the game",
+             ("items", "Level required"): "Item level requirements changed"}
+KIND_WORDS = {"items": "items", "runes": "runes", "skills": "skills", "monsters": "monsters", "npcs": "townsfolk",
+              "quests": "quests", "mixes": "mixes", "boxes": "boxes", "talents": "talent trees", "elites": "Elite maps",
+              "events": "events", "worlds": "maps"}
+# How much a line of the notes matters, first first: new things, then the game's rules and pay,
+# then numbers and new drops, then hoards, shops and the like.
+IMPORTANCE = {"runes": 1, "skills": 1, "quests": 1, "talents": 1, "mixes": 1, "items": 2, "monsters": 2,
+              "elites": 2, "boxes": 4, "npcs": 5, "events": 5, "worlds": 5}
+GROUP_AT = 3  # a cause shared by this many entities is one line of the notes
+
+
+def headline(cause, members):
+    """What a group of changes sharing one cause says, and how much it matters."""
+    n = len(members)
+    changes = [c for m in members for c in m["changes"]]
+    new = sum(1 for c in changes if c["change"] == "new")
+    gone = sum(1 for c in changes if c["change"] == "removed")
+    other = len(changes) - new - gone
+    def counts(word):
+        bits = [f"{new} {word} added" if new else "", f"{gone} removed" if gone else "", f"{other} changed" if other else ""]
+        return ", ".join(b for b in bits if b)
+    kind, _, rest = cause.partition(":")
+    if kind == "drops":
+        who, _, where = rest.partition("@")
+        return f"What {who} drops ({where}): {counts('items')}", 4 if "raid" in where else 3
+    if kind == "source":
+        return f"{rest} ({n} items)", 1
+    if kind == "mdrop":
+        item, _, how = rest.rpartition(":")
+        return (f"{item} now drops from {n} monsters" if how == "new" else f"{item} no longer drops from {n} monsters"), 3
+    if kind == "spawned":
+        return f"Monsters' {rest.lower()} changed ({n} monsters)", 2
+    if kind == "shelf":
+        sample = changes[0]
+        return f"Shop shelves changed ({n} shops, {len(changes)} shelves; e.g. {line(sample)})", 5
+    if kind == "field":
+        k, _, label = rest.partition(":")
+        words = HEADLINES.get((k, label)) or f"{label} changed"
+        return f"{words} ({n} {KIND_WORDS.get(k, k)})", IMPORTANCE.get(k, 5)
+    return f"{cause} ({n})", 5
+
+
+def notes_of(changed, new):
+    """The release's notes: [{type: new|group|single, ...}], what matters first. `changed` is
+    [{kind, slug, name, changes}] of the real (not pool) changes."""
+    by_cause = {}
+    for e in changed:
+        for c in e["changes"]:
+            if c.get("cause"):
+                m = by_cause.setdefault(c["cause"], {})
+                m.setdefault((e["kind"], e["slug"]), {"kind": e["kind"], "slug": e["slug"], "name": e["name"], "changes": []})
+                m[(e["kind"], e["slug"])]["changes"].append(c)
+    grouped = {cause for cause, m in by_cause.items() if len(m) >= GROUP_AT}
+    notes = [dict(type="new", importance=0, **t) for t in new]
+    for cause in grouped:
+        members = sorted(by_cause[cause].values(), key=lambda m: m["name"])
+        words, importance = headline(cause, members)
+        notes.append({"type": "group", "importance": importance, "headline": words, "cause": cause, "count": len(members),
+                      "kind": members[0]["kind"],
+                      "entities": [{"kind": m["kind"], "slug": m["slug"], "name": m["name"],
+                                    "lines": [line(c) for c in m["changes"]]} for m in members]})
+    for e in changed:
+        rest = [c for c in e["changes"] if c.get("cause") not in grouped]
+        if not rest:
+            continue
+        lines = [line(c) for c in rest]
+        if len(lines) > 8:
+            lines = lines[:7] + [f"and {len(lines) - 7} more changes"]
+        notes.append({"type": "single", "importance": IMPORTANCE.get(e["kind"], 5), "kind": e["kind"], "slug": e["slug"],
+                      "name": e["name"], "summary": lines})
+    notes.sort(key=lambda x: (x["importance"], -(x.get("count") or 1), x.get("headline") or x.get("name") or ""))
+    return notes
+
+
+def release_label(commit, date):
+    """The day it went live, said, with its time when another release went live that day."""
+    import datetime
+    when = None
+    same_day = 0
+    try:
+        import releases
+        rows = releases.load()
+        for r in rows:
+            if r["commit"] == commit:
+                when = r.get("live_at")
+        same_day = sum(1 for r in rows if (r.get("live_at") or "")[:10] == date)
+    except Exception:  # noqa: BLE001 - the day alone
+        pass
+    try:
+        d = datetime.date.fromisoformat(date)
+        said = f"{d.day} {d.strftime('%B %Y')}"
+    except ValueError:
+        return date
+    if same_day > 1 and when and len(when) >= 16:
+        said += f", {when[11:16]} UTC"
+    return said
+
+
+def release_number(commit):
+    try:
+        import releases
+        order = releases.commits()
+        return order.index(commit) + 1 if commit in order else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def release_date(commit, meta):
     """The day players had it: releases.json's live_at, else the build's own day."""
     try:
@@ -527,6 +643,7 @@ def run(this, previous=None, say=print):
     stamp = {"commit": commit, "protocol": meta["protocol"]}
     base = {"commit": commit, "protocol": meta["protocol"], "date": release_date(commit, meta)}
     things = {"new": [], "changed": [], "removed": []}
+    real_changes = []
     shifts = 0
     for (kind, slug), e in R1.ents.items():
         before = []
@@ -545,6 +662,7 @@ def run(this, previous=None, say=print):
                 entry = dict(base, changes=ch)
                 real = [c for c in ch if not c.get("pool")]
                 if real:
+                    real_changes.append({"kind": kind, "slug": slug, "name": name, "changes": real})
                     lines = [line(c) for c in real]
                     if len(lines) > 8:
                         lines = lines[:7] + [f"and {len(lines) - 7} more changes"]
@@ -566,6 +684,8 @@ def run(this, previous=None, say=print):
                       if r.get("commit") != commit]
     note = NOTES / f"{commit}.md"
     this_rel = dict(base, previous=prev, note=note.read_text().strip() if note.exists() else None,
+                    label=release_label(commit, base["date"]), number=release_number(commit),
+                    notes=notes_of(real_changes, things["new"]) if prev else [],
                     counts={"new": len(things["new"]), "changed": len(things["changed"]),
                             "removed": len(things["removed"]), "pool_shifts": shifts},
                     things=things)
