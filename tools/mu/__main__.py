@@ -54,6 +54,7 @@ import argparse
 import json
 import os
 import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -373,6 +374,16 @@ def dispatch(args, say):
                     say(line)
                 passed = passed and done.returncode == 0
                 last += done.stdout.splitlines()[-1:]
+            # A release that passed says so in its folder: web/deploy.sh uploads only such a one. A
+            # rebuild replaces the folder, and the stamp with it.
+            stamp = os.path.join(args.dir, "TESTED") if args.dir else None
+            if stamp and os.path.isfile(os.path.join(args.dir, "meta.json")):
+                if passed:
+                    with open(stamp, "w") as out:
+                        json.dump({"at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "summary": last}, out, indent=1)
+                    say(f"armory: {stamp} written")
+                elif os.path.exists(stamp):
+                    os.remove(stamp)
             return passed, {"output": last}
         sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "armory"))
         import build as armory_build

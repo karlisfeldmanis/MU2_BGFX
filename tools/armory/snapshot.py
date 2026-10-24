@@ -3,8 +3,9 @@
 The commit is the live release's (https://mu-classic.com/game/<platform>/manifest.json `version`,
 all three platforms agreeing) unless --commit names one. Its tree is `git archive`d into
 out/armory/src/<commit>/ as dist.py snapshot() does, with third_party/extern linked (git has
-none of it). The tables are the release's own packs, dist/macos/MU2.app/Contents/Resources/data,
-and dist/macos/BUILT_FROM must name the commit, or the build stops.
+none of it). The tables are the release's own packs (releases.py): out/armory/packs/<commit>/,
+kept from dist/macos when its BUILT_FROM is the commit, else fetched from the release's manifest;
+with neither, the build stops. The release before a commit is releases.json's, never git's.
 """
 import json
 import os
@@ -55,15 +56,16 @@ def short(ref):
     return git("rev-parse", "--short=8", "--verify", ref + "^{commit}")
 
 
-def data_dir(commit):
-    """The release's packs, checked to be this commit's."""
-    if not BUILT_FROM.exists() or not DATA.is_dir():
-        raise Stop(f"no {DATA.relative_to(ROOT)}: `./mu dist macos --commit {commit}` first")
-    built = BUILT_FROM.read_text().split()[0] if BUILT_FROM.read_text().split() else ""
-    if not built or not (commit.startswith(built) or built.startswith(commit)):
-        raise Stop(f"dist/macos is built from {built or 'nothing'}, not {commit}: its packs are another "
-                   f"release's. `./mu dist macos --commit {commit}` first, or --commit {built}")
-    return DATA
+def data_dir(commit, say=print):
+    """The release's packs, checked to be this commit's: out/armory/packs/<commit>/ (releases.py)."""
+    import releases
+    found = releases.data_for(commit, say)
+    if found is None:
+        built = releases.built_from()
+        raise Stop(f"no packs of {commit}: out/armory/packs/{commit}/ is empty, dist/macos is built from "
+                   f"{built or 'nothing'} and the release's manifest has no world packs left. "
+                   f"`./mu dist macos --commit {commit}` first")
+    return found
 
 
 def snapshot(commit, say):
@@ -98,16 +100,7 @@ def protocol(commit):
 
 
 def released_before(commit):
-    """The newest Armory build under out/armory/ whose commit is an ancestor of this one."""
-    best = None
-    for meta in ARMORY.glob("*/meta.json"):
-        other = meta.parent.name
-        if other == commit:
-            continue
-        ok = subprocess.run(["git", "merge-base", "--is-ancestor", other, commit], cwd=ROOT).returncode == 0
-        if not ok:
-            continue
-        if best is None or subprocess.run(["git", "merge-base", "--is-ancestor", best, other],
-                                          cwd=ROOT).returncode == 0:
-            best = other
-    return best
+    """The release players had before this one, by out/armory/releases.json (releases.py): a
+    release is often a hotfix branch, so git ancestry does not say it. None for the first."""
+    import releases
+    return releases.previous(commit)

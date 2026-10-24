@@ -6,7 +6,11 @@ release's tree and runs it on the release's packs. docs/plans/armory.md.
 
 The dump's sources are this checkout's, copied into the snapshot, so an older release is read by
 today's dump; a snapshot whose CMakeLists.txt does not include tools/armory/dump/armory.cmake yet
-is handed it as CMAKE_PROJECT_mu2_INCLUDE. Built niced, at most six jobs, in build_dir alone.
+is handed it as CMAKE_PROJECT_mu2_INCLUDE. Built niced, at most six jobs, in build_dir/<snapshot>/:
+one build folder a snapshot, its CMakeCache checked to be that snapshot's, since a CMake build folder
+keeps the source tree it was first configured with (4b0ad87e's Armory was built by 5d7ddebc's dump
+that way). After the run, every rune's line the dump wrote must be a literal of the snapshot's
+src/sim/items.cpp, or the run fails: the dump's rules are the snapshot's own.
 """
 import os
 import shutil
@@ -25,9 +29,22 @@ def _run(cmd, cwd=None):
     return done.stdout
 
 
+def home_of(build_dir):
+    """The source tree a configured build folder builds (CMakeCache's CMAKE_HOME_DIRECTORY), or None."""
+    cache = Path(build_dir) / "CMakeCache.txt"
+    if not cache.is_file():
+        return None
+    for line in cache.read_text(errors="replace").splitlines():
+        if line.startswith("CMAKE_HOME_DIRECTORY:"):
+            return Path(line.split("=", 1)[1].strip()).resolve()
+    return None
+
+
 def build(snapshot_dir, build_dir):
-    """Configures (once) and builds armory_dump; returns the binary's path."""
-    snapshot_dir, build_dir = Path(snapshot_dir).resolve(), Path(build_dir).resolve()
+    """Configures (once a snapshot) and builds armory_dump in build_dir/<snapshot>/; returns the
+    binary's path. Stops when that folder builds another tree."""
+    snapshot_dir = Path(snapshot_dir).resolve()
+    build_dir = Path(build_dir).resolve() / snapshot_dir.name
     dest = snapshot_dir / "tools" / "armory" / "dump"
     if dest.resolve() != SOURCES.resolve():
         dest.mkdir(parents=True, exist_ok=True)
@@ -37,11 +54,33 @@ def build(snapshot_dir, build_dir):
     cmake = ["cmake", "-S", str(snapshot_dir), "-B", str(build_dir), "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release"]
     if "tools/armory/dump/armory.cmake" not in (snapshot_dir / "CMakeLists.txt").read_text():
         cmake.append(f"-DCMAKE_PROJECT_mu2_INCLUDE={dest / 'armory.cmake'}")
+    home = home_of(build_dir)
+    if home is not None and home != snapshot_dir:
+        raise RuntimeError(f"{build_dir} builds {home}, not the snapshot {snapshot_dir}: error, its dump would "
+                           f"be another release's (remove the folder)")
     if not (build_dir / "build.ninja").exists():
         build_dir.mkdir(parents=True, exist_ok=True)
         _run(cmake)
+    if home_of(build_dir) != snapshot_dir:
+        raise RuntimeError(f"error: {build_dir} is configured for {home_of(build_dir)}, not {snapshot_dir}")
     _run(["nice", "cmake", "--build", str(build_dir), "--target", "armory_dump", "-j", str(JOBS)])
     return build_dir / "armory_dump"
+
+
+def check_snapshot(snapshot_dir, out_dir):
+    """Every rune's line in rules.json is a literal of the snapshot's src/sim/items.cpp (PowerRow's
+    `tells`): a dump compiled from another tree says another release's words. Raises when not."""
+    import json
+    rules = Path(out_dir) / "rules.json"
+    if not rules.is_file():
+        return
+    text = "".join((Path(snapshot_dir) / "src/sim" / f).read_text(errors="replace")
+                   for f in ("items.cpp", "items.h") if (Path(snapshot_dir) / "src/sim" / f).is_file())
+    runes = [r for r in json.loads(rules.read_text()).get("runes") or [] if isinstance(r, dict) and r.get("tells")]
+    foreign = [r["tells"] for r in runes if json.dumps(r["tells"])[1:-1] not in text and r["tells"] not in text]
+    if foreign:
+        raise RuntimeError(f"error: {len(foreign)} of {len(runes)} rune lines are not the snapshot's "
+                           f"({foreign[0]!r}...): the dump was built from another tree")
 
 
 def run(snapshot_dir, build_dir, data_dir, out_dir, commit, protocol, check_odds=False, assets=False):
@@ -54,7 +93,9 @@ def run(snapshot_dir, build_dir, data_dir, out_dir, commit, protocol, check_odds
            "--commit", str(commit), "--protocol", str(protocol)]
     if check_odds:
         cmd.append("--check-odds")
-    return _run(cmd)
+    said = _run(cmd)
+    check_snapshot(snapshot_dir, out_dir)
+    return said
 
 
 if __name__ == "__main__":
