@@ -171,12 +171,25 @@ def townsfolk(src, worlds_):
                 docs.setdefault(k.lower(), d)
     out = {}
     for w, wd in worlds_.items():
+        # A table entry with no figure is stood by the world's own figure placement on its tile
+        # (src/game/play_open.cpp: "Hanzo is Smith01, Pasi Wizard01 and Baz Storage01 in the
+        # town's own placements", matched by tile to the table's blank entries).
+        placed = {}
+        pf = wd["dir"] / "placements.json"
+        if pf.exists():
+            for spot in load(pf).get("spawns") or []:
+                tile = spot.get("tile")
+                if spot.get("model") and isinstance(tile, list) and len(tile) == 2:
+                    placed.setdefault((int(tile[0]), int(tile[1])), spot["model"])
         for one in wd["npcs"]:
-            e = out.setdefault(one["name"], {"name": one["name"], "npc": int(one["npc"]),
-                                             "figure": one.get("figure") or "", "where": []})
-            if not e["figure"] and one.get("figure"):
-                e["figure"] = one["figure"]
+            figure = one.get("figure") or ""
             at = one.get("at") or [None, None]
+            if not figure and at[0] is not None:
+                figure = placed.get((int(at[0]), int(at[1])), "")
+            e = out.setdefault(one["name"], {"name": one["name"], "npc": int(one["npc"]),
+                                             "figure": figure, "where": []})
+            if not e["figure"] and figure:
+                e["figure"] = figure
             e["where"].append({"world": w, "map": wd["name"], "x": at[0], "y": at[1], "look": one.get("look")})
     for e in out.values():
         if not e["figure"]:
