@@ -64,6 +64,7 @@
 #include "game/fx/aqua.h"
 #include "game/fx/deathstab.h"
 #include "game/fx/impale.h"
+#include "game/fx/electric_spike.h"
 #include "game/fx/fire_burst.h"
 #include "game/fx/force.h"
 #include "game/fx/firebreath.h"
@@ -1096,6 +1097,8 @@ public:
     Force& force() { return force_; }
     // And his Fire Burst: its heads, trail, fire and flash, and its boom. fx/fire_burst.h.
     FireBurst& fireBurst() { return fireBurst_; }
+    // And his Electric Spike: its gather, bolt and rings. fx/electric_spike.h.
+    ElectricSpike& electricSpike() { return electricSpike_; }
     // The Dinorant's Fire Breath: its sprays, its haze and its burst. fx/firebreath.h.
     FireBreath& fireBreath() { return fireBreath_; }
     void gatherBolt(gfx::Effects& effects, const float eye[3]) const { bolt_.gather(effects, eye); }
@@ -1950,6 +1953,7 @@ private:
     Impale impale_;
     Force force_;
     FireBurst fireBurst_;
+    ElectricSpike electricSpike_;
     FireBreath fireBreath_;
     // A Teleport's fade on the hero: seconds since he began to fade out, or since he was put
     // down and began to fade back in; -1 for neither. MU's tenth of alpha a frame, both ways.
@@ -2074,6 +2078,7 @@ private:
         int orb = -1;                                   // an orb read, and the skill kept
         int darkSpear = -1;  // sDarkSpear: Force let go (fx/force.h)
         int fireBurstBoom = -1;  // eFirebustBoom: Fire Burst let go (fx/fire_burst.h)
+        int electricSpike = -1;  // sDarkElecSpike: Electric Spike let go (fx/electric_spike.h)
         int warp = -1;                                  // sMagic: a Town Portal landing
         int rite = -1;                                  // the Rebirth rite, its whole 14 s
         int riteReborn = -1;                            // and its message, as he stands

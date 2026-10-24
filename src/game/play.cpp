@@ -1530,6 +1530,14 @@ void Play::update(double seconds) {
                         // Nor Force: its piercing, waves and streaks stand at him (fx/force.h).
                     } else if (happening.a == sim::skill::kFireBurst) {
                         // Nor Fire Burst: its heads fly from the let-go (fx/fire_burst.h).
+                    } else if (happening.a == sim::skill::kElectricSpike) {
+                        // Electric Spike's bolt down the aim the realm struck along (`c`), and
+                        // sDarkElecSpike with it (fx/electric_spike.h).
+                        const float at[3] = {caster->crown[0], feet, caster->crown[2]};
+                        electricSpike_.loose(happening.who, at, float(happening.c) / 1000.0f);
+                        if (heard_.electricSpike >= 0) {
+                            emit(heard_.electricSpike, at[0], at[2], happening.who);
+                        }
                     } else {
                         bolt_.cast(from, to, happening.whom, atHand);
                     }
@@ -1893,6 +1901,10 @@ void Play::update(double seconds) {
                         // Fire Burst's heads, trail, fire and flash (fx/fire_burst.h).
                         if (cast && happening.a == sim::skill::kFireBurst) {
                             fireBurst_.begin(happening.who, happening.whom, swinger->swinging);
+                        }
+                        // Electric Spike's gather and rings run on its clip (fx/electric_spike.h).
+                        if (cast && happening.a == sim::skill::kElectricSpike) {
+                            electricSpike_.begin(happening.who, swinger->swinging);
                         }
 
                         // What this swing was thrown with, kept until the blow settles -- for a
@@ -2888,6 +2900,8 @@ void Play::update(double seconds) {
             emit(heard_.darkSpear, drawn->crown[0], drawn->crown[2], id);
         }
     });
+    // Electric Spike's gather, bolt and rings (fx/electric_spike.h).
+    electricSpike_.update(float(seconds), gripOf);
     // Fire Burst's, and eFirebustBoom as it is let go (fx/fire_burst.h).
     fireBurst_.update(float(seconds), bodyAt, [&](uint32_t id) {
         const Drawn* drawn = drawnOf(id);

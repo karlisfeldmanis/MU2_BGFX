@@ -2868,6 +2868,18 @@
         "eFirebustBoom.wav"
       ],
       "from": "SOUND_ATTACK_FIRE_BUST_EXP, Data\\Sound\\eFirebustBoom.wav (ZzzOpenData.cpp:4870). Asked every frame of every Fire Burst head (MoveHandlers.cpp:5642), but a playing buffer ignores Play, so one boom a cast from the heads' first frame; cued by game/fx/fire_burst.h at the let-go."
+    },
+    "electric_spike_ready": {
+      "files": [
+        "sDarkElecSpikeReady.wav"
+      ],
+      "from": "SOUND_ELEC_STRIKE_READY, Data\\Sound\\sDarkElecSpikeReady.wav (ZzzOpenData.cpp:4872). Electric Spike gathering at his hand, key 1.2 of PLAYER_SKILL_FLASH (ZzzCharacter.cpp:10512-10522); the skill row's own sound, on the cast (sim/skills.cpp)."
+    },
+    "electric_spike": {
+      "files": [
+        "sDarkElecSpike.wav"
+      ],
+      "from": "SOUND_ELEC_STRIKE, Data\\Sound\\sDarkElecSpike.wav (ZzzOpenData.cpp:4873). Electric Spike let go, with its bolt (ZzzCharacter.cpp:4391-4404); played on the realm's Loosed (game/play.cpp, fx/electric_spike.h)."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

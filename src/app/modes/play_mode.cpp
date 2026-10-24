@@ -579,6 +579,7 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().impale().open(assets, ctx.textures, &world_.ground());
                 world_.played().force().open(assets, ctx.textures, &world_.ground());
                 world_.played().fireBurst().open(assets, ctx.textures, &world_.ground());
+                world_.played().electricSpike().open(assets, ctx.textures, &world_.ground());
                 world_.played().fireBreath().open(assets, ctx.textures,
                                                   world_.played().showing().table(),
                                                   &world_.ground());
@@ -2027,6 +2028,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().impale().gatherEffects(ctx.renderer.effects());
         world_.played().force().gatherEffects(ctx.renderer.effects());
         world_.played().fireBurst().gatherEffects(ctx.renderer.effects());
+        world_.played().electricSpike().gatherEffects(ctx.renderer.effects());
         world_.played().fireBreath().gatherEffects(ctx.renderer.effects(), eye.position,
                                                    eye.target, daylightOf(ctx.lighting));
         // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and
