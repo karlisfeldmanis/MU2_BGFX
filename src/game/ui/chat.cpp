@@ -1555,6 +1555,15 @@ void Chat::update(float seconds, float width, float height, float bottom, float 
     if (settingsOpen_) {
         const float x = std::min(panel_.right() + kSettingsGap * u, width - kSettingsWide * u - 8.0f * u);
         settingsBox_ = {x, panel_.y, kSettingsWide * u, (40.0f + kSettingsRow * 7.0f + 14.0f) * u};
+        // Never over the HUD either: over a piece of it, the box rises until its foot clears it.
+        for (int pass = 0; pass < 2; ++pass) {
+            for (const Box& block : blocks_) {
+                const Box& b = settingsBox_;
+                if (b.bottom() <= block.y || b.y >= block.bottom() || b.right() <= block.x || b.x >= block.right())
+                    continue;
+                settingsBox_.y = std::max(8.0f * u, std::round(block.y - kSettingsGap * u - b.h));
+            }
+        }
     }
 
     // Lit: the pointer on it, the box open, a drag, a menu or the settings.
