@@ -30,6 +30,8 @@ constexpr double kReask = 2.5;
 constexpr float kSetOn = 6.0f;
 // A skill asked and not thrown (cooling, no mana, out of reach) is not asked again before this.
 constexpr double kSkillRetry = 1.0;
+// How long the realm keeps a key's wish (realm_skills.cpp's kWishTicks).
+constexpr double kWishSeconds = 1.5;
 constexpr double kAuraRetry = 4.0;
 // Around the one he fights, the bodies that count toward "3+ near", in tiles.
 constexpr float kCrowd = 3.0f;
@@ -227,6 +229,7 @@ void Helper::start(const Play& play, const Stats* carried) {
     walkedColumn_ = walkedRow_ = -1;
     target_ = picking_ = 0;
     tried_.clear();
+    pendingSkill_ = 0;
     lootTried_.clear();
     potions_ = play.realm().autoDrinkSlot(false) >= 0;
     core::logf("helper: started at %d,%d", anchorColumn_, anchorRow_);
@@ -620,8 +623,20 @@ void Helper::keys(Play& play, const HelperSettings& settings, uint32_t target) {
     const sim::Realm& realm = play.realm();
     const sim::Body& hero = realm.hero();
     const sim::Body* at = realm.find(target);
-    // Not held back by a swing under way: the realm spends his next swing on the skill.
     if (at == nullptr) return;
+    // **One key at a time.** The realm keeps one wish, which waits on the swing under way: a
+    // second key asked meanwhile took its place (Fire Burst asked, Electric Spike 0.3 s on, only
+    // the Spike thrown). So the last one asked stands until his next swing begins -- the wish is
+    // read before the order, so that swing is it, thrown or refused -- or the realm's second and
+    // a half lapses it. And a swing that felled the one it named left it on a corpse while
+    // he swung Force on: asked again at once, at the one he fights now.
+    if (pendingSkill_ != 0) {
+        const sim::Body* named = realm.find(pendingAt_);
+        const bool fell = named == nullptr || !named->alive();
+        if (!fell && hero.swingsAt == pendingSwing_ && clock_ < pendingUntil_) return;
+        if (fell && hero.swingsAt == pendingSwing_) tried_.erase(pendingSkill_);
+        pendingSkill_ = 0;
+    }
     int crowd = 0;
     for (const sim::Body& body : realm.bodies()) {
         if (body.monster() && body.alive() && !body.gone && tilesApart(at->x, at->y, body.x, body.y) <= kCrowd) ++crowd;
@@ -644,8 +659,20 @@ void Helper::keys(Play& play, const HelperSettings& settings, uint32_t target) {
         if (!now || hero.mana < price || !row->suits(hand)) continue;
         if (const auto tried = tried_.find(skill); tried != tried_.end() && tried->second > clock_) continue;
         tried_[skill] = clock_ + kSkillRetry;
+        pendingSkill_ = skill;
+        pendingAt_ = target;
+        pendingSwing_ = hero.swingsAt;
+        pendingUntil_ = clock_ + kWishSeconds;
         core::logf("helper: %s at %u, %d about it", row->name, unsigned(target), crowd);
-        play.castSkill(skill, target);
+        // **At the one he fights, never the mouse** (Israphel on Discord: "power wave missed a lot
+        // with the helper"): Play::castSkill sends a skill with a direction the way the pointer is,
+        // which while the helper hunts is wherever the hand left it. Pressed on him instead, as a
+        // press with the pointer on a monster is (Realm::invokeAt), it turns onto him as it goes.
+        if (row->aimsAtPointer()) {
+            play.castHeroAt(skill, at->column(), at->row(), target);
+        } else {
+            play.castSkill(skill, target);
+        }
         return;
     }
 }

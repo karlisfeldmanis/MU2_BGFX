@@ -147,6 +147,11 @@ private:
     int32_t bar_[8] = {};
     int barCount_ = 0;
     std::map<int32_t, double> tried_;       // a skill asked: not again before this
+    // The key last asked, while it waits on his swing: no other is asked over it (Helper::keys).
+    int32_t pendingSkill_ = 0;
+    uint32_t pendingAt_ = 0;
+    int64_t pendingSwing_ = 0;
+    double pendingUntil_ = 0.0;
     std::map<uint32_t, double> lootTried_;  // a pickup asked: given up after this
     std::map<uint64_t, double> aidTried_;   // an aid asked on one of his party: not again before this
     std::map<int, double> mendTried_;       // a worn slot's repair asked: not again before this
