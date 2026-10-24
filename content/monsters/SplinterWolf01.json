@@ -38,9 +38,9 @@
     "attack_rate": 1430,
     "defense_rate": 500,
     "attack_skill": null,
-    "note": "OpenMU VersionSeasonSix (KanturuRuins.cs:306): level 80, 16,000 HP, 310-340. Raised past Aida's Bloody breeds (134-140) as docs/worlds/kanturu-port.md decision 3 asks: 142, 180,000, 1290-1360; MU's ranges and pace kept."
+    "note": "OpenMU VersionSeasonSix (KanturuRuins.cs:306): level 80, 16000 life, 310-340, 230, 460/163. Raised past Aida (decision 3): one step above Bloody Witch Queen (140); ranges and speeds as MU. Ours, for the user to judge in the arena (2026-10-22)."
   },
-  "why_this_one": "To write.",
+  "why_this_one": "The Ruins' first breed: 22 OpenMU spots on the south arc nearest the camp (x 36-189, y 196-240, 29-168 steps), the weakest of the eight, so it is the first a hero fights past the Tarkan door (docs/worlds/kanturu-port.md 4.1).",
   "mu_checklist": [
     {
       "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:441",
@@ -55,7 +55,7 @@
         "BITMAP_JOINT_ENERGY"
       ],
       "state": "done",
-      "note": "the recipe's monster block (mu new monster)"
+      "note": "the recipe's monster block (model 107, scale 0.8); its two eye joints are show.eye_trail: Bone26 right, Bone25 left, red (1.5, 0.01, 0), 10 units across, 10 tails each (fx/eye_trails, now per breed)"
     },
     {
       "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:1221",
@@ -74,8 +74,8 @@
         "SOUND_KANTURU_1ST_SWOLF_ATTACK1",
         "SOUND_KANTURU_1ST_SWOLF_DIE"
       ],
-      "state": "todo",
-      "note": ""
+      "state": "done",
+      "note": "as splinterwolf_move (swolf_idle-01/02, one frame in 15 while it walks), splinterwolf_attack (swolf_attack-01/02, once a blow) and splinterwolf_die (swolf_death) in content/sounds/sounds.json, cooked into showing"
     },
     {
       "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:414",
@@ -87,8 +87,8 @@
         "SOUND_KANTURU_1ST_SWOLF_MOVE1"
       ],
       "file": "Data/Sound/w37/swolf_idle-01.wav",
-      "state": "todo",
-      "note": ""
+      "state": "done",
+      "note": "content/sounds/swolf_idle-01.wav and -02.wav, splinterwolf_move"
     },
     {
       "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:416",
@@ -100,8 +100,8 @@
         "SOUND_KANTURU_1ST_SWOLF_ATTACK1"
       ],
       "file": "Data/Sound/w37/swolf_attack-01.wav",
-      "state": "todo",
-      "note": ""
+      "state": "done",
+      "note": "content/sounds/swolf_attack-01.wav and -02.wav, splinterwolf_attack"
     },
     {
       "at": "MuMain/src/source/World/MapInfra/MapManager.cpp:418",
@@ -113,8 +113,8 @@
         "SOUND_KANTURU_1ST_SWOLF_DIE"
       ],
       "file": "Data/Sound/w37/swolf_death.wav",
-      "state": "todo",
-      "note": ""
+      "state": "done",
+      "note": "content/sounds/swolf_death.wav, splinterwolf_die"
     },
     {
       "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:954",
@@ -127,8 +127,8 @@
         "RENDER_TEXTURE",
         "RENDER_BRIGHT"
       ],
-      "state": "todo",
-      "note": ""
+      "state": "done",
+      "note": "glow.splinterwolfef_R and splinterwolfef01_R: drawn added only, pulse 0.5 +- 0.5 at the half rate (sin(WorldTime * 0.002)), MU's fLumi; meshes 0, 1, 4 lit"
     },
     {
       "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2715",
@@ -144,8 +144,8 @@
         "MONSTER01_DIE"
       ],
       "calls": [],
-      "state": "todo",
-      "note": ""
+      "state": "done",
+      "note": "content/monsters/actions.json action_overrides.107: stand 0.25, walk 0.23, attack 0.28, die 0.19 (the Render case's per-frame speeds win over OpenMonsterModel's 0.27/0.30)"
     },
     {
       "at": "MuMain/src/source/Engine/Object/ZzzOpenData.cpp:2430",
@@ -164,8 +164,8 @@
       "lines": 4,
       "actions": [],
       "calls": [],
-      "state": "todo",
-      "note": "falls through into the next case: no break"
+      "state": "done",
+      "note": "MU flips a coin between Attack 1 and Attack 2 and returns (no fall-through: the case returns true). Ours: the shared SwordCount rule, one blow in three Attack 1; both clips play"
     },
     {
       "at": "MuMain/src/source/World/GameMaps/GM_Kanturu_1st.cpp:685",
@@ -174,10 +174,57 @@
       "lines": 5,
       "actions": [],
       "calls": [],
-      "state": "todo",
-      "note": ""
+      "state": "done",
+      "note": "AttackEffectKanturu1stMonster's MODEL_SPLINTER_WOLF case only returns true: no attack effect to carry"
     }
   ],
+  "glow": {
+    "splinterwolfef_R": {
+      "pulse": [
+        0.5,
+        0.5
+      ],
+      "pulse_rate": "half"
+    },
+    "splinterwolfef01_R": {
+      "pulse": [
+        0.5,
+        0.5
+      ],
+      "pulse_rate": "half"
+    }
+  },
+  "glow_from": "RenderKanturu1stMonsterObjectMesh MODEL_SPLINTER_WOLF (GM_Kanturu_1st.cpp:954-964), BodyLight 1: meshes 0, 1 and 4 (the body, fur and tail) plain; meshes 2 and 3 (splinterwolfef_R, splinterwolfef01_R) drawn only RENDER_TEXTURE | RENDER_BRIGHT, added, at fLumi = (sin(WorldTime * 0.002) + 1) * 0.5, a slow breath from dark to full over about 3 s. Ours: both drawn as glows only, pulse 0.5 +- 0.5 at the half rate (WorldTime * 0.002).",
+  "rules": {
+    "drops": {
+      "money_rate": 30,
+      "max_plus": 3,
+      "regen": 10
+    },
+    "resist": {
+      "ice": 20,
+      "poison": 20
+    },
+    "note": "Resistance: OpenMU S6 Maps/KanturuRuins.cs:306-332 writes 20/255 to all four, read as WebZen raw values as Aida's are; fire and lightning are not carried. Drops: Aida's (30 and 3) until the user settles Kanturu's (docs/worlds/kanturu-port.md decision 8); RegTime 10, OpenMU's RespawnDelay."
+  },
+  "show": {
+    "tags": [],
+    "eye_trail": {
+      "right": "Bone26",
+      "left": "Bone25",
+      "colour": [
+        1.5,
+        0.01,
+        0.0
+      ],
+      "width": 10,
+      "tails": [
+        10,
+        10
+      ],
+      "note": "CreateKanturu1stMonster MONSTER_SPLINTER_WOLF (GM_Kanturu_1st.cpp:441-460): MoveEye(o, b, 16, 17), bones 16 and 17 (Bone26 right, Bone25 left), and two BITMAP_JOINT_ENERGY at scale 10 in (1.5, 0.01, 0), subtypes 24 (EyeLeft) and 25 (EyeRight), 10 tails each (ZzzEffectJoint.cpp:347-358): two short red streaks off its eyes."
+    }
+  },
   "islands": [
     {
       "island": 0,
@@ -196,8 +243,8 @@
       ],
       "bake_uv": [
         0.013,
-        0.063,
-        0.985,
+        0.013,
+        0.987,
         0.987
       ]
     },
@@ -217,10 +264,10 @@
         0.431
       ],
       "bake_uv": [
-        0.874,
-        0.76,
-        0.882,
-        0.771
+        0.445,
+        0.642,
+        0.461,
+        0.664
       ]
     },
     {
@@ -239,10 +286,10 @@
         0.356
       ],
       "bake_uv": [
-        0.964,
-        0.013,
-        0.974,
-        0.135
+        0.381,
+        0.952,
+        0.434,
+        0.97
       ]
     },
     {
@@ -261,10 +308,10 @@
         0.628
       ],
       "bake_uv": [
-        0.429,
-        0.34,
-        0.969,
-        0.956
+        0.013,
+        0.271,
+        0.932,
+        0.959
       ]
     },
     {
@@ -283,10 +330,10 @@
         0.356
       ],
       "bake_uv": [
-        0.964,
-        0.16,
-        0.975,
-        0.79
+        0.013,
+        0.954,
+        0.936,
+        0.972
       ]
     },
     {
@@ -305,10 +352,10 @@
         0.356
       ],
       "bake_uv": [
-        0.966,
-        0.693,
-        0.977,
-        0.924
+        0.275,
+        0.841,
+        0.97,
+        0.965
       ]
     },
     {
@@ -327,10 +374,10 @@
         0.356
       ],
       "bake_uv": [
-        0.967,
-        0.723,
-        0.977,
-        0.97
+        0.951,
+        0.247,
+        0.972,
+        0.298
       ]
     },
     {
@@ -349,10 +396,10 @@
         0.628
       ],
       "bake_uv": [
-        0.212,
-        0.194,
-        0.972,
-        0.958
+        0.015,
+        0.169,
+        0.959,
+        0.925
       ]
     },
     {
@@ -371,10 +418,10 @@
         0.356
       ],
       "bake_uv": [
-        0.48,
-        0.753,
-        0.977,
-        0.973
+        0.057,
+        0.96,
+        0.197,
+        0.974
       ]
     },
     {
@@ -393,10 +440,10 @@
         0.356
       ],
       "bake_uv": [
-        0.511,
-        0.969,
-        0.81,
-        0.978
+        0.802,
+        0.128,
+        0.966,
+        0.976
       ]
     },
     {
@@ -415,10 +462,10 @@
         0.798
       ],
       "bake_uv": [
-        0.638,
-        0.879,
-        0.687,
-        0.903
+        0.623,
+        0.466,
+        0.726,
+        0.517
       ]
     },
     {
@@ -437,10 +484,10 @@
         0.719
       ],
       "bake_uv": [
-        0.874,
-        0.194,
-        0.894,
-        0.237
+        0.364,
+        0.691,
+        0.407,
+        0.781
       ]
     },
     {
@@ -459,10 +506,10 @@
         0.24
       ],
       "bake_uv": [
-        0.393,
-        0.896,
-        0.422,
-        0.92
+        0.436,
+        0.722,
+        0.496,
+        0.773
       ]
     },
     {
@@ -481,10 +528,10 @@
         0.431
       ],
       "bake_uv": [
-        0.874,
-        0.702,
-        0.882,
-        0.713
+        0.61,
+        0.638,
+        0.625,
+        0.66
       ]
     },
     {
@@ -503,10 +550,10 @@
         0.356
       ],
       "bake_uv": [
-        0.552,
-        0.969,
-        0.687,
-        0.979
+        0.459,
+        0.014,
+        0.974,
+        0.023
       ]
     },
     {
@@ -525,10 +572,10 @@
         0.628
       ],
       "bake_uv": [
-        0.085,
-        0.235,
-        0.972,
-        0.951
+        0.068,
+        0.139,
+        0.932,
+        0.963
       ]
     },
     {
@@ -547,10 +594,10 @@
         0.356
       ],
       "bake_uv": [
-        0.589,
-        0.969,
-        0.847,
-        0.98
+        0.333,
+        0.426,
+        0.976,
+        0.726
       ]
     },
     {
@@ -569,10 +616,10 @@
         0.356
       ],
       "bake_uv": [
-        0.283,
-        0.649,
-        0.973,
-        0.981
+        0.748,
+        0.774,
+        0.966,
+        0.978
       ]
     },
     {
@@ -591,10 +638,10 @@
         0.356
       ],
       "bake_uv": [
-        0.314,
-        0.97,
-        0.644,
-        0.981
+        0.957,
+        0.054,
+        0.98,
+        0.947
       ]
     },
     {
@@ -613,10 +660,10 @@
         0.628
       ],
       "bake_uv": [
-        0.283,
-        0.194,
-        0.973,
-        0.956
+        0.294,
+        0.54,
+        0.932,
+        0.963
       ]
     },
     {
@@ -635,10 +682,10 @@
         0.356
       ],
       "bake_uv": [
-        0.013,
-        0.97,
-        0.091,
-        0.981
+        0.644,
+        0.463,
+        0.982,
+        0.97
       ]
     },
     {
@@ -657,10 +704,10 @@
         0.356
       ],
       "bake_uv": [
-        0.048,
-        0.97,
-        0.724,
-        0.981
+        0.237,
+        0.168,
+        0.983,
+        0.972
       ]
     },
     {
@@ -679,10 +726,10 @@
         0.798
       ],
       "bake_uv": [
-        0.718,
-        0.879,
-        0.767,
-        0.903
+        0.623,
+        0.541,
+        0.726,
+        0.592
       ]
     },
     {
@@ -701,10 +748,10 @@
         0.719
       ],
       "bake_uv": [
-        0.212,
-        0.88,
-        0.233,
-        0.922
+        0.258,
+        0.695,
+        0.301,
+        0.785
       ]
     },
     {
@@ -723,10 +770,10 @@
         0.24
       ],
       "bake_uv": [
-        0.915,
-        0.013,
-        0.943,
-        0.037
+        0.754,
+        0.532,
+        0.815,
+        0.584
       ]
     },
     {
@@ -745,10 +792,10 @@
         0.89
       ],
       "bake_uv": [
-        0.869,
-        0.285,
-        0.89,
-        0.619
+        0.271,
+        0.014,
+        0.707,
+        0.269
       ]
     },
     {
@@ -767,10 +814,10 @@
         0.89
       ],
       "bake_uv": [
-        0.874,
-        0.373,
-        0.89,
-        0.523
+        0.705,
+        0.235,
+        0.749,
+        0.747
       ]
     },
     {
@@ -789,10 +836,10 @@
         0.996
       ],
       "bake_uv": [
-        0.874,
-        0.013,
-        0.941,
-        0.97
+        0.53,
+        0.044,
+        0.788,
+        0.792
       ]
     },
     {
@@ -811,10 +858,10 @@
         0.996
       ],
       "bake_uv": [
-        0.874,
-        0.104,
-        0.926,
-        0.972
+        0.463,
+        0.354,
+        0.781,
+        0.959
       ]
     },
     {
@@ -833,10 +880,10 @@
         1.003
       ],
       "bake_uv": [
-        0.14,
-        0.285,
-        0.848,
-        0.856
+        0.317,
+        0.668,
+        0.959,
+        0.963
       ]
     },
     {
@@ -855,9 +902,9 @@
         1.003
       ],
       "bake_uv": [
-        0.201,
-        0.557,
-        0.843,
+        0.921,
+        0.014,
+        0.963,
         0.87
       ]
     },
@@ -877,10 +924,10 @@
         1.002
       ],
       "bake_uv": [
-        0.552,
-        0.557,
-        0.653,
-        0.785
+        0.376,
+        0.876,
+        0.836,
+        0.925
       ]
     },
     {
@@ -899,10 +946,10 @@
         1.002
       ],
       "bake_uv": [
-        0.283,
-        0.557,
-        0.78,
-        0.799
+        0.149,
+        0.607,
+        0.91,
+        0.921
       ]
     },
     {
@@ -921,10 +968,10 @@
         1.002
       ],
       "bake_uv": [
-        0.103,
-        0.013,
-        0.786,
-        0.784
+        0.879,
+        0.198,
+        0.921,
+        0.747
       ]
     },
     {
@@ -943,10 +990,10 @@
         1.003
       ],
       "bake_uv": [
-        0.013,
-        0.013,
-        0.524,
-        0.395
+        0.149,
+        0.42,
+        0.86,
+        0.868
       ]
     },
     {
@@ -965,10 +1012,10 @@
         1.003
       ],
       "bake_uv": [
-        0.283,
-        0.013,
-        0.848,
-        0.87
+        0.152,
+        0.427,
+        0.947,
+        0.965
       ]
     },
     {
@@ -987,10 +1034,10 @@
         1.002
       ],
       "bake_uv": [
-        0.192,
-        0.149,
-        0.786,
-        0.784
+        0.27,
+        0.856,
+        0.894,
+        0.929
       ]
     },
     {
@@ -1009,10 +1056,10 @@
         1.002
       ],
       "bake_uv": [
-        0.387,
-        0.285,
-        0.786,
-        0.799
+        0.721,
+        0.077,
+        0.902,
+        0.921
       ]
     },
     {
@@ -1032,9 +1079,9 @@
       ],
       "bake_uv": [
         0.013,
-        0.421,
-        0.786,
-        0.784
+        0.427,
+        0.243,
+        0.906
       ]
     },
     {
@@ -1053,10 +1100,10 @@
         1.003
       ],
       "bake_uv": [
-        0.013,
-        0.013,
-        0.659,
-        0.531
+        0.045,
+        0.014,
+        0.894,
+        0.894
       ]
     },
     {
@@ -1075,10 +1122,10 @@
         0.421
       ],
       "bake_uv": [
-        0.013,
-        0.809,
-        0.051,
-        0.855
+        0.946,
+        0.339,
+        0.957,
+        0.352
       ]
     },
     {
@@ -1097,10 +1144,10 @@
         0.421
       ],
       "bake_uv": [
-        0.076,
-        0.809,
-        0.114,
-        0.855
+        0.531,
+        0.949,
+        0.542,
+        0.963
       ]
     },
     {
@@ -1119,10 +1166,10 @@
         0.97
       ],
       "bake_uv": [
-        0.638,
-        0.808,
-        0.693,
-        0.853
+        0.446,
+        0.204,
+        0.561,
+        0.3
       ]
     },
     {
@@ -1141,10 +1188,10 @@
         0.989
       ],
       "bake_uv": [
-        0.638,
-        0.693,
-        0.779,
-        0.782
+        0.013,
+        0.013,
+        0.46,
+        0.46
       ]
     },
     {
@@ -1163,10 +1210,10 @@
         0.97
       ],
       "bake_uv": [
-        0.718,
-        0.808,
-        0.773,
-        0.853
+        0.487,
+        0.013,
+        0.603,
+        0.11
       ]
     },
     {
@@ -1186,9 +1233,9 @@
       ],
       "bake_uv": [
         0.013,
-        0.557,
-        0.527,
-        0.666
+        0.013,
+        0.596,
+        0.676
       ]
     }
   ]

@@ -1,0 +1,130 @@
+{
+  "item": "Object83",
+  "mu_name": "Object83",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 82,
+  "placements": 4,
+  "profile": "world",
+  "sheets": {
+    "so_k34wao02": "kl_so_k34wao02.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "so_k34wao02": "plate_steel"
+  },
+  "material_note": "so_k34wao02: dark steel with bronze trim and a winged fan: plate_steel.",
+  "why_this_one": "A 6.7 m dark steel column, 4 of them standing on those pedestals. MU's model is still (no moving bone). Batch 9, the Relics' last objects (the user, 2026-10-24: \"go\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 24,
+      "area": 88548.7,
+      "along": [
+        -37.3,
+        36.0
+      ],
+      "mu_uv": [
+        0.257,
+        0.34,
+        0.86,
+        0.991
+      ],
+      "bake_uv": [
+        0.222,
+        0.007,
+        0.873,
+        0.921
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 20,
+      "area": 58674.1,
+      "along": [
+        -18.1,
+        16.8
+      ],
+      "mu_uv": [
+        0.007,
+        0.082,
+        1.0,
+        0.995
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.993,
+        0.749
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 18,
+      "area": 13996.4,
+      "along": [
+        -50.7,
+        -6.3
+      ],
+      "mu_uv": [
+        0.125,
+        0.291,
+        0.876,
+        0.994
+      ],
+      "bake_uv": [
+        0.026,
+        0.471,
+        0.755,
+        0.96
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 22,
+      "area": 16449.6,
+      "along": [
+        -14.7,
+        13.3
+      ],
+      "mu_uv": [
+        0.511,
+        0.009,
+        0.918,
+        0.924
+      ],
+      "bake_uv": [
+        0.007,
+        0.612,
+        0.209,
+        0.874
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 18,
+      "area": 13996.5,
+      "along": [
+        5.5,
+        50.0
+      ],
+      "mu_uv": [
+        0.125,
+        0.291,
+        0.876,
+        0.994
+      ],
+      "bake_uv": [
+        0.026,
+        0.471,
+        0.854,
+        0.982
+      ]
+    }
+  ]
+}

@@ -196,9 +196,13 @@ void StandShow::update(float seconds, const Figure& figure) {
             if (figure.pointOn(bone, origin, at)) stars_.star(at, shadePoison_, 1.0f);
         }
     }
-    if (trail_[0] >= 0 && trail_[1] >= 0) {
-        if (figure.pointOn(trail_[0], origin, at)) trails_.feed(1, false, at);
-        if (figure.pointOn(trail_[1], origin, at)) trails_.feed(1, true, at);
+    if (trail_[0] >= 0 && trail_[1] >= 0 && body_ != nullptr) {
+        for (int e = 0; e < 2; ++e) {
+            if (figure.pointOn(trail_[e], origin, at)) {
+                trails_.feed(1, e == 1, at, body_->eyeTrailColour, body_->eyeTrailWidth,
+                             body_->eyeTrailTails[e]);
+            }
+        }
     }
     if (handFlame_[3] >= 0) {
         handOwed_ += frames;

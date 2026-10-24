@@ -1,0 +1,19 @@
+{
+  "item": "BladeTornado01",
+  "mu_name": "The blue swirl a Kanturu Blade Hunter's blow throws",
+  "mu_name_from": "ZzzOpenData.cpp:4456-4457: AccessModel(MODEL_BLADE_SKILL, Data/Effect/, bladetonedo) - Data/Effect/bladetonedo.bmd.",
+  "kind": "blade_hunter",
+  "why_this_one": "MODEL_BLADE_SKILL, which AttackEffectKanturu1stMonster creates 140 units out from the hunter's BLADE_L_HAND at CheckAttackTime(14) (GM_Kanturu_1st.cpp:716-740). game/fx/blade_hunter.h draws it.",
+  "mesh": "BladeTornado01.obj",
+  "mesh_from": "muextract export-obj on Data/Effect/bladetonedo.bmd, from MuMain's clean Data: one mesh, 156 vertices, 160 triangles on shockwave.jpg; about 0.8 m round and lying 1.8 m back from its origin along MU's y.",
+  "parts": [
+    {
+      "group": "shockwave",
+      "sheet": "shockwave.png",
+      "blend": "additive",
+      "note": "Data/Effect/shockwave.OZJ: a grey ring of streaks on black. Drawn RENDER_TEXTURE | RENDER_BRIGHT three times over at BodyLight (0.2, 0.2, 1.0) (ZzzObject.cpp:1669-1674)."
+    }
+  ],
+  "scale": 1.5,
+  "scale_from": "Scale 1.5 at its birth, down 0.1 a frame to 0.8; LifeTime 10 (ZzzEffect.cpp:521-530, MoveHandlers.cpp:331-341)."
+}

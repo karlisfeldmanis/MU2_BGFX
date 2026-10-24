@@ -1,0 +1,88 @@
+{
+  "item": "Object25",
+  "mu_name": "Object25",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 24,
+  "placements": 16,
+  "profile": "world",
+  "sheets": {
+    "Mcanwall002": "kl_mcanwall002.png",
+    "Mcanwall011": "kl_mcanwall011.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "Mcanwall002": "flagstone",
+    "Mcanwall011": "flagstone"
+  },
+  "material_note": "Mcanwall002: carved grey stone: flagstone; Mcanwall011: carved grey stone with iron and bronze fittings: flagstone.",
+  "why_this_one": "A 2.4 m carved stone block. 16 placed. MU's model is still (no moving bone). Batch 6 of the Relics (the user, 2026-10-24: \"next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 113,
+      "area": 57915.5,
+      "along": [
+        56.0,
+        83.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.0,
+        1.002,
+        1.0
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.989,
+        0.989
+      ]
+    },
+    {
+      "island": 1,
+      "material": "flagstone",
+      "triangles": 60,
+      "area": 46261.3,
+      "along": [
+        -83.6,
+        -56.0
+      ],
+      "mu_uv": [
+        -0.002,
+        -0.043,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.943,
+        0.918
+      ]
+    },
+    {
+      "island": 2,
+      "material": "flagstone",
+      "triangles": 29,
+      "area": 42210.5,
+      "along": [
+        -62.3,
+        65.8
+      ],
+      "mu_uv": [
+        0.549,
+        0.002,
+        0.996,
+        0.526
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.935,
+        0.922
+      ]
+    }
+  ]
+}

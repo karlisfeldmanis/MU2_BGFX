@@ -1,0 +1,44 @@
+{
+  "item": "Object04",
+  "mu_name": "Object04",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 3,
+  "placements": 9,
+  "profile": "world",
+  "sheets": {
+    "Mcanwall003": "kl_mcanwall003.png",
+    "cho_chair_01": "kl_cho_chair_01.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "Mcanwall003": "flagstone",
+    "cho_chair_01": "flagstone"
+  },
+  "material_note": "Mcanwall003: carved grey stone with banded courses: flagstone; cho_chair_01: a grey stone seat cut with an octagon: flagstone.",
+  "why_this_one": "A stone chair, 9 of them, eight in the safe hall: a character sits on it (MU: CreateOperate, GM_Kanturu_2nd.cpp:41-44; Sit = true, ZzzInterface.cpp:1766-1772), pipeline.perches type 3. MU's model is still (no moving bone). Batch 7 of the Relics (the user, 2026-10-24: \"next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 22,
+      "area": 34954.1,
+      "along": [
+        -50.0,
+        50.0
+      ],
+      "mu_uv": [
+        0.012,
+        0.012,
+        0.988,
+        0.988
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.957
+      ]
+    }
+  ]
+}

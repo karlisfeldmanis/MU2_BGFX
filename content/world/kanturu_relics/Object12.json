@@ -1,0 +1,42 @@
+{
+  "item": "Object12",
+  "mu_name": "Object12",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 11,
+  "placements": 9,
+  "profile": "world",
+  "sheets": {
+    "song_k21wall01": "kl_song_k21wall01.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "song_k21wall01": "flagstone"
+  },
+  "material_note": "song_k21wall01: grey stone with a carved frieze: flagstone.",
+  "why_this_one": "A 3.7 m stone wall with a carved frieze. 9 placed. MU's model is still (no moving bone). Batch 6 of the Relics (the user, 2026-10-24: \"next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 4,
+      "area": 120067.2,
+      "along": [
+        -21.5,
+        21.5
+      ],
+      "mu_uv": [
+        -0.002,
+        0.0,
+        1.003,
+        0.991
+      ],
+      "bake_uv": [
+        -0.002,
+        0.0,
+        1.003,
+        0.991
+      ]
+    }
+  ]
+}

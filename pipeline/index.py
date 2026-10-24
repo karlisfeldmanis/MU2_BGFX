@@ -676,6 +676,12 @@ EFFECTS = {
     # Kanturu's carnivorous plants' spit, BITMAP_TWINTAIL_WATER, Effect/water.OZJ
     # (ZzzOpenData.cpp:5428): a 32 square on black, added (game/world/ruin_effects.h).
     "plant_spit": "effects/kanturu/water.png",
+    # The Iron Rider's (game/fx/iron_rider.h): its arrow's BITMAP_LIGHT + 3, Effect/Impack01.OZJ
+    # (ZzzOpenData.cpp:5430) and BITMAP_DS_EFFECT, Effect/BowE.OZJ (:5259), and its death smoke's
+    # BITMAP_CLUD64, Effect/Clud64.OZJ (:5252). 64 squares on black, added.
+    "iron_light": "effects/kanturu/impack01.png",
+    "iron_bow": "effects/kanturu/bowe.png",
+    "iron_cloud": "effects/kanturu/clud64.png",
     # The Witch Queen's (game/fx/witch_queen.h): BITMAP_CHROME3, Effect/Chrome03.OZJ
     # (ZzzOpenData.cpp:5300), a grey cloud her blows' BITMAP_SMOKE sub 27 wears; and
     # BITMAP_TRUE_BLUE, Effect/fantaB.OZJ (:5186), the blue lick where each of her strikes lands.
@@ -2111,6 +2117,7 @@ def missiles(root: Path, build: Path) -> dict:
         **_models(root, build, "impale"),
         **_models(root, build, "tarkan"),
         **_models(root, build, "aida"),
+        **_models(root, build, "kanturu"),
         **_models(root, build, "weakness"),
         **_models(root, build, "pollution"),
     }

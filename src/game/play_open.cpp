@@ -913,7 +913,8 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                     one.clawBones.push_back(ends[1]);
                 }
             }
-            if (look->has("death_tree") && look->skeletonMesh) {
+            // And a Gigantis's horn light, the second of its two (show.bones.stars, star_tint).
+            if ((look->has("death_tree") || look->has("gigantis")) && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (const std::string& name : look->bonesFor("stars"))
                     for (size_t b = 0; b < bones.size(); ++b)

@@ -221,6 +221,13 @@ FLOOR_BY_MAP = world_manifest.by_map("floor", world_manifest.as_tuples)
 #: run opens and the closed grid does not, so the castle itself stays ground.
 VOID_FILL_BY_MAP = world_manifest.by_map("void_fill", world_manifest.as_tuples)
 
+#: And the drawn ground no walk from those seeds can touch, walkable or not: the maps whose void
+#: is filled with something better than MU's floor. The Kanturu Relics draw a ring of NoMove
+#: floor round the maze and two strips five tiles off the safe hall, all ending on hard tile
+#: edges; their void has clouds (the user, 2026-10-24: "still see some ground outside the
+#: platform, we are using void with clouds now"). Ours, marked.
+VOID_ISLANDS = world_manifest.maps_with("void_islands")
+
 #: Which void a world's ground is spread over at the map's edge, by map number. Ours, marked:
 #: MU framed its maps for a 4:3 screen, and Aida's outer void -- the frame round the map and
 #: the channel between the west ruins and the middle, a third of its NoGround -- is bare black
@@ -673,6 +680,23 @@ def main() -> None:
         flags[filler] |= NO_GROUND
         print(f"  void       {int(filler.sum())} open tiles no walk from {seeds} reaches -> NoGround "
               f"(VOID_FILL_BY_MAP)")
+        if number - 1 in VOID_ISLANDS:
+            # From the reached walk out over every drawn tile, walkable or not, four ways: what it
+            # never touches is ground standing apart in the void.
+            drawn = (flags & NO_GROUND) == 0
+            joined = reached.copy()
+            queue = deque(zip(*np.nonzero(reached)))
+            while queue:
+                y, x = queue.popleft()
+                for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    ny, nx = y + dy, x + dx
+                    if 0 <= ny < SIZE and 0 <= nx < SIZE and drawn[ny, nx] and not joined[ny, nx]:
+                        joined[ny, nx] = True
+                        queue.append((ny, nx))
+            islands = drawn & ~joined
+            flags[islands] |= NO_GROUND
+            print(f"  void       {int(islands.sum())} drawn tiles standing apart from the walk -> "
+                  f"NoGround (VOID_ISLANDS)")
 
     lit = baked_light(world)
 

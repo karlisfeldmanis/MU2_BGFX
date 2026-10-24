@@ -10,10 +10,6 @@ namespace {
 
 constexpr float kUnit = 0.01f;
 constexpr float kFrames = 25.0f;
-// Scale 30: the ribbon 30 units across.
-constexpr float kHalfWidth = 30.0f * kUnit * 0.5f;
-// Light (0.5, 0.1, 1.0), subtypes 2 and 3 (ZzzEffectJoint.cpp:443-444).
-constexpr float kColour[3] = {0.5f, 0.1f, 1.0f};
 // Two a monster, for every Tarkan monster in sight.
 constexpr size_t kTrails = 128;
 
@@ -56,7 +52,8 @@ void EyeTrails::update(float seconds) {
     }
 }
 
-void EyeTrails::feed(uint32_t id, bool left, const float at[3]) {
+void EyeTrails::feed(uint32_t id, bool left, const float at[3], const float colour[3],
+                     float width, int tails) {
     if (!open_) return;
     Trail* found = nullptr;
     for (Trail& one : trails_) {
@@ -68,7 +65,9 @@ void EyeTrails::feed(uint32_t id, bool left, const float at[3]) {
         found = &trails_.back();
         found->id = id;
         found->left = left;
-        found->most = left ? 20 : 8;
+        found->most = std::clamp(tails, 1, kTails);
+        for (int k = 0; k < 3; ++k) found->colour[k] = colour[k];
+        found->halfWidth = width * kUnit * 0.5f;
     }
     found->fed = true;
     for (int k = 0; k < 3; ++k) found->head[k] = at[k];
@@ -96,7 +95,7 @@ void EyeTrails::gather(gfx::Effects& effects, const float* eye) const {
             const float length =
                 std::sqrt(side[0] * side[0] + side[1] * side[1] + side[2] * side[2]);
             if (length < 1e-6f) continue;
-            for (float& s : side) s *= kHalfWidth / length;
+            for (float& s : side) s *= one.halfWidth / length;
             gfx::Sprite sprite;
             sprite.placed = true;
             const float* ends[2] = {a, b};
@@ -110,7 +109,7 @@ void EyeTrails::gather(gfx::Effects& effects, const float* eye) const {
             for (int k = 0; k < 3; ++k) sprite.position[k] = (a[k] + b[k]) * 0.5f;
             // Ours: thinning to nothing at the last tail, so the end does not cut off square.
             const float fade = 1.0f - float(t) / float(one.most);
-            for (int k = 0; k < 3; ++k) sprite.colour[k] = kColour[k] * fade;
+            for (int k = 0; k < 3; ++k) sprite.colour[k] = one.colour[k] * fade;
             sprite.colour[3] = 1.0f;
             sprite.sheet = sheet_;
             sprite.blend = gfx::Blend::Additive;

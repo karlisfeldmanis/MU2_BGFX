@@ -1,0 +1,46 @@
+{
+  "item": "Object81",
+  "mu_name": "Object81",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 80,
+  "placements": 9,
+  "profile": "world",
+  "sheets": {
+    "Mctile02_R": "kl_mctile02_r.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "Mctile02_R": "lamplight"
+  },
+  "material_note": "Mctile02_R: a blue glow fading up from black, MU's bright sheet: lamplight.",
+  "why_this_one": "A 5 m blue glow card laid flat, 9 of them (type 80 is drawn after the characters, GM_Kanturu_2nd.cpp:604-616). MU's model is still (no moving bone). Batch 7 of the Relics (the user, 2026-10-24: \"next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "additive": [
+    "Mctile02_R"
+  ],
+  "additive_from": "Mctile02_R is an _R sheet, drawn RENDER_BRIGHT, added (TextureScript.cpp:16-58).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "lamplight",
+      "triangles": 2,
+      "area": 250000.0,
+      "along": [
+        -250.0,
+        250.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ]
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "item": "Object21",
+  "mu_name": "Object21",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 20,
+  "placements": 31,
+  "profile": "world",
+  "sheets": {
+    "Mcanwall003": "kl_mcanwall003.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "Mcanwall003": "flagstone"
+  },
+  "material_note": "Mcanwall003: carved grey stone with banded courses: flagstone.",
+  "why_this_one": "A 5 m stone pillar, 31 of them, along the halls' walls. Batch 3 of the Relics (the user, 2026-10-23: \"first we eed to finish actual map then we go to monsters\", \"next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "flagstone",
+      "triangles": 36,
+      "area": 6209.2,
+      "along": [
+        -32.8,
+        -4.8
+      ],
+      "mu_uv": [
+        0.681,
+        0.475,
+        0.961,
+        1.002
+      ],
+      "bake_uv": [
+        0.749,
+        0.006,
+        0.96,
+        0.807
+      ]
+    },
+    {
+      "island": 1,
+      "material": "flagstone",
+      "triangles": 22,
+      "area": 40188.1,
+      "along": [
+        -36.8,
+        31.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.0,
+        0.793,
+        1.0
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.877,
+        0.941
+      ]
+    },
+    {
+      "island": 2,
+      "material": "flagstone",
+      "triangles": 8,
+      "area": 19462.7,
+      "along": [
+        -42.3,
+        42.3
+      ],
+      "mu_uv": [
+        0.618,
+        0.004,
+        1.0,
+        0.473
+      ],
+      "bake_uv": [
+        0.006,
+        0.755,
+        0.639,
+        0.994
+      ]
+    }
+  ]
+}

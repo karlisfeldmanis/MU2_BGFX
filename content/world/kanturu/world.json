@@ -23,6 +23,20 @@
           0
         ],
         "note": "Kanturu, from Tarkan. MU's 126 is 17,219-21,220 (Gates.cs:279), which overlaps the way back (127) on three tiles, 17-19,220: a character dropped there would stand on the door home. So it lands on the camp's box, spawn gate 138's (19,217-21,219), as research 2.1 settled."
+      },
+      {
+        "number": 132,
+        "box": [
+          85,
+          89,
+          86,
+          92
+        ],
+        "faces": [
+          -1,
+          0
+        ],
+        "note": "The Ruins, from the Relics: beside the door (Gates.cs:280), facing west, away from 129."
       }
     ],
     "enters": [
@@ -278,17 +292,6 @@
       ],
       "look": 3,
       "note": "MU's Elpis (368), the Refinery Tower's keeper (OpenMU KanturuEvent.cs:51, 77,177 in map 39), stood in the Ruins camp because the Tower is not playable (the user, 2026-10-23: find better locations for them, then you decide): before the north ruin wall at the head of the camp, a shrine, facing the camera. Her refining is not built."
-    },
-    {
-      "npc": 367,
-      "name": "Gateway Machine",
-      "figure": "GatewayMachine",
-      "at": [
-        41,
-        212
-      ],
-      "look": 3,
-      "note": "MU's Gateway Machine (367), which stands in the Relics (OpenMU KanturuRelics.cs:46, 141,191), stood in the Ruins camp because the Relics are not playable (the user, 2026-10-23: find better locations for them, then you decide): the centrepiece of the lit east plaza between its brazier pairs, facing the camera. Tried first behind the Relics door, out over the chasm and unseen, then on the north ground, where it crowded the way. The tower event it opens is not built."
     }
   ]
 }

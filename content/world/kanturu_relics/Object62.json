@@ -1,0 +1,110 @@
+{
+  "item": "Object62",
+  "mu_name": "Object62",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 61,
+  "placements": 109,
+  "profile": "world",
+  "sheets": {
+    "pipe01": "kl_pipe01.png",
+    "pipe02": "kl_pipe02.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "pipe01": "plate_steel",
+    "pipe02": "plate_steel"
+  },
+  "material_note": "pipe01: riveted grey plating with a dark cable channel; pipe02: a riveted octagonal flange round a dark bore: plate_steel.",
+  "why_this_one": "A pipe section of the refinery's pipework, 109 of them, nearly all hung in the void under the maze (1 m above the floor to 3 m below it), where the void clouds drift. Batch 2 of the Relics, the most-placed kinds (the user, 2026-10-23: \"first we eed to finish actual map then we go to monsters\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 22450.9,
+      "along": [
+        -29.4,
+        102.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.996,
+        0.707
+      ],
+      "bake_uv": [
+        0.006,
+        0.481,
+        0.748,
+        0.838
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 24,
+      "area": 19970.4,
+      "along": [
+        -77.6,
+        -27.8
+      ],
+      "mu_uv": [
+        -0.002,
+        0.711,
+        0.996,
+        1.005
+      ],
+      "bake_uv": [
+        0.141,
+        0.301,
+        0.99,
+        0.972
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 3369.1,
+      "along": [
+        -94.7,
+        -75.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.395,
+        0.999,
+        0.955
+      ],
+      "bake_uv": [
+        0.481,
+        0.006,
+        0.985,
+        0.763
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 24,
+      "area": 12056.8,
+      "along": [
+        -102.4,
+        -93.2
+      ],
+      "mu_uv": [
+        -0.002,
+        0.01,
+        0.999,
+        1.004
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.779,
+        0.994
+      ]
+    }
+  ]
+}

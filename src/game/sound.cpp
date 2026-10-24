@@ -1055,13 +1055,18 @@ void Sound::playAt(int handle, float x, float y, float z, uint32_t following) {
     // at one in sixteen frames each, four of them ask for a cry every tenth of a second, and every
     // one cut the last off a few milliseconds in. The hero's own sounds are the exception, ours:
     // his swing is the one noise that must go with what his hands do, so it takes the older voice.
+    // His own, or what sounds unattached where he stands (the coins he picks up) -- not whatever
+    // weigh() ranks kHero for standing within a metre of him: a monster fighting him there
+    // restarted its own cry a blow into it (the user, 2026-10-23: "its being reseted and prevous
+    // audio clip i cant hear till the end").
+    const bool his = following != 0 ? following == im.hero : weight.importance >= kHero;
     int voice = -1;
     for (int k = 0; k < kVoices && voice < 0; ++k) {
         const int v = (event.next + k) % kVoices;
         if (!im.playing(event, v)) voice = v;
     }
     if (voice < 0) {
-        if (weight.importance < kHero) {
+        if (!his) {
             ++im.counted.swallowed;
             return;
         }

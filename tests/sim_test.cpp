@@ -8653,6 +8653,56 @@ void testKanturuGates() {
     check(s.column == 7 && s.row >= 199 && s.row <= 201, "out on Tarkan's gate 128 in the arch");
 }
 
+void testKanturuRelicsGates() {
+    std::printf("kanturu relics gates\n");
+    struct Seen { int gated = 0, barred = 0, column = 0, row = 0; };
+    const auto walk = [](const content::Tables& tables, int fromC, int fromR, int toC, int toR,
+                         int level) {
+        Seen seen;
+        sim::Realm realm;
+        check(realm.raise(&tables, 7, fromC, fromR, sim::Kin::DarkKnight, level),
+              "a realm raises by the gate");
+        sim::Request go;
+        go.kind = sim::Request::Kind::WalkTo;
+        go.column = toC;
+        go.row = toR;
+        realm.ask(go);
+        for (int tick = 0; tick < 400 && seen.gated == 0; ++tick) {
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) {
+                if (one.who != realm.hero().id) continue;
+                if (one.what == sim::What::Barred && seen.barred == 0) seen.barred = one.b;
+                if (one.what == sim::What::Gated) {
+                    seen.gated = one.a;
+                    seen.column = one.b;
+                    seen.row = one.c;
+                }
+            }
+        }
+        return seen;
+    };
+    content::Tables ruins, relics;
+    std::string error;
+    check(content::loadTables(std::string(MU2_ASSET_DIR) + "/cooked/kanturu/kanturu.mur", ruins,
+                              error),
+          "the Ruins' tables load");
+    check(content::loadTables(
+              std::string(MU2_ASSET_DIR) + "/cooked/kanturu_relics/kanturu_relics.mur", relics,
+              error),
+          "the Relics' tables load");
+    // The Ruins' door to the Relics, gate 129 (OpenMU Season Six Gates.cs:539), is shut while the
+    // Relics have no monsters, so the Ruins end there once Tarkan's door opens (2026-10-25): a
+    // level 400 knight walks onto it and nothing takes him. Reopened, it asks 380 (the user,
+    // 2026-10-23; MU 220) and lets out on the Relics' 130, the hall's west end (d467229b).
+    Seen s = walk(ruins, 86, 90, 89, 90, 400);
+    checkEqual(s.gated, 0, "the Ruins' door to the Relics is shut: a level 400 knight is not gated");
+    // And back, gate 131 (Gates.cs:540): MU asks 150, ours free, onto the Ruins' 132.
+    s = walk(relics, 77, 105, 69, 105, 1);
+    checkEqual(s.gated, 131, "a level 1 knight takes the Relics' way back, gate 131");
+    check(s.column >= 85 && s.column <= 86 && s.row >= 89 && s.row <= 92,
+          "out on the Ruins' gate 132 beside the door");
+}
+
 void testTarkanGates() {
     std::printf("tarkan gates\n");
     struct Seen { int gated = 0, barred = 0, column = 0, row = 0; };
@@ -16576,6 +16626,7 @@ int main() {
     testTarkanGates();
     testAidaGates();
     testKanturuGates();
+    testKanturuRelicsGates();
     testIcarusGates();
     testTraps();
     testQuests(tables);

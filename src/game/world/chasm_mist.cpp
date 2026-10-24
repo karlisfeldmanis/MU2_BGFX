@@ -20,6 +20,21 @@ constexpr size_t kMost = 300;          // MU's pool of 3,000, over kRatio
 constexpr float kThrows = 20.0f / kRatio;  // ours a box throws a frame
 constexpr float kRiseLife = 300.0f, kRiseLight = 0.04f;
 constexpr float kHoverLight = 0.06f, kShadeLight = 0.2f;
+// The Relics' kinds: one a box throws in 3 frames, over kRatio.
+constexpr float kRelicThrows = 1.0f / 3.0f / kRatio;
+constexpr float kRelicLife = 500.0f, kRelicReach = 500.0f;  // frames, and units from its birth
+// Ours (the user, 2026-10-24: "fine tune those blue smoke so they are more subtle and not
+// cuted"): the haze at kHazeLevel of MU's light, born only over its box (0.5-2 m up, where MU's
+// is within 2 m either way and half of it sank into the floor), and thinning over kHazeSoft
+// metres before the floor or a wall behind it rather than on a line. Then ("still some cuts,
+// make blue smoke more blurry"): clouds.jpg is lit to its border, so each puff showed as a square;
+// the haze wears one of the void clouds' four soft masses (pipeline/cloud_sheet.py), which fade to
+// nothing at their edges, kHazeBlur times MU's size, at kHazeSheet so a puff gives clouds.jpg's
+// light (its mean 0.23 over the masses' 0.12 at kHazeBlur squared the area, held at 1). Then
+// ("smoke is cuted/croped", "also to blurry"): a card facing the camera still stood through the
+// floor on a straight line, so each puff lies flat, a layer over the floor it was born over, and
+// 1.25 times MU's size where 1.8 read too soft.
+constexpr float kHazeLevel = 0.5f, kHazeSoft = 2.0f, kHazeBlur = 1.25f, kHazeSheet = 1.0f;
 // Ours: the mist's whole clock runs at this pace -- it climbs, turns, lives and is thrown at
 // half MU's speed, so it moves slower at the same density (the user, 2026-10-23: "make smoke
 // move slower").
@@ -58,12 +73,15 @@ void ChasmMist::open(const std::string& assetDir, const std::string& world, cons
     strength_ = std::clamp(worldShow(world).chasmMistStrength, 0.0f, 1.0f);
     content::Showing table;
     std::string error;
-    if (content::loadShowing(assetDir + "/cooked/showing/showing.mus", table, error))
+    if (content::loadShowing(assetDir + "/cooked/showing/showing.mus", table, error)) {
         if (const content::EffectSheet* sheet = table.effect("cloud"))
             sheet_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
+        if (const content::EffectSheet* sheet = table.effect("void_clouds"))
+            haze_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
+    }
     const core::Json doc = core::parseJsonFile(assetDir + "/world/" + world + "/" + world + ".json");
     const core::Json& objects = doc["objects"];
-    size_t counts[3] = {0, 0, 0};
+    size_t counts[4] = {0, 0, 0, 0};
     for (size_t i = 0; i < objects.size(); ++i) {
         const core::Json& one = objects.at(i);
         const std::string model = one["model"].stringOr("");
@@ -71,6 +89,7 @@ void ChasmMist::open(const std::string& assetDir, const std::string& world, cons
         if (model == "Object63") kind = Kind::Rise;
         else if (model == "Object108") kind = Kind::Hover;
         else if (model == "Object109") kind = Kind::Shade;
+        else if (model == "Object51") kind = Kind::Haze;
         else continue;
         const core::Json& at = one["at"];
         if (at.size() < 3) continue;
@@ -86,8 +105,9 @@ void ChasmMist::open(const std::string& assetDir, const std::string& world, cons
     }
     open_ = true;
     puffs_.reserve(kMost);
-    core::logf("chasm mist: %zu rise boxes, %zu hover boxes, %zu shade boxes; sheet %s", counts[0],
-               counts[1], counts[2], bgfx::isValid(sheet_) ? "yes" : "NO");
+    core::logf("chasm mist: %zu rise boxes, %zu hover boxes, %zu shade boxes, %zu haze boxes; sheet %s",
+               counts[0], counts[1], counts[2], counts[3],
+               bgfx::isValid(sheet_) ? "yes" : "NO");
 }
 
 void ChasmMist::shutdown() {
@@ -97,6 +117,7 @@ void ChasmMist::shutdown() {
     warm_ = 0.0f;
     ground_ = nullptr;
     sheet_ = BGFX_INVALID_HANDLE;
+    haze_ = BGFX_INVALID_HANDLE;
 }
 
 bool ChasmMist::voidAt(float x, float z) const {
@@ -134,6 +155,24 @@ void ChasmMist::throwPuff(uint16_t index) {
     puff.at[0] += (std::floor(unit() * 500.0f) - 250.0f) * kUnit;
     puff.at[2] += (std::floor(unit() * 500.0f) - 250.0f) * kUnit;
     puff.phase = std::floor(unit() * 1000.0f);
+    if (box.kind == Kind::Haze) {
+        // Within 200 units across; MU's straight drift along +x +y, ours +x -z.
+        for (int i = 0; i < 3; ++i) puff.at[i] = box.at[i] + (std::floor(unit() * 400.0f) - 200.0f) * kUnit;
+        puff.at[1] = box.at[1] + (50.0f + std::floor(unit() * 150.0f)) * kUnit;
+        const float v = (5.0f + std::floor(unit() * 10.0f)) * 0.12f;
+        puff.speed = v * 1.4142136f;
+        puff.drift[0] = v * kUnit / kFrame;
+        puff.drift[1] = -v * kUnit / kFrame;
+        puff.left = std::min(kRelicLife, kRelicReach / puff.speed);
+        puff.spin = 6.2831853f * unit();
+        puff.scale = (15.0f + std::floor(unit() * 15.0f)) / 30.0f + box.scale;
+        puff.light[1] = 0.01f;
+        puff.light[2] = 0.02f + 0.01f * std::floor(unit() * 3.0f);
+        puff.spinRate = (0.5f + std::floor(unit() * 2.0f)) * kDegrees / kFrame;
+        puff.cell = uint8_t(std::floor(unit() * 4.0f)) & 3u;
+        puffs_.push_back(puff);
+        return;
+    }
     if (box.kind == Kind::Rise) {
         // MU's spread, tried a few times for a spot with the void under half its width.
         const float half = 0.5f * kSheetMetres * 1.9f * box.scale;
@@ -196,6 +235,13 @@ void ChasmMist::update(float seconds, const float near[3]) {
         one.at[0] += one.drift[0] * seconds - one.drift[1] / (std::hypot(one.drift[0], one.drift[1]) + 1e-4f) * s;
         one.at[2] += one.drift[1] * seconds + one.drift[0] / (std::hypot(one.drift[0], one.drift[1]) + 1e-4f) * s;
         one.spin += one.spinRate * seconds;
+        if (one.kind == Kind::Haze) {
+            // Straight on, with neither the wander's sway nor its clock.
+            one.at[0] += one.drift[0] * seconds;
+            one.at[2] += one.drift[1] * seconds;
+            one.left -= frames;
+            continue;
+        }
         if (one.kind == Kind::Rise) {
             one.left -= frames;
             if (one.left > 150.0f) {
@@ -213,7 +259,9 @@ void ChasmMist::update(float seconds, const float near[3]) {
     }
     puffs_.erase(std::remove_if(puffs_.begin(), puffs_.end(),
                                 [](const Puff& p) {
-                                    return p.kind == Kind::Rise ? p.left <= 0.0f : p.left >= kAfterSeen;
+                                    return p.kind == Kind::Rise || p.kind == Kind::Haze
+                                               ? p.left <= 0.0f
+                                               : p.left >= kAfterSeen;
                                 }),
                  puffs_.end());
 
@@ -227,7 +275,7 @@ void ChasmMist::update(float seconds, const float near[3]) {
         while (box.owed >= kFrame) {
             box.owed -= kFrame;
             // kThrows a frame, the fraction by chance.
-            float n = kThrows;
+            float n = box.kind == Kind::Haze ? kRelicThrows : kThrows;
             for (; n >= 1.0f; n -= 1.0f) throwPuff(i);
             if (n > 0.0f && unit() < n) throwPuff(i);
         }
@@ -238,7 +286,41 @@ void ChasmMist::gather(gfx::Effects& effects) const {
     if (!open_ || !bgfx::isValid(sheet_)) return;
     // The minus kind's darkening as kRatio of MU's laid over each other: 1 - (1 - 0.2)^kRatio.
     const float shade = 1.0f - std::pow(1.0f - kShadeLight, kRatio * strength_);
+    const float warm = std::min(warm_ / kWarm, 1.0f);
     for (const Puff& one : puffs_) {
+        if (one.kind == Kind::Haze) {
+            // In over its first kEase frames, out over its last.
+            float ease = std::min(std::min(one.age / kEase, 1.0f), one.left / kEase);
+            ease = std::clamp(ease, 0.0f, 1.0f);
+            ease *= ease * (3.0f - 2.0f * ease);
+            gfx::Sprite sprite;
+            for (int i = 0; i < 3; ++i) {
+                sprite.position[i] = one.at[i];
+                sprite.colour[i] = one.light[i] * kRatio * strength_ * kHazeLevel * kHazeSheet;
+            }
+            sprite.colour[3] = ease * warm * warm;
+            {
+                // Flat, turned about its middle, in its quarter of the sheet.
+                if (!bgfx::isValid(haze_)) continue;
+                const float half = 0.5f * kSheetMetres * one.scale * kHazeBlur;
+                const float c = std::cos(one.spin) * half, s = std::sin(one.spin) * half;
+                const float u0 = 0.5f * float(one.cell & 1u), v0 = 0.5f * float(one.cell >> 1);
+                const float side[4][2] = {{-1, -1}, {1, -1}, {1, 1}, {-1, 1}};
+                for (int k = 0; k < 4; ++k) {
+                    sprite.corner[k][0] = one.at[0] + side[k][0] * c - side[k][1] * s;
+                    sprite.corner[k][1] = one.at[1];
+                    sprite.corner[k][2] = one.at[2] + side[k][0] * s + side[k][1] * c;
+                    sprite.cornerUv[k][0] = u0 + 0.25f * (side[k][0] + 1.0f);
+                    sprite.cornerUv[k][1] = v0 + 0.25f * (side[k][1] + 1.0f);
+                }
+                sprite.placed = true;
+                sprite.sheet = haze_;
+            }
+            sprite.blend = gfx::Blend::Additive;
+            sprite.soft = kHazeSoft;
+            effects.add(sprite);
+            continue;
+        }
         float level;
         float spin = 0.0f;
         gfx::Blend blend = gfx::Blend::Additive;
@@ -262,7 +344,6 @@ void ChasmMist::gather(gfx::Effects& effects) const {
         else ease = std::min(ease, 1.0f - one.left / kAfterSeen);
         ease = std::clamp(ease, 0.0f, 1.0f);
         ease *= ease * (3.0f - 2.0f * ease);
-        const float warm = std::min(warm_ / kWarm, 1.0f);
         level *= ease * warm * warm;
         if (blend == gfx::Blend::Additive) spin += one.spin;
         gfx::Sprite sprite;

@@ -18,6 +18,21 @@
 //   Shade  Object109, 11: the same arm, SubType 7, light 0.2, drawn MINUS (dst * (1 - src)),
 //          which darkens; it does not turn (:9171-9177).
 //
+// And the Relics' blue cloud boxes (MoveKanturu2ndObject, GM_Kanturu_2nd.cpp:448-459), each
+// throwing one frame in 3, born within 2 m of the box every way, Scale the box's plus a little,
+// drifting 0.6-1.7 units a frame along MU's +x +y and gone 5 m from where it was born, or after
+// 500 frames (ZzzEffectParticle.cpp:2883-2895, 7623-7637):
+//   Haze   Object51, type 50, 18 at the floor by the walls: SubType 11, added, light (0, 0.01,
+//          0.02-0.04), turning 0.5 or 1.5 degrees a frame. Ours: it fades out over its last
+//          kEase frames before the 5 m, where MU's ends at once; it is half as bright, born
+//          0.5-2 m over its box, thins over 2 m before what stands behind it, and is one of the
+//          void clouds' soft masses lying flat, 1.25 times MU's size, in place of clouds.jpg
+//          facing the camera, which stood through the floor on a line (kHazeLevel).
+// It throws kRatio fewer as the Ruins' do, but takes neither the Ruins' wander nor its blur.
+// Not drawn, ours: type 48 (Object49, 60), SubType 10, grey drawn MINUS, which in MU darkened
+// only the black void its boxes stand in and here stained the lit floor at the rim black (the
+// user, 2026-10-24: "some smoke is black, is that expected?").
+//
 // MU throws 20 a frame from every box it sees into a pool of 3,000 particles (_define.h:460)
 // and stops when the pool is full. Ours throws one in kRatio of them, each kRatio times as bright
 // (the minus kind: as dark as kRatio of MU's laid over each other), into a pool of kMost: the
@@ -55,7 +70,7 @@ public:
     void gather(gfx::Effects& effects) const;
 
 private:
-    enum class Kind : uint8_t { Rise, Hover, Shade };
+    enum class Kind : uint8_t { Rise, Hover, Shade, Haze };
     struct Puff {
         Kind kind = Kind::Rise;
         uint16_t box = 0;
@@ -72,6 +87,9 @@ private:
         float swayHz = 0.0f;
         float spin = 0.0f, spinRate = 0.0f;  // ours: radians, and a second
         float edge = 1.0f;      // ours: how much of it lies over the void, squared (overVoid)
+        float light[3] = {0, 0, 0};  // Haze's
+        float speed = 0.0f;     // Haze's: units a frame from where it was born
+        uint8_t cell = 0;       // Haze's: which of the void clouds' four masses
     };
     struct Box {
         Kind kind = Kind::Rise;
@@ -94,6 +112,7 @@ private:
     float strength_ = 1.0f;  // the show's `strength`: 1 is MU's full pool of light
     uint32_t seed_ = 0xC4A5Eu;
     bgfx::TextureHandle sheet_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle haze_ = BGFX_INVALID_HANDLE;  // the showing's `void_clouds`, the haze's
 };
 
 }  // namespace mu::game

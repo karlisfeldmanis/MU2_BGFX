@@ -81,6 +81,44 @@ def source_sheet(folder, name):
     return None
 
 
+def object_rig(bmd, obj, notes):
+    """Write <ObjectNN>.rig.json beside the mesh when MU's model moves, and say how.
+
+    The Ruins' and the Relics' first batches cooked animated kinds still and rigged them later
+    by hand (the user, 2026-10-23: "when you cook objects you also make animations"). So the
+    rig comes with the mesh: MuExtract export-rig --actions=all, kept when action 0 moves a
+    bone and its vertices are the .obj's (Kanturu's Object05 had 535 against 532, and a
+    mismatched rig cannot skin the mesh). Returns a line for the recipe, or None when still.
+    """
+    rig = os.path.splitext(obj)[0] + ".rig.json"
+    done = subprocess.run(["dotnet", MUEXTRACT, "export-rig", bmd, rig, "--actions=all"],
+                          capture_output=True, text=True)
+    if done.returncode or not os.path.exists(rig):
+        notes.append(f"MuExtract export-rig failed, so no rig: {(done.stdout + done.stderr).strip()[-200:]}")
+        return None
+    with open(rig) as handle:
+        doc = json.load(handle)
+    clips = doc.get("animations") or []
+    tracks = clips[0].get("tracks", []) if clips else []
+    moving = [t["bone"] for t in tracks
+              if len({json.dumps(key) for key in t.get("t", [])}) > 1
+              or len({json.dumps(key) for key in t.get("r", [])}) > 1]
+    if not moving:
+        os.remove(rig)
+        return None
+    with open(obj) as handle:
+        vertices = sum(1 for line in handle if line.startswith("v "))
+    rigged = sum(mesh.get("vertices", 0) for mesh in doc.get("meshes", []))
+    if rigged != vertices:
+        os.remove(rig)
+        notes.append(f"MU's model moves ({len(moving)} bones) but its rig has {rigged} vertices "
+                     f"to the .obj's {vertices}: left still, as the Ruins' Object05")
+        return None
+    return (f"{len(moving)} of its {doc.get('bones', len(tracks))} bones move over "
+            f"{clips[0].get('keys', 0)} keys ({os.path.basename(rig)}, MuExtract export-rig "
+            f"--actions=all; {rigged} vertices, as the .obj)")
+
+
 def new_object(target, prefix, say):
     if "/" not in target:
         raise NotFound("name it with its world: mu new object aida/Object52")
@@ -106,6 +144,7 @@ def new_object(target, prefix, say):
     say(f"mesh    {os.path.relpath(obj, ROOT)}: {len(names)} mesh(es)")
 
     sheets, cutout, notes = {}, [], []
+    rig = object_rig(bmd, obj, notes)
     for sheet in dict.fromkeys(names):
         key = os.path.splitext(sheet)[0]
         mu_file = source_sheet(folder, sheet)
@@ -145,12 +184,19 @@ def new_object(target, prefix, say):
     if cutout:
         recipe_doc["cutout"] = cutout
         recipe_doc["cutout_from"] = "decode_texture found a real alpha channel cutting the sheet."
+    if rig:
+        recipe_doc["play_speed"] = 0.16
+        recipe_doc["play_speed_from"] = (
+            f"Every object's flat Velocity 0.16 until the map's Move code says otherwise: {rig}. "
+            "To check: MuMain's Move<Map>Object case for this type.")
     recipe_doc["why_this_one"] = "To write."
     with open(recipe, "w") as handle:
         json.dump(recipe_doc, handle, indent=2)
         handle.write("\n")
 
     say(f"recipe  {os.path.relpath(recipe, ROOT)}: {len(placed)} placements, type {recipe_doc['object_type']}")
+    if rig:
+        say(f"rig     {name}.rig.json: {rig}; play_speed 0.16, check the map's Move code for its Velocity")
     for note in notes:
         say(f"NOTE    {note}")
     say(f"CHOOSE  a material per sheet ({', '.join(sheets)}) from: {', '.join(materials())}")

@@ -244,13 +244,27 @@ void Play::exhale(float seconds) {
         if (look == nullptr) continue;
         const FigureBody::Claws& claws = look->claws;
         if (claws.until >= 0.0f && keyOf(one.figure) > claws.until) continue;
+        if (claws.after >= 0.0f && keyOf(one.figure) < claws.after) continue;
         if (claws.firstOnly && clip != one.attackClip) continue;
-        const float grip[3] = {claws.alongZ ? 0.0f : claws.from, 0.0f, claws.alongZ ? claws.from : 0.0f};
-        const float tip[3] = {claws.alongZ ? 0.0f : claws.to, 0.0f, claws.alongZ ? claws.to : 0.0f};
+        float grip[3] = {0.0f, 0.0f, 0.0f}, tip[3] = {0.0f, 0.0f, 0.0f};
+        if (claws.axis < 3) {
+            grip[claws.axis] = claws.from;
+            tip[claws.axis] = claws.to;
+        }
         for (size_t c = 0; c + 1 < one.clawBones.size(); c += 2) {
             float from[3], to[3];
             if (!one.figure.pointOn(one.clawBones[c], grip, from)) continue;
             if (!one.figure.pointOn(one.clawBones[c + 1], tip, to)) continue;
+            if (claws.axis == 3) {
+                const float line[3] = {to[0] - from[0], to[1] - from[1], to[2] - from[2]};
+                const float far = std::sqrt(line[0] * line[0] + line[1] * line[1] + line[2] * line[2]);
+                if (far < 1e-4f) continue;
+                const float base[3] = {from[0], from[1], from[2]};
+                for (int k = 0; k < 3; ++k) {
+                    from[k] = base[k] + line[k] / far * claws.from * look->scale;
+                    to[k] = base[k] + line[k] / far * claws.to * look->scale;
+                }
+            }
             const uint32_t key = one.id ^ (uint32_t(c / 2 + 1) << 28);
             streak_.feed(key, from, to, Streak::Sheet::Spear, claws.light);
         }
@@ -467,10 +481,16 @@ void Play::snort(float seconds) {
         if (one.trailBones[0] < 0 || one.trailBones[1] < 0 || !one.visible || !one.placed) {
             continue;
         }
+        const FigureBody* look = one.figure.body();
+        if (look == nullptr) continue;
         const float origin[3] = {0.0f, 0.0f, 0.0f};
         float at[3];
-        if (one.figure.pointOn(one.trailBones[0], origin, at)) eyeTrails_.feed(one.id, false, at);
-        if (one.figure.pointOn(one.trailBones[1], origin, at)) eyeTrails_.feed(one.id, true, at);
+        for (int e = 0; e < 2; ++e) {
+            if (one.figure.pointOn(one.trailBones[e], origin, at)) {
+                eyeTrails_.feed(one.id, e == 1, at, look->eyeTrailColour, look->eyeTrailWidth,
+                                look->eyeTrailTails[e]);
+            }
+        }
     }
     // The plain Beam Knight's hand flames, one a claw each reference frame while it is drawn.
     for (Drawn& one : drawn_) {
@@ -612,8 +632,16 @@ void Play::snort(float seconds) {
 void Play::shade(float seconds) {
     shadowStars_.update(seconds);
     for (Drawn& one : drawn_) {
-        if ((one.shadeBones.empty() && one.auraBone < 0 && !one.embers && one.starBones.empty()) ||
-            !one.visible || !one.placed) {
+        // An Iron Rider, a Blade Hunter, a Kentauros, a Berserker and a Genocider have none of
+        // these and their shows all the same (play_breeds.cpp).
+        const bool shown = !one.shadeBones.empty() || one.auraBone >= 0 || one.embers ||
+                           !one.starBones.empty() ||
+                           (one.figure.body() && (one.figure.body()->has("iron_rider") ||
+                                                  one.figure.body()->has("blade_hunter") ||
+                                                  one.figure.body()->has("kentauros") ||
+                                                  one.figure.body()->has("berserker") ||
+                                                  one.figure.body()->has("genocider")));
+        if (!shown || !one.visible || !one.placed) {
             continue;
         }
         float fade = 1.0f;

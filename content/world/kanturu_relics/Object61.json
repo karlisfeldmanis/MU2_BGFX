@@ -1,0 +1,42 @@
+{
+  "item": "Object61",
+  "mu_name": "Object61",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 60,
+  "placements": 51,
+  "profile": "world",
+  "sheets": {
+    "pipe04": "kl_pipe04.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "pipe04": "plate_steel"
+  },
+  "material_note": "pipe04: a ribbed elbow and an octagonal hatch over a vent grille: plate_steel.",
+  "why_this_one": "A pipe elbow of the refinery's pipework, 51 of them, nearly all hung in the void under the maze (1 m above the floor to 3 m below it), where the void clouds drift. Batch 2 of the Relics, the most-placed kinds (the user, 2026-10-23: \"first we eed to finish actual map then we go to monsters\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 64,
+      "area": 40394.1,
+      "along": [
+        -87.7,
+        87.7
+      ],
+      "mu_uv": [
+        0.023,
+        0.014,
+        0.588,
+        0.993
+      ],
+      "bake_uv": [
+        0.006,
+        0.004,
+        0.996,
+        0.813
+      ]
+    }
+  ]
+}

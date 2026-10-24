@@ -2852,6 +2852,192 @@
       "from": "SOUND_SKILL_DRAIN_LIFE, which ZzzOpenData loads from Data\\\\Sound\\\\SE_Ch_summoner_skill07_lifedrain.wav with one voice (:4919). ZzzCharacter plays it as Drain Life lets MODEL_ALICE_DRAIN_LIFE go (:5214-5223).",
       "note": "The Ancient rune Drain Life (sim/items.h kDrain...), played where it drains (game/fx/drain)."
     },
+    "splinterwolf_move": {
+      "files": [
+        "swolf_idle-01.wav",
+        "swolf_idle-02.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_SWOLF_MOVE1 + rand() % 2, one frame in 15 while it walks (GM_Kanturu_1st.cpp:1221-1245); MapManager.cpp:414-415 loads w37/swolf_idle-01.wav and -02.wav."
+    },
+    "splinterwolf_attack": {
+      "files": [
+        "swolf_attack-01.wav",
+        "swolf_attack-02.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_SWOLF_ATTACK1 + rand() % 2, once a blow on ATTACK1 or ATTACK2 (GM_Kanturu_1st.cpp:1221-1245); w37/swolf_attack-01.wav and -02.wav (MapManager.cpp:416-417)."
+    },
+    "splinterwolf_die": {
+      "files": [
+        "swolf_death.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_SWOLF_DIE on MONSTER01_DIE, once (GM_Kanturu_1st.cpp:1221-1245); w37/swolf_death.wav (MapManager.cpp:418)."
+    },
+    "ironrider_move": {
+      "files": [
+        "ir_idle-01.wav",
+        "ir_idle-02.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_IR_MOVE1 + rand() % 2, one frame in 15 while it walks (GM_Kanturu_1st.cpp:1260-1264); MapManager.cpp:419-420 loads w37/ir_idle-01.wav and -02.wav."
+    },
+    "ironrider_attack": {
+      "files": [
+        "ir_attack-01.wav",
+        "ir_attack-02.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_IR_ATTACK1 + rand() % 2, once a blow on ATTACK1 or ATTACK2 (GM_Kanturu_1st.cpp:1265-1272); w37/ir_attack-01.wav and -02.wav (MapManager.cpp:421-422)."
+    },
+    "ironrider_die": {
+      "files": [
+        "ir_death.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_IR_DIE once as it dies (GM_Kanturu_1st.cpp:1283-1287); w37/ir_death.wav (MapManager.cpp:423)."
+    },
+    "satyros_move": {
+      "files": [
+        "sati_idle-01.wav",
+        "sati_idle-02.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_SATI_MOVE1 + rand() % 2, one frame in 15 while it walks (GM_Kanturu_1st.cpp:1295-1318); MapManager.cpp:409-410 loads w37/sati_idle-01.wav and -02.wav."
+    },
+    "satyros_attack": {
+      "files": [
+        "sati_attack-01.wav",
+        "sati_attack-02.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_SATI_ATTACK1 + rand() % 2, once a blow (GM_Kanturu_1st.cpp:1295-1318); w37/sati_attack-01.wav and -02.wav (MapManager.cpp:411-412)."
+    },
+    "satyros_die": {
+      "files": [
+        "sati_death.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_SATI_DIE once as it dies (GM_Kanturu_1st.cpp:1310-1316); w37/sati_death.wav (MapManager.cpp:413)."
+    },
+    "bladehunter_move": {
+      "files": [
+        "blade_idle-01.wav",
+        "blade_idle-02.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_BLADE_MOVE1 + rand() % 2, one frame in 10 while it walks, with its dust (GM_Kanturu_1st.cpp:1345-1354); MapManager.cpp:404-405 loads w37/blade_idle-01.wav and -02.wav."
+    },
+    "bladehunter_attack": {
+      "files": [
+        "blade_attack-01.wav",
+        "blade_attack-02.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_BLADE_ATTACK1 + rand() % 2, once a blow (GM_Kanturu_1st.cpp:1355-1362); w37/blade_attack-01.wav and -02.wav (MapManager.cpp:406-407)."
+    },
+    "bladehunter_die": {
+      "files": [
+        "blade_death.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_BLADE_DIE once as it dies (GM_Kanturu_1st.cpp:1363-1370); w37/blade_death.wav (MapManager.cpp:408)."
+    },
+    "kentauros_move": {
+      "files": [
+        "kenta_idle-01.wav",
+        "kenta_idle-02.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_KENTA_MOVE1 + rand() % 2, one frame in 15 while it walks (GM_Kanturu_1st.cpp:1377-1381); MapManager.cpp:399-400 loads w37/kenta_idle-01.wav and -02.wav."
+    },
+    "kentauros_attack": {
+      "files": [
+        "kenta_attack-01.wav",
+        "kenta_skill-01.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_KENTA_ATTACK1 + rand() % 2, once a blow (GM_Kanturu_1st.cpp:1382-1389); w37/kenta_attack-01.wav and, as ATTACK2, kenta_skill-01.wav (MapManager.cpp:401-402)."
+    },
+    "kentauros_die": {
+      "files": [
+        "kenta_death.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_KENTA_DIE once as it dies (GM_Kanturu_1st.cpp:1390-1397); w37/kenta_death.wav (MapManager.cpp:403)."
+    },
+    "gigantis_move": {
+      "files": [
+        "gigan_idle-01.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_GIGAN_MOVE1, one frame in 15 while it walks (GM_Kanturu_1st.cpp:1136-1140); MapManager.cpp:390 loads w37/gigan_idle-01.wav, its only one."
+    },
+    "gigantis_attack": {
+      "files": [
+        "gigan_attack-01.wav",
+        "gigan_attack-02.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_GIGAN_ATTACK1 + rand() % 2, once a blow (GM_Kanturu_1st.cpp:1141-1148); w37/gigan_attack-01.wav and -02.wav (MapManager.cpp:391-392)."
+    },
+    "gigantis_die": {
+      "files": [
+        "gigan_death.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_GIGAN_DIE once as it dies (GM_Kanturu_1st.cpp:1149-1156); w37/gigan_death.wav (MapManager.cpp:393)."
+    },
+    "berserker_move": {
+      "files": [
+        "ber_idle-01.wav",
+        "ber_idle-02.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_BER_MOVE1 + rand() % 2, one frame in 15 while it walks (GM_Kanturu_1st.cpp:1094-1098); MapManager.cpp:385-386 loads w37/ber_idle-01.wav and -02.wav."
+    },
+    "berserker_attack": {
+      "files": [
+        "ber_attack-01.wav",
+        "ber_attack-02.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_BER_ATTACK1 + rand() % 2, once a blow (GM_Kanturu_1st.cpp:1099-1106); w37/ber_attack-01.wav and -02.wav (MapManager.cpp:387-388)."
+    },
+    "berserker_die": {
+      "files": [
+        "ber_death.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_BER_DIE once as it dies (GM_Kanturu_1st.cpp:1107-1114); w37/ber_death.wav (MapManager.cpp:389)."
+    },
+    "genocider_move": {
+      "files": [
+        "geno_idle-01.wav",
+        "geno_idle-02.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_GENO_MOVE1 + rand() % 2, one frame in 15 while it walks (GM_Kanturu_1st.cpp:1183-1187); MapManager.cpp:394-395 loads w37/geno_idle-01.wav and -02.wav."
+    },
+    "genocider_attack": {
+      "files": [
+        "geno_attack-01.wav",
+        "geno_attack-02.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_GENO_ATTACK1 + rand() % 2, once a blow (GM_Kanturu_1st.cpp:1188-1195); w37/geno_attack-01.wav and -02.wav (MapManager.cpp:396-397)."
+    },
+    "genocider_die": {
+      "files": [
+        "geno_death.wav"
+      ],
+      "from": "SOUND_KANTURU_1ST_GENO_DIE once as it dies (GM_Kanturu_1st.cpp:1196-1203); w37/geno_death.wav (MapManager.cpp:398)."
+    },
+    "world_kanturu_relics": {
+      "files": [
+        "kan_relic_global.wav"
+      ],
+      "from": "SOUND_KANTURU_2ND_MAPSOUND_GLOBAL, Data\\Sound\\w38\\kan_relic_global.wav (MapManager.cpp:442). Sound_Kanturu2nd_Object plays it from every object every frame (GM_Kanturu_2nd.cpp:194-196), so it is always on in the Relics: a 12 s loop.",
+      "loop": true,
+      "gain_db": -14.0,
+      "note": "At the Ruins air's level: the file is 10.3 dB quieter than kan_ruin_global (-30.4 to -20.1 dBFS), so 10 dB less down than world_kanturu's -24 (2026-10-24). A first level for the user to judge."
+    },
+    "kanturu_gear": {
+      "files": [
+        "kan_relic_gear.wav"
+      ],
+      "from": "SOUND_KANTURU_2ND_MAPSOUND_GEAR, Data\\Sound\\w38\\kan_relic_gear.wav (MapManager.cpp:439), played flat while a type 9 (Object10) is moved (GM_Kanturu_2nd.cpp:198-201).",
+      "loop": true,
+      "gain_db": -24.0,
+      "note": "Ours: heard from the nearest gear (world.json show.object_loops). As loud as the Ruins wheel: the file is 2.1 dB quieter, so 2 dB less down than kanturu_wheel's -26. A first level for the user to judge."
+    },
+    "kanturu_incubator": {
+      "files": [
+        "kan_relic_incubator.wav"
+      ],
+      "from": "SOUND_KANTURU_2ND_MAPSOUND_INCUBATOR, Data\\Sound\\w38\\kan_relic_incubator.wav (MapManager.cpp:440), played flat while a type 31, 35, 36 or 37 (Object32, 36, 37, 38) is moved (GM_Kanturu_2nd.cpp:202-208).",
+      "loop": true,
+      "gain_db": -21.0,
+      "note": "Ours: heard from the nearest incubator tank. The file is as loud as kan_ruin_elec (-25.8 dBFS), so at kanturu_elec's -21. A first level for the user to judge."
+    },
     "skill_blood_attack": {
       "files": [
         "eBloodAttack.wav"

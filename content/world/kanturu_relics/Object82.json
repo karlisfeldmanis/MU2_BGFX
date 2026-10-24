@@ -1,0 +1,158 @@
+{
+  "item": "Object82",
+  "mu_name": "Object82",
+  "mu_name_from": "kanturu_relics's object slot: type N is Object{N+1}.bmd, from Data/Object39.",
+  "world": "kanturu_relics",
+  "object_type": 81,
+  "placements": 6,
+  "profile": "world",
+  "sheets": {
+    "so_k34wao01": "kl_so_k34wao01.png",
+    "sok34wao03_R": "kl_sok34wao03_r.png"
+  },
+  "sheet_from": "Data/Object39/, decoded under the kl_ prefix by `mu new`.",
+  "sheet_materials": {
+    "so_k34wao01": "plate_steel",
+    "sok34wao03_R": "lamplight"
+  },
+  "material_note": "so_k34wao01: dark steel panels with a green-lit ladder channel: plate_steel. sok34wao03_R: green light streaks, MU's bright sheet: lamplight.",
+  "why_this_one": "A 16.7 m dark steel column streaked with green light, 6 of them round the Gateway Machine (136-137, 190-191), its frame. MU's model is still (no moving bone). Batch 8 of the Relics (the user, 2026-10-24: \"next\"). docs/worlds/kanturu-port.md Part B 8.1.",
+  "additive": [
+    "sok34wao03_R"
+  ],
+  "additive_from": "sok34wao03_R is an _R sheet, drawn RENDER_BRIGHT, added (TextureScript.cpp:16-58).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 30,
+      "area": 482728.0,
+      "along": [
+        -75.2,
+        75.2
+      ],
+      "mu_uv": [
+        0.006,
+        0.032,
+        0.943,
+        0.986
+      ],
+      "bake_uv": [
+        0.006,
+        0.511,
+        0.907,
+        0.98
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 30,
+      "area": 482728.0,
+      "along": [
+        -75.2,
+        75.2
+      ],
+      "mu_uv": [
+        0.006,
+        0.032,
+        0.943,
+        0.986
+      ],
+      "bake_uv": [
+        0.126,
+        0.511,
+        0.907,
+        0.98
+      ]
+    },
+    {
+      "island": 2,
+      "material": "lamplight",
+      "triangles": 8,
+      "area": 5981.1,
+      "along": [
+        -31.8,
+        -24.8
+      ],
+      "mu_uv": [
+        0.018,
+        -0.012,
+        0.501,
+        0.988
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.244,
+        0.498
+      ]
+    },
+    {
+      "island": 3,
+      "material": "lamplight",
+      "triangles": 8,
+      "area": 5981.1,
+      "along": [
+        23.2,
+        30.2
+      ],
+      "mu_uv": [
+        0.507,
+        0.997,
+        0.99,
+        1.997
+      ],
+      "bake_uv": [
+        0.256,
+        0.006,
+        0.494,
+        0.498
+      ]
+    },
+    {
+      "island": 4,
+      "material": "lamplight",
+      "triangles": 8,
+      "area": 5981.1,
+      "along": [
+        -31.8,
+        -24.8
+      ],
+      "mu_uv": [
+        0.018,
+        -0.012,
+        0.501,
+        0.988
+      ],
+      "bake_uv": [
+        0.506,
+        0.006,
+        0.744,
+        0.498
+      ]
+    },
+    {
+      "island": 5,
+      "material": "lamplight",
+      "triangles": 8,
+      "area": 5981.1,
+      "along": [
+        23.2,
+        30.2
+      ],
+      "mu_uv": [
+        0.507,
+        0.997,
+        0.99,
+        1.997
+      ],
+      "bake_uv": [
+        0.756,
+        0.006,
+        0.994,
+        0.498
+      ]
+    }
+  ]
+}
