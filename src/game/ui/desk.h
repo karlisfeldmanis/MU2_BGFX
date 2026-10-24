@@ -366,6 +366,8 @@ public:
     }
 
 private:
+    // tests/stage_test.cpp: the faces it holds, photographed without a Play.
+    friend struct DeskFaces;
     // What a window does with a command's answer (Play::answers), by its ticket: the asks are
     // answered a tick later, as MU's are a round trip later, and the window hears its yes or no
     // then. Quiet for one heard with others; ZenBox shuts the number box on a yes.

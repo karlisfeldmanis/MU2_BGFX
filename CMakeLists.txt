@@ -1058,6 +1058,16 @@ target_compile_definitions(save_test PRIVATE MU2_ASSET_DIR="${MU_ASSETS}"
                                              MU2_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_compile_options(save_test PRIVATE ${MU_WARNINGS})
 
+# The pictures' frame buffers without a GPU (tests/stage_test.cpp): bgfx's Noop renderer keeps
+# the real handle pools, so a stage, a portrait and the desk are counted against its 128 -- a
+# desk shut at every gate gives back all it took, and a refused buffer draws nothing.
+add_executable(stage_test EXCLUDE_FROM_ALL
+  tests/stage_test.cpp
+)
+target_link_libraries(stage_test PRIVATE mu_game)
+target_include_directories(stage_test PRIVATE src)
+target_compile_options(stage_test PRIVATE ${MU_WARNINGS})
+
 # The Lorencia bot: a character played from level one with no window -- hunting, potions,
 # loot, gear and the town's counters -- and what happened, when (tools/bot/bot.cpp).
 add_executable(bot EXCLUDE_FROM_ALL
