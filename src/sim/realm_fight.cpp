@@ -459,16 +459,13 @@ void Realm::stormcall(Body& hero, Body& struck, int wound) {
     // Either hand: a sword is in the right, and MU puts a bow in the LEFT with the arrows in the
     // right (a crossbow the other way round). Only a weapon takes a weapon's power, so a shield
     // in the left carries none.
-    uint8_t rolled[256] = {};
     for (const int slot : {int(kWeaponRight), int(kWeaponLeft)}) {
         const Held& hand = kit[slot];
         if (hand.empty()) continue;
-        // Each socket's power rolls on its own, in socket order -- kRuneStackMost of one at
-        // most (sim::kRuneStackMost).
+        // Each socket's power rolls on its own, in socket order.
         for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
             const PowerRow* power = powerOf(hand.powers[socket]);
-            if (power == nullptr || !power->weapon() || !power->takenBy(hero.kin, hero.second) ||
-                rolled[hand.powers[socket]]++ >= kRuneStackMost) {
+            if (power == nullptr || !power->weapon() || !power->takenBy(hero.kin, hero.second)) {
                 continue;
             }
             callDown(hero, struck, *power, wound);
@@ -1286,7 +1283,6 @@ bool Realm::echoes(Body& hero) {
     if (!tables_) return false;
     const Satchel& kit = kitOf(hero);
     const RaiderRunes dice(runeDice_, raiderDice_, hero.raider >= 0);
-    int echoes = 0;
     for (const int slot : {int(kWeaponRight), int(kWeaponLeft)}) {
         const Held& hand = kit[slot];
         if (hand.empty()) continue;
@@ -1294,7 +1290,7 @@ bool Realm::echoes(Body& hero) {
             const PowerRow* power = powerOf(hand.powers[socket]);
             if (power == nullptr ||
                 (power->power != Power::Echo && power->power != Power::FaintEcho) ||
-                !power->takenBy(hero.kin, hero.second) || echoes++ >= kRuneStackMost) {
+                !power->takenBy(hero.kin, hero.second)) {
                 continue;
             }
             const bool faint = power->power == Power::FaintEcho;
@@ -1444,7 +1440,7 @@ int Realm::pyroblasts(const Body& hero) const {
                     power->takenBy(hero.kin, hero.second);
         }
     }
-    return std::min(worn, kRuneStackMost);
+    return worn;
 }
 
 void Realm::pyroblast(Body& hero, uint32_t struck, float x, float y, float force) {

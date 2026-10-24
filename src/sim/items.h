@@ -979,22 +979,20 @@ const PowerRow* powerOf(uint8_t power);
 // `stacks` false where a second adds nothing; `says` the line.
 struct Stacking {
     bool stacks;
-    const char* says;
+    std::string says;
 };
 Stacking stackingOf(Power power);
-// How many of a rune count where it stacks (the user, 2026-10-24: "check which stacking runes is
-// way to powerfull to stuck and nerf them"): some twenty-six sockets worn would have summed
-// Keen Eye to +260% critical, Bloodwell to 78% of every wound back, the Undying to x2.5 life and a
-// stat rune to +800%. Six now, two things' worth (three was "to much nerfed") -- of a family of
-// tiers (Wellspring, Barrage, Whirlwind's, Wrath and Spite) the strongest six, of the stat runes
-// six for each stat. Steadfast and the Plagues keep the ceilings they had. Ours.
-constexpr int kRuneStackMost = 6;
-// The family a rune's six are counted in -- its weakest tier's power -- and 0 for those not
-// counted here: the stat runes (counted a stat at a time) and those with ceilings of their own.
-uint8_t stackFamilyOf(Power power);
-// A rune's strength within its family, to keep the strongest: Common, Rare, Epic, Legendary,
-// Ancient.
-int rarityRank(Rarity rarity);
+// How many of the strongest runes count, worn anywhere (the user, 2026-10-24: "check which
+// stacking runes is way to powerfull to stuck and nerf them", then a cap on every rune "to much
+// nerfed", then "just add some limiters for most OP runes of how many they can be used"): some
+// twenty-six sockets worn would have summed Keen Eye to +260% critical, Bloodwell to 78% of every
+// wound back, Renewal to 78% life a 3 s, Ironskin to +210% defense, an element to +220% and a
+// stat rune to +800%. The first so many found count, the rest are idle; 0 is no limit -- the
+// weapon's runes, held to its sockets, and Wellspring to the jewellery's five. Steadfast and the
+// Plagues keep the ceilings they had. Ours.
+int stackMostOf(Power power);
+// The stat runes': the best six for each stat, Might and Ascendance alike.
+constexpr int kStatRuneMost = 6;
 // A rune paid to the Magic Gladiator that he may not set -- a Legendary of the knight's or the
 // wizard's, from a giver's path -- comes as its weaker kin he may: Arcane Echo as Faint Echo,
 // Pyroblaster as Scorch, Whirlwind as Eddy, Fireburst as Sparkburst, Hellfire as Brimstone,

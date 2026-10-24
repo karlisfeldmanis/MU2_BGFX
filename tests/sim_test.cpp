@@ -10860,8 +10860,9 @@ void testRunes(const content::Tables& tables) {
         check(e.whirlwinds == 1 && e.runeDefense > 0.0 && e.blockChance > 0.0 &&
                   e.killLife >= sim::kSecondWindShare && e.killMana >= sim::kSecondWindShare,
               "worn, the four are each counted");
-        // Six of a rune count (sim::kRuneStackMost): nine Keen Eyes, in the armour, the helm and
-        // the pants, are six's critical; eight Greater Mights six's strength, and a Lesser none.
+        // The strongest runes count so many (sim::stackMostOf): nine Keen Eyes, in the armour, the
+        // helm and the pants, are five's critical; eight Greater Mights six's strength
+        // (sim::kStatRuneMost), and a Lesser none.
         {
             sim::Realm keen;
             keen.raise(&tables, 7, 190, 110, dk, 200);
@@ -10872,8 +10873,9 @@ void testRunes(const content::Tables& tables) {
             keen.give(plate, sim::placeOf(tables.items[size_t(plate)]), 0, -1, false, 0, 0, 3, eyes);
             keen.give(helm, sim::kHelm, 0, -1, false, 0, 0, 3, eyes);
             keen.give(pants, sim::kPants, 0, -1, false, 0, 0, 3, eyes);
-            checkNear(keen.hero().excel.runeCritical, sim::kRuneStackMost * sim::kKeenEyeCritical,
-                      1e-9, "nine Keen Eyes worn are six's critical chance");
+            checkNear(keen.hero().excel.runeCritical,
+                      sim::stackMostOf(sim::Power::KeenEye) * sim::kKeenEyeCritical, 1e-9,
+                      "nine Keen Eyes worn are five's critical chance");
             const uint8_t might[3] = {uint8_t(sim::Power::GreaterMight),
                                       uint8_t(sim::Power::GreaterMight),
                                       uint8_t(sim::Power::LesserMight)};
@@ -10886,7 +10888,7 @@ void testRunes(const content::Tables& tables) {
             mighty.give(serpent, sim::kWeaponRight, 0, -1, false, 0, 0, 3, greater);
             mighty.give(helm, sim::kHelm, 0, -1, false, 0, 0, 3, greater);
             checkEqual(mighty.hero().runeShare.strength,
-                       sim::kRuneStackMost * sim::statShareOf(sim::Power::GreaterMight).strength,
+                       sim::kStatRuneMost * sim::statShareOf(sim::Power::GreaterMight).strength,
                        "eight Greater Mights and a Lesser are six Greaters' strength");
             check(sim::stackingOf(sim::Power::KeenEye).stacks &&
                       !sim::stackingOf(sim::Power::Frenzy).stacks,

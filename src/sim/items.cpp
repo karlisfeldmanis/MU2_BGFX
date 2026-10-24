@@ -707,7 +707,6 @@ const PowerRow* powerOf(uint8_t power) {
 }
 
 Stacking stackingOf(Power power) {
-    static_assert(kRuneStackMost == 6, "the lines below say the count");
     switch (power) {
         // Read once, a flag or a count that is only asked `> 0` (Excellence::frenzies, volleys;
         // skills.h lanesOf), or the best share of the worn kept (bulwarkShare, the volleys' side).
@@ -728,66 +727,38 @@ Stacking stackingOf(Power power) {
         // burst but Fire Ball's +50% is asked `pyroblasts() > 0`.
         case Power::Whirlwind:
         case Power::Eddy:
-        case Power::Swirl: return {true, "Damage stacks up to 6, pull chance doesn't"};
-        case Power::Pyroblast: return {true, "Burst chance stacks up to 6, damage doesn't"};
-        // Their own ceilings, kSteadfastMost (its line says it) and kPlagueMost.
-        case Power::Steadfast: return {true, "Stacks"};
+        case Power::Swirl: return {true, "Damage stacks, pull chance doesn't"};
+        case Power::Pyroblast: return {true, "Burst chance stacks, damage doesn't"};
+        // Summed to kPlagueMost, which its own line leaves out (Steadfast's says its 25%).
         case Power::Plague:
         case Power::PlagueArrows: return {true, "Stacks, up to 50%"};
-        // Three a stat (kRuneStackMost), Might and Ascendance together.
-        case Power::LesserMight:
-        case Power::GreaterMight:
-        case Power::LesserGrace:
-        case Power::GreaterGrace:
-        case Power::LesserVigor:
-        case Power::GreaterVigor:
-        case Power::LesserInsight:
-        case Power::GreaterInsight:
-        case Power::LesserAscendance:
-        case Power::GreaterAscendance: return {true, "Stacks, the best 6 of a stat count"};
         default: break;
     }
-    // A family of tiers keeps its strongest three, a lone rune its first three.
-    const Power family = Power(stackFamilyOf(power));
-    for (const Power tier : {Power::FaintWellspring, Power::LesserBarrage, Power::Spite}) {
-        if (family == tier) return {true, "Stacks, the best 6 of its kind count"};
+    if (statShareOf(power).strength || statShareOf(power).agility ||
+        statShareOf(power).vitality || statShareOf(power).energy) {
+        return {true, "Stacks, the best " + std::to_string(kStatRuneMost) + " of a stat count"};
     }
-    return {true, "Stacks, up to 6"};
+    if (const int most = stackMostOf(power); most > 0) {
+        return {true, "Stacks, up to " + std::to_string(most)};
+    }
+    return {true, "Stacks"};
 }
 
-uint8_t stackFamilyOf(Power power) {
+int stackMostOf(Power power) {
     switch (power) {
-        case Power::Steadfast:
-        case Power::Plague:
-        case Power::PlagueArrows: return 0;
-        case Power::FaintWellspring:
-        case Power::LesserWellspring:
-        case Power::Wellspring:
-        case Power::GreaterWellspring: return uint8_t(Power::FaintWellspring);
-        case Power::LesserBarrage:
-        case Power::Barrage:
-        case Power::GreaterBarrage: return uint8_t(Power::LesserBarrage);
-        case Power::Swirl:
-        case Power::Eddy:
-        case Power::Whirlwind: return uint8_t(Power::Swirl);
-        case Power::Spite:
-        case Power::Wrath: return uint8_t(Power::Spite);
-        default: break;
+        case Power::Undying: return 3;
+        case Power::KeenEye:
+        case Power::Bloodwell:
+        case Power::Renewal:
+        case Power::SecondWind: return 5;
+        case Power::Ironskin:
+        case Power::Inferno:
+        case Power::Glacier:
+        case Power::Venom:
+        case Power::Thunder:
+        case Power::Tempest: return 6;
+        default: return 0;
     }
-    const HeroPoints share = statShareOf(power);
-    if (share.strength || share.agility || share.vitality || share.energy) return 0;
-    return uint8_t(power);
-}
-
-int rarityRank(Rarity rarity) {
-    switch (rarity) {
-        case Rarity::Common: return 0;
-        case Rarity::Rare: return 1;
-        case Rarity::Epic: return 2;
-        case Rarity::Legendary: return 3;
-        case Rarity::Ancient: return 4;
-    }
-    return 0;
 }
 
 BleedRune bleedRuneOf(Power power) {

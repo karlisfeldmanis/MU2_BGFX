@@ -395,36 +395,17 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
             if (has(5)) e.excellentChance += 0.2;
         }
     }
-    // Which worn runes count (sim::kRuneStackMost): of each family the strongest kRuneStackMost, the
-    // first found where they are as strong.
+    // Which worn runes count (sim::stackMostOf): of a limited one the first so many found.
     bool counted[kRingLeft + 1][kMostSockets] = {};
     {
-        struct Worn {
-            int slot, at;
-            uint8_t family;
-            int rank;
-        };
-        Worn worn[(kRingLeft + 1) * kMostSockets];
-        int n = 0;
+        uint8_t found[256] = {};
         for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
-            if (!rowAt(slot)) continue;
             for (int at = 0; at < std::min<int>(kit[slot].sockets, kMostSockets); ++at) {
                 const PowerRow* power = powerOf(kit[slot].powers[at]);
                 if (!power) continue;
-                const uint8_t family = stackFamilyOf(power->power);
-                if (family == 0) {
-                    counted[slot][at] = true;
-                    continue;
-                }
-                worn[n++] = {slot, at, family, rarityRank(power->rarity)};
+                const int most = stackMostOf(power->power);
+                counted[slot][at] = most == 0 || found[uint8_t(power->power)]++ < most;
             }
-        }
-        std::stable_sort(worn, worn + n, [](const Worn& a, const Worn& b) {
-            return a.family != b.family ? a.family < b.family : a.rank > b.rank;
-        });
-        for (int i = 0, run = 0; i < n; ++i) {
-            run = i > 0 && worn[i].family == worn[i - 1].family ? run + 1 : 0;
-            counted[worn[i].slot][worn[i].at] = run < kRuneStackMost;
         }
     }
     // The armour runes, in any socket of anything worn that takes one: the armour, the shield,
@@ -704,7 +685,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
         }
     }
     // The stat runes, in any socket of anything worn, summed (sim::statShareOf) -- the best
-    // sim::kRuneStackMost for each stat, Might and Ascendance alike.
+    // sim::kStatRuneMost for each stat, Might and Ascendance alike.
     hero.runeShare = HeroPoints{};
     {
         int shares[4][(kRingLeft + 1) * kMostSockets];
@@ -724,7 +705,7 @@ void Realm::rearm(Body& hero, const Satchel& kit) {
         int sums[4] = {};
         for (int k = 0; k < 4; ++k) {
             std::sort(shares[k], shares[k] + counts[k], std::greater<int>());
-            for (int i = 0; i < std::min(counts[k], kRuneStackMost); ++i) sums[k] += shares[k][i];
+            for (int i = 0; i < std::min(counts[k], kStatRuneMost); ++i) sums[k] += shares[k][i];
         }
         hero.runeShare.strength = sums[0];
         hero.runeShare.agility = sums[1];
