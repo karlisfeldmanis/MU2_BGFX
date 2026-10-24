@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstring>
 
+#include "core/bidi.h"
 #include "core/files.h"
 #include "core/log.h"
 #include "core/utf8.h"
@@ -234,8 +235,10 @@ float Canvas::text(float x, float baseline, float fontSize, uint32_t abgr, const
     begin(atlas);
     FaceGlyph g;
     bool cached = false;
-    for (size_t at = 0; at < s.size();) {
-        if (!f.look(core::utf8::next(s, at), &g, &cached)) continue;
+    // After the measure, which turns the line too and would refill the same buffer.
+    const std::string& shown = core::bidi::visual(s);
+    for (size_t at = 0; at < shown.size();) {
+        if (!f.look(core::utf8::next(shown, at), &g, &cached)) continue;
         if (g.x1 > g.x0 && g.y1 > g.y0 && (!cached || bgfx::isValid(more))) {
             begin(cached ? more : atlas);
             quad(pen + g.x0 * k, baseline + g.y0 * k, (g.x1 - g.x0) * k, (g.y1 - g.y0) * k, g.u0,
@@ -256,8 +259,9 @@ float Canvas::lettered(const Face& f, bgfx::TextureHandle texture, float x, floa
     float pen = x;
     FaceGlyph g;
     bool cached = false;
-    for (size_t at = 0; at < s.size();) {
-        if (!f.look(core::utf8::next(s, at), &g, &cached)) continue;
+    const std::string& shown = core::bidi::visual(s);
+    for (size_t at = 0; at < shown.size();) {
+        if (!f.look(core::utf8::next(shown, at), &g, &cached)) continue;
         if (g.x1 > g.x0 && g.y1 > g.y0 && (!cached || bgfx::isValid(more))) {
             // A cached letter has no halo (Face::look gives a blurred face none), so no growth.
             const float gr = cached ? 0.0f : grow, gu = cached ? 0.0f : growUv;

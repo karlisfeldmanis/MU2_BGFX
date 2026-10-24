@@ -9,6 +9,7 @@
 #include <map>
 #include <mutex>
 
+#include "core/bidi.h"
 #include "core/files.h"
 #include "core/log.h"
 #include "core/paths.h"
@@ -259,8 +260,10 @@ float Face::measure(float fontSize, const std::string& s) const {
     float width = 0.0f;
     FaceGlyph g;
     bool cached = false;
-    for (size_t at = 0; at < s.size();) {
-        if (look(core::utf8::next(s, at), &g, &cached)) width += g.advance * f;
+    // As drawn: Arabic's joined forms are not as wide as its letters alone.
+    const std::string& shown = core::bidi::visual(s);
+    for (size_t at = 0; at < shown.size();) {
+        if (look(core::utf8::next(shown, at), &g, &cached)) width += g.advance * f;
     }
     return width;
 }

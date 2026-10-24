@@ -7,6 +7,7 @@
 #include <fstream>
 #include <functional>
 
+#include "core/bidi.h"
 #include "core/log.h"
 #include "core/paths.h"
 #include "core/utf8.h"
@@ -1989,7 +1990,9 @@ void Chat::build(float u, const Pointer& pointer) {
                                              : spans(back_, textX, textBase, kDraft * u, kBoneHi, set, from,
                                                      set.text.size(), 1.0f, u, -1, Pointer{});
         if (std::fmod(clock_, 1.0f) < 0.6f) {
-            back_.rect({std::round(textX + drawn + 1.0f * u), std::round(input_.midY() - 10.0f * u),
+            // Where the next letter comes: the left end of a line that reads from the right.
+            const float caretX = core::bidi::rightToLeft(draft_) ? textX - 3.0f * u : textX + drawn + 1.0f * u;
+            back_.rect({std::round(caretX), std::round(input_.midY() - 10.0f * u),
                         std::max(1.0f, std::round(2.0f * u)), std::round(20.0f * u)},
                        kBloodHi);
         }

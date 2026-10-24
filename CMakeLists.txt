@@ -265,6 +265,7 @@ set(MU_DIRS
 # Logging, arguments, json, files. Depends on nothing.
 add_library(mu_core STATIC
   src/core/log.cpp
+  src/core/bidi.cpp
   src/core/watch.cpp
   src/core/jobs.cpp
   src/core/args.cpp
