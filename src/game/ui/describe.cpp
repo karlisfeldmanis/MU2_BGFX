@@ -113,17 +113,49 @@ Row stat(const char* name, const std::string& text, Tone tone) {
     return row;
 }
 
-// How many of a rune he wears, in any socket of anything worn, as sim::stackMostOf counts them.
-int runesWorn(const sim::Satchel& bag, sim::Power power) {
-    int worn = 0;
+// The runes worn that share a rune's limit, strongest first, as Realm::redress counts them: of a
+// limited rune its copies (sim::stackMostOf); of a stat rune every rune adding to its stat --
+// Lesser and Greater, Might and Ascendance -- the best kStatRuneMost of them counting. An
+// Ascendance's stat is the one he wears most runes for.
+struct Pool {
+    int most = 0;
+    std::vector<sim::Rarity> worn;
+};
+Pool poolOf(const sim::Satchel& bag, sim::Power power) {
+    Pool pool;
+    const sim::HeroPoints mine = sim::statShareOf(power);
+    const int shares[4] = {mine.strength, mine.agility, mine.vitality, mine.energy};
+    const bool stat = shares[0] || shares[1] || shares[2] || shares[3];
+    pool.most = stat                               ? sim::kStatRuneMost
+                : !sim::stackingOf(power).stacks ? 1
+                                                   : sim::stackMostOf(power);
+    if (pool.most == 0) return pool;
+    std::vector<std::pair<int, sim::Rarity>> found[4];
     for (int slot = sim::kWeaponRight; slot <= sim::kRingLeft; ++slot) {
         const sim::Held& held = bag[slot];
         if (held.empty()) continue;
         for (int at = 0; at < std::min<int>(held.sockets, sim::kMostSockets); ++at) {
-            worn += held.powers[at] == uint8_t(power);
+            const sim::PowerRow* row = sim::powerOf(held.powers[at]);
+            if (!row) continue;
+            if (!stat) {
+                if (row->power == power) found[0].push_back({0, row->rarity});
+                continue;
+            }
+            const sim::HeroPoints its = sim::statShareOf(row->power);
+            const int each[4] = {its.strength, its.agility, its.vitality, its.energy};
+            for (int k = 0; k < 4; ++k) {
+                if (shares[k] && each[k]) found[k].push_back({each[k], row->rarity});
+            }
         }
     }
-    return worn;
+    size_t pick = 0;
+    for (size_t k = 1; k < 4; ++k) {
+        if (found[k].size() > found[pick].size()) pick = k;
+    }
+    std::stable_sort(found[pick].begin(), found[pick].end(),
+                     [](const auto& a, const auto& b) { return a.first > b.first; });
+    for (const auto& one : found[pick]) pool.worn.push_back(one.second);
+    return pool;
 }
 
 }  // namespace
@@ -922,14 +954,13 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 socket.rows.push_back(line);
                 // Of a limited rune, how many of its limit he wears, after its name (the user,
                 // 2026-10-24: "we need to show on toolttip that he can use some amount of specific
-                // rune", then "Rune Name (1/5)", then pips): five lozenges after "Keen Eye", three
-                // lit for three worn (tip::Row::pips), and one after a rune that doesn't stack.
-                const int most = sim::stackingOf(power->power).stacks
-                                     ? sim::stackMostOf(power->power)
-                                     : 1;
-                if (most > 0) {
-                    socket.rows.back().pips = most;
-                    socket.rows.back().lit = runesWorn(bag, power->power);
+                // rune", then pips, then "use color coding for type"): a ring for each allowed,
+                // the runes of its kind worn set in them in their rarities (tip::Row::pips).
+                if (const Pool pool = poolOf(bag, power->power); pool.most > 0) {
+                    socket.rows.back().pips = pool.most;
+                    for (const sim::Rarity rarity : pool.worn) {
+                        socket.rows.back().worn.push_back(rarityTone(rarity));
+                    }
                 }
                 // What the rune strikes for in his hands with THIS weapon (the user, 2026-10-01:
                 // "show damage for dps runes based on base dmg and scaling"): the swing's band as
@@ -1137,7 +1168,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             Row stacks = stat("Stacks", stacking.stacks ? "Yes" : "No, max 1",
                               stacking.stacks ? Tone::White : Tone::Yellow);
             if (const int most = sim::stackMostOf(power->power); most > 0) {
-                const int worn = runesWorn(bag, power->power);
+                const int worn = int(poolOf(bag, power->power).worn.size());
                 stacks = stat("Stacks", "Up to " + std::to_string(most), Tone::White);
                 stacks.values.push_back({std::to_string(worn) + "/" + std::to_string(most) + " worn",
                                          worn >= most ? Tone::Yellow : Tone::Gray, false, "", 0});

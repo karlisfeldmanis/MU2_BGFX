@@ -610,7 +610,7 @@ float heavy(const Type& type, gfx::Canvas& canvas, float x, float baseline, floa
 // A rune's pips hold their room as a word of 'n's, five for every four pips, which wraps whole
 // and is never printed: the pips are drawn over it.
 size_t pipRoom(const Row& row) {
-    const size_t slots = size_t(std::max(row.pips, row.lit));
+    const size_t slots = std::max(size_t(row.pips), row.worn.size());
     return slots + (slots + 3) / 4;
 }
 std::string composed(const Row& row) {
@@ -626,16 +626,15 @@ std::string composed(const Row& row) {
 }
 bool prosaic(const Row& row) { return !row.free.empty() || !row.tail.empty(); }
 
-// A rune's pips over the room `composed` left them, from `x`: a track, o-o-o-o -- round stones
-// on a thin line, lit stones and the line between them in the rune's ink (gold once full), the
-// rest hollow rings on a dim line, and any past the limit dim and struck through.
-void pipsAt(gfx::Canvas& canvas, const Row& row, float x, float cy, float size, uint32_t ink,
-            uint32_t gold, uint32_t dim, uint32_t hole) {
-    const int slots = std::max(row.pips, row.lit);
+// A rune's pips over the room `composed` left them, from `x`: o o o o, round stones apart (the
+// user, 2026-10-24: "lets use 0 0 0 0 not 0-0-0-0-", "show all possible circle as outlines",
+// "use color coding for type") -- those worn solid stones in their rarities' ink, room left
+// outlined rings, and any past the limit dim and struck through.
+void pipsAt(gfx::Canvas& canvas, const Row& row, float x, float cy, float size, uint32_t dim,
+            uint32_t hole) {
+    const int slots = std::max(row.pips, int(row.worn.size()));
     if (slots <= 0) return;
     const float r = size * 0.20f, pitch = r * 3.0f, line = std::max(1.0f, size * 0.07f);
-    const bool full = row.lit >= row.pips;
-    const uint32_t lit = full ? gold : ink;
     const auto disc = [&](float cx, float radius, uint32_t colour) {
         constexpr int kSides = 16;
         float xy[kSides * 2];
@@ -646,24 +645,18 @@ void pipsAt(gfx::Canvas& canvas, const Row& row, float x, float cy, float size, 
         }
         canvas.polygon(nullptr, xy, nullptr, kSides, colour);
     };
-    const auto at = [&](int i) { return x + r * 1.6f + pitch * float(i); };
-    // The line first, under the stones: dim the length of it, lit as far as the last lit.
-    if (slots > 1) {
-        canvas.rect({at(0), cy - line * 0.5f, at(slots - 1) - at(0), line}, dim);
-        const int litTo = std::min(row.lit, row.pips) - 1;
-        if (litTo > 0) canvas.rect({at(0), cy - line * 0.5f, at(litTo) - at(0), line}, lit);
-    }
     for (int i = 0; i < slots; ++i) {
-        const float cx = at(i);
-        if (i >= row.pips) {  // past the limit: dim, struck through
+        const float cx = x + r * 1.6f + pitch * float(i);
+        const bool worn = i < int(row.worn.size());
+        const uint32_t ink = worn ? fade(colourOf(row.worn[size_t(i)])) : dim;
+        if (i >= row.pips) {  // past the limit: dim, struck through in its ink
             disc(cx, r, dim);
-            canvas.rect({cx - r * 1.4f, cy - line * 0.5f, r * 2.8f, line}, gold);
-        } else if (i < row.lit) {
-            disc(cx, r, lit);
-        } else {  // room for one more: a hollow ring
-            disc(cx, r, dim);
-            disc(cx, r - line * 1.2f, hole);
+            canvas.rect({cx - r * 1.4f, cy - line * 0.5f, r * 2.8f, line}, ink);
+            continue;
         }
+        // A worn one a solid stone, room left an outlined ring.
+        disc(cx, r, ink);
+        if (!worn) disc(cx, r - line * 1.2f, hole);
     }
 }
 
@@ -1072,8 +1065,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                 const size_t tailAt = full.size() - row.tail.size();
                 // The pips' room, a word of 'n's after the name and its space (composed).
                 const size_t pipAt = row.pips > 0 ? keyEnd + 1 : std::string::npos;
-                const size_t pipEnd =
-                    row.pips > 0 ? pipAt + pipRoom(row) : std::string::npos;
+                const size_t pipEnd = row.pips > 0 ? pipAt + pipRoom(row) : std::string::npos;
                 const uint32_t tone = colourOf(row.freeTone);
                 for (const Span& span : prose[s][r]) {
                     const float baseline = middle(face, rowPen, rowTall, rowSize);
@@ -1086,7 +1078,6 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                             const float wide = face.measure(rowSize, full.substr(at, stop - at));
                             const uint32_t gray = fade(colourOf(Tone::Gray));
                             pipsAt(canvas, row, px, baseline - rowSize * 0.32f, rowSize,
-                                   fade(colourOf(row.keywordTone)), fade(colourOf(Tone::Yellow)),
                                    (gray & 0x00FFFFFFu) | (((gray >> 24) * 3 / 5) << 24),
                                    fade(kBody));
                             px += wide;
