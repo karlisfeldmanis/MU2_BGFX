@@ -85,8 +85,9 @@ constexpr uint32_t kDivider = style::kAsh3;
 // A rune row's pips (Card::pipsAt): their size and step, in units, and the
 // hole an empty one's ring is drawn round.
 constexpr float kPipRadius = 1.9f, kPipPitch = 5.4f;
-// The rune row the pointer is on, while its card says what it does.
-constexpr uint32_t kRuneLit = gfx::rgba(0.137f, 0.122f, 0.098f);
+// A rune's block on Bonuses, in units: the room above its name and under its effect, the
+// name's line, a line of the effect, and the effect's type.
+constexpr float kRunePad = 3.5f, kRuneName = 9.0f, kNoteLine = 7.5f, kNoteSize = 6.5f;
 constexpr uint32_t kPipHole = gfx::rgba(0.075f, 0.067f, 0.055f);
 // The Bonuses page's values, each in what it is: a stat's, an element's, a fortune's colour.
 // Never red: red reads as a loss (the user, 2026-10-23).
@@ -114,13 +115,6 @@ constexpr float kSwitchTop = kKeysTop + kKeysTall + 6.0f;
 constexpr float kSwitchRow = kCtlTall + 6.0f;
 // How far the tabs and the page come down: the switch's row while there are points to spend.
 float dropFor(int points) { return points > 0 ? kSwitchRow : 0.0f; }
-
-// A Combat or Bonuses row's height: kRowTall, closed up before `rows` under `groups` headings
-// would cross the foot. The drawing and the pointer both read it.
-float pageRowTall(size_t rows, size_t groups, float drop) {
-    const float heads = (kGroupHead + kGroupGap) * float(groups);
-    return rows > 0 ? std::min(kRowTall, (kBodyBottom - kBodyTop - drop - heads) / float(rows)) : kRowTall;
-}
 
 Box tabBox(int i, float drop) {
     const float w = kWellW / float(kTabCount);
@@ -431,7 +425,6 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                     line.ink = statInks[k];
                     pipsOf(line, statRunes[k]);
                     if (!line.stones.empty()) line.labelInk = line.stones.front();
-                    line.tone = uint8_t(tip::Tone::White);
                     runes.lines.push_back(std::move(line));
                 }
                 // The rest, a row a power in the order worn; Bulwark's kin and the Volleys' each
@@ -457,7 +450,6 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                         }
                         Line line{power->name, "", false};
                         line.labelInk = tip::colourOf(rarityTone(power->rarity));
-                        line.tone = uint8_t(rarityTone(power->rarity));
                         pipsOf(line, power->power);
                         // "+10% critical chance" times those that count; otherwise how many.
                         const char* tells = power->tells ? power->tells : "";
@@ -568,17 +560,6 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
         if (tab_ == 0 && (over_ < 0 || over_ >= 4)) {
             for (int i = 0; i < 4; ++i)
                 if (under({kWellX, tops[i], kWellW, kAttrTall})) now_.overStat = i;
-        }
-        // A rune's row on Bonuses: what it does, on a card beside it (Line::note).
-        if (tab_ == 2 && !now_.groups.empty()) {
-            size_t rows = 0;
-            for (const Group& group : now_.groups) rows += group.lines.size();
-            const float rowTall = pageRowTall(rows, now_.groups.size(), drop);
-            const std::vector<Line>& runes = now_.groups.front().lines;
-            for (size_t l = 0; l < runes.size(); ++l) {
-                const float top = kBodyTop + drop + kGroupHead + rowTall * float(l);
-                if (!runes[l].note.empty() && under({kWellX, top, kWellW, rowTall})) now_.overRune = int(l);
-            }
         }
         now_.totals[0] = total.strength;
         now_.totals[1] = total.agility;
@@ -935,30 +916,76 @@ void Card::rebuild() {
             }
         }
     } else {
-        // A page heavy with gear's chances closes its rows up before it would cross the foot.
-        size_t rows = 0;
-        for (const Group& group : now_.groups) rows += group.lines.size();
-        const float rowTall = pageRowTall(rows, now_.groups.size(), drop);
+        // A group with nothing in it yet is its heading and a quiet "none" on one line, no well,
+        // so the room goes to what he has. A rune is a block: its name, pips and total on a
+        // line, what it does under it, wrapped at its words, kRunePad above and below.
+        const float noteRoom = (kRight - kLeft) * k;
+        const auto wrapped = [&](const std::string& note) {
+            std::vector<std::string> out;
+            std::string at;
+            size_t from = 0;
+            while (from < note.size()) {
+                size_t to = note.find(' ', from);
+                if (to == std::string::npos) to = note.size();
+                const std::string word = note.substr(from, to - from);
+                const std::string tried = at.empty() ? word : at + " " + word;
+                if (!at.empty() && controls::labelWidth(kNoteSize * k, tried) > noteRoom) {
+                    out.push_back(at);
+                    at = word;
+                } else {
+                    at = tried;
+                }
+                from = to + 1;
+            }
+            if (!at.empty()) out.push_back(at);
+            return out;
+        };
+        const auto empty = [](const Group& group) {
+            return std::all_of(group.lines.begin(), group.lines.end(), [](const Line& line) { return line.dim; });
+        };
+        const auto entry = [&](const Line& line) {
+            return line.note.empty() ? kRowTall
+                                     : 2.0f * kRunePad + kRuneName + kNoteLine * float(wrapped(line.note).size());
+        };
+        // Only a page still too long closes up, all of it by one share.
+        float need = 0.0f;
+        for (const Group& group : now_.groups) {
+            if (empty(group)) {
+                need += kGroupHead + kGroupGap;
+                continue;
+            }
+            need += kGroupHead + kGroupGap;
+            for (const Line& line : group.lines) need += entry(line);
+        }
+        const float room = kBodyBottom - kBodyTop - drop;
+        const float close = need > room ? std::max(0.6f, room / need) : 1.0f;
         float uy = kBodyTop + drop;
         for (const Group& group : now_.groups) {
             smallCaps(kWellX + 2.0f, at(uy + 1.0f, kSmallCaps), kDim, group.name);
+            if (empty(group)) {
+                const float base = at(uy + 1.0f, kSmallCaps);
+                controls::ranged(canvas_, x + kRight * k, base, kSmallCaps * k, kDim, "none");
+                uy += (kGroupHead + kGroupGap) * close;
+                continue;
+            }
             uy += kGroupHead;
-            const float tall = rowTall * float(group.lines.size());
+            float tall = 0.0f;
+            for (const Line& line : group.lines) tall += entry(line) * close;
             panel::cell(canvas_, x, y, {kWellX, uy, kWellW, tall}, sheet::Cell::Rest);
             // The pips stand in one column, right against the group's widest figure, so every
             // row's pips end where the next one's do, whatever its name.
             float widest = 0.0f;
             for (const Line& line : group.lines) widest = std::max(widest, controls::labelWidth(kRowSize * k, line.value));
             const float pipsEnd = x + kRight * k - widest - (widest > 0.0f ? kPipPitch * k : 0.0f);
+            float ly = uy;
             for (size_t l = 0; l < group.lines.size(); ++l) {
                 const Line& line = group.lines[l];
-                const Box row{kWellX, uy + rowTall * float(l), kWellW, rowTall};
-                // The rune the pointer is on, lit as the stat wells are while their card is up.
-                if (&group == &now_.groups.front() && int(l) == now_.overRune) {
-                    canvas_.rect(panel::scaled(x, y, {row.x + 1.0f, row.y, row.w - 2.0f, row.h}), kRuneLit);
-                }
-                if (l > 0) canvas_.rect(panel::scaled(x, y, {row.x + 1.0f, row.y, row.w - 2.0f, 0.5f}), kDivider);
-                const float base = panel::centredBaseline(face, panel::scaled(x, y, row), kRowSize * k);
+                const std::vector<std::string> said = line.note.empty() ? std::vector<std::string>{} : wrapped(line.note);
+                const float rowTall = entry(line) * close;
+                if (l > 0) canvas_.rect(panel::scaled(x, y, {kWellX + 4.0f, ly, kWellW - 8.0f, 0.5f}), kDivider);
+                const Box name = said.empty() ? Box{kWellX, ly, kWellW, rowTall}
+                                              : Box{kWellX, ly + kRunePad * close, kWellW, kRuneName * close};
+                const float base = panel::centredBaseline(face, panel::scaled(x, y, name), kRowSize * k);
                 controls::label(canvas_, x + kLeft * k, base, kRowSize * k,
                                 line.dim ? kDim : line.labelInk ? line.labelInk : kPlain, line.label);
                 const int slots = std::max(line.pips, int(line.stones.size()));
@@ -968,6 +995,14 @@ void Card::rebuild() {
                 }
                 controls::ranged(canvas_, x + kRight * k, base, kRowSize * k, line.dim ? kDim : line.ink ? line.ink : kHeading,
                                  line.value);
+                for (size_t n = 0; n < said.size(); ++n) {
+                    // What the rune does, quiet under its name.
+                    const Box under{kWellX, name.y + name.h + kNoteLine * close * float(n), kWellW, kNoteLine * close};
+                    controls::label(canvas_, x + kLeft * k,
+                                    panel::centredBaseline(face, panel::scaled(x, y, under), kNoteSize * k),
+                                    kNoteSize * k, kQuiet, said[n]);
+                }
+                ly += rowTall;
             }
             uy += tall + kGroupGap;
         }
@@ -1039,21 +1074,6 @@ void Card::rebuild() {
         attrTops(counts, tops, drop);
         const tip::Sheet sheet = statSheet(now_.overStat, now_.who->kin, now_.totals);
         tip::draw(tip_, sheet, panel::scaled(x, y, {kWellX, tops[now_.overStat], kWellW, kAttrTall}),
-                  now_.width, now_.height);
-    }
-    if (now_.tab == 2 && now_.overRune >= 0 && !now_.groups.empty()) {
-        const Line& line = now_.groups.front().lines[size_t(now_.overRune)];
-        size_t rows = 0;
-        for (const Group& group : now_.groups) rows += group.lines.size();
-        const float rowTall = pageRowTall(rows, now_.groups.size(), drop);
-        tip::Sheet sheet;
-        sheet.name = line.label;
-        sheet.nameTone = tip::Tone(line.tone);
-        tip::Section does;
-        does.rows.push_back(tip::Row{"", {}, line.note, tip::Tone::White});
-        sheet.sections.push_back(std::move(does));
-        tip::draw(tip_, sheet,
-                  panel::scaled(x, y, {kWellX, kBodyTop + drop + kGroupHead + rowTall * float(now_.overRune), kWellW, rowTall}),
                   now_.width, now_.height);
     }
 }

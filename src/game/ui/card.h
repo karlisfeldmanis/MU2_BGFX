@@ -61,10 +61,8 @@ private:
         uint32_t labelInk = 0;
         int pips = 0;
         std::vector<uint32_t> stones;
-        // What it does, on the card the pointer brings up over its row: "+10% critical chance
-        // each", under its name in `tone` (a tip::Tone, its rarity's).
+        // What it does, quiet under its name: "+10% critical chance each".
         std::string note;
-        uint8_t tone = 0;
         bool operator==(const Line&) const = default;
     };
     // A headed block of lines on the Combat and Bonuses pages.
@@ -94,8 +92,6 @@ private:
         // its card is up. `totals` is what it reads, his points with the runes in.
         int overStat = -1;
         int totals[4] = {};
-        // The rune row on Bonuses the pointer is on, or -1: its card is up.
-        int overRune = -1;
         bool closing = false, overClose = false;
         int step = 1;          // 1, 10 or 0 for all, as a press now spends (10 is All under ten)
         int returnable = 0;    // the points a reset would take back
