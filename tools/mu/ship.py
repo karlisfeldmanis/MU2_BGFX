@@ -172,7 +172,7 @@ def commits(since, until="HEAD"):
 
 def live(say):
     """Every part's live commit, read from where it lives."""
-    state = {"clients": {}, "launchers": {}, "boxes": [], "web": None, "errors": []}
+    state = {"clients": {}, "launchers": {}, "boxes": [], "web": None, "armory": None, "errors": []}
     from concurrent.futures import ThreadPoolExecutor
     with ThreadPoolExecutor(max_workers=6) as pool:
         clients = {p: pool.submit(fetch, f"{SITE}/game/{p}/manifest.json") for p in CLIENTS}
@@ -207,7 +207,10 @@ def live(say):
 
     def read_web():
         try:
-            return ssh(WEB_HOST, "cat /opt/mu2-web/DEPLOYED").strip()
+            # And the Armory's release: what /srv/mu2-web/armory/current points at (web/deploy.sh).
+            said = ssh(WEB_HOST, "cat /opt/mu2-web/DEPLOYED; readlink /srv/mu2-web/armory/current || true").splitlines()
+            state["armory"] = said[1].strip() if len(said) > 1 and said[1].strip() else None
+            return said[0].strip() if said else None
         except (RuntimeError, subprocess.TimeoutExpired) as e:
             state["errors"].append(f"site: {e}")
             return None
@@ -306,6 +309,19 @@ def report(say, until="HEAD"):
         row("site", "mu-classic.com", state["web"], web_todo)
         say(f"site     {'':8} {state['web']}  {'?' if web_todo is None else (str(len(web_todo)) + ' behind' if web_todo else 'current')}")
 
+    # The Armory: the release players will have once this ships -- this commit when its macOS client
+    # goes, else the live one -- built and tested, and `current` on the box. A release that changes
+    # only the game still uploads its Armory, its own lane (web/deploy.sh --armory, nothing restarted).
+    live_mac = (state["clients"].get("macos") or {}).get("commit")
+    armory_target = head if "macos" in client_todo else live_mac
+    armory_todo = bool(armory_target) and state["armory"] != armory_target
+    if armory_target:
+        tested = os.path.isfile(os.path.join(ROOT, "out", "armory", armory_target, "TESTED"))
+        row("armory", "mu-classic.com/armory", state["armory"], [armory_target] if armory_todo else [],
+            target=armory_target, tested=tested)
+        say(f"armory   {'':8} {state['armory'] or 'none'}  "
+            + (f"-> {armory_target} ({'built and tested' if tested else 'to build and test'})" if armory_todo else "current"))
+
     # Every commit not yet everywhere, with what it needs.
     floor = oldest([c["commit"] for c in state["clients"].values() if c]
                    + [b["deployed"] for b in state["boxes"] if b.get("deployed")]
@@ -346,7 +362,8 @@ def report(say, until="HEAD"):
         any(b.get("protocol") not in (None, head_protocol) for b in state["boxes"])
     # What is to ship, for prepare and switch.
     plan["todo"] = {"boxes": [b["host"] for b in server_todo], "clients": client_todo,
-                    "launcher": bool(launcher_todo), "web": bool(web_todo)}
+                    "launcher": bool(launcher_todo), "web": bool(web_todo),
+                    "armory": armory_target if armory_todo else None}
     verdicts = []
     if bump:
         verdicts.append(f"PROTOCOL {min([c['protocol'] for c in state['clients'].values() if c] or [0])} -> {head_protocol}: "
@@ -361,6 +378,8 @@ def report(say, until="HEAD"):
         verdicts.append("launcher update (every launcher replaces itself)")
     if web_todo:
         verdicts.append("site deploy")
+    if armory_todo:
+        verdicts.append(f"the Armory of {armory_target} (its data and `current`; nothing restarted)")
     verdict = "; ".join(verdicts) if verdicts else "nothing to ship: every part is current"
     # A prepare of this commit with nothing failed: only the switch is left.
     try:
@@ -470,7 +489,7 @@ def prepare(say, commit=None):
     todo, protocol = plan["todo"], plan["protocol"]
     boxes = {b[1]: b for b in BOXES}
     say(f"preparing {commit} (protocol {protocol}): {plan['verdict']}")
-    if not (todo["boxes"] or todo["clients"] or todo["launcher"] or todo["web"]):
+    if not (todo["boxes"] or todo["clients"] or todo["launcher"] or todo["web"] or todo.get("armory")):
         return True, {"commit": commit, "nothing": True}
     lanes = Lanes(say)
     staged_already = {h for h, part in ((k[len("server-"):], v) for k, v in plan["parts"].items() if k.startswith("server-"))
@@ -485,11 +504,17 @@ def prepare(say, commit=None):
                     sent.append(sends.submit(lanes.run, p, [f"./mu release {p} --stage"]))
             if todo["launcher"]:
                 lanes.run("launcher", [f"./mu dist launcher --commit {commit}", "./mu release launcher --dry"])
-            # The Armory's data for this release (tools/armory/build.py), from dist/macos's packs, so
-            # after its dist: out/armory/<commit>/, nothing sent. Its result is said, never a reason
+            # The Armory's data for the release players will have (tools/armory/build.py), from its
+            # packs (dist/macos's, kept in out/armory/packs/, so after its dist): out/armory/<commit>/,
+            # built and tested unless it already is, nothing sent. Its result is said, never a reason
             # the switch waits.
-            if "macos" not in todo["clients"] or lanes.results.get("macos"):
-                lanes.run("armory", [f"./mu armory build --commit {commit}", f"./mu armory test out/armory/{commit}"])
+            target = todo.get("armory")
+            if target and ("macos" not in todo["clients"] or lanes.results.get("macos")):
+                if os.path.isfile(os.path.join(ROOT, "out", "armory", target, "TESTED")):
+                    lanes.tell("armory", f"out/armory/{target}/ built and tested already")
+                    lanes.results["armory"] = True
+                else:
+                    lanes.run("armory", [f"./mu armory build --commit {target}", f"./mu armory test out/armory/{target}"])
             for f in sent:
                 f.result()
 
@@ -509,7 +534,8 @@ def prepare(say, commit=None):
     ready = {"commit": commit, "protocol": protocol, "bump": plan["bump"], "at": time.strftime("%Y-%m-%d %H:%M:%S"),
              "boxes": [h for h in todo["boxes"] if lanes.results.get(boxes[h][0])],
              "clients": [p for p in todo["clients"] if lanes.results.get(p)],
-             "launcher": bool(lanes.results.get("launcher")), "web": todo["web"], "failed": failed}
+             "launcher": bool(lanes.results.get("launcher")), "web": todo["web"], "failed": failed,
+             "armory": todo.get("armory") if lanes.results.get("armory") else None}
     os.makedirs(os.path.dirname(PREPARED), exist_ok=True)
     with open(PREPARED, "w") as out:
         json.dump(ready, out, indent=1)
@@ -564,7 +590,8 @@ def switch(say, commit=None, now=False):
         + (f" ({', '.join(b['region'] for b in warns)} told {RESTART_WARN} s first)" if warns else "")
         + f", clients {', '.join(ready['clients']) or 'none'}"
         + (f" in {wait} s, as the servers come back" if wait and ready["clients"] else "")
-        + (", the launcher" if ready["launcher"] else "") + (", the site" if ready["web"] else ""))
+        + (", the launcher" if ready["launcher"] else "") + (", the site" if ready["web"] else "")
+        + (f", the Armory of {ready['armory']}" if ready.get("armory") else ""))
 
     lanes = Lanes(say)
     started = time.time()
@@ -583,8 +610,11 @@ def switch(say, commit=None, now=False):
         jobs += [pool.submit(client, p) for p in ready["clients"]]
         if ready["launcher"]:
             jobs.append(pool.submit(lanes.run, "launcher", ["./mu release launcher"]))
+        armory = ready.get("armory")
         if ready["web"]:
-            jobs.append(pool.submit(lanes.run, "site", [f"MU2_COMMIT={commit} web/deploy.sh"]))
+            jobs.append(pool.submit(lanes.run, "site", [f"MU2_COMMIT={commit} {f'ARMORY={armory} ' if armory else ''}web/deploy.sh"]))
+        elif armory:
+            jobs.append(pool.submit(lanes.run, "armory", [f"ARMORY={armory} web/deploy.sh --armory"]))
         for j in jobs:
             j.result()
 
@@ -610,7 +640,15 @@ def switch(say, commit=None, now=False):
         ok = after["web"] == commit
         good &= ok
         say(f"  {'live  ' if ok else 'WRONG '}  site   {after['web']}")
+    if ready.get("armory"):
+        ok = after.get("armory") == ready["armory"]
+        good &= ok
+        say(f"  {'live  ' if ok else 'WRONG '}  armory {after.get('armory')}")
     say(f"\n{'live' if good else 'NOT all live'}: {commit} in {time.time() - started:.0f} s")
+    # The release order the Armory's history follows (tools/armory/releases.py): this one, once its
+    # macOS client is what players have.
+    if "macos" in ready["clients"] and (after["clients"].get("macos") or {}).get("commit") == commit:
+        subprocess.run([sys.executable, os.path.join(ROOT, "tools", "armory", "releases.py"), "record", commit], cwd=ROOT)
     if good:
         os.remove(PREPARED)
     return good, {"commit": commit, "results": lanes.results, "live": good}

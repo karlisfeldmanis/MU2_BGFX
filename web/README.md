@@ -11,7 +11,7 @@ Design: the "MU2 Launcher" canvas, Website page.
 | `i18n.py`, `i18n/` | the site in Portuguese, Spanish, Russian, Vietnamese and Polish under `/pt/`, `/es/`, `/ru/`, `/vi/`, `/pl/`: the English pages are the source, each language's words are kept in the database (`texts`) and edited by admins on `/translate` (`site/translate.html`); `i18n/<lang>.json` are the first words of each, put in at start wherever a line has none. A script's words go through `MU.t('...')` (`site.js`) |
 | `Caddyfile` | HTTPS on mu-classic.com (and still on 37.27.158.226 for launchers already out), installers from disk, the rest to server.py |
 | `mu2-web.service` | the systemd unit; accounts in `/var/lib/mu2-web/accounts.db` |
-| `deploy.sh` | HEAD's `web/` to `/opt/mu2-web`, the newest built Armory to `/srv/mu2-web/armory/`, Caddy installed if missing, both restarted |
+| `deploy.sh` | HEAD's `web/` to `/opt/mu2-web`, the live release's tested Armory to `/srv/mu2-web/armory/`, Caddy installed if missing, both restarted; `--armory` the Armory alone |
 | `armory.py`, `site/armory/` | the Armory (below) |
 
 ## Run it here
@@ -34,11 +34,31 @@ admin reads the reports at `GET /api/armory/reports`. Its words are a group of `
     python3 -I web/server.py --db out/web/accounts.db --port 8091 --armory out/armory/5d7ddebc
     open http://127.0.0.1:8091/armory
 
-`--armory` takes a release (a folder with meta.json) or a folder of them, serving `current` or the
-newest; locally it defaults to out/armory/. `web/deploy.sh` uploads the newest built release (or
-`ARMORY=<commit>`) to `/srv/mu2-web/armory/<commit>/` and moves `current`; Caddy serves
-`/armory/data/*` from there. `./mu armory test` checks the output, the card against the game's
-renders (tools/armory/tests/card_check.js) and the pages in headless Chrome (site_test.js).
+`--armory` takes a release (a folder with meta.json) or a folder of them, serving the commit
+`ARMORY` names, else `current`, else locally the newest built release of out/armory/releases.json --
+never the newest on disk, and never a history-only build (`SEED`). `./mu armory test out/armory/<commit>`
+checks the output, the card against the game's renders (tools/armory/tests/card_check.js) and the
+pages in headless Chrome (site_test.js), and writes `TESTED` in the release's folder on a pass.
+
+`web/deploy.sh` uploads the Armory of `ARMORY=<commit>`, else of the live release (the macOS
+manifest's version), to `/srv/mu2-web/armory/<commit>/` and moves `current`; Caddy serves
+`/armory/data/*` from there. It refuses, leaving `current` as it is, a release not built, a `.new`
+(unfinished), a `SEED`, or one without `TESTED`. It is sent with `rsync --link-dest` against the
+release `current` was, so unchanged thumbnails are linked on the box, not sent again. Kept on the
+box: the release `current` points at, the one it pointed at before, the one just sent and the
+newest four by meta.json `built`. `mu ship` plans and switches the Armory as its own lane:
+
+    ARMORY=4b0ad87e web/deploy.sh --armory          # its data and `current` only, nothing restarted
+    DRY=1 ARMORY=4b0ad87e web/deploy.sh --armory    # the commands, not run
+
+Rollback: point `current` back at a release still on the box (one of the kept ones) by sending it
+again, which uploads nothing new when it is there and swaps the link:
+
+    ARMORY=<older commit> web/deploy.sh --armory
+
+(it needs out/armory/<older commit>/ with its TESTED here; `./mu armory build --commit <older>`
+and `./mu armory test out/armory/<older>` remake it from its kept packs, out/armory/packs/<commit>/).
+Or on the box itself: `cd /srv/mu2-web/armory && ln -sfn <older> current.new && mv -T current.new current`.
 
 ## The accounts
 

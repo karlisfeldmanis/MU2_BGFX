@@ -24,8 +24,9 @@ server.py asks `get()` and `post()` first; each answers True when the path was t
     GET  /api/armory/reports   Bearer T of an admin     -> 200 {reports} | 404 for anyone else
 
 The release served is --armory DIR: a built release itself (has meta.json), or a folder of them, of
-which `current` (a link deploy.sh moves) or else the newest built is served. Read again when its
-meta.json changes, so a new release needs no restart.
+which the commit ARMORY names, else `current` (a link deploy.sh moves to the live release), else
+locally the newest built of its releases.json is served -- never the newest on disk, and never a
+history-only build (SEED). Read again when its meta.json changes, so a new release needs no restart.
 
 Comments live in the accounts' database (armory_comments, armory_votes, armory_reports), each under
 its account and gone with it (ON DELETE CASCADE).
@@ -167,24 +168,29 @@ class Armory:
     # ---- the release
 
     def folder(self):
+        """The release served, never the newest on disk: --armory DIR itself when it is one, else the
+        commit ARMORY names, else `current` (deploy.sh moves it to the live release), else locally the
+        newest of out/armory/releases.json that is built. A history-only build (SEED) is never served."""
+        import os
         r = self.root
         if r is None or not r.is_dir():
             return None
         if (r / "meta.json").is_file():
             return r
+        servable = lambda d: (d / "meta.json").is_file() and not (d / "SEED").exists() and not d.name.endswith(".new")
+        named = os.environ.get("ARMORY", "").strip()
+        if named:
+            return r / named if COMMIT.match(named) and servable(r / named) else None
         if (r / "current" / "meta.json").is_file():
             return (r / "current").resolve()
-        best = None
-        for d in r.iterdir():
-            m = d / "meta.json"
-            if d.is_dir() and m.is_file() and not d.name.endswith(".new"):
-                try:
-                    built = json.loads(m.read_text()).get("built", "")
-                except ValueError:
-                    continue
-                if best is None or built > best[0]:
-                    best = (built, d)
-        return best[1] if best else None
+        try:
+            listed = [x.get("commit") for x in json.loads((r / "releases.json").read_text()).get("releases") or []]
+        except (OSError, ValueError):
+            listed = []
+        for commit in reversed(listed):
+            if commit and COMMIT.match(commit) and servable(r / commit):
+                return r / commit
+        return None
 
     def release(self):
         f = self.folder()
@@ -307,7 +313,8 @@ class Armory:
         base = None
         if r is not None and commit == r.commit:
             base = r.dir
-        elif self.root is not None and COMMIT.match(commit) and (self.root / commit / "meta.json").is_file():
+        elif (self.root is not None and COMMIT.match(commit) and (self.root / commit / "meta.json").is_file()
+              and not (self.root / commit / "SEED").exists()):
             base = self.root / commit
         if base is None or ".." in rel.split("/"):
             h.send_error(404)
@@ -739,5 +746,5 @@ class Armory:
 
 
 def default_root(here: Path):
-    """Locally, the repository's out/armory/ (its newest build)."""
+    """Locally, the repository's out/armory/ (its newest built release, Armory.folder)."""
     return here.parent / "out" / "armory"
