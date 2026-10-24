@@ -88,13 +88,15 @@ void ElectricSpike::begin(uint32_t who, float clipSeconds) {
     slot->rate = clipSeconds > 0.0f ? kClipFrames / (clipSeconds * kReferenceFps) : 1.0f;
 }
 
-void ElectricSpike::gather(uint32_t who, const float hand[3]) {
+void ElectricSpike::gather(uint32_t who, const float hand[3], float yaw) {
     for (Gather& one : gathers_) {
         if (one.alive) continue;
         one = Gather{};
         one.alive = true;
         one.who = who;
         for (int k = 0; k < 3; ++k) one.at[k] = hand[k];
+        one.ahead[0] = std::sin(yaw);
+        one.ahead[1] = std::cos(yaw);
         gatherFrame(one);
         return;
     }
@@ -105,16 +107,23 @@ void ElectricSpike::gatherFrame(Gather& one) {
     for (int j = 0; j < 3; ++j) {
         one.star[j][0] = float(int(unit() * 8.0f) + 8) * 0.2f;
         one.star[j][1] = between(0.0f, 6.2831853f);
-        // Every other frame a zap from 120 units out, any way round, into the hand.
+        // Every other frame a zap from 120 units out into the hand: any way round in MU, his
+        // front half here -- one drawn behind him is turned to the front (ours, "only frontal").
         if ((int(one.left) % 2) != 0) continue;
         for (Zap& zap : zaps_) {
             if (zap.alive) continue;
             const float yaw = between(0.0f, 6.2831853f), pitch = between(-1.5707963f, 1.5707963f);
             zap = Zap{};
             zap.alive = true;
-            zap.from[0] = one.at[0] + std::cos(pitch) * std::cos(yaw) * 120.0f * metre;
+            float flat[2] = {std::cos(pitch) * std::cos(yaw), std::cos(pitch) * std::sin(yaw)};
+            const float back = flat[0] * one.ahead[0] + flat[1] * one.ahead[1];
+            if (back < 0.0f) {
+                flat[0] -= 2.0f * back * one.ahead[0];
+                flat[1] -= 2.0f * back * one.ahead[1];
+            }
+            zap.from[0] = one.at[0] + flat[0] * 120.0f * metre;
             zap.from[1] = one.at[1] + std::sin(pitch) * 120.0f * metre;
-            zap.from[2] = one.at[2] + std::cos(pitch) * std::sin(yaw) * 120.0f * metre;
+            zap.from[2] = one.at[2] + flat[1] * 120.0f * metre;
             for (int k = 0; k < 3; ++k) zap.to[k] = one.at[k];
             zap.seed = dice_;
             break;

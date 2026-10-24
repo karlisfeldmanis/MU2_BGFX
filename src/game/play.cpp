@@ -2918,7 +2918,12 @@ void Play::update(double seconds) {
         }
     });
     // Electric Spike's gather, bolt and rings (fx/electric_spike.h).
-    electricSpike_.update(float(seconds), gripOf);
+    electricSpike_.update(float(seconds), gripOf, [&](uint32_t id, float* yaw) {
+        const Drawn* drawn = drawnOf(id);
+        if (drawn == nullptr || !drawn->placed) return false;
+        *yaw = drawn->yaw;
+        return true;
+    });
     // Fire Burst's, and eFirebustBoom as it is let go (fx/fire_burst.h).
     fireBurst_.update(
         float(seconds), bodyAt,

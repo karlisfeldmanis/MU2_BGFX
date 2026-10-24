@@ -23,7 +23,8 @@
 // that falls 0.06 a frame, the light / 1.5 a frame under eight of twelve -- Main 1.03.35's move
 // (ZzzEffect.cpp:14800-14807; MuMain's is empty).
 //
-// **Ours, and marked**: the rings laid on his line and slid ahead so none of them is behind his hand
+// **Ours, and marked**: the gather's zaps come from his front half alone, where MU's come from
+// any way round and trailed down behind him; the rings laid on his line and slid ahead so none of them is behind his hand
 // -- the user's "only frontal", where MU's crescent flares beside and behind him; no party wisps,
 // as there is no party drain to draw (decision 6); the zaps' walk drawn as a jagged line re-thrown
 // each frame; keys read as a share of the clip as played.
@@ -59,9 +60,10 @@ public:
     // A body struck off the bolt `wait` seconds on: a zap off the bolt, `from`, into it, `to`.
     void arc(const float from[3], const float to[3], float wait);
 
-    // Every frame. `grip(id, out)` his weapon hand, false for none.
-    template <typename Grip>
-    void update(float seconds, Grip grip);
+    // Every frame. `grip(id, out)` his weapon hand, false for none; `facing(id, &yaw)` the way
+    // he faces, forward (sin yaw, 0, cos yaw), false for none.
+    template <typename Grip, typename Facing>
+    void update(float seconds, Grip grip, Facing facing);
 
     void gatherEffects(gfx::Effects& effects) const;
     void clear();
@@ -85,6 +87,7 @@ private:
         float at[3] = {};
         float left = 20.0f, due = 0.0f;
         float star[3][2] = {};  // the frame's stars: scale, spin
+        float ahead[2] = {0.0f, 1.0f};  // his facing, flat (x, z)
     };
     struct Zap {
         bool alive = false;
@@ -129,7 +132,7 @@ private:
     float unit();
     float between(float a, float b) { return a + (b - a) * unit(); }
     float perUnit() const { return (ground_ ? ground_->metresPerTile() : 1.0f) / 100.0f; }
-    void gather(uint32_t who, const float hand[3]);
+    void gather(uint32_t who, const float hand[3], float yaw);
     void gatherFrame(Gather& one);
     void ring(const float hand[3], const float way[3]);
     void step(Joint& one);
@@ -138,8 +141,8 @@ private:
                 const float colour[3], float scroll) const;
 };
 
-template <typename Grip>
-void ElectricSpike::update(float seconds, Grip grip) {
+template <typename Grip, typename Facing>
+void ElectricSpike::update(float seconds, Grip grip, Facing facing) {
     seconds = std::fmin(seconds, 0.1f);
     clock_ += seconds;
     const float frames = seconds * kReferenceFps;
@@ -153,7 +156,9 @@ void ElectricSpike::update(float seconds, Grip grip) {
         charge.key += frames * charge.rate * 0.4f;  // keys: the clip plays 0.4 a reference frame
         if (!charge.gathered && charge.key >= kGatherKey) {
             charge.gathered = true;
-            gather(charge.who, hand);
+            float yaw = 0.0f;
+            facing(charge.who, &yaw);
+            gather(charge.who, hand, yaw);
         }
         if (!charge.ringed && charge.key >= kRingKey) {
             charge.ringed = true;
@@ -164,6 +169,10 @@ void ElectricSpike::update(float seconds, Grip grip) {
     for (Gather& one : gathers_) {
         if (!one.alive) continue;
         grip(one.who, one.at);
+        if (float yaw = 0.0f; facing(one.who, &yaw)) {
+            one.ahead[0] = std::sin(yaw);
+            one.ahead[1] = std::cos(yaw);
+        }
         one.due += frames;
         while (one.alive && one.due >= 1.0f) {
             one.due -= 1.0f;
