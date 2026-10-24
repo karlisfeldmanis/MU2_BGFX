@@ -946,6 +946,20 @@ constexpr SkillRow kRows[kSkills] = {
               "everything in it. His Command and his party near him add to it.",
      .clip = 152, .sound = "electric_spike_ready", .built = true, .families = arms::kNone, .needLevel = 92,
      .kin = Kin::DarkLord, .damage = 250, .flies = 40.0f, .anyHand = true, .release = 5.5f / 13.0f},
+    // Critical Damage 64 (docs/plans/dark-lord-spells/critical-damage.md): MU's row, WebZen
+    // skill.txt:69 -- level 82, 50 mana, energy 102 and Command 300 -- on PLAYER_SKILL_HAND (6 keys
+    // at 0.29; WSclient.cpp:4683-4701), its flash 14 ticks after the echo (no AttackStage case,
+    // ZzzCharacter.cpp:4133-4140, 4367-4384): 0.56 s of the clip's 0.83. Cmd/25 + Ene/30 on every
+    // critical and excellent hit for 60 + Ene/10 s, on him and his party within ten tiles
+    // (ObjUseSkill.cpp:4136-4215, Realm::throwSkill).
+    // **Ours**: Greater Damage's three seconds of cooldown, where MU has none and spends 50 AG as
+    // well; a weaker lord's cast does not replace a stronger one's (the user's rule for a ward,
+    // 2026-10-21), where WebZen's does.
+    {.number = skill::kCriticalDamage, .name = "Critical Damage", .mana = 50, .coolTicks = 60,
+     .tells = "Every critical and excellent hit harder, his and his party's near him, by his Command "
+              "and energy, for a minute and more.",
+     .clip = 147, .sound = "", .built = true, .families = arms::kNone, .needLevel = 82,
+     .kin = Kin::DarkLord, .anyHand = true, .release = 0.56f / 0.83f, .sharpens = true},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy
@@ -1288,6 +1302,12 @@ bool summonsHere(const SkillRow& row, uint32_t map) { return row.airborne || rul
 int healOf(const HeroPoints& points) { return 5 + std::max(0, points.energy) / 5; }
 
 int mightOf(const HeroPoints& points) { return 3 + std::max(0, points.energy) / 7; }
+
+int32_t keenOf(const HeroPoints& points) {
+    return std::max(0, points.command) / 25 + std::max(0, points.energy) / 30;
+}
+
+int32_t keenTicksOf(const HeroPoints& points) { return (60 + std::max(0, points.energy) / 10) * 20; }
 
 float boonShare(const SkillRow& row, const HeroPoints& points, int shieldDefense) {
     if (row.number == skill::kGreaterDefense) return wardShare(points);

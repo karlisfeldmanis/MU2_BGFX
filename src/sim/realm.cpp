@@ -1178,6 +1178,12 @@ void Realm::press() {
         reswing(hero);
     }
     // And Greater Damage, off on its tick and the band re-reckoned without it.
+    // And Critical Damage, the same way.
+    if (hero.keenUntil != 0 && tick_ >= hero.keenUntil) {
+        hero.keenUntil = 0;
+        hero.keen = 0;
+        rearm(hero);
+    }
     if (hero.mightUntil != 0 && tick_ >= hero.mightUntil) {
         hero.mightUntil = 0;
         hero.might = 0;

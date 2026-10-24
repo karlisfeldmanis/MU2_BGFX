@@ -37,12 +37,14 @@ Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice) {
         attacker.criticalChance > 0.0 && dice.nextBool(attacker.criticalChance);
     const bool excellent =
         attacker.excellentChance > 0.0 && dice.nextBool(attacker.excellentChance);
+    // A Dark Lord's Critical Damage on each hand's top, as WebZen lays it on m_AttackDamageRight
+    // and Left before either is taken (ObjAttack.cpp:3380-3386).
     if (excellent) {
         blow.excellent = true;
-        blow.rolled = int(double(attacker.maximumDamage) * 1.2);
+        blow.rolled = int(double(attacker.maximumDamage + attacker.criticalAdd) * 1.2);
     } else if (critical) {
         blow.critical = true;
-        blow.rolled = attacker.maximumDamage * (100 + attacker.criticalDamage) / 100;
+        blow.rolled = attacker.maximumDamage * (100 + attacker.criticalDamage) / 100 + attacker.criticalAdd;
     } else {
         // 3. min + rand()%(max-min+1): the top of the band is a roll too (ObjAttack.cpp:3117
         // for a monster, :3331 for a hero, 1.00.93), where OpenMU's upper-exclusive NextInt
@@ -56,8 +58,8 @@ Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice) {
     // each hand, so a run without one draws what it always drew.
     if (attacker.offhandMaximumDamage > 0) {
         const int low = attacker.offhandMinimumDamage, high = attacker.offhandMaximumDamage;
-        blow.rolled += excellent  ? int(double(high) * 1.2)
-                       : critical ? high * (100 + attacker.criticalDamage) / 100
+        blow.rolled += excellent  ? int(double(high + attacker.criticalAdd) * 1.2)
+                       : critical ? high * (100 + attacker.criticalDamage) / 100 + attacker.criticalAdd
                        : high > low ? dice.nextInt(low, high + 1)
                                     : low;
     }
@@ -100,7 +102,9 @@ Blow cast(const Fighter& attacker, const Fighter& defender, int skillDamage, Ran
     } else if (critical) {
         blow.critical = true;
         blow.rolled = high * (100 + attacker.criticalDamage) / 100;
-        damage = blow.rolled - defense;
+        // A Dark Lord's Critical Damage after the defence, on a spell's critical alone
+        // (ObjAttack.cpp:3705-3721).
+        damage = blow.rolled - defense + attacker.criticalAdd;
     } else {
         // `if (baseMaxDamage <= baseMinDamage) dmg = baseMinDamage`: no draw. The top is a
         // roll, as the swing's (ObjAttack.cpp:3694).
@@ -366,6 +370,7 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     out->damageTaken = arms.pet.taken;
     out->damageDealt = arms.pet.dealt;
     out->greaterDamage = arms.greaterDamage;
+    out->criticalAdd = arms.criticalAdd;
 
     // Truncated, and it is a departure of the same kind as the two above: OpenMU keeps
     // MaximumHealth as a float attribute and compares health against it as one. Nothing in

@@ -328,4 +328,65 @@ void testDarkLord(void (*check)(bool, const char*), void (*checkEqual)(long long
         check(struck[0] > letGo && said[0] == 1, "the body beside him is struck, its zap said");
         check(struck[1] < 0 && said[1] == 0, "the one behind him is not");
     }
+
+    // **Critical Damage** (64, docs/plans/dark-lord-spells/critical-damage.md): Cmd/25 + Ene/30 on
+    // every critical and excellent hit, for 60 + Ene/10 s, on him and his party within ten tiles.
+    {
+        const sim::SkillRow* keen = sim::skillNumbered(sim::skill::kCriticalDamage);
+        check(keen != nullptr && keen->onSelf() && keen->kin == sim::Kin::DarkLord && keen->mana == 50 &&
+                  keen->needLevel == 82 && keen->sharpens,
+              "Critical Damage: a self-cast of his, level 82, 50 mana");
+        sim::HeroPoints points;
+        points.command = 300;
+        points.energy = 102;
+        checkEqual(sim::keenOf(points), 12 + 3, "Cmd/25 + Ene/30: 300 and 102 give 15");
+        checkEqual(sim::keenTicksOf(points), (60 + 10) * 20, "for 60 + Ene/10 seconds");
+
+        // The flat add: on each hand's top for a critical swing, before the defence.
+        sim::Fighter a, d;
+        a.attackRate = 1000.0f;
+        a.minimumDamage = 50;
+        a.maximumDamage = 100;
+        a.criticalChance = 1.0;
+        a.criticalAdd = 30;
+        d.defenseRate = 0.0f;
+        sim::Random dice(7);
+        const sim::Blow crit = sim::strike(a, d, dice);
+        check(!crit.hit || crit.rolled == 130, "a critical swing rolls its top and the add");
+        a.criticalChance = 0.0;
+        sim::Random dice2(7);
+        const sim::Blow plain = sim::strike(a, d, dice2);
+        check(!plain.hit || plain.rolled <= 100, "an ordinary swing takes none of it");
+
+        sim::Realm lordRealm;
+        check(lordRealm.raise(&lorencia, 9, 160, 60, sim::Kin::DarkLord, 100), "a level-100 Dark Lord raises");
+        check(lordRealm.learn(sim::skill::kCriticalDamage), "he learns it");
+        lordRealm.unseen(true);
+        const uint32_t lord = lordRealm.hero().id;
+        const int hx = lordRealm.hero().column(), hy = lordRealm.hero().row();
+        const uint32_t near = lordRealm.join(sim::Kin::DarkKnight, 100, hx + 2, hy);
+        const uint32_t far = lordRealm.join(sim::Kin::DarkKnight, 100, hx + 14, hy);
+        const uint32_t stranger = lordRealm.join(sim::Kin::DarkKnight, 100, hx, hy + 2);
+        check(near && far && stranger, "three knights join");
+        for (uint32_t one : {lord, near, far}) check(lordRealm.setParty(one, 5), "into his party");
+        lordRealm.invoke(sim::skill::kCriticalDamage, 0);
+        int cast = 0;
+        for (int tick = 0; tick < 40; ++tick) {
+            lordRealm.step();
+            for (const sim::Happening& one : lordRealm.happenings()) {
+                if (one.what == sim::What::Cast && one.who == lord && one.a == sim::skill::kCriticalDamage) ++cast;
+            }
+        }
+        checkEqual(cast, 1, "it is cast once");
+        const sim::Body& me = lordRealm.hero();
+        const int32_t want = sim::keenOf(me.totalPoints());
+        check(want > 0, "he has Command and energy to give");
+        checkEqual(me.keen, want, "on him");
+        checkEqual(lordRealm.find(near)->keen, want, "on the knight of his party two tiles off");
+        checkEqual(lordRealm.find(near)->stats.criticalAdd, want, "and in the knight's blows");
+        checkEqual(lordRealm.find(far)->keen, 0, "not on the one fourteen tiles off");
+        checkEqual(lordRealm.find(stranger)->keen, 0, "nor on a stranger beside him");
+        check(me.keenUntil - lordRealm.tick() > sim::keenTicksOf(me.totalPoints()) - 40,
+              "held for its sixty seconds and more");
+    }
 }

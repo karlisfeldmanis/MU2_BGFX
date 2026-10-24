@@ -199,6 +199,10 @@ struct Fighter {
     // `Stats.GreaterDamageBonus`: the elf's Greater Damage, added to every blow after the
     // defence (AttackableExtensions.cs:185). Nought for anybody not under it.
     int greaterDamage = 0;
+    // A Dark Lord's Critical Damage: added flat to each hand's top on a critical or excellent
+    // swing, before the defence, and to a spell's critical after it (WebZen ObjAttack.cpp:3380-3386,
+    // :3718-3721). Nought for anybody not under it.
+    int criticalAdd = 0;
     // Stats.AttackDamageIncrease: the Imp's x1.3, taken on every blow after the level floor and
     // before damageTaken (AttackableExtensions.cs:220-224). 1 for everybody without one.
     double damageDealt = 1.0;
@@ -378,6 +382,8 @@ struct Arms {
     int quiverPlus = 0;
     // Greater Damage while it stands (Fighter::greaterDamage).
     int greaterDamage = 0;
+    // Critical Damage while it stands (Fighter::criticalAdd).
+    int criticalAdd = 0;
     // A worn wing's option (docs/game/wings.md): Satan's on both ends of every band he swings, and
     // Heaven's on his wizardry, 4 a level, PlusSpecial's AT_IMPROVE_DAMAGE and AT_IMPROVE_MAGIC
     // (ObjCalCharacter.cpp:473-477, :582-583).

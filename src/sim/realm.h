@@ -608,6 +608,10 @@ struct Body {
     // Greater Damage on her: the bonus reckoned at the cast, and the tick it lapses.
     int32_t might = 0;
     int64_t mightUntil = 0;
+    // A Dark Lord's Critical Damage on him: the flat add on a critical or excellent hit, reckoned
+    // off the lord at the cast, and the tick it lapses. Not saved: MU ends it on logout.
+    int32_t keen = 0;
+    int64_t keenUntil = 0;
     // Being pushed (`Realm::push`): tiles a tick to slide, and how many ticks are left. While it
     // runs the body neither thinks nor walks.
     float pushX = 0.0f, pushY = 0.0f;

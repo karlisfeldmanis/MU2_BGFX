@@ -351,6 +351,26 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
                     to.mercy = spare;
                 }
             }
+        } else if (row.sharpens) {
+            // Critical Damage: off his Command and energy now, on him and on every member of his
+            // party on this map within ten whole tiles (`gObjCalDistance < 10`), himself alone
+            // outside one (ObjUseSkill.cpp:4150-4215). A recast replaces it rather than stacking --
+            // but a weaker lord's not a stronger one's still standing (ours, the ward's rule).
+            const int32_t keen = keenOf(hero.totalPoints());
+            const int64_t until = tick_ + keenTicksOf(hero.totalPoints());
+            for (Body& one : bodies_) {
+                const bool his = &one == &hero;
+                if (!his && (hero.party == 0 || !one.player || one.party != hero.party || !one.alive())) continue;
+                if (!his) {
+                    const float dx = float(one.column() - hero.column()), dy = float(one.row() - hero.row());
+                    if (int(std::sqrt(dx * dx + dy * dy)) >= 10) continue;
+                }
+                if (one.keenUntil > tick_ && one.keen > keen) continue;
+                one.keen = keen;
+                one.keenUntil = until;
+                For theirs(*this, one);
+                rearm(one);
+            }
         } else if (row.mightTicks > 0) {
             // Greater Damage: reckoned off her energy now and held for the minute; a second cast
             // replaces the first rather than stacking, as MU's magic effects do.

@@ -129,6 +129,10 @@ constexpr int32_t kFireBurst = 61;
 // `AT_SKILL_ELECTRICSPARK`, Electric Spike: a bolt down WebZen's own hit table toward the ground he
 // names (ObjUseSkill.cpp:4219-4319; docs/plans/dark-lord-spells/electric-spike.md).
 constexpr int32_t kElectricSpike = 65;
+// `AT_SKILL_ADD_CRITICALDAMAGE`, Critical Damage: a flat add on every critical and excellent hit,
+// on him and his party near him (WebZen ObjUseSkill.cpp:4136-4215;
+// docs/plans/dark-lord-spells/critical-damage.md).
+constexpr int32_t kCriticalDamage = 64;
 // `AT_SKILL_PENETRATION`, off the Orb of Penetration (group 12 number 17): 0.95d's and not
 // 0.75's (Version095d is where OpenMU first has it; VersionSeasonSix/SkillsInitializer.cs:171
 // carries the row). An arrow that flies on through everything in its line.
@@ -450,6 +454,11 @@ struct SkillRow {
     int32_t summonsAs = 0;
     // **A summon that flies**: raised over a map whose rules forbid summons (Icarus's).
     bool airborne = false;
+    // ---- Critical Damage's, appended after the Alquamos's ------------------------------------
+    // **A party's critical damage**: `Command/25 + Energy/30` on every critical and excellent hit
+    // for `60 + Energy/10` seconds, on him and every party member within ten tiles (sim::keenOf,
+    // Realm::throwSkill).
+    bool sharpens = false;
     // **Whether a press aims it at the ground under the pointer** rather than at a body: the
     // shapes that have a direction -- Aqua Beam's beam, Power Wave's line, the knight's arcs and
     // Twister's walking storm. Thrown from the keys or the right button, he turns to where the
@@ -479,10 +488,10 @@ struct SkillRow {
                number == skill::kHellfire || number == skill::kTwistingSlash;
     }
     // Whether it is cast on the caster and takes no target.
-    bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0; }
+    bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0 || sharpens; }
     // Whether it is an aura: a self-cast that is not a summon. Blood Castle's court lets these
     // be raised on its safe tiles, to go into the fight with them (Realm::throwSkill).
-    bool aura() const { return boonTicks > 0 || mends || mightTicks > 0; }
+    bool aura() const { return boonTicks > 0 || mends || mightTicks > 0 || sharpens; }
     // **Whether it may be cast on another player**: the elf's Heal, Greater Defense and Greater
     // Damage, as MU casts them on a player -- on whoever she is pointing at or has picked, within
     // kAidReach (Realm::throwSkill; the user, 2026-10-19: "elf can buff, heal other players by
@@ -516,8 +525,9 @@ struct SkillRow {
 // again, which the static_assert below says. Also the width of a body's cooldown array -- and
 // the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill. The Dark Lord's Force past the Alquamos (41), his Fire
-// Burst (42) and Electric Spike (43); a kept layout before 15 carries 40 cools, net/wire.cpp.
-constexpr int kSkills = 43;
+// Burst (42), Electric Spike (43) and Critical Damage (44); a kept layout before 15 carries 40
+// cools, net/wire.cpp.
+constexpr int kSkills = 44;
 
 // What each of Nova's stages adds to its blow: OpenMU's NovaDamageTable (NovaSkillStartPlugin.cs:30),
 // stage 0 to 12, with the strength's half beside it (SkillsInitializer.cs:610-611).
@@ -816,6 +826,10 @@ inline int lanesOf(const SkillRow& row, int volleys) {
 // Heal's health and Greater Damage's bonus, off her energy.
 int healOf(const HeroPoints& points);
 int mightOf(const HeroPoints& points);
+// Critical Damage off the lord who casts it: `Command/25 + Energy/30` added to a critical or
+// excellent hit, for `60 + Energy/10` seconds, in ticks (WebZen ObjUseSkill.cpp:4173-4175).
+int32_t keenOf(const HeroPoints& points);
+int32_t keenTicksOf(const HeroPoints& points);
 
 // Whichever of the two a self-cast row is, so the realm, the card, the scroll and the strip ask
 // one question and cannot say different numbers for the same buff.
