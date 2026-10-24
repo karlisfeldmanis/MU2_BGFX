@@ -485,6 +485,11 @@ def prepare(say, commit=None):
                     sent.append(sends.submit(lanes.run, p, [f"./mu release {p} --stage"]))
             if todo["launcher"]:
                 lanes.run("launcher", [f"./mu dist launcher --commit {commit}", "./mu release launcher --dry"])
+            # The Armory's data for this release (tools/armory/build.py), from dist/macos's packs, so
+            # after its dist: out/armory/<commit>/, nothing sent. Its result is said, never a reason
+            # the switch waits.
+            if "macos" not in todo["clients"] or lanes.results.get("macos"):
+                lanes.run("armory", [f"./mu armory build --commit {commit}", f"./mu armory test out/armory/{commit}"])
             for f in sent:
                 f.result()
 
@@ -500,7 +505,7 @@ def prepare(say, commit=None):
         for j in jobs:
             j.result()
 
-    failed = [k for k, ok in lanes.results.items() if not ok]
+    failed = [k for k, ok in lanes.results.items() if not ok and k != "armory"]
     ready = {"commit": commit, "protocol": protocol, "bump": plan["bump"], "at": time.strftime("%Y-%m-%d %H:%M:%S"),
              "boxes": [h for h in todo["boxes"] if lanes.results.get(boxes[h][0])],
              "clients": [p for p in todo["clients"] if lanes.results.get(p)],

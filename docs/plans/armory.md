@@ -27,10 +27,12 @@ The release players have, never HEAD:
 |---|---|---|
 | Dump | `tools/armory/dump/*.cpp`, CMake target `armory_dump` (EXCLUDE_FROM_ALL), built in the snapshot | Everything a C++ rule decides: cards (`describe()`), prices (`npcValue`), skills, talents, gear powers, rune odds, quest rewards, NPC services, per-kill drop odds |
 | Odds check | `armory_dump --check-odds` | Runs the real `Realm::leave` many times for sample monsters and fails if the tallies leave the analytic odds' confidence band |
-| Extractors | `tools/armory/*.py` | What is data, not rule: item rows, monster nests, maps (`Minimap::bakeChart` geometry), models (GLB), icons |
-| Build | `tools/armory/build.py`, `./mu armory build` | `out/armory/<commit>/`: per-kind indexes and per-entity files, each stamped with commit and protocol |
-| History | `tools/armory/history.py` | The diff of one release's output against the previous release's, per entity: was/now. Optional per-release note in `tools/armory/notes/<commit>.md` |
-| Site | `web/armory/` (server routes) and `web/site/armory/` (client) | Stable URLs per entity, server-rendered head for links and search, three.js viewer, comments |
+| Extractors | `tools/armory/*.py` | What is data, not rule: item rows, monster nests, maps (`Minimap::bakeChart` geometry), thumbnails, icons |
+| Thumbnails | `tools/armory/models.py`, `thumbs.py`, `thumbs/` | Models converted to GLB in `out/armory/cache/glb/` only (never published), drawn offscreen by three.js in headless Chrome as transparent WebP thumbnails; Elites in the game's gold (`kEliteLight`, `kEliteChrome`) |
+| Build | `tools/armory/build.py`, `./mu armory build` | `out/armory/<commit>/`: per-kind indexes and per-entity files, each stamped with commit and protocol. Also a lane of `./mu ship prepare`, after the macOS dist |
+| History | `tools/armory/history.py` (run by the build) | The diff of one release's output against the previous release's, per entity: was/now. Optional per-release note in `tools/armory/notes/<commit>.md` |
+| Test | `tools/armory/tests/armory_test.js`, `./mu armory test` | The output's contract, the design's page logic on the built rows, the spot checks below |
+| Site | `web/armory/` (server routes) and `web/site/armory/` (client) | Stable URLs per entity, server-rendered head for links and search, thumbnails, comments |
 
 The drop odds: a kill's outcome is several independent dice and pools drawn inside
 `Realm::leave`. The dump computes each item's per-kill chance analytically in C++, from the
@@ -41,15 +43,21 @@ game's own predicates and constants (`dropRateOf`, `rulesOf`, `dropsFromMonsters
 ## Output layout (`out/armory/<commit>/`)
 
 ```
-meta.json                      commit, protocol, built, the release before it
-index/<kind>.json              the list page's rows only (items, monsters, npcs, quests, ...)
+meta.json                      commit, protocol, built, the release before it, what the dump left out
+index/<kind>.json              the list page's rows only (items, monsters, npcs, worlds, quests, ...)
 <kind>/<slug>.json             one entity: everything its page shows
 cards/<slug>.json              its card rows (+0, +11 exc, ...) for tooltips
-models/<hash>.glb              content-addressed, rebuilt only when its sources change
+thumbs/<hash>.webp             512 px, transparent, content-addressed (redrawn only when its model,
+thumbs/<hash>.96.webp            or the renderer, changes); the 96 px one is the card's top-right picture
 icons/<hash>.png, maps/<world>.png
-history/<slug>.json            the releases that changed it, was/now per field
+history/<kind>/<slug>.json     the releases that changed it, was/now per field (per kind: two kinds
+history/releases.json            may share a slug); the releases with their hand notes
 search.json                    name, kind, slug for everything
 ```
+
+No models are published: the Armory shows thumbnails, not a 3D viewer (the user, 2026-10-24).
+Slugs come from English names (names are not translated) and keep what the release before gave
+them; a name two things share gets the content key after it (`red-skeleton-knight-redskeleton01c2`).
 
 ## Live, or not dropping yet
 
@@ -57,11 +65,13 @@ Read from the game's flags, never a kept list: `kAncientLevel`, the map rules
 (`rulesOf(map)`), whether a world is in the release's packs. Built-but-dormant things are marked
 `"live": false` and shown as "not dropping yet".
 
+## Decided
+
+- Thumbnails only, no 3D viewer and no GLBs served (2026-10-24).
+- Names stay English (2026-10-24).
+
 ## Undecided (ask the user)
 
-- Serving WebZen's models and textures publicly: thumbnails only, lower resolution, or full GLBs.
-  Before the 3D viewer goes live.
-- Translating names (the site has eight languages).
 - Deploying: only when asked, `web/deploy.sh`.
 
 ## Spot checks (done means these hold)

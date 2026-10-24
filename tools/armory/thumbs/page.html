@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Armory thumbnails</title>
+<!-- tools/armory/thumbs/render.js loads this in headless Chrome and calls render(job) for each
+     model: the cached GLB drawn on a transparent square, as the page size and the item card's 96 px. -->
+<script type="importmap">{"imports": {"three": "/vendor/build/three.module.js"}}</script>
+<style>html, body { margin: 0; background: transparent; }</style>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from '/vendor/examples/jsm/loaders/GLTFLoader.js';
+import { RoomEnvironment } from '/vendor/examples/jsm/environments/RoomEnvironment.js';
+
+const SIZE = 512, SMALL = 96;
+const canvas = document.createElement('canvas');
+canvas.width = canvas.height = SIZE;
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(SIZE, SIZE, false);
+renderer.setClearColor(0x000000, 0);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+const scene = new THREE.Scene();
+const pm = new THREE.PMREMGenerator(renderer);
+scene.environment = pm.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+scene.add(new THREE.HemisphereLight(0xfff1dc, 0x1a120c, 0.9));
+const key = new THREE.DirectionalLight(0xffe2bf, 1.8); key.position.set(2, 3, 4); scene.add(key);
+const rim = new THREE.DirectionalLight(0x9fb7ff, 0.6); rim.position.set(-3, 1, -3); scene.add(rim);
+const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 200);
+const loader = new GLTFLoader();
+const small = document.createElement('canvas');
+small.width = small.height = SMALL;
+
+function dispose(obj) {
+  obj.traverse(o => {
+    if (o.geometry) o.geometry.dispose();
+    const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
+    ms.forEach(m => { for (const k in m) if (m[k] && m[k].isTexture) m[k].dispose(); m.dispose(); });
+  });
+}
+
+// job: {glb, view: 'item'|'figure', elite: null | {light:[r,g,b], chrome:[r,g,b]}}
+window.render = async function (job) {
+  const buf = await (await fetch(job.glb)).arrayBuffer();
+  const gltf = await loader.parseAsync(buf, '');
+  const root = gltf.scene;
+  root.traverse(o => {
+    if (!o.isMesh) return;
+    const ms = Array.isArray(o.material) ? o.material : [o.material];
+    ms.forEach(m => {
+      // MU's glow: added, never drawn over (models.py marks it extras.mu_additive).
+      if (m.userData && m.userData.mu_additive) {
+        m.blending = THREE.AdditiveBlending; m.depthWrite = false; m.transparent = true;
+        return;
+      }
+      if (job.elite) {
+        // The Elite: its body lit warm gold (kEliteLight) under the +9 pass in kEliteChrome.
+        // The light is over 1 (the game's body light); its hue is kept, its brightness given to
+        // the gold glow so the tone mapping does not bleach it white.
+        const L = job.elite.light, top = Math.max(L[0], L[1], L[2]);
+        m.color.multiply(new THREE.Color(L[0] / top, L[1] / top, L[2] / top));
+        m.emissive = new THREE.Color(job.elite.chrome[0], job.elite.chrome[1], job.elite.chrome[2]).multiplyScalar(0.3);
+        if (m.map) m.emissiveMap = m.map;
+        m.metalness = Math.max(m.metalness, 0.6);
+        m.roughness = Math.min(m.roughness, 0.35);
+      }
+    });
+  });
+  scene.add(root);
+  const box = new THREE.Box3().setFromObject(root);
+  const sphere = box.getBoundingSphere(new THREE.Sphere());
+  const size = box.getSize(new THREE.Vector3());
+  // Items face the camera broad side on (models.py turned them); figures from three quarters.
+  const dir = job.view === 'item' ? new THREE.Vector3(0.0, 0.12, 1) : new THREE.Vector3(0.55, 0.22, 1);
+  dir.normalize();
+  const fov = THREE.MathUtils.degToRad(camera.fov);
+  // Fit the box's silhouette, not the sphere, with a small margin.
+  const extent = Math.max(size.x, size.y, size.z * 0.6) * 0.5;
+  const dist = Math.max(extent / Math.tan(fov / 2) * 1.18, sphere.radius * 1.2);
+  camera.position.copy(sphere.center).addScaledVector(dir, dist);
+  camera.near = dist / 100; camera.far = dist * 10;
+  camera.lookAt(sphere.center);
+  camera.updateProjectionMatrix();
+  renderer.render(scene, camera);
+  const big = canvas.toDataURL('image/webp', 0.9);
+  const ctx = small.getContext('2d');
+  ctx.clearRect(0, 0, SMALL, SMALL);
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(canvas, 0, 0, SIZE, SIZE, 0, 0, SMALL, SMALL);
+  const little = small.toDataURL('image/webp', 0.92);
+  scene.remove(root);
+  dispose(root);
+  return { big: big.split(',')[1], small: little.split(',')[1] };
+};
+window.ready = true;
+</script>
+</body>
+</html>
