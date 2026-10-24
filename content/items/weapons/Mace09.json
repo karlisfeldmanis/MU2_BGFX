@@ -1564,5 +1564,16 @@
         0.549
       ]
     }
-  ]
+  ],
+  "glow": {
+    "sep01": {
+      "over": true,
+      "pulse": [
+        0.6,
+        0.4
+      ],
+      "pulse_rate": "slow"
+    }
+  },
+  "glow_note": "RenderPartObjectBody (ZzzObject.cpp:7142-7149) draws the body whole and then mesh 0, sep01 (the head and the shaft), again ADDED as its BlendMesh at sin(WorldTime*0.001)*0.6 + 0.4: the blue head breathing brighter over itself. ItemObjectAttribute hides nothing of it, so the glow is drawn over the opaque mesh (over), not in place of it; pulse [0.6, 0.4] at the slow rate. MU's 0.4 - 0.6 dips below nought, so part of each breath adds nothing."
 }

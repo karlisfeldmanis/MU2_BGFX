@@ -68,6 +68,7 @@ int colourOf(int group, int number) {
     if (group == 3 && number == 10) return 9;                    // DRAGON_SPEAR
     if (group == 0 && number == 20) return 10;                   // KNIGHT_BLADE
     if (group == 0 && number == 21) return 5;                    // DARK_REIGN_BLADE
+    if (group == 2 && number == 8) return 9;                     // BATTLE_SCEPTER (ZzzObject.cpp:6584)
     if (group >= 7 && group <= 11) {
         switch (number) {
             case 1: return 1;    // Dragon
