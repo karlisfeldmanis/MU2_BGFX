@@ -189,6 +189,11 @@ ${o.strip ? `<div class="estrip">${o.strip}</div>` : ''}${o.tabs ? tabBar(o.tabs
   }
 
   // ---- the home page: what the Armory holds, from the release's own files
+  // An event's picture: its strongest monster as the game draws it (the castle's map is a corridor).
+  function eventPic(e, M) {
+    const top = (e && e.monsters || []).filter(m => M && M[m.slug] && M[m.slug].t).sort((x, y) => (y.level || 0) - (x.level || 0))[0];
+    return top ? M[top.slug].t : null;
+  }
   function homePage() {
     CRUMBS.innerHTML = `<li><span class="here" aria-current="page">${esc(t('Armory'))}</span></li>`;
     const C = B.counts || {};
@@ -196,15 +201,15 @@ ${o.strip ? `<div class="estrip">${o.strip}</div>` : ''}${o.tabs ? tabBar(o.tabs
     const I = rows('items'), F = by('npcs', 'npc') || {};
     const top = (list, key) => list.slice().sort((x, y) => (key(y) || 0) - (key(x) || 0))[0];
     const img = (p) => (p ? `<img src="${pic(p)}" alt="" loading="lazy" width="72" height="72">` : '');
-    const firstOf = (type) => (rows('events').find(r => r.type === type) || {});
-    const eventWorld = (r) => r.world || (() => { const x = have(`events/${firstOf(r.type).slug}.json`); return x && x.world; })();
+    const MS0 = by('monsters', 'slug');
+    const evThumb = (r) => eventPic(have(`events/${r.slug}.json`), MS0);
     const mapOf = (w) => (w ? chart(w, [], { square: true }) : '');
     const pick = {
       items: img((top(I.filter(i => i.t && i.c === 'Weapons' && i.live !== false), i => i.dl) || {}).t),
       monsters: img((top(rows('monsters').filter(m => m.t && m.live !== false), m => m.lv) || {}).t),
       npcs: img((rows('npcs').find(n => n.t && n.role === 'shop') || rows('npcs').find(n => n.t) || {}).t),
       quests: img(((F[(rows('quests')[0] || {}).giver]) || {}).t),
-      events: rows('events').length ? mapOf(eventWorld(rows('events')[0])) : '',
+      events: img((() => { const ev = rows('events'); const r = ev.find(x => x.type === 'raid') || ev[ev.length - 1]; return r ? evThumb(r) : null; })()),
       skills: (() => { const x = rows('skills').find(r => r.icon); return x ? `<span class="ticon" style="background-image:url(${pic(x.icon)})"></span>` : ''; })(),
       mixes: img(((F[(rows('mixes')[0] || {}).npc]) || {}).t),
       worlds: (() => { const w = rows('worlds').find(r => r.chart && r.live !== false && r.in_release); return w ? mapOf(w.k) : ''; })(),
@@ -214,7 +219,7 @@ ${o.strip ? `<div class="estrip">${o.strip}</div>` : ''}${o.tabs ? tabBar(o.tabs
     const count = (k) => (k === 'talents' ? t('{n} classes', { n: C[k] }) : N(C[k]));
     const tiles = kinds.map(k => `<a class="ktile" href="${listHref(k)}"><span class="kpic">${pick[k] || `<span class="kmark" aria-hidden="true">${esc(LIST[k].charAt(0))}</span>`}</span><span class="ktext"><span class="kname">${esc(LIST[k])}</span><span class="kcount">${count(k)}</span></span></a>`).join('');
     const cats = ORDER.filter(c => I.some(i => i.c === c)).map(c => `<a class="chip" href="${esc(listHref('items', { cat: c }))}">${esc(t(c))}<span class="cn">${I.filter(i => i.c === c && !isZen(i)).length}</span></a>`).join('');
-    const evs = rows('events').map(r => `<a class="evc" href="${href('events', r.slug)}"><span class="evpic">${mapOf(eventWorld(r))}</span><span class="relt"><span class="reln">${esc(r.n)}</span><span class="mute small">${r.levels ? esc(t('Monsters Lv {a}–{b}', { a: r.levels[0], b: r.levels[1] })) : ''}${r.items ? ' · ' + esc(t('{n} items', { n: r.items })) : ''}</span></span></a>`).join('');
+    const evs = rows('events').map(r => `<a class="evc" href="${href('events', r.slug)}"><span class="evpic">${evThumb(r) ? `<img src="${pic(evThumb(r))}" alt="" loading="lazy" width="48" height="48">` : ''}</span><span class="relt"><span class="reln">${esc(r.n)}</span><span class="mute small">${r.levels ? esc(t('Monsters Lv {a}–{b}', { a: r.levels[0], b: r.levels[1] })) : ''}${r.items ? ' · ' + esc(t('{n} items', { n: r.items })) : ''}</span></span></a>`).join('');
     // What the latest release added or changed (history/releases.json, the build's diff).
     const rel = have('history/releases.json');
     const last = rel && (rel.releases || [])[0];
@@ -521,7 +526,7 @@ ${r.note ? `<p class="mute" style="margin:6px 0 0">${esc(r.note)}</p>` : ''}
       if ((x1 - x0) * (y1 - y0) > 0.8 * S * S) [x0, y0, x1, y1] = [0, 0, S, S];
     }
     const w = x1 - x0, h = y1 - y0, fx = (v) => ((v - x0) / w * 100).toFixed(3) + '%', fy = (v) => ((v - y0) / h * 100).toFixed(3) + '%';
-    const size = o.square ? '' : `aspect-ratio:${w.toFixed(1)} / ${h.toFixed(1)};width:min(100%, ${Math.round(560 * Math.min(1, w / h))}px)`;
+    const size = o.square ? '' : `aspect-ratio:${w.toFixed(1)} / ${h.toFixed(1)};width:min(100%, ${Math.round(Math.min(560, 440 * w / h))}px)`;
     return `<div class="chart${o.square ? ' sq' : ''}" style="${size}"><img src="${src}" alt="${esc(t('Map of {map}', { map: row.n }))}" width="512" height="512" style="left:${(-x0 / w * 100).toFixed(3)}%;top:${(-y0 / h * 100).toFixed(3)}%;width:${(S / w * 100).toFixed(3)}%;height:${(S / h * 100).toFixed(3)}%">${marks.map(m => m.box
       ? `<span class="box" aria-hidden="true" style="left:${fx(m.box[0] * 2)};top:${fy(m.box[1] * 2)};width:${((m.box[2] - m.box[0] + 1) * 2 / w * 100).toFixed(3)}%;height:${((m.box[3] - m.box[1] + 1) * 2 / h * 100).toFixed(3)}%"></span>`
       : `<span class="dot" aria-hidden="true" style="left:${fx((m.x + 0.5) * 2)};top:${fy((m.y + 0.5) * 2)}"></span>${m.label ? `<span class="lbl" style="left:${fx((m.x + 0.5) * 2)};top:${fy((m.y + 0.5) * 2)}">${esc(m.label)}</span>` : ''}`).join('')}</div>`;
@@ -570,12 +575,26 @@ ${r.note ? `<p class="mute" style="margin:6px 0 0">${esc(r.note)}</p>` : ''}
     if (tab === 'comments') body = comments('monsters', e.slug, []);
     else if (tab === 'where') {
       const nest = pl ? nests.find(n => n.world === pl.world) : nests[0];
-      const world = nest ? nest.world : pl ? pl.world : null;
       const W = by('worlds', 'k');
-      const map = world ? (W === undefined ? ld : chart(world, nest ? (nest.boxes || []).map(b => ({ box: b })) : [])) : '';
-      const say = nest ? t('{n} in its nests in {map}. The boxes are where they rise.', { n: nest.count, map: nest.map }) : pl ? t('{place}: the event raises it, not nests of its own.', { place: placeLabel(pl) }) : '';
-      body = onlySummon ? absent(nothing) : `<div class="where"><div>${map || absent(t('No chart for this place.'))}${say ? `<p class="note">${esc(say)}</p>` : ''}</div>
-<div>${nests.length ? `<h2 class="h3">${esc(t('Its nests'))}</h2>${nests.map(n => `<a class="sim" href="${href('worlds', n.world_slug)}"${nest === n ? ' aria-current="true"' : ''}><span style="flex:1">${esc(n.map)}</span><span class="mute small">${esc(t('{n} in its nests', { n: n.count }))}</span></a>`).join('')}` : `<span class="mute">${esc(t('Only in events'))}</span>`}</div></div>`;
+      // The chart only where it has nests to mark; an event's monster gets a card a tier instead.
+      const map = nest ? (W === undefined ? ld : chart(nest.world, (nest.boxes || []).map(b => ({ box: b })))) : '';
+      const EV = by('events', 'slug') || {};
+      const evOf = (p) => { const n = placeName(p); const slug = n.href && n.href.includes('/armory/event/') ? n.href.split('/').pop() : null; return { n, row: slug ? EV[slug] : null }; };
+      const tiers = places.map((p, i) => ({ p, lv: p.level, hp: c.health, here: i === pick, at: i }))
+        .concat(sibs.map(r => { const x = have(`monsters/${r.slug}.json`); const d = x && (x.drops || [])[0]; return d ? { p: d, lv: r.lv, hp: r.hp, slug: r.slug } : null; }).filter(Boolean))
+        .filter(x => ['castle', 'square', 'raid'].includes(x.p.kind)).sort((x, y) => (x.lv || 0) - (y.lv || 0));
+      const cards = tiers.map(x => {
+        const ev = evOf(x.p);
+        const mine = x.slug ? href('monsters', x.slug) : qLink({ at: x.at ? String(x.at) : '', tab: 'where' });
+        return `<div class="tierc"${x.here ? ' aria-current="true"' : ''}><a class="reln" href="${esc(mine)}"${x.slug ? '' : ' data-q data-keep'}>${esc(placeLabel(x.p))}</a>
+<span class="mute small">${esc(t('Lv {n}', { n: x.lv }))} · ${esc(t('Life {n}', { n: N(x.hp) }))}</span>${ev.row && ev.row.levels ? `<span class="mute small">${esc(t('Its monsters Lv {a}–{b}', { a: ev.row.levels[0], b: ev.row.levels[1] }))}</span>` : ''}
+${ev.n.href ? `<a class="crumb small" href="${ev.n.href}">${esc(t('The event'))} ›</a>` : ''}</div>`;
+      }).join('');
+      const nestList = nests.length ? `<h2 class="h3">${esc(t('Its nests'))}</h2>${nests.map(n => `<a class="sim" href="${href('worlds', n.world_slug)}"${nest === n ? ' aria-current="true"' : ''}><span style="flex:1">${esc(n.map)}</span><span class="mute small">${esc(t('{n} in its nests', { n: n.count }))}</span></a>`).join('')}` : '';
+      const tierBlock = cards ? `<h2 class="h3"${nestList ? ' style="margin-top:24px"' : ''}>${esc(t('In events'))}</h2><div class="tiers">${cards}</div>` : '';
+      body = onlySummon ? absent(nothing) : map
+        ? `<div class="where"><div>${map}<p class="note">${esc(t('{n} in its nests in {map}. The boxes are where they rise.', { n: nest.count, map: nest.map }))}</p></div><div>${nestList}${tierBlock}</div></div>`
+        : (tierBlock || nestList || absent(t('No place to show in this release.')));
     } else if (!places.length) body = onlySummon ? absent(nothing) : missing.has('drops') ? waitDump('drops') : absent(t('It drops nothing.'));
     else {
       const items = (pl.items || []).filter(i => (i.chance || 0) > 0);
@@ -603,7 +622,7 @@ ${(pl.while_quest || []).length ? `<h2 class="h3" style="margin-top:24px">${esc(
   }
 
   // ---- townsfolk and worlds
-  const ROLE = (r) => (r ? pretty(String(r)) : '');
+  const ROLE = (r) => (r && !/^(none|null|undefined)$/i.test(String(r).trim()) ? pretty(String(r)) : '');
   function npcsList() {
     const rows = rowsOf('npcs');
     crumbs([[LIST.npcs]]);
@@ -733,7 +752,8 @@ ${table([[t('Item')], [t('Type')], [t('Best from')], [t('Chance a kill'), 1]], (
 <td class="mute">${esc(d.sub || '')}</td><td>${a('monsters', d.from_slug, d.from_name, 'crumb')}</td><td class="r">${oddsCell(d.chance)}</td></tr>`), 'sm pops')}${showAll(all ? shown.length : Math.min(30, shown.length), shown.length, 'all')}
 <p class="note">${esc(t('Chances are per kill of the monster named, for one player, before Item Find, talents and party bonuses.'))}</p>`, t('{n} items', { n: shown.length })) +
       sec(t('Comments'), comments('events', e.slug, []));
-    return frame({ pic: e.world ? `<div class="epicol"><div class="epic map">${chart(e.world, [], { square: true }) || ''}</div></div>` : '', name: e.name, tone: e.type === 'raid' ? '#F2C14E' : '', sub, facts,
+    const top = eventPic(e, MI);
+    return frame({ pic: top ? epic({ page: top.replace('.96.webp', '.webp') }, e.name) : '', name: e.name, tone: e.type === 'raid' ? '#F2C14E' : '', sub, facts,
       more: e.live === false ? `<div class="erow">${notLive(e.live)}</div>` : '', strip, body });
   }
 

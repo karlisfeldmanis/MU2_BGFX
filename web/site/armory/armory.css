@@ -253,7 +253,7 @@ blockquote.say p { margin: 0 0 8px; }
 .scale { display: grid; grid-template-columns: 348px minmax(0, 1fr); gap: 32px; align-items: start; }
 .cardcol { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .scalecol { min-width: 0; }
-.where { display: grid; grid-template-columns: minmax(0, 560px) minmax(0, 1fr); gap: 32px; align-items: start; }
+.where { display: grid; grid-template-columns: fit-content(560px) minmax(0, 1fr); gap: 32px; align-items: start; }
 .step { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid #16110E; }
 .step .box { width: 18px; height: 18px; flex: 0 0 18px; border: 1px solid #6A5426; border-radius: 3px; }
 /* A world's chart, cut to what it draws (armory.js chart()). */
@@ -293,7 +293,14 @@ blockquote.say p { margin: 0 0 8px; }
 .kcount { font-size: 15px; color: #9C9282; font-variant-numeric: tabular-nums; }
 .evc { display: flex; align-items: center; gap: 12px; padding: 8px 12px 8px 8px; border: 1px solid #221A15; border-radius: 4px; background: #0A0706; min-width: 0; }
 .evc:hover { border-color: #4A3B2F; background: #120E0B; }
-.evpic { flex: none; width: 48px; height: 48px; border: 1px solid #2A211B; border-radius: 3px; overflow: hidden; background: #0D0B0A; }
+.tiers { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.tierc { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid #221A15; border-radius: 4px; background: #0A0706; min-width: 0; }
+.tierc[aria-current="true"] { border-color: #6A5426; background: #15100B; }
+.tierc .reln { font: 700 17px/1.2 Cinzel, serif; color: #F3E8D4 !important; }
+.tierc[aria-current="true"] .reln { color: #F2D58A !important; }
+.tierc .crumb { align-self: flex-start; padding: 2px 0; font-size: 14px; }
+.evpic img { width: 100%; height: 100%; object-fit: contain; }
+.evpic { flex: none; width: 48px; height: 48px; border: 1px solid #2A211B; border-radius: 3px; overflow: hidden; background: radial-gradient(ellipse at 50% 42%, #2A1F17 0%, #120D0A 62%, #0A0706 100%); }
 @media (max-width: 720px) { .ktiles { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; } .ktile { flex-direction: column; align-items: flex-start; gap: 10px; } }
 
 /* ---- the game's item card: src/game/ui/tip.cpp, at the 1080-line pixels of card_style.json ---- */
