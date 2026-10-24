@@ -31,7 +31,7 @@ namespace {
 //    the Golden Archer's (Plate, Sphinx, Spirit), Tersia's floors (Dragon, Legendary, Guardian),
 //    and the second class's over Icarus and the class change (Dark Phoenix, Grand Soul, Divine;
 //    the Magic Gladiator's Storm Crow). Never a piece of a set a link before it.
-//  - Jewellery and pets climb too: a green ring at home, a pendant, the Angel, a blue
+//  - Jewellery and pets climb too: a green ring at home, a pendant, the Angel and the Imp, a blue
 //    then purple ring, the Kinship that frees the pets, Uniria at the tower (the Dinorant the
 //    Balrog paid was taken off on 2026-10-21; the machine makes one).
 //  - Every clear's jewels rise: Bless at home, Soul from Devias, Chaos from the Halls (the
@@ -592,8 +592,9 @@ QuestRow pit() {
     // The first powered pendant, purple, three powers.
     row.paid[n++] = {.item = "NecklaceFury", .plus = 3, .firstOnly = true,
                      .affixes = {uint8_t(Affix::Leech), uint8_t(Affix::Wisdom)}};
-    // No Imp (the user, 2026-10-24: "we are not giving imp on quest rewards, but we are giving
-    // guardian angels"): it only drops (off the tavern since 2026-10-11); Devin's Angels stay.
+    // And the second pet, the Imp, for the Angel's other shoulder of the game: the damage one. Two,
+    // every clear, as Devin's Angels.
+    row.paid[n++] = {.item = "Helper02", .count = 2};
     // And the chain's last skills (2026-10-07): the knight's Cyclone, Devias's until 2026-10-09
     // (its orb asks 72; Death Stab's 120 went to Tersia's sixth floor), and the wizard's
     // Hellfire. The elf's Penetration went to Tersia's sixth floor too (the user, 2026-10-09:

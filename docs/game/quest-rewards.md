@@ -27,9 +27,8 @@ the rules below. Where this disagrees with an older quest doc's reward section, 
    the knight and the wizard jewels, not a third copy of a weapon (2026-10-21).
 6. **One whole set per chain**, a piece or two a link, so the five-piece set bonus is earned.
 7. **Jewellery, pets and jewels rise with the acts**; a skill orb comes at about its level. The
-   Angel lasts 2 hours and Uniria 24, and they stack (1298be3b), so their quests pay them
-   **every clear**: 2 Angels (Devin), 1 Uniria (Tersia's first floor). No quest pays the Imp
-   (2026-10-24); it only drops, no shop sells it since 2026-10-11.
+   Angel and the Imp last 2 hours and Uniria 24, and they stack (1298be3b), so their quests pay
+   them **every clear**: 2 Angels (Devin), 2 Imps (the Pit), 1 Uniria (Tersia's first floor).
 8. Every quest still pays 3 Firecrackers, the class change 10.
 9. **The talents' Attunements get their runes.** Wind counts Tempest, Fire Inferno, Storm Thunder
    and Tempest, Frost and Venom Glacier and Venom. The Sky Door pays the knight and the elf a
@@ -47,7 +46,7 @@ the rules below. Where this disagrees with an older quest doc's reward section, 
 |---|---|---|---|---|---|---|
 | I | Marlon / Peia | 1-30 | DK Falchion and Spear, DW Serpent Staff, Elf Battle Bow (1 socket) | -- | Common: DK Gust + Graze, DW Faint Echo, Elf Chill | Ring of Wealth (green); Lunge / Ice / Greater Damage; 3 Bless, 20 potions, Box of Luck every clear |
 | II | Devin | 30-50 | DK Double Blade and Legendary Sword, DW Legendary Staff + Legendary Shield, Elf Tiger Bow (2 sockets) | -- | Lesser Ascendance (Elf: Barrage) + class Rare stat (Might / Insight / Grace); Renewal | Pendant of Fire (1 socket); **2 Guardian Angels every clear**; Flame / Summon +3; 3 Bless, 1 Soul, Box of Luck |
-| III | Golden Archer: Catacombs, Halls, Pit | 40-75 | -- | **Set A**: DK Plate, DW Sphinx, Elf Spirit. Catacombs helm+gloves, Halls pants+boots (2 sockets), Pit armour | Keen Eye, Ironskin; Bloodwell, Frenzy; Undying | Halls: DK **Serpent Shield** + Steadfast, Ring of the Leech (blue), first **Jewel of Chaos**. Pit: Pendant of Fury (purple), Box of Kundun +1. Skills: Twisting Slash, Cyclone / Twister, Evil Spirit, Hellfire / Summon +4 |
+| III | Golden Archer: Catacombs, Halls, Pit | 40-75 | -- | **Set A**: DK Plate, DW Sphinx, Elf Spirit. Catacombs helm+gloves, Halls pants+boots (2 sockets), Pit armour | Keen Eye, Ironskin; Bloodwell, Frenzy; Undying | Halls: DK **Serpent Shield** + Steadfast, Ring of the Leech (blue), first **Jewel of Chaos**. Pit: Pendant of Fury (purple), **2 Imps every clear**, Box of Kundun +1. Skills: Twisting Slash, Cyclone / Twister, Evil Spirit, Hellfire / Summon +4 |
 | IV | Lirien (Atlans) | 70-100 | DK Lighting Sword and Crescent Axe, DW Legendary Staff (1H), Elf Aquagold Crossbow (2 sockets) | -- | **First Legendary**: DK Twister, DW Arcane Echo, Elf Frost Arrow; Epic: Eddy / Scorch / Plague Arrows; **Buckler** (DK, DW) | first **Jewel of Life**, 2 Soul, Box of Kundun +2; Aqua Beam |
 | V | Tersia, floors 1-5 | 80-120 | -- | **Set B**: DK Dragon, DW Legendary, Elf Guardian. A piece a floor: helm, gloves, boots (2), pants, armour | Greater Vigor; class Greater stat + Kinship; Second Wind; Bloodwell; Renewal | LT1 **Horn of Uniria every clear**; LT2 Ring of Poison (socket); LT4 Ring of Wealth (purple), Slash; LT5 **Dragon Shield / Legendary Shield +5 (2 sockets)** (Elf: Ring of Ice) |
 | V | Tersia, floors 6-7 | 120-160 | Balrog: Elf Chaos Nature Bow (3 sockets); DK and DW 2 Bless + 2 Soul instead | -- | LT6: Meteor / Spirit Plague / Scatter Volley; Balrog: **Wrath** + Stormcall | LT6 Death Stab, Penetration; Balrog: Ring of Wisdom (legendary), Rageful Blow, Inferno, Summon +5 (Bali), Chaos, Box of Kundun +2. No Dinorant (2026-10-21: the machine makes one) |
