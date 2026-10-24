@@ -922,14 +922,14 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 socket.rows.push_back(line);
                 // Of a limited rune, how many of its limit he wears, after its name (the user,
                 // 2026-10-24: "we need to show on toolttip that he can use some amount of specific
-                // rune", then "Rune Name (1/5) is betetr understandable"): "Keen Eye (3/5)", and
-                // one that doesn't stack out of one, "Frenzy (1/1)".
+                // rune", then "Rune Name (1/5)", then pips): five lozenges after "Keen Eye", three
+                // lit for three worn (tip::Row::pips), and one after a rune that doesn't stack.
                 const int most = sim::stackingOf(power->power).stacks
                                      ? sim::stackMostOf(power->power)
                                      : 1;
                 if (most > 0) {
-                    socket.rows.back().keyword += " (" + std::to_string(runesWorn(bag, power->power)) +
-                                                  "/" + std::to_string(most) + ")";
+                    socket.rows.back().pips = most;
+                    socket.rows.back().lit = runesWorn(bag, power->power);
                 }
                 // What the rune strikes for in his hands with THIS weapon (the user, 2026-10-01:
                 // "show damage for dps runes based on base dmg and scaling"): the swing's band as

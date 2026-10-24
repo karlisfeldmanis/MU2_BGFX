@@ -88,6 +88,11 @@ struct Row {
     Tone labelTone = Tone::White;
     // A little air above the row: where a framed block turns from one list to the next.
     bool gap = false;
+    // A limited rune's pips after its name (the user, 2026-10-24: "some special UI design for
+    // that 5/1"): `pips` lozenges, one a rune allowed, `lit` of them for those worn -- in the
+    // keyword's ink, all gold once full, and any past the limit dim and struck through.
+    int pips = 0;
+    int lit = 0;
 };
 
 // The item card's headline: the one number a thing is compared by, large, and the sum that made

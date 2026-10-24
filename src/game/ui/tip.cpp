@@ -607,14 +607,50 @@ float heavy(const Type& type, gfx::Canvas& canvas, float x, float baseline, floa
 }
 
 // A free row as one string: the keyword, the prose and the value, which wrap together.
+// A rune's pips hold their room as a word of kPipRoom 'n's each, which wraps whole and is never
+// printed: the pips are drawn over it.
+constexpr size_t kPipRoom = 2;
 std::string composed(const Row& row) {
     std::string s;
-    if (!row.keyword.empty()) s = row.keyword + " \xB7 ";
+    if (!row.keyword.empty() && row.pips > 0) {
+        s = row.keyword + " " + std::string(size_t(std::max(row.pips, row.lit)) * kPipRoom, 'n') +
+            "  ";
+    } else if (!row.keyword.empty()) {
+        s = row.keyword + " \xB7 ";
+    }
     s += row.free;
     if (!row.tail.empty()) s += (s.empty() ? "" : " ") + row.tail;
     return s;
 }
 bool prosaic(const Row& row) { return !row.free.empty() || !row.tail.empty(); }
+
+// A rune's pips over the room `composed` left them, from `x` across `wide`: a lozenge each, the
+// rune's own shape as the socket's stone is drawn.
+void pipsAt(gfx::Canvas& canvas, const Row& row, float x, float cy, float wide, float size,
+            uint32_t ink, uint32_t gold, uint32_t dim, uint32_t hole) {
+    const int slots = std::max(row.pips, row.lit);
+    if (slots <= 0) return;
+    const float pitch = wide / float(slots);
+    const float hh = size * 0.34f, ww = hh * kJewelAspect;
+    const bool full = row.lit >= row.pips;
+    for (int i = 0; i < slots; ++i) {
+        const float cx = x + pitch * (float(i) + 0.5f);
+        const auto lozenge = [&](float h, uint32_t c) {
+            const float w = h * kJewelAspect;
+            const float xy[8] = {cx, cy - h, cx + w, cy, cx, cy + h, cx - w, cy};
+            canvas.polygon(nullptr, xy, nullptr, 4, c);
+        };
+        if (i >= row.pips) {  // past the limit: dim, struck through
+            lozenge(hh, dim);
+            canvas.rect({cx - ww * 1.3f, cy - size * 0.03f, ww * 2.6f, size * 0.06f}, gold);
+        } else if (i < row.lit) {
+            lozenge(hh, full ? gold : ink);
+        } else {  // room for one more: a hollow setting
+            lozenge(hh, dim);
+            lozenge(hh * 0.55f, hole);
+        }
+    }
+}
 
 // Where each wrapped line of `text` starts in it and how long it is, so a line can be coloured by
 // what part of the row it holds.
@@ -1019,6 +1055,11 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                 const std::string full = composed(row);
                 const size_t keyEnd = row.keyword.size();
                 const size_t tailAt = full.size() - row.tail.size();
+                // The pips' room, a word of 'n's after the name and its space (composed).
+                const size_t pipAt = row.pips > 0 ? keyEnd + 1 : std::string::npos;
+                const size_t pipEnd =
+                    row.pips > 0 ? pipAt + size_t(std::max(row.pips, row.lit)) * kPipRoom
+                                 : std::string::npos;
                 const uint32_t tone = colourOf(row.freeTone);
                 for (const Span& span : prose[s][r]) {
                     const float baseline = middle(face, rowPen, rowTall, rowSize);
@@ -1026,11 +1067,22 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                     size_t at = span.at;
                     const size_t end = span.at + span.length;
                     while (at < end) {
+                        if (at == pipAt) {
+                            const size_t stop = std::min(end, pipEnd);
+                            const float wide = face.measure(rowSize, full.substr(at, stop - at));
+                            pipsAt(canvas, row, px, baseline - rowSize * 0.32f, wide, rowSize,
+                                   fade(colourOf(row.keywordTone)), fade(colourOf(Tone::Yellow)),
+                                   fade(colourOf(Tone::Gray)), fade(kBody));
+                            px += wide;
+                            at = stop;
+                            continue;
+                        }
                         const bool key = at < keyEnd;
                         const bool value = !key && at >= tailAt;
-                        const size_t stop = key ? std::min(end, keyEnd)
+                        const size_t stop = key     ? std::min(end, keyEnd)
                                             : value ? end
-                                                    : std::min(end, tailAt);
+                                            : at < pipAt ? std::min({end, tailAt, pipAt})
+                                                         : std::min(end, tailAt);
                         const std::string piece = full.substr(at, stop - at);
                         px += value ? heavy(type, canvas, px, baseline, rowSize, fade(brighter(tone)),
                                             piece, drop, u)
