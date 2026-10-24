@@ -82,9 +82,9 @@ constexpr uint32_t kSpendWash = gfx::rgba(0.165f, 0.051f, 0.035f);
 constexpr uint32_t kChosen = gfx::rgba(0.941f, 0.843f, 0.604f);
 constexpr uint32_t kChosenBar = gfx::rgba(0.788f, 0.639f, 0.353f);
 constexpr uint32_t kDivider = style::kAsh3;
-// A rune row's pips (Card::pipsAt): where they start, their size and step, in units, and the
+// A rune row's pips (Card::pipsAt): their size and step, in units, and the
 // hole an empty one's ring is drawn round.
-constexpr float kPipsX = 64.0f, kPipRadius = 1.9f, kPipPitch = 5.4f;
+constexpr float kPipRadius = 1.9f, kPipPitch = 5.4f;
 // A rune row's effect under its name: its share of a row's height, and its type.
 constexpr float kNoteShare = 0.7f, kNoteSize = 6.5f;
 constexpr uint32_t kPipHole = gfx::rgba(0.075f, 0.067f, 0.055f);
@@ -459,7 +459,8 @@ void Card::update(float width, float height, const sim::Body* hero, const sim::R
                             line.value = plusPercent(each * counted);
                             line.note = std::string(tells) + (count > 1 ? " each" : "");
                         } else {
-                            line.value = "x" + std::to_string(count);
+                            // One worn says nothing a count would: "x2" only once there are two.
+                            if (count > 1) line.value = "x" + std::to_string(count);
                             line.note = tells;
                         }
                         line.ink = kHeading;
@@ -915,10 +916,33 @@ void Card::rebuild() {
         }
     } else {
         // A page heavy with gear's chances closes its rows up before it would cross the foot. A
-        // rune's row has its effect under it (Line::note), the note kNoteShare of a row tall.
+        // rune's row has its effect under it (Line::note), each of the note's lines kNoteShare of
+        // a row tall: a note wider than the well wraps at its words rather than running off it.
+        const float noteRoom = (kRight - kLeft) * k;
+        const auto wrapped = [&](const std::string& note) {
+            std::vector<std::string> out;
+            std::string at;
+            size_t from = 0;
+            while (from < note.size()) {
+                size_t to = note.find(' ', from);
+                if (to == std::string::npos) to = note.size();
+                const std::string word = note.substr(from, to - from);
+                const std::string tried = at.empty() ? word : at + " " + word;
+                if (!at.empty() && controls::labelWidth(kNoteSize * k, tried) > noteRoom) {
+                    out.push_back(at);
+                    at = word;
+                } else {
+                    at = tried;
+                }
+                from = to + 1;
+            }
+            if (!at.empty()) out.push_back(at);
+            return out;
+        };
+        const auto notes = [&](const Line& line) { return line.note.empty() ? 0.0f : float(wrapped(line.note).size()); };
         float rows = 0.0f;
         for (const Group& group : now_.groups) {
-            for (const Line& line : group.lines) rows += line.note.empty() ? 1.0f : 1.0f + kNoteShare;
+            for (const Line& line : group.lines) rows += 1.0f + kNoteShare * notes(line);
         }
         const float heads = (kGroupHead + kGroupGap) * float(now_.groups.size());
         const float rowTall =
@@ -928,26 +952,37 @@ void Card::rebuild() {
             smallCaps(kWellX + 2.0f, at(uy + 1.0f, kSmallCaps), kDim, group.name);
             uy += kGroupHead;
             float tall = 0.0f;
-            for (const Line& line : group.lines) tall += rowTall * (line.note.empty() ? 1.0f : 1.0f + kNoteShare);
+            for (const Line& line : group.lines) tall += rowTall * (1.0f + kNoteShare * notes(line));
             panel::cell(canvas_, x, y, {kWellX, uy, kWellW, tall}, sheet::Cell::Rest);
+            // The pips stand in one column, right against the group's widest figure, so every
+            // row's pips end where the next one's do, whatever its name.
+            float widest = 0.0f;
+            for (const Line& line : group.lines) widest = std::max(widest, controls::labelWidth(kRowSize * k, line.value));
+            const float pipsEnd = x + kRight * k - widest - (widest > 0.0f ? kPipPitch * k : 0.0f);
             float ly = uy;
             for (size_t l = 0; l < group.lines.size(); ++l) {
                 const Line& line = group.lines[l];
-                const float noteTall = line.note.empty() ? 0.0f : rowTall * kNoteShare;
+                const std::vector<std::string> said = line.note.empty() ? std::vector<std::string>{} : wrapped(line.note);
+                const float noteTall = rowTall * kNoteShare * float(said.size());
                 const Box row{kWellX, ly, kWellW, rowTall};
                 if (l > 0) canvas_.rect(panel::scaled(x, y, {row.x + 1.0f, row.y, row.w - 2.0f, 0.5f}), kDivider);
                 const float base = panel::centredBaseline(face, panel::scaled(x, y, row), kRowSize * k);
                 controls::label(canvas_, x + kLeft * k, base, kRowSize * k,
                                 line.dim ? kDim : line.labelInk ? line.labelInk : kPlain, line.label);
-                if (line.pips > 0 || !line.stones.empty()) pipsAt(line, x + kPipsX * k, base - kRowSize * k * 0.32f, k);
+                const int slots = std::max(line.pips, int(line.stones.size()));
+                if (slots > 0) {
+                    const float r = kPipRadius * k;
+                    pipsAt(line, pipsEnd - 2.0f * r - kPipPitch * k * float(slots - 1), base - kRowSize * k * 0.32f, k);
+                }
                 controls::ranged(canvas_, x + kRight * k, base, kRowSize * k, line.dim ? kDim : line.ink ? line.ink : kHeading,
                                  line.value);
-                if (!line.note.empty()) {
+                for (size_t n = 0; n < said.size(); ++n) {
                     // What the rune does, quiet under its name.
-                    const Box under{kWellX, ly + rowTall - 1.5f, kWellW, noteTall};
+                    const Box under{kWellX, ly + rowTall - 1.5f + rowTall * kNoteShare * float(n), kWellW,
+                                    rowTall * kNoteShare};
                     controls::label(canvas_, x + kLeft * k,
                                     panel::centredBaseline(face, panel::scaled(x, y, under), kNoteSize * k),
-                                    kNoteSize * k, kQuiet, line.note);
+                                    kNoteSize * k, kQuiet, said[n]);
                 }
                 ly += rowTall + noteTall;
             }
