@@ -1,0 +1,37 @@
+const fs=require('fs');
+const L=f=>JSON.parse(fs.readFileSync(f,'utf8'));
+global.window={devicePixelRatio:1}; global.THREE=undefined;
+global.fetch=()=>new Promise(()=>{});
+eval(fs.readFileSync('check.js','utf8')+'\n;global.Component=Component;');
+const c=new Component({}); c.props={};
+c.setState=function(p){Object.assign(this.state,typeof p==='function'?p(this.state):p);};
+const qs=L('quests.json'),ns=L('npcs.json');
+Object.assign(c.state,{items:L('db.json'),monsters:L('monsters.json'),npcs:ns.npcs,quests:qs.quests,src:L('sources.json'),sysA:L('systems_a.json'),sysB:L('systems_b.json'),icons:L('guide/project/icons/index.json'),cards:L('cards.json'),loading:false,modelIdx:{npcs:{}}});
+const run=(label,st)=>{Object.assign(c.state,st);try{const v=c.renderVals();console.log('OK',label,JSON.stringify(v.crumbs.map(x=>x.label)));return v;}catch(e){console.log('FAIL',label,e.stack.split('\n').slice(0,3).join(' | '));}};
+run('items',{view:'list',browse:'items'});
+let v=run('item Sword17',{view:'item',sel:'Sword17',tab:''});
+v=run('item Box',{view:'item',sel:'MagicBox08',tab:'use'}); if(v) console.log('  box rows',v.use.box.length,v.use.tiers.length);
+v=run('item Wing06 powers',{view:'item',sel:'Wing06',tab:'powers'}); if(v) console.log('  tables',v.pw.tables.length,v.pw.kv.length);
+v=run('item Jewel02',{view:'item',sel:'Jewel02',tab:'use'}); if(v) console.log('  does',v.use.does.length, v.it.teaches.length);
+v=run('item orb',{view:'item',sel:'Gem01',tab:''}); if(v) console.log('  teaches',JSON.stringify(v.it.teaches.map(t=>t.name)));
+run('monster',{view:'mon',mon:'Chief Skeleton Warrior',monCtx:'Blood Castle 4'});
+v=run('elite',{view:'mon',mon:'Elite Skeleton Warrior',monCtx:'Lorencia'}); if(v) console.log('  ',v.mo.eliteNote);
+run('events',{view:'list',browse:'events'}); run('event',{view:'event',event:'bc4'});
+run('npc',{view:'npc',npc:'pasi-the-mage'}); run('quest',{view:'quest',quest:'kanturs-legion'});
+v=run('runes',{view:'list',browse:'runes'}); if(v) console.log('  runes',v.runeRows.length,v.runeRules.length);
+const r0=c.state.sysA.runes.runes[0].id; v=run('rune',{view:'rune',rune:r0}); if(v) console.log('  dropRows',v.ru.dropRows.length,v.ru.other.length);
+v=run('skills',{view:'list',browse:'skills'}); if(v) console.log('  skills',v.skillRows.length, v.skillRows[0].iconSm.slice(0,60));
+v=run('skill',{view:'skill',skill:'19'}); if(v) console.log('  kv',v.sk.kv.length,v.sk.from.length,v.sk.talents);
+v=run('talents',{view:'list',browse:'talents',tcls:'DK',tlv:400,treb:0,tpts:{}}); if(v){console.log('  total',v.tal.total,'cols',v.tal.columns.length,'tiers',v.tal.columns[0].tiers.length, v.tal.columns[0].tiers[0].smalls.length, v.tal.columns[0].tiers[0].majors.length);
+  const n=v.tal.columns[0].tiers[0].smalls[0]; for(let i=0;i<10;i++){ c.renderVals().tal.columns[0].tiers[0].smalls[0].add(); }
+  v=c.renderVals(); const mj=v.tal.columns[0].tiers[0].majors[0]; console.log('  after 10: left',v.tal.left,'major addable',!mj.noAdd,'small1 sub ok',!v.tal.columns[0].tiers[0].smalls[0].noSub); mj.add(); v=c.renderVals(); console.log('  major taken; tier2 small addable',!v.tal.columns[0].tiers[1].smalls[0].noAdd,'small0 sub blocked',v.tal.columns[0].tiers[0].smalls[0].noSub, 'picks',v.tal.picks.length);}
+run('talents MG',{tcls:'MG',treb:1}); console.log('  MG total',c.renderVals().tal.total);
+v=run('mixes',{view:'list',browse:'mixes'}); if(v) console.log('  mixes',v.mixCards.length,JSON.stringify(v.mixCards[1].rate));
+v=run('elites',{view:'list',browse:'elites'}); if(v) console.log('  elites',v.eliteRows.length,v.eliteRules.length);
+v=run('skills2',{view:'list',browse:'skills'}); console.log(v.skillRows.slice(0,4).map(r=>r.name+':'+(r.iconSm?'icon':'none')).join(', '), '| with icon', v.skillRows.filter(r=>r.iconSm).length);
+v=run('skill19',{view:'skill',skill:'19'}); console.log(v.sk.icon.slice(0,90));
+v=run('tal icon',{view:'list',browse:'talents',tcls:'DK'}); console.log(v.tal.columns[0].tiers[0].smalls[0].icon.slice(0,90));
+v=run('gold',{view:'event',event:'gd',gdTown:'Devias'}); if(v) console.log('  gold drops',v.gd.drops.length,v.gd.dropCount,v.gd.fields.map(f=>f.left+'/'+f.top).join(' '), v.gd.hoard.map(h=>h.name).join(', '));
+v=run('events+gold',{view:'list',browse:'events'}); if(v) console.log('  ',JSON.stringify(v.eventRows[10]));
+v=run('card list',{view:'list',browse:'items'}); console.log('  hasGc',v.rows[0].hasGc, v.rows[0].gc.title, v.rows[0].gc.rows.length);
+v=run('card item',{view:'item',sel:'Sword17',gcState:'+11 excellent (bits 0 and 3) 3 sockets'}); console.log('  ',v.it.gcStates.map(x=>x.label).join(' | ')); console.log('  ',JSON.stringify(v.it.gc).slice(0,900));
