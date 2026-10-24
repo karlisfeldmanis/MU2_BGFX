@@ -73,6 +73,14 @@
     "void_islands": {
       "value": true,
       "note": "Every drawn tile no walk from void_fill's seed touches becomes void: MU's ring of NoMove floor round the maze and the two strips five tiles off the safe hall (rows 75-95 and 116-127), which ended on hard tile edges. The void has clouds instead (the user, 2026-10-24: \"still see some ground outside the platform, we are using void with clouds now\"). Ours, marked; pipeline/terrain.py VOID_ISLANDS."
+    },
+    "anchor_kinds": {
+      "value": {
+        "Object55": 30,
+        "Object57": 31,
+        "Object66": 32
+      },
+      "note": "The Relics' hidden lightning boxes (MoveKanturu2ndObject, GM_Kanturu_2nd.cpp:489-520): Object55 (type 54, 18 in the void) a bolt falling 11 m into it one frame in 20; Object57 (type 56, 13 on the walls) a half-metre arc from its west one in 10; Object66 (type 65, 2) a 3.5 m bolt from its north one in 10. game/world/ruin_effects.h (the user, 2026-10-24: \"better\", effects 3)."
     }
   },
   "npcs": [

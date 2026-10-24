@@ -22,6 +22,13 @@
 //         frames (ZzzEffectParticle.cpp:721-724, 4937-4939): about two crackles over the spark,
 //         re-rolled every reference frame.
 //
+//   Bolts The Relics' hidden lightning boxes, the world's anchors of kinds 30-32
+//         (MoveKanturu2ndObject, GM_Kanturu_2nd.cpp:489-520): each a BITMAP_JOINT_THUNDER+1
+//         to the box, at scale 30-40, living 20 frames (ZzzEffectJoint.cpp:1436-1470). Type 54
+//         (18, in the void), one frame in 20, from 11 m above it, 0-5 units off; type 56 (13, on
+//         the walls), one in 10, from 50 units west; type 65 (2), one in 10, from 3.5 m north.
+//         Drawn as Thunder's wide fork.
+//
 // The points are the recipes' `emitters` (kinds "arc_from", "arc_to", "spit", "tower"), the rigs' rest
 // positions in the model's frame, laid once per placement turned and scaled as MU's bones are.
 // Ours, marked: the plants sway (E2c) and the spit leaves from bone 1 at rest, which is the
@@ -77,9 +84,14 @@ private:
     struct Tower {
         float at[3] = {0, 0, 0};
     };
+    struct Bolt {
+        float at[3] = {0, 0, 0};
+        content::EmitterKind kind = content::EmitterKind::VoidStrike;
+    };
     std::vector<Tank> tanks_;
     std::vector<Plant> plants_;
     std::vector<Tower> towers_;
+    std::vector<Bolt> bolts_;
     float clock_ = 0.0f;  // seconds, for the towers' sparks
     bgfx::TextureHandle energy_ = BGFX_INVALID_HANDLE;  // Effect/Thunder01, the showing's `energy`
     std::vector<Blob> blobs_;

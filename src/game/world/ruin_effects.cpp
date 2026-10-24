@@ -43,6 +43,17 @@ void RuinEffects::open(const std::string& assetDir, const std::string& world,
             energy_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
         thunderOpen_ = thunder_.open(assetDir, textures, table);
     }
+    // The world's lightning boxes.
+    for (const content::TownEmitter& one : town.emitters) {
+        if (one.model != content::TownEmitter::kWorld) continue;
+        if (one.kind == content::EmitterKind::VoidStrike || one.kind == content::EmitterKind::WallArc ||
+            one.kind == content::EmitterKind::NorthBolt) {
+            Bolt bolt;
+            for (int k = 0; k < 3; ++k) bolt.at[k] = one.at[k];
+            bolt.kind = one.kind;
+            bolts_.push_back(bolt);
+        }
+    }
     // What each model carries, found once, in the cook's order.
     std::vector<std::vector<const content::TownEmitter*>> carried(town.models.size());
     for (const content::TownEmitter& one : town.emitters) {
@@ -92,9 +103,9 @@ void RuinEffects::open(const std::string& assetDir, const std::string& world,
     }
     blobs_.reserve(kMostBlobs);
     open_ = true;
-    core::logf("ruin effects: %zu tank arcs, %zu spitting plants, %zu towers; water %s, energy %s, "
-               "thunder %s",
-               tanks_.size(), plants_.size(), towers_.size(), bgfx::isValid(spit_) ? "yes" : "NO",
+    core::logf("ruin effects: %zu tank arcs, %zu spitting plants, %zu towers, %zu bolt boxes; water %s, "
+               "energy %s, thunder %s",
+               tanks_.size(), plants_.size(), towers_.size(), bolts_.size(), bgfx::isValid(spit_) ? "yes" : "NO",
                bgfx::isValid(energy_) ? "yes" : "NO", thunderOpen_ ? "yes" : "NO");
 }
 
@@ -103,6 +114,7 @@ void RuinEffects::shutdown() {
     tanks_.clear();
     plants_.clear();
     towers_.clear();
+    bolts_.clear();
     blobs_.clear();
     spit_ = BGFX_INVALID_HANDLE;
     energy_ = BGFX_INVALID_HANDLE;
@@ -136,6 +148,25 @@ void RuinEffects::update(float seconds, const float near[3]) {
             to[2] = tower.at[2] - 50.0f * unit() * kUnit;
             from[1] = to[1] = tower.at[1] + 10.0f * kUnit;
             thunder_.fork(from, to, true);
+        }
+        // The lightning boxes: each bolt ends on the box. MU's x is east (ours x), its y south
+        // (ours -z), its z up (ours y).
+        const float everyTwenty = 1.0f - std::pow(1.0f - 1.0f / 20.0f, frames);
+        const float everyTen = 1.0f - std::pow(1.0f - 1.0f / 10.0f, frames);
+        for (const Bolt& bolt : bolts_) {
+            const bool strike = bolt.kind == content::EmitterKind::VoidStrike;
+            if (!nearby(bolt.at) || unit() >= (strike ? everyTwenty : everyTen)) continue;
+            float from[3] = {bolt.at[0], bolt.at[1], bolt.at[2]};
+            if (strike) {
+                from[0] += (unit() * 10.0f - 5.0f) * kUnit;
+                from[2] += (unit() * 10.0f - 5.0f) * kUnit;
+                from[1] += 1100.0f * kUnit;
+            } else if (bolt.kind == content::EmitterKind::WallArc) {
+                from[0] -= 50.0f * kUnit;
+            } else {
+                from[2] += 350.0f * kUnit;  // MU's y - 350: north
+            }
+            thunder_.fork(from, bolt.at, true);
         }
         // Every arc here is pinned at both ends (target 0), so neither is asked.
         thunder_.update(seconds, [](uint32_t) { return false; }, [](uint32_t, float*) { return false; });

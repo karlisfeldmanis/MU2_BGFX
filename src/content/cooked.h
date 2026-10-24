@@ -216,7 +216,11 @@ enum class EmitterKind : uint8_t {
     PoleFlare = 28,
     // The Relics' jade towers (Object09, bone 4): a pulsing spark and random bolts,
     // game/world/ruin_effects.h.
-    TowerSpark = 29
+    TowerSpark = 29,
+    // The Relics' hidden lightning boxes (MoveKanturu2ndObject types 54, 56 and 65): a bolt
+    // falling 11 m into the box, a half-metre arc from its west, a 3.5 m bolt from its north;
+    // game/world/ruin_effects.h.
+    VoidStrike = 30, WallArc = 31, NorthBolt = 32
 };
 struct TownEmitter {
     static constexpr uint16_t kWorld = 0xFFFF;
