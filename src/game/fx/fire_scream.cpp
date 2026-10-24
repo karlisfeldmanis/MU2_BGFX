@@ -270,8 +270,12 @@ void FireScream::gatherEffects(gfx::Effects& effects) const {
         gfx::Sprite flame;
         for (int k = 0; k < 3; ++k) flame.position[k] = one.at[k];
         flame.halfWidth = flame.halfHeight = 32.0f * one.scale * m;
+        // **Ours**: stood on the ground rather than half in it. MU's is centred 3 units over the
+        // land and four metres across, so the ground cut each one off in a flat line and the wall
+        // showed stepped edges (the user, 2026-10-24: "cuted/croped parts from spell"); a wider
+        // soft fade only dimmed it and kept the steps.
+        flame.position[1] += flame.halfHeight;
         flame.spin = one.spin;
-        // Thinned into the ground it stands on, not cut flat by it (ours: MU draws it over the land).
         flame.soft = 1.0f;
         for (int k = 0; k < 3; ++k) flame.colour[k] = std::min(1.0f, one.light);
         flame.sheet = flameTex_;
