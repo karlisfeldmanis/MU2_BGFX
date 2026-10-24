@@ -115,6 +115,16 @@ void ItemStage::resize(int width, int height) {
         BGFX_TEXTURE_RT_WRITE_ONLY | BGFX_TEXTURE_RT_MSAA_X4);
     const bgfx::TextureHandle both[2] = {colour, depth};
     target_ = bgfx::createFrameBuffer(2, both, true);
+    if (!bgfx::isValid(target_)) {
+        // Asked again next frame, so the textures go back and it is said once.
+        static bool said = false;
+        if (!said) core::logError("item stage: a %dx%d frame buffer was refused", width, height);
+        said = true;
+        bgfx::destroy(colour);
+        bgfx::destroy(depth);
+        picture_ = gfx::Art{};
+        return;
+    }
     picture_.handle = colour;
     picture_.width = float(width);
     picture_.height = float(height);
@@ -127,6 +137,9 @@ void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seco
     pixelsPerUnit_ = pixelsPerUnit;
     if (unitsW_ <= 0.0f || unitsH_ <= 0.0f) return;
     resize(int(std::lround(unitsW_ * pixelsPerUnit)), int(std::lround(unitsH_ * pixelsPerUnit)));
+    // No buffer is no stage: bgfx takes an invalid one for the backbuffer, and the picture
+    // would be drawn, cleared black, over the screen's top-left corner.
+    if (!bgfx::isValid(target_)) return;
     bool spinning = false;
     for (const Standing& one : standing_) spinning |= one.spinning;
     // A stage at rest is a picture already taken: nothing on it moved, nothing turns and

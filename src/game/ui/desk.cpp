@@ -188,6 +188,14 @@ void Desk::shutdown() {
     inspectStagePicture_.shutdown();
     inspectFigure_.shutdown();
     for (Portrait& face : classFaces_) face.shutdown();
+    // The target's face and the party's too. A Portrait does not let its target go by itself,
+    // and the desk is shut at every gate, warp and trip to the character screen: left, each
+    // world handed on took one of bgfx's 128 frame buffers per face. A party that travelled
+    // ran out, and the vault's stage, refused its buffer, drew its items over the screen's
+    // top-left corner (GeraColorz in Discord, 2026-10-24).
+    portrait_.shutdown();
+    for (auto& [name, face] : partyFaces_) face.shutdown();
+    partyFaces_.clear();
     arrival_.shutdown();
     reborn_.shutdown();
     tally_.shutdown();
